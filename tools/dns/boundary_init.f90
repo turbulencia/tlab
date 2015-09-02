@@ -408,7 +408,7 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
      ENDIF
 ! reference value at the center of the vertical length
      j = jmax/2
-     bcs_p_imin = AVG1V1D(buff_nps_imin,jmax,kmax, i1,j, txc(1,1), dz, scalez)
+     bcs_p_imin = AVG1V1D(buff_nps_imin,jmax,kmax, i1,j, i1, txc(1,1))
 
 ! reference plane for BCS at xmin: rho, u_i, p, z_i
      DO k = 1,kmax; DO j = 1,jmax
@@ -464,7 +464,7 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
      ENDIF
 ! reference value at the center of the vertical length
      j = jmax/2
-     bcs_p_imax = AVG1V1D(buff_nps_imax,jmax,kmax, buff_nps_imax,j, txc(1,1), dz, scalez)
+     bcs_p_imax = AVG1V1D(buff_nps_imax,jmax,kmax, buff_nps_imax,j, i1, txc(1,1))
 
 ! reference plane for BCS at xmax: rho, u_i, p, z_i
      DO k = 1,kmax; DO j = 1,jmax

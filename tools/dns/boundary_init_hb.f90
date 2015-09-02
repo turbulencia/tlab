@@ -44,7 +44,7 @@ SUBROUTINE BOUNDARY_INIT_HB(dx,dz, q,s, txc, buffer_hb)
   TARGET txc, q
 
 ! -------------------------------------------------------------------
-  TREAL AVG_IK, AVG1V1D, COV2V2D, COV2V1D
+  TREAL AVG_IK, AVG1V1D, AVG2V2D, COV2V1D
   TINTEGER i, j, is, iq
 
   TREAL, DIMENSION(:), POINTER :: r_loc, e_loc
@@ -63,7 +63,7 @@ SUBROUTINE BOUNDARY_INIT_HB(dx,dz, q,s, txc, buffer_hb)
      DO iq = 1,3
      DO j = 1, buff_nps_u_jmin
         IF ( buff_hard_on(iq) .EQ. 0 ) &
-             buff_hard(iq,2) = COV2V2D(imax,jmax,kmax, j, i1,i1, r_loc,q(1,iq), dx,dz, area)
+             buff_hard(iq,2) = AVG2V2D(imax,jmax,kmax, j, r_loc,q(1,iq))
         buffer_hb(:,j,:,iq) = buff_hard(iq,2)
      ENDDO
      ENDDO
@@ -72,7 +72,7 @@ SUBROUTINE BOUNDARY_INIT_HB(dx,dz, q,s, txc, buffer_hb)
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      DO j = 1, buff_nps_e_jmin
         IF ( buff_hard_on(4) .EQ. 0 ) &
-             buff_hard(4,2) = COV2V2D(imax,jmax,kmax, j, i1,i1, r_loc,e_loc, dx,dz, area)
+             buff_hard(4,2) = AVG2V2D(imax,jmax,kmax, j, r_loc,e_loc)
         buffer_hb(:,j,:,4) = buff_hard(4,2)
         IF ( buff_hard_on(5) .EQ. 0 ) &
              buff_hard(5,2) = AVG_IK(imax,jmax,kmax, j, r_loc, dx,dz, area)
@@ -85,7 +85,7 @@ SUBROUTINE BOUNDARY_INIT_HB(dx,dz, q,s, txc, buffer_hb)
      DO is = 1,inb_scal
      DO j = 1,buff_nps_u_jmin
         IF ( buff_hard_on(inb_flow+is) .EQ. 0 ) &
-             buff_hard(inb_flow+is,2) = COV2V2D(imax,jmax,kmax, j, i1,i1, r_loc,s(1,is), dx,dz, area)
+             buff_hard(inb_flow+is,2) = AVG2V2D(imax,jmax,kmax, j, r_loc,s(1,is))
         buffer_hb(:,j,:,inb_flow+is) = buff_hard(inb_flow+is,2)
      ENDDO
      ENDDO
@@ -100,7 +100,7 @@ SUBROUTINE BOUNDARY_INIT_HB(dx,dz, q,s, txc, buffer_hb)
      DO iq = 1,3
      DO j = 1, buff_nps_u_jmin; DO i = 1,imax
         IF ( buff_hard_on(iq) .EQ. 0 ) &
-             buff_hard(iq,2) = COV2V1D(imax,jmax,kmax, i,j, r_loc,q(1,iq), dz, scalez)
+             buff_hard(iq,2) = COV2V1D(imax,jmax,kmax, i,j, r_loc,q(1,iq))
         buffer_hb(i,j,:,iq) = buff_hard(iq,2)
      ENDDO; ENDDO
      ENDDO
@@ -109,10 +109,10 @@ SUBROUTINE BOUNDARY_INIT_HB(dx,dz, q,s, txc, buffer_hb)
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      DO j = 1, buff_nps_e_jmin; DO i = 1,imax
         IF ( buff_hard_on(4) .EQ. 0 ) &
-             buff_hard(4,2) = COV2V1D(imax,jmax,kmax, i,j, r_loc,e_loc, dz, scalez)
+             buff_hard(4,2) = COV2V1D(imax,jmax,kmax, i,j, r_loc,e_loc)
         buffer_hb(i,j,:,4) = buff_hard(4,2)
         IF ( buff_hard_on(5) .EQ. 0 ) &
-             buff_hard(5,2) = AVG1V1D(imax,jmax,kmax, i,j, r_loc,       dz, scalez)
+             buff_hard(5,2) = AVG1V1D(imax,jmax,kmax, i,j, i1, r_loc)
         buffer_hb(i,j,:,5) = buff_hard(5,2)
      ENDDO; ENDDO
      ENDIF
@@ -122,7 +122,7 @@ SUBROUTINE BOUNDARY_INIT_HB(dx,dz, q,s, txc, buffer_hb)
      DO is = 1,inb_scal
      DO j = 1,buff_nps_u_jmin; DO i = 1,imax
         IF ( buff_hard_on(inb_flow+is) .EQ. 0 ) &
-             buff_hard(inb_flow+is,2) = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is), dz, scalez)
+             buff_hard(inb_flow+is,2) = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is))
         buffer_hb(i,j,:,inb_flow+is) = buff_hard(inb_flow+is,2)
      ENDDO; ENDDO
 

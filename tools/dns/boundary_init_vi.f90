@@ -56,7 +56,7 @@ SUBROUTINE BOUNDARY_INIT_VI(dz, q,s, txc, buffer_vi)
 ! ###################################################################
   DO iq = 1,3
   DO j = 1,jmax; DO i = 1,buff_nps_imin
-     dbuff(iq) = COV2V1D(imax,jmax,kmax, i,j, r_loc,q(1,iq), dz, scalez)
+     dbuff(iq) = COV2V1D(imax,jmax,kmax, i,j, r_loc,q(1,iq))
      buffer_vi(i,j,:,iq) = dbuff(iq)
   ENDDO; ENDDO
   ENDDO
@@ -64,9 +64,9 @@ SUBROUTINE BOUNDARY_INIT_VI(dz, q,s, txc, buffer_vi)
 ! if compressible
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
   DO j = 1,jmax; DO i = 1,buff_nps_imin
-     dbuff(4) = COV2V1D(imax,jmax,kmax, i,j, r_loc,e_loc, dz, scalez)
+     dbuff(4) = COV2V1D(imax,jmax,kmax, i,j, r_loc,e_loc)
      buffer_vi(i,j,:,4) = dbuff(4)
-     dbuff(5) = AVG1V1D(imax,jmax,kmax, i,j, r_loc,       dz, scalez)
+     dbuff(5) = AVG1V1D(imax,jmax,kmax, i,j, i1, r_loc)
      buffer_vi(i,j,:,5) = dbuff(5)
   ENDDO; ENDDO
   ENDIF
@@ -74,7 +74,7 @@ SUBROUTINE BOUNDARY_INIT_VI(dz, q,s, txc, buffer_vi)
   IF ( icalc_scal .EQ. 1 ) THEN
   DO is = 1,inb_scal
   DO j = 1,jmax; DO i = 1,buff_nps_imin
-     dbuff(is) = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is), dz, scalez)
+     dbuff(is) = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is))
      buffer_vi(i,j,:,inb_flow+is) = dbuff(is)
   ENDDO; ENDDO
   ENDDO

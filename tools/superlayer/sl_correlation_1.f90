@@ -50,7 +50,7 @@ SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
 ! -------------------------------------------------------------------
   TINTEGER j
   TREAL mean_1, mean_2, var_1, var_2, delta_w
-  TREAL AVG1V2D, COV2V2D
+  TREAL AVG1V2D, AVG2V2D
 
   CHARACTER*32 fname
   CHARACTER*250 line1
@@ -89,7 +89,7 @@ SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
 ! ###################################################################
   DO j = 1,jmax
 
-     corr(j,1) = COV2V2D(imax, jmax, kmax, j, i1, i1, vorticity, strain, dx, dz, area)
+     corr(j,1) = AVG2V2D(imax, jmax, kmax, j, vorticity, strain)
      mean_1 = AVG1V2D(imax, jmax, kmax, j, i1, vorticity)
      var_1  = AVG1V2D(imax, jmax, kmax, j, i2, vorticity)-mean_1*mean_1
      mean_2 = AVG1V2D(imax, jmax, kmax, j, i1, strain)
@@ -100,7 +100,7 @@ SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
         corr(j,1) = C_2_R
      ENDIF
 
-     corr(j,2) = COV2V2D(imax, jmax, kmax, j, i1, i1, vorticity, gradient, dx, dz, area)
+     corr(j,2) = AVG2V2D(imax, jmax, kmax, j, vorticity, gradient)
      mean_1 = AVG1V2D(imax, jmax, kmax, j, i1, vorticity)
      var_1  = AVG1V2D(imax, jmax, kmax, j, i2, vorticity)-mean_1*mean_1
      mean_2 = AVG1V2D(imax, jmax, kmax, j, i1, gradient)
@@ -111,7 +111,7 @@ SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
         corr(j,2) = C_2_R
      ENDIF
 
-     corr(j,3) = COV2V2D(imax, jmax, kmax, j, i1, i1, gradient, strain, dx, dz, area)
+     corr(j,3) = AVG2V2D(imax, jmax, kmax, j, gradient, strain)
      mean_1 = AVG1V2D(imax, jmax, kmax, j, i1, gradient)
      var_1  = AVG1V2D(imax, jmax, kmax, j, i2, gradient)-mean_1*mean_1
      mean_2 = AVG1V2D(imax, jmax, kmax, j, i1, strain)
