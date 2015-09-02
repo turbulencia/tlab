@@ -1,0 +1,6 @@
+site=npaci
+system=sp
+os=aix
+account=DUMMY
+queue=""
+hpc=parallel

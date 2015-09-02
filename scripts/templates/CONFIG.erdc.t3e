@@ -1,0 +1,6 @@
+site=erdc
+system=t3e
+os=cray
+account=ONRDC003
+queue=
+hpc=parallel

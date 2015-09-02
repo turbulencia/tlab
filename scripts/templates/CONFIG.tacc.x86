@@ -1,0 +1,6 @@
+site=tacc
+system=x86
+os=linux
+account=csd238
+queue=normal
+hpc=parallel

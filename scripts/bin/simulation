@@ -1,0 +1,31 @@
+#!/bin/sh 
+#
+
+. $CONFIG_FILE
+
+if [ $# -eq 0 ]; then
+   echo "Usage: $0 timestamp [arg]"
+   exit 1
+fi
+
+timestamp=$1
+shift
+
+if [ ! -f dns.ini ]; then
+    echo "Error: dns.ini does not exist"
+    exit 2
+fi
+
+if [ ! -f dns.x ]; then
+    echo "Error: dns.x does not exist"
+    exit 3
+fi
+
+echo "Running dns.x"
+$TOOLS_HOME/dns.run dns.x $timestamp $*
+if [ $hpc = "parallel" ]; then
+    if [ $system = "t3e" ]; then
+	qalter -l mpp_p=0
+    fi
+fi
+

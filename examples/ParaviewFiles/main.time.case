@@ -1,0 +1,42 @@
+FORMAT
+type: ensight gold
+GEOMETRY
+model: grid.ensight
+VARIABLE
+scalar per node: 1 Scalar1             Scalar10*****
+scalar per node: 1 Scalar2             Scalar20*****
+scalar per node: 1 LnScalar1Gradient   LnScalar1Gradient0*****
+scalar per node: 1 LnScalar2Gradient   LnScalar2Gradient0*****
+
+scalar per node: 1 Pressure            Pressure0*****
+scalar per node: 1 InvariantP          InvariantP0*****
+scalar per node: 1 LnEnstrophy         LnEnstrophy0*****
+scalar per node: 1 VelocityX           VelocityX0*****
+scalar per node: 1 VelocityY           VelocityY0*****
+TIME
+time set: 1
+number of steps: 21
+filename start number: 0
+filename increment: 1000
+time values: 
+0 
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20

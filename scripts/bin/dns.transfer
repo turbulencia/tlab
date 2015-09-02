@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# Transfer to mass storage facility if so implemented
+
+. $CONFIG_FILE
+
+QSEND_SITE=$site
+
+OPT="$1"
+shift 
+
+if [ $QSEND_SITE = "navo" ]; then
+    echo "Archiving $*"
+    for file in $*; do
+	rcp $file jules-hip0:$OPT/$file
+    done
+elif [ $QSEND_SITE = "erdc" ]; then
+   echo "Archiving $*"
+   msfstat -q
+   if [ $? = 0 ]; then
+      msfmput -d $OPT -q $*
+   fi
+elif [ $QSEND_SITE = "tacc" ]; then
+    echo "Archiving $*"
+    for file in $*; do
+	rcp $file $ARCHIVER:$OPT/$file
+    done
+fi
+

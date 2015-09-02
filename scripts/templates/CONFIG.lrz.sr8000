@@ -1,0 +1,6 @@
+site=lrz
+system=sr8000
+os=hitachi
+account=h0023
+queue=
+hpc=parallel

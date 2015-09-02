@@ -1,0 +1,47 @@
+#!/bin/sh
+
+# In the current path look for the last restart file and set 
+# Start and End in dns.ini
+
+if [ $# -eq 0 ]; then
+   echo "Usage: $0 path [inc]"
+   exit 1
+fi
+
+cd $1
+shift
+
+# Get last restart file in directory 
+LAST=`ls | grep '^flow.[0-9]' | grep '[0-9]$' | sed 's/flow.//' | sed 's/\.[0-9]$//' | sort -r -n | head -1`
+
+if [ ! -n "$LAST" ]; then
+   LAST="0"
+fi
+
+# Modify dns.ini file
+
+if [ $# -eq 1 ]; then
+   PLUS=$1
+   shift
+else
+   PLUS=`awk -F"=" '/Restart/ { print $2 }' dns.ini`
+fi
+
+awk -F"=" '{ 
+	    if      ( $1 == "Start" ) 
+		{ 
+		    print "Start=" '$LAST'
+		} 
+	    else if ( $1 == "End" ) 
+		{ 
+		    print "End=" '$LAST'+'$PLUS' 
+		} 
+	    else 
+		{
+		    print $0 
+		}
+	}' dns.ini > dns.ini.tmp
+
+/bin/mv dns.ini.tmp dns.ini
+
+

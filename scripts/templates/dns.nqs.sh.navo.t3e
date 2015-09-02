@@ -1,0 +1,187 @@
+#!/bin/sh 
+#
+# nqs batch file for dns.x 
+#
+############################################################################
+# Memory Usually Needed
+# 128 64MW
+# 192 100MW
+# 256 128MW
+#
+# Time Usually Needed
+# 4h  14400
+# 12h 43200
+# 24h 86400
+# 36h 129600
+########################### CHANGE ONLY THIS ###############################
+#QSUB -r "dns-256-0.3-1"
+#QSUB -lc 1MW
+#QSUB -J y
+#QSUB -mb
+#QSUB -me
+#QSUB -mr
+#QSUB -lT 14400
+########################### END NQS DIRECTIVES #############################
+#
+########################### DO NOT MODIFY ##################################
+
+. $HOME/bin/CONFIG
+
+# Change Account 
+newacct $ACCOUNT
+
+# Change this to reflect your home directory
+MSFHOME=/u/home/$LOGNAME
+MSTOR=jules-hip0
+ABORT="no"
+
+for JDIR in $JOBDIR; do
+
+   MASSDIR=$MSFHOME/$JDIR
+   LOCALDIR=/tmp/$LOGNAME/$JDIR
+   TRASHDIR=/tmp/$LOGNAME/$JDIR-transfered
+   
+   # Create Working Directories
+   if [ ! -d  /tmp/$LOGNAME ]; then
+      mkdir /tmp/$LOGNAME
+   fi
+   if [ ! -d $LOCALDIR ]; then
+      mkdir  $LOCALDIR
+   fi
+
+   # Check if temp_rest is already in Job Directory
+   if [ ! -e $LOCALDIR/temp_rest ]; then
+	# Try to create links to temp_rest and scal_rest
+        if [ $JOBDIR = $JDIR ]; then
+           dns.pre $LOCALDIR $STEP 
+        fi
+
+       	# If still no temp_rest
+	if [ ! -e $LOCALDIR/temp_rest ]; then
+            if [ -d $MASSDIR ]; then
+	    # Try to create mass storage links
+	    if [ $JOBDIR = $JDIR ]; then
+		dns.pre $MASSDIR $STEP 
+	    fi
+
+	    # Copy needed files to local system
+	    cd $MASSDIR
+	    if [ -e temp_rest ]; then
+		# Restarting
+		/bin/cp dns.ini dns.x Grid.in temp_rest scal_rest $LOCALDIR
+	    else
+		/bin/cp * $LOCALDIR
+	    fi
+            fi
+	fi
+   fi
+
+   cd $LOCALDIR
+   touch *
+   # Run Simulation
+   date
+   if [ $system = "t3e" ]; then
+        simulation $TIMESTAMP $NP
+   else
+	simulation $TIMESTAMP 
+   fi
+   date
+
+   # Abort on severall errors
+   if [ -e dns.error ]; then
+      ABORT="yes"
+   fi
+    
+   if [ -e dns.error.0 ]; then
+      ABORT="yes"
+   fi
+
+   if [ -e core ]; then
+      touch dns.core
+      ABORT="yes"
+   fi
+
+   # In case of a full initialization copy restart files
+   RMIO=`remsh $MSTOR ls -al $MASSDIR`
+   if [ $? ]; then
+   RMIO=`remsh $MSTOR ls -al $MASSDIR/temp_rest`
+   if [ ! $? ]; then
+      RMIO=`remsh $MSTOR ls -al $MASSDIR/pt0`
+      if [ ! $? ]; then
+         cp temp_rest pt0
+      fi
+   fi
+   RMIO=`remsh $MSTOR ls -al $MASSDIR/scal_rest`
+   if [ ! $? ]; then
+      RMIO=`remsh $MSTOR ls -al $MASSDIR/sc0`
+      if [ ! $? ]; then
+         cp scal_rest sc0
+      fi
+   fi
+   fi
+   /bin/rm -f core *_rest
+
+   # Compress and tar statistics
+   DATE=`date +%m%d%y-%H%M%S`
+   dns.stats dns-stat-$DATE.tar 
+
+   dns.archive $TRASHDIR $MASSDIR  
+
+   # Transfer files
+   RMIO=`remsh $MSTOR ls -al $MASSDIR`
+   if [ $? ]; then
+   
+   # Remove Local files if correctly transfered 
+   TESTFILE=`ls pt* | tr '\n' ' ' | awk '{ print $NF }'`
+
+   clean_pt () {
+   ls pt* | tr 'pt' ' ' | sort -n | tr '\n' ' ' | awk '{ if ( NF > 1 ) {for (i=1; i< NF ; i++) print pt$i}}' | tr '\n' ' '
+   }
+
+   RMIO=`remsh $MSTOR ls -al $MASSDIR/$TESTFILE`
+   if [ $? ]; then
+      rm -f *.tar 
+      FDEL=`clean_pt`
+      rm -f $FDEL
+      FDEL=`clean_pt`
+      rm -f $FDEL
+   fi
+   fi
+done
+
+# Requeue simulation
+if [ $JDIR = $JOBDIR ]; then
+    if [ $ABORT = "no" ]; then
+
+	if [ -e $LOCALDIR/dns.nqs.new-vars ]; then
+	    . $LOCALDIR/dns.nqs.new-vars
+	fi
+
+	if [ -e $MASSDIR/dns.ini ]; then
+	    ITIME=`awk -F"=" '{ 
+				if ( $1 == "End" ) 
+				    {
+				    print $2 
+				    }
+			    }' $MASSDIR/dns.ini` 
+	elif [ -e $LOCALDIR/dns.ini ]; then
+	    ITIME=`awk -F"=" '{ 
+				if ( $1 == "End" ) 
+				    {
+				    print $2 
+				    }
+			    }' $LOCALDIR/dns.ini` 
+	else
+	    echo "Error getting max time"
+	    exit 1
+	fi
+ 
+	if [ $ITIME -lt $MAXITER ]; then
+	    # Submit Script
+	    qsend -name $NAME -time $TIME -maxiter $MAXITER -mem $MEM \
+	          -script $SCRIPT -jobdir $JOBDIR -step $STEP -np $NP
+
+	fi       
+    fi
+fi
+

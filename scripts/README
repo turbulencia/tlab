@@ -1,0 +1,23 @@
+Queuing scripts for recursive automatic submission
+
+In some systems it may not be allowed to requeue (e.g. TACC)
+
+Copy the bin directory into your home directory,
+along with the two templates corresponding to the system, 
+and link CONFIG.default to the template file.
+
+Requirements: grep, head, ls, sed, sort, awk.
+You may have to change some grep commands to the one in
+your system accepting extended regular expressions.
+
+---
+
+JSC example of iterative job submission:
+
+llrun -np 64 -exe ./iniflow.x -mode SMP -env "OMP_NUM_THREADS=4"
+
+For the nonblocking communication mode in JSC you need to add
+
+export PYTHONPATH=/usr/local/rubik/rubik-1.0.1/.
+
+to the file .profile

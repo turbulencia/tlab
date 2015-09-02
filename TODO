@@ -1,0 +1,15 @@
+* Remove wrk1d from partial_*
+* Variable ifilt_step in AVG_FLOW_SPATIAL_LAYER
+* In some routines I do not need icalc_scal, icalc_flow, I can do the same with inb_scal=0
+* Error control in libraries averages, pdfs...
+* Introduce new mean profiles to get rid of the factor of 2 when wall-bounded cases?
+* Two linear layer with smooth transition to be implemented 
+* Multi-segment inigrid. To be written using integral compact schemes instead of quad?
+* OMP/BLAS optimization to be implemented in THERMO routines
+* Compressible cases have a bug with relaxation of BCs (SigmaInfJ and SigmaOut)
+* In avg_scal_temporal, add convective term and source Qss in transport eqn for Rss;
+* ALLTOALL when kmax=1 and ims_npro_i>1 does not work and was commented out.
+* Finish filters
+* Check the -qNOOVER in the intel compiler to force SIMD in pointers (NO OVERLAP MEMORY)
+* Memory reqs. in two-point statistics to be reduced.
+* Check random number generator in parallel mode; current decorrelation in rand_main.f90 might not be enough.

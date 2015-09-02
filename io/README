@@ -1,0 +1,21 @@
+Restart files:
+--------------
+IEEE double precision floating point representation.
+Sequential access mode
+Unformatted records
+Byte ordering is big-endian
+
+Split mode: [default]
+No record length information. First 4-bytes are an integer pointing to the 
+field array after the header.
+
+Array mode:
+Embedded record information (4-bytes integer) for backwards compatibility,
+ but should not be used because of new large-size files.
+(header + flow fields) ...: header size is 96 bytes
+(header + scalar fields) .: header size is 48 bytes
+
+Arrays ordering:
+----------------
+inner-most index is streamwise
+outer-most index is spanwise (domain decomposion in parallel MPI mode)

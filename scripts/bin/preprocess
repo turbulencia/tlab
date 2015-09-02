@@ -1,0 +1,45 @@
+#!/bin/sh 
+#
+
+. $CONFIG_FILE
+
+if [ $# -eq 0 ]; then
+   echo "Usage: $0 timestamp [arg]"
+   exit 1
+fi
+
+timestamp=$1
+shift
+
+EXEC=""
+
+if [ ! -f dns.ini ]; then
+    echo "Error: dns.ini does not exist"
+    exit 2
+fi
+
+if [ ! -f grid      ]; then
+    EXEC="      ./inigrid.x"
+fi
+if [ ! -f    *.rand* ]; then
+    EXEC="$EXEC ./inirand.x"
+fi
+if [ ! -f scal.ics*  ]; then
+    EXEC="$EXEC ./iniscal.x"
+fi
+if [ ! -f flow.ics*  ]; then
+    EXEC="$EXEC ./iniflow.x"
+fi
+
+echo $EXEC
+
+for exfile in $EXEC; do
+    if [ ! -f $exfile ]; then
+	echo "Error: $exfile needed and does not exist"
+	exit 3
+    fi
+
+    echo "Running $exfile"
+    $TOOLS_HOME/dns.run $exfile $timestamp $*
+done
+

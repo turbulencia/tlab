@@ -1,0 +1,118 @@
+#!/bin/sh 
+#
+# nqs batch file for dns.x 
+#
+############################################################################
+# Memory Usually Needed
+# 128 64mb
+# 192 100mb
+# 256 128mb
+#
+# Time Usually Needed
+# 4h  14400
+# 12h 43200
+# 24h 86400
+# 36h 129600
+########################### CHANGE ONLY THIS ###############################
+#@$ -r "dns-256-0.3-1"
+#@$-lc 1MW
+#@$-mb
+#@$-me
+#@$-mr
+#@$ -lT 14400
+########################### END NQS DIRECTIVES #############################
+#
+########################### DO NOT MODIFY ##################################
+
+# Change this to reflect your home directory
+. $HOME/bin/CONFIG
+
+ABORT="no"
+
+LOCALDIR=/tmp/TEMP/$LOGNAME/$JOBDIR
+   
+# Create Working Directories
+if [ ! -d $LOCALDIR ]; then
+   mkdir $LOCALDIR
+fi
+
+cd $LOCALDIR
+
+# If not pt* files, then set DNSFIRST to yes
+tmp=`ls pt*[0-9]`
+if [ $? = 0 ]; then
+    DNSFIRST="no"
+else
+    DNSFIRST="yes"
+fi
+
+# Check if temp_rest is already in Job Directory
+if [ ! -r temp_rest ]; then
+    # Try to create links to temp_rest and scal_rest
+    dns.pre $LOCALDIR $STEP
+fi
+
+touch *
+    
+# Run Simulation
+date
+
+simulation $TIMESTAMP 
+
+date
+
+# Abort on severall errors
+if [ -r dns.error ]; then
+    ABORT="yes"
+fi
+	
+if [ -r dns.error.0 ]; then
+    ABORT="yes"
+fi
+
+if [ -r core ]; then
+    touch dns.core
+    rm -f core
+    ABORT="yes"
+fi
+
+if [ $DNSFIRST = "no" ]; then
+    /bin/rm -f *_rest
+else
+    mv temp_rest pt0
+    if [ -r scal_rest ]; then
+        mv scal_rest sc0
+    fi
+fi
+
+# Compress and tar statistics
+DATE=`date +%m%d%y-%H%M%S`
+dns.stats dns-stat-$DATE.tar 
+
+# Requeue simulation
+    if [ $ABORT = "no" ]; then
+
+	if [ -e $LOCALDIR/dns.nqs.new-vars ]; then
+	    . $LOCALDIR/dns.nqs.new-vars
+	fi
+
+	if [ -r $LOCALDIR/dns.ini ]; then
+	    ITIME=`awk -F"=" '{ 
+				if ( $1 == "End" ) 
+				    {
+				    print $2 
+				    }
+			    }' $LOCALDIR/dns.ini` 
+	else
+	    echo "Error getting max time"
+	    exit 1
+	fi
+ 
+	if [ $ITIME -lt $MAXITER ]; then
+	    # Submit Script
+	    qsend -name $NAME -time $TIME -maxiter $MAXITER -mem $MEM \
+	          -script $SCRIPT -jobdir $JOBDIR -step $STEP -np $NP
+
+	fi       
+    fi
+

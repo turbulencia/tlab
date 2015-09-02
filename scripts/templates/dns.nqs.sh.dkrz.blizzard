@@ -1,0 +1,131 @@
+#@ shell=/bin/sh
+#@ job_type = parallel
+#@ notify_user = juan-pedro.mellado@zmaw.de
+#@ node_usage = not_shared
+#@ notification = always
+#@ task_affinity  = core(1)
+#@ environment = COPY_ALL
+#@ network.MPI = sn_all,not_shared,us
+#@ rset = RSET_MCM_AFFINITY
+#@ mcm_affinity_options = mcm_distribute
+########################### CHANGE ONLY THIS ###############################
+########################### END LSF DIRECTIVES #############################
+#@ queue
+############################################################################
+########################### DO NOT MODIFY ##################################
+export MEMORY_AFFINITY=MCM
+export MP_PRINTENV=YES
+export MP_LABELIO=YES
+export MP_INFOLEVEL=2
+export MP_EAGER_LIMIT=64k
+export MP_BUFFER_MEM=64M,256M
+export MP_USE_BULK_XFER=NO
+export MP_BULK_MIN_MSG_SIZE=128k
+export MP_RFIFO_SIZE=4M
+export MP_SHM_ATTACH_THRESH=500000
+export LAPI_DEBUG_STRIPE_SEND_FLIP=8
+
+date
+hostname
+
+export TOOLS_HOME=$HOME/bin
+
+export PATH=$PATH:$TOOLS_HOME
+export CONFIG_FILE=$TOOLS_HOME/CONFIG.dkrz.blizzard
+
+. $CONFIG_FILE
+
+ABORT="no"
+
+# Change this to reflect your directories
+LOCALDIR=$WORK/$JOBDIR
+TRASHDIR=$WORK/$JOBDIR-transfered
+
+# Create Working Directories
+mkdir -p $LOCALDIR
+
+cd $LOCALDIR
+
+dns.pre $LOCALDIR $STEP
+
+touch *
+
+# Run Simulation
+case $RUNMODE in
+  "preprocess" )
+    preprocess $TIMESTAMP
+    ABORT="yes"
+    ;;
+  "simulation" )
+    simulation $TIMESTAMP
+    if [ $? -ne 0 ]; then
+       ABORT="yes"
+    fi 
+    ;;
+  "postprocess" )
+    postprocess $TIMESTAMP
+    ABORT="yes"
+  ;;
+esac
+
+# Abort on several errors
+if [ -f dns.err ]; then
+    ABORT="yes"
+fi
+	
+if [ -f dns.err.0 ]; then
+    ABORT="yes"
+fi
+
+if [ -f core ]; then
+    touch dns.core
+    rm -f core
+    ABORT="yes"
+fi
+
+#clean 
+if [ -f dns.ini ]; then
+    cp dns.ini dns.ini-$TIMESTAMP
+fi
+LOGFILES="dns.ini.bak dns.log dns.out dns.les"
+for FILE in $LOGFILES; do
+    if [ -f $FILE ]; then
+        mv $FILE $FILE-$TIMESTAMP
+    fi
+done
+
+# Compress and tar statistics
+dns.stats dns-stat-$TIMESTAMP.tar 
+
+if [ $RUNMODE = "simulation" ];then
+
+# Archive
+#    dns.archive $TRASHDIR 
+
+# Requeue simulation
+    if [ $ABORT = "no" ]; then
+	if [ -f $LOCALDIR/dns.nqs.new-vars ]; then
+	    . $LOCALDIR/dns.nqs.new-vars
+	fi
+
+	if [ -f $LOCALDIR/dns.ini ]; then
+	    ITIME=`awk -F"=" '{ 
+				if ( $1 == "End" ) 
+				    {
+				    print $2 
+				    }
+			    }' $LOCALDIR/dns.ini` 
+	else
+	    echo "Error getting max time"
+	    exit 1
+	fi
+ 
+	if [ $ITIME -lt $MAXITER ]; then
+	    # Submit Script
+	    qsend -name $NAME -time $TIME -maxiter $MAXITER -mem $MEM \
+	          -script $SCRIPT -jobdir $JOBDIR -step $STEP -np $NP
+
+	fi       
+    fi
+fi
+

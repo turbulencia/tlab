@@ -1,0 +1,6 @@
+site=rwth
+system=x86
+os=linux
+account=jm258963
+queue=
+hpc=parallel

@@ -1,0 +1,6 @@
+site=fzj
+system=juqueen
+os=linux
+account=hhh07
+queue=""
+hpc=parallel

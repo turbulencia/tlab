@@ -1,0 +1,25 @@
+#define FUYX 1
+#define FUYZ 2
+#define BUXY 3
+#define BUZY 4
+#define FVYX 5
+#define FVYZ 6
+#define BVXY 7
+#define BVZY 8
+#define FWYX 9
+#define FWYZ 10
+#define BWXY 11
+#define BWZY 12
+#define F1YX 13
+#define F1YZ 14
+#define B1XY 15
+#define B1ZY 16
+#define F2YX 17
+#define F2YZ 18
+#define B2XY 19
+#define B2ZY 20
+#define FPYX 21
+#define FPYZ 22
+#define BPXY 23
+#define BPZY 24
+

@@ -1,0 +1,25 @@
+Description
+-----------
+
+Tools to simulate and analyze different configurations of 2D and 3D turbulence flows.
+
+There are two modes [temporal|spatial], which corresponds to temporaly evolving flows, or spatially evolving flows. This qualifier refers to the statistical homogeneities of the configuration, and it partially defines the BCs, and the calculation of statistical properties.
+
+The are several types [shear/jet/isotropic]. The type defines as well the BCs, and the calculation of statistical properties. A wake type could be added for completeness. Isotropic mode not yet finished.
+
+Numerical schemes are based on compact finite difference methods on structured meshes. Stretching allowed.
+
+See manual for more information.
+
+Library dependencies
+--------------------
+tools -> mappings -> io      -> parallel       -> utils
+                     flow       thermodynamics    FFTW [external]
+                     operators  fdm
+                                linear
+                                averages
+                                pdfs
+                                filters
+                                quadpack [external, from NETLIB]
+                                fitpack  [external, from NETLIB]
+

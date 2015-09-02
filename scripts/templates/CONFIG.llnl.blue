@@ -1,0 +1,6 @@
+site=llnl
+system=sp
+os=aix
+account=DUMMY
+queue=""
+hpc=parallel

@@ -1,0 +1,6 @@
+site=fzj
+system=jump
+os=aix
+account=hac16
+queue=""
+hpc=parallel

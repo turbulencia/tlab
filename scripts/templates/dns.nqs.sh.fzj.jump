@@ -1,0 +1,139 @@
+#!/bin/sh
+#
+#@ job_type = parallel
+#@ notify_user = Juan.Pedro.Mellado@rwth-aachen.de
+#@ node_usage = shared
+#@ notification = always
+########################### CHANGE ONLY THIS ###############################
+########################### END LSF DIRECTIVES #############################
+#@ queue
+############################################################################
+########################### DO NOT MODIFY ##################################
+export TOOLS_HOME=$HOME/bin
+
+export PATH=$PATH:$TOOLS_HOME
+export CONFIG_FILE=$TOOLS_HOME/CONFIG.fzj.jump
+
+. $CONFIG_FILE
+
+ABORT="no"
+
+# Change this to reflect your directories
+LOCALDIR=$WORK/$JOBDIR
+TRASHDIR=$WORK/$JOBDIR-transfered
+
+# Create Working Directories
+mkdir -p $LOCALDIR
+
+cd $LOCALDIR
+
+# If not pt* files, then set DNSFIRST to yes
+tmp=`ls | grep 'pt[0-9]'`
+if [ -n "$tmp" ]; then
+    DNSFIRST="no"
+else
+    DNSFIRST="yes"
+fi
+
+# Check if flow_rest is already in Job Directory
+if [ ! -f flow_rest ]; then
+    # Try to create links to flow_rest and scal_rest
+    dns.pre $LOCALDIR $STEP
+fi
+
+touch *
+
+# Run Simulation
+case $RUNMODE in
+  "preprocess" )
+    preprocess $TIMESTAMP
+    ABORT="yes"
+    ;;
+  "simulation" )
+    if [ $DNSFIRST = "yes" ]; then
+       preprocess $TIMESTAMP
+       if [ $? -eq 0 ]; then
+           simulation $TIMESTAMP
+       else
+           ABORT="yes"
+       fi
+    else 
+       simulation $TIMESTAMP
+    fi
+    if [ $? -ne 0 ]; then
+       ABORT="yes"
+    fi 
+    ;;
+  "postprocess" )
+    postprocess $TIMESTAMP
+    ABORT="yes"
+  ;;
+esac
+
+# Abort on several errors
+if [ -f dns.error ]; then
+    ABORT="yes"
+fi
+	
+if [ -f dns.error.0 ]; then
+    ABORT="yes"
+fi
+
+if [ -f core ]; then
+    touch dns.core
+    rm -f core
+    ABORT="yes"
+fi
+
+#clean 
+if [ $DNSFIRST = "no" ]; then
+    /bin/rm -f flow_rest scal_rest stat_rest
+else
+    mv flow_rest pt0
+    mv scal_rest sc0
+fi
+if [ -f dns.ini ]; then
+    cp dns.ini dns.ini-$TIMESTAMP
+fi
+LOGFILES="dns.log dns.itera dns.output dns.les"
+for FILE in $LOGFILES; do
+    if [ -f $FILE ]; then
+        mv $FILE $FILE-$TIMESTAMP
+    fi
+done
+
+# Compress and tar statistics
+dns.stats dns-stat-$TIMESTAMP.tar 
+
+if [ $RUNMODE = "simulation" ];then
+
+# Archive
+#    dns.archive $TRASHDIR 
+
+# Requeue simulation
+    if [ $ABORT = "no" ]; then
+	if [ -f $LOCALDIR/dns.nqs.new-vars ]; then
+	    . $LOCALDIR/dns.nqs.new-vars
+	fi
+
+	if [ -f $LOCALDIR/dns.ini ]; then
+	    ITIME=`awk -F"=" '{ 
+				if ( $1 == "End" ) 
+				    {
+				    print $2 
+				    }
+			    }' $LOCALDIR/dns.ini` 
+	else
+	    echo "Error getting max time"
+	    exit 1
+	fi
+ 
+	if [ $ITIME -lt $MAXITER ]; then
+	    # Submit Script
+	    qsend -name $NAME -time $TIME -maxiter $MAXITER -mem $MEM \
+	          -script $SCRIPT -jobdir $JOBDIR -step $STEP -np $NP
+
+	fi       
+    fi
+fi
+

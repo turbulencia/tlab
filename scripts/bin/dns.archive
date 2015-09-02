@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# Archiving the simulation results. Data is
+# moved to trash directory to clean the run directory
+# for the new simulation.
+
+MASSDIR=/dev/null
+if [ $# -eq 2 ]; then
+   MASSDIR="$2"
+fi
+
+# Create temporary trash directory
+if [ ! -d $1 ]; then
+    mkdir $1
+fi
+
+# Move restart files
+LIST=`ls | grep 'flow.[0-9]' | sed 's/flow.//' | sort -r -n` 
+LAST=`ls | grep 'flow.[0-9]' | sed 's/flow.//' | sort -r -n | head -1` 
+if [ -n "$LAST" ]; then
+   for elem in $LIST; do
+       dns.transfer $MASSDIR pt$elem sc$elem
+       if [ -f st$elem ]; then
+          dns.transfer $MASSDIR st$elem
+       fi
+       if [ $elem -ne $LAST ]; then
+          mv -f flow.$elem scal.$elem $1
+          if [ -f st$elem ]; then
+             mv -f st$elem $1
+          fi
+       else
+          /bin/cp -f grid flow.$elem scal.$elem $1
+          if [ -f st$elem ]; then
+             /bin/cp -f st$elem $1
+          fi
+       fi
+
+       if [ -f ln$elem ]; then
+          dns.transfer $MASSDIR ln$elem
+          mv -f ln$elem $1
+       fi
+       if [ -f pl$elem ]; then
+          dns.transfer $MASSDIR ln$elem
+          mv -f pl$elem $1
+       fi       
+   done
+fi
+
+# Move buffer files
+LIST=`ls | grep buffer | sed s/buffer_flow_rest// | sed s/buffer_scal_rest//`
+if [ -n "$LIST" ]; then
+   dns.transfer $MASSDIR $LIST
+   mv -f $LIST $1
+fi
+
+# Other files to be moved
+LIST=`ls | grep 'dns[a-z\.-]*-[0-9]*-[0-9]*'`
+if [ -n "$LIST" ]; then
+   dns.transfer $MASSDIR $LIST
+   mv -f $LIST $1
+fi
+

@@ -1,0 +1,132 @@
+\chapter{Grid}
+
+The equations are solved using Cartesian co-ordinates and the grid is
+structured. The grid is constructed by building up the three directions
+separately (in a 2D case, $Oz$ has simply one node).  Each direction is broken
+into segments, and each of those segments are built with specified
+algorithms. (One segment is often enough for usual configurations.) The first
+point in each direction is set at zero.
+
+The executable is \emph{inigrid.x} and reads data from {\it dns.ini}, as any of
+the other tools. The data blocks are [IniGridOx], [IniGridOy] and
+[IniGridOz]. Once created, basic information about the grid is saved into the
+file {\it grid.sts}. Grid transformations can be done with \emph{transgrid.x};
+the corresponding sources are in the \emph{/tools/transform/grid}
+sub-directory. They allow to print out an ASCII file with the grid positions,
+add an offset, drop or introduce planes and make a scaling.  (As in the case of
+the utilities of the main code, a browse through them is recommended, though
+they are really simple.)
+
+\bigskip
+
+The main options for each particular direction are:
+\begin{itemize}
+\item segments: Number of segments in that direction.
+\item periodic: If yes, a uniform mesh is done with a number of points equal to
+  the sum of the points of all segments, and over a length equal to the sum of
+  the length of all segments, regardless the input options for each segment. The
+  last plane in that direction is dropped, so that the last point does not match
+  the scale (the latter is a bit larger).
+\item mirrored: If yes, this direction is created with the corresponding options
+  and then it is mirrored with respect to the origin. The final scale is the
+  double of that set in the input file \emph{dns.ini} and the first node is
+  moved to zero. In the case of mirroring the number of points is always even. 
+\end{itemize}
+
+\section{Segments}
+Information about segment number $n$ is specified with the suffix {\it \_$n$} in
+the options below:
+\begin{itemize}
+\item scales: physical end of the segment. 
+\item points: number of points in the segment. This number includes the first
+  and the last points of the present segment, which are common with the adjacent
+  ones. (E.g., if one direction has three segments with 11, 16 and 6 points
+  each, the total number of points in that direction will be 31, 30 steps.)
+\item opts: list of options for the generation algorithm.
+\begin{itemize}
+\item $opts=0$ : Uniform grid.
+\item $opts=1-3$ : See old version of this document. 
+\item $opts=4$ : Geometric progression. Not used in a loooong time.
+\item $opts=5$ : Explicit mapping: hyperbolic tangent of the space step.
+\item $opts=6$ : Explicit mapping: hyperbolic tangent of the stretching factor.
+\end{itemize}                                                   
+
+\item vals: list of constants for the different generation algorithms.
+\end{itemize}
+
+\section{Explicit mappings (opts 5 and 6)}
+A basic grid is considered first with uniform spacing, that is
+$\{s_j=h_0(j-1):\, j = 1,\ldots,n\}$. 
+
+In case of a hyperbolic tangent (i.e. {\it opts=5}), the mapping is
+\begin{equation}
+\frac{dx}{ds} = 1 + \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_1}{2\delta_1}\right)\right]
+\end{equation}
+that is, the grid step $\Delta x =dx/dj$ varies between the uniform values $h_0$
+and $h_1$, the transition occurring at $s=s_1$ and over a length $\delta_1$. The
+space step $h_0$ corresponds to that of the initial uniform grid. The parameters
+$s_1$, $h_1/h_0$ and $\delta_1$ are provided in the corresponding {\it vals}
+record of the {\it dns.ini} file.
+
+Two transitions are possible if the {\it opts} record is set to $5,2$. The
+mapping is then
+\begin{equation}
+\frac{dx}{ds} = 1 
++ \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_1}{2\delta_1}\right)\right]
++ \frac{h_2/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_2}{2\delta_2}\right)\right]
+\end{equation}
+
+In case of {\it opts=6} a hyperbolic tangent variation of the stretching factor
+$f=d/dx (\Delta x)$ (so defined, $f+1$ an approximation to the ratio $(\Delta x)
+_{j+1}/(\Delta x) _{j} $) is imposed by solving the linear equation
+\begin{equation}
+\frac{d^2x}{ds^2} - (f/h_1)\frac{dx}{ds} = 0 \;,
+\end{equation}
+where $f$ is given by
+\begin{equation}
+f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_1}{2\delta_1}\right)\right]
+\end{equation}
+and the parameters $s_1$, $\Delta f_1$ and $\delta_1$ are provided in the list
+${\it vals}$. The non-dimensional parameter $f$ then varies from $0$ to $\Delta
+f_1$; values smaller that $0.1$ are recommended (less that 10\% stretching). A
+first integral of this problem leads to
+\begin{equation}
+\frac{dx}{ds} =
+\left[1+\exp\left(\frac{s-s_1}{\delta_1}\right)\right]^{\delta_1(\Delta f_1/h_1)} \;.
+\end{equation}
+This equation for $x(s)$ needs to be solved numerically, but already shows that
+this mapping leads to an exponential growth of the space step $\Delta x$ and the
+grid $x(s)$. Note that $\delta_1$ admits negative values.
+
+As before, two transitions are possible if the {\it opts} record is set to $6,2$,
+\begin{equation}
+f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_1}{2\delta_1}\right)\right]
++ \frac{\Delta f_2}{2}\left[ 1 + \tanh\left(\frac{s-s_2}{2\delta_2}\right)\right]
+\end{equation}
+
+\section{Geometric progression algorithm (opts 4)}
+For each segment $i$ the geometric ratio $r_i$ is given (input variable
+$val1$). The rest of the constrains are the number of points in each segment,
+$n_i$ and the total length in that direction, $L$.  The first step of the first
+segment is initialized to 1 (this number does not matter because of the final
+scaling), and then the first segment is generated. The last step size is taken
+as the first one for the second segment, and the sequence continue until the
+last segment. A final rescaling adjusts the physical length of the grid in that
+direction.
+
+The length of each segment in the grid is saved into \emph{grid.sts}. For
+calculating them, if we denote the length of each segment by $l_i$, we have
+\begin{equation}
+l_i = h_i^1(1+r_i+r_i^2+\ldots+r_i^{n_i-2})=
+h_i^1\frac{1-r_i^{n_i-1}}{1-r_i}=h_i^1C_i
+\end{equation}
+The first step $h_i^1$ of each segment is related to the previous one by
+\begin{equation}
+h_{i+1}^1 = h_i^1 r_i^{n_i-1}
+\end{equation}
+and the equation to close the problem is
+\begin{equation}
+L=\sum_{seg}l_i=h_1^1\left( C_1 + r_1^{n_1-1}C_2 + 
+r_1^{n_1-1}r_2^{n_2-1}C_3 + \ldots \right)
+\end{equation}
+

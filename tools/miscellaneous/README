@@ -1,0 +1,2 @@
+extract.f90 extracts subarrays from a given file. 
+In juqueen, compile with xlf90_r -O3 extract.f90.

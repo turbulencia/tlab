@@ -1,0 +1,57 @@
+Preprocessing Tools
+-------------------
+inigrid.x   dns.ini                              grid
+inirand.x   dns.ini, grid                        [flow,scal].rand.?
+iniflow.x   dns.ini, grid [,flow.rand.?]         flow.ics.?
+iniscal.x   dns.ini, grid [,scal.rand.?]         scal.ics.?
+
+Simulation Tools
+----------------
+dns.x       dns.ini, grid, flow.*.?, scal.*.?    flow.*.?, scal.*.?
+
+Postprocessing Tools
+--------------------
+averages.x  dns.ini, grid, flow.*.?, scal.*.?    avg*
+pdfs.x      dns.ini, grid, flow.*.?, scal.*.?    pdf*
+spectra.x   dns.ini, grid, flow.*.?, scal.*.?    xsp*, zsp*
+visuals.x   dns.ini, grid, flow.*.?, scal.*.?    Visualization data
+
+---
+
+2D cases
+
+Case01. Shear layer with broadband ICs. Uniform grid. Kelvin-Helmholtz.
+Case02. Same as Case01, but compressible
+Case03. Same as Case01, but with stretched grid.
+Case04. Same as Case03, but compressible
+Case05. Same as Case03, but 2 scalars with different Schmidt numbers.
+Case06. Oscillating inversion (stably stratified density interface) with discrete ICs.
+Case07. Unstable inversion. Rayleigh-Taylor.
+Case08. Stably stratified shear layer. 
+Case09. Cloud-top mixing layer. Same as Case06 plus buoyancy reversal.
+Case10. Same as Case09, but compressible.
+Case11. Heated plate. 
+Case12. Same as Case11, but two scalars with different BCs.
+Case13. Subsiding shell. Gravity vector along the horizontal.
+Case14. Subsiding shell. Broadband perturbation.
+Case15. Radiation case.
+Case16. Channel flow. 
+Case17. Same as 16, implicit solver.
+Case18. Radiation case with evaporative cooling.
+
+3D cases
+
+Case21. Neutral Ekman layer without sponge at the top.
+Case22. Neutral Ekman layer with sponge at the top.
+Case23. Stable Ekman layer with sponge at the top.
+Case24. Same as 21, implicit solver.
+Case25. Same as 22, implicit solver.
+Case26. Same as 23, implicit solver.
+
+1D cases
+
+Case40. 1D perturbed laminar Ekman layer, implicit solver.
+
+---
+
+make checkrl/checkdb runs the check.sh bash-script inside each directory

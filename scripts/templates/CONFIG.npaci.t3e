@@ -1,0 +1,6 @@
+site=npaci
+system=t3e
+os=cray
+account=DUMMY
+queue="-q normal"
+hpc=parallel

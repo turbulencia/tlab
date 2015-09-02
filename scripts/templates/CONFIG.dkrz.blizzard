@@ -1,0 +1,6 @@
+site=dkrz
+system=blizzard
+os=aix
+account=
+queue=""
+hpc=parallel

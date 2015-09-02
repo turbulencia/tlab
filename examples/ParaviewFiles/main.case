@@ -1,0 +1,25 @@
+FORMAT
+type: ensight gold
+GEOMETRY
+model: grid.ensight
+VARIABLE
+scalar per node: Scalar1             Scalar1000000
+scalar per node: Scalar2             Scalar2000000
+scalar per node: LnScalar1Gradient   LnScalar1Gradient000000
+scalar per node: LnScalar2Gradient   LnScalar2Gradient000000
+
+scalar per node: Pressure            Pressure000000
+
+scalar per node: VelocityZ           VelocityZ000000
+scalar per node: VelocityY           VelocityY000000
+scalar per node: VelocityX           VelocityX000000
+vector per node: VelocityVector      VelocityVector000000
+
+scalar per node: LnEnstrophy         LnEnstrophy000000
+
+scalar per node: InvariantP           InvariantP000000
+scalar per node: HorizontalDivergence HorizontalDivergence000000
+
+scalar per node: H2Ot                H2Ot000000
+scalar per node: H2Ol                H2Ol000000
+scalar per node: Density             Density000000

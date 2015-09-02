@@ -1,0 +1,26 @@
+#!/bin/sh 
+#
+
+. $CONFIG_FILE
+
+if [ $# -eq 0 ]; then
+   echo "Usage: $0 timestamp [arg]"
+   exit 1
+fi
+
+timestamp=$1
+shift
+
+if [ ! -f dns.ini ]; then
+    echo "Error: dns.ini does not exist"
+    exit 2
+fi
+
+EXEC="./visuals.x ./spectra.x ./averages.x ./pdfs.x ./blend.x ./transfields.x"
+
+for exfile in $EXEC; do
+    if [ -f $exfile ]; then
+        echo "Running $exfile"
+        $TOOLS_HOME/dns.run $exfile $timestamp $*
+    fi
+done

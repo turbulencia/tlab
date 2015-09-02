@@ -1,0 +1,6 @@
+site=rwth
+system=sun
+os=solaris
+account=jm258963
+queue=
+hpc=parallel

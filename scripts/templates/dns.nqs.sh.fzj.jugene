@@ -1,0 +1,113 @@
+#!/bin/sh
+#
+#@ job_type = bluegene
+#@ environment = COPY_ALL;
+#@ notify_user = juan-pedro.mellado@zmaw.de
+#@ notification = always
+#@ bg_connection = TORUS
+########################### CHANGE ONLY THIS ###############################
+########################### END LSF DIRECTIVES #############################
+#@ queue
+############################################################################
+########################### DO NOT MODIFY ##################################
+export TOOLS_HOME=$HOME/bin
+
+export PATH=$PATH:$TOOLS_HOME
+export CONFIG_FILE=$TOOLS_HOME/CONFIG.fzj.jugene
+
+. $CONFIG_FILE
+
+ABORT="no"
+
+# Change this to reflect your directories
+LOCALDIR=$WORK/$JOBDIR
+TRASHDIR=$WORK/$JOBDIR-transfered
+
+# Create Working Directories
+mkdir -p $LOCALDIR
+
+cd $LOCALDIR
+
+dns.pre $LOCALDIR $STEP
+
+touch *
+
+# Run Simulation
+case $RUNMODE in
+  "preprocess" )
+    preprocess $TIMESTAMP $NP $CPUMODE
+    ABORT="yes"
+    ;;
+  "simulation" )
+    simulation $TIMESTAMP $NP $CPUMODE
+    if [ $? -ne 0 ]; then
+       ABORT="yes"
+    fi 
+    ;;
+  "postprocess" )
+    postprocess $TIMESTAMP $NP $CPUMODE
+    ABORT="yes"
+  ;;
+esac
+
+# Abort on several errors
+if [ -f dns.err ]; then
+    ABORT="yes"
+fi
+	
+if [ -f dns.err.0 ]; then
+    ABORT="yes"
+fi
+
+if [ -f core ]; then
+    touch dns.core
+    rm -f core
+    ABORT="yes"
+fi
+
+#clean 
+if [ -f dns.ini ]; then
+    cp dns.ini dns.ini-$TIMESTAMP
+fi
+LOGFILES="dns.ini.bak dns.log dns.out dns.les"
+for FILE in $LOGFILES; do
+    if [ -f $FILE ]; then
+        mv $FILE $FILE-$TIMESTAMP
+    fi
+done
+
+# Compress and tar statistics
+dns.stats dns-stat-$TIMESTAMP.tar 
+
+if [ $RUNMODE = "simulation" ];then
+
+# Archive
+#    dns.archive $TRASHDIR 
+
+# Requeue simulation
+    if [ $ABORT = "no" ]; then
+	if [ -f $LOCALDIR/dns.nqs.new-vars ]; then
+	    . $LOCALDIR/dns.nqs.new-vars
+	fi
+
+	if [ -f $LOCALDIR/dns.ini ]; then
+	    ITIME=`awk -F"=" '{ 
+				if ( $1 == "End" ) 
+				    {
+				    print $2 
+				    }
+			    }' $LOCALDIR/dns.ini` 
+	else
+	    echo "Error getting max time"
+	    exit 1
+	fi
+ 
+	if [ $ITIME -lt $MAXITER ]; then
+	    # Submit Script
+	    qsend -name $NAME -time $TIME -maxiter $MAXITER -mem $MEM \
+	          -script $SCRIPT -jobdir $JOBDIR -step $STEP -np $NP -cpumode $CPUMODE
+
+	fi       
+    fi
+fi
+

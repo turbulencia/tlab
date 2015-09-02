@@ -1,0 +1,359 @@
+\chapter{Post-Processing Tools}\label{sec:postprocessing}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Averages}
+
+See file {\tt dns/tools/statistics/averages/averages}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Probability Density Functions}
+
+See file {\tt dns/tools/statistics/pdfs/pdfx}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conditioning}
+
+See file {\tt dns/tools/statistics/averages/averages} and {\tt
+  dns/tools/statistics/pdfs/pdfx}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Two-point Statistics}
+\sloppy
+
+See file {\tt dns/tools/statistics/spectra/spectra}.
+
+Given two scalar fields $\{a_{nm}:\,n=1,\ldots,N,\,m=1,\ldots,M\}$ and similarly
+$b_{nm}$, we calculate the one-dimensional co-spectra
+$\{E^x_0,\,E^x_1,\,\ldots,\,E^x_{N/2}\}$ and
+$\{E^z_0,\,E^z_1,\,\ldots,\,E^z_{M/2}\}$ normalized such that
+\begin{equation}
+\langle ab\rangle = E^x_0+2\sum_1^{N/2-1}E^x_n+E^x_{N/2} = E^z_1+2\sum_0^{M/2-1}E^z_m+E^z_{M/2}
+\end{equation}
+The mean value is removed, such that the left-hand side is $\langle
+a'b'\rangle$. The Nyquist frequency energy content $E^x_{N/2}$ and $E^z_{M/2}$
+is not written to disk, only the $N/2$ values
+$\{E^x_0,\,E^x_1,\,\ldots,\,E^x_{N/2-1}\}$ and the $M/2$ values
+$\{E^z_0,\,E^z_1,\,\ldots,\,E^z_{M/2-1}\}$. When $a\equiv b$, then we obtain the
+power spectral density.
+
+The sum above can be interpreted as the trapezoidal-rule approximation to the
+integral $(L/2\pi)\int_0^{\kappa_c}2E(\kappa)\mathrm{d}\kappa$, where
+$\kappa_c=\pi/h$ is the Nyquist frequency, $\Delta \kappa=\kappa_c/(N/2)=2\pi/L$
+is the uniform wavenumber spacing, $h=L/N$ is the uniform grid spacing and $L$
+is the domain size. Hence, the physical spectral function at wavenumber $\kappa_n=
+n\Delta \kappa$ (equivalently, wavelength $L/n$) is $2E_n/\Delta \kappa$.
+
+Due to the relatively large size of the files, we split the calculations is the
+auto-spectra and the cross-spectra. The corresponding files containing the
+one-dimensional spectra along the direction $Ox$ are {\tt xsp} and {\tt xCsp},
+respectively, and similarly along the direction $Oz$. The two-dimensional
+co-spectra $E_{nm}$ can also be written to disk, though the additional memory
+requirement can be a difficulty.
+
+The one-dimensional cross-correlations $\{C^x_0,\,C^x_1,\,\ldots,\,C^x_{N-1}\}$
+and $\{C^z_0,\,C^z_1,\,\ldots,\,C^z_{M-1}\}$ are normalized by
+$a_\mathrm{rms}b_\mathrm{rms}$, so that $C^x_0 = C^z_0 =1$ when $a\equiv b$ and
+we calculate the auto-correlations. The auto-correlations are even functions and
+therefore only $\{C^x_0,\,C^x_1,\,\ldots,\,C^x_{N/2-1}\}$ and
+$\{C^z_0,\,C^z_1,\,\ldots,\,C^z_{M/2-1}\}$ are written to disk (note that we
+also dropped the last term $C^x_{N/2}$ and $C^z_{M/2}$.)
+
+The corresponding files containing the one-dimensional cross-correlations along
+the direction $Ox$ are {\tt xcr} and {\tt xCcr}, and similarly along the
+direction $Oz$. The two-dimensional cross-correlation $C_{nm}$ can also be
+written to disk, though the additional memory requirement can be a difficulty.
+
+Both form a Fourier pair according to
+\begin{equation*}
+E_k=\frac{1}{N}\sum_0^{N-1}(a_\mathrm{rms}b_\mathrm{rms}C_n)\exp(-i\omega_kn)\;,\qquad
+a_\mathrm{rms}b_\mathrm{rms}C_n=\sum_0^{N-1}E_k\exp(i\omega_kn)\;,
+\end{equation*}
+where $\{\omega_k=(2\pi/N)k:\, k = 0,\ldots,N-1\}$ is the scaled wavenumber and
+$i=\sqrt{-1}$ is the imaginary unit. Therefore,
+\begin{equation}
+\frac{1}{N}\sum_0^{N-1}C_n=\frac{E_0}{a_\mathrm{rms}b_\mathrm{rms}} \;,
+\end{equation}
+relation that can be used to relate integral scales $\ell$ to the Fourier mode
+$E_0$, as follows. First, for the auto-correlation function, we can re-write
+\begin{equation}
+\frac{1}{N/2}\sum_0^{N/2-1}C_n=\frac{E_0}{a_\mathrm{rms}^2}+\frac{1-C_{N/2}}{N} 
+\end{equation}
+because
+\begin{equation*}
+\frac{1}{N}\sum_0^{N-1}C_n = \frac{1}{N}\left(\sum_0^{N/2-1}C_n
++C_{N/2}+\sum_{N/2+1}^{N-1}C_n\right) = \frac{1}{N}\left(2\sum_0^{N/2-1}C_n
++C_{N/2}-1\right) \;,
+\end{equation*}
+since, from periodicity, $C_N=C_0=1$ and, from the symmetry of the
+auto-correlation sequence, $\sum_{N/2+1}^{N}C_n=\sum_0^{N/2-1}C_n$. Therefore,
+if we use a trapezoidal rule to define the integral length scale as
+\begin{equation}
+\ell=h\left(\frac{C_0+C_{N/2-1}}{2}+\sum_1^{N/2-2}C_n\right)\;,
+\end{equation}
+where $h=L/N$ is the grid spacing and $L$ is the domain size, we obtain
+\begin{equation}
+\ell=\frac{L}{2}\left(\frac{E_0}{a_\mathrm{rms}^2}-\frac{2C_{N/2}}{N}\right)
+\simeq \frac{L}{2a_\mathrm{rms}^2}E_0\;.
+\end{equation}
+This result applies to both directions $Ox$ and $Oz$, providing relations
+between $\ell^x$ and $E^x$, and $\ell^z$ and $E^z$. Each case needs to use the
+corresponding domain size, $L^x$ and $L^z$.
+
+These relations show that the integral length scales can be obtained directly
+from the spectral information without the need to calculate the correlation
+functions. However, the statistical convergence of those integral scales might
+be too poor and alternative definitions might be more useful. Also, correlation
+functions provide information about the degree of de-correlation achieved with a
+particular domain size, and about the structural organization of the flow in
+terms of different properties.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary of Budget Equations for Second-Order Moments}
+
+\subsection{Reynolds Stresses}
+
+Reynolds averages are indicated by a line and $u^{'}=u-\bar{u}$.  Favre averages
+are used for quantities per unit mass and are indicated by a tilde,
+e.g. $\tilde{u}=\overline{\rho u}/\overline{\rho}$ and $u^{''}=u-\tilde{u}$ and
+$\widetilde{u^{''2}}=\overline{\rho u^{''2}}/\bar{\rho}$. In case of constant
+density, Favre and Reynolds averages coincide.
+
+The momentum equation written in non conservative form is
+\begin{equation}
+\rho \frac{\partial u_i}{\partial t} + \rho u_k \frac{\partial u_i}{\partial
+  x_k} = -\frac{\partial p}{\partial x_i} + \frac{\partial \tau_{ik}}{\partial
+  x_k} + b\,g_i - \epsilon_{imk} c_m\,\rho u_k
+\end{equation}
+where the non-dimensional numbers $Re$, $Fr$ and $Ro$ are included in the
+corresponding tensors $\tau$, $g$ and $c$ for notational convenience.
+
+Multiplying by $u^{''}_j$ and averaging
+\begin{equation}
+\label{eq:ap2}
+\overline{\rho u^{''}_j \frac{\partial (\tilde{u}_i+u^{''}_i)}{\partial t}} +
+\overline{\rho u^{''}_j (\tilde{u}_k+u^{''}_k)\frac{\partial (\tilde{u}_i+u^{''}_i)}{\partial x_k} } =
+- \overline{u^{''}_j \frac{\partial p}{\partial x_i}} +
+\overline{u^{''}_j \frac{\partial \tau_{ik}}{\partial x_k} }
++\overline{bu^{''}_j}\,g_i-\epsilon_{imk} c_m\overline{\rho u^{''}_j(\tilde{u}_k+u^{''}_k)}
+\end{equation}
+noting that $\overline{\rho u^{''}_j}=0$ we can simplify Eq. (\ref{eq:ap2}) to
+\begin{equation}
+\label{eq:ap3}
+\overline{\rho u^{''}_j \frac{\partial u^{''}_i}{\partial t}} +
+\overline{\rho u^{''}_j u^{''}_k }\frac{\partial \tilde{u}_i}{\partial x_k} +
+\overline{\rho u^{''}_j \frac{\partial u^{''}_i}{\partial x_k} } \tilde{u}_k +
+\overline{\rho u^{''}_k u^{''}_j \frac{\partial u^{''}_i}{\partial x_k} }  =
+- \overline{u^{''}_j \frac{\partial p}{\partial x_i}} +
+\overline{u^{''}_j \frac{\partial \tau_{ik}}{\partial x_k} }
++\overline{bu^{''}_j}\,g_i-\epsilon_{imk} c_m\overline{\rho u^{''}_ju^{''}_k}
+\end{equation}
+adding Eq. (\ref{eq:ap3}) with the indexes exchanged we get
+\begin{equation}\label{eq:ap4}
+  \begin{split}
+    \overline{\rho \frac{\partial (u^{''}_i u^{''}_j)}{\partial t}} +
+     \overline{\rho \frac{\partial (u^{''}_i u^{''}_j)}{\partial x_k}}
+    \tilde{u}_k = & - (\overline{\rho u^{''}_k u^{''}_i} \frac{\partial 
+      \tilde{u}_j}{\partial x_k}+\overline{\rho u^{''}_k u^{''}_j} 
+    \frac{\partial \tilde{u}_i}{\partial x_k})
+    - \overline{\rho u^{''}_k \frac{\partial (u^{''}_i u^{''}_j)}{\partial 
+        x_k}} \\
+    & - (\overline{u^{''}_j \frac{\partial p}{\partial x_i}+u^{''}_i 
+      \frac{\partial p}{\partial x_j}}) + (\overline{u^{''}_j 
+      \frac{\partial \tau_{ik}}{\partial x_k}+u^{''}_i \frac{\partial 
+        \tau_{jk}}{\partial x_k}}) \\
+    & + (\overline{bu^{''}_j}\,g_i+\overline{bu^{''}_i}\,g_j)\\
+    & - (\epsilon_{imk} c_m\overline{\rho u^{''}_ju^{''}_k} +
+         \epsilon_{jmk} c_m\overline{\rho u^{''}_iu^{''}_k} )
+  \end{split}
+\end{equation}
+
+From the continuity equation 
+\begin{equation}
+  \frac{\partial \rho}{\partial t} + \frac{\partial (\rho u_k)}{\partial 
+  x_k} = 0
+\end{equation}
+and multiplying by $u^{''}_i u^{''}_j$ and averaging
+\begin{equation}
+\label{eq:ap5}
+  \overline{u^{''}_i u^{''}_j \frac{\partial \rho}{\partial t}} +
+  \overline{u^{''}_i u^{''}_j \frac{\partial (\rho u^{''}_k)}{
+      \partial x_k}} + \overline{u^{''}_i u^{''}_j \frac{\partial 
+      (\rho \tilde{u}_k) }{\partial x_k} } = 0
+\end{equation}
+defining
+\begin{equation}
+  R_{ij} = \frac{\overline{\rho u^{''}_i u^{''}_j}}{\bar{\rho}}
+\end{equation}
+and adding Eqs. (\ref{eq:ap4}) and (\ref{eq:ap5}) we get
+\begin{equation}
+\begin{split}
+  \frac{\partial (\bar{\rho} R_{ij})}{\partial t} +
+  \frac{\partial (\bar{\rho} \tilde{u}_k R_{ij})}{\partial x_k} = 
+  & -\bar{\rho}\biggl( R_{ik} \frac{\partial \tilde{u}_j}{\partial x_k} +
+  R_{jk} \frac{\partial \tilde{u}_i}{\partial x_k} \biggr) -
+  \biggl( \frac{\partial (\overline{\rho u^{''}_i u^{''}_j u^{''}_k}) }{
+    \partial x_k} \biggr) \\
+  & - \biggl( \overline{u^{''}_i \frac{\partial 
+      p^{'}}{\partial x_j} + u^{''}_j \frac{\partial p^{'}}{\partial 
+      x_i} } \biggr) + \biggl( \overline{u^{''}_i \frac{\partial 
+      \tau^{'}_{jk}}{\partial x_k} + u^{''}_j \frac{\partial 
+      \tau^{'}_{ik}}{\partial x_k}} \biggr) \\
+  & - \biggl( \bar{u}^{''}_i 
+  \frac{\partial \bar{p}}{\partial x_j} + \bar{u}^{''}_j \frac{\partial 
+    \bar{p}}{ \partial x_i} \biggr) + \biggl( \bar{u}^{''}_i 
+  \frac{\partial \bar{\tau}_{jk}}{\partial x_k} + \bar{u}^{''}_j 
+  \frac{\partial \bar{\tau}_{ik}}{\partial x_k} \biggr) \\
+  & + (\overline{bu^{''}_j}\,g_i+\overline{bu^{''}_i}\,g_j)
+    - \bar{\rho}c_m(\epsilon_{imk} R_{jk} + \epsilon_{jmk} R_{ik} )
+\end{split}
+\end{equation}
+
+The pressure and viscous terms can be decomposed as:
+\begin{equation}
+  \begin{split}
+    \biggl( \overline{ u^{''}_i \frac{\partial 
+        p^{'}}{\partial x_j} + u^{''}_j \frac{\partial p^{'}}{\partial 
+        x_i} } \biggr) = & \biggl( \frac{\partial (\overline{u^{''}_i 
+        p^{'}}) }{\partial x_j} + \frac{\partial (\overline{u^{''}_i 
+        p^{'}})}{\partial x_i} \biggr) - \overline{p^{'}(
+      \frac{\partial u^{''}_i}{\partial x_j}+\frac{\partial u^{''}_j}{
+        \partial x_i})}\\
+    = & \frac{\partial}{\partial x_k} \biggl(\overline{u^{''}_i 
+        p^{'} \delta_{jk} + u^{''}_j p^{'} \delta_{ik}   }\biggr) 
+      - \overline{p^{'}( \frac{\partial u^{''}_i}{\partial x_j}+
+        \frac{\partial u^{''}_j}{\partial x_i})}\\
+      \biggl( \overline{u^{''}_i \frac{\partial 
+      \tau^{'}_{jk}}{\partial x_k} + u^{''}_j \frac{\partial 
+      \tau^{'}_{ik}}{\partial x_k}} \biggr) = & \frac{\partial}{
+    \partial x_k} \biggl( \overline{u^{''}_i \tau^{'}_{jk} +
+    u^{''}_j \tau^{'}_{ik}} \biggr) - \biggl( \overline{\frac{
+      \partial u^{''}_i }{\partial x_k} \tau^{'}_{jk} + \frac{
+      \partial u^{''}_j }{\partial x_k} \tau^{'}_{ik}} \biggr) \\
+  \end{split}
+\end{equation}
+
+Finally, the Reynolds stress equation reads:
+\begin{equation}
+  \frac{\partial R_{ij}}{\partial t}  = C_{ij} - F_{ij} + P_{ij}  + B_{ij} - \varepsilon_{ij} +
+  \frac{1}{\bar{\rho}}\left(\Pi_{ij} - \frac{\partial T_{ijk}}{ \partial
+    x_k}  + \Sigma_{ij} \right)
+\end{equation}
+where
+\begin{eqnarray*}
+  C_{ij} =&  - \tilde{u}_k \frac{\partial
+    R_{ij}}{\partial x_k} & ,\text{advection} \\
+  F_{ij} =&  \epsilon_{imk}c_m R_{jk} + \epsilon_{jmk}c_m R_{ik} &,
+  \text{Coriolis redistribution}\\
+  P_{ij} =&  - \biggl( R_{ik} \frac{\partial \tilde{u}_j}{
+    \partial x_k} + R_{jk} \frac{\partial \tilde{u}_i}{
+    \partial x_k}\biggr) & ,\text{turbulent shear production} \\
+  B_{ij} =& \frac{1}{\bar{\rho}} \biggl(
+  \overline{bu^{''}_j}\,g_i+\overline{bu^{''}_i}\,g_j \biggr) &,
+  \text{turbulent buoyancy production}\\
+  \varepsilon_{ij} =& \frac{1}{\bar{\rho}} \biggl( \overline{ 
+    \tau^{'}_{jk}
+    \frac{\partial u^{''}_i}{\partial x_k} + \tau^{'}_{ik}
+    \frac{\partial u^{''}_j}{\partial x_k}}\biggr) & , \text{turbulent dissipation}\\
+  T_{ijk} =& \overline{\rho u^{''}_i u^{''}_j u^{''}_k} +
+  \overline{p^{'}u^{'}_i} \delta_{jk} + \overline{p^{'}u^{'}_j} 
+  \delta_{ik} - ( \overline{\tau^{'}_{jk} u^{''}_i} + 
+  \overline{\tau^{'}_{ik} u^{''}_j}) & , \text{turbulent transport} \\
+  \Pi_{ij} =& \overline{p^{'}\biggl( \frac{\partial u^{''}_i}{
+      \partial x_j}+ \frac{\partial u^{''}_j}{\partial x_i} \biggr)} & , \text{pressure strain} \\
+  \Sigma_{ij} =&  \overline{u^{''}_i} \biggl( \frac{\partial \bar{\tau}_{jk}}{
+    \partial x_k} - \frac{\partial \bar{p}}{\partial x_j} \biggr) +  
+  \overline{u^{''}_j} \biggl( \frac{\partial \bar{\tau}_{ik}}{
+    \partial x_k} - \frac{\partial \bar{p}}{\partial x_i} \biggr)& , \text{mean flux}\\
+\end{eqnarray*}
+Depending on symmetries, many of these terms are zero (within statistical
+convergence) and substitutes for ensemble average can be used, like plane
+averages of time averages.  Note that if $b\equiv \rho$, then $B_{ij}=0$. The
+mean flux term is sometimes written as $\Sigma_{ij}=D_{ij}-G_{ij}$, the first
+term grouping the mean viscous stress contributions and the last term the mean
+pressure contributions. In cases of constant density, then
+$\overline{u^{''}_j}=0$ and $\Sigma_{ij}=D_{ij}=G_{ij}=0$.
+
+Contracting indices, the budget equation for the turbulent kinetic energy
+$K=R_{ii}/2$ reads
+\begin{equation}
+  \frac{\partial K}{\partial t}  = C + P  + B - \varepsilon +
+  \frac{1}{\bar{\rho}}\left(\Pi - \frac{\partial T_{k}}{ \partial
+    x_k}  + \Sigma \right)
+\end{equation}
+Note that $F_{ii}=0$, always. If the flow is solenoidal, then $\Pi=0$.
+
+\subsection{Energy Equation}
+
+To be developed (before in terms of the pressure)
+
+\subsection{Scalar Variance}
+
+Similarly, the equation for the scalar r.m.s. is obtained from the scalar
+conservation equations,
+
+\begin{eqnarray*}
+  \frac{\partial}{\partial t}(\rho \zeta) + 
+  \frac{\partial}{\partial x_k}(\rho \zeta u_k) & = & 
+  -\frac{\partial j_k}{\partial x_k}
+  + w
+\end{eqnarray*}
+multiplying by $\zeta^{''}$ and averaging
+\begin{equation}
+  \label{eq:scalar1}
+  \overline{\rho \zeta^{''} \frac{\partial \zeta^{''}}{\partial t}}
+  + \overline{\rho \zeta^{''} u^{''}_k} \frac{\partial \tilde{\zeta}}{\partial x_k}
+  + \overline{\rho \zeta^{''} \frac{\partial \zeta^{''}}{\partial x_k}} \tilde{u}_k
+  + \overline{\rho \zeta^{''} u^{''}_k \frac{\partial \zeta^{''}}{\partial x_k}}
+  = \\
+  -\overline{\zeta^{''}}\frac{\partial \bar{j_k}}{\partial x_k}
+  -\frac{\partial }{\partial x_k}\bigg(\overline{j_k' \zeta^{''}} \bigg)
+  +\overline{j_k' \frac{\partial \zeta^{''}}{\partial x_k}}
+  + \overline{w\zeta^{''}}
+\end{equation}
+
+Adding the mass conservation equation multiplied by $\frac{1}{2}\zeta^{''2}$
+and averaging
+\begin{multline}
+  \label{eq:scalar2}
+  \frac{\partial}{\partial t}(\overline{\rho \zeta^{''2}})
+  + \frac{\partial }{\partial x_k}(\tilde{u}_k \overline{\rho \zeta^{''2}}) =\\
+  -2 \overline{\rho \zeta^{''} u^{''}_k} \frac{\partial \tilde{\zeta}}{
+    \partial x_k} - \frac{\partial}{\partial x_k}\bigg( 
+  \overline{\rho \zeta^{''2} u^{''}_k} + 2\overline{j_k' \zeta^{''} }
+  \bigg) +2 \overline{j_k'\frac{\partial \zeta^{''}}{\partial x_k}}
+  -2\overline{\zeta^{''}}\frac{\partial \bar{j}_k}{\partial x_k}
+  + 2 \overline{w\zeta^{''}}
+\end{multline}
+
+Defining
+\begin{eqnarray}
+  R_{\zeta\zeta} & = & \frac{\overline{\rho \zeta^{''2}}}{\bar{\rho}} \\
+  R_{k \zeta} & = & \frac{\overline{\rho \zeta^{''} u^{''}_k}}{\bar{\rho}}
+\end{eqnarray}
+the previous transport equation can be further simplified to
+\begin{equation}
+  \label{eq:scalar3}
+  \frac{\partial R_{\zeta \zeta}}{\partial t} + 
+  \tilde{u}_k \frac{\partial R_{\zeta \zeta}}{\partial x_k}
+  = P_{\zeta\zeta} - \chi +\frac{1}{\bar{\rho}} \left(
+  - \frac{\partial T_{\zeta\zeta k}}{\partial x_k} + D_{\zeta\zeta} + Q_{\zeta\zeta}\right)
+\end{equation}
+where
+\begin{eqnarray*}
+  P_{\zeta \zeta} = & -2 R_{k \zeta} \frac{\partial \tilde{\zeta}}{\partial x_k}
+  &,\text{turbulent production}\\
+  \chi = & -\frac{2}{\bar{\rho}} \overline{j_k' \frac{\partial \zeta^{''}}{\partial x_k}}
+  &,\text{turbulent dissipation}\\ 
+  T_{\zeta\zeta k} = & \overline{\rho \zeta^{''2} u^{''}_k } +2
+  \overline{j_k'\zeta^{''}}
+  &,\text{turbulent transport}\\ 
+  D_{\zeta\zeta} = & -2 \overline{\zeta^{''}} \frac{\partial \bar{j}_k}{\partial x_k} 
+     &,\text{mean flux}\\
+  Q_{\zeta\zeta} = & 2\overline{w\zeta^{''}}&,\text{source}
+\end{eqnarray*}
+

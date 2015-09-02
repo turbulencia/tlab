@@ -1,0 +1,105 @@
+#!/bin/sh 
+#
+
+. $CONFIG_FILE
+
+if [ $# -eq 0 ]; then
+   echo "Usage: $0 exfile timestamp [arg]"
+   exit 1
+fi
+
+exfile=$1
+shift
+timestamp=$1
+shift
+
+STDOUT=$exfile.stdout-$timestamp
+STDERR=$exfile.stderr-$timestamp
+
+case $os in
+     cray)
+	case $system in
+	    t3e)
+		FPCNV=""
+		BLOCK="-s unblocked"
+		MPIRUN="mpprun -n"
+		;;
+	    *)
+		FPCNV="-N ieee_dp"
+		BLOCK="-F f77"
+		;;
+	esac
+	
+	assign $FPCNV -F f77 u:50
+	assign $FPCNV -F f77 u:51
+
+	assign $FPCNV $BLOCK u:52
+	assign $FPCNV $BLOCK u:53
+	assign $FPCNV $BLOCK u:54
+	assign $FPCNV $BLOCK u:55
+        ;;
+     sx)
+	F_PROGINF=yes
+	F_RECLUNIT=byte
+	export F_PROGINF F_RECLUNIT
+	MPIRUN="mpirun -np"
+	;;
+     aix)
+	;;
+     linux)
+	;;
+     hitachi)
+	;;
+esac
+
+chmod a+x $exfile
+
+if   [[ $system = "jump" || $system = "blizzard" ]]; then
+    poe $exfile > $STDOUT 2> $STDERR
+
+elif [ $system = "juqueen" ]; then
+    if [ -n "$3" ]; then
+	runjob         --ranks-per-node $2 --mapping $3 --exp-env PAMID_VERBOSE         \
+                                                        --exp-env PAMID_ASYNC_PROGRESS  \
+                                                        --exp-env PAMID_CONTEXT_POST    \
+                                                        --exp-env PAMID_NUMREQUESTS     \
+                                                        --exp-env PAMID_RMA_PENDING     \
+                                                        --exp-env OMP_NUM_THREADS       \
+                                                        --exp-env OMP_MAX_ACTIVE_LEVELS \
+                                                        --exp-env OMP_NESTED            \
+                                                                  : $exfile > $STDOUT 2> $STDERR
+    else
+	runjob --np $1 --ranks-per-node $2              --env-all : $exfile > $STDOUT 2> $STDERR
+    fi
+
+elif [ $system = "jugene" ]; then
+    if   [ $2 = "vn" ]; then
+        mpirun -verbose 1 -np $1 -exe $exfile -mode VN   -mapfile TXYZ -env "DCMF_FIFOMODE=ALLTOALL" > $STDOUT 2> $STDERR
+    elif [ $2 = "dual" ]; then
+        mpirun            -np $1 -exe $exfile -mode DUAL -mapfile TXYZ -env "OMP_NUM_THREADS=2" > $STDOUT 2> $STDERR
+    elif [ $2 = "smp" ]; then
+        mpirun -verbose 2 -np $1 -exe $exfile -mode SMP                -env "OMP_NUM_THREADS=4" -env "DCMF_RECFIFO=16777216" > $STDOUT 2> $STDERR
+    fi
+
+elif [ $system = "x86" ]; then
+    if   [ $site = "tacc" ]; then
+        pam -g 1 gmmpirun_wrapper $exfile > $STDOUT 2> $STDERR
+    elif [ $site = "itv" ]; then
+        $exfile > $STDOUT 2> $STDERR
+    elif [ $site = "rwth" ]; then
+        $MPIEXEC $FLAGS_MPI_BATCH $exfile > $STDOUT 2> $STDERR
+    fi
+
+elif [ $system = "sun" ]; then
+    mprun $exfile > $STDOUT 2> $STDERR
+
+elif [ $system = "sr8000" ]; then
+    mpiexec -N $1 -n $2 $exfile -F'PORT(ECONV)' > $STDOUT 2> $STDERR
+
+elif [ $system = "t3e" ]; then
+    mpirun -np $1 $exfile > $STDOUT 2> $STDERR
+
+else
+    /bin/time $exfile > $STDOUT 2> $STDERR
+
+fi

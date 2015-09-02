@@ -1,0 +1,25 @@
+#!/bin/sh
+
+if [ $# -eq 1 ]; then
+   DNSTAR=$1
+else
+   DNSTAR="dns-stat.tar"
+fi
+
+if [ ! -f $DNSTAR ]; then
+    LIST=`ls | egrep 'avg[0-9]|cr[0-9]|sp[0-9]|pdf[0-9]|cavgXi[0-9]|pdfXi[0-9]|int[0-9]|kin[0-9]'`
+    echo "Compressing statistic files $FILES"
+    if [ -n "$LIST" ]; then
+       gzip $LIST 
+    fi
+
+    LIST=`ls | grep '\.gz'`
+    echo "Archiving statistic files into $DNSTAR"
+    tar cvf $DNSTAR $LIST dns.def dns.ini
+
+    if [ -f $DNSTAR ]; then
+	/bin/rm -f $LIST dns.def
+    fi
+else
+    echo "$DNSTAR file exist. Aborting"
+fi

@@ -1,0 +1,129 @@
+#!/bin/sh 
+#
+# nqs batch file for dns.x 
+#
+############################################################################
+# Memory Usually Needed
+# 128 64MW
+# 192 100MW
+# 256 128MW
+#
+# Time Usually Needed
+# 4h  14400
+# 12h 43200
+# 24h 86400
+# 36h 129600
+########################### CHANGE ONLY THIS ###############################
+#QSUB -r "dns-256-0.3-1"
+#QSUB -lc 1MW
+#QSUB -J y
+#QSUB -mb
+#QSUB -me
+#QSUB -mr
+#QSUB -lT 14400
+########################### END NQS DIRECTIVES #############################
+#
+########################### DO NOT MODIFY ##################################
+
+. $HOME/bin/CONFIG
+
+# Change Account 
+newacct $ACCOUNT
+
+# Change this to reflect your home directory
+#MSFHOME=/erdc1/$LOGNAME
+#MSTOR=jules-hip0
+ABORT="no"
+
+#for JDIR in $JOBDIR; do
+
+MASSDIR=$MSFHOME/$JOBDIR
+LOCALDIR=/work/$LOGNAME/$JOBDIR
+TRASHDIR=/work/$LOGNAME/$JOBDIR-transfered
+   
+# Create Working Directories
+if [ ! -d /work/$LOGNAME ]; then
+   mkdir /work/$LOGNAME
+fi
+if [ ! -d $LOCALDIR ]; then
+   mkdir $LOCALDIR
+fi
+
+cd $LOCALDIR
+
+# If not pt* files, then set DNSFIRST to yes
+tmp=`ls pt*[0-9]`
+if [ $? = 0 ]; then
+    DNSFIRST="no"
+else
+    DNSFIRST="yes"
+fi
+
+# Check if temp_rest is already in Job Directory
+if [ ! -e temp_rest ]; then
+    # Try to create links to temp_rest and scal_rest
+    dns.pre $LOCALDIR $STEP
+fi
+
+touch *
+
+# Run Simulation
+simulation $TIMESTAMP $NP
+date
+
+# Abort on severall errors
+if [ -e dns.error ]; then
+   ABORT="yes"
+fi
+    
+if [ -e dns.error.0 ]; then
+   ABORT="yes"
+fi
+
+if [ -e core ]; then
+   touch dns.core
+   rm -f core
+   ABORT="yes"
+fi
+
+if [ $DNSFIRST = "no" ]; then
+    /bin/rm -f *_rest
+else
+    mv temp_rest pt0
+    mv scal_rest sc0
+fi
+
+# Compress and tar statistics
+DATE=`date +%m%d%y-%H%M%S`
+dns.stats dns-stat-$DATE.tar 
+
+# Move to mass storage 
+dns.archive $TRASHDIR $MASSDIR
+
+# Requeue simulation
+if [ $ABORT = "no" ]; then
+
+	if [ -e $LOCALDIR/dns.nqs.new-vars ]; then
+	    . $LOCALDIR/dns.nqs.new-vars
+	fi
+
+	if [ -e $LOCALDIR/dns.ini ]; then
+	    ITIME=`awk -F"=" '{ 
+				if ( $1 == "End" ) 
+				    {
+				    print $2 
+				    }
+			    }' $LOCALDIR/dns.ini` 
+	else
+	    echo "Error getting max time"
+	    exit 1
+	fi
+ 
+	if [ $ITIME -lt $MAXITER ]; then
+	    # Submit Script
+	    qsend -name $NAME -time $TIME -maxiter $MAXITER -mem $MEM \
+	          -script $SCRIPT -jobdir $JOBDIR -step $STEP -np $NP
+
+	fi       
+fi
+

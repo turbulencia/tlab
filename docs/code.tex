@@ -1,0 +1,565 @@
+\chapter{Code}\label{sec:code}
+
+%To compile, run {\tt ./configure} program, modify the {\tt Makefile} in the root directory if necessary, and run {\tt make}. By default two versions of the code will be generated: a release and a debug version.  The binaries will be located in {\tt ./bin/release} and {\tt ./bin/debug}. The libraries will be located in {\tt ./lib/release} and {\tt ./lib/debug}. To build just the release version, run {\tt make release}.
+
+The root directory contains the sources for the common libraries, and the directory {\tt tools} contains the sources for the specific binaries: the main code in {\tt tools/dns}, and the preprocessing and postprocessing tools. %Each of the subdirectory in {\tt tools} generates one executable (at least).
+
+Files {\tt README} and {\tt TODO} contain additional information. To compile, read {\tt INSTALL}.
+
+Directory {\tt examples} contains a few examples to get acquainted with using the code.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Executables}
+
+{
+\centering
+\setlength{\tabcolsep}{0pt}
+\footnotesize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.85\textwidth}}
+%
+\multicolumn{2}{>{\columncolor{lightgreen}}c}{\rule{0pt}{11pt}\normalsize\bf Simulation}\\
+%
+\tt dns.x & 
+main program used to run a simulation. It will read its input from the file
+dns.ini that the user must supply. An example file is located in {\tt
+  examples}. All standard output is written to dns.log and dns.out. Errors are
+reported to dns.err and warnings to dns.war. In order to run the simulation you
+must provide with an initial flow and scalar fields. and a grid file.\newline
+Sources in {\tt tools/dns}.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.85\textwidth}}
+%
+\multicolumn{2}{>{\columncolor{lightgreen}}c}{\rule{0pt}{11pt}\normalsize\bf Preprocessing}\\
+%
+\tt inigrid.x & 
+generates the grid by reading the parameters of the dns.ini
+file, section [IniGridOx], [IniGridOy] and [IniGridOz].\newline
+Sources in {\tt tools/initialize/grid}.\\
+\tt inirand.x & 
+generates the scal.rand or flow.rand file that contains a
+pseudo-random, isotropic field that will be used by the following program to
+generate flow or scalar initial fields. The parameters are described in
+dns.ini, section [Broadband].\newline Sources in {\tt tools/initialize/rand}\\
+\tt iniscal.x &
+generates the scal.ics file by reading the parameters of the dns.ini file,
+section [IniFields].\newline Sources in {\tt tools/initialize/scal.}\\
+\tt iniflow.x &
+generates the flow.ics file by reading the parameters of the dns.ini file,
+section [IniFields].\newline Sources in {\tt tools/initialize/flow}.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.85\textwidth}}
+%
+\multicolumn{2}{>{\columncolor{lightgreen}}c}{\rule{0pt}{11pt}\normalsize\bf Postprocessing}\\
+%
+\tt averages.x & 
+calculates main average profiles and conditional averages (outer intermittency).\newline
+Sources in {\tt tools/statistics/averages}.\\
+\tt spectra.x & 
+calculates 1D, 2D and 3D spectra and co-spectra of main variables. Correlations should be
+included here.\newline
+Sources in {\tt tools/statistics/spectra}.\\
+\tt pdfs.x & 
+calculates PDFs, joints PDFs and conditional PDFs.\newline
+Sources in {\tt tools/statistics/pdfs}.\\
+\tt visuals.x & 
+calculates different fields and exports data for visualization (default is
+ensight format). \newline
+Sources in {\tt tools/plot/visuals}.\\
+\end{longtable}
+
+}
+
+\pagebreak
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Input file dns.ini}
+
+The following tables describe the different blocks appearing in the input file {\tt dns.ini}. The first column contains the tag. The second column contains the possible values, the first one being the default one and the word {\it value} indicating that a numerical value needs to be provided. The third column describes the field. This data is read in the file {\tt *\_READ\_GLOBAL} and in the files {\tt *\_READ\_LOCAL} of each of the tools; the variable corresponding to each field should be also read there.
+
+Data is case insensitive.
+
+{
+\centering
+\setlength{\tabcolsep}{0pt}
+\footnotesize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Version]}\\
+%
+\tt Major & {\it value} &
+Major version number. An error is generated if different from the value set in
+{\tt DNS\_READ\_GLOBAL}.\\
+\tt Minor & {\it value} &
+Minor version number. A warning is generated if different from the value set in
+{\tt DNS\_READ\_GLOBAL}.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Main]}\\
+%
+\tt Type & \tt temporal, spatial      & 
+Temporally evolving or spatially evolving simulation.\\
+\tt Flow & \tt shear, jet, isotropic & 
+Geometry of the flow, mainly related to initial and boundary conditions.\\
+\tt CalculateFlow & \tt yes, no & 
+Execute code segments affecting the flow variables.\\
+\tt CalculateScalar & \tt yes, no & 
+Execute code segments affecting the scalar variables.\\
+\tt Equations & \tt internal, total, incompressible &
+Define system of equations to be solved.\\
+\tt Mixture & \tt None, AirVapor, AirWater, AirWaterSupersaturation & 
+Defines the mixture to be used for the thermodynamics.\\
+\tt TermAdvection & \tt divergence, convective, skewsymmetric &
+Formulation of the advection terms.\\
+\tt TermViscous & \tt divergence, explicit&
+Formulation of the viscous terms.\\
+\tt TermDiffusion & \tt divergence, explicit &
+Formulation of the diffusion terms.\\
+\tt TermBodyForce & \tt None, Explicit, Homogeneous, Linear, Bilinear,
+Quadratic, PiecewiseLinear, PiecewiseBilinear &
+Formulation of the body force terms (see routine {\tt flow/flow\_buoyancy}).\\
+\tt TermCoriolis & \tt none, explicit, normalized &
+Formulation of the Coriolis terms.\\
+\tt TermRadiation & \tt None, Bulk1dGlobal, Bulk1dLocal, Bulk1dMixed,
+Bulk1dLocalMap, Bulk1dMixedMap &
+Formulation of the radiation termr (see routine {\tt flow/flow\_radiation}).\\
+\tt SpaceOrder & \tt CompactJacobian4, CompactJacobian6, CompactDirect6 &
+Finite difference method used for the spatial derivatives.\\
+\tt TimeOrder & \tt RungeKuttaExplicit3, RungeKuttaExplicit4, RungeKuttaDiffusion3 &
+Runge-Kutta method used for the time advancement.\\
+\tt TimeStep & {\it value} &
+If positive, constant time step to be used in the time marching scheme.\\
+\tt TimeCFL & {\it value} & Courant number for the advection part.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Iteration]}\\
+%
+\tt Start & {\em value} & Initial iteration. The corresponding files {\tt flow.*}
+and {\tt scal.*} will be read from disk.\\
+\tt End & {\em value} & Final iteration at which the algortihm will be stopped.\\
+\tt Restart & {\em value} & Iteration step specifying the frequency with which to
+write the restart files to disk.\\
+\tt Statistics & {\em value} & Iteration step specifying the frequency with which to
+calculate statistics.\\ 
+\tt IteraLog& {\em value} & Iteration step specifying the frequency with which to
+write the log-file {\tt dns.out}.\\
+\tt RunAvera& \tt no, yes & Save running averages to disk (spatially evolving simulations).\\
+\tt RunLines& \tt no, yes & Save line information to disk (spatially evolving simulations).\\
+\tt RunPlane& \tt no, yes & Save plane information to disk (spatially evolving simulations).\\
+\tt StatSave& {\em value} &  Iteration step specifying the frequency with which to
+accumulate statistics (spatially evolving simulations).\\
+\tt StatStep& {\em value} & Iteration step specifying the frequency with which to
+save data to disk (spatially evolving simulations).\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Parameters]}\\
+%
+\tt Reynolds & {\em value} & Reynolds number $Re$ in
+section~\ref{sec:equations}.\\
+\tt Prandtl  & {\em value} & Prandtl number $Pr$ in
+section~\ref{sec:equations}.\\
+\tt Froude   & {\em value} & Froude number $Fr$ in
+section~\ref{sec:equations}.\\
+\tt Rossby   & {\em value} & Rossby number $Ro$ in
+section~\ref{sec:equations}.\\
+\tt Mach     & {\em value} & Mach number $Ma$ in
+section~\ref{sec:equations}.\\
+\tt Gama    & {\em value} & Ratio of specific heats $\gamma$ in
+section~\ref{sec:equations}.\\
+\tt Schmidt & {\em value1, value2, ...} & List of Schmidt numbers $Sc_i$ in
+section~\ref{sec:equations}. The number of values defines the number of scalars
+in the problem. If a mixture is defined in the block [Main], then consistency is
+checked.\\
+\tt Damkohler & {\em value1, value2, ...} & List of Damkohler numbers $Da_i$ in
+section~\ref{sec:equations}.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Control]}\\
+%
+\tt FlowLimit & \tt yes, no & Monitor and eventually force the thermodynamic
+fields to be  within a prescribed interval.\\  
+\tt MinPressure & {\em value} & Lower bound for the pressure interval.\\
+\tt MaxPressure & {\em value} & Upper bound for the pressure interval.\\
+\tt MinDensity & {\em value} & Lower bound for the density interval.\\
+\tt MaxDensity & {\em value} & Upper bound for the density interval.\\
+ScalLimit  & \tt yes, no & Monitor and eventually force the scalar fields to be
+within a prescribed interval.\\ 
+\tt MinScalar & {\em value} & Lower bound for the scalar interval.\\
+\tt MaxScalar & {\em value} & Upper bound for the scalar interval.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Grid]}\\
+%
+\tt Imax & {\it value} & Number of points along the Ox direction (first array
+index).\\ 
+\tt Jmax & {\it value} & Number of points along the Oy direction (second array
+index).\\ 
+\tt Kmax & {\it value} & Number of points along the Oz direction (third array
+index). If set equal to 1, then 2D simulation.\\
+\tt Imax(*) & {\it value} & Number of points per processor (MPI task) along the Ox
+direction (MPI parallel mode).\\
+\tt Jmax(*) & {\it value} & Number of points per processor (MPI task) along the Oy
+direction (MPI parallel mode). So far, this value is set equal to the total size
+because only a 2D decomposition has been implemented.\\
+\tt Kmax(*) & {\it value} & Number of points per processor (MPI task) along the
+Oz direction (MPI parallel mode).\\
+\tt XUniform & \tt yes, no & Uniform grid is used in the Ox direction; no Jacobian
+information is needed.\\
+\tt YUniform & \tt yes, no & Uniform grid is used in the Oy direction; no Jacobian
+information is needed.\\
+\tt ZUniform & \tt yes, no & Uniform grid is used in the Oz direction; no Jacobian
+information is needed.\\
+\tt XPeriodic & \tt no, yes & Periodicity along Ox direction.\\
+\tt YPeriodic & \tt no, yes & Periodicity along Oy direction.\\
+\tt ZPeriodic & \tt no, yes & Periodicity along Oz direction.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [BoundaryConditions]}\\
+%
+ToBeFilled & & \\
+%
+\tt VelocityImin & \tt none, noslip, freeslip & Velocity boundary condition at $x_\text{min}$
+(incompressible mode).\\
+\tt VelocityImax & \tt none, noslip, freeslip & Velocity boundary condition at $x_\text{max}$
+(incompressible mode).\\
+\tt Scalar\#Imin & \tt none, dirichlet, neumman & Scalar boundary condition at $x_\text{min}$
+(incompressible mode). The symbol {\tt \#} is the number of the scalar.\\
+\tt Scalar\#Imax & \tt none, dirichlet, neumman & Scalar boundary condition at $x_\text{max}$
+(incompressible mode). The symbol {\tt \#} is the number of the scalar.\\
+\multicolumn{3}{>{\columncolor{gray!25}}l}{Similarly in the other two directions.}\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [BufferZone]}\\
+%
+\tt Type & \tt none, relaxation, filter, both & Type of buffer or sponge layer
+to use.\\
+\tt LoadBuffer & \tt no, yes & If {\tt no}, then create reference buffer fields
+from the current fields and save them to disk.\newline 
+If {\tt yes}, then read the necessary buffer fields from disk. E.g., for the
+upper boundary, the file name to be searched for would be {\tt flow.bcs.jmax}
+and {\tt scal.bcs.jmax}.\\ 
+\tt PointsImin & {\em value} & Number of points in the $Ox$ direction at $x_\text{min}$.\\
+\tt PointsImax & {\em value} & Number of points in the $Ox$ direction at $x_\text{max}$.\\
+\tt PointsUJmin & {\em value} & Number of points in the $Oy$ direction at
+$y_\text{min}$ for the velocity fields.\\
+\tt PointsUJmax & {\em value} & Number of points in the $Oy$ direction at
+$y_\text{max}$ for the velocity fields.\\
+\tt PointsEJmin & {\em value} & Number of points in the $Oy$ direction at
+$y_\text{min}$ for the thermodynamic fields.\\
+\tt PointsEJmax & {\em value} & Number of points in the $Oy$ direction at
+$y_\text{max}$ for the thermodynamic fields.\\
+\tt PointsSJmin & {\em value} & Number of points in the $Oy$ direction at
+$y_\text{min}$ for the scalar fields.\\
+\tt PointsSJmax & {\em value} & Number of points in the $Oy$ direction at
+$y_\text{max}$ for the scalar fields.\\
+\tt ParametersU & {\em value1, value2, ...} & Set of parameters defining the
+the strength and the exponent of the relaxation term in the flow and
+thermodynamic fields, section~\ref{sec:buffer}.\\
+\tt ParametersS & {\em value1, value2, ...} & Set of parameters defining the
+the strength and the exponent of the relaxation term in the scalar fields,
+section~\ref{sec:buffer}.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Flow]}\\
+%
+\tt Pressure  & {\em value} & Reference mean pressure.\\
+\tt Density   & {\em value} & Reference mean density.\\  
+\tt VelocityX & {\em value} & Reference mean velocity along $Ox$.\\
+\tt VelocityY & {\em value} & Reference mean velocity along $Oy$.\\
+\tt VelocityZ & {\em value} & Reference mean velocity along $Oz$.\\
+%
+\tt ProfileVelocity & \tt None, Linear, Tanh, Erf, Ekman, EkmanP &
+Function form of the mean velocity profile, typically along the direction
+$Ox$.\\
+\tt YCoorVelocity & {\em value} & Coordinate along $Oy$ of the reference point
+of the profile, relative to the total scale, equation~(\ref{equ:profile}).\\
+\tt ThickVelocity & {\em value} & Reference profile thickness, equation~(\ref{equ:profile}).\\
+\tt DeltaVelocity & {\em value} & Reference profile difference,
+equation~(\ref{equ:profile}).\\
+\tt DiamVelocity  & {\em value} & Reference profile diameter (jet mode).\\ 
+%
+\multicolumn{3}{l}{Similarly for density or temperature}\\
+%
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Scalar]}\\
+%
+\tt ProfileScalar\# & \tt None, Linear, Tanh, Erf, LinearErf &
+Function form of the mean profile.\\
+\tt MeanScalar\# & {\em value} & Reference mean scalar.\\
+\tt YCoorScalar\# & {\em value} & Coordinate along $Oy$ of the reference point
+of the profile, relative to the total scale.\\
+\tt ThickScalar\# & {\em value} & Reference profile thickness.\\
+\tt DeltaScalar\# & {\em value} & Reference profile difference.\\
+\tt DiamScalar\#  & {\em value} & Reference profile diameter (jet mode).\\ 
+%
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [BodyForce]}\\
+%
+\tt Vector     & {\em value1, value2, value3} & Components of the buoyancy
+unitary vector $(g_1,\,g_2,\,g_3)$ in section~\ref{sec:equations}.\\
+\tt Parameters & {\em value1, value2, ...} & Set of parameters defining the
+buoyancy function $b^e(s_i)$.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Rotation]}\\
+%
+\tt Vector     & {\em value1, value2, value3} & Components of the angular
+velocity vector $(f_1,\,f_2,\,f_3)$ in section~\ref{sec:equations}.\\
+\tt Parameters & {\em value1, value2, ...} & Set of parameters the Coriolis
+force term.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Radiation]}\\
+%
+\tt Scalar & {\em value} & Index of scalar field on which the effect of 
+radiation heating or cooling is acting.\\
+\tt Parameters & {\em value1, value2, ...} & Set of parameters defining the
+radiation function $r^e(s_i)$.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [IniFields]}\\
+%
+\tt Velocity & \tt None, VelocityDiscrete, VelocityBroadband,
+VorticityBroadband, PotentialBroadband & Type of initial velocity field.\\
+\tt Temperature & \tt None, PlaneBroadband, PlaneDiscrete &
+Type of initial temperature field.\\
+\tt Scalar & \tt None, LayerDiscrete, LayerBroadband, PlaneDiscrete,
+PlaneBroadband, DeltaDiscrete, DeltaBroadband, FluxDiscrete, FluxBroadband &
+Type of initial scalar field.\\
+\tt ForceDilatation & \tt yes, no & Force the velocity field to satisfy the
+solenoidal constraint.\\
+\tt ThickIni & {\em value}[{\em1 , value2, ...}]& Thickness of fluctuation shape
+profile. The mean profile is set by the corresponding by values in {\tt [Flow]} and
+{\tt [Scalar]}. In case of the scalar, as many values as scalars should be
+provided.\\
+\tt YCoorIni & {\em value}[{\em1 , value2, ...}] & Coordinate along $Oy$ of the
+reference point of the fluctuation shape profile, relative to the total
+scale. The mean profile is set by the corresponding by values in {\tt [Flow]} and
+{\tt [Scalar]}. In case of the scalar, as many values as scalars should be
+provided. The default values are those specified in {\tt [Flow]} and
+{\tt [Scalar]}.\\
+\tt NormalizeK & {\em value} & Maximum value of the profile of the turbulent
+kinetic energy.\\
+\tt NormalizeP & {\em value} & Maximum value of the profile of the pressure
+root-mean-square.\\
+\tt NormalizeS & {\em value1, value2, ...} & Maximum value of the profile of the
+scalar
+root-mean-square.\\
+\tt Mixture & \tt None, Equilibrium, LoadFields & Type of mixture with which to
+initialize the thermodynamic fields.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Broadband]}\\
+%
+\tt Type & \tt None, Physical, Phase & The random magnitude is set in physical
+space or phase in frequency space. \\
+\tt Distribution & uniform, gaussian & Type of the PDF.\\
+\tt Seed & {\it value} & Seed for the random generator.\\
+\tt Covariance & {\it value1, value2, ...} & Flow covariance matrix.\\ 
+\tt Spectrum & \tt uniform, quadratic, quartic, gaussian & Form of the power
+spectral density, equation~(\ref{equ:spectra}).\\
+\tt f0 & {\it value} & Parameters defining the functional form of the power
+spectral density.\\
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Discrete]}\\
+%
+\tt Type        &  \tt Varicose, Sinuous, Gaussian & Form of the perturbation.\\
+\tt 2DAmpl      & {\it value1, value2, ...} & Amplitude of 2D modes. The number of
+values sets the number of modes, beginning from the first.\\
+\tt 2DPhi       & {\it value1, value2, ...} & Corresponding phases.\\
+\tt Broadening  & {\it value} & Lateral extension of the perturbation.\\
+\tt XLength     & {\it value} & In spatial simulations, longitudinal extension
+of the inflow perturbation.\\
+\end{longtable}
+
+%% \item \textbf{3DAmpl} (\textit{A3d}): intensity. 
+%% \item \textbf{3DXPhi} (\textit{Phix3d}): Same as above, but for the 3D pertubations.
+%% \item \textbf{3DZPhi} (\textit{Phiz3d}): Same as above.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [PostProcessing]}\\
+%
+\tt Files     & {\it value1, value2, ...} & Iterations to be postprocessed.\\
+\tt Subdomain & $i_{1}, i_{2}, j_{1}, j_{2}, k_{1}, k_{2}$ & 
+Grid block to be postprocessed.\\
+\tt Partition & $\alpha_1$[, $\alpha_2$], $\beta_1$, ..., $\beta_{n-1}$& 
+Type of partition defined by values \{$\alpha_1$[, $\alpha_2$]\}. The first
+parameter defines the conditioning field: 1. external field, 2. scalar field,
+3. enstrophy, 4. magnitude of scalar gradient. The second parameter chooses
+between a relative or an absolute threshold values. Set of thresholds
+\{$\beta_1$, ...,$\beta_{n-1}$\} to define the partition of the conditioning
+field into $n$ zones.\\ 
+\tt ParamAverages & $\alpha_1$[, $\alpha_2$, $\alpha_3$, $\alpha_4$]& Main option
+$\alpha_1$ (see {\tt tools/statistics/averages/averages.f90}); block size $\alpha_2$; gate
+level $\alpha_3$; maximum order of the moments $\alpha_4$.\\
+\tt ParamPdfs & $\alpha_1$[, $\alpha_2$, $\alpha_3$, $\alpha_4$]& Main option
+$\alpha_1$ (see {\tt tools/statistics/pdfs/pdfs.f90}); block size $\alpha_2$; gate
+level $\alpha_3$; number of bins $\alpha_4$.\\
+\tt ParamSpectra & $\alpha_1$[, $\alpha_2$, $\alpha_3$, $\alpha_4$]& Main option
+$\alpha_1$ (see {\tt tools/statistics/spectra/spectra.f90}); block size
+$\alpha_2$; save full spectra $\alpha_3$; average over iteration $\alpha_4$.\\
+\end{longtable}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Inflow]}\\
+%
+\tt Type & \tt None, Discrete, BroadbandPeriodic,  BroadbandSequential & Type of
+inflow forcing to use 
+in a spatially evolving simulation.\\
+\tt Adapt & \it value & Interval in global time units for starting the inflow
+forcing.\\ 
+\end{longtable}
+
+}
+
+% {\Large\bf [Statistics]}
+
+% \begin{itemize}
+% \item \textbf{FilterEnergy} (\textit{ffltdmp}):  If ``yes'' calculate corresponding statistics.(default=no)
+% \item \textbf{EpsInter} (\textit{eps\_inter}): (default=0.01)
+% \item \textbf{IAvera} (\textit{statavg}): Planes i constant to be averaged.(default=1)
+% \item \textbf{ILines} (\textit{statlin\_i}): I position of line to be saved. It has to match with JLines.(default=1)
+% \item \textbf{JLines} (\textit{statlin\_j}): J position of line to be saved. It has to match with ILines. (default=1)
+% \item \textbf{IPlane} (\textit{statpln}): Planes i constant to be saved. (default=1)
+% \end{itemize}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% {\Large\bf [LES]}
+
+% \begin{itemize}
+% \item \textbf{Active} (\textit{iles}): ``yes'' if SGS terms are used. (default=no)
+% \item \textbf{Transport}  (\textit{iles\_type\_tran}): ``none'', ``ssm'' for scale similarity , ``arm-rans'' for approximate reconstruction, ``arm-sptl'' for approximate reconstruction, ``arm-invs'' (default=ssm)
+% \item \textbf{Regularization} (\textit{iles\_type\_regu}): ``none'', ``smg-static'', ``smg-dynamic'', ``smg-static-rms'', ``smg-dynamic-rms'' (default=smg-static)
+% \item \textbf{Dissipation} (\textit{iles\_type\_diss}): ``none'', ``diss-sgs'' (default=none)
+% \item \textbf{Chemistry} (\textit{iles\_type\_chem}):  ``none'', ``arm\_bs arm\_ps'' (default=none)
+% \item \textbf{Filter0Size} (\textit{isgs\_f0size}): $\Delta\_f / \Delta\_g$ of filter level 0. Integer even number. (default=2)
+% \item \textbf{Filter1Size} (\textit{isgs\_f1size}): $\Delta\_f / \Delta\_g$ of filter level 1. Integer even number. (default=4)
+% \item \textbf{Inviscid} (\textit{iles\_inviscid}): (default=no)
+% \item \textbf{JmaxDeact} (\textit{iles\_jmaxdeact}): (default=1)
+% \item \textbf{SmagVariant} (\textit{sgs\_devsmag}): ``deviatoric'' for Smagorinsky expression in terms of the deviatoric tensors (``other'' for relation in the whole tensor). (default=deviatoric)
+% \item \textbf{SmagTrans} (\textit{sgs\_smagtrans}): (default=-1.0)
+% \item \textbf{SmagDelta} (\textit{sgs\_smagdelta}): (default=0.0)
+% \item \textbf{Alpha} (\textit{sgs\_alpha}): Constant for scale similarity model.(default=1.0)
+% \item \textbf{Csm} (\textit{sgs\_csm}): Smagorinsky constant.(default=0.13)
+% \item \textbf{Prs} (\textit{sgs\_prs}): Smagorinsky Prandtl number. (default=0.6)
+% \item \textbf{Sct} (\textit{sgs\_sct}): Smagorinsky Schmidt number. (default=0.6)
+% \item \textbf{AlphaDil} (\textit{sgs\_pdil}): (default=2.2)
+% \item \textbf{ChemistryCondDissipation} (\textit{iles\_type\_disZchem}): Conditonal dissipation model. ``mean'', ``one-dimensional'' (default=mean)
+% \item \textbf{ChemistryDissipation} (\textit{iles\_type\_dischem}): Dissipation model. ``gradient'', ``diss-sgs'' (default=gradient)
+% \item \textbf{FDFfile} (\textit{les\_fdf\_bs\_file}): file name
+% \item \textbf{ChemistryVariance} (\textit{iles\_type\_recchem}): ssm arm-invs arm-rans arm-sptl (default=arm-rans)
+% \item \textbf{ARM\_Spectrum} (\textit{iarm\_spc}): Type of model spectrum; ``Pope'' or ``adhoc''. (default=Pope)
+% \item \textbf{ARM\_NL} (\textit{iarm\_nl}): Number of points in gamma for the c0-table.(default=10)
+% \item \textbf{ARM\_NRe} (\textit{iarm\_nre}): Number of points in Reynolds for the c0-table. (default=10)
+% \item \textbf{ARM\_ReMin} (\textit{arm\_remin}): Minimun Reynolds for the c0-table (default=10.0)
+% \item \textbf{ARM\_DeltaRe} (\textit{arm\_dre}): Increment in the Reynolds for the c0-table.(default=10.0)
+% \item \textbf{ARM\_ActivaT} (\textit{arm\_tact}): (default=100)
+% \item \textbf{ARM\_FlameT} (\textit{arm\_tflame}): (default=10)
+% \item \textbf{ARM\_StechioZ} (\textit{arm\_zst}): (default=0.2)
+% \item \textbf{ARM\_SmoothZ} (\textit{arm\_smooth}): (default=0.1)
+% \item \textbf{ARM\_c0} (\textit{arm\_c0\_inviscid}): (default=4.72)
+% \end{itemize}

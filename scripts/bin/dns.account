@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. $CONFIG_FILE
+
+QSEND_SITE=$site
+
+if [ ! $# -eq 1 ]; then
+   echo "Wrong number of arguments"
+   exit 1
+fi
+
+if [ $QSEND_SITE = "navo" ]; then
+  show_usage | awk 'BEGIN { acc = 0 } $4 ~ /'$1'/ { acc = 1 } { if ( acc == 1 && $1 == "Balance" ) exit } END { print 3600*$2 }'
+else
+  echo "999999999"
+fi
+
