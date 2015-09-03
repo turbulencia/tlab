@@ -32,9 +32,9 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_P1(NNstat, m_p_x, m_p_y, m_p_z, &
      m_p_z_z1(j) = m_p_z(j)*m_z1(j)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, m_p_x_z1, wrk2d(1,1), wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_p_y_z1, wrk2d(1,2), wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_p_z_z1, wrk2d(1,3), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, m_p_x_z1, wrk2d(1,1), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, m_p_y_z1, wrk2d(1,2), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, m_p_z_z1, wrk2d(1,3), wrk2d(1,11) )
 
   DO j = 1,NNstat
      MS_SPx(j) = MS_SPx(j) + wrk2d(j,1)

@@ -69,7 +69,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
 
   CALL REDUCE(imax, jmax, kmax, tmp6, nstatavg, statavg, m_fxx)
 
-  CALL SUM_K_V( NNstat, kmax, m_fxx, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_fxx, wrk2d(1,1), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat
@@ -88,10 +88,10 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
      m_z1_fxx(j) = m_fxx(j)*m_z1(j)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, m_z1_fxx, wrk2d(1,1), wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_u_fxx, wrk2d(1,2), wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_v_fxx, wrk2d(1,3), wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_w_fxx, wrk2d(1,4), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, m_z1_fxx, wrk2d(1,1), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, m_u_fxx, wrk2d(1,2), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, m_v_fxx, wrk2d(1,3), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, m_w_fxx, wrk2d(1,4), wrk2d(1,11) )
 
   DO j = 1,NNstat
      MS_FkdkS(j) = MS_FkdkS(j) + wrk2d(j,1)
@@ -122,7 +122,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
 
   CALL REDUCE(imax, jmax, kmax, tmp6, nstatavg, statavg, m_fyy)
 
-  CALL SUM_K_V( NNstat, kmax, m_fyy, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_fyy, wrk2d(1,1), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat
@@ -141,13 +141,13 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
      m_z1_fyy(j) = m_fyy(j)*m_z1(j)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, m_z1_fyy, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_z1_fyy, wrk2d(1,1), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_u_fyy, wrk2d(1,2), &
+  CALL SUM1V1D_V( NNstat, kmax, m_u_fyy, wrk2d(1,2), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_v_fyy, wrk2d(1,3), &
+  CALL SUM1V1D_V( NNstat, kmax, m_v_fyy, wrk2d(1,3), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_w_fyy, wrk2d(1,4), &
+  CALL SUM1V1D_V( NNstat, kmax, m_w_fyy, wrk2d(1,4), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat
@@ -192,13 +192,13 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
      m_z1_fzz(j) = m_fzz(j)*m_z1(j)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, m_z1_fzz, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_z1_fzz, wrk2d(1,1), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_u_fzz, wrk2d(1,2), &
+  CALL SUM1V1D_V( NNstat, kmax, m_u_fzz, wrk2d(1,2), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_v_fzz, wrk2d(1,3), &
+  CALL SUM1V1D_V( NNstat, kmax, m_v_fzz, wrk2d(1,3), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_w_fzz, wrk2d(1,4), &
+  CALL SUM1V1D_V( NNstat, kmax, m_w_fzz, wrk2d(1,4), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat
@@ -231,9 +231,9 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
      ENDDO
   ENDIF
 
-  CALL SUM_K_V( NNstat, kmax, m_z1_x, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_z1_x, wrk2d(1,1), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_z1_y, wrk2d(1,2), &
+  CALL SUM1V1D_V( NNstat, kmax, m_z1_y, wrk2d(1,2), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat
@@ -251,11 +251,11 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
      m_vis_z1_z(j) = m_vis(j)*m_z1_z(j)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, m_vis_z1_x, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_vis_z1_x, wrk2d(1,1), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_vis_z1_y, wrk2d(1,2), &
+  CALL SUM1V1D_V( NNstat, kmax, m_vis_z1_y, wrk2d(1,2), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_vis_z1_z, wrk2d(1,3), &
+  CALL SUM1V1D_V( NNstat, kmax, m_vis_z1_z, wrk2d(1,3), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat
@@ -273,11 +273,11 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
      m_vis_z1_y(j) = m_vis_z1_y(j)*m_z1(j)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, m_vis_z1_x, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_vis_z1_x, wrk2d(1,1), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_vis_z1_y, wrk2d(1,2), &
+  CALL SUM1V1D_V( NNstat, kmax, m_vis_z1_y, wrk2d(1,2), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_eps, wrk2d(1,3), &
+  CALL SUM1V1D_V( NNstat, kmax, m_eps, wrk2d(1,3), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat
@@ -305,11 +305,11 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
      m_p_z1_z(j) = m_p(j)*m_z1_z(j)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, m_p_z1_x, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_p_z1_x, wrk2d(1,1), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_p_z1_y, wrk2d(1,2), &
+  CALL SUM1V1D_V( NNstat, kmax, m_p_z1_y, wrk2d(1,2), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_p_z1_z, wrk2d(1,3), &
+  CALL SUM1V1D_V( NNstat, kmax, m_p_z1_z, wrk2d(1,3), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat
@@ -334,13 +334,13 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
      m_rho_z1_z1_y(j) = m_rho_z1_y(j)*m_z1(j)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_x, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_x, wrk2d(1,1), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_y, wrk2d(1,2), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_y, wrk2d(1,2), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_z1_x, wrk2d(1,3), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_z1_x, wrk2d(1,3), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_z1_y, wrk2d(1,4), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_z1_y, wrk2d(1,4), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat
@@ -367,13 +367,13 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
      m_rho_z1_z1_y_v(j) = m_rho_z1_y_v(j)*m_z1(j)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_x_u, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_x_u, wrk2d(1,1), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_y_v, wrk2d(1,2), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_y_v, wrk2d(1,2), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_z1_x_u, wrk2d(1,3), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_z1_x_u, wrk2d(1,3), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_z1_y_v, wrk2d(1,4), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_z1_y_v, wrk2d(1,4), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat
@@ -400,13 +400,13 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
      m_rho_z1_y_w(j) = m_rho(j)*m_z1_y(j)*m_w(j)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_x_v, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_x_v, wrk2d(1,1), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_y_u, wrk2d(1,2), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_y_u, wrk2d(1,2), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_x_w, wrk2d(1,3), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_x_w, wrk2d(1,3), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_y_w, wrk2d(1,4), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_y_w, wrk2d(1,4), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat
@@ -438,17 +438,17 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_S2(NNstat, dx, dy, dz, &
      m_rho_v_w_z1_y(j) = m_rho(j)*m_z1_y(j)*m_v(j)*m_w(j)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, m_rho_u_u_z1_x, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_u_u_z1_x, wrk2d(1,1), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_v_v_z1_y, wrk2d(1,2), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_v_v_z1_y, wrk2d(1,2), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_u_v_z1_x, wrk2d(1,3), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_u_v_z1_x, wrk2d(1,3), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_u_v_z1_y, wrk2d(1,4), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_u_v_z1_y, wrk2d(1,4), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_u_w_z1_x, wrk2d(1,5), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_u_w_z1_x, wrk2d(1,5), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_v_w_z1_y, wrk2d(1,6), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_v_w_z1_y, wrk2d(1,6), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat

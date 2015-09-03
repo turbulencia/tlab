@@ -89,7 +89,7 @@ PROGRAM SPECTRA
 
   TINTEGER kx_total,ky_total,kz_total, kr_total, isize_spec2dr
 
-  TREAL AVG1V3D, AVG2V2D
+  TREAL AVG1V3D, COV2V2D
 
   TINTEGER itime_size, it
   TINTEGER itime_vec(itime_size_max)
@@ -485,9 +485,9 @@ PROGRAM SPECTRA
 
            wrk1d(:,1:3) = C_0_R ! variance to normalize and check Parseval's relation
            DO j=1,jmax
-              wrk1d(j,1) = AVG2V2D(imax,jmax,kmax,j,data(iv1)%field,data(iv2)%field)
-              wrk1d(j,2) = AVG2V2D(imax,jmax,kmax,j,data(iv1)%field,data(iv1)%field)
-              wrk1d(j,3) = AVG2V2D(imax,jmax,kmax,j,data(iv2)%field,data(iv2)%field)
+              wrk1d(j,1) = COV2V2D(imax,jmax,kmax,j,data(iv1)%field,data(iv2)%field)
+              wrk1d(j,2) = COV2V2D(imax,jmax,kmax,j,data(iv1)%field,data(iv1)%field)
+              wrk1d(j,3) = COV2V2D(imax,jmax,kmax,j,data(iv2)%field,data(iv2)%field)
            ENDDO
 
            txc(1:isize_field,1) =  data(iv1)%field(1:isize_field)

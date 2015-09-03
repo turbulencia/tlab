@@ -44,7 +44,7 @@ SUBROUTINE BOUNDARY_INIT_HT(dx,dz, q,s, txc, buffer_ht)
   TARGET txc, q
 
 ! -------------------------------------------------------------------
-  TREAL AVG_IK, AVG1V1D, AVG2V2D, COV2V1D
+  TREAL AVG_IK, AVG1V1D, COV2V2D, COV2V1D
   TINTEGER i, j, is, iq, jloc
 
   TREAL, DIMENSION(:), POINTER :: r_loc, e_loc
@@ -63,7 +63,7 @@ SUBROUTINE BOUNDARY_INIT_HT(dx,dz, q,s, txc, buffer_ht)
      DO iq = 1,3
      DO j = 1, buff_nps_u_jmax; jloc = buff_u_jmax + j - 1
         IF ( buff_hard_on(iq) .EQ. 0 ) &
-             buff_hard(iq,1) = AVG2V2D(imax,jmax,kmax, jloc, r_loc,q(1,iq))
+             buff_hard(iq,1) = COV2V2D(imax,jmax,kmax, jloc, r_loc,q(1,iq))
         buffer_ht(:,j,:,iq) = buff_hard(iq,1)
      ENDDO
      ENDDO
@@ -72,7 +72,7 @@ SUBROUTINE BOUNDARY_INIT_HT(dx,dz, q,s, txc, buffer_ht)
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      DO j = 1, buff_nps_e_jmax; jloc = buff_e_jmax + j - 1
         IF ( buff_hard_on(4) .EQ. 0 ) &
-             buff_hard(4,1) = AVG2V2D(imax,jmax,kmax, jloc, r_loc,e_loc)
+             buff_hard(4,1) = COV2V2D(imax,jmax,kmax, jloc, r_loc,e_loc)
         buffer_ht(:,j,:,4) = buff_hard(4,1)
         IF ( buff_hard_on(5) .EQ. 0 ) &
              buff_hard(5,1) = AVG_IK(imax,jmax,kmax, jloc, r_loc, dx,dz, area)
@@ -85,7 +85,7 @@ SUBROUTINE BOUNDARY_INIT_HT(dx,dz, q,s, txc, buffer_ht)
      DO is = 1,inb_scal
      DO j = 1,buff_nps_u_jmax; jloc = buff_u_jmax + j - 1
         IF ( buff_hard_on(inb_flow+is) .EQ. 0 ) &
-             buff_hard(inb_flow+is,1) = AVG2V2D(imax,jmax,kmax, jloc, r_loc,s(1,is))
+             buff_hard(inb_flow+is,1) = COV2V2D(imax,jmax,kmax, jloc, r_loc,s(1,is))
            buffer_ht(:,j,:,inb_flow+is) = buff_hard(inb_flow+is,1)
      ENDDO
      ENDDO

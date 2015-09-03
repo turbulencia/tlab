@@ -43,13 +43,13 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_W1(NNstat, m_w_x, m_w_y, &
      m_rho_v_w_y_z1(j) = m_rho(j)*m_z1(j)*m_v(j)*m_w_y(j)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_w_x, wrk2d(1,1), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_w_x, wrk2d(1,1), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_z1_w_y, wrk2d(1,2), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_w_y, wrk2d(1,2), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_u_w_x_z1, wrk2d(1,3), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_u_w_x_z1, wrk2d(1,3), &
        wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, m_rho_v_w_y_z1, wrk2d(1,4), &
+  CALL SUM1V1D_V( NNstat, kmax, m_rho_v_w_y_z1, wrk2d(1,4), &
        wrk2d(1,11) )
 
   DO j = 1,NNstat

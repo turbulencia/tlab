@@ -42,17 +42,17 @@
          m_rho_z1_z1(j) = m_rho_z1(j)*m_z1(j)
       ENDDO
 
-      CALL SUM_K_V( NNstat, kmax, m_z1, wrk2d(1,1), &
+      CALL SUM1V1D_V( NNstat, kmax, m_z1, wrk2d(1,1), &
            wrk2d(1,11))
-      CALL SUM_K_V( NNstat, kmax, m_rho_z1, wrk2d(1,2), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_z1, wrk2d(1,2), &
            wrk2d(1,11))
-      CALL SUM_K_V( NNstat, kmax, m_rho_z1_u, wrk2d(1,3), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_u, wrk2d(1,3), &
            wrk2d(1,11))
-      CALL SUM_K_V( NNstat, kmax, m_rho_z1_v, wrk2d(1,4), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_v, wrk2d(1,4), &
            wrk2d(1,11))
-      CALL SUM_K_V( NNstat, kmax, m_rho_z1_w, wrk2d(1,5), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_w, wrk2d(1,5), &
            wrk2d(1,11))
-      CALL SUM_K_V( NNstat, kmax, m_rho_z1_z1, wrk2d(1,6), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_z1, wrk2d(1,6), &
            wrk2d(1,11))
 
       DO j = 1,NNstat
@@ -76,11 +76,11 @@
          m_rho_z1_w_2(j) = m_rho_z1_w(j)*m_w(j)
       ENDDO
 
-      CALL SUM_K_V( NNstat, kmax, m_rho_z1_u_2, wrk2d(1,1), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_u_2, wrk2d(1,1), &
            wrk2d(1,11))
-      CALL SUM_K_V( NNstat, kmax, m_rho_z1_v_2, wrk2d(1,2), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_v_2, wrk2d(1,2), &
            wrk2d(1,11))
-      CALL SUM_K_V( NNstat, kmax, m_rho_z1_w_2, wrk2d(1,3), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_w_2, wrk2d(1,3), &
            wrk2d(1,11))
 
       DO j = 1,NNstat
@@ -103,11 +103,11 @@
          m_rho_z1_v_w(j) = m_rho_z1(j)*m_v(j)*m_w(j)
       ENDDO
 
-      CALL SUM_K_V( NNstat, kmax, m_rho_z1_u_v, wrk2d(1,1), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_u_v, wrk2d(1,1), &
            wrk2d(1,11))
-      CALL SUM_K_V( NNstat, kmax, m_rho_z1_u_w, wrk2d(1,2), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_u_w, wrk2d(1,2), &
            wrk2d(1,11))
-      CALL SUM_K_V( NNstat, kmax, m_rho_z1_v_w, wrk2d(1,3), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_z1_v_w, wrk2d(1,3), &
            wrk2d(1,11))
 
       DO j = 1,NNstat
@@ -134,11 +134,11 @@
          m_rho_w_z1_2(j) = m_rho_z1(j)*m_w(j)*m_z1(j)
       ENDDO
 
-      CALL SUM_K_V( NNstat, kmax, m_rho_u_z1_2, wrk2d(1,1), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_u_z1_2, wrk2d(1,1), &
            wrk2d(1,11))
-      CALL SUM_K_V( NNstat, kmax, m_rho_v_z1_2, wrk2d(1,2), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_v_z1_2, wrk2d(1,2), &
            wrk2d(1,11))
-      CALL SUM_K_V( NNstat, kmax, m_rho_w_z1_2, wrk2d(1,3), &
+      CALL SUM1V1D_V( NNstat, kmax, m_rho_w_z1_2, wrk2d(1,3), &
            wrk2d(1,11))
 
       DO j = 1,NNstat
@@ -165,13 +165,13 @@
          m_z1_w(j) = m_z1(j)*m_w(j)
       ENDDO
       
-      CALL SUM_K_V( NNstat, kmax, m_z1_z1, wrk2d(1,1), &
+      CALL SUM1V1D_V( NNstat, kmax, m_z1_z1, wrk2d(1,1), &
            wrk2d(1,11) )
-      CALL SUM_K_V( NNstat, kmax, m_z1_u, wrk2d(1,2), &
+      CALL SUM1V1D_V( NNstat, kmax, m_z1_u, wrk2d(1,2), &
            wrk2d(1,11) )
-      CALL SUM_K_V( NNstat, kmax, m_z1_v, wrk2d(1,3), &
+      CALL SUM1V1D_V( NNstat, kmax, m_z1_v, wrk2d(1,3), &
            wrk2d(1,11) )
-      CALL SUM_K_V( NNstat, kmax, m_z1_w, wrk2d(1,4), &
+      CALL SUM1V1D_V( NNstat, kmax, m_z1_w, wrk2d(1,4), &
            wrk2d(1,11) )
 
       DO j = 1,NNstat
@@ -205,7 +205,7 @@
          ENDIF
       ENDDO
 
-      CALL SUM_K_V( NNstat, kmax, m_z1_gamma, wrk2d(1,1), &
+      CALL SUM1V1D_V( NNstat, kmax, m_z1_gamma, wrk2d(1,1), &
            wrk2d(1,11) )
 
       DO j = 1,NNstat
@@ -223,9 +223,9 @@
          m_z1_3(j) = m_z1(j)*m_z1(j)*m_z1(j)
          m_z1_4(j) = m_z1_3(j)*m_z1(j)
       ENDDO
-      CALL SUM_K_V( NNstat, kmax, m_z1_3, wrk2d(1,1), &
+      CALL SUM1V1D_V( NNstat, kmax, m_z1_3, wrk2d(1,1), &
            wrk2d(1,11) )
-      CALL SUM_K_V( NNstat, kmax, m_z1_4, wrk2d(1,2), &
+      CALL SUM1V1D_V( NNstat, kmax, m_z1_4, wrk2d(1,2), &
            wrk2d(1,11) )
       DO j = 1,NNstat
          MS_S3(j) = MS_S3(j) + wrk2d(j,1)

@@ -51,12 +51,12 @@ SUBROUTINE DNS_SAVE_AVGKIN(rho, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp
      tmp4(j,1,1) = tmp7(j,1,1)*tmp4(j,1,1)
   ENDDO
 
-  CALL SUM_K_V( NNstat, kmax, tmp5, wrk2d(1,1), wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, tmp6, wrk2d(1,2), wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, tmp7, wrk2d(1,3), wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, tmp2, wrk2d(1,4), wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, tmp3, wrk2d(1,5), wrk2d(1,11) )
-  CALL SUM_K_V( NNstat, kmax, tmp4, wrk2d(1,6), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, tmp5, wrk2d(1,1), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, tmp6, wrk2d(1,2), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, tmp7, wrk2d(1,3), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, tmp2, wrk2d(1,4), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, tmp3, wrk2d(1,5), wrk2d(1,11) )
+  CALL SUM1V1D_V( NNstat, kmax, tmp4, wrk2d(1,6), wrk2d(1,11) )
 
   DO j = 1,NNstat
      MA_FLT_RU(j) = MA_FLT_RU(j) + wrk2d(j,1)

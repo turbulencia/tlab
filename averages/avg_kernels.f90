@@ -232,7 +232,7 @@ END FUNCTION AVG1V2D1G
 ! ###################################################################
 ! Covariance within the plane j
 ! ###################################################################
-TREAL FUNCTION AVG2V2D(nx,ny,nz, j, a, b)
+TREAL FUNCTION COV2V2D(nx,ny,nz, j, a, b)
 
   IMPLICIT NONE
 
@@ -251,25 +251,25 @@ TREAL FUNCTION AVG2V2D(nx,ny,nz, j, a, b)
 #endif
 
 ! ###################################################################
-  AVG2V2D = C_0_R
+  COV2V2D = C_0_R
   DO k = 1,nz
      DO i = 1,nx
-        AVG2V2D = AVG2V2D + a(i,j,k)*b(i,j,k)
+        COV2V2D = COV2V2D + a(i,j,k)*b(i,j,k)
      ENDDO
   ENDDO
 
 #ifdef USE_MPI
-  sum_mpi = AVG2V2D
-  CALL MPI_ALLREDUCE(sum_mpi, AVG2V2D, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  sum_mpi = COV2V2D
+  CALL MPI_ALLREDUCE(sum_mpi, COV2V2D, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
   sum_mpi = M_REAL(nx*nz)
   CALL MPI_ALLREDUCE(sum_mpi, norm_mpi, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-  AVG2V2D = AVG2V2D/norm_mpi
+  COV2V2D = COV2V2D/norm_mpi
 #else
-  AVG2V2D = AVG2V2D/M_REAL(nx*nz)
+  COV2V2D = COV2V2D/M_REAL(nx*nz)
 #endif
 
   RETURN
-END FUNCTION AVG2V2D
+END FUNCTION COV2V2D
 
 !########################################################################
 ! Average of array a
