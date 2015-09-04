@@ -1,52 +1,49 @@
+# -*- sh -*-
 # Grace project file
 #
-@version 50122
+@version 1000902
 @page size 792, 612
 @page scroll 5%
 @page inout 5%
 @link page off
-@map font 35 to "Courier", "Courier"
-@map font 36 to "Courier-Bold", "Courier-Bold"
-@map font 11 to "Courier-BoldOblique", "Courier-BoldOblique"
-@map font 9 to "Courier-Oblique", "Courier-Oblique"
-@map font 8 to "Dingbats-Regular", "Dingbats-Regular"
-@map font 4 to "Helvetica", "Helvetica"
-@map font 6 to "Helvetica-Bold", "Helvetica-Bold"
-@map font 7 to "Helvetica-BoldOblique", "Helvetica-BoldOblique"
-@map font 5 to "Helvetica-Oblique", "Helvetica-Oblique"
-@map font 14 to "NimbusMonoL-BoldOblique", "NimbusMonoL-BoldOblique"
-@map font 15 to "NimbusMonoL-Regular", "NimbusMonoL-Regular"
-@map font 16 to "NimbusMonoL-RegularOblique", "NimbusMonoL-RegularOblique"
-@map font 17 to "NimbusRomanNo9L-Medium", "NimbusRomanNo9L-Medium"
-@map font 18 to "NimbusRomanNo9L-MediumItalic", "NimbusRomanNo9L-MediumItalic"
-@map font 19 to "NimbusRomanNo9L-Regular", "NimbusRomanNo9L-Regular"
-@map font 20 to "NimbusRomanNo9L-RegularItalic", "NimbusRomanNo9L-RegularItalic"
-@map font 21 to "NimbusSansL-Bold", "NimbusSansL-Bold"
-@map font 22 to "NimbusSansL-BoldCondensed", "NimbusSansL-BoldCondensed"
-@map font 23 to "NimbusSansL-BoldCondensedItalic", "NimbusSansL-BoldCondensedItalic"
-@map font 24 to "NimbusSansL-BoldItalic", "NimbusSansL-BoldItalic"
-@map font 25 to "NimbusSansL-Regular", "NimbusSansL-Regular"
-@map font 26 to "NimbusSansL-RegularCondensed", "NimbusSansL-RegularCondensed"
-@map font 27 to "NimbusSansL-RegularCondensedItalic", "NimbusSansL-RegularCondensedItalic"
-@map font 28 to "NimbusSansL-RegularItalic", "NimbusSansL-RegularItalic"
-@map font 29 to "StandardSymbolsL-Regular", "StandardSymbolsL-Regular"
-@map font 12 to "Symbol", "Symbol"
+@map font 0 to "Times-Roman", "Times-Roman"
+@map font 1 to "Times-Italic", "Times-Italic"
 @map font 2 to "Times-Bold", "Times-Bold"
 @map font 3 to "Times-BoldItalic", "Times-BoldItalic"
-@map font 1 to "Times-Italic", "Times-Italic"
-@map font 0 to "Times-Roman", "Times-Roman"
-@map font 37 to "URWBookmanL-Light", "URWBookmanL-Light"
-@map font 38 to "URWBookmanL-LightItalic", "URWBookmanL-LightItalic"
-@map font 39 to "URWChanceryL-MediumItalic", "URWChanceryL-MediumItalic"
-@map font 40 to "URWGothicL-Book", "URWGothicL-Book"
-@map font 41 to "URWGothicL-BookOblique", "URWGothicL-BookOblique"
-@map font 42 to "URWGothicL-Demi", "URWGothicL-Demi"
-@map font 43 to "URWGothicL-DemiOblique", "URWGothicL-DemiOblique"
-@map font 44 to "URWPalladioL-Bold", "URWPalladioL-Bold"
-@map font 45 to "URWPalladioL-BoldItalic", "URWPalladioL-BoldItalic"
-@map font 46 to "URWPalladioL-Italic", "URWPalladioL-Italic"
-@map font 47 to "URWPalladioL-Roman", "URWPalladioL-Roman"
+@map font 4 to "Helvetica", "Helvetica"
+@map font 5 to "Helvetica-Oblique", "Helvetica-Oblique"
+@map font 6 to "Helvetica-Bold", "Helvetica-Bold"
+@map font 7 to "Helvetica-BoldOblique", "Helvetica-BoldOblique"
+@map font 35 to "Courier", "Courier"
+@map font 9 to "Courier-Oblique", "Courier-Oblique"
+@map font 36 to "Courier-Bold", "Courier-Bold"
+@map font 11 to "Courier-BoldOblique", "Courier-BoldOblique"
+@map font 12 to "Symbol", "Symbol"
 @map font 13 to "ZapfDingbats", "ZapfDingbats"
+@map font 14 to "ZapfChancery-MediumItalic", "ZapfChancery-MediumItalic"
+@map font 15 to "PazoMathBlackboardBold", "Palatino-Bold"
+@map font 16 to "AvantGarde-Book", "AvantGarde-Book"
+@map font 17 to "AvantGarde-BookOblique", "AvantGarde-BookOblique"
+@map font 18 to "AvantGarde-Demi", "AvantGarde-Demi"
+@map font 19 to "AvantGarde-DemiOblique", "AvantGarde-DemiOblique"
+@map font 20 to "Bookman-Light", "Bookman-Light"
+@map font 21 to "Bookman-LightItalic", "Bookman-LightItalic"
+@map font 22 to "Bookman-Demi", "Bookman-Demi"
+@map font 23 to "Bookman-DemiItalic", "Bookman-DemiItalic"
+@map font 24 to "NewCenturySchlbk-Roman", "NewCenturySchlbk-Roman"
+@map font 25 to "NewCenturySchlbk-Italic", "NewCenturySchlbk-Italic"
+@map font 26 to "NewCenturySchlbk-Bold", "NewCenturySchlbk-Bold"
+@map font 27 to "NewCenturySchlbk-BoldItalic", "NewCenturySchlbk-BoldItalic"
+@map font 28 to "Palatino-Roman", "Palatino-Roman"
+@map font 29 to "Palatino-Bold", "Palatino-Bold"
+@map font 30 to "Palatino-Italic", "Palatino-Italic"
+@map font 31 to "Palatino-BoldItalic", "Palatino-BoldItalic"
+@map font 32 to "Helvetica-Narrow", "Helvetica-Narrow"
+@map font 33 to "Helvetica-Narrow-Oblique", "Helvetica-Narrow-Oblique"
+@map font 34 to "CALLIG15", "CALLIG15"
+@map font 37 to "LaTeX-italic", "LaTeX-italic"
+@map font 38 to "LaTeX-bold", "LaTeX-bold"
+@map font 39 to "LaTeX-sanserif", "LaTeX-sanserif"
 @map color 0 to (255, 255, 255), "white"
 @map color 1 to (0, 0, 0), "black"
 @map color 2 to (255, 0, 0), "red"
@@ -69,7 +66,18 @@
 @map color 19 to (148, 0, 0), "red4"
 @map color 20 to (68, 120, 173), "blue2"
 @map color 21 to (176, 196, 222), "blue3"
+@map color 22 to (102, 205, 17), "aquamarine3"
+@map color 23 to (69, 139, 116), "aquamarine4"
+@map color 24 to (255, 215, 0), "gold1"
+@map color 25 to (238, 201, 0), "gold2"
+@map color 26 to (205, 173, 0), "gold3"
+@map color 27 to (139, 117, 0), "gold4"
+@map color 28 to (204, 204, 204), "grey80"
+@map color 29 to (153, 153, 153), "grey60"
+@map color 30 to (102, 102, 102), "grey40"
+@map color 31 to (77, 77, 77), "grey30"
 @reference date 0
+@ date auto on
 @date wrap off
 @date wrap year 1950
 @default linewidth 1.0
@@ -80,6 +88,7 @@
 @default char size 1.000000
 @default symbol size 1.000000
 @default sformat "%.8g"
+@default locale on
 @background color 0
 @page background fill on
 @timestamp off
@@ -87,19 +96,28 @@
 @timestamp color 1
 @timestamp rot 0
 @timestamp font 0
+@timestamp just 0
 @timestamp char size 1.000000
-@timestamp def "Fri Feb  1 14:55:07 2013"
-@with box
-@    box on
-@    box loctype world
-@    box g0
-@    box -0.21042, 1.82364, 0.21042, -1.82364
-@    box linestyle 1
-@    box linewidth 2.0
-@    box color 1
-@    box fill color 7
-@    box fill pattern 0
-@box def
+@timestamp linestyle 0
+@timestamp fill pattern 0
+@timestamp fill color 1
+@timestamp def "Fri Sep  4 09:51:52 2015"
+@WITH Box 0
+@    Box  hidden false
+@    Box on
+@    Box layer 50
+@    Box g0
+@    Box loctype world
+@    Box color 1
+@    Box -0.21042 , -1.82364 , 0.21042 , 1.82364
+@    Box linestyle 1
+@    Box linewidth 2.0
+@    Box fill color 7
+@    Box fill pattern 0
+@    Box background fill off
+@    Box background fill color 0
+@    Box rot 0
+@ Box def
 @r0 off
 @link r0 to g0
 @r0 type above
@@ -136,7 +154,6 @@
 @r4 color 1
 @r4 line 0, 0, 0, 0
 @g0 on
-@g0 hidden true
 @g0 type XY
 @g0 stacked false
 @g0 bar hgap 0.000000
@@ -151,13 +168,19 @@
 @    znorm 1
 @    view 0.150000, 0.150000, 0.950000, 0.950000
 @    title ""
+@    title layer 50
 @    title font 0
 @    title size 1.500000
 @    title color 1
+@    title just 4
+@    title offset 0.000000 , 0.000000
 @    subtitle ""
+@    subtitle layer 50
 @    subtitle font 0
 @    subtitle size 1.000000
 @    subtitle color 1
+@    subtitle just 4
+@    subtitle offset 0.000000 , 0.000000
 @    xaxes scale Normal
 @    yaxes scale Normal
 @    xaxes invert off
@@ -167,10 +190,10 @@
 @    altxaxis  off
 @    altyaxis  off
 @    legend off
+@    legend layer 50
 @    legend loctype view
-@    legend 0.2, 0.35
+@    legend 0.2         ,0.35
 @    legend box color 1
-@    legend box pattern 1
 @    legend box linewidth 1.0
 @    legend box linestyle 1
 @    legend box fill color 0
@@ -183,14 +206,15 @@
 @    legend hgap 1
 @    legend invert false
 @    frame type 0
+@    frame layer 50
 @    frame linestyle 1
 @    frame linewidth 1.0
 @    frame color 1
 @    frame pattern 1
 @    frame background color 0
 @    frame background pattern 0
+@g0 hidden true
 @g1 on
-@g1 hidden false
 @g1 type XY
 @g1 stacked false
 @g1 bar hgap 0.000000
@@ -205,18 +229,25 @@
 @    znorm 1
 @    view 0.150000, 0.150000, 0.700000, 0.950000
 @    title ""
+@    title layer 50
 @    title font 0
 @    title size 1.500000
 @    title color 1
+@    title just 4
+@    title offset 0.000000 , 0.000000
 @    subtitle ""
+@    subtitle layer 50
 @    subtitle font 0
 @    subtitle size 1.000000
 @    subtitle color 1
+@    subtitle just 4
+@    subtitle offset 0.000000 , 0.000000
 @    xaxes scale Normal
 @    yaxes scale Normal
 @    xaxes invert off
 @    yaxes invert off
 @    xaxis  on
+@    xaxis  layer 50
 @    xaxis  type zero false
 @    xaxis  offset 0.000000 , 0.000000
 @    xaxis  bar on
@@ -268,6 +299,7 @@
 @    xaxis  tick place normal
 @    xaxis  tick spec type none
 @    yaxis  on
+@    yaxis  layer 50
 @    yaxis  type zero false
 @    yaxis  offset 0.000000 , 0.000000
 @    yaxis  bar on
@@ -321,10 +353,10 @@
 @    altxaxis  off
 @    altyaxis  off
 @    legend off
+@    legend layer 50
 @    legend loctype view
-@    legend 0.2, 0.35
+@    legend 0.2         ,0.35
 @    legend box color 1
-@    legend box pattern 1
 @    legend box linewidth 1.0
 @    legend box linestyle 1
 @    legend box fill color 0
@@ -337,6 +369,7 @@
 @    legend hgap 1
 @    legend invert false
 @    frame type 0
+@    frame layer 50
 @    frame linestyle 1
 @    frame linewidth 1.0
 @    frame color 1
@@ -344,6 +377,7 @@
 @    frame background color 0
 @    frame background pattern 0
 @    s0 hidden false
+@    s0 layer 50
 @    s0 type xy
 @    s0 symbol 1
 @    s0 symbol size 0.750000
@@ -379,6 +413,7 @@
 @    s0 avalue prepend ""
 @    s0 avalue append ""
 @    s0 avalue offset 0.000000 , 0.000000
+@    s0 avalue skip 0 , 0
 @    s0 errorbar on
 @    s0 errorbar place both
 @    s0 errorbar color 1
@@ -390,9 +425,11 @@
 @    s0 errorbar riser linestyle 1
 @    s0 errorbar riser clip off
 @    s0 errorbar riser clip length 0.100000
-@    s0 comment "/home/zmaw/m300041/develop/dns/docs/manual/figs/aux1.dat"
+@    s0 legend on
 @    s0 legend  ""
+@    s0 comment "AdvectionSpectra.agr"
 @    s1 hidden false
+@    s1 layer 50
 @    s1 type xy
 @    s1 symbol 0
 @    s1 symbol size 0.750000
@@ -405,7 +442,7 @@
 @    s1 symbol char 65
 @    s1 symbol char font 0
 @    s1 symbol skip 0
-@    s1 line type 1
+@    s1 line type 6 , 4 , 1000
 @    s1 line linestyle 1
 @    s1 line linewidth 2.0
 @    s1 line color 19
@@ -428,19 +465,22 @@
 @    s1 avalue prepend ""
 @    s1 avalue append ""
 @    s1 avalue offset 0.000000 , 0.000000
+@    s1 avalue skip 0 , 0
 @    s1 errorbar on
-@    s1 errorbar place both
-@    s1 errorbar color 19
-@    s1 errorbar pattern 1
-@    s1 errorbar size 1.000000
-@    s1 errorbar linewidth 1.0
-@    s1 errorbar linestyle 1
-@    s1 errorbar riser linewidth 1.0
-@    s1 errorbar riser linestyle 1
+@    s1 errorbar place normal
+@    s1 errorbar color 0
+@    s1 errorbar pattern 0
+@    s1 errorbar size 0.500000
+@    s1 errorbar linewidth 0.0
+@    s1 errorbar linestyle 0
+@    s1 errorbar riser linewidth 0.0
+@    s1 errorbar riser linestyle 0
 @    s1 errorbar riser clip off
-@    s1 errorbar riser clip length 0.100000
-@    s1 comment "/home/zmaw/m300041/develop/dns/docs/manual/figs/aux0.dat"
+@    s1 errorbar riser clip length 0.000000
+@    s1 legend on
 @    s1 legend  ""
+@    s1 comment "AdvectionSpectra.agr"
+@g1 hidden false
 @target G1.S0
 @type xy
 -0.00010094789 1.9709694

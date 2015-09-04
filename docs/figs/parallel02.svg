@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
+
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -12,12 +13,13 @@
    height="1052.3622047"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.46"
-   sodipodi:docname="drawing.svg"
+   inkscape:version="0.47 r22583"
+   sodipodi:docname="parallel02.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    inkscape:export-filename="/home/zmaw/m300041/drawing.png"
    inkscape:export-xdpi="90"
-   inkscape:export-ydpi="90">
+   inkscape:export-ydpi="90"
+   version="1.1">
   <defs
      id="defs4">
     <marker
@@ -53,6 +55,13 @@
        inkscape:vp_z="744.09448 : 526.18109 : 1"
        inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
        id="perspective10" />
+    <inkscape:perspective
+       id="perspective2881"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -66,16 +75,17 @@
      inkscape:pageshadow="2"
      inkscape:zoom="2.7843546"
      inkscape:cx="327.1947"
-     inkscape:cy="816.72282"
+     inkscape:cy="831.08881"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:object-nodes="false"
-     inkscape:window-width="1127"
-     inkscape:window-height="907"
+     inkscape:window-width="1677"
+     inkscape:window-height="1049"
      inkscape:window-x="103"
      inkscape:window-y="33"
-     inkscape:snap-center="true">
+     inkscape:snap-center="true"
+     inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
        id="grid2383"
@@ -180,7 +190,7 @@
        id="text3211"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
-         id="tspan3213"></tspan></text>
+         id="tspan3213" /></text>
     <text
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
@@ -383,5 +393,10 @@
          x="-201.47185"
          y="127.44845"
          id="tspan5137">ims_pro_k</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 212.59843,343.70077 0,-248.031503"
+       id="path2421-6"
+       sodipodi:nodetypes="cc" />
   </g>
 </svg>
