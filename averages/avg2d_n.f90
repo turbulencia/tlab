@@ -6,9 +6,6 @@
 #define L_FORMAT_MAX 40
 
 !########################################################################
-!# Tool/Library PDF
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2008/04/10 - J.P. Mellado
@@ -17,20 +14,14 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!########################################################################
-!# ARGUMENTS 
-!#
-!# igate    In     Gate level. If 0, no intermittency considered
-!# nvar     In     Number of variables
-!# nmom     In     Number of moments
-!# avg_loc  In     Auxiliar array of size nmom*nvar*3
+!# Calculating the first nmom moments of the nvar fields defined by the
+!# pointers array data
 !#
 !########################################################################
-
-SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax, jmax, kmax, &
+SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
      nvar, nmom, y, gate, data, avg_loc)
 
-  USE DNS_TYPES,  ONLY : pointers_structure
+  USE DNS_TYPES,     ONLY : pointers_structure
   USE DNS_CONSTANTS, ONLY : efile
 
   IMPLICIT NONE
@@ -40,16 +31,16 @@ SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax, jmax, kmax, &
 #include "mpif.h"
 #endif
 
-  CHARACTER*(*) fname
+  CHARACTER*(*) fname, varname(nvar)
   TREAL rtime
-  TINTEGER imax,jmax,kmax, nvar, nmom
+  TINTEGER,                 INTENT(IN) :: imax,jmax,kmax
+  TINTEGER,                 INTENT(IN) :: nvar  ! Number of variables to process
+  TINTEGER,                 INTENT(IN) :: nmom  ! Number of moments to consider in the analysis
+  INTEGER(1),               INTENT(IN) :: igate ! Gate level in gate array to be used. If 0, no intermittency considered
+  INTEGER(1), DIMENSION(*), INTENT(IN) :: gate  ! Array with the mask field corresponding to the different gate levels
+  TYPE(pointers_structure), DIMENSION(nvar) :: data ! Array of pointer to the fields to be processed
   TREAL y(jmax)
   TREAL avg_loc(nmom,nvar,2)
-  CHARACTER*32 varname(nvar)
-
-  INTEGER(1) gate(*), igate
-
-  TYPE(pointers_structure), DIMENSION(nvar) :: data
 
 ! -------------------------------------------------------------------
   TINTEGER k, j, i, iv, im
@@ -62,7 +53,6 @@ SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax, jmax, kmax, &
 
 #ifdef USE_MPI
   INTEGER ims_pro, ims_err
-
   CALL MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro,ims_err)
 #endif
 
@@ -185,7 +175,6 @@ SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax, jmax, kmax, &
 
         ENDDO
      ENDDO
-
 
 ! -------------------------------------------------------------------
 ! TkStat output
