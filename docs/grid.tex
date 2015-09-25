@@ -1,60 +1,49 @@
 \chapter{Grid}
 
-The equations are solved using Cartesian co-ordinates and the grid is
-structured. The grid is constructed by building up the three directions
-separately (in a 2D case, $Oz$ has simply one node).  Each direction is broken
-into segments, and each of those segments are built with specified
-algorithms. (One segment is often enough for usual configurations.) The first
-point in each direction is set at zero.
+The equations are solved using Cartesian co-ordinates and the grid is structured. The grid is constructed by building up the three directions separately (in a 2D case, $Oz$ has simply one node).  Each direction is broken into segments, and each of those segments is built with specified generation algorithms. The first node in each direction is set at zero. 
 
-The executable is \emph{inigrid.x} and reads data from {\it dns.ini}, as any of
-the other tools. The data blocks are [IniGridOx], [IniGridOy] and
-[IniGridOz]. Once created, basic information about the grid is saved into the
-file {\it grid.sts}. Grid transformations can be done with \emph{transgrid.x};
-the corresponding sources are in the \emph{/tools/transform/grid}
-sub-directory. They allow to print out an ASCII file with the grid positions,
-add an offset, drop or introduce planes and make a scaling.  (As in the case of
-the utilities of the main code, a browse through them is recommended, though
-they are really simple.)
+The executable is {\tt inigrid.x} and the data in {\tt dns.ini} is specified in the blocks [IniGridOx], [IniGridOy] and [IniGridOz]. Once created, basic information about the grid is saved into the file {\tt grid.sts}. Grid transformations can be done with {\tt transgrid.x}; the corresponding sources are in the {\tt tools/transform} sub-directory. 
 
-\bigskip
+%They allow to print out an ASCII file with the grid positions, add an offset, drop or introduce planes and make a scaling.  (As in the case of the utilities of the main code, a browse through them is recommended, though they are really simple.)
 
-The main options for each particular direction are:
-\begin{itemize}
-\item segments: Number of segments in that direction.
-\item periodic: If yes, a uniform mesh is done with a number of points equal to
+{
+\centering
+\setlength{\tabcolsep}{0pt}
+\footnotesize
+
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [IniGridOx]}\\
+%
+\tt Segments & {\it value} & Number of segments in that direction.\\
+\tt Periodic & \tt yes, no & If yes, a uniform mesh is done with a number of points equal to
   the sum of the points of all segments, and over a length equal to the sum of
   the length of all segments, regardless the input options for each segment. The
   last plane in that direction is dropped, so that the last point does not match
-  the scale (the latter is a bit larger).
-\item mirrored: If yes, this direction is created with the corresponding options
+  the scale (the latter is a bit larger).\\
+\tt Mirrored & \tt yes, no &  If yes, this direction is created with the corresponding options
   and then it is mirrored with respect to the origin. The final scale is the
-  double of that set in the input file \emph{dns.ini} and the first node is
-  moved to zero. In the case of mirroring the number of points is always even. 
-\end{itemize}
+  double of that set in the input file {\tt dns.ini} and the first node is
+  moved to zero. In the case of mirroring the number of points is always even.\\
+\tt Scales\_\# & {\it value} & Physical end of the segment number {\tt \#}.\\
+\tt Points\_\# & {\it value} & Number of points in the segment number {\tt \#}. This number includes the first and the last points of the present segment, which are common with the adjacent  ones. (E.g., if one direction has three segments with 11, 16 and 6 points each, the total number of points in that direction will be 31, 30 steps.)\\
+\tt Opts\_\#  &  {\it value1, value2, ...} & List of options for the generation algorithm:
+\begin{enumerate}[leftmargin=*,noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
+\item[0] Uniform grid.
+\item[4] Geometric progression. Not used in a loooong time.
+\item[5] Explicit mapping: hyperbolic tangent of the space step.
+\item[6] Explicit mapping: hyperbolic tangent of the stretching factor.
+\end{enumerate}\\
+\tt Vals\_\#  &  {\it value1, value2, ...} & List of constants for the different generation algorithms.\\
+\end{longtable}
 
-\section{Segments}
-Information about segment number $n$ is specified with the suffix {\it \_$n$} in
-the options below:
-\begin{itemize}
-\item scales: physical end of the segment. 
-\item points: number of points in the segment. This number includes the first
-  and the last points of the present segment, which are common with the adjacent
-  ones. (E.g., if one direction has three segments with 11, 16 and 6 points
-  each, the total number of points in that direction will be 31, 30 steps.)
-\item opts: list of options for the generation algorithm.
-\begin{itemize}
-\item $opts=0$ : Uniform grid.
-\item $opts=1-3$ : See old version of this document. 
-\item $opts=4$ : Geometric progression. Not used in a loooong time.
-\item $opts=5$ : Explicit mapping: hyperbolic tangent of the space step.
-\item $opts=6$ : Explicit mapping: hyperbolic tangent of the stretching factor.
-\end{itemize}                                                   
+}
 
-\item vals: list of constants for the different generation algorithms.
-\end{itemize}
+\section{Generation algorithms}
 
-\section{Explicit mappings (opts 5 and 6)}
+\subsection{Explicit mappings}
 A basic grid is considered first with uniform spacing, that is
 $\{s_j=h_0(j-1):\, j = 1,\ldots,n\}$. 
 
@@ -104,7 +93,7 @@ f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_1}{2\delta_1}\right)\rig
 + \frac{\Delta f_2}{2}\left[ 1 + \tanh\left(\frac{s-s_2}{2\delta_2}\right)\right]
 \end{equation}
 
-\section{Geometric progression algorithm (opts 4)}
+\subsection{Geometric progression}
 For each segment $i$ the geometric ratio $r_i$ is given (input variable
 $val1$). The rest of the constrains are the number of points in each segment,
 $n_i$ and the total length in that direction, $L$.  The first step of the first
@@ -114,7 +103,7 @@ as the first one for the second segment, and the sequence continue until the
 last segment. A final rescaling adjusts the physical length of the grid in that
 direction.
 
-The length of each segment in the grid is saved into \emph{grid.sts}. For
+The length of each segment in the grid is saved into {\tt grid.sts}. For
 calculating them, if we denote the length of each segment by $l_i$, we have
 \begin{equation}
 l_i = h_i^1(1+r_i+r_i^2+\ldots+r_i^{n_i-2})=
