@@ -60,7 +60,7 @@ CONTAINS
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-  SUBROUTINE DNS_TOWER_INITIALIZE(x,y,z,stride)
+  SUBROUTINE DNS_TOWER_INITIALIZE(stride)
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     USE DNS_GLOBAL,ONLY : imax,jmax,kmax,imax_total,jmax_total,kmax_total 
@@ -81,12 +81,9 @@ CONTAINS
 
     TINTEGER, DIMENSION(3), INTENT(IN) :: stride
 
-    TINTEGER :: istart, iend, jstart,jend,kstart,kend, ibuf,i,j,k,ii,kk
-    TREAL,DIMENSION(*) :: x,y,z  
-    TINTEGER, DIMENSION(2) :: idummy 
+    TINTEGER :: istart, iend, jstart,jend,kstart,kend, ibuf,i,j,k,ii
     TINTEGER, POINTER :: tip, tip_total  
-    INTEGER, DIMENSION(1) :: start_1d,count_1d
-    INTEGER, DIMENSION(2) :: start_2d,count_2d
+    !
     IF ( ims_offset_i .EQ. 0 .AND. ims_offset_k .EQ. 0 ) THEN 
        tower_master = 1 
     ELSE 
@@ -229,9 +226,8 @@ CONTAINS
     TREAL, DIMENSION(*),              INTENT(IN)   :: dx,dy,dz 
     TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)   :: v
     TREAL, DIMENSION(*),              INTENT(INOUT):: wrk1d
-    TREAL :: rdummy
 
-    TINTEGER  :: it,ii,kk,ip,ipm,ip1,ipm1
+    TINTEGER  :: ii,kk,ip,ipm
     TINTEGER, POINTER :: tip  
 
 
@@ -305,7 +301,9 @@ CONTAINS
   SUBROUTINE DNS_TOWER_WRITE(wrk3d) 
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    USE DNS_LOCAL, ONLY : nitera_save
+    USE DNS_LOCAL,     ONLY : nitera_save
+    USE DNS_GLOBAL,    ONLY : itime
+    USE DNS_CONSTANTS, ONLY : wfile 
 #ifdef USE_MPI
     USE DNS_MPI,   ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro,ims_err
 #endif 
@@ -320,12 +318,7 @@ CONTAINS
 
     TREAL, DIMENSION(*), INTENT(INOUT) :: wrk3d
     
-    INTEGER, DIMENSION(4) :: start_field, count_field 
-    INTEGER, DIMENSION(2) :: start_mean, count_mean 
-    INTEGER, DIMENSION(1) :: start_0D, count_0D  
-    INTEGER :: mode_loc, nc_loc, vid
-    INTEGER :: status
-    TINTEGER :: it,idummy,ivar 
+    TINTEGER :: it,ivar 
     CHARACTER(LEN=64) :: cdummy
 
     TINTEGER, POINTER :: tip 
@@ -335,6 +328,13 @@ CONTAINS
     IF ( tip .LT. 1 ) THEN 
        ! DO NOTHING 
     ELSE  
+
+       IF  ( itime .NE. INT(tower_it(nitera_save)+1)  )  THEN
+          CALL IO_WRITE_ASCII(wfile,'tools/dns/dns_tower.f90 (DNS_TOWER_WRITE)') 
+          CALL IO_WRITE_ASCII(wfile,'nitera_save for towers does not match current iteration')  
+          !                          (But it should if the code is set-up properly) 
+       ENDIF
+                
        DO ivar=1,tower_varcount
           tower_count = 0 
 #ifdef USE_MPI
@@ -367,7 +367,8 @@ CONTAINS
              ENDDO
              
              WRITE(cdummy,995) &
-                  INT(tower_it(1)),INT(tower_it(nitera_save)),ivar
+                  INT(tower_it(1))+1,itime,ivar
+             WRITE(*,*) tower_it(1), itime
 995          FORMAT('tower.mean','.',I6.6,'-',I6.6,'.',I1)
              OPEN(73,FILE=TRIM(ADJUSTL(cdummy)),ACCESS='STREAM', FORM='UNFORMATTED')  
              WRITE(73,POS=1) wrk3d(1:nitera_save*(tower_jmax+2)) 
@@ -376,6 +377,7 @@ CONTAINS
 #ifdef USE_MPI
           ENDIF
 #endif 
+
           DO itower=1,tower_imax 
              DO ktower=1,tower_kmax
                 ip_skp = tower_jmax*tip;  
@@ -408,7 +410,7 @@ CONTAINS
                 WRITE(cdummy,997) &
                      ims_offset_i+tower_ipos(itower), &
                      ims_offset_k+tower_kpos(ktower),&
-                     INT(tower_it(1)),INT(tower_it(nitera_save)),ivar
+                     INT(tower_it(1))+1,itime,ivar
 997             FORMAT('tower.',I6.6,'x',I6.6,'.',I6.6,'-',I6.6,'.',I1)
                 OPEN(73,FILE=TRIM(ADJUSTL(cdummy)),ACCESS='STREAM', FORM='UNFORMATTED')  
                 WRITE(73,POS=1) wrk3d(1:nitera_save*(tower_jmax+2)) 

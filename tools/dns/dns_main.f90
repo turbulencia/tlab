@@ -376,7 +376,8 @@ PROGRAM DNS
 ! Initializing tower stuff 
 ! #######################################################################
   IF ( tower_mode .EQ. 1 ) THEN 
-     CALL DNS_TOWER_INITIALIZE(x,y,z,tower_stride)  
+!     CALL DNS_TOWER_INITIALIZE(x,y,z,tower_stride)  
+     CALL DNS_TOWER_INITIALIZE(tower_stride)  
   ENDIF
 
 ! #######################################################################

@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import struct
 import array
 import string
@@ -9,6 +7,20 @@ import datetime
 from netCDF4 import Dataset
 from os import listdir
 from os import system 
+
+import os.path 
+import os
+
+user = os.environ['USER'] 
+lock_fname = 'lock_tower_merge_for_{}'.format(user) 
+if os.path.isfile(lock_fname):  
+    print 'ERROR: cannot run tower_merge.py, locked by {}'.format(lock_fname)  
+else :
+    command = 'touch {}'.format(lock_fname) 
+    system('touch {}'.format(lock_fname) )
+
+quit()
+
 def read_record(file, mode):
     reclen,=struct.unpack(mode[0]+'i',f.read(4))
     if ( mode[1] == 'i' or mode[1] == 'f'):
@@ -104,10 +116,11 @@ ntowerz = len(itowerz)
 slices = []
 varcount = -1
 from glob import glob
-for f in glob('/work/hhh07/hhh071/3072_003.65_thin/tower.mean.*.?'): 
-    dummy = f.split('.',4)  
-    [start,end] =  dummy[3].split('-')   
-    ivar = int(dummy[4])
+for f in glob('tower.mean.*.?'): 
+    dummy = f.split('.',4)   
+    print dummy 
+    [start,end] =  dummy[2].split('-')   
+    ivar = int(dummy[3])
     if ( ivar > varcount ): 
         varcount = ivar 
     if  [start,end] not in slices:
@@ -256,7 +269,7 @@ for slc in slices:
 
         time_it = data[:,1]
         time_rt = data[:,0]
-        t_index = [int(it-slc[0]) for it in time_it] 
+        t_index = [int(it-slc[0]+1) for it in time_it] 
         its=min(t_index); ite=max(t_index)+1;
         data = data[:,2:tower_jmax+2]
 
@@ -268,8 +281,8 @@ for slc in slices:
             iteration_rt[i] = time_rt[i-its]
             iteration_it[i] = int(time_it[i-its])
             
-        if ( idx_i >= 0 and idx_k >= 0 ): 
-            if ( ivar == 1 ) :
+        if ( idx_i >= 0 and idx_k >= 0 ):  
+            if ( ivar == 1 ) : 
                 nc_uvar[its:ite,idx_k,idx_i,:] = data
             if ( ivar == 2 ) :
                 nc_vvar[its:ite,idx_k,idx_i,:] = data
@@ -300,5 +313,7 @@ for slc in slices:
     sys_command='mv tower_new.nc tower'+string.zfill(slc[0],6)+'-'+string.zfill(slc[1],6)+'.nc' 
     system(sys_command) 
 
+
+system('rm {}'.format(lock_fname))
 
 exit 
