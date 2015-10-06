@@ -28,7 +28,7 @@ PRJS=\
      # Case16 \
      # Case17 \
 
-FILES=avg* grid* flow* scal* dns.out dns.log dns.err dns.war dns.def dns.ini.bak
+FILES=avg* grid* flow* scal* dns.out dns.log dns.err dns.war dns.def dns.ini.bak tower*
 
 ##########################################################################
 #   Directives

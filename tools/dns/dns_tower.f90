@@ -368,7 +368,6 @@ CONTAINS
              
              WRITE(cdummy,995) &
                   INT(tower_it(1))+1,itime,ivar
-             WRITE(*,*) tower_it(1), itime
 995          FORMAT('tower.mean','.',I6.6,'-',I6.6,'.',I1)
              OPEN(73,FILE=TRIM(ADJUSTL(cdummy)),ACCESS='STREAM', FORM='UNFORMATTED')  
              WRITE(73,POS=1) wrk3d(1:nitera_save*(tower_jmax+2)) 
