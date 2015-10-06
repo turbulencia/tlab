@@ -1,15 +1,18 @@
 #!/opt/local/bin/python2.7
 # script to process DNS statistics
 # Chiel van Heerwaarden, 2011
-
+# Cedrick Ansorge, 2015 
+#
 import stats2nc
 
-pathes=['/Users/cedrick/WORK/phd/experiments/ekman_stable/3072x0512x6144_1000_003.65/statistics/']
-types= ['avg','avg1s','int'] 
+#pathes=['/Users/cedrick/WORK/phd/experiments/ekman_stable/3072x0512x6144_1000_000.91/statistics/']
+pathes=['/Users/cedrick/WORK/phd/experiments/ekman_stable/3072x0512x6144_1000_000.91/statistics']
+types= ['avg','avg2s','avg1s','int'] 
+#types= ['int']
 jmax = 512
 for p in pathes:
     for t in types:
-        d = stats2nc.avg2dict(t,p, jmax,0)
+        d = stats2nc.avg2dict(t,p, jmax,0) # The last entry is to be set to 1 if gzip
         if ( d != -1 ):
             tstart=d['Iteration'][0] 
             tend  =d['Iteration'][len(d['Iteration'][:])-1]
