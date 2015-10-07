@@ -6,8 +6,18 @@ import gzip as gz
 import netCDF4
 import subprocess
 import array as arr
+import string
  
 from pylab import *
+from operator import itemgetter, attrgetter
+
+class ClassFile: 
+    def __init__(self,name,num): 
+        self.name=name 
+        self.num =num
+    def __repr__(self):
+        return repr((self.name,self.num)) 
+
 
 def is_number(s):
     try:
@@ -32,7 +42,7 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
     headerprof = 199
     headertime = 14 
     headerlength    = 21
-  elif ( avgtype == 'avg1s' or avgtype=='avg2s' or avgtype=='avg3s'): 
+  elif ( avgtype == 'avg1s' ): 
     headerprof = 44
     headertime = 11
     headerlength = 8
@@ -53,40 +63,47 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
   ########################################################### 
   if ( tstart == -1 ) : 
     files_from_list=1 
-    command = "find " + avgpath + ' -name \"' + avgtype + "?[0-9]*\""+gzip_str
-    print command
+    command = "ls " + avgpath + '/' + avgtype + "?[0-9]*"+gzip_str
+
     p = subprocess.Popen(command, shell=True,  
                          stdout=subprocess.PIPE) 
     file_list = []
     for file in p.stdout.readlines():
-      dummy = file.strip('\n') 
-      try:
-        with open(dummy):
-          cstart=len('{}/{}'.format(avgpath,avgtype))
-          cend=len(dummy)-gzip_count             #strip off .gz 
-          if ( is_number(dummy[cstart:cend]) ):
-            file_list.append(file.strip('\n')) 
+        dummy = file.strip('\n')  
+        try:
+            with open(dummy): 
+                if '.nc' not in dummy: 
+                    cstart=len('{}/{}'.format(avgpath,avgtype))
+                    cend=len(dummy)-gzip_count             #strip off .gz 
+                    filenum = string.atoi(dummy[cstart:cend])
+                    if ( is_number(filenum) ):
+                        file_list.append(ClassFile(dummy,filenum))
 
-      except IOError:
-        print 'ERROR - File', file, 'does not exist' 
+        except IOError:
+            print 'ERROR - File', file, 'does not exist' 
 
     retval = p.wait()
     ntimes = len(file_list)
   else :
     ntimes = (tend - tstart) / tstep + 1
 
+  print  file_list 
+
+  if ( files_from_list == 1 ) :
+      file_list=sorted(file_list,key=lambda ClassFile: ClassFile.num)
+
+  print  file_list 
   print 'FILES for', avgtype,':', ntimes 
+
 
   ############################################################ 
   if ( ntimes == 0 ) : 
     return -1 
   for t in range(ntimes): 
     if ( files_from_list == 1 ) :
-      filename = file_list[t] 
+      filename = file_list[t].name 
+      filenum = file_list[t].num 
       #number starts after <path>/<file type>
-      cstart=len('{}/{}'.format(avgpath,avgtype))
-      cend=len(filename)-gzip_count       #strip off .gz 
-      filenum = filename[cstart:cend]    
       tend = filenum
       if (t == 0): 
         tstart = filenum
@@ -94,14 +111,14 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
       filenum = tstart+t*tstep
       filename = '{}/{}{}{}'.format(avgpath,avgtype,filenum,gzip_str)
   
-    # process the file 
+    # process the file
     if ( gzip == 1):
       f = gz.open(filename,'r') 
     elif (gzip == 0): 
       f= open(filename,'r') 
    
     # retrieve the time
-    datastring = f.readline() 
+    datastring = f.readline()
     time = datastring.split()[2]
     print('{}: it{}  Time={}'.format(avgtype, filenum,time))
   
