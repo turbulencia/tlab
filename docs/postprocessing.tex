@@ -10,7 +10,7 @@ Allows for conditional analysis.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Probability Density Functions}
+\section{Probability density functions}
 
 See file {\tt dns/tools/statistics/pdfs}.
 
@@ -18,13 +18,109 @@ Allows for conditional analysis.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Conditional Analysis}
+\section{Conditional analysis}
 
 To be developed.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Two-point Statistics}
+\section{Spatially coarse grained data at full time resolution}
+
+Data can be saved at full temporal resolution with a user-defined spatial coarse graining. In that mode, on top of the standard output, a single file is generated for each horizontal  data point per restart. This allows to maintain full flexibility and at the same time to  avoid parallel I/O at this stage. 
+% 
+For small strides (see table), this approach may produce a large number of files which can cause problems if the data is not converted to netCDF immediately after a simulation is run. 
+% 
+The files can be merged into a netCDF file with the script \texttt{scripts/python/tower2nc.py}. 
+
+{
+\centering
+\setlength{\tabcolsep}{0pt}
+\footnotesize
+
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [SaveTowers]}\\
+%
+\tt Stride & {\it value1, value2, value3} & Strides along the directions $Ox$, $Oy$ and $Oz$.
+\end{longtable}
+
+}
+
+For example, {\tt Stride=0,0,0} would not save any data; {\tt Stride=1,1,1} would save all points, but it more efficient to use {\tt Iteration.Restart=1}; {\tt Stride=16, 1,16} would save vertical profiles every 16x16 horizontal point. A Stride of 0 has no effect whatsoever (no output will be generated). \textit{Note: vertical corse graining is not tested, but should work. }
+
+\begin{description} 
+\item[File name] ~\\ 
+  \textbf{The file name contains crucial information} which is not stored elsewhere. 
+  Hence, files should not be renamed.
+  Output files are named by the following scheme \\[0.25em]
+  \begin{tabular}{r c r c r c r c r c r} 
+    tower&.&iloc&$\times$&kloc  &.&$t_\mathrm{start}$&-&$t_\mathrm{end}$&.&ivar\\
+    tower&.&000015&$\times$&000015&.&000001&-&000010&.&1
+  \end{tabular}\\[0.25em]
+  %
+  Only one scalar is supported, and the variables (ivar) are \\[0.25em]
+  \centerline{
+    \begin{tabular}{r l}
+      1--3 & velocities ($u,v,w$) \\ 
+      4    & pressure ($p$) \\ 
+      5    & scalar1 ($s_1$)\\
+    \end{tabular}
+  }
+  In case of multiple scalars, only the first one will be output. 
+%
+\item[File structure] ~\\
+  The file consists of $nt=it_\mathrm{end}-it_\mathrm{start}+1$ records. Irrespective of the 
+  iteration being an integer, all data is saved in double precision real format, 
+  i.e. one record has $(ny+2)*8\,Bytes$. 
+  The whole file has $8* (it_\mathrm{end}-it_\mathrm{start}+1)  * (ny+2)\,Bytes$. \\ 
+  \begin{figure}
+    \begin{centering}
+      Inner direction of write $\rightarrow$ \\[0.25em] 
+      \begin{tabular}{| l | l | c | c | c | c | }  
+        \hline
+        $it_\mathrm{start}$ & $t(it_\mathrm{start})$ & $v_{ivar}(y_1)$ & $v_{ivar}(y_2)$ & \ldots & $v_{ivar}(ny)$ \\     \hline
+        $it_\mathrm{start}+1$ & $t(it_\mathrm{start}+1)$ & $v_{ivar}(y_1)$ & $v_{ivar}(y_2)$ & \ldots & $v_{ivar}(ny)$ \\ 
+        $\qquad$\vdots & $\qquad$\vdots & \vdots & \vdots & ~ & \vdots \\
+        $it_\mathrm{end}-1$   & $t(it_\mathrm{end}-1)$ & $v_{ivar}(y_1)$ & $v_{ivar}(y_2)$ & \ldots & $v_{ivar}(ny)$ \\ \hline
+        $it_\mathrm{end}$   & $t(it_\mathrm{end})$ & $v_{ivar}(y_1)$ & $v_{ivar}(y_2)$ & \ldots & $v_{ivar}(ny)$ \\ 
+        \hline
+      \end{tabular}\\
+    \end{centering}
+  \caption{Internal organization of tower files.}
+   \end{figure}  
+  \item[netCDF output]~ \\ 
+    The python script \[\texttt{tlab/scripts/python/tower\_merge.py}\] is available to bundle tower files from one restart into a single netCDF file which 
+    is then self-descriptive through its Meta-data. The script handles tower files of multiple restarts, but it will generate one netCDF file per restart.  
+    The python script is executed in the directory where the tower file resides. 
+    It relies on 
+    \begin{itemize}  
+      \item availability of \textbf{all} tower files belonging to one restart, 
+      \item the \texttt{grid} file used for the simulation,
+      \item the \texttt{dns.ini} used for the simulation (restart etc. does not matter, but the value of \texttt{Stride} 
+        in the section \texttt{[SaveTowers]} must not change),
+      \item a properly installed \texttt{netCDF4-python} library. (On ZMAW computers, it may be necessary to load a particular 
+        python module).  
+        
+    \end{itemize} 
+    \textbf{The script is not thread-safe}, i.e. it may only be run once at the same time 
+    one the same system. This is ascertained by a lock in the form of an empty file which is touched 
+    in the working directory. 
+    %
+    \par 
+    % 
+    The script moves tower files to a directory named \texttt{towerdump\_}$<$\texttt{TIME\_STAMP}$>$. Once the script 
+    exited successfully and integrity of the netCDF file was checked, this directory may be tarred and archived or removed. 
+    % 
+    Should, for any reason, the script exit before successful completion, the files that were already moved to the \texttt{towerdump} 
+    \textbf{must be copied back} before the script is run again. 
+    % 
+\end{description}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Two-point statistics}
 \sloppy
 
 See file {\tt dns/tools/statistics/spectra}. Based on package FFTW \cite{Frigo:2005}.
@@ -116,7 +212,7 @@ terms of different properties.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Summary of Budget Equations for Second-Order Moments}
+\section{Summary of budget equations for second-order moments}
 
 \subsection{Reynolds Stresses}
 

@@ -42,7 +42,7 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
     headerprof = 199
     headertime = 14 
     headerlength    = 21
-  elif ( avgtype == 'avg1s' ): 
+  elif ( avgtype == 'avg1s' or avgtype == 'avg2s' or avgtype == 'avg3s' ): 
     headerprof = 44
     headertime = 11
     headerlength = 8
@@ -87,12 +87,12 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
   else :
     ntimes = (tend - tstart) / tstep + 1
 
-  print  file_list 
+#  print  file_list 
 
   if ( files_from_list == 1 ) :
       file_list=sorted(file_list,key=lambda ClassFile: ClassFile.num)
 
-  print  file_list 
+#  print  file_list 
   print 'FILES for', avgtype,':', ntimes 
 
 
