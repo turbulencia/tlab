@@ -8,6 +8,8 @@
 !#              Created
 !# 2012/12/20 - J.P. Mellado
 !#              Rearranged to reduce transpositions more
+!# 2015/10/09 - J.P. Mellado
+!#              Extracting source code into arrays FI_SOURCES_*
 !#
 !########################################################################
 !# DESCRIPTION
@@ -23,9 +25,6 @@
 !# Oz momentum equation, stored in tmp6 and then used as needed. This
 !# saves 2 MPI transpositions. 
 !# Includes the scalar to benefit from the same reduction
-!#
-!########################################################################
-!# ARGUMENTS 
 !#
 !########################################################################
 SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
@@ -64,8 +63,8 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! -----------------------------------------------------------------------
   TINTEGER is, ij, k, nxy, ip_b, ip_t
-  TINTEGER ibc, isource_scal(MAX_NSP)
-  TREAL dummy, diff, u_geo, w_geo
+  TINTEGER ibc
+  TREAL dummy, diff
 
   TINTEGER siz, srt, end    !  Variables for OpenMP Partitioning 
 
@@ -77,12 +76,15 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! #######################################################################
   nxy   = imax*jmax
-  u_geo = COS(rotn_param(1))
-  w_geo =-SIN(rotn_param(1))
 
 #ifdef USE_BLAS
   ilen = isize_field
 #endif
+
+! #######################################################################
+! Source terms in momentum equations
+! #######################################################################
+  CALL FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
 
 ! #######################################################################
 ! Ox diffusion and convection terms in Ox momentum eqn
@@ -105,54 +107,13 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
        dy, w, tmp3, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)  ! tmp2 is used below in BCs
 
-! -----------------------------------------------------------------------
-! Coriolis. So far, rotation only in the Oy direction. 
-! -----------------------------------------------------------------------
-!$omp parallel default( shared ) private( ij, dummy,srt,end,siz )
-  CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
-  IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
-     dummy = rotn_vector(2)
-     DO ij = srt,end
-        h3(ij) = h3(ij) + tmp1(ij) + tmp4(ij) + visc*tmp3(ij) - v(ij)*tmp2(ij) & 
-             + dummy*( u(ij)-u_geo ) 
-     ENDDO
-! -----------------------------------------------------------------------
-  ELSE
-     DO ij = srt,end
-        h3(ij) = h3(ij) + tmp1(ij) + tmp4(ij) + visc*tmp3(ij) - v(ij)*tmp2(ij) 
-     ENDDO
-  ENDIF
-!$omp end parallel
-
-! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
-! -----------------------------------------------------------------------
-  IF ( ibodyforce_z .EQ. EQNS_NONE ) THEN
-  ELSE
-     wrk1d(:,1) = C_0_R
-     CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
-     
 !$omp parallel default( shared ) &
-#ifdef USE_BLAS
-!$omp private( ilen, dummy, srt,end,siz)
-#else     
-!$omp private( ij,   dummy, srt,end,siz )
-#endif
-     CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
-     dummy = body_vector(3)
-
-#ifdef USE_BLAS
-     ilen = siz
-     CALL DAXPY(ilen, dummy, wrk3d(srt), 1, h3(srt), 1)
-#else
-     DO ij = srt,end
-        h3(ij) = h3(ij) + dummy*wrk3d(ij)
-     ENDDO
-#endif
-
+!$omp private( ij, srt,end,siz )
+  CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
+  DO ij = srt,end
+     h3(ij) = h3(ij) + tmp1(ij) + tmp4(ij) + visc*tmp3(ij) - v(ij)*tmp2(ij) 
+  ENDDO
 !$omp end parallel
-     
-  ENDIF
 
 ! -----------------------------------------------------------------------
 ! BCs s.t. derivative d/dy(w) is zero
@@ -182,41 +143,16 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   CALL OPR_BURGERS_X(i1,i0, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
        dx, v,u,tmp5, tmp3, i0,i0, i0,i0, tmp2, wrk2d,wrk3d) ! tmp5 contains u transposed
 
-! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
-! -----------------------------------------------------------------------
-
-  IF ( ibodyforce_y .EQ. EQNS_NONE ) THEN
 !$omp parallel default( shared ) &
-#ifdef USE_BLAS
-!$omp private( ilen, srt,end,siz, dummy )
-#else
-!$omp private( ij,   srt,end,siz, dummy )
-#endif 
-     CALL DNS_OMP_PARTITION(isize_field, srt,end,siz) 
-     DO ij = srt,end
-        h2(ij) = h2(ij) + tmp1(ij) + tmp4(ij) + tmp3(ij)
-     ENDDO
+!$omp private( ij, srt,end,siz )
+  CALL DNS_OMP_PARTITION(isize_field, srt,end,siz) 
+  DO ij = srt,end
+     h2(ij) = h2(ij) + tmp1(ij) + tmp4(ij) + tmp3(ij)
+  ENDDO
 !$omp end parallel 
-! -----------------------------------------------------------------------
-  ELSE
-     CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, b_ref)
-!$omp parallel default( shared ) &
-#ifdef USE_BLAS
-!$omp private( ilen, srt,end,siz, dummy )
-#else
-!$omp private( ij,   srt,end,siz, dummy )
-#endif 
-     CALL DNS_OMP_PARTITION(isize_field, srt,end,siz)      
-     dummy = body_vector(2)
-     DO ij = srt,end
-        h2(ij) = h2(ij) + tmp1(ij) + tmp4(ij) + tmp3(ij) + dummy*wrk3d(ij)
-     ENDDO
-!$omp end parallel 
-  ENDIF
 
 ! #######################################################################
-! Diffusion and convection terms in Ox momentum eqn
+! diffusion and convection terms in Ox momentum eqn
 ! The term \nu u'' - u u' has been already added in the beginning
 ! #######################################################################
   CALL OPR_BURGERS_Z(i1,i0, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
@@ -224,57 +160,13 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
        dy, u, tmp3, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)  ! tmp2 is used below in BCs
 
-! -----------------------------------------------------------------------
-! Coriolis. So far, rotation only in the Oy direction. 
-! -----------------------------------------------------------------------
-
-!$omp parallel default( shared ) private( ij, dummy,srt,end,siz )
-
-  CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
-
-  IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
-     dummy = rotn_vector(2)
-     DO ij = srt, end 
-        h1(ij) = h1(ij) + tmp4(ij) + visc*tmp3(ij) - v(ij)*tmp2(ij) &
-             + dummy*( w_geo-w(ij) )
-     ENDDO
-! -----------------------------------------------------------------------
-  ELSE
-     DO ij = srt,end
-        h1(ij) = h1(ij) + tmp4(ij) + visc*tmp3(ij) - v(ij)*tmp2(ij)
-     ENDDO
-  ENDIF
-!$omp end parallel
-
-! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
-! -----------------------------------------------------------------------
-  IF ( ibodyforce_x .EQ. EQNS_NONE ) THEN
-  ELSE
-     wrk1d(:,1) = C_0_R
-     CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
-
 !$omp parallel default( shared ) &
-#ifdef USE_BLAS
-!$omp private( ilen, dummy,srt,end,siz )
-#else 
-!$omp private( ij,   dummy,srt,end,siz )
-#endif 
-
-     CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
-     dummy = body_vector(1)
-
-#ifdef USE_BLAS
-     ilen = siz
-     CALL DAXPY(ilen, dummy, wrk3d(srt), 1, h1(srt), 1)
-#else
-     DO ij = srt,end
-        h1(ij) = h1(ij) + dummy*wrk3d(ij)
-     ENDDO
-#endif
+!$omp private( ij, srt,end,siz )
+  CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
+  DO ij = srt,end
+     h1(ij) = h1(ij) + tmp4(ij) + visc*tmp3(ij) - v(ij)*tmp2(ij)
+  ENDDO
 !$omp end parallel
-     
-  ENDIF
 
 ! -----------------------------------------------------------------------
 ! BCs s.t. derivative d/dy(u) is zero
@@ -401,13 +293,13 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
 
 ! #######################################################################
-! Scalars
+! source terms in scalar equations
 ! #######################################################################
-  isource_scal = -1 ! Define the calculation of source terms
-  IF ( irad_scalar .GT. 0 ) isource_scal(irad_scalar) = 1
-  IF ( imixture    .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) isource_scal(3) = 2
+  CALL FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
 
-! -----------------------------------------------------------------------
+! #######################################################################
+! diffusion and convection terms in scalar eqn
+! #######################################################################
   DO is = 1,inb_scal ! Start loop over the N scalars
      
      IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R
@@ -420,50 +312,16 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
           dy, s(1,is), tmp3, i0,i0, i0,i0, tmp4, wrk1d,wrk2d,wrk3d)
      
-! -----------------------------------------------------------------------
-! Sources (in wrk3d)
-! -----------------------------------------------------------------------
-     IF ( isource_scal(is) .GT. 0 ) THEN
-        IF ( isource_scal(is) .EQ. 1 ) THEN ! Special source term
-           CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(:,inb_scal_array), rad_param,&
-                wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), wrk3d)
-        ELSE
-           CALL FI_SOURCES(isource_scal(is), is, imax,jmax,kmax, y, s, wrk3d)
-        ENDIF
-        
-!$omp parallel default( shared ) private( ij,srt,end,siz )
-        CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
-        DO ij = srt,end
-           hs(ij,is) = hs(ij,is) + tmp1(ij) + tmp2(ij) + diff*tmp3(ij)  &
-                - v(ij)*tmp4(ij) + wrk3d(ij)
-        ENDDO
+!$omp parallel default( shared ) &
+!$omp private( ij, srt,end,siz )
+     CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
+     DO ij = srt,end
+        hs(ij,is) = hs(ij,is) + tmp1(ij) + tmp2(ij) + diff*tmp3(ij)  &
+             - v(ij)*tmp4(ij)
+     ENDDO
 !$omp end parallel
-
-     ELSE
-!$omp parallel default( shared ) private( ij,srt,end,siz )
-        CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
-        DO ij = srt,end
-           hs(ij,is) = hs(ij,is) + tmp1(ij) + tmp2(ij) + diff*tmp3(ij)  &
-                - v(ij)*tmp4(ij)
-        ENDDO
-!$omp end parallel
-
-     ENDIF
      
   ENDDO
-
-!------------------------------------------------------------------------
-! Transport (such as settling); not in main loop because of required array space
-!------------------------------------------------------------------------
-  IF ( itransport .GT. 0 ) THEN  
-     DO is = 1,inb_scal ! Loop over the scalars
-        CALL FI_TRANS_FLUX(itransport, imax,jmax,kmax, is, inb_scal_array, trans_param, settling, &
-             dy, s,tmp1, tmp4, wrk1d,wrk2d,wrk3d)
-        DO ij = 1,isize_field    
-           hs(ij,is) = hs(ij,is) + tmp1(ij)
-        ENDDO
-     ENDDO
-  ENDIF
   
 ! #######################################################################
 ! Boundary conditions
