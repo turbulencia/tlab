@@ -82,9 +82,10 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 #endif
 
 ! #######################################################################
-! Source terms in momentum equations
+! Source terms
 ! #######################################################################
   CALL FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
+  CALL FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
 
 ! #######################################################################
 ! Ox diffusion and convection terms in Ox momentum eqn
@@ -152,7 +153,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel 
 
 ! #######################################################################
-! diffusion and convection terms in Ox momentum eqn
+! Diffusion and convection terms in Ox momentum eqn
 ! The term \nu u'' - u u' has been already added in the beginning
 ! #######################################################################
   CALL OPR_BURGERS_Z(i1,i0, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
@@ -293,12 +294,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
 
 ! #######################################################################
-! source terms in scalar equations
-! #######################################################################
-  CALL FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
-
-! #######################################################################
-! diffusion and convection terms in scalar eqn
+! Diffusion and convection terms in scalar eqn
 ! #######################################################################
   DO is = 1,inb_scal ! Start loop over the N scalars
      
