@@ -83,7 +83,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   ! 
   TINTEGER :: nxy_trans,nyz_trans,nxy,id,imeasure,ij,k,is,commID
   TINTEGER :: finished,ip_b,ip_t,ibc
-  TREAL tdummy,!bdummy,fdummy,u_geo,w_geo 
+  TREAL tdummy!,bdummy,fdummy,u_geo,w_geo 
   TREAL, DIMENSION(:), POINTER :: p_bcs 
   !
   TREAL, DIMENSION(inb_scal)      :: err_s, diff  
