@@ -120,6 +120,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, x,y,z,dx,dy,dz, u,v,w, tmp1,tmp2,tmp3,tmp4,
 
   ELSE
      wx = u; wy = v; wz = w
+     IF ( kmax_total .EQ. 1 ) wz = 0
 
   ENDIF
 
