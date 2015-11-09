@@ -22,6 +22,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   USE OMP_LIB,    ONLY : omp_get_thread_num 
 
   USE DNS_CONSTANTS, ONLY : lfile,wfile,efile
+  !
   USE DNS_GLOBAL, ONLY : i1bc,iunifx,j1bc,iunify,k1bc
   USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total,imode_fdm
   USE DNS_GLOBAL, ONLY : iunifz,inb_flow,inb_vars,inb_scal,visc,schmidt,prandtl 
@@ -82,7 +83,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   ! 
   TINTEGER :: nxy_trans,nyz_trans,nxy,id,imeasure,ij,k,is,commID
   TINTEGER :: finished,ip_b,ip_t,ibc
-  TREAL tdummy,bdummy,fdummy,u_geo,w_geo 
+  TREAL tdummy,!bdummy,fdummy,u_geo,w_geo 
   TREAL, DIMENSION(:), POINTER :: p_bcs 
   !
   TREAL, DIMENSION(inb_scal)      :: err_s, diff  
@@ -121,13 +122,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   ptime =0
 
   nxy=imax*jmax 
-  u_geo = COS(rotn_param(1))
-  w_geo =-SIN(rotn_param(1)) 
-  IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN 
-     fdummy= rotn_vector(2) 
-  ELSE 
-     fdummy = C_0_R 
-  ENDIF
+  ! u_geo = COS(rotn_param(1))
+  ! w_geo =-SIN(rotn_param(1)) 
+  ! IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN 
+  !    fdummy= rotn_vector(2) 
+  ! ELSE 
+  !    fdummy = C_0_R 
+  ! ENDIF
 
   DO is=1,inb_scal
      diff(is) = visc*prandtl*schmidt(is) 
@@ -137,6 +138,17 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   t_run = rtime
   t_init= rtime  
 
+! #######################################################################
+! Source terms
+! #######################################################################
+  ! CALL FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
+  ! CALL FI_SOURCES_SCAL(y,dy, s, hs, tmp11,tmp12,tmp21,tmp22, wrk1d,wrk2d,wrk3d)
+  CALL FI_SOURCES_FLOW(u,s, h1, b_ref, wrk1d,wrk3d)
+  CALL FI_SOURCES_SCAL(y,dy, s, hs, tmp11,tmp12,tmp21,tmp22, wrk1d,wrk2d,wrk3d)
+
+! #######################################################################
+! Advection-diffusion terms
+! #######################################################################
   CALL NB3DFFT_NBC_PREPARE(24,.FALSE.)
 
 !$omp parallel num_threads(2)  &
@@ -195,7 +207,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
      t_tmp = -MPI_WTime()
      CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
           dy, u, tmp41, i0,i0, i0,i0, tmp42, wrk1d,wrk2d,wrk3d)  
-     h1=h1+visc*tmp41 - v*tmp42 + fdummy*(w_geo-w)
+!     h1=h1+visc*tmp41 - v*tmp42 + fdummy*(w_geo-w)
+     h1=h1+visc*tmp41 - v*tmp42 !+ fdummy*(w_geo-w)
 
      ! -----------------------------------------------------------------------
      ! BCs s.t. derivative d/dy(u) is zero
@@ -218,7 +231,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
      h2=h2+visc*tmp41 - v*tmp42
      CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
           dy, w, tmp41, i0,i0, i0,i0, tmp42, wrk1d,wrk2d,wrk3d)  
-     h3=h3+visc*tmp41 - v*tmp42 + fdummy*(u-u_geo)
+!     h3=h3+visc*tmp41 - v*tmp42 + fdummy*(u-u_geo)
+     h3=h3+visc*tmp41 - v*tmp42 !+ fdummy*(u-u_geo)
 
      ! -----------------------------------------------------------------------
      ! BCs s.t. derivative d/dy(w) is zero
@@ -309,14 +323,14 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
            CALL NB3DFFT_R2R_Y1UNPACK(bt1,tmp11,info(BUXY),t_tmp);     t_comp=t_comp+t_tmp   
            ! 
            t_tmp = -MPI_WTime() 
-           IF ( ibodyforce_x .EQ. EQNS_NONE ) THEN
+           ! IF ( ibodyforce_x .EQ. EQNS_NONE ) THEN
               h1=h1+bt1
-           ELSE 
-              wrk1d(:,1)=C_0_R
-              CALL FI_BUOYANCY(ibodyforce,imax,jmax,kmax,body_param,s,tmp11,wrk1d) 
-              bdummy=body_vector(1)
-              h1=h1+bt1+bdummy*tmp11
-           ENDIF
+           ! ELSE 
+           !    wrk1d(:,1)=C_0_R
+           !    CALL FI_BUOYANCY(ibodyforce,imax,jmax,kmax,body_param,s,tmp11,wrk1d) 
+           !    bdummy=body_vector(1)
+           !    h1=h1+bt1+bdummy*tmp11
+           ! ENDIF
            t_ser = t_ser + (t_tmp + MPI_WTime())
            !
            CALL NB3DFFT_R2R_YXCOMM(v,bt1,bt1,tmp11,info(FVYX),t_tmp); t_comp=t_comp+t_tmp  
@@ -327,14 +341,14 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
            CALL NB3DFFT_R2R_Y2UNPACK(bt2,tmp21,info(BWZY),t_tmp);      t_comp=t_comp+t_tmp  
            !
            t_tmp = -MPI_WTime()
-           IF ( ibodyforce_z .EQ. EQNS_NONE ) THEN 
+           ! IF ( ibodyforce_z .EQ. EQNS_NONE ) THEN 
               h3=h3+bt2
-           ELSE 
-              wrk1d(:,1)=C_0_R
-              CALL FI_BUOYANCY(ibodyforce,imax,jmax,kmax, body_param,s,tmp21,wrk1d)  
-              bdummy=body_vector(3) 
-              h3=h3+bt2+bdummy*tmp21
-           ENDIF
+           ! ELSE 
+           !    wrk1d(:,1)=C_0_R
+           !    CALL FI_BUOYANCY(ibodyforce,imax,jmax,kmax, body_param,s,tmp21,wrk1d)  
+           !    bdummy=body_vector(3) 
+           !    h3=h3+bt2+bdummy*tmp21
+           ! ENDIF
            t_ser = t_ser + (t_tmp+MPI_WTime())
            !
            CALL NB3DFFT_R2R_YZCOMM(v,tmp21,tmp21,bt2,info(FVYZ),t_tmp);t_comp=t_comp+t_tmp
@@ -426,14 +440,14 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
            CALL NB3DFFT_R2R_Y1UNPACK(bt1,tmp11,info(BVXY),t_tmp);     t_comp=t_comp+t_tmp   
            !
            t_tmp = -MPI_WTime()
-           IF ( ibodyforce_y .EQ. EQNS_NONE ) THEN 
+!           IF ( ibodyforce_y .EQ. EQNS_NONE ) THEN 
               h2=h2+bt1
-           ELSE 
-              !
-              CALL FI_BUOYANCY(ibodyforce,imax,jmax,kmax,body_param,s,tmp11,b_ref)
-              bdummy=body_vector(2)
-              h2=h2+bt1+bdummy*tmp11
-           ENDIF
+           ! ELSE 
+           !    !
+           !    CALL FI_BUOYANCY(ibodyforce,imax,jmax,kmax,body_param,s,tmp11,b_ref)
+           !    bdummy=body_vector(2)
+           !    h2=h2+bt1+bdummy*tmp11
+           ! ENDIF
            t_ser = t_ser + (t_tmp+MPI_WTime())
            !
            IF ( inb_scal .GT. 1 ) &

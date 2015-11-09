@@ -38,6 +38,7 @@ Case15. Radiation case.
 Case16. Channel flow. 
 Case17. Same as 16, implicit solver.
 Case18. Radiation case with evaporative cooling.
+Case19. Radiation case with evaporative cooling and settling.
 
 3D cases
 
