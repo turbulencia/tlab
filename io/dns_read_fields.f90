@@ -137,7 +137,10 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
 #endif
 
 ! -------------------------------------------------------------------
-  ELSE IF ( imode_files .EQ. DNS_FILE_NETCDF )   THEN
+  ELSE IF ( imode_files .EQ. DNS_FILE_NETCDF )   THEN  
+     ! To be implemented 
+  ELSE IF ( imode_files .EQ. DNS_NOFILE )        THEN  
+     ! Do nothing
   ENDIF
 
   RETURN

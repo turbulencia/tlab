@@ -6,6 +6,7 @@
 #define DNS_FILE_RAWARRAY   1
 #define DNS_FILE_RAWSPLIT   2
 #define DNS_FILE_NETCDF     3
+#define DNS_NOFILE          4
 
 ! Flow Types
 #define DNS_FLOW_SHEAR       1
