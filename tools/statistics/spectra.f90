@@ -85,6 +85,7 @@ PROGRAM SPECTRA
   TINTEGER is, iv, iv_offset, iv1, iv2, ip, j
   TINTEGER jmax_aux, kxmax,kymax,kzmax
   TINTEGER mpi_subarray(3)
+  TINTEGER icalc_radial 
   TREAL norm, dummy
 
   TINTEGER kx_total,ky_total,kz_total, kr_total, isize_spec2dr
@@ -114,6 +115,9 @@ PROGRAM SPECTRA
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
 #endif
+
+
+  icalc_radial = 1 
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
@@ -314,6 +318,13 @@ PROGRAM SPECTRA
 ! Read the grid 
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
+
+
+  ! radial correlation is conceptually fraud in the case of asymmetric domain AND horizontally anisotropic grid spacing
+  ! Not [properly] parallelized in the i direction (???) 
+  IF ( imax_total .NE. kmax_total .OR. dx(1) .NE. dz(1) .OR. ims_npro_i .GT. 1 ) &
+       icalc_radial = 0 
+  
 
 ! ------------------------------------------------------------------------
 ! Define size of blocks
@@ -518,8 +529,7 @@ PROGRAM SPECTRA
 ! Reduce 2D correlation into array wrk3d and accumulate 1D correlation
               wrk3d = C_0_R
               CALL REDUCE_CORRELATION(imax,jmax,kmax, opt_block, kr_total, &
-                   txc(:,2), wrk3d, outx(:,iv),outz(:,iv),outr(:,iv), wrk1d(:,2),wrk1d(:,4)) 
-
+                   txc(:,2), wrk3d, outx(:,iv),outz(:,iv),outr(:,iv), wrk1d(:,2),wrk1d(:,4),icalc_radial) 
            ENDIF
 
 ! Check Parseval's relation
@@ -534,7 +544,7 @@ PROGRAM SPECTRA
 
         ENDDO
         
-        IF ( flag_mode .EQ. 2 ) THEN  ! Calculate sampling size for radial correlation
+        IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1) THEN  ! Calculate sampling size for radial correlation
            samplesize = C_0_R
            CALL RADIAL_SAMPLESIZE(imax,jmax,kmax, kr_total, samplesize)
         ENDIF
@@ -560,7 +570,7 @@ PROGRAM SPECTRA
               IF ( ims_pro .EQ. 0 ) outr(1:isize_spec2dr,iv) = wrk3d(1:isize_spec2dr)
            ENDDO
 
-           IF ( flag_mode .EQ. 2 ) THEN  ! Calculate sampling size for radial correlation
+           IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1 ) THEN !Calculate sampling size for radial correlation
               CALL MPI_Reduce(samplesize, wrk3d, kr_total, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err) 
               IF ( ims_pro .EQ. 0 ) samplesize(1:kr_total) = wrk3d(1:kr_total)
            ENDIF
@@ -570,7 +580,7 @@ PROGRAM SPECTRA
 #ifdef USE_MPI
            IF ( ims_pro .EQ. 0 ) THEN
 #endif
-           IF ( flag_mode .EQ. 2 ) THEN
+           IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1 ) THEN
               DO iv1 = 1, kr_total
                  IF ( samplesize(iv1) .GT. C_0_R ) samplesize(iv1) = C_1_R /samplesize(iv1)
               ENDDO
@@ -597,9 +607,11 @@ PROGRAM SPECTRA
            sizes(1) = kzmax*jmax_aux; sizes(2) = sizes(1); sizes(3) = 0; sizes(4) = nfield
            WRITE(fname,*) itime; fname = 'z'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
            CALL IO_WRITE_SUBARRAY4(i2, sizes, fname, varname, outz, mpi_subarray(2), wrk3d)
-        
-           WRITE(fname,*) itime; fname = 'r'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
-           CALL WRITE_SPECTRUM1D(fname, varname, kr_total*jmax_aux, nfield, outr)
+
+           IF ( icalc_radial .EQ. 1 ) THEN 
+              WRITE(fname,*) itime; fname = 'r'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
+              CALL WRITE_SPECTRUM1D(fname, varname, kr_total*jmax_aux, nfield, outr)
+           ENDIF
            
 ! Saving 2D fields
            IF ( opt_ffmt .EQ. 1 ) THEN 

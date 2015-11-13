@@ -257,10 +257,12 @@ END SUBROUTINE REDUCE_SPECTRUM
 !########################################################################
 !########################################################################
 ! Retaining just 1/4 of the lags domain
+! ARGUMENTS: 
+! icalc_radial   - whether to reduce radial correlations or not 
 SUBROUTINE REDUCE_CORRELATION(nx,ny,nz, nblock, nr_total, &
-     in, data_2d,data_x,data_z,data_r, variance1, variance2)
+     in, data_2d,data_x,data_z,data_r, variance1, variance2,icalc_radial_in)
 
-  USE DNS_GLOBAL, ONLY : isize_wrk1d
+  USE DNS_GLOBAL, ONLY : isize_wrk1d,imax_total,kmax_total
 #ifdef USE_MPI 
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
 #endif 
@@ -268,6 +270,7 @@ SUBROUTINE REDUCE_CORRELATION(nx,ny,nz, nblock, nr_total, &
   IMPLICIT NONE 
 
   TINTEGER,                             INTENT(IN)  :: nx,ny,nz, nblock, nr_total
+  TINTEGER,OPTIONAL,                    INTENT(IN)  :: icalc_radial_in  ! defaults to 1 
   TREAL, DIMENSION(nx,ny,nz),           INTENT(IN)  :: in
   TREAL, DIMENSION(nx,ny/nblock,nz),    INTENT(OUT) :: data_2d 
   TREAL, DIMENSION(nx,ny/nblock),       INTENT(OUT) :: data_x 
@@ -277,8 +280,14 @@ SUBROUTINE REDUCE_CORRELATION(nx,ny,nz, nblock, nr_total, &
   TREAL, DIMENSION(isize_wrk1d),        INTENT(OUT) :: variance2 ! to validate
 
 ! -----------------------------------------------------------------------
-  TINTEGER i,j,k, ipy,ny_loc, i_global,k_global, r_global
+  TINTEGER i,j,k, ipy,ny_loc, i_global,k_global, r_global, icalc_radial 
   TREAL norm
+
+  IF ( present(icalc_radial_in) ) THEN 
+     icalc_radial = icalc_radial_in 
+  ELSE 
+     icalc_radial = 1 
+  ENDIF
 
 ! #######################################################################
   variance2(:) = C_0_R ! use variance to control result
@@ -315,10 +324,21 @@ SUBROUTINE REDUCE_CORRELATION(nx,ny,nz, nblock, nr_total, &
            IF ( k_global .EQ. 1 ) data_x(i,ipy) = data_x(i,ipy) + in(i,j,k)*norm
 
            IF ( i_global .EQ. 1 ) data_z(k,ipy) = data_z(k,ipy) + in(i,j,k)*norm
-           
-           r_global = SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2) )  + 1
-           IF ( r_global .LE. nr_total ) data_r(r_global,ipy) = data_r(r_global,ipy) + data_2d(i,ipy,k)
 
+           ! Avoid contamination by periodicity of domain 
+           ! --> has to be taken into account in RADIAL_SAMPLESIZE as well 
+           IF ( icalc_radial .EQ. 1 .AND. & 
+                k_global .LT. kmax_total/2 .AND. i_global .LT. imax_total/2 ) THEN 
+              
+              !r_global = SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2) )  + 1
+              !r_global = CEILING(SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2) )  + 1)
+              !IF ( r_global .LE. nr_total ) data_r(r_global,ipy) = data_r(r_global,ipy) + data_2d(i,ipy,k)
+              ! Check: Do we still need the 'IF'? 
+
+              r_global = INT(SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2)))  + 1
+              IF ( r_global .LE. nr_total ) data_r(r_global,ipy) = data_r(r_global,ipy) + in(i,j,k)
+
+           ENDIF
 ! use variance to control result
            IF ( i_global .EQ. 1 .AND. k_global .EQ. 1 ) variance2(j) = in(i,j,k)
            
@@ -332,6 +352,8 @@ END SUBROUTINE REDUCE_CORRELATION
 !########################################################################
 !########################################################################
 SUBROUTINE RADIAL_SAMPLESIZE(nx,ny,nz, nr_total, samplesize)
+
+  USE DNS_GLOBAL, ONLY : imax_total, kmax_total 
 
 #ifdef USE_MPI 
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
@@ -359,9 +381,13 @@ SUBROUTINE RADIAL_SAMPLESIZE(nx,ny,nz, nr_total, samplesize)
 #else 
         i_global = i
 #endif 
-        r_global = SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2) ) + 1
-        IF ( r_global .LE. nr_total ) THEN
-           samplesize(r_global) = samplesize(r_global) + C_1_R
+        ! Avoid contamination by periodicity of the domain. 
+        IF (i_global .LT. imax_total/2 .AND. k_global.LT. kmax_total/2) THEN  
+           !r_global = SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2) ) + 1
+           r_global = INT(SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2) )) + 1
+           IF ( r_global .LE. nr_total ) THEN
+              samplesize(r_global) = samplesize(r_global) + C_1_R
+           ENDIF
         ENDIF
      ENDDO
   ENDDO
