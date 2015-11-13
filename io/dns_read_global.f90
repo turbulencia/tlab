@@ -108,6 +108,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'rawarray' ) THEN; imode_files = DNS_FILE_RAWARRAY
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'rawsplit' ) THEN; imode_files = DNS_FILE_RAWSPLIT
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'netcdf'   ) THEN; imode_files = DNS_FILE_NETCDF
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'none'   )   THEN; imode_files = DNS_NOFILE
   ELSE
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong file format.')
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)

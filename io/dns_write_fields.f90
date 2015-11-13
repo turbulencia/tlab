@@ -125,7 +125,10 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
 
      ENDDO
 
-  ELSE IF ( imode_files .EQ. DNS_FILE_NETCDF )   THEN
+  ELSE IF ( imode_files .EQ. DNS_FILE_NETCDF )  THEN  
+     ! To be implemented 
+  ELSE IF ( imode_files .EQ. DNS_NOFILE )       THEN 
+     ! Do nothing
   ENDIF
 
   RETURN
