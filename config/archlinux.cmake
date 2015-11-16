@@ -3,8 +3,15 @@ if ( NOT BUILD_TYPE )
    set(BUILD_TYPE BIG)
 endif()
  
-if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build; not developed
-   message( FATAL_ERROR "Only BIG mode developed. CMake will exit." )
+if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build
+   set(ENV{FC} mpif90)
+   set(CMAKE_Fortran_COMPILER mpif90) 
+   set(USER_Fortran_FLAGS "-cpp -ffree-form -ffree-line-length-none -fno-automatic")
+   set(USER_Fortran_FLAGS_RELEASE "-fconvert=little-endian -O3 -ffast-math -mtune=native -march=native")
+
+   add_definitions(-DUSE_FFTW -DUSE_MPI -DUSE_MPI_IO)
+
+   set(CMAKE_BUILD_TYPE RELEASE)
 
 else() # compiler for serial build
    set(ENV{FC} gfortran)

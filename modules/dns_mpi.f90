@@ -4,7 +4,8 @@ MODULE DNS_MPI
   IMPLICIT NONE
   SAVE
 
-  INTEGER  :: ims_comm_xz, ims_comm_x, ims_comm_z
+  INTEGER  :: ims_comm_xz,     ims_comm_x,     ims_comm_z
+  INTEGER  :: ims_comm_xz_aux, ims_comm_x_aux, ims_comm_z_aux
 
   INTEGER  :: ims_pro,  ims_pro_i,  ims_pro_j,  ims_pro_k
   INTEGER  :: ims_npro, ims_npro_i, ims_npro_j, ims_npro_k

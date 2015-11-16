@@ -69,17 +69,16 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
 
         tmp_z(1:ny,k,1) = tmp_z(1:ny,k,1) + spec_2d(i,1:ny,k)
 
-! need to use CEILING here; otherwise the zero-wavenumber 
-! for radial spectra gets contaminated 
-!        kr_global = CEILING( SQRT( M_REAL(kx_global*kx_global + kz_global*kz_global) ) )
         kr_global = INT( SQRT( M_REAL((kx_global-1)**2 + (kz_global-1)**2) ) ) + 1           
-        spec_r(kr_global,:) = spec_r(kr_global,:) + spec_2d(i,:,k)
+        IF ( kr_global .LE. kr_total ) &
+           spec_r(kr_global,:) = spec_r(kr_global,:) + spec_2d(i,:,k)
 
 ! correction; half of the modes kx_global=1 have been counted twice 
         IF ( kx_global .EQ. 1 .AND. flag .EQ. 1 ) THEN
            tmp_z(1:ny,k,1) = tmp_z(1:ny,k,1) - spec_2d(i,1:ny,k)
  
-           spec_r(kr_global,:) = spec_r(kr_global,:) - spec_2d(i,:,k)
+           IF ( kr_global .LE. kr_total ) &
+                spec_r(kr_global,:) = spec_r(kr_global,:) - spec_2d(i,:,k)
         ENDIF
 
 ! correction; half of the modes kz_global=1 need to be counted twice
@@ -256,13 +255,10 @@ END SUBROUTINE REDUCE_SPECTRUM
 
 !########################################################################
 !########################################################################
-! Retaining just 1/4 of the lags domain
-! ARGUMENTS: 
-! icalc_radial   - whether to reduce radial correlations or not 
 SUBROUTINE REDUCE_CORRELATION(nx,ny,nz, nblock, nr_total, &
-     in, data_2d,data_x,data_z,data_r, variance1, variance2,icalc_radial_in)
+     in, data_2d,data_x,data_z,data_r, variance1, variance2, icalc_radial)
 
-  USE DNS_GLOBAL, ONLY : isize_wrk1d,imax_total,kmax_total
+  USE DNS_GLOBAL, ONLY : isize_wrk1d
 #ifdef USE_MPI 
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
 #endif 
@@ -270,7 +266,7 @@ SUBROUTINE REDUCE_CORRELATION(nx,ny,nz, nblock, nr_total, &
   IMPLICIT NONE 
 
   TINTEGER,                             INTENT(IN)  :: nx,ny,nz, nblock, nr_total
-  TINTEGER,OPTIONAL,                    INTENT(IN)  :: icalc_radial_in  ! defaults to 1 
+  TINTEGER,OPTIONAL,                    INTENT(IN)  :: icalc_radial ! whether to reduce radial correlations or not 
   TREAL, DIMENSION(nx,ny,nz),           INTENT(IN)  :: in
   TREAL, DIMENSION(nx,ny/nblock,nz),    INTENT(OUT) :: data_2d 
   TREAL, DIMENSION(nx,ny/nblock),       INTENT(OUT) :: data_x 
@@ -280,14 +276,8 @@ SUBROUTINE REDUCE_CORRELATION(nx,ny,nz, nblock, nr_total, &
   TREAL, DIMENSION(isize_wrk1d),        INTENT(OUT) :: variance2 ! to validate
 
 ! -----------------------------------------------------------------------
-  TINTEGER i,j,k, ipy,ny_loc, i_global,k_global, r_global, icalc_radial 
+  TINTEGER i,j,k, ipy,ny_loc, i_global,k_global, r_global
   TREAL norm
-
-  IF ( present(icalc_radial_in) ) THEN 
-     icalc_radial = icalc_radial_in 
-  ELSE 
-     icalc_radial = 1 
-  ENDIF
 
 ! #######################################################################
   variance2(:) = C_0_R ! use variance to control result
@@ -325,18 +315,9 @@ SUBROUTINE REDUCE_CORRELATION(nx,ny,nz, nblock, nr_total, &
 
            IF ( i_global .EQ. 1 ) data_z(k,ipy) = data_z(k,ipy) + in(i,j,k)*norm
 
-           ! Avoid contamination by periodicity of domain 
-           ! --> has to be taken into account in RADIAL_SAMPLESIZE as well 
-           IF ( icalc_radial .EQ. 1 .AND. & 
-                k_global .LT. kmax_total/2 .AND. i_global .LT. imax_total/2 ) THEN 
-              
-              !r_global = SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2) )  + 1
-              !r_global = CEILING(SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2) )  + 1)
-              !IF ( r_global .LE. nr_total ) data_r(r_global,ipy) = data_r(r_global,ipy) + data_2d(i,ipy,k)
-              ! Check: Do we still need the 'IF'? 
-
+           IF ( icalc_radial .EQ. 1 ) THEN
               r_global = INT(SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2)))  + 1
-              IF ( r_global .LE. nr_total ) data_r(r_global,ipy) = data_r(r_global,ipy) + in(i,j,k)
+              IF ( r_global .LE. nr_total ) data_r(r_global,ipy) = data_r(r_global,ipy) + in(i,j,k)*norm
 
            ENDIF
 ! use variance to control result
@@ -352,8 +333,6 @@ END SUBROUTINE REDUCE_CORRELATION
 !########################################################################
 !########################################################################
 SUBROUTINE RADIAL_SAMPLESIZE(nx,ny,nz, nr_total, samplesize)
-
-  USE DNS_GLOBAL, ONLY : imax_total, kmax_total 
 
 #ifdef USE_MPI 
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
@@ -381,14 +360,9 @@ SUBROUTINE RADIAL_SAMPLESIZE(nx,ny,nz, nr_total, samplesize)
 #else 
         i_global = i
 #endif 
-        ! Avoid contamination by periodicity of the domain. 
-        IF (i_global .LT. imax_total/2 .AND. k_global.LT. kmax_total/2) THEN  
-           !r_global = SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2) ) + 1
-           r_global = INT(SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2) )) + 1
-           IF ( r_global .LE. nr_total ) THEN
-              samplesize(r_global) = samplesize(r_global) + C_1_R
-           ENDIF
-        ENDIF
+        r_global = INT(SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2) )) + 1
+        IF ( r_global .LE. nr_total ) samplesize(r_global) = samplesize(r_global) + C_1_R
+
      ENDDO
   ENDDO
 
@@ -449,7 +423,7 @@ END SUBROUTINE WRITE_SPECTRUM1D
 SUBROUTINE DEFINE_ARRAY_TYPE(opt_main, nblock, subarray)
 
   USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total, imax,jmax,kmax
-  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_j, ims_offset_k, ims_err 
+  USE DNS_MPI!,    ONLY : ims_offset_i, ims_offset_j, ims_offset_k, ims_err, ims_comm_aux 
 
   IMPLICIT NONE 
 
@@ -461,6 +435,8 @@ SUBROUTINE DEFINE_ARRAY_TYPE(opt_main, nblock, subarray)
 ! -----------------------------------------------------------------------
   TINTEGER                :: ndims, i
   TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
+
+  INTEGER ims_color
 
 ! #######################################################################
   IF     ( opt_main .EQ. 1 .OR. opt_main .EQ. 2 ) THEN
@@ -493,29 +469,66 @@ SUBROUTINE DEFINE_ARRAY_TYPE(opt_main, nblock, subarray)
           MPI_ORDER_FORTRAN, MPI_REAL4, subarray(3), ims_err)
      CALL MPI_Type_commit(subarray(3), ims_err)
 
-! -----------------------------------------------------------------------
-! I do not know how to save just have of the data
-  ! ELSE IF ( opt_main .EQ. 3 ) THEN
-  !    ndims = 2 ! Subarray for the output of the Ox correlation
-  !    sizes(1)   = imax_total/2;   sizes(2)   = jmax_total/nblock
-  !    locsize(1) = imax;           locsize(2) = jmax/nblock
-  !    offset(1)  = ims_offset_i;   offset(2)  = ims_offset_j/nblock
-
-  !    CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
-  !         MPI_ORDER_FORTRAN, MPI_REAL4, subarray(1), ims_err)
-  !    CALL MPI_Type_commit(subarray(1), ims_err)
-
-  !    ndims = 2 ! Subarray for the output of the Oz correlation
-  !    sizes(1)   = kmax_total/2;   sizes(2)   = jmax_total/nblock
-  !    locsize(1) = kmax;           locsize(2) = jmax/nblock
-  !    offset(1)  = ims_offset_k;   offset(2)  = ims_offset_j/nblock
-
-  !    CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
-  !         MPI_ORDER_FORTRAN, MPI_REAL4, subarray(2), ims_err)
-  !    CALL MPI_Type_commit(subarray(2), ims_err)
-
 ! #######################################################################
-  ELSE IF ( opt_main .EQ. 4 .OR. opt_main .EQ. 3 ) THEN
+  ELSE IF ( opt_main .EQ. 3 ) THEN
+! Create new communicator with 1/2 of the Ox domain
+! Assuming even number of processes in each direction
+     ims_color = 1
+     IF ( ims_pro_i .LE. (ims_npro_i-1)/2 ) &
+          ims_color = 0
+     CALL MPI_COMM_SPLIT(ims_comm_x, ims_color, ims_pro, ims_comm_x_aux, ims_err)
+
+     IF ( ims_color .EQ. 0 ) THEN
+        ndims = 2 ! Subarray for the output of the Ox cross-correlation
+        sizes(1)   = imax_total/2;   sizes(2)   = jmax_total/nblock
+        locsize(1) = imax;           locsize(2) = jmax/nblock
+        offset(1)  = ims_offset_i;   offset(2)  = ims_offset_j/nblock
+        
+        CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
+             MPI_ORDER_FORTRAN, MPI_REAL4, subarray(1), ims_err)
+        CALL MPI_Type_commit(subarray(1), ims_err)
+     ENDIF
+
+! -----------------------------------------------------------------------
+! Create new communicator with 1/2 of the Oz domain
+! Assuming even number of processes in each direction
+     ims_color = 1
+     IF ( ims_pro_k .LE. (ims_npro_k-1)/2 ) &
+          ims_color = 0
+     CALL MPI_COMM_SPLIT(ims_comm_z, ims_color, ims_pro, ims_comm_z_aux, ims_err)
+
+     IF ( ims_color .EQ. 0 ) THEN
+        ndims = 2 ! Subarray for the output of the Oz cross-correlation
+        sizes(1)   = kmax_total/2;   sizes(2)   = jmax_total/nblock
+        locsize(1) = kmax;           locsize(2) = jmax/nblock
+        offset(1)  = ims_offset_k;   offset(2)  = ims_offset_j/nblock
+        
+        CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
+             MPI_ORDER_FORTRAN, MPI_REAL4, subarray(2), ims_err)
+        CALL MPI_Type_commit(subarray(2), ims_err)
+     ENDIF
+
+! -----------------------------------------------------------------------
+! Create new communicator with the first 1/4 of the xOz domain
+! Assuming even number of processes in each direction
+     ims_color = 1
+     IF ( ims_pro_i .LE. (ims_npro_i-1)/2 .AND. ims_pro_k .LE. (ims_npro_k-1)/2 ) &
+          ims_color = 0
+     CALL MPI_COMM_SPLIT(MPI_COMM_WORLD, ims_color, ims_pro, ims_comm_xz_aux, ims_err)
+     
+     IF ( ims_color .EQ. 0 ) THEN
+        ndims = 3 ! Subarray for the output of the 2D data     
+        sizes(1)   = imax_total/2; sizes(2)   = jmax_total/nblock;   sizes(3)   = kmax_total/2
+        locsize(1) = imax;         locsize(2) = jmax/nblock;         locsize(3) = kmax 
+        offset(1)  = ims_offset_i; offset(2)  = ims_offset_j/nblock; offset(3)  = ims_offset_k
+        
+        CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
+             MPI_ORDER_FORTRAN, MPI_REAL4, subarray(3), ims_err)
+        CALL MPI_Type_commit(subarray(3), ims_err)
+     ENDIF
+  
+! #######################################################################
+  ELSE IF ( opt_main .EQ. 4 ) THEN
      ndims = 2 ! Subarray for the output of the Ox cross-correlation
      sizes(1)   = imax_total;     sizes(2)   = jmax_total/nblock
      locsize(1) = imax;           locsize(2) = jmax/nblock
@@ -536,6 +549,12 @@ SUBROUTINE DEFINE_ARRAY_TYPE(opt_main, nblock, subarray)
      CALL MPI_Type_commit(subarray(2), ims_err)
 
 ! -----------------------------------------------------------------------
+!    Duplicating the communicator so that we call IO_WRITE_SUBARRAY with ims_comm_aux
+!    in case of cross-correlations as in case of auto-correlations, although the
+!    amount of data to save to disk is different
+!    Not sure if needed because I am using different code blocks in io_write_array
+!     CALL MPI_COMM_DUP(MPI_COMM_WORLD, ims_comm_aux, ims_err)
+
      ndims = 3 ! Subarray for the output of the 2D data     
      sizes(1)   = imax_total;   sizes(2)   = jmax_total/nblock;   sizes(3)   = kmax_total 
      locsize(1) = imax;         locsize(2) = jmax/nblock;         locsize(3) = kmax 

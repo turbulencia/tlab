@@ -1,13 +1,13 @@
 In order to compile the code, run the following commands:
 
-cd ${PATH_TO_DNS}
+cd ${PATH_TO_TLAB}
 mkdir build
 cd build
 cmake .. -DSYST={mpipc,juqueen,...} -DBUILD_TYPE={BIG,LITTLE,PARALLEL,NONBLOCKING}
 make
 
 Instead of mpipc or juqueen, you have to use the corresponding file from 
-the directory ${PATH_DNS}/config
+the directory ${PATH_TO_TLAB}/config
 
 You need to have cmake installed: Try "module load cmake".
 

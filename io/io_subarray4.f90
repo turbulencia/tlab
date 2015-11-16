@@ -9,7 +9,9 @@
 SUBROUTINE IO_WRITE_SUBARRAY4(idir, sizes, fname, varname, data, subarray, work)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro_i,ims_pro_k, ims_comm_x,ims_comm_z, ims_err
+  USE DNS_MPI, ONLY : ims_pro_i,ims_pro_k, ims_err, ims_npro_i,ims_npro_k
+  USE DNS_MPI, ONLY : ims_comm_x,     ims_comm_z
+  USE DNS_MPI, ONLY : ims_comm_x_aux, ims_comm_z_aux, ims_comm_xz_aux
 #endif
 
   IMPLICIT NONE
@@ -42,7 +44,10 @@ SUBROUTINE IO_WRITE_SUBARRAY4(idir, sizes, fname, varname, data, subarray, work)
 #ifdef USE_MPI
   IF ( ( idir .EQ. 1 .AND. ims_pro_k .EQ. 0 ) .OR. &
        ( idir .EQ. 2 .AND. ims_pro_i .EQ. 0 ) .OR. &
-         idir .EQ. 3                          ) THEN
+         idir .EQ. 3                          .OR. &
+       ( idir .EQ. 4 .AND. ims_pro_k .EQ. 0 .AND. ims_pro_i .LE. (ims_npro_i-1)/2 ) .OR. &
+       ( idir .EQ. 5 .AND. ims_pro_i .EQ. 0 .AND. ims_pro_k .LE. (ims_npro_k-1)/2 ) .OR. &
+         idir .EQ. 6                        .AND. ims_pro_i .LE. (ims_npro_i-1)/2 .AND. ims_pro_k .LE. (ims_npro_k-1)/2 ) THEN
 #endif
 
   DO iv = 1,sizes(4)
@@ -53,14 +58,25 @@ SUBROUTINE IO_WRITE_SUBARRAY4(idir, sizes, fname, varname, data, subarray, work)
      mpio_offset = 0
 
      IF      ( idir .EQ. 1 ) THEN ! Ox data
-        CALL MPI_File_open(ims_comm_x,    TRIM(ADJUSTL(name)),&
+        CALL MPI_File_open(ims_comm_x,     TRIM(ADJUSTL(name)),&
              IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err) 
      ELSE IF ( idir .EQ. 2 ) THEN ! Oz data
-        CALL MPI_File_open(ims_comm_z,    TRIM(ADJUSTL(name)),&
+        CALL MPI_File_open(ims_comm_z,     TRIM(ADJUSTL(name)),&
              IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err) 
      ELSE IF ( idir .EQ. 3 ) THEN ! 3d data
-        CALL MPI_File_open(MPI_COMM_WORLD,TRIM(ADJUSTL(name)),&
+        CALL MPI_File_open(MPI_COMM_WORLD, TRIM(ADJUSTL(name)),&
              IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err) 
+
+     ELSE IF ( idir .EQ. 4 ) THEN ! Ox data
+        CALL MPI_File_open(ims_comm_x_aux, TRIM(ADJUSTL(name)),&
+             IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err) 
+     ELSE IF ( idir .EQ. 5 ) THEN ! Oz data
+        CALL MPI_File_open(ims_comm_z_aux, TRIM(ADJUSTL(name)),&
+             IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err) 
+     ELSE IF ( idir .EQ. 6 ) THEN ! 3d data
+        CALL MPI_File_open(ims_comm_xz_aux,TRIM(ADJUSTL(name)),&
+             IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err) 
+
      ENDIF
      CALL MPI_File_set_view(mpio_fh, mpio_offset, MPI_REAL4, subarray, 'native', MPI_INFO_NULL, ims_err) 
      CALL MPI_File_write_all(mpio_fh, work, sizes(2), MPI_REAL4, mpio_status, ims_err) 

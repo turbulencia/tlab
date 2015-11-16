@@ -116,9 +116,6 @@ PROGRAM SPECTRA
   CALL DNS_MPI_INITIALIZE
 #endif
 
-
-  icalc_radial = 1 
-
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
@@ -213,7 +210,7 @@ PROGRAM SPECTRA
   isize_out2d = imax*jmax_aux*kmax                  ! accumulation of 2D data
 
 ! -------------------------------------------------------------------
-!  maximum radial wavenumber  & length lag; radial data is not really parallelized yet
+!  maximum wavenumber & length lag; radial data is not really parallelized yet
   kx_total = MAX(imax_total/2,1); ky_total = MAX(jmax_total/2,1); kz_total = MAX(kmax_total/2,1)
 
   IF ( opt_main .EQ. 4 ) THEN    ! Cross-correlations need the full length
@@ -221,11 +218,11 @@ PROGRAM SPECTRA
   ENDIF
 
   IF ( opt_main .GE. 5 ) THEN ! 3D spectrum
-!     kr_total = CEILING( SQRT(M_REAL(kx_total**2 + kz_total**2 + ky_total**2)) ) 
-     kr_total =  INT(SQRT(M_REAL( (kx_total-1)**2 + (kz_total-1)**2 + (ky_total-1)**2))) + 1
+!     kr_total =  INT(SQRT(M_REAL( (kx_total-1)**2 + (kz_total-1)**2 + (ky_total-1)**2))) + 1 ! Use if need to check Parseval's in output data
+     kr_total = MIN(kx_total,MIN(ky_total,kz_total))
   ELSE
-!     kr_total = CEILING( SQRT(M_REAL(kx_total**2 + kz_total**2)) ) 
-     kr_total =  INT(SQRT(M_REAL( (kx_total-1)**2 + (kz_total-1)**2))) + 1
+!     kr_total =  INT(SQRT(M_REAL( (kx_total-1)**2 + (kz_total-1)**2))) + 1 ! Use if need to check Parseval's in output data
+     kr_total = MIN(kx_total,kz_total)
   ENDIF
 
   IF ( opt_main .GE. 5 ) THEN; isize_spec2dr = kr_total            ! 3D spectrum
@@ -319,13 +316,10 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
-
-  ! radial correlation is conceptually fraud in the case of asymmetric domain AND horizontally anisotropic grid spacing
-  ! Not [properly] parallelized in the i direction (???) 
-  IF ( imax_total .NE. kmax_total .OR. dx(1) .NE. dz(1) .OR. ims_npro_i .GT. 1 ) &
-       icalc_radial = 0 
+  icalc_radial = 0
+  IF ( flag_mode .EQ. 1 .AND. imax_total .EQ. kmax_total ) icalc_radial = 1 ! Calculate radial spectra
+  IF ( flag_mode .EQ. 2 .AND. dx(1) .EQ. dz(1)           ) icalc_radial = 1 ! Calculate radial correlations
   
-
 ! ------------------------------------------------------------------------
 ! Define size of blocks
 ! ------------------------------------------------------------------------
@@ -544,7 +538,7 @@ PROGRAM SPECTRA
 
         ENDDO
         
-        IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1) THEN  ! Calculate sampling size for radial correlation
+        IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1 ) THEN  ! Calculate sampling size for radial correlation
            samplesize = C_0_R
            CALL RADIAL_SAMPLESIZE(imax,jmax,kmax, kr_total, samplesize)
         ENDIF
@@ -570,7 +564,7 @@ PROGRAM SPECTRA
               IF ( ims_pro .EQ. 0 ) outr(1:isize_spec2dr,iv) = wrk3d(1:isize_spec2dr)
            ENDDO
 
-           IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1 ) THEN !Calculate sampling size for radial correlation
+           IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1 ) THEN ! Calculate sampling size for radial correlation
               CALL MPI_Reduce(samplesize, wrk3d, kr_total, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err) 
               IF ( ims_pro .EQ. 0 ) samplesize(1:kr_total) = wrk3d(1:kr_total)
            ENDIF
@@ -602,11 +596,21 @@ PROGRAM SPECTRA
 ! Saving 1D fields
            sizes(1) = kxmax*jmax_aux; sizes(2) = sizes(1); sizes(3) = 0; sizes(4) = nfield
            WRITE(fname,*) itime; fname = 'x'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(i1, sizes, fname, varname, outx, mpi_subarray(1), wrk3d)
+           IF ( opt_main .EQ. 3 ) THEN ! auto-correlations; just 1/2 of the data
+              CALL IO_WRITE_SUBARRAY4(i4, sizes, fname, varname, outx, mpi_subarray(1), wrk3d)
+           ELSE
+              CALL IO_WRITE_SUBARRAY4(i1, sizes, fname, varname, outx, mpi_subarray(1), wrk3d)
+           ENDIF
 
-           sizes(1) = kzmax*jmax_aux; sizes(2) = sizes(1); sizes(3) = 0; sizes(4) = nfield
-           WRITE(fname,*) itime; fname = 'z'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(i2, sizes, fname, varname, outz, mpi_subarray(2), wrk3d)
+           IF ( kmax_total .GT. 1 ) THEN
+              sizes(1) = kzmax*jmax_aux; sizes(2) = sizes(1); sizes(3) = 0; sizes(4) = nfield
+              WRITE(fname,*) itime; fname = 'z'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
+              IF ( opt_main .EQ. 3 ) THEN ! auto-correlations; just 1/2 of the data
+                 CALL IO_WRITE_SUBARRAY4(i5, sizes, fname, varname, outz, mpi_subarray(2), wrk3d)
+              ELSE
+                 CALL IO_WRITE_SUBARRAY4(i2, sizes, fname, varname, outz, mpi_subarray(2), wrk3d)
+              ENDIF
+           ENDIF
 
            IF ( icalc_radial .EQ. 1 ) THEN 
               WRITE(fname,*) itime; fname = 'r'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
@@ -615,12 +619,15 @@ PROGRAM SPECTRA
            
 ! Saving 2D fields
            IF ( opt_ffmt .EQ. 1 ) THEN 
-              IF      ( flag_mode .EQ. 2 ) THEN ! correlations
+              IF ( flag_mode .EQ. 2 ) THEN ! correlations
                  sizes(1) = isize_out2d; sizes(2) = sizes(1);    sizes(3) = 0;        sizes(4) = nfield
                  WRITE(fname,*) itime; fname = 'cor'//TRIM(ADJUSTL(fname))
-                 CALL IO_WRITE_SUBARRAY4(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
-
-              ELSE                              ! spectra
+                 IF ( opt_main .EQ. 3 ) THEN ! auto-correlations; just 1/4 of the data
+                    CALL IO_WRITE_SUBARRAY4(i6, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
+                 ELSE
+                    CALL IO_WRITE_SUBARRAY4(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
+                 ENDIF
+              ELSE                         ! spectra
                  sizes(1) = isize_out2d; sizes(2) = sizes(1) /2; sizes(3) = 0;        sizes(4) = nfield
                  WRITE(fname,*) itime; fname = 'pow'//TRIM(ADJUSTL(fname)) 
                  CALL IO_WRITE_SUBARRAY4(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
