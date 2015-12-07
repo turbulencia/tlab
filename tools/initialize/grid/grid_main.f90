@@ -24,7 +24,9 @@
 PROGRAM INIGRID
 
   USE GRID_LOCAL
-
+#ifdef USE_MPI 
+  USE DNS_MPI 
+#endif 
   IMPLICIT NONE
 
 #include "integers.h"
@@ -33,6 +35,10 @@ PROGRAM INIGRID
   TREAL, DIMENSION(:), ALLOCATABLE :: x,y,z, work1,work2
   TINTEGER                         :: idir, iseg, isize_wrk1d
 
+#ifdef USE_MPI 
+#include "mpif.h" 
+#endif 
+
 ! #######################################################################
 ! Reading the input file
 ! #######################################################################
@@ -40,6 +46,12 @@ PROGRAM INIGRID
   ofile = 'dns.log'
   sfile = 'grid.sts'
   ffile = 'grid'
+
+
+#ifdef USE_MPI 
+  CALL DNS_INITIALIZE 
+  IF ( ims_pro .EQ. 0 ) THEN 
+#endif 
 
   CALL GRID_READ_LOCAL(ifile,i1) ! read data of Ox direction
   CALL GRID_READ_LOCAL(ifile,i2) ! read data of Oy direction
@@ -129,7 +141,11 @@ PROGRAM INIGRID
 
 ! Writing data
   CALL IO_WRITE_GRID(ffile, imax,jmax,kmax, scale(1),scale(2),scale(3), x,y,z)
+#ifdef USE_MPI 
+ENDIF  
+CALL DNS_END(0)
+#endif 
 
-  STOP
+STOP 
 
 END PROGRAM INIGRID

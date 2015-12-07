@@ -17,11 +17,17 @@ SUBROUTINE DNS_END(ic)
   INTEGER ic
 
 #ifdef USE_MPI
-  CHARACTER*64 line
+  CHARACTER*256 line
 #endif
   
-  IF ( ic .EQ. 0 ) THEN; CALL IO_WRITE_ASCII(lfile, 'Finalizing program.')
-  ELSE;                  CALL IO_WRITE_ASCII(lfile, 'Finalizing program abnormaly. Check'//TRIM(ADJUSTL(efile)) ); ENDIF
+  CALL GETARG(0,line);  
+
+  WRITE(line,*) 'Finalizing program ' // TRIM(ADJUSTL(line)) 
+  IF ( ic .EQ. 0 ) THEN; 
+  ELSE;                  
+     line = TRIM(ADJUSTL(line)) // ' abnormally. Check '//TRIM(ADJUSTL(efile))
+  ENDIF
+  CALL IO_WRITE_ASCII(lfile, line)
   CALL IO_WRITE_ASCII(lfile, '########################################')
   
 #ifdef USE_MPI
