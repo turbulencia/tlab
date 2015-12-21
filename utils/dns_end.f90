@@ -15,10 +15,7 @@ SUBROUTINE DNS_END(ic)
 #endif
   
   INTEGER ic
-
-#ifdef USE_MPI
   CHARACTER*256 line
-#endif
   
   CALL GETARG(0,line);  
 
