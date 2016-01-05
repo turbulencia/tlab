@@ -998,11 +998,10 @@ PROGRAM VISUALS_MAIN
            ENDIF
            
            IF ( iradiation .NE. EQNS_NONE ) THEN
-              CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
-                   wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), wrk3d) ! Calculate radiation function in wrk3d
+              CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,1), wrk1d,wrk3d)
               
               plot_file = 'Radiation'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, wrk3d, tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
               
            ENDIF
 

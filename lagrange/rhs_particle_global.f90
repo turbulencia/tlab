@@ -103,11 +103,12 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
     dummy2 = 1/dummy2 !1/delta_s
     dummy = 1/body_param(3)  ! 1/chi_s
 
-    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
-        wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
+    ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
+    !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
+    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,1), wrk1d,wrk3d)
     ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
-       txc(ij,1) = dummy2*wrk3d(ij)
+       txc(ij,1) = dummy2*txc(ij,1)
     ENDDO 
     
     
@@ -199,16 +200,12 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
        txc(ij,1) = visc*txc(ij,1)
     ENDDO 
   
-    IF ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN !Update the liquid function
-      CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,4), rad_param,&
-        wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    ELSE
-      CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,3), rad_param,&
-        wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    ENDIF
+    ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
+    !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
+    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,2), wrk1d,wrk3d)
     ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
-       txc(ij,2) = dummy2*wrk3d(ij)
+       txc(ij,2) = dummy2*txc(ij,2)
     ENDDO 
 
   ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !using combination of both versions of equation
@@ -256,22 +253,17 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
   
  
 
-    IF ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN !Update the liquid function
-      CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,4), rad_param,&
-        wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    ELSE
-      CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,3), rad_param,&
-        wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    ENDIF   
-
+    ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
+    !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
+    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,4), wrk1d,wrk3d)
     ! Radiation *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
-       txc(ij,1) =txc(ij,1) + dummy2*wrk3d(ij)
+       txc(ij,1) =txc(ij,1) + dummy2*txc(ij,4)
     ENDDO 
 
     ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
-       txc(ij,4) = dummy2*wrk3d(ij)
+       txc(ij,4) = dummy2*txc(ij,4)
     ENDDO 
 
 
@@ -342,17 +334,12 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
     dummy = 1/body_param(3)  ! 1/chi_s
 
 
-    
-    IF ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN !Update the liquid function
-    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,4), rad_param,&
-      wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    ELSE
-    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,3), rad_param,&
-      wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    ENDIF
+    ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
+    !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
+    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,1), wrk1d,wrk3d)
     ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
-       txc(ij,1) = dummy2*wrk3d(ij)
+       txc(ij,1) = dummy2*txc(ij,1)
     ENDDO 
     
     
@@ -443,17 +430,12 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
        txc(ij,1) = visc*txc(ij,1)
     ENDDO 
   
-    IF ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN !Update the liquid function
-    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,4), rad_param,&
-      wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    ELSE
-    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,3), rad_param,&
-      wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    ENDIF   
-
+    ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
+    !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
+    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,2), wrk1d,wrk3d)
     ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
-       txc(ij,2) = dummy2*wrk3d(ij)
+       txc(ij,2) = dummy2*txc(ij,2)
     ENDDO 
 
 
@@ -502,23 +484,17 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
     ENDDO 
   
  
-
-    IF ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN !Update the liquid function
-      CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,4), rad_param,&
-        wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    ELSE
-      CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,3), rad_param,&
-        wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    ENDIF
-
+    ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
+    !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
+    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,4), wrk1d,wrk3d)
     ! Radiation *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
-       txc(ij,1) =txc(ij,1) + dummy2*wrk3d(ij)
+       txc(ij,1) =txc(ij,1) + dummy2*txc(ij,4)
     ENDDO 
 
     ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
-       txc(ij,4) = dummy2*wrk3d(ij)
+       txc(ij,4) = dummy2*txc(ij,4)
     ENDDO 
 
 

@@ -239,9 +239,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'          ) THEN; iradiation = EQNS_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dglobal'  ) THEN; iradiation = EQNS_RAD_BULK1D_GLOBAL
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dlocal'   ) THEN; iradiation = EQNS_RAD_BULK1D_LOCAL
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dmixed'   ) THEN; iradiation = EQNS_RAD_BULK1D_MIXED
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dlocalmap') THEN; iradiation = EQNS_RAD_BULK1D_LOCAL_MAP
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dmixedmap') THEN; iradiation = EQNS_RAD_BULK1D_MIXED_MAP
+  ! ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dmixed'   ) THEN; iradiation = EQNS_RAD_BULK1D_MIXED
+  ! ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dlocalmap') THEN; iradiation = EQNS_RAD_BULK1D_LOCAL_MAP
+  ! ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dmixedmap') THEN; iradiation = EQNS_RAD_BULK1D_MIXED_MAP
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermRadiation option.')
      CALL DNS_STOP(DNS_ERROR_OPTION)

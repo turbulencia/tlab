@@ -95,7 +95,8 @@ PROGRAM INISCAL
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk3d(isize_wrk3d))
 
-  IF ( flag_s .EQ. 2 .OR. flag_s .EQ. 3 ) THEN
+  IF ( flag_s .EQ. 2 .OR. flag_s .EQ. 3 .OR. &
+       iradiation .NE. EQNS_NONE ) THEN
      WRITE(str,*) i1;          line = 'Allocating array txc. Size '//TRIM(ADJUSTL(str))//'x'
      WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile,line)
@@ -189,10 +190,9 @@ PROGRAM INISCAL
      rad_param(1) = rad_ini
      IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN
         CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, s(:,1), s(:,inb_scal_array)) !Update the liquid function
-        CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(:,inb_scal_array),rad_param, &
-             wrk1d(1:jmax), wrk1d((jmax+1):(2*jmax)), wrk1d(2*jmax+1), wrk3d)
-        s(1:isize_field,irad_scalar) = s(1:isize_field,irad_scalar) + wrk3d(1:isize_field)
      ENDIF
+     CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc, wrk1d,wrk3d)
+     s(1:isize_field,irad_scalar) = s(1:isize_field,irad_scalar) + txc(1:isize_field)
 
   ENDIF
 

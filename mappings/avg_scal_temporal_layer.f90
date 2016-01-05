@@ -230,8 +230,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 
 ! Radiation
   IF ( irad_scalar .EQ. is ) THEN
-     CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,1,1,inb_scal_array), rad_param, &
-          wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), dsdx)
+     CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
   ENDIF
 
 ! Buoyancy as a diagnostic variable
@@ -280,12 +279,11 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
         ENDIF
 
 ! Radiation source in dsdx
-        CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,1,1,inb_scal_array), rad_param, &
-             wrk1d(1,1), wrk1d(1,2), wrk1d(1,3), wrk3d)
+        CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
 
 ! Radiation cooling production term in dsdx
         dummy = body_param(5) /froude
-        dsdx = wrk3d *dummy
+        dsdx = dsdx *dummy
 
 ! Couplig of radiation and evaporative cooling active; dsdy contains the coupling field
         dummy = C_1_R /froude

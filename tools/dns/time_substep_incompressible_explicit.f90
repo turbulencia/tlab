@@ -152,6 +152,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
                 q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
                 vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
                 wrk1d,wrk2d,wrk3d)
+           CALL FI_SOURCES_SCAL(y,dy, s, hs, txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
            DO is = 1,inb_scal
               CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is, dte, dx,dy,dz, u,v,w,s(1,is),hs(1,is), s,&
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
