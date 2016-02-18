@@ -450,6 +450,8 @@ PROGRAM AVERAGES
               CALL THERMO_AIRWATER_PHAL(i1,i1,i1, mean_i(2), p_init, mean_i(1))
               CALL THERMO_THERMAL_DENSITY_HP_ALWATER(i1,i1,i1, mean_i(2),mean_i(1),p_init,mean_rho)
               CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2), p_init, s(1,1))
+           ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+              CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(:,inb_scal_array), wrk3d)
            ENDIF
            CALL FI_PRESSURE_BOUSSINESQ(y,dx,dy,dz, u,v,w, s, txc(1,3), &
                 txc(1,1),txc(1,2),txc(1,4), wrk1d,wrk2d,wrk3d)

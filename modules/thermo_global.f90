@@ -1,7 +1,7 @@
 #include "types.h"
 
 MODULE THERMO_GLOBAL
-  USE DNS_GLOBAL, ONLY : MAX_NSP
+  USE DNS_CONSTANTS, ONLY : MAX_NSP, MAX_PROF
 
   IMPLICIT NONE
   SAVE
@@ -13,6 +13,11 @@ MODULE THERMO_GLOBAL
 ! General options
 ! ###################################################################
   TINTEGER :: imixture
+
+! ###################################################################
+! Thermodynamics parameters
+! ###################################################################
+  TREAL    :: thermo_param(MAX_PROF)
 
 ! ###################################################################
 ! Nondimensional numbers

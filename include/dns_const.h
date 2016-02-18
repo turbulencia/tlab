@@ -140,6 +140,7 @@
 #define MIXT_TYPE_SUPSAT      11
 #define MIXT_TYPE_BILAIRWATER 12
 #define MIXT_TYPE_BILAIRWATERSTRAT 13
+#define MIXT_TYPE_AIRWATER_LINEAR    14
 
 ! Lagrangian Type
 #define LAG_TYPE_NONE          0

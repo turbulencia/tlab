@@ -31,6 +31,8 @@
 !########################################################################
 SUBROUTINE FI_BUOYANCY(ibodyforce, nx,ny,nz, param, s, b, wrk1d)
 
+  USE DNS_GLOBAL, ONLY : inb_scal_array
+
   IMPLICIT NONE
   
   TINTEGER,                     INTENT(IN) :: ibodyforce, nx, ny, nz
@@ -40,8 +42,9 @@ SUBROUTINE FI_BUOYANCY(ibodyforce, nx,ny,nz, param, s, b, wrk1d)
   TREAL, DIMENSION(ny),         INTENT(IN) :: wrk1d
 
 ! -----------------------------------------------------------------------
-  TINTEGER i, j, k
-  TREAL c0_loc, c1_loc, c2_loc, c3_loc, delta, delta_inv, dummy
+  TINTEGER i,j,k, is
+  TREAL c0_loc,c1_loc,c2_loc,c3_loc, dummy
+  TREAL delta, delta_inv
 
 ! #######################################################################
 ! Constant homogeneous value
@@ -53,15 +56,49 @@ SUBROUTINE FI_BUOYANCY(ibodyforce, nx,ny,nz, param, s, b, wrk1d)
 ! Linear relation
 ! #######################################################################
   ELSE IF ( ibodyforce .EQ. EQNS_BOD_LINEAR       ) THEN
-     c0_loc = param(1)
+     ! c0_loc = param(1)
 
-     DO k = 1,nz; DO j = 1,ny
-        dummy = wrk1d(j)
-        b(1:nx,j,k) = c0_loc*s(1:nx,j,k,1) - dummy
-     ENDDO; ENDDO
+     ! DO k = 1,nz; DO j = 1,ny
+     !    dummy = wrk1d(j)
+     !    b(1:nx,j,k) = c0_loc*s(1:nx,j,k,1) - dummy
+     ! ENDDO; ENDDO
+
+     c1_loc = param(1); c2_loc = param(2); c3_loc = param(3) ! proportionality factors
+     c0_loc = param(inb_scal_array+1)                        ! independent term
+
+     IF      ( inb_scal_array .EQ. 1 .OR. &
+             ( inb_scal_array .EQ. 2 .AND. ABS(param(2)) .LT. C_SMALL_R ) ) THEN ! avoid mem call for one common case is=2
+        DO k = 1,nz; DO j = 1,ny
+           dummy = wrk1d(j) - c0_loc
+           b(1:nx,j,k) = c1_loc *s(1:nx,j,k,1) - dummy
+        ENDDO; ENDDO
+        
+     ELSE IF ( inb_scal_array .EQ. 2 ) THEN
+        DO k = 1,nz; DO j = 1,ny
+           dummy = wrk1d(j) - c0_loc
+           b(1:nx,j,k) = c1_loc *s(1:nx,j,k,1) + c2_loc *s(1:nx,j,k,2) - dummy
+        ENDDO; ENDDO
+        
+     ELSE IF ( inb_scal_array .EQ. 3 ) THEN
+        DO k = 1,nz; DO j = 1,ny
+           dummy = wrk1d(j) - c0_loc
+           b(1:nx,j,k) = c1_loc *s(1:nx,j,k,1) + c2_loc *s(1:nx,j,k,2) + c3_loc *s(1:nx,j,k,3) - dummy
+        ENDDO; ENDDO
+
+     ELSE ! general
+        DO k = 1,nz; DO j = 1,ny
+           dummy = wrk1d(j)
+           b(1:nx,j,k) = c0_loc -dummy
+        ENDDO; ENDDO
+
+        DO is = 1,inb_scal_array
+           IF ( ABS(param(is)) .GT. C_SMALL_R ) b(:,:,:)= b(:,:,:) + param(is) *s(:,:,:,is)         
+        ENDDO
+
+     ENDIF
 
 ! #######################################################################
-! Bilinear (2 scalars)
+! Bilinear
 ! #######################################################################
   ELSE IF ( ibodyforce .EQ. EQNS_BOD_BILINEAR     ) THEN
      c0_loc = param(1); c1_loc = param(2); c2_loc = param(3)

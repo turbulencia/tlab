@@ -154,12 +154,13 @@ SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d,x,y,z,l_txc,l_tags,l_hq,l_q)
   DEALLOCATE(particle_bins_local)
 #else
 
-  IF ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN !Update the liquid function
-    CALL FIELD_TO_PARTICLE (s(1,4),wrk1d,wrk2d,wrk3d,x ,y, z, l_txc, l_tags, l_hq, l_q)  
-  ELSE
-    CALL FIELD_TO_PARTICLE (s(1,3),wrk1d,wrk2d,wrk3d,x ,y, z, l_txc, l_tags, l_hq, l_q)  
-  ENDIF
-
+  ! IF ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN !Update the liquid function
+  !   CALL FIELD_TO_PARTICLE (s(1,4),wrk1d,wrk2d,wrk3d,x ,y, z, l_txc, l_tags, l_hq, l_q)  
+  ! ELSE
+  !   CALL FIELD_TO_PARTICLE (s(1,3),wrk1d,wrk2d,wrk3d,x ,y, z, l_txc, l_tags, l_hq, l_q)  
+  ! ENDIF
+  CALL FIELD_TO_PARTICLE (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d,x ,y, z, l_txc, l_tags, l_hq, l_q)  
+    
   particle_pdf_min = 0
 
   DO i=1,particle_number

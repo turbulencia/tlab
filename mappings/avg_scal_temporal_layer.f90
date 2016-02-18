@@ -180,8 +180,8 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
      line2='I J Y SM SW SS SR'
 
 ! Dependent variables depending on y and t
-     IF ( flag_buoyancy .EQ. is .AND. imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN ! Source term partition
-        line1 = 'rS fS rS_y fS_y rQ fQ rQ2 fQ2 rQ3 fQ3 rQ4 fQ4' !Alberto changed
+     IF ( flag_buoyancy .EQ. is .AND. ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) ) THEN ! Source term partition
+        line1 = 'rS fS rS_y fS_y rQ fQ rQ2 fQ2 rQ3 fQ3 rQ4 fQ4'
      ELSE 
         line1 = 'rS fS rS_y fS_y rQ fQ'
      ENDIF
@@ -288,6 +288,8 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 ! Couplig of radiation and evaporative cooling active; dsdy contains the coupling field
         dummy = C_1_R /froude
         dsdy = wrk3d *dsdy *dummy
+
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
 
      ELSE
         CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
@@ -417,7 +419,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 
      fQ(j)  = rQ(j)
 
-     IF ( flag_buoyancy .EQ. is .AND. imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN ! Source term partition
+     IF ( flag_buoyancy .EQ. is .AND. ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) ) THEN ! Source term partition
         rQ2(j) = AVG_IK(imax,jmax,kmax, j, dsdy, dx,dz, area)
         fQ2(j) = rQ2(j)
         rQ3(j) = AVG_IK(imax,jmax,kmax, j, dsdz, dx,dz, area)
@@ -770,7 +772,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 
         ENDIF
 
-        IF ( flag_buoyancy .EQ. is .AND. imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN ! Source term partition
+        IF ( flag_buoyancy .EQ. is .AND. ( imixture .EQ. MIXT_TYPE_BILAIRWATER  .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR )) THEN ! Source term partition
            WRITE(23,1020) 1, j, (VAUXPRE(k),k=1,ivauxpre),&
                 rS(j), fS(j), rS_y(j), fS_y(j), rQ(j), fQ(j), rQ2(j), fQ2(j),rQ3(j), fQ3(j),rQ4(j),fQ4(j),Rsu(j), Rsv(j), Rsw(j), &
                 fS2(j), fS3(j), fS4(j), fS5(j), fS6(j),&

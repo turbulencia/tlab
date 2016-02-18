@@ -190,6 +190,8 @@ PROGRAM INISCAL
      rad_param(1) = rad_ini
      IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN
         CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, s(:,1), s(:,inb_scal_array)) !Update the liquid function
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(:,inb_scal_array), wrk3d)
      ENDIF
      CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc, wrk1d,wrk3d)
      s(1:isize_field,irad_scalar) = s(1:isize_field,irad_scalar) + txc(1:isize_field)

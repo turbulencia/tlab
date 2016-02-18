@@ -177,6 +177,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwatersupersaturation' ) THEN; imixture = MIXT_TYPE_SUPSAT
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterbilinear'        ) THEN; imixture = MIXT_TYPE_BILAIRWATER
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterbilinearstrat'   ) THEN; imixture = MIXT_TYPE_BILAIRWATERSTRAT
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterlinear'   ) THEN; imixture = MIXT_TYPE_AIRWATER_LINEAR
   ELSE 
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong multispecies model.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
@@ -407,6 +408,21 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL SCANINICHAR(bakfile, inifile, 'Transport', 'Parameters', '1.0', sRes)
      idummy = MAX_PROF
      CALL LIST_REAL(sRes, idummy, trans_param)
+
+  ENDIF
+
+! ###################################################################
+! Thermodynamics
+! ###################################################################
+  CALL IO_WRITE_ASCII(bakfile, '#')
+  CALL IO_WRITE_ASCII(bakfile, '#[Thermodynamics]')
+  CALL IO_WRITE_ASCII(bakfile, '#Parameters=<value>')
+
+  IF ( imixture .NE. EQNS_NONE ) THEN
+     thermo_param(:) = C_0_R
+     CALL SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Parameters', '1.0', sRes)
+     idummy = MAX_PROF
+     CALL LIST_REAL(sRes, idummy, thermo_param)
 
   ENDIF
 
@@ -882,7 +898,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         
      ELSE IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN 
         IF ( irad_scalar .NE. 2 ) THEN
-           CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. AirWaterBilinear requires Radiation.Scalar set to 2.')
+           CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. AirWaterBilinear requires Radiation. Scalar set to 2.')
            CALL DNS_STOP(DNS_ERROR_OPTION)
         ENDIF
 

@@ -276,6 +276,17 @@ SUBROUTINE THERMO_INITIALIZE
      THERMO_SPNAME(3) = 'buoyancystrat' ! 2nd stratification 
      THERMO_SPNAME(4) = 'Liquid'        ! Normalized Liquid
 
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+     inb_scal_array = inb_scal + 1      ! using inb_scal read in the inifile
+     NSP            = inb_scal_array 
+
+     THERMO_SPNAME(1) = 'chi'      ! Mixture fraction 
+     THERMO_SPNAME(2) = 'psi'      ! Deviation in the enthalpy from the mixture fraction
+     DO is = 3,inb_scal
+        WRITE(THERMO_SPNAME(is),*) is; THERMO_SPNAME(is) = 'Scalar'//TRIM(ADJUSTL(THERMO_SPNAME(is))) 
+     ENDDO
+     THERMO_SPNAME(NSP) = 'Liquid' ! Normalized Liquid
+     
   ENDIF
 
 ! ###################################################################
@@ -626,9 +637,11 @@ SUBROUTINE THERMO_INITIALIZE
            ENDDO
            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/tmp2/tloc**(ipsat-1)
         ENDDO
-     ELSE IF  ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT) THEN; !Nothing to be done for this mixture
+     ELSE IF  ( imixture .EQ. MIXT_TYPE_BILAIRWATER      .OR. &
+                imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT .OR. &
+                imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN; !Nothing to be done for this mixture
      ELSE
-        CALL IO_WRITE_ASCII(efile, 'THERMO_INIT: Must use chemkin data.')
+        CALL IO_WRITE_ASCII(efile, 'THERMO_INITIALIZE: Must use chemkin data.')
         CALL DNS_STOP(DNS_ERROR_THERMOCONT)
      ENDIF
 

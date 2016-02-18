@@ -390,6 +390,16 @@ PROGRAM VISUALS_MAIN
         WRITE(part_file,*) itime; part_file="particle."//TRIM(ADJUSTL(part_file))
      ENDIF
 
+     IF      ( (imixture .EQ. MIXT_TYPE_AIRWATER) .OR. &                                     ! calculate liquid
+               ( (imixture .EQ. MIXT_TYPE_SUPSAT) .AND. ( damkohler(1) .LE. C_0_R) ) ) THEN
+        CALL THERMO_THERMAL_DENSITY_HP_ALWATER(i1,i1,i1, mean_i(2),mean_i(1),p_init,mean_rho)
+        CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(:,2), p_init, s(:,1))    
+        
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(:,inb_scal_array), wrk3d)
+        
+     ENDIF
+
 ! -------------------------------------------------------------------
 ! Calculate intermittency
 ! -------------------------------------------------------------------

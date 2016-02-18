@@ -185,7 +185,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
           vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
 
      IF ( icalc_scal .EQ. 1 ) THEN
-        IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN
+        IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN ! But this should be already done...
            CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, s(:,1),s(:,inb_scal_array)) ! Update the liquid function
         ENDIF
         DO is = inb_scal+1,inb_scal_array ! Add diagnostic fields, if any
