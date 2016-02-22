@@ -59,7 +59,7 @@ SUBROUTINE NORMALIZE(nx,ny,nz, u,v,w, tke1)
                      AVG1V3D(nx,ny,nz, i2, w) )
   ENDIF
 
-  factor = SQRT(tke1/tke0)
+  IF ( tke0 .GT. C_0_R ) factor = SQRT(tke1/tke0)
 
 ! ###################################################################
 ! Scale flow field

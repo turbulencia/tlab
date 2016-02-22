@@ -30,11 +30,7 @@
 !# inviscid Navier-Stokes equations:
 !# 1) Mean profiles
 !# 2) Add perturbation
-!# However, the velocity fluctuation in first calculated to reduce aux
-!# arrays.
-!#
-!########################################################################
-!# ARGUMENTS 
+!# The velocity fluctuation in first calculated to reduce aux arrays.
 !#
 !########################################################################
 PROGRAM INIFLOW
@@ -236,42 +232,28 @@ PROGRAM INIFLOW
 
 ! ###################################################################
 ! Velocity perturbation fields
-! I need here 7 txc fields
 ! ###################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'INIFLOW: Section 3')
 #endif
   IF ( flag_u .NE. 0 ) THEN
-     txc(:,1) = C_0_R; txc(:,2) = C_0_R; txc(:,3) = C_0_R
+     txc(:,1:3) = C_0_R
 
      IF      ( flag_u .EQ. 1 ) THEN
         CALL VELOCITY_DISCRETE(i1, x,y,z, txc(1,1),txc(1,2),txc(1,3))
 
-     ELSE IF ( flag_u .EQ. 2 ) THEN ! Velocity given
-        CALL VELOCITY_BROADBAND(i0, x,y,z,dx,dy,dz, txc(1,1),txc(1,2),txc(1,3), &
-             txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), &
-             ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
-        
-     ELSE IF ( flag_u .EQ. 3 ) THEN ! Vorticity given
-        CALL VELOCITY_BROADBAND(i1, x,y,z,dx,dy,dz, txc(1,1),txc(1,2),txc(1,3), &
-             txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), &
-             ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
-
-     ELSE IF ( flag_u .EQ. 4 ) THEN ! Velocity potential given
-        CALL VELOCITY_BROADBAND(i2, x,y,z,dx,dy,dz, txc(1,1),txc(1,2),txc(1,3), &
+     ELSE IF ( flag_u .GT. 1 ) THEN
+        CALL VELOCITY_BROADBAND(flag_u, x,y,z,dx,dy,dz, txc(1,1),txc(1,2),txc(1,3), &
              txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), &
              ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
         
      ENDIF
 
-! normalize
      IF ( norm_ini_u .GE. C_0_R ) THEN
         CALL NORMALIZE(imax,jmax,kmax, txc(1,1),txc(1,2),txc(1,3), norm_ini_u)
      ENDIF
      
-     u(:) = u(:) + txc(1:isize_field,1)
-     v(:) = v(:) + txc(1:isize_field,2)
-     w(:) = w(:) + txc(1:isize_field,3)
+     q(1:isize_field,1:3) =  q(1:isize_field,1:3) + txc(1:isize_field,1:3)
 
   ENDIF
 
@@ -297,26 +279,6 @@ PROGRAM INIFLOW
         CALL DENSITY_FLUCTUATION(flag_t, x,y,z,dx,dz, s,p,rho, txc(1,1),txc(1,2), wrk2d,wrk3d)
      ENDIF
 
-! Reset density according to pressure fluctuations
-! has to be checked
-!     IF ( ireactive .EQ. CHEM_FINITE .AND. ichem_config .EQ. CHEM_PREMIXED ) THEN
-!        x0      = thick_u*10.0
-!        x_shift = x0*C_05_R
-!        rho1    = mean_rho + delta_rho*C_05_R
-!        u1      = mean_u + delta_u*C_05_R
-!        
-! Expected format: x rho u y1
-!        CALL CHEM_READ_TEXT(flame_ini_file, i4, i1, i2, imax, x_shift, x, rho, isize_wrk3d, wrk3d)
-!        CALL CHEM_READ_TEXT(flame_ini_file, i4, i1, i3, imax, x_shift, x, u,   isize_wrk3d, wrk3d)
-!        
-!        DO i = 1,imax
-!           IF      ( i. EQ. 1    ) THEN; p_prime = (u(2)-u(1))/(x(2)-x(1))
-!           ELSE IF ( i .EQ. imax ) THEN; p_prime = (u(imax)-u(imax-1))/(x(imax)-x(imax-1))
-!           ELSE;                         p_prime = (u(i+1)-u(i-1))/(x(i+1)-x(i-1));        ENDIF
-!           p(i) = p_init + rho1*u1**2-rho(i)*u(i)**2 + p_prime/(prandtl*reynolds)
-!        ENDDO
-!           
-!     ENDIF
   ENDIF
 
 ! ###################################################################

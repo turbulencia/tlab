@@ -21,9 +21,9 @@
 !########################################################################
 !# ARGUMENTS 
 !#
-!# iflag     In   0  cropping in velocity
-!#                1  cropping in vorticity
-!#                2  cropping in velocity potential
+!# iflag     In   2  cropping in velocity
+!#                3  cropping in vorticity
+!#                4  cropping in velocity potential
 !#
 !########################################################################
 SUBROUTINE VELOCITY_BROADBAND(iflag, x,y,z,dx,dy,dz, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
@@ -113,14 +113,17 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, x,y,z,dx,dy,dz, u,v,w, tmp1,tmp2,tmp3,tmp4,
 ! -------------------------------------------------------------------
 ! Set field for cropping
 ! -------------------------------------------------------------------
-  IF ( iflag .EQ. 1 ) THEN
+  IF      ( iflag .EQ. 2 ) THEN ! velocity given
+     wx = u; wy = v; wz = w
+     IF ( kmax_total .EQ. 1 ) wz = 0
+     
+  ELSE IF ( iflag .EQ. 3 ) THEN ! vorticity given
      CALL FI_CURL(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
           dx,dy,dz, u,v,w, wx,wy,wz, tmp4, wrk1d,wrk2d,wrk3d)
      IF ( kmax_total .EQ. 1 ) THEN; wx = C_0_R; wy = C_0_R; ENDIF ! exactly zero
 
-  ELSE
+  ELSE IF ( iflag .EQ. 4 ) THEN ! velocity potential given
      wx = u; wy = v; wz = w
-     IF ( kmax_total .EQ. 1 ) wz = 0
 
   ENDIF
 
@@ -169,7 +172,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, x,y,z,dx,dy,dz, u,v,w, tmp1,tmp2,tmp3,tmp4,
 ! ###################################################################
 ! If vorticity case, solve lap(u) = - rot vort.
 ! ###################################################################
-  IF ( iflag .EQ. 1 ) THEN
+  IF ( iflag .EQ. 3 ) THEN
 ! -------------------------------------------------------------------
 ! Calculate rot vort
 ! -------------------------------------------------------------------
@@ -250,7 +253,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, x,y,z,dx,dy,dz, u,v,w, tmp1,tmp2,tmp3,tmp4,
 ! ###################################################################
 ! Vector potential
 ! ###################################################################
-  IF ( iflag .EQ. 2 ) THEN
+  IF ( iflag .EQ. 4 ) THEN
      ibcmin = 0; ibcmax = 0
      IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) ibcmin = 1
      IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) ibcmax = 1
