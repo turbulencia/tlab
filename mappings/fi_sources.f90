@@ -182,6 +182,31 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
         
      ENDIF
 
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR .AND. inb_scal .EQ. 3 .AND. is .EQ. 2 ) THEN
+        
+        ycenter=y(1)+scaley*ycoor_i(3)+0.005 !postition of s3 plus constant
+        DO i=1,imax
+           DO k=1,kmax
+              DO j=1,jmax
+                 yrel=y(j)-ycenter
+                 xi=yrel/0.2 !thicknes constant
+                 wrk3d(i+(j-1)*imax+(k-1)*imax*jmax) = (1+TANH(xi))/2 !strength constant
+              ENDDO
+           ENDDO
+        ENDDO
+        
+!$omp parallel default( shared ) &
+!$omp private( ij, dummy,srt,end,siz )
+        CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
+        
+        dummy = -C_1_R/0.02
+        DO ij = srt,end
+           hs(ij,is) = hs(ij,is) + dummy*wrk3d(ij)*s(ij,is)
+        ENDDO
+!$omp end parallel
+        
+     ENDIF
+
 ! -----------------------------------------------------------------------
 ! Transport, such as settling 
 ! array tmp1 should not be used inside the loop on is

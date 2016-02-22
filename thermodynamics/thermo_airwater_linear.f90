@@ -18,7 +18,7 @@
 !########################################################################
 SUBROUTINE THERMO_AIRWATER_LINEAR(nx,ny,nz, s, l, wrk3d)
   
-  USE DNS_GLOBAL, ONLY : inb_scal
+  USE DNS_GLOBAL, ONLY : inb_scal_array
   USE THERMO_GLOBAL, ONLY : thermo_param
   
   IMPLICIT NONE
@@ -32,23 +32,24 @@ SUBROUTINE THERMO_AIRWATER_LINEAR(nx,ny,nz, s, l, wrk3d)
   
 ! -------------------------------------------------------------------
   TINTEGER ij
-  TREAL dummy
+  TREAL dummy, dummy2
 
 ! ###################################################################
-  IF ( inb_scal .EQ. 1 ) THEN
+  IF ( inb_scal_array .EQ. 2 ) THEN
      wrk3d = C_1_R + thermo_param(1)*s(:,1)
   ELSE
      wrk3d = C_1_R + thermo_param(1)*s(:,1) + thermo_param(2)*s(:,2)
   ENDIF
 
-  IF ( ABS(thermo_param(3)) .LT. C_SMALL_R ) THEN
+  IF ( ABS(thermo_param(inb_scal_array)) .LT. C_SMALL_R ) THEN
      DO ij = 1,nx*ny*nz
         l(ij) = MAX( wrk3d(ij), C_0_R )
      ENDDO
 
   ELSE
-     dummy = C_1_R /thermo_param(3)
-     l = dummy *LOG( EXP(dummy*wrk3d ) +C_1_R )
+     dummy  = thermo_param(inb_scal_array)
+     dummy2 = C_1_R /dummy
+     l = dummy *LOG( EXP(dummy2 *wrk3d) +C_1_R )
 
   ENDIF
   
@@ -59,7 +60,7 @@ END SUBROUTINE THERMO_AIRWATER_LINEAR
 !########################################################################
 SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, der1, der2, wrk3d)
   
-  USE DNS_GLOBAL, ONLY : inb_scal
+  USE DNS_GLOBAL, ONLY : inb_scal_array
   USE THERMO_GLOBAL, ONLY : thermo_param
   
   IMPLICIT NONE
@@ -73,16 +74,16 @@ SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, der1, der2, wrk3d)
   
 ! -------------------------------------------------------------------
   TINTEGER ij
-  TREAL dummy, dummy1 !, dummy2
+  TREAL dummy
 
 ! ###################################################################
-   IF ( inb_scal .EQ. 1 ) THEN
+   IF ( inb_scal_array .EQ. 2 ) THEN
      wrk3d = C_1_R + thermo_param(1)*s(:,1)
   ELSE
      wrk3d = C_1_R + thermo_param(1)*s(:,1) + thermo_param(2)*s(:,2)
   ENDIF
   
-  IF ( ABS(thermo_param(3)) .LT. C_SMALL_R ) THEN
+  IF ( ABS(thermo_param(inb_scal_array)) .LT. C_SMALL_R ) THEN
      der2 = C_BIG_R
 
      DO ij = 1,nx*ny*nz
@@ -91,14 +92,11 @@ SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, der1, der2, wrk3d)
      ENDDO
 
   ELSE
-     dummy  =-C_1_R/thermo_param(3)
-     dummy1 =-C_05_R*dummy
-!     dummy2 = C_05_R*dummy1
+     dummy  =-C_1_R/thermo_param(inb_scal_array)
 
      der1 = C_1_R / ( C_1_R + EXP(dummy *wrk3d) )
 
-!     der2 = dummy2 / (COSH(dummy1 *wrk3d)**2)
-     der2 = (C_1_R-der1) *der1
+     der2 = (der1-C_1_R) *der1 *dummy
 
   ENDIF
   

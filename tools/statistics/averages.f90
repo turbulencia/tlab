@@ -260,7 +260,8 @@ PROGRAM AVERAGES
   IF ( ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &
        ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
        ibodyforce .EQ. EQNS_BOD_PIECEWISE_LINEAR   .OR. &
-       ibodyforce .EQ. EQNS_BOD_PIECEWISE_BILINEAR ) THEN
+       ibodyforce .EQ. EQNS_BOD_PIECEWISE_BILINEAR .OR. &
+       imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy = 1
   ELSE 
      flag_buoyancy = 0   
