@@ -28,17 +28,18 @@ Case05. Same as Case03, but 2 scalars with different Schmidt numbers.
 Case06. Oscillating inversion (stably stratified density interface) with discrete ICs.
 Case07. Unstable inversion. Rayleigh-Taylor.
 Case08. Stably stratified shear layer. 
-Case09. Cloud-top mixing layer. Same as Case06 plus buoyancy reversal.
-Case10. Same as Case09, but compressible.
-Case11. Heated plate. 
-Case12. Same as Case11, but two scalars with different BCs.
-Case13. Subsiding shell. Gravity vector along the horizontal.
-Case14. Subsiding shell. Broadband perturbation.
-Case15. Radiation case.
-Case16. Channel flow. 
-Case17. Same as 16, implicit solver.
-Case18. Radiation case with evaporative cooling.
-Case19. Radiation case with evaporative cooling and settling.
+Case09. Heated plate. 
+Case10. Same as Case11, but two scalars with different BCs.
+Case11. Channel flow. 
+Case12. Same as 16, implicit solver.
+Case13. Radiation case.
+Case14. Cloud-top mixing layer; airwater, evaporation only. (Case06 plus buoyancy reversal.)
+Case15. Same as Case09, but compressible.
+Case16. Cloud-top mixing layer; airwater, radiation only.
+Case17. Cloud-top mixing layer; airwater, radiation case with evaporative cooling.
+Case18. Cloud-top mixing layer; airwater, radiation case with evaporative cooling and settling.
+Case19. Subsiding shell; airwater. Gravity vector along the horizontal.
+Case20. Subsiding shell; airwater. Broadband perturbation.
 
 3D cases
 

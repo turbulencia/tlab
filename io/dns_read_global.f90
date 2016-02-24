@@ -812,16 +812,11 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
 ! Initializing thermodynamic data of the mixture
 ! -------------------------------------------------------------------
-  NSP            = 1
-  inb_scal       = 1
-  inb_scal_array = 1
+  inb_scal       = inb_scal_local1 ! Default is general N scalars; gama0 has been already read above.
+  inb_scal_array = inb_scal
+  NSP            = inb_scal
 
-  IF ( imixture .EQ. MIXT_TYPE_NONE ) THEN ! general N scalars
-                                           ! gama0 has been already read above
-     inb_scal       = inb_scal_local1 
-     inb_scal_array = inb_scal
-
-  ELSE                                     ! particular mixture (requires implementation)
+  IF ( imixture .NE. MIXT_TYPE_NONE ) THEN ! particular mixture (requires implementation)
      CALL THERMO_INITIALIZE                ! gama0 is defined here
      IF ( inb_scal_local1 .NE. inb_scal )  THEN 
         CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Incorrect number of Schmidt numbers.')

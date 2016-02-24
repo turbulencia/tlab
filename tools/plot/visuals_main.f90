@@ -245,10 +245,11 @@ PROGRAM VISUALS_MAIN
   MaskSize    = 6
 
 ! in case we need the buoyancy statistics
-  IF ( ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &
-       ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
+  IF ( ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
+       ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &       
        ibodyforce .EQ. EQNS_BOD_PIECEWISE_LINEAR   .OR. &
-       ibodyforce .EQ. EQNS_BOD_PIECEWISE_BILINEAR ) THEN
+       ibodyforce .EQ. EQNS_BOD_PIECEWISE_BILINEAR .OR. &
+       imixture   .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy = 1
   ELSE 
      flag_buoyancy = 0   
@@ -905,13 +906,13 @@ PROGRAM VISUALS_MAIN
                  
               ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
                  CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array), txc(1,4)) ! calculate xi in tmp1
-                 CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, txc(1,4), &
+                 CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
                       dx,dy,dz, txc(1,4), txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
                  
                  CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, txc(1,2),txc(1,3), wrk3d)
                  
-                 dummy = diff *body_param(3) /froude
-                 txc(1:isize_field,1) = txc(1:isize_field,1) *txc(1:isize_field,3) *dummy ! evaporation source
+                 dummy = body_param(inb_scal_array)
+                 wrk3d(1:isize_field) = txc(1:isize_field,1) *txc(1:isize_field,3) *dummy ! evaporation source
                  
               ELSE
                  CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')

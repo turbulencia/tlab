@@ -39,13 +39,14 @@
 #define fQ(j)     mean2d(j,35)
 #define rQ(j)     mean2d(j,36)
 #define Qss(j)    mean2d(j,37)
-#define fQ2(j)    mean2d(j,38)
-#define rQ2(j)    mean2d(j,39)
-#define fQ3(j)    mean2d(j,40)
-#define rQ3(j)    mean2d(j,41)
-#define fQ4(j)    mean2d(j,42)
-#define rQ4(j)    mean2d(j,43)
+#define fQrad(j)  mean2d(j,38)
+#define rQrad(j)  mean2d(j,39)
+#define fQeva(j)  mean2d(j,40)
+#define rQeva(j)  mean2d(j,41)
+#define fQtra(j)  mean2d(j,42)
+#define rQtra(j)  mean2d(j,43)
 
+#define L_AVGPOS 3
 #define L_AVGMAX 43
 
 !########################################################################
@@ -119,7 +120,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
   CHARACTER*250 line1
   CHARACTER*850 line2
 
-  TREAL buo_parsett(4)
+  TREAL buo_parsett(4), iavgpos
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: u,v,w, rho, vis
@@ -148,14 +149,16 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
   ELSE;                                  diff = visc/schmidt(is); ENDIF
 
 ! Buoyancy as a diagnostic variable
-  IF ( ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &
-       ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
+  IF ( ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
+       ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &
        ibodyforce .EQ. EQNS_BOD_PIECEWISE_LINEAR   .OR. &
        ibodyforce .EQ. EQNS_BOD_PIECEWISE_BILINEAR .OR. &
-       imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+       imixture   .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy =  inb_scal_array+1 
+     iavgpos = L_AVGPOS *2
   ELSE 
      flag_buoyancy = 0
+     iavgpos = 0
   ENDIF
 
 ! -----------------------------------------------------------------------
@@ -182,8 +185,11 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 
 ! Dependent variables depending on y and t
      line1 = 'rS fS rS_y fS_y rQ fQ'
-     IF ( ( flag_buoyancy .EQ. is .AND. imixture .EQ. MIXT_TYPE_BILAIRWATER ) .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN ! Source term partition
+     IF ( flag_buoyancy .EQ. is .AND. imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN ! Source term partition
         line1 = TRIM(ADJUSTL(line1))//' rQ2 fQ2 rQ3 fQ3 rQ4 fQ4'
+     ENDIF
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN ! Source term partition
+        line1 = TRIM(ADJUSTL(line1))//' rQrad fQrad rQeva fQeva rQtra fQtra'
      ENDIF
      WRITE(i23,1010) 'GROUP = Mean '//TRIM(ADJUSTL(line1))
      line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
@@ -241,9 +247,24 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
      
      dsdz =-dsdz *dsdx *diff ! evaporation source
 
-     dsdx = dsdz
+     IF     (itransport .EQ. EQNS_TRANS_C_SET) THEN ! tranport terms need dsdy
+     ELSE
+        tmp1(1:isize_field,1,1) = C_0_R           
+     ENDIF
+
+     dsdx = dsdz ! do we need this?
+
+     IF ( irad_scalar .GT. 0 ) THEN  ! radiation source
+        CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
+        IF ( inb_scal .EQ. 2 ) THEN; dummy = thermo_param(inb_scal);
+        ELSE;                        dummy = C_0_R; ENDIF
+           dsdy = dsdx *dummy *dsdy
+     ELSE
+           dsdy = C_0_R
+     ENDIF
+
   ENDIF
-  
+
 ! Buoyancy as a diagnostic variable
   IF ( flag_buoyancy .EQ. is  ) THEN
      IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN
@@ -310,13 +331,18 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
         dummy =-diff *body_param(inb_scal_array) /froude
         dsdz = dsdz *dsdx *dummy ! evaporation source
 
-! tranport terms here because they need dsdy
-        
-        IF ( irad_scalar .GT. 0 ) THEN
+        IF     (itransport .EQ. EQNS_TRANS_C_SET) THEN ! tranport terms need dsdy
+        ELSE
+           tmp1(1:isize_field,1,1) = C_0_R           
+        ENDIF
+
+        IF ( irad_scalar .GT. 0 ) THEN ! radiation source terms need dsdy
            CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
-           IF ( inb_scal .EQ. 2 ) THEN; dummy = body_param(inb_scal_array) *thermo_param(inb_scal) /froude;
+           IF ( inb_scal .EQ. 2 ) THEN; dummy = thermo_param(inb_scal) *body_param(inb_scal_array) /froude;
            ELSE;                        dummy = C_0_R; ENDIF
-           dsdy = dsdx *(C_1_R +dummy *dsdy)  ! radiation source
+           dsdy = dsdx *(C_1_R +dummy *dsdy)
+        ELSE
+           dsdy = C_0_R
         ENDIF
         
      ELSE
@@ -447,13 +473,13 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 
      fQ(j)  = rQ(j)
 
-     IF ( ( flag_buoyancy .EQ. is .AND. imixture .EQ. MIXT_TYPE_BILAIRWATER ) .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN ! Source term partition
-        rQ2(j) = AVG_IK(imax,jmax,kmax, j, dsdy, dx,dz, area)
-        fQ2(j) = rQ2(j)
-        rQ3(j) = AVG_IK(imax,jmax,kmax, j, dsdz, dx,dz, area)
-        fQ3(j) = rQ3(j)
-        rQ4(j) = AVG_IK(imax,jmax,kmax, j, tmp1, dx,dz, area)
-        fQ4(j) = rQ4(j)
+     IF ( iavgpos .GT. 0 ) THEN
+        rQrad(j) = AVG_IK(imax,jmax,kmax, j, dsdy, dx,dz, area)
+        fQrad(j) = rQrad(j)
+        rQeva(j) = AVG_IK(imax,jmax,kmax, j, dsdz, dx,dz, area)
+        fQeva(j) = rQeva(j)
+        rQtra(j) = AVG_IK(imax,jmax,kmax, j, tmp1, dx,dz, area)
+        fQtra(j) = rQtra(j)
      ENDIF
 
 ! -----------------------------------------------------------------------
@@ -800,30 +826,18 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 
         ENDIF
 
-        IF ( ( flag_buoyancy .EQ. is .AND. imixture .EQ. MIXT_TYPE_BILAIRWATER ) .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN ! Source term partition
-           WRITE(23,1020) 1, j, (VAUXPRE(k),k=1,ivauxpre),&
-                rS(j), fS(j), rS_y(j), fS_y(j), rQ(j), fQ(j), rQ2(j), fQ2(j),rQ3(j), fQ3(j),rQ4(j),fQ4(j),Rsu(j), Rsv(j), Rsw(j), &
-                fS2(j), fS3(j), fS4(j), fS5(j), fS6(j),&
-                rS2(j), rS3(j), rS4(j), rS5(j), rS6(j),&
-                fSRHO(j), rSRHO(j), &
-                Rss_t, Pss, Ess(j), Tssy(j), Tssy_y(j), Dss(j), Qss(j), &
-                var_x, var_y, var_z, skew_x, skew_y, skew_z, flat_x, flat_y, flat_z,&
-                (VAUXPOS(k),k=1,ivauxpos)
-        
-        ELSE
-           WRITE(23,1020) 1, j, (VAUXPRE(k),k=1,ivauxpre),&
-                rS(j), fS(j), rS_y(j), fS_y(j), rQ(j), fQ(j), Rsu(j), Rsv(j), Rsw(j), &
-                fS2(j), fS3(j), fS4(j), fS5(j), fS6(j),&
-                rS2(j), rS3(j), rS4(j), rS5(j), rS6(j),&
-                fSRHO(j), rSRHO(j), &
-                Rss_t, Pss, Ess(j), Tssy(j), Tssy_y(j), Dss(j), Qss(j), &
-                var_x, var_y, var_z, skew_x, skew_y, skew_z, flat_x, flat_y, flat_z,&
-                (VAUXPOS(k),k=1,ivauxpos)
-       
-        ENDIF
+        WRITE(23,1020) 1, j, (VAUXPRE(k),k=1,ivauxpre),&
+             rS(j), fS(j), rS_y(j), fS_y(j), rQ(j), fQ(j), (mean2d(j,L_AVGMAX-L_AVGPOS*2+k),k=1,iavgpos), &
+             Rsu(j), Rsv(j), Rsw(j), &
+             fS2(j), fS3(j), fS4(j), fS5(j), fS6(j),&
+             rS2(j), rS3(j), rS4(j), rS5(j), rS6(j),&
+             fSRHO(j), rSRHO(j), &
+             Rss_t, Pss, Ess(j), Tssy(j), Tssy_y(j), Dss(j), Qss(j), &
+             var_x, var_y, var_z, skew_x, skew_y, skew_z, flat_x, flat_y, flat_z,&
+             (VAUXPOS(k),k=1,ivauxpos)
 
 ! using the maximum 37+5+11
-1020    FORMAT(I5,(1X,I5),5(1X,G_FORMAT_R),37(1X,G_FORMAT_R),11(1X,G_FORMAT_R))
+1020    FORMAT(I5,(1X,I5),5(1X,G_FORMAT_R),L_AVGMAX(1X,G_FORMAT_R),11(1X,G_FORMAT_R))
         
 #ifdef USE_MPI
      ENDIF
