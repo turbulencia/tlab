@@ -121,11 +121,11 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d,wrk3d
   
 ! -----------------------------------------------------------------------
-  TINTEGER ij, is, i,j,k
+  TINTEGER ij, is, i,j,k, flag_grad
   TREAL xi, ycenter, yrel, dummy
 
   TINTEGER siz, srt, end    !  Variables for OpenMP Partitioning 
-
+  
 #ifdef USE_BLAS
   INTEGER ilen
 #endif
@@ -187,8 +187,10 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
 ! Transport, such as settling 
 ! array tmp1 should not be used inside the loop on is
 ! -----------------------------------------------------------------------
-     IF ( itransport .GT. 0 ) THEN  
-        CALL FI_TRANS_FLUX(itransport, imax,jmax,kmax, is, inb_scal_array, trans_param, settling, &
+     IF ( itransport .GT. 0 ) THEN
+        IF ( is .EQ. 1 ) THEN; flag_grad = 1;
+        ELSE;                  flag_grad = 0; ENDIF
+        CALL FI_TRANS_FLUX(itransport, flag_grad, imax,jmax,kmax, is, inb_scal_array, trans_param, settling, &
              dy, s,tmp1, tmp4, wrk1d,wrk2d,wrk3d)
         
 !$omp parallel default( shared ) &

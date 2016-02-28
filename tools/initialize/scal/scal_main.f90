@@ -181,16 +181,17 @@ PROGRAM INISCAL
   ENDIF
 
 ! ------------------------------------------------------------------
-! Add Radiation component after the fluctuation field.
+! Add Radiation component after the fluctuation field
 ! ------------------------------------------------------------------
   IF ( iradiation .NE. EQNS_NONE ) THEN
      
-! An initial effect of radiation as an accumulation during a certain interval of time
-! is considered by means of rad_ini
-     rad_param(1) = rad_ini
+! An initial effect of radiation is imposed as an accumulation during a certain interval of time
+     rad_param(1) = norm_ini_radiation
      IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN
+        rad_param(1) = rad_ini
         CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, s(:,1), s(:,inb_scal_array)) !Update the liquid function
-     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+     ENDIF
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
         CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(:,inb_scal_array), wrk3d)
      ENDIF
      CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc, wrk1d,wrk3d)

@@ -25,7 +25,7 @@ MODULE DNS_LOCAL
 ! Control 
 ! ###################################################################
   TINTEGER :: ilimit_flow, ilimit_scal
-  TREAL    :: p_bound_min, p_bound_max, r_bound_min, r_bound_max, z_bound_min, z_bound_max
+  TREAL    :: p_bound_min, p_bound_max, r_bound_min, r_bound_max, s_bound_min(MAX_NSP), s_bound_max(MAX_NSP)
 
 ! ###################################################################
 ! Statistics

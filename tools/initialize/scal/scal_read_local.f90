@@ -91,6 +91,8 @@ SUBROUTINE SCAL_READ_LOCAL(inifile)
 
   ENDIF
   
+  CALL SCANINIREAL(bakfile,inifile,'IniFields', 'NormalizeR', '0.0', norm_ini_radiation) ! Radiation field
+
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'Broadening', 'dummy', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .NE. 'dummy' )  THEN
      CALL IO_WRITE_ASCII(wfile, 'SCAL_READ_LOCAL. Broadening obsolete, use ThickIni instead.')
@@ -116,22 +118,23 @@ SUBROUTINE SCAL_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#2DPhi=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#3DXPhi=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#3DZPhi=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#RadStart=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#Broadening=<value>')
 
-  nx2d = MAX_DISCRETE
-  nx3d = MAX_DISCRETE
-  nz3d = MAX_DISCRETE
   CALL SCANINICHAR(bakfile,inifile,'Discrete','2DPhi', '0.0',sRes)
+  Phix2D(:)=C_0_R; nx2d = MAX_FRC_FREC
   CALL LIST_REAL(sRes, nx2d, Phix2D)
+  CALL SCANINICHAR(bakfile,inifile,'Discrete','2DAmpl','0.0',sRes)
+  A2D(:)=C_0_R; nx2d = MAX_FRC_FREC ! The amplitude sets the value of nx2d
+  CALL LIST_REAL(sRes, nx2d, A2D)
+  
   CALL SCANINICHAR(bakfile,inifile,'Discrete','3DXPhi','0.0',sRes)
+  Phix3D(:)=C_0_R; nx3d = MAX_FRC_FREC
   CALL LIST_REAL(sRes, nx3d, Phix3d)
   CALL SCANINICHAR(bakfile,inifile,'Discrete','3DZPhi','0.0',sRes)
+  Phiz3D(:)=C_0_R; nz3d = MAX_FRC_FREC
   CALL LIST_REAL(sRes, nz3d, Phiz3D)
-
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','2DAmpl','0.0',sRes)
-  CALL LIST_REAL(sRes, nx2d, A2D)
   CALL SCANINICHAR(bakfile,inifile,'Discrete','3DAmpl','0.0',sRes)
+  A3D(:)=C_0_R; nx3d = MAX_FRC_FREC ! The amplitude sets the value of nx3d
   CALL LIST_REAL(sRes, nx3d, A3D)
 
 ! An initial effect of radiation as an accumulation during a certain interval of time

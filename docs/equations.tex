@@ -206,7 +206,7 @@ pressure.
 For the buoyancy (see routine {\tt flow/flow\_buoyancy}), the most common
 expressions are a linear or bilinear relation to the scalar fields as
 \begin{equation}
-b^e=[\alpha_0+]\;\alpha_1\zeta_1\; [+\alpha_2\zeta_2] \;,
+b^e=\alpha_1\zeta_1+\alpha_2\zeta_2+\ldots+\alpha_\mathrm{\tt inb\_scal\_array+1}\;,
 \end{equation}
 where the coefficients $\alpha_i$ need to be provided. A quadratic form 
 \begin{equation}
@@ -215,42 +215,42 @@ b^e=-\frac{4\alpha_0}{\alpha_1^2}\zeta_1(\zeta_1-\alpha_1) \;,
 is also available, so that the maximum buoyancy $\alpha_0$ is achieved at
 $\zeta_1=\alpha_1/2$. 
 
-Another option is a piece-wise linear function
-\begin{equation}
-b^e=\frac{\alpha_2}{\alpha_3}\zeta_1+\\
-\left(\frac{\alpha_1-\alpha_2}{1-\alpha_3}-\frac{\alpha_2}{\alpha_3}\right)
-\alpha_4\ln\left[\exp\left(\frac{\zeta_1-\alpha_3}{\alpha_4}\right)+1\right] \;.
-\end{equation}
-The first linear branch of this function varies between $b^e=0$ at $\zeta_1=0$
-and $b^e=\alpha_2$ at $\zeta_1=\alpha_3$; the second linear branch varies
-between $b^e=\alpha_2$ at $\zeta_1=\alpha_3$ and $b^e=\alpha_1$ at
-$\zeta_1=1$. The first-order discontinuity at $\zeta_1=\alpha_3$ is smoothed
-over an interval $\alpha_4$ in the $\zeta_1$-space. This expression can be
-written as
-\begin{equation}
-\begin{aligned}
-&b^e=\beta_1\,\zeta_1+\beta_2\,(\ell-1)\;,
-\qquad \beta_1=\frac{\alpha_1-\alpha_2}{1-\alpha_3}\;,\qquad
-\beta_2=\frac{\alpha_3\alpha_1-\alpha_2}{1-\alpha_3}\;,
-\\
-&\ell=\frac{\alpha_4}{\alpha_3}\ln\left[\exp\left(\frac{\alpha_3-\zeta_1}{\alpha_4}\right)+1\right] \;,
-\end{aligned}
-\end{equation}
-where the symbols $\beta_i$ relate to those used in Stevens (2002) according to $\beta_1\equiv\delta_\text{d}b$, $\beta_2\equiv g\beta_\ell q_{\ell\text{,max}}$, normalized with an appropriate buoyancy scale. ($\alpha_1\equiv\delta_\text{d}b-g\beta_\ell q_{\ell\text{,max}}$, $\alpha_3\equiv g\beta_\ell q_{\ell\text{,max}}/(\delta_\text{d}b-\delta_\text{m}b)$, and $\alpha_2\equiv\alpha_3\delta_\text{m}b$.) The piece-wise linear function reduces to a linear function when $\beta_2=0$.
+% Another option is a piece-wise linear function
+% \begin{equation}
+% b^e=\frac{\alpha_2}{\alpha_3}\zeta_1+\\
+% \left(\frac{\alpha_1-\alpha_2}{1-\alpha_3}-\frac{\alpha_2}{\alpha_3}\right)
+% \alpha_4\ln\left[\exp\left(\frac{\zeta_1-\alpha_3}{\alpha_4}\right)+1\right] \;.
+% \end{equation}
+% The first linear branch of this function varies between $b^e=0$ at $\zeta_1=0$
+% and $b^e=\alpha_2$ at $\zeta_1=\alpha_3$; the second linear branch varies
+% between $b^e=\alpha_2$ at $\zeta_1=\alpha_3$ and $b^e=\alpha_1$ at
+% $\zeta_1=1$. The first-order discontinuity at $\zeta_1=\alpha_3$ is smoothed
+% over an interval $\alpha_4$ in the $\zeta_1$-space. This expression can be
+% written as
+% \begin{equation}
+% \begin{aligned}
+% &b^e=\beta_1\,\zeta_1+\beta_2\,(\ell-1)\;,
+% \qquad \beta_1=\frac{\alpha_1-\alpha_2}{1-\alpha_3}\;,\qquad
+% \beta_2=\frac{\alpha_3\alpha_1-\alpha_2}{1-\alpha_3}\;,
+% \\
+% &\ell=\frac{\alpha_4}{\alpha_3}\ln\left[\exp\left(\frac{\alpha_3-\zeta_1}{\alpha_4}\right)+1\right] \;,
+% \end{aligned}
+% \end{equation}
+% where the symbols $\beta_i$ relate to those used in Stevens (2002) according to $\beta_1\equiv\delta_\text{d}b$, $\beta_2\equiv g\beta_\ell q_{\ell\text{,max}}$, normalized with an appropriate buoyancy scale. ($\alpha_1\equiv\delta_\text{d}b-g\beta_\ell q_{\ell\text{,max}}$, $\alpha_3\equiv g\beta_\ell q_{\ell\text{,max}}/(\delta_\text{d}b-\delta_\text{m}b)$, and $\alpha_2\equiv\alpha_3\delta_\text{m}b$.) The piece-wise linear function reduces to a linear function when $\beta_2=0$.
 
-The last case is the piece-wise bilinear expression
-\begin{equation}
-\begin{aligned}
-&b^e=\beta_1\,\zeta_1+\beta_2\,(\ell-1) + \alpha_5\,\zeta_2\;,\\
-&\ell=\frac{\alpha_4}{\alpha_3}\ln\left[\exp\left(\frac{\alpha_3-\zeta_1-\alpha_3\beta_6\,\zeta_2}{\alpha_4}\right)+1\right]
-\;,\qquad \beta_6=\alpha_6\alpha_5/\beta_2\;,
-\end{aligned}
-\end{equation}
-which reduces to the previous piece-wise linear in the case
-$\alpha_5=\alpha_6=0$. (The reason to express the buoyancy in terms of the
-parameter $\alpha_6$ instead of directly in terms of $\beta_6$ is that we also
-need $\alpha_6$ for the analysis of the source term of the buoyancy evolution
-equation.)
+% The last case is the piece-wise bilinear expression
+% \begin{equation}
+% \begin{aligned}
+% &b^e=\beta_1\,\zeta_1+\beta_2\,(\ell-1) + \alpha_5\,\zeta_2\;,\\
+% &\ell=\frac{\alpha_4}{\alpha_3}\ln\left[\exp\left(\frac{\alpha_3-\zeta_1-\alpha_3\beta_6\,\zeta_2}{\alpha_4}\right)+1\right]
+% \;,\qquad \beta_6=\alpha_6\alpha_5/\beta_2\;,
+% \end{aligned}
+% \end{equation}
+% which reduces to the previous piece-wise linear in the case
+% $\alpha_5=\alpha_6=0$. (The reason to express the buoyancy in terms of the
+% parameter $\alpha_6$ instead of directly in terms of $\beta_6$ is that we also
+% need $\alpha_6$ for the analysis of the source term of the buoyancy evolution
+% equation.)
 
 Note that the buoyancy field is {\it always} treated as a diagnostic variable
 and the average statistical data -- actually from the momentum source term
@@ -303,3 +303,9 @@ The scalar indeces $\{\beta\,,\gamma\}$ and the parameters $\{\alpha_0\,,\alpha_
 provided. Default values are $\beta=1$ and $\gamma=${\tt inb\_scal\_array}. The scalar fields can be average profiles,
 instead of instantaneous values, and non-linear mapping functions can be
 specified.
+
+For complex thermodynamics (e.g., airwater), the field $\zeta_\mathrm{\tt inb\_scal\_array}$ is calculated from a nonlinear mapping applied on the field
+\begin{equation}
+\xi =\alpha_1\zeta_1+\ldots+\alpha_\mathrm{\tt inb\_scal}\zeta_\mathrm{\tt inb\_scal}\;.
+\end{equation}
+The parameter $\alpha_\mathrm{\tt inb\_scal\_array}$ is the smoothing parameter of the nonlinear mapping

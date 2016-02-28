@@ -139,7 +139,7 @@ SUBROUTINE DNS_CONTROL_SCAL(s)
   USE DNS_GLOBAL,ONLY : imode_eqns, isize_field, icalc_scal
   USE DNS_GLOBAL,ONLY : inb_scal
   USE DNS_LOCAL, ONLY : ilimit_scal
-  USE DNS_LOCAL, ONLY : z_bound_min, z_bound_max
+  USE DNS_LOCAL, ONLY : s_bound_min, s_bound_max
 
   IMPLICIT NONE
 
@@ -152,7 +152,7 @@ SUBROUTINE DNS_CONTROL_SCAL(s)
   IF ( ilimit_scal .EQ. 1 .AND. icalc_scal .EQ. 1 ) THEN
      DO is = 1,inb_scal
         DO ij = 1,isize_field
-           s(ij,is) = MIN(MAX(s(ij,is),z_bound_min), z_bound_max)
+           s(ij,is) = MIN(MAX(s(ij,is),s_bound_min(is)), s_bound_max(is))
         ENDDO
      ENDDO
   ENDIF

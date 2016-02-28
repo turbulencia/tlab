@@ -6,7 +6,7 @@ MODULE SCAL_LOCAL
   IMPLICIT NONE
   SAVE
 
-  TINTEGER, PARAMETER :: MAX_DISCRETE = 32
+  TINTEGER, PARAMETER :: MAX_FRC_FREC = 32
 
 ! ###################################################################
 ! Basic options
@@ -15,7 +15,8 @@ MODULE SCAL_LOCAL
 
 ! Geometry and scaling of perturbation
   TREAL    :: thick_ini(MAX_NSP), norm_ini_s(MAX_NSP), ycoor_ini(MAX_NSP)
-
+  TREAL    :: norm_ini_radiation
+  
 ! ###################################################################
 ! Discrete forcing
 ! ###################################################################
@@ -23,8 +24,8 @@ MODULE SCAL_LOCAL
 
 ! sinusoidal  
   TINTEGER :: nx2d, nx3d, nz3d
-  TREAL    :: A2D(MAX_DISCRETE), Phix2d(MAX_DISCRETE)
-  TREAL    :: A3D(MAX_DISCRETE), Phix3d(MAX_DISCRETE), Phiz3d(MAX_DISCRETE)
+  TREAL    :: A2D(MAX_FRC_FREC), Phix2d(MAX_FRC_FREC)
+  TREAL    :: A3D(MAX_FRC_FREC), Phix3d(MAX_FRC_FREC), Phiz3d(MAX_FRC_FREC)
 
 ! Gaussian
   TREAL    :: delta_discrete

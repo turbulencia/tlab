@@ -34,7 +34,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
   CHARACTER*512 sRes
   CHARACTER*32 bakfile, lstr
-  TINTEGER is,idummy
+  TINTEGER is,idummy,inb_scal_local1
 
 ! ###################################################################
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
@@ -151,11 +151,35 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Control', 'MinDensity',  '-1.0', r_bound_min)
   CALL SCANINIREAL(bakfile, inifile, 'Control', 'MaxDensity',  '-1.0', r_bound_max)
 
-  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MinScalar', '-1.0', z_bound_min)
-  IF ( z_bound_min .LT. C_0_R ) z_bound_min = C_0_R
+  ! CALL SCANINIREAL(bakfile, inifile, 'Control', 'MinScalar', '-1.0', z_bound_min)
+  ! IF ( z_bound_min .LT. C_0_R ) z_bound_min = C_0_R
 
-  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MaxScalar', '-1.0', z_bound_max)
-  IF ( z_bound_max .LT. C_0_R ) z_bound_max = C_1_R
+  ! CALL SCANINIREAL(bakfile, inifile, 'Control', 'MaxScalar', '-1.0', z_bound_max)
+  ! IF ( z_bound_max .LT. C_0_R ) z_bound_max = C_1_R
+
+  s_bound_min(:) = C_0_R; inb_scal_local1 = MAX_NSP
+  IF ( ilimit_scal .EQ. 1 ) THEN
+     CALL SCANINICHAR(bakfile, inifile, 'Control', 'MinScalar',  'void', sRes)
+     IF ( sRes .NE. 'void' ) THEN
+        CALL LIST_REAL(sRes, inb_scal_local1, s_bound_min)
+        IF ( inb_scal_local1 .NE. inb_scal ) THEN ! Consistency check
+           CALL IO_WRITE_ASCII(efile,'DNS_READ_LOCAL. MinScalar size does not match inb_scal.')
+           CALL DNS_STOP(DNS_ERROR_OPTION)
+        ENDIF
+     ENDIF
+  ENDIF
+     
+  s_bound_max(:) = C_1_R; inb_scal_local1 = MAX_NSP
+  IF ( ilimit_scal .EQ. 1 ) THEN
+     CALL SCANINICHAR(bakfile, inifile, 'Control', 'MaxScalar',  'void', sRes)
+     IF ( sRes .NE. 'void' ) THEN
+        CALL LIST_REAL(sRes, inb_scal_local1, s_bound_max)
+        IF ( inb_scal_local1 .NE. inb_scal ) THEN ! Consistency check
+           CALL IO_WRITE_ASCII(efile,'DNS_READ_LOCAL. MaxScalar size does not match inb_scal.')
+           CALL DNS_STOP(DNS_ERROR_OPTION)
+        ENDIF
+     ENDIF
+  ENDIF
 
 ! ###################################################################
 ! Boundary Conditions
@@ -758,20 +782,23 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#3DZPhi=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#Broadening=<value>')
 
-  nx2d = MAX_FRC_FREC
-  nx3d = MAX_FRC_FREC
-  nz3d = MAX_FRC_FREC
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','2DPhi','0.0',sRes)
+  CALL SCANINICHAR(bakfile,inifile,'Discrete','2DPhi', '0.0',sRes)
+  Phix2D(:)=C_0_R; nx2d = MAX_FRC_FREC
   CALL LIST_REAL(sRes, nx2d, Phix2D)
+  CALL SCANINICHAR(bakfile,inifile,'Discrete','2DAmpl','0.0',sRes)
+  A2D(:)=C_0_R; nx2d = MAX_FRC_FREC ! The amplitude sets the value of nx2d
+  CALL LIST_REAL(sRes, nx2d, A2D)
+  
   CALL SCANINICHAR(bakfile,inifile,'Discrete','3DXPhi','0.0',sRes)
+  Phix3D(:)=C_0_R; nx3d = MAX_FRC_FREC
   CALL LIST_REAL(sRes, nx3d, Phix3d)
   CALL SCANINICHAR(bakfile,inifile,'Discrete','3DZPhi','0.0',sRes)
+  Phiz3D(:)=C_0_R; nz3d = MAX_FRC_FREC
   CALL LIST_REAL(sRes, nz3d, Phiz3D)
-
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','2DAmpl','0.0',sRes)
-  CALL LIST_REAL(sRes, nx2d, A2D)
   CALL SCANINICHAR(bakfile,inifile,'Discrete','3DAmpl','0.0',sRes)
+  A3D(:)=C_0_R; nx3d = MAX_FRC_FREC ! The amplitude sets the value of nx3d
   CALL LIST_REAL(sRes, nx3d, A3D)
+
 
   CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'Type', 'Varicose', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'varicose' ) THEN; ifrcdsc_mode = 1

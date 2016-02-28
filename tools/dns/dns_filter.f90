@@ -167,7 +167,7 @@ SUBROUTINE DNS_FILTER(flag_save, y,dx,dy,dz, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
         
         IF ( ilimit_scal .EQ. 1 ) THEN
            DO ij = 1,isize_field
-              s(ij,is) = MIN(MAX(s(ij,is),z_bound_min), z_bound_max)
+              s(ij,is) = MIN(MAX(s(ij,is),s_bound_min(is)), s_bound_max(is))
            ENDDO
         ENDIF
         

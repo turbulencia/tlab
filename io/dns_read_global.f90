@@ -59,7 +59,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! ###################################################################
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
-  iMajorVersion = 6; iMinorVersion = 1
+  iMajorVersion = 6; iMinorVersion = 2
 
   ireactive = CHEM_NONE ! default is nonreactive
 
@@ -310,9 +310,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINICHAR(bakfile, inifile, 'Parameters', 'Damkohler', lstr, sRes)
   damkohler(:) = C_0_R; inb_scal_local2 = MAX_NSP
   CALL LIST_REAL(sRes, inb_scal_local2, damkohler)
-
-! Consistency check
-  IF ( inb_scal_local1 .NE. inb_scal_local2 ) THEN
+  IF ( inb_scal_local1 .NE. inb_scal_local2 ) THEN ! Consistency check
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Schmidt and Damkholer sizes do not match.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF

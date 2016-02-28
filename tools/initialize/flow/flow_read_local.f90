@@ -120,19 +120,21 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#3DZPhi=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#Broadening=<value>')
 
-  nx2d = MAX_FRC_FREC
-  nx3d = MAX_FRC_FREC
-  nz3d = MAX_FRC_FREC
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','2DPhi','0.0',sRes)
+  CALL SCANINICHAR(bakfile,inifile,'Discrete','2DPhi', '0.0',sRes)
+  Phix2D(:)=C_0_R; nx2d = MAX_FRC_FREC
   CALL LIST_REAL(sRes, nx2d, Phix2D)
+  CALL SCANINICHAR(bakfile,inifile,'Discrete','2DAmpl','0.0',sRes)
+  A2D(:)=C_0_R; nx2d = MAX_FRC_FREC ! The amplitude sets the value of nx2d
+  CALL LIST_REAL(sRes, nx2d, A2D)
+  
   CALL SCANINICHAR(bakfile,inifile,'Discrete','3DXPhi','0.0',sRes)
+  Phix3D(:)=C_0_R; nx3d = MAX_FRC_FREC
   CALL LIST_REAL(sRes, nx3d, Phix3d)
   CALL SCANINICHAR(bakfile,inifile,'Discrete','3DZPhi','0.0',sRes)
+  Phiz3D(:)=C_0_R; nz3d = MAX_FRC_FREC
   CALL LIST_REAL(sRes, nz3d, Phiz3D)
-
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','2DAmpl','0.0',sRes)
-  CALL LIST_REAL(sRes, nx2d, A2D)
   CALL SCANINICHAR(bakfile,inifile,'Discrete','3DAmpl','0.0',sRes)
+  A3D(:)=C_0_R; nx3d = MAX_FRC_FREC ! The amplitude sets the value of nx3d
   CALL LIST_REAL(sRes, nx3d, A3D)
 
   CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'Type', 'Varicose', sRes)

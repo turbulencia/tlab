@@ -257,8 +257,8 @@ PROGRAM AVERAGES
   jmax_aux = jmax_total/opt_block
 
 ! in case we need the buoyancy statistics
-  IF ( ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &
-       ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
+  IF ( ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
+       ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &       
        ibodyforce .EQ. EQNS_BOD_PIECEWISE_LINEAR   .OR. &
        ibodyforce .EQ. EQNS_BOD_PIECEWISE_BILINEAR .OR. &
        imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
@@ -495,10 +495,17 @@ PROGRAM AVERAGES
               dummy = C_1_R/froude
               txc(1:isize_field,1) = txc(1:isize_field,1)*dummy
 ! mean values
-              dummy = C_0_R
               s_aux(1:inb_scal) = mean_i(1:inb_scal) - C_05_R*delta_i(1:inb_scal)
+              IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+                 CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array), dummy)
+              ENDIF
+              dummy = C_0_R
               CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umin, dummy)
               s_aux(1:inb_scal) = mean_i(1:inb_scal) + C_05_R*delta_i(1:inb_scal)
+              IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+                 CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array), dummy)
+              ENDIF
+              dummy = C_0_R
               CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umax, dummy)
               mean_i(is) = (umax+umin)/froude; delta_i(is) = ABS(umax-umin)/froude; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
               CALL AVG_SCAL_TEMPORAL_LAYER(is, y, dx,dy,dz, q,s, txc(1,1), &

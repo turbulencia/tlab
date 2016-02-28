@@ -280,8 +280,8 @@ SUBROUTINE THERMO_INITIALIZE
      inb_scal_array = inb_scal + 1      ! using inb_scal read in the inifile
      NSP            = inb_scal_array 
 
-     THERMO_SPNAME(1) = 'chi'      ! Mixture fraction 
-     THERMO_SPNAME(2) = 'psi'      ! Deviation in the enthalpy from the mixture fraction
+     THERMO_SPNAME(1) = 'Chi'      ! Mixture fraction 
+     THERMO_SPNAME(2) = 'Psi'      ! Deviation in the enthalpy from the mixture fraction
      DO is = 3,inb_scal
         WRITE(THERMO_SPNAME(is),*) is; THERMO_SPNAME(is) = 'Scalar'//TRIM(ADJUSTL(THERMO_SPNAME(is))) 
      ENDDO
