@@ -18,7 +18,7 @@
 !########################################################################
 SUBROUTINE THERMO_AIRWATER_LINEAR(nx,ny,nz, s, l, wrk3d)
   
-  USE DNS_GLOBAL, ONLY : inb_scal_array
+  USE DNS_GLOBAL, ONLY : inb_scal
   USE THERMO_GLOBAL, ONLY : thermo_param
   
   IMPLICIT NONE
@@ -35,19 +35,19 @@ SUBROUTINE THERMO_AIRWATER_LINEAR(nx,ny,nz, s, l, wrk3d)
   TREAL dummy, dummy2
 
 ! ###################################################################
-  IF ( inb_scal_array .EQ. 2 ) THEN
+  IF ( inb_scal .EQ. 1 ) THEN
      wrk3d = C_1_R + thermo_param(1)*s(:,1)
   ELSE
      wrk3d = C_1_R + thermo_param(1)*s(:,1) + thermo_param(2)*s(:,2)
   ENDIF
 
-  IF ( ABS(thermo_param(inb_scal_array)) .LT. C_SMALL_R ) THEN
+  IF ( ABS(thermo_param(inb_scal+1)) .LT. C_SMALL_R ) THEN
      DO ij = 1,nx*ny*nz
         l(ij) = MAX( wrk3d(ij), C_0_R )
      ENDDO
 
   ELSE
-     dummy  = thermo_param(inb_scal_array)
+     dummy  = thermo_param(inb_scal+1)
      dummy2 = C_1_R /dummy
      l = dummy *LOG( EXP(dummy2 *wrk3d) +C_1_R )
 
@@ -60,7 +60,7 @@ END SUBROUTINE THERMO_AIRWATER_LINEAR
 !########################################################################
 SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, der1, der2, wrk3d)
   
-  USE DNS_GLOBAL, ONLY : inb_scal_array
+  USE DNS_GLOBAL, ONLY : inb_scal
   USE THERMO_GLOBAL, ONLY : thermo_param
   
   IMPLICIT NONE
@@ -77,13 +77,13 @@ SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, der1, der2, wrk3d)
   TREAL dummy
 
 ! ###################################################################
-   IF ( inb_scal_array .EQ. 2 ) THEN
+   IF ( inb_scal .EQ. 1 ) THEN
      wrk3d = C_1_R + thermo_param(1)*s(:,1)
   ELSE
      wrk3d = C_1_R + thermo_param(1)*s(:,1) + thermo_param(2)*s(:,2)
   ENDIF
   
-  IF ( ABS(thermo_param(inb_scal_array)) .LT. C_SMALL_R ) THEN
+  IF ( ABS(thermo_param(inb_scal+1)) .LT. C_SMALL_R ) THEN
      der2 = C_BIG_R
 
      DO ij = 1,nx*ny*nz
@@ -92,7 +92,7 @@ SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, der1, der2, wrk3d)
      ENDDO
 
   ELSE
-     dummy  =-C_1_R/thermo_param(inb_scal_array)
+     dummy  =-C_1_R/thermo_param(inb_scal+1)
 
      der1 = C_1_R / ( C_1_R + EXP(dummy *wrk3d) )
 
