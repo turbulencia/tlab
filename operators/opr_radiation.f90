@@ -36,7 +36,7 @@ SUBROUTINE OPR_RADIATION(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d)
   
 ! -----------------------------------------------------------------------
   TINTEGER j, ip,nxy,nxz, ibc
-  TREAL delta_inv
+  TREAL delta_inv, dummy
   TREAL, DIMENSION(:), POINTER :: p_org, p_dst
   
 ! #######################################################################
@@ -90,8 +90,12 @@ SUBROUTINE OPR_RADIATION(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d)
   ip = nxz *(ny-1) +1; p_dst(ip:ip+nxz-1) = C_0_R ! boundary condition
 
 ! Calculate radiative heating rate
-  p_dst(1:ny*nxz) = param(1) *p_org(1:ny*nxz) *EXP( p_dst(1:ny*nxz) *delta_inv )
-  
+  dummy = param(1)
+  DO j = 1,ny*nxz
+     p_dst(j) = p_org(j) *EXP( p_dst(j) *delta_inv ) *dummy
+  ENDDO
+!  p_dst(1:ny*nxz) = param(1) *p_org(1:ny*nxz) *EXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
+
 ! ###################################################################
   IF      ( iradiation .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN
      DO j = ny,1,-1
