@@ -1,3 +1,5 @@
+#include "types.h"
+
 !########################################################################
 !# Tool/Library SUPERLAYER
 !#
@@ -11,13 +13,8 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
      strain, vorticity, gradient, tmp1, tmp2, wrk1d, wrk2d, wrk3d)
-
-#include "types.h"
 
   USE DNS_GLOBAL
 
@@ -75,8 +72,7 @@ SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
        dx, dy, dz, u, v, w, strain, tmp1, tmp2, wrk1d, wrk2d, wrk3d)
   CALL FI_VORTICITY(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
        dx, dy, dz, u, v, w, vorticity, tmp1, tmp2, wrk1d, wrk2d, wrk3d)
-  CALL FI_GRADIENT(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, z1, gradient, tmp1, tmp2, wrk1d, wrk2d, wrk3d)
+  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, z1,gradient, tmp1, wrk1d,wrk2d,wrk3d)
 
   IF ( ilog .EQ. 1 ) THEN
      strain    = log(strain)

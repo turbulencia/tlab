@@ -574,8 +574,7 @@ PROGRAM AVERAGES
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 3 ) THEN
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
-        CALL FI_GRADIENT(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, s, txc(1,1), txc(1,2), txc(1,3), wrk1d, wrk2d, wrk3d)
+        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,txc(1,1), txc(1,2),  wrk1d,wrk2d,wrk3d)
         DO ij = 1,isize_field
            txc(ij,2) = log(txc(ij,1))
         ENDDO
@@ -811,8 +810,7 @@ PROGRAM AVERAGES
         ENDDO
 
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
-        CALL FI_GRADIENT(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, s, txc(1,3), txc(1,4), txc(1,5), wrk1d, wrk2d, wrk3d)
+        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,txc(1,3), txc(1,4),  wrk1d,wrk2d,wrk3d)
         DO ij = 1,isize_field
            txc(ij,5) = txc(ij,1)/txc(ij,3)
            txc(ij,4) = log(txc(ij,3))

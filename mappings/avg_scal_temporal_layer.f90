@@ -258,7 +258,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 ! -----------------------------------------------------------------------
   IF ( is .EQ. inb_scal_array .AND. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,1,1,inb_scal_array), tmp1) ! calculate xi in tmp1
-     CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, tmp1, dsdx,dsdy,dsdz, wrk1d,wrk2d,wrk3d)
+     CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, tmp1,dsdx, dsdy, wrk1d,wrk2d,wrk3d)
      
      CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdy,dsdz, tmp1)
      
@@ -298,8 +298,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
         tmp1(1:isize_field,1,1) = body_param(3) - s(1:isize_field,1,1,1) - dummy2*s(1:isize_field,1,1,2);
 
 ! Evaporative cooling production term in dsdz
-        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, tmp1, dsdy,dsdx,dsdz, wrk1d,wrk2d,wrk3d)
+        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, tmp1,dsdy, dsdx, wrk1d,wrk2d,wrk3d)
         CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, tmp1, dsdy, wrk3d) ! dsdy contains gradient
         dummy = diff /froude
         dsdz = wrk3d* dummy
@@ -344,7 +343,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 
      ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
         CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,1,1,inb_scal_array), tmp1) ! calculate xi in tmp1
-        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, tmp1, dsdx,dsdy,dsdz, wrk1d,wrk2d,wrk3d)
+        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, tmp1,dsdx, dsdy, wrk1d,wrk2d,wrk3d)
         
         CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdy,dsdz, tmp1)
         
@@ -371,7 +370,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
         dsdx = dsdz + dsdy + tmp1 ! total source; needed for the second-order moment equation
      
      ELSE
-        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s, dsdx,dsdy,dsdz, wrk1d,wrk2d,wrk3d)
+        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,dsdx, dsdy, wrk1d,wrk2d,wrk3d)
         CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, s, dsdx, wrk3d) ! dsdx contains gradient
         dsdx = wrk3d* diff /froude
 

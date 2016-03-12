@@ -1,3 +1,7 @@
+#include "types.h"
+#include "dns_const.h"
+#include "dns_error.h"
+
 !########################################################################
 !# Tool/Library SUPERLAYER
 !#
@@ -14,13 +18,6 @@
 !# groupd of variables to save memory
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-#include "dns_error.h"
-
 SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_size, &
      threshold, ibuffer_npy, x,y,z,dx,dy,dz, u,v,w,p,z1, a, sl, profiles, txc, mean, wrk1d,wrk2d,wrk3d)
   
@@ -113,8 +110,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   DO ij = 1,imax*jmax*kmax
      txc(ij,3) = C_2_R*txc(ij,3)
   ENDDO
-  CALL FI_GRADIENT(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, z1, txc(1,2), txc(1,1), txc(1,6), wrk1d, wrk2d, wrk3d)
+  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, z1,txc(1,2), txc(1,1), wrk1d,wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      txc(ij,1) = a(ij)
   ENDDO

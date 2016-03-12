@@ -13,4 +13,3 @@
 * Check the -qNOOVER in the intel compiler to force SIMD in pointers (NO OVERLAP MEMORY)
 * Memory reqs. in two-point statistics to be reduced.
 * Check random number generator in parallel mode; current decorrelation in rand_main.f90 might not be enough.
-* The number of arguments in FI_GRADIENT can be reduced by 1
