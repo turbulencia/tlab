@@ -38,8 +38,8 @@ endif()
 
 set(GNU_SED "gsed")
 
-set(FFTW_INCLUDE_DIR   "/scratch/mpi/mh0738/cedrick/include")
-set(FFTW_LIB           "/scratch/mpi/mh0738/cedrick/lib/libfftw3.a")
+set(FFTW_INCLUDE_DIR   "/scratch/mpi/mpiaes/mh0738/cedrick/include")
+set(FFTW_LIB           "/scratch/mpi/mpiaes/mh0738/cedrick/lib/libfftw3.a")
 set(LIBS ${FFTW_LIB} )
 
 add_definitions(-DRESTRICTKEYWORD=__restrict__)

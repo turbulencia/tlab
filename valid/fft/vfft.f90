@@ -1,7 +1,7 @@
 #include "types.h" 
 #include "dns_error.h"
 #include "dns_const.h" 
-#ifdef PARALLEL 
+#ifdef USE_MPI 
 #include "dns_const_mpi.h" 
 #endif 
 
@@ -10,14 +10,14 @@ PROGRAM VFFT
 USE DNS_GLOBAL, ONLY:  imax,jmax,kmax, imax_total,jmax_total,kmax_total
 USE DNS_GLOBAL, ONLY:  isize_txc_dimz 
 
-#ifdef PARALLEL 
+#ifdef USE_MPI 
 USE DNS_MPI
 #endif 
 
 IMPLICIT NONE 
 
 #include "integers.h" 
-#ifdef PARALLEL 
+#ifdef USE_MPI 
 #include "mpif.h" 
 #endif 
 
@@ -35,7 +35,7 @@ case_count= i0
 
 CALL DNS_INITIALIZE 
 CALL DNS_READ_GLOBAL('dns.ini') 
-#ifdef PARALLEL
+#ifdef USE_MPI
 CALL DNS_MPI_INITIALIZE 
 #endif 
 
@@ -87,12 +87,12 @@ CALL FFT_CHECK(3,err_count,case_count,&
      wrk2d ) 
 
 
-#ifdef PARALLEL 
+#ifdef USE_MPI 
 IF (ims_pro .EQ. 0 ) THEN
 #endif 
    WRITE(*,1000) err_count, case_count
 1000 FORMAT('fft-check completed. ', I3, ' Errors in ', I3, ' Checks. For details see file dns.log') 
-#ifdef PARALLEL
+#ifdef USE_MPI
 ENDIF
 #endif 
 

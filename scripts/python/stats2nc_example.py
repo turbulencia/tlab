@@ -5,8 +5,8 @@
 #
 import stats2nc
 
-pathes=['/Users/cedrick/WORK/phd/experiments/ekman_stable/3072x0512x6144_1000_000.91/statistics']
-types= ['avg','avg2s','avg1s','int']
+pathes=['.']
+types= ['avg','avg1s','avg2s','int']
 jmax = 512
 
 for p in pathes:

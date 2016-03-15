@@ -1,7 +1,7 @@
 #include "types.h"  
 #include "dns_error.h"
 #include "dns_const.h"
-#ifdef PARALLEL 
+#ifdef USE_MPI 
 #include "dns_const_mpi.h" 
 #endif 
 PROGRAM VHELMHOLTZ_FXZ
@@ -10,14 +10,14 @@ PROGRAM VHELMHOLTZ_FXZ
   USE DNS_GLOBAL,  ONLY : iunifx, iunify, iunifz, imode_fdm, imax_total, jmax_total, kmax_total, &
        i1bc,j1bc,k1bc,scalex,scaley,scalez,area,volume,imax,jmax,kmax,&
        inb_grid,inb_wrk1d,inb_wrk2d,isize_wrk1d,isize_wrk2d,gfile,isize_txc_field
-#ifdef PARALLEL
+#ifdef USE_MPI
   USE DNS_MPI,     ONLY : ims_pro, ims_err 
 #endif 
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef PARALLEL 
+#ifdef USE_MPI 
 #include "mpif.h"
 #endif 
 
@@ -43,7 +43,7 @@ PROGRAM VHELMHOLTZ_FXZ
   TARGET a
 
 
-#ifdef PARALLEL  
+#ifdef USE_MPI  
 #else 
   TINTEGER :: ims_pro 
   PARAMETER(ims_pro=0) 
@@ -53,7 +53,7 @@ PROGRAM VHELMHOLTZ_FXZ
   CALL DNS_INITIALIZE
 
   CALL DNS_READ_GLOBAL('dns.ini')
-#ifdef PARALLEL 
+#ifdef USE_MPI 
   CALL DNS_MPI_INITIALIZE  
 #endif 
   
@@ -135,7 +135,7 @@ PROGRAM VHELMHOLTZ_FXZ
            t_old = t_old+(3600*(h2-h1)+60*(m2-m1)+(s2-s1) ) + (n2-n1)/1.0E+03
         ENDDO
      ENDIF
-#ifdef PARALLEL  
+#ifdef USE_MPI  
      dummy=t_new
      CALL MPI_Reduce(dummy, t_new, 1, MPI_REAL8, MPI_MAX, 0, MPI_COMM_WORLD, ims_err)  
      dummy=t_old
@@ -147,7 +147,7 @@ PROGRAM VHELMHOLTZ_FXZ
         ELSE IF ( opt .EQ. 2 ) THEN 
            WRITE(*,*) 'OLD SOLVER', t_old/nmeasure, 'ms'  
         ENDIF
-#ifdef PARALLEL 
+#ifdef USE_MPI 
      ENDIF
 #endif 
      ! normalize solution  
@@ -181,7 +181,7 @@ PROGRAM VHELMHOLTZ_FXZ
               ENDDO
            ENDDO
         ENDDO
-#ifdef PARALLEL 
+#ifdef USE_MPI 
          dummy=error
          CALL MPI_Reduce(dummy, error,     i1, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err) 
          dummy=rms
@@ -192,7 +192,7 @@ PROGRAM VHELMHOLTZ_FXZ
 #endif 
            WRITE(*,*) ims_pro, ifield, 'Relative error .............: ', sqrt(error)/sqrt(rms)
            WRITE(*,*) ims_pro, ifield, 'Maximum error ..............: ', max_error 
-#ifdef PARALLEL 
+#ifdef USE_MPI 
          ENDIF
 #endif 
      ENDDO

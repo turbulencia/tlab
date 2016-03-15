@@ -15,8 +15,8 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Read scalar restart file. There are PARALLEL and SERIAL modes, and
-!# within the PARALLEL mode there are USE_MPI_IO, USE_SPLIT_IO 
+!# Read scalar restart file. There are USE_MPI and SERIAL modes, and
+!# within the USE_MPI mode there are USE_MPI_IO, USE_SPLIT_IO 
 !# and PE 0 handling.
 !# 
 !# IEEE double precision floating point representation.
@@ -43,14 +43,14 @@
 SUBROUTINE IO_READ_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, iread, a, txc)
 
   USE DNS_GLOBAL,ONLY : itime, rtime, visc
-#ifdef PARALLEL
+#ifdef USE_MPI
   USE DNS_MPI,   ONLY : ims_offset_k, ims_npro_i, ims_npro_k, ims_pro, ims_err
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef PARALLEL
+#ifdef USE_MPI
 #include "mpif.h"
 #endif
 
@@ -64,7 +64,7 @@ SUBROUTINE IO_READ_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, iread, a,
   TINTEGER nxy, is, iz
   TINTEGER nx_total, ny_total, nz_total
 
-#ifdef PARALLEL
+#ifdef USE_MPI
 
 #ifdef USE_MPI_IO
   INTEGER mpio_fh
@@ -87,7 +87,7 @@ SUBROUTINE IO_READ_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, iread, a,
 #endif
 
 ! ###################################################################
-#ifdef PARALLEL
+#ifdef USE_MPI
   nx_total = nx*ims_npro_i
   ny_total = ny
   nz_total = nz*ims_npro_k
@@ -99,7 +99,7 @@ SUBROUTINE IO_READ_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, iread, a,
 
   nxy = nx*ny
 
-#ifdef PARALLEL
+#ifdef USE_MPI
 #ifdef USE_MPI_IO
 ! ###################################################################
 ! Use MPI_IO for restart files
@@ -229,7 +229,7 @@ SUBROUTINE IO_READ_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, iread, a,
 ! Let Process 0 handle all IO
 ! ###################################################################
   IF ( ims_pro .EQ. 0 ) THEN
-! Allocate temporary array tmp for PARALLEL PE#0 mode if required
+! Allocate temporary array tmp for USE_MPI PE#0 mode if required
      itmp = kmax*nxy
      IF ( itmp .GT. itxc) THEN; iuse_tmp = 1; ALLOCATE(tmp(itmp))
      ELSE;                      iuse_tmp = 0; ENDIF
@@ -342,8 +342,8 @@ END SUBROUTINE IO_READ_FIELDS_ARRAY
 !########################################################################
 !# DESCRIPTION
 !#
-!# Read scalar restart file. There are PARALLEL and SERIAL modes, and
-!# within the PARALLEL mode there are USE_MPI_IO, USE_SPLIT_IO 
+!# Read scalar restart file. There are USE_MPI and SERIAL modes, and
+!# within the USE_MPI mode there are USE_MPI_IO, USE_SPLIT_IO 
 !# and PE 0 handling.
 !# 
 !########################################################################
@@ -363,14 +363,14 @@ SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
 
   USE DNS_GLOBAL, ONLY : itime, rtime, visc, prandtl, schmidt ! header info
   USE THERMO_GLOBAL, ONLY : gama0
-#ifdef PARALLEL
+#ifdef USE_MPI
   USE DNS_MPI,   ONLY : ims_offset_k, ims_npro_i, ims_npro_k, ims_pro, ims_err
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef PARALLEL
+#ifdef USE_MPI
 #include "mpif.h"
 #endif
 
@@ -384,7 +384,7 @@ SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
   TINTEGER nxy, is
   TINTEGER nx_total, ny_total, nz_total
 
-#ifdef PARALLEL
+#ifdef USE_MPI
 
 #ifdef USE_MPI_IO
   INTEGER mpio_fh
@@ -404,7 +404,7 @@ SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
 #endif
 
 ! ###################################################################
-#ifdef PARALLEL
+#ifdef USE_MPI
   nx_total = nx*ims_npro_i
   ny_total = ny
   nz_total = nz*ims_npro_k
@@ -417,7 +417,7 @@ SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
   nxy      = nx*ny
   dummy    = C_0_R
 
-#ifdef PARALLEL
+#ifdef USE_MPI
 #ifdef USE_MPI_IO
 ! ###################################################################
 ! Use MPI_IO for restart files
@@ -559,7 +559,7 @@ SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
 ! Let Process 0 handle all IO
 ! ###################################################################
   IF ( ims_pro .EQ. 0 ) THEN
-! Allocate temporary array tmp for PARALLEL PE#0 mode if required
+! Allocate temporary array tmp for USE_MPI PE#0 mode if required
      itmp = kmax*nxy
      IF ( itmp .GT. itxc) THEN; iuse_tmp = 1; ALLOCATE(tmp(itmp))
      ELSE;                      iuse_tmp = 0; ENDIF

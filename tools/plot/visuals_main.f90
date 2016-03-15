@@ -27,14 +27,14 @@ PROGRAM VISUALS_MAIN
   USE THERMO_GLOBAL, ONLY : imixture
   USE THERMO_GLOBAL, ONLY : NSP, THERMO_SPNAME
   USE LAGRANGE_GLOBAL
-#ifdef PARALLEL
+#ifdef USE_MPI
   USE DNS_MPI
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef PARALLEL
+#ifdef USE_MPI
 #include "mpif.h"
 #endif
 
@@ -86,7 +86,7 @@ PROGRAM VISUALS_MAIN
   TINTEGER params_size
   TREAL params(params_size_max)
 
-#ifdef PARALLEL
+#ifdef USE_MPI
   TINTEGER itmp_mpi
   INTEGER icount
 #endif
@@ -102,7 +102,7 @@ PROGRAM VISUALS_MAIN
   IF ( icalc_particle .EQ. 1 ) THEN
      CALL PARTICLE_READ_GLOBAL('dns.ini')
   ENDIF
-#ifdef PARALLEL
+#ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
 #endif
 
@@ -140,7 +140,7 @@ PROGRAM VISUALS_MAIN
   CALL LIST_INTEGER(sRes, iopt_size, opt_vec)
   
   IF ( sRes .EQ. '-1' ) THEN
-#ifdef PARALLEL
+#ifdef USE_MPI
 #else
      WRITE(*,'(A)') 'Option?'
      WRITE(*,'(A)') ' 0. Grid'
@@ -191,7 +191,7 @@ PROGRAM VISUALS_MAIN
   CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Subdomain', '-1', sRes)
   
   IF ( sRes .EQ. '-1' ) THEN
-#ifdef PARALLEL
+#ifdef USE_MPI
 #else
      WRITE(*,*) 'Subdomain limits ?'
      READ(*,'(A64)') sRes
@@ -210,7 +210,7 @@ PROGRAM VISUALS_MAIN
   CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Format', '-1', sRes)
   
   IF ( sRes .EQ. '-1' ) THEN
-#ifdef PARALLEL
+#ifdef USE_MPI
 #else
      WRITE(*,*) 'File Format ?'
      WRITE(*,*) ' 0. General restart format'
@@ -326,7 +326,7 @@ PROGRAM VISUALS_MAIN
   IF ( idummy .EQ. 1 ) ALLOCATE(surface(imax*kmax,inb_scal))
 
 ! auxiliar array for in parallel mode
-#ifdef PARALLEL
+#ifdef USE_MPI
   itmp_mpi=isize_field*2
   WRITE(str,*) itmp_mpi; line = 'Allocating array tmp_mpi. Size '//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
@@ -356,7 +356,7 @@ PROGRAM VISUALS_MAIN
 ! ###################################################################
 ! Grid
 ! ###################################################################
-#ifdef PARALLEL
+#ifdef USE_MPI
   IF ( ims_pro .EQ. 0 ) THEN
 #endif
      DO iv = 1,iopt_size
@@ -364,7 +364,7 @@ PROGRAM VISUALS_MAIN
            CALL ENSIGHT_GRID('grid.ensight', imax,jmax,kmax_total, subdomain, x,y,z)
         ENDIF
      ENDDO
-#ifdef PARALLEL
+#ifdef USE_MPI
   ENDIF
 #endif
 

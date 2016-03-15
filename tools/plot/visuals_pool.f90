@@ -42,7 +42,7 @@ END SUBROUTINE VISUALS_WRITE
 
 SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_mpi)
 
-#ifdef PARALLEL
+#ifdef USE_MPI
   USE DNS_MPI
 #endif
 
@@ -55,7 +55,7 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
 
   TINTEGER, INTENT(IN) :: nx,ny,nz, nfield, subdomain(6)
   TREAL, DIMENSION(nx,ny,nz,nfield) :: field
-#ifdef PARALLEL
+#ifdef USE_MPI
   TREAL, DIMENSION(nx*ny*nz,2     ) :: tmp_mpi
 #else
   TREAL, DIMENSION(*)               :: tmp_mpi
@@ -68,7 +68,7 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
 ! ###################################################################        
 ! Header
 ! ###################################################################        
-#ifdef PARALLEL
+#ifdef USE_MPI
   IF ( ims_pro .EQ. 0 ) THEN
 #endif
 #include "dns_open_file.h"
@@ -83,7 +83,7 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
      WRITE(LOC_UNIT_ID) line
   ENDIF
 
-#ifdef PARALLEL
+#ifdef USE_MPI
   ENDIF
 #endif
   
@@ -93,7 +93,7 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
 ! -------------------------------------------------------------------
 ! parallel
 ! -------------------------------------------------------------------
-#ifdef PARALLEL
+#ifdef USE_MPI
   DO ifield = 1,nfield
      CALL DNS_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field, tmp_mpi(1,1), tmp_mpi(1,2))
   END DO
@@ -114,11 +114,11 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
 
 ! ###################################################################
 ! ###################################################################
-#ifdef PARALLEL
+#ifdef USE_MPI
   IF ( ims_pro .EQ. 0 ) THEN
 #endif
      CLOSE(LOC_UNIT_ID)
-#ifdef PARALLEL
+#ifdef USE_MPI
   ENDIF
 #endif
 

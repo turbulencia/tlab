@@ -17,14 +17,14 @@ USE DNS_GLOBAL, ONLY   :  imax_total, jmax_total, kmax_total, imax, jmax, kmax
 USE DNS_CONSTANTS, ONLY : lfile
 USE DNS_GLOBAL, ONLY   :  isize_txc_dimx, isize_txc_dimz 
 
-#ifdef PARALLEL 
+#ifdef USE_MPI 
 USE DNS_MPI
 #endif 
 
 IMPLICIT NONE 
 
 #include "integers.h" 
-#ifdef PARALLEL 
+#ifdef USE_MPI 
 #include "mpif.h" 
 #include "dns_const_mpi.h" 
 #endif 
@@ -68,7 +68,7 @@ DO k=1,kmax
    DO j=1,jmax 
       DO i=1,imax 
          ip = (k-1)*imax*jmax + (j-1)*imax+i 
-#ifdef PARALLEL 
+#ifdef USE_MPI 
          tmp1(ip) = setup_check(check_mode,i+ims_offset_i,   j, k+ims_offset_k)
 #else 
          tmp1(ip) = setup_check(check_mode,i,                j, k)
@@ -95,7 +95,7 @@ END SELECT
 
 
 
-#ifdef PARALLEL
+#ifdef USE_MPI
 DO i=0,ims_npro-1 
    IF (ims_pro .EQ. i ) THEN 
       DO k=1,kmax
@@ -120,7 +120,7 @@ CALL OPR_FOURIER_B(i2, imax,jmax,kmax, tmp4,tmp3, wrk3d)
 
 ip = imax*jmax*kmax 
 residual = MAXVAL(ABS(norm*tmp3(1:ip)-tmp1(1:ip)))
-#ifdef PARALLEL 
+#ifdef USE_MPI 
 dummy = residual 
 CALL MPI_Reduce(dummy,residual,1,MPI_REAL8,MPI_MAX,0,MPI_COMM_WORLD,ims_err)  
 
@@ -149,7 +149,7 @@ IF (ims_pro .EQ. 0) THEN
    case_count= case_count+1
    CALL IO_WRITE_ASCII(lfile, line) 
 
-#ifdef PARALLEL 
+#ifdef USE_MPI 
 ENDIF
 #endif 
 
@@ -171,7 +171,7 @@ spec_variance(:) = C_0_R
 
 CALL KXZ_PSD(imax,jmax,kmax,i1,norm,tmp2,trans,spec_variance) 
 
-#ifdef PARALLEL
+#ifdef USE_MPI
 dummy_variance(:) = spec_variance(:)
 CALL MPI_Reduce(dummy_variance,spec_variance,jmax,MPI_REAL8,MPI_SUM,i0,MPI_COMM_WORLD,ims_err) 
 #endif 
@@ -181,7 +181,7 @@ DO k=1,kmax
    DO j=1,jmax
       DO i=1,imax/2
          ip = (k-1)*imax/2*jmax + (j-1)*imax/2 + i
-#ifdef PARALLEL
+#ifdef USE_MPI
          trans_ref(ip) = power_check(check_mode,i+ims_offset_i/2,j,k+ims_offset_k)
 #else 
          trans_ref(ip) = power_check(check_mode,i,             j,k)
@@ -194,7 +194,7 @@ ENDDO
 ip = imax/2*jmax*kmax
 residual = MAXVAL(ABS(trans_ref(1:ip) - trans(1:ip)))
 
-#ifdef PARALLEL
+#ifdef USE_MPI
 dummy = residual 
 CALL MPI_Reduce(dummy,residual,1,MPI_REAL8,0,MPI_MAX,MPI_COMM_WORLD,ims_err) 
 
@@ -210,11 +210,11 @@ IF ( ims_pro .EQ. 0 ) THEN
    
 1017 FORMAT(a,1x,a6,1x, 'PSD check.    Max. Residual:', G13.8)
    CALL IO_WRITE_ASCII(lfile,line) 
-#ifdef PARALLEL
+#ifdef USE_MPI
 ENDIF 
 #endif 
 
-#ifdef PARALLEL
+#ifdef USE_MPI
 
 DO i=1,ims_npro
    IF ( ims_pro .EQ. i-1 ) THEN 
@@ -238,7 +238,7 @@ ENDDO
 1010 FORMAT(16(g12.3,1x))
 
 
-#ifdef PARALLEL
+#ifdef USE_MPI
 IF ( ims_pro .EQ. 0 ) THEN  
 #endif 
 
@@ -260,7 +260,7 @@ IF ( ims_pro .EQ. 0 ) THEN
 1001 FORMAT(a, 1x,a6, 1x, 'PARSEVAL-Identity check. Residual:', &
           1x, G13.8, ' Field:', G13.8, ' Spectrum: ', G13.8)
 
-#ifdef PARALLEL
+#ifdef USE_MPI
 ENDIF
 #endif 
 
