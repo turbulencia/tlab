@@ -664,7 +664,7 @@ PROGRAM VISUALS_MAIN
            IF ( opt_vec(iv) .EQ. iscal_offset+2 .OR. opt_vec(iv) .EQ. iscal_offset+3 ) THEN
               CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
               CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s(1,is), &
-                   txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
+                   txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
               
               plot_file = TRIM(ADJUSTL(str))//'Gradient'//time_str(1:MaskSize)
 
@@ -902,14 +902,14 @@ PROGRAM VISUALS_MAIN
 
                  CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
                  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                      dx,dy,dz, txc(1,4), txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
+                      dx,dy,dz, txc(1,4), txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
                
                  CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, txc(1,4), txc(1,1), wrk3d)
                  
               ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
                  CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array), txc(1,4)) ! calculate xi in tmp1
                  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                      dx,dy,dz, txc(1,4), txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
+                      dx,dy,dz, txc(1,4), txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
                  
                  CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, txc(1,2),txc(1,3), wrk3d)
                  
@@ -919,7 +919,7 @@ PROGRAM VISUALS_MAIN
               ELSE
                  CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
                  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                      dx,dy,dz, s, txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
+                      dx,dy,dz, s, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
 
                  CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, s, txc(1,1), wrk3d)
                  

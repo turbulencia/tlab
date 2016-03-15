@@ -109,8 +109,7 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
   ENDDO
   varname(1) = 'log(W2)'
 
-  CALL FI_GRADIENT(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, z1, txc(1,2), txc(1,3), txc(1,4), wrk1d, wrk2d, wrk3d)
+  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, z1,txc(1,2), txc(1,3), wrk1d,wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      txc(ij,2) = log(txc(ij,2))
   ENDDO
@@ -145,8 +144,7 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
   ipfield    = ipfield + nfield_loc
   nfield_loc = 1
 
-  CALL FI_GRADIENT(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, z1, txc(1,2), txc(1,3), txc(1,4), wrk1d, wrk2d, wrk3d)
+  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, z1,txc(1,2), txc(1,3), wrk1d,wrk2d,wrk3d)
 
   CALL FI_ISOSURFACE_ANGLE(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
        dx, dy, dz, a, txc(1,2), txc(1,1), &

@@ -206,7 +206,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
     txc(1:isize_field,4) = C_1_R - dummy*s(1:isize_field,1) - dummy2*s(1:isize_field,2) !xi field in txc(1,4)
 
     CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          dx,dy,dz, txc(1,4), txc(1,1),txc(1,2),txc(1,5), wrk1d,wrk2d,wrk3d) ! square of chi gradient in txc(1,1)
+          dx,dy,dz, txc(1,4), txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d) ! square of chi gradient in txc(1,1)
 
     DO ij = 1,isize_field
        txc(ij,1) = visc*txc(ij,1)
@@ -257,7 +257,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
 
 
     CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          dx,dy,dz, txc(1,2), txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d) ! square of chi gradient in txc(1,3)
+          dx,dy,dz, txc(1,2), txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d) ! square of chi gradient in txc(1,3)
 
     DO ij = 1,isize_field
        txc(ij,3) = visc*txc(ij,3)
@@ -448,7 +448,7 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
     txc(1:isize_field,4) = C_1_R - dummy*s(1:isize_field,1) - dummy2*s(1:isize_field,2) !xi field in txc(1,4)
 
     CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          dx,dy,dz, txc(1,4), txc(1,1),txc(1,2),txc(1,5), wrk1d,wrk2d,wrk3d) ! square of chi gradient in txc(1,1)
+          dx,dy,dz, txc(1,4), txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d) ! square of chi gradient in txc(1,1)
 
     DO ij = 1,isize_field
        txc(ij,1) = visc*txc(ij,1)
@@ -501,7 +501,7 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
 
 
     CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          dx,dy,dz, txc(1,2), txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d) ! square of chi gradient in txc(1,3)
+          dx,dy,dz, txc(1,2), txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d) ! square of chi gradient in txc(1,3)
 
     DO ij = 1,isize_field
        txc(ij,3) = visc*txc(ij,3)

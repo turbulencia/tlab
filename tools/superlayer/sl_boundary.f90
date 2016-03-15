@@ -263,8 +263,7 @@ PROGRAM SL_BOUNDARY
 ! Based on scalar gradient
         ELSE IF ( iint .EQ. 3 ) THEN
            CALL IO_WRITE_ASCII(lfile,'Calculating scalar gradient...')
-           CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                dx,dy,dz, s, field, txc(1), txc(1+isize_field), wrk1d,wrk2d,wrk3d)
+           CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,field, txc, wrk1d,wrk2d,wrk3d)
            CALL MINMAX(imax,jmax,kmax, field, vmin,vmax)
            WRITE(str,'(E22.15E3,E22.15E3)') vmin,vmax; str='Bounds '//TRIM(ADJUSTL(str))
            CALL IO_WRITE_ASCII(lfile,str)

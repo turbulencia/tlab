@@ -5,6 +5,8 @@
 !#
 !# 2007/09/11 - J.P. Mellado
 !#              Created
+!# 2016/03/12 - J.P. Mellado
+!#              Reducing memory requirement in one array
 !#
 !########################################################################
 !# DESCRIPTION
@@ -19,7 +21,7 @@
 ! Calculate the magnitude of the scalar gradient
 !########################################################################
 SUBROUTINE FI_GRADIENT(imode_fdm, nx,ny,nz, i1bc,j1bc,k1bc, &
-     dx,dy,dz, s, result, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
+     dx,dy,dz, s, result, tmp1, wrk1d,wrk2d,wrk3d)
 
   IMPLICIT NONE
 
@@ -29,15 +31,15 @@ SUBROUTINE FI_GRADIENT(imode_fdm, nx,ny,nz, i1bc,j1bc,k1bc, &
   TREAL, DIMENSION(*),        INTENT(IN)    :: dx,dy,dz
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1,tmp2
+  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1
   TREAL, DIMENSION(*),        INTENT(INOUT) :: wrk1d,wrk2d,wrk3d
 
 ! ###################################################################
-  CALL PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, s,tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, s,tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  result = tmp1*tmp1 + tmp2*tmp2
-  CALL PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, s,tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  result = result + tmp2*tmp2
+  CALL PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, s,result, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, s,tmp1,   i0,i0, wrk1d,wrk2d,wrk3d)
+  result = result*result + tmp1*tmp1
+  CALL PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, s,tmp1,   i0,i0, wrk1d,wrk2d,wrk3d)
+  result = result        + tmp1*tmp1
 
   RETURN
 END SUBROUTINE FI_GRADIENT

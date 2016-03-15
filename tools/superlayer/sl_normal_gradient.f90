@@ -1,3 +1,6 @@
+#include "types.h"
+#include "dns_const.h"
+
 !########################################################################
 !# Tool/Library SUPERLAYER
 !#
@@ -11,15 +14,9 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, x, y, z, dx, dy, dz, &
      u, v, w, z1, a, sl, profiles, txc, wrk1d, wrk2d, wrk3d)
   
-#include "types.h"
-#include "dns_const.h"
-
   USE DNS_GLOBAL
 
   IMPLICIT NONE
@@ -47,8 +44,7 @@ SUBROUTINE SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, x, y, z, dx,
   jmax_loc = MIN(jmax,jmax - 2*ibuffer_npy +1)
 
 ! Calculate scalar gradient field sqrt(G_iG_i), put it in array z1
-  CALL FI_GRADIENT(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, z1, a, txc(1,1), txc(1,2), wrk1d, wrk2d, wrk3d)
+  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, z1,a, txc(1,1), wrk1d,wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      a(ij) = SQRT(a(ij))
   ENDDO
