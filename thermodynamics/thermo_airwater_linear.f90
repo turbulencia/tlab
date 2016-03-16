@@ -58,7 +58,7 @@ END SUBROUTINE THERMO_AIRWATER_LINEAR
 
 !########################################################################
 !########################################################################
-SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, der1, der2, wrk3d)
+SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, der1,der2, wrk3d)
   
   USE DNS_GLOBAL, ONLY : inb_scal
   USE THERMO_GLOBAL, ONLY : thermo_param
@@ -69,7 +69,7 @@ SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, der1, der2, wrk3d)
   
   TINTEGER,                     INTENT(IN)    :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)    :: s          ! chi, psi
-  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT)   :: der1, der2
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT)   :: der1,der2
   TREAL, DIMENSION(nx*ny*nz),   INTENT(INOUT) :: wrk3d      ! xi
   
 ! -------------------------------------------------------------------
