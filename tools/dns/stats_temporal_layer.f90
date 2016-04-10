@@ -194,15 +194,15 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
         ENDDO
         DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
            CALL AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s(1,is), &
-                txc(1,1),txc(1,2),txc(1,3),txc(1,4), vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
+                txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
         ENDDO
 
 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
         IF ( flag_buoyancy .EQ. 1 ) THEN
            wrk1d(1:jmax) = C_0_R
-           CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, txc(:,1), wrk1d) ! note that wrk3d is defined as integer.
+           CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, hq(:,1), wrk1d) ! note that wrk3d is defined as integer.
            dummy = C_1_R/froude
-           txc(1:isize_field,1) = txc(1:isize_field,1)*dummy
+           hq(1:isize_field,1) = hq(1:isize_field,1)*dummy
 ! mean values
            s_aux(1:inb_scal) = mean_i(1:inb_scal) - C_05_R*delta_i(1:inb_scal)
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
@@ -217,8 +217,8 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
            dummy = C_0_R
            CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umax, dummy)
            mean_i(is) = (umax+umin)/froude; delta_i(is) = ABS(umax-umin)/froude; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
-           CALL AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, txc(1,1), &
-                txc(1,2),txc(1,3),txc(1,4),txc(1,5), vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
+           CALL AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, hq(:,1), &
+                txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
            
         ENDIF
 

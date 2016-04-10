@@ -74,7 +74,7 @@
 !# DESCRIPTION
 !#
 !########################################################################
-SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz, tmp1, mean2d, wrk1d,wrk2d,wrk3d)
+SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, idiffusion, iradiation, itransport, ibodyforce
@@ -100,7 +100,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
   TREAL, DIMENSION(*),                INTENT(IN)    :: y,dx,dy,dz
   TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)    :: q, s
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(IN)    :: s_local
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: dsdx,dsdy,dsdz, tmp1, wrk3d
+  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, wrk3d
   TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: mean2d, wrk1d
   TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk2d
 
@@ -161,7 +161,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
   IF ( itransport .NE. EQNS_NONE ) THEN
      iavgpos = iavgpos + 2
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-        trans_param(inb_scal_array    ) = C_1_R                              ! liquid
+        trans_param(inb_scal_array    ) = C_1_R ! liquid
         trans_param(inb_scal_array + 1) =-C_1_R ! buoyancy
      ENDIF
   ENDIF
@@ -238,40 +238,47 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 #endif
 
 ! #######################################################################
-! Calculating source terms; using arrays dsdx, dsdy, dsdz, tmp1
+! Calculating source terms
 ! #######################################################################
-  dsdx = C_0_R; dsdy = C_0_R; dsdz = C_0_R; tmp1 = C_0_R
+  dsdx = C_0_R; dsdy = C_0_R; dsdz = C_0_R; tmp1 = C_0_R; tmp2 = C_0_R; tmp3 = C_0_R
 
-  IF ( is .EQ. irad_scalar ) THEN      ! Radiation in dsdy
-     CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdy, wrk1d,wrk3d)
+  IF ( is .EQ. irad_scalar ) THEN      ! Radiation in tmp1
+     CALL OPR_RADIATION     (iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), tmp1, wrk1d,wrk3d)
+     CALL OPR_RADIATION_FLUX(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
   ENDIF
 
-  IF ( itransport .NE. EQNS_NONE) THEN ! Tranport terms in tmp1
-     CALL FI_TRANS_FLUX(itransport, i1, imax,jmax,kmax, is, inb_scal_array, trans_param, settling, dy, s,tmp1, dsdx, wrk1d,wrk2d,wrk3d)
+  IF ( itransport .NE. EQNS_NONE) THEN ! Transport in tmp3
+     CALL FI_TRANS_FLUX(itransport, i1, imax,jmax,kmax, is, inb_scal_array, trans_param, settling, dy, s,tmp3, dsdy, wrk1d,wrk2d,wrk3d)
   ENDIF
 
 ! -----------------------------------------------------------------------
 ! Liquid as a diagnostic variable
 ! -----------------------------------------------------------------------
   IF ( is .EQ. inb_scal_array .AND. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-     CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,1,1,inb_scal_array), dsdz) ! calculate xi in dsdz
-     CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, dsdz,dsdx, dsdy, wrk1d,wrk2d,wrk3d)
-     
-     CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdy,dsdz, wrk3d)
-     
-     dsdz =-dsdz *dsdx *diff ! evaporation source in dsdz
+     CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdy,dsdz, dsdx) ! calculate xi in dsdx
+     CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, dsdx,tmp2, tmp1, wrk1d,wrk2d,wrk3d)
+          
+     dummy=-diff
+     tmp2 = dsdz *tmp2 *dummy ! evaporation source in tmp2
 
-     IF ( itransport .NE. EQNS_NONE) THEN ! tranport source; needs dsdy
-        tmp1 = tmp1 *dsdy
+     IF ( itransport .NE. EQNS_NONE ) THEN ! transport source; needs dsdy
+        tmp3 = tmp3 *dsdy
      ENDIF
 
-     IF ( irad_scalar .GT. 0 ) THEN  ! radiation source in dsdy; needs dsdy from before
-        CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
+     IF ( iradiation .NE. EQNS_NONE ) THEN  ! radiation source; needs dsdy from before
+        CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), tmp1, wrk1d,wrk3d)
         IF ( inb_scal .EQ. 2 ) THEN; dummy = thermo_param(inb_scal);
         ELSE;                        dummy = C_0_R; ENDIF
-        dsdy = dsdx *dsdy *dummy
+        tmp1 = tmp1 *dsdy *dummy
+
+! Correction term
+        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, dsdx,dsdy, i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_RADIATION_FLUX(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
+        dsdx = dsdx *dsdy *dsdz *dummy
+        
      ELSE
-        dsdy = C_0_R
+        tmp1 = C_0_R
+        dsdx = C_0_R
      ENDIF
 
   ENDIF
@@ -281,44 +288,49 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 ! -----------------------------------------------------------------------
   IF ( is .EQ. inb_scal_array+1 ) THEN
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,1,1,inb_scal_array), dsdz) ! calculate xi in dsdz
-        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, dsdz,dsdx, dsdy, wrk1d,wrk2d,wrk3d)
-        
-        CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdy,dsdz, wrk3d)
+        CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdy,dsdz, dsdx) ! calculate xi in dsdx
+        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, dsdx,tmp2, tmp1, wrk1d,wrk2d,wrk3d)
         
         dummy=-diff *body_param(inb_scal_array) /froude
-        dsdz = dsdz *dsdx *dummy ! evaporation source
+        tmp2 = dsdz *tmp2 *dummy ! evaporation source in tmp2
 
         IF ( itransport .NE. EQNS_NONE) THEN ! tranport source; needs dsdy
            dummy = body_param(inb_scal_array) /froude
            dummy2=-trans_param(1) *body_param(1) /froude - dummy
-           IF ( inb_scal .EQ. 2 ) dummy2 = dummy2 - trans_param(2)
-           tmp1 = tmp1 *( dummy2 - (C_1_R - dsdy) *dummy )
+           IF ( inb_scal .EQ. 2 ) dummy2 = dummy2 - trans_param(2) *body_param(2) /froude
+           tmp3 = tmp3 *( dummy2 - (C_1_R - dsdy) *dummy )
         ENDIF
 
         IF ( irad_scalar .GT. 0 ) THEN ! radiation source; need dsdy
-           CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
-           IF ( inb_scal .EQ. 2 ) THEN; dummy = thermo_param(inb_scal) *body_param(inb_scal_array) /froude;
+           CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), tmp1, wrk1d,wrk3d)
+           IF ( inb_scal .EQ. 2 ) THEN; dummy = thermo_param(inb_scal) *body_param(inb_scal_array) /froude; dummy2 = body_param(inb_scal) /froude;
            ELSE;                        dummy = C_0_R; ENDIF
-           dsdy = dsdx *(C_1_R +dummy *dsdy)
+           tmp1 = tmp1 *(dummy2 +dummy *dsdy)
+
+! Correction term
+           CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, dsdx,dsdy, i0,i0, wrk1d,wrk2d,wrk3d)
+           CALL OPR_RADIATION_FLUX(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
+           dsdx = dsdx *dsdy *dsdz *dummy
+        
         ELSE
-           dsdy = C_0_R
+           tmp1 = C_0_R
+           dsdx = C_0_R           
         ENDIF
         
      ELSE IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN
 
-!  Create xi intermediate array tmp1
+!  Create xi intermediate array tmp3
         dummy = ( body_param(1)*body_param(3)-body_param(2) ) /( C_1_R-body_param(3) )/body_param(3)
         IF ( dummy .GT. C_SMALL_R ) THEN; dummy2 = body_param(5)*body_param(6)/dummy
         ELSE;                             dummy2 = C_0_R; ENDIF ! Radiation only
 
-        tmp1(1:isize_field,1,1) = body_param(3) - s(1:isize_field,1,1,1) - dummy2*s(1:isize_field,1,1,2);
+        tmp3(1:isize_field,1,1) = body_param(3) - s(1:isize_field,1,1,1) - dummy2*s(1:isize_field,1,1,2);
 
-! Evaporative cooling production term in dsdz
-        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, tmp1,dsdy, dsdx, wrk1d,wrk2d,wrk3d)
-        CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, tmp1, dsdy, wrk3d) ! dsdy contains gradient
+! Evaporative cooling production term in tmp2
+        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, tmp3,dsdy, dsdx, wrk1d,wrk2d,wrk3d)
+        CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, tmp3, dsdy, wrk3d) ! dsdy contains gradient
         dummy = diff /froude
-        dsdz = wrk3d* dummy
+        tmp2 = wrk3d* dummy
        
 ! Alberto calculate source term due to settling WRONG RESULTS CHECK NON-DIM FROM dsdy
         IF( itransport .EQ. EQNS_TRANS_C_SET .OR. itransport .EQ. EQNS_TRANS_LN_SET ) THEN
@@ -329,20 +341,20 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
            buo_parsett(4) = body_param(6)
 
            IF     (itransport .EQ. EQNS_TRANS_C_SET) THEN
-              CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s(1,1,1,3), tmp1, i0,i0, wrk1d,wrk2d,wrk3d) !Gradient of s in tmp1      
+              CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s(1,1,1,3), tmp3, i0,i0, wrk1d,wrk2d,wrk3d) !Gradient of s in tmp3      
               buo_parsett(1) = (buo_parsett(1)*trans_param(1) + buo_parsett(2)*trans_param(2))*settling
               buo_parsett(3) = (buo_parsett(3)*trans_param(1) + buo_parsett(4)*trans_param(2))*settling/body_param(5)/body_param(6)
-              tmp1(1:isize_field,1,1) = (buo_parsett(1) + buo_parsett(3)*dsdy(1:isize_field,1,1) )*tmp1(1:isize_field,1,1)
+              tmp3(1:isize_field,1,1) = (buo_parsett(1) + buo_parsett(3)*dsdy(1:isize_field,1,1) )*tmp3(1:isize_field,1,1)
 
            ELSEIF (itransport .EQ. EQNS_TRANS_LN_SET) THEN
-              CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s(1,1,1,3), tmp1, i0,i0, wrk1d,wrk2d,wrk3d) !Gradient of s in tmp1      
+              CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s(1,1,1,3), tmp3, i0,i0, wrk1d,wrk2d,wrk3d) !Gradient of s in tmp3      
               buo_parsett(1) = ( buo_parsett(1)*trans_param(1) + buo_parsett(2)*trans_param(2) )*C_5_R/C_3_R*settling
               buo_parsett(3) = ( buo_parsett(3)*trans_param(1) + buo_parsett(4)*trans_param(2) )*C_5_R/C_3_R*settling/body_param(5)/body_param(6)
               dummy = C_2_R/C_3_R
-              tmp1(1:isize_field,1,1) = (buo_parsett(1) + buo_parsett(3)*dsdy(1:isize_field,1,1) )*tmp1(1:isize_field,1,1)*(s(1:isize_field,1,1,3)**dummy)
+              tmp3(1:isize_field,1,1) = (buo_parsett(1) + buo_parsett(3)*dsdy(1:isize_field,1,1) )*tmp3(1:isize_field,1,1)*(s(1:isize_field,1,1,3)**dummy)
 
            ELSE
-              tmp1(1:isize_field,1,1) = C_0_R
+              tmp3(1:isize_field,1,1) = C_0_R
 
            ENDIF
         ENDIF
@@ -356,13 +368,13 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 
 ! Couplig of radiation and evaporative cooling active; dsdy contains the coupling field
         dummy = C_1_R /froude
-        dsdy = dsdx *dsdy *dummy
+        tmp1 = dsdx *dsdy *dummy
 
      ELSE
         CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,dsdx, dsdy, wrk1d,wrk2d,wrk3d)
         CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, s, dsdx, wrk3d) ! dsdx contains gradient
 !        dsdx = wrk3d* diff /froude
-        dsdy = wrk3d* diff /froude
+        tmp1 = wrk3d* diff /froude
 
      ENDIF
 
@@ -479,7 +491,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 ! Production terms
 ! -----------------------------------------------------------------------
      DO k = 1,kmax; DO i = 1,imax
-        wrk3d(i,1,k) = dsdy(i,j,k) + dsdz(i,j,k) + tmp1(i,j,k)
+        wrk3d(i,1,k) = tmp1(i,j,k) + tmp2(i,j,k) + tmp3(i,j,k)
         wrk3d(i,2,k) = wrk3d(i,1,k)*(s_local(i,j,k)-fS(j)) 
      ENDDO; ENDDO
      rQ(j)  = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
@@ -489,23 +501,21 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
 
      k = L_AVGMAX-iavgpos
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-        k = k + 1; mean2d(j,k) = AVG_IK(imax,jmax,kmax, j, dsdy, dx,dz, area) ! radiation
-!        k = k + 1; mean2d(j,k) = mean2d(j,k-1)
-        k = k + 1; mean2d(j,k) = C_0_R ! Correction term; to be developed.
-        k = k + 1; mean2d(j,k) = AVG_IK(imax,jmax,kmax, j, dsdz, dx,dz, area) ! evaporation
+        k = k + 1; mean2d(j,k) = AVG_IK(imax,jmax,kmax, j, tmp1, dx,dz, area) ! radiation
+        k = k + 1; mean2d(j,k) = AVG_IK(imax,jmax,kmax, j, dsdx, dx,dz, area) ! correction term
+        k = k + 1; mean2d(j,k) = AVG_IK(imax,jmax,kmax, j, tmp2, dx,dz, area) ! evaporation
      ENDIF
      IF ( itransport .NE. EQNS_NONE ) THEN
-        k = k + 1; mean2d(j,k) = AVG_IK(imax,jmax,kmax, j, tmp1, dx,dz, area)
-!        k = k + 1; mean2d(j,k) = mean2d(j,k-1)
+        k = k + 1; mean2d(j,k) = AVG_IK(imax,jmax,kmax, j, tmp3, dx,dz, area)
         k = k + 1; mean2d(j,k) = C_0_R ! Correction term; to be developed.
      ENDIF
      
      IF ( is .EQ. inb_scal_array+1 .AND. imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN
-        rQrad(j) = AVG_IK(imax,jmax,kmax, j, dsdy, dx,dz, area)
+        rQrad(j) = AVG_IK(imax,jmax,kmax, j, tmp1, dx,dz, area)
         fQrad(j) = rQrad(j)
-        rQeva(j) = AVG_IK(imax,jmax,kmax, j, dsdz, dx,dz, area)
+        rQeva(j) = AVG_IK(imax,jmax,kmax, j, tmp2, dx,dz, area)
         fQeva(j) = rQeva(j)
-        rQtra(j) = AVG_IK(imax,jmax,kmax, j, tmp1, dx,dz, area)
+        rQtra(j) = AVG_IK(imax,jmax,kmax, j, tmp3, dx,dz, area)
         fQtra(j) = rQtra(j)
      ENDIF
 

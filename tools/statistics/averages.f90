@@ -485,15 +485,15 @@ PROGRAM AVERAGES
            ENDDO
            DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
               CALL AVG_SCAL_TEMPORAL_LAYER(is, y, dx,dy,dz, q,s, s(1,is), &
-                   txc(1,1),txc(1,2),txc(1,3),txc(1,4), mean, wrk1d,wrk2d,wrk3d)
+                   txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
            ENDDO
 
 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
            IF ( flag_buoyancy .EQ. 1 ) THEN
               wrk1d(1:jmax) = C_0_R 
-              CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, txc(:,1), wrk1d)
+              CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, txc(:,7), wrk1d)
               dummy = C_1_R/froude
-              txc(1:isize_field,1) = txc(1:isize_field,1)*dummy
+              txc(1:isize_field,7) = txc(1:isize_field,7)*dummy
 ! mean values
               s_aux(1:inb_scal) = mean_i(1:inb_scal) - C_05_R*delta_i(1:inb_scal)
               IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
@@ -508,8 +508,8 @@ PROGRAM AVERAGES
               dummy = C_0_R
               CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umax, dummy)
               mean_i(is) = (umax+umin)/froude; delta_i(is) = ABS(umax-umin)/froude; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
-              CALL AVG_SCAL_TEMPORAL_LAYER(is, y, dx,dy,dz, q,s, txc(1,1), &
-                   txc(1,2),txc(1,3),txc(1,4),txc(1,5), mean, wrk1d,wrk2d,wrk3d)
+              CALL AVG_SCAL_TEMPORAL_LAYER(is, y, dx,dy,dz, q,s, txc(1,7), &
+                   txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
               
            ENDIF
 
@@ -523,15 +523,15 @@ PROGRAM AVERAGES
               CALL DNS_READ_PARTICLE(fname,l_q) 
                  
               l_txc = C_1_R; ! We want density
-              CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,5))
+              CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,7))
               
-              txc(:,5) = txc(:,5) + 0.00000001
+              txc(:,7) = txc(:,7) + 0.00000001
               DO is = inb_scal_array+2,inb_scal_particle+inb_scal_array+1
                  l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
-                 CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,6))   
-                 txc(:,6) = txc(:,6)/txc(:,5)
-                 CALL AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, txc(1,6), &
-                      txc(1,1),txc(1,2),txc(1,3),txc(1,4), mean, wrk1d,wrk2d,wrk3d)
+                 CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,8))   
+                 txc(:,8) = txc(:,8)/txc(:,7)
+                 CALL AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, txc(1,8), &
+                      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
               ENDDO
            ENDIF
         ENDIF
