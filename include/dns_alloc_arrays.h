@@ -1,5 +1,5 @@
   IF ( iread_flow .EQ. 1 ) THEN
-     WRITE(str,*) inb_flow_array; line = 'Allocating array flow. Size '//TRIM(ADJUSTL(str))//'x'
+     WRITE(str,*) inb_flow_array; line = 'Allocating array flow  of size '//TRIM(ADJUSTL(str))//'x'
      WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile,line)
      ALLOCATE(q(isize_field,inb_flow_array),stat=ierr)
@@ -10,7 +10,7 @@
   ENDIF
 
   IF ( iread_scal .EQ. 1 ) THEN
-     WRITE(str,*) inb_scal_array; line = 'Allocating array scal. Size '//TRIM(ADJUSTL(str))//'x'
+     WRITE(str,*) inb_scal_array; line = 'Allocating array scal  of size '//TRIM(ADJUSTL(str))//'x'
      WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile,line)
      ALLOCATE(s(isize_field,inb_scal_array),stat=ierr)
@@ -21,7 +21,7 @@
   ENDIF
 
   IF ( inb_txc .GT. 0 ) THEN
-     WRITE(str,*) inb_txc; line = 'Allocating array txc. Size '//TRIM(ADJUSTL(str))//'x'
+     WRITE(str,*) inb_txc; line = 'Allocating array txc   of size '//TRIM(ADJUSTL(str))//'x'
      WRITE(str,*) isize_txc_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile,line)
      ALLOCATE(txc(isize_txc_field,inb_txc),stat=ierr)
@@ -31,7 +31,7 @@
      ENDIF
   ENDIF
 
-  WRITE(str,*) isize_wrk3d; line = 'Allocating array wrk3d. Size '//TRIM(ADJUSTL(str))
+  WRITE(str,*) isize_wrk3d; line = 'Allocating array wrk3d of size '//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
   ALLOCATE(wrk3d(isize_wrk3d),stat=ierr)
   IF ( ierr .NE. 0 ) THEN

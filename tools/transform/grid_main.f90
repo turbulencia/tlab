@@ -2,17 +2,18 @@
 
 PROGRAM TRANSGRID
 
+  USE DNS_TYPES, ONLY : grid_structure
   IMPLICIT NONE
 
-  TYPE grid_struct
-     SEQUENCE
-     CHARACTER*8 name
-     TINTEGER size
-     TREAL scale
-     TREAL, DIMENSION(:), ALLOCATABLE :: nodes
-  END TYPE grid_struct
+  ! TYPE grid_struct
+  !    SEQUENCE
+  !    CHARACTER*8 name
+  !    TINTEGER size
+  !    TREAL scale
+  !    TREAL, DIMENSION(:), ALLOCATABLE :: nodes
+  ! END TYPE grid_struct
   
-  TYPE(grid_struct), DIMENSION(3) :: g, g_ref
+  TYPE(grid_structure), DIMENSION(3) :: g, g_ref
   
   TINTEGER option, direction, n, isize_wrk1d
   CHARACTER*32 ifile,ffile,sfile, file_ref

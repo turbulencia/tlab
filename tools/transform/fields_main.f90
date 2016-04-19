@@ -463,7 +463,7 @@ PROGRAM TRANSFIELDS
 
         dummy = (x_dst(imax_total_dst)-x(imax_total)) / (x(imax_total)-x(imax_total-1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
-           CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Ox scales are not equal')
+           CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Ox scales are not equal at the end.')
            CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
         ENDIF
         wrk1d(1:imax_total,1) = x(1:imax_total) ! we need extra space
@@ -475,15 +475,31 @@ PROGRAM TRANSFIELDS
               jmax_aux = jmax_aux + subdomain(4)
               dummy = (y_dst(jmax_total_dst)-y(jmax_total)) / INT(subdomain(4))
            ELSE
-              CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oy scales are not equal')
+              CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oy scales are not equal at the end.')
               CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
            ENDIF
         ENDIF
-        wrk1d(1:jmax_total,2) = y(1:jmax_total) ! we need extra space
+        wrk1d(1+subdomain(3):jmax_total+subdomain(3),2) = y(1:jmax_total) ! we need extra space
         DO ip = jmax_total+1,jmax_aux
            wrk1d(ip,2) = wrk1d(ip-1,2) + dummy
         ENDDO
 
+        dummy = (y_dst(1)-y(1)) / (y(2)-y(1))
+        IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
+           IF ( dummy .LT. C_0_R ) THEN
+              subdomain(3) = ABS(jmax_total_dst - jmax_total) ! additional planes at the beginning
+              jmax_aux = jmax_aux + subdomain(3)
+              dummy = (y_dst(1)-y(1)) / INT(subdomain(3))
+           ELSE
+              CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oy scales are not equal at the beginning.')
+              CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
+           ENDIF
+        ENDIF
+        wrk1d(1+subdomain(3):jmax_total+subdomain(3),2) = y(1:jmax_total) ! we need extra space
+        DO ip = subdomain(3),1,-1
+           wrk1d(ip,2) = wrk1d(ip+1,2) + dummy ! dummy is negative
+        ENDDO
+           
         dummy = (z_dst(kmax_total_dst)-z(kmax_total)) / (z(kmax_total)-z(kmax_total-1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oz scales are not equal')
