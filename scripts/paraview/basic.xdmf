@@ -1,0 +1,81 @@
+<?xml version="1.0" ?>
+
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+
+<Xdmf xmlns:xi="http://www.w3.org/2001/XInclude" Version="2.0">
+  <Domain>
+    <Grid Name="Standard" GridType="Uniform">
+      <Topology name="T00000" TopologyType="3DRectMesh"
+		Dimensions="   128    96    128">
+      </Topology>
+
+      <Geometry name="G00000" Type="VXVYVZ">
+	<DataItem Format="Binary" Seek=" 56" DataType="Float" Precision="8" Endian="Big"
+		  Dimensions="  128">
+	  grid
+	</DataItem>
+	<DataItem Format="Binary" Seek=" 1088" DataType="Float" Precision="8" Endian="Big"
+		  Dimensions="   96">
+	  grid
+	</DataItem>
+	<DataItem Format="Binary" Seek=" 1864" DataType="Float" Precision="8" Endian="Big"
+		  Dimensions="  128">
+	  grid
+	</DataItem>
+      </Geometry>
+      
+      <Time TimeType="Single" Value=" 0.E+00"/>
+
+      <Attribute Name="ScalarVisuals" Center="Node">
+	<DataItem Format="Binary" Seek=" 0" DataType="Float" Precision="4" Endian="Big"
+		  Dimensions=" 128 96 128">
+	  Scalar1000010
+	</DataItem>
+      </Attribute>
+
+      <Attribute Name="ScalarDns" Center="Node">
+	<DataItem Format="Binary" Seek=" 52" DataType="Float" Precision="8" Endian="Big"
+		  Dimensions=" 128 96 128">
+	  scal.10.1
+	</DataItem>
+      </Attribute>
+
+      <Attribute AttributeType="Vector" Name="VelocityDns">
+	<DataItem Function="JOIN($0,$1,$2)" ItemType="Function"
+		  Dimensions="  128 96 128 3">
+	  <DataItem Format="Binary" Seek=" 52" DataType="Float" Precision="8" Endian="Big"
+		    Dimensions=" 128 96 128">
+	    flow.10.1
+	  </DataItem>
+	  <DataItem Format="Binary" Seek=" 52" DataType="Float" Precision="8" Endian="Big"
+		    Dimensions=" 128 96 128">
+	    flow.10.2
+	  </DataItem>
+	  <DataItem Format="Binary" Seek=" 52" DataType="Float" Precision="8" Endian="Big"
+		    Dimensions=" 128 96 128">
+	    flow.10.3
+	  </DataItem>
+	</DataItem>
+      </Attribute>
+
+      <Attribute AttributeType="Vector" Name="VelocityVisuals">
+	<DataItem Function="JOIN($0,$1,$2)" ItemType="Function"
+		  Dimensions="  128 96 128 3">
+	  <DataItem Format="Binary" Seek="  0" DataType="Float" Precision="4" Endian="Big"
+		    Dimensions=" 128 96 128">
+	    VelocityVector000010.1
+	  </DataItem>
+	  <DataItem Format="Binary" Seek="  0" DataType="Float" Precision="4" Endian="Big"
+		    Dimensions=" 128 96 128">
+	    VelocityVector000010.2
+	  </DataItem>
+	  <DataItem Format="Binary" Seek="  0" DataType="Float" Precision="4" Endian="Big"
+		    Dimensions=" 128 96 128">
+	    VelocityVector000010.3
+	  </DataItem>
+	</DataItem>
+      </Attribute>
+
+    </Grid>
+  </Domain>
+</Xdmf>

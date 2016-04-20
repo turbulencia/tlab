@@ -2,8 +2,16 @@
 
 SUBROUTINE VISUALS_WRITE(name, itype, iformat, nx,ny,nz, subdomain, field, tmp_mpi)
 
+  USE DNS_GLOBAL, ONLY : imax_total, kmax_total
+#ifdef USE_MPI
+  USE DNS_MPI, ONLY : ims_offset_i,ims_offset_k, ims_npro_i,ims_npro_k, ims_err, ims_pro
+#endif
+
   IMPLICIT NONE
 
+#ifdef USE_MPI
+#include "mpif.h"
+#endif
 #include "integers.h"
 
   TINTEGER iformat, itype, nx,ny,nz, subdomain(6)
@@ -12,7 +20,34 @@ SUBROUTINE VISUALS_WRITE(name, itype, iformat, nx,ny,nz, subdomain, field, tmp_m
   CHARACTER*(*) name
 
 ! -------------------------------------------------------------------
-  TINTEGER iaux_loc, nfield
+  TINTEGER iaux_loc, nfield, jmax_aux, sizes(4), i
+  CHARACTER*32 varname(16)
+  LOGICAL iflag_full
+  TINTEGER ims_subarray
+#ifdef USE_MPI
+  TINTEGER ndims_l, sizes_l(3), locsize_l(3), offset_l(3)
+#endif
+
+! ###################################################################
+  IF ( iformat .EQ. 2 ) THEN ! Raw, single precision, no header
+     IF ( ( subdomain(2)-subdomain(1)+1 .EQ. imax_total ) .AND. &
+          ( subdomain(6)-subdomain(5)+1 .EQ. kmax_total ) ) THEN  ! Full MPI grid
+        iflag_full = .true.
+
+        jmax_aux = subdomain(4)-subdomain(3)+1
+! reduce the array in y direction
+#ifdef USE_MPI
+        ndims_l = 3 ! Subarray for the output of the 2D data
+        sizes_l(1)  = ims_npro_i*nx; sizes_l(2)   = jmax_aux; sizes_l(3)   = ims_npro_k*nz
+        locsize_l(1)= nx;            locsize_l(2) = jmax_aux; locsize_l(3) = nz
+        offset_l(1) = ims_offset_i;  offset_l(2)  = 0;        offset_l(3)  = ims_offset_k
+        CALL MPI_Type_create_subarray(ndims_l, sizes_l, locsize_l, offset_l, &
+             MPI_ORDER_FORTRAN, MPI_REAL4, ims_subarray, ims_err)
+        CALL MPI_Type_commit(ims_subarray, ims_err)
+#endif
+       
+     ENDIF
+  ENDIF
 
 ! ###################################################################
   IF      ( itype .EQ. 0 ) THEN; nfield = 1;
@@ -26,8 +61,17 @@ SUBROUTINE VISUALS_WRITE(name, itype, iformat, nx,ny,nz, subdomain, field, tmp_m
   ELSE IF ( iformat .EQ. 1 ) THEN ! ensight
      CALL ENSIGHT_FIELD(name, i1, nx,ny,nz, nfield, subdomain, field, tmp_mpi)
            
-  ELSE IF ( iformat .EQ. 2 ) THEN ! ensight, no header
-     CALL ENSIGHT_FIELD(name, i0, nx,ny,nz, nfield, subdomain, field, tmp_mpi)
+  ELSE IF ( iformat .EQ. 2 ) THEN ! Raw, single precision, no header
+     IF ( iflag_full ) THEN
+        sizes(1) = nx*nz*jmax_aux; sizes(2) = sizes(1); sizes(3) = 0; sizes(4) = nfield
+        varname = ''
+        IF ( nfield .GT. 1 ) THEN
+           DO i = 1,nfield; WRITE(varname(i),*) i; varname(i) = TRIM(ADJUSTL(varname(i))); ENDDO
+        ENDIF
+        CALL IO_WRITE_SUBARRAY4(i3, sizes, name, varname, field, ims_subarray, tmp_mpi)
+     ELSE ! through PE0
+        CALL ENSIGHT_FIELD(name, i0, nx,ny,nz, nfield, subdomain, field, tmp_mpi)
+     ENDIF
 
   ENDIF
 

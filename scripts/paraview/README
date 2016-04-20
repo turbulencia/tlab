@@ -1,1 +1,2 @@
-Ensight file format
+*.case Ensight file format
+*.xdmf Xdfm format, to read directly from binaries.

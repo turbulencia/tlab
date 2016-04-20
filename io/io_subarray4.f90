@@ -8,6 +8,7 @@
 !########################################################################
 SUBROUTINE IO_WRITE_SUBARRAY4(idir, sizes, fname, varname, data, subarray, work)
 
+  USE DNS_CONSTANTS, ONLY : lfile
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_pro_i,ims_pro_k, ims_err, ims_npro_i,ims_npro_k
   USE DNS_MPI, ONLY : ims_comm_x,     ims_comm_z
@@ -51,8 +52,11 @@ SUBROUTINE IO_WRITE_SUBARRAY4(idir, sizes, fname, varname, data, subarray, work)
 #endif
 
   DO iv = 1,sizes(4)
-     name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
-     
+     name = TRIM(ADJUSTL(fname))
+     IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
+
+     CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+
 #ifdef USE_MPI
      work(1:sizes(2)) = SNGL(data(sizes(3)+1:sizes(3)+sizes(2),iv))
      mpio_offset = 0

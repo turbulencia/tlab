@@ -44,9 +44,6 @@
 
 #define EQNS_RAD_BULK1D_LOCAL      13
 #define EQNS_RAD_BULK1D_GLOBAL     14
-#define EQNS_RAD_BULK1D_MIXED      15
-#define EQNS_RAD_BULK1D_LOCAL_MAP  16
-#define EQNS_RAD_BULK1D_MIXED_MAP  17
 
 #define EQNS_RHS_SPLIT             18
 #define EQNS_RHS_COMBINED          19

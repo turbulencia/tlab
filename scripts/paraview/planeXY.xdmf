@@ -1,0 +1,96 @@
+<?xml version="1.0" ?>
+
+<!--
+! This file has been adapted from psOpen, from  Jens Henrik Goebbert
+-->
+
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" [
+
+<!-- domain name  -->
+        <!ENTITY DomainName   "PlaneXY">
+
+<!-- data precision (grid is always 8 bytes) -->
+        <!ENTITY Prec      "4">
+
+<!-- dimension of complete datasets -->
+        <!ENTITY DimsX   "512">
+        <!ENTITY DimsY   "256">
+        <!ENTITY DimsZ     "1">
+
+<!-- dimension of hyperslab to load -->
+        <!ENTITY HSDimsX "256">
+        <!ENTITY HSDimsY "128">
+        <!ENTITY HSDimsZ   "1">
+
+<!-- start of hyperslab in complete dataset -->
+        <!ENTITY HSDimsX_Start "0">
+        <!ENTITY HSDimsY_Start "0">
+        <!ENTITY HSDimsZ_Start "0">
+
+<!-- stride of hyperslab in complete dataset -->
+        <!ENTITY HSStrideX "2">
+        <!ENTITY HSStrideY "2">
+        <!ENTITY HSStrideZ "1">
+]>
+
+<Xdmf xmlns:xi="http://www.w3.org/2001/XInclude" Version="2.0">
+  <Domain Name="&DomainName;">
+    <Grid Name="SingleFrame" GridType="Uniform">
+      <Time TimeType="Single" Value=" 0.E+00"/>
+
+      <Topology TopologyType="3DRectMesh" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">  
+      </Topology>
+
+      <Geometry GeometryType="VXVYVZ">
+
+	<DataItem Name="X" ItemType="HyperSlab" Dimensions="&HSDimsX;">
+	  <DataItem Dimensions="1 3" Format="XML">
+	    &HSDimsX_Start;
+	    &HSStrideX;
+	    &HSDimsX;
+	  </DataItem>
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="  56" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsX;">
+	    grid
+	  </DataItem>
+	</DataItem>
+	
+	<DataItem Name="Y" ItemType="HyperSlab" Dimensions="&HSDimsY;">
+	  <DataItem Dimensions="1 3" Format="XML">
+	    &HSDimsY_Start;
+	    &HSStrideY;
+	    &HSDimsY;
+	  </DataItem>
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="4160" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsY;">
+	    grid
+	  </DataItem>
+	</DataItem>
+	
+	<DataItem Name="Z" ItemType="HyperSlab" Dimensions="&HSDimsZ;">
+	  <DataItem Dimensions="1 3" Format="XML">
+	    &HSDimsZ_Start;
+	    &HSStrideZ;
+	    &HSDimsZ;
+	  </DataItem>
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="6216" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsZ;">
+	    grid
+	  </DataItem>
+	</DataItem>
+
+      </Geometry>
+      
+      <Attribute Center="Node" Name="Scalar">
+	<DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	  <DataItem Dimensions="3 3" Format="XML">
+	    &HSDimsZ_Start; &HSDimsY_Start; &HSDimsX_Start;
+	    &HSStrideZ; &HSStrideY; &HSStrideX;
+	    &HSDimsZ; &HSDimsY; &HSDimsX;
+	  </DataItem>
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="0" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	    Scalar1000010
+	  </DataItem>
+	</DataItem>
+      </Attribute>
+
+    </Grid>
+  </Domain>
+</Xdmf>
