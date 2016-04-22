@@ -9,6 +9,11 @@
 <!-- domain name  -->
         <!ENTITY DomainName   "PlaneXY">
 
+<!-- offsets to grid blocks -->
+        <!ENTITY SeekGridX   "56"> 
+        <!ENTITY SeekGridY "4160"> <!-- SeekGridX + DimX*8 + 8-->
+        <!ENTITY SeekGridZ "6216"> <!-- SeekGridY + DimY*8 + 8-->
+
 <!-- data precision (grid is always 8 bytes) -->
         <!ENTITY Prec      "4">
 
@@ -49,7 +54,7 @@
 	    &HSStrideX;
 	    &HSDimsX;
 	  </DataItem>
-	  <DataItem ItemType="Uniform" Format="Binary" Seek="  56" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsX;">
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridX;" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsX;">
 	    grid
 	  </DataItem>
 	</DataItem>
@@ -60,7 +65,7 @@
 	    &HSStrideY;
 	    &HSDimsY;
 	  </DataItem>
-	  <DataItem ItemType="Uniform" Format="Binary" Seek="4160" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsY;">
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridY;" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsY;">
 	    grid
 	  </DataItem>
 	</DataItem>
@@ -71,7 +76,7 @@
 	    &HSStrideZ;
 	    &HSDimsZ;
 	  </DataItem>
-	  <DataItem ItemType="Uniform" Format="Binary" Seek="6216" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsZ;">
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridZ;" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsZ;">
 	    grid
 	  </DataItem>
 	</DataItem>

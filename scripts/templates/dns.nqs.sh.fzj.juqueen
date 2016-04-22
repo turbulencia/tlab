@@ -60,6 +60,9 @@ if [ $COMMMODE = "nonblocking" ];then
 
     MAPPING_FILE=mapping.txt
 fi
+    export OMP_NUM_THREADS=2 # number of threads per task
+    export OMP_MAX_THREADS=2
+
 
 # Run Simulation
 case $RUNMODE in
