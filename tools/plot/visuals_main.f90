@@ -247,8 +247,6 @@ PROGRAM VISUALS_MAIN
 ! in case we need the buoyancy statistics
   IF ( ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
        ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &       
-       ibodyforce .EQ. EQNS_BOD_PIECEWISE_LINEAR   .OR. &
-       ibodyforce .EQ. EQNS_BOD_PIECEWISE_BILINEAR .OR. &
        imixture   .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy = 1
   ELSE 
@@ -609,27 +607,6 @@ PROGRAM VISUALS_MAIN
               ENDIF
               
 ! -------------------------------------------------------------------
-           ELSE IF  ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN
-
-              IF      ( opt_vec(iv) .EQ. 10 ) THEN ! total water vapor water mass fraction
-
-                 plot_file = TRIM(ADJUSTL('Totalwater'))//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s, tmp_mpi)
-
-              ELSE IF ( opt_vec(iv) .EQ. 11 ) THEN ! Enthalpy TO DO
-
-                 plot_file = TRIM(ADJUSTL(THERMO_SPNAME(2)))//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s(1,2), tmp_mpi)
-
-              ELSE IF ( opt_vec(iv) .EQ. 12 ) THEN ! liquid mass fraction
-                 CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, s(:,1),s(:,inb_scal_array))
-
-                 plot_file = TRIM(ADJUSTL(THERMO_SPNAME(inb_scal_array)))//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s(1,inb_scal_array), tmp_mpi)
-
-              ENDIF
-
-! -------------------------------------------------------------------
            ELSE ! Plot the chosen species
               is = opt_vec(iv) - 9
               plot_file = TRIM(ADJUSTL(THERMO_SPNAME(is)))//time_str(1:MaskSize)
@@ -866,9 +843,6 @@ PROGRAM VISUALS_MAIN
         IF ( opt_vec(iv) .EQ. iscal_offset+12 ) THEN
 
            wrk1d(1:jmax,1) = C_0_R
-           IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN ! update the liquid field in case of air water
-              CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, s(:,1),s(:,inb_scal_array))
-           ENDIF
            CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
            dummy =  C_1_R/froude
            wrk3d(1:isize_field) = wrk3d(1:isize_field) *dummy
@@ -890,23 +864,7 @@ PROGRAM VISUALS_MAIN
 
 ! buoyancy source
            IF ( flag_buoyancy .EQ. 1 ) THEN
-              IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN
-!                 CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, s(:,1),s(:,inb_scal_array)) !Update the liquid function
-
-!  Create xi intermediate array tmp1
-                 dummy = ( body_param(1)*body_param(3)-body_param(2) ) /( C_1_R-body_param(3) )/body_param(3)
-                 IF ( dummy .GT. C_SMALL_R ) THEN; dummy2 = body_param(5)*body_param(6)/dummy
-                 ELSE;                             dummy2 = C_0_R; ENDIF ! Radiation only
-
-                 txc(1:isize_field,4) = body_param(3) - s(1:isize_field,1) - dummy2*s(1:isize_field,2);
-
-                 CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
-                 CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                      dx,dy,dz, txc(1,4), txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
-               
-                 CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, txc(1,4), txc(1,1), wrk3d)
-                 
-              ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+              IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
                  CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array), txc(1,4)) ! calculate xi in tmp1
                  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
                       dx,dy,dz, txc(1,4), txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
@@ -1015,10 +973,6 @@ PROGRAM VISUALS_MAIN
 ! Radiation
 ! ###################################################################
         IF (  opt_vec(iv) .EQ. iscal_offset+16) THEN    
-           
-           IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN 
-              CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, s(:,1),s(:,inb_scal_array)) ! Update the liquid field
-           ENDIF
            
            IF ( iradiation .NE. EQNS_NONE ) THEN
               CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,1), wrk1d,wrk3d)

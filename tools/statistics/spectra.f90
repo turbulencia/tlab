@@ -37,6 +37,7 @@ PROGRAM SPECTRA
   USE DNS_TYPES, ONLY : pointers_structure
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -78,7 +79,7 @@ PROGRAM SPECTRA
   CHARACTER*32 varname(16)
   TINTEGER p_pairs(16,2)
 
-  TINTEGER opt_main, opt_ffmt, opt_time, opt_block
+  TINTEGER opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
   TINTEGER flag_mode, iread_flow, iread_scal, ierr
   TINTEGER isize_wrk3d, isize_out2d, isize_aux, sizes(4)
   TINTEGER nfield, nfield_ref
@@ -195,6 +196,16 @@ PROGRAM SPECTRA
 ! in case jmax_total is not divisible by opt_block, drop the upper most planes
   jmax_aux = jmax_total/opt_block
 
+! in case we need the buoyancy statistics
+  IF ( ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
+       ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &       
+       imixture   .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+     flag_buoyancy = 1
+     inb_scal_array= inb_scal_array+1             ! space for the buoyancy field
+  ELSE 
+     flag_buoyancy = 0   
+  ENDIF
+
   IF      ( opt_main .EQ. 1 ) THEN; flag_mode = 1 ! spectra
   ELSE IF ( opt_main .EQ. 2 ) THEN; flag_mode = 1
   ELSE IF ( opt_main .EQ. 3 ) THEN; flag_mode = 2 ! correlations
@@ -243,13 +254,13 @@ PROGRAM SPECTRA
 
   nfield_ref  = 0
   IF ( icalc_flow .EQ. 1 ) nfield_ref = nfield_ref + inb_flow + 1 ! pressure
-  IF ( icalc_scal .EQ. 1 ) nfield_ref = nfield_ref + inb_scal 
+  IF ( icalc_scal .EQ. 1 ) nfield_ref = nfield_ref + inb_scal_array 
 
   nfield = nfield_ref ! default
   IF ( opt_main .EQ. 2 .OR. opt_main .EQ. 4 ) THEN                ! cross-spectra and cross-correlations
      nfield = 0
      IF ( icalc_flow .EQ. 1 ) nfield = nfield + 3
-     IF ( icalc_scal .EQ. 1 ) nfield = nfield + 3*inb_scal 
+     IF ( icalc_scal .EQ. 1 ) nfield = nfield + 3*inb_scal_array  
   ENDIF
 
   inb_txc = 4 ! default
@@ -373,7 +384,7 @@ PROGRAM SPECTRA
   iv_offset = iv
   
   IF ( icalc_scal .EQ. 1 ) THEN
-     DO is = 1,inb_scal
+     DO is = 1,inb_scal_array
         WRITE(sRes,*) is
         iv = iv+1; data(iv)%field => s(:,is); varname(iv) = tag_name(1:1)//TRIM(ADJUSTL(sRes))//TRIM(ADJUSTL(sRes))
      ENDDO
@@ -397,7 +408,7 @@ PROGRAM SPECTRA
         iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 3;  varname(iv) = tag_name(1:1)//'uw'
         iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 3;  varname(iv) = tag_name(1:1)//'vw'
         IF ( icalc_scal .EQ. 1 ) THEN
-           DO is = 1,inb_scal
+           DO is = 1,inb_scal_array
               WRITE(sRes,*) is
               ip = is+iv_offset
               iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = ip; varname(iv) = tag_name(1:1)//'u'//TRIM(ADJUSTL(sRes))
@@ -451,6 +462,15 @@ PROGRAM SPECTRA
      IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
         CALL FI_PRESSURE_BOUSSINESQ(y,dx,dy,dz, q(1,1),q(1,2),q(1,3),s,p_aux, &
              txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+           CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(:,inb_scal+1), wrk3d)
+        ENDIF
+        IF ( flag_buoyancy .EQ. 1 ) THEN
+           wrk1d(1:jmax,1) = C_0_R 
+           CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, s(:,inb_scal_array), wrk1d)
+           dummy = C_1_R/froude
+           s(:,inb_scal_array) = s(:,inb_scal_array)*dummy
+        ENDIF
      ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         p_aux = C_1_R ! to be developed
         

@@ -175,8 +175,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airvapor' ) THEN; imixture = MIXT_TYPE_AIRVAPOR
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwater' ) THEN; imixture = MIXT_TYPE_AIRWATER
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwatersupersaturation' ) THEN; imixture = MIXT_TYPE_SUPSAT
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterbilinear'        ) THEN; imixture = MIXT_TYPE_BILAIRWATER
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterbilinearstrat'   ) THEN; imixture = MIXT_TYPE_BILAIRWATERSTRAT
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterlinear'   ) THEN; imixture = MIXT_TYPE_AIRWATER_LINEAR
   ELSE 
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong multispecies model.')
@@ -219,9 +217,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'      ) THEN; ibodyforce = EQNS_BOD_LINEAR
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bilinear'    ) THEN; ibodyforce = EQNS_BOD_BILINEAR
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic'   ) THEN; ibodyforce = EQNS_BOD_QUADRATIC
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'piecewiselinear'   ) THEN; ibodyforce = EQNS_BOD_PIECEWISE_LINEAR 
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'piecewisebilinear' ) THEN; ibodyforce = EQNS_BOD_PIECEWISE_BILINEAR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'piecewisetrilinear') THEN; ibodyforce = EQNS_BOD_PIECEWISE_TRILINEAR
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermBodyForce option.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
@@ -886,12 +881,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
            CALL DNS_STOP(DNS_ERROR_OPTION)
         ENDIF
         
-     ELSE IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN 
-        IF ( irad_scalar .NE. 2 ) THEN
-           CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. AirWaterBilinear requires Radiation. Scalar set to 2.')
-           CALL DNS_STOP(DNS_ERROR_OPTION)
-        ENDIF
-
      ENDIF
 
   ENDIF

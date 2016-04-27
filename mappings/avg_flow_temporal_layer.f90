@@ -185,11 +185,11 @@ SUBROUTINE AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q,s,&
      dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL, MAX_PROF
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, itransport, ibodyforce, icoriolis
+  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, itransport, ibodyforce
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, imode_fdm, i1bc,j1bc,k1bc, area, scaley
-  USE DNS_GLOBAL, ONLY : froude, schmidt, visc, rossby
+  USE DNS_GLOBAL, ONLY : froude, visc, rossby
   USE DNS_GLOBAL, ONLY : body_vector, body_param
   USE DNS_GLOBAL, ONLY : rotn_vector, icoriolis_y
   USE DNS_GLOBAL, ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i
@@ -220,7 +220,7 @@ SUBROUTINE AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q,s,&
   TARGET q, dudz
 
 ! -------------------------------------------------------------------
-  TINTEGER i, j, k, flag, flag_buoyancy
+  TINTEGER i, j, k, flag !, flag_buoyancy
   TREAL AVG_IK, SIMPSON_NU, FLOW_SHEAR_TEMPORAL, UPPER_THRESHOLD, LOWER_THRESHOLD
   TREAL delta_m, delta_m_p, delta_w
   TINTEGER iprof
@@ -291,14 +291,13 @@ SUBROUTINE AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q,s,&
   ENDIF
 
 ! in case we need the buoyancy statistics
-  IF ( ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &
-       ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
-       ibodyforce .EQ. EQNS_BOD_PIECEWISE_LINEAR   .OR. &
-       ibodyforce .EQ. EQNS_BOD_PIECEWISE_BILINEAR ) THEN
-     flag_buoyancy = 1
-  ELSE 
-     flag_buoyancy = 0   
-  ENDIF
+  ! IF ( ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &
+  !      ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
+  !      imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+  !    flag_buoyancy = 1
+  ! ELSE 
+  !    flag_buoyancy = 0   
+  ! ENDIF
 
 ! -------------------------------------------------------------------
 ! TkStat file; header
@@ -769,15 +768,15 @@ SUBROUTINE AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q,s,&
      CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s,          dudx,       wrk1d(1,2))
 
 ! scalar gradient for the source term; prefactor in dummy
-     IF ( flag_buoyancy .EQ. 1 ) THEN
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, dvdx, i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s, dvdy, i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, dvdz, i0,i0, wrk1d,wrk2d,wrk3d)
-        dudy = dvdx*dvdx + dvdy*dvdy + dvdz*dvdz
+     ! IF ( flag_buoyancy .EQ. 1 ) THEN
+     !    CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, dvdx, i0,i0, wrk1d,wrk2d,wrk3d)
+     !    CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s, dvdy, i0,i0, wrk1d,wrk2d,wrk3d)
+     !    CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, dvdz, i0,i0, wrk1d,wrk2d,wrk3d)
+     !    dudy = dvdx*dvdx + dvdy*dvdy + dvdz*dvdz
      
-        dummy =-(body_param(2)-body_param(1))/(C_1_R-body_param(3)) - body_param(2)/body_param(3)
-        dummy = dummy/(C_4_R*body_param(4)) * visc/schmidt(1) / froude
-     ENDIF
+     !    dummy =-(body_param(2)-body_param(1))/(C_1_R-body_param(3)) - body_param(2)/body_param(3)
+     !    dummy = dummy/(C_4_R*body_param(4)) * visc/schmidt(1) / froude
+     ! ENDIF
 
 ! buoyancy terms
      DO j = 1,jmax
@@ -802,13 +801,13 @@ SUBROUTINE AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q,s,&
         Byy(j) = C_2_R*Byy(j)*body_vector(2)
         Bzz(j) = C_2_R*Bzz(j)*body_vector(3)
 
-        IF ( flag_buoyancy .EQ. 1 ) THEN
-           DO k = 1,kmax; DO i = 1,imax
-              wrk3d(i,4,k) =-dudy(i,j,k)*dummy / &
-                (cosh(C_05_R*(s(i,j,k,1)-body_param(3))/body_param(4)))**2
-           ENDDO; ENDDO
-           rSb(j) = AVG_IK(imax,jmax,kmax, i4, wrk3d, dx,dz, area)
-        ENDIF
+        ! IF ( flag_buoyancy .EQ. 1 ) THEN
+        !    DO k = 1,kmax; DO i = 1,imax
+        !       wrk3d(i,4,k) =-dudy(i,j,k)*dummy / &
+        !         (cosh(C_05_R*(s(i,j,k,1)-body_param(3))/body_param(4)))**2
+        !    ENDDO; ENDDO
+        !    rSb(j) = AVG_IK(imax,jmax,kmax, i4, wrk3d, dx,dz, area)
+        ! ENDIF
 
      ENDDO
 

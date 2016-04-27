@@ -538,9 +538,6 @@ PROGRAM DNS
             CALL THERMO_AIRWATER_PHAL(imax, jmax, kmax, s(:,2), p_init, s(:,1)) !Calculate the water in eq in the domain
         ENDIF
 
-     ELSE IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN 
-        CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, s(:,1),s(:,inb_scal_array))
-
      ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
         CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(:,inb_scal_array), wrk3d)
 

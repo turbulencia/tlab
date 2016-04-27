@@ -43,17 +43,6 @@
 ! we need space at the end for additional calculations
 #define L_AVGMAX 42
 
-! to be deleted from here
-#define fQrad(j)  mean2d(j,38)
-#define rQrad(j)  mean2d(j,39)
-#define fQeva(j)  mean2d(j,40)
-#define rQeva(j)  mean2d(j,41)
-#define fQtra(j)  mean2d(j,42)
-#define rQtra(j)  mean2d(j,43)
-
-!#define L_AVGMAX 43
-! till here
-
 !########################################################################
 !# Tool/Library AVERAGES
 !#
@@ -165,9 +154,6 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
         trans_param(inb_scal_array + 1) =-C_1_R ! buoyancy
      ENDIF
   ENDIF
-  IF ( is .EQ. inb_scal_array+1 .AND. imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN
-     iavgpos = 6
-  ENDIF
 
 ! -----------------------------------------------------------------------
 ! TkStat file; header
@@ -198,9 +184,6 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
      ENDIF
      IF ( itransport .NE. EQNS_NONE ) THEN
         line1 = TRIM(ADJUSTL(line1))//' rQtra rQtraC'
-     ENDIF
-     IF ( is .EQ. inb_scal_array+1 .AND. imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN ! Source term partition
-        line1 = 'rS fS rS_y fS_y rQ fQ rQ2 fQ2 rQ3 fQ3 rQ4 fQ4'
      ENDIF
      WRITE(i23,1010) 'GROUP = Mean '//TRIM(ADJUSTL(line1))
      line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
@@ -317,59 +300,6 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
            dsdx = C_0_R           
         ENDIF
         
-     ELSE IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN
-
-!  Create xi intermediate array tmp3
-        dummy = ( body_param(1)*body_param(3)-body_param(2) ) /( C_1_R-body_param(3) )/body_param(3)
-        IF ( dummy .GT. C_SMALL_R ) THEN; dummy2 = body_param(5)*body_param(6)/dummy
-        ELSE;                             dummy2 = C_0_R; ENDIF ! Radiation only
-
-        tmp3(1:isize_field,1,1) = body_param(3) - s(1:isize_field,1,1,1) - dummy2*s(1:isize_field,1,1,2);
-
-! Evaporative cooling production term in tmp2
-        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, tmp3,dsdy, dsdx, wrk1d,wrk2d,wrk3d)
-        CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, tmp3, dsdy, wrk3d) ! dsdy contains gradient
-        dummy = diff /froude
-        tmp2 = wrk3d* dummy
-       
-! Alberto calculate source term due to settling WRONG RESULTS CHECK NON-DIM FROM dsdy
-        IF( itransport .EQ. EQNS_TRANS_C_SET .OR. itransport .EQ. EQNS_TRANS_LN_SET ) THEN
-! Coefficients that multiply the nabla flux terms  
-           buo_parsett(1) = (C_1_R-body_param(2))/(C_1_R-body_param(3))/body_param(5)
-           buo_parsett(2) = C_1_R
-           buo_parsett(3) = (-body_param(2)+body_param(3))/(C_1_R-body_param(3))/body_param(3)/body_param(5)
-           buo_parsett(4) = body_param(6)
-
-           IF     (itransport .EQ. EQNS_TRANS_C_SET) THEN
-              CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s(1,1,1,3), tmp3, i0,i0, wrk1d,wrk2d,wrk3d) !Gradient of s in tmp3      
-              buo_parsett(1) = (buo_parsett(1)*trans_param(1) + buo_parsett(2)*trans_param(2))*settling
-              buo_parsett(3) = (buo_parsett(3)*trans_param(1) + buo_parsett(4)*trans_param(2))*settling/body_param(5)/body_param(6)
-              tmp3(1:isize_field,1,1) = (buo_parsett(1) + buo_parsett(3)*dsdy(1:isize_field,1,1) )*tmp3(1:isize_field,1,1)
-
-           ELSEIF (itransport .EQ. EQNS_TRANS_LN_SET) THEN
-              CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s(1,1,1,3), tmp3, i0,i0, wrk1d,wrk2d,wrk3d) !Gradient of s in tmp3      
-              buo_parsett(1) = ( buo_parsett(1)*trans_param(1) + buo_parsett(2)*trans_param(2) )*C_5_R/C_3_R*settling
-              buo_parsett(3) = ( buo_parsett(3)*trans_param(1) + buo_parsett(4)*trans_param(2) )*C_5_R/C_3_R*settling/body_param(5)/body_param(6)
-              dummy = C_2_R/C_3_R
-              tmp3(1:isize_field,1,1) = (buo_parsett(1) + buo_parsett(3)*dsdy(1:isize_field,1,1) )*tmp3(1:isize_field,1,1)*(s(1:isize_field,1,1,3)**dummy)
-
-           ELSE
-              tmp3(1:isize_field,1,1) = C_0_R
-
-           ENDIF
-        ENDIF
-
-! Radiation source in dsdx
-        CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
-
-! Radiation cooling production term in dsdx
-        dummy = body_param(5) /froude
-        dsdx = dsdx *dummy
-
-! Couplig of radiation and evaporative cooling active; dsdy contains the coupling field
-        dummy = C_1_R /froude
-        tmp1 = dsdx *dsdy *dummy
-
      ELSE
         CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,dsdx, dsdy, wrk1d,wrk2d,wrk3d)
         CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, s, dsdx, wrk3d) ! dsdx contains gradient
@@ -510,15 +440,6 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
         k = k + 1; mean2d(j,k) = C_0_R ! Correction term; to be developed.
      ENDIF
      
-     IF ( is .EQ. inb_scal_array+1 .AND. imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN
-        rQrad(j) = AVG_IK(imax,jmax,kmax, j, tmp1, dx,dz, area)
-        fQrad(j) = rQrad(j)
-        rQeva(j) = AVG_IK(imax,jmax,kmax, j, tmp2, dx,dz, area)
-        fQeva(j) = rQeva(j)
-        rQtra(j) = AVG_IK(imax,jmax,kmax, j, tmp3, dx,dz, area)
-        fQtra(j) = rQtra(j)
-     ENDIF
-
 ! -----------------------------------------------------------------------
 ! density-scalar correlations
 ! -----------------------------------------------------------------------

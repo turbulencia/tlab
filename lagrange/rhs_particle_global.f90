@@ -138,21 +138,6 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
     ENDDO 
 
     !LAPLACE s
-    ! IF ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN !Update the liquid function
-    !   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-    !         dz, s(1,4), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-    !         dy, s(1,4), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-    !         dx, s(1,4), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    ! ELSE
-    !   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-    !         dz, s(1,3), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-    !         dy, s(1,3), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-    !         dx, s(1,3), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    ! ENDIF
     CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
          dz, s(1,inb_scal_array), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
     CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
@@ -176,21 +161,6 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
     
     
     !LAPLACE s
-    ! IF ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN !Update the liquid function
-    !   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-    !         dz, s(1,4), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-    !         dy, s(1,4), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-    !         dx, s(1,4), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    ! ELSE
-    !   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-    !         dz, s(1,3), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-    !         dy, s(1,3), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-    !         dx, s(1,3), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    ! ENDIF
     CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
          dz, s(1,inb_scal_array), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
     CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
@@ -381,21 +351,6 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
     ENDDO 
 
     !LAPLACE s
-    ! IF ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN !Update the liquid function
-    !   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-    !         dz, s(1,4), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-    !         dy, s(1,4), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-    !         dx, s(1,4), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    ! ELSE
-    !   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-    !         dz, s(1,3), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-    !         dy, s(1,3), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-    !         dx, s(1,3), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    ! ENDIF
     CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
          dz, s(1,inb_scal_array), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
     CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
@@ -418,21 +373,6 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
     
     
     !LAPLACE s
-    ! IF ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN !Update the liquid function
-    !   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-    !         dz, s(1,4), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-    !         dy, s(1,4), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-    !         dx, s(1,4), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    ! ELSE
-    !   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-    !         dz, s(1,3), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-    !         dy, s(1,3), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    !   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-    !         dx, s(1,3), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    ! ENDIF
     CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
          dz, s(1,inb_scal_array), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
     CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
@@ -454,8 +394,6 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
        txc(ij,1) = visc*txc(ij,1)
     ENDDO 
   
-    ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
-    !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
     CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,2), wrk1d,wrk3d)
     ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field

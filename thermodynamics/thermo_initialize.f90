@@ -257,25 +257,6 @@ SUBROUTINE THERMO_INITIALIZE
 ! The second scalar is the deviations in the enthalpy from the mix fraction.
 ! The last scalar is just the normalized concentration of liquid.
 ! -------------------------------------------------------------------
-  ELSE IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN
-     NSP            = 3
-     inb_scal       = 2
-     inb_scal_array = inb_scal + 1
-
-     THERMO_SPNAME(1) = 'chi'    ! Mixture fraction 
-     THERMO_SPNAME(2) = 'psi'    ! Deviation in the enthalpy from the mixture fraction
-     THERMO_SPNAME(3) = 'Liquid' ! Normalized Liquid
-  
-  ELSE IF ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN
-     NSP            = 4
-     inb_scal       = 3
-     inb_scal_array = inb_scal + 1
-
-     THERMO_SPNAME(1) = 'chi'           ! Mixture fraction 
-     THERMO_SPNAME(2) = 'psi'           ! Deviation in the enthalpy from the mixture fraction
-     THERMO_SPNAME(3) = 'buoyancystrat' ! 2nd stratification 
-     THERMO_SPNAME(4) = 'Liquid'        ! Normalized Liquid
-
   ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      inb_scal_array = inb_scal + 1      ! using inb_scal read in the inifile
      NSP            = inb_scal_array 
@@ -637,9 +618,7 @@ SUBROUTINE THERMO_INITIALIZE
            ENDDO
            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/tmp2/tloc**(ipsat-1)
         ENDDO
-     ELSE IF  ( imixture .EQ. MIXT_TYPE_BILAIRWATER      .OR. &
-                imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT .OR. &
-                imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN; !Nothing to be done for this mixture
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN; !Nothing to be done for this mixture
      ELSE
         CALL IO_WRITE_ASCII(efile, 'THERMO_INITIALIZE: Must use chemkin data.')
         CALL DNS_STOP(DNS_ERROR_THERMOCONT)

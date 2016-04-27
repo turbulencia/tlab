@@ -187,10 +187,6 @@ PROGRAM INISCAL
      
 ! An initial effect of radiation is imposed as an accumulation during a certain interval of time
      rad_param(1) = norm_ini_radiation
-     IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN
-        rad_param(1) = rad_ini
-        CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, s(:,1), s(:,inb_scal_array)) !Update the liquid function
-     ENDIF
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
         CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(:,inb_scal_array), wrk3d)
      ENDIF

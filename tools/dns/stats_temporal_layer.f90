@@ -103,8 +103,6 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
 ! in case we need the buoyancy statistics
   IF ( ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
        ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &
-       ibodyforce .EQ. EQNS_BOD_PIECEWISE_LINEAR   .OR. &
-       ibodyforce .EQ. EQNS_BOD_PIECEWISE_BILINEAR  .OR. &
        imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy = 1
   ELSE 
@@ -186,9 +184,6 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
           vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
 
      IF ( icalc_scal .EQ. 1 ) THEN
-        IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER .OR. imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT ) THEN ! But this should be already done...
-           CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, s(:,1),s(:,inb_scal_array)) ! Update the liquid function
-        ENDIF
         DO is = inb_scal+1,inb_scal_array ! Add diagnostic fields, if any
            mean_i(is) = C_1_R; delta_i(is) = C_0_R; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
         ENDDO

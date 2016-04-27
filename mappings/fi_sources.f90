@@ -157,8 +157,7 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
 ! -----------------------------------------------------------------------
 ! Relaxation
 ! -----------------------------------------------------------------------
-     IF ( ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR .AND. inb_scal .EQ. 3 .AND. is .EQ. 2 ) .OR. &
-          ( imixture .EQ. MIXT_TYPE_BILAIRWATERSTRAT .AND. is .EQ. 2 ) ) THEN
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR .AND. inb_scal .EQ. 3 .AND. is .EQ. 2 ) THEN
         
         ycenter=y(1)+scaley*ycoor_i(3)+0.005 !postition of s3 plus constant
         DO i=1,imax
