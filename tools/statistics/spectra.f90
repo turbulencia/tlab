@@ -29,9 +29,6 @@
 !# Postprocessing tool to compute spectra in temporal mode
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 PROGRAM SPECTRA
 
   USE DNS_TYPES, ONLY : pointers_structure
@@ -73,10 +70,10 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
-  CHARACTER*8  tag_file, tag_name
   CHARACTER*32 fname, inifile, bakfile
-  CHARACTER*64 str, line
   CHARACTER*32 varname(16)
+  CHARACTER*64 str, line
+  CHARACTER*8  tag_file, tag_name, tag_var(16)
   TINTEGER p_pairs(16,2)
 
   TINTEGER opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
@@ -93,12 +90,16 @@ PROGRAM SPECTRA
 
   TREAL AVG1V3D, COV2V2D
 
+  TINTEGER inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
+
+! Reading variables
+  CHARACTER*512 sRes
+
   TINTEGER itime_size, it
   TINTEGER itime_vec(itime_size_max)
 
   TINTEGER iopt_size
   TREAL opt_vec(iopt_size_max)
-  CHARACTER*512 sRes
 
 #ifdef USE_MPI
   TINTEGER id
@@ -252,15 +253,27 @@ PROGRAM SPECTRA
   iread_flow = icalc_flow
   iread_scal = icalc_scal
 
-  nfield_ref  = 0
-  IF ( icalc_flow .EQ. 1 ) nfield_ref = nfield_ref + inb_flow + 1 ! pressure
-  IF ( icalc_scal .EQ. 1 ) nfield_ref = nfield_ref + inb_scal_array 
+  inb_scal_min = 1              ! Change this values if you want to reduce the number of scalars to process
+  inb_scal_max = inb_scal_array ! and thereby reduced memory requirements
+  ! inb_scal_min = 4
+  ! inb_scal_max = 4
 
-  nfield = nfield_ref ! default
-  IF ( opt_main .EQ. 2 .OR. opt_main .EQ. 4 ) THEN                ! cross-spectra and cross-correlations
-     nfield = 0
+  nfield_ref  = 0     ! defining the number of accesible fields
+  IF ( icalc_flow .EQ. 1 ) nfield_ref = nfield_ref + inb_flow + 1 ! pressure
+  IF ( icalc_scal .EQ. 1 ) nfield_ref = nfield_ref + inb_scal_array
+
+  nfield = 0          ! defining the number of accessed fields
+  IF      ( opt_main .EQ. 1 .OR. opt_main .EQ. 3 ) THEN ! Auto-spectra & correlations
+     IF ( icalc_flow .EQ. 1 ) nfield = nfield + inb_flow + 1 ! pressure
+     IF ( icalc_scal .EQ. 1 ) nfield = nfield +(inb_scal_max - inb_scal_min + 1)
+
+  ELSE IF ( opt_main .EQ. 2 .OR. opt_main .EQ. 4 ) THEN ! cross-spectra and cross-correlations
      IF ( icalc_flow .EQ. 1 ) nfield = nfield + 3
-     IF ( icalc_scal .EQ. 1 ) nfield = nfield + 3*inb_scal_array  
+     IF ( icalc_scal .EQ. 1 ) nfield = nfield + 3 *(inb_scal_max - inb_scal_min + 1)
+
+  ELSE
+     nfield = nfield_ref
+
   ENDIF
 
   inb_txc = 4 ! default
@@ -286,13 +299,21 @@ PROGRAM SPECTRA
   ALLOCATE(outx(kxmax*jmax_aux, nfield))
   ALLOCATE(outz(kzmax*jmax_aux, nfield))
 
+  WRITE(str,*) nfield; line = 'Allocating array outr  of size '//TRIM(ADJUSTL(str))//'x'
+  WRITE(str,*) isize_spec2dr; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+  CALL IO_WRITE_ASCII(lfile,line)
   ALLOCATE(outr(isize_spec2dr, nfield) )
-    IF ( flag_mode .EQ. 2 ) THEN
+  IF ( ierr .NE. 0 ) THEN
+     CALL IO_WRITE_ASCII(efile,'SPECTRA. Not enough memory for spectral data.')
+     CALL DNS_STOP(DNS_ERROR_ALLOC)
+  ENDIF
+
+  IF ( flag_mode .EQ. 2 ) THEN
      ALLOCATE( samplesize(kr_total) )
   ENDIF
 
   IF ( opt_ffmt .EQ. 1 ) THEN ! need additional space for 2d spectra
-     WRITE(str,*) nfield; line = 'Allocating array out2d. Size '//TRIM(ADJUSTL(str))//'x'
+     WRITE(str,*) nfield; line = 'Allocating array out2d of size '//TRIM(ADJUSTL(str))//'x'
      WRITE(str,*) isize_out2d; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile,line)
      ALLOCATE(out2d(isize_out2d, nfield),stat=ierr)
@@ -304,7 +325,7 @@ PROGRAM SPECTRA
 
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. &
        imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
-     WRITE(str,*) isize_txc_field; line = 'Allocating array p_aux. Size '//TRIM(ADJUSTL(str))
+     WRITE(str,*) isize_txc_field; line = 'Allocating array p_aux of size '//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile,line)
      ALLOCATE(p_aux(isize_txc_field),stat=ierr)
      IF ( ierr .NE. 0 ) THEN
@@ -370,15 +391,15 @@ PROGRAM SPECTRA
 ! Define reference pointers and tags
   iv = 0
   IF ( icalc_flow .EQ. 1 ) THEN
-     iv = iv+1; data(iv)%field => q(:,1); varname(iv) = tag_name(1:1)//'uu'
-     iv = iv+1; data(iv)%field => q(:,2); varname(iv) = tag_name(1:1)//'vv'
-     iv = iv+1; data(iv)%field => q(:,3); varname(iv) = tag_name(1:1)//'ww'
+     iv = iv+1; data(iv)%field => q(:,1); tag_var(iv) = 'u'
+     iv = iv+1; data(iv)%field => q(:,2); tag_var(iv) = 'v'
+     iv = iv+1; data(iv)%field => q(:,3); tag_var(iv) = 'w'
      IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        iv = iv+1; data(iv)%field => q(:,6); varname(iv) = tag_name(1:1)//'pp'
-        iv = iv+1; data(iv)%field => q(:,5); varname(iv) = tag_name(1:1)//'rr'
-        iv = iv+1; data(iv)%field => q(:,7); varname(iv) = tag_name(1:1)//'tt'
+        iv = iv+1; data(iv)%field => q(:,6); tag_var(iv) = 'p'
+        iv = iv+1; data(iv)%field => q(:,5); tag_var(iv) = 'r'
+        iv = iv+1; data(iv)%field => q(:,7); tag_var(iv) = 't'
      ELSE
-        iv = iv+1; data(iv)%field => p_aux; varname(iv) = tag_name(1:1)//'pp'
+        iv = iv+1; data(iv)%field => p_aux;  tag_var(iv) = 'p'
      ENDIF
   ENDIF
   iv_offset = iv
@@ -386,7 +407,7 @@ PROGRAM SPECTRA
   IF ( icalc_scal .EQ. 1 ) THEN
      DO is = 1,inb_scal_array
         WRITE(sRes,*) is
-        iv = iv+1; data(iv)%field => s(:,is); varname(iv) = tag_name(1:1)//TRIM(ADJUSTL(sRes))//TRIM(ADJUSTL(sRes))
+        iv = iv+1; data(iv)%field => s(:,is); tag_var(iv) = TRIM(ADJUSTL(sRes))
      ENDDO
   ENDIF
 
@@ -398,33 +419,38 @@ PROGRAM SPECTRA
 ! Define pairs
   iv = 0
   IF      ( opt_main .EQ. 1 .OR. opt_main .EQ. 3 ) THEN ! Auto-spectra & correlations
-     DO ip = 1,nfield_ref
-        iv = iv+1; p_pairs(iv,1) = iv; p_pairs(iv,2) = iv
+     DO ip = 1,iv_offset
+        iv = iv+1; p_pairs(iv,1) = iv; p_pairs(iv,2) = iv 
      ENDDO
-
+     IF ( icalc_scal .EQ. 1 ) THEN
+        DO is = inb_scal_min,inb_scal_max
+           ip = is+iv_offset
+           iv = iv+1; p_pairs(iv,1) = ip; p_pairs(iv,2) = ip
+        ENDDO
+     ENDIF
+        
   ELSE IF ( opt_main .EQ. 2 .OR. opt_main .EQ. 4 ) THEN ! Cross-spectra & correlations
      IF ( icalc_flow .EQ. 1 ) THEN
-        iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 2;  varname(iv) = tag_name(1:1)//'uv'
-        iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 3;  varname(iv) = tag_name(1:1)//'uw'
-        iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 3;  varname(iv) = tag_name(1:1)//'vw'
+        iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 2
+        iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 3
+        iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 3
         IF ( icalc_scal .EQ. 1 ) THEN
-           DO is = 1,inb_scal_array
-              WRITE(sRes,*) is
+           DO is = inb_scal_min,inb_scal_max
               ip = is+iv_offset
-              iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = ip; varname(iv) = tag_name(1:1)//'u'//TRIM(ADJUSTL(sRes))
-              iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = ip; varname(iv) = tag_name(1:1)//'v'//TRIM(ADJUSTL(sRes))
-              iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = ip; varname(iv) = tag_name(1:1)//'w'//TRIM(ADJUSTL(sRes))
+              iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = ip
+              iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = ip
+              iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = ip
            ENDDO
         ENDIF
 ! block to calculate the pressure-velocity and triple-velocity correlation terms in turbulent transport
-        ! iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 4;  varname(iv) = tag_name(1:1)//'up'
-        ! iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 4;  varname(iv) = tag_name(1:1)//'vp'
-        ! iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 4;  varname(iv) = tag_name(1:1)//'wp'
+        ! iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 4
+        ! iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 4
+        ! iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 4
         ! IF ( icalc_scal .EQ. 1 ) THEN ! aux array for u_iu_i/2
-        !    s(:,1) = C_05_R*( q(:,1)*q(:,1) + q(:,2)*q(:,2) + q(:,3)*q(:,3) )
-        !    iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 5;  varname(iv) = tag_name(1:1)//'uq'
-        !    iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 5;  varname(iv) = tag_name(1:1)//'vq'
-        !    iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 5;  varname(iv) = tag_name(1:1)//'wq'
+        !    s(:,1) = C_05_R*( q(:,1)*q(:,1) + q(:,2)*q(:,2) + q(:,3)*q(:,3) ); tag_var(5) = 'q'
+        !    iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 5
+        !    iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 5
+        !    iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 5
         ! ENDIF
      ELSE
         CALL IO_WRITE_ASCII(efile, 'SPECTRA. Cross-spectra needs flow fields.')
@@ -437,6 +463,10 @@ PROGRAM SPECTRA
      CALL IO_WRITE_ASCII(efile, 'SPECTRA. Array space nfield incorrect.')
      CALL DNS_STOP(DNS_ERROR_WRKSIZE)
   ENDIF
+
+  DO iv = 1,nfield ! define variable names
+     varname(iv) = tag_name(1:1)//TRIM(ADJUSTL(tag_var(p_pairs(iv,1))))//TRIM(ADJUSTL(tag_var(p_pairs(iv,2))))
+  ENDDO
 
 ! ###################################################################
 ! Calculating statistics

@@ -72,7 +72,6 @@ PROGRAM AVERAGES
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
-  CHARACTER*512 sRes
   CHARACTER*32 fname, inifile, bakfile
   CHARACTER*32 varname(16)
   CHARACTER*64 str, line
@@ -88,6 +87,9 @@ PROGRAM AVERAGES
   TINTEGER igate_size
   INTEGER(1) opt_gate, igate_vec(igate_size_max)
   TREAL gate_threshold(igate_size_max)
+
+! Reading variables
+  CHARACTER*512 sRes
 
   TINTEGER itime_size, it
   TINTEGER itime_vec(itime_size_max)

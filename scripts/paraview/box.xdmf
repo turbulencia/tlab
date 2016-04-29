@@ -14,6 +14,9 @@
         <!ENTITY SeekGridY "1088"> <!-- SeekGridX + DimX*8 + 8-->
         <!ENTITY SeekGridZ "1864"> <!-- SeekGridY + DimY*8 + 8-->
 
+<!-- iteration number  -->
+        <!ENTITY Itime "000010">
+
 <!-- offsets to data -->
         <!ENTITY SeekData   "0"> <!-- No header -->
         <!-- <!ENTITY SeekData  "52"> --> <!-- Tlab header -->
@@ -96,7 +99,7 @@
 	    &HSDimsZ; &HSDimsY; &HSDimsX;
 	  </DataItem>
 	  <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
-	    Scalar1000010
+	    Scalar1&Itime;
 	  </DataItem>
 	</DataItem>
       </Attribute>
@@ -111,7 +114,7 @@
 	      &HSDimsZ; &HSDimsY; &HSDimsX;
 	    </DataItem>
 	    <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
-	      VelocityVector000010.1
+	      VelocityVector&Itime;.1
 	    </DataItem>
 	  </DataItem>
 	  <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
@@ -121,7 +124,7 @@
 	      &HSDimsZ; &HSDimsY; &HSDimsX;
 	    </DataItem>
 	    <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
-	      VelocityVector000010.2
+	      VelocityVector&Itime;.2
 	    </DataItem>
 	  </DataItem>
 	  <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
@@ -131,7 +134,7 @@
 	      &HSDimsZ; &HSDimsY; &HSDimsX;
 	    </DataItem>
 	    <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
-	      VelocityVector000010.3
+	      VelocityVector&Itime;.3
 	    </DataItem>
 	  </DataItem>
 	</DataItem>
