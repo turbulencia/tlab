@@ -302,7 +302,7 @@ PROGRAM SPECTRA
   WRITE(str,*) nfield; line = 'Allocating array outr  of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_spec2dr; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(outr(isize_spec2dr, nfield) )
+  ALLOCATE(outr(isize_spec2dr, nfield),stat=ierr)
   IF ( ierr .NE. 0 ) THEN
      CALL IO_WRITE_ASCII(efile,'SPECTRA. Not enough memory for spectral data.')
      CALL DNS_STOP(DNS_ERROR_ALLOC)
