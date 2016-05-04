@@ -151,11 +151,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Control', 'MinDensity',  '-1.0', r_bound_min)
   CALL SCANINIREAL(bakfile, inifile, 'Control', 'MaxDensity',  '-1.0', r_bound_max)
 
-  ! CALL SCANINIREAL(bakfile, inifile, 'Control', 'MinScalar', '-1.0', z_bound_min)
-  ! IF ( z_bound_min .LT. C_0_R ) z_bound_min = C_0_R
-
-  ! CALL SCANINIREAL(bakfile, inifile, 'Control', 'MaxScalar', '-1.0', z_bound_max)
-  ! IF ( z_bound_max .LT. C_0_R ) z_bound_max = C_1_R
+  d_bound_max = C_BIG_R ! default
+  CALL SCANINICHAR(bakfile, inifile, 'Control', 'MaxDilatation', 'void', sRes)
+  IF ( sRes .NE. 'void' ) THEN
+     idummy = 1
+     CALL LIST_REAL(sRes, idummy, d_bound_max)
+  ENDIF
 
   s_bound_min(:) = C_0_R; inb_scal_local1 = MAX_NSP
   IF ( ilimit_scal .EQ. 1 ) THEN

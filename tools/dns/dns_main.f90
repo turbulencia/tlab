@@ -600,62 +600,21 @@ PROGRAM DNS
           dx,dy,dz, q(1,1),q(1,2),q(1,3), h_q(1,1),h_q(1,2), wrk1d,wrk2d,wrk3d)
      CALL MINMAX(imax,jmax,kmax, h_q(1,1), logs_data(11),logs_data(10))
      logs_data(10)=-logs_data(10); logs_data(11)=-logs_data(11)
+     IF ( MAX(ABS(logs_data(10)),ABS(logs_data(11))) .GT. d_bound_max ) THEN
+        logs_data(1) = 1
+     ENDIF
   ENDIF
 
   CALL DNS_LOGS(i2) ! first line
 
+  IF ( logs_data(1) .NE. 0 ) CALL DNS_STOP(DNS_ERROR_DILATATION)
+
 ! ###################################################################
 ! Do simulation: Integrate equations
 ! ###################################################################
-
- CALL TIME_INTEGRATION(x,y,z,dx,dy,dz, q,h_q,s,h_s, &
+  CALL TIME_INTEGRATION(x,y,z,dx,dy,dz, q,h_q,s,h_s, &
        x_inf,y_inf,z_inf,q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
        l_q, l_hq, l_txc, l_tags, l_comm, l_trajectories, l_trajectories_tags)
-
-! ###################################################################
-! Save Final Data (if not already saved) and Exit
-! ###################################################################
-  IF ( MOD(nitera_last-nitera_first,nitera_save) .NE. 0 ) THEN
-
-     CALL DNS_TOWER_WRITE(wrk3d) 
-     
-     IF ( icalc_flow .EQ. 1 ) THEN
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-        CALL DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, isize_wrk3d, q, wrk3d)
-     ENDIF
-     
-     IF ( icalc_particle .EQ. 1 ) THEN
-        WRITE(fname,*) itime; fname = "particle."//TRIM(ADJUSTL(fname))
-        CALL DNS_WRITE_PARTICLE(fname, l_q)
-
-        WRITE(fname,*) itime; fname = 'particle_id.'//TRIM(ADJUSTL(fname))
-        CALL DNS_WRITE_PARTICLE_TAGS(fname, l_tags)
-
-     END IF
-   
-     IF ( icalc_scal .EQ. 1 ) THEN
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-        CALL DNS_WRITE_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, isize_wrk3d, s, wrk3d)
-     ENDIF
-     
-     IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN 
-        IF ( frunstat .EQ. 1 ) THEN
-           WRITE(fname,*) itime; fname = 'st'//TRIM(ADJUSTL(fname))
-           CALL DNS_WRITE_AVGIJ(fname, vaux(vindex(VA_MEAN_WRK)))
-        ENDIF
-        ! IF ( frunline .EQ. 1 ) THEN
-        !    WRITE(fname,*) itime; fname = 'ln'//TRIM(ADJUSTL(fname))
-        !    CALL DNS_WRITE_LINE(fname, isize_wrk3d, inb_vars,&
-        !         vaux(vindex(VA_TIMES)), vaux(vindex(VA_LINE_SPA_WRK)), wrk3d)
-        ! ENDIF
-        ! IF ( frunplane .EQ. 1 ) THEN
-        !    WRITE(fname,*) itime; fname = 'pl'//TRIM(ADJUSTL(fname))
-        !    CALL DNS_WRITE_PLANE(fname, isize_wrk3d,  nstatplnvars, &
-        !         vaux(vindex(VA_TIMES)), vaux(vindex(VA_PLANE_SPA_WRK)), wrk3d)
-        ! ENDIF
-     ENDIF
-
-  ENDIF
 
 ! ###################################################################
 #ifdef USE_FFTW

@@ -1,5 +1,6 @@
 #include "types.h"
 #include "dns_const.h"
+#include "dns_error.h"
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
 #endif
@@ -27,12 +28,12 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
      l_q, l_hq, l_txc, l_tags, l_comm, l_trajectories, l_trajectories_tags)
   
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, lfile
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_vars, isize_particle, inb_particle
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_particle, inb_particle
   USE DNS_GLOBAL, ONLY : i1bc,j1bc,k1bc, imode_fdm, imode_flow, imode_sim, imode_eqns
   USE DNS_GLOBAL, ONLY : icalc_flow, icalc_scal, icalc_particle
   USE DNS_GLOBAL, ONLY : itransport, visc
   USE DNS_GLOBAL, ONLY : itime, rtime
-  USE DNS_GLOBAL, ONLY : nspa_rest, nspa_step, nstatplnvars, iupdate_stat
+  USE DNS_GLOBAL, ONLY : nspa_rest, nspa_step, iupdate_stat
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL 
   USE DNS_TOWER
@@ -99,6 +100,13 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
   sizes_l = (/idummy,idummy,0,1/)
   varname = (/'0'/)
   
+! Control
+  IF ( ifilt_step   .LE. 0 ) ifilt_step   = nitera_last - nitera_first + 1
+  IF ( nitera_log   .LE. 0 ) nitera_log   = nitera_last - nitera_first + 1
+  IF ( nitera_stats .LE. 0 ) nitera_stats = nitera_last - nitera_first + 1
+  IF ( nitera_save  .LE. 0 ) nitera_save  = nitera_last - nitera_first + 1
+  IF ( nitera_pln   .LE. 0 ) nitera_pln   = nitera_last - nitera_first + 1
+
 ! ###################################################################
 ! Loop on iterations: itime counter
 ! ###################################################################
@@ -116,9 +124,9 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
      itime = itime + 1
      rtime = rtime + dtime
 
-     IF ( ifilt_step .GT. 0 .AND. MOD(itime-nitera_first,ifilt_step) .EQ. 0 ) THEN
-        IF ( nitera_stats .GT. 0 .AND. MOD(itime-nitera_first,nitera_stats) .EQ. 0 ) THEN; flag_save = .TRUE.
-        ELSE;                                                                              flag_save = .FALSE.; ENDIF
+     IF ( MOD(itime-nitera_first,ifilt_step) .EQ. 0 ) THEN
+        IF ( MOD(itime-nitera_first,nitera_stats) .EQ. 0 ) THEN; flag_save = .TRUE.
+        ELSE;                                                    flag_save = .FALSE.; ENDIF
         CALL DNS_FILTER(flag_save, y, dx,dy,dz, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
      ENDIF
 
@@ -163,15 +171,19 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
 ! ###################################################################
 ! The rest: Logging, postprocessing and saving
 ! ###################################################################
-     IF ( nitera_log .GT. 0 .AND. MOD(itime-nitera_first,nitera_log) .EQ. 0 ) THEN ! Log files
-        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. &
-             imode_eqns .EQ. DNS_EQNS_ANELASTIC     )THEN
+     IF ( MOD(itime-nitera_first,nitera_log) .EQ. 0 ) THEN ! Log files
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            CALL FI_INVARIANT_P(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
                 dx,dy,dz, q(1,1),q(1,2),q(1,3), hq(1,1),hq(1,2), wrk1d,wrk2d,wrk3d)
            CALL MINMAX(imax,jmax,kmax, hq(1,1), logs_data(11),logs_data(10))
            logs_data(10)=-logs_data(10); logs_data(11)=-logs_data(11)
+           IF ( MAX(ABS(logs_data(10)),ABS(logs_data(11))) .GT. d_bound_max ) THEN
+              logs_data(1) = 1
+           ENDIF
         ENDIF
         CALL DNS_LOGS(i2)
+        IF ( logs_data(1) .NE. 0 ) CALL DNS_STOP(DNS_ERROR_DILATATION)
+
 #ifdef LES
         IF ( iles .EQ. 1 ) CALL LES_LOGS(i2)
 #endif
@@ -232,7 +244,7 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
         CALL DNS_WRITE_TRAJECTORIES(fname,l_q,l_tags, l_trajectories, l_trajectories_tags, wrk3d,txc,itime, nitera_last, nitera_save, nitera_first)
      END IF
 
-     IF ( nitera_stats .GT. 0 .AND. MOD(itime-nitera_first,nitera_stats) .EQ. 0 ) THEN ! Calculate statistics
+     IF ( MOD(itime-nitera_first,nitera_stats) .EQ. 0 ) THEN ! Calculate statistics
         IF     ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
            IF ( imode_flow .EQ. DNS_FLOW_ISOTROPIC ) THEN ! TO BE DEVELOPED
            ELSE 
@@ -246,7 +258,8 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
         ENDIF
      ENDIF
      
-     IF ( nitera_save .GT. 0 .AND. MOD(itime-nitera_first,nitera_save) .EQ. 0 ) THEN ! Save restart files
+     IF ( itime .EQ. nitera_last .OR. &                     ! Secure that one restart file is saved
+          MOD(itime-nitera_first,nitera_save) .EQ. 0 ) THEN ! Save restart files
         IF ( icalc_flow .EQ. 1 ) THEN
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
            CALL DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, isize_field, q, wrk3d)
@@ -274,7 +287,7 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
         
      ENDIF
 
-     IF ( nitera_pln .GT. 0 .AND. MOD(itime-nitera_first,nitera_pln) .EQ. 0 ) THEN ! Save restart files
+     IF ( MOD(itime-nitera_first,nitera_pln) .EQ. 0 ) THEN
         IF ( npln_j .GT. 0 ) THEN ! Saving horizontal planes
            CALL REDUCE_Y_ALL(imax,jmax,kmax, inb_flow,q, inb_scal,s, npln_j,pln_j, wrk3d)
            WRITE(fname,*) itime; fname = 'planes.'//TRIM(ADJUSTL(fname))
