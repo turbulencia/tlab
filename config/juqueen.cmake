@@ -11,6 +11,8 @@
 # Add -DUSE_ESSL to CPPFLAGS if you want to use the
 # transpose routine from the ESSL library
 #
+# -qhot gives problems with EXP functions!
+#
 ########################################################
 if ( NOT BUILD_TYPE )
    message( WARNING "Setting CMAKE_BUILD_TYPE to default value." )
@@ -21,7 +23,7 @@ if ( ${BUILD_TYPE} STREQUAL "PARALLEL" OR ${BUILD_TYPE} STREQUAL "NONBLOCKING" )
    set(ENV{FC} /bgsys/drivers/ppcfloor/comm/xl/bin/mpixlf95_r)
 #   set(CMAKE_Fortran_COMPILER mpixlf95_r) 
    set(USER_Fortran_FLAGS         "-qnoescape ")
-   set(USER_Fortran_FLAGS_RELEASE "-O3 -qmaxmem=-1 -qarch=qp -qtune=qp -qxflag=ngenstub -qhot -qalias=noaryovrlp:nopteovrlp -qassert=contiguous ")
+   set(USER_Fortran_FLAGS_RELEASE "-O3 -qmaxmem=-1 -qarch=qp -qtune=qp -qxflag=ngenstub -qalias=noaryovrlp:nopteovrlp -qassert=contiguous ")
    set(USER_Fortran_FLAGS_DEBUG   "-O0 -pg -qfullpath")
 
    add_definitions(-d -qsuffix=cpp=f90 -WF,-DUSE_MPI,-DUSE_MPI_IO,-DUSE_FFTW,-DUSE_ESSL)

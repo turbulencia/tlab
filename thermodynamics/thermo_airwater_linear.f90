@@ -18,17 +18,17 @@
 !########################################################################
 SUBROUTINE THERMO_AIRWATER_LINEAR(nx,ny,nz, s, l, wrk3d)
   
-  USE DNS_GLOBAL, ONLY : inb_scal
+  USE DNS_GLOBAL,    ONLY : inb_scal
   USE THERMO_GLOBAL, ONLY : thermo_param
   
   IMPLICIT NONE
   
 #include "integers.h"
   
-  TINTEGER,                     INTENT(IN)    :: nx,ny,nz
-  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)    :: s     ! chi, psi
-  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT)   :: l     ! normalized liquid
-  TREAL, DIMENSION(nx*ny*nz),   INTENT(INOUT) :: wrk3d ! xi
+  TINTEGER,                            INTENT(IN)    :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,inb_scal), INTENT(IN)    :: s     ! chi, psi
+  TREAL, DIMENSION(nx*ny*nz),          INTENT(OUT)   :: l     ! normalized liquid
+  TREAL, DIMENSION(nx*ny*nz),          INTENT(INOUT) :: wrk3d ! xi
   
 ! -------------------------------------------------------------------
   TINTEGER ij

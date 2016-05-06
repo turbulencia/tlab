@@ -68,10 +68,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   
   TREAL, DIMENSION(*),                   INTENT(IN) :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field),         INTENT(IN) :: u,v,w
-  TREAL, DIMENSION(isize_field,inb_scal),INTENT(IN) :: s
+  TREAL, DIMENSION(isize_field,inb_scal_array),INTENT(IN) :: s
 
   TREAL, DIMENSION(isize_field),         INTENT(INOUT):: h1,h2,h3 
-  TREAL, DIMENSION(isize_field,inb_scal_array),INTENT(OUT):: hs 
+  TREAL, DIMENSION(isize_field,inb_scal),INTENT(OUT):: hs 
   TREAL, DIMENSION(imax,kmax,inb_vars)              :: bcs_hb, bcs_ht 
   TREAL, DIMENSION(jmax),                INTENT(IN) :: b_ref
   TREAL, DIMENSION(isize_field),         INTENT(INOUT):: tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42
