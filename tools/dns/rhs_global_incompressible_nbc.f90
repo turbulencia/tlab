@@ -25,7 +25,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   !
   USE DNS_GLOBAL, ONLY : i1bc,iunifx,j1bc,iunify,k1bc
   USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total,imode_fdm
-  USE DNS_GLOBAL, ONLY : iunifz,inb_flow,inb_vars,inb_scal,visc,schmidt,prandtl 
+  USE DNS_GLOBAL, ONLY : iunifz,inb_flow,inb_vars,inb_scal,inb_scal_array,visc,schmidt,prandtl 
   USE DNS_GLOBAL, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : rotn_param,rotn_vector,body_param,body_vector 
   USE DNS_GLOBAL, ONLY : ibodyforce_x,ibodyforce_y,ibodyforce_z,ibodyforce
@@ -71,7 +71,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   TREAL, DIMENSION(isize_field,inb_scal),INTENT(IN) :: s
 
   TREAL, DIMENSION(isize_field),         INTENT(INOUT):: h1,h2,h3 
-  TREAL, DIMENSION(isize_field,inb_scal),INTENT(OUT):: hs 
+  TREAL, DIMENSION(isize_field,inb_scal_array),INTENT(OUT):: hs 
   TREAL, DIMENSION(imax,kmax,inb_vars)              :: bcs_hb, bcs_ht 
   TREAL, DIMENSION(jmax),                INTENT(IN) :: b_ref
   TREAL, DIMENSION(isize_field),         INTENT(INOUT):: tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42

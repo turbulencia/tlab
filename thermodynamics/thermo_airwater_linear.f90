@@ -49,7 +49,10 @@ SUBROUTINE THERMO_AIRWATER_LINEAR(nx,ny,nz, s, l, wrk3d)
   ELSE
      dummy  = thermo_param(inb_scal+1)
      dummy2 = C_1_R /dummy
-     l = dummy *LOG( EXP(dummy2 *wrk3d) +C_1_R )
+!     l = dummy *LOG( EXP(dummy2 *wrk3d) +C_1_R )
+     DO ij = 1,nx*ny*nz
+        l(ij) = dummy *LOG( EXP(dummy2 *wrk3d(ij)) +C_1_R )
+     ENDDO
 
   ENDIF
   

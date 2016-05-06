@@ -25,7 +25,7 @@ SUBROUTINE OPR_RADIATION(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d)
 #include "integers.h"
 
   TINTEGER,                   INTENT(IN)    :: iradiation, nx,ny,nz
-  TREAL, DIMENSION(ny,*),     INTENT(IN)    :: dy
+  TREAL, DIMENSION(*),        INTENT(IN)    :: dy
   TREAL, DIMENSION(*),        INTENT(IN)    :: param    ! Radiation parameters
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s        ! Radiatively active scalar
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: r        ! Radiative heating rate
@@ -94,7 +94,7 @@ SUBROUTINE OPR_RADIATION(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d)
   DO j = 1,ny*nxz
      p_dst(j) = p_org(j) *EXP( p_dst(j) *delta_inv ) *dummy
   ENDDO
-!  p_dst(1:ny*nxz) = param(1) *p_org(1:ny*nxz) *EXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
+!  p_dst(1:ny*nxz) = param(1) *p_org(1:ny*nxz) *DEXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
 
 ! ###################################################################
   IF      ( iradiation .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN
@@ -196,7 +196,7 @@ SUBROUTINE OPR_RADIATION_FLUX(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d
 !     p_dst(j) = p_org(j) *EXP( p_dst(j) *delta_inv ) *dummy
      p_dst(j) =           EXP( p_dst(j) *delta_inv ) *dummy
   ENDDO
-!  p_dst(1:ny*nxz) = param(1) *p_org(1:ny*nxz) *EXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
+!  p_dst(1:ny*nxz) = param(1) *p_org(1:ny*nxz) *DEXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
 
 ! ###################################################################
   IF      ( iradiation .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN

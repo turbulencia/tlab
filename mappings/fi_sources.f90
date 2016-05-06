@@ -141,7 +141,7 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
 ! Radiation
 ! -----------------------------------------------------------------------
      IF ( irad_scalar .EQ. is ) THEN
-        CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), tmp1, wrk1d,wrk3d)
+        CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,inb_scal_array), tmp1, wrk1d,wrk3d)
         
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
