@@ -652,6 +652,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   t_snd=(/t_run,t_ser,t_comp,t_test,t_init,t_wait/)
   CALL MPI_Reduce(t_snd,t_rcv,6,MPI_REAL8,MPI_SUM,0,MPI_COMM_WORLD,ims_err) 
      
+#ifdef USE_PROFILE
   IF ( ims_pro .EQ. 0 ) THEN 
      t_rcv=t_rcv/ims_npro
      t_run=t_rcv(1);  t_ser= t_rcv(2); t_comp=t_rcv(3); 
@@ -663,7 +664,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
           '(total [s], serial[1], comp[1], test[1], init[1], wait [1]);', &
           F10.3, 5(F6.3,';'))
   ENDIF
-      
+#endif
+  
   ptime = -MPI_WTime()
 
 ! -----------------------------------------------------------------------
