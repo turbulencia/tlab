@@ -493,7 +493,7 @@ PROGRAM SPECTRA
         CALL FI_PRESSURE_BOUSSINESQ(y,dx,dy,dz, q(1,1),q(1,2),q(1,3),s,p_aux, &
              txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
         IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-           CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(:,inb_scal+1), wrk3d)
+           CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal+1))
         ENDIF
         IF ( flag_buoyancy .EQ. 1 ) THEN
            wrk1d(1:jmax,1) = C_0_R 

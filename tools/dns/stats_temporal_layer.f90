@@ -201,13 +201,13 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
 ! mean values
            s_aux(1:inb_scal) = mean_i(1:inb_scal) - C_05_R*delta_i(1:inb_scal)
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-              CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array), dummy)
+              CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array))
            ENDIF
            dummy = C_0_R
            CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umin, dummy)
            s_aux(1:inb_scal) = mean_i(1:inb_scal) + C_05_R*delta_i(1:inb_scal)
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-              CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array), dummy)
+              CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array))
            ENDIF
            dummy = C_0_R
            CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umax, dummy)

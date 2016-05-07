@@ -268,7 +268,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
      CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(:,2), dummy, s(:,1))
 
   ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-     CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array), wrk3d)
+     CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
 
   ENDIF
 

@@ -396,7 +396,7 @@ PROGRAM VISUALS_MAIN
            CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(:,2), p_init, s(:,1))    
            
         ELSEIF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-           CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(:,inb_scal_array), wrk3d)
+           CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
            
         ENDIF
      ENDIF
@@ -653,7 +653,7 @@ PROGRAM VISUALS_MAIN
                  !       ELSE;                            txc(ij,1)=log(umin); ENDIF
                  !    ENDDO
                  ! ELSE                                                  ! Natural log
-                    txc(1:isize_field,1) = log(txc(1:isize_field,1))
+                    txc(1:isize_field,1) = LOG(txc(1:isize_field,1)+C_SMALL_R)
                     plot_file = 'Ln'//TRIM(ADJUSTL(plot_file))
                 ! ENDIF
               ENDIF
@@ -709,7 +709,7 @@ PROGRAM VISUALS_MAIN
            plot_file = 'Enstrophy'//time_str(1:MaskSize)
 
            IF ( opt_vec(iv) .EQ. iscal_offset+5 ) THEN ! Natural log
-              txc(1:isize_field,1)=log(txc(1:isize_field,1))
+              txc(1:isize_field,1)=LOG(txc(1:isize_field,1)+C_SMALL_R)
               plot_file = 'Ln'//TRIM(ADJUSTL(plot_file))
            ENDIF
            
@@ -754,7 +754,7 @@ PROGRAM VISUALS_MAIN
            plot_file = 'Strain'//time_str(1:MaskSize)
 
            IF ( opt_vec(iv) .EQ. iscal_offset+8 ) THEN ! Natural log
-              txc(1:isize_field,1)=log(txc(1:isize_field,1))
+              txc(1:isize_field,1)=LOG(txc(1:isize_field,1)+C_SMALL_R)
               plot_file = 'Ln'//TRIM(ADJUSTL(plot_file))
            ENDIF
            
@@ -865,14 +865,12 @@ PROGRAM VISUALS_MAIN
 ! buoyancy source
            IF ( flag_buoyancy .EQ. 1 ) THEN
               IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-                 CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array), txc(1,4)) ! calculate xi in tmp1
+                 CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, txc(1,2),txc(1,3), txc(1,4))
                  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
                       dx,dy,dz, txc(1,4), txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
                  
-                 CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, txc(1,2),txc(1,3), wrk3d)
-                 
                  dummy = body_param(inb_scal_array)
-                 wrk3d(1:isize_field) = txc(1:isize_field,1) *txc(1:isize_field,3) *dummy ! evaporation source
+                 wrk3d(1:isize_field) = txc(1:isize_field,1) *txc(1:isize_field,3) *dummy
                  
               ELSE
                  CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
@@ -950,7 +948,7 @@ PROGRAM VISUALS_MAIN
            CALL FI_DISSIPATION(i1, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
                 area, visc, dx,dy,dz, txc(1,5),q(1,1),q(1,2),q(1,3), txc(1,1), &
                 txc(1,2),txc(1,3),txc(1,4), wrk1d, wrk1d(1,6),wrk2d,wrk3d)
-           txc(1:isize_field,1)=LOG(txc(1:isize_field,1))
+           txc(1:isize_field,1)=LOG(txc(1:isize_field,1)+C_SMALL_R)
 
            plot_file = 'LnDissipation'//time_str(1:MaskSize)
            CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)

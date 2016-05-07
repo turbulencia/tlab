@@ -16,7 +16,7 @@
 !# enthalpy deviation according to the linearized equilibrium thermodynamics
 !#
 !########################################################################
-SUBROUTINE THERMO_AIRWATER_LINEAR(nx,ny,nz, s, l, wrk3d)
+SUBROUTINE THERMO_AIRWATER_LINEAR(nx,ny,nz, s, l)
   
   USE DNS_GLOBAL,    ONLY : inb_scal
   USE THERMO_GLOBAL, ONLY : thermo_param
@@ -28,30 +28,31 @@ SUBROUTINE THERMO_AIRWATER_LINEAR(nx,ny,nz, s, l, wrk3d)
   TINTEGER,                            INTENT(IN)    :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,inb_scal), INTENT(IN)    :: s     ! chi, psi
   TREAL, DIMENSION(nx*ny*nz),          INTENT(OUT)   :: l     ! normalized liquid
-  TREAL, DIMENSION(nx*ny*nz),          INTENT(INOUT) :: wrk3d ! xi
   
 ! -------------------------------------------------------------------
   TINTEGER ij
   TREAL dummy, dummy2
 
 ! ###################################################################
+! Calculating \xi
   IF ( inb_scal .EQ. 1 ) THEN
-     wrk3d = C_1_R + thermo_param(1)*s(:,1)
+     l = C_1_R + thermo_param(1)*s(:,1)
   ELSE
-     wrk3d = C_1_R + thermo_param(1)*s(:,1) + thermo_param(2)*s(:,2)
+     l = C_1_R + thermo_param(1)*s(:,1) + thermo_param(2)*s(:,2)
   ENDIF
 
+! Calculating liquid; \xi is overwritten in this routine
   IF ( ABS(thermo_param(inb_scal+1)) .LT. C_SMALL_R ) THEN
      DO ij = 1,nx*ny*nz
-        l(ij) = MAX( wrk3d(ij), C_0_R )
+        l(ij) = MAX( l(ij), C_0_R )
      ENDDO
 
   ELSE
      dummy  = thermo_param(inb_scal+1)
      dummy2 = C_1_R /dummy
-!     l = dummy *LOG( EXP(dummy2 *wrk3d) +C_1_R )
+!     l = dummy *LOG( EXP(dummy2 *l) +C_1_R )
      DO ij = 1,nx*ny*nz
-        l(ij) = dummy *LOG( EXP(dummy2 *wrk3d(ij)) +C_1_R )
+        l(ij) = dummy *LOG( EXP(dummy2 *l(ij)) +C_1_R )
      ENDDO
 
   ENDIF

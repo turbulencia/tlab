@@ -188,9 +188,9 @@ PROGRAM INISCAL
 ! An initial effect of radiation is imposed as an accumulation during a certain interval of time
      rad_param(1) = norm_ini_radiation
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(:,inb_scal_array), wrk3d)
+        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
      ENDIF
-     CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc, wrk1d,wrk3d)
+     CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,inb_scal_array), txc, wrk1d,wrk3d)
      s(1:isize_field,irad_scalar) = s(1:isize_field,irad_scalar) + txc(1:isize_field)
 
   ENDIF
