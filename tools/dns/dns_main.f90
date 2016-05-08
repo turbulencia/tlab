@@ -86,7 +86,7 @@ PROGRAM DNS
 #endif
   TREAL dummy
   CHARACTER*32 fname
-  CHARACTER*64 str, line
+  CHARACTER*128 str, line
 
 #ifdef USE_MPI
   TINTEGER ndims_l, sizes_l(3), locsize_l(3), offset_l(3)
@@ -474,10 +474,12 @@ PROGRAM DNS
 
   IF ( viscstart .NE. viscstop ) THEN ! check if viscosity has been changed
      WRITE(str,*) viscstart
-     str = 'Changing original viscosity '//TRIM(ADJUSTL(str))//'to new value.'
+     str = 'Changing original viscosity '//TRIM(ADJUSTL(str))//' to new value.'
      CALL IO_WRITE_ASCII(lfile,str)
      IF ( visctime .GT. C_0_R ) THEN ! Continuous change
         iviscchg = 1; visctime = (viscstart - viscstop)/visctime
+     ELSE
+        visc = viscstop
      ENDIF
   ENDIF
 

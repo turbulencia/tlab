@@ -821,6 +821,13 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      CALL DNS_STOP(DNS_ERROR_OPTION)
   END IF
 
+! Avoid dividing by zero in time_integration routine
+  IF ( ifilt_step   .LE. 0 ) ifilt_step   = nitera_last - nitera_first + 1
+  IF ( nitera_save  .LE. 0 ) nitera_save  = nitera_last - nitera_first + 1
+  IF ( nitera_stats .LE. 0 ) nitera_stats = nitera_last - nitera_first + 1
+  IF ( nitera_log   .LE. 0 ) nitera_log   = nitera_last - nitera_first + 1
+  IF ( nitera_pln   .LE. 0 ) nitera_pln   = nitera_last - nitera_first + 1
+
 ! -------------------------------------------------------------------
 ! Control limits
 ! I need mean_rho

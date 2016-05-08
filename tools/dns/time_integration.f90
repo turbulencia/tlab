@@ -100,13 +100,6 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
   sizes_l = (/idummy,idummy,0,1/)
   varname = (/'0'/)
   
-! Control
-  IF ( ifilt_step   .LE. 0 ) ifilt_step   = nitera_last - nitera_first + 1
-  IF ( nitera_log   .LE. 0 ) nitera_log   = nitera_last - nitera_first + 1
-  IF ( nitera_stats .LE. 0 ) nitera_stats = nitera_last - nitera_first + 1
-  IF ( nitera_save  .LE. 0 ) nitera_save  = nitera_last - nitera_first + 1
-  IF ( nitera_pln   .LE. 0 ) nitera_pln   = nitera_last - nitera_first + 1
-
 ! ###################################################################
 ! Loop on iterations: itime counter
 ! ###################################################################
@@ -165,7 +158,15 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
         ENDIF
      ENDIF
 ! -----------------------------------------------------------------------
+     IF ( iviscchg .EQ. 1 ) THEN ! Change viscosity if necessary
+        visc = visc - dtime*visctime
+        IF ( ( (visc .LT. viscstop) .AND. (viscstart .GT. viscstop) )   .OR. &
+             ( (visc .GT. viscstop) .AND. (viscstart .LT. viscstop) ) ) THEN
+           iviscchg = 0; visc = viscstop
+        ENDIF
+     ENDIF
 
+! -----------------------------------------------------------------------
      CALL TIME_COURANT(dx,dy,dz, q,s, wrk2d,wrk3d)
 
 ! ###################################################################
@@ -220,14 +221,6 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
       
      ENDIF
 ! -----------------------------------------------------------------------
-
-     IF ( iviscchg .EQ. 1 ) THEN ! Change viscosity if necessary
-        visc = visc - dtime*visctime
-        IF ( ( (visc .LT. viscstop) .AND. (viscstart .GT. viscstop) )   .OR. &
-             ( (visc .GT. viscstop) .AND. (viscstart .LT. viscstop) ) ) THEN
-           iviscchg = 0; visc = viscstop
-        ENDIF
-     ENDIF
 
      IF ( tower_mode .EQ. 1 ) THEN 
         CALL DNS_TOWER_ACCUMULATE(q,1,dx,dy,dz,wrk1d)
