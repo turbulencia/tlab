@@ -741,7 +741,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         CALL DNS_STOP(DNS_ERROR_OPTION)
      ENDIF
      WRITE(lstr,*) is; lstr='MeanScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.5', mean_i(is) )
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', mean_i(is) )
      WRITE(lstr,*) is; lstr='YCoorScalar'//TRIM(ADJUSTL(lstr))
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.5', ycoor_i(is))
      WRITE(lstr,*) is; lstr='DiamScalar'//TRIM(ADJUSTL(lstr))

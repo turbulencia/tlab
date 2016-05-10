@@ -133,6 +133,7 @@ PROGRAM TRANSFIELDS
      WRITE(*,'(A)') '5. Filter fields'
      WRITE(*,'(A)') '6. Transform of scalar fields'
      WRITE(*,'(A)') '7. Blend fields'
+     WRITE(*,'(A)') '8. Add mean profiles'
      READ(*,*) opt_main
   ELSE
      opt_main = DINT(opt_vec(1))
@@ -371,11 +372,15 @@ PROGRAM TRANSFIELDS
      WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))
      CALL IO_WRITE_ASCII(lfile,sRes)
 
-! main variables
-     WRITE(flow_file,*) itime; flow_file=TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(flow_file))
+     IF ( iread_flow .EQ. 1 ) THEN ! Flow variables
+        WRITE(flow_file,*) itime; flow_file = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(flow_file))
+        CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
+     ENDIF
 
-! scalar variables
-     WRITE(scal_file,*) itime; scal_file=TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(scal_file))
+     IF ( iread_scal .EQ. 1 ) THEN ! Scalar variables
+        WRITE(scal_file,*) itime; scal_file = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(scal_file))
+        CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
+     ENDIF
 
 ! ###################################################################
 ! Cropping
@@ -395,60 +400,35 @@ PROGRAM TRANSFIELDS
         ENDIF
         
         IF ( icalc_flow .GT. 0 ) THEN
-           CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q,wrk3d)
-
            DO iq = 1,inb_flow
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
               CALL TRANS_CROP(imax,jmax,kmax, subdomain, q(1,iq), q_dst(1,iq))
            ENDDO
-
-           flow_file=TRIM(ADJUSTL(flow_file))//'.trn'
-           CALL DNS_WRITE_FIELDS(flow_file, i2, imax_dst,jmax_dst,kmax_dst, inb_flow, isize_wrk3d, q_dst,wrk3d)
-
         ENDIF
 
         IF ( icalc_scal .GT. 0 ) THEN
-           CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s,wrk3d)
-
            DO is = 1,inb_scal
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
               CALL TRANS_CROP(imax,jmax,kmax, subdomain, s(1,is), s_dst(1,is))
            ENDDO
-
-           scal_file=TRIM(ADJUSTL(scal_file))//'.trn'
-           CALL DNS_WRITE_FIELDS(scal_file, i1, imax_dst,jmax_dst,kmax_dst, inb_scal, isize_wrk3d, s_dst,wrk3d)
-
         ENDIF
 
 ! ###################################################################
 ! Extension
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 2 ) THEN
-           
         IF ( icalc_flow .GT. 0 ) THEN
-           CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q,wrk3d)
-
            DO iq = 1,inb_flow
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
               CALL TRANS_EXTEND(imax,jmax,kmax, subdomain, q(1,iq), q_dst(1,iq))
            ENDDO
-
-           flow_file=TRIM(ADJUSTL(flow_file))//'.trn'
-           CALL DNS_WRITE_FIELDS(flow_file, i2, imax_dst,jmax_dst,kmax_dst, inb_flow, isize_wrk3d, q_dst,wrk3d)
-
         ENDIF
 
         IF ( icalc_scal .GT. 0 ) THEN
-           CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s,wrk3d)
-
            DO is = 1,inb_scal
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
               CALL TRANS_EXTEND(imax,jmax,kmax, subdomain, s(1,is), s_dst(1,is))
            ENDDO
-
-           scal_file=TRIM(ADJUSTL(scal_file))//'.trn'
-           CALL DNS_WRITE_FIELDS(scal_file, i1, imax_dst,jmax_dst,kmax_dst, inb_scal, isize_wrk3d, s_dst,wrk3d)
-
         ENDIF
 
 ! ###################################################################
@@ -507,9 +487,8 @@ PROGRAM TRANSFIELDS
         ENDIF
         wrk1d(1:kmax_total,3) = z(1:kmax_total) ! we need extra space
 
+! Remeshing the fields
         IF ( icalc_flow .GT. 0 ) THEN
-           CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q,wrk3d)
-
            DO iq = 1,inb_flow
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
               CALL TRANS_EXTEND(imax,jmax,kmax, subdomain, q(:,iq), txc(:,1))
@@ -517,15 +496,9 @@ PROGRAM TRANSFIELDS
                    scalex,scaley_dst,scalez, wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), x_dst,y_dst,z_dst, &
                    txc(:,1),q_dst(:,iq), txc(:,2), isize_wrk3d, wrk3d)
            ENDDO
-
-           flow_file=TRIM(ADJUSTL(flow_file))//'.trn'
-           CALL DNS_WRITE_FIELDS(flow_file, i2, imax_dst,jmax_dst,kmax_dst, inb_flow, isize_wrk3d, q_dst,wrk3d)
-
         ENDIF
               
         IF ( icalc_scal .GT. 0 ) THEN
-           CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s,wrk3d)
-
            DO is = 1,inb_scal
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
               CALL TRANS_EXTEND(imax,jmax,kmax, subdomain, s(:,is), txc(:,1))
@@ -533,10 +506,6 @@ PROGRAM TRANSFIELDS
                    scalex,scaley_dst,scalez, wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), x_dst,y_dst,z_dst, &
                    txc(:,1),s_dst(:,is), txc(:,2), isize_wrk3d, wrk3d)
            ENDDO
-
-           scal_file=TRIM(ADJUSTL(scal_file))//'.trn'
-           CALL DNS_WRITE_FIELDS(scal_file, i1, imax_dst,jmax_dst,kmax_dst, inb_scal, isize_wrk3d, s_dst,wrk3d)
-
         ENDIF
 
 ! ###################################################################
@@ -544,12 +513,10 @@ PROGRAM TRANSFIELDS
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 4 ) THEN
         IF ( icalc_flow .GT. 0 ) THEN
-           CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q,wrk3d)
            q_dst = q_dst + q *opt_vec(it+1)
         ENDIF
 
         IF ( icalc_scal .GT. 0 ) THEN
-           CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s,wrk3d)
            s_dst = s_dst + s *opt_vec(it+1)
         ENDIF
 
@@ -562,8 +529,6 @@ PROGRAM TRANSFIELDS
         IF ( opt_filter .EQ. DNS_FILTER_ERF    ) dummy = C_1_R/M_REAL(imax_total*kmax_total)
 
         IF ( icalc_flow .GT. 0 ) THEN
-           CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q,wrk3d)
-           
            DO iq = 1,inb_flow
               CALL IO_WRITE_ASCII(lfile,'Filtering...')
               
@@ -599,14 +564,9 @@ PROGRAM TRANSFIELDS
               ENDIF
            ENDDO
            
-           flow_file=TRIM(ADJUSTL(flow_file))//'.trn'
-           CALL DNS_WRITE_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow, isize_wrk3d, q_dst,wrk3d)
-           
         ENDIF
 
         IF ( icalc_scal .GT. 0 ) THEN
-           CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s,wrk3d)
-
            DO is = 1,inb_scal
               CALL IO_WRITE_ASCII(lfile,'Filtering...')
               
@@ -631,22 +591,13 @@ PROGRAM TRANSFIELDS
                  
               ENDIF
            ENDDO
-
-           scal_file=TRIM(ADJUSTL(scal_file))//'.trn'
-           CALL DNS_WRITE_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal, isize_wrk3d, s_dst,wrk3d)
-
         ENDIF
 
 ! ###################################################################
 ! Nonlinear transformation
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 6 ) THEN
-        CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s,wrk3d)
-
         CALL TRANS_FUNCTION(imax,jmax,kmax, s,s_dst, txc)
-
-        scal_file=TRIM(ADJUSTL(scal_file))//'.trn'
-        CALL DNS_WRITE_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal, isize_wrk3d, s_dst,wrk3d)
 
 ! ###################################################################
 ! Blend
@@ -657,16 +608,12 @@ PROGRAM TRANSFIELDS
         CALL IO_WRITE_ASCII(lfile,sRes)
 
         IF ( icalc_scal .GT. 0 ) THEN
-           CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s,wrk3d)
-
            DO is = 1,inb_scal
               CALL TRANS_BLEND(imax,jmax,kmax, opt_vec(2),y, s(1,is),s_dst(1,is))
            ENDDO
         ENDIF
 
         IF ( icalc_flow .GT. 0 ) THEN ! Blended fields have rtime from last velocity field
-           CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q,wrk3d)
-           
            DO iq = 1,inb_flow
               CALL TRANS_BLEND(imax,jmax,kmax, opt_vec(2),y, q(1,iq),q_dst(1,iq))
            ENDDO
@@ -674,8 +621,40 @@ PROGRAM TRANSFIELDS
 
         IF ( it .EQ. 1 ) opt_vec(3) = -opt_vec(3) ! flipping blending shape
 
+! ###################################################################
+! Adding mean profiles
+! ###################################################################
+     ELSE IF ( opt_main .EQ. 8 ) THEN
+        IF ( icalc_flow .GT. 0 ) THEN
+           DO iq = 1,inb_flow
+              CALL IO_WRITE_ASCII(lfile,'Adding mean flow profiles...')
+              CALL TRANS_ADD_MEAN(i0, iq, imax,jmax,kmax, y, q(1,iq), q_dst(1,iq))
+           ENDDO
+        ENDIF
+        
+        IF ( icalc_scal .GT. 0 ) THEN
+           DO is = 1,inb_scal
+              CALL IO_WRITE_ASCII(lfile,'Adding mean scal profiles...')
+              CALL TRANS_ADD_MEAN(i1, is, imax,jmax,kmax, y, s(1,is), s_dst(1,is))
+           ENDDO
+        ENDIF
+        
      ENDIF
 
+! ###################################################################
+! Writing transform fields
+! ###################################################################
+     IF ( opt_main .NE. 4 .AND. opt_main .NE. 7 ) THEN
+        IF ( icalc_flow .GT. 0 ) THEN
+           flow_file=TRIM(ADJUSTL(flow_file))//'.trn'
+           CALL DNS_WRITE_FIELDS(flow_file, i2, imax_dst,jmax_dst,kmax_dst, inb_flow, isize_wrk3d, q_dst,wrk3d)
+        ENDIF
+        IF ( icalc_scal .GT. 0 ) THEN
+           scal_file=TRIM(ADJUSTL(scal_file))//'.trn'
+           CALL DNS_WRITE_FIELDS(scal_file, i1, imax_dst,jmax_dst,kmax_dst, inb_scal, isize_wrk3d, s_dst,wrk3d)
+        ENDIF
+     ENDIF
+     
   ENDDO
   
 ! ###################################################################
@@ -710,9 +689,6 @@ END PROGRAM TRANSFIELDS
 !# Crop array a into array b in the first two indices
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE TRANS_CROP(nx,ny,nz, subdomain, a, b)
 
   IMPLICIT NONE
@@ -744,9 +720,6 @@ END SUBROUTINE TRANS_CROP
 !# DESCRIPTION
 !#
 !# Extend array a into array b in the first two indices
-!#
-!########################################################################
-!# ARGUMENTS 
 !#
 !########################################################################
 SUBROUTINE TRANS_EXTEND(nx,ny,nz, planes, a, b)
@@ -793,10 +766,69 @@ END SUBROUTINE TRANS_EXTEND
 !########################################################################
 !# DESCRIPTION
 !#
-!# Calculate b = f(a)
+!########################################################################
+SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
+
+  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_GLOBAL, ONLY : imode_flow, scaley
+  USE DNS_GLOBAL, ONLY : iprof_i, thick_i, delta_i, mean_i, prof_i, ycoor_i
+  USE DNS_GLOBAL, ONLY : iprof_u, thick_u, delta_u, mean_u, prof_u, ycoor_u
+
+  IMPLICIT NONE
+
+  TINTEGER flag_mode, is, nx,ny,nz
+  TREAL, DIMENSION(*),        INTENT(IN)  :: y
+  TREAL, DIMENSION(nx,ny,nz), INTENT(IN)  :: a
+  TREAL, DIMENSION(nx,ny,nz), INTENT(OUT) :: b
+  
+! -----------------------------------------------------------------------
+  TINTEGER j
+  TREAL FLOW_SHEAR_TEMPORAL, ycenter, dummy
+  EXTERNAL FLOW_SHEAR_TEMPORAL
+
+! #######################################################################
+  IF ( imode_flow .EQ. DNS_FLOW_SHEAR     ) THEN
+     IF ( flag_mode .EQ. 0 ) THEN ! Velocity
+        IF ( is .EQ. 1 ) THEN ! Only the mean velocity
+        ycenter = y(1) + scaley*ycoor_u
+        DO j = 1,ny
+           dummy =  FLOW_SHEAR_TEMPORAL&
+                (iprof_u, thick_u, delta_u, mean_u, ycenter, prof_u, y(j))
+            b(:,j,:) = dummy + a(:,j,:)
+        ENDDO
+        ELSE
+           b = a
+        ENDIF
+
+     ELSE                         ! Scalars
+        ycenter = y(1) + scaley*ycoor_i(is)
+        DO j = 1,ny
+           dummy =  FLOW_SHEAR_TEMPORAL&
+                (iprof_i(is), thick_i(is), delta_i(is), mean_i(is), ycenter, prof_i(1,is), y(j))
+           b(:,j,:) = dummy + a(:,j,:)
+        ENDDO
+
+     ENDIF
+     
+  ELSE 
+     CALL IO_WRITE_ASCII(efile, 'TRANS_ADD_MEAN. Only shear mode developed.')
+     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+     
+  ENDIF
+
+  RETURN
+END SUBROUTINE TRANS_ADD_MEAN
+
+!########################################################################
+!# Tool/Library
 !#
 !########################################################################
-!# ARGUMENTS 
+!# HISTORY
+!#
+!########################################################################
+!# DESCRIPTION
+!#
+!# Calculate b = f(a)
 !#
 !########################################################################
 SUBROUTINE TRANS_FUNCTION(nx,ny,nz, a,b, txc)
@@ -866,9 +898,6 @@ END SUBROUTINE TRANS_FUNCTION
 !# b <- b + f(y)*a
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE TRANS_BLEND(nx,ny,nz, params, y, a, b)
 
   IMPLICIT NONE
@@ -903,9 +932,6 @@ END SUBROUTINE TRANS_BLEND
 !# DESCRIPTION
 !#
 !# b <- b + f(y)*a
-!#
-!########################################################################
-!# ARGUMENTS 
 !#
 !########################################################################
 SUBROUTINE TRANS_CUTOFF_2D(nx,ny,nz, spc_param, a)

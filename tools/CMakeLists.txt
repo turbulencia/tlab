@@ -88,7 +88,7 @@ target_link_libraries(transgrid.x operators io ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "transform/fields*.f90")
 add_executable(transfields.x ${sourcefiles})
-target_link_libraries(transfields.x mappings operators io thermodynamics filters fdm linear fitpack ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(transfields.x mappings operators flow io thermodynamics filters fdm linear fitpack ${LEVEL1_LIBS} ${LIBS})
 if (PSFFT_LIB)
 set_target_properties(transfields.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
 endif()
