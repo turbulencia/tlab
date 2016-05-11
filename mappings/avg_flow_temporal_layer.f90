@@ -188,7 +188,7 @@ SUBROUTINE AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q,s,&
   USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, itransport, ibodyforce
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : itime, rtime
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, imode_fdm, i1bc,j1bc,k1bc, area, scaley
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, inb_scal_array, imode_fdm, i1bc,j1bc,k1bc, area, scaley
   USE DNS_GLOBAL, ONLY : froude, visc, rossby
   USE DNS_GLOBAL, ONLY : body_vector, body_param
   USE DNS_GLOBAL, ONLY : rotn_vector, icoriolis_y
@@ -220,11 +220,10 @@ SUBROUTINE AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q,s,&
   TARGET q, dudz
 
 ! -------------------------------------------------------------------
-  TINTEGER i, j, k, flag !, flag_buoyancy
+  TINTEGER i,j,k, is
   TREAL AVG_IK, SIMPSON_NU, FLOW_SHEAR_TEMPORAL, UPPER_THRESHOLD, LOWER_THRESHOLD
   TREAL delta_m, delta_m_p, delta_w
-  TINTEGER iprof
-  TREAL ycenter, thick, delta, mean, param(MAX_PROF)
+  TREAL ycenter
   TREAL rho_min, rho_max, delta_hb01, delta_ht01, delta_h01, mixing1, mixing2
   TREAL delta_hb25, delta_ht25, delta_h25
   TREAL u_friction, d_friction, a_friction
@@ -289,15 +288,6 @@ SUBROUTINE AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q,s,&
   ELSE
      p   => dudz
   ENDIF
-
-! in case we need the buoyancy statistics
-  ! IF ( ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &
-  !      ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
-  !      imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-  !    flag_buoyancy = 1
-  ! ELSE 
-  !    flag_buoyancy = 0   
-  ! ENDIF
 
 ! -------------------------------------------------------------------
 ! TkStat file; header
@@ -746,73 +736,55 @@ SUBROUTINE AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q,s,&
 ! Potential energy
 !
 ! dudx = buoyancy
-! dudy = scalar gradient GiGi
 !
 ! ###################################################################
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
 
      IF ( ibodyforce .NE. EQNS_NONE ) THEN
-! buoyancy field
-     ycenter = y(1) + scaley*ycoor_i(1)
-     iprof   = iprof_i(1)
-     thick   = thick_i(1)
-     delta   = delta_i(1)
-     mean    = mean_i (1)
-     param(:)= prof_i (:,1)
-     DO j = 1,jmax
-        wrk1d(j,1) = FLOW_SHEAR_TEMPORAL(iprof, thick, delta, mean, ycenter, param, y(j))
-        wrk1d(j,3) = C_0_R
-     ENDDO
-     flag = EQNS_BOD_LINEAR
-     CALL FI_BUOYANCY(flag,       i1,jmax,i1,     body_param, wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
-     CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s,          dudx,       wrk1d(1,2))
-
-! scalar gradient for the source term; prefactor in dummy
-     ! IF ( flag_buoyancy .EQ. 1 ) THEN
-     !    CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, dvdx, i0,i0, wrk1d,wrk2d,wrk3d)
-     !    CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s, dvdy, i0,i0, wrk1d,wrk2d,wrk3d)
-     !    CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, dvdz, i0,i0, wrk1d,wrk2d,wrk3d)
-     !    dudy = dvdx*dvdx + dvdy*dvdy + dvdz*dvdz
-     
-     !    dummy =-(body_param(2)-body_param(1))/(C_1_R-body_param(3)) - body_param(2)/body_param(3)
-     !    dummy = dummy/(C_4_R*body_param(4)) * visc/schmidt(1) / froude
-     ! ENDIF
+! buoyancy field as used in the integration of the equations (as in dns_profiles)
+        DO is = 1,inb_scal
+           ycenter = y(1) + scaley*ycoor_i(is)
+           DO j = 1,jmax
+              wrk1d(j,is) = FLOW_SHEAR_TEMPORAL(iprof_i(is), thick_i(is), delta_i(is), mean_i(is), ycenter, prof_i(1,is), y(j))
+           ENDDO
+        ENDDO
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+           CALL THERMO_AIRWATER_LINEAR(i1,jmax,i1, wrk1d(1,1), wrk1d(1,inb_scal_array))
+        ENDIF
+        wrk1d(:,inb_scal_array+1) = C_0_R
+        CALL FI_BUOYANCY(ibodyforce, i1,  jmax,i1,   body_param, wrk1d(1,1), wrk1d(1,inb_scal_array+2), wrk1d(1,inb_scal_array+1))
+        CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s,          dudx,                      wrk1d(1,inb_scal_array+2))
 
 ! buoyancy terms
-     DO j = 1,jmax
-        rB(j) = AVG_IK(imax,jmax,kmax, j, dudx, dx,dz, area)
-        DO k = 1,kmax; DO i = 1,imax
-           wrk3d(i,1,k) = (u(i,j,k)-rU(j))*(dudx(i,j,k)-rB(j))
-           wrk3d(i,2,k) = (v(i,j,k)-rV(j))*(dudx(i,j,k)-rB(j))
-           wrk3d(i,3,k) = (w(i,j,k)-rW(j))*(dudx(i,j,k)-rB(j))
-        ENDDO; ENDDO
+        dummy = C_1_R /froude
+        DO j = 1,jmax
+           rB(j) = AVG_IK(imax,jmax,kmax, j, dudx, dx,dz, area)
+           DO k = 1,kmax; DO i = 1,imax
+              wrk3d(i,1,k) = (u(i,j,k)-rU(j))*(dudx(i,j,k)-rB(j))
+              wrk3d(i,2,k) = (v(i,j,k)-rV(j))*(dudx(i,j,k)-rB(j))
+              wrk3d(i,3,k) = (w(i,j,k)-rW(j))*(dudx(i,j,k)-rB(j))
+           ENDDO; ENDDO
 
-        rB(j) = (C_1_R/froude)*rB(j)
+           rB(j) = rB(j) *dummy
+           
+           Bxx(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area) *dummy
+           Byy(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area) *dummy
+           Bzz(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area) *dummy
+           
+           Bxy(j) = Bxx(j)*body_vector(2) + Byy(j)*body_vector(1) ! body_vector includes the Froude
+           Bxz(j) = Bxx(j)*body_vector(3) + Bzz(j)*body_vector(1)
+           Byz(j) = Byy(j)*body_vector(3) + Bzz(j)*body_vector(2)
+           
+           Bxx(j) = C_2_R*Bxx(j)*body_vector(1)
+           Byy(j) = C_2_R*Byy(j)*body_vector(2)
+           Bzz(j) = C_2_R*Bzz(j)*body_vector(3)
+           
+           rSb(j) = C_0_R ! not yet developed
 
-        Bxx(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-        Byy(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
-        Bzz(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
-
-        Bxy(j) = Bxx(j)*body_vector(2) + Byy(j)*body_vector(1) ! body_vector includes the Froude
-        Bxz(j) = Bxx(j)*body_vector(3) + Bzz(j)*body_vector(1)
-        Byz(j) = Byy(j)*body_vector(3) + Bzz(j)*body_vector(2)
-
-        Bxx(j) = C_2_R*Bxx(j)*body_vector(1)
-        Byy(j) = C_2_R*Byy(j)*body_vector(2)
-        Bzz(j) = C_2_R*Bzz(j)*body_vector(3)
-
-        ! IF ( flag_buoyancy .EQ. 1 ) THEN
-        !    DO k = 1,kmax; DO i = 1,imax
-        !       wrk3d(i,4,k) =-dudy(i,j,k)*dummy / &
-        !         (cosh(C_05_R*(s(i,j,k,1)-body_param(3))/body_param(4)))**2
-        !    ENDDO; ENDDO
-        !    rSb(j) = AVG_IK(imax,jmax,kmax, i4, wrk3d, dx,dz, area)
-        ! ENDIF
-
-     ENDDO
-
+        ENDDO
+        
      ENDIF
-
+     
   ELSE ! Compressible case is not yet finished
      DO j = 1,jmax
         Bxx(j) =-rR(j)*rUf(j)*body_vector(1)
