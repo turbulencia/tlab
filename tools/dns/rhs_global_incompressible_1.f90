@@ -85,7 +85,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Source terms
 ! #######################################################################
   CALL FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
-  CALL FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
+  CALL FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 
 ! #######################################################################
 ! Ox diffusion and convection terms in Ox momentum eqn

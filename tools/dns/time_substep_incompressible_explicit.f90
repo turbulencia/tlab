@@ -132,17 +132,17 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
             idiffusion .EQ. EQNS_EXPLICIT         ) THEN
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
         CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_ALWATER(dte,etime, x,y,z,dx,dy,dz, u,v,w,hq(1,1),hq(1,2),hq(1,3),s, &
-           txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-           vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), &
-           wrk1d,wrk2d,wrk3d)
-
+             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
+             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), &
+             wrk1d,wrk2d,wrk3d)
+        
         IF ( imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
            CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT(dte, dx,dy,dz, u,v,w, hq(1,1),hq(1,2),hq(1,3), s, hs, &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk1d,wrk2d,wrk3d)
         ELSE ! imixture .EQ. MIXT_TYPE_AIRWATER
            DO is = 1,inb_scal
               CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_ALWATER(is, dte, dx,dy,dz, u,v,w,s(1,1), hs(1,is), &
-                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d,hq(1,1),hq(1,2),hq(1,3))
+                   txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d,hq(1,1),hq(1,2),hq(1,3))
            ENDDO
         ENDIF
 
@@ -152,7 +152,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
                 q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
                 vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
                 wrk1d,wrk2d,wrk3d)
-           CALL FI_SOURCES_SCAL(y,dy, s, hs, txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
+           CALL FI_SOURCES_SCAL(y,dy, s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
            DO is = 1,inb_scal
               CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is, dte, dx,dy,dz, u,v,w,s(1,is),hs(1,is), s,&
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)

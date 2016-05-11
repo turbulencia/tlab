@@ -103,7 +103,7 @@ END SUBROUTINE FI_SOURCES_FLOW
 
 ! #######################################################################
 ! #######################################################################
-SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
+SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, inb_scal_array, isize_field, isize_wrk1d
   USE DNS_GLOBAL, ONLY : scaley, ycoor_i
@@ -116,7 +116,7 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(*),             INTENT(IN)    :: y, dy
   TREAL, DIMENSION(isize_field,*), INTENT(IN)    :: s
   TREAL, DIMENSION(isize_field,*), INTENT(OUT)   :: hs
-  TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4
+  TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: tmp1,tmp2
   TREAL, DIMENSION(isize_wrk1d,*), INTENT(INOUT) :: wrk1d
   TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d,wrk3d
   
@@ -190,7 +190,7 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
         IF ( is .EQ. 1 ) THEN; flag_grad = 1;
         ELSE;                  flag_grad = 0; ENDIF
         CALL FI_TRANS_FLUX(itransport, flag_grad, imax,jmax,kmax, is, inb_scal_array, trans_param, settling, &
-             dy, s,tmp1, tmp4, wrk1d,wrk2d,wrk3d)
+             dy, s,tmp1, tmp2, wrk1d,wrk2d,wrk3d)
         
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )

@@ -26,14 +26,14 @@ SUBROUTINE FI_TRANS_FLUX(itransport, flag_grad, nx,ny,nz, is, is_trans, param, s
 
 #include "integers.h"
 
-  TINTEGER,                          INTENT(IN)    :: itransport, nx,ny,nz, flag_grad
-  TINTEGER,                          INTENT(IN)    :: is         ! Scalar for which the transport term is calculated
-  TINTEGER,                          INTENT(IN)    :: is_trans   ! Scalar used to calculate the transport
-  TREAL, DIMENSION(*),               INTENT(IN)    :: param      ! Transport Parameters
-  TREAL,                             INTENT(IN)    :: settling   ! Settling Parameter
-  TREAL, DIMENSION(nx*ny*nz,*),      INTENT(IN)    :: s          ! Array with all  scalars
-  TREAL, DIMENSION(nx*ny*nz,*),      INTENT(OUT)   :: trans      ! Transport component. It can have three directions
-  TREAL, DIMENSION(nx*ny*nz,*),      INTENT(INOUT) :: tmp        ! It saves some calculations to include some calculations outside the function in some cases
+  TINTEGER,                     INTENT(IN)    :: itransport, nx,ny,nz, flag_grad
+  TINTEGER,                     INTENT(IN)    :: is         ! Scalar for which the transport term is calculated
+  TINTEGER,                     INTENT(IN)    :: is_trans   ! Scalar used to calculate the transport
+  TREAL, DIMENSION(*),          INTENT(IN)    :: param      ! Transport Parameters
+  TREAL,                        INTENT(IN)    :: settling   ! Settling Parameter
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)    :: s          ! Array with all  scalars
+  TREAL, DIMENSION(nx*ny*nz,1), INTENT(OUT)   :: trans      ! Transport component. It could have eventually three directions
+  TREAL, DIMENSION(nx*ny*nz,1), INTENT(INOUT) :: tmp        ! To avoid re-calculations when repetedly calling this routine
 
   TREAL, DIMENSION(*)         :: dy
   TREAL, DIMENSION(nx*ny*nz)  :: wrk3d
