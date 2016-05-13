@@ -14,14 +14,11 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE SCAL_VOLUME_BROADBAND(is, y, dx,dz, s, tmp, wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, imode_flow
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, imode_flow, inb_scal
   USE DNS_GLOBAL, ONLY : diam_i
-  USE DNS_GLOBAL, ONLY : area, scaley
+  USE DNS_GLOBAL, ONLY : scaley
   USE SCAL_LOCAL, ONLY : thick_ini, ycoor_ini, norm_ini_s
   IMPLICIT NONE
 
@@ -32,17 +29,16 @@ SUBROUTINE SCAL_VOLUME_BROADBAND(is, y, dx,dz, s, tmp, wrk3d)
   TREAL, DIMENSION(imax,jmax,kmax) :: s, tmp, wrk3d
 
 ! -------------------------------------------------------------------
-  TREAL AVG_IK
-  TREAL dummy, savg
-  TREAL ycenter, amplify
+  TREAL AVG1V2D
+  TREAL ycenter, amplify, dummy
   TINTEGER j
 
 ! ###################################################################
-  CALL DNS_READ_FIELDS('scal.rand', i1, imax,jmax,kmax, i1,i1, isize_field, tmp, wrk3d)
+  CALL DNS_READ_FIELDS('scal.rand', i1, imax,jmax,kmax, inb_scal,is, isize_field, tmp, wrk3d)
 
 ! Remove mean
   DO j = 1,jmax
-     dummy = AVG_IK(imax, jmax, kmax, j, tmp, dx, dz, area)
+     dummy = AVG1V2D(imax,jmax,kmax, j, i1, tmp)
      tmp(:,j,:) = tmp(:,j,:) - dummy
   ENDDO
 
@@ -80,15 +76,14 @@ SUBROUTINE SCAL_VOLUME_BROADBAND(is, y, dx,dz, s, tmp, wrk3d)
 ! -------------------------------------------------------------------
 ! Scale
 ! -------------------------------------------------------------------
-  dummy = C_0_R
+  amplify = C_0_R
   DO j = 1,jmax
-     wrk3d(:,j,:) = tmp(:,j,:)**2
-     savg = AVG_IK(imax,jmax,kmax, j, wrk3d, dx,dz, area)    
-     dummy = MAX(savg,dummy)
+     dummy = AVG1V2D(imax,jmax,kmax, j, i2, tmp)
+     amplify = MAX(dummy,amplify)
   ENDDO
-  dummy = norm_ini_s(is)/SQRT(dummy)
+  amplify = norm_ini_s(is)/SQRT(amplify)
 
-  s = s + tmp*dummy
+  s = s + tmp*amplify
 
   RETURN
 END SUBROUTINE SCAL_VOLUME_BROADBAND

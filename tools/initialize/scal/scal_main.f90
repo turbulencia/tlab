@@ -140,11 +140,11 @@ PROGRAM INISCAL
 ! Fluctuation field
 ! -------------------------------------------------------------------
       DO is = 1,inb_scal
-        IF ((is .EQ. 3) .AND. (imixture .EQ. MIXT_TYPE_SUPSAT) .AND. (flag_mixture .EQ. 1)) THEN !In Eq concentration do nothing
+        IF ( is .EQ. 3 .AND. imixture .EQ. MIXT_TYPE_SUPSAT .AND. flag_mixture .EQ. 1)  THEN !In Eq concentration do nothing
         ELSE
            IF      ( flag_s .EQ. 1 ) THEN
               CALL SCAL_VOLUME_DISCRETE(is, x,y,z, s(1,is))
-           ELSE IF ( flag_s .EQ. 2 ) THEN
+           ELSE IF ( flag_s .EQ. 2 .AND. norm_ini_s(is) .GT. C_SMALL_R ) THEN
               CALL SCAL_VOLUME_BROADBAND(is, y,dx,dz, s(1,is), txc, wrk3d)
            ELSE IF ( flag_s .GE. 4 ) THEN ! rest of the cases
               CALL SCAL_PLANE(flag_s, is, x,y,z,dx,dz, s(1,is), wrk2d)
