@@ -141,8 +141,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
 ! #######################################################################
 ! Source terms
 ! #######################################################################
-  CALL FI_SOURCES_FLOW(u,s, h1, b_ref, wrk1d,wrk3d)
-  CALL FI_SOURCES_SCAL(y,dy, s, hs, tmp11,tmp12, wrk1d,wrk2d,wrk3d)
+  ! CALL FI_SOURCES_FLOW(u,s, h1, b_ref, wrk1d,wrk3d)
+  ! CALL FI_SOURCES_SCAL(y,dy, s, hs, tmp11,tmp12, wrk1d,wrk2d,wrk3d)
 
 ! #######################################################################
 ! Advection-diffusion terms
@@ -247,6 +247,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
            p_bcs => tmp42(ip_t:); bcs_ht(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
         ENDDO
      ENDIF
+
+     CALL FI_SOURCES_FLOW(u,s, h1, b_ref, wrk1d,wrk3d)
+     CALL FI_SOURCES_SCAL(y,dy, s, hs, tmp41,tmp42, wrk1d,wrk2d,wrk3d)
 
      t_ser    = t_ser + (t_tmp +MPI_WTime())
      !
