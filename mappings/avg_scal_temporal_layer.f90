@@ -103,10 +103,12 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
   TREAL delta_hb01, delta_ht01, delta_h01
   TREAL delta_sb01, delta_st01, delta_s01
   TREAL Pss, Rss_t
-  TREAL rR2, zprim, dummy, dummy2, fz1, fz2, fz3
+  TREAL rR2, zprim, fz1, fz2, fz3
   TREAL mixing1, mixing2
   TREAL var_x, var_y, var_z, skew_x, skew_y, skew_z, flat_x, flat_y, flat_z
   TINTEGER jloc_max(1)
+
+  TREAL dummy, dummy1, dummy2, dummy3
 
   TREAL VAUXPRE(5), VAUXPOS(11)
   TINTEGER ivauxpre, ivauxpos
@@ -114,7 +116,6 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
   CHARACTER*250 line1
   CHARACTER*850 line2
 
-  TREAL buo_parsett(4)
   TINTEGER iavgpos
   
 ! Pointers to existing allocated space
@@ -151,7 +152,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
      iavgpos = iavgpos + 2
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
         trans_param(inb_scal_array    ) = C_1_R ! liquid
-        trans_param(inb_scal_array + 1) =-C_1_R ! buoyancy
+        trans_param(inb_scal_array + 1) = C_1_R ! buoyancy
      ENDIF
   ENDIF
 
@@ -234,82 +235,50 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
      CALL FI_TRANS_FLUX(itransport, i1, imax,jmax,kmax, is, inb_scal_array, trans_param, settling, dy, s,tmp3, dsdy, wrk1d,wrk2d,wrk3d)
   ENDIF
 
-! -----------------------------------------------------------------------
-! Liquid as a diagnostic variable
-! -----------------------------------------------------------------------
-  IF ( is .EQ. inb_scal_array .AND. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-     CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdy,dsdz, dsdx) ! calculate xi in dsdx
-     CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, dsdx,tmp2, tmp1, wrk1d,wrk2d,wrk3d)
-          
-     dummy=-diff
-     tmp2 = dsdz *tmp2 *dummy ! evaporation source in tmp2
+  IF ( is .GT. inb_scal ) THEN         ! Diagnostic variables
+     IF      ( is .EQ. inb_scal_array   .AND. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN ! liquid
+        dummy3 = C_1_R; dummy2 = C_0_R; dummy1 = C_0_R
 
-     IF ( itransport .NE. EQNS_NONE ) THEN ! transport source; needs dsdy
-        tmp3 = tmp3 *dsdy
+     ELSE IF ( is .EQ. inb_scal_array+1 .AND. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN ! buoyancy
+        dummy3 = body_param(inb_scal_array) /froude
+        dummy2 = C_0_R; IF ( inb_scal .EQ. 2 ) dummy2 = dummy2 + body_param(2) /froude;
+        dummy1 = trans_param(1) *body_param(1) /froude; IF ( inb_scal .EQ. 2 ) dummy1 = dummy1 + trans_param(2) *body_param(2) /froude
      ENDIF
 
-     IF ( iradiation .NE. EQNS_NONE ) THEN  ! radiation source; needs dsdy from before
-        CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), tmp1, wrk1d,wrk3d)
-        IF ( inb_scal .EQ. 2 ) THEN; dummy = thermo_param(inb_scal);
-        ELSE;                        dummy = C_0_R; ENDIF
-        tmp1 = tmp1 *dsdy *dummy
-
-! Correction term
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, dsdx,dsdy, i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL OPR_RADIATION_FLUX(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
-        dsdx = dsdx *dsdy *dsdz *dummy
-        
-     ELSE
-        tmp1 = C_0_R
-        dsdx = C_0_R
-     ENDIF
-
-  ENDIF
-
-! -----------------------------------------------------------------------
-! Buoyancy as a diagnostic variable
-! -----------------------------------------------------------------------
-  IF ( is .EQ. inb_scal_array+1 ) THEN
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
         CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdy,dsdz, dsdx) ! calculate xi in dsdx
         CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, dsdx,tmp2, tmp1, wrk1d,wrk2d,wrk3d)
         
-        dummy=-diff *body_param(inb_scal_array) /froude
+        dummy=-diff *dummy3
         tmp2 = dsdz *tmp2 *dummy ! evaporation source in tmp2
-
-        IF ( itransport .NE. EQNS_NONE) THEN ! tranport source; needs dsdy
-           dummy = body_param(inb_scal_array) /froude
-           dummy2=-trans_param(1) *body_param(1) /froude - dummy
-           IF ( inb_scal .EQ. 2 ) dummy2 = dummy2 - trans_param(2) *body_param(2) /froude
-           tmp3 = tmp3 *( dummy2 - (C_1_R - dsdy) *dummy )
+        
+        IF ( itransport .NE. EQNS_NONE ) THEN ! transport source; needs dsdy
+           tmp3 = tmp3 *( dummy1 + dsdy *dummy3 )
         ENDIF
-
-        IF ( irad_scalar .GT. 0 ) THEN ! radiation source; need dsdy
+        
+        IF ( iradiation .NE. EQNS_NONE .AND. inb_scal .EQ. 2 ) THEN  ! radiation source; needs dsdy from before
            CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), tmp1, wrk1d,wrk3d)
-           IF ( inb_scal .EQ. 2 ) THEN; dummy = thermo_param(inb_scal) *body_param(inb_scal_array) /froude; dummy2 = body_param(inb_scal) /froude;
-           ELSE;                        dummy = C_0_R; ENDIF
-           tmp1 = tmp1 *(dummy2 +dummy *dsdy)
-
+           dummy= thermo_param(2) *dummy3
+           tmp1 = tmp1 *( dummy2 + dsdy *dummy  )
+           
 ! Correction term
            CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, dsdx,dsdy, i0,i0, wrk1d,wrk2d,wrk3d)
            CALL OPR_RADIATION_FLUX(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
            dsdx = dsdx *dsdy *dsdz *dummy
-        
+           
         ELSE
-           tmp1 = C_0_R
-           dsdx = C_0_R           
+           tmp1 = C_0_R; dsdx = C_0_R
+
         ENDIF
-        
+
      ELSE
         CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,dsdx, dsdy, wrk1d,wrk2d,wrk3d)
         CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, s, dsdx, wrk3d) ! dsdx contains gradient
-!        dsdx = wrk3d* diff /froude
         tmp1 = wrk3d* diff /froude
-
+        
      ENDIF
 
   ENDIF
-
 
 ! #######################################################################
 ! Main loop
