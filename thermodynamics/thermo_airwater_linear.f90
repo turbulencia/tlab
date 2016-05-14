@@ -62,7 +62,7 @@ END SUBROUTINE THERMO_AIRWATER_LINEAR
 
 !########################################################################
 !########################################################################
-SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, der1,der2, wrk3d)
+SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, xi,der1,der2)
   
   USE DNS_GLOBAL, ONLY : inb_scal
   USE THERMO_GLOBAL, ONLY : thermo_param
@@ -71,10 +71,9 @@ SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, der1,der2, wrk3d)
   
 #include "integers.h"
   
-  TINTEGER,                     INTENT(IN)    :: nx,ny,nz
-  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)    :: s          ! chi, psi
-  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT)   :: der1,der2
-  TREAL, DIMENSION(nx*ny*nz),   INTENT(INOUT) :: wrk3d      ! xi
+  TINTEGER,                            INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,inb_scal), INTENT(IN)  :: s          ! chi, psi
+  TREAL, DIMENSION(nx*ny*nz),          INTENT(OUT) :: xi,der1,der2
   
 ! -------------------------------------------------------------------
   TINTEGER ij
@@ -82,24 +81,27 @@ SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, der1,der2, wrk3d)
 
 ! ###################################################################
    IF ( inb_scal .EQ. 1 ) THEN
-     wrk3d = C_1_R + thermo_param(1)*s(:,1)
+     xi(:) = C_1_R + thermo_param(1)*s(:,1)
   ELSE
-     wrk3d = C_1_R + thermo_param(1)*s(:,1) + thermo_param(2)*s(:,2)
+     xi(:) = C_1_R + thermo_param(1)*s(:,1) + thermo_param(2)*s(:,2)
   ENDIF
   
   IF ( ABS(thermo_param(inb_scal+1)) .LT. C_SMALL_R ) THEN
      der2 = C_BIG_R
 
      DO ij = 1,nx*ny*nz
-        IF ( wrk3d(ij) .LE. C_0_R ) THEN; der1(ij) = C_0_R;
-        ELSE;                             der1(ij) = C_1_R; ENDIF
+        IF ( xi(ij) .LE. C_0_R ) THEN; der1(ij) = C_0_R;
+        ELSE;                          der1(ij) = C_1_R; ENDIF
      ENDDO
 
   ELSE
-     dummy  =-C_1_R/thermo_param(inb_scal+1)
-
-     der1 = C_1_R / ( C_1_R + EXP(dummy *wrk3d) )
-
+! Formulation in terms of the exponential might lead to NAN because of too large numbers!
+!     dummy  =-C_1_R/thermo_param(inb_scal+1)
+!     der1 = C_1_R / ( C_1_R + EXP(dummy *xi) ) 
+     
+     dummy= C_05_R /thermo_param(inb_scal+1)
+     der1 = C_05_R *( C_1_R + TANH( dummy *xi ) )
+     
      der2 = (der1-C_1_R) *der1 *dummy
 
   ENDIF

@@ -108,7 +108,7 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
   TREAL var_x, var_y, var_z, skew_x, skew_y, skew_z, flat_x, flat_y, flat_z
   TINTEGER jloc_max(1)
 
-  TREAL dummy, dummy1, dummy2, dummy3
+  TREAL dummy, coefT, coefR, coefQ
 
   TREAL VAUXPRE(5), VAUXPOS(11)
   TINTEGER ivauxpre, ivauxpos
@@ -236,30 +236,31 @@ SUBROUTINE AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz,
   ENDIF
 
   IF ( is .GT. inb_scal ) THEN         ! Diagnostic variables
-     IF      ( is .EQ. inb_scal_array   .AND. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN ! liquid
-        dummy3 = C_1_R; dummy2 = C_0_R; dummy1 = C_0_R
-
-     ELSE IF ( is .EQ. inb_scal_array+1 .AND. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN ! buoyancy
-        dummy3 = body_param(inb_scal_array) /froude
-        dummy2 = C_0_R; IF ( inb_scal .EQ. 2 ) dummy2 = dummy2 + body_param(2) /froude;
-        dummy1 = trans_param(1) *body_param(1) /froude; IF ( inb_scal .EQ. 2 ) dummy1 = dummy1 + trans_param(2) *body_param(2) /froude
-     ENDIF
-
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-        CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdy,dsdz, dsdx) ! calculate xi in dsdx
+        coefQ = C_1_R                        ! Coefficient in the evaporation term
+        coefR = C_0_R                        ! Coefficient in the radiation term
+        coefT = C_0_R                        ! Coefficient in the transport term
+        IF ( is .EQ. inb_scal_array+1 ) THEN ! Default values are for liquid; defining them for buoyancy
+           coefQ = body_param(inb_scal_array) /froude
+           coefR = body_param(inb_scal) /froude
+           DO i = 1,inb_scal; coefT = coefT + trans_param(i) *body_param(i) /froude; ENDDO
+        ENDIF
+     
+        CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdx,dsdy,dsdz) ! calculate xi in dsdx
         CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, dsdx,tmp2, tmp1, wrk1d,wrk2d,wrk3d)
         
-        dummy=-diff *dummy3
-        tmp2 = dsdz *tmp2 *dummy ! evaporation source in tmp2
+        dummy=-diff *coefQ
+        tmp2 = dsdz *tmp2 *dummy              ! evaporation source
         
         IF ( itransport .NE. EQNS_NONE ) THEN ! transport source; needs dsdy
-           tmp3 = tmp3 *( dummy1 + dsdy *dummy3 )
+           dummy= coefQ
+           tmp3 = tmp3 *( coefT + dsdy *dummy )
         ENDIF
         
-        IF ( iradiation .NE. EQNS_NONE .AND. inb_scal .EQ. 2 ) THEN  ! radiation source; needs dsdy from before
+        IF ( iradiation .NE. EQNS_NONE ) THEN  ! radiation source; needs dsdy
            CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), tmp1, wrk1d,wrk3d)
-           dummy= thermo_param(2) *dummy3
-           tmp1 = tmp1 *( dummy2 + dsdy *dummy  )
+           dummy= thermo_param(2) *coefQ
+           tmp1 = tmp1 *( coefR + dsdy *dummy  )
            
 ! Correction term
            CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, dsdx,dsdy, i0,i0, wrk1d,wrk2d,wrk3d)

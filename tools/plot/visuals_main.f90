@@ -865,12 +865,12 @@ PROGRAM VISUALS_MAIN
 ! buoyancy source
            IF ( flag_buoyancy .EQ. 1 ) THEN
               IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-                 CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, txc(1,2),txc(1,3), txc(1,4))
+                 CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, txc(1,1),txc(1,2),txc(1,3))
                  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                      dx,dy,dz, txc(1,4), txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
+                      dx,dy,dz, txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
                  
                  dummy = body_param(inb_scal_array)
-                 wrk3d(1:isize_field) = txc(1:isize_field,1) *txc(1:isize_field,3) *dummy
+                 wrk3d(1:isize_field) = txc(1:isize_field,2) *txc(1:isize_field,3) *dummy
                  
               ELSE
                  CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
