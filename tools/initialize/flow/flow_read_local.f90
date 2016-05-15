@@ -5,7 +5,7 @@
 SUBROUTINE FLOW_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile
-  USE DNS_GLOBAL, ONLY : ycoor_u
+  USE DNS_GLOBAL,    ONLY : ycoor_u, thick_u
   USE FLOW_LOCAL
 
   IMPLICIT NONE
@@ -18,6 +18,7 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   CHARACTER*(*) inifile
 
 ! -------------------------------------------------------------------
+  TINTEGER idummy
   CHARACTER*512 sRes
   CHARACTER*32 bakfile
 
@@ -32,10 +33,10 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile,'#Velocity=<option>')
   CALL IO_WRITE_ASCII(bakfile,'#Temperature=<option>')
   CALL IO_WRITE_ASCII(bakfile,'#ForceDilatation=<yes/no>')
-  CALL IO_WRITE_ASCII(bakfile,'#ThickIniS=<value>')
+  CALL IO_WRITE_ASCII(bakfile,'#ThickIniK=<value>')
+  CALL IO_WRITE_ASCII(bakfile,'#YCoorIniK=<value>')
   CALL IO_WRITE_ASCII(bakfile,'#NormalizeK=<value>')
   CALL IO_WRITE_ASCII(bakfile,'#NormalizeP=<value>')
-  CALL IO_WRITE_ASCII(bakfile,'#YCoorIni=<Relative Y reference point>')
   CALL IO_WRITE_ASCII(bakfile,'#Mixture=<string>')
 
 ! velocity
@@ -55,28 +56,26 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   ELSE;                                      flag_dilatation=1; ENDIF
 
 ! Geometry and scaling of perturbation
-  CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'ThickIniK',  '1.0', thick_ini )
-  CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeK', '1.0', norm_ini_u)
-  CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeP', '1.0', norm_ini_p)
-
-  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'dummy', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'dummy' ) THEN; ycoor_ini = ycoor_u;
+  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIniK', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
+       CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIni', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; thick_ini = thick_u;
   ELSE
-     CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'YCoorIni', '1.0', ycoor_ini )
+     thick_ini = C_1_R; idummy = 1
+     CALL LIST_REAL(sRes, idummy, thick_ini)
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIniK', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
+       CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; ycoor_ini = ycoor_u;
+  ELSE
+     ycoor_ini = C_1_R; idummy = 1
+     CALL LIST_REAL(sRes, idummy, ycoor_ini)
   ENDIF
   
-! For backwards compatibility; to be removed
-  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'Broadening', 'dummy', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .NE. 'dummy' )  THEN
-     CALL IO_WRITE_ASCII(wfile, 'FLOW_READ_LOCAL: Broadening obsolete, use ThickIniK instead.')
-     CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'Broadening', '1.0', thick_ini)
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIni', 'dummy', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .NE. 'dummy' )  THEN
-     CALL IO_WRITE_ASCII(wfile, 'FLOW_READ_LOCAL: ThickIni obsolete, use ThickIniK instead.')
-     CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'ThickIni',  '1.0', thick_ini )
-  ENDIF
+  CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeK', '1.0', norm_ini_u)
+  CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeP', '1.0', norm_ini_p)
 
 ! Temperature
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'Temperature', 'None', sRes)

@@ -412,14 +412,14 @@ Type of initial scalar field.\\
 \tt ForceDilatation & \tt yes, no & Force the velocity field to satisfy the
 solenoidal constraint.\\
 \tt ThickIni & {\em value}[{\em1 , value2, ...}]& Thickness of fluctuation shape
-profile. The mean profile is set by the corresponding by values in {\tt [Flow]} and
+profile. The mean profile is set by the corresponding values in {\tt [Flow]} and
 {\tt [Scalar]}. In case of the scalar, as many values as scalars should be
-provided.\\
+provided. You can differentiate between flow and scalar values by using {\tt ThickIniK} and {\tt ThickIniS}.\\
 \tt YCoorIni & {\em value}[{\em1 , value2, ...}] & Coordinate along $Oy$ of the
 reference point of the fluctuation shape profile, relative to the total
-scale. The mean profile is set by the corresponding by values in {\tt [Flow]} and
+scale. The mean profile is set by the corresponding values in {\tt [Flow]} and
 {\tt [Scalar]}. In case of the scalar, as many values as scalars should be
-provided. The default values are those specified in {\tt [Flow]} and
+provided. You can differentiate between flow and scalar values by using {\tt YCoorIniK} and {\tt YCoorIniS}. The default values are those specified in {\tt [Flow]} and
 {\tt [Scalar]}.\\
 \tt NormalizeK & {\em value} & Maximum value of the profile of the turbulent
 kinetic energy.\\

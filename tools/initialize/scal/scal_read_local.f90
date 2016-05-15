@@ -3,8 +3,8 @@
 
 SUBROUTINE SCAL_READ_LOCAL(inifile)
 
-  USE DNS_CONSTANTS, ONLY : efile, lfile, wfile
-  USE DNS_GLOBAL, ONLY : inb_scal, ycoor_i
+  USE DNS_CONSTANTS, ONLY : efile,lfile,wfile
+  USE DNS_GLOBAL,    ONLY : inb_scal, ycoor_i,thick_i
   USE SCAL_LOCAL
 
   IMPLICIT NONE
@@ -30,9 +30,9 @@ SUBROUTINE SCAL_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile,'#')
   CALL IO_WRITE_ASCII(bakfile,'#[IniFields]')
   CALL IO_WRITE_ASCII(bakfile,'#Scalar=<option>')
-  CALL IO_WRITE_ASCII(bakfile,'#ThickIniS=<value>')
-  CALL IO_WRITE_ASCII(bakfile,'#NormalizeS=<value>')
-  CALL IO_WRITE_ASCII(bakfile,'#YCoorIni=<Relative Y reference point>')
+  CALL IO_WRITE_ASCII(bakfile,'#ThickIniS=<values>')
+  CALL IO_WRITE_ASCII(bakfile,'#YCoorIniS=<values>')
+  CALL IO_WRITE_ASCII(bakfile,'#NormalizeS=<values>')
   CALL IO_WRITE_ASCII(bakfile,'#Mixture=<string>')
 
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'Scalar', 'None', sRes)
@@ -48,19 +48,43 @@ SUBROUTINE SCAL_READ_LOCAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'fluxdiscrete'   ) THEN; flag_s = 9; ENDIF
 
 ! Geometry and scaling of perturbation
-  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIniS', '1.0', sRes)
-  thick_ini(:) = C_0_R; idummy = MAX_NSP
-  CALL LIST_REAL(sRes, idummy, thick_ini)
-  IF ( idummy .NE. inb_scal ) THEN ! Consistency check 
-     IF ( idummy .EQ. 1 ) THEN
-        thick_ini(2:) = thick_ini(1)     
-        CALL IO_WRITE_ASCII(wfile, 'SCAL_READ_LOCAL. Using ThickIniS(1) for all scalars.')
-     ELSE
-        CALL IO_WRITE_ASCII(efile, 'SCAL_READ_LOCAL. ThickIniS size does not match number of scalars.')
-        CALL DNS_STOP(DNS_ERROR_OPTION)
+  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIniS', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
+       CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIni', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; thick_ini = thick_i;
+  ELSE
+     thick_ini(:) = C_0_R; idummy = MAX_NSP
+     CALL LIST_REAL(sRes, idummy, thick_ini)
+     IF ( idummy .NE. inb_scal ) THEN ! Consistency check 
+        IF ( idummy .EQ. 1 ) THEN
+           thick_ini(2:) = thick_ini(1)     
+           CALL IO_WRITE_ASCII(wfile, 'SCAL_READ_LOCAL. Using ThickIniS(1) for all scalars.')
+        ELSE
+           CALL IO_WRITE_ASCII(efile, 'SCAL_READ_LOCAL. ThickIniS size does not match number of scalars.')
+           CALL DNS_STOP(DNS_ERROR_OPTION)
+        ENDIF
      ENDIF
   ENDIF
+  
+  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIniS', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
+       CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; ycoor_ini = ycoor_i;
+  ELSE
+     ycoor_ini(:) = C_0_R; idummy = MAX_NSP
+     CALL LIST_REAL(sRes, idummy, ycoor_ini)
+     IF ( idummy .NE. inb_scal ) THEN ! Consistency check
+        IF ( idummy .EQ. 1 ) THEN
+           ycoor_ini(2:) = ycoor_ini(1)     
+           CALL IO_WRITE_ASCII(wfile, 'SCAL_READ_LOCAL. Using YCoorIniS(1) for all scalars.')
+        ELSE
+           CALL IO_WRITE_ASCII(efile, 'SCAL_READ_LOCAL. YCoorIniS size does not match number of scalars.')
+           CALL DNS_STOP(DNS_ERROR_OPTION)
+        ENDIF
+     ENDIF
 
+  ENDIF
+  
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'NormalizeS', '1.0', sRes)
   norm_ini_s(:) = C_0_R; idummy = MAX_NSP
   CALL LIST_REAL(sRes, idummy, norm_ini_s)
@@ -74,39 +98,7 @@ SUBROUTINE SCAL_READ_LOCAL(inifile)
      ENDIF
   ENDIF
 
-  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'dummy', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'dummy' ) THEN; ycoor_ini = ycoor_i;
-  ELSE
-     ycoor_ini(:) = C_0_R; idummy = MAX_NSP
-     CALL LIST_REAL(sRes, idummy, ycoor_ini)
-     IF ( idummy .NE. inb_scal ) THEN ! Consistency check
-        IF ( idummy .EQ. 1 ) THEN
-           ycoor_ini(2:) = ycoor_ini(1)     
-           CALL IO_WRITE_ASCII(wfile, 'SCAL_READ_LOCAL. Using YCoorIni(1) for all scalars.')
-        ELSE
-           CALL IO_WRITE_ASCII(efile, 'SCAL_READ_LOCAL. YCoorIni size does not match number of scalars.')
-           CALL DNS_STOP(DNS_ERROR_OPTION)
-        ENDIF
-     ENDIF
-
-  ENDIF
-  
   CALL SCANINIREAL(bakfile,inifile,'IniFields', 'NormalizeR', '0.0', norm_ini_radiation) ! Radiation field
-
-! For backwards compatibility; to be removed
-  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'Broadening', 'dummy', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .NE. 'dummy' )  THEN
-     CALL IO_WRITE_ASCII(wfile, 'SCAL_READ_LOCAL. Broadening obsolete, use ThickIni instead.')
-     CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'Broadening', '1.0', thick_ini(1))
-     thick_ini(2:) = thick_ini(1)
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIni', 'dummy', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .NE. 'dummy' )  THEN
-     CALL IO_WRITE_ASCII(wfile, 'FLOW_READ_LOCAL: ThickIni obsolete, use ThickIniS instead.')
-     CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'ThickIni',  '1.0', thick_ini(1) )
-     thick_ini(2:) = thick_ini(1)
-  ENDIF
 
 ! Additional parameters
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'Mixture', 'None', sRes)

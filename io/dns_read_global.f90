@@ -26,9 +26,6 @@
 !# and doing cross-check of these general data.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : lfile, efile, wfile
@@ -98,7 +95,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#TermAdvection=<divergence/skewsymmetric>')
   CALL IO_WRITE_ASCII(bakfile, '#TermViscous=<divergence/explicit>')
   CALL IO_WRITE_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
-  CALL IO_WRITE_ASCII(bakfile, '#TermBodyForce=<None/Explicit/Linear/Bilinear/Quadratic/PiecewiseLinear/PiecewiseBilinear>')
+  CALL IO_WRITE_ASCII(bakfile, '#TermBodyForce=<None/Explicit/Linear/Bilinear/Quadratic>')
   CALL IO_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
   CALL IO_WRITE_ASCII(bakfile, '#TermRadiation=<None/Bulk1dGlobal/Bulk1dLocal>')
   CALL IO_WRITE_ASCII(bakfile, '#Transport=<constant/powerlaw/sutherland/ConstSettlingSimp/ConstSettlingFull/LognormSettlingSimp/LognormSettlingFull>')

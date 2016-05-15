@@ -207,9 +207,9 @@ PROGRAM VISUALS_MAIN
   ENDIF
 
 ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Format', '-1', sRes)
+  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'void', '-1', sRes)
   
-  IF ( sRes .EQ. '-1' ) THEN
+  IF ( sRes .EQ. 'void' ) THEN
 #ifdef USE_MPI
 #else
      WRITE(*,*) 'File Format ?'
@@ -219,9 +219,14 @@ PROGRAM VISUALS_MAIN
      READ(*,'(A64)') sRes
 #endif
   ENDIF
-  READ(sRes,*) opt_format
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'general' ) THEN; opt_format = 0
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'ensight' ) THEN; opt_format = 1
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'single'  ) THEN; opt_format = 2
+  ELSE
+     READ(sRes,*) opt_format
+  ENDIF
   
-  IF ( opt_format .LT. 0 ) opt_format = 1 ! default
+  IF ( opt_format .LT. 0 ) opt_format = 1 ! default is ensight
   
 ! -------------------------------------------------------------------
 ! Defining gate levels for conditioning
