@@ -29,7 +29,7 @@
 !########################################################################
 PROGRAM AVERAGES
 
-  USE DNS_TYPES
+  USE DNS_TYPES,     ONLY : grid_structure, pointers_structure
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
