@@ -54,7 +54,6 @@ PROGRAM VISUALS_MAIN
   
   INTEGER(1), DIMENSION(:),   ALLOCATABLE, SAVE :: gate
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: surface
-  TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: tmp_mpi
 
 ! -------------------------------------------------------------------
 ! Local variables
@@ -68,7 +67,7 @@ PROGRAM VISUALS_MAIN
   TINTEGER opt_cond, opt_threshold
   TINTEGER isize_wrk3d, ij, is, n
   TINTEGER iscal_offset, iread_flow, iread_scal, iread_part, idummy, ierr, MaskSize
-  TREAL diff, umin, umax, dummy, dummy2
+  TREAL diff, umin, umax, dummy
   TINTEGER subdomain(6)
 
 ! Gates for the definition of the intermittency function (partition of the fields)
@@ -87,7 +86,6 @@ PROGRAM VISUALS_MAIN
   TREAL params(params_size_max)
 
 #ifdef USE_MPI
-  TINTEGER itmp_mpi
   INTEGER icount
 #endif
 
@@ -99,9 +97,9 @@ PROGRAM VISUALS_MAIN
   CALL DNS_INITIALIZE
 
   CALL DNS_READ_GLOBAL(inifile)
-  IF ( icalc_particle .EQ. 1 ) THEN
-     CALL PARTICLE_READ_GLOBAL('dns.ini')
-  ENDIF
+  IF ( icalc_particle .EQ. 1 ) &
+     CALL PARTICLE_READ_GLOBAL(inifile)
+
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
 #endif
@@ -207,7 +205,7 @@ PROGRAM VISUALS_MAIN
   ENDIF
 
 ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'void', '-1', sRes)
+  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Format', 'void', sRes)
   
   IF ( sRes .EQ. 'void' ) THEN
 #ifdef USE_MPI
@@ -285,7 +283,7 @@ PROGRAM VISUALS_MAIN
      IF ( opt_vec(iv) .EQ. 2              )       iread_flow = 1
      IF ( opt_vec(iv) .EQ. 3              )       iread_flow = 1
      IF ( opt_vec(iv) .EQ. 4              )       iread_flow = 1
-     IF ( opt_vec(iv) .EQ. 5              )       iread_flow = 1
+     IF ( opt_vec(iv) .EQ. 5              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
      IF ( opt_vec(iv) .EQ. 6              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
      IF ( opt_vec(iv) .EQ. 7              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,3); ENDIF
      IF ( opt_vec(iv) .EQ. 8              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,4); ENDIF
@@ -312,6 +310,9 @@ PROGRAM VISUALS_MAIN
 
   isize_txc   = isize_txc_field *inb_txc
   isize_wrk3d = isize_txc_field
+#ifdef USE_MPI
+  isize_wrk3d = isize_wrk3d + isize_field ! more space in wrk3d array needed in VISUAL_WRITE
+#endif
   IF ( icalc_particle .eq. 1) THEN
      isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
   END IF
@@ -328,18 +329,6 @@ PROGRAM VISUALS_MAIN
   ENDDO
   IF ( idummy .EQ. 1 ) ALLOCATE(surface(imax*kmax,inb_scal))
 
-! auxiliar array for in parallel mode
-#ifdef USE_MPI
-  itmp_mpi=isize_field*2
-  WRITE(str,*) itmp_mpi; line = 'Allocating array tmp_mpi. Size '//TRIM(ADJUSTL(str))
-  CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(tmp_mpi(itmp_mpi),stat=ierr)
-  IF ( ierr .NE. 0 ) THEN
-     CALL IO_WRITE_ASCII(efile,'VISUALS. Not enough memory for tmp_mpi.')
-     CALL DNS_STOP(DNS_ERROR_ALLOC)
-  ENDIF
-#endif
-
 ! -------------------------------------------------------------------
 ! Read the grid 
 ! -------------------------------------------------------------------
@@ -355,6 +344,13 @@ PROGRAM VISUALS_MAIN
   IF ( iread_flow .EQ. 1 .AND. inb_txc .GE. 3 ) THEN ! We need array space
      CALL DNS_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   ENDIF
+
+! -------------------------------------------------------------------
+! Initialize MPI/IO subarray information
+! -------------------------------------------------------------------
+#ifdef USE_MPI
+  CALL VISUALS_MPIO_AUX(opt_format, subdomain)
+#endif
 
 ! ###################################################################
 ! Grid
@@ -432,27 +428,27 @@ PROGRAM VISUALS_MAIN
 ! ###################################################################
         IF      ( opt_vec(iv) .EQ. 1 ) THEN
            plot_file = 'VelocityX'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, q(:,1), tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, q(:,1), wrk3d)
 
         ELSE IF ( opt_vec(iv) .EQ. 2 ) THEN
            plot_file = 'VelocityY'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, q(:,2), tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, q(:,2), wrk3d)
 
         ELSE IF ( opt_vec(iv) .EQ. 3 ) THEN
            plot_file = 'VelocityZ'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, q(:,3), tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, q(:,3), wrk3d)
 
         ELSE IF ( opt_vec(iv) .EQ. 4 ) THEN
            plot_file = 'VelocityVector'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i1, opt_format, imax,jmax,kmax, subdomain, q, tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i1, opt_format, imax,jmax,kmax, subdomain, q, wrk3d)
 
         ELSE IF ( opt_vec(iv) .EQ. 5 ) THEN
-           wrk3d(1:isize_field) = q(1:isize_field,1)*q(1:isize_field,1) &
+           txc(1:isize_field,1) = q(1:isize_field,1)*q(1:isize_field,1) &
                                 + q(1:isize_field,2)*q(1:isize_field,2) &
                                 + q(1:isize_field,3)*q(1:isize_field,3)
 
            plot_file = 'VelocityMagnitude'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, wrk3d, tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
         ENDIF
 
@@ -468,12 +464,12 @@ PROGRAM VISUALS_MAIN
 
               IF      ( opt_vec(iv) .EQ. 6 ) THEN ! density 
                  wrk1d(1:jmax,1) = C_0_R
-                 CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
+                 CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, txc(1,1), wrk1d)
                  dummy = C_1_R/froude
-                 wrk3d(1:isize_field) = wrk3d(1:isize_field)*dummy + C_1_R
+                 txc(1:isize_field,1) = txc(1:isize_field,1)*dummy + C_1_R
 
                  plot_file = 'Density'//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, wrk3d, tmp_mpi)
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
               ELSE IF ( opt_vec(iv) .EQ. 7 ) THEN ! temperature
 
@@ -483,21 +479,21 @@ PROGRAM VISUALS_MAIN
                     CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1), wrk3d)
                     
                     plot_file = 'Temperature'//time_str(1:MaskSize)
-                    CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(:,1), tmp_mpi)
+                    CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
                     
                  ELSE IF ( imixture .EQ. MIXT_TYPE_SUPSAT   ) THEN  ! liquid is already in the third scalar
                     CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1), wrk3d)
                     txc(1:isize_field,1) = (txc(1:isize_field,1) - txc(1,1))/(txc(isize_field,1) - txc(1,1)) 
                     
                     plot_file = 'Temperature'//time_str(1:MaskSize)
-                    CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(:,1), tmp_mpi)
+                    CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
                     
 ! Buoyancy
                     CALL THERMO_THERMAL_DENSITY_HP_ALWATER(imax,jmax,kmax, s(1,2),s(1,1),p_init,txc(1,1))
                     txc(1:isize_field,1) = body_vector(2)*(txc(1:isize_field,1) - mean_rho)/mean_rho
                     
                     plot_file = 'Buoyancy'//time_str(1:MaskSize)
-                    CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+                    CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
                     
 ! Supersaturated liquid
                     txc(1:isize_field,1:2) = s(1:isize_field,1:2)
@@ -505,7 +501,7 @@ PROGRAM VISUALS_MAIN
                     txc(1:isize_field,3) = (s(1:isize_field,3)-txc(1:isize_field,3))/s(1,3)
                      
                     plot_file = 'Supsat'//time_str(1:MaskSize)
-                    CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,3), tmp_mpi)
+                    CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,3), wrk3d)
                     
                  ENDIF
 
@@ -520,16 +516,16 @@ PROGRAM VISUALS_MAIN
                  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, txc(:,1),txc(1,4), i0,i0, wrk1d,wrk2d,wrk3d)
                  
 
-                 wrk3d(1:isize_field) = txc(1:isize_field,2)*q(1:isize_field,1) & 
+                 txc(1:isize_field,2) = txc(1:isize_field,2)*q(1:isize_field,1) & 
                                       + txc(1:isize_field,3)*q(1:isize_field,2) &
                                       + txc(1:isize_field,4)*q(1:isize_field,3)
-                 wrk3d(1:isize_field) = -wrk3d(1:isize_field)
+                 txc(1:isize_field,2) = -txc(1:isize_field,2)
 
                  plot_file = 'Pressure'//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(:,1), tmp_mpi)
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
                  plot_file = 'PressureGradientPower'//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, wrk3d, tmp_mpi)
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,2), wrk3d)
 
               ENDIF
 
@@ -539,20 +535,20 @@ PROGRAM VISUALS_MAIN
            ELSE
               IF      ( opt_vec(iv) .EQ. 6 ) THEN ! density
                  plot_file = 'Density'//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, q(:,5), tmp_mpi)
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, q(1,5), wrk3d)
                  
               ELSE IF ( opt_vec(iv) .EQ. 7 ) THEN ! temperature
                  CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(:,4), q(:,5), txc(:,1), wrk3d)
 
                  plot_file = 'Temperature'//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(:,1), tmp_mpi)
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
                  
               ELSE IF ( opt_vec(iv) .EQ. 8 ) THEN ! pressure
                  CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(:,4), q(:,5), txc(:,1), wrk3d)
                  CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(:,5), txc(:,1), txc(:,2))
 
                  plot_file = 'Pressure'//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(:,2), tmp_mpi)
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,2), wrk3d)
               ENDIF
               
            ENDIF
@@ -570,7 +566,7 @@ PROGRAM VISUALS_MAIN
               WRITE(str,*) is; str = 'Scalar'//TRIM(ADJUSTL(str))
               
               plot_file = TRIM(ADJUSTL(str))//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s(1,is), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s(1,is), wrk3d)
            ENDDO
           
 ! -------------------------------------------------------------------
@@ -596,18 +592,18 @@ PROGRAM VISUALS_MAIN
                  s(:,1) = s(:,inb_scal) - s(:,inb_scal+1)
                  
                  plot_file = TRIM(ADJUSTL(THERMO_SPNAME(1)))//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s, tmp_mpi)
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s, wrk3d)
                  
               ELSE IF ( opt_vec(iv) .EQ. 11 ) THEN ! air mass fraction
                  s(:,1) = C_1_R - s(:,inb_scal) 
                  
                  plot_file = TRIM(ADJUSTL(THERMO_SPNAME(2)))//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s, tmp_mpi)
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s, wrk3d)
                  
               ELSE IF ( opt_vec(iv) .EQ. 12 ) THEN ! liquid mass fraction
                  
                  plot_file = TRIM(ADJUSTL(THERMO_SPNAME(3)))//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s(1,inb_scal+1), tmp_mpi)
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s(1,inb_scal+1), wrk3d)
                  
               ENDIF
               
@@ -615,7 +611,7 @@ PROGRAM VISUALS_MAIN
            ELSE ! Plot the chosen species
               is = opt_vec(iv) - 9
               plot_file = TRIM(ADJUSTL(THERMO_SPNAME(is)))//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s(1,is), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, s(1,is), wrk3d)
               
            ENDIF
 
@@ -639,7 +635,7 @@ PROGRAM VISUALS_MAIN
               CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s(1,is), txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
               
               plot_file = TRIM(ADJUSTL(str))//'GradientVector'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i1, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i1, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
            ENDIF
 
 ! Scalar gradient
@@ -663,7 +659,7 @@ PROGRAM VISUALS_MAIN
                 ! ENDIF
               ENDIF
 
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
            ENDIF
 
 ! Scalar gradient equation
@@ -672,7 +668,7 @@ PROGRAM VISUALS_MAIN
               CALL FI_GRADIENT_PRODUCTION(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s(1,is), &
                    q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
               plot_file = 'ScalarGradientProduction'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
               CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient diffusion...')
               CALL FI_GRADIENT_DIFFUSION&
@@ -681,7 +677,7 @@ PROGRAM VISUALS_MAIN
               txc(1:isize_field,1)=diff*txc(1:isize_field,1)
 
               plot_file = TRIM(ADJUSTL(str))//'GradientDiffusion'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
            ENDIF
 
@@ -702,7 +698,7 @@ PROGRAM VISUALS_MAIN
                    q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
            
            plot_file = 'VorticityVector'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i1, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i1, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
         ENDIF
            
 ! -------------------------------------------------------------------
@@ -718,7 +714,7 @@ PROGRAM VISUALS_MAIN
               plot_file = 'Ln'//TRIM(ADJUSTL(plot_file))
            ENDIF
            
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
         ENDIF
         
 ! -------------------------------------------------------------------
@@ -728,7 +724,7 @@ PROGRAM VISUALS_MAIN
                 dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
            
            plot_file = 'EnstrophyProduction'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
            
            CALL IO_WRITE_ASCII(lfile,'Computing enstrophy diffusion...')
            CALL FI_VORTICITY_DIFFUSION&
@@ -737,7 +733,7 @@ PROGRAM VISUALS_MAIN
            txc(1:isize_field,1)=visc*txc(1:isize_field,1)
            
            plot_file = 'EnstrophyDiffusion'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
            
         ENDIF
         
@@ -763,7 +759,7 @@ PROGRAM VISUALS_MAIN
               plot_file = 'Ln'//TRIM(ADJUSTL(plot_file))
            ENDIF
            
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
         ENDIF
 
 ! -------------------------------------------------------------------
@@ -784,7 +780,7 @@ PROGRAM VISUALS_MAIN
               txc(1:isize_field,1)=C_2_R*txc(1:isize_field,1)
 
               plot_file = 'StrainPressure'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
               CALL IO_WRITE_ASCII(lfile,'Computing strain production...')
               CALL FI_STRAIN_PRODUCTION(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
@@ -793,7 +789,7 @@ PROGRAM VISUALS_MAIN
               txc(1:isize_field,1)=C_2_R*txc(1:isize_field,1)
 
               plot_file = 'StrainProduction'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
               CALL IO_WRITE_ASCII(lfile,'Computing strain diffusion...')
               CALL FI_STRAIN_DIFFUSION&
@@ -803,7 +799,7 @@ PROGRAM VISUALS_MAIN
               txc(1:isize_field,1)=C_2_R*visc*txc(1:isize_field,1)
 
               plot_file = 'StrainDiffusion'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
            ENDIF
            
 ! -------------------------------------------------------------------
@@ -815,14 +811,14 @@ PROGRAM VISUALS_MAIN
                    dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
 
               plot_file = 'InvariantP'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
               CALL IO_WRITE_ASCII(lfile,'Computing second invariant Q...')
               CALL FI_INVARIANT_Q(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
                    dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
 
               plot_file = 'InvariantQ'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
               CALL IO_WRITE_ASCII(lfile,'Computing third invariant R...')
               CALL FI_INVARIANT_R(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
@@ -830,7 +826,7 @@ PROGRAM VISUALS_MAIN
                    txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
 
               plot_file = 'InvariantR'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
            ENDIF
 
@@ -848,24 +844,24 @@ PROGRAM VISUALS_MAIN
         IF ( opt_vec(iv) .EQ. iscal_offset+12 ) THEN
 
            wrk1d(1:jmax,1) = C_0_R
-           CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
+           CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, txc(1,1), wrk1d)
            dummy =  C_1_R/froude
-           wrk3d(1:isize_field) = wrk3d(1:isize_field) *dummy
+           txc(1:isize_field,1) = txc(1:isize_field,1) *dummy
            
            plot_file = 'Buoyancy'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, wrk3d, tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
 ! buoyancy flux along Oy
-           txc(1:isize_field,1) = wrk3d(1:isize_field) *q(1:isize_field,2)
+           txc(1:isize_field,2) = txc(1:isize_field,1) *q(1:isize_field,2)
 
            plot_file = 'Cvb'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(:,1), tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,2), wrk3d)
 
 ! buoyancy fluctuation
-           CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, wrk3d)
+           CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, txc(1,1))
 
            plot_file = 'bPrime'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, wrk3d, tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
 ! buoyancy source
            IF ( flag_buoyancy .EQ. 1 ) THEN
@@ -875,24 +871,24 @@ PROGRAM VISUALS_MAIN
                       dx,dy,dz, txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
                  
                  dummy = body_param(inb_scal_array)
-                 wrk3d(1:isize_field) = txc(1:isize_field,2) *txc(1:isize_field,3) *dummy
+                 txc(1:isize_field,2) = txc(1:isize_field,2) *txc(1:isize_field,3) *dummy
                  
               ELSE
                  CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
                  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
                       dx,dy,dz, s, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
 
-                 CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, s, txc(1,1), wrk3d)
+                 CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, s, txc(1,1), txc(1,2))
                  
               ENDIF
 
               dummy =  visc/schmidt(1) /froude
 
-              txc(1:isize_field,1) = wrk3d(1:isize_field) *dummy
+              txc(1:isize_field,1) = txc(1:isize_field,2) *dummy
               txc(1:isize_field,1) = LOG(ABS(txc(1:isize_field,1))+C_SMALL_R)
               
               plot_file = 'LnBuoyancySource'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(:,1), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
               
            ENDIF
 
@@ -909,7 +905,7 @@ PROGRAM VISUALS_MAIN
            DO is = 1,inb_scal 
               subdomain(3) = 1; subdomain(4) = 1
               WRITE(str,*) is; plot_file = 'LowerEnvelope'//TRIM(ADJUSTL(str))//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,i1,kmax, subdomain, surface(1,is), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,i1,kmax, subdomain, surface(1,is), wrk3d)
            ENDDO
 
            WRITE(aux_file,*) itime; aux_file='upper.'//TRIM(ADJUSTL(aux_file))
@@ -918,7 +914,7 @@ PROGRAM VISUALS_MAIN
            DO is = 1,inb_scal 
               subdomain(3) = 1; subdomain(4) = 1
               WRITE(str,*) is; plot_file = 'UpperEnvelope'//TRIM(ADJUSTL(str))//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,i1,kmax, subdomain, surface(1,is), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,i1,kmax, subdomain, surface(1,is), wrk3d)
 
            ENDDO
         ENDIF
@@ -933,7 +929,7 @@ PROGRAM VISUALS_MAIN
            txc(1:isize_field,1) = txc(1:isize_field,1) + txc(1:isize_field,2)
 
            plot_file = 'HorizontalDivergence'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
         ENDIF
 
@@ -956,19 +952,19 @@ PROGRAM VISUALS_MAIN
            txc(1:isize_field,1)=LOG(txc(1:isize_field,1)+C_SMALL_R)
 
            plot_file = 'LnDissipation'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
 
 ! turbulent kinetic energy
            txc(1:isize_field,1) = q(1:isize_field,1); CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, txc(:,1))
            txc(1:isize_field,2) = q(1:isize_field,2); CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, txc(:,2))
            txc(1:isize_field,3) = q(1:isize_field,3); CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, txc(:,3))
 
-           wrk3d(1:isize_field) = txc(1:isize_field,1)*txc(1:isize_field,1) &
+           txc(1:isize_field,1) = txc(1:isize_field,1)*txc(1:isize_field,1) &
                                 + txc(1:isize_field,2)*txc(1:isize_field,2) &
                                 + txc(1:isize_field,3)*txc(1:isize_field,3)
 
            plot_file = 'Tke'//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, wrk3d, tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
            
         ENDIF
 
@@ -981,7 +977,7 @@ PROGRAM VISUALS_MAIN
               CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,1), wrk1d,wrk3d)
               
               plot_file = 'Radiation'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
               
            ENDIF
 
@@ -996,7 +992,7 @@ PROGRAM VISUALS_MAIN
            CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,1))
            str = 'ParticleDensity'
            plot_file = TRIM(ADJUSTL(str))//time_str(1:MaskSize)
-           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), tmp_mpi)
+           CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
            txc(:,1) = txc(:,1) + 0.00000001
            IF (inb_particle .GT. 3 ) THEN
               IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_2 & 
@@ -1007,14 +1003,14 @@ PROGRAM VISUALS_MAIN
                     CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,2))   
                     txc(:,2) = txc(:,2)/txc(:,1)
                     plot_file = TRIM(ADJUSTL(LAGRANGE_SPNAME(is)))//time_str(1:MaskSize)
-                    CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,2), tmp_mpi)
+                    CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,2), wrk3d)
                  END DO
               END IF
               IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
                  l_txc(:,1)=l_q(:,inb_particle) !inb_particle is the last component -> residence times in bil_cloud_4
                  CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,2))   
                  plot_file = TRIM(ADJUSTL(LAGRANGE_SPNAME(3)))//time_str(1:MaskSize)
-                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,2), tmp_mpi)
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,2), wrk3d)
               ENDIF
            END IF
            

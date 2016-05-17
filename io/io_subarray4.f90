@@ -1,7 +1,4 @@
 #include "types.h" 
-! #ifdef USE_MPI
-! #include "dns_const_mpi.h"
-! #endif
 
 SUBROUTINE IO_WRITE_SUBARRAY4_NEW(fname, varname, data, sizes, mpioinfo, work)
 
@@ -15,14 +12,14 @@ SUBROUTINE IO_WRITE_SUBARRAY4_NEW(fname, varname, data, sizes, mpioinfo, work)
 #endif 
 
   CHARACTER*(*),                              INTENT(IN)    :: fname
-  TINTEGER,                                   INTENT(IN)    :: sizes(4) ! total size, local size, stride, # variables
-  CHARACTER*32, DIMENSION(sizes(4)),          INTENT(IN)    :: varname
-  TREAL,        DIMENSION(sizes(1),sizes(4)), INTENT(IN)    :: data
+  TINTEGER,                                   INTENT(IN)    :: sizes(5) ! total size, lower bound, upper bound, stride, # variables
+  CHARACTER*32, DIMENSION(sizes(5)),          INTENT(IN)    :: varname
+  TREAL,        DIMENSION(sizes(1),sizes(5)), INTENT(IN)    :: data
   TYPE(subarray_structure),                   INTENT(IN)    :: mpioinfo
-  REAL(4),      DIMENSION(sizes(2)),          INTENT(INOUT) :: work
+  REAL(4),      DIMENSION(sizes(1)),          INTENT(INOUT) :: work
   
 ! -----------------------------------------------------------------------
-  TINTEGER iv
+  TINTEGER iv, isize
   CHARACTER*64 name
 
 #ifdef USE_MPI
@@ -33,27 +30,29 @@ SUBROUTINE IO_WRITE_SUBARRAY4_NEW(fname, varname, data, sizes, mpioinfo, work)
 #define LOC_UNIT_ID 75
 #define LOC_STATUS 'unknown'
 
+  isize = ( sizes(3) -sizes(2) ) /sizes(4) +1
+
 #ifdef USE_MPI
   IF ( mpioinfo%active ) THEN
 #endif
 
-  DO iv = 1,sizes(4)
+  DO iv = 1,sizes(5)
      name = TRIM(ADJUSTL(fname))
      IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
 
      CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 
-     work(1:sizes(2)) = SNGL(data(sizes(3)+1:sizes(3)+sizes(2),iv))
+     work(1:isize) = SNGL(data(sizes(2):sizes(3):sizes(4),iv))
 
 #ifdef USE_MPI
      CALL MPI_File_open(mpioinfo%communicator, TRIM(ADJUSTL(name)), IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err)
      CALL MPI_File_set_view(mpio_fh, mpioinfo%offset, MPI_REAL4, mpioinfo%subarray, 'native', MPI_INFO_NULL, ims_err) 
-     CALL MPI_File_write_all(mpio_fh, work, sizes(2), MPI_REAL4, mpio_status, ims_err) 
+     CALL MPI_File_write_all(mpio_fh, work, isize, MPI_REAL4, mpio_status, ims_err) 
      CALL MPI_File_close(mpio_fh, ims_err)  
      
 #else
 #include "dns_open_file.h"
-     WRITE(LOC_UNIT_ID) work(1:sizes(2))
+     WRITE(LOC_UNIT_ID) work(1:isize)
      CLOSE(LOC_UNIT_ID)
      
 #endif

@@ -64,7 +64,9 @@ PROGRAM SPECTRA
   TREAL,      DIMENSION(:,:), ALLOCATABLE :: out2d, outx,outz,outr
 
   TYPE(pointers_structure), DIMENSION(16) :: data
-  TYPE(subarray_structure), DIMENSION(3)  :: mpioinfo
+#ifndef USE_MPI ! for compatibility; to be removed
+  TYPE(subarray_structure), DIMENSION(3)  :: mpio_aux
+#endif
 
   TARGET q, s, p_aux
 
@@ -79,11 +81,10 @@ PROGRAM SPECTRA
 
   TINTEGER opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
   TINTEGER flag_mode, iread_flow, iread_scal, ierr
-  TINTEGER isize_wrk3d, isize_out2d, isize_aux, sizes(4)
+  TINTEGER isize_wrk3d, isize_out2d, isize_aux, sizes(5)
   TINTEGER nfield, nfield_ref
   TINTEGER is, iv, iv_offset, iv1, iv2, ip, j
   TINTEGER jmax_aux, kxmax,kymax,kzmax
-  INTEGER mpi_subarray(3)
   TINTEGER icalc_radial 
   TREAL norm, dummy
 
@@ -104,6 +105,7 @@ PROGRAM SPECTRA
 
 #ifdef USE_MPI
   TINTEGER id
+  INTEGER mpi_subarray(3)
 #endif
 
 !########################################################################
@@ -245,7 +247,7 @@ PROGRAM SPECTRA
 ! Define MPI-type for writing spectra  
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-  CALL DEFINE_ARRAY_TYPE(opt_main, opt_block, mpi_subarray, mpioinfo)  
+  CALL SPECTRA_MPIO_AUX(opt_main, opt_block, mpi_subarray)  
 #endif 
   
 ! -------------------------------------------------------------------
@@ -645,24 +647,26 @@ PROGRAM SPECTRA
 #endif                 
 
 ! Saving 1D fields
-           sizes(1) = kxmax*jmax_aux; sizes(2) = sizes(1); sizes(3) = 0; sizes(4) = nfield
            WRITE(fname,*) itime; fname = 'x'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
+           ! sizes(1) = kxmax*jmax_aux; sizes(2) = sizes(1); sizes(3) = 0; sizes(4) = nfield
            ! IF ( opt_main .EQ. 3 ) THEN ! auto-correlations; just 1/2 of the data
            !    CALL IO_WRITE_SUBARRAY4(i4, sizes, fname, varname, outx, mpi_subarray(1), wrk3d)
            ! ELSE
            !    CALL IO_WRITE_SUBARRAY4(i1, sizes, fname, varname, outx, mpi_subarray(1), wrk3d)
            ! ENDIF
-           CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, outx, sizes, mpioinfo(1), wrk3d)
+           sizes(1) = kxmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
+           CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, outx, sizes, mpio_aux(1), wrk3d)
 
            IF ( kmax_total .GT. 1 ) THEN
-              sizes(1) = kzmax*jmax_aux; sizes(2) = sizes(1); sizes(3) = 0; sizes(4) = nfield
               WRITE(fname,*) itime; fname = 'z'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
+              ! sizes(1) = kzmax*jmax_aux; sizes(2) = sizes(1); sizes(3) = 0; sizes(4) = nfield
               ! IF ( opt_main .EQ. 3 ) THEN ! auto-correlations; just 1/2 of the data
               !    CALL IO_WRITE_SUBARRAY4(i5, sizes, fname, varname, outz, mpi_subarray(2), wrk3d)
               ! ELSE
               !    CALL IO_WRITE_SUBARRAY4(i2, sizes, fname, varname, outz, mpi_subarray(2), wrk3d)
               ! ENDIF
-              CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, outz, sizes, mpioinfo(2), wrk3d)
+              sizes(1) = kzmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
+              CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, outz, sizes, mpio_aux(2), wrk3d)
            ENDIF
 
            IF ( icalc_radial .EQ. 1 ) THEN 
@@ -673,24 +677,27 @@ PROGRAM SPECTRA
 ! Saving 2D fields
            IF ( opt_ffmt .EQ. 1 ) THEN 
               IF ( flag_mode .EQ. 2 ) THEN ! correlations
-                 sizes(1) = isize_out2d; sizes(2) = sizes(1);    sizes(3) = 0;        sizes(4) = nfield
                  WRITE(fname,*) itime; fname = 'cor'//TRIM(ADJUSTL(fname))
+                 ! sizes(1) = isize_out2d; sizes(2) = sizes(1);    sizes(3) = 0;        sizes(4) = nfield
                  ! IF ( opt_main .EQ. 3 ) THEN ! auto-correlations; just 1/4 of the data
                  !    CALL IO_WRITE_SUBARRAY4(i6, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
                  ! ELSE
                  !    CALL IO_WRITE_SUBARRAY4(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
                  ! ENDIF
-                 CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, out2d, sizes, mpioinfo(3), wrk3d)
+                 sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
+                 CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, out2d, sizes, mpio_aux(3), wrk3d)
               ELSE                         ! spectra
-                 sizes(1) = isize_out2d; sizes(2) = sizes(1) /2; sizes(3) = 0;        sizes(4) = nfield
                  WRITE(fname,*) itime; fname = 'pow'//TRIM(ADJUSTL(fname)) 
-!                 CALL IO_WRITE_SUBARRAY4(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
-                 CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, out2d, sizes, mpioinfo(3), wrk3d)
+                 ! sizes(1) = isize_out2d; sizes(2) = sizes(1) /2; sizes(3) = 0;        sizes(4) = nfield
+                 ! CALL IO_WRITE_SUBARRAY4(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
+                 sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1) /2; sizes(4) = 1; sizes(5) = nfield
+                 CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, out2d, sizes, mpio_aux(3), wrk3d)
 
-                 sizes(1) = isize_out2d; sizes(2) = sizes(1) /2; sizes(3) = sizes(2); sizes(4) = nfield
                  WRITE(fname,*) itime; fname = 'pha'//TRIM(ADJUSTL(fname)) 
-!                 CALL IO_WRITE_SUBARRAY4(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
-                 CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, out2d, sizes, mpioinfo(3), wrk3d)
+                 ! sizes(1) = isize_out2d; sizes(2) = sizes(1) /2; sizes(3) = sizes(2); sizes(4) = nfield
+                 ! CALL IO_WRITE_SUBARRAY4(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
+                 sizes(1) = isize_out2d; sizes(2) = 1+sizes(1) /2; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
+                 CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, out2d, sizes, mpio_aux(3), wrk3d)
 
               ENDIF
 
