@@ -64,9 +64,6 @@ PROGRAM SPECTRA
   TREAL,      DIMENSION(:,:), ALLOCATABLE :: out2d, outx,outz,outr
 
   TYPE(pointers_structure), DIMENSION(16) :: data
-#ifndef USE_MPI ! for compatibility; to be removed
-  TYPE(subarray_structure), DIMENSION(3)  :: mpio_aux
-#endif
 
   TARGET q, s, p_aux
 
@@ -247,7 +244,7 @@ PROGRAM SPECTRA
 ! Define MPI-type for writing spectra  
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-  CALL SPECTRA_MPIO_AUX(opt_main, opt_block, mpi_subarray)  
+  CALL SPECTRA_MPIO_AUX(opt_main, opt_block)  
 #endif 
   
 ! -------------------------------------------------------------------
@@ -650,23 +647,23 @@ PROGRAM SPECTRA
            WRITE(fname,*) itime; fname = 'x'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
            ! sizes(1) = kxmax*jmax_aux; sizes(2) = sizes(1); sizes(3) = 0; sizes(4) = nfield
            ! IF ( opt_main .EQ. 3 ) THEN ! auto-correlations; just 1/2 of the data
-           !    CALL IO_WRITE_SUBARRAY4(i4, sizes, fname, varname, outx, mpi_subarray(1), wrk3d)
+           !    CALL IO_WRITE_SUBARRAY4_OLD(i4, sizes, fname, varname, outx, mpi_subarray(1), wrk3d)
            ! ELSE
-           !    CALL IO_WRITE_SUBARRAY4(i1, sizes, fname, varname, outx, mpi_subarray(1), wrk3d)
+           !    CALL IO_WRITE_SUBARRAY4_OLD(i1, sizes, fname, varname, outx, mpi_subarray(1), wrk3d)
            ! ENDIF
            sizes(1) = kxmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-           CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, outx, sizes, mpio_aux(1), wrk3d)
+           CALL IO_WRITE_SUBARRAY4(i1, fname, varname, outx, sizes, wrk3d)
 
            IF ( kmax_total .GT. 1 ) THEN
               WRITE(fname,*) itime; fname = 'z'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
               ! sizes(1) = kzmax*jmax_aux; sizes(2) = sizes(1); sizes(3) = 0; sizes(4) = nfield
               ! IF ( opt_main .EQ. 3 ) THEN ! auto-correlations; just 1/2 of the data
-              !    CALL IO_WRITE_SUBARRAY4(i5, sizes, fname, varname, outz, mpi_subarray(2), wrk3d)
+              !    CALL IO_WRITE_SUBARRAY4_OLD(i5, sizes, fname, varname, outz, mpi_subarray(2), wrk3d)
               ! ELSE
-              !    CALL IO_WRITE_SUBARRAY4(i2, sizes, fname, varname, outz, mpi_subarray(2), wrk3d)
+              !    CALL IO_WRITE_SUBARRAY4_OLD(i2, sizes, fname, varname, outz, mpi_subarray(2), wrk3d)
               ! ENDIF
               sizes(1) = kzmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-              CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, outz, sizes, mpio_aux(2), wrk3d)
+              CALL IO_WRITE_SUBARRAY4(i2, fname, varname, outz, sizes, wrk3d)
            ENDIF
 
            IF ( icalc_radial .EQ. 1 ) THEN 
@@ -680,24 +677,24 @@ PROGRAM SPECTRA
                  WRITE(fname,*) itime; fname = 'cor'//TRIM(ADJUSTL(fname))
                  ! sizes(1) = isize_out2d; sizes(2) = sizes(1);    sizes(3) = 0;        sizes(4) = nfield
                  ! IF ( opt_main .EQ. 3 ) THEN ! auto-correlations; just 1/4 of the data
-                 !    CALL IO_WRITE_SUBARRAY4(i6, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
+                 !    CALL IO_WRITE_SUBARRAY4_OLD(i6, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
                  ! ELSE
-                 !    CALL IO_WRITE_SUBARRAY4(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
+                 !    CALL IO_WRITE_SUBARRAY4_OLD(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
                  ! ENDIF
                  sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-                 CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, out2d, sizes, mpio_aux(3), wrk3d)
+                 CALL IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
               ELSE                         ! spectra
                  WRITE(fname,*) itime; fname = 'pow'//TRIM(ADJUSTL(fname)) 
                  ! sizes(1) = isize_out2d; sizes(2) = sizes(1) /2; sizes(3) = 0;        sizes(4) = nfield
-                 ! CALL IO_WRITE_SUBARRAY4(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
+                 ! CALL IO_WRITE_SUBARRAY4_OLD(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
                  sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1) /2; sizes(4) = 1; sizes(5) = nfield
-                 CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, out2d, sizes, mpio_aux(3), wrk3d)
+                 CALL IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
 
                  WRITE(fname,*) itime; fname = 'pha'//TRIM(ADJUSTL(fname)) 
                  ! sizes(1) = isize_out2d; sizes(2) = sizes(1) /2; sizes(3) = sizes(2); sizes(4) = nfield
-                 ! CALL IO_WRITE_SUBARRAY4(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
+                 ! CALL IO_WRITE_SUBARRAY4_OLD(i3, sizes, fname, varname, out2d, mpi_subarray(3), wrk3d)
                  sizes(1) = isize_out2d; sizes(2) = 1+sizes(1) /2; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-                 CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, out2d, sizes, mpio_aux(3), wrk3d)
+                 CALL IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
 
               ENDIF
 

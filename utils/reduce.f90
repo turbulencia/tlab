@@ -145,33 +145,36 @@ END SUBROUTINE REDUCE_DIV
 
 ! #######################################################################
 ! #######################################################################
-SUBROUTINE REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax_dst,jmax_dst,kmax_dst, a, wrk3d)
+SUBROUTINE REDUCE_BLOCK_INPLACE(nx,ny,nz, nx1,ny1,nz1, nx_dst,ny_dst,nz_dst, a, wrk1d)
 
   IMPLICIT NONE
 
-  TINTEGER imax,jmax,kmax, imax_dst,jmax_dst,kmax_dst
-  TREAL, DIMENSION(imax*jmax*kmax),             INTENT(INOUT) :: a
-  TREAL, DIMENSION(imax_dst*jmax_dst*kmax_dst), INTENT(INOUT) :: wrk3d
+  TINTEGER,                   INTENT(IN)    :: nx,ny,nz, nx1,ny1,nz1, nx_dst,ny_dst,nz_dst
+  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: a
+  TREAL, DIMENSION(nx_dst),   INTENT(INOUT) :: wrk1d
 
 ! -------------------------------------------------------------------
-  TINTEGER j,k, ijmax,ijmax_dst, ip,ip_dst
+  TINTEGER j,k, nxy,nxy_dst, ip,ip_dst
 
 ! -------------------------------------------------------------------
-  ijmax     = imax*jmax
-  ijmax_dst = imax_dst*jmax_dst
+  nxy     = nx    *ny
+  nxy_dst = nx_dst*ny_dst
 
-  DO k = 1,kmax_dst
-     ip     = (k-1)*ijmax     + 1
-     ip_dst = (k-1)*ijmax_dst + 1
-     DO j = 1,jmax_dst
-        wrk3d(ip_dst:ip_dst+imax_dst-1) = a(ip:ip+imax_dst-1)
-        ip     = ip     + imax
-        ip_dst = ip_dst + imax_dst
+  DO k = 1,nz_dst
+     ip     = (k-1) *nxy    +(nz1-1) *nxy +(ny1-1)*nx +(nx1-1) +1
+     ip_dst = (k-1) *nxy_dst                                          +1
+     DO j = 1,ny_dst
+!        wrk3d(ip_dst:ip_dst+nx_dst-1) = a(ip:ip+nx_dst-1)
+        wrk1d(1:nx_dst)           = a(ip:ip+nx_dst-1)
+        a(ip_dst:ip_dst+nx_dst-1) = wrk1d(1:nx_dst)
+
+        ip     = ip     + nx
+        ip_dst = ip_dst + nx_dst
      ENDDO
   ENDDO
 
-  ip = imax_dst*jmax_dst*kmax_dst 
-  a(1:ip) = wrk3d(1:ip)
+  ! ip = nx_dst*ny_dst*nz_dst 
+  ! a(1:ip) = wrk3d(1:ip)
 
   RETURN
 END SUBROUTINE REDUCE_BLOCK_INPLACE

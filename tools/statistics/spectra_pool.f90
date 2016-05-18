@@ -420,7 +420,7 @@ END SUBROUTINE WRITE_SPECTRUM1D
 !########################################################################
 #ifdef USE_MPI
 
-SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock, subarray)
+SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
 
   USE DNS_TYPES,  ONLY : subarray_structure
   USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total, imax,jmax,kmax
@@ -430,8 +430,8 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock, subarray)
 
 #include "mpif.h" 
 
-  TINTEGER,                 INTENT(IN)                :: opt_main, nblock 
-  INTEGER,                  INTENT(OUT), DIMENSION(3) :: subarray
+  TINTEGER, INTENT(IN) :: opt_main, nblock 
+!  INTEGER,                  INTENT(OUT), DIMENSION(3) :: subarray
 
 ! -----------------------------------------------------------------------
   TINTEGER                :: ndims, i
@@ -459,7 +459,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock, subarray)
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(1)%subarray, ims_err)
      CALL MPI_Type_commit(mpio_aux(1)%subarray, ims_err)
 
-     subarray(1) = mpio_aux(1)%subarray ! to be removed
+!     subarray(1) = mpio_aux(1)%subarray ! to be removed
      
 ! 2. Oz spectrum
      IF ( ims_pro_i .EQ. 0 ) mpio_aux(2)%active = .TRUE.
@@ -474,7 +474,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock, subarray)
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(2)%subarray, ims_err)
      CALL MPI_Type_commit(mpio_aux(2)%subarray, ims_err)
 
-     subarray(2) = mpio_aux(2)%subarray ! to be removed
+!     subarray(2) = mpio_aux(2)%subarray ! to be removed
 
 ! 3. Full 2D spectrum
      mpio_aux(3)%active = .TRUE.
@@ -489,7 +489,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock, subarray)
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(3)%subarray, ims_err)
      CALL MPI_Type_commit(mpio_aux(3)%subarray, ims_err)
 
-     subarray(3) = mpio_aux(3)%subarray ! to be removed
+!     subarray(3) = mpio_aux(3)%subarray ! to be removed
 
 ! #######################################################################
   ELSE IF ( opt_main .EQ. 3 ) THEN
@@ -516,7 +516,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock, subarray)
              MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(1)%subarray, ims_err)
         CALL MPI_Type_commit(mpio_aux(1)%subarray, ims_err)
 
-        subarray(1) = mpio_aux(1)%subarray ! to be removed
+!        subarray(1) = mpio_aux(1)%subarray ! to be removed
 
      ENDIF
 
@@ -542,7 +542,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock, subarray)
              MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(2)%subarray, ims_err)
         CALL MPI_Type_commit(mpio_aux(2)%subarray, ims_err)
 
-        subarray(2) = mpio_aux(2)%subarray ! to be removed
+!        subarray(2) = mpio_aux(2)%subarray ! to be removed
 
      ENDIF
 
@@ -568,7 +568,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock, subarray)
              MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(3)%subarray, ims_err)
         CALL MPI_Type_commit(mpio_aux(3)%subarray, ims_err)
 
-        subarray(3) = mpio_aux(3)%subarray ! to be removed
+!        subarray(3) = mpio_aux(3)%subarray ! to be removed
 
      ENDIF
   
@@ -588,7 +588,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock, subarray)
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(1)%subarray, ims_err)
      CALL MPI_Type_commit(mpio_aux(1)%subarray, ims_err)
 
-     subarray(1) = mpio_aux(1)%subarray ! to be removed
+!     subarray(1) = mpio_aux(1)%subarray ! to be removed
      
 ! 2. Oz cross-correlation
      IF ( ims_pro_i .EQ. 0 ) mpio_aux(2)%active = .TRUE.
@@ -603,7 +603,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock, subarray)
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(2)%subarray, ims_err)
      CALL MPI_Type_commit(mpio_aux(2)%subarray, ims_err)
 
-     subarray(2) = mpio_aux(2)%subarray ! to be removed
+!     subarray(2) = mpio_aux(2)%subarray ! to be removed
 
 ! 3. Full 2D cross-correlation
      mpio_aux(3)%active = .TRUE.
@@ -618,7 +618,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock, subarray)
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(3)%subarray, ims_err)
      CALL MPI_Type_commit(mpio_aux(3)%subarray, ims_err)
      
-     subarray(3) = mpio_aux(3)%subarray ! to be removed
+!     subarray(3) = mpio_aux(3)%subarray ! to be removed
 
   ENDIF
 

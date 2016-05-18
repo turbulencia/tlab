@@ -38,7 +38,7 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(buffer_ht,buffer_hb,buffer_vi,buffer_
      x,y, q,hq)
   
   USE DNS_GLOBAL, ONLY : imax, jmax, kmax
-  USE DNS_GLOBAL, ONLY : imode_eqns, inb_flow
+  USE DNS_GLOBAL, ONLY : imode_eqns
   USE DNS_GLOBAL, ONLY : mach
   USE THERMO_GLOBAL, ONLY : gama0
   USE DNS_LOCAL
@@ -231,7 +231,7 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, buffer_ht,buffer_hb,buffer_vi,buf
      x,y, q, s,hs)
   
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : imode_eqns, inb_flow, inb_scal
+  USE DNS_GLOBAL, ONLY : imode_eqns, inb_flow
   USE DNS_LOCAL
 
   IMPLICIT NONE

@@ -42,12 +42,10 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
   USE DNS_GLOBAL, ONLY : inb_flow,inb_scal, inb_scal_array
   USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE DNS_GLOBAL, ONLY : iadvection, idiffusion, ibodyforce, iviscous
+  USE DNS_GLOBAL, ONLY : iadvection, idiffusion, iviscous
   USE DNS_GLOBAL, ONLY : p_init, damkohler
-  USE DNS_GLOBAL, ONLY : body_param
-  USE DNS_GLOBAL, ONLY : icalc_particle, isize_particle, inb_particle
+  USE DNS_GLOBAL, ONLY : icalc_particle, isize_particle
   USE THERMO_GLOBAL, ONLY : imixture
-  USE LAGRANGE_GLOBAL, ONLY: particle_number, particle_bumper
 
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
   USE DNS_LOCAL,  ONLY : VA_BCS_HT, VA_BCS_HB, VA_BCS_VI, vindex

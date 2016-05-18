@@ -33,7 +33,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
   USE DNS_TYPES, ONLY : pointers_structure
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
-  USE DNS_LOCAL, ONLY : fstavg, fstpdf, fstinter
+  USE DNS_LOCAL, ONLY : fstavg, fstpdf !, fstinter
   USE DNS_LOCAL, ONLY : vindex, VA_MEAN_WRK
 #ifdef USE_MPI
   USE DNS_MPI

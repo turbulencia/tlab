@@ -108,7 +108,7 @@ MODULE DNS_LOCAL
   TINTEGER, DIMENSION(MAX_SAVEPLANES) :: pln_i, pln_j, pln_k
 !  TINTEGER nsave_planes
 !  INTEGER, DIMENSION(MAX_SAVEPLANES)  :: j_save
-  INTEGER ims_subarray_pln_i, ims_subarray_pln_j, ims_subarray_pln_k
+!  INTEGER ims_subarray_pln_i, ims_subarray_pln_j, ims_subarray_pln_k
   
   TINTEGER, DIMENSION(3)              :: tower_stride           ! Towers
   TINTEGER                            :: tower_mode  

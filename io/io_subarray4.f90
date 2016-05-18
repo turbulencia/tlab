@@ -1,9 +1,12 @@
 #include "types.h" 
 
-SUBROUTINE IO_WRITE_SUBARRAY4_NEW(fname, varname, data, sizes, mpioinfo, work)
+SUBROUTINE IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, data, sizes, work)
 
   USE DNS_TYPES,     ONLY : subarray_structure
   USE DNS_CONSTANTS, ONLY : lfile
+#ifdef USE_MPI
+  USE DNS_MPI,       ONLY : mpio_aux
+#endif
 
   IMPLICIT NONE
 
@@ -11,11 +14,11 @@ SUBROUTINE IO_WRITE_SUBARRAY4_NEW(fname, varname, data, sizes, mpioinfo, work)
 #include "mpif.h"
 #endif 
 
+  TINTEGER,                                   INTENT(IN)    :: iflag_mode
   CHARACTER*(*),                              INTENT(IN)    :: fname
   TINTEGER,                                   INTENT(IN)    :: sizes(5) ! total size, lower bound, upper bound, stride, # variables
   CHARACTER*32, DIMENSION(sizes(5)),          INTENT(IN)    :: varname
   TREAL,        DIMENSION(sizes(1),sizes(5)), INTENT(IN)    :: data
-  TYPE(subarray_structure),                   INTENT(IN)    :: mpioinfo
   REAL(4),      DIMENSION(sizes(1)),          INTENT(INOUT) :: work
   
 ! -----------------------------------------------------------------------
@@ -33,7 +36,7 @@ SUBROUTINE IO_WRITE_SUBARRAY4_NEW(fname, varname, data, sizes, mpioinfo, work)
   isize = ( sizes(3) -sizes(2) ) /sizes(4) +1
 
 #ifdef USE_MPI
-  IF ( mpioinfo%active ) THEN
+  IF ( mpio_aux(iflag_mode)%active ) THEN
 #endif
 
   DO iv = 1,sizes(5)
@@ -45,8 +48,8 @@ SUBROUTINE IO_WRITE_SUBARRAY4_NEW(fname, varname, data, sizes, mpioinfo, work)
      work(1:isize) = SNGL(data(sizes(2):sizes(3):sizes(4),iv))
 
 #ifdef USE_MPI
-     CALL MPI_File_open(mpioinfo%communicator, TRIM(ADJUSTL(name)), IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err)
-     CALL MPI_File_set_view(mpio_fh, mpioinfo%offset, MPI_REAL4, mpioinfo%subarray, 'native', MPI_INFO_NULL, ims_err) 
+     CALL MPI_File_open(mpio_aux(iflag_mode)%communicator, TRIM(ADJUSTL(name)), IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err)
+     CALL MPI_File_set_view(mpio_fh, mpio_aux(iflag_mode)%offset, MPI_REAL4, mpio_aux(iflag_mode)%subarray, 'native', MPI_INFO_NULL, ims_err) 
      CALL MPI_File_write_all(mpio_fh, work, isize, MPI_REAL4, mpio_status, ims_err) 
      CALL MPI_File_close(mpio_fh, ims_err)  
      
@@ -64,11 +67,11 @@ SUBROUTINE IO_WRITE_SUBARRAY4_NEW(fname, varname, data, sizes, mpioinfo, work)
 #endif
 
   RETURN
-END SUBROUTINE IO_WRITE_SUBARRAY4_NEW
+END SUBROUTINE IO_WRITE_SUBARRAY4
 
 !########################################################################
 !########################################################################
-SUBROUTINE IO_WRITE_SUBARRAY4(idir, sizes, fname, varname, data, subarray, work)
+SUBROUTINE IO_WRITE_SUBARRAY4_OLD(idir, sizes, fname, varname, data, subarray, work)
 
   USE DNS_CONSTANTS, ONLY : lfile
 #ifdef USE_MPI
@@ -163,5 +166,5 @@ SUBROUTINE IO_WRITE_SUBARRAY4(idir, sizes, fname, varname, data, subarray, work)
 #endif
 
   RETURN
-END SUBROUTINE IO_WRITE_SUBARRAY4
+END SUBROUTINE IO_WRITE_SUBARRAY4_OLD
 

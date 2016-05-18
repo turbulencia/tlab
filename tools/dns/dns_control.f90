@@ -136,7 +136,7 @@ END SUBROUTINE DNS_CONTROL_FLOW
 ! ###################################################################
 SUBROUTINE DNS_CONTROL_SCAL(s)
 
-  USE DNS_GLOBAL,ONLY : imode_eqns, isize_field, icalc_scal
+  USE DNS_GLOBAL,ONLY : isize_field, icalc_scal
   USE DNS_GLOBAL,ONLY : inb_scal
   USE DNS_LOCAL, ONLY : ilimit_scal
   USE DNS_LOCAL, ONLY : s_bound_min, s_bound_max

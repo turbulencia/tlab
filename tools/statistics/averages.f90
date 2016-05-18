@@ -585,7 +585,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 
@@ -629,7 +629,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 
@@ -719,7 +719,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 
@@ -779,7 +779,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 
@@ -821,7 +821,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 
@@ -854,7 +854,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 
@@ -884,7 +884,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 
@@ -909,7 +909,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 
@@ -976,7 +976,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 
@@ -998,7 +998,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 
@@ -1051,7 +1051,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 
@@ -1084,7 +1084,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 
@@ -1107,7 +1107,7 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
         ENDIF
 

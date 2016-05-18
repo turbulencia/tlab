@@ -3,12 +3,12 @@
 #define LOC_UNIT_ID i55
 #define LOC_STATUS 'unknown'
 
-SUBROUTINE VISUALS_WRITE(fname, itype, iformat, nx,ny,nz, subdomain, field, tmp_mpi)
+SUBROUTINE VISUALS_WRITE(fname, itype, iformat, nx,ny,nz, subdomain, field, txc)
 
   USE DNS_TYPES,  ONLY : subarray_structure
   USE DNS_GLOBAL, ONLY : imax_total, kmax_total
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : mpio_aux, ims_pro
+  USE DNS_MPI,    ONLY : ims_pro
 #endif
 
   IMPLICIT NONE
@@ -20,7 +20,7 @@ SUBROUTINE VISUALS_WRITE(fname, itype, iformat, nx,ny,nz, subdomain, field, tmp_
 
   TINTEGER iformat, itype, nx,ny,nz, subdomain(6)
   TREAL, DIMENSION(nx,ny,nz,*) :: field
-  TREAL, DIMENSION(nx*ny*nz,2) :: tmp_mpi
+  TREAL, DIMENSION(nx*ny*nz,2) :: txc
   CHARACTER*(*) fname
 
 ! -------------------------------------------------------------------
@@ -28,60 +28,59 @@ SUBROUTINE VISUALS_WRITE(fname, itype, iformat, nx,ny,nz, subdomain, field, tmp_
   CHARACTER*32 varname(16), name
   TINTEGER iflag_mode
 
-#ifndef USE_MPI
-  TYPE(subarray_structure) :: mpio_aux(10)
-#endif
-
 ! ###################################################################
   IF      ( itype .EQ. 0 ) THEN; nfield = 1;
   ELSE IF ( itype .EQ. 1 ) THEN; nfield = 3;
   ELSE IF ( itype .EQ. 2 ) THEN; nfield = 6; ENDIF
   sizes(5) = nfield
 
-! in-place reduction of data in array field along direction Oy 
-! to be done
-!  ny_aux = subdomain(4)-subdomain(3)+1
-  ny_aux = ny
+  ny_aux = subdomain(4)-subdomain(3)+1
 
   iflag_mode = 0 ! default
-  sizes(1) = ny_aux *nx *nz  ! array size
-  sizes(2) = 1               ! lower bound
+  sizes(1) = ny *nx *nz          ! array size
+  sizes(2) = 1                   ! lower bound
   IF      ( subdomain(2)-subdomain(1)+1 .EQ. imax_total .AND. &
             subdomain(6)-subdomain(5)+1 .EQ. 1          ) THEN! xOy plane
      iflag_mode = 1
-     sizes(3)   = ny_aux *nx ! upper bound
-     sizes(4)   = 1          ! stride
+     sizes(3)   = ny_aux *nx     ! upper bound
+     sizes(4)   = 1              ! stride
      
   ELSE IF ( subdomain(6)-subdomain(5)+1 .EQ. kmax_total .AND. & 
             subdomain(2)-subdomain(1)+1 .EQ. 1          ) THEN! zOy plane
      iflag_mode = 2
-     sizes(3)   = sizes(1)   ! upper bound
-     sizes(4)   = nx         ! stride
+     sizes(3)   = ny_aux *nx *nz ! upper bound
+     sizes(4)   = nx             ! stride
      
   ELSE IF ( subdomain(2)-subdomain(1)+1 .EQ. imax_total .AND. &
             subdomain(6)-subdomain(5)+1 .EQ. kmax_total ) THEN
      iflag_mode = 3                                           ! xOy blocks
-     sizes(3)   = sizes(1)   ! upper bound
-     sizes(4)   = 1          ! stride
+     sizes(3)   = ny_aux *nx *nz ! upper bound
+     sizes(4)   = 1              ! stride
 
   ENDIF
 
 ! ###################################################################
   IF      ( iformat .EQ. 0 ) THEN ! standard scalar format
      iaux_loc = nx*ny*nz
-     CALL DNS_WRITE_FIELDS(fname, i1, nx,ny,nz, nfield, iaux_loc, field, tmp_mpi)
+     CALL DNS_WRITE_FIELDS(fname, i1, nx,ny,nz, nfield, iaux_loc, field, txc)
 
 ! -------------------------------------------------------------------
   ELSE IF ( iformat .EQ. 1 ) THEN  ! ensight; to be removed
-     CALL ENSIGHT_FIELD(fname, i1, nx,ny_aux,nz, nfield, subdomain, field, tmp_mpi)
+     CALL ENSIGHT_FIELD(fname, i1, nx,ny,nz, nfield, subdomain, field, txc)
      
 ! -------------------------------------------------------------------
   ELSE IF ( iformat .EQ. 2 .AND. iflag_mode .GT. 0 ) THEN  ! single precision, using MPI_IO
+     IF ( ny_aux .NE. ny ) THEN
+        DO ifield = 1,nfield
+           CALL REDUCE_BLOCK_INPLACE(nx,ny,nz, i1,subdomain(3),i1, nz,ny_aux,nz, field(1,1,1,ifield), txc)
+        ENDDO
+     ENDIF
+
      varname = ''
      IF ( nfield .GT. 1 ) THEN
         DO ifield = 1,nfield; WRITE(varname(ifield),*) ifield; varname(ifield) = TRIM(ADJUSTL(varname(ifield))); ENDDO
      ENDIF
-     CALL IO_WRITE_SUBARRAY4_NEW(fname, varname, field, sizes, mpio_aux(iflag_mode), tmp_mpi)
+     CALL IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, field, sizes, txc)
         
 ! -------------------------------------------------------------------
   ELSE                                                     ! single precision, through PE0
@@ -99,7 +98,7 @@ SUBROUTINE VISUALS_WRITE(fname, itype, iformat, nx,ny,nz, subdomain, field, tmp_
 
 #ifdef USE_MPI
         ENDIF
-        CALL DNS_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field(1,1,1,ifield), tmp_mpi(1,1), tmp_mpi(1,2))
+        CALL DNS_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field(1,1,1,ifield), txc(1,1), txc(1,2))
         IF ( ims_pro .EQ. 0 ) THEN
 #else
            DO k = subdomain(5),subdomain(6)
@@ -125,7 +124,6 @@ END SUBROUTINE VISUALS_WRITE
 
 SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
 
-  USE DNS_TYPES,  ONLY : subarray_structure
   USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total, imax,jmax,kmax
   USE DNS_MPI
 
