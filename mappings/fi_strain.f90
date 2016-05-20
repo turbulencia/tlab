@@ -85,17 +85,17 @@ SUBROUTINE FI_STRAIN(imode_fdm, nx,ny,nz, i1bc,j1bc,k1bc, &
 ! Uy, Vx
   CALL PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, v, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  result = result + C_05_R *( tmp1 +tmp2 )
+  result = result + C_05_R *( tmp1 +tmp2 ) *( tmp1 +tmp2 )
 
 ! Uz, Wx
   CALL PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, w, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, u, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  result = result + C_05_R *( tmp1 +tmp2 )
+  result = result + C_05_R *( tmp1 +tmp2 ) *( tmp1 +tmp2 )
 
 ! Vz, Wy
   CALL PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, w, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, v, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  result = result + C_05_R *( tmp1 +tmp2 )
+  result = result + C_05_R *( tmp1 +tmp2 ) *( tmp1 +tmp2 )
 
   RETURN
 END SUBROUTINE FI_STRAIN

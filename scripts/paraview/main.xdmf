@@ -1,0 +1,178 @@
+<?xml version="1.0" ?>
+
+<!--
+General XDMF file to read TLAB simulation data into a data analysis and visualization application, like ParaView.
+
+Add simply data items after the geometry block to read different files.
+
+The structure of this file has been adapted from psOpen, from Jens Henrik Goebbert.
+-->
+
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" [
+
+<!-- offsets to grid blocks -->
+<!ENTITY SeekGridX   "56"> 
+<!ENTITY SeekGridY "1088"> <!-- SeekGridX + DimX*8 + 8-->
+<!ENTITY SeekGridZ "1864"> <!-- SeekGridY + DimY*8 + 8-->
+
+<!-- iteration number  -->
+<!ENTITY Itime "000010">
+
+<!-- offsets to data -->
+<!ENTITY SeekData   "0"> <!-- No header -->
+<!-- <!ENTITY SeekData  "52"> --> <!-- Tlab header -->
+<!-- <!ENTITY SeekData "244"> --> <!-- Ensight header -->
+
+<!-- dimension of complete datasets -->
+<!ENTITY DimsX   "128">
+<!ENTITY DimsY    "96">
+<!ENTITY DimsZ   "128">
+
+<!-- dimension of hyperslab to load -->
+<!ENTITY HSDimsX  "64">
+<!ENTITY HSDimsY  "48">
+<!ENTITY HSDimsZ  "64">
+
+<!-- start of hyperslab in complete dataset -->
+<!ENTITY HSDimsX_Start "0">
+<!ENTITY HSDimsY_Start "0">
+<!ENTITY HSDimsZ_Start "0">
+
+<!-- stride of hyperslab in complete dataset -->
+<!ENTITY HSStrideX "2">
+<!ENTITY HSStrideY "2">
+<!ENTITY HSStrideZ "2">
+
+<!-- data precision (grid is always 8 bytes) -->
+<!ENTITY Prec      "4">
+
+]>
+
+<Xdmf xmlns:xi="http://www.w3.org/2001/XInclude" Version="2.0">
+  <Domain Name="main">
+
+    <DataItem Name="HSMetaData" Dimensions="3 3" Format="XML"> <!-- Used below -->
+      &HSDimsZ_Start; &HSDimsY_Start; &HSDimsX_Start;
+      &HSStrideZ;     &HSStrideY;     &HSStrideX;
+      &HSDimsZ;       &HSDimsY;       &HSDimsX;
+    </DataItem>
+    
+    <Grid Name="SingleFrame" GridType="Uniform">
+      <Time TimeType="Single" Value=" 0.E+00"/>
+      
+      <Topology TopologyType="3DRectMesh" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">  
+      </Topology>
+      
+      <Geometry GeometryType="VXVYVZ">
+
+	<DataItem Name="X" ItemType="HyperSlab" Dimensions="&HSDimsX;">
+	  <DataItem Dimensions="1 3" Format="XML">
+	    &HSDimsX_Start;
+	    &HSStrideX;
+	    &HSDimsX;
+	  </DataItem>
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridX;" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsX;">
+	    grid
+	  </DataItem>
+	</DataItem>
+	
+	<DataItem Name="Y" ItemType="HyperSlab" Dimensions="&HSDimsY;">
+	  <DataItem Dimensions="1 3" Format="XML">
+	    &HSDimsY_Start;
+	    &HSStrideY;
+	    &HSDimsY;
+	  </DataItem>
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridY;" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsY;">
+	    grid
+	  </DataItem>
+	</DataItem>
+	
+	<DataItem Name="Z" ItemType="HyperSlab" Dimensions="&HSDimsZ;">
+	  <DataItem Dimensions="1 3" Format="XML">
+	    &HSDimsZ_Start;
+	    &HSStrideZ;
+	    &HSDimsZ;
+	  </DataItem>
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridZ;" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsZ;">
+	    grid
+	  </DataItem>
+	</DataItem>
+	
+      </Geometry>
+      
+      <Attribute Center="Node" Name="Scalar1">
+	<DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	  <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	    Scalar1&Itime;
+	  </DataItem>
+	</DataItem>
+      </Attribute>
+      
+      <Attribute Center="Node" Name="Scalar2">
+	<DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	  <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	    Scalar2&Itime;
+	  </DataItem>
+	</DataItem>
+      </Attribute>
+      
+      <Attribute AttributeType="Vector" Name="Velocity">
+	<DataItem ItemType="Function" Function="JOIN($0,$1,$2)" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX; 3">
+
+	  <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	    <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	    <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	      VelocityVector&Itime;.1
+	    </DataItem>
+	  </DataItem>
+
+	  <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	    <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	    <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	      VelocityVector&Itime;.2
+	    </DataItem>
+	  </DataItem>
+
+	  <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	    <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	    <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	      VelocityVector&Itime;.3
+	    </DataItem>
+	  </DataItem>
+
+	</DataItem>
+      </Attribute>
+
+      <Attribute Center="Node" Name="Gradient1">
+	<DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	  <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	    LnScalar1Gradient&Itime;
+	  </DataItem>
+	</DataItem>
+      </Attribute>
+      
+      <Attribute Center="Node" Name="Enstrophy">
+	<DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	  <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	    LnEnstrophy&Itime;
+	  </DataItem>
+	</DataItem>
+      </Attribute>
+      
+      <Attribute Center="Node" Name="Strain">
+	<DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	  <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	  <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	    LnStrain&Itime;
+	  </DataItem>
+	</DataItem>
+      </Attribute>
+      
+    </Grid>
+
+  </Domain>
+</Xdmf>

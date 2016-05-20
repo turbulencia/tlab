@@ -181,53 +181,98 @@ END SUBROUTINE REDUCE_BLOCK_INPLACE
 
 ! #######################################################################
 ! #######################################################################
-SUBROUTINE REDUCE_Y_ALL(imax,jmax,kmax, nvar1,a1, nvar2,a2, np,p, b)
+SUBROUTINE REDUCE_Y_ALL(nx,ny,nz, nvar1,a1, nvar2,a2, np,p, b)
 
   IMPLICIT NONE
 
-  TINTEGER imax,jmax,kmax, np, nvar1,nvar2                               ! np is the number of sampled planes
-  TINTEGER, DIMENSION(np),                         INTENT(IN)  :: p      ! array with the j location of the planes
-  TREAL,    DIMENSION(imax,jmax,kmax,       *   ), INTENT(IN)  :: a1, a2 ! input array (big)
-  TREAL,    DIMENSION(imax,np  ,nvar1+nvar2,kmax), INTENT(OUT) :: b      ! output array (small)
+  TINTEGER nx,ny,nz, np, nvar1,nvar2                                  ! np is the number of sampled planes
+  TINTEGER, DIMENSION(np),                      INTENT(IN)  :: p      ! array with the j location of the planes
+  TREAL,    DIMENSION(nx,ny,nz,            * ), INTENT(IN)  :: a1, a2 ! input array (big)
+  TREAL,    DIMENSION(nx,np   ,nvar1+nvar2,nz), INTENT(OUT) :: b      ! output array (small)
 
   TINTEGER j, j_loc, ivar, k
   
-  DO k = 1,kmax
+  DO k = 1,nz
      DO ivar = 1,nvar1
         DO j = 1,np
            j_loc = p(j)
-           b(1:imax,j,ivar,k) = a1(1:imax,j_loc,k,ivar)
+           b(1:nx,j,ivar,k) = a1(1:nx,j_loc,k,ivar)
         ENDDO
      ENDDO
      
-     DO ivar = 1+nvar1,nvar2+nvar1 ! if nvar is 0, then array a2 is not used
+     DO ivar = 1,nvar2 ! if nvar is 0, then array a2 is not used
         DO j = 1,np
            j_loc = p(j)
-           b(1:imax,j,ivar,k) = a2(1:imax,j_loc,k,ivar)
+           b(1:nx,j,ivar+nvar1,k) = a2(1:nx,j_loc,k,ivar)
+        ENDDO
+     ENDDO
+     
+  ENDDO
+
+  RETURN
+END SUBROUTINE REDUCE_Y_ALL
+
+! #######################################################################
+! #######################################################################
+SUBROUTINE REDUCE_Z_ALL(nx,ny,nz, nvar1,a1, nvar2,a2, np,p, b)
+
+  IMPLICIT NONE
+
+  TINTEGER nx,ny,nz, np, nvar1,nvar2                               ! np is the number of sampled planes
+  TINTEGER, DIMENSION(np),                   INTENT(IN)  :: p      ! array with the j location of the planes
+  TREAL,    DIMENSION(nx*ny,nz,         * ), INTENT(IN)  :: a1, a2 ! input array (big)
+  TREAL,    DIMENSION(nx*ny,nvar1+nvar2,np), INTENT(OUT) :: b      ! output array (small)
+
+  TINTEGER k, k_loc, ivar
+  
+  DO k = 1,np
+     k_loc = p(k)
+     DO ivar = 1,nvar1
+        b(1:nx*ny,ivar,k) = a1(1:nx*ny,k_loc,ivar)
+     ENDDO
+     
+     DO ivar = 1,nvar2 ! if nvar is 0, then array a2 is not used
+        b(1:nx*ny,ivar+nvar1,k) = a2(1:nx*ny,k_loc,ivar)
+     ENDDO
+     
+  ENDDO
+  
+  RETURN
+END SUBROUTINE REDUCE_Z_ALL
+
+! #######################################################################
+! #######################################################################
+SUBROUTINE REDUCE_X_ALL(nx,ny,nz, nvar1,a1, nvar2,a2, np,p, b)
+
+  IMPLICIT NONE
+
+  TINTEGER nx,ny,nz, np, nvar1,nvar2                               ! np is the number of sampled planes
+  TINTEGER, DIMENSION(np),                   INTENT(IN)  :: p      ! array with the j location of the planes
+  TREAL,    DIMENSION(nx,ny,nz,         * ), INTENT(IN)  :: a1, a2 ! input array (big)
+  TREAL,    DIMENSION(np,ny,nvar1+nvar2,nz), INTENT(OUT) :: b      ! output array (small)
+
+  TINTEGER i, i_loc, j, ivar, k
+  
+  DO k = 1,nz
+     DO ivar = 1,nvar1
+        DO j = 1,ny
+           DO i = 1,np
+              i_loc = p(i)
+              b(i,j,ivar,k) = a1(i_loc,j,k,ivar)
+           ENDDO
+        ENDDO
+     ENDDO
+     
+     DO ivar = 1,nvar2 ! if nvar is 0, then array a2 is not used
+        DO j = 1,ny
+           DO i = 1,np
+              i_loc = p(i)
+              b(i,j,ivar+nvar1,k) = a2(i_loc,j,k,ivar)
+           ENDDO
         ENDDO
      ENDDO
      
   ENDDO
   
-! ip_o=1
-! DO k=1,kmax
-!    DO ivar = 1,inb_flow
-!       DO j=1,npln_j !nsave_planes
-!          j_loc = pln_j(j) !j_save(j)
-!          ip_i = (k-1)*jmax*imax + (j_loc-1)*imax +1;
-!          wrk3d(ip_o:ip_o+imax-1) = q(ip_i:ip_i+imax-1,ivar);  ip_o = ip_o + imax;
-!       ENDDO
-!    ENDDO
-  
-!    DO ivar = 1,inb_scal
-!       DO j=1,npln_j !nsave_planes
-!          j_loc = pln_j(j) !j_save(j)
-!          ip_i = (k-1)*jmax*imax + (j_loc-1)*imax +1;
-!          wrk3d(ip_o:ip_o+imax-1) = s(ip_i:ip_i+imax-1,ivar);  ip_o = ip_o + imax;
-!       ENDDO
-!    ENDDO
-  
-! ENDDO
-  
   RETURN
-END SUBROUTINE REDUCE_Y_ALL
+END SUBROUTINE REDUCE_X_ALL

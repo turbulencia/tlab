@@ -47,7 +47,7 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
   USE DNS_GLOBAL, ONLY : itime
   USE DNS_GLOBAL, ONLY : mach, p_init
   USE DNS_GLOBAL, ONLY : imode_eqns,imode_sim, icalc_scal
-  USE DNS_GLOBAL, ONLY : scaley,scalez, area, diam_u,ycoor_u
+  USE DNS_GLOBAL, ONLY : scaley, area, diam_u,ycoor_u
   USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
   USE THERMO_GLOBAL, ONLY : imixture, gama0
   USE DNS_LOCAL

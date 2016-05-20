@@ -659,7 +659,7 @@ SUBROUTINE DNS_MPIO_AUX(npln_i,npln_j,npln_k, pln_i,pln_k)
   idummy = inb_flow_array +inb_scal_array
 
 ! ###################################################################
-! Saving full vertical xOy planes; using the first plane to define the PE writing
+! Saving full vertical xOy planes; writing only info of PE containing the first plane
   IF ( ims_pro_k .EQ. ( pln_k(1) /kmax) ) mpio_aux(1)%active = .TRUE.
   mpio_aux(1)%communicator = ims_comm_x
 
@@ -672,7 +672,7 @@ SUBROUTINE DNS_MPIO_AUX(npln_i,npln_j,npln_k, pln_i,pln_k)
        MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(1)%subarray, ims_err)
   CALL MPI_Type_commit(mpio_aux(1)%subarray, ims_err)
 
-! Saving full vertical zOy planes; using subdomain(1) to define the plane
+! Saving full vertical zOy planes; writing only info of PE containing the first plane
   IF ( ims_pro_i .EQ.  ( pln_i(1) /imax) ) mpio_aux(2)%active = .TRUE.
   mpio_aux(2)%communicator = ims_comm_z
 
@@ -692,7 +692,7 @@ SUBROUTINE DNS_MPIO_AUX(npln_i,npln_j,npln_k, pln_i,pln_k)
   ndims = 3 ! Subarray for the output of the 2D data
   sizes(1)  =imax_total;   sizes(2)   = npln_j*idummy; sizes(3)   = kmax_total
   locsize(1)=imax;         locsize(2) = npln_j*idummy; locsize(3) = kmax
-  offset(1) =ims_offset_i; offset(2)  = 0;                          offset(3)  = ims_offset_k
+  offset(1) =ims_offset_i; offset(2)  = 0;             offset(3)  = ims_offset_k
 
   CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
        MPI_ORDER_FORTRAN, MPI_REAL4,  mpio_aux(3)%subarray, ims_err)
