@@ -562,7 +562,7 @@ PROGRAM VISUALS_MAIN
 ! All prognostic scalars
 ! -------------------------------------------------------------------
         IF      ( opt_vec(iv) .EQ. 9 ) THEN
-           DO is = 1,inb_scal
+           DO is = 1,inb_scal_array
               WRITE(str,*) is; str = 'Scalar'//TRIM(ADJUSTL(str))
               
               plot_file = TRIM(ADJUSTL(str))//time_str(1:MaskSize)
@@ -621,66 +621,66 @@ PROGRAM VISUALS_MAIN
 ! Scalar Derivatives
 ! ###################################################################
         IF ( opt_vec(iv) .GE. iscal_offset+1 .AND. opt_vec(iv) .LE. iscal_offset+3 ) THEN
-           DO is = 1,inb_scal
-           WRITE(str,*) is; str = 'Scalar'//TRIM(ADJUSTL(str))
-
-           IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R
-           ELSE;                                  diff = visc/schmidt(is); ENDIF
+           DO is = 1,inb_scal_array
+              WRITE(str,*) is; str = 'Scalar'//TRIM(ADJUSTL(str))
 
 ! Scalar gradient vector
-           IF ( opt_vec(iv) .EQ. iscal_offset+1 ) THEN
-              CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient vector...')
-              CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s(1,is), txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
-              CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s(1,is), txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
-              CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s(1,is), txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
+              IF ( opt_vec(iv) .EQ. iscal_offset+1 ) THEN
+                 CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient vector...')
+                 CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s(1,is), txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
+                 CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s(1,is), txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
+                 CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s(1,is), txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
+                 
+                 plot_file = TRIM(ADJUSTL(str))//'GradientVector'//time_str(1:MaskSize)
+                 CALL VISUALS_WRITE(plot_file, i1, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
+              ENDIF
               
-              plot_file = TRIM(ADJUSTL(str))//'GradientVector'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i1, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
-           ENDIF
-
-! Scalar gradient
-           IF ( opt_vec(iv) .EQ. iscal_offset+2 .OR. opt_vec(iv) .EQ. iscal_offset+3 ) THEN
-              CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
-              CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s(1,is), &
-                   txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
-              
-              plot_file = TRIM(ADJUSTL(str))//'Gradient'//time_str(1:MaskSize)
-
-              IF ( opt_vec(iv) .EQ. iscal_offset+2 ) THEN 
-                 ! IF ( igate .GT. 0 ) THEN                              ! Conditioning
-                 !    CALL MINMAX(imax,jmax,kmax, txc(1,1), umin,umax)
-                 !    DO ij = 1,isize_field
-                 !       IF ( MaskFile(ij) .EQ. 1 ) THEN; txc(ij,1)=log(txc(ij,1))
-                 !       ELSE;                            txc(ij,1)=log(umin); ENDIF
-                 !    ENDDO
-                 ! ELSE                                                  ! Natural log
-                    txc(1:isize_field,1) = LOG(txc(1:isize_field,1)+C_SMALL_R)
-                    plot_file = 'Ln'//TRIM(ADJUSTL(plot_file))
-                ! ENDIF
+! Scalar gradient magnitude
+              IF ( opt_vec(iv) .EQ. iscal_offset+2 .OR. opt_vec(iv) .EQ. iscal_offset+3 ) THEN
+                 CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
+                 CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s(1,is), &
+                      txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
+                 
+                 plot_file = TRIM(ADJUSTL(str))//'Gradient'//time_str(1:MaskSize)
+                 
+                 IF ( opt_vec(iv) .EQ. iscal_offset+2 ) THEN 
+                    ! IF ( igate .GT. 0 ) THEN                              ! Conditioning
+                    !    CALL MINMAX(imax,jmax,kmax, txc(1,1), umin,umax)
+                    !    DO ij = 1,isize_field
+                    !       IF ( MaskFile(ij) .EQ. 1 ) THEN; txc(ij,1)=log(txc(ij,1))
+                    !       ELSE;                            txc(ij,1)=log(umin); ENDIF
+                    !    ENDDO
+                    ! ELSE                                                  ! Natural log
+                       txc(1:isize_field,1) = LOG(txc(1:isize_field,1)+C_SMALL_R)
+                       plot_file = 'Ln'//TRIM(ADJUSTL(plot_file))
+                    ! ENDIF
+                 ENDIF
+                 
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
               ENDIF
 
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
-           ENDIF
-
 ! Scalar gradient equation
-           IF ( opt_vec(iv) .EQ. iscal_offset+3 ) THEN
-              CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient production...')
-              CALL FI_GRADIENT_PRODUCTION(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s(1,is), &
-                   q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
-              plot_file = 'ScalarGradientProduction'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
+              IF ( opt_vec(iv) .EQ. iscal_offset+3 .AND. is .LE. inb_scal ) THEN
+                 IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R
+                 ELSE;                                  diff = visc/schmidt(is); ENDIF
 
-              CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient diffusion...')
-              CALL FI_GRADIENT_DIFFUSION&
-                   (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s(1,is), &
-                   txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
-              txc(1:isize_field,1)=diff*txc(1:isize_field,1)
-
-              plot_file = TRIM(ADJUSTL(str))//'GradientDiffusion'//time_str(1:MaskSize)
-              CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
-
-           ENDIF
-
+                 CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient production...')
+                 CALL FI_GRADIENT_PRODUCTION(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s(1,is), &
+                      q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+                 plot_file = 'ScalarGradientProduction'//time_str(1:MaskSize)
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
+                 
+                 CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient diffusion...')
+                 CALL FI_GRADIENT_DIFFUSION&
+                      (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s(1,is), &
+                      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+                 txc(1:isize_field,1) = diff *txc(1:isize_field,1)
+                 
+                 plot_file = TRIM(ADJUSTL(str))//'GradientDiffusion'//time_str(1:MaskSize)
+                 CALL VISUALS_WRITE(plot_file, i0, opt_format, imax,jmax,kmax, subdomain, txc(1,1), wrk3d)
+                 
+              ENDIF
+              
            ENDDO
 
         ENDIF
