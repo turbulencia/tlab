@@ -66,7 +66,7 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
 ! -------------------------------------------------------------------
   TINTEGER it_loc_data
   TINTEGER icount_stat, is
-  TINTEGER idummy, sizesi(5), sizesj(5), sizesk(5)
+  TINTEGER idummy, splanes_i(5), splanes_j(5), splanes_k(5)
   CHARACTER*32 fname, varname(1)
   CHARACTER*250 line1
   LOGICAL flag_save
@@ -95,14 +95,14 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
   iupdate_stat = nitera_first + nspa_step           ! Update statistical information
   icount_stat  = 1
 
-! Information for saving planes  
-  idummy  = kmax*jmax*npln_i*(inb_flow_array+inb_scal_array)
-  sizesi  = (/idummy,1,idummy,1,1/)
-  idummy  = imax*jmax*npln_k*(inb_flow_array+inb_scal_array)
-  sizesk  = (/idummy,1,idummy,1,1/)
-  idummy  = imax*kmax*npln_j*(inb_flow_array+inb_scal_array)
-  sizesj  = (/idummy,1,idummy,1,1/)
-  varname = (/''/)
+! Sizes information for saving planes  
+  idummy     = kmax*jmax*nplanes_i*(inb_flow_array+inb_scal_array)
+  splanes_i  = (/idummy,1,idummy,1,1/)
+  idummy     = imax*jmax*nplanes_k*(inb_flow_array+inb_scal_array)
+  splanes_k  = (/idummy,1,idummy,1,1/)
+  idummy     = imax*kmax*nplanes_j*(inb_flow_array+inb_scal_array)
+  splanes_j  = (/idummy,1,idummy,1,1/)
+  varname    = (/''/)
   
 ! ###################################################################
 ! Loop on iterations: itime counter
@@ -285,23 +285,22 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
      ENDIF
 
      IF ( MOD(itime-nitera_first,nitera_pln) .EQ. 0 ) THEN
-        IF ( npln_k .GT. 0 ) THEN
-           CALL REDUCE_Z_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, npln_k,pln_k, wrk3d)
+        IF ( nplanes_k .GT. 0 ) THEN
+           CALL REDUCE_Z_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, nplanes_k,planes_k, txc)
            WRITE(fname,*) itime; fname = 'planesK.'//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(i1, fname, varname, wrk3d, sizesk, txc)
+           CALL IO_WRITE_SUBARRAY4(i1, fname, varname, txc, splanes_k, hq)
         ENDIF
 
-        IF ( npln_j .GT. 0 ) THEN
-           CALL REDUCE_Y_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, npln_j,pln_j, wrk3d)
+        IF ( nplanes_j .GT. 0 ) THEN
+           CALL REDUCE_Y_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, nplanes_j,planes_j, txc)
            WRITE(fname,*) itime; fname = 'planesJ.'//TRIM(ADJUSTL(fname))
-           ! CALL IO_WRITE_SUBARRAY4_OLD(3,sizes_l,fname,varname,wrk3d,ims_subarray_pln_j,txc(1))
-           CALL IO_WRITE_SUBARRAY4(i3, fname, varname, wrk3d, sizesj, txc)
+           CALL IO_WRITE_SUBARRAY4(i3, fname, varname, txc, splanes_j, hq)
         ENDIF
 
-        IF ( npln_i .GT. 0 ) THEN
-           CALL REDUCE_X_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, npln_i,pln_i, wrk3d)
+        IF ( nplanes_i .GT. 0 ) THEN
+           CALL REDUCE_X_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, nplanes_i,planes_i, txc)
            WRITE(fname,*) itime; fname = 'planesI.'//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(i2, fname, varname, wrk3d, sizesi, txc)
+           CALL IO_WRITE_SUBARRAY4(i2, fname, varname, txc, splanes_i, hq)
         ENDIF
 
      ENDIF

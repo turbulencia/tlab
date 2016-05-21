@@ -679,23 +679,23 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesI', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
-     npln_i = 0; pln_i = 0
+     nplanes_i = 0; planes_i = 0
   ELSE 
-     npln_i = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, npln_i, pln_i)
+     nplanes_i = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_i, planes_i)
   ENDIF
   
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesJ', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
-     npln_j = 0; pln_j = 0
+     nplanes_j = 0; planes_j = 0
   ELSE 
-     npln_j = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, npln_j, pln_j)
+     nplanes_j = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_j, planes_j)
   ENDIF
   
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesK', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
-     npln_k = 0; pln_k = 0
+     nplanes_k = 0; planes_k = 0
   ELSE 
-     npln_k = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, npln_k, pln_k)
+     nplanes_k = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_k, planes_k)
   ENDIF
 
 ! ###################################################################

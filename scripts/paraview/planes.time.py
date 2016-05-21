@@ -1,16 +1,37 @@
-import numpy   as np   # For array operations.
+#!/usr/bin/python3
 
-filenames = ["planesJ.5", "planesJ.10"]
+import numpy as np   # For array operations.
+import sys
 
-nx = 1 # number of points in Ox
-ny = 1 # number of points in Oy
-nz = 1 # number of points in OZ
-ns = 1 # number of scalar variables
-nq = 3 # number of flow variables
+# edit as needed
+npx = 1    # number of planesI
+npy = 2    # number of planesJ
+npz = 1    # number of planesK
 
-f = open('TESTplanesJ.times.xdmf', 'w')
+nx = 128  # number of points in Ox
+ny = 96   # number of points in Oy
+nz = 128  # number of points in OZ
 
-# Header for xml file
+ns = 1    # number of scalar variables
+nq = 3    # number of flow variables
+
+# do not edit
+def itnumber(filename):
+    return int(filename.split(".",1)[1])
+
+if ( len(sys.argv) == 1 ):
+    print("Add filenames as arguments.")
+    quit()
+
+filetype  = sys.argv[1].split(".",1)[0]
+print("Processing fiels %s..." % ( filetype ))
+
+filenames = sorted(sys.argv[1:],key=itnumber)
+
+f = open('TEST'+filetype+'.times.xdmf', 'w')
+
+# Definining entities depending on planesmode
+
 f.write('''<?xml version="1.0" ?>
 
 <!--
@@ -22,58 +43,90 @@ The structure of this file has been adapted from psOpen, from Jens Henrik Goebbe
 -->
 
 <!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" [
+''')
 
-<!-- number of timeslices -->
-<!ENTITY ItMax "%d"> 
-
-<!-- offsets to grid blocks -->
-<!ENTITY SeekGridX   "56"> 
-<!ENTITY SeekGridY "1088"> <!-- SeekGridX + DimX*8 + 8-->
-<!ENTITY SeekGridZ "1864"> <!-- SeekGridY + DimY*8 + 8-->
-
-<!-- offsets to data -->
-<!ENTITY SeekDataU   "0">
-<!ENTITY SeekDataV   "512">  <!-- SeekGridU  + DimX*Prec-->
-<!ENTITY SeekDataW   "1024"> <!-- SeekGridV  + DimX*Prec-->
-<!ENTITY SeekDataS1  "1536"> <!-- SeekGridW  + DimX*Prec-->
-<!ENTITY SeekDataS2  "2048"> <!-- SeekGridS1 + DimX*Prec-->
-
+if   ( filetype == 'planesI'):
+    data = ( 1,ny,nz, npx,ny,nz*(nq+ns) )
+elif ( filetype == 'planesJ'):
+    data = ( nx,1,nz, nx,npy,nz*(nq+ns) )
+elif ( filetype == 'planesK'):
+    data = ( nx,ny,1, nx,ny,npz*(nq+ns) )
+f.write('''
 <!-- dimension of complete datasets -->
-<!ENTITY DimsX   "128">
-<!ENTITY DimsY   "1">
-<!ENTITY DimsZ   "512"><!-- #Vars*DimZ-->
+<!ENTITY GridDimsX   "%d">
+<!ENTITY GridDimsY   "%d">
+<!ENTITY GridDimsZ   "%d">
 
-<!ENTITY GridDimsX   "128">
-<!ENTITY GridDimsY   "1">
-<!ENTITY GridDimsZ   "128">
+<!ENTITY DimsX   "%d">
+<!ENTITY DimsY   "%d">
+<!ENTITY DimsZ   "%d">
+''' % data )
 
+if   ( filetype == 'planesI'):
+    data = (  1,ny,nz, npx,1,nq+ns )
+elif ( filetype == 'planesJ'):
+    data = ( nx, 1,nz, 1,npy,nq+ns )
+elif ( filetype == 'planesK'):
+    data = ( nx,ny, 1, 1,1,npz*(nq+ns) )
+f.write('''
 <!-- dimension of hyperslab to load -->
-<!ENTITY HSDimsX  "128">
-<!ENTITY HSDimsY  "1">
-<!ENTITY HSDimsZ  "128">
+<!ENTITY HSDimsX  "%d">
+<!ENTITY HSDimsY  "%d">
+<!ENTITY HSDimsZ  "%d">
 
 <!-- start of hyperslab in complete dataset -->
 <!ENTITY HSDimsX_Start "0">
 <!ENTITY HSDimsY_Start "0">
 <!ENTITY HSDimsZ_Start "0">
 
-<!ENTITY HSGridDimsX_Start "0">
-<!ENTITY HSGridDimsY_Start "11">
+<!ENTITY HSGridDimsX_Start "0"> <!-- Set here the plane position -->
+<!ENTITY HSGridDimsY_Start "0">
 <!ENTITY HSGridDimsZ_Start "0">
 
 <!-- stride of hyperslab in complete dataset -->
-<!ENTITY HSStrideX "1">
-<!ENTITY HSStrideY "1">
-<!ENTITY HSStrideZ "4"><!-- #Vars-->
+<!ENTITY HSStrideX "%d">
+<!ENTITY HSStrideY "%d">
+<!ENTITY HSStrideZ "%d">
 
 <!ENTITY HSGridStrideX "1">
 <!ENTITY HSGridStrideY "1">
 <!ENTITY HSGridStrideZ "1">
+''' % data )
 
+if   ( filetype == 'planesI'):
+    data = (56+nx*8+8, 56+nx*8+8+ny*8+8, ny*npx*4, ny*npx*4*2)
+elif ( filetype == 'planesJ'):
+    data = (56+nx*8+8, 56+nx*8+8+ny*8+8, nx*npy*4, nx*npy*4*2)
+elif ( filetype == 'planesK'):
+    data = (56+nx*8+8, 56+nx*8+8+ny*8+8, nx*ny *4, nx*ny *4*2)
+f.write('''
+<!-- offsets to grid blocks -->
+<!ENTITY SeekGridX  "56"> 
+<!ENTITY SeekGridY  "%d"> <!-- + DimX*8 + 8-->
+<!ENTITY SeekGridZ  "%d"> <!-- + DimY*8 + 8-->
+
+<!-- offsets to data -->
+<!ENTITY SeekDataU  "0">
+<!ENTITY SeekDataV  "%d"> <!-- + Dim*Prec-->
+<!ENTITY SeekDataW  "%d"> <!-- + Dim*Prec-->
+''' % data )
+
+for i in range(ns):
+    if   ( filetype == 'planesI'):
+        data = (i+1,ny*npx*4*(i+3))
+    elif ( filetype == 'planesJ'):
+        data = (i+1,nx*npy*4*(i+3))
+    elif ( filetype == 'planesK'):
+        data = (i+1,nx*ny *4*(i+3))
+    f.write('''<!ENTITY SeekDataS%d "%d"> <!-- + Dim*Prec-->
+''' % data )
+
+# code below is independent of filetype
+f.write('''
 ]>
 
 <Xdmf xmlns:xi="http://www.w3.org/2001/XInclude" Version="2.0">
-  <Domain Name="PlanesJ">
+  <Domain Name="%s">
     
     <!-- Hyperslab metadata referenced below -->
     <DataItem Name="HSMetaData" Dimensions="3 3" Format="XML"> 
@@ -90,9 +143,9 @@ The structure of this file has been adapted from psOpen, from Jens Henrik Goebbe
       
       <DataItem Name="X" ItemType="HyperSlab" Dimensions="&HSDimsX;">
 	<DataItem Dimensions="1 3" Format="XML">
-	  &HSGridDimsX_Start;
-	    &HSGridStrideX;
-	    &HSDimsX;
+          &HSGridDimsX_Start;
+	  &HSGridStrideX;
+	  &HSDimsX;
 	</DataItem>
 	<DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridX;" NumberType="Float" Precision="8" Endian="Big" Dimensions="&GridDimsX;">
 	  grid
@@ -128,19 +181,19 @@ The structure of this file has been adapted from psOpen, from Jens Henrik Goebbe
       
       <Time TimeType="HyperSlab">
 	<DataItem Format="XML" NumberType="Float" Dimensions="3"> <!-- start, stride, count-->
-	  0.0 1.0  &ItMax;
+	  0.0 1.0 %d;
 	</DataItem>
       </Time>
-''' % (len(filenames)) )
+''' % (filetype,len(filenames)) )
 
 # Loop over timeslices
 for file in filenames:
     f.write('''
       <!-- Timeslice -->
-      <Grid Name="It5" GridType="Uniform">
+      <Grid Name="It%d" GridType="Uniform">
 	<Topology Reference="/Xdmf/Domain/Topology[1]"/>
 	<Geometry Reference="/Xdmf/Domain/Geometry[1]"/>	
-''')
+    ''' % (itnumber(file)) )
     
     for i in range(ns):
         f.write('''
