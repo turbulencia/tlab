@@ -127,7 +127,7 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
 ! Read local options
 ! -------------------------------------------------------------------
-  opt_format = 1 ! default values
+  opt_format = 2 ! default values
   opt_gate   = 0
 
   IF    ( imixture .EQ. MIXT_TYPE_NONE ) THEN; iscal_offset = 9    ! define iscal_offset
@@ -224,7 +224,7 @@ PROGRAM VISUALS_MAIN
      READ(sRes,*) opt_format
   ENDIF
   
-  IF ( opt_format .LT. 0 ) opt_format = 1 ! default is ensight
+  IF ( opt_format .LT. 0 ) opt_format = 2 ! default is single precission, no header
   
 ! -------------------------------------------------------------------
 ! Defining gate levels for conditioning
