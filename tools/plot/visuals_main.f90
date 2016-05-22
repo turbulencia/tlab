@@ -205,9 +205,9 @@ PROGRAM VISUALS_MAIN
   ENDIF
 
 ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Format', 'void', sRes)
+  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Format', '-1', sRes)
   
-  IF ( sRes .EQ. 'void' ) THEN
+  IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI
 #else
      WRITE(*,*) 'File Format ?'
@@ -373,7 +373,7 @@ PROGRAM VISUALS_MAIN
   DO it=1, itime_size
      itime = itime_vec(it)
 
-     WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))
+     WRITE(sRes,*) itime; WRITE(str,100) rtime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))//'. Physical time '//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile, sRes)
      
      IF ( iread_scal .EQ. 1 ) THEN ! Scalar variables
@@ -402,6 +402,9 @@ PROGRAM VISUALS_MAIN
         ENDIF
      ENDIF
 
+     WRITE(sRes,100) rtime; sRes = 'Physical time '//TRIM(ADJUSTL(sRes))
+     CALL IO_WRITE_ASCII(lfile, sRes)
+     
 ! -------------------------------------------------------------------
 ! Calculate intermittency
 ! -------------------------------------------------------------------
@@ -1017,12 +1020,6 @@ PROGRAM VISUALS_MAIN
         ENDIF
 
      ENDDO
-
-! ###################################################################
-! ###################################################################
-! print out the time sequence for animation
-     WRITE(sRes,100) rtime
-     CALL IO_WRITE_ASCII('times.log','Time '//TRIM(ADJUSTL(sRes)))
 
   ENDDO
   
