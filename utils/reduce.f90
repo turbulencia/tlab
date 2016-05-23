@@ -162,9 +162,8 @@ SUBROUTINE REDUCE_BLOCK_INPLACE(nx,ny,nz, nx1,ny1,nz1, nx_dst,ny_dst,nz_dst, a, 
 
   DO k = 1,nz_dst
      ip     = (k-1) *nxy    +(nz1-1) *nxy +(ny1-1)*nx +(nx1-1) +1
-     ip_dst = (k-1) *nxy_dst                                          +1
+     ip_dst = (k-1) *nxy_dst                                   +1
      DO j = 1,ny_dst
-!        wrk3d(ip_dst:ip_dst+nx_dst-1) = a(ip:ip+nx_dst-1)
         wrk1d(1:nx_dst)           = a(ip:ip+nx_dst-1)
         a(ip_dst:ip_dst+nx_dst-1) = wrk1d(1:nx_dst)
 
@@ -173,11 +172,39 @@ SUBROUTINE REDUCE_BLOCK_INPLACE(nx,ny,nz, nx1,ny1,nz1, nx_dst,ny_dst,nz_dst, a, 
      ENDDO
   ENDDO
 
-  ! ip = nx_dst*ny_dst*nz_dst 
-  ! a(1:ip) = wrk3d(1:ip)
-
   RETURN
 END SUBROUTINE REDUCE_BLOCK_INPLACE
+
+! #######################################################################
+! #######################################################################
+SUBROUTINE REDUCE_BLOCK(nx,ny,nz, nx1,ny1,nz1, nx_dst,ny_dst,nz_dst, a, wrk3d)
+
+  IMPLICIT NONE
+
+  TINTEGER,                               INTENT(IN)    :: nx,ny,nz, nx1,ny1,nz1, nx_dst,ny_dst,nz_dst
+  TREAL, DIMENSION(nx*ny*nz),             INTENT(INOUT) :: a
+  TREAL, DIMENSION(nx_dst*ny_dst*nz_dst), INTENT(INOUT) :: wrk3d
+
+! -------------------------------------------------------------------
+  TINTEGER j,k, nxy,nxy_dst, ip,ip_dst
+
+! -------------------------------------------------------------------
+  nxy     = nx    *ny
+  nxy_dst = nx_dst*ny_dst
+
+  DO k = 1,nz_dst
+     ip     = (k-1) *nxy    +(nz1-1) *nxy +(ny1-1)*nx +(nx1-1) +1
+     ip_dst = (k-1) *nxy_dst                                   +1
+     DO j = 1,ny_dst
+        wrk3d(ip_dst:ip_dst+nx_dst-1) = a(ip:ip+nx_dst-1)
+
+        ip     = ip     + nx
+        ip_dst = ip_dst + nx_dst
+     ENDDO
+  ENDDO
+
+  RETURN
+END SUBROUTINE REDUCE_BLOCK
 
 ! #######################################################################
 ! #######################################################################
