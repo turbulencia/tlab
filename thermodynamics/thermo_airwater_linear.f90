@@ -96,13 +96,16 @@ SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, xi,der1,der2)
 
   ELSE
 ! Formulation in terms of the exponential might lead to NAN because of too large numbers!
-!     dummy  =-C_1_R/thermo_param(inb_scal+1)
+!     dummy=-C_1_R/thermo_param(inb_scal+1)
 !     der1 = C_1_R / ( C_1_R + EXP(dummy *xi) ) 
+
+!     der2 = (der1-C_1_R) *der1 *dummy
      
      dummy= C_05_R /thermo_param(inb_scal+1)
      der1 = C_05_R *( C_1_R + TANH( dummy *xi ) )
      
-     der2 = (der1-C_1_R) *der1 *dummy
+     dummy= C_1_R /thermo_param(inb_scal+1)
+     der2 = (C_1_R-der1) *der1 *dummy
 
   ENDIF
   

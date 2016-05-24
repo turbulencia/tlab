@@ -20,7 +20,7 @@ def itnumber(filename):
     return int(filename.split(".",1)[1])
 
 if ( len(sys.argv) == 1 ):
-    print("Add filenames as arguments.")
+    print("Usage: python $0 list-of-files.")
     quit()
 
 filetype  = sys.argv[1].split(".",1)[0]

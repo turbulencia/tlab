@@ -15,7 +15,7 @@ def itnumber(filename):
     return int(main[len(main)-sizeofmask:len(main)])
 
 if ( len(sys.argv) == 1 ):
-    print("Add filenames as arguments.")
+    print("Usage: python $0 list-of-files.")
     quit()
 
 filenames = sorted(sys.argv[1:],key=itnumber)

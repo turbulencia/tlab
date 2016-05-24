@@ -373,7 +373,7 @@ PROGRAM VISUALS_MAIN
   DO it=1, itime_size
      itime = itime_vec(it)
 
-     WRITE(sRes,*) itime; WRITE(str,100) rtime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))//'. Physical time '//TRIM(ADJUSTL(str))
+     WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))//'.'
      CALL IO_WRITE_ASCII(lfile, sRes)
      
      IF ( iread_scal .EQ. 1 ) THEN ! Scalar variables
