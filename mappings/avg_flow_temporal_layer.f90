@@ -756,7 +756,6 @@ SUBROUTINE AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q,s,&
         CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s,          dudx,                      wrk1d(1,inb_scal_array+2))
 
 ! buoyancy terms
-        dummy = C_1_R /froude
         DO j = 1,jmax
            rB(j) = AVG_IK(imax,jmax,kmax, j, dudx, dx,dz, area)
            DO k = 1,kmax; DO i = 1,imax
@@ -765,11 +764,12 @@ SUBROUTINE AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q,s,&
               wrk3d(i,3,k) = (w(i,j,k)-rW(j))*(dudx(i,j,k)-rB(j))
            ENDDO; ENDDO
 
+           dummy = C_1_R /froude
            rB(j) = rB(j) *dummy
            
-           Bxx(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area) *dummy
-           Byy(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area) *dummy
-           Bzz(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area) *dummy
+           Bxx(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
+           Byy(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
+           Bzz(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
            
            Bxy(j) = Bxx(j)*body_vector(2) + Byy(j)*body_vector(1) ! body_vector includes the Froude
            Bxz(j) = Bxx(j)*body_vector(3) + Bzz(j)*body_vector(1)
