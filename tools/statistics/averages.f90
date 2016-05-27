@@ -1097,10 +1097,8 @@ PROGRAM AVERAGES
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 15 ) THEN 
 
-        txc(1:isize_field,5) = C_1_R
-
         CALL FI_DISSIPATION(i1,imode_fdm,imax,jmax,kmax,i1bc,j1bc,k1bc, & 
-             area,visc,dx,dy,dz,txc(:,5),u,v,w,txc(:,1), & 
+             area,visc,dx,dy,dz, u,v,w,txc(:,1), & 
              txc(:,2),txc(:,3),txc(:,4),mean,wrk1d,wrk2d,wrk3d)
 
         data(1)%field => txc(:,1); varname(1) = 'Eps'

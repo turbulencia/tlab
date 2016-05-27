@@ -9,7 +9,6 @@
 * Compressible cases have a bug with relaxation of BCs (SigmaInfJ and SigmaOut)
 * In avg_scal_temporal, add convective term and source Qss in transport eqn for Rss;
 * ALLTOALL when kmax=1 and ims_npro_i>1 does not work and was commented out.
-* Finish filters
 * Check the -qNOOVER in the intel compiler to force SIMD in pointers (NO OVERLAP MEMORY)
 * Memory reqs. in two-point statistics to be reduced.
 * Check random number generator in parallel mode; current decorrelation in rand_main.f90 might not be enough.

@@ -1,3 +1,5 @@
+#include "types.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -10,24 +12,23 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Calculates turbulent dissipation \tau'_{ij}u'_{ij}/\rho
+!# Calculates turbulent dissipation per unit volume \rho \epsilon = \tau'_{ij}u'_{ij}
 !# It assumes constant visocsity
 !#
 !########################################################################
 !# ARGUMENTS 
 !#
 !# ifluc    In     Flag to consider total or fluctuation field:
-!#                 0 => tau_ji * u_i,j / \rho
-!#                 1 => tau'_ij * u'_i,j / \rho
+!#                 0 => tau_ji * u_i,j
+!#                 1 => tau'_ij * u'_i,j 
 !#
 !########################################################################
 SUBROUTINE FI_DISSIPATION(ifluc, imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-     area, visc, dx, dy, dz, rho, u, v, w, eps, &
+     area, visc, dx, dy, dz, u, v, w, eps, &
      tmp1, tmp2, tmp3, mean2d, wrk1d, wrk2d, wrk3d)
 
   IMPLICIT NONE
 
-#include "types.h"
 #include "integers.h"
 
   TINTEGER imode_fdm, ifluc
@@ -36,7 +37,7 @@ SUBROUTINE FI_DISSIPATION(ifluc, imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, 
   TREAL area, visc
 
   TREAL, DIMENSION(*)              :: dx, dy, dz
-  TREAL, DIMENSION(imax,jmax,kmax) :: rho, u, v, w, eps
+  TREAL, DIMENSION(imax,jmax,kmax) :: u, v, w, eps
   TREAL, DIMENSION(imax,jmax,kmax) :: tmp1, tmp2, tmp3, wrk3d
   TREAL, DIMENSION(*)              :: wrk1d, wrk2d
 
@@ -267,7 +268,7 @@ SUBROUTINE FI_DISSIPATION(ifluc, imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, 
   DO k=1, kmax
      DO j=1, jmax
         DO i=1, imax
-           eps(i,j,k) = visc*eps(i,j,k)/rho(i,j,k)
+           eps(i,j,k) = visc*eps(i,j,k)
         ENDDO
      ENDDO
   ENDDO

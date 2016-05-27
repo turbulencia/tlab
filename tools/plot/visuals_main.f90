@@ -952,16 +952,10 @@ PROGRAM VISUALS_MAIN
 ! ###################################################################
         IF ( opt_vec(iv) .EQ. iscal_offset+15 ) THEN
 
-! Initialize the density field in arrat tmp5 if needed
-           IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
-              txc(:,5) = C_1_R
-           ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN ! not yet implemented
-           ENDIF
-                 
 ! turbulent dissipation rate into txc4 because I do not need the energy
            CALL IO_WRITE_ASCII(lfile,'Computing dissipation rate...')
            CALL FI_DISSIPATION(i1, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                area, visc, dx,dy,dz, txc(1,5),q(1,1),q(1,2),q(1,3), txc(1,1), &
+                area, visc, dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1), &
                 txc(1,2),txc(1,3),txc(1,4), wrk1d, wrk1d(1,6),wrk2d,wrk3d)
            txc(1:isize_field,1)=LOG(txc(1:isize_field,1)+C_SMALL_R)
 
