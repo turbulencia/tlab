@@ -76,12 +76,12 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
   TARGET :: q
 
 ! -------------------------------------------------------------------
-  TINTEGER i, j, k, is, ip
+  TINTEGER i,j,k, iq,is, ip, idummy,io_sizes(5)
   TREAL AVG1V1D, AVG_IK, prefactor, dummy
   TREAL diam_loc, thick_loc, ycenter, r1, r05, FLOW_JET_TEMPORAL
   TREAL var_max, var_min
 
-  CHARACTER*32 name, str
+  CHARACTER*32 name, str, varname(inb_vars)
   CHARACTER*128 line 
 
 ! Pointers to existing allocated space
@@ -105,6 +105,16 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
   r1        = C_1_R
   r05       = C_05_R
 
+! Prepare data for subarrays
+  DO iq = 1,inb_flow
+     WRITE(varname(iq),*) iq; varname(iq) = TRIM(ADJUSTL(varname(iq)))
+  ENDDO
+  DO is = 1,inb_scal
+     WRITE(varname(is+inb_flow),*) is; varname(is) = TRIM(ADJUSTL(varname(is)))
+  ENDDO
+  idummy = imax*buff_nps_jmin*kmax
+  io_sizes = (/idummy,1,idummy,1,1/) ! io_sizes(5) to be set below as needed
+
 ! ###################################################################
 ! Buffer zone treatment
 ! ###################################################################
@@ -123,14 +133,20 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
 ! -------------------------------------------------------------------
   IF ( buff_load .EQ. 1 ) THEN
         
-     IF ( buff_nps_jmin .GT. 0 ) THEN 
+     IF ( buff_nps_jmin .GT. 0 ) THEN
         name = 'flow.bcs.jmin'
         CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmin,kmax, &
              inb_flow, i0, isize_field, buffer_hb,                   wrk3d)
+        ! idummy = imax*buff_nps_jmin*kmax
+        ! io_sizes = (/idummy,1,idummy,1,inb_flow/)
+        ! CALL IO_READ_SUBARRAY8(i4, name, varname, buffer_hb, io_sizes, wrk3d)
+
         IF ( icalc_scal .EQ. 1 ) THEN
         name = 'scal.bcs.jmin'
         CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmin,kmax, &
              inb_scal, i0, isize_field, buffer_hb(1,1,1,inb_flow+1), wrk3d)
+        ! io_sizes = (/idummy,1,idummy,1,inb_scal/)
+        ! CALL IO_READ_SUBARRAY8(i4, name, varname(inb_flow+1), buffer_hb(1,1,1,inb_flow+1), io_sizes, wrk3d)
         ENDIF
      ENDIF
 
@@ -138,10 +154,16 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
         name = 'flow.bcs.jmax'
         CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmax,kmax, &
              inb_flow, i0, isize_field, buffer_ht,                   wrk3d)
+        ! idummy = imax*buff_nps_jmax*kmax
+        ! io_sizes = (/idummy,1,idummy,1,inb_flow/)
+        ! CALL IO_READ_SUBARRAY8(i5, name, varname, buffer_ht, io_sizes, wrk3d)
+
         IF ( icalc_scal .EQ. 1 ) THEN
         name = 'scal.bcs.jmax'
         CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmax,kmax, &
              inb_scal, i0, isize_field, buffer_ht(1,1,1,inb_flow+1), wrk3d)
+        ! io_sizes = (/idummy,1,idummy,1,inb_scal/)
+        ! CALL IO_READ_SUBARRAY8(i5, name, varname(inb_flow+1), buffer_ht(1,1,1,inb_flow+1), io_sizes, wrk3d)
         ENDIF
      ENDIF
 

@@ -359,7 +359,7 @@ PROGRAM DNS
 ! SUBARRAY FOR WRITE OF PLANES
 ! ###################################################################
 #ifdef USE_MPI
-  CALL DNS_MPIO_AUX(nplanes_i,nplanes_j,nplanes_k, planes_i,planes_k)
+  CALL DNS_MPIO_AUX
 #endif
 
 ! #######################################################################
@@ -628,32 +628,35 @@ END PROGRAM DNS
 ! ###################################################################
 #ifdef USE_MPI
 
-SUBROUTINE DNS_MPIO_AUX(nplanes_i,nplanes_j,nplanes_k, planes_i,planes_k)
+SUBROUTINE DNS_MPIO_AUX()
 
   USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total, imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : inb_flow_array, inb_scal_array
+  USE DNS_LOCAL,  ONLY : nplanes_i,nplanes_j,nplanes_k, planes_i,planes_k
+  USE DNS_LOCAL,  ONLY : buff_nps_jmin, buff_nps_jmax
   USE DNS_MPI
-
+  
   IMPLICIT NONE
 
 #include "mpif.h" 
 
-  TINTEGER, INTENT(IN):: nplanes_i,nplanes_j,nplanes_k, planes_i(*),planes_k(*)
-
 ! -----------------------------------------------------------------------
-  TINTEGER                :: ndims, idummy
+  TINTEGER                :: ndims, idummy, id
   TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
 
 ! #######################################################################
-  mpio_aux(:)%active = .FALSE.
+  mpio_aux(:)%active = .FALSE. ! defaults
   mpio_aux(:)%offset = 0
 
+! ###################################################################
+! Subarray information to write planes
+! ###################################################################
   idummy = inb_flow_array +inb_scal_array
 
-! ###################################################################
+  id = 1
   IF ( nplanes_k .GT. 0 ) THEN ! Saving full vertical xOy planes; writing only info of PE containing the first plane
-     IF ( ims_pro_k .EQ. ( planes_k(1) /kmax) ) mpio_aux(1)%active = .TRUE.
-     mpio_aux(1)%communicator = ims_comm_x
+     IF ( ims_pro_k .EQ. ( planes_k(1) /kmax) ) mpio_aux(id)%active = .TRUE.
+     mpio_aux(id)%communicator = ims_comm_x
      
      ndims = 2
      sizes(1)   = imax_total;   sizes(2)   = jmax_total *nplanes_k*idummy
@@ -661,14 +664,15 @@ SUBROUTINE DNS_MPIO_AUX(nplanes_i,nplanes_j,nplanes_k, planes_i,planes_k)
      offset(1)  = ims_offset_i; offset(2)  = 0
      
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
-          MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(1)%subarray, ims_err)
-     CALL MPI_Type_commit(mpio_aux(1)%subarray, ims_err)
+          MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
      
   ENDIF
 
+  id = 2
   IF ( nplanes_i .GT. 0 ) THEN ! Saving full vertical zOy planes; writing only info of PE containing the first plane
-     IF ( ims_pro_i .EQ.  ( planes_i(1) /imax) ) mpio_aux(2)%active = .TRUE.
-     mpio_aux(2)%communicator = ims_comm_z
+     IF ( ims_pro_i .EQ.  ( planes_i(1) /imax) ) mpio_aux(id)%active = .TRUE.
+     mpio_aux(id)%communicator = ims_comm_z
      
      ndims = 2
      sizes(1)   = jmax_total *nplanes_i*idummy; sizes(2)   = kmax_total 
@@ -676,23 +680,59 @@ SUBROUTINE DNS_MPIO_AUX(nplanes_i,nplanes_j,nplanes_k, planes_i,planes_k)
      offset(1)  = 0;                            offset(2)  = ims_offset_k
      
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
-          MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(2)%subarray, ims_err)
-     CALL MPI_Type_commit(mpio_aux(2)%subarray, ims_err)
+          MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
 
   ENDIF
 
+  id = 3
   IF ( nplanes_j .GT. 0 ) THEN ! Saving full blocks xOz planes
-     mpio_aux(3)%active = .TRUE.
-     mpio_aux(3)%communicator = MPI_COMM_WORLD
+     mpio_aux(id)%active = .TRUE.
+     mpio_aux(id)%communicator = MPI_COMM_WORLD
      
      ndims = 3 ! Subarray for the output of the 2D data
      sizes(1)  =imax_total;   sizes(2)   = nplanes_j*idummy; sizes(3)   = kmax_total
      locsize(1)=imax;         locsize(2) = nplanes_j*idummy; locsize(3) = kmax
+     offset(1) =ims_offset_i; offset(2)  = 0;                offset(3)  = ims_offset_k
+     
+     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+          MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+
+  ENDIF
+
+! ###################################################################
+! Subarray information to read and write buffer regions
+! ###################################################################
+  id = 4
+  IF ( buff_nps_jmin .GT. 0 ) THEN ! At the lower boundary
+     mpio_aux(id)%active = .TRUE.
+     mpio_aux(id)%communicator = MPI_COMM_WORLD
+     
+     ndims = 3
+     sizes(1)  =imax_total;   sizes(2)   = buff_nps_jmin; sizes(3)   = kmax_total
+     locsize(1)=imax;         locsize(2) = buff_nps_jmin; locsize(3) = kmax
      offset(1) =ims_offset_i; offset(2)  = 0;             offset(3)  = ims_offset_k
      
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4,  mpio_aux(3)%subarray, ims_err)
-     CALL MPI_Type_commit(mpio_aux(3)%subarray, ims_err)
+          MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+
+  ENDIF
+
+  id = 5
+  IF ( buff_nps_jmax .GT. 0 ) THEN ! At the upper boundary
+     mpio_aux(id)%active = .TRUE.
+     mpio_aux(id)%communicator = MPI_COMM_WORLD
+     
+     ndims = 3
+     sizes(1)  =imax_total;   sizes(2)   = buff_nps_jmax; sizes(3)   = kmax_total
+     locsize(1)=imax;         locsize(2) = buff_nps_jmax; locsize(3) = kmax
+     offset(1) =ims_offset_i; offset(2)  = 0;             offset(3)  = ims_offset_k
+     
+     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+          MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
 
   ENDIF
 
