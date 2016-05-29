@@ -37,9 +37,6 @@
 !# routine
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
      bcs_ht,bcs_hb,bcs_vi,bcs_vo, x,y,z,dx,dy,dz, q,s, txc, wrk3d)
 
@@ -107,13 +104,11 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
 
 ! Prepare data for subarrays
   DO iq = 1,inb_flow
-     WRITE(varname(iq),*) iq; varname(iq) = TRIM(ADJUSTL(varname(iq)))
+     WRITE(varname(iq),*) iq;          varname(iq) = TRIM(ADJUSTL(varname(iq)))
   ENDDO
   DO is = 1,inb_scal
      WRITE(varname(is+inb_flow),*) is; varname(is) = TRIM(ADJUSTL(varname(is)))
   ENDDO
-  idummy = imax*buff_nps_jmin*kmax
-  io_sizes = (/idummy,1,idummy,1,1/) ! io_sizes(5) to be set below as needed
 
 ! ###################################################################
 ! Buffer zone treatment
@@ -135,35 +130,31 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
         
      IF ( buff_nps_jmin .GT. 0 ) THEN
         name = 'flow.bcs.jmin'
-        CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmin,kmax, &
-             inb_flow, i0, isize_field, buffer_hb,                   wrk3d)
-        ! idummy = imax*buff_nps_jmin*kmax
-        ! io_sizes = (/idummy,1,idummy,1,inb_flow/)
-        ! CALL IO_READ_SUBARRAY8(i4, name, varname, buffer_hb, io_sizes, wrk3d)
-
+        ! CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmin,kmax, &
+        !      inb_flow, i0, isize_field, buffer_hb,                   wrk3d)
+        idummy = imax*buff_nps_jmin*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
+        CALL IO_READ_SUBARRAY8(i4, name, varname,             buffer_hb,                   io_sizes, wrk3d)
         IF ( icalc_scal .EQ. 1 ) THEN
         name = 'scal.bcs.jmin'
-        CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmin,kmax, &
-             inb_scal, i0, isize_field, buffer_hb(1,1,1,inb_flow+1), wrk3d)
-        ! io_sizes = (/idummy,1,idummy,1,inb_scal/)
-        ! CALL IO_READ_SUBARRAY8(i4, name, varname(inb_flow+1), buffer_hb(1,1,1,inb_flow+1), io_sizes, wrk3d)
+        ! CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmin,kmax, &
+        !      inb_scal, i0, isize_field, buffer_hb(1,1,1,inb_flow+1), wrk3d)
+        io_sizes(5) = inb_scal
+        CALL IO_READ_SUBARRAY8(i4, name, varname(inb_flow+1), buffer_hb(1,1,1,inb_flow+1), io_sizes, wrk3d)
         ENDIF
      ENDIF
 
      IF ( buff_nps_jmax .GT. 0 ) THEN 
         name = 'flow.bcs.jmax'
-        CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmax,kmax, &
-             inb_flow, i0, isize_field, buffer_ht,                   wrk3d)
-        ! idummy = imax*buff_nps_jmax*kmax
-        ! io_sizes = (/idummy,1,idummy,1,inb_flow/)
-        ! CALL IO_READ_SUBARRAY8(i5, name, varname, buffer_ht, io_sizes, wrk3d)
-
+        ! CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmax,kmax, &
+        !      inb_flow, i0, isize_field, buffer_ht,                   wrk3d)
+        idummy = imax*buff_nps_jmax*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
+        CALL IO_READ_SUBARRAY8(i5, name, varname,             buffer_ht,                   io_sizes, wrk3d)
         IF ( icalc_scal .EQ. 1 ) THEN
         name = 'scal.bcs.jmax'
-        CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmax,kmax, &
-             inb_scal, i0, isize_field, buffer_ht(1,1,1,inb_flow+1), wrk3d)
-        ! io_sizes = (/idummy,1,idummy,1,inb_scal/)
-        ! CALL IO_READ_SUBARRAY8(i5, name, varname(inb_flow+1), buffer_ht(1,1,1,inb_flow+1), io_sizes, wrk3d)
+        ! CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmax,kmax, &
+        !      inb_scal, i0, isize_field, buffer_ht(1,1,1,inb_flow+1), wrk3d)
+        io_sizes(5) = inb_scal
+        CALL IO_READ_SUBARRAY8(i5, name, varname(inb_flow+1), buffer_ht(1,1,1,inb_flow+1), io_sizes, wrk3d)
         ENDIF
      ENDIF
 
@@ -206,12 +197,16 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
         CALL BOUNDARY_INIT_HB(dx,dz, q,s, txc, buffer_hb)
 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.jmin.'//TRIM(ADJUSTL(name))
-        CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmin,kmax,&
-             inb_flow, isize_field, buffer_hb,                   wrk3d)
+        ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmin,kmax,&
+        !      inb_flow, isize_field, buffer_hb,                   wrk3d)
+        idummy = imax*buff_nps_jmin*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
+        CALL IO_WRITE_SUBARRAY8(i4, name, varname,             buffer_hb,                   io_sizes, wrk3d)
         IF ( icalc_scal .EQ. 1 ) THEN
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_scal))//'bcs.jmin.'//TRIM(ADJUSTL(name))
-        CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmin,kmax,&
-             inb_scal, isize_field, buffer_hb(1,1,1,inb_flow+1), wrk3d)
+        ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmin,kmax,&
+        !      inb_scal, isize_field, buffer_hb(1,1,1,inb_flow+1), wrk3d)
+        io_sizes(5) = inb_scal
+        CALL IO_WRITE_SUBARRAY8(i4, name, varname(inb_flow+1), buffer_hb(1,1,1,inb_flow+1), io_sizes, wrk3d)
         ENDIF
      ENDIF
 
@@ -219,12 +214,16 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
         CALL BOUNDARY_INIT_HT(dx,dz, q,s, txc, buffer_ht)
 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.jmax.'//TRIM(ADJUSTL(name))
-        CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmax,kmax,&
-             inb_flow, isize_field, buffer_ht,                   wrk3d)
+        ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmax,kmax,&
+        !      inb_flow, isize_field, buffer_ht,                   wrk3d)
+        idummy = imax*buff_nps_jmax*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
+        CALL IO_WRITE_SUBARRAY8(i5, name, varname,             buffer_ht,                   io_sizes, wrk3d)
         IF ( icalc_scal .EQ. 1 ) THEN
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_scal))//'bcs.jmax.'//TRIM(ADJUSTL(name))
-        CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmax,kmax,&
-             inb_scal, isize_field, buffer_ht(1,1,1,inb_flow+1), wrk3d)
+        ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmax,kmax,&
+        !      inb_scal, isize_field, buffer_ht(1,1,1,inb_flow+1), wrk3d)
+        io_sizes(5) = inb_scal
+        CALL IO_WRITE_SUBARRAY8(i5, name, varname(inb_flow+1), buffer_ht(1,1,1,inb_flow+1), io_sizes, wrk3d)
         ENDIF
      ENDIF
    

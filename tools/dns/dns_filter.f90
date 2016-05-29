@@ -30,7 +30,7 @@ SUBROUTINE DNS_FILTER(flag_save, y,dx,dy,dz, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
   LOGICAL flag_save
   TREAL, DIMENSION(*)             :: y, dx,dy,dz
   TREAL, DIMENSION(isize_field,*) :: q, s
-  TREAL, DIMENSION(isize_field,2) :: txc                ! ADM needs 2; else, 1.
+  TREAL, DIMENSION(isize_field,*) :: txc
   TREAL, DIMENSION(*)             :: wrk2d, wrk3d, vaux
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
 

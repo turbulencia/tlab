@@ -1,3 +1,5 @@
+#include "types.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -14,11 +16,6 @@
 !# the mean thickness
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-
 SUBROUTINE SCAL_PLANE(iflag, is, x,y,z,dx,dz, s, disp)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, jmax_total,kmax_total, isize_field, inb_scal
@@ -43,10 +40,12 @@ SUBROUTINE SCAL_PLANE(iflag, is, x,y,z,dx,dz, s, disp)
 
 ! -------------------------------------------------------------------
   TINTEGER i,j,k, inx2d,inx3d,inz3d
-  TINTEGER idummy, idsp, kdsp
+  TINTEGER idummy, idsp,kdsp, io_sizes(5)
   TREAL wx,wz, wxloc,wzloc, dummy, ycenter, thick_loc,delta_loc,mean_loc
   TREAL AVG_IK, FLOW_SHEAR_TEMPORAL
   TREAL xcenter,zcenter,rcenter, amplify
+
+  CHARACTER*32 varname(inb_scal)
 
 ! ###################################################################
   disp = C_0_R
@@ -64,9 +63,17 @@ SUBROUTINE SCAL_PLANE(iflag, is, x,y,z,dx,dz, s, disp)
 ! Broadband case
 ! -------------------------------------------------------------------
   IF      ( iflag .EQ. 4 .OR. iflag .EQ. 6 .OR. iflag .EQ. 8 ) THEN ! use s as aux array
-     idummy = jmax_total; jmax_total = 1
-     CALL DNS_READ_FIELDS('scal.rand', i1, imax,i1,kmax, inb_scal,is, isize_field, disp, s)
-     jmax_total = idummy
+#ifdef USE_MPI
+  CALL SCAL_MPIO_AUX
+#endif
+     ! idummy = jmax_total; jmax_total = 1
+     ! CALL DNS_READ_FIELDS('scal.rand', i1, imax,i1,kmax, inb_scal,is, isize_field, disp, s)
+     ! jmax_total = idummy
+     DO i = 1,inb_scal
+        WRITE(varname(i),*) i; varname(i) = TRIM(ADJUSTL(varname(i)))
+     ENDDO
+     idummy=imax*kmax; io_sizes = (/idummy,1,idummy,1,inb_scal/)
+     CALL IO_READ_SUBARRAY8(i1, 'scal.rand', varname, disp, io_sizes, s) ! using array s as aux array
 ! remove mean
      dummy = AVG_IK(imax,i1,kmax, i1, disp, dx,dz, area)
      disp = disp - dummy
@@ -163,3 +170,46 @@ SUBROUTINE SCAL_PLANE(iflag, is, x,y,z,dx,dz, s, disp)
 
   RETURN
 END SUBROUTINE SCAL_PLANE
+
+! ###################################################################
+! ###################################################################
+#ifdef USE_MPI
+
+SUBROUTINE SCAL_MPIO_AUX()
+
+  USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total, imax,jmax,kmax
+  USE DNS_MPI
+  
+  IMPLICIT NONE
+
+#include "mpif.h" 
+
+! -----------------------------------------------------------------------
+  TINTEGER                :: ndims, idummy, id
+  TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
+
+! #######################################################################
+  mpio_aux(:)%active = .FALSE. ! defaults
+  mpio_aux(:)%offset = 0
+
+! ###################################################################
+! Subarray information to read plane data
+! ###################################################################
+  id = 1
+
+  mpio_aux(id)%active = .TRUE.
+  mpio_aux(id)%communicator = MPI_COMM_WORLD
+  
+  ndims = 3
+  sizes(1)  =imax_total;   sizes(2)   = 1; sizes(3)   = kmax_total
+  locsize(1)=imax;         locsize(2) = 1; locsize(3) = kmax
+  offset(1) =ims_offset_i; offset(2)  = 0; offset(3)  = ims_offset_k
+  
+  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+       MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)
+  CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+  
+  RETURN
+END SUBROUTINE SCAL_MPIO_AUX
+
+#endif
