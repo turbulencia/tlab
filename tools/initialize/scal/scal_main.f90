@@ -118,6 +118,12 @@ PROGRAM INISCAL
 ! ###################################################################
   s = C_0_R
 
+#ifdef USE_MPI
+  CALL SCAL_MPIO_AUX ! Needed for options 4, 6, 8
+#else
+  io_aux(1)%offset = 52 ! header size in bytes
+#endif
+
 ! ###################################################################
 ! Non-reacting case
 ! ###################################################################
@@ -204,3 +210,47 @@ PROGRAM INISCAL
 
   STOP
 END PROGRAM INISCAL
+
+! ###################################################################
+! ###################################################################
+#ifdef USE_MPI
+
+SUBROUTINE SCAL_MPIO_AUX()
+
+  USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total, imax,jmax,kmax
+  USE DNS_MPI
+  
+  IMPLICIT NONE
+
+#include "mpif.h" 
+
+! -----------------------------------------------------------------------
+  TINTEGER                :: ndims, idummy, id
+  TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
+
+! #######################################################################
+  mpio_aux(:)%active = .FALSE. ! defaults
+  mpio_aux(:)%offset = 0
+
+! ###################################################################
+! Subarray information to read plane data
+! ###################################################################
+  id = 1
+
+  mpio_aux(id)%active = .TRUE.
+  mpio_aux(id)%communicator = MPI_COMM_WORLD
+  mpio_aux(:)%offset  = 52 ! size of header in bytes
+
+  ndims = 3
+  sizes(1)  =imax_total;   sizes(2)   = 1; sizes(3)   = kmax_total
+  locsize(1)=imax;         locsize(2) = 1; locsize(3) = kmax
+  offset(1) =ims_offset_i; offset(2)  = 0; offset(3)  = ims_offset_k
+  
+  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+       MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)
+  CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+  
+  RETURN
+END SUBROUTINE SCAL_MPIO_AUX
+
+#endif

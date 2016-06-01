@@ -350,6 +350,8 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   CALL VISUALS_MPIO_AUX(opt_format, subdomain)
+#else
+  io_aux(:)%offset = 0
 #endif
 
 ! ###################################################################

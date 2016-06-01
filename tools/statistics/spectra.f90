@@ -245,6 +245,8 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   CALL SPECTRA_MPIO_AUX(opt_main, opt_block)  
+#else
+  io_aux(:)%offset = 0
 #endif 
   
 ! -------------------------------------------------------------------

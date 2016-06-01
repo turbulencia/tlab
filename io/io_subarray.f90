@@ -1,11 +1,15 @@
 #include "types.h" 
 
+#define SIZEOFBYTE 1
+
 SUBROUTINE IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, data, sizes, work)
 
   USE DNS_TYPES,     ONLY : subarray_structure
   USE DNS_CONSTANTS, ONLY : lfile
 #ifdef USE_MPI
   USE DNS_MPI,       ONLY : mpio_aux
+#else
+  USE DNS_GLOBAL,    ONLY : io_aux
 #endif
 
   IMPLICIT NONE
@@ -27,6 +31,8 @@ SUBROUTINE IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, data, sizes, work)
 
 #ifdef USE_MPI
   TINTEGER :: mpio_status(MPI_STATUS_SIZE), mpio_fh, ims_err
+#else
+  TINTEGER :: ioffset_local
 #endif
 
 ! #######################################################################
@@ -55,7 +61,8 @@ SUBROUTINE IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, data, sizes, work)
      
 #else
 #include "dns_open_file.h"
-     WRITE(LOC_UNIT_ID) work(1:isize)
+     ioffset_local = io_aux(iflag_mode)%offset + 1
+     WRITE(LOC_UNIT_ID,POS=ioffset_local) work(1:isize)
      CLOSE(LOC_UNIT_ID)
      
 #endif
@@ -77,6 +84,8 @@ SUBROUTINE IO_READ_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
   USE DNS_CONSTANTS, ONLY : lfile
 #ifdef USE_MPI
   USE DNS_MPI,       ONLY : mpio_aux
+#else
+  USE DNS_GLOBAL,    ONLY : io_aux
 #endif
 
   IMPLICIT NONE
@@ -98,6 +107,8 @@ SUBROUTINE IO_READ_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
 
 #ifdef USE_MPI
   TINTEGER :: mpio_status(MPI_STATUS_SIZE), mpio_fh, ims_err
+#else
+  TINTEGER :: ioffset_local
 #endif
 
 ! #######################################################################
@@ -124,7 +135,8 @@ SUBROUTINE IO_READ_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
      
 #else
 #include "dns_open_file.h"
-     READ(LOC_UNIT_ID) work(1:isize)
+     ioffset_local = io_aux(iflag_mode)%offset + 1
+     READ(LOC_UNIT_ID,POS=ioffset_local) work(1:isize)
      CLOSE(LOC_UNIT_ID)
      
 #endif
@@ -148,6 +160,8 @@ SUBROUTINE IO_WRITE_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
   USE DNS_CONSTANTS, ONLY : lfile
 #ifdef USE_MPI
   USE DNS_MPI,       ONLY : mpio_aux
+#else
+  USE DNS_GLOBAL,    ONLY : io_aux
 #endif
 
   IMPLICIT NONE
@@ -169,6 +183,8 @@ SUBROUTINE IO_WRITE_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
 
 #ifdef USE_MPI
   TINTEGER :: mpio_status(MPI_STATUS_SIZE), mpio_fh, ims_err
+#else
+  TINTEGER :: ioffset_local
 #endif
 
 ! #######################################################################
@@ -197,7 +213,8 @@ SUBROUTINE IO_WRITE_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
      
 #else
 #include "dns_open_file.h"
-     WRITE(LOC_UNIT_ID) work(1:isize)
+     ioffset_local = io_aux(iflag_mode)%offset + 1
+     WRITE(LOC_UNIT_ID,POS=ioffset_local) work(1:isize)
      CLOSE(LOC_UNIT_ID)
      
 #endif
