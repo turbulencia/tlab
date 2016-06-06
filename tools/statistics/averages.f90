@@ -481,7 +481,8 @@ PROGRAM AVERAGES
               mean_i(is) = C_1_R; delta_i(is) = C_0_R; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
            ENDDO
            DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
-              CALL AVG_SCAL_TEMPORAL_LAYER(is, y, dx,dy,dz, q,s, s(1,is), &
+!              CALL AVG_SCAL_TEMPORAL_LAYER(is, y, dx,dy,dz, q,s, s(1,is), &
+              CALL AVG_SCAL_XZ(is, y, dx,dy,dz, q,s, s(1,is), &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
            ENDDO
 
@@ -505,7 +506,8 @@ PROGRAM AVERAGES
               dummy = C_0_R
               CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umax, dummy)
               mean_i(is) = (umax+umin)/froude; delta_i(is) = ABS(umax-umin)/froude; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
-              CALL AVG_SCAL_TEMPORAL_LAYER(is, y, dx,dy,dz, q,s, txc(1,7), &
+!              CALL AVG_SCAL_TEMPORAL_LAYER(is, y, dx,dy,dz, q,s, txc(1,7), &
+              CALL AVG_SCAL_XZ(is, y, dx,dy,dz, q,s, txc(1,7), &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
               
            ENDIF
@@ -527,7 +529,8 @@ PROGRAM AVERAGES
                  l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
                  CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,8))   
                  txc(:,8) = txc(:,8)/txc(:,7)
-                 CALL AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, txc(1,8), &
+!                 CALL AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, txc(1,8), &
+                 CALL AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, txc(1,8), &
                       txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
               ENDDO
            ENDIF

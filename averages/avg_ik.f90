@@ -32,7 +32,7 @@ TREAL FUNCTION AVG_IK(nx,ny,nz, j, a, dx,dz, area)
   TREAL,                      INTENT(IN) :: area
 
 ! -------------------------------------------------------------------
-  TINTEGER i, k, idsp, kdsp
+  TINTEGER i,k, idsp,kdsp
   TREAL sum
 
 ! ###################################################################
@@ -88,11 +88,12 @@ SUBROUTINE AVG_IK_V(nx,ny,nz, jm, a, dx,dz, avg, wrk, area)
   TREAL,                      INTENT(IN)    :: area
 
 ! -------------------------------------------------------------------
+  TINTEGER i,j,k, idsp,kdsp
+  TREAL sum
+
 #ifdef USE_MPI
   INTEGER len
 #endif
-
-  TINTEGER i, j, k, idsp, kdsp
 
 ! ###################################################################
 #ifdef USE_MPI
@@ -104,18 +105,20 @@ SUBROUTINE AVG_IK_V(nx,ny,nz, jm, a, dx,dz, avg, wrk, area)
 #endif
 
   avg = C_0_R
-
   DO k = 1,nz
      DO j = 1,jm
+        sum = C_0_R
         DO i = 1,nx
-           avg(j) = avg(j) + a(i,j,k)*dx(i+idsp)*dz(k+kdsp)
+           sum = sum + a(i,j,k)*dx(idsp+i)
         ENDDO
+        avg(j) = avg(j) + sum*dz(k+kdsp)
      ENDDO
   ENDDO
 
 #ifdef USE_MPI
   len = jm
-  CALL MPI_REDUCE(avg, wrk, len, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+!  CALL MPI_REDUCE(avg, wrk, len, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+  CALL MPI_ALLREDUCE(avg, wrk, len, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
   avg = wrk/area
 #else
   avg = avg/area
