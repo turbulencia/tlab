@@ -1,4 +1,5 @@
 #include "types.h"
+#include "dns_const.h"
 
 !########################################################################
 !# Tool/Library
@@ -13,60 +14,73 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!# itype      In    Flag indicating type of filter:
-!#                  1 Compact 4th order
-!#                  2 Explicit 6th order
-!#                  3 Explicit 4th order
-!#                  4 Explicit ADM
-!# tmp        In    Auxilar 3D array of size only used in ADM type
-!#
-!########################################################################
-SUBROUTINE OPR_FILTER_Y(itype, nx,ny,nz, j1bc,bcs_jmin,bcs_jmax, u, cy, tmp, wrk1d,wrk2d,wrk3d)
+SUBROUTINE OPR_FILTER_Y(imode_filter, nx,ny,nz, j1bc,bcs_jmin,bcs_jmax, u, cy, tmp, wrk1d,wrk2d,wrk3d)
   
+  USE DNS_GLOBAL, ONLY : jmax_total
+
   IMPLICIT NONE
 
-  TINTEGER itype, nx, ny, nz, j1bc, bcs_jmin, bcs_jmax
-  TREAL, DIMENSION(*)    :: u, tmp, cy, wrk2d,wrk3d
-  TREAL, DIMENSION(ny,*) :: wrk1d
-
+  TINTEGER,                       INTENT(IN)            :: imode_filter, nx,ny,nz, j1bc, bcs_jmin,bcs_jmax
+  TREAL, DIMENSION(nx*ny*nz),     INTENT(INOUT), TARGET :: u, wrk3d    ! in-place operation
+  TREAL, DIMENSION(jmax_total,6), INTENT(IN)            :: cy          ! Filter kernel information
+  TREAL, DIMENSION(*),            INTENT(INOUT)         :: wrk2d       ! Aux arrays
+  TREAL, DIMENSION(nx*ny*nz),     INTENT(INOUT)         :: tmp         ! Aux array needed in ADM type
+  TREAL, DIMENSION(jmax_total,*), INTENT(INOUT)         :: wrk1d
+ 
 ! -----------------------------------------------------------------------
   TINTEGER nxy, nxz
+
+  TREAL, DIMENSION(:), POINTER :: p_org, p_dst
 
 ! #######################################################################
   nxy = nx*ny 
   nxz = nx*nz
 
-!Make y-direction the last one
-  CALL DNS_TRANSPOSE(u, nxy, nz, nxy, wrk3d, nz)
-
-! Filter
-  IF ( itype .EQ. 1 ) THEN
-     CALL FILT4C_KERNEL(ny, nxz, wrk3d, u, j1bc, bcs_jmin, bcs_jmax, wrk1d, cy)
-     IF ( j1bc .EQ. 0 ) THEN
-        CALL TRIDPFS(ny,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
-        CALL TRIDPSS(ny,nxz, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u, wrk2d)
-     ELSE
-        CALL TRIDFS(ny,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL TRIDSS(ny, nxz, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), u)
-     ENDIF
-
-  ELSE IF ( itype .EQ. 2 ) THEN
-     CALL FILT6E_KERNEL(nxz, ny, j1bc, bcs_jmin, bcs_jmax, wrk3d, u)
-
-  ELSE IF ( itype .EQ. 3 ) THEN
-     CALL FILT4E_KERNEL(ny, nxz, j1bc, wrk3d, u, cy)
-
-  ELSE IF ( itype .EQ. 4 ) THEN
-     CALL FILTADM_KERNEL(ny, nxz, j1bc, wrk3d, u, tmp, cy)
-
+! -------------------------------------------------------------------
+! Make y-direction the last one
+! -------------------------------------------------------------------
+  IF ( nz .EQ. 1 ) THEN
+     p_org => u
+     p_dst => wrk3d
+  ELSE
+#ifdef USE_ESSL
+     CALL DGETMO       (u, nxy, nxy, nz, wrk3d, nz)
+#else
+     CALL DNS_TRANSPOSE(u, nxy, nz, nxy, wrk3d, nz)
+#endif
+     p_org => wrk3d
+     p_dst => u
   ENDIF
 
-! traspose back
-  CALL DNS_TRANSPOSE(u, nz, nxy, nz, wrk3d, nxy)
+! ###################################################################
+  IF      ( imode_filter .EQ. DNS_FILTER_COMPACT ) THEN; CALL FILT4C_KERNEL(jmax_total,nxz, p_org,p_dst, j1bc, bcs_jmin, bcs_jmax, wrk1d, cy)
+     IF ( j1bc .EQ. 0 ) THEN
+        CALL TRIDPFS(jmax_total,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
+        CALL TRIDPSS(jmax_total,nxz, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), p_dst, wrk2d)
+     ELSE
+        CALL TRIDFS(jmax_total,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+        CALL TRIDSS(jmax_total,nxz, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), p_dst)
+     ENDIF
 
-  u(1:nxy*nz) = wrk3d(1:nxy*nz)
+  ELSE IF ( imode_filter .EQ. DNS_FILTER_6E      ) THEN; CALL FILT6E_KERNEL (nxz,jmax_total, j1bc, bcs_jmin, bcs_jmax, p_org, p_dst)
+  ELSE IF ( imode_filter .EQ. DNS_FILTER_4E      ) THEN; CALL FILT4E_KERNEL (jmax_total,nxz, j1bc,                     p_org, p_dst, cy)
+  ELSE IF ( imode_filter .EQ. DNS_FILTER_ADM     ) THEN; CALL FILTADM_KERNEL(jmax_total,nxz, j1bc,                     p_org, p_dst, tmp, cy)
+  ENDIF
+
+! -------------------------------------------------------------------
+! Put arrays back in the order in which they came in
+! -------------------------------------------------------------------
+  IF ( nz .GT. 1 ) THEN
+#ifdef USE_ESSL
+     CALL DGETMO       (p_dst, nz, nz, nxy, p_org, nxy)
+#else
+     CALL DNS_TRANSPOSE(p_dst, nz, nxy, nz, p_org, nxy)
+#endif
+  ENDIF
+
+  u(1:nx*ny*nz) = wrk3d(1:nx*ny*nz)
+
+  NULLIFY(p_org,p_dst)
 
   RETURN
 END SUBROUTINE OPR_FILTER_Y

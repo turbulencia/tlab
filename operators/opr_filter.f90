@@ -54,63 +54,17 @@ SUBROUTINE OPR_FILTER(itype, nx,ny,nz, ibc_x,ibc_y,ibc_z, impi_id, u, cx,cy,cz, 
   TREAL,    DIMENSION(*)                         :: cx,cy,cz, wrk1d, wrk2d
   TREAL,    DIMENSION(isize_txc_field,*), TARGET :: txc
 
-! -------------------------------------------------------------------
-!  TINTEGER nxy
-
-!  TREAL, DIMENSION(:), POINTER :: p_a, p_b
-
 ! ###################################################################
-! -------------------------------------------------------------------
-! X direction
-! -------------------------------------------------------------------
   IF ( ibc_x(1) .EQ. 1 .AND. imax_total .GT. 1 ) THEN
      CALL OPR_FILTER_X(itype, nx,ny,nz, ibc_x(2),ibc_x(3),ibc_x(4), u, cx, txc(1,2), wrk1d,wrk2d,txc(1,1))
-!     CALL OPR_FILTER_X_OLD(itype, nx,ny,nz, ibc_x(2),ibc_x(3),ibc_x(4), u, cx, txc(1,2), wrk1d,wrk2d,txc(1,1))
   ENDIF
 
-! -------------------------------------------------------------------
-! Y direction
-! -------------------------------------------------------------------
   IF ( ibc_y(1) .EQ. 1 .AND. ny .GT. 1 ) THEN
      CALL OPR_FILTER_Y(itype, nx,ny,nz, ibc_y(2),ibc_y(3),ibc_y(4), u, cy, txc(1,2), wrk1d,wrk2d,txc(1,1))
   ENDIF
 
-! -------------------------------------------------------------------
-! Z direction
-! -------------------------------------------------------------------
   IF ( ibc_z(1) .EQ. 1 .AND. kmax_total .GT. 1 ) THEN
      CALL OPR_FILTER_Z(itype, nx,ny,nz, ibc_z(2),ibc_z(3),ibc_z(4), u, cz, txc(1,2), wrk1d,wrk2d,txc(1,1))
-
-! #ifdef USE_MPI
-!      IF ( ims_npro_k .GT. 1 ) THEN
-! ! Transpose Matrix u -> txc
-!         CALL DNS_MPI_TRPF_K(u, txc(1,1), ims_ds_k(1,impi_id), ims_dr_k(1,impi_id), &
-!              ims_ts_k(1,impi_id), ims_tr_k(1,impi_id))
-!         p_a => txc(:,1)
-!         p_b => u
-!         nxy = ims_size_k(impi_id)
-!      ELSE
-! #endif
-!         p_a => u
-!         p_b => txc(:,1)
-!         nxy = nx*ny
-! #ifdef USE_MPI
-!      ENDIF
-! #endif
-
-! ! Filter            
-!      CALL OPR_FILTER_Z_OLD(itype, nxy,kmax_total, ibc_z(2),ibc_z(3),ibc_z(4), p_a, cz, txc(1,2), wrk1d,wrk2d,p_b)
-
-! ! Transpose back Matrix txc -> u; we know that u=txc(1,1), check OPR_FILTER_Z
-! #ifdef USE_MPI
-!      IF ( ims_npro_k .GT. 1 ) THEN
-!         CALL DNS_MPI_TRPB_K(txc(1,1), u, ims_ds_k(1,impi_id), ims_dr_k(1,impi_id), &
-!              ims_ts_k(1,impi_id), ims_tr_k(1,impi_id))
-
-!      ENDIF
-! #endif
-!   NULLIFY(p_a,p_b)
-
   ENDIF
 
   RETURN

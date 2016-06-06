@@ -18,7 +18,7 @@
 !########################################################################
 SUBROUTINE SCAL_PLANE(iflag, is, x,y,z,dx,dz, s, disp)
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, jmax_total,kmax_total, isize_field, inb_scal
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, kmax_total
   USE DNS_GLOBAL, ONLY : iprof_i, thick_i, delta_i, mean_i, ycoor_i, prof_i
   USE DNS_GLOBAL, ONLY : area, scalex,scaley,scalez
   USE SCAL_LOCAL
@@ -63,9 +63,6 @@ SUBROUTINE SCAL_PLANE(iflag, is, x,y,z,dx,dz, s, disp)
 ! Broadband case
 ! -------------------------------------------------------------------
   IF      ( iflag .EQ. 4 .OR. iflag .EQ. 6 .OR. iflag .EQ. 8 ) THEN ! use s as aux array
-     ! idummy = jmax_total; jmax_total = 1
-     ! CALL DNS_READ_FIELDS('scal.rand', i1, imax,i1,kmax, inb_scal,is, isize_field, disp, s)
-     ! jmax_total = idummy
      WRITE(varname,*) is; varname = TRIM(ADJUSTL(varname))
      idummy=imax*kmax; io_sizes = (/idummy,1,idummy,1,1/)
      CALL IO_READ_SUBARRAY8(i1, 'scal.rand', varname, disp, io_sizes, s) ! using array s as aux array
