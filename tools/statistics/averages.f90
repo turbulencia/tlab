@@ -471,7 +471,8 @@ PROGRAM AVERAGES
         ENDIF
 
         IF ( icalc_flow .EQ. 1 ) THEN
-           CALL AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q, s, &
+!           CALL AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q, s, &
+           CALL AVG_FLOW_XZ(y,dx,dy,dz, q, s, &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
                 txc(1,7),txc(1,8),txc(1,9), mean, wrk1d,wrk2d,wrk3d)
         ENDIF
