@@ -40,7 +40,7 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(x,y,z,dx,dy,dz, q,s,l_q,l_hq,l_txc,l_tags, 
         l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
         CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,6))   
         txc(:,6) = txc(:,6)/txc(:,5)
-        CALL AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, txc(1,6), &
+        CALL AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, txc(1,6), &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4), mean, wrk1d,wrk2d,wrk3d)
      ENDDO
   ENDIF

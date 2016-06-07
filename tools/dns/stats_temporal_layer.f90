@@ -188,7 +188,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
            mean_i(is) = C_1_R; delta_i(is) = C_0_R; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
         ENDDO
         DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
-           CALL AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, s(1,is), &
+           CALL AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, s(1,is), &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
         ENDDO
 
@@ -212,7 +212,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
            dummy = C_0_R
            CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umax, dummy)
            mean_i(is) = (umax+umin)/froude; delta_i(is) = ABS(umax-umin)/froude; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
-           CALL AVG_SCAL_TEMPORAL_LAYER(is, y,dx,dy,dz, q,s, hq(:,1), &
+           CALL AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, hq(:,1), &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
            
         ENDIF
