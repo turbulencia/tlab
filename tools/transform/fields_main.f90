@@ -441,6 +441,7 @@ PROGRAM TRANSFIELDS
 ! Check grids. In the Oy direction, we allow to have a larger box
         jmax_aux = jmax_total; subdomain = 0
 
+! To be updated: we need to distinguish between periodic and nonperiodic cases.
 !        dummy = (x_dst(imax_total_dst)-x(imax_total)) / (x(imax_total)-x(imax_total-1))
         dummy = (scalex_dst-scalex) / (x(imax_total)-x(imax_total-1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
@@ -449,14 +450,14 @@ PROGRAM TRANSFIELDS
         ENDIF
         wrk1d(1:imax_total,1) = x(1:imax_total) ! we need extra space
         
-!        dummy = (y_dst(jmax_total_dst)-y(jmax_total)) / (y(jmax_total)-y(jmax_total-1))
-        dummy = (scaley_dst-scaley) / (y(jmax_total)-y(jmax_total-1))
+        dummy = (y_dst(jmax_total_dst)-y(jmax_total)) / (y(jmax_total)-y(jmax_total-1))
+!        dummy = (scaley_dst-scaley) / (y(jmax_total)-y(jmax_total-1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            IF ( dummy .GT. C_0_R ) THEN
               subdomain(4) = ABS(jmax_total_dst - jmax_total) ! additional planes at the top
               jmax_aux = jmax_aux + subdomain(4)
-!              dummy = (y_dst(jmax_total_dst)-y(jmax_total)) / INT(subdomain(4))
-              dummy = (scaley_dst-scaley) / INT(subdomain(4))
+              dummy = (y_dst(jmax_total_dst)-y(jmax_total)) / INT(subdomain(4))
+!              dummy = (scaley_dst-scaley) / INT(subdomain(4))
            ELSE
               CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oy scales are not equal at the end.')
               CALL DNS_STOP(DNS_ERROR_GRID_SCALE)

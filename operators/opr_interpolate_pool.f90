@@ -301,16 +301,23 @@ SUBROUTINE INTERPOLATE_1D(imax,kmax, imax_dst, i1bc, scalex, x_org,x_dst, u_org,
      IF ( i1bc .EQ. 0 ) THEN
         CALL percur(iopt, imax1, x_org, u_org(1,k), wrk(ip1),        kx, s, &
              nest, nx, wrk(ip2), wrk(ip3), fp, wrk(ip4), lwrk, wrk(ip5), ier)
+
+        IF ( ier .NE. 0 .AND. ier .NE. -1 ) THEN
+           WRITE(line, *) 'INTERPOLATE_1D. Percur error code = ', ier
+           CALL IO_WRITE_ASCII(efile, line)
+           CALL DNS_STOP(DNS_ERROR_CURFIT)
+        ENDIF
      ELSE
         CALL curfit(iopt, imax,  x_org, u_org(1,k), wrk(ip1), xb,xe, kx, s, &
              nest, nx, wrk(ip2), wrk(ip3), fp, wrk(ip4), lwrk, wrk(ip5), ier)
+
+        IF ( ier .NE. 0 .AND. ier .NE. -1 ) THEN
+           WRITE(line, *) 'INTERPOLATE_1D. Curfit error code = ', ier
+           CALL IO_WRITE_ASCII(efile, line)
+           CALL DNS_STOP(DNS_ERROR_CURFIT)
+        ENDIF
      ENDIF
 
-     IF ( ier .NE. 0 .AND. ier .NE. -1 ) THEN
-        WRITE(line, *) 'INTERPOLATE_1D. Curfit error code = ', ier
-        CALL IO_WRITE_ASCII(efile, line)
-        CALL DNS_STOP(DNS_ERROR_CURFIT)
-     ENDIF
 
      CALL splev(wrk(ip2),nx,wrk(ip3),kx,x_dst,u_dst(1,k), imax_dst, ier)
 
