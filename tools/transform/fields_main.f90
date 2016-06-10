@@ -387,11 +387,11 @@ PROGRAM TRANSFIELDS
 ! ###################################################################
      IF ( opt_main .EQ. 1 ) THEN
         IF ( subdomain(5) .NE. 1 .OR. subdomain(6) .NE. kmax_total) THEN
-           CALL IO_WRITE_ASCII(efile,'TRANSFORM. Cropping only in Ox and Oy.')
+           CALL IO_WRITE_ASCII(efile,'TRANSFORM. Cropping only in Oy.')
            CALL DNS_STOP(DNS_ERROR_UNDEVELOP)           
         ENDIF
-        IF ( subdomain(1) .LT. 1 .OR. subdomain(2) .GT. imax_total) THEN
-           CALL IO_WRITE_ASCII(efile,'TRANSFORM. Cropping out of bounds in Ox.')
+        IF ( subdomain(1) .NE. 1 .OR. subdomain(2) .NE. imax_total) THEN
+           CALL IO_WRITE_ASCII(efile,'TRANSFORM. Cropping only in Oy.')
            CALL DNS_STOP(DNS_ERROR_UNDEVELOP)           
         ENDIF
         IF ( subdomain(3) .LT. 1 .OR. subdomain(4) .GT. jmax_total) THEN
@@ -698,9 +698,9 @@ SUBROUTINE TRANS_CROP(nx,ny,nz, subdomain, a, b)
 
   IMPLICIT NONE
 
-  TINTEGER nx, ny, nz, subdomain(6)
-  TREAL, DIMENSION(nx,ny,nz)                                                   :: a
-  TREAL, DIMENSION(subdomain(2)-subdomain(1)+1,subdomain(4)-subdomain(3)+1,nz) :: b
+  TINTEGER nx,ny,nz, subdomain(6)
+  TREAL, DIMENSION(nx,ny,nz)                          :: a
+  TREAL, DIMENSION(nx,subdomain(4)-subdomain(3)+1,nz) :: b
   
 ! -----------------------------------------------------------------------
   TINTEGER j, k
@@ -708,7 +708,7 @@ SUBROUTINE TRANS_CROP(nx,ny,nz, subdomain, a, b)
 ! #######################################################################
   DO k = 1,nz
      DO j = subdomain(3),subdomain(4)
-        b(:,j-subdomain(3)+1,k) = a(subdomain(1):subdomain(2),j,k)
+        b(:,j-subdomain(3)+1,k) = a(:,j,k)
      ENDDO
   ENDDO
 

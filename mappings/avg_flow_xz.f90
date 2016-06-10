@@ -18,7 +18,7 @@
 SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
      dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL, MAX_PROF
+  USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, itransport, ibodyforce
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : itime, rtime
@@ -45,7 +45,8 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
 #include "mpif.h"
 #endif
 
-  TREAL, DIMENSION(*),                INTENT(IN)    :: y,dx,dy,dz
+  TREAL, DIMENSION(jmax),             INTENT(IN)    :: y
+  TREAL, DIMENSION(*),                INTENT(IN)    :: dx,dy,dz
   TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)    :: q, s
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, wrk3d
   TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: mean2d, wrk1d
@@ -56,21 +57,21 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
 ! -------------------------------------------------------------------
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 20
   TINTEGER i,j,k, is
-  TREAL AVG_IK, SIMPSON_NU, FLOW_SHEAR_TEMPORAL, UPPER_THRESHOLD, LOWER_THRESHOLD
+!  TREAL AVG_IK
+  TREAL SIMPSON_NU, FLOW_SHEAR_TEMPORAL, UPPER_THRESHOLD, LOWER_THRESHOLD
   TREAL delta_m, delta_m_p, delta_w
   TREAL ycenter
   TREAL rho_min, rho_max, delta_hb01, delta_ht01, delta_h01, mixing1, mixing2
   TREAL delta_hb25, delta_ht25, delta_h25
   TREAL u_friction, d_friction, a_friction
-  TREAL dil, dummy
-  TREAL tau11, tau22, tau33, tau12, tau23, tau13
-  TREAL up, vp, wp, upy, vpy, wpy
+  TREAL dummy
+  ! TREAL tau11, tau22, tau33, tau12, tau23, tau13
+  ! TREAL upy, vpy, wpy, dil
   TREAL c23, prefactor
-  TREAL r_prime, p_prime, T_prime, u_prime, v_prime, w_prime
 
   TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nmax
 
-  TREAL VAUXPOS(14), L_RATIO, Q_RATIO, WMEAN_INV, C_RATIO
+  TREAL VAUXPOS(14)
   TINTEGER ivauxpos
   CHARACTER*32 name, groupname(MAX_VARS_GROUPS)
   CHARACTER*250 line1, varname(MAX_VARS_GROUPS)
@@ -492,172 +493,225 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
   WRITE(line1,*) itime; line1 = 'Calculating flow statistics at It'//TRIM(ADJUSTL(line1))//'...'
   CALL IO_WRITE_ASCII(lfile,line1)
 
+  print*,'hi'
+
 ! ###################################################################
-! Main data
+! Averages (do not overwrite dudz; it cotains p for incompressible case)
 ! ###################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 2')
 #endif
 
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, u, dx,dz, rU(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, v, dx,dz, rV(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, w, dx,dz, rW(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, p, dx,dz, rP(1), wrk1d, area)
+
+  IF     ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
+     rR(:) = C_1_R; fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
+     
+  ELSEIF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN ! not yet developed
+     rR(:) = C_1_R; fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
+     
+  ELSE
+     dwdx = rho *u
+     dwdy = rho *v
+     dwdz = rho *w
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdx, dx,dz, fU(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdy, dx,dz, fV(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdz, dx,dz, fW(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, rho,  dx,dz, rR(1), wrk1d, area)
+     fU(:) = fU(:) /rR(:)
+     fV(:) = fV(:) /rR(:)
+     fW(:) = fW(:) /rR(:)
+
+  ENDIF
+
+  rUf(:) = rU(:) - fU(:)
+  rVf(:) = rV(:) - fV(:)
+  rWf(:) = rW(:) - fW(:)  
+
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, fU(1), fU_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, fV(1), fV_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, fW(1), fW_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rU(1), rU_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rV(1), rV_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rW(1), rW_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rP(1),  rP_y(1),  i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rR(1),  rR_y(1),  i0,i0, wrk1d,wrk2d,wrk3d)
+ 
+  pref(:) = rP(:) -C_05_R *( rP(jmax/2) +rP(jmax/2+1) )
+  pmod(:) =-rP_y(:) +body_vector(2) *rR(:)
+
+! #######################################################################
+! Main covariances (do not overwrite dudz; it contains p for incompressible case)
+! #######################################################################
   DO j = 1,jmax
-     rU(j) = AVG_IK(imax,jmax,kmax, j, u, dx, dz, area)
-     rV(j) = AVG_IK(imax,jmax,kmax, j, v, dx, dz, area)
-     rW(j) = AVG_IK(imax,jmax,kmax, j, w, dx, dz, area)
-
-     IF     ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
-        rR(j) = C_1_R; fU(j) = rU(j); fV(j) = rV(j); fW(j) = rW(j)
-
-     ELSEIF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN ! not yet developed
-        rR(j) = C_1_R; fU(j) = rU(j); fV(j) = rV(j); fW(j) = rW(j)
-
-     ELSE
-        rR(j) = AVG_IK(imax,jmax,kmax, j, rho, dx, dz, area)
-        DO k = 1,kmax; DO i = 1,imax
-           wrk3d(i,1,k) = rho(i,j,k)*u(i,j,k)
-           wrk3d(i,2,k) = rho(i,j,k)*v(i,j,k)
-           wrk3d(i,3,k) = rho(i,j,k)*w(i,j,k)
-        ENDDO; ENDDO
-        fU(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx, dz, area)/rR(j)
-        fV(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx, dz, area)/rR(j)
-        fW(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx, dz, area)/rR(j)
-
-     ENDIF
-
-     rUf(j) = rU(j) - fU(j)
-     rVf(j) = rV(j) - fV(j)
-     rWf(j) = rW(j) - fW(j)
-
-     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-        DO k = 1,kmax; DO i = 1,imax
-           up = u(i,j,k) - fU(j)
-           vp = v(i,j,k) - fV(j)
-           wp = w(i,j,k) - fW(j)
-           
-           wrk3d(i,1,k) = up**2
-           wrk3d(i,2,k) = vp**2
-           wrk3d(i,3,k) = wp**2
-           wrk3d(i,4,k) = up*vp
-           wrk3d(i,5,k) = up*wp
-           wrk3d(i,6,k) = vp*wp
-           
-        ENDDO; ENDDO
-
-     ELSE
-        DO k = 1,kmax; DO i = 1,imax
-           up = u(i,j,k) - fU(j)
-           vp = v(i,j,k) - fV(j)
-           wp = w(i,j,k) - fW(j)
-           
-           wrk3d(i,1,k) = rho(i,j,k)*up**2
-           wrk3d(i,2,k) = rho(i,j,k)*vp**2
-           wrk3d(i,3,k) = rho(i,j,k)*wp**2
-           wrk3d(i,4,k) = rho(i,j,k)*up*vp
-           wrk3d(i,5,k) = rho(i,j,k)*up*wp
-           wrk3d(i,6,k) = rho(i,j,k)*vp*wp
-              
-           wrk3d(i,7,k) = (rho(i,j,k) - rR(j))**2
-              
-        ENDDO; ENDDO
-        rR2(j) = AVG_IK(imax,jmax,kmax, i7, wrk3d, dx, dz, area)
-
-     ENDIF
-     Rxx(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx, dz, area)/rR(j)
-     Ryy(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx, dz, area)/rR(j)
-     Rzz(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx, dz, area)/rR(j)
-     Rxy(j) = AVG_IK(imax,jmax,kmax, i4, wrk3d, dx, dz, area)/rR(j)
-     Rxz(j) = AVG_IK(imax,jmax,kmax, i5, wrk3d, dx, dz, area)/rR(j)
-     Ryz(j) = AVG_IK(imax,jmax,kmax, i6, wrk3d, dx, dz, area)/rR(j)
-
+     dwdx(:,j,:) = u(:,j,:) - fU(j)
+     dwdy(:,j,:) = v(:,j,:) - fV(j)
+     dwdz(:,j,:) = w(:,j,:) - fW(j)
   ENDDO
+  
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     dvdx = dwdx *dwdx
+     dvdy = dwdy *dwdy
+     dvdz = dwdz *dwdz
+  ELSE
+     dvdx = dwdx *dwdx *rho
+     dvdy = dwdy *dwdy *rho
+     dvdz = dwdz *dwdz *rho
+  ENDIF
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, Rxx(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, Ryy(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, Rzz(1), wrk1d, area)
+  Rxx(:) = Rxx(:) /rR(:)
+  Ryy(:) = Ryy(:) /rR(:)
+  Rzz(:) = Rzz(:) /rR(:)
+
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     dvdx = dwdx *dwdy
+     dvdy = dwdx *dwdz
+     dvdz = dwdy *dwdz
+  ELSE
+     dvdx = dwdx *dwdy *rho
+     dvdy = dwdx *dwdz *rho
+     dvdz = dwdy *dwdz *rho
+  ENDIF
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, Rxy(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, Rxz(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, Ryz(1), wrk1d, area)
+  Rxy(:) = Rxy(:) /rR(:)
+  Rxz(:) = Rxz(:) /rR(:)
+  Ryz(:) = Ryz(:) /rR(:)
+
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Rxx(1), Rxx_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ryy(1), Ryy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Rzz(1), Rzz_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Rxy(1), Rxy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Rxz(1), Rxz_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ryz(1), Ryz_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     rR2(:) = C_0_R
+
+  ELSE
+     DO j = 1,jmax
+        wrk3d(:,j,:)= rho(:,j,:)-rR(j)
+     ENDDO
+     dvdx = wrk3d*wrk3d
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx,dx,dz, rR2(1), wrk1d, area)
+
+     CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rR2(1), rR2_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+
+! Density Fluctuations Budget
+     DO j = 1,jmax
+        dvdx(:,j,:) = u(:,j,:) - rU(j)
+        dvdy(:,j,:) = v(:,j,:) - rV(j)
+        dvdz(:,j,:) = w(:,j,:) - rW(j)
+     ENDDO
+     dvdx = dvdx *wrk3d
+     dvdy = dvdy *wrk3d
+     dvdz = dvdz *wrk3d
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, rey_flux_x(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, rey_flux_y(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, rey_flux_z(1), wrk1d, area)
+     dvdy = dvdy *wrk3d
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, rey_trp(1),    wrk1d, area)
+
+  ENDIF
+
+! Triple-velocity correlations
+  dvdx = dwdx *dwdx *dwdy
+  dvdy = dwdy *dwdy *dwdy
+  dvdz = dwdz *dwdz *dwdy
+  IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
+     dvdx = dvdx *rho
+     dvdy = dvdy *rho
+     dvdz = dvdz *rho
+  ENDIF
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, Txxy(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, Tyyy(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, Tzzy(1), wrk1d, area)
+  Ty1(:) = ( Txxy(:) + Tyyy(:) + Tzzy(:) )*C_05_R
+
+  dvdx = dwdx *dwdy *dwdy
+  dvdy = dwdx *dwdy *dwdz
+  dvdz = dwdy *dwdy *dwdz
+  IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
+     dvdx = dvdx *rho
+     dvdy = dvdy *rho
+     dvdz = dvdz *rho
+  ENDIF
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, Txyy(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, Txzy(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, Tyzy(1), wrk1d, area)
+
+! Pressure
+  DO j = 1,jmax
+     dvdz(:,j,:) = p(:,j,:) - rP(j)
+  ENDDO
+  wrk3d = dvdz *dvdz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, rP2(1), wrk1d, area)
+
+! Pressure-velocity correlation in TKE transport terms
+  dwdx = dwdx *dvdz
+  dwdy = dwdy *dvdz
+  dwdz = dwdz *dvdz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdx, dx,dz, wrk1d(1,2), wrk1d, area)
+  Txyy(:) = Txyy(:) + wrk1d(:,2)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdy, dx,dz, Ty2(1),     wrk1d, area)
+  Tyyy(:) = Tyyy(:) + Ty2(:) *C_2_R
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdz, dx,dz, wrk1d(1,2), wrk1d, area)
+  Tyzy(:) = Tyzy(:) + wrk1d(:,2)
 
 ! ###################################################################
-! Pressure; array p used only in this section
+! Pressure; array dudz containing p is used only up to this section
 !
 ! dudx = du/dx
 ! dudy = du/dy
-! dudz = 
+! dudz = p
 ! dvdx = dv/dx
 ! dvdy = dv/dy
-! dvdz = 
+! dvdz = p_prime
 ! dwdx =       ; dp/dx
 ! dwdy =       ; dp/dy
 ! dwdz = dw/dz ; dp/dz
 ! ###################################################################
-! mean and fluctutation
-  DO j = 1,jmax
-     rP(j) = AVG_IK(imax,jmax,kmax, j, p, dx, dz, area)
-
-     DO k = 1,kmax; DO i = 1,imax
-        wrk3d(i,1,k) = (p(i,j,k)-rP(j))**2
-     ENDDO; ENDDO
-     rP2(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx, dz, area)
-  ENDDO
-
 ! Pressure convection term
   CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, p, dwdx, i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, p, dwdy, i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, p, dwdz, i0,i0, wrk1d,wrk2d,wrk3d)
-  DO j = 1,jmax
-     DO k = 1,kmax; DO i = 1,imax
-        wrk3d(i,1,k) = u(i,j,k)*dwdx(i,j,k)+v(i,j,k)*dwdy(i,j,k)+w(i,j,k)*dwdz(i,j,k)
-     ENDDO; ENDDO
-     ugradp(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx, dz, area)
-  ENDDO
+  wrk3d = u *dwdx + v*dwdy + w*dwdz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, ugradp(1), wrk1d, area)
 
 ! Pressure Strain Terms
 ! 9 derivatives are here recomputed; ok, this routine is not called that often
   CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, u, dudx, i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, v, dvdy, i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, w, dwdz, i0,i0, wrk1d,wrk2d,wrk3d)
-
-  DO j = 1,jmax
-     DO k = 1,kmax; DO i = 1,imax
-        p_prime  = p(i,j,k)-rP(j)
-        wrk3d(i,1,k) = p_prime*dudx(i,j,k)
-        wrk3d(i,2,k) = p_prime*dvdy(i,j,k)               ! no need to substract rV_y
-        wrk3d(i,3,k) = p_prime*dwdz(i,j,k)
-     ENDDO; ENDDO
-
-     PIxx(j) = C_2_R*AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-     PIyy(j) = C_2_R*AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
-     PIzz(j) = C_2_R*AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
-
-  ENDDO
+  dudx = dvdz *dudx ! dvdz contains the pressure fluctuation
+  dvdy = dvdz *dvdy ! no need to substract rV_y
+  dwdz = dvdz *dwdz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dudx, dx,dz, PIxx(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, PIyy(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdz, dx,dz, PIzz(1), wrk1d, area)
+  PIxx(:) = PIxx(:) *C_2_R
+  PIyy(:) = PIyy(:) *C_2_R
+  PIzz(:) = PIzz(:) *C_2_R
 
   CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, u, dudy, i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, v, dvdx, i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, u, dwdz, i0,i0, wrk1d,wrk2d,wrk3d) !dudz not free
   CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, w, dwdx, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, v, dvdz, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, w, dwdy, i0,i0, wrk1d,wrk2d,wrk3d)
-
-  DO j = 1,jmax
-     DO k = 1,kmax; DO i = 1,imax
-        p_prime = p(i,j,k) - rP(j)
-        wrk3d(i,1,k) = p_prime*(dudy(i,j,k)+dvdx(i,j,k)) ! no need to substract rU_y
-        wrk3d(i,2,k) = p_prime*(dwdz(i,j,k)+dwdx(i,j,k))
-        wrk3d(i,3,k) = p_prime*(dvdz(i,j,k)+dwdy(i,j,k)) ! no need to substract rW_y
-     ENDDO; ENDDO
-
-     PIxy(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-     PIxz(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
-     PIyz(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
-     
-  ENDDO
-
-! Turbulent transport terms
-! Only the pressure-velocity-correlation contribution; rest below
-  DO j = 1,jmax
-     DO k = 1,kmax; DO i = 1,imax
-        wrk3d(i,1,k) = (p(i,j,k)-rP(j))*(u(i,j,k)-fU(j))
-        wrk3d(i,2,k) = (p(i,j,k)-rP(j))*(v(i,j,k)-fV(j))
-        wrk3d(i,3,k) = (p(i,j,k)-rP(j))*(w(i,j,k)-fW(j))
-     ENDDO; ENDDO
-     Txyy(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-     Ty2(j)  = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
-     Tyyy(j) = C_2_R*Ty2(j)
-     Tyzy(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
-  ENDDO
+  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, v, dudx, i0,i0, wrk1d,wrk2d,wrk3d) !dvdz not free
+  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, w, dvdy, i0,i0, wrk1d,wrk2d,wrk3d)
+  dudy = dvdz *(dudy +dvdx) ! no need to substract rU_y
+  dwdz = dvdz *(dwdz +dwdx)
+  dudx = dvdz *(dudx +dvdy) ! no need to substract rW_y
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dudy, dx,dz, PIxy(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdz, dx,dz, PIxz(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, dudx, dx,dz, PIyz(1), wrk1d, area)
 
 ! ###################################################################
 ! Thermodynamic variables
@@ -672,8 +726,8 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
 ! dwdy = dpdy
 ! dwdz = 
 ! ###################################################################
-#define T_LOC(i,j,k)     dwdx(i,j,k)
 #define GAMMA_LOC(i,j,k) dudx(i,j,k)
+#define T_LOC(i,j,k)     dwdx(i,j,k)
 #define S_LOC(i,j,k)     dwdz(i,j,k)
 
   IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
@@ -685,66 +739,94 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
      CALL THERMO_GAMMA(imax,jmax,kmax, s, T_LOC(1,1,1), GAMMA_LOC(1,1,1))
      CALL THERMO_ENTROPY(imax,jmax,kmax, s, T_LOC(1,1,1), p, S_LOC(1,1,1))
 
-     DO j = 1,jmax
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, T_LOC(1,1,1),    dx,dz, rT(1),     wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, e,               dx,dz, re(1),     wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, S_LOC(1,1,1),    dx,dz, rs(1),     wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, GAMMA_LOC(1,1,1),dx,dz, rGamma(1), wrk1d, area)
+
 ! Means
-        rT(j)     = AVG_IK(imax, jmax, kmax, j, T_LOC(1,1,1),     dx,dz, area)
-        re(j)     = AVG_IK(imax, jmax, kmax, j, e,                dx,dz, area)
-        rs(j)     = AVG_IK(imax, jmax, kmax, j, S_LOC(1,1,1),     dx,dz, area)
-        rGamma(j) = AVG_IK(imax, jmax, kmax, j, GAMMA_LOC(1,1,1), dx,dz, area)
+     dudy = rho *e
+     dudz = e + prefactor *p /rho
+     dvdx = rho *dudz
+     dvdy = rho *dwdz    ! rho *S_LOC
+     dvdz = rho *dwdx    ! rho *T_LOC
+     wrk3d= dudx *p /rho ! GAMMA_LOC *p /rho = speed of sound
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dudy, dx,dz, fe(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dudz, dx,dz, rh(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, fh(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, fs(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, fT(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,dx,dz, c2(1), wrk1d, area)
+     fe(:) = fe(:) /rR(:)
+     fh(:) = fh(:) /rR(:)
+     fs(:) = fs(:) /rR(:)
+     fT(:) = fT(:) /rR(:)
 
-        DO k = 1,kmax
-           DO i = 1,imax
-              wrk3d(i,1,k) = rho(i,j,k)*e(i,j,k)
-              wrk3d(i,2,k) = e(i,j,k) + prefactor*p(i,j,k)/rho(i,j,k)
-              wrk3d(i,3,k) = rho(i,j,k)*e(i,j,k) + prefactor*p(i,j,k)
-              wrk3d(i,4,k) = rho(i,j,k)*S_LOC(i,j,k)
-              wrk3d(i,5,k) = rho(i,j,k)*T_LOC(i,j,k)
-              wrk3d(i,6,k) = GAMMA_LOC(i,j,k)*p(i,j,k)/rho(i,j,k)
-           ENDDO
-        ENDDO
-        fe(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)/rR(j)
-        rh(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
-        fh(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)/rR(j)
-        fs(j) = AVG_IK(imax,jmax,kmax, i4, wrk3d, dx,dz, area)/rR(j)
-        fT(j) = AVG_IK(imax,jmax,kmax, i5, wrk3d, dx,dz, area)/rR(j)
-        c2(j) = AVG_IK(imax,jmax,kmax, i6, wrk3d, dx,dz, area) ! speed of sound
-      
-! Fluctuations  
-        DO k = 1,kmax
-           DO i = 1,imax
-              wrk3d(i,1,k) =            (S_LOC(i,j,k)-rs(j))**2
-              wrk3d(i,2,k) = rho(i,j,k)*(S_LOC(i,j,k)-fs(j))**2
-              wrk3d(i,3,k) =            (T_LOC(i,j,k)-rT(j))**2
-              wrk3d(i,4,k) = rho(i,j,k)*(T_LOC(i,j,k)-fT(j))**2
-              wrk3d(i,5,k) = (rho(i,j,k)-rR(j))*(T_LOC(i,j,k)-fT(j))
-           ENDDO
-        ENDDO
-        rs2(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-        fs2(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)/rR(j)
-        rT2(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
-        fT2(j) = AVG_IK(imax,jmax,kmax, i4, wrk3d, dx,dz, area)/rR(j)
-        rRT(j) = AVG_IK(imax,jmax,kmax, i5, wrk3d, dx,dz, area)
-     
-! Acoustic and entropic density and temperature fluctuations
-        DO k=1, kmax
-           DO i=1, imax
-              r_prime = rho(i,j,k)   - rR(j)
-              p_prime = p(i,j,k)     - rP(j)
-              T_prime = T_LOC(i,j,k) - fT(j)
-              rho_ac(j) = p_prime/c2(j)
-              rho_en(j) = r_prime - rho_ac(j)
-              T_ac(j) = fT(j)*(p_prime/rP(j)-rho_ac(j)/rR(j))
-              T_en(j) = T_prime - T_ac(j)
-              
-              wrk3d(i,1,k) = T_ac(j)*T_ac(j)
-              wrk3d(i,2,k) = T_en(j)*T_en(j)
-           ENDDO
-        ENDDO
+     CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rT(1),  rT_y(1),  i0,i0, wrk1d,wrk2d,wrk3d)
 
-        T_ac(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-        T_en(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
+! Turbulent Mach number        
+     M_t(:) = SQRT((Rxx(:)+Ryy(:)+Rzz(:)) /c2(:))
+
+! Covariances
+     DO j = 1,jmax
+        dudy(:,j,:) =                     (S_LOC(:,j,:)-rs(j))**2
+        dudz(:,j,:) = rho(:,j,:)         *(S_LOC(:,j,:)-fs(j))**2
+        dvdx(:,j,:) =                     (T_LOC(:,j,:)-rT(j))**2
+        dvdy(:,j,:) = rho(:,j,:)         *(T_LOC(:,j,:)-fT(j))**2
+        dvdz(:,j,:) =(rho(:,j,:) -rR(j)) *(T_LOC(:,j,:)-fT(j))
+        wrk3d(:,j,:)=(rho(:,j,:) -rR(j)) *(p(:,j,:)-rP(j))
+     ENDDO
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dudy, dx,dz, rs2(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dudz, dx,dz, fs2(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, rT2(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, fT2(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, rRT(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,dx,dz, rRP(1), wrk1d, area)
+     fs2(:) = fs2(:) /rR(:)
+     fT2(:) = fT2(:) /rR(:)
+
+     DO j = 1,jmax
+        IF ( rR2(j) .GT. C_0_R .AND. rP2(j) .GT. C_0_R ) THEN; rRP(j) = rRP(j)/SQRT(rR2(j)*rP2(j))
+        ELSE;                                                  rRP(j) = C_2_R; ENDIF
+        
+        IF ( rR2(j) .GT. C_0_R .AND. rT2(j) .GT. C_0_R ) THEN; rRT(j) = rRT(j)/SQRT(rR2(j)*rT2(j))
+        ELSE;                                                  rRT(j) = C_2_R; ENDIF
 
      ENDDO
+
+     DO j = 1,jmax
+        dudy(:,j,:) =             (e(:,j,:)-re(j))**2
+        dudz(:,j,:) = rho(:,j,:) *(e(:,j,:)-fe(j))**2
+     ENDDO
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dudy, dx,dz, re2(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dudz, dx,dz, fe2(1), wrk1d, area)
+     fe2(:) = fe2(:) /rR(:)
+
+     wrk3d = e + prefactor *p /rho
+     DO j = 1,jmax
+        dudy(:,j,:) =             (wrk3d(:,j,:)-rh(j))**2
+        dudz(:,j,:) = rho(:,j,:) *(wrk3d(:,j,:)-fh(j))**2
+     ENDDO
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dudy, dx,dz, rh2(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dudz, dx,dz, fh2(1), wrk1d, area)
+     fh2(:) = fh2(:) /rR(:)
+
+! Acoustic and entropic density and temperature fluctuations
+     DO j = 1,jmax
+        dudy(:,j,:) = p(:,j,:) - rP(j)                 ! pprime
+        dudz(:,j,:) = dudy(:,j,:) /c2(j)               ! rho_ac
+        dvdx(:,j,:) = rho(:,j,:) - rR(j) - dudz(:,j,:) ! rho_en = rprime - rho_ac
+        dvdy(:,j,:) =(dudy(:,j,:) /rP(j) - dudz(:,j,:) /rR(j) ) *fT(j) ! T_ac
+        dvdz(:,j,:) = T_LOC(:,j,:) - fT(j) - dvdy(:,j,:)               ! T_en = Tprime - T_ac
+     ENDDO
+     dudz = dudz *dudz
+     dvdx = dvdx *dvdx
+     dvdy = dvdy *dvdy
+     dvdz = dvdz *dvdz
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dudz, dx,dz, rho_ac(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, rho_en(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, T_ac(1),   wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, T_en(1),   wrk1d, area)
 
 ! -------------------------------------------------------------------
 ! Buoyancy frequency & saturation pressure
@@ -755,75 +837,63 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
      CALL THERMO_CP(imax, jmax, kmax, s, GAMMA_LOC(1,1,1), dvdx)
      
      DO j = 1,jmax
-        DO k = 1,kmax
-           DO i = 1,imax
-              wrk3d(i,1,k) = dwdy(i,j,k)/p(i,j,k)/GAMMA_LOC(i,j,k)-dvdy(i,j,k)/rho(i,j,k)
-              wrk3d(i,2,k) = C_1_R/dvdx(i,j,k)
-              wrk3d(i,3,k) = T_LOC(i,j,k)*( (MRATIO*p(i,j,k))**(C_1_R/GAMMA_LOC(i,j,k)-C_1_R) )
-           ENDDO
-        ENDDO
-        bfreq_fr(j) =-AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)*body_vector(2)
-        lapse_fr(j) =-AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)*body_vector(2)*prefactor
-        potem_fr(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)        
-        psat(j)     = AVG_IK(imax,jmax,kmax,  j, dvdz,  dx,dz, area)
+        dudy(:,j,:) = dwdy(:,j,:) /p(:,j,:) /GAMMA_LOC(:,j,:) - dvdy(:,j,:) /rho(:,j,:)
+        dvdx(:,j,:) = C_1_R /dvdx(:,j,:)
+        dvdy(:,j,:) = T_LOC(:,j,:) *( (MRATIO*p(:,j,:))**(C_1_R/GAMMA_LOC(:,j,:)-C_1_R) )
      ENDDO
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dudy, dx,dz, bfreq_fr(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, lapse_fr(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, potem_fr(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, psat(1),     wrk1d, area)
+     bfreq_fr(:) =-bfreq_fr(:) *body_vector(2)
+     lapse_fr(:) =-lapse_fr(:) *body_vector(2) *prefactor
      
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, T_LOC(1,1,1), dudz, &
-             i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s(1,1,1,2), dudy, &
-             i0,i0, wrk1d,wrk2d,wrk3d)
-        DO j = 1,jmax
-           DO k=1, kmax
-              DO i=1, imax
-                 L_RATIO = THERMO_AI(6,1,1)-THERMO_AI(6,1,3)&
-                      - (THERMO_AI(1,1,3)-THERMO_AI(1,1,1)+GRATIO*WGHT_INV(1))*T_LOC(i,j,k)
-                 L_RATIO = L_RATIO/(GRATIO*WGHT_INV(1)*T_LOC(i,j,k))
-                 Q_RATIO = C_1_R/(MRATIO*p(i,j,k)/dvdz(i,j,k)-C_1_R)
-                 WMEAN_INV = (Q_RATIO+C_1_R)*(C_1_R-s(i,j,k,1))*WGHT_INV(2)
-                 
-                 wrk3d(i,1,k) = (C_1_R+Q_RATIO*L_RATIO)/WMEAN_INV/&
-                      (GAMMA_LOC(i,j,k)/(GAMMA_LOC(i,j,k)-C_1_R)+Q_RATIO*L_RATIO*L_RATIO)
+#undef S_LOC
 
-                 wrk3d(i,2,k) = (dudz(i,j,k)-body_vector(2)*MRATIO*wrk3d(i,1,k))/T_LOC(i,j,k)*&
-                      (C_1_R+WGHT_INV(1)/WGHT_INV(2)*L_RATIO/(C_1_R-s(i,j,k,1)))
-                 wrk3d(i,2,k) = wrk3d(i,2,k) - WGHT_INV(2)/WMEAN_INV*dudy(i,j,k)
-                 
-                 C_RATIO = THERMO_AI(1,1,2)+s(i,j,k,1)*(THERMO_AI(1,1,3)-THERMO_AI(1,1,2))
-                 C_RATIO = (C_1_R-s(i,j,k,1))*GRATIO*WGHT_INV(2)/C_RATIO
-                 
-                 wrk3d(i,3,k) = T_LOC(i,j,k)/( (MRATIO*p(i,j,k))**C_RATIO )*exp(Q_RATIO*C_RATIO*L_RATIO)
-                 wrk3d(i,3,k) = wrk3d(i,3,k)*(C_1_R+Q_RATIO)**C_RATIO&
-                      /((MRATIO*p(i,j,k)/dvdz(i,j,k))**(Q_RATIO*C_RATIO))
-              ENDDO
-           ENDDO
-           lapse_eq(j) =-AVG_IK(imax,jmax,kmax, i1, wrk3d, dx, dz, area)*body_vector(2)*MRATIO
-           bfreq_eq(j) =-AVG_IK(imax,jmax,kmax, i2, wrk3d, dx, dz, area)*body_vector(2)
-           potem_eq(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx, dz, area)
-           
-        ENDDO
-     ELSE
-        DO j = 1,jmax
-           lapse_eq(j) = C_0_R
-           bfreq_eq(j) = C_0_R
-           potem_eq(j) = C_0_R
-        ENDDO
+#define L_RATIO   dvdx
+#define Q_RATIO   dvdy
+#define WMEAN_INV dwdy
+#define C_RATIO   dwdz
+
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, T_LOC(1,1,1), dudz, i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s(1,1,1,2),   dudy, i0,i0, wrk1d,wrk2d,wrk3d)
+
+        dummy     = THERMO_AI(1,1,3) -THERMO_AI(1,1,1) +GRATIO *WGHT_INV(1)
+        L_RATIO   = THERMO_AI(6,1,1) -THERMO_AI(6,1,3) - dummy *dwdx ! dwdx is T_LOC
+        L_RATIO   = L_RATIO /( GRATIO *WGHT_INV(1) *dwdx )
+        Q_RATIO   = C_1_R /( MRATIO *p /dvdz -C_1_R )         ! dvdz is psat
+        WMEAN_INV =(Q_RATIO+C_1_R) *( C_1_R -s(:,:,:,1) )*WGHT_INV(2)
+
+        wrk3d = ( C_1_R +Q_RATIO *L_RATIO )/ WMEAN_INV /&
+               ( dudx /( dudx -C_1_R ) +Q_RATIO *L_RATIO *L_RATIO ) ! dudx is GAMMA_LOC
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, lapse_eq(1), wrk1d, area)
+        lapse_eq(:) =-lapse_eq(:) *body_vector(2) *MRATIO
+
+        dummy = WGHT_INV(1) /WGHT_INV(2)
+        wrk3d = ( dudz -body_vector(2) *MRATIO *wrk3d )/dwdx &
+               *( C_1_R +dummy *L_RATIO /( C_1_R -s(:,:,:,1) ) )
+        wrk3d = wrk3d - WGHT_INV(2) /WMEAN_INV *dudy
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, bfreq_eq(1), wrk1d, area)
+        bfreq_eq(:) =-bfreq_eq(:) *body_vector(2)
+        
+        C_RATIO = THERMO_AI(1,1,2)+s(:,:,:,1)*(THERMO_AI(1,1,3)-THERMO_AI(1,1,2))
+        C_RATIO = (C_1_R-s(:,:,:,1))*GRATIO*WGHT_INV(2)/C_RATIO
+        wrk3d = dwdx /( (MRATIO*p)**C_RATIO ) *EXP( Q_RATIO *C_RATIO *L_RATIO )
+        wrk3d = wrk3d *( C_1_R +Q_RATIO )**C_RATIO /( (MRATIO *p /dvdz)**(Q_RATIO*C_RATIO) )
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, potem_eq(1), wrk1d, area)
+        
      ENDIF
      
-     CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rP(1), pmod(1), i0,i0, wrk1d,wrk2d,wrk3d)
-     DO j = 1,jmax
-        pmod(j) = -pmod(j)+body_vector(2)*rR(j)
-     ENDDO
-     
-#undef GAMMA_LOC
-#undef T_LOC
-#undef S_LOC
+#undef L_RATIO
+#undef Q_RATIO
+#undef WMEAN_INV
+#undef C_RATIO
 
   ENDIF
 
-  DO j = 1,jmax
-     pref(j) = rP(j)-C_05_R*(rP(jmax/2)+rP(jmax/2+1))
-  ENDDO
+#undef GAMMA_LOC
+#undef T_LOC
 
 ! ###################################################################
 ! Potential energy
@@ -842,51 +912,47 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
            ENDDO
         ENDDO
         IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-           CALL THERMO_AIRWATER_LINEAR(i1,jmax,i1, wrk1d(1,1), wrk1d(1,inb_scal_array))
+           CALL THERMO_AIRWATER_LINEAR(i1,jmax,i1, wrk1d, wrk1d(1,inb_scal_array))
         ENDIF
         wrk1d(:,inb_scal_array+1) = C_0_R
-        CALL FI_BUOYANCY(ibodyforce, i1,  jmax,i1,   body_param, wrk1d(1,1), wrk1d(1,inb_scal_array+2), wrk1d(1,inb_scal_array+1))
+        CALL FI_BUOYANCY(ibodyforce, i1,  jmax,i1,   body_param, wrk1d, wrk1d(1,inb_scal_array+2), wrk1d(1,inb_scal_array+1))
         CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s,          dudx,                      wrk1d(1,inb_scal_array+2))
 
 ! buoyancy terms
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, dudx, dx,dz, rB(1), wrk1d, area)
         DO j = 1,jmax
-           rB(j) = AVG_IK(imax,jmax,kmax, j, dudx, dx,dz, area)
-           DO k = 1,kmax; DO i = 1,imax
-              wrk3d(i,1,k) = (u(i,j,k)-rU(j))*(dudx(i,j,k)-rB(j))
-              wrk3d(i,2,k) = (v(i,j,k)-rV(j))*(dudx(i,j,k)-rB(j))
-              wrk3d(i,3,k) = (w(i,j,k)-rW(j))*(dudx(i,j,k)-rB(j))
-           ENDDO; ENDDO
-
-           dummy = C_1_R /froude
-           rB(j) = rB(j) *dummy
-           
-           Bxx(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-           Byy(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
-           Bzz(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
-           
-           Bxy(j) = Bxx(j)*body_vector(2) + Byy(j)*body_vector(1) ! body_vector includes the Froude
-           Bxz(j) = Bxx(j)*body_vector(3) + Bzz(j)*body_vector(1)
-           Byz(j) = Byy(j)*body_vector(3) + Bzz(j)*body_vector(2)
-           
-           Bxx(j) = C_2_R*Bxx(j)*body_vector(1)
-           Byy(j) = C_2_R*Byy(j)*body_vector(2)
-           Bzz(j) = C_2_R*Bzz(j)*body_vector(3)
-           
-           rSb(j) = C_0_R ! not yet developed
-
+           dvdx(:,j,:) = (u(:,j,:)-rU(j))*(dudx(:,j,:)-rB(j))
+           dvdy(:,j,:) = (v(:,j,:)-rV(j))*(dudx(:,j,:)-rB(j))
+           dvdz(:,j,:) = (w(:,j,:)-rW(j))*(dudx(:,j,:)-rB(j))
         ENDDO
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, Bxx(1), wrk1d, area)
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, Byy(1), wrk1d, area)
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, Bzz(1), wrk1d, area)
+        Bxy(:) = Bxx(:) *body_vector(2) + Byy(:) *body_vector(1) ! body_vector includes the Froude
+        Bxz(:) = Bxx(:) *body_vector(3) + Bzz(:) *body_vector(1)
+        Byz(:) = Byy(:) *body_vector(3) + Bzz(:) *body_vector(2)
         
+        Bxx(:) = C_2_R *Bxx(:) *body_vector(1)
+        Byy(:) = C_2_R *Byy(:) *body_vector(2)
+        Bzz(:) = C_2_R *Bzz(:) *body_vector(3)
+        
+        dummy = C_1_R /froude
+        rB(:) = rB(:) *dummy
+
+        rSb(:) = C_0_R ! not yet developed
+                
+        CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rB(1), rB_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+
      ENDIF
      
   ELSE ! Compressible case is not yet finished
-     DO j = 1,jmax
-        Bxx(j) =-rR(j)*rUf(j)*body_vector(1)
-        Byy(j) =-rR(j)*rVf(j)*body_vector(2)
-        Bzz(j) =-rR(j)*rWf(j)*body_vector(3)
-        rSb(j) = C_0_R
-     ENDDO
+     Bxx(:) =-rR(:)*rUf(:)*body_vector(1)
+     Byy(:) =-rR(:)*rVf(:)*body_vector(2)
+     Bzz(:) =-rR(:)*rWf(:)*body_vector(3)
+     rSb(:) = C_0_R
 
   ENDIF
+
 
 ! ###################################################################
 ! # Array storage of velocity gradient tensor
@@ -920,101 +986,594 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
 ! ###################################################################
 ! Vorticity
 ! ###################################################################
+  wrk3d = dwdy - dvdz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, vortx(1), wrk1d, area)
   DO j = 1,jmax
-     DO k = 1,kmax; DO i = 1,imax
-        wrk3d(i,1,k) = dwdy(i,j,k) - dvdz(i,j,k)
-        wrk3d(i,2,k) = dudz(i,j,k) - dwdx(i,j,k)
-        wrk3d(i,3,k) = dvdx(i,j,k) - dudy(i,j,k)
-     ENDDO; ENDDO
-     vortx(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-     vorty(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
-     vortz(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
-
-     DO k = 1,kmax; DO i = 1,imax
-        wrk3d(i,1,k) = (wrk3d(i,1,k)-vortx(j))**2
-        wrk3d(i,2,k) = (wrk3d(i,2,k)-vorty(j))**2
-        wrk3d(i,3,k) = (wrk3d(i,3,k)-vortz(j))**2
-     ENDDO; ENDDO
-     vortx2(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-     vorty2(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
-     vortz2(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
-
+     wrk3d(:,j,:) = ( wrk3d(:,j,:) - vortx(j) ) **2
   ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, vortx2(1), wrk1d, area)
 
-! ##################################################################
-! Averaged viscous shear-stress tensor
-! ##################################################################
+  wrk3d = dudz - dwdx
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, vorty(1), wrk1d, area)
+  DO j = 1,jmax
+     wrk3d(:,j,:) = ( wrk3d(:,j,:) - vorty(j) ) **2
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, vorty2(1), wrk1d, area)
+
+  wrk3d = dvdx - dudy
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, vortz(1), wrk1d, area)
+  DO j = 1,jmax
+     wrk3d(:,j,:) = ( wrk3d(:,j,:) - vortz(j) ) **2
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, vortz2(1), wrk1d, area)
+
+! ###################################################################
+! Derivatives Fluctuations. Taylor Microscales
+! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 4')
+  CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 11')
 #endif
 
+! -------------------------------------------------------------------
+! Longitudinal terms and Taylor microscales
+  wrk3d = dudx  *dudx
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, var_ux(1),  wrk1d, area)
+  wrk3d = wrk3d *dudx
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, skew_ux(1), wrk1d, area)
+  wrk3d = wrk3d *dudx
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, flat_ux(1), wrk1d, area)
+
   DO j = 1,jmax
-     IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
-        DO k = 1,kmax; DO i = 1,imax
-           dil = (dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))*c23
-              
-           wrk3d(i,1,k) = vis(i,j,k)*(C_2_R*dudx(i,j,k)-dil)
-           wrk3d(i,2,k) = vis(i,j,k)*(C_2_R*dvdy(i,j,k)-dil)
-           wrk3d(i,3,k) = vis(i,j,k)*(C_2_R*dwdz(i,j,k)-dil)
-           wrk3d(i,4,k) = vis(i,j,k)*(dudy(i,j,k)+dvdx(i,j,k))
-           wrk3d(i,5,k) = vis(i,j,k)*(dudz(i,j,k)+dwdx(i,j,k))
-           wrk3d(i,6,k) = vis(i,j,k)*(dvdz(i,j,k)+dwdy(i,j,k))
-        ENDDO; ENDDO
+     wrk3d(:,j,:) = (dvdy(:,j,:) -rV_y(j)) *(dvdy(:,j,:)-rV_y(j))
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, var_vy(1),  wrk1d, area)
+  DO j = 1,jmax
+     wrk3d(:,j,:) = wrk3d(:,j,:) *(dvdy(:,j,:)-rV_y(j))
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, skew_vy(1), wrk1d, area)
+  DO j = 1,jmax
+     wrk3d(:,j,:) = wrk3d(:,j,:) *(dvdy(:,j,:)-rV_y(j))
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, flat_vy(1), wrk1d, area)
 
+  wrk3d = dwdz  *dwdz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, var_wz(1),  wrk1d, area)
+  wrk3d = wrk3d *dwdz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, skew_wz(1), wrk1d, area)
+  wrk3d = wrk3d *dwdz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, flat_wz(1), wrk1d, area)
+
+  DO j = 1,jmax
+     IF ( var_ux(j) .GT. C_0_R ) THEN
+        lxx(j) = SQRT(Rxx(j)/var_ux(j))
+        skew_ux(j) = skew_ux(j) / var_ux(j)**C_1_5_R
+        flat_ux(j) = flat_ux(j) / var_ux(j)**C_2_R
      ELSE
-        DO k = 1,kmax; DO i=1,imax
-           dil = (dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))*c23
-              
-           wrk3d(i,1,k) = C_2_R*dudx(i,j,k)-dil
-           wrk3d(i,2,k) = C_2_R*dvdy(i,j,k)-dil
-           wrk3d(i,3,k) = C_2_R*dwdz(i,j,k)-dil
-           wrk3d(i,4,k) = dudy(i,j,k)+dvdx(i,j,k)
-           wrk3d(i,5,k) = dudz(i,j,k)+dwdx(i,j,k)
-           wrk3d(i,6,k) = dvdz(i,j,k)+dwdy(i,j,k)
-        ENDDO; ENDDO
-
+        lxx(j) = C_BIG_R
+        skew_ux(j) = C_BIG_R
+        flat_ux(j) = C_BIG_R
+     ENDIF
+     IF ( var_vy(j) .GT. C_0_R ) THEN
+        lyy(j) = SQRT(Ryy(j)/var_vy(j))
+        skew_vy(j) = skew_vy(j) / var_vy(j)**C_1_5_R
+        flat_vy(j) = flat_vy(j) / var_vy(j)**C_2_R
+     ELSE
+        lyy(j) = C_BIG_R
+        skew_vy(j) = C_BIG_R
+        flat_vy(j) = C_BIG_R
+     ENDIF
+     IF ( var_wz(j) .GT. C_0_R ) THEN
+        lzz(j) = SQRT(Rzz(j)/var_wz(j))
+        skew_wz(j) = skew_wz(j) / var_wz(j)**C_1_5_R
+        flat_wz(j) = flat_wz(j) / var_wz(j)**C_2_R
+     ELSE
+        lzz(j) = C_BIG_R
+        skew_wz(j) = C_BIG_R
+        flat_wz(j) = C_BIG_R
      ENDIF
 
-     Tau_xx(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area) *visc
-     Tau_yy(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area) *visc
-     Tau_zz(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area) *visc
-     Tau_xy(j) = AVG_IK(imax,jmax,kmax, i4, wrk3d, dx,dz, area) *visc
-     Tau_xz(j) = AVG_IK(imax,jmax,kmax, i5, wrk3d, dx,dz, area) *visc
-     Tau_yz(j) = AVG_IK(imax,jmax,kmax, i6, wrk3d, dx,dz, area) *visc
+  ENDDO
+
+! -------------------------------------------------------------------
+! Lateral terms U
+  DO j = 1,jmax
+     wrk3d(:,j,:) = (dudy(:,j,:) -rU_y(j)) *(dudy(:,j,:)-rU_y(j))
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, var_uy(1),  wrk1d, area)
+  DO j = 1,jmax
+     wrk3d(:,j,:) = wrk3d(:,j,:) *(dudy(:,j,:)-rU_y(j))
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, skew_uy(1), wrk1d, area)
+  DO j = 1,jmax
+     wrk3d(:,j,:) = wrk3d(:,j,:) *(dudy(:,j,:)-rU_y(j))
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, flat_uy(1), wrk1d, area)
+
+  wrk3d = dudz  *dudz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, var_uz(1),  wrk1d, area)
+  wrk3d = wrk3d *dudz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, skew_uz(1), wrk1d, area)
+  wrk3d = wrk3d *dudz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, flat_uz(1), wrk1d, area)
+
+  DO j = 1,jmax
+     IF ( var_uy(j) .GT. C_0_R ) THEN
+        skew_uy(j) = skew_uy(j) / var_uy(j)**C_1_5_R
+        flat_uy(j) = flat_uy(j) / var_uy(j)**C_2_R
+     ELSE
+        skew_uy(j) = C_BIG_R
+        flat_uy(j) = C_BIG_R
+     ENDIF
+     IF ( var_uz(j) .GT. C_0_R ) THEN
+        skew_uz(j) = skew_uz(j) / var_uz(j)**C_1_5_R
+        flat_uz(j) = flat_uz(j) / var_uz(j)**C_2_R
+     ELSE
+        skew_uz(j) = C_BIG_R
+        flat_uz(j) = C_BIG_R
+     ENDIF
+  ENDDO
+
+! -------------------------------------------------------------------
+! Lateral terms V
+  wrk3d = dvdx  *dvdx
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, var_vx(1),  wrk1d, area)
+  wrk3d = wrk3d *dvdx
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, skew_vx(1), wrk1d, area)
+  wrk3d = wrk3d *dvdx
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, flat_vx(1), wrk1d, area)
+
+  wrk3d = dvdz  *dvdz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, var_vz(1),  wrk1d, area)
+  wrk3d = wrk3d *dvdz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, skew_vz(1), wrk1d, area)
+  wrk3d = wrk3d *dvdz
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, flat_vz(1), wrk1d, area)
+
+  DO j = 1,jmax
+     IF ( var_vx(j) .GT. C_0_R ) THEN
+        skew_vx(j) = skew_vx(j) / var_vx(j)**C_1_5_R
+        flat_vx(j) = flat_vx(j) / var_vx(j)**C_2_R
+     ELSE
+        skew_vx(j) = C_BIG_R
+        flat_vx(j) = C_BIG_R
+     ENDIF
+     IF ( var_vz(j) .GT. C_0_R ) THEN
+        skew_vz(j) = skew_vz(j) / var_vz(j)**C_1_5_R
+        flat_vz(j) = flat_vz(j) / var_vz(j)**C_2_R
+     ELSE
+        skew_vz(j) = C_BIG_R
+        flat_vz(j) = C_BIG_R
+     ENDIF
 
   ENDDO
 
+! -------------------------------------------------------------------
+! Lateral terms W
+  wrk3d = dwdx  *dwdx
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, var_wx(1),  wrk1d, area)
+  wrk3d = wrk3d *dwdx
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, skew_wx(1), wrk1d, area)
+  wrk3d = wrk3d *dwdx
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, flat_wx(1), wrk1d, area)
+
+  DO j = 1,jmax
+     wrk3d(:,j,:) = (dwdy(:,j,:) -rW_y(j)) *(dwdy(:,j,:)-rW_y(j))
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, var_wy(1),  wrk1d, area)
+  DO j = 1,jmax
+     wrk3d(:,j,:) = wrk3d(:,j,:) *(dwdy(:,j,:)-rW_y(j))
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, skew_wy(1), wrk1d, area)
+  DO j = 1,jmax
+     wrk3d(:,j,:) = wrk3d(:,j,:) *(dwdy(:,j,:)-rW_y(j))
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, flat_wy(1), wrk1d, area)
+
+  DO j = 1,jmax
+     IF ( var_wx(j) .GT. C_0_R ) THEN
+        skew_wx(j) = skew_wx(j) / var_wx(j)**C_1_5_R
+        flat_wx(j) = flat_wx(j) / var_wx(j)**C_2_R
+     ELSE
+        skew_wx(j) = C_BIG_R
+        flat_wx(j) = C_BIG_R
+     ENDIF
+     IF ( var_wy(j) .GT. C_0_R ) THEN
+        skew_wy(j) = skew_wy(j) / var_wy(j)**C_1_5_R
+        flat_wy(j) = flat_wy(j) / var_wy(j)**C_2_R
+     ELSE
+        skew_wy(j) = C_BIG_R
+        flat_wy(j) = C_BIG_R
+     ENDIF
+
+  ENDDO
+
+! -------------------------------------------------------------------
+! Dilatation fluctuation
+  wrk3d = dudx + dvdy + dwdz
+  DO j = 1,jmax
+     wrk3d(:,j,:) = (wrk3d(:,j,:) -rV_y(j)) *(wrk3d(:,j,:) -rV_y(j))
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, var_dil(1), wrk1d, area)
+
+! ###################################################################
+! Density Fluctuations Budget
+! ###################################################################
+  IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
+     wrk3d = dudx + dvdy + dwdz
+     DO j = 1,jmax
+        wrk3d(:,j,:) = ( wrk3d(:,j,:) -rV_y(j) ) *( rho(:,j,:)-rR(j) )
+     ENDDO
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, rey_dil1(1), wrk1d, area)
+
+     DO j = 1,jmax
+        wrk3d(:,j,:) = wrk3d(:,j,:) *( rho(:,j,:)-rR(j) )
+     ENDDO
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, rey_dil2(1), wrk1d, area)
+
+  ENDIF
+
 ! ##################################################################
-! Y Mean Derivatives
+! Mean viscous dissipation rate
 ! ##################################################################
-#ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 5')
-#endif
+  wrk3d = dudx **2 + dvdy **2 + dwdz **2 + C_05_R*( (dudy+dvdx)**2 + (dudz+dwdx)**2 + (dvdz+dwdy)**2 )&
+        - (dudx+dvdy+dwdz)**2 /C_3_R
 
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Rxx(1), Rxx_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ryy(1), Ryy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Rzz(1), Rzz_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Rxy(1), Rxy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Rxz(1), Rxz_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ryz(1), Ryz_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Phi(1), wrk1d, area)
+  Phi(:) = Phi(:) *visc *C_2_R
 
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, fU(1), fU_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, fV(1), fV_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, fW(1), fW_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rU(1), rU_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rV(1), rV_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rW(1), rW_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+! ##################################################################
+! Viscous shear-stress tensor
+! ##################################################################
+  wrk3d = dudx *C_2_R -dvdy -dwdz
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_xx(1), wrk1d, area)
+  Tau_xx(:) = Tau_xx(:) *visc *c23
 
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rP(1),  rP_y(1),  i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rT(1),  rT_y(1),  i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rR(1),  rR_y(1),  i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rR2(1), rR2_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  wrk3d = dwdz *C_2_R -dvdy -dudx
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_zz(1), wrk1d, area)
+  Tau_zz(:) = Tau_zz(:) *visc *c23
+
+  wrk3d = dvdy *C_2_R -dudx -dwdz
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_yy(1), wrk1d, area)
+  DO j = 1,jmax ! fluctuation tau22'
+     dvdy(:,j,:) = ( wrk3d(:,j,:) - Tau_yy(j) ) *c23
+  ENDDO
+  Tau_yy(:) = Tau_yy(:) *visc *c23
+
+  wrk3d = dudy +dvdx
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_xy(1), wrk1d, area)
+  DO j = 1,jmax ! fluctuation tau12'
+     dudy(:,j,:) = wrk3d(:,j,:) - Tau_xy(j)
+  ENDDO
+  Tau_xy(:) = Tau_xy(:) *visc
+
+  wrk3d = dudz +dwdx
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_xz(1), wrk1d, area)
+  Tau_xz(:) = Tau_xz(:) *visc
+
+  wrk3d = dvdz +dwdy
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_yz(1), wrk1d, area)
+  DO j = 1,jmax ! fluctuation tau23'
+     dwdy(:,j,:) = wrk3d(:,j,:) - Tau_yz(j)
+  ENDDO
+  Tau_yz(:) = Tau_yz(:) *visc
 
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tau_xy(1), Tau_xy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tau_yy(1), Tau_yy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tau_yz(1), Tau_yz_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
 
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rB(1), rB_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+! -------------------------------------------------------------------
+! Contribution to turbulent transport terms
+  DO j = 1,jmax
+     wrk3d(:,j,:) = dudy(:,j,:) *( u(:,j,:) -fU(j) ) ! -2*u'*tau12'
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d(1,2), wrk1d, area)
+  Txxy(:) = Txxy(:) - wrk1d(:,2) *visc *C_2_R
+  Ty3(:)  = Ty3(:)  - wrk1d(:,2) *visc 
+
+  DO j = 1,jmax
+     wrk3d(:,j,:) = dvdy(:,j,:) *( v(:,j,:) -fV(j) ) ! -2*v'*tau22'
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d(1,2), wrk1d, area)
+  Tyyy(:) = Tyyy(:) - wrk1d(:,2) *visc *C_2_R
+  Ty3(:)  = Ty3(:)  - wrk1d(:,2) *visc       
+
+  DO j = 1,jmax
+     wrk3d(:,j,:) = dwdy(:,j,:) *( w(:,j,:) -fW(j) ) ! -2*w'*tau23'
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d(1,2), wrk1d, area)
+  Tzzy(:) = Tzzy(:) - wrk1d(:,2) *visc *C_2_R
+  Ty3(:)  = Ty3(:)  - wrk1d(:,2) *visc 
+
+  DO j = 1,jmax
+     wrk3d(:,j,:) = dvdy(:,j,:) *( u(:,j,:) -fU(j) ) + dudy(:,j,:) *( v(:,j,:) -fV(j) )! -u'*tau22' -v'*tau12'
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d(1,2), wrk1d, area)
+  Txyy(:) = Txyy(:) - wrk1d(:,2) *visc
+
+  DO j = 1,jmax
+     wrk3d(:,j,:) = dwdy(:,j,:) *( u(:,j,:) -fU(j) ) + dudy(:,j,:) *( w(:,j,:) -fW(j) )! -u'*tau23' -w'*tau12'
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d(1,2), wrk1d, area)
+  Txzy(:) = Txzy(:) - wrk1d(:,2) *visc
+
+  DO j = 1,jmax
+     wrk3d(:,j,:) = dwdy(:,j,:) *( v(:,j,:) -fV(j) ) + dvdy(:,j,:) *( w(:,j,:) -fW(j) )! -v'*tau23' -w'*tau22'
+  ENDDO
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d(1,2), wrk1d, area)
+  Tyzy(:) = Tyzy(:) - wrk1d(:,2) *visc
+
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Txxy(1), Txxy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tyyy(1), Tyyy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tzzy(1), Tzzy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Txyy(1), Txyy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Txzy(1), Txzy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tyzy(1), Tyzy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ty1(1), Ty1_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ty2(1), Ty2_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ty3(1), Ty3_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+
+! Recover Oy derivatives overwritten before
+  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, u, dudy, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, v, dvdy, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, w, dwdy, i0,i0, wrk1d,wrk2d,wrk3d)
+
+! ###################################################################
+! Dissipation Terms
+! ###################################################################
+  wrk3d = ( dudx +dvdy +dwdz ) *c23
+  wrk3d = ( dudx *C_2_R -wrk3d ) *dudx + ( dudy +dvdx ) *dudy + ( dudz +dwdx ) *dudz
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Exx(1), wrk1d, area)
+  Exx(:) = ( Exx(:) *visc - Tau_xy(:) *rU_y(:) )*C_2_R
+
+  wrk3d = ( dudx +dvdy +dwdz ) *c23
+  wrk3d = ( dvdy *C_2_R -wrk3d ) *dvdy + ( dudy +dvdx ) *dvdx + ( dvdz +dwdy ) *dvdz
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Eyy(1), wrk1d, area)
+  Eyy(:) = ( Eyy(:) *visc - Tau_yy(:) *rV_y(:) )*C_2_R
+
+  wrk3d = ( dudx +dvdy +dwdz ) *c23
+  wrk3d = ( dwdz *C_2_R -wrk3d ) *dwdz + ( dwdy +dvdz ) *dwdy + ( dwdx +dudz ) *dwdx
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Ezz(1), wrk1d, area)
+  Ezz(:) = ( Ezz(:) *visc - Tau_yz(:) *rW_y(:) )*C_2_R
+
+  wrk3d = ( dudx +dvdy +dwdz ) *c23
+  wrk3d = ( dudx *C_2_R -wrk3d ) *dvdx + ( dudy +dvdx ) *dvdy + ( dudz +dwdx ) *dvdz &
+        + ( dvdy *C_2_R -wrk3d ) *dudy + ( dudy +dvdx ) *dudx + ( dvdz +dwdy ) *dudz
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Exy(1), wrk1d, area)
+  Exy(:) = Exy(:) *visc - Tau_xy(:) *rV_y(:) - Tau_yy(:) *rU_y(:)
+
+  wrk3d = ( dudx +dvdy +dwdz ) *c23
+  wrk3d = ( dudx *C_2_R -wrk3d ) *dwdx + ( dudy +dvdx ) *dwdy + ( dudz +dwdx ) *dwdz &
+        + ( dwdz *C_2_R -wrk3d ) *dudz + ( dudz +dwdx ) *dudx + ( dvdz +dwdy ) *dudy
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Exz(1), wrk1d, area)
+  Exz(:) = Exz(:) *visc - Tau_xy(:) *rW_y(:) - Tau_yz(:) *rU_y(:)
+
+  wrk3d = ( dudx +dvdy +dwdz ) *c23
+  wrk3d = ( dvdy *C_2_R -wrk3d ) *dwdy + ( dudy +dvdx ) *dwdx + ( dvdz +dwdy ) *dwdz &
+        + ( dwdz *C_2_R -wrk3d ) *dvdz + ( dudz +dwdx ) *dvdx + ( dvdz +dwdy ) *dvdy
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Eyz(1), wrk1d, area)
+  Eyz(:) = Eyz(:) *visc - Tau_yy(:) *rW_y(:) - Tau_yz(:) *rV_y(:)
+
+  ! DO j = 1,jmax
+  !    DO k = 1,kmax
+  !       DO i = 1,imax
+  !          dil = (dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))*c23
+           
+  !          IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
+  !             tau11 = visc*vis(i,j,k)*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
+  !             tau22 = visc*vis(i,j,k)*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
+  !             tau33 = visc*vis(i,j,k)*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
+  !             tau12 = visc*vis(i,j,k)*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
+  !             tau13 = visc*vis(i,j,k)*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
+  !             tau23 = visc*vis(i,j,k)*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
+              
+  !          ELSE
+  !             tau11 = visc*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
+  !             tau22 = visc*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
+  !             tau33 = visc*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
+  !             tau12 = visc*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
+  !             tau13 = visc*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
+  !             tau23 = visc*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
+  !          ENDIF
+           
+  !          upy = dudy(i,j,k)-rU_y(j)
+  !          vpy = dvdy(i,j,k)-rV_y(j)
+  !          wpy = dwdy(i,j,k)-rW_y(j)
+           
+  !          wrk3d(i,1,k) = tau11*dudx(i,j,k) + tau12*upy + tau13*dudz(i,j,k)
+  !          wrk3d(i,2,k) = tau12*dvdx(i,j,k) + tau22*vpy + tau23*dvdz(i,j,k)
+  !          wrk3d(i,3,k) = tau13*dwdx(i,j,k) + tau23*wpy + tau33*dwdz(i,j,k)
+  !          wrk3d(i,4,k) = tau11*dvdx(i,j,k) + tau12*vpy + tau13*dvdz(i,j,k) &
+  !                       + tau12*dudx(i,j,k) + tau22*upy + tau23*dudz(i,j,k)              
+  !          wrk3d(i,7,k) = tau13*dudx(i,j,k) + tau23*upy + tau33*dudz(i,j,k) &
+  !                       + tau11*dwdx(i,j,k) + tau12*wpy + tau13*dwdz(i,j,k) 
+  !          wrk3d(i,8,k) = tau13*dvdx(i,j,k) + tau23*vpy + tau33*dvdz(i,j,k) &
+  !                       + tau12*dwdx(i,j,k) + tau22*wpy + tau23*dwdz(i,j,k) 
+           
+  !       ENDDO
+  !    ENDDO
+
+  !   Exx(j) = C_2_R*AVG_IK(imax, jmax, kmax, i1, wrk3d, dx, dz, area)/rR(j)
+  !   Eyy(j) = C_2_R*AVG_IK(imax, jmax, kmax, i2, wrk3d, dx, dz, area)/rR(j)
+  !   Ezz(j) = C_2_R*AVG_IK(imax, jmax, kmax, i3, wrk3d, dx, dz, area)/rR(j)
+  !   Exy(j) =       AVG_IK(imax, jmax, kmax, i4, wrk3d, dx, dz, area)/rR(j)
+  !   Exz(j) =       AVG_IK(imax, jmax, kmax, i7, wrk3d, dx, dz, area)/rR(j)
+  !   Eyz(j) =       AVG_IK(imax, jmax, kmax, i8, wrk3d, dx, dz, area)/rR(j)
+
+  ! ENDDO
+  
+! ###################################################################
+! Complete budget equations
+! ###################################################################
+! Density fluctuations budget equation
+  IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
+     rey_prod(:) =-C_2_R*(rey_flux_y(:)*rR_y(:)+rR2(:)*rV_y(:))
+     rey_conv(:) =-rV(:)*rR2_y(:)
+     rey_dil1(:) = C_2_R*rR(:)*rey_dil1(:)
+     
+     DO j = 1,jmax
+        IF( rR_y(j) .NE. C_0_R ) THEN
+           eddy_diff(j) =-rey_flux_y(j)/rR_y(j)
+        ELSE
+           eddy_diff(j) = C_BIG_R
+        ENDIF
+     ENDDO
+
+  ELSE
+     DO j = 1,jmax
+        IF( rB_y(j) .NE. C_0_R ) THEN
+           eddy_diff(j) = C_05_R*Byy(j)/rB_y(j)
+        ELSE
+           eddy_diff(j) = C_BIG_R
+        ENDIF
+     ENDDO
+     
+  ENDIF
+  
+  DO j = 1,jmax
+     dummy =  rU_y(j)**2 + rW_y(j)**2 
+     IF ( dummy .NE. C_0_R ) THEN
+        eddy_visc(j) = SQRT( (Rxy(j)**2+Ryz(j)**2) / dummy )
+        ri_g(j)      = rB_y(j) / dummy
+     ELSE
+        eddy_visc(j) = C_BIG_R
+        ri_g(j)      = C_BIG_R
+     ENDIF
+     
+     IF ( eddy_diff(j) .NE. C_0_R ) THEN
+        eddy_prandtl(j) = eddy_visc(j)/eddy_diff(j)
+     ELSE
+        eddy_prandtl(j) = C_0_R
+     ENDIF
+     
+  ENDDO
+
+! Rij Convective Terms 
+  Cxx(:) =-fV(:)*Rxx_y(:)
+  Cyy(:) =-fV(:)*Ryy_y(:)
+  Czz(:) =-fV(:)*Rzz_y(:)
+  Cxy(:) =-fV(:)*Rxy_y(:)
+  Cxz(:) =-fV(:)*Rxz_y(:)
+  Cyz(:) =-fV(:)*Ryz_y(:)
+     
+! Rij Production Terms
+  Pxx(:) =-C_2_R*Rxy(:)*fU_y(:)
+  Pyy(:) =-C_2_R*Ryy(:)*fV_y(:)
+  Pzz(:) =-C_2_R*Ryz(:)*fW_y(:)
+  Pxy(:) =-( Rxy(:)*fV_y(:) + Ryy(:)*fU_y(:) ) 
+  Pxz(:) =-( Rxy(:)*fW_y(:) + Ryz(:)*fU_y(:) )
+  Pyz(:) =-( Ryy(:)*fW_y(:) + Ryz(:)*fV_y(:) )
+
+! Rij Pressure Variable-Density Terms
+  Gxx(:) = C_0_R
+  Gyy(:) = C_2_R*rVf(:)*rP_y(:)
+  Gzz(:) = C_0_R
+  Gxy(:) =       rUf(:)*rP_y(:)
+  Gxz(:) = C_0_R
+  Gyz(:) =       rWf(:)*rP_y(:)
+
+! Rij Viscous Variable-Density Terms
+  Dxx(:) = C_2_R*rUf(:)*Tau_xy_y(:)
+  Dyy(:) = C_2_R*rVf(:)*Tau_yy_y(:)
+  Dzz(:) = C_2_R*rWf(:)*Tau_yz_y(:)
+  Dxy(:) = rUf(:)*Tau_yy_y(:) + rVf(:)*Tau_xy_y(:)
+  Dxz(:) = rUf(:)*Tau_yz_y(:) + rWf(:)*Tau_xy_y(:)
+  Dyz(:) = rVf(:)*Tau_yz_y(:) + rWf(:)*Tau_yy_y(:)
+
+! Rij Coriolis Terms 
+  IF ( icoriolis_y .NE. EQNS_NONE ) THEN ! contribution from angular velocity Oy
+     dummy = rotn_vector(2)
+     Fxx(:) = dummy *C_2_R * Rxz(:)
+     Fyy(:) =        C_0_R
+     Fzz(:) =-dummy *C_2_R * Rxz(:)
+     Fxy(:) = dummy        * Ryz(:)
+     Fxz(:) = dummy        *(Rzz(:)-Rxx(:))
+     Fyz(:) =-dummy        * Rxy(:)
+  ENDIF
+     
+! Rij Buoyancy Terms; Calculated in Section Potential Energy
+    
+! Rij Transient terms
+  Rxx_t(:) = -Fxx(:) + Bxx(:) + Cxx(:) + Pxx(:) - Exx(:) + ( PIxx(:) - Txxy_y(:) - Gxx(:) + Dxx(:) ) /rR(:)
+  Ryy_t(:) = -Fyy(:) + Byy(:) + Cyy(:) + Pyy(:) - Eyy(:) + ( PIyy(:) - Tyyy_y(:) - Gyy(:) + Dyy(:) ) /rR(:)
+  Rzz_t(:) = -Fzz(:) + Bzz(:) + Czz(:) + Pzz(:) - Ezz(:) + ( PIzz(:) - Tzzy_y(:) - Gzz(:) + Dzz(:) ) /rR(:)
+  Rxy_t(:) = -Fxy(:) + Bxy(:) + Cxy(:) + Pxy(:) - Exy(:) + ( PIxy(:) - Txyy_y(:) - Gxy(:) + Dxy(:) ) /rR(:)
+  Rxz_t(:) = -Fxz(:) + Bxz(:) + Cxz(:) + Pxz(:) - Exz(:) + ( PIxz(:) - Txzy_y(:) - Gxz(:) + Dxz(:) ) /rR(:)
+  Ryz_t(:) = -Fyz(:) + Byz(:) + Cyz(:) + Pyz(:) - Eyz(:) + ( PIyz(:) - Tyzy_y(:) - Gyz(:) + Dyz(:) ) /rR(:)
+
+! Kinetic energy equation
+  Tke(:)  = C_05_R*(Rxx(:)    + Ryy(:)    + Rzz(:)   )
+  
+  Buo(:)  = C_05_R*(Bxx(:)    + Byy(:)    + Bzz(:)   )
+  Con(:)  = C_05_R*(Cxx(:)    + Cyy(:)    + Czz(:)   )
+  Prd(:)  = C_05_R*(Pxx(:)    + Pyy(:)    + Pzz(:)   )
+  Pi(:)   = C_05_R*(PIxx(:)   + PIyy(:)   + PIzz(:)  )
+  Eps(:)  = C_05_R*(Exx(:)    + Eyy(:)    + Ezz(:)   )
+  Ty_y(:) = C_05_R*(Txxy_y(:) + Tyyy_y(:) + Tzzy_y(:))
+  Gkin(:) = C_05_R*(Gxx(:)    + Gyy(:)    + Gzz(:)   )
+  Dkin(:) = C_05_R*(Dxx(:)    + Dyy(:)    + Dzz(:)   )
+  
+  Tke_t(:)= Buo(:) + Con(:) + Prd(:) - Eps(:) + ( - Ty_y(:) + Pi(:) - Gkin(:) + Dkin(:) ) /rR(:)
+
+! Potential energy equation
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     Pot(:)       = -rB(:)*(y(:) - y(1) - scaley*ycoor_i(inb_scal))
+     SourcePot(:) =-rSb(:)*(y(:) - y(1) - scaley*ycoor_i(inb_scal))
+     
+  ELSE
+     Pot(:)       =-rR(:)*(y(:) - y(1) - scaley*ycoor_rho)*body_vector(2)
+     SourcePot(:) = C_0_R
+     
+  ENDIF
+
+  DO j = 1,jmax
+     IF ( Prd(j) .NE. C_0_R ) THEN
+        ri_f(j) =-Buo(j) / Prd(j) ! BuoyancyDestruction / ShearProduction
+     ELSE
+        ri_f(j) = C_BIG_R
+     ENDIF
+  ENDDO
+
+! Kolmogorov microscale and Taylor Reynolds number
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC )THEN
+     eta(:) = visc
+     
+  ELSE
+     IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) THEN; wrk3d = visc *vis /rho
+     ELSE;                                            wrk3d = visc      /rho ; ENDIF
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, eta(1), wrk1d, area)        
+  ENDIF
+     
+  DO j = 1,jmax
+     IF ( eta(j) .GT. C_0_R ) THEN; re_x(j) = SQRT(Rxx(j))*lxx(j)/eta(j)
+     ELSE;                          re_x(j) = C_BIG_R; ENDIF
+
+     IF ( eta(j) .GT. C_0_R ) THEN; re_y(j) = SQRT(Ryy(j))*lyy(j)/eta(j)
+     ELSE;                          re_y(j) = C_BIG_R; ENDIF
+
+     IF ( eta(j) .GT. C_0_R ) THEN; re_z(j) = SQRT(Rzz(j))*lzz(j)/eta(j)
+     ELSE;                          re_z(j) = C_BIG_R; ENDIF
+
+     IF ( eta(j) .GT. C_0_R .AND. Eps(j) .GT. C_0_R ) THEN
+        re_iso(j) = ((Rxx(j)+Ryy(j)+Rzz(j))/C_3_R)* SQRT(C_15_R/(eta(j)*Eps(j)))
+        eta(j)    = (eta(j)**3/Eps(j))**C_025_R
+     ELSE
+        re_iso(j) = C_BIG_R
+        eta(j)    = C_BIG_R
+     ENDIF
+  ENDDO
 
 ! ##################################################################
 ! Global quantites
@@ -1036,7 +1595,7 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
            wrk1d(j,1) = rR(j)*(C_025_R-(fU(j)/delta_u)**2)
         ENDDO
         delta_m = SIMPSON_NU(jmax, wrk1d, y)/mean_rho
-
+           
         DO j=1, jmax
            wrk1d(j,1) = ( Tau_xy(j) -  rR(j)*Rxy(j) )*fU_y(j)
         ENDDO
@@ -1077,14 +1636,8 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
 ! Mixing, Youngs definition
         rho_min = mean_rho - C_05_R*ABS(delta_rho)
         rho_max = mean_rho + C_05_R*ABS(delta_rho)
-        DO k = 1,kmax
-           DO i = 1,imax*jmax
-              wrk3d(i,1,k) = (rho(i,1,k)-rho_min)*(rho_max-rho(i,1,k))
-           ENDDO
-        ENDDO
-        DO j = 1,jmax
-           wrk1d(j,1) = AVG_IK(imax, jmax, kmax, j, wrk3d, dx, dz, area)
-        ENDDO
+        wrk3d = (rho - rho_min) *(rho_max -rho)
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d, wrk1d(1,2), area)
         mixing1 = SIMPSON_NU(jmax, wrk1d, y)
         DO j = 1,jmax
            wrk1d(j,1)=(rR(j)-rho_min)*(rho_max-rR(j))
@@ -1099,9 +1652,7 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
               wrk3d(i,1,k) = MIN(rho(i,1,k)-rho_min,rho_max-rho(i,1,k))
            ENDDO
         ENDDO
-        DO j = 1,jmax
-           wrk1d(j,1)=AVG_IK(imax, jmax, kmax, j, wrk3d, dx, dz, area)
-        ENDDO
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d, wrk1d(1,2), area)
         mixing2 = SIMPSON_NU(jmax, wrk1d, y)
         DO j = 1,jmax
            wrk1d(j,1) = MIN(rR(j)-rho_min,rho_max-rR(j))
@@ -1130,647 +1681,24 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
      ENDIF
 
 ! -------------------------------------------------------------------
-! Jet
-! -------------------------------------------------------------------
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
-! not developed yet
-
-  ENDIF
-
-! ##################################################################
-! Turbulent transport terms
-! p' contribution has been calculated before
-! ##################################################################
-#ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 10')
-#endif
-
-  DO j = 1,jmax
-     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC )THEN 
-        DO k = 1,kmax
-           DO i = 1,imax
-              dil = (dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))*c23
-              tau11 = visc*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
-              tau22 = visc*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
-              tau33 = visc*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
-              tau12 = visc*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
-              tau13 = visc*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
-              tau23 = visc*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
-              up = u(i,j,k)-fU(j)
-              vp = v(i,j,k)-fV(j)
-              wp = w(i,j,k)-fW(j)
-              
-              wrk3d(i,1,k) = (up**2)*vp -C_2_R*up*tau12       
-              wrk3d(i,2,k) = (vp**3)    -C_2_R*vp*tau22 
-              wrk3d(i,3,k) = (wp**2)*vp -C_2_R*wp*tau23       
-              wrk3d(i,4,k) = (vp**2)*up -      up*tau22-vp*tau12
-              wrk3d(i,5,k) = up*vp*wp   -      up*tau23-wp*tau12  ! new Txzy
-              wrk3d(i,6,k) = (vp**2)*wp -      vp*tau23-wp*tau22  ! new Tyzy
-
-              wrk3d(i,7,k) = C_05_R*(up**2+vp**2+wp**2)*vp 
-              wrk3d(i,9,k) =-up*tau12-vp*tau22-wp*tau23
-           ENDDO
-        ENDDO
-
-     ELSE
-        IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
-           DO k = 1,kmax
-              DO i = 1,imax
-                 dil = (dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))*c23
-                 
-                 tau11 = visc*vis(i,j,k)*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
-                 tau22 = visc*vis(i,j,k)*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
-                 tau33 = visc*vis(i,j,k)*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
-                 tau12 = visc*vis(i,j,k)*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
-                 tau13 = visc*vis(i,j,k)*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
-                 tau23 = visc*vis(i,j,k)*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
-                 
-                 up      = u(i,j,k)-fU(j)
-                 vp      = v(i,j,k)-fV(j)
-                 wp      = w(i,j,k)-fW(j)
-                 
-                 wrk3d(i,1,k) = rho(i,j,k)*(up**2)*vp  -C_2_R*up*tau12          !T_112
-                 wrk3d(i,2,k) = rho(i,j,k)*(vp**3)     -C_2_R*vp*tau22          !T_222
-                 wrk3d(i,3,k) = rho(i,j,k)*(wp**2)*vp  -C_2_R*wp*tau23          !T_332
-                 wrk3d(i,4,k) = rho(i,j,k)*(vp**2)*up  -      up*tau22-vp*tau12 !T_122
-                 wrk3d(i,5,k) = rho(i,j,k)*up*vp*wp    -      up*tau23-wp*tau12 !T_132 new
-                 wrk3d(i,6,k) = rho(i,j,k)*(vp**2)*wp  -      vp*tau23-wp*tau22 !T_232 new
-
-! Partition of turbulent transport term for TKE equation
-                 wrk3d(i,7,k) = C_05_R*rho(i,j,k)*(up**2+vp**2+wp**2)*vp 
-                 wrk3d(i,9,k) =-up*tau12-vp*tau22-wp*tau23
-              ENDDO
-           ENDDO
-
-        ELSE
-           DO k = 1,kmax
-              DO i = 1,imax
-                 dil = (dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))*c23
-                 tau11 = visc*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
-                 tau22 = visc*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
-                 tau33 = visc*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
-                 tau12 = visc*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
-                 tau13 = visc*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
-                 tau23 = visc*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
-                 up = u(i,j,k)-fU(j)
-                 vp = v(i,j,k)-fV(j)
-                 wp = w(i,j,k)-fW(j)
-                 
-                 wrk3d(i,1,k) = rho(i,j,k)*(up**2)*vp -C_2_R*up*tau12            ! Txxy
-                 wrk3d(i,2,k) = rho(i,j,k)*(vp**3)    -C_2_R*vp*tau22            ! Tyyy
-                 wrk3d(i,3,k) = rho(i,j,k)*(wp**2)*vp -C_2_R*wp*tau23            ! Tzzy
-                 wrk3d(i,4,k) = rho(i,j,k)*(vp**2)*up -      up*tau22-vp*tau12   ! Txyy
-                 wrk3d(i,5,k) = rho(i,j,k)*up*vp*wp   -      up*tau23-wp*tau12   ! Txzy new
-                 wrk3d(i,6,k) = rho(i,j,k)*(vp**2)*wp -      vp*tau23-wp*tau22   ! Tyzy new
-
-                 wrk3d(i,7,k) = C_05_R*rho(i,j,k)*(up**2+vp**2+wp**2)*vp 
-                 wrk3d(i,9,k) =-up*tau12-vp*tau22-wp*tau23
-
-              ENDDO
-           ENDDO
-           
-        ENDIF
-     ENDIF
-     
-     Txxy(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx, dz, area)
-     Tyyy(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx, dz, area) + Tyyy(j) ! add p' terms
-     Tzzy(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx, dz, area)
-     Txyy(j) = AVG_IK(imax,jmax,kmax, i4, wrk3d, dx, dz, area) + Txyy(j) ! add p' terms
-     Txzy(j) = AVG_IK(imax,jmax,kmax, i5, wrk3d, dx, dz, area)
-     Tyzy(j) = AVG_IK(imax,jmax,kmax, i6, wrk3d, dx, dz, area) + Tyzy(j) ! add p' terms
-
-
-     Ty1(j) = AVG_IK(imax,jmax,kmax, i7, wrk3d, dx, dz, area)
-!    Ty2(j) contains only pressure terms
-     Ty3(j) = AVG_IK(imax,jmax,kmax, i9, wrk3d, dx, dz, area)
-
-  ENDDO
-
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Txxy(1), Txxy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tyyy(1), Tyyy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tzzy(1), Tzzy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Txyy(1), Txyy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Txzy(1), Txzy_y(1), i0,i0, wrk1d,wrk2d,wrk3d) !new
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tyzy(1), Tyzy_y(1), i0,i0, wrk1d,wrk2d,wrk3d) !new
-  
-
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ty1(1), Ty1_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ty2(1), Ty2_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ty3(1), Ty3_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-
-! ###################################################################
-! Final loop
-! ###################################################################
-#ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 11')
-#endif
-
-  DO j = 1,jmax
-! -------------------------------------------------------------------
-! Derivatives Fluctuations. Taylor Microscales
-! -------------------------------------------------------------------
-! Longitudinal terms and Taylor microscales
-     DO k = 1,kmax; DO i = 1,imax
-        wrk3d(i,1,k) =  dudx(i,j,k)         **2
-        wrk3d(i,2,k) = (dvdy(i,j,k)-rV_y(j))**2
-        wrk3d(i,3,k) =  dwdz(i,j,k)         **2
-        wrk3d(i,4,k) =  dudx(i,j,k)         **3
-        wrk3d(i,5,k) = (dvdy(i,j,k)-rV_y(j))**3
-        wrk3d(i,6,k) =  dwdz(i,j,k)         **3
-        wrk3d(i,7,k) =  dudx(i,j,k)         **4
-        wrk3d(i,8,k) = (dvdy(i,j,k)-rV_y(j))**4
-        wrk3d(i,9,k) =  dwdz(i,j,k)         **4
-     ENDDO; ENDDO
-     var_ux(j)  = AVG_IK(imax, jmax, kmax, i1, wrk3d, dx, dz, area)
-     var_vy(j)  = AVG_IK(imax, jmax, kmax, i2, wrk3d, dx, dz, area)
-     var_wz(j)  = AVG_IK(imax, jmax, kmax, i3, wrk3d, dx, dz, area)
-     skew_ux(j)= AVG_IK(imax, jmax, kmax, i4, wrk3d, dx, dz, area)
-     skew_vy(j)= AVG_IK(imax, jmax, kmax, i5, wrk3d, dx, dz, area)
-     skew_wz(j)= AVG_IK(imax, jmax, kmax, i6, wrk3d, dx, dz, area)
-     flat_ux(j)= AVG_IK(imax, jmax, kmax, i7, wrk3d, dx, dz, area)
-     flat_vy(j)= AVG_IK(imax, jmax, kmax, i8, wrk3d, dx, dz, area)
-     flat_wz(j)= AVG_IK(imax, jmax, kmax, i9, wrk3d, dx, dz, area)
-
-     IF ( var_ux(j) .GT. C_0_R ) THEN
-        lxx(j) = SQRT(Rxx(j)/var_ux(j))
-        skew_ux(j) = skew_ux(j) / var_ux(j)**C_1_5_R
-        flat_ux(j) = flat_ux(j) / var_ux(j)**C_2_R
-     ELSE
-        lxx(j) = C_BIG_R
-        skew_ux(j) = C_BIG_R
-        flat_ux(j) = C_BIG_R
-     ENDIF
-     IF ( var_vy(j) .GT. C_0_R ) THEN
-        lyy(j) = SQRT(Ryy(j)/var_vy(j))
-        skew_vy(j) = skew_vy(j) / var_vy(j)**C_1_5_R
-        flat_vy(j) = flat_vy(j) / var_vy(j)**C_2_R
-     ELSE
-        lyy(j) = C_BIG_R
-        skew_vy(j) = C_BIG_R
-        flat_vy(j) = C_BIG_R
-     ENDIF
-     IF ( var_wz(j) .GT. C_0_R ) THEN
-        lzz(j) = SQRT(Rzz(j)/var_wz(j))
-        skew_wz(j) = skew_wz(j) / var_wz(j)**C_1_5_R
-        flat_wz(j) = flat_wz(j) / var_wz(j)**C_2_R
-     ELSE
-        lzz(j) = C_BIG_R
-        skew_wz(j) = C_BIG_R
-        flat_wz(j) = C_BIG_R
-     ENDIF
-
-! Lateral terms U
-     DO k = 1,kmax; DO i = 1,imax
-        wrk3d(i,1,k) = (dudy(i,j,k)-rU_y(j))**2
-        wrk3d(i,2,k) =  dudz(i,j,k)         **2
-        wrk3d(i,3,k) = (dudy(i,j,k)-rU_y(j))**3
-        wrk3d(i,4,k) =  dudz(i,j,k)         **3
-        wrk3d(i,5,k) = (dudy(i,j,k)-rU_y(j))**4
-        wrk3d(i,6,k) =  dudz(i,j,k)         **4
-     ENDDO; ENDDO
-     var_uy(j)  = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-     var_uz(j)  = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
-     skew_uy(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
-     skew_uz(j) = AVG_IK(imax,jmax,kmax, i4, wrk3d, dx,dz, area)
-     flat_uy(j) = AVG_IK(imax,jmax,kmax, i5, wrk3d, dx,dz, area)
-     flat_uz(j) = AVG_IK(imax,jmax,kmax, i6, wrk3d, dx,dz, area)
-     IF ( var_uy(j) .GT. C_0_R ) THEN
-        skew_uy(j) = skew_uy(j) / var_uy(j)**C_1_5_R
-        flat_uy(j) = flat_uy(j) / var_uy(j)**C_2_R
-     ELSE
-        skew_uy(j) = C_BIG_R
-        flat_uy(j) = C_BIG_R
-     ENDIF
-     IF ( var_uz(j) .GT. C_0_R ) THEN
-        skew_uz(j) = skew_uz(j) / var_uz(j)**C_1_5_R
-        flat_uz(j) = flat_uz(j) / var_uz(j)**C_2_R
-     ELSE
-        skew_uz(j) = C_BIG_R
-        flat_uz(j) = C_BIG_R
-     ENDIF
-
-! Lateral terms V
-     DO k = 1,kmax; DO i = 1,imax
-        wrk3d(i,1,k) = dvdx(i,j,k)**2
-        wrk3d(i,2,k) = dvdz(i,j,k)**2
-        wrk3d(i,3,k) = dvdx(i,j,k)**3
-        wrk3d(i,4,k) = dvdz(i,j,k)**3
-        wrk3d(i,5,k) = dvdx(i,j,k)**4
-        wrk3d(i,6,k) = dvdz(i,j,k)**4
-     ENDDO; ENDDO
-     var_vx(j)  = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-     var_vz(j)  = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
-     skew_vx(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
-     skew_vz(j) = AVG_IK(imax,jmax,kmax, i4, wrk3d, dx,dz, area)
-     flat_vx(j) = AVG_IK(imax,jmax,kmax, i5, wrk3d, dx,dz, area)
-     flat_vz(j) = AVG_IK(imax,jmax,kmax, i6, wrk3d, dx,dz, area)
-     IF ( var_vx(j) .GT. C_0_R ) THEN
-        skew_vx(j) = skew_vx(j) / var_vx(j)**C_1_5_R
-        flat_vx(j) = flat_vx(j) / var_vx(j)**C_2_R
-     ELSE
-        skew_vx(j) = C_BIG_R
-        flat_vx(j) = C_BIG_R
-     ENDIF
-     IF ( var_vz(j) .GT. C_0_R ) THEN
-        skew_vz(j) = skew_vz(j) / var_vz(j)**C_1_5_R
-        flat_vz(j) = flat_vz(j) / var_vz(j)**C_2_R
-     ELSE
-        skew_vz(j) = C_BIG_R
-        flat_vz(j) = C_BIG_R
-     ENDIF
-
-! Lateral terms W
-     DO k = 1,kmax; DO i = 1,imax
-        wrk3d(i,1,k) =  dwdx(i,j,k)         **2
-        wrk3d(i,2,k) = (dwdy(i,j,k)-rW_y(j))**2
-        wrk3d(i,3,k) =  dwdx(i,j,k)         **3
-        wrk3d(i,4,k) = (dwdy(i,j,k)-rW_y(j))**3
-        wrk3d(i,5,k) =  dwdx(i,j,k)         **4
-        wrk3d(i,6,k) = (dwdy(i,j,k)-rW_y(j))**4
-     ENDDO; ENDDO
-     var_wx(j)  = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-     var_wy(j)  = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)
-     skew_wx(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
-     skew_wy(j) = AVG_IK(imax,jmax,kmax, i4, wrk3d, dx,dz, area)
-     flat_wx(j) = AVG_IK(imax,jmax,kmax, i5, wrk3d, dx,dz, area)
-     flat_wy(j) = AVG_IK(imax,jmax,kmax, i6, wrk3d, dx,dz, area)
-     IF ( var_wx(j) .GT. C_0_R ) THEN
-        skew_wx(j) = skew_wx(j) / var_wx(j)**C_1_5_R
-        flat_wx(j) = flat_wx(j) / var_wx(j)**C_2_R
-     ELSE
-        skew_wx(j) = C_BIG_R
-        flat_wx(j) = C_BIG_R
-     ENDIF
-     IF ( var_wy(j) .GT. C_0_R ) THEN
-        skew_wy(j) = skew_wy(j) / var_wy(j)**C_1_5_R
-        flat_wy(j) = flat_wy(j) / var_wy(j)**C_2_R
-     ELSE
-        skew_wy(j) = C_BIG_R
-        flat_wy(j) = C_BIG_R
-     ENDIF
-
-! Dilatation fluctuation
-     DO k = 1,kmax; DO i = 1,imax
-        wrk3d(i,1,k) = (dudx(i,j,k)+dvdy(i,j,k)-rV_y(j)+dwdz(i,j,k))**2
-     ENDDO; ENDDO
-     var_dil(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-
-! -------------------------------------------------------------------
-! Thermodynamic fluctuations
-! -------------------------------------------------------------------
-     IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-
-        DO k = 1,kmax
-           DO i = 1,imax
-              wrk3d(i,1,k) = (e(i,j,k)-re(j))**2
-              wrk3d(i,2,k) = rho(i,j,k)*(e(i,j,k)-fe(j))**2
-              wrk3d(i,3,k) = (e(i,j,k)+prefactor*p(i,j,k)/rho(i,j,k)-rh(j))**2
-              wrk3d(i,4,k) = rho(i,j,k)*(e(i,j,k)+prefactor*p(i,j,k)/rho(i,j,k)-fh(j))**2
-           ENDDO
-        ENDDO
-        re2(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-        fe2(j) = AVG_IK(imax,jmax,kmax, i2, wrk3d, dx,dz, area)/rR(j)
-        rh2(j) = AVG_IK(imax,jmax,kmax, i3, wrk3d, dx,dz, area)
-        fh2(j) = AVG_IK(imax,jmax,kmax, i4, wrk3d, dx,dz, area)/rR(j)
-
-! Correlations
-        DO k=1, kmax
-           DO i=1, imax
-              wrk3d(i,1,k) = (rho(i,j,k)-rR(j))*(p(i,j,k)-rP(j))
-           ENDDO
-        ENDDO        
-        rRP(j) = AVG_IK(imax, jmax, kmax, i1, wrk3d, dx, dz, area)
-        
-        IF ( rR2(j) .GT. C_0_R .AND. rP2(j) .GT. C_0_R ) THEN
-           rRP(j) = rRP(j)/sqrt(rR2(j)*rP2(j))
-        ELSE
-           rRP(j) = C_2_R
-        ENDIF
-        
-        IF ( rR2(j) .GT. C_0_R .AND. rT2(j) .GT. C_0_R ) THEN
-           rRT(j) = rRT(j)/sqrt(rR2(j)*rT2(j))
-        ELSE
-           rRT(j) = C_2_R
-        ENDIF
-
-! Acoustic and entropic density fluctuations
-        DO k=1, kmax
-           DO i=1, imax
-              r_prime = rho(i,j,k) - rR(j)
-              p_prime = p(i,j,k)   - rP(j)
-              rho_ac(j) = p_prime/c2(j)
-              rho_en(j) = r_prime - rho_ac(j)
-              
-              wrk3d(i,1,k) = rho_ac(j)*rho_ac(j)
-              wrk3d(i,2,k) = rho_en(j)*rho_en(j)
-           ENDDO
-        ENDDO
-
-        rho_ac(j) = AVG_IK(imax, jmax, kmax, i1, wrk3d, dx, dz, area)
-        rho_en(j) = AVG_IK(imax, jmax, kmax, i2, wrk3d, dx, dz, area)
-
-! Turbulent Mach number        
-        M_t(j) = SQRT((Rxx(j)+Ryy(j)+Rzz(j))/c2(j))
-
-     ELSE
-        re2(j) = C_0_R
-        fe2(j) = C_0_R
-        rh2(j) = C_0_R
-        fh2(j) = C_0_R
-        rRP(j) = C_0_R
-        rho_ac(j) = C_0_R
-        rho_en(j) = C_0_R
-        M_t(j) = C_0_R
-
-     ENDIF
-
-! -------------------------------------------------------------------
-! Averaged Density Fluctuations Budget
-! -------------------------------------------------------------------
-     IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        DO k = 1,kmax; DO i = 1,imax
-           r_prime = rho(i,j,k)-rR(j)
-           dil = (dudx(i,j,k)+dvdy(i,j,k)-rV_y(j)+dwdz(i,j,k))
-           u_prime = u(i,j,k) - rU(j)
-           v_prime = v(i,j,k) - rV(j)
-           w_prime = w(i,j,k) - rW(j)
-           
-           wrk3d(i,1,k) = dil*r_prime
-           wrk3d(i,2,k) = dil*r_prime**2
-           wrk3d(i,3,k) = r_prime*u_prime
-           wrk3d(i,4,k) = r_prime*v_prime
-           wrk3d(i,5,k) = r_prime*w_prime
-           wrk3d(i,6,k) = v_prime*r_prime**2
-        ENDDO; ENDDO
-        
-        rey_dil1(j)   = AVG_IK(imax, jmax, kmax, i1, wrk3d, dx, dz, area)
-        rey_dil2(j)   = AVG_IK(imax, jmax, kmax, i2, wrk3d, dx, dz, area)
-        rey_flux_x(j) = AVG_IK(imax, jmax, kmax, i3, wrk3d, dx, dz, area)
-        rey_flux_y(j) = AVG_IK(imax, jmax, kmax, i4, wrk3d, dx, dz, area)
-        rey_flux_z(j) = AVG_IK(imax, jmax, kmax, i5, wrk3d, dx, dz, area)
-        rey_trp(j)    = AVG_IK(imax, jmax, kmax, i6, wrk3d, dx, dz, area)
-        
-        rey_prod(j) =-C_2_R*(rey_flux_y(j)*rR_y(j)+rR2(j)*rV_y(j))
-        rey_conv(j) =-rV(j)*rR2_y(j)
-        rey_dil1(j) = C_2_R*rR(j)*rey_dil1(j)
-        
-        IF( rR_y(j) .NE. C_0_R ) THEN
-           eddy_diff(j) =-rey_flux_y(j)/rR_y(j)
-        ELSE
-           eddy_diff(j) = C_BIG_R
-        ENDIF
-     
-     ELSE
-        IF( rB_y(j) .NE. C_0_R ) THEN
-           eddy_diff(j) = C_05_R*Byy(j)/rB_y(j)
-        ELSE
-           eddy_diff(j) = C_BIG_R
-        ENDIF
-     
-     ENDIF
-
-     dummy =  rU_y(j)**2 + rW_y(j)**2 
-     IF ( dummy .NE. C_0_R ) THEN
-        eddy_visc(j) = SQRT( (Rxy(j)**2+Ryz(j)**2) / dummy )
-        ri_g(j)      = rB_y(j) / dummy
-     ELSE
-        eddy_visc(j) = C_BIG_R
-        ri_g(j)      = C_BIG_R
-     ENDIF
-
-     IF ( eddy_diff(j) .NE. C_0_R ) THEN
-        eddy_prandtl(j) = eddy_visc(j)/eddy_diff(j)
-     ELSE
-        eddy_prandtl(j) = C_0_R
-     ENDIF
-
-! -------------------------------------------------------------------
-! Dissipation Terms
-! -------------------------------------------------------------------
-     IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
-        DO k = 1,kmax
-           DO i = 1,imax              
-              dil = (dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))*c23
-
-              tau11 = visc*vis(i,j,k)*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
-              tau22 = visc*vis(i,j,k)*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
-              tau33 = visc*vis(i,j,k)*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
-              tau12 = visc*vis(i,j,k)*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
-              tau13 = visc*vis(i,j,k)*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
-              tau23 = visc*vis(i,j,k)*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
-
-              upy = dudy(i,j,k)-rU_y(j)
-              vpy = dvdy(i,j,k)-rV_y(j)
-              wpy = dwdy(i,j,k)-rW_y(j)
-              
-              wrk3d(i,1,k) = tau11*dudx(i,j,k) + tau12*upy + tau13*dudz(i,j,k)   ! Exx
-              wrk3d(i,2,k) = tau12*dvdx(i,j,k) + tau22*vpy + tau23*dvdz(i,j,k)   ! Eyy
-              wrk3d(i,3,k) = tau13*dwdx(i,j,k) + tau23*wpy + tau33*dwdz(i,j,k)   ! Ezz
-              wrk3d(i,4,k) = tau11*dvdx(i,j,k) + tau12*vpy + tau13*dvdz(i,j,k) & ! Exy
-                   + tau12*dudx(i,j,k) + tau22*upy + tau23*dudz(i,j,k)              
-              
-              wrk3d(i,6,k) = visc*vis(i,j,k)* & ! Mean Viscous Dissipation phi
-                   ( dudx(i,j,k)**2 + dvdy(i,j,k)**2 + dwdz(i,j,k)**2 &
-                   + C_05_R*( (dudy(i,j,k)+dvdx(i,j,k))**2 + (dudz(i,j,k)+dwdx(i,j,k))**2 &
-                            + (dvdz(i,j,k)+dwdy(i,j,k))**2 ) &
-                   - ((dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))**2)/C_3_R )
-
-           ENDDO
-        ENDDO
-     
-     ELSE
-        DO k = 1,kmax
-           DO i = 1,imax
-              dil = (dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))*c23
-
-              tau11 = visc*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
-              tau22 = visc*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
-              tau33 = visc*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
-              tau12 = visc*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
-              tau13 = visc*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
-              tau23 = visc*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
-
-              upy = dudy(i,j,k)-rU_y(j)
-              vpy = dvdy(i,j,k)-rV_y(j)
-              wpy = dwdy(i,j,k)-rW_y(j)
-              
-              wrk3d(i,1,k) = tau11*dudx(i,j,k) + tau12*upy + tau13*dudz(i,j,k)
-              wrk3d(i,2,k) = tau12*dvdx(i,j,k) + tau22*vpy + tau23*dvdz(i,j,k)
-              wrk3d(i,3,k) = tau13*dwdx(i,j,k) + tau23*wpy + tau33*dwdz(i,j,k)
-              wrk3d(i,4,k) = tau11*dvdx(i,j,k) + tau12*vpy + tau13*dvdz(i,j,k) &
-                           + tau12*dudx(i,j,k) + tau22*upy + tau23*dudz(i,j,k)              
-              wrk3d(i,7,k) = tau13*dudx(i,j,k) + tau23*upy + tau33*dudz(i,j,k) &
-                           + tau11*dwdx(i,j,k) + tau12*wpy + tau13*dwdz(i,j,k) 
-              wrk3d(i,8,k) = tau13*dvdx(i,j,k) + tau23*vpy + tau33*dvdz(i,j,k) &
-                           + tau12*dwdx(i,j,k) + tau22*wpy + tau23*dwdz(i,j,k) 
-
-              wrk3d(i,6,k) = visc*&
-                   ( dudx(i,j,k)**2 + dvdy(i,j,k)**2 + dwdz(i,j,k)**2 &
-                   + C_05_R*( (dudy(i,j,k)+dvdx(i,j,k))**2 + (dudz(i,j,k)+dwdx(i,j,k))**2 &
-                            + (dvdz(i,j,k)+dwdy(i,j,k))**2 ) &
-                   - ((dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))**2)/C_3_R )
-
-           ENDDO
-        ENDDO
-
-     ENDIF
-
-     Exx(j) = C_2_R*AVG_IK(imax, jmax, kmax, i1, wrk3d, dx, dz, area)/rR(j)
-     Eyy(j) = C_2_R*AVG_IK(imax, jmax, kmax, i2, wrk3d, dx, dz, area)/rR(j)
-     Ezz(j) = C_2_R*AVG_IK(imax, jmax, kmax, i3, wrk3d, dx, dz, area)/rR(j)
-     Exy(j) =       AVG_IK(imax, jmax, kmax, i4, wrk3d, dx, dz, area)/rR(j)
-     Exz(j) =       AVG_IK(imax, jmax, kmax, i7, wrk3d, dx, dz, area)/rR(j) ! new
-     Eyz(j) =       AVG_IK(imax, jmax, kmax, i8, wrk3d, dx, dz, area)/rR(j) ! new
-
-     Phi(j) = C_2_R*AVG_IK(imax, jmax, kmax, i6, wrk3d, dx, dz, area)
-
-! -------------------------------------------------------------------
-! Convective Terms 
-! -------------------------------------------------------------------
-     Cxx(j) =-fV(j)*Rxx_y(j)
-     Cyy(j) =-fV(j)*Ryy_y(j)
-     Czz(j) =-fV(j)*Rzz_y(j)
-     Cxy(j) =-fV(j)*Rxy_y(j)
-     Cxz(j) =-fV(j)*Rxz_y(j) ! new
-     Cyz(j) =-fV(j)*Ryz_y(j) ! new 
-
-! -------------------------------------------------------------------
-! Production Terms
-! -------------------------------------------------------------------
-     Pxx(j) =-C_2_R*Rxy(j)*fU_y(j)
-     Pyy(j) =-C_2_R*Ryy(j)*fV_y(j)
-     Pzz(j) =-C_2_R*Ryz(j)*fW_y(j)                ! was set to zero before 
-     Pxy(j) =-( Rxy(j)*fV_y(j) + Ryy(j)*fU_y(j) ) 
-     Pxz(j) =-( Rxy(j)*fW_y(j) + Ryz(j)*fU_y(j) ) ! new
-     Pyz(j) =-( Ryy(j)*fW_y(j) + Ryz(j)*fV_y(j) ) ! new
-
-! -------------------------------------------------------------------
-! Pressure Variable-Density  Terms
-! -------------------------------------------------------------------
-     Gxx(j) = C_0_R
-     Gyy(j) = C_2_R*rVf(j)*rP_y(j)
-     Gzz(j) = C_0_R
-     Gxy(j) =       rUf(j)*rP_y(j)
-     Gxz(j) = C_0_R
-     Gyz(j) =       rWf(j)*rP_y(j)
-
-! -------------------------------------------------------------------
-! Viscous Variable-Density  Terms
-! -------------------------------------------------------------------
-     Dxx(j) = C_2_R*rUf(j)*Tau_xy_y(j)
-     Dyy(j) = C_2_R*rVf(j)*Tau_yy_y(j)
-     Dzz(j) = C_2_R*rWf(j)*Tau_yz_y(j)
-     Dxy(j) = rUf(j)*Tau_yy_y(j) + rVf(j)*Tau_xy_y(j)
-     Dxz(j) = rUf(j)*Tau_yz_y(j) + rWf(j)*Tau_xy_y(j) ! new
-     Dyz(j) = rVf(j)*Tau_yz_y(j) + rWf(j)*Tau_yy_y(j) ! new
-
-! -------------------------------------------------------------------
-! Coriolis Terms 
-! -------------------------------------------------------------------
-     IF ( icoriolis_y .NE. EQNS_NONE ) THEN ! contribution from angular velocity Oy
-        dummy = rotn_vector(2)
-        Fxx(j) = dummy *C_2_R * Rxz(j)
-        Fyy(j) =        C_0_R
-        Fzz(j) =-dummy *C_2_R * Rxz(j)
-        Fxy(j) = dummy        * Ryz(j)
-        Fxz(j) = dummy        *(Rzz(j)-Rxx(j))
-        Fyz(j) =-dummy        * Rxy(j)
-     ENDIF
-
-! -------------------------------------------------------------------
-! Buoyancy Terms 
-! -------------------------------------------------------------------
-! Calculated in Section Potential Energy
-     
-! -------------------------------------------------------------------
-! Transient terms
-! -------------------------------------------------------------------
-     Rxx_t(j) = -Fxx(j) + Bxx(j) + Cxx(j) + Pxx(j) - Exx(j) + ( PIxx(j) - Txxy_y(j) - Gxx(j) + Dxx(j) ) /rR(j)
-     Ryy_t(j) = -Fyy(j) + Byy(j) + Cyy(j) + Pyy(j) - Eyy(j) + ( PIyy(j) - Tyyy_y(j) - Gyy(j) + Dyy(j) ) /rR(j)
-     Rzz_t(j) = -Fzz(j) + Bzz(j) + Czz(j) + Pzz(j) - Ezz(j) + ( PIzz(j) - Tzzy_y(j) - Gzz(j) + Dzz(j) ) /rR(j)
-     Rxy_t(j) = -Fxy(j) + Bxy(j) + Cxy(j) + Pxy(j) - Exy(j) + ( PIxy(j) - Txyy_y(j) - Gxy(j) + Dxy(j) ) /rR(j)
-     Rxz_t(j) = -Fxz(j) + Bxz(j) + Cxz(j) + Pxz(j) - Exz(j) + ( PIxz(j) - Txzy_y(j) - Gxz(j) + Dxz(j) ) /rR(j)
-     Ryz_t(j) = -Fyz(j) + Byz(j) + Cyz(j) + Pyz(j) - Eyz(j) + ( PIyz(j) - Tyzy_y(j) - Gyz(j) + Dyz(j) ) /rR(j)
-
-! -------------------------------------------------------------------
-! Kinetic energy equation
-! -------------------------------------------------------------------
-     Tke(j)  = C_05_R*(Rxx(j)    + Ryy(j)    + Rzz(j)   )
-
-     Buo(j)  = C_05_R*(Bxx(j)    + Byy(j)    + Bzz(j)   )
-     Con(j)  = C_05_R*(Cxx(j)       + Cyy(j)       + Czz(j)      )
-     Prd(j)  = C_05_R*(Pxx(j)       + Pyy(j)       + Pzz(j)      )
-     Pi(j)   = C_05_R*(PIxx(j)   + PIyy(j)   + PIzz(j)  )
-     Eps(j)  = C_05_R*(Exx(j)       + Eyy(j)       + Ezz(j)      )
-     Ty_y(j) = C_05_R*(Txxy_y(j) + Tyyy_y(j) + Tzzy_y(j))
-     Gkin(j) = C_05_R*(Gxx(j)       + Gyy(j)       + Gzz(j)      )
-     Dkin(j) = C_05_R*(Dxx(j)       + Dyy(j)       + Dzz(j)      )
-
-     Tke_t(j)= Buo(j) + Con(j) + Prd(j) - Eps(j) + ( - Ty_y(j) + Pi(j) - Gkin(j) + Dkin(j) ) / rR(j)
-
-! -------------------------------------------------------------------
-! Potential energy equation
-! -------------------------------------------------------------------
-     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-        Pot(j)       = -rB(j)*(y(j) - y(1) - scaley*ycoor_i(inb_scal))
-        SourcePot(j) =-rSb(j)*(y(j) - y(1) - scaley*ycoor_i(inb_scal))
-
-     ELSE
-        Pot(j)       =-rR(j)*(y(j) - y(1) - scaley*ycoor_rho)*body_vector(2)
-        SourcePot(j) = C_0_R
-        
-     ENDIF
-
-     IF ( Prd(j) .NE. C_0_R ) THEN
-        ri_f(j) =-Buo(j) / Prd(j) ! BuoyancyDestruction / ShearProduction
-     ELSE
-        ri_f(j) = C_BIG_R
-     ENDIF
-
-! -------------------------------------------------------------------
-! Kolmogorov microscale and Taylor Reynolds number
-! -------------------------------------------------------------------
-     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC )THEN
-        eta(j) = visc
-
-     ELSE
-        IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) THEN; wrk3d(:,1,:) = visc*vis(:,j,:)/rho(:,j,:)
-        ELSE;                          wrk3d(:,1,:) = visc/rho(:,j,:)            ;ENDIF
-        eta(j) = AVG_IK(imax,jmax,kmax, i1, wrk3d, dx,dz, area)
-
-     ENDIF
-
-     IF ( eta(j) .GT. C_0_R ) THEN; re_x(j) = SQRT(Rxx(j))*lxx(j)/eta(j)
-     ELSE;                       re_x(j) = C_BIG_R; ENDIF
-
-     IF ( eta(j) .GT. C_0_R ) THEN; re_y(j) = SQRT(Ryy(j))*lyy(j)/eta(j)
-     ELSE;                       re_y(j) = C_BIG_R; ENDIF
-
-     IF ( eta(j) .GT. C_0_R ) THEN; re_z(j) = SQRT(Rzz(j))*lzz(j)/eta(j)
-     ELSE;                       re_z(j) = C_BIG_R; ENDIF
-
-     IF ( eta(j) .GT. C_0_R .AND. Eps(j) .GT. C_0_R ) THEN
-        re_iso(j) = ((Rxx(j)+Ryy(j)+Rzz(j))/C_3_R)* SQRT(C_15_R/(eta(j)*Eps(j)))
-        eta(j) = (eta(j)**3/Eps(j))**C_025_R
-     ELSE
-        re_iso(j) = C_BIG_R
-        eta(j) = C_BIG_R
-     ENDIF
-
 ! Independent variables
-     IF      ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
+     DO j = 1,jmax
         VAUXPRE1 =  y(j)
         VAUXPRE2 = (y(j)-scaley*ycoor_u  -y(1))/delta_m
         VAUXPRE3 = (y(j)-scaley*ycoor_u  -y(1))/delta_w
         VAUXPRE4 = (y(j)-scaley*ycoor_rho-y(1))/delta_h01
-        
-     ELSE IF ( imode_flow .EQ. DNS_FLOW_JET   ) THEN
-! Not developed yet; for TkStat compatibility with previous files
-        VAUXPRE1 = y(j)
+     ENDDO
 
-     ENDIF
-     
-  ENDDO
+! -------------------------------------------------------------------
+! Jet
+! -------------------------------------------------------------------
+  ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
+! not developed yet
+     DO j = 1,jmax
+        VAUXPRE1 = y(j)
+     ENDDO
+
+  ENDIF
 
 ! ###################################################################
 ! Output
