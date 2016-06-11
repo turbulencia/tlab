@@ -179,7 +179,8 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
 ! Plane averages
 ! ###################################################################
   IF ( fstavg .EQ. 1 ) THEN
-     CALL AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q, s,&
+!     CALL AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q, s,&
+     CALL AVG_FLOW_XZ(y,dx,dy,dz, q, s,&
           txc(:,1),txc(:,2),txc(:,3),txc(1:,4),txc(:,5),txc(:,6),hq(:,1),hq(:,2),hq(:,3),  &
           vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
 

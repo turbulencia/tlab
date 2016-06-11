@@ -459,22 +459,22 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
 #define Ryz_y(j)  mean2d(j,ig(18)+18)
 #define rR2_y(j)  mean2d(j,ig(18)+19)
 
-#define Tau_xx(j) mean2d(j,ig(18)+20)
-#define Tau_yy(j) mean2d(j,ig(18)+21)
-#define Tau_zz(j) mean2d(j,ig(18)+22)
-#define Tau_xy(j) mean2d(j,ig(18)+23)
-#define Tau_xz(j) mean2d(j,ig(18)+24)
-#define Tau_yz(j) mean2d(j,ig(18)+25)
+#define Tau_yy(j)   mean2d(j,ig(18)+20)
+#define Tau_xy(j)   mean2d(j,ig(18)+21)
+#define Tau_yz(j)   mean2d(j,ig(18)+22)
+#define Tau_xy_y(j) mean2d(j,ig(18)+23)
+#define Tau_yy_y(j) mean2d(j,ig(18)+24)
+#define Tau_yz_y(j) mean2d(j,ig(18)+25)
+  sg(ng) = 26
 
-#define Tau_xy_y(j) mean2d(j,ig(18)+26)
-#define Tau_yy_y(j) mean2d(j,ig(18)+27)
-#define Tau_yz_y(j) mean2d(j,ig(18)+28)
-  sg(ng) = 29
+! #define Tau_xx(j) mean2d(j,ig(18)+26) ! not needed anymore
+! #define Tau_zz(j) mean2d(j,ig(18)+27)
+! #define Tau_xz(j) mean2d(j,ig(18)+28)
 
 #define L_AVGMAX 226
+
 ! -----------------------------------------------------------------------
   nmax = ig(ng) +sg(ng) -1
-!  print*,nmax
   IF ( MAX_AVG_TEMPORAL .LT. nmax ) THEN
      CALL IO_WRITE_ASCII(efile,'AVERAGES_FLOW_XZ. Not enough space in local arrays.')
      CALL DNS_STOP(LES_ERROR_AVGTMP)
@@ -492,8 +492,6 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
 ! #######################################################################
   WRITE(line1,*) itime; line1 = 'Calculating flow statistics at It'//TRIM(ADJUSTL(line1))//'...'
   CALL IO_WRITE_ASCII(lfile,line1)
-
-  print*,'hi'
 
 ! ###################################################################
 ! Averages (do not overwrite dudz; it cotains p for incompressible case)
@@ -916,7 +914,7 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
         ENDIF
         wrk1d(:,inb_scal_array+1) = C_0_R
         CALL FI_BUOYANCY(ibodyforce, i1,  jmax,i1,   body_param, wrk1d, wrk1d(1,inb_scal_array+2), wrk1d(1,inb_scal_array+1))
-        CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s,          dudx,                      wrk1d(1,inb_scal_array+2))
+        CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s,     dudx,                      wrk1d(1,inb_scal_array+2))
 
 ! buoyancy terms
         CALL AVG_IK_V(imax,jmax,kmax, jmax, dudx, dx,dz, rB(1), wrk1d, area)
@@ -1221,19 +1219,93 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Phi(1), wrk1d, area)
   Phi(:) = Phi(:) *visc *C_2_R
 
+! ###################################################################
+! Dissipation Terms; final operation after viscous terms below
+! ###################################################################
+  wrk3d = ( dudx +dvdy +dwdz ) *c23
+  wrk3d = ( dudx *C_2_R -wrk3d ) *dudx + ( dudy +dvdx ) *dudy + ( dudz +dwdx ) *dudz
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Exx(1), wrk1d, area)
+
+  wrk3d = ( dudx +dvdy +dwdz ) *c23
+  wrk3d = ( dvdy *C_2_R -wrk3d ) *dvdy + ( dudy +dvdx ) *dvdx + ( dvdz +dwdy ) *dvdz
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Eyy(1), wrk1d, area)
+
+  wrk3d = ( dudx +dvdy +dwdz ) *c23
+  wrk3d = ( dwdz *C_2_R -wrk3d ) *dwdz + ( dwdy +dvdz ) *dwdy + ( dwdx +dudz ) *dwdx
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Ezz(1), wrk1d, area)
+
+  wrk3d = ( dudx +dvdy +dwdz ) *c23
+  wrk3d = ( dudx *C_2_R -wrk3d ) *dvdx + ( dudy +dvdx ) *dvdy + ( dudz +dwdx ) *dvdz &
+        + ( dvdy *C_2_R -wrk3d ) *dudy + ( dudy +dvdx ) *dudx + ( dvdz +dwdy ) *dudz
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Exy(1), wrk1d, area)
+
+  wrk3d = ( dudx +dvdy +dwdz ) *c23
+  wrk3d = ( dudx *C_2_R -wrk3d ) *dwdx + ( dudy +dvdx ) *dwdy + ( dudz +dwdx ) *dwdz &
+        + ( dwdz *C_2_R -wrk3d ) *dudz + ( dudz +dwdx ) *dudx + ( dvdz +dwdy ) *dudy
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Exz(1), wrk1d, area)
+
+  wrk3d = ( dudx +dvdy +dwdz ) *c23
+  wrk3d = ( dvdy *C_2_R -wrk3d ) *dwdy + ( dudy +dvdx ) *dwdx + ( dvdz +dwdy ) *dwdz &
+        + ( dwdz *C_2_R -wrk3d ) *dvdz + ( dudz +dwdx ) *dvdx + ( dvdz +dwdy ) *dvdy
+  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Eyz(1), wrk1d, area)
+
+  ! DO j = 1,jmax
+  !    DO k = 1,kmax
+  !       DO i = 1,imax
+  !          dil = (dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))*c23
+           
+  !          IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
+  !             tau11 = visc*vis(i,j,k)*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
+  !             tau22 = visc*vis(i,j,k)*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
+  !             tau33 = visc*vis(i,j,k)*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
+  !             tau12 = visc*vis(i,j,k)*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
+  !             tau13 = visc*vis(i,j,k)*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
+  !             tau23 = visc*vis(i,j,k)*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
+              
+  !          ELSE
+  !             tau11 = visc*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
+  !             tau22 = visc*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
+  !             tau33 = visc*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
+  !             tau12 = visc*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
+  !             tau13 = visc*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
+  !             tau23 = visc*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
+  !          ENDIF
+           
+  !          upy = dudy(i,j,k)-rU_y(j)
+  !          vpy = dvdy(i,j,k)-rV_y(j)
+  !          wpy = dwdy(i,j,k)-rW_y(j)
+           
+  !          wrk3d(i,1,k) = tau11*dudx(i,j,k) + tau12*upy + tau13*dudz(i,j,k)
+  !          wrk3d(i,2,k) = tau12*dvdx(i,j,k) + tau22*vpy + tau23*dvdz(i,j,k)
+  !          wrk3d(i,3,k) = tau13*dwdx(i,j,k) + tau23*wpy + tau33*dwdz(i,j,k)
+  !          wrk3d(i,4,k) = tau11*dvdx(i,j,k) + tau12*vpy + tau13*dvdz(i,j,k) &
+  !                       + tau12*dudx(i,j,k) + tau22*upy + tau23*dudz(i,j,k)              
+  !          wrk3d(i,7,k) = tau13*dudx(i,j,k) + tau23*upy + tau33*dudz(i,j,k) &
+  !                       + tau11*dwdx(i,j,k) + tau12*wpy + tau13*dwdz(i,j,k) 
+  !          wrk3d(i,8,k) = tau13*dvdx(i,j,k) + tau23*vpy + tau33*dvdz(i,j,k) &
+  !                       + tau12*dwdx(i,j,k) + tau22*wpy + tau23*dwdz(i,j,k) 
+           
+  !       ENDDO
+  !    ENDDO
+
+  !   Exx(j) = C_2_R*AVG_IK(imax, jmax, kmax, i1, wrk3d, dx, dz, area)/rR(j)
+  !   Eyy(j) = C_2_R*AVG_IK(imax, jmax, kmax, i2, wrk3d, dx, dz, area)/rR(j)
+  !   Ezz(j) = C_2_R*AVG_IK(imax, jmax, kmax, i3, wrk3d, dx, dz, area)/rR(j)
+  !   Exy(j) =       AVG_IK(imax, jmax, kmax, i4, wrk3d, dx, dz, area)/rR(j)
+  !   Exz(j) =       AVG_IK(imax, jmax, kmax, i7, wrk3d, dx, dz, area)/rR(j)
+  !   Eyz(j) =       AVG_IK(imax, jmax, kmax, i8, wrk3d, dx, dz, area)/rR(j)
+
+  ! ENDDO
+  
 ! ##################################################################
 ! Viscous shear-stress tensor
 ! ##################################################################
-  wrk3d = dudx *C_2_R -dvdy -dwdz
-  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_xx(1), wrk1d, area)
-  Tau_xx(:) = Tau_xx(:) *visc *c23
-
-  wrk3d = dwdz *C_2_R -dvdy -dudx
-  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_zz(1), wrk1d, area)
-  Tau_zz(:) = Tau_zz(:) *visc *c23
-
   wrk3d = dvdy *C_2_R -dudx -dwdz
   IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_yy(1), wrk1d, area)
@@ -1250,11 +1322,6 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
   ENDDO
   Tau_xy(:) = Tau_xy(:) *visc
 
-  wrk3d = dudz +dwdx
-  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_xz(1), wrk1d, area)
-  Tau_xz(:) = Tau_xz(:) *visc
-
   wrk3d = dvdz +dwdy
   IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_yz(1), wrk1d, area)
@@ -1266,6 +1333,22 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tau_xy(1), Tau_xy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tau_yy(1), Tau_yy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tau_yz(1), Tau_yz_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+
+  ! not needed anymore
+  ! wrk3d = dudx *C_2_R -dvdy -dwdz
+  ! IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  ! CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_xx(1), wrk1d, area)
+  ! Tau_xx(:) = Tau_xx(:) *visc *c23
+
+  ! wrk3d = dwdz *C_2_R -dvdy -dudx
+  ! IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  ! CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_zz(1), wrk1d, area)
+  ! Tau_zz(:) = Tau_zz(:) *visc *c23
+
+  ! wrk3d = dudz +dwdx
+  ! IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
+  ! CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_xz(1), wrk1d, area)
+  ! Tau_xz(:) = Tau_xz(:) *visc
 
 ! -------------------------------------------------------------------
 ! Contribution to turbulent transport terms
@@ -1319,100 +1402,14 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ty2(1), Ty2_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ty3(1), Ty3_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
 
-! Recover Oy derivatives overwritten before
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, u, dudy, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, v, dvdy, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, w, dwdy, i0,i0, wrk1d,wrk2d,wrk3d)
-
-! ###################################################################
-! Dissipation Terms
-! ###################################################################
-  wrk3d = ( dudx +dvdy +dwdz ) *c23
-  wrk3d = ( dudx *C_2_R -wrk3d ) *dudx + ( dudy +dvdx ) *dudy + ( dudz +dwdx ) *dudz
-  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Exx(1), wrk1d, area)
+! -------------------------------------------------------------------
+! Contribution to dissipation
   Exx(:) = ( Exx(:) *visc - Tau_xy(:) *rU_y(:) )*C_2_R
-
-  wrk3d = ( dudx +dvdy +dwdz ) *c23
-  wrk3d = ( dvdy *C_2_R -wrk3d ) *dvdy + ( dudy +dvdx ) *dvdx + ( dvdz +dwdy ) *dvdz
-  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Eyy(1), wrk1d, area)
   Eyy(:) = ( Eyy(:) *visc - Tau_yy(:) *rV_y(:) )*C_2_R
-
-  wrk3d = ( dudx +dvdy +dwdz ) *c23
-  wrk3d = ( dwdz *C_2_R -wrk3d ) *dwdz + ( dwdy +dvdz ) *dwdy + ( dwdx +dudz ) *dwdx
-  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Ezz(1), wrk1d, area)
   Ezz(:) = ( Ezz(:) *visc - Tau_yz(:) *rW_y(:) )*C_2_R
-
-  wrk3d = ( dudx +dvdy +dwdz ) *c23
-  wrk3d = ( dudx *C_2_R -wrk3d ) *dvdx + ( dudy +dvdx ) *dvdy + ( dudz +dwdx ) *dvdz &
-        + ( dvdy *C_2_R -wrk3d ) *dudy + ( dudy +dvdx ) *dudx + ( dvdz +dwdy ) *dudz
-  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Exy(1), wrk1d, area)
-  Exy(:) = Exy(:) *visc - Tau_xy(:) *rV_y(:) - Tau_yy(:) *rU_y(:)
-
-  wrk3d = ( dudx +dvdy +dwdz ) *c23
-  wrk3d = ( dudx *C_2_R -wrk3d ) *dwdx + ( dudy +dvdx ) *dwdy + ( dudz +dwdx ) *dwdz &
-        + ( dwdz *C_2_R -wrk3d ) *dudz + ( dudz +dwdx ) *dudx + ( dvdz +dwdy ) *dudy
-  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Exz(1), wrk1d, area)
-  Exz(:) = Exz(:) *visc - Tau_xy(:) *rW_y(:) - Tau_yz(:) *rU_y(:)
-
-  wrk3d = ( dudx +dvdy +dwdz ) *c23
-  wrk3d = ( dvdy *C_2_R -wrk3d ) *dwdy + ( dudy +dvdx ) *dwdx + ( dvdz +dwdy ) *dwdz &
-        + ( dwdz *C_2_R -wrk3d ) *dvdz + ( dudz +dwdx ) *dvdx + ( dvdz +dwdy ) *dvdy
-  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Eyz(1), wrk1d, area)
-  Eyz(:) = Eyz(:) *visc - Tau_yy(:) *rW_y(:) - Tau_yz(:) *rV_y(:)
-
-  ! DO j = 1,jmax
-  !    DO k = 1,kmax
-  !       DO i = 1,imax
-  !          dil = (dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))*c23
-           
-  !          IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
-  !             tau11 = visc*vis(i,j,k)*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
-  !             tau22 = visc*vis(i,j,k)*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
-  !             tau33 = visc*vis(i,j,k)*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
-  !             tau12 = visc*vis(i,j,k)*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
-  !             tau13 = visc*vis(i,j,k)*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
-  !             tau23 = visc*vis(i,j,k)*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
-              
-  !          ELSE
-  !             tau11 = visc*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
-  !             tau22 = visc*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
-  !             tau33 = visc*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
-  !             tau12 = visc*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
-  !             tau13 = visc*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
-  !             tau23 = visc*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
-  !          ENDIF
-           
-  !          upy = dudy(i,j,k)-rU_y(j)
-  !          vpy = dvdy(i,j,k)-rV_y(j)
-  !          wpy = dwdy(i,j,k)-rW_y(j)
-           
-  !          wrk3d(i,1,k) = tau11*dudx(i,j,k) + tau12*upy + tau13*dudz(i,j,k)
-  !          wrk3d(i,2,k) = tau12*dvdx(i,j,k) + tau22*vpy + tau23*dvdz(i,j,k)
-  !          wrk3d(i,3,k) = tau13*dwdx(i,j,k) + tau23*wpy + tau33*dwdz(i,j,k)
-  !          wrk3d(i,4,k) = tau11*dvdx(i,j,k) + tau12*vpy + tau13*dvdz(i,j,k) &
-  !                       + tau12*dudx(i,j,k) + tau22*upy + tau23*dudz(i,j,k)              
-  !          wrk3d(i,7,k) = tau13*dudx(i,j,k) + tau23*upy + tau33*dudz(i,j,k) &
-  !                       + tau11*dwdx(i,j,k) + tau12*wpy + tau13*dwdz(i,j,k) 
-  !          wrk3d(i,8,k) = tau13*dvdx(i,j,k) + tau23*vpy + tau33*dvdz(i,j,k) &
-  !                       + tau12*dwdx(i,j,k) + tau22*wpy + tau23*dwdz(i,j,k) 
-           
-  !       ENDDO
-  !    ENDDO
-
-  !   Exx(j) = C_2_R*AVG_IK(imax, jmax, kmax, i1, wrk3d, dx, dz, area)/rR(j)
-  !   Eyy(j) = C_2_R*AVG_IK(imax, jmax, kmax, i2, wrk3d, dx, dz, area)/rR(j)
-  !   Ezz(j) = C_2_R*AVG_IK(imax, jmax, kmax, i3, wrk3d, dx, dz, area)/rR(j)
-  !   Exy(j) =       AVG_IK(imax, jmax, kmax, i4, wrk3d, dx, dz, area)/rR(j)
-  !   Exz(j) =       AVG_IK(imax, jmax, kmax, i7, wrk3d, dx, dz, area)/rR(j)
-  !   Eyz(j) =       AVG_IK(imax, jmax, kmax, i8, wrk3d, dx, dz, area)/rR(j)
-
-  ! ENDDO
+  Exy(:) =   Exy(:) *visc - Tau_xy(:) *rV_y(:) - Tau_yy(:) *rU_y(:)
+  Exz(:) =   Exz(:) *visc - Tau_xy(:) *rW_y(:) - Tau_yz(:) *rU_y(:)
+  Eyz(:) =   Eyz(:) *visc - Tau_yy(:) *rW_y(:) - Tau_yz(:) *rV_y(:)
   
 ! ###################################################################
 ! Complete budget equations
