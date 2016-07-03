@@ -18,15 +18,17 @@
 !# using compact schemes to calculate the integral term.
 !# 
 !########################################################################
-SUBROUTINE OPR_RADIATION(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d)
+SUBROUTINE OPR_RADIATION(radiation, nx,ny,nz, dy, s, r, wrk1d,wrk3d)
+
+  USE DNS_TYPES, ONLY : term_structure
 
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TINTEGER,                   INTENT(IN)    :: iradiation, nx,ny,nz
+  TYPE(term_structure),       INTENT(IN)    :: radiation
+  TINTEGER,                   INTENT(IN)    :: nx,ny,nz
   TREAL, DIMENSION(*),        INTENT(IN)    :: dy
-  TREAL, DIMENSION(*),        INTENT(IN)    :: param    ! Radiation parameters
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s        ! Radiatively active scalar
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: r        ! Radiative heating rate
   TREAL, DIMENSION(ny,*),     INTENT(INOUT) :: wrk1d
@@ -47,10 +49,10 @@ SUBROUTINE OPR_RADIATION(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d)
   CALL INT_C1N6_LHS(ny,    ibc,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
   CALL PENTADFS(ny-1,               wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
 
-  delta_inv = C_1_R /param(2)
+  delta_inv = C_1_R /radiation%parameters(2)
 
 ! ###################################################################
-  IF      ( iradiation .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN
+  IF      ( radiation%type .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN
      nxz = 1
 
      IF ( nz .EQ. 1 ) THEN
@@ -64,7 +66,7 @@ SUBROUTINE OPR_RADIATION(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d)
      CALL AVG1V2D_V(nx,ny,nz, i1, s, p_org, p_dst) ! Calculate averaged scalar into p_org; p_dst is auxiliar
      
 ! ###################################################################
-  ELSE IF ( iradiation .EQ. EQNS_RAD_BULK1D_LOCAL  ) THEN
+  ELSE IF ( radiation%type .EQ. EQNS_RAD_BULK1D_LOCAL  ) THEN
      nxz = nx*nz
 
      IF ( nz .EQ. 1 ) THEN
@@ -90,14 +92,14 @@ SUBROUTINE OPR_RADIATION(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d)
   ip = nxz *(ny-1) +1; p_dst(ip:ip+nxz-1) = C_0_R ! boundary condition
 
 ! Calculate radiative heating rate
-  dummy = param(1)
+  dummy = radiation%parameters(1)
   DO j = 1,ny*nxz
      p_dst(j) = p_org(j) *EXP( p_dst(j) *delta_inv ) *dummy
   ENDDO
-!  p_dst(1:ny*nxz) = param(1) *p_org(1:ny*nxz) *DEXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
+!  p_dst(1:ny*nxz) = radiation%parameters(1) *p_org(1:ny*nxz) *DEXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
 
 ! ###################################################################
-  IF      ( iradiation .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN
+  IF      ( radiation%type .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN
      DO j = ny,1,-1
         ip = nx*nz *(j-1) +1; p_dst(ip:ip+nx*nz-1) = p_dst(j)
      ENDDO
@@ -118,15 +120,17 @@ END SUBROUTINE OPR_RADIATION
 
 !########################################################################
 !########################################################################
-SUBROUTINE OPR_RADIATION_FLUX(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d)
+SUBROUTINE OPR_RADIATION_FLUX(radiation, nx,ny,nz, dy, s, r, wrk1d,wrk3d)
+
+  USE DNS_TYPES, ONLY : term_structure
 
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TINTEGER,                   INTENT(IN)    :: iradiation, nx,ny,nz
+  TYPE(term_structure),       INTENT(IN)    :: radiation
+  TINTEGER,                   INTENT(IN)    :: nx,ny,nz
   TREAL, DIMENSION(ny,*),     INTENT(IN)    :: dy
-  TREAL, DIMENSION(*),        INTENT(IN)    :: param    ! Radiation parameters
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s        ! Radiatively active scalar
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: r        ! Radiative flux
   TREAL, DIMENSION(ny,*),     INTENT(INOUT) :: wrk1d
@@ -147,10 +151,10 @@ SUBROUTINE OPR_RADIATION_FLUX(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d
   CALL INT_C1N6_LHS(ny,    ibc,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
   CALL PENTADFS(ny-1,               wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
 
-  delta_inv = C_1_R /param(2)
+  delta_inv = C_1_R /radiation%parameters(2)
 
 ! ###################################################################
-  IF      ( iradiation .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN
+  IF      ( radiation%type .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN
      nxz = 1
 
      IF ( nz .EQ. 1 ) THEN
@@ -164,7 +168,7 @@ SUBROUTINE OPR_RADIATION_FLUX(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d
      CALL AVG1V2D_V(nx,ny,nz, i1, s, p_org, p_dst) ! Calculate averaged scalar into p_org; p_dst is auxiliar
      
 ! ###################################################################
-  ELSE IF ( iradiation .EQ. EQNS_RAD_BULK1D_LOCAL  ) THEN
+  ELSE IF ( radiation%type .EQ. EQNS_RAD_BULK1D_LOCAL  ) THEN
      nxz = nx*nz
 
      IF ( nz .EQ. 1 ) THEN
@@ -190,16 +194,16 @@ SUBROUTINE OPR_RADIATION_FLUX(iradiation, nx,ny,nz, dy, param, s, r, wrk1d,wrk3d
   ip = nxz *(ny-1) +1; p_dst(ip:ip+nxz-1) = C_0_R ! boundary condition
 
 ! Calculate radiative heating rate
-!  dummy = param(1)
-  dummy =-param(1) *param(2)
+!  dummy = radiation%parameters(1)
+  dummy =-radiation%parameters(1) *radiation%parameters(2)
   DO j = 1,ny*nxz
 !     p_dst(j) = p_org(j) *EXP( p_dst(j) *delta_inv ) *dummy
      p_dst(j) =           EXP( p_dst(j) *delta_inv ) *dummy
   ENDDO
-!  p_dst(1:ny*nxz) = param(1) *p_org(1:ny*nxz) *DEXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
+!  p_dst(1:ny*nxz) = radiation%parameters(1) *p_org(1:ny*nxz) *DEXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
 
 ! ###################################################################
-  IF      ( iradiation .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN
+  IF      ( radiation%type .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN
      DO j = ny,1,-1
         ip = nx*nz *(j-1) +1; p_dst(ip:ip+nx*nz-1) = p_dst(j)
      ENDDO

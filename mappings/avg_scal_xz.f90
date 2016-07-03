@@ -5,13 +5,13 @@
 SUBROUTINE AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, idiffusion, iradiation, itransport, ibodyforce
+  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, idiffusion, ibodyforce, itransport
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal, inb_scal_array, imode_fdm, i1bc,j1bc,k1bc, area, scaley
-  USE DNS_GLOBAL, ONLY : body_param, rad_param, trans_param,irad_scalar
+  USE DNS_GLOBAL, ONLY : body_param, radiation, transport
   USE DNS_GLOBAL, ONLY : mean_rho, delta_rho, ycoor_rho, delta_u, ycoor_u, mean_i, delta_i, ycoor_i
-  USE DNS_GLOBAL, ONLY : visc, schmidt, froude,settling
+  USE DNS_GLOBAL, ONLY : visc, schmidt, froude
   USE THERMO_GLOBAL, ONLY : imixture, thermo_param
 #ifdef USE_MPI
   USE DNS_MPI
@@ -71,13 +71,6 @@ SUBROUTINE AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,t
   IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R
   ELSE;                                  diff = visc/schmidt(is); ENDIF
 
-  IF ( itransport .NE. EQNS_NONE ) THEN
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-        trans_param(inb_scal_array    ) = C_1_R ! liquid
-        trans_param(inb_scal_array + 1) = C_1_R ! buoyancy
-     ENDIF
-  ENDIF
-
 ! Variable definition and memory management
 ! -----------------------------------------------------------------------
 ! Independent variables
@@ -117,7 +110,7 @@ SUBROUTINE AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,t
      varname(2) = TRIM(ADJUSTL(varname(2)))//' rQrad rQradC rQeva'
      sg(2) = sg(2) + 3
   ENDIF
-  IF ( itransport .NE. EQNS_NONE ) THEN
+  IF ( transport%active(is) ) THEN
      varname(2) = TRIM(ADJUSTL(varname(2)))//' rQtra rQtraC'
      sg(2) = sg(2) + 2
   ENDIF
@@ -363,16 +356,16 @@ SUBROUTINE AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,t
 ! #######################################################################
   dsdx = C_0_R; dsdy = C_0_R; dsdz = C_0_R; tmp1 = C_0_R; tmp2 = C_0_R; tmp3 = C_0_R
 
-  IF ( is .EQ. irad_scalar ) THEN      ! Radiation in tmp1
-     CALL OPR_RADIATION     (iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), tmp1, wrk1d,wrk3d)
-     CALL OPR_RADIATION_FLUX(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
+  IF ( radiation%active(is) ) THEN ! Radiation in tmp1
+     CALL OPR_RADIATION     (radiation, imax,jmax,kmax, dy, s(1,1,1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
+     CALL OPR_RADIATION_FLUX(radiation, imax,jmax,kmax, dy, s(1,1,1,radiation%scalar(is)), dsdx, wrk1d,wrk3d)
   ENDIF
 
-  IF ( itransport .NE. EQNS_NONE) THEN ! Transport in tmp3
-     CALL FI_TRANS_FLUX(itransport, i1, imax,jmax,kmax, is, inb_scal_array, trans_param, settling, dy, s,tmp3, dsdy, wrk1d,wrk2d,wrk3d)
+  IF ( transport%active(is) ) THEN ! Transport in tmp3
+     CALL FI_TRANS_FLUX(transport, i1, imax,jmax,kmax, is, dy, s,tmp3, dsdy, wrk1d,wrk2d,wrk3d)
   ENDIF
 
-  IF ( is .GT. inb_scal ) THEN         ! Diagnostic variables
+  IF ( is .GT. inb_scal ) THEN     ! Diagnostic variables
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
         coefQ = C_1_R                        ! Coefficient in the evaporation term
         coefR = C_0_R                        ! Coefficient in the radiation term
@@ -380,7 +373,7 @@ SUBROUTINE AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,t
         IF ( is .EQ. inb_scal_array+1 ) THEN ! Default values are for liquid; defining them for buoyancy
            coefQ = body_param(inb_scal_array) /froude
            coefR = body_param(inb_scal) /froude
-           DO i = 1,inb_scal; coefT = coefT + trans_param(i) *body_param(i) /froude; ENDDO
+           DO i = 1,inb_scal; coefT = coefT + transport%parameters(i) *body_param(i) /froude; ENDDO
         ENDIF
      
         CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdx,dsdy,dsdz) ! calculate xi in dsdx
@@ -389,19 +382,19 @@ SUBROUTINE AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,t
         dummy=-diff *coefQ
         tmp2 = dsdz *tmp2 *dummy              ! evaporation source
         
-        IF ( itransport .NE. EQNS_NONE ) THEN ! transport source; needs dsdy
+        IF ( transport%active(is) ) THEN ! transport source; needs dsdy
            dummy= coefQ
            tmp3 = tmp3 *( coefT + dsdy *dummy )
         ENDIF
         
-        IF ( iradiation .NE. EQNS_NONE ) THEN  ! radiation source; needs dsdy
-           CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), tmp1, wrk1d,wrk3d)
+        IF ( radiation%active(is) ) THEN ! radiation source; needs dsdy
+           CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,1,1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
            dummy= thermo_param(2) *coefQ
            tmp1 = tmp1 *( coefR + dsdy *dummy  )
            
 ! Correction term
            CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, dsdx,dsdy, i0,i0, wrk1d,wrk2d,wrk3d)
-           CALL OPR_RADIATION_FLUX(iradiation, imax,jmax,kmax, dy, rad_param, s(1,1,1,inb_scal_array), dsdx, wrk1d,wrk3d)
+           CALL OPR_RADIATION_FLUX(radiation, imax,jmax,kmax, dy, s(1,1,1,radiation%scalar(is)), dsdx, wrk1d,wrk3d)
            dsdx = dsdx *dsdy *dsdz *dummy
            
         ELSE
@@ -426,7 +419,7 @@ SUBROUTINE AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,t
      k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! correction term
      k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! evaporation
   ENDIF
-  IF ( itransport .NE. EQNS_NONE ) THEN
+  IF ( transport%active(is) ) THEN
      k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, dx,dz, mean2d(1,k), wrk1d(1,1), area)
      k = k + 1; mean2d(:,k) = C_0_R ! Correction term; to be developed.
   ENDIF

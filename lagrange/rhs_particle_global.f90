@@ -39,7 +39,8 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, imax_total,jmax_total, kmax_total
   USE DNS_GLOBAL, ONLY : isize_particle, scalex, scaley, scalez, inb_particle, inb_scal_array
   USE DNS_GLOBAL, ONLY : body_param, imode_fdm, i1bc, j1bc, k1bc, visc, isize_wrk1d
-  USE DNS_GLOBAL, ONLY : iunifx,iunify,iunifz,iradiation,rad_param, inb_txc
+  USE DNS_GLOBAL, ONLY : iunifx,iunify,iunifz, inb_txc
+  USE DNS_GLOBAL, ONLY : radiation
   USE LAGRANGE_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
@@ -105,7 +106,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
 
     ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
     !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,1), wrk1d,wrk3d)
+    CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(1)), txc(1,1), wrk1d,wrk3d)
     ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
        txc(ij,1) = dummy2*txc(ij,1)
@@ -184,7 +185,8 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
   
     ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
     !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,2), wrk1d,wrk3d)
+!    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,2), wrk1d,wrk3d)
+    CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(1)), txc(1,2), wrk1d,wrk3d)
     ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
        txc(ij,2) = dummy2*txc(ij,2)
@@ -237,7 +239,8 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
 
     ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
     !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,4), wrk1d,wrk3d)
+!    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,4), wrk1d,wrk3d)
+    CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(1)), txc(1,4), wrk1d,wrk3d)
     ! Radiation *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
        txc(ij,1) =txc(ij,1) + dummy2*txc(ij,4)
@@ -318,7 +321,8 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
 
     ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
     !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,1), wrk1d,wrk3d)
+!    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,1), wrk1d,wrk3d)
+    CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(1)), txc(1,1), wrk1d,wrk3d)
     ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
        txc(ij,1) = dummy2*txc(ij,1)
@@ -394,7 +398,8 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
        txc(ij,1) = visc*txc(ij,1)
     ENDDO 
   
-    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,2), wrk1d,wrk3d)
+!    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,2), wrk1d,wrk3d)
+    CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(1)), txc(1,2), wrk1d,wrk3d)
     ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
        txc(ij,2) = dummy2*txc(ij,2)
@@ -448,7 +453,8 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
  
     ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
     !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,4), wrk1d,wrk3d)
+!    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,4), wrk1d,wrk3d)
+    CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(1)), txc(1,4), wrk1d,wrk3d)
     ! Radiation *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
        txc(ij,1) =txc(ij,1) + dummy2*txc(ij,4)

@@ -19,7 +19,7 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
      dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, itransport, ibodyforce
+  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, ibodyforce, itransport
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, inb_scal_array, imode_fdm, i1bc,j1bc,k1bc, area, scaley

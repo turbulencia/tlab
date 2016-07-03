@@ -96,7 +96,7 @@ PROGRAM INISCAL
   ALLOCATE(wrk3d(isize_wrk3d))
 
   IF ( flag_s .EQ. 2 .OR. flag_s .EQ. 3 .OR. &
-       iradiation .NE. EQNS_NONE ) THEN
+       radiation%type .NE. EQNS_NONE ) THEN
      WRITE(str,*) i1;          line = 'Allocating array txc. Size '//TRIM(ADJUSTL(str))//'x'
      WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile,line)
@@ -189,16 +189,20 @@ PROGRAM INISCAL
 ! ------------------------------------------------------------------
 ! Add Radiation component after the fluctuation field
 ! ------------------------------------------------------------------
-  IF ( iradiation .NE. EQNS_NONE ) THEN
+  IF ( radiation%type .NE. EQNS_NONE ) THEN
      
 ! An initial effect of radiation is imposed as an accumulation during a certain interval of time
-     rad_param(1) = norm_ini_radiation
+     radiation%parameters(1) = norm_ini_radiation
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
         CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
      ENDIF
-     CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,inb_scal_array), txc, wrk1d,wrk3d)
-     s(1:isize_field,irad_scalar) = s(1:isize_field,irad_scalar) + txc(1:isize_field)
-
+     DO is = 1,inb_scal
+        IF ( radiation%active(is) ) THEN
+           CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(is)), txc, wrk1d,wrk3d)
+           s(1:isize_field,is) = s(1:isize_field,is) + txc(1:isize_field)
+        ENDIF
+     ENDDO
+     
   ENDIF
 
 ! ###################################################################

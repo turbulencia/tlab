@@ -48,10 +48,10 @@
 
 #define EQNS_TRANS_POWERLAW       21
 #define EQNS_TRANS_SUTHERLAND     22
-#define EQNS_TRANS_C_SET          23
-#define EQNS_TRANS_C_SET_FULL     24
-#define EQNS_TRANS_LN_SET         25
-#define EQNS_TRANS_LN_SET_FULL    26
+#define EQNS_TRANS_AIRWATER            23
+#define EQNS_TRANS_AIRWATERSIMPLIFIED  24
+
+#define EQNS_CHEM_QUADRATIC       25
 
 ! Finite-differences method
 #define FDM_COM4_JACOBIAN     4

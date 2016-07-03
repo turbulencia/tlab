@@ -28,7 +28,7 @@ MODULE DNS_CONSTANTS
 END MODULE DNS_CONSTANTS
 
 MODULE DNS_GLOBAL
-  USE DNS_TYPES,     ONLY : subarray_structure
+  USE DNS_TYPES,     ONLY : subarray_structure, term_structure
   USE DNS_CONSTANTS, ONLY : MAX_VARS, MAX_PROF, MAX_JETS, MAX_NSP
   USE DNS_CONSTANTS, ONLY : MAX_STATS_SPATIAL
   IMPLICIT NONE
@@ -49,7 +49,7 @@ MODULE DNS_GLOBAL
   TINTEGER :: imode_files              ! files format
   TINTEGER :: imode_verbosity          ! level of verbosity used in log files
   TINTEGER :: imode_eqns               ! set of equations to be solved 
-  TINTEGER :: iadvection, iviscous, idiffusion, icoriolis, ibodyforce, iradiation ! formulation
+  TINTEGER :: iadvection, iviscous, idiffusion, icoriolis, ibodyforce ! formulation
   TINTEGER :: ifourier
   TINTEGER :: itransport, ireactive
 
@@ -137,6 +137,7 @@ MODULE DNS_GLOBAL
   TREAL    :: body_vector(3)                       ! vector
   TREAL    :: body_param(MAX_PROF)                 ! buoyancy function parameters
   TINTEGER :: ibodyforce_x,ibodyforce_y,ibodyforce_z
+  TYPE(term_structure) :: body
 
 ! ###################################################################
 ! Rotation parameters
@@ -144,17 +145,12 @@ MODULE DNS_GLOBAL
   TREAL    :: rotn_vector(3)
   TREAL    :: rotn_param(MAX_PROF)
   TINTEGER :: icoriolis_x,icoriolis_y,icoriolis_z
+  TYPE(term_structure) :: coriolis
 
 ! ###################################################################
-! Radiation parameters
-! ###################################################################
-  TINTEGER :: irad_scalar                         ! index of scalar in which radiation acts
-  TREAL    :: rad_param(MAX_PROF)                 ! radiation function parameters
-
-! ###################################################################
-! Transport parameters
-! ###################################################################
-  TREAL    :: trans_param(MAX_PROF)
+  TYPE(term_structure) :: radiation ! Radiation parameters
+  TYPE(term_structure) :: transport ! Transport parameters
+  TYPE(term_structure) :: chemistry ! Chemistry parameters
 
 ! ###################################################################
 ! Nondimensional numbers

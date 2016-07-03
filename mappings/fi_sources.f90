@@ -107,8 +107,7 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, inb_scal_array, isize_field, isize_wrk1d
   USE DNS_GLOBAL, ONLY : scaley, ycoor_i
-  USE DNS_GLOBAL, ONLY : iradiation, rad_param, irad_scalar
-  USE DNS_GLOBAL, ONLY : itransport, trans_param, settling
+  USE DNS_GLOBAL, ONLY : radiation, transport, chemistry
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
@@ -140,9 +139,9 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 ! -----------------------------------------------------------------------
 ! Radiation
 ! -----------------------------------------------------------------------
-     IF ( irad_scalar .EQ. is ) THEN
-        CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(1,inb_scal_array), tmp1, wrk1d,wrk3d)
-        
+     IF ( radiation%active(is) ) THEN
+        CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
+
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
         CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
@@ -186,11 +185,10 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 ! Transport, such as settling 
 ! array tmp1 should not be used inside the loop on is
 ! -----------------------------------------------------------------------
-     IF ( itransport .GT. 0 ) THEN
+     IF ( transport%type .GT. 0 ) THEN
         IF ( is .EQ. 1 ) THEN; flag_grad = 1;
         ELSE;                  flag_grad = 0; ENDIF
-        CALL FI_TRANS_FLUX(itransport, flag_grad, imax,jmax,kmax, is, inb_scal_array, trans_param, settling, &
-             dy, s,tmp1, tmp2, wrk1d,wrk2d,wrk3d)
+        CALL FI_TRANS_FLUX(transport, flag_grad, imax,jmax,kmax, is, dy, s,tmp1, tmp2, wrk1d,wrk2d,wrk3d)
         
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -203,6 +201,23 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
         
      ENDIF
 
+! -----------------------------------------------------------------------
+! Chemistry
+! -----------------------------------------------------------------------
+     IF ( chemistry%type .GT. 0 ) THEN
+        CALL FI_CHEM(chemistry, imax,jmax,kmax, is, s, tmp1)
+        
+!$omp parallel default( shared ) &
+!$omp private( ij, dummy, srt,end,siz )
+        CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
+
+        DO ij = srt,end
+           hs(ij,is) = hs(ij,is) + tmp1(ij)
+        ENDDO
+!$omp end parallel
+
+     ENDIF
+     
   ENDDO
   
   RETURN

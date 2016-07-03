@@ -95,10 +95,11 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#TermAdvection=<divergence/skewsymmetric>')
   CALL IO_WRITE_ASCII(bakfile, '#TermViscous=<divergence/explicit>')
   CALL IO_WRITE_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
-  CALL IO_WRITE_ASCII(bakfile, '#TermBodyForce=<None/Explicit/Linear/Bilinear/Quadratic>')
+  CALL IO_WRITE_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Linear/Bilinear/Quadratic>')
   CALL IO_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
-  CALL IO_WRITE_ASCII(bakfile, '#TermRadiation=<None/Bulk1dGlobal/Bulk1dLocal>')
-  CALL IO_WRITE_ASCII(bakfile, '#Transport=<constant/powerlaw/sutherland/ConstSettlingSimp/ConstSettlingFull/LognormSettlingSimp/LognormSettlingFull>')
+  CALL IO_WRITE_ASCII(bakfile, '#TermRadiation=<none/Bulk1dGlobal/Bulk1dLocal>')
+  CALL IO_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
+  CALL IO_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic>')
   CALL IO_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian8/CompactDirect6>')
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'FileFormat', 'RawSplit', sRes)
@@ -229,23 +230,28 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'          ) THEN; iradiation = EQNS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dglobal'  ) THEN; iradiation = EQNS_RAD_BULK1D_GLOBAL
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dlocal'   ) THEN; iradiation = EQNS_RAD_BULK1D_LOCAL
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'          ) THEN; radiation%type = EQNS_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dglobal'  ) THEN; radiation%type = EQNS_RAD_BULK1D_GLOBAL
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dlocal'   ) THEN; radiation%type = EQNS_RAD_BULK1D_LOCAL
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermRadiation option.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
 
 ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'Transport', 'constant', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'sutherland'          ) THEN; itransport = EQNS_TRANS_SUTHERLAND;
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'powerlaw'            ) THEN; itransport = EQNS_TRANS_POWERLAW; 
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'constsettlingsimp'   ) THEN; itransport = EQNS_TRANS_C_SET; 
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'constsettlingfull'   ) THEN; itransport = EQNS_TRANS_C_SET_FULL; 
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'lognormsettlingsimp' ) THEN; itransport = EQNS_TRANS_LN_SET; 
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'lognormsettlingfull' ) THEN; itransport = EQNS_TRANS_LN_SET_FULL; 
-  ELSE;                                                           itransport = EQNS_NONE; ENDIF
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'sutherland'         ) THEN; transport%type = EQNS_TRANS_SUTHERLAND;
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'powerlaw'           ) THEN; transport%type = EQNS_TRANS_POWERLAW; 
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwater'           ) THEN; transport%type = EQNS_TRANS_AIRWATER;
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwatersimplified' ) THEN; transport%type = EQNS_TRANS_AIRWATERSIMPLIFIED;
+  ELSE;                                                          transport%type = EQNS_NONE; ENDIF
+
+  itransport = transport%type
+
+! -------------------------------------------------------------------
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermChemistry', 'none', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic' ) THEN; chemistry%type = EQNS_CHEM_QUADRATIC;
+  ELSE;                                                 chemistry%type = EQNS_NONE; ENDIF
 
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'SpaceOrder', 'void', sRes)
@@ -372,14 +378,15 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#Scalar=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-  irad_scalar = 0
-  IF ( iradiation .NE. EQNS_NONE ) THEN
-     CALL SCANINIINT(bakfile, inifile, 'Radiation', 'Scalar', '1', irad_scalar)   
+  radiation%active = .FALSE.
+  IF ( radiation%type .NE. EQNS_NONE ) THEN
+     CALL SCANINIINT(bakfile, inifile, 'Radiation', 'Scalar', '1', idummy)   
+     radiation%active(idummy) = .TRUE.
      
-     rad_param(:) = C_0_R
+     radiation%parameters(:) = C_0_R
      CALL SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', '1.0', sRes)
      idummy = MAX_PROF
-     CALL LIST_REAL(sRes, idummy, rad_param)
+     CALL LIST_REAL(sRes, idummy, radiation%parameters)
 
   ENDIF
 
@@ -389,15 +396,23 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[Transport]')
   CALL IO_WRITE_ASCII(bakfile, '#Parameters=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#Exponent=<value>')
 
-  IF ( itransport .NE. EQNS_NONE ) THEN
-     trans_param(:) = C_0_R
+  transport%active = .FALSE.
+  IF ( transport%type .NE. EQNS_NONE ) THEN
+     transport%parameters(:) = C_0_R
      CALL SCANINICHAR(bakfile, inifile, 'Transport', 'Parameters', '1.0', sRes)
      idummy = MAX_PROF
-     CALL LIST_REAL(sRes, idummy, trans_param)
+     CALL LIST_REAL(sRes, idummy, transport%parameters)
 
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+        transport%active = .TRUE. ! All scalars are affected
+
+        CALL SCANINIREAL(bakfile, inifile, 'Transport', 'Exponent', '0.0', transport%auxiliar(1))
+     ENDIF
+     
   ENDIF
-
+  
 ! ###################################################################
 ! Thermodynamics
 ! ###################################################################
@@ -893,7 +908,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE
      inb_flow       = 5
      inb_flow_array = inb_flow + 2                                ! space for p, T
-     IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) inb_flow_array = inb_flow_array + 1 ! space for vis
+     IF ( transport%type .EQ. EQNS_TRANS_SUTHERLAND .OR. transport%type .EQ. EQNS_TRANS_POWERLAW ) inb_flow_array = inb_flow_array + 1 ! space for vis
   ENDIF
   inb_vars = inb_flow + inb_scal
 
@@ -962,11 +977,26 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
 ! Other parameters
 ! -------------------------------------------------------------------
-  IF ( iradiation .NE. EQNS_NONE ) THEN
-     IF ( irad_scalar+1 .GT. inb_scal_array ) THEN
-        CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Not enough scalars for radiation formulation.')
-        CALL DNS_STOP(DNS_ERROR_OPTION)
-     ENDIF
+! By default, transport and radiation are caused by last scalar
+  transport%scalar = inb_scal_array
+  radiation%scalar = inb_scal_array
+  
+  IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+     transport%parameters(inb_scal_array    ) = C_1_R ! liquid
+     transport%parameters(inb_scal_array + 1) = C_1_R ! buoyancy
+
+! Adding the settling number in the parameter definitions
+     transport%parameters = transport%parameters *settling
+
+! Transport is caused by liquid (settling)     
+     transport%scalar = inb_scal_array
+
+! Radiation is caused by liquid
+     radiation%scalar = inb_scal_array
+
+     radiation%active(inb_scal_array    ) = .TRUE. ! liquid
+     radiation%active(inb_scal_array + 1) = .TRUE. ! buoyancy
+     
   ENDIF
 
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. i1bc .NE. 0 ) THEN

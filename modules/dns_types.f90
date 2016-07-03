@@ -4,6 +4,8 @@ MODULE DNS_TYPES
   IMPLICIT NONE
   SAVE
 
+  TINTEGER, PARAMETER :: MAX_PARS = 10
+
   TYPE grid_structure
      SEQUENCE
      CHARACTER*8 name
@@ -35,4 +37,14 @@ MODULE DNS_TYPES
 #endif
   END type subarray_structure
   
+  TYPE term_structure
+     SEQUENCE
+     TINTEGER type
+     TINTEGER, DIMENSION(MAX_PARS) :: scalar     ! fields defining this term
+     LOGICAL,  DIMENSION(MAX_PARS) :: active     ! fields affected by this term
+     TREAL,    DIMENSION(MAX_PARS) :: parameters
+     TREAL,    DIMENSION(MAX_PARS) :: auxiliar
+     TREAL,    DIMENSION(3)        :: vector
+  END TYPE term_structure
+
 END MODULE DNS_TYPES

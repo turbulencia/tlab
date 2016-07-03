@@ -21,12 +21,6 @@
 !#              Finalizing the management of conditional statistics
 !#
 !########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 PROGRAM AVERAGES
 
   USE DNS_TYPES,     ONLY : grid_structure, pointers_structure
