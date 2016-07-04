@@ -414,6 +414,30 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
   
 ! ###################################################################
+! Chemistry
+! ###################################################################
+  CALL IO_WRITE_ASCII(bakfile, '#')
+  CALL IO_WRITE_ASCII(bakfile, '#[Chemistry]')
+  CALL IO_WRITE_ASCII(bakfile, '#Parameters=<value>')
+
+  chemistry%active = .FALSE.
+  IF ( chemistry%type .NE. EQNS_NONE ) THEN
+     chemistry%parameters(:) = C_0_R
+     CALL SCANINICHAR(bakfile, inifile, 'Chemistry', 'Parameters', '1.0', sRes)
+     idummy = MAX_PROF
+     CALL LIST_REAL(sRes, idummy, chemistry%parameters)
+
+! Including damkohler in the prefactors
+     chemistry%parameters(1:inb_scal_local1) = chemistry%parameters(1:inb_scal_local1) *damkohler(1:inb_scal_local1)
+
+! Activating terms
+     DO is = 1,inb_scal_local1
+        IF ( ABS(chemistry%parameters(is)) .GT. C_0_R ) chemistry%active(is) = .TRUE.
+     ENDDO
+     
+  ENDIF
+  
+! ###################################################################
 ! Thermodynamics
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')

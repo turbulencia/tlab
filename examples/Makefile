@@ -20,11 +20,12 @@ PRJS=\
      Case19 \
      Case20 \
      Case21 \
-     Case22 \
-     Case23 \
-     Case24 \
-     Case25 \
-     Case26 \
+     Case31 \
+     Case32 \
+     Case33 \
+     Case34 \
+     Case35 \
+     Case36 \
      Case40
 
      # Case11 \

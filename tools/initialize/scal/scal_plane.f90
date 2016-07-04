@@ -7,7 +7,7 @@
 !# HISTORY
 !#
 !# 2007/08/16 - J.P. Mellado
-!#              Created. Extracted from old SCRTI.
+!#              Created.
 !#
 !########################################################################
 !# DESCRIPTION
@@ -114,6 +114,9 @@ SUBROUTINE SCAL_PLANE(iflag, is, x,y,z,dx,dz, s, disp)
         disp(i,k) = disp(i,k)*amplify
      ENDDO; ENDDO
   ENDIF
+
+! Strength
+  disp = disp *norm_ini_s(is)
 
 ! ###################################################################
 ! Perturbation in the scalar field

@@ -15,11 +15,7 @@ SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
 ! -----------------------------------------------------------------------
 !########################################################################
   IF ( chemistry%type .EQ. EQNS_CHEM_QUADRATIC ) THEN
-
-     IF ( is .EQ. 2 ) source = chemistry%parameters(is) * s(:,2) *s(:,3)
-     IF ( is .EQ. 3 ) source = chemistry%parameters(is) * s(:,2) *s(:,3)
-     IF ( is .EQ. 4 ) source = chemistry%parameters(is) * s(:,2) *s(:,3)
-        
+     source = chemistry%parameters(is) * s(:,2) *s(:,3)
   ENDIF  
   
   RETURN

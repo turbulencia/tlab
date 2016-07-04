@@ -18,12 +18,6 @@
 !#              Adding plane perturbation
 !#
 !########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 PROGRAM INISCAL
 
   USE DNS_CONSTANTS
@@ -152,7 +146,7 @@ PROGRAM INISCAL
               CALL SCAL_VOLUME_DISCRETE(is, x,y,z, s(1,is))
            ELSE IF ( flag_s .EQ. 2 .AND. norm_ini_s(is) .GT. C_SMALL_R ) THEN
               CALL SCAL_VOLUME_BROADBAND(is, y,dx,dz, s(1,is), txc, wrk3d)
-           ELSE IF ( flag_s .GE. 4 ) THEN ! rest of the cases
+           ELSE IF ( flag_s .GE. 4 .AND. norm_ini_s(is) .GT. C_SMALL_R ) THEN
               CALL SCAL_PLANE(flag_s, is, x,y,z,dx,dz, s(1,is), wrk2d)
            ENDIF
            

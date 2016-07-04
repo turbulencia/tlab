@@ -29,26 +29,27 @@ Case06. Oscillating inversion (stably stratified density interface) with discret
 Case07. Unstable inversion. Rayleigh-Taylor.
 Case08. Stably stratified shear layer. 
 Case09. Heated plate. 
-Case10. Same as Case11, but two scalars with different BCs.
+Case10. Same as Case09, but two scalars with different BCs.
 Case11. Channel flow. 
-Case12. Same as 16, implicit solver.
+Case12. Same as 11, implicit solver.
 Case13. Radiation case.
 Case14. Cloud-top mixing layer; airwater, evaporation only. (Case06 plus buoyancy reversal.)
-Case15. Same as Case09, but compressible.
+Case15. Same as Case14, but compressible.
 Case16. Cloud-top mixing layer; airwater, radiation only.
 Case17. Cloud-top mixing layer; airwater, radiation case with evaporative cooling.
 Case18. Cloud-top mixing layer; airwater, radiation case with evaporative cooling and settling.
 Case19. Subsiding shell; airwater. Gravity vector along the horizontal.
 Case20. Subsiding shell; airwater. Broadband perturbation.
+Case21. Convective boundary layer with quadratic chemistry in three pasive scalars.
 
 3D cases
 
-Case21. Neutral Ekman layer without sponge at the top.
-Case22. Neutral Ekman layer with sponge at the top.
-Case23. Stable Ekman layer with sponge at the top.
-Case24. Same as 21, implicit solver.
-Case25. Same as 22, implicit solver.
-Case26. Same as 23, implicit solver.
+Case31. Neutral Ekman layer without sponge at the top.
+Case32. Neutral Ekman layer with sponge at the top.
+Case33. Stable Ekman layer with sponge at the top.
+Case34. Same as 21, implicit solver.
+Case35. Same as 22, implicit solver.
+Case36. Same as 23, implicit solver.
 
 1D cases
 
