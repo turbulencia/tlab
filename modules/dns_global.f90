@@ -64,13 +64,8 @@ MODULE DNS_GLOBAL
 ! ###################################################################
 ! Arrays size
 ! ###################################################################
-! grid
-  TINTEGER :: imax_total,jmax_total,kmax_total
-  TINTEGER :: inb_grid, inb_grid_1, inb_grid_2, inb_grid_3
-  TINTEGER :: imax,jmax,kmax              ! locally per processor
-
 ! fields
-  TINTEGER :: isize_field
+  TINTEGER :: imax,jmax,kmax, isize_field ! locally per processor
   TINTEGER :: inb_flow, inb_flow_array    ! transported & array space
   TINTEGER :: inb_scal, inb_scal_array    ! transported & array space
   TINTEGER :: inb_vars                    ! simply inb_flow + inb_scal
@@ -100,6 +95,8 @@ MODULE DNS_GLOBAL
 ! Grid
 ! ###################################################################
   TYPE(grid_structure), DIMENSION(3) :: grid
+  TINTEGER :: inb_grid, inb_grid_1, inb_grid_2, inb_grid_3
+  TINTEGER :: imax_total,jmax_total,kmax_total
   TINTEGER :: iunifx,iunify,iunifz               ! uniform
   TINTEGER :: i1bc,j1bc,k1bc                     ! biased
   TREAL    :: scalex,scaley,scalez

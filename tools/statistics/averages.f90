@@ -23,7 +23,7 @@
 !########################################################################
 PROGRAM AVERAGES
 
-  USE DNS_TYPES,     ONLY : grid_structure, pointers_structure
+  USE DNS_TYPES,     ONLY : pointers_structure
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
@@ -46,9 +46,7 @@ PROGRAM AVERAGES
   TINTEGER, PARAMETER :: params_size_max =  2
 
 ! Arrays declarations
-  TREAL, DIMENSION(:),      ALLOCATABLE, SAVE         :: x,y,z, dx,dy,dz
-  TYPE(grid_structure), DIMENSION(3) :: g
-
+  TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE, TARGET :: q, s, txc
   TREAL, DIMENSION(:),      ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
 
@@ -100,7 +98,8 @@ PROGRAM AVERAGES
 #endif
 
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: u, v, w
+  TREAL, DIMENSION(:),   POINTER :: u, v, w
+  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
 
 !########################################################################
 !########################################################################
@@ -128,12 +127,9 @@ PROGRAM AVERAGES
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
@@ -386,7 +382,7 @@ PROGRAM AVERAGES
   y_aux(:) = 0
   do ij = 1,jmax                      
      is = (ij-1)/opt_block + 1
-     y_aux(is) = y_aux(is) + y(ij)/M_REAL(opt_block)
+     y_aux(is) = y_aux(is) + y(ij,1)/M_REAL(opt_block)
   enddo
 
 ! -------------------------------------------------------------------

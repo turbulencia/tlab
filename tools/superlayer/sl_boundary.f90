@@ -34,7 +34,7 @@ PROGRAM SL_BOUNDARY
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
-  TREAL, DIMENSION(:),   ALLOCATABLE         :: x, y, z, dx, dy, dz
+  TREAL, ALLOCATABLE, SAVE, TARGET :: x(:),y(:),z(:), dx(:,:),dy(:,:),dz(:,:)
   
 ! Flow variables
   TREAL, DIMENSION(:,:), ALLOCATABLE, TARGET :: q
@@ -93,9 +93,9 @@ PROGRAM SL_BOUNDARY
   ALLOCATE(x(imax_total))
   ALLOCATE(y(jmax_total))
   ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(dx(imax_total,inb_grid))
+  ALLOCATE(dy(jmax_total,inb_grid))
+  ALLOCATE(dz(kmax_total,inb_grid))
 
   ALLOCATE(sl(imax*kmax,6))
   ALLOCATE(wrk1d(isize_wrk1d* 5))

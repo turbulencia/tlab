@@ -10,7 +10,7 @@ MODULE DNS_TYPES
      SEQUENCE
      CHARACTER*8 name
      TINTEGER size
-     LOGICAL periodic
+     LOGICAL uniform, periodic
      TREAL scale
      TREAL, DIMENSION(:),   POINTER :: nodes
      TREAL, DIMENSION(:,:), POINTER :: aux

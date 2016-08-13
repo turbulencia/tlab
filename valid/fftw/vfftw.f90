@@ -11,7 +11,7 @@ PROGRAM VFFTW
 #include "fftw3.f"
 #endif
 
-  TREAL,    DIMENSION(:),     POINTER :: x, y, z, dx, dy, dz
+  TREAL,    DIMENSION(:,:),   ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL,    DIMENSION(:,:,:), POINTER :: a, b, c
   TCOMPLEX, DIMENSION(:,:,:), POINTER :: a1, a2, a3
   TREAL,    DIMENSION(:),     POINTER :: wrk1d, wrk2d, wrk3d
@@ -25,6 +25,8 @@ PROGRAM VFFTW
 !  TREAL fft_data_x, fft_data_z
   TREAL dummy, error
 
+  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
+
 ! ###################################################################
   CALL DNS_INITIALIZE
   
@@ -33,12 +35,12 @@ PROGRAM VFFTW
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
+  ! ALLOCATE(dx(imax_total,inb_grid))
+  ! ALLOCATE(dy(jmax_total,inb_grid))
+  ! ALLOCATE(dz(kmax_total,inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d*10))
   ALLOCATE(wrk2d(isize_wrk2d* 5))

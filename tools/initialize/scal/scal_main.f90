@@ -36,9 +36,9 @@ PROGRAM INISCAL
 #endif
 
 ! -------------------------------------------------------------------
-  TREAL, DIMENSION(:),   ALLOCATABLE :: x,y,z, dx,dy,dz
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: s
-  TREAL, DIMENSION(:),   ALLOCATABLE :: wrk1d, wrk2d, wrk3d, txc
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: s
+  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d, wrk2d, wrk3d, txc
 
   TREAL dummy
   TINTEGER isize_wrk3d, is, ierr
@@ -46,6 +46,8 @@ PROGRAM INISCAL
   CHARACTER*64 str, line
   CHARACTER*32 inifile
 
+  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
+  
 ! ###################################################################
   inifile = 'dns.ini'
 
@@ -71,12 +73,9 @@ PROGRAM INISCAL
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
 
   WRITE(str,*) inb_scal_array; line = 'Allocating array scal. Size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_field;    line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))

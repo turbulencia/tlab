@@ -42,10 +42,10 @@ PROGRAM LAGRANGE_PDF
 
 ! -------------------------------------------------------------------
   TINTEGER  ierr,isize_wrk3d, i
-  TREAL, DIMENSION(:),      ALLOCATABLE :: x,y,z, dx,dy,dz
-  TREAL, DIMENSION(:),      ALLOCATABLE :: wrk1d,wrk2d, wrk3d
-  TREAL, DIMENSION(:,:),      ALLOCATABLE :: txc
-  TREAL, DIMENSION(:,:,:,:), ALLOCATABLE, SAVE    :: s  
+  TREAL, DIMENSION(:,:),     ALLOCATABLE, SAVE, TARGET :: x,y,z
+  TREAL, DIMENSION(:),       ALLOCATABLE       :: wrk1d,wrk2d, wrk3d
+  TREAL, DIMENSION(:,:),     ALLOCATABLE       :: txc
+  TREAL, DIMENSION(:,:,:,:), ALLOCATABLE, SAVE :: s  
 
   TREAL, DIMENSION(:,:),    ALLOCATABLE :: l_q, l_txc, l_hq
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_tags
@@ -59,6 +59,7 @@ PROGRAM LAGRANGE_PDF
   CHARACTER*64 str, fname
   CHARACTER*128 line
   CHARACTER*32 bakfile
+  TREAL, DIMENSION(:,:), POINTER           :: dx, dy, dz
 
 
   inifile = 'dns.ini'
@@ -97,12 +98,12 @@ PROGRAM LAGRANGE_PDF
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
+  ! ALLOCATE(dx(imax_total,inb_grid))
+  ! ALLOCATE(dy(jmax_total,inb_grid))
+  ! ALLOCATE(dz(kmax_total,inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d))

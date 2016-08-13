@@ -21,7 +21,7 @@ PROGRAM VHELMHOLTZ_FXZ
 #include "mpif.h"
 #endif 
 
-  TREAL, DIMENSION(:),     ALLOCATABLE :: x, y, z, dx, dy, dz
+  TREAL, DIMENSION(:,:),   ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:,:), ALLOCATABLE :: b, c, d,g
   TREAL, DIMENSION(:,:,:,:),ALLOCATABLE:: a,f,e
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: txc
@@ -49,6 +49,8 @@ PROGRAM VHELMHOLTZ_FXZ
   PARAMETER(ims_pro=0) 
 #endif
 
+  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
+
 ! ###################################################################
   CALL DNS_INITIALIZE
 
@@ -63,12 +65,12 @@ PROGRAM VHELMHOLTZ_FXZ
 ! --------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
+  ! ALLOCATE(dx(imax_total,inb_grid))
+  ! ALLOCATE(dy(jmax_total,inb_grid))
+  ! ALLOCATE(dz(kmax_total,inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d,4*nfield+7))
   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))

@@ -56,12 +56,12 @@ PROGRAM SPECTRA
   TINTEGER, PARAMETER :: iopt_size_max  =  20
 
 ! Arrays declarations
-  TREAL,      DIMENSION(:),   ALLOCATABLE :: x,y,z, dx,dy,dz
-  TREAL,      DIMENSION(:,:), ALLOCATABLE :: q, s
-  TREAL,      DIMENSION(:,:), ALLOCATABLE :: wrk1d,wrk2d, txc
-  TREAL,      DIMENSION(:),   ALLOCATABLE :: wrk3d, p_aux, y_aux, samplesize
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q, s
+  TREAL, DIMENSION(:,:), ALLOCATABLE :: wrk1d,wrk2d, txc
+  TREAL, DIMENSION(:),   ALLOCATABLE :: wrk3d, p_aux, y_aux, samplesize
 
-  TREAL,      DIMENSION(:,:), ALLOCATABLE :: out2d, outx,outz,outr
+  TREAL, DIMENSION(:,:), ALLOCATABLE :: out2d, outx,outz,outr
 
   TYPE(pointers_structure), DIMENSION(16) :: data
 
@@ -90,6 +90,8 @@ PROGRAM SPECTRA
   TREAL AVG1V3D, COV2V2D
 
   TINTEGER inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
+
+  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
 
 ! Reading variables
   CHARACTER*512 sRes
@@ -121,12 +123,9 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
 
@@ -352,7 +351,7 @@ PROGRAM SPECTRA
 
   icalc_radial = 0
   IF ( flag_mode .EQ. 1 .AND. imax_total .EQ. kmax_total ) icalc_radial = 1 ! Calculate radial spectra
-  IF ( flag_mode .EQ. 2 .AND. dx(1) .EQ. dz(1)           ) icalc_radial = 1 ! Calculate radial correlations
+  IF ( flag_mode .EQ. 2 .AND. dx(1,1) .EQ. dz(1,1)       ) icalc_radial = 1 ! Calculate radial correlations
   
 ! ------------------------------------------------------------------------
 ! Define size of blocks
@@ -360,7 +359,7 @@ PROGRAM SPECTRA
   y_aux(:) = 0
   DO j = 1,jmax
      is = (j-1)/opt_block + 1 
-     y_aux(is) = y_aux(is) + y(j)/M_REAL(opt_block)
+     y_aux(is) = y_aux(is) + y(j,1)/M_REAL(opt_block)
   ENDDO
 
 ! -------------------------------------------------------------------

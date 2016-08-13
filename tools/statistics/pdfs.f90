@@ -46,10 +46,10 @@ PROGRAM PDFS
   TINTEGER, PARAMETER :: params_size_max =  2
 
 ! Arrays declarations
-  TREAL,      DIMENSION(:),   ALLOCATABLE         :: x,y,z, dx,dy,dz, wrk3d
+  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL,      DIMENSION(:,:), ALLOCATABLE, TARGET :: s, q, txc
   TREAL,      DIMENSION(:,:), ALLOCATABLE         :: wrk1d, wrk2d
-  TREAL,      DIMENSION(:),   ALLOCATABLE         :: pdf, y_aux
+  TREAL,      DIMENSION(:),   ALLOCATABLE         :: pdf, y_aux, wrk3d
   INTEGER(1), DIMENSION(:),   ALLOCATABLE         :: gate
 
   TYPE(pointers_structure), DIMENSION(16) :: data
@@ -92,6 +92,7 @@ PROGRAM PDFS
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u, v, w, p
+  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
 
 !########################################################################
 !########################################################################
@@ -111,12 +112,9 @@ PROGRAM PDFS
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
@@ -331,7 +329,7 @@ PROGRAM PDFS
   y_aux(:) = 0
   do ij = 1,jmax
      is = (ij-1)/opt_block + 1 
-     y_aux(is) = y_aux(is) + y(ij)/M_REAL(opt_block)
+     y_aux(is) = y_aux(is) + y(ij,1)/M_REAL(opt_block)
   enddo
 
 ! -------------------------------------------------------------------

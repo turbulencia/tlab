@@ -53,9 +53,9 @@ PROGRAM INI_TRAJEC
 ! -------------------------------------------------------------------
 
   TINTEGER  ierr,isize_wrk3d, i, dummy, particle_pos
-  TREAL, DIMENSION(:),      ALLOCATABLE :: x,y,z, dx,dy,dz
+  TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:),      ALLOCATABLE :: wrk1d,wrk2d, wrk3d
-  TREAL, DIMENSION(:,:),      ALLOCATABLE :: txc
+  TREAL, DIMENSION(:,:),    ALLOCATABLE :: txc
   
   TREAL, DIMENSION(:,:),    ALLOCATABLE :: l_q, l_txc, l_hq
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_tags
@@ -68,7 +68,9 @@ PROGRAM INI_TRAJEC
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: all_fake_l_trajectories_tags
 #endif
   TREAL, DIMENSION(:,:), ALLOCATABLE :: l_trajectories
-  TREAL, DIMENSION(:), ALLOCATABLE :: fake_liquid, all_fake_liquid
+  TREAL, DIMENSION(:),   ALLOCATABLE :: fake_liquid, all_fake_liquid
+
+  TREAL, DIMENSION(:,:), POINTER           :: dx, dy, dz
 
   TINTEGER nitera_first
 
@@ -103,16 +105,16 @@ PROGRAM INI_TRAJEC
   IF (jmax_part .EQ. 1) THEN
      jmax_part   = jmax ! 1 by default
   ENDIF
+  
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
-
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
+  ! ALLOCATE(dx(imax_total,inb_grid))
+  ! ALLOCATE(dy(jmax_total,inb_grid))
+  ! ALLOCATE(dz(kmax_total,inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d))

@@ -57,7 +57,7 @@ PROGRAM INIFLOW
 #endif
 
 ! -------------------------------------------------------------------
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: x,y,z, dx,dy,dz
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: q, s, txc
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk1d,wrk2d,wrk3d
 !#ifdef USE_CGLOC
@@ -65,7 +65,8 @@ PROGRAM INIFLOW
 !#endif
 
   TARGET q, wrk3d
-  TREAL, DIMENSION(:), POINTER :: u, v, w, p, rho
+  TREAL, DIMENSION(:),   POINTER :: u, v, w, p, rho
+  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
 
 ! -------------------------------------------------------------------
 ! Local variables
@@ -104,12 +105,9 @@ PROGRAM INIFLOW
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))

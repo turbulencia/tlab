@@ -34,7 +34,7 @@ PROGRAM SL_NORMAL_ANALYSIS
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
-  TREAL, DIMENSION(:),   POINTER :: x, y, z, dx, dy, dz
+  TREAL, ALLOCATABLE, SAVE, TARGET :: x(:),y(:),z(:), dx(:,:),dy(:,:),dz(:,:)
 
 ! Flow variables
   TREAL, DIMENSION(:,:), POINTER :: q
@@ -98,9 +98,9 @@ PROGRAM SL_NORMAL_ANALYSIS
   ALLOCATE(x(imax_total))
   ALLOCATE(y(jmax_total))
   ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(dx(imax_total,inb_grid))
+  ALLOCATE(dy(jmax_total,inb_grid))
+  ALLOCATE(dz(kmax_total,inb_grid))
 
   ALLOCATE(u(imax*jmax*kmax))
   ALLOCATE(v(imax*jmax*kmax))

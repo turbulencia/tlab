@@ -10,7 +10,7 @@ PROGRAM VPOISSON
 
 #include "integers.h"
 
-  TREAL, DIMENSION(:),     ALLOCATABLE :: x, y, z, dx, dy, dz
+  TREAL, DIMENSION(:,:),   ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:,:), ALLOCATABLE :: a, b, c, d, e, f
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: txc
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: wrk1d, wrk2d, bcs_hb, bcs_ht 
@@ -19,6 +19,8 @@ PROGRAM VPOISSON
   TINTEGER i, j, k,  ibc_x(4), ibc_y(4), ibc_z(4)
   TINTEGER isize_wrk3d, itype
   TREAL dummy, error, mean, AVG_IK, falpha, lambda
+
+  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
 
 ! ###################################################################
   CALL DNS_INITIALIZE
@@ -30,12 +32,12 @@ PROGRAM VPOISSON
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
+  ! ALLOCATE(dx(imax_total,inb_grid))
+  ! ALLOCATE(dy(jmax_total,inb_grid))
+  ! ALLOCATE(dz(kmax_total,inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d+1))
   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))

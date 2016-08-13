@@ -21,7 +21,7 @@ SUBROUTINE DNS_INITIALIZE
        
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : istat_min_ver, istat_maj_ver
-  USE DNS_GLOBAL, ONLY : inb_grid, inb_grid_1, inb_grid_2, inb_grid_3
+  USE DNS_GLOBAL, ONLY : grid, inb_grid, inb_grid_1, inb_grid_2, inb_grid_3
   USE DNS_GLOBAL, ONLY : dns_omp_numThreads
   USE DNS_GLOBAL, ONLY : imode_verbosity
 
@@ -40,6 +40,10 @@ SUBROUTINE DNS_INITIALIZE
   CHARACTER*64 line
 
 !########################################################################
+  grid(1)%name = 'x'
+  grid(2)%name = 'y'
+  grid(3)%name = 'z'
+
 ! space for grid-related data
   inb_grid   = 2                 ! increments
 
@@ -56,6 +60,8 @@ SUBROUTINE DNS_INITIALIZE
   inb_grid_3 = inb_grid + 1      ! pointer to LU decomposition of 2.order derivative containing diffusivities
                                  ! space is added in routine DNS_READ_GLOBAL
 
+  inb_grid = inb_grid + 1        ! Adding space for the nodes
+  
   imode_verbosity = 1 ! default value; needed already here
 
   istat_maj_ver = 1

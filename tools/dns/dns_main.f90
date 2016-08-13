@@ -48,7 +48,7 @@ PROGRAM DNS
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: x,y,z, dx,dy,dz
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
 
 ! Flow/Scalar variables and RHS space
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: q,s, h_q,h_s, txc  
@@ -74,8 +74,9 @@ PROGRAM DNS
   TARGET q
 
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:),   POINTER           :: u, v, w, e, rho, p, T, vis
-
+  TREAL, DIMENSION(:),   POINTER :: u, v, w, e, rho, p, T, vis
+  TREAL, DIMENSION(:,:), POINTER :: dx,dy,dz
+  
   TINTEGER iread_flow, iread_scal, idummy
   TINTEGER ierr, isize_wrk3d, isize_vaux, isize_loc
 #ifdef USE_MPI
@@ -267,12 +268,9 @@ PROGRAM DNS
 ! -------------------------------------------------------------------
 ! Allocating basic memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
@@ -433,8 +431,8 @@ PROGRAM DNS
     CALL DNS_READ_PARTICLE(fname,l_q) ! h_particle only as dummy
     ! set boundarys for residence time pdf 
     IF (inb_particle_aux .EQ. 1) THEN
-       l_y_lambda = ((y(jmax)-y(1))*ycoor_i(1)-2)
-       l_y_base = ( ((y(jmax)-y(1))*ycoor_i(1)-(y(jmax)-y(1))*ycoor_i(3) )/2 + (y(jmax)-y(1))*ycoor_i(3))
+       l_y_lambda = ((y(jmax,1)-y(1,1))*ycoor_i(1)-2)
+       l_y_base = ( ((y(jmax,1)-y(1,1))*ycoor_i(1)-(y(jmax,1)-y(1,1))*ycoor_i(3) )/2 + (y(jmax,1)-y(1,1))*ycoor_i(3))
        IF (residence_reset .EQ. 1) THEN
           l_q(:,6) = C_0_R
        ENDIF

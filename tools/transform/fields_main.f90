@@ -44,8 +44,8 @@ PROGRAM TRANSFIELDS
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: x,y,z, dx,dy,dz
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: x_dst,y_dst,z_dst
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
+  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: x_dst,y_dst,z_dst
 
 ! Fields
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: q,     s,    txc
@@ -88,6 +88,8 @@ PROGRAM TRANSFIELDS
   INTEGER icount
 #endif
 
+  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
+
 ! ###################################################################
   inifile = 'dns.ini'
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
@@ -103,12 +105,12 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
+  ! ALLOCATE(dx(imax_total,inb_grid))
+  ! ALLOCATE(dy(jmax_total,inb_grid))
+  ! ALLOCATE(dz(kmax_total,inb_grid))
 
 ! -------------------------------------------------------------------
 ! File names
@@ -443,54 +445,54 @@ PROGRAM TRANSFIELDS
 
 ! To be updated: we need to distinguish between periodic and nonperiodic cases.
 !        dummy = (x_dst(imax_total_dst)-x(imax_total)) / (x(imax_total)-x(imax_total-1))
-        dummy = (scalex_dst-scalex) / (x(imax_total)-x(imax_total-1))
+        dummy = (scalex_dst-scalex) / (x(imax_total,1)-x(imax_total-1,1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Ox scales are not equal at the end.')
            CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
         ENDIF
-        wrk1d(1:imax_total,1) = x(1:imax_total) ! we need extra space
+        wrk1d(1:imax_total,1) = x(1:imax_total,1) ! we need extra space
         
-        dummy = (y_dst(jmax_total_dst)-y(jmax_total)) / (y(jmax_total)-y(jmax_total-1))
+        dummy = (y_dst(jmax_total_dst)-y(jmax_total,1)) / (y(jmax_total,1)-y(jmax_total-1,1))
 !        dummy = (scaley_dst-scaley) / (y(jmax_total)-y(jmax_total-1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            IF ( dummy .GT. C_0_R ) THEN
               subdomain(4) = ABS(jmax_total_dst - jmax_total) ! additional planes at the top
               jmax_aux = jmax_aux + subdomain(4)
-              dummy = (y_dst(jmax_total_dst)-y(jmax_total)) / INT(subdomain(4))
+              dummy = (y_dst(jmax_total_dst)-y(jmax_total,1)) / INT(subdomain(4))
 !              dummy = (scaley_dst-scaley) / INT(subdomain(4))
            ELSE
               CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oy scales are not equal at the end.')
               CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
            ENDIF
         ENDIF
-        wrk1d(1+subdomain(3):jmax_total+subdomain(3),2) = y(1:jmax_total) ! we need extra space
+        wrk1d(1+subdomain(3):jmax_total+subdomain(3),2) = y(1:jmax_total,1) ! we need extra space
         DO ip = jmax_total+1,jmax_aux
            wrk1d(ip,2) = wrk1d(ip-1,2) + dummy
         ENDDO
 
-        dummy = (y_dst(1)-y(1)) / (y(2)-y(1))
+        dummy = (y_dst(1)-y(1,1)) / (y(2,1)-y(1,1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            IF ( dummy .LT. C_0_R ) THEN
               subdomain(3) = ABS(jmax_total_dst - jmax_total) ! additional planes at the beginning
               jmax_aux = jmax_aux + subdomain(3)
-              dummy = (y_dst(1)-y(1)) / INT(subdomain(3))
+              dummy = (y_dst(1)-y(1,1)) / INT(subdomain(3))
            ELSE
               CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oy scales are not equal at the beginning.')
               CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
            ENDIF
         ENDIF
-        wrk1d(1+subdomain(3):jmax_total+subdomain(3),2) = y(1:jmax_total) ! we need extra space
+        wrk1d(1+subdomain(3):jmax_total+subdomain(3),2) = y(1:jmax_total,1) ! we need extra space
         DO ip = subdomain(3),1,-1
            wrk1d(ip,2) = wrk1d(ip+1,2) + dummy ! dummy is negative
         ENDDO
            
 !        dummy = (z_dst(kmax_total_dst)-z(kmax_total)) / (z(kmax_total)-z(kmax_total-1))
-        dummy = (scalez_dst-scalez) / (z(kmax_total)-z(kmax_total-1))
+        dummy = (scalez_dst-scalez) / (z(kmax_total,1)-z(kmax_total-1,1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oz scales are not equal')
            CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
         ENDIF
-        wrk1d(1:kmax_total,3) = z(1:kmax_total) ! we need extra space
+        wrk1d(1:kmax_total,3) = z(1:kmax_total,1) ! we need extra space
 
 ! Remeshing the fields
         IF ( icalc_flow .GT. 0 ) THEN
@@ -529,7 +531,7 @@ PROGRAM TRANSFIELDS
 ! Filter
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 5 ) THEN
-        IF ( opt_filter .EQ. DNS_FILTER_ALPHA  ) dummy =-C_1_R/(alpha*dx(1))**2
+        IF ( opt_filter .EQ. DNS_FILTER_ALPHA  ) dummy =-C_1_R/(alpha*dx(1,1))**2
         IF ( opt_filter .EQ. DNS_FILTER_CUTOFF ) dummy = C_1_R/M_REAL(imax_total*kmax_total)
         IF ( opt_filter .EQ. DNS_FILTER_ERF    ) dummy = C_1_R/M_REAL(imax_total*kmax_total)
 
@@ -608,7 +610,7 @@ PROGRAM TRANSFIELDS
 ! Blend
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 7 ) THEN
-        IF ( it .EQ. 1 ) opt_vec(2) = y(1) + opt_vec(2)*scaley
+        IF ( it .EQ. 1 ) opt_vec(2) = y(1,1) + opt_vec(2)*scaley
         WRITE(sRes,*) opt_vec(2),opt_vec(3); sRes = 'Blending with '//TRIM(ADJUSTL(sRes))
         CALL IO_WRITE_ASCII(lfile,sRes)
 
