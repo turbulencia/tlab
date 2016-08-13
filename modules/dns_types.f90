@@ -12,8 +12,8 @@ MODULE DNS_TYPES
      TINTEGER size
      LOGICAL periodic
      TREAL scale
-     TREAL, DIMENSION(:),   ALLOCATABLE :: nodes
-     TREAL, DIMENSION(:,:), ALLOCATABLE :: aux
+     TREAL, DIMENSION(:),   POINTER :: nodes
+     TREAL, DIMENSION(:,:), POINTER :: aux
   END TYPE grid_structure
 
   TYPE pointers_structure

@@ -1,7 +1,7 @@
 #include "types.h"
 #include "dns_error.h"
 
-SUBROUTINE GRID_READ_LOCAL (inifile,idir)
+SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
 
   USE DNS_CONSTANTS, ONLY : efile
   USE GRID_LOCAL
@@ -10,7 +10,9 @@ SUBROUTINE GRID_READ_LOCAL (inifile,idir)
 
   CHARACTER*(*) inifile
   TINTEGER idir
-
+  TREAL scale
+  LOGICAL periodic
+  
 ! -------------------------------------------------------------------
   CHARACTER*64 sRes, str, bakfile
   CHARACTER*9 title
@@ -36,9 +38,10 @@ SUBROUTINE GRID_READ_LOCAL (inifile,idir)
   CALL SCANINIINT(bakfile, inifile, title, 'segments', '1', idir_opts(1,idir))
 
   CALL SCANINICHAR(bakfile, inifile, title, 'periodic', 'no', sRes) 
-  IF (TRIM(ADJUSTL(sRes)) .eq. 'yes') THEN; idir_opts(2,idir) = 1
-  ELSE;                                     idir_opts(2,idir) = 0; ENDIF
-
+  IF (TRIM(ADJUSTL(sRes)) .eq. 'yes') THEN; idir_opts(2,idir) = 1; periodic = .TRUE.
+  ELSE;                                     idir_opts(2,idir) = 0; periodic = .FALSE.; ENDIF
+! idir_opts(2,idir) to be removed
+     
   CALL SCANINICHAR(bakfile, inifile, title, 'mirrored', 'no', sRes)
   IF (TRIM(ADJUSTL(sRes)) .eq. 'yes') THEN; idir_opts(3,idir) = 1
   ELSE;                                     idir_opts(3,idir) = 0; ENDIF
@@ -78,8 +81,8 @@ SUBROUTINE GRID_READ_LOCAL (inifile,idir)
 ! -------------------------------------------------------------------
 ! Control
 ! -------------------------------------------------------------------
-  scale(idir) = isegend(idir_opts(1,idir),idir)
-  IF ( scale(idir) .LE. C_0_R ) THEN
+  scale = isegend(idir_opts(1,idir),idir)
+  IF ( scale .LE. C_0_R ) THEN
      CALL IO_WRITE_ASCII(efile, 'GRID_READ_LOCAL. Scales undefined.')
      CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
      

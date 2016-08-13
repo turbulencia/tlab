@@ -26,7 +26,7 @@
 
 SUBROUTINE BLD_TANH(idir, x, imax, scalex)
 
-  USE GRID_LOCAL
+  USE GRID_LOCAL, ONLY : iseg_vals, iseg_opts, idir_opts
 
   IMPLICIT NONE
 

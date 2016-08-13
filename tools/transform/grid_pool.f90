@@ -255,14 +255,6 @@ SUBROUTINE TRANS_DATA(name, grid, work1,work2)
   USE DNS_TYPES, ONLY : grid_structure
   IMPLICIT NONE
 
-  ! TYPE grid_struct
-  !    SEQUENCE
-  !    CHARACTER*8 name
-  !    TINTEGER size
-  !    TREAL scale
-  !    TREAL, DIMENSION(:), ALLOCATABLE :: nodes
-  ! END TYPE grid_struct
-  
   TYPE(grid_structure) grid
   
   CHARACTER*(*) name

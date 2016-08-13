@@ -1,28 +1,10 @@
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - S. Stanley
-!#              Created
-!# 2000/06/01 - J.P. Mellado
-!#              Modified
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Grid generation tool
-!# Origin is set always to (0,0,0)
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 #include "types.h"
 
+!# Grid generation tool. Origin is set always to (0,0,0)
 PROGRAM INIGRID
 
+  USE DNS_TYPES, ONLY     : grid_structure
+  USE DNS_CONSTANTS, ONLY : gfile
   USE GRID_LOCAL
 #ifdef USE_MPI 
   USE DNS_MPI 
@@ -31,37 +13,35 @@ PROGRAM INIGRID
 
 #include "integers.h"
 
-  TINTEGER                         :: imax,jmax,kmax, nmax
-  TREAL, DIMENSION(:), ALLOCATABLE :: x,y,z, work1,work2
-  TINTEGER                         :: idir, iseg, isize_wrk1d
+  CHARACTER*32, PARAMETER                  :: ifile = 'dns.ini', sfile = 'grid.sts'
+  TYPE(grid_structure), DIMENSION(3)       :: g
+  TINTEGER                                 :: nmax
+  TREAL, DIMENSION(:), ALLOCATABLE, TARGET :: x,y,z
+  TREAL, DIMENSION(:), ALLOCATABLE         :: work1,work2
+  TINTEGER idir, iseg, isize_wrk1d, n
+  TREAL dxmx, dxmn, axmx, axmn
 
 #ifdef USE_MPI 
 #include "mpif.h" 
 #endif 
 
 ! #######################################################################
-! Reading the input file
+! Initialize
 ! #######################################################################
-  ifile = 'dns.ini'
-  ofile = 'dns.log'
-  sfile = 'grid.sts'
-  ffile = 'grid'
-
-
+  g(1)%name = 'x'
+  g(2)%name = 'y'
+  g(3)%name = 'z'
+  
 #ifdef USE_MPI 
   CALL DNS_INITIALIZE 
   IF ( ims_pro .EQ. 0 ) THEN 
 #endif 
 
-  CALL GRID_READ_LOCAL(ifile,i1) ! read data of Ox direction
-  CALL GRID_READ_LOCAL(ifile,i2) ! read data of Oy direction
-  CALL GRID_READ_LOCAL(ifile,i3) ! read data of Oz direction
-
-! #######################################################################
-! Calculating the dimensions
-! #######################################################################
   DO idir = 1,3
 
+! Read data
+     CALL GRID_READ_LOCAL(ifile, idir, g(idir)%scale, g(idir)%periodic)
+     
 ! Add points of all segments
      nmax = isegdim(1,idir)
      DO iseg = 2,idir_opts(1,idir)
@@ -69,83 +49,98 @@ PROGRAM INIGRID
      ENDDO
 
 ! Mirrored
-     IF (idir_opts(3,idir).eq.1) nmax = 2*nmax - 2
+     IF ( idir_opts(3,idir) .EQ. 1 ) nmax = 2*nmax - 2
 
-! Store data
-     IF ( idir .EQ. 1 ) imax = nmax
-     IF ( idir .EQ. 2 ) jmax = nmax
-     IF ( idir .EQ. 3 ) kmax = nmax
+! Size
+     g(idir)%size = nmax
 
   ENDDO
 
 ! #######################################################################
 ! Allocation of arrays
 ! #######################################################################
-  isize_wrk1d = MAX(imax,MAX(jmax,kmax))
-  ALLOCATE(x(imax))
-  ALLOCATE(y(jmax))
-  ALLOCATE(z(kmax))
+  ALLOCATE(x(g(1)%size)); g(1)%nodes => x
+  ALLOCATE(y(g(2)%size)); g(2)%nodes => y
+  ALLOCATE(z(g(3)%size)); g(3)%nodes => z
+
+  isize_wrk1d = MAX(g(1)%size,MAX(g(2)%size,g(3)%size))
   ALLOCATE(work1(isize_wrk1d))
   ALLOCATE(work2(isize_wrk1d))
 
 ! #######################################################################
-! Direction Ox
+! Construct grid
 ! #######################################################################
-  IF      ( iseg_opts(1,1,1) .LE. 4 ) THEN; CALL BLD_GEN( i1,x,imax,scale(1))
-  ELSE IF ( iseg_opts(1,1,1) .EQ. 5 ) THEN; CALL BLD_TANH(i1,x,imax,scale(1))
-  ELSE IF ( iseg_opts(1,1,1) .EQ. 6 ) THEN; CALL BLD_EXP( i1,x,imax,scale(1)); ENDIF
+  DO idir = 1,3
 
-  IF (idir_opts(2,1).eq.1) imax = imax - 1 ! periodic case
+     SELECT CASE(iseg_opts(1,1,idir))
 
-  IF ( idir_opts(3,1) .EQ. 1 ) THEN
-     IF ( iseg_opts(1,1,1) .EQ. 5 .OR. iseg_opts(1,1,1) .EQ. 6 ) THEN; CALL GRID_MIRROR(i2,imax,x,scale(1))
-     ELSE;                                                             CALL GRID_MIRROR(i1,imax,x,scale(1))
-     ENDIF
-  ENDIF
+     CASE(:4)
+        CALL BLD_GEN( idir, g(idir)%nodes, g(idir)%size, g(idir)%scale)
+        IF ( idir_opts(3,idir) .EQ. 1 ) CALL GRID_MIRROR(i1, g(idir)%size, g(idir)%nodes, g(idir)%scale)
+        
+     CASE(5)
+        CALL BLD_TANH(idir, g(idir)%nodes, g(idir)%size, g(idir)%scale)
+        IF ( idir_opts(3,idir) .EQ. 1 ) CALL GRID_MIRROR(i2, g(idir)%size, g(idir)%nodes, g(idir)%scale)
+        
+     CASE(6)
+        CALL BLD_EXP( idir, g(idir)%nodes, g(idir)%size, g(idir)%scale)
+        IF ( idir_opts(3,idir) .EQ. 1 ) CALL GRID_MIRROR(i2, g(idir)%size, g(idir)%nodes, g(idir)%scale)
 
-! #######################################################################
-! Direction Oy
-! #######################################################################
-  IF      ( iseg_opts(1,1,2) .LE. 4 ) THEN; CALL BLD_GEN( i2,y,jmax,scale(2))
-  ELSE IF ( iseg_opts(1,1,2) .EQ. 5 ) THEN; CALL BLD_TANH(i2,y,jmax,scale(2))
-  ELSE IF ( iseg_opts(1,1,2) .EQ. 6 ) THEN; CALL BLD_EXP( i2,y,jmax,scale(2)); ENDIF
+     END SELECT
+     
+     IF ( g(idir)%periodic ) g(idir)%size = g(idir)%size - 1
+        
+  ENDDO
 
-  IF (idir_opts(2,2).eq.1) jmax = jmax - 1 ! periodic case
-
-  IF ( idir_opts(3,2) .EQ. 1 ) THEN
-     IF ( iseg_opts(1,1,2) .EQ. 5 .OR. iseg_opts(1,1,2) .EQ. 6 ) THEN; CALL GRID_MIRROR(i2,jmax,y,scale(2))
-     ELSE;                                                             CALL GRID_MIRROR(i1,jmax,y,scale(2))
-     ENDIF
-  ENDIF
-
-! #######################################################################
-! Direction Oz
-! #######################################################################
-  IF      ( iseg_opts(1,1,3) .LE. 4 ) THEN; CALL BLD_GEN( i3,z,kmax,scale(3))
-  ELSE IF ( iseg_opts(1,1,3) .EQ. 5 ) THEN; CALL BLD_TANH(i3,z,kmax,scale(3))
-  ELSE IF ( iseg_opts(1,1,3) .EQ. 6 ) THEN; CALL BLD_EXP( i3,z,kmax,scale(3)); ENDIF
-
-  IF (idir_opts(2,3).eq.1) kmax = kmax - 1 ! periodic case
-
-  IF ( idir_opts(3,3) .EQ. 1 ) THEN
-     IF ( iseg_opts(1,1,3) .EQ. 5 .OR. iseg_opts(1,1,3) .EQ. 6 ) THEN; CALL GRID_MIRROR(i2,kmax,z,scale(3))
-     ELSE;                                                             CALL GRID_MIRROR(i1,kmax,z,scale(3))
-     ENDIF
-  ENDIF
-
-! #######################################################################
-! Final step
 ! #######################################################################
 ! Statistics
-  CALL GRID_STAT(sfile, imax,jmax,kmax, x,y,z, scale(1),scale(2),scale(3), work1,work2)
+! #######################################################################
+  OPEN(20,file=sfile)
 
+  DO idir = 1,3
+     WRITE(20,3000) '['//TRIM(ADJUSTL(g(idir)%name))//'-direction]'
+
+     IF ( g(idir)%size .GT. 1 ) THEN
+        work1(2) = g(idir)%nodes(2) - g(idir)%nodes(1)
+        DO n = 3,g(idir)%size
+           work1(n) = g(idir)%nodes(n)-g(idir)%nodes(n-1)
+           work2(n) = work1(n)/work1(n-1)
+        ENDDO
+        dxmx = MAXVAL(work1(2:g(idir)%size)); dxmn = MINVAL(work1(2:g(idir)%size))
+        axmx = MAXVAL(work2(3:g(idir)%size)); axmn = MINVAL(work2(3:g(idir)%size))
+        
+        WRITE(20,2000) 'number of points .......: ',g(idir)%size
+        WRITE(20,1000) 'origin .................: ',g(idir)%nodes(1)
+        WRITE(20,1000) 'end point ..............: ',g(idir)%nodes(g(idir)%size)
+        WRITE(20,1000) 'scale ..................: ',g(idir)%scale
+        WRITE(20,1000) 'minimum step ...........: ',dxmn
+        WRITE(20,1000) 'maximum step ...........: ',dxmx
+        WRITE(20,1000) 'minimum stretching .....: ',axmn
+        WRITE(20,1000) 'maximum stretching .....: ',axmx
+
+     ELSE
+        WRITE(20,'(a7)') '2D case'
+        
+     ENDIF
+
+  ENDDO
+
+  CLOSE(20)
+
+! #######################################################################
 ! Writing data
-  CALL IO_WRITE_GRID(ffile, imax,jmax,kmax, scale(1),scale(2),scale(3), x,y,z)
+! #######################################################################
+  CALL IO_WRITE_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, g(1)%nodes,g(2)%nodes,g(3)%nodes)
+
 #ifdef USE_MPI 
 ENDIF  
 CALL DNS_END(0)
 #endif 
 
 STOP 
+
+1000 FORMAT(a25,e12.5)
+2000 FORMAT(a25,i5)
+3000 FORMAT(a13)
 
 END PROGRAM INIGRID

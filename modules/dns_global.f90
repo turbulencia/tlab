@@ -28,7 +28,7 @@ MODULE DNS_CONSTANTS
 END MODULE DNS_CONSTANTS
 
 MODULE DNS_GLOBAL
-  USE DNS_TYPES,     ONLY : subarray_structure, term_structure
+  USE DNS_TYPES,     ONLY : grid_structure, subarray_structure, term_structure
   USE DNS_CONSTANTS, ONLY : MAX_VARS, MAX_PROF, MAX_JETS, MAX_NSP
   USE DNS_CONSTANTS, ONLY : MAX_STATS_SPATIAL
   IMPLICIT NONE
@@ -99,9 +99,12 @@ MODULE DNS_GLOBAL
 ! ###################################################################
 ! Grid
 ! ###################################################################
+  TYPE(grid_structure), DIMENSION(3) :: grid
   TINTEGER :: iunifx,iunify,iunifz               ! uniform
   TINTEGER :: i1bc,j1bc,k1bc                     ! biased
-  TREAL    :: scalex,scaley,scalez, area,volume
+  TREAL    :: scalex,scaley,scalez
+
+  TREAL    :: area,volume
   
 ! ###################################################################
 ! Profiles
