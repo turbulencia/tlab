@@ -42,7 +42,8 @@ SUBROUTINE DNS_WRITE_TRAJECTORIES(fname, l_q, l_tags, l_trajectories, l_trajecto
 
   TREAL, DIMENSION(isize_particle,3) :: l_q 
   INTEGER(8), DIMENSION(isize_particle) :: l_tags
-  TREAL, DIMENSION(isize_field) ::wrk3d, txc
+  TREAL, DIMENSION(isize_particle,3) :: txc
+  TREAL, DIMENSION(isize_particle,3) :: wrk3d !ALBERTO
   TREAL, DIMENSION(3,num_trajectories,nitera_save) :: l_trajectories
   INTEGER(8), DIMENSION(num_trajectories) :: l_trajectories_tags
   
@@ -52,19 +53,19 @@ SUBROUTINE DNS_WRITE_TRAJECTORIES(fname, l_q, l_tags, l_trajectories, l_trajecto
   TINTEGER  dummy_num_trajectories
   TINTEGER  nitera_last, nitera_save, nitera_first
   
-  TINTEGER i,j, itime, version
+  TINTEGER i,j, itime
   TINTEGER,SAVE :: save_point, save_time
   TLONGINTEGER m
 
 
 
   
-!  version=1 !0=old 1=new
+
 
   !#######################################################################
   !WRITE THE N LARGEST PARTICLES
   !#######################################################################
-!  IF (version .EQ. 1) THEN
+ IF (icalc_trajectories .EQ. LAG_TRAJECTORY_LARGEST) THEN
   
     !#######################################################################
     !Read the file with largest particles
@@ -195,66 +196,68 @@ SUBROUTINE DNS_WRITE_TRAJECTORIES(fname, l_q, l_tags, l_trajectories, l_trajecto
         CLOSE(115)
       ENDDO
 
-      l_trajectories(:,:,:) = 0
+      l_trajectories(:,:,:) = 0 
       save_time=1 
-      save_point=save_point + nitera_save
+      save_point=save_point + nitera_save 
 
     ENDIF ! itime save point
-
+    
 
 #endif
   !#######################################################################
-  !OLD VERSION - WRITE ALL TRAJECTORIES EVERY TIMESTEP
+  !OLD VERSION - WRITE ALL TRAJECTORIES EVERY TIMESTEP. NOT OPTIMIZED. IT WRITES EVERY TIME STEP TO DISC.
   !#######################################################################
-!  ELSEIF (version .EQ. 0) THEN
-!
-!#ifdef USE_MPI
-!    !Sort particles
-!  
-!    DO j=1,3 
-!      DO i=1,particle_vector(ims_pro+1)
-!        wrk3d(l_tags(i),j)= l_q(i,j)
-!      END DO
-!    END DO
-!  
-!  
-!  
-!  
-!    CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err) 
-!  
-!    CALL MPI_REDUCE(wrk3d, txc, particle_number*3, MPI_REAL8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
-!  
-!   
-!    IF(ims_pro .EQ. 0) THEN
-!  
-!  
-!        WRITE(str,*) "vtk";  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! adjust the name with the number for direction
-!        OPEN(unit=115, file=str)
-!  !      WRITE (115,*)  '# vtk DataFile Version 3.0'
-!  !      WRITE (115,*)  'particle'
-!  !      WRITE (115,*)  'ASCII'
-!  !      WRITE (115,*)  'DATASET UNSTRUCTURED_GRID'
-!  !      WRITE (115,*)  '' !maybee delete this line in the header, need to be tested
-!  !      WRITE (115,*)  'POINTS 50 float'
-!        DO m=1,particle_number
-!          WRITE (115,*) txc(m,1), txc(m,2), txc(m,3)
-!        END DO
-!        CLOSE(115)
-!    END IF
-!#else
-!    DO j=1,3 
-!      DO i=1,particle_number
-!        wrk3d(l_tags(i),j)= l_q(i,j)
-!      END DO
-!    END DO
-!    WRITE(str,*) "vtk";  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! adjust the name with the number for direction
-!    OPEN(unit=115, file=str)
-!    DO m=1,particle_number
-!      WRITE (115,*) wrk3d(m,1), wrk3d(m,2), wrk3d(m,3)
-!    END DO
-!    CLOSE(115)
-!#endif 
-!  ENDIF 
+ ELSEIF (icalc_trajectories .EQ. LAG_TRAJECTORY_ALL) THEN
+
+
+   wrk3d = C_0_R
+#ifdef USE_MPI
+   !Sort particles
+ 
+   DO j=1,3 
+     DO i=1,particle_vector(ims_pro+1)
+       wrk3d(l_tags(i),j)= l_q(i,j)
+     END DO
+   END DO
+ 
+ 
+ 
+ 
+   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err) 
+ 
+   CALL MPI_REDUCE(wrk3d, txc, particle_number*3, MPI_REAL8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
+ 
+  
+   IF(ims_pro .EQ. 0) THEN
+ 
+ 
+       WRITE(str,*) "vtk";  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! adjust the name with the number for direction
+       OPEN(unit=115, file=str)
+ !      WRITE (115,*)  '# vtk DataFile Version 3.0'
+ !      WRITE (115,*)  'particle'
+ !      WRITE (115,*)  'ASCII'
+ !      WRITE (115,*)  'DATASET UNSTRUCTURED_GRID'
+ !      WRITE (115,*)  '' !maybee delete this line in the header, need to be tested
+ !      WRITE (115,*)  'POINTS 50 float'
+       DO m=1,particle_number
+         WRITE (115,*) txc(m,1), txc(m,2), txc(m,3)
+       END DO
+       CLOSE(115)
+   END IF
+#else
+   DO j=1,3 
+     DO i=1,particle_number
+       wrk3d(l_tags(i),j)= l_q(i,j)
+     END DO
+   END DO
+   WRITE(str,*) "vtk";  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! adjust the name with the number for direction
+   OPEN(unit=115, file=str)
+   DO m=1,particle_number
+     WRITE (115,*) wrk3d(m,1), wrk3d(m,2), wrk3d(m,3)
+   END DO
+   CLOSE(115)
+#endif 
+  ENDIF 
   RETURN
 END SUBROUTINE DNS_WRITE_TRAJECTORIES
 

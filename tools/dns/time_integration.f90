@@ -37,7 +37,7 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL 
   USE DNS_TOWER
-  USE LAGRANGE_GLOBAL, ONLY : icalc_trajectories
+  USE LAGRANGE_GLOBAL, ONLY : icalc_trajectories, ilagrange
 #ifdef LES
   USE LES_GLOBAL, ONLY : iles
 #endif
@@ -231,7 +231,7 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
         CALL DNS_TOWER_ACCUMULATE(s,2,dx,dy,dz,wrk1d)
      ENDIF
 
-     IF ( icalc_particle .EQ. 1 ) THEN ! Lagrangian
+     IF ( icalc_particle .EQ. 1 .AND. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN ! ALBERTO Lagrangian Residece time clippling 
         CALL PARTICLE_TIME_RESIDENCE(dtime, l_q, l_hq)
         CALL PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d,x ,y, z, l_txc, l_tags, l_hq, l_q)
      ENDIF

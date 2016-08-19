@@ -27,7 +27,8 @@
 !########################################################################
 
 SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk2d,wrk3d,txc)
-
+  
+  USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
@@ -48,10 +49,14 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
   TREAL, DIMENSION(isize_field,*)                 :: txc
   TINTEGER  i,j, is, ij
   TINTEGER  particle_number_local
-  TINTEGER, DIMENSION(1)::x_seed
+ ! TINTEGER, DIMENSION(1)::x_seed
+  TINTEGER, ALLOCATABLE                            ::x_seed(:)
+  TINTEGER size_seed
+
   TREAL real_buffer_calc, real_buffer_mean, real_buffer_delta, real_buffer_frac
   TREAL FLOW_SHEAR_TEMPORAL
-  TREAL rnd_number(4), rnd_scal(3)
+  TREAL rnd_number(4) 
+  TINTEGER rnd_scal(3)
   TREAL rnd_number_second
   TREAL c1_loc, c2_loc, c4_loc, liq_delta, liq_delta_inv, liq_dummy
   EXTERNAL FLOW_SHEAR_TEMPORAL
@@ -69,12 +74,17 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
   l_q=C_0_R
   ALLOCATE(s(imax,jmax,kmax, inb_scal_array))
   ALLOCATE(l_buffer(isize_particle,2))
+
+  CALL RANDOM_SEED(SIZE=size_seed) !Alberto new
+  ALLOCATE(x_seed(size_seed))
+
 #ifdef USE_MPI
   !Particle number per processor
   particle_number_each=int(particle_number/INT(ims_npro, KIND=8)) 
 
   !Generate seed - different seed for each processor
-  x_seed=(/1+ims_pro/)
+  !x_seed=(/1+ims_pro/)
+   x_seed = (/ (j,j=1+ims_pro, size_seed+ims_pro) /) !Alberto
   CALL RANDOM_SEED(PUT=x_seed)
 
 
@@ -175,7 +185,8 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
 #else
 
   IF (particle_rnd_mode .eq. 1) THEN
-    x_seed=1
+  !  x_seed=1
+      x_seed = (/ (j,j=1, size_seed) /) !Alberto
     CALL RANDOM_SEED(PUT=x_seed)
 
     DO i=1,particle_number
@@ -249,30 +260,14 @@ particle_number_local=particle_number
 #endif
 
   IF (inb_particle .GT. 3 ) THEN
-     IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_2& 
-          .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
+     IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
          CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, txc, wrk3d) ! Read the scalar fields into txc
-          IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+          IF ( imixture .EQ.  MIXT_TYPE_AIRWATER_LINEAR) THEN 
              CALL FIELD_TO_PARTICLE (txc(:,1),wrk1d,wrk2d,wrk3d,x ,y, z, l_buffer(1,1), l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
              CALL FIELD_TO_PARTICLE (txc(:,2),wrk1d,wrk2d,wrk3d,x ,y, z, l_buffer(1,2), l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
-             c1_loc = body_param(3)
-             c2_loc = body_param(4)/body_param(3)
-             liq_delta  = body_param(4)
-        
-             liq_dummy = ( body_param(1)*body_param(3)-body_param(2) ) /( C_1_R-body_param(3) )/body_param(3)
-             IF ( liq_dummy .GT. C_SMALL_R ) THEN; c4_loc = body_param(5)*body_param(6)/liq_dummy
-             ELSE;                             c4_loc = C_0_R; ENDIF ! Radiation only
-             
-             IF ( liq_delta .GT. C_SMALL_R ) THEN
-                liq_delta_inv = C_1_R/liq_delta
-                DO ij = 1,particle_number_local
-                   l_q(ij,4) = c2_loc*LOG( C_1_R + EXP( ( c1_loc - l_buffer(ij,1) - c4_loc*l_buffer(ij,2) )*liq_delta_inv) )
-                ENDDO
-             ELSE
-                DO ij = 1,particle_number_local
-                   l_q(ij,4) = MAX(c1_loc - l_buffer(ij,1) - c4_loc*l_buffer(ij,2),C_0_R)
-                ENDDO
-             ENDIF
+       
+
+             CALL THERMO_AIRWATER_LINEAR(isize_particle,1,1,l_buffer(1,1),l_q(1,4)) !INEFFICIENT. It loops the whole array and not only until particle_number_local
 
 
             l_q(:,5) = l_q(:,4)
@@ -283,20 +278,7 @@ particle_number_local=particle_number
           ENDIF
      ENDIF
   ENDIF
-!  IF (inb_particle .GT. 3 ) THEN
-!     IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_2 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3) THEN
-!         CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, txc, wrk3d) ! Read the scalar fields into txc
-!          IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN 
-!             CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, txc(:,1),txc(:,3)) ! Write liquid in txc(3)
-!             CALL FIELD_TO_PARTICLE (txc(:,3),wrk1d,wrk2d,wrk3d,x ,y, z, l_buffer, l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
-!            l_q(:,4) = l_buffer
-!            l_q(:,5) = l_q(:,4)
-!
-!          ELSE
-!             !Give error for wrong mixture
-!          ENDIF
-!     ENDIF
-!  ENDIF
+
 
   RETURN
 END SUBROUTINE PARTICLE_RANDOM_POSITION

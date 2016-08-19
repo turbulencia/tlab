@@ -42,6 +42,13 @@ Case19. Subsiding shell; airwater. Gravity vector along the horizontal.
 Case20. Subsiding shell; airwater. Broadband perturbation.
 Case21. Convective boundary layer with quadratic chemistry in three pasive scalars.
 
+2D cases: Lagrangian routines
+
+Case25. Case01 (shear layer), saving only the particles.
+Case26. Case01 (shear layer), saving trajectories as well (but fewer particles).
+Case27. Case17 (cloud-top), solving liquid equation w/ & w/o diffusion.
+Case28. Same as 27, but with a stratified bottom interface.
+
 3D cases
 
 Case31. Neutral Ekman layer without sponge at the top.

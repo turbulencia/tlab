@@ -505,8 +505,7 @@ PROGRAM AVERAGES
         
 ! Lagrange Liquid and Liquid without diffusion
         IF ( icalc_particle .EQ. 1 ) THEN
-           IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_2 & 
-                .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
+           IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
               WRITE(fname,*) itime; fname = "particle."//TRIM(ADJUSTL(fname))
               CALL DNS_READ_PARTICLE(fname,l_q) 
                  

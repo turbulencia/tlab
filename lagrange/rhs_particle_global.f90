@@ -38,11 +38,11 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
 #endif
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, imax_total,jmax_total, kmax_total
   USE DNS_GLOBAL, ONLY : isize_particle, scalex, scaley, scalez, inb_particle, inb_scal_array
-  USE DNS_GLOBAL, ONLY : body_param, imode_fdm, i1bc, j1bc, k1bc, visc, isize_wrk1d
+  USE DNS_GLOBAL, ONLY : imode_fdm, i1bc, j1bc, k1bc, visc, isize_wrk1d
   USE DNS_GLOBAL, ONLY : iunifx,iunify,iunifz, inb_txc
   USE DNS_GLOBAL, ONLY : radiation
   USE LAGRANGE_GLOBAL
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE THERMO_GLOBAL, ONLY : imixture, thermo_param
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -99,104 +99,12 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
 ! #####################################################################
 ! Put source terms into txc variables
 ! #####################################################################
-  IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD) THEN
-    dummy2 = ( body_param(1)*body_param(3)-body_param(2) ) /( C_1_R-body_param(3) )/body_param(6)/body_param(5) ! delta_s
-    dummy2 = 1/dummy2 !1/delta_s
-    dummy = 1/body_param(3)  ! 1/chi_s
-
-    ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
-    !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-    CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(1)), txc(1,1), wrk1d,wrk3d)
-    ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
-    DO ij = 1,isize_field
-       txc(ij,1) = dummy2*txc(ij,1)
-    ENDDO 
-    
-    
-
-    !LAPLACE Xi
-    CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-          dz, s(1,1), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-          dy, s(1,1), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-          dx, s(1,1), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    
-    DO ij = 1,isize_field
-       txc(ij,1) =txc(ij,1) + visc*dummy*(txc(ij,4)+txc(ij,5)+txc(ij,6))
-    ENDDO 
- 
-    !LAPLACE delta
-    CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-          dz, s(1,2), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-          dy, s(1,2), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-          dx, s(1,2), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    
-    DO ij = 1,isize_field
-       txc(ij,1) =txc(ij,1) + (visc*dummy2*(txc(ij,4)+txc(ij,5)+txc(ij,6)))
-    ENDDO 
-
-    !LAPLACE s
-    CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-         dz, s(1,inb_scal_array), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-         dy, s(1,inb_scal_array), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-         dx, s(1,inb_scal_array), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-
-    DO ij = 1,isize_field
-       txc(ij,3) = visc*(txc(ij,4)+txc(ij,5)+txc(ij,6))
-    ENDDO 
-
-    txc(1:isize_field,2) = C_1_R - dummy*s(1:isize_field,1) - dummy2*s(1:isize_field,2) !xi field in txc(1,2)
   
-  ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_2) THEN !using second version of equation
+  IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !using combination of both versions of equation
 
-    dummy2 = ( body_param(1)*body_param(3)-body_param(2) ) /( C_1_R-body_param(3) )/body_param(6)/body_param(5) ! delta_s
-    dummy2 = 1/dummy2 !1/delta_s
-    dummy = 1/body_param(3)  ! 1/chi_s
+     dummy2 = -thermo_param(2)
+     dummy = -thermo_param(1)
 
-
-    
-    
-    !LAPLACE s
-    CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-         dz, s(1,inb_scal_array), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-         dy, s(1,inb_scal_array), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-         dx, s(1,inb_scal_array), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-
-    DO ij = 1,isize_field
-       txc(ij,3) = visc*(txc(ij,4)+txc(ij,5)+txc(ij,6))
-    ENDDO 
-
-
-    txc(1:isize_field,4) = C_1_R - dummy*s(1:isize_field,1) - dummy2*s(1:isize_field,2) !xi field in txc(1,4)
-
-    CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          dx,dy,dz, txc(1,4), txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d) ! square of chi gradient in txc(1,1)
-
-    DO ij = 1,isize_field
-       txc(ij,1) = visc*txc(ij,1)
-    ENDDO 
-  
-    ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
-    !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-!    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,2), wrk1d,wrk3d)
-    CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(1)), txc(1,2), wrk1d,wrk3d)
-    ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
-    DO ij = 1,isize_field
-       txc(ij,2) = dummy2*txc(ij,2)
-    ENDDO 
-
-  ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !using combination of both versions of equation
-
-    dummy2 = ( body_param(1)*body_param(3)-body_param(2) ) /( C_1_R-body_param(3) )/body_param(6)/body_param(5) ! delta_s
-    dummy2 = 1/dummy2 !1/delta_s
-    dummy = 1/body_param(3)  ! 1/chi_s
 
     !LAPLACE Xi
     CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
@@ -237,9 +145,6 @@ SUBROUTINE RHS_PARTICLE_GLOBAL( &
   
  
 
-    ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
-    !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-!    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,4), wrk1d,wrk3d)
     CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(1)), txc(1,4), wrk1d,wrk3d)
     ! Radiation *** ATTENTION RADIATION IS MINUS
     DO ij = 1,isize_field
@@ -313,104 +218,11 @@ CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
   ! Put source terms into txc variables
   ! #####################################################################
 
-  IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD) THEN
-    dummy2 = ( body_param(1)*body_param(3)-body_param(2) ) /( C_1_R-body_param(3) )/body_param(6)/body_param(5) ! delta_s
-    dummy2 = 1/dummy2 !1/delta_s
-    dummy = 1/body_param(3)  ! 1/chi_s
 
+  IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !using second version of equation
 
-    ! CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, s(1,inb_scal_array), rad_param,&
-    !     wrk1d(1:isize_wrk1d), wrk1d(isize_wrk1d+1:2*isize_wrk1d), wrk1d(2*isize_wrk1d+1:3*isize_wrk1d), wrk3d) ! Put radiation in wrk3d
-!    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,1), wrk1d,wrk3d)
-    CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(1)), txc(1,1), wrk1d,wrk3d)
-    ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
-    DO ij = 1,isize_field
-       txc(ij,1) = dummy2*txc(ij,1)
-    ENDDO 
-    
-    
-
-    !LAPLACE Xi
-    CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-          dz, s(1,1), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-          dy, s(1,1), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-          dx, s(1,1), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    
-    DO ij = 1,isize_field
-       txc(ij,1) =txc(ij,1) + visc*dummy*(txc(ij,4)+txc(ij,5)+txc(ij,6))
-    ENDDO 
- 
-    !LAPLACE delta
-    CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-          dz, s(1,2), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-          dy, s(1,2), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-          dx, s(1,2), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    
-    DO ij = 1,isize_field
-       txc(ij,1) =txc(ij,1) + (visc*dummy2*(txc(ij,4)+txc(ij,5)+txc(ij,6)))
-    ENDDO 
-
-    !LAPLACE s
-    CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-         dz, s(1,inb_scal_array), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-         dy, s(1,inb_scal_array), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-         dx, s(1,inb_scal_array), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-
-    DO ij = 1,isize_field
-       txc(ij,3) = visc*(txc(ij,4)+txc(ij,5)+txc(ij,6))
-    ENDDO 
-
-    txc(1:isize_field,2) = C_1_R - dummy*s(1:isize_field,1) - dummy2*s(1:isize_field,2) !xi field in txc(1,2)
-
-  ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_2) THEN !using second version of equation
-    dummy2 = ( body_param(1)*body_param(3)-body_param(2) ) /( C_1_R-body_param(3) )/body_param(6)/body_param(5) ! delta_s
-    dummy2 = 1/dummy2 !1/delta_s
-    dummy = 1/body_param(3)  ! 1/chi_s
-
-
-    
-    
-    !LAPLACE s
-    CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-         dz, s(1,inb_scal_array), txc(1,6), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-         dy, s(1,inb_scal_array), txc(1,5), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-    CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-         dx, s(1,inb_scal_array), txc(1,4), i0,i0, i0,i0, txc(1,3), wrk1d,wrk2d,wrk3d)
-
-    DO ij = 1,isize_field
-       txc(ij,3) = visc*(txc(ij,4)+txc(ij,5)+txc(ij,6))
-    ENDDO 
-
-
-    txc(1:isize_field,4) = C_1_R - dummy*s(1:isize_field,1) - dummy2*s(1:isize_field,2) !xi field in txc(1,4)
-
-    CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          dx,dy,dz, txc(1,4), txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d) ! square of chi gradient in txc(1,1)
-
-    DO ij = 1,isize_field
-       txc(ij,1) = visc*txc(ij,1)
-    ENDDO 
-  
-!    CALL OPR_RADIATION(iradiation, imax,jmax,kmax, dy, rad_param, s(:,inb_scal_array), txc(:,2), wrk1d,wrk3d)
-    CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(1)), txc(1,2), wrk1d,wrk3d)
-    ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS
-    DO ij = 1,isize_field
-       txc(ij,2) = dummy2*txc(ij,2)
-    ENDDO 
-
-
-  ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !using second version of equation
-
-    dummy2 = ( body_param(1)*body_param(3)-body_param(2) ) /( C_1_R-body_param(3) )/body_param(6)/body_param(5) ! delta_s
-    dummy2 = 1/dummy2 !1/delta_s
-    dummy = 1/body_param(3)  ! 1/chi_s
+     dummy2 = -thermo_param(2)
+     dummy = -thermo_param(1)
 
     !LAPLACE Xi
     CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&

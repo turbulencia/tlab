@@ -66,6 +66,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
   CHARACTER*32 bakfile
 
   inifile = 'dns.ini'
+  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
@@ -78,7 +79,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
 #endif
 
 ! Get the local information from the dns.ini
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Start',      '0',  nitera_first)
+  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Start','0',  nitera_first)
     
 
 #include "dns_alloc_larrays.h"

@@ -20,29 +20,32 @@ if [ -e "dns.ini" ]; then
 	    $BINPATH/iniscal.x
 	    if [ $? = 0 ]; then
 		$BINPATH/iniflow.x
+		if [ $? = 0 ]; then
+		    $BINPATH/inipart.x
 
 #Simulation
-		if [ $? = 0 ]; then
-		    LIST=`ls flow.ics.*`; for FILE in $LIST; do mv $FILE ${FILE/flow.ics/flow.0}; done
-		    LIST=`ls scal.ics.*`; for FILE in $LIST; do mv $FILE ${FILE/scal.ics/scal.0}; done
+		    if [ $? = 0 ]; then
+			LIST=`ls *.ics*`; for FILE in $LIST; do mv $FILE ${FILE/ics/0}; done
 
-		    $BINPATH/dns.x
-  		    if [[ $? = 0 && ! -e "dns.err" ]]; then
-			diff dns.out dns.out.ref > /dev/null 2>&1
-   			if [ $? = 0 ]; then
-                            grep -i " nan " avg* > /dev/null 2>&1
-                            if [ $? = 1 ]; then
-			       echo -e "\033[1;32mPassed\033[0m."
-                            else
-			       echo -e "\033[1;31mFailed \033[0m[NaN in averages]."; exit 9
-                            fi
+			$BINPATH/dns.x
+  			if [[ $? = 0 && ! -e "dns.err" ]]; then
+			    diff dns.out dns.out.ref > /dev/null 2>&1
+   			    if [ $? = 0 ]; then
+				grep -i " nan " avg* > /dev/null 2>&1
+				if [ $? = 1 ]; then
+				    echo -e "\033[1;32mPassed\033[0m."
+				else
+				    echo -e "\033[1;31mFailed \033[0m[NaN in averages]."; exit 10
+				fi
+			    else
+				echo -e "\033[1;31mFailed \033[0m[dns.out]."; exit 9
+			    fi
 			else
-			    echo -e "\033[1;31mFailed \033[0m[dns.out]."; exit 8
+    			    echo -e "\033[1;31mFailed \033[0m[dns]."; exit 8
 			fi
 		    else
-    			echo -e "\033[1;31mFailed \033[0m[dns]."; exit 7
+			echo -e "\033[1;31mFailed \033[0m[inipart]."; exit 7
 		    fi
-		    
 		else
 		    echo -e "\033[1;31mFailed \033[0m[iniflow]."; exit 6
 		fi

@@ -106,9 +106,7 @@ END SUBROUTINE FI_SOURCES_FLOW
 SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, isize_field, isize_wrk1d
-  USE DNS_GLOBAL, ONLY : scaley, ycoor_i
   USE DNS_GLOBAL, ONLY : radiation, transport, chemistry
-  USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
 
@@ -120,8 +118,7 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d,wrk3d
   
 ! -----------------------------------------------------------------------
-  TINTEGER ij, is, i,j,k, flag_grad
-  TREAL xi, ycenter, yrel, dummy
+  TINTEGER ij, is, flag_grad
 
   TINTEGER siz, srt, end    !  Variables for OpenMP Partitioning 
   
@@ -177,10 +174,10 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 ! Chemistry
 ! -----------------------------------------------------------------------
      IF ( chemistry%active(is) ) THEN
-        CALL FI_CHEM(chemistry, imax,jmax,kmax, is, s, tmp1)
+        CALL FI_CHEM(chemistry, imax,jmax,kmax, is, y, s, tmp1)
         
 !$omp parallel default( shared ) &
-!$omp private( ij, dummy, srt,end,siz )
+!$omp private( ij, srt,end,siz )
         CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
 
         DO ij = srt,end
@@ -190,34 +187,6 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 
      ENDIF
      
-! -----------------------------------------------------------------------
-! Relaxation
-! -----------------------------------------------------------------------
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR .AND. inb_scal .EQ. 3 .AND. is .EQ. 2 ) THEN
-        
-        ycenter=y(1)+scaley*ycoor_i(3)+0.005 !postition of s3 plus constant
-        DO i=1,imax
-           DO k=1,kmax
-              DO j=1,jmax
-                 yrel=y(j)-ycenter
-                 xi=yrel/0.2 !thicknes constant
-                 wrk3d(i+(j-1)*imax+(k-1)*imax*jmax) = (1+TANH(xi))/2 !strength constant
-              ENDDO
-           ENDDO
-        ENDDO
-        
-!$omp parallel default( shared ) &
-!$omp private( ij, dummy,srt,end,siz )
-        CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
-        
-        dummy = -C_1_R/0.02
-        DO ij = srt,end
-           hs(ij,is) = hs(ij,is) + dummy*wrk3d(ij)*s(ij,is)
-        ENDDO
-!$omp end parallel
-        
-     ENDIF
-
   ENDDO
   
   RETURN

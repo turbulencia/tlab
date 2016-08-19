@@ -30,7 +30,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
 
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE THERMO_GLOBAL, ONLY : imixture, thermo_param
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -249,18 +249,17 @@ particle_number_local=particle_number
 #endif
 
   IF (inb_particle .GT. 3 ) THEN
-     IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_2 & 
-          .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
+     IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
          CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, txc, wrk3d) ! Read the scalar fields into txc
           IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
              CALL FIELD_TO_PARTICLE (txc(:,1),wrk1d,wrk2d,wrk3d,x ,y, z, l_buffer(1,1), l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
              CALL FIELD_TO_PARTICLE (txc(:,2),wrk1d,wrk2d,wrk3d,x ,y, z, l_buffer(1,2), l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
-             c1_loc = body_param(3)
-             c2_loc = body_param(4)/body_param(3)
-             liq_delta  = body_param(4)
+             c1_loc = C_1_R/thermo_param(1)
+             c2_loc = thermo_param(3)*thermo_param(1)
+             liq_delta  = thermo_param(3)
         
-             liq_dummy = ( body_param(1)*body_param(3)-body_param(2) ) /( C_1_R-body_param(3) )/body_param(3)
-             IF ( liq_dummy .GT. C_SMALL_R ) THEN; c4_loc = body_param(5)*body_param(6)/liq_dummy
+           
+             IF ( liq_dummy .GT. C_SMALL_R ) THEN; c4_loc = thermo_param(2)/thermo_param(1)
              ELSE;                             c4_loc = C_0_R; ENDIF ! Radiation only
              
              IF ( liq_delta .GT. C_SMALL_R ) THEN
@@ -282,20 +281,7 @@ particle_number_local=particle_number
           ENDIF
      ENDIF
   ENDIF
-!  IF (inb_particle .GT. 3 ) THEN
-!     IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_2 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3) THEN
-!         CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, txc, wrk3d) ! Read the scalar fields into txc
-!          IF ( imixture .EQ. MIXT_TYPE_BILAIRWATER ) THEN 
-!             CALL FI_LIQUIDWATER(ibodyforce, imax,jmax,kmax, body_param, txc(:,1),txc(:,3)) ! Write liquid in txc(3)
-!             CALL FIELD_TO_PARTICLE (txc(:,3),wrk1d,wrk2d,wrk3d,x ,y, z, l_buffer, l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
-!            l_q(:,4) = l_buffer
-!            l_q(:,5) = l_q(:,4)
-!
-!          ELSE
-!             !Give error for wrong mixture
-!          ENDIF
-!     ENDIF
-!  ENDIF
+
 
   RETURN
 END SUBROUTINE PARTICLE_RANDOM_POSITION

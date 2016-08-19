@@ -21,9 +21,10 @@ SUBROUTINE  RHS_PARTICLE_GLOBAL_INTERPOLATION_HALO_1 &
 
 USE DNS_GLOBAL, ONLY: imax,jmax,kmax,isize_field,imax_total
 USE DNS_GLOBAL, ONLY: isize_particle, kmax_total, kmax_total, inb_particle
-USE DNS_GLOBAL, ONLY : body_param, visc
+USE DNS_GLOBAL, ONLY : visc
 USE LAGRANGE_GLOBAL, ONLY:particle_number, jmin_part, inb_lag_aux_field, inb_lag_total_interp
 USE LAGRANGE_GLOBAL, ONLY: ilagrange
+USE THERMO_GLOBAL, ONLY: thermo_param
 #ifdef USE_MPI
    USE DNS_MPI, ONLY: ims_pro_i, ims_pro_k, ims_pro
 #endif
@@ -131,41 +132,8 @@ IMPLICIT NONE
       !  In this case it is assumed that the tendencies were send in the txc fields. Change it if this is not the case.
       !  This is the line to be changed if a new case is added (here and in the halo routines). The rest can be copy/paste.
       !######################################################################
-      IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD) THEN
-        DO  j = 1,3
-            l_hq(i,j) = l_hq(i,j) +  interpolated_value(j)
-        ENDDO
-        
-        !interpolated_value(4) = equation without ds/dxi 
-        !interpolated_value(5) = xi
-        !interpolated_value(6) = diffusion term
-        delta_inv0 = -body_param(3)/body_param(4)
-        l_hq(i,4) = l_hq(i,4) - interpolated_value(4)/(C_1_R + EXP(interpolated_value(5)*delta_inv0))
 
-        l_hq(i,5) = l_hq(i,4) - interpolated_value(6)       
-
-      ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_2) THEN
-        DO  j = 1,3
-            l_hq(i,j) = l_hq(i,j) +  interpolated_value(j)
-        ENDDO
-        
-        !interpolated_value(4) = evaporation/condensation term without d2s/dxi2 
-        !interpolated_value(5) = radiation term without ds/dxi
-        !interpolated_value(6) = diffusion term
-        !interpolated_value(7) = xi
-        delta_inv0 = -body_param(3)/body_param(4)
-        delta_inv2 = C_05_R/body_param(4)*body_param(3)
-        delta_inv4 = C_025_R/body_param(4)*body_param(3)
-        l_hq(i,4) = l_hq(i,4) + interpolated_value(6) & 
-                    - interpolated_value(5)/(C_1_R + EXP(interpolated_value(7)*delta_inv0)) &
-                    - interpolated_value(4)*delta_inv4/(COSH(interpolated_value(7)*delta_inv2)**2) 
-
-
-        l_hq(i,5) = l_hq(i,5)  & 
-                    - interpolated_value(5)/(C_1_R + EXP(interpolated_value(7)*delta_inv0)) &
-                    - interpolated_value(4)*delta_inv4/(COSH(interpolated_value(7)*delta_inv2)**2) 
-
-      ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
+      IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
         DO  j = 1,3
             l_hq(i,j) = l_hq(i,j) +  interpolated_value(j)
         ENDDO
@@ -174,9 +142,12 @@ IMPLICIT NONE
         !interpolated_value(5) = xi
         !interpolated_value(6) = evaporation/condensation term without d2s/dxi2 
         !interpolated_value(7) = radiation term without ds/dxi
-        delta_inv0 = -body_param(3)/body_param(4)
-        delta_inv2 = C_05_R/body_param(4)*body_param(3)
-        delta_inv4 = C_025_R/body_param(4)*body_param(3)
+
+        delta_inv0 = C_1_R/thermo_param(1)/thermo_param(3)
+        delta_inv2 = -C_05_R/thermo_param(1)/thermo_param(3)
+        delta_inv4 = -C_025_R/thermo_param(1)/thermo_param(3)
+
+
 
         l_hq(i,4) = l_hq(i,4) - interpolated_value(4)/(C_1_R + EXP(interpolated_value(5)*delta_inv0))
 
@@ -275,57 +246,8 @@ IMPLICIT NONE
   !  In this case it is assumed that the tendencies were send in the txc fields. Change it if this is not the case.
   !  This is the line to be changed if a new case is added (here and in the halo routines). The rest can be copy/paste.
   ! #####################################################################
-!       IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD) THEN
-!        DO  j = 1,3
-!            l_hq(i,j) = l_hq(i,j) +  interpolated_value(j)
-!        ENDDO
-!        
-!        delta_inv0 = -body_param(3)/body_param(4)
-!        l_hq(i,4)= l_hq(i,4) - interpolated_value(4)/(C_1_R + EXP(interpolated_value(5)*delta_inv0))
-!
-!        l_hq(i,5) = l_hq(i,4) - interpolated_value(6)       
-!
-!      ELSE
-!        DO  j = 1,inb_particle
-!            l_hq(i,j) = l_hq(i,j) +  interpolated_value(j)
-!        ENDDO
-!      END IF
-!  
-      IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD) THEN
-        DO  j = 1,3
-            l_hq(i,j) = l_hq(i,j) +  interpolated_value(j)
-        ENDDO
-        
-        !interpolated_value(4) = equation without ds/dxi 
-        !interpolated_value(5) = xi
-        !interpolated_value(6) = diffusion term
-        delta_inv0 = -body_param(3)/body_param(4)
-        l_hq(i,4) = l_hq(i,4) - interpolated_value(4)/(C_1_R + EXP(interpolated_value(5)*delta_inv0))
 
-        l_hq(i,5) = l_hq(i,4) - interpolated_value(6)       
-
-      ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_2) THEN
-        DO  j = 1,3
-            l_hq(i,j) = l_hq(i,j) +  interpolated_value(j)
-        ENDDO
-        
-        !interpolated_value(4) = evaporation/condensation term without d2s/dxi2 
-        !interpolated_value(5) = radiation term without ds/dxi
-        !interpolated_value(6) = diffusion term
-        !interpolated_value(7) = xi
-        delta_inv0 = -body_param(3)/body_param(4)
-        delta_inv2 = C_05_R/body_param(4)*body_param(3)
-        delta_inv4 = C_025_R/body_param(4)*body_param(3)
-        l_hq(i,4) = l_hq(i,4) + interpolated_value(6) & 
-                    - interpolated_value(5)/(C_1_R + EXP(interpolated_value(7)*delta_inv0)) &
-                    - interpolated_value(4)*delta_inv4/(COSH(interpolated_value(7)*delta_inv2)**2) 
-
-
-        l_hq(i,5) = l_hq(i,5)  & 
-                    - interpolated_value(5)/(C_1_R + EXP(interpolated_value(7)*delta_inv0)) &
-                    - interpolated_value(4)*delta_inv4/(COSH(interpolated_value(7)*delta_inv2)**2) 
-
-      ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
+      IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
         DO  j = 1,3
             l_hq(i,j) = l_hq(i,j) +  interpolated_value(j)
         ENDDO
@@ -334,9 +256,12 @@ IMPLICIT NONE
         !interpolated_value(5) = xi
         !interpolated_value(6) = evaporation/condensation term without d2s/dxi2 
         !interpolated_value(7) = radiation term without ds/dxi
-        delta_inv0 = -body_param(3)/body_param(4)
-        delta_inv2 = C_05_R/body_param(4)*body_param(3)
-        delta_inv4 = C_025_R/body_param(4)*body_param(3)
+
+        delta_inv0 = C_1_R/thermo_param(1)/thermo_param(3)
+        delta_inv2 = -C_05_R/thermo_param(1)/thermo_param(3)
+        delta_inv4 = -C_025_R/thermo_param(1)/thermo_param(3)
+
+
 
         l_hq(i,4) = l_hq(i,4) - interpolated_value(4)/(C_1_R + EXP(interpolated_value(5)*delta_inv0))
 

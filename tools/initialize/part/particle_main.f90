@@ -28,6 +28,7 @@
 PROGRAM INIPART
 
   USE DNS_GLOBAL
+  USE DNS_CONSTANTS
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI
@@ -42,13 +43,16 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
 
   TINTEGER  ierr,isize_wrk3d, i
-  TREAL, ALLOCATABLE, SAVE, TARGET :: x(:),y(:),z(:), dx(:,:),dy(:,:),dz(:,:)
-  TREAL, DIMENSION(:),      ALLOCATABLE :: wrk1d,wrk2d, wrk3d
-  TREAL, DIMENSION(:,:),    ALLOCATABLE :: txc
-  
-  TREAL, DIMENSION(:,:),    ALLOCATABLE :: l_q, l_txc, l_hq
-  INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_tags
 
+  TREAL, DIMENSION(:,:),    ALLOCATABLE,SAVE,TARGET :: x,y,z
+  TREAL, DIMENSION(:),      ALLOCATABLE             :: wrk1d,wrk2d, wrk3d
+  TREAL, DIMENSION(:,:),      ALLOCATABLE           :: txc
+  
+  TREAL, DIMENSION(:,:),    ALLOCATABLE             :: l_q, l_txc, l_hq
+  INTEGER(8), DIMENSION(:), ALLOCATABLE             :: l_tags
+
+
+  TREAL, DIMENSION(:,:),     POINTER    :: dx,dy,dz
 
   CHARACTER*32 inifile
   CHARACTER*64 str, line
@@ -64,6 +68,8 @@ PROGRAM INIPART
   CALL DNS_READ_GLOBAL(inifile)
   IF ( icalc_particle .EQ. 1 ) THEN
      CALL PARTICLE_READ_GLOBAL('dns.ini')
+  ELSE
+     CALL DNS_END(0)
   ENDIF
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
@@ -76,23 +82,22 @@ PROGRAM INIPART
   IF (jmax_part .EQ. 1) THEN
      jmax_part   = jmax ! 1 by default
   ENDIF
-
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total,inb_grid))
-  ALLOCATE(dy(jmax_total,inb_grid))
-  ALLOCATE(dz(kmax_total,inb_grid))
+
+  ALLOCATE(x(imax_total,inb_grid))
+  ALLOCATE(y(jmax_total,inb_grid))
+  ALLOCATE(z(kmax_total,inb_grid))
+!  ALLOCATE(dx(imax_total*inb_grid))
+!  ALLOCATE(dy(jmax_total*inb_grid))
+!  ALLOCATE(dz(kmax_total*inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d))
   ALLOCATE(wrk3d(isize_wrk3d))
 
-  IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_2 &
-      .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !Allocte memory to read fields
+  IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !Allocte memory to read fields
      ALLOCATE(txc(isize_field,3))
      ALLOCATE(l_hq(isize_particle,inb_particle)) !Rubish information. Just to run FIELD_TO_PARTICLE properly
   ENDIF

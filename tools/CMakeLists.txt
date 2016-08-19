@@ -101,12 +101,12 @@ set_target_properties(transformat.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} $
 endif()
 
 # Lagrangian
-# FILE(GLOB sourcefiles "initialize/part/*.f90")
-# add_executable(inipart.x ${sourcefiles})
-# target_link_libraries(inipart.x operators flow io thermodynamics lagrange fdm linear ${LEVEL1_LIBS} ${LIBS})
-# if (PSFFT_LIB)
-# set_target_properties(inipart.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
-# endif()
+FILE(GLOB sourcefiles "initialize/part/*.f90")
+add_executable(inipart.x ${sourcefiles})
+target_link_libraries(inipart.x operators flow io thermodynamics lagrange fdm linear ${LEVEL1_LIBS} ${LIBS})
+if (PSFFT_LIB)
+set_target_properties(inipart.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
+endif()
 
 FILE(GLOB sourcefiles "lagrange/lagrange_pdf.f90")
 add_executable(l_pdf.x ${sourcefiles})
@@ -135,11 +135,4 @@ target_link_libraries(l_pos_trajec.x mappings operators flow io thermodynamics l
 if (PSFFT_LIB)
 set_target_properties(l_pos_trajec.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
 endif()
-
-# FILE(GLOB sourcefiles "lagrange/lagrange_dispersion*.f90")
-# add_executable(l_dispersion.x ${sourcefiles})
-# target_link_libraries(l_dispersion.x mappings operators flow io thermodynamics lagrange pdfs averages fdm linear ${LEVEL1_LIBS} ${LIBS})
-# if (PSFFT_LIB)
-# set_target_properties(l_dispersion.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
-# endif()
 

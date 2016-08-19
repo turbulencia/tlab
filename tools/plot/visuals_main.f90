@@ -1004,9 +1004,7 @@ PROGRAM VISUALS_MAIN
            CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
            txc(:,1) = txc(:,1) + 0.00000001
            IF (inb_particle .GT. 3 ) THEN
-              IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_2 & 
-                   .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
-!                 DO is=1,inb_lag_aux_field
+              IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 )  THEN
                  DO is=1,2
                     l_txc(:,1)=l_q(:,3+is) !!! DO WE WANT l_txc(:,is) ???
                     CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,2))   

@@ -51,7 +51,8 @@
 #define EQNS_TRANS_AIRWATER            23
 #define EQNS_TRANS_AIRWATERSIMPLIFIED  24
 
-#define EQNS_CHEM_QUADRATIC       25
+#define EQNS_CHEM_QUADRATIC          25
+#define EQNS_CHEM_LAYEREDRELAXATION  26
 
 ! Finite-differences method
 #define FDM_COM4_JACOBIAN     4
@@ -138,9 +139,13 @@
 #define LAG_TYPE_NONE          0
 #define LAG_TYPE_TRACER        1
 #define LAG_TYPE_SIMPLE_SETT   2
-#define LAG_TYPE_BIL_CLOUD     3
-#define LAG_TYPE_BIL_CLOUD_2   4
-#define LAG_TYPE_BIL_CLOUD_3   5
-#define LAG_TYPE_BIL_CLOUD_4   6
+#define LAG_TYPE_BIL_CLOUD_3   3
+#define LAG_TYPE_BIL_CLOUD_4   4
+
+! Lagrangian Trajectories  
+#define LAG_TRAJECTORY_NONE     0
+#define LAG_TRAJECTORY_ALL      1
+#define LAG_TRAJECTORY_LARGEST  2
+
 
 #endif

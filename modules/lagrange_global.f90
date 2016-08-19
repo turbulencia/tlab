@@ -32,7 +32,6 @@ MODULE LAGRANGE_GLOBAL
 
   TINTEGER      :: icalc_particle_pdf  !if calculation of pdf for particles
   TINTEGER      :: num_trajectories  !number of followed trajectories
-  TINTEGER      :: num_dispersion  !number of pairs for dispersion comparison
   TREAL         :: y_particle_pdf_pos
   TREAL         :: y_particle_pdf_width
   TREAL         :: x_particle_pdf_pos

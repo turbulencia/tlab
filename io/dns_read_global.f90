@@ -99,7 +99,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
   CALL IO_WRITE_ASCII(bakfile, '#TermRadiation=<none/Bulk1dGlobal/Bulk1dLocal>')
   CALL IO_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
-  CALL IO_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic>')
+  CALL IO_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation>')
   CALL IO_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian8/CompactDirect6>')
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'FileFormat', 'RawSplit', sRes)
@@ -250,8 +250,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermChemistry', 'none', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic' ) THEN; chemistry%type = EQNS_CHEM_QUADRATIC;
-  ELSE;                                                 chemistry%type = EQNS_NONE; ENDIF
+  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic'        ) THEN; chemistry%type = EQNS_CHEM_QUADRATIC;
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'layeredrelaxation') THEN; chemistry%type = EQNS_CHEM_LAYEREDRELAXATION; 
+  ELSE;                                                        chemistry%type = EQNS_NONE; ENDIF
 
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'SpaceOrder', 'void', sRes)
@@ -420,20 +421,27 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#[Chemistry]')
   CALL IO_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-  chemistry%active = .FALSE.
-  IF ( chemistry%type .NE. EQNS_NONE ) THEN
+  IF      ( chemistry%type .NE. EQNS_NONE ) THEN
      chemistry%parameters(:) = C_0_R
      CALL SCANINICHAR(bakfile, inifile, 'Chemistry', 'Parameters', '1.0', sRes)
      idummy = MAX_PROF
      CALL LIST_REAL(sRes, idummy, chemistry%parameters)
 
-! Including damkohler in the prefactors
-     chemistry%parameters(1:inb_scal_local1) = chemistry%parameters(1:inb_scal_local1) *damkohler(1:inb_scal_local1)
+  ENDIF
 
 ! Activating terms
+  chemistry%active = .FALSE.
+  IF      ( chemistry%type .EQ. EQNS_CHEM_QUADRATIC ) THEN
      DO is = 1,inb_scal_local1
         IF ( ABS(chemistry%parameters(is)) .GT. C_0_R ) chemistry%active(is) = .TRUE.
      ENDDO
+  
+! Including damkohler in the prefactors
+     chemistry%parameters(1:inb_scal_local1) = chemistry%parameters(1:inb_scal_local1) *damkohler(1:inb_scal_local1)
+
+  ELSE IF ( chemistry%type .EQ. EQNS_CHEM_LAYEREDRELAXATION ) THEN
+     CALL SCANINIINT(bakfile, inifile, 'Chemistry', 'Scalar', '-1', idummy)
+     IF ( idummy .GT. 0 ) chemistry%active(idummy) = .TRUE.
      
   ENDIF
   

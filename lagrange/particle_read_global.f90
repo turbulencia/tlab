@@ -33,8 +33,6 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'              ) THEN; ilagrange = LAG_TYPE_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tracer'            ) THEN; ilagrange = LAG_TYPE_TRACER
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'simplesettling'    ) THEN; ilagrange = LAG_TYPE_SIMPLE_SETT
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bilinearcloud'     ) THEN; ilagrange = LAG_TYPE_BIL_CLOUD
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bilinearcloudtwo'  ) THEN; ilagrange = LAG_TYPE_BIL_CLOUD_2
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bilinearcloudthree') THEN; ilagrange = LAG_TYPE_BIL_CLOUD_3
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bilinearcloudfour' ) THEN; ilagrange = LAG_TYPE_BIL_CLOUD_4
   ELSE 
@@ -64,15 +62,19 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Y_Particle_Width', '1.0', y_particle_width  )
   CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Particle_bumper', '2.0', particle_bumper  )
 
-  CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'CalculateTrajectories', 'no', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_trajectories = 1
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_trajectories = 0
+  CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'CalculateTrajectories', 'none', sRes)
+  !Plot all droplets. This version is NOT optimized and writes to disc every time step
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'all' ) THEN; icalc_trajectories = LAG_TRAJECTORY_ALL 
+  !plot the 'Num_trajectories' largest droplets at the simulation last time step from a file created lagrange_traject.x. This function is optimized and does not write
+  ! every tinme step to disc 
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'largest') THEN; icalc_trajectories = LAG_TRAJECTORY_LARGEST 
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no' .OR. TRIM(ADJUSTL(sRes)) .eq. 'none' ) THEN; icalc_trajectories = LAG_TRAJECTORY_NONE !Alberto
   ELSE
-     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. CalculateTrajectories must be yes or no')
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Invalid option in CalculateTrajectories')
      CALL DNS_STOP(DNS_ERROR_CALCTRAJECTORIES)
   ENDIF
+
   CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Num_trajectories', '50', num_trajectories  )
-  CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Num_dispersion', '2', num_dispersion  )
 
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'CalculateParticlePDF', 'no', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_particle_pdf = 1

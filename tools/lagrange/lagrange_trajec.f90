@@ -69,6 +69,7 @@ PROGRAM LAGRANGE_TRAJEC
 !  TREAL test3(50)
 !  INTEGER(8) test4(50)
   inifile = 'dns.ini'
+  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
   CALL DNS_INITIALIZE
 

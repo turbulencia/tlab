@@ -20,6 +20,10 @@ PRJS=\
      Case19 \
      Case20 \
      Case21 \
+     Case25 \
+     Case26 \
+     Case27 \
+     Case28 \
      Case31 \
      Case32 \
      Case33 \
@@ -31,7 +35,7 @@ PRJS=\
      # Case11 \
      # Case12 \
 
-FILES=avg* grid* flow* scal* dns.out dns.log dns.err dns.war dns.def dns.ini.bak tower*
+FILES=avg* grid* flow* scal* dns.out dns.log dns.err dns.war dns.def dns.ini.bak tower* particle* trajectories* residence*
 
 ##########################################################################
 #   Directives
