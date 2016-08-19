@@ -2,7 +2,7 @@
 #include "dns_const.h"
 #include "dns_error.h"
 
-SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(x,y,z,dx,dy,dz, q,s,l_q,l_hq,l_txc,l_tags, txc, mean, wrk1d,wrk2d,wrk3d)
+SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(x,y,z,dx,dy,dz, q,s,hq, l_q,l_hq,l_txc,l_tags, txc, mean, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
@@ -13,7 +13,8 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(x,y,z,dx,dy,dz, q,s,l_q,l_hq,l_txc,l_tags, 
 #include "integers.h"
 
   TREAL, DIMENSION(*),                 INTENT(IN)    :: x,y,z, dx,dy,dz
-  TREAL, DIMENSION(isize_field,    *), INTENT(IN)    :: q, s
+  TREAL, DIMENSION(isize_field,    *), INTENT(IN)    :: q,s
+  TREAL, DIMENSION(isize_field,    *), INTENT(INOUT) :: hq ! Used as aux array
   TREAL, DIMENSION(isize_txc_field,*), INTENT(INOUT) :: txc
   TREAL, DIMENSION(*),                 INTENT(INOUT) :: wrk1d,wrk2d,wrk3d, mean
 
@@ -34,12 +35,12 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(x,y,z,dx,dy,dz, q,s,l_q,l_hq,l_txc,l_tags, 
      l_txc = C_1_R; ! We want density
      CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,5))
      
-     txc(:,7) = txc(:,7) + 0.00000001
+     hq(:,1) = hq(:,1) + 0.00000001
      DO is = inb_scal_array+2,inb_scal_particle+inb_scal_array+1
         l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
-        CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,8))   
-        txc(:,8) = txc(:,8)/txc(:,7)
-        CALL AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, txc(1,8), &
+        CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, hq(1,2))   
+        hq(:,2) = hq(:,2) /hq(:,1)
+        CALL AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, hq(1,2), &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4), txc(1,5),txc(1,6),mean, wrk1d,wrk2d,wrk3d)
      ENDDO
   ENDIF
