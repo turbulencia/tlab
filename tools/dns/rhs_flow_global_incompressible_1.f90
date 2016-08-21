@@ -86,8 +86,8 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
        dz, u, tmp6, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
        dy, u, tmp5, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)
-  CALL OPR_BURGERS_X(i0,i0, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, u,u,u, tmp4, i0,i0, i0,i0, tmp1, wrk2d,wrk3d)
+  CALL OPR_BURGERS_X(i0,i0, imode_fdm, imax,jmax,kmax, &
+       g(1), u,u,u, tmp4, i0,i0, i0,i0, tmp1, wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
 ! Coriolis. So far, rotation only in the Oy direction. 
@@ -162,8 +162,8 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! Diffusion and convection terms in Oz momentum eqn
 ! #######################################################################
   IF ( kmax_total .GT. 1 ) THEN
-  CALL OPR_BURGERS_Z(i0,i0, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, w,w,w, tmp6, i0,i0, i0,i0, tmp3, wrk2d,wrk3d)
+  CALL OPR_BURGERS_Z(i0,i0, imode_fdm, imax,jmax,kmax,&
+       g(3), w,w,w, tmp6, i0,i0, i0,i0, tmp3, wrk2d,wrk3d)
   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
        dy, w, tmp5, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
@@ -243,8 +243,8 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
        dz, v, tmp6, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
-  CALL OPR_BURGERS_Y(i0,i0, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, v,v,v, tmp5, i0,i0, i0,i0, tmp2, wrk2d,wrk3d)
+  CALL OPR_BURGERS_Y(i0,i0, imode_fdm, imax,jmax,kmax,&
+       g(2), v,v,v, tmp5, i0,i0, i0,i0, tmp2, wrk2d,wrk3d)
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
        dx, v, tmp4, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
 
