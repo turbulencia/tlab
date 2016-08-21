@@ -1,14 +1,6 @@
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2007/01/01 - J.P. Mellado
-!#              Cleaned
-!#
+#include "types.h"
+#include "dns_const.h"
+
 !########################################################################
 !# DESCRIPTION
 !#
@@ -21,31 +13,18 @@
 !# The BCs are such that a and a + grad phi are the same at top and bottom 
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
+SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
 
-SUBROUTINE SOLENOIDAL(iwall, y,dx,dy,dz, &
-     u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
-
-  USE DNS_GLOBAL, ONLY : imode_fdm, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, isize_wrk1d
+  USE DNS_GLOBAL, ONLY : g, kmax_total, i1bc,j1bc,k1bc
+  USE DNS_GLOBAL, ONLY : imode_fdm, imax,jmax,kmax, isize_wrk1d
   USE DNS_GLOBAL, ONLY : isize_field
-#ifdef USE_MPI
-  USE DNS_MPI
-#endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER iwall
 
-  TREAL, DIMENSION(*)              :: y, dx, dy, dz
   TREAL, DIMENSION(imax,jmax,kmax) :: u, v, w
   TREAL, DIMENSION(imax,jmax,kmax) :: tmp1, tmp2, tmp3, tmp4, tmp5, wrk3d
   TREAL, DIMENSION(*)              :: ipos, jpos, kpos, ci, cj, ck
@@ -55,7 +34,14 @@ SUBROUTINE SOLENOIDAL(iwall, y,dx,dy,dz, &
 ! -------------------------------------------------------------------
   TINTEGER  ibc
 
+  TREAL, DIMENSION(:),     POINTER :: y, dx,dy,dz
+
 ! ###################################################################
+! Define pointers
+                   dx => g(1)%aux(:,1)
+  y => g(2)%nodes; dy => g(2)%aux(:,1)
+                   dz => g(3)%aux(:,1)
+
 !  IF ( iwall .EQ. 1) THEN; ibc = 4
 !  ELSE;                    ibc = 3; ENDIF
   ibc = 3

@@ -2,48 +2,24 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
-!########################################################################
-!# Tool/Library FLOW/INIT
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2003/01/01 - J.P. Mellado
-!#              Created
-!# 2007/03/19 - J.P. Mellado
-!#              Modified to include all cases, not only RTI.
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Equilibrium solution for the case of a body force acting on y coordinate.
-!# Solving the equation
-!#    \partial [p(x,y,z) - p_m(x,y,z)]/\partial y = rho(x,y,z)*g
-!#
-!# If volumetric forces are present, two types are possible:
-!# 1) T/W is given, which leads to an exponential variation of p.
-!# 2) rho is given, which leads to a linear variation of p.
-!#
-!# AIRWATER mode, needs T and q_i, to avoid recalculation
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax
+  USE DNS_GLOBAL,    ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem, diam_tem, jet_tem
+  USE DNS_GLOBAL,    ONLY : iprof_rho, p_init, ibodyforce
+  USE DNS_GLOBAL,    ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i, diam_i, jet_i
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TREAL, DIMENSION(*)                :: wrk2d
-  TREAL, DIMENSION(imax,jmax,kmax)   :: p,T, wrk3d
-  TREAL, DIMENSION(imax,jmax,kmax,*) :: s
-  TREAL, DIMENSION(jmax,8)           :: wrk1d
+  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(OUT)   :: p
+  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: T
+  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(INOUT) :: s
+  TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: wrk1d, wrk2d, wrk3d
 
 ! -------------------------------------------------------------------
   TINTEGER j, iprof_loc
@@ -84,11 +60,11 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 ! AIRWATER case: temperature/mixture profile is given
         IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. iprof_tem .GT. 0 ) THEN
            DO j = 1,jmax
-              ycenter = y(1) + scaley*ycoor_tem
+              ycenter = y(1) + g(2)%scale*ycoor_tem
               t_loc(j) = FLOW_SHEAR_TEMPORAL&
                    (iprof_tem, thick_tem, delta_tem, mean_tem, ycenter, prof_tem, y(j))
 
-              ycenter = y(1) + scaley*ycoor_i(1)
+              ycenter = y(1) + g(2)%scale*ycoor_i(1)
               z1_loc(j) =  FLOW_SHEAR_TEMPORAL&
                    (iprof_i(1), thick_i(1), delta_i(1), mean_i(1), ycenter, prof_i, y(j))
 
@@ -104,12 +80,12 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 ! AIRWATER case: enthalpy/mixture profile is given
         ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. iprof_tem .LT. 0 ) THEN
            DO j = 1,jmax
-              ycenter = y(1) + scaley*ycoor_tem
+              ycenter = y(1) + g(2)%scale*ycoor_tem
               iprof_loc =-iprof_tem
               h_loc(j) = FLOW_SHEAR_TEMPORAL&
                    (iprof_loc, thick_tem, delta_tem, mean_tem, ycenter, prof_tem, y(j))
 
-              ycenter = y(1) + scaley*ycoor_i(1)
+              ycenter = y(1) + g(2)%scale*ycoor_i(1)
               z1_loc(j) =  FLOW_SHEAR_TEMPORAL&
                    (iprof_i(1), thick_i(1), delta_i(1), mean_i(1), ycenter, prof_i, y(j))
 
@@ -123,7 +99,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 
 ! General case: temperature/mixture profile is given
         ELSE
-           ycenter = y(1) + ycoor_tem*scaley
+           ycenter = y(1) + ycoor_tem*g(2)%scale
            CALL FI_HYDROSTATIC(i1, jmax, i1, ycenter, y, p_loc(1))
            DO j = 1,jmax
               p_loc(j) = p_init*EXP(p_loc(j))

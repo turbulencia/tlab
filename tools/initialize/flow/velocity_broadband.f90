@@ -31,24 +31,18 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
 
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imode_fdm, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, isize_wrk1d, isize_field
-  USE DNS_GLOBAL, ONLY : imode_flow, visc, area, scaley
+  USE DNS_GLOBAL, ONLY : imode_flow, visc, area
   USE DNS_GLOBAL, ONLY : thick_u, diam_u
   USE FLOW_LOCAL, ONLY : flag_wall, flag_dilatation, thick_ini,  ycoor_ini
-#ifdef USE_MPI
-  USE DNS_MPI
-#endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER iflag
 
-  TREAL, DIMENSION(imax,jmax,kmax) :: u,v,w
-  TREAL, DIMENSION(imax,jmax,kmax) :: tmp1,tmp2,tmp3,tmp4,tmp5, wrk3d
+  TREAL, DIMENSION(imax,jmax,kmax), INTENT(OUT)   :: u,v,w
+  TREAL, DIMENSION(imax,jmax,kmax), INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4,tmp5, wrk3d
   TREAL, DIMENSION(*)              :: ipos,jpos,kpos, ci,cj,ck
   TREAL, DIMENSION(imax,kmax,*)    :: wrk2d
   TREAL, DIMENSION(isize_wrk1d,*)  :: wrk1d
@@ -73,12 +67,6 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
   y => g(2)%nodes; dy => g(2)%aux(:,1)
   z => g(3)%nodes; dz => g(3)%aux(:,1)
 
-#ifdef USE_MPI
-  idsp = ims_offset_k 
-#else 
-  idsp = 0
-#endif
-
 ! ###################################################################
 ! Read initial random field
 ! ###################################################################
@@ -97,7 +85,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
 ! change sign in the lateral velocity in the upper layer
   IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
      DO j = 1,jmax
-        ycenter = y(j) - scaley*C_05_R - y(1)
+        ycenter = y(j) - g(2)%scale*C_05_R - y(1)
         amplify = TANH(-C_05_R*ycenter/thick_u)
         v(:,j,:) = amplify*v(:,j,:)
      ENDDO
@@ -137,7 +125,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
 ! -------------------------------------------------------------------
   IF      ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
      DO j = 1,jmax
-        ycenter = y(j) - scaley*ycoor_ini - y(1)
+        ycenter = y(j) - g(2)%scale*ycoor_ini - y(1)
         IF ( thick_ini .eq. C_0_R ) THEN; amplify = C_0_R
         ELSE;                             amplify = EXP(-(C_05_R*ycenter/thick_ini)**2); ENDIF
 
@@ -158,11 +146,11 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
 ! -------------------------------------------------------------------
   ELSE IF ( imode_flow .EQ. DNS_FLOW_JET   ) THEN
      DO j = 1, jmax           
-        ycenter =   y(j) - scaley*ycoor_ini - diam_u*C_05_R - y(1)
+        ycenter =   y(j) - g(2)%scale*ycoor_ini - diam_u*C_05_R - y(1)
         IF ( thick_ini .eq. C_0_R ) THEN; amplify = C_0_R
         ELSE;                             amplify = EXP(-(C_05_R*ycenter/thick_ini)**2); ENDIF
 
-        ycenter =-( y(j) - scaley*ycoor_ini + diam_u*C_05_R - y(1) )
+        ycenter =-( y(j) - g(2)%scale*ycoor_ini + diam_u*C_05_R - y(1) )
         IF ( thick_ini .eq. C_0_R ) THEN; amplify = C_0_R
         ELSE;                             amplify = amplify + EXP(-(C_05_R*ycenter/thick_ini)**2); ENDIF
 
@@ -288,8 +276,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
 ! vorticity field because it was not solenoidal.
 ! ###################################################################
   IF ( flag_dilatation .EQ. 1 ) THEN
-     CALL SOLENOIDAL(flag_wall, y,dx,dy,dz, &
-          u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
+     CALL SOLENOIDAL(flag_wall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
   ENDIF
 
   RETURN

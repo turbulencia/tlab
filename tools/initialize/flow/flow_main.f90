@@ -49,9 +49,6 @@ PROGRAM INIFLOW
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 #ifdef USE_FFTW
 #include "fftw3.f"
 #endif

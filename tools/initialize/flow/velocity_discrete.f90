@@ -15,7 +15,7 @@ SUBROUTINE VELOCITY_DISCRETE(iflag, u,v,w)
   IMPLICIT NONE
 
   TINTEGER iflag
-  TREAL, DIMENSION(imax,jmax,kmax) :: u,v,w  
+  TREAL, DIMENSION(imax,jmax,kmax), INTENT(OUT) :: u,v,w  
 
 ! -------------------------------------------------------------------
   TINTEGER i, j, k, jsim

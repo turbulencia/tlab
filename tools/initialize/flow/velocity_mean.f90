@@ -1,39 +1,21 @@
 #include "types.h"
 #include "dns_const.h"
 
-!########################################################################
-!# Tool/Library INIT/FLOW
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2007/06/05 - J.P. Mellado
-!#              Written in terms of FLOW_SHEAR_TEMPORAL
-!# 2012/12/14 - J.P. Mellado
-!#              Adding a rotation angle for the Ekman case
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-SUBROUTINE VELOCITY_MEAN(rho,u,v,w, wrk1d,wrk3d)
+SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
 
-  USE DNS_GLOBAL
-#ifdef USE_MPI
-  USE DNS_MPI
-#endif
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : imode_flow, imode_sim, imax,jmax,kmax
+  USE DNS_GLOBAL, ONLY : iprof_u, mean_u, delta_u, thick_u, ycoor_u, prof_u, diam_u, jet_u
+  USE DNS_GLOBAL, ONLY : mean_v, mean_w
+  USE DNS_GLOBAL, ONLY : rotn_param, rotn_vector
 
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TREAL, DIMENSION(imax,jmax,kmax) :: u, v, w, rho, wrk3d
-  TREAL, DIMENSION(jmax,*)         :: wrk1d
+  TREAL, DIMENSION(imax,jmax,kmax), INTENT(IN)    :: rho
+  TREAL, DIMENSION(imax,jmax,kmax), INTENT(OUT)   :: u, v, w
+  TREAL, DIMENSION(jmax,*),         INTENT(INOUT) :: wrk1d, wrk3d
 
 ! -------------------------------------------------------------------
   TINTEGER j, k, iprof_loc
@@ -54,8 +36,8 @@ SUBROUTINE VELOCITY_MEAN(rho,u,v,w, wrk1d,wrk3d)
   IF      ( imode_flow .EQ. DNS_FLOW_ISOTROPIC   ) THEN
      u = u + mean_u
      v = v + mean_v
-     IF ( kmax_total .GT. 1 ) THEN; w = w + mean_w
-     ELSE;                          w = C_0_R     ; ENDIF
+     IF ( g(3)%size .GT. 1 ) THEN; w = w + mean_w
+     ELSE;                         w = C_0_R     ; ENDIF
 
 ! ###################################################################
 ! Shear layer case
@@ -70,7 +52,7 @@ SUBROUTINE VELOCITY_MEAN(rho,u,v,w, wrk1d,wrk3d)
         iprof_loc = PROFILE_EKMAN_V           ! Needed for Ekman case
         calpha = COS(rotn_param(1)); salpha = SIN(rotn_param(1))
         fsign  = SIGN(C_1_R,rotn_vector(2))
-        ycenter = y(1) + scaley*ycoor_u
+        ycenter = y(1) + g(2)%scale*ycoor_u
         DO j = 1,jmax
            wrk1d(j,1) =  FLOW_SHEAR_TEMPORAL&
                 (iprof_u,   thick_u, delta_u, mean_u, ycenter, prof_u, y(j))
@@ -92,7 +74,7 @@ SUBROUTINE VELOCITY_MEAN(rho,u,v,w, wrk1d,wrk3d)
 
         v = v + mean_v
 
-        IF ( kmax_total .GT. 1 ) THEN
+        IF ( g(3)%size .GT. 1 ) THEN
            IF ( iprof_u .EQ. PROFILE_EKMAN_U  .OR. iprof_u .EQ. PROFILE_EKMAN_U_P ) THEN
               DO j = 1,jmax
                  w(:,j,:) = w(:,j,:) - wrk1d(j,1)*salpha + wrk1d(j,2)*calpha
@@ -123,7 +105,7 @@ SUBROUTINE VELOCITY_MEAN(rho,u,v,w, wrk1d,wrk3d)
 
 ! Construct reference profile into array wrk1d
 ! pilot to be added: ijet_pilot, rjet_pilot_thickness, rjet_pilot_velocity
-        ycenter = y(1) + scaley*ycoor_u
+        ycenter = y(1) + g(2)%scale*ycoor_u
         DO j = 1,jmax
            wrk1d(j,1) =  FLOW_JET_TEMPORAL&
                 (iprof_u, thick_u, delta_u, mean_u, diam_u, ycenter, prof_u, y(j))
@@ -136,8 +118,8 @@ SUBROUTINE VELOCITY_MEAN(rho,u,v,w, wrk1d,wrk3d)
 
         v = v + mean_v
 
-        IF ( kmax_total .GT. 1 ) THEN; w = w + mean_w
-        ELSE;                          w = C_0_R     ; ENDIF
+        IF ( g(3)%size .GT. 1 ) THEN; w = w + mean_w
+        ELSE;                         w = C_0_R     ; ENDIF
         
 ! -------------------------------------------------------------------
 ! Spatial
@@ -150,7 +132,7 @@ SUBROUTINE VELOCITY_MEAN(rho,u,v,w, wrk1d,wrk3d)
            rho_vi(j) = rho(1,j,1)
            u_vi(j)   = u(1,j,1)
         ENDDO
-        ycenter = y(1) + scaley*ycoor_u
+        ycenter = y(1) + g(2)%scale*ycoor_u
         CALL FLOW_JET_SPATIAL_VELOCITY&
              (imax, jmax, iprof_u, thick_u, delta_u, mean_u, diam_u, ycenter,&
              jet_u(1), jet_u(2), jet_u(3), &
@@ -165,8 +147,8 @@ SUBROUTINE VELOCITY_MEAN(rho,u,v,w, wrk1d,wrk3d)
 #undef u_vi
 #undef aux
         
-        IF ( kmax_total .GT. 1 ) THEN; w = w + mean_w
-        ELSE;                          w = C_0_R     ; ENDIF
+        IF ( g(3)%size .GT. 1 ) THEN; w = w + mean_w
+        ELSE;                         w = C_0_R     ; ENDIF
 
      ENDIF
 

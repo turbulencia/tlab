@@ -26,7 +26,13 @@
 SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
   
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL,    ONLY : g, j1bc
+  USE DNS_GLOBAL,    ONLY : imode_sim, imode_flow, imode_fdm, inb_scal, imax,jmax,kmax
+  USE DNS_GLOBAL,    ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem, diam_tem, jet_tem
+  USE DNS_GLOBAL,    ONLY : iprof_rho, mean_rho, delta_rho, thick_rho, ycoor_rho, prof_rho, diam_rho, jet_rho
+  USE DNS_GLOBAL,    ONLY : iprof_u, mean_u, delta_u, thick_u, ycoor_u, prof_u, diam_u, jet_u
+  USE DNS_GLOBAL,    ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i, diam_i, jet_i
+  USE DNS_GLOBAL,    ONLY : ibodyforce, body_param, body_vector
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
@@ -75,27 +81,19 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! temperature/mixture profile are given
            IF ( iprof_rho .EQ. PROFILE_NONE ) THEN
-              ycenter = y(1) + scaley*ycoor_tem
+              ycenter = y(1) + g(2)%scale*ycoor_tem
               DO j = 1,jmax
                  dummy =  FLOW_SHEAR_TEMPORAL&
                       (iprof_tem, thick_tem, delta_tem, mean_tem, ycenter, prof_tem, y(j))
-                 DO k = 1,kmax
-                    DO i = 1,imax
-                       TEM_MEAN_LOC(i,j,k) = dummy
-                    ENDDO
-                 ENDDO
+                 TEM_MEAN_LOC(:,j,:) = dummy
               ENDDO
 
               DO is = 1,inb_scal
-                 ycenter = y(1) + scaley*ycoor_i(is)
+                 ycenter = y(1) + g(2)%scale*ycoor_i(is)
                  DO j = 1,jmax
                     dummy =  FLOW_SHEAR_TEMPORAL&
                          (iprof_i(is), thick_i(is), delta_i(is), mean_i(is), ycenter, prof_i,y(j))
-                    DO k = 1,kmax
-                       DO i = 1,imax
-                          s(i,j,k,is) = dummy
-                       ENDDO
-                    ENDDO
+                    s(:,j,:,is) = dummy
                  ENDDO
               ENDDO
 
@@ -106,23 +104,15 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
               CALL THERMO_THERMAL_DENSITY&
                    (imax, jmax, kmax, s, p, TEM_MEAN_LOC(1,1,1), RHO_MEAN_LOC(1,1,1))
-              DO k = 1,kmax
-                 DO ij = 1,imax*jmax
-                    rho(ij,1,k) = rho(ij,1,k) + RHO_MEAN_LOC(ij,1,k)
-                 ENDDO
-              ENDDO
+              rho(:,:,:) = rho(:,:,:) + RHO_MEAN_LOC(:,:,:)
 
 ! density profile itself is given
            ELSE
-              ycenter = y(1) + scaley*ycoor_rho
+              ycenter = y(1) + g(2)%scale*ycoor_rho
               DO j = 1,jmax
                  dummy =  FLOW_SHEAR_TEMPORAL&
                       (iprof_rho, thick_rho, delta_rho, mean_rho, ycenter, prof_rho, y(j))
-                 DO k = 1,kmax
-                    DO i = 1,imax
-                       rho(i,j,k) = rho(i,j,k) + dummy
-                    ENDDO
-                 ENDDO
+                 rho(:,j,:) = rho(:,j,:) + dummy
               ENDDO
 
            ENDIF
@@ -144,11 +134,8 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
            ELSE
               CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
                    dy, p, txc, i0, i0, wrk1d, wrk2d, wrk3d)
-              DO k = 1,kmax
-                 DO ij = 1,imax*jmax
-                    rho(ij,1,k) = rho(ij,1,k) + txc(ij,1,k)/body_vector(2)
-                 ENDDO
-              ENDDO
+              dummy = C_1_R /body_vector(2)
+              rho(:,:,:) = rho(:,:,:) + txc(:,:,:) *dummy
            ENDIF
 
         ENDIF
@@ -173,27 +160,19 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! temperature/mixture profile are given
      IF ( iprof_rho .EQ. PROFILE_NONE ) THEN
-        ycenter = y(1) + scaley*ycoor_tem
+        ycenter = y(1) + g(2)%scale*ycoor_tem
         DO j = 1,jmax
            dummy = FLOW_JET_TEMPORAL&
                 (iprof_tem, thick_tem, delta_tem, mean_tem, diam_tem, ycenter, prof_tem, y(j))
-           DO k = 1,kmax
-              DO i = 1,imax
-                 wrk3d(i,j,k) = dummy
-              ENDDO
-           ENDDO
+           wrk3d(:,j,:) = dummy
         ENDDO
 
         DO is = 1,inb_scal
-           ycenter = y(1) + scaley*ycoor_i(is)
+           ycenter = y(1) + g(2)%scale*ycoor_i(is)
            DO j = 1,jmax
               dummy =  FLOW_JET_TEMPORAL&
                    (iprof_i(is), thick_i(is), delta_i(is), mean_i(is), diam_i(is), ycenter, prof_i, y(j))
-              DO k = 1,kmax
-                 DO i = 1,imax
-                    s(i,j,k,is) = dummy
-                 ENDDO
-              ENDDO
+              s(:,j,:,is) = dummy
            ENDDO
         ENDDO
 
@@ -219,13 +198,10 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 #define aux3(j)   wrk1d(j,5)
 #define aux4(j)   wrk1d(j,6)
 ! Inflow profile of density
-           DO j = 1,jmax
-              rho_vi(j) = rho(1,j,1)
-           ENDDO
+           rho_vi(:) = rho(1,:,1)
 
 ! Inflow profile of axial velocity
-           u_vi(1:jmax) = C_0_R
-           ycenter = y(1) + scaley*ycoor_u
+           ycenter = y(1) + g(2)%scale*ycoor_u
            DO j = 1,jmax
               u_vi(j) = FLOW_JET_TEMPORAL&
                    (iprof_u, thick_u, delta_u, mean_u, diam_u, ycenter, prof_u, y(j))
@@ -234,27 +210,19 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 ! 2D distribution of density
            CALL FLOW_JET_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem, mean_tem, &
                 ycoor_tem, diam_tem, jet_tem, iprof_u, thick_u, delta_u, mean_u, ycoor_u, diam_u,&
-                jet_u, scaley, x, y, s,p,rho_vi(1),u_vi(1),aux1(1),rho,aux2(1),aux3(1),aux4(1)) 
+                jet_u, g(2)%scale, x, y, s,p,rho_vi(1),u_vi(1),aux1(1),rho,aux2(1),aux3(1),aux4(1)) 
                 
-           IF ( kmax .GT. 1 ) THEN
-              DO k = 2,kmax
-                 DO ij = 1,imax*jmax
-                    rho(ij,1,k) = rho(ij,1,1)
-                 ENDDO
-              ENDDO
-           ENDIF
+           DO k = 2,kmax
+              rho(:,:,k) = rho(:,:,1)
+           ENDDO
 
 ! density profile itself is given
         ELSE
-           ycenter = y(1) + scaley*ycoor_rho
+           ycenter = y(1) + g(2)%scale*ycoor_rho
            DO j = 1,jmax
               dummy =  FLOW_JET_TEMPORAL&
                    (iprof_rho, thick_rho, delta_rho, mean_rho, diam_rho, ycenter, prof_rho, y(j))
-              DO k = 1,kmax
-                 DO i = 1,imax
-                    rho(i,j,k) = rho(i,j,k) + dummy
-                 ENDDO
-              ENDDO
+              rho(:,j,:) = rho(:,j,:) + dummy
            ENDDO
 
         ENDIF

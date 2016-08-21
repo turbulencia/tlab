@@ -2,24 +2,12 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/10/08 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Setting up a perturbation of the thermodynamic fields by a 
 !# displacement of the reference center plane.
 !#
 !# Array s enters with the scalar total field, including fluctuations.
-!#
-!########################################################################
-!# ARGUMENTS 
 !#
 !########################################################################
 SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
@@ -32,15 +20,12 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
   USE THERMO_GLOBAL, ONLY : imixture
   USE FLOW_LOCAL
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE DNS_MPI, ONLY :  ims_offset_k
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER code
 
@@ -77,11 +62,8 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
      jmax_total = idummy
 ! remove mean
      dummy = AVG_IK(imax, i1, kmax, i1, disp, dx, dz, area)
-     DO k = 1,kmax
-        DO i = 1,imax
-           disp(i,k) = disp(i,k)-dummy
-        ENDDO
-     ENDDO
+     disp = disp -dummy
+
   ENDIF
 
 ! -------------------------------------------------------------------

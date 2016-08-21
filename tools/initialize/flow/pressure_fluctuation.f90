@@ -43,16 +43,10 @@ SUBROUTINE PRESSURE_FLUCTUATION(u,v,w,rho,p,pprime, &
   USE DNS_GLOBAL ,   ONLY : imode_fdm, imax,jmax,kmax,kmax_total, isize_field, isize_wrk1d
   USE THERMO_GLOBAL, ONLY : gama0
   USE FLOW_LOCAL,    ONLY : norm_ini_p
-#ifdef USE_MPI
-  USE DNS_MPI
-#endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TREAL, DIMENSION(imax,jmax,kmax) :: u,v,w,rho, p,pprime
   TREAL, DIMENSION(imax,jmax,kmax) :: txc1, txc2, txc3, txc4, wrk3d
