@@ -1,11 +1,11 @@
 #include "types.h"
 #include "dns_const.h"
 
-SUBROUTINE VELOCITY_DISCRETE(iflag, x,y,z, u,v,w)
+SUBROUTINE VELOCITY_DISCRETE(iflag, u,v,w)
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, imax_total,kmax_total
-  USE DNS_GLOBAL, ONLY : imode_flow
-  USE DNS_GLOBAL, ONLY : scalex,scaley,scalez, diam_u
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
+  USE DNS_GLOBAL, ONLY : imode_flow, diam_u
+  USE DNS_GLOBAL, ONLY : g
   USE FLOW_LOCAL
 
 #ifdef USE_MPI
@@ -15,7 +15,6 @@ SUBROUTINE VELOCITY_DISCRETE(iflag, x,y,z, u,v,w)
   IMPLICIT NONE
 
   TINTEGER iflag
-  TREAL, DIMENSION(*)              :: x,y,z
   TREAL, DIMENSION(imax,jmax,kmax) :: u,v,w  
 
 ! -------------------------------------------------------------------
@@ -24,16 +23,23 @@ SUBROUTINE VELOCITY_DISCRETE(iflag, x,y,z, u,v,w)
   TREAL u2d, v2d, u3d, v3d, w3d
   TINTEGER inx2d, inx3d, inz3d, idsp
 
+  TREAL, DIMENSION(:), POINTER :: x,y,z
+
 ! ###################################################################
-  wx = C_2_R * C_PI_R / scalex
-  wz = C_2_R * C_PI_R / scalez
+! Define pointers
+  x => g(1)%nodes
+  y => g(2)%nodes
+  z => g(3)%nodes
+
+  wx = C_2_R * C_PI_R / g(1)%scale
+  wz = C_2_R * C_PI_R / g(3)%scale
 
 ! ###################################################################
 ! Forcing for shear
 ! ###################################################################
   IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN 
      DO j = 1,jmax
-        ycenter = y(j) - scaley*ycoor_ini - y(1)
+        ycenter = y(j) - g(2)%scale*ycoor_ini - y(1)
         fy  = EXP(-(ycenter/(C_2_R*thick_ini))**2)
         fyp =-ycenter*fy/(C_2_R * thick_ini**2)
         IF ( iflag .EQ. 2 ) THEN ! no-slip condition at wall
@@ -57,7 +63,7 @@ SUBROUTINE VELOCITY_DISCRETE(iflag, x,y,z, u,v,w)
         ENDDO
 
 ! 3D perturbation
-        IF ( kmax_total .GT. 1 ) THEN
+        IF ( g(3)%size .GT. 1 ) THEN
 #ifdef USE_MPI
            idsp = ims_offset_k 
 #else
@@ -98,7 +104,7 @@ SUBROUTINE VELOCITY_DISCRETE(iflag, x,y,z, u,v,w)
 
         jsim = jmax - j + 1
 
-        ycenter = y(j) - scaley*ycoor_ini + diam_u/C_2_R - y(1)
+        ycenter = y(j) - g(2)%scale*ycoor_ini + diam_u/C_2_R - y(1)
         fy  = EXP(-(ycenter/(C_2_R*thick_ini))**2)*thick_ini
         fyp =-ycenter*fy/(C_2_R*thick_ini**2)
 

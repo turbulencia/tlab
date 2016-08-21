@@ -21,7 +21,7 @@
 !# ARGUMENTS 
 !#
 !########################################################################
-SUBROUTINE VELOCITY_MEAN(x,y,z, rho,u,v,w, wrk1d,wrk3d)
+SUBROUTINE VELOCITY_MEAN(rho,u,v,w, wrk1d,wrk3d)
 
   USE DNS_GLOBAL
 #ifdef USE_MPI
@@ -32,7 +32,6 @@ SUBROUTINE VELOCITY_MEAN(x,y,z, rho,u,v,w, wrk1d,wrk3d)
 
 #include "integers.h"
 
-  TREAL, DIMENSION(*)              :: x, y, z
   TREAL, DIMENSION(imax,jmax,kmax) :: u, v, w, rho, wrk3d
   TREAL, DIMENSION(jmax,*)         :: wrk1d
 
@@ -41,6 +40,13 @@ SUBROUTINE VELOCITY_MEAN(x,y,z, rho,u,v,w, wrk1d,wrk3d)
   TREAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL, ycenter, calpha, salpha, fsign 
   EXTERNAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL
 
+  TREAL, DIMENSION(:), POINTER :: x,y,z
+
+! ###################################################################
+! Define pointers
+  x => g(1)%nodes
+  y => g(2)%nodes
+  z => g(3)%nodes
 
 ! ###################################################################
 ! Isotropic case

@@ -1,3 +1,6 @@
+#include "types.h"
+#include "dns_const.h"
+
 !########################################################################
 !# Tool/Library INIT/FLOW
 !#
@@ -33,15 +36,13 @@
 !#        Out  Pressure mean+fluctuation field 
 !#
 !########################################################################
-#include "types.h"
-#include "dns_const.h"
-
-SUBROUTINE PRESSURE_FLUCTUATION(y,dx,dy,dz, u,v,w,rho,p,pprime, &
+SUBROUTINE PRESSURE_FLUCTUATION(u,v,w,rho,p,pprime, &
      txc1,txc2,txc3,txc4, ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL , ONLY : imode_fdm, imax,jmax,kmax,kmax_total, isize_field, i1bc,j1bc,k1bc, isize_wrk1d
-  USE THERMO_GLOBAL , ONLY : gama0
-  USE FLOW_LOCAL, ONLY : norm_ini_p
+  USE DNS_GLOBAL ,   ONLY : g, i1bc,j1bc,k1bc
+  USE DNS_GLOBAL ,   ONLY : imode_fdm, imax,jmax,kmax,kmax_total, isize_field, isize_wrk1d
+  USE THERMO_GLOBAL, ONLY : gama0
+  USE FLOW_LOCAL,    ONLY : norm_ini_p
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -53,16 +54,20 @@ SUBROUTINE PRESSURE_FLUCTUATION(y,dx,dy,dz, u,v,w,rho,p,pprime, &
 #include "mpif.h"
 #endif
 
-  TREAL, DIMENSION(*)              :: y, dx, dy, dz
-  TREAL, DIMENSION(imax,jmax,kmax) :: u, v, w, rho, p, pprime
+  TREAL, DIMENSION(imax,jmax,kmax) :: u,v,w,rho, p,pprime
   TREAL, DIMENSION(imax,jmax,kmax) :: txc1, txc2, txc3, txc4, wrk3d
   TREAL, DIMENSION(*)              :: ipos, jpos, kpos, ci, cj, ck
   TREAL, DIMENSION(imax,kmax,*)    :: wrk2d
   TREAL, DIMENSION(isize_wrk1d,*)  :: wrk1d
 
 ! -------------------------------------------------------------------
+  TREAL, DIMENSION(:), POINTER :: y, dx,dy,dz
 
 ! ###################################################################
+! Define pointers
+                   dx => g(1)%aux(:,1)
+  y => g(2)%nodes; dy => g(2)%aux(:,1)
+                   dz => g(3)%aux(:,1)
 
 ! -------------------------------------------------------------------
 ! Calculate RHS d/dx_i d/dx_j (u_i u_j), stored in txc4
@@ -99,7 +104,7 @@ SUBROUTINE PRESSURE_FLUCTUATION(y,dx,dy,dz, u,v,w,rho,p,pprime, &
 ! Solve Poisson equation
 ! Array pprime contains fluctuating p' (BCs are equal to zero!)
 ! -------------------------------------------------------------------
-  IF ( i1bc .EQ. 0 .AND. k1bc .EQ. 0 ) THEN ! Doubly periodic in xOz
+  IF ( g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz
      wrk2d(:,:,1:2) = C_0_R  ! bcs
      pprime = -txc4          ! change of forcing term sign
      CALL OPR_POISSON_FXZ(imode_fdm,i1,i0, imax,jmax,kmax, &

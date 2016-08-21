@@ -26,9 +26,10 @@
 !#                4  cropping in velocity potential
 !#
 !########################################################################
-SUBROUTINE VELOCITY_BROADBAND(iflag, x,y,z,dx,dy,dz, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
+SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
      ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
 
+  USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imode_fdm, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, isize_wrk1d, isize_field
   USE DNS_GLOBAL, ONLY : imode_flow, visc, area, scaley
   USE DNS_GLOBAL, ONLY : thick_u, diam_u
@@ -46,7 +47,6 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, x,y,z,dx,dy,dz, u,v,w, tmp1,tmp2,tmp3,tmp4,
 
   TINTEGER iflag
 
-  TREAL, DIMENSION(*)              :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(imax,jmax,kmax) :: u,v,w
   TREAL, DIMENSION(imax,jmax,kmax) :: tmp1,tmp2,tmp3,tmp4,tmp5, wrk3d
   TREAL, DIMENSION(*)              :: ipos,jpos,kpos, ci,cj,ck
@@ -61,12 +61,17 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, x,y,z,dx,dy,dz, u,v,w, tmp1,tmp2,tmp3,tmp4,
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: wx, wy, wz
+  TREAL, DIMENSION(:),     POINTER :: x,y,z, dx,dy,dz
 
 ! ###################################################################
 ! Define pointers
   wx => tmp1
   wy => tmp2
   wz => tmp3
+
+  x => g(1)%nodes; dx => g(1)%aux(:,1)
+  y => g(2)%nodes; dy => g(2)%aux(:,1)
+  z => g(3)%nodes; dz => g(3)%aux(:,1)
 
 #ifdef USE_MPI
   idsp = ims_offset_k 

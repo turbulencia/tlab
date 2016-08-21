@@ -149,12 +149,12 @@ PROGRAM INIFLOW
 ! Initialize Poisson Solver
 ! -------------------------------------------------------------------
   IF ( flag_u .NE. 0 ) THEN
-     IF ( ifourier .EQ. 1 .AND. i1bc .EQ. 0 .AND. k1bc .EQ. 0 ) THEN ! Doubly periodic in xOz 
+     IF ( ifourier .EQ. 1 .AND. g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz 
         CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
 
      ELSE
 #ifdef USE_CGLOC
-        IF ( unifx .EQ. 1 .OR. unify .EQ. 1 ) THEN
+        IF ( .NOT. g(1)%uniform .NOT. .OR. g(2)%uniform ) THEN
            CALL IO_WRITE_ASCII(lfile, 'Initializing conjugate gradient, non-uniform grid, second-order.')
            cg_unif = 1; cg_ord = 2
            CALL CGBC2(cg_unif, imode_fdm, imax,jmax,kmax,kmax_total, &
@@ -195,10 +195,10 @@ PROGRAM INIFLOW
 #endif
 
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     CALL PRESSURE_MEAN(y,dy, p,txc(1,1),s, wrk1d,wrk2d,wrk3d)
+     CALL PRESSURE_MEAN(p,txc(1,1),s, wrk1d,wrk2d,wrk3d)
      
      IF ( ireactive .EQ. CHEM_NONE ) THEN
-        CALL DENSITY_MEAN(x,y,dy, rho,p,txc(1,1),s, txc(1,2), wrk1d,wrk2d,wrk3d)
+        CALL DENSITY_MEAN(rho,p,txc(1,1),s, txc(1,2), wrk1d,wrk2d,wrk3d)
         
      ELSE
 #ifdef CHEMISTRY
@@ -226,7 +226,7 @@ PROGRAM INIFLOW
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'INIFLOW: Section 2')
 #endif
-  CALL VELOCITY_MEAN(x,y,z, rho,u,v,w, wrk1d,wrk3d)
+  CALL VELOCITY_MEAN(rho,u,v,w, wrk1d,wrk3d)
 
 ! ###################################################################
 ! Velocity perturbation fields
@@ -238,10 +238,10 @@ PROGRAM INIFLOW
      txc(:,1:3) = C_0_R
 
      IF      ( flag_u .EQ. 1 ) THEN
-        CALL VELOCITY_DISCRETE(i1, x,y,z, txc(1,1),txc(1,2),txc(1,3))
+        CALL VELOCITY_DISCRETE(i1, txc(1,1),txc(1,2),txc(1,3))
 
      ELSE IF ( flag_u .GT. 1 ) THEN
-        CALL VELOCITY_BROADBAND(flag_u, x,y,z,dx,dy,dz, txc(1,1),txc(1,2),txc(1,3), &
+        CALL VELOCITY_BROADBAND(flag_u, txc(1,1),txc(1,2),txc(1,3), &
              txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), &
              ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
         
@@ -264,7 +264,7 @@ PROGRAM INIFLOW
 
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      IF ( flag_u .NE. 0 ) THEN
-        CALL PRESSURE_FLUCTUATION(y,dx,dy,dz, u,v,w,rho,p,txc(1,1), &
+        CALL PRESSURE_FLUCTUATION(u,v,w,rho,p,txc(1,1), &
              txc(1,2),txc(1,3),txc(1,4),txc(1,5), &
              ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
      ENDIF
@@ -274,7 +274,7 @@ PROGRAM INIFLOW
      ENDIF
      
      IF ( flag_t .EQ. 4 .OR. flag_t .EQ. 5 ) THEN
-        CALL DENSITY_FLUCTUATION(flag_t, x,y,z,dx,dz, s,p,rho, txc(1,1),txc(1,2), wrk2d,wrk3d)
+        CALL DENSITY_FLUCTUATION(flag_t, s,p,rho, txc(1,1),txc(1,2), wrk2d,wrk3d)
      ENDIF
 
   ENDIF

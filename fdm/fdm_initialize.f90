@@ -1,27 +1,9 @@
 #include "types.h"
 #include "dns_const.h"
 
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2007/12/02 - J.P. Mellado
-!#              Second derivatives added.
-!# 2013/01/20 - J.P. Mellado
-!#              Introducing direct formulation of non-uniform grid
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Compute dx/di and create LU factorization for first- and second-order
-!# derivatives
-!#
-!########################################################################
-SUBROUTINE FDM_INITIALIZE(iunif, imethod, nx, i1bc, scalex, x, dx, wrk1d)
+!# Compute dx/di and create LU factorization for first- and second-order derivatives
+
+SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
 
   USE DNS_GLOBAL, ONLY : inb_scal
   USE DNS_GLOBAL, ONLY : inb_grid, inb_grid_1, inb_grid_2, inb_grid_3
@@ -31,8 +13,9 @@ SUBROUTINE FDM_INITIALIZE(iunif, imethod, nx, i1bc, scalex, x, dx, wrk1d)
   
 #include "integers.h"
   
-  TINTEGER,                    INTENT(IN) :: iunif, imethod, nx, i1bc
+  TINTEGER,                    INTENT(IN) :: imethod, nx
   TREAL,                       INTENT(IN) :: scalex
+  LOGICAL,                     INTENT(IN) :: uniform, periodic
   TREAL,DIMENSION(nx),         INTENT(IN) :: x
   TREAL,DIMENSION(nx,inb_grid),INTENT(OUT):: dx
   TREAL,DIMENSION(nx,5)                   :: wrk1d
@@ -51,7 +34,7 @@ SUBROUTINE FDM_INITIALIZE(iunif, imethod, nx, i1bc, scalex, x, dx, wrk1d)
 ! ###################################################################
 ! Uniform grid
 ! ###################################################################
-  IF ( iunif .EQ. 0 ) THEN
+  IF ( uniform ) THEN
 ! -------------------------------------------------------------------
 ! first derivative
 ! -------------------------------------------------------------------
@@ -59,7 +42,7 @@ SUBROUTINE FDM_INITIALIZE(iunif, imethod, nx, i1bc, scalex, x, dx, wrk1d)
         dx(i,1) = (x(i+1)-x(i-1))*C_05_R
      ENDDO
 ! periodic BCs
-     IF ( i1bc .EQ. 0 ) THEN
+     IF ( periodic ) THEN
         dx(nx,1) = ( x(1) + scalex - x(nx-1)       )*C_05_R
         dx(1, 1) = ( x(2)-x(1) + x(1)+scalex-x(nx) )*C_05_R
 ! nonperiodic BCs
@@ -126,7 +109,7 @@ SUBROUTINE FDM_INITIALIZE(iunif, imethod, nx, i1bc, scalex, x, dx, wrk1d)
 ! -------------------------------------------------------------------
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
-  IF ( i1bc .EQ. 0 ) THEN
+  IF ( periodic ) THEN
      IF      ( imethod .EQ. FDM_COM4_JACOBIAN                                 ) THEN
         CALL FDM_C1N4P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN .OR. imethod .EQ. FDM_COM6_DIRECT ) THEN
@@ -198,7 +181,7 @@ SUBROUTINE FDM_INITIALIZE(iunif, imethod, nx, i1bc, scalex, x, dx, wrk1d)
 ! -------------------------------------------------------------------
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
-  IF ( i1bc .EQ. 0 ) THEN
+  IF ( periodic ) THEN
      IF      ( imethod .EQ. FDM_COM4_JACOBIAN                                 ) THEN
         CALL FDM_C2N4P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN .OR. imethod .EQ. FDM_COM6_DIRECT ) THEN
@@ -279,7 +262,7 @@ SUBROUTINE FDM_INITIALIZE(iunif, imethod, nx, i1bc, scalex, x, dx, wrk1d)
 ! -------------------------------------------------------------------
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
-     IF ( i1bc .EQ. 0 ) THEN ! Check routines TRIDPFS and TRIDPSS
+     IF ( periodic ) THEN ! Check routines TRIDPFS and TRIDPSS
         dx(:,ip+1) = dx(:,inb_grid_2  )         ! matrix L; 1. subdiagonal
         dx(:,ip+2) = dx(:,inb_grid_2+1) /dummy  ! matrix L; 1/diagonal
         dx(:,ip+3) = dx(:,inb_grid_2+2)         ! matrix U is the same
@@ -301,7 +284,7 @@ SUBROUTINE FDM_INITIALIZE(iunif, imethod, nx, i1bc, scalex, x, dx, wrk1d)
 ! ###################################################################
 ! Modified wavenumbers in periodic case
 ! ###################################################################
-  IF ( i1bc .EQ. 0 ) THEN
+  IF ( periodic ) THEN
      
 ! -------------------------------------------------------------------
 ! First order derivative
@@ -346,4 +329,3 @@ SUBROUTINE FDM_INITIALIZE(iunif, imethod, nx, i1bc, scalex, x, dx, wrk1d)
 
   RETURN
 END SUBROUTINE FDM_INITIALIZE
-      

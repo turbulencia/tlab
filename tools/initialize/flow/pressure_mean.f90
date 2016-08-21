@@ -30,7 +30,7 @@
 !# ARGUMENTS 
 !#
 !########################################################################
-SUBROUTINE PRESSURE_MEAN(y,dy, p,T,s, wrk1d,wrk2d,wrk3d)
+SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL
@@ -40,7 +40,7 @@ SUBROUTINE PRESSURE_MEAN(y,dy, p,T,s, wrk1d,wrk2d,wrk3d)
 
 #include "integers.h"
 
-  TREAL, DIMENSION(*)                :: y,dy, wrk2d
+  TREAL, DIMENSION(*)                :: wrk2d
   TREAL, DIMENSION(imax,jmax,kmax)   :: p,T, wrk3d
   TREAL, DIMENSION(imax,jmax,kmax,*) :: s
   TREAL, DIMENSION(jmax,8)           :: wrk1d
@@ -50,6 +50,12 @@ SUBROUTINE PRESSURE_MEAN(y,dy, p,T,s, wrk1d,wrk2d,wrk3d)
   TREAL pmin,pmax, ycenter
   TREAL FLOW_SHEAR_TEMPORAL
 
+  TREAL, DIMENSION(:), POINTER :: y,dy
+
+! ###################################################################
+! Define pointers
+  y => g(2)%nodes; dy => g(2)%aux(:,1)
+   
 ! ###################################################################
 ! Constant pressure
 ! ###################################################################

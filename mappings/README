@@ -1,1 +1,1 @@
-Routines to calculate level1 operators and mappings: Operators and mappings defined in terms of level0 operators, i.e., this operators do not depend directrly on the FDM schemes.
+Routines to calculate level1 operators and mappings: Operators and mappings defined in terms of level0 operators, i.e., these operators do not depend directly on the FDM schemes.

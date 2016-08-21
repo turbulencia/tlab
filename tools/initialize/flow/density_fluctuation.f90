@@ -22,9 +22,13 @@
 !# ARGUMENTS 
 !#
 !########################################################################
-SUBROUTINE DENSITY_FLUCTUATION(code, x,y,z,dx,dz, s, p, rho, T, h, disp, wrk3d)
+SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
 
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, jmax_total, isize_field, area
+  USE DNS_GLOBAL,    ONLY : imode_flow
+  USE DNS_GLOBAL,    ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem, diam_tem, jet_tem
+  USE DNS_GLOBAL,    ONLY : iprof_rho
   USE THERMO_GLOBAL, ONLY : imixture
   USE FLOW_LOCAL
 #ifdef USE_MPI
@@ -40,7 +44,6 @@ SUBROUTINE DENSITY_FLUCTUATION(code, x,y,z,dx,dz, s, p, rho, T, h, disp, wrk3d)
 
   TINTEGER code
 
-  TREAL, DIMENSION(*)                :: x, y, z, dx, dz
   TREAL, DIMENSION(imax,jmax,kmax)   :: T, h, rho, p, wrk3d
   TREAL, DIMENSION(imax,jmax,kmax,*) :: s
   TREAL, DIMENSION(imax,kmax)        :: disp
@@ -52,7 +55,14 @@ SUBROUTINE DENSITY_FLUCTUATION(code, x,y,z,dx,dz, s, p, rho, T, h, disp, wrk3d)
   TREAL AVG_IK, FLOW_SHEAR_TEMPORAL
   TREAL xcenter, amplify
 
+  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dz
+  
 ! ###################################################################
+! Define pointers
+  x => g(1)%nodes; dx => g(1)%aux(:,1)
+  y => g(2)%nodes
+  z => g(3)%nodes; dz => g(3)%aux(:,1)
+
   disp = C_0_R
 
 ! ###################################################################
@@ -78,8 +88,8 @@ SUBROUTINE DENSITY_FLUCTUATION(code, x,y,z,dx,dz, s, p, rho, T, h, disp, wrk3d)
 ! Discrete case
 ! -------------------------------------------------------------------
   IF ( code .EQ. 5 ) THEN
-     wx = C_2_R*C_PI_R/scalex
-     wz = C_2_R*C_PI_R/scalez
+     wx = C_2_R*C_PI_R /g(1)%scale
+     wz = C_2_R*C_PI_R /g(3)%scale
 
 ! 1D perturbation along X
      DO inx2d = 1,nx2d
@@ -93,7 +103,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, x,y,z,dx,dz, s, p, rho, T, h, disp, wrk3d)
      ENDDO
 
 ! 2D perturbation along X and Z
-     IF (kmax_total .GT. 1) THEN
+     IF ( g(3)%size .GT. 1 ) THEN
 #ifdef USE_MPI
         idsp = ims_offset_k 
 #else
@@ -122,7 +132,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, x,y,z,dx,dz, s, p, rho, T, h, disp, wrk3d)
   IF ( frc_delta .GT. C_0_R ) THEN
      DO k = 1,kmax
         DO i = 1,imax
-           xcenter   = x(i) - scalex*C_05_R - x(1)
+           xcenter   = x(i) - g(1)%scale *C_05_R - x(1)
            amplify   = EXP(-(C_05_R*xcenter/frc_delta)**2)
            disp(i,k) = disp(i,k)*amplify
         ENDDO
@@ -142,9 +152,9 @@ SUBROUTINE DENSITY_FLUCTUATION(code, x,y,z,dx,dz, s, p, rho, T, h, disp, wrk3d)
         IF ( iprof_tem .GT. 0 ) THEN
            DO k = 1,kmax
               DO i = 1,imax
-                 delta_loc = delta_tem + (prof_tem(2)-prof_tem(1))*disp(i,k)*scaley
-                 mean_loc  = mean_tem  + C_05_R*(prof_tem(2)+prof_tem(1))*disp(i,k)*scaley
-                 ycenter   = y(1) + scaley*ycoor_tem + disp(i,k)
+                 delta_loc = delta_tem + (prof_tem(2)-prof_tem(1))*disp(i,k) *g(2)%scale
+                 mean_loc  = mean_tem  + C_05_R*(prof_tem(2)+prof_tem(1))*disp(i,k) *g(2)%scale
+                 ycenter   = y(1) + g(2)%scale *ycoor_tem + disp(i,k)
                  DO j = 1,jmax
                     T(i,j,k) =  FLOW_SHEAR_TEMPORAL&
                          (iprof_tem, thick_tem, delta_loc, mean_loc, ycenter, prof_tem, y(j))
@@ -160,9 +170,9 @@ SUBROUTINE DENSITY_FLUCTUATION(code, x,y,z,dx,dz, s, p, rho, T, h, disp, wrk3d)
         ELSE IF ( iprof_tem .LT. 0 ) THEN
            DO k = 1,kmax
               DO i = 1,imax
-                 delta_loc = delta_tem + (prof_tem(2)-prof_tem(1))*disp(i,k)*scaley
-                 mean_loc  = mean_tem  + C_05_R*(prof_tem(2)+prof_tem(1))*disp(i,k)*scaley
-                 ycenter   = y(1) + scaley*ycoor_tem + disp(i,k)
+                 delta_loc = delta_tem + (prof_tem(2)-prof_tem(1))*disp(i,k) *g(2)%scale
+                 mean_loc  = mean_tem  + C_05_R*(prof_tem(2)+prof_tem(1))*disp(i,k) *g(2)%scale
+                 ycenter   = y(1) + g(2)%scale *ycoor_tem + disp(i,k)
                  iprof_loc =-iprof_tem
                  DO j = 1,jmax
                     h(i,j,k) =  FLOW_SHEAR_TEMPORAL&

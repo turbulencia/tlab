@@ -18,9 +18,6 @@
 !# Calculate rho from T, p and composition using thermal equation of state.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE THERMO_THERMAL_DENSITY(nx,ny,nz, s,p,T, rho)
 
   USE THERMO_GLOBAL, ONLY : imixture, MRATIO

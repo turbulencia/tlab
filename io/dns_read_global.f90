@@ -480,9 +480,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINIINT(bakfile, inifile, 'Grid', 'Imax', '0', imax_total)
   CALL SCANINIINT(bakfile, inifile, 'Grid', 'Jmax', '0', jmax_total)
   CALL SCANINIINT(bakfile, inifile, 'Grid', 'Kmax', '0', kmax_total)
-  grid(1)%size = imax_total
-  grid(2)%size = jmax_total
-  grid(3)%size = kmax_total
+  g(1)%size = imax_total
+  g(2)%size = jmax_total
+  g(3)%size = kmax_total
   
 ! default
   imax = imax_total
@@ -527,24 +527,24 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! Uniform
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Grid', 'XUniform', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; iunifx = 0; grid(1)%uniform = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; iunifx = 1; grid(1)%uniform = .FALSE.
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; iunifx = 0; g(1)%uniform = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; iunifx = 1; g(1)%uniform = .FALSE.
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Uniform X grid')
      CALL DNS_STOP(DNS_ERROR_UNIFORMX)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Grid', 'YUniform', 'void', sRes)      
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; iunify = 0; grid(2)%uniform = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; iunify = 1; grid(2)%uniform = .FALSE.
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; iunify = 0; g(2)%uniform = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; iunify = 1; g(2)%uniform = .FALSE.
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Uniform Y grid')
      CALL DNS_STOP(DNS_ERROR_UNIFORMY)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Grid', 'ZUniform', 'void', sRes)      
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; iunifz = 0; grid(3)%uniform = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; iunifz = 1; grid(3)%uniform = .FALSE.
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; iunifz = 0; g(3)%uniform = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; iunifz = 1; g(3)%uniform = .FALSE.
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Uniform Z grid')
      CALL DNS_STOP(DNS_ERROR_UNIFORMZ)
@@ -554,24 +554,24 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! Periodic
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Grid', 'XPeriodic', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; i1bc = 0; grid(1)%periodic = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; i1bc = 1; grid(1)%periodic = .FALSE.
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; i1bc = 0; g(1)%periodic = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; i1bc = 1; g(1)%periodic = .FALSE.
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Periodic X grid')
      CALL DNS_STOP(DNS_ERROR_IBC)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Grid', 'YPeriodic', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; j1bc = 0; grid(2)%periodic = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; j1bc = 1; grid(2)%periodic = .FALSE.
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; j1bc = 0; g(2)%periodic = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; j1bc = 1; g(2)%periodic = .FALSE.
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Periodic Y grid')
      CALL DNS_STOP(DNS_ERROR_JBC)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Grid', 'ZPeriodic', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; k1bc = 0; grid(3)%periodic = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; k1bc = 1; grid(3)%periodic = .FALSE.
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; k1bc = 0; g(3)%periodic = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; k1bc = 1; g(3)%periodic = .FALSE.
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Periodic Z grid')
      CALL DNS_STOP(DNS_ERROR_KBC)
