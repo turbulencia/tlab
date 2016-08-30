@@ -519,8 +519,8 @@ PROGRAM VISUALS_MAIN
 
               ELSE IF ( opt_vec(iv) .EQ. 8 ) THEN ! pressure
                  CALL IO_WRITE_ASCII(lfile,'Computing pressure...')
-                 CALL FI_PRESSURE_BOUSSINESQ(y,dx,dy,dz, q(:,1),q(:,2),q(:,3), s, &
-                      txc(:,1),txc(:,2),txc(:,3),txc(:,4), wrk1d,wrk2d,wrk3d)
+                 CALL FI_PRESSURE_BOUSSINESQ(q(1,1),q(1,2),q(1,3), s, txc(1,1), &
+                      txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
                  
                  CALL IO_WRITE_ASCII(lfile,'Computing pressure gradient vector...')
                  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, txc(:,1),txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)

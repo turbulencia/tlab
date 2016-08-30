@@ -381,8 +381,7 @@ PROGRAM PDFS
 ! ###################################################################
      IF ( opt_main .EQ. 1 ) THEN
         IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
-           CALL FI_PRESSURE_BOUSSINESQ(y,dx,dy,dz, u,v,w,s,txc(1,1), &
-                txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
+           CALL FI_PRESSURE_BOUSSINESQ(u,v,w,s, txc(1,1), txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
 
         ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            p(:) = C_1_R ! to be developed

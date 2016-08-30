@@ -2,11 +2,12 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
-SUBROUTINE AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d, wrk1d,wrk2d,wrk3d)
+SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, idiffusion, ibodyforce, itransport
   USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, idiffusion, ibodyforce, itransport
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal, inb_scal_array, imode_fdm, i1bc,j1bc,k1bc, area, scaley
   USE DNS_GLOBAL, ONLY : body_param, radiation, transport
@@ -25,7 +26,6 @@ SUBROUTINE AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,t
 #endif
 
   TINTEGER,                           INTENT(IN)    :: is
-  TREAL, DIMENSION(*),                INTENT(IN)    :: y,dx,dy,dz
   TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)    :: q, s
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(IN)    :: s_local
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, wrk3d
@@ -58,8 +58,14 @@ SUBROUTINE AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,t
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: u,v,w, rho, vis
 
-! #######################################################################
+  TREAL, DIMENSION(:),     POINTER :: y, dx,dy,dz
+
+! ###################################################################
 ! Define pointers
+                   dx => g(1)%aux(:,1)
+  y => g(2)%nodes; dy => g(2)%aux(:,1)
+                   dz => g(3)%aux(:,1)
+
   u => q(:,:,:,1)
   v => q(:,:,:,2)
   w => q(:,:,:,3)

@@ -74,7 +74,7 @@ PROGRAM VTGVORTEX
 !  CALL FI_FORCING_0(imax,jmax,kmax, rtime,visc, x,y, q(1,1),q(1,2), txc(1,1),txc(1,4))
 !  CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
 
-  CALL FI_PRESSURE_BOUSSINESQ(y,dx,dy,dz, q(1,1),q(1,2),q(1,3),txc(1,4), q(1,4), &
+  CALL FI_PRESSURE_BOUSSINESQ(q(1,1),q(1,2),q(1,3),txc(1,4), q(1,4), &
        txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
 
 ! Theoretical Taylor-Green in array txc

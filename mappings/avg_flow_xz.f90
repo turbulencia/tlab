@@ -15,12 +15,12 @@
 !# use array dudz until pressure block
 !#
 !########################################################################
-SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
-     dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d, wrk1d,wrk2d,wrk3d)
+SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, ibodyforce, itransport
   USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, ibodyforce, itransport
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, inb_scal_array, imode_fdm, i1bc,j1bc,k1bc, area, scaley
   USE DNS_GLOBAL, ONLY : froude, visc, rossby
@@ -45,9 +45,7 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
 #include "mpif.h"
 #endif
 
-  TREAL, DIMENSION(jmax),             INTENT(IN)    :: y
-  TREAL, DIMENSION(*),                INTENT(IN)    :: dx,dy,dz
-  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)    :: q, s
+  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)    :: q,s
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, wrk3d
   TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: mean2d, wrk1d
   TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk2d
@@ -57,7 +55,6 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
 ! -------------------------------------------------------------------
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 20
   TINTEGER i,j,k, is
-!  TREAL AVG_IK
   TREAL SIMPSON_NU, FLOW_SHEAR_TEMPORAL, UPPER_THRESHOLD, LOWER_THRESHOLD
   TREAL delta_m, delta_m_p, delta_w
   TREAL ycenter
@@ -65,8 +62,6 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
   TREAL delta_hb25, delta_ht25, delta_h25
   TREAL u_friction, d_friction, a_friction
   TREAL dummy
-  ! TREAL tau11, tau22, tau33, tau12, tau23, tau13
-  ! TREAL upy, vpy, wpy, dil
   TREAL c23, prefactor
 
   TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nmax
@@ -79,16 +74,17 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: u,v,w,p, e,rho, vis
+  TREAL, DIMENSION(:),     POINTER :: y, dx,dy,dz
 
 ! ###################################################################
-#ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 1')
-#endif
-
 ! Define pointers
-  u   => q(:,:,:,1)
-  v   => q(:,:,:,2)
-  w   => q(:,:,:,3)
+                   dx => g(1)%aux(:,1)
+  y => g(2)%nodes; dy => g(2)%aux(:,1)
+                   dz => g(3)%aux(:,1)
+
+  u => q(:,:,:,1)
+  v => q(:,:,:,2)
+  w => q(:,:,:,3)
   IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
      e   => q(:,:,:,4)
      rho => q(:,:,:,5)
@@ -466,10 +462,6 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
 #define Tau_yy_y(j) mean2d(j,ig(18)+24)
 #define Tau_yz_y(j) mean2d(j,ig(18)+25)
   sg(ng) = 26
-
-! #define Tau_xx(j) mean2d(j,ig(18)+26) ! not needed anymore
-! #define Tau_zz(j) mean2d(j,ig(18)+27)
-! #define Tau_xz(j) mean2d(j,ig(18)+28)
 
 #define L_AVGMAX 226
 
@@ -1254,54 +1246,6 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
         + ( dwdz *C_2_R -wrk3d ) *dvdz + ( dudz +dwdx ) *dvdx + ( dvdz +dwdy ) *dvdy
   IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Eyz(1), wrk1d, area)
-
-  ! DO j = 1,jmax
-  !    DO k = 1,kmax
-  !       DO i = 1,imax
-  !          dil = (dudx(i,j,k)+dvdy(i,j,k)+dwdz(i,j,k))*c23
-           
-  !          IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
-  !             tau11 = visc*vis(i,j,k)*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
-  !             tau22 = visc*vis(i,j,k)*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
-  !             tau33 = visc*vis(i,j,k)*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
-  !             tau12 = visc*vis(i,j,k)*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
-  !             tau13 = visc*vis(i,j,k)*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
-  !             tau23 = visc*vis(i,j,k)*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
-              
-  !          ELSE
-  !             tau11 = visc*(C_2_R*dudx(i,j,k)-dil)-Tau_xx(j)
-  !             tau22 = visc*(C_2_R*dvdy(i,j,k)-dil)-Tau_yy(j)
-  !             tau33 = visc*(C_2_R*dwdz(i,j,k)-dil)-Tau_zz(j)
-  !             tau12 = visc*(dudy(i,j,k)+dvdx(i,j,k))-Tau_xy(j)
-  !             tau13 = visc*(dudz(i,j,k)+dwdx(i,j,k))-Tau_xz(j)
-  !             tau23 = visc*(dvdz(i,j,k)+dwdy(i,j,k))-Tau_yz(j)
-  !          ENDIF
-           
-  !          upy = dudy(i,j,k)-rU_y(j)
-  !          vpy = dvdy(i,j,k)-rV_y(j)
-  !          wpy = dwdy(i,j,k)-rW_y(j)
-           
-  !          wrk3d(i,1,k) = tau11*dudx(i,j,k) + tau12*upy + tau13*dudz(i,j,k)
-  !          wrk3d(i,2,k) = tau12*dvdx(i,j,k) + tau22*vpy + tau23*dvdz(i,j,k)
-  !          wrk3d(i,3,k) = tau13*dwdx(i,j,k) + tau23*wpy + tau33*dwdz(i,j,k)
-  !          wrk3d(i,4,k) = tau11*dvdx(i,j,k) + tau12*vpy + tau13*dvdz(i,j,k) &
-  !                       + tau12*dudx(i,j,k) + tau22*upy + tau23*dudz(i,j,k)              
-  !          wrk3d(i,7,k) = tau13*dudx(i,j,k) + tau23*upy + tau33*dudz(i,j,k) &
-  !                       + tau11*dwdx(i,j,k) + tau12*wpy + tau13*dwdz(i,j,k) 
-  !          wrk3d(i,8,k) = tau13*dvdx(i,j,k) + tau23*vpy + tau33*dvdz(i,j,k) &
-  !                       + tau12*dwdx(i,j,k) + tau22*wpy + tau23*dwdz(i,j,k) 
-           
-  !       ENDDO
-  !    ENDDO
-
-  !   Exx(j) = C_2_R*AVG_IK(imax, jmax, kmax, i1, wrk3d, dx, dz, area)/rR(j)
-  !   Eyy(j) = C_2_R*AVG_IK(imax, jmax, kmax, i2, wrk3d, dx, dz, area)/rR(j)
-  !   Ezz(j) = C_2_R*AVG_IK(imax, jmax, kmax, i3, wrk3d, dx, dz, area)/rR(j)
-  !   Exy(j) =       AVG_IK(imax, jmax, kmax, i4, wrk3d, dx, dz, area)/rR(j)
-  !   Exz(j) =       AVG_IK(imax, jmax, kmax, i7, wrk3d, dx, dz, area)/rR(j)
-  !   Eyz(j) =       AVG_IK(imax, jmax, kmax, i8, wrk3d, dx, dz, area)/rR(j)
-
-  ! ENDDO
   
 ! ##################################################################
 ! Viscous shear-stress tensor
@@ -1333,22 +1277,6 @@ SUBROUTINE AVG_FLOW_XZ(y,dx,dy,dz, q,s,&
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tau_xy(1), Tau_xy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tau_yy(1), Tau_yy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tau_yz(1), Tau_yz_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-
-  ! not needed anymore
-  ! wrk3d = dudx *C_2_R -dvdy -dwdz
-  ! IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  ! CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_xx(1), wrk1d, area)
-  ! Tau_xx(:) = Tau_xx(:) *visc *c23
-
-  ! wrk3d = dwdz *C_2_R -dvdy -dudx
-  ! IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  ! CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_zz(1), wrk1d, area)
-  ! Tau_zz(:) = Tau_zz(:) *visc *c23
-
-  ! wrk3d = dudz +dwdx
-  ! IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  ! CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Tau_xz(1), wrk1d, area)
-  ! Tau_xz(:) = Tau_xz(:) *visc
 
 ! -------------------------------------------------------------------
 ! Contribution to turbulent transport terms

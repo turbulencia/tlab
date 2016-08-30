@@ -110,7 +110,7 @@ PROGRAM AVERAGES
 
   CALL DNS_READ_GLOBAL(inifile)
   IF ( icalc_particle .EQ. 1 ) THEN
-     CALL PARTICLE_READ_GLOBAL('dns.ini')
+     CALL PARTICLE_READ_GLOBAL(inifile)
   ENDIF
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
@@ -444,7 +444,7 @@ PROGRAM AVERAGES
            ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
               CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
            ENDIF
-           CALL FI_PRESSURE_BOUSSINESQ(y,dx,dy,dz, u,v,w, s, txc(1,3), &
+           CALL FI_PRESSURE_BOUSSINESQ(u,v,w, s, txc(1,3), &
                 txc(1,1),txc(1,2),txc(1,4), wrk1d,wrk2d,wrk3d)
 
         ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
@@ -461,9 +461,7 @@ PROGRAM AVERAGES
         ENDIF
 
         IF ( icalc_flow .EQ. 1 ) THEN
-!           CALL AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q, s, &
-           CALL AVG_FLOW_XZ(y,dx,dy,dz, q, s, &
-                txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
+           CALL AVG_FLOW_XZ(q,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
                 txc(1,7),txc(1,8),txc(1,9), mean, wrk1d,wrk2d,wrk3d)
         ENDIF
         
@@ -472,7 +470,7 @@ PROGRAM AVERAGES
               mean_i(is) = C_1_R; delta_i(is) = C_0_R; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
            ENDDO
            DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
-              CALL AVG_SCAL_XZ(is, y, dx,dy,dz, q,s, s(1,is), &
+              CALL AVG_SCAL_XZ(is, q,s, s(1,is), &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
            ENDDO
 
@@ -496,7 +494,7 @@ PROGRAM AVERAGES
               dummy = C_0_R
               CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umax, dummy)
               mean_i(is) = (umax+umin)/froude; delta_i(is) = ABS(umax-umin)/froude; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
-              CALL AVG_SCAL_XZ(is, y, dx,dy,dz, q,s, txc(1,7), &
+              CALL AVG_SCAL_XZ(is, q,s, txc(1,7), &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
               
            ENDIF
@@ -517,7 +515,7 @@ PROGRAM AVERAGES
                  l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
                  CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,8))   
                  txc(:,8) = txc(:,8)/txc(:,7)
-                 CALL AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, txc(1,8), &
+                 CALL AVG_SCAL_XZ(is, q,s, txc(1,8), &
                       txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
               ENDDO
            ENDIF
@@ -593,7 +591,7 @@ PROGRAM AVERAGES
         nfield = nfield+1; data(nfield)%field => w(:); varname(nfield) = 'W'
 
         IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
-           CALL FI_PRESSURE_BOUSSINESQ(y,dx,dy,dz, u,v,w, s, txc(1,1), &
+           CALL FI_PRESSURE_BOUSSINESQ(u,v,w, s, txc(1,1), &
                 txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
            nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'P'
 
@@ -1055,12 +1053,12 @@ PROGRAM AVERAGES
      ELSE IF ( opt_main .EQ. 14 ) THEN
         is = 0
 
-        CALL FI_PRESSURE_BOUSSINESQ(y,dx,dy,dz, u,v,w, s, txc(1,1), &
+        CALL FI_PRESSURE_BOUSSINESQ(u,v,w, s, txc(1,1), &
              txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
         is = is+1; data(is)%field => txc(:,1); varname(is) = 'P'
         
         txc(:,3) = C_0_R
-        CALL FI_PRESSURE_BOUSSINESQ(y,dx,dy,dz, txc(1,3),txc(1,3),txc(1,3), s, txc(1,2), &
+        CALL FI_PRESSURE_BOUSSINESQ(txc(1,3),txc(1,3),txc(1,3), s, txc(1,2), &
              txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
         is = is+1; data(is)%field => txc(:,2); varname(is) = 'Phydro'
 

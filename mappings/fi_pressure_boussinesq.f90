@@ -27,9 +27,10 @@
 !# wrk3d     Aux   Size needed is isize_txc_field for the Poisson
 !#
 !########################################################################
-SUBROUTINE FI_PRESSURE_BOUSSINESQ(y,dx,dy,dz, u,v,w,s,p, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
+SUBROUTINE FI_PRESSURE_BOUSSINESQ(u,v,w,s, p, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : MAX_PROF
+  USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, isize_field, isize_wrk1d
   USE DNS_GLOBAL, ONLY : visc
   USE DNS_GLOBAL, ONLY : icoriolis, rotn_vector, rotn_param
@@ -41,17 +42,25 @@ IMPLICIT NONE
 
 #include "integers.h"
 
-  TREAL, DIMENSION(*)              :: y, dx,dy,dz
-  TREAL, DIMENSION(imax,jmax,kmax) :: u,v,w, p, s, tmp1
-  TREAL, DIMENSION(imax,jmax,kmax) :: tmp2, tmp3, wrk3d ! larger arrays
-  TREAL, DIMENSION(isize_wrk1d,16) :: wrk1d
-  TREAL, DIMENSION(imax,kmax,2)    :: wrk2d
+  TREAL, DIMENSION(imax,jmax,kmax), INTENT(IN)    :: u,v,w, s
+  TREAL, DIMENSION(imax,jmax,kmax), INTENT(OUT)   :: p
+  TREAL, DIMENSION(imax,jmax,kmax), INTENT(INOUT) :: tmp1,tmp2,tmp3, wrk3d ! larger arrays
+  TREAL, DIMENSION(isize_wrk1d,16), INTENT(INOUT) :: wrk1d
+  TREAL, DIMENSION(imax,kmax,2),    INTENT(INOUT) :: wrk2d
 
 ! -----------------------------------------------------------------------
   TINTEGER ij, i, k, flag, iprof
   TREAL ycenter, thick, delta, mean, param(MAX_PROF), FLOW_SHEAR_TEMPORAL
   TREAL dummy, u_geo, w_geo
   TINTEGER iunifx_loc,iunifz_loc, i1bc_loc,j1bc_loc,k1bc_loc
+
+  TREAL, DIMENSION(:), POINTER :: y, dx,dy,dz
+
+! ###################################################################
+! Define pointers
+                   dx => g(1)%aux(:,1)
+  y => g(2)%nodes; dy => g(2)%aux(:,1)
+                   dz => g(3)%aux(:,1)
 
 ! #######################################################################
   i1bc_loc = 0; iunifx_loc = 0 ! must be periodic and uniform in xOz
@@ -71,35 +80,40 @@ IMPLICIT NONE
 
   CALL PARTIAL_ZZ(i1, iunifz_loc, imode_fdm, imax,jmax,kmax, k1bc_loc,&
        dz, u, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  DO ij = 1,isize_field
-     tmp3(ij,1,1) =                tmp2(ij,1,1)*visc - w(ij,1,1)*tmp1(ij,1,1)
-  ENDDO
+  tmp3 =        tmp2 *visc - w *tmp1
+  ! DO ij = 1,isize_field
+  !    tmp3(ij,1,1) =                tmp2(ij,1,1)*visc - w(ij,1,1)*tmp1(ij,1,1)
+  ! ENDDO
   CALL PARTIAL_YY(i1, iunify,     imode_fdm, imax,jmax,kmax, j1bc_loc,&
        dy, u, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  DO ij = 1,isize_field
-     tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - v(ij,1,1)*tmp1(ij,1,1)
-  ENDDO
+  tmp3 = tmp3 + tmp2 *visc - v *tmp1
+  ! DO ij = 1,isize_field
+  !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - v(ij,1,1)*tmp1(ij,1,1)
+  ! ENDDO
   CALL PARTIAL_XX(i1, iunifx_loc, imode_fdm, imax,jmax,kmax, i1bc_loc,&
        dx, u, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  DO ij = 1,isize_field
-     tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - u(ij,1,1)*tmp1(ij,1,1)
-  ENDDO
+  tmp3 = tmp3 + tmp2 *visc - u *tmp1
+  ! DO ij = 1,isize_field
+  !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - u(ij,1,1)*tmp1(ij,1,1)
+  ! ENDDO
 
   IF ( ibodyforce_x .EQ. EQNS_NONE ) THEN
   ELSE
      wrk1d(:,1) = C_0_R
      CALL FI_BUOYANCY(ibodyforce_x, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
-     DO ij = 1,isize_field
-        tmp3(ij,1,1) = tmp3(ij,1,1) + body_vector(1)*wrk3d(ij,1,1)
-     ENDDO
+     tmp3 = tmp3 + body_vector(1) *wrk3d
+     ! DO ij = 1,isize_field
+     !    tmp3(ij,1,1) = tmp3(ij,1,1) + body_vector(1)*wrk3d(ij,1,1)
+     ! ENDDO
      
   ENDIF
 
   IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
      dummy = rotn_vector(2)
-     DO ij = 1,isize_field
-        tmp3(ij,1,1) = tmp3(ij,1,1) + dummy*( w_geo-w(ij,1,1) )
-     ENDDO
+     tmp3 = tmp3 + dummy* ( w_geo -w )
+     ! DO ij = 1,isize_field
+     !    tmp3(ij,1,1) = tmp3(ij,1,1) + dummy*( w_geo-w(ij,1,1) )
+     ! ENDDO
   ENDIF
 
   CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc_loc, dx, tmp3, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
@@ -110,35 +124,40 @@ IMPLICIT NONE
 ! #######################################################################
   CALL PARTIAL_ZZ(i1, iunifz_loc, imode_fdm, imax,jmax,kmax, k1bc_loc,&
        dz, w, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  DO ij = 1,isize_field
-     tmp3(ij,1,1) =                tmp2(ij,1,1)*visc - w(ij,1,1)*tmp1(ij,1,1)
-  ENDDO
+  tmp3 =        tmp2 *visc - w *tmp1
+  ! DO ij = 1,isize_field
+  !    tmp3(ij,1,1) =                tmp2(ij,1,1)*visc - w(ij,1,1)*tmp1(ij,1,1)
+  ! ENDDO
   CALL PARTIAL_YY(i1, iunify,     imode_fdm, imax,jmax,kmax, j1bc_loc,&
        dy, w, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  DO ij = 1,isize_field
-     tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - v(ij,1,1)*tmp1(ij,1,1)
-  ENDDO
+  tmp3 = tmp3 + tmp2 *visc - v *tmp1
+  ! DO ij = 1,isize_field
+  !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - v(ij,1,1)*tmp1(ij,1,1)
+  ! ENDDO
   CALL PARTIAL_XX(i1, iunifx_loc, imode_fdm, imax,jmax,kmax, i1bc_loc,&
        dx, w, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  DO ij = 1,isize_field
-     tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - u(ij,1,1)*tmp1(ij,1,1)
-  ENDDO
+  tmp3 = tmp3 + tmp2 *visc - u *tmp1
+  ! DO ij = 1,isize_field
+  !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - u(ij,1,1)*tmp1(ij,1,1)
+  ! ENDDO
 
   IF ( ibodyforce_z .EQ. EQNS_NONE ) THEN
   ELSE
      wrk1d(:,1) = C_0_R
      CALL FI_BUOYANCY(ibodyforce_z, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
-     DO ij = 1,isize_field
-        tmp3(ij,1,1) = tmp3(ij,1,1) + body_vector(3)*wrk3d(ij,1,1)
-     ENDDO
+     tmp3 = tmp3 + body_vector(3) *wrk3d
+     ! DO ij = 1,isize_field
+     !    tmp3(ij,1,1) = tmp3(ij,1,1) + body_vector(3)*wrk3d(ij,1,1)
+     ! ENDDO
      
   ENDIF
 
   IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
      dummy = rotn_vector(2)
-     DO ij = 1,isize_field
-        tmp3(ij,1,1) = tmp3(ij,1,1) + dummy*( u(ij,1,1)-u_geo )
-     ENDDO
+     tmp3 = tmp3 + dummy* ( u -u_geo )
+     ! DO ij = 1,isize_field
+     !    tmp3(ij,1,1) = tmp3(ij,1,1) + dummy*( u(ij,1,1)-u_geo )
+     ! ENDDO
   ENDIF
 
   CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc_loc, dz, tmp3, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
@@ -149,19 +168,22 @@ IMPLICIT NONE
 ! #######################################################################
   CALL PARTIAL_ZZ(i1, iunifz_loc, imode_fdm, imax,jmax,kmax, k1bc_loc,&
        dz, v, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  DO ij = 1,isize_field
-     tmp3(ij,1,1) =                tmp2(ij,1,1)*visc - w(ij,1,1)*tmp1(ij,1,1)
-  ENDDO
+  tmp3 =        tmp2 *visc - w *tmp1
+  ! DO ij = 1,isize_field
+  !    tmp3(ij,1,1) =                tmp2(ij,1,1)*visc - w(ij,1,1)*tmp1(ij,1,1)
+  ! ENDDO
   CALL PARTIAL_YY(i1, iunify,     imode_fdm, imax,jmax,kmax, j1bc_loc,&
        dy, v, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  DO ij = 1,isize_field
-     tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - v(ij,1,1)*tmp1(ij,1,1)
-  ENDDO
+  tmp3 = tmp3 + tmp2 *visc - v *tmp1
+  ! DO ij = 1,isize_field
+  !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - v(ij,1,1)*tmp1(ij,1,1)
+  ! ENDDO
   CALL PARTIAL_XX(i1, iunifx_loc, imode_fdm, imax,jmax,kmax, i1bc_loc,&
        dx, v, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  DO ij = 1,isize_field
-     tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - u(ij,1,1)*tmp1(ij,1,1)
-  ENDDO
+  tmp3 = tmp3 + tmp2 *visc - u *tmp1
+  ! DO ij = 1,isize_field
+  !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - u(ij,1,1)*tmp1(ij,1,1)
+  ! ENDDO
 
 ! -----------------------------------------------------------------------
 ! Buoyancy. So far only in the Oy direction. Remember that body_vector contains the Froude # already.
@@ -186,9 +208,10 @@ IMPLICIT NONE
      CALL FI_BUOYANCY(flag,         i1,jmax,i1,     body_param, wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
 
      CALL FI_BUOYANCY(ibodyforce_y, imax,jmax,kmax, body_param, s,          tmp2,       wrk1d(1,2))
-     DO ij = 1,isize_field
-        tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*body_vector(2)
-     ENDDO
+     tmp3 = tmp3 + tmp2 *body_vector(2)
+     ! DO ij = 1,isize_field
+     !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*body_vector(2)
+     ! ENDDO
 
   ENDIF
 

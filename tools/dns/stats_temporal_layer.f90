@@ -134,7 +134,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
 ! Calculate pressure
 ! ###################################################################
   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
-     CALL FI_PRESSURE_BOUSSINESQ(y,dx,dy,dz, u,v,w,s,txc(:,3), txc(:,1),txc(:,2),txc(:,4), wrk1d,wrk2d,wrk3d)
+     CALL FI_PRESSURE_BOUSSINESQ(u,v,w,s, txc(1,3), txc(1,1),txc(1,2),txc(1,4), wrk1d,wrk2d,wrk3d)
      
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      p(:) = C_1_R ! to be developed
@@ -179,9 +179,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
 ! Plane averages
 ! ###################################################################
   IF ( fstavg .EQ. 1 ) THEN
-!     CALL AVG_FLOW_TEMPORAL_LAYER(y,dx,dy,dz, q, s,&
-     CALL AVG_FLOW_XZ(y,dx,dy,dz, q, s,&
-          txc(:,1),txc(:,2),txc(:,3),txc(1:,4),txc(:,5),txc(:,6),hq(:,1),hq(:,2),hq(:,3),  &
+     CALL AVG_FLOW_XZ(q,s, txc(:,1),txc(:,2),txc(:,3),txc(1:,4),txc(:,5),txc(:,6),hq(:,1),hq(:,2),hq(:,3),  &
           vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
 
      IF ( icalc_scal .EQ. 1 ) THEN
@@ -189,7 +187,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
            mean_i(is) = C_1_R; delta_i(is) = C_0_R; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
         ENDDO
         DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
-           CALL AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, s(1,is), &
+           CALL AVG_SCAL_XZ(is, q,s, s(1,is), &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
         ENDDO
 
@@ -213,7 +211,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
            dummy = C_0_R
            CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umax, dummy)
            mean_i(is) = (umax+umin)/froude; delta_i(is) = ABS(umax-umin)/froude; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
-           CALL AVG_SCAL_XZ(is, y,dx,dy,dz, q,s, hq(:,1), &
+           CALL AVG_SCAL_XZ(is, q,s, hq(:,1), &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
            
         ENDIF
