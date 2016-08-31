@@ -118,9 +118,9 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(dx, dy, dz, u, v, w, p, r, gamma, z1, &
                     + r(1,j,k)*ddz(ip+3,j,k) + w(1,j,k)*ddz(ip+5,j,k)
         tmin(j,k,2) = v(1,j,k)*ddy(ip+1,j,k) + w(1,j,k)*ddz(ip+1,j,k)
         tmin(j,k,3) = v(1,j,k)*ddy(ip+2,j,k) + w(1,j,k)*ddz(ip+2,j,k) &
-                    + ddy(ip+4,j,k)/r(1,j,k) - body_vector(2)
+                    + ddy(ip+4,j,k)/r(1,j,k) - buoyancy%vector(2)
         tmin(j,k,4) = v(1,j,k)*ddy(ip+3,j,k) + w(1,j,k)*ddz(ip+3,j,k) &
-                    + ddz(ip+4,j,k)/r(1,j,k) - body_vector(3)
+                    + ddz(ip+4,j,k)/r(1,j,k) - buoyancy%vector(3)
         tmin(j,k,5) = v(1,j,k)*ddy(ip+4,j,k) + w(1,j,k)*ddz(ip+4,j,k) &
                     + gamma(1,j,k)*p(1,j,k)*( ddy(ip+2,j,k) + ddz(ip+3,j,k) )
         DO is = 1,inb_scal_array
@@ -147,9 +147,9 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(dx, dy, dz, u, v, w, p, r, gamma, z1, &
                     + r(imax,j,k)*ddz(ip+3,j,k) + w(imax,j,k)*ddz(ip+5,j,k)
         tmax(j,k,2) = v(imax,j,k)*ddy(ip+1,j,k) + w(imax,j,k)*ddz(ip+1,j,k)
         tmax(j,k,3) = v(imax,j,k)*ddy(ip+2,j,k) + w(imax,j,k)*ddz(ip+2,j,k) &
-                    + ddy(ip+4,j,k)/r(imax,j,k) - body_vector(2)
+                    + ddy(ip+4,j,k)/r(imax,j,k) - buoyancy%vector(2)
         tmax(j,k,4) = v(imax,j,k)*ddy(ip+3,j,k) + w(imax,j,k)*ddz(ip+3,j,k) &
-                    + ddz(ip+4,j,k)/r(imax,j,k) - body_vector(3)
+                    + ddz(ip+4,j,k)/r(imax,j,k) - buoyancy%vector(3)
         tmax(j,k,5) = v(imax,j,k)*ddy(ip+4,j,k) + w(imax,j,k)*ddz(ip+4,j,k) &
                     + gamma(imax,j,k)*p(imax,j,k)*( ddy(ip+2,j,k) + ddz(ip+3,j,k) )
         DO is = 1,inb_scal_array

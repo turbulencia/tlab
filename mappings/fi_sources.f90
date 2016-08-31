@@ -16,7 +16,7 @@
 SUBROUTINE FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
-  USE DNS_GLOBAL, ONLY : ibodyforce, body_param, body_vector
+  USE DNS_GLOBAL, ONLY : buoyancy 
   USE DNS_GLOBAL, ONLY : icoriolis, rotn_param, rotn_vector
 
   IMPLICIT NONE
@@ -61,42 +61,40 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
   ENDIF
 
 ! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
+! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
-  IF ( ibodyforce .NE. EQNS_NONE ) THEN
-     DO iq = 1,3
-        IF ( ABS(body_vector(iq)) .GT. C_0_R ) THEN
-           
-           IF ( iq .EQ. 2 ) THEN
-              CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, b_ref)
-           ELSE
-              wrk1d(:,1) = C_0_R
-              CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
-           ENDIF
-           
+  DO iq = 1,3
+     IF ( buoyancy%active(iq) ) THEN
+        
+        IF ( iq .EQ. 2 ) THEN
+           CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref)
+        ELSE
+           wrk1d(:,1) = C_0_R
+           CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+        ENDIF
+        
 !$omp parallel default( shared ) &
 #ifdef USE_BLAS
 !$omp private( ilen, dummy, srt,end,siz)
 #else     
 !$omp private( ij,   dummy, srt,end,siz )
 #endif
-           CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
-           
-           dummy = body_vector(iq)
+        CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
+        
+        dummy = buoyancy%vector(iq)
 #ifdef USE_BLAS
-           ilen = siz
-           CALL DAXPY(ilen, dummy, wrk3d(srt), 1, hq(srt,iq), 1)
+        ilen = siz
+        CALL DAXPY(ilen, dummy, wrk3d(srt), 1, hq(srt,iq), 1)
 #else
-           DO ij = srt,end
-              hq(ij,iq) = hq(ij,iq) + dummy*wrk3d(ij)
-           ENDDO
+        DO ij = srt,end
+           hq(ij,iq) = hq(ij,iq) + dummy* wrk3d(ij)
+        ENDDO
 #endif
 !$omp end parallel
+        
+     ENDIF
 
-        ENDIF
-
-     ENDDO
-  ENDIF
+  ENDDO
 
   RETURN
 END SUBROUTINE FI_SOURCES_FLOW

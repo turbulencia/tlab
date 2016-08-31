@@ -93,9 +93,9 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_ALWATER&
 
 
 			dummy = ( THERMO_AI(1,1,3) - C_1_R + THERMO_AI(6,1,3) )* differential_diffusion
-			dummy1 = stokes*body_vector(1)*( THERMO_AI(1,1,3) - C_1_R + THERMO_AI(6,1,3) )*settling!Alberto: Parameter multiplying the sedimentation term
-			dummy2 = stokes*body_vector(2)*( THERMO_AI(1,1,3) - C_1_R + THERMO_AI(6,1,3) )*settling !Alberto: Parameter multiplying the sedimentation term
-			dummy3 = stokes*body_vector(3)*( THERMO_AI(1,1,3) - C_1_R + THERMO_AI(6,1,3) )*settling !Alberto: Parameter multiplying the sedimentation term
+			dummy1 = stokes*buoyancy%vector(1)*( THERMO_AI(1,1,3) - C_1_R + THERMO_AI(6,1,3) )*settling!Alberto: Parameter multiplying the sedimentation term
+			dummy2 = stokes*buoyancy%vector(2)*( THERMO_AI(1,1,3) - C_1_R + THERMO_AI(6,1,3) )*settling !Alberto: Parameter multiplying the sedimentation term
+			dummy3 = stokes*buoyancy%vector(3)*( THERMO_AI(1,1,3) - C_1_R + THERMO_AI(6,1,3) )*settling !Alberto: Parameter multiplying the sedimentation term
 			!$omp parallel default( shared ) private( ij )
 			!$omp do
 			DO ij = 1,isize_field			
@@ -193,9 +193,9 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_ALWATER&
 			!$omp do
 			DO ij = 1,isize_field
 			dummy = (C_1_R - al_qt(ij) + al_ql(ij) )* differential_diffusion
-			dummy1 = stokes*body_vector(1)*(C_1_R - al_qt(ij) + al_ql(ij) )*settling
-			dummy2 = stokes*body_vector(2)*(C_1_R - al_qt(ij) + al_ql(ij) )*settling
-			dummy3 = stokes*body_vector(3)*(C_1_R - al_qt(ij) + al_ql(ij) )*settling
+			dummy1 = stokes*buoyancy%vector(1)*(C_1_R - al_qt(ij) + al_ql(ij) )*settling
+			dummy2 = stokes*buoyancy%vector(2)*(C_1_R - al_qt(ij) + al_ql(ij) )*settling
+			dummy3 = stokes*buoyancy%vector(3)*(C_1_R - al_qt(ij) + al_ql(ij) )*settling
 			hs(ij) = hs(ij) + dummy*( tmp6(ij)+tmp5(ij)+tmp4(ij)) - dummy1*tmp1(ij) - dummy2*tmp2(ij) - dummy3*tmp3(ij)!Alberto. Liqud diff + Sedimentation term
 			ENDDO
 			!$omp end do

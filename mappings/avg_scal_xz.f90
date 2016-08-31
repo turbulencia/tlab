@@ -7,10 +7,10 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, idiffusion, ibodyforce, itransport
+  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, idiffusion, itransport
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal, inb_scal_array, imode_fdm, i1bc,j1bc,k1bc, area, scaley
-  USE DNS_GLOBAL, ONLY : body_param, radiation, transport
+  USE DNS_GLOBAL, ONLY : buoyancy, radiation, transport
   USE DNS_GLOBAL, ONLY : mean_rho, delta_rho, ycoor_rho, delta_u, ycoor_u, mean_i, delta_i, ycoor_i
   USE DNS_GLOBAL, ONLY : visc, schmidt, froude
   USE THERMO_GLOBAL, ONLY : imixture, thermo_param
@@ -377,9 +377,9 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         coefR = C_0_R                        ! Coefficient in the radiation term
         coefT = C_0_R                        ! Coefficient in the transport term
         IF ( is .EQ. inb_scal_array+1 ) THEN ! Default values are for liquid; defining them for buoyancy
-           coefQ = body_param(inb_scal_array) /froude
-           coefR = body_param(inb_scal) /froude
-           DO i = 1,inb_scal; coefT = coefT + transport%parameters(i) *body_param(i) /froude; ENDDO
+           coefQ = buoyancy%parameters(inb_scal_array) /froude
+           coefR = buoyancy%parameters(inb_scal) /froude
+           DO i = 1,inb_scal; coefT = coefT + transport%parameters(i) *buoyancy%parameters(i) /froude; ENDDO
         ENDIF
      
         CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdx,dsdy,dsdz) ! calculate xi in dsdx
@@ -410,7 +410,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
      ELSE
         CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,dsdx, dsdy, wrk1d,wrk2d,wrk3d)
-        CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, s, dsdx, wrk3d) ! dsdx contains gradient
+        CALL FI_BUOYANCY_SOURCE(buoyancy, isize_field, s, dsdx, wrk3d) ! dsdx contains gradient
         tmp1 = wrk3d* diff /froude
         
      ENDIF

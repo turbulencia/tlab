@@ -28,13 +28,19 @@
 !# Isotropic case should be put in a different subroutine.
 !#
 !########################################################################
-SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
+SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : pointers_structure
-  USE DNS_GLOBAL
+  USE DNS_CONSTANTS, ONLY : MAX_NSP
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal, inb_scal_array
+  USE DNS_GLOBAL,    ONLY : buoyancy, imode_eqns, icalc_scal
+  USE DNS_GLOBAL,    ONLY : itransport, schmidt, froude
+  USE DNS_GLOBAL,    ONLY : itime, rtime
+  USE DNS_GLOBAL,    ONLY : mean_i, delta_i, ycoor_i
   USE THERMO_GLOBAL, ONLY : imixture
-  USE DNS_LOCAL, ONLY : fstavg, fstpdf !, fstinter
-  USE DNS_LOCAL, ONLY : vindex, VA_MEAN_WRK
+  USE DNS_LOCAL,     ONLY : fstavg, fstpdf !, fstinter
+  USE DNS_LOCAL,     ONLY : vindex, VA_MEAN_WRK
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -46,7 +52,6 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
 
 #include "integers.h"
 
-  TREAL, DIMENSION(*),                 INTENT(IN)    :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field,    *), INTENT(IN)    :: q,s
   TREAL, DIMENSION(isize_field,    *), INTENT(INOUT) :: hq ! auxiliary array
   TREAL, DIMENSION(isize_txc_field,6), INTENT(INOUT) :: txc
@@ -60,7 +65,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
 
 ! -------------------------------------------------------------------
   TREAL umin,umax, dummy, s_aux(MAX_NSP)
-  TINTEGER nbins, is, flag_buoyancy!, ij
+  TINTEGER nbins, is, flag_buoyancy
   TINTEGER ibc(16), nfield
   TREAL amin(16), amax(16)
   CHARACTER*32 fname
@@ -78,7 +83,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
 #ifdef LES
   TINTEGER ichi
 #endif
-
+  
 ! ###################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER' )
@@ -101,8 +106,8 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
   ENDIF
 
 ! in case we need the buoyancy statistics
-  IF ( ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
-       ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &
+  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC          .OR. &
+       buoyancy%type .EQ. EQNS_BOD_BILINEAR           .OR. &
        imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy = 1
   ELSE 
@@ -170,7 +175,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
      nbins = 32
      WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
      CALL PDF2D_N(fname, varname, igate, rtime, &
-          imax,jmax,kmax, nfield, ibc, amin, amax, y, wrk3d, &
+          imax,jmax,kmax, nfield, ibc, amin, amax, g(2)%nodes, wrk3d, &
           data, nbins, isize_field, txc(:,1), wrk1d)
      
   ENDIF
@@ -194,7 +199,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
         IF ( flag_buoyancy .EQ. 1 ) THEN
            wrk1d(1:jmax) = C_0_R
-           CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, hq(:,1), wrk1d) ! note that wrk3d is defined as integer.
+           CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, hq(:,1), wrk1d) ! note that wrk3d is defined as integer.
            dummy = C_1_R/froude
            hq(1:isize_field,1) = hq(1:isize_field,1)*dummy
 ! mean values
@@ -203,13 +208,13 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
               CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array))
            ENDIF
            dummy = C_0_R
-           CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umin, dummy)
+           CALL FI_BUOYANCY(buoyancy, i1,i1,i1, s_aux, umin, dummy)
            s_aux(1:inb_scal) = mean_i(1:inb_scal) + C_05_R*delta_i(1:inb_scal)
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
               CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array))
            ENDIF
            dummy = C_0_R
-           CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umax, dummy)
+           CALL FI_BUOYANCY(buoyancy, i1,i1,i1, s_aux, umax, dummy)
            mean_i(is) = (umax+umin)/froude; delta_i(is) = ABS(umax-umin)/froude; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
            CALL AVG_SCAL_XZ(is, q,s, hq(:,1), &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
@@ -224,7 +229,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
 ! -------------------------------------------------------------------
      IF ( iles .EQ. 1 ) THEN
         CALL LES_AVG_FLOW_TEMPORAL_LAYER&
-             (x,y,z,dx,dy,dz, rho,u,v,w,e, hq(1,1),hq(1,2),hq(1,3),hq(1,4), &
+             (rho,u,v,w,e, hq(1,1),hq(1,2),hq(1,3),hq(1,4), &
              txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d,&
              vaux(vindex(VA_LES_FLT0X)),vaux(vindex(VA_LES_FLT0Y)),vaux(vindex(VA_LES_FLT0Z)), &
              vaux(vindex(VA_LES_FLT1X)),vaux(vindex(VA_LES_FLT1Y)),vaux(vindex(VA_LES_FLT1Z)), &
@@ -240,7 +245,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,w
         IF ( icalc_scal .EQ. 1 ) THEN
            DO is = 1,inb_scal
               CALL LES_AVG_SCAL_TEMPORAL_LAYER&
-                   (is, x,y,z,dx,dy,dz, rho,u,v,w, s(1,is), hq(1,1),hq(1,2),hq(1,3),hq(1,4), &
+                   (is, rho,u,v,w, s(1,is), hq(1,1),hq(1,2),hq(1,3),hq(1,4), &
                    txc, vaux(vindex(VA_MEAN_WRK)), txc(1,ichi), wrk1d,wrk2d,wrk3d, &
                    vaux(vindex(VA_LES_FLT0X)),vaux(vindex(VA_LES_FLT0Y)),vaux(vindex(VA_LES_FLT0Z)), &
                    vaux(vindex(VA_LES_FLT1X)),vaux(vindex(VA_LES_FLT1Y)),vaux(vindex(VA_LES_FLT1Z)), &

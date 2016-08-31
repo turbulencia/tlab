@@ -32,7 +32,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL,    ONLY : iprof_rho, mean_rho, delta_rho, thick_rho, ycoor_rho, prof_rho, diam_rho, jet_rho
   USE DNS_GLOBAL,    ONLY : iprof_u, mean_u, delta_u, thick_u, ycoor_u, prof_u, diam_u, jet_u
   USE DNS_GLOBAL,    ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i, diam_i, jet_i
-  USE DNS_GLOBAL,    ONLY : ibodyforce, body_param, body_vector
+  USE DNS_GLOBAL,    ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
@@ -74,7 +74,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 ! Calculate density from equation of state
 ! -------------------------------------------------------------------
      IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
-        IF ( ibodyforce .EQ. EQNS_NONE ) THEN
+        IF ( buoyancy%type .EQ. EQNS_NONE ) THEN
 
 #define TEM_MEAN_LOC(i,j,k) wrk3d(i,j,k)
 #define RHO_MEAN_LOC(i,j,k) txc(i,j,k)
@@ -134,7 +134,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
            ELSE
               CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
                    dy, p, txc, i0, i0, wrk1d, wrk2d, wrk3d)
-              dummy = C_1_R /body_vector(2)
+              dummy = C_1_R /buoyancy%vector(2)
               rho(:,:,:) = rho(:,:,:) + txc(:,:,:) *dummy
            ENDIF
 

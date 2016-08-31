@@ -104,11 +104,11 @@ SUBROUTINE BOUNDARY_BCS_Z(dz, M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh
 #endif
      IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
         CALL BOUNDARY_BCS_FLOW_NR_2(i0, nt, pl_const, bcs_p_kmin,&
-             rho, w, u, v, p, gama, tmp1, tmp4, tmp2, tmp3, tmp5, body_vector(3),&
+             rho, w, u, v, p, gama, tmp1, tmp4, tmp2, tmp3, tmp5, buoyancy%vector(3),&
              hr_loc(1), hu_loc(1), hv_loc(1), hw_loc(1), he_loc(1))
      ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
         CALL BOUNDARY_BCS_FLOW_NR_1(i0, nt, pl_const, bcs_p_kmin,&
-             rho, w, u, v, p, gama, tmp1, tmp4, tmp2, tmp3, tmp5, body_vector(3),&
+             rho, w, u, v, p, gama, tmp1, tmp4, tmp2, tmp3, tmp5, buoyancy%vector(3),&
              hr_loc(1), hu_loc(1), hv_loc(1), hw_loc(1), he_loc(1))
      ENDIF
      DO i = 1,imax*jmax
@@ -138,12 +138,12 @@ SUBROUTINE BOUNDARY_BCS_Z(dz, M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh
      IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
         CALL BOUNDARY_BCS_FLOW_NR_2(i1, nt, pl_const, bcs_p_kmax,&
              rho(1,1,kmax), w(1,1,kmax), u(1,1,kmax), v(1,1,kmax), p(1,1,kmax), gama(1,1,kmax),&
-             tmp1(1,1,kmax), tmp4(1,1,kmax), tmp2(1,1,kmax), tmp3(1,1,kmax), tmp5(1,1,kmax), body_vector(3),&
+             tmp1(1,1,kmax), tmp4(1,1,kmax), tmp2(1,1,kmax), tmp3(1,1,kmax), tmp5(1,1,kmax), buoyancy%vector(3),&
              hr_loc(1), hu_loc(1), hv_loc(1), hw_loc(1), he_loc(1))
      ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
         CALL BOUNDARY_BCS_FLOW_NR_2(i1, nt, pl_const, bcs_p_kmax,&
              rho(1,1,kmax), w(1,1,kmax), u(1,1,kmax), v(1,1,kmax), p(1,1,kmax), gama(1,1,kmax),&
-             tmp1(1,1,kmax), tmp4(1,1,kmax), tmp2(1,1,kmax), tmp3(1,1,kmax), tmp5(1,1,kmax), body_vector(3),&
+             tmp1(1,1,kmax), tmp4(1,1,kmax), tmp2(1,1,kmax), tmp3(1,1,kmax), tmp5(1,1,kmax), buoyancy%vector(3),&
              hr_loc(1), hu_loc(1), hv_loc(1), hw_loc(1), he_loc(1))
      ENDIF
      DO i = 1,imax*jmax
@@ -183,7 +183,7 @@ SUBROUTINE BOUNDARY_BCS_Z(dz, M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh
         IF ( ims_pro .EQ. 0 ) THEN
 #endif
            CALL BOUNDARY_BCS_SCAL_NR(i0, nt, pl_const, bcs_p_kmin, &
-                rho, w, z1(1,1,1,is), p, gama, tmp1, tmp4, tmp2, tmp5, body_vector(3), hz1_loc(1))
+                rho, w, z1(1,1,1,is), p, gama, tmp1, tmp4, tmp2, tmp5, buoyancy%vector(3), hz1_loc(1))
 ! special case affects only energy equation
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. is .EQ. 2 ) THEN
            ELSE
@@ -221,7 +221,7 @@ SUBROUTINE BOUNDARY_BCS_Z(dz, M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh
            CALL BOUNDARY_BCS_SCAL_NR(i1, nt, pl_const, bcs_p_kmax,&
                 rho(1,1,kmax), w(1,1,kmax), z1(1,1,kmax,is), p(1,1,kmax), gama(1,1,kmax),&
                 tmp1(1,1,kmax), tmp4(1,1,kmax), tmp2(1,1,kmax), tmp5(1,1,kmax),&
-                body_vector(3), hz1_loc(1) )
+                buoyancy%vector(3), hz1_loc(1) )
 ! special case affects only energy equation
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. is .EQ. 2 ) THEN
            ELSE

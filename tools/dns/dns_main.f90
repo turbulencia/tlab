@@ -513,7 +513,7 @@ PROGRAM DNS
 ! Initialize thermodynamic quantities
 ! ###################################################################
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     CALL DNS_PROFILES(y, vaux(vindex(VA_BCS_VI)), wrk1d)
+     CALL DNS_PROFILES(vaux(vindex(VA_BCS_VI)), wrk1d)
 
      IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
         CALL THERMO_AIRWATER_PHAL(i1, i1,i1, mean_i(2), p_init, mean_i(1)) !Calculate the mean water in eq

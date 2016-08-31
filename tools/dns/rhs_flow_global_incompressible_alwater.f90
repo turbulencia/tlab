@@ -124,20 +124,19 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_ALWATER&
   ENDIF
 
 ! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
+! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
-  IF ( ibodyforce_x .EQ. EQNS_NONE ) THEN
-  ELSE
+  IF ( buoyancy%active(1) ) THEN
      wrk1d(:,1) = C_0_R
-     CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
 
 #ifdef USE_BLAS
-     dummy = body_vector(1)
+     dummy = buoyancy%vector(1)
      CALL DAXPY(ilen, dummy, wrk3d, 1, h1, 1)
 
 #else
 !$omp parallel default( shared ) private( ij, dummy )
-     dummy = body_vector(1)
+     dummy = buoyancy%vector(1)
 !$omp do
      DO ij = 1,isize_field
         h1(ij) = h1(ij) + dummy*wrk3d(ij)
@@ -205,20 +204,19 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_ALWATER&
      ENDIF
 
 ! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
+! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
-     IF ( ibodyforce_z .EQ. EQNS_NONE ) THEN
-     ELSE
+     IF ( buoyancy%active(3) ) THEN
         wrk1d(:,1) = C_0_R
-        CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
+        CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
 
 #ifdef USE_BLAS
-        dummy = body_vector(3)
+        dummy = buoyancy%vector(3)
         CALL DAXPY(ilen, dummy, wrk3d, 1, h3, 1)
 
 #else
 !$omp parallel default( shared ) private( ij, dummy )
-        dummy = body_vector(3)
+        dummy = buoyancy%vector(3)
 !$omp do
         DO ij = 1,isize_field
            h3(ij) = h3(ij) + dummy*wrk3d(ij)
@@ -261,22 +259,9 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_ALWATER&
        dx, v, tmp4, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
+! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
-  IF ( ibodyforce_y .EQ. EQNS_NONE ) THEN
-!$omp parallel default( shared ) private( ij )
-!$omp do
-     DO ij = 1,isize_field
-        h2(ij) = h2(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
-             - ( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
-     ENDDO
-!$omp end do
-!$omp end parallel
-
-! -----------------------------------------------------------------------
-  ELSE
-
-
+  IF ( buoyancy%active(2) ) THEN
 !ALberto: Changed to calculate the density before performing any operation
      IF ( (imixture .EQ. MIXT_TYPE_AIRWATER) .OR. (imixture .EQ. MIXT_TYPE_SUPSAT) ) THEN !Alberto: everything equally valid for Super Saturation
         al_h=>s(:,1)  !We point to the scalar array which contains the enthalpy
@@ -285,7 +270,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_ALWATER&
         CALL THERMO_THERMAL_DENSITY_HP_ALWATER(imax,jmax,kmax, al_q,al_h,p_init,wrk3d)   
 !Alberto: Now we take care of the bouyancy term	
 !$omp parallel default( shared ) private( ij, dummy)
-        dummy =  body_vector(2)/mean_rho
+        dummy =  buoyancy%vector(2)/mean_rho
 !$omp do
         DO ij = 1,isize_field
            h2(ij) = h2(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
@@ -297,9 +282,9 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_ALWATER&
 
 !************* END changes Alberto     
      ELSE
-        CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, b_ref) 
+        CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref) 
 !$omp parallel default( shared ) private( ij, dummy)
-        dummy = body_vector(2)
+        dummy = buoyancy%vector(2)
 !$omp do
         DO ij = 1,isize_field
            h2(ij) = h2(ij) + dummy*wrk3d(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
@@ -309,6 +294,15 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_ALWATER&
 !$omp end parallel
      ENDIF
 
+  ELSE
+!$omp parallel default( shared ) private( ij )
+!$omp do
+     DO ij = 1,isize_field
+        h2(ij) = h2(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
+             - ( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
+     ENDDO
+!$omp end do
+!$omp end parallel
 
   ENDIF
 

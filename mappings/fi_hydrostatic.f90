@@ -251,7 +251,7 @@ SUBROUTINE FI_HYDROSTATIC_AIRWATER_T(y, dy, z1, T, p, rho, wrk1d, wrk2d, wrk3d)
 
   USE DNS_GLOBAL, ONLY : p_init, ycoor_tem, scaley
   USE DNS_GLOBAL, ONLY : imode_fdm, jmax, j1bc
-  USE DNS_GLOBAL, ONLY : body_vector
+  USE DNS_GLOBAL, ONLY : buoyancy
 
   USE THERMO_GLOBAL, ONLY : dsmooth, WGHT_INV
 
@@ -291,7 +291,7 @@ SUBROUTINE FI_HYDROSTATIC_AIRWATER_T(y, dy, z1, T, p, rho, wrk1d, wrk2d, wrk3d)
 ! density profile from pressure gradient
      CALL PARTIAL_Y(imode_fdm, i1, jmax, i1, j1bc, dy, p, rho, i0, i0, wrk1d, wrk2d, wrk3d)
      DO ij = 1,jmax
-        rho(ij) = rho(ij)/body_vector(2)
+        rho(ij) = rho(ij)/buoyancy%vector(2)
      ENDDO
 
 ! equilibrium from state (rho,T)
@@ -340,7 +340,7 @@ FUNCTION FI_HYDROSTATIC_SCALEHEIGHT_INV(y,p)
   USE DNS_GLOBAL, ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem
   USE DNS_GLOBAL, ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i
   USE DNS_GLOBAL, ONLY : inb_scal, scaley
-  USE DNS_GLOBAL, ONLY : body_vector
+  USE DNS_GLOBAL, ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
@@ -389,7 +389,7 @@ FUNCTION FI_HYDROSTATIC_SCALEHEIGHT_INV(y,p)
   CALL THERMO_THERMAL_DENSITY(i1, i1, i1, y_i_loc, r1, t_loc, FI_HYDROSTATIC_SCALEHEIGHT_INV)
 
 ! adding the volumetric force part
-  FI_HYDROSTATIC_SCALEHEIGHT_INV = body_vector(2)*FI_HYDROSTATIC_SCALEHEIGHT_INV
+  FI_HYDROSTATIC_SCALEHEIGHT_INV = buoyancy%vector(2)*FI_HYDROSTATIC_SCALEHEIGHT_INV
 
   RETURN
 END FUNCTION FI_HYDROSTATIC_SCALEHEIGHT_INV

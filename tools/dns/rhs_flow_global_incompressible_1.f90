@@ -113,12 +113,11 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
 
 ! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
+! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
-  IF ( ibodyforce_x .EQ. EQNS_NONE ) THEN
-  ELSE
+  IF ( buoyancy%active(1) ) THEN
      wrk1d(:,1) = C_0_R
-     CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
 
 !$omp parallel default( shared ) &
 #ifdef USE_BLAS
@@ -128,7 +127,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 #endif 
 
      CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
-     dummy = body_vector(1)
+     dummy = buoyancy%vector(1)
 
 #ifdef USE_BLAS
      ilen = siz
@@ -191,12 +190,11 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
 
 ! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
+! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
-  IF ( ibodyforce_z .EQ. EQNS_NONE ) THEN
-  ELSE
+  IF ( buoyancy%active(3) ) THEN
      wrk1d(:,1) = C_0_R
-     CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
      
 !$omp parallel default( shared ) &
 #ifdef USE_BLAS
@@ -205,7 +203,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 !$omp private( ij,   dummy, srt,end,siz )
 #endif
      CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
-     dummy = body_vector(3)
+     dummy = buoyancy%vector(3)
 
 #ifdef USE_BLAS
      ilen = siz
@@ -249,11 +247,26 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
        dx, v, tmp4, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
+! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
 
+  IF ( buoyancy%active(2) ) THEN
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref)
+!$omp parallel default( shared ) &
+#ifdef USE_BLAS
+!$omp private( ilen, srt,end,siz, dummy )
+#else
+!$omp private( ij,   srt,end,siz, dummy )
+#endif 
+     CALL DNS_OMP_PARTITION(isize_field, srt,end,siz)      
+     dummy = buoyancy%vector(2)
+     DO ij = srt,end
+        h2(ij) = h2(ij) + dummy*wrk3d(ij) + tmp5(ij) + visc*( tmp6(ij)+tmp4(ij) ) &
+             - ( w(ij)*tmp3(ij) + u(ij)*tmp1(ij) )
+     ENDDO
+!$omp end parallel 
 
-  IF ( ibodyforce_y .EQ. EQNS_NONE ) THEN
+  ELSE
 !$omp parallel default( shared ) &
 #ifdef USE_BLAS
 !$omp private( ilen, srt,end,siz, dummy )
@@ -266,22 +279,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
              - ( w(ij)*tmp3(ij) + u(ij)*tmp1(ij) )
      ENDDO
 !$omp end parallel 
-! -----------------------------------------------------------------------
-  ELSE
-     CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, b_ref)
-!$omp parallel default( shared ) &
-#ifdef USE_BLAS
-!$omp private( ilen, srt,end,siz, dummy )
-#else
-!$omp private( ij,   srt,end,siz, dummy )
-#endif 
-     CALL DNS_OMP_PARTITION(isize_field, srt,end,siz)      
-     dummy = body_vector(2)
-     DO ij = srt,end
-        h2(ij) = h2(ij) + dummy*wrk3d(ij) + tmp5(ij) + visc*( tmp6(ij)+tmp4(ij) ) &
-             - ( w(ij)*tmp3(ij) + u(ij)*tmp1(ij) )
-     ENDDO
-!$omp end parallel 
+     
   ENDIF
 
 ! #######################################################################

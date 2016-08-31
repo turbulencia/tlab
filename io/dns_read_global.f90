@@ -209,12 +209,12 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermBodyForce', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'        ) THEN; ibodyforce = EQNS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'explicit'    ) THEN; ibodyforce = EQNS_EXPLICIT
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'homogeneous' ) THEN; ibodyforce = EQNS_BOD_HOMOGENEOUS
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'      ) THEN; ibodyforce = EQNS_BOD_LINEAR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bilinear'    ) THEN; ibodyforce = EQNS_BOD_BILINEAR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic'   ) THEN; ibodyforce = EQNS_BOD_QUADRATIC
+  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'        ) THEN; buoyancy%type = EQNS_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'explicit'    ) THEN; buoyancy%type = EQNS_EXPLICIT
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'homogeneous' ) THEN; buoyancy%type = EQNS_BOD_HOMOGENEOUS
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'      ) THEN; buoyancy%type = EQNS_BOD_LINEAR
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bilinear'    ) THEN; buoyancy%type = EQNS_BOD_BILINEAR
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic'   ) THEN; buoyancy%type = EQNS_BOD_QUADRATIC
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermBodyForce option.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
@@ -312,29 +312,34 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
 ! ###################################################################
-! Body force
+! Buoyancy
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[BodyForce]')
   CALL IO_WRITE_ASCII(bakfile, '#Vector=<Gx,Gy,Gz>')
   CALL IO_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-  body_vector(:) = C_0_R; ibodyforce_x = 0; ibodyforce_y = 0; ibodyforce_z = 0
-  IF ( ibodyforce .NE. EQNS_NONE ) THEN
+  buoyancy%vector = C_0_R; buoyancy%active = .FALSE.
+  IF ( buoyancy%type .NE. EQNS_NONE ) THEN
      CALL SCANINICHAR(bakfile, inifile, 'BodyForce', 'Vector', '0.0,-1.0,0.0', sRes)
      idummy = 3
-     CALL LIST_REAL(sRes, idummy, body_vector)
+     CALL LIST_REAL(sRes, idummy, buoyancy%vector)
 
-     IF ( ABS(body_vector(1)) .GT. C_0_R ) THEN; ibodyforce_x = ibodyforce; CALL IO_WRITE_ASCII(lfile, 'Body force along Ox.'); ENDIF
-     IF ( ABS(body_vector(2)) .GT. C_0_R ) THEN; ibodyforce_y = ibodyforce; CALL IO_WRITE_ASCII(lfile, 'Body force along Oy.'); ENDIF
-     IF ( ABS(body_vector(3)) .GT. C_0_R ) THEN; ibodyforce_z = ibodyforce; CALL IO_WRITE_ASCII(lfile, 'Body force along Oz.'); ENDIF
+     IF ( ABS(buoyancy%vector(1)) .GT. C_0_R ) THEN; buoyancy%active(1) = .TRUE.; CALL IO_WRITE_ASCII(lfile, 'Body force along Ox.'); ENDIF
+     IF ( ABS(buoyancy%vector(2)) .GT. C_0_R ) THEN; buoyancy%active(2) = .TRUE.; CALL IO_WRITE_ASCII(lfile, 'Body force along Oy.'); ENDIF
+     IF ( ABS(buoyancy%vector(3)) .GT. C_0_R ) THEN; buoyancy%active(3) = .TRUE.; CALL IO_WRITE_ASCII(lfile, 'Body force along Oz.'); ENDIF
 
-     body_vector(:) = body_vector(:)/froude ! adding the froude number into de vector g
-     
-     body_param(:) = C_0_R
+     IF ( froude .GT. C_0_R ) THEN
+           buoyancy%vector(:) = buoyancy%vector(:) /froude ! adding the froude number into de vector g
+     ELSE
+        CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Froude number must be nonzero if buoyancy is retained.')
+        CALL DNS_STOP(DNS_ERROR_OPTION)        
+     ENDIF
+
+     buoyancy%parameters(:) = C_0_R
      CALL SCANINICHAR(bakfile, inifile, 'BodyForce', 'Parameters', '0.0', sRes)
      idummy = MAX_PROF
-     CALL LIST_REAL(sRes, idummy, body_param)
+     CALL LIST_REAL(sRes, idummy, buoyancy%parameters)
 
   ENDIF
 
@@ -873,7 +878,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      delta_rho = C_0_R
 
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
-     delta_rho = body_param(1)
+     delta_rho = buoyancy%parameters(1)
 ! check that density is positive
      IF ( mean_rho .LE. ABS(C_05_R*delta_rho) ) THEN
         CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Given density is negative.')

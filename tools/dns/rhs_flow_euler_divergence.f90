@@ -45,9 +45,9 @@ SUBROUTINE RHS_FLOW_EULER_DIVERGENCE(dx,dy,dz, rho,u,v,w,p,e, h0,h1,h2,h3,h4,&
   TREAL g1, g2, g3, prefactor, dummy
 
 ! ###################################################################
-  g1 = body_vector(1)
-  g2 = body_vector(2)
-  g3 = body_vector(3)
+  g1 = buoyancy%vector(1)
+  g2 = buoyancy%vector(2)
+  g3 = buoyancy%vector(3)
 
 ! ###################################################################
 ! Terms \rho u in mass and u-momentum equations

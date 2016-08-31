@@ -247,8 +247,8 @@ PROGRAM VISUALS_MAIN
   MaskSize    = 6
 
 ! in case we need the buoyancy statistics
-  IF ( ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
-       ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &       
+  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC          .OR. &
+       buoyancy%type .EQ. EQNS_BOD_BILINEAR           .OR. &       
        imixture   .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy = 1
   ELSE 
@@ -476,7 +476,7 @@ PROGRAM VISUALS_MAIN
 
               IF      ( opt_vec(iv) .EQ. 6 ) THEN ! density 
                  wrk1d(1:jmax,1) = C_0_R
-                 CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, txc(1,1), wrk1d)
+                 CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
                  dummy = C_1_R/froude
                  txc(1:isize_field,1) = txc(1:isize_field,1)*dummy + C_1_R
 
@@ -502,7 +502,7 @@ PROGRAM VISUALS_MAIN
                     
 ! Buoyancy
                     CALL THERMO_THERMAL_DENSITY_HP_ALWATER(imax,jmax,kmax, s(1,2),s(1,1),p_init,txc(1,1))
-                    txc(1:isize_field,1) = body_vector(2)*(txc(1:isize_field,1) - mean_rho)/mean_rho
+                    txc(1:isize_field,1) = buoyancy%vector(2)*(txc(1:isize_field,1) - mean_rho)/mean_rho
                     
                     plot_file = 'Buoyancy'//time_str(1:MaskSize)
                     CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
@@ -859,7 +859,7 @@ PROGRAM VISUALS_MAIN
         IF ( opt_vec(iv) .EQ. iscal_offset+12 ) THEN
 
            wrk1d(1:jmax,1) = C_0_R
-           CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, txc(1,1), wrk1d)
+           CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
            dummy =  C_1_R/froude
            txc(1:isize_field,1) = txc(1:isize_field,1) *dummy
            
@@ -885,7 +885,7 @@ PROGRAM VISUALS_MAIN
                  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
                       dx,dy,dz, txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
                  
-                 dummy = body_param(inb_scal_array)
+                 dummy = buoyancy%parameters(inb_scal_array)
                  txc(1:isize_field,2) = txc(1:isize_field,2) *txc(1:isize_field,3) *dummy
                  
               ELSE
@@ -893,7 +893,7 @@ PROGRAM VISUALS_MAIN
                  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
                       dx,dy,dz, s, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
 
-                 CALL FI_BUOYANCY_SOURCE(ibodyforce, isize_field, body_param, s, txc(1,1), txc(1,2))
+                 CALL FI_BUOYANCY_SOURCE(buoyancy, isize_field, s, txc(1,1), txc(1,2))
                  
               ENDIF
 

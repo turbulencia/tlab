@@ -97,22 +97,23 @@ IMPLICIT NONE
        dx, v, tmp4, i0,i0, i0,i0, tmp1, wrk1d, wrk2d, wrk3d)
 
 ! -----------------------------------------------------------------------
-! Buoyancy. So far only in the Oy direction. Remember that body_vector contains the Froude # already.
+! Buoyancy. So far only in the Oy direction. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
-  IF ( ibodyforce .EQ. EQNS_NONE ) THEN
+  IF ( buoyancy%active(2) ) THEN
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref)
+
+     dummy = buoyancy%vector(2)
+     DO ij = 1,isize_field
+        h2(ij) = h2(ij) + dummy*wrk3d(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
+             - C_05_R*( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
+     ENDDO
+
+  ELSE
      DO ij = 1,isize_field
         h2(ij) = h2(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
              - C_05_R*( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
      ENDDO
 
-  ELSE
-     CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, b_ref)
-
-     dummy = body_vector(2)
-     DO ij = 1,isize_field
-        h2(ij) = h2(ij) + dummy*wrk3d(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
-             - C_05_R*( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
-     ENDDO
   ENDIF
 
 ! #######################################################################

@@ -20,11 +20,11 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, ibodyforce, itransport
+  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, itransport
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, inb_scal_array, imode_fdm, i1bc,j1bc,k1bc, area, scaley
   USE DNS_GLOBAL, ONLY : froude, visc, rossby
-  USE DNS_GLOBAL, ONLY : body_vector, body_param
+  USE DNS_GLOBAL, ONLY : buoyancy
   USE DNS_GLOBAL, ONLY : rotn_vector, icoriolis_y
   USE DNS_GLOBAL, ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i
   USE DNS_GLOBAL, ONLY : delta_u, ycoor_u
@@ -532,7 +532,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rR(1),  rR_y(1),  i0,i0, wrk1d,wrk2d,wrk3d)
  
   pref(:) = rP(:) -C_05_R *( rP(jmax/2) +rP(jmax/2+1) )
-  pmod(:) =-rP_y(:) +body_vector(2) *rR(:)
+  pmod(:) =-rP_y(:) +buoyancy%vector(2) *rR(:)
 
 ! #######################################################################
 ! Main covariances (do not overwrite dudz; it contains p for incompressible case)
@@ -835,8 +835,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, lapse_fr(1), wrk1d, area)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, potem_fr(1), wrk1d, area)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, psat(1),     wrk1d, area)
-     bfreq_fr(:) =-bfreq_fr(:) *body_vector(2)
-     lapse_fr(:) =-lapse_fr(:) *body_vector(2) *prefactor
+     bfreq_fr(:) =-bfreq_fr(:) *buoyancy%vector(2)
+     lapse_fr(:) =-lapse_fr(:) *buoyancy%vector(2) *prefactor
      
 #undef S_LOC
 
@@ -858,14 +858,14 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         wrk3d = ( C_1_R +Q_RATIO *L_RATIO )/ WMEAN_INV /&
                ( dudx /( dudx -C_1_R ) +Q_RATIO *L_RATIO *L_RATIO ) ! dudx is GAMMA_LOC
         CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, lapse_eq(1), wrk1d, area)
-        lapse_eq(:) =-lapse_eq(:) *body_vector(2) *MRATIO
+        lapse_eq(:) =-lapse_eq(:) *buoyancy%vector(2) *MRATIO
 
         dummy = WGHT_INV(1) /WGHT_INV(2)
-        wrk3d = ( dudz -body_vector(2) *MRATIO *wrk3d )/dwdx &
+        wrk3d = ( dudz -buoyancy%vector(2) *MRATIO *wrk3d )/dwdx &
                *( C_1_R +dummy *L_RATIO /( C_1_R -s(:,:,:,1) ) )
         wrk3d = wrk3d - WGHT_INV(2) /WMEAN_INV *dudy
         CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, bfreq_eq(1), wrk1d, area)
-        bfreq_eq(:) =-bfreq_eq(:) *body_vector(2)
+        bfreq_eq(:) =-bfreq_eq(:) *buoyancy%vector(2)
         
         C_RATIO = THERMO_AI(1,1,2)+s(:,:,:,1)*(THERMO_AI(1,1,3)-THERMO_AI(1,1,2))
         C_RATIO = (C_1_R-s(:,:,:,1))*GRATIO*WGHT_INV(2)/C_RATIO
@@ -893,7 +893,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 ! ###################################################################
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
 
-     IF ( ibodyforce .NE. EQNS_NONE ) THEN
+     IF ( buoyancy%type .NE. EQNS_NONE ) THEN
 ! buoyancy field as used in the integration of the equations (as in dns_profiles)
         DO is = 1,inb_scal
            ycenter = y(1) + scaley*ycoor_i(is)
@@ -905,8 +905,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
            CALL THERMO_AIRWATER_LINEAR(i1,jmax,i1, wrk1d, wrk1d(1,inb_scal_array))
         ENDIF
         wrk1d(:,inb_scal_array+1) = C_0_R
-        CALL FI_BUOYANCY(ibodyforce, i1,  jmax,i1,   body_param, wrk1d, wrk1d(1,inb_scal_array+2), wrk1d(1,inb_scal_array+1))
-        CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s,     dudx,                      wrk1d(1,inb_scal_array+2))
+        CALL FI_BUOYANCY(buoyancy, i1,  jmax,i1,   wrk1d, wrk1d(1,inb_scal_array+2), wrk1d(1,inb_scal_array+1))
+        CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s,     dudx,                      wrk1d(1,inb_scal_array+2))
 
 ! buoyancy terms
         CALL AVG_IK_V(imax,jmax,kmax, jmax, dudx, dx,dz, rB(1), wrk1d, area)
@@ -918,13 +918,13 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, Bxx(1), wrk1d, area)
         CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, Byy(1), wrk1d, area)
         CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, Bzz(1), wrk1d, area)
-        Bxy(:) = Bxx(:) *body_vector(2) + Byy(:) *body_vector(1) ! body_vector includes the Froude
-        Bxz(:) = Bxx(:) *body_vector(3) + Bzz(:) *body_vector(1)
-        Byz(:) = Byy(:) *body_vector(3) + Bzz(:) *body_vector(2)
+        Bxy(:) = Bxx(:) *buoyancy%vector(2) + Byy(:) *buoyancy%vector(1) ! buoyancy%vector includes the Froude
+        Bxz(:) = Bxx(:) *buoyancy%vector(3) + Bzz(:) *buoyancy%vector(1)
+        Byz(:) = Byy(:) *buoyancy%vector(3) + Bzz(:) *buoyancy%vector(2)
         
-        Bxx(:) = C_2_R *Bxx(:) *body_vector(1)
-        Byy(:) = C_2_R *Byy(:) *body_vector(2)
-        Bzz(:) = C_2_R *Bzz(:) *body_vector(3)
+        Bxx(:) = C_2_R *Bxx(:) *buoyancy%vector(1)
+        Byy(:) = C_2_R *Byy(:) *buoyancy%vector(2)
+        Bzz(:) = C_2_R *Bzz(:) *buoyancy%vector(3)
         
         dummy = C_1_R /froude
         rB(:) = rB(:) *dummy
@@ -936,9 +936,9 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      ENDIF
      
   ELSE ! Compressible case is not yet finished
-     Bxx(:) =-rR(:)*rUf(:)*body_vector(1)
-     Byy(:) =-rR(:)*rVf(:)*body_vector(2)
-     Bzz(:) =-rR(:)*rWf(:)*body_vector(3)
+     Bxx(:) =-rR(:)*rUf(:)*buoyancy%vector(1)
+     Byy(:) =-rR(:)*rVf(:)*buoyancy%vector(2)
+     Bzz(:) =-rR(:)*rWf(:)*buoyancy%vector(3)
      rSb(:) = C_0_R
 
   ENDIF
@@ -1458,7 +1458,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      SourcePot(:) =-rSb(:)*(y(:) - y(1) - scaley*ycoor_i(inb_scal))
      
   ELSE
-     Pot(:)       =-rR(:)*(y(:) - y(1) - scaley*ycoor_rho)*body_vector(2)
+     Pot(:)       =-rR(:)*(y(:) - y(1) - scaley*ycoor_rho)*buoyancy%vector(2)
      SourcePot(:) = C_0_R
      
   ENDIF

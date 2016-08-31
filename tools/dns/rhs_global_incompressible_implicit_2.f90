@@ -39,7 +39,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   USE DNS_GLOBAL, ONLY : icalc_scal
   USE DNS_GLOBAL, ONLY : imode_fdm, i1bc, iunifx, j1bc, iunify, k1bc, iunifz
   USE DNS_GLOBAL, ONLY : visc, schmidt
-  USE DNS_GLOBAL, ONLY : ibodyforce, ibodyforce_x,ibodyforce_y,ibodyforce_z, body_vector,body_param
+  USE DNS_GLOBAL, ONLY : buoyancy
   USE DNS_GLOBAL, ONLY : icoriolis, rotn_vector, rotn_param
 
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax, bcs_scal_jmin, bcs_scal_jmax
@@ -142,13 +142,12 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
         ENDDO
      ENDIF
 ! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
+! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
-     IF ( ibodyforce_z .EQ. EQNS_NONE ) THEN
-     ELSE
+     IF ( buoyancy%active(3) ) THEN
         wrk1d(:,1) = C_0_R
-        CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
-        dummy = body_vector(3)
+        CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+        dummy = buoyancy%vector(3)
         DO ij = 1,isize_field
              h3(ij) = h3(ij) + dummy*wrk3d(ij)
         ENDDO
@@ -192,13 +191,12 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   ENDIF
 
 ! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
+! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
-  IF ( ibodyforce_x .EQ. EQNS_NONE ) THEN
-  ELSE
+  IF ( buoyancy%active(1) ) THEN
      wrk1d(:,1) = C_0_R
-     CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
-     dummy = body_vector(1)
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+     dummy = buoyancy%vector(1)
      DO ij = 1,isize_field
           h1(ij) =   h1(ij) + dummy*wrk3d(ij)
      ENDDO
@@ -226,17 +224,17 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
        dy, v, tmp1, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)   
 
 ! -----------------------------------------------------------------------
-! Buoyancy. Remember that body_vector contains the Froude # already.
+! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
-  IF ( ibodyforce_y .EQ. EQNS_NONE ) THEN
-     DO ij = 1,isize_field
-          h2(ij) = -u(ij)*h2(ij) -v(ij)*tmp2(ij) -w(ij)*tmp3(ij)
-     ENDDO
-  ELSE
-     CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, b_ref)
-     dummy = body_vector(2)
+  IF ( buoyancy%active(2) ) THEN
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref)
+     dummy = buoyancy%vector(2)
      DO ij = 1,isize_field
           h2(ij) = -u(ij)*h2(ij) -v(ij)*tmp2(ij) -w(ij)*tmp3(ij)  + dummy*wrk3d(ij)
+     ENDDO
+  ELSE
+     DO ij = 1,isize_field
+        h2(ij) = -u(ij)*h2(ij) -v(ij)*tmp2(ij) -w(ij)*tmp3(ij)
      ENDDO
   ENDIF
 

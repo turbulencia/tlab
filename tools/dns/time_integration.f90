@@ -245,7 +245,7 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
         IF     ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
            IF ( imode_flow .EQ. DNS_FLOW_ISOTROPIC ) THEN ! TO BE DEVELOPED
            ELSE 
-              CALL STATS_TEMPORAL_LAYER(x,y,z,dx,dy,dz, q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
+              CALL STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
               IF ( icalc_particle .EQ. 1 ) THEN ! Lagrangian
                  CALL STATS_TEMPORAL_LAGRANGIAN(x,y,z,dx,dy,dz, q,s,hq, l_q,l_hq,l_txc,l_tags, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
               ENDIF

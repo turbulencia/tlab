@@ -29,12 +29,13 @@
 !########################################################################
 SUBROUTINE FI_PRESSURE_BOUSSINESQ(u,v,w,s, p, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
 
+  USE DNS_TYPES,  ONLY : term_structure
   USE DNS_GLOBAL, ONLY : MAX_PROF
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, isize_field, isize_wrk1d
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_wrk1d
   USE DNS_GLOBAL, ONLY : visc
   USE DNS_GLOBAL, ONLY : icoriolis, rotn_vector, rotn_param
-  USE DNS_GLOBAL, ONLY : ibodyforce_x,ibodyforce_y,ibodyforce_z, body_param, body_vector
+  USE DNS_GLOBAL, ONLY : buoyancy
   USE DNS_GLOBAL, ONLY : iprof_i,thick_i,delta_i,mean_i,ycoor_i,prof_i
   USE DNS_GLOBAL, ONLY : imode_fdm, iunify, scaley
 
@@ -49,7 +50,8 @@ IMPLICIT NONE
   TREAL, DIMENSION(imax,kmax,2),    INTENT(INOUT) :: wrk2d
 
 ! -----------------------------------------------------------------------
-  TINTEGER ij, i, k, flag, iprof
+  TYPE(term_structure) :: buoyancy_loc
+  TINTEGER ij, i, k, iprof
   TREAL ycenter, thick, delta, mean, param(MAX_PROF), FLOW_SHEAR_TEMPORAL
   TREAL dummy, u_geo, w_geo
   TINTEGER iunifx_loc,iunifz_loc, i1bc_loc,j1bc_loc,k1bc_loc
@@ -97,11 +99,10 @@ IMPLICIT NONE
   !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - u(ij,1,1)*tmp1(ij,1,1)
   ! ENDDO
 
-  IF ( ibodyforce_x .EQ. EQNS_NONE ) THEN
-  ELSE
+  IF ( buoyancy%active(1) ) THEN
      wrk1d(:,1) = C_0_R
-     CALL FI_BUOYANCY(ibodyforce_x, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
-     tmp3 = tmp3 + body_vector(1) *wrk3d
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+     tmp3 = tmp3 + buoyancy%vector(1) *wrk3d
      ! DO ij = 1,isize_field
      !    tmp3(ij,1,1) = tmp3(ij,1,1) + body_vector(1)*wrk3d(ij,1,1)
      ! ENDDO
@@ -141,11 +142,10 @@ IMPLICIT NONE
   !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - u(ij,1,1)*tmp1(ij,1,1)
   ! ENDDO
 
-  IF ( ibodyforce_z .EQ. EQNS_NONE ) THEN
-  ELSE
+  IF ( buoyancy%active(3) ) THEN
      wrk1d(:,1) = C_0_R
-     CALL FI_BUOYANCY(ibodyforce_z, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
-     tmp3 = tmp3 + body_vector(3) *wrk3d
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+     tmp3 = tmp3 + buoyancy%vector(3) *wrk3d
      ! DO ij = 1,isize_field
      !    tmp3(ij,1,1) = tmp3(ij,1,1) + body_vector(3)*wrk3d(ij,1,1)
      ! ENDDO
@@ -188,11 +188,7 @@ IMPLICIT NONE
 ! -----------------------------------------------------------------------
 ! Buoyancy. So far only in the Oy direction. Remember that body_vector contains the Froude # already.
 ! -----------------------------------------------------------------------
-  IF ( ibodyforce_y .EQ. EQNS_NONE ) THEN
-! Validation
-!  DO ij = 1,isize_field; tmp3(ij,1,1) = tmp3(ij,1,1) + s(ij,1,1); ENDDO
-
-  ELSE 
+  IF ( buoyancy%active(2) ) THEN
 ! Reference state
      ycenter = y(1) + scaley*ycoor_i(1)
      iprof   = iprof_i(1)
@@ -204,14 +200,18 @@ IMPLICIT NONE
         wrk1d(ij,1) = FLOW_SHEAR_TEMPORAL(iprof, thick, delta, mean, ycenter, param, y(ij))
         wrk1d(ij,3) = C_0_R
      ENDDO
-     flag = EQNS_BOD_LINEAR
-     CALL FI_BUOYANCY(flag,         i1,jmax,i1,     body_param, wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
+     buoyancy_loc = buoyancy; buoyancy_loc%type = EQNS_BOD_LINEAR
+     CALL FI_BUOYANCY(buoyancy_loc, i1,jmax,i1,     wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
 
-     CALL FI_BUOYANCY(ibodyforce_y, imax,jmax,kmax, body_param, s,          tmp2,       wrk1d(1,2))
-     tmp3 = tmp3 + tmp2 *body_vector(2)
+     CALL FI_BUOYANCY(buoyancy,     imax,jmax,kmax, s,          tmp2,       wrk1d(1,2))
+     tmp3 = tmp3 + buoyancy%vector(2)* tmp2
      ! DO ij = 1,isize_field
      !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*body_vector(2)
      ! ENDDO
+
+  ELSE 
+! Validation
+!  DO ij = 1,isize_field; tmp3(ij,1,1) = tmp3(ij,1,1) + s(ij,1,1); ENDDO
 
   ENDIF
 

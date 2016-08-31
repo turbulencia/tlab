@@ -61,9 +61,9 @@ SUBROUTINE RHS_FLOW_GLOBAL_1(dx,dy,dz, vis, rho,u,v,w,p,e, z1, h0,h1,h2,h3,h4, z
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
-  g1 = body_vector(1)
-  g2 = body_vector(2)
-  g3 = body_vector(3)
+  g1 = buoyancy%vector(1)
+  g2 = buoyancy%vector(2)
+  g3 = buoyancy%vector(3)
   prefactor = (gama0-C_1_R)*mach*mach
   c13 = C_1_R/C_3_R
 

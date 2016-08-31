@@ -28,7 +28,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   USE DNS_GLOBAL, ONLY : iunifz,inb_flow,inb_vars,inb_scal,inb_scal_array,visc,schmidt,prandtl 
   USE DNS_GLOBAL, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : rotn_param,rotn_vector,body_param,body_vector 
-  USE DNS_GLOBAL, ONLY : ibodyforce_x,ibodyforce_y,ibodyforce_z,ibodyforce
   USE DNS_GLOBAL, ONLY : icoriolis 
   ! 
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
@@ -328,14 +327,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
            CALL NB3DFFT_R2R_Y1UNPACK(bt1,tmp11,info(BUXY),t_tmp);     t_comp=t_comp+t_tmp   
            ! 
            t_tmp = -MPI_WTime() 
-           ! IF ( ibodyforce_x .EQ. EQNS_NONE ) THEN
-              h1=h1+bt1
-           ! ELSE 
-           !    wrk1d(:,1)=C_0_R
-           !    CALL FI_BUOYANCY(ibodyforce,imax,jmax,kmax,body_param,s,tmp11,wrk1d) 
-           !    bdummy=body_vector(1)
-           !    h1=h1+bt1+bdummy*tmp11
-           ! ENDIF
+           h1=h1+bt1
            t_ser = t_ser + (t_tmp + MPI_WTime())
            !
            CALL NB3DFFT_R2R_YXCOMM(v,bt1,bt1,tmp11,info(FVYX),t_tmp); t_comp=t_comp+t_tmp  
@@ -346,14 +338,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
            CALL NB3DFFT_R2R_Y2UNPACK(bt2,tmp21,info(BWZY),t_tmp);      t_comp=t_comp+t_tmp  
            !
            t_tmp = -MPI_WTime()
-           ! IF ( ibodyforce_z .EQ. EQNS_NONE ) THEN 
-              h3=h3+bt2
-           ! ELSE 
-           !    wrk1d(:,1)=C_0_R
-           !    CALL FI_BUOYANCY(ibodyforce,imax,jmax,kmax, body_param,s,tmp21,wrk1d)  
-           !    bdummy=body_vector(3) 
-           !    h3=h3+bt2+bdummy*tmp21
-           ! ENDIF
+           h3=h3+bt2
            t_ser = t_ser + (t_tmp+MPI_WTime())
            !
            CALL NB3DFFT_R2R_YZCOMM(v,tmp21,tmp21,bt2,info(FVYZ),t_tmp);t_comp=t_comp+t_tmp
@@ -449,14 +434,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
            CALL NB3DFFT_R2R_Y1UNPACK(bt1,tmp11,info(BVXY),t_tmp);     t_comp=t_comp+t_tmp   
            !
            t_tmp = -MPI_WTime()
-!           IF ( ibodyforce_y .EQ. EQNS_NONE ) THEN 
-              h2=h2+bt1
-           ! ELSE 
-           !    !
-           !    CALL FI_BUOYANCY(ibodyforce,imax,jmax,kmax,body_param,s,tmp11,b_ref)
-           !    bdummy=body_vector(2)
-           !    h2=h2+bt1+bdummy*tmp11
-           ! ENDIF
+           h2=h2+bt1
            t_ser = t_ser + (t_tmp+MPI_WTime())
            !
            IF ( inb_scal .GT. 1 ) &

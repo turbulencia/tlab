@@ -249,8 +249,8 @@ PROGRAM AVERAGES
   jmax_aux = jmax_total/opt_block
 
 ! in case we need the buoyancy statistics
-  IF ( ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
-       ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &       
+  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC          .OR. &
+       buoyancy%type .EQ. EQNS_BOD_BILINEAR           .OR. &       
        imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy = 1
   ELSE 
@@ -477,7 +477,7 @@ PROGRAM AVERAGES
 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
            IF ( flag_buoyancy .EQ. 1 ) THEN
               wrk1d(1:jmax) = C_0_R 
-              CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, txc(:,7), wrk1d)
+              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(:,7), wrk1d)
               dummy = C_1_R/froude
               txc(1:isize_field,7) = txc(1:isize_field,7)*dummy
 ! mean values
@@ -486,13 +486,13 @@ PROGRAM AVERAGES
                  CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array))
               ENDIF
               dummy = C_0_R
-              CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umin, dummy)
+              CALL FI_BUOYANCY(buoyancy, i1,i1,i1, s_aux, umin, dummy)
               s_aux(1:inb_scal) = mean_i(1:inb_scal) + C_05_R*delta_i(1:inb_scal)
               IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
                  CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array))
               ENDIF
               dummy = C_0_R
-              CALL FI_BUOYANCY(ibodyforce, i1,i1,i1, body_param, s_aux, umax, dummy)
+              CALL FI_BUOYANCY(buoyancy, i1,i1,i1, s_aux, umax, dummy)
               mean_i(is) = (umax+umin)/froude; delta_i(is) = ABS(umax-umin)/froude; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
               CALL AVG_SCAL_XZ(is, q,s, txc(1,7), &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
@@ -632,20 +632,20 @@ PROGRAM AVERAGES
         CALL IO_WRITE_ASCII(lfile,'Computing baroclinic term...')
         IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR.&
              imode_eqns .EQ. DNS_EQNS_ANELASTIC     )THEN
-           IF ( ibodyforce .EQ. EQNS_NONE ) THEN
+           IF ( buoyancy%type .EQ. EQNS_NONE ) THEN
               txc(:,4) = C_0_R; txc(:,5) = C_0_R; txc(:,6) = C_0_R
            ELSE
 ! calculate buoyancy vector along Oy
-           wrk1d(1:jmax) = C_0_R 
-           CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, wrk3d, wrk1d)
-           DO ij = 1,isize_field
-              s(ij,1) = wrk3d(ij)*body_vector(2)
-           ENDDO
-
-           CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, txc(1,4), i0,i0, wrk1d,wrk2d,wrk3d)
-           txc(:,4) =-txc(:,4)
-           txc(:,5) = C_0_R
-           CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, txc(1,6), i0,i0, wrk1d,wrk2d,wrk3d)
+              wrk1d(1:jmax) = C_0_R 
+              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+              DO ij = 1,isize_field
+                 s(ij,1) = wrk3d(ij)*buoyancy%vector(2)
+              ENDDO
+              
+              CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, txc(1,4), i0,i0, wrk1d,wrk2d,wrk3d)
+              txc(:,4) =-txc(:,4)
+              txc(:,5) = C_0_R
+              CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, txc(1,6), i0,i0, wrk1d,wrk2d,wrk3d)
            ENDIF
 
         ELSE

@@ -93,16 +93,16 @@ IMPLICIT NONE
   CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
        dx, v, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
 
-  IF ( ibodyforce .EQ. EQNS_NONE ) THEN
+  IF ( buoyancy%type .EQ. EQNS_NONE ) THEN
      DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
         h2(i,j,k) = h2(i,j,k) + visc*( tmp6(i,j,k)+tmp5(i,j,k)+tmp4(i,j,k) ) &
              - r_ref(j)*( w(i,j,k)*tmp3(i,j,k)+v(i,j,k)*tmp2(i,j,k)+u(i,j,k)*tmp1(i,j,k) )
      ENDDO; ENDDO; ENDDO
 
   ELSE
-     CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, z1, wrk3d, b_ref)
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, z1, wrk3d, b_ref)
      DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
-        h2(i,j,k) = h2(i,j,k) + wrk3d(i,j,k)*body_vector(2) + visc*( tmp6(i,j,k)+tmp5(i,j,k)+tmp4(i,j,k) ) &
+        h2(i,j,k) = h2(i,j,k) + wrk3d(i,j,k)*buoyancy%vector(2) + visc*( tmp6(i,j,k)+tmp5(i,j,k)+tmp4(i,j,k) ) &
              - r_ref(j)*( w(i,j,k)*tmp3(i,j,k)+v(i,j,k)*tmp2(i,j,k)+u(i,j,k)*tmp1(i,j,k) )
      ENDDO; ENDDO; ENDDO
 

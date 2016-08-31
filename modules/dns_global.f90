@@ -49,7 +49,7 @@ MODULE DNS_GLOBAL
   TINTEGER :: imode_files              ! files format
   TINTEGER :: imode_verbosity          ! level of verbosity used in log files
   TINTEGER :: imode_eqns               ! set of equations to be solved 
-  TINTEGER :: iadvection, iviscous, idiffusion, icoriolis, ibodyforce ! formulation
+  TINTEGER :: iadvection, iviscous, idiffusion, icoriolis ! formulation
   TINTEGER :: ifourier
   TINTEGER :: itransport, ireactive
 
@@ -134,14 +134,6 @@ MODULE DNS_GLOBAL
               prof_i(MAX_PROF,MAX_NSP), diam_i(MAX_NSP), jet_i(MAX_JETS,MAX_NSP)
   
 ! ###################################################################
-! Body force vector and buoyancy function parameters
-! ###################################################################
-  TREAL    :: body_vector(3)                       ! vector
-  TREAL    :: body_param(MAX_PROF)                 ! buoyancy function parameters
-  TINTEGER :: ibodyforce_x,ibodyforce_y,ibodyforce_z
-  TYPE(term_structure) :: body
-
-! ###################################################################
 ! Rotation parameters
 ! ###################################################################
   TREAL    :: rotn_vector(3)
@@ -150,6 +142,7 @@ MODULE DNS_GLOBAL
   TYPE(term_structure) :: coriolis
 
 ! ###################################################################
+  TYPE(term_structure) :: buoyancy  ! Buoyancy parameters
   TYPE(term_structure) :: radiation ! Radiation parameters
   TYPE(term_structure) :: transport ! Transport parameters
   TYPE(term_structure) :: chemistry ! Chemistry parameters

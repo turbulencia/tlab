@@ -53,7 +53,7 @@ SUBROUTINE FI_TRANS_VELOCITY(&
 
 !$omp parallel default( shared ) private( ij, dummy_s, dummy_g )
   dummy_s = stokes
-  dummy_g = settling*body_vector(1)   !Froude number already included in body_vector
+  dummy_g = settling*buoyancy%vector(1)   !Froude number already included in buoyancy%vector
   IF (dummy_g .NE. C_0_R) THEN
 !$omp do
      DO ij = 1,isize_field			
@@ -78,7 +78,7 @@ SUBROUTINE FI_TRANS_VELOCITY(&
 
 !$omp parallel default( shared ) private( ij, dummy_s, dummy_g )
   dummy_s = stokes
-  dummy_g = settling*body_vector(2)   !Froude number already included in body_vector
+  dummy_g = settling*buoyancy%vector(2)   !Froude number already included in buoyancy%vector
   IF (dummy_g .NE. C_0_R) THEN
 !$omp do
      DO ij = 1,isize_field			
@@ -103,7 +103,7 @@ SUBROUTINE FI_TRANS_VELOCITY(&
 
 !$omp parallel default( shared ) private( ij, dummy_s, dummy_g )
   dummy_s = stokes
-  dummy_g = settling*body_vector(3)   !Froude number already included in body_vector
+  dummy_g = settling*buoyancy%vector(3)   !Froude number already included in buoyancy%vector
   IF (dummy_g .NE. C_0_R) THEN
 !$omp do
      DO ij = 1,isize_field			

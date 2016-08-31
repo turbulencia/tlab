@@ -466,7 +466,7 @@ ELSEIF (settling > C_0_R) THEN
 !Except for a q_g term which is taken out later
 !$omp parallel default( shared ) private( ij,dummy,exp_l )
   exp_l = C_5_R/C_3_R
-  dummy = -settling*body_vector(2)
+  dummy = -settling*buoyancy%vector(2)
  !$omp do
     DO ij = 1,isize_field
        tmp4(ij) = dummy*(C_1_R-al_ql(ij))*al_ql(ij)**exp_l      

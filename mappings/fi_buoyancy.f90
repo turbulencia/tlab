@@ -18,47 +18,37 @@
 !# A reference profile is passed through array wrk1d
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!# In the piecewise-linear case (buoyancy reversal)
-!# param1    In    b2-b1
-!# param2    In    bm-b1
-!# param3    In    Sm
-!# param4    In    delta
-!#
-!########################################################################
-SUBROUTINE FI_BUOYANCY(ibodyforce, nx,ny,nz, param, s, b, wrk1d)
+SUBROUTINE FI_BUOYANCY(buoyancy, nx,ny,nz, s, b, wrk1d)
 
+  USE DNS_TYPES,  ONLY : term_structure
   USE DNS_GLOBAL, ONLY : inb_scal_array
 
   IMPLICIT NONE
   
-  TINTEGER,                     INTENT(IN) :: ibodyforce, nx, ny, nz
-  TREAL, DIMENSION(*),          INTENT(IN) :: param
+  TYPE(term_structure),         INTENT(IN) :: buoyancy
+  TINTEGER,                     INTENT(IN) :: nx,ny,nz
   TREAL, DIMENSION(nx,ny,nz,*), INTENT(IN) :: s
   TREAL, DIMENSION(nx,ny,nz),   INTENT(OUT):: b
   TREAL, DIMENSION(ny),         INTENT(IN) :: wrk1d
 
 ! -----------------------------------------------------------------------
-  TINTEGER i,j,k, is
+  TINTEGER j,k, is
   TREAL c0_loc,c1_loc,c2_loc,c3_loc, dummy
-  TREAL delta, delta_inv
 
 ! #######################################################################
-! Constant homogeneous value
-! #######################################################################
-  IF      ( ibodyforce .EQ. EQNS_BOD_HOMOGENEOUS  ) THEN
-     b = param(1)
+  SELECT CASE( buoyancy%type )
 
-! #######################################################################
-! Linear relation
-! #######################################################################
-  ELSE IF ( ibodyforce .EQ. EQNS_BOD_LINEAR       ) THEN
-     c1_loc = param(1); c2_loc = param(2); c3_loc = param(3) ! proportionality factors
-     c0_loc = param(inb_scal_array+1)                        ! independent term
+! -----------------------------------------------------------------------
+  CASE( EQNS_BOD_HOMOGENEOUS )
+     b = buoyancy%parameters(1)
+
+! -----------------------------------------------------------------------
+  CASE( EQNS_BOD_LINEAR )
+     c1_loc = buoyancy%parameters(1); c2_loc = buoyancy%parameters(2); c3_loc = buoyancy%parameters(3) ! proportionality factors
+     c0_loc = buoyancy%parameters(inb_scal_array+1)                                                    ! independent term
 
      IF      ( inb_scal_array .EQ. 1 .OR. &
-             ( inb_scal_array .EQ. 2 .AND. ABS(param(2)) .LT. C_SMALL_R ) ) THEN ! avoid mem call for one common case is=2
+             ( inb_scal_array .EQ. 2 .AND. ABS(buoyancy%parameters(2)) .LT. C_SMALL_R ) ) THEN ! avoid mem call for one common case is=2
         DO k = 1,nz; DO j = 1,ny
            dummy = wrk1d(j) - c0_loc
            b(1:nx,j,k) = c1_loc *s(1:nx,j,k,1) - dummy
@@ -83,82 +73,74 @@ SUBROUTINE FI_BUOYANCY(ibodyforce, nx,ny,nz, param, s, b, wrk1d)
         ENDDO; ENDDO
 
         DO is = 1,inb_scal_array
-           IF ( ABS(param(is)) .GT. C_SMALL_R ) b(:,:,:)= b(:,:,:) + param(is) *s(:,:,:,is)         
+           IF ( ABS(buoyancy%parameters(is)) .GT. C_SMALL_R ) b(:,:,:)= b(:,:,:) + buoyancy%parameters(is) *s(:,:,:,is)         
         ENDDO
 
      ENDIF
 
-! #######################################################################
-! Bilinear
-! #######################################################################
-  ELSE IF ( ibodyforce .EQ. EQNS_BOD_BILINEAR     ) THEN
-     c0_loc = param(1); c1_loc = param(2); c2_loc = param(3)
+! -----------------------------------------------------------------------
+  CASE ( EQNS_BOD_BILINEAR )
+     c0_loc = buoyancy%parameters(1); c1_loc = buoyancy%parameters(2); c2_loc = buoyancy%parameters(3)
 
      DO k = 1,nz; DO j = 1,ny
         dummy = wrk1d(j)
         b(1:nx,j,k) = c0_loc*s(1:nx,j,k,1) + c1_loc*s(1:nx,j,k,2) + c2_loc*s(1:nx,j,k,1)*s(1:nx,j,k,2) - dummy
      ENDDO; ENDDO
 
-! #######################################################################
-! Quadratic relation
-! #######################################################################
-  ELSE IF ( ibodyforce .EQ. EQNS_BOD_QUADRATIC    ) THEN
-     c0_loc =-param(1)/(param(2)/C_2_R)**2 
-     c1_loc = param(2)
+! -----------------------------------------------------------------------
+  CASE( EQNS_BOD_QUADRATIC )
+     c0_loc =-buoyancy%parameters(1)/(buoyancy%parameters(2)/C_2_R)**2 
+     c1_loc = buoyancy%parameters(2)
 
      DO k = 1,nz; DO j = 1,ny
         dummy = wrk1d(j)
         b(1:nx,j,k) = c0_loc*s(1:nx,j,k,1)*(s(1:nx,j,k,1)-c1_loc) - dummy
      ENDDO; ENDDO
 
-  ENDIF
+  END SELECT
 
   RETURN
 END SUBROUTINE FI_BUOYANCY
 
 !########################################################################
 !########################################################################
-SUBROUTINE FI_BUOYANCY_SOURCE(ibodyforce, isize_field, param, s, gradient, b_source)
+SUBROUTINE FI_BUOYANCY_SOURCE(buoyancy, isize_field, s, gradient, b_source)
+
+  USE DNS_TYPES, ONLY : term_structure
 
   IMPLICIT NONE
 
-  TINTEGER,                        INTENT(IN)    :: ibodyforce, isize_field
-  TREAL, DIMENSION(*),             INTENT(IN)    :: param
+  TYPE(term_structure),            INTENT(IN)    :: buoyancy
+  TINTEGER,                        INTENT(IN)    :: isize_field
   TREAL, DIMENSION(isize_field,*), INTENT(IN)    :: s
   TREAL, DIMENSION(isize_field,*), INTENT(INOUT) :: gradient
   TREAL, DIMENSION(isize_field),   INTENT(OUT)   :: b_source
 
 ! -----------------------------------------------------------------------
-  TINTEGER ij
-  TREAL c0_loc, c1_loc, c2_loc, c3_loc, delta, delta_inv
+  TREAL c0_loc
 
 ! #######################################################################
-! Constant homogeneous value
-! #######################################################################
-  IF      ( ibodyforce .EQ. EQNS_BOD_HOMOGENEOUS  ) THEN
+  SELECT CASE( buoyancy%type )
+
+! -----------------------------------------------------------------------
+  CASE( EQNS_BOD_HOMOGENEOUS )
      b_source = C_0_R
 
-! #######################################################################
-! Linear relation
-! #######################################################################
-  ELSE IF ( ibodyforce .EQ. EQNS_BOD_LINEAR       ) THEN
+! -----------------------------------------------------------------------
+  CASE( EQNS_BOD_LINEAR )
      b_source = C_0_R
 
-! #######################################################################
-! Bilinear (2 scalars)
-! #######################################################################
-  ELSE IF ( ibodyforce .EQ. EQNS_BOD_BILINEAR     ) THEN
+! -----------------------------------------------------------------------
+  CASE( EQNS_BOD_BILINEAR )
      b_source = C_0_R
 
-! #######################################################################
-! Quadratic relation
-! #######################################################################
-  ELSE IF ( ibodyforce .EQ. EQNS_BOD_QUADRATIC    ) THEN
-     c0_loc =-param(1)/(param(2)/C_2_R)**2; c0_loc = c0_loc*C_2_R
+! -----------------------------------------------------------------------
+  CASE( EQNS_BOD_QUADRATIC )
+     c0_loc =-buoyancy%parameters(1)/(buoyancy%parameters(2)/C_2_R)**2; c0_loc = c0_loc*C_2_R
      
      b_source = c0_loc* gradient(:,1)
 
-  ENDIF
+  END SELECT
 
   RETURN
 END SUBROUTINE FI_BUOYANCY_SOURCE

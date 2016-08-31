@@ -31,7 +31,7 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_Y(dx,dy,dz, u,v,w,p,r,gamma,z1, &
      tmin,lmin,tmax,lmax, tmp1,ddx,ddz, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax, jmax, kmax, inb_flow, inb_scal_array
-  USE DNS_GLOBAL, ONLY : imode_fdm, i1bc, k1bc, body_vector
+  USE DNS_GLOBAL, ONLY : imode_fdm, i1bc, k1bc, buoyancy
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -113,10 +113,10 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_Y(dx,dy,dz, u,v,w,p,r,gamma,z1, &
      tmin(i,k,1) = r(i,1,k)*ddx(i,ip+1,k) + u(i,1,k)*ddx(i,ip+5,k) &
                  + r(i,1,k)*ddz(i,ip+3,k) + w(i,1,k)*ddz(i,ip+5,k)
      tmin(i,k,2) = u(i,1,k)*ddx(i,ip+1,k) + w(i,1,k)*ddz(i,ip+1,k) &
-                 + ddx(i,ip+4,k)/r(i,1,k) - body_vector(1)
+                 + ddx(i,ip+4,k)/r(i,1,k) - buoyancy%vector(1)
      tmin(i,k,3) = u(i,1,k)*ddx(i,ip+2,k) + w(i,1,k)*ddz(i,ip+2,k)
      tmin(i,k,4) = u(i,1,k)*ddx(i,ip+3,k) + w(i,1,k)*ddz(i,ip+3,k) &
-                 + ddz(i,ip+4,k)/r(i,1,k) - body_vector(3)
+                 + ddz(i,ip+4,k)/r(i,1,k) - buoyancy%vector(3)
      tmin(i,k,5) = u(i,1,k)*ddx(i,ip+4,k) + w(i,1,k)*ddz(i,ip+4,k) &
                  + gamma(i,1,k)*p(i,1,k)*( ddx(i,ip+1,k) + ddz(i,ip+3,k) )
      DO is = 1,inb_scal_array
@@ -140,10 +140,10 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_Y(dx,dy,dz, u,v,w,p,r,gamma,z1, &
      tmax(i,k,1) = r(i,jmax,k)*ddx(i,ip+1,k) + u(i,jmax,k)*ddx(i,ip+5,k) &
                  + r(i,jmax,k)*ddz(i,ip+3,k) + w(i,jmax,k)*ddz(i,ip+5,k)
      tmax(i,k,2) = u(i,jmax,k)*ddx(i,ip+1,k) + w(i,jmax,k)*ddz(i,ip+1,k) &
-                 + ddx(i,ip+4,k)/r(i,jmax,k) - body_vector(1)
+                 + ddx(i,ip+4,k)/r(i,jmax,k) - buoyancy%vector(1)
      tmax(i,k,3) = u(i,jmax,k)*ddx(i,ip+2,k) + w(i,jmax,k)*ddz(i,ip+2,k)
      tmax(i,k,4) = u(i,jmax,k)*ddx(i,ip+3,k) + w(i,jmax,k)*ddz(i,ip+3,k) &
-                 + ddz(i,ip+4,k)/r(i,jmax,k) - body_vector(3)
+                 + ddz(i,ip+4,k)/r(i,jmax,k) - buoyancy%vector(3)
      tmax(i,k,5) = u(i,jmax,k)*ddx(i,ip+4,k) + w(i,jmax,k)*ddz(i,ip+4,k) &
                  + gamma(i,jmax,k)*p(i,jmax,k)*( ddx(i,ip+1,k) + ddz(i,ip+3,k) )
      DO is = 1,inb_scal_array

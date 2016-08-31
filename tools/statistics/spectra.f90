@@ -197,8 +197,8 @@ PROGRAM SPECTRA
   jmax_aux = jmax_total/opt_block
 
 ! in case we need the buoyancy statistics
-  IF ( ibodyforce .EQ. EQNS_BOD_QUADRATIC          .OR. &
-       ibodyforce .EQ. EQNS_BOD_BILINEAR           .OR. &       
+  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC          .OR. &
+       buoyancy%type .EQ. EQNS_BOD_BILINEAR           .OR. &       
        imixture   .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy = 1
      inb_scal_array= inb_scal_array+1             ! space for the buoyancy field
@@ -498,8 +498,8 @@ PROGRAM SPECTRA
         ENDIF
         IF ( flag_buoyancy .EQ. 1 ) THEN
            wrk1d(1:jmax,1) = C_0_R 
-           CALL FI_BUOYANCY(ibodyforce, imax,jmax,kmax, body_param, s, s(:,inb_scal_array), wrk1d)
-           dummy = C_1_R/froude
+           CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, s(:,inb_scal_array), wrk1d)
+           dummy = C_1_R /froude
            s(:,inb_scal_array) = s(:,inb_scal_array)*dummy
         ENDIF
      ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN

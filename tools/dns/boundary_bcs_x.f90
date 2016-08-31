@@ -184,13 +184,13 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, x,y,z,dx,dy,dz, rho,u,v,w,p,gama,
      CALL BOUNDARY_BCS_FLOW_NR_2(i0, nt, pl_out, bcs_p_imin,&
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
-          body_vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
+          buoyancy%vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      CALL BOUNDARY_BCS_FLOW_NR_3(iflag_min, idir, nt, pl_inf3,pl_inf1, inf_rhs, bcs_vi,&
           bcs_vi(1,1,inb_vars+1), &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
-          body_vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
+          buoyancy%vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
 ! add transverse terms
      CALL BOUNDARY_BCS_FLOW_NR_4(iflag_min, idir, nt, bcs_sigma_trans, &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1), &
@@ -243,13 +243,13 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, x,y,z,dx,dy,dz, rho,u,v,w,p,gama,
      CALL BOUNDARY_BCS_FLOW_NR_2(i1, nt, pl_out, bcs_p_imax,&
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
-          body_vector(1), hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
+          buoyancy%vector(1), hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      CALL BOUNDARY_BCS_FLOW_NR_3(iflag_max, idir, nt, pl_out, pl_inf2, inf_rhs, bcs_vo,&
           dummy, &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
-          body_vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
+          buoyancy%vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
 ! add transverse terms
      CALL BOUNDARY_BCS_FLOW_NR_4(iflag_max, idir, nt, bcs_sigma_trans, &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1), &
@@ -309,7 +309,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, x,y,z,dx,dy,dz, rho,u,v,w,p,gama,
              inf_rhs, inf_rhs(1,1,5+is), bcs_vi, bcs_vi(1,1,5+is), bcs_vi(1,1,inb_vars+1), &
              r_loc(1,1), u_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1),&
              drdn_loc(1,1), dudn_loc(1,1), dz1dn_loc(1,1), dpdn_loc(1,1),&
-             body_vector(1), hz1_loc(1,1))
+             buoyancy%vector(1), hz1_loc(1,1))
 ! add transverse terms
         CALL BOUNDARY_BCS_SCAL_NR_4(iflag_min, nt, bcs_sigma_trans, &
              r_loc(1,1), u_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1), &
@@ -367,7 +367,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, x,y,z,dx,dy,dz, rho,u,v,w,p,gama,
              inf_rhs, inf_rhs(1,1,5+is), bcs_vo, bcs_vo(1,1,5+is), dummy, &
              r_loc(1,1), u_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1),&
              drdn_loc(1,1), dudn_loc(1,1), dz1dn_loc(1,1), dpdn_loc(1,1),&
-             body_vector(1), hz1_loc(1,1))
+             buoyancy%vector(1), hz1_loc(1,1))
 ! add transverse terms
         CALL BOUNDARY_BCS_SCAL_NR_4(iflag_max, nt, bcs_sigma_trans, &
              r_loc(1,1), u_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1), &
