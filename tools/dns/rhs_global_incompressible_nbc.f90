@@ -23,11 +23,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
 
   USE DNS_CONSTANTS, ONLY : lfile,wfile,efile
   !
-  USE DNS_GLOBAL, ONLY : g, i1bc,iunifx,j1bc,iunify,k1bc
+  USE DNS_GLOBAL, ONLY : g, i1bc,j1bc,iunify,k1bc
   USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total,imode_fdm
-  USE DNS_GLOBAL, ONLY : iunifz,inb_flow,inb_vars,inb_scal,inb_scal_array,visc,schmidt,prandtl 
+  USE DNS_GLOBAL, ONLY : inb_flow,inb_vars,inb_scal,inb_scal_array,visc,schmidt,prandtl 
   USE DNS_GLOBAL, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : rotn_param,rotn_vector,body_param,body_vector 
+  USE DNS_GLOBAL, ONLY : rotn_param,rotn_vector
   USE DNS_GLOBAL, ONLY : icoriolis 
   ! 
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
