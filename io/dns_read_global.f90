@@ -58,8 +58,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   iMajorVersion = 6; iMinorVersion = 2
 
-  ireactive = CHEM_NONE ! default is nonreactive
-
   CALL IO_WRITE_ASCII(lfile, 'Reading global input data.')
 
 ! ###################################################################

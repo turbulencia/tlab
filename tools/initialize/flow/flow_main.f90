@@ -194,11 +194,13 @@ PROGRAM INIFLOW
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      CALL PRESSURE_MEAN(p,txc(1,1),s, wrk1d,wrk2d,wrk3d)
      
+#ifdef CHEMISTRY
      IF ( ireactive .EQ. CHEM_NONE ) THEN
+#endif
         CALL DENSITY_MEAN(rho,p,txc(1,1),s, txc(1,2), wrk1d,wrk2d,wrk3d)
         
-     ELSE
 #ifdef CHEMISTRY
+     ELSE
         IF ( icalc_scal .EQ. 1 ) THEN
            CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, &
                 inb_scal,inb_scal, isize_wrk3d, s(1,inb_scal), wrk3d)
@@ -210,11 +212,11 @@ PROGRAM INIFLOW
               CALL THERMO_BURKESCHUMANN(rho, s(1,inb_scal))
            ENDIF
         ENDIF
-#else
         CALL IO_WRITE_ASCII(efile, 'INIFLOW: Chemistry part to be checked')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-#endif
      ENDIF
+#endif
+
   ENDIF
 
 ! ###################################################################

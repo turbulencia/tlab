@@ -120,7 +120,9 @@ PROGRAM INISCAL
 ! ###################################################################
 ! Non-reacting case
 ! ###################################################################
+#ifdef CHEMISTRY
   IF ( ireactive .EQ. CHEM_NONE ) THEN
+#endif
 
 ! -------------------------------------------------------------------
 ! Mean
@@ -152,11 +154,11 @@ PROGRAM INISCAL
         ENDIF
      ENDDO
 
+#ifdef CHEMISTRY
 ! ###################################################################
 ! Reacting case
 ! ###################################################################
   ELSE
-#ifdef CHEMISTRY
      is = inb_scal
 
 ! pasive scalar field
@@ -172,12 +174,11 @@ PROGRAM INISCAL
      ELSE IF ( ireactive .EQ. CHEM_INFINITE .AND. inb_scal .GT. 1 ) THEN
         CALL SCREACT_INFINITE(x, s, isize_wrk3d, wrk3d)
      ENDIF
-#else
      CALL IO_WRITE_ASCII(efile, 'INISCAL. Chemistry part to be checked')
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-#endif
 
   ENDIF
+#endif
 
 ! ------------------------------------------------------------------
 ! Add Radiation component after the fluctuation field

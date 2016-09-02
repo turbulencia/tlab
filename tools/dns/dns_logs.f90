@@ -34,10 +34,10 @@
 !########################################################################
 SUBROUTINE DNS_LOGS(iflag)
 
-  USE DNS_GLOBAL, ONLY : imode_eqns, ireactive
   USE DNS_CONSTANTS, ONLY : ofile
-  USE DNS_GLOBAL, ONLY : itime, rtime, visc
-  USE DNS_LOCAL,  ONLY : logs_data, dtime
+  USE DNS_GLOBAL,    ONLY : imode_eqns
+  USE DNS_GLOBAL,    ONLY : itime, rtime, visc
+  USE DNS_LOCAL,     ONLY : logs_data, dtime
 
   USE THERMO_GLOBAL, ONLY : imixture
   USE THERMO_GLOBAL, ONLY : NEWTONRAPHSON_ERROR  
@@ -47,7 +47,7 @@ SUBROUTINE DNS_LOGS(iflag)
   TINTEGER iflag
 
 ! -----------------------------------------------------------------------
-  TINTEGER ip !l, l1,l2,ll2
+  TINTEGER ip
   CHARACTER*256 line1
   CHARACTER*256 line2
 
@@ -63,11 +63,12 @@ SUBROUTINE DNS_LOGS(iflag)
      line1 = line1(1:ip)//' '//' D#';   ip = ip + 1 + 10
      line1 = line1(1:ip)//' '//' visc'; ip = ip + 1 + 10
      
-! reactive
+#ifdef CHEMISTRY
      IF ( ireactive .NE. CHEM_NONE ) THEN
         line1 = line1(1:ip)//' '//' R#'; ip = ip + 1 + 10
      ENDIF
-
+#endif
+     
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. &
           imode_eqns .EQ. DNS_EQNS_ANELASTIC     )THEN
         line1 = line1(1:ip)//' '//' DilMin'; ip = ip + 1 + 13
@@ -99,14 +100,15 @@ SUBROUTINE DNS_LOGS(iflag)
      WRITE(line1,100) INT(logs_data(1)), itime, rtime, dtime, (logs_data(ip),ip=2,3), visc
 100  FORMAT((1X,I1),(1X,I7),(1X,E13.6),4(1X,E10.3))
      
-! reactive
+#ifdef CHEMISTRY
      IF ( ireactive .NE. CHEM_NONE ) THEN
         WRITE(line2,101) logs_data(4)
 101     FORMAT(1(1X,E10.3))
         line1 = TRIM(line1)//TRIM(line2)
 
      ENDIF
-
+#endif
+     
 ! -----------------------------------------------------------------------
 ! Incompressible data
 ! -----------------------------------------------------------------------

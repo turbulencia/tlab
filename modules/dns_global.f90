@@ -51,7 +51,7 @@ MODULE DNS_GLOBAL
   TINTEGER :: imode_eqns               ! set of equations to be solved 
   TINTEGER :: iadvection, iviscous, idiffusion ! formulation
   TINTEGER :: ifourier
-  TINTEGER :: itransport, ireactive
+  TINTEGER :: itransport
 
   TINTEGER :: imode_fdm                ! finite-difference method for spatial operators
 
