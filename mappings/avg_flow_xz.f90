@@ -24,8 +24,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, inb_scal_array, imode_fdm, i1bc,j1bc,k1bc, area, scaley
   USE DNS_GLOBAL, ONLY : froude, visc, rossby
-  USE DNS_GLOBAL, ONLY : buoyancy
-  USE DNS_GLOBAL, ONLY : rotn_vector, icoriolis_y
+  USE DNS_GLOBAL, ONLY : buoyancy, coriolis
   USE DNS_GLOBAL, ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i
   USE DNS_GLOBAL, ONLY : delta_u, ycoor_u
   USE DNS_GLOBAL, ONLY : mean_rho, delta_rho, ycoor_rho
@@ -1418,8 +1417,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   Dyz(:) = rVf(:)*Tau_yz_y(:) + rWf(:)*Tau_yy_y(:)
 
 ! Rij Coriolis Terms 
-  IF ( icoriolis_y .NE. EQNS_NONE ) THEN ! contribution from angular velocity Oy
-     dummy = rotn_vector(2)
+  IF ( coriolis%active(2) ) THEN ! contribution from angular velocity Oy
+     dummy = coriolis%vector(2)
      Fxx(:) = dummy *C_2_R * Rxz(:)
      Fyy(:) =        C_0_R
      Fzz(:) =-dummy *C_2_R * Rxz(:)

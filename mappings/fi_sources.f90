@@ -16,8 +16,7 @@
 SUBROUTINE FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
-  USE DNS_GLOBAL, ONLY : buoyancy 
-  USE DNS_GLOBAL, ONLY : icoriolis, rotn_param, rotn_vector
+  USE DNS_GLOBAL, ONLY : buoyancy, coriolis
 
   IMPLICIT NONE
 
@@ -45,15 +44,15 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
 ! -----------------------------------------------------------------------
 ! Coriolis. So far, rotation only in the Oy direction. 
 ! -----------------------------------------------------------------------
-  IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
-     u_geo = COS(rotn_param(1))
-     w_geo =-SIN(rotn_param(1))
+  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
+     u_geo = COS(coriolis%parameters(1))
+     w_geo =-SIN(coriolis%parameters(1))
 
 !$omp parallel default( shared ) &
 !$omp private( ij, dummy,srt,end,siz )
      CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
 
-     dummy = rotn_vector(2)
+     dummy = coriolis%vector(2)
      DO ij = srt,end
         hq(ij,1) = hq(ij,1) + dummy*( w_geo-q(ij,3) )
         hq(ij,3) = hq(ij,3) + dummy*( q(ij,1)-u_geo ) 

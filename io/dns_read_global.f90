@@ -221,9 +221,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermCoriolis', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'       ) THEN; icoriolis = EQNS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit'   ) THEN; icoriolis = EQNS_EXPLICIT
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'normalized' ) THEN; icoriolis = EQNS_COR_NORMALIZED
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'       ) THEN; coriolis%type = EQNS_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit'   ) THEN; coriolis%type = EQNS_EXPLICIT
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'normalized' ) THEN; coriolis%type = EQNS_COR_NORMALIZED
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermCoriolis option.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
@@ -351,28 +351,35 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#Vector=<Fx,Fy,Fz>')
   CALL IO_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-  rotn_vector(:) = C_0_R
-  CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Vector', '0.0,1.0,0.0', sRes)
-  idummy = 3
-  CALL LIST_REAL(sRes, idummy, rotn_vector)
-  
-  icoriolis_x = EQNS_NONE; icoriolis_y = EQNS_NONE; icoriolis_z = EQNS_NONE
-  IF ( ABS(rotn_vector(1)) .GT. C_0_R ) THEN; icoriolis_x = icoriolis; CALL IO_WRITE_ASCII(lfile, 'Angular velocity along Ox.'); ENDIF
-  IF ( ABS(rotn_vector(2)) .GT. C_0_R ) THEN; icoriolis_y = icoriolis; CALL IO_WRITE_ASCII(lfile, 'Angular velocity along Oy.'); ENDIF
-  IF ( ABS(rotn_vector(3)) .GT. C_0_R ) THEN; icoriolis_z = icoriolis; CALL IO_WRITE_ASCII(lfile, 'Angular velocity along Oz.'); ENDIF
-           
-  rotn_vector(:) = rotn_vector(:)/rossby ! adding the rossby number into the vector w
-  
-  rotn_param(:) = C_0_R
-  CALL SCANINICHAR(bakfile,inifile,'Rotation','Parameters','0.0',sRes)
-  idummy = MAX_PROF
-  CALL LIST_REAL(sRes, idummy, rotn_param)
+  coriolis%vector(:) = C_0_R; coriolis%active = .FALSE.
+  IF ( coriolis%type .NE. EQNS_NONE ) THEN
+     CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Vector', '0.0,1.0,0.0', sRes)
+     idummy = 3
+     CALL LIST_REAL(sRes, idummy, coriolis%vector)  
+     
+     IF ( ABS(coriolis%vector(1)) .GT. C_0_R ) THEN; coriolis%active(2) = .TRUE.; coriolis%active(3) = .TRUE.; CALL IO_WRITE_ASCII(lfile, 'Angular velocity along Ox.'); ENDIF
+     IF ( ABS(coriolis%vector(2)) .GT. C_0_R ) THEN; coriolis%active(3) = .TRUE.; coriolis%active(1) = .TRUE.; CALL IO_WRITE_ASCII(lfile, 'Angular velocity along Oy.'); ENDIF
+     IF ( ABS(coriolis%vector(3)) .GT. C_0_R ) THEN; coriolis%active(1) = .TRUE.; coriolis%active(2) = .TRUE.; CALL IO_WRITE_ASCII(lfile, 'Angular velocity along Oz.'); ENDIF
+              
+     IF ( rossby .GT. C_0_R ) THEN
+        coriolis%vector(:) = coriolis%vector(:) /rossby ! adding the rossby number into the vector
+     ELSE
+        CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Rossby number must be nonzero if coriolis is retained.')
+        CALL DNS_STOP(DNS_ERROR_OPTION)        
+     ENDIF
+     
+     coriolis%parameters(:) = C_0_R
+     CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Parameters', '0.0', sRes)
+     idummy = MAX_PROF
+     CALL LIST_REAL(sRes, idummy, coriolis%parameters)
+
+  ENDIF
 
 ! Consistency check
-  IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
-     IF ( icoriolis_x .NE. EQNS_NONE .OR. icoriolis_z .NE. EQNS_NONE ) THEN
-     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. TermCoriolis option only allows for angular velocity along Oy.')
-     CALL DNS_STOP(DNS_ERROR_OPTION)
+  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
+     IF ( coriolis%active(2) ) THEN
+        CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. TermCoriolis option only allows for angular velocity along Oy.')
+        CALL DNS_STOP(DNS_ERROR_OPTION)
      ENDIF
   ENDIF
 

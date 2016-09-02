@@ -37,13 +37,10 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, kmax_total
   USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field, isize_wrk1d,  inb_flow,inb_scal
   USE DNS_GLOBAL, ONLY : icalc_scal
-  USE DNS_GLOBAL, ONLY : imode_fdm, i1bc, iunifx, j1bc, iunify, k1bc, iunifz
+  USE DNS_GLOBAL, ONLY : imode_fdm, i1bc, j1bc, iunify, k1bc
   USE DNS_GLOBAL, ONLY : visc, schmidt
-  USE DNS_GLOBAL, ONLY : buoyancy
-  USE DNS_GLOBAL, ONLY : icoriolis, rotn_vector, rotn_param
-
-  USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax, bcs_scal_jmin, bcs_scal_jmax
-  USE DNS_LOCAL,  ONLY : idivergence
+  USE DNS_GLOBAL, ONLY : buoyancy, coriolis
+  USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
   USE DNS_LOCAL,  ONLY : buff_type
 
@@ -74,8 +71,8 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 
 ! #######################################################################
   nxy   = imax*jmax
-  u_geo = COS(rotn_param(1))
-  w_geo =-SIN(rotn_param(1))
+  u_geo = COS(coriolis%parameters(1))
+  w_geo =-SIN(coriolis%parameters(1))
 
   visc_exp = kex*visc
   visc_imp = kim*visc 
@@ -131,8 +128,8 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 ! -----------------------------------------------------------------------
 ! Coriolis (so far, rotation only in the Oy direction) 
 ! -----------------------------------------------------------------------
-     IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
-        dummy = rotn_vector(2)
+     IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
+        dummy = coriolis%vector(2)
         DO ij = 1,isize_field
            h3(ij) = -u(ij)*h3(ij) -v(ij)*tmp2(ij) - w(ij)*tmp3(ij) + dummy*( u(ij)-u_geo )
         ENDDO
@@ -179,8 +176,8 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 ! -----------------------------------------------------------------------
 ! Coriolis. So far, rotation only in the Oy direction. 
 ! -----------------------------------------------------------------------
-  IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
-     dummy = rotn_vector(2)
+  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
+     dummy = coriolis%vector(2)
      DO ij = 1, isize_field 
         h1(ij) = -u(ij)*h1(ij) -v(ij)*tmp2(ij) -w(ij)*tmp3(ij) + dummy*( w_geo-w(ij) )
      ENDDO

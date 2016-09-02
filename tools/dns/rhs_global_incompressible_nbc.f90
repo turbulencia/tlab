@@ -27,12 +27,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total,imode_fdm
   USE DNS_GLOBAL, ONLY : inb_flow,inb_vars,inb_scal,inb_scal_array,visc,schmidt,prandtl 
   USE DNS_GLOBAL, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : rotn_param,rotn_vector
-  USE DNS_GLOBAL, ONLY : icoriolis 
   ! 
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : bcs_scal_jmin, bcs_scal_jmax
-  USE DNS_LOCAL,  ONLY : idivergence
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
   USE DNS_LOCAL,  ONLY : buff_type 
   USE DNS_LOCAL,  ONLY : rkm_substep,rkm_endstep,tower_mode 
@@ -82,7 +79,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   ! 
   TINTEGER :: nxy_trans,nyz_trans,nxy,id,imeasure,ij,k,is,commID
   TINTEGER :: finished,ip_b,ip_t,ibc
-  TREAL tdummy!,bdummy,fdummy,u_geo,w_geo 
+  TREAL tdummy
   TREAL, DIMENSION(:), POINTER :: p_bcs 
   !
   TREAL, DIMENSION(inb_scal)      :: err_s, diff  
@@ -121,13 +118,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   ptime =0
 
   nxy=imax*jmax 
-  ! u_geo = COS(rotn_param(1))
-  ! w_geo =-SIN(rotn_param(1)) 
-  ! IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN 
-  !    fdummy= rotn_vector(2) 
-  ! ELSE 
-  !    fdummy = C_0_R 
-  ! ENDIF
 
   DO is=1,inb_scal
      diff(is) = visc*prandtl*schmidt(is) 
@@ -199,13 +189,12 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
      CALL NB3DFFT_R2R_YZCOMM(w,tmpw,tmpw,bt2,  info(FWYZ),t_tmp);  t_comp=t_comp+t_tmp  
      CALL NB3DFFT_R2R_YXCOMM(w,bt3,  bt3,  tmp31,info(FWYX),t_tmp);t_comp=t_comp+t_tmp   
      !
-     ! Coriolis Force, Vertical derivatives, and Vertical advection  
+     ! Vertical derivatives, and Vertical advection  
      !   
      t_tmp = -MPI_WTime()
      CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
           dy, u, tmp41, i0,i0, i0,i0, tmp42, wrk1d,wrk2d,wrk3d)  
-!     h1=h1+visc*tmp41 - v*tmp42 + fdummy*(w_geo-w)
-     h1=h1+visc*tmp41 - v*tmp42 !+ fdummy*(w_geo-w)
+     h1=h1+visc*tmp41 - v*tmp42
 
      ! -----------------------------------------------------------------------
      ! BCs s.t. derivative d/dy(u) is zero
@@ -228,8 +217,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
      h2=h2+visc*tmp41 - v*tmp42
      CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
           dy, w, tmp41, i0,i0, i0,i0, tmp42, wrk1d,wrk2d,wrk3d)  
-!     h3=h3+visc*tmp41 - v*tmp42 + fdummy*(u-u_geo)
-     h3=h3+visc*tmp41 - v*tmp42 !+ fdummy*(u-u_geo)
+     h3=h3+visc*tmp41 - v*tmp42
 
      ! -----------------------------------------------------------------------
      ! BCs s.t. derivative d/dy(w) is zero

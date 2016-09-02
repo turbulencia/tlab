@@ -72,8 +72,8 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 
 ! #######################################################################
   nxy   = imax*jmax
-  u_geo = COS(rotn_param(1))
-  w_geo =-SIN(rotn_param(1))
+  u_geo = COS(coriolis%parameters(1))
+  w_geo =-SIN(coriolis%parameters(1))
 
 #ifdef USE_BLAS
   ilen = isize_field
@@ -97,8 +97,8 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 
   CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
 
-  IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
-     dummy = rotn_vector(2)
+  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
+     dummy = coriolis%vector(2)
      DO ij = srt, end 
         h1(ij) = h1(ij) + dummy*( w_geo-w(ij) )  + tmp4(ij) + visc*( tmp6(ij)+tmp5(ij) ) &
              - ( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) )
@@ -174,8 +174,8 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 
 !$omp parallel default( shared ) private( ij, dummy,srt,end,siz )
   CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
-  IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
-     dummy = rotn_vector(2)
+  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
+     dummy = coriolis%vector(2)
      DO ij = srt,end
         h3(ij) = h3(ij) + dummy*( u(ij)-u_geo ) + tmp6(ij) + visc*( tmp5(ij)+tmp4(ij) ) &
              - ( v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )

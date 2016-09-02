@@ -69,8 +69,8 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_ALWATER&
 
 ! #######################################################################
   nxy   = imax*jmax
-  u_geo = COS(rotn_param(1))
-  w_geo =-SIN(rotn_param(1))
+  u_geo = COS(coriolis%parameters(1))
+  w_geo =-SIN(coriolis%parameters(1))
 
 #ifdef USE_BLAS
   ilen = isize_field
@@ -99,9 +99,9 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_ALWATER&
 ! -----------------------------------------------------------------------
 ! Coriolis. So far, rotation only in the Oy direction. 
 ! -----------------------------------------------------------------------
-  IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
+  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
 !$omp parallel default( shared ) private( ij, dummy )
-     dummy = rotn_vector(2)
+     dummy = coriolis%vector(2)
 !$omp do
      DO ij = 1,isize_field
         h1(ij) = h1(ij) + dummy*( w_geo-w(ij) ) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
@@ -180,9 +180,9 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_ALWATER&
 ! -----------------------------------------------------------------------
 ! Coriolis. So far, rotation only in the Oy direction. 
 ! -----------------------------------------------------------------------
-     IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
+     IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
 !$omp parallel default( shared ) private( ij, dummy )
-        dummy = rotn_vector(2)
+        dummy = coriolis%vector(2)
 !$omp do
         DO ij = 1,isize_field
            h3(ij) = h3(ij) + dummy*( u(ij)-u_geo ) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &

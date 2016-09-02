@@ -7,7 +7,7 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
   USE DNS_GLOBAL, ONLY : imode_flow, imode_sim, imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : iprof_u, mean_u, delta_u, thick_u, ycoor_u, prof_u, diam_u, jet_u
   USE DNS_GLOBAL, ONLY : mean_v, mean_w
-  USE DNS_GLOBAL, ONLY : rotn_param, rotn_vector
+  USE DNS_GLOBAL, ONLY : coriolis
 
   IMPLICIT NONE
 
@@ -21,14 +21,6 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
   TINTEGER j, k, iprof_loc
   TREAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL, ycenter, calpha, salpha, fsign 
   EXTERNAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL
-
-  TREAL, DIMENSION(:), POINTER :: x,y,z
-
-! ###################################################################
-! Define pointers
-  x => g(1)%nodes
-  y => g(2)%nodes
-  z => g(3)%nodes
 
 ! ###################################################################
 ! Isotropic case
@@ -50,14 +42,14 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
 
 ! Construct reference profiles into array wrk1d
         iprof_loc = PROFILE_EKMAN_V           ! Needed for Ekman case
-        calpha = COS(rotn_param(1)); salpha = SIN(rotn_param(1))
-        fsign  = SIGN(C_1_R,rotn_vector(2))
-        ycenter = y(1) + g(2)%scale*ycoor_u
+        calpha = COS(coriolis%parameters(1)); salpha = SIN(coriolis%parameters(1))
+        fsign  = SIGN(C_1_R,coriolis%vector(2))
+        ycenter = g(2)%nodes(1) + g(2)%scale*ycoor_u
         DO j = 1,jmax
            wrk1d(j,1) =  FLOW_SHEAR_TEMPORAL&
-                (iprof_u,   thick_u, delta_u, mean_u, ycenter, prof_u, y(j))
+                (iprof_u,   thick_u, delta_u, mean_u, ycenter, prof_u, g(2)%nodes(j))
            wrk1d(j,2) =  FLOW_SHEAR_TEMPORAL& ! Needed for Ekman case
-                (iprof_loc, thick_u, delta_u, mean_u, ycenter, prof_u, y(j))
+                (iprof_loc, thick_u, delta_u, mean_u, ycenter, prof_u, g(2)%nodes(j))
         ENDDO
 
 ! Construct velocity field
@@ -105,10 +97,10 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
 
 ! Construct reference profile into array wrk1d
 ! pilot to be added: ijet_pilot, rjet_pilot_thickness, rjet_pilot_velocity
-        ycenter = y(1) + g(2)%scale*ycoor_u
+        ycenter = g(2)%nodes(1) + g(2)%scale*ycoor_u
         DO j = 1,jmax
            wrk1d(j,1) =  FLOW_JET_TEMPORAL&
-                (iprof_u, thick_u, delta_u, mean_u, diam_u, ycenter, prof_u, y(j))
+                (iprof_u, thick_u, delta_u, mean_u, diam_u, ycenter, prof_u, g(2)%nodes(j))
         ENDDO
         
 ! Construct velocity field
@@ -132,11 +124,11 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
            rho_vi(j) = rho(1,j,1)
            u_vi(j)   = u(1,j,1)
         ENDDO
-        ycenter = y(1) + g(2)%scale*ycoor_u
+        ycenter = g(2)%nodes(1) + g(2)%scale *ycoor_u
         CALL FLOW_JET_SPATIAL_VELOCITY&
              (imax, jmax, iprof_u, thick_u, delta_u, mean_u, diam_u, ycenter,&
              jet_u(1), jet_u(2), jet_u(3), &
-             x, y, rho_vi(1), u_vi(1), rho, u, v, aux(1), wrk3d)
+             g(1)%nodes, g(2)%nodes, rho_vi(1), u_vi(1), rho, u, v, aux(1), wrk3d)
         IF ( kmax .GT. 1 ) THEN
            DO k = 2,kmax
               u(:,:,k) = u(:,:,1)

@@ -34,8 +34,7 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(u,v,w,s, p, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_wrk1d
   USE DNS_GLOBAL, ONLY : visc
-  USE DNS_GLOBAL, ONLY : icoriolis, rotn_vector, rotn_param
-  USE DNS_GLOBAL, ONLY : buoyancy
+  USE DNS_GLOBAL, ONLY : buoyancy, coriolis
   USE DNS_GLOBAL, ONLY : iprof_i,thick_i,delta_i,mean_i,ycoor_i,prof_i
   USE DNS_GLOBAL, ONLY : imode_fdm, iunify, scaley
 
@@ -71,50 +70,33 @@ IMPLICIT NONE
 
   p = C_0_R
 
-  u_geo = COS(rotn_param(1))
-  w_geo =-SIN(rotn_param(1))
+  u_geo = COS(coriolis%parameters(1))
+  w_geo =-SIN(coriolis%parameters(1))
 
 ! #######################################################################
 ! Calculate forcing term Ox
 ! #######################################################################
-! Validation
-!  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc_loc, dx, tmp1, p, i0,i0, wrk1d,wrk2d,wrk3d)
-
   CALL PARTIAL_ZZ(i1, iunifz_loc, imode_fdm, imax,jmax,kmax, k1bc_loc,&
        dz, u, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3 =        tmp2 *visc - w *tmp1
-  ! DO ij = 1,isize_field
-  !    tmp3(ij,1,1) =                tmp2(ij,1,1)*visc - w(ij,1,1)*tmp1(ij,1,1)
-  ! ENDDO
+
   CALL PARTIAL_YY(i1, iunify,     imode_fdm, imax,jmax,kmax, j1bc_loc,&
        dy, u, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3 = tmp3 + tmp2 *visc - v *tmp1
-  ! DO ij = 1,isize_field
-  !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - v(ij,1,1)*tmp1(ij,1,1)
-  ! ENDDO
+
   CALL PARTIAL_XX(i1, iunifx_loc, imode_fdm, imax,jmax,kmax, i1bc_loc,&
        dx, u, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3 = tmp3 + tmp2 *visc - u *tmp1
-  ! DO ij = 1,isize_field
-  !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - u(ij,1,1)*tmp1(ij,1,1)
-  ! ENDDO
 
   IF ( buoyancy%active(1) ) THEN
      wrk1d(:,1) = C_0_R
      CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
-     tmp3 = tmp3 + buoyancy%vector(1) *wrk3d
-     ! DO ij = 1,isize_field
-     !    tmp3(ij,1,1) = tmp3(ij,1,1) + body_vector(1)*wrk3d(ij,1,1)
-     ! ENDDO
-     
+     tmp3 = tmp3 + buoyancy%vector(1) *wrk3d     
   ENDIF
 
-  IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
-     dummy = rotn_vector(2)
+  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
+     dummy = coriolis%vector(2)
      tmp3 = tmp3 + dummy* ( w_geo -w )
-     ! DO ij = 1,isize_field
-     !    tmp3(ij,1,1) = tmp3(ij,1,1) + dummy*( w_geo-w(ij,1,1) )
-     ! ENDDO
   ENDIF
 
   CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc_loc, dx, tmp3, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
@@ -126,38 +108,24 @@ IMPLICIT NONE
   CALL PARTIAL_ZZ(i1, iunifz_loc, imode_fdm, imax,jmax,kmax, k1bc_loc,&
        dz, w, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3 =        tmp2 *visc - w *tmp1
-  ! DO ij = 1,isize_field
-  !    tmp3(ij,1,1) =                tmp2(ij,1,1)*visc - w(ij,1,1)*tmp1(ij,1,1)
-  ! ENDDO
+
   CALL PARTIAL_YY(i1, iunify,     imode_fdm, imax,jmax,kmax, j1bc_loc,&
        dy, w, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3 = tmp3 + tmp2 *visc - v *tmp1
-  ! DO ij = 1,isize_field
-  !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - v(ij,1,1)*tmp1(ij,1,1)
-  ! ENDDO
+
   CALL PARTIAL_XX(i1, iunifx_loc, imode_fdm, imax,jmax,kmax, i1bc_loc,&
        dx, w, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3 = tmp3 + tmp2 *visc - u *tmp1
-  ! DO ij = 1,isize_field
-  !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - u(ij,1,1)*tmp1(ij,1,1)
-  ! ENDDO
 
   IF ( buoyancy%active(3) ) THEN
      wrk1d(:,1) = C_0_R
      CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
      tmp3 = tmp3 + buoyancy%vector(3) *wrk3d
-     ! DO ij = 1,isize_field
-     !    tmp3(ij,1,1) = tmp3(ij,1,1) + body_vector(3)*wrk3d(ij,1,1)
-     ! ENDDO
-     
   ENDIF
 
-  IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
-     dummy = rotn_vector(2)
+  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
+     dummy = coriolis%vector(2)
      tmp3 = tmp3 + dummy* ( u -u_geo )
-     ! DO ij = 1,isize_field
-     !    tmp3(ij,1,1) = tmp3(ij,1,1) + dummy*( u(ij,1,1)-u_geo )
-     ! ENDDO
   ENDIF
 
   CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc_loc, dz, tmp3, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
@@ -169,21 +137,14 @@ IMPLICIT NONE
   CALL PARTIAL_ZZ(i1, iunifz_loc, imode_fdm, imax,jmax,kmax, k1bc_loc,&
        dz, v, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3 =        tmp2 *visc - w *tmp1
-  ! DO ij = 1,isize_field
-  !    tmp3(ij,1,1) =                tmp2(ij,1,1)*visc - w(ij,1,1)*tmp1(ij,1,1)
-  ! ENDDO
+
   CALL PARTIAL_YY(i1, iunify,     imode_fdm, imax,jmax,kmax, j1bc_loc,&
        dy, v, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3 = tmp3 + tmp2 *visc - v *tmp1
-  ! DO ij = 1,isize_field
-  !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - v(ij,1,1)*tmp1(ij,1,1)
-  ! ENDDO
+
   CALL PARTIAL_XX(i1, iunifx_loc, imode_fdm, imax,jmax,kmax, i1bc_loc,&
        dx, v, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3 = tmp3 + tmp2 *visc - u *tmp1
-  ! DO ij = 1,isize_field
-  !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*visc - u(ij,1,1)*tmp1(ij,1,1)
-  ! ENDDO
 
 ! -----------------------------------------------------------------------
 ! Buoyancy. So far only in the Oy direction. Remember that body_vector contains the Froude # already.
@@ -205,13 +166,6 @@ IMPLICIT NONE
 
      CALL FI_BUOYANCY(buoyancy,     imax,jmax,kmax, s,          tmp2,       wrk1d(1,2))
      tmp3 = tmp3 + buoyancy%vector(2)* tmp2
-     ! DO ij = 1,isize_field
-     !    tmp3(ij,1,1) = tmp3(ij,1,1) + tmp2(ij,1,1)*body_vector(2)
-     ! ENDDO
-
-  ELSE 
-! Validation
-!  DO ij = 1,isize_field; tmp3(ij,1,1) = tmp3(ij,1,1) + s(ij,1,1); ENDDO
 
   ENDIF
 

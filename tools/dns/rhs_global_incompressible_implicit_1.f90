@@ -162,7 +162,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 ! -----------------------------------------------------------------------
 ! Coriolis (so far, rotation only in the Oy direction) 
 ! -----------------------------------------------------------------------
-     IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
+     IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
         dummy = C_1_R/rossby
         DO ij = 1,isize_field
              h3(ij) =   h3(ij) - w(ij)*tmp3(ij) + dummy*(u(ij)-C_1_R)
@@ -221,7 +221,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 ! Coriolis. So far, rotation only in the Oy direction. 
 ! -----------------------------------------------------------------------
 
-  IF ( icoriolis .EQ. EQNS_COR_NORMALIZED ) THEN
+  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
      dummy = C_1_R/rossby
      DO ij = 1, isize_field 
           h1(ij) =   h1(ij) - w(ij)*tmp3(ij) - dummy*w(ij)
