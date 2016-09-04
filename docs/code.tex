@@ -84,6 +84,34 @@ Sources in {\tt tools/plot/visuals}.\\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Scripts}
+
+Sources in {\tt scripts/python}.
+
+{
+\centering
+\setlength{\tabcolsep}{0pt}
+\footnotesize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.85\textwidth}}
+%
+\multicolumn{2}{>{\columncolor{lightred}}c}{\rule{0pt}{11pt}\normalsize\bf Python}\\
+%
+\tt xdmf.py & 
+Create XDMF file with fields data for visualization tools, such as ParaView. Argument is the list of binary files to be included in the XDMF file. Edit the file to set grid size.\\
+\tt xdmfplanes.py & 
+Create XDMF file with planes data for visualization tools, such as ParaView. Argument is the list of binary files to be included in the XDMF file. Edit the file to set grid size and plane parameters.\\
+\tt stats2nc.py & 
+Construct NetCDF files from a list of ASCII statistics files.\\
+\end{longtable}
+
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Input file dns.ini}
 
 The following tables describe the different blocks appearing in the input file {\tt dns.ini}. The first column contains the tag. The second column contains the possible values, the first one being the default one and the word {\it value} indicating that a numerical value needs to be provided. The third column describes the field. This data is read in the file {\tt *\_READ\_GLOBAL} and in the files {\tt *\_READ\_LOCAL} of each of the tools; the variable corresponding to each field should be also read there.
