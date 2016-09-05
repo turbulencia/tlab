@@ -37,6 +37,7 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(x,y,z,dx,dy,dz, q,s,hq, l_q,l_hq,l_txc,l_ta
      
      hq(:,1) = hq(:,1) + 0.00000001
      DO is = inb_scal_array+2,inb_scal_particle+inb_scal_array+1
+        mean_i(is) = C_1_R; delta_i(is) = C_0_R; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
         l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
         CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, hq(1,2))   
         hq(:,2) = hq(:,2) /hq(:,1)

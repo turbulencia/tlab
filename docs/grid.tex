@@ -47,25 +47,35 @@ The executable is {\tt inigrid.x} and the data in {\tt dns.ini} is specified in 
 A basic grid is considered first with uniform spacing, that is
 $\{s_j=h_0(j-1):\, j = 1,\ldots,n\}$. 
 
-In case of a hyperbolic tangent (i.e. {\it opts=5}), the mapping is
+In case of a hyperbolic tangent (i.e. {\tt opts=5}), the mapping is
 \begin{equation}
-\frac{dx}{ds} = 1 + \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_1}{2\delta_1}\right)\right]
+\frac{dx}{ds} = 1 + \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
 \end{equation}
 that is, the grid step $\Delta x =dx/dj$ varies between the uniform values $h_0$
-and $h_1$, the transition occurring at $s=s_1$ and over a length $\delta_1$. The
+and $h_1$, the transition occurring at $s=s_{t1}$ and over a length $\delta_1$. The
 space step $h_0$ corresponds to that of the initial uniform grid. The parameters
-$s_1$, $h_1/h_0$ and $\delta_1$ are provided in the corresponding {\it vals}
-record of the {\it dns.ini} file.
+$s_{t1}$, $h_1/h_0$ and $\delta_1$ are provided in the corresponding {\tt vals}
+record of the {\tt dns.ini} file.
 
-Two transitions are possible if the {\it opts} record is set to $5,2$. The
+The mapping can be written explicitly as
+\begin{equation}
+  x = s + (h_1/h_0-1)\delta_1\left\{\ln(1+\exp[(s-s_{t1})/2])+C\right\}
+\end{equation}
+where $C$ is the integration constant, defined such that $x=0$ for $s=0$. The final extension obeys the relationship
+\begin{equation}
+  x_\mathrm{max}=s_\mathrm{max} + (h_1/h_0-1)\delta_1\ln\left[\frac{\exp(s_\mathrm{max}/\delta_1)+1}{1+\exp(-s_{t1}/\delta_1)}\right],
+\end{equation}
+where $s_\mathrm{max} =(n-1)h_0$.
+
+Two transitions are possible if the {\tt opts} record is set to $5,2$. The
 mapping is then
 \begin{equation}
 \frac{dx}{ds} = 1 
-+ \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_1}{2\delta_1}\right)\right]
-+ \frac{h_2/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_2}{2\delta_2}\right)\right]
++ \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
++ \frac{h_2/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t2}}{2\delta_2}\right)\right]\;.
 \end{equation}
 
-In case of {\it opts=6} a hyperbolic tangent variation of the stretching factor
+In case of {\tt opts=6} a hyperbolic tangent variation of the stretching factor
 $f=d/dx (\Delta x)$ (so defined, $f+1$ an approximation to the ratio $(\Delta x)
 _{j+1}/(\Delta x) _{j} $) is imposed by solving the linear equation
 \begin{equation}
@@ -73,24 +83,24 @@ _{j+1}/(\Delta x) _{j} $) is imposed by solving the linear equation
 \end{equation}
 where $f$ is given by
 \begin{equation}
-f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_1}{2\delta_1}\right)\right]
+f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
 \end{equation}
-and the parameters $s_1$, $\Delta f_1$ and $\delta_1$ are provided in the list
-${\it vals}$. The non-dimensional parameter $f$ then varies from $0$ to $\Delta
+and the parameters $s_{t1}$, $\Delta f_1$ and $\delta_1$ are provided in the list
+${\tt vals}$. The non-dimensional parameter $f$ then varies from $0$ to $\Delta
 f_1$; values smaller that $0.1$ are recommended (less that 10\% stretching). A
 first integral of this problem leads to
 \begin{equation}
 \frac{dx}{ds} =
-\left[1+\exp\left(\frac{s-s_1}{\delta_1}\right)\right]^{\delta_1(\Delta f_1/h_1)} \;.
+\left[1+\exp\left(\frac{s-s_{t1}}{\delta_1}\right)\right]^{\delta_1(\Delta f_1/h_1)} \;.
 \end{equation}
 This equation for $x(s)$ needs to be solved numerically, but already shows that
 this mapping leads to an exponential growth of the space step $\Delta x$ and the
 grid $x(s)$. Note that $\delta_1$ admits negative values.
 
-As before, two transitions are possible if the {\it opts} record is set to $6,2$,
+As before, two transitions are possible if the {\tt opts} record is set to $6,2$,
 \begin{equation}
-f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_1}{2\delta_1}\right)\right]
-+ \frac{\Delta f_2}{2}\left[ 1 + \tanh\left(\frac{s-s_2}{2\delta_2}\right)\right]
+f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
++ \frac{\Delta f_2}{2}\left[ 1 + \tanh\left(\frac{s-s_{t2}}{2\delta_2}\right)\right]
 \end{equation}
 
 \subsection{Geometric progression}

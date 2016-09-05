@@ -677,7 +677,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorVelocity', '0.5', ycoor_u)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamVelocity',  '1.0', diam_u )
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickVelocity', '0.0', thick_u)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaVelocity', '1.0', delta_u)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaVelocity', '0.0', delta_u)
 
 ! density
   CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileDensity', 'None', sRes)

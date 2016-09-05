@@ -41,6 +41,7 @@ Case18. Cloud-top mixing layer; airwater, radiation case with evaporative coolin
 Case19. Subsiding shell; airwater. Gravity vector along the horizontal.
 Case20. Subsiding shell; airwater. Broadband perturbation.
 Case21. Convective boundary layer with quadratic chemistry in three pasive scalars.
+Case22. Rayleigh-Benard convection with Dirichlet boundary conditions.
 
 2D cases: Lagrangian routines
 
