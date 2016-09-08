@@ -42,7 +42,7 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
     headerprof = 199
     headertime = 14 
     headerlength    = 21
-  elif ( avgtype == 'avg1s' or avgtype == 'avg2s' or avgtype == 'avg3s' ): 
+  elif ( avgtype == 'avg1s' or avgtype == 'avg2s' or avgtype == 'avg3s' or avgtype == 'avg4s' ): 
     headerprof = 44
     headertime = 11
     headerlength = 8
@@ -63,7 +63,7 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
   ########################################################### 
   if ( tstart == -1 ) : 
     files_from_list=1 
-    command = "ls " + avgpath + '/' + avgtype + "?[0-9]*"+gzip_str
+    command = "ls " + avgpath + '/' + avgtype + "[0-9]*"+gzip_str
 
     p = subprocess.Popen(command, shell=True,  
                          stdout=subprocess.PIPE) 
