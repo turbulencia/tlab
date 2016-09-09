@@ -101,9 +101,8 @@ SUBROUTINE PRESSURE_FLUCTUATION(u,v,w,rho,p,pprime, &
   IF ( g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz
      wrk2d(:,:,1:2) = C_0_R  ! bcs
      pprime = -txc4          ! change of forcing term sign
-     CALL OPR_POISSON_FXZ(imode_fdm,i1,i0, imax,jmax,kmax, &
-          y,dx,dy,dz, pprime,wrk3d, txc1,txc2, &
-          wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
+     CALL OPR_POISSON_FXZ(imode_fdm,i1,i0, imax,jmax,kmax, g,&
+          pprime,wrk3d, txc1,txc2, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
   ELSE                                      ! General treatment
 #ifdef USE_CGLOC

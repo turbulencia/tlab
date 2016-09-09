@@ -15,9 +15,8 @@
 !########################################################################
 SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : g, kmax_total, i1bc,j1bc,k1bc
+  USE DNS_GLOBAL, ONLY : g, i1bc,j1bc,k1bc
   USE DNS_GLOBAL, ONLY : imode_fdm, imax,jmax,kmax, isize_wrk1d
-  USE DNS_GLOBAL, ONLY : isize_field
 
   IMPLICIT NONE
 
@@ -60,9 +59,8 @@ SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, ipos,jpos,kpos,ci,
   IF ( i1bc .EQ. 0 .AND. k1bc .EQ. 0 ) THEN ! Doubly periodic in xOz
      wrk2d(:,:,1:2) = C_0_R  ! bcs
      tmp1 = -tmp2            ! change of forcing term sign
-     CALL OPR_POISSON_FXZ(imode_fdm,i1,ibc, imax,jmax,kmax,  &
-          y,dx,dy,dz, tmp1,wrk3d, tmp4,tmp5, &
-          wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
+     CALL OPR_POISSON_FXZ(imode_fdm,i1,ibc, imax,jmax,kmax, g, &
+          tmp1,wrk3d, tmp4,tmp5, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
   ELSE                                      ! General treatment
 #ifdef USE_CGLOC

@@ -3,15 +3,6 @@
 #include "dns_const_mpi.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Solve Lap p = a using Fourier in xOz planes, to rewritte the problem
@@ -25,24 +16,20 @@
 !########################################################################
 !# ARGUMENTS 
 !#
-!# a       In    Forcing term
-!#         Out   Solution field p
 !# ibc     In    BCs at j1/jmax: 0, for Dirichlet & Dirichlet
 !#                               1, for Neumann   & Dirichlet 
 !#                               2, for Dirichlet & Neumann   
 !#                               3, for Neumann   & Neumann
-!# bcs_??  In    BCs at j1/jmax
-!# iflag   In    Flag to pass back: 1, only pressure
-!#                                  2, also derivative dp/dy
 !#
 !# The global variable isize_txc_field defines the size of array txc equal
 !# to (imax+2)*(jmax+2)*kmax, or larger if PARALLEL mode
 !#
 !########################################################################
-SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, &
-     y,dx,dy,dz, a,dpdy, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
+SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, g,&
+     a,dpdy, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz, imax_total,kmax_total, inb_grid_1
+  USE DNS_TYPES,  ONLY : grid_structure
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz, inb_grid_1
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -52,14 +39,13 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, &
 #include "integers.h"
 
   TINTEGER ibc, iflag, imode_fdm, nx,ny,nz
-  TREAL,    DIMENSION(*)                   :: y,dy
-  TREAL,    DIMENSION(imax_total,*)        :: dx
-  TREAL,    DIMENSION(kmax_total,*)        :: dz
-  TREAL,    DIMENSION(nx,ny,nz)            :: a, dpdy
-  TREAL,    DIMENSION(nx,nz)               :: bcs_hb, bcs_ht  
-  TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz) :: tmp1,tmp2, wrk3d
-  TCOMPLEX, DIMENSION(ny,2)                :: aux
-  TCOMPLEX, DIMENSION(ny,6)                :: wrk1d
+  TYPE(grid_structure),                     INTENT(IN)    :: g(3)
+  TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: a    ! Forcing term, ans solution field p
+  TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: dpdy ! Derivative, if iflag = 2
+  TREAL,    DIMENSION(nx,nz),               INTENT(IN)    :: bcs_hb, bcs_ht   ! Boundary-condition fields
+  TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz), INTENT(INOUT) :: tmp1,tmp2, wrk3d
+  TCOMPLEX, DIMENSION(ny,2),                INTENT(INOUT) :: aux
+  TCOMPLEX, DIMENSION(ny,6),                INTENT(INOUT) :: wrk1d
 
 ! -----------------------------------------------------------------------
   TINTEGER i, j, k, iglobal, kglobal, ip, isize_line
@@ -67,14 +53,14 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, &
   TCOMPLEX bcs(3)
 
 ! #######################################################################
-  norm = C_1_R/M_REAL(imax_total*kmax_total)
+  norm = C_1_R /M_REAL( g(1)%size *g(3)%size )
 
   isize_line = nx/2+1
 
 ! #######################################################################
 ! Fourier transform of forcing term; output of this section in array tmp1
 ! #######################################################################
-  IF ( kmax_total .GT. 1 ) THEN
+  IF ( g(3)%size .GT. 1 ) THEN
      CALL OPR_FOURIER_F_X_EXEC(nx,ny,nz, a,bcs_hb,bcs_ht,tmp2, tmp1,wrk3d) 
      CALL OPR_FOURIER_F_Z_EXEC(tmp2,tmp1) ! tmp2 might be overwritten
   ELSE  
@@ -100,8 +86,8 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, &
 
 ! Define \lambda based on modified wavenumbers (real)
      ip = inb_grid_1 + 5 ! pointer to position in arrays dx, dz
-     IF ( kmax_total .GT. 1 ) THEN; lambda = dx(iglobal,ip) + dz(kglobal,ip)
-     ELSE;                          lambda = dx(iglobal,ip); ENDIF
+     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%aux(iglobal,ip) + g(3)%aux(kglobal,ip)
+     ELSE;                         lambda = g(1)%aux(iglobal,ip); ENDIF
 
 ! forcing term
      DO j = 1,ny
@@ -115,25 +101,29 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, &
 ! -----------------------------------------------------------------------
 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 ! -----------------------------------------------------------------------
-! Neumman BCs
-     IF ( ibc .EQ. 3 ) THEN
-     IF ( kglobal .EQ. 1              .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. imax_total/2+1) .OR.&
-          kglobal .EQ. kmax_total/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. imax_total/2+1)     )THEN
-        CALL FDE_BVP_SINGULAR_NN(imode_fdm, ny,i2, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
-     ELSE
-        CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
-     ENDIF
-     ENDIF
+     SELECT CASE(ibc)
 
-! Dirichlet BCs
-     IF ( ibc .EQ. 0 ) THEN
-     IF ( kglobal .EQ. 1              .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. imax_total/2+1) .OR.&
-          kglobal .EQ. kmax_total/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. imax_total/2+1)     )THEN
-        CALL FDE_BVP_SINGULAR_DD(imode_fdm, ny,i2, y,dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
-     ELSE
-        CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
-     ENDIF
-     ENDIF
+     CASE(3) ! Neumann   & Neumann   BCs
+        IF ( kglobal .EQ. 1             .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1) .OR.&
+             kglobal .EQ. g(3)%size/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1)     )THEN
+           CALL FDE_BVP_SINGULAR_NN(imode_fdm, ny,i2, &
+                g(2)%aux, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
+        ELSE
+           CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, &
+                g(2)%aux, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+        ENDIF
+
+     CASE(0) ! Dirichlet & Dirichlet BCs
+        IF ( kglobal .EQ. 1             .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1) .OR.&
+             kglobal .EQ. g(3)%size/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1)     )THEN
+           CALL FDE_BVP_SINGULAR_DD(imode_fdm, ny,i2, &
+                g(2)%nodes,g(2)%aux, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
+        ELSE
+           CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, &
+                           g(2)%aux, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+        ENDIF
+
+     END SELECT
 
 ! normalize
      DO j = 1,ny
@@ -148,7 +138,7 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, &
 ! ###################################################################
 ! Fourier field p (based on array tmp1)
 ! ###################################################################
-  IF ( kmax_total .GT. 1 ) THEN
+  IF ( g(3)%size .GT. 1 ) THEN
      CALL OPR_FOURIER_B_Z_EXEC(tmp1,wrk3d) 
      CALL OPR_FOURIER_B_X_EXEC(nx,ny,nz, wrk3d,a, tmp1) 
   ELSE
@@ -158,8 +148,8 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, &
 ! ###################################################################
 ! Fourier derivatives (based on array tmp2)
 ! ###################################################################
-  IF ( iflag .EQ. 2 .OR. iflag .EQ. 3 ) THEN
-     IF ( kmax_total .GT. 1 ) THEN
+  IF ( iflag .EQ. 2 ) THEN
+     IF ( g(3)%size .GT. 1 ) THEN
         CALL OPR_FOURIER_B_Z_EXEC(tmp2,wrk3d) 
         CALL OPR_FOURIER_B_X_EXEC(nx,ny,nz, wrk3d,dpdy, tmp2) 
      ELSE

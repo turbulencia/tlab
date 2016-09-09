@@ -18,7 +18,7 @@ PROGRAM VPOISSON
   
   TINTEGER i, j, k,  ibc_x(4), ibc_y(4), ibc_z(4)
   TINTEGER isize_wrk3d, itype
-  TREAL dummy, error, mean, AVG_IK, falpha, lambda
+  TREAL dummy, error, falpha, lambda
 
   TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
 
@@ -82,8 +82,8 @@ PROGRAM VPOISSON
   itype = 2
 
   IF      ( itype .EQ. 1 ) THEN
-     CALL OPR_POISSON_FXZ(imode_fdm, i3,i3, imax,jmax,kmax,  &
-          y,dx,dy,dz, a,c, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
+     CALL OPR_POISSON_FXZ(imode_fdm, i2,i3, imax,jmax,kmax, g, &
+          a,c, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
      e = c ! save dp/dy
   ELSE IF ( itype .EQ. 2 ) THEN
      WRITE(*,*) 'Eigenvalue ?'
@@ -118,7 +118,7 @@ PROGRAM VPOISSON
 ! ###################################################################
 ! solve poisson eqn
 ! ###################################################################
-!  CALL OPR_POISSON_FXZ(imode_fdm, i3,i3, imax,jmax,kmax,  &
+!  CALL OPR_POISSON_FXZ(imode_fdm, i2,i3, imax,jmax,kmax,  &
 !       y,dx,dy,dz, b,c,d,e, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
   CALL DNS_WRITE_FIELDS('field.out', i1, imax,jmax,kmax, i1, i1, b, wrk3d)
 

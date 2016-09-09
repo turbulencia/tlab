@@ -655,8 +655,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   ENDDO
 
 ! pressure in tmp12, Oy derivative in tmp11
-  CALL OPR_POISSON_FXZ(imode_fdm,i2,i3, imax,jmax,kmax,  &
-       y,dx,dy,dz, tmp12,tmp11, tmp41,tmp42, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
+  CALL OPR_POISSON_FXZ(imode_fdm,i2,i3, imax,jmax,kmax, g, &
+       tmp12,tmp11, tmp41,tmp42, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
 
   IF ( tower_mode .EQ. 1 .AND. rkm_substep .EQ. rkm_endstep ) THEN 
      CALL DNS_TOWER_ACCUMULATE(tmp12,i4,dx,dy,dz,wrk1d) 

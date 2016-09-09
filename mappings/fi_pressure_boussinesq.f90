@@ -181,9 +181,8 @@ IMPLICIT NONE
 ! #######################################################################
 ! Solve Poisson equation
 ! #######################################################################
-  CALL OPR_POISSON_FXZ(imode_fdm,i1,i3, imax,jmax,kmax, &
-       y,dx,dy,dz, p,wrk3d, tmp2,tmp3, &
-       wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
+  CALL OPR_POISSON_FXZ(imode_fdm,i1,i3, imax,jmax,kmax, g,&
+       p,wrk3d, tmp2,tmp3, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
   RETURN
 END SUBROUTINE FI_PRESSURE_BOUSSINESQ
