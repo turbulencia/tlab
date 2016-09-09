@@ -42,12 +42,19 @@ SUBROUTINE BLD_EXP(idir, x, imax, scalex)
   params(1) = iseg_vals(2,1,idir)/ds ! f_1
   params(2) = iseg_vals(1,1,idir)    ! transition point in uniform grid s_1
   params(3) = iseg_vals(3,1,idir)    ! delta_1
-  IF ( iseg_opts(2,1,idir) .EQ. 2 ) THEN
+  IF ( iseg_opts(2,1,idir) .GT.1 ) THEN
      params(4) = iseg_vals(5,1,idir)/ds ! f_2
      params(5) = iseg_vals(4,1,idir)    ! transition point in uniform grid s_2
      params(6) = iseg_vals(6,1,idir)    ! delta_2
   ELSE
      params(4) = C_0_R
+  ENDIF
+  IF ( iseg_opts(2,1,idir) .GT. 2 ) THEN
+     params(7) = iseg_vals(8,1,idir) ! f_3
+     params(8) = iseg_vals(7,1,idir) ! transition point in uniform grid s_3
+     params(9) = iseg_vals(9,1,idir) ! delta_3
+  ELSE
+     params(7) = C_0_R
   ENDIF
 
 ! create grid x as a function of variable s
@@ -74,6 +81,7 @@ FUNCTION GRID_EXP(y,p)
 
   TREAL fds_1, s0_1, delta_1
   TREAL fds_2, s0_2, delta_2
+  TREAL fds_3, s0_3, delta_3
 
 ! first segment
   fds_1   = p(1)
@@ -87,8 +95,17 @@ FUNCTION GRID_EXP(y,p)
   s0_2    = p(5)
   delta_2 = p(6)
 
-  IF ( fds_2 .GT. C_0_R ) THEN
+  IF ( fds_2 .NE. C_0_R ) THEN
      GRID_EXP = GRID_EXP*(EXP((y-s0_2)/delta_2)+C_1_R)**(fds_2*delta_2)
+  ENDIF
+
+! third segment
+  fds_3   = p(7)
+  s0_3    = p(8)
+  delta_3 = p(9)
+
+  IF ( fds_3 .NE. C_0_R ) THEN
+     GRID_EXP = GRID_EXP*( C_1_R + fds_3 /(COSH((y-s0_3)/delta_3))**C_2_R )
   ENDIF
 
   RETURN

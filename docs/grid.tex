@@ -79,7 +79,7 @@ In case of {\tt opts=6} a hyperbolic tangent variation of the stretching factor
 $f=d/dx (\Delta x)$ (so defined, $f+1$ an approximation to the ratio $(\Delta x)
 _{j+1}/(\Delta x) _{j} $) is imposed by solving the linear equation
 \begin{equation}
-\frac{d^2x}{ds^2} - (f/h_1)\frac{dx}{ds} = 0 \;,
+\frac{d^2x}{ds^2} - (f/h_0)\frac{dx}{ds} = 0 \;,
 \end{equation}
 where $f$ is given by
 \begin{equation}
@@ -91,7 +91,7 @@ f_1$; values smaller that $0.1$ are recommended (less that 10\% stretching). A
 first integral of this problem leads to
 \begin{equation}
 \frac{dx}{ds} =
-\left[1+\exp\left(\frac{s-s_{t1}}{\delta_1}\right)\right]^{\delta_1(\Delta f_1/h_1)} \;.
+\left[1+\exp\left(\frac{s-s_{t1}}{\delta_1}\right)\right]^{\delta_1(\Delta f_1/h_0)} \;.
 \end{equation}
 This equation for $x(s)$ needs to be solved numerically, but already shows that
 this mapping leads to an exponential growth of the space step $\Delta x$ and the
@@ -99,8 +99,14 @@ grid $x(s)$. Note that $\delta_1$ admits negative values.
 
 As before, two transitions are possible if the {\tt opts} record is set to $6,2$,
 \begin{equation}
-f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
-+ \frac{\Delta f_2}{2}\left[ 1 + \tanh\left(\frac{s-s_{t2}}{2\delta_2}\right)\right]
+  f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
+  + \frac{\Delta f_2}{2}\left[ 1 + \tanh\left(\frac{s-s_{t2}}{2\delta_2}\right)\right] \;,
+\end{equation}
+which implies
+\begin{equation}
+  \frac{dx}{ds} =
+  \left[1+\exp\left(\frac{s-s_{t1}}{\delta_1}\right)\right]^{\delta_1(\Delta f_1/h_0)}
+  \left[1+\exp\left(\frac{s-s_{t2}}{\delta_2}\right)\right]^{\delta_2(\Delta f_2/h_0)}\;.
 \end{equation}
 
 \subsection{Geometric progression}

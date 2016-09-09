@@ -36,6 +36,7 @@ SUBROUTINE BLD_TANH(idir, x, imax, scalex)
 ! -----------------------------------------------------------------------
   TREAL s_1, f_1, delta_1
   TREAL s_2, f_2, delta_2
+  TREAL s_3, f_3, delta_3
   TINTEGER i, iloc
 
 ! #######################################################################
@@ -43,10 +44,15 @@ SUBROUTINE BLD_TANH(idir, x, imax, scalex)
   s_1    = iseg_vals(1,1,idir) ! transition point in uniform grid
   f_1    = iseg_vals(2,1,idir) ! ratio f_1/f_0
   delta_1= iseg_vals(3,1,idir)
-  IF ( iseg_opts(2,1,idir) .EQ. 2 ) THEN ! mode 2
+  IF ( iseg_opts(2,1,idir) .GT. 1 ) THEN ! mode 2
      s_2    = iseg_vals(4,1,idir) ! transition point in uniform grid
      f_2    = iseg_vals(5,1,idir) ! ratio f_2/f_0
      delta_2= iseg_vals(6,1,idir)
+  ENDIF
+  IF ( iseg_opts(2,1,idir) .GT. 2 ) THEN ! mode 3
+     s_3    = iseg_vals(7,1,idir) ! transition point in uniform grid
+     f_3    = iseg_vals(8,1,idir) ! ratio f_2/f_0
+     delta_3= iseg_vals(9,1,idir)
   ENDIF
 
 ! mirrowing case; first point in array is imax/2 
@@ -59,7 +65,13 @@ SUBROUTINE BLD_TANH(idir, x, imax, scalex)
   ENDDO
 
 ! create grid x as a function of variable s 
-  IF ( iseg_opts(2,1,idir) .EQ. 2 ) THEN
+  IF      ( iseg_opts(2,1,idir) .EQ. 3 ) THEN
+     DO i = iloc,imax
+        x(i) = x(i) + (f_1-C_1_R)*delta_1*LOG(EXP((x(i)-s_1)/delta_1)+C_1_R) &
+                    + (f_2-C_1_R)*delta_2*LOG(EXP((x(i)-s_2)/delta_2)+C_1_R) &
+                    + f_3 *C_2_R *delta_3*TANH((x(i)-s_3)/delta_3)
+     ENDDO
+  ELSE IF ( iseg_opts(2,1,idir) .EQ. 2 ) THEN
      DO i = iloc,imax
         x(i) = x(i) + (f_1-C_1_R)*delta_1*LOG(EXP((x(i)-s_1)/delta_1)+C_1_R) &
                     + (f_2-C_1_R)*delta_2*LOG(EXP((x(i)-s_2)/delta_2)+C_1_R)
