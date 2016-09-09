@@ -57,9 +57,9 @@ PROGRAM INIFLOW
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: q, s, txc
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk1d,wrk2d,wrk3d
-!#ifdef USE_CGLOC
+#ifdef USE_CGLOC
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: ci,cj,ck, ipos,jpos,kpos
-!#endif
+#endif
 
   TARGET q, wrk3d
   TREAL, DIMENSION(:),   POINTER :: u, v, w, p, rho
@@ -241,8 +241,7 @@ PROGRAM INIFLOW
 
      ELSE IF ( flag_u .GT. 1 ) THEN
         CALL VELOCITY_BROADBAND(flag_u, txc(1,1),txc(1,2),txc(1,3), &
-             txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), &
-             ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
+             txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), wrk1d,wrk2d,wrk3d)
         
      ENDIF
 
@@ -264,8 +263,7 @@ PROGRAM INIFLOW
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      IF ( flag_u .NE. 0 ) THEN
         CALL PRESSURE_FLUCTUATION(u,v,w,rho,p,txc(1,1), &
-             txc(1,2),txc(1,3),txc(1,4),txc(1,5), &
-             ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
+             txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
      ENDIF
      
      IF ( imixture .GT. 0 ) THEN

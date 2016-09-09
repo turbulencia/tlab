@@ -37,10 +37,10 @@
 !#
 !########################################################################
 SUBROUTINE PRESSURE_FLUCTUATION(u,v,w,rho,p,pprime, &
-     txc1,txc2,txc3,txc4, ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
+     txc1,txc2,txc3,txc4, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL ,   ONLY : g, i1bc,j1bc,k1bc
-  USE DNS_GLOBAL ,   ONLY : imode_fdm, imax,jmax,kmax,kmax_total, isize_field, isize_wrk1d
+  USE DNS_GLOBAL ,   ONLY : imode_fdm, imax,jmax,kmax, isize_wrk1d
   USE THERMO_GLOBAL, ONLY : gama0
   USE FLOW_LOCAL,    ONLY : norm_ini_p
 
@@ -50,7 +50,6 @@ SUBROUTINE PRESSURE_FLUCTUATION(u,v,w,rho,p,pprime, &
 
   TREAL, DIMENSION(imax,jmax,kmax) :: u,v,w,rho, p,pprime
   TREAL, DIMENSION(imax,jmax,kmax) :: txc1, txc2, txc3, txc4, wrk3d
-  TREAL, DIMENSION(*)              :: ipos, jpos, kpos, ci, cj, ck
   TREAL, DIMENSION(imax,kmax,*)    :: wrk2d
   TREAL, DIMENSION(isize_wrk1d,*)  :: wrk1d
 
@@ -106,7 +105,8 @@ SUBROUTINE PRESSURE_FLUCTUATION(u,v,w,rho,p,pprime, &
 
   ELSE                                      ! General treatment
 #ifdef USE_CGLOC
-     CALL CGPOISSON(i1, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, &
+! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
+     CALL CGPOISSON(i1, imax,jmax,kmax, g(3)%size, i1bc,j1bc,k1bc, &
           dx,dy,dz, pprime, txc4,txc3,txc2, ipos,jpos,kpos,ci,cj,ck, wrk2d)
 #endif
   ENDIF

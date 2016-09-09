@@ -13,7 +13,7 @@
 !# The BCs are such that a and a + grad phi are the same at top and bottom 
 !#
 !########################################################################
-SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
+SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : g, i1bc,j1bc,k1bc
   USE DNS_GLOBAL, ONLY : imode_fdm, imax,jmax,kmax, isize_wrk1d
@@ -26,7 +26,6 @@ SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, ipos,jpos,kpos,ci,
 
   TREAL, DIMENSION(imax,jmax,kmax) :: u, v, w
   TREAL, DIMENSION(imax,jmax,kmax) :: tmp1, tmp2, tmp3, tmp4, tmp5, wrk3d
-  TREAL, DIMENSION(*)              :: ipos, jpos, kpos, ci, cj, ck
   TREAL, DIMENSION(imax,kmax,*)    :: wrk2d
   TREAL, DIMENSION(isize_wrk1d,*)  :: wrk1d
 
@@ -64,6 +63,7 @@ SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, ipos,jpos,kpos,ci,
 
   ELSE                                      ! General treatment
 #ifdef USE_CGLOC
+! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
      CALL CGPOISSON(i1, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, &
           dx,dy,dz, tmp1, tmp2,tmp3,tmp4, ipos,jpos,kpos,ci,cj,ck, wrk2d)
 #endif

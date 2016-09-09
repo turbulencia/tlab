@@ -29,9 +29,9 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL,    ONLY : g, j1bc
   USE DNS_GLOBAL,    ONLY : imode_sim, imode_flow, imode_fdm, inb_scal, imax,jmax,kmax
   USE DNS_GLOBAL,    ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem, diam_tem, jet_tem
-  USE DNS_GLOBAL,    ONLY : iprof_rho, mean_rho, delta_rho, thick_rho, ycoor_rho, prof_rho, diam_rho, jet_rho
+  USE DNS_GLOBAL,    ONLY : iprof_rho, mean_rho, delta_rho, thick_rho, ycoor_rho, prof_rho, diam_rho
   USE DNS_GLOBAL,    ONLY : iprof_u, mean_u, delta_u, thick_u, ycoor_u, prof_u, diam_u, jet_u
-  USE DNS_GLOBAL,    ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i, diam_i, jet_i
+  USE DNS_GLOBAL,    ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i, diam_i
   USE DNS_GLOBAL,    ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture
 
@@ -47,7 +47,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
   TREAL ycenter, dummy
-  TINTEGER i, j, k, ij, is
+  TINTEGER j, k, is
   TREAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL
   EXTERNAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL
 

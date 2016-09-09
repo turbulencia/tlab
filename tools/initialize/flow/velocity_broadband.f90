@@ -26,8 +26,7 @@
 !#                4  cropping in velocity potential
 !#
 !########################################################################
-SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
-     ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
+SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imode_fdm, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, isize_wrk1d, isize_field
@@ -43,14 +42,13 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
 
   TREAL, DIMENSION(imax,jmax,kmax), INTENT(OUT)   :: u,v,w
   TREAL, DIMENSION(imax,jmax,kmax), INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4,tmp5, wrk3d
-  TREAL, DIMENSION(*)              :: ipos,jpos,kpos, ci,cj,ck
   TREAL, DIMENSION(imax,kmax,*)    :: wrk2d
   TREAL, DIMENSION(isize_wrk1d,*)  :: wrk1d
 
   TARGET :: tmp1, tmp2, tmp3
 
 ! -------------------------------------------------------------------
-  TINTEGER j, idsp, ibc, ibcmin, ibcmax
+  TINTEGER j, ibc, ibcmin, ibcmax
   TREAL ycenter, ymin, ymax, amplify, dummy
 
 ! Pointers to existing allocated space
@@ -188,6 +186,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
         
      ELSE                                      ! General treatment
 #ifdef USE_CGLOC
+! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
         CALL CGPOISSON(i1, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, &
              dx,dy,dz, u, wx,v,w, ipos,jpos,kpos,ci,cj,ck, wrk2d)
 #endif
@@ -273,7 +272,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, &
 ! vorticity field because it was not solenoidal.
 ! ###################################################################
   IF ( flag_dilatation .EQ. 1 ) THEN
-     CALL SOLENOIDAL(flag_wall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, ipos,jpos,kpos,ci,cj,ck, wrk1d,wrk2d,wrk3d)
+     CALL SOLENOIDAL(flag_wall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
   ENDIF
 
   RETURN

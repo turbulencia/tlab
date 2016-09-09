@@ -15,7 +15,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, jmax_total, isize_field, area
   USE DNS_GLOBAL,    ONLY : imode_flow
-  USE DNS_GLOBAL,    ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem, diam_tem, jet_tem
+  USE DNS_GLOBAL,    ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem
   USE DNS_GLOBAL,    ONLY : iprof_rho
   USE THERMO_GLOBAL, ONLY : imixture
   USE FLOW_LOCAL
