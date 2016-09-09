@@ -104,6 +104,8 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
 ! ###################################################################
 ! LU factorization first-order derivative, done in routine TRID*FS
 ! ###################################################################
+  ! ig = 3
+  ! g%lu1 => x(:,ig:)
   ip = inb_grid_1 - 1
 
 ! -------------------------------------------------------------------
@@ -117,8 +119,9 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
      ELSE IF ( imethod .EQ. FDM_COM8_JACOBIAN                                 ) THEN
         CALL FDM_C1N8P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ENDIF
-
      CALL TRIDPFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3),dx(1,ip+4),dx(1,ip+5))
+     ip = ip + 5
+     ! ig = ig + 5
 
 ! -------------------------------------------------------------------
 ! Nonperiodic case; tridiagonal for 4 different BCs
@@ -134,8 +137,9 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
         CALL FDM_C1N6_LHS(nx, i0,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ENDIF
      CALL TRIDFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-
      ip = ip + 3
+     ! ig = ig + 3
+
      IF      ( imethod .EQ. FDM_COM4_JACOBIAN ) THEN
         CALL FDM_C1N4_LHS(nx, i1,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN ) THEN
@@ -146,8 +150,9 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
         CALL FDM_C1N6_LHS(nx, i1,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ENDIF
      CALL TRIDFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-
      ip = ip + 3
+     ! ig = ig + 3
+
      IF      ( imethod .EQ. FDM_COM4_JACOBIAN ) THEN
         CALL FDM_C1N4_LHS(nx, i0,i1, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN ) THEN
@@ -158,8 +163,9 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
         CALL FDM_C1N6_LHS(nx, i0,i1, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ENDIF
      CALL TRIDFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-
      ip = ip + 3
+     ! ig = ig + 3
+
      IF      ( imethod .EQ. FDM_COM4_JACOBIAN ) THEN
         CALL FDM_C1N4_LHS(nx, i1,i1, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN ) THEN
@@ -170,12 +176,15 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
         CALL FDM_C1N6_LHS(nx, i1,i1, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ENDIF
      CALL TRIDFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
+     ip = ip + 3
+     ! ig = ig + 3
 
   ENDIF
 
 ! ###################################################################
 ! LU factorization second-order derivative, done in routine TRID*FS
 ! ###################################################################
+  ! g%lu2 => x(:,ig:)
   ip = inb_grid_2 - 1
 
 ! -------------------------------------------------------------------
@@ -190,6 +199,8 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
         CALL FDM_C2N6P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3)) ! 8th not yet developed
      ENDIF
      CALL TRIDPFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3),dx(1,ip+4),dx(1,ip+5))
+     ip = ip + 5
+     ! ig = ig + 5
 
 ! -------------------------------------------------------------------
 ! Nonperiodic case; tridiagonal
@@ -206,11 +217,12 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
         dx(:,ip+8:ip+10) = dx(:,ip+1:ip+3) ! saving the array A w/o LU decomposition
      ENDIF
      CALL TRIDFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
+     ip = ip + 3
+     ! ig = ig + 3
 
 ! Different BCs
      IF ( imethod .NE. FDM_COM6_DIRECT ) THEN
 
-     ip = ip + 3
      IF      ( imethod .EQ. FDM_COM4_JACOBIAN ) THEN
         CALL FDM_C2N4_LHS(nx, i1,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN ) THEN
@@ -221,8 +233,9 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
      !    dx(1,ip+1:ip+3) = dx(1,inb_grid_2+7:inb_grid_2+9)
      ENDIF
      CALL TRIDFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-
      ip = ip + 3
+     ! ig = ig + 3
+
      IF      ( imethod .EQ. FDM_COM4_JACOBIAN ) THEN
         CALL FDM_C2N4_LHS(nx, i0,i1, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN ) THEN
@@ -233,8 +246,9 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
      !    dx(1,ip+1:ip+3) = dx(1,inb_grid_2+7:inb_grid_2+9)
      ENDIF
      CALL TRIDFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-
      ip = ip + 3
+     ! ig = ig + 3
+
      IF      ( imethod .EQ. FDM_COM4_JACOBIAN ) THEN
         CALL FDM_C2N4_LHS(nx, i1,i1, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN ) THEN
@@ -245,6 +259,8 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
      !    dx(1,ip+1:ip+3) = dx(1,inb_grid_2+7:inb_grid_2+9)
      ENDIF
      CALL TRIDFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
+     ip = ip + 3
+     ! ig = ig + 3
 
   ENDIF
 
@@ -253,6 +269,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
 ! ###################################################################
 ! LU factorization second-order derivative times the diffusivities
 ! ###################################################################
+  ! g%lu2d => x(:,ig:)
   ip = inb_grid_3 - 1
 
   DO is = 0,inb_scal ! case 0 for the reynolds number
@@ -279,6 +296,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
      ENDIF
      
      ip = ip + 5 ! stride is 5, which is set by the maximum imposed by periodic BCs
+     ! ig = ig + 5
   ENDDO
 
 ! ###################################################################
@@ -289,6 +307,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
 ! -------------------------------------------------------------------
 ! First order derivative
 ! -------------------------------------------------------------------
+     ! g%wn1 => x(:,ig:)
      ip = inb_grid_1 + 5
 
      r28 = C_14_R*C_2_R
@@ -308,9 +327,12 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
 ! Final calculations because it is mainly used in the Poisson solver like this
      dx(:,ip) = (dx(:,ip)/dx(1,1))**2
 
+     ! ig = ig + 1
+
 ! -------------------------------------------------------------------
 ! Second order derivative
 ! -------------------------------------------------------------------
+     ! g%wn2 => x(:,ig:)
      ip = inb_grid_2 + 5
 
      r24 = C_6_R*C_4_R 
@@ -324,6 +346,8 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
 
 ! Final calculations because it is mainly used in the Helmholtz solver like this
      dx(:,ip) = dx(:,ip)/(dx(1,1)**2)
+
+     ! ig = ig + 1
 
   ENDIF
 
