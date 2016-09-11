@@ -369,9 +369,10 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
   IF ( transport%active(is) ) THEN ! Transport in tmp3
      CALL FI_TRANS_FLUX(transport, i1, imax,jmax,kmax, is, dy, s,tmp3, dsdy, wrk1d,wrk2d,wrk3d)
+! probably to be split into transport and transport flux, mimicking radiation terms
   ENDIF
 
-  IF ( is .GT. inb_scal ) THEN     ! Diagnostic variables
+  IF ( is .GT. inb_scal ) THEN     ! Diagnostic variables; I overwrite tmp1 and dsdx and recalculate them.
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
         coefQ = C_1_R                        ! Coefficient in the evaporation term
         coefR = C_0_R                        ! Coefficient in the radiation term
@@ -386,28 +387,35 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, dsdx,tmp2, tmp1, wrk1d,wrk2d,wrk3d)
         
         dummy=-diff *coefQ
-        tmp2 = dsdz *tmp2 *dummy              ! evaporation source
+        tmp2 = dsdz *tmp2 *dummy         ! evaporation source
         
-        IF ( transport%active(is) ) THEN ! transport source; needs dsdy
-           dummy= coefQ
-           tmp3 = tmp3 *( coefT + dsdy *dummy )
+        IF ( transport%active(is) .OR. radiation%active(is) ) THEN ! preparing correction terms into dsdz
+           CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, dsdx,tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
+           dsdz = dsdz *tmp1
         ENDIF
         
         IF ( radiation%active(is) ) THEN ! radiation source; needs dsdy
            CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,1,1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
            dummy= thermo_param(2) *coefQ
            tmp1 = tmp1 *( coefR + dsdy *dummy  )
-           
-! Correction term
-           CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, dsdx,dsdy, i0,i0, wrk1d,wrk2d,wrk3d)
+! Correction term needs dsdz
            CALL OPR_RADIATION_FLUX(radiation, imax,jmax,kmax, dy, s(1,1,1,radiation%scalar(is)), dsdx, wrk1d,wrk3d)
-           dsdx = dsdx *dsdy *dsdz *dummy
-           
+           dsdx = dsdx *dsdz *dummy
         ELSE
            tmp1 = C_0_R; dsdx = C_0_R
-
         ENDIF
 
+        IF ( transport%active(is) ) THEN ! transport source; needs dsdy
+           dummy= coefQ
+           tmp3 = tmp3 *( coefT + dsdy *dummy )
+! Correction term needs dsdz
+           dummy= dummy
+           dsdy =-s(:,:,:,transport%scalar(1))**(C_1_R+transport%auxiliar(1))
+           dsdz = dsdy *dsdz *dummy
+        ELSE
+           dsdz = C_0_R
+        ENDIF
+        
      ELSE
         CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,dsdx, dsdy, wrk1d,wrk2d,wrk3d)
         CALL FI_BUOYANCY_SOURCE(buoyancy, isize_field, s, dsdx, wrk3d) ! dsdx contains gradient
@@ -427,7 +435,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   ENDIF
   IF ( transport%active(is) ) THEN
      k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, dx,dz, mean2d(1,k), wrk1d(1,1), area)
-     k = k + 1; mean2d(:,k) = C_0_R ! Correction term; to be developed.
+     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdz, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! correction term
   ENDIF
 
   wrk3d = tmp1 + tmp2 + tmp3 ! total
