@@ -23,6 +23,8 @@ case $kernel in
                 SYST=mpipc;; 
             juqueen* )
                 SYST=juqueen;; 
+            tinkerbell* )
+                SYST=archlinux;; 
 	esac 
 esac
 

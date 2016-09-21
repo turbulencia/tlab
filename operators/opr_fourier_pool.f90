@@ -57,7 +57,6 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
 #include "fftw3.f"
 #endif
 
-!  TREAL, DIMENSION(*) :: tmp, wrk1d, wrk2d, wrk3d
   TREAL, DIMENSION(isize_txc_field), INTENT(INOUT) :: tmp, wrk3d
   TREAL, DIMENSION(imax_total+2),    INTENT(INOUT) :: wrk1d, wrk2d
 
@@ -94,6 +93,15 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
   isize_stride = isize_fft_z
 
   IF ( kmax_total .GT. 1 ) THEN
+#ifdef _DEBUG
+     CALL dfftw_plan_many_dft(fft_plan_fz, i1, kmax_total, isize_fft_z, &
+          tmp,   kmax_total, isize_stride, i1, &
+          wrk3d, kmax_total, isize_stride, i1, FFTW_FORWARD, FFTW_ESTIMATE)
+     
+     CALL dfftw_plan_many_dft(fft_plan_bz, i1, kmax_total, isize_fft_z, &
+          tmp,   kmax_total, isize_stride, i1, &
+          wrk3d, kmax_total, isize_stride, i1, FFTW_BACKWARD, FFTW_ESTIMATE)
+#else
      CALL dfftw_plan_many_dft(fft_plan_fz, i1, kmax_total, isize_fft_z, &
           tmp,   kmax_total, isize_stride, i1, &
           wrk3d, kmax_total, isize_stride, i1, FFTW_FORWARD, FFTW_MEASURE)
@@ -101,6 +109,7 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
      CALL dfftw_plan_many_dft(fft_plan_bz, i1, kmax_total, isize_fft_z, &
           tmp,   kmax_total, isize_stride, i1, &
           wrk3d, kmax_total, isize_stride, i1, FFTW_BACKWARD, FFTW_MEASURE)
+#endif
   ENDIF
 
 ! -----------------------------------------------------------------------
@@ -122,17 +131,30 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
   ELSE
 #endif
      isize_disp = imax_total/2+1
+#ifdef _DEBUG
+     CALL dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, imax_total, wrk1d,wrk2d, FFTW_ESTIMATE)
+#else
      CALL dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, imax_total, wrk1d,wrk2d, FFTW_MEASURE)
+#endif
 #ifdef USE_MPI
   ENDIF
 #endif
 
+#ifdef _DEBUG
+  CALL dfftw_plan_many_dft_r2c(fft_plan_fx, i1, imax_total, isize_fft_x, &
+       tmp,   imax_total,     i1, imax_total, &
+       wrk3d, imax_total/2+1, i1, isize_disp, FFTW_ESTIMATE)
+  CALL dfftw_plan_many_dft_c2r(fft_plan_bx, i1, imax_total, isize_fft_x, &
+       tmp,   imax_total/2+1, i1, isize_disp, &
+       wrk3d, imax_total,     i1, imax_total, FFTW_ESTIMATE)
+#else
   CALL dfftw_plan_many_dft_r2c(fft_plan_fx, i1, imax_total, isize_fft_x, &
        tmp,   imax_total,     i1, imax_total, &
        wrk3d, imax_total/2+1, i1, isize_disp, FFTW_MEASURE)
   CALL dfftw_plan_many_dft_c2r(fft_plan_bx, i1, imax_total, isize_fft_x, &
        tmp,   imax_total/2+1, i1, isize_disp, &
        wrk3d, imax_total,     i1, imax_total, FFTW_MEASURE)
+#endif
   
 ! -----------------------------------------------------------------------
 ! Oy direction
@@ -142,6 +164,15 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
   isize_stride = isize_fft_y
 
   IF ( jmax_total .GT. 1 ) THEN
+#ifdef _DEBUG
+     CALL dfftw_plan_many_dft(fft_plan_fy, i1, jmax_total, isize_fft_y, &
+          tmp,   jmax_total, isize_stride, i1, &
+          wrk3d, jmax_total, isize_stride, i1, FFTW_FORWARD, FFTW_ESTIMATE)
+     
+     CALL dfftw_plan_many_dft(fft_plan_by, i1, jmax_total, isize_fft_y, &
+          tmp,   jmax_total, isize_stride, i1, &
+          wrk3d, jmax_total, isize_stride, i1, FFTW_BACKWARD, FFTW_ESTIMATE)
+#else
      CALL dfftw_plan_many_dft(fft_plan_fy, i1, jmax_total, isize_fft_y, &
           tmp,   jmax_total, isize_stride, i1, &
           wrk3d, jmax_total, isize_stride, i1, FFTW_FORWARD, FFTW_MEASURE)
@@ -149,6 +180,7 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
      CALL dfftw_plan_many_dft(fft_plan_by, i1, jmax_total, isize_fft_y, &
           tmp,   jmax_total, isize_stride, i1, &
           wrk3d, jmax_total, isize_stride, i1, FFTW_BACKWARD, FFTW_MEASURE)
+#endif
   ENDIF
 
 #else
