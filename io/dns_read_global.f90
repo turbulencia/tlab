@@ -805,7 +805,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      WRITE(lstr,*) is; lstr='ThickScalar'//TRIM(ADJUSTL(lstr))
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', thick_i(is))
      WRITE(lstr,*) is; lstr='DeltaScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '1.0', delta_i(is))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', delta_i(is))
 ! additional specific data
 !     IF ( ABS(iprof_i(is)) .EQ. PROFILE_LINEAR_ERF ) THEN
         WRITE(lstr,*) is; lstr='BottomSlopeScalar'//TRIM(ADJUSTL(lstr))
@@ -1025,21 +1025,20 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   transport%scalar = inb_scal_array
   radiation%scalar = inb_scal_array
   
-  IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-     transport%parameters(inb_scal_array    ) = C_1_R ! liquid
-     transport%parameters(inb_scal_array + 1) = C_1_R ! buoyancy
-
+  IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+     IF ( transport%type .NE. EQNS_NONE ) THEN 
+        transport%scalar = inb_scal_array                ! Transport is caused by liquid
+        transport%parameters(inb_scal_array    ) = C_1_R ! liquid
+        transport%parameters(inb_scal_array + 1) = C_1_R ! buoyancy
 ! Adding the settling number in the parameter definitions
-     transport%parameters = transport%parameters *settling
+        transport%parameters = transport%parameters *settling
+     ENDIF
 
-! Transport is caused by liquid (settling)     
-     transport%scalar = inb_scal_array
-
-! Radiation is caused by liquid
-     radiation%scalar = inb_scal_array
-
-     radiation%active(inb_scal_array    ) = .TRUE. ! liquid
-     radiation%active(inb_scal_array + 1) = .TRUE. ! buoyancy
+     IF ( radiation%type .NE. EQNS_NONE ) THEN 
+        radiation%scalar = inb_scal_array             ! Radiation is caused by liquid
+        radiation%active(inb_scal_array    ) = .TRUE. ! liquid
+        radiation%active(inb_scal_array + 1) = .TRUE. ! buoyancy
+     ENDIF
      
   ENDIF
 

@@ -268,6 +268,11 @@ SUBROUTINE THERMO_INITIALIZE
      ENDDO
      THERMO_SPNAME(NSP) = 'Liquid' ! Normalized Liquid
      
+     WGHT(1) = 18.015   ! unused, but defined for re-normalization below
+     WGHT(2) = 28.9644
+     WGHT(3) = 18.015
+     WGHT(4:)= C_1_R
+     
   ENDIF
 
 ! ###################################################################
@@ -536,7 +541,8 @@ SUBROUTINE THERMO_INITIALIZE
 ! -------------------------------------------------------------------
 ! Water vapor, air and water liquid (data from Bjorn)
 ! -------------------------------------------------------------------
-     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. &
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR .OR. & ! Not needed so far
+               imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
                imixture .EQ. MIXT_TYPE_SUPSAT   ) THEN
 
 ! Enthalpy of Formation in Jules/Kmol
@@ -618,7 +624,7 @@ SUBROUTINE THERMO_INITIALIZE
            ENDDO
            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/tmp2/tloc**(ipsat-1)
         ENDDO
-     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN; !Nothing to be done for this mixture
+
      ELSE
         CALL IO_WRITE_ASCII(efile, 'THERMO_INITIALIZE: Must use chemkin data.')
         CALL DNS_STOP(DNS_ERROR_THERMOCONT)
@@ -708,7 +714,7 @@ SUBROUTINE THERMO_INITIALIZE
 
   gama0 = CPREF*WREF/(CPREF*WREF-RGAS)
 ! Value of R_0/(C_{p,0}W_0) is called GRATIO
-  GRATIO = (gama0-C_1_R)/gama0
+  IF ( gama0 .GT. C_0_R ) GRATIO = (gama0-C_1_R)/gama0
 
   DO is = 1,NSP
      HREF(is) = HREF(is)/(CPREF*TREF)
