@@ -59,7 +59,7 @@ SUBROUTINE PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, u,up, bcs_kmin,bcs_kmax, wrk
 #endif
 
   IF ( g(3)%size .EQ. 1 ) THEN ! Set to zero in 2D case
-  up = C_0_R
+     up = C_0_R
      
   ELSE
 ! ###################################################################
@@ -82,7 +82,7 @@ SUBROUTINE PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, u,up, bcs_kmin,bcs_kmax, wrk
 #endif
 
 ! ###################################################################
-  CALL OPR_PARTIAL(imode_fdm, nxy, g(3), p_a,p_b, bcs_kmin,bcs_kmax, wrk2d)
+  CALL OPR_PARTIAL1(imode_fdm, nxy, g(3), p_a,p_b, bcs_kmin,bcs_kmax, wrk2d)
   
 ! ! ###################################################################
 ! ! -------------------------------------------------------------------

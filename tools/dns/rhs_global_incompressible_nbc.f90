@@ -543,7 +543,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
            CALL DNS_TRANSPOSE(bt3,imax_total,nyz_trans,imax_total,tmp31,nyz_trans) 
            ! CALL PARTIAL(imode_fdm,nyz_trans,imax_total,i1bc,dx, &
            !      tmp31,tmp32,0,0,wrk1d,wrk2d,wrk3d) 
-           CALL OPR_PARTIAL(imode_fdm, nyz_trans, g(1), tmp31,tmp32, 0,0, wrk2d) 
+           CALL OPR_PARTIAL1(imode_fdm, nyz_trans, g(1), tmp31,tmp32, 0,0, wrk2d) 
            CALL DNS_TRANSPOSE(tmp32,nyz_trans,imax_total,nyz_trans,bt3,imax_total) 
            t_ser = t_ser + (t_tmp+MPI_WTime())
            !
@@ -556,7 +556,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
            t_tmp = -MPI_WTime()
            ! CALL PARTIAL(imode_fdm,nxy_trans,kmax_total,k1bc,dz, &
            !      tmp41,bt4,0,0,wrk1d,wrk2d,wrk3d)  
-           CALL OPR_PARTIAL(imode_fdm, nxy_trans, g(3), tmp41,bt4, 0,0, wrk2d)  
+           CALL OPR_PARTIAL1(imode_fdm, nxy_trans, g(3), tmp41,bt4, 0,0, wrk2d)  
            t_ser = t_ser + (t_tmp+MPI_WTime())
            !
            CALL NB3DFFT_R2R_ZYCOMM(bt4,bt4,tmp42,tmp41,info(BPZY),t_tmp);t_comp=t_comp+t_tmp;
