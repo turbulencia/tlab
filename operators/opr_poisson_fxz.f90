@@ -29,7 +29,7 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, g,&
      a,dpdy, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
   USE DNS_TYPES,  ONLY : grid_structure
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz, inb_grid_1
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz !, inb_grid_1
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -85,9 +85,11 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, g,&
 #endif
 
 ! Define \lambda based on modified wavenumbers (real)
-     ip = inb_grid_1 + 5 ! pointer to position in arrays dx, dz
-     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%aux(iglobal,ip) + g(3)%aux(kglobal,ip)
-     ELSE;                         lambda = g(1)%aux(iglobal,ip); ENDIF
+     ! ip = inb_grid_1 + 5 ! pointer to position in arrays dx, dz
+     ! IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%aux(iglobal,ip) + g(3)%aux(kglobal,ip)
+     ! ELSE;                         lambda = g(1)%aux(iglobal,ip); ENDIF
+     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%wn1(iglobal,1) + g(3)%wn1(kglobal,1)
+     ELSE;                         lambda = g(1)%wn1(iglobal,1); ENDIF
 
 ! forcing term
      DO j = 1,ny

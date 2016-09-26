@@ -3,9 +3,6 @@
 #include "dns_error.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2012/07/10 - C. Ansorge
@@ -24,9 +21,6 @@
 !# Pressure term requires 3 1st order derivatives
 !# BCs need 2 1st order derivatives in Oy
 !# Scalar needed for the buoyancy term
-!#
-!########################################################################
-!# ARGUMENTS 
 !#
 !########################################################################
 SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
@@ -314,7 +308,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
         ENDDO
         ip_b = 1     ; ip_t = 1+ imax*kmax
         CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, &
-             dx,dy,dz, tmp7, tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(1,5),wrk3d )      
+             tmp7, tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(1,5),wrk3d )      
 
         DO ij=1,isize_field  
            s(ij,is) = tmp7(ij) * beta - kef*s(ij,is)
@@ -333,11 +327,11 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
 
   bcs_hb(1:imax,1:kmax,4:6) = -alpha*aug*bcs_hb(1:imax,1:kmax,4:6) 
   bcs_ht(1:imax,1:kmax,4:6) = -alpha*aug*bcs_ht(1:imax,1:kmax,4:6)
-  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, dx,dy,dz, &
+  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, &
        tmp1, tmp5,tmp6, bcs_hb(1,1,4), bcs_ht(1,1,4), wrk1d, wrk1d(:,5),wrk3d)
-  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, dx,dy,dz, &
+  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, &
        tmp2, tmp5,tmp6, bcs_hb(1,1,5), bcs_ht(1,1,5), wrk1d, wrk1d(:,5),wrk3d)
-  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, dx,dy,dz, &
+  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, &
        tmp3, tmp5,tmp6, bcs_hb(1,1,6), bcs_ht(1,1,6), wrk1d, wrk1d(:,5),wrk3d)
 
   DO ij=1,isize_field  

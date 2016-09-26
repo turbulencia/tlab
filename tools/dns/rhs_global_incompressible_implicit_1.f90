@@ -1,6 +1,7 @@
-!########################################################################
-!# Tool/Library
-!#
+#include "types.h"
+#include "dns_const.h"
+#include "dns_error.h"
+
 !########################################################################
 !# HISTORY
 !#
@@ -16,14 +17,6 @@
 !# 
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-#include "dns_error.h"
-
-
 SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
      (dte,etime,kex,kim,kco,x,y,z,dx,dy,dz, &
      q,hq,u,v,w,h1,h2,h3,s,hs,&
@@ -367,7 +360,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
         ENDDO
         ip_b = 1     ; ip_t = 1+ imax*kmax
         CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, &
-             dx,dy,dz, s(1,is), tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(1,5),wrk3d )      
+             s(1,is), tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(1,5),wrk3d )      
 
         DO ij=1,isize_field  
            s(ij,is) = s(ij,is) * beta
@@ -376,8 +369,6 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
      ENDDO
 
   ENDIF
-
-986 FORMAT('E',4('[',E10.3,':',E10.3']',1x))
 
 ! ################################################################################
 ! IMPLICIT PART OF SUBSTEP - change viscosity accordingly 
@@ -396,7 +387,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 
   ip_b = 1; ip_t = 1+imax*kmax  
   CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, &
-       dx,dy,dz, tmp1, tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(:,5),wrk3d )     
+       tmp1, tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(:,5),wrk3d )     
 
   DO k=1,kmax 
      ip=(k-1)*imax*jmax+1; wrk2d(ip_b:ip_b+imax-1)=-alpha*v(ip:ip+imax-1); ip_b=ip_b+imax
@@ -404,7 +395,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   ENDDO
   ip_b = 1     ; ip_t = 1+ imax*kmax 
   CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, &
-       dx,dy,dz, tmp2, tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(:,5),wrk3d )     
+       tmp2, tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(:,5),wrk3d )     
 
   DO k=1,kmax 
      ip=(k-1)*imax*jmax+1; wrk2d(ip_b:ip_b+imax-1)=-alpha*w(ip:ip+imax-1); ip_b=ip_b+imax
@@ -412,7 +403,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   ENDDO
   ip_b = 1     ; ip_t = 1+ imax*kmax 
   CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, &
-       dx,dy,dz, tmp3, tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(:,5),wrk3d )     
+       tmp3, tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(:,5),wrk3d )     
   DO ij=1,isize_field  
      u(ij) = tmp1(ij) * beta 
      v(ij) = tmp2(ij) * beta

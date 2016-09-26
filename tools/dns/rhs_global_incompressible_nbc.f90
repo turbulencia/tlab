@@ -541,8 +541,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
            !
            t_tmp = -MPI_WTime()
            CALL DNS_TRANSPOSE(bt3,imax_total,nyz_trans,imax_total,tmp31,nyz_trans) 
-           CALL PARTIAL(imode_fdm,nyz_trans,imax_total,i1bc,dx, &
-                tmp31,tmp32,0,0,wrk1d,wrk2d,wrk3d) 
+           ! CALL PARTIAL(imode_fdm,nyz_trans,imax_total,i1bc,dx, &
+           !      tmp31,tmp32,0,0,wrk1d,wrk2d,wrk3d) 
+           CALL OPR_PARTIAL(imode_fdm, nyz_trans, g(1), tmp31,tmp32, 0,0, wrk2d) 
            CALL DNS_TRANSPOSE(tmp32,nyz_trans,imax_total,nyz_trans,bt3,imax_total) 
            t_ser = t_ser + (t_tmp+MPI_WTime())
            !
@@ -553,8 +554,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
            t_test=t_test+t_tmp  
            CALL NB3DFFT_R2R_ZUNPACK(tmp41,bt4,info(FPYZ),t_tmp); t_comp=t_comp+t_tmp;  
            t_tmp = -MPI_WTime()
-           CALL PARTIAL(imode_fdm,nxy_trans,kmax_total,k1bc,dz, &
-                tmp41,bt4,0,0,wrk1d,wrk2d,wrk3d)  
+           ! CALL PARTIAL(imode_fdm,nxy_trans,kmax_total,k1bc,dz, &
+           !      tmp41,bt4,0,0,wrk1d,wrk2d,wrk3d)  
+           CALL OPR_PARTIAL(imode_fdm, nxy_trans, g(3), tmp41,bt4, 0,0, wrk2d)  
            t_ser = t_ser + (t_tmp+MPI_WTime())
            !
            CALL NB3DFFT_R2R_ZYCOMM(bt4,bt4,tmp42,tmp41,info(BPZY),t_tmp);t_comp=t_comp+t_tmp;
@@ -662,7 +664,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
      CALL DNS_TOWER_ACCUMULATE(tmp12,i4,dx,dy,dz,wrk1d) 
   ENDIF
 
-
   CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i0,dx,tmp12,tmp41,i0,i0,wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, i0,dz,tmp12,tmp42,i0,i0,wrk1d,wrk2d,wrk3d) 
   
@@ -673,7 +674,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
   bcs_hb(:,:,1:inb_vars) = C_0_R  ! default is no-slip 
   bcs_ht(:,:,1:inb_vars) = C_0_R
   
-
 ! -----------------------------------------------------------------------
 ! Preliminaries
 ! -----------------------------------------------------------------------

@@ -5,9 +5,6 @@
 #endif
 
 !########################################################################
-!# Tool/Library PADE
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 1999/01/01 - C. Pantano
@@ -31,7 +28,7 @@
 !########################################################################
 SUBROUTINE PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, u,up, bcs_imin,bcs_imax, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imax_total, inb_grid_1
+  USE DNS_GLOBAL, ONLY : g !imax_total, inb_grid_1
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -39,13 +36,13 @@ SUBROUTINE PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, u,up, bcs_imin,bcs_imax, wrk
   IMPLICIT NONE
 
   TINTEGER imode_fdm, nx,ny,nz, i1bc, bcs_imin, bcs_imax
-  TREAL, DIMENSION(imax_total,*)        :: dx
+  TREAL, DIMENSION(*)        :: dx
   TREAL, DIMENSION(nx*ny*nz),    TARGET :: u, up, wrk3d
   TREAL, DIMENSION(*)                   :: wrk1d ! not used, to be removed
   TREAL, DIMENSION(ny*nz)               :: wrk2d
  
 ! -------------------------------------------------------------------
-  TINTEGER ip, nyz
+  TINTEGER nyz
 
   TREAL, DIMENSION(:), POINTER :: p_a, p_b, p_c
 
@@ -82,47 +79,50 @@ SUBROUTINE PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, u,up, bcs_imin,bcs_imax, wrk
 ! Make  x  direction the last one
 ! -------------------------------------------------------------------
 #ifdef USE_ESSL
-  CALL DGETMO(p_a, imax_total, imax_total, nyz,        p_b, nyz)
+  CALL DGETMO(p_a, g(1)%size, g(1)%size, nyz,        p_b, nyz)
 #else
-  CALL DNS_TRANSPOSE(p_a, imax_total, nyz,        imax_total, p_b, nyz)
+  CALL DNS_TRANSPOSE(p_a, g(1)%size, nyz,        g(1)%size, p_b, nyz)
 #endif
 
 ! ###################################################################
-! -------------------------------------------------------------------
-! Periodic case
-! -------------------------------------------------------------------
-  IF ( i1bc .EQ. 0 ) THEN
-     IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN                                 ) THEN; CALL FDM_C1N4P_RHS(imax_total,nyz, p_b, p_c)
-     ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN; CALL FDM_C1N6P_RHS(imax_total,nyz, p_b, p_c)
-     ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN                                 ) THEN; CALL FDM_C1N8P_RHS(imax_total,nyz, p_b, p_c)
-     ENDIF
+  CALL OPR_PARTIAL(imode_fdm, nyz, g(1), p_b,p_c, bcs_imin,bcs_imax, wrk2d)
+  
+! ! ###################################################################
+! ! -------------------------------------------------------------------
+! ! Periodic case
+! ! -------------------------------------------------------------------
+!   IF ( i1bc .EQ. 0 ) THEN
+!      IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN                                 ) THEN; CALL FDM_C1N4P_RHS(imax_total,nyz, p_b, p_c)
+!      ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN; CALL FDM_C1N6P_RHS(imax_total,nyz, p_b, p_c)
+!      ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN                                 ) THEN; CALL FDM_C1N8P_RHS(imax_total,nyz, p_b, p_c)
+!      ENDIF
 
-     ip = inb_grid_1 - 1
-     CALL TRIDPSS(imax_total,nyz, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3),dx(1,ip+4),dx(1,ip+5), p_c,wrk2d)
+!      ip = inb_grid_1 - 1
+!      CALL TRIDPSS(imax_total,nyz, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3),dx(1,ip+4),dx(1,ip+5), p_c,wrk2d)
 
-! -------------------------------------------------------------------
-! Nonperiodic case
-! -------------------------------------------------------------------
-  ELSE
-     IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN; CALL FDM_C1N4_RHS(imax_total,nyz, bcs_imin,bcs_imax, p_b, p_c)
-     ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN; CALL FDM_C1N6_RHS(imax_total,nyz, bcs_imin,bcs_imax, p_b, p_c)
-     ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN; CALL FDM_C1N8_RHS(imax_total,nyz, bcs_imin,bcs_imax, p_b, p_c)
-     ELSE IF ( imode_fdm .eq. FDM_COM6_DIRECT   ) THEN; CALL FDM_C1N6_RHS(imax_total,nyz, bcs_imin,bcs_imax, p_b, p_c) ! not yet implemented
-     ENDIF
+! ! -------------------------------------------------------------------
+! ! Nonperiodic case
+! ! -------------------------------------------------------------------
+!   ELSE
+!      IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN; CALL FDM_C1N4_RHS(imax_total,nyz, bcs_imin,bcs_imax, p_b, p_c)
+!      ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN; CALL FDM_C1N6_RHS(imax_total,nyz, bcs_imin,bcs_imax, p_b, p_c)
+!      ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN; CALL FDM_C1N8_RHS(imax_total,nyz, bcs_imin,bcs_imax, p_b, p_c)
+!      ELSE IF ( imode_fdm .eq. FDM_COM6_DIRECT   ) THEN; CALL FDM_C1N6_RHS(imax_total,nyz, bcs_imin,bcs_imax, p_b, p_c) ! not yet implemented
+!      ENDIF
      
-     ip = inb_grid_1 + (bcs_imin + bcs_imax*2)*3 - 1
-     CALL TRIDSS(imax_total,nyz, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3), p_c)
+!      ip = inb_grid_1 + (bcs_imin + bcs_imax*2)*3 - 1
+!      CALL TRIDSS(imax_total,nyz, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3), p_c)
 
-  ENDIF
+!   ENDIF
 
 ! ###################################################################
 ! -------------------------------------------------------------------
 ! Put arrays back in the order in which they came in
 ! -------------------------------------------------------------------
 #ifdef USE_ESSL
-  CALL DGETMO(p_c, nyz, nyz,        imax_total, p_b, imax_total)
+  CALL DGETMO(p_c, nyz, nyz,        g(1)%size, p_b, g(1)%size)
 #else
-  CALL DNS_TRANSPOSE(p_c, nyz, imax_total, nyz,        p_b, imax_total)
+  CALL DNS_TRANSPOSE(p_c, nyz, g(1)%size, nyz,        p_b, g(1)%size)
 #endif
 
 ! -------------------------------------------------------------------

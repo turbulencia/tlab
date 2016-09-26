@@ -8,9 +8,6 @@
 #define C_FILE_LOC "TRANSFORM"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2010/08/20 - J.P. Mellado
@@ -18,9 +15,6 @@
 !#
 !########################################################################
 !# DESCRIPTION
-!#
-!########################################################################
-!# ARGUMENTS 
 !#
 !########################################################################
 PROGRAM TRANSFIELDS
@@ -561,7 +555,7 @@ PROGRAM TRANSFIELDS
                  ENDDO
                  q_dst(:,iq) = q(:,iq)*dummy ! forcing term
                  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, dummy,&
-                      dx,dy,dz, q_dst(1,iq), txc(1,2),txc(1,3), &
+                      q_dst(1,iq), txc(1,2),txc(1,3), &
                       wrk2d(1,1),wrk2d(1,2), wrk1d,wrk1d(1,5),wrk3d)
                  
               ELSE ! Rest; ADM needs two arrays in txc, rest just 1

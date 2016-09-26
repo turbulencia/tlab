@@ -3,9 +3,6 @@
 #include "dns_error.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2012/07/10 - C. Ansorge
@@ -365,7 +362,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 ! #######################################################################
         beta =-C_1_R/(alpha/schmidt(is))
  
-        CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, dx,dy,dz, &
+        CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, &
              tmp4, tmp6,tmp7, bcs_locb(1,1,4), bcs_loct(1,1,4), wrk1d, wrk1d(1,5),wrk3d )
 
         DO ij = 1,isize_field  
@@ -380,11 +377,11 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 ! ################################################################################ 
   beta =-C_1_R/alpha 
 
-  CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, dx,dy,dz, &
+  CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, &
        tmp1, tmp5,tmp6, bcs_locb(1,1,1), bcs_loct(1,1,1), wrk1d, wrk1d(1,5),wrk3d)
-  CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, dx,dy,dz, &
+  CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, &
        tmp2, tmp5,tmp6, bcs_locb(1,1,2), bcs_loct(1,1,2), wrk1d, wrk1d(1,5),wrk3d)
-  CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, dx,dy,dz, &
+  CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, &
        tmp3, tmp5,tmp6, bcs_locb(1,1,3), bcs_loct(1,1,3), wrk1d, wrk1d(1,5),wrk3d) 
 
   DO ij=1,isize_field  

@@ -114,7 +114,7 @@ PROGRAM VHELMHOLTZ_FXZ
            ENDDO
 
            CALL DATE_AND_TIME(date,time1) 
-           CALL OPR_HELMHOLTZ_FXZ_2_NEW(imax,jmax,kmax, nfield, i0, beta, dx,dy,dz, &
+           CALL OPR_HELMHOLTZ_FXZ_2_N(imax,jmax,kmax, nfield, i0, beta, &
                 data, txc(1,1),txc(1,nfield+1), &
                 bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,wrk1d(1,4*nfield+1),wrk3d)    
            CALL DATE_AND_TIME(date,time2) 
@@ -127,7 +127,7 @@ PROGRAM VHELMHOLTZ_FXZ
            a=f 
            CALL DATE_AND_TIME(date,time1)
            DO ifield=1,nfield
-              CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, dx,dy,dz, &
+              CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, &
                    a(1,1,1,ifield), txc(1,1), txc(1,2),&
                    bcs_hb(1,1,ifield),bcs_ht(1,1,ifield), wrk1d,wrk1d(1,5),wrk3d) 
            ENDDO

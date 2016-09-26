@@ -3,8 +3,9 @@
 
 !# Compute dx/di and create LU factorization for first- and second-order derivatives
 
-SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
+SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d, g)
 
+  USE DNS_TYPES,  ONLY : grid_structure
   USE DNS_GLOBAL, ONLY : inb_scal
   USE DNS_GLOBAL, ONLY : inb_grid, inb_grid_1, inb_grid_2, inb_grid_3
   USE DNS_GLOBAL, ONLY : reynolds, schmidt
@@ -13,10 +14,11 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
   
 #include "integers.h"
   
+  TYPE(grid_structure),                     INTENT(INOUT)    :: g
   TINTEGER,                    INTENT(IN) :: imethod, nx
   TREAL,                       INTENT(IN) :: scalex
   LOGICAL,                     INTENT(IN) :: uniform, periodic
-  TREAL,DIMENSION(nx),         INTENT(IN) :: x
+  TREAL,DIMENSION(nx,inb_grid), TARGET,        INTENT(INOUT) :: x
   TREAL,DIMENSION(nx,inb_grid),INTENT(OUT):: dx
   TREAL,DIMENSION(nx,5)                   :: wrk1d
 
@@ -39,12 +41,12 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
 ! first derivative
 ! -------------------------------------------------------------------
      DO i = 2,nx-1
-        dx(i,1) = (x(i+1)-x(i-1))*C_05_R
+        dx(i,1) = (x(i+1,1)-x(i-1,1))*C_05_R
      ENDDO
 ! periodic BCs
      IF ( periodic ) THEN
-        dx(nx,1) = ( x(1) + scalex - x(nx-1)       )*C_05_R
-        dx(1, 1) = ( x(2)-x(1) + x(1)+scalex-x(nx) )*C_05_R
+        dx(nx,1) = ( x(1,1) + scalex - x(nx-1,1)       )*C_05_R
+        dx(1, 1) = ( x(2,1)-x(1,1) + x(1,1)+scalex-x(nx,1) )*C_05_R
 ! nonperiodic BCs
      ELSE
         dx(1, 1) = dx(2,1)
@@ -107,17 +109,20 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
   ! ig = 3
   ! g%lu1 => x(:,ig:)
   ip = inb_grid_1 - 1
-
+  g%lu1 => x(:,inb_grid_1+1:)
+  
 ! -------------------------------------------------------------------
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
   IF ( periodic ) THEN
-     IF      ( imethod .EQ. FDM_COM4_JACOBIAN                                 ) THEN
+     IF      ( imethod .EQ. FDM_COM4_JACOBIAN ) THEN
         CALL FDM_C1N4P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-     ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN .OR. imethod .EQ. FDM_COM6_DIRECT ) THEN
+     ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN ) THEN
         CALL FDM_C1N6P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-     ELSE IF ( imethod .EQ. FDM_COM8_JACOBIAN                                 ) THEN
+     ELSE IF ( imethod .EQ. FDM_COM8_JACOBIAN ) THEN
         CALL FDM_C1N8P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
+     ELSE IF ( imethod .EQ. FDM_COM6_DIRECT   ) THEN ! same as Jacobian version for uniform grid.
+        CALL FDM_C1N6P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ENDIF
      CALL TRIDPFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3),dx(1,ip+4),dx(1,ip+5))
      ip = ip + 5
@@ -133,7 +138,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
         CALL FDM_C1N6_LHS(nx, i0,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM8_JACOBIAN ) THEN
         CALL FDM_C1N8_LHS(nx, i0,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-     ELSE IF ( imethod .EQ. FDM_COM6_DIRECT   ) THEN ! not yet implemented
+     ELSE IF ( imethod .EQ. FDM_COM6_DIRECT   ) THEN ! not yet implemented; using Jacobian version
         CALL FDM_C1N6_LHS(nx, i0,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ENDIF
      CALL TRIDFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
@@ -146,7 +151,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
         CALL FDM_C1N6_LHS(nx, i1,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM8_JACOBIAN ) THEN
         CALL FDM_C1N8_LHS(nx, i1,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-     ELSE IF ( imethod .EQ. FDM_COM6_DIRECT   ) THEN ! not yet implemented
+     ELSE IF ( imethod .EQ. FDM_COM6_DIRECT   ) THEN ! not yet implemented; using Jacobian version
         CALL FDM_C1N6_LHS(nx, i1,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ENDIF
      CALL TRIDFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
@@ -159,7 +164,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
         CALL FDM_C1N6_LHS(nx, i0,i1, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM8_JACOBIAN ) THEN
         CALL FDM_C1N8_LHS(nx, i0,i1, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-     ELSE IF ( imethod .EQ. FDM_COM6_DIRECT   ) THEN ! not yet implemented
+     ELSE IF ( imethod .EQ. FDM_COM6_DIRECT   ) THEN ! not yet implemented; using Jacobian version
         CALL FDM_C1N6_LHS(nx, i0,i1, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ENDIF
      CALL TRIDFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
@@ -172,7 +177,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
         CALL FDM_C1N6_LHS(nx, i1,i1, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM8_JACOBIAN ) THEN
         CALL FDM_C1N8_LHS(nx, i1,i1, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-     ELSE IF ( imethod .EQ. FDM_COM6_DIRECT   ) THEN ! not yet implemented
+     ELSE IF ( imethod .EQ. FDM_COM6_DIRECT   ) THEN ! not yet implemented; using Jacobian version
         CALL FDM_C1N6_LHS(nx, i1,i1, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ENDIF
      CALL TRIDFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
@@ -186,32 +191,35 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
 ! ###################################################################
   ! g%lu2 => x(:,ig:)
   ip = inb_grid_2 - 1
+  g%lu2 => x(:,inb_grid_2+1:)
 
 ! -------------------------------------------------------------------
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
   IF ( periodic ) THEN
-     IF      ( imethod .EQ. FDM_COM4_JACOBIAN                                 ) THEN
+     IF      ( imethod .EQ. FDM_COM4_JACOBIAN ) THEN
         CALL FDM_C2N4P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-     ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN .OR. imethod .EQ. FDM_COM6_DIRECT ) THEN
+     ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN ) THEN
         CALL FDM_C2N6P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-     ELSE IF ( imethod .EQ. FDM_COM8_JACOBIAN                                 ) THEN
-        CALL FDM_C2N6P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3)) ! 8th not yet developed
+     ELSE IF ( imethod .EQ. FDM_COM8_JACOBIAN ) THEN ! 8th not yet developed
+        CALL FDM_C2N6P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
+     ELSE IF ( imethod .EQ. FDM_COM6_DIRECT   ) THEN ! same as Jacobian version for uniform grid.
+        CALL FDM_C2N6P_LHS(nx, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ENDIF
      CALL TRIDPFS(nx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3),dx(1,ip+4),dx(1,ip+5))
      ip = ip + 5
      ! ig = ig + 5
 
 ! -------------------------------------------------------------------
-! Nonperiodic case; tridiagonal
+! Nonperiodic case; tridiagonal for 4 different BCs
 ! -------------------------------------------------------------------
   ELSE
      IF      ( imethod .EQ. FDM_COM4_JACOBIAN ) THEN
         CALL FDM_C2N4_LHS(nx, i0,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM6_JACOBIAN ) THEN
         CALL FDM_C2N6_LHS(nx, i0,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
-     ELSE IF ( imethod .EQ. FDM_COM8_JACOBIAN ) THEN
-        CALL FDM_C2N6_LHS(nx, i0,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3)) ! 8th not yet developed
+     ELSE IF ( imethod .EQ. FDM_COM8_JACOBIAN ) THEN ! 8th not yet developed
+        CALL FDM_C2N6_LHS(nx, i0,i0, dx, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3))
      ELSE IF ( imethod .EQ. FDM_COM6_DIRECT   ) THEN
         CALL FDM_C2N6N_INITIALIZE(nx, x, dx(1,ip+1), dx(1,ip+4))
         dx(:,ip+8:ip+10) = dx(:,ip+1:ip+3) ! saving the array A w/o LU decomposition
@@ -271,6 +279,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
 ! ###################################################################
   ! g%lu2d => x(:,ig:)
   ip = inb_grid_3 - 1
+  g%lu2d => x(:,inb_grid_3+1:)
 
   DO is = 0,inb_scal ! case 0 for the reynolds number
      IF ( is .EQ. 0 ) THEN; dummy = reynolds
@@ -309,6 +318,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
 ! -------------------------------------------------------------------
      ! g%wn1 => x(:,ig:)
      ip = inb_grid_1 + 5
+     g%wn1 => x(:,ip+1:)
 
      r28 = C_14_R*C_2_R
      r48 = C_6_R*C_8_R
@@ -334,6 +344,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, nx, scalex, uniform, periodic, x, dx, wrk1d)
 ! -------------------------------------------------------------------
      ! g%wn2 => x(:,ig:)
      ip = inb_grid_2 + 5
+     g%wn2 => x(:,ip+1:)
 
      r24 = C_6_R*C_4_R 
      DO i = 1,nx

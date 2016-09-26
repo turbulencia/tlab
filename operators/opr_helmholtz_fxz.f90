@@ -4,9 +4,6 @@
 #include "dns_const_mpi.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2010/11/11 - J.P. Mellado
@@ -38,10 +35,10 @@
 !#
 !########################################################################
 SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, ibc, alpha,&
-     dx,dy,dz, a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
+     a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz, imax_total,jmax_total,kmax_total, inb_grid_1
-  USE DNS_GLOBAL, ONLY : imode_fdm
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : imode_fdm, g
   USE DNS_CONSTANTS, ONLY : efile
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
@@ -53,9 +50,6 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, ibc, alpha,&
 
   TINTEGER nx,ny,nz, ibc
   TREAL alpha
-  TREAL,    DIMENSION(imax_total,*)        :: dx
-  TREAL,    DIMENSION(jmax_total,*)        :: dy
-  TREAL,    DIMENSION(kmax_total,*)        :: dz
   TREAL,    DIMENSION(nx,ny,nz)            :: a
   TREAL,    DIMENSION(nx,nz)               :: bcs_hb, bcs_ht  
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz) :: tmp1,tmp2, wrk3d
@@ -68,14 +62,14 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, ibc, alpha,&
   TCOMPLEX bcs(3)
 
 ! #######################################################################
-  norm = C_1_R/M_REAL(imax_total*kmax_total)
+  norm = C_1_R/M_REAL(g(1)%size*g(3)%size)
 
   isize_line = nx/2+1
 
 ! #######################################################################
 ! Fourier transform of forcing term; output of this section in array tmp1
 ! #######################################################################
-  IF ( kmax_total .GT. 1 ) THEN
+  IF ( g(3)%size .GT. 1 ) THEN
      CALL OPR_FOURIER_F_X_EXEC(nx,ny,nz, a,bcs_hb,bcs_ht,tmp2, tmp1,wrk3d) 
      CALL OPR_FOURIER_F_Z_EXEC(tmp2,tmp1) ! tmp2 might be overwritten
   ELSE  
@@ -100,9 +94,11 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, ibc, alpha,&
 #endif
 
 ! Define \lambda based on modified wavenumbers (real)
-     ip = inb_grid_1 + 5 ! pointer to position in arrays dx, dz
-     IF ( kmax_total .GT. 1 ) THEN; lambda = dx(iglobal,ip) + dz(kglobal,ip)
-     ELSE;                          lambda = dx(iglobal,ip); ENDIF
+     ! ip = inb_grid_1 + 5 ! pointer to position in arrays dx, dz
+     ! IF ( g(3)%size .GT. 1 ) THEN; lambda = dx(iglobal,ip) + dz(kglobal,ip)
+     ! ELSE;                          lambda = dx(iglobal,ip); ENDIF
+     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%wn1(iglobal,1) + g(3)%wn1(kglobal,1)
+     ELSE;                         lambda = g(1)%wn1(iglobal,1); ENDIF
 
      lambda = lambda - alpha
 
@@ -119,9 +115,11 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, ibc, alpha,&
 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 ! -----------------------------------------------------------------------
      IF      ( ibc .EQ. 3 ) THEN ! Neumman BCs
-        CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+!        CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+        CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, g(2)%aux, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
      ELSE IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
-        CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+!        CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+        CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, g(2)%aux, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
      ELSE
         CALL IO_WRITE_ASCII(efile,'OPR_HELMHOLT_FXZ. Undeveloped BCs.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
@@ -140,7 +138,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, ibc, alpha,&
 ! ###################################################################
 ! Fourier field p (based on array tmp1)
 ! ###################################################################
-  IF ( kmax_total .GT. 1 ) THEN
+  IF ( g(3)%size .GT. 1 ) THEN
      CALL OPR_FOURIER_B_Z_EXEC(tmp1,wrk3d) 
      CALL OPR_FOURIER_B_X_EXEC(nx,ny,nz, wrk3d,a, tmp1) 
   ELSE
@@ -152,11 +150,12 @@ END SUBROUTINE OPR_HELMHOLTZ_FXZ
 
 !########################################################################
 !########################################################################
+! Same, but using the direct mode of FDM
 SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, ibc, alpha,&
-     dx,dy,dz, a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
+     a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : isize_field, isize_txc_dimz, imax_total,jmax_total,kmax_total, inb_grid_2
-  USE DNS_GLOBAL, ONLY : imode_fdm
+  USE DNS_GLOBAL, ONLY : isize_field, isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : imode_fdm, g
   USE DNS_CONSTANTS, ONLY : efile
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
@@ -168,9 +167,6 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, ibc, alpha,&
 
   TINTEGER nx,ny,nz, ibc
   TREAL alpha
-  TREAL,    DIMENSION(imax_total,*)        :: dx
-  TREAL,    DIMENSION(jmax_total,*)        :: dy
-  TREAL,    DIMENSION(kmax_total,*)        :: dz
   TREAL,    DIMENSION(isize_field)         :: a
   TREAL,    DIMENSION(nx,nz)               :: bcs_hb, bcs_ht  
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz) :: tmp1,tmp2, wrk3d
@@ -183,14 +179,14 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, ibc, alpha,&
   TCOMPLEX bcs(3)
 
 ! #######################################################################
-  norm = C_1_R/M_REAL(imax_total*kmax_total)
+  norm = C_1_R/M_REAL(g(1)%size*g(3)%size)
 
   isize_line = nx/2+1
 
 ! #######################################################################
 ! Fourier transform of forcing term; output of this section in array tmp1
 ! #######################################################################
-  IF ( kmax_total .GT. 1 ) THEN
+  IF ( g(3)%size .GT. 1 ) THEN
      CALL OPR_FOURIER_F_X_EXEC(nx,ny,nz, a,bcs_hb,bcs_ht,tmp2, tmp1,wrk3d) 
      CALL OPR_FOURIER_F_Z_EXEC(tmp2,tmp1) ! tmp2 might be overwritten
   ELSE  
@@ -215,9 +211,11 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, ibc, alpha,&
 #endif
 
 ! Define \lambda based on modified wavenumbers (real)
-     ip = inb_grid_2 + 5 ! pointer to position in arrays dx, dz
-     IF ( kmax_total .GT. 1 ) THEN; lambda = dx(iglobal,ip) + dz(kglobal,ip)
-     ELSE;                          lambda = dx(iglobal,ip); ENDIF
+     ! ip = inb_grid_2 + 5 ! pointer to position in arrays dx, dz
+     ! IF ( g(3)%size .GT. 1 ) THEN; lambda = dx(iglobal,ip) + dz(kglobal,ip)
+     ! ELSE;                          lambda = dx(iglobal,ip); ENDIF
+     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%wn2(iglobal,1) + g(3)%wn2(kglobal,1)
+     ELSE;                         lambda = g(1)%wn2(iglobal,1); ENDIF
 
      lambda = lambda - alpha
 
@@ -235,14 +233,19 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, ibc, alpha,&
 ! -----------------------------------------------------------------------
      IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
         IF      ( imode_fdm .EQ. FDM_COM6_JACOBIAN ) THEN
-           CALL INT_C2N6_LHS_E(ny,    dy, lambda, &
+!           CALL INT_C2N6_LHS_E(ny,    dy, lambda, &
+           CALL INT_C2N6_LHS_E(ny,    g(2)%aux, lambda, &
                 wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
-           CALL INT_C2N6_RHS  (ny,i2, dy, aux(1,1),aux(1,2))
+!           CALL INT_C2N6_RHS  (ny,i2, dy, aux(1,1),aux(1,2))
+           CALL INT_C2N6_RHS  (ny,i2, g(2)%aux, aux(1,1),aux(1,2))
         ELSE IF ( imode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
            wrk1d = C_0_R
-           CALL INT_C2N6N_LHS_E(ny,    dy(1,inb_grid_2+7),dy(1,inb_grid_2+3), lambda, &
+           ! CALL INT_C2N6N_LHS_E(ny,    dy(1,inb_grid_2+7),dy(1,inb_grid_2+3), lambda, &
+           !      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
+           ! CALL INT_C2N6N_RHS  (ny,i2, dy(1,inb_grid_2+7), aux(1,1),aux(1,2))
+           CALL INT_C2N6N_LHS_E(ny,    g(2)%lu2(1,8),g(2)%lu2(1,4), lambda, &
                 wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
-           CALL INT_C2N6N_RHS  (ny,i2, dy(1,inb_grid_2+7), aux(1,1),aux(1,2))
+           CALL INT_C2N6N_RHS  (ny,i2, g(2)%lu2(1,8), aux(1,1),aux(1,2))
         ENDIF
 
         CALL PENTADFS(ny-2,    wrk1d(2,1),wrk1d(2,2),wrk1d(2,3),wrk1d(2,4),wrk1d(2,5))
@@ -271,7 +274,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, ibc, alpha,&
 ! ###################################################################
 ! Fourier field p (based on array tmp1)
 ! ###################################################################
-  IF ( kmax_total .GT. 1 ) THEN
+  IF ( g(3)%size .GT. 1 ) THEN
      CALL OPR_FOURIER_B_Z_EXEC(tmp1,wrk3d) 
      CALL OPR_FOURIER_B_X_EXEC(nx,ny,nz, wrk3d,a, tmp1) 
   ELSE
@@ -280,3 +283,151 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, ibc, alpha,&
 
   RETURN
 END SUBROUTINE OPR_HELMHOLTZ_FXZ_2
+
+!########################################################################
+!########################################################################
+! Same, but for n fields
+SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
+     a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
+
+  USE DNS_TYPES,  ONLY : pointers_structure
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : imode_fdm, g
+  USE DNS_CONSTANTS, ONLY : efile
+#ifdef USE_MPI
+  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+#endif
+
+  IMPLICIT NONE
+#include "integers.h"
+
+
+  TINTEGER ibc, nx,ny,nz,nfield
+  TREAL alpha
+  TYPE(pointers_structure), DIMENSION(nfield)     :: a
+  TREAL,    DIMENSION(nx,nz,nfield)               :: bcs_hb, bcs_ht  
+  TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz,nfield) :: tmp1
+  TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz)        :: tmp2, wrk3d
+  TCOMPLEX, DIMENSION(nfield,ny,2)                :: aux
+  TREAL,    DIMENSION(ny,7)                       :: wrk1d
+! -----------------------------------------------------------------------
+  TINTEGER i,j,k, iglobal, kglobal, ip, isize_line,ifield
+  TREAL lambda, norm
+  TCOMPLEX bcs(3,nfield)
+
+! #######################################################################
+  norm = C_1_R/M_REAL(g(1)%size*g(3)%size)
+
+  isize_line = nx/2+1
+  
+! #######################################################################
+! Fourier transform of forcing term; output of this section in array tmp1
+! ####################################################################### 
+  DO ifield=1,nfield 
+     IF ( g(3)%size .GT. 1 ) THEN
+        CALL OPR_FOURIER_F_X_EXEC(nx,ny,nz, a(ifield)%field,&
+             bcs_hb(1,1,ifield),bcs_ht(1,1,ifield),tmp2, tmp1(1,1,ifield),wrk3d) 
+        CALL OPR_FOURIER_F_Z_EXEC(tmp2,tmp1(1,1,ifield)) ! tmp2 might be overwritten
+     ELSE  
+        CALL OPR_FOURIER_F_X_EXEC(nx,ny,nz, a(ifield)%field,bcs_hb(1,1,ifield),bcs_ht(1,1,ifield),tmp1(1,1,ifield), tmp2,wrk3d)
+     ENDIF
+  ENDDO
+
+! ###################################################################
+! Solve FDE \hat{p}''-\lambda \hat{p} = \hat{a}
+! ###################################################################
+  DO k = 1,nz
+#ifdef USE_MPI
+  kglobal = k+ ims_offset_k
+#else
+  kglobal = k
+#endif
+
+  DO i = 1,isize_line
+#ifdef USE_MPI
+  iglobal = i + ims_offset_i/2
+#else
+  iglobal = i
+#endif
+
+! Define \lambda based on modified wavenumbers (real)
+     ! ip = inb_grid_2 + 5 ! pointer to position in arrays dx, dz
+     ! IF ( g(3)%size .GT. 1 ) THEN; lambda = dx(iglobal,ip) + dz(kglobal,ip)
+     ! ELSE;                          lambda = dx(iglobal,ip); ENDIF
+     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%wn2(iglobal,1) + g(3)%wn2(kglobal,1)
+     ELSE;                         lambda = g(1)%wn2(iglobal,1); ENDIF
+
+     lambda = lambda - alpha
+
+! forcing term
+     DO ifield=1,nfield
+        DO j = 1,ny
+           ip = (j-1)*isize_line + i; aux(ifield,j,1) = tmp1(ip,k,ifield)
+        ENDDO
+! BCs
+        j = ny+1; ip = (j-1)*isize_line + i; 
+        bcs(ifield,1) = tmp1(ip,k,ifield)   ! Dirichlet or Neumann
+        j = ny+2; ip = (j-1)*isize_line + i; 
+        bcs(ifield,2) = tmp1(ip,k,ifield)   ! Dirichlet or Neumann
+     ENDDO
+
+! -----------------------------------------------------------------------
+! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+! -----------------------------------------------------------------------
+     IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
+        IF      ( imode_fdm .EQ. FDM_COM6_JACOBIAN ) THEN
+!           CALL INT_C2N6_LHS_E(ny,    dy, lambda, &
+           CALL INT_C2N6_LHS_E(ny,    g(2)%aux, lambda, &
+                wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
+!           CALL INT_C2N6_RHS  (ny,i2*nfield, dy, aux(1,1,1),aux(1,1,2))
+           CALL INT_C2N6_RHS  (ny,i2, g(2)%aux, aux(1,1,1),aux(1,1,2))
+        ELSE IF ( imode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
+           wrk1d = C_0_R
+           ! CALL INT_C2N6N_LHS_E(ny,dy(1,inb_grid_2+7),dy(1,inb_grid_2+3), lambda, &
+           !      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
+           ! CALL INT_C2N6N_RHS  (ny,i2*nfield, dy(1,inb_grid_2+7),aux(1,1,1),aux(1,1,2))
+           CALL INT_C2N6N_LHS_E(ny,    g(2)%lu2(1,8),g(2)%lu2(1,4), lambda, &
+                wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
+           CALL INT_C2N6N_RHS  (ny,i2, g(2)%lu2(1,8), aux(1,1,1),aux(1,1,2))
+        ENDIF
+
+        CALL PENTADFS(ny-2,    wrk1d(2,1),wrk1d(2,2),wrk1d(2,3),wrk1d(2,4),wrk1d(2,5))
+
+        CALL PENTADSS(ny-2,i1,        wrk1d(2,1),wrk1d(2,2),wrk1d(2,3),wrk1d(2,4),wrk1d(2,5),wrk1d(2,6))
+        CALL PENTADSS(ny-2,i1,        wrk1d(2,1),wrk1d(2,2),wrk1d(2,3),wrk1d(2,4),wrk1d(2,5),wrk1d(2,7)) 
+        CALL PENTADSS(ny-2,i2*nfield, wrk1d(2,1),wrk1d(2,2),wrk1d(2,3),wrk1d(2,4),wrk1d(2,5),aux(1,2,2))
+
+        DO ifield=1,nfield 
+           aux(ifield,1:ny,2) = aux(ifield,1:ny,2) &
+                + bcs(ifield,1)*wrk1d(1:ny,6) + bcs(ifield,2)*wrk1d(1:ny,7) 
+        ENDDO
+
+     ELSE
+        CALL IO_WRITE_ASCII(efile,'OPR_HELMHOLT_FXZ_2_N. Undeveloped BCs.')
+        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+     ENDIF
+
+! normalize 
+     DO ifield=1,nfield
+        DO j = 1,ny
+           ip = (j-1)*isize_line + i
+           tmp1(ip,k,ifield) = aux(ifield,j,2)  *norm ! solution
+        ENDDO
+     ENDDO
+  ENDDO
+  ENDDO
+
+! ###################################################################
+! Fourier field p (based on array tmp1)
+! ################################################################### 
+  DO ifield=1,nfield 
+     IF ( g(3)%size .GT. 1 ) THEN
+        CALL OPR_FOURIER_B_Z_EXEC(tmp1(1,1,ifield),wrk3d) 
+        CALL OPR_FOURIER_B_X_EXEC(nx,ny,nz, wrk3d,a(ifield)%field, tmp1(1,1,ifield)) 
+     ELSE
+        CALL OPR_FOURIER_B_X_EXEC(nx,ny,nz, tmp1(1,1,ifield),a(ifield)%field, wrk3d) 
+     ENDIF
+  ENDDO
+  
+  RETURN
+END SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N

@@ -89,9 +89,9 @@ PROGRAM VPOISSON
      WRITE(*,*) 'Eigenvalue ?'
      READ(*,*) lambda
      ! CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, lambda,&
-     !      dx,dy,dz, a, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
+     !      a, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
      CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, lambda,&
-          dx,dy,dz, a, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
+          a, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
   ENDIF
 
 ! -------------------------------------------------------------------

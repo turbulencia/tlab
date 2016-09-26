@@ -28,22 +28,22 @@
 !########################################################################
 SUBROUTINE PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u,up, bcs_jmin,bcs_jmax, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : jmax_total, inb_grid_1
+  USE DNS_GLOBAL, ONLY : g !jmax_total, inb_grid_1
 
   IMPLICIT NONE
 
   TINTEGER imode_fdm, nx, ny, nz, j1bc, bcs_jmin, bcs_jmax
-  TREAL, DIMENSION(jmax_total,*)         :: dy
+  TREAL, DIMENSION(*)         :: dy
   TREAL, DIMENSION(nx*ny*nz),    TARGET  :: u, up, wrk3d
   TREAL, DIMENSION(*)                    :: wrk1d ! not used, to be removed
   TREAL, DIMENSION(nx*nz)                :: wrk2d
 
 ! -------------------------------------------------------------------
-  TINTEGER ip, nxz, nxy
+  TINTEGER nxz, nxy
   TREAL, DIMENSION(:), POINTER :: p_org, p_dst
 
 ! ###################################################################
-  IF ( jmax_total .EQ. 1 ) THEN ! Set to zero in 2D case
+  IF ( g(2)%size .EQ. 1 ) THEN ! Set to zero in 2D case
   up = C_0_R
 
   ELSE
@@ -68,32 +68,35 @@ SUBROUTINE PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u,up, bcs_jmin,bcs_jmax, wrk
   ENDIF
 
 ! ###################################################################
-! -------------------------------------------------------------------
-! Periodic case
-! -------------------------------------------------------------------
-  IF ( j1bc .EQ. 0 ) THEN
-     IF      ( imode_fdm .EQ. FDM_COM4_JACOBIAN                                 ) THEN; CALL FDM_C1N4P_RHS(ny,nxz, p_org, p_dst)
-     ELSE IF ( imode_fdm .EQ. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN; CALL FDM_C1N6P_RHS(ny,nxz, p_org, p_dst)
-     ELSE IF ( imode_fdm .EQ. FDM_COM8_JACOBIAN                                 ) THEN; CALL FDM_C1N8P_RHS(ny,nxz, p_org, p_dst)
-     ENDIF
+  CALL OPR_PARTIAL(imode_fdm, nxz, g(2), p_org,p_dst, bcs_jmin,bcs_jmax, wrk2d)
+  
+! ! ###################################################################
+! ! -------------------------------------------------------------------
+! ! Periodic case
+! ! -------------------------------------------------------------------
+!   IF ( j1bc .EQ. 0 ) THEN
+!      IF      ( imode_fdm .EQ. FDM_COM4_JACOBIAN                                 ) THEN; CALL FDM_C1N4P_RHS(ny,nxz, p_org, p_dst)
+!      ELSE IF ( imode_fdm .EQ. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN; CALL FDM_C1N6P_RHS(ny,nxz, p_org, p_dst)
+!      ELSE IF ( imode_fdm .EQ. FDM_COM8_JACOBIAN                                 ) THEN; CALL FDM_C1N8P_RHS(ny,nxz, p_org, p_dst)
+!      ENDIF
      
-     ip  = inb_grid_1 - 1
-     CALL TRIDPSS(ny,nxz, dy(1,ip+1),dy(1,ip+2),dy(1,ip+3),dy(1,ip+4),dy(1,ip+5), p_dst,wrk2d)
+!      ip  = inb_grid_1 - 1
+!      CALL TRIDPSS(ny,nxz, dy(1,ip+1),dy(1,ip+2),dy(1,ip+3),dy(1,ip+4),dy(1,ip+5), p_dst,wrk2d)
 
-! -------------------------------------------------------------------
-! Nonperiodic case
-! -------------------------------------------------------------------
-  ELSE
-     IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN; CALL FDM_C1N4_RHS(ny,nxz, bcs_jmin,bcs_jmax, p_org, p_dst)
-     ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN; CALL FDM_C1N6_RHS(ny,nxz, bcs_jmin,bcs_jmax, p_org, p_dst)
-     ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN; CALL FDM_C1N8_RHS(ny,nxz, bcs_jmin,bcs_jmax, p_org, p_dst)
-     ELSE IF ( imode_fdm .eq. FDM_COM6_DIRECT   ) THEN; CALL FDM_C1N6_RHS(ny,nxz, bcs_jmin,bcs_jmax, p_org, p_dst) ! not yet implemented
-     ENDIF
+! ! -------------------------------------------------------------------
+! ! Nonperiodic case
+! ! -------------------------------------------------------------------
+!   ELSE
+!      IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN; CALL FDM_C1N4_RHS(ny,nxz, bcs_jmin,bcs_jmax, p_org, p_dst)
+!      ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN; CALL FDM_C1N6_RHS(ny,nxz, bcs_jmin,bcs_jmax, p_org, p_dst)
+!      ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN; CALL FDM_C1N8_RHS(ny,nxz, bcs_jmin,bcs_jmax, p_org, p_dst)
+!      ELSE IF ( imode_fdm .eq. FDM_COM6_DIRECT   ) THEN; CALL FDM_C1N6_RHS(ny,nxz, bcs_jmin,bcs_jmax, p_org, p_dst) ! not yet implemented
+!      ENDIF
      
-     ip = inb_grid_1 + (bcs_jmin + bcs_jmax*2)*3 - 1
-     CALL TRIDSS(ny,nxz, dy(1,ip+1),dy(1,ip+2),dy(1,ip+3), p_dst)
+!      ip = inb_grid_1 + (bcs_jmin + bcs_jmax*2)*3 - 1
+!      CALL TRIDSS(ny,nxz, dy(1,ip+1),dy(1,ip+2),dy(1,ip+3), p_dst)
 
-  ENDIF
+!   ENDIF
   
 ! ###################################################################
 ! -------------------------------------------------------------------

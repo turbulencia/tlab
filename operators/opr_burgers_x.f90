@@ -38,7 +38,7 @@
 !# tmp1       Out  Transpose velocity
 !#
 !########################################################################
-SUBROUTINE OPR_BURGERS_X(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
+SUBROUTINE OPR_BURGERS_X_OLD(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
      bcs1_imin,bcs1_imax, bcs2_imin,bcs2_imax, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES,     ONLY : grid_structure
@@ -190,4 +190,4 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
   NULLIFY(p_a,p_b,p_c,p_d, p_vel)
 
   RETURN
-END SUBROUTINE OPR_BURGERS_X
+END SUBROUTINE OPR_BURGERS_X_OLD
