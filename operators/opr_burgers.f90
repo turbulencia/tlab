@@ -123,7 +123,7 @@ SUBROUTINE OPR_BURGERS(imode_fdm, is, nyz, g, s,u, &
      ENDIF
      ! ip = inb_grid_3 + is*5 - 1 ! LU decomposition containing the diffusivity
      ! CALL TRIDSS(g%size,nyz, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3), result)
-     ip = is*5 ! LU decomposition containing the diffusivity
+     ip = is*3 ! LU decomposition containing the diffusivity
      CALL TRIDSS(g%size,nyz, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3), result)
 
   ENDIF
