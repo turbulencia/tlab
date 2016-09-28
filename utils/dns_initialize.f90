@@ -1,19 +1,6 @@
 #include "types.h"
 #include "dns_error.h"
 
-!########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
 SUBROUTINE DNS_INITIALIZE
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -21,7 +8,6 @@ SUBROUTINE DNS_INITIALIZE
        
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : istat_min_ver, istat_maj_ver
-  USE DNS_GLOBAL, ONLY : inb_grid, inb_grid_1, inb_grid_2, inb_grid_3
   USE DNS_GLOBAL, ONLY : dns_omp_numThreads
   USE DNS_GLOBAL, ONLY : imode_verbosity
 
@@ -40,24 +26,6 @@ SUBROUTINE DNS_INITIALIZE
   CHARACTER*64 line
 
 !########################################################################
-! space for grid-related data
-  inb_grid   = 2                 ! increments
-
-  inb_grid_1 = inb_grid + 1      ! pointer to data related to 1. order derivative
-  idummy = MAX(3*4,5)                ! diagonal coefficients in Jacobian mode
-  idummy = MAX(idummy,10)            ! diagonal coefficients in Direct mode
-  inb_grid   = inb_grid + idummy
-
-  inb_grid_2 = inb_grid + 1      ! pointer to data related to 2. order derivative
-  idummy = MAX(3*4,5)                ! diagonal coefficients in Jacobian mode
-  idummy = MAX(idummy,10)            ! diagonal coefficients in Direct mode
-  inb_grid   = inb_grid + idummy
-
-  inb_grid_3 = inb_grid + 1      ! pointer to LU decomposition of 2.order derivative containing diffusivities
-                                 ! space is added in routine DNS_READ_GLOBAL
-
-  inb_grid = inb_grid + 1        ! Adding space for the nodes
-  
   imode_verbosity = 1 ! default value; needed already here
 
   istat_maj_ver = 1

@@ -95,7 +95,7 @@ MODULE DNS_GLOBAL
 ! Grid
 ! ###################################################################
   TYPE(grid_structure), DIMENSION(3) :: g
-  TINTEGER :: inb_grid, inb_grid_1, inb_grid_2, inb_grid_3
+  TINTEGER :: inb_grid !, inb_grid_1, inb_grid_2, inb_grid_3
   TINTEGER :: imax_total,jmax_total,kmax_total
 
   TREAL    :: area,volume

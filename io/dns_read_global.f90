@@ -963,9 +963,22 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   isize_wrk1d = MAX(imax_total,MAX(jmax_total,kmax_total))
   isize_wrk2d = MAX(imax*jmax, MAX(imax*kmax,jmax*kmax)  )
 
-! grid array
+! grid array; this could be made specific for each direction
+!             Remember that wavenumber space in periodic mode is included by MAX statements.
+  inb_grid = 1                 ! Nodes
+  inb_grid = inb_grid + 2      ! Jacobians of first- and second-order derivatives
+
+  idummy = MAX(3*4,5)          ! LU decomposition 1. order; diagonal coefficients in Jacobian mode
+  idummy = MAX(idummy,10)      !                            diagonal coefficients in Direct mode
+  inb_grid = inb_grid + idummy
+
+  idummy = MAX(3*4,5)          ! LU decomposition 2. order; diagonal coefficients in Jacobian mode
+  idummy = MAX(idummy,10)      !                            diagonal coefficients in Direct mode
+  inb_grid = inb_grid + idummy
+
   inb_grid = inb_grid + (1+inb_scal)*5 ! space for LU decomposition of 2.order derivative
                                        ! containing diffusivities
+
 ! auxiliar array txc
   isize_txc_field = imax*jmax*kmax
   IF ( ifourier .EQ. 1 ) THEN

@@ -338,9 +338,9 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
 
 ! -------------------------------------------------------------------
   TINTEGER nxy
-  TREAL, DIMENSION(:),   POINTER :: p_a,p_b,p_c, p_vel
+  TREAL, DIMENSION(:), POINTER :: p_a,p_b,p_c, p_vel
 #ifdef USE_MPI
-  TINTEGER, PARAMETER : id  = DNS_MPI_K_PARTIAL
+  TINTEGER, PARAMETER :: id  = DNS_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
