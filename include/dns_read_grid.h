@@ -8,9 +8,9 @@
 
   CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, g(1)%nodes,g(2)%nodes,g(3)%nodes)
 			     
-  CALL FDM_INITIALIZE(imode_fdm, g(1)%size, g(1)%nodes, wrk1d, g(1))
-  CALL FDM_INITIALIZE(imode_fdm, g(2)%size, g(2)%nodes, wrk1d, g(2))
-  CALL FDM_INITIALIZE(imode_fdm, g(3)%size, g(3)%nodes, wrk1d, g(3))
+  CALL FDM_INITIALIZE(imode_fdm, x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(imode_fdm, y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(imode_fdm, z, g(3), wrk1d)
 
   area = g(1)%scale
   IF ( g(3)%size .GT. 1 ) area = area *g(3)%scale ! 3D case
