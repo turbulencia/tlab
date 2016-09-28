@@ -963,23 +963,27 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   isize_wrk1d = MAX(imax_total,MAX(jmax_total,kmax_total))
   isize_wrk2d = MAX(imax*jmax, MAX(imax*kmax,jmax*kmax)  )
 
-! grid array; this could be made specific for each direction
-!             Remember that wavenumber space in periodic mode is included by MAX statements.
-  g(1)%inb_grid = 1                 ! Nodes
-  g(1)%inb_grid = g(1)%inb_grid + 2      ! Jacobians of first- and second-order derivatives
+! grid array
+  DO is = 1,3
+     g(is)%inb_grid = 1                  ! Nodes
+     g(is)%inb_grid = g(is)%inb_grid &
+                    + 2                  ! Jacobians of first- and second-order derivatives
 
-  idummy = MAX(3*4,5)          ! LU decomposition 1. order; diagonal coefficients in Jacobian mode
-  idummy = MAX(idummy,10)      !                            diagonal coefficients in Direct mode
-  g(1)%inb_grid = g(1)%inb_grid + idummy
-
-  idummy = MAX(3*4,5)          ! LU decomposition 2. order; diagonal coefficients in Jacobian mode
-  idummy = MAX(idummy,10)      !                            diagonal coefficients in Direct mode
-  g(1)%inb_grid = g(1)%inb_grid + idummy
-
-  g(1)%inb_grid = g(1)%inb_grid + (1+inb_scal)*5 ! space for LU decomposition of 2.order derivative
-                                       ! containing diffusivities
-  g(2:)%inb_grid = g(1)%inb_grid
-  
+     IF ( g(is)%periodic ) THEN
+        g(is)%inb_grid = g(is)%inb_grid  &
+                       + 5               & ! LU decomposition 1. order
+                       + 5               & ! LU decomposition 2. order
+                       + 5 *(1+inb_scal) & ! LU decomposition 2. order with diffusivities
+                       + 2                 ! modified wavenumbers
+     ELSE
+        g(is)%inb_grid = g(is)%inb_grid  &
+                       + 3 *4            & ! LU decomposition 1. order, 4 bcs
+                       + 3 *4            & ! LU decomposition 2. order, 4 bcs
+                       + 3 *(1+inb_scal)   ! LU decomposition 2. order w/ diffusivities, 1 bcs
+! In Direct mode, we only need 10 instead of 3*4 because only 1 bcs is considered
+     ENDIF
+  END DO
+     
 ! auxiliar array txc
   isize_txc_field = imax*jmax*kmax
   IF ( ifourier .EQ. 1 ) THEN
