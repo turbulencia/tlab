@@ -73,9 +73,9 @@ PROGRAM INISCAL
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
-  ALLOCATE(x(imax_total,inb_grid))
-  ALLOCATE(y(jmax_total,inb_grid))
-  ALLOCATE(z(kmax_total,inb_grid))
+  ALLOCATE(x(g(1)%size,g(1)%inb_grid))
+  ALLOCATE(y(g(2)%size,g(2)%inb_grid))
+  ALLOCATE(z(g(3)%size,g(3)%inb_grid))
 
   WRITE(str,*) inb_scal_array; line = 'Allocating array scal. Size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_field;    line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))

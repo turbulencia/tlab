@@ -34,7 +34,7 @@ PROGRAM SL_BOUNDARY
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
-  TREAL, ALLOCATABLE, SAVE, TARGET :: x(:),y(:),z(:), dx(:,:),dy(:,:),dz(:,:)
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
   
 ! Flow variables
   TREAL, DIMENSION(:,:), ALLOCATABLE, TARGET :: q
@@ -73,6 +73,8 @@ PROGRAM SL_BOUNDARY
   INTEGER icount
 #endif
 
+  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
+  
 ! ###################################################################
   inifile = 'dns.ini'
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
@@ -90,12 +92,9 @@ PROGRAM SL_BOUNDARY
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total,inb_grid))
-  ALLOCATE(dy(jmax_total,inb_grid))
-  ALLOCATE(dz(kmax_total,inb_grid))
+  ALLOCATE(x(g(1)%size,g(1)%inb_grid))
+  ALLOCATE(y(g(2)%size,g(2)%inb_grid))
+  ALLOCATE(z(g(3)%size,g(3)%inb_grid))
 
   ALLOCATE(sl(imax*kmax,6))
   ALLOCATE(wrk1d(isize_wrk1d* 5))

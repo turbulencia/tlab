@@ -34,7 +34,7 @@ PROGRAM SL_CORRELATION
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
-  TREAL, ALLOCATABLE, SAVE, TARGET :: x(:),y(:),z(:), dx(:,:),dy(:,:),dz(:,:)
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
 
 ! Flow variables
   TREAL, DIMENSION(:,:), ALLOCATABLE :: q
@@ -64,6 +64,8 @@ PROGRAM SL_CORRELATION
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u, v, w
 
+  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
+  
 ! ###################################################################
   CALL DNS_INITIALIZE
 
@@ -78,12 +80,9 @@ PROGRAM SL_CORRELATION
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total,inb_grid))
-  ALLOCATE(dy(jmax_total,inb_grid))
-  ALLOCATE(dz(kmax_total,inb_grid))
+  ALLOCATE(x(g(1)%size,g(1)%inb_grid))
+  ALLOCATE(y(g(2)%size,g(2)%inb_grid))
+  ALLOCATE(z(g(3)%size,g(3)%inb_grid))
 
   ALLOCATE(q(imax*jmax*kmax,3))
   ALLOCATE(z1(imax*jmax*kmax))

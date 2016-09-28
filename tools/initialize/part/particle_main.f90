@@ -46,11 +46,10 @@ PROGRAM INIPART
 
   TREAL, DIMENSION(:,:),    ALLOCATABLE,SAVE,TARGET :: x,y,z
   TREAL, DIMENSION(:),      ALLOCATABLE             :: wrk1d,wrk2d, wrk3d
-  TREAL, DIMENSION(:,:),      ALLOCATABLE           :: txc
+  TREAL, DIMENSION(:,:),    ALLOCATABLE             :: txc
   
   TREAL, DIMENSION(:,:),    ALLOCATABLE             :: l_q, l_txc, l_hq
   INTEGER(8), DIMENSION(:), ALLOCATABLE             :: l_tags
-
 
   TREAL, DIMENSION(:,:),     POINTER    :: dx,dy,dz
 
@@ -85,13 +84,9 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
-
-  ALLOCATE(x(imax_total,inb_grid))
-  ALLOCATE(y(jmax_total,inb_grid))
-  ALLOCATE(z(kmax_total,inb_grid))
-!  ALLOCATE(dx(imax_total*inb_grid))
-!  ALLOCATE(dy(jmax_total*inb_grid))
-!  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(g(1)%size,g(1)%inb_grid))
+  ALLOCATE(y(g(2)%size,g(2)%inb_grid))
+  ALLOCATE(z(g(3)%size,g(3)%inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d))
@@ -106,11 +101,9 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
-
   CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk2d,wrk3d,txc)
   
   CALL DNS_WRITE_PARTICLE('particle.ics',l_q)
-
 
 #ifdef USE_MPI
   particle_number_each=int(particle_number/INT(ims_npro, KIND=8)) 

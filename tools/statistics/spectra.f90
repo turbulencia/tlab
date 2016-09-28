@@ -123,10 +123,6 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total,inb_grid))
-  ALLOCATE(y(jmax_total,inb_grid))
-  ALLOCATE(z(kmax_total,inb_grid))
-
   ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
 
   ALLOCATE(y_aux(jmax_total)) ! Reduced vertical grid

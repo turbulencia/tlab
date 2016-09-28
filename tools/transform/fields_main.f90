@@ -99,12 +99,6 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total,inb_grid))
-  ALLOCATE(y(jmax_total,inb_grid))
-  ALLOCATE(z(kmax_total,inb_grid))
-  ! ALLOCATE(dx(imax_total,inb_grid))
-  ! ALLOCATE(dy(jmax_total,inb_grid))
-  ! ALLOCATE(dz(kmax_total,inb_grid))
 
 ! -------------------------------------------------------------------
 ! File names

@@ -7,7 +7,7 @@ PROGRAM VEFILTER2
 #include "types.h"  
 #include "integers.h"
 
-  TREAL, DIMENSION(:),   ALLOCATABLE :: x, y, z, dx, dy, dz
+  TREAL, DIMENSION(:,:),   ALLOCATABLE :: x, y, z
   TREAL, DIMENSION(:),   ALLOCATABLE :: a, cx, cy, cz
   TREAL, DIMENSION(:,:), ALLOCATABLE :: wrk3d
   TINTEGER :: i
@@ -20,12 +20,9 @@ PROGRAM VEFILTER2
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total))
-  ALLOCATE(y(jmax_total))
-  ALLOCATE(z(kmax_total))
-  ALLOCATE(dx(imax_total*inb_grid))
-  ALLOCATE(dy(jmax_total*inb_grid))
-  ALLOCATE(dz(kmax_total*inb_grid))
+  ALLOCATE(x(g(1)%size,g(1)%inb_grid))
+  ALLOCATE(y(g(2)%size,g(2)%inb_grid))
+  ALLOCATE(z(g(3)%size,g(3)%inb_grid))
 
   ALLOCATE(wrk3d(imax*jmax*kmax,2),a(imax*jmax*kmax))
   ALLOCATE(cx(imax*5),cy(jmax*5),cz(kmax_total*5))

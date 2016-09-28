@@ -9,16 +9,10 @@ PROGRAM VSL
 #include "types.h"
 #include "integers.h"
 
-  TREAL x(:)
-  ALLOCATABLE x
-  TREAL y(:)
-  ALLOCATABLE y
-  TREAL z(:)
-  ALLOCATABLE z
-  TREAL z1(:,:,:)
-  ALLOCATABLE z1
-  TREAL wrk3d(:)
-  ALLOCATABLE wrk3d
+  TREAL, DIMENSION(:,:),   ALLOCATABLE :: x, y, z
+
+  TREAL, ALLOCATABLE :: z1(:,:,:)
+  TREAL, ALLOCATABLE :: wrk3d(:)
 
   TINTEGER iwrk_size, i, j, k
   TREAL mean, delta, thick, y_center, param, FLOW_SHEAR_TEMPORAL
@@ -28,9 +22,10 @@ PROGRAM VSL
 
   CALL DNS_READ_GLOBAL('dns.ini')
 
-  ALLOCATE(x(imax))
-  ALLOCATE(y(jmax))
-  ALLOCATE(z(kmax_total))
+  ALLOCATE(x(g(1)%size,g(1)%inb_grid))
+  ALLOCATE(y(g(2)%size,g(2)%inb_grid))
+  ALLOCATE(z(g(3)%size,g(3)%inb_grid))
+
   ALLOCATE(z1(imax,jmax,kmax))
   ALLOCATE(wrk3d(imax*jmax*kmax))
 
