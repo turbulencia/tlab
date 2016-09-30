@@ -105,9 +105,6 @@ PROGRAM INIFLOW
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
 
-! -------------------------------------------------------------------
-! Further allocation of memory space
-! -------------------------------------------------------------------
   iread_flow = 1
   iread_scal = 0
 

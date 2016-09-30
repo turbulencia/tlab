@@ -56,14 +56,10 @@ SUBROUTINE PARTIAL_XX(ifirst,iunif,imode_fdm, nx,ny,nz, i1bc, dx, u, up2, &
   TREAL, DIMENSION(:), POINTER :: p_a, p_b, p_c, p_d
 
 #ifdef USE_MPI
-  TINTEGER id
+  TINTEGER, PARAMETER :: id = DNS_MPI_I_PARTIAL
 #endif
 
 ! ###################################################################
-#ifdef USE_MPI
-  id  = DNS_MPI_I_PARTIAL
-#endif
-
 ! -------------------------------------------------------------------
 ! Transposition
 ! -------------------------------------------------------------------

@@ -60,11 +60,12 @@ END SUBROUTINE FDM_C2N4_LHS
 ! #######################################################################
 ! Right-hand side; forcing term
 ! #######################################################################
-SUBROUTINE FDM_C2N4_RHS(iunif, imax,jkmax, imin_set_zero,imax_set_zero, dx, u,up,d)
+SUBROUTINE FDM_C2N4_RHS(uniform, imax,jkmax, imin_set_zero,imax_set_zero, dx, u,up,d)
 
   IMPLICIT NONE
 
-  TINTEGER,                      INTENT(IN) :: iunif, imax,jkmax, imin_set_zero,imax_set_zero
+  LOGICAL,                       INTENT(IN) :: uniform
+  TINTEGER,                      INTENT(IN) :: imax,jkmax, imin_set_zero,imax_set_zero
   TREAL,   DIMENSION(imax,2),    INTENT(IN) :: dx
   TREAL,   DIMENSION(jkmax,imax),INTENT(IN) :: u, up
   TREAL,   DIMENSION(jkmax,imax),INTENT(OUT):: d
@@ -104,7 +105,7 @@ SUBROUTINE FDM_C2N4_RHS(iunif, imax,jkmax, imin_set_zero,imax_set_zero, dx, u,up
 ! -------------------------------------------------------------------
 ! Uniform case
 ! -------------------------------------------------------------------
-  IF ( iunif .EQ. 0 ) THEN
+  IF ( uniform ) THEN
      c65dx2 = C_6_R/C_5_R
      DO i = 2,imax-1
         DO jk = 1,jkmax

@@ -20,111 +20,79 @@
 !# along generic direction x to nyz lines of data
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!# bcs2_imin  In   BC derivative at imin: 0  biased, non-zero
-!#                                        1  forced to zero
-!# bcs2_imax  In   BC derivative at imax: 0  biased, non-zero
-!#                                        1  forced to zero
-!#
-!########################################################################
-SUBROUTINE OPR_BURGERS(imode_fdm, is, nyz, g, s,u, &
-     bcs1_imin,bcs1_imax,bcs2_imin,bcs2_imax, result, wrk2d,wrk3d)
+SUBROUTINE OPR_BURGERS(imode_fdm, is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 
   USE DNS_TYPES,     ONLY : grid_structure
   USE DNS_CONSTANTS, ONLY : efile
 
   IMPLICIT NONE
 
-  TINTEGER,                     INTENT(IN)    :: is, nyz
-  TYPE(grid_structure),         INTENT(IN)    :: g
-  TREAL, DIMENSION(nyz*g%size), INTENT(IN)    :: s,u    ! argument field and velocity field
-  TREAL, DIMENSION(nyz*g%size), INTENT(OUT)   :: result ! result N(u) applied to s
-  TREAL, DIMENSION(nyz*g%size), INTENT(INOUT) :: wrk3d  ! dsdx
-  TREAL, DIMENSION(*),          INTENT(INOUT) :: wrk2d
-
-  TINTEGER imode_fdm
-  TINTEGER bcs1_imin,bcs1_imax, bcs2_imin,bcs2_imax
+  TINTEGER,                        INTENT(IN)    :: imode_fdm, is
+  TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
+  TINTEGER,                        INTENT(IN)    :: bcs_min(2) ! BC derivative: 0 biased, non-zero
+  TINTEGER,                        INTENT(IN)    :: bcs_max(2) !                1 forced to zero
+  TYPE(grid_structure),            INTENT(IN)    :: g
+  TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: s,u    ! argument field and velocity field
+  TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result ! result N(u) applied to s
+  TREAL, DIMENSION(nlines*g%size), INTENT(INOUT) :: wrk3d  ! dsdx
+  TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d
 
 ! -------------------------------------------------------------------
-  TINTEGER iunif, ip,ij
+  TINTEGER ip,ij
 
 ! ###################################################################
-  IF ( bcs2_imin + bcs2_imax .GT. 0 ) THEN
+  IF ( bcs_min(2) + bcs_max(2) .GT. 0 ) THEN
      CALL IO_WRITE_ASCII(efile,'OPR_BURGERS. Only developed for biased BCs.')
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
-  IF ( g%uniform ) THEN; iunif = 0;
-  ELSE;                  iunif = 1; ENDIF
-       
+! First derivative
+  CALL OPR_PARTIAL1(imode_fdm, nlines, g, s,wrk3d, bcs_min(1),bcs_max(1), wrk2d)
+
+! Second derivative uses LE decomposition including diffusivity coefficient
 ! -------------------------------------------------------------------
 ! Periodic case
 ! -------------------------------------------------------------------
   IF ( g%periodic ) THEN 
      IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN
-        CALL FDM_C1N4P_RHS(g%size,nyz, s, wrk3d)
-     ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN
-        CALL FDM_C1N6P_RHS(g%size,nyz, s, wrk3d)
-     ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN
-        CALL FDM_C1N8P_RHS(g%size,nyz, s, wrk3d)
-     ELSE IF ( imode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
-        CALL FDM_C1N6P_RHS(g%size,nyz, s, wrk3d)
-     ENDIF
-     ! ip = inb_grid_1 - 1
-     ! CALL TRIDPSS(g%size,nyz, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3),&
-     !      dx(1,ip+4),dx(1,ip+5), wrk3d,wrk2d)
-     CALL TRIDPSS(g%size,nyz, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5), wrk3d,wrk2d)
-
-! Calculate second derivative
-     IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN
-        CALL FDM_C2N4P_RHS(g%size,nyz, s, result)
+        CALL FDM_C2N4P_RHS(g%size,nlines, s, result)
      ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN 
-        CALL FDM_C2N6P_RHS(g%size,nyz, s, result)
+        CALL FDM_C2N6P_RHS(g%size,nlines, s, result)
      ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN 
-        CALL FDM_C2N6P_RHS(g%size,nyz, s, result) !8th not yet developed
+        CALL FDM_C2N6P_RHS(g%size,nlines, s, result) !8th not yet developed
      ELSE IF ( imode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
-        CALL FDM_C2N6P_RHS(g%size,nyz, s, result)
+        CALL FDM_C2N6P_RHS(g%size,nlines, s, result)
      ENDIF
      ! ip = inb_grid_3 + is*5 - 1 ! LU decomposition containing the diffusivity
-     ! CALL TRIDPSS(g%size,nyz, dx(1,ip+1),dx(1,ip+2),&
+     ! CALL TRIDPSS(g%size,nlines, dx(1,ip+1),dx(1,ip+2),&
      !      dx(1,ip+3),dx(1,ip+4),dx(1,ip+5), result,wrk2d)
      ip = is*5 ! LU decomposition containing the diffusivity
-     CALL TRIDPSS(g%size,nyz, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3),g%lu2d(1,ip+4),g%lu2d(1,ip+5), result,wrk2d)
+     CALL TRIDPSS(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3),g%lu2d(1,ip+4),g%lu2d(1,ip+5), result,wrk2d)
 
 ! -------------------------------------------------------------------
 ! Nonperiodic case
 ! -------------------------------------------------------------------
   ELSE
-     IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN;
-        CALL FDM_C1N4_RHS(g%size,nyz, bcs1_imin,bcs1_imax, s, wrk3d)
-     ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN; 
-        CALL FDM_C1N6_RHS(g%size,nyz, bcs1_imin,bcs1_imax, s, wrk3d)
-     ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN; 
-        CALL FDM_C1N8_RHS(g%size,nyz, bcs1_imin,bcs1_imax, s, wrk3d)
-     ELSE IF ( imode_fdm .eq. FDM_COM6_DIRECT   ) THEN; 
-        CALL FDM_C1N6_RHS(g%size,nyz, bcs1_imin,bcs1_imax, s, wrk3d) ! not yet implemented
-     ENDIF
-     ! ip = inb_grid_1 + (bcs1_imin + bcs1_imax*2)*3 - 1
-     ! CALL TRIDSS(g%size,nyz, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3), wrk3d)
-     ip = (bcs1_imin + bcs1_imax*2)*3 
-     CALL TRIDSS(g%size,nyz, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3), wrk3d)
+     SELECT CASE( imode_fdm )
+        
+     CASE( FDM_COM4_JACOBIAN )
+        CALL FDM_C2N4_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%aux, s, wrk3d, result)
 
-! Calculate second derivative
-     IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN; 
-        CALL FDM_C2N4_RHS(iunif, g%size,nyz, bcs2_imin,bcs2_imax, g%aux, s, wrk3d, result)
-     ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN; 
-        CALL FDM_C2N6_RHS(iunif, g%size,nyz, bcs2_imin,bcs2_imax, g%aux, s, wrk3d, result)
-     ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN; 
-        CALL FDM_C2N6_RHS(iunif, g%size,nyz, bcs2_imin,bcs2_imax, g%aux, s, wrk3d, result)
-     ELSE IF ( imode_fdm .eq. FDM_COM6_DIRECT   ) THEN; 
-!        CALL FDM_C2N6N_RHS(g%size,nyz, dx(1,inb_grid_2+3), &
-        CALL FDM_C2N6N_RHS(g%size,nyz, g%lu2(1,4), s, result)
-     ENDIF
+     CASE( FDM_COM6_JACOBIAN )
+        CALL FDM_C2N6_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%aux, s, wrk3d, result)
+
+     CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
+        CALL FDM_C2N6_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%aux, s, wrk3d, result)
+
+     CASE( FDM_COM6_DIRECT   )
+        CALL FDM_C2N6N_RHS(g%size,nlines, g%lu2(1,4), u, result)
+
+     END SELECT
+
      ! ip = inb_grid_3 + is*5 - 1 ! LU decomposition containing the diffusivity
-     ! CALL TRIDSS(g%size,nyz, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3), result)
+     ! CALL TRIDSS(g%size,nlines, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3), result)
      ip = is*3 ! LU decomposition containing the diffusivity
-     CALL TRIDSS(g%size,nyz, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3), result)
+     CALL TRIDSS(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3), result)
 
   ENDIF
 
@@ -133,7 +101,7 @@ SUBROUTINE OPR_BURGERS(imode_fdm, is, nyz, g, s,u, &
 ! ###################################################################
 !$omp parallel default( shared ) private( ij )
 !$omp do
-  DO ij = 1,nyz*g%size
+  DO ij = 1,nlines*g%size
      result(ij) = result(ij) - u(ij)*wrk3d(ij) ! diffusivity included in 2.-order derivative
   ENDDO
 !$omp end do
@@ -172,13 +140,16 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
   TARGET s,u1,u2, tmp1, result, wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER nyz
+  TINTEGER nyz, bcs_min(2), bcs_max(2)
   TREAL, DIMENSION(:), POINTER :: p_a,p_b,p_c,p_d, p_vel
 #ifdef USE_MPI
   TINTEGER, PARAMETER :: id = DNS_MPI_I_PARTIAL
 #endif
 
 ! ###################################################################
+  bcs_min(1) = bcs1_imin; bcs_max(1) = bcs1_imax
+  bcs_min(2) = bcs2_imin; bcs_max(2) = bcs2_imax
+
 ! -------------------------------------------------------------------
 ! MPI transposition
 ! -------------------------------------------------------------------
@@ -215,8 +186,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
 #endif
 
 ! ###################################################################
-  CALL OPR_BURGERS(imode_fdm, is, nyz, g, p_b, p_vel, &
-       bcs1_imin,bcs1_imax, bcs2_imin,bcs2_imax, p_d, wrk2d,p_c)
+  CALL OPR_BURGERS(imode_fdm, is, nyz, g, p_b, p_vel, p_d, bcs_min,bcs_max, wrk2d,p_c)
   
 ! ###################################################################
 ! Put arrays back in the order in which they came in
@@ -256,10 +226,13 @@ SUBROUTINE OPR_BURGERS_Y(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
   TARGET s,u1,u2, tmp1, result, wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER nxy, nxz
+  TINTEGER nxy, nxz, bcs_min(2), bcs_max(2)
   TREAL, DIMENSION(:),   POINTER :: p_org, p_dst1, p_dst2, p_vel
 
 ! ###################################################################
+  bcs_min(1) = bcs1_jmin; bcs_max(1) = bcs1_jmax
+  bcs_min(2) = bcs2_jmin; bcs_max(2) = bcs2_jmax
+
   IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
      result = C_0_R
      
@@ -294,8 +267,7 @@ SUBROUTINE OPR_BURGERS_Y(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
   ENDIF
 
 ! ###################################################################
-  CALL OPR_BURGERS(imode_fdm, is, nxz, g, p_org, p_vel, &
-       bcs1_jmin,bcs1_jmax, bcs2_jmin,bcs2_jmax, p_dst2, wrk2d,p_dst1)
+  CALL OPR_BURGERS(imode_fdm, is, nxz, g, p_org, p_vel, p_dst2, bcs_min,bcs_max, wrk2d,p_dst1)
   
 ! ###################################################################
 ! Put arrays back in the order in which they came in
@@ -337,13 +309,16 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
   TARGET s,u1,u2, tmp1, result, wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER nxy
+  TINTEGER nxy, bcs_min(2), bcs_max(2)  
   TREAL, DIMENSION(:), POINTER :: p_a,p_b,p_c, p_vel
 #ifdef USE_MPI
   TINTEGER, PARAMETER :: id  = DNS_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
+  bcs_min(1) = bcs1_kmin; bcs_max(1) = bcs1_kmax
+  bcs_min(2) = bcs2_kmin; bcs_max(2) = bcs2_kmax
+
   IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
      result = C_0_R
      
@@ -384,8 +359,7 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
   ENDIF
 
 ! ###################################################################
-  CALL OPR_BURGERS(imode_fdm, is, nxy, g, p_a, p_vel, &
-       bcs1_kmin,bcs1_kmax, bcs2_kmin,bcs2_kmax, p_c, wrk2d,p_b)
+  CALL OPR_BURGERS(imode_fdm, is, nxy, g, p_a, p_vel, p_c, bcs_min,bcs_max, wrk2d,p_b)
 
 ! ###################################################################
 ! Put arrays back in the order in which they came in

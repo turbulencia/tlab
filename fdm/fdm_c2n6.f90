@@ -98,14 +98,15 @@ END SUBROUTINE FDM_C2N6_LHS
 ! #######################################################################
 ! Right-hand side; forcing term
 ! #######################################################################
-SUBROUTINE FDM_C2N6_RHS(iunif, imax,jkmax, imin_zet_zero,imax_set_zero, dx, u,up,d)
+SUBROUTINE FDM_C2N6_RHS(uniform, imax,jkmax, imin_zet_zero,imax_set_zero, dx, u,up,d)
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
 
   IMPLICIT NONE
 
-  TINTEGER,                      INTENT(IN) :: iunif, imax, jkmax, imin_zet_zero, imax_set_zero
+  LOGICAL,                       INTENT(IN) :: uniform
+  TINTEGER,                      INTENT(IN) :: imax, jkmax, imin_zet_zero, imax_set_zero
   TREAL,   DIMENSION(imax,2),    INTENT(IN) :: dx
   TREAL,   DIMENSION(jkmax,imax),INTENT(IN) :: u, up
   TREAL,   DIMENSION(jkmax,imax),INTENT(OUT):: d
@@ -128,7 +129,7 @@ SUBROUTINE FDM_C2N6_RHS(iunif, imax,jkmax, imin_zet_zero,imax_set_zero, dx, u,up
 ! #######################################################################
 !$omp parallel default ( none ) &
 !$omp private( jk,i, cl01,cl13,cl27,cl15, cr01,cr13,cr27,cr15,srt,end,siz, thread ) &
-!$omp shared(jkmax,iunif,d,u,imax,vmult_imin,vmult_imax,dx,up)
+!$omp shared(jkmax,uniform,d,u,imax,vmult_imin,vmult_imax,dx,up)
 
   CALL DNS_OMP_PARTITION(jkmax,srt,end,siz)
 
@@ -146,7 +147,7 @@ SUBROUTINE FDM_C2N6_RHS(iunif, imax,jkmax, imin_zet_zero,imax_set_zero, dx, u,up
 ! -------------------------------------------------------------------
 ! Uniform case
 ! -------------------------------------------------------------------
-  IF ( iunif .EQ. 0 ) THEN
+  IF ( uniform ) THEN
 
      DO jk = srt,end
         d(jk,1)     = cl13*u(jk,1) - cl27*u(jk,2) + cl15*u(jk,3) - cl01*u(jk,4)

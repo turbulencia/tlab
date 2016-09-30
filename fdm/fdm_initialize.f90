@@ -95,16 +95,16 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
      SELECT CASE( imethod )
         
      CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C2N4_LHS(    nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C2N4_RHS(i0, nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%aux(1,2))
+        CALL FDM_C2N4_LHS(        nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+        CALL FDM_C2N4_RHS(.TRUE., nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%aux(1,2))
         
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
-        CALL FDM_C2N6_LHS(    nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C2N6_RHS(i0, nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%aux(1,2))
+        CALL FDM_C2N6_LHS(        nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+        CALL FDM_C2N6_RHS(.TRUE., nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%aux(1,2))
         
-     CASE( FDM_COM8_JACOBIAN ) ! Not yet developed
-        CALL FDM_C2N6_LHS(    nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C2N6_RHS(i0, nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%aux(1,2))
+     CASE( FDM_COM8_JACOBIAN ) ! Not yet developed; defaulting to 6. order
+        CALL FDM_C2N6_LHS(        nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+        CALL FDM_C2N6_RHS(.TRUE., nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%aux(1,2))
         
      END SELECT
 

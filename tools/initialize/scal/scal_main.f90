@@ -2,6 +2,8 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
+#define C_FILE_LOC "INISCAL"
+
 !########################################################################
 !# Tool/Library INIT/SCAL
 !#
@@ -37,11 +39,11 @@ PROGRAM INISCAL
 
 ! -------------------------------------------------------------------
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: s
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d, wrk2d, wrk3d, txc
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q,s, txc
+  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
 
   TREAL dummy
-  TINTEGER isize_wrk3d, is, ierr
+  TINTEGER iread_flow, iread_scal, isize_wrk3d, is, ierr
 
   CHARACTER*64 str, line
   CHARACTER*32 inifile
@@ -73,35 +75,18 @@ PROGRAM INISCAL
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
-  ALLOCATE(x(g(1)%size,g(1)%inb_grid))
-  ALLOCATE(y(g(2)%size,g(2)%inb_grid))
-  ALLOCATE(z(g(3)%size,g(3)%inb_grid))
-
-  WRITE(str,*) inb_scal_array; line = 'Allocating array scal. Size '//TRIM(ADJUSTL(str))//'x'
-  WRITE(str,*) isize_field;    line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-  CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(s(isize_field,inb_scal_array),stat=ierr)
-  IF ( ierr .NE. 0 ) THEN
-     CALL IO_WRITE_ASCII(efile, 'INISCAL. Not enough memory for scal.')
-     CALL DNS_STOP(DNS_ERROR_ALLOC)
-  ENDIF
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk3d(isize_wrk3d))
-
-  IF ( flag_s .EQ. 2 .OR. flag_s .EQ. 3 .OR. &
-       radiation%type .NE. EQNS_NONE ) THEN
-     WRITE(str,*) i1;          line = 'Allocating array txc. Size '//TRIM(ADJUSTL(str))//'x'
-     WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-     CALL IO_WRITE_ASCII(lfile,line)
-     ALLOCATE(txc(isize_field),stat=ierr)
-     IF ( ierr .NE. 0 ) THEN
-        CALL IO_WRITE_ASCII(efile, 'INISCAL. Not enough memory for txc.')
-        CALL DNS_STOP(DNS_ERROR_ALLOC)
-     ENDIF
-  ENDIF
-
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN; ALLOCATE(wrk2d(isize_wrk2d*5))
   ELSE;                                        ALLOCATE(wrk2d(isize_wrk2d  ));  ENDIF
+
+  iread_flow = 0
+  iread_scal = 1
+
+  IF ( flag_s .EQ. 2 .OR. flag_s .EQ. 3 .OR. radiation%type .NE. EQNS_NONE ) THEN
+     inb_txc = 1
+  ENDIF
+
+#include "dns_alloc_arrays.h"
 
 ! -------------------------------------------------------------------
 ! Read the grid 
@@ -193,7 +178,7 @@ PROGRAM INISCAL
      DO is = 1,inb_scal
         IF ( radiation%active(is) ) THEN
            CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(is)), txc, wrk1d,wrk3d)
-           s(1:isize_field,is) = s(1:isize_field,is) + txc(1:isize_field)
+           s(1:isize_field,is) = s(1:isize_field,is) + txc(1:isize_field,1)
         ENDIF
      ENDDO
      

@@ -56,14 +56,10 @@ SUBROUTINE PARTIAL_ZZ(ifirst,iunif,imode_fdm, nx,ny,nz, k1bc, dz, u, up2, &
   TREAL, DIMENSION(:), POINTER :: p_a, p_b, p_c
 
 #ifdef USE_MPI
-  TINTEGER id
+  TINTEGER, PARAMETER :: id = DNS_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
-#ifdef USE_MPI
-  id  = DNS_MPI_K_PARTIAL
-#endif
-
   IF ( g(3)%size .EQ. 1 ) THEN ! Set to zero in 2D case
      up2 = C_0_R
      IF ( ifirst .EQ. 1 ) up1 = C_0_R

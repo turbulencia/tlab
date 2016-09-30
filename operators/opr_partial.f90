@@ -86,12 +86,8 @@ SUBROUTINE OPR_PARTIAL2(imode_fdm, nlines, g, u,result, bcs_min,bcs_max, wrk2d,w
 
 ! -------------------------------------------------------------------
   TINTEGER ip
-  TINTEGER iunif ! to be removed
 
 ! ###################################################################
-  IF ( g%uniform ) THEN; iunif = 0;
-  ELSE;                  iunif = 1; ENDIF     
-
 ! Check whether to calculate 1. order derivative
   IF ( .NOT. g%uniform ) THEN
      IF ( imode_fdm .eq. FDM_COM4_JACOBIAN .OR. &
@@ -123,13 +119,13 @@ SUBROUTINE OPR_PARTIAL2(imode_fdm, nlines, g, u,result, bcs_min,bcs_max, wrk2d,w
      SELECT CASE( imode_fdm )
         
      CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C2N4_RHS(iunif, g%size,nlines, bcs_min(2),bcs_max(2), g%aux, u, wrk3d, result)
+        CALL FDM_C2N4_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%aux, u, wrk3d, result)
 
      CASE( FDM_COM6_JACOBIAN )
-        CALL FDM_C2N6_RHS(iunif, g%size,nlines, bcs_min(2),bcs_max(2), g%aux, u, wrk3d, result)
+        CALL FDM_C2N6_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%aux, u, wrk3d, result)
 
-     CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented
-        CALL FDM_C2N6_RHS(iunif, g%size,nlines, bcs_min(2),bcs_max(2), g%aux, u, wrk3d, result)
+     CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
+        CALL FDM_C2N6_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%aux, u, wrk3d, result)
 
      CASE( FDM_COM6_DIRECT   )
         CALL FDM_C2N6N_RHS(g%size,nlines, g%lu2(1,4), u, result)
