@@ -29,7 +29,7 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, g,&
      a,dpdy, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
   USE DNS_TYPES,  ONLY : grid_structure
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz !, inb_grid_1
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -88,8 +88,8 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, g,&
      ! ip = inb_grid_1 + 5 ! pointer to position in arrays dx, dz
      ! IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%aux(iglobal,ip) + g(3)%aux(kglobal,ip)
      ! ELSE;                         lambda = g(1)%aux(iglobal,ip); ENDIF
-     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%wn1(iglobal,1) + g(3)%wn1(kglobal,1)
-     ELSE;                         lambda = g(1)%wn1(iglobal,1); ENDIF
+     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%mwn(iglobal,1) + g(3)%mwn(kglobal,1)
+     ELSE;                         lambda = g(1)%mwn(iglobal,1); ENDIF
 
 ! forcing term
      DO j = 1,ny
@@ -109,20 +109,20 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, g,&
         IF ( kglobal .EQ. 1             .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1) .OR.&
              kglobal .EQ. g(3)%size/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1)     )THEN
            CALL FDE_BVP_SINGULAR_NN(imode_fdm, ny,i2, &
-                g(2)%aux, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
+                g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
         ELSE
            CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, &
-                g(2)%aux, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+                g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
         ENDIF
 
      CASE(0) ! Dirichlet & Dirichlet BCs
         IF ( kglobal .EQ. 1             .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1) .OR.&
              kglobal .EQ. g(3)%size/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1)     )THEN
            CALL FDE_BVP_SINGULAR_DD(imode_fdm, ny,i2, &
-                g(2)%nodes,g(2)%aux, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
+                g(2)%nodes,g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
         ELSE
            CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, &
-                           g(2)%aux, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+                           g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
         ENDIF
 
      END SELECT

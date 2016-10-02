@@ -58,9 +58,9 @@ SUBROUTINE PRESSURE_FLUCTUATION(u,v,w,rho,p,pprime, &
 
 ! ###################################################################
 ! Define pointers
-                   dx => g(1)%aux(:,1)
-  y => g(2)%nodes; dy => g(2)%aux(:,1)
-                   dz => g(3)%aux(:,1)
+                   dx => g(1)%jac(:,1)
+  y => g(2)%nodes; dy => g(2)%jac(:,1)
+                   dz => g(3)%jac(:,1)
 
 ! -------------------------------------------------------------------
 ! Calculate RHS d/dx_i d/dx_j (u_i u_j), stored in txc4

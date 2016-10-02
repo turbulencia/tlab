@@ -30,9 +30,11 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
 ! ###################################################################
 ! Jacobians
 ! ###################################################################
+  g%jac => x(:,ig:)
+
   IF ( nx .EQ. 1 ) THEN
-     g%aux(1,1) = C_1_R
-     g%aux(1,2) = C_1_R
+     g%jac(1,1) = C_1_R
+     g%jac(1,2) = C_1_R
      RETURN
   ENDIF
 
@@ -42,50 +44,50 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
 ! first derivative
 ! -------------------------------------------------------------------
      DO i = 2,nx-1
-        g%aux(i,1) = (x(i+1,1)-x(i-1,1))*C_05_R
+        g%jac(i,1) = (x(i+1,1)-x(i-1,1))*C_05_R
      ENDDO
 
 ! Boundary points
      IF ( g%periodic ) THEN
-        g%aux(nx,1) = ( x(1,1) + g%scale - x(nx-1,1)           )*C_05_R
-        g%aux(1, 1) = ( x(2,1)-x(1,1) + x(1,1)+g%scale-x(nx,1) )*C_05_R
+        g%jac(nx,1) = ( x(1,1) + g%scale - x(nx-1,1)           )*C_05_R
+        g%jac(1, 1) = ( x(2,1)-x(1,1) + x(1,1)+g%scale-x(nx,1) )*C_05_R
 
      ELSE
-        g%aux(1, 1) = g%aux(2,1)
-        g%aux(nx,1) = g%aux(nx-1,1)
+        g%jac(1, 1) = g%jac(2,1)
+        g%jac(nx,1) = g%jac(nx-1,1)
 
      ENDIF
 
 ! -------------------------------------------------------------------
 ! second derivative is zero
 ! -------------------------------------------------------------------
-     g%aux(:,2) = C_0_R
+     g%jac(:,2) = C_0_R
 
 ! ###################################################################
   ELSE ! derivative wrt computational grid, uniform
 ! -------------------------------------------------------------------
 ! first derivative
 ! -------------------------------------------------------------------
-     g%aux(:,1) = C_1_R
+     g%jac(:,1) = C_1_R
 
      SELECT CASE( imethod )
 
      CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C1N4_LHS(nx,    i0,i0, g%aux, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C1N4_RHS(nx,i1, i0,i0, x, g%aux(1,1))
+        CALL FDM_C1N4_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+        CALL FDM_C1N4_RHS(nx,i1, i0,i0, x, g%jac(1,1))
         
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
-        CALL FDM_C1N6_LHS(nx,    i0,i0, g%aux, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C1N6_RHS(nx,i1, i0,i0, x, g%aux(1,1))
+        CALL FDM_C1N6_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+        CALL FDM_C1N6_RHS(nx,i1, i0,i0, x, g%jac(1,1))
 
      CASE( FDM_COM8_JACOBIAN )
-        CALL FDM_C1N8_LHS(nx,    i0,i0, g%aux, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C1N8_RHS(nx,i1, i0,i0, x, g%aux(1,1))
+        CALL FDM_C1N8_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+        CALL FDM_C1N8_RHS(nx,i1, i0,i0, x, g%jac(1,1))
         
      END SELECT
 
      CALL TRIDFS(nx,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-     CALL TRIDSS(nx, i1, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), g%aux(1,1))
+     CALL TRIDSS(nx, i1, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), g%jac(1,1))
 
 ! -------------------------------------------------------------------
 ! second derivative
@@ -96,20 +98,20 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
         
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4_LHS(        nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C2N4_RHS(.TRUE., nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%aux(1,2))
+        CALL FDM_C2N4_RHS(.TRUE., nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%jac(1,2))
         
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
         CALL FDM_C2N6_LHS(        nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C2N6_RHS(.TRUE., nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%aux(1,2))
+        CALL FDM_C2N6_RHS(.TRUE., nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%jac(1,2))
         
-     CASE( FDM_COM8_JACOBIAN ) ! Not yet developed; defaulting to 6. order
+     CASE( FDM_COM8_JACOBIAN ) ! Not yet developed; default to 6. order
         CALL FDM_C2N6_LHS(        nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C2N6_RHS(.TRUE., nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%aux(1,2))
+        CALL FDM_C2N6_RHS(.TRUE., nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%jac(1,2))
         
      END SELECT
 
      CALL TRIDFS(nx,     wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
-     CALL TRIDSS(nx, i1, wrk1d(1,1), wrk1d(1,2), wrk1d(1,3), g%aux(1,2))
+     CALL TRIDSS(nx, i1, wrk1d(1,1), wrk1d(1,2), wrk1d(1,3), g%jac(1,2))
 
   ENDIF
 
@@ -127,13 +129,13 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
      SELECT CASE( imethod )
         
      CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C1N4P_LHS(nx, g%aux, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
+        CALL FDM_C1N4P_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
         
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
-        CALL FDM_C1N6P_LHS(nx, g%aux, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
+        CALL FDM_C1N6P_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
         
      CASE( FDM_COM8_JACOBIAN )
-        CALL FDM_C1N8P_LHS(nx, g%aux, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
+        CALL FDM_C1N8P_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
         
      END SELECT
      
@@ -152,16 +154,16 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
         SELECT CASE( imethod )
            
         CASE( FDM_COM4_JACOBIAN )
-           CALL FDM_C1N4_LHS(nx, ibc_min,ibc_max, g%aux, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+           CALL FDM_C1N4_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
 
         CASE( FDM_COM6_JACOBIAN )
-           CALL FDM_C1N6_LHS(nx, ibc_min,ibc_max, g%aux, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+           CALL FDM_C1N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
 
         CASE( FDM_COM8_JACOBIAN )
-           CALL FDM_C1N8_LHS(nx, ibc_min,ibc_max, g%aux, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+           CALL FDM_C1N8_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
 
         CASE( FDM_COM6_DIRECT   ) ! Not yet implemented; using Jacobian version
-           CALL FDM_C1N6_LHS(nx, ibc_min,ibc_max, g%aux, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+           CALL FDM_C1N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
 
         END SELECT
         
@@ -183,13 +185,13 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
      SELECT CASE( imethod )
         
      CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C2N4P_LHS(nx, g%aux, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
+        CALL FDM_C2N4P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
         
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )  ! Direct = Jacobian because uniform grid
-        CALL FDM_C2N6P_LHS(nx, g%aux, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
+        CALL FDM_C2N6P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
 
      CASE( FDM_COM8_JACOBIAN )                   ! Not yet developed
-        CALL FDM_C2N6P_LHS(nx, g%aux, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
+        CALL FDM_C2N6P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
 
      END SELECT
      
@@ -207,14 +209,14 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
         SELECT CASE( imethod )
            
         CASE( FDM_COM4_JACOBIAN )
-           CALL FDM_C2N4_LHS(nx, ibc_min,ibc_max, g%aux, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
+           CALL FDM_C2N4_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
 
         CASE( FDM_COM6_JACOBIAN )
            
-           CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%aux, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
+           CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
 
         CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented
-           CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%aux, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3)) ! 8th not yet developed
+           CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3)) ! 8th not yet developed
 
         CASE( FDM_COM6_DIRECT   )
            IF ( i .EQ. 0 ) CALL FDM_C2N6N_INITIALIZE(nx, x, g%lu2(1,ip+1), g%lu2(1,ip+4))
@@ -279,10 +281,10 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
 ! ###################################################################
 ! Modified wavenumbers in periodic case
 ! ###################################################################
-  IF ( g%periodic ) THEN
+  g%mwn => x(:,ig:)
 
-! Define wavenumbers     
-     DO i = 1,nx
+  IF ( g%periodic ) THEN
+     DO i = 1,nx ! Define wavenumbers
         IF ( i .LE. nx/2+1 ) THEN; wrk1d(i,1) = C_2_R*C_PI_R*M_REAL(i-1   )/M_REAL(nx)
         ELSE;                      wrk1d(i,1) = C_2_R*C_PI_R*M_REAL(i-1-nx)/M_REAL(nx); ENDIF
      ENDDO
@@ -290,8 +292,6 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
 ! -------------------------------------------------------------------
 ! First-order derivative
 ! -------------------------------------------------------------------
-     g%wn1 => x(:,ig:)
-
      r04 = C_2_R /C_5_R
      r28 = C_14_R*C_2_R
      r48 = C_6_R *C_8_R
@@ -301,31 +301,27 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
      SELECT CASE( imethod )
 
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
-        g%wn1(:,1)=( r28*sin(wrk1d(:,1))+    sin(C_2_R*wrk1d(:,1))                          )&
+        g%mwn(:,1)=( r28*sin(wrk1d(:,1))+    sin(C_2_R*wrk1d(:,1))                          )&
                   /( C_18_R +C_12_R*cos(wrk1d(:,1)))
 
      CASE( FDM_COM8_JACOBIAN )
-        g%wn1(:,1)=( r25*sin(wrk1d(:,1))+r04*sin(C_2_R*wrk1d(:,1))-r60*sin(C_3_R*wrk1d(:,1)))&
+        g%mwn(:,1)=( r25*sin(wrk1d(:,1))+r04*sin(C_2_R*wrk1d(:,1))-r60*sin(C_3_R*wrk1d(:,1)))&
                   /( C_4_R +C_3_R *cos(wrk1d(:,1)))
 
      END SELECT
 
 ! Final calculations because it is mainly used in the Poisson solver like this
-     g%wn1(:,1) = ( g%wn1(:,1) /g%aux(1,1) )**2
-
-     ig = ig + 1
+     g%mwn(:,1) = ( g%mwn(:,1) /g%jac(1,1) )**2
 
 ! -------------------------------------------------------------------
 ! Second-order derivative
 ! -------------------------------------------------------------------
-     g%wn2 => x(:,ig:)
-
      r24 = C_6_R*C_4_R 
 
      SELECT CASE( imethod )
 
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
-        g%wn2(:,1)=( r24*(1-cos(wrk1d(:,1))) + C_1_5_R*(C_1_R-cos(C_2_R*wrk1d(:,1))) )&
+        g%mwn(:,2)=( r24*(1-cos(wrk1d(:,1))) + C_1_5_R*(C_1_R-cos(C_2_R*wrk1d(:,1))) )&
                   /( C_11_R + C_4_R*cos(wrk1d(:,1)) )
 
      CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented
@@ -333,9 +329,9 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
      END SELECT
 
 ! Final calculations because it is mainly used in the Helmholtz solver like this
-     g%wn2(:,1) = g%wn2(:,1) /( g%aux(1,1)**2 )
+     g%mwn(:,2) = g%mwn(:,2) /( g%jac(1,1)**2 )
 
-     ig = ig + 1
+     ig = ig + 2
 
   ENDIF
 

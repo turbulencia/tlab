@@ -36,7 +36,7 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(u,v,w,s, p, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL, ONLY : visc
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
   USE DNS_GLOBAL, ONLY : iprof_i,thick_i,delta_i,mean_i,ycoor_i,prof_i
-  USE DNS_GLOBAL, ONLY : imode_fdm, iunify, scaley
+  USE DNS_GLOBAL, ONLY : imode_fdm, iunify
 
 IMPLICIT NONE
 
@@ -55,13 +55,13 @@ IMPLICIT NONE
   TREAL dummy, u_geo, w_geo
   TINTEGER iunifx_loc,iunifz_loc, i1bc_loc,j1bc_loc,k1bc_loc
 
-  TREAL, DIMENSION(:), POINTER :: y, dx,dy,dz
+  TREAL, DIMENSION(:), POINTER :: dx,dy,dz
 
 ! ###################################################################
 ! Define pointers
-                   dx => g(1)%aux(:,1)
-  y => g(2)%nodes; dy => g(2)%aux(:,1)
-                   dz => g(3)%aux(:,1)
+  dx => g(1)%jac(:,1)
+  dy => g(2)%jac(:,1)
+  dz => g(3)%jac(:,1)
 
 ! #######################################################################
   i1bc_loc = 0; iunifx_loc = 0 ! must be periodic and uniform in xOz
@@ -151,14 +151,14 @@ IMPLICIT NONE
 ! -----------------------------------------------------------------------
   IF ( buoyancy%active(2) ) THEN
 ! Reference state
-     ycenter = y(1) + scaley*ycoor_i(1)
+     ycenter = g(2)%nodes(1) + g(2)%scale *ycoor_i(1)
      iprof   = iprof_i(1)
      thick   = thick_i(1)
      delta   = delta_i(1)
      mean    = mean_i (1)
      param(:)= prof_i (:,1)
      DO ij = 1,jmax
-        wrk1d(ij,1) = FLOW_SHEAR_TEMPORAL(iprof, thick, delta, mean, ycenter, param, y(ij))
+        wrk1d(ij,1) = FLOW_SHEAR_TEMPORAL(iprof, thick, delta, mean, ycenter, param, g(2)%nodes(ij))
         wrk1d(ij,3) = C_0_R
      ENDDO
      buoyancy_loc = buoyancy; buoyancy_loc%type = EQNS_BOD_LINEAR

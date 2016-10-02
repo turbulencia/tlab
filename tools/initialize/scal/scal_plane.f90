@@ -52,7 +52,7 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
      idummy=imax*kmax; io_sizes = (/idummy,1,idummy,1,1/)
      CALL IO_READ_SUBARRAY8(i1, 'scal.rand', varname, disp, io_sizes, s) ! using array s as aux array
 ! remove mean
-     dummy = AVG_IK(imax,i1,kmax, i1, disp, g(1)%aux,g(3)%aux, area)
+     dummy = AVG_IK(imax,i1,kmax, i1, disp, g(1)%jac,g(3)%jac, area)
      disp = disp - dummy
 
 ! -------------------------------------------------------------------

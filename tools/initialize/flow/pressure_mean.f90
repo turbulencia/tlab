@@ -30,7 +30,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 
 ! ###################################################################
 ! Define pointers
-  y => g(2)%nodes; dy => g(2)%aux(:,1)
+  y => g(2)%nodes; dy => g(2)%jac(:,1)
    
 ! ###################################################################
 ! Constant pressure

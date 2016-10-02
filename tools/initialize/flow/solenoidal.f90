@@ -24,21 +24,21 @@ SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
 
   TINTEGER iwall
 
-  TREAL, DIMENSION(imax,jmax,kmax) :: u, v, w
-  TREAL, DIMENSION(imax,jmax,kmax) :: tmp1, tmp2, tmp3, tmp4, tmp5, wrk3d
+  TREAL, DIMENSION(imax,jmax,kmax) :: u,v,w
+  TREAL, DIMENSION(imax,jmax,kmax) :: tmp1,tmp2,tmp3,tmp4,tmp5, wrk3d
   TREAL, DIMENSION(imax,kmax,*)    :: wrk2d
   TREAL, DIMENSION(isize_wrk1d,*)  :: wrk1d
 
 ! -------------------------------------------------------------------
   TINTEGER  ibc
 
-  TREAL, DIMENSION(:),     POINTER :: y, dx,dy,dz
+  TREAL, DIMENSION(:), POINTER :: dx,dy,dz
 
 ! ###################################################################
 ! Define pointers
-                   dx => g(1)%aux(:,1)
-  y => g(2)%nodes; dy => g(2)%aux(:,1)
-                   dz => g(3)%aux(:,1)
+  dx => g(1)%jac(:,1)
+  dy => g(2)%jac(:,1)
+  dz => g(3)%jac(:,1)
 
 !  IF ( iwall .EQ. 1) THEN; ibc = 4
 !  ELSE;                    ibc = 3; ENDIF

@@ -44,9 +44,9 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
   
 ! ###################################################################
 ! Define pointers
-  x => g(1)%nodes; dx => g(1)%aux(:,1)
+  x => g(1)%nodes; dx => g(1)%jac(:,1)
   y => g(2)%nodes
-  z => g(3)%nodes; dz => g(3)%aux(:,1)
+  z => g(3)%nodes; dz => g(3)%jac(:,1)
 
   disp = C_0_R
 

@@ -13,12 +13,11 @@ MODULE DNS_TYPES
      LOGICAL uniform, periodic
      TREAL scale
      TREAL, DIMENSION(:),   POINTER :: nodes
-     TREAL, DIMENSION(:,:), POINTER :: aux   ! pointer to Jacobians
+     TREAL, DIMENSION(:,:), POINTER :: jac   ! pointer to Jacobians
      TREAL, DIMENSION(:,:), POINTER :: lu1   ! pointer to LU decomposition for 1. derivative
      TREAL, DIMENSION(:,:), POINTER :: lu2   ! pointer to LU decomposition for 2. derivative
      TREAL, DIMENSION(:,:), POINTER :: lu2d  ! pointer to LU decomposition for 2. derivative inc. diffusion
-     TREAL, DIMENSION(:,:), POINTER :: wn1   ! pointer to modified wavenumber for 1. derivative
-     TREAL, DIMENSION(:,:), POINTER :: wn2   ! pointer to modified wavenumber for 2. derivative
+     TREAL, DIMENSION(:,:), POINTER :: mwn   ! pointer to modified wavenumbers
   END TYPE grid_structure
 
   TYPE pointers_structure

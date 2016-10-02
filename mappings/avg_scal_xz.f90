@@ -62,9 +62,9 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
 ! ###################################################################
 ! Define pointers
-                   dx => g(1)%aux(:,1)
-  y => g(2)%nodes; dy => g(2)%aux(:,1)
-                   dz => g(3)%aux(:,1)
+                   dx => g(1)%jac(:,1)
+  y => g(2)%nodes; dy => g(2)%jac(:,1)
+                   dz => g(3)%jac(:,1)
 
   u => q(:,:,:,1)
   v => q(:,:,:,2)

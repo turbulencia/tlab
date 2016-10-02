@@ -52,8 +52,8 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
   TREAL ycenter, ymin, ymax, amplify, dummy
 
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:,:,:), POINTER :: wx, wy, wz
-  TREAL, DIMENSION(:),     POINTER :: x,y,z, dx,dy,dz
+  TREAL, DIMENSION(:,:,:), POINTER :: wx,wy,wz
+  TREAL, DIMENSION(:),     POINTER :: dx,dy,dz
 
 ! ###################################################################
 ! Define pointers
@@ -61,9 +61,9 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
   wy => tmp2
   wz => tmp3
 
-  x => g(1)%nodes; dx => g(1)%aux(:,1)
-  y => g(2)%nodes; dy => g(2)%aux(:,1)
-  z => g(3)%nodes; dz => g(3)%aux(:,1)
+  dx => g(1)%jac(:,1)
+  dy => g(2)%jac(:,1)
+  dz => g(3)%jac(:,1)
 
 ! ###################################################################
 ! Read initial random field
@@ -83,7 +83,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 ! change sign in the lateral velocity in the upper layer
   IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
      DO j = 1,jmax
-        ycenter = y(j) - g(2)%scale*C_05_R - y(1)
+        ycenter = g(2)%nodes(j) - g(2)%scale*C_05_R - g(2)%nodes(1)
         amplify = TANH(-C_05_R*ycenter/thick_u)
         v(:,j,:) = amplify*v(:,j,:)
      ENDDO
@@ -123,12 +123,12 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 ! -------------------------------------------------------------------
   IF      ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
      DO j = 1,jmax
-        ycenter = y(j) - g(2)%scale*ycoor_ini - y(1)
+        ycenter = g(2)%nodes(j) - g(2)%scale*ycoor_ini - g(2)%nodes(1)
         IF ( thick_ini .eq. C_0_R ) THEN; amplify = C_0_R
         ELSE;                             amplify = EXP(-(C_05_R*ycenter/thick_ini)**2); ENDIF
 
-        ymin = (y(j)-y(1)   )/thick_ini
-        ymax = (y(j)-y(jmax))/thick_ini
+        ymin = (g(2)%nodes(j)-g(2)%nodes(1)   )/thick_ini
+        ymax = (g(2)%nodes(j)-g(2)%nodes(jmax))/thick_ini
         IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) amplify = amplify *TANH( C_05_R*ymin) !**2
         IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) amplify = amplify *TANH(-C_05_R*ymax) !**2
         v(:,j,:) = wy(:,j,:)*amplify
@@ -144,11 +144,11 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 ! -------------------------------------------------------------------
   ELSE IF ( imode_flow .EQ. DNS_FLOW_JET   ) THEN
      DO j = 1, jmax           
-        ycenter =   y(j) - g(2)%scale*ycoor_ini - diam_u*C_05_R - y(1)
+        ycenter =   g(2)%nodes(j) - g(2)%scale*ycoor_ini - diam_u*C_05_R - g(2)%nodes(1)
         IF ( thick_ini .eq. C_0_R ) THEN; amplify = C_0_R
         ELSE;                             amplify = EXP(-(C_05_R*ycenter/thick_ini)**2); ENDIF
 
-        ycenter =-( y(j) - g(2)%scale*ycoor_ini + diam_u*C_05_R - y(1) )
+        ycenter =-( g(2)%nodes(j) - g(2)%scale*ycoor_ini + diam_u*C_05_R - g(2)%nodes(1) )
         IF ( thick_ini .eq. C_0_R ) THEN; amplify = C_0_R
         ELSE;                             amplify = amplify + EXP(-(C_05_R*ycenter/thick_ini)**2); ENDIF
 

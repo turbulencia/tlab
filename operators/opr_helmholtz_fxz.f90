@@ -62,7 +62,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, ibc, alpha,&
   TCOMPLEX bcs(3)
 
 ! #######################################################################
-  norm = C_1_R/M_REAL(g(1)%size*g(3)%size)
+  norm = C_1_R /M_REAL( g(1)%size *g(3)%size )
 
   isize_line = nx/2+1
 
@@ -97,8 +97,8 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, ibc, alpha,&
      ! ip = inb_grid_1 + 5 ! pointer to position in arrays dx, dz
      ! IF ( g(3)%size .GT. 1 ) THEN; lambda = dx(iglobal,ip) + dz(kglobal,ip)
      ! ELSE;                          lambda = dx(iglobal,ip); ENDIF
-     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%wn1(iglobal,1) + g(3)%wn1(kglobal,1)
-     ELSE;                         lambda = g(1)%wn1(iglobal,1); ENDIF
+     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%mwn(iglobal,1) + g(3)%mwn(kglobal,1)
+     ELSE;                         lambda = g(1)%mwn(iglobal,1); ENDIF
 
      lambda = lambda - alpha
 
@@ -116,10 +116,10 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, ibc, alpha,&
 ! -----------------------------------------------------------------------
      IF      ( ibc .EQ. 3 ) THEN ! Neumman BCs
 !        CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
-        CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, g(2)%aux, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+        CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
      ELSE IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
 !        CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
-        CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, g(2)%aux, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+        CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
      ELSE
         CALL IO_WRITE_ASCII(efile,'OPR_HELMHOLT_FXZ. Undeveloped BCs.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
@@ -214,8 +214,8 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, ibc, alpha,&
      ! ip = inb_grid_2 + 5 ! pointer to position in arrays dx, dz
      ! IF ( g(3)%size .GT. 1 ) THEN; lambda = dx(iglobal,ip) + dz(kglobal,ip)
      ! ELSE;                          lambda = dx(iglobal,ip); ENDIF
-     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%wn2(iglobal,1) + g(3)%wn2(kglobal,1)
-     ELSE;                         lambda = g(1)%wn2(iglobal,1); ENDIF
+     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%mwn(iglobal,2) + g(3)%mwn(kglobal,2)
+     ELSE;                         lambda = g(1)%mwn(iglobal,2); ENDIF
 
      lambda = lambda - alpha
 
@@ -234,10 +234,10 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, ibc, alpha,&
      IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
         IF      ( imode_fdm .EQ. FDM_COM6_JACOBIAN ) THEN
 !           CALL INT_C2N6_LHS_E(ny,    dy, lambda, &
-           CALL INT_C2N6_LHS_E(ny,    g(2)%aux, lambda, &
+           CALL INT_C2N6_LHS_E(ny,    g(2)%jac, lambda, &
                 wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
 !           CALL INT_C2N6_RHS  (ny,i2, dy, aux(1,1),aux(1,2))
-           CALL INT_C2N6_RHS  (ny,i2, g(2)%aux, aux(1,1),aux(1,2))
+           CALL INT_C2N6_RHS  (ny,i2, g(2)%jac, aux(1,1),aux(1,2))
         ELSE IF ( imode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
            wrk1d = C_0_R
            ! CALL INT_C2N6N_LHS_E(ny,    dy(1,inb_grid_2+7),dy(1,inb_grid_2+3), lambda, &
@@ -354,8 +354,8 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
      ! ip = inb_grid_2 + 5 ! pointer to position in arrays dx, dz
      ! IF ( g(3)%size .GT. 1 ) THEN; lambda = dx(iglobal,ip) + dz(kglobal,ip)
      ! ELSE;                          lambda = dx(iglobal,ip); ENDIF
-     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%wn2(iglobal,1) + g(3)%wn2(kglobal,1)
-     ELSE;                         lambda = g(1)%wn2(iglobal,1); ENDIF
+     IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%mwn(iglobal,2) + g(3)%mwn(kglobal,2)
+     ELSE;                         lambda = g(1)%mwn(iglobal,2); ENDIF
 
      lambda = lambda - alpha
 
@@ -377,10 +377,10 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
      IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
         IF      ( imode_fdm .EQ. FDM_COM6_JACOBIAN ) THEN
 !           CALL INT_C2N6_LHS_E(ny,    dy, lambda, &
-           CALL INT_C2N6_LHS_E(ny,    g(2)%aux, lambda, &
+           CALL INT_C2N6_LHS_E(ny,    g(2)%jac, lambda, &
                 wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
 !           CALL INT_C2N6_RHS  (ny,i2*nfield, dy, aux(1,1,1),aux(1,1,2))
-           CALL INT_C2N6_RHS  (ny,i2, g(2)%aux, aux(1,1,1),aux(1,1,2))
+           CALL INT_C2N6_RHS  (ny,i2, g(2)%jac, aux(1,1,1),aux(1,1,2))
         ELSE IF ( imode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
            wrk1d = C_0_R
            ! CALL INT_C2N6N_LHS_E(ny,dy(1,inb_grid_2+7),dy(1,inb_grid_2+3), lambda, &

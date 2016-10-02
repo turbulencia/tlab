@@ -347,7 +347,7 @@ PROGRAM SPECTRA
 
   icalc_radial = 0
   IF ( flag_mode .EQ. 1 .AND. g(1)%size     .EQ. g(3)%size     ) icalc_radial = 1 ! Calculate radial spectra
-  IF ( flag_mode .EQ. 2 .AND. g(1)%aux(1,1) .EQ. g(3)%aux(1,1) ) icalc_radial = 1 ! Calculate radial correlations
+  IF ( flag_mode .EQ. 2 .AND. g(1)%jac(1,1) .EQ. g(3)%jac(1,1) ) icalc_radial = 1 ! Calculate radial correlations
   
 ! ------------------------------------------------------------------------
 ! Define size of blocks
@@ -514,7 +514,7 @@ PROGRAM SPECTRA
         ENDDO
      ELSE
         DO iv = 1,nfield_ref
-           CALL REYFLUCT2D(imax,jmax,kmax, g(1)%aux,g(3)%aux, area, data(iv)%field)
+           CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, data(iv)%field)
         ENDDO
      ENDIF
 
