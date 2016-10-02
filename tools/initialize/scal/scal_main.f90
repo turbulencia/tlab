@@ -118,7 +118,7 @@ PROGRAM INISCAL
            dummy = p_init/C_1_R ! MRATIO = 1
            CALL  THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2), dummy, s(1,1))
         ELSE
-           CALL SCAL_MEAN(is, x,y,z, s(1,is), wrk1d,wrk2d,wrk3d)
+           CALL SCAL_MEAN(is, s(1,is), wrk1d,wrk2d,wrk3d)
         END IF
      END DO
 
@@ -129,11 +129,11 @@ PROGRAM INISCAL
         IF ( is .EQ. 3 .AND. imixture .EQ. MIXT_TYPE_SUPSAT .AND. flag_mixture .EQ. 1)  THEN !In Eq concentration do nothing
         ELSE
            IF      ( flag_s .EQ. 1 ) THEN
-              CALL SCAL_VOLUME_DISCRETE(is, x,y,z, s(1,is))
+              CALL SCAL_VOLUME_DISCRETE(is, s(1,is))
            ELSE IF ( flag_s .EQ. 2 .AND. norm_ini_s(is) .GT. C_SMALL_R ) THEN
-              CALL SCAL_VOLUME_BROADBAND(is, y,dx,dz, s(1,is), txc, wrk3d)
+              CALL SCAL_VOLUME_BROADBAND(is, s(1,is), txc, wrk3d)
            ELSE IF ( flag_s .GE. 4 .AND. norm_ini_s(is) .GT. C_SMALL_R ) THEN
-              CALL SCAL_PLANE(flag_s, is, x,y,z,dx,dz, s(1,is), wrk2d)
+              CALL SCAL_PLANE(flag_s, is, s(1,is), wrk2d)
            ENDIF
            
         ENDIF
@@ -148,7 +148,7 @@ PROGRAM INISCAL
 
 ! pasive scalar field
      IF      ( flag_mixture .EQ. 0 ) THEN
-        CALL SCAL_MEAN(is, x,y,z, s(1,is), wrk1d,wrk2d,wrk3d)
+        CALL SCAL_MEAN(is, s(1,is), wrk1d,wrk2d,wrk3d)
      ELSE IF ( flag_mixture .EQ. 2 ) THEN
         CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, i1,i1, isize_wrk3d, s(1,is), wrk3d)
      ENDIF
@@ -177,7 +177,7 @@ PROGRAM INISCAL
      ENDIF
      DO is = 1,inb_scal
         IF ( radiation%active(is) ) THEN
-           CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(is)), txc, wrk1d,wrk3d)
+           CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2)%aux, s(1,radiation%scalar(is)), txc, wrk1d,wrk3d)
            s(1:isize_field,is) = s(1:isize_field,is) + txc(1:isize_field,1)
         ENDIF
      ENDDO
