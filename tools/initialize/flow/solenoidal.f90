@@ -58,7 +58,7 @@ SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
   IF ( i1bc .EQ. 0 .AND. k1bc .EQ. 0 ) THEN ! Doubly periodic in xOz
      wrk2d(:,:,1:2) = C_0_R  ! bcs
      tmp1 = -tmp2            ! change of forcing term sign
-     CALL OPR_POISSON_FXZ(imode_fdm,i1,ibc, imax,jmax,kmax, g, &
+     CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, ibc, &
           tmp1,wrk3d, tmp4,tmp5, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
   ELSE                                      ! General treatment

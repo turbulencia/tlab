@@ -181,7 +181,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
      IF ( i1bc .EQ. 0 .AND. k1bc .EQ. 0 ) THEN ! Doubly periodic in xOz 
         wrk2d(:,:,1:2) = C_0_R  ! bcs
         u = -wx                 ! change of forcing term sign
-        CALL OPR_POISSON_FXZ(imode_fdm,i1,ibc, imax,jmax,kmax, g,&
+        CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, ibc,&
              u,wrk3d, tmp4,tmp5, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
         
      ELSE                                      ! General treatment
@@ -201,7 +201,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
      IF ( i1bc .EQ. 0 .AND. k1bc .EQ. 0 ) THEN ! Doubly periodic in xOz
         wrk2d(:,:,1:2) = C_0_R  ! bcs
         v = -wy                 ! change sign of forcing term
-        CALL OPR_POISSON_FXZ(imode_fdm,i1,ibc, imax,jmax,kmax, g,&
+        CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, ibc,&
              v,wrk3d, tmp4,tmp5, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
         
      ELSE                                      ! General treatment
@@ -222,7 +222,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
         IF ( i1bc .EQ. 0 .AND. k1bc .EQ. 0 ) THEN ! Doubly periodic in xOz
            wrk2d(:,:,1:2) = C_0_R  ! bcs
            w = -wz                 ! change sign of forcing term
-           CALL OPR_POISSON_FXZ(imode_fdm,i1,ibc, imax,jmax,kmax, g,&
+           CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, ibc,&
                 w,wrk3d, tmp4,tmp5, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
         
         ELSE                                      ! General treatment

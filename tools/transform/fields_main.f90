@@ -548,7 +548,7 @@ PROGRAM TRANSFIELDS
                     ip = ip + imax
                  ENDDO
                  q_dst(:,iq) = q(:,iq)*dummy ! forcing term
-                 CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, dummy,&
+                 CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, i0, dummy,&
                       q_dst(1,iq), txc(1,2),txc(1,3), &
                       wrk2d(1,1),wrk2d(1,2), wrk1d,wrk1d(1,5),wrk3d)
                  

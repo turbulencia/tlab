@@ -20,14 +20,15 @@
 !# along generic direction x to nyz lines of data
 !#
 !########################################################################
-SUBROUTINE OPR_BURGERS(imode_fdm, is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
+SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 
   USE DNS_TYPES,     ONLY : grid_structure
   USE DNS_CONSTANTS, ONLY : efile
-
+  USE DNS_GLOBAL,    ONLY : imode_fdm
+  
   IMPLICIT NONE
 
-  TINTEGER,                        INTENT(IN)    :: imode_fdm, is
+  TINTEGER,                        INTENT(IN)    :: is
   TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
   TINTEGER,                        INTENT(IN)    :: bcs_min(2) ! BC derivative: 0 biased, non-zero
   TINTEGER,                        INTENT(IN)    :: bcs_max(2) !                1 forced to zero
@@ -54,15 +55,19 @@ SUBROUTINE OPR_BURGERS(imode_fdm, is, nlines, g, s,u, result, bcs_min,bcs_max, w
 ! Periodic case
 ! -------------------------------------------------------------------
   IF ( g%periodic ) THEN 
-     IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN
+     SELECT CASE( imode_fdm )
+        
+     CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4P_RHS(g%size,nlines, s, result)
-     ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN 
+        
+     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
         CALL FDM_C2N6P_RHS(g%size,nlines, s, result)
-     ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN 
-        CALL FDM_C2N6P_RHS(g%size,nlines, s, result) !8th not yet developed
-     ELSE IF ( imode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
+        
+     CASE( FDM_COM8_JACOBIAN )                  ! Not yet implemented; default to 6. order
         CALL FDM_C2N6P_RHS(g%size,nlines, s, result)
-     ENDIF
+        
+     END SELECT
+
      ! ip = inb_grid_3 + is*5 - 1 ! LU decomposition containing the diffusivity
      ! CALL TRIDPSS(g%size,nlines, dx(1,ip+1),dx(1,ip+2),&
      !      dx(1,ip+3),dx(1,ip+4),dx(1,ip+5), result,wrk2d)
@@ -119,7 +124,7 @@ END SUBROUTINE OPR_BURGERS
 !# is         In   Scalar index; if 0, then velocity
 !# tmp1       Out  Transpose velocity
 !########################################################################
-SUBROUTINE OPR_BURGERS_X(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
+SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
      bcs1_imin,bcs1_imax, bcs2_imin,bcs2_imax, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_structure
@@ -129,7 +134,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
 
   IMPLICIT NONE
 
-  TINTEGER ivel, is, imode_fdm, nx,ny,nz
+  TINTEGER ivel, is, nx,ny,nz
   TINTEGER bcs1_imin,bcs1_imax, bcs2_imin,bcs2_imax
   TYPE(grid_structure),           INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz),     INTENT(IN)    :: s,u1,u2
@@ -186,7 +191,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
 #endif
 
 ! ###################################################################
-  CALL OPR_BURGERS(imode_fdm, is, nyz, g, p_b, p_vel, p_d, bcs_min,bcs_max, wrk2d,p_c)
+  CALL OPR_BURGERS(is, nyz, g, p_b, p_vel, p_d, bcs_min,bcs_max, wrk2d,p_c)
   
 ! ###################################################################
 ! Put arrays back in the order in which they came in
@@ -209,13 +214,13 @@ END SUBROUTINE OPR_BURGERS_X
 
 !########################################################################
 !########################################################################
-SUBROUTINE OPR_BURGERS_Y(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
+SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
      bcs1_jmin,bcs1_jmax, bcs2_jmin,bcs2_jmax, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_structure
   IMPLICIT NONE
 
-  TINTEGER ivel, is, imode_fdm, nx,ny,nz
+  TINTEGER ivel, is, nx,ny,nz
   TINTEGER bcs1_jmin,bcs1_jmax, bcs2_jmin,bcs2_jmax
   TYPE(grid_structure),           INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz),     INTENT(IN)    :: s,u1,u2
@@ -267,7 +272,7 @@ SUBROUTINE OPR_BURGERS_Y(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
   ENDIF
 
 ! ###################################################################
-  CALL OPR_BURGERS(imode_fdm, is, nxz, g, p_org, p_vel, p_dst2, bcs_min,bcs_max, wrk2d,p_dst1)
+  CALL OPR_BURGERS(is, nxz, g, p_org, p_vel, p_dst2, bcs_min,bcs_max, wrk2d,p_dst1)
   
 ! ###################################################################
 ! Put arrays back in the order in which they came in
@@ -288,7 +293,7 @@ END SUBROUTINE OPR_BURGERS_Y
 
 !########################################################################
 !########################################################################
-SUBROUTINE OPR_BURGERS_Z(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
+SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
      bcs1_kmin,bcs1_kmax, bcs2_kmin,bcs2_kmax, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_structure
@@ -298,7 +303,7 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
 
   IMPLICIT NONE
 
-  TINTEGER ivel, is, imode_fdm, nx,ny,nz
+  TINTEGER ivel, is, nx,ny,nz
   TINTEGER bcs1_kmin, bcs1_kmax, bcs2_kmin, bcs2_kmax
   TYPE(grid_structure),           INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz),     INTENT(IN)    :: s,u1,u2
@@ -359,7 +364,7 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, imode_fdm, nx,ny,nz, g, s,u1,u2, result, &
   ENDIF
 
 ! ###################################################################
-  CALL OPR_BURGERS(imode_fdm, is, nxy, g, p_a, p_vel, p_c, bcs_min,bcs_max, wrk2d,p_b)
+  CALL OPR_BURGERS(is, nxy, g, p_a, p_vel, p_c, bcs_min,bcs_max, wrk2d,p_b)
 
 ! ###################################################################
 ! Put arrays back in the order in which they came in

@@ -362,7 +362,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 ! #######################################################################
         beta =-C_1_R/(alpha/schmidt(is))
  
-        CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, &
+        CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, g, i0, beta, &
              tmp4, tmp6,tmp7, bcs_locb(1,1,4), bcs_loct(1,1,4), wrk1d, wrk1d(1,5),wrk3d )
 
         DO ij = 1,isize_field  
@@ -377,11 +377,11 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 ! ################################################################################ 
   beta =-C_1_R/alpha 
 
-  CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, &
+  CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, g, i0, beta, &
        tmp1, tmp5,tmp6, bcs_locb(1,1,1), bcs_loct(1,1,1), wrk1d, wrk1d(1,5),wrk3d)
-  CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, &
+  CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, g, i0, beta, &
        tmp2, tmp5,tmp6, bcs_locb(1,1,2), bcs_loct(1,1,2), wrk1d, wrk1d(1,5),wrk3d)
-  CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, beta, &
+  CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, g, i0, beta, &
        tmp3, tmp5,tmp6, bcs_locb(1,1,3), bcs_loct(1,1,3), wrk1d, wrk1d(1,5),wrk3d) 
 
   DO ij=1,isize_field  
@@ -412,7 +412,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   ENDDO
 
 ! pressure in tmp1, Oy derivative in tmp3
-  CALL OPR_POISSON_FXZ(imode_fdm,i2,i3, imax,jmax,kmax, g,&
+  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
        tmp1,tmp3, tmp2,tmp4, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
 
 ! horizontal derivatives

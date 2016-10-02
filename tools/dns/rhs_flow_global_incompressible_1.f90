@@ -86,7 +86,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
        dz, u, tmp6, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
        dy, u, tmp5, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)
-  CALL OPR_BURGERS_X(i0,i0, imode_fdm, imax,jmax,kmax, &
+  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, &
        g(1), u,u,u, tmp4, i0,i0, i0,i0, tmp1, wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
@@ -161,7 +161,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! Diffusion and convection terms in Oz momentum eqn
 ! #######################################################################
   IF ( kmax_total .GT. 1 ) THEN
-  CALL OPR_BURGERS_Z(i0,i0, imode_fdm, imax,jmax,kmax,&
+  CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax,&
        g(3), w,w,w, tmp6, i0,i0, i0,i0, tmp3, wrk2d,wrk3d)
   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
        dy, w, tmp5, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)
@@ -241,7 +241,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
        dz, v, tmp6, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
-  CALL OPR_BURGERS_Y(i0,i0, imode_fdm, imax,jmax,kmax,&
+  CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax,&
        g(2), v,v,v, tmp5, i0,i0, i0,i0, tmp2, wrk2d,wrk3d)
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
        dx, v, tmp4, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
@@ -351,7 +351,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   ENDDO
 
 ! pressure in tmp1, Oy derivative in tmp3
-  CALL OPR_POISSON_FXZ(imode_fdm,i2,i3, imax,jmax,kmax, g,&
+  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
        tmp1,tmp3, tmp2,tmp4, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
 
 ! horizontal derivatives

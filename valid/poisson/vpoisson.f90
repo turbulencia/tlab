@@ -79,7 +79,7 @@ PROGRAM VPOISSON
   itype = 2
 
   IF      ( itype .EQ. 1 ) THEN
-     CALL OPR_POISSON_FXZ(imode_fdm, i2,i3, imax,jmax,kmax, g, &
+     CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
           a,c, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
      e = c ! save dp/dy
   ELSE IF ( itype .EQ. 2 ) THEN
@@ -87,7 +87,7 @@ PROGRAM VPOISSON
      READ(*,*) lambda
      ! CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, lambda,&
      !      a, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
-     CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, i0, lambda,&
+     CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, g, i0, lambda,&
           a, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
   ENDIF
 
@@ -115,8 +115,8 @@ PROGRAM VPOISSON
 ! ###################################################################
 ! solve poisson eqn
 ! ###################################################################
-!  CALL OPR_POISSON_FXZ(imode_fdm, i2,i3, imax,jmax,kmax,  &
-!       y,dx,dy,dz, b,c,d,e, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
+!  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
+!       b,c,d,e, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
   CALL DNS_WRITE_FIELDS('field.out', i1, imax,jmax,kmax, i1, i1, b, wrk3d)
 
   CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, a, c, i0,i0, wrk1d,wrk2d,wrk3d)

@@ -207,7 +207,7 @@ IMPLICIT NONE
   ENDDO
 
 ! pressure in tmp1, Oy derivative in tmp3
-  CALL OPR_POISSON_FXZ(imode_fdm,i2,i3, imax,jmax,kmax, g,&
+  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
        tmp1,tmp3, tmp2,tmp4, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
 
 ! horizontal derivatives

@@ -181,7 +181,7 @@ IMPLICIT NONE
 ! #######################################################################
 ! Solve Poisson equation
 ! #######################################################################
-  CALL OPR_POISSON_FXZ(imode_fdm,i1,i3, imax,jmax,kmax, g,&
+  CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, i3, &
        p,wrk3d, tmp2,tmp3, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
   RETURN

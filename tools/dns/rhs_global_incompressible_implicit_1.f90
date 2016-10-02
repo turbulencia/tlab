@@ -359,7 +359,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
            ip=ip+(jmax-1)*imax;  wrk2d(ip_t:ip_t+imax-1)=-alpha*bcs_st(1:imax,k,is); ip_t=ip_t+imax
         ENDDO
         ip_b = 1     ; ip_t = 1+ imax*kmax
-        CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, &
+        CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, i0, beta, &
              s(1,is), tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(1,5),wrk3d )      
 
         DO ij=1,isize_field  
@@ -386,7 +386,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   ENDDO
 
   ip_b = 1; ip_t = 1+imax*kmax  
-  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, &
+  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, i0, beta, &
        tmp1, tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(:,5),wrk3d )     
 
   DO k=1,kmax 
@@ -394,7 +394,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
      ip=ip+(jmax-1)*imax;  wrk2d(ip_t:ip_t+imax-1)=-alpha*v(ip:ip+imax-1); ip_t=ip_t+imax
   ENDDO
   ip_b = 1     ; ip_t = 1+ imax*kmax 
-  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, &
+  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, i0, beta, &
        tmp2, tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(:,5),wrk3d )     
 
   DO k=1,kmax 
@@ -402,7 +402,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
      ip=ip+(jmax-1)*imax;  wrk2d(ip_t:ip_t+imax-1)=-alpha*w(ip:ip+imax-1); ip_t=ip_t+imax
   ENDDO
   ip_b = 1     ; ip_t = 1+ imax*kmax 
-  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, beta, &
+  CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, i0, beta, &
        tmp3, tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(:,5),wrk3d )     
   DO ij=1,isize_field  
      u(ij) = tmp1(ij) * beta 
@@ -440,7 +440,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   ENDDO
 
 ! pressure in tmp1, Oy derivative in tmp3
-  CALL OPR_POISSON_FXZ(imode_fdm,i2,i3, imax,jmax,kmax, g,&
+  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
        tmp1,tmp3, tmp2,tmp4, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
 
 ! horizontal derivatives

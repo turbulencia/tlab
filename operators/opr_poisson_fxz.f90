@@ -25,11 +25,12 @@
 !# to (imax+2)*(jmax+2)*kmax, or larger if PARALLEL mode
 !#
 !########################################################################
-SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, g,&
+SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
      a,dpdy, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
   USE DNS_TYPES,  ONLY : grid_structure
   USE DNS_GLOBAL, ONLY : isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : imode_fdm
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -38,10 +39,11 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, g,&
 
 #include "integers.h"
 
-  TINTEGER ibc, iflag, imode_fdm, nx,ny,nz
+  LOGICAL,                                  INTENT(IN)    :: flag
+  TINTEGER,                                 INTENT(IN)    :: nx,ny,nz, ibc
   TYPE(grid_structure),                     INTENT(IN)    :: g(3)
   TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: a    ! Forcing term, ans solution field p
-  TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: dpdy ! Derivative, if iflag = 2
+  TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: dpdy ! Derivative, flag .TRUE.
   TREAL,    DIMENSION(nx,nz),               INTENT(IN)    :: bcs_hb, bcs_ht   ! Boundary-condition fields
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz), INTENT(INOUT) :: tmp1,tmp2, wrk3d
   TCOMPLEX, DIMENSION(ny,2),                INTENT(INOUT) :: aux
@@ -150,7 +152,7 @@ SUBROUTINE OPR_POISSON_FXZ(imode_fdm,iflag,ibc, nx,ny,nz, g,&
 ! ###################################################################
 ! Fourier derivatives (based on array tmp2)
 ! ###################################################################
-  IF ( iflag .EQ. 2 ) THEN
+  IF ( flag ) THEN
      IF ( g(3)%size .GT. 1 ) THEN
         CALL OPR_FOURIER_B_Z_EXEC(tmp2,wrk3d) 
         CALL OPR_FOURIER_B_X_EXEC(nx,ny,nz, wrk3d,dpdy, tmp2) 

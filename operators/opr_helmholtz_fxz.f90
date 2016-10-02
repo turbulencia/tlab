@@ -34,11 +34,12 @@
 !# to (imax+2)*(jmax+2)*kmax, or larger if PARALLEL mode
 !#
 !########################################################################
-SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, ibc, alpha,&
+SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, ibc, alpha,&
      a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
+  USE DNS_TYPES,  ONLY : grid_structure
   USE DNS_GLOBAL, ONLY : isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : imode_fdm, g
+  USE DNS_GLOBAL, ONLY : imode_fdm
   USE DNS_CONSTANTS, ONLY : efile
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
@@ -49,6 +50,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, ibc, alpha,&
 #include "integers.h"
 
   TINTEGER nx,ny,nz, ibc
+  TYPE(grid_structure),      INTENT(IN)    :: g(3)
   TREAL alpha
   TREAL,    DIMENSION(nx,ny,nz)            :: a
   TREAL,    DIMENSION(nx,nz)               :: bcs_hb, bcs_ht  
@@ -151,11 +153,12 @@ END SUBROUTINE OPR_HELMHOLTZ_FXZ
 !########################################################################
 !########################################################################
 ! Same, but using the direct mode of FDM
-SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, ibc, alpha,&
+SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, g, ibc, alpha,&
      a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
+  USE DNS_TYPES,  ONLY : grid_structure
   USE DNS_GLOBAL, ONLY : isize_field, isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : imode_fdm, g
+  USE DNS_GLOBAL, ONLY : imode_fdm
   USE DNS_CONSTANTS, ONLY : efile
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
@@ -167,6 +170,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, ibc, alpha,&
 
   TINTEGER nx,ny,nz, ibc
   TREAL alpha
+  TYPE(grid_structure),      INTENT(IN)    :: g(3)
   TREAL,    DIMENSION(isize_field)         :: a
   TREAL,    DIMENSION(nx,nz)               :: bcs_hb, bcs_ht  
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz) :: tmp1,tmp2, wrk3d

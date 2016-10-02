@@ -91,7 +91,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Ox diffusion and convection terms in Ox momentum eqn
 ! Initializing tmp5 for the rest of terms
 ! #######################################################################
-  CALL OPR_BURGERS_X(i0,i0, imode_fdm, imax,jmax,kmax, &
+  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, &
        g(1), u,u,u, tmp1, i0,i0, i0,i0, tmp5, wrk2d,wrk3d) ! tmp5 contains u transposed
   
   h1 = h1 + tmp1
@@ -101,9 +101,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
   IF ( kmax_total .GT. 1 ) THEN
 
-  CALL OPR_BURGERS_Z(i0,i0, imode_fdm, imax,jmax,kmax,&
+  CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax,&
        g(3), w,w,w,    tmp1, i0,i0, i0,i0, tmp6, wrk2d,wrk3d) ! tmp6 contains w transposed
-  CALL OPR_BURGERS_X(i1,i0, imode_fdm, imax,jmax,kmax, &
+  CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, &
        g(1), w,u,tmp5, tmp4, i0,i0, i0,i0, tmp2, wrk2d,wrk3d) ! tmp5 contains u transposed
   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
        dy, w, tmp3, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)  ! tmp2 is used below in BCs
@@ -137,11 +137,11 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
 ! Diffusion and convection terms in Oy momentum eqn
 ! #######################################################################
-  CALL OPR_BURGERS_Y(i0,i0, imode_fdm, imax,jmax,kmax,&
+  CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax,&
        g(2), v,v,v,    tmp1, i0,i0, i0,i0, tmp2, wrk2d,wrk3d)
-  CALL OPR_BURGERS_Z(i1,i0, imode_fdm, imax,jmax,kmax,&
+  CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax,&
        g(3), v,w,tmp6, tmp4, i0,i0, i0,i0, tmp2, wrk2d,wrk3d) ! tmp6 contains w transposed
-  CALL OPR_BURGERS_X(i1,i0, imode_fdm, imax,jmax,kmax,&
+  CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax,&
        g(1), v,u,tmp5, tmp3, i0,i0, i0,i0, tmp2, wrk2d,wrk3d) ! tmp5 contains u transposed
 
 !$omp parallel default( shared ) &
@@ -156,7 +156,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Diffusion and convection terms in Ox momentum eqn
 ! The term \nu u'' - u u' has been already added in the beginning
 ! #######################################################################
-  CALL OPR_BURGERS_Z(i1,i0, imode_fdm, imax,jmax,kmax,&
+  CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax,&
        g(3), u,w,tmp6, tmp4, i0,i0, i0,i0, tmp2, wrk2d,wrk3d) ! tmp6 contains w transposed
   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
        dy, u, tmp3, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)  ! tmp2 is used below in BCs
@@ -254,7 +254,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   ENDDO
 
 ! pressure in tmp1, Oy derivative in tmp3
-  CALL OPR_POISSON_FXZ(imode_fdm,i2,i3, imax,jmax,kmax, g, &
+  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
        tmp1,tmp3, tmp2,tmp4, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
 
 ! Saving pressure for towers to tmp array 
@@ -301,9 +301,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
      IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R
      ELSE;                                  diff = visc/schmidt(is); ENDIF
         
-     CALL OPR_BURGERS_Z(i1,is, imode_fdm, imax,jmax,kmax,&
+     CALL OPR_BURGERS_Z(i1,is, imax,jmax,kmax,&
           g(3), s(1,is),w,tmp6, tmp1, i0,i0, i0,i0, tmp2, wrk2d,wrk3d) ! tmp6 contains w transposed
-     CALL OPR_BURGERS_X(i1,is, imode_fdm, imax,jmax,kmax,&
+     CALL OPR_BURGERS_X(i1,is, imax,jmax,kmax,&
           g(1), s(1,is),u,tmp5, tmp2, i0,i0, i0,i0, tmp3, wrk2d,wrk3d) ! tmp5 contains u transposed
      CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
           dy, s(1,is), tmp3, i0,i0, i0,i0, tmp4, wrk1d,wrk2d,wrk3d)
