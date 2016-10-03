@@ -13,17 +13,13 @@ case $kernel in
 	SYST=blizzard;; 
     Linux )
 	case $host in 
-	    thunder4 ) 
+	    thunder* ) 
 		SYST=thunder;;
-	    thunder5 )  
-		SYST=thunder;; 
-	    thunder6 ) 
-		SYST=thunder;; 
             mpipc* )
                 SYST=mpipc;; 
             juqueen* )
                 SYST=juqueen;; 
-            tinkerbell* )
+            laptop* )
                 SYST=archlinux;; 
 	esac 
 esac
