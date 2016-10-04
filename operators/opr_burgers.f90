@@ -24,7 +24,6 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 
   USE DNS_TYPES,     ONLY : grid_structure
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL,    ONLY : imode_fdm
   
   IMPLICIT NONE
 
@@ -48,14 +47,14 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
   ENDIF
 
 ! First derivative
-  CALL OPR_PARTIAL1(imode_fdm, nlines, g, s,wrk3d, bcs_min(1),bcs_max(1), wrk2d)
+  CALL OPR_PARTIAL1(nlines, g, s,wrk3d, bcs_min(1),bcs_max(1), wrk2d)
 
 ! Second derivative uses LE decomposition including diffusivity coefficient
 ! -------------------------------------------------------------------
 ! Periodic case
 ! -------------------------------------------------------------------
   IF ( g%periodic ) THEN 
-     SELECT CASE( imode_fdm )
+     SELECT CASE( g%mode_fdm )
         
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4P_RHS(g%size,nlines, s, result)
@@ -78,7 +77,7 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 ! Nonperiodic case
 ! -------------------------------------------------------------------
   ELSE
-     SELECT CASE( imode_fdm )
+     SELECT CASE( g%mode_fdm )
         
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, s, wrk3d, result)

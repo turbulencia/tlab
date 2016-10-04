@@ -82,7 +82,7 @@ SUBROUTINE PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, u,up, bcs_kmin,bcs_kmax, wrk
 #endif
 
 ! ###################################################################
-  CALL OPR_PARTIAL1(imode_fdm, nxy, g(3), p_a,p_b, bcs_kmin,bcs_kmax, wrk2d)
+  CALL OPR_PARTIAL1(nxy, g(3), p_a,p_b, bcs_kmin,bcs_kmax, wrk2d)
   
 ! ! ###################################################################
 ! ! -------------------------------------------------------------------

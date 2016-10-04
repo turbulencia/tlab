@@ -9,7 +9,7 @@ MODULE DNS_TYPES
   TYPE grid_structure
      SEQUENCE
      CHARACTER*8 name
-     TINTEGER size, inb_grid
+     TINTEGER size, inb_grid, mode_fdm
      LOGICAL uniform, periodic
      TREAL scale
      TREAL, DIMENSION(:),   POINTER :: nodes

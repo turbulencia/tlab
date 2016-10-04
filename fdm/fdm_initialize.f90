@@ -3,7 +3,7 @@
 
 !# Compute dx/di and create LU factorization for first- and second-order derivatives
 
-SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
+SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 
   USE DNS_TYPES,  ONLY : grid_structure
   USE DNS_GLOBAL, ONLY : inb_scal
@@ -14,7 +14,6 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
 #include "integers.h"
   
   TYPE(grid_structure),                        INTENT(INOUT) :: g
-  TINTEGER,                                    INTENT(IN)    :: imethod
   TREAL, DIMENSION(g%size,g%inb_grid), TARGET, INTENT(INOUT) :: x
   TREAL, DIMENSION(g%size,5),                  INTENT(INOUT) :: wrk1d
 
@@ -25,7 +24,12 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
 ! ###################################################################
   nx = g%size
   
-  ig = 2 ! Accumulating counter to define pointers inside array x
+  ig = 1 ! Accumulating counter to define pointers inside array x
+
+! ###################################################################
+  g%nodes => x(:,ig)
+
+  ig = ig + 1
   
 ! ###################################################################
 ! Jacobians
@@ -70,7 +74,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
 ! -------------------------------------------------------------------
      g%jac(:,1) = C_1_R
 
-     SELECT CASE( imethod )
+     SELECT CASE( g%mode_fdm )
 
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C1N4_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
@@ -94,7 +98,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
 ! -------------------------------------------------------------------
      wrk1d(:,4) = C_1_R; wrk1d(:,5) = C_0_R
 
-     SELECT CASE( imethod )
+     SELECT CASE( g%mode_fdm )
         
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4_LHS(        nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
@@ -126,7 +130,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
   IF ( g%periodic ) THEN
-     SELECT CASE( imethod )
+     SELECT CASE( g%mode_fdm )
         
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C1N4P_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
@@ -151,7 +155,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
         ibc_max = i /2
         ip = i*3
 
-        SELECT CASE( imethod )
+        SELECT CASE( g%mode_fdm )
            
         CASE( FDM_COM4_JACOBIAN )
            CALL FDM_C1N4_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
@@ -182,7 +186,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
   IF ( g%periodic ) THEN
-     SELECT CASE( imethod )
+     SELECT CASE( g%mode_fdm )
         
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
@@ -206,7 +210,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
         ibc_min = MOD(i,2)
         ibc_max = i /2
         ip = i*3
-        SELECT CASE( imethod )
+        SELECT CASE( g%mode_fdm )
            
         CASE( FDM_COM4_JACOBIAN )
            CALL FDM_C2N4_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
@@ -225,7 +229,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
 
 ! The direct mode is only implemented for bcs=(0,0); we use the remaining array
 ! to save other data        
-        IF  ( imethod .EQ. FDM_COM6_DIRECT ) THEN
+        IF  ( g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
            IF ( i .EQ. 0 ) THEN
               g%lu2(:,ip+8:ip+10) = g%lu2(:,ip+1:ip+3) ! saving the array A w/o LU decomposition
               CALL TRIDFS(nx, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
@@ -298,7 +302,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
      r25 = C_5_R *C_5_R /C_4_R
      r60 = C_1_R /( C_6_R *C_10_R )
 
-     SELECT CASE( imethod )
+     SELECT CASE( g%mode_fdm )
 
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
         g%mwn(:,1)=( r28*sin(wrk1d(:,1))+    sin(C_2_R*wrk1d(:,1))                          )&
@@ -318,7 +322,7 @@ SUBROUTINE FDM_INITIALIZE(imethod, x, g, wrk1d)
 ! -------------------------------------------------------------------
      r24 = C_6_R*C_4_R 
 
-     SELECT CASE( imethod )
+     SELECT CASE( g%mode_fdm )
 
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
         g%mwn(:,2)=( r24*(1-cos(wrk1d(:,1))) + C_1_5_R*(C_1_R-cos(C_2_R*wrk1d(:,1))) )&

@@ -43,7 +43,8 @@ PROGRAM VHELMHOLTZ_FDE
 !   CLOSE(21)
 
   CALL DNS_INITIALIZE
-  CALL FDM_INITIALIZE(iunif, imode_fdm, imax, i1bc, scalex, x, dx, wrk1d)
+ ! TO BE REVIEWED 
+!  CALL FDM_INITIALIZE(iunif, imode_fdm, imax, i1bc, scalex, x, dx, wrk1d)
 
 ! ###################################################################
 ! Define the function

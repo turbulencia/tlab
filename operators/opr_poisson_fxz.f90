@@ -30,7 +30,6 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 
   USE DNS_TYPES,  ONLY : grid_structure
   USE DNS_GLOBAL, ONLY : isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : imode_fdm
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -110,20 +109,20 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
      CASE(3) ! Neumann   & Neumann   BCs
         IF ( kglobal .EQ. 1             .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1) .OR.&
              kglobal .EQ. g(3)%size/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1)     )THEN
-           CALL FDE_BVP_SINGULAR_NN(imode_fdm, ny,i2, &
+           CALL FDE_BVP_SINGULAR_NN(g(2)%mode_fdm, ny,i2, &
                 g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
         ELSE
-           CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, &
+           CALL FDE_BVP_REGULAR_NN(g(2)%mode_fdm, ny,i2, lambda, &
                 g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
         ENDIF
 
      CASE(0) ! Dirichlet & Dirichlet BCs
         IF ( kglobal .EQ. 1             .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1) .OR.&
              kglobal .EQ. g(3)%size/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1)     )THEN
-           CALL FDE_BVP_SINGULAR_DD(imode_fdm, ny,i2, &
+           CALL FDE_BVP_SINGULAR_DD(g(2)%mode_fdm, ny,i2, &
                 g(2)%nodes,g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
         ELSE
-           CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, &
+           CALL FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny,i2, lambda, &
                            g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
         ENDIF
 

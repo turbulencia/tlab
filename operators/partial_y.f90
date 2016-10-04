@@ -68,7 +68,7 @@ SUBROUTINE PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u,up, bcs_jmin,bcs_jmax, wrk
   ENDIF
 
 ! ###################################################################
-  CALL OPR_PARTIAL1(imode_fdm, nxz, g(2), p_org,p_dst, bcs_jmin,bcs_jmax, wrk2d)
+  CALL OPR_PARTIAL1(nxz, g(2), p_org,p_dst, bcs_jmin,bcs_jmax, wrk2d)
   
 ! ! ###################################################################
 ! ! -------------------------------------------------------------------

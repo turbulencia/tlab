@@ -94,12 +94,12 @@ SUBROUTINE PARTIAL_XX(ifirst,iunif,imode_fdm, nx,ny,nz, i1bc, dx, u, up2, &
 ! ###################################################################
   bcs_min(1) = bcs1_imin; bcs_max(1) = bcs1_imax
   bcs_min(2) = bcs2_imin; bcs_max(2) = bcs2_imax
-  CALL OPR_PARTIAL2(imode_fdm, nyz, g(1), p_b,p_d, bcs_min,bcs_max, wrk2d,p_c)
+  CALL OPR_PARTIAL2(nyz, g(1), p_b,p_d, bcs_min,bcs_max, wrk2d,p_c)
   
 ! Check whether we need to calculate the 1. order derivative
   IF ( ifirst .EQ. 1 ) THEN
      IF ( g(1)%uniform .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
-        CALL OPR_PARTIAL1(imode_fdm, nyz, g(1), p_b,p_c, bcs_min(1),bcs_max(1), wrk2d)
+        CALL OPR_PARTIAL1(nyz, g(1), p_b,p_c, bcs_min(1),bcs_max(1), wrk2d)
      ENDIF
   ENDIF
   

@@ -261,8 +261,10 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong SpaceOrder option.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
- ENDIF
+  ENDIF
 
+  g(1:3)%mode_fdm = imode_fdm
+  
 ! ###################################################################
 ! Iteration Section
 ! ###################################################################

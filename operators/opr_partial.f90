@@ -1,13 +1,12 @@
 #include "types.h"
 #include "dns_const.h"
 
-SUBROUTINE OPR_PARTIAL1(imode_fdm, nlines, g, u,result, bcs_min,bcs_max, wrk2d)
+SUBROUTINE OPR_PARTIAL1(nlines, g, u,result, bcs_min,bcs_max, wrk2d)
 
   USE DNS_TYPES, ONLY : grid_structure
   
   IMPLICIT NONE
 
-  TINTEGER,                        INTENT(IN)    :: imode_fdm
   TINTEGER,                        INTENT(IN)    :: nlines  ! # of lines to be solved
   TINTEGER,                        INTENT(IN)    :: bcs_min ! BC derivative: 0 biased, non-zero
   TINTEGER,                        INTENT(IN)    :: bcs_max !                1 forced to zero
@@ -21,7 +20,7 @@ SUBROUTINE OPR_PARTIAL1(imode_fdm, nlines, g, u,result, bcs_min,bcs_max, wrk2d)
 
 ! ###################################################################
   IF ( g%periodic ) THEN
-     SELECT CASE( imode_fdm )
+     SELECT CASE( g%mode_fdm )
         
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C1N4P_RHS(g%size,nlines, u, result)
@@ -40,7 +39,7 @@ SUBROUTINE OPR_PARTIAL1(imode_fdm, nlines, g, u,result, bcs_min,bcs_max, wrk2d)
 
 ! -------------------------------------------------------------------
   ELSE
-     SELECT CASE( imode_fdm )
+     SELECT CASE( g%mode_fdm )
         
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C1N4_RHS(g%size,nlines, bcs_min,bcs_max, u, result)
@@ -68,13 +67,12 @@ END SUBROUTINE OPR_PARTIAL1
 
 ! ###################################################################
 ! ###################################################################
-SUBROUTINE OPR_PARTIAL2(imode_fdm, nlines, g, u,result, bcs_min,bcs_max, wrk2d,wrk3d)
+SUBROUTINE OPR_PARTIAL2(nlines, g, u,result, bcs_min,bcs_max, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_structure
   
   IMPLICIT NONE
 
-  TINTEGER,                        INTENT(IN)    :: imode_fdm
   TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
   TINTEGER,                        INTENT(IN)    :: bcs_min(2) ! BC derivative: 0 biased, non-zero
   TINTEGER,                        INTENT(IN)    :: bcs_max(2) !                1 forced to zero
@@ -90,16 +88,16 @@ SUBROUTINE OPR_PARTIAL2(imode_fdm, nlines, g, u,result, bcs_min,bcs_max, wrk2d,w
 ! ###################################################################
 ! Check whether to calculate 1. order derivative
   IF ( .NOT. g%uniform ) THEN
-     IF ( imode_fdm .eq. FDM_COM4_JACOBIAN .OR. &
-          imode_fdm .eq. FDM_COM6_JACOBIAN .OR. &
-          imode_fdm .eq. FDM_COM8_JACOBIAN      ) THEN
-        CALL OPR_PARTIAL1(imode_fdm, nlines, g, u,wrk3d, bcs_min(1),bcs_max(1), wrk2d)
+     IF ( g%mode_fdm .eq. FDM_COM4_JACOBIAN .OR. &
+          g%mode_fdm .eq. FDM_COM6_JACOBIAN .OR. &
+          g%mode_fdm .eq. FDM_COM8_JACOBIAN      ) THEN
+        CALL OPR_PARTIAL1(nlines, g, u,wrk3d, bcs_min(1),bcs_max(1), wrk2d)
      ENDIF
   ENDIF
   
 ! ###################################################################
   IF ( g%periodic ) THEN
-     SELECT CASE( imode_fdm )
+     SELECT CASE( g%mode_fdm )
         
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4P_RHS(g%size,nlines, u, result)
@@ -116,7 +114,7 @@ SUBROUTINE OPR_PARTIAL2(imode_fdm, nlines, g, u,result, bcs_min,bcs_max, wrk2d,w
 
 ! -------------------------------------------------------------------
   ELSE
-     SELECT CASE( imode_fdm )
+     SELECT CASE( g%mode_fdm )
         
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)

@@ -2,10 +2,12 @@
 
 PROGRAM VPARTIAL2
 
+  USE DNS_TYPES, ONLY : grid_structure
   IMPLICIT NONE
 
 #include "integers.h"
 
+  TYPE(grid_structure),            INTENT(IN)    :: g
   TINTEGER imode_fdm, imax, jmax, kmax, i, wk, i1bc, idummy, iunif
   PARAMETER(imax=128)
   TREAL scalex
@@ -25,6 +27,7 @@ PROGRAM VPARTIAL2
   WRITE(*,*) 'Wavenumber ?'
   READ(*,*) wk
 
+! CHANGE TO UPDATE NEW GRID_STRUCTURE
   IF ( i1bc .EQ. 0 ) THEN
      DO i = 1,imax
         x(i) = M_REAL(i-1)/M_REAL(imax)*scalex
@@ -39,7 +42,7 @@ PROGRAM VPARTIAL2
      scalex = x(imax)-x(1)
   ENDIF
 
-  CALL FDM_INITIALIZE(iunif, imode_fdm, imax, i1bc, scalex, x, dx, wrk1d)
+  CALL FDM_INITIALIZE(x, g, wrk1d)
 
 ! ###################################################################
 ! Define the function

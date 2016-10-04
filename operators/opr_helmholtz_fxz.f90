@@ -37,10 +37,9 @@
 SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, ibc, alpha,&
      a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
-  USE DNS_TYPES,  ONLY : grid_structure
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : imode_fdm
   USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_TYPES,     ONLY : grid_structure
+  USE DNS_GLOBAL,    ONLY : isize_txc_dimz
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -118,10 +117,10 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, ibc, alpha,&
 ! -----------------------------------------------------------------------
      IF      ( ibc .EQ. 3 ) THEN ! Neumman BCs
 !        CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
-        CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+        CALL FDE_BVP_REGULAR_NN(g(2)%mode_fdm, ny,i2, lambda, g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
      ELSE IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
 !        CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
-        CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+        CALL FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny,i2, lambda, g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
      ELSE
         CALL IO_WRITE_ASCII(efile,'OPR_HELMHOLT_FXZ. Undeveloped BCs.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
@@ -156,10 +155,9 @@ END SUBROUTINE OPR_HELMHOLTZ_FXZ
 SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, g, ibc, alpha,&
      a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
-  USE DNS_TYPES,  ONLY : grid_structure
-  USE DNS_GLOBAL, ONLY : isize_field, isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : imode_fdm
   USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_TYPES,     ONLY : grid_structure
+  USE DNS_GLOBAL,    ONLY : isize_field, isize_txc_dimz
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -236,13 +234,13 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, g, ibc, alpha,&
 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 ! -----------------------------------------------------------------------
      IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
-        IF      ( imode_fdm .EQ. FDM_COM6_JACOBIAN ) THEN
+        IF      ( g(2)%mode_fdm .EQ. FDM_COM6_JACOBIAN ) THEN
 !           CALL INT_C2N6_LHS_E(ny,    dy, lambda, &
            CALL INT_C2N6_LHS_E(ny,    g(2)%jac, lambda, &
                 wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
 !           CALL INT_C2N6_RHS  (ny,i2, dy, aux(1,1),aux(1,2))
            CALL INT_C2N6_RHS  (ny,i2, g(2)%jac, aux(1,1),aux(1,2))
-        ELSE IF ( imode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
+        ELSE IF ( g(2)%mode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
            wrk1d = C_0_R
            ! CALL INT_C2N6N_LHS_E(ny,    dy(1,inb_grid_2+7),dy(1,inb_grid_2+3), lambda, &
            !      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
@@ -294,10 +292,10 @@ END SUBROUTINE OPR_HELMHOLTZ_FXZ_2
 SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
      a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
-  USE DNS_TYPES,  ONLY : pointers_structure
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : imode_fdm, g
   USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_TYPES,     ONLY : pointers_structure
+  USE DNS_GLOBAL,    ONLY : isize_txc_dimz
+  USE DNS_GLOBAL,    ONLY : g
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -379,13 +377,13 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 ! -----------------------------------------------------------------------
      IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
-        IF      ( imode_fdm .EQ. FDM_COM6_JACOBIAN ) THEN
+        IF      ( g(2)%mode_fdm .EQ. FDM_COM6_JACOBIAN ) THEN
 !           CALL INT_C2N6_LHS_E(ny,    dy, lambda, &
            CALL INT_C2N6_LHS_E(ny,    g(2)%jac, lambda, &
                 wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
 !           CALL INT_C2N6_RHS  (ny,i2*nfield, dy, aux(1,1,1),aux(1,1,2))
            CALL INT_C2N6_RHS  (ny,i2, g(2)%jac, aux(1,1,1),aux(1,1,2))
-        ELSE IF ( imode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
+        ELSE IF ( g(2)%mode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
            wrk1d = C_0_R
            ! CALL INT_C2N6N_LHS_E(ny,dy(1,inb_grid_2+7),dy(1,inb_grid_2+3), lambda, &
            !      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
