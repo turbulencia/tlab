@@ -29,12 +29,12 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 
   TINTEGER,                        INTENT(IN)    :: is
   TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
+  TYPE(grid_structure),            INTENT(IN)    :: g
+  TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: s,u        ! argument field and velocity field
+  TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result     ! N(u) applied to s
   TINTEGER,                        INTENT(IN)    :: bcs_min(2) ! BC derivative: 0 biased, non-zero
   TINTEGER,                        INTENT(IN)    :: bcs_max(2) !                1 forced to zero
-  TYPE(grid_structure),            INTENT(IN)    :: g
-  TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: s,u    ! argument field and velocity field
-  TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result ! result N(u) applied to s
-  TREAL, DIMENSION(nlines*g%size), INTENT(INOUT) :: wrk3d  ! dsdx
+  TREAL, DIMENSION(nlines*g%size), INTENT(INOUT) :: wrk3d      ! dsdx
   TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d
 
 ! -------------------------------------------------------------------
@@ -67,9 +67,6 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
         
      END SELECT
 
-     ! ip = inb_grid_3 + is*5 - 1 ! LU decomposition containing the diffusivity
-     ! CALL TRIDPSS(g%size,nlines, dx(1,ip+1),dx(1,ip+2),&
-     !      dx(1,ip+3),dx(1,ip+4),dx(1,ip+5), result,wrk2d)
      ip = is*5 ! LU decomposition containing the diffusivity
      CALL TRIDPSS(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3),g%lu2d(1,ip+4),g%lu2d(1,ip+5), result,wrk2d)
 
@@ -93,8 +90,6 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 
      END SELECT
 
-     ! ip = inb_grid_3 + is*5 - 1 ! LU decomposition containing the diffusivity
-     ! CALL TRIDSS(g%size,nlines, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3), result)
      ip = is*3 ! LU decomposition containing the diffusivity
      CALL TRIDSS(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3), result)
 
@@ -181,12 +176,12 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
   ELSE;                    p_vel => u2; ENDIF ! always transposed needed
 
 ! -------------------------------------------------------------------
-! Local transposition: make  x  direction the last one
+! Local transposition: make x-direction the last one
 ! -------------------------------------------------------------------
 #ifdef USE_ESSL
-  CALL DGETMO       (p_a, g%size, g%size, nyz,        p_b, nyz)
+  CALL DGETMO       (p_a, g%size, g%size, nyz,    p_b, nyz)
 #else
-  CALL DNS_TRANSPOSE(p_a, g%size, nyz,        g%size, p_b, nyz)
+  CALL DNS_TRANSPOSE(p_a, g%size, nyz,    g%size, p_b, nyz)
 #endif
 
 ! ###################################################################
@@ -246,7 +241,7 @@ SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
   nxz = nx*nz
 
 ! -------------------------------------------------------------------
-! Local transposition: Make y direction the last one
+! Local transposition: Make y-direction the last one
 ! -------------------------------------------------------------------
   IF ( nz .EQ. 1 ) THEN
      p_org  => s

@@ -95,9 +95,6 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, ibc, alpha,&
 #endif
 
 ! Define \lambda based on modified wavenumbers (real)
-     ! ip = inb_grid_1 + 5 ! pointer to position in arrays dx, dz
-     ! IF ( g(3)%size .GT. 1 ) THEN; lambda = dx(iglobal,ip) + dz(kglobal,ip)
-     ! ELSE;                          lambda = dx(iglobal,ip); ENDIF
      IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%mwn(iglobal,1) + g(3)%mwn(kglobal,1)
      ELSE;                         lambda = g(1)%mwn(iglobal,1); ENDIF
 
@@ -213,9 +210,6 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, g, ibc, alpha,&
 #endif
 
 ! Define \lambda based on modified wavenumbers (real)
-     ! ip = inb_grid_2 + 5 ! pointer to position in arrays dx, dz
-     ! IF ( g(3)%size .GT. 1 ) THEN; lambda = dx(iglobal,ip) + dz(kglobal,ip)
-     ! ELSE;                          lambda = dx(iglobal,ip); ENDIF
      IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%mwn(iglobal,2) + g(3)%mwn(kglobal,2)
      ELSE;                         lambda = g(1)%mwn(iglobal,2); ENDIF
 
@@ -235,17 +229,12 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, g, ibc, alpha,&
 ! -----------------------------------------------------------------------
      IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
         IF      ( g(2)%mode_fdm .EQ. FDM_COM6_JACOBIAN ) THEN
-!           CALL INT_C2N6_LHS_E(ny,    dy, lambda, &
            CALL INT_C2N6_LHS_E(ny,    g(2)%jac, lambda, &
                 wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
-!           CALL INT_C2N6_RHS  (ny,i2, dy, aux(1,1),aux(1,2))
            CALL INT_C2N6_RHS  (ny,i2, g(2)%jac, aux(1,1),aux(1,2))
         ELSE IF ( g(2)%mode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
            wrk1d = C_0_R
-           ! CALL INT_C2N6N_LHS_E(ny,    dy(1,inb_grid_2+7),dy(1,inb_grid_2+3), lambda, &
-           !      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
-           ! CALL INT_C2N6N_RHS  (ny,i2, dy(1,inb_grid_2+7), aux(1,1),aux(1,2))
-           CALL INT_C2N6N_LHS_E(ny,    g(2)%lu2(1,8),g(2)%lu2(1,4), lambda, &
+           CALL INT_C2N6N_LHS_E(ny,    g(2)%lu2(1,8), g(2)%lu2(1,4), lambda, &
                 wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
            CALL INT_C2N6N_RHS  (ny,i2, g(2)%lu2(1,8), aux(1,1),aux(1,2))
         ENDIF
@@ -353,9 +342,6 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
 #endif
 
 ! Define \lambda based on modified wavenumbers (real)
-     ! ip = inb_grid_2 + 5 ! pointer to position in arrays dx, dz
-     ! IF ( g(3)%size .GT. 1 ) THEN; lambda = dx(iglobal,ip) + dz(kglobal,ip)
-     ! ELSE;                          lambda = dx(iglobal,ip); ENDIF
      IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%mwn(iglobal,2) + g(3)%mwn(kglobal,2)
      ELSE;                         lambda = g(1)%mwn(iglobal,2); ENDIF
 
@@ -378,17 +364,12 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
 ! -----------------------------------------------------------------------
      IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
         IF      ( g(2)%mode_fdm .EQ. FDM_COM6_JACOBIAN ) THEN
-!           CALL INT_C2N6_LHS_E(ny,    dy, lambda, &
            CALL INT_C2N6_LHS_E(ny,    g(2)%jac, lambda, &
                 wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
-!           CALL INT_C2N6_RHS  (ny,i2*nfield, dy, aux(1,1,1),aux(1,1,2))
            CALL INT_C2N6_RHS  (ny,i2, g(2)%jac, aux(1,1,1),aux(1,1,2))
         ELSE IF ( g(2)%mode_fdm .EQ. FDM_COM6_DIRECT   ) THEN
            wrk1d = C_0_R
-           ! CALL INT_C2N6N_LHS_E(ny,dy(1,inb_grid_2+7),dy(1,inb_grid_2+3), lambda, &
-           !      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
-           ! CALL INT_C2N6N_RHS  (ny,i2*nfield, dy(1,inb_grid_2+7),aux(1,1,1),aux(1,1,2))
-           CALL INT_C2N6N_LHS_E(ny,    g(2)%lu2(1,8),g(2)%lu2(1,4), lambda, &
+           CALL INT_C2N6N_LHS_E(ny,    g(2)%lu2(1,8), g(2)%lu2(1,4), lambda, &
                 wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
            CALL INT_C2N6N_RHS  (ny,i2, g(2)%lu2(1,8), aux(1,1,1),aux(1,1,2))
         ENDIF

@@ -28,7 +28,7 @@
 !########################################################################
 SUBROUTINE PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u,up, bcs_jmin,bcs_jmax, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : g !jmax_total, inb_grid_1
+  USE DNS_GLOBAL, ONLY : g
 
   IMPLICIT NONE
 
@@ -44,7 +44,7 @@ SUBROUTINE PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u,up, bcs_jmin,bcs_jmax, wrk
 
 ! ###################################################################
   IF ( g(2)%size .EQ. 1 ) THEN ! Set to zero in 2D case
-  up = C_0_R
+     up = C_0_R
 
   ELSE
 ! ###################################################################
@@ -52,14 +52,14 @@ SUBROUTINE PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u,up, bcs_jmin,bcs_jmax, wrk
   nxz = nx*nz
 
 ! -------------------------------------------------------------------
-! Make y  direction the last one
+! Local transposition: Make y-direction the last one
 ! -------------------------------------------------------------------
   IF ( nz .EQ. 1 ) THEN
      p_org => u
      p_dst => up
   ELSE
 #ifdef USE_ESSL
-     CALL DGETMO(u, nxy, nxy, nz, up, nz)
+     CALL DGETMO       (u, nxy, nxy, nz, up, nz)
 #else
      CALL DNS_TRANSPOSE(u, nxy, nz, nxy, up, nz)
 #endif
@@ -70,41 +70,11 @@ SUBROUTINE PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u,up, bcs_jmin,bcs_jmax, wrk
 ! ###################################################################
   CALL OPR_PARTIAL1(nxz, g(2), p_org,p_dst, bcs_jmin,bcs_jmax, wrk2d)
   
-! ! ###################################################################
-! ! -------------------------------------------------------------------
-! ! Periodic case
-! ! -------------------------------------------------------------------
-!   IF ( j1bc .EQ. 0 ) THEN
-!      IF      ( imode_fdm .EQ. FDM_COM4_JACOBIAN                                 ) THEN; CALL FDM_C1N4P_RHS(ny,nxz, p_org, p_dst)
-!      ELSE IF ( imode_fdm .EQ. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN; CALL FDM_C1N6P_RHS(ny,nxz, p_org, p_dst)
-!      ELSE IF ( imode_fdm .EQ. FDM_COM8_JACOBIAN                                 ) THEN; CALL FDM_C1N8P_RHS(ny,nxz, p_org, p_dst)
-!      ENDIF
-     
-!      ip  = inb_grid_1 - 1
-!      CALL TRIDPSS(ny,nxz, dy(1,ip+1),dy(1,ip+2),dy(1,ip+3),dy(1,ip+4),dy(1,ip+5), p_dst,wrk2d)
-
-! ! -------------------------------------------------------------------
-! ! Nonperiodic case
-! ! -------------------------------------------------------------------
-!   ELSE
-!      IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN; CALL FDM_C1N4_RHS(ny,nxz, bcs_jmin,bcs_jmax, p_org, p_dst)
-!      ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN; CALL FDM_C1N6_RHS(ny,nxz, bcs_jmin,bcs_jmax, p_org, p_dst)
-!      ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN; CALL FDM_C1N8_RHS(ny,nxz, bcs_jmin,bcs_jmax, p_org, p_dst)
-!      ELSE IF ( imode_fdm .eq. FDM_COM6_DIRECT   ) THEN; CALL FDM_C1N6_RHS(ny,nxz, bcs_jmin,bcs_jmax, p_org, p_dst) ! not yet implemented
-!      ENDIF
-     
-!      ip = inb_grid_1 + (bcs_jmin + bcs_jmax*2)*3 - 1
-!      CALL TRIDSS(ny,nxz, dy(1,ip+1),dy(1,ip+2),dy(1,ip+3), p_dst)
-
-!   ENDIF
-  
 ! ###################################################################
-! -------------------------------------------------------------------
 ! Put arrays back in the order in which they came in
-! -------------------------------------------------------------------
   IF ( nz .GT. 1 ) THEN
 #ifdef USE_ESSL
-     CALL DGETMO(p_dst, nz, nz, nxy, up, nxy)
+     CALL DGETMO       (p_dst, nz, nz, nxy, up, nxy)
 #else
      CALL DNS_TRANSPOSE(p_dst, nz, nxy, nz, up, nxy)
 #endif

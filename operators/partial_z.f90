@@ -31,7 +31,7 @@
 !########################################################################
 SUBROUTINE PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, u,up, bcs_kmin,bcs_kmax, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : g !kmax_total, inb_grid_1
+  USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -50,21 +50,17 @@ SUBROUTINE PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, u,up, bcs_kmin,bcs_kmax, wrk
   TREAL, DIMENSION(:), POINTER :: p_a, p_b
 
 #ifdef USE_MPI
-  TINTEGER id
+  TINTEGER, PARAMETER :: id  = DNS_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
-#ifdef USE_MPI
-  id  = DNS_MPI_K_PARTIAL
-#endif
-
   IF ( g(3)%size .EQ. 1 ) THEN ! Set to zero in 2D case
      up = C_0_R
      
   ELSE
 ! ###################################################################
 ! -------------------------------------------------------------------
-! Transposition
+! MPI Transposition
 ! -------------------------------------------------------------------
 #ifdef USE_MPI         
   IF ( ims_npro_k .GT. 1 ) THEN
@@ -84,38 +80,8 @@ SUBROUTINE PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, u,up, bcs_kmin,bcs_kmax, wrk
 ! ###################################################################
   CALL OPR_PARTIAL1(nxy, g(3), p_a,p_b, bcs_kmin,bcs_kmax, wrk2d)
   
-! ! ###################################################################
-! ! -------------------------------------------------------------------
-! ! Periodic case
-! ! -------------------------------------------------------------------
-!   IF ( k1bc .EQ. 0 ) THEN
-!      IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN                                 ) THEN; CALL FDM_C1N4P_RHS(kmax_total,nxy, p_a, p_b)
-!      ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN; CALL FDM_C1N6P_RHS(kmax_total,nxy, p_a, p_b)
-!      ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN                                 ) THEN; CALL FDM_C1N8P_RHS(kmax_total,nxy, p_a, p_b)
-!      ENDIF
-     
-!      ip  = inb_grid_1 - 1
-!      CALL TRIDPSS(kmax_total,nxy, dz(1,ip+1),dz(1,ip+2),dz(1,ip+3),dz(1,ip+4),dz(1,ip+5), p_b,wrk2d)
-     
-! ! -------------------------------------------------------------------
-! ! Nonperiodic case
-! ! -------------------------------------------------------------------
-!   ELSE
-!      IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN; CALL FDM_C1N4_RHS(kmax_total,nxy, bcs_kmin,bcs_kmax, p_a, p_b)
-!      ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN; CALL FDM_C1N6_RHS(kmax_total,nxy, bcs_kmin,bcs_kmax, p_a, p_b)
-!      ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN; CALL FDM_C1N8_RHS(kmax_total,nxy, bcs_kmin,bcs_kmax, p_a, p_b)
-!      ELSE IF ( imode_fdm .eq. FDM_COM6_DIRECT   ) THEN; CALL FDM_C1N6_RHS(kmax_total,nxy, bcs_kmin,bcs_kmax, p_a, p_b) ! not yet implemented
-!      ENDIF
-
-!      ip = inb_grid_1 + (bcs_kmin + bcs_kmax*2)*3 - 1
-!      CALL TRIDSS(kmax_total,nxy, dz(1,ip+1),dz(1,ip+2),dz(1,ip+3), p_b)
-     
-!   ENDIF
-     
 ! ###################################################################
-! -------------------------------------------------------------------
-! Transposition
-! -------------------------------------------------------------------
+! Put arrays back in the order in which they came in
 #ifdef USE_MPI         
   IF ( ims_npro_k .GT. 1 ) THEN
      CALL DNS_MPI_TRPB_K(p_b, up, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))

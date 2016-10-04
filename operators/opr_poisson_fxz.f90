@@ -86,9 +86,6 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 #endif
 
 ! Define \lambda based on modified wavenumbers (real)
-     ! ip = inb_grid_1 + 5 ! pointer to position in arrays dx, dz
-     ! IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%aux(iglobal,ip) + g(3)%aux(kglobal,ip)
-     ! ELSE;                         lambda = g(1)%aux(iglobal,ip); ENDIF
      IF ( g(3)%size .GT. 1 ) THEN; lambda = g(1)%mwn(iglobal,1) + g(3)%mwn(kglobal,1)
      ELSE;                         lambda = g(1)%mwn(iglobal,1); ENDIF
 

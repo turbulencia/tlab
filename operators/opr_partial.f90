@@ -8,11 +8,11 @@ SUBROUTINE OPR_PARTIAL1(nlines, g, u,result, bcs_min,bcs_max, wrk2d)
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: nlines  ! # of lines to be solved
-  TINTEGER,                        INTENT(IN)    :: bcs_min ! BC derivative: 0 biased, non-zero
-  TINTEGER,                        INTENT(IN)    :: bcs_max !                1 forced to zero
   TYPE(grid_structure),            INTENT(IN)    :: g
   TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: u
   TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result
+  TINTEGER,                        INTENT(IN)    :: bcs_min ! BC derivative: 0 biased, non-zero
+  TINTEGER,                        INTENT(IN)    :: bcs_max !                1 forced to zero
   TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
 
 ! -------------------------------------------------------------------
@@ -33,8 +33,6 @@ SUBROUTINE OPR_PARTIAL1(nlines, g, u,result, bcs_min,bcs_max, wrk2d)
         
      END SELECT
      
-     ! ip  = inb_grid_1 - 1
-     ! CALL TRIDPSS(g%size,nlines, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3),dx(1,ip+4),dx(1,ip+5), result,wrk2d)
      CALL TRIDPSS(g%size,nlines, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5), result,wrk2d)
 
 ! -------------------------------------------------------------------
@@ -55,8 +53,6 @@ SUBROUTINE OPR_PARTIAL1(nlines, g, u,result, bcs_min,bcs_max, wrk2d)
 
      END SELECT
      
-     ! ip = inb_grid_1 + (bcs_min + bcs_max*2)*3 - 1
-     ! CALL TRIDSS(g%size,nlines, dx(1,ip+1),dx(1,ip+2),dx(1,ip+3), result)
      ip = (bcs_min + bcs_max*2)*3 
      CALL TRIDSS(g%size,nlines, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3), result)
 
@@ -74,13 +70,13 @@ SUBROUTINE OPR_PARTIAL2(nlines, g, u,result, bcs_min,bcs_max, wrk2d,wrk3d)
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
-  TINTEGER,                        INTENT(IN)    :: bcs_min(2) ! BC derivative: 0 biased, non-zero
-  TINTEGER,                        INTENT(IN)    :: bcs_max(2) !                1 forced to zero
   TYPE(grid_structure),            INTENT(IN)    :: g
   TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: u
   TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result
+  TINTEGER,                        INTENT(IN)    :: bcs_min(2) ! BC derivative: 0 biased, non-zero
+  TINTEGER,                        INTENT(IN)    :: bcs_max(2) !                1 forced to zero
   TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
-  TREAL, DIMENSION(nlines*g%size), INTENT(INOUT) :: wrk3d ! First derivative, in case needed
+  TREAL, DIMENSION(nlines*g%size), INTENT(INOUT) :: wrk3d      ! First derivative, in case needed
 
 ! -------------------------------------------------------------------
   TINTEGER ip

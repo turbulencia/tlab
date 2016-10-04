@@ -33,7 +33,7 @@
 SUBROUTINE PARTIAL_YY(ifirst,iunif,imode_fdm, nx,ny,nz, j1bc, dy, u, up2, &
      bcs1_jmin,bcs1_jmax, bcs2_jmin,bcs2_jmax, up1, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : g !jmax_total, inb_grid_1, inb_grid_2
+  USE DNS_GLOBAL, ONLY : g
 
   IMPLICIT NONE
 
@@ -49,6 +49,9 @@ SUBROUTINE PARTIAL_YY(ifirst,iunif,imode_fdm, nx,ny,nz, j1bc, dy, u, up2, &
   TREAL, DIMENSION(:), POINTER :: p_org, p_dst1, p_dst2
 
 ! ###################################################################
+  bcs_min(1) = bcs1_jmin; bcs_max(1) = bcs1_jmax
+  bcs_min(2) = bcs2_jmin; bcs_max(2) = bcs2_jmax
+
   IF ( g(2)%size .EQ. 1 ) THEN ! Set to zero in 2D case
      up2 = C_0_R
      IF ( ifirst .EQ. 1 ) up1 = C_0_R
@@ -59,7 +62,7 @@ SUBROUTINE PARTIAL_YY(ifirst,iunif,imode_fdm, nx,ny,nz, j1bc, dy, u, up2, &
   nxz = nx*nz
 
 ! -------------------------------------------------------------------
-! Make y direction the last one
+! Local transposition: Make y direction the last one
 ! -------------------------------------------------------------------
   IF ( nz .EQ. 1 ) THEN
      p_org  => u
@@ -67,7 +70,7 @@ SUBROUTINE PARTIAL_YY(ifirst,iunif,imode_fdm, nx,ny,nz, j1bc, dy, u, up2, &
      p_dst2 => up2
   ELSE
 #ifdef USE_ESSL
-     CALL DGETMO(u, nxy, nxy, nz, up2, nz)
+     CALL DGETMO       (u, nxy, nxy, nz, up2, nz)
 #else
      CALL DNS_TRANSPOSE(u, nxy, nz, nxy, up2, nz)
 #endif
@@ -77,8 +80,6 @@ SUBROUTINE PARTIAL_YY(ifirst,iunif,imode_fdm, nx,ny,nz, j1bc, dy, u, up2, &
   ENDIF
 
 ! ###################################################################
-  bcs_min(1) = bcs1_jmin; bcs_max(1) = bcs1_jmax
-  bcs_min(2) = bcs2_jmin; bcs_max(2) = bcs2_jmax
   CALL OPR_PARTIAL2(nxz, g(2), p_org,p_dst2, bcs_min,bcs_max, wrk2d,p_dst1)
   
 ! Check whether we need to calculate the 1. order derivative
@@ -88,73 +89,17 @@ SUBROUTINE PARTIAL_YY(ifirst,iunif,imode_fdm, nx,ny,nz, j1bc, dy, u, up2, &
      ENDIF
   ENDIF
   
-! ! Check whether we need to calculate the 1. order derivative
-!   ifirst_loc = ifirst
-!   IF ( iunif .NE. 0 ) THEN
-!      IF ( imode_fdm .eq. FDM_COM4_JACOBIAN .OR. &
-!           imode_fdm .eq. FDM_COM6_JACOBIAN .OR. &
-!           imode_fdm .eq. FDM_COM8_JACOBIAN      ) THEN; ifirst_loc = MAX(ifirst_loc,1)
-!      ENDIF
-!   ENDIF
-
-! ! ###################################################################
-! ! -------------------------------------------------------------------
-! ! Periodic case
-! ! -------------------------------------------------------------------
-!   IF ( j1bc  .EQ. 0 ) THEN
-!      IF ( ifirst_loc .EQ. 1 ) THEN ! First derivative
-!      IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN                                 ) THEN; CALL FDM_C1N4P_RHS(jmax_total,nxz, p_org, p_dst1)
-!      ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN; CALL FDM_C1N6P_RHS(jmax_total,nxz, p_org, p_dst1)
-!      ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN                                 ) THEN; CALL FDM_C1N8P_RHS(jmax_total,nxz, p_org, p_dst1)
-!      ENDIF
-!      ip = inb_grid_1 - 1
-!      CALL TRIDPSS(jmax_total,nxz, dy(1,ip+1),dy(1,ip+2),dy(1,ip+3),dy(1,ip+4),dy(1,ip+5), p_dst1,wrk2d)
-!      ENDIF
-
-! ! Calculate second derivative
-!      IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN                                 ) THEN; CALL FDM_C2N4P_RHS(jmax_total,nxz, p_org, p_dst2)
-!      ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN; CALL FDM_C2N6P_RHS(jmax_total,nxz, p_org, p_dst2)
-!      ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN                                 ) THEN; CALL FDM_C2N6P_RHS(jmax_total,nxz, p_org, p_dst2) ! 8th not yet developed
-!      ENDIF
-!      ip = inb_grid_2 - 1
-!      CALL TRIDPSS(jmax_total,nxz, dy(1,ip+1),dy(1,ip+2),dy(1,ip+3),dy(1,ip+4),dy(1,ip+5), p_dst2,wrk2d)
-
-! ! -------------------------------------------------------------------
-! ! Nonperiodic case
-! ! -------------------------------------------------------------------
-!   ELSE
-!      IF ( ifirst_loc .EQ. 1 ) THEN ! First derivative
-!      IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN; CALL FDM_C1N4_RHS(jmax_total,nxz, bcs1_jmin,bcs1_jmax, p_org, p_dst1)
-!      ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN; CALL FDM_C1N6_RHS(jmax_total,nxz, bcs1_jmin,bcs1_jmax, p_org, p_dst1)
-!      ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN; CALL FDM_C1N8_RHS(jmax_total,nxz, bcs1_jmin,bcs1_jmax, p_org, p_dst1)
-!      ELSE IF ( imode_fdm .eq. FDM_COM6_DIRECT   ) THEN; CALL FDM_C1N6_RHS(jmax_total,nxz, bcs1_jmin,bcs1_jmax, p_org, p_dst1)  ! not yet implemented
-!      ENDIF
-!      ip = inb_grid_1 + (bcs1_jmin + bcs1_jmax*2)*3 - 1
-!      CALL TRIDSS(jmax_total,nxz, dy(1,ip+1),dy(1,ip+2),dy(1,ip+3), p_dst1)
-!      ENDIF
-     
-! ! Calculate second derivative
-!      IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN; CALL FDM_C2N4_RHS(iunif, jmax_total,nxz, bcs2_jmin,bcs2_jmax, dy, p_org, p_dst1, p_dst2)
-!      ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN; CALL FDM_C2N6_RHS(iunif, jmax_total,nxz, bcs2_jmin,bcs2_jmax, dy, p_org, p_dst1, p_dst2)
-!      ELSE IF ( imode_fdm .eq. FDM_COM8_JACOBIAN ) THEN; CALL FDM_C2N6_RHS(iunif, jmax_total,nxz, bcs2_jmin,bcs2_jmax, dy, p_org, p_dst1, p_dst2)
-!      ELSE IF ( imode_fdm .eq. FDM_COM6_DIRECT   ) THEN; CALL FDM_C2N6N_RHS(jmax_total,nxz, dy(1,inb_grid_2+3), p_org, p_dst2)
-!      ENDIF
-!      ip = inb_grid_2 + (bcs2_jmin + bcs2_jmax*2)*3 - 1
-!      CALL TRIDSS(jmax_total,nxz, dy(1,ip+1),dy(1,ip+2),dy(1,ip+3), p_dst2)
-
-!   ENDIF
-     
 ! ###################################################################
 ! Put arrays back in the order in which they came in
   IF ( nz .GT. 1 ) THEN
 #ifdef USE_ESSL
-     CALL DGETMO(p_dst2, nz, nz, nxy, up2, nxy)
+     CALL DGETMO       (p_dst2, nz, nz, nxy, up2, nxy)
 #else
      CALL DNS_TRANSPOSE(p_dst2, nz, nxy, nz, up2, nxy)
 #endif
      IF ( ifirst .EQ. 1 ) THEN
 #ifdef USE_ESSL
-        CALL DGETMO(p_dst1, nz, nz, nxy, up1, nxy)
+        CALL DGETMO       (p_dst1, nz, nz, nxy, up1, nxy)
 #else
         CALL DNS_TRANSPOSE(p_dst1, nz, nxy, nz, up1, nxy)
 #endif
