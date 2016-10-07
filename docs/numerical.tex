@@ -69,7 +69,7 @@ table~\ref{tab:coeffs}. Global schemes are constructed as a combination of $n$ o
 these formulae, using biased finite differences at the boundaries in case of
 non-periodicity.  We define the global algorithm (35653) by using the centered
 scheme C6 at the $(n-4)$ interior points, and the biased schemes B5 at $j=2$ and
-$B3$ at $j=1$ with the corresponding symmetric counterpart at $j=n-1$ and $j=n$,
+B3 at $j=1$ with the corresponding symmetric counterpart at $j=n-1$ and $j=n$,
 respectively \cite{Carpenter:1993}. Those global schemes can be represented as
 \begin{equation}
   A_1\, \delta_x \mathbf{s}=(1/h)B_1\, \mathbf{s} \;, \qquad
@@ -93,8 +93,8 @@ right-hand side contains always at least one diagonal of just ones, so as to
 save memory and computational time (see routine {\tt
   fdm\_initialize}). Conceptually, it is sometimes advantageous to think about
 equation~(\ref{equ:fdm}) as the definition of linear finite-difference operators
-$\delta_x: \Re^n \rightarrow \Re^n$, $\mathbf{s'} = \delta_x\mathbf{s} =
-(1/h)(A_1^{-1}B_1)\mathbf{s}$, and $\delta_{xx}: \Re^n \rightarrow \Re^n$,
+$\delta_x: \mathbb{R}^n \rightarrow \mathbb{R}^n$, $\mathbf{s'} = \delta_x\mathbf{s} =
+(1/h)(A_1^{-1}B_1)\mathbf{s}$, and $\delta_{xx}: \mathbb{R}^n \rightarrow \mathbb{R}^n$,
 $\mathbf{s''} = \delta_{xx}\mathbf{s} = (1/h^2)(A_2^{-1}B_2)\mathbf{s}$. Then,
 we can use some results from linear algebra \citep{Mellado:2012}.
 
@@ -281,7 +281,7 @@ that is, $A$ should be replaced by $AD_1$, where $D_1=\text{diag} (\mathbf{x'})$
 is a diagonal matrix with $\{x'_j\}$ as diagonal elements. Similarly, for the FD
 approximation to the second-order derivative, we obtain
 \begin{equation}
-  (A_2D_2)\, \delta_{xx} \mathbf{s}=(1/h)B_2 \mathbf{s} - (A_2D_1^2)\,\delta_x
+  (A_2D_1^2)\, \delta_{xx} \mathbf{s}=(1/h)B_2 \mathbf{s} - (A_2D_2)\,\delta_x
   \mathbf{s} \;,
 \end{equation}
 where $D_2=\text{diag} (\mathbf{x''})$ is again a diagonal matrix with
@@ -370,7 +370,7 @@ finite difference equations along $Oy$ of the form
   \delta_x \delta_x \mathbf{f}|_j - (\lambda_1/h)^2\mathbf{f}|_j=\mathbf{s}|_j 
   \;,\qquad j=2,\ldots,n-1 \;,
 \end{equation}
-$\lambda_1\in\Re$, where boundary conditions need to be provided at $j=1$ and
+$\lambda_1\in\mathbb{R}$, where boundary conditions need to be provided at $j=1$ and
 $j=n$.  The algorithm is described in \cite{Mellado:2012}. These routines are in
 the source file {\tt dns/opr\_fde\_pool}.
 
@@ -390,7 +390,7 @@ difference equations along $Oy$ of the form
   \delta_{xx} \mathbf{f}|_j - (\lambda_2/h^2-\alpha)\mathbf{f}|_j=\mathbf{s}|_j 
   \;,\qquad j=2,\ldots,n-1 \;,
 \end{equation}
-$\lambda_2\in\Re$, where boundary conditions need to be provided at $j=1$ and
+$\lambda_2\in\mathbb{R}$, where boundary conditions need to be provided at $j=1$ and
 $j=n$. The difference is that, for the Helmholtz equation, we also include the
 case in which the second-order derivative is implemented in terms of the
 $\delta_{xx}$ FDM operator, not only the $\delta_x\delta_x$ FDM operator.
@@ -569,7 +569,7 @@ B^R_{22}\left(\begin{array}{c}s_2\\\vdots\\s_n\end{array}\right)+
 s_1\mathbf{b^R_{21}} \;,
 \end{equation}
 where the $(n-1)\times (n-1)$ matrices $\{A^R_{22}\,,B^R_{22}\}$ and the column
-vector $\mathbf{b^R_{21}}\in\Re^{n-1}$ are
+vector $\mathbf{b^R_{21}}\in\mathbb{R}^{n-1}$ are
 \begin{equation}
 A^R_{22}=A_{22}-\frac{1}{a_{11}}\mathbf{a_{21}}\mathbf{a_{12}}^T \;,\qquad
 B^R_{22}=B_{22}-\frac{1}{a_{11}}\mathbf{a_{21}}\mathbf{b_{12}}^T \;,\qquad
