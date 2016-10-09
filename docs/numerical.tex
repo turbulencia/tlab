@@ -45,12 +45,7 @@ routines that are just a combination of the low-level routines.
 
 \subsection{Derivatives}\label{sec:fdm}
 
-Spatial derivatives are calculated using fourth- or sixth-order compact Pad\'{e}
-schemes as described by \cite{Lele:1992} and extended by \cite{Shukla:2005} for
-non-uniform grids. The routines {\tt PARTIAL\_X}, {\tt PARTIAL\_Y} and {\tt
-  PARTIAL\_Z}, and correspondingly {\tt PARTIAL\_XX}, {\tt PARTIAL\_YY} and {\tt
-  PARTIAL\_ZZ} manage these operations. The kernels of the specific algorithms
-are in the library {\tt fdm}.
+Spatial derivatives are calculated using fourth- or sixth-order compact Pad\'{e} schemes as described by \cite{Lele:1992} and extended by \cite{Shukla:2005} for non-uniform grids. The routines {\tt PARTIAL\_X}, {\tt PARTIAL\_Y} and {\tt   PARTIAL\_Z}, and correspondingly {\tt PARTIAL\_XX}, {\tt PARTIAL\_YY} and {\tt   PARTIAL\_ZZ} manage these operations. The kernels of the specific algorithms are in the library {\tt fdm}.
 
 We restrict ourselves to the 5-point stencils
 \begin{equation}
@@ -58,45 +53,13 @@ a_{-1}s'_{j-1}+a_{0}s'_{j}+a_{+1}s'_{j+1}=
 \frac{1}{h}(b_{-2}s_{j-2}+b_{-1}s_{j-1}+b_{0}s_{j}+b_{+1}s_{j+1}+b_{+2}s_{j+2}) \;,
 \label{equ:coefs}
 \end{equation}
-and similarly for the second-order derivative, where the components of the
-$n$-dimensional vectors $\mathbf{s}=(s_j)$, $\mathbf{s'}=\delta_x
-\mathbf{s}=(s'_j)$ and $\mathbf{s''}=\delta_{xx} \mathbf{s}=(s'_j)$ are,
-respectively, approximations to the values $\{s(x_j):\, j=1,\ldots,n\}$ of a
-function $s(\cdot)$ defined on a finite interval $[x_1\,,x_n]$ and its first-
-and second-order derivatives evaluated at those same points $\{x_j\}$. The
-coefficients for the first-order derivative are given in
-table~\ref{tab:coeffs}. Global schemes are constructed as a combination of $n$ of
-these formulae, using biased finite differences at the boundaries in case of
-non-periodicity.  We define the global algorithm (35653) by using the centered
-scheme C6 at the $(n-4)$ interior points, and the biased schemes B5 at $j=2$ and
-B3 at $j=1$ with the corresponding symmetric counterpart at $j=n-1$ and $j=n$,
-respectively \cite{Carpenter:1993}. Those global schemes can be represented as
+and similarly for the second-order derivative, where the components of the $n$-dimensional vectors $\mathbf{s}=(s_j)$, $\mathbf{s'}=\delta_x \mathbf{s}=(s'_j)$ and $\mathbf{s''}=\delta_{xx} \mathbf{s}=(s'_j)$ are, respectively, approximations to the values $\{s(x_j):\, j=1,\ldots,n\}$ of a function $s(\cdot)$ defined on a finite interval $[x_1\,,x_n]$ and its first- and second-order derivatives evaluated at those same points $\{x_j\}$. The coefficients for the first-order derivative are given in table~\ref{tab:coeffs}. Global schemes are constructed as a combination of $n$ of these formulae, using biased finite differences at the boundaries in case of non-periodicity.  We define the global algorithm (35653) by using the centered scheme C6 at the $(n-4)$ interior points, and the biased schemes B5 at $j=2$ and B3 at $j=1$ with the corresponding symmetric counterpart at $j=n-1$ and $j=n$, respectively \cite{Carpenter:1993}. Those global schemes can be represented as
 \begin{equation}
   A_1\, \delta_x \mathbf{s}=(1/h)B_1\, \mathbf{s} \;, \qquad
   A_2\, \delta_{xx} \mathbf{s}=(1/h^2)B_2\, \mathbf{s}
 \label{equ:fdm}
 \end{equation}
-where $h=(x_n-x_1)/(n-1)$ is a reference space step and the square matrices
-$A=(a_{ij})$ and $B=(b_{ij})$ are narrow banded, namely, tri-diagonal and
-penta-diagonal, respectively. (At the boundary points, 1 or 2 additional points
-in the right-hand sides can be used to increase the order, which in theory
-increases the bandwidth of the matrices. However, it can be handled locally
-without a penalty in memory requirements nor computational time.)  If periodic
-boundary conditions are used, these are imposed at $x_{n+1}$ and not at $x_n$,
-i.e.  $s(x_{n+1})=s(x_1)$. The size of the domain is then
-$L=n(x_n-x_1)/(n-1)=nh$ instead of $x_n-x_1=(n-1)h$, and we do not save the
-information at $x_{n+1}$. The matrices $A$ and $B$ are then circulant instead of
-banded.  In any of both cases, standard Thomas' algorithm is used to solve those
-linear systems efficiently. In particular, an LU decomposition is performed
-during the initialization and equations can be normalized such that the
-right-hand side contains always at least one diagonal of just ones, so as to
-save memory and computational time (see routine {\tt
-  fdm\_initialize}). Conceptually, it is sometimes advantageous to think about
-equation~(\ref{equ:fdm}) as the definition of linear finite-difference operators
-$\delta_x: \mathbb{R}^n \rightarrow \mathbb{R}^n$, $\mathbf{s'} = \delta_x\mathbf{s} =
-(1/h)(A_1^{-1}B_1)\mathbf{s}$, and $\delta_{xx}: \mathbb{R}^n \rightarrow \mathbb{R}^n$,
-$\mathbf{s''} = \delta_{xx}\mathbf{s} = (1/h^2)(A_2^{-1}B_2)\mathbf{s}$. Then,
-we can use some results from linear algebra \citep{Mellado:2012}.
+where $h=(x_n-x_1)/(n-1)$ is a reference space step and the square matrices $A=(a_{ij})$ and $B=(b_{ij})$ are narrow banded, namely, tri-diagonal and penta-diagonal, respectively. (At the boundary points, 1 or 2 additional points in the right-hand sides can be used to increase the order, which in theory increases the bandwidth of the matrices. However, it can be handled locally without a penalty in memory requirements nor computational time.)  If periodic boundary conditions are used, these are imposed at $x_{n+1}$ and not at $x_n$, i.e.  $s(x_{n+1})=s(x_1)$. The size of the domain is then $L=n(x_n-x_1)/(n-1)=nh$ instead of $x_n-x_1=(n-1)h$, and we do not save the information at $x_{n+1}$. The matrices $A$ and $B$ are then circulant instead of banded.  In any of both cases, standard Thomas' algorithm is used to solve those linear systems efficiently. In particular, an LU decomposition is performed during the initialization and equations can be normalized such that the right-hand side contains always at least one diagonal of just ones, so as to save memory and computational time (see routine {\tt   fdm\_initialize}). Conceptually, it is sometimes advantageous to think about equation~(\ref{equ:fdm}) as the definition of linear finite-difference operators $\delta_x: \mathbb{R}^n \rightarrow \mathbb{R}^n$, $\mathbf{s'} = \delta_x\mathbf{s} = (1/h)(A_1^{-1}B_1)\mathbf{s}$, and $\delta_{xx}: \mathbb{R}^n \rightarrow \mathbb{R}^n$, $\mathbf{s''} = \delta_{xx}\mathbf{s} = (1/h^2)(A_2^{-1}B_2)\mathbf{s}$. Then, we can use some results from linear algebra \citep{Mellado:2012}.
 
 \begin{table}[!ht]
 \centering
@@ -116,116 +79,50 @@ $^{-2}\!/\!_{4!}\,h^3s^{(4)}$\\
 B5&$^1\!/\!_6$&1&$^1\!/\!_2$& 0 &$ ^{-10}\!/\!_{18}$ &$ ^{-1}\!/\!_2$ & 1&
 $^{1}\!/\!_{18}$&$^{-2}\!/\!_{6!}\,h^5s^{(6)}$\\\hline
 \end{tabular}
-\caption{Coefficients of the finite-difference formulae (\ref{equ:coefs}).
-  The first three rows are centered differences, the last three are biased
-  differences. The matrix $A_1$ in (\ref{equ:fdm}) is constructed in terms of
-  the coefficients $\{a_i\}$, the matrix $B_1$ in terms of $\{b_i\}$. The last
-  column contains the leading order term of the local truncation error defined
-  by (\ref{equ:truncation1}).}
+\caption{Coefficients of the finite-difference formulae (\ref{equ:coefs}). The first three rows are centered differences, the last three are biased differences. The matrix $A_1$ in (\ref{equ:fdm}) is constructed in terms of the coefficients $\{a_i\}$, the matrix $B_1$ in terms of $\{b_i\}$. The last column contains the leading order term of the local truncation error defined by (\ref{equ:truncation1}).}
 \label{tab:coeffs}
 \end{table}
 
-The local truncation error of the FDM approximation to the first-order
-derivative in~(\ref{equ:fdm}) is defined by
+The local truncation error of the FDM approximation to the first-order derivative in~(\ref{equ:fdm}) is defined by
 \begin{equation}
-\mathbf{t_1}=
-\frac{1}{h}B_1\left(\begin{array}{c}s(x_1)\\\vdots\\s(x_n)\end{array}\right)-
-A_1\left(
-\begin{array}{c}\frac{ds}{dx}(x_1)\\\vdots\\\frac{ds}{dx}(x_n) 
-\end{array}\right)\;,
-\label{equ:truncation1}
+  \mathbf{t_1}=
+  \frac{1}{h}B_1\left(\begin{array}{c}s(x_1)\\\vdots\\s(x_n)\end{array}\right)-
+  A_1\left(
+  \begin{array}{c}\frac{ds}{dx}(x_1)\\\vdots\\\frac{ds}{dx}(x_n) 
+  \end{array}\right)\;,
+  \label{equ:truncation1}
 \end{equation}
-which yields $\boldsymbol{\epsilon} = -A_1^{-1}\mathbf{t}$ as the discretization
-errors $\{\epsilon_j=ds/dx(x_j)-s'_j\,:\;j=1,\ldots,n\}$. The explicit
-expression for the components of $\mathbf{t}$ can be found in
-table~\ref{tab:coeffs}. Similarly for the second-order derivative, vector
-$\mathbf{t_2}$ (to be written).
+which yields $\boldsymbol{\epsilon} = -A_1^{-1}\mathbf{t}$ as the discretization errors $\{\epsilon_j=ds/dx(x_j)-s'_j\,:\;j=1,\ldots,n\}$. The explicit expression for the components of $\mathbf{t}$ can be found in table~\ref{tab:coeffs}. Similarly for the second-order derivative, vector $\mathbf{t_2}$ (to be written).
 
-For notational convenience in the following discussion on Fourier analysis, we
-change the index so that it varies between $j=0$ and $j=n-1$. We can define a
-new sequence of numbers $\{\hat{s}_k\}_0^{n-1}$ from $\{s_j\}_0^{n-1}$ by
+For notational convenience in the following discussion on Fourier analysis, we change the index so that it varies between $j=0$ and $j=n-1$. We can define a new sequence of numbers $\{\hat{s}_k\}_0^{n-1}$ from $\{s_j\}_0^{n-1}$ by
 \begin{equation}
 \hat{s}_k=\frac{1}{n}\sum_0^{n-1}s_j\exp(-i\omega_kj)\;,\qquad
 s_j=\sum_0^{n-1}\hat{s}_k\exp(i\omega_kj)\;,
 \label{equ:dft}
 \end{equation}
-where $\{\omega_k=(2\pi/n)k:\, k = 0,\ldots,n-1\}$ is the scaled wavenumber and
-$i=\sqrt{-1}$ is the imaginary unit. We use the library FFTW in the code for
-this transformation~\footnote{visit {http://www.fftw.org/}}. Note that
-$\hat{s}_{k+n}=\hat{s}_k$ because $\exp(-i2\pi j)=1$ for any integer number $j$,
-so that we can write
+where $\{\omega_k=(2\pi/n)k:\, k = 0,\ldots,n-1\}$ is the scaled wavenumber and $i=\sqrt{-1}$ is the imaginary unit. We use the library FFTW in the code for this transformation~\footnote{visit {http://www.fftw.org/}}. Note that $\hat{s}_{k+n}=\hat{s}_k$ because $\exp(-i2\pi j)=1$ for any integer number $j$, so that we can write
 \begin{equation}
   s_j =  \sum_{-n/2+1}^{n/2} \hat{s}_k \exp[i\omega_kj]\;.  
 \end{equation}
-The expression above coincides with the Fourier series $\sum_{-n/2}^{n/2}
-\hat{s}_k \exp[i\kappa_kx]$ of the function $s(x)$ over the interval $[0,L]$
-particularized at the grid points $\{x_n\}$ provided that the spectral content
-of the function $s(x)$ beyond the Nyquist frequency
-$\kappa_{n/2}=(2\pi/L)(n/2)=2\pi/(2h)=\pi/h$ is zero. Then we have the relation
-$\kappa_kh=\omega_k$ between the wavenumber $\kappa_k=(2\pi/L)k$ and the scaled
-wavenumber $\omega_k$. In principle, both $\{\hat{s}_k\}$ from $\{s_j\}$ are
-complex numbers; however, the sequence $\{\hat{s}_k\}$ is typically real and we
-only need to know the Fourier modes between $k=0$, the mean value, and $k=n/2$,
-the Nyquist frequency, because of the symmetry. Then, $\omega_k$ varies between
-0 and $\pi$ and $\kappa_k$ varies between 0 and $\pi/h$. A third quantity
-sometimes used in the discussion is the number of points per wavelength
-$\mathrm{PPW}_k=(L/k)/h=2\pi/\omega_k$; for a given wavelength $L/k$, or
-wavenumber $\kappa_k$, reducing the grid step $h$ and thus increasing resolution
--- increasing $\mathrm{PPW}_k$ -- means reducing the scaled wavenumber
-$\omega_k$ towards zero.
+The expression above coincides with the Fourier series $\sum_{-n/2}^{n/2} \hat{s}_k \exp[i\kappa_kx]$ of the function $s(x)$ over the interval $[0,L]$ particularized at the grid points $\{x_n\}$ provided that the spectral content of the function $s(x)$ beyond the Nyquist frequency $\kappa_{n/2}=(2\pi/L)(n/2)=2\pi/(2h)=\pi/h$ is zero. Then we have the relation $\kappa_kh=\omega_k$ between the wavenumber $\kappa_k=(2\pi/L)k$ and the scaled wavenumber $\omega_k$. In principle, both $\{\hat{s}_k\}$ from $\{s_j\}$ are complex numbers; however, the sequence $\{\hat{s}_k\}$ is typically real and we only need to know the Fourier modes between $k=0$, the mean value, and $k=n/2$, the Nyquist frequency, because of the symmetry. Then, $\omega_k$ varies between 0 and $\pi$ and $\kappa_k$ varies between 0 and $\pi/h$. A third quantity sometimes used in the discussion is the number of points per wavelength $\mathrm{PPW}_k=(L/k)/h=2\pi/\omega_k$; for a given wavelength $L/k$, or wavenumber $\kappa_k$, reducing the grid step $h$ and thus increasing resolution -- increasing $\mathrm{PPW}_k$ -- means reducing the scaled wavenumber $\omega_k$ towards zero.
 
-The previous framework allows us to understand the FDM using the so-called von
-Neumann analysis. We know that the exact values of $\{s'_j\}$ and $\{s''_j\}$
-under the conditions stated above are
+The previous framework allows us to understand the FDM using the so-called von Neumann analysis. We know that the exact values of $\{s'_j\}$ and $\{s''_j\}$ under the conditions stated above are
 \begin{equation}
-s'(x_j) =\sum_0^{n-1} (i\omega_k/h)  \hat{s}_k\exp(i\omega_kj)\;,\qquad 
-s''(x_j)=\sum_0^{n-1} (-\omega^2_k/h^2)\hat{s}_k\exp(i\omega_kj)\;,
+  s'(x_j) =\sum_0^{n-1} (i\omega_k/h)  \hat{s}_k\exp(i\omega_kj)\;,\qquad 
+  s''(x_j)=\sum_0^{n-1} (-\omega^2_k/h^2)\hat{s}_k\exp(i\omega_kj)\;,
 \end{equation}
-having simply used the previous relation $\kappa_k=\omega_k/h$. The FDM
-approximations can be written as
+having simply used the previous relation $\kappa_k=\omega_k/h$. The FDM approximations can be written as
 \begin{equation}
-s'_j =\sum_0^{n-1} (\lambda_1/h)  \hat{s}_k\exp(i\omega_kj)\;,\qquad 
-s''_j=\sum_0^{n-1} (\lambda_2/h^2)\hat{s}_k\exp(i\omega_kj)\;.
-\label{equ:lambda}
+  s'_j =\sum_0^{n-1} (\lambda_1/h)  \hat{s}_k\exp(i\omega_kj)\;,\qquad 
+  s''_j=\sum_0^{n-1} (\lambda_2/h^2)\hat{s}_k\exp(i\omega_kj)\;.
+  \label{equ:lambda}
 \end{equation}
-The deviation of the complex functions $\lambda_1(\omega)$ and
-$\lambda_2(\omega)$ from the exact values $i\omega$ and $-\omega^2$ measures the
-FDM discretization error (see figure~\ref{fig:fdm}).  One possible way to
-quantify this error is by means of the resolving efficiency, defined as the
-number of points per wavelength PPW required to maintain errors in the
-corresponding transfer function below a specified level (or, equivalently, a
-specified error in the dispersion velocity of the linear advection problem). In
-these terms, for the first-order derivative, an error of 1\% requires 4 PPW in
-the case of the implicit compact scheme used in the DNS, whereas the
-second-order explicit central scheme requires 25 PPW
-\citep{Lele:1992,Lomax:1998}. This difference is even higher if the common
-reference error of 0.1\% is retained, for which the previous finite difference
-schemes require 6 PPW and 100 PPW, respectively. The corresponding resolution
-requirements for the second-order derivative using a compact scheme are similar
-to those of the first-order derivative; the second-order central explicit FDM
-improves slightly and only needs 18 PPW for 1\% error and 67 PPW for 0.1\%
-error. (These errors in the transfer function can be understood as errors in the
-exponential rate of decrease of a given wave caused by the diffusion operator.)
-However, these are theoretical values based on linear analysis of the algorithm
-and resolution studies are always required to ascertain this error. Last, we
-also note that, as we increase resolution, $h$ decreases and $\omega_k$ moves
-towards the origin in figure~\ref{fig:fdm} for a fixed wavenumber $\kappa_k$;
-the departure at the origin of the approximation from the exact value gives then
-the order of the FDM.
+The deviation of the complex functions $\lambda_1(\omega)$ and $\lambda_2(\omega)$ from the exact values $i\omega$ and $-\omega^2$ measures the FDM discretization error (see figure~\ref{fig:fdm}).  One possible way to quantify this error is by means of the resolving efficiency, defined as the number of points per wavelength PPW required to maintain errors in the corresponding transfer function below a specified level (or, equivalently, a specified error in the dispersion velocity of the linear advection problem). In these terms, for the first-order derivative, an error of 1\% requires 4 PPW in the case of the implicit compact scheme used in the DNS, whereas the second-order explicit central scheme requires 25 PPW \citep{Lele:1992,Lomax:1998}. This difference is even higher if the common reference error of 0.1\% is retained, for which the previous finite difference schemes require 6 PPW and 100 PPW, respectively. The corresponding resolution requirements for the second-order derivative using a compact scheme are similar to those of the first-order derivative; the second-order central explicit FDM improves slightly and only needs 18 PPW for 1\% error and 67 PPW for 0.1\% error. (These errors in the transfer function can be understood as errors in the exponential rate of decrease of a given wave caused by the diffusion operator.) However, these are theoretical values based on linear analysis of the algorithm and resolution studies are always required to ascertain this error. Last, we also note that, as we increase resolution, $h$ decreases and $\omega_k$ moves towards the origin in figure~\ref{fig:fdm} for a fixed wavenumber $\kappa_k$; the departure at the origin of the approximation from the exact value gives then the order of the FDM.
 
 \begin{figure}
-\includegraphics[clip,width=0.49\textwidth]{figs/Fdm1}\hfill
-\includegraphics[clip,width=0.49\textwidth]{figs/Fdm2}
-\caption{Modified wavenumbers of the FDM approximations $\mathbf{s'}$ and
-  $\mathbf{s''}$ to the first- and second-order derivatives, left (red) and
-  right (blue), respectively. (Equivalently, transfer functions associated to
-  the linear operators $\delta_{x}: A_1^{-1}B_1$ and $\delta_{xx}:
-  A_2^{-1}B_2$.) Black lines indicate the exact value and light colors indicate
-  the second-order central FDM. The red line in panel ($b$) corresponds to the
-  operator $\delta_{x}\delta_{x} =(A_1^{-1}B_1)^2$. The interval $[-\pi,0$ is
-    simply the anti-symmetric and symmetric extension of the curves in panels
-    ($a$) and ($b$), respectively. The number inside the figure give the maximum
-    values, to be considered in the time-marching scheme.}\label{fig:fdm}
+  \includegraphics[clip,width=0.49\textwidth]{figs/Fdm1}\hfill
+  \includegraphics[clip,width=0.49\textwidth]{figs/Fdm2}
+  \caption{Modified wavenumbers of the FDM approximations $\mathbf{s'}$ and $\mathbf{s''}$ to the first- and second-order derivatives, left (red) and right (blue), respectively. (Equivalently, transfer functions associated to the linear operators $\delta_{x}: A_1^{-1}B_1$ and $\delta_{xx}: A_2^{-1}B_2$.) Black lines indicate the exact value and light colors indicate the second-order central FDM. The red line in panel ($b$) corresponds to the operator $\delta_{x}\delta_{x} =(A_1^{-1}B_1)^2$. The interval $[-\pi,0$ is simply the anti-symmetric and symmetric extension of the curves in panels ($a$) and ($b$), respectively. The number inside the figure give the maximum values, to be considered in the time-marching scheme.}\label{fig:fdm}
 \end{figure}
 
 It is also useful to use the notation 
@@ -239,64 +136,32 @@ equation~(\ref{equ:fdm}). Then, we can write
   \hat{\mathbf{s'}}=W\, \mathbf{s'} =
   [(1/h)W(A_1^{-1}B_1)W^{-1})W\mathbf{s} = (1/h)\Lambda_1\hat{\mathbf{s}} \;.
 \end{equation}
-From this relation between the vectors $\hat{\mathbf{s'}}$ and
-$\hat{\mathbf{s}}$ and equation~(\ref{equ:lambda}), we deduce that the array
-$\Lambda_1$ is diagonal with $\{\lambda_k\}_0^{n-1}$ as diagonal
-elements. Moreover, since $W$ is invertible, $W$ represents just a similarity
-transformation -- a change of base -- and therefore we know that the matrices
-$A_1^{-1}B_1$ and $\Lambda_1$ have the same eigenvalues. Hence,
-$\{\lambda_k\}_0^{n-1}$ is simply the set of eigenvalues of $A_1^{-1}B_1$;
-figure~\ref{fig:fdm} shows the curve through the imaginary part of half of
-them. In the complex plane, the numbers $\{\lambda_{1,k}\}_0^{n-1}$
-corresponding to the first-order derivative move in the imaginary axis, and the
-numbers $\{\lambda_{2,k}\}_0^{n-1}$ corresponding to the second-order derivative
-move in the negative part of the real axis.  This exercise might not be relevant
-for the periodic case because we can obtain $\{\lambda_k\}_0^{n-1}$ easily by
-substituting equation~(\ref{equ:dft}) into equation~(\ref{equ:coefs}), but it is
-clarifying for the non-periodic cases because the equivalent of
-figure~\ref{fig:fdm} is simply the spectrum of $A_1^{-1}B_1$, in general, a
-set of points in the complex plane.
+From this relation between the vectors $\hat{\mathbf{s'}}$ and $\hat{\mathbf{s}}$ and equation~(\ref{equ:lambda}), we deduce that the array $\Lambda_1$ is diagonal with $\{\lambda_k\}_0^{n-1}$ as diagonal elements. Moreover, since $W$ is invertible, $W$ represents just a similarity transformation -- a change of base -- and therefore we know that the matrices $A_1^{-1}B_1$ and $\Lambda_1$ have the same eigenvalues. Hence, $\{\lambda_k\}_0^{n-1}$ is simply the set of eigenvalues of $A_1^{-1}B_1$; figure~\ref{fig:fdm} shows the curve through the imaginary part of half of them. In the complex plane, the numbers $\{\lambda_{1,k}\}_0^{n-1}$ corresponding to the first-order derivative move in the imaginary axis, and the numbers $\{\lambda_{2,k}\}_0^{n-1}$ corresponding to the second-order derivative move in the negative part of the real axis.  This exercise might not be relevant for the periodic case because we can obtain $\{\lambda_k\}_0^{n-1}$ easily by substituting equation~(\ref{equ:dft}) into equation~(\ref{equ:coefs}), but it is clarifying for the non-periodic cases because the equivalent of figure~\ref{fig:fdm} is simply the spectrum of $A_1^{-1}B_1$, in general, a set of points in the complex plane.
 
-It is also interesting to note that one option to calculate the FD approximation
-to the second-order derivative is always $\delta_{x}\delta_{x} \mathbf{s} =
-(A_1^{-1}B_1)^2$, that is, to apply consecutively twice the FD approximation to
-the first-order derivative. However, the spectral transfer function of the FD
-operator $\delta_{x}\delta_{x}$ falls to zero at the Nyquist frequency, as shown
-in figure~\ref{fig:fdm}, which results in a very poor representation of the
-diffusion terms at the high wavenumbers. This property can become very important
-because the errors derived from the aliasing in calculating the non-linear terms
-accumulate and the use of filter might become unavoidable in order to have
-stable simulations. Hence, it is advisable to use a direct discretization of the
-second-order derivative operator.
+It is also interesting to note that one option to calculate the FD approximation to the second-order derivative is always $\delta_{x}\delta_{x} \mathbf{s} = (A_1^{-1}B_1)^2$, that is, to apply consecutively twice the FD approximation to the first-order derivative. However, the spectral transfer function of the FD operator $\delta_{x}\delta_{x}$ falls to zero at the Nyquist frequency, as shown in figure~\ref{fig:fdm}, which results in a very poor representation of the diffusion terms at the high wavenumbers. This property can become very important because the errors derived from the aliasing in calculating the non-linear terms accumulate and the use of filter might become unavoidable in order to have stable simulations. Hence, it is advisable to use a direct discretization of the second-order derivative operator.
 
-Last, a uniform grid $\{x_j=x_1+(j-1)h:\, j = 1,\ldots,n\}$ has been considered
-so far. If a non-uniform grid $\{x_j:\, j = 1,\ldots,n\}$ is employed instead,
-we can define $\mathbf{x'} = (1/h)A_1^{-1}B_1\mathbf{x}$ from the mapping
-between the computational and the physical domains and the calculation of the
-approximation $\delta_{x} \mathbf{s}$ to the first-order derivative is given by
+Last, a uniform grid $\{x_j=x_1+(j-1)h:\, j = 1,\ldots,n\}$ has been considered so far. If a non-uniform grid $\{x_j:\, j = 1,\ldots,n\}$ is employed instead, we can define $\mathbf{x'} = (1/h)A_1^{-1}B_1\mathbf{x}$ from the mapping between the computational and the physical domains and the calculation of the approximation $\delta_{x} \mathbf{s}$ to the first-order derivative is given by
 \begin{equation}
   (A_1D_1)\, \delta_x \mathbf{s}=(1/h)B_1 \mathbf{s} \;,
 \end{equation}
-that is, $A$ should be replaced by $AD_1$, where $D_1=\text{diag} (\mathbf{x'})$
-is a diagonal matrix with $\{x'_j\}$ as diagonal elements. Similarly, for the FD
-approximation to the second-order derivative, we obtain
+that is, $A$ should be replaced by $AD_1$, where $D_1=\text{diag} (\mathbf{x'})$ is a diagonal matrix with $\{x'_j\}$ as diagonal elements. Similarly, for the FD approximation to the second-order derivative, we obtain
 \begin{equation}
   (A_2D_1^2)\, \delta_{xx} \mathbf{s}=(1/h)B_2 \mathbf{s} - (A_2D_2)\,\delta_x
   \mathbf{s} \;,
 \end{equation}
 where $D_2=\text{diag} (\mathbf{x''})$ is again a diagonal matrix with
-$\{x''_j\}$ as diagonal elements; these elements are the components of the
-vector $\mathbf{x''} = (1/h^2)A_2^{-1}B_2\mathbf{x}$. As a result of using this
-Jacobian formulation for non-uniform grids, we need to calculate the
-approximation to the first-order derivative in order to calculate $\delta_{xx}
-\mathbf{s}$. In general, that is not a problem because we need both, the first-
-and the second-order derivatives, in all the transport equations.
+$\{x''_j\}$ as diagonal elements; these elements are the components of the vector $\mathbf{x''} = (1/h^2)A_2^{-1}B_2\mathbf{x}$. As a result of using this Jacobian formulation for non-uniform grids, we need to calculate the approximation to the first-order derivative in order to calculate $\delta_{xx} \mathbf{s}$. In general, that is not a problem because we need both, the first- and the second-order derivatives, in all the transport equations.
 
-A direct formulation of compact FD approximation to the second-order derivative
-for non-uniform grids is needed, however, when using the implicit temporal
-scheme for the diffusion terms in order to solve exactly the corresponding
-Helmholtz equations, without any approximation. Such a direct formulation leads
-to the system form~(\ref{equ:fdm}). We followed \cite{Shukla:2005}.
+We could reformulate the calculation of the second derivative as
+\begin{subequations}
+  \begin{align}
+    (A_2D_1^2)\, \mathbf{s}^*&=(1/h)B_2 \mathbf{s} \;,\\
+    \delta_{xx} \mathbf{s}&= \mathbf{s}^*- (D_1^{-2}D_2)\,\delta_x  \mathbf{s} \;,
+  \end{align}
+\end{subequations}
+where $D_1^{-2}D_2$ is a diagonal matrix and could be precomputed. This formulation is clearer, but not faster.
+
+A direct formulation of compact FD approximation to the second-order derivative for non-uniform grids is needed, however, when using the implicit temporal scheme for the diffusion terms in order to solve exactly the corresponding Helmholtz equations, without any approximation. Such a direct formulation leads to the system form~(\ref{equ:fdm}). We followed \cite{Shukla:2005}.
 
 \subsection{Advection and Diffusion}
 
@@ -305,95 +170,64 @@ skew-symmetric forms \citep{Blaisdell:1996,Kravchenko:1997}. The molecular
 transport terms can be formulated in the conservative and non-conservative forms
 (this latter if transport coefficients are constant).
 
-In the convective formulation, the routines {\tt OPR\_BURGERS\_*} combine the
-first and second-order derivative operators as 
+In the convective formulation, the routines {\tt OPR\_BURGERS\_*} combine the first and second-order derivative operators as 
 \begin{equation}
-f=Re^{-1}s'' - u s'\;
+f=\epsilon s'' - u s'\;
 \end{equation}
-where $s$ is a scalar field and $u$ a velocity field. The combination reduces
-transpositions, either locally or across processors. The reason is that, in
-general, we need 2 transpositions for $s''$, forward and backward, and similarly
-for $s'$, which amounts to 4 transpositions. In the the combined form, we need 1
-forward transposition for $s$ and 1 for $u$, and then 1 backward transposition
-for the result $f$. In total, 3 transpositions. The addition and multiplication
-operations are done in transposed space. If $u= s$, then it is only 2
-transpositions that we need. When $u\ne s$, then the transposed velocity needs
-to be passed through the arguments in case it is needed.
+where $s$ is a scalar field, $u$ a velocity field, and $\epsilon$ is the diffusivity. The combination reduces transpositions, either locally or across processors. The reason is that, in general, we need 2 transpositions for $s''$, forward and backward, and similarly for $s'$, which amounts to 4 transpositions. In the the combined form, we need 1 forward transposition for $s$ and 1 for $u$, and then 1 backward transposition for the result $f$. In total, 3 transpositions. The addition and multiplication operations are done in transposed space. If $u= s$, then it is only 2 transpositions that we need. When $u\ne s$, then the transposed velocity needs to be passed through the arguments in case it is needed.
+
+We could reformulate the calculation of $\mathbf{f}$ by combining the linear operation with the calculation of the second derivative, which yields
+\begin{subequations}
+  \begin{align}
+    \epsilon^{-1}(A_2D_1^2)\, \mathbf{f}^*&=(1/h)B_2 \mathbf{s} \;,\\
+    \mathbf{f}&= \mathbf{f}^*- (\epsilon D_1^{-2}D_2 + \mathbf{u})\,\delta_x  \mathbf{s} \;,
+  \end{align}
+\end{subequations}
+where $\epsilon D_1^{-2}D_2$ is a diagonal matrix and could be precomputed. This formulation is clearer, but not sure if faster, and we need more memory because $\epsilon D_1^{-2}D_2$ varies with $\epsilon$.
 
 \subsection{Filters}
 
-See file {\tt dns/opr\_filter}.  The kernels of the specific algorithms are in
-the library {\tt filters}. Used in previous version for long-term stability, now
-mainly used for post-processing and large-eddy simulations.
+See file {\tt dns/opr\_filter}.  The kernels of the specific algorithms are in the library {\tt filters}. Used in previous version for long-term stability, now mainly used for post-processing and large-eddy simulations.
 
 \subsection{Fourier transform}
 
-See file {\tt dns/opr\_fourier}. It is based on the FFTW library and it has been
-already discussed in the previous section (see text around
-equation~({\ref{equ:dft})).  It is used in the pre-processing (generation of the
-  initial random field), in the post-processing (spectral analysis), and also
-  during the simulation (Poisson and Helmholtz solvers).
+See file {\tt dns/opr\_fourier}. It is based on the FFTW library and it has been already discussed in the previous section (see text around equation~({\ref{equ:dft})).It is used in the pre-processing (generation of the   initial random field), in the post-processing (spectral analysis), and also during the simulation (Poisson and Helmholtz solvers).
 
-The Fourier transform is applied by default to an array {\tt
-  imax\_total}$\times${\tt(jmax\_total+2)}$\times${\tt kmax\_total}. The reason
-to add two additional planes {\tt \{jmax\_total+1,jmax\_total+2\}} is that we
-need them for the boundary conditions of the Poisson equations, and we make that
-the standard procedure. If not needed, then these two planes contain simply
-zeros.
+The Fourier transform is applied by default to an array {\tt imax\_total}$\times${\tt(jmax\_total+2)}$\times${\tt kmax\_total}. The reason to add two additional planes {\tt \{jmax\_total+1,jmax\_total+2\}} is that we need them for the boundary conditions of the Poisson equations, and we make that the standard procedure. If not needed, then these two planes contain simply zeros.
 
-The sequence of transformations is $Ox\rightarrow Oz\rightarrow Oy$. The
-transformed field contains the Nyquist frequency, so it needs an array
-{\tt(imax\_total/2+1)}$\times${\tt(jmax\_total+2)}$\times${\tt kmax\_total} of
-complex numbers.
+The sequence of transformations is $Ox\rightarrow Oz\rightarrow Oy$. The transformed field contains the Nyquist frequency, so it needs an array {\tt(imax\_total/2+1)}$\times${\tt(jmax\_total+2)}$\times${\tt kmax\_total} of complex numbers.
 
-Given the scalar field $s$, the power spectral density
-$\{E_0,\,E_1,\,\ldots,\,E_{N/2}\}$ is normalized such that
+Given the scalar field $s$, the power spectral density $\{E_0,\,E_1,\,\ldots,\,E_{N/2}\}$ is normalized such that
 \begin{equation}
 \langle s^2\rangle = E_0+2\sum_0^{N/2-1}E_n+E_{N/2} \;.
 \end{equation}
-The mean value is typically removed, such that the left-hand side is
-$s^2_\text{rms}$. The Nyquist frequency energy content $E_{N/2}$ is not written
-to disk, only the $N/2$ values $\{E_0,\,E_1,\,\ldots,\,E_{N/2-1}\}$.
+The mean value is typically removed, such that the left-hand side is $s^2_\text{rms}$. The Nyquist frequency energy content $E_{N/2}$ is not written to disk, only the $N/2$ values $\{E_0,\,E_1,\,\ldots,\,E_{N/2-1}\}$.
 
 \subsection{Poisson equation}
 
-See file {\tt dns/opr\_poisson}. Given the scalar field $s$, obtain the scalar
-field $f$ such that
+See file {\tt dns/opr\_poisson}. Given the scalar field $s$, obtain the scalar field $f$ such that
 \begin{equation}
-\nabla^2 f= s \;,
+  \nabla^2 f= s \;,
 \end{equation}
-complemented with appropriate boundary conditions.  The current version only
-handles cases with periodic boundary conditions along $Ox$ and $Oz$. It performs
-a Fourier decomposition along these two directions, to obtain the a set of
-finite difference equations along $Oy$ of the form
+complemented with appropriate boundary conditions.  The current version only handles cases with periodic boundary conditions along $Ox$ and $Oz$. It performs a Fourier decomposition along these two directions, to obtain the a set of finite difference equations along $Oy$ of the form
 \begin{equation}
   \delta_x \delta_x \mathbf{f}|_j - (\lambda_1/h)^2\mathbf{f}|_j=\mathbf{s}|_j 
   \;,\qquad j=2,\ldots,n-1 \;,
 \end{equation}
-$\lambda_1\in\mathbb{R}$, where boundary conditions need to be provided at $j=1$ and
-$j=n$.  The algorithm is described in \cite{Mellado:2012}. These routines are in
-the source file {\tt dns/opr\_fde\_pool}.
+$\lambda_1\in\mathbb{R}$, where boundary conditions need to be provided at $j=1$ and $j=n$.  The algorithm is described in \cite{Mellado:2012}. These routines are in the source file {\tt dns/opr\_fde\_pool}.
 
 \subsection{Helmholtz equation}
 
-See file {\tt dns/opr\_helmholtz}. Given the scalar field $s$, obtain the scalar
-field $f$ such that
+See file {\tt dns/opr\_helmholtz}. Given the scalar field $s$, obtain the scalar field $f$ such that
 \begin{equation}
 \nabla^2 f + \alpha f= s \;,
 \end{equation}
-complemented with appropriate boundary conditions. The current version only
-handles cases with periodic boundary conditions along $Ox$ and $Oz$. The
-algorithm is similar to that used for the Poisson equation. It performs a
-Fourier decomposition along these two directions, to obtain the a set of finite
-difference equations along $Oy$ of the form
+complemented with appropriate boundary conditions. The current version only handles cases with periodic boundary conditions along $Ox$ and $Oz$. The algorithm is similar to that used for the Poisson equation. It performs a Fourier decomposition along these two directions, to obtain the a set of finite difference equations along $Oy$ of the form
 \begin{equation}
   \delta_{xx} \mathbf{f}|_j - (\lambda_2/h^2-\alpha)\mathbf{f}|_j=\mathbf{s}|_j 
   \;,\qquad j=2,\ldots,n-1 \;,
 \end{equation}
-$\lambda_2\in\mathbb{R}$, where boundary conditions need to be provided at $j=1$ and
-$j=n$. The difference is that, for the Helmholtz equation, we also include the
-case in which the second-order derivative is implemented in terms of the
-$\delta_{xx}$ FDM operator, not only the $\delta_x\delta_x$ FDM operator.
+$\lambda_2\in\mathbb{R}$, where boundary conditions need to be provided at $j=1$ and $j=n$. The difference is that, for the Helmholtz equation, we also include the case in which the second-order derivative is implemented in terms of the $\delta_{xx}$ FDM operator, not only the $\delta_x\delta_x$ FDM operator.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

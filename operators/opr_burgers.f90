@@ -24,21 +24,22 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 
   USE DNS_TYPES,     ONLY : grid_structure
   USE DNS_CONSTANTS, ONLY : efile
-  
+  USE DNS_GLOBAL, ONLY    : reynolds
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: is
   TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
   TYPE(grid_structure),            INTENT(IN)    :: g
-  TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: s,u        ! argument field and velocity field
-  TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result     ! N(u) applied to s
+  TREAL, DIMENSION(nlines,g%size), INTENT(IN)    :: s,u        ! argument field and velocity field
+  TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result     ! N(u) applied to s
   TINTEGER,                        INTENT(IN)    :: bcs_min(2) ! BC derivative: 0 biased, non-zero
   TINTEGER,                        INTENT(IN)    :: bcs_max(2) !                1 forced to zero
-  TREAL, DIMENSION(nlines*g%size), INTENT(INOUT) :: wrk3d      ! dsdx
+  TREAL, DIMENSION(nlines,g%size), INTENT(INOUT) :: wrk3d      ! dsdx
   TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d
 
 ! -------------------------------------------------------------------
   TINTEGER ip,ij
+  TREAL dummy
 
 ! ###################################################################
   IF ( bcs_min(2) + bcs_max(2) .GT. 0 ) THEN
@@ -81,6 +82,7 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 
      CASE( FDM_COM6_JACOBIAN )
         CALL FDM_C2N6_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, s, wrk3d, result)
+!        CALL FDM_C2N6_RHS(.TRUE., g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)
 
      CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
         CALL FDM_C2N6_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, s, wrk3d, result)
@@ -98,13 +100,28 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 ! ###################################################################
 ! Operation
 ! ###################################################################
+!  IF ( g%uniform ) THEN
+
 !$omp parallel default( shared ) private( ij )
 !$omp do
-  DO ij = 1,nlines*g%size
-     result(ij) = result(ij) - u(ij)*wrk3d(ij) ! diffusivity included in 2.-order derivative
-  ENDDO
+     DO ij = 1,nlines*g%size
+        result(ij,1) = result(ij,1) - u(ij,1)*wrk3d(ij,1) ! diffusivity included in 2.-order derivative
+     ENDDO
 !$omp end do
 !$omp end parallel
+
+  ! ELSE
+  !    IF ( g%mode_fdm .eq. FDM_COM4_JACOBIAN .OR. &
+  !         g%mode_fdm .eq. FDM_COM6_JACOBIAN .OR. &
+  !         g%mode_fdm .eq. FDM_COM8_JACOBIAN      ) THEN
+  !       DO ip = 1,g%size
+  !          dummy = g%jac(ip,2) /( g%jac(ip,1) *g%jac(ip,1) ) /reynolds
+  !          result(:,ip) = result(:,ip) - (dummy + u(:,ip)) *wrk3d(:,ip)
+  !       ENDDO
+  !    ELSE
+  !       result = result - u *wrk3d
+  !    ENDIF
+  ! ENDIF
 
   RETURN
 END SUBROUTINE OPR_BURGERS

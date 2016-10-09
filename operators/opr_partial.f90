@@ -71,16 +71,17 @@ SUBROUTINE OPR_PARTIAL2(nlines, g, u,result, bcs_min,bcs_max, wrk2d,wrk3d)
 
   TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
   TYPE(grid_structure),            INTENT(IN)    :: g
-  TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: u
-  TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result
+  TREAL, DIMENSION(nlines,g%size), INTENT(IN)    :: u
+  TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result
   TINTEGER,                        INTENT(IN)    :: bcs_min(2) ! BC derivative: 0 biased, non-zero
   TINTEGER,                        INTENT(IN)    :: bcs_max(2) !                1 forced to zero
   TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
-  TREAL, DIMENSION(nlines*g%size), INTENT(INOUT) :: wrk3d      ! First derivative, in case needed
+  TREAL, DIMENSION(nlines,g%size), INTENT(INOUT) :: wrk3d      ! First derivative, in case needed
 
 ! -------------------------------------------------------------------
   TINTEGER ip
-
+  TREAL dummy
+  
 ! ###################################################################
 ! Check whether to calculate 1. order derivative
   IF ( .NOT. g%uniform ) THEN
@@ -117,10 +118,11 @@ SUBROUTINE OPR_PARTIAL2(nlines, g, u,result, bcs_min,bcs_max, wrk2d,wrk3d)
 
      CASE( FDM_COM6_JACOBIAN )
         CALL FDM_C2N6_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)
+!        CALL FDM_C2N6_RHS(.TRUE., g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)
 
      CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
         CALL FDM_C2N6_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)
-
+        
      CASE( FDM_COM6_DIRECT   )
         CALL FDM_C2N6N_RHS(g%size,nlines, g%lu2(1,4), u, result)
 
@@ -131,6 +133,17 @@ SUBROUTINE OPR_PARTIAL2(nlines, g, u,result, bcs_min,bcs_max, wrk2d,wrk3d)
 
   ENDIF
   
+  ! IF ( .NOT. g%uniform ) THEN
+  !    IF ( g%mode_fdm .eq. FDM_COM4_JACOBIAN .OR. &
+  !         g%mode_fdm .eq. FDM_COM6_JACOBIAN .OR. &
+  !         g%mode_fdm .eq. FDM_COM8_JACOBIAN      ) THEN
+  !       DO ip = 1,g%size
+  !          dummy = g%jac(ip,2) /( g%jac(ip,1) *g%jac(ip,1) )
+  !          result(:,ip) = result(:,ip) - dummy* wrk3d(:,ip)
+  !       ENDDO
+  !    ENDIF
+  ! ENDIF
+
   RETURN
 END SUBROUTINE OPR_PARTIAL2
 
