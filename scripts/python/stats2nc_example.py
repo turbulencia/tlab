@@ -6,13 +6,13 @@
 import stats2nc
 
 pathes=['.']
-types= ['avg','avg1s','avg2s','int']
+types= ['avg','avg1s','avg2s']
 jmax = 512
 
 for p in pathes:
     for t in types:
-        d = stats2nc.avg2dict(t,p, jmax,0)
-#        d = stats2nc.avg2dict(t,p, jmax,1) if gzipped files
+#        d = stats2nc.avg2dict(t,p, jmax,0)
+        d = stats2nc.avg2dict(t,p, jmax,1) #if gzipped files
         if ( d != -1 ):
             tstart=d['Iteration'][0]
             tend  =d['Iteration'][len(d['Iteration'][:])-1]

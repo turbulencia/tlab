@@ -63,13 +63,14 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
   ########################################################### 
   if ( tstart == -1 ) : 
     files_from_list=1 
-    command = "ls " + avgpath + '/' + avgtype + "[0-9]*"+gzip_str
-
+#    command = "ls " + avgpath + '/' + avgtype + "?[0-9]*" + gzip_str
+    command = "ls " + avgpath + '/' + avgtype + "*" + gzip_str + " | egrep '" + avgtype + "?[0-9]*" + gzip_str + "'"
+    
     p = subprocess.Popen(command, shell=True,  
                          stdout=subprocess.PIPE) 
     file_list = []
     for file in p.stdout.readlines():
-        dummy = file.strip('\n')  
+        dummy = file.strip('\n')
         try:
             with open(dummy): 
                 if '.nc' not in dummy: 
