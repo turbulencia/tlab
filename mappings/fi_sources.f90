@@ -17,6 +17,8 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
+  USE DNS_GLOBAL, ONLY : p_init, mean_rho
+  USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
 
@@ -24,7 +26,7 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
   TREAL, DIMENSION(isize_field,*), INTENT(OUT)   :: hq
   TREAL, DIMENSION(jmax),          INTENT(IN)    :: b_ref
   TREAL, DIMENSION(isize_wrk1d,*), INTENT(INOUT) :: wrk1d
-  TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk3d
+  TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: wrk3d
 
 ! -----------------------------------------------------------------------
   TINTEGER ij, iq
@@ -65,13 +67,19 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
   DO iq = 1,3
      IF ( buoyancy%active(iq) ) THEN
         
-        IF ( iq .EQ. 2 ) THEN
-           CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref)
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN ! Based on density
+           CALL THERMO_THERMAL_DENSITY_HP_ALWATER(imax,jmax,kmax, s(1,2), s(1,1), p_init, wrk3d)
+           dummy = C_1_R /mean_rho
+           wrk3d = dummy *( wrk3d - mean_rho )
         ELSE
-           wrk1d(:,1) = C_0_R
-           CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+           IF ( iq .EQ. 2 ) THEN
+              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref)
+           ELSE
+              wrk1d(:,1) = C_0_R
+              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+           ENDIF
         ENDIF
-        
+
 !$omp parallel default( shared ) &
 #ifdef USE_BLAS
 !$omp private( ilen, dummy, srt,end,siz)
@@ -112,7 +120,7 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(isize_field,*), INTENT(OUT)   :: hs
   TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: tmp1,tmp2
   TREAL, DIMENSION(isize_wrk1d,*), INTENT(INOUT) :: wrk1d
-  TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d,wrk3d
+  TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: wrk2d,wrk3d
   
 ! -----------------------------------------------------------------------
   TINTEGER ij, is, flag_grad

@@ -110,7 +110,7 @@ PROGRAM INIRAND
   ENDIF
 
   IF ( icalc_flow .EQ. 1 ) THEN ! we need array space
-     CALL DNS_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
+     CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   ENDIF
 
   IF ( jmax_total .EQ. 1 ) THEN; ifourier_type = 2; 

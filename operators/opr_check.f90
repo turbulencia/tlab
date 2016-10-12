@@ -3,7 +3,7 @@
 #include "dns_const_mpi.h"
 #endif
 
-SUBROUTINE DNS_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
+SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : isize_field,isize_txc_field, isize_wrk2d
   USE DNS_GLOBAL, ONLY : imax_total,kmax_total !,jmax_total 
@@ -142,4 +142,4 @@ SUBROUTINE DNS_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
 
 100 FORMAT(G_FORMAT_R)
 
-END SUBROUTINE DNS_CHECK
+END SUBROUTINE OPR_CHECK

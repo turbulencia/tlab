@@ -39,12 +39,12 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
-  USE DNS_GLOBAL, ONLY : inb_flow,inb_scal, inb_scal_array
   USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE DNS_GLOBAL, ONLY : iadvection, idiffusion, iviscous
-  USE DNS_GLOBAL, ONLY : p_init, damkohler
-  USE DNS_GLOBAL, ONLY : icalc_particle, isize_particle
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field
+  USE DNS_GLOBAL,    ONLY : inb_flow,inb_scal, inb_scal_array
+  USE DNS_GLOBAL,    ONLY : iadvection, idiffusion, iviscous
+  USE DNS_GLOBAL,    ONLY : p_init, damkohler
+  USE DNS_GLOBAL,    ONLY : icalc_particle, isize_particle
   USE THERMO_GLOBAL, ONLY : imixture
 
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
@@ -128,54 +128,48 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   ELSE IF ( iadvection .EQ. EQNS_CONVECTIVE .AND. &
             iviscous   .EQ. EQNS_EXPLICIT   .AND. & 
             idiffusion .EQ. EQNS_EXPLICIT         ) THEN
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
-        CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_ALWATER(dte,etime, x,y,z,dx,dy,dz, u,v,w,hq(1,1),hq(1,2),hq(1,3),s, &
-             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), &
+     IF      ( imode_rhs .EQ. EQNS_RHS_SPLIT       ) THEN 
+        CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1(dte,etime, x,y,z,dx,dy,dz, u,v,w,hq(1,1),hq(1,2),hq(1,3),s, &
+             q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
+             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
              wrk1d,wrk2d,wrk3d)
         
-        IF ( imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+        IF      ( imixture .EQ. MIXT_TYPE_SUPSAT   ) THEN
            CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT(dte, dx,dy,dz, u,v,w, hq(1,1),hq(1,2),hq(1,3), s, hs, &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk1d,wrk2d,wrk3d)
-        ELSE ! imixture .EQ. MIXT_TYPE_AIRWATER
+        ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
            DO is = 1,inb_scal
               CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_ALWATER(is, dte, dx,dy,dz, u,v,w,s(1,1), hs(1,is), &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d,hq(1,1),hq(1,2),hq(1,3))
            ENDDO
-        ENDIF
-
-     ELSE
-        IF      ( imode_rhs .EQ. EQNS_RHS_SPLIT       ) THEN 
-           CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1(dte,etime, x,y,z,dx,dy,dz, u,v,w,hq(1,1),hq(1,2),hq(1,3),s, &
-                q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-                vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
-                wrk1d,wrk2d,wrk3d)
+        ELSE
            CALL FI_SOURCES_SCAL(y,dy, s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
            DO is = 1,inb_scal
               CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is, dte, dx,dy,dz, u,v,w,s(1,is),hs(1,is), s,&
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
            ENDDO
-
-        ELSE IF ( imode_rhs .EQ. EQNS_RHS_COMBINED    ) THEN 
-           CALL RHS_GLOBAL_INCOMPRESSIBLE_1(dte,etime, x,y,z,dx,dy,dz, u,v,w,hq(1,1),hq(1,2),hq(1,3), &
-                q,hq, s,hs, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-                vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
-                wrk1d,wrk2d,wrk3d)
-        ELSE IF ( imode_rhs .EQ. EQNS_RHS_NONBLOCKING ) THEN 
-#ifdef USE_PSFFT 
-           CALL RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime, x,y,z,dx,dy,dz,&
-                u(1),v(1),w(1),s(1,1),&
-                txc(1,1), txc(1,2), &
-                txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), txc(1,8),txc(1,9),txc(1,10), &
-                txc(1,11),txc(1,12),txc(1,13),txc(1,14),&
-                hq(1,1),hq(1,2),hq(1,3), hs(1,1), &
-                vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
-                wrk1d,wrk2d,wrk3d)
-#else
-           CALL IO_WRITE_ASCII(efile,'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Need compiling flag -DUSE_PSFFT.')
-           CALL DNS_STOP(DNS_ERROR_PSFFT)
-#endif
         ENDIF
+        
+     ELSE IF ( imode_rhs .EQ. EQNS_RHS_COMBINED    ) THEN 
+        CALL RHS_GLOBAL_INCOMPRESSIBLE_1(dte,etime, x,y,z,dx,dy,dz, u,v,w,hq(1,1),hq(1,2),hq(1,3), &
+             q,hq, s,hs, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
+             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
+             wrk1d,wrk2d,wrk3d)
+
+     ELSE IF ( imode_rhs .EQ. EQNS_RHS_NONBLOCKING ) THEN 
+#ifdef USE_PSFFT 
+        CALL RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime, x,y,z,dx,dy,dz,&
+             u(1),v(1),w(1),s(1,1),&
+             txc(1,1), txc(1,2), &
+             txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), txc(1,8),txc(1,9),txc(1,10), &
+             txc(1,11),txc(1,12),txc(1,13),txc(1,14),&
+             hq(1,1),hq(1,2),hq(1,3), hs(1,1), &
+             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
+             wrk1d,wrk2d,wrk3d)
+#else
+        CALL IO_WRITE_ASCII(efile,'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Need compiling flag -DUSE_PSFFT.')
+        CALL DNS_STOP(DNS_ERROR_PSFFT)
+#endif
      ENDIF
      
 ! -----------------------------------------------------------------------
@@ -185,13 +179,11 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
      
   ENDIF
 
-
 ! #######################################################################
 ! Call RHS particle algorithm
 ! #######################################################################
   IF ( icalc_particle .EQ. 1 ) THEN
-     CALL RHS_PARTICLE_GLOBAL(x,y,z,dx,dy,dz,q,s,wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, &
-          l_tags, l_comm)
+     CALL RHS_PARTICLE_GLOBAL(x,y,z,dx,dy,dz,q,s,wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags, l_comm)
      
 !    CALL FIELD_TO_PARTICLE &
 !    (q(:,1), wrk1d, wrk2d, wrk3d,x ,y, z, l_txc, l_tags, l_hq, l_q)

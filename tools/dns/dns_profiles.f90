@@ -28,7 +28,9 @@ SUBROUTINE DNS_PROFILES(b_ref, wrk1d)
         wrk1d(j,is) = FLOW_SHEAR_TEMPORAL(iprof_i(is), thick_i(is), delta_i(is), mean_i(is), ycenter, prof_i(1,is), g(2)%nodes(j))
      ENDDO
   ENDDO
-  IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+  IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+     b_ref = C_1_R
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
      CALL THERMO_AIRWATER_LINEAR(i1,jmax,i1, wrk1d(1,1), wrk1d(1,inb_scal_array))
   ENDIF
   wrk1d(:,inb_scal_array+1) = C_0_R

@@ -336,7 +336,7 @@ PROGRAM PDFS
   ENDIF
 
   IF ( iread_flow .EQ. 1 ) THEN ! We need array space
-     CALL DNS_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
+     CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   ENDIF
 
 ! ###################################################################

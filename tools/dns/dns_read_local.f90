@@ -19,10 +19,11 @@
 !########################################################################
 SUBROUTINE DNS_READ_LOCAL(inifile)
 
-  USE DNS_GLOBAL, ONLY : p_init, mean_rho
-  USE DNS_GLOBAL, ONLY : imode_sim, icalc_scal, inb_flow, inb_scal
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, iunify, imode_fdm
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile
+  USE DNS_GLOBAL,    ONLY : p_init, mean_rho
+  USE DNS_GLOBAL,    ONLY : imode_sim, icalc_scal, inb_flow, inb_scal
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, iunify, imode_fdm, imode_eqns
+  USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL
 
   IMPLICIT NONE
@@ -947,5 +948,15 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
   ENDIF
 
+! -------------------------------------------------------------------
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+     IF ( imixture .EQ. MIXT_TYPE_SUPSAT .OR. imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+        IF ( imode_rhs .NE. EQNS_RHS_SPLIT ) THEN
+           CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Airwater formulation only for RhsSplit mode.')
+           CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
+        ENDIF
+     ENDIF
+  ENDIF
+  
   RETURN
 END SUBROUTINE DNS_READ_LOCAL

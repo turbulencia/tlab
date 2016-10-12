@@ -365,7 +365,7 @@ PROGRAM SPECTRA
      CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
   ENDIF
 
-  CALL DNS_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
+  CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
 ! Initialize
