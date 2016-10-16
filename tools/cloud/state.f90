@@ -99,7 +99,7 @@ PROGRAM STATE
      r1 = p/(T*(1- qt +WGHT_INV(1)/WGHT_INV(2)*qv ) )
      CALL THERMO_THERMAL_DENSITY(i1,i1,i1,z1,p,T, r2)
      CALL THERMO_CALORIC_ENTHALPY(i1,i1,i1,z1,T,h2)
-     CALL THERMO_THERMAL_DENSITY_HP_ALWATER(i1,i1,i1, z1,h2,p,r3)
+     CALL THERMO_AIRWATER_DENSITY(i1,i1,i1, z1,p,h2,r3)
 
      WRITE(*,*) 'Latent heat..............................', (THERMO_AI(6,1,3))*1.007*TREF 
   ENDIF

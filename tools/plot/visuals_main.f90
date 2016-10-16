@@ -388,12 +388,14 @@ PROGRAM VISUALS_MAIN
      ENDIF
 
      IF ( iread_scal .EQ. 1 ) THEN ! Scalar-dependent variables
-        IF      ( (imixture .EQ. MIXT_TYPE_AIRWATER) .OR. &                                     ! calculate liquid
-             ( (imixture .EQ. MIXT_TYPE_SUPSAT) .AND. ( damkohler(1) .LE. C_0_R) ) ) THEN
-           CALL THERMO_THERMAL_DENSITY_HP_ALWATER(i1,i1,i1, mean_i(2),mean_i(1),p_init,mean_rho)
-           CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(:,2), p_init, s(:,1))    
-           
-        ELSEIF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+        IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+           IF ( damkohler(1) .LE. C_0_R )  THEN
+              CALL THERMO_AIRWATER_PHAL(i1,i1,i1,       mean_i(2), p_init, mean_i(1))        ! Calculate mean liquid
+              CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2),    p_init, s(1,1))           ! Calculate liquid field
+           ENDIF
+           CALL THERMO_AIRWATER_DENSITY(i1,i1,i1,       mean_i(2), p_init, mean_i(1), mean_rho) ! Calculate mean density
+
+        ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
            CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
            
         ENDIF
@@ -471,46 +473,37 @@ PROGRAM VISUALS_MAIN
                 imode_eqns .EQ. DNS_EQNS_ANELASTIC           ) THEN
 
               IF      ( opt_vec(iv) .EQ. 6 ) THEN ! density 
-                 wrk1d(1:jmax,1) = C_0_R
-                 CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
-                 dummy = C_1_R/froude
-                 txc(1:isize_field,1) = txc(1:isize_field,1)*dummy + C_1_R
+                 IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT )  THEN
+                    CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2), p_init, s(1,1), txc(1,1))
 
+                 ELSE
+                    wrk1d(1:jmax,1) = C_0_R
+                    CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
+                    dummy = C_1_R/froude
+                    txc(1:isize_field,1) = txc(1:isize_field,1)*dummy + C_1_R
+
+                 ENDIF
+                 
                  plot_file = 'Density'//time_str(1:MaskSize)
                  CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
               ELSE IF ( opt_vec(iv) .EQ. 7 ) THEN ! temperature
+                 IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+                    CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1), wrk3d) !txc2, txc3 not used
+                    
+                    plot_file = 'Temperature'//time_str(1:MaskSize)
+                    CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
+                    
+                    IF ( damkohler(1) .GT. C_0_R ) THEN ! Supersaturated liquid
+                       txc(1:isize_field,1:2) = s(1:isize_field,1:2)
+                       CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, txc(1,2), p_init, txc(1,1))
+                       txc(1:isize_field,3) = (s(1:isize_field,3)-txc(1:isize_field,3))/s(1,3)
+                       
+                       plot_file = 'Supsat'//time_str(1:MaskSize)
+                       CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,3), wrk3d)
 
-                 IF      ( imixture .EQ. MIXT_TYPE_AIRWATER )  THEN
-                    CALL THERMO_THERMAL_DENSITY_HP_ALWATER(i1,i1,i1, mean_i(2),mean_i(1),p_init,mean_rho) ! calculate liquid
-                    CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(:,2), p_init, s(:,1))    
-                    CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1), wrk3d)
-                    
-                    plot_file = 'Temperature'//time_str(1:MaskSize)
-                    CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
-                    
-                 ELSE IF ( imixture .EQ. MIXT_TYPE_SUPSAT   ) THEN  ! liquid is already in the third scalar
-                    CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1), wrk3d)
-                    txc(1:isize_field,1) = (txc(1:isize_field,1) - txc(1,1))/(txc(isize_field,1) - txc(1,1)) 
-                    
-                    plot_file = 'Temperature'//time_str(1:MaskSize)
-                    CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
-                    
-! Buoyancy
-                    CALL THERMO_THERMAL_DENSITY_HP_ALWATER(imax,jmax,kmax, s(1,2),s(1,1),p_init,txc(1,1))
-                    txc(1:isize_field,1) = buoyancy%vector(2)*(txc(1:isize_field,1) - mean_rho)/mean_rho
-                    
-                    plot_file = 'Buoyancy'//time_str(1:MaskSize)
-                    CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
-                    
-! Supersaturated liquid
-                    txc(1:isize_field,1:2) = s(1:isize_field,1:2)
-                    CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, txc(:,2), p_init, txc(:,1))
-                    txc(1:isize_field,3) = (s(1:isize_field,3)-txc(1:isize_field,3))/s(1,3)
-                     
-                    plot_file = 'Supsat'//time_str(1:MaskSize)
-                    CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,3), wrk3d)
-                    
+                    ENDIF
+
                  ENDIF
 
               ELSE IF ( opt_vec(iv) .EQ. 8 ) THEN ! pressure
@@ -587,17 +580,6 @@ PROGRAM VISUALS_MAIN
            
 ! -------------------------------------------------------------------
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN ! s(1,inb_scal+1) contains liquid mass fraction
-
-              IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. &
-                   imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
-                 CALL THERMO_AIRWATER_PHAL(i1, i1,i1, mean_i(2), p_init, mean_i(1))
-                 CALL THERMO_THERMAL_DENSITY_HP_ALWATER(i1,i1,i1, mean_i(2),mean_i(1),p_init,mean_rho)
-                 CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(:,2), p_init, s(:,1))    
-
-              ELSE ! Compressible
-                 CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(:,4), q(:,5), txc(:,1), wrk3d)
-                 
-              ENDIF
 
               IF      ( opt_vec(iv) .EQ. 10 ) THEN ! vapor water mass fraction
                  s(:,1) = s(:,inb_scal) - s(:,inb_scal+1)
@@ -853,11 +835,17 @@ PROGRAM VISUALS_MAIN
 ! Buoyancy
 ! ###################################################################
         IF ( opt_vec(iv) .EQ. iscal_offset+12 ) THEN
+           IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT )  THEN
+              CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2), p_init, s(1,1), txc(1,1))
+              txc(1:isize_field,1) = buoyancy%vector(2)*(txc(1:isize_field,1) - mean_rho)/mean_rho
 
-           wrk1d(1:jmax,1) = C_0_R
-           CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
-           dummy =  C_1_R/froude
-           txc(1:isize_field,1) = txc(1:isize_field,1) *dummy
+           ELSE
+              wrk1d(1:jmax,1) = C_0_R
+              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
+              dummy =  C_1_R/froude
+              txc(1:isize_field,1) = txc(1:isize_field,1) *dummy
+
+           ENDIF
            
            plot_file = 'Buoyancy'//time_str(1:MaskSize)
            CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)

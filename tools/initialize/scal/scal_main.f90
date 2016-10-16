@@ -43,11 +43,11 @@ PROGRAM INISCAL
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
 
   TREAL dummy
-  TINTEGER iread_flow, iread_scal, isize_wrk3d, is, ierr
+  TINTEGER iread_flow, iread_scal, isize_wrk3d, is, ierr, inb_scal_loc
 
   CHARACTER*64 str, line
   CHARACTER*32 inifile
-
+  
   TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
   
 ! ###################################################################
@@ -109,36 +109,40 @@ PROGRAM INISCAL
   IF ( ireactive .EQ. CHEM_NONE ) THEN
 #endif
 
+     inb_scal_loc = inb_scal
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+        IF ( damkohler(1) .GT. C_0_R .AND. flag_mixture .EQ. 1 ) THEN
+           inb_scal_loc = inb_scal - 1
+        ENDIF
+     ENDIF
+     
 ! -------------------------------------------------------------------
 ! Mean
 ! -------------------------------------------------------------------
-     DO is = 1,inb_scal
-        !Start the supersaturation simulation with a concentration in equilibrium
-        IF ( (is .EQ. 3) .AND. (imixture .EQ. MIXT_TYPE_SUPSAT) .AND. (flag_mixture .EQ. 1) ) THEN 
-           dummy = p_init/C_1_R ! MRATIO = 1
-           CALL  THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2), dummy, s(1,1))
-        ELSE
-           CALL SCAL_MEAN(is, s(1,is), wrk1d,wrk2d,wrk3d)
-        END IF
-     END DO
-
+     DO is = 1,inb_scal_loc
+        CALL SCAL_MEAN(is, s(1,is), wrk1d,wrk2d,wrk3d)
+     ENDDO
+     
 ! -------------------------------------------------------------------
 ! Fluctuation field
 ! -------------------------------------------------------------------
-      DO is = 1,inb_scal
-        IF ( is .EQ. 3 .AND. imixture .EQ. MIXT_TYPE_SUPSAT .AND. flag_mixture .EQ. 1)  THEN !In Eq concentration do nothing
-        ELSE
-           IF      ( flag_s .EQ. 1 ) THEN
-              CALL SCAL_VOLUME_DISCRETE(is, s(1,is))
-           ELSE IF ( flag_s .EQ. 2 .AND. norm_ini_s(is) .GT. C_SMALL_R ) THEN
-              CALL SCAL_VOLUME_BROADBAND(is, s(1,is), txc, wrk3d)
-           ELSE IF ( flag_s .GE. 4 .AND. norm_ini_s(is) .GT. C_SMALL_R ) THEN
-              CALL SCAL_PLANE(flag_s, is, s(1,is), wrk2d)
-           ENDIF
-           
+     DO is = 1,inb_scal_loc
+        IF      ( flag_s .EQ. 1 ) THEN
+           CALL SCAL_VOLUME_DISCRETE(is, s(1,is))
+        ELSE IF ( flag_s .EQ. 2 .AND. norm_ini_s(is) .GT. C_SMALL_R ) THEN
+           CALL SCAL_VOLUME_BROADBAND(is, s(1,is), txc, wrk3d)
+        ELSE IF ( flag_s .GE. 4 .AND. norm_ini_s(is) .GT. C_SMALL_R ) THEN
+           CALL SCAL_PLANE(flag_s, is, s(1,is), wrk2d)
         ENDIF
      ENDDO
-
+     
+! Initial liquid, if needed, in equilibrium; we simply overwrite previous values     
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+        IF ( damkohler(1) .GT. C_0_R .AND. flag_mixture .EQ. 1 ) THEN
+           CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2), p_init, s(1,1))
+        ENDIF
+     ENDIF
+     
 #ifdef CHEMISTRY
 ! ###################################################################
 ! Reacting case

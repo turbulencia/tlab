@@ -45,7 +45,6 @@ SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, x,y,z,dx,dy,dz, q,hq,s,hs, &
 
 ! -----------------------------------------------------------------------
   TINTEGER is
-  TREAL dummy
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:), POINTER :: u, v, w
@@ -127,9 +126,14 @@ SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, x,y,z,dx,dy,dz, q,hq,s,hs, &
 ! ###################################################################
 ! Calculate other intensive thermodynamic variables
 ! ###################################################################
-  IF ( (imixture .EQ. MIXT_TYPE_AIRWATER) .OR. ( (imixture .EQ. MIXT_TYPE_SUPSAT) .AND. ( damkohler(1) .LE. C_0_R) ) ) THEN
-     dummy = p_init/C_1_R ! MRATIO = 1
-     CALL  THERMO_AIRWATER_PHAL(imax, jmax, kmax, s(:,2), dummy, s(:,1))
+  IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+     IF ( damkohler(1) .LE. C_0_R )  THEN
+        CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2), p_init, s(1,1))
+     ENDIF
+     
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+     CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
+
   ENDIF
 
 ! ###################################################################

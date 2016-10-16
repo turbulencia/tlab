@@ -67,7 +67,7 @@ SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s, e, rho, T, wrk3d)
 ! ###################################################################
 ! mixture MIXT_TYPE_AIRWATER
 ! ###################################################################
-  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         DO i =1,nx*ny*nz
            T(i) = (s(i,1) - s(i,3)*THERMO_AI(6,1,3) )/( (1-s(i,2))*THERMO_AI(1,1,2) +& 
@@ -75,19 +75,6 @@ SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s, e, rho, T, wrk3d)
         ENDDO
      ELSE
         CALL THERMO_AIRWATER_RE(nx, ny, nz, s, e, rho, T, wrk3d)
-     ENDIF
-
-! ###################################################################
-! mixture MIXT_TYPE_SUPSAT
-! ###################################################################
-  ELSE IF ( imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
-     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-        DO i =1,nx*ny*nz
-           T(i) = (s(i,1) - s(i,3)*THERMO_AI(6,1,3) )/( (1-s(i,2))*THERMO_AI(1,1,2) +& 
-                (s(i,2)-s(i,3))*THERMO_AI(1,1,1) + s(i,3)* THERMO_AI(1,1,3) )
-        ENDDO
-     ELSE
-! Compressible mode not yet developed
      ENDIF
      
 ! ###################################################################

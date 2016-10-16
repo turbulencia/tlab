@@ -433,12 +433,16 @@ PROGRAM AVERAGES
 ! ###################################################################
      IF      ( opt_main .EQ. 1 ) THEN
         IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
-           IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-              CALL THERMO_AIRWATER_PHAL(i1,i1,i1, mean_i(2), p_init, mean_i(1))
-              CALL THERMO_THERMAL_DENSITY_HP_ALWATER(i1,i1,i1, mean_i(2),mean_i(1),p_init,mean_rho)
-              CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2), p_init, s(1,1))
+           IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+              IF ( damkohler(1) .LE. C_0_R )  THEN
+                 CALL THERMO_AIRWATER_PHAL(i1,i1,i1,       mean_i(2), p_init, mean_i(1))        ! Calculate mean liquid
+                 CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2),    p_init, s(1,1))           ! Calculate liquid field
+              ENDIF
+              CALL THERMO_AIRWATER_DENSITY(i1,i1,i1,    mean_i(2), p_init, mean_i(1), mean_rho) ! Calculate mean density
+
            ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
               CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
+
            ENDIF
            CALL FI_PRESSURE_BOUSSINESQ(u,v,w, s, txc(1,3), &
                 txc(1,1),txc(1,2),txc(1,4), wrk1d,wrk2d,wrk3d)

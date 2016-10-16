@@ -511,19 +511,12 @@ PROGRAM DNS
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL DNS_PROFILES(vaux(vindex(VA_BCS_VI)), wrk1d)
 
-     IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-        CALL THERMO_AIRWATER_PHAL(i1, i1,i1, mean_i(2), p_init, mean_i(1)) !Calculate the mean water in eq
-        CALL THERMO_THERMAL_DENSITY_HP_ALWATER(i1,i1,i1, mean_i(2),mean_i(1),p_init,mean_rho)  !Calculate density (using the mean values)
-        CALL THERMO_AIRWATER_PHAL(imax, jmax, kmax, s(:,2), p_init, s(:,1)) !Calculate the water in eq in the domain
-
-     ELSE IF ( imixture .EQ. MIXT_TYPE_SUPSAT   ) THEN
-        IF (damkohler(1) .GT. C_0_R)  THEN !supersaturation condition
-	    CALL THERMO_THERMAL_DENSITY_HP_ALWATER(i1,i1,i1, mean_i(2),mean_i(1),p_init,mean_rho)  !Calculate density (using the mean values)	    
-	ELSE
-	    CALL THERMO_AIRWATER_PHAL(i1, i1,i1, mean_i(2), p_init, mean_i(1)) !Calculate the mean water in eq
-            CALL THERMO_THERMAL_DENSITY_HP_ALWATER(i1,i1,i1, mean_i(2),mean_i(1),p_init,mean_rho)  !Calculate density (using the mean values)
-            CALL THERMO_AIRWATER_PHAL(imax, jmax, kmax, s(:,2), p_init, s(:,1)) !Calculate the water in eq in the domain
+     IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+        IF ( damkohler(1) .LE. C_0_R )  THEN
+           CALL THERMO_AIRWATER_PHAL(i1,i1,i1,       mean_i(2), p_init, mean_i(1))        ! Calculate mean liquid
+           CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2),    p_init, s(1,1))           ! Calculate liquid field
         ENDIF
+        CALL THERMO_AIRWATER_DENSITY(i1,i1,i1,    mean_i(2), p_init, mean_i(1), mean_rho) ! Calculate mean density
 
      ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
         CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))

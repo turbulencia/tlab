@@ -239,9 +239,9 @@ ENDIF
 
 IF (damkohler(1) .GT. C_0_R) THEN !It supersatturation is allowed
 
-   CALL THERMO_SUPSAT_PH(imax,jmax,kmax, tmp7, s(:,2:3), tmp4, p_init, al_h) !Temperature in tmp7 and saturation concentration in tmp4 
+   CALL THERMO_AIRWATER_QSAT(imax,jmax,kmax, s(:,2:3),p_init,al_h, tmp7, tmp4) !Temperature in tmp7 and saturation concentration in tmp4 
 
-  !(IN THE FUTURE THIS LOOP CAN BE DONE IN THERMO_SUPSAT_PH)
+  !(IN THE FUTURE THIS LOOP CAN BE DONE IN THERMO_AIRWATER_QSAT)
   !$omp parallel default( shared ) private( ij, dummy, exp_l )
   dummy = C_3_R*damkohler(1)
   exp_l = C_1_R/C_3_R
