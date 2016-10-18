@@ -405,14 +405,14 @@ PROGRAM DNS
 ! ###################################################################
   IF      ( ifilt_domain .EQ. DNS_FILTER_4E  .OR. &
             ifilt_domain .EQ. DNS_FILTER_ADM      ) THEN  
-     CALL FILT4E_INI(imax_total, i1bc, scalex, x, vaux(vindex(VA_FLT_CX)))
-     CALL FILT4E_INI(jmax_total, j1bc, scaley, y, vaux(vindex(VA_FLT_CY)))
-     CALL FILT4E_INI(kmax_total, k1bc, scalez, z, vaux(vindex(VA_FLT_CZ)))
+     CALL FILT4E_INI(imax_total, i1bc, scalex, g(1)%nodes, vaux(vindex(VA_FLT_CX)))
+     CALL FILT4E_INI(jmax_total, j1bc, scaley, g(2)%nodes, vaux(vindex(VA_FLT_CY)))
+     CALL FILT4E_INI(kmax_total, k1bc, scalez, g(3)%nodes, vaux(vindex(VA_FLT_CZ)))
 
   ELSE IF ( ifilt_domain .EQ. DNS_FILTER_COMPACT  ) THEN
-     CALL FILT4C_INI(imax_total, i1bc, ifilt_alpha, dx, vaux(vindex(VA_FLT_CX)))
-     CALL FILT4C_INI(jmax_total, j1bc, ifilt_alpha, dy, vaux(vindex(VA_FLT_CY)))
-     CALL FILT4C_INI(kmax_total, k1bc, ifilt_alpha, dz, vaux(vindex(VA_FLT_CZ)))
+     CALL FILT4C_INI(imax_total, i1bc, ifilt_alpha, g(1)%jac, vaux(vindex(VA_FLT_CX)))
+     CALL FILT4C_INI(jmax_total, j1bc, ifilt_alpha, g(2)%jac, vaux(vindex(VA_FLT_CY)))
+     CALL FILT4C_INI(kmax_total, k1bc, ifilt_alpha, g(3)%jac, vaux(vindex(VA_FLT_CZ)))
 
   ENDIF
 
@@ -427,8 +427,9 @@ PROGRAM DNS
     CALL DNS_READ_PARTICLE(fname,l_q) ! h_particle only as dummy
     ! set boundarys for residence time pdf 
     IF (inb_particle_aux .EQ. 1) THEN
-       l_y_lambda = ((y(jmax,1)-y(1,1))*ycoor_i(1)-2)
-       l_y_base = ( ((y(jmax,1)-y(1,1))*ycoor_i(1)-(y(jmax,1)-y(1,1))*ycoor_i(3) )/2 + (y(jmax,1)-y(1,1))*ycoor_i(3))
+       l_y_lambda =  (g(2)%nodes(jmax)-g(2)%nodes(1)) *ycoor_i(1) - C_2_R
+       l_y_base =   ((g(2)%nodes(jmax)-g(2)%nodes(1)) *ycoor_i(1)-(g(2)%nodes(jmax)-g(2)%nodes(1))*ycoor_i(3) )/C_2_R &
+                  +  (g(2)%nodes(jmax)-g(2)%nodes(1)) *ycoor_i(3)
        IF (residence_reset .EQ. 1) THEN
           l_q(:,6) = C_0_R
        ENDIF
@@ -551,24 +552,24 @@ PROGRAM DNS
                      vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), &
                      vaux(vindex(VA_BCS_HT)),  vaux(vindex(VA_BCS_HB)),  &
                      vaux(vindex(VA_BCS_VI)),  vaux(vindex(VA_BCS_VO)),  &
-                     x,y,z, dx,dy,dz, q,s, txc, wrk3d)
+                     q,s, txc, wrk3d)
 
 ! inflow
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-     CALL BOUNDARY_INFLOW_INIT(rtime, y, x_inf,y_inf,z_inf, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d)
+     CALL BOUNDARY_INFLOW_INIT(rtime, g(2)%nodes, x_inf,y_inf,z_inf, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d)
   ENDIF
 
 ! ###################################################################
 ! Initialize LES 
 ! ###################################################################
 #ifdef LES
-  IF ( iles .EQ. 1 ) CALL LES_INI(x,y,z,dx,dy,dz, q,s,h_q,h_s, txc, vaux, wrk1d,wrk2d,wrk3d)
+  IF ( iles .EQ. 1 ) CALL LES_INI(q,s,h_q,h_s, txc, vaux, wrk1d,wrk2d,wrk3d)
 #endif
 
 ! ###################################################################
 ! Initialize time step dt
 ! ###################################################################
-  CALL TIME_COURANT(dx,dy,dz, q,s, wrk2d,wrk3d)
+  CALL TIME_COURANT(q,s, wrk2d,wrk3d)
 
 ! ###################################################################
 ! Initialize logfiles
@@ -576,8 +577,7 @@ PROGRAM DNS
   CALL DNS_LOGS(i1) ! headers
 
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     CALL FI_INVARIANT_P(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          dx,dy,dz, q(1,1),q(1,2),q(1,3), h_q(1,1),h_q(1,2), wrk1d,wrk2d,wrk3d)
+     CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), h_q(1,1), h_q(1,2), wrk2d,wrk3d)
      CALL MINMAX(imax,jmax,kmax, h_q(1,1), logs_data(11),logs_data(10))
      logs_data(10)=-logs_data(10); logs_data(11)=-logs_data(11)
      IF ( MAX(ABS(logs_data(10)),ABS(logs_data(11))) .GT. d_bound_max ) THEN
@@ -592,7 +592,7 @@ PROGRAM DNS
 ! ###################################################################
 ! Do simulation: Integrate equations
 ! ###################################################################
-  CALL TIME_INTEGRATION(x,y,z,dx,dy,dz, q,h_q,s,h_s, &
+  CALL TIME_INTEGRATION(q,h_q,s,h_s, &
        x_inf,y_inf,z_inf,q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
        l_q, l_hq, l_txc, l_tags, l_comm, l_trajectories, l_trajectories_tags)
 

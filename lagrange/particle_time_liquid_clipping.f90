@@ -23,11 +23,10 @@
 !# 
 !#
 !########################################################################
-SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d,x ,y, z, l_txc, l_tags, l_hq, l_q)    
+SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q)    
 
   USE DNS_GLOBAL, ONLY : inb_particle, isize_particle
   USE DNS_GLOBAL, ONLY : isize_field, inb_scal_array
-  USE THERMO_GLOBAL, ONLY : imixture
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : particle_vector, ims_pro
@@ -36,7 +35,6 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d,x ,y, z, l_txc, l_t
   IMPLICIT NONE
 
   TREAL, DIMENSION(isize_field,*) :: s
-  TREAL, DIMENSION(*)             :: x,y,z
   TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
 
   TREAL, DIMENSION(isize_particle,inb_particle) :: l_q, l_hq
@@ -79,7 +77,7 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d,x ,y, z, l_txc, l_t
 ! ###################################################################
 ! If no liquid around in Eulerian, set liquid droplet to zero
 ! ###################################################################
-      CALL FIELD_TO_PARTICLE (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d,x ,y, z, l_txc, l_tags, l_hq, l_q)  !Update the liquid function
+      CALL FIELD_TO_PARTICLE (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q)  !Update the liquid function
       IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
          DO l_i=1,local_isize_particle
             IF (l_txc(l_i) .LT. 0.00001) THEN

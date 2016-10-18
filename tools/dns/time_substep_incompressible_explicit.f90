@@ -33,7 +33,7 @@
 !#
 !########################################################################
 SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
-     x,y,z,dx,dy,dz, q,hq,s,hs, txc, vaux, wrk1d,wrk2d,wrk3d, &
+     q,hq,s,hs, txc, vaux, wrk1d,wrk2d,wrk3d, &
      l_q, l_hq, l_txc, l_tags, l_comm)
 
 #ifdef USE_OPENMP
@@ -41,6 +41,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 #endif
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field
+  USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : inb_flow,inb_scal, inb_scal_array
   USE DNS_GLOBAL,    ONLY : iadvection, idiffusion, iviscous
   USE DNS_GLOBAL,    ONLY : p_init, damkohler
@@ -55,7 +56,6 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   IMPLICIT NONE
 
   TREAL dte,etime
-  TREAL, DIMENSION(*)                 :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field, *)    :: q,hq, s,hs
   TREAL, DIMENSION(isize_txc_field,*) :: txc
   TREAL, DIMENSION(*)                 :: wrk1d,wrk2d,wrk3d, vaux
@@ -77,6 +77,9 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   INTEGER ilen
 #endif
 
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
+
 ! #######################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT')
@@ -87,6 +90,10 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 #endif
 
 ! Define pointers
+  x => g(1)%nodes; dx => g(1)%jac(:,1)
+  y => g(2)%nodes; dy => g(2)%jac(:,1)
+  z => g(3)%nodes; dz => g(3)%jac(:,1)
+
   u => q(:,1)
   v => q(:,2)
   w => q(:,3)
@@ -189,7 +196,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
      CALL RHS_PARTICLE_GLOBAL(x,y,z,dx,dy,dz,q,s,wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags, l_comm)
      
 !    CALL FIELD_TO_PARTICLE &
-!    (q(:,1), wrk1d, wrk2d, wrk3d,x ,y, z, l_txc, l_tags, l_hq, l_q)
+!    (q(:,1), wrk1d, wrk2d, wrk3d, l_txc, l_tags, l_hq, l_q)
      
   END IF
 

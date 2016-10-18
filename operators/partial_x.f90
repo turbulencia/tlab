@@ -35,11 +35,12 @@ SUBROUTINE PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, u,up, bcs_imin,bcs_imax, wrk
 
   IMPLICIT NONE
 
-  TINTEGER imode_fdm, nx,ny,nz, i1bc, bcs_imin, bcs_imax
-  TREAL, DIMENSION(*)        :: dx
-  TREAL, DIMENSION(nx*ny*nz),    TARGET :: u, up, wrk3d
-  TREAL, DIMENSION(*)                   :: wrk1d ! not used, to be removed
-  TREAL, DIMENSION(ny*nz)               :: wrk2d
+  TINTEGER                           :: nx,ny,nz, bcs_imin,bcs_imax
+  TREAL, DIMENSION(nx*ny*nz), TARGET :: u, up, wrk3d
+  TREAL, DIMENSION(ny*nz)            :: wrk2d
+!
+  TINTEGER            :: imode_fdm, i1bc      ! not used, to be removed
+  TREAL, DIMENSION(*) :: dx, wrk1d            ! not used, to be removed
  
 ! -------------------------------------------------------------------
   TINTEGER nyz

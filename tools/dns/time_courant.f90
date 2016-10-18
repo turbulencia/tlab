@@ -48,7 +48,7 @@
 !#
 !########################################################################
 
-SUBROUTINE TIME_COURANT(dx,dy,dz, q,s, wrk2d,wrk3d)
+SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
 
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : gama0
@@ -69,7 +69,6 @@ SUBROUTINE TIME_COURANT(dx,dy,dz, q,s, wrk2d,wrk3d)
 #include "mpif.h"
 #endif
 
-  TREAL, DIMENSION(*),                INTENT(IN) :: dx, dy, dz
   TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN) :: q, s
   TREAL, DIMENSION(imax,jmax,kmax)               :: wrk3d
   TREAL, DIMENSION(imax,jmax)                    :: wrk2d
@@ -91,6 +90,7 @@ SUBROUTINE TIME_COURANT(dx,dy,dz, q,s, wrk2d,wrk3d)
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: u, v, w, rho, p, vis
+  TREAL, DIMENSION(:),     POINTER :: dx, dy, dz
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -98,6 +98,10 @@ SUBROUTINE TIME_COURANT(dx,dy,dz, q,s, wrk2d,wrk3d)
 #endif
 
 ! Define pointers
+  dx => g(1)%jac(:,1)
+  dy => g(2)%jac(:,1)
+  dz => g(3)%jac(:,1)
+
   u   => q(:,:,:,1)
   v   => q(:,:,:,2)
   w   => q(:,:,:,3)

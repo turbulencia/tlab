@@ -688,8 +688,7 @@ PROGRAM AVERAGES
              dx,dy,dz, u,v,w, txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing dilatation term...')
-        CALL FI_INVARIANT_P(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u,v,w, txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+        CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, txc(1,4),txc(1,5), wrk2d,wrk3d)
 
         DO ij = 1,isize_field
            txc(ij,6) = txc(ij,4)*txc(ij,3) ! -w^2 div(u)
@@ -832,9 +831,7 @@ PROGRAM AVERAGES
              txc(1,3), txc(1,4), txc(1,5), wrk1d, wrk2d, wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing first invariant P...')
-        CALL FI_INVARIANT_P(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, txc(1,3), &
-             txc(1,4), wrk1d, wrk2d, wrk3d)
+        CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, txc(1,3), txc(1,4), wrk2d,wrk3d)
 
         data(1)%field => txc(:,3); varname(1) = 'InvariantP'
         data(2)%field => txc(:,2); varname(2) = 'InvariantQ'

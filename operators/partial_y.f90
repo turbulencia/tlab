@@ -32,11 +32,12 @@ SUBROUTINE PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u,up, bcs_jmin,bcs_jmax, wrk
 
   IMPLICIT NONE
 
-  TINTEGER imode_fdm, nx, ny, nz, j1bc, bcs_jmin, bcs_jmax
-  TREAL, DIMENSION(*)         :: dy
-  TREAL, DIMENSION(nx*ny*nz),    TARGET  :: u, up, wrk3d
-  TREAL, DIMENSION(*)                    :: wrk1d ! not used, to be removed
-  TREAL, DIMENSION(nx*nz)                :: wrk2d
+  TINTEGER                            :: nx,ny,nz, bcs_jmin,bcs_jmax
+  TREAL, DIMENSION(nx*ny*nz), TARGET  :: u, up, wrk3d
+  TREAL, DIMENSION(nx*nz)             :: wrk2d
+!
+  TINTEGER            :: imode_fdm, j1bc      ! not used, to be removed
+  TREAL, DIMENSION(*) :: dy, wrk1d            ! not used, to be removed
 
 ! -------------------------------------------------------------------
   TINTEGER nxz, nxy

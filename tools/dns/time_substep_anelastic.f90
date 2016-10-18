@@ -22,7 +22,7 @@
 !# txc     Aux   3D array size 6
 !#
 !########################################################################
-SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, x,y,z,dx,dy,dz, q,hq,s,hs, &
+SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, q,hq,s,hs, &
      txc, vaux, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
@@ -36,7 +36,6 @@ SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, x,y,z,dx,dy,dz, q,hq,s,hs, &
   IMPLICIT NONE
 
   TREAL dte,etime
-  TREAL, DIMENSION(*)                 :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field, *)    :: q,hq, s,hs
   TREAL, DIMENSION(isize_txc_field,*) :: txc
   TREAL, DIMENSION(*)                 :: wrk1d,wrk2d,wrk3d, vaux
@@ -53,6 +52,9 @@ SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, x,y,z,dx,dy,dz, q,hq,s,hs, &
   INTEGER ilen
 #endif
 
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
+
 ! #######################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING TIME_SUBSTEP_ANELASTIC')
@@ -63,6 +65,10 @@ SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, x,y,z,dx,dy,dz, q,hq,s,hs, &
 #endif
 
 ! Define pointers
+  x => g(1)%nodes; dx => g(1)%jac(:,1)
+  y => g(2)%nodes; dy => g(2)%jac(:,1)
+  z => g(3)%nodes; dz => g(3)%jac(:,1)
+
   u => q(:,1)
   v => q(:,2)
   w => q(:,3)

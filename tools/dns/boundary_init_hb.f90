@@ -1,3 +1,7 @@
+#include "types.h"
+#include "dns_const.h"
+#include "dns_error.h"
+
 !########################################################################
 !# Tool/Library DNS
 !#
@@ -18,26 +22,19 @@
 !# the initial field by taking averages.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-#include "dns_error.h"
+SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_hb)
 
-SUBROUTINE BOUNDARY_INIT_HB(dx,dz, q,s, txc, buffer_hb)
-
-  USE DNS_GLOBAL, ONLY : imax, jmax, kmax
-  USE DNS_GLOBAL, ONLY : imode_sim, imode_eqns, icalc_scal
-  USE DNS_GLOBAL, ONLY : inb_flow, inb_scal, scalez, area
   USE DNS_CONSTANTS, ONLY : lfile
+  USE DNS_GLOBAL,    ONLY : imax, jmax, kmax
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns, icalc_scal
+  USE DNS_GLOBAL,    ONLY : inb_flow, inb_scal, area
   USE DNS_LOCAL
 
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TREAL, DIMENSION(*)                         :: dx, dz
   TREAL, DIMENSION(imax*jmax*kmax,*)          :: q, s, txc
   TREAL, DIMENSION(imax,buff_nps_jmin,kmax,*) :: buffer_hb
 
@@ -75,7 +72,7 @@ SUBROUTINE BOUNDARY_INIT_HB(dx,dz, q,s, txc, buffer_hb)
              buff_hard(4,2) = COV2V2D(imax,jmax,kmax, j, r_loc,e_loc)
         buffer_hb(:,j,:,4) = buff_hard(4,2)
         IF ( buff_hard_on(5) .EQ. 0 ) &
-             buff_hard(5,2) = AVG_IK(imax,jmax,kmax, j, r_loc, dx,dz, area)
+             buff_hard(5,2) = AVG_IK(imax,jmax,kmax, j, r_loc, g(1)%jac,g(3)%jac, area)
         buffer_hb(:,j,:,5) = buff_hard(5,2)
      ENDDO
      ENDIF

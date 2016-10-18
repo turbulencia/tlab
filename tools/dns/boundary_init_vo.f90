@@ -1,3 +1,7 @@
+#include "types.h"
+#include "dns_const.h"
+#include "dns_error.h"
+
 !########################################################################
 !# Tool/Library DNS
 !#
@@ -16,24 +20,16 @@
 !# spatially evolving cases.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-#include "dns_error.h"
-
-SUBROUTINE BOUNDARY_INIT_VO(dz, q,s, txc, buffer_vo)
+SUBROUTINE BOUNDARY_INIT_VO(q,s, txc, buffer_vo)
 
   USE DNS_GLOBAL, ONLY : imax, jmax, kmax
-  USE DNS_GLOBAL, ONLY : imode_eqns, icalc_scal, inb_scal, inb_flow, inb_vars, scalez
+  USE DNS_GLOBAL, ONLY : imode_eqns, icalc_scal, inb_scal, inb_flow, inb_vars
   USE DNS_LOCAL
 
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TREAL, DIMENSION(*)                         :: dz
   TREAL, DIMENSION(imax*jmax*kmax,*)          :: q, s, txc
   TREAL, DIMENSION(buff_nps_imax,jmax,kmax,*) :: buffer_vo
 

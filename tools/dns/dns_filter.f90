@@ -16,7 +16,7 @@
 !# DESCRIPTION
 !#
 !########################################################################
-SUBROUTINE DNS_FILTER(flag_save, y,dx,dy,dz, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
+SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : lfile
   USE DNS_GLOBAL
@@ -28,7 +28,6 @@ SUBROUTINE DNS_FILTER(flag_save, y,dx,dy,dz, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
 #include "integers.h"
 
   LOGICAL flag_save
-  TREAL, DIMENSION(*)             :: y, dx,dy,dz
   TREAL, DIMENSION(isize_field,*) :: q, s
   TREAL, DIMENSION(isize_field,*) :: txc
   TREAL, DIMENSION(*)             :: wrk2d, wrk3d, vaux
@@ -42,9 +41,14 @@ SUBROUTINE DNS_FILTER(flag_save, y,dx,dy,dz, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:), POINTER :: e, rho, p, T, vis
+  TREAL, DIMENSION(:), POINTER :: y, dx,dy,dz
 
 ! #######################################################################
 ! Define pointers
+                   dx => g(1)%jac(:,1)
+  y => g(2)%nodes; dy => g(2)%jac(:,1)
+                   dz => g(3)%jac(:,1)
+
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      e   => q(:,4)
      rho => q(:,5)

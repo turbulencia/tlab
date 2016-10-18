@@ -252,8 +252,8 @@ particle_number_local=particle_number
      IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
          CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, txc, wrk3d) ! Read the scalar fields into txc
           IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-             CALL FIELD_TO_PARTICLE (txc(:,1),wrk1d,wrk2d,wrk3d,x ,y, z, l_buffer(1,1), l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
-             CALL FIELD_TO_PARTICLE (txc(:,2),wrk1d,wrk2d,wrk3d,x ,y, z, l_buffer(1,2), l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
+             CALL FIELD_TO_PARTICLE (txc(:,1),wrk1d,wrk2d,wrk3d, l_buffer(1,1), l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
+             CALL FIELD_TO_PARTICLE (txc(:,2),wrk1d,wrk2d,wrk3d, l_buffer(1,2), l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
              c1_loc = C_1_R/thermo_param(1)
              c2_loc = thermo_param(3)*thermo_param(1)
              liq_delta  = thermo_param(3)

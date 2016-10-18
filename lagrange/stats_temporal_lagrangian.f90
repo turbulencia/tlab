@@ -2,7 +2,7 @@
 #include "dns_const.h"
 #include "dns_error.h"
 
-SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(x,y,z,dx,dy,dz, q,s,hq, l_q,l_hq,l_txc,l_tags, txc, mean, wrk1d,wrk2d,wrk3d)
+SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags, txc, mean, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
@@ -12,7 +12,6 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(x,y,z,dx,dy,dz, q,s,hq, l_q,l_hq,l_txc,l_ta
 
 #include "integers.h"
 
-  TREAL, DIMENSION(*),                 INTENT(IN)    :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field,    *), INTENT(IN)    :: q,s
   TREAL, DIMENSION(isize_field,    *), INTENT(INOUT) :: hq ! Used as aux array
   TREAL, DIMENSION(isize_txc_field,*), INTENT(INOUT) :: txc
@@ -25,6 +24,15 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(x,y,z,dx,dy,dz, q,s,hq, l_q,l_hq,l_txc,l_ta
 ! -------------------------------------------------------------------
   TINTEGER is
   CHARACTER*32 fname
+
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
+
+! #######################################################################
+! Define pointers
+  x => g(1)%nodes; dx => g(1)%jac(:,1)
+  y => g(2)%nodes; dy => g(2)%jac(:,1)
+  z => g(3)%nodes; dz => g(3)%jac(:,1)
 
 ! ###################################################################
 ! Particle calculations

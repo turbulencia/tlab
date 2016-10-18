@@ -664,7 +664,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,x,y,z,dx,dy,dz,&
        tmp12,tmp11, tmp41,tmp42, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
 
   IF ( tower_mode .EQ. 1 .AND. rkm_substep .EQ. rkm_endstep ) THEN 
-     CALL DNS_TOWER_ACCUMULATE(tmp12,i4,dx,dy,dz,wrk1d) 
+     CALL DNS_TOWER_ACCUMULATE(tmp12,i4,wrk1d) 
   ENDIF
 
   CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i0,dx,tmp12,tmp41,i0,i0,wrk1d,wrk2d,wrk3d)

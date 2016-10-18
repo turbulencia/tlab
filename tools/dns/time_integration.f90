@@ -23,13 +23,13 @@
 !# DESCRIPTION
 !#
 !########################################################################
-SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
+SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
      x_inf,y_inf,z_inf,q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
      l_q, l_hq, l_txc, l_tags, l_comm, l_trajectories, l_trajectories_tags)
   
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, lfile
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal_array, inb_flow_array, isize_particle, inb_particle
-  USE DNS_GLOBAL, ONLY : i1bc,j1bc,k1bc, imode_fdm, imode_flow, imode_sim, imode_eqns
+  USE DNS_GLOBAL, ONLY : imode_flow, imode_sim, imode_eqns
   USE DNS_GLOBAL, ONLY : icalc_flow, icalc_scal, icalc_particle
   USE DNS_GLOBAL, ONLY : itransport, visc
   USE DNS_GLOBAL, ONLY : itime, rtime
@@ -51,7 +51,6 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
 #endif  
 #include "integers.h"
 
-  TREAL, DIMENSION(*)             :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
   TREAL, DIMENSION(*)             :: txc, vaux
   TREAL, DIMENSION(*)             :: x_inf, y_inf, z_inf, q_inf, s_inf
@@ -72,7 +71,7 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
   LOGICAL flag_save
   
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:),   POINTER :: u, v, w, e, rho, p, T, vis
+  TREAL, DIMENSION(:), POINTER :: u, v, w, e, rho, p, T, vis
 
 ! ###################################################################
 ! Define pointers
@@ -114,7 +113,7 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
 
   DO WHILE ( itime .LT. nitera_last )
 
-     CALL TIME_RUNGEKUTTA(x,y,z,dx,dy,dz, q,hq,s,hs, &
+     CALL TIME_RUNGEKUTTA(q,hq,s,hs, &
           x_inf,y_inf,z_inf,q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
           l_q, l_hq, l_txc, l_tags, l_comm)
 
@@ -124,7 +123,7 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
      IF ( MOD(itime-nitera_first,ifilt_step) .EQ. 0 ) THEN
         IF ( MOD(itime-nitera_first,nitera_stats) .EQ. 0 ) THEN; flag_save = .TRUE.
         ELSE;                                                    flag_save = .FALSE.; ENDIF
-        CALL DNS_FILTER(flag_save, y, dx,dy,dz, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
+        CALL DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
      ENDIF
 
 ! -----------------------------------------------------------------------
@@ -171,15 +170,14 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
      ENDIF
 
 ! -----------------------------------------------------------------------
-     CALL TIME_COURANT(dx,dy,dz, q,s, wrk2d,wrk3d)
+     CALL TIME_COURANT(q,s, wrk2d,wrk3d)
 
 ! ###################################################################
 ! The rest: Logging, postprocessing and saving
 ! ###################################################################
      IF ( MOD(itime-nitera_first,nitera_log) .EQ. 0 ) THEN ! Log files
         IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-           CALL FI_INVARIANT_P(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                dx,dy,dz, q(1,1),q(1,2),q(1,3), hq(1,1),hq(1,2), wrk1d,wrk2d,wrk3d)
+           CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), hq(1,1), hq(1,2), wrk2d,wrk3d)
            CALL MINMAX(imax,jmax,kmax, hq(1,1), logs_data(11),logs_data(10))
            logs_data(10)=-logs_data(10); logs_data(11)=-logs_data(11)
            IF ( MAX(ABS(logs_data(10)),ABS(logs_data(11))) .GT. d_bound_max ) THEN
@@ -199,7 +197,7 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
 ! -----------------------------------------------------------------------
      IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
         IF ( itime .EQ. iupdate_stat ) THEN ! Running statistics 
-           CALL DNS_SPATIAL_STATS_RUN(icount_stat, dx,dy,dz, q,hq,s, txc, vaux, wrk1d,wrk2d,wrk3d)
+           CALL DNS_SPATIAL_STATS_RUN(icount_stat, q,hq,s, txc, vaux, wrk1d,wrk2d,wrk3d)
            
            icount_stat  = icount_stat  + 1
            iupdate_stat = iupdate_stat + nspa_step
@@ -227,13 +225,13 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
 ! -----------------------------------------------------------------------
 
      IF ( tower_mode .EQ. 1 ) THEN 
-        CALL DNS_TOWER_ACCUMULATE(q,1,dx,dy,dz,wrk1d)
-        CALL DNS_TOWER_ACCUMULATE(s,2,dx,dy,dz,wrk1d)
+        CALL DNS_TOWER_ACCUMULATE(q,1,wrk1d)
+        CALL DNS_TOWER_ACCUMULATE(s,2,wrk1d)
      ENDIF
 
      IF ( icalc_particle .EQ. 1 .AND. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN ! ALBERTO Lagrangian Residece time clippling 
         CALL PARTICLE_TIME_RESIDENCE(dtime, l_q, l_hq)
-        CALL PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d,x ,y, z, l_txc, l_tags, l_hq, l_q)
+        CALL PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q)
      ENDIF
 
      IF ( icalc_trajectories .EQ. 1 ) THEN ! Lagrangian
@@ -247,11 +245,11 @@ SUBROUTINE TIME_INTEGRATION(x,y,z,dx,dy,dz, q,hq,s,hs, &
            ELSE 
               CALL STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
               IF ( icalc_particle .EQ. 1 ) THEN ! Lagrangian
-                 CALL STATS_TEMPORAL_LAGRANGIAN(x,y,z,dx,dy,dz, q,s,hq, l_q,l_hq,l_txc,l_tags, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
+                 CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
               ENDIF
            ENDIF
         ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-           CALL STATS_SPATIAL_LAYER(x,y,z,dx,dy,dz, vaux, txc, wrk1d,wrk2d,wrk3d)
+           CALL STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d,wrk3d)
         ENDIF
      ENDIF
      

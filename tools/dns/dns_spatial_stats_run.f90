@@ -1,3 +1,6 @@
+#include "types.h"
+#include "avgij_map.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -16,10 +19,7 @@
 !# ARGUMENTS 
 !#
 !########################################################################
-SUBROUTINE DNS_SPATIAL_STATS_RUN(icount_stat, dx,dy,dz, q,h,z1, txc, vaux, wrk1d,wrk2d,wrk3d)
-
-#include "types.h"
-#include "avgij_map.h"
+SUBROUTINE DNS_SPATIAL_STATS_RUN(icount_stat, q,h,z1, txc, vaux, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL
   USE DNS_LOCAL
@@ -29,7 +29,6 @@ SUBROUTINE DNS_SPATIAL_STATS_RUN(icount_stat, dx,dy,dz, q,h,z1, txc, vaux, wrk1d
 #include "integers.h"
 
   TINTEGER icount_stat
-  TREAL, DIMENSION(*)                :: dx, dy, dz
   TREAL, DIMENSION(imax*jmax*kmax,*) :: q, h, z1, txc
   TREAL, DIMENSION(*)                :: wrk1d, wrk2d, wrk3d, vaux
 
@@ -40,9 +39,14 @@ SUBROUTINE DNS_SPATIAL_STATS_RUN(icount_stat, dx,dy,dz, q,h,z1, txc, vaux, wrk1d
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u, v, w, T, rho, p, vis
+  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
 
 ! ###################################################################
 ! Define pointers
+  dx => g(1)%jac(:,1)
+  dy => g(2)%jac(:,1)
+  dz => g(3)%jac(:,1)
+
   u   => q(:,1)
   v   => q(:,2)
   w   => q(:,3)

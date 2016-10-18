@@ -38,14 +38,15 @@
 !#
 !########################################################################
 SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
-     bcs_ht,bcs_hb,bcs_vi,bcs_vo, x,y,z,dx,dy,dz, q,s, txc, wrk3d)
+     bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_flow,inb_scal,inb_vars, isize_field
-  USE DNS_GLOBAL, ONLY : itime
-  USE DNS_GLOBAL, ONLY : mach, p_init
-  USE DNS_GLOBAL, ONLY : imode_eqns,imode_sim, icalc_scal
-  USE DNS_GLOBAL, ONLY : scaley, area, diam_u,ycoor_u
   USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal,inb_vars, isize_field
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : itime
+  USE DNS_GLOBAL,    ONLY : mach, p_init
+  USE DNS_GLOBAL,    ONLY : imode_eqns,imode_sim, icalc_scal
+  USE DNS_GLOBAL,    ONLY : area, diam_u,ycoor_u
   USE THERMO_GLOBAL, ONLY : imixture, gama0
   USE DNS_LOCAL
 #ifdef USE_MPI
@@ -66,7 +67,6 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
 
   TREAL, DIMENSION(imax,kmax,*)      :: bcs_hb, bcs_ht
   TREAL, DIMENSION(jmax,kmax,*)      :: bcs_vi, bcs_vo
-  TREAL, DIMENSION(*)                :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(imax*jmax*kmax,*) :: q, s, txc
   TREAL, DIMENSION(*)                :: wrk3d
 
@@ -194,7 +194,7 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
      ENDIF
 
      IF ( buff_nps_jmin .GT. 0 ) THEN 
-        CALL BOUNDARY_INIT_HB(dx,dz, q,s, txc, buffer_hb)
+        CALL BOUNDARY_INIT_HB(q,s, txc, buffer_hb)
 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.jmin.'//TRIM(ADJUSTL(name))
         ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmin,kmax,&
@@ -211,7 +211,7 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
      ENDIF
 
      IF ( buff_nps_jmax .GT. 0 ) THEN 
-        CALL BOUNDARY_INIT_HT(dx,dz, q,s, txc, buffer_ht)
+        CALL BOUNDARY_INIT_HT(q,s, txc, buffer_ht)
 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.jmax.'//TRIM(ADJUSTL(name))
         ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmax,kmax,&
@@ -228,7 +228,7 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
      ENDIF
    
      IF ( buff_nps_imin .GT. 0 ) THEN 
-        CALL BOUNDARY_INIT_VI(dz,    q,s, txc, buffer_vi)
+        CALL BOUNDARY_INIT_VI(q,s, txc, buffer_vi)
 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.imin.'//TRIM(ADJUSTL(name))
         CALL DNS_WRITE_FIELDS(name, i0, buff_nps_imin,jmax,kmax,&
@@ -241,7 +241,7 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
      ENDIF
 
      IF ( buff_nps_imax .GT. 0 ) THEN
-        CALL BOUNDARY_INIT_VO(dz,    q,s, txc, buffer_vo)
+        CALL BOUNDARY_INIT_VO(q,s, txc, buffer_vo)
 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.imax.'//TRIM(ADJUSTL(name))
         CALL DNS_WRITE_FIELDS(name, i0, buff_nps_imax,jmax,kmax,&
@@ -332,7 +332,7 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
         CALL THERMO_THERMAL_PRESSURE(imax,buff_nps_jmin,kmax, buffer_hb(1,1,1,inb_flow+1), &
              buffer_hb(1,1,1,5), txc(1,2), txc(1,1))
      ENDIF
-     bcs_p_jmin = AVG_IK(imax,buff_nps_jmin,kmax, i1, txc(1,1), dx,dz, area)
+     bcs_p_jmin = AVG_IK(imax,buff_nps_jmin,kmax, i1, txc(1,1), g(1)%jac,g(3)%jac, area)
 
 ! reference plane for BCS at bottom: rho, u_i, p, z_i
      DO k = 1,kmax; DO i = 1,imax
@@ -378,7 +378,7 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
         CALL THERMO_THERMAL_PRESSURE(imax,buff_nps_jmax,kmax, buffer_ht(1,1,1,inb_flow+1), &
              buffer_ht(1,1,1,5), txc(1,2), txc(1,1))
      ENDIF
-     bcs_p_jmax = AVG_IK(imax,buff_nps_jmax,kmax, buff_nps_jmax, txc(1,1), dx,dz, area)
+     bcs_p_jmax = AVG_IK(imax,buff_nps_jmax,kmax, buff_nps_jmax, txc(1,1), g(1)%jac,g(3)%jac, area)
 
 ! reference plane for BCS at top: rho, u_i, p, z_i
      DO k = 1,kmax; DO i = 1,imax
@@ -447,9 +447,9 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
 ! shape factor
      diam_loc  = C_3_R*diam_u
      thick_loc = diam_u/C_8_R
-     ycenter   = y(1) + scaley*ycoor_u
+     ycenter   = g(2)%nodes(1) + g(2)%scale *ycoor_u
      DO k = 1,kmax; DO j = 1,jmax
-        bcs_vi(j,k,inb_vars+1) = FLOW_JET_TEMPORAL(i2, thick_loc, r1, r05, diam_loc, ycenter, dummy, y(j))
+        bcs_vi(j,k,inb_vars+1) = FLOW_JET_TEMPORAL(i2, thick_loc, r1, r05, diam_loc, ycenter, dummy, g(2)%nodes(j))
      ENDDO; ENDDO
 
 ! -------------------------------------------------------------------

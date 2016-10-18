@@ -15,14 +15,15 @@
 !#
 !########################################################################
 SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(dte,etime, kex,kim, kco, &
-     x,y,z,dx,dy,dz, q,hq,s,hs, txc, vaux, wrk1d,wrk2d,wrk3d)
+     q,hq,s,hs, txc, vaux, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field
-  USE DNS_GLOBAL, ONLY : imode_eqns
   USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_GLOBAL,    ONLY : isize_field, isize_txc_field
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : imode_eqns
 
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
   USE DNS_LOCAL,  ONLY : VA_BCS_HT, VA_BCS_HB, VA_BCS_VI
@@ -32,16 +33,23 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(dte,etime, kex,kim, kco, &
 
   TREAL,                              INTENT(IN)    :: dte,etime 
   TREAL,                              INTENT(IN)    :: kex,kim, kco
-  TREAL, DIMENSION(*),                INTENT(IN)    :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field, *),   INTENT(INOUT) :: q,hq, s,hs
   TREAL, DIMENSION(isize_txc_field,9),INTENT(INOUT) :: txc
   TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk1d,wrk2d,wrk3d, vaux
 ! -----------------------------------------------------------------------
 
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
+
 ! #######################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT')
 #endif
+
+! Define pointers
+  x => g(1)%nodes; dx => g(1)%jac(:,1)
+  y => g(2)%nodes; dy => g(2)%jac(:,1)
+  z => g(3)%nodes; dz => g(3)%jac(:,1)
 
 ! #######################################################################
 ! Evaluate standard RHS of incompressible equations

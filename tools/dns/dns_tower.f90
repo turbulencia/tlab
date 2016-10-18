@@ -15,10 +15,9 @@
 !     - allocate corresponding space for arrays
 !     - organize buffers where tower data are saved until write 
 !
-! DNS_TOWER_ACCUMULATE(v,index,dx,dy,dz,wrk1d) 
+! DNS_TOWER_ACCUMULATE(v,index,wrk1d) 
 !     - PARAMTERS: v        -- data
 !                  index    -- what to write (1 - flow, 2 - scalars, 4 - pressure) 
-!                  dx,dy,dz -- needed for averaging
 !                  wrk1d    -- wrkspace for averaging 
 !     - accumulates data from flow arrays into tower buffers 
 !       until towers are written to disk
@@ -29,7 +28,7 @@
 ! DNS_TOWER_FINALIZE() 
 !     - nothing so far
 !
-! TOWER_AVG_IK_V(imax, jmax, kmax, a, dx, dz, avg, wrk) 
+! TOWER_AVG_IK_V(imax, jmax, kmax, a, avg, wrk) 
 !     - average 1 Variable horizontally over all planes in the vertical. 
 ! 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
@@ -205,7 +204,7 @@ CONTAINS
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 
-  SUBROUTINE DNS_TOWER_ACCUMULATE(v,index,dx,dy,dz,wrk1d) 
+  SUBROUTINE DNS_TOWER_ACCUMULATE(v,index,wrk1d) 
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifdef USE_MPI
@@ -222,10 +221,9 @@ CONTAINS
 #endif 
 
     ! 1 -- flow;  2 -- scalar;  4 -- pressure
-    TINTEGER,                         INTENT(IN)   :: index 
-    TREAL, DIMENSION(*),              INTENT(IN)   :: dx,dy,dz 
+    TINTEGER,                           INTENT(IN)   :: index 
     TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)   :: v
-    TREAL, DIMENSION(*),              INTENT(INOUT):: wrk1d
+    TREAL, DIMENSION(*),                INTENT(INOUT):: wrk1d
 
     TINTEGER  :: ii,kk,ip,ipm
     TINTEGER, POINTER :: tip  
@@ -249,7 +247,7 @@ CONTAINS
        ENDDO 
        ip = 1+(tower_accumulation-1)*tower_jmax; ipm=ip+tower_jmax-1 
 
-       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,1),dx,dz,tower_pm(ip:ipm),wrk1d(6*jmax))     
+       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,1),tower_pm(ip:ipm),wrk1d(6*jmax))     
     ! HANDLY FLOW FIELDS
     ELSE IF ( index .EQ. 1 ) THEN 
        DO kk=1,tower_kmax 
@@ -264,9 +262,9 @@ CONTAINS
           ENDDO
        ENDDO
        ip = 1+(tower_accumulation-1)*tower_jmax; ipm=ip+tower_jmax-1 
-       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,1),dx,dz,tower_um(ip:ipm),wrk1d(6*jmax)) 
-       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,2),dx,dz,tower_vm(ip:ipm),wrk1d(6*jmax)) 
-       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,3),dx,dz,tower_wm(ip:ipm),wrk1d(6*jmax)) 
+       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,1),tower_um(ip:ipm),wrk1d(6*jmax)) 
+       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,2),tower_vm(ip:ipm),wrk1d(6*jmax)) 
+       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,3),tower_wm(ip:ipm),wrk1d(6*jmax)) 
 
     ! HANDLE SCALARS
     ELSE IF (index .EQ. 2 ) THEN  
@@ -278,7 +276,7 @@ CONTAINS
           ENDDO
        ENDDO 
        ip = 1+(tower_accumulation-1)*tower_jmax; ipm=ip+tower_jmax-1 
-       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,1),dx,dz,tower_sm(ip:ipm),wrk1d(6*jmax)) 
+       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,1),tower_sm(ip:ipm),wrk1d(6*jmax)) 
 
     ENDIF
 
@@ -438,12 +436,12 @@ CONTAINS
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-  SUBROUTINE TOWER_AVG_IK_V(imax, jmax, kmax, a, dx, dz, avg, wrk)
+  SUBROUTINE TOWER_AVG_IK_V(imax, jmax, kmax, a, avg, wrk)
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #include "types.h"
 
-    USE DNS_GLOBAL, ONLY : area 
+    USE DNS_GLOBAL, ONLY : area, g
 
     IMPLICIT NONE
 
@@ -452,7 +450,6 @@ CONTAINS
 #endif
     TINTEGER imax, jmax, kmax
     TREAL a(imax, jmax, kmax)
-    TREAL dx(imax), dz(kmax)
     TREAL avg(tower_jmax), wrk(tower_jmax)
 #ifdef USE_MPI
     INTEGER ims_err, len
@@ -467,7 +464,7 @@ CONTAINS
     DO k = 1, kmax
        DO j=1,tower_jmax
           DO i = 1, imax
-             avg(j) = avg(j) + a(i,tower_jpos(j),k)*dx(i)*dz(k)
+             avg(j) = avg(j) + a(i,tower_jpos(j),k) *g(1)%jac(i,1) *g(3)%jac(k,1)
           ENDDO
        ENDDO
     ENDDO

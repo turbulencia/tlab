@@ -25,7 +25,7 @@
 !# txc   In    3D auxiliar array of size 6 or 9
 !#
 !########################################################################
-SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, x,y,z,dx,dy,dz, q,hq, s,hs, &
+SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
      x_inf,y_inf,z_inf,q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
@@ -56,10 +56,9 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, x,y,z,dx,dy,dz, q,hq, s,hs, &
 
   TREAL dte, etime
 
-  TREAL, DIMENSION(*)                :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field,*) :: q, hq, s, hs, txc
-  TREAL, DIMENSION(*)                :: x_inf, y_inf, z_inf, q_inf, s_inf
-  TREAL, DIMENSION(*)                :: wrk1d, wrk2d, wrk3d, vaux
+  TREAL, DIMENSION(*)             :: x_inf, y_inf, z_inf, q_inf, s_inf
+  TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d, vaux
 
   TARGET :: q, hq
 
@@ -71,6 +70,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, x,y,z,dx,dy,dz, q,hq, s,hs, &
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:), POINTER :: u, v, w, e, rho, p, T, vis
   TREAL, DIMENSION(:), POINTER :: h0, h1, h2, h3, h4
+  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -78,6 +78,10 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, x,y,z,dx,dy,dz, q,hq, s,hs, &
 #endif
 
 ! Define pointers
+  x => g(1)%nodes; dx => g(1)%jac(:,1)
+  y => g(2)%nodes; dy => g(2)%jac(:,1)
+  z => g(3)%nodes; dz => g(3)%jac(:,1)
+
   u   => q(:,1)
   v   => q(:,2)
   w   => q(:,3)

@@ -23,7 +23,7 @@
 !# Runge-Kutta semi-implicit 3th order from Spalart, Moser & Rogers (1991)
 !#
 !########################################################################
-SUBROUTINE TIME_RUNGEKUTTA(x,y,z,dx,dy,dz, q,hq,s,hs, &
+SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
      x_inf,y_inf,z_inf,q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
      l_q, l_hq, l_txc, l_tags, l_comm)
 
@@ -47,7 +47,6 @@ SUBROUTINE TIME_RUNGEKUTTA(x,y,z,dx,dy,dz, q,hq,s,hs, &
 #include "mpif.h"
 #endif 
 
-  TREAL, DIMENSION(*)             :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
   TREAL, DIMENSION(*)             :: x_inf,y_inf,z_inf, q_inf,s_inf
   TREAL, DIMENSION(*)             :: txc, wrk1d,wrk2d,wrk3d, vaux
@@ -161,21 +160,20 @@ SUBROUTINE TIME_RUNGEKUTTA(x,y,z,dx,dy,dz, q,hq,s,hs, &
      IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
         IF    ( rkm_mode .EQ. RKM_EXP3 .OR. rkm_mode .EQ. RKM_EXP4 ) THEN 
            CALL TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(&
-                dte,etime, &
-                x,y,z,dx,dy,dz, q,hq,s,hs,txc, vaux, wrk1d,wrk2d,wrk3d, &
+                dte,etime, q,hq,s,hs,txc, vaux, wrk1d,wrk2d,wrk3d, &
                 l_q, l_hq, l_txc, l_tags, l_comm)
 
         ELSE 
            CALL TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(&
-                dte,etime,kex(rkm_substep), kim(rkm_substep), kco(rkm_substep), &
-                x,y,z,dx,dy,dz, q,hq,s,hs,txc, vaux, wrk1d,wrk2d,wrk3d)
+                dte,etime, kex(rkm_substep), kim(rkm_substep), kco(rkm_substep), &
+                q,hq,s,hs,txc, vaux, wrk1d,wrk2d,wrk3d)
         ENDIF
      ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
-        CALL TIME_SUBSTEP_ANELASTIC(dte,etime, x,y,z,dx,dy,dz, &
-             q,hq,s,hs,txc, vaux, wrk1d,wrk2d,wrk3d)
+        CALL TIME_SUBSTEP_ANELASTIC(&
+             dte,etime, q,hq,s,hs,txc, vaux, wrk1d,wrk2d,wrk3d)
      ELSE
-        CALL TIME_SUBSTEP_COMPRESSIBLE(dte,etime, x,y,z,dx,dy,dz, &
-             q,hq,s,hs, x_inf,y_inf,z_inf, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
+        CALL TIME_SUBSTEP_COMPRESSIBLE(&
+             dte,etime, q,hq,s,hs, x_inf,y_inf,z_inf, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
      ENDIF
 
 ! -------------------------------------------------------------------

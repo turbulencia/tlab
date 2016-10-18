@@ -43,7 +43,6 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_LOCAL,  ONLY : buff_type 
   USE DNS_LOCAL,  ONLY : rkm_substep,rkm_endstep,tower_mode 
   USE DNS_TOWER 
-  USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
 
@@ -259,7 +258,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! Saving pressure for towers to tmp array 
   IF ( tower_mode .EQ. 1 .AND. rkm_substep .EQ. rkm_endstep ) THEN 
-     CALL DNS_TOWER_ACCUMULATE(tmp1,i4,dx,dy,dz,wrk1d) 
+     CALL DNS_TOWER_ACCUMULATE(tmp1,i4,wrk1d) 
   ENDIF
 
 ! horizontal derivatives

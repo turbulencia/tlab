@@ -16,25 +16,27 @@
 !########################################################################
 ! First invariant
 !########################################################################
-SUBROUTINE FI_INVARIANT_P(imode_fdm, nx,ny,nz, i1bc,j1bc,k1bc, &
-     dx,dy,dz, u,v,w, result, tmp1, wrk1d,wrk2d,wrk3d)
+SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
 
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TINTEGER imode_fdm, nx,ny,nz, i1bc,j1bc,k1bc
-  TREAL, DIMENSION(*),        INTENT(IN)    :: dx,dy,dz
+  TINTEGER nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u,v,w
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
   TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1
-  TREAL, DIMENSION(*),        INTENT(INOUT) :: wrk1d,wrk2d,wrk3d
+  TREAL, DIMENSION(*),        INTENT(INOUT) :: wrk2d,wrk3d
 
+  TINTEGER idummy   ! To use old wrappers to calculate derivatives
+  TREAL    dummy(1)
 ! ###################################################################
-  CALL PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, u, result, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, v, tmp1,   i0,i0, wrk1d,wrk2d,wrk3d)
+  idummy = 0
+
+  CALL PARTIAL_X(idummy, nx,ny,nz, idummy, dummy, u, result, i0,i0, dummy, wrk2d,wrk3d)
+  CALL PARTIAL_Y(idummy, nx,ny,nz, idummy, dummy, v, tmp1,   i0,i0, dummy, wrk2d,wrk3d)
   result =  result + tmp1
-  CALL PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, w, tmp1,   i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Z(idummy, nx,ny,nz, idummy, dummy, w, tmp1,   i0,i0, dummy, wrk2d,wrk3d)
   result =-(result + tmp1)
 
   RETURN

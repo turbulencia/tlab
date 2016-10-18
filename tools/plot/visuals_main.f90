@@ -800,8 +800,7 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
            IF ( opt_vec(iv) .EQ. iscal_offset+10 ) THEN
               CALL IO_WRITE_ASCII(lfile,'Computing first invariant P...')
-              CALL FI_INVARIANT_P(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                   dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
+              CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), wrk2d,wrk3d)
 
               plot_file = 'InvariantP'//time_str(1:MaskSize)
               CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
