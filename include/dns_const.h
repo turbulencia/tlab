@@ -132,8 +132,7 @@
 #define MIXT_TYPE_QUASIBS      8
 #define MIXT_TYPE_AIRVAPOR     9
 #define MIXT_TYPE_AIRWATER    10
-#define MIXT_TYPE_SUPSAT      11
-#define MIXT_TYPE_AIRWATER_LINEAR    14
+#define MIXT_TYPE_AIRWATER_LINEAR    11
 
 ! Lagrangian Type
 #define LAG_TYPE_NONE          0

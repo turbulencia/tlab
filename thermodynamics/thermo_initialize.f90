@@ -14,10 +14,8 @@
 !#              Extracted from reactini.f
 !# 2007/05/09 - J.P. Mellado
 !#              Air-Vapor mixture added
-!# 2011/07/05 - A. de Lozar
-!#              Supersaturation mixture added.
 !# 2013/06/12 - A. de Lozar
-!#              Bilinear Air Water added for stratocumulus
+!#              Linear AirWater added for stratocumulus
 !# 
 !########################################################################
 !# DESCRIPTION
@@ -49,19 +47,14 @@
 !# The new reference value of gamma0 is calculated here based on the
 !# reference species
 !#
-!# inb_scal_array is inb_scal plus 1 in order to keep the
-!# liquid content in AIRWATER case
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
 !########################################################################
 SUBROUTINE THERMO_INITIALIZE
   
   USE THERMO_GLOBAL
 
-  USE DNS_GLOBAL, ONLY : imode_eqns, inb_scal, inb_scal_array
   USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE DNS_GLOBAL,    ONLY : inb_scal, inb_scal_array
+  USE DNS_GLOBAL,    ONLY : damkohler
   IMPLICIT NONE
 
 ! -------------------------------------------------------------------
@@ -211,19 +204,13 @@ SUBROUTINE THERMO_INITIALIZE
 
 ! -------------------------------------------------------------------
 ! Water vapor, air and liquid water
-! Transport just q_t, and then equilibrium
-! Add array space for q_l
+! Compressible:   Transport    q_t, and q_l from equilibrium; add space for q_l
+! Incompressible: Transport h, q_t, and q_l from equilibrium; add space for q_l
+! If non-equilibrium calculation, then inb_scal includes q_l and inb_scal_array = inb_scal (default)
 ! -------------------------------------------------------------------
   ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
      NSP            = 3
-     IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    .OR. &
-               imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-        inb_scal    = 1 
-     ELSE IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. &
-               imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
-        inb_scal    = 2
-     ENDIF
-     inb_scal_array = inb_scal+1
+     IF ( damkohler(3) .LE. C_0_R ) inb_scal_array = inb_scal+1 ! using inb_scal read in the inifile
 
      THERMO_SPNAME(1) = 'H2Ov'
      THERMO_SPNAME(2) = 'AIR'
@@ -234,31 +221,13 @@ SUBROUTINE THERMO_INITIALIZE
      WGHT(3) = 18.015
 
 ! -------------------------------------------------------------------
-! Water vapor, air and liquid water in supersaturation case
-! Transport q_t, and q_l and allows for non equilibrium
-! Add array space for q_l, q_t and h
-! -------------------------------------------------------------------
-  ELSE IF ( imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
-     NSP            = 3
-     inb_scal       = 3
-     inb_scal_array = inb_scal
-
-     THERMO_SPNAME(1) = 'H2Ov'
-     THERMO_SPNAME(2) = 'AIR'
-     THERMO_SPNAME(3) = 'H2Ol'
-
-     WGHT(1) = 18.015
-     WGHT(2) = 28.9644
-     WGHT(3) = 18.015
-
-! -------------------------------------------------------------------
-! Stratocumulus case with the bilinear formulation
-! The first scalar is the scaled total water, equivalent to mixture fraction \chi in the linear formulation
-! The second scalar is the deviations in the enthalpy from the mix fraction.
-! The last scalar is just the normalized concentration of liquid.
+! Linearized thermodynamics for stratocumulus case
+! The 1. scalar is the scaled total water (mixing fraction)
+! The 2. scalar is the enthalpy deviations from the pure mixing case (described by mixing fraction only)
+! The 3. scalar is the normalized concentration of liquid.
 ! -------------------------------------------------------------------
   ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-     inb_scal_array = inb_scal + 1      ! using inb_scal read in the inifile
+     inb_scal_array = inb_scal + 1 ! using inb_scal read in the inifile
      NSP            = inb_scal_array 
 
      THERMO_SPNAME(1) = 'Chi'      ! Mixture fraction 
@@ -268,7 +237,7 @@ SUBROUTINE THERMO_INITIALIZE
      ENDDO
      THERMO_SPNAME(NSP) = 'Liquid' ! Normalized Liquid
      
-     WGHT(1) = 18.015   ! unused, but defined for re-normalization below
+     WGHT(1) = 18.015              ! unused, but defined for re-normalization below
      WGHT(2) = 28.9644
      WGHT(3) = 18.015
      WGHT(4:)= C_1_R
@@ -542,8 +511,7 @@ SUBROUTINE THERMO_INITIALIZE
 ! Water vapor, air and water liquid (data from Bjorn)
 ! -------------------------------------------------------------------
      ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR .OR. & ! Not needed so far
-               imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
-               imixture .EQ. MIXT_TYPE_SUPSAT   ) THEN
+               imixture .EQ. MIXT_TYPE_AIRWATER        ) THEN
 
 ! Enthalpy of Formation in Jules/Kmol
 ! Vapor and air values set such that THERMO_AI(6) = 0

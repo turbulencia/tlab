@@ -207,7 +207,7 @@ PROGRAM DNS
             iviscous   .EQ. EQNS_EXPLICIT                 ) THEN
                                              inb_txc = 6
   ENDIF
-  IF ( imixture .EQ. MIXT_TYPE_SUPSAT   ) inb_txc = inb_txc + 1
+  IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .GT. C_0_R ) inb_txc = inb_txc + 1
 
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN ! because of the statistics
      inb_txc = MAX(inb_txc,7)
@@ -511,7 +511,7 @@ PROGRAM DNS
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL DNS_PROFILES(vaux(vindex(VA_BCS_VI)), wrk1d)
 
-     IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+     IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
         IF ( damkohler(1) .LE. C_0_R )  THEN
            CALL THERMO_AIRWATER_PHAL(i1,i1,i1,       mean_i(2), p_init, mean_i(1))        ! Calculate mean liquid
            CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2),    p_init, s(1,1))           ! Calculate liquid field

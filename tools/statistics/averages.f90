@@ -433,7 +433,7 @@ PROGRAM AVERAGES
 ! ###################################################################
      IF      ( opt_main .EQ. 1 ) THEN
         IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
-           IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+           IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
               IF ( damkohler(1) .LE. C_0_R )  THEN
                  CALL THERMO_AIRWATER_PHAL(i1,i1,i1,       mean_i(2), p_init, mean_i(1))        ! Calculate mean liquid
                  CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2),    p_init, s(1,1))           ! Calculate liquid field

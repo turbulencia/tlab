@@ -388,7 +388,7 @@ PROGRAM VISUALS_MAIN
      ENDIF
 
      IF ( iread_scal .EQ. 1 ) THEN ! Scalar-dependent variables
-        IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+        IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
            IF ( damkohler(1) .LE. C_0_R )  THEN
               CALL THERMO_AIRWATER_PHAL(i1,i1,i1,       mean_i(2), p_init, mean_i(1))        ! Calculate mean liquid
               CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2),    p_init, s(1,1))           ! Calculate liquid field
@@ -473,7 +473,7 @@ PROGRAM VISUALS_MAIN
                 imode_eqns .EQ. DNS_EQNS_ANELASTIC           ) THEN
 
               IF      ( opt_vec(iv) .EQ. 6 ) THEN ! density 
-                 IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT )  THEN
+                 IF      ( imixture .EQ. MIXT_TYPE_AIRWATER )  THEN
                     CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2), p_init, s(1,1), txc(1,1))
 
                  ELSE
@@ -488,7 +488,7 @@ PROGRAM VISUALS_MAIN
                  CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
               ELSE IF ( opt_vec(iv) .EQ. 7 ) THEN ! temperature
-                 IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+                 IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
                     CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1), wrk3d) !txc2, txc3 not used
                     
                     plot_file = 'Temperature'//time_str(1:MaskSize)
@@ -835,7 +835,7 @@ PROGRAM VISUALS_MAIN
 ! Buoyancy
 ! ###################################################################
         IF ( opt_vec(iv) .EQ. iscal_offset+12 ) THEN
-           IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT )  THEN
+           IF      ( imixture .EQ. MIXT_TYPE_AIRWATER )  THEN
               CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2), p_init, s(1,1), txc(1,1))
               txc(1:isize_field,1) = buoyancy%vector(2)*(txc(1:isize_field,1) - mean_rho)/mean_rho
 

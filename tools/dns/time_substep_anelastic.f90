@@ -126,7 +126,7 @@ SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, x,y,z,dx,dy,dz, q,hq,s,hs, &
 ! ###################################################################
 ! Calculate other intensive thermodynamic variables
 ! ###################################################################
-  IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
      IF ( damkohler(1) .LE. C_0_R )  THEN
         CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2), p_init, s(1,1))
      ENDIF

@@ -110,7 +110,7 @@ PROGRAM INISCAL
 #endif
 
      inb_scal_loc = inb_scal
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
         IF ( damkohler(1) .GT. C_0_R .AND. flag_mixture .EQ. 1 ) THEN
            inb_scal_loc = inb_scal - 1
         ENDIF
@@ -137,7 +137,7 @@ PROGRAM INISCAL
      ENDDO
      
 ! Initial liquid, if needed, in equilibrium; we simply overwrite previous values     
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
         IF ( damkohler(1) .GT. C_0_R .AND. flag_mixture .EQ. 1 ) THEN
            CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2), p_init, s(1,1))
         ENDIF

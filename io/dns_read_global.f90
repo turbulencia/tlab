@@ -3,9 +3,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 1999/01/01 - C. Pantano
@@ -167,11 +164,10 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE;                                         ifourier = 0; ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'Mixture', 'None', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none' )     THEN; imixture = MIXT_TYPE_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airvapor' ) THEN; imixture = MIXT_TYPE_AIRVAPOR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwater' ) THEN; imixture = MIXT_TYPE_AIRWATER
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwatersupersaturation' ) THEN; imixture = MIXT_TYPE_SUPSAT
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterlinear'   ) THEN; imixture = MIXT_TYPE_AIRWATER_LINEAR
+  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'          )     THEN; imixture = MIXT_TYPE_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airvapor'      ) THEN; imixture = MIXT_TYPE_AIRVAPOR
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwater'      ) THEN; imixture = MIXT_TYPE_AIRWATER
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterlinear') THEN; imixture = MIXT_TYPE_AIRWATER_LINEAR
   ELSE 
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong multispecies model.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
@@ -824,7 +820,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE;                                                iuse_chemkin = 1; ENDIF
 
 ! Special data
-  IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+  IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', 'SmoothFactor', '0.1', dsmooth)
   ENDIF
 
@@ -927,15 +923,10 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
            schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
         ENDIF
 
-     ELSE IF ( imixture .EQ. MIXT_TYPE_SUPSAT      ) THEN
-        IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-           CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. AirWaterSupersaturation not yet developed in compressible mode.')
-           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-        ENDIF
         IF ( damkohler(1) .EQ. C_0_R .AND. damkohler(2) .EQ. C_0_R ) THEN
            damkohler(1:2) = damkohler(3)
         ELSE
-           CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. AirWaterSupersaturation requires first 2 Damkholer numbers zero.')
+           CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. AirWater requires at least first 2 Damkholer numbers zero.')
            CALL DNS_STOP(DNS_ERROR_OPTION)
         ENDIF
         

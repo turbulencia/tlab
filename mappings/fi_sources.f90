@@ -67,7 +67,7 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
   DO iq = 1,3
      IF ( buoyancy%active(iq) ) THEN
         
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN ! Based on density
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN ! Based on density
            CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2),p_init,s(1,1), wrk3d)
            dummy = C_1_R /mean_rho
            wrk3d = dummy *( wrk3d - mean_rho )

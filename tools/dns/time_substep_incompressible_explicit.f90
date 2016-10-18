@@ -133,20 +133,24 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
              vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
              wrk1d,wrk2d,wrk3d)
         
-        IF      ( imixture .EQ. MIXT_TYPE_SUPSAT   ) THEN
-           CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT(dte, dx,dy,dz, u,v,w, hq(1,1),hq(1,2),hq(1,3), s, hs, &
-                txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk1d,wrk2d,wrk3d)
-        ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-           DO is = 1,inb_scal
-              CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_ALWATER(is, dte, dx,dy,dz, u,v,w,s(1,1), hs(1,is), &
-                   txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d,hq(1,1),hq(1,2),hq(1,3))
-           ENDDO
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+           IF ( damkohler(1) .LE. C_0_R )  THEN
+              DO is = 1,inb_scal
+                 CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER(is, dte, dx,dy,dz, u,v,w,s(1,1), hs(1,is), &
+                      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d,hq(1,1),hq(1,2),hq(1,3))
+              ENDDO
+           ELSE
+              CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT(dte, dx,dy,dz, u,v,w, hq(1,1),hq(1,2),hq(1,3), s, hs, &
+                   txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk1d,wrk2d,wrk3d)
+           ENDIF
+
         ELSE
            CALL FI_SOURCES_SCAL(y,dy, s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
            DO is = 1,inb_scal
               CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is, dte, dx,dy,dz, u,v,w,s(1,is),hs(1,is), s,&
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
            ENDDO
+
         ENDIF
         
      ELSE IF ( imode_rhs .EQ. EQNS_RHS_COMBINED    ) THEN 
@@ -251,7 +255,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 ! ###################################################################
 ! Calculate other intensive thermodynamic variables
 ! ###################################################################
-  IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_SUPSAT ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
      IF ( damkohler(1) .LE. C_0_R )  THEN
         CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2), p_init, s(1,1))
      ENDIF
