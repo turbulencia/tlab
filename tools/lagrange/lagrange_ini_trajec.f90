@@ -70,8 +70,6 @@ PROGRAM INI_TRAJEC
   TREAL, DIMENSION(:,:), ALLOCATABLE :: l_trajectories
   TREAL, DIMENSION(:),   ALLOCATABLE :: fake_liquid, all_fake_liquid
 
-  TREAL, DIMENSION(:,:), POINTER           :: dx, dy, dz
-
   TINTEGER nitera_first
 
   CHARACTER*32 inifile

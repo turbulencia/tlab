@@ -12,9 +12,6 @@
   IF ( g(3)%size .GT. 1 ) area = area *g(3)%scale ! 3D case
   volume = area *g(2)%scale
 
-  dx => x(:,2:) ! to be removed
-  dy => y(:,2:)
-  dz => z(:,2:)
   scalex = g(1)%scale ! to be removed 
   scaley = g(2)%scale 
   scalez = g(3)%scale

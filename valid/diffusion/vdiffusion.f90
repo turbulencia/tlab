@@ -18,8 +18,6 @@ PROGRAM VDIFFUSION
   TREAL dummy, error, pi_loc, factor, wavenumber, x_loc
   CHARACTER*(32) fname
 
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
-
 ! ###################################################################
   CALL DNS_INITIALIZE
   

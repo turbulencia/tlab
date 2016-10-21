@@ -46,6 +46,10 @@ PROGRAM VPOISSON
 
 #include "dns_read_grid.h"
 
+  dx => x(:,2:) ! to be removed
+  dy => y(:,2:)
+  dz => z(:,2:)
+
   falpha = 0.49d0
   CALL FILT4C_INI(imax_total, i1bc, falpha, dx, cx)
   CALL FILT4C_INI(jmax_total, j1bc, falpha, dy, cy)

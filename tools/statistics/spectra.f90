@@ -91,8 +91,6 @@ PROGRAM SPECTRA
 
   TINTEGER inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
 
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
-
 ! Reading variables
   CHARACTER*512 sRes
 

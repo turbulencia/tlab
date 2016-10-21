@@ -75,7 +75,6 @@ PROGRAM DNS
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u, v, w, e, rho, p, T, vis
-  TREAL, DIMENSION(:,:), POINTER :: dx,dy,dz
   
   TINTEGER iread_flow, iread_scal, idummy
   TINTEGER ierr, isize_wrk3d, isize_vaux, isize_loc

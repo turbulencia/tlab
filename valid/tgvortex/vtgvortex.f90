@@ -18,8 +18,6 @@ PROGRAM VTGVORTEX
   TREAL dummy, error
   CHARACTER*(32) fname
 
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
-
 ! ###################################################################
   CALL DNS_INITIALIZE
   
@@ -92,7 +90,7 @@ PROGRAM VTGVORTEX
 
      IF ( dummy .GT. C_0_R ) THEN
      WRITE(*,*) 'L-infinity error ...: ', MAXVAL(ABS(txc(1:isize_field-imax,iv)))
-     WRITE(*,*) 'L-2 error ..........: ', sqrt(error*dx(1)*dy(1))
+     WRITE(*,*) 'L-2 error ..........: ', sqrt(error*g(1)%jac(1,1)*g(2)%jac(1,1))
      WRITE(*,*) 'Relative error .....: ', sqrt(error)/sqrt(dummy)
      WRITE(fname,*) iv; fname = 'error'//TRIM(ADJUSTL(fname))
      CALL DNS_WRITE_FIELDS(fname, i1, imax,jmax,kmax, i1, i0, txc(1,iv), wrk3d)

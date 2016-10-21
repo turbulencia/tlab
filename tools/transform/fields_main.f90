@@ -82,8 +82,6 @@ PROGRAM TRANSFIELDS
   INTEGER icount
 #endif
 
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
-
 ! ###################################################################
   inifile = 'dns.ini'
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
@@ -320,14 +318,14 @@ PROGRAM TRANSFIELDS
   IF ( opt_filter .GT. 0 ) THEN
      IF      ( opt_filter .EQ. DNS_FILTER_4E  .OR. &
                opt_filter .EQ. DNS_FILTER_ADM      ) THEN  
-        CALL FILT4E_INI(imax_total, i1bc, scalex, x, filter_x)
-        CALL FILT4E_INI(jmax_total, j1bc, scaley, y, filter_y)
-        CALL FILT4E_INI(kmax_total, k1bc, scalez, z, filter_z)
+        CALL FILT4E_INI(imax_total, i1bc, g(1)%scale, g(1)%nodes, filter_x)
+        CALL FILT4E_INI(jmax_total, j1bc, g(2)%scale, g(2)%nodes, filter_y)
+        CALL FILT4E_INI(kmax_total, k1bc, g(3)%scale, g(3)%nodes, filter_z)
         
      ELSE IF ( opt_filter .EQ. DNS_FILTER_COMPACT  ) THEN
-        CALL FILT4C_INI(imax_total, i1bc, alpha, dx, filter_x)
-        CALL FILT4C_INI(jmax_total, j1bc, alpha, dy, filter_y)
-        CALL FILT4C_INI(kmax_total, k1bc, alpha, dz, filter_z)
+        CALL FILT4C_INI(imax_total, i1bc, alpha, g(1)%jac, filter_x)
+        CALL FILT4C_INI(jmax_total, j1bc, alpha, g(2)%jac, filter_y)
+        CALL FILT4C_INI(kmax_total, k1bc, alpha, g(3)%jac, filter_z)
         
      ENDIF
 
@@ -519,9 +517,9 @@ PROGRAM TRANSFIELDS
 ! Filter
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 5 ) THEN
-        IF ( opt_filter .EQ. DNS_FILTER_ALPHA  ) dummy =-C_1_R/(alpha*dx(1,1))**2
-        IF ( opt_filter .EQ. DNS_FILTER_CUTOFF ) dummy = C_1_R/M_REAL(imax_total*kmax_total)
-        IF ( opt_filter .EQ. DNS_FILTER_ERF    ) dummy = C_1_R/M_REAL(imax_total*kmax_total)
+        IF ( opt_filter .EQ. DNS_FILTER_ALPHA  ) dummy =-C_1_R /(alpha*g(1)%jac(1,1))**2
+        IF ( opt_filter .EQ. DNS_FILTER_CUTOFF ) dummy = C_1_R /M_REAL(imax_total*kmax_total)
+        IF ( opt_filter .EQ. DNS_FILTER_ERF    ) dummy = C_1_R /M_REAL(imax_total*kmax_total)
 
         IF ( icalc_flow .GT. 0 ) THEN
            DO iq = 1,inb_flow

@@ -51,8 +51,6 @@ PROGRAM INIPART
   TREAL, DIMENSION(:,:),    ALLOCATABLE             :: l_q, l_txc, l_hq
   INTEGER(8), DIMENSION(:), ALLOCATABLE             :: l_tags
 
-  TREAL, DIMENSION(:,:),     POINTER    :: dx,dy,dz
-
   CHARACTER*32 inifile
   CHARACTER*64 str, line
 

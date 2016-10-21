@@ -63,7 +63,6 @@ PROGRAM INIFLOW
 
   TARGET q, wrk3d
   TREAL, DIMENSION(:),   POINTER :: u, v, w, p, rho
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
 
 ! -------------------------------------------------------------------
 ! Local variables

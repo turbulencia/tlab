@@ -56,8 +56,6 @@ PROGRAM INIRAND
   TREAL AVG1V3D, dummy
 
   CHARACTER*32 inifile
-
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
   
 ! ###################################################################
   inifile = 'dns.ini'

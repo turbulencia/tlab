@@ -68,9 +68,6 @@ PROGRAM VHELMHOLTZ_FXZ
   ALLOCATE(x(imax_total,inb_grid))
   ALLOCATE(y(jmax_total,inb_grid))
   ALLOCATE(z(kmax_total,inb_grid))
-  ! ALLOCATE(dx(imax_total,inb_grid))
-  ! ALLOCATE(dy(jmax_total,inb_grid))
-  ! ALLOCATE(dz(kmax_total,inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d,4*nfield+7))
   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
@@ -81,6 +78,10 @@ PROGRAM VHELMHOLTZ_FXZ
   ALLOCATE(cx(6*imax),cy(6*jmax),cz(6*kmax_total))
 
 #include "dns_read_grid.h"
+
+  dx => x(:,2:) ! to be removed
+  dy => y(:,2:)
+  dz => z(:,2:)
 
   CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
   

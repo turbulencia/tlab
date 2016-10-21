@@ -59,8 +59,6 @@ PROGRAM LAGRANGE_PDF
   CHARACTER*64 str, fname
   CHARACTER*128 line
   CHARACTER*32 bakfile
-  TREAL, DIMENSION(:,:), POINTER           :: dx, dy, dz
-
 
   inifile = 'dns.ini'
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'

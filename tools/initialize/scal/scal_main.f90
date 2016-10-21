@@ -48,8 +48,6 @@ PROGRAM INISCAL
   CHARACTER*64 str, line
   CHARACTER*32 inifile
   
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
-  
 ! ###################################################################
   inifile = 'dns.ini'
 
