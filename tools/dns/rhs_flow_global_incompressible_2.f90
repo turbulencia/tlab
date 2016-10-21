@@ -1,3 +1,6 @@
+#include "types.h"
+#include "dns_const.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -16,15 +19,9 @@
 !# Scalar needed for the buoyancy term
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-
 SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2&
-     (dte, x,y,z,dx,dy,dz, u,v,w,h1,h2,h3, s, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
-     bcs_hb,bcs_ht,b_ref, vaux, wrk1d,wrk2d,wrk3d)
+     (dte, u,v,w,h1,h2,h3, s, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
+     bcs_hb,bcs_ht, vaux, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
@@ -36,13 +33,11 @@ IMPLICIT NONE
 #include "integers.h"
 
   TREAL dte
-  TREAL, DIMENSION(*)             :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field)   :: u,v,w, h1,h2,h3, s
   TREAL, DIMENSION(isize_field,*) :: q,hq
   TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk3d
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
-  TREAL , DIMENSION(*)            :: wrk2d, vaux
-  TREAL, DIMENSION(jmax)          :: b_ref
+  TREAL, DIMENSION(*)             :: wrk2d, vaux
   TREAL, DIMENSION(imax,kmax,*)   :: bcs_hb,bcs_ht
 
   TARGET tmp2, h2
@@ -50,9 +45,11 @@ IMPLICIT NONE
 ! -----------------------------------------------------------------------
   TINTEGER ij, k, nxy, ip_b, ip_t
   TINTEGER ibc
-  TREAL alpha, dummy
+  TREAL alpha
 
   TREAL, DIMENSION(:), POINTER :: p_bcs
+
+  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
 
 ! #######################################################################
   nxy    = imax*jmax
@@ -96,25 +93,10 @@ IMPLICIT NONE
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax, jmax, kmax, i1bc,&
        dx, v, tmp4, i0,i0, i0,i0, tmp1, wrk1d, wrk2d, wrk3d)
 
-! -----------------------------------------------------------------------
-! Buoyancy. So far only in the Oy direction. Remember that buoyancy%vector contains the Froude # already.
-! -----------------------------------------------------------------------
-  IF ( buoyancy%active(2) ) THEN
-     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref)
-
-     dummy = buoyancy%vector(2)
-     DO ij = 1,isize_field
-        h2(ij) = h2(ij) + dummy*wrk3d(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
-             - C_05_R*( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
-     ENDDO
-
-  ELSE
-     DO ij = 1,isize_field
-        h2(ij) = h2(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
-             - C_05_R*( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
-     ENDDO
-
-  ENDIF
+  DO ij = 1,isize_field
+     h2(ij) = h2(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
+          - C_05_R*( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
+  ENDDO
 
 ! #######################################################################
 ! Diffusion and convection terms in Oz momentum eqn
@@ -211,7 +193,7 @@ IMPLICIT NONE
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(&
           vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), x,y, q,hq)
+          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), g(1)%nodes,g(2)%nodes, q,hq)
   ENDIF
 
 ! #######################################################################
@@ -274,8 +256,8 @@ IMPLICIT NONE
   IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
   IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
   IF ( ibc .GT. 0 ) THEN
-     CALL BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, imax,jmax,kmax, dy, h1, bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,tmp1,wrk3d)
-     CALL BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, imax,jmax,kmax, dy, h3, bcs_hb(1,1,2),bcs_ht(1,1,2), wrk1d,tmp1,wrk3d)
+     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), h1, bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,tmp1,wrk3d)
+     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), h3, bcs_hb(1,1,2),bcs_ht(1,1,2), wrk1d,tmp1,wrk3d)
   ENDIF
 
 ! -----------------------------------------------------------------------

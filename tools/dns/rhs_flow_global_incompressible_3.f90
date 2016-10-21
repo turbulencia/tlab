@@ -1,3 +1,7 @@
+#include "types.h"
+#include "dns_error.h"
+#include "dns_const.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -16,15 +20,8 @@
 !# Scalar needed for the buoyancy term
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_error.h"
-#include "dns_const.h"
-
 SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3&
-     (dte, x,y,z,dx,dy,dz, u,v,w,h1,h2,h3, s, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
+     (dte, u,v,w,h1,h2,h3, s, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
      bcs_hb,bcs_ht,b_ref, vaux, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL
@@ -36,7 +33,6 @@ IMPLICIT NONE
 #include "integers.h"
 
   TREAL dte
-  TREAL, DIMENSION(*)             :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(*)             :: u,v,w, h1,h2,h3, s
   TREAL, DIMENSION(isize_field,*) :: q,hq
   TREAL, DIMENSION(*)             :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, wrk3d
@@ -47,6 +43,15 @@ IMPLICIT NONE
 
 ! -----------------------------------------------------------------------
   TINTEGER ij, i, k
+
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
+
+! #######################################################################
+! Define pointers
+  x => g(1)%nodes; dx => g(1)%jac(:,1)
+  y => g(2)%nodes; dy => g(2)%jac(:,1)
+  z => g(3)%nodes; dz => g(3)%jac(:,1)
 
 ! #######################################################################
 ! Diffusion and convection terms in momentum equations

@@ -179,7 +179,7 @@ PROGRAM INISCAL
      ENDIF
      DO is = 1,inb_scal
         IF ( radiation%active(is) ) THEN
-           CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2)%jac, s(1,radiation%scalar(is)), txc, wrk1d,wrk3d)
+           CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2), s(1,radiation%scalar(is)), txc, wrk1d,wrk3d)
            s(1:isize_field,is) = s(1:isize_field,is) + txc(1:isize_field,1)
         ENDIF
      ENDDO

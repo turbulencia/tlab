@@ -18,9 +18,9 @@
 !# using compact schemes to calculate the integral term.
 !# 
 !########################################################################
-SUBROUTINE OPR_RADIATION(radiation, nx,ny,nz, dy, s, r, wrk1d,wrk3d)
+SUBROUTINE OPR_RADIATION(radiation, nx,ny,nz, g, s, r, wrk1d,wrk3d)
 
-  USE DNS_TYPES, ONLY : term_structure
+  USE DNS_TYPES, ONLY : term_structure, grid_structure
 
   IMPLICIT NONE
 
@@ -28,7 +28,7 @@ SUBROUTINE OPR_RADIATION(radiation, nx,ny,nz, dy, s, r, wrk1d,wrk3d)
 
   TYPE(term_structure),       INTENT(IN)    :: radiation
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
-  TREAL, DIMENSION(*),        INTENT(IN)    :: dy
+  TYPE(grid_structure),       INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s        ! Radiatively active scalar
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: r        ! Radiative heating rate
   TREAL, DIMENSION(ny,*),     INTENT(INOUT) :: wrk1d
@@ -87,7 +87,7 @@ SUBROUTINE OPR_RADIATION(radiation, nx,ny,nz, dy, s, r, wrk1d,wrk3d)
 
 ! ###################################################################
 ! Calculate (negative) integral path.
-  CALL INT_C1N6_RHS(ny,nxz, ibc, dy, p_org, p_dst)
+  CALL INT_C1N6_RHS(ny,nxz, ibc, g%jac, p_org, p_dst)
   CALL PENTADSS(ny-1,nxz, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), p_dst)
   ip = nxz *(ny-1) +1; p_dst(ip:ip+nxz-1) = C_0_R ! boundary condition
 
@@ -120,9 +120,9 @@ END SUBROUTINE OPR_RADIATION
 
 !########################################################################
 !########################################################################
-SUBROUTINE OPR_RADIATION_FLUX(radiation, nx,ny,nz, dy, s, r, wrk1d,wrk3d)
+SUBROUTINE OPR_RADIATION_FLUX(radiation, nx,ny,nz, g, s, r, wrk1d,wrk3d)
 
-  USE DNS_TYPES, ONLY : term_structure
+  USE DNS_TYPES, ONLY : term_structure, grid_structure
 
   IMPLICIT NONE
 
@@ -130,7 +130,7 @@ SUBROUTINE OPR_RADIATION_FLUX(radiation, nx,ny,nz, dy, s, r, wrk1d,wrk3d)
 
   TYPE(term_structure),       INTENT(IN)    :: radiation
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
-  TREAL, DIMENSION(ny,*),     INTENT(IN)    :: dy
+  TYPE(grid_structure),       INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s        ! Radiatively active scalar
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: r        ! Radiative flux
   TREAL, DIMENSION(ny,*),     INTENT(INOUT) :: wrk1d
@@ -189,7 +189,7 @@ SUBROUTINE OPR_RADIATION_FLUX(radiation, nx,ny,nz, dy, s, r, wrk1d,wrk3d)
 
 ! ###################################################################
 ! Calculate (negative) integral path.
-  CALL INT_C1N6_RHS(ny,nxz, ibc, dy, p_org, p_dst)
+  CALL INT_C1N6_RHS(ny,nxz, ibc, g%jac, p_org, p_dst)
   CALL PENTADSS(ny-1,nxz, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), p_dst)
   ip = nxz *(ny-1) +1; p_dst(ip:ip+nxz-1) = C_0_R ! boundary condition
 

@@ -1,3 +1,6 @@
+#include "types.h"
+#include "dns_const.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -14,14 +17,8 @@
 !# diffusion term explicit. 3 2nd order + 3+3 1st order derivatives.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-
 SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2&
-     (is, dx,dy,dz, u,v,w,s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d)
+     (is, u,v,w,s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL
   USE DNS_LOCAL, ONLY : bcs_scal_jmin, bcs_scal_jmax
@@ -31,7 +28,6 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2&
 #include "integers.h"
 
   TINTEGER is
-  TREAL, DIMENSION(*)           :: dx, dy, dz
   TREAL, DIMENSION(isize_field) :: u, v, w, s, hs
   TREAL, DIMENSION(isize_field) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, wrk3d
   TREAL, DIMENSION(*)           :: wrk1d
@@ -40,6 +36,8 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2&
 ! -----------------------------------------------------------------------
   TINTEGER ij, k, nxy, ip, ibc
   TREAL diff
+
+  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
 
 ! #######################################################################
   nxy = imax*jmax
@@ -81,7 +79,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2&
   IF ( bcs_scal_jmin(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
   IF ( bcs_scal_jmax(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
   IF ( ibc .GT. 0 ) THEN
-     CALL BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, imax,jmax,kmax, dy, hs, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,tmp1,wrk3d)
+     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,tmp1,wrk3d)
   ENDIF
 
 ! -----------------------------------------------------------------------

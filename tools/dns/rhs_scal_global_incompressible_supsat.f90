@@ -41,7 +41,7 @@
 !#
 !########################################################################
 SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT&
-     (dte, dx,dy,dz, u,v,w, h1,h2,h3, s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, tmp7, wrk1d,wrk2d,wrk3d)
+     (dte, u,v,w, h1,h2,h3, s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, tmp7, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -56,7 +56,6 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT&
 #include "integers.h"
 
   TREAL dte
-  TREAL, DIMENSION(*)           :: dx, dy, dz
   TREAL, DIMENSION(isize_field) :: u, v, w
   TREAL, DIMENSION(isize_field) :: h1, h2, h3  !rhs of the flow equation
   TREAL, DIMENSION(isize_field,*), TARGET :: s !Alberto. Now mulidimensinal array (including h,qt,ql)
@@ -71,6 +70,9 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT&
   TREAL, DIMENSION(2)           :: diff
   TREAL dummy,exp_l,  diff_difusion, cl, Q_latent !Auxialliary variables
 
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:), POINTER :: dx,dy,dz
+
 ! -----------------------------------------------------------------------
 !Alberto.Ponter to the qt,ql (2dim array) and enthalpy
   TREAL, DIMENSION(:),  POINTER :: al_h
@@ -78,6 +80,11 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT&
   TREAL, DIMENSION(:),  POINTER :: al_ql
 
 ! #######################################################################
+! Define pointers
+  dx => g(1)%jac(:,1)
+  dy => g(2)%jac(:,1)
+  dz => g(3)%jac(:,1)
+
   nxy = imax*jmax
 
   DO k = 1,2 
@@ -544,7 +551,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT&
      IF ( bcs_scal_jmin(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
      IF ( bcs_scal_jmax(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
      IF ( ibc .GT. 0 ) THEN
-        CALL BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, imax,jmax,kmax, dy, hs(:,is), wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,tmp1,wrk3d)
+        CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs(:,is), wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,tmp1,wrk3d)
      ENDIF
 
 ! -----------------------------------------------------------------------

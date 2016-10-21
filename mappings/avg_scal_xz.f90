@@ -363,12 +363,12 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   dsdx = C_0_R; dsdy = C_0_R; dsdz = C_0_R; tmp1 = C_0_R; tmp2 = C_0_R; tmp3 = C_0_R
 
   IF ( radiation%active(is) ) THEN ! Radiation in tmp1
-     CALL OPR_RADIATION     (radiation, imax,jmax,kmax, dy, s(1,1,1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
-     CALL OPR_RADIATION_FLUX(radiation, imax,jmax,kmax, dy, s(1,1,1,radiation%scalar(is)), dsdx, wrk1d,wrk3d)
+     CALL OPR_RADIATION     (radiation, imax,jmax,kmax, g(2), s(1,1,1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
+     CALL OPR_RADIATION_FLUX(radiation, imax,jmax,kmax, g(2), s(1,1,1,radiation%scalar(is)), dsdx, wrk1d,wrk3d)
   ENDIF
 
   IF ( transport%active(is) ) THEN ! Transport in tmp3
-     CALL FI_TRANS_FLUX(transport, i1, imax,jmax,kmax, is, dy, s,tmp3, dsdy, wrk1d,wrk2d,wrk3d)
+     CALL FI_TRANS_FLUX(transport, i1, imax,jmax,kmax, is, s,tmp3, dsdy, wrk2d,wrk3d)
 ! probably to be split into transport and transport flux, mimicking radiation terms
   ENDIF
 
@@ -395,11 +395,11 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         ENDIF
         
         IF ( radiation%active(is) ) THEN ! radiation source; needs dsdy
-           CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,1,1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
+           CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2), s(1,1,1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
            dummy= thermo_param(2) *coefQ
            tmp1 = tmp1 *( coefR + dsdy *dummy  )
 ! Correction term needs dsdz
-           CALL OPR_RADIATION_FLUX(radiation, imax,jmax,kmax, dy, s(1,1,1,radiation%scalar(is)), dsdx, wrk1d,wrk3d)
+           CALL OPR_RADIATION_FLUX(radiation, imax,jmax,kmax, g(2), s(1,1,1,radiation%scalar(is)), dsdx, wrk1d,wrk3d)
            dsdx = dsdx *dsdz *dummy
         ELSE
            tmp1 = C_0_R; dsdx = C_0_R

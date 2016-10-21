@@ -38,18 +38,10 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(dte,etime, kex,kim, kco, &
   TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk1d,wrk2d,wrk3d, vaux
 ! -----------------------------------------------------------------------
 
-! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
-
 ! #######################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT')
 #endif
-
-! Define pointers
-  x => g(1)%nodes; dx => g(1)%jac(:,1)
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
-  z => g(3)%nodes; dz => g(3)%jac(:,1)
 
 ! #######################################################################
 ! Evaluate standard RHS of incompressible equations
@@ -57,14 +49,14 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(dte,etime, kex,kim, kco, &
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
      IF      ( rkm_mode .EQ. RKM_IMP3_DIFFUSION ) THEN
         CALL RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(&
-             dte,etime,kex,kim,kco,x,y,z,dx,dy,dz,  &
+             dte,etime,kex,kim,kco,  &
              q, hq, q(:,1),q(:,2),q(:,3), hq(1,1),hq(1,2),hq(1,3), s,hs, &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), &
              vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),&
              vaux(vindex(VA_BCS_VI)),vaux,wrk1d,wrk2d,wrk3d)
 ! pressure-correction algorithm; to be checked
         ! CALL RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(&
-        !      dte,etime,kex,kim,kco,x,y,z,dx,dy,dz,  &
+        !      dte,etime,kex,kim,kco,  &
         !      q, hq, q(:,1),q(:,2),q(:,3), hq(1,1),hq(1,2),hq(1,3), s,hs, &
         !      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), txc(1,8), &
         !      vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),&

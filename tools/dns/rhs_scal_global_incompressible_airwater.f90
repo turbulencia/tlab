@@ -23,7 +23,7 @@
 !# File initialed copied from: RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1
 !########################################################################
 SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
-     (is, dte, dx,dy,dz, u,v,w, s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d,h1,h2,h3)
+     (is, dte, u,v,w, s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d,h1,h2,h3)
   
 #ifdef USE_GLOBAL
   USE OMP_LIB
@@ -38,7 +38,6 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
 
   TINTEGER is
   TREAL dte
-  TREAL, DIMENSION(*)           :: dx, dy, dz
   TREAL, DIMENSION(isize_field) :: u, v, w, hs !,s
   TREAL, DIMENSION(isize_field) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, wrk3d
   TREAL, DIMENSION(*)           :: wrk1d
@@ -52,6 +51,9 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
   TINTEGER ij, k, nxy, ip, ibc
   TREAL diff
 
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:), POINTER :: dx,dy,dz
+
 !Alberto.Ponter to the qt,ql (2dim array) and enthalpy
   TREAL, DIMENSION(:),  POINTER :: al_qt
   TREAL, DIMENSION(:),  POINTER :: al_ql
@@ -64,6 +66,10 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
   TREAL :: dummy, dummy1, dummy2, dummy3
 
 ! #######################################################################
+! Define pointers
+  dx => g(1)%jac(:,1)
+  dy => g(2)%jac(:,1)
+  dz => g(3)%jac(:,1)
 
   nxy = imax*jmax
 
@@ -321,7 +327,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
   IF ( bcs_scal_jmin(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
   IF ( bcs_scal_jmax(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
   IF ( ibc .GT. 0 ) THEN
-     CALL BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, imax,jmax,kmax, dy, hs, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,tmp1,wrk3d)
+     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,tmp1,wrk3d)
   ENDIF
 
 ! -----------------------------------------------------------------------

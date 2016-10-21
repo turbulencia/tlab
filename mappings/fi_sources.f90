@@ -15,9 +15,9 @@
 !########################################################################
 SUBROUTINE FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
-  USE DNS_GLOBAL, ONLY : buoyancy, coriolis
-  USE DNS_GLOBAL, ONLY : p_init, mean_rho
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
+  USE DNS_GLOBAL,    ONLY : buoyancy, coriolis
+  USE DNS_GLOBAL,    ONLY : p_init, mean_rho
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
@@ -108,14 +108,14 @@ END SUBROUTINE FI_SOURCES_FLOW
 
 ! #######################################################################
 ! #######################################################################
-SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
+SUBROUTINE FI_SOURCES_SCAL(s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, isize_field, isize_wrk1d
+  USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : radiation, transport, chemistry
 
   IMPLICIT NONE
 
-  TREAL, DIMENSION(*),             INTENT(IN)    :: y, dy
   TREAL, DIMENSION(isize_field,*), INTENT(IN)    :: s
   TREAL, DIMENSION(isize_field,*), INTENT(OUT)   :: hs
   TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: tmp1,tmp2
@@ -142,7 +142,7 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 ! Radiation
 ! -----------------------------------------------------------------------
      IF ( radiation%active(is) ) THEN
-        CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
+        CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2), s(1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -162,7 +162,7 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
      IF ( transport%active(is) ) THEN
         IF ( is .EQ. 1 ) THEN; flag_grad = 1;
         ELSE;                  flag_grad = 0; ENDIF
-        CALL FI_TRANS_FLUX(transport, flag_grad, imax,jmax,kmax, is, dy, s,tmp1, tmp2, wrk1d,wrk2d,wrk3d)
+        CALL FI_TRANS_FLUX(transport, flag_grad, imax,jmax,kmax, is, s,tmp1, tmp2, wrk2d,wrk3d)
         
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -179,7 +179,7 @@ SUBROUTINE FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 ! Chemistry
 ! -----------------------------------------------------------------------
      IF ( chemistry%active(is) ) THEN
-        CALL FI_CHEM(chemistry, imax,jmax,kmax, is, y, s, tmp1)
+        CALL FI_CHEM(chemistry, imax,jmax,kmax, is, s, tmp1)
         
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )

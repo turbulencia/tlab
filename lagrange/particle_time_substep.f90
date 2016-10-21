@@ -20,17 +20,10 @@
 !# Taking care of Particle routines in time_substep_incompressible_explicit 
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!# 
-!#
-!########################################################################
-SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, x, z, l_q, l_hq,&
-                                l_tags, l_comm )    
-
-
+SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )    
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, imax_total, kmax_total
+  USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY: isize_particle, scalex, scalez, inb_particle
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
@@ -42,10 +35,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, x, z, l_q, l_hq,&
 #include "mpif.h"
 #endif
 
-
-
   TREAL dte, dx_grid, dz_grid
-  TREAL, DIMENSION(*)                 :: x,z
   TREAL, DIMENSION(isize_particle,inb_particle) :: l_q
   TREAL, DIMENSION(isize_particle,inb_particle) :: l_hq
   TREAL, DIMENSION(isize_l_comm) :: l_comm
@@ -59,7 +49,13 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, x, z, l_q, l_hq,&
   TINTEGER nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north
 #endif
  
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:), POINTER :: x,z
  
+! Define pointers
+  x => g(1)%nodes
+  z => g(3)%nodes
+
 #ifdef USE_MPI
   
   p_buffer_1(1:isize_pbuffer)=> l_comm(isize_max_hf+1:isize_max_hf+isize_pbuffer)

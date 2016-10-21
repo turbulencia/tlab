@@ -17,9 +17,9 @@
 !# a more exact one (differences of 10^-4)
 !#
 !########################################################################
-SUBROUTINE FI_TRANS_FLUX(transport, flag_grad, nx,ny,nz, is, dy, s,trans, tmp, wrk1d,wrk2d,wrk3d)
+SUBROUTINE FI_TRANS_FLUX(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : term_structure
+  USE DNS_TYPES,  ONLY : term_structure
   USE DNS_GLOBAL, ONLY : imode_fdm, j1bc
   
   IMPLICIT NONE
@@ -29,23 +29,25 @@ SUBROUTINE FI_TRANS_FLUX(transport, flag_grad, nx,ny,nz, is, dy, s,trans, tmp, w
   TYPE(term_structure),         INTENT(IN)    :: transport
   TINTEGER,                     INTENT(IN)    :: nx,ny,nz, flag_grad
   TINTEGER,                     INTENT(IN)    :: is
-  TREAL, DIMENSION(*),          INTENT(IN)    :: dy
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)    :: s
   TREAL, DIMENSION(nx*ny*nz,1), INTENT(OUT)   :: trans ! Transport component. It could have eventually three directions
   TREAL, DIMENSION(nx*ny*nz,1), INTENT(INOUT) :: tmp   ! To avoid re-calculations when repetedly calling this routine
-  TREAL, DIMENSION(*),          INTENT(INOUT) :: wrk1d,wrk2d,wrk3d
+  TREAL, DIMENSION(*),          INTENT(INOUT) :: wrk2d,wrk3d
 
 ! -----------------------------------------------------------------------
   TREAL dummy, exponent
   TINTEGER is_ref
   
+  TINTEGER idummy   ! To use old wrappers to calculate derivatives
+  TREAL    rdummy(1)
+
 !########################################################################
   exponent = transport%auxiliar(1)
   is_ref   = transport%scalar(1)
 
   IF     ( transport%type .EQ. EQNS_TRANS_AIRWATERSIMPLIFIED ) THEN
      IF ( flag_grad .EQ. 1 ) THEN
-        CALL PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, s(1,is_ref), tmp, i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL PARTIAL_Y(idummy, nx,ny,nz, idummy,rdummy, s(1,is_ref), tmp, i0,i0, rdummy,wrk2d,wrk3d)
         IF ( exponent .GT. C_0_R ) tmp(:,1) = tmp(:,1) *(s(:,is_ref)**exponent)
      ENDIF
 
@@ -60,7 +62,7 @@ SUBROUTINE FI_TRANS_FLUX(transport, flag_grad, nx,ny,nz, is, dy, s,trans, tmp, w
      ELSE
         tmp(:,1) = (transport%parameters(is) - transport%parameters(5)*s(:,is)) * s(:,is_ref)
      ENDIF
-     CALL PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, tmp(1,1), trans(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
+     CALL PARTIAL_Y(idummy, nx,ny,nz, idummy,rdummy, tmp(1,1), trans(1,1), i0,i0, rdummy,wrk2d,wrk3d)
 
   ENDIF
   

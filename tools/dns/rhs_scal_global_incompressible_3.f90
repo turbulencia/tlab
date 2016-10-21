@@ -1,3 +1,7 @@
+#include "types.h"
+#include "dns_const.h"
+#include "dns_error.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -14,15 +18,8 @@
 !# diffusion term explicit. 3 2nd order + 3 1st order derivatives.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-#include "dns_error.h"
-
 SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3&
-     (is, dx,dy,dz, u,v,w,z1,zh1, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d)
+     (is, u,v,w,z1,zh1, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL
 
@@ -31,9 +28,6 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3&
 #include "integers.h"
 
   TINTEGER is
-  TREAL dx(imax)
-  TREAL dy(jmax)
-  TREAL dz(kmax_total)
 
   TREAL u(*), v(*), w(*), z1(*), zh1(*)
   TREAL tmp1(*), tmp2(*), tmp3(*), tmp4(*), tmp5(*), tmp6(*)
@@ -43,7 +37,15 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3&
   TINTEGER ij, i, k
   TREAL diff
 
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:), POINTER :: dx,dy,dz
+
 ! #######################################################################
+! Define pointers
+  dx => g(1)%jac(:,1)
+  dy => g(2)%jac(:,1)
+  dz => g(3)%jac(:,1)
+
   IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R
   ELSE;                                  diff = visc/schmidt(is); ENDIF
 

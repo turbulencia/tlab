@@ -45,9 +45,8 @@ SUBROUTINE PARTIAL_XX(ifirst,iunif,imode_fdm, nx,ny,nz, i1bc, dx, u, up2, &
 
   TINTEGER ifirst, iunif
   TINTEGER imode_fdm, nx,ny,nz, i1bc, bcs1_imin,bcs1_imax, bcs2_imin,bcs2_imax
-  TREAL, DIMENSION(*)        :: dx
   TREAL, DIMENSION(nx*ny*nz),    TARGET :: u, up1, up2, wrk3d
-  TREAL, DIMENSION(*)                   :: wrk1d ! not used, to be removed
+  TREAL, DIMENSION(*)                   :: dx, wrk1d ! not used, to be removed
   TREAL, DIMENSION(ny*nz)               :: wrk2d
 
 ! -------------------------------------------------------------------

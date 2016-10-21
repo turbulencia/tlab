@@ -45,9 +45,8 @@ SUBROUTINE PARTIAL_ZZ(ifirst,iunif,imode_fdm, nx,ny,nz, k1bc, dz, u, up2, &
 
   TINTEGER ifirst, iunif
   TINTEGER imode_fdm, nx,ny,nz, k1bc, bcs1_kmin, bcs1_kmax, bcs2_kmin, bcs2_kmax
-  TREAL, DIMENSION(*)        :: dz
   TREAL, DIMENSION(nx*ny*nz),    TARGET :: u, up1, up2, wrk3d
-  TREAL, DIMENSION(*)                   :: wrk1d ! not used, to be removed
+  TREAL, DIMENSION(*)                   :: dz, wrk1d ! not used, to be removed
   TREAL, DIMENSION(nx*ny)               :: wrk2d
 
 ! -------------------------------------------------------------------

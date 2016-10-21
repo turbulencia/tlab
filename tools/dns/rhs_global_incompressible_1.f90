@@ -28,8 +28,8 @@
 !#
 !########################################################################
 SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
-     (dte,etime, x,y,z,dx,dy,dz, u,v,w,h1,h2,h3, q,hq, s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
-     bcs_hb,bcs_ht,b_ref, vaux, wrk1d,wrk2d,wrk3d)
+     (dte,etime, u,v,w,h1,h2,h3, q,hq, s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
+     bcs_hb,bcs_ht, vaux, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -49,13 +49,11 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 #include "integers.h"
 
   TREAL dte,etime
-  TREAL, DIMENSION(*)             :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field)   :: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
   TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(*)             :: wrk2d,wrk3d, vaux
-  TREAL, DIMENSION(jmax)          :: b_ref
   TREAL, DIMENSION(imax,kmax,inb_vars) :: bcs_hb, bcs_ht
 
   TARGET tmp2, h2
@@ -73,18 +71,14 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   INTEGER ilen
 #endif
 
+  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
+
 ! #######################################################################
   nxy   = imax*jmax
 
 #ifdef USE_BLAS
   ilen = isize_field
 #endif
-
-! #######################################################################
-! Source terms
-! #######################################################################
-  CALL FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
-  CALL FI_SOURCES_SCAL(y,dy, s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 
 ! #######################################################################
 ! Ox diffusion and convection terms in Ox momentum eqn
@@ -190,7 +184,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(&
           vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), x,y, q,hq)
+          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), g(1)%nodes,g(2)%nodes, q,hq)
   ENDIF
 
 ! #######################################################################
@@ -331,8 +325,8 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
   IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
   IF ( ibc .GT. 0 ) THEN
-     CALL BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, imax,jmax,kmax, dy, h1, bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,tmp1,wrk3d)
-     CALL BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, imax,jmax,kmax, dy, h3, bcs_hb(1,1,2),bcs_ht(1,1,2), wrk1d,tmp1,wrk3d)
+     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), h1, bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,tmp1,wrk3d)
+     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), h3, bcs_hb(1,1,2),bcs_ht(1,1,2), wrk1d,tmp1,wrk3d)
   ENDIF
 
   DO is = 1,inb_scal
@@ -340,7 +334,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   IF ( bcs_scal_jmin(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
   IF ( bcs_scal_jmax(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
   IF ( ibc .GT. 0 ) THEN
-     CALL BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, imax,jmax,kmax, dy, hs(1,is), bcs_hb(1,1,is+inb_flow),bcs_ht(1,1,is+inb_flow), wrk1d,tmp1,wrk3d)
+     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs(1,is), bcs_hb(1,1,is+inb_flow),bcs_ht(1,1,is+inb_flow), wrk1d,tmp1,wrk3d)
   ENDIF
   ENDDO
 

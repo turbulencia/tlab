@@ -24,7 +24,7 @@
 !#
 !########################################################################
 SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
-     (dte,etime,kex,kim,kco,x,y,z,dx,dy,dz, &
+     (dte,etime,kex,kim,kco, &
      q,hq,u,v,w,h1,h2,h3,s,hs,&
      tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8, &
      bcs_hb,bcs_ht,b_ref, vaux, &
@@ -35,18 +35,16 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
 #endif
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
-  USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax, bcs_scal_jmin, bcs_scal_jmax
+  USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : idivergence
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
   USE DNS_LOCAL,  ONLY : buff_type
-  USE DNS_MPI,    ONLY : ims_pro 
 
   IMPLICIT NONE
 
 #include "integers.h"
 
   TREAL dte, etime, kex, kim, kco 
-  TREAL, DIMENSION(*),                   INTENT(IN)   :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field,*)                     :: q,hq
   TREAL, DIMENSION(isize_field),         INTENT(INOUT):: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,inb_scal),INTENT(INOUT):: s,hs 
@@ -65,6 +63,8 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
 
   TREAL, DIMENSION(:),        POINTER :: p_bcs
   TREAL, DIMENSION(imax,kmax,inb_scal):: bcs_sb, bcs_st 
+
+  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
 
   kef= kex/kim
   aug = C_1_R + kef 
@@ -231,14 +231,14 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(&
           vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), x,y, q,hq ) 
+          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), g(1)%nodes,g(2)%nodes, q,hq ) 
   ENDIF
 
 
 ! old pressure tendencies
   CALL PARTIAL_X(imode_fdm,imax,jmax,kmax,i1bc,dx,tmp8, tmp1,i0,i0,wrk1d,wrk2d,wrk3d) 
   CALL PARTIAL_Y(imode_fdm,imax,jmax,kmax,j1bc,dy,tmp8, tmp2,i0,i0,wrk1d,wrk2d,wrk3d) 
-  CALL PARTIAL_X(imode_fdm,imax,jmax,kmax,k1bc,dz,tmp8, tmp3,i0,i0,wrk1d,wrk2d,wrk3d) 
+  CALL PARTIAL_Z(imode_fdm,imax,jmax,kmax,k1bc,dz,tmp8, tmp3,i0,i0,wrk1d,wrk2d,wrk3d) 
   DO ij=1,isize_field  
      h1(ij) = h1(ij) - tmp1(ij) 
      h2(ij) = h2(ij) - tmp2(ij) 
@@ -285,7 +285,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
         IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
            CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is,&
                 vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-                vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), x,y, q,s(1,is), hs(1,is) ) 
+                vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), g(1)%nodes,g(2)%nodes, q,s(1,is), hs(1,is) ) 
         ENDIF
         
 ! --------------------------------------------------
@@ -405,9 +405,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
   IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
   IF ( ibc .GT. 0 ) THEN
      ! WATCH OUT - THIS IS REALLY GOING TO GIVE NO-FLUX (instead of constant flux) 
-     CALL BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, imax,jmax,kmax, dy, u, &
+     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), u, &
           bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,tmp1,wrk3d)
-     CALL BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, imax,jmax,kmax, dy, w, &
+     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), w, &
           bcs_hb(1,1,2),bcs_ht(1,1,2), wrk1d,tmp1,wrk3d)
   ENDIF
 

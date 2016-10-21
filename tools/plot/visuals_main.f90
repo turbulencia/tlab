@@ -970,7 +970,7 @@ PROGRAM VISUALS_MAIN
         IF (  opt_vec(iv) .EQ. iscal_offset+16) THEN    
            
            IF ( radiation%type .NE. EQNS_NONE ) THEN
-              CALL OPR_RADIATION(radiation, imax,jmax,kmax, dy, s(1,radiation%scalar(1)), txc(1,1), wrk1d,wrk3d)
+              CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2), s(1,radiation%scalar(1)), txc(1,1), wrk1d,wrk3d)
               
               plot_file = 'Radiation'//time_str(1:MaskSize)
               CALL VISUALS_WRITE(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)

@@ -25,12 +25,9 @@
 !# Scalar needed for the buoyancy term
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
-     (dte,etime, x,y,z,dx,dy,dz, u,v,w,h1,h2,h3, s, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
-     bcs_hb,bcs_ht,b_ref, vaux, wrk1d,wrk2d,wrk3d)
+     (dte,etime, u,v,w,h1,h2,h3, s, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
+     bcs_hb,bcs_ht, vaux, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -46,13 +43,11 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 #include "integers.h"
 
   TREAL dte,etime
-  TREAL, DIMENSION(*)             :: x,y,z, dx,dy,dz
   TREAL, DIMENSION(isize_field)   :: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,*) :: s, q,hq
   TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(*)             :: wrk2d,wrk3d, vaux
-  TREAL, DIMENSION(jmax)          :: b_ref
   TREAL, DIMENSION(imax,kmax,*)   :: bcs_hb, bcs_ht
 
   TARGET tmp2, h2
@@ -60,7 +55,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! -----------------------------------------------------------------------
   TINTEGER ij, k, nxy, ip_b, ip_t
   TINTEGER ibc
-  TREAL dummy, u_geo, w_geo
+  TREAL dummy
 
   TINTEGER siz, srt, end    !  Variables for OpenMP Partitioning 
 
@@ -70,10 +65,10 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   INTEGER ilen
 #endif
 
+  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
+
 ! #######################################################################
   nxy   = imax*jmax
-  u_geo = COS(coriolis%parameters(1))
-  w_geo =-SIN(coriolis%parameters(1))
 
 #ifdef USE_BLAS
   ilen = isize_field
@@ -89,57 +84,13 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, &
        g(1), u,u,u, tmp4, i0,i0, i0,i0, tmp1, wrk2d,wrk3d)
 
-! -----------------------------------------------------------------------
-! Coriolis. So far, rotation only in the Oy direction. 
-! -----------------------------------------------------------------------
-
-!$omp parallel default( shared ) private( ij, dummy,srt,end,siz )
-
+!$omp parallel default( shared ) private( ij, srt,end,siz )
   CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
-
-  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
-     dummy = coriolis%vector(2)
-     DO ij = srt, end 
-        h1(ij) = h1(ij) + dummy*( w_geo-w(ij) )  + tmp4(ij) + visc*( tmp6(ij)+tmp5(ij) ) &
+  DO ij = srt,end
+     h1(ij) = h1(ij) + tmp4(ij) + visc*( tmp6(ij)+tmp5(ij) ) &
              - ( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) )
-     ENDDO
-! -----------------------------------------------------------------------
-  ELSE
-     DO ij = srt,end
-        h1(ij) = h1(ij) + tmp4(ij) + visc*( tmp6(ij)+tmp5(ij) ) &
-             - ( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) )
-     ENDDO
-  ENDIF
+  ENDDO
 !$omp end parallel
-
-! -----------------------------------------------------------------------
-! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
-! -----------------------------------------------------------------------
-  IF ( buoyancy%active(1) ) THEN
-     wrk1d(:,1) = C_0_R
-     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
-
-!$omp parallel default( shared ) &
-#ifdef USE_BLAS
-!$omp private( ilen, dummy,srt,end,siz )
-#else 
-!$omp private( ij,   dummy,srt,end,siz )
-#endif 
-
-     CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
-     dummy = buoyancy%vector(1)
-
-#ifdef USE_BLAS
-     ilen = siz
-     CALL DAXPY(ilen, dummy, wrk3d(srt), 1, h1(srt), 1)
-#else
-     DO ij = srt,end
-        h1(ij) = h1(ij) + dummy*wrk3d(ij)
-     ENDDO
-#endif
-!$omp end parallel
-     
-  ENDIF
 
 ! -----------------------------------------------------------------------
 ! BCs s.t. derivative d/dy(u) is zero
@@ -168,55 +119,13 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
        dx, w, tmp4, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
 
-! -----------------------------------------------------------------------
-! Coriolis. So far, rotation only in the Oy direction. 
-! -----------------------------------------------------------------------
-
-!$omp parallel default( shared ) private( ij, dummy,srt,end,siz )
+!$omp parallel default( shared ) private( ij, srt,end,siz )
   CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
-  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
-     dummy = coriolis%vector(2)
-     DO ij = srt,end
-        h3(ij) = h3(ij) + dummy*( u(ij)-u_geo ) + tmp6(ij) + visc*( tmp5(ij)+tmp4(ij) ) &
-             - ( v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
-     ENDDO
-! -----------------------------------------------------------------------
-  ELSE
-     DO ij = srt,end
-        h3(ij) = h3(ij) + tmp6(ij) + visc*( tmp5(ij)+tmp4(ij) ) &
-             - ( v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
-     ENDDO
-  ENDIF
+  DO ij = srt,end
+     h3(ij) = h3(ij) + tmp6(ij) + visc*( tmp5(ij)+tmp4(ij) ) &
+          - ( v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
+  ENDDO
 !$omp end parallel
-
-! -----------------------------------------------------------------------
-! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
-! -----------------------------------------------------------------------
-  IF ( buoyancy%active(3) ) THEN
-     wrk1d(:,1) = C_0_R
-     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
-     
-!$omp parallel default( shared ) &
-#ifdef USE_BLAS
-!$omp private( ilen, dummy, srt,end,siz)
-#else     
-!$omp private( ij,   dummy, srt,end,siz )
-#endif
-     CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
-     dummy = buoyancy%vector(3)
-
-#ifdef USE_BLAS
-     ilen = siz
-     CALL DAXPY(ilen, dummy, wrk3d(srt), 1, h3(srt), 1)
-#else
-     DO ij = srt,end
-        h3(ij) = h3(ij) + dummy*wrk3d(ij)
-     ENDDO
-#endif
-
-!$omp end parallel
-     
-  ENDIF
 
 ! -----------------------------------------------------------------------
 ! BCs s.t. derivative d/dy(w) is zero
@@ -246,41 +155,18 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
        dx, v, tmp4, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
 
-! -----------------------------------------------------------------------
-! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
-! -----------------------------------------------------------------------
-
-  IF ( buoyancy%active(2) ) THEN
-     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref)
 !$omp parallel default( shared ) &
 #ifdef USE_BLAS
-!$omp private( ilen, srt,end,siz, dummy )
+!$omp private( ilen, srt,end,siz)
 #else
-!$omp private( ij,   srt,end,siz, dummy )
+!$omp private( ij,   srt,end,siz)
 #endif 
-     CALL DNS_OMP_PARTITION(isize_field, srt,end,siz)      
-     dummy = buoyancy%vector(2)
-     DO ij = srt,end
-        h2(ij) = h2(ij) + dummy*wrk3d(ij) + tmp5(ij) + visc*( tmp6(ij)+tmp4(ij) ) &
-             - ( w(ij)*tmp3(ij) + u(ij)*tmp1(ij) )
-     ENDDO
+  CALL DNS_OMP_PARTITION(isize_field, srt,end,siz) 
+  DO ij = srt,end
+     h2(ij) = h2(ij) + tmp5(ij) + visc*( tmp6(ij)+tmp4(ij) ) &
+          - ( w(ij)*tmp3(ij) + u(ij)*tmp1(ij) )
+  ENDDO
 !$omp end parallel 
-
-  ELSE
-!$omp parallel default( shared ) &
-#ifdef USE_BLAS
-!$omp private( ilen, srt,end,siz, dummy )
-#else
-!$omp private( ij,   srt,end,siz, dummy )
-#endif 
-     CALL DNS_OMP_PARTITION(isize_field, srt,end,siz) 
-     DO ij = srt,end
-        h2(ij) = h2(ij) + tmp5(ij) + visc*( tmp6(ij)+tmp4(ij) ) &
-             - ( w(ij)*tmp3(ij) + u(ij)*tmp1(ij) )
-     ENDDO
-!$omp end parallel 
-     
-  ENDIF
 
 ! #######################################################################
 ! Impose buffer zone as relaxation terms
@@ -288,7 +174,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(&
           vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), x,y, q,hq)
+          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), g(1)%nodes,g(2)%nodes, q,hq)
   ENDIF
 
 ! #######################################################################
@@ -398,8 +284,8 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
   IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
   IF ( ibc .GT. 0 ) THEN
-     CALL BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, imax,jmax,kmax, dy, h1, bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,tmp1,wrk3d)
-     CALL BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, imax,jmax,kmax, dy, h3, bcs_hb(1,1,2),bcs_ht(1,1,2), wrk1d,tmp1,wrk3d)
+     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), h1, bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,tmp1,wrk3d)
+     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), h3, bcs_hb(1,1,2),bcs_ht(1,1,2), wrk1d,tmp1,wrk3d)
   ENDIF
 
 ! -----------------------------------------------------------------------

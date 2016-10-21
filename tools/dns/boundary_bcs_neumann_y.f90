@@ -26,20 +26,20 @@
 !#                            3, for Neumann/Neumann
 !#
 !########################################################################
-SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, nx,ny,nz, dy, u, bcs_hb,bcs_ht, wrk1d,tmp1,tmp2)
+SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1,tmp2)
 
-  USE DNS_GLOBAL, ONLY : jmax_total
+  USE DNS_TYPES, ONLY : grid_structure
 
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TINTEGER imode_fdm, nx,ny,nz, ibc
-  TREAL, DIMENSION(jmax_total,*)                      :: dy
-  TREAL, DIMENSION(nx*nz,ny),     TARGET, INTENT(IN)  :: u         ! they are transposed below
-  TREAL, DIMENSION(nx*nz,ny),     TARGET              :: tmp1,tmp2 ! they are transposed below
-  TREAL, DIMENSION(jmax_total,3), TARGET              :: wrk1d
-  TREAL, DIMENSION(nx*nz),        TARGET, INTENT(OUT) :: bcs_hb,bcs_ht
+  TINTEGER nx,ny,nz, ibc
+  TYPE(grid_structure),               INTENT(IN)  :: g
+  TREAL, DIMENSION(nx*nz,ny), TARGET, INTENT(IN)  :: u         ! they are transposed below
+  TREAL, DIMENSION(nx*nz,ny), TARGET              :: tmp1,tmp2 ! they are transposed below
+  TREAL, DIMENSION(g%size,3), TARGET              :: wrk1d
+  TREAL, DIMENSION(nx*nz),    TARGET, INTENT(OUT) :: bcs_hb,bcs_ht
 
 ! -------------------------------------------------------------------
   TINTEGER nxz, nxy
@@ -49,7 +49,7 @@ SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, nx,ny,nz, dy, u, bcs_hb,bcs_ht,
   TREAL, DIMENSION(:),   POINTER :: a,b,c
 
 ! ###################################################################
-  IF ( jmax_total .EQ. 1 ) THEN ! Set to zero in 2D case
+  IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
   bcs_hb = C_0_R; bcs_ht = C_0_R 
 
   ELSE
@@ -82,14 +82,23 @@ SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(imode_fdm,ibc, nx,ny,nz, dy, u, bcs_hb,bcs_ht,
   ENDIF
 
 ! ###################################################################
-  IF      ( imode_fdm .eq. FDM_COM4_JACOBIAN ) THEN; !not yet implemented
-  ELSE IF ( imode_fdm .eq. FDM_COM6_JACOBIAN ) THEN; CALL FDM_C1N6_BCS_LHS(ny,     ibc, dy, a,b,c)
-                                                 CALL FDM_C1N6_BCS_RHS(ny,nxz, ibc,     p_org,p_dst)
-  ELSE IF ( imode_fdm .eq. FDM_COM6_DIRECT   ) THEN; CALL FDM_C1N6_BCS_LHS(ny,     ibc, dy, a,b,c) ! not yet implemented
-                                                 CALL FDM_C1N6_BCS_RHS(ny,nxz, ibc,     p_org,p_dst)
-  ELSE IF ( imode_fdm .eq. FDM_COM6_DIRECT   ) THEN; !not yet implemented
-  ENDIF
+  SELECT CASE( g%mode_fdm )
      
+  CASE( FDM_COM4_JACOBIAN ) !not yet implemented
+     
+  CASE( FDM_COM6_JACOBIAN )
+     CALL FDM_C1N6_BCS_LHS(ny,     ibc, g%jac, a,b,c)
+     CALL FDM_C1N6_BCS_RHS(ny,nxz, ibc,     p_org,p_dst)
+
+  CASE( FDM_COM6_DIRECT   ) !not yet implemented
+     CALL FDM_C1N6_BCS_LHS(ny,     ibc, g%jac, a,b,c)
+     CALL FDM_C1N6_BCS_RHS(ny,nxz, ibc,     p_org,p_dst)
+     
+  CASE( FDM_COM8_JACOBIAN ) !not yet implemented
+     
+  END SELECT
+  
+! -------------------------------------------------------------------
   IF      ( ibc .EQ. 1 ) THEN
      CALL TRIDFS(ny-1,     a(2),b(2),c(2))
      CALL TRIDSS(ny-1,nxz, a(2),b(2),c(2), p_dst(1,2))

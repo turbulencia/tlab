@@ -27,11 +27,6 @@
 !# decreased performance considerably (at least in JUGENE)
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!# txc     Aux   3D array size 6
-!#
-!########################################################################
 SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
      q,hq,s,hs, txc, vaux, wrk1d,wrk2d,wrk3d, &
      l_q, l_hq, l_txc, l_tags, l_comm)
@@ -64,21 +59,13 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   TREAL, DIMENSION(*)                 :: l_comm, l_txc
   INTEGER(8), DIMENSION(*)            :: l_tags
 
-  TARGET :: q
-
 ! -----------------------------------------------------------------------
   TINTEGER ij, is
   TINTEGER srt,end,siz    !  Variables for OpenMP Partitioning 
 
-! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: u, v, w
-
 #ifdef USE_BLAS
   INTEGER ilen
 #endif
-
-! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
 
 ! #######################################################################
 #ifdef TRACE_ON
@@ -89,15 +76,6 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   ilen = isize_field
 #endif
 
-! Define pointers
-  x => g(1)%nodes; dx => g(1)%jac(:,1)
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
-  z => g(3)%nodes; dz => g(3)%jac(:,1)
-
-  u => q(:,1)
-  v => q(:,2)
-  w => q(:,3)
-
 ! #######################################################################
 ! Evaluate standard RHS of incompressible equations
 ! #######################################################################
@@ -106,13 +84,15 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   IF      ( iadvection .EQ. EQNS_DIVERGENCE .AND. &
             iviscous   .EQ. EQNS_EXPLICIT   .AND. & 
             idiffusion .EQ. EQNS_EXPLICIT         ) THEN
-     CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3(dte, x,y,z,dx,dy,dz, u,v,w,hq(1,1),hq(1,2),hq(1,3),s, &
+     CALL FI_SOURCES_FLOW(q,s, hq, vaux(vindex(VA_BCS_VI)), wrk1d,wrk3d)
+     CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3),s, &
           q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
           vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
           wrk1d,wrk2d,wrk3d)
      
+     CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
      DO is = 1,inb_scal
-        CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is, dx,dy,dz, u,v,w,s(1,is),hs(1,is), &
+        CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is, q(1,1),q(1,2),q(1,3),s(1,is),hs(1,is), &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
      ENDDO
         
@@ -120,13 +100,14 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   ELSE IF ( iadvection .EQ. EQNS_SKEWSYMMETRIC .AND. &
             iviscous   .EQ. EQNS_EXPLICIT      .AND. & 
             idiffusion .EQ. EQNS_EXPLICIT            ) THEN
-     CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2(dte, x,y,z,dx,dy,dz, u,v,w,hq(1,1),hq(1,2),hq(1,3),s, &
+     CALL FI_SOURCES_FLOW(q,s, hq, vaux(vindex(VA_BCS_VI)), wrk1d,wrk3d)
+     CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3),s, &
           q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-          vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
-          wrk1d,wrk2d,wrk3d)
+          vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, wrk1d,wrk2d,wrk3d)
      
+     CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
      DO is = 1,inb_scal
-        CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is, dx,dy,dz, u,v,w,s(1,is), hs(1,is), &
+        CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is, q(1,1),q(1,2),q(1,3),s(1,is), hs(1,is), &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
      ENDDO
      
@@ -135,41 +116,42 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
             iviscous   .EQ. EQNS_EXPLICIT   .AND. & 
             idiffusion .EQ. EQNS_EXPLICIT         ) THEN
      IF      ( imode_rhs .EQ. EQNS_RHS_SPLIT       ) THEN 
-        CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1(dte,etime, x,y,z,dx,dy,dz, u,v,w,hq(1,1),hq(1,2),hq(1,3),s, &
+        CALL FI_SOURCES_FLOW(q,s, hq, vaux(vindex(VA_BCS_VI)), wrk1d,wrk3d)
+        CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1(dte,etime, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3),s, &
              q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
-             wrk1d,wrk2d,wrk3d)
+             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, wrk1d,wrk2d,wrk3d)
         
         IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
            IF ( damkohler(1) .LE. C_0_R )  THEN
               DO is = 1,inb_scal
-                 CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER(is, dte, dx,dy,dz, u,v,w,s(1,1), hs(1,is), &
+                 CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER(is, dte, q(1,1),q(1,2),q(1,3),s(1,1), hs(1,is), &
                       txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d,hq(1,1),hq(1,2),hq(1,3))
               ENDDO
            ELSE
-              CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT(dte, dx,dy,dz, u,v,w, hq(1,1),hq(1,2),hq(1,3), s, hs, &
+              CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT(dte, q(1,1),q(1,2),q(1,3), hq(1,1),hq(1,2),hq(1,3), s, hs, &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk1d,wrk2d,wrk3d)
            ENDIF
 
         ELSE
-           CALL FI_SOURCES_SCAL(y,dy, s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
+           CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
            DO is = 1,inb_scal
-              CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is, dte, dx,dy,dz, u,v,w,s(1,is),hs(1,is), s,&
+              CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is, dte, q(1,1),q(1,2),q(1,3),s(1,is),hs(1,is), s,&
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
            ENDDO
 
         ENDIF
         
      ELSE IF ( imode_rhs .EQ. EQNS_RHS_COMBINED    ) THEN 
-        CALL RHS_GLOBAL_INCOMPRESSIBLE_1(dte,etime, x,y,z,dx,dy,dz, u,v,w,hq(1,1),hq(1,2),hq(1,3), &
+        CALL FI_SOURCES_FLOW(q,s, hq, vaux(vindex(VA_BCS_VI)), wrk1d,wrk3d)
+        CALL FI_SOURCES_SCAL(  s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
+        CALL RHS_GLOBAL_INCOMPRESSIBLE_1(dte,etime, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
              q,hq, s,hs, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
-             wrk1d,wrk2d,wrk3d)
+             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, wrk1d,wrk2d,wrk3d)
 
      ELSE IF ( imode_rhs .EQ. EQNS_RHS_NONBLOCKING ) THEN 
 #ifdef USE_PSFFT 
-        CALL RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime, x,y,z,dx,dy,dz,&
-             u(1),v(1),w(1),s(1,1),&
+        CALL RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime, &
+             q(1,1),q(1,2),q(1,3),s(1,1),&
              txc(1,1), txc(1,2), &
              txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), txc(1,8),txc(1,9),txc(1,10), &
              txc(1,11),txc(1,12),txc(1,13),txc(1,14),&
@@ -193,11 +175,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 ! Call RHS particle algorithm
 ! #######################################################################
   IF ( icalc_particle .EQ. 1 ) THEN
-     CALL RHS_PARTICLE_GLOBAL(x,y,z,dx,dy,dz,q,s,wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags, l_comm)
-     
-!    CALL FIELD_TO_PARTICLE &
-!    (q(:,1), wrk1d, wrk2d, wrk3d, l_txc, l_tags, l_hq, l_q)
-     
+     CALL RHS_PARTICLE_GLOBAL(q,s,wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags, l_comm)
   END IF
 
 ! #######################################################################
@@ -206,9 +184,9 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
      ! Flow part needs to be taken into account in the pressure
      DO is = 1,inb_scal
-     CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is,&
-          vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), x,y, q,s(1,is),hs(1,is))
+        CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is,&
+             vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
+             vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), g(1)%nodes,g(2)%nodes, q,s(1,is),hs(1,is))
      ENDDO
   ENDIF
 
@@ -256,7 +234,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 ! Particle POSTION UPDATED and  SEND/RECV TO THE NEW PROCESSOR
 ! ######################################################################
   IF ( icalc_particle .EQ. 1 ) THEN 
-    CALL PARTICLE_TIME_SUBSTEP(dte, x, z, l_q, l_hq,l_tags, l_comm )    
+    CALL PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq,l_tags, l_comm )    
   END IF 
 
 ! ###################################################################
