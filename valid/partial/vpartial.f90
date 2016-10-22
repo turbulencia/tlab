@@ -107,10 +107,10 @@ PROGRAM VPARTIAL
      CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, du1_n, du2_n1, i0,i0, wrk1d,wrk2d,wrk3d)
      
 ! Direct metrics
-     CALL FDM_C2N6N_INITIALIZE(imax, x, wrk1d(1,1), wrk1d(1,4))
+     CALL FDM_C2N6ND_INITIALIZE(imax, x, wrk1d(1,1), wrk1d(1,4))
      CALL TRIDFS(imax,     wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
 
-     CALL FDM_C2N6N_RHS(imax,len, wrk1d(1,4), u, du2_n3)
+     CALL FDM_C2N6ND_RHS(imax,len, wrk1d(1,4), u, du2_n3)
      CALL TRIDSS(imax,len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), du2_n3)
 
   ENDIF

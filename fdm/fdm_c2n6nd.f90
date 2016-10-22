@@ -1,9 +1,6 @@
 #include "types.h"
 
 !########################################################################
-!# Tool/Library PADE
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2013/01/20 - J.P. Mellado
@@ -11,6 +8,8 @@
 !#
 !########################################################################
 !# DESCRIPTION
+!#
+!# Compact 2nd-order 6th-order Nonuniform Direct
 !#
 !# Implementation of the second derivative finite difference with
 !# 6th order tridiagonal compact scheme for non-uniform grids
@@ -32,7 +31,7 @@
 !########################################################################
 ! Create diagonals
 !########################################################################
-SUBROUTINE FDM_C2N6N_INITIALIZE(nmax, x, lhs, rhs)
+SUBROUTINE FDM_C2N6ND_INITIALIZE(nmax, x, lhs, rhs)
 
   IMPLICIT NONE
 
@@ -433,12 +432,12 @@ SUBROUTINE FDM_C2N6N_INITIALIZE(nmax, x, lhs, rhs)
   rhs(n,1) = bp2 *tmp1 
 
   RETURN
-END SUBROUTINE FDM_C2N6N_INITIALIZE
+END SUBROUTINE FDM_C2N6ND_INITIALIZE
 
 ! #######################################################################
 ! Constructing forcing term
 ! #######################################################################
-SUBROUTINE FDM_C2N6N_RHS(nmax,mmax, rhs, u, d)
+SUBROUTINE FDM_C2N6ND_RHS(nmax,mmax, rhs, u, d)
 
   IMPLICIT NONE
 
@@ -480,4 +479,4 @@ SUBROUTINE FDM_C2N6N_RHS(nmax,mmax, rhs, u, d)
             + u(:,n)
 
   RETURN
-END SUBROUTINE FDM_C2N6N_RHS
+END SUBROUTINE FDM_C2N6ND_RHS

@@ -223,7 +223,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
            CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3)) ! 8th not yet developed
 
         CASE( FDM_COM6_DIRECT   )
-           IF ( i .EQ. 0 ) CALL FDM_C2N6N_INITIALIZE(nx, x, g%lu2(1,ip+1), g%lu2(1,ip+4))
+           IF ( i .EQ. 0 ) CALL FDM_C2N6ND_INITIALIZE(nx, x, g%lu2(1,ip+1), g%lu2(1,ip+4))
            
         END SELECT
 
