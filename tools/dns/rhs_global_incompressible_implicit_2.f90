@@ -24,7 +24,7 @@
 !#
 !########################################################################
 SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
-     (dte,etime,kex,kim,kco, q,hq, u,v,w,h1,h2,h3, s,hs,&
+     (dte, kex,kim,kco, q,hq, u,v,w,h1,h2,h3, s,hs,&
      tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7, &
      bcs_hb,bcs_ht,b_ref, vaux, wrk1d,wrk2d,wrk3d)
 
@@ -46,7 +46,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 
 #include "integers.h"
 
-  TREAL dte, etime, kex, kim, kco 
+  TREAL dte, kex, kim, kco 
   TREAL, DIMENSION(isize_field,*)                     :: q,hq
   TREAL, DIMENSION(isize_field),         INTENT(INOUT):: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,inb_scal),INTENT(INOUT):: s,hs 
@@ -250,7 +250,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(&
           vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), g(1)%nodes,g(2)%nodes, q,hq ) 
+          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,hq ) 
   ENDIF
 
 ! #######################################################################
@@ -334,7 +334,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
         IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
            CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is,&
                 vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-                vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), g(1)%nodes,g(2)%nodes, q,s(1,is), hs(1,is) ) 
+                vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,s(1,is), hs(1,is) ) 
         ENDIF
         
 ! #######################################################################

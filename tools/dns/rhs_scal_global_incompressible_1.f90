@@ -19,7 +19,7 @@
 !#
 !########################################################################
 SUBROUTINE RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1&
-     (is, dte, u,v,w,s_is,hs_is, s, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d)
+     (is, u,v,w,s_is,hs_is, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d)
 
   USE OMP_LIB
   USE DNS_GLOBAL
@@ -30,9 +30,7 @@ SUBROUTINE RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1&
 #include "integers.h"
 
   TINTEGER is
-  TREAL dte
   TREAL, DIMENSION(isize_field)   :: u,v,w, s_is, hs_is
-  TREAL, DIMENSION(isize_field,*) :: s
   TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk3d
   TREAL, DIMENSION(jmax,*)        :: wrk1d
   TREAL, DIMENSION(imax,kmax,2)   :: wrk2d

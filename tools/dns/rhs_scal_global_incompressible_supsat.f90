@@ -41,7 +41,7 @@
 !#
 !########################################################################
 SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT&
-     (dte, u,v,w, h1,h2,h3, s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, tmp7, wrk1d,wrk2d,wrk3d)
+     (u,v,w, h1,h2,h3, s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, tmp7, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -55,7 +55,6 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT&
 
 #include "integers.h"
 
-  TREAL dte
   TREAL, DIMENSION(isize_field) :: u, v, w
   TREAL, DIMENSION(isize_field) :: h1, h2, h3  !rhs of the flow equation
   TREAL, DIMENSION(isize_field,*), TARGET :: s !Alberto. Now mulidimensinal array (including h,qt,ql)
@@ -93,7 +92,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT&
 
   al_h=>s(:,1)  !We point to the scalar array which contains the enthalpy
   al_qt=> s(:,2) ! We point to the scalar array which contains qt
-  al_ql=> s(:,3)		! We point to the scalar array which contains ql
+  al_ql=> s(:,3)  ! We point to the scalar array which contains ql
 
 ! #######################################################################
 ! Diffusion and convection terms in scalar equations

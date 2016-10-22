@@ -21,7 +21,6 @@ SUBROUTINE DNS_INITIALIZE
 #include "mpif.h"
 #endif
 
-  TINTEGER idummy 
   CHARACTER*10 clock(2)
   CHARACTER*64 line
 

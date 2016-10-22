@@ -237,13 +237,13 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
   ENDIF
 
   IF ( j1bc .NE. DNS_BCS_PERIODIC ) THEN
-     CALL BOUNDARY_BCS_Y(isize_field, M2_max, dx,dy,dz, rho,u,v,w,p,GAMMA_LOC(1),s, &
+     CALL BOUNDARY_BCS_Y(isize_field, M2_max, rho,u,v,w,p,GAMMA_LOC(1),s, &
           vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), h0,h1,h2,h3,h4,hs,&
           txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), AUX_LOC(1), wrk1d,wrk2d,wrk3d)
   ENDIF
 
   IF ( i1bc .NE. DNS_BCS_PERIODIC ) THEN
-     CALL BOUNDARY_BCS_X(isize_field, M2_max, etime, x,y,z,dx,dy,dz, rho,u,v,w,p,GAMMA_LOC(1),s, &
+     CALL BOUNDARY_BCS_X(isize_field, M2_max, etime, rho,u,v,w,p,GAMMA_LOC(1),s, &
           x_inf,y_inf,z_inf,q_inf,s_inf, &
           vaux(vindex(VA_BCS_VI)), vaux(vindex(VA_BCS_VO)), h0,h1,h2,h3,h4,hs,&
           txc, AUX_LOC(1), wrk1d,wrk2d,wrk3d)
@@ -262,11 +262,11 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(&
           vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), x,y, q,  hq)
+          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,hq)
      DO is = 1,inb_scal
      CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is,&
           vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), x,y, q,s(1,is),hs(1,is))
+          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,s(1,is),hs(1,is))
      ENDDO
   ENDIF
 

@@ -1,3 +1,5 @@
+#include "types.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -11,15 +13,10 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-
 !########################################################################
 ! Sinusoidal forcing
 !########################################################################
-SUBROUTINE FI_FORCING_0(imax,jmax,kmax, time,visc, x,y, u,v, h_u,h_v)
+SUBROUTINE FI_FORCING_0(imax,jmax,kmax, time,visc, u,v, h_u,h_v)
 
   IMPLICIT NONE
 
@@ -27,7 +24,6 @@ SUBROUTINE FI_FORCING_0(imax,jmax,kmax, time,visc, x,y, u,v, h_u,h_v)
   
   TINTEGER imax,jmax,kmax
   TREAL time,visc
-  TREAL, DIMENSION(*)              :: x,y
   TREAL, DIMENSION(imax,jmax,kmax) :: u,v, h_u,h_v
 
 ! -----------------------------------------------------------------------
@@ -41,8 +37,8 @@ SUBROUTINE FI_FORCING_0(imax,jmax,kmax, time,visc, x,y, u,v, h_u,h_v)
 !  amplitude =-( C_1_R + (sigma/omega)**2 )*omega
 !  amplitude = amplitude*sin(omega*time)
 !  DO j = 1,jmax; DO i = 1,imax
-!     u(i,j,1) = SIN(x(i)*omega)*COS(y(j)*omega)
-!     v(i,j,1) =-COS(x(i)*omega)*SIN(y(j)*omega)
+!     u(i,j,1) = SIN(x(i)*omega)*COS(g(2)%nodes(j)*omega)
+!     v(i,j,1) =-COS(x(i)*omega)*SIN(g(2)%nodes(j)*omega)
 !  ENDDO; ENDDO
 
   amplitude = sin(omega*time)
@@ -57,8 +53,9 @@ END SUBROUTINE FI_FORCING_0
 ! Velocity field with no-slip
 !########################################################################
 SUBROUTINE FI_FORCING_1(iunifx,iunify, imode_fdm, imax,jmax,kmax, i1bc,j1bc, &
-     time,visc, x,y,dx,dy, h1,h2, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
+     time,visc, h1,h2, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
 
+  USE DNS_GLOBAL, ONLY : g
   IMPLICIT NONE
 
 #include "integers.h"
@@ -66,7 +63,6 @@ SUBROUTINE FI_FORCING_1(iunifx,iunify, imode_fdm, imax,jmax,kmax, i1bc,j1bc, &
   TINTEGER iunifx,iunify, imode_fdm, imax,jmax,kmax, i1bc,j1bc
   TREAL time,visc
 
-  TREAL, DIMENSION(*)              :: x,y, dx,dy
   TREAL, DIMENSION(imax*jmax*kmax) :: h1,h2
   TREAL, DIMENSION(imax*jmax*kmax) :: tmp1,tmp2,tmp3,tmp4
   TREAL                            :: wrk1d(*), wrk2d(*), wrk3d(*)
@@ -75,14 +71,16 @@ SUBROUTINE FI_FORCING_1(iunifx,iunify, imode_fdm, imax,jmax,kmax, i1bc,j1bc, &
   TINTEGER ij, i, j
   TREAL pi_loc
 
+  TREAL dx(1), dy(1) ! To use old wrappers to calculate derivatives
+
   pi_loc     = ACOS(-C_1_R)
 
 ! #######################################################################
   DO j = 1,jmax; DO i = 1,imax; ij = imax*(j-1) + i
-!     tmp1(ij) = sin(C_2_R*pi_loc*x(i))*       sin(C_4_R*pi_loc*y(j))
-!     tmp2(ij) =-cos(C_2_R*pi_loc*x(i))*(C_1_R-cos(C_4_R*pi_loc*y(j)))*C_05_R
-     tmp1(ij) = sin(pi_loc*x(i))*sin(pi_loc*x(i))*sin(C_2_R*pi_loc*y(j))
-     tmp2(ij) =-sin(C_2_R*pi_loc*x(i))*sin(pi_loc*y(j))*sin(pi_loc*y(j))
+!     tmp1(ij) = sin(C_2_R*pi_loc*g(1)%nodes(i))*       sin(C_4_R*pi_loc*g(2)%nodes(j))
+!     tmp2(ij) =-cos(C_2_R*pi_loc*g(1)%nodes(i))*(C_1_R-cos(C_4_R*pi_loc*g(2)%nodes(j)))*C_05_R
+     tmp1(ij) = sin(pi_loc*g(1)%nodes(i))*sin(pi_loc*g(1)%nodes(i))*sin(C_2_R*pi_loc*g(2)%nodes(j))
+     tmp2(ij) =-sin(C_2_R*pi_loc*g(1)%nodes(i))*sin(pi_loc*g(2)%nodes(j))*sin(pi_loc*g(2)%nodes(j))
   ENDDO; ENDDO
 
 ! Time terms
@@ -125,9 +123,9 @@ SUBROUTINE FI_FORCING_1(iunifx,iunify, imode_fdm, imax,jmax,kmax, i1bc,j1bc, &
 
 ! #######################################################################
   DO j = 1,jmax; DO i = 1,imax; ij = imax*(j-1) + i
-!     tmp1(ij) = cos(C_4_R*pi_loc*x(i))*(C_2_R-cos(C_4_R*pi_loc*y(j)))/C_8_R &
-!          - C_05_R*(sin(C_2_R*pi_loc*y(j)))**4
-     tmp1(ij) = sin(C_2_R*pi_loc*x(i))*sin(C_2_R*pi_loc*y(j))
+!     tmp1(ij) = cos(C_4_R*pi_loc*g(1)%nodes(i))*(C_2_R-cos(C_4_R*pi_loc*g(2)%nodes(j)))/C_8_R &
+!          - C_05_R*(sin(C_2_R*pi_loc*g(2)%nodes(j)))**4
+     tmp1(ij) = sin(C_2_R*pi_loc*g(1)%nodes(i))*sin(C_2_R*pi_loc*g(2)%nodes(j))
      tmp1(ij) = tmp1(ij)*(cos(C_2_R*pi_loc*time))**2
   ENDDO; ENDDO
 

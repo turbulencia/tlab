@@ -249,7 +249,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
               ENDIF
            ENDIF
         ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-           CALL STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d,wrk3d)
+           CALL STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d)
         ENDIF
      ENDIF
      

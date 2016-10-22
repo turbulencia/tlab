@@ -65,8 +65,8 @@ PROGRAM VTGVORTEX
   CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
   txc(:,1) = C_0_R; txc(:,4) = C_0_R
 !  CALL FI_FORCING_1(iunifx,iunify, imode_fdm, imax,jmax,kmax, i1bc,j1bc, & 
-!       rtime,visc, x,y,dx,dy, txc(1,1),txc(1,4), q(1,1),q(1,2),q(1,3),q(1,4), wrk1d,wrk2d,wrk3d)
-!  CALL FI_FORCING_0(imax,jmax,kmax, rtime,visc, x,y, q(1,1),q(1,2), txc(1,1),txc(1,4))
+!       rtime,visc, txc(1,1),txc(1,4), q(1,1),q(1,2),q(1,3),q(1,4), wrk1d,wrk2d,wrk3d)
+!  CALL FI_FORCING_0(imax,jmax,kmax, rtime,visc, q(1,1),q(1,2), txc(1,1),txc(1,4))
 !  CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
 
   CALL FI_PRESSURE_BOUSSINESQ(q(1,1),q(1,2),q(1,3),txc(1,4), q(1,4), &

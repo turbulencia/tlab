@@ -1,3 +1,7 @@
+#include "types.h"
+#include "dns_error.h"
+#include "dns_const.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -21,12 +25,8 @@
 !# wrk1d     Out     Reference density profile
 !#
 !########################################################################
-#include "types.h"
-#include "dns_error.h"
-#include "dns_const.h"
-
 SUBROUTINE  RHS_FLOW_GLOBAL_ANELASTIC_1&
-     (dte, x,y,z,dx,dy,dz, u,v,w,h1,h2,h3, z1, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
+     (dte, u,v,w,h1,h2,h3, z1, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
      bcs_hb,bcs_ht,b_ref, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL
@@ -36,7 +36,6 @@ IMPLICIT NONE
 #include "integers.h"
 
   TREAL dte
-  TREAL, DIMENSION(*)              :: x, y, z, dx, dy, dz
   TREAL, DIMENSION(imax,jmax,kmax) :: u, v, w, h1, h2, h3, z1
   TREAL, DIMENSION(imax,jmax,kmax) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, wrk3d
   TREAL                            :: wrk1d(isize_wrk1d,*), wrk2d(*)
@@ -45,6 +44,8 @@ IMPLICIT NONE
 
 ! -----------------------------------------------------------------------
   TINTEGER ij, i, j, k
+
+  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
 
 ! #######################################################################
 ! Density reference profile

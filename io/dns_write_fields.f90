@@ -31,7 +31,7 @@
 !########################################################################
 SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
 
-  USE DNS_GLOBAL, ONLY : imode_files, imode_eqns, inb_scal
+  USE DNS_GLOBAL, ONLY : imode_files, imode_eqns
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : visc, froude, rossby, damkohler, prandtl, mach

@@ -1,3 +1,7 @@
+#include "types.h"
+#include "dns_error.h"
+#include "dns_const.h"
+
 !########################################################################
 !# Tool/Library DNS
 !#
@@ -23,21 +27,12 @@
 !# to be calculated.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_error.h"
-#include "dns_const.h"
-
 SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s, e, rho, T, wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imode_eqns
   USE DNS_CONSTANTS, ONLY : efile
-
+  USE DNS_GLOBAL,    ONLY : imode_eqns
   USE THERMO_GLOBAL, ONLY : imixture, gama0, GRATIO
-  USE THERMO_GLOBAL, ONLY : NSP, NCP_CHEMKIN, WGHT_INV, THERMO_AI, THERMO_TLIM
-  USE THERMO_GLOBAL, ONLY : YMASS
+  USE THERMO_GLOBAL, ONLY : NSP, NCP_CHEMKIN, WGHT_INV, THERMO_AI
 
   IMPlICIT NONE
 

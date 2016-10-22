@@ -23,7 +23,7 @@
 !########################################################################
 SUBROUTINE THERMO_AIRWATER_QSAT_RE(nx, ny, nz, e, rho, qsat, T)
 
-  USE THERMO_GLOBAL, ONLY : GRATIO, MRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
+  USE THERMO_GLOBAL, ONLY : GRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT
 
   IMPLICIT NONE
 

@@ -21,10 +21,7 @@
 !# in BOUNDARY_BCS_X.
 !#
 !########################################################################
-!# ARGUMENTS 
-!# 
-!########################################################################
-SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, dx,dy,dz, rho,u,v,w,p,gama,z1, &
+SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
      bcs_hb,bcs_ht, h0,h1,h2,h3,h4,zh1, tmp1,tmp2,tmp3,tmp4,tmp5, aux2d, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
@@ -39,7 +36,6 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, dx,dy,dz, rho,u,v,w,p,gama,z1, &
   TINTEGER iaux
   TREAL M2_max
 
-  TREAL, DIMENSION(*)                :: dx, dy, dz
   TREAL, DIMENSION(imax,jmax,kmax)   :: rho, u, v, w, p, gama, h0, h1, h2, h3, h4
   TREAL, DIMENSION(imax,jmax,kmax)   :: tmp1, tmp2, tmp3, tmp4, tmp5
   TREAL, DIMENSION(imax,jmax,kmax,*) :: z1, zh1
@@ -54,6 +50,8 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, dx,dy,dz, rho,u,v,w,p,gama,z1, &
   TREAL prefactor, pl_out, pl_inf, dummy
 
   TREAL, DIMENSION(:,:,:), POINTER :: tmin, lmin, tmax, lmax, inf_rhs
+
+  TREAL dy(1) ! To use old wrappers to calculate derivatives
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -133,7 +131,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, dx,dy,dz, rho,u,v,w,p,gama,z1, &
 ! ###################################################################
 ! Transverse terms
 ! ###################################################################
-  CALL BOUNDARY_BCS_TRANSVERSE_Y(dx,dy,dz, u,v,w,p,rho,gama, z1, &
+  CALL BOUNDARY_BCS_TRANSVERSE_Y(u,v,w,p,rho,gama, z1, &
        tmin,lmin,tmax,lmax, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
 
 ! ###################################################################

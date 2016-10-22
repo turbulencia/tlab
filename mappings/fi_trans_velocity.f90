@@ -56,13 +56,13 @@ SUBROUTINE FI_TRANS_VELOCITY(&
   dummy_g = settling*buoyancy%vector(1)   !Froude number already included in buoyancy%vector
   IF (dummy_g .NE. C_0_R) THEN
 !$omp do
-     DO ij = 1,isize_field			
+     DO ij = 1,isize_field   
         tmp1(ij) =  dummy_s*( h1(ij) +  u(ij)*tmp4(ij) + v(ij)*tmp5(ij) + w(ij)*tmp6(ij)  - dummy_g )
      ENDDO
 !$omp end do
   ELSE
 !$omp do
-     DO ij = 1,isize_field			
+     DO ij = 1,isize_field   
         tmp1(ij) =  dummy_s*( h1(ij) +  u(ij)*tmp4(ij) + v(ij)*tmp5(ij) + w(ij)*tmp6(ij)  )
      ENDDO
 !$omp end do
@@ -81,13 +81,13 @@ SUBROUTINE FI_TRANS_VELOCITY(&
   dummy_g = settling*buoyancy%vector(2)   !Froude number already included in buoyancy%vector
   IF (dummy_g .NE. C_0_R) THEN
 !$omp do
-     DO ij = 1,isize_field			
+     DO ij = 1,isize_field   
         tmp2(ij) =  dummy_s*( h2(ij) +  u(ij)*tmp4(ij) + v(ij)*tmp5(ij) + w(ij)*tmp6(ij)  - dummy_g )
      ENDDO
 !$omp end do
   ELSE
 !$omp do
-     DO ij = 1,isize_field			
+     DO ij = 1,isize_field   
         tmp2(ij) =  dummy_s*( h2(ij) +  u(ij)*tmp4(ij) + v(ij)*tmp5(ij) + w(ij)*tmp6(ij)  )
      ENDDO
 !$omp end do
@@ -106,13 +106,13 @@ SUBROUTINE FI_TRANS_VELOCITY(&
   dummy_g = settling*buoyancy%vector(3)   !Froude number already included in buoyancy%vector
   IF (dummy_g .NE. C_0_R) THEN
 !$omp do
-     DO ij = 1,isize_field			
+     DO ij = 1,isize_field   
         tmp3(ij) =  dummy_s*( h3(ij) +  u(ij)*tmp4(ij) + v(ij)*tmp5(ij) + w(ij)*tmp6(ij)  - dummy_g )
      ENDDO
 !$omp end do
   ELSE
 !$omp do
-     DO ij = 1,isize_field			
+     DO ij = 1,isize_field   
         tmp3(ij) =  dummy_s*( h3(ij) +  u(ij)*tmp4(ij) + v(ij)*tmp5(ij) + w(ij)*tmp6(ij)  )
      ENDDO
 !$omp end do

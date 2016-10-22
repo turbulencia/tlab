@@ -52,9 +52,6 @@ SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, q,hq,s,hs, &
   INTEGER ilen
 #endif
 
-! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
-
 ! #######################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING TIME_SUBSTEP_ANELASTIC')
@@ -63,11 +60,6 @@ SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, q,hq,s,hs, &
 #ifdef USE_BLAS
   ilen = isize_field
 #endif
-
-! Define pointers
-  x => g(1)%nodes; dx => g(1)%jac(:,1)
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
-  z => g(3)%nodes; dz => g(3)%jac(:,1)
 
   u => q(:,1)
   v => q(:,2)
@@ -80,13 +72,13 @@ SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, q,hq,s,hs, &
   IF ( iadvection .EQ. EQNS_CONVECTIVE .AND. &
        iviscous   .EQ. EQNS_EXPLICIT   .AND. & 
        idiffusion .EQ. EQNS_EXPLICIT         ) THEN
-     CALL RHS_FLOW_GLOBAL_ANELASTIC_1(dte, x,y,z,dx,dy,dz, u,v,w,hq(1,1),hq(1,2),hq(1,3), s, &
+     CALL RHS_FLOW_GLOBAL_ANELASTIC_1(dte, u,v,w,hq(1,1),hq(1,2),hq(1,3), s, &
           txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
           vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), &
           wrk1d,wrk2d,wrk3d)
      
      DO is = 1,inb_scal
-        CALL RHS_SCAL_GLOBAL_ANELASTIC_1(is, dx,dy,dz, u,v,w,s(1,is),hs(1,is), &
+        CALL RHS_SCAL_GLOBAL_ANELASTIC_1(is, u,v,w,s(1,is),hs(1,is), &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
      ENDDO
      
@@ -105,7 +97,7 @@ SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, q,hq,s,hs, &
      DO is = 1,inb_scal
      CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is,&
           vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), x,y, q,s(1,is),hs(1,is))
+          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,s(1,is),hs(1,is))
      ENDDO
   ENDIF
 

@@ -20,7 +20,6 @@
 SUBROUTINE FI_TRANS_FLUX(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d,wrk3d)
 
   USE DNS_TYPES,  ONLY : term_structure
-  USE DNS_GLOBAL, ONLY : imode_fdm, j1bc
   
   IMPLICIT NONE
 

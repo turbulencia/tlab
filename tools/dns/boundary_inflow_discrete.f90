@@ -1,3 +1,6 @@
+#include "types.h"
+#include "dns_const.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -11,13 +14,7 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-
-SUBROUTINE BOUNDARY_INFLOW_DISCRETE(x,y,z, etime, inf_rhs)
+SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
   
   USE DNS_GLOBAL
   USE DNS_LOCAL, ONLY : frc_length, frc_adapt, frc_delta, ifrcdsc_mode
@@ -29,9 +26,6 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(x,y,z, etime, inf_rhs)
  
   IMPLICIT NONE
 
-  TREAL x(imax)
-  TREAL y(jmax)
-  TREAL z(kmax)
   TREAL etime
   TREAL inf_rhs(jmax,kmax,*)
 
@@ -70,7 +64,7 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(x,y,z, etime, inf_rhs)
 
      DO j = 1, jmax
 
-        ycenter = y(j) - scaley*ycoor_u - y(1)
+        ycenter = g(2)%nodes(j) - g(2)%scale *ycoor_u - g(2)%nodes(1)
         fy  = EXP(-(ycenter/(C_2_R*frc_delta))**2)*frc_delta
         fyp =-ycenter*fy/(C_2_R * frc_delta**2)
 
@@ -101,12 +95,12 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(x,y,z, etime, inf_rhs)
 
                  DO k=1, kmax
                     u3d = A3d(inx3d)*wxloc*SIN(wxloc*xaux+Phix3d(inx3d)) * &
-                         SIN(wzloc*z(k)+Phiz3d(inz3d)) * fyp
+                         SIN(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fyp
                     v3d = A3d(inx3d)*wxloc*COS(wxloc*xaux+Phix3d(inx3d)) * &
-                         SIN(wzloc*z(k)+Phiz3d(inz3d)) * fy * &
+                         SIN(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fy * &
                          (wxloc+wzloc)
                     w3d =-A3d(inx3d)*wxloc*SIN(wxloc*xaux+Phix3d(inx3d)) * &
-                         COS(wzloc*z(k)+Phiz3d(inz3d)) * fyp
+                         COS(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fyp
                     inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult*mean_u*u3d
                     inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult*mean_u*v3d
                     inf_rhs(j,k,4) = inf_rhs(j,k,4) - vmult*mean_u*w3d
@@ -128,7 +122,7 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(x,y,z, etime, inf_rhs)
 
         jsim = jmax - j + 1
 
-        ycenter = y(j) - scaley*ycoor_u + diam_u/C_2_R - y(1)
+        ycenter = g(2)%nodes(j) - g(2)%scale *ycoor_u + diam_u/C_2_R - g(2)%nodes(1)
         fy  = EXP(-(ycenter/(C_2_R*frc_delta))**2)*frc_delta
         fyp =-ycenter*fy/(C_2_R * frc_delta**2)
 
@@ -169,12 +163,12 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(x,y,z, etime, inf_rhs)
 
                  DO k=1, kmax
                     u3d = A3d(inx3d)*wxloc*SIN(wxloc*xaux+Phix3d(inx3d)) * &
-                         SIN(wzloc*z(k)+Phiz3d(inz3d)) * fyp
+                         SIN(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fyp
                     v3d = A3d(inx3d)*wxloc*COS(wxloc*xaux+Phix3d(inx3d)) * &
-                         SIN(wzloc*z(k)+Phiz3d(inz3d)) * fy * &
+                         SIN(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fy * &
                          (wxloc+wzloc)
                     w3d =-A3d(inx3d)*wxloc*SIN(wxloc*xaux+Phix3d(inx3d)) * &
-                         COS(wzloc*z(k)+Phiz3d(inz3d)) * fyp
+                         COS(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fyp
                     inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult*mean_u*u3d
                     inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult*mean_u*v3d
                     inf_rhs(j,k,4) = inf_rhs(j,k,4) - vmult*mean_u*w3d

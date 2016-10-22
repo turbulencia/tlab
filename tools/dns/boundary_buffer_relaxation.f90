@@ -31,13 +31,10 @@
 !# In this respect, inflow and outflow cases must be reviewed.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(buffer_ht,buffer_hb,buffer_vi,buffer_vo, &
-     x,y, q,hq)
+SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(buffer_ht,buffer_hb,buffer_vi,buffer_vo, q,hq)
   
-  USE DNS_GLOBAL, ONLY : imax, jmax, kmax
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
+  USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imode_eqns
   USE DNS_GLOBAL, ONLY : mach
   USE THERMO_GLOBAL, ONLY : gama0
@@ -50,7 +47,6 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(buffer_ht,buffer_hb,buffer_vi,buffer_
   TREAL, DIMENSION(buff_nps_imin,jmax,         kmax,*) :: buffer_vi
   TREAL, DIMENSION(buff_nps_imax,jmax,         kmax,*) :: buffer_vo
 
-  TREAL, DIMENSION(*)                :: x, y
   TREAL, DIMENSION(imax,jmax,kmax,*) :: q,hq
 
   TARGET q
@@ -77,9 +73,9 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(buffer_ht,buffer_hb,buffer_vi,buffer_
 ! Bottom boundary
 ! ###################################################################
   IF ( buff_nps_jmin .GT. 1 ) THEN
-     lb = y(buff_u_jmin) - y(1)
+     lb = g(2)%nodes(buff_u_jmin) - g(2)%nodes(1)
      DO j = 1,buff_u_jmin-1
-        sigma = buff_param_u(1)*((y(buff_u_jmin)-y(j))/lb)**buff_param_u(2)
+        sigma = buff_param_u(1)*((g(2)%nodes(buff_u_jmin)-g(2)%nodes(j))/lb)**buff_param_u(2)
 
         IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
            hq(:,j,:,1) = hq(:,j,:,1) - sigma*(rho(:,j,:)*u(:,j,:)-buffer_hb(:,j,:,1))
@@ -99,9 +95,9 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(buffer_ht,buffer_hb,buffer_vi,buffer_
 
 ! if compressible
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     lb = y(buff_e_jmin) - y(1)
+     lb = g(2)%nodes(buff_e_jmin) - g(2)%nodes(1)
      DO j = 1,buff_e_jmin-1
-        sigma = buff_param_u(1)*((y(buff_e_jmin)-y(j))/lb)**buff_param_u(2)
+        sigma = buff_param_u(1)*((g(2)%nodes(buff_e_jmin)-g(2)%nodes(j))/lb)**buff_param_u(2)
 
         IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
            DO k = 1,kmax; DO i = 1,imax
@@ -126,10 +122,10 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(buffer_ht,buffer_hb,buffer_vi,buffer_
 ! Top boundary
 ! ###################################################################
   IF ( buff_nps_jmax .GT. 1 ) THEN
-     lb = y(jmax)-y(buff_u_jmax)
+     lb = g(2)%nodes(jmax)-g(2)%nodes(buff_u_jmax)
      DO j = buff_u_jmax+1,jmax
         jloc = j - buff_u_jmax + 1
-        sigma = buff_param_u(1)*((y(j)-y(buff_u_jmax))/lb)**buff_param_u(2)
+        sigma = buff_param_u(1)*((g(2)%nodes(j)-g(2)%nodes(buff_u_jmax))/lb)**buff_param_u(2)
 
         IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
            hq(:,j,:,1) = hq(:,j,:,1) - sigma*(rho(:,j,:)*u(:,j,:)-buffer_ht(:,jloc,:,1))
@@ -149,10 +145,10 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(buffer_ht,buffer_hb,buffer_vi,buffer_
 
 ! if compressible
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     lb = y(jmax)-y(buff_e_jmax)
+     lb = g(2)%nodes(jmax)-g(2)%nodes(buff_e_jmax)
      DO j = buff_e_jmax+1,jmax
         jloc = j - buff_e_jmax + 1
-        sigma = buff_param_u(1)*((y(j)-y(buff_e_jmax))/lb)**buff_param_u(2)
+        sigma = buff_param_u(1)*((g(2)%nodes(j)-g(2)%nodes(buff_e_jmax))/lb)**buff_param_u(2)
 
         IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
            DO k = 1,kmax; DO i=1,imax
@@ -178,8 +174,8 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(buffer_ht,buffer_hb,buffer_vi,buffer_
 ! ###################################################################
   IF ( buff_nps_imin .GT. 1 ) THEN
      DO i = 1,buff_imin-1
-        lb = x(buff_imin)-x(1)
-        sigma = ((x(buff_imin)-x(i))/lb)**buff_param_u(2)
+        lb = g(1)%nodes(buff_imin)-g(1)%nodes(1)
+        sigma = ((g(1)%nodes(buff_imin)-g(1)%nodes(i))/lb)**buff_param_u(2)
 
         hq(i,:,:,1) = hq(i,:,:,1) - sigma*(rho(i,:,:)*u(i,:,:)-buffer_vi(i,:,:,1))
         IF ( buff_v_free .NE. 1 ) &
@@ -202,8 +198,8 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(buffer_ht,buffer_hb,buffer_vi,buffer_
   IF ( buff_nps_imax .GT. 1 ) THEN
      DO i = buff_imax+1,imax
         iloc = i-buff_imax+1
-        lb = x(imax)-x(buff_imax)
-        sigma = buff_param_u(1)*((x(i)-x(buff_imax))/lb)**buff_param_u(2)
+        lb = g(1)%nodes(imax)-g(1)%nodes(buff_imax)
+        sigma = buff_param_u(1)*((g(1)%nodes(i)-g(1)%nodes(buff_imax))/lb)**buff_param_u(2)
 
         hq(i,:,:,1) = hq(i,:,:,1) - sigma*(rho(i,:,:)*u(i,:,:)-buffer_vo(iloc,:,:,1))
         IF ( buff_v_free .NE. 1 ) &
@@ -226,11 +222,10 @@ END SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW
 ! #######################################################################
 ! Scalar
 ! #######################################################################
-
-SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, buffer_ht,buffer_hb,buffer_vi,buffer_vo, &
-     x,y, q, s,hs)
+SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, buffer_ht,buffer_hb,buffer_vi,buffer_vo, q, s,hs)
   
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
+  USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imode_eqns, inb_flow
   USE DNS_LOCAL
 
@@ -242,7 +237,6 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, buffer_ht,buffer_hb,buffer_vi,buf
   TREAL, DIMENSION(buff_nps_imin,jmax,         kmax,*) :: buffer_vi
   TREAL, DIMENSION(buff_nps_imax,jmax,         kmax,*) :: buffer_vo
 
-  TREAL, DIMENSION(*)                        :: x, y
   TREAL, DIMENSION(imax,jmax,kmax)           :: s,hs
   TREAL, DIMENSION(imax,jmax,kmax,*), TARGET :: q ! for the density
 
@@ -261,9 +255,9 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, buffer_ht,buffer_hb,buffer_vi,buf
 ! Bottom boundary
 ! ###################################################################
   IF ( buff_nps_jmin .GT. 1 ) THEN
-     lb = y(buff_s_jmin) - y(1)
+     lb = g(2)%nodes(buff_s_jmin) - g(2)%nodes(1)
      DO j = 1,buff_s_jmin-1
-        sigma = buff_param_s(1)*((y(buff_s_jmin)-y(j))/lb)**buff_param_s(2)
+        sigma = buff_param_s(1)*((g(2)%nodes(buff_s_jmin)-g(2)%nodes(j))/lb)**buff_param_s(2)
 
         IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
         hs(:,j,:) = hs(:,j,:) - sigma*(rho(:,j,:)*s(:,j,:)-buffer_hb(:,j,:,inb_flow+is))
@@ -280,10 +274,10 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, buffer_ht,buffer_hb,buffer_vi,buf
 ! Top boundary
 ! ###################################################################
   IF ( buff_nps_jmax .GT. 1 ) THEN
-     lb = y(jmax)-y(buff_s_jmax)
+     lb = g(2)%nodes(jmax)-g(2)%nodes(buff_s_jmax)
      DO j = buff_s_jmax+1,jmax
         jloc = j - buff_s_jmax + 1
-        sigma = buff_param_s(1)*((y(j)-y(buff_s_jmax))/lb)**buff_param_s(2)
+        sigma = buff_param_s(1)*((g(2)%nodes(j)-g(2)%nodes(buff_s_jmax))/lb)**buff_param_s(2)
 
         IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
         hs(:,j,:) = hs(:,j,:) - sigma*(rho(:,j,:)*s(:,j,:)-buffer_ht(:,jloc,:,inb_flow+is))
@@ -301,8 +295,8 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, buffer_ht,buffer_hb,buffer_vi,buf
 ! ###################################################################
   IF ( buff_nps_imin .GT. 1 ) THEN
      DO i = 1,buff_imin-1
-        lb = x(buff_imin)-x(1)
-        sigma = buff_param_s(1)*((x(buff_imin)-x(i))/lb)**buff_param_s(2)
+        lb = g(1)%nodes(buff_imin)-g(1)%nodes(1)
+        sigma = buff_param_s(1)*((g(1)%nodes(buff_imin)-g(1)%nodes(i))/lb)**buff_param_s(2)
 
         IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
         hs(i,:,:) = hs(i,:,:) - sigma*(rho(i,:,:)*s(i,:,:)-buffer_vi(i,:,:,inb_flow+is))
@@ -321,8 +315,8 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, buffer_ht,buffer_hb,buffer_vi,buf
   IF ( buff_nps_imax .GT. 1 ) THEN
      DO i = buff_imax+1,imax
         iloc = i-buff_imax+1
-        lb = x(imax)-x(buff_imax)
-        sigma = buff_param_s(1)*((x(i)-x(buff_imax))/lb)**buff_param_s(2)
+        lb = g(1)%nodes(imax)-g(1)%nodes(buff_imax)
+        sigma = buff_param_s(1)*((g(1)%nodes(i)-g(1)%nodes(buff_imax))/lb)**buff_param_s(2)
 
         IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
         hs(i,:,:) = hs(i,:,:) - sigma*(rho(i,:,:)*s(i,:,:)-buffer_vo(iloc,:,:,inb_flow+is))

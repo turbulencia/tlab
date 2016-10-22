@@ -28,7 +28,7 @@
 !# stat           aux local array with postprocess (final) mean data
 !#
 !########################################################################
-SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat, wrk1d,wrk2d)
+SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,wrk2d)
 
   USE DNS_CONSTANTS, ONLY : efile, tfile
   USE DNS_GLOBAL
@@ -38,11 +38,12 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat,
 #include "integers.h"
 
   TINTEGER itxc, jmin_loc, jmax_loc
-  TREAL, DIMENSION(*)                :: x, y, dy
   TREAL, DIMENSION(nstatavg,jmax,*)  :: mean1d, stat
 
   TREAL wrk1d(isize_wrk1d,*)
   TREAL wrk2d(isize_wrk2d,*)
+
+  TREAL dy(1) ! To use old wrappers to calculate derivatives
 
 ! -------------------------------------------------------------------
 #define rU(A,B)     stat(A,B,1)
@@ -1013,16 +1014,16 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat,
         DO j = jmin_loc, jmax_loc
            wrk1d(j,1) = rR(n,j)*( C_025_R - ((fU(n,j)-UC)/DU)**2 )
         ENDDO
-        delta_m_u(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1),y(jmin_loc))
+        delta_m_u(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
      ENDDO
 
 ! Mixing layer limit (U=0.1dU and U=0.9dU)
-     y_center = y(1) + ycoor_u*scaley
+     y_center = g(2)%nodes(1) + ycoor_u*scaley
      DO n = 1,nstatavg
         fU_05 = U2 + C_01_R*delta_u
         DO j = 1,jmax
            IF ( fU(n,j) .GT. fU_05 .AND. fU(n,j+1) .LE. fU_05 ) THEN
-              delta_01_u(n) = y(j) + (fU_05-fU(n,j))*(y(j+1)-y(j))/(fU(n,j+1)-fU(n,j))
+              delta_01_u(n) = g(2)%nodes(j) + (fU_05-fU(n,j))*(g(2)%nodes(j+1) -g(2)%nodes(j))/(fU(n,j+1)-fU(n,j))
            ENDIF
         ENDDO
         delta_01_u(n) = delta_01_u(n) - y_center
@@ -1030,7 +1031,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat,
         fU_05 = U2 + r09*delta_u
         DO j = 1,jmax
            IF ( fU(n,j) .GT. fU_05 .AND. fU(n,j+1) .LE. fU_05 ) THEN
-              delta_01_d(n) = y(j) + (fU_05-fU(n,j))*(y(j+1)-y(j))/(fU(n,j+1)-fU(n,j))
+              delta_01_d(n) = g(2)%nodes(j) + (fU_05-fU(n,j))*(g(2)%nodes(j+1) -g(2)%nodes(j))/(fU(n,j+1)-fU(n,j))
            ENDIF
         ENDDO
         delta_01_d(n) = delta_01_d(n) - y_center
@@ -1050,12 +1051,12 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat,
         DO j = jmin_loc,jmax_loc
            wrk1d(j,1) = rR(n,j)*fU(n,j)
         ENDDO
-        IntMassU(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1),y(jmin_loc))
+        IntMassU(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
 ! lateral
         DO k = 1,n
            i = statavg(k)
            wrk1d(k,1) = rR(k,jmin_loc)*fV(k,jmin_loc) - rR(k,jmax_loc)*fV(k,jmax_loc)
-           wrk1d(k,2) = x(i)
+           wrk1d(k,2) = g(1)%nodes(i)
         ENDDO
         IF ( n .EQ. 1 ) THEN
            IntMassV(n) = C_0_R
@@ -1074,17 +1075,17 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat,
         DO j = jmin_loc,jmax_loc
            wrk1d(j,1) = rR(n,j)*fU(n,j)*(fU(n,j)-U2)
         ENDDO
-        IntExcMomU(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1),y(jmin_loc))
+        IntExcMomU(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
 ! pressure part
         DO j = jmin_loc,jmax_loc
            wrk1d(j,1) = (rP(n,j)-p_init)
         ENDDO
-        IntExcMomP(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1),y(jmin_loc))
+        IntExcMomP(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
 ! Reynolds stress part
         DO j = jmin_loc,jmax_loc
            wrk1d(j,1) = rR(n,j)*fRxx(n,j)
         ENDDO
-        IntExcMomRxx(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1),y(jmin_loc))
+        IntExcMomRxx(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
      ENDDO
 
 ! -------------------------------------------------------------------
@@ -1095,22 +1096,22 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat,
         DO j = jmin_loc,jmax_loc
            wrk1d(j,1) = rR(n,j)*fU(n,j)*fTKE(n,j)
         ENDDO
-        IntTkeK(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1),y(jmin_loc))
+        IntTkeK(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
 ! Integral of production term
         DO j = jmin_loc,jmax_loc
            wrk1d(j,1) = rR(n,j)*Prod(n,j)
         ENDDO
-        IntTkeP(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1),y(jmin_loc))
+        IntTkeP(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
 ! Integral of numerical dissipation
         DO j = jmin_loc,jmax_loc
            wrk1d(j,1) =-rR(n,j)*eps_f(n,j)
         ENDDO
-        IntTkeF(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1),y(jmin_loc))
+        IntTkeF(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
 ! Integral of production term
         DO j = jmin_loc,jmax_loc
            wrk1d(j,1) = Pres(n,j)
         ENDDO
-        IntTkePi(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1),y(jmin_loc))
+        IntTkePi(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
      ENDDO
 
 ! -------------------------------------------------------------------
@@ -1120,7 +1121,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat,
         DO j = jmin_loc,jmax_loc
            wrk1d(j,1) = rR(n,j)*fU(n,j)*(fT(n,j)-T2)
         ENDDO
-        IntFluxT(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1),y(jmin_loc))
+        IntFluxT(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
      ENDDO
 
 ! -------------------------------------------------------------------
@@ -1144,22 +1145,22 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat,
         DO j = jmin_loc,jmax/2
            wrk1d(j,1) = rR(n,j)*( C_025_R - ((fU(n,j)-UC)/DU)**2 )
         ENDDO
-        delta_m_d(n) = SIMPSON_NU(jmax/2-jmin_loc+1,wrk1d(jmin_loc,1),y(jmin_loc))
+        delta_m_d(n) = SIMPSON_NU(jmax/2-jmin_loc+1,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
 
         UC = C_05_R*(U2+fU(n,jmax/2+1))
         DU = fU(n,jmax/2+1)-U2
         DO j = jmax/2+1,jmax_loc
            wrk1d(j,1) = rR(n,j)*( C_025_R - ((fU(n,j)-UC)/DU)**2 )
         ENDDO
-        delta_m_u(n) = SIMPSON_NU(jmax_loc-jmax/2, wrk1d(jmax/2+1,1),y(jmax/2+1))
+        delta_m_u(n) = SIMPSON_NU(jmax_loc-jmax/2, wrk1d(jmax/2+1,1), g(2)%nodes(jmax/2+1))
      ENDDO
 
 ! Jet half-width based on velocity
-     CALL DELTA_X(nstatavg, jmax, y, fU(1,1), wrk1d(1,1),&
+     CALL DELTA_X(nstatavg, jmax, g(2)%nodes, fU(1,1), wrk1d(1,1),&
           delta_u_d(1), delta_u_u(1), U2, r05)
 
 ! Jet Limit (U=0.05Uc)
-     CALL DELTA_X(nstatavg, jmax, y, fU(1,1), wrk1d(1,1),&
+     CALL DELTA_X(nstatavg, jmax, g(2)%nodes, fU(1,1), wrk1d(1,1),&
           delta_01_d(1), delta_01_u(1), U2, r005)
 
 ! Jet half-width based on temperature/density
@@ -1167,13 +1168,13 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat,
         DO j = 1,jmax*nstatavg
            wrk2d(j,1) = ABS(fT(j,1)-T2) + T2 ! we can have hot or cold jet
         ENDDO
-        CALL DELTA_X(nstatavg, jmax, y, wrk2d(1,1), wrk1d(1,1),&
+        CALL DELTA_X(nstatavg, jmax, g(2)%nodes, wrk2d(1,1), wrk1d(1,1),&
              delta_t_d(1), delta_t_u(1), T2, r05)
 
         DO j = 1,jmax*nstatavg
            wrk2d(j,1) = ABS(rR(j,1)-R2) + R2 ! we can have hot or cold jet
         ENDDO
-        CALL DELTA_X(nstatavg, jmax, y, wrk2d(1,1), wrk1d(1,1),&
+        CALL DELTA_X(nstatavg, jmax, g(2)%nodes, wrk2d(1,1), wrk1d(1,1),&
              delta_r_d(1), delta_r_u(1), R2, r05)
      ELSE
         DO n = 1,nstatavg
@@ -1185,16 +1186,16 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat,
      ENDIF
 
 ! Jet center line based on velocity
-     y_center = y(1) + ycoor_u*scaley
+     y_center = g(2)%nodes(1) + ycoor_u*scaley
      DO n = 1,nstatavg
         DO j = 1,jmax
            wrk1d(j,1) = fU(n,j)
         ENDDO
         jloc_max = MAXLOC(wrk1d(1:jmax,1)); j = jloc_max(1)
         IF ( wrk1d(j-1,1) .GT. wrk1d(j+1,1) ) THEN
-           delta_u_center(n) = C_05_R*(y(j)+y(j-1))
+           delta_u_center(n) = C_05_R*(g(2)%nodes(j) +g(2)%nodes(j-1))
         ELSE
-           delta_u_center(n) = C_05_R*(y(j)+y(j+1))
+           delta_u_center(n) = C_05_R*(g(2)%nodes(j) +g(2)%nodes(j+1))
         ENDIF
         delta_u_center(n) = delta_u_center(n) - y_center
      ENDDO
@@ -1524,10 +1525,10 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat,
 
      DO j = 1,jmax
         ivauxpre = 4
-        VAUXPRE(1) = x(i)/diam_u
-        VAUXPRE(2) = y(j)/diam_u
-        VAUXPRE(3) = (y(j)- y(1) - ycoor_u*  scaley)/delta_05
-        VAUXPRE(4) = (y(j)- y(1) - ycoor_tem*scaley)/delta_t
+        VAUXPRE(1) = g(1)%nodes(i)/diam_u
+        VAUXPRE(2) = g(2)%nodes(j)/diam_u
+        VAUXPRE(3) = (g(2)%nodes(j)- g(2)%nodes(1) - ycoor_u*  scaley)/delta_05
+        VAUXPRE(4) = (g(2)%nodes(j)- g(2)%nodes(1) - ycoor_tem*scaley)/delta_t
 
         IF ( j .EQ. jmax/2 ) THEN
            ivauxdum = ivauxpos
@@ -1537,7 +1538,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, stat,
 
         WRITE(i23,1100) i,j,(VAUXPRE(k), k=1,ivauxpre), &
 ! Grid&
-             x(i),y(j),&
+             g(1)%nodes(i),g(2)%nodes(j),&
 ! Reynolds averages&
              rU(n,j),rV(n,j),rW(n,j),&
              rP(n,j),rR(n,j),rT(n,j), &

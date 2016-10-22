@@ -555,7 +555,7 @@ PROGRAM DNS
 
 ! inflow
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-     CALL BOUNDARY_INFLOW_INIT(rtime, g(2)%nodes, x_inf,y_inf,z_inf, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d)
+     CALL BOUNDARY_INFLOW_INIT(rtime, x_inf,y_inf,z_inf, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d)
   ENDIF
 
 ! ###################################################################

@@ -26,7 +26,7 @@
 !#
 !########################################################################
 SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
-     (dte,etime, u,v,w,h1,h2,h3, s, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
+     (dte, u,v,w,h1,h2,h3, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
      bcs_hb,bcs_ht, vaux, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
@@ -42,9 +42,9 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 
 #include "integers.h"
 
-  TREAL dte,etime
+  TREAL dte
   TREAL, DIMENSION(isize_field)   :: u,v,w, h1,h2,h3
-  TREAL, DIMENSION(isize_field,*) :: s, q,hq
+  TREAL, DIMENSION(isize_field,*) :: q,hq
   TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(*)             :: wrk2d,wrk3d, vaux
@@ -174,7 +174,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(&
           vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), g(1)%nodes,g(2)%nodes, q,hq)
+          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,hq)
   ENDIF
 
 ! #######################################################################

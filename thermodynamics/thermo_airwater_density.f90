@@ -26,7 +26,7 @@ SUBROUTINE THERMO_AIRWATER_DENSITY(nx,ny,nz, q,p,h, rho)
 
   TINTEGER nx, ny, nz
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: q       ! total water content, liquid water content
-  TREAL,			INTENT(IN)  :: p
+  TREAL,                        INTENT(IN)  :: p
   TREAL, DIMENSION(nx*ny*nz),   INTENT(IN)  :: h       ! entahlpy
   TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: rho
 

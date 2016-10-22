@@ -21,7 +21,7 @@
 
 SUBROUTINE BOUNDARY_BUFFER_FILTER(x, rho,u,v,w,e,z1, txc1,txc2,txc3,txc4,txc5, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imax, jmax, kmax, kmax_total, i1bc, j1bc, k1bc
+  USE DNS_GLOBAL, ONLY : imax, jmax, kmax, i1bc, j1bc, k1bc
   USE DNS_GLOBAL, ONLY : icalc_scal, inb_scal
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_LOCAL,  ONLY : buff_nps_jmin, buff_nps_jmax, buff_imax, buff_nps_imax

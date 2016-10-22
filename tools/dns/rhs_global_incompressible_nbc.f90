@@ -10,7 +10,7 @@
 #include "nb3dfft_defines.inc"
 #endif 
 
-SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,&
+SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      u,v,w,s,&
      tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42,&
      bt1,bt2,bt3,bt4,&
@@ -60,7 +60,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,&
   ! 
   TINTEGER, PARAMETER :: nmeasure=3
   
-  TREAL,                                 INTENT(IN) :: dte,etime
+  TREAL,                                 INTENT(IN) :: dte
   
   TREAL, DIMENSION(isize_field),         INTENT(IN) :: u,v,w
   TREAL, DIMENSION(isize_field,inb_scal_array),INTENT(IN) :: s
@@ -469,7 +469,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,etime,&
      IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
         CALL BOUNDARY_BUFFER_RELAXATION_FLOW(&
              vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-             vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), g(1)%nodes,g(2)%nodes, u,h1)
+             vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), u,h1)
      ENDIF
 
      tdummy = C_1_R / dte   

@@ -1,3 +1,5 @@
+#include "types.h"
+  
 !########################################################################
 !# Tool/Library
 !#
@@ -11,13 +13,8 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-  
 SUBROUTINE BOUNDARY_INFLOW_BROADBAND&
-     (etime, y, inf_rhs, x_inf, y_inf, z_inf, q_inf,z1_inf, txc, wrk1d, wrk2d, wrk3d)
+     (etime, inf_rhs, x_inf, y_inf, z_inf, q_inf,z1_inf, txc, wrk1d, wrk2d, wrk3d)
   
   USE DNS_GLOBAL
   USE DNS_LOCAL, ONLY : ifrc_mode, ifrc_ifield, frc_adapt
@@ -27,7 +24,6 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND&
   IMPLICIT NONE
   
   TREAL etime
-  TREAL y(*)
   TREAL inf_rhs(jmax,kmax,*) 
   TREAL x_inf(imax_inf), y_inf(jmax_inf), z_inf(kmax_total)
   TREAL q_inf(imax_inf,jmax_inf,kmax_inf,*)
@@ -67,7 +63,7 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND&
 ! check if we need to read again inflow data
   IF ( ifrc_mode .EQ. 3 .AND. INT(mean_u*etime/scalex_inf)+1 .NE. ifrc_ifield ) THEN
      CALL BOUNDARY_INFLOW_INIT&
-          (etime, y, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, wrk1d,wrk2d,wrk3d)
+          (etime, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, wrk1d,wrk2d,wrk3d)
   ENDIF
 
 ! ###################################################################
@@ -83,7 +79,7 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND&
 
   dx_loc = x_inf(2) - x_inf(1)
 ! Get left index
-  ileft = xaux/dx_loc+1
+  ileft = INT(xaux/dx_loc) +1
 ! Check bounds
   IF ( ileft .GT. imax_inf ) THEN
      ileft = 1

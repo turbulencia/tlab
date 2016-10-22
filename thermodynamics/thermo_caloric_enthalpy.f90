@@ -1,3 +1,6 @@
+#include "types.h"
+#include "dns_const.h"
+
 !########################################################################
 !# Tool/Library DNS
 !#
@@ -16,16 +19,10 @@
 !# h = \sum Y_ih_i 
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-
 SUBROUTINE THERMO_CALORIC_ENTHALPY(nx,ny,nz, s, T, h)
 
-  USE THERMO_GLOBAL, ONLY : imixture, gama0, GRATIO
-  USE THERMO_GLOBAL, ONLY : NSP, NCP_CHEMKIN, WGHT_INV, THERMO_AI, THERMO_TLIM
+  USE THERMO_GLOBAL, ONLY : imixture
+  USE THERMO_GLOBAL, ONLY : NSP, NCP_CHEMKIN, THERMO_AI, THERMO_TLIM
   USE THERMO_GLOBAL, ONLY : YMASS
 
   IMPLICIT NONE

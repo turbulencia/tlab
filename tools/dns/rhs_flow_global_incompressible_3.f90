@@ -21,8 +21,8 @@
 !#
 !########################################################################
 SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3&
-     (dte, u,v,w,h1,h2,h3, s, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
-     bcs_hb,bcs_ht,b_ref, vaux, wrk1d,wrk2d,wrk3d)
+     (dte, u,v,w,h1,h2,h3, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
+     bcs_hb,bcs_ht, vaux, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
@@ -33,25 +33,17 @@ IMPLICIT NONE
 #include "integers.h"
 
   TREAL dte
-  TREAL, DIMENSION(*)             :: u,v,w, h1,h2,h3, s
+  TREAL, DIMENSION(*)             :: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,*) :: q,hq
   TREAL, DIMENSION(*)             :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, wrk3d
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(*)             :: wrk2d, vaux
-  TREAL, DIMENSION(jmax)          :: b_ref
   TREAL, DIMENSION(imax,kmax,*)   :: bcs_hb, bcs_ht
 
 ! -----------------------------------------------------------------------
   TINTEGER ij, i, k
 
-! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
-
-! #######################################################################
-! Define pointers
-  x => g(1)%nodes; dx => g(1)%jac(:,1)
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
-  z => g(3)%nodes; dz => g(3)%jac(:,1)
+  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
 
 ! #######################################################################
 ! Diffusion and convection terms in momentum equations
@@ -88,18 +80,10 @@ IMPLICIT NONE
        dy, v, tmp5, i0, i0, i0, i0, tmp2, wrk1d, wrk2d, wrk3d)
   CALL PARTIAL_XX(i0, iunifx, imode_fdm, imax, jmax, kmax, i1bc,&
        dx, v, tmp4, i0, i0, i0, i0, tmp1, wrk1d, wrk2d, wrk3d)
-  IF ( buoyancy%active(2)  ) THEN
-     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref)
-     DO ij = 1,imax*jmax*kmax
-        h2(ij) = h2(ij) + wrk3d(ij)*buoyancy%vector(2) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) )
-     ENDDO
 
-  ELSE
-     DO ij = 1,imax*jmax*kmax
-        h2(ij) = h2(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) )
-     ENDDO
-
-  ENDIF
+  DO ij = 1,imax*jmax*kmax
+     h2(ij) = h2(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) )
+  ENDDO
 
   DO ij = 1,imax*jmax*kmax
      tmp6(ij)=v(ij)*w(ij)
@@ -173,7 +157,7 @@ IMPLICIT NONE
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(&
           vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), x,y, q,hq)
+          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,hq)
   ENDIF
 
 ! #######################################################################
@@ -249,11 +233,11 @@ IMPLICIT NONE
   DO k = 1,kmax
      DO i = 1,imax
         ij = i                 + imax*jmax*(k-1) ! bottom
-        h1(ij) = ( C_4_R*h1(ij+imax) + h1(ij+2*imax) - C_4_R*dy(2)*tmp1(ij+imax) )/C_5_R
-        h3(ij) = ( C_4_R*h3(ij+imax) + h3(ij+2*imax) - C_4_R*dy(2)*tmp2(ij+imax) )/C_5_R
+        h1(ij) = ( C_4_R*h1(ij+imax) + h1(ij+2*imax) - C_4_R*g(2)%jac(2,1)*tmp1(ij+imax) )/C_5_R
+        h3(ij) = ( C_4_R*h3(ij+imax) + h3(ij+2*imax) - C_4_R*g(2)%jac(2,1)*tmp2(ij+imax) )/C_5_R
         ij = i + imax*(jmax-1) + imax*jmax*(k-1) ! top
-        h1(ij) = ( C_4_R*h1(ij-imax) + h1(ij-2*imax) + C_4_R*dy(imax-1)*tmp1(ij-imax) )/C_5_R
-        h3(ij) = ( C_4_R*h3(ij-imax) + h3(ij-2*imax) + C_4_R*dy(imax-1)*tmp2(ij-imax) )/C_5_R
+        h1(ij) = ( C_4_R*h1(ij-imax) + h1(ij-2*imax) + C_4_R*g(2)%jac(imax-1,1)*tmp1(ij-imax) )/C_5_R
+        h3(ij) = ( C_4_R*h3(ij-imax) + h3(ij-2*imax) + C_4_R*g(2)%jac(imax-1,1)*tmp2(ij-imax) )/C_5_R
      ENDDO
   ENDDO
 

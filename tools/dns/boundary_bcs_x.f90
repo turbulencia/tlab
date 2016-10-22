@@ -17,10 +17,7 @@
 !# Nonperiodic characteristic BCs at xmin and xmax
 !#
 !########################################################################
-!# ARGUMENTS 
-!# 
-!########################################################################
-SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, x,y,z,dx,dy,dz, rho,u,v,w,p,gama,z1, &
+SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
      x_inf,y_inf,z_inf, q_inf,z1_inf, bcs_vi,bcs_vo, h0,h1,h2,h3,h4,zh1,&
      txc, aux2d, wrk1d,wrk2d,wrk3d)
 
@@ -37,7 +34,6 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, x,y,z,dx,dy,dz, rho,u,v,w,p,gama,
 
   TREAL M2_max, etime
 
-  TREAL, DIMENSION(*)                :: x, y, z, dx, dy, dz
   TREAL, DIMENSION(imax,jmax,kmax)   :: rho, u, v, w, p, gama, h0, h1, h2, h3, h4
   TREAL, DIMENSION(imax,jmax,kmax,*) :: z1, zh1, txc
   TREAL, DIMENSION(*)                :: x_inf, y_inf, z_inf, q_inf, z1_inf
@@ -51,6 +47,8 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, x,y,z,dx,dy,dz, rho,u,v,w,p,gama,
   TREAL prefactor, pl_out, pl_inf1, pl_inf2, pl_inf3, dummy
 
   TREAL, DIMENSION(:,:,:), POINTER :: tmin, mmin, tmax, mmax, inf_rhs
+
+  TREAL dx(1) ! To use old wrappers to calculate derivatives
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -135,13 +133,13 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, x,y,z,dx,dy,dz, rho,u,v,w,p,gama,
      inf_rhs(:,:,isize) = C_0_R
 
      IF     ( ifrc_mode .EQ. 1 ) THEN
-        CALL BOUNDARY_INFLOW_DISCRETE(x,y,z, etime, inf_rhs)
+        CALL BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
      ELSEIF ( ifrc_mode .EQ. 2 .OR. ifrc_mode .EQ. 3 ) THEN
         CALL BOUNDARY_INFLOW_BROADBAND&
-             (etime, y, inf_rhs, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, wrk1d,wrk2d,wrk3d)
+             (etime, inf_rhs, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, wrk1d,wrk2d,wrk3d)
 ! not yet developed
 !     ELSEIF ( ifrc_mode .EQ. 4 ) THEN
-!        CALL BOUNDARY_INFLOW_DISCRETE(x,y,z, etime, inf_rhs)
+!        CALL BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
 !        CALL BOUNDARY_INFLOW_BROADBAND&
 !             (etime, inf_rhs, x_inf, q_inf, z1_inf, tmp1, wrk1d, wrk2d, wrk3d)
      ENDIF
@@ -150,7 +148,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, x,y,z,dx,dy,dz, rho,u,v,w,p,gama,
 ! ###################################################################
 ! Transverse terms
 ! ###################################################################
-  CALL BOUNDARY_BCS_TRANSVERSE_X(dx, dy, dz, u, v, w, p, rho, gama, z1, &
+  CALL BOUNDARY_BCS_TRANSVERSE_X(u,v,w,p,rho,gama, z1, &
        tmin, mmin, tmax, mmax, txc(1,1,1,1), txc(1,1,1,2), txc(1,1,1,3), wrk1d, wrk2d, wrk3d)
 
 ! ###################################################################

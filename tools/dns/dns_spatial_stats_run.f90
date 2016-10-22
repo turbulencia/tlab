@@ -38,8 +38,8 @@ SUBROUTINE DNS_SPATIAL_STATS_RUN(icount_stat, q,h,z1, txc, vaux, wrk1d,wrk2d,wrk
   TINTEGER ie, is
 
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:),   POINTER :: u, v, w, T, rho, p, vis
-  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
+  TREAL, DIMENSION(:), POINTER :: u, v, w, T, rho, p, vis
+  TREAL, DIMENSION(:), POINTER :: dx,dy,dz
 
 ! ###################################################################
 ! Define pointers

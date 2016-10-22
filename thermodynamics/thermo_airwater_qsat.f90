@@ -56,7 +56,7 @@ SUBROUTINE THERMO_AIRWATER_QSAT(nx,ny,nz, q,p,h, T,qsat)
      t_loc = (h(ij) + q(ij,2)*q_latent )/( (1-q(ij,1))*cp_d + (q(ij,1)-q(ij,2))*cp_v + q(ij,2)* cl )
      psat = C_0_R                             
      DO ipsat = dum_npsat,1,-1 !Saturation pressure
-	psat = psat*t_loc + psat_coeff(ipsat) !psat is scaled witrh p
+        psat = psat*t_loc + psat_coeff(ipsat) !psat is scaled witrh p
      ENDDO     
      qsat(ij) = (C_1_R-q(ij,1))*rd_ov_rv/(C_1_R/psat-C_1_R)
      T(ij) = t_loc

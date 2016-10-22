@@ -1,3 +1,8 @@
+#include "types.h"
+#include "dns_error.h"
+#include "dns_const.h"
+#include "avgij_map.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -21,12 +26,7 @@
 !# itxc    In     size of array stat
 !#
 !########################################################################
-#include "types.h"
-#include "dns_error.h"
-#include "dns_const.h"
-#include "avgij_map.h"
-
-SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, mean1d_sc, stat, wrk1d)
+SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc, stat, wrk1d)
 
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL
@@ -36,7 +36,7 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, m
 #include "integers.h"
 
   TINTEGER is, itxc, jmin_loc,jmax_loc
-  TREAL, DIMENSION(*)                :: x, y, dy, wrk1d
+  TREAL, DIMENSION(*)                :: wrk1d
   TREAL, DIMENSION(nstatavg,jmax,*)  :: mean1d, mean1d_sc, stat
 
 ! -------------------------------------------------------------------
@@ -541,34 +541,34 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, m
         DO j = jmin_loc,jmax_loc
            wrk1d(j) = rR(n,j)*fU(n,j)*(fS(n,j)-S2)
         ENDDO
-        IntExcScaS(n) = SIMPSON_NU(jmax_loc-jmin_loc+1,wrk1d(jmin_loc),y(jmin_loc))
+        IntExcScaS(n) = SIMPSON_NU(jmax_loc-jmin_loc+1,wrk1d(jmin_loc), g(2)%nodes(jmin_loc))
 ! Reynolds stress part
         DO j = jmin_loc,jmax_loc
            wrk1d(j) =rR(n,j)*fRus(n,j)
         ENDDO
-        IntExcScaRsu(n) = SIMPSON_NU(jmax_loc-jmin_loc+1,wrk1d(jmin_loc), y(jmin_loc))
+        IntExcScaRsu(n) = SIMPSON_NU(jmax_loc-jmin_loc+1,wrk1d(jmin_loc), g(2)%nodes(jmin_loc))
      ENDDO
 
 ! -------------------------------------------------------------------
 ! Jet thickness
 ! -------------------------------------------------------------------
 ! Jet half-width based on velocity
-     CALL DELTA_X(nstatavg, jmax, y, fU(1,1), wrk1d, delta_05_d(1), delta_05_u(1), U2, r05)
+     CALL DELTA_X(nstatavg, jmax, g(2)%nodes, fU(1,1), wrk1d, delta_05_d(1), delta_05_u(1), U2, r05)
 
 ! Jet half-width based on scalar
-     CALL DELTA_X(nstatavg, jmax, y, fS(1,1), wrk1d, delta_s_d(1), delta_s_u(1), S2, r05)
+     CALL DELTA_X(nstatavg, jmax, g(2)%nodes, fS(1,1), wrk1d, delta_s_d(1), delta_s_u(1), S2, r05)
 
 ! Jet center line based on scalar
-     y_center = y(1) + ycoor_i(inb_scal)*scaley
+     y_center = g(2)%nodes(1) + ycoor_i(inb_scal)*scaley
      DO n = 1,nstatavg
         DO j = 1,jmax
            wrk1d(j) = fS(n,j)
         ENDDO
         jloc_max = MAXLOC(wrk1d(1:jmax)); j = jloc_max(1)
         IF ( wrk1d(j-1) .GT. wrk1d(j+1) ) THEN
-           delta_s_center(n) = C_05_R*(y(j)+y(j-1))
+           delta_s_center(n) = C_05_R*(g(2)%nodes(j) +g(2)%nodes(j-1))
         ELSE
-           delta_s_center(n) = C_05_R*(y(j)+y(j+1))
+           delta_s_center(n) = C_05_R*(g(2)%nodes(j) +g(2)%nodes(j+1))
         ENDIF
         delta_s_center(n) = delta_s_center(n) - y_center
      ENDDO
@@ -715,10 +715,10 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, m
 
      DO j = 1,jmax
         ivauxpre = 4
-        VAUXPRE(1) = x(i)/diam_u
-        VAUXPRE(2) = y(j)/diam_u
-        VAUXPRE(3) = (y(j)- y(1) - ycoor_i(inb_scal)*scaley)/delta_s
-        VAUXPRE(4) = (y(j)- y(1) - ycoor_i(inb_scal)*scaley)/delta_05
+        VAUXPRE(1) = g(1)%nodes(i)/diam_u
+        VAUXPRE(2) = g(2)%nodes(j)/diam_u
+        VAUXPRE(3) = (g(2)%nodes(j)- g(2)%nodes(1) - ycoor_i(inb_scal)*scaley)/delta_s
+        VAUXPRE(4) = (g(2)%nodes(j)- g(2)%nodes(1) - ycoor_i(inb_scal)*scaley)/delta_05
 
         IF ( j .EQ. jmax/2 ) THEN
            ivauxdum = ivauxpos
@@ -728,7 +728,7 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, x,y,dy, mean1d, m
 
         WRITE(i23,1100) i, j, (VAUXPRE(k), k=1,ivauxpre), &
 ! Grid&
-             x(i), y(j), &
+             g(1)%nodes(i), g(2)%nodes(j), &
 ! Reynolds averages&
              rR(n,j), rS(n,j),&
              rSf2(n,j), rUfSf(n,j), &

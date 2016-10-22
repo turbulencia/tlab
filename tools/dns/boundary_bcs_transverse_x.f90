@@ -1,3 +1,9 @@
+#include "types.h"
+#include "dns_const.h"
+#ifdef USE_MPI
+#include "dns_const_mpi.h"
+#endif
+
 !########################################################################
 !# Tool/Library
 !#
@@ -21,13 +27,7 @@
 !# tmax    In    Transverse term at OxMax
 !#
 !########################################################################
-#include "types.h"
-#include "dns_const.h"
-#ifdef USE_MPI
-#include "dns_const_mpi.h"
-#endif
-
-SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(dx, dy, dz, u, v, w, p, r, gamma, z1, &
+SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
      tmin, mmin, tmax, mmax, tmp1, ddy, ddz, wrk1d, wrk2d, wrk3d)
 
   USE DNS_GLOBAL
@@ -39,7 +39,6 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(dx, dy, dz, u, v, w, p, r, gamma, z1, &
 
 #include "integers.h"
 
-  TREAL, DIMENSION(*)                                      :: dx, dy, dz
   TREAL, DIMENSION(imax,jmax,kmax)                         :: u, v, w, p, r, gamma
 #ifdef USE_MPI
   TREAL, DIMENSION(ims_bcs_imax,               jmax,kmax)  :: tmp1, ddy, ddz
@@ -57,6 +56,8 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(dx, dy, dz, u, v, w, p, r, gamma, z1, &
 #ifdef USE_MPI
   TINTEGER imode_fdm_loc
 #endif
+  
+  TREAL dy(1), dz(1) ! To use old wrappers to calculate derivatives
 
 ! #######################################################################
 ! -------------------------------------------------------------------

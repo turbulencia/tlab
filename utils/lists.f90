@@ -199,10 +199,10 @@ SUBROUTINE LIST_REAL(line, n, a)
 
 
 ! check the array is big enough
-     IF ( (amax-a(1))/aincr+1 .GT. n ) THEN
+     IF ( INT((amax-a(1))/aincr) +1 .GT. n ) THEN
         CALL DNS_STOP(DNS_ERROR_PARAMETER)
      ELSE
-        n = (amax-a(1))/aincr+1
+        n = INT((amax-a(1))/aincr) +1
      ENDIF
 
      DO i = 2,n

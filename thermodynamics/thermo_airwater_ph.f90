@@ -16,13 +16,10 @@
 !# Calculating the equilibrium T and q_l for given enthalpy and pressure.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE THERMO_AIRWATER_PH(nx, ny, nz, z1, p, h, T, dqldqt)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE THERMO_GLOBAL, ONLY : GRATIO, MRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
+  USE THERMO_GLOBAL, ONLY : MRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
 
   IMPLICIT NONE
 

@@ -23,7 +23,7 @@
 !# File initialed copied from: RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1
 !########################################################################
 SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
-     (is, dte, u,v,w, s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d,h1,h2,h3)
+     (is, u,v,w, s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d,h1,h2,h3)
   
 #ifdef USE_GLOBAL
   USE OMP_LIB
@@ -37,7 +37,6 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
 #include "integers.h"
 
   TINTEGER is
-  TREAL dte
   TREAL, DIMENSION(isize_field) :: u, v, w, hs !,s
   TREAL, DIMENSION(isize_field) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, wrk3d
   TREAL, DIMENSION(*)           :: wrk1d
@@ -62,7 +61,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
   TREAL, DIMENSION(:),    POINTER ::al_s !Recieved pointer . Needed in case the mixture is not airwater
 
 !Alberto: Parameters of the equations
-  TREAL :: differential_diffusion	   
+  TREAL :: differential_diffusion    
   TREAL :: dummy, dummy1, dummy2, dummy3
 
 ! #######################################################################
@@ -80,7 +79,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
         diff = visc/schmidt(1)  !Alberto: changed from schmidt(is) to schmidt(1) to reflect upon Prandtl = Schmidt
         al_h=>s(:,1)  !We point to the scalar array which contains the enthalpy
         al_qt=> s(:,2) ! We point to the scalar array which contains qt
-        al_ql=> s(:,3)		! We point to the scalar array which contains ql
+        al_ql=> s(:,3)  ! We point to the scalar array which contains ql
         al_s=>s(:,is) !Needed to calculate the laplacian in the part of the routine
 
         differential_diffusion = (schmidt(1)/schmidt(2) -C_1_R)*diff !Parameter for diff difusion
@@ -102,7 +101,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
            dummy3 = stokes*buoyancy%vector(3)*( THERMO_AI(1,1,3) - C_1_R + THERMO_AI(6,1,3) )*settling !Alberto: Parameter multiplying the sedimentation term
 !$omp parallel default( shared ) private( ij )
 !$omp do
-           DO ij = 1,isize_field			
+           DO ij = 1,isize_field   
               hs(ij) = hs(ij) + dummy*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) - dummy1*tmp1(ij) - dummy2*tmp2(ij) -dummy3*tmp3(ij) !Alberto. Liqud diff + Sedimentation term 
            ENDDO
 !$omp end do
@@ -129,7 +128,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
 
 !$omp parallel default( shared ) private( ij )
 !$omp do
-           DO ij = 1,isize_field			
+           DO ij = 1,isize_field   
               tmp4(ij) =  al_ql(ij)*( C_1_R - C_2_R*al_ql(ij) )*( u(ij)*tmp1(ij) + v(ij)*tmp2(ij) + w(ij)*tmp3(ij) )
            ENDDO
 !$omp end do
@@ -147,7 +146,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
 
 !$omp parallel default( shared ) private( ij )
 !$omp do
-           DO ij = 1,isize_field			
+           DO ij = 1,isize_field   
               tmp4(ij) =  al_ql(ij)*( C_1_R - C_2_R*al_ql(ij) ) *( u(ij)*tmp1(ij) + v(ij)*tmp2(ij) + w(ij)*tmp3(ij) )
            ENDDO
 !$omp end do
@@ -165,7 +164,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
 
 !$omp parallel default( shared ) private( ij )
 !$omp do
-           DO ij = 1,isize_field			
+           DO ij = 1,isize_field   
               tmp4(ij) =  al_ql(ij)*( C_1_R - C_2_R*al_ql(ij) )*( u(ij)*tmp1(ij) + v(ij)*tmp2(ij) + w(ij)*tmp3(ij) )
            ENDDO
 !$omp end do
@@ -175,7 +174,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
 
 !$omp parallel default( shared ) private( ij )
 !$omp do
-           DO ij = 1,isize_field			
+           DO ij = 1,isize_field   
               hs(ij) = hs(ij)  + dummy*tmp1(ij) + dummy*tmp5(ij) + dummy*tmp6(ij) !Add the second inertial term
            ENDDO
 !$omp end do
@@ -220,7 +219,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
 !(order ql^2) variation higher
 !dummy = (C_1_R - al_qt(ij))* stokes 
 !hs(ij) = hs(ij)  + dummy*tmp1(ij)*h1(ij) + dummy*tmp2(ij)*h2(ij) + dummy*tmp3(ij)*h3(ij)  &
-!		   - stokes*al_ql(ij)*tmp4(ij)*h1(ij) - stokes*al_ql(ij)*tmp5(ij)*h2(ij) - stokes*al_ql(ij)*tmp6(ij)*h3(ij)
+!     - stokes*al_ql(ij)*tmp4(ij)*h1(ij) - stokes*al_ql(ij)*tmp5(ij)*h2(ij) - stokes*al_ql(ij)*tmp6(ij)*h3(ij)
 !Approx (nabla qv) * ql sim 0
               dummy = (C_1_R - C_2_R*al_qt(ij))* stokes 
               hs(ij) = hs(ij)  + dummy*tmp1(ij)*h1(ij) + dummy*tmp2(ij)*h2(ij) + dummy*tmp3(ij)*h3(ij)  
@@ -237,7 +236,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
 
 !$omp parallel default( shared ) private( ij )
 !$omp do
-           DO ij = 1,isize_field			
+           DO ij = 1,isize_field   
               tmp4(ij) =  al_ql(ij)*(C_1_R-al_qt(ij))*( u(ij)*tmp1(ij) + v(ij)*tmp2(ij) + w(ij)*tmp3(ij) )
            ENDDO
 !$omp end do
@@ -254,7 +253,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
 
 !$omp parallel default( shared ) private( ij )
 !$omp do
-           DO ij = 1,isize_field			
+           DO ij = 1,isize_field   
               tmp4(ij) =  al_ql(ij)*(C_1_R-al_qt(ij))*( u(ij)*tmp1(ij) + v(ij)*tmp2(ij) + w(ij)*tmp3(ij) )
            ENDDO
 !$omp end do
@@ -271,7 +270,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER&
 
 !$omp parallel default( shared ) private( ij )
 !$omp do
-           DO ij = 1,isize_field			
+           DO ij = 1,isize_field   
               tmp4(ij) =  al_ql(ij)*(C_1_R-al_qt(ij))*( u(ij)*tmp1(ij) + v(ij)*tmp2(ij) + w(ij)*tmp3(ij) )
            ENDDO
 !$omp end do

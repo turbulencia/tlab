@@ -178,7 +178,7 @@ FUNCTION GAMMP_SER(A,X)
      GAMMP_SER=SUM*EXP(-X+A*LOG(X)-GLN)
   ENDIF
   
-999 IF ( IER .NE. 0 ) THEN
+  IF ( IER .NE. 0 ) THEN
      WRITE(*,*) 'mathlib : gammp_ser : ier = ',IER
      STOP
   ENDIF

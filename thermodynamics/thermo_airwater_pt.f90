@@ -15,12 +15,9 @@
 !# Calculate liquid content from p, T and water content.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE THERMO_AIRWATER_PT(nx, ny, nz, s, p, T)
 
-  USE THERMO_GLOBAL, ONLY : GRATIO, MRATIO, WGHT_INV, THERMO_AI, dsmooth
+  USE THERMO_GLOBAL, ONLY : MRATIO, WGHT_INV, dsmooth
 
   IMPLICIT NONE
 

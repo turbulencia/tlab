@@ -17,12 +17,9 @@
 !# using caloric equation of state.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE THERMO_AIRWATER_RE(nx, ny, nz, z1, e, rho, T, dqldqt)
 
-  USE THERMO_GLOBAL, ONLY : GRATIO, MRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
+  USE THERMO_GLOBAL, ONLY : GRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
   USE THERMO_GLOBAL, ONLY : NEWTONRAPHSON_ERROR
 #ifdef USE_MPI
   USE DNS_MPI

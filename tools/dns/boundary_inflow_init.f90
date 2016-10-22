@@ -1,3 +1,6 @@
+#include "types.h"
+#include "dns_error.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -15,17 +18,11 @@
 !# Initializing inflow fields for broadband forcing case.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_error.h"
-
-SUBROUTINE BOUNDARY_INFLOW_INIT(etime, y, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, wrk1d,wrk2d,wrk3d)
+SUBROUTINE BOUNDARY_INFLOW_INIT(etime, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
-  USE DNS_LOCAL, ONLY : ifrc_mode, ifrc_ifield, frc_length, frc_adapt
+  USE DNS_LOCAL, ONLY : ifrc_mode, ifrc_ifield
   USE DNS_LOCAL, ONLY : imax_inf,jmax_inf,kmax_inf
   USE DNS_LOCAL, ONLY : scalex_inf,scaley_inf,scalez_inf
 #ifdef USE_MPI
@@ -37,7 +34,6 @@ SUBROUTINE BOUNDARY_INFLOW_INIT(etime, y, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, 
 #include "integers.h"
 
   TREAL etime
-  TREAL y(jmax)
   TREAL x_inf(imax_inf)
   TREAL y_inf(jmax_inf)
   TREAL z_inf(kmax_total)
@@ -50,10 +46,10 @@ SUBROUTINE BOUNDARY_INFLOW_INIT(etime, y, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, 
   TARGET :: q_inf
 
 ! -------------------------------------------------------------------
-  TINTEGER ij, is
+  TINTEGER ij, is, itimetmp
   TINTEGER joffset, jglobal, j, ibc_local, iwrk_size
   TREAL tolerance, dy
-  TREAL visctmp, rtimetmp, itimetmp
+  TREAL visctmp, rtimetmp
   CHARACTER*32 fname, sname, str
   CHARACTER*128 line
 
@@ -131,7 +127,7 @@ SUBROUTINE BOUNDARY_INFLOW_INIT(etime, y, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, 
      joffset = (jmax-jmax_inf)/2
      DO j = 1,jmax_inf
         jglobal = joffset + j
-        dy = ABS(y(jglobal)-y_inf(j))
+        dy = ABS(g(2)%nodes(jglobal)-y_inf(j))
         IF (dy.gt.tolerance) THEN
            CALL IO_WRITE_ASCII(efile, 'BOUNDARY_INFLOW. Inflow domain does not match')
            CALL DNS_STOP(DNS_ERROR_INFLOWDOMAIN)
