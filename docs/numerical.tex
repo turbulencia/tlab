@@ -177,6 +177,11 @@ f=\epsilon s'' - u s'\;
 where $s$ is a scalar field, $u$ a velocity field, and $\epsilon$ is the diffusivity. The combination reduces transpositions, either locally or across processors. The reason is that, in general, we need 2 transpositions for $s''$, forward and backward, and similarly for $s'$, which amounts to 4 transpositions. In the the combined form, we need 1 forward transposition for $s$ and 1 for $u$, and then 1 backward transposition for the result $f$. In total, 3 transpositions. The addition and multiplication operations are done in transposed space. If $u= s$, then it is only 2 transpositions that we need. When $u\ne s$, then the transposed velocity needs to be passed through the arguments in case it is needed.
 
 We could reformulate the calculation of $\mathbf{f}$ by combining the linear operation with the calculation of the second derivative, which yields
+\begin{equation}
+    \epsilon^{-1}(A_2D_1^2)\, \mathbf{f}=(1/h)B_2 \mathbf{s}
+    - A_2(D_2 + \epsilon^{-1}D_1^2\mathbf{u})\,\delta_x  \mathbf{s} \;,
+\end{equation}
+or
 \begin{subequations}
   \begin{align}
     \epsilon^{-1}(A_2D_1^2)\, \mathbf{f}^*&=(1/h)B_2 \mathbf{s} \;,\\

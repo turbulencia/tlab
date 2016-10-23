@@ -105,12 +105,12 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
         CALL FDM_C2N4_RHS(.TRUE., nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%jac(1,2))
         
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
-        CALL FDM_C2N6_LHS(        nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C2N6_RHS(.TRUE., nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%jac(1,2))
+        CALL FDM_C2N6_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+        CALL FDM_C2N6_RHS( nx,i1, i0,i0,             x, g%jac(1,2))
         
      CASE( FDM_COM8_JACOBIAN ) ! Not yet developed; default to 6. order
-        CALL FDM_C2N6_LHS(        nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C2N6_RHS(.TRUE., nx,i1, i0,i0, wrk1d(1,4), x,wrk1d(1,5),g%jac(1,2))
+        CALL FDM_C2N6_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+        CALL FDM_C2N6_RHS( nx,i1, i0,i0,             x, g%jac(1,2))
         
      END SELECT
 

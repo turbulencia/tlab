@@ -81,11 +81,19 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
         CALL FDM_C2N4_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, s, wrk3d, result)
 
      CASE( FDM_COM6_JACOBIAN )
-        CALL FDM_C2N6_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, s, wrk3d, result)
-!        CALL FDM_C2N6_RHS(.TRUE., g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)
+        IF ( g%uniform ) THEN
+           CALL FDM_C2N6_RHS  (g%size,nlines, bcs_min(2),bcs_max(2),        s,        result)
+        ELSE
+           CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs_min(2),bcs_max(2), g%jac, s, wrk3d, result)
+        ENDIF
+!        CALL FDM_C2N6_RHS(g%size,nlines, bcs_min(2),bcs_max(2), s, result)
 
      CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
-        CALL FDM_C2N6_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, s, wrk3d, result)
+        IF ( g%uniform ) THEN
+           CALL FDM_C2N6_RHS  (g%size,nlines, bcs_min(2),bcs_max(2),        s,        result)
+        ELSE
+           CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs_min(2),bcs_max(2), g%jac, s, wrk3d, result)
+        ENDIF
 
      CASE( FDM_COM6_DIRECT   )
         CALL FDM_C2N6ND_RHS(g%size,nlines, g%lu2(1,4), u, result)

@@ -117,11 +117,18 @@ SUBROUTINE OPR_PARTIAL2(nlines, g, u,result, bcs_min,bcs_max, wrk2d,wrk3d)
         CALL FDM_C2N4_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)
 
      CASE( FDM_COM6_JACOBIAN )
-        CALL FDM_C2N6_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)
-!        CALL FDM_C2N6_RHS(.TRUE., g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)
+        IF ( g%uniform ) THEN
+           CALL FDM_C2N6_RHS  (g%size,nlines, bcs_min(2),bcs_max(2),        u,        result)
+        ELSE
+           CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)
+        ENDIF
 
      CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
-        CALL FDM_C2N6_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)
+        IF ( g%uniform ) THEN
+           CALL FDM_C2N6_RHS  (g%size,nlines, bcs_min(2),bcs_max(2),        u,        result)
+        ELSE
+           CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)
+        ENDIF
         
      CASE( FDM_COM6_DIRECT   )
         CALL FDM_C2N6ND_RHS(g%size,nlines, g%lu2(1,4), u, result)
@@ -133,20 +140,9 @@ SUBROUTINE OPR_PARTIAL2(nlines, g, u,result, bcs_min,bcs_max, wrk2d,wrk3d)
 
   ENDIF
   
-  ! IF ( .NOT. g%uniform ) THEN
-  !    IF ( g%mode_fdm .eq. FDM_COM4_JACOBIAN .OR. &
-  !         g%mode_fdm .eq. FDM_COM6_JACOBIAN .OR. &
-  !         g%mode_fdm .eq. FDM_COM8_JACOBIAN      ) THEN
-  !       DO ip = 1,g%size
-  !          dummy = g%jac(ip,2) /( g%jac(ip,1) *g%jac(ip,1) )
-  !          result(:,ip) = result(:,ip) - dummy* wrk3d(:,ip)
-  !       ENDDO
-  !    ENDIF
-  ! ENDIF
-
   RETURN
 END SUBROUTINE OPR_PARTIAL2
 
 ! ###################################################################
 ! ###################################################################
-! Add here OPR_DDX(order,...), OPR_DDY(order,...), and OPR_DDZ(order,...)
+! Add here OPR_DX(order,...), OPR_DY(order,...), and OPR_DZ(order,...)
