@@ -19,12 +19,14 @@
 !# Apply the non-linear operator N(u) = visc* d^2/dx^2 s - u d/dx s
 !# along generic direction x to nyz lines of data
 !#
+!# Second derivative uses LE decomposition including diffusivity coefficient
+!#
 !########################################################################
 SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 
   USE DNS_TYPES,     ONLY : grid_structure
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL, ONLY    : reynolds
+!  USE DNS_GLOBAL, ONLY    : reynolds
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: is
@@ -50,7 +52,6 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 ! First derivative
   CALL OPR_PARTIAL1(nlines, g, s,wrk3d, bcs_min(1),bcs_max(1), wrk2d)
 
-! Second derivative uses LE decomposition including diffusivity coefficient
 ! -------------------------------------------------------------------
 ! Periodic case
 ! -------------------------------------------------------------------
@@ -69,12 +70,28 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
      END SELECT
 
      ip = is*5 ! LU decomposition containing the diffusivity
-     CALL TRIDPSS(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3),g%lu2d(1,ip+4),g%lu2d(1,ip+5), result,wrk2d)
+     CALL TRIDPSS(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3),g%lu2d(1,ip+4),g%lu2d(1,ip+5), result, wrk2d)
+! Trying speed-up by includind operation at the end of this routine inside tridpss, to reduce memory access
+!     CALL TRIDPSS_ADD(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3),g%lu2d(1,ip+4),g%lu2d(1,ip+5), result, u,wrk3d, wrk2d)
 
 ! -------------------------------------------------------------------
 ! Nonperiodic case
 ! -------------------------------------------------------------------
   ELSE
+! ! Check whether we need 1. order derivative correction
+!      wrk2d(1:g%size) = C_0_R
+!      IF ( .NOT. g%uniform ) THEN
+!         IF ( g%mode_fdm .eq. FDM_COM4_JACOBIAN .OR. &
+!              g%mode_fdm .eq. FDM_COM6_JACOBIAN .OR. &
+!              g%mode_fdm .eq. FDM_COM8_JACOBIAN      ) THEN
+!            DO ip = 1,g%size
+!               wrk2d(ip) = g%jac(ip,2) /( g%jac(ip,1) *g%jac(ip,1) ) /reynolds
+! !           result(:,ip) = result(:,ip) - (wrk2d(ip) + u(:,ip)) *wrk3d(:,ip) ! inside tridss_add
+!            ENDDO
+           
+!         ENDIF
+!      ENDIF
+
      SELECT CASE( g%mode_fdm )
         
      CASE( FDM_COM4_JACOBIAN )
@@ -102,14 +119,14 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 
      ip = is*3 ! LU decomposition containing the diffusivity
      CALL TRIDSS(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3), result)
+! Trying speed-up by includind operation at the end of this routine inside tridss, to reduce memory access
+!     CALL TRIDSS_ADD(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3), result, u,wrk3d, wrk2d)
 
   ENDIF
 
 ! ###################################################################
 ! Operation
 ! ###################################################################
-!  IF ( g%uniform ) THEN
-
 !$omp parallel default( shared ) private( ij )
 !$omp do
      DO ij = 1,nlines*g%size
@@ -117,19 +134,6 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
      ENDDO
 !$omp end do
 !$omp end parallel
-
-  ! ELSE
-  !    IF ( g%mode_fdm .eq. FDM_COM4_JACOBIAN .OR. &
-  !         g%mode_fdm .eq. FDM_COM6_JACOBIAN .OR. &
-  !         g%mode_fdm .eq. FDM_COM8_JACOBIAN      ) THEN
-  !       DO ip = 1,g%size
-  !          dummy = g%jac(ip,2) /( g%jac(ip,1) *g%jac(ip,1) ) /reynolds
-  !          result(:,ip) = result(:,ip) - (dummy + u(:,ip)) *wrk3d(:,ip)
-  !       ENDDO
-  !    ELSE
-  !       result = result - u *wrk3d
-  !    ENDIF
-  ! ENDIF
 
   RETURN
 END SUBROUTINE OPR_BURGERS

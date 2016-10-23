@@ -148,6 +148,111 @@ SUBROUTINE TRIDSS(nmax,len, a,b,c, f)
   RETURN
 END SUBROUTINE TRIDSS
 
+! #######################################################################
+! Backward substitution step in the Thomas algorith
+! #######################################################################
+SUBROUTINE TRIDSS_ADD(nmax,len, a,b,c, f, g,h, d)
+
+#ifdef USE_OPENMP
+  USE OMP_LIB
+#endif 
+
+  IMPLICIT NONE
+
+  TINTEGER, INTENT(IN)                      :: nmax  ! dimension of tridiagonal systems
+  TINTEGER, INTENT(IN)                      :: len   ! number of systems to be solved
+  TREAL, DIMENSION(nmax),     INTENT(IN)    :: a,b,c ! factored LHS
+  TREAL, DIMENSION(len,nmax), INTENT(INOUT) :: f     ! RHS and solution
+  TREAL, DIMENSION(len,nmax), INTENT(IN)    :: g,h   ! Additive term
+  TREAL, DIMENSION(nmax),     INTENT(IN)    :: d     ! Scaled Jacobian
+
+! -------------------------------------------------------------------
+  TINTEGER :: n
+  TINTEGER :: srt,end,siz
+  TREAL    :: dummy1, dummy2
+
+#ifdef USE_BLAS
+  TREAL alpha
+  INTEGER ilen
+#else
+  TINTEGER l
+#endif
+
+! ###################################################################
+! -----------------------------------------------------------------------
+! Forward sweep
+! -----------------------------------------------------------------------
+#ifdef USE_BLAS
+  ilen = len
+#endif
+
+!$omp parallel default(none) &
+
+#ifdef USE_BLAS
+!$omp private(n,ilen,srt,end,siz,dummy1,dummy2) &
+#else
+!$omp private(n,l,srt,end,siz,dummy1,dummy2) &
+#endif
+!$omp shared(f,a,b,c,nmax,len) 
+
+  CALL DNS_OMP_PARTITION(len,srt,end,siz)
+  IF ( siz .LE. 0 ) THEN 
+     GOTO 999
+  END IF
+
+#ifdef USE_BLAS
+  ilen = siz
+#endif 
+
+  DO n = 2,nmax
+     dummy1 = a(n)
+#ifdef USE_BLAS
+     CALL AXPY_LOC(ilen, dummy1, f(srt,n-1), 1, f(srt,n), 1)
+#else 
+     DO l=srt,end
+        f(l,n) = f(l,n) + dummy1*f(l,n-1)
+     ENDDO
+#endif
+  ENDDO
+  
+! -----------------------------------------------------------------------
+! Backward sweep
+! -----------------------------------------------------------------------
+  dummy1=b(nmax) 
+#ifdef USE_BLAS
+  CALL SCAL_LOC(ilen, dummy1, f(srt,nmax), 1)
+#else 
+  DO l=srt,end 
+     f(l,nmax) = f(l,nmax)*dummy1
+  ENDDO
+#endif
+
+  DO n = nmax-1, 1, -1
+     dummy1 = c(n)
+     dummy2 = b(n)
+#ifdef USE_BLAS
+     CALL AXPY_LOC(ilen, dummy1, f(srt,n+1), 1, f(srt,n), 1)
+     CALL SCAL_LOC(ilen, dummy2, f(srt,n), 1)
+     DO l = srt, end
+        f(l,n+1) =  f(l,n+1) - (d(n+1)+g(l,n+1)) *h(l,n+1)  ! TO BE IMPLEMENTED USING BLAS
+     ENDDO
+#else 
+     DO l = srt, end
+        f(l,n  ) = (f(l,n) + dummy1*f(l,n+1))*dummy2
+        f(l,n+1) =  f(l,n+1) - (d(n+1)+g(l,n+1)) *h(l,n+1)
+     ENDDO
+#endif
+  ENDDO
+  DO l = srt, end
+     f(l,1) =  f(l,1) - (d(1)+g(l,1)) *h(l,1)
+  ENDDO
+  
+999 CONTINUE
+!$omp end parallel
+ 
+  RETURN
+END SUBROUTINE TRIDSS_ADD
+
 !########################################################################
 !# DESCRIPTION
 !#
@@ -328,3 +433,135 @@ SUBROUTINE TRIDPSS(nmax,len, a,b,c,d,e, f, wrk)
   
   RETURN
 END SUBROUTINE TRIDPSS
+
+! #######################################################################
+! Backward substitution step in the Thomas algorith
+! #######################################################################
+SUBROUTINE TRIDPSS_ADD(nmax,len, a,b,c,d,e, f, g,h, wrk)
+
+#ifdef USE_OPENMP
+  USE OMP_LIB
+#endif
+  
+  IMPLICIT NONE
+  
+  TINTEGER,                   INTENT(IN)    :: nmax, len
+  TREAL, DIMENSION(nmax),     INTENT(IN)    :: a,b,c,d,e
+  TREAL, DIMENSION(len,nmax), INTENT(INOUT) :: f
+  TREAL, DIMENSION(len,nmax), INTENT(IN)    :: g,h
+  TREAL, DIMENSION(len)                     :: wrk
+
+! -------------------------------------------------------------------
+  TREAL                                     :: dummy1, dummy2
+  TINTEGER                                  :: srt, end, siz
+
+  TINTEGER l, n
+#ifdef USE_BLAS 
+  INTEGER :: ilen
+#endif 
+
+! -------------------------------------------------------------------
+! Forward sweep
+! -------------------------------------------------------------------
+
+!$omp parallel default( none ) &
+#ifdef USE_BLAS
+!$omp private(n, l,ilen, dummy1, dummy2, srt, end,siz) &
+#else
+!$omp private(n, l, dummy1, dummy2, srt, end,siz) &
+#endif
+!$omp shared(f,wrk,nmax,a,b,c,d,e,len)
+
+  CALL DNS_OMP_PARTITION(len,srt,end,siz) 
+  IF ( siz .LE. 0 ) THEN 
+     GOTO 999
+  ENDIF
+
+#ifdef USE_BLAS 
+  ilen = siz
+#endif 
+
+  dummy1 = b(1)
+#ifdef USE_BLAS 
+  CALL SCAL_LOC(ilen,dummy1,f(srt,1),1)
+#else
+  DO l=srt,end
+     f(l,1) = f(l,1)*dummy1
+  ENDDO
+#endif 
+
+  DO n = 2, nmax-1
+     dummy1 = a(n)
+     dummy2 = b(n)
+#ifdef USE_BLAS 
+     CALL SCAL_LOC(ilen,dummy2,f(srt,n),1) 
+     CALL AXPY_LOC(ilen,dummy1,f(srt,n-1),1, f(srt,n), 1)
+#else
+     DO l=srt,end
+        f(l,  n) = f(l,  n)*dummy2 + dummy1*f(l,  n-1)
+     ENDDO
+#endif
+  ENDDO
+      
+  wrk(srt:end) = C_0_R
+  
+  DO n = 1, nmax-1
+     dummy1 = d(n)
+#ifdef USE_BLAS 
+     CALL AXPY_LOC(ilen,dummy1,f(srt,n),1,wrk(srt),1)
+#else
+     DO l=srt,end
+        wrk(l) = wrk(l)   + dummy1*f(l,n)
+     ENDDO
+#endif
+  ENDDO
+
+  dummy1 = b(nmax)
+#ifdef USE_BLAS 
+  CALL SCAL_LOC(ilen, dummy1,f(srt,nmax),1)
+  CALL AXPY_LOC(ilen,-dummy1,wrk(srt),1,f(srt,nmax),1)
+#else
+  DO l=srt,end
+     f(l,nmax) = (f(l,nmax) - wrk(l))*dummy1
+  ENDDO
+#endif
+
+! -------------------------------------------------------------------
+! Backward sweep
+! -------------------------------------------------------------------
+  dummy1 = e(nmax-1)
+
+#ifdef USE_BLAS
+  CALL AXPY_LOC(ilen,dummy1,f(srt,nmax),1,f(srt,nmax-1),1)
+#else
+  DO l=srt,end
+     f(l,nmax-1) = dummy1*f(l,nmax) + f(l,nmax-1)
+  ENDDO
+#endif 
+
+
+  DO n = nmax-2, 1, -1
+     dummy1 = c(n)
+     dummy2 = e(n)
+#ifdef USE_BLAS 
+     CALL AXPY_LOC(ilen,dummy2,f(srt,nmax),1,f(srt,n),1) 
+     CALL AXPY_LOC(ilen,dummy1,f(srt,n+1), 1,f(srt,n),1)
+     DO l = srt,end
+        f(l,n+1) = f(l,n+1) - g(l,n+1)*h(l,n+1)  ! TO BE IMPLEMENTED USING BLAS
+     ENDDO
+#else
+     DO l = srt,end
+        f(l,n  ) = f(l,n  ) + dummy1*f(l,n+1) + dummy2*f(l,nmax)
+        f(l,n+1) = f(l,n+1) - g(l,n+1)*h(l,n+1)
+     ENDDO
+#endif
+  ENDDO
+  DO l = srt, end
+     f(l,1   ) =  f(l,1   ) - g(l,1   )*h(l,1   )
+     f(l,nmax) =  f(l,nmax) - g(l,nmax)*h(l,nmax)
+  ENDDO
+999 CONTINUE
+!$omp end parallel
+  
+  RETURN
+END SUBROUTINE TRIDPSS_ADD
