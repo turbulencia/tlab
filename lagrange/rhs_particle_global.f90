@@ -28,14 +28,14 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags,l_com
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, imax_total,jmax_total, kmax_total
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, imax_total, kmax_total
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : isize_particle, scalex, scaley, scalez, inb_particle, inb_scal_array
+  USE DNS_GLOBAL, ONLY : isize_particle, scalex, scalez
   USE DNS_GLOBAL, ONLY : imode_fdm, i1bc, j1bc, k1bc, visc, isize_wrk1d
-  USE DNS_GLOBAL, ONLY : iunifx,iunify,iunifz, inb_txc
+  USE DNS_GLOBAL, ONLY : iunifx,iunify,iunifz
   USE DNS_GLOBAL, ONLY : radiation
   USE LAGRANGE_GLOBAL
-  USE THERMO_GLOBAL, ONLY : imixture, thermo_param
+  USE THERMO_GLOBAL, ONLY : thermo_param
 #ifdef USE_MPI
   USE DNS_MPI
 #endif

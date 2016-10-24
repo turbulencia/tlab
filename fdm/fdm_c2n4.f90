@@ -60,14 +60,12 @@ END SUBROUTINE FDM_C2N4_LHS
 ! #######################################################################
 ! Right-hand side; forcing term
 ! #######################################################################
-SUBROUTINE FDM_C2N4_RHS(uniform, imax,jkmax, imin_set_zero,imax_set_zero, dx, u,up,d)
+SUBROUTINE FDM_C2N4_RHS(imax,jkmax, imin_set_zero,imax_set_zero, u,d)
 
   IMPLICIT NONE
 
-  LOGICAL,                       INTENT(IN) :: uniform
   TINTEGER,                      INTENT(IN) :: imax,jkmax, imin_set_zero,imax_set_zero
-  TREAL,   DIMENSION(imax,2),    INTENT(IN) :: dx
-  TREAL,   DIMENSION(jkmax,imax),INTENT(IN) :: u, up
+  TREAL,   DIMENSION(jkmax,imax),INTENT(IN) :: u
   TREAL,   DIMENSION(jkmax,imax),INTENT(OUT):: d
 
 ! -------------------------------------------------------------------
@@ -102,23 +100,12 @@ SUBROUTINE FDM_C2N4_RHS(uniform, imax,jkmax, imin_set_zero,imax_set_zero, dx, u,
      d(jk,imax) = c13dx2*u(jk,imax) - c27dx2*u(jk,imax-1) + c15dx2*u(jk,imax-2) - c1dx2*u(jk,imax-3)
   ENDDO
 
-! -------------------------------------------------------------------
-! Uniform case
-! -------------------------------------------------------------------
-  IF ( uniform ) THEN
-     c65dx2 = C_6_R/C_5_R
-     DO i = 2,imax-1
-        DO jk = 1,jkmax
-           d(jk,i) = c65dx2*(u(jk,i+1)-C_2_R*u(jk,i)+u(jk,i-1))
-        ENDDO
+  c65dx2 = C_6_R/C_5_R
+  DO i = 2,imax-1
+     DO jk = 1,jkmax
+        d(jk,i) = c65dx2*(u(jk,i+1)-C_2_R*u(jk,i)+u(jk,i-1))
      ENDDO
-
-! -------------------------------------------------------------------
-! Nonuniform case
-! -------------------------------------------------------------------
-  ELSE
-! Not yet developed
-  ENDIF
-
+  ENDDO
+  
   RETURN
 END SUBROUTINE FDM_C2N4_RHS

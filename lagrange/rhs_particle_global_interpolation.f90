@@ -19,11 +19,10 @@
 SUBROUTINE  RHS_PARTICLE_GLOBAL_INTERPOLATION &
     (q,l_q,l_hq,y,wrk1d, txc, grid_start, grid_end)
 
-USE DNS_GLOBAL, ONLY: imax,jmax,kmax,isize_field
+USE DNS_GLOBAL, ONLY: imax,jmax,kmax
 USE DNS_CONSTANTS, ONLY : efile
 USE DNS_GLOBAL, ONLY: imax_total,kmax_total,  isize_particle, inb_particle
-USE DNS_GLOBAL, ONLY :  visc
-USE LAGRANGE_GLOBAL, ONLY: particle_number, jmin_part ,inb_lag_aux_field, inb_lag_total_interp
+USE LAGRANGE_GLOBAL, ONLY: jmin_part, inb_lag_total_interp
 USE LAGRANGE_GLOBAL, ONLY: ilagrange
 USE THERMO_GLOBAL, ONLY : thermo_param
 #ifdef USE_MPI

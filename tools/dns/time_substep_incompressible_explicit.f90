@@ -36,7 +36,6 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 #endif
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field
-  USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : inb_flow,inb_scal, inb_scal_array
   USE DNS_GLOBAL,    ONLY : iadvection, idiffusion, iviscous
   USE DNS_GLOBAL,    ONLY : p_init, damkohler

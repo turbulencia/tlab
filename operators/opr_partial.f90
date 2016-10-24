@@ -80,7 +80,6 @@ SUBROUTINE OPR_PARTIAL2(nlines, g, u,result, bcs_min,bcs_max, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
   TINTEGER ip
-  TREAL dummy
   
 ! ###################################################################
 ! Check whether to calculate 1. order derivative
@@ -114,8 +113,10 @@ SUBROUTINE OPR_PARTIAL2(nlines, g, u,result, bcs_min,bcs_max, wrk2d,wrk3d)
      SELECT CASE( g%mode_fdm )
         
      CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C2N4_RHS(g%uniform, g%size,nlines, bcs_min(2),bcs_max(2), g%jac, u, wrk3d, result)
-
+        IF ( g%uniform ) THEN
+           CALL FDM_C2N4_RHS  (g%size,nlines, bcs_min(2),bcs_max(2),        u,        result)
+        ELSE ! Not yet implemented
+        ENDIF
      CASE( FDM_COM6_JACOBIAN )
         IF ( g%uniform ) THEN
            CALL FDM_C2N6_RHS  (g%size,nlines, bcs_min(2),bcs_max(2),        u,        result)

@@ -19,10 +19,9 @@
 SUBROUTINE  RHS_PARTICLE_GLOBAL_INTERPOLATION_HALO_2 &
     (halo_field,l_q,l_hq,y,wrk1d,halo_start, halo_end)
 
-USE DNS_GLOBAL, ONLY: imax,jmax,kmax,isize_field, imax_total
+USE DNS_GLOBAL, ONLY: imax,jmax,kmax
 USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
-USE DNS_GLOBAL, ONLY : visc
-USE LAGRANGE_GLOBAL, ONLY:  particle_number, jmin_part, inb_lag_aux_field, inb_lag_total_interp
+USE LAGRANGE_GLOBAL, ONLY: jmin_part, inb_lag_total_interp
 USE LAGRANGE_GLOBAL, ONLY: ilagrange
 USE THERMO_GLOBAL, ONLY: thermo_param
 

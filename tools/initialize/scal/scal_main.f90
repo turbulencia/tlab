@@ -42,7 +42,6 @@ PROGRAM INISCAL
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q,s, txc
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
 
-  TREAL dummy
   TINTEGER iread_flow, iread_scal, isize_wrk3d, is, ierr, inb_scal_loc
 
   CHARACTER*64 str, line

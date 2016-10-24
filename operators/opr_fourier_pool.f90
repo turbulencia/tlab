@@ -39,8 +39,8 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL, ONLY : fft_plan_fx_bcs,fft_plan_fx,fft_plan_bx
   USE DNS_GLOBAL, ONLY : fft_plan_fy,fft_plan_by
   USE DNS_GLOBAL, ONLY : fft_plan_fz,fft_plan_bz
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, imax_total,jmax_total,kmax_total
-  USE DNS_GLOBAL, ONLY : isize_txc_field, isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : imax,jmax, imax_total,jmax_total,kmax_total
+  USE DNS_GLOBAL, ONLY : isize_txc_field
   USE DNS_CONSTANTS, ONLY : efile
 
 #ifdef USE_MPI
@@ -292,9 +292,10 @@ END SUBROUTINE OPR_FOURIER_F_X_EXEC
 !########################################################################
 SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
 
-  USE DNS_GLOBAL, ONLY : imax_total, isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
   USE DNS_GLOBAL, ONLY : fft_plan_bx
 #ifdef USE_MPI 
+  USE DNS_GLOBAL, ONLY : imax_total
   USE DNS_MPI,    ONLY : ims_npro_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i, ims_size_i
 #endif 
 
@@ -386,7 +387,7 @@ END SUBROUTINE OPR_FOURIER_B_X_EXEC
 SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out) 
   
   USE DNS_GLOBAL, ONLY : fft_plan_fz, fft_reordering 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz, imax_total, jmax_total, kmax_total 
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz, kmax_total 
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_npro_k, ims_ts_k, ims_tr_k, ims_ds_k, ims_dr_k, ims_err,ims_size_k
 #endif 

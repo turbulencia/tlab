@@ -7,7 +7,7 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : isize_field,isize_txc_field, isize_wrk2d
   USE DNS_GLOBAL, ONLY : imax_total,kmax_total !,jmax_total 
-  USE DNS_GLOBAL, ONLY : ifourier, fft_reordering
+  USE DNS_GLOBAL, ONLY : ifourier !, fft_reordering
   USE DNS_CONSTANTS, ONLY : lfile
 #ifdef USE_MPI
   USE DNS_MPI

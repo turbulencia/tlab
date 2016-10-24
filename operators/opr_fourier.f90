@@ -19,7 +19,7 @@
 SUBROUTINE OPR_FOURIER_F(flag_mode, nx,ny,nz, in,out, tmp1,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : jmax_total, kmax_total
-  USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field, isize_txc_dimz, isize_wrk2d
+  USE DNS_GLOBAL, ONLY : isize_txc_field, isize_txc_dimz, isize_wrk2d
   USE DNS_GLOBAL, ONLY : fft_plan_fy
 
   IMPLICIT NONE
@@ -66,7 +66,7 @@ END SUBROUTINE OPR_FOURIER_F
 SUBROUTINE OPR_FOURIER_B(flag_mode, nx,ny,nz, in,out, wrk3d)
 
   USE DNS_GLOBAL, ONLY : jmax_total, kmax_total
-  USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field, isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : isize_txc_field, isize_txc_dimz
   USE DNS_GLOBAL, ONLY : fft_plan_by
 
   IMPLICIT NONE
