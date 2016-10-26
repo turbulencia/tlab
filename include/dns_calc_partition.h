@@ -19,13 +19,13 @@
      IF      ( opt_cond .EQ. 1 ) THEN ! External file
         WRITE(fname,*) itime; fname = 'par'//TRIM(ADJUSTL(fname)); params_size = 2
         CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
-	igate_size = DINT(params(2))
+        igate_size = INT(params(2))
         IF ( igate_size .GT. igate_size_max ) THEN
            CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Not enough memory for igate_vec.')
            CALL DNS_STOP(DNS_ERROR_ALLOC)
         ENDIF
         DO n = 1,igate_size
-           igate_vec(n) = n ! It assumes a particular intermittency function in the file
+           igate_vec(n) = INT(n) ! It assumes a particular intermittency function in the file
         ENDDO
 
      ELSE                             ! Local file

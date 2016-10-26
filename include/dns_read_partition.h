@@ -31,10 +31,10 @@
 #endif
   ELSE
      idummy = 1
-     opt_cond = DINT(opt_vec2(idummy))
+     opt_cond = INT(opt_vec2(idummy))
      IF ( opt_cond .EQ. 3 .OR. opt_cond .EQ. 4 ) THEN
         idummy = idummy + 1
-        opt_threshold = DINT(opt_vec2(idummy))
+        opt_threshold = INT(opt_vec2(idummy))
      ENDIF
      IF ( opt_cond .GE. 2 ) THEN
         idummy = idummy + 1

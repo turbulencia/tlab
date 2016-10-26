@@ -4,29 +4,10 @@
 
 #define C_FILE_LOC "PDFS"
 
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2007/05/16 - J.P. Mellado
-!#              General input files sequence from dns.ini or stdin.
-!#              Absoft argument readingfrom command line removed (v>=4.4.0)
-!# 2007/07/11 - J.P. Mellado
-!#              Intermittency removed
-!# 2008/04/02 - J.P. Mellado
-!#              Reformulation of the gate signal
-!# 2013/10/01 - J.P. Mellado
-!#              Finalizing the management of conditional statistics
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
 PROGRAM PDFS
 
-  USE DNS_TYPES, ONLY : pointers_structure
-  USE DNS_CONSTANTS
+  USE DNS_TYPES,     ONLY : pointers_structure
+  USE DNS_CONSTANTS, ONLY : efile, lfile , gfile, tag_flow, tag_scal
   USE DNS_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI
@@ -92,7 +73,8 @@ PROGRAM PDFS
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u, v, w, p
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
+
+  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
 
 !########################################################################
 !########################################################################
@@ -175,13 +157,13 @@ PROGRAM PDFS
 
 #endif
   ELSE
-     opt_main = DINT(opt_vec(1))
-     IF ( iopt_size .GE. 2 ) opt_block = DINT(opt_vec(2))
-     IF ( iopt_size .GE. 3 ) opt_gate  = DINT(opt_vec(3))
-     IF ( iopt_size .GE. 4 ) opt_bins  = DINT(opt_vec(4))
-     IF ( iopt_size .GE. 5 ) opt_bcs   = DINT(opt_vec(5))
+     opt_main = INT(opt_vec(1))
+     IF ( iopt_size .GE. 2 ) opt_block = INT(opt_vec(2))
+     IF ( iopt_size .GE. 3 ) opt_gate  = INT(opt_vec(3))
+     IF ( iopt_size .GE. 4 ) opt_bins  = INT(opt_vec(4))
+     IF ( iopt_size .GE. 5 ) opt_bcs   = INT(opt_vec(5))
      IF ( opt_main .EQ. 10 ) THEN
-        IF ( iopt_size .GE. 6 ) opt_bins_2   = DINT(opt_vec(6))
+        IF ( iopt_size .GE. 6 ) opt_bins_2  = INT(opt_vec(6))
      ENDIF
 
   ENDIF
@@ -318,10 +300,6 @@ PROGRAM PDFS
 ! Read the grid 
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
-
-  dx => x(:,2:) ! to be removed
-  dy => y(:,2:)
-  dz => z(:,2:)
 
 ! ------------------------------------------------------------------------
 ! Define size of blocks
@@ -733,12 +711,9 @@ PROGRAM PDFS
 ! Scalar gradient components
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 12 ) THEN
-        CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-             dx, s, txc(1,1), i0, i0, wrk1d, wrk2d, wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-             dy, s, txc(1,2), i0, i0, wrk1d, wrk2d, wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-             dz, s, txc(1,3), i0, i0, wrk1d, wrk2d, wrk3d)
+        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s, txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
 ! Angles; s array is overwritten to save space
         DO ij = 1,imax*jmax*kmax
            dummy = txc(ij,2)/sqrt(txc(ij,1)*txc(ij,1)+txc(ij,2)*txc(ij,2)+txc(ij,3)*txc(ij,3))
@@ -749,7 +724,7 @@ PROGRAM PDFS
         data(1)%field => txc(:,1); varname(1) = 'GradientX'; ibc(1) = 2
         data(2)%field => txc(:,2); varname(2) = 'GradientY'; ibc(2) = 2
         data(3)%field => txc(:,3); varname(3) = 'GradientZ'; ibc(3) = 2
-        data(4)%field => s(:,1);  varname(4) = 'Theta';     ibc(4) = 2
+        data(4)%field => s(:,1);   varname(4) = 'Theta';     ibc(4) = 2
         data(5)%field => txc(:,4); varname(5) = 'Phi';       ibc(5) = 2
 
         WRITE(fname,*) itime; fname='jpdfGi'//TRIM(ADJUSTL(fname))
@@ -861,12 +836,9 @@ PROGRAM PDFS
 
 ! local direction cosines of scalar gradient vector
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient vector...') ! txc7-txc9
-        CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-             dx, s, txc(1,7), i0, i0, wrk1d, wrk2d, wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-             dy, s, txc(1,8), i0, i0, wrk1d, wrk2d, wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-             dz, s, txc(1,9), i0, i0, wrk1d, wrk2d, wrk3d)
+        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, txc(1,7), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s, txc(1,8), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, txc(1,9), i0,i0, wrk1d,wrk2d,wrk3d)
 
         DO ij = 1,imax*jmax*kmax
            dummy = sqrt(txc(ij,7)*txc(ij,7)+txc(ij,8)*txc(ij,8)+txc(ij,9)*txc(ij,9))

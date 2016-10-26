@@ -4,27 +4,11 @@
 
 #define C_FILE_LOC "AVERAGES"
 
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2007/05/16 - J.P. Mellado
-!#              General input files sequence from dns.ini or stdin.
-!#              Absoft argument readingfrom command line removed (v>=4.4.0)
-!# 2008/04/02 - J.P. Mellado
-!#              Reformulation of the gate signal
-!# 2013/10/01 - J.P. Mellado
-!#              Finalizing the management of conditional statistics
-!#
-!########################################################################
 PROGRAM AVERAGES
 
   USE DNS_TYPES,     ONLY : pointers_structure
-  USE DNS_CONSTANTS
+  USE DNS_CONSTANTS, ONLY : efile, lfile, gfile, tag_flow, tag_scal
+  USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
   USE LAGRANGE_GLOBAL
@@ -99,7 +83,8 @@ PROGRAM AVERAGES
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u, v, w
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
+
+  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
 
 !########################################################################
 !########################################################################
@@ -172,6 +157,7 @@ PROGRAM AVERAGES
      WRITE(*,*) '13. Zonal avarages of momentum vertical transport'
      WRITE(*,*) '14. Zonal avarages of pressure partition'
      WRITE(*,*) '15. Zonal avarages of dissipation'
+     WRITE(*,*) '16. Zonal avarages of third-order scalar covariances'
      READ(*,*) opt_main
 
      WRITE(*,*) 'Planes block size ?'
@@ -200,15 +186,15 @@ PROGRAM AVERAGES
 
 #endif
   ELSE
-     opt_main = DINT(opt_vec(1))
-     IF ( iopt_size .GE. 2 ) opt_block = DINT(opt_vec(2))
+     opt_main = INT(opt_vec(1))
+     IF ( iopt_size .GE. 2 ) opt_block = INT(opt_vec(2))
      IF ( opt_main .GT. 2 ) THEN
-        IF ( iopt_size .GE. 3 ) opt_gate  = DINT(opt_vec(3))
-        IF ( iopt_size .GE. 4 ) opt_order = DINT(opt_vec(4))
+        IF ( iopt_size .GE. 3 ) opt_gate  = INT(opt_vec(3))
+        IF ( iopt_size .GE. 4 ) opt_order = INT(opt_vec(4))
      ENDIF
      IF ( opt_main .EQ. 3 ) THEN
-        opt_bins = DINT(opt_vec(5))
-        opt_bcs  = DINT(opt_vec(6))
+        opt_bins = INT(opt_vec(5))
+        opt_bcs  = INT(opt_vec(6))
      ENDIF
 
      CALL SCANINIINT(bakfile, inifile, 'PostProcessing', 'Format', '0', opt_format)
@@ -340,6 +326,11 @@ PROGRAM AVERAGES
      inb_txc = MAX(inb_txc,6)
      iread_flow = 1
      iread_scal = 0
+  ELSE IF ( opt_main .EQ.16 ) THEN ! third-order scalar covariances
+     nfield = 3
+     inb_txc = MAX(inb_txc,3)
+     iread_flow = 0
+     iread_scal = 1
   ENDIF
 
   IF ( opt_main .EQ. 1 ) THEN
@@ -371,10 +362,6 @@ PROGRAM AVERAGES
 ! Read the grid 
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
-
-  dx => x(:,2:) ! to be removed
-  dy => y(:,2:)
-  dz => z(:,2:)
 
 ! ------------------------------------------------------------------------
 ! Define size of blocks
@@ -941,12 +928,9 @@ PROGRAM AVERAGES
 
 ! local direction cosines of scalar gradient vector
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient vector...') ! txc7-txc9
-        CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-             dx, s, txc(1,7), i0, i0, wrk1d, wrk2d, wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-             dy, s, txc(1,8), i0, i0, wrk1d, wrk2d, wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-             dz, s, txc(1,9), i0, i0, wrk1d, wrk2d, wrk3d)
+        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, txc(1,7), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s, txc(1,8), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, txc(1,9), i0,i0, wrk1d,wrk2d,wrk3d)
 
         DO ij = 1,isize_field
            dummy = sqrt(txc(ij,7)*txc(ij,7)+txc(ij,8)*txc(ij,8)+txc(ij,9)*txc(ij,9))
@@ -1019,10 +1003,10 @@ PROGRAM AVERAGES
         is = is+1; data(is)%field => txc(:,3); varname(is) = 'tauyz'
         is = is+1; data(is)%field => txc(:,4); varname(is) = 'diffz'
 
-        CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, u)
-        CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, v)
-        CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, w)
-        CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, s(:,1))
+        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, u)
+        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, v)
+        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, w)
+        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(:,1))
         u = u*v
         w = w*v
         s(:,1) = s(:,1)*v
@@ -1101,6 +1085,39 @@ PROGRAM AVERAGES
         WRITE(fname,*) itime; fname='avgEps'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
+
+! ###################################################################
+! Covariances among scalars
+! ###################################################################
+     ELSE IF ( opt_main .EQ. 16 ) THEN
+
+        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(1,1))
+        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(1,2))
+
+        txc(1:isize_field,1) = s(1:isize_field,1)   *s(1:isize_field,2)
+        txc(1:isize_field,2) = txc(1:isize_field,1) *s(1:isize_field,1)
+        txc(1:isize_field,3) = txc(1:isize_field,1) *s(1:isize_field,2)
+        
+        is = 0
+        is = is+1; data(is)%field => txc(:,1); varname(is) = 's1s2'
+        is = is+1; data(is)%field => txc(:,2); varname(is) = 's1s2s1'
+        is = is+1; data(is)%field => txc(:,3); varname(is) = 's1s2s2'
+
+        IF ( nfield .NE. is ) THEN ! Check
+           CALL IO_WRITE_ASCII(efile, 'AVERAGES. Array space nfield incorrect.')
+           CALL DNS_STOP(DNS_ERROR_WRKSIZE)
+        ENDIF
+
+        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+           DO is = 1,nfield
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+           ENDDO
+        ENDIF
+
+        WRITE(fname,*) itime; fname='Cov'//TRIM(ADJUSTL(fname))
+        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+             nfield, opt_order, y_aux, gate, data, mean)
+
      ENDIF
   ENDDO
 
