@@ -7,7 +7,7 @@
 PROGRAM AVERAGES
 
   USE DNS_TYPES,     ONLY : pointers_structure
-  USE DNS_CONSTANTS, ONLY : efile, lfile, gfile, tag_flow, tag_scal
+  USE DNS_CONSTANTS, ONLY : efile,lfile,gfile, tag_flow,tag_scal
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
@@ -52,7 +52,7 @@ PROGRAM AVERAGES
   CHARACTER*32 varname(16)
   CHARACTER*64 str, line
 
-  TINTEGER opt_main, opt_block, opt_order, opt_bins, opt_bcs, opt_format, flag_buoyancy
+  TINTEGER opt_main, opt_block, opt_order, opt_bins, opt_bcs, flag_buoyancy
   TINTEGER opt_cond, opt_threshold
   TINTEGER nfield, isize_wrk3d, is, ij, n
   TREAL diff, umin, umax, dummy, s_aux(MAX_NSP)
@@ -132,7 +132,6 @@ PROGRAM AVERAGES
   opt_order = 1
   opt_bins  = 0
   opt_bcs   = 1
-  opt_format= 0
 
   CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamAverages', '-1', sRes)
   iopt_size = iopt_size_max
@@ -145,19 +144,19 @@ PROGRAM AVERAGES
      WRITE(*,*) ' 1. Conventional averages'
      WRITE(*,*) ' 2. Intermittency or gate function'
      WRITE(*,*) ' 3. Zonal average of scalar gradient G_iG_i conditioned on scalar'
-     WRITE(*,*) ' 4. Zonal avarages of main variables'
-     WRITE(*,*) ' 5. Zonal avarages of enstrophy W_iW_i/2 equation'
-     WRITE(*,*) ' 6. Zonal avarages of strain 2S_ijS_ij/2 equation'
-     WRITE(*,*) ' 7. Zonal avarages of scalar gradient G_iG_i/2 equation'
-     WRITE(*,*) ' 8. Zonal avarages of velocity gradient invariants'
-     WRITE(*,*) ' 9. Zonal avarages of scalar gradient components'
-     WRITE(*,*) '10. Zonal avarages of eigenvalues of rate-of-strain tensor'
-     WRITE(*,*) '11. Zonal avarages of eigenframe of rate-of-strain tensor'
-     WRITE(*,*) '12. Zonal avarages of longitudinal velocity derivatives'
-     WRITE(*,*) '13. Zonal avarages of momentum vertical transport'
-     WRITE(*,*) '14. Zonal avarages of pressure partition'
-     WRITE(*,*) '15. Zonal avarages of dissipation'
-     WRITE(*,*) '16. Zonal avarages of third-order scalar covariances'
+     WRITE(*,*) ' 4. Main variables'
+     WRITE(*,*) ' 5. Enstrophy W_iW_i/2 equation'
+     WRITE(*,*) ' 6. Strain 2S_ijS_ij/2 equation'
+     WRITE(*,*) ' 7. Scalar gradient G_iG_i/2 equation'
+     WRITE(*,*) ' 8. Velocity gradient invariants'
+     WRITE(*,*) ' 9. Scalar gradient components'
+     WRITE(*,*) '10. Eigenvalues of rate-of-strain tensor'
+     WRITE(*,*) '11. Eigenframe of rate-of-strain tensor'
+     WRITE(*,*) '12. Longitudinal velocity derivatives'
+     WRITE(*,*) '13. Momentum vertical transport'
+     WRITE(*,*) '14. Pressure partition'
+     WRITE(*,*) '15. Dissipation'
+     WRITE(*,*) '16. Third-order scalar covariances'
      READ(*,*) opt_main
 
      WRITE(*,*) 'Planes block size ?'
@@ -177,13 +176,6 @@ PROGRAM AVERAGES
         READ(*,*) opt_bcs
      ENDIF
 
-     IF ( opt_main .EQ. 2 ) THEN
-        WRITE(*,*) 'File Format ?'
-        WRITE(*,*) ' 0. Just averages'
-        WRITE(*,*) ' 1. Binaries'
-        READ(*,*) opt_format
-     ENDIF
-
 #endif
   ELSE
      opt_main = INT(opt_vec(1))
@@ -196,8 +188,6 @@ PROGRAM AVERAGES
         opt_bins = INT(opt_vec(5))
         opt_bcs  = INT(opt_vec(6))
      ENDIF
-
-     CALL SCANINIINT(bakfile, inifile, 'PostProcessing', 'Format', '0', opt_format)
 
   ENDIF
 
@@ -218,7 +208,7 @@ PROGRAM AVERAGES
   igate_size    = 0
   opt_threshold = 0
 
-  IF ( opt_main .GT. 1 ) THEN
+  IF ( opt_main .GT. 1 .AND. opt_gate .GT.0 ) THEN
 
 #include "dns_read_partition.h"
 
@@ -258,80 +248,83 @@ PROGRAM AVERAGES
      iread_scal = 1
   ENDIF
 
-  IF      ( opt_main .EQ. 1 ) THEN
+  SELECT CASE ( opt_main )
+
+  CASE ( 1 )
      inb_txc = MAX(inb_txc,9)
      iread_flow = icalc_flow
      iread_scal = icalc_scal
-  ELSE IF ( opt_main .EQ. 2 ) THEN
+  CASE ( 2 )
      ifourier = 0
-  ELSE IF ( opt_main .EQ. 3 ) THEN
+  CASE ( 3 )
      nfield = 2
      inb_txc = MAX(inb_txc,3)
      iread_scal = 1
-  ELSE IF ( opt_main .EQ. 4 ) THEN
+  CASE ( 4 )
      nfield = 6+inb_scal
      inb_txc = MAX(inb_txc,3)
      iread_scal = 1
      iread_flow = 1
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) inb_txc = MAX(inb_txc,5)
-  ELSE IF ( opt_main .EQ. 5 ) THEN ! enstrophy
+  CASE ( 5 ) ! enstrophy
      nfield = 7
      inb_txc = MAX(inb_txc,8)
      iread_flow = 1
      iread_scal = 1
-  ELSE IF ( opt_main .EQ. 6 ) THEN
+  CASE ( 6 )
      nfield = 4
      inb_txc = MAX(inb_txc,8)
      iread_flow = 1
      iread_scal = 1
-  ELSE IF ( opt_main .EQ. 7 ) THEN ! scalar gradient
+  CASE ( 7 ) ! scalar gradient
      nfield = 5
      inb_txc = MAX(inb_txc,6)
      iread_scal = 1
      iread_flow = 1
-  ELSE IF ( opt_main .EQ. 8 ) THEN
+  CASE ( 8 )
      nfield = 3
      inb_txc = MAX(inb_txc,6)
      iread_flow = 1
-  ELSE IF ( opt_main .EQ. 9 ) THEN
+  CASE ( 9 )
      nfield = 5
      inb_txc = MAX(inb_txc,4)
      iread_scal = 1
-  ELSE IF ( opt_main .EQ.10 ) THEN ! eigenvalues
+  CASE (10 ) ! eigenvalues
      nfield = 3
      inb_txc = MAX(inb_txc,9)
      iread_flow = 1
-  ELSE IF ( opt_main .EQ.11 ) THEN ! eigenframe
+  CASE (11 ) ! eigenframe
      nfield = 6
      inb_txc = MAX(inb_txc,10)
      iread_flow = 1
      iread_scal = 1
-  ELSE IF ( opt_main .EQ.12 ) THEN ! longitudinal velocity derivatives
+  CASE (12 ) ! longitudinal velocity derivatives
      nfield = 3
      inb_txc = MAX(inb_txc,3)
      iread_flow = 1
      iread_scal = 0
-  ELSE IF ( opt_main .EQ.13 ) THEN ! Momentum vertical flux
+  CASE (13 ) ! Momentum vertical flux
      nfield = 8
      inb_txc = MAX(inb_txc,4)
      iread_flow = 1
      iread_scal = 1
-  ELSE IF ( opt_main .EQ.14 ) THEN ! pressure partition
+  CASE (14 ) ! pressure partition
      nfield = 3
      inb_txc = MAX(inb_txc,6)
      iread_flow = 1
      iread_scal = 1
-  ELSE IF ( opt_main .EQ.15 ) THEN ! dissipation partition
+  CASE (15 ) ! dissipation partition
      nfield = 1
      inb_txc = MAX(inb_txc,6)
      iread_flow = 1
      iread_scal = 0
-  ELSE IF ( opt_main .EQ.16 ) THEN ! third-order scalar covariances
+  CASE (16 ) ! third-order scalar covariances
      nfield = 3
      inb_txc = MAX(inb_txc,3)
      iread_flow = 0
      iread_scal = 1
-  ENDIF
+
+  END SELECT
 
   IF ( opt_main .EQ. 1 ) THEN
      ALLOCATE(mean(jmax*MAX_AVG_TEMPORAL))
@@ -358,6 +351,7 @@ PROGRAM AVERAGES
   IF ( icalc_particle .EQ. 1 ) THEN
 #include "dns_alloc_larrays.h"
   ENDIF
+
 ! -------------------------------------------------------------------
 ! Read the grid 
 ! -------------------------------------------------------------------
@@ -416,13 +410,22 @@ PROGRAM AVERAGES
 ! -------------------------------------------------------------------
 ! Calculate intermittency
 ! -------------------------------------------------------------------
+     IF ( opt_cond .GT. 0 ) THEN
+
 #include "dns_calc_partition.h"
      IF ( opt_main .EQ. 2 .AND. opt_cond .EQ. 1 ) rtime = params(1)
+
+     ENDIF
+
+! -------------------------------------------------------------------
+! Type of averages
+! -------------------------------------------------------------------
+     SELECT CASE ( opt_main )
 
 ! ###################################################################
 ! Conventional statistics
 ! ###################################################################
-     IF      ( opt_main .EQ. 1 ) THEN
+     CASE ( 1 )
         IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
            IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
               IF ( damkohler(1) .LE. C_0_R )  THEN
@@ -519,7 +522,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Partition of field
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 2 ) THEN
+     CASE ( 2 )
         DO n = 1,igate_size
            WRITE(varname(n),*) n; varname(n) = 'Partition'//TRIM(ADJUSTL(varname(n)))
         ENDDO
@@ -548,7 +551,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Scalar gradient conditioned on Z
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 3 ) THEN
+     CASE ( 3 )
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
         CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,txc(1,1), txc(1,2),  wrk1d,wrk2d,wrk3d)
         DO ij = 1,isize_field
@@ -575,7 +578,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Main variables
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 4 ) THEN
+     CASE ( 4 )
         nfield = 0
         nfield = nfield+1; data(nfield)%field => u(:); varname(nfield) = 'U'
         nfield = nfield+1; data(nfield)%field => v(:); varname(nfield) = 'V'
@@ -619,7 +622,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Enstrophy equation
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 5 ) THEN
+     CASE ( 5 )
         CALL IO_WRITE_ASCII(lfile,'Computing baroclinic term...')
         IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR.&
              imode_eqns .EQ. DNS_EQNS_ANELASTIC     )THEN
@@ -708,7 +711,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Strain equation
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 6 ) THEN
+     CASE ( 6 )
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
         CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
         CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
@@ -768,7 +771,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Scalar gradient equation
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 7 ) THEN
+     CASE ( 7 )
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient production...')
         CALL FI_GRADIENT_PRODUCTION(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
              dx, dy, dz, s, u, v, w, txc(1,1), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6),&
@@ -810,7 +813,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Velocity gradient invariants
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 8 ) THEN
+     CASE ( 8 )
         CALL IO_WRITE_ASCII(lfile,'Computing third invariant R...')
         CALL FI_INVARIANT_R(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
              dx, dy, dz, u, v, w, txc(1,1), &
@@ -841,7 +844,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Scalar gradient components
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 9 ) THEN
+     CASE ( 9 )
         CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
         CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s, txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
         CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
@@ -871,7 +874,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! eigenvalues of rate-of-strain tensor
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 10 ) THEN
+     CASE ( 10 )
         CALL IO_WRITE_ASCII(lfile,'Computing rate-of-strain tensor...') ! txc1-txc6
         CALL FI_STRAIN_TENSOR(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
              dx, dy, dz, u, v, w, txc(1,1), wrk1d, wrk2d, wrk3d)
@@ -896,7 +899,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! eigenframe of rate-of-strain tensor
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 11 ) THEN
+     CASE ( 11 )
         CALL IO_WRITE_ASCII(lfile,'Computing rate-of-strain tensor...') ! txc1-txc6
         CALL FI_STRAIN_TENSOR(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
              dx,dy,dz, u,v,w, txc(1,1), wrk1d,wrk2d,wrk3d)
@@ -960,7 +963,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! longitudinal velocity derivatives
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 12 ) THEN
+     CASE ( 12 )
         CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, u, txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
         CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, v, txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
         CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, w, txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
@@ -982,7 +985,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Momentum vertical transport
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 13 ) THEN
+     CASE ( 13 )
         CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, u, txc(:,1), i0,i0, wrk1d,wrk2d,wrk3d)
         CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, v, txc(:,2), i0,i0, wrk1d,wrk2d,wrk3d)
         txc(:,1) = ( txc(:,1) + txc(:,2) ) *visc
@@ -1035,7 +1038,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Hydrostatic pressure
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 14 ) THEN
+     CASE ( 14 )
         is = 0
 
         CALL FI_PRESSURE_BOUSSINESQ(u,v,w, s, txc(1,1), &
@@ -1068,8 +1071,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Dissipation
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 15 ) THEN 
-
+     CASE ( 15 ) 
         CALL FI_DISSIPATION(i1,imode_fdm,imax,jmax,kmax,i1bc,j1bc,k1bc, & 
              area,visc,dx,dy,dz, u,v,w,txc(:,1), & 
              txc(:,2),txc(:,3),txc(:,4),mean,wrk1d,wrk2d,wrk3d)
@@ -1089,8 +1091,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Covariances among scalars
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 16 ) THEN
-
+     CASE ( 16 )
         CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(1,1))
         CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(1,2))
 
@@ -1114,11 +1115,11 @@ PROGRAM AVERAGES
            ENDDO
         ENDIF
 
-        WRITE(fname,*) itime; fname='Cov'//TRIM(ADJUSTL(fname))
+        WRITE(fname,*) itime; fname='cov'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
-     ENDIF
+     END SELECT
   ENDDO
 
   CALL DNS_END(0)

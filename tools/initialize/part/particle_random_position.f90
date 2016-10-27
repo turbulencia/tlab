@@ -26,7 +26,7 @@
 !#
 !########################################################################
 
-SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk2d,wrk3d,txc)
+SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,isize_wrk3d,wrk1d,wrk2d,wrk3d,txc)
   
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
@@ -43,11 +43,10 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
   TREAL, DIMENSION(isize_particle,inb_particle)   :: l_q, l_hq
   TREAL, DIMENSION(isize_particle)                :: l_tags
   TREAL, DIMENSION(:,:,:,:), ALLOCATABLE, SAVE    :: s  
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE          :: l_buffer
-  TREAL, DIMENSION(*),              INTENT(IN)    :: x,y,z
-  TREAL, DIMENSION(*)                             ::   wrk1d,wrk2d,wrk3d
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE        :: l_buffer
+  TREAL, DIMENSION(*)                             :: wrk1d,wrk2d,wrk3d
   TREAL, DIMENSION(isize_field,*)                 :: txc
-  TINTEGER  i,j, is, ij
+  TINTEGER  i,j, is
   TINTEGER  particle_number_local
  ! TINTEGER, DIMENSION(1)::x_seed
   TINTEGER, ALLOCATABLE                            ::x_seed(:)
@@ -58,10 +57,8 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
   TREAL rnd_number(4) 
   TINTEGER rnd_scal(3)
   TREAL rnd_number_second
-  TREAL c1_loc, c2_loc, c4_loc, liq_delta, liq_delta_inv, liq_dummy
   EXTERNAL FLOW_SHEAR_TEMPORAL
 
-  CHARACTER*32 fname
   TINTEGER isize_wrk3d
 #ifdef USE_MPI
   TINTEGER particle_number_each
@@ -111,7 +108,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
         !Each processor creates random numbers in its territory
         l_q(i,1)=((rnd_number(1)/ims_npro_i)+(real_buffer_i/real_nbuffer_i))*scalex
         l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*scaley
-!        l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*(y(jmin_part+1)-y(jmin_part))*jmax_total
+!        l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*(g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part))*jmax_total
         IF ( kmax_total .GT. 1) THEN
            l_q(i,3)=((rnd_number(3)/ims_npro_k)+(real_buffer_k/real_nbuffer_k))*scalez
         ELSE
@@ -163,8 +160,8 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
        !Set up random numbers
        !Each processor creates random numbers in its territory
         l_q(i,1)=((rnd_number(1)/ims_npro_i)+(real_buffer_i/real_nbuffer_i))*scalex
-!        l_q(i,2)=y(rnd_scal(2)) + real_buffer_frac*scaley/jmax 
-        l_q(i,2)=y(rnd_scal(2)) + real_buffer_frac*(y(jmin_part+1)-y(jmin_part) )
+!        l_q(i,2)=g(2)%nodes(rnd_scal(2)) + real_buffer_frac*scaley/jmax 
+        l_q(i,2)=g(2)%nodes(rnd_scal(2)) + real_buffer_frac*(g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part) )
         IF ( kmax_total .GT. 1) THEN
            l_q(i,3)=((rnd_number(3)/ims_npro_k)+(real_buffer_k/real_nbuffer_k))*scalez
         ELSE
@@ -196,7 +193,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
 
       l_q(i,1)=((rnd_number(1)))*scalex
       l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*scaley
-!      l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*(y(jmin_part+1)-y(jmin_part))*jmax_total
+!      l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*(g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part))*jmax_total
       IF ( kmax_total .GT. 1) THEN
         l_q(i,3)=((rnd_number(3)*scalez))
       ELSE
@@ -235,7 +232,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
 
        !Set up random numbers
         l_q(i,1)=(rnd_number(1))*scalex
-        l_q(i,2)=y(rnd_scal(2)) + real_buffer_frac*(y(jmin_part+1)-y(jmin_part) )
+        l_q(i,2)=g(2)%nodes(rnd_scal(2)) + real_buffer_frac*(g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part) )
         IF ( kmax_total .GT. 1) THEN
            l_q(i,3)=(rnd_number(3))*scalez
         ELSE

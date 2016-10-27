@@ -50,6 +50,10 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
     headerlength = 4
     headerprof = 4
     headertime = 0
+  elif( avgtype == 'cov' ):
+    headerlength = 6
+    headerprof = 6
+    headertime = 3
   else :
     print 'WARNING : unknown filetype!' 
     print 'WARNING : assuming all data is vertical profiles' 

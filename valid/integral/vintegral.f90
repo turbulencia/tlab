@@ -12,7 +12,7 @@ PROGRAM VINTEGRAL
   PARAMETER(imax=1024)
   TREAL scalex, x_0
   TREAL x(imax), dx(imax,2+4*3+4*3+5)
-  TREAL u(imax), du1_a(imax), du2_a(imax), w_n(imax), dw1_n(imax), v(imax), dv1_a(imax), f(imax)
+  TREAL u(imax), du1_a(imax), w_n(imax), dw1_n(imax), v(imax), f(imax)!, dv1_a(imax), du2_a(imax)
   TREAL wrk1d(imax,5+2+5), wrk2d(imax), wrk3d(imax)
   TREAL sol, error, wk, lambda, dummy
   TINTEGER imin_loc, imax_loc

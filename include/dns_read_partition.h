@@ -3,7 +3,7 @@
   CALL LIST_REAL(sRes, iopt_size, opt_vec2)
 
   IF ( sRes .EQ. '-1' ) THEN
-#ifdef PARALLEL
+#ifdef USE_MPI
      CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Missing input [PostProcessing.Partition] in dns.ini.')
      CALL DNS_STOP(DNS_ERROR_INVALOPT) 
 #else

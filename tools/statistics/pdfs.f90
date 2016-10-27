@@ -185,7 +185,11 @@ PROGRAM PDFS
   igate_size    = 0
   opt_threshold = 0
 
+  IF ( opt_gate .GT.0 ) THEN
+
 #include "dns_read_partition.h"
+
+  ENDIF
 
 ! -------------------------------------------------------------------
 ! Definitions
@@ -352,7 +356,11 @@ PROGRAM PDFS
 ! -------------------------------------------------------------------
 ! Calculate intermittency
 ! -------------------------------------------------------------------
+     IF ( opt_cond .GT. 0 ) THEN
+
 #include "dns_calc_partition.h"
+
+     ENDIF
 
 ! ###################################################################
 ! Main variable 2D-PDF

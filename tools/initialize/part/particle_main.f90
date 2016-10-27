@@ -99,7 +99,7 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
-  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk2d,wrk3d,txc)
+  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,isize_wrk3d,wrk1d,wrk2d,wrk3d,txc)
   
   CALL DNS_WRITE_PARTICLE('particle.ics',l_q)
 
