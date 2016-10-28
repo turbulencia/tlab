@@ -1,0 +1,10 @@
+\chapter{Profiling}\label{sec:profiling}
+
+We include here results from profiling to identify where to put the effort to further optimize the code. The diagrams shown below have been constructed with {\tt gprof2dot.py}\footnote{\url{https://github.com/jrfonseca/gprof2dot}}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[clip,width=\textwidth]{figs/profiling.pdf}
+  \caption{From {\tt example/Case33} running 10 iterations. Profiling data obtained from {\tt gfortran -pg} and processed with {\tt gprof}, running the command {\tt gprof path/to/your/executable | gprof2dot.py | dot -Tpdf -o output.pdf}.}
+\end{figure}
+

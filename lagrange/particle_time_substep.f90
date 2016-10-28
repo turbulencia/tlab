@@ -22,9 +22,9 @@
 !########################################################################
 SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )    
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, imax_total, kmax_total
+  USE DNS_GLOBAL, ONLY : imax_total, kmax_total
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY: isize_particle, scalex, scalez, inb_particle
+  USE DNS_GLOBAL, ONLY : isize_particle, inb_particle
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI
@@ -61,13 +61,12 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   p_buffer_1(1:isize_pbuffer)=> l_comm(isize_max_hf+1:isize_max_hf+isize_pbuffer)
   p_buffer_2(1:isize_pbuffer)=> l_comm(isize_max_hf+isize_pbuffer+1:isize_max_hf+isize_pbuffer*2)
 
-  dx_grid=scalex/imax_total  
-  dz_grid=scalez/kmax_total  
+  dx_grid = g(1)%scale/imax_total  
+  dz_grid = g(3)%scale/kmax_total  
   
   !#######################################################################
   ! Particle new postion here!
   !#######################################################################
-   
     DO i = 1,particle_vector(ims_pro+1)
       DO is = 1,inb_particle_evolution !coordinaes 1=x 2=y 3=z
       
@@ -76,10 +75,10 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   
       ENDDO
     END DO
+
   !#####################################################################
   !Particle sorting for Send/Recv X-Direction
   !#####################################################################        
-
     CALL PARTICLE_SORT(x,z,nzone_grid, nzone_west, nzone_east,nzone_south, nzone_north,1,&
                        l_hq, l_tags,l_q )
 
@@ -100,8 +99,6 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   !#####################################################################
   ! Send/Recv of particles X-Direction
   !#####################################################################
-      
-
     CALL PARTICLE_SEND_RECV(nzone_grid, nzone_west, nzone_east,nzone_south, nzone_north, 1,& 
                             p_buffer_1, p_buffer_2, l_hq, l_tags, l_q) 
 
@@ -109,7 +106,6 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   !#####################################################################
   !Particle sorting for Send/Recv Z-Direction
   !#####################################################################        
-
     CALL PARTICLE_SORT(x,z,nzone_grid, nzone_west, nzone_east,nzone_south,nzone_north,3,&
                          l_hq, l_tags, l_q)
 
@@ -144,7 +140,6 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   !#######################################################################
   ! Particle new postion here!
   !#######################################################################
-      
   DO i = 1,particle_number
     DO is = 1,inb_particle_evolution !coordinaes 1=x 2=y 3=z
      
@@ -153,11 +148,12 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   
     ENDDO
   END DO
+
   !#######################################################################
   ! Move particle to other side of x-grid
   !#######################################################################
-  dx_grid=scalex/imax_total  
-  dz_grid=scalez/kmax_total  
+  dx_grid = g(1)%scale/imax_total  
+  dz_grid = g(3)%scale/kmax_total  
   DO i = 1,particle_number
     IF (l_q(i,1) .GT. x(imax_total)+dx_grid) THEN
       l_q(i,1) = l_q(i,1) - x(imax_total) - dx_grid

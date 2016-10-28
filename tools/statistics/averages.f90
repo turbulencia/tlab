@@ -30,7 +30,7 @@ PROGRAM AVERAGES
   TINTEGER, PARAMETER :: params_size_max =  2
 
 ! Arrays declarations
-  TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE, TARGET :: x,y,z
+  TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE         :: x,y,z
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE, TARGET :: q, s, txc
   TREAL, DIMENSION(:),      ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
 

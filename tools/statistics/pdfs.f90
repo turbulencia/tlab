@@ -7,7 +7,7 @@
 PROGRAM PDFS
 
   USE DNS_TYPES,     ONLY : pointers_structure
-  USE DNS_CONSTANTS, ONLY : efile, lfile , gfile, tag_flow, tag_scal
+  USE DNS_CONSTANTS, ONLY : efile,lfile ,gfile, tag_flow,tag_scal
   USE DNS_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI
@@ -27,7 +27,7 @@ PROGRAM PDFS
   TINTEGER, PARAMETER :: params_size_max =  2
 
 ! Arrays declarations
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
+  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE   :: x,y,z
   TREAL,      DIMENSION(:,:), ALLOCATABLE, TARGET :: s, q, txc
   TREAL,      DIMENSION(:,:), ALLOCATABLE         :: wrk1d, wrk2d
   TREAL,      DIMENSION(:),   ALLOCATABLE         :: pdf, y_aux, wrk3d
@@ -72,7 +72,7 @@ PROGRAM PDFS
 #endif
 
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:),   POINTER :: u, v, w, p
+  TREAL, DIMENSION(:), POINTER :: p
 
   TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
 
@@ -220,73 +220,75 @@ PROGRAM PDFS
      inb_txc    = 1
   ENDIF
 
-  IF ( opt_main .EQ. 1 ) THEN
+  SELECT CASE ( opt_main )
+
+  CASE( 1 )
      iread_scal = 1
      iread_flow = 1
      inb_txc = MAX(inb_txc,3)
      nfield = 6+1
-  ELSE IF ( opt_main .EQ. 2 ) THEN
+  CASE( 2 )
      iread_scal = 1
      nfield = inb_scal
-  ELSE IF ( opt_main .EQ. 3 ) THEN ! Scalar gradient equation
+  CASE( 3 ) ! Scalar gradient equation
      iread_scal = 1
      iread_flow = 1
      inb_txc = MAX(inb_txc,6)
      nfield = 4
-  ELSE IF ( opt_main .EQ. 4 ) THEN ! Enstrophy equation
+  CASE( 4 ) ! Enstrophy equation
      iread_flow = 1
      iread_scal = 1
      inb_txc = MAX(inb_txc,8)
      nfield = 6
-  ELSE IF ( opt_main .EQ. 5 ) THEN ! Strain equation
+  CASE( 5 ) ! Strain equation
      iread_scal = 1
      iread_flow = 1
      inb_txc = MAX(inb_txc,8)
      nfield = 4
-  ELSE IF ( opt_main .EQ. 6 ) THEN ! Invariants
+  CASE( 6 ) ! Invariants
      iread_flow = 1
      inb_txc = MAX(inb_txc,6)
      nfield = 3
-  ELSE IF ( opt_main .EQ. 7 ) THEN ! Chi-flamelet 
+  CASE( 7 ) ! Chi-flamelet 
      iread_scal = 1
      iread_flow = 1
      inb_txc = MAX(inb_txc,6)
      nfield = 2
-  ELSE IF ( opt_main .EQ. 9 ) THEN
+  CASE( 9 )
      iread_flow = 1
      inb_txc = MAX(inb_txc,4)
-  ELSE IF ( opt_main .EQ. 10 ) THEN
+  CASE( 10 )
      iread_scal = 1
      iread_flow = 1
      inb_txc = MAX(inb_txc,3)
-  ELSE IF ( opt_main .EQ. 11 ) THEN
+  CASE( 11 )
      iread_scal = 1
      iread_flow = 1
      inb_txc = MAX(inb_txc,3)
-  ELSE IF ( opt_main .EQ. 12 ) THEN
+  CASE( 12 )
      iread_scal = 1
      inb_txc = MAX(inb_txc,4)
      nfield = 5
-  ELSE IF ( opt_main .EQ. 13 ) THEN
+  CASE( 13 )
 !     inb_txc = MAX(inb_txc,2)
 !     nfield = 2
      inb_txc = MAX(inb_txc,1)
      nfield = 1
-  ELSE IF ( opt_main .EQ. 14 ) THEN ! eigenvalues
+  CASE( 14 ) ! eigenvalues
      iread_flow = 1
      inb_txc = MAX(inb_txc,9)
      nfield = 3
-  ELSE IF ( opt_main .EQ. 15 ) THEN ! eigenframe
+  CASE( 15 ) ! eigenframe
      iread_flow = 1
      iread_scal = 1
      inb_txc = MAX(inb_txc,9)
      nfield = 6
-  ELSE IF ( opt_main .EQ. 16 ) THEN ! longitudinal velocity derivatives
+  CASE( 16 ) ! longitudinal velocity derivatives
      iread_flow = 1
      iread_scal = 0
      inb_txc = MAX(inb_txc,3)
      nfield = 3
-  ENDIF
+  END SELECT
 
   IF ( ifourier .EQ. 1 ) inb_txc = MAX(inb_txc,1)
 
@@ -326,13 +328,6 @@ PROGRAM PDFS
   ENDIF
 
 ! ###################################################################
-! Define pointers
-! ###################################################################
-  u   => q(:,1)
-  v   => q(:,2)
-  w   => q(:,3)
-
-! ###################################################################
 ! Calculating statistics
 ! ###################################################################
   DO it=1, itime_size
@@ -362,12 +357,17 @@ PROGRAM PDFS
 
      ENDIF
 
+! -------------------------------------------------------------------
+! Type of PDFs
+! -------------------------------------------------------------------
+     SELECT CASE ( opt_main )
+
 ! ###################################################################
 ! Main variable 2D-PDF
 ! ###################################################################
-     IF ( opt_main .EQ. 1 ) THEN
+     CASE( 1 )
         IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
-           CALL FI_PRESSURE_BOUSSINESQ(u,v,w,s, txc(1,1), txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
+           CALL FI_PRESSURE_BOUSSINESQ(q(1,1),q(1,2),q(1,3),s, txc(1,1), txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
 
         ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            p(:) = C_1_R ! to be developed
@@ -383,9 +383,9 @@ PROGRAM PDFS
         ENDIF
 
         nfield = 0
-        nfield = nfield+1; data(nfield)%field => u(:);     varname(nfield) = 'Pu'
-        nfield = nfield+1; data(nfield)%field => v(:);     varname(nfield) = 'Pv'
-        nfield = nfield+1; data(nfield)%field => w(:);     varname(nfield) = 'Pw'
+        nfield = nfield+1; data(nfield)%field => q(:,1);   varname(nfield) = 'Pu'
+        nfield = nfield+1; data(nfield)%field => q(:,2);   varname(nfield) = 'Pv'
+        nfield = nfield+1; data(nfield)%field => q(:,3);   varname(nfield) = 'Pw'
         nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'Pp'
         IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
            nfield = nfield+1; data(nfield)%field => txc(:,2); varname(nfield) = 'Pr'
@@ -412,7 +412,7 @@ PROGRAM PDFS
 ! ###################################################################
 ! Scalar 2D-PDF
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 2 ) THEN
+     CASE ( 2 )
         nfield = 0
         DO is = 1,inb_scal
            nfield = nfield+1; data(is)%field => s(:,is); varname(is) = 'Scalar '
@@ -439,28 +439,24 @@ PROGRAM PDFS
 ! ###################################################################
 ! Scalar gradient equation
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 3 ) THEN
+     CASE ( 3 )
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient production...')
         CALL FI_GRADIENT_PRODUCTION(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, s, u, v, w, txc(1,1), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6),&
+             dx, dy, dz, s, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6),&
              wrk1d, wrk2d, wrk3d)
 
 ! array u used as auxiliar
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient diffusion...')
         CALL FI_GRADIENT_DIFFUSION&
              (iunifx, iunify, iunifz, imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, s, txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), u, &
+             dx, dy, dz, s, txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), q(1,1), &
              wrk1d, wrk2d, wrk3d)
-        DO ij = 1,imax*jmax*kmax
-           txc(ij,2) = diff*txc(ij,2)
-        ENDDO
+        txc(1:isize_field,2) = diff *txc(1:isize_field,2)
 
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
         CALL FI_GRADIENT(imode_fdm, imax, jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
-        DO ij = 1,imax*jmax*kmax
-           txc(ij,4) = txc(ij,1)/txc(ij,3)
-           txc(ij,3) = log(txc(ij,3))
-        ENDDO
+        txc(1:isize_field,4) = txc(1:isize_field,1) /txc(1:isize_field,3)
+        txc(1:isize_field,3) = log(txc(1:isize_field,3))
 
         data(1)%field => txc(:,3); varname(1) = 'LnGradientG_iG_i'      ; ibc(1) = 2
         data(2)%field => txc(:,1); varname(2) = 'ProductionMsG_iG_jS_ij'; ibc(2) = 2
@@ -481,7 +477,7 @@ PROGRAM PDFS
 ! ###################################################################
 ! Enstrophy equation
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 4 ) THEN
+     CASE ( 4 )
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
         CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
         CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
@@ -496,7 +492,7 @@ PROGRAM PDFS
              dx, dy, dz, txc(1,2), txc(1,1), txc(1,4), txc(1,3), txc(1,7), wrk1d, wrk2d, wrk3d)
 ! result vector in txc1, txc2, txc3
         CALL FI_CURL(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u,v,w, txc(1,1),txc(1,2),txc(1,3), txc(1,7), wrk1d,wrk2d,wrk3d)
+             dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3), txc(1,7), wrk1d,wrk2d,wrk3d)
 ! scalar product, store in txc8
         DO ij = 1,imax*jmax*kmax
            txc(ij,8) = txc(ij,1)*txc(ij,4) + txc(ij,2)*txc(ij,5) + txc(ij,3)*txc(ij,6)
@@ -504,30 +500,26 @@ PROGRAM PDFS
         
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy production...')
         CALL FI_VORTICITY_PRODUCTION(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, txc(1,1), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), &
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), &
              wrk1d, wrk2d, wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy diffusion...')
         CALL FI_VORTICITY_DIFFUSION&
              (iunifx, iunify, iunifz, imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), &
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), &
              wrk1d, wrk2d, wrk3d)
-        DO ij = 1,imax*jmax*kmax
-           txc(ij,2) = visc*txc(ij,2)
-        ENDDO
+        txc(1:isize_field,2) = visc *txc(1:isize_field,2)
 
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy...')
         CALL FI_VORTICITY(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, txc(1,3), txc(1,4), txc(1,5), wrk1d, wrk2d, wrk3d)
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,3), txc(1,4), txc(1,5), wrk1d, wrk2d, wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing dilatation term...')
-        CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, txc(1,4), txc(1,5), wrk2d,wrk3d)
+        CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,4), txc(1,5), wrk2d,wrk3d)
 
-        DO ij = 1,imax*jmax*kmax
-           txc(ij,5) = txc(ij,4)*txc(ij,3) ! -w^2 div(u)
-           txc(ij,4) = txc(ij,1)/txc(ij,3) ! production rate 
-           txc(ij,3) = log(txc(ij,3))      ! ln(w^2)
-        ENDDO
+        txc(1:isize_field,5) = txc(1:isize_field,4) *txc(1:isize_field,3) ! -w^2 div(u)
+        txc(1:isize_field,4) = txc(1:isize_field,1) /txc(1:isize_field,3) ! production rate 
+        txc(1:isize_field,3) = log(txc(1:isize_field,3))                  ! ln(w^2)
 
         data(1)%field => txc(:,3); varname(1) = 'LnEnstrophyW_iW_i'   ;   ibc(1) = 2
         data(2)%field => txc(:,1); varname(2) = 'ProductionW_iW_jS_ij';   ibc(2) = 2
@@ -550,7 +542,7 @@ PROGRAM PDFS
 ! ###################################################################
 ! Strain equation
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 5 ) THEN
+     CASE ( 5 )
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
         CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
         CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
@@ -562,36 +554,28 @@ PROGRAM PDFS
              (imax, jmax, kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
         CALL FI_STRAIN_PRESSURE&
              (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx, dy, dz, u, v, w, txc(1,1), &
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,1), &
              txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), wrk1d,wrk2d,wrk3d)
-        DO ij = 1,imax*jmax*kmax
-           txc(ij,1)=C_2_R*txc(ij,2)
-        ENDDO
+        txc(1:isize_field,1) = C_2_R *txc(1:isize_field,2)
         
         CALL IO_WRITE_ASCII(lfile,'Computing strain production...')
         CALL FI_STRAIN_PRODUCTION(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, &
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), &
              txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), wrk1d,wrk2d,wrk3d)
-        DO ij = 1,imax*jmax*kmax
-           txc(ij,2)=C_2_R*txc(ij,2)
-        ENDDO
+        txc(1:isize_field,2) = C_2_R *txc(1:isize_field,2)
 
         CALL IO_WRITE_ASCII(lfile,'Computing strain diffusion...')
         CALL FI_STRAIN_DIFFUSION&
              (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx, dy, dz, u, v, w, &
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), &
              txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), txc(1,8), wrk1d,wrk2d,wrk3d)
-        DO ij = 1,imax*jmax*kmax
-           txc(ij,3)=C_2_R*visc*txc(ij,3)
-        ENDDO
+        txc(1:isize_field,3) = C_2_R *visc *txc(1:isize_field,3)
 
         CALL IO_WRITE_ASCII(lfile,'Computing strain...')
         CALL FI_STRAIN(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, txc(1,4), txc(1,5), txc(1,6), &
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,4), txc(1,5), txc(1,6), &
              wrk1d, wrk2d, wrk3d)
-        DO ij = 1,imax*jmax*kmax
-           txc(ij,4)=log(C_2_R*txc(ij,4))
-        ENDDO
+        txc(1:isize_field,4) = log( C_2_R *txc(1:isize_field,4) )
               
         data(1)%field => txc(:,4); varname(1) = 'LnStrain2S_ijS_i'         ; ibc(1) = 2
         data(2)%field => txc(:,2); varname(2) = 'ProductionMs2S_ijS_jkS_ki'; ibc(2) = 2
@@ -612,19 +596,19 @@ PROGRAM PDFS
 ! ###################################################################
 ! Velocity gradient invariants
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 6 ) THEN
+     CASE ( 6 )
         CALL IO_WRITE_ASCII(lfile,'Computing third invariant R...') ! txc1 contains R
         CALL FI_INVARIANT_R(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, txc(1,1), &
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,1), &
              txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), wrk1d, wrk2d, wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing second invariant Q...') ! txc2 contains Q
         CALL FI_INVARIANT_Q(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, txc(1,2), &
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,2), &
              txc(1,3), txc(1,4), txc(1,5), wrk1d, wrk2d, wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing first invariant P...')
-        CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, txc(1,3), txc(1,4), wrk2d,wrk3d)
+        CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,3), txc(1,4), wrk2d,wrk3d)
 
         data(1)%field => txc(:,3); varname(1) = 'InvariantP'; ibc(1) = 2
         data(2)%field => txc(:,2); varname(2) = 'InvariantQ'; ibc(2) = 2
@@ -648,9 +632,9 @@ PROGRAM PDFS
 ! ###################################################################
 ! Chi flamelet equation PDF
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 7 ) THEN
+     CASE ( 7 )
         CALL FI_STRAIN_A(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, s, u, v, w, txc(1,1), txc(1,2),&
+             dx, dy, dz, s, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),&
              txc(1,3), txc(1,4), txc(1,5), txc(1,6), wrk1d, wrk2d, wrk3d)
         data(1)%field => txc(:,1); varname(1) = 'StrainAG_iG_i'; ibc(1) = 2
         data(2)%field => txc(:,2); varname(2) = 'StrainA';       ibc(2) = 2
@@ -669,17 +653,17 @@ PROGRAM PDFS
 ! ###################################################################
 ! Joint PDF W^2 and 2S^2
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 9 ) THEN
+     CASE ( 9 )
 ! txc1 contains w^2
         CALL FI_VORTICITY(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, txc(1,1), txc(1,2), txc(1,3), wrk1d, wrk2d, wrk3d)
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), txc(1,3), wrk1d, wrk2d, wrk3d)
 ! in case we want to condition on w
         DO ij = 1,imax*jmax*kmax
            s(ij,1) = SQRT(txc(ij,1))
         ENDDO
 ! txc2 contains 2s^2
         CALL FI_STRAIN(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, txc(1,2), txc(1,3), txc(1,4), wrk1d, wrk2d, wrk3d)
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,2), txc(1,3), txc(1,4), wrk1d, wrk2d, wrk3d)
         DO ij = 1,imax*jmax*kmax
            txc(ij,2) = C_2_R*txc(ij,2)
         ENDDO
@@ -691,12 +675,10 @@ PROGRAM PDFS
 ! ###################################################################
 ! Conditional scalar gradient 3D-PDFs 
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 10 ) THEN
+     CASE ( 10 )
         CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,txc(1,1), txc(1,2), wrk1d,wrk2d,wrk3d)
         varname(1) = 'ScalarGradient'
-        DO ij = 1,imax*jmax*kmax
-           txc(ij,1) = log(txc(ij,1))
-        ENDDO
+        txc(1:isize_field,1) = log(txc(1:isize_field,1))
 
         WRITE(fname,*) itime; fname='cpdf'//TRIM(ADJUSTL(fname))
         CALL CPDF3D_N(fname, varname, opt_gate, i1, i1, rtime, imax, jmax, kmax,&
@@ -705,11 +687,9 @@ PROGRAM PDFS
 ! ###################################################################
 ! Joint PDF Scalar and Scalar Gradient 
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 11 ) THEN
+     CASE ( 11 )
         CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,txc(1,1), txc(1,2), wrk1d,wrk2d,wrk3d)
-        DO ij = 1,imax*jmax*kmax
-           txc(ij,1) = log(txc(ij,1))
-        ENDDO
+        txc(1:isize_field,1) = log(txc(1:isize_field,1))
 
         WRITE(fname,*) itime; fname='jpdfXiZ'//TRIM(ADJUSTL(fname))
         CALL JPDF3D(fname, i1, opt_gate, i1, imax, jmax, kmax, i0, i0,&
@@ -718,7 +698,7 @@ PROGRAM PDFS
 ! ###################################################################
 ! Scalar gradient components
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 12 ) THEN
+     CASE ( 12 )
         CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
         CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s, txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
         CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
@@ -753,7 +733,7 @@ PROGRAM PDFS
 ! ###################################################################
 ! Gradient trajectory data from external file
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 13 ) THEN
+     CASE ( 13 )
         WRITE(fname,*) itime; fname = 'de'//TRIM(ADJUSTL(fname))
         CALL DNS_READ_FIELDS(fname, i0, imax,jmax,kmax, i1,i0, isize_wrk3d, txc, wrk3d)
 
@@ -786,10 +766,10 @@ PROGRAM PDFS
 ! ###################################################################
 ! eigenvalues of rate-of-strain tensor
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 14 ) THEN
+     CASE ( 14 )
         CALL IO_WRITE_ASCII(lfile,'Computing rate-of-strain tensor...') ! txc1-txc6
         CALL FI_STRAIN_TENSOR(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, txc(1,1), wrk1d, wrk2d, wrk3d)
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,1), wrk1d, wrk2d, wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing eigenvalues...') ! txc6-txc9
         CALL FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1,1), txc(1,7))
@@ -812,10 +792,10 @@ PROGRAM PDFS
 ! ###################################################################
 ! eigenframe of rate-of-strain tensor
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 15 ) THEN
+     CASE ( 15 )
         CALL IO_WRITE_ASCII(lfile,'Computing rate-of-strain tensor...') ! txc1-txc6
         CALL FI_STRAIN_TENSOR(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, txc(1,1), wrk1d, wrk2d, wrk3d)
+             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,1), wrk1d, wrk2d, wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing eigenvalues...') ! txc7-txc9
         CALL FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1,1), txc(1,7))
@@ -826,21 +806,21 @@ PROGRAM PDFS
 ! local direction cosines of vorticity vector
         CALL IO_WRITE_ASCII(lfile,'Computing vorticity vector...') ! txc7-txc9
         CALL FI_CURL(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u,v,w, txc(1,7),txc(1,8),txc(1,9), txc(1,10), wrk1d,wrk2d,wrk3d)
+             dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,7),txc(1,8),txc(1,9), txc(1,10), wrk1d,wrk2d,wrk3d)
 
         DO ij = 1,imax*jmax*kmax
            dummy = sqrt(txc(ij,7)*txc(ij,7)+txc(ij,8)*txc(ij,8)+txc(ij,9)*txc(ij,9))
-           u(ij) = (txc(ij,7)*txc(ij,1) + txc(ij,8)*txc(ij,2) + txc(ij,9)*txc(ij,3))/dummy
-           v(ij) = (txc(ij,7)*txc(ij,4) + txc(ij,8)*txc(ij,5) + txc(ij,9)*txc(ij,6))/dummy
-           eloc1 = txc(ij,2)*txc(ij,6)-txc(ij,5)*txc(ij,3)
-           eloc2 = txc(ij,3)*txc(ij,4)-txc(ij,6)*txc(ij,1)
-           eloc3 = txc(ij,1)*txc(ij,5)-txc(ij,4)*txc(ij,2)
-           w(ij) = (txc(ij,7)*eloc1 + txc(ij,8)*eloc2 + txc(ij,9)*eloc3)/dummy
+           q(ij,1) = (txc(ij,7)*txc(ij,1) + txc(ij,8)*txc(ij,2) + txc(ij,9)*txc(ij,3))/dummy
+           q(ij,2) = (txc(ij,7)*txc(ij,4) + txc(ij,8)*txc(ij,5) + txc(ij,9)*txc(ij,6))/dummy
+           eloc1   = txc(ij,2)*txc(ij,6)-txc(ij,5)*txc(ij,3)
+           eloc2   = txc(ij,3)*txc(ij,4)-txc(ij,6)*txc(ij,1)
+           eloc3   = txc(ij,1)*txc(ij,5)-txc(ij,4)*txc(ij,2)
+           q(ij,3) = (txc(ij,7)*eloc1 + txc(ij,8)*eloc2 + txc(ij,9)*eloc3)/dummy
         ENDDO
 
-        data(1)%field => u; varname(1) = 'cos(w,lambda1)'; ibc(1) = 2
-        data(2)%field => v; varname(2) = 'cos(w,lambda2)'; ibc(2) = 2
-        data(3)%field => w; varname(3) = 'cos(w,lambda3)'; ibc(3) = 2
+        data(1)%field => q(:,1); varname(1) = 'cos(w,lambda1)'; ibc(1) = 2
+        data(2)%field => q(:,2); varname(2) = 'cos(w,lambda2)'; ibc(2) = 2
+        data(3)%field => q(:,3); varname(3) = 'cos(w,lambda3)'; ibc(3) = 2
 
 ! local direction cosines of scalar gradient vector
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient vector...') ! txc7-txc9
@@ -877,10 +857,10 @@ PROGRAM PDFS
 ! ###################################################################
 ! Scalar gradient components
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 16 ) THEN
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, u, txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, v, txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, w, txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
+     CASE ( 16 )
+        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, q(1,1), txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, q(1,2), txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, q(1,3), txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
 
         data(1)%field => txc(:,1); varname(1) = 'dudx'
         data(2)%field => txc(:,2); varname(2) = 'dvdy'
@@ -898,7 +878,8 @@ PROGRAM PDFS
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
              imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
-     ENDIF
+
+     END SELECT
   ENDDO
 
   CALL DNS_END(0)
