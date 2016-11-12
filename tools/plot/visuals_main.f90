@@ -212,11 +212,13 @@ PROGRAM VISUALS_MAIN
      READ(*,'(A64)') sRes
 #endif
   ENDIF
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'general' ) THEN; opt_format = 0
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'ensight' ) THEN; opt_format = 1
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'single'  ) THEN; opt_format = 2
-  ELSE
-     READ(sRes,*) opt_format
+  IF ( LEN_TRIM(ADJUSTL(sRes)) .GT. 0 ) THEN
+     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'general' ) THEN; opt_format = 0
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'ensight' ) THEN; opt_format = 1
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'single'  ) THEN; opt_format = 2
+     ELSE
+        READ(sRes,*) opt_format
+     ENDIF
   ENDIF
   
   IF ( opt_format .LT. 0 ) opt_format = 2 ! default is single precission, no header

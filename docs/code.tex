@@ -148,35 +148,34 @@ Minor version number. A warning is generated if different from the value set in
 \tt Type & \tt temporal, spatial      & 
 Temporally evolving or spatially evolving simulation.\\
 \tt Flow & \tt shear, jet, isotropic & 
-Geometry of the flow, mainly related to initial and boundary conditions.\\
+Flow geometry, mainly related to initial and boundary conditions.\\
 \tt CalculateFlow & \tt yes, no & 
-Execute code segments affecting the flow variables.\\
+Execute code segments affecting flow variables.\\
 \tt CalculateScalar & \tt yes, no & 
-Execute code segments affecting the scalar variables.\\
+Execute code segments affecting scalar variables.\\
 \tt Equations & \tt internal, total, incompressible &
 Define system of equations to be solved.\\
-\tt Mixture & \tt None, AirVapor, AirWater, AirWaterSupersaturation & 
+\tt Mixture & \tt None, AirVapor, AirWater, AirWaterLinear & 
 Defines the mixture to be used for the thermodynamics.\\
 \tt TermAdvection & \tt divergence, convective, skewsymmetric &
-Formulation of the advection terms.\\
+Formulation of advection terms.\\
 \tt TermViscous & \tt divergence, explicit&
-Formulation of the viscous terms.\\
+Formulation of viscous terms.\\
 \tt TermDiffusion & \tt divergence, explicit &
-Formulation of the diffusion terms.\\
+Formulation of diffusion terms.\\
 \tt TermBodyForce & \tt None, Explicit, Homogeneous, Linear, Bilinear,
-Quadratic, PiecewiseLinear, PiecewiseBilinear &
-Formulation of the body force terms (see routine {\tt flow/flow\_buoyancy}).\\
-\tt TermCoriolis & \tt none, explicit, normalized &
-Formulation of the Coriolis terms.\\
-\tt TermRadiation & \tt None, Bulk1dGlobal, Bulk1dLocal, Bulk1dMixed,
-Bulk1dLocalMap, Bulk1dMixedMap &
-Formulation of the radiation termr (see routine {\tt flow/flow\_radiation}).\\
+Quadratic &
+Formulation of body force terms (see {\tt mappings/fi\_buoyancy}).\\
+\tt TermCoriolis & \tt None, Explicit, Normalized &
+Formulation of Coriolis terms.\\
+\tt TermRadiation & \tt None, Bulk1dGlobal, Bulk1dLocal &
+Formulation of radiation terms (see {\tt operators/opr\_radiation}).\\
 \tt SpaceOrder & \tt CompactJacobian4, CompactJacobian6, CompactDirect6 &
-Finite difference method used for the spatial derivatives.\\
+Finite difference method used for spatial derivatives.\\
 \tt TimeOrder & \tt RungeKuttaExplicit3, RungeKuttaExplicit4, RungeKuttaDiffusion3 &
-Runge-Kutta method used for the time advancement.\\
+Runge-Kutta method used for time advancement.\\
 \tt TimeStep & {\it value} &
-If positive, constant time step to be used in the time marching scheme.\\
+If positive, constant time step to be used in time marching scheme.\\
 \tt TimeCFL & {\it value} & Courant number for the advection part.\\
 \end{longtable}
 
@@ -189,20 +188,16 @@ If positive, constant time step to be used in the time marching scheme.\\
 %
 \tt Start & {\em value} & Initial iteration. The corresponding files {\tt flow.*}
 and {\tt scal.*} will be read from disk.\\
-\tt End & {\em value} & Final iteration at which the algortihm will be stopped.\\
-\tt Restart & {\em value} & Iteration step specifying the frequency with which to
-write the restart files to disk.\\
-\tt Statistics & {\em value} & Iteration step specifying the frequency with which to
-calculate statistics.\\ 
-\tt IteraLog& {\em value} & Iteration step specifying the frequency with which to
-write the log-file {\tt dns.out}.\\
+\tt End & {\em value} & Final iteration at which the algorithm will be stopped.\\
+\tt Restart & {\em value} & Iteration-step frequency to write the restart files to disk.\\
+\tt Statistics & {\em value} & Iteration-step frequency to calculate statistics.\\ 
+\tt IteraLog& {\em value} & Iteration-step frequency to write the log-file {\tt dns.out}.\\
+\tt SavePlanes& {\em value} & Iteration-step frequency to write plane data to disk.\\
 \tt RunAvera& \tt no, yes & Save running averages to disk (spatially evolving simulations).\\
 \tt RunLines& \tt no, yes & Save line information to disk (spatially evolving simulations).\\
 \tt RunPlane& \tt no, yes & Save plane information to disk (spatially evolving simulations).\\
-\tt StatSave& {\em value} &  Iteration step specifying the frequency with which to
-accumulate statistics (spatially evolving simulations).\\
-\tt StatStep& {\em value} & Iteration step specifying the frequency with which to
-save data to disk (spatially evolving simulations).\\
+\tt StatSave& {\em value} &  Iteration-step frequency to accumulate statistics (spatially evolving simulations).\\
+\tt StatStep& {\em value} & Iteration-step frequency to save statistics to disk (spatially evolving simulations).\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -212,24 +207,14 @@ save data to disk (spatially evolving simulations).\\
 %
 \multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Parameters]}\\
 %
-\tt Reynolds & {\em value} & Reynolds number $Re$ in
-section~\ref{sec:equations}.\\
-\tt Prandtl  & {\em value} & Prandtl number $Pr$ in
-section~\ref{sec:equations}.\\
-\tt Froude   & {\em value} & Froude number $Fr$ in
-section~\ref{sec:equations}.\\
-\tt Rossby   & {\em value} & Rossby number $Ro$ in
-section~\ref{sec:equations}.\\
-\tt Mach     & {\em value} & Mach number $Ma$ in
-section~\ref{sec:equations}.\\
-\tt Gama    & {\em value} & Ratio of specific heats $\gamma$ in
-section~\ref{sec:equations}.\\
-\tt Schmidt & {\em value1, value2, ...} & List of Schmidt numbers $Sc_i$ in
-section~\ref{sec:equations}. The number of values defines the number of scalars
-in the problem. If a mixture is defined in the block [Main], then consistency is
-checked.\\
-\tt Damkohler & {\em value1, value2, ...} & List of Damkohler numbers $Da_i$ in
-section~\ref{sec:equations}.\\
+\tt Reynolds & {\em value} & Reynolds number $\mathbf{Re}$ (see section~\ref{sec:equations}).\\
+\tt Prandtl  & {\em value} & Prandtl number $\mathbf{Pr}$.\\
+\tt Froude   & {\em value} & Froude number $\mathbf{Fr}$.\\
+\tt Rossby   & {\em value} & Rossby number $\mathbf{Ro}$.\\
+\tt Mach     & {\em value} & Mach number $\mathbf{Ma}$.\\
+\tt Gama     & {\em value} & Ratio of specific heats $\gamma$.\\
+\tt Schmidt  & {\em value1, value2, ...} & List of Schmidt numbers $\mathbf{Sc}_i$. The number of values defines the number of scalars. If a mixture is defined in the block [Main], then consistency is checked.\\
+\tt Damkohler & {\em value1, value2, ...} & List of Damkohler numbers $\mathbf{Da}_i$.\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -263,7 +248,7 @@ index).\\
 \tt Jmax & {\it value} & Number of points along the Oy direction (second array
 index).\\ 
 \tt Kmax & {\it value} & Number of points along the Oz direction (third array
-index). If set equal to 1, then 2D simulation.\\
+index).\newline If set equal to 1, then 2D simulation.\\
 \tt Imax(*) & {\it value} & Number of points per processor (MPI task) along the Ox
 direction (MPI parallel mode).\\
 \tt Jmax(*) & {\it value} & Number of points per processor (MPI task) along the Oy
@@ -271,15 +256,12 @@ direction (MPI parallel mode). So far, this value is set equal to the total size
 because only a 2D decomposition has been implemented.\\
 \tt Kmax(*) & {\it value} & Number of points per processor (MPI task) along the
 Oz direction (MPI parallel mode).\\
-\tt XUniform & \tt yes, no & Uniform grid is used in the Ox direction; no Jacobian
-information is needed.\\
-\tt YUniform & \tt yes, no & Uniform grid is used in the Oy direction; no Jacobian
-information is needed.\\
-\tt ZUniform & \tt yes, no & Uniform grid is used in the Oz direction; no Jacobian
-information is needed.\\
-\tt XPeriodic & \tt no, yes & Periodicity along Ox direction.\\
-\tt YPeriodic & \tt no, yes & Periodicity along Oy direction.\\
-\tt ZPeriodic & \tt no, yes & Periodicity along Oz direction.\\
+\tt XUniform & \tt yes, no & If yes, no Jacobian information is needed in Ox direction.\\
+\tt YUniform & \tt yes, no & If yes, no Jacobian information is needed in Oy direction.\\
+\tt ZUniform & \tt yes, no & If yes, no Jacobian information is needed in Oz direction.\\
+\tt XPeriodic & \tt yes, no & Periodicity along Ox direction.\\
+\tt YPeriodic & \tt yes, no & Periodicity along Oy direction.\\
+\tt ZPeriodic & \tt yes, no & Periodicity along Oz direction.\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -289,8 +271,6 @@ information is needed.\\
 %
 \multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [BoundaryConditions]}\\
 %
-ToBeFilled & & \\
-%
 \tt VelocityImin & \tt none, noslip, freeslip & Velocity boundary condition at $x_\text{min}$
 (incompressible mode).\\
 \tt VelocityImax & \tt none, noslip, freeslip & Velocity boundary condition at $x_\text{max}$
@@ -299,7 +279,8 @@ ToBeFilled & & \\
 (incompressible mode). The symbol {\tt \#} is the number of the scalar.\\
 \tt Scalar\#Imax & \tt none, dirichlet, neumman & Scalar boundary condition at $x_\text{max}$
 (incompressible mode). The symbol {\tt \#} is the number of the scalar.\\
-\multicolumn{3}{>{\columncolor{gray!25}}l}{Similarly in the other two directions.}\\
+\multicolumn{3}{l}{Similarly in the other directions {\tt I} and {\tt J}.}\\
+\multicolumn{3}{l}{Compressible-case information to be filled.}\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -330,11 +311,9 @@ $y_\text{max}$ for the thermodynamic fields.\\
 $y_\text{min}$ for the scalar fields.\\
 \tt PointsSJmax & {\em value} & Number of points in the $Oy$ direction at
 $y_\text{max}$ for the scalar fields.\\
-\tt ParametersU & {\em value1, value2, ...} & Set of parameters defining the
-the strength and the exponent of the relaxation term in the flow and
+\tt ParametersU & {\em value1, value2, ...} & Set of parameters defining strength and exponent of the relaxation term in the flow and
 thermodynamic fields, section~\ref{sec:buffer}.\\
-\tt ParametersS & {\em value1, value2, ...} & Set of parameters defining the
-the strength and the exponent of the relaxation term in the scalar fields,
+\tt ParametersS & {\em value1, value2, ...} & Set of parameters defining strength and exponent of the relaxation term in the scalar fields,
 section~\ref{sec:buffer}.\\
 \end{longtable}
 
@@ -406,7 +385,7 @@ buoyancy function $b^e(s_i)$.\\
 %
 \tt Vector     & {\em value1, value2, value3} & Components of the angular
 velocity vector $(f_1,\,f_2,\,f_3)$ in section~\ref{sec:equations}.\\
-\tt Parameters & {\em value1, value2, ...} & Set of parameters the Coriolis
+\tt Parameters & {\em value1, value2, ...} & Set of parameters defining the Coriolis
 force term.\\
 \end{longtable}
 
@@ -467,9 +446,9 @@ initialize the thermodynamic fields.\\
 %
 \multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Broadband]}\\
 %
-\tt Type & \tt None, Physical, Phase & The random magnitude is set in physical
-space or phase in frequency space. \\
-\tt Distribution & uniform, gaussian & Type of the PDF.\\
+\tt Type & \tt None, Physical, Phase & Randomness is set in physical
+space, or in the phase in frequency space. \\
+\tt Distribution & uniform, gaussian & Type of probability density function (PDF).\\
 \tt Seed & {\it value} & Seed for the random generator.\\
 \tt Covariance & {\it value1, value2, ...} & Flow covariance matrix.\\ 
 \tt Spectrum & \tt uniform, quadratic, quartic, gaussian & Form of the power
@@ -516,14 +495,15 @@ between a relative or an absolute threshold values. Set of thresholds
 \{$\beta_1$, ...,$\beta_{n-1}$\} to define the partition of the conditioning
 field into $n$ zones.\\ 
 \tt ParamAverages & $\alpha_1$[, $\alpha_2$, $\alpha_3$, $\alpha_4$]& Main option
-$\alpha_1$ (see {\tt tools/statistics/averages/averages.f90}); block size $\alpha_2$; gate
+$\alpha_1$ (see {\tt tools/statistics/averages.f90}); block size $\alpha_2$; gate
 level $\alpha_3$; maximum order of the moments $\alpha_4$.\\
 \tt ParamPdfs & $\alpha_1$[, $\alpha_2$, $\alpha_3$, $\alpha_4$]& Main option
-$\alpha_1$ (see {\tt tools/statistics/pdfs/pdfs.f90}); block size $\alpha_2$; gate
+$\alpha_1$ (see {\tt tools/statistics/pdfs.f90}); block size $\alpha_2$; gate
 level $\alpha_3$; number of bins $\alpha_4$.\\
 \tt ParamSpectra & $\alpha_1$[, $\alpha_2$, $\alpha_3$, $\alpha_4$]& Main option
-$\alpha_1$ (see {\tt tools/statistics/spectra/spectra.f90}); block size
-$\alpha_2$; save full spectra $\alpha_3$; average over iteration $\alpha_4$.\\
+$\alpha_1$ (see {\tt tools/statistics/spectra.f90}); block size
+$\alpha_2$; save full spectra $\alpha_3$; average over iterations $\alpha_4$.\\
+\tt ParamVisuals & $\alpha_1,\,\alpha_2,\,\ldots$ & List of fields to be calculated (see {\tt tools/plot/visuals.f90}).\\
 \end{longtable}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
