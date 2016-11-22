@@ -787,6 +787,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'      ) THEN; iprof_i(is) = PROFILE_TANH
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; iprof_i(is) = PROFILE_ERF
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearerf' ) THEN; iprof_i(is) = PROFILE_LINEAR_ERF
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erfantisym') THEN; iprof_i(is) = PROFILE_ERF_ANTISYM
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic' ) THEN; iprof_i(is) = PROFILE_PARABOLIC
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; iprof_i(is) = PROFILE_LINEAR_CROP
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; iprof_i(is) = PROFILE_MIXEDLAYER
@@ -804,14 +805,18 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', thick_i(is))
      WRITE(lstr,*) is; lstr='DeltaScalar'//TRIM(ADJUSTL(lstr))
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', delta_i(is))
-! additional specific data
-!     IF ( ABS(iprof_i(is)) .EQ. PROFILE_LINEAR_ERF ) THEN
-        WRITE(lstr,*) is; lstr='BottomSlopeScalar'//TRIM(ADJUSTL(lstr))
-        CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  prof_i(1,is))
-        WRITE(lstr,*) is; lstr='UpperSlopeScalar'//TRIM(ADJUSTL(lstr))
-        CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  prof_i(2,is))
-!     ENDIF
 
+! additional specific data     
+     WRITE(lstr,*) is; lstr='BottomSlopeScalar'//TRIM(ADJUSTL(lstr))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  prof_i(1,is))
+     WRITE(lstr,*) is; lstr='UpperSlopeScalar'//TRIM(ADJUSTL(lstr))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  prof_i(2,is))
+
+     IF ( iprof_i(is) .EQ. PROFILE_ERF_ANTISYM ) THEN
+        WRITE(lstr,*) is; lstr='YCoorSymmetry'//TRIM(ADJUSTL(lstr))
+        CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  prof_i(1,is))
+     ENDIF
+     
   ENDDO
 
 ! use chemkin for the thermodynamic data

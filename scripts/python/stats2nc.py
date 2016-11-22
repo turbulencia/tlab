@@ -68,7 +68,8 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
   if ( tstart == -1 ) : 
     files_from_list=1 
 #    command = "ls " + avgpath + '/' + avgtype + "?[0-9]*" + gzip_str
-    command = "ls " + avgpath + '/' + avgtype + "*" + gzip_str + " | egrep '" + avgtype + "?[0-9]*" + gzip_str + "'"
+    # command = "ls " + avgpath + '/' + avgtype + "*" + gzip_str + " | egrep '" + avgtype + "?[0-9]*" + gzip_str + "'"
+    command = "ls " + avgpath + "/" + avgtype + "*" + " | egrep '" + avgtype + "[0-9]*(" + gzip_str + ")?$" + "'"
     
     p = subprocess.Popen(command, shell=True,  
                          stdout=subprocess.PIPE) 
@@ -79,7 +80,11 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
             with open(dummy): 
                 if '.nc' not in dummy: 
                     cstart=len('{}/{}'.format(avgpath,avgtype))
-                    cend=len(dummy)-gzip_count             #strip off .gz 
+                    cend=len(dummy)
+                    if gzip_str in dummy:
+                        cend=cend-len(gzip_str)
+#                    cend=len(dummy)-gzip_count             #strip off .gz
+
                     filenum = string.atoi(dummy[cstart:cend])
                     if ( is_number(filenum) ):
                         file_list.append(ClassFile(dummy,filenum))
@@ -117,11 +122,15 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
       filename = '{}/{}{}{}'.format(avgpath,avgtype,filenum,gzip_str)
   
     # process the file
-    if ( gzip == 1):
-      f = gz.open(filename,'r') 
-    elif (gzip == 0): 
-      f= open(filename,'r') 
-   
+    # if ( gzip == 1):
+    #   f = gz.open(filename,'r') 
+    # elif (gzip == 0): 
+    #   f= open(filename,'r') 
+    if gzip_str in filename:
+      f = gz.open(filename,'r')
+    else:
+      f= open(filename,'r')
+      
     # retrieve the time
     datastring = f.readline()
     time = datastring.split()[2]

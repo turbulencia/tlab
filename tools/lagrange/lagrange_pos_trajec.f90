@@ -34,7 +34,6 @@ PROGRAM LAGRANGE_POS_TRAJEC
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
-  USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -47,6 +46,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
 
 ! -------------------------------------------------------------------
 
+#ifdef USE_MPI
   TINTEGER  ierr, i, j, k, particle_pos
 
   TINTEGER  dummy_ims_npro
@@ -85,7 +85,6 @@ PROGRAM LAGRANGE_POS_TRAJEC
 #include "dns_alloc_larrays.h"
   
 
-#ifdef USE_MPI
   ALLOCATE(dummy_proc(num_trajectories))
   ALLOCATE(all_dummy_proc(num_trajectories)) 
   ALLOCATE(dummy_big_overall(num_trajectories))

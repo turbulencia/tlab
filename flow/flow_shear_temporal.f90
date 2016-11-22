@@ -1,47 +1,16 @@
 #include "types.h"
 #include "dns_const.h"
   
-!########################################################################
-!# Tool/Library FLOW
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/05/08 - J.P. Mellado
-!#              Created
-!# 2007/05/30 - J.P. Mellado
-!#              Adding case 4. Adding param as argument
-!# 2011/01/19 - Cedrick Ansorge
-!#              Adding case 7. - Ekman Layer initial perturbation
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!# iflag   In    type of profile:
-!#               0 constant value
-!#               1 linear
-!#               2 hyperbolic tangent
-!#               3 error function
-!#               4 two linear-varying layers with error function separation
-!#               5 Ekman layer U
-!#               6 Ekman layer W
-!#               7 Ekman layer Perturbed U
-!#               8 Bickley jet
-!#
-!########################################################################
 FUNCTION FLOW_SHEAR_TEMPORAL(iflag, thick, delta, mean, ycenter, param, y)
 
   IMPLICIT NONE
   
-  TINTEGER iflag
-  TREAL thick, delta, mean, ycenter, param(*)
+  TINTEGER, INTENT(IN) :: iflag                                 ! type of profile  
+  TREAL,    INTENT(IN) :: thick, delta, mean, ycenter, param(*) ! parameters defining the profile
   TREAL y, FLOW_SHEAR_TEMPORAL
   
 ! -------------------------------------------------------------------
-  TREAL yrel, xi, amplify, zamp, cnought !, ERF
+  TREAL yrel, xi, amplify, zamp, cnought
 
 ! ###################################################################
   yrel = y - ycenter ! position relative to ycenter
@@ -59,20 +28,40 @@ FUNCTION FLOW_SHEAR_TEMPORAL(iflag, thick, delta, mean, ycenter, param, y)
   ELSE
      xi = yrel/thick
 
-     IF      ( iflag .EQ. PROFILE_LINEAR     ) THEN; amplify =-xi
-     ELSE IF ( iflag .EQ. PROFILE_TANH       ) THEN; amplify = C_05_R*TANH(-C_05_R*xi)
-     ELSE IF ( iflag .EQ. PROFILE_ERF        ) THEN; amplify = C_05_R* ERF(-C_05_R*xi)
-     ELSE IF ( iflag .EQ. PROFILE_BICKLEY    ) THEN; amplify = C_1_R/(COSH(C_05_R*xi))**C_2_R
-     ELSE IF ( iflag .EQ. PROFILE_GAUSSIAN   ) THEN; amplify = EXP(-C_05_R*xi**C_2_R) 
-     ELSE IF ( iflag .EQ. PROFILE_LINEAR_ERF ) THEN; amplify = C_05_R* ERF(-C_05_R*xi)
-     ELSE IF ( iflag .EQ. PROFILE_EKMAN_U    ) THEN; amplify = C_1_R -EXP(-xi)*COS(xi)
-     ELSE IF ( iflag .EQ. PROFILE_EKMAN_V    ) THEN; amplify =       -EXP(-xi)*SIN(xi)
-     ELSE IF ( iflag .EQ. PROFILE_EKMAN_U_P  ) THEN; amplify = C_1_R -EXP(-xi)*COS(xi) ! + perturbation:
+     SELECT CASE( iflag )
+        
+     CASE( PROFILE_LINEAR     )
+        amplify =-xi
+
+     CASE( PROFILE_TANH       )
+        amplify = C_05_R*TANH(-C_05_R*xi)
+
+     CASE( PROFILE_ERF,PROFILE_LINEAR_ERF,PROFILE_ERF_ANTISYM )
+        amplify = C_05_R* ERF(-C_05_R*xi)
+
+     CASE( PROFILE_PARABOLIC  )
+        amplify = (C_1_R+C_05_R*xi)*(C_1_R-C_05_R*xi)
+
+     CASE( PROFILE_BICKLEY    )
+        amplify = C_1_R /(COSH(C_05_R*xi))**C_2_R
+
+     CASE( PROFILE_GAUSSIAN   )
+        amplify = EXP(-C_05_R*xi**C_2_R) 
+
+     CASE( PROFILE_EKMAN_U    )
+        amplify = C_1_R -EXP(-xi)*COS(xi)
+
+     CASE( PROFILE_EKMAN_U_P  )
+        amplify = C_1_R -EXP(-xi)*COS(xi) ! + perturbation:
+
         cnought = C_PI_R*C_PI_R/C_4_R/C_4_R       ! Maximum initial Perturbation is at y=pi/2*thick 
         zamp    = SQRT(C_2_R)*xi*EXP( -xi*xi/C_8_R/cnought ) / (thick*thick*C_4_R * cnought)**C_1_5_R
         amplify = amplify + zamp                  ! Add Perturbations
-     ELSE IF ( iflag .EQ. PROFILE_PARABOLIC  ) THEN; amplify = (C_1_R+C_05_R*xi)*(C_1_R-C_05_R*xi)
-     ENDIF
+
+     CASE( PROFILE_EKMAN_V    )
+        amplify =       -EXP(-xi)*SIN(xi)
+
+     END SELECT
 
   ENDIF
   
@@ -101,6 +90,13 @@ FUNCTION FLOW_SHEAR_TEMPORAL(iflag, thick, delta, mean, ycenter, param, y)
   FLOW_SHEAR_TEMPORAL = FLOW_SHEAR_TEMPORAL - C_025_R*param(2)*thick*(C_1_R -SIGN(C_1_R,y-thick))
   ENDIF
 
+! antisymmetric erf
+  IF ( iflag .EQ. PROFILE_ERF_ANTISYM) THEN
+     xi = (param(1)-y)/thick; amplify = C_05_R* ERF(-C_05_R*xi)
+     FLOW_SHEAR_TEMPORAL = FLOW_SHEAR_TEMPORAL - (mean + delta*amplify)
+  ENDIF
+
+ 
   RETURN
 END FUNCTION FLOW_SHEAR_TEMPORAL
 
