@@ -142,7 +142,8 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
         ycenter   = g(2)%nodes(1) + g(2)%scale *ycoor_i(is)
         delta_loc = delta_i(is) + disp(i,k)
         mean_loc  =(delta_loc)*C_05_R
-        thick_loc = delta_loc/delta_i(is)*thick_i(is)
+        IF ( delta_i(is) .GT. 0 ) THEN; thick_loc = delta_loc/delta_i(is)*thick_i(is);
+        ELSE;                           thick_loc = thick_i(is); ENDIF
         DO j = 1,jmax
            s(i,j,k) =  FLOW_SHEAR_TEMPORAL&
                 (iprof_i(is), thick_loc, delta_loc, mean_loc, ycenter, prof_i(1,is),g(2)%nodes(j))
