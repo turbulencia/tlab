@@ -29,12 +29,7 @@ def is_number(s):
 
 def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
 
-  if ( gzip == 1):
-    gzip_count = 3 
-    gzip_str   = '.gz'
-  else :
-    gzip_count = 0
-    gzip_str   = ''
+  gzip_str   = '.gz'
 
   files_from_list = 0
   # specify the number of vertical profs and time variables 
@@ -67,8 +62,6 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
   ########################################################### 
   if ( tstart == -1 ) : 
     files_from_list=1 
-#    command = "ls " + avgpath + '/' + avgtype + "?[0-9]*" + gzip_str
-    # command = "ls " + avgpath + '/' + avgtype + "*" + gzip_str + " | egrep '" + avgtype + "?[0-9]*" + gzip_str + "'"
     command = "ls " + avgpath + "/" + avgtype + "*" + " | egrep '" + avgtype + "[0-9]*(" + gzip_str + ")?$" + "'"
     
     p = subprocess.Popen(command, shell=True,  
@@ -83,7 +76,6 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
                     cend=len(dummy)
                     if gzip_str in dummy:
                         cend=cend-len(gzip_str)
-#                    cend=len(dummy)-gzip_count             #strip off .gz
 
                     filenum = string.atoi(dummy[cstart:cend])
                     if ( is_number(filenum) ):
@@ -97,14 +89,10 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
   else :
     ntimes = (tend - tstart) / tstep + 1
 
-#  print  file_list 
-
   if ( files_from_list == 1 ) :
       file_list=sorted(file_list,key=lambda ClassFile: ClassFile.num)
 
-#  print  file_list 
   print 'FILES for', avgtype,':', ntimes 
-
 
   ############################################################ 
   if ( ntimes == 0 ) : 
@@ -119,13 +107,12 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
         tstart = filenum
     else: 
       filenum = tstart+t*tstep
-      filename = '{}/{}{}{}'.format(avgpath,avgtype,filenum,gzip_str)
+      if ( gzip == 1):
+        filename = '{}/{}{}{}'.format(avgpath,avgtype,filenum,gzip_str)
+      else:
+        filename = '{}/{}{}'.format(avgpath,avgtype,filenum)
   
     # process the file
-    # if ( gzip == 1):
-    #   f = gz.open(filename,'r') 
-    # elif (gzip == 0): 
-    #   f= open(filename,'r') 
     if gzip_str in filename:
       f = gz.open(filename,'r')
     else:

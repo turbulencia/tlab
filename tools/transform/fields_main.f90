@@ -34,7 +34,7 @@ PROGRAM TRANSFIELDS
 
 ! Parameter definitions
   TINTEGER, PARAMETER :: itime_size_max = 128
-  TINTEGER, PARAMETER :: iopt_size_max  =  20
+  TINTEGER, PARAMETER :: iopt_size_max  = 128
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
@@ -113,6 +113,8 @@ PROGRAM TRANSFIELDS
   CALL LIST_REAL(sRes, iopt_size, opt_vec)
 
   IF ( sRes .EQ. '-1' ) THEN
+#ifdef USE_MPI
+#else
      WRITE(*,'(A)') 'Option ?'
      WRITE(*,'(A)') '1. Crop fields'
      WRITE(*,'(A)') '2. Extend fields in Ox and Oy'
@@ -123,18 +125,27 @@ PROGRAM TRANSFIELDS
      WRITE(*,'(A)') '7. Blend fields'
      WRITE(*,'(A)') '8. Add mean profiles'
      READ(*,*) opt_main
+#endif
   ELSE
      opt_main = DINT(opt_vec(1))
   ENDIF
 
   IF ( opt_main .EQ. 4 ) THEN
      IF ( sRes .EQ. '-1' ) THEN
+#ifdef USE_MPI
+#else
         WRITE(*,*) 'Coefficients ?'
         READ(*,'(A512)') sRes
         iopt_size = iopt_size_max-1
         CALL LIST_REAL(sRes, iopt_size, opt_vec(2))
+#endif
      ELSE
         iopt_size = iopt_size-1
+     ENDIF
+     IF ( iopt_size .EQ. 0 ) THEN
+        CALL IO_WRITE_ASCII(lfile,'TRANSFORM. Performing arithmetic mean of fields.')
+        iopt_size = itime_size
+        opt_vec(2:) = C_1_R /M_REAL(itime_size)
      ENDIF
      IF ( iopt_size .NE. itime_size ) THEN
         CALL IO_WRITE_ASCII(efile,'TRANSFORM. Number of coefficient incorrect.')
@@ -144,6 +155,8 @@ PROGRAM TRANSFIELDS
 
   IF ( opt_main .EQ. 5 ) THEN
      IF ( sRes .EQ. '-1' ) THEN
+#ifdef USE_MPI
+#else
         WRITE(*,'(A)') 'Filter type ?'
         WRITE(*,'(A)') '1. Compact Fourth-Order'
         WRITE(*,'(A)') '2. Explicit Sixth-Order'
@@ -153,6 +166,7 @@ PROGRAM TRANSFIELDS
         WRITE(*,'(A)') '6. Spectral cut-off' 
         WRITE(*,'(A)') '7. Gaussian Filter' 
         READ(*,*) opt_filter
+#endif
      ELSE
         opt_filter = DINT(opt_vec(2))
      ENDIF
