@@ -53,7 +53,7 @@ else() # compiler for serial build
      set(CMAKE_BUILD_TYPE RELEASE) 
      
    else()	
-     set(USER_Fortran_FLAGS_DEBUG    "-O0 -pg -debug full -traceback -fpe0 -save-temps")# -warn all")
+     set(USER_Fortran_FLAGS_DEBUG    "-O0 -convert big_endian -pg -debug full -traceback -fpe0 -save-temps")# -warn all")
      
      add_definitions(-D_DEBUG)
      

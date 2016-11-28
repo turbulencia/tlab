@@ -7,16 +7,6 @@
 
 #define C_FILE_LOC "TRANSFORM"
 
-!########################################################################
-!# HISTORY
-!#
-!# 2010/08/20 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
 PROGRAM TRANSFIELDS
 
   USE DNS_CONSTANTS
@@ -33,7 +23,7 @@ PROGRAM TRANSFIELDS
 #endif
 
 ! Parameter definitions
-  TINTEGER, PARAMETER :: itime_size_max = 128
+  TINTEGER, PARAMETER :: itime_size_max = 512
   TINTEGER, PARAMETER :: iopt_size_max  = 128
 
 ! -------------------------------------------------------------------
@@ -55,7 +45,7 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
-  TINTEGER opt_main, opt_filter
+  TINTEGER opt_main, opt_filter, opt_function
   TINTEGER iq, is, k, ip, ip_b, ip_t
   TINTEGER isize_wrk3d, idummy, iread_flow, iread_scal, ierr
   CHARACTER*32 inifile, bakfile, flow_file, scal_file
@@ -63,7 +53,7 @@ PROGRAM TRANSFIELDS
   CHARACTER*512 sRes
   TINTEGER subdomain(6)
 
-  TINTEGER imax_dst,jmax_dst,kmax_dst, imax_total_dst,jmax_total_dst,kmax_total_dst, jmax_aux
+  TINTEGER imax_dst,jmax_dst,kmax_dst, imax_total_dst,jmax_total_dst,kmax_total_dst, jmax_aux, inb_scal_dst
   TREAL scalex_dst, scaley_dst, scalez_dst
 
 ! Filter variables
@@ -106,8 +96,10 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
 ! Read local options
 ! -------------------------------------------------------------------
-  opt_main  =-1 ! default values
-
+  opt_main     =-1 ! default values
+  opt_filter   = 0
+  opt_function = 0
+  
   CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamTransform', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_REAL(sRes, iopt_size, opt_vec)
@@ -121,7 +113,7 @@ PROGRAM TRANSFIELDS
      WRITE(*,'(A)') '3. Remesh fields'
      WRITE(*,'(A)') '4. Linear combination of fields'
      WRITE(*,'(A)') '5. Filter fields'
-     WRITE(*,'(A)') '6. Transform of scalar fields'
+     WRITE(*,'(A)') '6. Transform scalar fields'
      WRITE(*,'(A)') '7. Blend fields'
      WRITE(*,'(A)') '8. Add mean profiles'
      READ(*,*) opt_main
@@ -130,6 +122,7 @@ PROGRAM TRANSFIELDS
      opt_main = DINT(opt_vec(1))
   ENDIF
 
+! -------------------------------------------------------------------
   IF ( opt_main .EQ. 4 ) THEN
      IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI
@@ -153,6 +146,7 @@ PROGRAM TRANSFIELDS
      ENDIF
   ENDIF
 
+! -------------------------------------------------------------------
   IF ( opt_main .EQ. 5 ) THEN
      IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI
@@ -192,12 +186,36 @@ PROGRAM TRANSFIELDS
      ELSE
         alpha = opt_vec(3)
      ENDIF
-
-  ELSE
-     opt_filter = 0
-
   ENDIF
 
+! -------------------------------------------------------------------
+  IF ( opt_main .EQ. 6 ) THEN
+     IF ( sRes .EQ. '-1' ) THEN
+#ifdef USE_MPI
+#else
+        WRITE(*,'(A)') 'Function type ?'
+        WRITE(*,'(A)') '1. Vapor Saturation Humidity'
+        WRITE(*,'(A)') '2. Linear'
+        READ(*,*) opt_function
+#endif
+     ELSE
+        opt_function = DINT(opt_vec(2))
+     ENDIF
+
+     IF ( sRes .EQ. '-1' ) THEN
+#ifdef USE_MPI
+#else
+        WRITE(*,*) 'Coefficients ?'
+        READ(*,'(A512)') sRes
+        iopt_size = iopt_size_max-2
+        CALL LIST_REAL(sRes, iopt_size, opt_vec(3))
+#endif
+     ELSE
+        iopt_size = iopt_size-2
+     ENDIF
+  ENDIF
+
+! -------------------------------------------------------------------
   IF ( opt_main .EQ. 7 ) THEN ! 2nd and 3rd entries in opt_vec contain coeffs.
      IF ( sRes .EQ. '-1' ) THEN
         WRITE(*,*) 'Coefficients ?'
@@ -272,6 +290,8 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
   inb_txc = 0
 
+  inb_scal_dst = inb_scal
+  
   iread_flow = icalc_flow
   iread_scal = icalc_scal
 
@@ -282,6 +302,7 @@ PROGRAM TRANSFIELDS
      inb_txc         = 3
   ELSE IF ( opt_main .EQ. 6 ) THEN
      inb_txc         = 5
+     inb_scal_dst    = 1
   ENDIF
 
   IF ( opt_filter .EQ. DNS_FILTER_ALPHA ) inb_txc = MAX(inb_txc,4) ! needs more space
@@ -302,7 +323,7 @@ PROGRAM TRANSFIELDS
 
 ! -------------------------------------------------------------------
   IF ( icalc_flow .EQ. 1 ) ALLOCATE(q_dst(imax_dst*jmax_dst*kmax_dst,inb_flow))
-  IF ( icalc_scal .EQ. 1 ) ALLOCATE(s_dst(imax_dst*jmax_dst*kmax_dst,inb_scal))
+  IF ( icalc_scal .EQ. 1 ) ALLOCATE(s_dst(imax_dst*jmax_dst*kmax_dst,inb_scal_dst))
 
   ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
@@ -355,7 +376,7 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
   IF ( ifourier .EQ. 1 ) CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
 
-  IF ( inb_txc .GE. 3 ) CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
+  IF ( inb_txc .GE. 3 .AND. icalc_flow .GT. 0 ) CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
 ! Initialize cumulative field
@@ -601,11 +622,20 @@ PROGRAM TRANSFIELDS
         ENDIF
 
 ! ###################################################################
-! Nonlinear transformation
+! Transformation
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 6 ) THEN
-        CALL TRANS_FUNCTION(imax,jmax,kmax, s,s_dst, txc)
-
+        IF      ( opt_function .EQ. 1 ) THEN
+           CALL TRANS_FUNCTION(imax,jmax,kmax, s,s_dst, txc)
+           
+        ELSE IF ( opt_function .EQ. 2 ) THEN
+           s_dst(:,1) = C_0_R
+           DO is = 1,MIN(inb_scal,iopt_size)
+              s_dst(:,1) = s_dst(:,1) + opt_vec(2+is) *s(:,is)
+           ENDDO
+           
+        ENDIF
+        
 ! ###################################################################
 ! Blend
 ! ###################################################################
@@ -658,7 +688,7 @@ PROGRAM TRANSFIELDS
         ENDIF
         IF ( icalc_scal .GT. 0 ) THEN
            scal_file=TRIM(ADJUSTL(scal_file))//'.trn'
-           CALL DNS_WRITE_FIELDS(scal_file, i1, imax_dst,jmax_dst,kmax_dst, inb_scal, isize_wrk3d, s_dst,wrk3d)
+           CALL DNS_WRITE_FIELDS(scal_file, i1, imax_dst,jmax_dst,kmax_dst, inb_scal_dst, isize_wrk3d, s_dst,wrk3d)
         ENDIF
      ENDIF
      
@@ -674,7 +704,7 @@ PROGRAM TRANSFIELDS
      ENDIF
      IF ( icalc_scal .GT. 0 ) THEN
         scal_file='scal.trn'
-        CALL DNS_WRITE_FIELDS(scal_file, i1, imax_dst,jmax_dst,kmax_dst, inb_scal, isize_wrk3d, s_dst,wrk3d)
+        CALL DNS_WRITE_FIELDS(scal_file, i1, imax_dst,jmax_dst,kmax_dst, inb_scal_dst, isize_wrk3d, s_dst,wrk3d)
      ENDIF
   ENDIF
 
