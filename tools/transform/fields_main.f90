@@ -24,7 +24,7 @@ PROGRAM TRANSFIELDS
 
 ! Parameter definitions
   TINTEGER, PARAMETER :: itime_size_max = 512
-  TINTEGER, PARAMETER :: iopt_size_max  = 128
+  TINTEGER, PARAMETER :: iopt_size_max  = 512
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
@@ -142,6 +142,10 @@ PROGRAM TRANSFIELDS
      ENDIF
      IF ( iopt_size .NE. itime_size ) THEN
         CALL IO_WRITE_ASCII(efile,'TRANSFORM. Number of coefficient incorrect.')
+        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+     ENDIF
+     IF ( iopt_size .GT. iopt_size_max ) THEN
+        CALL IO_WRITE_ASCII(efile,'TRANSFORM. Array opt_vec too small.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
   ENDIF
