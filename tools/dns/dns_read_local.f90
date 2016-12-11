@@ -2,21 +2,6 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2009/11/24 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Extracted from DNS_READ_GLOBAL
-!#
-!########################################################################
 SUBROUTINE DNS_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile
@@ -591,25 +576,31 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[Filter]')
-  CALL IO_WRITE_ASCII(bakfile, '#Type=<none/compact/explicit6/adm>')
+  CALL IO_WRITE_ASCII(bakfile, '#Type=<none/compact/tophat/explicit6/adm>')
   CALL IO_WRITE_ASCII(bakfile, '#Alpha=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#Stencil=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#Step=<filter step>')
   CALL IO_WRITE_ASCII(bakfile, '#Scalar=<yes/no>')
-  CALL IO_WRITE_ASCII(bakfile, '#Ifilt=<set filter in i direction>')
-  CALL IO_WRITE_ASCII(bakfile, '#Jfilt=<set filter in j direction>')
-  CALL IO_WRITE_ASCII(bakfile, '#Kfilt=<set filter in k direction>')
+  CALL IO_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
+  CALL IO_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
+  CALL IO_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
 
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'Type', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; ifilt_domain = DNS_FILTER_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; ifilt_domain = DNS_FILTER_COMPACT
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; idummy = DNS_FILTER_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; idummy = DNS_FILTER_COMPACT
      CALL SCANINIREAL(bakfile, inifile, 'Filter', 'Alpha', '0.49', ifilt_alpha)
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit6' ) THEN; ifilt_domain = DNS_FILTER_6E  
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit4' ) THEN; ifilt_domain = DNS_FILTER_4E  
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'adm'       ) THEN; ifilt_domain = DNS_FILTER_ADM;     ENDIF
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'tophat'    ) THEN; idummy = DNS_FILTER_TOPHAT
+     CALL SCANINIINT(bakfile, inifile, 'Filter', 'Stencil', '2', FilterDomain(1)%stencil)
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit6' ) THEN; idummy = DNS_FILTER_6E  
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit4' ) THEN; idummy = DNS_FILTER_4E  
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'adm'       ) THEN; idummy = DNS_FILTER_ADM; ENDIF
 
   CALL SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', ifilt_step)
-  IF ( ifilt_step   .EQ. 0               ) ifilt_domain = DNS_FILTER_NONE
-  IF ( ifilt_domain .EQ. DNS_FILTER_NONE ) ifilt_step   = 0 
+  IF ( ifilt_step .EQ. 0               ) idummy     = DNS_FILTER_NONE
+  IF ( idummy     .EQ. DNS_FILTER_NONE ) ifilt_step = 0 
+  
+  FilterDomain(:)%type = idummy
+  FilterDomain(2:3)%stencil = FilterDomain(1)%stencil
   
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'Scalar', 'yes', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; ifilt_scalar = 1
@@ -617,16 +608,13 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
 ! active/no active
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveX', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .eq. 'no' ) THEN; ifilt_x = 0
-  ELSE;                                      ifilt_x = 1; ENDIF
-
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(1)%type = DNS_FILTER_NONE 
+     
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveY', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .eq. 'no' ) THEN; ifilt_y = 0
-  ELSE;                                      ifilt_y = 1; ENDIF
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(2)%type = DNS_FILTER_NONE
 
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveZ', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .eq. 'no' ) THEN; ifilt_z = 0
-  ELSE;                                      ifilt_z = 1; ENDIF
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(3)%type = DNS_FILTER_NONE
 
 ! -------------------------------------------------------------------
 ! Inflow Filter

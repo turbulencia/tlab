@@ -59,11 +59,6 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
 
   ENDIF
   
-! BCs for the filters (see routine FILTER)
-  ibc_x(1) = ifilt_x; ibc_x(2) = i1bc; ibc_x(3) = 0; ibc_x(4) = 0
-  ibc_y(1) = ifilt_y; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0 
-  ibc_z(1) = ifilt_z; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0 
-
 ! #######################################################################
 ! Domain filter
 ! #######################################################################
@@ -95,13 +90,11 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
   
   id = 1
   DO iq = 1,inb_flow
-     CALL OPR_FILTER(ifilt_domain, imax,jmax,kmax, ibc_x,ibc_y,ibc_z, id, q(1,iq),     &
-          vaux(vindex(VA_FLT_CX)),vaux(vindex(VA_FLT_CY)),vaux(vindex(VA_FLT_CZ)), wrk1d,wrk2d,txc)
+     CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, q(1,iq), wrk1d,wrk2d,txc)
   ENDDO
   IF ( icalc_scal .EQ. 1 .AND. ifilt_scalar .EQ. 1 ) THEN
      DO is = 1,inb_scal
-        CALL OPR_FILTER(ifilt_domain, imax,jmax,kmax, ibc_x,ibc_y,ibc_z, id, s(1,is),     &
-             vaux(vindex(VA_FLT_CX)),vaux(vindex(VA_FLT_CY)),vaux(vindex(VA_FLT_CZ)), wrk1d,wrk2d,txc)
+        CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, s(1,is), wrk1d,wrk2d,txc)
      ENDDO
   ENDIF
   

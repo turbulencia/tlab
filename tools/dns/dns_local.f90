@@ -1,6 +1,7 @@
 #include "types.h"
 
 MODULE DNS_LOCAL
+  USE DNS_TYPES,  ONLY : filter_structure
   USE DNS_GLOBAL, ONLY : MAX_NSP, MAX_VARS 
 #ifdef USE_PSFFT  
   USE NB3DFFT,    ONLY : NB3DFFT_SCHEDLTYPE
@@ -78,9 +79,15 @@ MODULE DNS_LOCAL
 ! ###########################################################
 ! Filters
 ! ###########################################################
-  TINTEGER :: ifilt_domain, ifilt_step, ifilt_scalar, ifilt_x, ifilt_y, ifilt_z
+  TYPE(filter_structure), DIMENSION(3) :: FilterDomain
+
+  TINTEGER :: ifilt_step, ifilt_scalar
   TREAL    :: ifilt_alpha
-  TINTEGER :: ifilt_inflow, ifilt_inflow_iwidth, ifilt_inflow_jwidth, ifilt_inflow_step
+
+  ! This info should be put into a filter_structure
+  TINTEGER :: ifilt_inflow, ifilt_inflow_iwidth, ifilt_inflow_jwidth
+  TINTEGER :: ifilt_inflow_step
+
 
 ! ###################################################################
 ! Inflow field in spatial mode
@@ -114,80 +121,74 @@ MODULE DNS_LOCAL
   TREAL    :: logs_data(20)
 
 ! ###################################################################
-! vaux array
-! ###################################################################
-#ifdef LES
-  TINTEGER, PARAMETER :: vindex_size=36
-#else
-  TINTEGER, PARAMETER :: vindex_size=15
-#endif
-
-  TINTEGER, DIMENSION(vindex_size) :: vindex, vsize
-
-! -------------------------------------------------------------------
-  INTEGER VA_FLT_CX, VA_FLT_CY, VA_FLT_CZ
-  PARAMETER (VA_FLT_CX=1)
-  PARAMETER (VA_FLT_CY=2)
-  PARAMETER (VA_FLT_CZ=3)
-  INTEGER VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI
-  PARAMETER (VA_BUFF_HT=4)
-  PARAMETER (VA_BUFF_HB=5)
-  PARAMETER (VA_BUFF_VI=6)
-  PARAMETER (VA_BUFF_VO=7)
-  INTEGER VA_BCS_HT, VA_BCS_HB, VA_BCS_VO, VA_BCS_VI
-  PARAMETER (VA_BCS_HT=8)
-  PARAMETER (VA_BCS_HB=9)
-  PARAMETER (VA_BCS_VI=10)
-  PARAMETER (VA_BCS_VO=11)
-
-  INTEGER VA_MEAN_WRK
-  PARAMETER (VA_MEAN_WRK=12)
-  INTEGER VA_LINE_SPA_WRK
-  PARAMETER (VA_LINE_SPA_WRK=13)
-  INTEGER VA_TIMES
-  PARAMETER (VA_TIMES=14)
-  INTEGER VA_PLANE_SPA_WRK
-  PARAMETER (VA_PLANE_SPA_WRK=15)
-
-! ###################################################################
 ! NB3DFFT library
 ! ###################################################################
 #ifdef USE_PSFFT  
   TYPE(NB3DFFT_SCHEDLTYPE), SAVE :: nbcsetup
 #endif 
 
-
 ! ###################################################################
+! vaux array
+! ###################################################################
+#ifdef LES
+  TINTEGER, PARAMETER :: vindex_size=33
+#else
+  TINTEGER, PARAMETER :: vindex_size=12
+#endif
+
+  TINTEGER, DIMENSION(vindex_size) :: vindex, vsize
+
+! -------------------------------------------------------------------
+  INTEGER VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI
+  PARAMETER (VA_BUFF_HT=1)
+  PARAMETER (VA_BUFF_HB=2)
+  PARAMETER (VA_BUFF_VI=3)
+  PARAMETER (VA_BUFF_VO=4)
+  INTEGER VA_BCS_HT, VA_BCS_HB, VA_BCS_VO, VA_BCS_VI
+  PARAMETER (VA_BCS_HT=5)
+  PARAMETER (VA_BCS_HB=6)
+  PARAMETER (VA_BCS_VI=7)
+  PARAMETER (VA_BCS_VO=8)
+
+  INTEGER VA_MEAN_WRK
+  PARAMETER (VA_MEAN_WRK=9)
+  INTEGER VA_LINE_SPA_WRK
+  PARAMETER (VA_LINE_SPA_WRK=10)
+  INTEGER VA_TIMES
+  PARAMETER (VA_TIMES=11)
+  INTEGER VA_PLANE_SPA_WRK
+  PARAMETER (VA_PLANE_SPA_WRK=12)
+
 ! -------------------------------------------------------------------
 #ifdef LES
   INTEGER VA_LES_FLT0X, VA_LES_FLT0Y, VA_LES_FLT0Z
-  PARAMETER (VA_LES_FLT0X=16)
-  PARAMETER (VA_LES_FLT0Y=17)
-  PARAMETER (VA_LES_FLT0Z=18)
+  PARAMETER (VA_LES_FLT0X=13)
+  PARAMETER (VA_LES_FLT0Y=14)
+  PARAMETER (VA_LES_FLT0Z=15)
   INTEGER VA_LES_FLT1X, VA_LES_FLT1Y, VA_LES_FLT1Z
-  PARAMETER (VA_LES_FLT1X=19)
-  PARAMETER (VA_LES_FLT1Y=20)
-  PARAMETER (VA_LES_FLT1Z=21)
+  PARAMETER (VA_LES_FLT1X=16)
+  PARAMETER (VA_LES_FLT1Y=17)
+  PARAMETER (VA_LES_FLT1Z=18)
   INTEGER VA_LES_FLT2X, VA_LES_FLT2Y, VA_LES_FLT2Z
-  PARAMETER (VA_LES_FLT2X=22)
-  PARAMETER (VA_LES_FLT2Y=23)
-  PARAMETER (VA_LES_FLT2Z=24)
+  PARAMETER (VA_LES_FLT2X=19)
+  PARAMETER (VA_LES_FLT2Y=20)
+  PARAMETER (VA_LES_FLT2Z=21)
   INTEGER VA_LES_SGSCOEFU, VA_LES_SGSCOEFE, VA_LES_SGSCOEFZ
-  PARAMETER (VA_LES_SGSCOEFU=25)
-  PARAMETER (VA_LES_SGSCOEFE=26)
-  PARAMETER (VA_LES_SGSCOEFZ=27)
+  PARAMETER (VA_LES_SGSCOEFU=22)
+  PARAMETER (VA_LES_SGSCOEFE=23)
+  PARAMETER (VA_LES_SGSCOEFZ=24)
   INTEGER VA_LES_ARM_UF, VA_LES_ARM_PF, VA_LES_ARM_ZF
-  PARAMETER (VA_LES_ARM_UF=28)
-  PARAMETER (VA_LES_ARM_PF=29)
-  PARAMETER (VA_LES_ARM_ZF=30)
+  PARAMETER (VA_LES_ARM_UF=25)
+  PARAMETER (VA_LES_ARM_PF=26)
+  PARAMETER (VA_LES_ARM_ZF=27)
   INTEGER VA_LES_ARM_UH, VA_LES_ARM_PH, VA_LES_ARM_ZH
-  PARAMETER (VA_LES_ARM_UH=31)
-  PARAMETER (VA_LES_ARM_PH=32)
-  PARAMETER (VA_LES_ARM_ZH=33)
+  PARAMETER (VA_LES_ARM_UH=28)
+  PARAMETER (VA_LES_ARM_PH=29)
+  PARAMETER (VA_LES_ARM_ZH=30)
   INTEGER VA_ARM_WRK, VA_ARM_C0, VA_LES_FDF_BS
-  PARAMETER (VA_ARM_WRK   =34)
-  PARAMETER (VA_ARM_C0    =35)
-  PARAMETER (VA_LES_FDF_BS=36) 
+  PARAMETER (VA_ARM_WRK   =31)
+  PARAMETER (VA_ARM_C0    =32)
+  PARAMETER (VA_LES_FDF_BS=33) 
 #endif
   
 END MODULE DNS_LOCAL

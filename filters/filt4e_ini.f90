@@ -1,6 +1,5 @@
-!########################################################################
-!# Tool/Library
-!#
+#include "types.h"
+
 !########################################################################
 !# HISTORY
 !#
@@ -20,37 +19,33 @@
 !# which implies alpha_m2 = alpha_p2
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-SUBROUTINE FILT4E_INI(kmax, k1bc, scalez, z, coef)
-  
+SUBROUTINE FILT4E_INI(scalez, z, f)
+
+  USE DNS_TYPES,  ONLY : filter_structure
+
   IMPLICIT NONE
 
-#include "types.h"
-
-  TINTEGER kmax, k1bc
-  TREAL scalez
-  TREAL, DIMENSION(kmax)   :: z
-  TREAL, DIMENSION(kmax,*) :: coef
+  TREAL,                  INTENT(IN)    :: scalez
+  TREAL, DIMENSION(*),    INTENT(IN)    :: z
+  TYPE(filter_structure), INTENT(INOUT) :: f
 
 ! -----------------------------------------------------------------------
   TINTEGER k, km2, km1, kp1, kp2, kmin_loc, kmax_loc
   TREAL D0,D1,D2,Dm1, zm2,zm1,zp1,zp2,zp3
 
-#define alpha_m2(k)  coef(k,1)
-#define alpha_m1(k)  coef(k,2)
-#define alpha(k)     coef(k,3)
-#define alpha_p1(k)  coef(k,4)
-#define alpha_p2(k)  coef(k,5)
+#define alpha_m2(k)  f%coeffs(k,1)
+#define alpha_m1(k)  f%coeffs(k,2)
+#define alpha(k)     f%coeffs(k,3)
+#define alpha_p1(k)  f%coeffs(k,4)
+#define alpha_p2(k)  f%coeffs(k,5)
 
-  IF ( kmax .LE. 1 ) RETURN
+  IF ( f%size .LE. 1 ) RETURN
 
 ! #######################################################################
 ! Coefficients near wall
 ! Vanishing moment of third order
 ! #######################################################################
-  IF ( k1bc .NE. 0 ) THEN
+  IF ( .NOT. f%periodic ) THEN
 
 ! -----------------------------------------------------------------------
 ! Point 2
@@ -81,7 +76,7 @@ SUBROUTINE FILT4E_INI(kmax, k1bc, scalez, z, coef)
 ! -----------------------------------------------------------------------
 ! Point N-1
 ! -----------------------------------------------------------------------
-     k = kmax-1
+     k = f%size-1
      
      zm1 = abs(z(k+1)-z(k)  )
      zp1 = abs(z(k)  -z(k-1))
@@ -105,11 +100,11 @@ SUBROUTINE FILT4E_INI(kmax, k1bc, scalez, z, coef)
      alpha_m2(k) =-C_05_R*(C_2_R*alpha_p2(k)*(-zp1*zp3-zp1*zm1+zp3**2+zm1*zp3)+zp1*zm1)/D2
      
      kmin_loc = 3
-     kmax_loc = kmax-2
+     kmax_loc = f%size-2
 
   ELSE
      kmin_loc = 1
-     kmax_loc = kmax
+     kmax_loc = f%size
 
   ENDIF
 
@@ -117,10 +112,10 @@ SUBROUTINE FILT4E_INI(kmax, k1bc, scalez, z, coef)
 ! inner points
 ! #######################################################################
   DO k = kmin_loc,kmax_loc
-     km2 = k-2; km2 = MOD(km2+kmax-1,kmax) + 1
-     km1 = k-1; km1 = MOD(km1+kmax-1,kmax) + 1
-     kp1 = k+1; kp1 = MOD(kp1+kmax-1,kmax) + 1
-     kp2 = k+2; kp2 = MOD(kp2+kmax-1,kmax) + 1
+     km2 = k-2; km2 = MOD(km2+f%size-1,f%size) + 1
+     km1 = k-1; km1 = MOD(km1+f%size-1,f%size) + 1
+     kp1 = k+1; kp1 = MOD(kp1+f%size-1,f%size) + 1
+     kp2 = k+2; kp2 = MOD(kp2+f%size-1,f%size) + 1
 
      zm2 = z(k)  -z(km2); IF ( zm2 .LT. C_0_R ) zm2 = zm2 + scalez
      zm1 = z(k)  -z(km1); IF ( zm1 .LT. C_0_R ) zm1 = zm1 + scalez

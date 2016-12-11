@@ -1,19 +1,18 @@
+#include "types.h"
+
+!#########################################################
+!# DESCRIPTION
+!#
+!# Top-hat filter coefficients initialization
+!# Midpoint(trapezoidal) rule
+!# The array cf is transposed wrt to the notes for later
+!# better memory location
+!# 
+!#########################################################
+
 SUBROUTINE FILTHINI(iunif, ibc, imax, nx, scalex, x, cf, wrk1d)
 
-  ! #########################################################
-  ! # FILTER LIBRARY
-  ! #
-  ! # Top-hat filter coefficients initialization
-  ! # Midpoint(trapezoidal) rule
-  ! # The array cf is transposed wrt to the notes for later
-  ! # better memory location
-  ! # 
-  ! #########################################################
-
   IMPLICIT NONE
-
-#include "types.h"
-#include "integers.h"
 
   TINTEGER iunif, ibc, imax
   TINTEGER nx
@@ -22,8 +21,13 @@ SUBROUTINE FILTHINI(iunif, ibc, imax, nx, scalex, x, cf, wrk1d)
   TREAL cf(*)
   TREAL wrk1d(imax,3)
 
+! -----------------------------------------------------------------------
   TREAL dum
   TINTEGER i, ii, im, ic, ip
+
+#include "integers.h"
+
+! #######################################################################
 
   wrk1d = C_0_R
 

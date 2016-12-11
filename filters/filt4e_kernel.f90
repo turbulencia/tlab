@@ -13,16 +13,14 @@
 !# Explicit filter as described in Stolz's thesis.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-SUBROUTINE FILT4E_KERNEL(imax, jkmax, i1bc, u, uf, a)
+SUBROUTINE FILT4E_KERNEL(imax, jkmax, periodic, u, uf, a)
 
   IMPLICIT NONE
 
 #include "types.h"
 
-  TINTEGER imax, jkmax, i1bc
+  LOGICAL periodic
+  TINTEGER imax, jkmax
   TREAL, DIMENSION(jkmax,imax) :: u, uf
   TREAL, DIMENSION(imax,5)     :: a
 
@@ -36,7 +34,7 @@ SUBROUTINE FILT4E_KERNEL(imax, jkmax, i1bc, u, uf, a)
 ! -------------------------------------------------------------------
 ! Periodic
 ! -------------------------------------------------------------------
-  IF ( i1bc .EQ. 0 ) THEN
+  IF ( periodic ) THEN
      i = 1
      DO jk = 1,jkmax
         uf(jk,i) = a(i,1)*u(jk,imax-1) + a(i,2)*u(jk,imax) + a(i,3)*u(jk,i  ) &

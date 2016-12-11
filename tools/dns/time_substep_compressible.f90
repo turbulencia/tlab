@@ -353,8 +353,9 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
 ! Impose buffer zone as filter
 ! ###################################################################
   IF ( buff_type .EQ. 2 .OR. buff_type .EQ. 3 ) THEN
-     CALL BOUNDARY_BUFFER_FILTER&
-          (x, rho,u,v,w,e,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+     ! CALL BOUNDARY_BUFFER_FILTER&
+     !      (x, rho,u,v,w,e,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+     ! OPR_FILTER has changed and this routine needs to be updated
   ENDIF
 
 ! ###################################################################

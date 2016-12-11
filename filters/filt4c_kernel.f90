@@ -1,6 +1,5 @@
-!########################################################################
-!# Tool/Library
-!#
+#include "types.h"
+
 !########################################################################
 !# HISTORY
 !#
@@ -17,16 +16,12 @@
 !# uf_i + alpha*(uf_i-1 + uf_i+1) = a*u_i + b*(u_i-1 + u_i+1) + c*(u_i-2 + u_i+2)
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-SUBROUTINE FILT4C_KERNEL(imax, jkmax, u, uf, i1bc, i1zero, imxzero, txi, cxi)
+SUBROUTINE FILT4C_KERNEL(imax,jkmax, u, uf, periodic, i1zero, imxzero, txi, cxi)
 
   IMPLICIT NONE
 
-#include "types.h"
-
-  TINTEGER imax, jkmax, i1bc, i1zero, imxzero
+  LOGICAL periodic
+  TINTEGER imax, jkmax, i1zero, imxzero
   TREAL, DIMENSION(jkmax,imax) :: u, uf
 
   TREAL txi(imax,5)
@@ -45,7 +40,7 @@ SUBROUTINE FILT4C_KERNEL(imax, jkmax, u, uf, i1bc, i1zero, imxzero, txi, cxi)
 ! Set up the left hand side and factor the matrix
 ! Constant alpha contained in array cxi(6)
 ! #######################################################################
-  IF ( i1bc .EQ. 0 ) THEN ! periodic
+  IF ( periodic ) THEN ! periodic
      txi(1,1) = cxi(1,6)
      txi(1,2) = C_1_R
      txi(1,3) = cxi(1,6)
@@ -74,7 +69,7 @@ SUBROUTINE FILT4C_KERNEL(imax, jkmax, u, uf, i1bc, i1zero, imxzero, txi, cxi)
 ! #######################################################################
 ! Set up right hand side and DO forward/backward substitution
 ! #######################################################################
-  IF ( i1bc .EQ. 0 ) THEN ! periodic
+  IF ( periodic ) THEN ! periodic
      DO jk=1, jkmax
         uf(jk,1) = cxi(1,1)*u(jk,imax-1) + cxi(1,2)*u(jk,imax) + cxi(1,3)*u(jk,1) + &
              cxi(1,4)*u(jk,2) + cxi(1,5)*u(jk,3)

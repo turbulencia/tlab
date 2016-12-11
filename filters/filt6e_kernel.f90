@@ -1,14 +1,15 @@
-SUBROUTINE FILT6E_KERNEL(imax, kmax, k1bc, kflt1bc, kfltmxbc, u, uflt)
+#include "types.h"
+
+SUBROUTINE FILT6E_KERNEL(kmax,ijmax, periodic, kflt1bc, kfltmxbc, u, uf)
 
   IMPLICIT NONE
 
-#include "types.h"
+  LOGICAL periodic
+  TINTEGER ijmax, kmax
+  TINTEGER kflt1bc, kfltmxbc
+  TREAL, DIMENSION(ijmax,kmax) :: u, uf
 
-  TINTEGER imax, kmax
-  TINTEGER k1bc, kflt1bc, kfltmxbc
-  TREAL u(imax,kmax)
-  TREAL uflt(imax,kmax)
-
+! -------------------------------------------------------------------
   TINTEGER i,k
   TINTEGER kstart, kstop
   TREAL b0, b1, b2, b3
@@ -16,6 +17,7 @@ SUBROUTINE FILT6E_KERNEL(imax, kmax, k1bc, kflt1bc, kfltmxbc, u, uflt)
 
   TINTEGER i1, i2, i3, i4, im3, ip3, im2, ip2, im1, ip1
 
+! #######################################################################
 #ifdef SINGLE_PREC
   b0 = 11.0e0/16.0e0
   b1 = 15.0e0/64.0e0
@@ -80,20 +82,19 @@ SUBROUTINE FILT6E_KERNEL(imax, kmax, k1bc, kflt1bc, kfltmxbc, u, uflt)
   kstart = 1
   kstop = kmax
 
-  IF ( k1bc .NE. 0 ) THEN
-!    Non periodic case
+  IF ( .NOT. periodic ) THEN
 
      k=1
-     DO i=1, imax
-        uflt(i,k) = u(i,k)
+     DO i=1, ijmax
+        uf(i,k) = u(i,k)
      ENDDO
 
      IF ( kflt1bc .EQ. 1 ) THEN
 !       If the second plane is included do it separately.
 
         k=2
-        DO i=1, imax
-           uflt(i,k) = &
+        DO i=1, ijmax
+           uf(i,k) = &
                 b_b(1) * u(i,k-1)&
                 + b_b(2) * u(i,k)&
                 + b_b(3) * u(i,k+1) &
@@ -106,8 +107,8 @@ SUBROUTINE FILT6E_KERNEL(imax, kmax, k1bc, kflt1bc, kfltmxbc, u, uflt)
 !       If the third plane is included do it separately.
 
         k=3
-        DO i=1, imax
-           uflt(i,k) = &
+        DO i=1, ijmax
+           uf(i,k) = &
                 b_c(1) * u(i,k-2)&
                 + b_c(2) * u(i,k-1)&
                 + b_c(3) * u(i,k) &
@@ -120,8 +121,8 @@ SUBROUTINE FILT6E_KERNEL(imax, kmax, k1bc, kflt1bc, kfltmxbc, u, uflt)
      ELSE
 
         DO k=2,3
-           DO i=1, imax
-              uflt(i,k) = u(i,k)
+           DO i=1, ijmax
+              uf(i,k) = u(i,k)
            ENDDO
         ENDDO
 
@@ -130,16 +131,16 @@ SUBROUTINE FILT6E_KERNEL(imax, kmax, k1bc, kflt1bc, kfltmxbc, u, uflt)
      kstart = 4
 
      k=kmax
-     DO i=1, imax
-        uflt(i,k) = u(i,k)
+     DO i=1, ijmax
+        uf(i,k) = u(i,k)
      ENDDO
 
      IF ( kfltmxbc .EQ. 1 ) THEN
 !       If the second plane is included do it separately.
 
         k=kmax-1
-        DO i=1, imax
-           uflt(i,k) = &
+        DO i=1, ijmax
+           uf(i,k) = &
                   b_b(1) * u(i,k+1) &
                 + b_b(2) * u(i,k)   &
                 + b_b(3) * u(i,k-1) &
@@ -152,8 +153,8 @@ SUBROUTINE FILT6E_KERNEL(imax, kmax, k1bc, kflt1bc, kfltmxbc, u, uflt)
 !       If the third plane is included do it separately.
 
         k=kmax-2
-        DO i=1, imax
-           uflt(i,k) = &
+        DO i=1, ijmax
+           uf(i,k) = &
                   b_c(1) * u(i,k+2) &
                 + b_c(2) * u(i,k+1) &
                 + b_c(3) * u(i,k)   &
@@ -165,8 +166,8 @@ SUBROUTINE FILT6E_KERNEL(imax, kmax, k1bc, kflt1bc, kfltmxbc, u, uflt)
      ELSE
 
         DO k=kmax-2,kmax-1
-           DO i=1, imax
-              uflt(i,k) = u(i,k)
+           DO i=1, ijmax
+              uf(i,k) = u(i,k)
            ENDDO
         ENDDO
 
@@ -188,8 +189,8 @@ SUBROUTINE FILT6E_KERNEL(imax, kmax, k1bc, kflt1bc, kfltmxbc, u, uflt)
      ip1 = MOD(k+kmax,kmax)+1
      ip2 = MOD(k+i1+kmax,kmax)+1
      ip3 = MOD(k+i2+kmax,kmax)+1
-     DO i=1, imax
-        uflt(i,k) = b3*(u(i,im3)+u(i,ip3))&
+     DO i=1, ijmax
+        uf(i,k) = b3*(u(i,im3)+u(i,ip3))&
              + b2*(u(i,im2)+u(i,ip2)) &
              + b1*(u(i,im1)+u(i,ip1)) &
              + b0*u(i,k)

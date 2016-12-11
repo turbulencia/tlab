@@ -81,9 +81,10 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(u, txc, mean, wrk1d,wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
   id = DNS_MPI_K_INFLOW
-  CALL OPR_FILTER(i2, ifltmx,jfltmx,kmax, ibc_x,ibc_y,ibc_z, id, &
-       txc, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-
+  ! CALL OPR_FILTER(i2, ifltmx,jfltmx,kmax, ibc_x,ibc_y,ibc_z, id, &
+  !      txc, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+! Needs to be updated
+  
 ! -----------------------------------------------------------------------
 ! Add mean field
 ! -----------------------------------------------------------------------

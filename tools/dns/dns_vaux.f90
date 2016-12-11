@@ -7,9 +7,6 @@
 #endif
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2007/01/01 - J.P. Mellado
@@ -19,11 +16,6 @@
 !# DESCRIPTION
 !# 
 !# Defining structure of auxiliary array VAUX
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!# isize_vaux  Out  Size of the array to be allocated in memory
 !#
 !########################################################################
 SUBROUTINE DNS_VAUX(isize_vaux)
@@ -37,7 +29,7 @@ SUBROUTINE DNS_VAUX(isize_vaux)
 
   IMPLICIT NONE
   
-  TINTEGER isize_vaux
+  TINTEGER, INTENT(OUT) :: isize_vaux ! Size of the array to be allocated in memory
 
 ! -----------------------------------------------------------------------
   TINTEGER i
@@ -49,10 +41,6 @@ SUBROUTINE DNS_VAUX(isize_vaux)
 #endif
   
 ! #######################################################################
-  vsize(VA_FLT_CX) = imax_total*6 ! compact needs 6, explicit 5
-  vsize(VA_FLT_CY) = jmax_total*6
-  vsize(VA_FLT_CZ) = kmax_total*6
-
   vsize(VA_BUFF_HT) = imax*kmax*inb_vars*buff_nps_jmax
   vsize(VA_BUFF_HB) = imax*kmax*inb_vars*buff_nps_jmin
   vsize(VA_BUFF_VI) = jmax*kmax*inb_vars*buff_nps_imin

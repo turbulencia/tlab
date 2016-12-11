@@ -86,6 +86,7 @@
 #define DNS_FILTER_ALPHA    5
 #define DNS_FILTER_CUTOFF   6
 #define DNS_FILTER_ERF      7
+#define DNS_FILTER_TOPHAT   8
 
 ! Mean profiles
 #define PROFILE_NONE         0

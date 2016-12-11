@@ -6,6 +6,16 @@ MODULE DNS_TYPES
 
   TINTEGER, PARAMETER :: MAX_PARS = 10
 
+  TYPE term_structure
+     SEQUENCE
+     TINTEGER type
+     TINTEGER, DIMENSION(MAX_PARS) :: scalar     ! fields defining this term
+     LOGICAL,  DIMENSION(MAX_PARS) :: active     ! fields affected by this term
+     TREAL,    DIMENSION(MAX_PARS) :: parameters
+     TREAL,    DIMENSION(MAX_PARS) :: auxiliar
+     TREAL,    DIMENSION(3)        :: vector
+  END TYPE term_structure
+
   TYPE grid_structure
      SEQUENCE
      CHARACTER*8 name
@@ -40,15 +50,14 @@ MODULE DNS_TYPES
      INTEGER offset
 #endif
   END type subarray_structure
-  
-  TYPE term_structure
-     SEQUENCE
-     TINTEGER type
-     TINTEGER, DIMENSION(MAX_PARS) :: scalar     ! fields defining this term
-     LOGICAL,  DIMENSION(MAX_PARS) :: active     ! fields affected by this term
-     TREAL,    DIMENSION(MAX_PARS) :: parameters
-     TREAL,    DIMENSION(MAX_PARS) :: auxiliar
-     TREAL,    DIMENSION(3)        :: vector
-  END TYPE term_structure
 
+  TYPE filter_structure
+     SEQUENCE
+     TINTEGER type, size, inb_filter, stencil
+     TINTEGER bcs_min, bcs_max
+     LOGICAL uniform, periodic
+     TINTEGER mpitype
+     TREAL, DIMENSION(:,:), POINTER :: coeffs ! pointer to coefficients
+  END TYPE filter_structure
+  
 END MODULE DNS_TYPES

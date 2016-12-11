@@ -7,23 +7,6 @@
 
 #define C_FILE_LOC "DNS"
 
-!########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2003/01/01 - J.P. Mellado
-!#              Modified
-!# 2007/06/12 - J.P. Mellado
-!#              Formulation in terms of the energy instead of pressure
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
 PROGRAM DNS
 
   USE DNS_CONSTANTS
@@ -58,11 +41,12 @@ PROGRAM DNS
 
 ! Auxiliar memory space
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: vaux
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z ! Filters
 
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_txc
+  TREAL,      DIMENSION(:,:),   ALLOCATABLE, SAVE :: l_txc                 ! Lagrangian
   TREAL,      DIMENSION(:,:,:), ALLOCATABLE, SAVE :: l_trajectories
-  TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
-  INTEGER(8), DIMENSION(:),   ALLOCATABLE, SAVE :: l_tags, l_trajectories_tags
+  TREAL,      DIMENSION(:),     ALLOCATABLE, SAVE :: l_comm
+  INTEGER(8), DIMENSION(:),     ALLOCATABLE, SAVE :: l_tags, l_trajectories_tags
 
 ! Work arrays
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk1d,wrk2d,wrk3d
@@ -76,7 +60,7 @@ PROGRAM DNS
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u, v, w, e, rho, p, T, vis
   
-  TINTEGER iread_flow, iread_scal, idummy
+  TINTEGER iread_flow, iread_scal, idummy, is
   TINTEGER ierr, isize_wrk3d, isize_vaux, isize_loc
 #ifdef USE_MPI
   TINTEGER id
@@ -349,7 +333,7 @@ PROGRAM DNS
   ENDIF
 
 ! ###################################################################
-! SUBARRAY FOR WRITE OF PLANES
+! Subarray for writing planes
 ! ###################################################################
 #ifdef USE_MPI
   CALL DNS_MPIO_AUX
@@ -400,21 +384,60 @@ PROGRAM DNS
 #include "dns_read_grid.h"
 
 ! ###################################################################
-! Initialize constant vectors for filters
+! Initialize filters
 ! ###################################################################
-  IF      ( ifilt_domain .EQ. DNS_FILTER_4E  .OR. &
-            ifilt_domain .EQ. DNS_FILTER_ADM      ) THEN  
-     CALL FILT4E_INI(imax_total, i1bc, scalex, g(1)%nodes, vaux(vindex(VA_FLT_CX)))
-     CALL FILT4E_INI(jmax_total, j1bc, scaley, g(2)%nodes, vaux(vindex(VA_FLT_CY)))
-     CALL FILT4E_INI(kmax_total, k1bc, scalez, g(3)%nodes, vaux(vindex(VA_FLT_CZ)))
+  FilterDomain(:)%size       = g(:)%size
+  FilterDomain(:)%periodic   = g(:)%periodic
+  FilterDomain(:)%uniform    = g(:)%uniform
+  FilterDomain(:)%inb_filter = FilterDomain(:)%stencil+1 ! Default
+  DO is = 1,3
+     SELECT CASE( FilterDomain(is)%type )
+     
+     CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
+        FilterDomain(is)%inb_filter = 5
+        
+     CASE( DNS_FILTER_COMPACT )
+        FilterDomain(is)%inb_filter = 6
+        
+     CASE( DNS_FILTER_TOPHAT )
+        IF ( MOD(FilterDomain(is)%stencil,2) .NE. 0 ) THEN
+           CALL IO_WRITE_ASCII(efile, 'DNS_MAIN. Filter stencil is not even.')
+           CALL DNS_STOP(DNS_ERROR_PARAMETER)
+        ENDIF
+        
+     END SELECT
+  ENDDO
+  
+  ALLOCATE( filter_x( FilterDomain(1)%size, FilterDomain(1)%inb_filter))
+  FilterDomain(1)%coeffs => filter_x
+  ALLOCATE( filter_y( FilterDomain(2)%size, FilterDomain(2)%inb_filter))
+  FilterDomain(2)%coeffs => filter_y
+  ALLOCATE( filter_z( FilterDomain(3)%size, FilterDomain(3)%inb_filter))
+  FilterDomain(3)%coeffs => filter_z
 
-  ELSE IF ( ifilt_domain .EQ. DNS_FILTER_COMPACT  ) THEN
-     CALL FILT4C_INI(imax_total, i1bc, ifilt_alpha, g(1)%jac, vaux(vindex(VA_FLT_CX)))
-     CALL FILT4C_INI(jmax_total, j1bc, ifilt_alpha, g(2)%jac, vaux(vindex(VA_FLT_CY)))
-     CALL FILT4C_INI(kmax_total, k1bc, ifilt_alpha, g(3)%jac, vaux(vindex(VA_FLT_CZ)))
+  DO is = 1,3
+     IF ( FilterDomain(is)%type .NE. DNS_FILTER_NONE ) THEN
+        FilterDomain(is)%bcs_min = 0
+        FilterDomain(is)%bcs_max = 0
+        
+        SELECT CASE( FilterDomain(is)%type )
+           
+        CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
+           CALL FILT4E_INI(g(is)%scale, g(is)%nodes, FilterDomain(is))
+           
+        CASE( DNS_FILTER_COMPACT )
+           CALL FILT4C_INI(ifilt_alpha, g(is)%jac,   FilterDomain(is))
+           
+        END SELECT
+        
+     ENDIF
+  END DO
 
-  ENDIF
-
+#ifdef USE_MPI
+  FilterDomain(1)%mpitype = DNS_MPI_I_PARTIAL 
+  FilterDomain(3)%mpitype = DNS_MPI_K_PARTIAL
+#endif
+  
 ! ####################################################################
 ! Initializing position of l_q(particles)
 ! ####################################################################

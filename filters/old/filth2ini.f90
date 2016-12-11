@@ -1,19 +1,18 @@
+#include "types.h"
+
+!#########################################################
+!# DESCRIPTION
+!#
+!# Double top-hat filter coefficients initialization
+!# Midpoint(trapezoidal) rule
+!# The array cf is transposed wrt to the notes for later
+!# better memory location
+!# 
+!#########################################################
+
 SUBROUTINE FILTH2INI(iunif, ibc, imax, nx0, nx1, scalex, x, cf, wrk2d, wrk1d)
 
-  ! #########################################################
-  ! # FILTER LIBRARY
-  ! #
-  ! # Double top-hat filter coefficients initialization
-  ! # Midpoint(trapezoidal) rule
-  ! # The array cf is transposed wrt to the notes for later
-  ! # better memory location
-  ! # 
-  ! #########################################################
-
   IMPLICIT NONE
-
-#include "types.h"
-#include "integers.h"
 
   TINTEGER iunif, ibc, imax
   TINTEGER nx0, nx1
@@ -23,8 +22,12 @@ SUBROUTINE FILTH2INI(iunif, ibc, imax, nx0, nx1, scalex, x, cf, wrk2d, wrk1d)
   TREAL wrk2d(imax,imax,3)
   TREAL wrk1d(imax,*)
 
+! -----------------------------------------------------------------------
   TINTEGER i, j, ii, ip, jm, jj
 
+#include "integers.h"
+
+! #######################################################################
   wrk2d = C_0_R
 
   IF ( iunif .EQ. 0 ) THEN
