@@ -15,7 +15,7 @@
 !#    = G*( 3u - 3G*u + G*G*u )
 !#
 !########################################################################
-SUBROUTINE FILTADM_KERNEL(imax, jkmax, periodic, u, uf, tmp, a)
+SUBROUTINE FLT_ADM(imax, jkmax, periodic, a, u, uf, tmp)
 
   IMPLICIT NONE
 
@@ -28,8 +28,8 @@ SUBROUTINE FILTADM_KERNEL(imax, jkmax, periodic, u, uf, tmp, a)
   TINTEGER i, jk
 
 ! #######################################################################
-  CALL FILT4E_KERNEL(imax, jkmax, periodic, u,  uf,  a)
-  CALL FILT4E_KERNEL(imax, jkmax, periodic, uf, tmp, a)
+  CALL FLT_E4(imax, jkmax, periodic, u,  uf,  a)
+  CALL FLT_E4(imax, jkmax, periodic, uf, tmp, a)
 
   DO i = 1,imax
      DO jk = 1,jkmax
@@ -37,7 +37,7 @@ SUBROUTINE FILTADM_KERNEL(imax, jkmax, periodic, u, uf, tmp, a)
      ENDDO
   ENDDO
 
-  CALL FILT4E_KERNEL(imax, jkmax, periodic, tmp, uf, a)
+  CALL FLT_E4(imax, jkmax, periodic, tmp, uf, a)
   
   RETURN
-END SUBROUTINE FILTADM_KERNEL
+END SUBROUTINE FLT_ADM

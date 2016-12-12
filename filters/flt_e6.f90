@@ -1,6 +1,6 @@
 #include "types.h"
 
-SUBROUTINE FILT6E_KERNEL(kmax,ijmax, periodic, kflt1bc, kfltmxbc, u, uf)
+SUBROUTINE FLT_E6(kmax,ijmax, periodic, kflt1bc, kfltmxbc, u, uf)
 
   IMPLICIT NONE
 
@@ -198,4 +198,4 @@ SUBROUTINE FILT6E_KERNEL(kmax,ijmax, periodic, kflt1bc, kfltmxbc, u, uf)
   ENDDO
 
   RETURN
-END SUBROUTINE FILT6E_KERNEL
+END SUBROUTINE FLT_E6

@@ -53,7 +53,7 @@ MODULE DNS_TYPES
 
   TYPE filter_structure
      SEQUENCE
-     TINTEGER type, size, inb_filter, stencil
+     TINTEGER type, size, inb_filter, delta
      TINTEGER bcs_min, bcs_max
      LOGICAL uniform, periodic
      TINTEGER mpitype

@@ -16,7 +16,7 @@
 !# uf_i + alpha*(uf_i-1 + uf_i+1) = a*u_i + b*(u_i-1 + u_i+1) + c*(u_i-2 + u_i+2)
 !#
 !########################################################################
-SUBROUTINE FILT4C_KERNEL(imax,jkmax, u, uf, periodic, i1zero, imxzero, txi, cxi)
+SUBROUTINE FLT_C4(imax,jkmax, periodic, i1zero, imxzero, cxi, u, uf, txi)
 
   IMPLICIT NONE
 
@@ -130,5 +130,5 @@ SUBROUTINE FILT4C_KERNEL(imax,jkmax, u, uf, periodic, i1zero, imxzero, txi, cxi)
   ENDDO
 
   RETURN
-END SUBROUTINE FILT4C_KERNEL
+END SUBROUTINE FLT_C4
 

@@ -112,7 +112,7 @@ END SUBROUTINE FLT_T1
 !########################################################################
 ! Non-uniform grid
 !########################################################################
-SUBROUTINE FLT_T1NU(kmax, ijmax, nx, cf, z1, zf1)
+SUBROUTINE FLT_T1ND(kmax, ijmax, nx, cf, z1, zf1)
 
   IMPLICIT NONE
   
@@ -122,6 +122,7 @@ SUBROUTINE FLT_T1NU(kmax, ijmax, nx, cf, z1, zf1)
   TREAL z1(ijmax,*)
   TREAL zf1(ijmax,*)
 
+! -------------------------------------------------------------------
   TREAL r0, dum
   TINTEGER i1, i2
   TINTEGER k,ij,ic
@@ -192,13 +193,13 @@ SUBROUTINE FLT_T1NU(kmax, ijmax, nx, cf, z1, zf1)
   ENDDO
 
   RETURN
-END SUBROUTINE FLT_T1NU
+END SUBROUTINE FLT_T1ND
 
 !########################################################################
 ! Non-uniform grid
 ! Particularized for a stencil of 3 points, nx=2
 !########################################################################
-SUBROUTINE FLT_T1NUN2(kmax, ijmax, cf, z1, zf1)
+SUBROUTINE FLT_T1NDD2(kmax, ijmax, cf, z1, zf1)
   
   IMPLICIT NONE
 
@@ -207,6 +208,7 @@ SUBROUTINE FLT_T1NUN2(kmax, ijmax, cf, z1, zf1)
   TREAL z1(ijmax,*)
   TREAL zf1(ijmax,*)
 
+! -------------------------------------------------------------------
   TINTEGER ij, k
   TREAL a1, a2, a3
 
@@ -241,13 +243,13 @@ SUBROUTINE FLT_T1NUN2(kmax, ijmax, cf, z1, zf1)
   ENDDO
 
   RETURN
-END SUBROUTINE FLT_T1NUN2
+END SUBROUTINE FLT_T1NDD2
 
 !########################################################################
 ! Non-uniform grid
 ! Particularized for a stencil of 5 points, nx=4
 !########################################################################
-SUBROUTINE FLT_T1NUN4(kmax, ijmax, cf, z1, zf1)
+SUBROUTINE FLT_T1NDD4(kmax, ijmax, cf, z1, zf1)
   
   IMPLICIT NONE
 
@@ -256,6 +258,7 @@ SUBROUTINE FLT_T1NUN4(kmax, ijmax, cf, z1, zf1)
   TREAL z1(ijmax,*)
   TREAL zf1(ijmax,*)
 
+! -------------------------------------------------------------------
   TINTEGER ij, k
   TREAL a1, a2, a3, a4, a5
 
@@ -310,13 +313,13 @@ SUBROUTINE FLT_T1NUN4(kmax, ijmax, cf, z1, zf1)
   ENDDO
 
   RETURN
-END SUBROUTINE FLT_T1NUN4
+END SUBROUTINE FLT_T1NDD4
 
 !########################################################################
 ! Non-uniform grid
 ! Particularized for a stencil of 7 points, nx=6
 !########################################################################
-SUBROUTINE FLT_T1NUN6(kmax, ijmax, cf, z1, zf1)
+SUBROUTINE FLT_T1NDD6(kmax, ijmax, cf, z1, zf1)
   
   IMPLICIT NONE
 
@@ -408,4 +411,4 @@ SUBROUTINE FLT_T1NUN6(kmax, ijmax, cf, z1, zf1)
   ENDDO
 
   RETURN
-END SUBROUTINE FLT_T1NUN6
+END SUBROUTINE FLT_T1NDD6

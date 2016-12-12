@@ -389,8 +389,13 @@ PROGRAM DNS
   FilterDomain(:)%size       = g(:)%size
   FilterDomain(:)%periodic   = g(:)%periodic
   FilterDomain(:)%uniform    = g(:)%uniform
-  FilterDomain(:)%inb_filter = FilterDomain(:)%stencil+1 ! Default
+  FilterDomain(:)%inb_filter = FilterDomain(:)%delta +1 ! Default
+  FilterDomain(:)%bcs_min    = 0
+  FilterDomain(:)%bcs_max    = 0
+  
   DO is = 1,3
+     IF ( FilterDomain(is)%size .EQ. 1 ) FilterDomain(is)%type = DNS_FILTER_NONE
+     
      SELECT CASE( FilterDomain(is)%type )
      
      CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
@@ -400,8 +405,8 @@ PROGRAM DNS
         FilterDomain(is)%inb_filter = 6
         
      CASE( DNS_FILTER_TOPHAT )
-        IF ( MOD(FilterDomain(is)%stencil,2) .NE. 0 ) THEN
-           CALL IO_WRITE_ASCII(efile, 'DNS_MAIN. Filter stencil is not even.')
+        IF ( MOD(FilterDomain(is)%delta,2) .NE. 0 ) THEN
+           CALL IO_WRITE_ASCII(efile, 'DNS_MAIN. Filter delta is not even.')
            CALL DNS_STOP(DNS_ERROR_PARAMETER)
         ENDIF
         
@@ -415,22 +420,19 @@ PROGRAM DNS
   ALLOCATE( filter_z( FilterDomain(3)%size, FilterDomain(3)%inb_filter))
   FilterDomain(3)%coeffs => filter_z
 
-  DO is = 1,3
-     IF ( FilterDomain(is)%type .NE. DNS_FILTER_NONE ) THEN
-        FilterDomain(is)%bcs_min = 0
-        FilterDomain(is)%bcs_max = 0
+  DO is = 1,3     
+     SELECT CASE( FilterDomain(is)%type )
         
-        SELECT CASE( FilterDomain(is)%type )
-           
-        CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
-           CALL FILT4E_INI(g(is)%scale, g(is)%nodes, FilterDomain(is))
-           
-        CASE( DNS_FILTER_COMPACT )
-           CALL FILT4C_INI(ifilt_alpha, g(is)%jac,   FilterDomain(is))
-           
-        END SELECT
+     CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
+        CALL FLT_E4_INI(g(is)%scale, g(is)%nodes, FilterDomain(is))
         
-     ENDIF
+     CASE( DNS_FILTER_COMPACT )
+        CALL FLT_C4_INI(ifilt_alpha, g(is)%jac,   FilterDomain(is))
+        
+     CASE( DNS_FILTER_TOPHAT )
+        CALL FLT_T1_INI(g(is)%scale, g(is)%nodes, FilterDomain(is), wrk1d)
+        
+     END SELECT
   END DO
 
 #ifdef USE_MPI

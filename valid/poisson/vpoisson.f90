@@ -51,9 +51,9 @@ PROGRAM VPOISSON
   dz => z(:,2:)
 
   falpha = 0.49d0
-  CALL FILT4C_INI(imax_total, i1bc, falpha, dx, cx)
-  CALL FILT4C_INI(jmax_total, j1bc, falpha, dy, cy)
-  CALL FILT4C_INI(kmax_total, k1bc, falpha, dz, cz)
+  CALL FLT_C4_INI(imax_total, i1bc, falpha, dx, cx)
+  CALL FLT_C4_INI(jmax_total, j1bc, falpha, dy, cy)
+  CALL FLT_C4_INI(kmax_total, k1bc, falpha, dz, cz)
 ! BCs for the filters (see routine FILTER)
   ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 0; ibc_x(4) = 0
   ibc_y(1) = 0; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0 

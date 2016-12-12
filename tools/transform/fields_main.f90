@@ -9,6 +9,7 @@
 
 PROGRAM TRANSFIELDS
 
+  USE DNS_TYPES,  ONLY : filter_structure
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
 #ifdef USE_MPI
@@ -40,7 +41,8 @@ PROGRAM TRANSFIELDS
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk3d
 
 ! Filters
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: filter_x, filter_y, filter_z
+  TYPE(filter_structure), DIMENSION(3)                              :: FilterDomain
+  TREAL,                  DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z
 
 ! -------------------------------------------------------------------
 ! Local variables
@@ -55,10 +57,11 @@ PROGRAM TRANSFIELDS
 
   TINTEGER imax_dst,jmax_dst,kmax_dst, imax_total_dst,jmax_total_dst,kmax_total_dst, jmax_aux, inb_scal_dst
   TREAL scalex_dst, scaley_dst, scalez_dst
+  TREAL dummy
 
 ! Filter variables
-  TINTEGER ibc_x(4), ibc_y(4), ibc_z(4)
-  TREAL dummy, alpha
+  TREAL alpha
+  TINTEGER delta
   TREAL, DIMENSION(:), POINTER :: p_bcs
 
   TINTEGER itime_size, it
@@ -163,13 +166,18 @@ PROGRAM TRANSFIELDS
         WRITE(*,'(A)') '5. Alpha'
         WRITE(*,'(A)') '6. Spectral cut-off' 
         WRITE(*,'(A)') '7. Gaussian Filter' 
+        WRITE(*,'(A)') '8. Tophat' 
         READ(*,*) opt_filter
 #endif
      ELSE
         opt_filter = DINT(opt_vec(2))
      ENDIF
+     
      alpha = C_0_R
+     delta = 2
      IF ( sRes .EQ. '-1' ) THEN
+#ifdef USE_MPI
+#else
         IF      ( opt_filter .EQ. DNS_FILTER_COMPACT ) THEN
            WRITE(*,*) 'Alpha Coeffcient ?'
            READ(*,*) alpha
@@ -186,9 +194,14 @@ PROGRAM TRANSFIELDS
            WRITE(*,*) 'and Characteristic Width--in log units (relative to domain size)?'   
            WRITE(*,*) '   positive real number.'
            READ(*,*) opt_vec(3), opt_vec(4) 
+        ELSE IF ( opt_filter .EQ. DNS_FILTER_TOPHAT ) THEN
+           WRITE(*,*) 'Delta (in multiples of grid step)?'
+           READ(*,*) delta
         ENDIF
+#endif
      ELSE
         alpha = opt_vec(3)
+        delta = DINT(opt_vec(3))
      ENDIF
   ENDIF
 
@@ -338,12 +351,6 @@ PROGRAM TRANSFIELDS
      ALLOCATE(z_dst(kmax_total_dst))
   ENDIF
 
-  IF ( opt_main .EQ. 5 ) THEN ! Filters
-     ALLOCATE(filter_x(imax_total*6))
-     ALLOCATE(filter_y(jmax_total*6))
-     ALLOCATE(filter_z(kmax_total*6))
-  ENDIF
-
 #include "dns_alloc_arrays.h"
 
 ! -------------------------------------------------------------------
@@ -352,26 +359,64 @@ PROGRAM TRANSFIELDS
 #include "dns_read_grid.h"
 
 ! -------------------------------------------------------------------
-! Initialize constant vectors for filters
+! Initialize filters
 ! -------------------------------------------------------------------
-  IF ( opt_filter .GT. 0 ) THEN
-     IF      ( opt_filter .EQ. DNS_FILTER_4E  .OR. &
-               opt_filter .EQ. DNS_FILTER_ADM      ) THEN  
-        CALL FILT4E_INI(imax_total, i1bc, g(1)%scale, g(1)%nodes, filter_x)
-        CALL FILT4E_INI(jmax_total, j1bc, g(2)%scale, g(2)%nodes, filter_y)
-        CALL FILT4E_INI(kmax_total, k1bc, g(3)%scale, g(3)%nodes, filter_z)
+  IF ( opt_main .EQ. 5 ) THEN ! Filters
+     FilterDomain(:)%type       = opt_filter
+     FilterDomain(:)%delta      = delta
+     FilterDomain(:)%size       = g(:)%size
+     FilterDomain(:)%periodic   = g(:)%periodic
+     FilterDomain(:)%uniform    = g(:)%uniform
+     FilterDomain(:)%inb_filter = FilterDomain(:)%delta +1 ! Default
+     FilterDomain(:)%bcs_min    = 0
+     FilterDomain(:)%bcs_max    = 0
+     
+     DO is = 1,3
+        IF ( FilterDomain(is)%size .EQ. 1 ) FilterDomain(is)%type = DNS_FILTER_NONE
         
-     ELSE IF ( opt_filter .EQ. DNS_FILTER_COMPACT  ) THEN
-        CALL FILT4C_INI(imax_total, i1bc, alpha, g(1)%jac, filter_x)
-        CALL FILT4C_INI(jmax_total, j1bc, alpha, g(2)%jac, filter_y)
-        CALL FILT4C_INI(kmax_total, k1bc, alpha, g(3)%jac, filter_z)
+        SELECT CASE( FilterDomain(is)%type )
+           
+        CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
+           FilterDomain(is)%inb_filter = 5
+           
+        CASE( DNS_FILTER_COMPACT )
+           FilterDomain(is)%inb_filter = 6
         
-     ENDIF
-
-! BCs for the filters (see routine FILTER)
-     ibc_x(1) = i1; ibc_x(2) = i1bc; ibc_x(3) = 0; ibc_x(4) = 0
-     ibc_y(1) = i1; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0 
-     ibc_z(1) = i1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0 
+        CASE( DNS_FILTER_TOPHAT )
+           IF ( MOD(FilterDomain(is)%delta,2) .NE. 0 ) THEN
+              CALL IO_WRITE_ASCII(efile, 'DNS_MAIN. Filter delta is not even.')
+              CALL DNS_STOP(DNS_ERROR_PARAMETER)
+           ENDIF
+           
+        END SELECT
+     ENDDO
+     
+     ALLOCATE( filter_x( FilterDomain(1)%size, FilterDomain(1)%inb_filter))
+     FilterDomain(1)%coeffs => filter_x
+     ALLOCATE( filter_y( FilterDomain(2)%size, FilterDomain(2)%inb_filter))
+     FilterDomain(2)%coeffs => filter_y
+     ALLOCATE( filter_z( FilterDomain(3)%size, FilterDomain(3)%inb_filter))
+     FilterDomain(3)%coeffs => filter_z
+     
+     DO is = 1,3     
+        SELECT CASE( FilterDomain(is)%type )
+           
+        CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
+           CALL FLT_E4_INI(g(is)%scale, g(is)%nodes, FilterDomain(is))
+           
+        CASE( DNS_FILTER_COMPACT )
+           CALL FLT_C4_INI(alpha,       g(is)%jac,   FilterDomain(is))
+        
+        CASE( DNS_FILTER_TOPHAT )
+           CALL FLT_T1_INI(g(is)%scale, g(is)%nodes, FilterDomain(is), wrk1d)
+           
+        END SELECT
+     END DO
+     
+#ifdef USE_MPI
+     FilterDomain(1)%mpitype = DNS_MPI_I_PARTIAL 
+     FilterDomain(3)%mpitype = DNS_MPI_K_PARTIAL
+#endif
 
   ENDIF
 
@@ -591,8 +636,9 @@ PROGRAM TRANSFIELDS
                  
               ELSE ! Rest; ADM needs two arrays in txc, rest just 1
                  q_dst(:,iq) = q(:,iq) 
-                 CALL OPR_FILTER(opt_filter, imax,jmax,kmax, ibc_x,ibc_y,ibc_z, &
-                      i1, q_dst(1,iq), filter_x,filter_y,filter_z, wrk1d,wrk2d,txc)
+                 ! CALL OPR_FILTER(opt_filter, imax,jmax,kmax, ibc_x,ibc_y,ibc_z, &
+                 !      i1, q_dst(1,iq), filter_x,filter_y,filter_z, wrk1d,wrk2d,txc)
+                 CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, q_dst(1,iq), wrk1d,wrk2d,txc)
               ENDIF
            ENDDO
            
@@ -618,8 +664,9 @@ PROGRAM TRANSFIELDS
 
               ELSE ! Rest; ADM needs two arrays in txc, rest just 1
                  s_dst(:,is) = s(:,is) 
-                 CALL OPR_FILTER(opt_filter, imax,jmax,kmax, ibc_x,ibc_y,ibc_z, &
-                      i1, s_dst(1,is), filter_x,filter_y,filter_z, wrk1d,wrk2d,txc)
+                 ! CALL OPR_FILTER(opt_filter, imax,jmax,kmax, ibc_x,ibc_y,ibc_z, &
+                 !      i1, s_dst(1,is), filter_x,filter_y,filter_z, wrk1d,wrk2d,txc)
+                 CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, s_dst(1,is), wrk1d,wrk2d,txc)
                  
               ENDIF
            ENDDO

@@ -16,7 +16,7 @@
 !# uf_i + alpha*(uf_i-1 + uf_i+1) = a*u_i + b*(u_i-1 + u_i+1) + c*(u_i-2 + u_i+2)
 !#
 !########################################################################
-SUBROUTINE FILT4C_INI(alpha, dx, f)
+SUBROUTINE FLT_C4_INI(alpha, dx, f)
   
   USE DNS_TYPES,  ONLY : filter_structure
 
@@ -212,4 +212,4 @@ SUBROUTINE FILT4C_INI(alpha, dx, f)
   ENDIF
 
   RETURN
-END SUBROUTINE FILT4C_INI
+END SUBROUTINE FLT_C4_INI

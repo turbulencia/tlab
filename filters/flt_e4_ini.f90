@@ -19,7 +19,7 @@
 !# which implies alpha_m2 = alpha_p2
 !#
 !########################################################################
-SUBROUTINE FILT4E_INI(scalez, z, f)
+SUBROUTINE FLT_E4_INI(scalez, z, f)
 
   USE DNS_TYPES,  ONLY : filter_structure
 
@@ -134,5 +134,5 @@ SUBROUTINE FILT4E_INI(scalez, z, f)
   ENDDO
 
   RETURN
-END SUBROUTINE FILT4E_INI
+END SUBROUTINE FLT_E4_INI
 

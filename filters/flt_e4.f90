@@ -1,6 +1,5 @@
-!########################################################################
-!# Tool/Library
-!#
+#include "types.h"
+
 !########################################################################
 !# HISTORY
 !#
@@ -13,11 +12,9 @@
 !# Explicit filter as described in Stolz's thesis.
 !#
 !########################################################################
-SUBROUTINE FILT4E_KERNEL(imax, jkmax, periodic, u, uf, a)
+SUBROUTINE FLT_E4(imax, jkmax, periodic, a, u, uf)
 
   IMPLICIT NONE
-
-#include "types.h"
 
   LOGICAL periodic
   TINTEGER imax, jkmax
@@ -90,4 +87,4 @@ SUBROUTINE FILT4E_KERNEL(imax, jkmax, periodic, u, uf, a)
   ENDDO
 
   RETURN
-END SUBROUTINE FILT4E_KERNEL
+END SUBROUTINE FLT_E4
