@@ -585,10 +585,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
   CALL IO_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
 
+  FilterDomain(1)%delta = 2
+  FilterDomain(1)%alpha = 0.49
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'Type', 'none', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; idummy = DNS_FILTER_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; idummy = DNS_FILTER_COMPACT
-     CALL SCANINIREAL(bakfile, inifile, 'Filter', 'Alpha', '0.49', ifilt_alpha)
+     CALL SCANINIREAL(bakfile, inifile, 'Filter', 'Alpha', '0.49', FilterDomain(1)%alpha)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'tophat'    ) THEN; idummy = DNS_FILTER_TOPHAT
      CALL SCANINIINT(bakfile, inifile, 'Filter', 'Delta', '2', FilterDomain(1)%delta)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit6' ) THEN; idummy = DNS_FILTER_6E  
@@ -601,6 +603,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   
   FilterDomain(:)%type = idummy
   FilterDomain(2:3)%delta = FilterDomain(1)%delta
+  FilterDomain(2:3)%alpha = FilterDomain(1)%alpha
   
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'Scalar', 'yes', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; ifilt_scalar = 1

@@ -204,7 +204,7 @@ PROGRAM TRANSFIELDS
         delta = DINT(opt_vec(3))
      ENDIF
   ENDIF
-
+  
 ! -------------------------------------------------------------------
   IF ( opt_main .EQ. 6 ) THEN
      IF ( sRes .EQ. '-1' ) THEN
@@ -364,6 +364,7 @@ PROGRAM TRANSFIELDS
   IF ( opt_main .EQ. 5 ) THEN ! Filters
      FilterDomain(:)%type       = opt_filter
      FilterDomain(:)%delta      = delta
+     FilterDomain(:)%alpha      = alpha
      FilterDomain(:)%size       = g(:)%size
      FilterDomain(:)%periodic   = g(:)%periodic
      FilterDomain(:)%uniform    = g(:)%uniform
@@ -405,7 +406,7 @@ PROGRAM TRANSFIELDS
            CALL FLT_E4_INI(g(is)%scale, g(is)%nodes, FilterDomain(is))
            
         CASE( DNS_FILTER_COMPACT )
-           CALL FLT_C4_INI(alpha,       g(is)%jac,   FilterDomain(is))
+           CALL FLT_C4_INI(             g(is)%jac,   FilterDomain(is))
         
         CASE( DNS_FILTER_TOPHAT )
            CALL FLT_T1_INI(g(is)%scale, g(is)%nodes, FilterDomain(is), wrk1d)
@@ -636,8 +637,6 @@ PROGRAM TRANSFIELDS
                  
               ELSE ! Rest; ADM needs two arrays in txc, rest just 1
                  q_dst(:,iq) = q(:,iq) 
-                 ! CALL OPR_FILTER(opt_filter, imax,jmax,kmax, ibc_x,ibc_y,ibc_z, &
-                 !      i1, q_dst(1,iq), filter_x,filter_y,filter_z, wrk1d,wrk2d,txc)
                  CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, q_dst(1,iq), wrk1d,wrk2d,txc)
               ENDIF
            ENDDO
@@ -664,8 +663,6 @@ PROGRAM TRANSFIELDS
 
               ELSE ! Rest; ADM needs two arrays in txc, rest just 1
                  s_dst(:,is) = s(:,is) 
-                 ! CALL OPR_FILTER(opt_filter, imax,jmax,kmax, ibc_x,ibc_y,ibc_z, &
-                 !      i1, s_dst(1,is), filter_x,filter_y,filter_z, wrk1d,wrk2d,txc)
                  CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, s_dst(1,is), wrk1d,wrk2d,txc)
                  
               ENDIF

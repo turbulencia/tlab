@@ -136,3 +136,11 @@ if (PSFFT_LIB)
 set_target_properties(l_pos_trajec.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
 endif()
 
+# Structure analysis
+FILE(GLOB sourcefiles "structure/apriori.f90")
+add_executable(apriori.x ${sourcefiles})
+target_link_libraries(apriori.x mappings operators flow io thermodynamics averages filters fdm linear fitpack ${LEVEL1_LIBS} ${LIBS})
+if (PSFFT_LIB)
+set_target_properties(apriori.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
+endif()
+

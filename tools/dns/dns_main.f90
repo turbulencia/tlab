@@ -58,35 +58,30 @@ PROGRAM DNS
   TARGET q
 
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:),   POINTER :: u, v, w, e, rho, p, T, vis
+  TREAL, DIMENSION(:),   POINTER :: e, rho, p, T, vis
   
+  CHARACTER*32 fname, inifile
+  CHARACTER*128 str, line
   TINTEGER iread_flow, iread_scal, idummy, is
   TINTEGER ierr, isize_wrk3d, isize_vaux, isize_loc
-#ifdef USE_MPI
-  TINTEGER id
-#endif
   TREAL dummy
-  CHARACTER*32 fname
-  CHARACTER*128 str, line
-
-#ifdef USE_MPI
-  TINTEGER ndims_l, sizes_l(3), locsize_l(3), offset_l(3)
-#endif
 
 ! ###################################################################
+  inifile = 'dns.ini'
+
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL('dns.ini')
+  CALL DNS_READ_GLOBAL(inifile)
   IF ( icalc_particle .EQ. 1 ) THEN
-     CALL PARTICLE_READ_GLOBAL('dns.ini')
+     CALL PARTICLE_READ_GLOBAL(inifile)
   ENDIF
 #ifdef CHEMISTRY
-  CALL CHEM_READ_GLOBAL('dns.ini')
+  CALL CHEM_READ_GLOBAL(inifile)
 #endif
 #ifdef LES
-  CALL LES_READ_INI('dns.ini')
+  CALL LES_READ_INI(inifile)
 #endif
-  CALL DNS_READ_LOCAL('dns.ini')
+  CALL DNS_READ_LOCAL(inifile)
 
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
@@ -95,77 +90,6 @@ PROGRAM DNS
 
   itime        = nitera_first
   logs_data(1) = 0 ! Status
-
-! #######################################################################
-! Definining types for parallel mode
-! #######################################################################
-#ifdef USE_MPI
-! -------------------------------------------------------------------
-! Filters at boundaries
-! -------------------------------------------------------------------
-  IF ( buff_nps_imax .GT. 1 ) THEN ! Required for outflow explicit filter in Ox
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Ox BCs explicit filter.')
-     id    = DNS_MPI_K_OUTBCS
-     isize_loc = buff_nps_imax*jmax
-     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
-          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-  ENDIF
-
-  IF ( buff_nps_jmin .GT. 1 ) THEN ! Required for outflow explicit filter in Oy
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Oy BCs explicit filter.')
-     id    = DNS_MPI_K_TOPBCS
-     isize_loc = imax*buff_nps_jmin
-     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
-          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-  ENDIF
-
-  IF ( ifilt_inflow .EQ. 1 ) THEN !  Required for inflow explicit filter
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for inflow filter.')
-     id    = DNS_MPI_K_INFLOW
-     isize_loc = ifilt_inflow_iwidth*ifilt_inflow_jwidth
-     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
-          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-  ENDIF
-
-
-! -------------------------------------------------------------------
-! Characteristic BCs in compressible mode
-! -------------------------------------------------------------------
-  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-
-  IF ( i1bc .NE. DNS_BCS_PERIODIC ) THEN ! Required for NRBCs in Ox
-     id    = DNS_MPI_K_NRBCX
-     isize_loc = MOD(jmax,ims_npro_k)
-     ims_bcs_imax = 2*(inb_flow+inb_scal_array)
-     DO WHILE ( MOD(isize_loc*ims_bcs_imax,ims_npro_k) .GT. 0 ) 
-        ims_bcs_imax = ims_bcs_imax + 1
-     ENDDO
-     WRITE(str,*) ims_bcs_imax
-     str = 'Initialize MPI types for Ox BCs transverse terms. '//TRIM(ADJUSTL(str))//' planes.'
-     CALL IO_WRITE_ASCII(lfile,str)
-     isize_loc = ims_bcs_imax*jmax
-     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
-          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-  ENDIF
-
-  IF ( j1bc .NE. DNS_BCS_PERIODIC ) THEN ! Required for NRBCs in Oy
-     id    = DNS_MPI_K_NRBCY
-     isize_loc = MOD(imax,ims_npro_k)
-     ims_bcs_jmax = 2*(inb_flow+inb_scal_array)
-     DO WHILE ( MOD(isize_loc*ims_bcs_jmax,ims_npro_k) .GT. 0 ) 
-        ims_bcs_jmax = ims_bcs_jmax + 1
-     ENDDO
-     WRITE(str,*) ims_bcs_jmax
-     str = 'Initialize MPI types for Oy BCs transverse terms. '//TRIM(ADJUSTL(str))//' planes.'
-     CALL IO_WRITE_ASCII(lfile,str)
-     isize_loc = imax*ims_bcs_jmax
-     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
-          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-  ENDIF
-
-  ENDIF
-
-#endif
 
 ! #######################################################################
 ! Memory management
@@ -427,7 +351,7 @@ PROGRAM DNS
         CALL FLT_E4_INI(g(is)%scale, g(is)%nodes, FilterDomain(is))
         
      CASE( DNS_FILTER_COMPACT )
-        CALL FLT_C4_INI(ifilt_alpha, g(is)%jac,   FilterDomain(is))
+        CALL FLT_C4_INI(             g(is)%jac,   FilterDomain(is))
         
      CASE( DNS_FILTER_TOPHAT )
         CALL FLT_T1_INI(g(is)%scale, g(is)%nodes, FilterDomain(is), wrk1d)
@@ -516,10 +440,6 @@ PROGRAM DNS
 ! ###################################################################
 ! Define pointers
 ! ###################################################################
-  u   => q(:,1)
-  v   => q(:,2)
-  w   => q(:,3)
-
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      e   => q(:,4)
      rho => q(:,5)
@@ -571,14 +491,12 @@ PROGRAM DNS
 ! ###################################################################
 ! Initialize data for boundary conditions
 ! ###################################################################
-! buffer zone and reference pressures
   CALL BOUNDARY_INIT(vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
                      vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), &
                      vaux(vindex(VA_BCS_HT)),  vaux(vindex(VA_BCS_HB)),  &
                      vaux(vindex(VA_BCS_VI)),  vaux(vindex(VA_BCS_VO)),  &
                      q,s, txc, wrk3d)
 
-! inflow
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
      CALL BOUNDARY_INFLOW_INIT(rtime, x_inf,y_inf,z_inf, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d)
   ENDIF

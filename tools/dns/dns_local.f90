@@ -82,7 +82,6 @@ MODULE DNS_LOCAL
   TYPE(filter_structure), DIMENSION(3) :: FilterDomain
 
   TINTEGER :: ifilt_step, ifilt_scalar
-  TREAL    :: ifilt_alpha
 
   ! This info should be put into a filter_structure
   TINTEGER :: ifilt_inflow, ifilt_inflow_iwidth, ifilt_inflow_jwidth

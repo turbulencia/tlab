@@ -16,23 +16,24 @@
 !# uf_i + alpha*(uf_i-1 + uf_i+1) = a*u_i + b*(u_i-1 + u_i+1) + c*(u_i-2 + u_i+2)
 !#
 !########################################################################
-SUBROUTINE FLT_C4_INI(alpha, dx, f)
+SUBROUTINE FLT_C4_INI(dx, f)
   
-  USE DNS_TYPES,  ONLY : filter_structure
+  USE DNS_TYPES, ONLY : filter_structure
 
   IMPLICIT NONE
   
-  TREAL,                  INTENT(IN)    :: alpha
   TREAL, DIMENSION(*),    INTENT(IN)    :: dx
   TYPE(filter_structure), INTENT(INOUT) :: f
 
 ! -----------------------------------------------------------------------
-  TREAL ac_loc
+  TREAL ac_loc, alpha
   TINTEGER i
 
 ! #######################################################################
   IF ( f%size .GT. 1 ) THEN
      
+  alpha = f%alpha
+  
 ! #######################################################################
 ! Calculate constants for LHS
 ! #######################################################################

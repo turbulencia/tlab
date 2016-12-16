@@ -5,7 +5,7 @@
 #endif
 
 ! ###################################################################
-! Filter kernelalong one direction 
+! Filter kernel along one direction 
 ! ###################################################################
 SUBROUTINE OPR_FILTER_1D(nlines, f, u,result, wrk1d,wrk2d,wrk3d)
 
