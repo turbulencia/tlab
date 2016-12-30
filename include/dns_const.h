@@ -53,6 +53,7 @@
 
 #define EQNS_CHEM_QUADRATIC          25
 #define EQNS_CHEM_LAYEREDRELAXATION  26
+#define EQNS_CHEM_OZONE              27
 
 ! Finite-differences method
 #define FDM_COM4_JACOBIAN     4

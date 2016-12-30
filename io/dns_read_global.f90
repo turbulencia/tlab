@@ -94,7 +94,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
   CALL IO_WRITE_ASCII(bakfile, '#TermRadiation=<none/Bulk1dGlobal/Bulk1dLocal>')
   CALL IO_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
-  CALL IO_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation>')
+  CALL IO_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
   CALL IO_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian8/CompactDirect6>')
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'FileFormat', 'RawSplit', sRes)
@@ -246,6 +246,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermChemistry', 'none', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic'        ) THEN; chemistry%type = EQNS_CHEM_QUADRATIC;
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'layeredrelaxation') THEN; chemistry%type = EQNS_CHEM_LAYEREDRELAXATION; 
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'ozone'            ) THEN; chemistry%type = EQNS_CHEM_OZONE; 
   ELSE;                                                        chemistry%type = EQNS_NONE; ENDIF
 
 ! -------------------------------------------------------------------
@@ -446,6 +447,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   
 ! Including damkohler in the prefactors
      chemistry%parameters(1:inb_scal_local1) = chemistry%parameters(1:inb_scal_local1) *damkohler(1:inb_scal_local1)
+
+  ELSE IF ( chemistry%type .EQ. EQNS_CHEM_OZONE ) THEN
+     chemistry%active(1:3) = .TRUE.
 
   ELSE IF ( chemistry%type .EQ. EQNS_CHEM_LAYEREDRELAXATION ) THEN
      CALL SCANINIINT(bakfile, inifile, 'Chemistry', 'Scalar', '-1', idummy)
