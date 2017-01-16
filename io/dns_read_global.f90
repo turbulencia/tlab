@@ -440,22 +440,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
 ! Activating terms
   chemistry%active = .FALSE.
-  IF      ( chemistry%type .EQ. EQNS_CHEM_QUADRATIC ) THEN
-     DO is = 1,inb_scal_local1
-        IF ( ABS(chemistry%parameters(is)) .GT. C_0_R ) chemistry%active(is) = .TRUE.
-     ENDDO
-  
-! Including damkohler in the prefactors
-     chemistry%parameters(1:inb_scal_local1) = chemistry%parameters(1:inb_scal_local1) *damkohler(1:inb_scal_local1)
-
-  ELSE IF ( chemistry%type .EQ. EQNS_CHEM_OZONE ) THEN
-     chemistry%active(1:3) = .TRUE.
-
-  ELSE IF ( chemistry%type .EQ. EQNS_CHEM_LAYEREDRELAXATION ) THEN
-     CALL SCANINIINT(bakfile, inifile, 'Chemistry', 'Scalar', '-1', idummy)
-     IF ( idummy .GT. 0 ) chemistry%active(idummy) = .TRUE.
-     
-  ENDIF
+  DO is = 1,inb_scal_local1
+     IF ( ABS(damkohler(is)) .GT. C_0_R ) chemistry%active(is) = .TRUE.
+  ENDDO
   
 ! ###################################################################
 ! Thermodynamics

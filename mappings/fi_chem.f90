@@ -4,7 +4,7 @@
 SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
 
   USE DNS_TYPES,  ONLY : term_structure
-  USE DNS_GLOBAL, ONLY : ycoor_i
+  USE DNS_GLOBAL, ONLY : ycoor_i, damkohler
   USE DNS_GLOBAL, ONLY : g
 
   IMPLICIT NONE
@@ -21,9 +21,6 @@ SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
 !########################################################################
   SELECT CASE( chemistry%type )
 
-  CASE( EQNS_CHEM_QUADRATIC )
-     source = chemistry%parameters(is) * s(:,2) *s(:,3)
-
   CASE( EQNS_CHEM_LAYEREDRELAXATION )
      ycenter = g(2)%nodes(1) + g(2)%scale *ycoor_i(is) + chemistry%parameters(2)
      thickness_inv = C_1_R /chemistry%parameters(3)
@@ -31,23 +28,26 @@ SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
         DO k=1,nz
            DO j=1,ny
               xi = (g(2)%nodes(j)-ycenter) /chemistry%parameters(3)
-              source(i+(j-1)*nx+(k-1)*nx*ny) = C_05_R *( C_1_R +TANH(xi) ) !strength constant
+              source(i+(j-1)*nx+(k-1)*nx*ny) = C_05_R *( C_1_R +TANH(xi) ) ! strength constant
            ENDDO
         ENDDO
      ENDDO
      
-     dummy  =-C_1_R /chemistry%parameters(1)
-     source = dummy *source*s(:,is)
+     dummy  =-damkohler(is) /chemistry%parameters(1)
+     source = dummy *source *s(:,is)
+
+  CASE( EQNS_CHEM_QUADRATIC )
+     dummy  = damkohler(is) *chemistry%parameters(is)
+     source = dummy *s(:,2) *s(:,3)
 
   CASE( EQNS_CHEM_OZONE )
-! 2. species is O3
-! 3. species is NO
-! 4. species is NO2
-! calculate the reaction constant
-     source = chemistry%parameters(2) *EXP(chemistry%parameters(3)*s(:,1))
+     dummy  = damkohler(is)
+     IF ( is .EQ. 4 ) dummy =-dummy
      
-     source = chemistry%parameters(1) *s(:,4) - source *s(:,2) *s(:,3)
-     IF ( is .EQ. 4 ) source =-source
+     source =-chemistry%parameters(2) /( C_1_R +chemistry%parameters(3)*s(:,1) )
+     source = EXP(source)
+     
+     source = dummy *( chemistry%parameters(1) *s(:,4) - source *s(:,2) *s(:,3) )
      
   END SELECT
   
