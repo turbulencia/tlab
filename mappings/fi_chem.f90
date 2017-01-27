@@ -15,7 +15,7 @@ SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
   TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: source
 
 ! -----------------------------------------------------------------------
-  TREAL xi, dummy, thickness_inv, ycenter
+  TREAL dummy, dummy2, xi, thickness_inv, ycenter
   TINTEGER i,j,k
 
 !########################################################################
@@ -27,7 +27,7 @@ SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
      DO i=1,nx
         DO k=1,nz
            DO j=1,ny
-              xi = (g(2)%nodes(j)-ycenter) /chemistry%parameters(3)
+              xi = (g(2)%nodes(j)-ycenter) *thickness_inv
               source(i+(j-1)*nx+(k-1)*nx*ny) = C_05_R *( C_1_R +TANH(xi) ) ! strength constant
            ENDDO
         ENDDO
@@ -44,10 +44,15 @@ SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
      dummy  = damkohler(is)
      IF ( is .EQ. 4 ) dummy =-dummy
      
-     source =-chemistry%parameters(2) /( C_1_R +chemistry%parameters(3)*s(:,1) )
+     source =-chemistry%parameters(1) /( C_1_R +chemistry%parameters(2)*s(:,1) )
      source = EXP(source)
-     
-     source = dummy *( chemistry%parameters(1) *s(:,4) - source *s(:,2) *s(:,3) )
+
+     IF ( is .EQ. 4 ) THEN
+        dummy2 = C_1_R + chemistry%parameters(3)
+        source = dummy *( dummy2 *s(:,4) - source *s(:,2) *s(:,3) )
+     ELSE
+        source = dummy *(         s(:,4) - source *s(:,2) *s(:,3) )
+     ENDIF
      
   END SELECT
   
