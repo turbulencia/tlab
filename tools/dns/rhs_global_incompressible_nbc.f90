@@ -15,7 +15,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42,&
      bt1,bt2,bt3,bt4,&
      h1,h2,h3,hs,&
-     bcs_hb,bcs_ht,b_ref,vaux,&
+     bcs_hb,bcs_ht,vaux,&
      wrk1d,wrk2d,wrk3d) 
   USE, INTRINSIC :: iso_c_binding, ONLY : c_int,c_loc,c_ptr,c_f_pointer 
 
@@ -68,7 +68,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   TREAL, DIMENSION(isize_field),         INTENT(INOUT):: h1,h2,h3 
   TREAL, DIMENSION(isize_field,inb_scal),INTENT(OUT):: hs 
   TREAL, DIMENSION(imax,kmax,inb_vars)              :: bcs_hb, bcs_ht 
-  TREAL, DIMENSION(jmax),                INTENT(IN) :: b_ref
   TREAL, DIMENSION(isize_field),         INTENT(INOUT):: tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42
   TREAL, DIMENSION(isize_field)  :: bt1,bt2,bt3,bt4
   TREAL, DIMENSION(isize_wrk1d,*):: wrk1d
@@ -236,7 +235,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      ! -----------------------------------------------------------------------
      ! Source terms
      ! -----------------------------------------------------------------------
-     CALL FI_SOURCES_FLOW(u,s, h1, b_ref, wrk1d,wrk3d)
+     CALL FI_SOURCES_FLOW(u,s, h1,              wrk1d,      wrk3d)
      CALL FI_SOURCES_SCAL(  s, hs, tmp41,tmp42, wrk1d,wrk2d,wrk3d)
 
      t_ser    = t_ser + (t_tmp +MPI_WTime())

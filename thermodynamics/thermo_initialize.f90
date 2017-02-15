@@ -557,7 +557,7 @@ SUBROUTINE THERMO_INITIALIZE
 
         NCP_CHEMKIN = 1
 
-! Saturation pressure; from Bjorn's notes
+! Saturation pressure; Flatau et al., J. Applied Meteorol., 1507-1513, 1992
         WRK1D_LOC(1) = 0.611213476*C_1E3_R
         WRK1D_LOC(2) = 0.444007856*C_1E2_R
         WRK1D_LOC(3) = 0.143064234*C_1E1_R

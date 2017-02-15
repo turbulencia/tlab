@@ -74,8 +74,7 @@ SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, q,hq,s,hs, &
        idiffusion .EQ. EQNS_EXPLICIT         ) THEN
      CALL RHS_FLOW_GLOBAL_ANELASTIC_1(dte, u,v,w,hq(1,1),hq(1,2),hq(1,3), s, &
           txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-          vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), &
-          wrk1d,wrk2d,wrk3d)
+          vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), wrk1d,wrk2d,wrk3d)
      
      DO is = 1,inb_scal
         CALL RHS_SCAL_GLOBAL_ANELASTIC_1(is, u,v,w,s(1,is),hs(1,is), &

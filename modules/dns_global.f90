@@ -119,14 +119,19 @@ MODULE DNS_GLOBAL
 
 ! Flow: thermodynamics
   TREAL    :: p_init              ! reference pressure
-
+  TREAL, DIMENSION(:), ALLOCATABLE :: pbackground
+  
   TINTEGER :: iprof_rho
   TREAL    :: mean_rho, delta_rho, thick_rho, ycoor_rho, &
               prof_rho(MAX_PROF), diam_rho, jet_rho(MAX_JETS)
+  TREAL, DIMENSION(:), ALLOCATABLE :: rbackground
+
+  TREAL, DIMENSION(:), ALLOCATABLE :: bbackground
 
   TINTEGER :: iprof_tem
   TREAL    :: mean_tem, delta_tem, thick_tem, ycoor_tem, &
               prof_tem(MAX_PROF), diam_tem, jet_tem(MAX_JETS)
+  TREAL, DIMENSION(:), ALLOCATABLE :: tbackground
 
 ! Scalars
   TINTEGER :: iprof_i(MAX_NSP)

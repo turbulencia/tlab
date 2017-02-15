@@ -27,7 +27,7 @@
 !########################################################################
 SUBROUTINE  RHS_FLOW_GLOBAL_ANELASTIC_1&
      (dte, u,v,w,h1,h2,h3, z1, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
-     bcs_hb,bcs_ht,b_ref, wrk1d,wrk2d,wrk3d)
+     bcs_hb,bcs_ht, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL
 
@@ -39,7 +39,7 @@ IMPLICIT NONE
   TREAL, DIMENSION(imax,jmax,kmax) :: u, v, w, h1, h2, h3, z1
   TREAL, DIMENSION(imax,jmax,kmax) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, wrk3d
   TREAL                            :: wrk1d(isize_wrk1d,*), wrk2d(*)
-  TREAL, DIMENSION(jmax)           :: b_ref, r_ref
+  TREAL, DIMENSION(jmax)           :: r_ref
   TREAL, DIMENSION(imax,kmax,*)    :: bcs_hb, bcs_ht
 
 ! -----------------------------------------------------------------------
@@ -101,7 +101,7 @@ IMPLICIT NONE
      ENDDO; ENDDO; ENDDO
 
   ELSE
-     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, z1, wrk3d, b_ref)
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, z1, wrk3d, bbackground)
      DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
         h2(i,j,k) = h2(i,j,k) + wrk3d(i,j,k)*buoyancy%vector(2) + visc*( tmp6(i,j,k)+tmp5(i,j,k)+tmp4(i,j,k) ) &
              - r_ref(j)*( w(i,j,k)*tmp3(i,j,k)+v(i,j,k)*tmp2(i,j,k)+u(i,j,k)*tmp1(i,j,k) )

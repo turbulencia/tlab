@@ -427,6 +427,8 @@ PROGRAM AVERAGES
 ! ###################################################################
      CASE ( 1 )
         IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
+           CALL THERMO_PROFILES(wrk1d)
+           
            IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
               IF ( damkohler(1) .LE. C_0_R )  THEN
                  CALL THERMO_AIRWATER_PHAL(i1,i1,i1,       mean_i(2), p_init, mean_i(1))        ! Calculate mean liquid

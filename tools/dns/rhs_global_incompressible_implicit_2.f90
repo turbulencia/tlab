@@ -26,7 +26,7 @@
 SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
      (dte, kex,kim,kco, q,hq, u,v,w,h1,h2,h3, s,hs,&
      tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7, &
-     bcs_hb,bcs_ht,b_ref, vaux, wrk1d,wrk2d,wrk3d)
+     bcs_hb,bcs_ht, vaux, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -38,6 +38,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   USE DNS_GLOBAL, ONLY : imode_fdm, i1bc, j1bc, iunify, k1bc
   USE DNS_GLOBAL, ONLY : visc, schmidt
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
+  USE DNS_GLOBAL, ONLY : bbackground
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
   USE DNS_LOCAL,  ONLY : buff_type
@@ -53,7 +54,6 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   TREAL, DIMENSION(isize_txc_field),     INTENT(OUT)  :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7
   TREAL, DIMENSION(isize_wrk1d,*),       INTENT(OUT)  :: wrk1d
   TREAL, DIMENSION(*),                   INTENT(OUT)  :: wrk2d,wrk3d, vaux
-  TREAL, DIMENSION(jmax),                INTENT(IN)   :: b_ref
   TREAL, DIMENSION(imax,kmax,*),         INTENT(OUT)  :: bcs_hb, bcs_ht
 
   TARGET v
@@ -223,7 +223,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
   IF ( buoyancy%active(2) ) THEN
-     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref)
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, bbackground)
      dummy = buoyancy%vector(2)
      DO ij = 1,isize_field
           h2(ij) = -u(ij)*h2(ij) -v(ij)*tmp2(ij) -w(ij)*tmp3(ij)  + dummy*wrk3d(ij)

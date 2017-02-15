@@ -20,14 +20,14 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, itransport
+  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, itransport, inb_scal, imode_fdm
   USE DNS_GLOBAL, ONLY : itime, rtime
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, inb_scal_array, imode_fdm, i1bc,j1bc,k1bc, area, scaley
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, area, i1bc,j1bc,k1bc
   USE DNS_GLOBAL, ONLY : froude, visc, rossby
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
-  USE DNS_GLOBAL, ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i
-  USE DNS_GLOBAL, ONLY : delta_u, ycoor_u
+  USE DNS_GLOBAL, ONLY : delta_u, ycoor_u, ycoor_i
   USE DNS_GLOBAL, ONLY : mean_rho, delta_rho, ycoor_rho
+  USE DNS_GLOBAL, ONLY : bbackground
   USE THERMO_GLOBAL, ONLY : imixture, MRATIO, GRATIO
   USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV
 #ifdef TRACE_ON
@@ -53,10 +53,9 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
 ! -------------------------------------------------------------------
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 20
-  TINTEGER i,j,k, is
-  TREAL SIMPSON_NU, FLOW_SHEAR_TEMPORAL, UPPER_THRESHOLD, LOWER_THRESHOLD
+  TINTEGER i,j,k
+  TREAL SIMPSON_NU, UPPER_THRESHOLD, LOWER_THRESHOLD
   TREAL delta_m, delta_m_p, delta_w
-  TREAL ycenter
   TREAL rho_min, rho_max, delta_hb01, delta_ht01, delta_h01, mixing1, mixing2
   TREAL delta_hb25, delta_ht25, delta_h25
   TREAL u_friction, d_friction, a_friction
@@ -73,12 +72,12 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: u,v,w,p, e,rho, vis
-  TREAL, DIMENSION(:),     POINTER :: y, dx,dy,dz
+  TREAL, DIMENSION(:),     POINTER :: dx,dy,dz
 
 ! ###################################################################
 ! Define pointers
                    dx => g(1)%jac(:,1)
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
+                   dy => g(2)%jac(:,1)
                    dz => g(3)%jac(:,1)
 
   u => q(:,:,:,1)
@@ -851,11 +850,11 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         dummy     = THERMO_AI(1,1,3) -THERMO_AI(1,1,1) +GRATIO *WGHT_INV(1)
         L_RATIO   = THERMO_AI(6,1,1) -THERMO_AI(6,1,3) - dummy *dwdx ! dwdx is T_LOC
         L_RATIO   = L_RATIO /( GRATIO *WGHT_INV(1) *dwdx )
-        Q_RATIO   = C_1_R /( MRATIO *p /dvdz -C_1_R )         ! dvdz is psat
+        Q_RATIO   = C_1_R /( MRATIO *p /dvdz -C_1_R )                ! dvdz is psat
         WMEAN_INV =(Q_RATIO+C_1_R) *( C_1_R -s(:,:,:,1) )*WGHT_INV(2)
 
         wrk3d = ( C_1_R +Q_RATIO *L_RATIO )/ WMEAN_INV /&
-               ( dudx /( dudx -C_1_R ) +Q_RATIO *L_RATIO *L_RATIO ) ! dudx is GAMMA_LOC
+               ( dudx /( dudx -C_1_R ) +Q_RATIO *L_RATIO *L_RATIO )  ! dudx is GAMMA_LOC
         CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, lapse_eq(1), wrk1d, area)
         lapse_eq(:) =-lapse_eq(:) *buoyancy%vector(2) *MRATIO
 
@@ -893,21 +892,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
 
      IF ( buoyancy%type .NE. EQNS_NONE ) THEN
-! buoyancy field as used in the integration of the equations (as in dns_profiles)
-        DO is = 1,inb_scal
-           ycenter = y(1) + scaley*ycoor_i(is)
-           DO j = 1,jmax
-              wrk1d(j,is) = FLOW_SHEAR_TEMPORAL(iprof_i(is), thick_i(is), delta_i(is), mean_i(is), ycenter, prof_i(1,is), y(j))
-           ENDDO
-        ENDDO
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-           CALL THERMO_AIRWATER_LINEAR(i1,jmax,i1, wrk1d, wrk1d(1,inb_scal_array))
-        ENDIF
-        wrk1d(:,inb_scal_array+1) = C_0_R
-        CALL FI_BUOYANCY(buoyancy, i1,  jmax,i1,   wrk1d, wrk1d(1,inb_scal_array+2), wrk1d(1,inb_scal_array+1))
-        CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s,     dudx,                      wrk1d(1,inb_scal_array+2))
-
-! buoyancy terms
+        CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, dudx, bbackground)
+        
         CALL AVG_IK_V(imax,jmax,kmax, jmax, dudx, dx,dz, rB(1), wrk1d, area)
         DO j = 1,jmax
            dvdx(:,j,:) = (u(:,j,:)-rU(j))*(dudx(:,j,:)-rB(j))
@@ -941,7 +927,6 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      rSb(:) = C_0_R
 
   ENDIF
-
 
 ! ###################################################################
 ! # Array storage of velocity gradient tensor
@@ -1453,11 +1438,11 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
 ! Potential energy equation
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     Pot(:)       = -rB(:)*(y(:) - y(1) - scaley*ycoor_i(inb_scal))
-     SourcePot(:) =-rSb(:)*(y(:) - y(1) - scaley*ycoor_i(inb_scal))
+     Pot(:)       = -rB(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale*ycoor_i(inb_scal))
+     SourcePot(:) =-rSb(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale*ycoor_i(inb_scal))
      
   ELSE
-     Pot(:)       =-rR(:)*(y(:) - y(1) - scaley*ycoor_rho)*buoyancy%vector(2)
+     Pot(:)       =-rR(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale*ycoor_rho)*buoyancy%vector(2)
      SourcePot(:) = C_0_R
      
   ENDIF
@@ -1518,12 +1503,12 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         DO j=1, jmax
            wrk1d(j,1) = rR(j)*(C_025_R-(fU(j)/delta_u)**2)
         ENDDO
-        delta_m = SIMPSON_NU(jmax, wrk1d, y)/mean_rho
+        delta_m = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)/mean_rho
            
         DO j=1, jmax
            wrk1d(j,1) = ( Tau_xy(j) -  rR(j)*Rxy(j) )*fU_y(j)
         ENDDO
-        delta_m_p = SIMPSON_NU(jmax, wrk1d, y)*C_2_R/(mean_rho*delta_u**3)
+        delta_m_p = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)*C_2_R/(mean_rho*delta_u**3)
 
      ELSE
         delta_w   = C_1_R
@@ -1540,21 +1525,21 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
           imode_eqns .NE. DNS_EQNS_ANELASTIC      .AND. &
           ABS(delta_rho) .GT. C_SMALL_R                 ) THEN
         dummy = mean_rho + (C_05_R-C_1EM2_R)*delta_rho
-        delta_hb01 = LOWER_THRESHOLD(jmax, dummy, rR(1), y)
+        delta_hb01 = LOWER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
         dummy = mean_rho - (C_05_R-C_1EM2_R)*delta_rho
-        delta_ht01 = UPPER_THRESHOLD(jmax, dummy, rR(1), y)
+        delta_ht01 = UPPER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
 
-        delta_hb01 = (y(1) + scaley*ycoor_rho) - delta_hb01  
-        delta_ht01 = delta_ht01 - (y(1) + scaley*ycoor_rho)
+        delta_hb01 = (g(2)%nodes(1) + g(2)%scale*ycoor_rho) - delta_hb01  
+        delta_ht01 = delta_ht01 - (g(2)%nodes(1) + g(2)%scale*ycoor_rho)
         delta_h01  = delta_ht01 + delta_hb01
 
         dummy = mean_rho + (C_05_R-C_025_R)*delta_rho
-        delta_hb25 = LOWER_THRESHOLD(jmax, dummy, rR(1), y)
+        delta_hb25 = LOWER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
         dummy = mean_rho - (C_05_R-C_025_R)*delta_rho
-        delta_ht25 = UPPER_THRESHOLD(jmax, dummy, rR(1), y)
+        delta_ht25 = UPPER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
 
-        delta_hb25 = (y(1) + scaley*ycoor_rho) - delta_hb25  
-        delta_ht25 = delta_ht25 - (y(1) + scaley*ycoor_rho)
+        delta_hb25 = (g(2)%nodes(1) + g(2)%scale*ycoor_rho) - delta_hb25  
+        delta_ht25 = delta_ht25 - (g(2)%nodes(1) + g(2)%scale*ycoor_rho)
         delta_h25  = delta_ht25 + delta_hb25
 
 ! Mixing, Youngs definition
@@ -1562,11 +1547,11 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         rho_max = mean_rho + C_05_R*ABS(delta_rho)
         wrk3d = (rho - rho_min) *(rho_max -rho)
         CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d, wrk1d(1,2), area)
-        mixing1 = SIMPSON_NU(jmax, wrk1d, y)
+        mixing1 = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
         DO j = 1,jmax
            wrk1d(j,1)=(rR(j)-rho_min)*(rho_max-rR(j))
         ENDDO
-        mixing1 = mixing1/SIMPSON_NU(jmax, wrk1d, y)
+        mixing1 = mixing1/SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
 
 ! Mixing, Cook's definition
         rho_min = mean_rho - C_05_R*ABS(delta_rho)
@@ -1577,11 +1562,11 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
            ENDDO
         ENDDO
         CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d, wrk1d(1,2), area)
-        mixing2 = SIMPSON_NU(jmax, wrk1d, y)
+        mixing2 = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
         DO j = 1,jmax
            wrk1d(j,1) = MIN(rR(j)-rho_min,rho_max-rR(j))
         ENDDO
-        mixing2 = mixing2/SIMPSON_NU(jmax, wrk1d, y)
+        mixing2 = mixing2/SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
 
      ELSE
         delta_h01 = C_1_R
@@ -1607,10 +1592,10 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 ! -------------------------------------------------------------------
 ! Independent variables
      DO j = 1,jmax
-        VAUXPRE1 =  y(j)
-        VAUXPRE2 = (y(j)-scaley*ycoor_u  -y(1))/delta_m
-        VAUXPRE3 = (y(j)-scaley*ycoor_u  -y(1))/delta_w
-        VAUXPRE4 = (y(j)-scaley*ycoor_rho-y(1))/delta_h01
+        VAUXPRE1 =  g(2)%nodes(j)
+        VAUXPRE2 = (g(2)%nodes(j)-g(2)%scale*ycoor_u  -g(2)%nodes(1))/delta_m
+        VAUXPRE3 = (g(2)%nodes(j)-g(2)%scale*ycoor_u  -g(2)%nodes(1))/delta_w
+        VAUXPRE4 = (g(2)%nodes(j)-g(2)%scale*ycoor_rho-g(2)%nodes(1))/delta_h01
      ENDDO
 
 ! -------------------------------------------------------------------
@@ -1619,7 +1604,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
 ! not developed yet
      DO j = 1,jmax
-        VAUXPRE1 = y(j)
+        VAUXPRE1 = g(2)%nodes(j)
      ENDDO
 
   ENDIF

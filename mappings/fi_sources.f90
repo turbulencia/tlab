@@ -13,18 +13,18 @@
 !# Sources from the evolution equations.
 !#
 !########################################################################
-SUBROUTINE FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
+SUBROUTINE FI_SOURCES_FLOW(q,s, hq, wrk1d,wrk3d)
 
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE DNS_GLOBAL,    ONLY : buoyancy, coriolis
   USE DNS_GLOBAL,    ONLY : p_init, mean_rho
+  USE DNS_GLOBAL,    ONLY : bbackground
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
 
   TREAL, DIMENSION(isize_field,*), INTENT(IN)    :: q,s
   TREAL, DIMENSION(isize_field,*), INTENT(OUT)   :: hq
-  TREAL, DIMENSION(jmax),          INTENT(IN)    :: b_ref
   TREAL, DIMENSION(isize_wrk1d,*), INTENT(INOUT) :: wrk1d
   TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: wrk3d
 
@@ -73,7 +73,7 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, b_ref, wrk1d,wrk3d)
            wrk3d = dummy *( wrk3d - mean_rho )
         ELSE
            IF ( iq .EQ. 2 ) THEN
-              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref)
+              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, bbackground)
            ELSE
               wrk1d(:,1) = C_0_R
               CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)

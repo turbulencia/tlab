@@ -43,7 +43,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   USE THERMO_GLOBAL, ONLY : imixture
 
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
-  USE DNS_LOCAL,  ONLY : VA_BCS_HT, VA_BCS_HB, VA_BCS_VI, vindex
+  USE DNS_LOCAL,  ONLY : VA_BCS_HT, VA_BCS_HB, vindex
   USE DNS_LOCAL,  ONLY : buff_type
   USE DNS_LOCAL,  ONLY : imode_rhs
 
@@ -83,7 +83,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   IF      ( iadvection .EQ. EQNS_DIVERGENCE .AND. &
             iviscous   .EQ. EQNS_EXPLICIT   .AND. & 
             idiffusion .EQ. EQNS_EXPLICIT         ) THEN
-     CALL FI_SOURCES_FLOW(q,s, hq, vaux(vindex(VA_BCS_VI)), wrk1d,wrk3d)
+     CALL FI_SOURCES_FLOW(q,s, hq, wrk1d,wrk3d)
      CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
           q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
           vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, wrk1d,wrk2d,wrk3d)
@@ -98,7 +98,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   ELSE IF ( iadvection .EQ. EQNS_SKEWSYMMETRIC .AND. &
             iviscous   .EQ. EQNS_EXPLICIT      .AND. & 
             idiffusion .EQ. EQNS_EXPLICIT            ) THEN
-     CALL FI_SOURCES_FLOW(q,s, hq, vaux(vindex(VA_BCS_VI)), wrk1d,wrk3d)
+     CALL FI_SOURCES_FLOW(q,s, hq, wrk1d,wrk3d)
      CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
           q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
           vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, wrk1d,wrk2d,wrk3d)
@@ -114,7 +114,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
             iviscous   .EQ. EQNS_EXPLICIT   .AND. & 
             idiffusion .EQ. EQNS_EXPLICIT         ) THEN
      IF      ( imode_rhs .EQ. EQNS_RHS_SPLIT       ) THEN 
-        CALL FI_SOURCES_FLOW(q,s, hq, vaux(vindex(VA_BCS_VI)), wrk1d,wrk3d)
+        CALL FI_SOURCES_FLOW(q,s, hq, wrk1d,wrk3d)
         CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
              q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
              vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, wrk1d,wrk2d,wrk3d)
@@ -140,7 +140,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
         ENDIF
         
      ELSE IF ( imode_rhs .EQ. EQNS_RHS_COMBINED    ) THEN 
-        CALL FI_SOURCES_FLOW(q,s, hq, vaux(vindex(VA_BCS_VI)), wrk1d,wrk3d)
+        CALL FI_SOURCES_FLOW(q,s, hq, wrk1d,wrk3d)
         CALL FI_SOURCES_SCAL(  s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
         CALL RHS_GLOBAL_INCOMPRESSIBLE_1(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
              q,hq, s,hs, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
@@ -154,7 +154,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
              txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), txc(1,8),txc(1,9),txc(1,10), &
              txc(1,11),txc(1,12),txc(1,13),txc(1,14),&
              hq(1,1),hq(1,2),hq(1,3), hs(1,1), &
-             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux(vindex(VA_BCS_VI)), vaux, &
+             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, &
              wrk1d,wrk2d,wrk3d)
 #else
         CALL IO_WRITE_ASCII(efile,'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Need compiling flag -DUSE_PSFFT.')

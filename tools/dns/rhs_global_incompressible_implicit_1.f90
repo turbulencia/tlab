@@ -21,7 +21,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
      (dte, kex,kim,kco, &
      q,hq,u,v,w,h1,h2,h3,s,hs,&
      tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8,tmp9, &
-     bcs_hb,bcs_ht,b_ref, vaux, &
+     bcs_hb,bcs_ht, vaux, &
      wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
@@ -44,7 +44,6 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   TREAL, DIMENSION(isize_txc_field),     INTENT(OUT)  :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8,tmp9
   TREAL, DIMENSION(isize_wrk1d,*),       INTENT(OUT)  :: wrk1d
   TREAL, DIMENSION(*),                   INTENT(OUT)  :: wrk2d,wrk3d, vaux
-  TREAL, DIMENSION(jmax),                INTENT(IN)   :: b_ref
   TREAL, DIMENSION(imax,kmax,*),         INTENT(OUT)  :: bcs_hb, bcs_ht
 
   TARGET tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,h2,wrk2d,u,v,w
@@ -262,7 +261,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
   IF ( buoyancy%active(2) ) THEN
-     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, b_ref)
+     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, bbackground)
      dummy = buoyancy%vector(2)
      DO ij = 1,isize_field
           h2(ij) =   h2(ij) - w(ij)*tmp3(ij) + dummy*wrk3d(ij)
