@@ -38,7 +38,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field
   USE DNS_GLOBAL,    ONLY : inb_flow,inb_scal, inb_scal_array
   USE DNS_GLOBAL,    ONLY : iadvection, idiffusion, iviscous
-  USE DNS_GLOBAL,    ONLY : p_init, damkohler
+  USE DNS_GLOBAL,    ONLY : damkohler, pbackground
   USE DNS_GLOBAL,    ONLY : icalc_particle, isize_particle
   USE THERMO_GLOBAL, ONLY : imixture
 
@@ -239,8 +239,8 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 ! Calculate other intensive thermodynamic variables
 ! ###################################################################
   IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-     IF ( damkohler(1) .LE. C_0_R )  THEN
-        CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2), p_init, s(1,1))
+     IF ( damkohler(3) .LE. C_0_R )  THEN
+        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), pbackground, s(1,1))
      ENDIF
      
   ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 

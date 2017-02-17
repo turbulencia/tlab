@@ -86,9 +86,8 @@ PROGRAM STATE
      h = h/TREF/1.007
      z1(1) = qt
      ! CALL THERMO_AIRWATER_PH2(i1, i1, i1, z1, p, h, T)
-     CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, p, h, T, dummy)
-     ! CALL THERMO_AIRWATER_PHAL(i1, i1, i1, z1, p, h)
-     ! t = h/(THERMO_AI(1,1,2)+z1(1)*(THERMO_AI(1,1,1)-THERMO_AI(1,1,2))) need the t!
+     CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, p, h)
+     CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, z1, h, T)
 
      ql = z1(2)
      qv = qt - ql

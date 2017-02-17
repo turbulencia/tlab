@@ -33,15 +33,16 @@ Case10. Same as Case09, but two scalars with different BCs.
 Case11. Channel flow. 
 Case12. Same as 11, implicit solver.
 Case13. Radiation case.
-Case14. Cloud-top mixing layer; airwater, evaporation only. (Case06 plus buoyancy reversal.)
+Case14. Cloud-top mixing layer; airwaterlinear, evaporation only. (Case06 plus buoyancy reversal.)
 Case15. Same as Case14, but compressible.
-Case16. Cloud-top mixing layer; airwater, radiation only.
-Case17. Cloud-top mixing layer; airwater, radiation case with evaporative cooling.
-Case18. Cloud-top mixing layer; airwater, radiation case with evaporative cooling and settling.
+Case16. Cloud-top mixing layer; airwaterlinear, radiation only.
+Case17. Cloud-top mixing layer; airwaterlinear, radiation case with evaporative cooling.
+Case18. Cloud-top mixing layer; airwaterlinear, radiation case with evaporative cooling and settling.
 Case19. Subsiding shell; airwater. Gravity vector along the horizontal.
 Case20. Subsiding shell; airwater. Broadband perturbation.
 Case21. Convective boundary layer with quadratic chemistry in three pasive scalars.
 Case22. Rayleigh-Benard convection with Dirichlet boundary conditions.
+Case23. Same as Case14, but airwater.
 
 2D cases: Lagrangian routines
 

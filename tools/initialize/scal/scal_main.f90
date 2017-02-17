@@ -135,8 +135,8 @@ PROGRAM INISCAL
      
 ! Initial liquid, if needed, in equilibrium; we simply overwrite previous values     
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-        IF ( damkohler(1) .GT. C_0_R .AND. flag_mixture .EQ. 1 ) THEN
-           CALL THERMO_AIRWATER_PHAL(imax,jmax,kmax, s(1,2), p_init, s(1,1))
+        IF ( damkohler(3) .GT. C_0_R .AND. flag_mixture .EQ. 1 ) THEN
+           CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), pbackground, s(1,1))
         ENDIF
      ENDIF
      
