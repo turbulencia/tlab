@@ -1,8 +1,8 @@
-PROGRAM STATE
-  
 #include "types.h"
 #include "dns_const.h"
 
+PROGRAM STATE
+  
   USE DNS_GLOBAL
   USE THERMO_GLOBAL
 
@@ -40,7 +40,7 @@ PROGRAM STATE
      READ(*,*) e
 
   ELSE IF ( iopt .EQ. 3 ) THEN
-     WRITE(*,*) 'enthapy ?'
+     WRITE(*,*) 'enthalpy (kJ/kg)?'
      READ(*,*) h
      WRITE(*,*) 'pressure (bar) ?'
      READ(*,*) p
@@ -75,7 +75,7 @@ PROGRAM STATE
      ql = z1(2)
      qv = qt - ql
      qs = qv ! initial condition for next routine
-!     CALL THERMO_AIRWATER_QSAT_RE(i1, i1, i1, e, r, qs, dummy)
+!     CALL THERMO_CALORIC_QSAT(i1, i1, i1, e, r, qs, dummy)
      CALL THERMO_THERMAL_PRESSURE(i1, i1, i1, z1, r, t, p)
      CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, dummy)
      dummy = C_1_R/(MRATIO*p/dummy-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
@@ -85,11 +85,13 @@ PROGRAM STATE
   ELSE IF ( iopt .EQ. 3 ) THEN
      h = h/TREF/1.007
      z1(1) = qt
-     CALL THERMO_AIRWATER_PH2(i1, i1, i1, z1, p, h, T)
+     ! CALL THERMO_AIRWATER_PH2(i1, i1, i1, z1, p, h, T)
+     CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, p, h, T, dummy)
+     ! CALL THERMO_AIRWATER_PHAL(i1, i1, i1, z1, p, h)
+     ! t = h/(THERMO_AI(1,1,2)+z1(1)*(THERMO_AI(1,1,1)-THERMO_AI(1,1,2))) need the t!
 
      ql = z1(2)
      qv = qt - ql
-     qs = qv ! initial condition for next routine
   
      CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, dummy)
      WRITE(*,*) 'Saturation pressure................:', dummy
@@ -100,8 +102,6 @@ PROGRAM STATE
      CALL THERMO_THERMAL_DENSITY(i1,i1,i1,z1,p,T, r2)
      CALL THERMO_CALORIC_ENTHALPY(i1,i1,i1,z1,T,h2)
      CALL THERMO_AIRWATER_DENSITY(i1,i1,i1, z1,p,h2,r3)
-
-     WRITE(*,*) 'Latent heat..............................', (THERMO_AI(6,1,3))*1.007*TREF 
   ENDIF
 
   WRITE(*,*) 'Saturation specific humidity ......:', qs
@@ -115,6 +115,7 @@ PROGRAM STATE
   IF ( iopt .EQ. 3 ) THEN
      WRITE(*,*) 'Density ...........................:', r1,r2,r3
      WRITE(*,*) 'Specific enthalpy .................:', h*1.007*TREF,  h2*1.007*TREF
+     WRITE(*,*) 'Latent heat........................:', (THERMO_AI(6,1,3))*1.007*TREF 
   ENDIF
   cp_ref = (1-qt)*THERMO_AI(1,1,2) + qt*THERMO_AI(1,1,3)
   l      = THERMO_AI(6,1,1)-THERMO_AI(6,1,3)

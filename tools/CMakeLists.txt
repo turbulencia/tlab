@@ -144,3 +144,8 @@ if (PSFFT_LIB)
 set_target_properties(apriori.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
 endif()
 
+# Cloud
+FILE(GLOB sourcefiles "cloud/state.f90")
+add_executable(state.x ${sourcefiles})
+target_link_libraries(state.x mappings operators flow io thermodynamics averages filters fdm linear fitpack ${LEVEL1_LIBS} ${LIBS})
+

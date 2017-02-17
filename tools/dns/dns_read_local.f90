@@ -940,12 +940,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ENDIF
 
 ! -------------------------------------------------------------------
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. imode_rhs .NE. EQNS_RHS_SPLIT ) THEN
-        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Airwater formulation only for RhsSplit mode.')
-        CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
-     ENDIF
-  ENDIF
+  ! IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+  !    IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. imode_rhs .NE. EQNS_RHS_SPLIT ) THEN
+  !       CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Airwater formulation only for RhsSplit mode.')
+  !       CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
+  !    ENDIF
+  ! ENDIF
   
   RETURN
 END SUBROUTINE DNS_READ_LOCAL

@@ -1,9 +1,6 @@
 #include "types.h"
 
 !########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2007/11/08 - J.P. Mellado
@@ -21,7 +18,7 @@
 !#         Out   Value of qsat
 !#
 !########################################################################
-SUBROUTINE THERMO_AIRWATER_QSAT_RE(nx, ny, nz, e, rho, qsat, T)
+SUBROUTINE THERMO_CALORIC_QSAT(nx,ny,nz, e,rho, qsat, T)
 
   USE THERMO_GLOBAL, ONLY : GRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT
 
@@ -92,5 +89,5 @@ SUBROUTINE THERMO_AIRWATER_QSAT_RE(nx, ny, nz, e, rho, qsat, T)
   ENDDO
 
   RETURN
-END SUBROUTINE THERMO_AIRWATER_QSAT_RE
+END SUBROUTINE THERMO_CALORIC_QSAT
 

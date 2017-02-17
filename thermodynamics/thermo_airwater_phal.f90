@@ -40,7 +40,7 @@ SUBROUTINE THERMO_AIRWATER_PHAL(nx, ny, nz, z1, p, h)
 !$omp parallel default( none ) private( ij, z1_loc, h_loc, t_loc, psat, qsat, dummy, deltaql, iter, func, dpdtsat, ipsat, der1, der2, dsmooth_loc, cp_v, cp_d, cl, rd_ov_rv, q_latent, psat_coeff, dum_npsat, niter, dpsat_dT_coeff, partial_ql_qt) shared( z1, h, nx, ny, nz, dsmooth, THERMO_AI, WGHT_INV, NPSAT, THERMO_PSAT, p)
 
 ! ###################################################################
-  niter = 4
+  niter = 5
 
   q_latent = -THERMO_AI(6,1,3)
   cp_d = THERMO_AI(1,1,2)

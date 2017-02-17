@@ -74,13 +74,14 @@ SUBROUTINE THERMO_INITIALIZE
 !
 ! Molecular Weight in kg/kmol
 ! ###################################################################
+  SELECT CASE ( imixture )
+     
 ! -------------------------------------------------------------------
 ! Burke-Schuman case
 ! Transport just mixture fraction, and then equilibrium
 ! 4 species + Nitrogen + Conserved Scalar         
 ! -------------------------------------------------------------------
-  IF      ( imixture .EQ. MIXT_TYPE_BS      &
-       .OR. imixture .EQ. MIXT_TYPE_QUASIBS ) THEN
+  CASE( MIXT_TYPE_BS, MIXT_TYPE_QUASIBS )
      NSP            = 5
      inb_scal       = 1   
      inb_scal_array = inb_scal
@@ -101,8 +102,7 @@ SUBROUTINE THERMO_INITIALIZE
 ! Peters Mechanism for Methane
 ! 7 species + Nitrogen + Conserved Scalar
 ! -------------------------------------------------------------------
-  ELSE IF ( imixture .EQ. MIXT_TYPE_PETERS1991 &
-       .OR. imixture .EQ. MIXT_TYPE_PETERS1988 ) THEN
+  CASE( MIXT_TYPE_PETERS1991, MIXT_TYPE_PETERS1988 )
      NSP            = 8
      inb_scal       = NSP
      inb_scal_array = inb_scal
@@ -129,7 +129,7 @@ SUBROUTINE THERMO_INITIALIZE
 ! Unimolecular decomposition flame
 ! 1 reactant + 1 product + Conserved Scalar
 ! -------------------------------------------------------------------
-  ELSE IF ( imixture .EQ. MIXT_TYPE_UNIDECOMP ) THEN
+  CASE( MIXT_TYPE_UNIDECOMP )
      NSP            = 2
      inb_scal       = NSP
      inb_scal_array = inb_scal
@@ -144,7 +144,7 @@ SUBROUTINE THERMO_INITIALIZE
 ! Unimolecular decomposition flame
 ! 2 reactant + 1 product + Conserved Scalar
 ! -------------------------------------------------------------------
-  ELSE IF ( imixture .EQ. MIXT_TYPE_ONESTEP ) THEN
+  CASE( MIXT_TYPE_ONESTEP )
      NSP            = 4
      inb_scal       = NSP
      inb_scal_array = inb_scal
@@ -163,7 +163,7 @@ SUBROUTINE THERMO_INITIALIZE
 ! Swaminathan & Bilger Mechanism for Methane
 ! 5 species + Nitrogen + Conserved Scalar
 ! -------------------------------------------------------------------
-  ELSE IF ( imixture .EQ. MIXT_TYPE_BILGER1997 ) THEN
+  CASE( MIXT_TYPE_BILGER1997 )
      NSP            = 8
      inb_scal       = NSP-1
      inb_scal_array = inb_scal
@@ -187,9 +187,9 @@ SUBROUTINE THERMO_INITIALIZE
      WGHT(8) =  2.0
 
 ! -------------------------------------------------------------------
-! Water vapor and air (commented data from Burcat&Ruscic)
+! Water vapor and air
 ! -------------------------------------------------------------------
-  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN
+  CASE( MIXT_TYPE_AIRVAPOR )
      NSP            = 2
      inb_scal       = NSP
      inb_scal_array = inb_scal
@@ -197,9 +197,9 @@ SUBROUTINE THERMO_INITIALIZE
      THERMO_SPNAME(1) = 'H2O'
      THERMO_SPNAME(2) = 'AIR'
 
-!     WGHT(1) = 18.01538
+!     WGHT(1) = 18.01538 ! from Burcat&Ruscic
 !     WGHT(2) = 28.96518
-     WGHT(1) = 18.015
+     WGHT(1) = 18.015    ! from B. Stevens
      WGHT(2) = 28.9644
 
 ! -------------------------------------------------------------------
@@ -208,7 +208,7 @@ SUBROUTINE THERMO_INITIALIZE
 ! Incompressible: Transport h, q_t, and q_l from equilibrium; add space for q_l
 ! If non-equilibrium calculation, then inb_scal includes q_l and inb_scal_array = inb_scal (default)
 ! -------------------------------------------------------------------
-  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+  CASE( MIXT_TYPE_AIRWATER )
      NSP            = 3
      IF ( damkohler(3) .LE. C_0_R ) inb_scal_array = inb_scal+1 ! using inb_scal read in the inifile
 
@@ -226,7 +226,7 @@ SUBROUTINE THERMO_INITIALIZE
 ! The 2. scalar is the enthalpy deviations from the pure mixing case (described by mixing fraction only)
 ! The 3. scalar is the normalized concentration of liquid.
 ! -------------------------------------------------------------------
-  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+  CASE( MIXT_TYPE_AIRWATER_LINEAR )
      inb_scal_array = inb_scal + 1 ! using inb_scal read in the inifile
      NSP            = inb_scal_array 
 
@@ -242,7 +242,7 @@ SUBROUTINE THERMO_INITIALIZE
      WGHT(3) = 18.015
      WGHT(4:)= C_1_R
      
-  ENDIF
+  END SELECT
 
 ! ###################################################################
 ! Thermodynamic data
@@ -286,11 +286,11 @@ SUBROUTINE THERMO_INITIALIZE
   RGAS = 8.314*C_1E3_R
 
   IF ( iuse_chemkin .EQ. 0 ) THEN
+     SELECT CASE ( imixture )
 ! -------------------------------------------------------------------
 ! FIXED THERMODYNAMIC DATA FOR METHANE
 ! -------------------------------------------------------------------
-     IF ( imixture .EQ. MIXT_TYPE_BS .OR. &
-          imixture .EQ. MIXT_TYPE_QUASIBS ) THEN
+     CASE( MIXT_TYPE_BS, MIXT_TYPE_QUASIBS )
 
 ! Enthalpy of Formation in Jules/Kmol
         HREF(1) = -74.0*C_1E6_R
@@ -355,7 +355,7 @@ SUBROUTINE THERMO_INITIALIZE
 ! -------------------------------------------------------------------
 ! FIXED THERMODYNAMIC DATA FOR SIMPLE REACTION
 ! -------------------------------------------------------------------
-     ELSE IF ( imixture .EQ. MIXT_TYPE_UNIDECOMP ) THEN
+     CASE( MIXT_TYPE_UNIDECOMP )
 
 ! Enthalpy of Formation in Jules/Kmol
         HREF(1) = C_0_R
@@ -403,7 +403,7 @@ SUBROUTINE THERMO_INITIALIZE
 ! -------------------------------------------------------------------
 ! FIXED THERMODYNAMIC DATA FOR SIMPLE REACTION
 ! -------------------------------------------------------------------
-     ELSE IF ( imixture .EQ. MIXT_TYPE_ONESTEP ) THEN
+     CASE( MIXT_TYPE_ONESTEP )
 
 ! Enthalpy of Formation in Jules/Kmol
         HREF(1) = C_0_R
@@ -454,83 +454,32 @@ SUBROUTINE THERMO_INITIALIZE
         NPSAT = 0
 
 ! -------------------------------------------------------------------
-! Air and water vapor case from Bjorn 
-! (commented data from Burcat&Ruscic)
+! Water vapor, air and water liquid
 ! -------------------------------------------------------------------
-     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN
+     CASE( MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR )
 
 ! Enthalpy of Formation in Jules/Kmol
-!        HREF(1) =-241.826*C_1E6_R
-!        HREF(2) =-0.126  *C_1E6_R
-        HREF(1) = 33.688*C_1E3_R*TREF
-        HREF(2) = 29.167*C_1E3_R*TREF
-
-! Entropy of Formation in Jules/(Kelvin Kmol)
-!        SREF(1) = 188.829*C_1E3_R
-!        SREF(2) = 198.824*C_1E3_R
-        SREF(1) = C_0_R
-        SREF(2) = C_0_R
-
-! Heat capacity polynomial; using only the low temperature range
-        DO im = 1, 2
-!           THERMO_AI(1,im,1) = 34.907*C_1E3_R
-!           THERMO_AI(1,im,2) = 29.668*C_1E3_R
-           THERMO_AI(1,im,1) = 33.688*C_1E3_R
-           THERMO_AI(1,im,2) = 29.167*C_1E3_R
-
-! All other coefficients are zero
-           DO is=1, NSP
-              DO icp=2,MAX_NCP
-                 THERMO_AI(icp,im,is) = C_0_R
-              ENDDO
-           ENDDO
-
-! 6th and 7th coefficient are calculated from reference enthalpy
-           DO is=1, NSP
-              THERMO_AI(6,im,is) = HREF(is) &
-                   - THERMO_AI(1,im,is)*TREF
-              THERMO_AI(7,im,is) = SREF(is) 
-           ENDDO
-        ENDDO
-
-        DO is=1, NSP
-           THERMO_TLIM(1,is) = 200.0e0
-           THERMO_TLIM(2,is) = 5000.0e0
-           THERMO_TLIM(3,is) = 5000.0e0
-        ENDDO
-
-        NCP_CHEMKIN = 1
-
-! saturation pressure no needed
-        DO ipsat = 1,MAX_SAT
-           THERMO_PSAT(ipsat) = C_0_R 
-        ENDDO
-        NPSAT = 0
-
-! -------------------------------------------------------------------
-! Water vapor, air and water liquid (data from Bjorn)
-! -------------------------------------------------------------------
-     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR .OR. & ! Not needed so far
-               imixture .EQ. MIXT_TYPE_AIRWATER        ) THEN
-
-! Enthalpy of Formation in Jules/Kmol
-! Vapor and air values set such that THERMO_AI(6) = 0
-! latent heat of vaporization at 298 K is (2501.6-58.690) kJ/kg
-        HREF(1) = 33.688*C_1E3_R*TREF
-        HREF(2) = 29.167*C_1E3_R*TREF
+!        HREF(1) =-241.826*C_1E6_R    ! from Burcat&Ruscic
+!        HREF(2) =-0.126  *C_1E6_R  
+        HREF(1) = 33.688*C_1E3_R*TREF ! from B. Stevens; values s.t. THERMO_AI(6,im,1:2) = 0
+        HREF(2) = 29.167*C_1E3_R*TREF ! latent heat of vaporization at 298 K is (2501.6-58.690) kJ/kg
         HREF(3) = 33.688*C_1E3_R*TREF-44.009*C_1E6_R
-!        HREF(1) = C_0_R
+!        HREF(1) = C_0_R              ! for testing
 !        HREF(2) = C_0_R 
 !        HREF(3) =-44.009*C_1E6_R
 
 ! Entropy of Formation in Jules/(Kelvin Kmol)
-        SREF(1) = C_0_R
+!        SREF(1) = 188.829*C_1E3_R ! from Burcat&Ruscic
+!        SREF(2) = 198.824*C_1E3_R
+        SREF(1) = C_0_R            ! from B. Stevens
         SREF(2) = C_0_R
         SREF(3) =-44.009*C_1E6_R/TREF 
 
 ! Heat capacity polynomial; using only the low temperature range
         DO im = 1, 2
-           THERMO_AI(1,im,1) = 33.688*C_1E3_R
+!           THERMO_AI(1,im,1) = 34.907*C_1E3_R ! from Burcat&Ruscic
+!           THERMO_AI(1,im,2) = 29.668*C_1E3_R
+           THERMO_AI(1,im,1) = 33.688*C_1E3_R  ! from B. Stevens; values s.t. THERMO_AI(6,im,1:2) = 0
            THERMO_AI(1,im,2) = 29.167*C_1E3_R
            THERMO_AI(1,im,3) = 75.980*C_1E3_R
 
@@ -543,8 +492,7 @@ SUBROUTINE THERMO_INITIALIZE
 
 ! 6th and 7th coefficient are calculated from reference enthalpy
            DO is=1, NSP
-              THERMO_AI(6,im,is) = HREF(is) &
-                   - THERMO_AI(1,im,is)*TREF
+              THERMO_AI(6,im,is) = HREF(is) - THERMO_AI(1,im,is)*TREF
               THERMO_AI(7,im,is) = SREF(is) 
            ENDDO
         ENDDO
@@ -593,10 +541,13 @@ SUBROUTINE THERMO_INITIALIZE
            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/tmp2/tloc**(ipsat-1)
         ENDDO
 
-     ELSE
+! -------------------------------------------------------------------
+     CASE DEFAULT
+        
         CALL IO_WRITE_ASCII(efile, 'THERMO_INITIALIZE: Must use chemkin data.')
         CALL DNS_STOP(DNS_ERROR_THERMOCONT)
-     ENDIF
+
+     END SELECT
 
 ! -------------------------------------------------------------------
 ! ALTERNATIVE: LOAD THERMODYNAMIC DATA FROM CHEMKIN FILE
@@ -635,9 +586,9 @@ SUBROUTINE THERMO_INITIALIZE
 ! ###################################################################
 ! Final calculations
 !
-! FROM THIS POINT ON, NO USE OF HREF() and SREF() SHOULD BE PERMITED.
+! FROM THIS POINT ON, NO USE OF HREF() and SREF() SHOULD BE PERMITED, AND
+! NORMALIZED REFERENCE TEMPERATURE IS 1.0
 !
-! REMEMBER: Reference temperature is 1.0 from this point on.
 ! ###################################################################
 ! -------------------------------------------------------------------
 ! Change heat capacities from molar to mass specific
@@ -709,9 +660,7 @@ SUBROUTINE THERMO_INITIALIZE
 ! -------------------------------------------------------------------
 ! Output
 ! -------------------------------------------------------------------
-  CALL IO_WRITE_ASCII(lfile, '########################################')
-  CALL IO_WRITE_ASCII(lfile, '# Thermodynamic properties')
-  CALL IO_WRITE_ASCII(lfile, '########################################')
+  CALL IO_WRITE_ASCII(lfile, 'Thermodynamic properties have been initialized.')
   DO is = 1,NSP
      WRITE(str,*) is; str = 'Species'//TRIM(ADJUSTL(str))//'='//TRIM(ADJUSTL(THERMO_SPNAME(is)))
      CALL IO_WRITE_ASCII(lfile, str)

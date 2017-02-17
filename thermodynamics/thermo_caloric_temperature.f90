@@ -18,8 +18,7 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Computing from the state given by 
-!# density, energy and species mass fractions:
+!# Computing temperature from density, energy and species mass fractions:
 !#
 !# e=\sum Y_ih_i - TR_0\sum Y_i/W_i
 !#
@@ -27,7 +26,7 @@
 !# to be calculated.
 !#
 !########################################################################
-SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s, e, rho, T, wrk3d)
+SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s,e,rho, T, wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL,    ONLY : imode_eqns

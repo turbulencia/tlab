@@ -37,6 +37,7 @@ SUBROUTINE DNS_LOGS(iflag)
   USE DNS_CONSTANTS, ONLY : ofile
   USE DNS_GLOBAL,    ONLY : imode_eqns
   USE DNS_GLOBAL,    ONLY : itime, rtime, visc
+  USE DNS_GLOBAL,    ONLY : damkohler
   USE DNS_LOCAL,     ONLY : logs_data, dtime
 
   USE THERMO_GLOBAL, ONLY : imixture
@@ -78,11 +79,12 @@ SUBROUTINE DNS_LOGS(iflag)
         line1 = line1(1:ip)//' '//' PMax'; ip = ip + 1 + 10
         line1 = line1(1:ip)//' '//' RMin'; ip = ip + 1 + 10
         line1 = line1(1:ip)//' '//' RMax'; ip = ip + 1 + 10
-        IF (imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-           line1 = line1(1:ip)//' '//' NewtonRs'; ip = ip + 1 + 10
-        ENDIF
      ENDIF
 
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN
+        line1 = line1(1:ip)//' '//' NewtonRs'; ip = ip + 1 + 10
+     ENDIF
+     
      line1 = line1(1:ip-1)//'#'
      CALL IO_WRITE_ASCII(ofile, REPEAT('#',LEN_TRIM(line1)))
      CALL IO_WRITE_ASCII(ofile, TRIM(ADJUSTL(line1)))
@@ -94,9 +96,6 @@ SUBROUTINE DNS_LOGS(iflag)
 ! Construct line with data
 ! #######################################################################
   IF ( iflag .EQ. 2 ) THEN
-! -----------------------------------------------------------------------
-! Common general data
-! -----------------------------------------------------------------------
      WRITE(line1,100) INT(logs_data(1)), itime, rtime, dtime, (logs_data(ip),ip=2,3), visc
 100  FORMAT((1X,I1),(1X,I7),(1X,E13.6),4(1X,E10.3))
      
@@ -109,34 +108,26 @@ SUBROUTINE DNS_LOGS(iflag)
      ENDIF
 #endif
      
-! -----------------------------------------------------------------------
-! Incompressible data
-! -----------------------------------------------------------------------
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. &
           imode_eqns .EQ. DNS_EQNS_ANELASTIC     )THEN
         WRITE(line2,200) logs_data(10), logs_data(11)
 200     FORMAT(2(1X,E13.6))
         line1 = TRIM(line1)//TRIM(line2)
         
-! -----------------------------------------------------------------------
-! Compressible
-! -----------------------------------------------------------------------
      ELSE
-        IF (imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-           logs_data(9) = NEWTONRAPHSON_ERROR
-           WRITE(line2,301) (logs_data(ip),ip=5,9)
-        ELSE
-           WRITE(line2,300) (logs_data(ip),ip=5,8)
-        ENDIF
+        WRITE(line2,300) (logs_data(ip),ip=5,8)
 300     FORMAT(4(1X,E10.3))
-301     FORMAT(5(1X,E10.3))
         line1 = TRIM(line1)//TRIM(line2)
         
      ENDIF
   
-! -----------------------------------------------------------------------
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN
+        WRITE(line2,400) NEWTONRAPHSON_ERROR
+400     FORMAT(1(1X,E10.3))
+        line1 = TRIM(line1)//TRIM(line2)
+     ENDIF
+
 ! Output
-! -----------------------------------------------------------------------
      CALL IO_WRITE_ASCII(ofile, TRIM(ADJUSTL(line1)))
 
   ENDIF
