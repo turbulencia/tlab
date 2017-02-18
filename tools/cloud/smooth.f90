@@ -74,7 +74,7 @@ PROGRAM SMOOTH
         CALL THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, T, h)
 
      ELSE IF ( opt .EQ. 3 ) THEN
-!        CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, p, h)
+!        CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, p)
 !     CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, z1, h, T)
         CALL THERMO_AIRWATER_PH2(i1, i1, i1, z1, p, h, T)
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, qsat)

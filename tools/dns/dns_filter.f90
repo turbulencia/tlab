@@ -36,7 +36,7 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
   TARGET q
 
 ! -----------------------------------------------------------------------
-  TINTEGER id, iq,is,ij, ibc_x(4), ibc_y(4), ibc_z(4)
+  TINTEGER id, iq,is,ij
   CHARACTER*250 line
 
 ! Pointers to existing allocated space

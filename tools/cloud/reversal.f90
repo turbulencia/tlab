@@ -122,7 +122,7 @@ PROGRAM REVERSAL
         h  = h_1  + x*(h_2-h_1)
 
         z1(1) = qt
-        CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, p, h)
+        CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, p)
         CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, z1, h, T)
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, qsat)
         qsat = C_1_R/(MRATIO*p/qsat-C_1_R)*WGHT_INV(2)/WGHT_INV(1)

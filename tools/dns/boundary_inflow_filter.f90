@@ -1,6 +1,8 @@
-!########################################################################
-!# Tool/Library
-!#
+#include "types.h"
+#include "dns_error.h"
+#include "dns_const.h"
+#include "dns_const_mpi.h"
+
 !########################################################################
 !# HISTORY
 !#
@@ -10,15 +12,9 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!########################################################################
-!# ARGUMENTS 
+!# Needs to be updated to the the new filter formulation
 !#
 !########################################################################
-#include "types.h"
-#include "dns_error.h"
-#include "dns_const.h"
-#include "dns_const_mpi.h"
-
 SUBROUTINE BOUNDARY_INFLOW_FILTER(u, txc, mean, wrk1d,wrk2d,wrk3d)
   
   USE DNS_GLOBAL

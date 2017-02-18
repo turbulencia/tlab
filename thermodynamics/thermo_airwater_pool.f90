@@ -12,9 +12,10 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Calculate thermodynamic properties from h, p and composition.
+!# Calculate thermodynamic properties from h, p and composition in the
+!# incompressible formulation, when the thermodynamic pressure is
+!# a given profile
 !#
-!# Assumes p is a constant.
 !# Assumes that THERMO_AI(6,1,1) = THERMO_AI(6,1,2) = 0
 !#
 !########################################################################
@@ -43,7 +44,7 @@ SUBROUTINE THERMO_AIRWATER_TEMPERATURE(nx,ny,nz, q,h, T)
 !$omp do
      DO ij = 1,nx*ny*nz
         T(ij) = (h(ij) - q(ij,2)*THERMO_AI(6,1,3) ) / &
-             ( (1-q(ij,1))*THERMO_AI(1,1,2) + (q(ij,1)-q(ij,2))*THERMO_AI(1,1,1) &
+             ( (C_1_R-q(ij,1))*THERMO_AI(1,1,2) + (q(ij,1)-q(ij,2))*THERMO_AI(1,1,1) &
              + q(ij,2)* THERMO_AI(1,1,3) )
      ENDDO
 !$omp end do
@@ -54,45 +55,97 @@ END SUBROUTINE THERMO_AIRWATER_TEMPERATURE
 
 !########################################################################
 !########################################################################
-SUBROUTINE THERMO_AIRWATER_DENSITY(nx,ny,nz, q,p,h, rho)
+SUBROUTINE THERMO_AIRWATER_DENSITY(nx,ny,nz, q,h, p, rho)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE THERMO_GLOBAL, ONLY : WGHT_INV, THERMO_AI
+  USE THERMO_GLOBAL, ONLY : WGHT_INV, THERMO_AI, MRATIO
 
   IMPLICIT NONE
 
-  TINTEGER nx, ny, nz
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: q   ! total water content, liquid water content
-  TREAL,                        INTENT(IN)  :: p
   TREAL, DIMENSION(nx*ny*nz),   INTENT(IN)  :: h   ! entahlpy
+  TREAL, DIMENSION(*),          INTENT(IN)  :: p
   TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: rho
 
 ! -------------------------------------------------------------------
-  TINTEGER ij
-  TREAL WMEAN_INV, T, dummy
+  TINTEGER ij, i, jk
+  TREAL WMEAN_INV, P_LOC, T, dummy
   
 ! ###################################################################
-!$omp parallel default( shared ) private (T,WMEAN_INV,ij,dummy)
-     dummy = (WGHT_INV(1)-WGHT_INV(2))
-!$omp do
-     DO ij = 1,nx*ny*nz
+  dummy = (WGHT_INV(1)-WGHT_INV(2))
+
+  ij = 0
+
+  DO jk = 0,ny*nz-1
+     P_LOC = MRATIO *p( MOD(jk,ny) +1 )
+
+     DO i = 1,nx
+        ij = ij +1
+
         T = (h(ij) - q(ij,2)*THERMO_AI(6,1,3) ) / &
-             ( (1-q(ij,1))*THERMO_AI(1,1,2) + (q(ij,1)-q(ij,2))*THERMO_AI(1,1,1) &
+             ( (C_1_R-q(ij,1))*THERMO_AI(1,1,2) + (q(ij,1)-q(ij,2))*THERMO_AI(1,1,1) &
              + q(ij,2)* THERMO_AI(1,1,3) )
         WMEAN_INV = WGHT_INV(2) + q(ij,1)*dummy - q(ij,2)*WGHT_INV(1)
-        rho(ij) = p/(WMEAN_INV*T)
+        rho(ij) = P_LOC /(WMEAN_INV*T)
+        
      ENDDO
-!$omp end do
-!$omp end parallel
-
+     
+  ENDDO
+  
   RETURN
 END SUBROUTINE THERMO_AIRWATER_DENSITY
 
 !########################################################################
 !########################################################################
-SUBROUTINE THERMO_AIRWATER_QSAT(nx,ny,nz, q,p,h, T,qsat)
+SUBROUTINE THERMO_AIRWATER_BUOYANCY(nx,ny,nz, q,h, p,r, b)
+
+  USE THERMO_GLOBAL, ONLY : WGHT_INV, THERMO_AI, MRATIO
+  
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: q   ! total water content, liquid water content
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(IN)  :: h   ! entahlpy
+  TREAL, DIMENSION(*),          INTENT(IN)  :: p,r
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: b
+
+! -------------------------------------------------------------------
+  TINTEGER ij, i, jk, is
+  TREAL WMEAN_INV, P_LOC, R_LOC, R_LOC_INV, T, dummy
+  
+! ###################################################################
+  dummy = (WGHT_INV(1)-WGHT_INV(2))
+
+  ij = 0
+
+  DO jk = 0,ny*nz-1
+     is = MOD(jk,ny) +1
+     P_LOC = MRATIO *p(is)
+     R_LOC = r(is)
+     R_LOC_INV = C_1_R /R_LOC
+     
+     DO i = 1,nx
+        ij = ij +1
+
+        T = (h(ij) - q(ij,2)*THERMO_AI(6,1,3) ) / &
+             ( (C_1_R-q(ij,1))*THERMO_AI(1,1,2) + (q(ij,1)-q(ij,2))*THERMO_AI(1,1,1) &
+             + q(ij,2)* THERMO_AI(1,1,3) )
+        WMEAN_INV = WGHT_INV(2) + q(ij,1)*dummy - q(ij,2)*WGHT_INV(1)
+        b(ij) = R_LOC_INV *( P_LOC /(WMEAN_INV*T) -R_LOC )
+        
+     ENDDO
+     
+  ENDDO
+  
+  RETURN
+END SUBROUTINE THERMO_AIRWATER_BUOYANCY
+
+!########################################################################
+!########################################################################
+SUBROUTINE THERMO_AIRWATER_QSAT(nx,ny,nz, q,h, p, T,qsat)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -105,19 +158,21 @@ SUBROUTINE THERMO_AIRWATER_QSAT(nx,ny,nz, q,p,h, T,qsat)
 
   TINTEGER nx, ny, nz
   TREAL, DIMENSION(nx*ny*nz,2), INTENT(IN)  :: q       ! total water content, liquid water content
-  TREAL,                        INTENT(IN)  :: p 
   TREAL, DIMENSION(nx*ny*nz),   INTENT(IN)  :: h       ! entahlpy
+  TREAL, DIMENSION(*),          INTENT(IN)  :: p 
   TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: qsat, T
   
 ! -------------------------------------------------------------------
   TINTEGER ij, ipsat, dum_npsat
 
   TREAL q_latent, cp_d, cp_v, cl, psat, psat_coeff(20),  rd_ov_rv ! Auxialliary variables to spped up
-  TREAL t_loc  
+  TREAL t_loc, p_loc
 
 ! ###################################################################
+  p_loc = p(1) ! To be implemented like in the previous routines
+  
 !$omp parallel default( none ) &
-!$omp private( ij, t_loc, psat, ipsat, cp_v, cp_d, cl, rd_ov_rv, q_latent, psat_coeff,dum_npsat) &
+!$omp private( ij, t_loc, p_loc, psat, ipsat, cp_v, cp_d, cl, rd_ov_rv, q_latent, psat_coeff,dum_npsat) &
 !$omp shared( T, qsat,q, h, nx, ny, nz, THERMO_AI, WGHT_INV, NPSAT, THERMO_PSAT, p)
 
   q_latent = -THERMO_AI(6,1,3)
@@ -127,7 +182,7 @@ SUBROUTINE THERMO_AIRWATER_QSAT(nx,ny,nz, q,p,h, T,qsat)
   rd_ov_rv = C_1_R/WGHT_INV(1)
   dum_npsat = NPSAT
   DO ipsat = dum_npsat,1,-1
-     psat_coeff(ipsat) = THERMO_PSAT(ipsat)/p
+     psat_coeff(ipsat) = THERMO_PSAT(ipsat)/p_loc
   ENDDO
 
 !$omp do

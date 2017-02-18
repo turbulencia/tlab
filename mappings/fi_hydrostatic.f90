@@ -379,7 +379,7 @@ FUNCTION FI_HYDROSTATIC_SCALEHEIGHT_INV(y,p)
      h_loc = FLOW_SHEAR_TEMPORAL&
           (iprof_loc, thick_tem, delta_tem, mean_tem, ycenter, prof_tem, y)
      p_loc = p(4)+(p(5)-p(4))/(p(3)-p(2))*(y-p(2))
-!     CALL THERMO_AIRWATER_PH(i1, i1, i1, y_i_loc, p_loc, h_loc)
+!     CALL THERMO_AIRWATER_PH(i1, i1, i1, y_i_loc, h_loc, p_loc)
      ! CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, y_i_loc, h_loc, t_loc)
      CALL THERMO_AIRWATER_PH2(i1, i1, i1, y_i_loc, p_loc, h_loc, t_loc)
   ENDIF

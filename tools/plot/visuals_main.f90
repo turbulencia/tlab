@@ -370,6 +370,10 @@ PROGRAM VISUALS_MAIN
   ENDIF
 #endif
 
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     CALL THERMO_PROFILES(wrk1d)
+  ENDIF
+  
 ! ###################################################################
 ! Postprocess given list of files
 ! ###################################################################
@@ -382,6 +386,15 @@ PROGRAM VISUALS_MAIN
      IF ( iread_scal .EQ. 1 ) THEN ! Scalar variables
         WRITE(scal_file,*) itime; scal_file = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(scal_file))
         CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
+
+        IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
+           CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2),s(1,1), pbackground)
+           
+        ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
+           CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
+           
+        ENDIF
+
      ENDIF
 
      IF ( iread_flow .EQ. 1 ) THEN ! Flow variables
@@ -391,20 +404,6 @@ PROGRAM VISUALS_MAIN
 
      IF ( iread_part .EQ. 1 ) THEN ! Particle variables
         WRITE(part_file,*) itime; part_file="particle."//TRIM(ADJUSTL(part_file))
-     ENDIF
-
-     IF ( iread_scal .EQ. 1 ) THEN ! Scalar-dependent variables
-        IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-           IF ( damkohler(1) .LE. C_0_R )  THEN
-              CALL THERMO_AIRWATER_PH(i1,i1,i1,       mean_i(2), pbackground, mean_i(1))      ! Calculate mean liquid
-              CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2),    pbackground, s(1,1))         ! Calculate liquid field
-           ENDIF
-           CALL THERMO_AIRWATER_DENSITY(i1,i1,i1,     mean_i(2), p_init, mean_i(1), mean_rho) ! Calculate mean density
-
-        ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-           CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
-           
-        ENDIF
      ENDIF
 
      WRITE(sRes,100) rtime; sRes = 'Physical time '//TRIM(ADJUSTL(sRes))
@@ -480,7 +479,7 @@ PROGRAM VISUALS_MAIN
 
               IF      ( opt_vec(iv) .EQ. 6 ) THEN ! density 
                  IF      ( imixture .EQ. MIXT_TYPE_AIRWATER )  THEN
-                    CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2), p_init, s(1,1), txc(1,1))
+                    CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2),s(1,1), pbackground, txc(1,1))
 
                  ELSE
                     wrk1d(1:jmax,1) = C_0_R
@@ -502,7 +501,7 @@ PROGRAM VISUALS_MAIN
                     
                     IF ( damkohler(1) .GT. C_0_R ) THEN ! Supersaturated liquid
                        txc(1:isize_field,1:2) = s(1:isize_field,1:2)
-                       CALL THERMO_AIRWATER_PH(imax,jmax,kmax, txc(1,2), pbackground, txc(1,1))
+                       CALL THERMO_AIRWATER_PH(imax,jmax,kmax, txc(1,2),txc(1,1), pbackground)
                        txc(1:isize_field,3) = (s(1:isize_field,3)-txc(1:isize_field,3))/s(1,3)
                        
                        plot_file = 'Supsat'//time_str(1:MaskSize)
@@ -841,7 +840,7 @@ PROGRAM VISUALS_MAIN
 ! ###################################################################
         IF ( opt_vec(iv) .EQ. iscal_offset+12 ) THEN
            IF      ( imixture .EQ. MIXT_TYPE_AIRWATER )  THEN
-              CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2), p_init, s(1,1), txc(1,1))
+              CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2),s(1,1), pbackground, txc(1,1))
               txc(1:isize_field,1) = buoyancy%vector(2)*(txc(1:isize_field,1) - mean_rho)/mean_rho
 
            ELSE

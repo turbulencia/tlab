@@ -7,7 +7,7 @@ SUBROUTINE THERMO_PROFILES(wrk1d)
   USE DNS_GLOBAL, ONLY : inb_scal, inb_scal_array
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : iprof_i, ycoor_i, thick_i, delta_i, mean_i, prof_i
-  USE DNS_GLOBAL, ONLY : p_init, mean_rho
+  USE DNS_GLOBAL, ONLY : p_init, mean_rho, damkohler
   USE DNS_GLOBAL, ONLY : rbackground, bbackground, pbackground
   USE DNS_GLOBAL, ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture
@@ -23,7 +23,16 @@ SUBROUTINE THERMO_PROFILES(wrk1d)
   TREAL ycenter, FLOW_SHEAR_TEMPORAL 
  
 ! #######################################################################
+! pressure
+  pbackground(:) = p_init
+  
 ! Density
+  IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     IF ( damkohler(3) .LE. C_0_R )  THEN
+        CALL THERMO_AIRWATER_PH(i1,i1,i1, mean_i(2),mean_i(1), pbackground ) ! Calculate mean liquid
+     ENDIF
+     CALL THERMO_AIRWATER_DENSITY(i1,i1,i1, mean_i(2),mean_i(1), pbackground, mean_rho) ! Calculate mean density
+  ENDIF
   rbackground(:) = mean_rho
   
 ! Buoyancy
@@ -41,8 +50,5 @@ SUBROUTINE THERMO_PROFILES(wrk1d)
   wrk1d(:,inb_scal_array+1) = C_0_R
   CALL FI_BUOYANCY(buoyancy, i1,g(2)%size,i1, wrk1d(1,1), bbackground, wrk1d(1,inb_scal_array+1))
 
-! pressure
-  pbackground(:) = p_init
-  
   RETURN
 END SUBROUTINE THERMO_PROFILES

@@ -456,14 +456,10 @@ PROGRAM DNS
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_PROFILES(wrk1d)
      
-     IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-        IF ( damkohler(3) .LE. C_0_R )  THEN
-           CALL THERMO_AIRWATER_PH(i1,i1,i1,       mean_i(2), pbackground, mean_i(1))      ! Calculate mean liquid
-           CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2),    pbackground, s(1,1))         ! Calculate liquid field
-        ENDIF
-        CALL THERMO_AIRWATER_DENSITY(i1,i1,i1,     mean_i(2), p_init, mean_i(1), mean_rho) ! Calculate mean density
+     IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
+        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), pbackground)         
 
-     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN 
         CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
 
      ENDIF

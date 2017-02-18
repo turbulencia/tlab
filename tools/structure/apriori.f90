@@ -437,7 +437,7 @@ PROGRAM APRIORI
         CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, q(:,3),txc(1,9), i0,i0, wrk1d,wrk2d,wrk3d)
 
         DO is = 1,nfield
-           CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, txc(1,is), wrk1d,wrk2d,txc(1,7))
+           CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, txc(1,is), wrk1d,wrk2d,txc(1,10))
         ENDDO
 
         IF (  jmax_aux*opt_block .NE. jmax_total ) THEN

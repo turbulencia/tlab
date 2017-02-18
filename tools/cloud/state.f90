@@ -86,7 +86,7 @@ PROGRAM STATE
      h = h/TREF/1.007
      z1(1) = qt
      ! CALL THERMO_AIRWATER_PH2(i1, i1, i1, z1, p, h, T)
-     CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, p, h)
+     CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, p)
      CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, z1, h, T)
 
      ql = z1(2)
@@ -100,7 +100,7 @@ PROGRAM STATE
      r1 = p/(T*(1- qt +WGHT_INV(1)/WGHT_INV(2)*qv ) )
      CALL THERMO_THERMAL_DENSITY(i1,i1,i1,z1,p,T, r2)
      CALL THERMO_CALORIC_ENTHALPY(i1,i1,i1,z1,T,h2)
-     CALL THERMO_AIRWATER_DENSITY(i1,i1,i1, z1,p,h2,r3)
+     CALL THERMO_AIRWATER_DENSITY(i1,i1,i1, z1,h2,p, r3)
   ENDIF
 
   WRITE(*,*) 'Saturation specific humidity ......:', qs
