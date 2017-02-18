@@ -918,7 +918,7 @@ END SUBROUTINE TRANS_ADD_MEAN
 !########################################################################
 SUBROUTINE TRANS_FUNCTION(nx,ny,nz, a,b, txc)
 
-  USE DNS_GLOBAL, ONLY : inb_scal
+  USE DNS_GLOBAL, ONLY : inb_scal, epbackground
   USE THERMO_GLOBAL, ONLY : imixture, MRATIO, GRATIO, dsmooth
   USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV
 
@@ -950,8 +950,8 @@ SUBROUTINE TRANS_FUNCTION(nx,ny,nz, a,b, txc)
   txc(:,3) = p                       ! pressure
   txc(:,4) = h_0  + a(:)*(h_1 -h_0 ) ! total enthalpy
 
-  CALL THERMO_AIRWATER_PH(nx,ny,nz, txc(1,1), txc(1,4), txc(1,3))
-  CALL THERMO_AIRWATER_TEMPERATURE(nx,ny,nz, txc(1,1), txc(1,4), txc(1,5))
+  CALL THERMO_AIRWATER_PH(nx,ny,nz, txc(1,1), txc(1,4), epbackground,p)
+  CALL THERMO_AIRWATER_TEMPERATURE(nx,ny,nz, txc(1,1), txc(1,4), epbackground, txc(1,5))
 
 ! Calculate liquid water temperature from temperature (assuming c_p = c_p,d)
   txc(:,5) = txc(:,5) - LATENT_HEAT*txc(:,2)

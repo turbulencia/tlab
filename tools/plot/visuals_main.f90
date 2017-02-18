@@ -388,7 +388,7 @@ PROGRAM VISUALS_MAIN
         CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
 
         IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
-           CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2),s(1,1), pbackground)
+           CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground)
            
         ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
            CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
@@ -479,7 +479,7 @@ PROGRAM VISUALS_MAIN
 
               IF      ( opt_vec(iv) .EQ. 6 ) THEN ! density 
                  IF      ( imixture .EQ. MIXT_TYPE_AIRWATER )  THEN
-                    CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2),s(1,1), pbackground, txc(1,1))
+                    CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground, txc(1,1))
 
                  ELSE
                     wrk1d(1:jmax,1) = C_0_R
@@ -501,7 +501,7 @@ PROGRAM VISUALS_MAIN
                     
                     IF ( damkohler(1) .GT. C_0_R ) THEN ! Supersaturated liquid
                        txc(1:isize_field,1:2) = s(1:isize_field,1:2)
-                       CALL THERMO_AIRWATER_PH(imax,jmax,kmax, txc(1,2),txc(1,1), pbackground)
+                       CALL THERMO_AIRWATER_PH(imax,jmax,kmax, txc(1,2),txc(1,1), epbackground,pbackground)
                        txc(1:isize_field,3) = (s(1:isize_field,3)-txc(1:isize_field,3))/s(1,3)
                        
                        plot_file = 'Supsat'//time_str(1:MaskSize)
@@ -840,7 +840,7 @@ PROGRAM VISUALS_MAIN
 ! ###################################################################
         IF ( opt_vec(iv) .EQ. iscal_offset+12 ) THEN
            IF      ( imixture .EQ. MIXT_TYPE_AIRWATER )  THEN
-              CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2),s(1,1), pbackground, txc(1,1))
+              CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground, txc(1,1))
               txc(1:isize_field,1) = buoyancy%vector(2)*(txc(1:isize_field,1) - mean_rho)/mean_rho
 
            ELSE

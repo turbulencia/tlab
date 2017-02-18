@@ -17,7 +17,7 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, wrk1d,wrk3d)
 
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE DNS_GLOBAL,    ONLY : buoyancy, coriolis
-  USE DNS_GLOBAL,    ONLY : bbackground, pbackground, rbackground
+  USE DNS_GLOBAL,    ONLY : bbackground, pbackground, rbackground, epbackground
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
@@ -67,7 +67,7 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, wrk1d,wrk3d)
      IF ( buoyancy%active(iq) ) THEN
         
         IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-           CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,2),s(1,1), pbackground,rbackground, wrk3d)
+           CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground,rbackground, wrk3d)
         ELSE
            IF ( iq .EQ. 2 ) THEN
               CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, bbackground)

@@ -27,7 +27,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
   USE DNS_GLOBAL, ONLY : delta_u, ycoor_u, ycoor_i
   USE DNS_GLOBAL, ONLY : mean_rho, delta_rho, ycoor_rho
-  USE DNS_GLOBAL, ONLY : bbackground
+  USE DNS_GLOBAL, ONLY : bbackground, pbackground, rbackground, tbackground
   USE THERMO_GLOBAL, ONLY : imixture, MRATIO, GRATIO
   USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV
 #ifdef TRACE_ON
@@ -76,9 +76,9 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
 ! ###################################################################
 ! Define pointers
-                   dx => g(1)%jac(:,1)
-                   dy => g(2)%jac(:,1)
-                   dz => g(3)%jac(:,1)
+  dx => g(1)%jac(:,1)
+  dy => g(2)%jac(:,1)
+  dz => g(3)%jac(:,1)
 
   u => q(:,:,:,1)
   v => q(:,:,:,2)
@@ -495,11 +495,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL AVG_IK_V(imax,jmax,kmax, jmax, w, dx,dz, rW(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, p, dx,dz, rP(1), wrk1d, area)
 
-  IF     ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
-     rR(:) = C_1_R; fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
-     
-  ELSEIF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN ! not yet developed
-     rR(:) = C_1_R; fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     rR(:) = rbackground(:); fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
      
   ELSE
      dwdx = rho *u
@@ -529,9 +526,12 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rP(1),  rP_y(1),  i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rR(1),  rR_y(1),  i0,i0, wrk1d,wrk2d,wrk3d)
  
-  pref(:) = rP(:) -C_05_R *( rP(jmax/2) +rP(jmax/2+1) )
-  pmod(:) =-rP_y(:) +buoyancy%vector(2) *rR(:)
-
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     pref(:) = pbackground(:)
+  ELSE
+     pref(:) = rP(:)
+  ENDIF
+  
 ! #######################################################################
 ! Main covariances (do not overwrite dudz; it contains p for incompressible case)
 ! #######################################################################
@@ -718,7 +718,10 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 #define T_LOC(i,j,k)     dwdx(i,j,k)
 #define S_LOC(i,j,k)     dwdz(i,j,k)
 
-  IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     rT(:)   = tbackground(:)
+     
+  ELSE
 
 ! -------------------------------------------------------------------
 ! Main fields
@@ -918,6 +921,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
                 
         CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rB(1), rB_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
 
+        pmod(:) =-rP_y(:) + SIGN(rB(:),buoyancy%vector(2))
+        
      ENDIF
      
   ELSE ! Compressible case is not yet finished
@@ -925,6 +930,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      Byy(:) =-rR(:)*rVf(:)*buoyancy%vector(2)
      Bzz(:) =-rR(:)*rWf(:)*buoyancy%vector(3)
      rSb(:) = C_0_R
+
+     pmod(:) =-rP_y(:) +buoyancy%vector(2) *rR(:)
 
   ENDIF
 

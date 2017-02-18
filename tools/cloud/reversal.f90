@@ -12,7 +12,7 @@ PROGRAM REVERSAL
 
   TREAL qt_1, qt_2, h_1, h_2, qt, h, x, qsat, dqldqt
   TREAL qvqd, ba_ratio, heat1, heat2, alpha, dummy
-  TREAL z1(2), e, rho, p, T
+  TREAL z1(2), e, rho, p, T, ep
   TREAL t_1, t_2, c0, c1, c2
   TREAL r_1, r_2, r_max, r_old, x_c, x_max
   TINTEGER n, nmax, iopt, iup
@@ -120,10 +120,11 @@ PROGRAM REVERSAL
 
         qt = qt_1 + x*(qt_2-qt_1)
         h  = h_1  + x*(h_2-h_1)
-
+        ep = C_0_R
+        
         z1(1) = qt
-        CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, p)
-        CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, z1, h, T)
+        CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, ep,p)
+        CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, z1, h, ep,T)
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, qsat)
         qsat = C_1_R/(MRATIO*p/qsat-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
         qsat = qsat/(C_1_R+qsat)

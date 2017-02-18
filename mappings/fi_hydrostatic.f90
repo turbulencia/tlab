@@ -195,9 +195,10 @@ END SUBROUTINE FI_HYDROSTATIC_STEPS
 !########################################################################
 ! Compute hydrostatic equilibrium from profiles (h,q_t).
 !########################################################################
-SUBROUTINE FI_HYDROSTATIC_AIRWATER_H(nmax, y, s,h,T,p, wrk1d)
+SUBROUTINE FI_HYDROSTATIC_AIRWATER_H(nmax, y, s,h,e, T,p, wrk1d)
 
-  USE DNS_GLOBAL, ONLY : p_init, ycoor_tem, scaley
+  USE DNS_GLOBAL, ONLY : imode_eqns
+  USE DNS_GLOBAL, ONLY : p_init, ycoor_tem, ycoor_i, scaley, damkohler
 
   IMPLICIT NONE
 
@@ -205,7 +206,7 @@ SUBROUTINE FI_HYDROSTATIC_AIRWATER_H(nmax, y, s,h,T,p, wrk1d)
 
   TINTEGER nmax
   TREAL, DIMENSION(nmax)   :: y
-  TREAL, DIMENSION(nmax)   :: h, T, p
+  TREAL, DIMENSION(nmax)   :: h, T, p, e
   TREAL, DIMENSION(nmax,*) :: s, wrk1d
 
 ! -------------------------------------------------------------------
@@ -215,39 +216,38 @@ SUBROUTINE FI_HYDROSTATIC_AIRWATER_H(nmax, y, s,h,T,p, wrk1d)
 ! ###################################################################
   niter = 10
 
-! ###################################################################
-! initialize iteration
-! ###################################################################
-! pressure from hydrostatic equilibrium
-  ycenter = y(1) + ycoor_tem*scaley      
-  wrk1d(:,1) = p_init
-  CALL FI_HYDROSTATIC_STEPS(i1, nmax, i1, i1, ycenter, y, p, wrk1d)
-  p(:) = p_init*EXP(p(:))
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+     ycenter = y(1) + ycoor_i(1)*scaley      
+  ELSE
+     ycenter = y(1) + ycoor_tem*scaley
+     wrk1d(:,2) = e(:)
+  ENDIF
 
-! ###################################################################
-! iteration
-! ###################################################################
-  DO iter = 1,niter
-! pressure from hydrostatic equilibrium
-     ycenter = y(1) + ycoor_tem*scaley      
-     wrk1d(:,1) = p(:)
-     CALL FI_HYDROSTATIC_STEPS(i1, nmax, i1, i1, ycenter, y, p, wrk1d)
+  p(:) = p_init        ! initialize iteration
+  DO iter = 1,niter    ! iterate
+     wrk1d(:,1) = p(:) ! pressure from hydrostatic equilibrium
+     CALL FI_HYDROSTATIC_STEPS(i1,nmax,i1, i2, ycenter, y, p, wrk1d)
      p(:) = p_init*EXP(p(:))
 
   ENDDO
 
-! ###################################################################
 ! compute equilibrium values of q_l and T
-! ###################################################################
-  CALL THERMO_AIRWATER_PH2(i1, nmax, i1, s, p, h, T)
-
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     IF ( damkohler(3) .LE. C_0_R )  THEN
+        CALL THERMO_AIRWATER_PH(i1,nmax,i1, s,h, e,p)
+     ENDIF
+     CALL THERMO_AIRWATER_TEMPERATURE(i1,nmax,i1, s,h, e, T)
+  ELSE
+     CALL THERMO_AIRWATER_PH2(i1,nmax,i1, s, p, h, T)
+  ENDIF
+  
   RETURN
 END SUBROUTINE FI_HYDROSTATIC_AIRWATER_H
       
 !########################################################################
-!Compute hydrostatic equilibrium from profiles (T,q_t).
+! Compute hydrostatic equilibrium from profiles (T,q_t).
 !########################################################################
-SUBROUTINE FI_HYDROSTATIC_AIRWATER_T(y, dy, z1, T, p, rho, wrk1d, wrk2d, wrk3d)
+SUBROUTINE FI_HYDROSTATIC_AIRWATER_T(y, dy, s, T, p, rho, wrk1d, wrk2d, wrk3d)
 
   USE DNS_GLOBAL, ONLY : p_init, ycoor_tem, scaley
   USE DNS_GLOBAL, ONLY : imode_fdm, jmax, j1bc
@@ -260,7 +260,7 @@ SUBROUTINE FI_HYDROSTATIC_AIRWATER_T(y, dy, z1, T, p, rho, wrk1d, wrk2d, wrk3d)
 #include "integers.h"
 
   TREAL y(jmax), dy(jmax)
-  TREAL z1(jmax,*), T(*), p(*), rho(*)
+  TREAL s(jmax,*), T(*), p(*), rho(*)
   TREAL wrk1d(*), wrk2d(*), wrk3d(*)
 
 ! -------------------------------------------------------------------
@@ -270,12 +270,7 @@ SUBROUTINE FI_HYDROSTATIC_AIRWATER_T(y, dy, z1, T, p, rho, wrk1d, wrk2d, wrk3d)
 ! ###################################################################
   niter = 3
 
-! ###################################################################
-! initialize iteration from condition q_l = 0
-! ###################################################################
-  DO ij = 1,jmax
-     z1(ij,2) = C_0_R
-  ENDDO
+  s(:,2) = C_0_R ! initialize iteration from condition q_l = 0
 
 ! ###################################################################
 ! iteration
@@ -283,7 +278,7 @@ SUBROUTINE FI_HYDROSTATIC_AIRWATER_T(y, dy, z1, T, p, rho, wrk1d, wrk2d, wrk3d)
   DO iter = 1,niter
 ! pressure 
      ycenter = y(1) + ycoor_tem*scaley
-     CALL FI_HYDROSTATIC_STEPS(i1, jmax, i1, i1, ycenter, y, p, z1(1,2))
+     CALL FI_HYDROSTATIC_STEPS(i1, jmax, i1, i1, ycenter, y, p, s(1,2))
      DO ij = 1,jmax
         p(ij) = p_init*EXP(p(ij))
      ENDDO
@@ -295,20 +290,20 @@ SUBROUTINE FI_HYDROSTATIC_AIRWATER_T(y, dy, z1, T, p, rho, wrk1d, wrk2d, wrk3d)
      ENDDO
 
 ! equilibrium from state (rho,T)
-     CALL THERMO_POLYNOMIAL_PSAT(i1, jmax, i1, T, z1(1,2))
+     CALL THERMO_POLYNOMIAL_PSAT(i1, jmax, i1, T, s(1,2))
 
      DO ij = 1,jmax
-        qsat = z1(ij,2)/(rho(ij)*T(ij)*WGHT_INV(1))
+        qsat = s(ij,2)/(rho(ij)*T(ij)*WGHT_INV(1))
 
-        IF ( qsat .GE. z1(ij,1) ) THEN
-           z1(ij,2) = 0
+        IF ( qsat .GE. s(ij,1) ) THEN
+           s(ij,2) = 0
         ELSE
-           z1(ij,2) = z1(ij,1)-qsat
+           s(ij,2) = s(ij,1)-qsat
         ENDIF
         IF ( dsmooth .GT. C_0_R ) THEN
            dsmooth_loc = dsmooth*qsat
-           z1(ij,2) = C_05_R*dsmooth_loc&
-                *LOG(EXP(C_2_R*(z1(ij,1)-qsat)/dsmooth_loc)+C_1_R)
+           s(ij,2) = C_05_R*dsmooth_loc&
+                *LOG(EXP(C_2_R*(s(ij,1)-qsat)/dsmooth_loc)+C_1_R)
         ENDIF
 
      ENDDO
@@ -336,10 +331,11 @@ END SUBROUTINE FI_HYDROSTATIC_AIRWATER_T
 FUNCTION FI_HYDROSTATIC_SCALEHEIGHT_INV(y,p)
 
   USE DNS_CONSTANTS, ONLY : MAX_NSP
-  USE DNS_GLOBAL, ONLY : imode_flow
+  USE DNS_GLOBAL, ONLY : imode_eqns
   USE DNS_GLOBAL, ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem
+  USE DNS_GLOBAL, ONLY : p_scale_height
   USE DNS_GLOBAL, ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i
-  USE DNS_GLOBAL, ONLY : inb_scal, scaley
+  USE DNS_GLOBAL, ONLY : inb_scal, scaley, damkohler
   USE DNS_GLOBAL, ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture
 
@@ -351,46 +347,59 @@ FUNCTION FI_HYDROSTATIC_SCALEHEIGHT_INV(y,p)
 
 ! -------------------------------------------------------------------
   TREAL t_loc, y_i_loc(MAX_NSP+1), ycenter, FLOW_SHEAR_TEMPORAL
-  TREAL r1, p_loc, h_loc !, dummy
+  TREAL r1, e_loc, p_loc, h_loc
   TINTEGER is, iprof_loc
   EXTERNAL FLOW_SHEAR_TEMPORAL
 
 ! ###################################################################
   r1 = C_1_R
 
-  IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
+  p_loc = p(4)+(p(5)-p(4))/(p(3)-p(2))*(y-p(2))
+  e_loc = p(6)+(p(7)-p(6))/(p(3)-p(2))*(y-p(2))
+
+  DO is = 1,inb_scal
+     ycenter = p(1) + scaley*ycoor_i(is)
+     y_i_loc(is) =  FLOW_SHEAR_TEMPORAL&
+          (iprof_i(is), thick_i(is), delta_i(is), mean_i(is), ycenter, prof_i, y)
+  ENDDO
+  
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+        IF ( damkohler(3) .LE. C_0_R )  THEN
+           CALL THERMO_AIRWATER_PH(i1,i1,i1, y_i_loc(2),y_i_loc(1), e_loc,p_loc)
+        ENDIF
+        
+! Setting the pressure entry to 1, THERMO_RHO gives the thermodynamic part
+! of the inverse of the scale height W/(R_0 T)
+        CALL THERMO_AIRWATER_DENSITY(i1,i1,i1, y_i_loc(2),y_i_loc(1), e_loc,r1, FI_HYDROSTATIC_SCALEHEIGHT_INV)
+     ENDIF
+
+     FI_HYDROSTATIC_SCALEHEIGHT_INV = SIGN(FI_HYDROSTATIC_SCALEHEIGHT_INV,buoyancy%vector(2)) /p_scale_height
+
+  ELSE     
      ycenter = p(1) + scaley*ycoor_tem
      t_loc = FLOW_SHEAR_TEMPORAL&
           (iprof_tem, thick_tem, delta_tem, mean_tem, ycenter, prof_tem, y)
-     DO is = 1,inb_scal
-        ycenter = p(1) + scaley*ycoor_i(is)
-        y_i_loc(is) =  FLOW_SHEAR_TEMPORAL&
-             (iprof_i(is), thick_i(is), delta_i(is), mean_i(is), ycenter, prof_i, y)
-     ENDDO
-  ENDIF
 
-! AIRWATER case
-  IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. iprof_tem .GT. 0 ) THEN
-     y_i_loc(2) = p(4)+(p(5)-p(4))/(p(3)-p(2))*(y-p(2))
-  ENDIF
-  IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. iprof_tem .LT. 0 ) THEN
-     ycenter = p(1) + scaley*ycoor_tem
-     iprof_loc =-iprof_tem
-     h_loc = FLOW_SHEAR_TEMPORAL&
-          (iprof_loc, thick_tem, delta_tem, mean_tem, ycenter, prof_tem, y)
-     p_loc = p(4)+(p(5)-p(4))/(p(3)-p(2))*(y-p(2))
-!     CALL THERMO_AIRWATER_PH(i1, i1, i1, y_i_loc, h_loc, p_loc)
-     ! CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, y_i_loc, h_loc, t_loc)
-     CALL THERMO_AIRWATER_PH2(i1, i1, i1, y_i_loc, p_loc, h_loc, t_loc)
-  ENDIF
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. iprof_tem .GT. 0 ) THEN
+        y_i_loc(2) = p_loc ! p(4)+(p(5)-p(4))/(p(3)-p(2))*(y-p(2))
+     ENDIF
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. iprof_tem .LT. 0 ) THEN
+        ycenter = p(1) + scaley*ycoor_tem
+        iprof_loc =-iprof_tem
+        h_loc = FLOW_SHEAR_TEMPORAL&
+             (iprof_loc, thick_tem, delta_tem, mean_tem, ycenter, prof_tem, y)
+        CALL THERMO_AIRWATER_PH2(i1, i1, i1, y_i_loc, p_loc, h_loc, t_loc)
+     ENDIF
 
-! Setting the pressure entry to 1, THERMO_RHO give the thermodynamic part
+! Setting the pressure entry to 1, THERMO_RHO gives the thermodynamic part
 ! of the inverse of the scale height W/(R_0 T)
-  r1 = C_1_R
-  CALL THERMO_THERMAL_DENSITY(i1, i1, i1, y_i_loc, r1, t_loc, FI_HYDROSTATIC_SCALEHEIGHT_INV)
+     CALL THERMO_THERMAL_DENSITY(i1, i1, i1, y_i_loc, r1, t_loc, FI_HYDROSTATIC_SCALEHEIGHT_INV)
 
-! adding the volumetric force part
-  FI_HYDROSTATIC_SCALEHEIGHT_INV = buoyancy%vector(2)*FI_HYDROSTATIC_SCALEHEIGHT_INV
+     FI_HYDROSTATIC_SCALEHEIGHT_INV = buoyancy%vector(2)*FI_HYDROSTATIC_SCALEHEIGHT_INV
+     
+  ENDIF
 
   RETURN
 END FUNCTION FI_HYDROSTATIC_SCALEHEIGHT_INV

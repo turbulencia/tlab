@@ -662,22 +662,21 @@ SUBROUTINE THERMO_INITIALIZE
 ! -------------------------------------------------------------------
   CALL IO_WRITE_ASCII(lfile, 'Thermodynamic properties have been initialized.')
   DO is = 1,NSP
-     WRITE(str,*) is; str = 'Species'//TRIM(ADJUSTL(str))//'='//TRIM(ADJUSTL(THERMO_SPNAME(is)))
+     WRITE(str,*) is; str = 'Setting Species'//TRIM(ADJUSTL(str))//'='//TRIM(ADJUSTL(THERMO_SPNAME(is)))
      CALL IO_WRITE_ASCII(lfile, str)
   ENDDO
-  WRITE(str,'(A8,1X,E12.5E3)') 'WREF  = ', WREF
+  WRITE(str,'(A14,1X,E12.5E3)') 'Setting WREF = ', WREF
   CALL IO_WRITE_ASCII(lfile, str)
-  WRITE(str,'(A8,1X,E12.5E3)') 'TREF  = ', TREF
+  WRITE(str,'(A14,1X,E12.5E3)') 'Setting TREF = ', TREF
   CALL IO_WRITE_ASCII(lfile, str)
   IF ( NPSAT .GT. 0 ) THEN
-     WRITE(str,'(A8,1X,E12.5E3)') 'RREF  = ', RREF
+     WRITE(str,'(A14,1X,E12.5E3)') 'Setting RREF = ', RREF
      CALL IO_WRITE_ASCII(lfile, str)
   ENDIF
-  WRITE(str,'(A8,1X,E12.5E3)') 'CPREF = ', CPREF
+  WRITE(str,'(A15,1X,E12.5E3)') 'Setting CPREF = ', CPREF
   CALL IO_WRITE_ASCII(lfile, str)
-  WRITE(str,'(A8,1X,E12.5E3)') 'Gama0 = ', gama0
+  WRITE(str,'(A15,1X,E12.5E3)') 'Setting Gama0 = ', gama0
   CALL IO_WRITE_ASCII(lfile, str)
-  CALL IO_WRITE_ASCII(lfile, '#')
 
   RETURN
 END SUBROUTINE THERMO_INITIALIZE

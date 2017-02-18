@@ -17,7 +17,7 @@
 !# Routint THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
 !#
 !########################################################################
-SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, p)
+SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
 
   USE DNS_CONSTANTS, ONLY : efile
   USE THERMO_GLOBAL, ONLY : MRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
@@ -35,11 +35,11 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, p)
   TINTEGER,                     INTENT(IN)   :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(INOUT):: s        ! (*,1) is q_t, (*,2) is q_l
   TREAL, DIMENSION(nx*ny*nz),   INTENT(IN)   :: h
-  TREAL, DIMENSION(*),          INTENT(IN)   :: p
+  TREAL, DIMENSION(*),          INTENT(IN)   :: e,p
 
 ! -------------------------------------------------------------------
   TINTEGER ij, is, inr, nrmax, ipsat, i, jk
-  TREAL psat, qsat, T_LOC, P_LOC, B_LOC(10), FUN, DER
+  TREAL psat, qsat, T_LOC, E_LOC, P_LOC, B_LOC(10), FUN, DER
   TREAL LATENT_HEAT, HEAT_CAPACITY_LD, HEAT_CAPACITY_LV, HEAT_CAPACITY_VD
   TREAL ALPHA_1, ALPHA_2, BETA_1, BETA_2, alpha, beta
   TREAL dummy
@@ -72,14 +72,15 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, p)
   DO jk = 0,ny*nz-1
      is = MOD(jk,ny) +1
      P_LOC = MRATIO*p(is)
-
+     E_LOC = e(is)
+     
      DO i = 1,nx
         ij = ij +1
 
 ! -------------------------------------------------------------------
 ! reference case assuming q_l = 0
 ! -------------------------------------------------------------------
-        T_LOC = (h(ij)-THERMO_AI(6,1,2)-s(ij,1)*(THERMO_AI(6,1,1)-THERMO_AI(6,1,2)))/&
+        T_LOC = (h(ij) -E_LOC -THERMO_AI(6,1,2) -s(ij,1)*(THERMO_AI(6,1,1)-THERMO_AI(6,1,2)) )/&
              (THERMO_AI(1,1,2)+s(ij,1)*(THERMO_AI(1,1,1)-THERMO_AI(1,1,2)))
 
 ! calculate saturation specific humidity q_sat(T,p) in array s(1,2)
@@ -99,9 +100,9 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, p)
 ! -------------------------------------------------------------------
         ELSE
 ! preparing Newton-Raphson 
-           alpha = (ALPHA_1 + s(ij,1)*ALPHA_2 + h(ij)) /P_LOC
-           beta  = (BETA_1  + s(ij,1)*BETA_2         ) /P_LOC
-           B_LOC(1) = h(ij)-THERMO_AI(6,1,2) - s(ij,1)*(THERMO_AI(6,1,3)-THERMO_AI(6,1,2)) -&
+           alpha = (ALPHA_1 + s(ij,1)*ALPHA_2 + h(ij) - E_LOC) /P_LOC
+           beta  = (BETA_1  + s(ij,1)*BETA_2                 ) /P_LOC
+           B_LOC(1) = h(ij) -E_LOC -THERMO_AI(6,1,2) - s(ij,1)*(THERMO_AI(6,1,3)-THERMO_AI(6,1,2)) -&
                 THERMO_PSAT(1)*alpha
            DO is = 2,9
               B_LOC(is) = THERMO_PSAT(is-1)*beta - THERMO_PSAT(is)*alpha

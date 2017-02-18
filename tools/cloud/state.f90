@@ -10,7 +10,7 @@ PROGRAM STATE
 
 #include "integers.h"
 
-  TREAL p, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt
+  TREAL p, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep
   TREAL heat1, heat2, cp1, cp2, alpha, as, bs, t_eq, l, cp_ref
   TREAL r1,r2,r3, h2
   TINTEGER iopt
@@ -84,10 +84,11 @@ PROGRAM STATE
 
   ELSE IF ( iopt .EQ. 3 ) THEN
      h = h/TREF/1.007
+     ep = C_0_R
      z1(1) = qt
      ! CALL THERMO_AIRWATER_PH2(i1, i1, i1, z1, p, h, T)
-     CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, p)
-     CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, z1, h, T)
+     CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, ep,p)
+     CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, z1, h, ep, T)
 
      ql = z1(2)
      qv = qt - ql

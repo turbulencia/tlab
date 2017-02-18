@@ -46,7 +46,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 #define p_loc(i)       wrk1d(i,1)
 #define r_loc(i)       wrk1d(i,2)
 #define t_loc(i)       wrk1d(i,3)
-#define e_loc(i)       wrk1d(i,4)
+#define ep_loc(i)       wrk1d(i,4)
 #define h_loc(i)       wrk1d(i,5)
 #define z1_loc(i)      wrk1d(i,6)
 #define z2_loc(i)      wrk1d(i,7)
@@ -90,7 +90,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
                    (iprof_i(1), thick_i(1), delta_i(1), mean_i(1), ycenter, prof_i, y(j))
 
            ENDDO
-           CALL FI_HYDROSTATIC_AIRWATER_H(jmax, y, z1_loc(1), h_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
+           CALL FI_HYDROSTATIC_AIRWATER_H(jmax, y, z1_loc(1), h_loc(1),ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
            DO j = 1,jmax
               s(:,j,:,1) = z1_loc(j)
               s(:,j,:,2) = z2_loc(j)

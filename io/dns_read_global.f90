@@ -642,6 +642,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Pressure',   '0.0', p_init)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Density',    '0.0', mean_rho)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Temperature','0.0', mean_tem)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ScaleHeight','1.0', p_scale_height)
 
 ! -------------------------------------------------------------------
 ! Shear flow values
