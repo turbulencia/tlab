@@ -253,8 +253,8 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT&
 
   ELSE 
      IF ( (schmidt(1) .NE.  schmidt(2) ) .OR. (stokes .GT. C_0_R) .OR. (settling .GT. C_0_R) ) THEN
-!Put temperature in tmp7 (mqn_rho, tmp4 and wrk3d are in this case unused)
-        CALL THERMO_CALORIC_TEMPERATURE(imax, jmax, kmax, s, tmp4, mean_rho, tmp7, wrk3d) 
+!Put temperature in tmp7
+        CALL THERMO_AIRWATER_TEMPERATURE(imax, jmax, kmax, s(1,2), s(1,1), tmp7) 
      ENDIF
   ENDIF
 

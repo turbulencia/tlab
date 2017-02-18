@@ -454,7 +454,7 @@ PROGRAM DNS
 ! Initialize thermodynamic quantities
 ! ###################################################################
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     CALL THERMO_PROFILES(wrk1d)
+     CALL FI_PROFILES(wrk1d)
      
      IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
         CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), pbackground)         

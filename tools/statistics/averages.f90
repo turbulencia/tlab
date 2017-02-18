@@ -387,7 +387,7 @@ PROGRAM AVERAGES
   ENDIF
 
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     CALL THERMO_PROFILES(wrk1d)
+     CALL FI_PROFILES(wrk1d)
   ENDIF
   
 ! ###################################################################
