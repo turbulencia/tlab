@@ -164,7 +164,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
            ENDDO
 
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-              CALL THERMO_AIRWATER_PH2(imax,jmax,kmax, s, p, h, T)
+              CALL THERMO_AIRWATER_PH_RE(imax,jmax,kmax, s, p, h, T)
            ENDIF
 
         ENDIF

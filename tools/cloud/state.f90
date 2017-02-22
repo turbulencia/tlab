@@ -86,7 +86,7 @@ PROGRAM STATE
      h = h/TREF/1.007
      ep = C_0_R
      z1(1) = qt
-     ! CALL THERMO_AIRWATER_PH2(i1, i1, i1, z1, p, h, T)
+     ! CALL THERMO_AIRWATER_PH_RE(i1, i1, i1, z1, p, h, T)
      CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, ep,p)
      CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, z1, h, ep, T)
 

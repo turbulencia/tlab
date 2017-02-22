@@ -238,7 +238,7 @@ SUBROUTINE FI_HYDROSTATIC_AIRWATER_H(nmax, y, s,h,e, T,p, wrk1d)
      ENDIF
      CALL THERMO_AIRWATER_TEMPERATURE(i1,nmax,i1, s,h, e, T)
   ELSE
-     CALL THERMO_AIRWATER_PH2(i1,nmax,i1, s, p, h, T)
+     CALL THERMO_AIRWATER_PH_RE(i1,nmax,i1, s, p, h, T)
   ENDIF
   
   RETURN
@@ -390,7 +390,7 @@ FUNCTION FI_HYDROSTATIC_SCALEHEIGHT_INV(y,p)
         iprof_loc =-iprof_tem
         h_loc = FLOW_SHEAR_TEMPORAL&
              (iprof_loc, thick_tem, delta_tem, mean_tem, ycenter, prof_tem, y)
-        CALL THERMO_AIRWATER_PH2(i1, i1, i1, y_i_loc, p_loc, h_loc, t_loc)
+        CALL THERMO_AIRWATER_PH_RE(i1, i1, i1, y_i_loc, p_loc, h_loc, t_loc)
      ENDIF
 
 ! Setting the pressure entry to 1, THERMO_RHO gives the thermodynamic part

@@ -76,7 +76,7 @@ PROGRAM SMOOTH
      ELSE IF ( opt .EQ. 3 ) THEN
 !        CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, p)
 !     CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, z1, h, T)
-        CALL THERMO_AIRWATER_PH2(i1, i1, i1, z1, p, h, T)
+        CALL THERMO_AIRWATER_PH_RE(i1, i1, i1, z1, p, h, T)
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, qsat)
         qsat = C_1_R/(MRATIO*p/qsat-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
         qsat = qsat/(C_1_R+qsat)
