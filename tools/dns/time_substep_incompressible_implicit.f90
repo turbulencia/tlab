@@ -74,11 +74,6 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(dte,etime, kex,kim, kco, &
 
   ENDIF
   
-! ###################################################################
-! Simulation control
-! ###################################################################
-  CALL DNS_CONTROL_SCAL(s)
-
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'LEAVING TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT')
 #endif

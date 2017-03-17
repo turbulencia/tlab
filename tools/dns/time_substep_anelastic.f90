@@ -131,11 +131,6 @@ SUBROUTINE TIME_SUBSTEP_ANELASTIC(dte,etime, q,hq,s,hs, &
 
   ENDIF
 
-! ###################################################################
-! Simulation control
-! ###################################################################
-  CALL DNS_CONTROL_SCAL(s)
-
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'LEAVING TIME_SUBSTEP_ANELASTIC')
 #endif

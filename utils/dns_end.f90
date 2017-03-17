@@ -25,7 +25,6 @@ SUBROUTINE DNS_END(ic)
      line = TRIM(ADJUSTL(line)) // ' abnormally. Check '//TRIM(ADJUSTL(efile))
   ENDIF
   CALL IO_WRITE_ASCII(lfile, line)
-  CALL IO_WRITE_ASCII(lfile, '########################################')
   
 #ifdef USE_MPI
   ims_time_max = MPI_WTIME()
@@ -41,6 +40,8 @@ SUBROUTINE DNS_END(ic)
 
 #endif
       
+  CALL IO_WRITE_ASCII(lfile, '########################################')
+
 #ifdef USE_MPI
   CALL MPI_FINALIZE(ims_err)
 #endif

@@ -438,19 +438,6 @@ PROGRAM DNS
   ENDIF
 
 ! ###################################################################
-! Define pointers
-! ###################################################################
-  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     e   => q(:,4)
-     rho => q(:,5)
-     p   => q(:,6)
-     T   => q(:,7)
-
-     IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) vis => q(:,8)
-
-  ENDIF
-
-! ###################################################################
 ! Initialize thermodynamic quantities
 ! ###################################################################
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
@@ -465,6 +452,13 @@ PROGRAM DNS
      ENDIF
 
   ELSE
+     e   => q(:,4)
+     rho => q(:,5)
+     p   => q(:,6)
+     T   => q(:,7)
+
+     IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) vis => q(:,8)
+
      CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
      CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, vis)
@@ -478,11 +472,10 @@ PROGRAM DNS
 
   ENDIF
 
-! check max/min values
-  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     CALL DNS_CONTROL_FLOW(q,s, wrk3d)
-  ENDIF
-  CALL DNS_CONTROL_SCAL(s)
+! ###################################################################
+! Check
+! ###################################################################
+  CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
      
 ! ###################################################################
 ! Initialize data for boundary conditions
@@ -513,25 +506,14 @@ PROGRAM DNS
 ! Initialize logfiles
 ! ###################################################################
   CALL DNS_LOGS(i1) ! headers
-
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), h_q(1,1), h_q(1,2), wrk2d,wrk3d)
-     CALL MINMAX(imax,jmax,kmax, h_q(1,1), logs_data(11),logs_data(10))
-     logs_data(10)=-logs_data(10); logs_data(11)=-logs_data(11)
-     IF ( MAX(ABS(logs_data(10)),ABS(logs_data(11))) .GT. d_bound_max ) THEN
-        logs_data(1) = 1
-     ENDIF
-  ENDIF
-
   CALL DNS_LOGS(i2) ! first line
-
-  IF ( logs_data(1) .NE. 0 ) CALL DNS_STOP(DNS_ERROR_DILATATION)
+  IF ( INT(logs_data(1)) .NE. 0 ) CALL DNS_STOP(INT(logs_data(1)))
 
 ! ###################################################################
 ! Do simulation: Integrate equations
 ! ###################################################################
-  CALL TIME_INTEGRATION(q,h_q,s,h_s, &
-       x_inf,y_inf,z_inf,q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
+  CALL TIME_INTEGRATION(q,h_q, s,h_s, &
+       x_inf,y_inf,z_inf, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
        l_q, l_hq, l_txc, l_tags, l_comm, l_trajectories, l_trajectories_tags)
 
 ! ###################################################################

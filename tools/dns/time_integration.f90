@@ -6,9 +6,6 @@
 #endif
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 1999/01/01 - C. Pantano
@@ -37,7 +34,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL 
   USE DNS_TOWER
-  USE LAGRANGE_GLOBAL, ONLY : icalc_trajectories, ilagrange
+  USE LAGRANGE_GLOBAL, ONLY : icalc_trajectories
 #ifdef LES
   USE LES_GLOBAL, ONLY : iles
 #endif
@@ -113,8 +110,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
 
   DO WHILE ( itime .LT. nitera_last )
 
-     CALL TIME_RUNGEKUTTA(q,hq,s,hs, &
-          x_inf,y_inf,z_inf,q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
+     CALL TIME_RUNGEKUTTA(q,hq, s,hs, x_inf,y_inf,z_inf, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
           l_q, l_hq, l_txc, l_tags, l_comm)
 
      itime = itime + 1
@@ -160,6 +156,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
            
         ENDIF
      ENDIF
+
 ! -----------------------------------------------------------------------
      IF ( iviscchg .EQ. 1 ) THEN ! Change viscosity if necessary
         visc = visc - dtime*visctime
@@ -175,18 +172,8 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
 ! ###################################################################
 ! The rest: Logging, postprocessing and saving
 ! ###################################################################
-     IF ( MOD(itime-nitera_first,nitera_log) .EQ. 0 ) THEN ! Log files
-        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-           CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), hq(1,1), hq(1,2), wrk2d,wrk3d)
-           CALL MINMAX(imax,jmax,kmax, hq(1,1), logs_data(11),logs_data(10))
-           logs_data(10)=-logs_data(10); logs_data(11)=-logs_data(11)
-           IF ( MAX(ABS(logs_data(10)),ABS(logs_data(11))) .GT. d_bound_max ) THEN
-              logs_data(1) = 1
-           ENDIF
-        ENDIF
+     IF ( MOD(itime-nitera_first,nitera_log) .EQ. 0 .OR. INT(logs_data(1)) .NE. 0 ) THEN ! Log files
         CALL DNS_LOGS(i2)
-        IF ( logs_data(1) .NE. 0 ) CALL DNS_STOP(DNS_ERROR_DILATATION)
-
 #ifdef LES
         IF ( iles .EQ. 1 ) CALL LES_LOGS(i2)
 #endif
@@ -229,11 +216,6 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
         CALL DNS_TOWER_ACCUMULATE(s,2,wrk1d)
      ENDIF
 
-     IF ( icalc_particle .EQ. 1 .AND. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN ! ALBERTO Lagrangian Residece time clippling 
-        CALL PARTICLE_TIME_RESIDENCE(dtime, l_q, l_hq)
-        CALL PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q)
-     ENDIF
-
      IF ( icalc_trajectories .EQ. 1 ) THEN ! Lagrangian
         WRITE(fname,*) itime; fname = 'trajectories.'//TRIM(ADJUSTL(fname))
         CALL DNS_WRITE_TRAJECTORIES(fname,l_q,l_tags, l_trajectories, l_trajectories_tags, wrk3d,txc,itime, nitera_last, nitera_save, nitera_first)
@@ -253,8 +235,9 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
         ENDIF
      ENDIF
      
-     IF ( itime .EQ. nitera_last .OR. &                     ! Secure that one restart file is saved
-          MOD(itime-nitera_first,nitera_save) .EQ. 0 ) THEN ! Save restart files
+     IF ( MOD(itime-nitera_first,nitera_save) .EQ. 0 .OR. &      ! Save restart files
+          itime .EQ. nitera_last .OR. INT(logs_data(1)) .NE. 0 ) THEN ! Secure that one restart file is saved
+        
         IF ( icalc_flow .EQ. 1 ) THEN
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
            CALL DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, isize_field, q, wrk3d)
@@ -268,7 +251,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
            CALL DNS_TOWER_WRITE(wrk3d) 
         ENDIF
 
-        IF ( icalc_particle .EQ. 1 ) THEN ! Lagrangian
+        IF ( icalc_particle .EQ. 1 ) THEN
            WRITE(fname,*) itime; fname = 'particle.'//TRIM(ADJUSTL(fname))
            CALL DNS_WRITE_PARTICLE(fname, l_q)
            WRITE(fname,*) itime; fname = 'particle_id.'//TRIM(ADJUSTL(fname))
@@ -282,7 +265,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
         
      ENDIF
 
-     IF ( MOD(itime-nitera_first,nitera_pln) .EQ. 0 ) THEN
+     IF ( MOD(itime-nitera_first,nitera_pln) .EQ. 0 ) THEN ! Save planes
         IF ( nplanes_k .GT. 0 ) THEN
            CALL REDUCE_Z_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, nplanes_k,planes_k, txc)
            WRITE(fname,*) itime; fname = 'planesK.'//TRIM(ADJUSTL(fname))
@@ -302,6 +285,9 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
         ENDIF
 
      ENDIF
+     
+! -----------------------------------------------------------------------
+     IF ( INT(logs_data(1)) .NE. 0 ) CALL DNS_STOP(INT(logs_data(1)))
      
   ENDDO
 

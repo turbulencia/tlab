@@ -365,12 +365,6 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
   CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
   IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, vis)
 
-! ###################################################################
-! Simulation control
-! ###################################################################
-  CALL DNS_CONTROL_FLOW(q,s, wrk3d)
-  CALL DNS_CONTROL_SCAL(  s)
-
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'LEAVING TIME_SUBSTEP')
 #endif

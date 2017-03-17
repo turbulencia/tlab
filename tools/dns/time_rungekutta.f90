@@ -34,7 +34,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
   USE DNS_GLOBAL, ONLY : icalc_flow,icalc_scal, imode_eqns
   USE DNS_GLOBAL, ONLY : isize_particle
   USE DNS_GLOBAL, ONLY : rtime
-  USE LAGRANGE_GLOBAL, ONLY : particle_number, inb_particle_evolution
+  USE LAGRANGE_GLOBAL, ONLY : particle_number, inb_particle_evolution, ilagrange
   USE DNS_LOCAL
 
 #ifdef USE_MPI
@@ -177,6 +177,17 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
              dte,etime, q,hq,s,hs, x_inf,y_inf,z_inf, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
      ENDIF
 
+! -------------------------------------------------------------------
+! Control updated values
+! -------------------------------------------------------------------
+     CALL DNS_CONTROL(MOD(rkm_substep,rkm_endstep), q,s, txc, wrk2d,wrk3d)
+     IF ( INT(logs_data(1)) .NE. 0 ) RETURN ! Error detected
+
+     IF ( icalc_particle .EQ. 1 .AND. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
+        CALL PARTICLE_TIME_RESIDENCE(dtime, l_q, l_hq)
+        CALL PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q)
+     ENDIF
+     
 ! -------------------------------------------------------------------
 ! Update RHS hq and hs in the explicit low-storage algorithm
 ! -------------------------------------------------------------------
