@@ -3,9 +3,6 @@
 #include "dns_const_mpi.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2007/06/12 - J.P. Mellado
@@ -33,7 +30,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
   USE DNS_GLOBAL, ONLY : isize_field, inb_flow,inb_scal, icalc_particle
   USE DNS_GLOBAL, ONLY : icalc_flow,icalc_scal, imode_eqns
   USE DNS_GLOBAL, ONLY : isize_particle
-  USE DNS_GLOBAL, ONLY : rtime
+  USE DNS_GLOBAL, ONLY : rtime, itime
   USE LAGRANGE_GLOBAL, ONLY : particle_number, inb_particle_evolution, ilagrange
   USE DNS_LOCAL
 
@@ -56,7 +53,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
   INTEGER(8), DIMENSION(*)           :: l_tags
 
 ! -------------------------------------------------------------------
-  TINTEGER i, is
+  TINTEGER i, is, flag_control
   INTEGER(8) ip
   TREAL dte, etime, alpha
   TREAL kdt(5), kco(4), ktime(5)
@@ -180,7 +177,8 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 ! -------------------------------------------------------------------
 ! Control updated values
 ! -------------------------------------------------------------------
-     CALL DNS_CONTROL(MOD(rkm_substep,rkm_endstep), q,s, txc, wrk2d,wrk3d)
+     flag_control = MOD(rkm_substep,rkm_endstep) + MOD(itime+1-nitera_first,nitera_log) ! Only when datalogs are written
+     CALL DNS_CONTROL(flag_control, q,s, txc, wrk2d,wrk3d)
      IF ( INT(logs_data(1)) .NE. 0 ) RETURN ! Error detected
 
      IF ( icalc_particle .EQ. 1 .AND. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN

@@ -16,7 +16,7 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
   USE DNS_GLOBAL,ONLY : isize_field, imax,jmax,kmax, itime
   USE DNS_LOCAL, ONLY : ilimit_flow, p_bound_min,p_bound_max, r_bound_min,r_bound_max, d_bound_max
   USE DNS_LOCAL, ONLY : ilimit_scal, s_bound_min,s_bound_max
-  USE DNS_LOCAL, ONLY : logs_data, nitera_log, nitera_first
+  USE DNS_LOCAL, ONLY : logs_data
 
   IMPLICIT NONE
 
@@ -48,8 +48,7 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
 ! Incompressible flow
 ! ###################################################################
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     IF ( flag_dilatation .EQ. 0 .AND. &
-          MOD(itime+1-nitera_first,nitera_log) .EQ. 0 ) THEN ! Only when datalogs are written
+     IF ( flag_dilatation .EQ. 0 ) THEN
         CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), wrk2d,wrk3d)
         
         CALL MINMAX(imax,jmax,kmax, txc(1,1), logs_data(11),logs_data(10))
