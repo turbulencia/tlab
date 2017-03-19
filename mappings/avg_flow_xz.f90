@@ -27,7 +27,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
   USE DNS_GLOBAL, ONLY : delta_u, ycoor_u, ycoor_i
   USE DNS_GLOBAL, ONLY : mean_rho, delta_rho, ycoor_rho
-  USE DNS_GLOBAL, ONLY : bbackground, pbackground, rbackground, tbackground
+  USE DNS_GLOBAL, ONLY : bbackground, epbackground, pbackground, rbackground, tbackground
   USE THERMO_GLOBAL, ONLY : imixture, MRATIO, GRATIO
   USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV
 #ifdef TRACE_ON
@@ -895,7 +895,13 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
 
      IF ( buoyancy%type .NE. EQNS_NONE ) THEN
-        CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, dudx, bbackground)
+        IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+           IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+              CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,1,1,2),s(1,1,1,1), epbackground,pbackground,rbackground, dudx)
+           ENDIF
+        ELSE
+           CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, dudx, bbackground)
+        ENDIF
         
         CALL AVG_IK_V(imax,jmax,kmax, jmax, dudx, dx,dz, rB(1), wrk1d, area)
         DO j = 1,jmax

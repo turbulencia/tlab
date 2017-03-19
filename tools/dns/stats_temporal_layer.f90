@@ -31,11 +31,11 @@
 SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : pointers_structure
-  USE DNS_CONSTANTS, ONLY : MAX_NSP
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal, inb_scal_array
   USE DNS_GLOBAL,    ONLY : buoyancy, imode_eqns, icalc_scal
   USE DNS_GLOBAL,    ONLY : itransport, schmidt, froude
+  USE DNS_GLOBAL,    ONLY : bbackground, epbackground, pbackground, rbackground
   USE DNS_GLOBAL,    ONLY : itime, rtime
   USE DNS_GLOBAL,    ONLY : mean_i, delta_i, ycoor_i
   USE THERMO_GLOBAL, ONLY : imixture
@@ -64,7 +64,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
   TARGET :: q,s, txc
 
 ! -------------------------------------------------------------------
-  TREAL umin,umax, dummy, s_aux(MAX_NSP)
+  TREAL dummy
   TINTEGER nbins, is, flag_buoyancy
   TINTEGER ibc(16), nfield
   TREAL amin(16), amax(16)
@@ -106,8 +106,9 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
   ENDIF
 
 ! in case we need the buoyancy statistics
-  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC          .OR. &
-       buoyancy%type .EQ. EQNS_BOD_BILINEAR           .OR. &
+  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
+       buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &
+       imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
        imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy = 1
   ELSE 
@@ -139,7 +140,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
 ! Calculate pressure
 ! ###################################################################
   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
-     CALL FI_PRESSURE_BOUSSINESQ(u,v,w,s, txc(1,3), txc(1,1),txc(1,2),txc(1,4), wrk1d,wrk2d,wrk3d)
+     CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,3), txc(1,1),txc(1,2), hq, wrk1d,wrk2d,wrk3d)
      
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      p(:) = C_1_R ! to be developed
@@ -184,7 +185,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
 ! Plane averages
 ! ###################################################################
   IF ( fstavg .EQ. 1 ) THEN
-     CALL AVG_FLOW_XZ(q,s, txc(:,1),txc(:,2),txc(:,3),txc(1:,4),txc(:,5),txc(:,6),hq(:,1),hq(:,2),hq(:,3),  &
+     CALL AVG_FLOW_XZ(q,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),hq(1,1),hq(1,2),hq(1,3),  &
           vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
 
      IF ( icalc_scal .EQ. 1 ) THEN
@@ -198,25 +199,22 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
 
 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
         IF ( flag_buoyancy .EQ. 1 ) THEN
-           wrk1d(1:jmax) = C_0_R
-           CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, hq(:,1), wrk1d) ! note that wrk3d is defined as integer.
            dummy = C_1_R/froude
+           IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+              IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+                 CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground,rbackground, hq(1,1))
+              ENDIF
+           ELSE
+              wrk1d(1:jmax) = C_0_R
+              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, hq(1,1), wrk1d) ! note that wrk3d is defined as integer.
+           ENDIF
            hq(1:isize_field,1) = hq(1:isize_field,1)*dummy
-! mean values
-           s_aux(1:inb_scal) = mean_i(1:inb_scal) - C_05_R*delta_i(1:inb_scal)
-           IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-              CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array))
-           ENDIF
-           dummy = C_0_R
-           CALL FI_BUOYANCY(buoyancy, i1,i1,i1, s_aux, umin, dummy)
-           s_aux(1:inb_scal) = mean_i(1:inb_scal) + C_05_R*delta_i(1:inb_scal)
-           IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-              CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array))
-           ENDIF
-           dummy = C_0_R
-           CALL FI_BUOYANCY(buoyancy, i1,i1,i1, s_aux, umax, dummy)
-           mean_i(is) = (umax+umin)/froude; delta_i(is) = ABS(umax-umin)/froude; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
-           CALL AVG_SCAL_XZ(is, q,s, hq(:,1), &
+
+           mean_i(is)  =    (bbackground(1)+bbackground(g(2)%size)) *dummy ! mean values
+           delta_i(is) = ABS(bbackground(1)-bbackground(g(2)%size)) *dummy
+           ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
+
+           CALL AVG_SCAL_XZ(is, q,s, hq(1,1), &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
            
         ENDIF

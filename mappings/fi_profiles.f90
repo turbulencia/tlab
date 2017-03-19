@@ -55,6 +55,6 @@ SUBROUTINE FI_PROFILES(wrk1d)
 ! Calculate buoyancy profile  
   wrk1d(:,inb_scal_array+1) = C_0_R
   CALL FI_BUOYANCY(buoyancy, i1,g(2)%size,i1, wrk1d(1,1), bbackground, wrk1d(1,inb_scal_array+1))
-  
+
   RETURN
 END SUBROUTINE FI_PROFILES

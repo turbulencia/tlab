@@ -221,8 +221,9 @@ PROGRAM AVERAGES
   jmax_aux = jmax_total/opt_block
 
 ! in case we need the buoyancy statistics
-  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC          .OR. &
-       buoyancy%type .EQ. EQNS_BOD_BILINEAR           .OR. &       
+  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
+       buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
+       imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
        imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy = 1
   ELSE 
@@ -265,7 +266,7 @@ PROGRAM AVERAGES
      inb_txc = MAX(inb_txc,3)
      iread_scal = 1
      iread_flow = 1
-     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) inb_txc = MAX(inb_txc,5)
+     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) inb_txc = MAX(inb_txc,6)
   CASE ( 5 ) ! enstrophy
      nfield = 7
      inb_txc = MAX(inb_txc,8)
@@ -310,7 +311,7 @@ PROGRAM AVERAGES
      iread_scal = 1
   CASE (14 ) ! pressure partition
      nfield = 3
-     inb_txc = MAX(inb_txc,6)
+     inb_txc = MAX(inb_txc,7)
      iread_flow = 1
      iread_scal = 1
   CASE (15 ) ! dissipation partition
@@ -377,6 +378,11 @@ PROGRAM AVERAGES
      CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   ENDIF
 
+! -------------------------------------------------------------------
+! Initialize thermodynamic quantities
+! -------------------------------------------------------------------
+  CALL FI_PROFILES(wrk1d)
+  
 ! ###################################################################
 ! Define pointers
 ! ###################################################################
@@ -386,10 +392,6 @@ PROGRAM AVERAGES
      w => q(:,3)
   ENDIF
 
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     CALL FI_PROFILES(wrk1d)
-  ENDIF
-  
 ! ###################################################################
 ! Postprocess given list of files
 ! ###################################################################
@@ -441,7 +443,7 @@ PROGRAM AVERAGES
 ! ###################################################################
      CASE ( 1 )
         IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
-           CALL FI_PRESSURE_BOUSSINESQ(u,v,w, s, txc(1,3), txc(1,1),txc(1,2),txc(1,4), wrk1d,wrk2d,wrk3d)
+           CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,3), txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
 
         ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            txc(:,1) = C_1_R ! to be developed
@@ -472,24 +474,20 @@ PROGRAM AVERAGES
 
 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
            IF ( flag_buoyancy .EQ. 1 ) THEN
-              wrk1d(1:jmax) = C_0_R 
-              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(:,7), wrk1d)
+              IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+                 IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+                    CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground,rbackground, txc(1,7))
+                 ENDIF
+              ELSE
+                 wrk1d(1:jmax) = C_0_R 
+                 CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,7), wrk1d)
+              ENDIF
               dummy = C_1_R/froude
               txc(1:isize_field,7) = txc(1:isize_field,7)*dummy
 ! mean values
-              s_aux(1:inb_scal) = mean_i(1:inb_scal) - C_05_R*delta_i(1:inb_scal)
-              IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-                 CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array))
-              ENDIF
-              dummy = C_0_R
-              CALL FI_BUOYANCY(buoyancy, i1,i1,i1, s_aux, umin, dummy)
-              s_aux(1:inb_scal) = mean_i(1:inb_scal) + C_05_R*delta_i(1:inb_scal)
-              IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-                 CALL THERMO_AIRWATER_LINEAR(i1,i1,i1, s_aux, s_aux(inb_scal_array))
-              ENDIF
-              dummy = C_0_R
-              CALL FI_BUOYANCY(buoyancy, i1,i1,i1, s_aux, umax, dummy)
-              mean_i(is) = (umax+umin)/froude; delta_i(is) = ABS(umax-umin)/froude; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
+              mean_i(is)  =    (bbackground(1)+bbackground(g(2)%size))/froude
+              delta_i(is) = ABS(bbackground(1)-bbackground(g(2)%size))/froude
+              ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
               CALL AVG_SCAL_XZ(is, q,s, txc(1,7), &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
               
@@ -587,8 +585,7 @@ PROGRAM AVERAGES
         nfield = nfield+1; data(nfield)%field => w(:); varname(nfield) = 'W'
 
         IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
-           CALL FI_PRESSURE_BOUSSINESQ(u,v,w, s, txc(1,1), &
-                txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
+           CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
            nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'P'
 
         ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
@@ -1043,13 +1040,11 @@ PROGRAM AVERAGES
      CASE ( 14 )
         is = 0
 
-        CALL FI_PRESSURE_BOUSSINESQ(u,v,w, s, txc(1,1), &
-             txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
+        CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
         is = is+1; data(is)%field => txc(:,1); varname(is) = 'P'
         
-        txc(:,3) = C_0_R
-        CALL FI_PRESSURE_BOUSSINESQ(txc(1,3),txc(1,3),txc(1,3), s, txc(1,2), &
-             txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+        q = C_0_R
+        CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,2), txc(1,3),txc(1,4), txc(1,5), wrk1d,wrk2d,wrk3d)
         is = is+1; data(is)%field => txc(:,2); varname(is) = 'Phydro'
 
         txc(:,3) = txc(:,1) - txc(:,2)

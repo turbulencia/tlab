@@ -245,9 +245,10 @@ PROGRAM VISUALS_MAIN
   MaskSize    = 6
 
 ! in case we need the buoyancy statistics
-  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC          .OR. &
-       buoyancy%type .EQ. EQNS_BOD_BILINEAR           .OR. &       
-       imixture   .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
+       buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
+       imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
+       imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy = 1
   ELSE 
      flag_buoyancy = 0   
@@ -283,7 +284,7 @@ PROGRAM VISUALS_MAIN
      IF ( opt_vec(iv) .EQ. 5              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
      IF ( opt_vec(iv) .EQ. 6              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
      IF ( opt_vec(iv) .EQ. 7              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,3); ENDIF
-     IF ( opt_vec(iv) .EQ. 8              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,4); ENDIF
+     IF ( opt_vec(iv) .EQ. 8              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,6); ENDIF
      IF ( opt_vec(iv) .EQ. 9              ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,1); ENDIF
      IF ( opt_vec(iv) .GT. 9 .AND. &
           opt_vec(iv) .LE. iscal_offset   ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,4); ENDIF
@@ -355,6 +356,11 @@ PROGRAM VISUALS_MAIN
   io_aux(:)%offset = 0
 #endif
 
+! -------------------------------------------------------------------
+! Initialize thermodynamic quantities
+! -------------------------------------------------------------------
+  CALL FI_PROFILES(wrk1d)
+  
 ! ###################################################################
 ! Grid
 ! ###################################################################
@@ -370,10 +376,6 @@ PROGRAM VISUALS_MAIN
   ENDIF
 #endif
 
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     CALL FI_PROFILES(wrk1d)
-  ENDIF
-  
 ! ###################################################################
 ! Postprocess given list of files
 ! ###################################################################
@@ -482,8 +484,14 @@ PROGRAM VISUALS_MAIN
                     CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground, txc(1,1))
 
                  ELSE
-                    wrk1d(1:jmax,1) = C_0_R
-                    CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
+                    IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+                       IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+                          CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground,rbackground, txc(1,1))
+                       ENDIF
+                    ELSE
+                       wrk1d(1:jmax,1) = C_0_R
+                       CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
+                    ENDIF
                     dummy = C_1_R/froude
                     txc(1:isize_field,1) = txc(1:isize_field,1)*dummy + C_1_R
 
@@ -513,8 +521,7 @@ PROGRAM VISUALS_MAIN
 
               ELSE IF ( opt_vec(iv) .EQ. 8 ) THEN ! pressure
                  CALL IO_WRITE_ASCII(lfile,'Computing pressure...')
-                 CALL FI_PRESSURE_BOUSSINESQ(q(1,1),q(1,2),q(1,3), s, txc(1,1), &
-                      txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
+                 CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
                  
                  CALL IO_WRITE_ASCII(lfile,'Computing pressure gradient vector...')
                  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, txc(:,1),txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
@@ -844,8 +851,14 @@ PROGRAM VISUALS_MAIN
               txc(1:isize_field,1) = buoyancy%vector(2)*(txc(1:isize_field,1) - mean_rho)/mean_rho
 
            ELSE
-              wrk1d(1:jmax,1) = C_0_R
-              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
+              IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+                 IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+                    CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground,rbackground, txc(1,1))
+                 ENDIF
+              ELSE
+                 wrk1d(1:jmax,1) = C_0_R
+                 CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
+              ENDIF
               dummy =  C_1_R/froude
               txc(1:isize_field,1) = txc(1:isize_field,1) *dummy
 

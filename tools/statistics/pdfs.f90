@@ -202,7 +202,7 @@ PROGRAM PDFS
 ! -------------------------------------------------------------------      
   iread_flow = 0
   iread_scal = 0
-  IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN; inb_txc = 4;
+  IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN; inb_txc = 6;
   ELSE;                                                     inb_txc = 1; ENDIF
   nfield     = 2 
 
@@ -225,7 +225,7 @@ PROGRAM PDFS
   CASE( 1 )
      iread_scal = 1
      iread_flow = 1
-     inb_txc = MAX(inb_txc,3)
+     inb_txc = MAX(inb_txc,6)
      nfield = 6+1
   CASE( 2 )
      iread_scal = 1
@@ -367,7 +367,7 @@ PROGRAM PDFS
 ! ###################################################################
      CASE( 1 )
         IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
-           CALL FI_PRESSURE_BOUSSINESQ(q(1,1),q(1,2),q(1,3),s, txc(1,1), txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
+           CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
 
         ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            p(:) = C_1_R ! to be developed

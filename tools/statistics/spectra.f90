@@ -191,9 +191,10 @@ PROGRAM SPECTRA
   jmax_aux = jmax_total/opt_block
 
 ! in case we need the buoyancy statistics
-  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC          .OR. &
-       buoyancy%type .EQ. EQNS_BOD_BILINEAR           .OR. &       
-       imixture   .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
+       buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
+       imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
+       imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
      flag_buoyancy = 1
      inb_scal_array= inb_scal_array+1             ! space for the buoyancy field
   ELSE 
@@ -271,7 +272,7 @@ PROGRAM SPECTRA
 
   ENDIF
 
-  inb_txc = 4 ! default
+  inb_txc = 5 ! default
 
   isize_aux = jmax_aux
 #ifdef USE_MPI
@@ -365,6 +366,11 @@ PROGRAM SPECTRA
 
   CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
 
+! -------------------------------------------------------------------
+! Initialize thermodynamic quantities
+! -------------------------------------------------------------------
+  CALL FI_PROFILES(wrk1d)
+  
 ! -------------------------------------------------------------------
 ! Initialize
 ! -------------------------------------------------------------------
@@ -485,14 +491,20 @@ PROGRAM SPECTRA
 
 ! Calculate diagnostic quantities to be processed
      IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
-        CALL FI_PRESSURE_BOUSSINESQ(q(1,1),q(1,2),q(1,3),s, p_aux, &
-             txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
+        CALL FI_PRESSURE_BOUSSINESQ(q,s, p_aux, &
+             txc(1,1),txc(1,2), txc(1,3), wrk1d,wrk2d,wrk3d)
         IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
            CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal+1))
         ENDIF
         IF ( flag_buoyancy .EQ. 1 ) THEN
-           wrk1d(1:jmax,1) = C_0_R 
-           CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, s(:,inb_scal_array), wrk1d)
+           IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+              IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+                 CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground,rbackground, s(1,inb_scal_array))
+              ENDIF
+           ELSE
+              wrk1d(1:jmax,1) = C_0_R 
+              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, s(1,inb_scal_array), wrk1d)
+           ENDIF
            dummy = C_1_R /froude
            s(:,inb_scal_array) = s(:,inb_scal_array)*dummy
         ENDIF

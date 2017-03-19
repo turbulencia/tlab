@@ -22,6 +22,7 @@ PRJS=\
      Case21 \
      Case22 \
      Case23 \
+     Case24 \
      Case25 \
      Case26 \
      Case27 \
