@@ -642,7 +642,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Pressure',   '0.0', p_init)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Density',    '0.0', mean_rho)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Temperature','0.0', mean_tem)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ScaleHeight','1.0', p_scale_height)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ScaleHeight','0.0', p_scale_height)
 
 ! -------------------------------------------------------------------
 ! Shear flow values
@@ -886,18 +886,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ENDIF
   ENDIF
   
-!   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
-!      delta_rho = C_0_R
-
-!   ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
-!      delta_rho = buoyancy%parameters(1)
-! ! check that density is positive
-!      IF ( mean_rho .LE. ABS(C_05_R*delta_rho) ) THEN
-!         CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Given density is negative.')
-!         CALL DNS_STOP(DNS_ERROR_OPTION)
-!      ENDIF
-!   ELSE
-
 ! mean_rho and delta_rho need to be defined, because of old version.
 ! Note that rho1 and rho2 are the values defined by equation of state,
 ! being then mean_rho=(rho1+rho2)/2.

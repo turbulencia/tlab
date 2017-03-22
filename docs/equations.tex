@@ -233,3 +233,52 @@ For complex thermodynamics (e.g., airwater), the field $\zeta_\mathrm{\tt inb\_s
 \xi =1+\alpha_1\zeta_1+\ldots+\alpha_\mathrm{\tt inb\_scal}\zeta_\mathrm{\tt inb\_scal}\;.
 \end{equation}
 The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of the nonlinear mapping.
+
+\section{Anelastic formulation}
+
+We retain a background vertical variation of thermodynamic variables $\{\rho_\mathrm{bg},\,p_\mathrm{bg},\,T_\mathrm{bg},\,R_\mathrm{bg}\equiv W_\mathrm{bg}^{-1}\}$. The background profiles are steady and satisfy the hydrostatic balance equation,
+\begin{equation}
+  \partial_3\,p_\mathrm{bg}=\mathbf{H}^{-1}\, g_3\,\rho_\mathrm{bg}\;,
+\end{equation}
+where 
+\begin{equation}
+  \mathbf{H} = \frac{(R_0/W_0)T_0}{gL_0}
+\end{equation}
+is a nondimensional scale height, and the thermal equation of state,
+\begin{equation}
+  p_\mathrm{bg}  = \rho_\mathrm{bg} R_\mathrm{bg} T_\mathrm{bg} \;.
+\end{equation}
+The pressure in this formulation is nondimensionalized with $p_0=$10$^5$~Pa and the reference density is obtained from $\rho_0=p_0[(R_0/W_0)T_0]^{-1}$. We need two additional constraints, which are set through the background profile information in the file {\tt dns.ini}. Typically, we impose the static energy (enthalpy plus potential energy) and the composition.
+%
+If there is only one species, then $R_\mathrm{bg}=1$ and we only need one additional constraint.
+
+The evolution equations are:
+\begin{equation}
+\setlength{\extrarowheight}{1ex}
+\begin{array}{rlll}
+  0 =&
+  -\partial_k(\rho_\mathrm{bg}u_k)   & \\
+  \partial_t  u_i =& 
+  -\partial_k ( u_i u_k )-\rho_\mathrm{bg}^{-1}\partial_i p' &
+  +\mathrm{\bf Re}^{-1}\qquad\;\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) &
+  +\mathrm{\bf Fr}^{-1}\, g_i\,b+\mathrm{\bf Ro}^{-1}\,\epsilon_{ijk} f_k\,u_j  \\
+  \partial_t \zeta_i =&
+  -\partial_k (\zeta_i u_k) &
+  + \mathrm{\bf Re}^{-1}\mathrm{\bf Sc}_i^{-1}\, \rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*}\partial_k\zeta_i\right) &+ \mathrm{\bf Da}_i\,w_i
+\end{array}
+\end{equation}
+where the (negative) buoyancy is
+\begin{equation}
+  b=\rho_\mathrm{bg}^{-1}(\rho-\rho_\mathrm{bg}) \;.
+\end{equation}
+The pressure deviation satisfies the following Poisson equation:
+\begin{equation}
+  \partial_i\partial_ip'=\partial_i\left[\rho_\mathrm{bg}\left(
+-\partial_k ( u_i u_k )+\mathrm{\bf Re}^{-1}\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) +\mathrm{\bf Fr}^{-1}\, g_i\,b+\mathrm{\bf Ro}^{-1}\,\epsilon_{ijk} f_k\,u_j  
+\right)\right]\;.
+\end{equation}
+The first scalar is the static energy
+\begin{equation}
+  \zeta_1 = h + \frac{\gamma_0-1}{\gamma_0}\mathbf{H}^{-1}x_3 \;.
+\end{equation}
+The remaining scalars are the composition (e.g., total water specific humidity and liquid water specific humidity in the case of the airwater mixture).

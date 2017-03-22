@@ -91,7 +91,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
                    (iprof_i(1), thick_i(1), delta_i(1), mean_i(1), ycenter, prof_i, y(j))
 
            ENDDO
-           CALL FI_HYDROSTATIC_AIRWATER_H(jmax, y, z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
+           CALL FI_HYDROSTATIC_H(jmax, y, z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
            DO j = 1,jmax
               s(:,j,:,1) = z2_loc(j)
               s(:,j,:,2) = z3_loc(j)

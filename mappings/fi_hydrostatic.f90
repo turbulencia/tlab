@@ -195,10 +195,11 @@ END SUBROUTINE FI_HYDROSTATIC_STEPS
 !########################################################################
 ! Compute hydrostatic equilibrium from profiles (h,q_t).
 !########################################################################
-SUBROUTINE FI_HYDROSTATIC_AIRWATER_H(nmax, y, s, e, T,p, wrk1d)
+SUBROUTINE FI_HYDROSTATIC_H(nmax, y, s, e, T,p, wrk1d)
 
   USE DNS_GLOBAL, ONLY : imode_eqns
   USE DNS_GLOBAL, ONLY : p_init, ycoor_tem, ycoor_i, scaley, damkohler
+  USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
 
@@ -233,16 +234,18 @@ SUBROUTINE FI_HYDROSTATIC_AIRWATER_H(nmax, y, s, e, T,p, wrk1d)
 
 ! compute equilibrium values of q_l and T
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     IF ( damkohler(3) .LE. C_0_R )  THEN
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R )  THEN
         CALL THERMO_AIRWATER_PH(i1,nmax,i1, s(:,2),s(:,1), e,p)
      ENDIF
      CALL THERMO_ANELASTIC_TEMPERATURE(i1,nmax,i1, s, e, T)
   ELSE
-     CALL THERMO_AIRWATER_PH_RE(i1,nmax,i1, s(:,2), p, s(:,1), T)
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R )  THEN
+        CALL THERMO_AIRWATER_PH_RE(i1,nmax,i1, s(:,2), p, s(:,1), T)
+     ENDIF
   ENDIF
   
   RETURN
-END SUBROUTINE FI_HYDROSTATIC_AIRWATER_H
+END SUBROUTINE FI_HYDROSTATIC_H
       
 !########################################################################
 ! Compute hydrostatic equilibrium from profiles (T,q_t).
@@ -364,17 +367,12 @@ FUNCTION FI_HYDROSTATIC_SCALEHEIGHT_INV(y,p)
   ENDDO
   
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
-
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-        IF ( damkohler(3) .LE. C_0_R )  THEN
-           CALL THERMO_AIRWATER_PH(i1,i1,i1, y_i_loc(2),y_i_loc(1), e_loc,p_loc)
-        ENDIF
-        
+     IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R )  THEN
+        CALL THERMO_AIRWATER_PH(i1,i1,i1, y_i_loc(2),y_i_loc(1), e_loc,p_loc)
+     ENDIF        
 ! Setting the pressure entry to 1, THERMO_RHO gives the thermodynamic part
 ! of the inverse of the scale height W/(R_0 T)
-        CALL THERMO_ANELASTIC_DENSITY(i1,i1,i1, y_i_loc(1), e_loc,r1, FI_HYDROSTATIC_SCALEHEIGHT_INV)
-     ENDIF
-
+     CALL THERMO_ANELASTIC_DENSITY(i1,i1,i1, y_i_loc(1), e_loc,r1, FI_HYDROSTATIC_SCALEHEIGHT_INV)
      FI_HYDROSTATIC_SCALEHEIGHT_INV = SIGN(FI_HYDROSTATIC_SCALEHEIGHT_INV,buoyancy%vector(2)) /p_scale_height
 
   ELSE     
