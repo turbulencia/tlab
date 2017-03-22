@@ -62,7 +62,7 @@ PROGRAM DNS
   
   CHARACTER*32 fname, inifile
   CHARACTER*128 str, line
-  TINTEGER iread_flow, iread_scal, idummy, is
+  TINTEGER idummy, is
   TINTEGER ierr, isize_wrk3d, isize_vaux, isize_loc
   TREAL dummy
 
@@ -189,8 +189,6 @@ PROGRAM DNS
      ALLOCATE(x_inf(1),y_inf(1),z_inf(1),q_inf(1,1),s_inf(1,1))
   ENDIF
 
-! The case wiht icalc_scal = 0 in Ekman flow gives an error...
-  iread_flow = icalc_flow; iread_scal = 1 !icalc_scal
 #include "dns_alloc_arrays.h"
 
 ! -------------------------------------------------------------------

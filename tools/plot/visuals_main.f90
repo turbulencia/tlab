@@ -244,16 +244,18 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
   MaskSize    = 6
 
+  flag_buoyancy = 0 ! default
+  
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
 ! in case we need the buoyancy statistics
-  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
-       buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
-       imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
-       imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-     flag_buoyancy = 1
-  ELSE 
-     flag_buoyancy = 0   
+     IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
+          buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
+          imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
+          imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+        flag_buoyancy = 1
+     ENDIF
   ENDIF
-
+  
 ! -------------------------------------------------------------------
 ! Further allocation of memory space
 ! -------------------------------------------------------------------

@@ -69,6 +69,8 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, wrk1d,wrk3d)
         IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
               CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground,rbackground, wrk3d)
+           ELSE
+            ! CALL THERMO_ANELASTIC_BUOYANCY()
            ENDIF
         ELSE
            IF ( iq .EQ. 2 ) THEN

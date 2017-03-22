@@ -853,6 +853,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
 ! Initializing thermodynamic data of the mixture
 ! -------------------------------------------------------------------
+  IF ( icalc_scal .EQ. 0 ) inb_scal_local1 = 0
+     
   inb_scal       = inb_scal_local1 ! Default is general N scalars; gama0 has been already read above.
   inb_scal_array = inb_scal
   NSP            = inb_scal
@@ -874,6 +876,15 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      MRATIO = gama0*mach*mach
   ENDIF
 
+  IF ( buoyancy%type .EQ. EQNS_BOD_LINEAR   .OR. &
+       buoyancy%type .EQ. EQNS_BOD_BILINEAR .OR. &
+       buoyancy%type .EQ. EQNS_BOD_QUADRATIC ) THEN
+     IF ( inb_scal .EQ. 0 ) THEN
+        CALL IO_WRITE_ASCII(wfile,'DNS_READ_GLOBAL. Zero scalars; setting TermBodyForce equal to none.')
+        buoyancy%type = EQNS_NONE
+     ENDIF
+  ENDIF
+  
   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
      delta_rho = C_0_R
 

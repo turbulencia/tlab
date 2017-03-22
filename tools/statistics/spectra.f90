@@ -190,17 +190,19 @@ PROGRAM SPECTRA
 ! in case jmax_total is not divisible by opt_block, drop the upper most planes
   jmax_aux = jmax_total/opt_block
 
+  flag_buoyancy = 0 ! default
+  
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
 ! in case we need the buoyancy statistics
-  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
-       buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
-       imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
-       imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-     flag_buoyancy = 1
-     inb_scal_array= inb_scal_array+1             ! space for the buoyancy field
-  ELSE 
-     flag_buoyancy = 0   
+     IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
+          buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
+          imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
+          imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+        flag_buoyancy = 1
+        inb_scal_array= inb_scal_array+1             ! space for the buoyancy field
+     ENDIF
   ENDIF
-
+  
   IF      ( opt_main .EQ. 1 ) THEN; flag_mode = 1 ! spectra
   ELSE IF ( opt_main .EQ. 2 ) THEN; flag_mode = 1
   ELSE IF ( opt_main .EQ. 3 ) THEN; flag_mode = 2 ! correlations

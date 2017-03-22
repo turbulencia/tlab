@@ -89,6 +89,8 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
   CALL IO_WRITE_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER' )
 #endif
 
+  flag_buoyancy = 0  ! default
+
 ! Define pointers
   u   => q(:,1)
   v   => q(:,2)
@@ -103,16 +105,13 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
      e   => txc(:,6) ! not used, but argument in LES routines
      rho => txc(:,6) ! not used
      p   => txc(:,3) ! to be used in AVG_FLOW_TEMPORAL_LAYER
-  ENDIF
-
 ! in case we need the buoyancy statistics
-  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
-       buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &
-       imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
-       imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-     flag_buoyancy = 1
-  ELSE 
-     flag_buoyancy = 0   
+     IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
+          buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &
+          imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
+          imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+        flag_buoyancy = 1
+     ENDIF
   ENDIF
 
 ! ###################################################################

@@ -26,91 +26,75 @@ IMPLICIT NONE
   TREAL, DIMENSION(isize_wrk1d,16),   INTENT(INOUT) :: wrk1d            ! to work out forcing term and BCs for p
   TREAL, DIMENSION(imax,kmax,2),      INTENT(INOUT) :: wrk2d
 
-  TARGET q, tmp3
-  
 ! -----------------------------------------------------------------------
   TINTEGER i, k
 
   TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
-
-  TREAL, DIMENSION(:,:,:), POINTER :: u,v,w, rhs
   
-! ###################################################################
-! Define pointers
-  u => q(:,:,:,1)
-  v => q(:,:,:,2)
-  w => q(:,:,:,3)
-
 ! #######################################################################
   p    = C_0_R
   tmp3 = C_0_R
   
-  CALL FI_SOURCES_FLOW(u,s, tmp3, wrk1d,wrk3d)
+  CALL FI_SOURCES_FLOW(q,s, tmp3, wrk1d,wrk3d)
   
 ! #######################################################################
 ! Calculate forcing term Ox
 ! #######################################################################
-  rhs => tmp3(:,:,:,1)
-  
   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, u, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  rhs = rhs + tmp2 *visc - w *tmp1
+       dz, q(:,:,:,1), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+  tmp3(:,:,:,1) = tmp3(:,:,:,1) + tmp2 *visc - q(:,:,:,3) *tmp1
 
   CALL PARTIAL_YY(i1, iunify,     imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, u, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  rhs = rhs + tmp2 *visc - v *tmp1
+       dy, q(:,:,:,1), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+  tmp3(:,:,:,1) = tmp3(:,:,:,1) + tmp2 *visc - q(:,:,:,2) *tmp1
 
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, u, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  rhs = rhs + tmp2 *visc - u *tmp1
+       dx, q(:,:,:,1), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+  tmp3(:,:,:,1) = tmp3(:,:,:,1) + tmp2 *visc - q(:,:,:,1) *tmp1
 
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, rhs, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, tmp3(:,:,:,1), tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
   p = p + tmp1
 
 ! #######################################################################
 ! Calculate forcing term Oz
 ! #######################################################################
-  rhs => tmp3(:,:,:,3)
-  
   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, w, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  rhs = rhs + tmp2 *visc - w *tmp1
+       dz, q(:,:,:,3), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+  tmp3(:,:,:,3) = tmp3(:,:,:,3) + tmp2 *visc - q(:,:,:,3) *tmp1
 
   CALL PARTIAL_YY(i1, iunify,     imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, w, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  rhs = rhs + tmp2 *visc - v *tmp1
+       dy, q(:,:,:,3), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+  tmp3(:,:,:,3) = tmp3(:,:,:,3) + tmp2 *visc - q(:,:,:,2) *tmp1
 
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, w, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  rhs = rhs + tmp2 *visc - u *tmp1
+       dx, q(:,:,:,3), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+  tmp3(:,:,:,3) = tmp3(:,:,:,3) + tmp2 *visc - q(:,:,:,1) *tmp1
 
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, rhs, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, tmp3(:,:,:,3), tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
   p = p + tmp1
 
 ! #######################################################################
 ! Calculate forcing term Oy
 ! #######################################################################
-  rhs => tmp3(:,:,:,2)
-  
   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, v, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  rhs = rhs + tmp2 *visc - w *tmp1
+       dz, q(:,:,:,2), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+  tmp3(:,:,:,2) = tmp3(:,:,:,2) + tmp2 *visc - q(:,:,:,3) *tmp1
 
   CALL PARTIAL_YY(i1, iunify,     imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, v, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  rhs = rhs + tmp2 *visc - v *tmp1
+       dy, q(:,:,:,2), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+  tmp3(:,:,:,2) = tmp3(:,:,:,2) + tmp2 *visc - q(:,:,:,2) *tmp1
 
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, v, tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
-  rhs = rhs + tmp2 *visc - u *tmp1
+       dx, q(:,:,:,2), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+  tmp3(:,:,:,2) = tmp3(:,:,:,2) + tmp2 *visc - q(:,:,:,1) *tmp1
 
 ! Neumann BCs top and bottom
   DO k = 1,kmax; DO i = 1,imax
-     wrk2d(i,k,1) = rhs(i,1   ,k)
-     wrk2d(i,k,2) = rhs(i,jmax,k)
+     wrk2d(i,k,1) = tmp3(i,1   ,k,2)
+     wrk2d(i,k,2) = tmp3(i,jmax,k,2)
   ENDDO; ENDDO
   
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, rhs, tmp1, i0,i0, wrk1d,tmp2,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, tmp3(:,:,:,2), tmp1, i0,i0, wrk1d,tmp2,wrk3d)
   p = p + tmp1
 
 ! #######################################################################

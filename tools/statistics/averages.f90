@@ -55,7 +55,7 @@ PROGRAM AVERAGES
   TINTEGER opt_main, opt_block, opt_order, opt_bins, opt_bcs, flag_buoyancy
   TINTEGER opt_cond, opt_threshold
   TINTEGER nfield, isize_wrk3d, is, ij, n
-  TREAL diff, umin, umax, dummy, s_aux(MAX_NSP)
+  TREAL diff, umin, umax, dummy
   TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3
   TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
 
@@ -220,14 +220,16 @@ PROGRAM AVERAGES
 ! in case jmax_total is not divisible by opt_block, drop the upper most planes
   jmax_aux = jmax_total/opt_block
 
+  flag_buoyancy = 0 ! default
+  
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
 ! in case we need the buoyancy statistics
-  IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
-       buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
-       imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
-       imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-     flag_buoyancy = 1
-  ELSE 
-     flag_buoyancy = 0   
+     IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
+          buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
+          imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
+          imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+        flag_buoyancy = 1
+     ENDIF
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -442,12 +444,9 @@ PROGRAM AVERAGES
 ! Conventional statistics
 ! ###################################################################
      CASE ( 1 )
-        IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
            CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,3), txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
 
-        ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-           txc(:,1) = C_1_R ! to be developed
-           
         ELSE
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
            CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, q(1,4), wrk3d)! energy

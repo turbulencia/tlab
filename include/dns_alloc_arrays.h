@@ -31,7 +31,7 @@
      CALL DNS_STOP(DNS_ERROR_ALLOC)
   ENDIF
 
-  IF ( iread_flow .EQ. 1 ) THEN
+  IF ( inb_flow_array .GT. 0 ) THEN
      WRITE(str,*) inb_flow_array; line = 'Allocating array flow  of size '//TRIM(ADJUSTL(str))//'x'
      WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile,line)
@@ -42,7 +42,7 @@
      ENDIF
   ENDIF
 
-  IF ( iread_scal .EQ. 1 ) THEN
+  IF ( inb_scal_array .GT. 0 ) THEN
      WRITE(str,*) inb_scal_array; line = 'Allocating array scal  of size '//TRIM(ADJUSTL(str))//'x'
      WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile,line)
