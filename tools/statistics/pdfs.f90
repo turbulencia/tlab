@@ -71,9 +71,6 @@ PROGRAM PDFS
   INTEGER icount
 #endif
 
-! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: p
-
   TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
 
 !########################################################################
@@ -366,11 +363,8 @@ PROGRAM PDFS
 ! Main variable 2D-PDF
 ! ###################################################################
      CASE( 1 )
-        IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
            CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
-
-        ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-           p(:) = C_1_R ! to be developed
            
         ELSE
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data

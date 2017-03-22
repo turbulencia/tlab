@@ -896,9 +896,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
      IF ( buoyancy%type .NE. EQNS_NONE ) THEN
         IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
-           IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-              CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,1,1,2),s(1,1,1,1), epbackground,pbackground,rbackground, dudx)
-           ENDIF
+           CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, dudx)
         ELSE
            CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, dudx, bbackground)
         ENDIF

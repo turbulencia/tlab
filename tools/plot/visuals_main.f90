@@ -478,25 +478,16 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
 ! Incompressible
 ! -------------------------------------------------------------------
-           IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. &
-                imode_eqns .EQ. DNS_EQNS_ANELASTIC           ) THEN
-
+           IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
               IF      ( opt_vec(iv) .EQ. 6 ) THEN ! density 
-                 IF      ( imixture .EQ. MIXT_TYPE_AIRWATER )  THEN
-                    CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground, txc(1,1))
-
+                 IF    ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+                    CALL THERMO_ANELASTIC_DENSITY(imax,jmax,kmax, s, epbackground,pbackground, txc(1,1))
+                    
                  ELSE
-                    IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
-                       IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-                          CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground,rbackground, txc(1,1))
-                       ENDIF
-                    ELSE
-                       wrk1d(1:jmax,1) = C_0_R
-                       CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
-                    ENDIF
+                    wrk1d(1:jmax,1) = C_0_R
+                    CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
                     dummy = C_1_R/froude
                     txc(1:isize_field,1) = txc(1:isize_field,1)*dummy + C_1_R
-
                  ENDIF
                  
                  plot_file = 'Density'//time_str(1:MaskSize)
@@ -772,8 +763,7 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
         IF ( opt_vec(iv) .EQ. iscal_offset+9 ) THEN ! StrainEquation (I need the pressure)
               CALL IO_WRITE_ASCII(lfile,'Computing strain pressure...')
-              IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. &
-                   imode_eqns .EQ. DNS_EQNS_ANELASTIC     )THEN
+              IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
                  CALL IO_WRITE_ASCII(efile,'VISUALS. Strain eqn for incompressible undeveloped.')
                  CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
               ELSE
@@ -848,23 +838,14 @@ PROGRAM VISUALS_MAIN
 ! Buoyancy
 ! ###################################################################
         IF ( opt_vec(iv) .EQ. iscal_offset+12 ) THEN
-           IF      ( imixture .EQ. MIXT_TYPE_AIRWATER )  THEN
-              CALL THERMO_AIRWATER_DENSITY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground, txc(1,1))
-              txc(1:isize_field,1) = buoyancy%vector(2)*(txc(1:isize_field,1) - mean_rho)/mean_rho
-
+           IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+              CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,1))
            ELSE
-              IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
-                 IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-                    CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground,rbackground, txc(1,1))
-                 ENDIF
-              ELSE
-                 wrk1d(1:jmax,1) = C_0_R
-                 CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
-              ENDIF
-              dummy =  C_1_R/froude
-              txc(1:isize_field,1) = txc(1:isize_field,1) *dummy
-
+              wrk1d(1:jmax,1) = C_0_R
+              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
            ENDIF
+           dummy =  C_1_R/froude
+           txc(1:isize_field,1) = txc(1:isize_field,1) *dummy
            
            plot_file = 'Buoyancy'//time_str(1:MaskSize)
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)

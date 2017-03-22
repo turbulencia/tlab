@@ -865,8 +865,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Incorrect number of Schmidt numbers.')
         CALL DNS_STOP(DNS_ERROR_OPTION)
      ENDIF
-
   ENDIF
+! Value of R_0/(C_{p,0}W_0) is called GRATIO
+  IF ( gama0 .GT. C_0_R ) GRATIO = (gama0-C_1_R)/gama0
 
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      mach    = C_0_R
@@ -885,21 +886,22 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ENDIF
   ENDIF
   
-  IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
-     delta_rho = C_0_R
+!   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
+!      delta_rho = C_0_R
 
-  ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
-     delta_rho = buoyancy%parameters(1)
-! check that density is positive
-     IF ( mean_rho .LE. ABS(C_05_R*delta_rho) ) THEN
-        CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Given density is negative.')
-        CALL DNS_STOP(DNS_ERROR_OPTION)
-     ENDIF
+!   ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
+!      delta_rho = buoyancy%parameters(1)
+! ! check that density is positive
+!      IF ( mean_rho .LE. ABS(C_05_R*delta_rho) ) THEN
+!         CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Given density is negative.')
+!         CALL DNS_STOP(DNS_ERROR_OPTION)
+!      ENDIF
+!   ELSE
 
 ! mean_rho and delta_rho need to be defined, because of old version.
 ! Note that rho1 and rho2 are the values defined by equation of state,
 ! being then mean_rho=(rho1+rho2)/2.
-  ELSE
+  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      IF ( iprof_rho .EQ. PROFILE_NONE ) THEN
         dummy     = delta_tem/mean_tem
         mean_rho  = MRATIO*p_init/mean_tem/(C_1_R-C_025_R*dummy*dummy)

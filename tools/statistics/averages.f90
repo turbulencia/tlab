@@ -474,9 +474,7 @@ PROGRAM AVERAGES
 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
            IF ( flag_buoyancy .EQ. 1 ) THEN
               IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
-                 IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-                    CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground,rbackground, txc(1,7))
-                 ENDIF
+                 CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,7))
               ELSE
                  wrk1d(1:jmax) = C_0_R 
                  CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,7), wrk1d)
@@ -583,12 +581,8 @@ PROGRAM AVERAGES
         nfield = nfield+1; data(nfield)%field => v(:); varname(nfield) = 'V'
         nfield = nfield+1; data(nfield)%field => w(:); varname(nfield) = 'W'
 
-        IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
            CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
-           nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'P'
-
-        ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-           txc(:,1) = C_1_R ! to be developed
            nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'P'
            
         ELSE
@@ -622,14 +616,17 @@ PROGRAM AVERAGES
 ! ###################################################################
      CASE ( 5 )
         CALL IO_WRITE_ASCII(lfile,'Computing baroclinic term...')
-        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR.&
-             imode_eqns .EQ. DNS_EQNS_ANELASTIC     )THEN
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            IF ( buoyancy%type .EQ. EQNS_NONE ) THEN
               txc(:,4) = C_0_R; txc(:,5) = C_0_R; txc(:,6) = C_0_R
            ELSE
 ! calculate buoyancy vector along Oy
-              wrk1d(1:jmax) = C_0_R 
-              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+              IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+                 CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d)
+              ELSE
+                 wrk1d(1:jmax) = C_0_R 
+                 CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+              ENDIF
               DO ij = 1,isize_field
                  s(ij,1) = wrk3d(ij)*buoyancy%vector(2)
               ENDDO

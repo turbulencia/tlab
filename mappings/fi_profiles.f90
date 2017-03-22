@@ -40,21 +40,26 @@ SUBROUTINE FI_PROFILES(wrk1d)
   IF      ( imixture .EQ. MIXT_TYPE_AIRWATER        ) THEN
      epbackground = (g(2)%nodes - g(2)%nodes(1) - g(2)%scale*ycoor_i(1)) *GRATIO /p_scale_height
 
-     CALL FI_HYDROSTATIC_AIRWATER_H(g(2)%size, g(2)%nodes, wrk1d(1,2),wrk1d(1,1), epbackground, tbackground, pbackground, wrk1d(1,4))
+     CALL FI_HYDROSTATIC_AIRWATER_H(g(2)%size, g(2)%nodes, wrk1d, epbackground, tbackground, pbackground, wrk1d(1,4))
      IF ( damkohler(3) .LE. C_0_R )  THEN
         CALL THERMO_AIRWATER_PH(i1,g(2)%size,i1, wrk1d(1,2),wrk1d(1,1), epbackground,pbackground )
      ENDIF
 
-     CALL THERMO_AIRWATER_DENSITY(i1,g(2)%size,i1, wrk1d(1,2),wrk1d(1,1), epbackground,pbackground, rbackground)
+     CALL THERMO_ANELASTIC_DENSITY(i1,g(2)%size,i1, wrk1d, epbackground,pbackground, rbackground)
      
   ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-     CALL THERMO_AIRWATER_LINEAR(i1,g(2)%size,i1, wrk1d(1,1), wrk1d(1,inb_scal_array))
+     CALL THERMO_AIRWATER_LINEAR(i1,g(2)%size,i1, wrk1d, wrk1d(1,inb_scal_array))
      
   ENDIF
   
 ! Calculate buoyancy profile  
-  wrk1d(:,inb_scal_array+1) = C_0_R
-  CALL FI_BUOYANCY(buoyancy, i1,g(2)%size,i1, wrk1d(1,1), bbackground, wrk1d(1,inb_scal_array+1))
-
+  IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+     CALL THERMO_ANELASTIC_BUOYANCY(i1,g(2)%size,i1, wrk1d, epbackground,pbackground,rbackground, bbackground)
+     
+  ELSE
+     wrk1d(:,inb_scal_array+1) = C_0_R
+     CALL FI_BUOYANCY(buoyancy, i1,g(2)%size,i1, wrk1d(1,1), bbackground, wrk1d(1,inb_scal_array+1))
+  ENDIF
+  
   RETURN
 END SUBROUTINE FI_PROFILES

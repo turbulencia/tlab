@@ -138,11 +138,8 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
 ! ###################################################################
 ! Calculate pressure
 ! ###################################################################
-  IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN 
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
      CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,3), txc(1,1),txc(1,2), hq, wrk1d,wrk2d,wrk3d)
-     
-  ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     p(:) = C_1_R ! to be developed
      
   ELSE
      CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
@@ -200,9 +197,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
         IF ( flag_buoyancy .EQ. 1 ) THEN
            dummy = C_1_R/froude
            IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
-              IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-                 CALL THERMO_AIRWATER_BUOYANCY(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground,rbackground, hq(1,1))
-              ENDIF
+              CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, hq(1,1))
            ELSE
               wrk1d(1:jmax) = C_0_R
               CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, hq(1,1), wrk1d) ! note that wrk3d is defined as integer.

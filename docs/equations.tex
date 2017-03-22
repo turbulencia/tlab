@@ -4,10 +4,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Compressible formulation}
 
-The energy equation is written in terms of the specific internal energy
-(sensible plus formation). Viscosity, thermal conductivity, diffusivity and the
-specific heat ratio can depend on the temperature. The equation of state
-corresponding to an ideal gas is assumed.
+The energy equation is written in terms of the specific internal energy (sensible plus formation). Viscosity, thermal conductivity, diffusivity and the specific heat ratio can depend on the temperature. The equation of state corresponding to an ideal gas is assumed.
 
 \begin{equation}
 \setlength{\extrarowheight}{1ex}
@@ -43,10 +40,7 @@ and
   p  = (\gamma_0 \mathrm{\bf M}^2)^{-1}\rho T \;.
   \label{eq:state}
 \end{equation}
-The specific heat ratio, $\gamma$, is constant and equal to the reference value
-$\gamma_0=1/(1-R_0/C_{p0})$ and the dimensionless numbers are defined using the
-reference scales $\mathrm{L}_0$, $\mathrm{U}_0$, $\rho_0$
-and $\mathrm{T}_0$ in the usual way,
+The specific heat ratio, $\gamma$, is constant and equal to the reference value $\gamma_0=1/(1-R_0/C_{p0})$ and the dimensionless numbers are defined using the reference scales $\mathrm{L}_0$, $\mathrm{U}_0$, $\rho_0$ and $\mathrm{T}_0$ in the usual way,
 \begin{alignat*}{3}
   \mathrm{\bf Re} & = \frac{\rho_0 \mathrm{U}_0 \mathrm{L}_0}{\mu_0} & \qquad 
   \mathrm{\bf Pr} & = \frac{\mu_0}{(\lambda_0/C_{p0})} & \qquad
@@ -61,12 +55,7 @@ and
 \mathrm{\bf Fr} & = \frac{\mathrm{U}_0^2}{g\mathrm{L}_0} & \qquad \mathrm{\bf
   Ro} = \frac{\mathrm{U}_0}{\mathrm{L}_0f} \;.
 \end{alignat*}
-The body force is expressed in terms of the body force function
-$b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=\rho$. The
-vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the
-magnitude of the vector is complete determined by the corresponding
-non-dimensional number. In this compressible case, the centrifugal term should
-probably be included; not yet studied.
+Thermal energy variables are normalized with $C_{p0}T_0$. The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=\rho$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the vector is complete determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
 
 \subsection{Multi-species compressible flows}
 
@@ -116,23 +105,9 @@ and
 \begin{equation}
   p = (\gamma_0 \mathrm{\bf M}^2)^{-1} \frac{\rho T}{W} 
 \end{equation}
-It can be verified that given all the thermo-chemical properties of the
-components of the mixture as a function of temperature, the previous set of
-equations are closed. Notice that $\gamma$ is no longer a constant and depend on
-the composition of the mixture.
+It can be verified that given all the thermo-chemical properties of the components of the mixture as a function of temperature, the previous set of equations are closed. Notice that $\gamma$ is no longer a constant and depend on the composition of the mixture.
 
-The functions $Y_i^e(\rho,e,\zeta_j)$ need to be provided. The total number of
-species is $N$, need not be equal to the total number of scalars
-transported. (If you want, one set is prognostic variables and the other one is
-diagnostic variables.) This includes the simplest possible case of $Y_i^e =
-\zeta_i$. Another case is equilibrium, e.g. Burke-Schumann approximation, where
-mass fraction of all species is related to the mixture fraction variable,
-$\zeta$.  In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to
-reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction
-of unity Lewis number the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$.
-These relationships are obtained by assuming equal diffusivity of all species
-and a single-step infinitely fast chemical reaction.  For further discussion on
-the formulation see \cite{Williams:1985}.
+The functions $Y_i^e(\rho,e,\zeta_j)$ need to be provided. The total number of species is $N$, need not be equal to the total number of scalars transported. (If you want, one set is prognostic variables and the other one is diagnostic variables.) This includes the simplest possible case of $Y_i^e = \zeta_i$. Another case is equilibrium, e.g. Burke-Schumann approximation, where mass fraction of all species is related to the mixture fraction variable, $\zeta$.  In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction of unity Lewis number the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$. These relationships are obtained by assuming equal diffusivity of all species and a single-step infinitely fast chemical reaction.  For further discussion on the formulation see \cite{Williams:1985}.
 
 \subsection{Multi-species compressible reacting flows}
 
@@ -144,8 +119,7 @@ Add reaction terms to the scalar equations
   - \mathrm{\bf Re}^{-1}\mathrm{\bf Sc}_i^{-1} \partial_k j_{ik} & \color{red}{+ \mathrm{\bf Da}_i\,w_i}
 \end{array}
 \end{equation}
-and $\mathrm{\bf Da}_i$ are the Damk{\"o}hler numbers. A reaction mechanism
-needs to be given to obtain $w_i(\rho,e,\zeta_j)$.
+and $\mathrm{\bf Da}_i$ are the Damk{\"o}hler numbers. A reaction mechanism needs to be given to obtain $w_i(\rho,e,\zeta_j)$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -167,44 +141,17 @@ The Boussinesq approximation is used:
 \end{array}
 \end{equation}
 
-The body force is now the buoyancy and the buoyancy function $b^e(\zeta_i)$
-needs to be provided. The buoyancy function is assumed to be normalized by a
-reference buoyancy (acceleration) $b_0$ so that $\mathrm{\bf
-  Fr}=U_0^2/(b_0L_0)$. (Note that non-dimensional numbers represent the relative
-magnitude of physical processes and thus they are positive semi-definite; the
-sign or direction associated with the process, if any, in indicated in the
-corresponding parameters.)
+The body force is now the buoyancy and the buoyancy function $b^e(\zeta_i)$ needs to be provided. The buoyancy function is assumed to be normalized by a reference buoyancy (acceleration) $b_0$ so that $\mathrm{\bf   Fr}=U_0^2/(b_0L_0)$. (Note that non-dimensional numbers represent the relative magnitude of physical processes and thus they are positive semi-definite; the sign or direction associated with the process, if any, in indicated in the corresponding parameters.)
 
 So far, only the case $\mu^*=1$ in the equations above has been implemented.
 
-Because of the decoupling between the momentum and the internal energy evolution
-equations, one of the scalar equations can correspond to the internal energy
-equation; reaction or phase change processes, as well as radiation processes,
-can then be formulated as the appropriate source terms $\mathrm{\bf
-  Da}_\mathrm{L}w_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}w_\mathrm{R}$,
-respectively, in the corresponding scalar equation. Note that the physical
-meaning of the corresponding (generalized) Damk{\"o}hler numbers $\mathrm{\bf
-  Da}_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}$ is a non-dimensional heat
-parameter, and not a timescale ratio -- which is the correct meaning of the
-Damk{\"o}hler numbers appearing in the evolution equations for the components in
-a compressible mixture. We maintain this inconsistency, instead of introducing
-new symbols and variables, for code simplicity.
+Because of the decoupling between the momentum and the internal energy evolution equations, one of the scalar equations can correspond to the internal energy equation; reaction or phase change processes, as well as radiation processes, can then be formulated as the appropriate source terms $\mathrm{\bf   Da}_\mathrm{L}w_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}w_\mathrm{R}$, respectively, in the corresponding scalar equation. Note that the physical meaning of the corresponding (generalized) Damk{\"o}hler numbers $\mathrm{\bf   Da}_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}$ is a non-dimensional heat parameter, and not a timescale ratio -- which is the correct meaning of the Damk{\"o}hler numbers appearing in the evolution equations for the components in a compressible mixture. We maintain this inconsistency, instead of introducing new symbols and variables, for code simplicity.
 
-Some scalars can be diagnostic and not prognostic variables, so that there is no
-evolution equation associated with them. One common example is liquid content in
-a moist air formulation assuming phase equilibrium. The two global variables
-{\tt inb\_scal} and {\tt inb\_scal\_array} accounts for that possibility. In
-principle, this should be specified through the variable {\tt imixture}. The
-routine {\tt thermodynamics/thermo\_initialize} defines the mixture
-properties. The average statistical data is calculated for all of them,
-prognostic and diagnostic variables.
+Some scalars can be diagnostic and not prognostic variables, so that there is no evolution equation associated with them. One common example is liquid content in a moist air formulation assuming phase equilibrium. The two global variables {\tt inb\_scal} and {\tt inb\_scal\_array} accounts for that possibility. In principle, this should be specified through the variable {\tt imixture}. The routine {\tt thermodynamics/thermo\_initialize} defines the mixture properties. The average statistical data is calculated for all of them, prognostic and diagnostic variables.
 
-Different expressions for the buoyancy and the Coriolis terms are possible
-depending on the geometry and the definition of the (kinematic) modified
-pressure. 
+Different expressions for the buoyancy and the Coriolis terms are possible depending on the geometry and the definition of the (kinematic) modified pressure. 
 
-For the buoyancy (see routine {\tt flow/flow\_buoyancy}), the most common
-expressions are a linear or bilinear relation to the scalar fields as
+For the buoyancy (see routine {\tt flow/flow\_buoyancy}), the most common expressions are a linear or bilinear relation to the scalar fields as
 \begin{equation}
 b^e=\alpha_1\zeta_1+\alpha_2\zeta_2+\ldots+\alpha_\mathrm{\tt inb\_scal\_array+1}\;,
 \end{equation}
@@ -252,19 +199,9 @@ $\zeta_1=\alpha_1/2$.
 % need $\alpha_6$ for the analysis of the source term of the buoyancy evolution
 % equation.)
 
-Note that the buoyancy field is {\it always} treated as a diagnostic variable
-and the average statistical data -- actually from the momentum source term
-$Fr^{-1}b$ -- is calculated as an additional scalar field on top of {\tt
-  inb\_scal\_array} scalars (prognostic plus diagnostic). The only exception
-occurs when the buoyancy function is merely a linear relation because, in that
-case, the corresponding statistical information can be easily obtained from the
-corresponding scalar field.
+Note that the buoyancy field is {\it always} treated as a diagnostic variable and the average statistical data -- actually from the momentum source term $Fr^{-1}b$ -- is calculated as an additional scalar field on top of {\tt   inb\_scal\_array} scalars (prognostic plus diagnostic). The only exception occurs when the buoyancy function is merely a linear relation because, in that case, the corresponding statistical information can be easily obtained from the corresponding scalar field.
 
-In case of the Coriolis force term, the case that is currently implemented in
-that of an Ekman layer forming when a flow in geostrophic balance if bounded by
-a (smooth) solid wall perpendicular to the angular velocity vector. The
-direction $Ox_2$ is defined along the angular velocity, so that $f_1=f_3=0$. The
-momentum equation reads then
+In case of the Coriolis force term, the case that is currently implemented in that of an Ekman layer forming when a flow in geostrophic balance if bounded by a (smooth) solid wall perpendicular to the angular velocity vector. The direction $Ox_2$ is defined along the angular velocity, so that $f_1=f_3=0$. The momentum equation reads then
 \begin{equation}
 \setlength{\extrarowheight}{1ex}
 \begin{array}{rlll}
@@ -282,30 +219,17 @@ momentum equation reads then
   +\mathrm{\bf Fr}^{-1}\, g_3\,b+\mathrm{\bf Ro}^{-1}\,f_2\,(u_1-u_{1,g}) 
 \end{array}
 \end{equation}
-The geostrophic velocity vector $(u_{1,g},\,u_{2,g},\,u_{3,g}) =
-(\cos\alpha,\,0,\,-\sin\alpha)$ is defined in terms of the input parameter
-$\alpha$ (rotation angle around $Ox_2$), to be provided.
+The geostrophic velocity vector $(u_{1,g},\,u_{2,g},\,u_{3,g}) = (\cos\alpha,\,0,\,-\sin\alpha)$ is defined in terms of the input parameter $\alpha$ (rotation angle around $Ox_2$), to be provided.
 
-Radiation heating or cooling can be considered as an additional source term
-$\mathrm{\bf Da}_\mathrm{R}\,r\,\delta_{i\beta}$ in the right-hand side of one
-of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the
-corresponding non-dimensional heat parameter and the radiation function
-$r^e(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional)
-heat parameter $Q$. So far, $\mathrm{\bf Da}_\mathrm{R}=1$ (to be added at the
-end of the input list of the Damk{\"o}hler numbers?). One possible formulation
-is a one-dimensional bulk model (see routine {\tt flow/flow\_radiation}), which
-is represented by radiation functions of the form
+Radiation heating or cooling can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{R}\,r\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the corresponding non-dimensional heat parameter and the radiation function $r^e(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) heat parameter $Q$. So far, $\mathrm{\bf Da}_\mathrm{R}=1$ (to be added at the end of the input list of the Damk{\"o}hler numbers?). One possible formulation is a one-dimensional bulk model (see routine {\tt flow/flow\_radiation}), which is represented by radiation functions of the form
 \begin{equation}
 r^e=\alpha_0 \zeta_{\gamma}\exp\left[
 -\alpha_1^{-1}\int_z^\infty\zeta_{\gamma}(z')\,\mathrm{d}z'\right] \;.
 \end{equation}
-The scalar indeces $\{\beta\,,\gamma\}$ and the parameters $\{\alpha_0\,,\alpha_1\}$ need to be
-provided. Default values are $\beta=1$ and $\gamma=${\tt inb\_scal\_array}. The scalar fields can be average profiles,
-instead of instantaneous values, and non-linear mapping functions can be
-specified.
+The scalar indeces $\{\beta\,,\gamma\}$ and the parameters $\{\alpha_0\,,\alpha_1\}$ need to be provided. Default values are $\beta=1$ and $\gamma=${\tt inb\_scal\_array}. The scalar fields can be average profiles, instead of instantaneous values, and non-linear mapping functions can be specified.
 
 For complex thermodynamics (e.g., airwater), the field $\zeta_\mathrm{\tt inb\_scal\_array}$ is calculated from a nonlinear mapping applied on the field
 \begin{equation}
 \xi =1+\alpha_1\zeta_1+\ldots+\alpha_\mathrm{\tt inb\_scal}\zeta_\mathrm{\tt inb\_scal}\;.
 \end{equation}
-The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of the nonlinear mapping
+The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of the nonlinear mapping.

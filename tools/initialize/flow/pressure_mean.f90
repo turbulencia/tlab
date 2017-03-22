@@ -46,11 +46,12 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 #define p_loc(i)       wrk1d(i,1)
 #define r_loc(i)       wrk1d(i,2)
 #define t_loc(i)       wrk1d(i,3)
-#define ep_loc(i)       wrk1d(i,4)
+#define ep_loc(i)      wrk1d(i,4)
 #define h_loc(i)       wrk1d(i,5)
 #define z1_loc(i)      wrk1d(i,6)
 #define z2_loc(i)      wrk1d(i,7)
-#define wrk1d_loc(i)   wrk1d(i,8)
+#define z3_loc(i)      wrk1d(i,8)
+#define wrk1d_loc(i)   wrk1d(i,9)
 
 ! -------------------------------------------------------------------
 ! Temperature profile is given
@@ -82,18 +83,18 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
            DO j = 1,jmax
               ycenter = y(1) + g(2)%scale*ycoor_tem
               iprof_loc =-iprof_tem
-              h_loc(j) = FLOW_SHEAR_TEMPORAL&
+              z1_loc(j) = FLOW_SHEAR_TEMPORAL&
                    (iprof_loc, thick_tem, delta_tem, mean_tem, ycenter, prof_tem, y(j))
 
               ycenter = y(1) + g(2)%scale*ycoor_i(1)
-              z1_loc(j) =  FLOW_SHEAR_TEMPORAL&
+              z2_loc(j) =  FLOW_SHEAR_TEMPORAL&
                    (iprof_i(1), thick_i(1), delta_i(1), mean_i(1), ycenter, prof_i, y(j))
 
            ENDDO
-           CALL FI_HYDROSTATIC_AIRWATER_H(jmax, y, z1_loc(1), h_loc(1),ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
+           CALL FI_HYDROSTATIC_AIRWATER_H(jmax, y, z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
            DO j = 1,jmax
-              s(:,j,:,1) = z1_loc(j)
-              s(:,j,:,2) = z2_loc(j)
+              s(:,j,:,1) = z2_loc(j)
+              s(:,j,:,2) = z3_loc(j)
               T(:,j,:)   =  t_loc(j)
            ENDDO
 

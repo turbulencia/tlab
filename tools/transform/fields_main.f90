@@ -945,29 +945,29 @@ SUBROUTINE TRANS_FUNCTION(nx,ny,nz, a,b, txc)
   h_0  = 0.955376d0; h_1  = 0.981965d0
   p    = 0.940d0
 
-  txc(:,1) = qt_0 + a(:)*(qt_1-qt_0) ! total water, space for q_l
-  txc(:,2) = C_0_R
-  txc(:,3) = p                       ! pressure
-  txc(:,4) = h_0  + a(:)*(h_1 -h_0 ) ! total enthalpy
+  txc(:,1) = h_0  + a(:)*(h_1 -h_0 ) ! total enthalpy
+  txc(:,2) = qt_0 + a(:)*(qt_1-qt_0) ! total water, space for q_l
+  txc(:,3) = C_0_R
+  txc(:,4) = p                       ! pressure
 
-  CALL THERMO_AIRWATER_PH(nx,ny,nz, txc(1,1), txc(1,4), epbackground,p)
-  CALL THERMO_AIRWATER_TEMPERATURE(nx,ny,nz, txc(1,1), txc(1,4), epbackground, txc(1,5))
+  CALL THERMO_AIRWATER_PH(nx,ny,nz, txc(1,2), txc(1,1), epbackground,p)
+  CALL THERMO_ANELASTIC_TEMPERATURE(nx,ny,nz, txc(1,1), epbackground, txc(1,5))
 
 ! Calculate liquid water temperature from temperature (assuming c_p = c_p,d)
-  txc(:,5) = txc(:,5) - LATENT_HEAT*txc(:,2)
+  txc(:,5) = txc(:,5) - LATENT_HEAT*txc(:,3)
 
 ! Calculate saturation pressure based on the liquid water temperature
-  CALL THERMO_POLYNOMIAL_PSAT(nx,ny,nz, txc(1,5), txc(1,4))
+  CALL THERMO_POLYNOMIAL_PSAT(nx,ny,nz, txc(1,5), txc(1,1))
 
 ! Calculate saturation specific humidity
-  txc(:,4) = C_1_R/(MRATIO*txc(:,3)/txc(:,4)-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-  txc(:,4) = txc(:,4)/(C_1_R+txc(:,4))
+  txc(:,1) = C_1_R/(MRATIO*txc(:,4)/txc(:,1)-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+  txc(:,1) = txc(:,1)/(C_1_R+txc(:,1))
  
 ! Calculate parameter \beta (assuming c_p = c_p,d)
   txc(:,3) = WGHT_INV(2)/WGHT_INV(1)/GRATIO*LATENT_HEAT*LATENT_HEAT / ( txc(:,5)*txc(:,5) )
 
 ! Calculate s
-  b(:) = txc(:,1) - txc(:,4) * ( C_1_R + txc(:,3)*txc(:,1) ) / ( C_1_R + txc(:,3)*txc(:,4) )
+  b(:) = txc(:,2) - txc(:,1) * ( C_1_R + txc(:,3)*txc(:,2) ) / ( C_1_R + txc(:,3)*txc(:,1) )
 
   RETURN
 END SUBROUTINE TRANS_FUNCTION

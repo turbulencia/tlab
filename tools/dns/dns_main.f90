@@ -105,8 +105,7 @@ PROGRAM DNS
 
 ! txc
   inb_txc = 9
-  IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR.  &
-            imode_eqns .EQ. DNS_EQNS_ANELASTIC            ) THEN 
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
                                              inb_txc = 6
      IF ( rkm_mode .EQ. RKM_IMP3_DIFFUSION ) inb_txc = inb_txc+1
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL       .AND. &

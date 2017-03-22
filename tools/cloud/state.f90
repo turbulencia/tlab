@@ -12,7 +12,7 @@ PROGRAM STATE
 
   TREAL p, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep
   TREAL heat1, heat2, cp1, cp2, alpha, as, bs, t_eq, l, cp_ref
-  TREAL r1,r2,r3, h2
+  TREAL r1,r2,r3, h2(3), s(3)
   TINTEGER iopt
 
 ! ###################################################################
@@ -88,7 +88,8 @@ PROGRAM STATE
      z1(1) = qt
      ! CALL THERMO_AIRWATER_PH_RE(i1, i1, i1, z1, p, h, T)
      CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, ep,p)
-     CALL THERMO_AIRWATER_TEMPERATURE(i1, i1, i1, z1, h, ep, T)
+     s(1) = h; s(2:3) = z1(1:2)
+     CALL THERMO_ANELASTIC_TEMPERATURE(i1, i1, i1, s, ep, T)
 
      ql = z1(2)
      qv = qt - ql
@@ -101,7 +102,8 @@ PROGRAM STATE
      r1 = p/(T*(1- qt +WGHT_INV(1)/WGHT_INV(2)*qv ) )
      CALL THERMO_THERMAL_DENSITY(i1,i1,i1,z1,p,T, r2)
      CALL THERMO_CALORIC_ENTHALPY(i1,i1,i1,z1,T,h2)
-     CALL THERMO_AIRWATER_DENSITY(i1,i1,i1, z1,h2,p, r3)
+     h2(2:3) = z1(1:2)
+     CALL THERMO_ANELASTIC_DENSITY(i1,i1,i1, h2,p, r3)
   ENDIF
 
   WRITE(*,*) 'Saturation specific humidity ......:', qs
@@ -114,7 +116,7 @@ PROGRAM STATE
   WRITE(*,*) 'Specific enthalpy .................:', h
   IF ( iopt .EQ. 3 ) THEN
      WRITE(*,*) 'Density ...........................:', r1,r2,r3
-     WRITE(*,*) 'Specific enthalpy .................:', h*1.007*TREF,  h2*1.007*TREF
+     WRITE(*,*) 'Specific enthalpy .................:', h*1.007*TREF,  h2(1)*1.007*TREF
      WRITE(*,*) 'Latent heat........................:', (THERMO_AI(6,1,3))*1.007*TREF 
   ENDIF
   cp_ref = (1-qt)*THERMO_AI(1,1,2) + qt*THERMO_AI(1,1,3)

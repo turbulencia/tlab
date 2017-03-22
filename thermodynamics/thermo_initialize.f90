@@ -542,10 +542,10 @@ SUBROUTINE THERMO_INITIALIZE
         ENDDO
 
 ! -------------------------------------------------------------------
-     CASE DEFAULT
+     ! CASE DEFAULT
         
-        CALL IO_WRITE_ASCII(efile, 'THERMO_INITIALIZE: Must use chemkin data.')
-        CALL DNS_STOP(DNS_ERROR_THERMOCONT)
+     !    CALL IO_WRITE_ASCII(efile, 'THERMO_INITIALIZE: Must use chemkin data.')
+     !    CALL DNS_STOP(DNS_ERROR_THERMOCONT)
 
      END SELECT
 
@@ -632,8 +632,6 @@ SUBROUTINE THERMO_INITIALIZE
   ENDDO
 
   gama0 = CPREF*WREF/(CPREF*WREF-RGAS)
-! Value of R_0/(C_{p,0}W_0) is called GRATIO
-  IF ( gama0 .GT. C_0_R ) GRATIO = (gama0-C_1_R)/gama0
 
   DO is = 1,NSP
      HREF(is) = HREF(is)/(CPREF*TREF)

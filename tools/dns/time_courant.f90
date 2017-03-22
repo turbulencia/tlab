@@ -143,8 +143,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
 ! Incompressible
 ! Calculate global maximum of u/dx + v/dy + w/dz 
 ! -------------------------------------------------------------------
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE   .OR. &
-       imode_eqns .EQ. DNS_EQNS_ANELASTIC             ) THEN
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      DO k = 1,kmax
         DO ij = 1,imax*jmax
            index = ij-1
@@ -236,8 +235,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
 ! Incompressible
 ! Calculate global maximum of \nu*(1/dx^2 + 1/dy^2 + 1/dz^2)
 ! -------------------------------------------------------------------
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE   .OR. &
-       imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      DO k = 1,kmax
         DO ij = 1,imax*jmax
            index = ij-1

@@ -70,8 +70,7 @@ SUBROUTINE DNS_LOGS(iflag)
      ENDIF
 #endif
      
-     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. &
-          imode_eqns .EQ. DNS_EQNS_ANELASTIC     )THEN
+     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         line1 = line1(1:ip)//' '//' DilMin'; ip = ip + 1 + 13
         line1 = line1(1:ip)//' '//' DilMax'; ip = ip + 1 + 13
      ELSE
@@ -108,8 +107,7 @@ SUBROUTINE DNS_LOGS(iflag)
      ENDIF
 #endif
      
-     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. &
-          imode_eqns .EQ. DNS_EQNS_ANELASTIC     )THEN
+     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         WRITE(line2,200) logs_data(10), logs_data(11)
 200     FORMAT(2(1X,E13.6))
         line1 = TRIM(line1)//TRIM(line2)

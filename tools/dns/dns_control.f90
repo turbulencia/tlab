@@ -13,7 +13,7 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL,ONLY : imode_eqns, icalc_scal, inb_scal
-  USE DNS_GLOBAL,ONLY : isize_field, imax,jmax,kmax, itime
+  USE DNS_GLOBAL,ONLY : isize_field, imax,jmax,kmax
   USE DNS_LOCAL, ONLY : ilimit_flow, p_bound_min,p_bound_max, r_bound_min,r_bound_max, d_bound_max
   USE DNS_LOCAL, ONLY : ilimit_scal, s_bound_min,s_bound_max
   USE DNS_LOCAL, ONLY : logs_data
