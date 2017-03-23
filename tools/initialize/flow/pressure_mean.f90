@@ -70,8 +70,10 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
                    (iprof_i(1), thick_i(1), delta_i(1), mean_i(1), ycenter, prof_i, y(j))
 
            ENDDO
-           CALL FI_HYDROSTATIC_AIRWATER_T&
-                (y, dy, z1_loc(1), t_loc(1), p_loc(1), r_loc(1), wrk1d_loc(1), wrk2d, wrk3d)
+           ! CALL FI_HYDROSTATIC_AIRWATER_T&
+           !      (y, dy, z1_loc(1), t_loc(1), p_loc(1), r_loc(1), wrk1d_loc(1), wrk2d, wrk3d)
+           CALL IO_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 1 undeveloped')
+           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
            DO j = 1,jmax
               s(:,j,:,1) = z1_loc(j)
               s(:,j,:,2) = z2_loc(j)
@@ -91,7 +93,8 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
                    (iprof_i(1), thick_i(1), delta_i(1), mean_i(1), ycenter, prof_i, y(j))
 
            ENDDO
-           CALL FI_HYDROSTATIC_H(jmax, y, z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
+!           CALL FI_HYDROSTATIC_H_OLD(jmax, y, z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
+           CALL FI_HYDROSTATIC_H(g(2), z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
            DO j = 1,jmax
               s(:,j,:,1) = z2_loc(j)
               s(:,j,:,2) = z3_loc(j)
@@ -101,7 +104,10 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 ! General case: temperature/mixture profile is given
         ELSE
            ycenter = y(1) + ycoor_tem*g(2)%scale
-           CALL FI_HYDROSTATIC(i1, jmax, i1, ycenter, y, p_loc(1))
+!           CALL FI_HYDROSTATIC(i1, jmax, i1, ycenter, y, p_loc(1))
+           CALL IO_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 2 undeveloped')
+           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+           
            DO j = 1,jmax
               p_loc(j) = p_init*EXP(p_loc(j))
            ENDDO

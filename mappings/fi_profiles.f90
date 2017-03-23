@@ -16,7 +16,7 @@ SUBROUTINE FI_PROFILES(wrk1d)
 
 #include "integers.h"
 
-  TREAL, DIMENSION(g(2)%size,inb_scal_array+1), INTENT(INOUT) :: wrk1d
+  TREAL, DIMENSION(g(2)%size,*), INTENT(INOUT) :: wrk1d
   
 ! -----------------------------------------------------------------------
   TINTEGER j, is
@@ -41,7 +41,8 @@ SUBROUTINE FI_PROFILES(wrk1d)
      epbackground = (g(2)%nodes - g(2)%nodes(1) - g(2)%scale*ycoor_i(1)) *GRATIO /p_scale_height
      
      IF ( buoyancy%active(2) ) THEN
-        CALL FI_HYDROSTATIC_H(g(2)%size, g(2)%nodes, wrk1d, epbackground, tbackground, pbackground, wrk1d(1,4))
+!        CALL FI_HYDROSTATIC_H_OLD(g(2)%size, g(2)%nodes, wrk1d, epbackground, tbackground, pbackground, wrk1d(1,4))
+        CALL FI_HYDROSTATIC_H(g(2), wrk1d, epbackground, tbackground, pbackground, wrk1d(1,inb_scal_array+1))
      ENDIF
      
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN

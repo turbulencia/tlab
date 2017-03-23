@@ -23,17 +23,17 @@ PRJS=\
      Case22 \
      Case23 \
      Case24 \
-     Case25 \
-     Case26 \
-     Case27 \
-     Case28 \
      Case31 \
      Case32 \
      Case33 \
      Case34 \
-     Case35 \
-     Case36 \
-     Case40
+     Case41 \
+     Case42 \
+     Case43 \
+     Case44 \
+     Case45 \
+     Case46 \
+     Case50
 
      # Case11 \
      # Case12 \

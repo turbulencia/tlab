@@ -118,7 +118,7 @@ MODULE DNS_GLOBAL
   TREAL    :: mean_v, mean_w      ! in these two directions, only mean values
 
 ! Flow: thermodynamics
-  TREAL    :: p_init, p_scale_height        ! reference pressure
+  TREAL    :: p_init, p_scale_height, ycoor_p
   TREAL, DIMENSION(:), ALLOCATABLE :: pbackground
   
   TINTEGER :: iprof_rho

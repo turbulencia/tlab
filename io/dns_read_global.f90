@@ -642,7 +642,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Pressure',   '0.0', p_init)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Density',    '0.0', mean_rho)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Temperature','0.0', mean_tem)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ScaleHeight','0.0', p_scale_height)
 
 ! -------------------------------------------------------------------
 ! Shear flow values
@@ -708,11 +707,13 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickTemperature', '0.0', thick_tem)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaTemperature', '0.0', delta_tem)
 
+! pressure
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorPressure','0.5', ycoor_p)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ScaleHeight',  '0.0', p_scale_height)
+  
 ! additional specific data
-!  IF ( ABS(iprof_tem) .EQ. PROFILE_LINEAR_ERF ) THEN
-     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'BottomSlope', '0.0',  prof_tem(1))
-     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'UpperSlope',  '0.0',  prof_tem(2))
-!  ENDIF
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'BottomSlope', '0.0',  prof_tem(1))
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'UpperSlope',  '0.0',  prof_tem(2))
 
 ! consistency check
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
