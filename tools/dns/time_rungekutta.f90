@@ -155,7 +155,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 #ifdef USE_PROFILE
      CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES)
 #endif
-     IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
+     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         IF    ( rkm_mode .EQ. RKM_EXP3 .OR. rkm_mode .EQ. RKM_EXP4 ) THEN 
            CALL TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(&
                 dte,etime, q,hq,s,hs,txc, vaux, wrk1d,wrk2d,wrk3d, &
@@ -166,9 +166,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
                 dte,etime, kex(rkm_substep), kim(rkm_substep), kco(rkm_substep), &
                 q,hq,s,hs,txc, vaux, wrk1d,wrk2d,wrk3d)
         ENDIF
-     ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
-        CALL TIME_SUBSTEP_ANELASTIC(&
-             dte,etime, q,hq,s,hs,txc, vaux, wrk1d,wrk2d,wrk3d)
+
      ELSE
         CALL TIME_SUBSTEP_COMPRESSIBLE(&
              dte,etime, q,hq,s,hs, x_inf,y_inf,z_inf, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)

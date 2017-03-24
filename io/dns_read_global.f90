@@ -854,8 +854,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
 ! Initializing thermodynamic data of the mixture
 ! -------------------------------------------------------------------
-  IF ( icalc_scal .EQ. 0 ) inb_scal_local1 = 0
-     
   inb_scal       = inb_scal_local1 ! Default is general N scalars; gama0 has been already read above.
   inb_scal_array = inb_scal
   NSP            = inb_scal

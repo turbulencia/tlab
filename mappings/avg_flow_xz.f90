@@ -1532,9 +1532,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 ! Based on delta_rho
 ! -------------------------------------------------------------------
 ! 1% and 25% thickness
-     IF ( imode_eqns .NE. DNS_EQNS_INCOMPRESSIBLE .AND. &
-          imode_eqns .NE. DNS_EQNS_ANELASTIC      .AND. &
-          ABS(delta_rho) .GT. C_SMALL_R                 ) THEN
+     IF ( imode_eqns .NE. DNS_EQNS_INCOMPRESSIBLE .AND. imode_eqns .NE. DNS_EQNS_ANELASTIC &
+          .AND. ABS(delta_rho) .GT. C_SMALL_R ) THEN
         dummy = mean_rho + (C_05_R-C_1EM2_R)*delta_rho
         delta_hb01 = LOWER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
         dummy = mean_rho - (C_05_R-C_1EM2_R)*delta_rho

@@ -43,7 +43,10 @@ Case20. Subsiding shell; airwater. Gravity vector along the horizontal.
 Case21. Subsiding shell; airwater. Broadband perturbation.
 Case22. Convective boundary layer with quadratic chemistry in three pasive scalars.
 Case23. Rayleigh-Benard convection with Dirichlet boundary conditions.
-Case24. Stratocumulus-topped boundary layer; airwater equilibrium incompressible formulation.
+Case24. Airwater equilibrium incompressible formulation: Stratocumulus-topped boundary layer.
+Case25. Anelastic formulation of CBL.
+Case26. Airvapor anelastic formulation of CBL.
+Case27. Airwater equilibrium anelastic formulation: Stratocumulus-topped boundary layer.
 
 2D cases: Lagrangian routines
 
