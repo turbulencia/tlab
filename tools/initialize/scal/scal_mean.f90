@@ -11,8 +11,7 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL, ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i, diam_i, jet_i
   USE DNS_GLOBAL, ONLY : iprof_u, mean_u, delta_u, thick_u, ycoor_u, prof_u, diam_u, jet_u
   USE DNS_GLOBAL, ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem, diam_tem, jet_tem
-  USE DNS_GLOBAL, ONLY : iprof_rho, delta_rho
-  USE DNS_GLOBAL, ONLY : p_init
+  USE DNS_GLOBAL, ONLY : pbg, rbg
 
 #ifdef USE_MPI
   USE DNS_MPI
@@ -81,7 +80,7 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
      IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
 
 ! temperature/mixture profile are given
-        IF ( iprof_rho .EQ. PROFILE_NONE ) THEN
+        IF ( rbg%type .EQ. PROFILE_NONE ) THEN
 #define rho_vi(j) wrk1d(j,1)
 #define u_vi(j)   wrk1d(j,2)
 #define z_vi(j)   wrk1d(j,3)
@@ -112,7 +111,7 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
            ENDDO
 ! the species array here is wrong for multispecies case !!!
            DO ij = 1,imax*jmax
-              p_loc(ij,1) = p_init
+              p_loc(ij,1) = pbg%mean
            ENDDO
            CALL THERMO_THERMAL_DENSITY&
                 (imax, jmax, i1, s, p_loc(1,1), t_loc(1,1), rho_loc(1,1))
@@ -132,7 +131,7 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
            ENDDO
 
 ! 2D distributions of density and velocity
-           IF ( delta_rho .NE. C_0_R ) THEN
+           IF ( rbg%delta .NE. C_0_R ) THEN
               CALL FLOW_JET_SPATIAL_DENSITY(imax,jmax, iprof_tem,thick_tem,delta_tem,mean_tem, &
                    ycoor_tem,diam_tem,jet_tem, iprof_u,thick_u,delta_u,mean_u,ycoor_u,diam_u, &
                    jet_u, g(2)%scale, g(1)%nodes, g(2)%nodes, s,p_loc(1,1),rho_vi(1),u_vi(1),aux1(1),rho_loc(1,1), &

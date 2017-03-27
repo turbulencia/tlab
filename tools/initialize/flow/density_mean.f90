@@ -29,7 +29,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL,    ONLY : g, j1bc
   USE DNS_GLOBAL,    ONLY : imode_sim, imode_flow, imode_fdm, inb_scal, imax,jmax,kmax
   USE DNS_GLOBAL,    ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem, diam_tem, jet_tem
-  USE DNS_GLOBAL,    ONLY : iprof_rho, mean_rho, delta_rho, thick_rho, ycoor_rho, prof_rho, diam_rho
+  USE DNS_GLOBAL,    ONLY : rbg
   USE DNS_GLOBAL,    ONLY : iprof_u, mean_u, delta_u, thick_u, ycoor_u, prof_u, diam_u, jet_u
   USE DNS_GLOBAL,    ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i, diam_i
   USE DNS_GLOBAL,    ONLY : buoyancy
@@ -62,7 +62,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 ! Isotropic case
 ! ###################################################################
   IF      ( imode_flow .EQ. DNS_FLOW_ISOTROPIC ) THEN
-     rho =  rho + mean_rho
+     rho =  rho + rbg%mean
 
 ! ###################################################################
 ! Shear layer case
@@ -80,7 +80,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 #define RHO_MEAN_LOC(i,j,k) txc(i,j,k)
 
 ! temperature/mixture profile are given
-           IF ( iprof_rho .EQ. PROFILE_NONE ) THEN
+           IF ( rbg%type .EQ. PROFILE_NONE ) THEN
               ycenter = y(1) + g(2)%scale*ycoor_tem
               DO j = 1,jmax
                  dummy =  FLOW_SHEAR_TEMPORAL&
@@ -108,10 +108,10 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! density profile itself is given
            ELSE
-              ycenter = y(1) + g(2)%scale*ycoor_rho
+              ycenter = y(1) + g(2)%scale*rbg%ymean
               DO j = 1,jmax
                  dummy =  FLOW_SHEAR_TEMPORAL&
-                      (iprof_rho, thick_rho, delta_rho, mean_rho, ycenter, prof_rho, y(j))
+                      (rbg%type, rbg%thick, rbg%delta, rbg%mean, ycenter, rbg%parameters, y(j))
                  rho(:,j,:) = rho(:,j,:) + dummy
               ENDDO
 
@@ -159,7 +159,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 
 ! temperature/mixture profile are given
-     IF ( iprof_rho .EQ. PROFILE_NONE ) THEN
+     IF ( rbg%type .EQ. PROFILE_NONE ) THEN
         ycenter = y(1) + g(2)%scale*ycoor_tem
         DO j = 1,jmax
            dummy = FLOW_JET_TEMPORAL&
@@ -187,10 +187,10 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 ! Only if there is a density variation. Constant density is already
 ! initialized in previous routine segment.
 ! -------------------------------------------------------------------
-     IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. delta_rho .NE. C_0_R ) THEN
+     IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. rbg%delta .NE. C_0_R ) THEN
 
 ! temperature/mixture profile are given
-        IF ( iprof_rho .EQ. PROFILE_NONE ) THEN
+        IF ( rbg%type .EQ. PROFILE_NONE ) THEN
 #define rho_vi(j) wrk1d(j,1)
 #define u_vi(j)   wrk1d(j,2)
 #define aux1(j)   wrk1d(j,3)
@@ -218,10 +218,10 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! density profile itself is given
         ELSE
-           ycenter = y(1) + g(2)%scale*ycoor_rho
+           ycenter = y(1) + g(2)%scale*rbg%ymean
            DO j = 1,jmax
               dummy =  FLOW_JET_TEMPORAL&
-                   (iprof_rho, thick_rho, delta_rho, mean_rho, diam_rho, ycenter, prof_rho, y(j))
+                   (rbg%type, rbg%thick, rbg%delta, rbg%mean, rbg%diam, ycenter, rbg%parameters, y(j))
               rho(:,j,:) = rho(:,j,:) + dummy
            ENDDO
 

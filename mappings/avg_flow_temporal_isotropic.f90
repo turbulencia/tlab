@@ -24,7 +24,7 @@ SUBROUTINE AVG_FLOW_TEMPORAL_ISOTROPIC(dx,dy,dz, rho,u,v,w,p, &
 #include "mpif.h"
 #endif
 !  TINTEGER itime, imax, jmax, kmax, i1bc, j1bc, k1bc, imode_fdm
-!  TREAL rtime, vol, visc, gama0, cond, mean_rho, p_init
+!  TREAL rtime, vol, visc, gama0, cond, mean_rho, pbg%mean
 
   TREAL, DIMENSION(*)                :: dx, dy, dz
   TREAL, DIMENSION(imax,jmax,kmax)   :: u, v, w, rho, p, vis
@@ -336,8 +336,8 @@ SUBROUTINE AVG_FLOW_TEMPORAL_ISOTROPIC(dx,dy,dz, rho,u,v,w,p, &
      DO i = 1,imax*jmax
         IF ( p(i,1,k) .GT. C_0_R .AND. &
              rho(i,1,k) .GT. C_0_R ) THEN
-           wrk3d(i,1,k) = log(p(i,1,k)/p_init)&
-                - gama0 * log(rho(i,1,k)/mean_rho)
+           wrk3d(i,1,k) = log(p(i,1,k)/pbg%mean)&
+                - gama0 * log(rho(i,1,k)/rbg%mean)
         ELSE
            wrk3d(i,1,k) = C_BIG_R
         ENDIF
@@ -349,8 +349,8 @@ SUBROUTINE AVG_FLOW_TEMPORAL_ISOTROPIC(dx,dy,dz, rho,u,v,w,p, &
      DO i = 1,imax*jmax
         IF ( p(i,1,k) .GT. C_0_R .AND. &
              rho(i,1,k) .GT. C_0_R ) THEN
-           wrk3d(i,1,k) = (log(p(i,1,k)/p_init)&
-                - gama0 * log(rho(i,1,k)/mean_rho) &
+           wrk3d(i,1,k) = (log(p(i,1,k)/pbg%mean)&
+                - gama0 * log(rho(i,1,k)/rbg%mean) &
                 - entropy)**2
         ELSE
            wrk3d(i,1,k) = C_BIG_R

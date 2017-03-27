@@ -17,7 +17,7 @@
 !#
 !# Calculate entropy from T, p and composition. The reference state 
 !# is T_0, which is set to 298 K in the case of multispecies, and 
-!# p_init. Nondimensional with C_{p,0}.
+!# pbg%mean. Nondimensional with C_{p,0}.
 !#
 !########################################################################
 !# ARGUMENTS 
@@ -25,7 +25,7 @@
 !########################################################################
 SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
 
-  USE DNS_GLOBAL, ONLY : p_init
+  USE DNS_GLOBAL, ONLY : pbg
 
   USE THERMO_GLOBAL, ONLY : imixture, gama0, GRATIO
   USE THERMO_GLOBAL, ONLY : NSP, NCP_CHEMKIN, WGHT_INV, THERMO_AI, THERMO_TLIM
@@ -48,7 +48,7 @@ SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
   alpha = (gama0-C_1_R)/gama0
   IF ( imixture .EQ. 0 ) THEN
      DO ij = 1,nx*ny*nz
-        s(ij) = log(T(ij)/(p(ij)/p_init)**alpha)
+        s(ij) = log(T(ij)/(p(ij)/pbg%mean)**alpha)
      ENDDO
 
 ! ###################################################################
@@ -79,7 +79,7 @@ SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
               s(ij) = s(ij) - GRATIO*YMASS(is)*WGHT_INV(is)*log(XMOL_I)
            ENDIF
         ENDDO
-        s(ij) = s(ij) - GRATIO*WMEAN_INV*log(p(ij)/p_init)
+        s(ij) = s(ij) - GRATIO*WMEAN_INV*log(p(ij)/pbg%mean)
 
         s(ij) = s(ij) + z1(ij,2)*(THERMO_AI(7,im,3)+THERMO_AI(1,1,3)*log(T(ij)))
 
@@ -118,7 +118,7 @@ SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
               s(ij) = s(ij) - GRATIO*YMASS(is)*WGHT_INV(is)*log(XMOL_I)
            ENDIF
         ENDDO
-        s(ij) = s(ij) - GRATIO*WMEAN_INV*log(p(ij)/p_init)
+        s(ij) = s(ij) - GRATIO*WMEAN_INV*log(p(ij)/pbg%mean)
      ENDDO
   ENDIF
 

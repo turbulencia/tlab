@@ -7,7 +7,7 @@ SUBROUTINE FI_PROFILES(wrk1d)
   USE DNS_GLOBAL, ONLY : inb_scal, inb_scal_array
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : iprof_i, ycoor_i, thick_i, delta_i, mean_i, prof_i
-  USE DNS_GLOBAL, ONLY : p_scale_height, damkohler
+  USE DNS_GLOBAL, ONLY : pbg, damkohler
   USE DNS_GLOBAL, ONLY : rbackground, bbackground, pbackground, tbackground, epbackground
   USE DNS_GLOBAL, ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture, GRATIO
@@ -36,9 +36,9 @@ SUBROUTINE FI_PROFILES(wrk1d)
      ENDDO
   ENDDO
      
-  IF ( p_scale_height .GT. C_0_R ) THEN
+  IF ( pbg%parameters(1) .GT. C_0_R ) THEN
 ! Calculate derived thermodynamic profiles
-     epbackground = (g(2)%nodes - g(2)%nodes(1) - g(2)%scale*ycoor_i(1)) *GRATIO /p_scale_height
+     epbackground = (g(2)%nodes - g(2)%nodes(1) - g(2)%scale*ycoor_i(1)) *GRATIO /pbg%parameters(1)
      
      IF ( buoyancy%active(2) ) THEN
 !        CALL FI_HYDROSTATIC_H_OLD(g(2)%size, g(2)%nodes, wrk1d, epbackground, tbackground, pbackground, wrk1d(1,4))

@@ -25,7 +25,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
   USE DNS_TYPES, ONLY : grid_structure
 
   USE DNS_GLOBAL, ONLY : imode_eqns
-  USE DNS_GLOBAL, ONLY : p_init, ycoor_p, p_scale_height, damkohler, buoyancy
+  USE DNS_GLOBAL, ONLY : pbg, damkohler, buoyancy
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
@@ -44,7 +44,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
   
 ! ###################################################################
 ! Get the center  
-  ycenter = g%nodes(1) + ycoor_p *g%scale
+  ycenter = g%nodes(1) + pbg%ymean *g%scale
   DO j = 1,g%size
      IF ( g%nodes(j  ) .LE. ycenter .AND. &
           g%nodes(j+1) .GT. ycenter ) THEN
@@ -63,7 +63,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
 
   niter = 10
 
-  p(:) = p_init        ! initialize iteration
+  p(:) = pbg%mean        ! initialize iteration
   IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Get the composition, if necessary
      s(:,3) = C_0_R
   ENDIF
@@ -71,7 +71,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
 ! Setting the pressure entry to 1 to get 1/RT.
         CALL THERMO_ANELASTIC_DENSITY(i1,g%size,i1, s, e,wrk1d(1,6), wrk1d(1,7))
-        dummy = C_1_R / SIGN(p_scale_height,buoyancy%vector(2))
+        dummy = C_1_R / SIGN(pbg%parameters(1),buoyancy%vector(2))
      ELSE
         CALL THERMO_AIRWATER_PH_RE(i1,g%size, i1, s(1,2), p, s(1,1), T)
 ! Setting the pressure entry to 1 to get 1/RT.
@@ -85,7 +85,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
      CALL PENTADSS(g%size-1,i1, wrk1d(2,1),wrk1d(2,2),wrk1d(2,3),wrk1d(2,4),wrk1d(2,5), p(2))
      p(1) = C_0_R
 
-! Calculate pressure and normalize s.t. p=p_init at y=ycoor_p
+! Calculate pressure and normalize s.t. p=pbg%mean at y=pbg%ymean
      p(:) = EXP(p(:))
      IF ( ABS(ycenter-g%nodes(jcenter)) .EQ. C_0_R ) THEN
         dummy = p(jcenter)
@@ -93,7 +93,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
         dummy = p(jcenter) + (p(jcenter+1)      -p(jcenter)      ) &
                            / (g%nodes(jcenter+1)-g%nodes(jcenter)) *(ycenter-g%nodes(jcenter))
      ENDIF
-     dummy = p_init /dummy     
+     dummy = pbg%mean /dummy     
      p(:)  = dummy *p(:)
 
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Get the composition, if necessary
@@ -302,7 +302,7 @@ END SUBROUTINE FI_HYDROSTATIC_H
 ! SUBROUTINE FI_HYDROSTATIC_H_OLD(nmax, y, s, e, T,p, wrk1d)
 
 !   USE DNS_GLOBAL, ONLY : imode_eqns
-!   USE DNS_GLOBAL, ONLY : p_init, scaley, damkohler, ycoor_p !ycoor_tem, ycoor_i
+!   USE DNS_GLOBAL, ONLY : pbg%mean, scaley, damkohler, ycoor_p !ycoor_tem, ycoor_i
 !   USE THERMO_GLOBAL, ONLY : imixture
 
 !   IMPLICIT NONE
@@ -329,11 +329,11 @@ END SUBROUTINE FI_HYDROSTATIC_H
 !      wrk1d(:,2) = e(:)
 !   ENDIF
 
-!   p(:) = p_init        ! initialize iteration
+!   p(:) = pbg%mean        ! initialize iteration
 !   DO iter = 1,niter    ! iterate
 !      wrk1d(:,1) = p(:) ! pressure from hydrostatic equilibrium
 !      CALL FI_HYDROSTATIC_STEPS(i1,nmax,i1, i2, ycenter, y, p, wrk1d)
-!      p(:) = p_init*EXP(p(:))
+!      p(:) = pbg%mean*EXP(p(:))
 
 !   ENDDO
 
@@ -357,7 +357,7 @@ END SUBROUTINE FI_HYDROSTATIC_H
 ! !########################################################################
 ! SUBROUTINE FI_HYDROSTATIC_AIRWATER_T(y, dy, s, T, p, rho, wrk1d, wrk2d, wrk3d)
 
-!   USE DNS_GLOBAL, ONLY : p_init, ycoor_tem, scaley
+!   USE DNS_GLOBAL, ONLY : pbg%mean, ycoor_tem, scaley
 !   USE DNS_GLOBAL, ONLY : imode_fdm, jmax, j1bc
 !   USE DNS_GLOBAL, ONLY : buoyancy
 
@@ -388,7 +388,7 @@ END SUBROUTINE FI_HYDROSTATIC_H
 !      ycenter = y(1) + ycoor_tem*scaley
 !      CALL FI_HYDROSTATIC_STEPS(i1, jmax, i1, i1, ycenter, y, p, s(1,2))
 !      DO ij = 1,jmax
-!         p(ij) = p_init*EXP(p(ij))
+!         p(ij) = pbg%mean*EXP(p(ij))
 !      ENDDO
 
 ! ! density profile from pressure gradient

@@ -16,7 +16,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, jmax_total, isize_field, area
   USE DNS_GLOBAL,    ONLY : imode_flow
   USE DNS_GLOBAL,    ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem
-  USE DNS_GLOBAL,    ONLY : iprof_rho
+  USE DNS_GLOBAL,    ONLY : rbg
   USE THERMO_GLOBAL, ONLY : imixture
   USE FLOW_LOCAL
 #ifdef USE_MPI
@@ -128,7 +128,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
 ! -------------------------------------------------------------------
 ! temperature
 ! -------------------------------------------------------------------
-     IF ( iprof_rho .EQ. PROFILE_NONE ) THEN
+     IF ( rbg%type .EQ. PROFILE_NONE ) THEN
 
 ! temperature/mixture profile is given
         IF ( iprof_tem .GT. 0 ) THEN

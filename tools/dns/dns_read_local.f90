@@ -5,7 +5,7 @@
 SUBROUTINE DNS_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile
-  USE DNS_GLOBAL,    ONLY : p_init, mean_rho
+  USE DNS_GLOBAL,    ONLY : pbg, rbg
   USE DNS_GLOBAL,    ONLY : imode_sim, icalc_scal, inb_flow, inb_scal
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, iunify, imode_fdm
   USE DNS_LOCAL
@@ -833,12 +833,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
 ! -------------------------------------------------------------------
 ! Control limits
-! I need mean_rho
+! I need rbg%mean
 ! -------------------------------------------------------------------
-  IF ( p_bound_min .LT. C_0_R ) p_bound_min = p_init*C_1EM6_R
-  IF ( p_bound_max .LT. C_0_R ) p_bound_max = p_init/C_1EM6_R
-  IF ( r_bound_min .LT. C_0_R ) r_bound_min = mean_rho*C_1EM6_R
-  IF ( r_bound_max .LT. C_0_R ) r_bound_max = mean_rho/C_1EM6_R
+  IF ( p_bound_min .LT. C_0_R ) p_bound_min = pbg%mean*C_1EM6_R
+  IF ( p_bound_max .LT. C_0_R ) p_bound_max = pbg%mean/C_1EM6_R
+  IF ( r_bound_min .LT. C_0_R ) r_bound_min = rbg%mean*C_1EM6_R
+  IF ( r_bound_max .LT. C_0_R ) r_bound_max = rbg%mean/C_1EM6_R
 
 ! -------------------------------------------------------------------
 ! Buffer zone

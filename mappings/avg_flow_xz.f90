@@ -26,7 +26,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE DNS_GLOBAL, ONLY : froude, visc, rossby
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
   USE DNS_GLOBAL, ONLY : delta_u, ycoor_u, ycoor_i
-  USE DNS_GLOBAL, ONLY : mean_rho, delta_rho, ycoor_rho
+  USE DNS_GLOBAL, ONLY : rbg
   USE DNS_GLOBAL, ONLY : bbackground, epbackground, pbackground, rbackground, tbackground
   USE THERMO_GLOBAL, ONLY : imixture, MRATIO, GRATIO
   USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV
@@ -1453,7 +1453,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      SourcePot(:) =-rSb(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale*ycoor_i(inb_scal))
      
   ELSE
-     Pot(:)       =-rR(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale*ycoor_rho)*buoyancy%vector(2)
+     Pot(:)       =-rR(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale*rbg%ymean)*buoyancy%vector(2)
      SourcePot(:) = C_0_R
      
   ENDIF
@@ -1514,12 +1514,12 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         DO j=1, jmax
            wrk1d(j,1) = rR(j)*(C_025_R-(fU(j)/delta_u)**2)
         ENDDO
-        delta_m = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)/mean_rho
+        delta_m = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)/rbg%mean
            
         DO j=1, jmax
            wrk1d(j,1) = ( Tau_xy(j) -  rR(j)*Rxy(j) )*fU_y(j)
         ENDDO
-        delta_m_p = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)*C_2_R/(mean_rho*delta_u**3)
+        delta_m_p = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)*C_2_R/(rbg%mean*delta_u**3)
 
      ELSE
         delta_w   = C_1_R
@@ -1533,28 +1533,28 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 ! -------------------------------------------------------------------
 ! 1% and 25% thickness
      IF ( imode_eqns .NE. DNS_EQNS_INCOMPRESSIBLE .AND. imode_eqns .NE. DNS_EQNS_ANELASTIC &
-          .AND. ABS(delta_rho) .GT. C_SMALL_R ) THEN
-        dummy = mean_rho + (C_05_R-C_1EM2_R)*delta_rho
+          .AND. ABS(rbg%delta) .GT. C_SMALL_R ) THEN
+        dummy = rbg%mean + (C_05_R-C_1EM2_R)*rbg%delta
         delta_hb01 = LOWER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
-        dummy = mean_rho - (C_05_R-C_1EM2_R)*delta_rho
+        dummy = rbg%mean - (C_05_R-C_1EM2_R)*rbg%delta
         delta_ht01 = UPPER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
 
-        delta_hb01 = (g(2)%nodes(1) + g(2)%scale*ycoor_rho) - delta_hb01  
-        delta_ht01 = delta_ht01 - (g(2)%nodes(1) + g(2)%scale*ycoor_rho)
+        delta_hb01 = (g(2)%nodes(1) + g(2)%scale*rbg%ymean) - delta_hb01  
+        delta_ht01 = delta_ht01 - (g(2)%nodes(1) + g(2)%scale*rbg%ymean)
         delta_h01  = delta_ht01 + delta_hb01
 
-        dummy = mean_rho + (C_05_R-C_025_R)*delta_rho
+        dummy = rbg%mean + (C_05_R-C_025_R)*rbg%delta
         delta_hb25 = LOWER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
-        dummy = mean_rho - (C_05_R-C_025_R)*delta_rho
+        dummy = rbg%mean - (C_05_R-C_025_R)*rbg%delta
         delta_ht25 = UPPER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
 
-        delta_hb25 = (g(2)%nodes(1) + g(2)%scale*ycoor_rho) - delta_hb25  
-        delta_ht25 = delta_ht25 - (g(2)%nodes(1) + g(2)%scale*ycoor_rho)
+        delta_hb25 = (g(2)%nodes(1) + g(2)%scale*rbg%ymean) - delta_hb25  
+        delta_ht25 = delta_ht25 - (g(2)%nodes(1) + g(2)%scale*rbg%ymean)
         delta_h25  = delta_ht25 + delta_hb25
 
 ! Mixing, Youngs definition
-        rho_min = mean_rho - C_05_R*ABS(delta_rho)
-        rho_max = mean_rho + C_05_R*ABS(delta_rho)
+        rho_min = rbg%mean - C_05_R*ABS(rbg%delta)
+        rho_max = rbg%mean + C_05_R*ABS(rbg%delta)
         wrk3d = (rho - rho_min) *(rho_max -rho)
         CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d, wrk1d(1,2), area)
         mixing1 = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
@@ -1564,8 +1564,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         mixing1 = mixing1/SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
 
 ! Mixing, Cook's definition
-        rho_min = mean_rho - C_05_R*ABS(delta_rho)
-        rho_max = mean_rho + C_05_R*ABS(delta_rho)
+        rho_min = rbg%mean - C_05_R*ABS(rbg%delta)
+        rho_max = rbg%mean + C_05_R*ABS(rbg%delta)
         DO k = 1,kmax
            DO i = 1,imax*jmax
               wrk3d(i,1,k) = MIN(rho(i,1,k)-rho_min,rho_max-rho(i,1,k))
@@ -1605,7 +1605,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         VAUXPRE1 =  g(2)%nodes(j)
         VAUXPRE2 = (g(2)%nodes(j)-g(2)%scale*ycoor_u  -g(2)%nodes(1))/delta_m
         VAUXPRE3 = (g(2)%nodes(j)-g(2)%scale*ycoor_u  -g(2)%nodes(1))/delta_w
-        VAUXPRE4 = (g(2)%nodes(j)-g(2)%scale*ycoor_rho-g(2)%nodes(1))/delta_h01
+        VAUXPRE4 = (g(2)%nodes(j)-g(2)%scale*rbg%ymean-g(2)%nodes(1))/delta_h01
      ENDDO
 
 ! -------------------------------------------------------------------

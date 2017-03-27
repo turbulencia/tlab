@@ -6,6 +6,13 @@ MODULE DNS_TYPES
 
   TINTEGER, PARAMETER :: MAX_PARS = 10
 
+  TYPE background_d
+     SEQUENCE
+     TINTEGER type
+     TREAL reference, mean, delta, ymean, thick, diam
+     TREAL, DIMENSION(MAX_PARS) :: parameters !, jet
+  END TYPE background_d
+
   TYPE term_structure
      SEQUENCE
      TINTEGER type

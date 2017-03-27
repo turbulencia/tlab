@@ -139,7 +139,7 @@ PROGRAM INIRAND
      ENDIF
      
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-        q(:,4) = p_init; q(:,5) = mean_rho
+        q(:,4) = pbg%mean; q(:,5) = rbg%mean
      ENDIF
      
      CALL DNS_WRITE_FIELDS('flow.rand', i2, imax,jmax,kmax, inb_flow, isize_field, q, txc)

@@ -377,7 +377,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
   dt_mean = (rtime-rstattimeorg)/M_REAL(itime-istattimeorg)
   U2 = mean_u   - C_05_R*delta_u
   T2 = mean_tem - C_05_R*delta_tem
-  R2 = mean_rho - C_05_R*delta_rho
+  R2 = rbg%mean - C_05_R*rbg%delta
 
   IF ( itxc .LT. nstatavg*jmax*LAST_INDEX ) THEN
      CALL IO_WRITE_ASCII(efile,'AVG_FLOW_SPATIAL_LAYER: Not enough space in stat')
@@ -1078,7 +1078,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         IntExcMomU(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
 ! pressure part
         DO j = jmin_loc,jmax_loc
-           wrk1d(j,1) = (rP(n,j)-p_init)
+           wrk1d(j,1) = (rP(n,j)-pbg%mean)
         ENDDO
         IntExcMomP(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
 ! Reynolds stress part
@@ -1164,7 +1164,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
           delta_01_d(1), delta_01_u(1), U2, r005)
 
 ! Jet half-width based on temperature/density
-     IF ( delta_rho .NE. C_0_R ) THEN
+     IF ( rbg%delta .NE. C_0_R ) THEN
         DO j = 1,jmax*nstatavg
            wrk2d(j,1) = ABS(fT(j,1)-T2) + T2 ! we can have hot or cold jet
         ENDDO
@@ -1218,7 +1218,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         delta_05 = C_05_R*(delta_u_u(n)+delta_u_d(n))
 
         simuc(n) = C_05_R*(fU(n,jmax/2)+fU(n,jmax/2+1)) - U2
-        IF ( delta_rho .NE. C_0_R ) THEN
+        IF ( rbg%delta .NE. C_0_R ) THEN
            simtc(n) = C_05_R*(fT(n,jmax/2)+fT(n,jmax/2+1)) - T2
            simrc(n) = C_05_R*(rR(n,jmax/2)+rR(n,jmax/2+1)) - R2
         ELSE

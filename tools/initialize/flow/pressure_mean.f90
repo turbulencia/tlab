@@ -8,7 +8,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax
   USE DNS_GLOBAL,    ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem
-  USE DNS_GLOBAL,    ONLY : iprof_rho, p_init, buoyancy
+  USE DNS_GLOBAL,    ONLY : rbg, pbg, buoyancy
   USE DNS_GLOBAL,    ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i
   USE THERMO_GLOBAL, ONLY : imixture
 
@@ -36,7 +36,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 ! Constant pressure
 ! ###################################################################
   IF ( buoyancy%type .EQ. EQNS_NONE ) THEN
-     p = p_init
+     p = pbg%mean
 
 ! ###################################################################
 ! Hydrostatic equilibrium
@@ -56,7 +56,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 ! Temperature profile is given
 ! -------------------------------------------------------------------
-     IF ( iprof_rho .EQ. PROFILE_NONE ) THEN
+     IF ( rbg%type .EQ. PROFILE_NONE ) THEN
 
 ! AIRWATER case: temperature/mixture profile is given
         IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. iprof_tem .GT. 0 ) THEN
@@ -109,7 +109,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
            CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
            
            DO j = 1,jmax
-              p_loc(j) = p_init*EXP(p_loc(j))
+              p_loc(j) = pbg%mean*EXP(p_loc(j))
            ENDDO
 
         ENDIF

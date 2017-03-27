@@ -11,7 +11,8 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal, inb_scal_array, imode_fdm, i1bc,j1bc,k1bc, area, scaley
   USE DNS_GLOBAL, ONLY : buoyancy, radiation, transport
-  USE DNS_GLOBAL, ONLY : mean_rho, delta_rho, ycoor_rho, delta_u, ycoor_u, mean_i, delta_i, ycoor_i
+  USE DNS_GLOBAL, ONLY : rbg
+  USE DNS_GLOBAL, ONLY : delta_u, ycoor_u, mean_i, delta_i, ycoor_i
   USE DNS_GLOBAL, ONLY : visc, schmidt, froude
   USE THERMO_GLOBAL, ONLY : imixture, thermo_param
 #ifdef USE_MPI
@@ -606,12 +607,12 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         DO j=1, jmax
            wrk1d(j,1) = rR(j)*(C_025_R - (fU(j)/delta_u)**2)
         ENDDO
-        delta_m = SIMPSON_NU(jmax, wrk1d, y)/mean_rho
+        delta_m = SIMPSON_NU(jmax, wrk1d, y)/rbg%mean
 
         DO j=1, jmax
            wrk1d(j,1) = ( diff*F2(j) -  rR(j)*Rsv(j) )*fS_y(j)
         ENDDO
-        delta_s_area = SIMPSON_NU(jmax, wrk1d, y)*C_2_R/(mean_rho*delta_u)
+        delta_s_area = SIMPSON_NU(jmax, wrk1d, y)*C_2_R/(rbg%mean*delta_u)
 
      ELSE
         delta_m      = C_1_R
@@ -621,12 +622,12 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      ENDIF
 
 ! -----------------------------------------------------------------------
-! Based on delta_rho 
+! Based on rbg%delta 
 ! -----------------------------------------------------------------------
-     IF ( ABS(delta_rho) .GT. C_SMALL_R ) THEN
-        dummy = mean_rho + (C_05_R-C_1EM2_R)*delta_rho
+     IF ( ABS(rbg%delta) .GT. C_SMALL_R ) THEN
+        dummy = rbg%mean + (C_05_R-C_1EM2_R)*rbg%delta
         delta_hb01 = LOWER_THRESHOLD(jmax, dummy, rR(1), y)
-        dummy = mean_rho - (C_05_R-C_1EM2_R)*delta_rho
+        dummy = rbg%mean - (C_05_R-C_1EM2_R)*rbg%delta
         delta_ht01 = UPPER_THRESHOLD(jmax, dummy, rR(1), y)
         delta_h01 = delta_ht01 - delta_hb01
 
@@ -708,7 +709,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         VAUXPRE2 = (y(j)-scaley*ycoor_u     - y(1))/delta_m
         VAUXPRE3 = (y(j)-scaley*ycoor_u     - y(1))/delta_w
         VAUXPRE4 = (y(j)-scaley*ycoor_i(is) - y(1))/delta_s01
-        VAUXPRE5 = (y(j)-scaley*ycoor_rho   - y(1))/delta_h01
+        VAUXPRE5 = (y(j)-scaley*rbg%ymean   - y(1))/delta_h01
      ENDDO
      
 ! -----------------------------------------------------------------------

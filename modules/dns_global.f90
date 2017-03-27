@@ -28,7 +28,7 @@ MODULE DNS_CONSTANTS
 END MODULE DNS_CONSTANTS
 
 MODULE DNS_GLOBAL
-  USE DNS_TYPES,     ONLY : grid_structure, subarray_structure, term_structure
+  USE DNS_TYPES,     ONLY : grid_structure, subarray_structure, term_structure, background_d
   USE DNS_CONSTANTS, ONLY : MAX_VARS, MAX_PROF, MAX_JETS, MAX_NSP
   USE DNS_CONSTANTS, ONLY : MAX_STATS_SPATIAL
   IMPLICIT NONE
@@ -108,6 +108,14 @@ MODULE DNS_GLOBAL
 ! ###################################################################
 ! Profiles
 ! ###################################################################
+  TYPE(background_d) :: qbg(3)        ! Velocity
+  TYPE(background_d) :: sbg(MAX_NSP)  ! Scalars
+  TYPE(background_d) :: pbg, rbg, tbg ! Pressure, density, temperature
+
+  TREAL, DIMENSION(:), ALLOCATABLE :: pbackground, rbackground, tbackground
+  TREAL, DIMENSION(:), ALLOCATABLE :: bbackground, epbackground
+
+! TO BE REMOVED
 ! Flow: velocities
   TINTEGER :: iprof_u
   TREAL    :: mean_u, delta_u, thick_u,   & ! Velocity profile parameters
@@ -117,29 +125,16 @@ MODULE DNS_GLOBAL
 
   TREAL    :: mean_v, mean_w      ! in these two directions, only mean values
 
-! Flow: thermodynamics
-  TREAL    :: p_init, p_scale_height, ycoor_p
-  TREAL, DIMENSION(:), ALLOCATABLE :: pbackground
-  
-  TINTEGER :: iprof_rho
-  TREAL    :: mean_rho, delta_rho, thick_rho, ycoor_rho, &
-              prof_rho(MAX_PROF), diam_rho, jet_rho(MAX_JETS)
-  TREAL, DIMENSION(:), ALLOCATABLE :: rbackground
-
-  TREAL, DIMENSION(:), ALLOCATABLE :: bbackground
-
   TINTEGER :: iprof_tem
   TREAL    :: mean_tem, delta_tem, thick_tem, ycoor_tem, &
               prof_tem(MAX_PROF), diam_tem, jet_tem(MAX_JETS)
-  TREAL, DIMENSION(:), ALLOCATABLE :: tbackground
-
-  TREAL, DIMENSION(:), ALLOCATABLE :: epbackground
 
 ! Scalars
   TINTEGER :: iprof_i(MAX_NSP)
   TREAL    :: mean_i(MAX_NSP), delta_i(MAX_NSP), thick_i(MAX_NSP), ycoor_i(MAX_NSP), &
               prof_i(MAX_PROF,MAX_NSP), diam_i(MAX_NSP), jet_i(MAX_JETS,MAX_NSP)
-  
+
+
 ! ###################################################################
   TYPE(term_structure) :: buoyancy  ! Buoyancy parameters
   TYPE(term_structure) :: coriolis  ! Coriolis parameters

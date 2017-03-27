@@ -24,7 +24,7 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal,inb_vars, isize_field
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : itime
-  USE DNS_GLOBAL,    ONLY : mach, p_init
+  USE DNS_GLOBAL,    ONLY : mach, pbg
   USE DNS_GLOBAL,    ONLY : imode_eqns,imode_sim, icalc_scal
   USE DNS_GLOBAL,    ONLY : area, diam_u,ycoor_u
   USE THERMO_GLOBAL, ONLY : imixture, gama0
@@ -566,20 +566,20 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
      ENDDO; ENDDO
      
   ELSE
-     bcs_p_imin = p_init; bcs_p_imax = p_init
+     bcs_p_imin = pbg%mean; bcs_p_imax = pbg%mean
 
   ENDIF
 
 ! rest
-  bcs_p_kmin = p_init; bcs_p_kmax = p_init
+  bcs_p_kmin = pbg%mean; bcs_p_kmax = pbg%mean
 
 ! -------------------------------------------------------------------
 ! No buffer field available
 ! -------------------------------------------------------------------
   ELSE
-     bcs_p_imin = p_init; bcs_p_imax = p_init
-     bcs_p_jmin = p_init; bcs_p_jmax = p_init
-     bcs_p_kmin = p_init; bcs_p_kmax = p_init
+     bcs_p_imin = pbg%mean; bcs_p_imax = pbg%mean
+     bcs_p_jmin = pbg%mean; bcs_p_jmax = pbg%mean
+     bcs_p_kmin = pbg%mean; bcs_p_kmax = pbg%mean
 
   ENDIF
 
