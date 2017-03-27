@@ -641,7 +641,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityZ',  '0.0', mean_w)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Pressure',   '0.0', pbg%mean)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Density',    '0.0', rbg%mean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Temperature','0.0', mean_tem)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Temperature','0.0', tbg%mean)
 
 ! -------------------------------------------------------------------
 ! Shear flow values
@@ -682,30 +682,30 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorDensity', '0.5', rbg%ymean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamDensity',  '1.0', rbg%diam)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamDensity',  '1.0', rbg%diam )
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickDensity', '0.0', rbg%thick)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaDensity', '0.0', rbg%delta)
 
 ! temperature/enthalpy
   CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileTemperature', 'None', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'              ) THEN; iprof_tem = PROFILE_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'            ) THEN; iprof_tem = PROFILE_LINEAR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'              ) THEN; iprof_tem = PROFILE_TANH
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'               ) THEN; iprof_tem = PROFILE_ERF
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearerf'         ) THEN; iprof_tem = PROFILE_LINEAR_ERF
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'enthalpyerf'       ) THEN; iprof_tem =-PROFILE_ERF
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'enthalpylinearerf' ) THEN; iprof_tem =-PROFILE_LINEAR_ERF
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic'         ) THEN; iprof_tem = PROFILE_PARABOLIC
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop'        ) THEN; iprof_tem = PROFILE_LINEAR_CROP
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer'        ) THEN; iprof_tem = PROFILE_MIXEDLAYER
+  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'              ) THEN; tbg%type = PROFILE_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'            ) THEN; tbg%type = PROFILE_LINEAR
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'              ) THEN; tbg%type = PROFILE_TANH
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'               ) THEN; tbg%type = PROFILE_ERF
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearerf'         ) THEN; tbg%type = PROFILE_LINEAR_ERF
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'enthalpyerf'       ) THEN; tbg%type =-PROFILE_ERF
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'enthalpylinearerf' ) THEN; tbg%type =-PROFILE_LINEAR_ERF
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic'         ) THEN; tbg%type = PROFILE_PARABOLIC
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop'        ) THEN; tbg%type = PROFILE_LINEAR_CROP
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer'        ) THEN; tbg%type = PROFILE_MIXEDLAYER
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong temperature profile.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorTemperature', '0.5', ycoor_tem)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamTemperature',  '1.0', diam_tem )
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickTemperature', '0.0', thick_tem)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaTemperature', '0.0', delta_tem)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorTemperature', '0.5', tbg%ymean)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamTemperature',  '1.0', tbg%diam )
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickTemperature', '0.0', tbg%thick)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaTemperature', '0.0', tbg%delta)
 
 ! pressure
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorPressure','0.5', pbg%ymean        )
@@ -713,17 +713,17 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ScaleHeight',  '0.0', pbg%parameters(1))
   
 ! additional specific data
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'BottomSlope', '0.0',  prof_tem(1))
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'UpperSlope',  '0.0',  prof_tem(2))
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'BottomSlope', '0.0',  tbg%parameters(1))
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'UpperSlope',  '0.0',  tbg%parameters(2))
 
 ! consistency check
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     IF ( rbg%type .EQ. PROFILE_NONE .AND. iprof_tem .EQ. PROFILE_NONE ) THEN
+     IF ( rbg%type .EQ. PROFILE_NONE .AND. tbg%type .EQ. PROFILE_NONE ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Specify density or temperature.')
         CALL DNS_STOP(DNS_ERROR_OPTION)
      ENDIF
      
-     IF ( rbg%type .NE. PROFILE_NONE .AND. iprof_tem .NE. PROFILE_NONE ) THEN
+     IF ( rbg%type .NE. PROFILE_NONE .AND. tbg%type .NE. PROFILE_NONE ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Specify only density or only temperature.')
         CALL DNS_STOP(DNS_ERROR_OPTION)
      ENDIF
@@ -754,9 +754,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickBDensity', '2.0',  rbg%parameters(2))
      CALL SCANINIREAL(bakfile, inifile, 'Flow', 'FluxDensity',   '0.94', rbg%parameters(3))
 
-     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickATemperature', '0.14', jet_tem(1))
-     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickBTemperature', '2.0',  jet_tem(2))
-     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'FluxTemperature',   '0.94', jet_tem(3))
+     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickATemperature', '0.14', tbg%parameters(1))
+     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickBTemperature', '2.0',  tbg%parameters(2))
+     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'FluxTemperature',   '0.94', tbg%parameters(3))
 
   ENDIF
 
@@ -891,17 +891,17 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! being then mean_rho=(rho1+rho2)/2.
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      IF ( rbg%type .EQ. PROFILE_NONE ) THEN
-        dummy     = delta_tem /mean_tem
-        rbg%mean  = MRATIO *pbg%mean / mean_tem /(C_1_R-C_025_R*dummy*dummy)
-        rbg%delta =-rbg%mean*dummy
-        rbg%thick = thick_tem
-        rbg%diam  = diam_tem
+        dummy     = tbg%delta /tbg%mean
+        rbg%mean  = MRATIO *pbg%mean / tbg%mean /(C_1_R-C_025_R*dummy*dummy)
+        rbg%delta =-rbg%mean *dummy
+        rbg%thick = tbg%thick
+        rbg%diam  = tbg%diam
      ELSE
         dummy     = rbg%delta /rbg%mean
-        mean_tem  = MRATIO *pbg%mean /rbg%mean /(C_1_R-C_025_R*dummy*dummy)
-        delta_tem =-mean_tem*dummy
-        thick_tem = rbg%thick
-        diam_tem  = rbg%diam
+        tbg%mean  = MRATIO *pbg%mean /rbg%mean /(C_1_R-C_025_R*dummy*dummy)
+        tbg%delta =-tbg%mean *dummy
+        tbg%thick = rbg%thick
+        tbg%diam  = rbg%diam
      ENDIF
   ENDIF
 

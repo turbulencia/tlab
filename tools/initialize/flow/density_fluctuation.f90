@@ -15,8 +15,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, jmax_total, isize_field, area
   USE DNS_GLOBAL,    ONLY : imode_flow
-  USE DNS_GLOBAL,    ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem
-  USE DNS_GLOBAL,    ONLY : rbg
+  USE DNS_GLOBAL,    ONLY : rbg, tbg
   USE THERMO_GLOBAL, ONLY : imixture
   USE FLOW_LOCAL
 #ifdef USE_MPI
@@ -131,15 +130,15 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
      IF ( rbg%type .EQ. PROFILE_NONE ) THEN
 
 ! temperature/mixture profile is given
-        IF ( iprof_tem .GT. 0 ) THEN
+        IF ( tbg%type .GT. 0 ) THEN
            DO k = 1,kmax
               DO i = 1,imax
-                 delta_loc = delta_tem + (prof_tem(2)-prof_tem(1))*disp(i,k) *g(2)%scale
-                 mean_loc  = mean_tem  + C_05_R*(prof_tem(2)+prof_tem(1))*disp(i,k) *g(2)%scale
-                 ycenter   = y(1) + g(2)%scale *ycoor_tem + disp(i,k)
+                 delta_loc = tbg%delta + (tbg%parameters(2)-tbg%parameters(1))*disp(i,k) *g(2)%scale
+                 mean_loc  = tbg%mean  + C_05_R*(tbg%parameters(2)+tbg%parameters(1))*disp(i,k) *g(2)%scale
+                 ycenter   = y(1) + g(2)%scale *tbg%ymean + disp(i,k)
                  DO j = 1,jmax
                     T(i,j,k) =  FLOW_SHEAR_TEMPORAL&
-                         (iprof_tem, thick_tem, delta_loc, mean_loc, ycenter, prof_tem, y(j))
+                         (tbg%type, tbg%thick, delta_loc, mean_loc, ycenter, tbg%parameters, y(j))
                  ENDDO
               ENDDO
            ENDDO
@@ -149,16 +148,16 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
            ENDIF
 
 ! enthalpy/mixture profile is given
-        ELSE IF ( iprof_tem .LT. 0 ) THEN
+        ELSE IF ( tbg%type .LT. 0 ) THEN
            DO k = 1,kmax
               DO i = 1,imax
-                 delta_loc = delta_tem + (prof_tem(2)-prof_tem(1))*disp(i,k) *g(2)%scale
-                 mean_loc  = mean_tem  + C_05_R*(prof_tem(2)+prof_tem(1))*disp(i,k) *g(2)%scale
-                 ycenter   = y(1) + g(2)%scale *ycoor_tem + disp(i,k)
-                 iprof_loc =-iprof_tem
+                 delta_loc = tbg%delta + (tbg%parameters(2)-tbg%parameters(1))*disp(i,k) *g(2)%scale
+                 mean_loc  = tbg%mean  + C_05_R*(tbg%parameters(2)+tbg%parameters(1))*disp(i,k) *g(2)%scale
+                 ycenter   = y(1) + g(2)%scale *tbg%ymean + disp(i,k)
+                 iprof_loc =-tbg%type
                  DO j = 1,jmax
                     h(i,j,k) =  FLOW_SHEAR_TEMPORAL&
-                         (iprof_loc, thick_tem, delta_loc, mean_loc, ycenter, prof_tem, y(j))
+                         (iprof_loc, tbg%thick, delta_loc, mean_loc, ycenter, tbg%parameters, y(j))
                  ENDDO
               ENDDO
            ENDDO

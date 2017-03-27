@@ -375,9 +375,9 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
   endif
 
   dt_mean = (rtime-rstattimeorg)/M_REAL(itime-istattimeorg)
-  U2 = mean_u   - C_05_R*delta_u
-  T2 = mean_tem - C_05_R*delta_tem
-  R2 = rbg%mean - C_05_R*rbg%delta
+  U2 = mean_u   - C_05_R *delta_u
+  T2 = tbg%mean - C_05_R *tbg%delta
+  R2 = rbg%mean - C_05_R *rbg%delta
 
   IF ( itxc .LT. nstatavg*jmax*LAST_INDEX ) THEN
      CALL IO_WRITE_ASCII(efile,'AVG_FLOW_SPATIAL_LAYER: Not enough space in stat')
@@ -1527,8 +1527,8 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         ivauxpre = 4
         VAUXPRE(1) = g(1)%nodes(i)/diam_u
         VAUXPRE(2) = g(2)%nodes(j)/diam_u
-        VAUXPRE(3) = (g(2)%nodes(j)- g(2)%nodes(1) - ycoor_u*  scaley)/delta_05
-        VAUXPRE(4) = (g(2)%nodes(j)- g(2)%nodes(1) - ycoor_tem*scaley)/delta_t
+        VAUXPRE(3) = (g(2)%nodes(j)- g(2)%nodes(1) - ycoor_u   *scaley)/delta_05
+        VAUXPRE(4) = (g(2)%nodes(j)- g(2)%nodes(1) - tbg%ymean *scaley)/delta_t
 
         IF ( j .EQ. jmax/2 ) THEN
            ivauxdum = ivauxpos

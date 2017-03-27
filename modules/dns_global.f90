@@ -125,9 +125,9 @@ MODULE DNS_GLOBAL
 
   TREAL    :: mean_v, mean_w      ! in these two directions, only mean values
 
-  TINTEGER :: iprof_tem
-  TREAL    :: mean_tem, delta_tem, thick_tem, ycoor_tem, &
-              prof_tem(MAX_PROF), diam_tem, jet_tem(MAX_JETS)
+  ! TINTEGER :: iprof_tem
+  ! TREAL    :: mean_tem, delta_tem, thick_tem, ycoor_tem, &
+  !             prof_tem(MAX_PROF), diam_tem, jet_tem(MAX_JETS)
 
 ! Scalars
   TINTEGER :: iprof_i(MAX_NSP)

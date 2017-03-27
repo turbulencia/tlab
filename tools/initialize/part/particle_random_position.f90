@@ -53,11 +53,9 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,isize_wrk3d,wrk1d,wrk2d,wrk
   TINTEGER size_seed
 
   TREAL real_buffer_calc, real_buffer_mean, real_buffer_delta, real_buffer_frac
-  TREAL FLOW_SHEAR_TEMPORAL
   TREAL rnd_number(4) 
   TINTEGER rnd_scal(3)
   TREAL rnd_number_second
-  EXTERNAL FLOW_SHEAR_TEMPORAL
 
   TINTEGER isize_wrk3d
 #ifdef USE_MPI

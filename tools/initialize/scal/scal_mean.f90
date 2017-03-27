@@ -10,8 +10,7 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL, ONLY : imode_flow, imode_sim
   USE DNS_GLOBAL, ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i, diam_i, jet_i
   USE DNS_GLOBAL, ONLY : iprof_u, mean_u, delta_u, thick_u, ycoor_u, prof_u, diam_u, jet_u
-  USE DNS_GLOBAL, ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem, diam_tem, jet_tem
-  USE DNS_GLOBAL, ONLY : pbg, rbg
+  USE DNS_GLOBAL, ONLY : pbg, rbg, tbg
 
 #ifdef USE_MPI
   USE DNS_MPI
@@ -100,10 +99,10 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
 
 ! Initialize density field
            rho_vi(1:jmax) = C_0_R
-           ycenter = g(2)%nodes(1) + g(2)%scale *ycoor_tem
+           ycenter = g(2)%nodes(1) + g(2)%scale *tbg%ymean
            DO j = 1,jmax
               dummy = FLOW_JET_TEMPORAL&
-                   (iprof_tem, thick_tem, delta_tem, mean_tem, diam_tem, ycenter, prof_tem, g(2)%nodes(j))
+                   (tbg%type, tbg%thick, tbg%delta, tbg%mean, tbg%diam, ycenter, tbg%parameters, g(2)%nodes(j))
 ! pilot to be added: ijet_pilot, rjet_pilot_thickness, XIST
               DO i = 1,imax
                  t_loc(i,j) = dummy
@@ -132,8 +131,8 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
 
 ! 2D distributions of density and velocity
            IF ( rbg%delta .NE. C_0_R ) THEN
-              CALL FLOW_JET_SPATIAL_DENSITY(imax,jmax, iprof_tem,thick_tem,delta_tem,mean_tem, &
-                   ycoor_tem,diam_tem,jet_tem, iprof_u,thick_u,delta_u,mean_u,ycoor_u,diam_u, &
+              CALL FLOW_JET_SPATIAL_DENSITY(imax,jmax, tbg%type,tbg%thick,tbg%delta,tbg%mean, &
+                   tbg%ymean,tbg%diam,tbg%parameters, iprof_u,thick_u,delta_u,mean_u,ycoor_u,diam_u, &
                    jet_u, g(2)%scale, g(1)%nodes, g(2)%nodes, s,p_loc(1,1),rho_vi(1),u_vi(1),aux1(1),rho_loc(1,1), &
                    aux2(1), aux3(1), aux4(1))
            ENDIF

@@ -28,8 +28,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL,    ONLY : g, j1bc
   USE DNS_GLOBAL,    ONLY : imode_sim, imode_flow, imode_fdm, inb_scal, imax,jmax,kmax
-  USE DNS_GLOBAL,    ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem, diam_tem, jet_tem
-  USE DNS_GLOBAL,    ONLY : rbg
+  USE DNS_GLOBAL,    ONLY : rbg, tbg
   USE DNS_GLOBAL,    ONLY : iprof_u, mean_u, delta_u, thick_u, ycoor_u, prof_u, diam_u, jet_u
   USE DNS_GLOBAL,    ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i, diam_i
   USE DNS_GLOBAL,    ONLY : buoyancy
@@ -81,10 +80,10 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! temperature/mixture profile are given
            IF ( rbg%type .EQ. PROFILE_NONE ) THEN
-              ycenter = y(1) + g(2)%scale*ycoor_tem
+              ycenter = y(1) + g(2)%scale*tbg%ymean
               DO j = 1,jmax
                  dummy =  FLOW_SHEAR_TEMPORAL&
-                      (iprof_tem, thick_tem, delta_tem, mean_tem, ycenter, prof_tem, y(j))
+                      (tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
                  TEM_MEAN_LOC(:,j,:) = dummy
               ENDDO
 
@@ -160,10 +159,10 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! temperature/mixture profile are given
      IF ( rbg%type .EQ. PROFILE_NONE ) THEN
-        ycenter = y(1) + g(2)%scale*ycoor_tem
+        ycenter = y(1) + g(2)%scale*tbg%ymean
         DO j = 1,jmax
            dummy = FLOW_JET_TEMPORAL&
-                (iprof_tem, thick_tem, delta_tem, mean_tem, diam_tem, ycenter, prof_tem, y(j))
+                (tbg%type, tbg%thick, tbg%delta, tbg%mean, tbg%diam, ycenter, tbg%parameters, y(j))
            wrk3d(:,j,:) = dummy
         ENDDO
 
@@ -208,8 +207,8 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
            ENDDO
 
 ! 2D distribution of density
-           CALL FLOW_JET_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem, mean_tem, &
-                ycoor_tem, diam_tem, jet_tem, iprof_u, thick_u, delta_u, mean_u, ycoor_u, diam_u,&
+           CALL FLOW_JET_SPATIAL_DENSITY(imax, jmax, tbg%type, tbg%thick, tbg%delta, tbg%mean, &
+                tbg%ymean, tbg%diam, tbg%parameters, iprof_u, thick_u, delta_u, mean_u, ycoor_u, diam_u,&
                 jet_u, g(2)%scale, x, y, s,p,rho_vi(1),u_vi(1),aux1(1),rho,aux2(1),aux3(1),aux4(1)) 
                 
            DO k = 2,kmax

@@ -50,11 +50,9 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
   TINTEGER  particle_number_local
   TINTEGER, DIMENSION(1)::x_seed
   TREAL real_buffer_calc, real_buffer_mean, real_buffer_delta, real_buffer_frac
-  TREAL FLOW_SHEAR_TEMPORAL
   TREAL rnd_number(4), rnd_scal(3)
   TREAL rnd_number_second
   TREAL c1_loc, c2_loc, c4_loc, liq_delta, liq_delta_inv, liq_dummy
-  EXTERNAL FLOW_SHEAR_TEMPORAL
 
   CHARACTER*32 fname
   TINTEGER isize_wrk3d

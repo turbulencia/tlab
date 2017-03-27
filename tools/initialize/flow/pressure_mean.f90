@@ -7,8 +7,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL,    ONLY : iprof_tem, mean_tem, delta_tem, thick_tem, ycoor_tem, prof_tem
-  USE DNS_GLOBAL,    ONLY : rbg, pbg, buoyancy
+  USE DNS_GLOBAL,    ONLY : rbg, pbg, tbg, buoyancy
   USE DNS_GLOBAL,    ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i
   USE THERMO_GLOBAL, ONLY : imixture
 
@@ -59,11 +58,11 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
      IF ( rbg%type .EQ. PROFILE_NONE ) THEN
 
 ! AIRWATER case: temperature/mixture profile is given
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. iprof_tem .GT. 0 ) THEN
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. tbg%type .GT. 0 ) THEN
            DO j = 1,jmax
-              ycenter = y(1) + g(2)%scale*ycoor_tem
+              ycenter = y(1) + g(2)%scale*tbg%ymean
               t_loc(j) = FLOW_SHEAR_TEMPORAL&
-                   (iprof_tem, thick_tem, delta_tem, mean_tem, ycenter, prof_tem, y(j))
+                   (tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
 
               ycenter = y(1) + g(2)%scale*ycoor_i(1)
               z1_loc(j) =  FLOW_SHEAR_TEMPORAL&
@@ -81,12 +80,12 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
            ENDDO
 
 ! AIRWATER case: enthalpy/mixture profile is given
-        ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. iprof_tem .LT. 0 ) THEN
+        ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. tbg%type .LT. 0 ) THEN
            DO j = 1,jmax
-              ycenter = y(1) + g(2)%scale*ycoor_tem
-              iprof_loc =-iprof_tem
+              ycenter = y(1) + g(2)%scale*tbg%ymean
+              iprof_loc =-tbg%type
               z1_loc(j) = FLOW_SHEAR_TEMPORAL&
-                   (iprof_loc, thick_tem, delta_tem, mean_tem, ycenter, prof_tem, y(j))
+                   (iprof_loc, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
 
               ycenter = y(1) + g(2)%scale*ycoor_i(1)
               z2_loc(j) =  FLOW_SHEAR_TEMPORAL&
@@ -103,7 +102,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 
 ! General case: temperature/mixture profile is given
         ELSE
-           ycenter = y(1) + ycoor_tem*g(2)%scale
+           ycenter = y(1) + tbg%ymean*g(2)%scale
 !           CALL FI_HYDROSTATIC(i1, jmax, i1, ycenter, y, p_loc(1))
            CALL IO_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 2 undeveloped')
            CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
