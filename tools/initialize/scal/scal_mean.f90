@@ -8,9 +8,8 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : imode_flow, imode_sim
-  USE DNS_GLOBAL, ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i, diam_i, jet_i
   USE DNS_GLOBAL, ONLY : iprof_u, mean_u, delta_u, thick_u, ycoor_u, prof_u, diam_u, jet_u
-  USE DNS_GLOBAL, ONLY : pbg, rbg, tbg
+  USE DNS_GLOBAL, ONLY : pbg, rbg, tbg, sbg
 
 #ifdef USE_MPI
   USE DNS_MPI
@@ -35,7 +34,7 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
 ! Isotropic case
 ! ###################################################################
   IF      ( imode_flow .EQ. DNS_FLOW_ISOTROPIC ) THEN
-     s =  mean_i(is) + s
+     s =  sbg(is)%mean + s
 
 ! ###################################################################
 ! Shear layer case
@@ -45,10 +44,10 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
 ! Temporal
 ! -------------------------------------------------------------------
      IF      ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
-        ycenter = g(2)%nodes(1) + g(2)%scale *ycoor_i(is)
+        ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
         DO j = 1,jmax
            dummy =  FLOW_SHEAR_TEMPORAL&
-                (iprof_i(is), thick_i(is), delta_i(is), mean_i(is), ycenter, prof_i(1,is), g(2)%nodes(j))
+                (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
            s(:,j,:) = dummy + s(:,j,:)
         ENDDO
 
@@ -65,10 +64,10 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
 ! Jet case
 ! ###################################################################
   ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
-     ycenter = g(2)%nodes(1) + g(2)%scale *ycoor_i(is)
+     ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
      DO j = 1,jmax
         dummy =  FLOW_JET_TEMPORAL&
-             (iprof_i(is), thick_i(is), delta_i(is), mean_i(is), diam_i(is), ycenter, prof_i(1,is), g(2)%nodes(j))
+             (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, sbg(is)%diam, ycenter, sbg(is)%parameters, g(2)%nodes(j))
 ! pilot to be added: ijet_pilot, rjet_pilot_thickness, XIST
         s(:,j,:) = dummy + s(:,j,:)
      ENDDO
@@ -142,10 +141,10 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
                 jet_u(1), jet_u(2), jet_u(3), &
                 g(1)%nodes, g(2)%nodes, rho_vi(1), u_vi(1), rho_loc(1,1), u_loc(1,1), v_loc(1,1), aux1(1), wrk3d)
 ! 2D distribution of scalar
-           ycenter = g(2)%nodes(1) + g(2)%scale *ycoor_i(is)
+           ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
            CALL FLOW_JET_SPATIAL_SCALAR&
-                (imax, jmax, iprof_i(is), thick_i(is), delta_i(is), mean_i(is), diam_i(is), diam_i(is), ycenter,&
-                jet_i(1,is), jet_i(2,is), jet_i(3,is), &
+                (imax, jmax, sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, sbg(is)%diam, sbg(is)%diam, ycenter, &
+                sbg(is)%parameters(1), sbg(is)%parameters(2), sbg(is)%parameters(3), &
                 g(1)%nodes, g(2)%nodes, rho_vi(1), u_vi(1), z_vi(1), rho_loc(1,1), u_loc(1,1), s, wrk3d)
            IF ( kmax .GT. 1 ) THEN
               DO k = 2,kmax

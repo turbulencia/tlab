@@ -7,8 +7,8 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL,    ONLY : rbg, pbg, tbg, buoyancy
-  USE DNS_GLOBAL,    ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i
+  USE DNS_GLOBAL,    ONLY : rbg, pbg, tbg, sbg
+  USE DNS_GLOBAL,    ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE
@@ -60,13 +60,13 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 ! AIRWATER case: temperature/mixture profile is given
         IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. tbg%type .GT. 0 ) THEN
            DO j = 1,jmax
-              ycenter = y(1) + g(2)%scale*tbg%ymean
+              ycenter = y(1) + g(2)%scale *tbg%ymean
               t_loc(j) = FLOW_SHEAR_TEMPORAL&
                    (tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
 
-              ycenter = y(1) + g(2)%scale*ycoor_i(1)
+              ycenter = y(1) + g(2)%scale *sbg(1)%ymean
               z1_loc(j) =  FLOW_SHEAR_TEMPORAL&
-                   (iprof_i(1), thick_i(1), delta_i(1), mean_i(1), ycenter, prof_i, y(j))
+                   (sbg(1)%type, sbg(1)%thick, sbg(1)%delta, sbg(1)%mean, ycenter, sbg(1)%parameters, g(2)%nodes(j))
 
            ENDDO
            ! CALL FI_HYDROSTATIC_AIRWATER_T&
@@ -82,14 +82,14 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 ! AIRWATER case: enthalpy/mixture profile is given
         ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. tbg%type .LT. 0 ) THEN
            DO j = 1,jmax
-              ycenter = y(1) + g(2)%scale*tbg%ymean
+              ycenter = y(1) + g(2)%scale *tbg%ymean
               iprof_loc =-tbg%type
               z1_loc(j) = FLOW_SHEAR_TEMPORAL&
                    (iprof_loc, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
 
-              ycenter = y(1) + g(2)%scale*ycoor_i(1)
+              ycenter = y(1) + g(2)%scale *sbg(1)%ymean
               z2_loc(j) =  FLOW_SHEAR_TEMPORAL&
-                   (iprof_i(1), thick_i(1), delta_i(1), mean_i(1), ycenter, prof_i, y(j))
+                   (sbg(1)%type, sbg(1)%thick, sbg(1)%delta, sbg(1)%mean, ycenter, sbg(1)%parameters, g(2)%nodes(j))
 
            ENDDO
 !           CALL FI_HYDROSTATIC_H_OLD(jmax, y, z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))

@@ -856,8 +856,8 @@ SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
 
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL, ONLY : imode_flow, scaley
-  USE DNS_GLOBAL, ONLY : iprof_i, thick_i, delta_i, mean_i, prof_i, ycoor_i
   USE DNS_GLOBAL, ONLY : iprof_u, thick_u, delta_u, mean_u, prof_u, ycoor_u
+  USE DNS_GLOBAL, ONLY : sbg
 
   IMPLICIT NONE
 
@@ -886,10 +886,10 @@ SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
         ENDIF
 
      ELSE                         ! Scalars
-        ycenter = y(1) + scaley*ycoor_i(is)
+        ycenter = y(1) + scaley *sbg(is)%ymean
         DO j = 1,ny
            dummy =  FLOW_SHEAR_TEMPORAL&
-                (iprof_i(is), thick_i(is), delta_i(is), mean_i(is), ycenter, prof_i(1,is), y(j))
+                (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, y(j))
            b(:,j,:) = dummy + a(:,j,:)
         ENDDO
 

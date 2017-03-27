@@ -5,7 +5,7 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
 
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : iprof_i, thick_i, delta_i, mean_i, ycoor_i, prof_i
+  USE DNS_GLOBAL, ONLY : sbg
   USE DNS_GLOBAL, ONLY : area
   USE SCAL_LOCAL
 #ifdef USE_MPI
@@ -114,10 +114,10 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
 ! -------------------------------------------------------------------
   IF      ( iflag .EQ. 4 .OR. iflag .EQ. 5 ) THEN
      DO k = 1,kmax; DO i = 1,imax
-        ycenter = g(2)%nodes(1) + g(2)%scale *ycoor_i(is) + disp(i,k)
+        ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean + disp(i,k)
         DO j = 1,jmax
            s(i,j,k) =  FLOW_SHEAR_TEMPORAL&
-                (iprof_i(is), thick_i(is), delta_i(is), mean_i(is), ycenter, prof_i(1,is),g(2)%nodes(j))
+                (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
         ENDDO
      ENDDO; ENDDO
 
@@ -126,11 +126,11 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
 ! -------------------------------------------------------------------
   ELSE IF ( iflag .EQ. 6 .OR. iflag .EQ. 7 ) THEN
      DO k = 1,kmax; DO i = 1,imax
-        ycenter   = g(2)%nodes(1) + g(2)%scale *ycoor_i(is)
-        thick_loc = thick_i(is) + disp(i,k)
+        ycenter   = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
+        thick_loc = sbg(is)%thick + disp(i,k)
         DO j = 1,jmax
            s(i,j,k) =  FLOW_SHEAR_TEMPORAL&
-                (iprof_i(is), thick_loc, delta_i(is), mean_i(is), ycenter, prof_i(1,is),g(2)%nodes(j))
+                (sbg(is)%type, thick_loc, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
         ENDDO
      ENDDO; ENDDO
 
@@ -139,14 +139,14 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
 ! -------------------------------------------------------------------
   ELSE IF ( iflag .EQ. 8 .OR. iflag .EQ. 9 ) THEN
      DO k = 1,kmax; DO i = 1,imax
-        ycenter   = g(2)%nodes(1) + g(2)%scale *ycoor_i(is)
-        delta_loc = delta_i(is) + disp(i,k)
+        ycenter   = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
+        delta_loc = sbg(is)%delta + disp(i,k)
         mean_loc  =(delta_loc)*C_05_R
-        IF ( delta_i(is) .GT. 0 ) THEN; thick_loc = delta_loc/delta_i(is)*thick_i(is);
-        ELSE;                           thick_loc = thick_i(is); ENDIF
+        IF ( sbg(is)%delta .GT. 0 ) THEN; thick_loc = delta_loc /sbg(is)%delta *sbg(is)%thick;
+        ELSE;                             thick_loc = sbg(is)%thick; ENDIF
         DO j = 1,jmax
            s(i,j,k) =  FLOW_SHEAR_TEMPORAL&
-                (iprof_i(is), thick_loc, delta_loc, mean_loc, ycenter, prof_i(1,is),g(2)%nodes(j))
+                (sbg(is)%type, thick_loc, delta_loc, mean_loc, ycenter, sbg(is)%parameters, g(2)%nodes(j))
         ENDDO
      ENDDO; ENDDO
 

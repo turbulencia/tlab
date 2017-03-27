@@ -28,9 +28,8 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL,    ONLY : g, j1bc
   USE DNS_GLOBAL,    ONLY : imode_sim, imode_flow, imode_fdm, inb_scal, imax,jmax,kmax
-  USE DNS_GLOBAL,    ONLY : rbg, tbg
+  USE DNS_GLOBAL,    ONLY : rbg, tbg, sbg
   USE DNS_GLOBAL,    ONLY : iprof_u, mean_u, delta_u, thick_u, ycoor_u, prof_u, diam_u, jet_u
-  USE DNS_GLOBAL,    ONLY : iprof_i, mean_i, delta_i, thick_i, ycoor_i, prof_i, diam_i
   USE DNS_GLOBAL,    ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture
 
@@ -88,10 +87,10 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
               ENDDO
 
               DO is = 1,inb_scal
-                 ycenter = y(1) + g(2)%scale*ycoor_i(is)
+                 ycenter = y(1) + g(2)%scale *sbg(is)%ymean
                  DO j = 1,jmax
                     dummy =  FLOW_SHEAR_TEMPORAL&
-                         (iprof_i(is), thick_i(is), delta_i(is), mean_i(is), ycenter, prof_i,y(j))
+                         (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
                     s(:,j,:,is) = dummy
                  ENDDO
               ENDDO
@@ -167,10 +166,10 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
         ENDDO
 
         DO is = 1,inb_scal
-           ycenter = y(1) + g(2)%scale*ycoor_i(is)
+           ycenter = y(1) + g(2)%scale *sbg(is)%ymean
            DO j = 1,jmax
               dummy =  FLOW_JET_TEMPORAL&
-                   (iprof_i(is), thick_i(is), delta_i(is), mean_i(is), diam_i(is), ycenter, prof_i, y(j))
+                   (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, sbg(is)%diam, ycenter, sbg(is)%parameters, g(2)%nodes(j))
               s(:,j,:,is) = dummy
            ENDDO
         ENDDO

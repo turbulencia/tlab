@@ -135,8 +135,8 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
       real_buffer_frac = rnd_number(2)*(jmax_part-jmin_part+1) - floor(rnd_number(2)*(jmax_part-jmin_part+1))
       rnd_scal(3)=floor(rnd_number(3)*kmax)+1
 
-      real_buffer_mean=mean_i(is)
-      real_buffer_delta=delta_i(is)
+      real_buffer_mean=sbg(is)%mean
+      real_buffer_delta=sbg(is)%delta
       real_buffer_calc=((real_buffer_mean/real_buffer_delta)-0.5)
 
       !Use the scalar field to create the particle distribution
@@ -213,8 +213,8 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
       real_buffer_frac = rnd_number(2)*(jmax_part-jmin_part+1) - floor(rnd_number(2)*(jmax_part-jmin_part+1))
       rnd_scal(3)=floor(rnd_number(3)*kmax)+1
 
-      real_buffer_mean=mean_i(is)
-      real_buffer_delta=delta_i(is)
+      real_buffer_mean=sbg(is)%mean
+      real_buffer_delta=sbg(is)%delta
       real_buffer_calc=((real_buffer_mean/real_buffer_delta)-0.5)
       
       !Use the scalar field to create the particle distribution

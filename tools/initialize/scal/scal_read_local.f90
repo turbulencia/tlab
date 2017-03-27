@@ -4,7 +4,8 @@
 SUBROUTINE SCAL_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile,lfile,wfile
-  USE DNS_GLOBAL,    ONLY : inb_scal, ycoor_i,thick_i
+  USE DNS_GLOBAL,    ONLY : inb_scal
+  USE DNS_GLOBAL,    ONLY : sbg
   USE SCAL_LOCAL
 
   IMPLICIT NONE
@@ -51,7 +52,7 @@ SUBROUTINE SCAL_READ_LOCAL(inifile)
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIniS', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
        CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIni', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; thick_ini = thick_i;
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; thick_ini(:) = sbg(:)%thick;
   ELSE
      thick_ini(:) = C_0_R; idummy = MAX_NSP
      CALL LIST_REAL(sRes, idummy, thick_ini)
@@ -69,7 +70,7 @@ SUBROUTINE SCAL_READ_LOCAL(inifile)
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIniS', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
        CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; ycoor_ini = ycoor_i;
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; ycoor_ini(:) = sbg(:)%ymean;
   ELSE
      ycoor_ini(:) = C_0_R; idummy = MAX_NSP
      CALL LIST_REAL(sRes, idummy, ycoor_ini)

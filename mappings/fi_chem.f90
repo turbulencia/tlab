@@ -4,7 +4,7 @@
 SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
 
   USE DNS_TYPES,  ONLY : term_structure
-  USE DNS_GLOBAL, ONLY : ycoor_i, damkohler
+  USE DNS_GLOBAL, ONLY : sbg, damkohler
   USE DNS_GLOBAL, ONLY : g
 
   IMPLICIT NONE
@@ -22,7 +22,7 @@ SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
   SELECT CASE( chemistry%type )
 
   CASE( EQNS_CHEM_LAYEREDRELAXATION )
-     ycenter = g(2)%nodes(1) + g(2)%scale *ycoor_i(is) + chemistry%parameters(2)
+     ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean + chemistry%parameters(2)
      thickness_inv = C_1_R /chemistry%parameters(3)
      DO i=1,nx
         DO k=1,nz

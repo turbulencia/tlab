@@ -776,39 +776,39 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   DO is = 1,MAX_NSP
      WRITE(lstr,*) is; lstr='ProfileScalar'//TRIM(ADJUSTL(lstr))
      CALL SCANINICHAR(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), 'None', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; iprof_i(is) = PROFILE_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; iprof_i(is) = PROFILE_LINEAR
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'      ) THEN; iprof_i(is) = PROFILE_TANH
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; iprof_i(is) = PROFILE_ERF
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearerf' ) THEN; iprof_i(is) = PROFILE_LINEAR_ERF
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erfantisym') THEN; iprof_i(is) = PROFILE_ERF_ANTISYM
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic' ) THEN; iprof_i(is) = PROFILE_PARABOLIC
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; iprof_i(is) = PROFILE_LINEAR_CROP
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; iprof_i(is) = PROFILE_MIXEDLAYER
+     IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; sbg(is)%type = PROFILE_NONE
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; sbg(is)%type = PROFILE_LINEAR
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'      ) THEN; sbg(is)%type = PROFILE_TANH
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; sbg(is)%type = PROFILE_ERF
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearerf' ) THEN; sbg(is)%type = PROFILE_LINEAR_ERF
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erfantisym') THEN; sbg(is)%type = PROFILE_ERF_ANTISYM
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic' ) THEN; sbg(is)%type = PROFILE_PARABOLIC
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; sbg(is)%type = PROFILE_LINEAR_CROP
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; sbg(is)%type = PROFILE_MIXEDLAYER
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong species profile.')
         CALL DNS_STOP(DNS_ERROR_OPTION)
      ENDIF
      WRITE(lstr,*) is; lstr='MeanScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', mean_i(is) )
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%mean )
      WRITE(lstr,*) is; lstr='YCoorScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.5', ycoor_i(is))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.5', sbg(is)%ymean)
      WRITE(lstr,*) is; lstr='DiamScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '1.0', diam_i(is) )
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '1.0', sbg(is)%diam )
      WRITE(lstr,*) is; lstr='ThickScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', thick_i(is))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%thick)
      WRITE(lstr,*) is; lstr='DeltaScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', delta_i(is))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%delta)
 
 ! additional specific data     
      WRITE(lstr,*) is; lstr='BottomSlopeScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  prof_i(1,is))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  sbg(is)%parameters(1))
      WRITE(lstr,*) is; lstr='UpperSlopeScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  prof_i(2,is))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  sbg(is)%parameters(2))
 
-     IF ( iprof_i(is) .EQ. PROFILE_ERF_ANTISYM ) THEN
+     IF ( sbg(is)%type .EQ. PROFILE_ERF_ANTISYM ) THEN
         WRITE(lstr,*) is; lstr='YCoorSymmetry'//TRIM(ADJUSTL(lstr))
-        CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  prof_i(1,is))
+        CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  sbg(is)%parameters(1))
      ENDIF
      
   ENDDO
@@ -835,11 +835,11 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
      DO is = 1, MAX_NSP
         WRITE(lstr,*) is; lstr='ThickA'//TRIM(ADJUSTL(lstr))
-        CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.14', jet_i(1,is))
+        CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.14', sbg(is)%parameters(1))
         WRITE(lstr,*) is; lstr='ThickB'//TRIM(ADJUSTL(lstr))
-        CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '2.0',  jet_i(2,is))
+        CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '2.0',  sbg(is)%parameters(2))
         WRITE(lstr,*) is; lstr='Flux'//TRIM(ADJUSTL(lstr))
-        CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.94', jet_i(3,is))
+        CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.94', sbg(is)%parameters(3))
      ENDDO
 
   ENDIF

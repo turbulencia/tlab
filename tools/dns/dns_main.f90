@@ -372,9 +372,9 @@ PROGRAM DNS
     CALL DNS_READ_PARTICLE(fname,l_q) ! h_particle only as dummy
     ! set boundarys for residence time pdf 
     IF (inb_particle_aux .EQ. 1) THEN
-       l_y_lambda =  (g(2)%nodes(jmax)-g(2)%nodes(1)) *ycoor_i(1) - C_2_R
-       l_y_base =   ((g(2)%nodes(jmax)-g(2)%nodes(1)) *ycoor_i(1)-(g(2)%nodes(jmax)-g(2)%nodes(1))*ycoor_i(3) )/C_2_R &
-                  +  (g(2)%nodes(jmax)-g(2)%nodes(1)) *ycoor_i(3)
+       l_y_lambda =  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean - C_2_R
+       l_y_base =   ((g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean -(g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean )/C_2_R &
+                  +  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean
        IF (residence_reset .EQ. 1) THEN
           l_q(:,6) = C_0_R
        ENDIF

@@ -11,8 +11,8 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal, inb_scal_array, imode_fdm, i1bc,j1bc,k1bc, area, scaley
   USE DNS_GLOBAL, ONLY : buoyancy, radiation, transport
-  USE DNS_GLOBAL, ONLY : rbg
-  USE DNS_GLOBAL, ONLY : delta_u, ycoor_u, mean_i, delta_i, ycoor_i
+  USE DNS_GLOBAL, ONLY : rbg, sbg
+  USE DNS_GLOBAL, ONLY : delta_u, ycoor_u
   USE DNS_GLOBAL, ONLY : visc, schmidt, froude
   USE THERMO_GLOBAL, ONLY : imixture, thermo_param
 #ifdef USE_MPI
@@ -639,29 +639,29 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! -----------------------------------------------------------------------
 ! Based on scalar
 ! -----------------------------------------------------------------------
-     IF ( ABS(delta_i(is)) .GT. C_SMALL_R ) THEN
+     IF ( ABS(sbg(is)%delta) .GT. C_SMALL_R ) THEN
         jloc_max = MAXLOC(ABS(fS_y(1:jmax))); j = jloc_max(1)
 
         wrk1d(1:jmax,1) = fS(jmax) - fS(1:jmax)
-        delta_s_area     = SIMPSON_NU(jmax-j+1, wrk1d(j,1), y(j)) / ABS(delta_i(is))
+        delta_s_area     = SIMPSON_NU(jmax-j+1, wrk1d(j,1), y(j)) / ABS(sbg(is)%delta)
  
-        delta_s          = ABS(delta_i(is))/ABS(fS_y(j))
+        delta_s          = ABS(sbg(is)%delta)/ABS(fS_y(j))
         delta_s_position = y(j)
         delta_s_value    = fS(j)
 
 ! Thickness
-        dummy = mean_i(is) + (C_05_R-C_1EM3_R)*delta_i(is)
+        dummy = sbg(is)%mean + (C_05_R-C_1EM3_R)*sbg(is)%delta
         delta_sb01 = LOWER_THRESHOLD(jmax, dummy, rS(1), y)
-        dummy = mean_i(is) - (C_05_R-C_1EM3_R)*delta_i(is)
+        dummy = sbg(is)%mean - (C_05_R-C_1EM3_R)*sbg(is)%delta
         delta_st01 = UPPER_THRESHOLD(jmax, dummy, rS(1), y)
         
-        delta_sb01 = (y(1) + ycoor_i(is)*scaley) - delta_sb01
-        delta_st01 = delta_st01 - (y(1) + ycoor_i(is)*scaley)
+        delta_sb01 = (y(1) + sbg(is)%ymean*scaley) - delta_sb01
+        delta_st01 = delta_st01 - (y(1) + sbg(is)%ymean*scaley)
         delta_s01 = delta_st01 + delta_sb01
         
 !  Mixing, Youngs' definition
-        smin_loc = mean_i(is) - C_05_R*ABS(delta_i(is))
-        smax_loc = mean_i(is) + C_05_R*ABS(delta_i(is))
+        smin_loc = sbg(is)%mean - C_05_R*ABS(sbg(is)%delta)
+        smax_loc = sbg(is)%mean + C_05_R*ABS(sbg(is)%delta)
         DO k = 1,kmax
            DO i = 1,imax*jmax
               wrk3d(i,1,k) = (s_local(i,1,k)-smin_loc)*(smax_loc-s_local(i,1,k))
@@ -677,8 +677,8 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         mixing1 = mixing1/SIMPSON_NU(jmax, wrk1d, y)
 
 ! Mixing, Cook's definition
-        smin_loc = mean_i(is) - C_05_R*ABS(delta_i(is))
-        smax_loc = mean_i(is) + C_05_R*ABS(delta_i(is))
+        smin_loc = sbg(is)%mean - C_05_R*ABS(sbg(is)%delta)
+        smax_loc = sbg(is)%mean + C_05_R*ABS(sbg(is)%delta)
         DO k = 1,kmax
            DO i = 1,imax*jmax
               wrk3d(i,1,k) = MIN(s_local(i,1,k)-smin_loc,smax_loc-s_local(i,1,k))
@@ -706,10 +706,10 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! Independent variables
      DO j = 1,jmax            
         VAUXPRE1 =  y(j)
-        VAUXPRE2 = (y(j)-scaley*ycoor_u     - y(1))/delta_m
-        VAUXPRE3 = (y(j)-scaley*ycoor_u     - y(1))/delta_w
-        VAUXPRE4 = (y(j)-scaley*ycoor_i(is) - y(1))/delta_s01
-        VAUXPRE5 = (y(j)-scaley*rbg%ymean   - y(1))/delta_h01
+        VAUXPRE2 = (y(j)-scaley *ycoor_u       - y(1))/delta_m
+        VAUXPRE3 = (y(j)-scaley *ycoor_u       - y(1))/delta_w
+        VAUXPRE4 = (y(j)-scaley *sbg(is)%ymean - y(1))/delta_s01
+        VAUXPRE5 = (y(j)-scaley *rbg%ymean     - y(1))/delta_h01
      ENDDO
      
 ! -----------------------------------------------------------------------

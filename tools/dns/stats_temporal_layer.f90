@@ -35,9 +35,9 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal, inb_scal_array
   USE DNS_GLOBAL,    ONLY : buoyancy, imode_eqns, icalc_scal
   USE DNS_GLOBAL,    ONLY : itransport, schmidt, froude
+  USE DNS_GLOBAL,    ONLY : sbg
   USE DNS_GLOBAL,    ONLY : bbackground, epbackground, pbackground, rbackground
   USE DNS_GLOBAL,    ONLY : itime, rtime
-  USE DNS_GLOBAL,    ONLY : mean_i, delta_i, ycoor_i
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL,     ONLY : fstavg, fstpdf !, fstinter
   USE DNS_LOCAL,     ONLY : vindex, VA_MEAN_WRK
@@ -186,7 +186,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
 
      IF ( icalc_scal .EQ. 1 ) THEN
         DO is = inb_scal+1,inb_scal_array ! Add diagnostic fields, if any
-           mean_i(is) = C_1_R; delta_i(is) = C_0_R; ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
+           sbg(is)%mean = C_1_R; sbg(is)%delta = C_0_R; sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
         ENDDO
         DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
            CALL AVG_SCAL_XZ(is, q,s, s(1,is), &
@@ -204,9 +204,9 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
            ENDIF
            hq(1:isize_field,1) = hq(1:isize_field,1)*dummy
 
-           mean_i(is)  =    (bbackground(1)+bbackground(g(2)%size)) *dummy ! mean values
-           delta_i(is) = ABS(bbackground(1)-bbackground(g(2)%size)) *dummy
-           ycoor_i(is) = ycoor_i(1); schmidt(is) = schmidt(1)
+           sbg(is)%mean  =    (bbackground(1)+bbackground(g(2)%size)) *dummy ! mean values
+           sbg(is)%delta = ABS(bbackground(1)-bbackground(g(2)%size)) *dummy
+           sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
 
            CALL AVG_SCAL_XZ(is, q,s, hq(1,1), &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)

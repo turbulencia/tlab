@@ -5,7 +5,7 @@ SUBROUTINE SCAL_VOLUME_BROADBAND(is, s, tmp, wrk3d)
 
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, imode_flow, inb_scal
-  USE DNS_GLOBAL, ONLY : diam_i
+  USE DNS_GLOBAL, ONLY : sbg
   USE SCAL_LOCAL, ONLY : thick_ini, ycoor_ini, norm_ini_s
   IMPLICIT NONE
 
@@ -48,11 +48,11 @@ SUBROUTINE SCAL_VOLUME_BROADBAND(is, s, tmp, wrk3d)
   ELSE IF ( imode_flow .EQ. DNS_FLOW_JET   ) THEN
      DO j = 1, jmax
 
-        ycenter =   g(2)%nodes(j) - g(2)%scale *ycoor_ini(is) - diam_i(is) *C_05_R - g(2)%nodes(1)
+        ycenter =   g(2)%nodes(j) - g(2)%scale *ycoor_ini(is) - sbg(is)%diam *C_05_R - g(2)%nodes(1)
         IF ( thick_ini(is) .eq. C_0_R ) THEN; amplify = C_1_R
         ELSE;                                 amplify = EXP(-(C_05_R*ycenter/thick_ini(is))**2); ENDIF
 
-        ycenter =-( g(2)%nodes(j) - g(2)%scale *ycoor_ini(is) + diam_i(is) *C_05_R - g(2)%nodes(1) )
+        ycenter =-( g(2)%nodes(j) - g(2)%scale *ycoor_ini(is) + sbg(is)%diam *C_05_R - g(2)%nodes(1) )
         IF ( thick_ini(is) .eq. C_0_R ) THEN; amplify = C_1_R
         ELSE;                                 amplify = amplify + EXP(-(C_05_R*ycenter/thick_ini(is))**2); ENDIF
 
