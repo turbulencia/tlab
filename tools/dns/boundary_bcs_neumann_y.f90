@@ -28,14 +28,14 @@
 !########################################################################
 SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1,tmp2)
 
-  USE DNS_TYPES, ONLY : grid_structure
+  USE DNS_TYPES, ONLY : grid_dt
 
   IMPLICIT NONE
 
 #include "integers.h"
 
   TINTEGER nx,ny,nz, ibc
-  TYPE(grid_structure),               INTENT(IN)  :: g
+  TYPE(grid_dt),               INTENT(IN)  :: g
   TREAL, DIMENSION(nx*nz,ny), TARGET, INTENT(IN)  :: u         ! they are transposed below
   TREAL, DIMENSION(nx*nz,ny), TARGET              :: tmp1,tmp2 ! they are transposed below
   TREAL, DIMENSION(g%size,3), TARGET              :: wrk1d

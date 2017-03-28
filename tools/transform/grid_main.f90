@@ -2,10 +2,10 @@
 
 PROGRAM TRANSGRID
 
-  USE DNS_TYPES, ONLY : grid_structure
+  USE DNS_TYPES, ONLY : grid_dt
   IMPLICIT NONE
 
-  TYPE(grid_structure), DIMENSION(3) :: g, g_ref
+  TYPE(grid_dt), DIMENSION(3) :: g, g_ref
   
   TINTEGER option, direction, n, isize_wrk1d
   CHARACTER*32 ifile,ffile,sfile, file_ref

@@ -3,7 +3,7 @@
 !# Grid generation tool. Origin is set always to (0,0,0)
 PROGRAM INIGRID
 
-  USE DNS_TYPES, ONLY     : grid_structure
+  USE DNS_TYPES, ONLY     : grid_dt
   USE DNS_CONSTANTS, ONLY : gfile
   USE GRID_LOCAL
 #ifdef USE_MPI 
@@ -14,7 +14,7 @@ PROGRAM INIGRID
 #include "integers.h"
 
   CHARACTER*32, PARAMETER                  :: ifile = 'dns.ini', sfile = 'grid.sts'
-  TYPE(grid_structure), DIMENSION(3)       :: g
+  TYPE(grid_dt), DIMENSION(3)       :: g
   TINTEGER                                 :: nmax
   TREAL, DIMENSION(:), ALLOCATABLE, TARGET :: x,y,z
   TREAL, DIMENSION(:), ALLOCATABLE         :: work1,work2

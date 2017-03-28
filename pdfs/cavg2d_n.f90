@@ -39,7 +39,7 @@
 SUBROUTINE CAVG2D_N(fname, ibc, varname, igate, rtime, imax,jmax,kmax, &
      nvar, nbins, nmom, bmin, bmax, y, gate, b, data, cavg, wrk1d)
 
-  USE DNS_TYPES,  ONLY : pointers_structure
+  USE DNS_TYPES,  ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : efile
 
   IMPLICIT NONE
@@ -60,7 +60,7 @@ SUBROUTINE CAVG2D_N(fname, ibc, varname, igate, rtime, imax,jmax,kmax, &
 
   INTEGER(1) gate(*), igate
 
-  TYPE(pointers_structure), DIMENSION(nvar) :: data
+  TYPE(pointers_dt), DIMENSION(nvar) :: data
 
 ! -------------------------------------------------------------------
   TINTEGER j, ip, iv, im

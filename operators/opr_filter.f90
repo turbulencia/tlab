@@ -3,7 +3,7 @@
 
 SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
         
-  USE DNS_TYPES,  ONLY : filter_structure
+  USE DNS_TYPES,  ONLY : filter_dt
   USE DNS_GLOBAL, ONLY : isize_txc_field
 #ifdef USE_MPI
   USE DNS_MPI
@@ -12,10 +12,10 @@ SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
   IMPLICIT NONE
 
   TINTEGER nx,ny,nz
-  TYPE(filter_structure), DIMENSION(3),                 INTENT(IN)    :: f
-  TREAL,                  DIMENSION(nx*ny*nz),          INTENT(INOUT) :: u   ! Inplace operation
-  TREAL,                  DIMENSION(*),                 INTENT(INOUT) :: wrk1d, wrk2d
-  TREAL,                  DIMENSION(isize_txc_field,*), INTENT(INOUT) :: txc ! 2 if ADM type, 1 otherwise
+  TYPE(filter_dt), DIMENSION(3),                 INTENT(IN)    :: f
+  TREAL,           DIMENSION(nx*ny*nz),          INTENT(INOUT) :: u   ! Inplace operation
+  TREAL,           DIMENSION(*),                 INTENT(INOUT) :: wrk1d, wrk2d
+  TREAL,           DIMENSION(isize_txc_field,*), INTENT(INOUT) :: txc ! 2 if ADM type, 1 otherwise
   
 ! ###################################################################
   IF ( f(1)%type .NE. DNS_FILTER_NONE ) THEN

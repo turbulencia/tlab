@@ -5,7 +5,7 @@
 
 SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 
-  USE DNS_TYPES,  ONLY : grid_structure
+  USE DNS_TYPES,  ONLY : grid_dt
   USE DNS_GLOBAL, ONLY : inb_scal
   USE DNS_GLOBAL, ONLY : reynolds, schmidt
 
@@ -13,7 +13,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   
 #include "integers.h"
   
-  TYPE(grid_structure),                        INTENT(INOUT) :: g
+  TYPE(grid_dt),                               INTENT(INOUT) :: g
   TREAL, DIMENSION(g%size,g%inb_grid), TARGET, INTENT(INOUT) :: x
   TREAL, DIMENSION(g%size,5),                  INTENT(INOUT) :: wrk1d
 

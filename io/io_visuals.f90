@@ -5,7 +5,7 @@
 
 SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, txc)
 
-  USE DNS_TYPES,  ONLY : subarray_structure
+  USE DNS_TYPES,  ONLY : subarray_dt
   USE DNS_GLOBAL, ONLY : imax_total, kmax_total, isize_txc_field
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_pro

@@ -30,7 +30,7 @@
 !########################################################################
 SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : pointers_structure
+  USE DNS_TYPES, ONLY : pointers_dt
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal, inb_scal_array
   USE DNS_GLOBAL,    ONLY : buoyancy, imode_eqns, icalc_scal
@@ -72,7 +72,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
   CHARACTER*32 varname(16)
   INTEGER(1) igate !, gate_levels(16)
 
-  TYPE(pointers_structure), DIMENSION(16) :: data
+  TYPE(pointers_dt), DIMENSION(16) :: data
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u,v,w,e,rho, p,T,vis

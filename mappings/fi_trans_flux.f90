@@ -19,13 +19,13 @@
 !########################################################################
 SUBROUTINE FI_TRANS_FLUX(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d,wrk3d)
 
-  USE DNS_TYPES,  ONLY : term_structure
+  USE DNS_TYPES,  ONLY : term_dt
   
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TYPE(term_structure),         INTENT(IN)    :: transport
+  TYPE(term_dt),                INTENT(IN)    :: transport
   TINTEGER,                     INTENT(IN)    :: nx,ny,nz, flag_grad
   TINTEGER,                     INTENT(IN)    :: is
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)    :: s

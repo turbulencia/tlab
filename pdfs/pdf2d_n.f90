@@ -43,7 +43,7 @@
 SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax, jmax, kmax, &
      nvar, ibc, amin, amax, y, gate, data, nbins, npdf_size, pdf, wrk1d)
 
-  USE DNS_TYPES,  ONLY : pointers_structure
+  USE DNS_TYPES,  ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : efile
 
   IMPLICIT NONE
@@ -66,7 +66,7 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax, jmax, kmax, &
 
   INTEGER(1) gate(*), igate
 
-  TYPE(pointers_structure), DIMENSION(nvar) :: data
+  TYPE(pointers_dt), DIMENSION(nvar) :: data
 
 ! -------------------------------------------------------------------
   TINTEGER j, ip, nplim, iv, ibc_loc

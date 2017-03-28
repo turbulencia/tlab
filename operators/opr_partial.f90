@@ -3,12 +3,12 @@
 
 SUBROUTINE OPR_PARTIAL1(nlines, g, u,result, bcs_min,bcs_max, wrk2d)
 
-  USE DNS_TYPES, ONLY : grid_structure
+  USE DNS_TYPES, ONLY : grid_dt
   
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: nlines  ! # of lines to be solved
-  TYPE(grid_structure),            INTENT(IN)    :: g
+  TYPE(grid_dt),                   INTENT(IN)    :: g
   TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: u
   TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result
   TINTEGER,                        INTENT(IN)    :: bcs_min ! BC derivative: 0 biased, non-zero
@@ -65,12 +65,12 @@ END SUBROUTINE OPR_PARTIAL1
 ! ###################################################################
 SUBROUTINE OPR_PARTIAL2(nlines, g, u,result, bcs_min,bcs_max, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_structure
+  USE DNS_TYPES, ONLY : grid_dt
   
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
-  TYPE(grid_structure),            INTENT(IN)    :: g
+  TYPE(grid_dt),                   INTENT(IN)    :: g
   TREAL, DIMENSION(nlines,g%size), INTENT(IN)    :: u
   TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result
   TINTEGER,                        INTENT(IN)    :: bcs_min(2) ! BC derivative: 0 biased, non-zero

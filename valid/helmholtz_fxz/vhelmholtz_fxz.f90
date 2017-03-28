@@ -6,7 +6,7 @@
 #endif 
 PROGRAM VHELMHOLTZ_FXZ
   
-  USE DNS_TYPES, ONLY : pointers_structure
+  USE DNS_TYPES, ONLY : pointers_dt
   USE DNS_GLOBAL,  ONLY : iunifx, iunify, iunifz, imode_fdm, imax_total, jmax_total, kmax_total, &
        i1bc,j1bc,k1bc,scalex,scaley,scalez,area,volume,imax,jmax,kmax,&
        inb_grid,inb_wrk1d,inb_wrk2d,isize_wrk1d,isize_wrk2d,gfile,isize_txc_field
@@ -38,7 +38,7 @@ PROGRAM VHELMHOLTZ_FXZ
   CHARACTER*8 :: date
   CHARACTER*10:: time1,time2 
   TINTEGER :: h1,m1,s1,n1,h2,m2,s2,n2 
-  TYPE(pointers_structure),DIMENSION(nfield) ::  data 
+  TYPE(pointers_dt),DIMENSION(nfield) ::  data 
 
   TARGET a
 

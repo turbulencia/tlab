@@ -24,14 +24,14 @@
 !########################################################################
 SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
 
-  USE DNS_TYPES,     ONLY : grid_structure
+  USE DNS_TYPES,     ONLY : grid_dt
   USE DNS_CONSTANTS, ONLY : efile
 !  USE DNS_GLOBAL, ONLY    : reynolds
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: is
   TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
-  TYPE(grid_structure),            INTENT(IN)    :: g
+  TYPE(grid_dt),            INTENT(IN)    :: g
   TREAL, DIMENSION(nlines,g%size), INTENT(IN)    :: s,u        ! argument field and velocity field
   TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result     ! N(u) applied to s
   TINTEGER,                        INTENT(IN)    :: bcs_min(2) ! BC derivative: 0 biased, non-zero
@@ -151,7 +151,7 @@ END SUBROUTINE OPR_BURGERS
 SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
      bcs1_imin,bcs1_imax, bcs2_imin,bcs2_imax, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_structure
+  USE DNS_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -160,7 +160,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
 
   TINTEGER ivel, is, nx,ny,nz
   TINTEGER bcs1_imin,bcs1_imax, bcs2_imin,bcs2_imax
-  TYPE(grid_structure),           INTENT(IN)    :: g
+  TYPE(grid_dt),           INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz),     INTENT(IN)    :: s,u1,u2
   TREAL, DIMENSION(nx*ny*nz),     INTENT(OUT)   :: result
   TREAL, DIMENSION(nx*ny*nz),     INTENT(INOUT) :: tmp1, wrk3d
@@ -241,12 +241,12 @@ END SUBROUTINE OPR_BURGERS_X
 SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
      bcs1_jmin,bcs1_jmax, bcs2_jmin,bcs2_jmax, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_structure
+  USE DNS_TYPES, ONLY : grid_dt
   IMPLICIT NONE
 
   TINTEGER ivel, is, nx,ny,nz
   TINTEGER bcs1_jmin,bcs1_jmax, bcs2_jmin,bcs2_jmax
-  TYPE(grid_structure),           INTENT(IN)    :: g
+  TYPE(grid_dt),           INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz),     INTENT(IN)    :: s,u1,u2
   TREAL, DIMENSION(nx*ny*nz),     INTENT(OUT)   :: result
   TREAL, DIMENSION(nx*ny*nz),     INTENT(INOUT) :: tmp1, wrk3d
@@ -320,7 +320,7 @@ END SUBROUTINE OPR_BURGERS_Y
 SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
      bcs1_kmin,bcs1_kmax, bcs2_kmin,bcs2_kmax, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_structure
+  USE DNS_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -329,11 +329,11 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
 
   TINTEGER ivel, is, nx,ny,nz
   TINTEGER bcs1_kmin, bcs1_kmax, bcs2_kmin, bcs2_kmax
-  TYPE(grid_structure),           INTENT(IN)    :: g
-  TREAL, DIMENSION(nx*ny*nz),     INTENT(IN)    :: s,u1,u2
-  TREAL, DIMENSION(nx*ny*nz),     INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz),     INTENT(INOUT) :: tmp1, wrk3d
-  TREAL, DIMENSION(nx*ny),        INTENT(INOUT) :: wrk2d
+  TYPE(grid_dt),              INTENT(IN)    :: g
+  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s,u1,u2
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
+  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
+  TREAL, DIMENSION(nx*ny),    INTENT(INOUT) :: wrk2d
 
   TARGET s,u1,u2, tmp1, result, wrk3d
 

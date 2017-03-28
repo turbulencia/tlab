@@ -21,7 +21,7 @@
 SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
      nvar, nmom, y, gate, data, avg_loc)
 
-  USE DNS_TYPES,     ONLY : pointers_structure
+  USE DNS_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : efile
 
   IMPLICIT NONE
@@ -38,7 +38,7 @@ SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
   TINTEGER,                 INTENT(IN) :: nmom  ! Number of moments to consider in the analysis
   INTEGER(1),               INTENT(IN) :: igate ! Gate level in gate array to be used. If 0, no intermittency considered
   INTEGER(1), DIMENSION(*), INTENT(IN) :: gate  ! Array with the mask field corresponding to the different gate levels
-  TYPE(pointers_structure), DIMENSION(nvar) :: data ! Array of pointer to the fields to be processed
+  TYPE(pointers_dt), DIMENSION(nvar)   :: data ! Array of pointer to the fields to be processed
   TREAL y(jmax)
   TREAL avg_loc(nmom,nvar,2)
 

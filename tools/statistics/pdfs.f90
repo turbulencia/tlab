@@ -6,7 +6,7 @@
 
 PROGRAM PDFS
 
-  USE DNS_TYPES,     ONLY : pointers_structure
+  USE DNS_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : efile,lfile ,gfile, tag_flow,tag_scal
   USE DNS_GLOBAL
 #ifdef USE_MPI
@@ -33,7 +33,7 @@ PROGRAM PDFS
   TREAL,      DIMENSION(:),   ALLOCATABLE         :: pdf, y_aux, wrk3d
   INTEGER(1), DIMENSION(:),   ALLOCATABLE         :: gate
 
-  TYPE(pointers_structure), DIMENSION(16) :: data
+  TYPE(pointers_dt), DIMENSION(16) :: data
 
 ! -------------------------------------------------------------------
 ! Local variables

@@ -9,8 +9,8 @@
 
 PROGRAM APRIORI
 
-  USE DNS_TYPES,  ONLY : pointers_structure
-  USE DNS_TYPES,  ONLY : filter_structure
+  USE DNS_TYPES,  ONLY : pointers_dt
+  USE DNS_TYPES,  ONLY : filter_dt
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
 #ifdef USE_MPI
@@ -38,15 +38,15 @@ PROGRAM APRIORI
 
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: mean, y_aux
 
-  TYPE(pointers_structure), DIMENSION(16) :: data
+  TYPE(pointers_dt), DIMENSION(16) :: data
 
 ! Work arrays
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: wrk1d, wrk2d
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk3d
 
 ! Filters
-  TYPE(filter_structure), DIMENSION(3)                              :: FilterDomain
-  TREAL,                  DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z
+  TYPE(filter_dt), DIMENSION(3)                              :: FilterDomain
+  TREAL,           DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z
 
 ! -------------------------------------------------------------------
 ! Local variables

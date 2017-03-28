@@ -2,12 +2,12 @@
 
 PROGRAM VPARTIAL2
 
-  USE DNS_TYPES, ONLY : grid_structure
+  USE DNS_TYPES, ONLY : grid_dt
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TYPE(grid_structure),            INTENT(IN)    :: g
+  TYPE(grid_dt),            INTENT(IN)    :: g
   TINTEGER imode_fdm, imax, jmax, kmax, i, wk, i1bc, idummy, iunif
   PARAMETER(imax=128)
   TREAL scalex
@@ -27,7 +27,7 @@ PROGRAM VPARTIAL2
   WRITE(*,*) 'Wavenumber ?'
   READ(*,*) wk
 
-! CHANGE TO UPDATE NEW GRID_STRUCTURE
+! CHANGE TO UPDATE NEW GRID_DT
   IF ( i1bc .EQ. 0 ) THEN
      DO i = 1,imax
         x(i) = M_REAL(i-1)/M_REAL(imax)*scalex

@@ -18,12 +18,12 @@
 !########################################################################
 SUBROUTINE FLT_C4_INI(dx, f)
   
-  USE DNS_TYPES, ONLY : filter_structure
+  USE DNS_TYPES, ONLY : filter_dt
 
   IMPLICIT NONE
   
-  TREAL, DIMENSION(*),    INTENT(IN)    :: dx
-  TYPE(filter_structure), INTENT(INOUT) :: f
+  TREAL, DIMENSION(*), INTENT(IN)    :: dx
+  TYPE(filter_dt),     INTENT(INOUT) :: f
 
 ! -----------------------------------------------------------------------
   TREAL ac_loc, alpha

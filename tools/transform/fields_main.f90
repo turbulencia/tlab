@@ -9,7 +9,7 @@
 
 PROGRAM TRANSFIELDS
 
-  USE DNS_TYPES,  ONLY : filter_structure
+  USE DNS_TYPES,  ONLY : filter_dt
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
 #ifdef USE_MPI
@@ -41,8 +41,8 @@ PROGRAM TRANSFIELDS
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk3d
 
 ! Filters
-  TYPE(filter_structure), DIMENSION(3)                              :: FilterDomain
-  TREAL,                  DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z
+  TYPE(filter_dt), DIMENSION(3)                              :: FilterDomain
+  TREAL,           DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z
 
 ! -------------------------------------------------------------------
 ! Local variables

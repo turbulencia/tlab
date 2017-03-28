@@ -38,7 +38,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, ibc, alpha,&
      a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_TYPES,     ONLY : grid_structure
+  USE DNS_TYPES,     ONLY : grid_dt
   USE DNS_GLOBAL,    ONLY : isize_txc_dimz
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
@@ -49,7 +49,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, ibc, alpha,&
 #include "integers.h"
 
   TINTEGER nx,ny,nz, ibc
-  TYPE(grid_structure),      INTENT(IN)    :: g(3)
+  TYPE(grid_dt),      INTENT(IN)    :: g(3)
   TREAL alpha
   TREAL,    DIMENSION(nx,ny,nz)            :: a
   TREAL,    DIMENSION(nx,nz)               :: bcs_hb, bcs_ht  
@@ -153,7 +153,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, g, ibc, alpha,&
      a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_TYPES,     ONLY : grid_structure
+  USE DNS_TYPES,     ONLY : grid_dt
   USE DNS_GLOBAL,    ONLY : isize_field, isize_txc_dimz
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
@@ -165,7 +165,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, g, ibc, alpha,&
 
   TINTEGER nx,ny,nz, ibc
   TREAL alpha
-  TYPE(grid_structure),      INTENT(IN)    :: g(3)
+  TYPE(grid_dt),      INTENT(IN)    :: g(3)
   TREAL,    DIMENSION(isize_field)         :: a
   TREAL,    DIMENSION(nx,nz)               :: bcs_hb, bcs_ht  
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz) :: tmp1,tmp2, wrk3d
@@ -282,7 +282,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
      a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_TYPES,     ONLY : pointers_structure
+  USE DNS_TYPES,     ONLY : pointers_dt
   USE DNS_GLOBAL,    ONLY : isize_txc_dimz
   USE DNS_GLOBAL,    ONLY : g
 #ifdef USE_MPI
@@ -295,7 +295,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
 
   TINTEGER ibc, nx,ny,nz,nfield
   TREAL alpha
-  TYPE(pointers_structure), DIMENSION(nfield)     :: a
+  TYPE(pointers_dt), DIMENSION(nfield)            :: a
   TREAL,    DIMENSION(nx,nz,nfield)               :: bcs_hb, bcs_ht  
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz,nfield) :: tmp1
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz)        :: tmp2, wrk3d

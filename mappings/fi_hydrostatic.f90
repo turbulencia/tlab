@@ -22,7 +22,7 @@
 !########################################################################
 SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
 
-  USE DNS_TYPES, ONLY : grid_structure
+  USE DNS_TYPES, ONLY : grid_dt
 
   USE DNS_GLOBAL, ONLY : imode_eqns
   USE DNS_GLOBAL, ONLY : pbg, damkohler, buoyancy
@@ -32,7 +32,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
 
 #include "integers.h"
 
-  TYPE(grid_structure),       INTENT(IN)    :: g
+  TYPE(grid_dt),              INTENT(IN)    :: g
   TREAL, DIMENSION(g%size),   INTENT(IN)    :: e
   TREAL, DIMENSION(g%size),   INTENT(OUT)   :: T,p
   TREAL, DIMENSION(g%size,*), INTENT(INOUT) :: s      ! We calculate equilibrium composition

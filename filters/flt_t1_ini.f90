@@ -9,13 +9,13 @@
 !########################################################################
 SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
 
-  USE DNS_TYPES,  ONLY : filter_structure
+  USE DNS_TYPES,  ONLY : filter_dt
 
   IMPLICIT NONE
 
   TREAL,                      INTENT(IN)    :: scalex
   TREAL, DIMENSION(*),        INTENT(IN)    :: x
-  TYPE(filter_structure),     INTENT(INOUT) :: f
+  TYPE(filter_dt),            INTENT(INOUT) :: f
   TREAL, DIMENSION(f%size,3), INTENT(INOUT) :: wrk1d
   
 ! -----------------------------------------------------------------------

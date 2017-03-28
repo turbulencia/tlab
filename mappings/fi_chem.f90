@@ -3,13 +3,13 @@
 
 SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
 
-  USE DNS_TYPES,  ONLY : term_structure
+  USE DNS_TYPES,  ONLY : term_dt
   USE DNS_GLOBAL, ONLY : sbg, damkohler
   USE DNS_GLOBAL, ONLY : g
 
   IMPLICIT NONE
 
-  TYPE(term_structure),         INTENT(IN)  :: chemistry
+  TYPE(term_dt),                INTENT(IN)  :: chemistry
   TINTEGER,                     INTENT(IN)  :: nx,ny,nz, is
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
   TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: source

@@ -6,7 +6,7 @@
 
 PROGRAM AVERAGES
 
-  USE DNS_TYPES,     ONLY : pointers_structure
+  USE DNS_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : efile,lfile,gfile, tag_flow,tag_scal
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_GLOBAL
@@ -38,7 +38,7 @@ PROGRAM AVERAGES
   INTEGER(1), DIMENSION(:), ALLOCATABLE, SAVE         :: gate
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE         :: surface
 
-  TYPE(pointers_structure), DIMENSION(16) :: data
+  TYPE(pointers_dt), DIMENSION(16) :: data
 
 ! Particle data
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q

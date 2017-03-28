@@ -422,7 +422,7 @@ END SUBROUTINE WRITE_SPECTRUM1D
 
 SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
 
-  USE DNS_TYPES,  ONLY : subarray_structure
+  USE DNS_TYPES,  ONLY : subarray_dt
   USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total, imax,jmax,kmax
   USE DNS_MPI
 

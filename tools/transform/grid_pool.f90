@@ -252,10 +252,10 @@ END SUBROUTINE TRANS_ADD_PLANES
 ! ###################################################################
 SUBROUTINE TRANS_DATA(name, grid, work1,work2)
   
-  USE DNS_TYPES, ONLY : grid_structure
+  USE DNS_TYPES, ONLY : grid_dt
   IMPLICIT NONE
 
-  TYPE(grid_structure) grid
+  TYPE(grid_dt) grid
   
   CHARACTER*(*) name
   TREAL work1(*), work2(*)

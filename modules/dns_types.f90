@@ -6,14 +6,14 @@ MODULE DNS_TYPES
 
   TINTEGER, PARAMETER :: MAX_PARS = 10
 
-  TYPE background_d
+  TYPE background_dt
      SEQUENCE
      TINTEGER type
      TREAL reference, mean, delta, ymean, thick, diam
      TREAL, DIMENSION(MAX_PARS) :: parameters !, jet
-  END TYPE background_d
+  END TYPE background_dt
 
-  TYPE term_structure
+  TYPE term_dt
      SEQUENCE
      TINTEGER type
      TINTEGER, DIMENSION(MAX_PARS) :: scalar     ! fields defining this term
@@ -21,9 +21,9 @@ MODULE DNS_TYPES
      TREAL,    DIMENSION(MAX_PARS) :: parameters
      TREAL,    DIMENSION(MAX_PARS) :: auxiliar
      TREAL,    DIMENSION(3)        :: vector
-  END TYPE term_structure
+  END TYPE term_dt
 
-  TYPE grid_structure
+  TYPE grid_dt
      SEQUENCE
      CHARACTER*8 name
      TINTEGER size, inb_grid, mode_fdm
@@ -35,18 +35,18 @@ MODULE DNS_TYPES
      TREAL, DIMENSION(:,:), POINTER :: lu2   ! pointer to LU decomposition for 2. derivative
      TREAL, DIMENSION(:,:), POINTER :: lu2d  ! pointer to LU decomposition for 2. derivative inc. diffusion
      TREAL, DIMENSION(:,:), POINTER :: mwn   ! pointer to modified wavenumbers
-  END TYPE grid_structure
+  END TYPE grid_dt
 
-  TYPE pointers_structure
+  TYPE pointers_dt
      SEQUENCE
      TREAL, DIMENSION(:), POINTER :: field
-  END TYPE pointers_structure
+  END TYPE pointers_dt
 
 #ifdef USE_MPI
 #include "mpif.h"
 #endif
 
-  TYPE subarray_structure
+  TYPE subarray_dt
      SEQUENCE
      LOGICAL active
      INTEGER communicator
@@ -56,9 +56,9 @@ MODULE DNS_TYPES
 #else
      INTEGER offset
 #endif
-  END type subarray_structure
+  END type subarray_dt
 
-  TYPE filter_structure
+  TYPE filter_dt
      SEQUENCE
      TINTEGER type, size, inb_filter, delta
      TREAL alpha
@@ -66,6 +66,6 @@ MODULE DNS_TYPES
      LOGICAL uniform, periodic
      TINTEGER mpitype
      TREAL, DIMENSION(:,:), POINTER :: coeffs ! pointer to coefficients
-  END TYPE filter_structure
+  END TYPE filter_dt
   
 END MODULE DNS_TYPES

@@ -28,7 +28,7 @@
 SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
      a,dpdy, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
-  USE DNS_TYPES,  ONLY : grid_structure
+  USE DNS_TYPES,  ONLY : grid_dt
   USE DNS_GLOBAL, ONLY : isize_txc_dimz
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
@@ -40,7 +40,7 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 
   LOGICAL,                                  INTENT(IN)    :: flag
   TINTEGER,                                 INTENT(IN)    :: nx,ny,nz, ibc
-  TYPE(grid_structure),                     INTENT(IN)    :: g(3)
+  TYPE(grid_dt),                            INTENT(IN)    :: g(3)
   TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: a    ! Forcing term, ans solution field p
   TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: dpdy ! Derivative, flag .TRUE.
   TREAL,    DIMENSION(nx,nz),               INTENT(IN)    :: bcs_hb, bcs_ht   ! Boundary-condition fields

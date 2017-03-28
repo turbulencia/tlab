@@ -20,12 +20,12 @@
 !########################################################################
 SUBROUTINE FI_BUOYANCY(buoyancy, nx,ny,nz, s, b, wrk1d)
 
-  USE DNS_TYPES,  ONLY : term_structure
+  USE DNS_TYPES,  ONLY : term_dt
   USE DNS_GLOBAL, ONLY : inb_scal_array
 
   IMPLICIT NONE
   
-  TYPE(term_structure),         INTENT(IN) :: buoyancy
+  TYPE(term_dt),         INTENT(IN) :: buoyancy
   TINTEGER,                     INTENT(IN) :: nx,ny,nz
   TREAL, DIMENSION(nx,ny,nz,*), INTENT(IN) :: s
   TREAL, DIMENSION(nx,ny,nz),   INTENT(OUT):: b
@@ -106,11 +106,11 @@ END SUBROUTINE FI_BUOYANCY
 !########################################################################
 SUBROUTINE FI_BUOYANCY_SOURCE(buoyancy, isize_field, s, gradient, b_source)
 
-  USE DNS_TYPES, ONLY : term_structure
+  USE DNS_TYPES, ONLY : term_dt
 
   IMPLICIT NONE
 
-  TYPE(term_structure),            INTENT(IN)    :: buoyancy
+  TYPE(term_dt),                   INTENT(IN)    :: buoyancy
   TINTEGER,                        INTENT(IN)    :: isize_field
   TREAL, DIMENSION(isize_field,*), INTENT(IN)    :: s
   TREAL, DIMENSION(isize_field,*), INTENT(INOUT) :: gradient

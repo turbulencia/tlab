@@ -9,12 +9,12 @@
 ! ###################################################################
 SUBROUTINE OPR_FILTER_1D(nlines, f, u,result, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : filter_structure
+  USE DNS_TYPES, ONLY : filter_dt
     
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
-  TYPE(filter_structure),          INTENT(IN)    :: f
+  TYPE(filter_dt),          INTENT(IN)    :: f
   TREAL, DIMENSION(nlines,f%size), INTENT(IN)    :: u          ! field to be filtered
   TREAL, DIMENSION(nlines,f%size), INTENT(OUT)   :: result     ! filtered filed
   TREAL, DIMENSION(f%size,5),      INTENT(INOUT) :: wrk1d
@@ -76,7 +76,7 @@ END SUBROUTINE OPR_FILTER_1D
 ! ###################################################################
 SUBROUTINE OPR_FILTER_X(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : filter_structure
+  USE DNS_TYPES, ONLY : filter_dt
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -84,7 +84,7 @@ SUBROUTINE OPR_FILTER_X(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)            :: nx,ny,nz
-  TYPE(filter_structure),     INTENT(IN)            :: f
+  TYPE(filter_dt),     INTENT(IN)            :: f
   TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT), TARGET :: u, wrk3d    ! in-place operation
   TREAL, DIMENSION(ny*nz),    INTENT(INOUT)         :: wrk2d       ! Aux arrays
   TREAL, DIMENSION(f%size,*), INTENT(INOUT)         :: wrk1d
@@ -165,12 +165,12 @@ END SUBROUTINE OPR_FILTER_X
 ! ###################################################################
 SUBROUTINE OPR_FILTER_Y(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : filter_structure
+  USE DNS_TYPES, ONLY : filter_dt
 
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)            :: nx,ny,nz
-  TYPE(filter_structure),     INTENT(IN)            :: f
+  TYPE(filter_dt),     INTENT(IN)            :: f
   TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT), TARGET :: u, wrk3d    ! in-place operation
   TREAL, DIMENSION(*),        INTENT(INOUT)         :: wrk2d       ! Aux arrays
   TREAL, DIMENSION(f%size,*), INTENT(INOUT)         :: wrk1d
@@ -227,7 +227,7 @@ END SUBROUTINE OPR_FILTER_Y
 ! ###################################################################
 SUBROUTINE OPR_FILTER_Z(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : filter_structure
+  USE DNS_TYPES, ONLY : filter_dt
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -235,7 +235,7 @@ SUBROUTINE OPR_FILTER_Z(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)            :: nx,ny,nz
-  TYPE(filter_structure),     INTENT(IN)            :: f
+  TYPE(filter_dt),            INTENT(IN)            :: f
   TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT), TARGET :: u, wrk3d    ! in-place operation
   TREAL, DIMENSION(nx*ny),    INTENT(INOUT)         :: wrk2d       ! Aux arrays
   TREAL, DIMENSION(f%size,*), INTENT(INOUT)         :: wrk1d

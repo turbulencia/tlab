@@ -28,7 +28,7 @@ MODULE DNS_CONSTANTS
 END MODULE DNS_CONSTANTS
 
 MODULE DNS_GLOBAL
-  USE DNS_TYPES,     ONLY : grid_structure, subarray_structure, term_structure, background_d
+  USE DNS_TYPES,     ONLY : grid_dt, subarray_dt, term_dt, background_dt
   USE DNS_CONSTANTS, ONLY : MAX_VARS, MAX_PROF, MAX_JETS, MAX_NSP
   USE DNS_CONSTANTS, ONLY : MAX_STATS_SPATIAL
   IMPLICIT NONE
@@ -89,12 +89,12 @@ MODULE DNS_GLOBAL
   TINTEGER :: nspa_rest, nspa_step
 
 ! subarray information (offset)
-  TYPE(subarray_structure), DIMENSION(10) :: io_aux
+  TYPE(subarray_dt), DIMENSION(10) :: io_aux
 
 ! ###################################################################
 ! Grid
 ! ###################################################################
-  TYPE(grid_structure), DIMENSION(3) :: g
+  TYPE(grid_dt), DIMENSION(3) :: g
 
   TINTEGER :: imax_total,jmax_total,kmax_total
 
@@ -106,19 +106,19 @@ MODULE DNS_GLOBAL
   TREAL    :: scalex,scaley,scalez
   
 ! ###################################################################
-  TYPE(background_d) :: qbg(3)        ! Velocity background
-  TYPE(background_d) :: sbg(MAX_NSP)  ! Scalars backgrounds
-  TYPE(background_d) :: pbg, rbg, tbg ! Pressure, density, temperature backgrounds
+  TYPE(background_dt) :: qbg(3)        ! Velocity background
+  TYPE(background_dt) :: sbg(MAX_NSP)  ! Scalars backgrounds
+  TYPE(background_dt) :: pbg, rbg, tbg ! Pressure, density, temperature backgrounds
 
   TREAL, DIMENSION(:), ALLOCATABLE :: pbackground, rbackground, tbackground
   TREAL, DIMENSION(:), ALLOCATABLE :: bbackground, epbackground
 
 ! ###################################################################
-  TYPE(term_structure) :: buoyancy  ! Buoyancy parameters
-  TYPE(term_structure) :: coriolis  ! Coriolis parameters
-  TYPE(term_structure) :: radiation ! Radiation parameters
-  TYPE(term_structure) :: transport ! Transport parameters
-  TYPE(term_structure) :: chemistry ! Chemistry parameters
+  TYPE(term_dt) :: buoyancy  ! Buoyancy parameters
+  TYPE(term_dt) :: coriolis  ! Coriolis parameters
+  TYPE(term_dt) :: radiation ! Radiation parameters
+  TYPE(term_dt) :: transport ! Transport parameters
+  TYPE(term_dt) :: chemistry ! Chemistry parameters
 
 ! ###################################################################
 ! Nondimensional numbers

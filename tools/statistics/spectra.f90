@@ -31,7 +31,7 @@
 !########################################################################
 PROGRAM SPECTRA
 
-  USE DNS_TYPES, ONLY : pointers_structure, subarray_structure
+  USE DNS_TYPES, ONLY : pointers_dt, subarray_dt
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
@@ -63,7 +63,7 @@ PROGRAM SPECTRA
 
   TREAL, DIMENSION(:,:), ALLOCATABLE :: out2d, outx,outz,outr
 
-  TYPE(pointers_structure), DIMENSION(16) :: data
+  TYPE(pointers_dt), DIMENSION(16) :: data
 
   TARGET q, s, p_aux
 

@@ -21,13 +21,13 @@
 !########################################################################
 SUBROUTINE FLT_E4_INI(scalez, z, f)
 
-  USE DNS_TYPES,  ONLY : filter_structure
+  USE DNS_TYPES,  ONLY : filter_dt
 
   IMPLICIT NONE
 
-  TREAL,                  INTENT(IN)    :: scalez
-  TREAL, DIMENSION(*),    INTENT(IN)    :: z
-  TYPE(filter_structure), INTENT(INOUT) :: f
+  TREAL,               INTENT(IN)    :: scalez
+  TREAL, DIMENSION(*), INTENT(IN)    :: z
+  TYPE(filter_dt),     INTENT(INOUT) :: f
 
 ! -----------------------------------------------------------------------
   TINTEGER k, km2, km1, kp1, kp2, kmin_loc, kmax_loc

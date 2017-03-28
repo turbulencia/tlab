@@ -20,15 +20,15 @@
 !########################################################################
 SUBROUTINE OPR_RADIATION(radiation, nx,ny,nz, g, s, r, wrk1d,wrk3d)
 
-  USE DNS_TYPES, ONLY : term_structure, grid_structure
+  USE DNS_TYPES, ONLY : term_dt, grid_dt
 
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TYPE(term_structure),       INTENT(IN)    :: radiation
+  TYPE(term_dt),       INTENT(IN)    :: radiation
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
-  TYPE(grid_structure),       INTENT(IN)    :: g
+  TYPE(grid_dt),       INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s        ! Radiatively active scalar
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: r        ! Radiative heating rate
   TREAL, DIMENSION(ny,*),     INTENT(INOUT) :: wrk1d
@@ -122,15 +122,15 @@ END SUBROUTINE OPR_RADIATION
 !########################################################################
 SUBROUTINE OPR_RADIATION_FLUX(radiation, nx,ny,nz, g, s, r, wrk1d,wrk3d)
 
-  USE DNS_TYPES, ONLY : term_structure, grid_structure
+  USE DNS_TYPES, ONLY : term_dt, grid_dt
 
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TYPE(term_structure),       INTENT(IN)    :: radiation
+  TYPE(term_dt),              INTENT(IN)    :: radiation
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
-  TYPE(grid_structure),       INTENT(IN)    :: g
+  TYPE(grid_dt),              INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s        ! Radiatively active scalar
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: r        ! Radiative flux
   TREAL, DIMENSION(ny,*),     INTENT(INOUT) :: wrk1d

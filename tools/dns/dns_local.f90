@@ -1,7 +1,7 @@
 #include "types.h"
 
 MODULE DNS_LOCAL
-  USE DNS_TYPES,  ONLY : filter_structure
+  USE DNS_TYPES,  ONLY : filter_dt
   USE DNS_GLOBAL, ONLY : MAX_NSP, MAX_VARS 
 #ifdef USE_PSFFT  
   USE NB3DFFT,    ONLY : NB3DFFT_SCHEDLTYPE
@@ -79,11 +79,11 @@ MODULE DNS_LOCAL
 ! ###########################################################
 ! Filters
 ! ###########################################################
-  TYPE(filter_structure), DIMENSION(3) :: FilterDomain
+  TYPE(filter_dt), DIMENSION(3) :: FilterDomain
 
   TINTEGER :: ifilt_step, ifilt_scalar
 
-  ! This info should be put into a filter_structure
+  ! This info should be put into a filter_dt
   TINTEGER :: ifilt_inflow, ifilt_inflow_iwidth, ifilt_inflow_jwidth
   TINTEGER :: ifilt_inflow_step
 

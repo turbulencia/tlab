@@ -1,7 +1,7 @@
 #include "types.h"
 
 MODULE DNS_MPI
-  USE DNS_TYPES, ONLY : subarray_structure
+  USE DNS_TYPES, ONLY : subarray_dt
   IMPLICIT NONE
   SAVE
 
@@ -32,7 +32,7 @@ MODULE DNS_MPI
 
   TINTEGER, DIMENSION(:),   ALLOCATABLE :: particle_vector ! Particle data  
 
-  TYPE(subarray_structure), DIMENSION(10) :: mpio_aux
+  TYPE(subarray_dt), DIMENSION(10) :: mpio_aux
 
 #ifdef USE_PSFFT  
   INTEGER :: ims_nb_thrsupp_provided 
