@@ -25,8 +25,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, area, i1bc,j1bc,k1bc
   USE DNS_GLOBAL, ONLY : froude, visc, rossby
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
-  USE DNS_GLOBAL, ONLY : delta_u, ycoor_u
-  USE DNS_GLOBAL, ONLY : rbg, sbg
+  USE DNS_GLOBAL, ONLY : rbg, sbg, qbg
   USE DNS_GLOBAL, ONLY : bbackground, epbackground, pbackground, rbackground, tbackground
   USE THERMO_GLOBAL, ONLY : imixture, MRATIO, GRATIO
   USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV
@@ -1508,18 +1507,18 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 ! Based on delta_u 
 ! -------------------------------------------------------------------
 ! Vorticity thickness and momentum thickness
-     IF ( ABS(delta_u) .GT. C_SMALL_R ) THEN
-        delta_w = delta_u/MAXVAL(ABS(fU_y(1:jmax)))
+     IF ( ABS(qbg(1)%delta) .GT. C_SMALL_R ) THEN
+        delta_w = qbg(1)%delta/MAXVAL(ABS(fU_y(1:jmax)))
 
         DO j=1, jmax
-           wrk1d(j,1) = rR(j)*(C_025_R-(fU(j)/delta_u)**2)
+           wrk1d(j,1) = rR(j)*(C_025_R-(fU(j)/qbg(1)%delta)**2)
         ENDDO
         delta_m = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)/rbg%mean
            
         DO j=1, jmax
            wrk1d(j,1) = ( Tau_xy(j) -  rR(j)*Rxy(j) )*fU_y(j)
         ENDDO
-        delta_m_p = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)*C_2_R/(rbg%mean*delta_u**3)
+        delta_m_p = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)*C_2_R/(rbg%mean*qbg(1)%delta**3)
 
      ELSE
         delta_w   = C_1_R
@@ -1603,9 +1602,9 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 ! Independent variables
      DO j = 1,jmax
         VAUXPRE1 =  g(2)%nodes(j)
-        VAUXPRE2 = (g(2)%nodes(j)-g(2)%scale*ycoor_u  -g(2)%nodes(1))/delta_m
-        VAUXPRE3 = (g(2)%nodes(j)-g(2)%scale*ycoor_u  -g(2)%nodes(1))/delta_w
-        VAUXPRE4 = (g(2)%nodes(j)-g(2)%scale*rbg%ymean-g(2)%nodes(1))/delta_h01
+        VAUXPRE2 = (g(2)%nodes(j)-g(2)%scale *qbg(1)%ymean -g(2)%nodes(1))/delta_m
+        VAUXPRE3 = (g(2)%nodes(j)-g(2)%scale *qbg(1)%ymean -g(2)%nodes(1))/delta_w
+        VAUXPRE4 = (g(2)%nodes(j)-g(2)%scale *rbg%ymean    -g(2)%nodes(1))/delta_h01
      ENDDO
 
 ! -------------------------------------------------------------------

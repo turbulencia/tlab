@@ -31,7 +31,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imode_fdm, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, isize_wrk1d, isize_field
   USE DNS_GLOBAL, ONLY : imode_flow, visc, area
-  USE DNS_GLOBAL, ONLY : thick_u, diam_u
+  USE DNS_GLOBAL, ONLY : qbg
   USE FLOW_LOCAL, ONLY : flag_wall, flag_dilatation, thick_ini,  ycoor_ini
 
   IMPLICIT NONE
@@ -84,7 +84,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
   IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
      DO j = 1,jmax
         ycenter = g(2)%nodes(j) - g(2)%scale*C_05_R - g(2)%nodes(1)
-        amplify = TANH(-C_05_R*ycenter/thick_u)
+        amplify = TANH(-C_05_R*ycenter/qbg(1)%thick)
         v(:,j,:) = amplify*v(:,j,:)
      ENDDO
   ENDIF
@@ -144,11 +144,11 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 ! -------------------------------------------------------------------
   ELSE IF ( imode_flow .EQ. DNS_FLOW_JET   ) THEN
      DO j = 1, jmax           
-        ycenter =   g(2)%nodes(j) - g(2)%scale*ycoor_ini - diam_u*C_05_R - g(2)%nodes(1)
+        ycenter =   g(2)%nodes(j) - g(2)%scale*ycoor_ini - qbg(1)%diam*C_05_R - g(2)%nodes(1)
         IF ( thick_ini .eq. C_0_R ) THEN; amplify = C_0_R
         ELSE;                             amplify = EXP(-(C_05_R*ycenter/thick_ini)**2); ENDIF
 
-        ycenter =-( g(2)%nodes(j) - g(2)%scale*ycoor_ini + diam_u*C_05_R - g(2)%nodes(1) )
+        ycenter =-( g(2)%nodes(j) - g(2)%scale*ycoor_ini + qbg(1)%diam*C_05_R - g(2)%nodes(1) )
         IF ( thick_ini .eq. C_0_R ) THEN; amplify = C_0_R
         ELSE;                             amplify = amplify + EXP(-(C_05_R*ycenter/thick_ini)**2); ENDIF
 

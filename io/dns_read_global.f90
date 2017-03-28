@@ -636,9 +636,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
 ! Mean flow values
 ! -------------------------------------------------------------------
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityX',  '0.0', mean_u)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityY',  '0.0', mean_v)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityZ',  '0.0', mean_w)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityX',  '0.0', qbg(1)%mean)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityY',  '0.0', qbg(2)%mean)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityZ',  '0.0', qbg(3)%mean)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Pressure',   '0.0', pbg%mean)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Density',    '0.0', rbg%mean)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Temperature','0.0', tbg%mean)
@@ -648,25 +648,25 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
 ! streamwise velocity
   CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileVelocity', 'Tanh', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; iprof_u = PROFILE_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; iprof_u = PROFILE_LINEAR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'      ) THEN; iprof_u = PROFILE_TANH
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; iprof_u = PROFILE_ERF
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bickley'   ) THEN; iprof_u = PROFILE_BICKLEY
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'gaussian'  ) THEN; iprof_u = PROFILE_GAUSSIAN
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekman'     ) THEN; iprof_u = PROFILE_EKMAN_U
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekmanp'    ) THEN; iprof_u = PROFILE_EKMAN_U_P
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic' ) THEN; iprof_u = PROFILE_PARABOLIC
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; iprof_u = PROFILE_LINEAR_CROP
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; iprof_u = PROFILE_MIXEDLAYER
+  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; qbg(1)%type = PROFILE_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; qbg(1)%type = PROFILE_LINEAR
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'      ) THEN; qbg(1)%type = PROFILE_TANH
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; qbg(1)%type = PROFILE_ERF
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bickley'   ) THEN; qbg(1)%type = PROFILE_BICKLEY
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'gaussian'  ) THEN; qbg(1)%type = PROFILE_GAUSSIAN
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekman'     ) THEN; qbg(1)%type = PROFILE_EKMAN_U
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekmanp'    ) THEN; qbg(1)%type = PROFILE_EKMAN_U_P
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic' ) THEN; qbg(1)%type = PROFILE_PARABOLIC
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; qbg(1)%type = PROFILE_LINEAR_CROP
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; qbg(1)%type = PROFILE_MIXEDLAYER
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong velocity profile.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorVelocity', '0.5', ycoor_u)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamVelocity',  '1.0', diam_u )
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickVelocity', '0.0', thick_u)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaVelocity', '0.0', delta_u)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorVelocity', '0.5', qbg(1)%ymean)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamVelocity',  '1.0', qbg(1)%diam )
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickVelocity', '0.0', qbg(1)%thick)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaVelocity', '0.0', qbg(1)%delta)
 
 ! density
   CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileDensity', 'None', sRes)
@@ -745,9 +745,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL IO_WRITE_ASCII(bakfile, '#FluxTemperature=<value>')
 
 ! Bradbury profile is the default (x0=a*b)
-     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickAVelocity', '0.1235', jet_u(1))
-     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickBVelocity', '-0.873', jet_u(2))
-     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'FluxVelocity',   '0.96',   jet_u(3))
+     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickAVelocity', '0.1235', qbg(1)%parameters(1))
+     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickBVelocity', '-0.873', qbg(1)%parameters(2))
+     CALL SCANINIREAL(bakfile, inifile, 'Flow', 'FluxVelocity',   '0.96',   qbg(1)%parameters(3))
 
 ! Ramaprian is the default (x0=a*b)
      CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickADensity', '0.14', rbg%parameters(1))

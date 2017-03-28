@@ -2,9 +2,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2007/01/01 - J.P. Mellado
@@ -48,7 +45,7 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
 
   wx = C_2_R * C_PI_R / frc_length
   wz = C_2_R * C_PI_R / scalez
-  xaux =-mean_u*etime
+  xaux =-qbg(1)%mean *etime
 
 ! Transient factor
   IF ( frc_adapt .GT. C_0_R .AND. etime .LE. frc_adapt ) THEN
@@ -64,7 +61,7 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
 
      DO j = 1, jmax
 
-        ycenter = g(2)%nodes(j) - g(2)%scale *ycoor_u - g(2)%nodes(1)
+        ycenter = g(2)%nodes(j) - g(2)%scale *qbg(1)%ymean - g(2)%nodes(1)
         fy  = EXP(-(ycenter/(C_2_R*frc_delta))**2)*frc_delta
         fyp =-ycenter*fy/(C_2_R * frc_delta**2)
 
@@ -77,8 +74,8 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
            DO k = 1,kmax
               u2d = A2d(inx2d) * wxloc*        COS(wxloc*xaux+Phix2d(inx2d)) * fyp 
               v2d = A2d(inx2d) * wxloc*wxloc * SIN(wxloc*xaux+Phix2d(inx2d)) * fy
-              inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult*mean_u*u2d
-              inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult*mean_u*v2d
+              inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult *qbg(1)%mean *u2d
+              inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult *qbg(1)%mean *v2d
            ENDDO
 
         ENDDO
@@ -101,9 +98,9 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
                          (wxloc+wzloc)
                     w3d =-A3d(inx3d)*wxloc*SIN(wxloc*xaux+Phix3d(inx3d)) * &
                          COS(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fyp
-                    inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult*mean_u*u3d
-                    inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult*mean_u*v3d
-                    inf_rhs(j,k,4) = inf_rhs(j,k,4) - vmult*mean_u*w3d
+                    inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult*qbg(1)%mean*u3d
+                    inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult*qbg(1)%mean*v3d
+                    inf_rhs(j,k,4) = inf_rhs(j,k,4) - vmult*qbg(1)%mean*w3d
                  ENDDO
 
               ENDDO
@@ -122,7 +119,7 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
 
         jsim = jmax - j + 1
 
-        ycenter = g(2)%nodes(j) - g(2)%scale *ycoor_u + diam_u/C_2_R - g(2)%nodes(1)
+        ycenter = g(2)%nodes(j) - g(2)%scale *qbg(1)%ymean + qbg(1)%diam/C_2_R - g(2)%nodes(1)
         fy  = EXP(-(ycenter/(C_2_R*frc_delta))**2)*frc_delta
         fyp =-ycenter*fy/(C_2_R * frc_delta**2)
 
@@ -135,16 +132,16 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
            DO k = 1,kmax
               u2d = A2d(inx2d) * wxloc *       COS(wxloc*xaux+Phix2d(inx2d)) *fyp 
               v2d = A2d(inx2d) * wxloc*wxloc * SIN(wxloc*xaux+Phix2d(inx2d)) *fy
-              inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult*mean_u*u2d
-              inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult*mean_u*v2d
+              inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult*qbg(1)%mean*u2d
+              inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult*qbg(1)%mean*v2d
               !          varicose
               IF (ifrcdsc_mode .EQ. 1) THEN
-                 inf_rhs(jsim,k,2) = inf_rhs(jsim,k,2) - vmult*mean_u*u2d
-                 inf_rhs(jsim,k,3) = inf_rhs(jsim,k,3) + vmult*mean_u*v2d
+                 inf_rhs(jsim,k,2) = inf_rhs(jsim,k,2) - vmult*qbg(1)%mean*u2d
+                 inf_rhs(jsim,k,3) = inf_rhs(jsim,k,3) + vmult*qbg(1)%mean*v2d
                  !          sinuous
               ELSE
-                 inf_rhs(jsim,k,2) = inf_rhs(jsim,k,2) + vmult*mean_u*u2d
-                 inf_rhs(jsim,k,3) = inf_rhs(jsim,k,3) - vmult*mean_u*v2d
+                 inf_rhs(jsim,k,2) = inf_rhs(jsim,k,2) + vmult*qbg(1)%mean*u2d
+                 inf_rhs(jsim,k,3) = inf_rhs(jsim,k,3) - vmult*qbg(1)%mean*v2d
               ENDIF
 
            ENDDO
@@ -169,19 +166,19 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
                          (wxloc+wzloc)
                     w3d =-A3d(inx3d)*wxloc*SIN(wxloc*xaux+Phix3d(inx3d)) * &
                          COS(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fyp
-                    inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult*mean_u*u3d
-                    inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult*mean_u*v3d
-                    inf_rhs(j,k,4) = inf_rhs(j,k,4) - vmult*mean_u*w3d
+                    inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult*qbg(1)%mean*u3d
+                    inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult*qbg(1)%mean*v3d
+                    inf_rhs(j,k,4) = inf_rhs(j,k,4) - vmult*qbg(1)%mean*w3d
                     !             varicose
                     IF (ifrcdsc_mode .EQ. 1) THEN
-                       inf_rhs(jsim,k,2) = inf_rhs(jsim,k,2) - vmult*mean_u*u3d
-                       inf_rhs(jsim,k,3) = inf_rhs(jsim,k,3) + vmult*mean_u*v3d
-                       inf_rhs(jsim,k,4) = inf_rhs(jsim,k,4) - vmult*mean_u*w3d
+                       inf_rhs(jsim,k,2) = inf_rhs(jsim,k,2) - vmult*qbg(1)%mean*u3d
+                       inf_rhs(jsim,k,3) = inf_rhs(jsim,k,3) + vmult*qbg(1)%mean*v3d
+                       inf_rhs(jsim,k,4) = inf_rhs(jsim,k,4) - vmult*qbg(1)%mean*w3d
                        !             sinuous
                     ELSE
-                       inf_rhs(jsim,k,2) = inf_rhs(jsim,k,2) + vmult*mean_u*u3d
-                       inf_rhs(jsim,k,3) = inf_rhs(jsim,k,3) - vmult*mean_u*v3d
-                       inf_rhs(jsim,k,4) = inf_rhs(jsim,k,4) + vmult*mean_u*w3d
+                       inf_rhs(jsim,k,2) = inf_rhs(jsim,k,2) + vmult*qbg(1)%mean*u3d
+                       inf_rhs(jsim,k,3) = inf_rhs(jsim,k,3) - vmult*qbg(1)%mean*v3d
+                       inf_rhs(jsim,k,4) = inf_rhs(jsim,k,4) + vmult*qbg(1)%mean*w3d
                     ENDIF
 
                  ENDDO

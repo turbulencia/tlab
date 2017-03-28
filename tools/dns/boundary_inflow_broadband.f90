@@ -61,7 +61,7 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND&
   ENDIF
 
 ! check if we need to read again inflow data
-  IF ( ifrc_mode .EQ. 3 .AND. INT(mean_u*etime/scalex_inf)+1 .NE. ifrc_ifield ) THEN
+  IF ( ifrc_mode .EQ. 3 .AND. INT(qbg(1)%mean*etime/scalex_inf)+1 .NE. ifrc_ifield ) THEN
      CALL BOUNDARY_INFLOW_INIT&
           (etime, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, wrk1d,wrk2d,wrk3d)
   ENDIF
@@ -71,7 +71,7 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND&
 ! ###################################################################
   joffset = (jmax-jmax_inf)/2
 
-  xaux = mean_u*etime
+  xaux = qbg(1)%mean*etime
 ! Remove integral length scales of box
   xaux = xaux - INT(xaux/scalex_inf)*scalex_inf
 ! Set distance from box initial length

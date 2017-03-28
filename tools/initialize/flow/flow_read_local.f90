@@ -5,7 +5,7 @@
 SUBROUTINE FLOW_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile
-  USE DNS_GLOBAL,    ONLY : ycoor_u, thick_u
+  USE DNS_GLOBAL, ONLY : qbg
   USE FLOW_LOCAL
 
   IMPLICIT NONE
@@ -59,7 +59,7 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIniK', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
        CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIni', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; thick_ini = thick_u;
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; thick_ini = qbg(1)%thick;
   ELSE
      thick_ini = C_1_R; idummy = 1
      CALL LIST_REAL(sRes, idummy, thick_ini)
@@ -68,7 +68,7 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIniK', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
        CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; ycoor_ini = ycoor_u;
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; ycoor_ini = qbg(1)%ymean;
   ELSE
      ycoor_ini = C_1_R; idummy = 1
      CALL LIST_REAL(sRes, idummy, ycoor_ini)

@@ -6,13 +6,12 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, idiffusion, itransport
+  USE DNS_GLOBAL, ONLY : g, area
+  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, imode_fdm, idiffusion, itransport
   USE DNS_GLOBAL, ONLY : itime, rtime
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal, inb_scal_array, imode_fdm, i1bc,j1bc,k1bc, area, scaley
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal, inb_scal_array, i1bc,j1bc,k1bc
   USE DNS_GLOBAL, ONLY : buoyancy, radiation, transport
-  USE DNS_GLOBAL, ONLY : rbg, sbg
-  USE DNS_GLOBAL, ONLY : delta_u, ycoor_u
+  USE DNS_GLOBAL, ONLY : rbg, sbg, qbg
   USE DNS_GLOBAL, ONLY : visc, schmidt, froude
   USE THERMO_GLOBAL, ONLY : imixture, thermo_param
 #ifdef USE_MPI
@@ -598,21 +597,21 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
 
 ! -----------------------------------------------------------------------
-! Based on delta_u 
+! Based on delta_u
 ! -----------------------------------------------------------------------
-     IF ( ABS(delta_u) .GT. C_SMALL_R ) THEN
+     IF ( ABS(qbg(1)%delta) .GT. C_SMALL_R ) THEN
         CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, fU(1), fU_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-        delta_w = ABS(delta_u)/MAXVAL(ABS(fU_y(1:jmax)))
+        delta_w = ABS(qbg(1)%delta)/MAXVAL(ABS(fU_y(1:jmax)))
 
         DO j=1, jmax
-           wrk1d(j,1) = rR(j)*(C_025_R - (fU(j)/delta_u)**2)
+           wrk1d(j,1) = rR(j)*(C_025_R - (fU(j)/qbg(1)%delta)**2)
         ENDDO
         delta_m = SIMPSON_NU(jmax, wrk1d, y)/rbg%mean
 
         DO j=1, jmax
            wrk1d(j,1) = ( diff*F2(j) -  rR(j)*Rsv(j) )*fS_y(j)
         ENDDO
-        delta_s_area = SIMPSON_NU(jmax, wrk1d, y)*C_2_R/(rbg%mean*delta_u)
+        delta_s_area = SIMPSON_NU(jmax, wrk1d, y)*C_2_R/(rbg%mean*qbg(1)%delta)
 
      ELSE
         delta_m      = C_1_R
@@ -655,8 +654,8 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         dummy = sbg(is)%mean - (C_05_R-C_1EM3_R)*sbg(is)%delta
         delta_st01 = UPPER_THRESHOLD(jmax, dummy, rS(1), y)
         
-        delta_sb01 = (y(1) + sbg(is)%ymean*scaley) - delta_sb01
-        delta_st01 = delta_st01 - (y(1) + sbg(is)%ymean*scaley)
+        delta_sb01 = (y(1) + sbg(is)%ymean*g(2)%scale) - delta_sb01
+        delta_st01 = delta_st01 - (y(1) + sbg(is)%ymean*g(2)%scale)
         delta_s01 = delta_st01 + delta_sb01
         
 !  Mixing, Youngs' definition
@@ -706,10 +705,10 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! Independent variables
      DO j = 1,jmax            
         VAUXPRE1 =  y(j)
-        VAUXPRE2 = (y(j)-scaley *ycoor_u       - y(1))/delta_m
-        VAUXPRE3 = (y(j)-scaley *ycoor_u       - y(1))/delta_w
-        VAUXPRE4 = (y(j)-scaley *sbg(is)%ymean - y(1))/delta_s01
-        VAUXPRE5 = (y(j)-scaley *rbg%ymean     - y(1))/delta_h01
+        VAUXPRE2 = (y(j)-g(2)%scale *qbg(1)%ymean  - y(1))/delta_m
+        VAUXPRE3 = (y(j)-g(2)%scale *qbg(1)%ymean  - y(1))/delta_w
+        VAUXPRE4 = (y(j)-g(2)%scale *sbg(is)%ymean - y(1))/delta_s01
+        VAUXPRE5 = (y(j)-g(2)%scale *rbg%ymean     - y(1))/delta_h01
      ENDDO
      
 ! -----------------------------------------------------------------------

@@ -89,7 +89,7 @@ SUBROUTINE BOUNDARY_INFLOW_INIT(etime, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, wrk
 
      fname = 'inflow_flow '
      sname = 'inflow_scal '
-     ifrc_ifield = INT(mean_u*etime/scalex_inf) + 1
+     ifrc_ifield = INT(qbg(1)%mean*etime/scalex_inf) + 1
      IF ( ifrc_mode .EQ. 3 ) THEN
         WRITE(str,*) ifrc_ifield
         fname = TRIM(ADJUSTL(fname))//TRIM(ADJUSTL(str))
@@ -154,7 +154,7 @@ SUBROUTINE BOUNDARY_INFLOW_INIT(etime, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, wrk
            CALL PARTIAL_X(imode_fdm, imax_inf, jmax_inf, kmax_inf, ibc_local,&
                 wrk1d(1,1), q_inf(1,is), txc, i0, i0, wrk1d(1,2), wrk2d, wrk3d)
            DO ij = 1,imax_inf*jmax_inf*kmax_inf
-              q_inf(ij,is) = -txc(ij)*mean_u
+              q_inf(ij,is) = -txc(ij)*qbg(1)%mean
            ENDDO
         ENDDO
      ENDIF
@@ -164,7 +164,7 @@ SUBROUTINE BOUNDARY_INFLOW_INIT(etime, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, wrk
            CALL PARTIAL_X(imode_fdm, imax_inf, jmax_inf, kmax_inf, ibc_local,&
                 wrk1d(1,1), z1_inf(1,is), txc, i0, i0, wrk1d(1,2), wrk2d, wrk3d)
            DO ij = 1,imax_inf*jmax_inf*kmax_inf
-              z1_inf(ij,is) = -txc(ij)*mean_u
+              z1_inf(ij,is) = -txc(ij)*qbg(1)%mean
            ENDDO
 
         ENDDO

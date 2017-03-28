@@ -1,3 +1,6 @@
+#include "types.h"
+#include "dns_error.h"
+
 !########################################################################
 !# Tool/Library SUPERLAYER
 !#
@@ -14,9 +17,6 @@
 !# ARGUMENTS 
 !#
 !########################################################################
-#include "types.h"
-#include "dns_error.h"
-
 SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold, ibuffer_npy, &
      y, dx, dy, dz, u, v, w, z1, a, sl, samples, pdf, txc, wrk1d, wrk2d, wrk3d)
 
@@ -207,7 +207,7 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
 
   varname(5) = 'height'
 
-  ycenter = y(1) + ycoor_u*scaley
+  ycenter = y(1) + qbg(1)%ymean *scaley
   IF ( isl .EQ. 1 ) THEN
      DO ij = 1,imax*kmax
         ip = ipfield + (ij-1)*ioffset

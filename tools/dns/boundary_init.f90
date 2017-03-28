@@ -21,12 +21,12 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
      bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
 
   USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
+  USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim, icalc_scal
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal,inb_vars, isize_field
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : itime
-  USE DNS_GLOBAL,    ONLY : mach, pbg
-  USE DNS_GLOBAL,    ONLY : imode_eqns,imode_sim, icalc_scal
-  USE DNS_GLOBAL,    ONLY : area, diam_u,ycoor_u
+  USE DNS_GLOBAL,    ONLY : mach, pbg, qbg
+  USE DNS_GLOBAL,    ONLY : area
   USE THERMO_GLOBAL, ONLY : imixture, gama0
   USE DNS_LOCAL
 #ifdef USE_MPI
@@ -500,9 +500,9 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
      ENDDO; ENDDO
 
 ! shape factor
-     diam_loc  = C_3_R*diam_u
-     thick_loc = diam_u/C_8_R
-     ycenter   = g(2)%nodes(1) + g(2)%scale *ycoor_u
+     diam_loc  = C_3_R*qbg(1)%diam
+     thick_loc = qbg(1)%diam/C_8_R
+     ycenter   = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
      DO k = 1,kmax; DO j = 1,jmax
         bcs_vi(j,k,inb_vars+1) = FLOW_JET_TEMPORAL(i2, thick_loc, r1, r05, diam_loc, ycenter, dummy, g(2)%nodes(j))
      ENDDO; ENDDO

@@ -4,8 +4,8 @@
 SUBROUTINE VELOCITY_DISCRETE(iflag, u,v,w)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : imode_flow, diam_u
-  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : imode_flow
+  USE DNS_GLOBAL, ONLY : g, qbg
   USE FLOW_LOCAL
 
 #ifdef USE_MPI
@@ -104,7 +104,7 @@ SUBROUTINE VELOCITY_DISCRETE(iflag, u,v,w)
 
         jsim = jmax - j + 1
 
-        ycenter = y(j) - g(2)%scale*ycoor_ini + diam_u/C_2_R - y(1)
+        ycenter = y(j) - g(2)%scale*ycoor_ini + qbg(1)%diam/C_2_R - y(1)
         fy  = EXP(-(ycenter/(C_2_R*thick_ini))**2)*thick_ini
         fyp =-ycenter*fy/(C_2_R*thick_ini**2)
 

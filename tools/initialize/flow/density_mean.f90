@@ -28,8 +28,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL,    ONLY : g, j1bc
   USE DNS_GLOBAL,    ONLY : imode_sim, imode_flow, imode_fdm, inb_scal, imax,jmax,kmax
-  USE DNS_GLOBAL,    ONLY : rbg, tbg, sbg
-  USE DNS_GLOBAL,    ONLY : iprof_u, mean_u, delta_u, thick_u, ycoor_u, prof_u, diam_u, jet_u
+  USE DNS_GLOBAL,    ONLY : rbg, tbg, sbg, qbg
   USE DNS_GLOBAL,    ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture
 
@@ -49,12 +48,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
   TREAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL
   EXTERNAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL
 
-  TREAL, DIMENSION(:), POINTER :: x,y,dy
-  
-! ###################################################################
-! Define pointers
-  x => g(1)%nodes
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
+  TREAL dy(1) ! To use old wrappers to calculate derivatives
    
 ! ###################################################################
 ! Isotropic case
@@ -79,15 +73,15 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! temperature/mixture profile are given
            IF ( rbg%type .EQ. PROFILE_NONE ) THEN
-              ycenter = y(1) + g(2)%scale*tbg%ymean
+              ycenter = g(2)%nodes(1) + g(2)%scale *tbg%ymean
               DO j = 1,jmax
                  dummy =  FLOW_SHEAR_TEMPORAL&
-                      (tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
+                      (tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, g(2)%nodes(j))
                  TEM_MEAN_LOC(:,j,:) = dummy
               ENDDO
 
               DO is = 1,inb_scal
-                 ycenter = y(1) + g(2)%scale *sbg(is)%ymean
+                 ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
                  DO j = 1,jmax
                     dummy =  FLOW_SHEAR_TEMPORAL&
                          (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
@@ -97,19 +91,19 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! define liquid content in AirWater case: (p,T) given
               IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-                 CALL THERMO_AIRWATER_PT(imax, jmax, kmax, s, p, TEM_MEAN_LOC(1,1,1))
+                 CALL THERMO_AIRWATER_PT(imax,jmax,kmax, s, p, TEM_MEAN_LOC(1,1,1))
               ENDIF
 
               CALL THERMO_THERMAL_DENSITY&
-                   (imax, jmax, kmax, s, p, TEM_MEAN_LOC(1,1,1), RHO_MEAN_LOC(1,1,1))
+                   (imax,jmax,kmax, s, p, TEM_MEAN_LOC(1,1,1), RHO_MEAN_LOC(1,1,1))
               rho(:,:,:) = rho(:,:,:) + RHO_MEAN_LOC(:,:,:)
 
 ! density profile itself is given
            ELSE
-              ycenter = y(1) + g(2)%scale*rbg%ymean
+              ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean
               DO j = 1,jmax
                  dummy =  FLOW_SHEAR_TEMPORAL&
-                      (rbg%type, rbg%thick, rbg%delta, rbg%mean, ycenter, rbg%parameters, y(j))
+                      (rbg%type, rbg%thick, rbg%delta, rbg%mean, ycenter, rbg%parameters, g(2)%nodes(j))
                  rho(:,j,:) = rho(:,j,:) + dummy
               ENDDO
 
@@ -158,15 +152,15 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! temperature/mixture profile are given
      IF ( rbg%type .EQ. PROFILE_NONE ) THEN
-        ycenter = y(1) + g(2)%scale*tbg%ymean
+        ycenter = g(2)%nodes(1) + g(2)%scale*tbg%ymean
         DO j = 1,jmax
            dummy = FLOW_JET_TEMPORAL&
-                (tbg%type, tbg%thick, tbg%delta, tbg%mean, tbg%diam, ycenter, tbg%parameters, y(j))
+                (tbg%type, tbg%thick, tbg%delta, tbg%mean, tbg%diam, ycenter, tbg%parameters, g(2)%nodes(j))
            wrk3d(:,j,:) = dummy
         ENDDO
 
         DO is = 1,inb_scal
-           ycenter = y(1) + g(2)%scale *sbg(is)%ymean
+           ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
            DO j = 1,jmax
               dummy =  FLOW_JET_TEMPORAL&
                    (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, sbg(is)%diam, ycenter, sbg(is)%parameters, g(2)%nodes(j))
@@ -199,16 +193,17 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
            rho_vi(:) = rho(1,:,1)
 
 ! Inflow profile of axial velocity
-           ycenter = y(1) + g(2)%scale*ycoor_u
+           ycenter = g(2)%nodes(1) + g(2)%scale*qbg(1)%ymean
            DO j = 1,jmax
               u_vi(j) = FLOW_JET_TEMPORAL&
-                   (iprof_u, thick_u, delta_u, mean_u, diam_u, ycenter, prof_u, y(j))
+                   (qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, qbg(1)%diam, ycenter, qbg(1)%parameters,g(2)%nodes(j))
            ENDDO
 
 ! 2D distribution of density
-           CALL FLOW_JET_SPATIAL_DENSITY(imax, jmax, tbg%type, tbg%thick, tbg%delta, tbg%mean, &
-                tbg%ymean, tbg%diam, tbg%parameters, iprof_u, thick_u, delta_u, mean_u, ycoor_u, diam_u,&
-                jet_u, g(2)%scale, x, y, s,p,rho_vi(1),u_vi(1),aux1(1),rho,aux2(1),aux3(1),aux4(1)) 
+           CALL FLOW_JET_SPATIAL_DENSITY(imax, jmax, &
+                tbg%type, tbg%thick, tbg%delta, tbg%mean, tbg%ymean, tbg%diam, tbg%parameters, &
+                qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, qbg(1)%ymean, qbg(1)%diam, qbg(1)%parameters, &
+                g(2)%scale, g(1)%nodes, g(2)%nodes, s,p,rho_vi(1),u_vi(1),aux1(1),rho,aux2(1),aux3(1),aux4(1)) 
                 
            DO k = 2,kmax
               rho(:,:,k) = rho(:,:,1)
@@ -216,10 +211,10 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! density profile itself is given
         ELSE
-           ycenter = y(1) + g(2)%scale*rbg%ymean
+           ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean
            DO j = 1,jmax
               dummy =  FLOW_JET_TEMPORAL&
-                   (rbg%type, rbg%thick, rbg%delta, rbg%mean, rbg%diam, ycenter, rbg%parameters, y(j))
+                   (rbg%type, rbg%thick, rbg%delta, rbg%mean, rbg%diam, ycenter, rbg%parameters, g(2)%nodes(j))
               rho(:,j,:) = rho(:,j,:) + dummy
            ENDDO
 

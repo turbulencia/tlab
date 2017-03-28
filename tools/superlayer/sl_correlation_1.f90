@@ -152,7 +152,7 @@ SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
 ! Body
 ! -------------------------------------------------------------------
      DO j = 1,jmax
-        WRITE(23,1020) 1, j, y(j), (y(j)-scaley*ycoor_u-y(1))/delta_w,&
+        WRITE(23,1020) 1, j, y(j), (y(j)-scaley *qbg(1)%ymean-y(1))/delta_w,&
              corr(j,1), corr(j,2), corr(j,3)
      ENDDO
 

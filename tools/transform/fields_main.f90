@@ -855,9 +855,8 @@ END SUBROUTINE TRANS_EXTEND
 SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL, ONLY : imode_flow, scaley
-  USE DNS_GLOBAL, ONLY : iprof_u, thick_u, delta_u, mean_u, prof_u, ycoor_u
-  USE DNS_GLOBAL, ONLY : sbg
+  USE DNS_GLOBAL, ONLY : imode_flow
+  USE DNS_GLOBAL, ONLY : g, sbg, qbg
 
   IMPLICIT NONE
 
@@ -875,10 +874,10 @@ SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
   IF ( imode_flow .EQ. DNS_FLOW_SHEAR     ) THEN
      IF ( flag_mode .EQ. 0 ) THEN ! Velocity
         IF ( is .EQ. 1 ) THEN ! Only the mean velocity
-        ycenter = y(1) + scaley*ycoor_u
+        ycenter = y(1) + g(2)%scale *qbg(1)%ymean
         DO j = 1,ny
            dummy =  FLOW_SHEAR_TEMPORAL&
-                (iprof_u, thick_u, delta_u, mean_u, ycenter, prof_u, y(j))
+                (qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, y(j))
             b(:,j,:) = dummy + a(:,j,:)
         ENDDO
         ELSE
@@ -886,7 +885,7 @@ SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
         ENDIF
 
      ELSE                         ! Scalars
-        ycenter = y(1) + scaley *sbg(is)%ymean
+        ycenter = y(1) + g(2)%scale *sbg(is)%ymean
         DO j = 1,ny
            dummy =  FLOW_SHEAR_TEMPORAL&
                 (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, y(j))

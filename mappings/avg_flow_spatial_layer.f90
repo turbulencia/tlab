@@ -375,9 +375,9 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
   endif
 
   dt_mean = (rtime-rstattimeorg)/M_REAL(itime-istattimeorg)
-  U2 = mean_u   - C_05_R *delta_u
-  T2 = tbg%mean - C_05_R *tbg%delta
-  R2 = rbg%mean - C_05_R *rbg%delta
+  U2 = qbg(1)%mean - C_05_R *qbg(1)%delta
+  T2 = tbg%mean    - C_05_R *tbg%delta
+  R2 = rbg%mean    - C_05_R *rbg%delta
 
   IF ( itxc .LT. nstatavg*jmax*LAST_INDEX ) THEN
      CALL IO_WRITE_ASCII(efile,'AVG_FLOW_SPATIAL_LAYER: Not enough space in stat')
@@ -1009,8 +1009,8 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 
 ! Momentum thickness
      DO n = 1,nstatavg
-        UC = mean_u
-        DU = delta_u
+        UC = qbg(1)%mean
+        DU = qbg(1)%delta
         DO j = jmin_loc, jmax_loc
            wrk1d(j,1) = rR(n,j)*( C_025_R - ((fU(n,j)-UC)/DU)**2 )
         ENDDO
@@ -1018,9 +1018,9 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
      ENDDO
 
 ! Mixing layer limit (U=0.1dU and U=0.9dU)
-     y_center = g(2)%nodes(1) + ycoor_u*scaley
+     y_center = g(2)%nodes(1) + qbg(1)%ymean*g(2)%scale
      DO n = 1,nstatavg
-        fU_05 = U2 + C_01_R*delta_u
+        fU_05 = U2 + C_01_R*qbg(1)%delta
         DO j = 1,jmax
            IF ( fU(n,j) .GT. fU_05 .AND. fU(n,j+1) .LE. fU_05 ) THEN
               delta_01_u(n) = g(2)%nodes(j) + (fU_05-fU(n,j))*(g(2)%nodes(j+1) -g(2)%nodes(j))/(fU(n,j+1)-fU(n,j))
@@ -1028,7 +1028,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         ENDDO
         delta_01_u(n) = delta_01_u(n) - y_center
 
-        fU_05 = U2 + r09*delta_u
+        fU_05 = U2 + r09*qbg(1)%delta
         DO j = 1,jmax
            IF ( fU(n,j) .GT. fU_05 .AND. fU(n,j+1) .LE. fU_05 ) THEN
               delta_01_d(n) = g(2)%nodes(j) + (fU_05-fU(n,j))*(g(2)%nodes(j+1) -g(2)%nodes(j))/(fU(n,j+1)-fU(n,j))
@@ -1186,7 +1186,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
      ENDIF
 
 ! Jet center line based on velocity
-     y_center = g(2)%nodes(1) + ycoor_u*scaley
+     y_center = g(2)%nodes(1) + qbg(1)%ymean*g(2)%scale
      DO n = 1,nstatavg
         DO j = 1,jmax
            wrk1d(j,1) = fU(n,j)
@@ -1212,7 +1212,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
   DO n = 1,nstatavg
 
      IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-        DU = delta_u
+        DU = qbg(1)%delta
         delta_05 = delta_01_u(n) - delta_01_d(n)
      ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
         delta_05 = C_05_R*(delta_u_u(n)+delta_u_d(n))
@@ -1525,10 +1525,10 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 
      DO j = 1,jmax
         ivauxpre = 4
-        VAUXPRE(1) = g(1)%nodes(i)/diam_u
-        VAUXPRE(2) = g(2)%nodes(j)/diam_u
-        VAUXPRE(3) = (g(2)%nodes(j)- g(2)%nodes(1) - ycoor_u   *scaley)/delta_05
-        VAUXPRE(4) = (g(2)%nodes(j)- g(2)%nodes(1) - tbg%ymean *scaley)/delta_t
+        VAUXPRE(1) = g(1)%nodes(i) /qbg(1)%diam
+        VAUXPRE(2) = g(2)%nodes(j) /qbg(1)%diam
+        VAUXPRE(3) = (g(2)%nodes(j)- g(2)%nodes(1) - qbg(1)%ymean *g(2)%scale)/delta_05
+        VAUXPRE(4) = (g(2)%nodes(j)- g(2)%nodes(1) - tbg%ymean    *g(2)%scale)/delta_t
 
         IF ( j .EQ. jmax/2 ) THEN
            ivauxdum = ivauxpos

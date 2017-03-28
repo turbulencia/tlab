@@ -106,24 +106,12 @@ MODULE DNS_GLOBAL
   TREAL    :: scalex,scaley,scalez
   
 ! ###################################################################
-! Profiles
-! ###################################################################
-  TYPE(background_d) :: qbg(3)        ! Velocity
-  TYPE(background_d) :: sbg(MAX_NSP)  ! Scalars
-  TYPE(background_d) :: pbg, rbg, tbg ! Pressure, density, temperature
+  TYPE(background_d) :: qbg(3)        ! Velocity background
+  TYPE(background_d) :: sbg(MAX_NSP)  ! Scalars backgrounds
+  TYPE(background_d) :: pbg, rbg, tbg ! Pressure, density, temperature backgrounds
 
   TREAL, DIMENSION(:), ALLOCATABLE :: pbackground, rbackground, tbackground
   TREAL, DIMENSION(:), ALLOCATABLE :: bbackground, epbackground
-
-! TO BE REMOVED
-! Flow: velocities
-  TINTEGER :: iprof_u
-  TREAL    :: mean_u, delta_u, thick_u,   & ! Velocity profile parameters
-              ycoor_u,                    & ! Relative reference position 
-              prof_u(MAX_PROF)        ,   & ! Further parameters
-              diam_u, jet_u(MAX_JETS)       ! Jet-related geometry
-
-  TREAL    :: mean_v, mean_w      ! in these two directions, only mean values
 
 ! ###################################################################
   TYPE(term_structure) :: buoyancy  ! Buoyancy parameters

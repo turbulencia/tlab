@@ -116,7 +116,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
 
   IF ( bcs_euler_drift .EQ. 1) THEN
      pl_out = bcs_sigma_out*(C_1_R-M2_max)/scalex
-     pl_inf1 = bcs_sigma_inf_imin *mean_u/diam_u ! jet inflow region (dimensions 1/time)
+     pl_inf1 = bcs_sigma_inf_imin *qbg(1)%mean/qbg(1)%diam ! jet inflow region (dimensions 1/time)
      pl_inf2 = bcs_sigma_inf_imax/scalex        ! Lx plane
      pl_inf3 = bcs_sigma_inf_j  /scaley        ! x0 plane far from jet inflow region
   ELSE
