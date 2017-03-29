@@ -21,7 +21,7 @@ SUBROUTINE  RHS_PARTICLE_GLOBAL_INTERPOLATION &
 
 USE DNS_GLOBAL, ONLY: imax,jmax,kmax
 USE DNS_CONSTANTS, ONLY : efile
-USE DNS_GLOBAL, ONLY: imax_total,kmax_total,  isize_particle, inb_particle
+USE DNS_GLOBAL, ONLY: g, isize_particle, inb_particle
 USE LAGRANGE_GLOBAL, ONLY: jmin_part, inb_lag_total_interp
 USE LAGRANGE_GLOBAL, ONLY: ilagrange
 USE THERMO_GLOBAL, ONLY : thermo_param
@@ -44,7 +44,7 @@ IMPLICIT NONE
   TREAL, DIMENSION(inb_lag_total_interp) ::  interpolated_value
   TREAL delta_inv0, delta_inv2, delta_inv4
 
-  IF  (kmax_total .NE. 1) THEN ! 3D case
+  IF  ( g(3)%size .NE. 1) THEN ! 3D case
   
     DO i=grid_start,grid_end !loop over all particles inside the grid (no halo)
     

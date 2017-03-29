@@ -20,8 +20,8 @@
 SUBROUTINE  PARTICLE_TO_FIELD &
     (l_q,particle_property,x,y,z,wrk1d,wrk2d,wrk3d, field_out)
 
-USE DNS_GLOBAL, ONLY: imax,jmax,kmax, imax_total, jmax_total, kmax_total
-USE DNS_GLOBAL, ONLY: isize_particle, scalex, scaley, scalez
+USE DNS_GLOBAL, ONLY: imax,jmax,kmax, isize_particle
+USE DNS_GLOBAL, ONLY: g
 USE LAGRANGE_GLOBAL, ONLY: jmin_part
 #ifdef USE_MPI
    USE DNS_MPI, ONLY: ims_npro, ims_pro, ims_err
@@ -48,9 +48,9 @@ IMPLICIT NONE
 !Field is a extended field with gird, halo1, halo2 and halo3
 !#######################################################################
   wrk3d=C_0_R
-  wrk1d(1)= scalex/imax_total ! wrk1d 1-3 intervalls
+  wrk1d(1)= g(1)%scale/g(1)%size ! wrk1d 1-3 intervalls
   wrk1d(2)= y(jmin_part+1)-y(jmin_part)
-  wrk1d(3)= scalez/kmax_total
+  wrk1d(3)= g(3)%scale/g(3)%size
 
 
 
@@ -86,10 +86,10 @@ IMPLICIT NONE
 !Field is a extended field with gird, halo1, halo2 and halo3
 !#######################################################################
   wrk3d=C_0_R
-  wrk1d(1)= scalex/imax_total ! wrk1d 1-3 intervalls
+  wrk1d(1)= g(1)%scale/g(1)%size ! wrk1d 1-3 intervalls
   wrk1d(2)= y(jmin_part+1)-y(jmin_part)
-  wrk1d(3)= scalez/kmax_total
-!  wrk1d(2)= scaley/jmax_total ! needed for interpolation
+  wrk1d(3)= g(3)%scale/g(3)%size
+!  wrk1d(2)= g(2)%scale/g(2)%size ! needed for interpolation
 
   CALL RHS_PARTICLE_TO_FIELD(l_q, particle_property, y, wrk1d, wrk3d)
 

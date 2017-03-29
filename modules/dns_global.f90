@@ -103,7 +103,6 @@ MODULE DNS_GLOBAL
 ! to be removed
   TINTEGER :: iunifx,iunify,iunifz               ! uniform
   TINTEGER :: i1bc,j1bc,k1bc                     ! biased
-  TREAL    :: scalex,scaley,scalez
   
 ! ###################################################################
   TYPE(background_dt) :: qbg(3)        ! Velocity background

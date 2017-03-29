@@ -125,7 +125,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
   CALL SL_NORMAL_SAMPLE&
        (imax, jmax, kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
-       scalex, scalez, normal_factor, &
+       g(1)%scale, g(3)%scale, normal_factor, &
        x, y, z, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
 ! ###################################################################
@@ -155,7 +155,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
   CALL SL_NORMAL_SAMPLE&
        (imax, jmax, kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
-       scalex, scalez, normal_factor,&
+       g(1)%scale, g(3)%scale, normal_factor,&
        x, y, z, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
 ! ###################################################################
@@ -188,7 +188,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
   CALL SL_NORMAL_SAMPLE&
        (imax, jmax, kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
-       scalex, scalez, normal_factor,&
+       g(1)%scale, g(3)%scale, normal_factor,&
        x, y, z, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
 ! ###################################################################
@@ -222,7 +222,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
   CALL SL_NORMAL_SAMPLE&
        (imax, jmax, kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
-       scalex, scalez, normal_factor, &
+       g(1)%scale, g(3)%scale, normal_factor, &
        x, y, z, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
 ! ###################################################################
@@ -266,7 +266,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
   CALL SL_NORMAL_SAMPLE&
        (imax, jmax, kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
-       scalex, scalez, normal_factor, &
+       g(1)%scale, g(3)%scale, normal_factor, &
        x, y, z, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
 ! ###################################################################

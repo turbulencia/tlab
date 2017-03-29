@@ -207,7 +207,7 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
 
   varname(5) = 'height'
 
-  ycenter = y(1) + qbg(1)%ymean *scaley
+  ycenter = y(1) + qbg(1)%ymean *g(2)%scale
   IF ( isl .EQ. 1 ) THEN
      DO ij = 1,imax*kmax
         ip = ipfield + (ij-1)*ioffset

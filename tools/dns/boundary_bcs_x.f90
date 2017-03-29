@@ -115,10 +115,10 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
   ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL  ) THEN; iflag_min =-4; iflag_max = 3; ENDIF
 
   IF ( bcs_euler_drift .EQ. 1) THEN
-     pl_out = bcs_sigma_out*(C_1_R-M2_max)/scalex
+     pl_out = bcs_sigma_out*(C_1_R-M2_max)/g(1)%scale
      pl_inf1 = bcs_sigma_inf_imin *qbg(1)%mean/qbg(1)%diam ! jet inflow region (dimensions 1/time)
-     pl_inf2 = bcs_sigma_inf_imax/scalex        ! Lx plane
-     pl_inf3 = bcs_sigma_inf_j  /scaley        ! x0 plane far from jet inflow region
+     pl_inf2 = bcs_sigma_inf_imax/g(1)%scale        ! Lx plane
+     pl_inf3 = bcs_sigma_inf_j  /g(2)%scale        ! x0 plane far from jet inflow region
   ELSE
      pl_out  = C_0_R
      pl_inf1 = C_0_R

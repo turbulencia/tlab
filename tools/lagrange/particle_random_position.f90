@@ -97,11 +97,11 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
         real_nbuffer_k=ims_npro_k
         !Set up random numbers
         !Each processor creates random numbers in its territory
-        l_q(i,1)=((rnd_number(1)/ims_npro_i)+(real_buffer_i/real_nbuffer_i))*scalex
-        l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*scaley
-!        l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*(y(jmin_part+1)-y(jmin_part))*jmax_total
-        IF ( kmax_total .GT. 1) THEN
-           l_q(i,3)=((rnd_number(3)/ims_npro_k)+(real_buffer_k/real_nbuffer_k))*scalez
+        l_q(i,1)=((rnd_number(1)/ims_npro_i)+(real_buffer_i/real_nbuffer_i))*g(1)%scale
+        l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*g(2)%scale
+!        l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*(y(jmin_part+1)-y(jmin_part))*g(2)%size
+        IF ( g(3)%size .GT. 1) THEN
+           l_q(i,3)=((rnd_number(3)/ims_npro_k)+(real_buffer_k/real_nbuffer_k))*g(3)%scale
         ELSE
            l_q(i,3)=1
         END IF
@@ -116,7 +116,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
     !Read the scalar field
     CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
 
-    IF (jmin_part/ycoor_i(is) .GT. jmax_total) THEN
+    IF (jmin_part/ycoor_i(is) .GT. g(2)%size) THEN
       CALL IO_WRITE_ASCII(efile, 'DNS_INIPART. JMIN_PART exceeds YCorrScalar value')
       CALL DNS_STOP(DNS_ERROR_PARTICLE)
     END IF
@@ -150,11 +150,11 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
 
        !Set up random numbers
        !Each processor creates random numbers in its territory
-        l_q(i,1)=((rnd_number(1)/ims_npro_i)+(real_buffer_i/real_nbuffer_i))*scalex
-!        l_q(i,2)=y(rnd_scal(2)) + real_buffer_frac*scaley/jmax 
+        l_q(i,1)=((rnd_number(1)/ims_npro_i)+(real_buffer_i/real_nbuffer_i))*g(1)%scale
+!        l_q(i,2)=y(rnd_scal(2)) + real_buffer_frac*g(2)%scale/jmax 
         l_q(i,2)=y(rnd_scal(2)) + real_buffer_frac*(y(jmin_part+1)-y(jmin_part) )
-        IF ( kmax_total .GT. 1) THEN
-           l_q(i,3)=((rnd_number(3)/ims_npro_k)+(real_buffer_k/real_nbuffer_k))*scalez
+        IF ( g(3)%size .GT. 1) THEN
+           l_q(i,3)=((rnd_number(3)/ims_npro_k)+(real_buffer_k/real_nbuffer_k))*g(3)%scale
         ELSE
            l_q(i,3)=1
         END IF
@@ -181,11 +181,11 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
         CALL RANDOM_NUMBER(rnd_number(j))
       END DO
 
-      l_q(i,1)=((rnd_number(1)))*scalex
-      l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*scaley
-!      l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*(y(jmin_part+1)-y(jmin_part))*jmax_total
-      IF ( kmax_total .GT. 1) THEN
-        l_q(i,3)=((rnd_number(3)*scalez))
+      l_q(i,1)=((rnd_number(1)))*g(1)%scale
+      l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*g(2)%scale
+!      l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*(y(jmin_part+1)-y(jmin_part))*g(2)%size
+      IF ( g(3)%size .GT. 1) THEN
+        l_q(i,3)=((rnd_number(3)*g(3)%scale))
       ELSE
         l_q(i,3)=1
       END IF
@@ -195,7 +195,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
     !Read the scalar field
     CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
   
-    IF (jmin_part/ycoor_i(is) .GT. jmax_total) THEN
+    IF (jmin_part/ycoor_i(is) .GT. g(2)%size) THEN
       CALL IO_WRITE_ASCII(efile, 'DNS_INIPART. JMIN_PART exceeds YCorrScalar value')
       CALL DNS_STOP(DNS_ERROR_PARTICLE)
     END IF
@@ -221,10 +221,10 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,x,y,z,isize_wrk3d,wrk1d,wrk
       IF (rnd_number_second .le. abs(s(rnd_scal(1),rnd_scal(2),rnd_scal(3), 1)/real_buffer_delta-real_buffer_calc)) THEN
 
        !Set up random numbers
-        l_q(i,1)=(rnd_number(1))*scalex
+        l_q(i,1)=(rnd_number(1))*g(1)%scale
         l_q(i,2)=y(rnd_scal(2)) + real_buffer_frac*(y(jmin_part+1)-y(jmin_part) )
-        IF ( kmax_total .GT. 1) THEN
-           l_q(i,3)=(rnd_number(3))*scalez
+        IF ( g(3)%size .GT. 1) THEN
+           l_q(i,3)=(rnd_number(3))*g(3)%scale
         ELSE
            l_q(i,3)=1
         END IF

@@ -1,6 +1,5 @@
-!########################################################################
-!# Tool/Library
-!#
+#include "types.h"
+
 !########################################################################
 !# HISTORY
 !#
@@ -13,15 +12,10 @@
 !# Power spectral densities
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-
 SUBROUTINE RAND_PSD(nx,ny,nz, ispectrum, spc_param, random,seed, u)
 
-  USE DNS_GLOBAL, ONLY : imax_total, jmax_total, kmax_total, isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : scalex, scaley, scalez
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -48,13 +42,13 @@ SUBROUTINE RAND_PSD(nx,ny,nz, ispectrum, spc_param, random,seed, u)
 #else
      kglobal = k
 #endif
-     IF ( kglobal .LE. kmax_total/2+1 ) THEN; fk = M_REAL(kglobal-1)/scalez
-     ELSE;                                    fk =-M_REAL(kmax_total+1-kglobal)/scalez; ENDIF
+     IF ( kglobal .LE. g(3)%size/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
+     ELSE;                                    fk =-M_REAL(g(3)%size+1-kglobal)/g(3)%scale; ENDIF
 
      DO j = 1,ny
         jglobal = j ! No MPI decomposition along Oy
-        IF ( jglobal .LE. jmax_total/2+1 ) THEN; fj = M_REAL(jglobal-1)/scaley
-        ELSE;                                    fj =-M_REAL(jmax_total+1-jglobal)/scaley; ENDIF
+        IF ( jglobal .LE. g(2)%size/2+1 ) THEN; fj = M_REAL(jglobal-1)/g(2)%scale
+        ELSE;                                    fj =-M_REAL(g(2)%size+1-jglobal)/g(2)%scale; ENDIF
               
 
         DO i = 1,nx/2+1
@@ -63,8 +57,8 @@ SUBROUTINE RAND_PSD(nx,ny,nz, ispectrum, spc_param, random,seed, u)
 #else
            iglobal = i
 #endif
-           IF ( iglobal .LE. imax_total/2+1 ) THEN; fi = M_REAL(iglobal-1)/scalex
-           ELSE;                                    fi =-M_REAL(imax_total+1-iglobal)/scalex; ENDIF
+           IF ( iglobal .LE. g(1)%size/2+1 ) THEN; fi = M_REAL(iglobal-1)/g(1)%scale
+           ELSE;                                    fi =-M_REAL(g(1)%size+1-iglobal)/g(1)%scale; ENDIF
            
            f = SQRT(fi**2 + fj**2 + fk**2)
 
@@ -85,7 +79,7 @@ SUBROUTINE RAND_PSD(nx,ny,nz, ispectrum, spc_param, random,seed, u)
            IF ( f .EQ. C_0_R ) THEN
               pow_dst = C_0_R
            ELSE
-              IF ( jmax_total .EQ. 1 .OR. kmax_total .EQ. 1 ) THEN ! 2D spectrum
+              IF ( g(2)%size .EQ. 1 .OR. g(3)%size .EQ. 1 ) THEN ! 2D spectrum
                  pow_dst = pow_dst / (C_PI_R*f)
               ELSE
                  pow_dst = pow_dst / (2*C_PI_R*f**2)
@@ -98,7 +92,7 @@ SUBROUTINE RAND_PSD(nx,ny,nz, ispectrum, spc_param, random,seed, u)
            ip = (nx+2)*(j-1) + 2*i 
 
            IF ( random .EQ. 2 ) THEN
-              IF ( iglobal .EQ. 1 .OR. iglobal .EQ. imax_total/2+1 ) THEN; phase = C_0_R
+              IF ( iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1 ) THEN; phase = C_0_R
               ELSE;                                                        phase = (RAN0(seed)-C_05_R)*C_2_R*C_PI_R; ENDIF
               u(ip-1,k) = SQRT(pow_dst)*COS(phase)
               u(ip  ,k) = SQRT(pow_dst)*SIN(phase)

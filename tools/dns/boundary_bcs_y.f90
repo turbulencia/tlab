@@ -114,8 +114,8 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
 ! -------------------------------------------------------------------
   idir = 2
   IF ( bcs_euler_drift .EQ. 1 ) THEN
-     pl_out = bcs_sigma_out*(C_1_R-M2_max)/scaley
-     pl_inf = bcs_sigma_inf_j/scaley
+     pl_out = bcs_sigma_out*(C_1_R-M2_max)/g(2)%scale
+     pl_inf = bcs_sigma_inf_j/g(2)%scale
      iflag_min =-3
      iflag_max = 3
   ELSE

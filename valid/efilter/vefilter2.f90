@@ -7,7 +7,7 @@ PROGRAM VEFILTER2
 #include "types.h"  
 #include "integers.h"
 
-  TREAL, DIMENSION(:,:),   ALLOCATABLE :: x, y, z
+  TREAL, DIMENSION(:,:), ALLOCATABLE :: x, y, z
   TREAL, DIMENSION(:),   ALLOCATABLE :: a, cx, cy, cz
   TREAL, DIMENSION(:,:), ALLOCATABLE :: wrk3d
   TINTEGER :: i
@@ -28,11 +28,11 @@ PROGRAM VEFILTER2
   ALLOCATE(cx(imax*5),cy(jmax*5),cz(kmax_total*5))
   
 ! ###################################################################
-  CALL IO_READ_GRID(gfile, imax,jmax,kmax_total, scalex,scaley,scalez, x,y,z)
+  CALL IO_READ_GRID(gfile, imax,jmax,kmax_total, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z)
 
-  CALL FILT4E_INI(imax,       i1bc, scalex, x, cx)
-  CALL FILT4E_INI(jmax,       j1bc, scaley, y, cy)
-  CALL FILT4E_INI(kmax_total, k1bc, scalez, z, cz)
+  CALL FILT4E_INI(imax,       i1bc, g(1)%scale, x, cx)
+  CALL FILT4E_INI(jmax,       j1bc, g(2)%scale, y, cy)
+  CALL FILT4E_INI(kmax_total, k1bc, g(3)%scale, z, cz)
 
   CALL DNS_READ_FIELDS('field.inp', i1, imax,jmax,kmax, i1,i0, i1, a, wrk3d)
 

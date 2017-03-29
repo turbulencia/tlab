@@ -44,7 +44,7 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
 #endif
 
   wx = C_2_R * C_PI_R / frc_length
-  wz = C_2_R * C_PI_R / scalez
+  wz = C_2_R * C_PI_R / g(3)%scale
   xaux =-qbg(1)%mean *etime
 
 ! Transient factor

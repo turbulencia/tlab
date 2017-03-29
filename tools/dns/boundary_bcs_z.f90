@@ -77,7 +77,7 @@ SUBROUTINE BOUNDARY_BCS_Z(dz, M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh
 ! Note that pl_const has dimensions of 1/length
 ! ###################################################################
   IF ( bcs_euler_drift .EQ. 1 ) THEN
-     pl_const = bcs_sigma_out*(C_1_R-M2_max)/scalez
+     pl_const = bcs_sigma_out*(C_1_R-M2_max) /g(3)%scale
   ELSE
      pl_const = C_0_R
   ENDIF

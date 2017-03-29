@@ -516,7 +516,7 @@ PROGRAM TRANSFIELDS
 
 ! To be updated: we need to distinguish between periodic and nonperiodic cases.
 !        dummy = (x_dst(imax_total_dst)-x(imax_total)) / (x(imax_total)-x(imax_total-1))
-        dummy = (scalex_dst-scalex) / (x(imax_total,1)-x(imax_total-1,1))
+        dummy = (scalex_dst-g(1)%scale) / (x(imax_total,1)-x(imax_total-1,1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Ox scales are not equal at the end.')
            CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
@@ -524,13 +524,13 @@ PROGRAM TRANSFIELDS
         wrk1d(1:imax_total,1) = x(1:imax_total,1) ! we need extra space
         
         dummy = (y_dst(jmax_total_dst)-y(jmax_total,1)) / (y(jmax_total,1)-y(jmax_total-1,1))
-!        dummy = (scaley_dst-scaley) / (y(jmax_total)-y(jmax_total-1))
+!        dummy = (scaley_dst-g(2)%scale) / (y(jmax_total)-y(jmax_total-1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            IF ( dummy .GT. C_0_R ) THEN
               subdomain(4) = ABS(jmax_total_dst - jmax_total) ! additional planes at the top
               jmax_aux = jmax_aux + subdomain(4)
               dummy = (y_dst(jmax_total_dst)-y(jmax_total,1)) / INT(subdomain(4))
-!              dummy = (scaley_dst-scaley) / INT(subdomain(4))
+!              dummy = (scaley_dst-g(2)%scale) / INT(subdomain(4))
            ELSE
               CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oy scales are not equal at the end.')
               CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
@@ -558,7 +558,7 @@ PROGRAM TRANSFIELDS
         ENDDO
            
 !        dummy = (z_dst(kmax_total_dst)-z(kmax_total)) / (z(kmax_total)-z(kmax_total-1))
-        dummy = (scalez_dst-scalez) / (z(kmax_total,1)-z(kmax_total-1,1))
+        dummy = (scalez_dst-g(3)%scale) / (z(kmax_total,1)-z(kmax_total-1,1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oz scales are not equal')
            CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
@@ -571,7 +571,7 @@ PROGRAM TRANSFIELDS
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
               CALL TRANS_EXTEND(imax,jmax,kmax, subdomain, q(:,iq), txc(:,1))
               CALL OPR_INTERPOLATE(imax,jmax_aux,kmax, imax_dst,jmax_dst,kmax_dst, i1bc,j1bc,k1bc, &
-                   scalex,scaley_dst,scalez, wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), x_dst,y_dst,z_dst, &
+                   g(1)%scale,scaley_dst,g(3)%scale, wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), x_dst,y_dst,z_dst, &
                    txc(:,1),q_dst(:,iq), txc(:,2), isize_wrk3d, wrk3d)
            ENDDO
         ENDIF
@@ -581,7 +581,7 @@ PROGRAM TRANSFIELDS
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
               CALL TRANS_EXTEND(imax,jmax,kmax, subdomain, s(:,is), txc(:,1))
               CALL OPR_INTERPOLATE(imax,jmax_aux,kmax, imax_dst,jmax_dst,kmax_dst, i1bc,j1bc,k1bc, &
-                   scalex,scaley_dst,scalez, wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), x_dst,y_dst,z_dst, &
+                   g(1)%scale,scaley_dst,g(3)%scale, wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), x_dst,y_dst,z_dst, &
                    txc(:,1),s_dst(:,is), txc(:,2), isize_wrk3d, wrk3d)
            ENDDO
         ENDIF
@@ -688,7 +688,7 @@ PROGRAM TRANSFIELDS
 ! Blend
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 7 ) THEN
-        IF ( it .EQ. 1 ) opt_vec(2) = y(1,1) + opt_vec(2)*scaley
+        IF ( it .EQ. 1 ) opt_vec(2) = y(1,1) + opt_vec(2) *g(2)%scale
         WRITE(sRes,*) opt_vec(2),opt_vec(3); sRes = 'Blending with '//TRIM(ADJUSTL(sRes))
         CALL IO_WRITE_ASCII(lfile,sRes)
 
@@ -1022,7 +1022,7 @@ END SUBROUTINE TRANS_BLEND
 SUBROUTINE TRANS_CUTOFF_2D(nx,ny,nz, spc_param, a)
 
   USE DNS_GLOBAL, ONLY : kmax_total, isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : scalex, scalez
+  USE DNS_GLOBAL, ONLY : g 
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -1044,8 +1044,8 @@ SUBROUTINE TRANS_CUTOFF_2D(nx,ny,nz, spc_param, a)
 #else
      kglobal = k
 #endif
-     IF ( kglobal .LE. kmax_total/2+1 ) THEN; fk = M_REAL(kglobal-1)/scalez
-     ELSE;                                    fk =-M_REAL(kmax_total+1-kglobal)/scalez; ENDIF
+     IF ( kglobal .LE. kmax_total/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
+     ELSE;                                    fk =-M_REAL(kmax_total+1-kglobal)/g(3)%scale; ENDIF
 
      DO i = 1,nx/2+1
 #ifdef USE_MPI
@@ -1053,7 +1053,7 @@ SUBROUTINE TRANS_CUTOFF_2D(nx,ny,nz, spc_param, a)
 #else
         iglobal = i
 #endif
-        fi = M_REAL(iglobal-1)/scalex
+        fi = M_REAL(iglobal-1)/g(1)%scale
         
         f = SQRT(fi**2 + fk**2)
         
@@ -1095,7 +1095,7 @@ END SUBROUTINE TRANS_CUTOFF_2D
 SUBROUTINE TRANS_ERF_2D(nx,ny,nz, spc_param, a)
 
   USE DNS_GLOBAL, ONLY : kmax_total, isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : scalex, scalez
+  USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -1127,8 +1127,8 @@ SUBROUTINE TRANS_ERF_2D(nx,ny,nz, spc_param, a)
 #else
      kglobal = k
 #endif
-     IF ( kglobal .LE. kmax_total/2+1 ) THEN; fk = M_REAL(kglobal-1)/scalez
-     ELSE;                                    fk =-M_REAL(kmax_total+1-kglobal)/scalez; ENDIF
+     IF ( kglobal .LE. kmax_total/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
+     ELSE;                                    fk =-M_REAL(kmax_total+1-kglobal)/g(3)%scale; ENDIF
 
      DO i = 1,nx/2+1
 #ifdef USE_MPI
@@ -1136,7 +1136,7 @@ SUBROUTINE TRANS_ERF_2D(nx,ny,nz, spc_param, a)
 #else
         iglobal = i
 #endif
-        fi = M_REAL(iglobal-1)/scalex
+        fi = M_REAL(iglobal-1)/g(1)%scale
         
         f = SQRT(fi**2 + fk**2) 
         IF ( f .GT. 0 )  THEN;  damp = (ERF((LOG(f) - fcut_log)/spc_param(2)) + 1.)/2.

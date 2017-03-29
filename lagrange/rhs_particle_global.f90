@@ -28,9 +28,9 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags,l_com
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, imax_total, kmax_total
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : isize_particle, scalex, scalez
+  USE DNS_GLOBAL, ONLY : isize_particle
   USE DNS_GLOBAL, ONLY : imode_fdm, i1bc, j1bc, k1bc, visc, isize_wrk1d
   USE DNS_GLOBAL, ONLY : iunifx,iunify,iunifz
   USE DNS_GLOBAL, ONLY : radiation
@@ -180,10 +180,10 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags,l_com
   CALL PARTICLE_SORT_HALO(x,z, grid_field_counter, halo_zone_x, halo_zone_z,halo_zone_diagonal,&
        l_hq, l_tags, l_q)
 
-  wrk1d(1)= scalex/imax_total ! wrk1d 1-3 intervalls
-!  wrk1d(2)= scaley/jmax_total ! needed for interpolation
+  wrk1d(1)= g(1)%scale/g(1)%size ! wrk1d 1-3 intervalls
+!  wrk1d(2)= g(2)%scale/jmax_total ! needed for interpolation
   wrk1d(2)= y(jmin_part+1)-y(jmin_part)
-  wrk1d(3)= scalez/kmax_total
+  wrk1d(3)= g(3)%scale/g(3)%size
 
 !#######################################################################
 ! RHS for particles in normal field
@@ -280,10 +280,10 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags,l_com
   CALL PARTICLE_SORT_HALO(x,z, grid_field_counter, halo_zone_x, halo_zone_z,halo_zone_diagonal,&
        l_hq, l_tags, l_q)
 
-  wrk1d(1)= scalex/imax_total ! wrk1d 1-3 intervalls
-!  wrk1d(2)= scaley/jmax_total ! needed for interpolation
+  wrk1d(1)= g(1)%scale/g(1)%size ! wrk1d 1-3 intervalls
+!  wrk1d(2)= g(2)%scale/jmax_total ! needed for interpolation
   wrk1d(2)= y(jmin_part+1)-y(jmin_part)
-  wrk1d(3)= scalez/kmax_total
+  wrk1d(3)= g(3)%scale/g(3)%size
 
 !#######################################################################
 ! RHS for particles in normal field
