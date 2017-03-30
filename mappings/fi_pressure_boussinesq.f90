@@ -41,51 +41,51 @@ IMPLICIT NONE
 ! Calculate forcing term Ox
 ! #######################################################################
   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, q(:,:,:,1), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+       dz, q(1,1,1,1), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3(:,:,:,1) = tmp3(:,:,:,1) + tmp2 *visc - q(:,:,:,3) *tmp1
 
   CALL PARTIAL_YY(i1, iunify,     imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, q(:,:,:,1), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+       dy, q(1,1,1,1), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3(:,:,:,1) = tmp3(:,:,:,1) + tmp2 *visc - q(:,:,:,2) *tmp1
 
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, q(:,:,:,1), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+       dx, q(1,1,1,1), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3(:,:,:,1) = tmp3(:,:,:,1) + tmp2 *visc - q(:,:,:,1) *tmp1
 
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, tmp3(:,:,:,1), tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, tmp3(1,1,1,1), tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
   p = p + tmp1
 
 ! #######################################################################
 ! Calculate forcing term Oz
 ! #######################################################################
   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, q(:,:,:,3), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+       dz, q(1,1,1,3), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3(:,:,:,3) = tmp3(:,:,:,3) + tmp2 *visc - q(:,:,:,3) *tmp1
 
   CALL PARTIAL_YY(i1, iunify,     imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, q(:,:,:,3), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+       dy, q(1,1,1,3), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3(:,:,:,3) = tmp3(:,:,:,3) + tmp2 *visc - q(:,:,:,2) *tmp1
 
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, q(:,:,:,3), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+       dx, q(1,1,1,3), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3(:,:,:,3) = tmp3(:,:,:,3) + tmp2 *visc - q(:,:,:,1) *tmp1
 
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, tmp3(:,:,:,3), tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, tmp3(1,1,1,3), tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
   p = p + tmp1
 
 ! #######################################################################
 ! Calculate forcing term Oy
 ! #######################################################################
   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, q(:,:,:,2), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+       dz, q(1,1,1,2), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3(:,:,:,2) = tmp3(:,:,:,2) + tmp2 *visc - q(:,:,:,3) *tmp1
 
   CALL PARTIAL_YY(i1, iunify,     imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, q(:,:,:,2), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+       dy, q(1,1,1,2), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3(:,:,:,2) = tmp3(:,:,:,2) + tmp2 *visc - q(:,:,:,2) *tmp1
 
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, q(:,:,:,2), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+       dx, q(1,1,1,2), tmp2, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
   tmp3(:,:,:,2) = tmp3(:,:,:,2) + tmp2 *visc - q(:,:,:,1) *tmp1
 
 ! Neumann BCs top and bottom
@@ -94,7 +94,7 @@ IMPLICIT NONE
      wrk2d(i,k,2) = tmp3(i,jmax,k,2)
   ENDDO; ENDDO
   
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, tmp3(:,:,:,2), tmp1, i0,i0, wrk1d,tmp2,wrk3d)
+  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, tmp3(1,1,1,2), tmp1, i0,i0, wrk1d,tmp2,wrk3d)
   p = p + tmp1
 
 ! #######################################################################

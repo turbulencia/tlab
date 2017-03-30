@@ -920,21 +920,22 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         dummy = C_1_R /froude
         rB(:) = rB(:) *dummy
 
-        rSb(:) = C_0_R ! not yet developed
-                
-        CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rB(1), rB_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-
         pmod(:) =-rP_y(:) + SIGN(rB(:),buoyancy%vector(2))
         
+        CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rB(1), rB_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+
+        rSb(:) = C_0_R ! not yet developed
+                
      ENDIF
      
   ELSE ! Compressible case is not yet finished
      Bxx(:) =-rR(:)*rUf(:)*buoyancy%vector(1)
      Byy(:) =-rR(:)*rVf(:)*buoyancy%vector(2)
      Bzz(:) =-rR(:)*rWf(:)*buoyancy%vector(3)
-     rSb(:) = C_0_R
 
      pmod(:) =-rP_y(:) +buoyancy%vector(2) *rR(:)
+
+     rSb(:) = C_0_R
 
   ENDIF
 

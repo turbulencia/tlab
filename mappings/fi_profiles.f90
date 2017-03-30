@@ -18,7 +18,7 @@ SUBROUTINE FI_PROFILES(wrk1d)
   TREAL, DIMENSION(g(2)%size,*), INTENT(INOUT) :: wrk1d
   
 ! -----------------------------------------------------------------------
-  TINTEGER j, is
+  TINTEGER is, j
   TREAL ycenter, FLOW_SHEAR_TEMPORAL 
  
 ! #######################################################################
@@ -34,7 +34,7 @@ SUBROUTINE FI_PROFILES(wrk1d)
         wrk1d(j,is) = FLOW_SHEAR_TEMPORAL(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
      ENDDO
   ENDDO
-     
+
   IF ( pbg%parameters(1) .GT. C_0_R ) THEN
 ! Calculate derived thermodynamic profiles
      epbackground = (g(2)%nodes - g(2)%nodes(1) - g(2)%scale *pbg%ymean) *GRATIO /pbg%parameters(1)
@@ -44,12 +44,10 @@ SUBROUTINE FI_PROFILES(wrk1d)
         CALL FI_HYDROSTATIC_H(g(2), wrk1d, epbackground, tbackground, pbackground, wrk1d(1,inb_scal_array+1))
      ENDIF
      
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN
+     IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
         CALL THERMO_AIRWATER_PH(i1,g(2)%size,i1, wrk1d(1,2),wrk1d(1,1), epbackground,pbackground )
-        
      ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN 
         CALL THERMO_AIRWATER_LINEAR(i1,g(2)%size,i1, wrk1d, wrk1d(1,inb_scal_array))
-        
      ENDIF
      
      CALL THERMO_ANELASTIC_DENSITY(i1,g(2)%size,i1, wrk1d, epbackground,pbackground, rbackground)

@@ -199,7 +199,7 @@ PROGRAM PDFS
 ! -------------------------------------------------------------------      
   iread_flow = 0
   iread_scal = 0
-  IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN; inb_txc = 6;
+  IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN; inb_txc = 6;
   ELSE;                                                     inb_txc = 1; ENDIF
   nfield     = 2 
 

@@ -202,7 +202,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
               wrk1d(1:jmax) = C_0_R
               CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, hq(1,1), wrk1d) ! note that wrk3d is defined as integer.
            ENDIF
-           hq(1:isize_field,1) = hq(1:isize_field,1)*dummy
+           hq(1:isize_field,1) = hq(1:isize_field,1) *dummy
 
            sbg(is)%mean  =    (bbackground(1)+bbackground(g(2)%size)) *dummy ! mean values
            sbg(is)%delta = ABS(bbackground(1)-bbackground(g(2)%size)) *dummy

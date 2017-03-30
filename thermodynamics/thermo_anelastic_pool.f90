@@ -45,7 +45,7 @@ SUBROUTINE THERMO_ANELASTIC_TEMPERATURE(nx,ny,nz, s, e, T)
         DO i = 1,nx
            ij = ij +1
            
-           T = s(ij,1) - E_LOC
+           T(ij) = s(ij,1) - E_LOC
            
         ENDDO
      
@@ -62,7 +62,7 @@ SUBROUTINE THERMO_ANELASTIC_TEMPERATURE(nx,ny,nz, s, e, T)
         DO i = 1,nx
            ij = ij +1
            
-           T = (s(ij,1) - E_LOC ) / &
+           T(ij) = (s(ij,1) - E_LOC ) / &
                 ( (C_1_R-s(ij,2))*THERMO_AI(1,1,2) + s(ij,2)*THERMO_AI(1,1,1) )
            
         ENDDO
@@ -81,10 +81,10 @@ SUBROUTINE THERMO_ANELASTIC_TEMPERATURE(nx,ny,nz, s, e, T)
         DO i = 1,nx
            ij = ij +1
            
-           T = (s(ij,1) - E_LOC - s(ij,3)*THERMO_AI(6,1,3) ) / &
+           T(ij) = (s(ij,1) - E_LOC - s(ij,3)*THERMO_AI(6,1,3) ) / &
                 ( (C_1_R-s(ij,2))*THERMO_AI(1,1,2) + (s(ij,2)-s(ij,3))*THERMO_AI(1,1,1) &
                 + s(ij,3)* THERMO_AI(1,1,3) )
-           
+
         ENDDO
      
      ENDDO

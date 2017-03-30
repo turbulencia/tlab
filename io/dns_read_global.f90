@@ -633,19 +633,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#ThickTemperature=<value>') 
   CALL IO_WRITE_ASCII(bakfile, '#DeltaTemperature=<value>')
 
-! -------------------------------------------------------------------
-! Mean flow values
-! -------------------------------------------------------------------
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityX',  '0.0', qbg(1)%mean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityY',  '0.0', qbg(2)%mean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityZ',  '0.0', qbg(3)%mean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Pressure',   '0.0', pbg%mean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Density',    '0.0', rbg%mean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Temperature','0.0', tbg%mean)
-
-! -------------------------------------------------------------------
-! Shear flow values
-! -------------------------------------------------------------------
 ! streamwise velocity
   CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileVelocity', 'Tanh', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; qbg(1)%type = PROFILE_NONE
@@ -663,10 +650,15 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong velocity profile.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityX',     '0.0', qbg(1)%mean )
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorVelocity', '0.5', qbg(1)%ymean)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamVelocity',  '1.0', qbg(1)%diam )
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickVelocity', '0.0', qbg(1)%thick)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaVelocity', '0.0', qbg(1)%delta)
+
+! spanwise and crosswise velocity
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityY', '0.0', qbg(2)%mean)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityZ', '0.0', qbg(3)%mean)
 
 ! density
   CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileDensity', 'None', sRes)
@@ -681,6 +673,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong density profile.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Density',      '0.0', rbg%mean )
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorDensity', '0.5', rbg%ymean)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamDensity',  '1.0', rbg%diam )
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickDensity', '0.0', rbg%thick)
@@ -702,20 +695,22 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong temperature profile.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Temperature',      '0.0', tbg%mean )
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorTemperature', '0.5', tbg%ymean)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamTemperature',  '1.0', tbg%diam )
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickTemperature', '0.0', tbg%thick)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaTemperature', '0.0', tbg%delta)
 
-! pressure
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorPressure','0.5', pbg%ymean        )
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'RefPressure',  '0.0', pbg%reference    )
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ScaleHeight',  '0.0', pbg%parameters(1))
-  
-! additional specific data
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'BottomSlope', '0.0',  tbg%parameters(1))
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'UpperSlope',  '0.0',  tbg%parameters(2))
 
+! pressure
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Pressure',          '0.0', pbg%mean         )
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorPressure',     '0.5', pbg%ymean        )
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ReferencePressure', '0.0', pbg%reference    )
+
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ScaleHeight',       '0.0', pbg%parameters(1)) 
+ 
 ! consistency check
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      IF ( rbg%type .EQ. PROFILE_NONE .AND. tbg%type .EQ. PROFILE_NONE ) THEN
@@ -772,7 +767,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#Mean=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#Delta=<value>')
 
-! read scalars profiles
   DO is = 1,MAX_NSP
      WRITE(lstr,*) is; lstr='ProfileScalar'//TRIM(ADJUSTL(lstr))
      CALL SCANINICHAR(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), 'None', sRes)
@@ -799,12 +793,13 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%thick)
      WRITE(lstr,*) is; lstr='DeltaScalar'//TRIM(ADJUSTL(lstr))
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%delta)
+     WRITE(lstr,*) is; lstr='ReferenceScalar'//TRIM(ADJUSTL(lstr))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%reference)
 
-! additional specific data     
      WRITE(lstr,*) is; lstr='BottomSlopeScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  sbg(is)%parameters(1))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(1))
      WRITE(lstr,*) is; lstr='UpperSlopeScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  sbg(is)%parameters(2))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(2))
 
      IF ( sbg(is)%type .EQ. PROFILE_ERF_ANTISYM ) THEN
         WRITE(lstr,*) is; lstr='YCoorSymmetry'//TRIM(ADJUSTL(lstr))

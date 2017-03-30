@@ -268,7 +268,7 @@ PROGRAM AVERAGES
      inb_txc = MAX(inb_txc,3)
      iread_scal = 1
      iread_flow = 1
-     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) inb_txc = MAX(inb_txc,6)
+     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) inb_txc = MAX(inb_txc,6)
   CASE ( 5 ) ! enstrophy
      nfield = 7
      inb_txc = MAX(inb_txc,8)
@@ -473,14 +473,14 @@ PROGRAM AVERAGES
 
 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
            IF ( flag_buoyancy .EQ. 1 ) THEN
+              dummy = C_1_R/froude
               IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
                  CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,7))
               ELSE
                  wrk1d(1:jmax) = C_0_R 
                  CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,7), wrk1d)
               ENDIF
-              dummy = C_1_R/froude
-              txc(1:isize_field,7) = txc(1:isize_field,7)*dummy
+              txc(1:isize_field,7) = txc(1:isize_field,7) *dummy
 
               sbg(is)%mean  =    (bbackground(1)+bbackground(g(2)%size)) *dummy ! mean values
               sbg(is)%delta = ABS(bbackground(1)-bbackground(g(2)%size)) *dummy

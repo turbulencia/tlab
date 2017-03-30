@@ -10,7 +10,7 @@ MODULE DNS_TYPES
      SEQUENCE
      TINTEGER type
      TREAL reference, mean, delta, ymean, thick, diam
-     TREAL, DIMENSION(MAX_PARS) :: parameters !, jet
+     TREAL, DIMENSION(MAX_PARS) :: parameters
   END TYPE background_dt
 
   TYPE term_dt
