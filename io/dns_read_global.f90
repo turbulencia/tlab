@@ -43,7 +43,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
   CHARACTER*512 sRes
-  CHARACTER*64 lstr
+  CHARACTER*64 lstr, default
   CHARACTER*32 bakfile
   TINTEGER iMajorVersion, iMinorVersion
   TINTEGER is, inb_scal_local1, inb_scal_local2, idummy
@@ -794,8 +794,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      WRITE(lstr,*) is; lstr='DeltaScalar'//TRIM(ADJUSTL(lstr))
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%delta)
      WRITE(lstr,*) is; lstr='ReferenceScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%reference)
-
+     WRITE(default,*) sbg(is)%mean
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), TRIM(ADJUSTL(default)), sbg(is)%reference)
+     
      WRITE(lstr,*) is; lstr='BottomSlopeScalar'//TRIM(ADJUSTL(lstr))
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(1))
      WRITE(lstr,*) is; lstr='UpperSlopeScalar'//TRIM(ADJUSTL(lstr))

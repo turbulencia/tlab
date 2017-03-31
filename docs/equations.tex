@@ -236,20 +236,20 @@ The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of th
 
 \section{Anelastic formulation}
 
-We retain a background vertical variation of thermodynamic variables $\{\rho_\mathrm{bg},\,p_\mathrm{bg},\,T_\mathrm{bg},\,R_\mathrm{bg}\equiv W_\mathrm{bg}^{-1}\}$. The background profiles are steady and satisfy the hydrostatic balance,
+We retain a background vertical variation of thermodynamic variables $\{\rho_\mathrm{bg},\, p_\mathrm{bg},\, T_\mathrm{bg},\, R_\mathrm{bg}\equiv W_\mathrm{bg}^{-1}\}$. The background profiles are steady and satisfy the hydrostatic balance,
 \begin{equation}
-  \partial_3\,p_\mathrm{bg}=\mathbf{H}^{-1}\, g_3\,\rho_\mathrm{bg}\;,\qquad p_\mathrm{bg}(x_3=x_{3,0})=p_{\mathrm{bg},0}\;,
+  \partial_2\,p_\mathrm{bg}=-\mathbf{H}^{-1}\, g_2\,\rho_\mathrm{bg}\;,\qquad p_\mathrm{bg}|_{x_2=x_{2,0}}=p_{\mathrm{bg},0}\;,
 \end{equation}
-where 
-\begin{equation}
-  \mathbf{H} = \frac{(R_0/W_0)T_0}{gL_0}
-\end{equation}
-is a nondimensional scale height, and the thermal equation of state,
+ and the thermal equation of state,
 \begin{equation}
   p_\mathrm{bg}  = \rho_\mathrm{bg} R_\mathrm{bg} T_\mathrm{bg} \;.
 \end{equation}
-The pressure in this formulation is nondimensionalized with $p_0=$10$^5$~Pa and the reference density is obtained from $\rho_0=p_0[(R_0/W_0)T_0]^{-1}$. We need two additional constraints, which are set through the background profile information in the file {\tt dns.ini}. Typically, we impose the static energy (enthalpy plus potential energy) and the composition.
-%
+$\mathbf{g}$ is defined opposite to the gravitational acceleration (the problem is formulated in terms of the buoyancy), and
+\begin{equation}
+  \mathbf{H} = \frac{(R_0/W_0)T_0}{gL_0}
+\end{equation}
+is a nondimensional scale height. The pressure is nondimensionalized with $p_0=$10$^5$~Pa and the reference density is obtained from $\rho_0=p_0[(R_0/W_0)T_0]^{-1}$. We need two additional constraints, which are set through the background profile information in the file {\tt dns.ini}. Typically, we impose the static energy (enthalpy plus potential energy) and the composition.
+% 
 If there is only one species, then $R_\mathrm{bg}=1$ and we only need one additional constraint.
 
 The evolution equations are:
@@ -267,9 +267,9 @@ The evolution equations are:
   + \mathrm{\bf Re}^{-1}\mathrm{\bf Sc}_i^{-1}\, \rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*}\partial_k\zeta_i\right) &+ \mathrm{\bf Da}_i\,w_i
 \end{array}
 \end{equation}
-where the (negative) buoyancy is
+where the buoyancy is
 \begin{equation}
-  b=\rho_\mathrm{bg}^{-1}(\rho-\rho_\mathrm{bg}) \;.
+  b=\rho_\mathrm{bg}^{-1}(\rho_\mathrm{bg}-\rho) \;.
 \end{equation}
 The pressure deviation satisfies the following Poisson equation:
 \begin{equation}
@@ -279,6 +279,6 @@ The pressure deviation satisfies the following Poisson equation:
 \end{equation}
 The first scalar is the static energy
 \begin{equation}
-  \zeta_1 = h + \frac{\gamma_0-1}{\gamma_0}\mathbf{H}^{-1}(x_3-x_{3,0}) \;.
+  \zeta_1 = h + \frac{\gamma_0-1}{\gamma_0}\mathbf{H}^{-1}(x_2-x_{2,0}) \;.
 \end{equation}
 The remaining scalars are the composition (e.g., total water specific humidity and liquid water specific humidity in the case of the airwater mixture).

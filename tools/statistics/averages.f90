@@ -463,9 +463,6 @@ PROGRAM AVERAGES
         ENDIF
         
         IF ( icalc_scal .EQ. 1 ) THEN
-           DO is = inb_scal+1,inb_scal_array ! Add diagnostic fields, if any
-              sbg(is)%mean = C_1_R; sbg(is)%delta = C_0_R; sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
-           ENDDO
            DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
               CALL AVG_SCAL_XZ(is, q,s, s(1,is), &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
@@ -481,10 +478,6 @@ PROGRAM AVERAGES
                  CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,7), wrk1d)
               ENDIF
               txc(1:isize_field,7) = txc(1:isize_field,7) *dummy
-
-              sbg(is)%mean  =    (bbackground(1)+bbackground(g(2)%size)) *dummy ! mean values
-              sbg(is)%delta = ABS(bbackground(1)-bbackground(g(2)%size)) *dummy
-              sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
 
               CALL AVG_SCAL_XZ(is, q,s, txc(1,7), &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)

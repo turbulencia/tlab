@@ -211,7 +211,7 @@ SUBROUTINE THERMO_ANELASTIC_BUOYANCY(nx,ny,nz, s, e,p,r, b)
            ij = ij +1
            
            T = s(ij,1) - E_LOC
-           b(ij) = R_LOC_INV *( P_LOC /T -R_LOC )
+           b(ij) = R_LOC_INV *(R_LOC -P_LOC /T )
            
         ENDDO
      
@@ -235,7 +235,7 @@ SUBROUTINE THERMO_ANELASTIC_BUOYANCY(nx,ny,nz, s, e,p,r, b)
            T = (s(ij,1) - E_LOC ) / &
                 ( (C_1_R-s(ij,2))*THERMO_AI(1,1,2) + s(ij,2)*THERMO_AI(1,1,1) )
            WMEAN_INV = WGHT_INV(2) + s(ij,2)*dummy
-           b(ij) = R_LOC_INV *( P_LOC /(WMEAN_INV*T) -R_LOC )
+           b(ij) = R_LOC_INV *( R_LOC -P_LOC /(WMEAN_INV*T) )
            
         ENDDO
      
@@ -261,7 +261,7 @@ SUBROUTINE THERMO_ANELASTIC_BUOYANCY(nx,ny,nz, s, e,p,r, b)
                 ( (C_1_R-s(ij,2))*THERMO_AI(1,1,2) + (s(ij,2)-s(ij,3))*THERMO_AI(1,1,1) &
                 + s(ij,3)* THERMO_AI(1,1,3) )
            WMEAN_INV = WGHT_INV(2) + s(ij,2)*dummy - s(ij,3)*WGHT_INV(1)
-           b(ij) = R_LOC_INV *( P_LOC /(WMEAN_INV*T) -R_LOC )
+           b(ij) = R_LOC_INV *( R_LOC -P_LOC /(WMEAN_INV*T) )
            
         ENDDO
      

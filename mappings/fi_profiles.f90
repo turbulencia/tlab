@@ -6,7 +6,7 @@ SUBROUTINE FI_PROFILES(wrk1d)
 
   USE DNS_GLOBAL, ONLY : inb_scal, inb_scal_array
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : pbg, sbg, damkohler
+  USE DNS_GLOBAL, ONLY : pbg, sbg, damkohler,froude,schmidt
   USE DNS_GLOBAL, ONLY : rbackground, bbackground, pbackground, tbackground, epbackground
   USE DNS_GLOBAL, ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture, GRATIO
@@ -18,8 +18,8 @@ SUBROUTINE FI_PROFILES(wrk1d)
   TREAL, DIMENSION(g(2)%size,*), INTENT(INOUT) :: wrk1d
   
 ! -----------------------------------------------------------------------
-  TINTEGER is, j
-  TREAL ycenter, FLOW_SHEAR_TEMPORAL 
+  TINTEGER is!, j
+!  TREAL ycenter, FLOW_SHEAR_TEMPORAL 
  
 ! #######################################################################
   rbackground = C_1_R ! defaults
@@ -29,10 +29,11 @@ SUBROUTINE FI_PROFILES(wrk1d)
 
 ! Construct given thermodynamic profiles
   DO is = 1,inb_scal
-     ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
-     DO j = 1,g(2)%size
-        wrk1d(j,is) = FLOW_SHEAR_TEMPORAL(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
-     ENDDO
+     ! ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
+     ! DO j = 1,g(2)%size
+     !    wrk1d(j,is) = FLOW_SHEAR_TEMPORAL(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+     ! ENDDO
+     wrk1d(:,is) = sbg(is)%reference
   ENDDO
 
   IF ( pbg%parameters(1) .GT. C_0_R ) THEN
@@ -63,6 +64,15 @@ SUBROUTINE FI_PROFILES(wrk1d)
         CALL FI_BUOYANCY(buoyancy, i1,g(2)%size,i1, wrk1d, bbackground, wrk1d(1,inb_scal_array+1))
      ENDIF
   ENDIF
+
+! Add diagnostic fields, if any
+  DO is = inb_scal+1,inb_scal_array ! Add diagnostic fields, if any
+     sbg(is)%mean = C_1_R; sbg(is)%delta = C_0_R; sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
+  ENDDO
+! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
+  sbg(is)%mean  =    (bbackground(1)+bbackground(g(2)%size)) /froude
+  sbg(is)%delta = ABS(bbackground(1)-bbackground(g(2)%size)) /froude
+  sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
   
   RETURN
 END SUBROUTINE FI_PROFILES

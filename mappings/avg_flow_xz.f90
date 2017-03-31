@@ -494,9 +494,17 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL AVG_IK_V(imax,jmax,kmax, jmax, w, dx,dz, rW(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, p, dx,dz, rP(1), wrk1d, area)
 
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     rR(:) = rbackground(:); fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
+  IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
+     rR(:) = rbackground(:)
+
+     fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
+
+  ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
+     CALL THERMO_ANELASTIC_DENSITY(imax,jmax,kmax, s, epbackground,pbackground, dwdx)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdx, dx,dz, rR(1),  wrk1d, area)     
      
+     fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
+
   ELSE
      dwdx = rho *u
      dwdy = rho *v
@@ -552,10 +560,12 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, Rxx(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, Ryy(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, Rzz(1), wrk1d, area)
-  Rxx(:) = Rxx(:) /rR(:)
-  Ryy(:) = Ryy(:) /rR(:)
-  Rzz(:) = Rzz(:) /rR(:)
-
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     Rxx(:) = Rxx(:) /rR(:)
+     Ryy(:) = Ryy(:) /rR(:)
+     Rzz(:) = Rzz(:) /rR(:)
+  ENDIF
+  
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      dvdx = dwdx *dwdy
      dvdy = dwdx *dwdz
@@ -568,10 +578,12 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, dx,dz, Rxy(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, dx,dz, Rxz(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, dx,dz, Ryz(1), wrk1d, area)
-  Rxy(:) = Rxy(:) /rR(:)
-  Rxz(:) = Rxz(:) /rR(:)
-  Ryz(:) = Ryz(:) /rR(:)
-
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     Rxy(:) = Rxy(:) /rR(:)
+     Rxz(:) = Rxz(:) /rR(:)
+     Ryz(:) = Ryz(:) /rR(:)
+  ENDIF
+  
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Rxx(1), Rxx_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ryy(1), Ryy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Rzz(1), Rzz_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
@@ -579,13 +591,20 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Rxz(1), Rxz_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Ryz(1), Ryz_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
 
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
      rR2(:) = C_0_R
 
   ELSE
-     DO j = 1,jmax
-        wrk3d(:,j,:)= rho(:,j,:)-rR(j)
-     ENDDO
+     IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+        CALL THERMO_ANELASTIC_DENSITY(imax,jmax,kmax, s, epbackground,pbackground, wrk3d)
+        DO j = 1,jmax
+           wrk3d(:,j,:)= wrk3d(:,j,:)-rR(j)
+        ENDDO
+     ELSE
+        DO j = 1,jmax
+           wrk3d(:,j,:)= rho(:,j,:)-rR(j)
+        ENDDO
+     ENDIF
      dvdx = wrk3d*wrk3d
      CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx,dx,dz, rR2(1), wrk1d, area)
 
@@ -717,8 +736,17 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 #define T_LOC(i,j,k)     dwdx(i,j,k)
 #define S_LOC(i,j,k)     dwdz(i,j,k)
 
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+  IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
      rT(:)   = tbackground(:)
+
+  ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
+     CALL THERMO_ANELASTIC_TEMPERATURE(imax,jmax,kmax, s, epbackground, T_LOC(1,1,1))
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, T_LOC(1,1,1), dx,dz, rT(1),  wrk1d, area)
+
+     DO j = 1,jmax
+        dvdx(:,j,:) = (T_LOC(:,j,:)-rT(j))**2
+     ENDDO
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx,         dx,dz, rT2(1), wrk1d, area)
      
   ELSE
 
