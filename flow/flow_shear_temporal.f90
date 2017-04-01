@@ -26,7 +26,7 @@ FUNCTION FLOW_SHEAR_TEMPORAL(iflag, thick, delta, mean, ycenter, param, y)
      ENDIF
 
   ELSE
-     xi = yrel/thick
+     xi = yrel /thick
 
      SELECT CASE( iflag )
         
@@ -36,7 +36,7 @@ FUNCTION FLOW_SHEAR_TEMPORAL(iflag, thick, delta, mean, ycenter, param, y)
      CASE( PROFILE_TANH       )
         amplify = C_05_R*TANH(-C_05_R*xi)
 
-     CASE( PROFILE_ERF,PROFILE_LINEAR_ERF,PROFILE_ERF_ANTISYM )
+     CASE( PROFILE_ERF,PROFILE_LINEAR_ERF,PROFILE_ERF_ANTISYM,PROFILE_ERF_SURFACE )
         amplify = C_05_R* ERF(-C_05_R*xi)
 
      CASE( PROFILE_PARABOLIC  )
@@ -66,7 +66,7 @@ FUNCTION FLOW_SHEAR_TEMPORAL(iflag, thick, delta, mean, ycenter, param, y)
   ENDIF
   
 ! mean profile
-  FLOW_SHEAR_TEMPORAL = mean + delta*amplify
+  FLOW_SHEAR_TEMPORAL = mean + delta *amplify
   
 ! -------------------------------------------------------------------
 ! special profiles
@@ -91,12 +91,17 @@ FUNCTION FLOW_SHEAR_TEMPORAL(iflag, thick, delta, mean, ycenter, param, y)
   ENDIF
 
 ! antisymmetric erf
-  IF ( iflag .EQ. PROFILE_ERF_ANTISYM) THEN
+  IF ( iflag .EQ. PROFILE_ERF_ANTISYM ) THEN
      xi = (param(1)-y)/thick; amplify = C_05_R* ERF(-C_05_R*xi)
      FLOW_SHEAR_TEMPORAL = FLOW_SHEAR_TEMPORAL - (mean + delta*amplify)
   ENDIF
 
- 
+! adding surface flux
+  IF ( iflag .EQ. PROFILE_ERF_SURFACE ) THEN
+     xi = y /param(3)
+     FLOW_SHEAR_TEMPORAL = FLOW_SHEAR_TEMPORAL + param(4) *C_05_R *( C_1_R +ERF(-C_05_R*xi) )
+  ENDIF
+
   RETURN
 END FUNCTION FLOW_SHEAR_TEMPORAL
 

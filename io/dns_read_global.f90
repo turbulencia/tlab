@@ -3,20 +3,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2003/01/01 - J.P. Mellado
-!#              Modified
-!# 2007/05/07 - J.P. Mellado
-!#              Formulation on temperature is added.
-!#              New variables are added and input field names are
-!#              modified for consistency => version 4.5
-!# 2011/04/18 - A. Lozar
-!#              Adding inertial effects
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Reading general data from file dns.ini, setting up general parameters
@@ -771,13 +757,14 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      WRITE(lstr,*) is; lstr='ProfileScalar'//TRIM(ADJUSTL(lstr))
      CALL SCANINICHAR(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), 'None', sRes)
      IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; sbg(is)%type = PROFILE_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; sbg(is)%type = PROFILE_LINEAR
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'      ) THEN; sbg(is)%type = PROFILE_TANH
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; sbg(is)%type = PROFILE_ERF
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; sbg(is)%type = PROFILE_LINEAR
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; sbg(is)%type = PROFILE_LINEAR_CROP
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearerf' ) THEN; sbg(is)%type = PROFILE_LINEAR_ERF
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; sbg(is)%type = PROFILE_ERF
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erfsurface') THEN; sbg(is)%type = PROFILE_ERF_SURFACE
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erfantisym') THEN; sbg(is)%type = PROFILE_ERF_ANTISYM
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic' ) THEN; sbg(is)%type = PROFILE_PARABOLIC
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; sbg(is)%type = PROFILE_LINEAR_CROP
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; sbg(is)%type = PROFILE_MIXEDLAYER
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong species profile.')
@@ -801,6 +788,11 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(1))
      WRITE(lstr,*) is; lstr='UpperSlopeScalar'//TRIM(ADJUSTL(lstr))
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(2))
+
+     WRITE(lstr,*) is; lstr='SurfaceThickScalar'//TRIM(ADJUSTL(lstr))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(3))
+     WRITE(lstr,*) is; lstr='SurfaceDeltaScalar'//TRIM(ADJUSTL(lstr))
+     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(4))
 
      IF ( sbg(is)%type .EQ. PROFILE_ERF_ANTISYM ) THEN
         WRITE(lstr,*) is; lstr='YCoorSymmetry'//TRIM(ADJUSTL(lstr))
