@@ -33,7 +33,7 @@ SUBROUTINE THERMO_ANELASTIC_TEMPERATURE(nx,ny,nz, s, e, T)
 ! -------------------------------------------------------------------
   TINTEGER ij, i, jk, is
   TREAL E_LOC
-  
+
 ! ###################################################################
   IF      ( imixture .EQ. 0 ) THEN
 ! s1 is specific static energy
@@ -270,3 +270,97 @@ SUBROUTINE THERMO_ANELASTIC_BUOYANCY(nx,ny,nz, s, e,p,r, b)
   
   RETURN
 END SUBROUTINE THERMO_ANELASTIC_BUOYANCY
+
+!########################################################################
+!########################################################################
+SUBROUTINE THERMO_ANELASTIC_THETAL(nx,ny,nz, s, e,p, theta)
+
+  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
+
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
+  TREAL, DIMENSION(*),          INTENT(IN)  :: e,p
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: theta
+
+! -------------------------------------------------------------------
+  TINTEGER ij, i, jk, is
+  TREAL P_LOC, E_LOC, T_LOC
+
+  TREAL Rd, Rdv, Rl, Cd, Cdv, Cl, Lv0, Cvl, Lv
+  
+! ###################################################################
+  Rd = WGHT_INV(2)               *GRATIO
+  Rdv=(WGHT_INV(1) - WGHT_INV(2))*GRATIO
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Lv0=-THERMO_AI(6,1,3)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+
+  IF      ( imixture .EQ. 0 ) THEN
+! s1 is specific static energy
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = s(ij,1) - E_LOC
+           
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN
+! s1 is specific static energy
+! s2 is total water specific humidity = water vapor specific humidity
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC ) / &
+                ( (C_1_R-s(ij,2))*THERMO_AI(1,1,2) + s(ij,2)*THERMO_AI(1,1,1) )
+           
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+! s1 is specific static energy
+! s2 is total water specific humidity
+! s3 is liquid water specific humidity
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+       
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC - s(ij,3)*THERMO_AI(6,1,3) ) / &
+                ( (C_1_R-s(ij,2))*THERMO_AI(1,1,2) + (s(ij,2)-s(ij,3))*THERMO_AI(1,1,1) &
+                + s(ij,3)* THERMO_AI(1,1,3) )
+
+           Cl = C_1_R/( Cd  + s(ij,2) *Cdv )
+           Rl =(Rd  + s(ij,2) *Rdv) *Cl
+           Lv = Lv0 - T_LOC *Cvl
+
+           theta(ij) = T_LOC / P_LOC**Rl *EXP(-Lv *s(ij,3) *Cl / T_LOC )
+           
+        ENDDO
+     
+     ENDDO
+  ENDIF
+  
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_THETAL
