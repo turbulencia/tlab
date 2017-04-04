@@ -208,7 +208,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
         IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
               is = is + 1
-              CALL THERMO_ANELASTIC_THETAL(imax,jmax,kmax, s, epbackground,pbackground, hq(1,1))
+              CALL THERMO_ANELASTIC_THETA(imax,jmax,kmax, s, epbackground,pbackground, hq(1,1))
               CALL AVG_SCAL_XZ(is, q,s, hq(1,1), &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
            ENDIF

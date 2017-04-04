@@ -64,7 +64,7 @@ PROGRAM VISUALS_MAIN
   CHARACTER*64 str, line
 
   TINTEGER opt_format, flag_buoyancy
-  TINTEGER opt_cond, opt_threshold
+  TINTEGER opt_cond, opt_cond_scal, opt_threshold
   TINTEGER isize_wrk3d, ij, is, n
   TINTEGER iscal_offset, iread_flow, iread_scal, iread_part, idummy, ierr, MaskSize
   TREAL diff, umin, umax, dummy
@@ -227,6 +227,7 @@ PROGRAM VISUALS_MAIN
 ! Defining gate levels for conditioning
 ! -------------------------------------------------------------------
   opt_cond      = 0 ! default values
+  opt_cond_scal = 1
   igate_size    = 0
   opt_threshold = 0
 

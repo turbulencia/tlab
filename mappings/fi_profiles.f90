@@ -73,6 +73,14 @@ SUBROUTINE FI_PROFILES(wrk1d)
   sbg(is)%mean  =    (bbackground(1)+bbackground(g(2)%size)) /froude
   sbg(is)%delta = ABS(bbackground(1)-bbackground(g(2)%size)) /froude
   sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
-  
+
+  IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     is = is + 1
+     CALL THERMO_ANELASTIC_THETA(i1,g(2)%size,i1, wrk1d, epbackground,pbackground, wrk1d(1,inb_scal_array+1))
+     sbg(is)%mean  =    (wrk1d(1,inb_scal_array+1)+wrk1d((g(2)%size),inb_scal_array+1)) * C_05_R
+     sbg(is)%delta = ABS(wrk1d(1,inb_scal_array+1)+wrk1d((g(2)%size),inb_scal_array+1))
+     sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
+  ENDIF
+
   RETURN
 END SUBROUTINE FI_PROFILES

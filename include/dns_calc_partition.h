@@ -1,5 +1,5 @@
      IF      ( opt_cond .EQ. 2 ) THEN ! Based on scalar 
-        txc(1:isize_field,1) = s(1:isize_field,1)
+        txc(1:isize_field,1) = s(1:isize_field,opt_cond_scal)
 
      ELSE IF ( opt_cond .EQ. 3 ) THEN ! Based on vorticity
         CALL IO_WRITE_ASCII(lfile,'Calculating vorticity...')

@@ -112,10 +112,18 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      
   groupname(2) = 'Mean'
   varname(2)   = 'rS fS rS_y fS_y rQ fQ'
-  IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN ! Source term partition
-     varname(2) = TRIM(ADJUSTL(varname(2)))//' rQrad rQradC rQeva'
-     sg(2) = sg(2) + 3
+  ! IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN ! Source term partition
+  !    varname(2) = TRIM(ADJUSTL(varname(2)))//' rQrad rQradC rQeva'
+  !    sg(2) = sg(2) + 3
+  ! ENDIF
+  IF ( radiation%active(is) ) THEN
+     varname(2) = TRIM(ADJUSTL(varname(2)))//' rQrad rQradC'
+     sg(2) = sg(2) + 2
   ENDIF
+  IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR .OR. imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     varname(2) = TRIM(ADJUSTL(varname(2)))//' rQeva'
+     sg(2) = sg(2) + 1     
+  ENDIF  
   IF ( transport%active(is) ) THEN
      varname(2) = TRIM(ADJUSTL(varname(2)))//' rQtra rQtraC'
      sg(2) = sg(2) + 2
@@ -430,14 +438,21 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! -----------------------------------------------------------------------
 ! Calculating averages
   k = ig(2)+5
-  IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! radiation
-     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! correction term
-     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! evaporation
+  ! IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+  !    k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! radiation
+  !    k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! correction term
+  !    k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! evaporation
+  ! ENDIF
+  IF ( radiation%active(is) ) THEN
+     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, mean2d(1,k), wrk1d(1,1), area)
+     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! correction term or flux
+  ENDIF
+  IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR .OR. imixture .EQ. MIXT_TYPE_AIRWATER ) THEN ! evaporation
+     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, mean2d(1,k), wrk1d(1,1), area)
   ENDIF
   IF ( transport%active(is) ) THEN
      k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, dx,dz, mean2d(1,k), wrk1d(1,1), area)
-     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdz, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! correction term
+     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdz, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! correction term or flux
   ENDIF
 
   wrk3d = tmp1 + tmp2 + tmp3 ! total

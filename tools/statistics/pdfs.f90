@@ -44,7 +44,7 @@ PROGRAM PDFS
   CHARACTER*64 str, line
 
   TINTEGER opt_main, opt_block, opt_bins, opt_bcs, opt_bins_2
-  TINTEGER opt_cond, opt_threshold
+  TINTEGER opt_cond, opt_cond_scal, opt_threshold
   TINTEGER nfield, isize_wrk3d, ij, is, n
   TREAL diff, umin, umax, dummy
   TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3
@@ -179,6 +179,7 @@ PROGRAM PDFS
 ! Defining gate levels for conditioning
 ! -------------------------------------------------------------------
   opt_cond      = 0 ! default values
+  opt_cond_scal = 1
   igate_size    = 0
   opt_threshold = 0
 

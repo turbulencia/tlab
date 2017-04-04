@@ -26,9 +26,9 @@ SUBROUTINE OPR_RADIATION(radiation, nx,ny,nz, g, s, r, wrk1d,wrk3d)
 
 #include "integers.h"
 
-  TYPE(term_dt),       INTENT(IN)    :: radiation
-  TINTEGER,                   INTENT(IN)    :: nx,ny,nz
-  TYPE(grid_dt),       INTENT(IN)    :: g
+  TYPE(term_dt),       INTENT(IN)           :: radiation
+  TINTEGER,            INTENT(IN)           :: nx,ny,nz
+  TYPE(grid_dt),       INTENT(IN)           :: g
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s        ! Radiatively active scalar
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: r        ! Radiative heating rate
   TREAL, DIMENSION(ny,*),     INTENT(INOUT) :: wrk1d
@@ -37,8 +37,8 @@ SUBROUTINE OPR_RADIATION(radiation, nx,ny,nz, g, s, r, wrk1d,wrk3d)
   TARGET s, r, wrk3d
   
 ! -----------------------------------------------------------------------
-  TINTEGER j, ip,nxy,nxz, ibc
-  TREAL delta_inv, dummy
+  TINTEGER j, ip,ip2, nxy,nxz, ibc
+  TREAL delta_inv, f0, f1
   TREAL, DIMENSION(:), POINTER :: p_org, p_dst
   
 ! #######################################################################
@@ -92,12 +92,23 @@ SUBROUTINE OPR_RADIATION(radiation, nx,ny,nz, g, s, r, wrk1d,wrk3d)
   ip = nxz *(ny-1) +1; p_dst(ip:ip+nxz-1) = C_0_R ! boundary condition
 
 ! Calculate radiative heating rate
-  dummy = radiation%parameters(1)
-  DO j = 1,ny*nxz
-     p_dst(j) = p_org(j) *EXP( p_dst(j) *delta_inv ) *dummy
-  ENDDO
+  f0 = radiation%parameters(1)
+  IF ( ABS(radiation%parameters(3)) .GT. C_0_R ) THEN
+     f1 = radiation%parameters(3)
+     DO j = ny,1,-1
+        ip = nx*nz *(j-1) +1
+        ip2= ip + nx*nz -1
+        p_dst(ip:ip2) = p_org(ip:ip2) *( &
+               EXP( p_dst(ip:ip2)                *delta_inv ) *f0 &
+             + EXP((p_dst(1:nx*nz)-p_dst(ip:ip2))*delta_inv ) *f1 )
+     ENDDO
+  ELSE
+     DO j = 1,ny*nxz
+        p_dst(j) = p_org(j) *EXP( p_dst(j) *delta_inv ) *f0
+     ENDDO
 !  p_dst(1:ny*nxz) = radiation%parameters(1) *p_org(1:ny*nxz) *DEXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
-
+  ENDIF
+  
 ! ###################################################################
   IF      ( radiation%type .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN
      DO j = ny,1,-1
@@ -139,8 +150,8 @@ SUBROUTINE OPR_RADIATION_FLUX(radiation, nx,ny,nz, g, s, r, wrk1d,wrk3d)
   TARGET s, r, wrk3d
   
 ! -----------------------------------------------------------------------
-  TINTEGER j, ip,nxy,nxz, ibc
-  TREAL delta_inv, dummy
+  TINTEGER j, ip,ip2, nxy,nxz, ibc
+  TREAL delta_inv, f0,f1
   TREAL, DIMENSION(:), POINTER :: p_org, p_dst
   
 ! #######################################################################
@@ -193,15 +204,23 @@ SUBROUTINE OPR_RADIATION_FLUX(radiation, nx,ny,nz, g, s, r, wrk1d,wrk3d)
   CALL PENTADSS(ny-1,nxz, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), p_dst)
   ip = nxz *(ny-1) +1; p_dst(ip:ip+nxz-1) = C_0_R ! boundary condition
 
-! Calculate radiative heating rate
-!  dummy = radiation%parameters(1)
-  dummy =-radiation%parameters(1) *radiation%parameters(2)
-  DO j = 1,ny*nxz
-!     p_dst(j) = p_org(j) *EXP( p_dst(j) *delta_inv ) *dummy
-     p_dst(j) =           EXP( p_dst(j) *delta_inv ) *dummy
-  ENDDO
+! Calculate radiative flux
+  f0 = -radiation%parameters(1) *radiation%parameters(2)
+  IF ( ABS(radiation%parameters(3)) .GT. C_0_R ) THEN
+     f1 = -radiation%parameters(3) *radiation%parameters(2)
+     DO j = ny,1,-1
+        ip = nx*nz *(j-1) +1
+        ip2= ip + nx*nz -1
+        p_dst(ip:ip2) = EXP( p_dst(ip:ip2)                *delta_inv ) *f0 &
+                      - EXP((p_dst(1:nx*nz)-p_dst(ip:ip2))*delta_inv ) *f1
+     ENDDO
+  ELSE
+     DO j = 1,ny*nxz
+        p_dst(j) =           EXP( p_dst(j) *delta_inv ) *f0
+     ENDDO
 !  p_dst(1:ny*nxz) = radiation%parameters(1) *p_org(1:ny*nxz) *DEXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
-
+  ENDIF
+  
 ! ###################################################################
   IF      ( radiation%type .EQ. EQNS_RAD_BULK1D_GLOBAL ) THEN
      DO j = ny,1,-1

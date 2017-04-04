@@ -53,7 +53,7 @@ PROGRAM AVERAGES
   CHARACTER*64 str, line
 
   TINTEGER opt_main, opt_block, opt_order, opt_bins, opt_bcs, flag_buoyancy
-  TINTEGER opt_cond, opt_threshold
+  TINTEGER opt_cond, opt_cond_scal, opt_threshold
   TINTEGER nfield, isize_wrk3d, is, ij, n
   TREAL diff, umin, umax, dummy
   TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3
@@ -205,6 +205,7 @@ PROGRAM AVERAGES
 ! Defining gate levels for conditioning
 ! -------------------------------------------------------------------
   opt_cond      = 0 ! default values
+  opt_cond_scal = 1
   igate_size    = 0
   opt_threshold = 0
 
@@ -430,6 +431,10 @@ PROGRAM AVERAGES
 ! -------------------------------------------------------------------
      IF ( opt_cond .GT. 0 ) THEN
 
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+           opt_cond_scal = inb_scal_array
+        ENDIF
+
 #include "dns_calc_partition.h"
      IF ( opt_main .EQ. 2 .AND. opt_cond .EQ. 1 ) rtime = params(1)
 
@@ -487,7 +492,7 @@ PROGRAM AVERAGES
            IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
               IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
                  is = is + 1
-                 CALL THERMO_ANELASTIC_THETAL(imax,jmax,kmax, s, epbackground,pbackground, txc(1,7))
+                 CALL THERMO_ANELASTIC_THETA(imax,jmax,kmax, s, epbackground,pbackground, txc(1,7))
                  CALL AVG_SCAL_XZ(is, q,s, txc(1,7), &
                       txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
               ENDIF
