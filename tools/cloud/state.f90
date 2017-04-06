@@ -10,9 +10,9 @@ PROGRAM STATE
 
 #include "integers.h"
 
-  TREAL p, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep
+  TREAL p, ps, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep
   TREAL heat1, heat2, cp1, cp2, alpha, as, bs, t_eq, l, cp_ref
-  TREAL r1,r2,r3, h2(3), s(3)
+  TREAL r1, h1, s(3)
   TINTEGER iopt
 
 ! ###################################################################
@@ -21,8 +21,10 @@ PROGRAM STATE
   imixture = MIXT_TYPE_AIRWATER
   CALL THERMO_INITIALIZE
   MRATIO = C_1_R
+  IF ( gama0 .GT. C_0_R ) GRATIO = (gama0-C_1_R)/gama0
+  ep = C_0_R
   dsmooth = C_0_R
-
+     
   WRITE(*,*) 'Case p-t (1) or d-e (2) or p-h (3)?'
   READ(*,*) iopt
 
@@ -53,11 +55,11 @@ PROGRAM STATE
 
 ! ###################################################################
   IF ( iopt .EQ. 1 ) THEN
-     CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, dummy)
-     dummy = C_1_R/(MRATIO*p/dummy-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-     qs = dummy/(C_1_R+dummy)
+     CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, ps)
+     qs = C_1_R/(MRATIO*p/ps-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+     qs = qs/(C_1_R+qs)
      IF ( qt .GT. qs ) THEN
-        qv = dummy*(1-qt)
+        qv = qs*(1-qt)
         ql = qt-qv
      ELSE
         qv = qt
@@ -75,57 +77,56 @@ PROGRAM STATE
      ql = z1(2)
      qv = qt - ql
      qs = qv ! initial condition for next routine
-!     CALL THERMO_CALORIC_QSAT(i1, i1, i1, e, r, qs, dummy)
+!     CALL THERMO_CALORIC_QSAT(i1, i1, i1, e, r, qs, qs)
      CALL THERMO_THERMAL_PRESSURE(i1, i1, i1, z1, r, t, p)
-     CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, dummy)
-     dummy = C_1_R/(MRATIO*p/dummy-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-     qs = dummy/(C_1_R+dummy)
+     CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, ps)
+     qs = C_1_R/(MRATIO*p/ps-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+     qs = qs/(C_1_R+qs)
      CALL THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, t, h)
 
   ELSE IF ( iopt .EQ. 3 ) THEN
      h = h/TREF/1.007
-     ep = C_0_R
      z1(1) = qt
-     ! CALL THERMO_AIRWATER_PH_RE(i1, i1, i1, z1, p, h, T)
-     CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, ep,p)
+     CALL THERMO_AIRWATER_PH(i1,i1,i1, z1,h, ep,p)
      s(1) = h; s(2:3) = z1(1:2)
-     CALL THERMO_ANELASTIC_TEMPERATURE(i1, i1, i1, s, ep, T)
-
+     CALL THERMO_ANELASTIC_TEMPERATURE(i1,i1,i1, s, ep, T)
+     ! CALL THERMO_AIRWATER_PH_RE(i1,i1,i1, z1, p, h, T)
+     CALL THERMO_POLYNOMIAL_PSAT(i1,i1,i1, T, ps)
+     qs = C_1_R/(MRATIO*p/ps-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+     qs = qs/(C_1_R+qs)
+     CALL THERMO_THERMAL_DENSITY(i1,i1,i1, z1,p,T, r)
+     CALL THERMO_CALORIC_ENERGY(i1,i1,i1, z1, T, e)
      ql = z1(2)
      qv = qt - ql
-  
-     CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, dummy)
-     WRITE(*,*) 'Saturation pressure................:', dummy
-     dummy = C_1_R/(MRATIO*p/dummy-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-     qs = dummy/(C_1_R+dummy)
- 
-     r1 = p/(T*(1- qt +WGHT_INV(1)/WGHT_INV(2)*qv ) )
-     CALL THERMO_THERMAL_DENSITY(i1,i1,i1,z1,p,T, r2)
-     CALL THERMO_CALORIC_ENTHALPY(i1,i1,i1,z1,T,h2)
-     h2(2:3) = z1(1:2)
-     CALL THERMO_ANELASTIC_DENSITY(i1,i1,i1, h2,p, r3)
+! check
+     CALL THERMO_ANELASTIC_DENSITY(i1,i1,i1, s, ep,p, r1)
+!     r2 = p/(T*(1- qt +WGHT_INV(1)/WGHT_INV(2)*qv ) )
+     CALL THERMO_CALORIC_ENTHALPY(i1,i1,i1, z1,T,h1)
+
   ENDIF
 
-  WRITE(*,*) 'Saturation specific humidity ......:', qs
-  WRITE(*,*) 'Vapor specific humidity ...........:', qv
-  WRITE(*,*) 'Liquid specific humidity ..........:', ql
-  WRITE(*,*) 'Density ...........................:', r
-  WRITE(*,*) 'Pressure ..........................:', p
-  WRITE(*,*) 'Temperature .......................:', t*TREF - 273.15 ! 273.16
-  WRITE(*,*) 'Specific energy ...................:', e
-  WRITE(*,*) 'Specific enthalpy .................:', h
+  WRITE(*,'(a,e)') 'Saturation specific humidity ......:', qs
+  WRITE(*,'(a,e)') 'Vapor specific humidity ...........:', qv
+  WRITE(*,'(a,e)') 'Liquid specific humidity ..........:', ql
+  WRITE(*,'(a,e)') 'Density ...........................:', r
+  WRITE(*,'(a,e)') 'Pressure ..........................:', p
+  WRITE(*,'(a,e)') 'Saturation pressure ...............:', ps
+  WRITE(*,'(a,e)') 'Temperature .......................:', t*TREF - 273.15 ! 273.16
+  WRITE(*,'(a,e)') 'Specific energy ...................:', e
+  WRITE(*,'(a,e)') 'Specific enthalpy .................:', h
+  WRITE(*,'(a,e)') 'Reference latent heat .............:', THERMO_AI(6,1,3) *1.007 *TREF 
   IF ( iopt .EQ. 3 ) THEN
-     WRITE(*,*) 'Density ...........................:', r1,r2,r3
-     WRITE(*,*) 'Specific enthalpy .................:', h*1.007*TREF,  h2(1)*1.007*TREF
-     WRITE(*,*) 'Latent heat........................:', (THERMO_AI(6,1,3))*1.007*TREF 
+     WRITE(*,'(a,e)') 'Density ...........................:', r1
+     WRITE(*,'(a,e)') 'Specific enthalpy .................:', h1
   ENDIF
+  
   cp_ref = (1-qt)*THERMO_AI(1,1,2) + qt*THERMO_AI(1,1,3)
   l      = THERMO_AI(6,1,1)-THERMO_AI(6,1,3)
   t_eq   = t*(C_1_R/p)**((1-qt)*GRATIO*WGHT_INV(2)/cp_ref)
   t_eq   = t_eq * EXP(qv*l/cp_ref/t) 
+  WRITE(*,'(a,e)') 'Equivalent potential temperature ..:', t_eq*TREF
 
-  WRITE(*,*) 'Equivalent potential temperature ..:', t_eq*TREF
-
+  
 ! ###################################################################
   WRITE(*,*) ' '
   WRITE(*,*) 'Calculate reversal linear coefficients (1-yes/0-no) ?'

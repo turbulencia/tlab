@@ -15,66 +15,16 @@
 !########################################################################
 !# DESCRIPTION
 !#
+!# Calculating the equilibrium T and q_l for given enthalpy and pressure.
 !# Assumes often that THERMO_AI(6,1,1) = THERMO_AI(6,1,2) = 0
 !#
 !# Routine THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
 !#
+!# Smoothing according to Eq. 25 in Mellado et al., TCFD, 2010
+!#
 !########################################################################
-
-!########################################################################
-!########################################################################
-! This is not the saturation humidity, but the equilibrium value for a given qt
-SUBROUTINE THERMO_AIRWATER_QSAT(nx,ny,nz, q,h, e,p, T,qsat)
-
-  USE THERMO_GLOBAL, ONLY : THERMO_AI, THERMO_PSAT, NPSAT, WGHT_INV, MRATIO
-
-  IMPLICIT NONE
-
-#include "integers.h"
-
-  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
-  TREAL, DIMENSION(nx*ny*nz,2), INTENT(IN)  :: q       ! total water content, liquid water content
-  TREAL, DIMENSION(nx*ny*nz),   INTENT(IN)  :: h       ! entahlpy
-  TREAL, DIMENSION(*),          INTENT(IN)  :: e, p 
-  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: qsat, T
-  
-! -------------------------------------------------------------------
-  TINTEGER ij, i, jk, is, ipsat
-  TREAL psat, E_LOC, P_LOC, rd_ov_rv
-  
-! ###################################################################
-  rd_ov_rv = WGHT_INV(2) /WGHT_INV(1)
-  
-  ij = 0
-  DO jk = 0,ny*nz-1
-     is = MOD(jk,ny) +1
-     P_LOC = MRATIO*p(is)
-     E_LOC = e(is)
-     
-     DO i = 1,nx
-        ij = ij +1
-
-        T(ij) = (h(ij) - E_LOC - q(ij,2)*THERMO_AI(6,1,3) ) / &
-          ( (C_1_R-q(ij,1))*THERMO_AI(1,1,2) + (q(ij,1)-q(ij,2))*THERMO_AI(1,1,1) &
-          + q(ij,2)* THERMO_AI(1,1,3) )
-        
-        psat = C_0_R
-        DO ipsat = NPSAT,1,-1
-           psat = psat*T(ij) + THERMO_PSAT(ipsat)
-        ENDDO
-        qsat(ij) = rd_ov_rv *( C_1_R -q(ij,1) ) /( P_LOC/psat -C_1_R )
-     ENDDO
-  ENDDO
-  
-  RETURN
-END SUBROUTINE THERMO_AIRWATER_QSAT
-
-!########################################################################
-!########################################################################
-! Calculating the equilibrium T and q_l for given enthalpy and pressure.
 SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
 
-  USE DNS_CONSTANTS, ONLY : efile
   USE THERMO_GLOBAL, ONLY : MRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
   USE THERMO_GLOBAL, ONLY : NEWTONRAPHSON_ERROR
 #ifdef USE_MPI
@@ -98,13 +48,11 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
   TREAL LATENT_HEAT, HEAT_CAPACITY_LD, HEAT_CAPACITY_LV, HEAT_CAPACITY_VD
   TREAL ALPHA_1, ALPHA_2, BETA_1, BETA_2, alpha, beta, rd_ov_rv
   TREAL dummy
+  TREAL qvequ, dsmooth_loc, dqldqt, dqsdt
+  
+  TREAL Cd, Cdv, Lv0, Cvl
 
 ! ###################################################################
-  IF ( dsmooth .GT. C_0_R ) THEN
-     CALL IO_WRITE_ASCII(efile, 'THERMO_AIRWATER_PH. SmoothUndeveloped.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
-
   NEWTONRAPHSON_ERROR = C_0_R
 ! maximum number of iterations in Newton-Raphson
   nrmax = 5
@@ -121,9 +69,14 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
   BETA_1  = WGHT_INV(2) /WGHT_INV(1) *HEAT_CAPACITY_LV + THERMO_AI(1,1,2)
   BETA_2  = HEAT_CAPACITY_LD - WGHT_INV(2) /WGHT_INV(1) *HEAT_CAPACITY_LV
 
-! ###################################################################
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Lv0=-THERMO_AI(6,1,3)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+
   rd_ov_rv = WGHT_INV(2) /WGHT_INV(1)
 
+! ###################################################################
   ij = 0
   DO jk = 0,ny*nz-1
      is = MOD(jk,ny) +1
@@ -132,14 +85,14 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
      
      DO i = 1,nx
         ij = ij +1
-
+        
 ! -------------------------------------------------------------------
-! reference case assuming q_l = 0
+! reference case assuming ql = 0
 ! -------------------------------------------------------------------
-        T_LOC = (h(ij) -E_LOC -THERMO_AI(6,1,2) -s(ij,1)*(THERMO_AI(6,1,1)-THERMO_AI(6,1,2)) )/&
-             (THERMO_AI(1,1,2)+s(ij,1)*(THERMO_AI(1,1,1)-THERMO_AI(1,1,2)))
-
-! calculate saturation specific humidity q_sat(T,p) in array s(1,2)
+        s(ij,2) = C_0_R
+        T_LOC   = ( h(ij) -E_LOC ) /( Cd +s(ij,1) *Cdv )
+        
+! calculate saturation specific humidity q_sat(T,p)
         psat = C_0_R
         DO ipsat = NPSAT,1,-1
            psat = psat*T_LOC + THERMO_PSAT(ipsat)
@@ -147,19 +100,34 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
         dummy = rd_ov_rv /( P_LOC/psat -C_1_R )
         qsat = dummy /( C_1_R +dummy )
      
-        IF ( qsat .GE. s(ij,1) ) THEN
-           s(ij,2) = C_0_R
-!        deltaql = C_0_R       !Needed by the smoothing function
+! -------------------------------------------------------------------
+! calculate smoothed piecewise linear contribution, if needed
+! -------------------------------------------------------------------
+        IF ( dsmooth .GT. C_0_R ) THEN
+! calculate dqsdt from dpsatdt (qs here mean qvequ)
+           dqsdt = C_0_R
+           DO ipsat = NPSAT-1,1,-1
+              dqsdt = dqsdt *T_LOC + THERMO_PSAT(ipsat+1) *M_REAL(ipsat)
+           ENDDO
+           dqsdt = qsat / psat /( C_1_R - psat/P_LOC ) *dqsdt
+! calculate dqldqt
+           dqsdt = dqsdt / ( Cd + qsat *Cdv )
+           dqldqt = ( C_1_R/( C_1_R - qsat ) + Cdv *T_LOC *dqsdt )/ &
+                    ( C_1_R + ( Lv0 - Cvl *T_LOC ) *dqsdt )
            
+           dsmooth_loc  = dsmooth *qsat
+           s(ij,2) = dqldqt *dsmooth_loc *LOG( EXP( (s(ij,1)-qsat) /dsmooth_loc ) +C_1_R )
+
+        ENDIF
+        
 ! -------------------------------------------------------------------
 ! if q_s < q_t, then we have to recalculate T
 ! -------------------------------------------------------------------
-        ELSE
+        IF ( qsat .LT. s(ij,1) ) THEN
 ! preparing Newton-Raphson 
            alpha = (ALPHA_1 + s(ij,1)*ALPHA_2 + h(ij) - E_LOC) /P_LOC
            beta  = (BETA_1  + s(ij,1)*BETA_2                 ) /P_LOC
-           B_LOC(1) = h(ij) -E_LOC -THERMO_AI(6,1,2) - s(ij,1)*(THERMO_AI(6,1,3)-THERMO_AI(6,1,2)) -&
-                THERMO_PSAT(1)*alpha
+           B_LOC(1) = h(ij) -E_LOC + s(ij,1) *Lv0 - THERMO_PSAT(1)*alpha
            DO is = 2,9
               B_LOC(is) = THERMO_PSAT(is-1)*beta - THERMO_PSAT(is)*alpha
            ENDDO
@@ -178,26 +146,21 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
            ENDDO
            NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(FUN/DER)/T_LOC)
            
-! recalculate saturation specific humidity q_vs(T,p,qt)
+! calculate equilibrium vapor specific humidity
            psat = C_0_R
            DO ipsat = NPSAT,1,-1
               psat = psat*T_LOC + THERMO_PSAT(ipsat)
            ENDDO
            dummy = rd_ov_rv /( P_LOC/psat -C_1_R )
-           s(ij,2) = dummy *( C_1_R -s(ij,1) )
-!        deltaql = -dummy*s(ij,2) !Needed by the smoothing function
-!        qsat = s(ij,2)
-        
-! liquid content
-           s(ij,2) = s(ij,1)-s(ij,2)
+           qvequ = dummy *( C_1_R -s(ij,1) )
+
+           IF ( dsmooth .GT. C_0_R ) THEN ! add correction
+              s(ij,2) = s(ij,2) +s(ij,1) -qvequ - (s(ij,1) -qsat) *dqldqt
+           ELSE                           ! or calculate new
+              s(ij,2) =          s(ij,1) -qvequ
+           ENDIF
            
         ENDIF
-     
-     ! IF ( dsmooth .GT. C_0_R ) THEN
-     !    dsmooth_loc = dsmooth *qsat
-     !    partial_ql_qt = dummy+C_1_R
-     !    s(ij,2) = partial_ql_qt*dsmooth_loc*log(exp((s_loc(1)-qsat)/dsmooth_loc)+C_1_R) + deltaql;
-     ! ENDIF
 
      ENDDO
   ENDDO

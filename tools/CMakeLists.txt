@@ -149,3 +149,6 @@ FILE(GLOB sourcefiles "cloud/state.f90")
 add_executable(state.x ${sourcefiles})
 target_link_libraries(state.x mappings operators flow io thermodynamics averages filters fdm linear fitpack ${LEVEL1_LIBS} ${LIBS})
 
+FILE(GLOB sourcefiles "cloud/smooth.f90")
+add_executable(smooth.x ${sourcefiles})
+target_link_libraries(smooth.x mappings operators flow io thermodynamics averages filters fdm linear fitpack ${LEVEL1_LIBS} ${LIBS})

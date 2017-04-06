@@ -237,7 +237,8 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT&
 ! #######################################################################
   IF (damkohler(1) .GT. C_0_R) THEN !It supersatturation is allowed
 
-     CALL THERMO_AIRWATER_QSAT(imax,jmax,kmax, s(:,2:3),al_h, epbackground,pbackground, tmp7, tmp4) !Temperature in tmp7 and saturation concentration in tmp4 
+!Temperature in tmp7 and saturation concentration in tmp4
+     CALL THERMO_ANELASTIC_QVEQU(imax,jmax,kmax, s, epbackground,pbackground, tmp7, tmp4)
 
 !(IN THE FUTURE THIS LOOP CAN BE DONE IN THERMO_AIRWATER_QSAT)
 !$omp parallel default( shared ) private( ij, dummy, exp_l )

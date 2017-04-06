@@ -271,6 +271,61 @@ END SUBROUTINE THERMO_ANELASTIC_BUOYANCY
 
 !########################################################################
 !########################################################################
+SUBROUTINE THERMO_ANELASTIC_QVEQU(nx,ny,nz, s, e,p, T,qvequ)
+
+  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, THERMO_PSAT, NPSAT, WGHT_INV, MRATIO
+
+  IMPLICIT NONE
+
+#include "integers.h"
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
+  TREAL, DIMENSION(*),          INTENT(IN)  :: e,p 
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: qvequ, T
+  
+! -------------------------------------------------------------------
+  TINTEGER ij, i, jk, is, ipsat
+  TREAL psat, E_LOC, P_LOC
+  
+  TREAL Cd, Cdv, Lv0, Cvl, rd_ov_rv
+  
+! ###################################################################
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Lv0=-THERMO_AI(6,1,3)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+
+  rd_ov_rv = WGHT_INV(2) /WGHT_INV(1)
+  
+  IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO*p(is)
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T(ij) = (s(ij,1) - E_LOC + s(ij,3)*Lv0 )  / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
+           
+           psat = C_0_R
+           DO ipsat = NPSAT,1,-1
+              psat = psat*T(ij) + THERMO_PSAT(ipsat)
+           ENDDO
+           qvequ(ij) = rd_ov_rv *( C_1_R -s(ij,2) ) /( P_LOC/psat -C_1_R )
+           
+        ENDDO
+
+     ENDDO
+  ENDIF
+     
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_QVEQU
+
+!########################################################################
+!########################################################################
 SUBROUTINE THERMO_ANELASTIC_THETA(nx,ny,nz, s, e,p, theta)
 
   USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
