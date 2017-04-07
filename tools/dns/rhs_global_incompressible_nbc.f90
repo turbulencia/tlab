@@ -235,7 +235,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      ! -----------------------------------------------------------------------
      ! Source terms
      ! -----------------------------------------------------------------------
-     CALL FI_SOURCES_FLOW(u,s, h1,              wrk1d,      wrk3d)
+     CALL FI_SOURCES_FLOW(u,s, h1, tmp41,       wrk1d,wrk2d,wrk3d)
      CALL FI_SOURCES_SCAL(  s, hs, tmp41,tmp42, wrk1d,wrk2d,wrk3d)
 
      t_ser    = t_ser + (t_tmp +MPI_WTime())

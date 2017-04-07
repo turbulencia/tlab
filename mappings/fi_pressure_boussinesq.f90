@@ -35,7 +35,7 @@ IMPLICIT NONE
   p    = C_0_R
   tmp3 = C_0_R
   
-  CALL FI_SOURCES_FLOW(q,s, tmp3, wrk1d,wrk3d)
+  CALL FI_SOURCES_FLOW(q,s, tmp3, tmp1, wrk1d,wrk2d,wrk3d)
   
 ! #######################################################################
 ! Calculate forcing term Ox

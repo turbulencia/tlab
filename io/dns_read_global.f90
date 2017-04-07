@@ -79,6 +79,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Linear/Bilinear/Quadratic>')
   CALL IO_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
   CALL IO_WRITE_ASCII(bakfile, '#TermRadiation=<none/Bulk1dGlobal/Bulk1dLocal>')
+  CALL IO_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergence>')
   CALL IO_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
   CALL IO_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
   CALL IO_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian8/CompactDirect6>')
@@ -218,6 +219,14 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
 
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermSubsidence', 'None', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'               ) THEN; subsidence%type = EQNS_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'constantdivergence' ) THEN; subsidence%type = EQNS_SUB_CONSTANT
+  ELSE
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermSubsidence option.')
+     CALL DNS_STOP(DNS_ERROR_OPTION)
+  ENDIF
+  
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'sutherland'         ) THEN; transport%type = EQNS_TRANS_SUTHERLAND;
@@ -383,6 +392,24 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', '1.0', sRes)
      idummy = MAX_PROF
      CALL LIST_REAL(sRes, idummy, radiation%parameters)
+
+  ENDIF
+
+! ###################################################################
+! Subsidence
+! ###################################################################
+  CALL IO_WRITE_ASCII(bakfile, '#')
+  CALL IO_WRITE_ASCII(bakfile, '#[Subsidence]')
+  CALL IO_WRITE_ASCII(bakfile, '#Parameters=<value>')
+
+  subsidence%active = .FALSE.
+  IF ( subsidence%type .NE. EQNS_NONE ) THEN
+     subsidence%active = .TRUE.
+
+     subsidence%parameters(:) = C_0_R
+     CALL SCANINICHAR(bakfile, inifile, 'Subsidence', 'Parameters', '0.0', sRes)
+     idummy = MAX_PROF
+     CALL LIST_REAL(sRes, idummy, subsidence%parameters)
 
   ENDIF
 

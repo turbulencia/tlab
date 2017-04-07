@@ -113,11 +113,12 @@ MODULE DNS_GLOBAL
   TREAL, DIMENSION(:), ALLOCATABLE :: bbackground, epbackground
 
 ! ###################################################################
-  TYPE(term_dt) :: buoyancy  ! Buoyancy parameters
-  TYPE(term_dt) :: coriolis  ! Coriolis parameters
-  TYPE(term_dt) :: radiation ! Radiation parameters
-  TYPE(term_dt) :: transport ! Transport parameters
-  TYPE(term_dt) :: chemistry ! Chemistry parameters
+  TYPE(term_dt) :: buoyancy   ! Buoyancy parameters
+  TYPE(term_dt) :: coriolis   ! Coriolis parameters
+  TYPE(term_dt) :: radiation  ! Radiation parameters
+  TYPE(term_dt) :: transport  ! Transport parameters
+  TYPE(term_dt) :: chemistry  ! Chemistry parameters
+  TYPE(term_dt) :: subsidence ! Large-scale parameters
 
 ! ###################################################################
 ! Nondimensional numbers

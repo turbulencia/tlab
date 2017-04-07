@@ -18,8 +18,8 @@ SUBROUTINE FI_PROFILES(wrk1d)
   TREAL, DIMENSION(g(2)%size,*), INTENT(INOUT) :: wrk1d
   
 ! -----------------------------------------------------------------------
-  TINTEGER is!, j
-!  TREAL ycenter, FLOW_SHEAR_TEMPORAL 
+  TINTEGER is, j
+  TREAL ycenter, FLOW_SHEAR_TEMPORAL 
  
 ! #######################################################################
   rbackground = C_1_R ! defaults
@@ -29,11 +29,11 @@ SUBROUTINE FI_PROFILES(wrk1d)
 
 ! Construct given thermodynamic profiles
   DO is = 1,inb_scal
-     ! ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
-     ! DO j = 1,g(2)%size
-     !    wrk1d(j,is) = FLOW_SHEAR_TEMPORAL(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
-     ! ENDDO
-     wrk1d(:,is) = sbg(is)%reference
+     ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
+     DO j = 1,g(2)%size
+        wrk1d(j,is) = FLOW_SHEAR_TEMPORAL(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+     ENDDO
+!     wrk1d(:,is) = sbg(is)%reference
   ENDDO
 
   IF ( pbg%parameters(1) .GT. C_0_R ) THEN

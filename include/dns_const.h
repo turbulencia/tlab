@@ -46,14 +46,16 @@
 #define EQNS_RHS_COMBINED          19
 #define EQNS_RHS_NONBLOCKING       20
 
-#define EQNS_TRANS_POWERLAW       21
-#define EQNS_TRANS_SUTHERLAND     22
+#define EQNS_TRANS_POWERLAW        21
+#define EQNS_TRANS_SUTHERLAND      22
 #define EQNS_TRANS_AIRWATER            23
 #define EQNS_TRANS_AIRWATERSIMPLIFIED  24
 
 #define EQNS_CHEM_QUADRATIC          25
 #define EQNS_CHEM_LAYEREDRELAXATION  26
 #define EQNS_CHEM_OZONE              27
+
+#define EQNS_SUB_CONSTANT          28
 
 ! Finite-differences method
 #define FDM_COM4_JACOBIAN     4

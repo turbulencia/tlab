@@ -13,17 +13,19 @@
 !# Sources from the evolution equations.
 !#
 !########################################################################
-SUBROUTINE FI_SOURCES_FLOW(q,s, hq, wrk1d,wrk3d)
+SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
-  USE DNS_GLOBAL,    ONLY : buoyancy, coriolis
+  USE DNS_GLOBAL,    ONLY : buoyancy, coriolis, subsidence
   USE DNS_GLOBAL,    ONLY : bbackground, pbackground, rbackground, epbackground
 
   IMPLICIT NONE
 
   TREAL, DIMENSION(isize_field,*), INTENT(IN)    :: q,s
   TREAL, DIMENSION(isize_field,*), INTENT(OUT)   :: hq
+  TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: tmp1
   TREAL, DIMENSION(isize_wrk1d,*), INTENT(INOUT) :: wrk1d
+  TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d
   TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: wrk3d
 
 ! -----------------------------------------------------------------------
@@ -57,12 +59,16 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, wrk1d,wrk3d)
         hq(ij,1) = hq(ij,1) + dummy*( w_geo-q(ij,3) )
         hq(ij,3) = hq(ij,3) + dummy*( q(ij,1)-u_geo ) 
      ENDDO
+!$omp end parallel
+
   ENDIF
+
+! -----------------------------------------------------------------------
+  DO iq = 1,3
 
 ! -----------------------------------------------------------------------
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
-  DO iq = 1,3
      IF ( buoyancy%active(iq) ) THEN
 
         IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
@@ -98,6 +104,23 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, wrk1d,wrk3d)
         
      ENDIF
 
+! -----------------------------------------------------------------------
+! Subsidence
+! -----------------------------------------------------------------------
+     IF ( subsidence%active(iq) ) THEN
+        CALL FI_SUBSIDENCE(subsidence, imax,jmax,kmax, q(1,iq), tmp1, wrk2d,wrk3d)
+
+!$omp parallel default( shared ) &
+!$omp private( ij, srt,end,siz )
+        CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
+        
+        DO ij = srt,end
+           hq(ij,iq) = hq(ij,iq) + tmp1(ij)
+        ENDDO
+!$omp end parallel
+        
+     ENDIF
+     
   ENDDO
 
   RETURN
@@ -109,7 +132,7 @@ SUBROUTINE FI_SOURCES_SCAL(s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, isize_field, isize_wrk1d
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : radiation, transport, chemistry
+  USE DNS_GLOBAL, ONLY : radiation, transport, chemistry, subsidence
 
   IMPLICIT NONE
 
@@ -117,7 +140,8 @@ SUBROUTINE FI_SOURCES_SCAL(s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(isize_field,*), INTENT(OUT)   :: hs
   TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: tmp1,tmp2
   TREAL, DIMENSION(isize_wrk1d,*), INTENT(INOUT) :: wrk1d
-  TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: wrk2d,wrk3d
+  TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d
+  TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: wrk3d
   
 ! -----------------------------------------------------------------------
   TINTEGER ij, is, flag_grad
@@ -187,6 +211,23 @@ SUBROUTINE FI_SOURCES_SCAL(s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
         ENDDO
 !$omp end parallel
 
+     ENDIF
+     
+! -----------------------------------------------------------------------
+! Subsidence
+! -----------------------------------------------------------------------
+     IF ( subsidence%active(is) ) THEN
+        CALL FI_SUBSIDENCE(subsidence, imax,jmax,kmax, s(1,is), tmp1, wrk2d,wrk3d)
+
+!$omp parallel default( shared ) &
+!$omp private( ij, srt,end,siz )
+        CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
+        
+        DO ij = srt,end
+           hs(ij,is) = hs(ij,is) + tmp1(ij)
+        ENDDO
+!$omp end parallel
+        
      ENDIF
      
   ENDDO

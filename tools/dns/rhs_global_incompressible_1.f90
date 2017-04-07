@@ -2,16 +2,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# HISTORY
-!#
-!# 2011/11/28 - J.P. Mellado
-!#              Created
-!# 2012/12/20 - J.P. Mellado
-!#              Rearranged to reduce transpositions more
-!# 2015/10/09 - J.P. Mellado
-!#              Extracting source code into arrays FI_SOURCES_*
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Derived from RHS_FLOW/SCAL_GLOBAL_INCOMPRESSIBLE_1
