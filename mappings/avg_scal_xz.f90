@@ -659,22 +659,22 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         jloc_max = MAXLOC(ABS(fS_y(1:jmax))); j = jloc_max(1)
 
         wrk1d(1:jmax,1) = fS(jmax) - fS(1:jmax)
-        delta_s_area     = SIMPSON_NU(jmax-j+1, wrk1d(j,1), y(j)) / ABS(sbg(is)%delta)
+        delta_s_area    = SIMPSON_NU(jmax-j+1, wrk1d(j,1), y(j)) / ABS(sbg(is)%delta)
  
         delta_s          = ABS(sbg(is)%delta)/ABS(fS_y(j))
         delta_s_position = y(j)
         delta_s_value    = fS(j)
 
 ! Thickness
-        dummy = sbg(is)%mean + (C_05_R-C_1EM3_R)*sbg(is)%delta
+        dummy      = sbg(is)%mean + (C_05_R-C_1EM3_R) *sbg(is)%delta
         delta_sb01 = LOWER_THRESHOLD(jmax, dummy, rS(1), y)
-        dummy = sbg(is)%mean - (C_05_R-C_1EM3_R)*sbg(is)%delta
+        dummy      = sbg(is)%mean - (C_05_R-C_1EM3_R) *sbg(is)%delta
         delta_st01 = UPPER_THRESHOLD(jmax, dummy, rS(1), y)
         
-        delta_sb01 = (y(1) + sbg(is)%ymean*g(2)%scale) - delta_sb01
-        delta_st01 = delta_st01 - (y(1) + sbg(is)%ymean*g(2)%scale)
-        delta_s01 = delta_st01 + delta_sb01
-        
+        delta_sb01 =              (y(1) + sbg(is)%ymean *g(2)%scale) - delta_sb01
+        delta_st01 = delta_st01 - (y(1) + sbg(is)%ymean *g(2)%scale)
+        delta_s01  = delta_st01 + delta_sb01
+
 !  Mixing, Youngs' definition
         smin_loc = sbg(is)%mean - C_05_R*ABS(sbg(is)%delta)
         smax_loc = sbg(is)%mean + C_05_R*ABS(sbg(is)%delta)

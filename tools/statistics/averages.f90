@@ -499,7 +499,7 @@ PROGRAM AVERAGES
            ENDIF
            
         ENDIF
-        
+
 ! Lagrange Liquid and Liquid without diffusion
         IF ( icalc_particle .EQ. 1 ) THEN
            IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
@@ -513,7 +513,10 @@ PROGRAM AVERAGES
               DO is = inb_scal_array+2,inb_scal_particle+inb_scal_array+1
                  l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
                  CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,8))   
-                 txc(:,8) = txc(:,8)/txc(:,7)
+                 txc(:,8) = txc(:,8) /txc(:,7)
+                 sbg(is)%mean  = sbg(inb_scal_array)%mean
+                 sbg(is)%delta = sbg(inb_scal_array)%delta
+                 sbg(is)%ymean = sbg(inb_scal_array)%ymean
                  CALL AVG_SCAL_XZ(is, q,s, txc(1,8), &
                       txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
               ENDDO

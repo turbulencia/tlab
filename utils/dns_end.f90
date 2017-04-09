@@ -28,12 +28,12 @@ SUBROUTINE DNS_END(ic)
   
 #ifdef USE_MPI
   ims_time_max = MPI_WTIME()
-  WRITE(line,'(E12.5E3)') ims_time_max-ims_time_min
+  WRITE(line,1000) ims_time_max-ims_time_min
   line = 'Time elapse ....................: '//TRIM(ADJUSTL(line))
   CALL IO_WRITE_ASCII(lfile, line)
  
 #ifdef PROFILE_ON 
-  WRITE(line,'(E12.5E3)') ims_time_trans
+  WRITE(line,1000) ims_time_trans
   line = 'Time in array transposition ....: '//TRIM(ADJUST(line))
   CALL IO_WRITE_ASCII(lfile, line)
 #endif
@@ -47,4 +47,9 @@ SUBROUTINE DNS_END(ic)
 #endif
   
   RETURN
+
+#ifdef USE_MPI
+1000 FORMAT(G_FORMAT_R)
+#endif
+  
 END SUBROUTINE DNS_END

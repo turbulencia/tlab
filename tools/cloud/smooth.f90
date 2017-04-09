@@ -87,7 +87,7 @@ PROGRAM SMOOTH
         CALL THERMO_CALORIC_ENERGY(i1,i1,i1, z1, T, e)
 
      ENDIF
-     WRITE(21,'(9e)') qt, z1(2), qt-z1(2), qs, rho, T, p, e, h
+     WRITE(21,1000) qt, z1(2), qt-z1(2), qs, rho, T, p, e, h
 
      qt = qt+qt_del
   ENDDO
@@ -95,4 +95,7 @@ PROGRAM SMOOTH
   CLOSE(21)
 
   STOP
+
+1000 FORMAT(9(G_FORMAT_R))
+
 END PROGRAM SMOOTH

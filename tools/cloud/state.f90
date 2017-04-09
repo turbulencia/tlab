@@ -105,26 +105,26 @@ PROGRAM STATE
 
   ENDIF
 
-  WRITE(*,'(a,e)') 'Saturation specific humidity ......:', qs
-  WRITE(*,'(a,e)') 'Vapor specific humidity ...........:', qv
-  WRITE(*,'(a,e)') 'Liquid specific humidity ..........:', ql
-  WRITE(*,'(a,e)') 'Density ...........................:', r
-  WRITE(*,'(a,e)') 'Pressure ..........................:', p
-  WRITE(*,'(a,e)') 'Saturation pressure ...............:', ps
-  WRITE(*,'(a,e)') 'Temperature .......................:', t*TREF - 273.15 ! 273.16
-  WRITE(*,'(a,e)') 'Specific energy ...................:', e
-  WRITE(*,'(a,e)') 'Specific enthalpy .................:', h
-  WRITE(*,'(a,e)') 'Reference latent heat .............:', THERMO_AI(6,1,3) *1.007 *TREF 
+  WRITE(*,1000) 'Saturation specific humidity ......:', qs
+  WRITE(*,1000) 'Vapor specific humidity ...........:', qv
+  WRITE(*,1000) 'Liquid specific humidity ..........:', ql
+  WRITE(*,1000) 'Density ...........................:', r
+  WRITE(*,1000) 'Pressure ..........................:', p
+  WRITE(*,1000) 'Saturation pressure ...............:', ps
+  WRITE(*,1000) 'Temperature .......................:', t*TREF - 273.15 ! 273.16
+  WRITE(*,1000) 'Specific energy ...................:', e
+  WRITE(*,1000) 'Specific enthalpy .................:', h
+  WRITE(*,1000) 'Reference latent heat .............:', THERMO_AI(6,1,3) *1.007 *TREF 
   IF ( iopt .EQ. 3 ) THEN
-     WRITE(*,'(a,e)') 'Density ...........................:', r1
-     WRITE(*,'(a,e)') 'Specific enthalpy .................:', h1
+     WRITE(*,1000) 'Density ...........................:', r1
+     WRITE(*,1000) 'Specific enthalpy .................:', h1
   ENDIF
   
   cp_ref = (1-qt)*THERMO_AI(1,1,2) + qt*THERMO_AI(1,1,3)
   l      = THERMO_AI(6,1,1)-THERMO_AI(6,1,3)
   t_eq   = t*(C_1_R/p)**((1-qt)*GRATIO*WGHT_INV(2)/cp_ref)
   t_eq   = t_eq * EXP(qv*l/cp_ref/t) 
-  WRITE(*,'(a,e)') 'Equivalent potential temperature ..:', t_eq*TREF
+  WRITE(*,1000) 'Equivalent potential temperature ..:', t_eq*TREF
 
   
 ! ###################################################################
@@ -160,4 +160,7 @@ PROGRAM STATE
   ENDIF
 
   STOP
+
+1000 FORMAT(A,G_FORMAT_R)
+
 END PROGRAM STATE
