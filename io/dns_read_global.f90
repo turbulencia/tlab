@@ -673,9 +673,49 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceThickVelocity', '1.0', qbg(1)%parameters(3))
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceDeltaVelocity', '0.0', qbg(1)%parameters(4))
   
-! spanwise and crosswise velocity
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityY', '0.0', qbg(2)%mean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityZ', '0.0', qbg(3)%mean)
+! crosswise velocity
+  CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileVelocityY', 'none', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; qbg(2)%type = PROFILE_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; qbg(2)%type = PROFILE_LINEAR
+  ELSE
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong velocity Y profile.')
+     CALL DNS_STOP(DNS_ERROR_OPTION)
+  ENDIF
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityY',      '0.0', qbg(2)%mean)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorVelocityY', '0.5', qbg(2)%ymean)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamVelocityY',  '1.0', qbg(2)%diam )
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickVelocityY', '0.0', qbg(2)%thick)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaVelocityY', '0.0', qbg(2)%delta)
+
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceThickVelocityY', '1.0', qbg(2)%parameters(3))
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceDeltaVelocityY', '0.0', qbg(2)%parameters(4))
+
+! spanwise velocity
+  CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileVelocityZ', 'none', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; qbg(3)%type = PROFILE_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; qbg(3)%type = PROFILE_LINEAR
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'      ) THEN; qbg(3)%type = PROFILE_TANH
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; qbg(3)%type = PROFILE_ERF
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erfsurface') THEN; qbg(3)%type = PROFILE_ERF_SURFACE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bickley'   ) THEN; qbg(3)%type = PROFILE_BICKLEY
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'gaussian'  ) THEN; qbg(3)%type = PROFILE_GAUSSIAN
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekman'     ) THEN; qbg(3)%type = PROFILE_EKMAN_V
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekmanp'    ) THEN; qbg(3)%type = PROFILE_EKMAN_U_P
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic' ) THEN; qbg(3)%type = PROFILE_PARABOLIC
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; qbg(3)%type = PROFILE_LINEAR_CROP
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; qbg(3)%type = PROFILE_MIXEDLAYER
+  ELSE
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong velocity Z profile.')
+     CALL DNS_STOP(DNS_ERROR_OPTION)
+  ENDIF
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityZ',      '0.0', qbg(3)%mean)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorVelocityZ', '0.5', qbg(3)%ymean)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamVelocityZ',  '1.0', qbg(3)%diam )
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickVelocityZ', '0.0', qbg(3)%thick)
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaVelocityZ', '0.0', qbg(3)%delta)
+
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceThickVelocityZ', '1.0', qbg(3)%parameters(3))
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceDeltaVelocityZ', '0.0', qbg(3)%parameters(4))
 
 ! density
   CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileDensity', 'None', sRes)

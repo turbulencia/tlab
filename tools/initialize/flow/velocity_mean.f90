@@ -71,7 +71,13 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
                  w(:,j,:) = w(:,j,:) - wrk1d(j,1)*salpha + wrk1d(j,2)*calpha
               ENDDO
            ELSE
-              w = w + qbg(3)%mean
+              ycenter = g(2)%nodes(1) + g(2)%scale *qbg(3)%ymean
+              DO j = 1,jmax
+                 wrk1d(j,1) =  FLOW_SHEAR_TEMPORAL&
+                      (qbg(3)%type, qbg(3)%thick, qbg(3)%delta, qbg(3)%mean, ycenter, qbg(3)%parameters, g(2)%nodes(j))
+                 w(:,j,:) = w(:,j,:) + wrk1d(j,1)
+              ENDDO
+!              w = w + qbg(3)%mean
            ENDIF
 
         ELSE

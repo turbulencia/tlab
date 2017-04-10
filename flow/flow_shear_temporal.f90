@@ -21,8 +21,8 @@ FUNCTION FLOW_SHEAR_TEMPORAL(iflag, thick, delta, mean, ycenter, param, y)
 ! -------------------------------------------------------------------
   IF ( thick .EQ. C_0_R ) THEN
      IF ( iflag .GT. 0 ) THEN 
-     IF      ( yrel .LE. C_0_R ) THEN; amplify = C_05_R
-     ELSE IF ( yrel .GT. C_0_R ) THEN; amplify =-C_05_R; ENDIF
+        IF      ( yrel .LE. C_0_R ) THEN; amplify = C_05_R
+        ELSE IF ( yrel .GT. C_0_R ) THEN; amplify =-C_05_R; ENDIF
      ENDIF
 
   ELSE
@@ -66,7 +66,11 @@ FUNCTION FLOW_SHEAR_TEMPORAL(iflag, thick, delta, mean, ycenter, param, y)
   ENDIF
   
 ! mean profile
-  FLOW_SHEAR_TEMPORAL = mean + delta *amplify
+  IF ( ABS(delta) .GT. C_0_R ) THEN
+     FLOW_SHEAR_TEMPORAL = mean + delta *amplify
+  ELSE
+     FLOW_SHEAR_TEMPORAL = mean
+  ENDIF
   
 ! -------------------------------------------------------------------
 ! special profiles
