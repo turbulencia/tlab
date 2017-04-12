@@ -310,7 +310,39 @@ if [ $answer = "yes" ]; then
 	}' 
 # LINUX 
     elif [ $system = "x86" ]; then
-	if [ $site = "tacc" ]; then
+	if [ $site = "dkrz" ]; then
+	LINE='BEGIN {} 
+	    { 
+             if ($4 == "DIRECTIVES" ) 
+		{
+		    print "#SBATCH --job-name='$QSEND_NAME'"
+                    print "#SBATCH --output='$QSEND_NAME'.o%j"
+                    print "#SBATCH --error='$QSEND_NAME'.e%j"
+                    print "#SBATCH --ntasks='$QSEND_NP'.e%j"
+ 
+		    total_time = '$QSEND_TIME';
+		    hours = int(total_time/3600);
+		    total_time = total_time-hours*3600;
+		    min   = int(total_time/60);
+		    sec   = int(total_time-min*60);
+		    printf "#SBATCH --time=%.2d:%.2d:%.2d\n", hours, min, sec
+		}
+	    else if ($4 == "MODIFY")
+		{
+		    print "JOBDIR='$QSEND_JOBDIR'"
+		    print "MEM='$QSEND_MEM'"
+		    print "TIME='$QSEND_TIME'"
+		    print "NAME=\"'$QSEND_NAME'\""
+                    print "MAXITER=\"'$QSEND_MAXITER'\""
+		    print "SCRIPT='$QSEND_SCRIPT'"
+                    print "STEP='$QSEND_STEP'"
+                    print "NP='$QSEND_NP'"
+                    print "ACCOUNT='$account'"
+                    print "TIMESTAMP='$TIMESTAMP'"
+		}
+	    print $0
+	}' 
+	elif [ $site = "tacc" ]; then
 	LINE='BEGIN {} 
 	    { 
 	    if ($2 == "-o" )
@@ -404,6 +436,40 @@ if [ $answer = "yes" ]; then
 	    print $0
 	}' 
         fi
+# x86 mistral
+    elif [ $system = "mistral" ]; then
+	LINE='BEGIN {} 
+	    { 
+             if ($4 == "DIRECTIVES" ) 
+		{
+		    print "#SBATCH --job-name='$QSEND_NAME'"
+                    print "#SBATCH --output=ll_out.%j-'$TIMESTAMP'"
+                    print "#SBATCH --error=ll_err.%j-'$TIMESTAMP'"
+                    print "#SBATCH --ntasks='$QSEND_NP'"
+ 
+		    total_time = '$QSEND_TIME';
+		    hours = int(total_time/3600);
+		    total_time = total_time-hours*3600;
+		    min   = int(total_time/60);
+		    sec   = int(total_time-min*60);
+		    printf "#SBATCH --time=%.2d:%.2d:%.2d\n", hours, min, sec
+		}
+	    else if ($4 == "MODIFY")
+		{
+		    print "JOBDIR='$QSEND_JOBDIR'"
+		    print "MEM='$QSEND_MEM'"
+		    print "TIME='$QSEND_TIME'"
+		    print "NAME=\"'$QSEND_NAME'\""
+                    print "MAXITER=\"'$QSEND_MAXITER'\""
+		    print "SCRIPT='$QSEND_SCRIPT'"
+                    print "STEP='$QSEND_STEP'"
+                    print "NP='$QSEND_NP'"
+                    print "ACCOUNT='$account'"
+                    print "TIMESTAMP='$TIMESTAMP'"
+                    print "RUNMODE='$RUNMODE'"
+		}
+	    print $0
+	}' 
 # SUN
     elif [ $system = "sun" ]; then
 	LINE='BEGIN {} 
@@ -685,8 +751,10 @@ if [ $answer = "yes" ]; then
 	if [ $answer = "yes" ]; then
 	    echo "Submiting Job $QSEND_NAME"
 	    chmod +x $QSEND_TMP_SCRIPT
-	    if [[ $site = "fzj" || $site = "dkrz" ]]; then
+	    if [[ $site = "fzj" ]]; then
 	        llsubmit $queue $QSEND_TMP_SCRIPT
+            elif [ $site = "dkrz" ]; then
+		sbatch $queue $QSEND_TMP_SCRIPT
             elif [ $site = "tacc" ]; then
                 bsub < $QSEND_TMP_SCRIPT
 	    else

@@ -240,6 +240,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermChemistry', 'none', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic'        ) THEN; chemistry%type = EQNS_CHEM_QUADRATIC;
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic3'       ) THEN; chemistry%type = EQNS_CHEM_QUADRATIC3; 
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'layeredrelaxation') THEN; chemistry%type = EQNS_CHEM_LAYEREDRELAXATION; 
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'ozone'            ) THEN; chemistry%type = EQNS_CHEM_OZONE; 
   ELSE;                                                        chemistry%type = EQNS_NONE; ENDIF

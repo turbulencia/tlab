@@ -1,0 +1,6 @@
+site=dkrz
+system=mistral
+os=linux
+account=mh0738
+queue=""
+hpc=parallel

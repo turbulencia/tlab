@@ -52,10 +52,11 @@
 #define EQNS_TRANS_AIRWATERSIMPLIFIED  24
 
 #define EQNS_CHEM_QUADRATIC          25
-#define EQNS_CHEM_LAYEREDRELAXATION  26
-#define EQNS_CHEM_OZONE              27
+#define EQNS_CHEM_QUADRATIC3         26
+#define EQNS_CHEM_LAYEREDRELAXATION  27
+#define EQNS_CHEM_OZONE              28
 
-#define EQNS_SUB_CONSTANT          28
+#define EQNS_SUB_CONSTANT          29
 
 ! Finite-differences method
 #define FDM_COM4_JACOBIAN     4

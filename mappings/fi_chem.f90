@@ -36,10 +36,21 @@ SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
      dummy  =-damkohler(is) /chemistry%parameters(1)
      source = dummy *source *s(:,is)
 
-  CASE( EQNS_CHEM_QUADRATIC )
+  CASE( EQNS_CHEM_QUADRATIC  )
      dummy  = damkohler(is) *chemistry%parameters(is)
      source = dummy *s(:,2) *s(:,3)
 
+  CASE( EQNS_CHEM_QUADRATIC3 )
+     dummy  = damkohler(is) *chemistry%parameters(is)
+
+     IF      ( is .GE. 1 .AND. is .LE. 3 ) THEN
+        source = dummy *s(:,2) *s(:,3)
+     ELSE IF ( is .GE. 4 .AND. is .LE. 6 ) THEN
+        source = dummy *s(:,4) *s(:,5)
+     ELSE IF ( is .GE. 7 .AND. is .LE. 9 ) THEN
+        source = dummy *s(:,7) *s(:,8)
+     ENDIF
+     
   CASE( EQNS_CHEM_OZONE )
      dummy  = damkohler(is)
      IF ( is .EQ. 4 ) dummy =-dummy
