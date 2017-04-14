@@ -37,7 +37,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! -----------------------------------------------------------------------
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 10
   TINTEGER i,j,k
-  TREAL diff, AVG_IK, SIMPSON_NU, UPPER_THRESHOLD, LOWER_THRESHOLD
+  TREAL diff, SIMPSON_NU, UPPER_THRESHOLD, LOWER_THRESHOLD
   TREAL delta_m, delta_w, delta_s, delta_s_area, delta_s_position, delta_s_value 
   TREAL smin_loc, smax_loc
   TREAL delta_hb01, delta_ht01, delta_h01
@@ -678,14 +678,16 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 !  Mixing, Youngs' definition
         smin_loc = sbg(is)%mean - C_05_R*ABS(sbg(is)%delta)
         smax_loc = sbg(is)%mean + C_05_R*ABS(sbg(is)%delta)
-        DO k = 1,kmax
-           DO i = 1,imax*jmax
-              wrk3d(i,1,k) = (s_local(i,1,k)-smin_loc)*(smax_loc-s_local(i,1,k))
-           ENDDO
-        ENDDO
-        DO j = 1,jmax
-           wrk1d(j,1) = AVG_IK(imax, jmax, kmax, j, wrk3d, dx, dz, area)
-        ENDDO
+        wrk3d = (s_local - smin_loc) *(smax_loc -s_local)
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d, wrk1d(1,2), area)
+        ! DO k = 1,kmax
+        !    DO i = 1,imax*jmax
+        !       wrk3d(i,1,k) = (s_local(i,1,k)-smin_loc)*(smax_loc-s_local(i,1,k))
+        !    ENDDO
+        ! ENDDO
+        ! DO j = 1,jmax
+        !    wrk1d(j,1) = AVG_IK(imax, jmax, kmax, j, wrk3d, dx, dz, area)
+        ! ENDDO
         mixing1 = SIMPSON_NU(jmax, wrk1d, y)
         DO j = 1,jmax
            wrk1d(j,1)=(rS(j)-smin_loc)*(smax_loc-rS(j))
@@ -700,9 +702,10 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
               wrk3d(i,1,k) = MIN(s_local(i,1,k)-smin_loc,smax_loc-s_local(i,1,k))
            ENDDO
         ENDDO
-        DO j = 1,jmax
-           wrk1d(j,1)=AVG_IK(imax, jmax, kmax, j, wrk3d, dx, dz, area)
-        ENDDO
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d, wrk1d(1,2), area)
+        ! DO j = 1,jmax
+        !    wrk1d(j,1)=AVG_IK(imax, jmax, kmax, j, wrk3d, dx, dz, area)
+        ! ENDDO
         mixing2 = SIMPSON_NU(jmax, wrk1d, y)
         DO j = 1,jmax
            wrk1d(j,1) = MIN(rS(j)-smin_loc,smax_loc-rS(j))

@@ -96,11 +96,11 @@ MODULE DNS_GLOBAL
 ! ###################################################################
   TYPE(grid_dt), DIMENSION(3) :: g
 
-  TINTEGER :: imax_total,jmax_total,kmax_total
-
   TREAL    :: area,volume
   
 ! to be removed
+  TINTEGER :: imax_total,jmax_total,kmax_total
+
   TINTEGER :: iunifx,iunify,iunifz               ! uniform
   TINTEGER :: i1bc,j1bc,k1bc                     ! biased
   
@@ -109,7 +109,7 @@ MODULE DNS_GLOBAL
   TYPE(background_dt) :: sbg(MAX_NSP)  ! Scalars backgrounds
   TYPE(background_dt) :: pbg, rbg, tbg ! Pressure, density, temperature backgrounds
 
-  TREAL, DIMENSION(:), ALLOCATABLE :: pbackground, rbackground, tbackground
+  TREAL, DIMENSION(:), ALLOCATABLE :: pbackground, tbackground, rbackground, ribackground
   TREAL, DIMENSION(:), ALLOCATABLE :: bbackground, epbackground
 
 ! ###################################################################

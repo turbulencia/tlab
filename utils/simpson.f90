@@ -90,3 +90,60 @@ FUNCTION SIMPSON_NU(imax, u, x)
 
   RETURN
 END FUNCTION SIMPSON_NU
+
+! ###################################################################
+! ###################################################################
+SUBROUTINE SIMPSON_NU_V(imax,nlines, u, x, out, wrk2d)
+
+  IMPLICIT NONE
+
+  TINTEGER,                      INTENT(IN)  :: imax, nlines
+  TREAL, DIMENSION(nlines,imax), INTENT(IN)  :: u
+  TREAL, DIMENSION(imax),        INTENT(IN)  :: x
+  TREAL, DIMENSION(nlines),      INTENT(OUT) :: out
+  TREAL, DIMENSION(nlines,*),    INTENT(OUT) :: wrk2d
+
+  TARGET wrk2d
+  
+  TINTEGER i, nn, i2
+  TREAL dx21, dx20, dx10
+  TREAL, DIMENSION(:), POINTER :: du20, du10, du21, b, c
+
+  du20 => wrk2d(:,1)
+  du10 => wrk2d(:,2)
+  du21 => wrk2d(:,3)
+  b    => wrk2d(:,4)
+  c    => wrk2d(:,5)
+  
+  i2 = 2 
+
+! Correct the last element contribution
+  IF ( MOD(imax,i2) .EQ. 0 ) THEN 
+     dx21 = x(imax)-x(imax-1)
+     dx20 = x(imax)-x(imax-2)
+     dx10 = x(imax-1)-x(imax-2)
+     du20 = u(:,imax)  -u(:,imax-2)
+     du10 = u(:,imax-1)-u(:,imax-2)
+     du21 = u(:,imax)  -u(:,imax-1)
+     c = (du21/dx21-du10/dx10)/dx20
+     b = (du21/dx21-c*dx21)/C_2_R
+     out = dx21*(u(:,imax-1)+dx21*(b+c*dx21/C_3_R))
+     nn = imax - 1
+  ELSE
+     out(:) = C_0_R
+     nn = imax
+  ENDIF
+
+  DO i=2, nn-1,2
+     dx21 = x(i+1)-x(i)
+     dx20 = x(i+1)-x(i-1)
+     dx10 = x(i)-x(i-1)
+     du20 = u(:,i+1)-u(:,i-1)
+     du10 = u(:,i)  -u(:,i-1)
+     c = (du20/dx20-du10/dx10)/dx21
+     b = (du20/dx20-c*dx20)/C_2_R
+     out = out + dx20*(u(:,i-1)+dx20*(b+c*dx20/C_3_R))
+  ENDDO
+
+  RETURN
+END SUBROUTINE SIMPSON_NU_V

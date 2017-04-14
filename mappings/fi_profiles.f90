@@ -7,7 +7,7 @@ SUBROUTINE FI_PROFILES(wrk1d)
   USE DNS_GLOBAL, ONLY : inb_scal, inb_scal_array
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : pbg, sbg, damkohler,froude,schmidt
-  USE DNS_GLOBAL, ONLY : rbackground, bbackground, pbackground, tbackground, epbackground
+  USE DNS_GLOBAL, ONLY : rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
   USE DNS_GLOBAL, ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture, GRATIO
 
@@ -23,6 +23,7 @@ SUBROUTINE FI_PROFILES(wrk1d)
  
 ! #######################################################################
   rbackground = C_1_R ! defaults
+  ribackground= C_1_R
   pbackground = C_1_R
   tbackground = C_1_R
   epbackground= C_0_R
@@ -52,7 +53,9 @@ SUBROUTINE FI_PROFILES(wrk1d)
      ENDIF
      
      CALL THERMO_ANELASTIC_DENSITY(i1,g(2)%size,i1, wrk1d, epbackground,pbackground, rbackground)
-     
+
+     ribackground = C_1_R /rbackground
+
   ENDIF
   
 ! Calculate buoyancy profile  

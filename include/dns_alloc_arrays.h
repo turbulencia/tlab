@@ -1,5 +1,6 @@
   ALLOCATE(pbackground(g(2)%size))
   ALLOCATE(rbackground(g(2)%size))
+  ALLOCATE(ribackground(g(2)%size))
   ALLOCATE(bbackground(g(2)%size))
   ALLOCATE(tbackground(g(2)%size))
   ALLOCATE(epbackground(g(2)%size))

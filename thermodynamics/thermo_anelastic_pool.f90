@@ -413,3 +413,99 @@ SUBROUTINE THERMO_ANELASTIC_THETA(nx,ny,nz, s, e,p, theta)
   
   RETURN
 END SUBROUTINE THERMO_ANELASTIC_THETA
+
+!########################################################################
+!########################################################################
+SUBROUTINE THERMO_ANELASTIC_WEIGHT_INPLACE(nx,ny,nz, weight, a)
+
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)    :: nx,ny,nz
+  TREAL, DIMENSION(*),          INTENT(IN)    :: weight
+  TREAL, DIMENSION(nx,ny*nz),   INTENT(INOUT) :: a
+
+! -------------------------------------------------------------------
+  TINTEGER jk, j
+
+! ###################################################################
+  DO jk = 1,ny*nz
+     j = MOD(jk-1,ny) +1
+     
+     a(1:nx,jk) = a(1:nx,jk) *weight(j)
+     
+  ENDDO
+  
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_WEIGHT_INPLACE
+
+!########################################################################
+!########################################################################
+SUBROUTINE THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx,ny,nz, weight, a, b)
+
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(*),          INTENT(IN)  :: weight
+  TREAL, DIMENSION(nx,ny*nz),   INTENT(IN)  :: a
+  TREAL, DIMENSION(nx,ny*nz),   INTENT(OUT) :: b
+
+! -------------------------------------------------------------------
+  TINTEGER jk, j
+
+! ###################################################################
+  DO jk = 1,ny*nz
+     j = MOD(jk-1,ny) +1
+     
+     b(1:nx,jk) = b(1:nx,jk) + a(1:nx,jk) *weight(j)
+     
+  ENDDO
+
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_WEIGHT_OUTPLACE
+
+!########################################################################
+!########################################################################
+SUBROUTINE THERMO_ANELASTIC_LWP(nx,ny,nz, g, r, ql, lwp, wrk2d,wrk3d)
+
+  USE DNS_TYPES, ONLY : grid_dt
+
+  IMPLICIT NONE
+
+  TINTEGER,                   INTENT(IN)    :: nx,ny,nz
+  TYPE(grid_dt),              INTENT(IN)    :: g
+  TREAL, DIMENSION(*),        INTENT(IN)    :: r
+  TREAL, DIMENSION(nx*nz,ny), INTENT(IN)    :: ql
+  TREAL, DIMENSION(nx*nz),    INTENT(OUT)   :: lwp
+  TREAL, DIMENSION(nx*nz*5),  INTENT(INOUT) :: wrk2d
+  TREAL, DIMENSION(nx*nz,ny), INTENT(INOUT) :: wrk3d
+
+  TARGET ql, wrk3d
+  
+! -------------------------------------------------------------------
+  TINTEGER nxy, nxz, j
+  TREAL, DIMENSION(:,:), POINTER :: p_org
+
+! ###################################################################
+  nxz = nx*nz
+  nxy = nx*ny ! For transposition to make y direction the last one
+
+  IF ( nz .EQ. 1 ) THEN
+     p_org => ql
+  ELSE 
+     p_org => wrk3d
+     
+#ifdef USE_ESSL
+     CALL DGETMO(ql, nxy, nxy, nz, p_org, nz)
+#else
+     CALL DNS_TRANSPOSE(ql, nxy, nz, nxy, p_org, nz)
+#endif
+  ENDIF
+
+  DO j = 1,ny
+     wrk3d(1:nxz,j) = p_org(1:nxz,j) *r(j)
+  ENDDO
+     
+  CALL SIMPSON_NU_V(ny,nxz, wrk3d, g%nodes, lwp, wrk2d)
+  
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_LWP
