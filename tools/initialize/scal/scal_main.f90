@@ -91,6 +91,8 @@ PROGRAM INISCAL
 #include "dns_read_grid.h"
 
 ! ###################################################################
+  CALL FI_PROFILES(wrk1d)
+     
   s = C_0_R
 
 #ifdef USE_MPI
@@ -172,8 +174,13 @@ PROGRAM INISCAL
   IF ( radiation%type .NE. EQNS_NONE ) THEN
      
 ! An initial effect of radiation is imposed as an accumulation during a certain interval of time
+     IF ( ABS(radiation%parameters(1)) .GT. C_0_R ) THEN
+        radiation%parameters(3) = radiation%parameters(3) /radiation%parameters(1) *norm_ini_radiation
+     ENDIF
      radiation%parameters(1) = norm_ini_radiation
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+     IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
+        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)         
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
         CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
      ENDIF
      DO is = 1,inb_scal
