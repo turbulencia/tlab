@@ -48,7 +48,7 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
 ! -------------------------------------------------------------------
   TINTEGER ij, is, inr, nrmax, ipsat, i, jk
   TREAL Cd, Cdv, Lv0, Cvl, Cdl, rd_ov_rv
-  TREAL ALPHA_1, ALPHA_2, BETA_1, BETA_2, alpha, beta
+  TREAL ALPHA_1, ALPHA_2, BETA_1, BETA_2, alpha, beta, C_LN2_L
   TREAL psat, qsat, T_LOC, E_LOC, H_LOC, P_LOC, B_LOC(10), FUN, DER
   TREAL dsmooth_loc, dqldqt, dqsdt!, qvequ
   TREAL dummy
@@ -71,6 +71,8 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
   ALPHA_2 = Lv0 *( C_1_R -rd_ov_rv )
   BETA_1  = rd_ov_rv *Cvl + THERMO_AI(1,1,2)
   BETA_2  = Cdl -rd_ov_rv *Cvl
+
+  C_LN2_L = LOG(C_2_R)
 
 ! ###################################################################
   ij = 0
@@ -114,7 +116,12 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
                     ( C_1_R + ( Lv0 - Cvl *T_LOC ) *dqsdt )
            
            dsmooth_loc  = dsmooth *qsat
-           s(ij,2) = dqldqt *dsmooth_loc *LOG( EXP( (s(ij,1)-qsat) /dsmooth_loc ) +C_1_R )
+           IF ( s(ij,1)-qsat .LT. C_0_R ) THEN
+              s(ij,2) = dqldqt *dsmooth_loc *LOG( EXP( (s(ij,1)-qsat) /dsmooth_loc ) +C_1_R )
+           ELSE
+              s(ij,2) = dqldqt *( (s(ij,1)-qsat) &
+                                  +dsmooth_loc *( C_LN2_L -LOG( TANH( (s(ij,1)-qsat) /(C_2_R *dsmooth_loc) ) +C_1_R ) ) )
+           ENDIF
 
         ENDIF
         
