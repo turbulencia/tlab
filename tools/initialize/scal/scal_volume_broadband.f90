@@ -16,7 +16,7 @@ SUBROUTINE SCAL_VOLUME_BROADBAND(is, s, tmp, wrk3d)
 
 ! -------------------------------------------------------------------
   TREAL AVG1V2D
-  TREAL ycenter, amplify, dummy
+  TREAL ycenter, amplify, dummy, ymin, ymax
   TINTEGER j
 
 ! ###################################################################
@@ -38,6 +38,12 @@ SUBROUTINE SCAL_VOLUME_BROADBAND(is, s, tmp, wrk3d)
         ycenter = g(2)%nodes(j) - g(2)%scale *ycoor_ini(is) - g(2)%nodes(1)
         IF ( thick_ini(is) .eq. C_0_R ) THEN; amplify = C_1_R
         ELSE;                                 amplify = EXP(-(C_05_R*ycenter/thick_ini(is))**2); ENDIF
+
+! set perturbation and its normal derivative zero at the boundaries
+        ymin = (g(2)%nodes(j)-g(2)%nodes(1)   )/thick_ini(is)
+        ymax = (g(2)%nodes(j)-g(2)%nodes(jmax))/thick_ini(is)
+        amplify = amplify *TANH( C_05_R*ymin) **2
+        amplify = amplify *TANH(-C_05_R*ymax) **2
 
         tmp(:,j,:) = tmp(:,j,:)*amplify
      ENDDO
