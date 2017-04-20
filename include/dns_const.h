@@ -56,7 +56,8 @@
 #define EQNS_CHEM_LAYEREDRELAXATION  27
 #define EQNS_CHEM_OZONE              28
 
-#define EQNS_SUB_CONSTANT          29
+#define EQNS_SUB_CONSTANT_LOCAL      29
+#define EQNS_SUB_CONSTANT_GLOBAL     30
 
 ! Finite-differences method
 #define FDM_COM4_JACOBIAN     4

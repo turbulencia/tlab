@@ -456,12 +456,37 @@ SUBROUTINE THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx,ny,nz, weight, a, b)
   DO jk = 1,ny*nz
      j = MOD(jk-1,ny) +1
      
-     b(1:nx,jk) = b(1:nx,jk) + a(1:nx,jk) *weight(j)
+     b(1:nx,jk) = a(1:nx,jk) *weight(j)
      
   ENDDO
 
   RETURN
 END SUBROUTINE THERMO_ANELASTIC_WEIGHT_OUTPLACE
+
+!########################################################################
+!########################################################################
+SUBROUTINE THERMO_ANELASTIC_WEIGHT_ADD(nx,ny,nz, weight, a, b)
+
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)    :: nx,ny,nz
+  TREAL, DIMENSION(*),          INTENT(IN)    :: weight
+  TREAL, DIMENSION(nx,ny*nz),   INTENT(IN)    :: a
+  TREAL, DIMENSION(nx,ny*nz),   INTENT(INOUT) :: b
+
+! -------------------------------------------------------------------
+  TINTEGER jk, j
+
+! ###################################################################
+  DO jk = 1,ny*nz
+     j = MOD(jk-1,ny) +1
+     
+     b(1:nx,jk) = b(1:nx,jk) +a(1:nx,jk) *weight(j)
+     
+  ENDDO
+
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_WEIGHT_ADD
 
 !########################################################################
 !########################################################################

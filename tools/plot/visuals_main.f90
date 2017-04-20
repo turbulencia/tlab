@@ -304,7 +304,7 @@ PROGRAM VISUALS_MAIN
      IF ( opt_vec(iv) .EQ. iscal_offset+12) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,4); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+14) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,2); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+15) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,5); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+16) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,1); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+16) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+17) THEN; iread_part = 1;                 inb_txc=MAX(inb_txc,2); ENDIF ! Alberto check 2 or 1?
 
   ENDDO
@@ -967,16 +967,26 @@ PROGRAM VISUALS_MAIN
 ! ###################################################################
         IF (  opt_vec(iv) .EQ. iscal_offset+16) THEN    
            
-           IF ( radiation%type .NE. EQNS_NONE ) THEN
-              CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2), s(1,radiation%scalar(1)), txc(1,1), wrk1d,wrk3d)
-              
-              plot_file = 'Radiation'//time_str(1:MaskSize)
-              CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
-              
-           ENDIF
-
-         ENDIF
-
+           DO is = 1,inb_scal
+              IF ( radiation%active(is) ) THEN
+                 IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+                    CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, s(1,radiation%scalar(is)), txc(1,2))
+                    CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2), txc(1,2),                 txc(1,1), wrk1d,wrk3d)
+                    CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, ribackground, txc(1,1))
+                    
+                 ELSE
+                    CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2), s(1,radiation%scalar(1)), txc(1,1), wrk1d,wrk3d)
+                    
+                 ENDIF
+                 
+                 WRITE(str,*) is; plot_file = 'Radiation'//TRIM(ADJUSTL(str))//time_str(1:MaskSize)
+                 CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
+                 
+              ENDIF
+           ENDDO
+           
+        ENDIF
+        
 ! ###################################################################
 ! Particle density
 ! ###################################################################

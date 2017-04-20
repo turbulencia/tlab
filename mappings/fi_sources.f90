@@ -15,9 +15,9 @@
 !########################################################################
 SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
-  USE DNS_GLOBAL,    ONLY : buoyancy, coriolis, subsidence
-  USE DNS_GLOBAL,    ONLY : bbackground, pbackground, rbackground, epbackground
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
+  USE DNS_GLOBAL, ONLY : buoyancy, coriolis, subsidence
+  USE DNS_GLOBAL, ONLY : bbackground, pbackground, rbackground, epbackground
 
   IMPLICIT NONE
 
@@ -108,7 +108,7 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 ! Subsidence
 ! -----------------------------------------------------------------------
      IF ( subsidence%active(iq) ) THEN
-        CALL FI_SUBSIDENCE(subsidence, imax,jmax,kmax, q(1,iq), tmp1, wrk2d,wrk3d)
+        CALL FI_SUBSIDENCE(subsidence, imax,jmax,kmax, q(1,iq), tmp1, wrk1d,wrk2d,wrk3d)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -131,8 +131,10 @@ END SUBROUTINE FI_SOURCES_FLOW
 SUBROUTINE FI_SOURCES_SCAL(s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, isize_field, isize_wrk1d
+  USE DNS_GLOBAL, ONLY : imode_eqns
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : radiation, transport, chemistry, subsidence
+  USE DNS_GLOBAL, ONLY : rbackground, ribackground
 
   IMPLICIT NONE
 
@@ -163,16 +165,24 @@ SUBROUTINE FI_SOURCES_SCAL(s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 ! Radiation
 ! -----------------------------------------------------------------------
      IF ( radiation%active(is) ) THEN
-        CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2), s(1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
+        IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+           CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, s(1,radiation%scalar(is)), tmp2)
+           CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2), tmp2,                      tmp1, wrk1d,wrk3d)
+           CALL THERMO_ANELASTIC_WEIGHT_ADD(imax,jmax,kmax, ribackground, tmp1, hs(1,is))
 
+        ELSE
+           CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2), s(1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
+        
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-        CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
-        
-        DO ij = srt,end
-           hs(ij,is) = hs(ij,is) + tmp1(ij)
-        ENDDO
+           CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
+           
+           DO ij = srt,end
+              hs(ij,is) = hs(ij,is) + tmp1(ij)
+           ENDDO
 !$omp end parallel
+           
+        ENDIF
         
      ENDIF
      
@@ -217,7 +227,7 @@ SUBROUTINE FI_SOURCES_SCAL(s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 ! Subsidence
 ! -----------------------------------------------------------------------
      IF ( subsidence%active(is) ) THEN
-        CALL FI_SUBSIDENCE(subsidence, imax,jmax,kmax, s(1,is), tmp1, wrk2d,wrk3d)
+        CALL FI_SUBSIDENCE(subsidence, imax,jmax,kmax, s(1,is), tmp1, wrk1d,wrk2d,wrk3d)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )

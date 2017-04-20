@@ -12,6 +12,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal, inb_scal_array, i1bc,j1bc,k1bc
   USE DNS_GLOBAL, ONLY : buoyancy, radiation, transport
   USE DNS_GLOBAL, ONLY : rbg, sbg, qbg
+  USE DNS_GLOBAL, ONLY : rbackground, ribackground
   USE DNS_GLOBAL, ONLY : visc, schmidt, froude
   USE THERMO_GLOBAL, ONLY : imixture, thermo_param
 #ifdef USE_MPI
@@ -112,10 +113,6 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      
   groupname(2) = 'Mean'
   varname(2)   = 'rS fS rS_y fS_y rQ fQ'
-  ! IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN ! Source term partition
-  !    varname(2) = TRIM(ADJUSTL(varname(2)))//' rQrad rQradC rQeva'
-  !    sg(2) = sg(2) + 3
-  ! ENDIF
   IF ( radiation%active(is) ) THEN
      varname(2) = TRIM(ADJUSTL(varname(2)))//' rQrad rQradC'
      sg(2) = sg(2) + 2
@@ -371,8 +368,17 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   dsdx = C_0_R; dsdy = C_0_R; dsdz = C_0_R; tmp1 = C_0_R; tmp2 = C_0_R; tmp3 = C_0_R
 
   IF ( radiation%active(is) ) THEN ! Radiation in tmp1
-     CALL OPR_RADIATION     (radiation, imax,jmax,kmax, g(2), s(1,1,1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
-     CALL OPR_RADIATION_FLUX(radiation, imax,jmax,kmax, g(2), s(1,1,1,radiation%scalar(is)), dsdx, wrk1d,wrk3d)
+     IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+        CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, s(1,1,1,radiation%scalar(is)), tmp2)
+        CALL OPR_RADIATION     (radiation, imax,jmax,kmax, g(2), tmp2,                          tmp1, wrk1d,wrk3d)
+        CALL OPR_RADIATION_FLUX(radiation, imax,jmax,kmax, g(2), tmp2,                          dsdx, wrk1d,wrk3d)
+        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, ribackground, tmp1)
+        tmp2 = C_0_R
+        
+     ELSE
+        CALL OPR_RADIATION     (radiation, imax,jmax,kmax, g(2), s(1,1,1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
+        CALL OPR_RADIATION_FLUX(radiation, imax,jmax,kmax, g(2), s(1,1,1,radiation%scalar(is)), dsdx, wrk1d,wrk3d)
+     ENDIF
   ENDIF
 
   IF ( transport%active(is) ) THEN ! Transport in tmp3
@@ -438,11 +444,6 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! -----------------------------------------------------------------------
 ! Calculating averages
   k = ig(2)+5
-  ! IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-  !    k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! radiation
-  !    k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! correction term
-  !    k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! evaporation
-  ! ENDIF
   IF ( radiation%active(is) ) THEN
      k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, mean2d(1,k), wrk1d(1,1), area)
      k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! correction term or flux
@@ -680,14 +681,6 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         smax_loc = sbg(is)%mean + C_05_R*ABS(sbg(is)%delta)
         wrk3d = (s_local - smin_loc) *(smax_loc -s_local)
         CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d, wrk1d(1,2), area)
-        ! DO k = 1,kmax
-        !    DO i = 1,imax*jmax
-        !       wrk3d(i,1,k) = (s_local(i,1,k)-smin_loc)*(smax_loc-s_local(i,1,k))
-        !    ENDDO
-        ! ENDDO
-        ! DO j = 1,jmax
-        !    wrk1d(j,1) = AVG_IK(imax, jmax, kmax, j, wrk3d, dx, dz, area)
-        ! ENDDO
         mixing1 = SIMPSON_NU(jmax, wrk1d, y)
         DO j = 1,jmax
            wrk1d(j,1)=(rS(j)-smin_loc)*(smax_loc-rS(j))
@@ -703,9 +696,6 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
            ENDDO
         ENDDO
         CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d, wrk1d(1,2), area)
-        ! DO j = 1,jmax
-        !    wrk1d(j,1)=AVG_IK(imax, jmax, kmax, j, wrk3d, dx, dz, area)
-        ! ENDDO
         mixing2 = SIMPSON_NU(jmax, wrk1d, y)
         DO j = 1,jmax
            wrk1d(j,1) = MIN(rS(j)-smin_loc,smax_loc-rS(j))

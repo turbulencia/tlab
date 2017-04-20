@@ -79,7 +79,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Linear/Bilinear/Quadratic>')
   CALL IO_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
   CALL IO_WRITE_ASCII(bakfile, '#TermRadiation=<none/Bulk1dGlobal/Bulk1dLocal>')
-  CALL IO_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergence>')
+  CALL IO_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
   CALL IO_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
   CALL IO_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
   CALL IO_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian8/CompactDirect6>')
@@ -220,8 +220,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermSubsidence', 'None', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'               ) THEN; subsidence%type = EQNS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'constantdivergence' ) THEN; subsidence%type = EQNS_SUB_CONSTANT
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'                    ) THEN; subsidence%type = EQNS_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'constantdivergencelocal' ) THEN; subsidence%type = EQNS_SUB_CONSTANT_LOCAL
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'constantdivergenceglobal') THEN; subsidence%type = EQNS_SUB_CONSTANT_GLOBAL
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermSubsidence option.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
