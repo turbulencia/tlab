@@ -326,6 +326,63 @@ END SUBROUTINE THERMO_ANELASTIC_QVEQU
 
 !########################################################################
 !########################################################################
+SUBROUTINE THERMO_ANELASTIC_RELATIVEHUMIDITY(nx,ny,nz, s, e,p, T,rh)
+
+  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, THERMO_PSAT, NPSAT, WGHT_INV, MRATIO
+
+  IMPLICIT NONE
+
+#include "integers.h"
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
+  TREAL, DIMENSION(*),          INTENT(IN)  :: e,p 
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: rh, T
+  
+! -------------------------------------------------------------------
+  TINTEGER ij, i, jk, is, ipsat
+  TREAL psat, E_LOC, P_LOC
+  
+  TREAL Rv, Rd, Rdv, Cd, Cdv, Lv0, Cvl
+  
+! ###################################################################
+  Rv = WGHT_INV(1)
+  Rd = WGHT_INV(2)
+  Rdv= WGHT_INV(1) - WGHT_INV(2)
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Lv0=-THERMO_AI(6,1,3)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+
+  IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO*p(is)
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T(ij) = (s(ij,1) - E_LOC + s(ij,3)*Lv0 )  / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
+           
+           psat = C_0_R
+           DO ipsat = NPSAT,1,-1
+              psat = psat*T(ij) + THERMO_PSAT(ipsat)
+           ENDDO
+           rh(ij) = (s(ij,2) -s(ij,3)) *P_LOC/psat *Rv /( Rd + s(ij,2) *Rdv - s(ij,3) *Rv )
+           rh(ij) = rh(ij) *C_100_R
+           
+        ENDDO
+
+     ENDDO
+  ENDIF
+     
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_RELATIVEHUMIDITY
+
+!########################################################################
+!########################################################################
 SUBROUTINE THERMO_ANELASTIC_THETA(nx,ny,nz, s, e,p, theta)
 
   USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO

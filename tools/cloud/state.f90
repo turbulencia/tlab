@@ -10,7 +10,7 @@ PROGRAM STATE
 
 #include "integers.h"
 
-  TREAL p, ps, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep
+  TREAL p, ps, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep, theta
   TREAL heat1, heat2, cp1, cp2, alpha, as, bs, t_eq, l, cp_ref
   TREAL r1, h1, s(3)
   TINTEGER iopt
@@ -29,9 +29,9 @@ PROGRAM STATE
   READ(*,*) iopt
 
   IF ( iopt .EQ. 1 ) THEN
-     WRITE(*,*) 'temperature (C) ?'
+     WRITE(*,*) 'temperature (K) ?'
      READ(*,*) t
-     t = (t+273.15)/TREF
+     t=t/TREF !t = (t+273.15)/TREF
      WRITE(*,*) 'pressure (bar) ?'
      READ(*,*) p
 
@@ -71,6 +71,9 @@ PROGRAM STATE
      CALL THERMO_CALORIC_ENERGY(i1, i1, i1, z1, t, e)
      CALL THERMO_THERMAL_DENSITY(i1, i1, i1, z1, p, t, r)
 
+     s(1) = h; s(2:3) = z1(1:2)
+     CALL THERMO_ANELASTIC_THETA(i1,i1,i1, s, ep,p, theta)
+
   ELSE IF ( iopt .EQ. 2 ) THEN
      z1(1) = qt
      CALL THERMO_CALORIC_TEMPERATURE(i1, i1, i1, z1, e, r, T, dqldqt)
@@ -84,6 +87,9 @@ PROGRAM STATE
      qs = qs/(C_1_R+qs)
      CALL THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, t, h)
 
+     s(1) = h; s(2:3) = z1(1:2)
+     CALL THERMO_ANELASTIC_THETA(i1,i1,i1, s, ep,p, theta)
+
   ELSE IF ( iopt .EQ. 3 ) THEN
      h = h/TREF/1.007
      z1(1) = qt
@@ -91,13 +97,16 @@ PROGRAM STATE
      s(1) = h; s(2:3) = z1(1:2)
      CALL THERMO_ANELASTIC_TEMPERATURE(i1,i1,i1, s, ep, T)
      ! CALL THERMO_AIRWATER_PH_RE(i1,i1,i1, z1, p, h, T)
+     ql = z1(2)
+     qv = qt - ql
+
      CALL THERMO_POLYNOMIAL_PSAT(i1,i1,i1, T, ps)
      qs = C_1_R/(MRATIO*p/ps-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
      qs = qs/(C_1_R+qs)
      CALL THERMO_THERMAL_DENSITY(i1,i1,i1, z1,p,T, r)
      CALL THERMO_CALORIC_ENERGY(i1,i1,i1, z1, T, e)
-     ql = z1(2)
-     qv = qt - ql
+     CALL THERMO_ANELASTIC_THETA(i1,i1,i1, s, ep,p, theta)
+
 ! check
      CALL THERMO_ANELASTIC_DENSITY(i1,i1,i1, s, ep,p, r1)
 !     r2 = p/(T*(1- qt +WGHT_INV(1)/WGHT_INV(2)*qv ) )
@@ -111,21 +120,21 @@ PROGRAM STATE
   WRITE(*,1000) 'Density ...........................:', r
   WRITE(*,1000) 'Pressure ..........................:', p
   WRITE(*,1000) 'Saturation pressure ...............:', ps
-  WRITE(*,1000) 'Temperature .......................:', t*TREF - 273.15 ! 273.16
+  WRITE(*,1000) 'Temperature (K) ...................:', t*TREF !- 273.15
   WRITE(*,1000) 'Specific energy ...................:', e
   WRITE(*,1000) 'Specific enthalpy .................:', h
   WRITE(*,1000) 'Reference latent heat .............:', THERMO_AI(6,1,3) *1.007 *TREF 
+  WRITE(*,1000) 'Liquid-water potential T (K) ......:', theta*TREF
   IF ( iopt .EQ. 3 ) THEN
      WRITE(*,1000) 'Density ...........................:', r1
      WRITE(*,1000) 'Specific enthalpy .................:', h1
   ENDIF
   
-  cp_ref = (1-qt)*THERMO_AI(1,1,2) + qt*THERMO_AI(1,1,3)
+  cp_ref = (C_1_R-qt)*THERMO_AI(1,1,2) + qt*THERMO_AI(1,1,3)
   l      = THERMO_AI(6,1,1)-THERMO_AI(6,1,3)
-  t_eq   = t*(C_1_R/p)**((1-qt)*GRATIO*WGHT_INV(2)/cp_ref)
+  t_eq   = t*(C_1_R/p)**((C_1_R-qt)*GRATIO*WGHT_INV(2)/cp_ref)
   t_eq   = t_eq * EXP(qv*l/cp_ref/t) 
-  WRITE(*,1000) 'Equivalent potential temperature ..:', t_eq*TREF
-
+  WRITE(*,1000) 'Equivalent potential T (K) ........:', t_eq*TREF
   
 ! ###################################################################
   WRITE(*,*) ' '

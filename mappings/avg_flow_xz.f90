@@ -407,14 +407,14 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 #define potem_eq(j)  mean2d(j,ig(16)+8)
 #define psat(j)      mean2d(j,ig(16)+9)
 #define pref(j)      mean2d(j,ig(16)+10)
-#define pmod(j)      mean2d(j,ig(16)+11)
+#define relhum(j)    mean2d(j,ig(16)+11)
 #define ri_f(j)      mean2d(j,ig(16)+12)
 #define ri_g(j)      mean2d(j,ig(16)+13)
   sg(ng) = 14
 
   groupname(ng) = 'Stratification'
   varname(ng)   = 'Pot Source rSb BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq '&
-                //'PotTemp_fr PotTemp_eq SaturationPressure rP0 rPmod Ri_f Ri_g'
+                //'PotTemp_fr PotTemp_eq SaturationPressure rP0 RelativeHumidity Ri_f Ri_g'
 
 ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
@@ -748,6 +748,12 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      ENDDO
      CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx,         dx,dz, rT2(1), wrk1d, area)
      
+     CALL THERMO_POLYNOMIAL_PSAT(imax,jmax,kmax, T_LOC(1,1,1), dvdz)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz,         dx,dz, psat(1), wrk1d, area)
+
+     CALL THERMO_ANELASTIC_RELATIVEHUMIDITY(imax,jmax,kmax, s, epbackground,pbackground, T_LOC(1,1,1), wrk3d)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,        dx,dz, relhum(1), wrk1d, area)
+     
   ELSE
 
 ! -------------------------------------------------------------------
@@ -948,7 +954,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         dummy = C_1_R /froude
         rB(:) = rB(:) *dummy
 
-        pmod(:) =-rP_y(:) + SIGN(rB(:),buoyancy%vector(2))
+!        pmod(:) =-rP_y(:) + SIGN(rB(:),buoyancy%vector(2))
         
         CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, rB(1), rB_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
 
@@ -961,7 +967,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      Byy(:) =-rR(:)*rVf(:)*buoyancy%vector(2)
      Bzz(:) =-rR(:)*rWf(:)*buoyancy%vector(3)
 
-     pmod(:) =-rP_y(:) +buoyancy%vector(2) *rR(:)
+!     pmod(:) =-rP_y(:) +buoyancy%vector(2) *rR(:)
 
      rSb(:) = C_0_R
 

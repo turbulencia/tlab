@@ -168,7 +168,8 @@ PROGRAM VISUALS_MAIN
      WRITE(*,'(I2,A)') iscal_offset+14,'. HorizontalDivergence'
      WRITE(*,'(I2,A)') iscal_offset+15,'. Turbulent quantities'
      WRITE(*,'(I2,A)') iscal_offset+16,'. Radiative forcing'
-     WRITE(*,'(I2,A)') iscal_offset+17,'. Particle Density'
+     WRITE(*,'(I2,A)') iscal_offset+17,'. Relative humidity'
+     WRITE(*,'(I2,A)') iscal_offset+18,'. Particle Density'
      READ(*,'(A512)') sRes        
 #endif
   ENDIF
@@ -305,7 +306,8 @@ PROGRAM VISUALS_MAIN
      IF ( opt_vec(iv) .EQ. iscal_offset+14) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,2); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+15) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,5); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+16) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+17) THEN; iread_part = 1;                 inb_txc=MAX(inb_txc,2); ENDIF ! Alberto check 2 or 1?
+     IF ( opt_vec(iv) .EQ. iscal_offset+17) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+18) THEN; iread_part = 1;                 inb_txc=MAX(inb_txc,2); ENDIF ! Alberto check 2 or 1?
 
   ENDDO
 
@@ -988,9 +990,21 @@ PROGRAM VISUALS_MAIN
         ENDIF
         
 ! ###################################################################
+! Relative humidity
+! ###################################################################
+        IF (  opt_vec(iv) .EQ. iscal_offset+17) THEN    
+           
+           CALL THERMO_ANELASTIC_RELATIVEHUMIDITY(imax,jmax,kmax, s, epbackground,pbackground, wrk3d, txc(1,1))
+
+           plot_file = 'RelativeHumidity'//time_str(1:MaskSize)
+           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
+           
+        ENDIF
+        
+! ###################################################################
 ! Particle density
 ! ###################################################################
-        IF ( opt_vec(iv) .EQ. iscal_offset+17 ) THEN
+        IF ( opt_vec(iv) .EQ. iscal_offset+18 ) THEN
            CALL DNS_READ_PARTICLE(part_file,l_q)
            l_txc = C_1_R; ! We want density
            CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,1))
