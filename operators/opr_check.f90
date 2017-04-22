@@ -6,7 +6,7 @@
 SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : isize_field,isize_txc_field, isize_wrk2d
-  USE DNS_GLOBAL, ONLY : imax_total,kmax_total !,jmax_total 
+  USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : ifourier !, fft_reordering
   USE DNS_CONSTANTS, ONLY : lfile
 #ifdef USE_MPI
@@ -121,7 +121,7 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
 #endif
      WRITE(str,100) M_REAL(t_dif)/PROC_CYCLES
 
-     norm = C_1_R/M_REAL(imax_total*kmax_total)
+     norm = C_1_R/M_REAL( g(1)%size *g(3)%size )
 !     norm = norm /M_REAL(jmax_total) ! for large domains we need to do it in two steps !
 
 #ifdef USE_MPI         

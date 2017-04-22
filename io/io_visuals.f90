@@ -255,7 +255,7 @@ END SUBROUTINE ENSIGHT_GRID
 
 SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
 
-  USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total, imax,jmax,kmax
+  USE DNS_GLOBAL, ONLY : imax,kmax
   USE DNS_MPI
 
   IMPLICIT NONE
@@ -279,9 +279,9 @@ SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
   mpio_aux(1)%communicator = ims_comm_x
 
   ndims = 2
-  sizes(1)   = imax_total;   sizes(2)   = subdomain(4)-subdomain(3)+1
-  locsize(1) = imax;         locsize(2) = subdomain(4)-subdomain(3)+1
-  offset(1)  = ims_offset_i; offset(2)  = 0
+  sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1
+  locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1
+  offset(1)  = ims_offset_i;     offset(2)  = 0
   
   CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
        MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(1)%subarray, ims_err)
@@ -292,7 +292,7 @@ SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
   mpio_aux(2)%communicator = ims_comm_z
 
   ndims = 2
-                             sizes(1)   = subdomain(4)-subdomain(3)+1; sizes(2)   = kmax_total 
+                             sizes(1)   = subdomain(4)-subdomain(3)+1; sizes(2)   = kmax *ims_npro_k 
                              locsize(1) = subdomain(4)-subdomain(3)+1; locsize(2) = kmax 
                              offset(1)  = 0;                           offset(2)  = ims_offset_k
 
@@ -305,9 +305,9 @@ SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
   mpio_aux(3)%communicator = MPI_COMM_WORLD
 
   ndims = 3
-  sizes(1)   = imax_total;   sizes(2)   = subdomain(4)-subdomain(3)+1; sizes(3)   = kmax_total 
-  locsize(1) = imax;         locsize(2) = subdomain(4)-subdomain(3)+1; locsize(3) = kmax 
-  offset(1)  = ims_offset_i; offset(2)  = 0;                           offset(3)  = ims_offset_k
+  sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1; sizes(3)   = kmax *ims_npro_k 
+  locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1; locsize(3) = kmax 
+  offset(1)  = ims_offset_i;     offset(2)  = 0;                           offset(3)  = ims_offset_k
   
   CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
        MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(3)%subarray, ims_err)

@@ -208,7 +208,7 @@ END PROGRAM INISCAL
 
 SUBROUTINE SCAL_MPIO_AUX()
 
-  USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total, imax,jmax,kmax
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_MPI
   
   IMPLICIT NONE
@@ -233,9 +233,9 @@ SUBROUTINE SCAL_MPIO_AUX()
   mpio_aux(:)%offset  = 52 ! size of header in bytes
 
   ndims = 3
-  sizes(1)  =imax_total;   sizes(2)   = 1; sizes(3)   = kmax_total
-  locsize(1)=imax;         locsize(2) = 1; locsize(3) = kmax
-  offset(1) =ims_offset_i; offset(2)  = 0; offset(3)  = ims_offset_k
+  sizes(1)  =imax *ims_npro_i; sizes(2)   = 1; sizes(3)   = kmax *ims_npro_k
+  locsize(1)=imax;             locsize(2) = 1; locsize(3) = kmax
+  offset(1) =ims_offset_i;     offset(2)  = 0; offset(3)  = ims_offset_k
   
   CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
        MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)

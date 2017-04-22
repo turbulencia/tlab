@@ -536,7 +536,7 @@ END PROGRAM DNS
 
 SUBROUTINE DNS_MPIO_AUX()
 
-  USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total, imax,jmax,kmax
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : inb_flow_array, inb_scal_array
   USE DNS_LOCAL,  ONLY : nplanes_i,nplanes_j,nplanes_k, planes_i,planes_k
   USE DNS_LOCAL,  ONLY : buff_nps_jmin, buff_nps_jmax
@@ -565,9 +565,9 @@ SUBROUTINE DNS_MPIO_AUX()
      mpio_aux(id)%communicator = ims_comm_x
      
      ndims = 2
-     sizes(1)   = imax_total;   sizes(2)   = jmax_total *nplanes_k*idummy
-     locsize(1) = imax;         locsize(2) = jmax_total *nplanes_k*idummy
-     offset(1)  = ims_offset_i; offset(2)  = 0
+     sizes(1)   = imax *ims_npro_i; sizes(2)   = jmax *nplanes_k *idummy
+     locsize(1) = imax;             locsize(2) = jmax *nplanes_k *idummy
+     offset(1)  = ims_offset_i;     offset(2)  = 0
      
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
@@ -581,9 +581,9 @@ SUBROUTINE DNS_MPIO_AUX()
      mpio_aux(id)%communicator = ims_comm_z
      
      ndims = 2
-     sizes(1)   = jmax_total *nplanes_i*idummy; sizes(2)   = kmax_total 
-     locsize(1) = jmax_total *nplanes_i*idummy; locsize(2) = kmax 
-     offset(1)  = 0;                            offset(2)  = ims_offset_k
+     sizes(1)   = jmax *nplanes_i *idummy; sizes(2)   = kmax *ims_npro_k 
+     locsize(1) = jmax *nplanes_i *idummy; locsize(2) = kmax 
+     offset(1)  = 0;                       offset(2)  = ims_offset_k
      
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
@@ -597,9 +597,9 @@ SUBROUTINE DNS_MPIO_AUX()
      mpio_aux(id)%communicator = MPI_COMM_WORLD
      
      ndims = 3 ! Subarray for the output of the 2D data
-     sizes(1)  =imax_total;   sizes(2)   = nplanes_j*idummy; sizes(3)   = kmax_total
-     locsize(1)=imax;         locsize(2) = nplanes_j*idummy; locsize(3) = kmax
-     offset(1) =ims_offset_i; offset(2)  = 0;                offset(3)  = ims_offset_k
+     sizes(1)  =imax *ims_npro_i; sizes(2)   = nplanes_j*idummy; sizes(3)   = kmax *ims_npro_k
+     locsize(1)=imax;             locsize(2) = nplanes_j*idummy; locsize(3) = kmax
+     offset(1) =ims_offset_i;     offset(2)  = 0;                offset(3)  = ims_offset_k
      
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
@@ -616,9 +616,9 @@ SUBROUTINE DNS_MPIO_AUX()
      mpio_aux(id)%communicator = MPI_COMM_WORLD
      
      ndims = 3
-     sizes(1)  =imax_total;   sizes(2)   = buff_nps_jmin; sizes(3)   = kmax_total
-     locsize(1)=imax;         locsize(2) = buff_nps_jmin; locsize(3) = kmax
-     offset(1) =ims_offset_i; offset(2)  = 0;             offset(3)  = ims_offset_k
+     sizes(1)  =imax *ims_npro_i; sizes(2)   = buff_nps_jmin; sizes(3)   = kmax *ims_npro_k
+     locsize(1)=imax;             locsize(2) = buff_nps_jmin; locsize(3) = kmax
+     offset(1) =ims_offset_i;     offset(2)  = 0;             offset(3)  = ims_offset_k
      
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
           MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)
@@ -632,9 +632,9 @@ SUBROUTINE DNS_MPIO_AUX()
      mpio_aux(id)%communicator = MPI_COMM_WORLD
      
      ndims = 3
-     sizes(1)  =imax_total;   sizes(2)   = buff_nps_jmax; sizes(3)   = kmax_total
-     locsize(1)=imax;         locsize(2) = buff_nps_jmax; locsize(3) = kmax
-     offset(1) =ims_offset_i; offset(2)  = 0;             offset(3)  = ims_offset_k
+     sizes(1)  =imax *ims_npro_i; sizes(2)   = buff_nps_jmax; sizes(3)   = kmax *ims_npro_k
+     locsize(1)=imax;             locsize(2) = buff_nps_jmax; locsize(3) = kmax
+     offset(1) =ims_offset_i;     offset(2)  = 0;             offset(3)  = ims_offset_k
      
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
           MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)

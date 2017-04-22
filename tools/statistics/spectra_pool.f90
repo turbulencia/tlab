@@ -423,7 +423,7 @@ END SUBROUTINE WRITE_SPECTRUM1D
 SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
 
   USE DNS_TYPES,  ONLY : subarray_dt
-  USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total, imax,jmax,kmax
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_MPI
 
   IMPLICIT NONE 
@@ -431,7 +431,6 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
 #include "mpif.h" 
 
   TINTEGER, INTENT(IN) :: opt_main, nblock 
-!  INTEGER,                  INTENT(OUT), DIMENSION(3) :: subarray
 
 ! -----------------------------------------------------------------------
   TINTEGER                :: ndims, i
@@ -451,9 +450,9 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
      mpio_aux(1)%communicator = ims_comm_x
      
      ndims = 2 ! Subarray for the output of the Ox spectrum
-     sizes(1)   = imax_total/2;   sizes(2)   = jmax_total/nblock
-     locsize(1) = imax/2;         locsize(2) = jmax/nblock
-     offset(1)  = ims_offset_i/2; offset(2)  = ims_offset_j/nblock
+     sizes(1)   = imax *ims_npro_i/2; sizes(2)   = jmax        /nblock
+     locsize(1) = imax/2;             locsize(2) = jmax        /nblock
+     offset(1)  = ims_offset_i/2;     offset(2)  = ims_offset_j/nblock
 
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(1)%subarray, ims_err)
@@ -466,9 +465,9 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
      mpio_aux(2)%communicator = ims_comm_z
 
      ndims = 2 ! Subarray for the output of the Oz spectrum
-     sizes(1)   = kmax_total/2;   sizes(2)   = jmax_total/nblock
-     locsize(1) = kmax/2;         locsize(2) = jmax/nblock
-     offset(1)  = ims_offset_k/2; offset(2)  = ims_offset_j/nblock
+     sizes(1)   = kmax *ims_npro_k/2; sizes(2)   = jmax        /nblock
+     locsize(1) = kmax/2;             locsize(2) = jmax        /nblock
+     offset(1)  = ims_offset_k/2;     offset(2)  = ims_offset_j/nblock
 
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(2)%subarray, ims_err)
@@ -481,9 +480,9 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
      mpio_aux(3)%communicator = MPI_COMM_WORLD
      
      ndims = 3 ! Subarray for the output of the 2D data
-     sizes(1)   = imax_total/2;   sizes(2)   = jmax_total/nblock;   sizes(3)   = kmax_total 
-     locsize(1) = imax/2;         locsize(2) = jmax/nblock;         locsize(3) = kmax 
-     offset(1)  = ims_offset_i/2; offset(2)  = ims_offset_j/nblock; offset(3)  = ims_offset_k
+     sizes(1)   = imax *ims_npro_i /2; sizes(2)   = jmax        /nblock; sizes(3)   = kmax *ims_npro_k 
+     locsize(1) = imax/2;              locsize(2) = jmax        /nblock; locsize(3) = kmax 
+     offset(1)  = ims_offset_i/2;      offset(2)  = ims_offset_j/nblock; offset(3)  = ims_offset_k
      
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(3)%subarray, ims_err)
@@ -508,9 +507,9 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
         mpio_aux(1)%communicator = ims_comm_x_aux
         
         ndims = 2 ! Subarray for the output of the Ox cross-correlation
-        sizes(1)   = imax_total/2;   sizes(2)   = jmax_total/nblock
-        locsize(1) = imax;           locsize(2) = jmax/nblock
-        offset(1)  = ims_offset_i;   offset(2)  = ims_offset_j/nblock
+        sizes(1)   = imax *ims_npro_i /2; sizes(2)   = jmax        /nblock
+        locsize(1) = imax;                locsize(2) = jmax        /nblock
+        offset(1)  = ims_offset_i;        offset(2)  = ims_offset_j/nblock
         
         CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
              MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(1)%subarray, ims_err)
@@ -534,9 +533,9 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
         mpio_aux(2)%communicator = ims_comm_z_aux
 
         ndims = 2 ! Subarray for the output of the Oz cross-correlation
-        sizes(1)   = kmax_total/2;   sizes(2)   = jmax_total/nblock
-        locsize(1) = kmax;           locsize(2) = jmax/nblock
-        offset(1)  = ims_offset_k;   offset(2)  = ims_offset_j/nblock
+        sizes(1)   = kmax *ims_npro_k /2; sizes(2)   = jmax        /nblock
+        locsize(1) = kmax;                locsize(2) = jmax        /nblock
+        offset(1)  = ims_offset_k;        offset(2)  = ims_offset_j/nblock
         
         CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
              MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(2)%subarray, ims_err)
@@ -560,9 +559,9 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
         mpio_aux(3)%communicator = ims_comm_xz_aux
 
         ndims = 3 ! Subarray for the output of the 2D data     
-        sizes(1)   = imax_total/2; sizes(2)   = jmax_total/nblock;   sizes(3)   = kmax_total/2
-        locsize(1) = imax;         locsize(2) = jmax/nblock;         locsize(3) = kmax 
-        offset(1)  = ims_offset_i; offset(2)  = ims_offset_j/nblock; offset(3)  = ims_offset_k
+        sizes(1)   = imax *ims_npro_i /2; sizes(2)   = jmax        /nblock; sizes(3)   = kmax *ims_npro_k/2
+        locsize(1) = imax;                locsize(2) = jmax        /nblock; locsize(3) = kmax 
+        offset(1)  = ims_offset_i;        offset(2)  = ims_offset_j/nblock; offset(3)  = ims_offset_k
         
         CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
              MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(3)%subarray, ims_err)
@@ -580,9 +579,9 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
      mpio_aux(1)%communicator = ims_comm_x
      
      ndims = 2 ! Subarray for the output of the Ox cross-correlation
-     sizes(1)   = imax_total;     sizes(2)   = jmax_total/nblock
-     locsize(1) = imax;           locsize(2) = jmax/nblock
-     offset(1)  = ims_offset_i;   offset(2)  = ims_offset_j/nblock
+     sizes(1)   = imax *ims_npro_i; sizes(2)   = jmax        /nblock
+     locsize(1) = imax;             locsize(2) = jmax        /nblock
+     offset(1)  = ims_offset_i;     offset(2)  = ims_offset_j/nblock
 
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(1)%subarray, ims_err)
@@ -595,9 +594,9 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
      mpio_aux(2)%communicator = ims_comm_z
 
      ndims = 2 ! Subarray for the output of the Oz cross-correlation
-     sizes(1)   = kmax_total;     sizes(2)   = jmax_total/nblock
-     locsize(1) = kmax;           locsize(2) = jmax/nblock
-     offset(1)  = ims_offset_k;   offset(2)  = ims_offset_j/nblock
+     sizes(1)   = kmax *ims_npro_k; sizes(2)   = jmax        /nblock
+     locsize(1) = kmax;             locsize(2) = jmax        /nblock
+     offset(1)  = ims_offset_k;     offset(2)  = ims_offset_j/nblock
 
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(2)%subarray, ims_err)
@@ -610,9 +609,9 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
      mpio_aux(3)%communicator = MPI_COMM_WORLD
      
      ndims = 3 ! Subarray for the output of the 2D data     
-     sizes(1)   = imax_total;   sizes(2)   = jmax_total/nblock;   sizes(3)   = kmax_total 
-     locsize(1) = imax;         locsize(2) = jmax/nblock;         locsize(3) = kmax 
-     offset(1)  = ims_offset_i; offset(2)  = ims_offset_j/nblock; offset(3)  = ims_offset_k
+     sizes(1)   = imax *ims_npro_i; sizes(2)   = jmax        /nblock; sizes(3)   = kmax *ims_npro_k 
+     locsize(1) = imax;             locsize(2) = jmax        /nblock; locsize(3) = kmax 
+     offset(1)  = ims_offset_i;     offset(2)  = ims_offset_j/nblock; offset(3)  = ims_offset_k
 
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(3)%subarray, ims_err)
