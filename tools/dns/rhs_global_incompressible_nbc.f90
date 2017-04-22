@@ -24,9 +24,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   USE DNS_CONSTANTS, ONLY : lfile,wfile,efile
   !
   USE DNS_GLOBAL, ONLY : g, i1bc,j1bc,iunify,k1bc
-  USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total,imode_fdm
+  USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total,imode_fdm,imode_eqns
   USE DNS_GLOBAL, ONLY : inb_flow,inb_vars,inb_scal,inb_scal_array,visc,schmidt,prandtl 
   USE DNS_GLOBAL, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
+  USE DNS_GLOBAL, ONLY : rbackground
   ! 
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : bcs_scal_jmin, bcs_scal_jmax
@@ -60,15 +61,15 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   ! 
   TINTEGER, PARAMETER :: nmeasure=3
   
-  TREAL,                                 INTENT(IN) :: dte
+  TREAL,                                        INTENT(IN)   :: dte
   
-  TREAL, DIMENSION(isize_field),         INTENT(IN) :: u,v,w
-  TREAL, DIMENSION(isize_field,inb_scal_array),INTENT(IN) :: s
+  TREAL, DIMENSION(isize_field),                INTENT(IN)   :: u,v,w
+  TREAL, DIMENSION(isize_field,inb_scal_array), INTENT(IN)   :: s
 
-  TREAL, DIMENSION(isize_field),         INTENT(INOUT):: h1,h2,h3 
-  TREAL, DIMENSION(isize_field,inb_scal),INTENT(OUT):: hs 
-  TREAL, DIMENSION(imax,kmax,inb_vars)              :: bcs_hb, bcs_ht 
-  TREAL, DIMENSION(isize_field),         INTENT(INOUT):: tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42
+  TREAL, DIMENSION(isize_field),                INTENT(INOUT):: h1,h2,h3 
+  TREAL, DIMENSION(isize_field,inb_scal),       INTENT(OUT)  :: hs 
+  TREAL, DIMENSION(imax,kmax,inb_vars)                       :: bcs_hb, bcs_ht 
+  TREAL, DIMENSION(isize_field),                INTENT(INOUT):: tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42
   TREAL, DIMENSION(isize_field)  :: bt1,bt2,bt3,bt4
   TREAL, DIMENSION(isize_wrk1d,*):: wrk1d
   TREAL, DIMENSION(*)            :: wrk2d,wrk3d,vaux
@@ -479,6 +480,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      tmp42 = h3 + w*tdummy 
      t_ser = t_ser + (t_tmp+MPI_WTime())
 
+     IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp32)
+        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp42)
+     ENDIF
+     
      CALL NB3DFFT_R2R_YXCOMM(tmp32,bt3,  bt3,  tmp31,info(FPYX),t_tmp);t_comp=t_comp+t_tmp   
      CALL NB3DFFT_R2R_YZCOMM(tmp42,tmp41,tmp41,bt4,  info(FPYZ),t_tmp);t_comp=t_comp+t_tmp   
 
@@ -566,6 +572,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      t_tmp = -MPI_WTime()
      tdummy=C_1_R/dte
      tmp11=h2+v*tdummy
+     IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp11)
+     ENDIF
      CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, &
           tmp11, tmp12, i0,i0, wrk1d,wrk2d,wrk3d) 
      t_ser = t_ser + (t_tmp+MPI_WTime())
@@ -632,6 +641,12 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      p_bcs => h2(ip_t:); bcs_ht(1:imax,k,3) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
   ENDDO
 
+! Adding density in BCs  
+  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     bcs_hb = bcs_hb *rbackground(1)
+     bcs_ht = bcs_ht *rbackground(g(2)%size)
+  ENDIF
+  
 ! pressure in tmp12, Oy derivative in tmp11
   CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
        tmp12,tmp11, tmp41,tmp42, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
@@ -643,10 +658,18 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i0,dx,tmp12,tmp41,i0,i0,wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, i0,dz,tmp12,tmp42,i0,i0,wrk1d,wrk2d,wrk3d) 
   
-  h1 = h1 - tmp41 
-  h2 = h2 - tmp11
-  h3 = h3 - tmp42 
+  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     CALL THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax,jmax,kmax, ribackground, tmp41, h1)
+     CALL THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax,jmax,kmax, ribackground, tmp11, h2)
+     CALL THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax,jmax,kmax, ribackground, tmp42, h3)
 
+  ELSE
+     h1 = h1 - tmp41 
+     h2 = h2 - tmp11
+     h3 = h3 - tmp42
+     
+  ENDIF
+  
   bcs_hb(:,:,1:inb_vars) = C_0_R  ! default is no-slip 
   bcs_ht(:,:,1:inb_vars) = C_0_R
   

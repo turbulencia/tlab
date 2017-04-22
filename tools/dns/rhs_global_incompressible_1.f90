@@ -208,11 +208,21 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 #endif
 !$omp end parallel
 
+     IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp2)
+        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
+        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
+     ENDIF
      CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, tmp2, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
      CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, tmp3, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
      CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, tmp4, tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
 
   ELSE
+     IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, h2)
+        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, h1)
+        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, h3)
+     ENDIF
      CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, h2, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
      CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, h1, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
      CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, h3, tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
@@ -236,6 +246,12 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
      p_bcs => h2(ip_t:); bcs_ht(1:imax,k,3) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
   ENDDO
 
+! Adding density in BCs  
+  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     bcs_hb = bcs_hb *rbackground(1)
+     bcs_ht = bcs_ht *rbackground(g(2)%size)
+  ENDIF
+  
 ! pressure in tmp1, Oy derivative in tmp3
   CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
        tmp1,tmp3, tmp2,tmp4, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
@@ -252,29 +268,35 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! -----------------------------------------------------------------------
 ! Add pressure gradient 
 ! -----------------------------------------------------------------------
+  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     CALL THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax,jmax,kmax, ribackground, tmp2, h1)
+     CALL THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax,jmax,kmax, ribackground, tmp3, h2)
+     CALL THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax,jmax,kmax, ribackground, tmp4, h3)
+
+  ELSE
 !$omp parallel default( shared ) &
 #ifdef USE_BLAS
 !$omp private( ilen, srt,end,siz,dummy )
 #else
 !$omp private( ij,   srt,end,siz,dummy )
 #endif
-  CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
-
+     CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
+     
 #ifdef USE_BLAS
-  ilen = siz 
-  dummy=-C_1_R
-  CALL DAXPY(ilen, dummy, tmp2(srt), 1, h1(srt),1)
-  CALL DAXPY(ilen, dummy, tmp3(srt), 1, h2(srt),1)
-  CALL DAXPY(ilen, dummy, tmp4(srt), 1, h3(srt),1)
+     ilen = siz 
+     dummy=-C_1_R
+     CALL DAXPY(ilen, dummy, tmp2(srt), 1, h1(srt),1)
+     CALL DAXPY(ilen, dummy, tmp3(srt), 1, h2(srt),1)
+     CALL DAXPY(ilen, dummy, tmp4(srt), 1, h3(srt),1)
 #else
-  DO ij = srt,end
-     h1(ij) = h1(ij) - tmp2(ij)
-     h2(ij) = h2(ij) - tmp3(ij)
-     h3(ij) = h3(ij) - tmp4(ij)
-  ENDDO
+     DO ij = srt,end
+        h1(ij) = h1(ij) - tmp2(ij)
+        h2(ij) = h2(ij) - tmp3(ij)
+        h3(ij) = h3(ij) - tmp4(ij)
+     ENDDO
 #endif
-
 !$omp end parallel
+  ENDIF  
 
 ! #######################################################################
 ! Diffusion and convection terms in scalar eqn
