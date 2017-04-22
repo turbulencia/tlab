@@ -208,30 +208,34 @@ END SUBROUTINE REDUCE_BLOCK
 
 ! #######################################################################
 ! #######################################################################
-SUBROUTINE REDUCE_Y_ALL(nx,ny,nz, nvar1,a1, nvar2,a2, np,p, b)
+SUBROUTINE REDUCE_Y_ALL(nx,ny,nz, nvar1,a1, nvar2,a2, aux, np,np_aux,p, b)
 
   IMPLICIT NONE
 
-  TINTEGER nx,ny,nz, np, nvar1,nvar2                                  ! np is the number of sampled planes
+  TINTEGER nx,ny,nz, np,np_aux, nvar1,nvar2                           ! np is the number of sampled planes
+                                                                      ! np_aux is one or zero, additional data
   TINTEGER, DIMENSION(np),                      INTENT(IN)  :: p      ! array with the j location of the planes
   TREAL,    DIMENSION(nx,ny,nz,            * ), INTENT(IN)  :: a1, a2 ! input array (big)
+  TREAL,    DIMENSION(nx,   nz,nvar1+nvar2   ), INTENT(IN)  :: aux    ! additional data with different structure
   TREAL,    DIMENSION(nx,np   ,nvar1+nvar2,nz), INTENT(OUT) :: b      ! output array (small)
 
   TINTEGER j, j_loc, ivar, k
   
   DO k = 1,nz
      DO ivar = 1,nvar1
-        DO j = 1,np
+        DO j = 1,np-np_aux
            j_loc = p(j)
            b(1:nx,j,ivar,k) = a1(1:nx,j_loc,k,ivar)
         ENDDO
+        IF ( np_aux .GT. 0 ) b(1:nx,j,ivar,k) = aux(1:nx,k,ivar            ) ! Additional data, if needed
      ENDDO
      
      DO ivar = 1,nvar2 ! if nvar is 0, then array a2 is not used
-        DO j = 1,np
+        DO j = 1,np-np_aux
            j_loc = p(j)
            b(1:nx,j,ivar+nvar1,k) = a2(1:nx,j_loc,k,ivar)
         ENDDO
+        IF ( np_aux .GT. 0 ) b(1:nx,j,ivar+nvar1,k) = aux(1:nx,k,ivar+nvar1) ! Additional data, if needed
      ENDDO
      
   ENDDO

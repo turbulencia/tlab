@@ -28,6 +28,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal_array, inb_flow_array, isize_particle, inb_particle
   USE DNS_GLOBAL, ONLY : imode_flow, imode_sim, imode_eqns
   USE DNS_GLOBAL, ONLY : icalc_flow, icalc_scal, icalc_particle
+  USE DNS_GLOBAL, ONLY : rbackground, g
   USE DNS_GLOBAL, ONLY : itransport, visc
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : nspa_rest, nspa_step, iupdate_stat
@@ -61,7 +62,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
 
 ! -------------------------------------------------------------------
   TINTEGER it_loc_data
-  TINTEGER icount_stat, is
+  TINTEGER icount_stat, is, iq, ip
   TINTEGER idummy, splanes_i(5), splanes_j(5), splanes_k(5)
   CHARACTER*32 fname, varname(1)
   CHARACTER*250 line1
@@ -273,7 +274,22 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
         ENDIF
 
         IF ( nplanes_j .GT. 0 ) THEN
-           CALL REDUCE_Y_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, nplanes_j,planes_j, txc)
+           IF ( nplanes_j_aux .GT. 0 ) THEN ! Calculate integrals
+              IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+                 ip = 1
+                 DO iq = 1,inb_flow_array
+                    CALL THERMO_ANELASTIC_LWP(imax,jmax,kmax, g(2), rbackground, q(1,iq), wrk3d(ip), wrk1d,hq(1,1)) !hq is aux variable
+                    ip = ip + imax*kmax
+                 ENDDO
+                 DO is = 1,inb_scal_array
+                    CALL THERMO_ANELASTIC_LWP(imax,jmax,kmax, g(2), rbackground, s(1,is), wrk3d(ip), wrk1d,hq(1,1))
+                    ip = ip + imax*kmax
+                 ENDDO
+              ELSE
+                 wrk3d(1:(inb_flow_array+inb_scal_array)*imax*kmax) = C_0_R
+              ENDIF
+           ENDIF
+           CALL REDUCE_Y_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, wrk3d, nplanes_j,nplanes_j_aux,planes_j, txc)
            WRITE(fname,*) itime; fname = 'planesJ.'//TRIM(ADJUSTL(fname))
            CALL IO_WRITE_SUBARRAY4(i3, fname, varname, txc, splanes_j, hq)
         ENDIF

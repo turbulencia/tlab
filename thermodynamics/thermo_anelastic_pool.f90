@@ -547,7 +547,7 @@ END SUBROUTINE THERMO_ANELASTIC_WEIGHT_ADD
 
 !########################################################################
 !########################################################################
-SUBROUTINE THERMO_ANELASTIC_LWP(nx,ny,nz, g, r, ql, lwp, wrk2d,wrk3d)
+SUBROUTINE THERMO_ANELASTIC_LWP(nx,ny,nz, g, r, ql, lwp, wrk1d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
 
@@ -557,37 +557,25 @@ SUBROUTINE THERMO_ANELASTIC_LWP(nx,ny,nz, g, r, ql, lwp, wrk2d,wrk3d)
   TYPE(grid_dt),              INTENT(IN)    :: g
   TREAL, DIMENSION(*),        INTENT(IN)    :: r
   TREAL, DIMENSION(nx*nz,ny), INTENT(IN)    :: ql
-  TREAL, DIMENSION(nx*nz),    INTENT(OUT)   :: lwp
-  TREAL, DIMENSION(nx*nz*5),  INTENT(INOUT) :: wrk2d
-  TREAL, DIMENSION(nx*nz,ny), INTENT(INOUT) :: wrk3d
+  TREAL, DIMENSION(nx,nz),    INTENT(OUT)   :: lwp
+  TREAL, DIMENSION(ny),       INTENT(INOUT) :: wrk1d
+  TREAL, DIMENSION(nx,ny,nz), INTENT(INOUT) :: wrk3d
 
-  TARGET ql, wrk3d
-  
 ! -------------------------------------------------------------------
-  TINTEGER nxy, nxz, j
-  TREAL, DIMENSION(:,:), POINTER :: p_org
+  TINTEGER i,j,k
+  TREAL SIMPSON_NU
 
 ! ###################################################################
-  nxz = nx*nz
-  nxy = nx*ny ! For transposition to make y direction the last one
+  CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx,ny,nz, r, ql, wrk3d)
 
-  IF ( nz .EQ. 1 ) THEN
-     p_org => ql
-  ELSE 
-     p_org => wrk3d
-     
-#ifdef USE_ESSL
-     CALL DGETMO(ql, nxy, nxy, nz, p_org, nz)
-#else
-     CALL DNS_TRANSPOSE(ql, nxy, nz, nxy, p_org, nz)
-#endif
-  ENDIF
-
-  DO j = 1,ny
-     wrk3d(1:nxz,j) = p_org(1:nxz,j) *r(j)
+  DO k = 1,nz
+     DO i = 1,nx
+        DO j = 1,ny
+           wrk1d(j) = wrk3d(i,j,k)
+        ENDDO
+        lwp(i,k) = SIMPSON_NU(ny, wrk1d, g%nodes)
+     ENDDO
   ENDDO
      
-  CALL SIMPSON_NU_V(ny,nxz, wrk3d, g%nodes, lwp, wrk2d)
-  
   RETURN
 END SUBROUTINE THERMO_ANELASTIC_LWP

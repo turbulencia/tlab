@@ -667,6 +667,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#PlanesI=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#PlanesJ=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#PlanesK=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#IntegralsJ=<yes/no>')
 
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesI', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
@@ -682,6 +683,11 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      nplanes_j = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_j, planes_j)
   ENDIF
   
+  CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'IntegralsJ', 'no', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; nplanes_j_aux = 1
+  ELSE;                                       nplanes_j_aux = 0; ENDIF
+  nplanes_j = nplanes_j +nplanes_j_aux
+     
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesK', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
      nplanes_k = 0; planes_k = 0

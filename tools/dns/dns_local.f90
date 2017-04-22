@@ -110,7 +110,7 @@ MODULE DNS_LOCAL
 ! ###################################################################
 ! Output data
 ! ###################################################################
-  TINTEGER                            :: nplanes_i, nplanes_j, nplanes_k ! Planes
+  TINTEGER                            :: nplanes_i, nplanes_j, nplanes_k, nplanes_j_aux ! Planes
   TINTEGER, DIMENSION(MAX_SAVEPLANES) :: planes_i,  planes_j,  planes_k
   
   TINTEGER, DIMENSION(3)              :: tower_stride           ! Towers
