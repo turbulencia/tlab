@@ -27,7 +27,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total,imode_fdm,imode_eqns
   USE DNS_GLOBAL, ONLY : inb_flow,inb_vars,inb_scal,inb_scal_array,visc,schmidt,prandtl 
   USE DNS_GLOBAL, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : rbackground
+  USE DNS_GLOBAL, ONLY : rbackground, ribackground
   ! 
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : bcs_scal_jmin, bcs_scal_jmax
