@@ -10,7 +10,7 @@ PROGRAM STATE
 
 #include "integers.h"
 
-  TREAL p, ps, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep, theta
+  TREAL p, ps, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep, theta, theta_e
   TREAL heat1, heat2, cp1, cp2, alpha, as, bs, t_eq, l, cp_ref
   TREAL r1, h1, s(3)
   TINTEGER iopt
@@ -73,6 +73,7 @@ PROGRAM STATE
 
      s(1) = h; s(2:3) = z1(1:2)
      CALL THERMO_ANELASTIC_THETA(i1,i1,i1, s, ep,p, theta)
+     CALL THERMO_ANELASTIC_THETA_E(i1,i1,i1, s, ep,p, theta_e)
 
   ELSE IF ( iopt .EQ. 2 ) THEN
      z1(1) = qt
@@ -89,6 +90,7 @@ PROGRAM STATE
 
      s(1) = h; s(2:3) = z1(1:2)
      CALL THERMO_ANELASTIC_THETA(i1,i1,i1, s, ep,p, theta)
+     CALL THERMO_ANELASTIC_THETA_E(i1,i1,i1, s, ep,p, theta_e)
 
   ELSE IF ( iopt .EQ. 3 ) THEN
      h = h/TREF/1.007
@@ -106,6 +108,7 @@ PROGRAM STATE
      CALL THERMO_THERMAL_DENSITY(i1,i1,i1, z1,p,T, r)
      CALL THERMO_CALORIC_ENERGY(i1,i1,i1, z1, T, e)
      CALL THERMO_ANELASTIC_THETA(i1,i1,i1, s, ep,p, theta)
+     CALL THERMO_ANELASTIC_THETA_E(i1,i1,i1, s, ep,p, theta_e)
 
 ! check
      CALL THERMO_ANELASTIC_DENSITY(i1,i1,i1, s, ep,p, r1)
@@ -118,24 +121,20 @@ PROGRAM STATE
   WRITE(*,1000) 'Vapor specific humidity ...........:', qv
   WRITE(*,1000) 'Liquid specific humidity ..........:', ql
   WRITE(*,1000) 'Density ...........................:', r
-  WRITE(*,1000) 'Pressure ..........................:', p
-  WRITE(*,1000) 'Saturation pressure ...............:', ps
+  WRITE(*,1000) 'Pressure (bar) ....................:', p
+  WRITE(*,1000) 'Saturation pressure (bar) .........:', ps
   WRITE(*,1000) 'Temperature (K) ...................:', t*TREF !- 273.15
   WRITE(*,1000) 'Specific energy ...................:', e
   WRITE(*,1000) 'Specific enthalpy .................:', h
-  WRITE(*,1000) 'Reference latent heat .............:', THERMO_AI(6,1,3) *1.007 *TREF 
+  WRITE(*,1000) 'Reference latent heat (kJ/kg) .....:', -THERMO_AI(6,1,3) *1.007 *TREF 
+  WRITE(*,1000) 'Latent heat (kJ/kg) ...............:', (-THERMO_AI(6,1,3)-t*(THERMO_AI(1,1,3)-THERMO_AI(1,1,1)) ) *1.007 *TREF 
   WRITE(*,1000) 'Liquid-water potential T (K) ......:', theta*TREF
+  WRITE(*,1000) 'Equivalent potential T (K) ........:', theta_e*TREF
   IF ( iopt .EQ. 3 ) THEN
      WRITE(*,1000) 'Density ...........................:', r1
      WRITE(*,1000) 'Specific enthalpy .................:', h1
   ENDIF
-  
-  cp_ref = (C_1_R-qt)*THERMO_AI(1,1,2) + qt*THERMO_AI(1,1,3)
-  l      = THERMO_AI(6,1,1)-THERMO_AI(6,1,3)
-  t_eq   = t*(C_1_R/p)**((C_1_R-qt)*GRATIO*WGHT_INV(2)/cp_ref)
-  t_eq   = t_eq * EXP(qv*l/cp_ref/t) 
-  WRITE(*,1000) 'Equivalent potential T (K) ........:', t_eq*TREF
-  
+    
 ! ###################################################################
   WRITE(*,*) ' '
   WRITE(*,*) 'Calculate reversal linear coefficients (1-yes/0-no) ?'

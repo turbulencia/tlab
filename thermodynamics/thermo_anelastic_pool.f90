@@ -382,6 +382,7 @@ SUBROUTINE THERMO_ANELASTIC_RELATIVEHUMIDITY(nx,ny,nz, s, e,p, T,rh)
 END SUBROUTINE THERMO_ANELASTIC_RELATIVEHUMIDITY
 
 !########################################################################
+! Liquid water potential temperature
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_THETA(nx,ny,nz, s, e,p, theta)
 
@@ -470,6 +471,101 @@ SUBROUTINE THERMO_ANELASTIC_THETA(nx,ny,nz, s, e,p, theta)
   
   RETURN
 END SUBROUTINE THERMO_ANELASTIC_THETA
+
+!########################################################################
+! Equivalent potential temperature
+!########################################################################
+SUBROUTINE THERMO_ANELASTIC_THETA_E(nx,ny,nz, s, e,p, theta)
+
+  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
+
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
+  TREAL, DIMENSION(*),          INTENT(IN)  :: e,p
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: theta
+
+! -------------------------------------------------------------------
+  TINTEGER ij, i, jk, is
+  TREAL P_LOC, E_LOC, T_LOC
+
+  TREAL Rd, Rdv, Cd, Cdv, Cdl, Lv0, Cvl, Lv
+  TREAL Re, Ce
+  
+! ###################################################################
+  Rd = WGHT_INV(2)               *GRATIO
+  Rdv=(WGHT_INV(1) - WGHT_INV(2))*GRATIO
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Cdl= THERMO_AI(1,1,3) - THERMO_AI(1,1,2)
+  Lv0=-THERMO_AI(6,1,3)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+
+  IF      ( imixture .EQ. 0 ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = s(ij,1) - E_LOC
+           
+           Re = Rd /Cd
+          
+           theta(ij) = T_LOC / P_LOC**Re
+
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+       
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC + s(ij,3)*Lv0 ) / ( Cd + s(ij,2) *Cdv )
+           Ce = C_1_R/( Cd  + s(ij,2) *Cdl )
+           Re = Rd  *( C_1_R -s(ij,2) )*Ce
+           Lv = Lv0 - T_LOC *Cvl
+           theta(ij) = T_LOC / P_LOC**Re *EXP( Lv *s(ij,2) *Ce /T_LOC )
+
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+       
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC + s(ij,3)*Lv0 ) / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
+           Ce = C_1_R/( Cd  + s(ij,2) *Cdl )
+           Re = Rd  *( C_1_R -s(ij,2) )*Ce
+           Lv = Lv0 - T_LOC *Cvl
+!           Lv = Lv0
+           theta(ij) = T_LOC / P_LOC**Re *EXP( Lv *(s(ij,2)-s(ij,3)) *Ce /T_LOC )
+
+        ENDDO
+     
+     ENDDO
+  ENDIF
+  
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_THETA_E
 
 !########################################################################
 !########################################################################
