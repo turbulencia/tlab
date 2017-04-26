@@ -50,7 +50,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! -----------------------------------------------------------------------
   TINTEGER is, ij, k, nxy, ip_b, ip_t
-  TINTEGER ibc
+  TINTEGER ibc, bcs(2,2)
   TREAL dummy, diff
 
   TINTEGER siz, srt, end    !  Variables for OpenMP Partitioning 
@@ -61,11 +61,14 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   INTEGER ilen
 #endif
 
-  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
-
+  TREAL dummy2(1) ! To use old wrappers to calculate derivatives
+  TINTEGER idummy2
+  
 ! #######################################################################
-  nxy   = imax*jmax
+  nxy = imax*jmax
 
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+  
 #ifdef USE_BLAS
   ilen = isize_field
 #endif
@@ -74,8 +77,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Ox diffusion and convection terms in Ox momentum eqn
 ! Initializing tmp5 for the rest of terms
 ! #######################################################################
-  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, &
-       g(1), u,u,u, tmp1, i0,i0, i0,i0, tmp5, wrk2d,wrk3d) ! tmp5 contains u transposed
+  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u, tmp1, tmp5, wrk2d,wrk3d) ! tmp5 contains u transposed
   
   h1 = h1 + tmp1
 
@@ -84,12 +86,10 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
   IF ( kmax_total .GT. 1 ) THEN
 
-  CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax,&
-       g(3), w,w,w,    tmp1, i0,i0, i0,i0, tmp6, wrk2d,wrk3d) ! tmp6 contains w transposed
-  CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, &
-       g(1), w,u,tmp5, tmp4, i0,i0, i0,i0, tmp2, wrk2d,wrk3d) ! tmp5 contains u transposed
-  CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, w, tmp3, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)  ! tmp2 is used below in BCs
+  CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, g(3), w,w,w,    tmp1, tmp6, wrk2d,wrk3d) ! tmp6 contains w transposed
+  CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, bcs, g(1), w,u,tmp5, tmp4, tmp2, wrk2d,wrk3d) ! tmp5 contains u transposed
+  CALL PARTIAL_YY(i1, idummy2, idummy2, imax,jmax,kmax, idummy2,&
+       dummy2, w, tmp3, i0,i0, i0,i0, tmp2, dummy2,wrk2d,wrk3d)  ! tmp2 is used below in BCs
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -120,12 +120,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
 ! Diffusion and convection terms in Oy momentum eqn
 ! #######################################################################
-  CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax,&
-       g(2), v,v,v,    tmp1, i0,i0, i0,i0, tmp2, wrk2d,wrk3d)
-  CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax,&
-       g(3), v,w,tmp6, tmp4, i0,i0, i0,i0, tmp2, wrk2d,wrk3d) ! tmp6 contains w transposed
-  CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax,&
-       g(1), v,u,tmp5, tmp3, i0,i0, i0,i0, tmp2, wrk2d,wrk3d) ! tmp5 contains u transposed
+  CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, g(2), v,v,v,    tmp1, tmp2, wrk2d,wrk3d)
+  CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), v,w,tmp6, tmp4, tmp2, wrk2d,wrk3d) ! tmp6 contains w transposed
+  CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, bcs, g(1), v,u,tmp5, tmp3, tmp2, wrk2d,wrk3d) ! tmp5 contains u transposed
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -139,10 +136,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Diffusion and convection terms in Ox momentum eqn
 ! The term \nu u'' - u u' has been already added in the beginning
 ! #######################################################################
-  CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax,&
-       g(3), u,w,tmp6, tmp4, i0,i0, i0,i0, tmp2, wrk2d,wrk3d) ! tmp6 contains w transposed
-  CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
-       dy, u, tmp3, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)  ! tmp2 is used below in BCs
+  CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), u,w,tmp6, tmp4, tmp2, wrk2d,wrk3d) ! tmp6 contains w transposed
+  CALL PARTIAL_YY(i1, idummy2, idummy2, imax,jmax,kmax, idummy2, & 
+       dummy2, u, tmp3, i0,i0, i0,i0, tmp2, dummy2,wrk2d,wrk3d)  ! tmp2 is used below in BCs
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -213,9 +209,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
      ENDIF
-     CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, tmp2, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, tmp3, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, tmp4, tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
+     CALL PARTIAL_Y(idummy2, imax,jmax,kmax, idummy2, dummy2, tmp2, tmp1, i0,i0, dummy2,wrk2d,wrk3d)
+     CALL PARTIAL_X(idummy2, imax,jmax,kmax, idummy2, dummy2, tmp3, tmp2, i0,i0, dummy2,wrk2d,wrk3d)
+     CALL PARTIAL_Z(idummy2, imax,jmax,kmax, idummy2, dummy2, tmp4, tmp3, i0,i0, dummy2,wrk2d,wrk3d)
 
   ELSE
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
@@ -223,9 +219,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, h1)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, h3)
      ENDIF
-     CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, h2, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, h1, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, h3, tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
+     CALL PARTIAL_Y(idummy2, imax,jmax,kmax, idummy2, dummy2, h2, tmp1, i0,i0, dummy2,wrk2d,wrk3d)
+     CALL PARTIAL_X(idummy2, imax,jmax,kmax, idummy2, dummy2, h1, tmp2, i0,i0, dummy2,wrk2d,wrk3d)
+     CALL PARTIAL_Z(idummy2, imax,jmax,kmax, idummy2, dummy2, h3, tmp3, i0,i0, dummy2,wrk2d,wrk3d)
 
   ENDIF
 
@@ -262,8 +258,8 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   ENDIF
 
 ! horizontal derivatives
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i0, dx, tmp1, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, i0, dz, tmp1, tmp4, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL PARTIAL_X(idummy2, imax,jmax,kmax, i0, dummy2, tmp1, tmp2, i0,i0, dummy2,wrk2d,wrk3d)
+  CALL PARTIAL_Z(idummy2, imax,jmax,kmax, i0, dummy2, tmp1, tmp4, i0,i0, dummy2,wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient 
@@ -306,12 +302,10 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
      IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R
      ELSE;                                  diff = visc/schmidt(is); ENDIF
         
-     CALL OPR_BURGERS_Z(i1,is, imax,jmax,kmax,&
-          g(3), s(1,is),w,tmp6, tmp1, i0,i0, i0,i0, tmp2, wrk2d,wrk3d) ! tmp6 contains w transposed
-     CALL OPR_BURGERS_X(i1,is, imax,jmax,kmax,&
-          g(1), s(1,is),u,tmp5, tmp2, i0,i0, i0,i0, tmp3, wrk2d,wrk3d) ! tmp5 contains u transposed
-     CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-          dy, s(1,is), tmp3, i0,i0, i0,i0, tmp4, wrk1d,wrk2d,wrk3d)
+     CALL OPR_BURGERS_Z(i1,is, imax,jmax,kmax, bcs, g(3), s(1,is),w,tmp6, tmp1, tmp2, wrk2d,wrk3d) ! tmp6 contains w transposed
+     CALL OPR_BURGERS_X(i1,is, imax,jmax,kmax, bcs, g(1), s(1,is),u,tmp5, tmp2, tmp3, wrk2d,wrk3d) ! tmp5 contains u transposed
+     CALL PARTIAL_YY(i1, idummy2, idummy2, imax,jmax,kmax, idummy2,&
+          dummy2, s(1,is), tmp3, i0,i0, i0,i0, tmp4, dummy2,wrk2d,wrk3d)
      
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )

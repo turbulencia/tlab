@@ -37,19 +37,21 @@ SUBROUTINE PARTIAL_YY(ifirst,iunif,imode_fdm, nx,ny,nz, j1bc, dy, u, up2, &
 
   IMPLICIT NONE
 
-  TINTEGER ifirst,iunif
-  TINTEGER imode_fdm, nx,ny,nz, j1bc, bcs1_jmin,bcs1_jmax, bcs2_jmin,bcs2_jmax
+  TINTEGER ifirst
+  TINTEGER nx,ny,nz, bcs1_jmin,bcs1_jmax, bcs2_jmin,bcs2_jmax
   TREAL, DIMENSION(nx*ny*nz),    TARGET :: u, up1, up2, wrk3d
-  TREAL, DIMENSION(*)                   :: dy, wrk1d ! not used, to be removed
   TREAL, DIMENSION(nx*nz)               :: wrk2d
 
+  TREAL, DIMENSION(*)                   :: dy, wrk1d ! not used, to be removed
+  TINTEGER iunif, imode_fdm, j1bc
+
 ! -------------------------------------------------------------------
-  TINTEGER nxy, nxz, bcs_min(2), bcs_max(2)!, ifirst_loc
+  TINTEGER nxy, nxz, bcs(2,2)
   TREAL, DIMENSION(:), POINTER :: p_org, p_dst1, p_dst2
 
 ! ###################################################################
-  bcs_min(1) = bcs1_jmin; bcs_max(1) = bcs1_jmax
-  bcs_min(2) = bcs2_jmin; bcs_max(2) = bcs2_jmax
+  bcs(1,1) = bcs1_jmin; bcs(2,1) = bcs1_jmax ! 1. order derivative
+  bcs(1,2) = bcs2_jmin; bcs(2,2) = bcs2_jmax ! 2. order derivative
 
   IF ( g(2)%size .EQ. 1 ) THEN ! Set to zero in 2D case
      up2 = C_0_R
@@ -79,12 +81,12 @@ SUBROUTINE PARTIAL_YY(ifirst,iunif,imode_fdm, nx,ny,nz, j1bc, dy, u, up2, &
   ENDIF
 
 ! ###################################################################
-  CALL OPR_PARTIAL2(nxz, g(2), p_org,p_dst2, bcs_min,bcs_max, wrk2d,p_dst1)
+  CALL OPR_PARTIAL2(nxz, bcs, g(2), p_org,p_dst2, wrk2d,p_dst1)
   
 ! Check whether we need to calculate the 1. order derivative
   IF ( ifirst .EQ. 1 ) THEN
-     IF ( g(2)%uniform .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
-        CALL OPR_PARTIAL1(nxz, g(2), p_org,p_dst1, bcs_min(1),bcs_max(1), wrk2d)
+     IF ( g(2)%uniform .OR. g(2)%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+        CALL OPR_PARTIAL1(nxz, bcs, g(2), p_org,p_dst1, wrk2d)
      ENDIF
   ENDIF
   

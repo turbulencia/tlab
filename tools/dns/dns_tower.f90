@@ -62,10 +62,11 @@ CONTAINS
   SUBROUTINE DNS_TOWER_INITIALIZE(stride)
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    USE DNS_GLOBAL,ONLY : imax,jmax,kmax,imax_total,jmax_total,kmax_total 
+    USE DNS_GLOBAL,ONLY : imax,jmax,kmax
     USE DNS_LOCAL, ONLY : nitera_save
 
 #ifdef USE_MPI 
+    USE DNS_GLOBAL,ONLY : imax_total,jmax_total,kmax_total 
     USE DNS_MPI, ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro
 #endif 
          

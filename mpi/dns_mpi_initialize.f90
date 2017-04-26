@@ -5,7 +5,7 @@
 
 SUBROUTINE DNS_MPI_INITIALIZE
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, imax_total,jmax_total,kmax_total
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : isize_txc_dimz, isize_txc_dimx
   USE DNS_GLOBAL, ONLY : imode_sim, ifourier
   USE DNS_CONSTANTS, ONLY : lfile

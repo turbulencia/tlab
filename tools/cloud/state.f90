@@ -11,7 +11,7 @@ PROGRAM STATE
 #include "integers.h"
 
   TREAL p, ps, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep, theta, theta_e
-  TREAL heat1, heat2, cp1, cp2, alpha, as, bs, t_eq, l, cp_ref
+  TREAL heat1, heat2, cp1, cp2, alpha, as, bs
   TREAL r1, h1, s(3)
   TINTEGER iopt
 

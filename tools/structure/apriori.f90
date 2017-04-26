@@ -198,9 +198,9 @@ PROGRAM APRIORI
   CALL LIST_INTEGER(sRes, idummy, subdomain)
   
   IF ( idummy .LT. 6 ) THEN ! default
-     subdomain(1) = 1; subdomain(2) = imax_total
-     subdomain(3) = 1; subdomain(4) = jmax_total
-     subdomain(5) = 1; subdomain(6) = kmax_total
+     subdomain(1) = 1; subdomain(2) = g(1)%size
+     subdomain(3) = 1; subdomain(4) = g(2)%size
+     subdomain(5) = 1; subdomain(6) = g(3)%size
   ENDIF
   
  MaskSize    = 6

@@ -5,17 +5,6 @@
 #endif
 
 !########################################################################
-!# Tool/Library PADE
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2003/01/01 - J.P. Mellado
-!#              Modified
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !########################################################################
@@ -46,7 +35,7 @@ SUBROUTINE PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, u,up, bcs_kmin,bcs_kmax, wrk
   TREAL, DIMENSION(*) :: dz, wrk1d            ! not used, to be removed
 
 ! -------------------------------------------------------------------
-  TINTEGER nxy
+  TINTEGER nxy, bcs(2)
 
   TREAL, DIMENSION(:), POINTER :: p_a, p_b
 
@@ -55,6 +44,8 @@ SUBROUTINE PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, u,up, bcs_kmin,bcs_kmax, wrk
 #endif
 
 ! ###################################################################
+  bcs(1) = bcs_kmin; bcs(2) = bcs_kmax
+
   IF ( g(3)%size .EQ. 1 ) THEN ! Set to zero in 2D case
      up = C_0_R
      
@@ -79,7 +70,7 @@ SUBROUTINE PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, u,up, bcs_kmin,bcs_kmax, wrk
 #endif
 
 ! ###################################################################
-  CALL OPR_PARTIAL1(nxy, g(3), p_a,p_b, bcs_kmin,bcs_kmax, wrk2d)
+  CALL OPR_PARTIAL1(nxy, bcs, g(3), p_a,p_b, wrk2d)
   
 ! ###################################################################
 ! Put arrays back in the order in which they came in

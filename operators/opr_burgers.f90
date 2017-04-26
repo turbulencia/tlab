@@ -6,50 +6,42 @@
 #endif
 
 !########################################################################
-!# HISTORY
-!#
-!# 2011/11/01 - J.P. Mellado
-!#              Created
-!# 2013/01/20 - J.P. Mellado
-!#              Introducing direct formulation of non-uniform grid
-!#
-!########################################################################
 !# DESCRIPTION
 !#
-!# Apply the non-linear operator N(u) = visc* d^2/dx^2 s - u d/dx s
-!# along generic direction x to nyz lines of data
+!# Apply the non-linear operator N(u)(s) = visc* d^2/dx^2 s - u d/dx s
+!# along generic direction x to nlines lines of data
 !#
 !# Second derivative uses LE decomposition including diffusivity coefficient
 !#
 !########################################################################
-SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
+SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 
   USE DNS_TYPES,     ONLY : grid_dt
   USE DNS_CONSTANTS, ONLY : efile
-!  USE DNS_GLOBAL, ONLY    : reynolds
   IMPLICIT NONE
 
-  TINTEGER,                        INTENT(IN)    :: is
-  TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
-  TYPE(grid_dt),            INTENT(IN)    :: g
-  TREAL, DIMENSION(nlines,g%size), INTENT(IN)    :: s,u        ! argument field and velocity field
-  TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result     ! N(u) applied to s
-  TINTEGER,                        INTENT(IN)    :: bcs_min(2) ! BC derivative: 0 biased, non-zero
-  TINTEGER,                        INTENT(IN)    :: bcs_max(2) !                1 forced to zero
-  TREAL, DIMENSION(nlines,g%size), INTENT(INOUT) :: wrk3d      ! dsdx
+  TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity
+  TINTEGER,                        INTENT(IN)    :: nlines ! # of lines to be solved
+  TINTEGER, DIMENSION(2,*),        INTENT(IN)    :: bcs    ! BCs at xmin (1,*) and xmax (2,*):
+                                                           !     0 biased, non-zero
+                                                           !     1 forced to zero
+  TYPE(grid_dt),                   INTENT(IN)    :: g
+  TREAL, DIMENSION(nlines,g%size), INTENT(IN)    :: s,u    ! argument field and velocity field
+  TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result ! N(u) applied to s
+  TREAL, DIMENSION(nlines,g%size), INTENT(INOUT) :: wrk3d  ! dsdx
   TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d
 
 ! -------------------------------------------------------------------
   TINTEGER ip,ij
 
 ! ###################################################################
-  IF ( bcs_min(2) + bcs_max(2) .GT. 0 ) THEN
+  IF ( bcs(1,2) + bcs(2,2) .GT. 0 ) THEN
      CALL IO_WRITE_ASCII(efile,'OPR_BURGERS. Only developed for biased BCs.')
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
 ! First derivative
-  CALL OPR_PARTIAL1(nlines, g, s,wrk3d, bcs_min(1),bcs_max(1), wrk2d)
+  CALL OPR_PARTIAL1(nlines, bcs, g, s,wrk3d, wrk2d)
 
 ! -------------------------------------------------------------------
 ! Periodic case
@@ -95,22 +87,22 @@ SUBROUTINE OPR_BURGERS(is, nlines, g, s,u, result, bcs_min,bcs_max, wrk2d,wrk3d)
         
      CASE( FDM_COM4_JACOBIAN )
         IF ( g%uniform ) THEN
-           CALL FDM_C2N4_RHS  (g%size,nlines, bcs_min(2),bcs_max(2),        s,        result)
+           CALL FDM_C2N4_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        s,        result)
         ELSE ! Not yet implemented
         ENDIF
      CASE( FDM_COM6_JACOBIAN )
         IF ( g%uniform ) THEN
-           CALL FDM_C2N6_RHS  (g%size,nlines, bcs_min(2),bcs_max(2),        s,        result)
+           CALL FDM_C2N6_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        s,        result)
         ELSE
-           CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs_min(2),bcs_max(2), g%jac, s, wrk3d, result)
+           CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, s, wrk3d, result)
         ENDIF
-!        CALL FDM_C2N6_RHS(g%size,nlines, bcs_min(2),bcs_max(2), s, result)
+!        CALL FDM_C2N6_RHS(g%size,nlines, bcs(1,2),bcs(2,2), s, result)
 
      CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
         IF ( g%uniform ) THEN
-           CALL FDM_C2N6_RHS  (g%size,nlines, bcs_min(2),bcs_max(2),        s,        result)
+           CALL FDM_C2N6_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        s,        result)
         ELSE
-           CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs_min(2),bcs_max(2), g%jac, s, wrk3d, result)
+           CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, s, wrk3d, result)
         ENDIF
 
      CASE( FDM_COM6_DIRECT   )
@@ -148,8 +140,7 @@ END SUBROUTINE OPR_BURGERS
 !# is         In   Scalar index; if 0, then velocity
 !# tmp1       Out  Transpose velocity
 !########################################################################
-SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
-     bcs1_imin,bcs1_imax, bcs2_imin,bcs2_imax, tmp1, wrk2d,wrk3d)
+SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
@@ -159,26 +150,23 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
   IMPLICIT NONE
 
   TINTEGER ivel, is, nx,ny,nz
-  TINTEGER bcs1_imin,bcs1_imax, bcs2_imin,bcs2_imax
-  TYPE(grid_dt),           INTENT(IN)    :: g
-  TREAL, DIMENSION(nx*ny*nz),     INTENT(IN)    :: s,u1,u2
-  TREAL, DIMENSION(nx*ny*nz),     INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz),     INTENT(INOUT) :: tmp1, wrk3d
-  TREAL, DIMENSION(ny*nz),        INTENT(INOUT) :: wrk2d
+  TINTEGER, DIMENSION(2,*),   INTENT(IN)    :: bcs ! BCs at xmin (1,*) and xmax (2,*)
+  TYPE(grid_dt),              INTENT(IN)    :: g
+  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s,u1,u2
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
+  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
+  TREAL, DIMENSION(ny*nz),    INTENT(INOUT) :: wrk2d
 
   TARGET s,u1,u2, tmp1, result, wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER nyz, bcs_min(2), bcs_max(2)
+  TINTEGER nyz
   TREAL, DIMENSION(:), POINTER :: p_a,p_b,p_c,p_d, p_vel
 #ifdef USE_MPI
   TINTEGER, PARAMETER :: id = DNS_MPI_I_PARTIAL
 #endif
 
 ! ###################################################################
-  bcs_min(1) = bcs1_imin; bcs_max(1) = bcs1_imax
-  bcs_min(2) = bcs2_imin; bcs_max(2) = bcs2_imax
-
 ! -------------------------------------------------------------------
 ! MPI transposition
 ! -------------------------------------------------------------------
@@ -215,8 +203,8 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
 #endif
 
 ! ###################################################################
-  CALL OPR_BURGERS(is, nyz, g, p_b, p_vel, p_d, bcs_min,bcs_max, wrk2d,p_c)
-  
+  CALL OPR_BURGERS(is, nyz, bcs, g, p_b, p_vel, p_d, wrk2d,p_c)
+
 ! ###################################################################
 ! Put arrays back in the order in which they came in
 #ifdef USE_ESSL
@@ -238,30 +226,26 @@ END SUBROUTINE OPR_BURGERS_X
 
 !########################################################################
 !########################################################################
-SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
-     bcs1_jmin,bcs1_jmax, bcs2_jmin,bcs2_jmax, tmp1, wrk2d,wrk3d)
+SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
   IMPLICIT NONE
 
   TINTEGER ivel, is, nx,ny,nz
-  TINTEGER bcs1_jmin,bcs1_jmax, bcs2_jmin,bcs2_jmax
-  TYPE(grid_dt),           INTENT(IN)    :: g
-  TREAL, DIMENSION(nx*ny*nz),     INTENT(IN)    :: s,u1,u2
-  TREAL, DIMENSION(nx*ny*nz),     INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz),     INTENT(INOUT) :: tmp1, wrk3d
-  TREAL, DIMENSION(nx*nz),        INTENT(INOUT) :: wrk2d
+  TINTEGER, DIMENSION(2,*),   INTENT(IN)    :: bcs ! BCs at xmin (1,*) and xmax (2,*)
+  TYPE(grid_dt),              INTENT(IN)    :: g
+  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s,u1,u2
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
+  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
+  TREAL, DIMENSION(nx*nz),    INTENT(INOUT) :: wrk2d
 
   TARGET s,u1,u2, tmp1, result, wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER nxy, nxz, bcs_min(2), bcs_max(2)
+  TINTEGER nxy, nxz
   TREAL, DIMENSION(:),   POINTER :: p_org, p_dst1, p_dst2, p_vel
 
 ! ###################################################################
-  bcs_min(1) = bcs1_jmin; bcs_max(1) = bcs1_jmax
-  bcs_min(2) = bcs2_jmin; bcs_max(2) = bcs2_jmax
-
   IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
      result = C_0_R
      
@@ -296,7 +280,7 @@ SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
   ENDIF
 
 ! ###################################################################
-  CALL OPR_BURGERS(is, nxz, g, p_org, p_vel, p_dst2, bcs_min,bcs_max, wrk2d,p_dst1)
+  CALL OPR_BURGERS(is, nxz, bcs, g, p_org, p_vel, p_dst2, wrk2d,p_dst1)
   
 ! ###################################################################
 ! Put arrays back in the order in which they came in
@@ -317,8 +301,7 @@ END SUBROUTINE OPR_BURGERS_Y
 
 !########################################################################
 !########################################################################
-SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
-     bcs1_kmin,bcs1_kmax, bcs2_kmin,bcs2_kmax, tmp1, wrk2d,wrk3d)
+SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
@@ -328,7 +311,7 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
   IMPLICIT NONE
 
   TINTEGER ivel, is, nx,ny,nz
-  TINTEGER bcs1_kmin, bcs1_kmax, bcs2_kmin, bcs2_kmax
+  TINTEGER, DIMENSION(2,*),   INTENT(IN)    :: bcs ! BCs at xmin (1,*) and xmax (2,*)
   TYPE(grid_dt),              INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s,u1,u2
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
@@ -338,16 +321,13 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
   TARGET s,u1,u2, tmp1, result, wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER nxy, bcs_min(2), bcs_max(2)  
+  TINTEGER nxy
   TREAL, DIMENSION(:), POINTER :: p_a,p_b,p_c, p_vel
 #ifdef USE_MPI
   TINTEGER, PARAMETER :: id  = DNS_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
-  bcs_min(1) = bcs1_kmin; bcs_max(1) = bcs1_kmax
-  bcs_min(2) = bcs2_kmin; bcs_max(2) = bcs2_kmax
-
   IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
      result = C_0_R
      
@@ -388,7 +368,7 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, g, s,u1,u2, result, &
   ENDIF
 
 ! ###################################################################
-  CALL OPR_BURGERS(is, nxy, g, p_a, p_vel, p_c, bcs_min,bcs_max, wrk2d,p_b)
+  CALL OPR_BURGERS(is, nxy, bcs, g, p_a, p_vel, p_c, wrk2d,p_b)
 
 ! ###################################################################
 ! Put arrays back in the order in which they came in

@@ -5,14 +5,6 @@
 #endif
 
 !########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2003/01/01 - J.P. Mellado
-!#              Modified
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !########################################################################
@@ -43,7 +35,7 @@ SUBROUTINE PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, u,up, bcs_imin,bcs_imax, wrk
   TREAL, DIMENSION(*) :: dx, wrk1d            ! not used, to be removed
  
 ! -------------------------------------------------------------------
-  TINTEGER nyz
+  TINTEGER nyz, bcs(2)
 
   TREAL, DIMENSION(:), POINTER :: p_a, p_b, p_c
 
@@ -52,6 +44,7 @@ SUBROUTINE PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, u,up, bcs_imin,bcs_imax, wrk
 #endif
 
 ! ###################################################################
+  bcs(1) = bcs_imin; bcs(2) = bcs_imax
 
 ! -------------------------------------------------------------------
 ! MPI transposition
@@ -83,7 +76,7 @@ SUBROUTINE PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, u,up, bcs_imin,bcs_imax, wrk
 #endif
 
 ! ###################################################################
-  CALL OPR_PARTIAL1(nyz, g(1), p_b,p_c, bcs_imin,bcs_imax, wrk2d)
+  CALL OPR_PARTIAL1(nyz, bcs, g(1), p_b,p_c, wrk2d)
   
 ! ###################################################################
 ! Put arrays back in the order in which they came in

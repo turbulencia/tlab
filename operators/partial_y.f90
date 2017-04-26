@@ -2,17 +2,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library PADE
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2003/01/01 - J.P. Mellado
-!#              Modified
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !########################################################################
@@ -40,10 +29,12 @@ SUBROUTINE PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u,up, bcs_jmin,bcs_jmax, wrk
   TREAL, DIMENSION(*) :: dy, wrk1d            ! not used, to be removed
 
 ! -------------------------------------------------------------------
-  TINTEGER nxz, nxy
+  TINTEGER nxz, nxy, bcs(2)
   TREAL, DIMENSION(:), POINTER :: p_org, p_dst
 
 ! ###################################################################
+  bcs(1) = bcs_jmin; bcs(2) = bcs_jmax
+
   IF ( g(2)%size .EQ. 1 ) THEN ! Set to zero in 2D case
      up = C_0_R
 
@@ -69,7 +60,7 @@ SUBROUTINE PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u,up, bcs_jmin,bcs_jmax, wrk
   ENDIF
 
 ! ###################################################################
-  CALL OPR_PARTIAL1(nxz, g(2), p_org,p_dst, bcs_jmin,bcs_jmax, wrk2d)
+  CALL OPR_PARTIAL1(nxz, bcs, g(2), p_org,p_dst, wrk2d)
   
 ! ###################################################################
 ! Put arrays back in the order in which they came in

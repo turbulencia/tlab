@@ -54,7 +54,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 
 ! -----------------------------------------------------------------------
   TINTEGER ij, k, nxy, ip_b, ip_t
-  TINTEGER ibc
+  TINTEGER ibc, bcs(2,2)
   TREAL dummy
 
   TINTEGER siz, srt, end    !  Variables for OpenMP Partitioning 
@@ -70,6 +70,8 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
   nxy   = imax*jmax
 
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+
 #ifdef USE_BLAS
   ilen = isize_field
 #endif
@@ -81,8 +83,8 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
        dz, u, tmp6, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
        dy, u, tmp5, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)
-  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, &
-       g(1), u,u,u, tmp4, i0,i0, i0,i0, tmp1, wrk2d,wrk3d)
+  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, &
+       g(1), u,u,u, tmp4, tmp1, wrk2d,wrk3d)
 
 !$omp parallel default( shared ) private( ij, srt,end,siz )
   CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
@@ -112,8 +114,8 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! Diffusion and convection terms in Oz momentum eqn
 ! #######################################################################
   IF ( kmax_total .GT. 1 ) THEN
-  CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax,&
-       g(3), w,w,w, tmp6, i0,i0, i0,i0, tmp3, wrk2d,wrk3d)
+  CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, &
+       g(3), w,w,w, tmp6, tmp3, wrk2d,wrk3d)
   CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
        dy, w, tmp5, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
@@ -150,8 +152,8 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
   CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
        dz, v, tmp6, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
-  CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax,&
-       g(2), v,v,v, tmp5, i0,i0, i0,i0, tmp2, wrk2d,wrk3d)
+  CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, &
+       g(2), v,v,v, tmp5, tmp2, wrk2d,wrk3d)
   CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
        dx, v, tmp4, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
 
