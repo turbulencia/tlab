@@ -211,7 +211,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
      ENDIF
      CALL PARTIAL_Y(idummy2, imax,jmax,kmax, idummy2, dummy2, tmp2, tmp1, i0,i0, dummy2,wrk2d,wrk3d)
      CALL PARTIAL_X(idummy2, imax,jmax,kmax, idummy2, dummy2, tmp3, tmp2, i0,i0, dummy2,wrk2d,wrk3d)
+!     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
      CALL PARTIAL_Z(idummy2, imax,jmax,kmax, idummy2, dummy2, tmp4, tmp3, i0,i0, dummy2,wrk2d,wrk3d)
+!     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4,tmp3, wrk3d, wrk2d,wrk3d)
 
   ELSE
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
@@ -221,7 +223,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
      ENDIF
      CALL PARTIAL_Y(idummy2, imax,jmax,kmax, idummy2, dummy2, h2, tmp1, i0,i0, dummy2,wrk2d,wrk3d)
      CALL PARTIAL_X(idummy2, imax,jmax,kmax, idummy2, dummy2, h1, tmp2, i0,i0, dummy2,wrk2d,wrk3d)
+!     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), h1,tmp2, wrk3d, wrk2d,wrk3d)
      CALL PARTIAL_Z(idummy2, imax,jmax,kmax, idummy2, dummy2, h3, tmp3, i0,i0, dummy2,wrk2d,wrk3d)
+!     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), h3,tmp3, wrk3d, wrk2d,wrk3d)
 
   ENDIF
 
@@ -259,7 +263,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! horizontal derivatives
   CALL PARTIAL_X(idummy2, imax,jmax,kmax, i0, dummy2, tmp1, tmp2, i0,i0, dummy2,wrk2d,wrk3d)
+!  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1,tmp2, wrk3d, wrk2d,wrk3d)
   CALL PARTIAL_Z(idummy2, imax,jmax,kmax, i0, dummy2, tmp1, tmp4, i0,i0, dummy2,wrk2d,wrk3d)
+!  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1,tmp4, wrk3d, wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient 

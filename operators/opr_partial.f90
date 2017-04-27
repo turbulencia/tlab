@@ -70,7 +70,7 @@ SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
   
   IMPLICIT NONE
 
-  TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
+  TINTEGER,                        INTENT(IN)    :: nlines ! # of lines to be solved
   TINTEGER, DIMENSION(2,*),        INTENT(IN)    :: bcs    ! BCs at xmin (1,*) and xmax (2,*):
                                                            !     0 biased, non-zero
                                                            !     1 forced to zero
@@ -78,7 +78,7 @@ SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
   TREAL, DIMENSION(nlines,g%size), INTENT(IN)    :: u
   TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result
   TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
-  TREAL, DIMENSION(nlines,g%size), INTENT(INOUT) :: wrk3d      ! First derivative, in case needed
+  TREAL, DIMENSION(nlines,g%size), INTENT(INOUT) :: wrk3d  ! First derivative, in case needed
 
 ! -------------------------------------------------------------------
   TINTEGER ip
@@ -149,3 +149,228 @@ END SUBROUTINE OPR_PARTIAL2
 ! ###################################################################
 ! ###################################################################
 ! Add here OPR_DX(order,...), OPR_DY(order,...), and OPR_DZ(order,...)
+#ifdef USE_MPI
+#include "dns_const_mpi.h"
+#endif
+
+!########################################################################
+!# Routines for different specific directions
+!########################################################################
+SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
+
+  USE DNS_TYPES, ONLY : grid_dt
+#ifdef USE_MPI
+  USE DNS_MPI
+#endif
+
+  IMPLICIT NONE
+
+  TINTEGER,                   INTENT(IN)    :: type      ! OPR_P1     1.order derivative
+                                                         ! OPR_P2     2.order derivative
+                                                         ! OPR_P2_P1  2. and 1.order derivatives (1. in tmp1)
+  TINTEGER,                   INTENT(IN)    :: nx,ny,nz  ! array sizes
+  TINTEGER, DIMENSION(2,*),   INTENT(IN)    :: bcs       ! BCs at xmin (1,*) and xmax (2,*)
+  TYPE(grid_dt),              INTENT(IN)    :: g
+  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
+  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
+  TREAL, DIMENSION(ny*nz),    INTENT(INOUT) :: wrk2d
+
+  TARGET u, tmp1, result, wrk3d
+
+! -------------------------------------------------------------------
+  TINTEGER nyz
+
+  TREAL, DIMENSION(:), POINTER :: p_a, p_b, p_c, p_d
+
+#ifdef USE_MPI
+  TINTEGER, PARAMETER :: id = DNS_MPI_I_PARTIAL
+#endif
+
+! ###################################################################
+! -------------------------------------------------------------------
+! MPI transposition
+! -------------------------------------------------------------------
+#ifdef USE_MPI         
+  IF ( ims_npro_i .GT. 1 ) THEN
+     CALL DNS_MPI_TRPF_I(u, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     p_a => result
+     p_b => wrk3d
+     p_c => result
+     p_d => tmp1
+     nyz = ims_size_i(id)
+  ELSE
+#endif
+     p_a => u
+     p_b => result
+     IF ( type .EQ. OPR_P2_P1 ) THEN
+        p_c => tmp1
+        p_d => wrk3d
+     ELSE
+        p_c => wrk3d
+        p_d => tmp1
+     ENDIF
+     nyz = ny*nz    
+#ifdef USE_MPI         
+  ENDIF
+#endif
+
+! -------------------------------------------------------------------
+! Local transposition: make x-direction the last one
+! -------------------------------------------------------------------
+#ifdef USE_ESSL
+  CALL DGETMO       (p_a, g%size, g%size, nyz,    p_b, nyz)
+#else
+  CALL DNS_TRANSPOSE(p_a, g%size, nyz,    g%size, p_b, nyz)
+#endif
+
+! ###################################################################
+  SELECT CASE( type )
+
+  CASE( OPR_P2 )
+     CALL OPR_PARTIAL2(nyz, bcs, g, p_b,p_c, wrk2d,p_d)
+  
+  CASE( OPR_P1 )
+     CALL OPR_PARTIAL1(nyz, bcs, g, p_b,p_c, wrk2d    )
+     
+  CASE( OPR_P2_P1 )
+     CALL OPR_PARTIAL2(nyz, bcs, g, p_b,p_c, wrk2d,p_d)
+
+! Check whether we need to calculate the 1. order derivative
+     IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+        CALL OPR_PARTIAL1(nyz, bcs, g, p_b, p_d, wrk2d)
+     ENDIF
+     
+  END SELECT
+
+! ###################################################################
+! Put arrays back in the order in which they came in
+#ifdef USE_ESSL
+  CALL DGETMO       (p_c, nyz, nyz,    g%size, p_b, g%size)
+#else
+  CALL DNS_TRANSPOSE(p_c, nyz, g%size, nyz,    p_b, g%size)
+#endif
+
+  IF ( type .EQ. OPR_P2_P1 ) THEN
+#ifdef USE_ESSL
+  CALL DGETMO       (p_d, nyz, nyz,    g%size, p_c, g%size)
+#else
+  CALL DNS_TRANSPOSE(p_d, nyz, g%size, nyz,    p_c, g%size)
+#endif
+  ENDIF
+
+#ifdef USE_MPI         
+  IF ( ims_npro_i .GT. 1 ) THEN
+     IF ( type .EQ. OPR_P2_P1 ) THEN ! only if you really want first derivative back
+        CALL DNS_MPI_TRPB_I(p_c, tmp1, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     ENDIF
+     CALL DNS_MPI_TRPB_I(p_b, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+  ENDIF
+#endif
+
+  NULLIFY(p_a,p_b,p_c,p_d)
+
+  RETURN
+END SUBROUTINE OPR_PARTIAL_X
+
+!########################################################################
+!########################################################################
+SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
+
+  USE DNS_TYPES, ONLY : grid_dt
+#ifdef USE_MPI
+  USE DNS_MPI
+#endif
+
+  IMPLICIT NONE
+
+  TINTEGER,                   INTENT(IN)    :: type      ! OPR_P1     1.order derivative
+                                                         ! OPR_P2     2.order derivative
+                                                         ! OPR_P2_P1  2. and 1.order derivatives (1. in tmp1)
+  TINTEGER,                   INTENT(IN)    :: nx,ny,nz  ! array sizes
+  TINTEGER, DIMENSION(2,*),   INTENT(IN)    :: bcs       ! BCs at xmin (1,*) and xmax (2,*)
+  TYPE(grid_dt),              INTENT(IN)    :: g
+  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
+  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
+  TREAL, DIMENSION(nx*ny),    INTENT(INOUT) :: wrk2d
+
+  TARGET u, tmp1, result, wrk3d
+
+! -------------------------------------------------------------------
+  TINTEGER nxy
+
+  TREAL, DIMENSION(:), POINTER :: p_a, p_b, p_c
+
+#ifdef USE_MPI
+  TINTEGER, PARAMETER :: id = DNS_MPI_K_PARTIAL
+#endif
+
+! ###################################################################
+  IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
+     result = C_0_R
+     IF ( type .EQ. OPR_P2_P1 ) tmp1 = C_0_R
+     
+  ELSE
+! ###################################################################
+! -------------------------------------------------------------------
+! MPI Transposition
+! -------------------------------------------------------------------
+#ifdef USE_MPI         
+  IF ( ims_npro_k .GT. 1 ) THEN
+     CALL DNS_MPI_TRPF_K(u, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     p_a => result
+     IF ( type .EQ. OPR_P2_P1 ) THEN
+        p_b => tmp1
+        p_c => wrk3d
+     ELSE
+        p_b => wrk3d
+        p_c => tmp1
+     ENDIF
+     nxy = ims_size_k(id)
+ ELSE
+#endif
+    p_a => u
+    p_b => result
+    p_c => tmp1
+    nxy = nx*ny 
+#ifdef USE_MPI         
+  ENDIF
+#endif
+
+! ###################################################################
+  SELECT CASE( type )
+
+  CASE( OPR_P2 )
+     CALL OPR_PARTIAL2(nxy, bcs, g, p_a,p_b, wrk2d,p_c)
+  
+  CASE( OPR_P1 )
+     CALL OPR_PARTIAL1(nxy, bcs, g, p_a,p_b, wrk2d    )
+     
+  CASE( OPR_P2_P1 )
+     CALL OPR_PARTIAL2(nxy, bcs, g, p_a,p_b, wrk2d,p_c)
+
+! Check whether we need to calculate the 1. order derivative
+     IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+        CALL OPR_PARTIAL1(nxy, bcs, g, p_a,p_c, wrk2d)
+     ENDIF
+     
+  END SELECT
+
+! ###################################################################
+! Put arrays back in the order in which they came in
+#ifdef USE_MPI         
+  IF ( ims_npro_k .GT. 1 ) THEN
+     CALL DNS_MPI_TRPB_K(p_b, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     IF ( type .EQ. OPR_P2_P1 ) THEN
+        CALL DNS_MPI_TRPB_K(p_c, tmp1, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     ENDIF
+  ENDIF
+#endif
+
+  NULLIFY(p_a,p_b,p_c)
+
+  ENDIF
+
+  RETURN
+END SUBROUTINE OPR_PARTIAL_Z

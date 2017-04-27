@@ -66,6 +66,11 @@
 
 #define FDM_COM6_DIRECT      16
 
+! Operators
+#define OPR_P1                1 
+#define OPR_P2                2
+#define OPR_P2_P1             3
+
 ! Runge-Kutta method
 #define RKM_EXP3              3
 #define RKM_EXP4              4
@@ -153,6 +158,5 @@
 #define LAG_TRAJECTORY_NONE     0
 #define LAG_TRAJECTORY_ALL      1
 #define LAG_TRAJECTORY_LARGEST  2
-
 
 #endif
