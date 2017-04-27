@@ -61,8 +61,8 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   INTEGER ilen
 #endif
 
-  TREAL dummy2(1) ! To use old wrappers to calculate derivatives
-  TINTEGER idummy2
+  ! TREAL dummy2(1) ! To use old wrappers to calculate derivatives
+  ! TINTEGER idummy2
   
 ! #######################################################################
   nxy = imax*jmax
@@ -88,8 +88,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 
   CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, g(3), w,w,w,    tmp1, tmp6, wrk2d,wrk3d) ! tmp6 contains w transposed
   CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, bcs, g(1), w,u,tmp5, tmp4, tmp2, wrk2d,wrk3d) ! tmp5 contains u transposed
-  CALL PARTIAL_YY(i1, idummy2, idummy2, imax,jmax,kmax, idummy2,&
-       dummy2, w, tmp3, i0,i0, i0,i0, tmp2, dummy2,wrk2d,wrk3d)  ! tmp2 is used below in BCs
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), w,tmp3, tmp2, wrk2d,wrk3d)
+  ! CALL PARTIAL_YY(i1, idummy2, idummy2, imax,jmax,kmax, idummy2,&
+  !      dummy2, w, tmp3, i0,i0, i0,i0, tmp2, dummy2,wrk2d,wrk3d)  ! tmp2 is used below in BCs
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -137,8 +138,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! The term \nu u'' - u u' has been already added in the beginning
 ! #######################################################################
   CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), u,w,tmp6, tmp4, tmp2, wrk2d,wrk3d) ! tmp6 contains w transposed
-  CALL PARTIAL_YY(i1, idummy2, idummy2, imax,jmax,kmax, idummy2, & 
-       dummy2, u, tmp3, i0,i0, i0,i0, tmp2, dummy2,wrk2d,wrk3d)  ! tmp2 is used below in BCs
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), u,tmp3, tmp2, wrk2d,wrk3d)! tmp2 is used below in BCs
+  ! CALL PARTIAL_YY(i1, idummy2, idummy2, imax,jmax,kmax, idummy2, & 
+  !      dummy2, u, tmp3, i0,i0, i0,i0, tmp2, dummy2,wrk2d,wrk3d)  ! tmp2 is used below in BCs
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -209,24 +211,26 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
      ENDIF
-     CALL PARTIAL_Y(idummy2, imax,jmax,kmax, idummy2, dummy2, tmp2, tmp1, i0,i0, dummy2,wrk2d,wrk3d)
-     CALL PARTIAL_X(idummy2, imax,jmax,kmax, idummy2, dummy2, tmp3, tmp2, i0,i0, dummy2,wrk2d,wrk3d)
-!     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
-     CALL PARTIAL_Z(idummy2, imax,jmax,kmax, idummy2, dummy2, tmp4, tmp3, i0,i0, dummy2,wrk2d,wrk3d)
-!     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4,tmp3, wrk3d, wrk2d,wrk3d)
-
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4,tmp3, wrk3d, wrk2d,wrk3d)
+! CALL PARTIAL_Y(idummy2, imax,jmax,kmax, idummy2, dummy2, tmp2, tmp1, i0,i0, dummy2,wrk2d,wrk3d)
+! CALL PARTIAL_X(idummy2, imax,jmax,kmax, idummy2, dummy2, tmp3, tmp2, i0,i0, dummy2,wrk2d,wrk3d)
+! CALL PARTIAL_Z(idummy2, imax,jmax,kmax, idummy2, dummy2, tmp4, tmp3, i0,i0, dummy2,wrk2d,wrk3d)
+     
   ELSE
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, h2)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, h1)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, h3)
      ENDIF
-     CALL PARTIAL_Y(idummy2, imax,jmax,kmax, idummy2, dummy2, h2, tmp1, i0,i0, dummy2,wrk2d,wrk3d)
-     CALL PARTIAL_X(idummy2, imax,jmax,kmax, idummy2, dummy2, h1, tmp2, i0,i0, dummy2,wrk2d,wrk3d)
-!     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), h1,tmp2, wrk3d, wrk2d,wrk3d)
-     CALL PARTIAL_Z(idummy2, imax,jmax,kmax, idummy2, dummy2, h3, tmp3, i0,i0, dummy2,wrk2d,wrk3d)
-!     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), h3,tmp3, wrk3d, wrk2d,wrk3d)
-
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), h2,tmp1, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), h1,tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), h3,tmp3, wrk3d, wrk2d,wrk3d)
+! CALL PARTIAL_Y(idummy2, imax,jmax,kmax, idummy2, dummy2, h2, tmp1, i0,i0, dummy2,wrk2d,wrk3d)
+! CALL PARTIAL_X(idummy2, imax,jmax,kmax, idummy2, dummy2, h1, tmp2, i0,i0, dummy2,wrk2d,wrk3d)
+! CALL PARTIAL_Z(idummy2, imax,jmax,kmax, idummy2, dummy2, h3, tmp3, i0,i0, dummy2,wrk2d,wrk3d)
+     
   ENDIF
 
 ! -----------------------------------------------------------------------
@@ -262,11 +266,11 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
   ENDIF
 
 ! horizontal derivatives
-  CALL PARTIAL_X(idummy2, imax,jmax,kmax, i0, dummy2, tmp1, tmp2, i0,i0, dummy2,wrk2d,wrk3d)
-!  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1,tmp2, wrk3d, wrk2d,wrk3d)
-  CALL PARTIAL_Z(idummy2, imax,jmax,kmax, i0, dummy2, tmp1, tmp4, i0,i0, dummy2,wrk2d,wrk3d)
-!  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1,tmp4, wrk3d, wrk2d,wrk3d)
-
+! CALL PARTIAL_X(idummy2, imax,jmax,kmax, i0, dummy2, tmp1, tmp2, i0,i0, dummy2,wrk2d,wrk3d)
+! CALL PARTIAL_Z(idummy2, imax,jmax,kmax, i0, dummy2, tmp1, tmp4, i0,i0, dummy2,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1,tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1,tmp4, wrk3d, wrk2d,wrk3d)
+  
 ! -----------------------------------------------------------------------
 ! Add pressure gradient 
 ! -----------------------------------------------------------------------
@@ -310,8 +314,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
         
      CALL OPR_BURGERS_Z(i1,is, imax,jmax,kmax, bcs, g(3), s(1,is),w,tmp6, tmp1, tmp2, wrk2d,wrk3d) ! tmp6 contains w transposed
      CALL OPR_BURGERS_X(i1,is, imax,jmax,kmax, bcs, g(1), s(1,is),u,tmp5, tmp2, tmp3, wrk2d,wrk3d) ! tmp5 contains u transposed
-     CALL PARTIAL_YY(i1, idummy2, idummy2, imax,jmax,kmax, idummy2,&
-          dummy2, s(1,is), tmp3, i0,i0, i0,i0, tmp4, dummy2,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s(1,is),tmp3, tmp4, wrk2d,wrk3d)
+! CALL PARTIAL_YY(i1, idummy2, idummy2, imax,jmax,kmax, idummy2,&
+!      dummy2, s(1,is), tmp3, i0,i0, i0,i0, tmp4, dummy2,wrk2d,wrk3d)
      
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )

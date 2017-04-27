@@ -374,3 +374,107 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   RETURN
 END SUBROUTINE OPR_PARTIAL_Z
+
+!########################################################################
+!########################################################################
+SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
+
+  USE DNS_TYPES, ONLY : grid_dt
+#ifdef USE_MPI
+  USE DNS_MPI
+#endif
+
+  IMPLICIT NONE
+
+  TINTEGER,                   INTENT(IN)    :: type      ! OPR_P1     1.order derivative
+                                                         ! OPR_P2     2.order derivative
+                                                         ! OPR_P2_P1  2. and 1.order derivatives (1. in tmp1)
+  TINTEGER,                   INTENT(IN)    :: nx,ny,nz  ! array sizes
+  TINTEGER, DIMENSION(2,*),   INTENT(IN)    :: bcs       ! BCs at xmin (1,*) and xmax (2,*)
+  TYPE(grid_dt),              INTENT(IN)    :: g
+  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
+  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
+  TREAL, DIMENSION(nx*nz),    INTENT(INOUT) :: wrk2d
+
+  TARGET u, tmp1, result, wrk3d
+
+! -------------------------------------------------------------------
+  TINTEGER nxy, nxz
+  TREAL, DIMENSION(:), POINTER :: p_a, p_b, p_c
+
+! ###################################################################
+  IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
+     result = C_0_R
+     IF ( type .EQ. OPR_P2_P1 ) tmp1 = C_0_R
+     
+  ELSE
+! ###################################################################
+  nxy = nx*ny 
+  nxz = nx*nz
+
+! -------------------------------------------------------------------
+! Local transposition: Make y direction the last one
+! -------------------------------------------------------------------
+  IF ( nz .EQ. 1 ) THEN
+     p_a => u
+     p_b => result
+     p_c => tmp1
+  ELSE
+#ifdef USE_ESSL
+     CALL DGETMO       (u, nxy, nxy, nz, result, nz)
+#else
+     CALL DNS_TRANSPOSE(u, nxy, nz, nxy, result, nz)
+#endif
+     p_a => result
+     IF ( type .EQ. OPR_P2_P1 ) THEN
+        p_b => tmp1
+        p_c => wrk3d
+     ELSE
+        p_b => wrk3d
+        p_c => tmp1
+     ENDIF
+  ENDIF
+
+! ###################################################################
+  SELECT CASE( type )
+
+  CASE( OPR_P2 )
+     CALL OPR_PARTIAL2(nxz, bcs, g, p_a,p_b, wrk2d,p_c)
+  
+  CASE( OPR_P1 )
+     CALL OPR_PARTIAL1(nxz, bcs, g, p_a,p_b, wrk2d    )
+     
+  CASE( OPR_P2_P1 )
+     CALL OPR_PARTIAL2(nxz, bcs, g, p_a,p_b, wrk2d,p_c)
+
+! Check whether we need to calculate the 1. order derivative
+     IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+        CALL OPR_PARTIAL1(nxz, bcs, g, p_a,p_c, wrk2d)
+     ENDIF
+     
+  END SELECT
+
+! ###################################################################
+! Put arrays back in the order in which they came in
+  IF ( nz .GT. 1 ) THEN
+#ifdef USE_ESSL
+     CALL DGETMO       (p_b, nz, nz, nxy, result, nxy)
+#else
+     CALL DNS_TRANSPOSE(p_b, nz, nxy, nz, result, nxy)
+#endif
+     IF ( type .EQ. OPR_P2_P1 ) THEN
+#ifdef USE_ESSL
+        CALL DGETMO       (p_c, nz, nz, nxy, tmp1, nxy)
+#else
+        CALL DNS_TRANSPOSE(p_c, nz, nxy, nz, tmp1, nxy)
+#endif
+     ENDIF
+  ENDIF
+  
+  NULLIFY(p_a,p_b,p_c)
+
+  ENDIF
+
+  RETURN
+END SUBROUTINE OPR_PARTIAL_Y
