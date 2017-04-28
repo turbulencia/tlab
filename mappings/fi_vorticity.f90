@@ -1,4 +1,5 @@
 #include "types.h"
+#include "dns_const.h"
 
 !########################################################################
 !# HISTORY
@@ -120,56 +121,61 @@ END SUBROUTINE FI_VORTICITY_PRODUCTION
 ! Calculate the vorticity diffusion term as given by w_i lap w_i
 ! The kinematic viscosity \nu is not multiplied here.
 !########################################################################
-SUBROUTINE FI_VORTICITY_DIFFUSION(iunifx,iunify,iunifz, imode_fdm, nx,ny,nz, i1bc,j1bc,k1bc, &
-     dx,dy,dz, u,v,w, result, vort, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
+SUBROUTINE FI_VORTICITY_DIFFUSION(nx,ny,nz, u,v,w, result, vort, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
+  USE  DNS_GLOBAL, ONLY : g
+  
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TINTEGER iunifx,iunify,iunifz, imode_fdm, nx,ny,nz, i1bc,j1bc,k1bc
-  TREAL, DIMENSION(*),        INTENT(IN)    :: dx,dy,dz
+  TINTEGER,                   INTENT(IN)    :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u,v,w
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
   TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: vort
   TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4
-  TREAL, DIMENSION(*),        INTENT(INOUT) :: wrk1d,wrk2d,wrk3d
+  TREAL, DIMENSION(*),        INTENT(INOUT) :: wrk2d,wrk3d
 
+! -------------------------------------------------------------------
+  TINTEGER bcs(2,2)
+  
 ! ###################################################################
+  bcs = 0
+  
 ! -------------------------------------------------------------------
 ! W_z = V,x - U,y
 ! -------------------------------------------------------------------
-  CALL PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, v, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), v,   tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), u,   tmp2, wrk3d, wrk2d,wrk3d)
   vort = tmp1 -tmp2
 
-  CALL PARTIAL_ZZ(i0, iunifz, imode_fdm, nx,ny,nz, k1bc, dz, vort, tmp3, i0,i0, i0,i0, tmp4, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_YY(i0, iunify, imode_fdm, nx,ny,nz, j1bc, dy, vort, tmp2, i0,i0, i0,i0, tmp4, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_XX(i0, iunifx, imode_fdm, nx,ny,nz, i1bc, dx, vort, tmp1, i0,i0, i0,i0, tmp4, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2, nx,ny,nz, bcs, g(3), vort,tmp3, tmp4, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, nx,ny,nz, bcs, g(2), vort,tmp2, tmp4, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2, nx,ny,nz, bcs, g(1), vort,tmp1, tmp4, wrk2d,wrk3d)
   result = vort *( tmp1 +tmp2 +tmp3 )
 
 ! -------------------------------------------------------------------
 ! W_y = U,z - W,x
 ! -------------------------------------------------------------------
-  CALL PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, u, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, w, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), u,   tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), w,   tmp2, wrk3d, wrk2d,wrk3d)
   vort = tmp1 -tmp2
 
-  CALL PARTIAL_ZZ(i0, iunifz, imode_fdm, nx,ny,nz, k1bc, dz, vort, tmp3, i0,i0, i0,i0, tmp4, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_YY(i0, iunify, imode_fdm, nx,ny,nz, j1bc, dy, vort, tmp2, i0,i0, i0,i0, tmp4, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_XX(i0, iunifx, imode_fdm, nx,ny,nz, i1bc, dx, vort, tmp1, i0,i0, i0,i0, tmp4, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2, nx,ny,nz, bcs, g(3), vort,tmp3, tmp4, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, nx,ny,nz, bcs, g(2), vort,tmp2, tmp4, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2, nx,ny,nz, bcs, g(1), vort,tmp1, tmp4, wrk2d,wrk3d)
   result = result + vort *( tmp1 +tmp2 +tmp3 )
 
 ! -------------------------------------------------------------------
 ! W_z = W,y - V,z
 ! -------------------------------------------------------------------
-  CALL PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, w, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, v, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), w,   tmp1, wrk3d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), v,   tmp2, wrk3d,wrk2d,wrk3d)
   vort = tmp1 -tmp2
 
-  CALL PARTIAL_ZZ(i0, iunifz, imode_fdm, nx,ny,nz, k1bc, dz, vort, tmp3, i0,i0, i0,i0, tmp4, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_YY(i0, iunify, imode_fdm, nx,ny,nz, j1bc, dy, vort, tmp2, i0,i0, i0,i0, tmp4, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_XX(i0, iunifx, imode_fdm, nx,ny,nz, i1bc, dx, vort, tmp1, i0,i0, i0,i0, tmp4, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2, nx,ny,nz, bcs, g(3), vort,tmp3, tmp4, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, nx,ny,nz, bcs, g(2), vort,tmp2, tmp4, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2, nx,ny,nz, bcs, g(1), vort,tmp1, tmp4, wrk2d,wrk3d)
   result = result + vort *( tmp1 +tmp2 +tmp3 )
 
   RETURN

@@ -500,9 +500,8 @@ PROGRAM PDFS
 
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy diffusion...')
         CALL FI_VORTICITY_DIFFUSION&
-             (iunifx, iunify, iunifz, imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), &
-             wrk1d, wrk2d, wrk3d)
+             (imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), &
+             wrk2d, wrk3d)
         txc(1:isize_field,2) = visc *txc(1:isize_field,2)
 
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy...')

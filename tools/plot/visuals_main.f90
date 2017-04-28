@@ -729,8 +729,7 @@ PROGRAM VISUALS_MAIN
            
            CALL IO_WRITE_ASCII(lfile,'Computing enstrophy diffusion...')
            CALL FI_VORTICITY_DIFFUSION&
-                (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+                (imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
            txc(1:isize_field,1)=visc*txc(1:isize_field,1)
            
            plot_file = 'EnstrophyDiffusion'//time_str(1:MaskSize)

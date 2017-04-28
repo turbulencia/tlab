@@ -676,9 +676,7 @@ PROGRAM AVERAGES
 
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy diffusion...')
         CALL FI_VORTICITY_DIFFUSION&
-             (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u,v,w, txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), &
-             wrk1d,wrk2d,wrk3d)
+             (imax,jmax,kmax, u,v,w, txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
         DO ij = 1,isize_field
            txc(ij,2) = visc*txc(ij,2)
         ENDDO
