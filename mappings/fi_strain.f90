@@ -130,8 +130,7 @@ SUBROUTINE FI_STRAIN_PRODUCTION(imode_fdm, nx,ny,nz, i1bc,j1bc,k1bc, &
 ! ###################################################################
 ! Vorticity production part
 ! ###################################################################
-  CALL FI_VORTICITY_PRODUCTION(imode_fdm, nx,ny,nz, i1bc,j1bc,k1bc, &
-       dx,dy,dz, u,v,w, result, s_12,s_13,s_23, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
+  CALL FI_VORTICITY_PRODUCTION(nx,ny,nz, u,v,w, result, s_12,s_13,s_23, tmp1,tmp2, wrk2d,wrk3d)
   
   result = C_025_R*result
 

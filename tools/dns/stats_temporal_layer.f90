@@ -117,8 +117,7 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
 ! Intermittency
 ! ###################################################################
 !   IF ( fstinter .EQ. 1 ) THEN
-!      CALL FI_VORTICITY(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-!           dx,dy,dz, u,v,w, txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
+!      CALL FI_VORTICITY(imax,jmax,kmax, u,v,w, txc(1,1), txc(1,2),txc(1,3), wrk2d,wrk3d)
 
 ! ! calculate vorticity gate based on 1% threshold
 !      CALL MINMAX(imax,jmax,kmax, txc(1,1), umin,umax)

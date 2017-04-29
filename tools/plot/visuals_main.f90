@@ -705,8 +705,7 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
         IF ( opt_vec(iv) .EQ. iscal_offset+5 .OR. opt_vec(iv) .EQ. iscal_offset+6 ) THEN ! Enstrophy
            CALL IO_WRITE_ASCII(lfile,'Computing enstrophy...')
-           CALL FI_VORTICITY(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-                dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
+           CALL FI_VORTICITY(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3), wrk2d,wrk3d)
            
            plot_file = 'Enstrophy'//time_str(1:MaskSize)
 
@@ -721,15 +720,15 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
         IF ( opt_vec(iv) .EQ. iscal_offset+6 ) THEN ! EnstrophyEquation
            CALL IO_WRITE_ASCII(lfile,'Computing enstrophy production...')
-           CALL FI_VORTICITY_PRODUCTION(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+           CALL FI_VORTICITY_PRODUCTION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),&
+                txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
            
            plot_file = 'EnstrophyProduction'//time_str(1:MaskSize)
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
            
            CALL IO_WRITE_ASCII(lfile,'Computing enstrophy diffusion...')
-           CALL FI_VORTICITY_DIFFUSION&
-                (imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
+           CALL FI_VORTICITY_DIFFUSION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),&
+                txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
            txc(1:isize_field,1)=visc*txc(1:isize_field,1)
            
            plot_file = 'EnstrophyDiffusion'//time_str(1:MaskSize)

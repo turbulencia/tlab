@@ -670,20 +670,18 @@ PROGRAM AVERAGES
         ENDDO
         
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy production...')
-        CALL FI_VORTICITY_PRODUCTION(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u,v,w, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-             wrk1d,wrk2d,wrk3d)
+        CALL FI_VORTICITY_PRODUCTION(imax,jmax,kmax, u,v,w, txc(1,1),&
+             txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy diffusion...')
-        CALL FI_VORTICITY_DIFFUSION&
-             (imax,jmax,kmax, u,v,w, txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
+        CALL FI_VORTICITY_DIFFUSION(imax,jmax,kmax, u,v,w, txc(1,2),&
+             txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
         DO ij = 1,isize_field
            txc(ij,2) = visc*txc(ij,2)
         ENDDO
 
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy...')
-        CALL FI_VORTICITY(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u,v,w, txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+        CALL FI_VORTICITY(imax,jmax,kmax, u,v,w, txc(1,3), txc(1,4),txc(1,5), wrk2d,wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing dilatation term...')
         CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, txc(1,4),txc(1,5), wrk2d,wrk3d)

@@ -69,8 +69,7 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
   ENDIF
 
 ! Calculate vorticiy field w_iw_i
-  CALL FI_VORTICITY(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, u, v, w, a, txc(1,1), txc(1,2), wrk1d, wrk2d, wrk3d)
+  CALL FI_VORTICITY(imax,jmax,kmax, u,v,w, a, txc(1,1),txc(1,2), wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
 ! Calculate boundaries

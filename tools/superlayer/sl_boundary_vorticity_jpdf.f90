@@ -90,8 +90,7 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! -------------------------------------------------------------------
   ELSE IF ( iopt .EQ. 4 ) THEN
      CALL IO_WRITE_ASCII(lfile,'Computing vorticity...')
-     CALL FI_VORTICITY(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, &
-          u,v,w, txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
+     CALL FI_VORTICITY(imax,jmax,kmax, u,v,w, txc(1,1), txc(1,2),txc(1,3), wrk2d,wrk3d)
      CALL IO_WRITE_ASCII(lfile,'Computing strain...')
      CALL FI_STRAIN(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
           dx,dy,dz, u,v,w, txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
@@ -106,8 +105,7 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! Calculate vorticiy w_iw_i as conditioning field and boundaries 
 ! Array txc3, and sl
 ! ###################################################################
-  CALL FI_VORTICITY(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-       dx,dy,dz, u,v,w, txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+  CALL FI_VORTICITY(imax,jmax,kmax, u,v,w, txc(1,3), txc(1,4),txc(1,5), wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
 ! Calculate boundaries

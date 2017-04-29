@@ -494,19 +494,16 @@ PROGRAM PDFS
         ENDDO
         
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy production...')
-        CALL FI_VORTICITY_PRODUCTION(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), &
-             wrk1d, wrk2d, wrk3d)
+        CALL FI_VORTICITY_PRODUCTION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),&
+             txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy diffusion...')
-        CALL FI_VORTICITY_DIFFUSION&
-             (imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), &
-             wrk2d, wrk3d)
+        CALL FI_VORTICITY_DIFFUSION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,2),&
+             txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
         txc(1:isize_field,2) = visc *txc(1:isize_field,2)
 
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy...')
-        CALL FI_VORTICITY(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,3), txc(1,4), txc(1,5), wrk1d, wrk2d, wrk3d)
+        CALL FI_VORTICITY(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,3), txc(1,4),txc(1,5), wrk2d,wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing dilatation term...')
         CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,4), txc(1,5), wrk2d,wrk3d)
@@ -649,8 +646,7 @@ PROGRAM PDFS
 ! ###################################################################
      CASE ( 9 )
 ! txc1 contains w^2
-        CALL FI_VORTICITY(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), txc(1,3), wrk1d, wrk2d, wrk3d)
+        CALL FI_VORTICITY(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3), wrk2d,wrk3d)
 ! in case we want to condition on w
         DO ij = 1,imax*jmax*kmax
            s(ij,1) = SQRT(txc(ij,1))
