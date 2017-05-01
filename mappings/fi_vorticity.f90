@@ -19,8 +19,6 @@ SUBROUTINE FI_VORTICITY(nx,ny,nz, u,v,w, result, tmp1,tmp2, wrk2d,wrk3d)
   
   IMPLICIT NONE
 
-#include "integers.h"
-
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u,v,w
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
@@ -59,8 +57,6 @@ SUBROUTINE FI_VORTICITY_PRODUCTION(nx,ny,nz, u,v,w, result, vort_x,vort_y,vort_z
   USE  DNS_GLOBAL, ONLY : g
   
   IMPLICIT NONE
-
-#include "integers.h"
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u,v,w
@@ -131,8 +127,6 @@ SUBROUTINE FI_VORTICITY_DIFFUSION(nx,ny,nz, u,v,w, result, vort, tmp1,tmp2,tmp3,
   USE  DNS_GLOBAL, ONLY : g
   
   IMPLICIT NONE
-
-#include "integers.h"
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u,v,w

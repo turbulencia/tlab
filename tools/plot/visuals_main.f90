@@ -811,16 +811,14 @@ PROGRAM VISUALS_MAIN
               CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
               CALL IO_WRITE_ASCII(lfile,'Computing second invariant Q...')
-              CALL FI_INVARIANT_Q(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                   dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
+              CALL FI_INVARIANT_Q(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
 
               plot_file = 'InvariantQ'//time_str(1:MaskSize)
               CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
               CALL IO_WRITE_ASCII(lfile,'Computing third invariant R...')
-              CALL FI_INVARIANT_R(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                   dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1), &
-                   txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+              CALL FI_INVARIANT_R(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), &
+                   txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
 
               plot_file = 'InvariantR'//time_str(1:MaskSize)
               CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)

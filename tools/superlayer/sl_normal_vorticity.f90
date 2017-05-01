@@ -136,12 +136,8 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   ipfield    = ipfield + nfield_loc
   nfield_loc = 3
 
-  CALL FI_INVARIANT_R(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, u, v, w, txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,1), txc(1,2), &
-       wrk1d, wrk2d, wrk3d)
-  CALL FI_INVARIANT_Q(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, u, v, w, txc(1,2), txc(1,4), txc(1,5), txc(1,6), &
-       wrk1d, wrk2d, wrk3d)
+  CALL FI_INVARIANT_R(imax,jmax,kmax, u,v,w, txc(1,3), txc(1,4),txc(1,5),txc(1,6),txc(1,1),txc(1,2), wrk2d,wrk3d)
+  CALL FI_INVARIANT_Q(imax,jmax,kmax, u,v,w, txc(1,2), txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
   CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, txc(1,1), txc(1,4), wrk2d,wrk3d)
 
 ! Calculate gradient of conditioning field; normal stored in u,v,w

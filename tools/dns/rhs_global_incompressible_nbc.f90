@@ -23,8 +23,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
   USE DNS_CONSTANTS, ONLY : lfile,wfile,efile
   !
-  USE DNS_GLOBAL, ONLY : g, imax_total, j1bc,iunify
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_fdm
+  USE DNS_GLOBAL, ONLY : g, imax_total
+  USE DNS_GLOBAL, ONLY : imode_eqns
   USE DNS_GLOBAL, ONLY : inb_flow,inb_vars,inb_scal,inb_scal_array,visc,schmidt,prandtl 
   USE DNS_GLOBAL, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : rbackground, ribackground
@@ -91,8 +91,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   INTEGER :: pkg_cnt
   TREAL err_x,err_y,err_z,kx,ky,kz,dum 
   TREAL rtime, rtime_loc,t_run,ptime,ctime_loc
-
-  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
 
   TARGET h2, tmp42 
 
@@ -189,8 +187,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      ! Vertical derivatives, and Vertical advection  
      !   
      t_tmp = -MPI_WTime()
-     CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
-          dy, u, tmp41, i0,i0, i0,i0, tmp42, wrk1d,wrk2d,wrk3d)  
+     ! CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
+     !      dy, u, tmp41, i0,i0, i0,i0, tmp42, wrk1d,wrk2d,wrk3d)  
+     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), u,tmp41, tmp42, wrk2d,wrk3d)
      h1=h1+visc*tmp41 - v*tmp42
 
      ! -----------------------------------------------------------------------
@@ -209,11 +208,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
         ENDDO
      ENDIF
 
-     CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
-          dy, v, tmp41, i0,i0, i0,i0, tmp42, wrk1d,wrk2d,wrk3d)  
+     ! CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
+     !      dy, v, tmp41, i0,i0, i0,i0, tmp42, wrk1d,wrk2d,wrk3d)  
+     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), v,tmp41, tmp42, wrk2d,wrk3d)
      h2=h2+visc*tmp41 - v*tmp42
-     CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
-          dy, w, tmp41, i0,i0, i0,i0, tmp42, wrk1d,wrk2d,wrk3d)  
+     ! CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc, & 
+     !      dy, w, tmp41, i0,i0, i0,i0, tmp42, wrk1d,wrk2d,wrk3d)  
+     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), w,tmp41, tmp42, wrk2d,wrk3d)
      h3=h3+visc*tmp41 - v*tmp42
 
      ! -----------------------------------------------------------------------
@@ -452,13 +453,15 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      ! we can prepare the pressure solver, and update tendencies 
      !
      t_tmp = -MPI_WTime() 
-     CALL PARTIAL_YY(i1,iunify,imode_fdm,imax,jmax,kmax, j1bc, & 
-          dy, s(1,1), tmp31, i0,i0,i0,i0,tmp32, wrk1d,wrk2d,wrk3d) 
+     ! CALL PARTIAL_YY(i1,iunify,imode_fdm,imax,jmax,kmax, j1bc, & 
+     !      dy, s(1,1), tmp31, i0,i0,i0,i0,tmp32, wrk1d,wrk2d,wrk3d) 
+     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s(1,1),tmp31, tmp32, wrk2d,wrk3d)
      hs(:,1) = hs(:,1) + diff(1)*tmp31-v*tmp32 
      !
      IF ( inb_scal .GT. 1 ) THEN
-     CALL PARTIAL_YY(i1,iunify,imode_fdm,imax,jmax,kmax, j1bc, & 
-          dy, s(1,2), tmp31, i0,i0,i0,i0,tmp32, wrk1d,wrk2d,wrk3d) 
+     ! CALL PARTIAL_YY(i1,iunify,imode_fdm,imax,jmax,kmax, j1bc, & 
+     !      dy, s(1,2), tmp31, i0,i0,i0,i0,tmp32, wrk1d,wrk2d,wrk3d) 
+     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s(1,2),tmp31, tmp32, wrk2d,wrk3d)
      hs(:,2) = hs(:,2) + diff(2)*tmp31-v*tmp32 
      ENDIF
 
@@ -574,8 +577,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp11)
      ENDIF
-     CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, &
-          tmp11, tmp12, i0,i0, wrk1d,wrk2d,wrk3d) 
+     ! CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, &
+     !      tmp11, tmp12, i0,i0, wrk1d,wrk2d,wrk3d) 
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp11,tmp12, wrk3d, wrk2d,wrk3d)
      t_ser = t_ser + (t_tmp+MPI_WTime())
      !
      DO WHILE ( finished /= 24 ) 
@@ -654,8 +658,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      CALL DNS_TOWER_ACCUMULATE(tmp12,i4,wrk1d) 
   ENDIF
 
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i0,dx,tmp12,tmp41,i0,i0,wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, i0,dz,tmp12,tmp42,i0,i0,wrk1d,wrk2d,wrk3d) 
+  ! CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i0,dx,tmp12,tmp41,i0,i0,wrk1d,wrk2d,wrk3d)
+  ! CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, i0,dz,tmp12,tmp42,i0,i0,wrk1d,wrk2d,wrk3d) 
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp12,tmp41, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp12,tmp42, wrk3d, wrk2d,wrk3d)
   
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax,jmax,kmax, ribackground, tmp41, h1)
