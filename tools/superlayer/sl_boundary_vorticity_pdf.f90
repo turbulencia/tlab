@@ -114,8 +114,7 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
   ENDDO
   varname(2) = 'log(G2)'
 
-  CALL FI_STRAIN(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, u, v, w, txc(1,3), txc(1,4), txc(1,5), wrk1d, wrk2d, wrk3d)
+  CALL FI_STRAIN(imax,jmax,kmax, u,v,w, txc(1,3),txc(1,4),txc(1,5), wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      txc(ij,3) = log(C_2_R*txc(ij,3))
   ENDDO

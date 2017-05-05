@@ -179,3 +179,59 @@ SUBROUTINE FI_VORTICITY_DIFFUSION(nx,ny,nz, u,v,w, result, vort, tmp1,tmp2,tmp3,
 
   RETURN
 END SUBROUTINE FI_VORTICITY_DIFFUSION
+
+!########################################################################
+! Calculate the baroclinic production of vorticity
+! (grad\rho x grad p)/\rho^2
+!########################################################################
+SUBROUTINE FI_VORTICITY_BAROCLINIC(nx,ny,nz, r,p, result, tmp1,tmp2, wrk2d,wrk3d)
+
+  USE  DNS_GLOBAL, ONLY : g
+  
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)    :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(IN)    :: r,p
+  TREAL, DIMENSION(nx*ny*nz,3), INTENT(OUT)   :: result
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(INOUT) :: tmp1,tmp2
+  TREAL, DIMENSION(*),          INTENT(INOUT) :: wrk2d,wrk3d
+
+! -------------------------------------------------------------------
+  TINTEGER bcs(2,2)
+  
+! ###################################################################
+  bcs = 0
+  
+! ###################################################################
+! r,yp,z-r,zp,y
+! ###################################################################
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), r, result(1,1), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), p, tmp1,        wrk3d, wrk2d,wrk3d)
+
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), p, result(1,2), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), r, tmp2,        wrk3d, wrk2d,wrk3d)
+
+  result(:,1) = ( result(:,1) *tmp1(:) -result(:,2) *tmp2(:) )/( r(:) *r(:) )
+
+! ###################################################################
+! r,zp,x-r,xp,z
+! p,z and r,z are in tmp1 and tmp2 respectively
+! ###################################################################
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), p, result(1,3), wrk3d, wrk2d,wrk3d)
+  result(:,2) = result(:,3)*tmp2(:)
+  
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), r, tmp2,        wrk3d, wrk2d,wrk3d)
+  result(:,2) = ( result(:,2) -tmp1(:) *tmp2(:) )/( r(:) *r(:) )
+
+! ###################################################################
+! r,xp,y-r,yp,x
+! p,x and r,x are in result3 and tmp2 respectively
+! ###################################################################
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), r, tmp1, wrk3d, wrk2d,wrk3d)
+  result(:,3) = result(:,3) *tmp1(:)
+  
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), p, tmp1, wrk3d, wrk2d,wrk3d)
+  result(:,3) = ( tmp1(:) *tmp2(:) -result(:,3) )/( r(:) *r(:) )
+
+  RETURN
+END SUBROUTINE FI_VORTICITY_BAROCLINIC

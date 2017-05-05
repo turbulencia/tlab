@@ -745,8 +745,7 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
         IF ( opt_vec(iv) .EQ. iscal_offset+8 .OR. opt_vec(iv) .EQ. iscal_offset+9 ) THEN ! Strain
            CALL IO_WRITE_ASCII(lfile,'Computing strain...')
-           CALL FI_STRAIN(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                   dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
+           CALL FI_STRAIN(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3), wrk2d,wrk3d)
            txc(1:isize_field,1)=C_2_R*txc(1:isize_field,1)
            
            plot_file = 'Strain'//time_str(1:MaskSize)
@@ -769,29 +768,24 @@ PROGRAM VISUALS_MAIN
                  CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), txc(1,1), wrk3d)
                  CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), txc(1,1), q(1,4)) ! pressure in q4
               ENDIF
-              CALL FI_STRAIN_PRESSURE&
-                   (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                   dx,dy,dz, q(1,1),q(1,2),q(1,3),q(1,4), &
-                   txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+              CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3),q(1,4), &
+                   txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk2d,wrk3d)
               txc(1:isize_field,1)=C_2_R*txc(1:isize_field,1)
 
               plot_file = 'StrainPressure'//time_str(1:MaskSize)
               CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
               CALL IO_WRITE_ASCII(lfile,'Computing strain production...')
-              CALL FI_STRAIN_PRODUCTION(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                   dx,dy,dz, q(1,1),q(1,2),q(1,3), &
-                   txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+              CALL FI_STRAIN_PRODUCTION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), &
+                   txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
               txc(1:isize_field,1)=C_2_R*txc(1:isize_field,1)
 
               plot_file = 'StrainProduction'//time_str(1:MaskSize)
               CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
               CALL IO_WRITE_ASCII(lfile,'Computing strain diffusion...')
-              CALL FI_STRAIN_DIFFUSION&
-                   (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                   dx,dy,dz, q(1,1),q(1,2),q(1,3), &
-                   txc(1,1), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), wrk1d,wrk2d,wrk3d)
+              CALL FI_STRAIN_DIFFUSION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), &
+                   txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
               txc(1:isize_field,1)=C_2_R*visc*txc(1:isize_field,1)
 
               plot_file = 'StrainDiffusion'//time_str(1:MaskSize)

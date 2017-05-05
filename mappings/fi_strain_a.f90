@@ -1,12 +1,6 @@
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/08/23 - J.P. Mellado
-!#              Created
-!#
+#include "types.h"
+#include "dns_const.h"
+
 !########################################################################
 !# DESCRIPTION
 !#
@@ -14,118 +8,67 @@
 !# that normalized by grad(a)*grad(a) (strain2)
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!# tmp1     Out  Returns grad(a)*grad(a)
-!#
-!########################################################################
-      SUBROUTINE FI_STRAIN_A(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-           dx, dy, dz, a, u, v, w, strain1, strain2, &
-           normal1, normal2, normal3, tmp1, wrk1d, wrk2d, wrk3d)
+SUBROUTINE FI_STRAIN_A(nx,ny,nz, a, u,v,w, strain1,strain2, normal1,normal2,normal3, tmp1, wrk2d,wrk3d)
 
-      IMPLICIT NONE
+  USE  DNS_GLOBAL, ONLY : g
+  
+  IMPLICIT NONE
 
-#include "types.h"
-#include "integers.h"
-
-      TINTEGER imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc
-
-      TREAL dx(imax)
-      TREAL dy(jmax)
-      TREAL dz(kmax)
-
-      TREAL a(imax, jmax, kmax)
-      TREAL u(imax, jmax, kmax)
-      TREAL v(imax, jmax, kmax)
-      TREAL w(imax, jmax, kmax)
-      TREAL strain1(imax, jmax, kmax)
-      TREAL strain2(imax, jmax, kmax)
-
-      TREAL normal1(imax,jmax,kmax)
-      TREAL normal2(imax,jmax,kmax)
-      TREAL normal3(imax,jmax,kmax)
-      TREAL tmp1(imax,jmax,kmax)
-      TREAL wrk1d(imax,*)
-      TREAL wrk2d(imax,*)
-      TREAL wrk3d(imax,jmax,kmax)
+  TINTEGER,                   INTENT(IN)    :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: a,u,v,w
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: strain1,strain2
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: normal1,normal2,normal3
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: tmp1 ! Returns grad(a)*grad(a) 
+  TREAL, DIMENSION(*),        INTENT(INOUT) :: wrk2d,wrk3d
 
 ! -------------------------------------------------------------------
-      TINTEGER i
+  TINTEGER bcs(2,2), i
+  
+! ###################################################################
+  bcs = 0
 
 ! ###################################################################
 ! Compute normals
-      CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-           dx, a, normal1, i0, i0, wrk1d, wrk2d, wrk3d)
-      CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-           dy, a, normal2, i0, i0, wrk1d, wrk2d, wrk3d)
-      CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-           dz, a, normal3, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), a, normal1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), a, normal2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), a, normal3, wrk3d, wrk2d,wrk3d)
 
 ! Compute gradient terms with u
-      CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-           dx, u, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-      DO i = 1,imax*jmax*kmax
-         strain1(i,1,1) = normal1(i,1,1)*tmp1(i,1,1)*normal1(i,1,1)
-      ENDDO
-      CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-           dy, u, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-      DO i = 1,imax*jmax*kmax
-         strain1(i,1,1) = strain1(i,1,1) + normal2(i,1,1)*tmp1(i,1,1)*normal1(i,1,1)
-      ENDDO
-      CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-           dz, u, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-      DO i = 1,imax*jmax*kmax
-         strain1(i,1,1) = strain1(i,1,1) + normal3(i,1,1)*tmp1(i,1,1)*normal1(i,1,1)
-      ENDDO
-      
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
+  strain1 = normal1*tmp1*normal1
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), u, tmp1, wrk3d, wrk2d,wrk3d)
+  strain1 = strain1 + normal2*tmp1*normal1
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), u, tmp1, wrk3d, wrk2d,wrk3d)
+  strain1 = strain1 + normal3*tmp1*normal1
+  
 ! Compute gradient terms with v
-      CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-           dx, v, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-      DO i = 1,imax*jmax*kmax
-         strain1(i,1,1) = strain1(i,1,1) + normal1(i,1,1)*tmp1(i,1,1)*normal2(i,1,1)
-      ENDDO
-      CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-           dy, v, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-      DO i = 1,imax*jmax*kmax
-         strain1(i,1,1) = strain1(i,1,1) + normal2(i,1,1)*tmp1(i,1,1)*normal2(i,1,1)
-      ENDDO
-      CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-           dz, v, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-      DO i = 1,imax*jmax*kmax
-         strain1(i,1,1) = strain1(i,1,1) + normal3(i,1,1)*tmp1(i,1,1)*normal2(i,1,1)
-      ENDDO
-      
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), v, tmp1, wrk3d, wrk2d,wrk3d)
+  strain1 = strain1 + normal1*tmp1*normal2
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), v, tmp1, wrk3d, wrk2d,wrk3d)
+  strain1 = strain1 + normal2*tmp1*normal2
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), v, tmp1, wrk3d, wrk2d,wrk3d)
+  strain1 = strain1 + normal3*tmp1*normal2
+  
 ! Compute gradient terms with 3
-      CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-           dx, w, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-      DO i = 1,imax*jmax*kmax
-         strain1(i,1,1) = strain1(i,1,1) + normal1(i,1,1)*tmp1(i,1,1)*normal3(i,1,1)
-      ENDDO
-      CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-           dy, w, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-      DO i = 1,imax*jmax*kmax
-         strain1(i,1,1) = strain1(i,1,1) + normal2(i,1,1)*tmp1(i,1,1)*normal3(i,1,1)
-      ENDDO
-      CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-           dz, w, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-      DO i = 1,imax*jmax*kmax
-         strain1(i,1,1) = strain1(i,1,1) + normal3(i,1,1)*tmp1(i,1,1)*normal3(i,1,1)
-      ENDDO
-      
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), w, tmp1, wrk3d, wrk2d,wrk3d)
+  strain1 = strain1 + normal1*tmp1*normal3
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), w, tmp1, wrk3d, wrk2d,wrk3d)
+  strain1 = strain1 + normal2*tmp1*normal3
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), w, tmp1, wrk3d, wrk2d,wrk3d)
+  strain1 = strain1 + normal3*tmp1*normal3
+
 ! norm of the gradient of a
-      DO i = 1,imax*jmax*kmax
-         tmp1(i,1,1) = normal1(i,1,1)**2 + normal2(i,1,1)**2 + normal3(i,1,1)**2 
-      ENDDO
+  tmp1 = normal1**2 + normal2**2 + normal3**2 
 
 ! normalize
-      DO i = 1,imax*jmax*kmax
-         IF ( tmp1(i,1,1) .GT. C_0_R ) THEN
-            strain2(i,1,1) = strain1(i,1,1)/tmp1(i,1,1)
-         ELSE
-            strain2(i,1,1) = strain1(i,1,1)
-         ENDIF
-      ENDDO
-         
+  DO i = 1,nx*ny*nz
+     IF ( tmp1(i) .GT. C_0_R ) THEN
+        strain2(i) = strain1(i) /tmp1(i)
+     ELSE
+        strain2(i) = strain1(i)
+     ENDIF
+  ENDDO
 
-      RETURN
-      END
+
+  RETURN
+END SUBROUTINE FI_STRAIN_A

@@ -658,8 +658,7 @@ PROGRAM AVERAGES
            CALL THERMO_THERMAL_PRESSURE&
                 (imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
 ! result vector in txc4, txc5, txc6
-           CALL FI__BAROCLINIC(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                dx,dy,dz, txc(1,2),txc(1,1), txc(1,4), txc(1,3),txc(1,7), wrk1d,wrk2d,wrk3d)
+           CALL FI_VORTICITY_BAROCLINIC(imax,jmax,kmax, txc(1,2),txc(1,1), txc(1,4), txc(1,3),txc(1,7), wrk2d,wrk3d)
         ENDIF
 ! result vector in txc1, txc2, txc3
         CALL FI_CURL(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
@@ -723,34 +722,28 @@ PROGRAM AVERAGES
              (imax, jmax, kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
         CALL THERMO_THERMAL_PRESSURE&
              (imax, jmax, kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
-        CALL FI_STRAIN_PRESSURE&
-             (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx, dy, dz, u, v, w, txc(1,1), &
-             txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), wrk1d,wrk2d,wrk3d)
+        CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, u,v,w, txc(1,1), &
+             txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         DO ij = 1,isize_field
            txc(ij,1)=C_2_R*txc(ij,2)
         ENDDO
         
         CALL IO_WRITE_ASCII(lfile,'Computing strain production...')
-        CALL FI_STRAIN_PRODUCTION(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u,v,w, &
-             txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk1d,wrk2d,wrk3d)
+        CALL FI_STRAIN_PRODUCTION(imax,jmax,kmax, u,v,w, &
+             txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
         DO ij = 1,isize_field
            txc(ij,2)=C_2_R*txc(ij,2)
         ENDDO
 
         CALL IO_WRITE_ASCII(lfile,'Computing strain diffusion...')
-        CALL FI_STRAIN_DIFFUSION&
-             (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u,v,w, &
-             txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), wrk1d,wrk2d,wrk3d)
+        CALL FI_STRAIN_DIFFUSION(imax,jmax,kmax, u,v,w, &
+             txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), wrk2d,wrk3d)
         DO ij = 1,isize_field
            txc(ij,3)=C_2_R*visc*txc(ij,3)
         ENDDO
 
         CALL IO_WRITE_ASCII(lfile,'Computing strain...')
-        CALL FI_STRAIN(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u,v,w, txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+        CALL FI_STRAIN(imax,jmax,kmax, u,v,w, txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         DO ij = 1,isize_field
            txc(ij,4)=C_2_R*txc(ij,4)
         ENDDO
@@ -871,8 +864,7 @@ PROGRAM AVERAGES
 ! ###################################################################
      CASE ( 10 )
         CALL IO_WRITE_ASCII(lfile,'Computing rate-of-strain tensor...') ! txc1-txc6
-        CALL FI_STRAIN_TENSOR(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, u, v, w, txc(1,1), wrk1d, wrk2d, wrk3d)
+        CALL FI_STRAIN_TENSOR(imax,jmax,kmax, u,v,w, txc(1,1), wrk2d,wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing eigenvalues...') ! txc6-txc9
         CALL FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1,1), txc(1,7))
@@ -896,8 +888,7 @@ PROGRAM AVERAGES
 ! ###################################################################
      CASE ( 11 )
         CALL IO_WRITE_ASCII(lfile,'Computing rate-of-strain tensor...') ! txc1-txc6
-        CALL FI_STRAIN_TENSOR(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u,v,w, txc(1,1), wrk1d,wrk2d,wrk3d)
+        CALL FI_STRAIN_TENSOR(imax,jmax,kmax, u,v,w, txc(1,1), wrk2d,wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing eigenvalues...')           ! txc7-txc9
         CALL FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1,1), txc(1,7))

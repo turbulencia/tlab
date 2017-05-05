@@ -480,8 +480,7 @@ PROGRAM PDFS
         CALL THERMO_THERMAL_PRESSURE&
              (imax, jmax, kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
 ! result vector in txc4, txc5, txc6
-        CALL FI__BAROCLINIC(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, txc(1,2), txc(1,1), txc(1,4), txc(1,3), txc(1,7), wrk1d, wrk2d, wrk3d)
+        CALL FI_VORTICITY_BAROCLINIC(imax,jmax,kmax, txc(1,2),txc(1,1), txc(1,4), txc(1,3),txc(1,7), wrk2d,wrk3d)
 ! result vector in txc1, txc2, txc3
         CALL FI_CURL(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
              dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3), txc(1,7), wrk1d,wrk2d,wrk3d)
@@ -540,29 +539,22 @@ PROGRAM PDFS
              (imax, jmax, kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
         CALL THERMO_THERMAL_PRESSURE&
              (imax, jmax, kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
-        CALL FI_STRAIN_PRESSURE&
-             (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,1), &
-             txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), wrk1d,wrk2d,wrk3d)
+        CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), &
+             txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         txc(1:isize_field,1) = C_2_R *txc(1:isize_field,2)
         
         CALL IO_WRITE_ASCII(lfile,'Computing strain production...')
-        CALL FI_STRAIN_PRODUCTION(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, q(1,1),q(1,2),q(1,3), &
-             txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), wrk1d,wrk2d,wrk3d)
+        CALL FI_STRAIN_PRODUCTION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), &
+             txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
         txc(1:isize_field,2) = C_2_R *txc(1:isize_field,2)
 
         CALL IO_WRITE_ASCII(lfile,'Computing strain diffusion...')
-        CALL FI_STRAIN_DIFFUSION&
-             (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx, dy, dz, q(1,1),q(1,2),q(1,3), &
-             txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), txc(1,8), wrk1d,wrk2d,wrk3d)
+        CALL FI_STRAIN_DIFFUSION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), &
+             txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), wrk2d,wrk3d)
         txc(1:isize_field,3) = C_2_R *visc *txc(1:isize_field,3)
 
         CALL IO_WRITE_ASCII(lfile,'Computing strain...')
-        CALL FI_STRAIN(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,4), txc(1,5), txc(1,6), &
-             wrk1d, wrk2d, wrk3d)
+        CALL FI_STRAIN(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         txc(1:isize_field,4) = log( C_2_R *txc(1:isize_field,4) )
               
         data(1)%field => txc(:,4); varname(1) = 'LnStrain2S_ijS_i'         ; ibc(1) = 2
@@ -617,9 +609,8 @@ PROGRAM PDFS
 ! Chi flamelet equation PDF
 ! ###################################################################
      CASE ( 7 )
-        CALL FI_STRAIN_A(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, s, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),&
-             txc(1,3), txc(1,4), txc(1,5), txc(1,6), wrk1d, wrk2d, wrk3d)
+        CALL FI_STRAIN_A(imax,jmax,kmax, s, q(1,1),q(1,2),q(1,3), &
+             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         data(1)%field => txc(:,1); varname(1) = 'StrainAG_iG_i'; ibc(1) = 2
         data(2)%field => txc(:,2); varname(2) = 'StrainA';       ibc(2) = 2
 

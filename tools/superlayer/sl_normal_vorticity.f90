@@ -104,8 +104,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   ipfield    = 1
   nfield_loc = 3
 
-  CALL FI_STRAIN(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, u, v, w, txc(1,3), txc(1,1), txc(1,2), wrk1d, wrk2d, wrk3d)
+  CALL FI_STRAIN(imax,jmax,kmax, u,v,w, txc(1,3),txc(1,1),txc(1,2), wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      txc(ij,3) = C_2_R*txc(ij,3)
   ENDDO
@@ -221,24 +220,18 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   ipfield    = ipfield + nfield_loc
   nfield_loc = 3
 
-  CALL FI_STRAIN_PRODUCTION&
-       (imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, u, v, w, txc(1,1), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6),&
-       wrk1d, wrk2d, wrk3d)
+  CALL FI_STRAIN_PRODUCTION(imax,jmax,kmax, u,v,w, &
+       txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      txc(ij,1) = txc(ij,1)*C_2_R
   ENDDO
-  CALL FI_STRAIN_DIFFUSION&
-       (iunifx, iunify, iunifz, imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, u, v, w, txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), &
-       wrk1d, wrk2d, wrk3d)
+  CALL FI_STRAIN_DIFFUSION(imax,jmax,kmax, u,v,w, &
+       txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      txc(ij,2) = txc(ij,2)*visc*C_2_R
   ENDDO
-  CALL FI_STRAIN_PRESSURE&
-       (iunifx, iunify, iunifz, imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, u, v, w, p, txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), &
-       wrk1d, wrk2d, wrk3d)
+  CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, u,v,w,p, &
+       txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      txc(ij,3) = txc(ij,3)*C_2_R
   ENDDO

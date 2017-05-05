@@ -68,8 +68,7 @@ SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
 ! ###################################################################
 ! Define fields
 ! ###################################################################
-  CALL FI_STRAIN(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, u, v, w, strain, tmp1, tmp2, wrk1d, wrk2d, wrk3d)
+  CALL FI_STRAIN(imax,jmax,kmax, u,v,w, strain, tmp1,tmp2, wrk2d,wrk3d)
   CALL FI_VORTICITY(imax,jmax,kmax, u,v,w, vorticity, tmp1,tmp2, wrk2d,wrk3d)
   CALL FI_GRADIENT(imax,jmax,kmax, z1,gradient, tmp1, wrk2d,wrk3d)
 
