@@ -639,8 +639,7 @@ PROGRAM VISUALS_MAIN
 ! Scalar gradient magnitude
               IF ( opt_vec(iv) .EQ. iscal_offset+2 .OR. opt_vec(iv) .EQ. iscal_offset+3 ) THEN
                  CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
-                 CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s(1,is), &
-                      txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
+                 CALL FI_GRADIENT(imax,jmax,kmax, s(1,is), txc(1,1),txc(1,2), wrk2d,wrk3d)
                  
                  plot_file = TRIM(ADJUSTL(str))//'Gradient'//time_str(1:MaskSize)
                  
@@ -666,15 +665,14 @@ PROGRAM VISUALS_MAIN
                  ELSE;                                  diff = visc/schmidt(is); ENDIF
 
                  CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient production...')
-                 CALL FI_GRADIENT_PRODUCTION(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s(1,is), &
-                      q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+                 CALL FI_GRADIENT_PRODUCTION(imax,jmax,kmax, s(1,is), q(1,1),q(1,2),q(1,3), &
+                      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
                  plot_file = 'ScalarGradientProduction'//time_str(1:MaskSize)
                  CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
                  
                  CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient diffusion...')
-                 CALL FI_GRADIENT_DIFFUSION&
-                      (iunifx,iunify,iunifz, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s(1,is), &
-                      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+                 CALL FI_GRADIENT_DIFFUSION(imax,jmax,kmax, s(1,is), &
+                      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
                  txc(1:isize_field,1) = diff *txc(1:isize_field,1)
                  
                  plot_file = TRIM(ADJUSTL(str))//'GradientDiffusion'//time_str(1:MaskSize)
@@ -865,16 +863,14 @@ PROGRAM VISUALS_MAIN
            IF ( flag_buoyancy .EQ. 1 ) THEN
               IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
                  CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, txc(1,1),txc(1,2),txc(1,3))
-                 CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                      dx,dy,dz, txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
+                 CALL FI_GRADIENT(imax,jmax,kmax, txc(1,1),txc(1,2), txc(1,4), wrk2d,wrk3d)
                  
                  dummy = buoyancy%parameters(inb_scal_array)
                  txc(1:isize_field,2) = txc(1:isize_field,2) *txc(1:isize_field,3) *dummy
                  
               ELSE
                  CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
-                 CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                      dx,dy,dz, s, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
+                 CALL FI_GRADIENT(imax,jmax,kmax, s, txc(1,1),txc(1,2), wrk2d,wrk3d)
 
                  CALL FI_BUOYANCY_SOURCE(buoyancy, isize_field, s, txc(1,1), txc(1,2))
                  

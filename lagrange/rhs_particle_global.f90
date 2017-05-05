@@ -134,8 +134,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags,l_com
 
 
 
-     CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          dx,dy,dz, txc(1,2), txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d) ! square of chi gradient in txc(1,3)
+     CALL FI_GRADIENT(imax,jmax,kmax, txc(1,2), txc(1,3),txc(1,4), wrk2d,wrk3d) ! square of chi gradient in txc(1,3)
 
      DO ij = 1,isize_field
         txc(ij,3) = visc*txc(ij,3)
@@ -253,8 +252,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags,l_com
 
 
 
-     CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          dx,dy,dz, txc(1,2), txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d) ! square of chi gradient in txc(1,3)
+     CALL FI_GRADIENT(imax,jmax,kmax, txc(1,2), txc(1,3),txc(1,4), wrk2d,wrk3d) ! square of chi gradient in txc(1,3)
 
      DO ij = 1,isize_field
         txc(ij,3) = visc*txc(ij,3)

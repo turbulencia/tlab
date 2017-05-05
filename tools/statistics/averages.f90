@@ -561,7 +561,7 @@ PROGRAM AVERAGES
 ! ###################################################################
      CASE ( 3 )
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
-        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,txc(1,1), txc(1,2),  wrk1d,wrk2d,wrk3d)
+        CALL FI_GRADIENT(imax,jmax,kmax, s,txc(1,1), txc(1,2),  wrk2d,wrk3d)
         DO ij = 1,isize_field
            txc(ij,2) = log(txc(ij,1))
         ENDDO
@@ -775,22 +775,19 @@ PROGRAM AVERAGES
 ! ###################################################################
      CASE ( 7 )
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient production...')
-        CALL FI_GRADIENT_PRODUCTION(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, s, u, v, w, txc(1,1), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6),&
-             wrk1d, wrk2d, wrk3d)
+        CALL FI_GRADIENT_PRODUCTION(imax,jmax,kmax, s, u,v,w, &
+             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
 
 ! array u used as auxiliar
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient diffusion...')
-        CALL FI_GRADIENT_DIFFUSION&
-             (iunifx, iunify, iunifz, imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, s, txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), u, &
-             wrk1d, wrk2d, wrk3d)
+        CALL FI_GRADIENT_DIFFUSION(imax,jmax,kmax, s, &
+             txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),u, wrk2d,wrk3d)
         DO ij = 1,isize_field
            txc(ij,2) = diff*txc(ij,2)
         ENDDO
 
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
-        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,txc(1,3), txc(1,4),  wrk1d,wrk2d,wrk3d)
+        CALL FI_GRADIENT(imax,jmax,kmax, s,txc(1,3), txc(1,4), wrk2d,wrk3d)
         DO ij = 1,isize_field
            txc(ij,5) = txc(ij,1)/txc(ij,3)
            txc(ij,4) = log(txc(ij,3))

@@ -398,7 +398,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         ENDIF
      
         CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdx,dsdy,dsdz) ! calculate xi in dsdx
-        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, dsdx,tmp2, tmp1, wrk1d,wrk2d,wrk3d)
+        CALL FI_GRADIENT(imax,jmax,kmax, dsdx,tmp2, tmp1, wrk2d,wrk3d)
         
         dummy=-diff *coefQ
         tmp2 = dsdz *tmp2 *dummy         ! evaporation source
@@ -432,7 +432,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         
      ELSE
         IF ( buoyancy%type .NE. EQNS_EXPLICIT ) THEN
-           CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, s,dsdx, dsdy, wrk1d,wrk2d,wrk3d)
+           CALL FI_GRADIENT(imax,jmax,kmax, s,dsdx, dsdy, wrk2d,wrk3d)
            CALL FI_BUOYANCY_SOURCE(buoyancy, isize_field, s, dsdx, wrk3d) ! dsdx contains gradient
            tmp1 = wrk3d* diff /froude
         ENDIF

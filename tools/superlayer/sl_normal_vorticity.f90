@@ -109,7 +109,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   DO ij = 1,imax*jmax*kmax
      txc(ij,3) = C_2_R*txc(ij,3)
   ENDDO
-  CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, z1,txc(1,2), txc(1,1), wrk1d,wrk2d,wrk3d)
+  CALL FI_GRADIENT(imax,jmax,kmax, z1,txc(1,2), txc(1,1), wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      txc(ij,1) = a(ij)
   ENDDO
@@ -190,14 +190,10 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   ipfield    = ipfield + nfield_loc
   nfield_loc = 2
 
-  CALL FI_GRADIENT_PRODUCTION&
-       (imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, z1, u, v, w, txc(1,1), txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6),&
-       wrk1d, wrk2d, wrk3d)
-  CALL FI_GRADIENT_DIFFUSION&
-       (iunifx, iunify, iunifz, imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, z1, txc(1,2), txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), &
-       wrk1d, wrk2d, wrk3d)
+  CALL FI_GRADIENT_PRODUCTION(imax,jmax,kmax, z1, u,v,w, &
+       txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
+  CALL FI_GRADIENT_DIFFUSION(imax,jmax,kmax, z1, &
+       txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
   diff = visc/schmidt(inb_scal)
   DO ij = 1,imax*jmax*kmax
      txc(ij,2) = txc(ij,2)*diff
