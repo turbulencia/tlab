@@ -661,8 +661,7 @@ PROGRAM AVERAGES
            CALL FI_VORTICITY_BAROCLINIC(imax,jmax,kmax, txc(1,2),txc(1,1), txc(1,4), txc(1,3),txc(1,7), wrk2d,wrk3d)
         ENDIF
 ! result vector in txc1, txc2, txc3
-        CALL FI_CURL(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u,v,w, txc(1,1),txc(1,2),txc(1,3), txc(1,7), wrk1d,wrk2d,wrk3d)
+        CALL FI_CURL(imax,jmax,kmax, u,v,w, txc(1,1),txc(1,2),txc(1,3), txc(1,7), wrk2d,wrk3d)
 ! scalar product, store in txc8
         DO ij = 1,isize_field
            txc(ij,8) = txc(ij,1)*txc(ij,4) + txc(ij,2)*txc(ij,5) + txc(ij,3)*txc(ij,6)
@@ -898,8 +897,7 @@ PROGRAM AVERAGES
 
 ! local direction cosines of vorticity vector
         CALL IO_WRITE_ASCII(lfile,'Computing vorticity vector...')      ! txc7-txc9
-        CALL FI_CURL(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u,v,w, txc(1,7),txc(1,8),txc(1,9), txc(1,10), wrk1d,wrk2d,wrk3d)
+        CALL FI_CURL(imax,jmax,kmax, u,v,w, txc(1,7),txc(1,8),txc(1,9), txc(1,10), wrk2d,wrk3d)
 
         DO ij = 1,isize_field
            dummy = sqrt(txc(ij,7)*txc(ij,7)+txc(ij,8)*txc(ij,8)+txc(ij,9)*txc(ij,9))
@@ -1056,9 +1054,7 @@ PROGRAM AVERAGES
 ! Dissipation
 ! ###################################################################
      CASE ( 15 ) 
-        CALL FI_DISSIPATION(i1,imode_fdm,imax,jmax,kmax,i1bc,j1bc,k1bc, & 
-             area,visc,dx,dy,dz, u,v,w,txc(:,1), & 
-             txc(:,2),txc(:,3),txc(:,4),mean,wrk1d,wrk2d,wrk3d)
+        CALL FI_DISSIPATION(i1,imax,jmax,kmax, u,v,w, txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
 
         data(1)%field => txc(:,1); varname(1) = 'Eps'
 

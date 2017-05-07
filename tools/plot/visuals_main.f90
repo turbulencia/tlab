@@ -693,8 +693,7 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
         IF ( opt_vec(iv) .EQ. iscal_offset+4 ) THEN ! VorticityVector
            CALL IO_WRITE_ASCII(lfile,'Computing vorticity vector...')
-           CALL FI_CURL(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, dx,dy,dz, &
-                   q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
+           CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
            
            plot_file = 'VorticityVector'//time_str(1:MaskSize)
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i3, subdomain, txc(1,1), wrk3d)
@@ -926,11 +925,10 @@ PROGRAM VISUALS_MAIN
 ! ###################################################################
         IF ( opt_vec(iv) .EQ. iscal_offset+15 ) THEN
 
-! turbulent dissipation rate into txc4 because I do not need the energy
+! turbulent dissipation rate
            CALL IO_WRITE_ASCII(lfile,'Computing dissipation rate...')
-           CALL FI_DISSIPATION(i1, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-                area, visc, dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1), &
-                txc(1,2),txc(1,3),txc(1,4), wrk1d, wrk1d(1,6),wrk2d,wrk3d)
+           CALL FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), &
+                txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
            txc(1:isize_field,1)=LOG(txc(1:isize_field,1)+C_SMALL_R)
 
            plot_file = 'LnDissipation'//time_str(1:MaskSize)

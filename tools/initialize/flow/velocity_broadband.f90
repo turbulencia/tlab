@@ -109,8 +109,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
      IF ( kmax_total .EQ. 1 ) wz = 0
      
   ELSE IF ( iflag .EQ. 3 ) THEN ! vorticity given
-     CALL FI_CURL(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          dx,dy,dz, u,v,w, wx,wy,wz, tmp4, wrk1d,wrk2d,wrk3d)
+     CALL FI_CURL(imax,jmax,kmax, u,v,w, wx,wy,wz, tmp4, wrk2d,wrk3d)
      IF ( kmax_total .EQ. 1 ) THEN; wx = C_0_R; wy = C_0_R; ENDIF ! exactly zero
 
   ELSE IF ( iflag .EQ. 4 ) THEN ! velocity potential given
@@ -167,8 +166,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 ! -------------------------------------------------------------------
 ! Calculate rot vort
 ! -------------------------------------------------------------------
-     CALL FI_CURL(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          dx,dy,dz, u,v,w, wx,wy,wz, tmp4, wrk1d,wrk2d,wrk3d)
+     CALL FI_CURL(imax,jmax,kmax, u,v,w, wx,wy,wz, tmp4, wrk2d,wrk3d)
      IF ( kmax_total .EQ. 1 ) THEN; wz = C_0_R; ENDIF ! exactly zero
 
 ! -------------------------------------------------------------------

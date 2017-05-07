@@ -1,53 +1,43 @@
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/09/11 - J.P. Mellado
-!#              Created
-!#
+#include "types.h"
+#include "dns_const.h"
+
 !########################################################################
 !# DESCRIPTION
 !#
-!# Calculate the vorticity as curl v
+!# Calculate the culr of the vector (u,v,w) in Cartesian coordinates
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
 
-SUBROUTINE FI_CURL(imode_fdm, nx,ny,nz, i1bc,j1bc,k1bc, &
-     dx,dy,dz, u,v,w, wx,wy,wz, tmp, wrk1d,wrk2d,wrk3d)
+SUBROUTINE FI_CURL(nx,ny,nz, u,v,w, wx,wy,wz, tmp, wrk2d,wrk3d)
 
+  USE  DNS_GLOBAL, ONLY : g
+  
   IMPLICIT NONE
 
-#include "integers.h"
-
-  TINTEGER imode_fdm, nx,ny,nz, i1bc,j1bc,k1bc
-
-  TREAL, DIMENSION(*)        :: dx,dy,dz
-  TREAL, DIMENSION(nx*ny*nz) :: u,v,w
-  TREAL, DIMENSION(nx*ny*nz) :: wx,wy,wz, tmp
-  TREAL, DIMENSION(*)        :: wrk1d,wrk2d,wrk3d
+  TINTEGER,                   INTENT(IN)    :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u,v,w
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: wx,wy,wz, tmp
+  TREAL, DIMENSION(*),        INTENT(INOUT) :: wrk2d,wrk3d
 
 ! -------------------------------------------------------------------
-
+  TINTEGER bcs(2,2)
+  
 ! ###################################################################
+  bcs = 0
+  
 ! v,x-u,y
-  CALL PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, v, wz,  i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, u, tmp, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), v, wz,  wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), u, tmp, wrk3d, wrk2d,wrk3d)
   wz = wz - tmp
 
 ! u,z-w,x
-  CALL PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, u, wy,  i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_X(imode_fdm, nx,ny,nz, i1bc, dx, w, tmp, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), u, wy,  wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), w, tmp, wrk3d, wrk2d,wrk3d)
   wy = wy - tmp
 
 ! w,y-v,z
-  CALL PARTIAL_Y(imode_fdm, nx,ny,nz, j1bc, dy, w, wx,  i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, nx,ny,nz, k1bc, dz, v, tmp, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), w, wx,  wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), v, tmp, wrk3d, wrk2d,wrk3d)
   wx = wx - tmp
 
   tmp = wx*wx + wy*wy + wz*wz

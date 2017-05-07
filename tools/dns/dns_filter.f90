@@ -72,9 +72,7 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
   ENDIF
 
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. ffltdmp .EQ. 1 .AND. flag_save ) THEN
-     CALL FI_DISSIPATION(i1, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          area, visc, dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1), &
-          txc(1,2),txc(1,3),txc(1,4), wrk1d, wrk1d(1,6), wrk2d, wrk3d)         
+     CALL FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)         
      CALL DNS_AVG_KIN(i1, itime, rtime, imax,jmax,kmax, y, dx,dz, area, q, txc, vaux(vindex(VA_MEAN_WRK)), wrk3d)
   ENDIF
   
@@ -117,9 +115,7 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
 
 ! statistics
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. ffltdmp .EQ. 1 .AND. flag_save ) THEN
-     CALL FI_DISSIPATION(i1, imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-          area, visc, dx,dy,dz, q(1,1),q(1,2),q(1,3), txc(1,1), &
-          txc(1,2),txc(1,3),txc(1,4), wrk1d, wrk1d(1,6), wrk2d, wrk3d)         
+     CALL FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)         
      CALL DNS_AVG_KIN(i2, itime, rtime, imax,jmax,kmax, y, dx,dz, area, q, txc, vaux(vindex(VA_MEAN_WRK)), wrk3d)
   ENDIF
   

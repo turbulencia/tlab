@@ -144,9 +144,8 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
 
   CALL FI_GRADIENT(imax,jmax,kmax, z1,txc(1,2), txc(1,3), wrk2d,wrk3d)
 
-  CALL FI_ISOSURFACE_ANGLE(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-       dx, dy, dz, a, txc(1,2), txc(1,1), &
-       txc(1,3), txc(1,4), txc(1,5), txc(1,6), wrk1d, wrk2d, wrk3d)
+  CALL FI_ISOSURFACE_ANGLE(imax,jmax,kmax, a,txc(1,2), txc(1,1), &
+       txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
 
 !  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,
 ! $     dx, a, txc(1,2), i0, i0, wrk1d, wrk2d, wrk3d)
