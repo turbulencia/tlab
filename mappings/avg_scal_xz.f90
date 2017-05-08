@@ -7,9 +7,9 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : g, area
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, imode_fdm, idiffusion, itransport
+  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, idiffusion, itransport
   USE DNS_GLOBAL, ONLY : itime, rtime
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal, inb_scal_array, i1bc,j1bc,k1bc
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal, inb_scal_array
   USE DNS_GLOBAL, ONLY : buoyancy, radiation, transport
   USE DNS_GLOBAL, ONLY : rbg, sbg, qbg
   USE DNS_GLOBAL, ONLY : rbackground, ribackground
@@ -37,7 +37,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
 ! -----------------------------------------------------------------------
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 10
-  TINTEGER i,j,k
+  TINTEGER i,j,k, bcs
   TREAL diff, SIMPSON_NU, UPPER_THRESHOLD, LOWER_THRESHOLD
   TREAL delta_m, delta_w, delta_s, delta_s_area, delta_s_position, delta_s_value 
   TREAL smin_loc, smax_loc
@@ -59,14 +59,10 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: u,v,w, rho, vis
 
-  TREAL, DIMENSION(:),     POINTER :: y, dx,dy,dz
-
 ! ###################################################################
-! Define pointers
-                   dx => g(1)%jac(:,1)
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
-                   dz => g(3)%jac(:,1)
-
+  bcs = 0
+  
+ ! Define pointers
   u => q(:,:,:,1)
   v => q(:,:,:,2)
   w => q(:,:,:,3)
@@ -221,19 +217,19 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! Preliminary data
 ! #######################################################################
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC )THEN
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, u, dx,dz, fU(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, v, dx,dz, fV(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, w, dx,dz, fW(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, u, g(1)%jac,g(3)%jac, fU(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, v, g(1)%jac,g(3)%jac, fV(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, w, g(1)%jac,g(3)%jac, fW(1), wrk1d(1,1), area)
      rR(:) = C_1_R
      
   ELSE
      dsdx = rho *u
      dsdy = rho *v
      dsdz = rho *w
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, dx,dz, fU(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdy, dx,dz, fV(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdz, dx,dz, fW(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, rho,  dx,dz, rR(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, g(1)%jac,g(3)%jac, fU(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdy, g(1)%jac,g(3)%jac, fV(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdz, g(1)%jac,g(3)%jac, fW(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, rho,  g(1)%jac,g(3)%jac, rR(1), wrk1d(1,1), area)
      fU(:) = fU(:) /rR(:)
      fV(:) = fV(:) /rR(:)
      fW(:) = fW(:) /rR(:)
@@ -244,12 +240,12 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! #######################################################################
 ! Moments
 ! #######################################################################
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, s_local, dx,dz, rS(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, s_local, g(1)%jac,g(3)%jac, rS(1), wrk1d(1,1), area)
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC )THEN
      fS(:) = rS(:)
   ELSE
      wrk3d = rho *u
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, fS(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, fS(1), wrk1d(1,1), area)
      fS(:) = fS(:) /rR(:)
   ENDIF
 
@@ -258,15 +254,15 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      wrk3d(:,j,:) = s_local(:,j,:) - rS(j)
   ENDDO
   tmp1 = wrk3d *wrk3d
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, rS2(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, rS2(1), wrk1d(1,1), area)
   tmp1 = wrk3d *tmp1
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, rS3(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, rS3(1), wrk1d(1,1), area)
   tmp1 = wrk3d *tmp1
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, rS4(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, rS4(1), wrk1d(1,1), area)
   tmp1 = wrk3d *tmp1
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, rS5(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, rS5(1), wrk1d(1,1), area)
   tmp1 = wrk3d *tmp1
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, rS6(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, rS6(1), wrk1d(1,1), area)
 
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC )THEN
      fS2(:) = rS2(:)
@@ -280,15 +276,15 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         wrk3d(:,j,:) = s_local(:,j,:) - fS(j)
      ENDDO
      tmp1 = wrk3d *wrk3d *rho
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, fS2(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, fS2(1), wrk1d(1,1), area)
      tmp1 = wrk3d *tmp1
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, fS3(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, fS3(1), wrk1d(1,1), area)
      tmp1 = wrk3d *tmp1
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, fS4(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, fS4(1), wrk1d(1,1), area)
      tmp1 = wrk3d *tmp1
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, fS5(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, fS5(1), wrk1d(1,1), area)
      tmp1 = wrk3d *tmp1
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, fS6(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, fS6(1), wrk1d(1,1), area)
      fS2(:) = fS2(:) /rR(:)
      fS3(:) = fS3(:) /rR(:)
      fS4(:) = fS4(:) /rR(:)
@@ -309,9 +305,9 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         tmp2(:,j,:) = wrk3d(:,j,:) *(v(:,j,:)-fV(j))
         tmp3(:,j,:) = wrk3d(:,j,:) *(w(:,j,:)-fW(j))
      ENDDO
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, Rsu(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, Rsv(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, dx,dz, Rsw(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, Rsu(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, g(1)%jac,g(3)%jac, Rsv(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, g(1)%jac,g(3)%jac, Rsw(1), wrk1d(1,1), area)
 
   ELSE
      DO j = 1,jmax
@@ -322,9 +318,9 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         tmp2(:,j,:) = wrk3d(:,j,:) *(v(:,j,:)-fV(j))
         tmp3(:,j,:) = wrk3d(:,j,:) *(w(:,j,:)-fW(j))
      ENDDO
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, Rsu(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, Rsv(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, dx,dz, Rsw(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, Rsu(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, g(1)%jac,g(3)%jac, Rsv(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, g(1)%jac,g(3)%jac, Rsw(1), wrk1d(1,1), area)
      Rsu(:) = Rsu(:) /rR(:)
      Rsv(:) = Rsv(:) /rR(:)
      Rsw(:) = Rsw(:) /rR(:)
@@ -342,9 +338,9 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         tmp2(:,j,:) = (rho(:,j,:) - rR(j)) *(s_local(:,j,:) - fS(j))
         tmp3(:,j,:) = (rho(:,j,:) - rR(j)) *(rho(:,j,:) - rR(j))
      ENDDO
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, rSRHO(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, fSRHO(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, dx,dz, rR2(1),   wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, rSRHO(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, g(1)%jac,g(3)%jac, fSRHO(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, g(1)%jac,g(3)%jac, rR2(1),   wrk1d(1,1), area)
 
      DO j = 1,jmax
         IF ( rR2(j) .GT. C_0_R ) THEN
@@ -404,7 +400,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         tmp2 = dsdz *tmp2 *dummy         ! evaporation source
         
         IF ( transport%active(is) .OR. radiation%active(is) ) THEN ! preparing correction terms into dsdz
-           CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, dsdx,tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
+           CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), dsdx,tmp1, wrk3d, wrk2d,wrk3d)
            dsdz = dsdz *tmp1
         ENDIF
         
@@ -445,39 +441,39 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! Calculating averages
   k = ig(2)+5
   IF ( radiation%active(is) ) THEN
-     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, mean2d(1,k), wrk1d(1,1), area)
-     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! correction term or flux
+     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, mean2d(1,k), wrk1d(1,1), area)
+     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, g(1)%jac,g(3)%jac, mean2d(1,k), wrk1d(1,1), area) ! correction term or flux
   ENDIF
   IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR .OR. imixture .EQ. MIXT_TYPE_AIRWATER ) THEN ! evaporation
-     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, mean2d(1,k), wrk1d(1,1), area)
+     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, g(1)%jac,g(3)%jac, mean2d(1,k), wrk1d(1,1), area)
   ENDIF
   IF ( transport%active(is) ) THEN
-     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, dx,dz, mean2d(1,k), wrk1d(1,1), area)
-     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdz, dx,dz, mean2d(1,k), wrk1d(1,1), area) ! correction term or flux
+     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, g(1)%jac,g(3)%jac, mean2d(1,k), wrk1d(1,1), area)
+     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdz, g(1)%jac,g(3)%jac, mean2d(1,k), wrk1d(1,1), area) ! correction term or flux
   ENDIF
 
   wrk3d = tmp1 + tmp2 + tmp3 ! total
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, rQ(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, rQ(1), wrk1d(1,1), area)
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC )THEN
      fQ(:) = rQ(:)
 
      DO j = 1,jmax
         wrk3d(:,j,:) =(s_local(:,j,:) - rS(j)) *wrk3d(:,j,:)
      ENDDO
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Qss(1), wrk1d(1,1), area) ! transport equation
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Qss(1), wrk1d(1,1), area) ! transport equation
      Qss(:) = Qss(:) *C_2_R
 
   ELSE     
      DO j = 1,jmax
         wrk3d(:,j,:) = wrk3d(:,j,:) *rho(:,j,:)
      ENDDO
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, fQ(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, fQ(1), wrk1d(1,1), area)
      fQ(:) = fQ(:) /rR(:)
 
      DO j = 1,jmax
         wrk3d(:,j,:) =(s_local(:,j,:) - fS(j)) *wrk3d(:,j,:)
      ENDDO
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Qss(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Qss(1), wrk1d(1,1), area)
      Qss(:) = Qss(:) *C_2_R /rR(:)
 
   ENDIF
@@ -485,12 +481,12 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! #######################################################################
 ! Derivative terms
 ! #######################################################################
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s_local, dsdx, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s_local, dsdy, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s_local, dsdz, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s_local, dsdx,    wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s_local, dsdy,    wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s_local, dsdz,    wrk3d, wrk2d,wrk3d)
 
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1,     j1bc, dy, rS(1),   rS_y(1),i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1,     j1bc, dy, fS(1),   fS_y(1),i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1,     bcs, g(2), rS(1),   rS_y(1), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1,     bcs, g(2), fS(1),   fS_y(1), wrk3d, wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
 ! Derivatives Fluctuations
@@ -499,27 +495,27 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      tmp2(:,j,:) =(dsdy(:,j,:) - rS_y(j)) *(dsdy(:,j,:) - rS_y(j))
   ENDDO
   tmp3 = dsdz *dsdz
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, var_x(1), wrk1d(1,1), area)
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, var_y(1), wrk1d(1,1), area)
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, dx,dz, var_z(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, var_x(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, g(1)%jac,g(3)%jac, var_y(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, g(1)%jac,g(3)%jac, var_z(1), wrk1d(1,1), area)
 
   tmp1 = tmp1 *dsdx
   DO j = 1,jmax
      tmp2(:,j,:) =  tmp2(:,j,:) *(dsdy(:,j,:) - rS_y(j))
   ENDDO
   tmp3 = tmp3 *dsdz
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, skew_x(1), wrk1d(1,1), area)
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, skew_y(1), wrk1d(1,1), area)
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, dx,dz, skew_z(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, skew_x(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, g(1)%jac,g(3)%jac, skew_y(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, g(1)%jac,g(3)%jac, skew_z(1), wrk1d(1,1), area)
   
   tmp1 = tmp1 *dsdx
   DO j = 1,jmax
      tmp2(:,j,:) =  tmp2(:,j,:) *(dsdy(:,j,:) - rS_y(j))
   ENDDO
   tmp3 = tmp3 *dsdz
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, flat_x(1), wrk1d(1,1), area)
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, flat_y(1), wrk1d(1,1), area)
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, dx,dz, flat_z(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, flat_x(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, g(1)%jac,g(3)%jac, flat_y(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, g(1)%jac,g(3)%jac, flat_z(1), wrk1d(1,1), area)
 
   DO j = 1,jmax
      IF ( var_x(j) .GT. C_SMALL_R ) THEN
@@ -551,13 +547,13 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      tmp1 = vis *dsdx
      tmp2 = vis *dsdy
      tmp3 = vis *dsdz
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, dx,dz, F1(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, dx,dz, F2(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, dx,dz, F3(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, F1(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, g(1)%jac,g(3)%jac, F2(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, g(1)%jac,g(3)%jac, F3(1), wrk1d(1,1), area)
   ELSE
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, dx,dz, F1(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdy, dx,dz, F2(1), wrk1d(1,1), area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdz, dx,dz, F3(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, g(1)%jac,g(3)%jac, F1(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdy, g(1)%jac,g(3)%jac, F2(1), wrk1d(1,1), area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdz, g(1)%jac,g(3)%jac, F3(1), wrk1d(1,1), area)
   ENDIF
 
   IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
@@ -573,7 +569,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
                      + (dsdz(:,j,:) - F3(j)) * dsdz(:,j,:)
      ENDDO
   ENDIF
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Ess(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Ess(1), wrk1d(1,1), area)
   Ess(:) = Ess(:) *C_2_R *diff /rR(:)
 
 ! -----------------------------------------------------------------------
@@ -598,11 +594,11 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      ENDIF
      
   ENDIF
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1,  dx,dz, Tssy(1), wrk1d(1,1), area)
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, Dss(1),  wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1,  g(1)%jac,g(3)%jac, Tssy(1), wrk1d(1,1), area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Dss(1),  wrk1d(1,1), area)
 
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, Tssy(1), Tssy_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, F2(1), F2_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Tssy(1), Tssy_y(1), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), F2(1),   F2_y(1),   wrk3d, wrk2d,wrk3d)
   Dss(:) = Dss(:) *F2_y(j) *C_2_R *diff
 
 ! -----------------------------------------------------------------------
@@ -618,18 +614,18 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! Based on delta_u
 ! -----------------------------------------------------------------------
      IF ( ABS(qbg(1)%delta) .GT. C_SMALL_R ) THEN
-        CALL PARTIAL_Y(imode_fdm, i1,jmax,i1, j1bc, dy, fU(1), fU_y(1), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fU(1), fU_y(1), wrk3d, wrk2d,wrk3d)
         delta_w = ABS(qbg(1)%delta)/MAXVAL(ABS(fU_y(1:jmax)))
 
         DO j=1, jmax
            wrk1d(j,1) = rR(j)*(C_025_R - (fU(j)/qbg(1)%delta)**2)
         ENDDO
-        delta_m = SIMPSON_NU(jmax, wrk1d, y)/rbg%mean
+        delta_m = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)/rbg%mean
 
         DO j=1, jmax
            wrk1d(j,1) = ( diff*F2(j) -  rR(j)*Rsv(j) )*fS_y(j)
         ENDDO
-        delta_s_area = SIMPSON_NU(jmax, wrk1d, y)*C_2_R/(rbg%mean*qbg(1)%delta)
+        delta_s_area = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)*C_2_R/(rbg%mean*qbg(1)%delta)
 
      ELSE
         delta_m      = C_1_R
@@ -643,9 +639,9 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! -----------------------------------------------------------------------
      IF ( ABS(rbg%delta) .GT. C_SMALL_R ) THEN
         dummy = rbg%mean + (C_05_R-C_1EM2_R)*rbg%delta
-        delta_hb01 = LOWER_THRESHOLD(jmax, dummy, rR(1), y)
+        delta_hb01 = LOWER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
         dummy = rbg%mean - (C_05_R-C_1EM2_R)*rbg%delta
-        delta_ht01 = UPPER_THRESHOLD(jmax, dummy, rR(1), y)
+        delta_ht01 = UPPER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
         delta_h01 = delta_ht01 - delta_hb01
 
      ELSE
@@ -660,32 +656,32 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         jloc_max = MAXLOC(ABS(fS_y(1:jmax))); j = jloc_max(1)
 
         wrk1d(1:jmax,1) = fS(jmax) - fS(1:jmax)
-        delta_s_area    = SIMPSON_NU(jmax-j+1, wrk1d(j,1), y(j)) / ABS(sbg(is)%delta)
+        delta_s_area    = SIMPSON_NU(jmax-j+1, wrk1d(j,1), g(2)%nodes(j)) / ABS(sbg(is)%delta)
  
         delta_s          = ABS(sbg(is)%delta)/ABS(fS_y(j))
-        delta_s_position = y(j)
+        delta_s_position = g(2)%nodes(j)
         delta_s_value    = fS(j)
 
 ! Thickness
         dummy      = sbg(is)%mean + (C_05_R-C_1EM3_R) *sbg(is)%delta
-        delta_sb01 = LOWER_THRESHOLD(jmax, dummy, rS(1), y)
+        delta_sb01 = LOWER_THRESHOLD(jmax, dummy, rS(1), g(2)%nodes)
         dummy      = sbg(is)%mean - (C_05_R-C_1EM3_R) *sbg(is)%delta
-        delta_st01 = UPPER_THRESHOLD(jmax, dummy, rS(1), y)
+        delta_st01 = UPPER_THRESHOLD(jmax, dummy, rS(1), g(2)%nodes)
         
-        delta_sb01 =              (y(1) + sbg(is)%ymean *g(2)%scale) - delta_sb01
-        delta_st01 = delta_st01 - (y(1) + sbg(is)%ymean *g(2)%scale)
+        delta_sb01 =              (g(2)%nodes(1) + sbg(is)%ymean *g(2)%scale) - delta_sb01
+        delta_st01 = delta_st01 - (g(2)%nodes(1) + sbg(is)%ymean *g(2)%scale)
         delta_s01  = delta_st01 + delta_sb01
 
 !  Mixing, Youngs' definition
         smin_loc = sbg(is)%mean - C_05_R*ABS(sbg(is)%delta)
         smax_loc = sbg(is)%mean + C_05_R*ABS(sbg(is)%delta)
         wrk3d = (s_local - smin_loc) *(smax_loc -s_local)
-        CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d, wrk1d(1,2), area)
-        mixing1 = SIMPSON_NU(jmax, wrk1d, y)
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, wrk1d, wrk1d(1,2), area)
+        mixing1 = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
         DO j = 1,jmax
            wrk1d(j,1)=(rS(j)-smin_loc)*(smax_loc-rS(j))
         ENDDO
-        mixing1 = mixing1/SIMPSON_NU(jmax, wrk1d, y)
+        mixing1 = mixing1/SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
 
 ! Mixing, Cook's definition
         smin_loc = sbg(is)%mean - C_05_R*ABS(sbg(is)%delta)
@@ -695,12 +691,12 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
               wrk3d(i,1,k) = MIN(s_local(i,1,k)-smin_loc,smax_loc-s_local(i,1,k))
            ENDDO
         ENDDO
-        CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, dx,dz, wrk1d, wrk1d(1,2), area)
-        mixing2 = SIMPSON_NU(jmax, wrk1d, y)
+        CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, wrk1d, wrk1d(1,2), area)
+        mixing2 = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
         DO j = 1,jmax
            wrk1d(j,1) = MIN(rS(j)-smin_loc,smax_loc-rS(j))
         ENDDO
-        mixing2 = mixing2/SIMPSON_NU(jmax, wrk1d, y)
+        mixing2 = mixing2/SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
 
      ELSE
         delta_sb01 = C_1_R
@@ -714,11 +710,11 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
 ! Independent variables
      DO j = 1,jmax            
-        VAUXPRE1 =  y(j)
-        VAUXPRE2 = (y(j)-g(2)%scale *qbg(1)%ymean  - y(1))/delta_m
-        VAUXPRE3 = (y(j)-g(2)%scale *qbg(1)%ymean  - y(1))/delta_w
-        VAUXPRE4 = (y(j)-g(2)%scale *sbg(is)%ymean - y(1))/delta_s01
-        VAUXPRE5 = (y(j)-g(2)%scale *rbg%ymean     - y(1))/delta_h01
+        VAUXPRE1 =  g(2)%nodes(j)
+        VAUXPRE2 = (g(2)%nodes(j)-g(2)%scale *qbg(1)%ymean  - g(2)%nodes(1))/delta_m
+        VAUXPRE3 = (g(2)%nodes(j)-g(2)%scale *qbg(1)%ymean  - g(2)%nodes(1))/delta_w
+        VAUXPRE4 = (g(2)%nodes(j)-g(2)%scale *sbg(is)%ymean - g(2)%nodes(1))/delta_s01
+        VAUXPRE5 = (g(2)%nodes(j)-g(2)%scale *rbg%ymean     - g(2)%nodes(1))/delta_h01
      ENDDO
      
 ! -----------------------------------------------------------------------
@@ -726,7 +722,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! -----------------------------------------------------------------------
   ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN ! Not developed yet
      DO j = 1,jmax            
-        VAUXPRE1 = y(j)
+        VAUXPRE1 = g(2)%nodes(j)
      ENDDO
      
   ENDIF

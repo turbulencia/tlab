@@ -20,8 +20,7 @@
 !# Question (do it in rhs_flow???)-> we might need 3 extra auxiliary arrays
 !#
 !########################################################################
-SUBROUTINE FI_TRANS_VELOCITY(&
-     dx,dy,dz, u,v,w, h1,h2,h3, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d)
+SUBROUTINE FI_TRANS_VELOCITY(u,v,w, h1,h2,h3, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk2d,wrk3d)
   
 #ifdef USE_OPENMP  
   USE OMP_LIB
@@ -32,24 +31,24 @@ SUBROUTINE FI_TRANS_VELOCITY(&
 
 #include "integers.h"
 
-  TREAL, DIMENSION(*)           :: dx, dy, dz
   TREAL, DIMENSION(isize_field) :: u, v, w
   TREAL, DIMENSION(isize_field) :: h1, h2, h3
   TREAL, DIMENSION(isize_field) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, wrk3d 
-  TREAL, DIMENSION(*)           :: wrk1d
   TREAL, DIMENSION(imax,kmax,2) :: wrk2d
 
 ! -----------------------------------------------------------------------
   TREAL                         :: dummy_s, dummy_g
-  INTEGER                       :: ij
+  INTEGER                       :: ij, bcs(2,2)
 
 ! #######################################################################
+  bcs = 0
+  
 !UX COMPONENT
 
 !Velocity derivatives
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, u, tmp4, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, u, tmp5, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, u, tmp6, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), u, tmp5, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), u, tmp6, wrk3d, wrk2d,wrk3d)
 
 !$omp parallel default( shared ) private( ij, dummy_s, dummy_g )
   dummy_s = stokes
@@ -72,9 +71,9 @@ SUBROUTINE FI_TRANS_VELOCITY(&
 ! #######################################################################
 !UY COMPONENT
 !Velocity derivatives
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, v, tmp4, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, v, tmp5, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, v, tmp6, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp5, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), v, tmp6, wrk3d, wrk2d,wrk3d)
 
 !$omp parallel default( shared ) private( ij, dummy_s, dummy_g )
   dummy_s = stokes
@@ -97,9 +96,9 @@ SUBROUTINE FI_TRANS_VELOCITY(&
 ! #######################################################################
 !UZ COMPONENT
 !Velocity derivatives
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, w, tmp4, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, w, tmp5, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, w, tmp6, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), w, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), w, tmp5, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp6, wrk3d, wrk2d,wrk3d)
 
 !$omp parallel default( shared ) private( ij, dummy_s, dummy_g )
   dummy_s = stokes

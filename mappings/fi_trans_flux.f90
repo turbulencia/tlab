@@ -20,10 +20,9 @@
 SUBROUTINE FI_TRANS_FLUX(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d,wrk3d)
 
   USE DNS_TYPES,  ONLY : term_dt
+  USE DNS_GLOBAL, ONLY : g
   
   IMPLICIT NONE
-
-#include "integers.h"
 
   TYPE(term_dt),                INTENT(IN)    :: transport
   TINTEGER,                     INTENT(IN)    :: nx,ny,nz, flag_grad
@@ -35,18 +34,17 @@ SUBROUTINE FI_TRANS_FLUX(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d
 
 ! -----------------------------------------------------------------------
   TREAL dummy, exponent
-  TINTEGER is_ref
+  TINTEGER is_ref, bcs
   
-  TINTEGER idummy   ! To use old wrappers to calculate derivatives
-  TREAL    rdummy(1)
-
 !########################################################################
+  bcs = 0
+  
   exponent = transport%auxiliar(1)
   is_ref   = transport%scalar(1)
 
   IF     ( transport%type .EQ. EQNS_TRANS_AIRWATERSIMPLIFIED ) THEN
      IF ( flag_grad .EQ. 1 ) THEN
-        CALL PARTIAL_Y(idummy, nx,ny,nz, idummy,rdummy, s(1,is_ref), tmp, i0,i0, rdummy,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), s(1,is_ref), tmp, wrk3d, wrk2d,wrk3d)
         IF ( exponent .GT. C_0_R ) tmp(:,1) = tmp(:,1) *(s(:,is_ref)**exponent)
      ENDIF
 
@@ -61,7 +59,7 @@ SUBROUTINE FI_TRANS_FLUX(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d
      ELSE
         tmp(:,1) = (transport%parameters(is) - transport%parameters(5)*s(:,is)) * s(:,is_ref)
      ENDIF
-     CALL PARTIAL_Y(idummy, nx,ny,nz, idummy,rdummy, tmp(1,1), trans(1,1), i0,i0, rdummy,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), tmp(1,1), trans(1,1), wrk3d, wrk2d,wrk3d)
 
   ENDIF
   

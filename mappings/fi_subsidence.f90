@@ -18,18 +18,17 @@ SUBROUTINE FI_SUBSIDENCE(subsidence, nx,ny,nz, s, source, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(*),          INTENT(INOUT) :: wrk2d, wrk3d
 
 ! -----------------------------------------------------------------------
-  TINTEGER ij, i, jk, is
+  TINTEGER ij, i, jk, is, bcs(2,2)
   TREAL W_LOC
 
-  TINTEGER idummy   ! To use old wrappers to calculate derivatives
-  TREAL    dummy(1)
-
 !########################################################################
+  bcs = 0
+  
   SELECT CASE( subsidence%type )
 
   CASE( EQNS_SUB_CONSTANT_LOCAL )
      
-     CALL PARTIAL_Y(idummy, nx,ny,nz, idummy, dummy, s, source, i0,i0, dummy,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), s, source, wrk3d, wrk2d,wrk3d)
 
      ij = 0
      DO jk = 0,ny*nz-1
@@ -49,7 +48,7 @@ SUBROUTINE FI_SUBSIDENCE(subsidence, nx,ny,nz, s, source, wrk1d,wrk2d,wrk3d)
 
      CALL AVG1V2D_V(nx,ny,nz, i1, s, wrk1d(1,1), wrk1d(1,2)) ! Calculate averaged scalar into wrk1d(1,1)
 
-     CALL PARTIAL_Y(idummy, i1,ny,i1, idummy, dummy, wrk1d(1,1), wrk1d(1,2), i0,i0, dummy,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, i1,ny,i1, bcs, g(2), wrk1d(1,1), wrk1d(1,2), wrk3d, wrk2d,wrk3d)
 
      ij = 0
      DO jk = 0,ny*nz-1

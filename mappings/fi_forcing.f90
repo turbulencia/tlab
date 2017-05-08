@@ -1,8 +1,6 @@
 #include "types.h"
+#include "dns_const.h"
 
-!########################################################################
-!# Tool/Library
-!#
 !########################################################################
 !# HISTORY
 !#
@@ -52,26 +50,26 @@ END SUBROUTINE FI_FORCING_0
 !########################################################################
 ! Velocity field with no-slip
 !########################################################################
-SUBROUTINE FI_FORCING_1(iunifx,iunify, imode_fdm, imax,jmax,kmax, i1bc,j1bc, &
-     time,visc, h1,h2, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
+SUBROUTINE FI_FORCING_1(imax,jmax,kmax, time,visc, h1,h2, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : g
+
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TINTEGER iunifx,iunify, imode_fdm, imax,jmax,kmax, i1bc,j1bc
+  TINTEGER imax,jmax,kmax
   TREAL time,visc
 
   TREAL, DIMENSION(imax*jmax*kmax) :: h1,h2
   TREAL, DIMENSION(imax*jmax*kmax) :: tmp1,tmp2,tmp3,tmp4
-  TREAL                            :: wrk1d(*), wrk2d(*), wrk3d(*)
+  TREAL                            :: wrk2d(*), wrk3d(*)
 
 ! -----------------------------------------------------------------------
-  TINTEGER ij, i, j
+  TINTEGER ij, i, j, bcs(2,2)
   TREAL pi_loc
 
-  TREAL dx(1), dy(1) ! To use old wrappers to calculate derivatives
+  bcs = 0
 
   pi_loc     = ACOS(-C_1_R)
 
@@ -96,27 +94,23 @@ SUBROUTINE FI_FORCING_1(iunifx,iunify, imode_fdm, imax,jmax,kmax, i1bc,j1bc, &
   ENDDO; ENDDO
 
 ! Diffusion and convection terms in Ox momentum eqn
-  CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, tmp1, tmp4, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), tmp1, tmp4,  tmp3, wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      h1(ij) = h1(ij) - visc*( tmp4(ij) ) + ( tmp3(ij)*tmp2(ij) )
   ENDDO
 
-  CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, tmp1, tmp4, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp4,  tmp3, wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      h1(ij) = h1(ij) - visc*( tmp4(ij) ) + ( tmp3(ij)*tmp1(ij) )
   ENDDO
 
 ! Diffusion and convection terms in Oy momentum eqn
-  CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, tmp2, tmp4, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), tmp2, tmp4,  tmp3, wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      h2(ij) = h2(ij) - visc*( tmp4(ij) ) + ( tmp3(ij)*tmp2(ij) )
   ENDDO
 
-  CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, tmp2, tmp4, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), tmp2, tmp4,  tmp3, wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      h2(ij) = h2(ij) - visc*( tmp4(ij) ) + ( tmp3(ij)*tmp1(ij) )
   ENDDO
@@ -130,8 +124,8 @@ SUBROUTINE FI_FORCING_1(iunifx,iunify, imode_fdm, imax,jmax,kmax, i1bc,j1bc, &
   ENDDO; ENDDO
 
 ! Pressure gradient
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, tmp1, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, tmp1, tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp1, tmp3, wrk3d, wrk2d,wrk3d)
 
   DO ij = 1,imax*jmax*kmax
      h1(ij) = h1(ij) + tmp2(ij)

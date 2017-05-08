@@ -29,7 +29,7 @@
 !# No termodynamic equilibrium is assumed so that we have a condensation term 
 !# (with 1 Damkohler number)
 !# All three scalar equations are done at the same time in order to avoid 
-! #calcualtion repetitions.
+!# calcualtion repetitions.
 !# (Contrary to the rest of the code where a loop over the different rhs_scal are done)
 !# Inertia (preferential condensaion), sedimentation and 
 !# differential diffusivity of the liquid are included.(2 Schmidts number are needed)
@@ -326,7 +326,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT&
 ! #######################################################################
 
 !NEgative Drift velocity DuDT -g strored in tmp4, tmp5, tmp6
-     CALL FI_TRANS_VELOCITY(dx,dy,dz, u,v,w, h1,h2,h3, tmp4,tmp5,tmp6,tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d) 
+     CALL FI_TRANS_VELOCITY(u,v,w, h1,h2,h3, tmp4,tmp5,tmp6,tmp1,tmp2,tmp3, wrk2d,wrk3d) 
 
 
 ! **************************
