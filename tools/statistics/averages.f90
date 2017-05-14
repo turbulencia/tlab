@@ -54,7 +54,7 @@ PROGRAM AVERAGES
 
   TINTEGER opt_main, opt_block, opt_order, opt_bins, opt_bcs, flag_buoyancy
   TINTEGER opt_cond, opt_cond_scal, opt_threshold
-  TINTEGER nfield, isize_wrk3d, is, ij, n
+  TINTEGER nfield, isize_wrk3d, is, ij, n, bcs(2,2)
   TREAL diff, umin, umax, dummy
   TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3
   TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
@@ -84,10 +84,10 @@ PROGRAM AVERAGES
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u, v, w
 
-  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
+!########################################################################
+!########################################################################
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-!########################################################################
-!########################################################################
   inifile = 'dns.ini'
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
@@ -642,10 +642,10 @@ PROGRAM AVERAGES
                  s(ij,1) = wrk3d(ij)*buoyancy%vector(2)
               ENDDO
               
-              CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, txc(1,4), i0,i0, wrk1d,wrk2d,wrk3d)
+              CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s, txc(1,4), wrk3d, wrk2d,wrk3d)
               txc(:,4) =-txc(:,4)
               txc(:,5) = C_0_R
-              CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, txc(1,6), i0,i0, wrk1d,wrk2d,wrk3d)
+              CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s, txc(1,6), wrk3d, wrk2d,wrk3d)
            ENDIF
 
         ELSE
@@ -832,9 +832,9 @@ PROGRAM AVERAGES
 ! Scalar gradient components
 ! ###################################################################
      CASE ( 9 )
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s, txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s, txc(1,1), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s, txc(1,2), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s, txc(1,3), wrk3d, wrk2d,wrk3d)
 ! Angles; s array is overwritten to save space
         DO ij = 1,isize_field
            dummy = txc(ij,2)/sqrt(txc(ij,1)*txc(ij,1)+txc(ij,2)*txc(ij,2)+txc(ij,3)*txc(ij,3))
@@ -915,9 +915,9 @@ PROGRAM AVERAGES
 
 ! local direction cosines of scalar gradient vector
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient vector...') ! txc7-txc9
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, txc(1,7), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s, txc(1,8), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, txc(1,9), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s, txc(1,7), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s, txc(1,8), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s, txc(1,9), wrk3d, wrk2d,wrk3d)
 
         DO ij = 1,isize_field
            dummy = sqrt(txc(ij,7)*txc(ij,7)+txc(ij,8)*txc(ij,8)+txc(ij,9)*txc(ij,9))
@@ -948,9 +948,9 @@ PROGRAM AVERAGES
 ! longitudinal velocity derivatives
 ! ###################################################################
      CASE ( 12 )
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, u, txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, v, txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, w, txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, txc(1,1), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, txc(1,2), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, txc(1,3), wrk3d, wrk2d,wrk3d)
 
         data(1)%field => txc(:,1); varname(1) = 'dudx'
         data(2)%field => txc(:,2); varname(2) = 'dvdy'
@@ -970,18 +970,18 @@ PROGRAM AVERAGES
 ! Momentum vertical transport
 ! ###################################################################
      CASE ( 13 )
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, u, txc(:,1), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, v, txc(:,2), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), u, txc(:,1), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v, txc(:,2), wrk3d, wrk2d,wrk3d)
         txc(:,1) = ( txc(:,1) + txc(:,2) ) *visc
 
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, v, txc(:,2), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, txc(:,2), wrk3d, wrk2d,wrk3d)
         txc(:,2) =   txc(:,2) *C_2_R       *visc
 
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, w, txc(:,3), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, v, txc(:,4), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), w, txc(:,3), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), v, txc(:,4), wrk3d, wrk2d,wrk3d)
         txc(:,3) = ( txc(:,3) + txc(:,4) ) *visc
 
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s(:,1), txc(:,4), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(:,1), txc(:,4), wrk3d, wrk2d,wrk3d)
         txc(:,4) =   txc(:,4) *diff
 
         is = 0

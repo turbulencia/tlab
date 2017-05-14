@@ -34,7 +34,7 @@ SUBROUTINE FI_TRANS_FLUX(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d
 
 ! -----------------------------------------------------------------------
   TREAL dummy, exponent
-  TINTEGER is_ref, bcs
+  TINTEGER is_ref, bcs(2,2)
   
 !########################################################################
   bcs = 0

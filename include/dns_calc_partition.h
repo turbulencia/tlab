@@ -3,13 +3,11 @@
 
      ELSE IF ( opt_cond .EQ. 3 ) THEN ! Based on vorticity
         CALL IO_WRITE_ASCII(lfile,'Calculating vorticity...')
-        CALL FI_VORTICITY(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, q(:,1),q(:,2),q(:,3), txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
+        CALL FI_VORTICITY(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3), wrk2d,wrk3d)
 
      ELSE IF ( opt_cond .EQ. 4 ) THEN ! Based on scalar gradient
         CALL IO_WRITE_ASCII(lfile,'Calculating scalar gradient...')
-        CALL FI_GRADIENT(imode_fdm, imax,jmax,kmax, i1bc,j1bc,k1bc, &
-             dx,dy,dz, s, txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
+        CALL FI_GRADIENT(imax,jmax,kmax, s, txc(1,1),txc(1,2),txc(1,3), wrk2d,wrk3d)
 
      ELSE IF ( opt_cond .EQ. 5 ) THEN ! Based on vertical velocity
         txc(1:isize_field,1) = q(1:isize_field,2)

@@ -45,7 +45,7 @@ PROGRAM PDFS
 
   TINTEGER opt_main, opt_block, opt_bins, opt_bcs, opt_bins_2
   TINTEGER opt_cond, opt_cond_scal, opt_threshold
-  TINTEGER nfield, isize_wrk3d, ij, is, n
+  TINTEGER nfield, isize_wrk3d, ij, is, n, bcs(2,2)
   TREAL diff, umin, umax, dummy
   TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3
   TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
@@ -71,10 +71,10 @@ PROGRAM PDFS
   INTEGER icount
 #endif
 
-  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
+!########################################################################
+!########################################################################
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-!########################################################################
-!########################################################################
   inifile = 'dns.ini'
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
@@ -635,8 +635,7 @@ PROGRAM PDFS
            s(ij,1) = SQRT(txc(ij,1))
         ENDDO
 ! txc2 contains 2s^2
-        CALL FI_STRAIN(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,2), txc(1,3), txc(1,4), wrk1d, wrk2d, wrk3d)
+        CALL FI_STRAIN(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,2), txc(1,3), txc(1,4), wrk2d,wrk3d)
         DO ij = 1,imax*jmax*kmax
            txc(ij,2) = C_2_R*txc(ij,2)
         ENDDO
@@ -672,9 +671,9 @@ PROGRAM PDFS
 ! Scalar gradient components
 ! ###################################################################
      CASE ( 12 )
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s, txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s, txc(1,1), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s, txc(1,2), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s, txc(1,3), wrk3d, wrk2d,wrk3d)
 ! Angles; s array is overwritten to save space
         DO ij = 1,imax*jmax*kmax
            dummy = txc(ij,2)/sqrt(txc(ij,1)*txc(ij,1)+txc(ij,2)*txc(ij,2)+txc(ij,3)*txc(ij,3))
@@ -741,11 +740,10 @@ PROGRAM PDFS
 ! ###################################################################
      CASE ( 14 )
         CALL IO_WRITE_ASCII(lfile,'Computing rate-of-strain tensor...') ! txc1-txc6
-        CALL FI_STRAIN_TENSOR(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,1), wrk1d, wrk2d, wrk3d)
+        CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), wrk2d,wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing eigenvalues...') ! txc6-txc9
-        CALL FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1,1), txc(1,7))
+        CALL FI_TENSOR_EIGENVALUES(imax,jmax,kmax, txc(1,1), txc(1,7))
 
         data(1)%field => txc(:,7); varname(1) = 'Lambda1'; ibc(1) = 2
         data(2)%field => txc(:,8); varname(2) = 'Lambda2'; ibc(2) = 2
@@ -767,14 +765,13 @@ PROGRAM PDFS
 ! ###################################################################
      CASE ( 15 )
         CALL IO_WRITE_ASCII(lfile,'Computing rate-of-strain tensor...') ! txc1-txc6
-        CALL FI_STRAIN_TENSOR(imode_fdm, imax, jmax, kmax, i1bc, j1bc, k1bc, &
-             dx, dy, dz, q(1,1),q(1,2),q(1,3), txc(1,1), wrk1d, wrk2d, wrk3d)
+        CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), wrk2d,wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing eigenvalues...') ! txc7-txc9
-        CALL FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1,1), txc(1,7))
+        CALL FI_TENSOR_EIGENVALUES(imax,jmax,kmax, txc(1,1), txc(1,7))
 
         CALL IO_WRITE_ASCII(lfile,'Computing eigenframe...') ! txc1-txc6
-        CALL FI_TENSOR_EIGENFRAME(imax, jmax, kmax, txc(1,1), txc(1,7))
+        CALL FI_TENSOR_EIGENFRAME(imax,jmax,kmax,  txc(1,1), txc(1,7))
 
 ! local direction cosines of vorticity vector
         CALL IO_WRITE_ASCII(lfile,'Computing vorticity vector...') ! txc7-txc9
@@ -796,9 +793,9 @@ PROGRAM PDFS
 
 ! local direction cosines of scalar gradient vector
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient vector...') ! txc7-txc9
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s, txc(1,7), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s, txc(1,8), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s, txc(1,9), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s, txc(1,7), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s, txc(1,8), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s, txc(1,9), wrk3d, wrk2d,wrk3d)
 
         DO ij = 1,imax*jmax*kmax
            dummy = sqrt(txc(ij,7)*txc(ij,7)+txc(ij,8)*txc(ij,8)+txc(ij,9)*txc(ij,9))
@@ -830,9 +827,9 @@ PROGRAM PDFS
 ! Scalar gradient components
 ! ###################################################################
      CASE ( 16 )
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, q(1,1), txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, q(1,2), txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, q(1,3), txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), q(1,1), txc(1,1), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), q(1,2), txc(1,2), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), q(1,3), txc(1,3), wrk3d, wrk2d,wrk3d)
 
         data(1)%field => txc(:,1); varname(1) = 'dudx'
         data(2)%field => txc(:,2); varname(2) = 'dvdy'

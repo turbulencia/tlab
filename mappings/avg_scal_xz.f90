@@ -37,7 +37,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
 ! -----------------------------------------------------------------------
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 10
-  TINTEGER i,j,k, bcs
+  TINTEGER i,j,k, bcs(2,2)
   TREAL diff, SIMPSON_NU, UPPER_THRESHOLD, LOWER_THRESHOLD
   TREAL delta_m, delta_w, delta_s, delta_s_area, delta_s_position, delta_s_value 
   TREAL smin_loc, smax_loc
@@ -60,7 +60,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   TREAL, DIMENSION(:,:,:), POINTER :: u,v,w, rho, vis
 
 ! ###################################################################
-  bcs = 0
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
   
  ! Define pointers
   u => q(:,:,:,1)
