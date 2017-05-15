@@ -1,57 +1,45 @@
 #include "types.h"
   
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
 !# DESCRIPTION
 !#
+!# Calculating RHS forcings at the inflow plane in spatially evolving cases
+!#
 !########################################################################
-SUBROUTINE BOUNDARY_INFLOW_BROADBAND&
-     (etime, inf_rhs, x_inf, y_inf, z_inf, q_inf,z1_inf, txc, wrk1d, wrk2d, wrk3d)
+SUBROUTINE BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, q_inf,s_inf, txc, wrk2d,wrk3d)
   
-  USE DNS_GLOBAL
-  USE DNS_LOCAL, ONLY : ifrc_mode, ifrc_ifield, frc_adapt
-  USE DNS_LOCAL, ONLY : imax_inf,jmax_inf,kmax_inf
-  USE DNS_LOCAL, ONLY : scalex_inf
+  USE DNS_GLOBAL, ONLY : jmax,kmax, inb_flow, inb_scal
+  USE DNS_GLOBAL, ONLY : icalc_scal
+  USE DNS_GLOBAL, ONLY : qbg
+  USE DNS_LOCAL, ONLY  : ifrc_mode, ifrc_ifield, frc_adapt
+  USE DNS_LOCAL, ONLY  : g_inf
 
   IMPLICIT NONE
   
   TREAL etime
-  TREAL inf_rhs(jmax,kmax,*) 
-  TREAL x_inf(imax_inf), y_inf(jmax_inf), z_inf(kmax_total)
-  TREAL q_inf(imax_inf,jmax_inf,kmax_inf,*)
-  TREAL z1_inf(imax_inf,jmax_inf,kmax_inf,*)
-
-  TREAL txc(*), wrk1d(*), wrk2d(*), wrk3d(*)
+  TREAL, DIMENSION(jmax,kmax,inb_flow+inb_scal), INTENT(OUT)   :: inf_rhs
+  TREAL, DIMENSION(g_inf(1)%size,&
+                   g_inf(2)%size,&
+                   g_inf(3)%size,inb_flow),      INTENT(IN)    :: q_inf
+  TREAL, DIMENSION(g_inf(1)%size,&
+                   g_inf(2)%size,&
+                   g_inf(3)%size,inb_scal),      INTENT(IN)    :: s_inf
+  TREAL, DIMENSION(g_inf(1)%size*&
+                   g_inf(2)%size*&
+                   g_inf(3)%size),               INTENT(INOUT) :: txc, wrk3d
+  TREAL, DIMENSION(*),                           INTENT(INOUT) :: wrk2d
 
   TARGET :: q_inf
 
 ! -------------------------------------------------------------------
   TREAL xaux, dx_loc, vmult
-  TINTEGER joffset, jglobal, ileft, iright, j, k, n, is
+  TINTEGER joffset, jglobal, ileft, iright, j, k, is, ip
   TREAL BSPLINES3P, BSPLINES3
-
-! Pointers to existing allocated space
-  TREAL, DIMENSION(:,:,:),   POINTER :: u_inf, v_inf, w_inf, p_inf, rho_inf
 
 ! ###################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_BROADBAND' )
 #endif
-
-! Define pointers
-  u_inf   => q_inf(:,:,:,1)
-  v_inf   => q_inf(:,:,:,2)
-  w_inf   => q_inf(:,:,:,3)
-  p_inf   => q_inf(:,:,:,4)
-  rho_inf => q_inf(:,:,:,5)
 
 ! Transient factor
   IF ( frc_adapt .GT. C_0_R .AND. etime .LE. frc_adapt ) THEN
@@ -61,37 +49,36 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND&
   ENDIF
 
 ! check if we need to read again inflow data
-  IF ( ifrc_mode .EQ. 3 .AND. INT(qbg(1)%mean*etime/scalex_inf)+1 .NE. ifrc_ifield ) THEN
-     CALL BOUNDARY_INFLOW_INIT&
-          (etime, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, wrk1d,wrk2d,wrk3d)
+  IF ( ifrc_mode .EQ. 3 .AND. INT(qbg(1)%mean*etime/g_inf(1)%scale)+1 .NE. ifrc_ifield ) THEN
+     CALL BOUNDARY_INFLOW_INIT(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
   ENDIF
 
 ! ###################################################################
 ! Getting the position
 ! ###################################################################
-  joffset = (jmax-jmax_inf)/2
+  joffset = (jmax-g_inf(2)%size)/2
 
   xaux = qbg(1)%mean*etime
 ! Remove integral length scales of box
-  xaux = xaux - INT(xaux/scalex_inf)*scalex_inf
+  xaux = xaux - INT(xaux/g_inf(1)%scale)*g_inf(1)%scale
 ! Set distance from box initial length
-  xaux = scalex_inf-xaux
+  xaux = g_inf(1)%scale-xaux
 
-  dx_loc = x_inf(2) - x_inf(1)
+  dx_loc = g_inf(1)%nodes(2) - g_inf(1)%nodes(1)
 ! Get left index
   ileft = INT(xaux/dx_loc) +1
 ! Check bounds
-  IF ( ileft .GT. imax_inf ) THEN
+  IF ( ileft .GT. g_inf(1)%size ) THEN
      ileft = 1
   ENDIF
 ! Set right index
   iright = ileft + 1
 ! Check bounds
-  IF ( iright .GT. imax_inf ) THEN
+  IF ( iright .GT. g_inf(1)%size ) THEN
      iright = 1
   ENDIF
 ! Get relative distance from left point
-  xaux = (xaux-(x_inf(ileft)-x_inf(1)))/dx_loc
+  xaux = (xaux-(g_inf(1)%nodes(ileft)-g_inf(1)%nodes(1)))/dx_loc
 
 ! ###################################################################
 ! Sampling the information
@@ -100,24 +87,17 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND&
 ! Periodic
 ! -------------------------------------------------------------------
   IF ( ifrc_mode .EQ. 2 ) THEN
-     DO k = 1,kmax_inf
-        DO j = 1,jmax_inf
+     DO k = 1,kmax
+        DO j = 1,g_inf(2)%size
            jglobal = joffset + j
-           inf_rhs(jglobal,k,1) = inf_rhs(jglobal,k,1) + vmult*&
-                BSPLINES3P(rho_inf(1,j,k), imax_inf, ileft, xaux)
-           inf_rhs(jglobal,k,2) = inf_rhs(jglobal,k,2) + vmult*&
-                BSPLINES3P(u_inf(1,j,k), imax_inf, ileft, xaux)
-           inf_rhs(jglobal,k,3) = inf_rhs(jglobal,k,3) + vmult*&
-                BSPLINES3P(v_inf(1,j,k), imax_inf, ileft, xaux)
-           inf_rhs(jglobal,k,4) = inf_rhs(jglobal,k,4) + vmult*&
-                BSPLINES3P(w_inf(1,j,k), imax_inf, ileft, xaux)
-           inf_rhs(jglobal,k,5) = inf_rhs(jglobal,k,5) + vmult*&
-                BSPLINES3P(p_inf(1,j,k), imax_inf, ileft, xaux)
-           
+           DO is = 1,inb_scal
+              inf_rhs(jglobal,k,is) = inf_rhs(jglobal,k,is) + vmult *BSPLINES3P(q_inf(1,j,k,is), g_inf(1)%size, ileft, xaux)
+           ENDDO
+
            IF ( icalc_scal .EQ. 1 ) THEN
-              DO is = 1,inb_scal_array
-                 inf_rhs(jglobal,k,5+is) = inf_rhs(jglobal,k,5+is) + vmult*&
-                   BSPLINES3P(z1_inf(1,j,k,is), imax_inf, ileft, xaux)
+              DO is = 1,inb_scal
+                 ip = inb_flow +is
+                 inf_rhs(jglobal,k,ip) = inf_rhs(jglobal,k,ip) + vmult *BSPLINES3P(s_inf(1,j,k,is), g_inf(1)%size, ileft, xaux)
               ENDDO
            ENDIF
            
@@ -128,24 +108,17 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND&
 ! Sequential
 ! -------------------------------------------------------------------
   ELSE
-     DO k = 1,kmax_inf
-        DO j = 1,jmax_inf
+     DO k = 1,kmax
+        DO j = 1,g_inf(2)%size
            jglobal = joffset + j
-           inf_rhs(jglobal,k,1) = inf_rhs(jglobal,k,1) + vmult*&
-                BSPLINES3(rho_inf(1,j,k), imax_inf, ileft, xaux)
-           inf_rhs(jglobal,k,2) = inf_rhs(jglobal,k,2) + vmult*&
-                BSPLINES3(u_inf(1,j,k), imax_inf, ileft, xaux)
-           inf_rhs(jglobal,k,3) = inf_rhs(jglobal,k,3) + vmult*&
-                BSPLINES3(v_inf(1,j,k), imax_inf, ileft, xaux)
-           inf_rhs(jglobal,k,4) = inf_rhs(jglobal,k,4) + vmult*&
-                BSPLINES3(w_inf(1,j,k), imax_inf, ileft, xaux)
-           inf_rhs(jglobal,k,5) = inf_rhs(jglobal,k,5) + vmult*&
-                BSPLINES3(p_inf(1,j,k), imax_inf, ileft, xaux)
+           DO is = 1,inb_flow
+              inf_rhs(jglobal,k,is) = inf_rhs(jglobal,k,is) + vmult *BSPLINES3(q_inf(1,j,k,is), g_inf(1)%size, ileft, xaux)
+           ENDDO
            
            IF ( icalc_scal .EQ. 1 ) THEN
-              DO is = 1,inb_scal_array
-                 inf_rhs(jglobal,k,5+is) = inf_rhs(jglobal,k,5+is) + vmult*&
-                   BSPLINES3(z1_inf(1,j,k,is), imax_inf, ileft, xaux)
+              DO is = 1,inb_scal
+                 ip = inb_flow +is
+                 inf_rhs(jglobal,k,ip) = inf_rhs(jglobal,k,ip) + vmult *BSPLINES3(s_inf(1,j,k,is), g_inf(1)%size, ileft, xaux)
               ENDDO
            ENDIF
 
@@ -157,15 +130,11 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND&
 ! ###################################################################
 ! Filling the rest
 ! ###################################################################
-  DO n = 1,5+inb_scal_array
-     DO k = 1,kmax_inf
-        DO j = 1,joffset
-           inf_rhs(j,k,n) = C_0_R
-        ENDDO
-        DO j = jmax-joffset+1,jmax
-           inf_rhs(j,k,n) = C_0_R
-        ENDDO
-     ENDDO
+  DO j = 1,joffset
+     inf_rhs(j,:,:) = inf_rhs(j,:,:) + C_0_R
+  ENDDO
+  DO j = jmax-joffset+1,jmax
+     inf_rhs(j,:,:) = inf_rhs(j,:,:) + C_0_R
   ENDDO
 
 #ifdef TRACE_ON

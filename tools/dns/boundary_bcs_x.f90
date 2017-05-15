@@ -18,7 +18,7 @@
 !#
 !########################################################################
 SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
-     x_inf,y_inf,z_inf, q_inf,z1_inf, bcs_vi,bcs_vo, h0,h1,h2,h3,h4,zh1,&
+     q_inf,z1_inf, bcs_vi,bcs_vo, h0,h1,h2,h3,h4,zh1,&
      txc, aux2d, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
@@ -36,7 +36,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
 
   TREAL, DIMENSION(imax,jmax,kmax)   :: rho, u, v, w, p, gama, h0, h1, h2, h3, h4
   TREAL, DIMENSION(imax,jmax,kmax,*) :: z1, zh1, txc
-  TREAL, DIMENSION(*)                :: x_inf, y_inf, z_inf, q_inf, z1_inf
+  TREAL, DIMENSION(*)                :: q_inf, z1_inf
   TREAL, DIMENSION(jmax,kmax,*)      :: aux2d, bcs_vi, bcs_vo
   TREAL, DIMENSION(*)                :: wrk1d, wrk2d, wrk3d
 
@@ -82,8 +82,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
   nt = jmax*kmax
   prefactor = (gama0-C_1_R)*mach*mach
 
-  IF ( itxc .LT. nt*(19+5*(inb_flow+inb_scal_array)) .OR. &
-       itxc .LT. imax_inf*jmax_inf*kmax_inf ) THEN
+  IF ( itxc .LT. nt*(19+5*(inb_flow+inb_scal_array)) ) THEN
      CALL IO_WRITE_ASCII(efile, 'BOUNDARY_BCS_X. Not enough space in txc.')
      CALL DNS_STOP(DNS_ERROR_IBC)
   ENDIF
@@ -132,16 +131,10 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
      isize = inb_flow + inb_scal_array
      inf_rhs(:,:,isize) = C_0_R
 
-     IF     ( ifrc_mode .EQ. 1 ) THEN
+     IF     ( ifrc_mode .EQ. 1 .OR. ifrc_mode .EQ. 4 ) THEN
         CALL BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
      ELSEIF ( ifrc_mode .EQ. 2 .OR. ifrc_mode .EQ. 3 ) THEN
-        CALL BOUNDARY_INFLOW_BROADBAND&
-             (etime, inf_rhs, x_inf,y_inf,z_inf, q_inf,z1_inf, txc, wrk1d,wrk2d,wrk3d)
-! not yet developed
-!     ELSEIF ( ifrc_mode .EQ. 4 ) THEN
-!        CALL BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
-!        CALL BOUNDARY_INFLOW_BROADBAND&
-!             (etime, inf_rhs, x_inf, q_inf, z1_inf, tmp1, wrk1d, wrk2d, wrk3d)
+        CALL BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, q_inf,z1_inf, txc, wrk2d,wrk3d)
      ENDIF
   ENDIF
 

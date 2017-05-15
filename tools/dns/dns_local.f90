@@ -1,7 +1,7 @@
 #include "types.h"
 
 MODULE DNS_LOCAL
-  USE DNS_TYPES,  ONLY : filter_dt
+  USE DNS_TYPES,  ONLY : filter_dt, grid_dt
   USE DNS_GLOBAL, ONLY : MAX_NSP, MAX_VARS 
 #ifdef USE_PSFFT  
   USE NB3DFFT,    ONLY : NB3DFFT_SCHEDLTYPE
@@ -91,8 +91,7 @@ MODULE DNS_LOCAL
 ! ###################################################################
 ! Inflow field in spatial mode
 ! ###################################################################
-  TINTEGER :: imax_inf,jmax_inf,kmax_inf
-  TREAL    :: scalex_inf,scaley_inf,scalez_inf
+  TYPE(grid_dt), DIMENSION(3) :: g_inf
 
   TINTEGER :: ifrc_mode, ifrc_ifield
   TREAL    :: frc_length, frc_adapt

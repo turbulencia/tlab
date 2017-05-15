@@ -26,7 +26,7 @@
 !#
 !########################################################################
 SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
-     x_inf,y_inf,z_inf,q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
+     q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -57,7 +57,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
   TREAL dte, etime
 
   TREAL, DIMENSION(isize_field,*) :: q, hq, s, hs, txc
-  TREAL, DIMENSION(*)             :: x_inf, y_inf, z_inf, q_inf, s_inf
+  TREAL, DIMENSION(*)             :: q_inf, s_inf
   TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d, vaux
 
   TARGET :: q, hq
@@ -244,7 +244,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
 
   IF ( i1bc .NE. DNS_BCS_PERIODIC ) THEN
      CALL BOUNDARY_BCS_X(isize_field, M2_max, etime, rho,u,v,w,p,GAMMA_LOC(1),s, &
-          x_inf,y_inf,z_inf,q_inf,s_inf, &
+          q_inf,s_inf, &
           vaux(vindex(VA_BCS_VI)), vaux(vindex(VA_BCS_VO)), h0,h1,h2,h3,h4,hs,&
           txc, AUX_LOC(1), wrk1d,wrk2d,wrk3d)
   ENDIF

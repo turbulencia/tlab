@@ -7,7 +7,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile
   USE DNS_GLOBAL,    ONLY : pbg, rbg
   USE DNS_GLOBAL,    ONLY : imode_sim, icalc_scal, inb_flow, inb_scal
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, iunify, imode_fdm
+  USE DNS_GLOBAL,    ONLY : imax,jmax
+  USE DNS_GLOBAL,    ONLY : g
   USE DNS_LOCAL
 
   IMPLICIT NONE
@@ -20,7 +21,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CHARACTER*512 sRes
   CHARACTER*32 bakfile, lstr
   TINTEGER is,idummy,inb_scal_local1
-
+  
 ! ###################################################################
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
@@ -260,7 +261,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! Scalar terms
 ! -------------------------------------------------------------------
   bcs_scal_imin(:) = DNS_BCS_NONE; bcs_scal_imax(:) = DNS_BCS_NONE
-  IF ( i1bc .NE. DNS_BCS_PERIODIC ) THEN
+  IF ( .NOT. g(1)%periodic ) THEN
   DO is = 1,inb_scal
      WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Imin'
      CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'none', sRes)
@@ -284,7 +285,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ENDIF
 
   bcs_scal_jmin(:) = DNS_BCS_NONE; bcs_scal_jmax(:) = DNS_BCS_NONE
-  IF ( j1bc .NE. DNS_BCS_PERIODIC ) THEN
+  IF ( .NOT. g(2)%periodic ) THEN
   DO is = 1,inb_scal
      WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Jmin'
      CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'void', sRes)
@@ -308,7 +309,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ENDIF
 
   bcs_scal_kmin(:) = DNS_BCS_NONE; bcs_scal_kmax(:) = DNS_BCS_NONE
-  IF ( k1bc .NE. DNS_BCS_PERIODIC ) THEN
+  IF ( .NOT. g(3)%periodic ) THEN
   DO is = 1,inb_scal
      WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Kmin'
      CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'none', sRes)
@@ -761,24 +762,41 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Inflow', 'Adapt', '0.0', frc_adapt)
 
 ! Broadband forcing: Grid size of the inflow domain
+  g_inf(:)%size     = 1       ! default
+  g_inf(:)%periodic = g(:)%periodic
+  g_inf(:)%uniform  = g(:)%uniform
   IF ( ifrc_mode .EQ. 2 .OR. ifrc_mode .EQ. 3 .OR. ifrc_mode .EQ. 4 ) THEN                  
-     CALL SCANINIINT(bakfile, inifile, 'Inflow', 'Imax', '0', imax_inf)
-     CALL SCANINIINT(bakfile, inifile, 'Inflow', 'Jmax', '0', jmax_inf)
-     CALL SCANINIINT(bakfile, inifile, 'Inflow', 'Kmax', '0', kmax_inf)
-
-     IF ( kmax_inf .NE. kmax_total ) THEN
-        CALL IO_WRITE_ASCII(efile,  'DNS_READ_LOCAL. Inflow KMAX missmatch.')
-        CALL DNS_STOP(DNS_ERROR_KMAXMISS)
+     CALL SCANINIINT(bakfile, inifile, 'Inflow', 'Imax', '0', idummy)
+     IF ( idummy .GT. 0         ) THEN; g_inf(1)%size = idummy
+     ELSE
+        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Imax.')
+        CALL DNS_STOP(DNS_ERROR_INFTYPE)
      ENDIF
 
-     kmax_inf = kmax
+     CALL SCANINIINT(bakfile, inifile, 'Inflow', 'Jmax', '0', idummy)
+     IF ( idummy .GT. 0         ) THEN; g_inf(2)%size = idummy
+     ELSE
+        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Jmax.')
+        CALL DNS_STOP(DNS_ERROR_INFTYPE)
+     ENDIF
 
-  ELSE
-     imax_inf = 1
-     jmax_inf = 1
-     kmax_inf = 1
+     CALL SCANINIINT(bakfile, inifile, 'Inflow', 'Kmax', '0', idummy)
+     IF ( idummy .EQ. g(3)%size ) THEN; g_inf(3)%size = idummy
+     ELSE
+        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Kmax.')
+        CALL DNS_STOP(DNS_ERROR_INFTYPE)
+     ENDIF
+     
   ENDIF
+  g_inf(1)%inb_grid = g(1)%inb_grid
+  g_inf(2)%inb_grid = 1
+  g_inf(3)%inb_grid = 1
 
+  IF ( ifrc_mode .EQ. 2 ) THEN
+     g_inf(1)%periodic = .TRUE.
+     g_inf(1)%uniform  = .TRUE.
+  ENDIF
+  
 ! ###################################################################
 ! Discrete Forcing
 ! ###################################################################
@@ -865,19 +883,19 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! Boundary conditions
 ! -------------------------------------------------------------------
 ! Make sure periodic BCs are not modified
-  IF ( i1bc .EQ. DNS_BCS_PERIODIC ) THEN;
+  IF ( g(1)%periodic ) THEN;
      bcs_euler_imin    = DNS_BCS_NONE; bcs_euler_imax    = DNS_BCS_NONE
      bcs_visc_imin     = DNS_BCS_NONE; bcs_visc_imax     = DNS_BCS_NONE
      bcs_flow_imin     = DNS_BCS_NONE; bcs_flow_imax     = DNS_BCS_NONE
      bcs_scal_imin(:)  = DNS_BCS_NONE; bcs_scal_imax(:)  = DNS_BCS_NONE
   ENDIF
-  IF ( j1bc .EQ. DNS_BCS_PERIODIC ) THEN;
+  IF ( g(2)%periodic ) THEN;
      bcs_euler_jmin    = DNS_BCS_NONE; bcs_euler_jmax    = DNS_BCS_NONE
      bcs_visc_jmin     = DNS_BCS_NONE; bcs_visc_jmax     = DNS_BCS_NONE
      bcs_flow_jmin     = DNS_BCS_NONE; bcs_flow_jmax     = DNS_BCS_NONE
      bcs_scal_jmin(:)  = DNS_BCS_NONE; bcs_scal_jmax(:)  = DNS_BCS_NONE
   ENDIF
-  IF ( k1bc .EQ. DNS_BCS_PERIODIC ) THEN;
+  IF ( g(3)%periodic ) THEN;
      bcs_euler_kmin    = DNS_BCS_NONE; bcs_euler_kmax    = DNS_BCS_NONE
      bcs_visc_kmin     = DNS_BCS_NONE; bcs_visc_kmax     = DNS_BCS_NONE
      bcs_flow_kmin     = DNS_BCS_NONE; bcs_flow_kmax     = DNS_BCS_NONE
@@ -913,7 +931,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      ENDDO
 
 ! Check if grid is non-uniform
-     IF ( iunify .EQ. 1 .AND. imode_fdm .NE. FDM_COM6_DIRECT ) THEN
+     IF ( .NOT. g(1)%uniform .AND. g(1)%mode_fdm .NE. FDM_COM6_DIRECT ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Non-uniform grid requires a direct FDM formulation.') 
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
      ENDIF

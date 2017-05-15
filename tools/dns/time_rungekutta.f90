@@ -21,7 +21,7 @@
 !#
 !########################################################################
 SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
-     x_inf,y_inf,z_inf,q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
+     q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
      l_q, l_hq, l_txc, l_tags, l_comm)
 
 #ifdef USE_OPENMP
@@ -45,7 +45,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 #endif 
 
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
-  TREAL, DIMENSION(*)             :: x_inf,y_inf,z_inf, q_inf,s_inf
+  TREAL, DIMENSION(*)             :: q_inf,s_inf
   TREAL, DIMENSION(*)             :: txc, wrk1d,wrk2d,wrk3d, vaux
 
   TREAL, DIMENSION(isize_particle,*) :: l_q, l_hq
@@ -169,7 +169,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 
      ELSE
         CALL TIME_SUBSTEP_COMPRESSIBLE(&
-             dte,etime, q,hq,s,hs, x_inf,y_inf,z_inf, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
+             dte,etime, q,hq,s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
      ENDIF
 
 ! -------------------------------------------------------------------

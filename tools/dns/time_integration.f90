@@ -6,22 +6,12 @@
 #endif
 
 !########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2007/06/12 - J.P. Mellado
-!#              Derived from old version for the new energy formulation
-!# 2007/08/02 - J.P. Mellado
-!#              Filter has been studied. It has to be done in the
-!#              pressure to get good dilatation evolution
-!#
-!########################################################################
 !# DESCRIPTION
 !#
+!# Performing the time integration over a given number of steps
+!#
 !########################################################################
-SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
-     x_inf,y_inf,z_inf,q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
+SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
      l_q, l_hq, l_txc, l_tags, l_comm, l_trajectories, l_trajectories_tags)
   
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, lfile
@@ -51,7 +41,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
 
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
   TREAL, DIMENSION(*)             :: txc, vaux
-  TREAL, DIMENSION(*)             :: x_inf, y_inf, z_inf, q_inf, s_inf
+  TREAL, DIMENSION(*)             :: q_inf, s_inf
   TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
 
   TREAL,      DIMENSION(isize_particle,inb_particle) :: l_q, l_hq
@@ -111,7 +101,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq,s,hs, &
 
   DO WHILE ( itime .LT. nitera_last )
 
-     CALL TIME_RUNGEKUTTA(q,hq, s,hs, x_inf,y_inf,z_inf, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
+     CALL TIME_RUNGEKUTTA(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
           l_q, l_hq, l_txc, l_tags, l_comm)
 
      itime = itime + 1

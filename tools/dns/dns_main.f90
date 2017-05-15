@@ -52,7 +52,7 @@ PROGRAM DNS
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk1d,wrk2d,wrk3d
 
 ! Inflow arrays
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: x_inf, y_inf, z_inf
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x_inf, y_inf, z_inf
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: q_inf, s_inf
 
   TARGET q
@@ -94,10 +94,10 @@ PROGRAM DNS
 ! #######################################################################
 ! Memory management
 ! #######################################################################
-  isize_loc = MAX(imax_inf,MAX(jmax_inf,kmax_inf))
+  isize_loc = MAX(g_inf(1)%size,MAX(g_inf(2)%size,g_inf(3)%size))
   isize_wrk1d = MAX(isize_wrk1d,isize_loc)
 
-  isize_loc = MAX(imax_inf*jmax_inf,MAX(imax_inf*kmax_inf,jmax_inf*kmax_inf))
+  isize_loc = MAX(g_inf(1)%size*g_inf(2)%size,MAX(g_inf(1)%size*g_inf(3)%size,g_inf(2)%size*g_inf(3)%size))
   isize_wrk2d = MAX(isize_wrk2d, isize_loc)
   IF ( icalc_particle .eq. 1) THEN
     isize_wrk2d = MAX(isize_wrk2d, jmax*inb_lag_total_interp)
@@ -152,7 +152,7 @@ PROGRAM DNS
   isize_txc = inb_txc*isize_txc_field
 
 ! wkr3d
-  isize_wrk3d = MAX(imax,imax_inf)*MAX(jmax,jmax_inf)*kmax
+  isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
   IF ( icalc_particle .eq. 1) THEN
      isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
@@ -177,18 +177,13 @@ PROGRAM DNS
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
 
-! inflow
-  IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-     ALLOCATE(x_inf(imax_inf))
-     ALLOCATE(y_inf(jmax_inf))
-     ALLOCATE(z_inf(kmax_total))
-     ALLOCATE(q_inf(imax_inf*jmax_inf*kmax_inf,inb_flow))
-     ALLOCATE(s_inf(imax_inf*jmax_inf*kmax_inf,inb_scal_array))
-  ELSE
-     ALLOCATE(x_inf(1),y_inf(1),z_inf(1),q_inf(1,1),s_inf(1,1))
-  ENDIF
-
 #include "dns_alloc_arrays.h"
+
+  ALLOCATE(x_inf(g_inf(1)%size,g_inf(1)%inb_grid)) ! Inflow fields for spatial simulations
+  ALLOCATE(y_inf(g_inf(2)%size,g_inf(2)%inb_grid))
+  ALLOCATE(z_inf(g_inf(3)%size,g_inf(3)%inb_grid))
+  ALLOCATE(q_inf(g_inf(1)%size*g_inf(2)%size*kmax,inb_flow_array))
+  ALLOCATE(s_inf(g_inf(1)%size*g_inf(2)%size*kmax,inb_scal_array))
 
 ! -------------------------------------------------------------------
 ! Allocating additional memory space
@@ -284,19 +279,17 @@ PROGRAM DNS
 ! ###################################################################
 ! Initialize arrays to zero
 ! ###################################################################
-  vaux(:) = C_0_R
+  q(:,:) = C_0_R; h_q(:,:) = C_0_R ! Basic fields and rhs
+  s(:,:) = C_0_R; h_s(:,:) = C_0_R
 
-  q(:,:)  = C_0_R; h_q(:,:) = C_0_R
-  s(:,:)  = C_0_R; h_s(:,:) = C_0_R
+  q_inf(:,:) = C_0_R               ! Inflow fields for spatial simulations
+  s_inf(:,:) = C_0_R
+
+  vaux(:) = C_0_R                  ! Auxiliary information
 
   IF ( icalc_particle .EQ. 1 ) THEN ! Lagrangian
      l_q = C_0_R; l_hq = C_0_R
      l_trajectories = C_0_R; l_trajectories_tags = C_0_R
-  ENDIF
-
-  IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN ! inflow domain for spatial case
-     q_inf(:,:) = C_0_R
-     s_inf(:,:) = C_0_R
   ENDIF
 
 ! ###################################################################
@@ -304,6 +297,14 @@ PROGRAM DNS
 ! ###################################################################
 #include "dns_read_grid.h"
 
+  IF ( g_inf(1)%size .GT. 1 ) THEN ! Inflow fields for spatial simulations
+     CALL IO_READ_GRID('grid.inf', g_inf(1)%size, g_inf(2)%size, g_inf(3)%size,  &
+          g_inf(1)%scale,g_inf(2)%scale,g_inf(3)%scale, x_inf,y_inf,z_inf)
+     CALL FDM_INITIALIZE(x_inf, g_inf(1), wrk1d)
+     g_inf(2)%nodes => y_inf(:,1)
+     g_inf(3)%nodes => z_inf(:,1)
+  ENDIF
+  
 ! ###################################################################
 ! Initialize filters
 ! ###################################################################
@@ -484,7 +485,7 @@ PROGRAM DNS
                      q,s, txc, wrk3d)
 
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-     CALL BOUNDARY_INFLOW_INIT(rtime, x_inf,y_inf,z_inf, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d)
+     CALL BOUNDARY_INFLOW_INIT(rtime, q_inf,s_inf, txc, wrk2d,wrk3d)
   ENDIF
 
 ! ###################################################################
@@ -509,8 +510,7 @@ PROGRAM DNS
 ! ###################################################################
 ! Do simulation: Integrate equations
 ! ###################################################################
-  CALL TIME_INTEGRATION(q,h_q, s,h_s, &
-       x_inf,y_inf,z_inf, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
+  CALL TIME_INTEGRATION(q,h_q, s,h_s, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
        l_q, l_hq, l_txc, l_tags, l_comm, l_trajectories, l_trajectories_tags)
 
 ! ###################################################################
