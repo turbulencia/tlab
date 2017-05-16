@@ -5,15 +5,6 @@
 #define C_FILE_LOC "VISUALS"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2014/01/01 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Creating data blocks for visualizations. Derived from ensight.f
@@ -65,7 +56,7 @@ PROGRAM VISUALS_MAIN
 
   TINTEGER opt_format, flag_buoyancy
   TINTEGER opt_cond, opt_cond_scal, opt_threshold
-  TINTEGER isize_wrk3d, ij, is, n
+  TINTEGER isize_wrk3d, ij, is, n, bcs(2,2)
   TINTEGER iscal_offset, iread_flow, iread_scal, iread_part, idummy, ierr, MaskSize
   TREAL diff, umin, umax, dummy
   TINTEGER subdomain(6)
@@ -89,10 +80,10 @@ PROGRAM VISUALS_MAIN
   INTEGER icount
 #endif
 
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
+!########################################################################
+!########################################################################
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-!########################################################################
-!########################################################################
   inifile = 'dns.ini'
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
@@ -337,10 +328,6 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
-  dx => x(:,2:) ! to be removed
-  dy => y(:,2:)
-  dz => z(:,2:)
-
 ! -------------------------------------------------------------------
 ! Initialize Poisson solver
 ! -------------------------------------------------------------------
@@ -520,9 +507,9 @@ PROGRAM VISUALS_MAIN
                  CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
                  
                  CALL IO_WRITE_ASCII(lfile,'Computing pressure gradient vector...')
-                 CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, txc(:,1),txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
-                 CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, txc(:,1),txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
-                 CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, txc(:,1),txc(1,4), i0,i0, wrk1d,wrk2d,wrk3d)
+                 CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), txc(1,1),txc(1,2), wrk3d, wrk2d,wrk3d)
+                 CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,1),txc(1,3), wrk3d, wrk2d,wrk3d)
+                 CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), txc(1,1),txc(1,4), wrk3d, wrk2d,wrk3d)
                  
 
                  txc(1:isize_field,2) = txc(1:isize_field,2)*q(1:isize_field,1) & 
@@ -628,9 +615,9 @@ PROGRAM VISUALS_MAIN
 ! Scalar gradient vector
               IF ( opt_vec(iv) .EQ. iscal_offset+1 ) THEN
                  CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient vector...')
-                 CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s(1,is), txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
-                 CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, s(1,is), txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
-                 CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s(1,is), txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
+                 CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s(1,is), txc(1,1), wrk3d, wrk2d,wrk3d)
+                 CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(1,is), txc(1,2), wrk3d, wrk2d,wrk3d)
+                 CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s(1,is), txc(1,3), wrk3d, wrk2d,wrk3d)
                  
                  plot_file = TRIM(ADJUSTL(str))//'GradientVector'//time_str(1:MaskSize)
                  CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i3, subdomain, txc(1,1), wrk3d)
@@ -847,7 +834,7 @@ PROGRAM VISUALS_MAIN
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
 
 ! buoyancy fluctuation
-           CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, txc(1,1))
+           CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(1,1))
 
            plot_file = 'bPrime'//time_str(1:MaskSize)
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
@@ -911,8 +898,8 @@ PROGRAM VISUALS_MAIN
 ! ###################################################################
         IF ( opt_vec(iv) .EQ. iscal_offset+14 ) THEN
            CALL IO_WRITE_ASCII(lfile,'Computing horizontal divergence...')
-           CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, q(1,1), txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
-           CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, q(1,3), txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
+           CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), q(1,1), txc(1,2), wrk3d, wrk2d,wrk3d)
+           CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), q(1,3), txc(1,1), wrk3d, wrk2d,wrk3d)
            txc(1:isize_field,1) = txc(1:isize_field,1) + txc(1:isize_field,2)
 
            plot_file = 'HorizontalDivergence'//time_str(1:MaskSize)
@@ -935,9 +922,9 @@ PROGRAM VISUALS_MAIN
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
 ! turbulent kinetic energy
-           txc(1:isize_field,1) = q(1:isize_field,1); CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, txc(:,1))
-           txc(1:isize_field,2) = q(1:isize_field,2); CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, txc(:,2))
-           txc(1:isize_field,3) = q(1:isize_field,3); CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, txc(:,3))
+           txc(1:isize_field,1) = q(1:isize_field,1); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,1))
+           txc(1:isize_field,2) = q(1:isize_field,2); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,2))
+           txc(1:isize_field,3) = q(1:isize_field,3); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
 
            txc(1:isize_field,1) = txc(1:isize_field,1)*txc(1:isize_field,1) &
                                 + txc(1:isize_field,2)*txc(1:isize_field,2) &

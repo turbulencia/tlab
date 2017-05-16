@@ -214,12 +214,9 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 
      IF ( MOD(itime-nitera_first,nitera_stats) .EQ. 0 ) THEN ! Calculate statistics
         IF     ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
-           IF ( imode_flow .EQ. DNS_FLOW_ISOTROPIC ) THEN ! TO BE DEVELOPED
-           ELSE 
-              CALL STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
-              IF ( icalc_particle .EQ. 1 ) THEN ! Lagrangian
-                 CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
-              ENDIF
+           CALL STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
+           IF ( icalc_particle .EQ. 1 ) THEN ! Lagrangian
+              CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
            ENDIF
         ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
            CALL STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d)

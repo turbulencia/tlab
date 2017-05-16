@@ -43,8 +43,6 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
   TREAL wrk1d(isize_wrk1d,*)
   TREAL wrk2d(isize_wrk2d,*)
 
-  TREAL dy(1) ! To use old wrappers to calculate derivatives
-
 ! -------------------------------------------------------------------
 #define rU(A,B)     stat(A,B,1)
 #define rV(A,B)     stat(A,B,2)
@@ -338,7 +336,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 
 #define VARMX1D 26
 
-  TINTEGER i, j, k, n
+  TINTEGER i, j, k, n, bcs(2,2)
   TREAL pts, c13, zero
   TREAL dum1, dum2, dum3, dum4, dum5
   TREAL SIMPSON_NU
@@ -361,6 +359,8 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
   CALL IO_WRITE_ASCII(tfile, 'ENTERING AVG_FLOW_SPATIAL_LAYER' )
 #endif
 
+  bcs = 0
+  
   r05  = C_05_R
   r005 = C_5_R*C_1EM2_R
   r09  = C_9_R/C_10_R
@@ -1002,8 +1002,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         DO j = 1,jmax
            wrk1d(j,1) = fU(n,j)
         ENDDO
-        CALL PARTIAL_Y(imode_fdm, i1, jmax, i1, j1bc, dy, wrk1d(1,1), &
-             wrk1d(1,2), i0, i0, wrk1d(1,3), wrk2d, wrk2d(1,2))
+        CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), wrk1d(1,1), wrk1d(1,2), wrk2d(1,2), wrk2d,wrk2d(1,2) )
         delta_w_u(n) = (fU(n,jmax)-fU(n,1)) / MINVAL(wrk1d(1:jmax,2))
      ENDDO
 
@@ -1132,8 +1131,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         DO j = 1,jmax
            wrk2d(j,1) = fU(n,j)
         ENDDO
-        CALL PARTIAL_Y( imode_fdm, i1, jmax, i1, j1bc, dy, wrk2d(1,1), &
-             wrk2d(1,2), i0, i0, wrk1d, wrk2d(1,3), wrk2d(1,4) )
+        CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), wrk2d(1,1), wrk2d(1,2), wrk2d(1,4), wrk2d(1,3),wrk2d(1,4) )
         delta_w_u(n) = (fU(n,jmax/2+1)-U2)/ ABS(MINVAL(wrk2d(1:jmax,2)))
         delta_w_d(n) = (fU(n,jmax/2)  -U2)/ ABS(MAXVAL(wrk2d(1:jmax,2)))
      ENDDO
