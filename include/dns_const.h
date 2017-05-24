@@ -114,6 +114,7 @@
 #define PROFILE_MIXEDLAYER  12
 #define PROFILE_ERF_ANTISYM 13
 #define PROFILE_ERF_SURFACE 14
+#define PROFILE_LINEAR_ERF_SURFACE 15
 
 ! Chemistry Constants
 #define CHEM_NONE           0

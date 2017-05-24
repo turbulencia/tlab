@@ -834,6 +834,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; sbg(is)%type = PROFILE_LINEAR
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; sbg(is)%type = PROFILE_LINEAR_CROP
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearerf' ) THEN; sbg(is)%type = PROFILE_LINEAR_ERF
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearerfsurface' ) THEN; sbg(is)%type = PROFILE_LINEAR_ERF_SURFACE
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; sbg(is)%type = PROFILE_ERF
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erfsurface') THEN; sbg(is)%type = PROFILE_ERF_SURFACE
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erfantisym') THEN; sbg(is)%type = PROFILE_ERF_ANTISYM
