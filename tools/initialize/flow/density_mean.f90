@@ -26,8 +26,8 @@
 SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
   
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL,    ONLY : g, j1bc
-  USE DNS_GLOBAL,    ONLY : imode_sim, imode_flow, imode_fdm, inb_scal, imax,jmax,kmax
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : imode_sim, imode_flow, inb_scal, imax,jmax,kmax
   USE DNS_GLOBAL,    ONLY : rbg, tbg, sbg, qbg
   USE DNS_GLOBAL,    ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture
@@ -44,12 +44,12 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
   TREAL ycenter, dummy
-  TINTEGER j, k, is
+  TINTEGER j, k, is, bcs(2,2)
   TREAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL
   EXTERNAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL
-
-  TREAL dy(1) ! To use old wrappers to calculate derivatives
    
+  bcs = 0
+
 ! ###################################################################
 ! Isotropic case
 ! ###################################################################
@@ -118,14 +118,13 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 ! assuming a volumetric force along OY
 ! -------------------------------------------------------------------
         ELSE
-! AIRWATER case. Routine PARTIAL_Y introduces small errors in equilibrium
+! AIRWATER case. Routine OPR_PARTIAL_Y introduces small errors in equilibrium
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
               CALL THERMO_THERMAL_DENSITY(imax, jmax, kmax, s, p, T, rho)
 
 ! General case
            ELSE
-              CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-                   dy, p, txc, i0, i0, wrk1d, wrk2d, wrk3d)
+              CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), p, txc, wrk3d, wrk2d,wrk3d)
               dummy = C_1_R /buoyancy%vector(2)
               rho(:,:,:) = rho(:,:,:) + txc(:,:,:) *dummy
            ENDIF

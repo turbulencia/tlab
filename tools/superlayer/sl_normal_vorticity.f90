@@ -19,7 +19,7 @@
 !#
 !########################################################################
 SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_size, &
-     threshold, ibuffer_npy, x,y,z,dx,dy,dz, u,v,w,p,z1, a, sl, profiles, txc, mean, wrk1d,wrk2d,wrk3d)
+     threshold, ibuffer_npy, u,v,w,p,z1, a, sl, profiles, txc, mean, wrk1d,wrk2d,wrk3d)
   
   USE DNS_GLOBAL
 #ifdef USE_MPI
@@ -37,8 +37,6 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
   TINTEGER isl, ith, nmax, istep, kstep, nfield, itxc_size, iavg, ibuffer_npy
   TREAL threshold
-  TREAL x(imax), y(jmax), z(kmax_total)
-  TREAL dx(imax), dy(jmax), dz(kmax_total)
   TREAL u(*), v(*), w(*), p(*), z1(*), a(*), sl(imax,kmax)
   TREAL profiles(L_NFIELDS_MAX,nmax,imax/istep,kmax/kstep)
   TREAL mean(L_NFIELDS_MAX,nmax,2)
@@ -82,14 +80,14 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 ! threshold w.r.t w_mean, therefore threshold^2 w.r.t. w^2_mean
   ELSE IF ( ith .EQ. 2 ) THEN
      ij = jmax/2
-     vmean = AVG_IK(imax, jmax, kmax, ij, a, dx, dz, area)
+     vmean = AVG_IK(imax,jmax,kmax, ij, a, dx, dz, area)
      vmin = threshold*threshold*vmean
   ENDIF
 ! upper or lower depending on flag isl
   IF ( isl .EQ. 1 ) THEN
-     CALL SL_UPPER_BOUNDARY(imax, jmax, kmax, jmax_loc, vmin, y, a, txc(1,1), sl, wrk2d)
+     CALL SL_UPPER_BOUNDARY(imax,jmax,kmax, jmax_loc, vmin, y, a, txc(1,1), sl, wrk2d)
   ELSE IF ( isl .EQ. 2 ) THEN
-     CALL SL_LOWER_BOUNDARY(imax, jmax, kmax, jmin_loc, vmin, y, a, txc(1,1), sl, wrk2d)
+     CALL SL_LOWER_BOUNDARY(imax,jmax,kmax, jmin_loc, vmin, y, a, txc(1,1), sl, wrk2d)
   ENDIF
 
 ! grid size factor for the normal direction
@@ -114,17 +112,14 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   ENDDO
 
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, a, txc(1,4), i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, a, txc(1,5), i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, a, txc(1,6), i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, txc(1,4), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, txc(1,5), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, txc(1,6), wrk3d, wrk2d,wrk3d)
 
   CALL SL_NORMAL_SAMPLE&
-       (imax, jmax, kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
+       (imax,jmax,kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
        g(1)%scale, g(3)%scale, normal_factor, &
-       x, y, z, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
+       g(1)%nodes,g(2)%nodes,g(3)%nodes, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
 ! ###################################################################
 ! Normal analysis:
@@ -140,17 +135,14 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, txc(1,1), txc(1,4), wrk2d,wrk3d)
 
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, a, txc(1,4), i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, a, txc(1,5), i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, a, txc(1,6), i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, txc(1,4), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, txc(1,5), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, txc(1,6), wrk3d, wrk2d,wrk3d)
 
   CALL SL_NORMAL_SAMPLE&
-       (imax, jmax, kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
+       (imax,jmax,kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
        g(1)%scale, g(3)%scale, normal_factor,&
-       x, y, z, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
+       g(1)%nodes,g(2)%nodes,g(3)%nodes, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
 ! ###################################################################
 ! Normal analysis:
@@ -169,17 +161,14 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   ENDDO
 
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, a, txc(1,4), i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, a, txc(1,5), i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, a, txc(1,6), i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, txc(1,4), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, txc(1,5), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, txc(1,6), wrk3d, wrk2d,wrk3d)
 
   CALL SL_NORMAL_SAMPLE&
-       (imax, jmax, kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
+       (imax,jmax,kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
        g(1)%scale, g(3)%scale, normal_factor,&
-       x, y, z, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
+       g(1)%nodes,g(2)%nodes,g(3)%nodes, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
 ! ###################################################################
 ! Normal analysis:
@@ -199,17 +188,14 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   ENDDO
 
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, a, txc(1,4), i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, a, txc(1,5), i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, a, txc(1,6), i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, txc(1,4), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, txc(1,5), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, txc(1,6), wrk3d, wrk2d,wrk3d)
 
   CALL SL_NORMAL_SAMPLE&
-       (imax, jmax, kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
+       (imax,jmax,kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
        g(1)%scale, g(3)%scale, normal_factor, &
-       x, y, z, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
+       g(1)%nodes,g(2)%nodes,g(3)%nodes, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
 ! ###################################################################
 ! Normal analysis:
@@ -237,17 +223,14 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   ENDDO
 
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, a, txc(1,4), i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, a, txc(1,5), i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, a, txc(1,6), i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, txc(1,4), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, txc(1,5), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, txc(1,6), wrk3d, wrk2d,wrk3d)
 
   CALL SL_NORMAL_SAMPLE&
-       (imax, jmax, kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
+       (imax,jmax,kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
        g(1)%scale, g(3)%scale, normal_factor, &
-       x, y, z, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
+       g(1)%nodes,g(2)%nodes,g(3)%nodes, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
 ! ###################################################################
 ! Output averages
@@ -318,7 +301,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 ! ###################################################################
   ELSE
 ! sample the normal vector into array wrk2d for output file
-     CALL SL_BOUNDARY_SAMPLE(imax, jmax, kmax, i3, i3, y, sl, txc(1,4), wrk2d)
+     CALL SL_BOUNDARY_SAMPLE(imax,jmax,kmax, i3, i3, y, sl, txc(1,4), wrk2d)
 
 ! -------------------------------------------------------------------
 ! TkStat file

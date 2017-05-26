@@ -1,25 +1,9 @@
-!########################################################################
-!# Tool/Library SUPERLAYER
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/09/14 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
-     threshold, ibuffer_npy, y,dx,dy,dz, u,v,w, sl, samples, txc, wrk1d,wrk2d,wrk3d)
-  
 #include "types.h"
 #include "dns_error.h"
 
+SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
+     threshold, ibuffer_npy, u,v,w, sl, samples, txc, wrk1d,wrk2d,wrk3d)
+  
   USE DNS_GLOBAL
 
   IMPLICIT NONE
@@ -33,7 +17,6 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 
   TREAL threshold
   TINTEGER iopt, isl, ith, nfield, itxc_size, np, ibuffer_npy
-  TREAL y(jmax), dx(imax), dy(jmax), dz(kmax_total)
   TREAL u(*), v(*), w(*), sl(imax*kmax,*)
   TREAL samples(L_NFIELDS_MAX*imax*kmax)
   TREAL txc(imax*jmax*kmax,6)
@@ -114,17 +97,17 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! threshold w.r.t w_mean, therefore threshold^2 w.r.t. w^2_mean
   ELSE IF ( ith .EQ. 2 ) THEN
      ij = jmax/2
-     vmean = AVG_IK(imax, jmax, kmax, ij, txc(1,3), dx, dz, area)
+     vmean = AVG_IK(imax, jmax, kmax, ij, txc(1,3), g(1)%jac,g(3)%jac, area)
      vmin = threshold*threshold*vmean
   ENDIF
 ! upper/lower/both depending on flag isl
   IF ( isl .EQ. 1 ) THEN
-     CALL SL_UPPER_BOUNDARY(imax,jmax,kmax, jmax_loc, vmin, y, txc(1,3), txc(1,4), sl,      wrk2d)
+     CALL SL_UPPER_BOUNDARY(imax,jmax,kmax, jmax_loc, vmin, g(2)%nodes, txc(1,3), txc(1,4), sl,      wrk2d)
   ELSE IF ( isl .EQ. 2 ) THEN
-     CALL SL_LOWER_BOUNDARY(imax,jmax,kmax, jmin_loc, vmin, y, txc(1,3), txc(1,4), sl,      wrk2d)
+     CALL SL_LOWER_BOUNDARY(imax,jmax,kmax, jmin_loc, vmin, g(2)%nodes, txc(1,3), txc(1,4), sl,      wrk2d)
   ELSE IF ( isl .EQ. 3 ) THEN
-     CALL SL_UPPER_BOUNDARY(imax,jmax,kmax, jmax_loc, vmin, y, txc(1,3), txc(1,4), sl(1,1), wrk2d)
-     CALL SL_LOWER_BOUNDARY(imax,jmax,kmax, jmin_loc, vmin, y, txc(1,3), txc(1,4), sl(1,2), wrk2d)
+     CALL SL_UPPER_BOUNDARY(imax,jmax,kmax, jmax_loc, vmin, g(2)%nodes, txc(1,3), txc(1,4), sl(1,1), wrk2d)
+     CALL SL_LOWER_BOUNDARY(imax,jmax,kmax, jmin_loc, vmin, g(2)%nodes, txc(1,3), txc(1,4), sl(1,2), wrk2d)
   ENDIF
 
 ! ###################################################################
@@ -132,16 +115,16 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! ###################################################################
   IF ( isl .EQ. 1 .OR. isl .EQ. 2 ) THEN
      nfield_loc = 2
-     CALL SL_BOUNDARY_SAMPLE(imax,jmax,kmax, i2, nfield_loc, y, sl, txc, samples)
+     CALL SL_BOUNDARY_SAMPLE(imax,jmax,kmax, i2, nfield_loc, g(2)%nodes, sl, txc, samples)
 
   ELSE
      nfield_loc = 4
 ! txc1 in upper and lower layer consecutive in samples array
-     CALL SL_BOUNDARY_SAMPLE(imax,jmax,kmax, i1, nfield_loc, y, sl(1,1), txc(1,1), samples(1))
-     CALL SL_BOUNDARY_SAMPLE(imax,jmax,kmax, i1, nfield_loc, y, sl(1,2), txc(1,1), samples(2))
+     CALL SL_BOUNDARY_SAMPLE(imax,jmax,kmax, i1, nfield_loc, g(2)%nodes, sl(1,1), txc(1,1), samples(1))
+     CALL SL_BOUNDARY_SAMPLE(imax,jmax,kmax, i1, nfield_loc, g(2)%nodes, sl(1,2), txc(1,1), samples(2))
 ! txc2 in upper and lower layer consecutive in samples array
-     CALL SL_BOUNDARY_SAMPLE(imax,jmax,kmax, i1, nfield_loc, y, sl(1,1), txc(1,2), samples(3))
-     CALL SL_BOUNDARY_SAMPLE(imax,jmax,kmax, i1, nfield_loc, y, sl(1,2), txc(1,2), samples(4))
+     CALL SL_BOUNDARY_SAMPLE(imax,jmax,kmax, i1, nfield_loc, g(2)%nodes, sl(1,1), txc(1,2), samples(3))
+     CALL SL_BOUNDARY_SAMPLE(imax,jmax,kmax, i1, nfield_loc, g(2)%nodes, sl(1,2), txc(1,2), samples(4))
   
   ENDIF
 

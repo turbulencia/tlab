@@ -2,34 +2,16 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2007/01/01 - J.P. Mellado
-!#              Cleaned
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Given a random velocity field, impose a shape function in the 
 !# corresponding vorticity or velocity field and remove solenoidal part.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!# iflag     In   2  cropping in velocity
-!#                3  cropping in vorticity
-!#                4  cropping in velocity potential
-!#
-!########################################################################
 SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imode_fdm, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, isize_wrk1d, isize_field
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_wrk1d, isize_field
   USE DNS_GLOBAL, ONLY : imode_flow, visc, area
   USE DNS_GLOBAL, ONLY : qbg
   USE FLOW_LOCAL, ONLY : flag_wall, flag_dilatation, thick_ini,  ycoor_ini
@@ -38,22 +20,22 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 
 #include "integers.h"
 
-  TINTEGER iflag
-
+  TINTEGER,                         INTENT(IN)    :: iflag ! Cropped fields: 2 velocity
+                                                           !                 3 vorticity
+                                                           !                 4 velocity potential
   TREAL, DIMENSION(imax,jmax,kmax), INTENT(OUT)   :: u,v,w
   TREAL, DIMENSION(imax,jmax,kmax), INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4,tmp5, wrk3d
-  TREAL, DIMENSION(imax,kmax,*)    :: wrk2d
-  TREAL, DIMENSION(isize_wrk1d,*)  :: wrk1d
+  TREAL, DIMENSION(imax,kmax,*),    INTENT(INOUT) :: wrk2d
+  TREAL, DIMENSION(isize_wrk1d,*),  INTENT(INOUT) :: wrk1d
 
   TARGET :: tmp1, tmp2, tmp3
 
 ! -------------------------------------------------------------------
-  TINTEGER j, ibc, ibcmin, ibcmax
+  TINTEGER j, ibc, bcs(2,2), bcs2(2,2)
   TREAL ycenter, ymin, ymax, amplify, dummy
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: wx,wy,wz
-  TREAL, DIMENSION(:),     POINTER :: dx,dy,dz
 
 ! ###################################################################
 ! Define pointers
@@ -61,10 +43,8 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
   wy => tmp2
   wz => tmp3
 
-  dx => g(1)%jac(:,1)
-  dy => g(2)%jac(:,1)
-  dz => g(3)%jac(:,1)
-
+  bcs = 0
+  
 ! ###################################################################
 ! Read initial random field
 ! ###################################################################
@@ -76,9 +56,9 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
   visc = dummy
 
 ! remove average
-  CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, u)
-  CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, v)
-  CALL REYFLUCT2D(imax,jmax,kmax, dx,dz, area, w)
+  CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, u)
+  CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, v)
+  CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, w)
 
 ! change sign in the lateral velocity in the upper layer
   IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
@@ -106,11 +86,11 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 ! -------------------------------------------------------------------
   IF      ( iflag .EQ. 2 ) THEN ! velocity given
      wx = u; wy = v; wz = w
-     IF ( kmax_total .EQ. 1 ) wz = 0
+     IF ( g(3)%size .EQ. 1 ) wz = 0
      
   ELSE IF ( iflag .EQ. 3 ) THEN ! vorticity given
      CALL FI_CURL(imax,jmax,kmax, u,v,w, wx,wy,wz, tmp4, wrk2d,wrk3d)
-     IF ( kmax_total .EQ. 1 ) THEN; wx = C_0_R; wy = C_0_R; ENDIF ! exactly zero
+     IF ( g(3)%size .EQ. 1 ) THEN; wx = C_0_R; wy = C_0_R; ENDIF ! exactly zero
 
   ELSE IF ( iflag .EQ. 4 ) THEN ! velocity potential given
      wx = u; wy = v; wz = w
@@ -167,7 +147,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 ! Calculate rot vort
 ! -------------------------------------------------------------------
      CALL FI_CURL(imax,jmax,kmax, u,v,w, wx,wy,wz, tmp4, wrk2d,wrk3d)
-     IF ( kmax_total .EQ. 1 ) THEN; wz = C_0_R; ENDIF ! exactly zero
+     IF ( g(3)%size .EQ. 1 ) THEN; wz = C_0_R; ENDIF ! exactly zero
 
 ! -------------------------------------------------------------------
 ! Solve lap(u) = - (rot vort)_x
@@ -176,7 +156,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
      ELSE;                         ibc = 0; ENDIF ! NoSlip
 
 ! v, w are aux arrays
-     IF ( i1bc .EQ. 0 .AND. k1bc .EQ. 0 ) THEN ! Doubly periodic in xOz 
+     IF ( g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz 
         wrk2d(:,:,1:2) = C_0_R  ! bcs
         u = -wx                 ! change of forcing term sign
         CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, ibc,&
@@ -185,8 +165,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
      ELSE                                      ! General treatment
 #ifdef USE_CGLOC
 ! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
-        CALL CGPOISSON(i1, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, &
-             dx,dy,dz, u, wx,v,w, ipos,jpos,kpos,ci,cj,ck, wrk2d)
+        CALL CGPOISSON(i1, imax,jmax,kmax,g(3)%size, u, wx,v,w, ipos,jpos,kpos,ci,cj,ck, wrk2d)
 #endif
      ENDIF
         
@@ -196,7 +175,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
      ibc = 0 ! No penetration
 
 ! w, wx are aux arrays
-     IF ( i1bc .EQ. 0 .AND. k1bc .EQ. 0 ) THEN ! Doubly periodic in xOz
+     IF ( g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz
         wrk2d(:,:,1:2) = C_0_R  ! bcs
         v = -wy                 ! change sign of forcing term
         CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, ibc,&
@@ -204,20 +183,19 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
         
      ELSE                                      ! General treatment
 #ifdef USE_CGLOC
-        CALL CGPOISSON(i1, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, &
-             dx,dy,dz, v, wy,w,wx, ipos,jpos,kpos,ci,cj,ck, wrk2d)
+        CALL CGPOISSON(i1, imax,jmax,kmax,g(3)%size, v, wy,w,wx, ipos,jpos,kpos,ci,cj,ck, wrk2d)
 #endif
      ENDIF
 
 ! -------------------------------------------------------------------
 ! Solve lap(w) = - (rot vort)_z
 ! -------------------------------------------------------------------
-     IF ( kmax_total .GT. 1 ) THEN
+     IF ( g(3)%size .GT. 1 ) THEN
         IF ( flag_wall .EQ. 0 ) THEN; ibc = 3        ! FreeSlip
         ELSE;                         ibc = 0; ENDIF ! NoSlip
 
 ! wx, wy are aux arrays
-        IF ( i1bc .EQ. 0 .AND. k1bc .EQ. 0 ) THEN ! Doubly periodic in xOz
+        IF ( g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz
            wrk2d(:,:,1:2) = C_0_R  ! bcs
            w = -wz                 ! change sign of forcing term
            CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, ibc,&
@@ -225,8 +203,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
         
         ELSE                                      ! General treatment
 #ifdef USE_CGLOC
-           CALL CGPOISSON(i1, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, &
-                dx,dy,dz, w, wz,wx,wy, ipos,jpos,kpos,ci,cj,ck, wrk2d)
+           CALL CGPOISSON(i1, imax,jmax,kmax,g(3)%size, w, wz,wx,wy, ipos,jpos,kpos,ci,cj,ck, wrk2d)
 #endif
         ENDIF
         
@@ -241,19 +218,19 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 ! Vector potential
 ! ###################################################################
   IF ( iflag .EQ. 4 ) THEN
-     ibcmin = 0; ibcmax = 0
-     IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) ibcmin = 1
-     IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) ibcmax = 1
+     bcs2 = 0
+     IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) bcs2(1,1) = 1 ! bcs at ymin = 1
+     IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) bcs2(2,1) = 1 ! bcs at ymax = 1
 ! I need to impose BCs to zero to get zero velocity there
-     CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, w,wx,   ibcmin,ibcmax, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, v,tmp4, i0,i0,         wrk1d,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs2,g(2), w,wx,   wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), v,tmp4, wrk3d, wrk2d,wrk3d)
      wx = wx-tmp4
-     CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, u,wy,   i0,i0,         wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, w,tmp4, i0,i0,         wrk1d,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), u,wy,   wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), w,tmp4, wrk3d, wrk2d,wrk3d)
      wy = wy-tmp4
-     IF ( kmax_total .GT. 1 ) THEN
-     CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, v,wz,   i0,i0,         wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, u,tmp4, ibcmin,ibcmax, wrk1d,wrk2d,wrk3d)
+     IF ( g(3)%size .GT. 1 ) THEN
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v,wz,   wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs2,g(2), u,tmp4, wrk3d, wrk2d,wrk3d)
      wz = wz-tmp4
      ELSE
      wz = C_0_R

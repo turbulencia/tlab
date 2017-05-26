@@ -1,19 +1,3 @@
-!########################################################################
-!# Tool/Library SUPERLAYER
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/09/04 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 #include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
@@ -237,17 +221,16 @@ PROGRAM SL_NORMAL_ANALYSIS
 ! -------------------------------------------------------------------
      IF ( iopt .EQ. 1 ) THEN
         CALL SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_size,&
-             threshold, ibuffer_npy, x, y, z, dx, dy, dz, u, v, w, p, z1, field, sl, profiles, &
-             txc, mean, wrk1d, wrk2d, wrk3d)
+             threshold, ibuffer_npy, u,v,w,p,z1, field, sl, profiles, txc, mean, wrk1d,wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
 ! Scalar gradient analysis
 ! -------------------------------------------------------------------
-!     ELSE IF ( iopt .EQ. 2 ) THEN
-!        CALL SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, x, y, z, dx, dy, dz, 
-! $           u, v, w, z1, field, sl, profiles, txc, wrk1d, wrk2d, wrk3d)
+     ELSE IF ( iopt .EQ. 2 ) THEN
+        CALL SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, & 
+             u, v, w, z1, field, sl, profiles, txc, wrk1d, wrk2d, wrk3d)
      ENDIF
-
+     
   ENDDO
 
   CALL DNS_END(0)

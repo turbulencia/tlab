@@ -300,14 +300,14 @@ PROGRAM SL_BOUNDARY
 ! -------------------------------------------------------------------
      ELSE IF ( iopt .EQ. 2 ) THEN
         CALL SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold, buff_nps_u_jmax, &
-             y,dx,dy,dz, u,v,w,s,field, sl, samples, pdf, txc, wrk1d,wrk2d,wrk3d)
+             u,v,w,s,field, sl, samples, pdf, txc, wrk1d,wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
 ! Surface JPDFs
 ! -------------------------------------------------------------------
      ELSE IF ( iopt .GE. 3 ) THEN
-        CALL SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
-             threshold, buff_nps_u_jmax, y,dx,dy,dz, u,v,w, sl, samples, txc, wrk1d,wrk2d,wrk3d)
+        CALL SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, threshold, buff_nps_u_jmax, &
+             u,v,w, sl, samples, txc, wrk1d,wrk2d,wrk3d)
 
      ENDIF
 

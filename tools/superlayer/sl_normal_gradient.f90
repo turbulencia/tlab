@@ -1,20 +1,7 @@
 #include "types.h"
 #include "dns_const.h"
 
-!########################################################################
-!# Tool/Library SUPERLAYER
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/09/04 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-SUBROUTINE SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, x, y, z, dx, dy, dz, &
+SUBROUTINE SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, &
      u, v, w, z1, a, sl, profiles, txc, wrk1d, wrk2d, wrk3d)
   
   USE DNS_GLOBAL
@@ -26,8 +13,6 @@ SUBROUTINE SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, x, y, z, dx,
 #define L_NFIELDS_MAX 1
 
   TINTEGER isl, nmax, istep, kstep, ibuffer_npy
-  TREAL x(imax), y(jmax), z(kmax_total)
-  TREAL dx(imax), dy(jmax), dz(kmax_total)
   TREAL u(*), v(*), w(*), z1(*), a(*), sl(*)
   TREAL profiles(L_NFIELDS_MAX,nmax,imax/istep,kmax/kstep)
   TREAL txc(imax*jmax*kmax,*)
@@ -53,24 +38,18 @@ SUBROUTINE SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, x, y, z, dx,
   CALL MINMAX(imax,jmax,kmax, a, vmin,vmax)
   vmin = vmin + C_1EM2_R*(vmax-vmin)
   IF ( isl .EQ. 1 ) THEN
-     CALL SL_UPPER_BOUNDARY(imax, jmax, kmax, jmax_loc, vmin, y, a, txc(1,1), sl, wrk2d)
+     CALL SL_UPPER_BOUNDARY(imax, jmax, kmax, jmax_loc, vmin, g(2)%nodes, a, txc(1,1), sl, wrk2d)
   ELSE IF ( isl .EQ. 2 ) THEN
-     CALL SL_LOWER_BOUNDARY(imax, jmax, kmax, jmin_loc, vmin, y, a, txc(1,1), sl, wrk2d)
+     CALL SL_LOWER_BOUNDARY(imax, jmax, kmax, jmin_loc, vmin, g(2)%nodes, a, txc(1,1), sl, wrk2d)
   ENDIF
 
 ! -------------------------------------------------------------------
 ! Normal analysis
 ! -------------------------------------------------------------------
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, a, u, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, a, v, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, a, w, i0, i0, wrk1d, wrk2d, wrk3d)
-!  CALL SL_NORMAL_ANALYSIS_1
-! $     (imax, jmax, kmax, kmax_total, nmax, istep, kstep, nfield, nfield, scalex, scalez,
-! $     x, y, z, sl, a, profiles, u, v, w)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, u, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, v, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, w, wrk3d, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
 ! TkStat file
@@ -84,7 +63,7 @@ SUBROUTINE SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, x, y, z, dx,
   DO k = 1,kmax/kstep
      DO i = 1,imax/istep
         DO n = 1,nmax
-           WRITE(21,1020) i, k, M_REAL(n-1-nmax/2)*(x(2)-x(1)), &
+           WRITE(21,1020) i, k, M_REAL(n-1-nmax/2)*(g(1)%nodes(2)-g(1)%nodes(1)), &
                 (profiles(ifield,n,i,k),ifield=1,nfield)
         ENDDO
      ENDDO

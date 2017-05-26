@@ -1,19 +1,6 @@
 #include "types.h"
 
-!########################################################################
-!# Tool/Library SUPERLAYER
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/09/01 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
+SUBROUTINE SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
      strain, vorticity, gradient, tmp1, tmp2, wrk1d, wrk2d, wrk3d)
 
   USE DNS_GLOBAL
@@ -23,10 +10,6 @@ SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
 #include "integers.h"
 
   TINTEGER ilog
-  TREAL y(jmax)
-  TREAL dx(imax)
-  TREAL dy(jmax)
-  TREAL dz(kmax_total)
   TREAL u(imax,jmax,kmax)
   TREAL v(imax,jmax,kmax)
   TREAL w(imax,jmax,kmax)
@@ -45,7 +28,7 @@ SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
   TREAL wrk3d(imax,jmax,kmax)
 
 ! -------------------------------------------------------------------
-  TINTEGER j
+  TINTEGER j, bcs(2,2)
   TREAL mean_1, mean_2, var_1, var_2, delta_w
   TREAL AVG1V2D, COV2V2D
 
@@ -54,14 +37,15 @@ SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
   CHARACTER*550 line2
 
 ! ###################################################################
+  bcs = 0
+  
   IF ( delta_u .EQ. C_0_R ) THEN
      delta_w = C_1_R
   ELSE
      DO j = 1,jmax
         wrk1d(j,1) = AVG1V2D(imax, jmax, kmax, j, i1, u)
      ENDDO
-     CALL PARTIAL_Y(imode_fdm, i1, jmax, i1, j1bc, dy, wrk1d(1,1), &
-          wrk1d(1,2), i0, i0, wrk1d(1,3), wrk2d, wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), wrk1d(1,1),wrk1d(1,2), wrk3d, wrk2d,wrk3d)
      delta_w = delta_u/MAXVAL(ABS(wrk1d(1:jmax,2)))
   ENDIF
 
@@ -150,7 +134,7 @@ SUBROUTINE SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, corr, &
 ! Body
 ! -------------------------------------------------------------------
      DO j = 1,jmax
-        WRITE(23,1020) 1, j, y(j), (y(j)-g(2)%scale *qbg(1)%ymean-y(1))/delta_w,&
+        WRITE(23,1020) 1, j, g(2)%nodes(j), (g(2)%nodes(j)-g(2)%scale *qbg(1)%ymean-y(1))/delta_w,&
              corr(j,1), corr(j,2), corr(j,3)
      ENDDO
 

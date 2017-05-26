@@ -2,23 +2,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library INIT/FLOW
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2003/01/01 - J.P. Mellado
-!#              Modified
-!# 2007/03/17 - J.P. Mellado
-!#              Calculation of RHS re-written
-!# 2007/04/30 - J.P. Mellado
-!#              Homentropic formulation
-!# 2007/08/01 - J.P. Mellado
-!#              Back to pressure formulation
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# solve Poisson equation for p', 
@@ -36,11 +19,10 @@
 !#        Out  Pressure mean+fluctuation field 
 !#
 !########################################################################
-SUBROUTINE PRESSURE_FLUCTUATION(u,v,w,rho,p,pprime, &
-     txc1,txc2,txc3,txc4, wrk1d,wrk2d,wrk3d)
+SUBROUTINE PRESSURE_FLUCTUATION(u,v,w,rho,p,pprime, txc1,txc2,txc3,txc4, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL ,   ONLY : g, i1bc,j1bc,k1bc
-  USE DNS_GLOBAL ,   ONLY : imode_fdm, imax,jmax,kmax, isize_wrk1d
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_wrk1d
   USE THERMO_GLOBAL, ONLY : gama0
   USE FLOW_LOCAL,    ONLY : norm_ini_p
 
@@ -49,48 +31,44 @@ SUBROUTINE PRESSURE_FLUCTUATION(u,v,w,rho,p,pprime, &
 #include "integers.h"
 
   TREAL, DIMENSION(imax,jmax,kmax) :: u,v,w,rho, p,pprime
-  TREAL, DIMENSION(imax,jmax,kmax) :: txc1, txc2, txc3, txc4, wrk3d
+  TREAL, DIMENSION(imax,jmax,kmax) :: txc1,txc2,txc3,txc4, wrk3d
   TREAL, DIMENSION(imax,kmax,*)    :: wrk2d
   TREAL, DIMENSION(isize_wrk1d,*)  :: wrk1d
 
 ! -------------------------------------------------------------------
-  TREAL, DIMENSION(:), POINTER :: y, dx,dy,dz
-
+  TINTEGER bcs(2,2)
+  
 ! ###################################################################
-! Define pointers
-                   dx => g(1)%jac(:,1)
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
-                   dz => g(3)%jac(:,1)
-
+  
 ! -------------------------------------------------------------------
 ! Calculate RHS d/dx_i d/dx_j (u_i u_j), stored in txc4
 ! -------------------------------------------------------------------
 ! terms with u
   txc1 = rho*u*u; txc2 = rho*u*v; txc3 = rho*u*w
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, txc3, txc4, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, txc2, txc3, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, txc1, txc2, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), txc3, txc4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc2, txc3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), txc1, txc2, wrk3d, wrk2d,wrk3d)
   txc2 = C_2_R*( txc4 + txc3 ) + txc2
 
 ! rhs in txc4
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, txc2, txc4, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), txc2, txc4, wrk3d, wrk2d,wrk3d)
 
 ! terms with v
   txc1 = rho*v*v; txc2 = rho*v*w
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, txc2, txc3, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, txc1, txc2, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), txc2, txc3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc1, txc2, wrk3d, wrk2d,wrk3d)
   txc2 = txc2 + C_2_R*txc3
 
 ! rhs in txc4
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, txc2, txc1, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc2, txc1, wrk3d, wrk2d,wrk3d)
   txc4 = txc4 + txc1
 
 ! terms with w
   txc1 = rho*w*w
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, txc1, txc2, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), txc1, txc2, wrk3d, wrk2d,wrk3d)
 
 ! rhs in txc4
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, txc2, txc1, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), txc2, txc1, wrk3d, wrk2d,wrk3d)
   txc4 = txc4 + txc1
 
 ! -------------------------------------------------------------------
@@ -106,8 +84,7 @@ SUBROUTINE PRESSURE_FLUCTUATION(u,v,w,rho,p,pprime, &
   ELSE                                      ! General treatment
 #ifdef USE_CGLOC
 ! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
-     CALL CGPOISSON(i1, imax,jmax,kmax, g(3)%size, i1bc,j1bc,k1bc, &
-          dx,dy,dz, pprime, txc4,txc3,txc2, ipos,jpos,kpos,ci,cj,ck, wrk2d)
+     CALL CGPOISSON(i1, imax,jmax,kmax, g(3)%size, pprime, txc4,txc3,txc2, ipos,jpos,kpos,ci,cj,ck, wrk2d)
 #endif
   ENDIF
 

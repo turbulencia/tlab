@@ -15,8 +15,8 @@
 !########################################################################
 SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : g, i1bc,j1bc,k1bc
-  USE DNS_GLOBAL, ONLY : imode_fdm, imax,jmax,kmax, isize_wrk1d
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_wrk1d
 
   IMPLICIT NONE
 
@@ -30,53 +30,46 @@ SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(isize_wrk1d,*)  :: wrk1d
 
 ! -------------------------------------------------------------------
-  TINTEGER  ibc
-
-  TREAL, DIMENSION(:), POINTER :: dx,dy,dz
+  TINTEGER  ibc, bcs(2,2)
 
 ! ###################################################################
-! Define pointers
-  dx => g(1)%jac(:,1)
-  dy => g(2)%jac(:,1)
-  dz => g(3)%jac(:,1)
-
+  bcs = 0
+  
 !  IF ( iwall .EQ. 1) THEN; ibc = 4
 !  ELSE;                    ibc = 3; ENDIF
   ibc = 3
 
 ! ###################################################################
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, u, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, v, tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, w, tmp4, i0,i0, wrk1d,wrk2d,wrk3d)
-
-  tmp2 = tmp2+tmp3+tmp4
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp4, wrk3d, wrk2d,wrk3d)
+  tmp2 = tmp2 +tmp3 +tmp4
 
 ! -------------------------------------------------------------------
 ! Solve lap(phi) = - div(u)
 ! -------------------------------------------------------------------
 ! wx, wy are aux arrays
-  IF ( i1bc .EQ. 0 .AND. k1bc .EQ. 0 ) THEN ! Doubly periodic in xOz
+  IF ( g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz
      wrk2d(:,:,1:2) = C_0_R  ! bcs
      tmp1 = -tmp2            ! change of forcing term sign
      CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, ibc, &
           tmp1,wrk3d, tmp4,tmp5, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
-  ELSE                                      ! General treatment
+  ELSE                                          ! General treatment
 #ifdef USE_CGLOC
 ! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
-     CALL CGPOISSON(i1, imax,jmax,kmax,kmax_total, i1bc,j1bc,k1bc, &
-          dx,dy,dz, tmp1, tmp2,tmp3,tmp4, ipos,jpos,kpos,ci,cj,ck, wrk2d)
+     CALL CGPOISSON(i1, imax,jmax,kmax,kmax_total, tmp1, tmp2,tmp3,tmp4, ipos,jpos,kpos,ci,cj,ck, wrk2d)
 #endif
   ENDIF
 
 ! -------------------------------------------------------------------
 ! Eliminate solenoidal part of u by adding grad(phi)
 ! -------------------------------------------------------------------
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, tmp1, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
   u = u + tmp2
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, tmp1, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
   v = v + tmp2
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, tmp1, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)     
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1, tmp2, wrk3d, wrk2d,wrk3d)     
   w = w + tmp2
   
   RETURN
