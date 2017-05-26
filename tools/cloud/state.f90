@@ -13,6 +13,7 @@ PROGRAM STATE
   TREAL p, ps, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep, theta, theta_e
   TREAL heat1, heat2, cp1, cp2, alpha, as, bs
   TREAL r1, h1, s(3)
+  TREAL Cd, Cdv, Cvl
   TINTEGER iopt
 
 ! ###################################################################
@@ -25,6 +26,10 @@ PROGRAM STATE
   ep = C_0_R
   dsmooth = C_0_R
      
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+
   WRITE(*,*) 'Case p-t (1) or d-e (2) or p-h (3)?'
   READ(*,*) iopt
 
@@ -124,6 +129,7 @@ PROGRAM STATE
   WRITE(*,1000) 'Pressure (bar) ....................:', p
   WRITE(*,1000) 'Saturation pressure (bar) .........:', ps
   WRITE(*,1000) 'Temperature (K) ...................:', t*TREF !- 273.15
+  WRITE(*,1000) 'Specific heat capacity ............:', Cd + qt *Cdv + ql *Cvl
   WRITE(*,1000) 'Specific energy ...................:', e
   WRITE(*,1000) 'Specific enthalpy .................:', h
   WRITE(*,1000) 'Reference latent heat (kJ/kg) .....:', -THERMO_AI(6,1,3) *1.007 *TREF 

@@ -161,6 +161,7 @@ PROGRAM VISUALS_MAIN
      WRITE(*,'(I2,A)') iscal_offset+16,'. Radiative forcing'
      WRITE(*,'(I2,A)') iscal_offset+17,'. Relative humidity'
      WRITE(*,'(I2,A)') iscal_offset+18,'. Particle Density'
+     WRITE(*,'(I2,A)') iscal_offset+19,'. Thermodynamic quantities'
      READ(*,'(A512)') sRes        
 #endif
   ENDIF
@@ -298,7 +299,8 @@ PROGRAM VISUALS_MAIN
      IF ( opt_vec(iv) .EQ. iscal_offset+15) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,5); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+16) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+17) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+18) THEN; iread_part = 1;                 inb_txc=MAX(inb_txc,2); ENDIF ! Alberto check 2 or 1?
+     IF ( opt_vec(iv) .EQ. iscal_offset+18) THEN; iread_part = 1;                 inb_txc=MAX(inb_txc,2); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+19) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
 
   ENDDO
 
@@ -1000,6 +1002,26 @@ PROGRAM VISUALS_MAIN
                  CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
               ENDIF
            END IF
+
+        ENDIF
+        
+! ###################################################################
+! Thermodynamic quantities
+! ###################################################################
+        IF (  opt_vec(iv) .EQ. iscal_offset+19) THEN    
+           
+           CALL VISUALS_FUNCTION1(imax,jmax,kmax, s,txc)
+
+           plot_file = 'Enthalpy'//time_str(1:MaskSize)
+           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, s(1,1), wrk3d)
+           plot_file = 'TotalWater'//time_str(1:MaskSize)
+           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, s(1,2), wrk3d)
+           plot_file = 'LiquidWater'//time_str(1:MaskSize)
+           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, s(1,3), wrk3d)
+           plot_file = 'Temperature'//time_str(1:MaskSize)
+           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
+           plot_file = 'Density'//time_str(1:MaskSize)
+           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
            
         ENDIF
 
@@ -1014,3 +1036,48 @@ PROGRAM VISUALS_MAIN
 100 FORMAT(G_FORMAT_R)
 
 END PROGRAM VISUALS_MAIN
+
+!########################################################################
+!# DESCRIPTION
+!#
+!# Calculate thermodynamic information for THERMO_AIRWATER_LINEAR
+!#
+!########################################################################
+SUBROUTINE VISUALS_FUNCTION1(nx,ny,nz, s,txc)
+
+  USE DNS_GLOBAL, ONLY : isize_txc_field
+  USE DNS_GLOBAL, ONLY : epbackground, pbackground
+  USE THERMO_GLOBAL, ONLY : imixture
+
+  IMPLICIT NONE
+
+  TINTEGER nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*)        :: s
+  TREAL, DIMENSION(isize_txc_field,*) :: txc
+  
+! -----------------------------------------------------------------------
+  TREAL qt_0,qt_1, h_0,h_1, p, T_0, C_0, PsiRef
+
+! #######################################################################
+  imixture = MIXT_TYPE_AIRWATER
+
+  qt_0 = 9.0d-3;     qt_1 = 1.5d-3
+  h_0  = 0.955376d0; h_1  = 0.981965d0
+  p    = 0.940d0
+  T_0  = 0.952181d0 ! 283.75 / TREF
+  C_0  = 1.0089
+  PsiRef= 6.57d-4
+  
+  s(:,3) = h_0  + s(:,1)*(h_1 -h_0 ) + s(:,2) *C_0 *T_0 *PsiRef ! enthalpy
+  s(:,2) = qt_0 + s(:,1)*(qt_1-qt_0)                            ! total water, space for q_l
+  s(:,1) = s(:,3)
+  
+  epbackground = C_0_R                                    ! potential energy
+  pbackground  = p                                        ! pressure
+
+  CALL THERMO_AIRWATER_PH(nx,ny,nz, s(1,2), s(1,1), epbackground,pbackground)
+  CALL THERMO_ANELASTIC_TEMPERATURE(nx,ny,nz, s(1,1), epbackground, txc(1,1))
+  CALL THERMO_ANELASTIC_DENSITY(nx,ny,nz, s(1,1), epbackground,pbackground, txc(1,2))
+
+  RETURN
+END SUBROUTINE VISUALS_FUNCTION1

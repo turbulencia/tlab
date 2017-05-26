@@ -436,6 +436,11 @@ PROGRAM TRANSFIELDS
      IF ( icalc_scal .EQ. 1 ) s_dst = C_0_R
   ENDIF
 
+! -------------------------------------------------------------------
+! Initialize thermodynamic quantities
+! -------------------------------------------------------------------
+  CALL FI_PROFILES(wrk1d)
+
 ! ###################################################################
 ! Postprocess given list of files
 ! ###################################################################
@@ -763,12 +768,6 @@ PROGRAM TRANSFIELDS
 END PROGRAM TRANSFIELDS
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Crop array a into array b in the first two indices
@@ -795,12 +794,6 @@ SUBROUTINE TRANS_CROP(nx,ny,nz, subdomain, a, b)
   RETURN
 END SUBROUTINE TRANS_CROP
 
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
 !########################################################################
 !# DESCRIPTION
 !#
@@ -842,12 +835,6 @@ SUBROUTINE TRANS_EXTEND(nx,ny,nz, planes, a, b)
   RETURN
 END SUBROUTINE TRANS_EXTEND
 
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
 !########################################################################
 !# DESCRIPTION
 !#
@@ -904,12 +891,6 @@ SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
 END SUBROUTINE TRANS_ADD_MEAN
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Calculate b = f(a)
@@ -949,17 +930,12 @@ SUBROUTINE TRANS_FUNCTION(nx,ny,nz, a,b, txc)
   txc(:,3) = C_0_R
   txc(:,4) = p                       ! pressure
 
-  CALL THERMO_AIRWATER_PH(nx,ny,nz, txc(1,2), txc(1,1), epbackground,p)
+  CALL THERMO_AIRWATER_PH(nx,ny,nz, txc(1,2), txc(1,1), epbackground,p)        ! Calculate q_l
   CALL THERMO_ANELASTIC_TEMPERATURE(nx,ny,nz, txc(1,1), epbackground, txc(1,5))
 
-! Calculate liquid water temperature from temperature (assuming c_p = c_p,d)
-  txc(:,5) = txc(:,5) - LATENT_HEAT*txc(:,3)
-
-! Calculate saturation pressure based on the liquid water temperature
-  CALL THERMO_POLYNOMIAL_PSAT(nx,ny,nz, txc(1,5), txc(1,1))
-
 ! Calculate saturation specific humidity
-  txc(:,1) = C_1_R/(MRATIO*txc(:,4)/txc(:,1)-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+  CALL THERMO_POLYNOMIAL_PSAT(nx,ny,nz, txc(1,5), txc(1,1))
+  txc(:,1) = C_1_R/(MRATIO*txc(:,4)/txc(:,1)-C_1_R) *WGHT_INV(2) /WGHT_INV(1)
   txc(:,1) = txc(:,1)/(C_1_R+txc(:,1))
  
 ! Calculate parameter \beta (assuming c_p = c_p,d)
@@ -971,12 +947,6 @@ SUBROUTINE TRANS_FUNCTION(nx,ny,nz, a,b, txc)
   RETURN
 END SUBROUTINE TRANS_FUNCTION
 
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
 !########################################################################
 !# DESCRIPTION
 !#
