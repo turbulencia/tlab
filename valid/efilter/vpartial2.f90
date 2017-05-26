@@ -7,39 +7,39 @@ PROGRAM VPARTIAL2
 
 #include "integers.h"
 
-  TYPE(grid_dt),            INTENT(IN)    :: g
-  TINTEGER imode_fdm, imax, jmax, kmax, i, wk, i1bc, idummy, iunif
+  TYPE(grid_dt) :: g
+  TINTEGER imax,jmax,kmax, i, wk, idummy
   PARAMETER(imax=128)
-  TREAL scalex
-  TREAL x(imax), dx(imax,2+4*3+4*3), u(imax), du1(imax), du2(imax), due(imax)
-  TREAL wrk1d(imax,5), wrk2d(imax), wrk3d(imax)
+  TREAL x(imax,3+4*3+4*3), u(imax), du1(imax), du2(imax), due(imax)
+  TREAL wrk1d(imax,5), wrk2d(imax), wrk3d(imax), bcs(2,2)
   TREAL tmp(imax)
 
 ! ###################################################################
-  scalex = C_2_R*C_PI_R
+  g%size     = imax
+  g%scale    = C_2_R*C_PI_R
+  g%mode_fdm = FDM_COM6_JACOBIAN
+  g%uniform  = .TRUE.
   jmax = 1
   kmax = 1
-  imode_fdm = 6
-  iunif = 1
 
-  WRITE(*,*) 'Periodic (0) or nonperiodic (1) case ?'
-  READ(*,*) i1bc
+  WRITE(*,*) 'Periodic (.TRUE. or .FALSE.)?'
+  READ(*,*) g%periodic
   WRITE(*,*) 'Wavenumber ?'
   READ(*,*) wk
 
 ! CHANGE TO UPDATE NEW GRID_DT
-  IF ( i1bc .EQ. 0 ) THEN
+  IF ( g%periodic ) THEN
      DO i = 1,imax
-        x(i) = M_REAL(i-1)/M_REAL(imax)*scalex
+        g%nodes(i) = M_REAL(i-1)/M_REAL(imax)*g%scale
      ENDDO
   ELSE
      OPEN(21,file='y.dat')
      DO i = 1,imax
-!        x(i) = M_REAL(i-1)/M_REAL(imax-1)*scalex
-        READ(21,*) idummy, x(i)
+!        g%nodes(i) = M_REAL(i-1)/M_REAL(imax-1)*g%scale
+        READ(21,*) idummy, g%nodes(i)
      ENDDO
      CLOSE(21)
-     scalex = x(imax)-x(1)
+     g%scale = g%nodes(imax)-g%nodes(1)
   ENDIF
 
   CALL FDM_INITIALIZE(x, g, wrk1d)
@@ -47,24 +47,22 @@ PROGRAM VPARTIAL2
 ! ###################################################################
 ! Define the function
   DO i = 1,imax
-     u(i) = SIN(C_2_R*C_PI_R/scalex*M_REAL(wk)*x(i))
-     due(i) = -(C_2_R*C_PI_R/scalex*M_REAL(wk))**2*u(i)
-!     u(i) = EXP(-(x(i)-C_PI_R)**2/(C_PI_R**2/64.))
-!     due(i) = -C_2_R*(x(i)-C_PI_R)/(C_PI_R**2/64.)*u(i)
+     u(i) = SIN(C_2_R*C_PI_R/g%scale*M_REAL(wk)*g%nodes(i))
+     due(i) = -(C_2_R*C_PI_R/g%scale*M_REAL(wk))**2*u(i)
+!     u(i) = EXP(-(g%nodes(i)-C_PI_R)**2/(C_PI_R**2/64.))
+!     due(i) = -C_2_R*(g%nodes(i)-C_PI_R)/(C_PI_R**2/64.)*u(i)
   ENDDO
 
 ! ###################################################################
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, u, tmp, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp, du1, i1, i1, wrk1d, wrk2d, wrk3d)
-
-  CALL PARTIAL_XX(iunif, imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, u, du2, i0, i0, i1, i1, tmp, wrk1d, wrk2d, wrk3d)
+  bcs(:,1) = 0
+  bcs(:,2) = 1
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs(1,1), g, u,   tmp, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs(1,2), g, tmp, du1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs,      g, u,   du2, tmp,   wrk2d,wrk3d)
 
   OPEN(20,file='partial.dat')
   DO i = 1,imax
-     WRITE(20,'(7e)') x(i), dx(i,1), dx(i,2), u(i), due(i), du1(i), du2(i)
+     WRITE(20,'(7e)') g%nodes(i), g%jac(i,1), g%jac(i,2), u(i), due(i), du1(i), du2(i)
   ENDDO
   CLOSE(20)
 

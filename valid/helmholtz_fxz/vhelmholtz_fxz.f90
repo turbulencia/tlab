@@ -7,9 +7,8 @@
 PROGRAM VHELMHOLTZ_FXZ
   
   USE DNS_TYPES, ONLY : pointers_dt
-  USE DNS_GLOBAL,  ONLY : iunifx, iunify, iunifz, imode_fdm, imax_total, jmax_total, kmax_total, &
-       i1bc,j1bc,k1bc,scalex,scaley,scalez,area,volume,imax,jmax,kmax,&
-       inb_grid,inb_wrk1d,inb_wrk2d,isize_wrk1d,isize_wrk2d,gfile,isize_txc_field
+  USE DNS_GLOBAL, ONLY : area,volume
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_wrk1d,inb_wrk2d,isize_wrk1d,isize_wrk2d,gfile,isize_txc_field
 #ifdef USE_MPI
   USE DNS_MPI,     ONLY : ims_pro, ims_err 
 #endif 
@@ -22,7 +21,7 @@ PROGRAM VHELMHOLTZ_FXZ
 #endif 
 
   TREAL, DIMENSION(:,:),   ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:,:,:), ALLOCATABLE :: b, c, d,g
+  TREAL, DIMENSION(:,:,:), ALLOCATABLE :: b, c, d, h
   TREAL, DIMENSION(:,:,:,:),ALLOCATABLE:: a,f,e
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: txc
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: wrk1d, wrk2d
@@ -49,8 +48,6 @@ PROGRAM VHELMHOLTZ_FXZ
   PARAMETER(ims_pro=0) 
 #endif
 
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
-
 ! ###################################################################
   CALL DNS_INITIALIZE
 
@@ -65,23 +62,19 @@ PROGRAM VHELMHOLTZ_FXZ
 ! --------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(imax_total,inb_grid))
-  ALLOCATE(y(jmax_total,inb_grid))
-  ALLOCATE(z(kmax_total,inb_grid))
+  ALLOCATE(x(g(1)%size,g(1)%inb_grid))
+  ALLOCATE(y(g(2)%size,g(2)%inb_grid))
+  ALLOCATE(z(g(3)%size,g(3)%inb_grid))
 
   ALLOCATE(wrk1d(isize_wrk1d,4*nfield+7))
   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
   ALLOCATE(bcs_ht(imax,kmax,nfield),bcs_hb(imax,kmax,nfield))
   ALLOCATE(a(imax,jmax,kmax,nfield), b(imax,jmax,kmax),c(imax,jmax,kmax))
-  ALLOCATE(d(imax,jmax,kmax),e(imax,jmax,kmax,nfield),f(imax,jmax,kmax,nfield),g(imax,jmax,kmax))
+  ALLOCATE(d(imax,jmax,kmax),e(imax,jmax,kmax,nfield),f(imax,jmax,kmax,nfield),h(imax,jmax,kmax))
   ALLOCATE(txc(isize_txc_field,nfield+1),wrk3d(isize_wrk3d))
-  ALLOCATE(cx(6*imax),cy(6*jmax),cz(6*kmax_total))
+  ALLOCATE(cx(6*imax),cy(6*jmax),cz(6*g(3)%size))
 
 #include "dns_read_grid.h"
-
-  dx => x(:,2:) ! to be removed
-  dy => y(:,2:)
-  dz => z(:,2:)
 
   CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
   
@@ -115,7 +108,7 @@ PROGRAM VHELMHOLTZ_FXZ
            ENDDO
 
            CALL DATE_AND_TIME(date,time1) 
-           CALL OPR_HELMHOLTZ_FXZ_2_N(imax,jmax,kmax, g, nfield, i0, beta, &
+           CALL OPR_HELMHOLTZ_FXZ_2_N(imax,jmax,kmax, h, nfield, i0, beta, &
                 data, txc(1,1),txc(1,nfield+1), &
                 bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,wrk1d(1,4*nfield+1),wrk3d)    
            CALL DATE_AND_TIME(date,time2) 
@@ -128,7 +121,7 @@ PROGRAM VHELMHOLTZ_FXZ
            a=f 
            CALL DATE_AND_TIME(date,time1)
            DO ifield=1,nfield
-              CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, g, i0, beta, &
+              CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, h, i0, beta, &
                    a(1,1,1,ifield), txc(1,1), txc(1,2),&
                    bcs_hb(1,1,ifield),bcs_ht(1,1,ifield), wrk1d,wrk1d(1,5),wrk3d) 
            ENDDO
@@ -160,13 +153,9 @@ PROGRAM VHELMHOLTZ_FXZ
      ! Error
      ! ###################################################################
      DO ifield=1,nfield
-        ! ------------------------------------------------------------------- 
-        CALL PARTIAL_XX(i0, iunifx, imode_fdm, imax,jmax,kmax, i1bc, &
-             dx, a(1,1,1,ifield), b, i0,i0,i0,i0, g,wrk1d,wrk2d,wrk3d) 
-        CALL PARTIAL_ZZ(i0, iunifz, imode_fdm, imax,jmax,kmax, k1bc, &
-             dz, a(1,1,1,ifield), c, i0,i0,i0,i0, g,wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_YY(i0, iunify, imode_fdm, imax,jmax,kmax, j1bc, &
-             dy, a(1,1,1,ifield), d, i0,i0,i0,i0, g,wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs, g(1), a(1,1,1,ifield), b, h, wrk2d,wrk3d) 
+        CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs, g(3), a(1,1,1,ifield), c, h, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs, g(2), a(1,1,1,ifield), d, h, wrk2d,wrk3d)
 
         error     = C_0_R
         max_error = C_0_R 

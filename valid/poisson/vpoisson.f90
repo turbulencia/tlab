@@ -16,11 +16,9 @@ PROGRAM VPOISSON
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: wrk1d, wrk2d, bcs_hb, bcs_ht 
   TREAL, DIMENSION(:),     ALLOCATABLE :: cx, cy, cz, wrk3d
   
-  TINTEGER i, j, k,  ibc_x(4), ibc_y(4), ibc_z(4)
+  TINTEGER i, j, k,  bcs !, ibc_x(4), ibc_y(4), ibc_z(4)
   TINTEGER isize_wrk3d, itype
   TREAL dummy, error, falpha, lambda
-
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
 
 ! ###################################################################
   CALL DNS_INITIALIZE
@@ -46,18 +44,17 @@ PROGRAM VPOISSON
 
 #include "dns_read_grid.h"
 
-  dx => x(:,2:) ! to be removed
-  dy => y(:,2:)
-  dz => z(:,2:)
-
-  falpha = 0.49d0
-  CALL FLT_C4_INI(imax_total, i1bc, falpha, dx, cx)
-  CALL FLT_C4_INI(jmax_total, j1bc, falpha, dy, cy)
-  CALL FLT_C4_INI(kmax_total, k1bc, falpha, dz, cz)
+! Filter routines have been updated.
+! falpha = 0.49d0
+  ! CALL FLT_C4_INI(imax_total, i1bc, falpha, dx, cx)
+  ! CALL FLT_C4_INI(jmax_total, j1bc, falpha, dy, cy)
+  ! CALL FLT_C4_INI(kmax_total, k1bc, falpha, dz, cz)
 ! BCs for the filters (see routine FILTER)
-  ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 0; ibc_x(4) = 0
-  ibc_y(1) = 0; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0 
-  ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0 
+  ! ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 0; ibc_x(4) = 0
+  ! ibc_y(1) = 0; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0 
+  ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0 
+
+  bcs = 0
 
   CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
   
@@ -96,18 +93,18 @@ PROGRAM VPOISSON
   ENDIF
 
 ! -------------------------------------------------------------------
-  ! CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, a, c, i0,i0, wrk1d,wrk2d,wrk3d)
-  ! CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, c, b, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_XX(i1,iunifx,imode_fdm, imax,jmax,kmax, i1bc, dx, a,b, i0,i0, i0,i0, c, wrk1d,wrk2d,wrk3d)
+  ! CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, c, wrk3d, wrk2d,wrk3d)
+  ! CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), c, b, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), a,b, c, wrk2d,wrk3d)
 
-  ! CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, a, c, i0,i0, wrk1d,wrk2d,wrk3d)
-  ! CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, c, d, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_ZZ(i1,iunifz,imode_fdm, imax,jmax,kmax, k1bc, dz, a,d, i0,i0, i0,i0, c, wrk1d,wrk2d,wrk3d)
+  ! CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, c, wrk3d, wrk2d,wrk3d)
+  ! CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), c, d, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), a,d, c, wrk2d,wrk3d)
   b = b + d
      
-  ! CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, a, c, i0,i0, wrk1d,wrk2d,wrk3d)
-  ! CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, c, d, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_YY(i1,iunify,imode_fdm, imax,jmax,kmax, j1bc, dy, a,d, i0,i0, i0,i0, c, wrk1d,wrk2d,wrk3d)
+  ! CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, c, wrk3d, wrk2d,wrk3d)
+  ! CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), c, d, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), a,d, c, wrk2d,wrk3d)
   b = b + d
 !  bcs_hb(:,:) = c(:,1,   :); bcs_ht(:,:) = c(:,jmax,:) ! Neumann BCs 
 
@@ -123,7 +120,7 @@ PROGRAM VPOISSON
 !       b,c,d,e, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
   CALL DNS_WRITE_FIELDS('field.out', i1, imax,jmax,kmax, i1, i1, b, wrk3d)
 
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, a, c, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, c, wrk3d, wrk2d,wrk3d)
 ! -------------------------------------------------------------------
   a = f ! rhs
   d = e ! dp/dy
