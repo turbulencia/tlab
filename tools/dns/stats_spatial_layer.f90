@@ -2,22 +2,6 @@
 #include "dns_const.h"
 #include "avgij_map.h"
 
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d)
 
   USE DNS_GLOBAL
@@ -40,18 +24,10 @@ SUBROUTINE STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d)
 ! -----------------------------------------------------------------------
   TINTEGER is
 
-! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
-
 ! #######################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING STATS_SPATIAL_LAYER' )
 #endif
-
-! Define pointers
-  x => g(1)%nodes; dx => g(1)%jac(:,1)
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
-  z => g(3)%nodes; dz => g(3)%jac(:,1)
 
 ! #######################################################################
 ! Averages

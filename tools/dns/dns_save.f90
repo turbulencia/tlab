@@ -1,9 +1,7 @@
 #include "types.h"
+#include "dns_const.h"
 #include "avgij_map.h"
 
-!########################################################################
-!# Tool/Library
-!#
 !########################################################################
 !# HISTORY
 !#
@@ -15,11 +13,10 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!########################################################################
-!# ARGUMENTS 
+!# Accumulating information for running statistics in spatial mode
 !#
 !########################################################################
-SUBROUTINE DNS_SPATIAL_STATS_RUN(icount_stat, q,h,z1, txc, vaux, wrk1d,wrk2d,wrk3d)
+SUBROUTINE DNS_SAVE(icount_stat, q,h,z1, txc, vaux, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL
   USE DNS_LOCAL
@@ -35,18 +32,12 @@ SUBROUTINE DNS_SPATIAL_STATS_RUN(icount_stat, q,h,z1, txc, vaux, wrk1d,wrk2d,wrk
   TARGET q
 
 ! -------------------------------------------------------------------
-  TINTEGER ie, is
+  TINTEGER ie, is, bcs(2,1)
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:), POINTER :: u, v, w, T, rho, p, vis
-  TREAL, DIMENSION(:), POINTER :: dx,dy,dz
 
 ! ###################################################################
-! Define pointers
-  dx => g(1)%jac(:,1)
-  dy => g(2)%jac(:,1)
-  dz => g(3)%jac(:,1)
-
   u   => q(:,1)
   v   => q(:,2)
   w   => q(:,3)
@@ -55,19 +46,21 @@ SUBROUTINE DNS_SPATIAL_STATS_RUN(icount_stat, q,h,z1, txc, vaux, wrk1d,wrk2d,wrk
   T   => q(:,7)
   vis => q(:,8)
 
+  bcs = 0
+  
 ! ###################################################################
 ! Save running averages
 ! ###################################################################
   IF ( frunstat .EQ. 1 ) THEN
      nstatavg_points = nstatavg_points + kmax_total
 
-     CALL DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
+     CALL DNS_SAVE_AVGIJ(rho,u,v,w,p,vis,T, &
           txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), &
           h(1,1), h(1,2), h(1,3), h(1,4), h(1,5), & 
           vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
 
      IF ( icalc_scal .EQ. 1 ) THEN
-        CALL DNS_SAVE_SCBDGIJ(dx,dy,dz, rho,u,v,w,p,z1,vis, &
+        CALL DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1,vis, &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), &
              h(1,1), h(1,2), h(1,3), h(1,4), h(1,5), & 
              vaux(vindex(VA_MEAN_WRK)+MA_MOMENTUM_SIZE*nstatavg*jmax), wrk1d,wrk2d,wrk3d)
@@ -88,34 +81,28 @@ SUBROUTINE DNS_SPATIAL_STATS_RUN(icount_stat, q,h,z1, txc, vaux, wrk1d,wrk2d,wrk
      CALL DNS_SAVE_I(icount_stat, rho, u, v, w, p, z1, T, vaux(vindex(VA_PLANE_SPA_WRK)))
 
      IF ( nstatplnextra .GT. 0 ) THEN
-        CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-             dx, rho, txc(1,1), i0, i0, wrk1d, wrk2d, wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), rho, txc(1,1), wrk3d, wrk2d,wrk3d)
         CALL DNS_SAVE_EXTRA_I(icount_stat, i1, txc, vaux(vindex(VA_PLANE_SPA_WRK)))
 
-        CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-             dx, u, txc(1,1), i0, i0, wrk1d, wrk2d, wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, txc(1,1), wrk3d, wrk2d,wrk3d)
         CALL DNS_SAVE_EXTRA_I(icount_stat, i2, txc, vaux(vindex(VA_PLANE_SPA_WRK)))
 
-        CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-             dx, v, txc(1,1), i0, i0, wrk1d, wrk2d, wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v, txc(1,1), wrk3d, wrk2d,wrk3d)
         CALL DNS_SAVE_EXTRA_I(icount_stat, i3, txc, vaux(vindex(VA_PLANE_SPA_WRK)))
 
-        CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-             dx, w, txc(1,1), i0, i0, wrk1d, wrk2d, wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), w, txc(1,1), wrk3d, wrk2d,wrk3d)
         CALL DNS_SAVE_EXTRA_I(icount_stat, i4, txc, vaux(vindex(VA_PLANE_SPA_WRK)))
 
-        CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-             dx, p, txc(1,1), i0, i0, wrk1d, wrk2d, wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), p, txc(1,1), wrk3d, wrk2d,wrk3d)
         CALL DNS_SAVE_EXTRA_I(icount_stat, i5, txc, vaux(vindex(VA_PLANE_SPA_WRK)))
 
         DO is = 1,inb_scal
            ie = is + 5
-           CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-                dx, z1(1,is), txc(1,1), i0, i0, wrk1d, wrk2d, wrk3d)
+           CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), z1(1,is), txc(1,1), wrk3d, wrk2d,wrk3d)
            CALL DNS_SAVE_EXTRA_I(icount_stat, ie, txc, vaux(vindex(VA_PLANE_SPA_WRK)))
         ENDDO
      ENDIF
   ENDIF
 
   RETURN
-END SUBROUTINE DNS_SPATIAL_STATS_RUN
+END SUBROUTINE DNS_SAVE

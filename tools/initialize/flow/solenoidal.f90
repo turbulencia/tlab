@@ -30,7 +30,7 @@ SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(isize_wrk1d,*)  :: wrk1d
 
 ! -------------------------------------------------------------------
-  TINTEGER  ibc, bcs(2,2)
+  TINTEGER  ibc, bcs(2,1)
 
 ! ###################################################################
   bcs = 0
@@ -39,25 +39,21 @@ SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
 !  ELSE;                    ibc = 3; ENDIF
   ibc = 3
 
-! ###################################################################
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp2, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp3, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp4, wrk3d, wrk2d,wrk3d)
-  tmp2 = tmp2 +tmp3 +tmp4
-
 ! -------------------------------------------------------------------
 ! Solve lap(phi) = - div(u)
 ! -------------------------------------------------------------------
+  CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, tmp1, tmp2, wrk2d,wrk3d)
+
 ! wx, wy are aux arrays
   IF ( g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz
      wrk2d(:,:,1:2) = C_0_R  ! bcs
-     tmp1 = -tmp2            ! change of forcing term sign
      CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, ibc, &
           tmp1,wrk3d, tmp4,tmp5, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
   ELSE                                          ! General treatment
 #ifdef USE_CGLOC
 ! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
+     tmp2 = -tmp1            ! change of forcing term sign
      CALL CGPOISSON(i1, imax,jmax,kmax,kmax_total, tmp1, tmp2,tmp3,tmp4, ipos,jpos,kpos,ci,cj,ck, wrk2d)
 #endif
   ENDIF
@@ -74,4 +70,3 @@ SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
   
   RETURN
 END SUBROUTINE SOLENOIDAL
-

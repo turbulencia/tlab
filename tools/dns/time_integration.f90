@@ -16,7 +16,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, lfile
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal_array, inb_flow_array, isize_particle, inb_particle
-  USE DNS_GLOBAL, ONLY : imode_flow, imode_sim, imode_eqns
+  USE DNS_GLOBAL, ONLY : imode_sim, imode_eqns
   USE DNS_GLOBAL, ONLY : icalc_flow, icalc_scal, icalc_particle
   USE DNS_GLOBAL, ONLY : rbackground, g
   USE DNS_GLOBAL, ONLY : itransport, visc
@@ -175,7 +175,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 ! -----------------------------------------------------------------------
      IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
         IF ( itime .EQ. iupdate_stat ) THEN ! Running statistics 
-           CALL DNS_SPATIAL_STATS_RUN(icount_stat, q,hq,s, txc, vaux, wrk1d,wrk2d,wrk3d)
+           CALL DNS_SAVE(icount_stat, q,hq,s, txc, vaux, wrk1d,wrk2d,wrk3d)
            
            icount_stat  = icount_stat  + 1
            iupdate_stat = iupdate_stat + nspa_step

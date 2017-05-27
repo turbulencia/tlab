@@ -2,7 +2,7 @@
 #include "dns_const.h"
 #include "avgij_map.h"
 
-SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
+SUBROUTINE DNS_SAVE_AVGIJ(rho,u,v,w,p,vis,T, &
      zc,yc,xc,wc,vc,uc,tc,sc,rc,qc,pc,oc, mean1d, wrk1d,wrk2d,wrk3d)
 
 ! #####################################################
@@ -30,7 +30,6 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 
   IMPLICIT NONE
 
-  TREAL, DIMENSION(*)              :: dx, dy, dz
   TREAL, DIMENSION(imax,jmax,kmax) :: u, v, w, p, rho, vis, T
   TREAL, DIMENSION(imax,jmax,*)    :: xc, yc, zc, vc, wc, uc, tc, sc, rc, qc, oc, pc
 
@@ -40,11 +39,11 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   TREAL wrk2d(isize_wrk2d,*)
   TREAL wrk3d(imax,jmax,kmax)
 
-  TINTEGER j
-  TINTEGER i0, NNstat
+  TINTEGER j, bcs(2,1)
+  TINTEGER NNstat
   TREAL c2, c23, cs2
 
-  i0 = 0
+  bcs = 0
   c2 = C_2_R
   c23 = C_2_R/C_3_R
   cs2 = C_14_R*C_1EM2_R
@@ -351,16 +350,13 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc, &
-       dx, u, sc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, u, rc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, u, qc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, sc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), u, rc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), u, qc, wrk3d, wrk2d,wrk3d)
 
-  CALL REDUCE( imax, jmax, kmax, sc, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, rc, nstatavg, statavg, yc )
-  CALL REDUCE( imax, jmax, kmax, qc, nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, sc, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, rc, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, qc, nstatavg, statavg, zc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = xc(j,1,1)*xc(j,1,1)
@@ -401,10 +397,10 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = w
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, p, nstatavg, statavg, tc )
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, oc )
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, uc )
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, pc )
+  CALL REDUCE( imax,jmax,kmax, p, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, oc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, uc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, pc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = xc(j,1,1)*tc(j,1,1)
@@ -423,8 +419,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   ENDDO
 
   DO j = 1,NNstat*kmax
-     tc(j,1,1) = C_2_R*oc(j,1,1)*vc(j,1,1)+uc(j,1,1)*wc(j,1,1)+&
-          pc(j,1,1)*tc(j,1,1)
+     tc(j,1,1) = C_2_R*oc(j,1,1)*vc(j,1,1)+uc(j,1,1)*wc(j,1,1)+           pc(j,1,1)*tc(j,1,1)
   ENDDO
 
   CALL SUM1V1D_V( NNstat, kmax, tc, wrk2d(1,1), wrk2d(1,11) )
@@ -533,7 +528,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = rho*w
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      oc(j,1,1) = oc(j,1,1)*tc(j,1,1)
@@ -606,7 +601,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = rho*w
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = xc(j,1,1)*oc(j,1,1)*tc(j,1,1)
@@ -619,12 +614,10 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   CALL SUM1V1D_V( NNstat, kmax, tc, wrk2d(1,3), wrk2d(1,11) )
 
   DO j = 1,NNstat
-     MA_RUUUkk(j) = MA_RUUUkk(j) + C_3_R*wrk2d(j,1) +&
-          C_2_R*wrk2d(j,2) + &
-          C_2_R*wrk2d(j,3)
+     MA_RUUUkk(j) = MA_RUUUkk(j) + C_3_R*wrk2d(j,1) +           C_2_R*wrk2d(j,2) +            C_2_R*wrk2d(j,3)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = xc(j,1,1)*oc(j,1,1)*tc(j,1,1)
@@ -637,12 +630,10 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   CALL SUM1V1D_V( NNstat, kmax, tc, wrk2d(1,3), wrk2d(1,11) )
 
   DO j = 1,NNstat
-     MA_RUVUkk(j) = MA_RUVUkk(j) + C_2_R*wrk2d(j,1) +&
-          wrk2d(j,2) + &
-          wrk2d(j,3)
+     MA_RUVUkk(j) = MA_RUVUkk(j) + C_2_R*wrk2d(j,1) +           wrk2d(j,2) +            wrk2d(j,3)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = xc(j,1,1)*oc(j,1,1)*tc(j,1,1)
@@ -655,16 +646,14 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   CALL SUM1V1D_V( NNstat, kmax, tc, wrk2d(1,3), wrk2d(1,11) )
 
   DO j = 1,NNstat
-     MA_RUWUkk(j) = MA_RUWUkk(j) + C_2_R*wrk2d(j,1) +&
-          wrk2d(j,2) + &
-          wrk2d(j,3)
+     MA_RUWUkk(j) = MA_RUWUkk(j) + C_2_R*wrk2d(j,1) +           wrk2d(j,2) +            wrk2d(j,3)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      vc(j,1,1) = xc(j,1,1)*uc(j,1,1)*tc(j,1,1)
   ENDDO
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      wc(j,1,1) = xc(j,1,1)*pc(j,1,1)*tc(j,1,1)
      tc(j,1,1) = xc(j,1,1)*uc(j,1,1)*tc(j,1,1)
@@ -697,7 +686,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = rho*w
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = xc(j,1,1)*tc(j,1,1)
@@ -761,10 +750,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = field tau_yz
 ! ######################################################
 
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc, &
-       dx, v, wc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, v, tc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v, wc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tc, wrk3d, wrk2d,wrk3d)
 
   DO j = 1,imax*jmax*kmax
      oc(j,1,1) = oc(j,1,1) +       wc(j,1,1)
@@ -773,8 +760,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      qc(j,1,1) = qc(j,1,1) -       tc(j,1,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, wc, nstatavg, statavg, vc )
-  CALL REDUCE( imax, jmax, kmax, tc, nstatavg, statavg, wc )
+  CALL REDUCE( imax,jmax,kmax, wc, nstatavg, statavg, vc )
+  CALL REDUCE( imax,jmax,kmax, tc, nstatavg, statavg, wc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*vc(j,1,1)
@@ -815,7 +802,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, p, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, p, nstatavg, statavg, yc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*vc(j,1,1)
@@ -825,7 +812,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_PVX(j) = MA_PVX(j) + wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = tc(j,1,1)*yc(j,1,1)*vc(j,1,1)
@@ -843,7 +830,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_PVY(j) = MA_PVY(j) + wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = tc(j,1,1)*yc(j,1,1)*wc(j,1,1)
@@ -854,7 +841,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_PHI1(j) = MA_PHI1(j) + wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = tc(j,1,1)*yc(j,1,1)*wc(j,1,1)
@@ -865,7 +852,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_PHI4(j) = MA_PHI4(j) + C_2_R*wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = tc(j,1,1)*yc(j,1,1)*wc(j,1,1)
@@ -893,7 +880,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, yc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*vc(j,1,1)
@@ -930,7 +917,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, yc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*vc(j,1,1)
@@ -949,7 +936,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_UVY(j) = MA_UVY(j) + wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      yc(j,1,1) = yc(j,1,1)*tc(j,1,1)
   ENDDO
@@ -988,7 +975,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*tc(j,1,1)*vc(j,1,1)
   ENDDO
@@ -996,7 +983,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   DO j = 1,NNstat
      MA_RUVUkk(j) = MA_RUVUkk(j) + wrk2d(j,1)
   ENDDO
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*tc(j,1,1)*wc(j,1,1)
   ENDDO
@@ -1005,7 +992,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_RUUUkk(j) = MA_RUUUkk(j) + wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*tc(j,1,1)*vc(j,1,1)
   ENDDO
@@ -1013,7 +1000,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   DO j = 1,NNstat
      MA_RVVUkk(j) = MA_RVVUkk(j) + C_2_R*wrk2d(j,1)
   ENDDO
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*tc(j,1,1)*wc(j,1,1)
   ENDDO
@@ -1022,7 +1009,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_RUVUkk(j) = MA_RUVUkk(j) + C_2_R*wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*tc(j,1,1)*vc(j,1,1)
   ENDDO
@@ -1030,7 +1017,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   DO j = 1,NNstat
      MA_RVWUkk(j) = MA_RVWUkk(j) + wrk2d(j,1)
   ENDDO
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*tc(j,1,1)*wc(j,1,1)
   ENDDO
@@ -1055,7 +1042,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # uc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, yc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*vc(j,1,1)
@@ -1073,7 +1060,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_VVy(j) = MA_VVy(j) + wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      yc(j,1,1) = yc(j,1,1)*tc(j,1,1)
   ENDDO
@@ -1111,7 +1098,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*tc(j,1,1)*wc(j,1,1)
   ENDDO
@@ -1120,7 +1107,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_RVVUkk(j) = MA_RVVUkk(j) + C_3_R*wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*tc(j,1,1)*wc(j,1,1)
   ENDDO
@@ -1145,7 +1132,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # uc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, yc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*vc(j,1,1)
@@ -1163,7 +1150,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_WVy(j) = MA_WVy(j) + wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      yc(j,1,1) = yc(j,1,1)*tc(j,1,1)
   ENDDO
@@ -1201,7 +1188,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      tc(j,1,1) = yc(j,1,1)*tc(j,1,1)*wc(j,1,1)
   ENDDO
@@ -1258,10 +1245,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = field tau_yz
 ! ######################################################
 
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc, &
-       dx, w, tc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, w, vc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), w, tc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, vc, wrk3d, wrk2d,wrk3d)
 
   DO j = 1,imax*jmax*kmax
      uc(j,1,1) = uc(j,1,1) +       tc(j,1,1)
@@ -1270,8 +1255,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      qc(j,1,1) = qc(j,1,1) + C_2_R*vc(j,1,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, vc, nstatavg, statavg, yc )
-  CALL REDUCE( imax, jmax, kmax, tc, nstatavg, statavg, vc )
+  CALL REDUCE( imax,jmax,kmax, vc, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, tc, nstatavg, statavg, vc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = vc(j,1,1)*zc(j,1,1)
@@ -1319,7 +1304,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # uc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, p,   nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, p,   nstatavg, statavg, zc )
 
   DO j = 1,NNstat*kmax
      wc(j,1,1) = zc(j,1,1)*vc(j,1,1)
@@ -1334,7 +1319,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_PWx(j) = MA_PWx(j) + wrk2d(j,2)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, xc )
 
   DO j = 1,NNstat*kmax
      wc(j,1,1) = wc(j,1,1)*xc(j,1,1)
@@ -1346,8 +1331,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_PHI6(j) = MA_PHI6(j) + wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, wc )
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, wc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      xc(j,1,1) = xc(j,1,1)*zc(j,1,1)
@@ -1384,7 +1369,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # uc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, xc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = xc(j,1,1)*vc(j,1,1)
@@ -1416,8 +1401,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, u,   nstatavg, statavg, zc )
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, u,   nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, xc )
 
   DO j = 1,NNstat*kmax
      wc(j,1,1) = zc(j,1,1)*vc(j,1,1)
@@ -1462,7 +1447,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      xc(j,1,1) = tc(j,1,1)*zc(j,1,1)
      tc(j,1,1) = tc(j,1,1)*wc(j,1,1)
@@ -1474,7 +1459,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_RUWUkk(j) = MA_RUWUkk(j) + wrk2d(j,2)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      xc(j,1,1) = tc(j,1,1)*zc(j,1,1)
      tc(j,1,1) = tc(j,1,1)*wc(j,1,1)
@@ -1486,7 +1471,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_RVWUkk(j) = MA_RVWUkk(j) + wrk2d(j,2)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      xc(j,1,1) = tc(j,1,1)*zc(j,1,1)
      tc(j,1,1) = tc(j,1,1)*wc(j,1,1)
@@ -1515,8 +1500,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, v,   nstatavg, statavg, zc )
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, v,   nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, xc )
 
   DO j = 1,NNstat*kmax
      wc(j,1,1) = zc(j,1,1)*vc(j,1,1)
@@ -1561,7 +1546,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      xc(j,1,1) = tc(j,1,1)*zc(j,1,1)
   ENDDO
@@ -1570,7 +1555,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_RVVUkk(j) = MA_RVVUkk(j) + wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      xc(j,1,1) = tc(j,1,1)*zc(j,1,1)
   ENDDO
@@ -1596,8 +1581,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, w,   nstatavg, statavg, zc )
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, w,   nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, xc )
 
   DO j = 1,NNstat*kmax
      wc(j,1,1) = zc(j,1,1)*vc(j,1,1)
@@ -1642,7 +1627,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      xc(j,1,1) = tc(j,1,1)*zc(j,1,1)
   ENDDO
@@ -1699,17 +1684,15 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = field tau_yz
 ! ######################################################
 
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, w, zc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, v, yc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), w, zc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), v, yc, wrk3d, wrk2d,wrk3d)
 
   DO j = 1,imax*jmax*kmax
      pc(j,1,1) = zc(j,1,1) + yc(j,1,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, yc, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, zc, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, yc, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, zc, nstatavg, statavg, yc )
 
   DO j = 1,NNstat*kmax
      zc(j,1,1) = xc(j,1,1)*yc(j,1,1)
@@ -1747,7 +1730,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # uc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, wc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, wc )
 
   DO j = 1,NNstat*kmax
      tc(j,1,1) = wc(j,1,1)*yc(j,1,1)
@@ -1778,7 +1761,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # uc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, p, nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, p, nstatavg, statavg, zc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = zc(j,1,1)*yc(j,1,1)
@@ -1793,8 +1776,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_PWY(j) = MA_PWY(j) + wrk2d(j,2)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, wc )
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, wc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = vc(j,1,1)*wc(j,1,1)
@@ -1826,8 +1809,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, u,   nstatavg, statavg, zc )
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, wc )
+  CALL REDUCE( imax,jmax,kmax, u,   nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, wc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = zc(j,1,1)*yc(j,1,1)
@@ -1872,8 +1855,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, tc )
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, wc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, wc )
 
   DO j = 1,NNstat*kmax
      wc(j,1,1) = wc(j,1,1)*zc(j,1,1)
@@ -1905,8 +1888,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, v,   nstatavg, statavg, zc )
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, wc )
+  CALL REDUCE( imax,jmax,kmax, v,   nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, wc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = zc(j,1,1)*yc(j,1,1)
@@ -1951,7 +1934,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      tc(j,1,1) = tc(j,1,1)*vc(j,1,1)
   ENDDO
@@ -1960,7 +1943,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_RVWUkk(j) = MA_RVWUkk(j) + wrk2d(j,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      wc(j,1,1) = tc(j,1,1)*zc(j,1,1)
      tc(j,1,1) = tc(j,1,1)*vc(j,1,1)
@@ -1989,8 +1972,8 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, w,   nstatavg, statavg, zc )
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, wc )
+  CALL REDUCE( imax,jmax,kmax, w,   nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, wc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = zc(j,1,1)*yc(j,1,1)
@@ -2035,7 +2018,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
   DO j = 1,NNstat*kmax
      wc(j,1,1) = tc(j,1,1)*zc(j,1,1)
   ENDDO
@@ -2099,54 +2082,45 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = 
 ! ######################################################
 
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc, &
-       dx, sc, vc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc, &
-       dx, oc, wc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc, &
-       dx, uc, tc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL REDUCE( imax, jmax, kmax, vc, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, wc, nstatavg, statavg, yc )
-  CALL REDUCE( imax, jmax, kmax, tc, nstatavg, statavg, zc )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), sc, vc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), oc, wc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), uc, tc, wrk3d, wrk2d,wrk3d)
+  CALL REDUCE( imax,jmax,kmax, vc, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, wc, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, tc, nstatavg, statavg, zc )
 
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, oc, vc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL REDUCE( imax, jmax, kmax, vc, nstatavg, statavg, wc )
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), oc, vc, wrk3d, wrk2d,wrk3d)
+  CALL REDUCE( imax,jmax,kmax, vc, nstatavg, statavg, wc )
   DO j = 1,NNstat*kmax
      xc(j,1,1) = xc(j,1,1) + wc(j,1,1)
   ENDDO
 
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, rc, vc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL REDUCE( imax, jmax, kmax, vc, nstatavg, statavg, wc )
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), rc, vc, wrk3d, wrk2d,wrk3d)
+  CALL REDUCE( imax,jmax,kmax, vc, nstatavg, statavg, wc )
   DO j = 1,NNstat*kmax
      yc(j,1,1) = yc(j,1,1) + wc(j,1,1)
   ENDDO
 
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, pc, vc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL REDUCE( imax, jmax, kmax, vc, nstatavg, statavg, wc )
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), pc, vc, wrk3d, wrk2d,wrk3d)
+  CALL REDUCE( imax,jmax,kmax, vc, nstatavg, statavg, wc )
   DO j = 1,NNstat*kmax
      zc(j,1,1) = zc(j,1,1) + wc(j,1,1)
   ENDDO
 
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, uc, vc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL REDUCE( imax, jmax, kmax, vc, nstatavg, statavg, wc )
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), uc, vc, wrk3d, wrk2d,wrk3d)
+  CALL REDUCE( imax,jmax,kmax, vc, nstatavg, statavg, wc )
   DO j = 1,NNstat*kmax
      xc(j,1,1) = xc(j,1,1) + wc(j,1,1)
   ENDDO
 
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, pc, vc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL REDUCE( imax, jmax, kmax, vc, nstatavg, statavg, wc )
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), pc, vc, wrk3d, wrk2d,wrk3d)
+  CALL REDUCE( imax,jmax,kmax, vc, nstatavg, statavg, wc )
   DO j = 1,NNstat*kmax
      yc(j,1,1) = yc(j,1,1) + wc(j,1,1)
   ENDDO
 
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, qc, vc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL REDUCE( imax, jmax, kmax, vc, nstatavg, statavg, wc )
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), qc, vc, wrk3d, wrk2d,wrk3d)
+  CALL REDUCE( imax,jmax,kmax, vc, nstatavg, statavg, wc )
   DO j = 1,NNstat*kmax
      zc(j,1,1) = zc(j,1,1) + wc(j,1,1)
   ENDDO
@@ -2157,12 +2131,12 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      zc(j,1,1) = visc*zc(j,1,1)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, sc, nstatavg, statavg, vc )
-  CALL REDUCE( imax, jmax, kmax, rc, nstatavg, statavg, wc )
-  CALL REDUCE( imax, jmax, kmax, qc, nstatavg, statavg, tc )
-  CALL REDUCE( imax, jmax, kmax, oc, nstatavg, statavg, sc )
-  CALL REDUCE( imax, jmax, kmax, uc, nstatavg, statavg, rc )
-  CALL REDUCE( imax, jmax, kmax, pc, nstatavg, statavg, qc )
+  CALL REDUCE( imax,jmax,kmax, sc, nstatavg, statavg, vc )
+  CALL REDUCE( imax,jmax,kmax, rc, nstatavg, statavg, wc )
+  CALL REDUCE( imax,jmax,kmax, qc, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, oc, nstatavg, statavg, sc )
+  CALL REDUCE( imax,jmax,kmax, uc, nstatavg, statavg, rc )
+  CALL REDUCE( imax,jmax,kmax, pc, nstatavg, statavg, qc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = visc*vc(j,1,1)
@@ -2212,7 +2186,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = (u & v & w)*d(tau_zk)/dk
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, pc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, pc )
 
   DO j = 1,NNstat*kmax
      oc(j,1,1) = pc(j,1,1)*xc(j,1,1)
@@ -2230,7 +2204,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_UTAUZkk(j) = MA_UTAUZkk(j) + wrk2d(j,3)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, pc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, pc )
 
   DO j = 1,NNstat*kmax
      oc(j,1,1) = pc(j,1,1)*xc(j,1,1)
@@ -2248,7 +2222,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      MA_VTAUZkk(j) = MA_VTAUZkk(j) + wrk2d(j,3)
   ENDDO
 
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, pc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, pc )
 
   DO j = 1,NNstat*kmax
      oc(j,1,1) = pc(j,1,1)*xc(j,1,1)
@@ -2283,7 +2257,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = T*d(tau_zk)/dk
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, T, nstatavg, statavg, pc )
+  CALL REDUCE( imax,jmax,kmax, T, nstatavg, statavg, pc )
 
   DO j = 1,NNstat*kmax
      oc(j,1,1) = pc(j,1,1)*xc(j,1,1)
@@ -2318,22 +2292,17 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = phi
 ! ######################################################
 
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc, &
-       dx, u, oc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, u, uc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, u, pc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, oc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), u, uc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), u, pc, wrk3d, wrk2d,wrk3d)
 
-  CALL REDUCE( imax, jmax, kmax, oc, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, uc, nstatavg, statavg, yc )
-  CALL REDUCE( imax, jmax, kmax, pc, nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, oc, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, uc, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, pc, nstatavg, statavg, zc )
 
   DO j = 1,NNstat*kmax
-     oc(j,1,1) = vc(j,1,1)*xc(j,1,1) + sc(j,1,1)*yc(j,1,1) +&
-          rc(j,1,1)*zc(j,1,1)
-     uc(j,1,1) = sc(j,1,1)*xc(j,1,1) + wc(j,1,1)*yc(j,1,1) +&
-          qc(j,1,1)*zc(j,1,1)
+     oc(j,1,1) = vc(j,1,1)*xc(j,1,1) + sc(j,1,1)*yc(j,1,1) +           rc(j,1,1)*zc(j,1,1)
+     uc(j,1,1) = sc(j,1,1)*xc(j,1,1) + wc(j,1,1)*yc(j,1,1) +           qc(j,1,1)*zc(j,1,1)
      pc(j,1,1) = oc(j,1,1)
   ENDDO
 
@@ -2346,8 +2315,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   ENDDO
 
   DO j = 1,NNstat*kmax
-     uc(j,1,1) = rc(j,1,1)*xc(j,1,1) + qc(j,1,1)*yc(j,1,1) +&
-          tc(j,1,1)*zc(j,1,1)
+     uc(j,1,1) = rc(j,1,1)*xc(j,1,1) + qc(j,1,1)*yc(j,1,1) +           tc(j,1,1)*zc(j,1,1)
   ENDDO
 
   CALL SUM1V1D_V( NNstat, kmax, uc, wrk2d(1,1), wrk2d(1,11) )
@@ -2373,24 +2341,19 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = phi
 ! ######################################################
 
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc, &
-       dx, v, oc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, v, uc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v, oc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, uc, wrk3d, wrk2d,wrk3d)
 
-  CALL REDUCE( imax, jmax, kmax, oc, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, uc, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, oc, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, uc, nstatavg, statavg, yc )
 
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, v, oc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), v, oc, wrk3d, wrk2d,wrk3d)
 
-  CALL REDUCE( imax, jmax, kmax, oc, nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, oc, nstatavg, statavg, zc )
 
   DO j = 1,NNstat*kmax
-     oc(j,1,1) = vc(j,1,1)*xc(j,1,1) + sc(j,1,1)*yc(j,1,1) +&
-          rc(j,1,1)*zc(j,1,1)
-     uc(j,1,1) = sc(j,1,1)*xc(j,1,1) + wc(j,1,1)*yc(j,1,1) +&
-          qc(j,1,1)*zc(j,1,1)
+     oc(j,1,1) = vc(j,1,1)*xc(j,1,1) + sc(j,1,1)*yc(j,1,1) +           rc(j,1,1)*zc(j,1,1)
+     uc(j,1,1) = sc(j,1,1)*xc(j,1,1) + wc(j,1,1)*yc(j,1,1) +           qc(j,1,1)*zc(j,1,1)
      pc(j,1,1) = pc(j,1,1) + uc(j,1,1)
   ENDDO
 
@@ -2403,8 +2366,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   ENDDO
 
   DO j = 1,NNstat*kmax
-     uc(j,1,1) = rc(j,1,1)*xc(j,1,1) + qc(j,1,1)*yc(j,1,1) +&
-          tc(j,1,1)*zc(j,1,1)
+     uc(j,1,1) = rc(j,1,1)*xc(j,1,1) + qc(j,1,1)*yc(j,1,1) +           tc(j,1,1)*zc(j,1,1)
   ENDDO
 
   CALL SUM1V1D_V( NNstat, kmax, uc, wrk2d(1,1), wrk2d(1,11) )
@@ -2430,24 +2392,19 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = phi
 ! ######################################################
 
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc, &
-       dx, w, oc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, w, uc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), w, oc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), w, uc, wrk3d, wrk2d,wrk3d)
 
-  CALL REDUCE( imax, jmax, kmax, oc, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, uc, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, oc, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, uc, nstatavg, statavg, yc )
 
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, w, oc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, oc, wrk3d, wrk2d,wrk3d)
 
-  CALL REDUCE( imax, jmax, kmax, oc, nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, oc, nstatavg, statavg, zc )
 
   DO j = 1,NNstat*kmax
-     oc(j,1,1) = vc(j,1,1)*xc(j,1,1) + sc(j,1,1)*yc(j,1,1) +&
-          rc(j,1,1)*zc(j,1,1)
-     uc(j,1,1) = sc(j,1,1)*xc(j,1,1) + wc(j,1,1)*yc(j,1,1) +&
-          qc(j,1,1)*zc(j,1,1)
+     oc(j,1,1) = vc(j,1,1)*xc(j,1,1) + sc(j,1,1)*yc(j,1,1) +           rc(j,1,1)*zc(j,1,1)
+     uc(j,1,1) = sc(j,1,1)*xc(j,1,1) + wc(j,1,1)*yc(j,1,1) +           qc(j,1,1)*zc(j,1,1)
   ENDDO
 
   CALL SUM1V1D_V( NNstat, kmax, oc, wrk2d(1,1), wrk2d(1,11) )
@@ -2459,8 +2416,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   ENDDO
 
   DO j = 1,NNstat*kmax
-     uc(j,1,1) = rc(j,1,1)*xc(j,1,1) + qc(j,1,1)*yc(j,1,1) +&
-          tc(j,1,1)*zc(j,1,1)
+     uc(j,1,1) = rc(j,1,1)*xc(j,1,1) + qc(j,1,1)*yc(j,1,1) +           tc(j,1,1)*zc(j,1,1)
      pc(j,1,1) = pc(j,1,1) + uc(j,1,1)
   ENDDO
 
@@ -2487,9 +2443,9 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = phi
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, yc )
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, zc )
 
   DO j = 1,NNstat*kmax
      xc(j,1,1) = pc(j,1,1)*xc(j,1,1)
@@ -2533,16 +2489,13 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, rho, sc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, rho, rc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, rho, qc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), rho, sc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), rho, rc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), rho, qc, wrk3d, wrk2d,wrk3d)
 
-  CALL REDUCE( imax, jmax, kmax, sc, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, rc, nstatavg, statavg, yc )
-  CALL REDUCE( imax, jmax, kmax, qc, nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, sc, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, rc, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, qc, nstatavg, statavg, zc )
 
   CALL SUM1V1D_V( NNstat, kmax, xc, wrk2d(1,1), wrk2d(1,11) )
   CALL SUM1V1D_V( NNstat, kmax, yc, wrk2d(1,2), wrk2d(1,11) )
@@ -2571,9 +2524,9 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = (u & v & w )*u*drho/dz
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, vc )
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, wc )
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, vc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, wc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      sc(j,1,1) = vc(j,1,1)*xc(j,1,1)
@@ -2667,9 +2620,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   CALL SUM1V1D_V( NNstat, kmax, pc, wrk2d(1,3), wrk2d(1,11) )
 
   DO j = 1,NNstat
-     MA_RUUUkk(j) = MA_RUUUkk(j) + wrk2d(j,1) +&
-          wrk2d(j,2) +&
-          wrk2d(j,3)
+     MA_RUUUkk(j) = MA_RUUUkk(j) + wrk2d(j,1) +           wrk2d(j,2) +           wrk2d(j,3)
   ENDDO
 
   DO j = 1,NNstat*kmax
@@ -2683,9 +2634,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   CALL SUM1V1D_V( NNstat, kmax, pc, wrk2d(1,3), wrk2d(1,11) )
 
   DO j = 1,NNstat
-     MA_RUVUkk(j) = MA_RUVUkk(j) + wrk2d(j,1) +&
-          wrk2d(j,2) +&
-          wrk2d(j,3)
+     MA_RUVUkk(j) = MA_RUVUkk(j) + wrk2d(j,1) +           wrk2d(j,2) +           wrk2d(j,3)
   ENDDO
 
 ! ####################################################
@@ -2781,9 +2730,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   CALL SUM1V1D_V( NNstat, kmax, pc, wrk2d(1,3), wrk2d(1,11) )
 
   DO j = 1,NNstat
-     MA_RVVUkk(j) = MA_RVVUkk(j) + wrk2d(j,1) +&
-          wrk2d(j,2) +&
-          wrk2d(j,3)
+     MA_RVVUkk(j) = MA_RVVUkk(j) + wrk2d(j,1) +           wrk2d(j,2) +           wrk2d(j,3)
   ENDDO
 
   DO j = 1,NNstat*kmax
@@ -2797,9 +2744,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   CALL SUM1V1D_V( NNstat, kmax, pc, wrk2d(1,3), wrk2d(1,11) )
 
   DO j = 1,NNstat
-     MA_RVWUkk(j) = MA_RVWUkk(j) + wrk2d(j,1) +&
-          wrk2d(j,2) +&
-          wrk2d(j,3)
+     MA_RVWUkk(j) = MA_RVWUkk(j) + wrk2d(j,1) +           wrk2d(j,2) +           wrk2d(j,3)
   ENDDO
 
 ! ####################################################
@@ -2879,9 +2824,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   CALL SUM1V1D_V( NNstat, kmax, pc, wrk2d(1,3), wrk2d(1,11) )
 
   DO j = 1,NNstat
-     MA_RWWUkk(j) = MA_RWWUkk(j) + wrk2d(j,1) +&
-          wrk2d(j,2) +&
-          wrk2d(j,3)
+     MA_RWWUkk(j) = MA_RWWUkk(j) + wrk2d(j,1) +           wrk2d(j,2) +           wrk2d(j,3)
   ENDDO
 
   DO j = 1,NNstat*kmax
@@ -2895,9 +2838,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
   CALL SUM1V1D_V( NNstat, kmax, pc, wrk2d(1,3), wrk2d(1,11) )
 
   DO j = 1,NNstat
-     MA_RUWUkk(j) = MA_RUWUkk(j) + wrk2d(j,1) +&
-          wrk2d(j,2) +&
-          wrk2d(j,3)
+     MA_RUWUkk(j) = MA_RUWUkk(j) + wrk2d(j,1) +           wrk2d(j,2) +           wrk2d(j,3)
   ENDDO
 
 ! ############
@@ -2925,19 +2866,16 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, p, sc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, p, rc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, p, qc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), p, sc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), p, rc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), p, qc, wrk3d, wrk2d,wrk3d)
 
-  CALL REDUCE( imax, jmax, kmax, sc, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, rc, nstatavg, statavg, yc )
-  CALL REDUCE( imax, jmax, kmax, qc, nstatavg, statavg, zc )
-  CALL REDUCE( imax, jmax, kmax, u, nstatavg, statavg, rc )
-  CALL REDUCE( imax, jmax, kmax, v, nstatavg, statavg, qc )
-  CALL REDUCE( imax, jmax, kmax, w, nstatavg, statavg, oc )
+  CALL REDUCE( imax,jmax,kmax, sc, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, rc, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, qc, nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, u, nstatavg, statavg, rc )
+  CALL REDUCE( imax,jmax,kmax, v, nstatavg, statavg, qc )
+  CALL REDUCE( imax,jmax,kmax, w, nstatavg, statavg, oc )
 
   DO j = 1,NNstat*kmax
      vc(j,1,1) = xc(j,1,1)*rc(j,1,1)
@@ -3056,7 +2994,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, T, nstatavg, statavg, vc )
+  CALL REDUCE( imax,jmax,kmax, T, nstatavg, statavg, vc )
 
   DO j = 1,NNstat*kmax
      wc(j,1,1) = vc(j,1,1)*xc(j,1,1)
@@ -3095,16 +3033,13 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, T, vc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, T, wc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, T, tc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), T, vc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), T, wc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), T, tc, wrk3d, wrk2d,wrk3d)
 
-  CALL REDUCE( imax, jmax, kmax, vc, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, wc, nstatavg, statavg, yc )
-  CALL REDUCE( imax, jmax, kmax, tc, nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, vc, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, wc, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, tc, nstatavg, statavg, zc )
 
   CALL SUM1V1D_V( NNstat, kmax, xc, wrk2d(1,1), wrk2d(1,11) )
   CALL SUM1V1D_V( NNstat, kmax, yc, wrk2d(1,2), wrk2d(1,11) )
@@ -3132,7 +3067,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # uc =
 ! ######################################################
 
-  CALL REDUCE( imax, jmax, kmax, p, nstatavg, statavg, sc )
+  CALL REDUCE( imax,jmax,kmax, p, nstatavg, statavg, sc )
 
   DO j = 1,NNstat*kmax
      xc(j,1,1) = xc(j,1,1)*sc(j,1,1)
@@ -3167,16 +3102,13 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc =
 ! ######################################################
 
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, vc, xc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, wc, yc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tc, zc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), vc, xc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), wc, yc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tc, zc, wrk3d, wrk2d,wrk3d)
 
-  CALL REDUCE( imax, jmax, kmax, xc, nstatavg, statavg, vc )
-  CALL REDUCE( imax, jmax, kmax, yc, nstatavg, statavg, wc )
-  CALL REDUCE( imax, jmax, kmax, zc, nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, xc, nstatavg, statavg, vc )
+  CALL REDUCE( imax,jmax,kmax, yc, nstatavg, statavg, wc )
+  CALL REDUCE( imax,jmax,kmax, zc, nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      sc(j,1,1)  =  vc(j,1,1) + wc(j,1,1) + tc(j,1,1)
@@ -3222,12 +3154,12 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = T^3 and T^4
 ! #################################
 
-  CALL REDUCE( imax, jmax, kmax, rho, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, u,   nstatavg, statavg, yc )
-  CALL REDUCE( imax, jmax, kmax, v,   nstatavg, statavg, zc )
-  CALL REDUCE( imax, jmax, kmax, w,   nstatavg, statavg, vc )
-  CALL REDUCE( imax, jmax, kmax, p,   nstatavg, statavg, wc )
-  CALL REDUCE( imax, jmax, kmax, T,   nstatavg, statavg, tc )
+  CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, u,   nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, v,   nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, w,   nstatavg, statavg, vc )
+  CALL REDUCE( imax,jmax,kmax, p,   nstatavg, statavg, wc )
+  CALL REDUCE( imax,jmax,kmax, T,   nstatavg, statavg, tc )
 
   DO j = 1,NNstat*kmax
      sc(j,1,1) = xc(j,1,1)**C_3_R
@@ -3304,18 +3236,15 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
 ! # pc = dwdz
 ! #################################
 
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc, &
-       dx, u, qc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, v, oc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, w, uc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, qc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, oc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, uc, wrk3d, wrk2d,wrk3d)
 
-  CALL REDUCE( imax, jmax, kmax, uc, nstatavg, statavg, pc )
-  CALL REDUCE( imax, jmax, kmax, oc, nstatavg, statavg, uc )
-  CALL REDUCE( imax, jmax, kmax, qc, nstatavg, statavg, oc )
-  CALL REDUCE( imax, jmax, kmax, p, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, T, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, uc, nstatavg, statavg, pc )
+  CALL REDUCE( imax,jmax,kmax, oc, nstatavg, statavg, uc )
+  CALL REDUCE( imax,jmax,kmax, qc, nstatavg, statavg, oc )
+  CALL REDUCE( imax,jmax,kmax, p, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, T, nstatavg, statavg, yc )
 
   DO j = 1,NNstat*kmax
      sc(j,1,1) = yc(j,1,1)*oc(j,1,1)
@@ -3363,16 +3292,13 @@ SUBROUTINE DNS_SAVE_AVGIJ(dx,dy,dz, rho,u,v,w,p,vis,T, &
      yc(j,1,1) = rho(j,1,1)*v(j,1,1)*T(j,1,1)**C_2_R
      zc(j,1,1) = rho(j,1,1)*w(j,1,1)*T(j,1,1)**C_2_R
   ENDDO
-  CALL PARTIAL_X( imode_fdm, imax, jmax, kmax, i1bc, &
-       dx, xc, vc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Y( imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, yc, wc, i0, i0, wrk1d, wrk2d, wrk3d )
-  CALL PARTIAL_Z( imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, zc, tc, i0, i0, wrk1d, wrk2d, wrk3d )
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), xc, vc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), yc, wc, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), zc, tc, wrk3d, wrk2d,wrk3d)
 
-  CALL REDUCE( imax, jmax, kmax, vc, nstatavg, statavg, xc )
-  CALL REDUCE( imax, jmax, kmax, wc, nstatavg, statavg, yc )
-  CALL REDUCE( imax, jmax, kmax, tc, nstatavg, statavg, zc )
+  CALL REDUCE( imax,jmax,kmax, vc, nstatavg, statavg, xc )
+  CALL REDUCE( imax,jmax,kmax, wc, nstatavg, statavg, yc )
+  CALL REDUCE( imax,jmax,kmax, tc, nstatavg, statavg, zc )
 
   CALL SUM1V1D_V( NNstat, kmax, xc, wrk2d(1,1), wrk2d(1,11) )
   CALL SUM1V1D_V( NNstat, kmax, yc, wrk2d(1,2), wrk2d(1,11) )
