@@ -1,5 +1,6 @@
 #include "types.h"
 #include "dns_const.h"
+#include "dns_error.h"
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
 #endif
@@ -30,8 +31,10 @@
 SUBROUTINE BOUNDARY_BCS_TRANSVERSE_Y(u,v,w,p,r,gamma,z1, &
      tmin,lmin,tmax,lmax, tmp1,ddx,ddz, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imax, jmax, kmax, inb_flow, inb_scal_array
-  USE DNS_GLOBAL, ONLY : imode_fdm, i1bc, k1bc, buoyancy
+  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow, inb_scal_array
+  USE DNS_GLOBAL,    ONLY : buoyancy
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -42,7 +45,7 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_Y(u,v,w,p,r,gamma,z1, &
 
   TREAL, DIMENSION(imax,jmax,kmax)                        :: u, v, w, p, r, gamma
 #ifdef USE_MPI
-  TREAL, DIMENSION(imax,ims_bcs_jmax,              kmax) :: tmp1, ddx, ddz
+  TREAL, DIMENSION(imax,ims_bcs_jmax,              kmax)  :: tmp1, ddx, ddz
 #else
   TREAL, DIMENSION(imax,2*(inb_flow+inb_scal_array),kmax) :: tmp1, ddx, ddz
 #endif
@@ -52,15 +55,12 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_Y(u,v,w,p,r,gamma,z1, &
   TREAL, DIMENSION(*)              :: wrk1d, wrk2d, wrk3d
 
 ! -----------------------------------------------------------------------
-  TINTEGER ip, i, k, is
+  TINTEGER ip, i, k, is, bcs(2,2)
   TREAL c
-#ifdef USE_MPI
-  TINTEGER imode_fdm_loc
-#endif
-
-  TREAL dx(1), dz(1) ! To use old wrappers to calculate derivatives
 
 ! #######################################################################
+  bcs = 0
+  
 ! -------------------------------------------------------------------
 ! Arrange data
 ! -------------------------------------------------------------------
@@ -96,16 +96,15 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_Y(u,v,w,p,r,gamma,z1, &
 ! Construct t1-t5
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-  CALL PARTIAL_X(imode_fdm, imax, ims_bcs_jmax, kmax, i1bc,&
-       dx, tmp1, ddx, i0, i0, wrk1d, wrk2d, wrk3d)
-  imode_fdm_loc = imode_fdm + (DNS_MPI_K_NRBCY-1)*100
-  CALL PARTIAL_Z(imode_fdm_loc, imax, ims_bcs_jmax, kmax, k1bc,&
-       dz, tmp1, ddz, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1,     imax,ims_bcs_jmax,kmax, bcs, g(1), tmp1, ddx, wrk3d, wrk2d,wrk3d)
+! Needs to be checked
+  CALL IO_WRITE_ASCII(efile,'BOUNDARY_BCS_TRANSVERSE_Y. To be checked')
+  CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+!  imode_fdm_loc = imode_fdm + (DNS_MPI_K_NRBCY-1)*100
+  CALL OPR_PARTIAL_Z(OPR_P1_BCS, imax,ims_bcs_jmax,kmax, bcs, g(3), tmp1, ddz, wrk3d, wrk2d,wrk3d)
 #else
-  CALL PARTIAL_X(imode_fdm, imax, ip, kmax, i1bc,&
-       dx, tmp1, ddx, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, ip, kmax, k1bc,&
-       dz, tmp1, ddz, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,ip,kmax, bcs, g(1), tmp1, ddx, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,ip,kmax, bcs, g(3), tmp1, ddz, wrk3d, wrk2d,wrk3d)
 #endif
   ip = 0
 

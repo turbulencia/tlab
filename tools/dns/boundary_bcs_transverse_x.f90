@@ -1,5 +1,6 @@
 #include "types.h"
 #include "dns_const.h"
+#include "dns_error.h"
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
 #endif
@@ -30,7 +31,10 @@
 SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
      tmin, mmin, tmax, mmax, tmp1, ddy, ddz, wrk1d, wrk2d, wrk3d)
 
-  USE DNS_GLOBAL
+  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow, inb_scal_array
+  USE DNS_GLOBAL,    ONLY : buoyancy
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -51,15 +55,12 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
   TREAL, DIMENSION(*) :: wrk1d, wrk2d, wrk3d
 
 ! -----------------------------------------------------------------------
-  TINTEGER ip, j, k, is
+  TINTEGER ip, j, k, is, bcs(2,2)  
   TREAL c
-#ifdef USE_MPI
-  TINTEGER imode_fdm_loc
-#endif
   
-  TREAL dy(1), dz(1) ! To use old wrappers to calculate derivatives
-
 ! #######################################################################
+  bcs = 0
+  
 ! -------------------------------------------------------------------
 ! Arrange data
 ! -------------------------------------------------------------------
@@ -99,16 +100,15 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
 ! Construct t1-t5
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-  CALL PARTIAL_Y(imode_fdm, ims_bcs_imax, jmax, kmax, j1bc,&
-       dy, tmp1, ddy, i0, i0, wrk1d, wrk2d, wrk3d)
-  imode_fdm_loc = imode_fdm + (DNS_MPI_K_NRBCX-1)*100
-  CALL PARTIAL_Z(imode_fdm_loc, ims_bcs_imax, jmax, kmax, k1bc,&
-       dz, tmp1, ddz, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1,     ims_bcs_imax,jmax,kmax, bcs, g(2), tmp1, ddy, wrk3d, wrk2d,wrk3d)
+! Needs to be checked
+  CALL IO_WRITE_ASCII(efile,'BOUNDARY_BCS_TRANSVERSE_X. To be checked')
+  CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+!  imode_fdm_loc = imode_fdm + (DNS_MPI_K_NRBCX-1)*100
+  CALL OPR_PARTIAL_Z(OPR_P1_BCS, ims_bcs_imax,jmax,kmax, bcs, g(3), tmp1, ddz, wrk3d, wrk2d,wrk3d)
 #else
-  CALL PARTIAL_Y(imode_fdm, ip, jmax, kmax, j1bc,&
-       dy, tmp1, ddy, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, ip, jmax, kmax, k1bc,&
-       dz, tmp1, ddz, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, ip,jmax,kmax, bcs, g(2), tmp1, ddy, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, ip,jmax,kmax, bcs, g(3), tmp1, ddz, wrk3d, wrk2d,wrk3d)
 #endif
   ip = 0
 

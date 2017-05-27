@@ -45,13 +45,11 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
   TARGET aux2d
 
 ! -------------------------------------------------------------------
-  TINTEGER i, k, is, nt, inb_scal_loc, iflag_min, iflag_max, idir, ip0
+  TINTEGER i, k, is, nt, inb_scal_loc, iflag_min, iflag_max, idir, ip0, bcs(2,1)
   TINTEGER imin_loc, imax_loc
   TREAL prefactor, pl_out, pl_inf, dummy
 
   TREAL, DIMENSION(:,:,:), POINTER :: tmin, lmin, tmax, lmax, inf_rhs
-
-  TREAL dy(1) ! To use old wrappers to calculate derivatives
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -80,6 +78,8 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
 #define dpdn_loc(i,k)  aux2d(i,k,18)
 #define dz1dn_loc(i,k) aux2d(i,k,19)
 
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+    
   ip0 = 19
 
   nt = imax*kmax
@@ -137,11 +137,11 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
 ! ###################################################################
 ! Flow 
 ! ###################################################################
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, rho, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, u,   tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, v,   tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, w,   tmp4, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, p,   tmp5, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), rho, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), u,   tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v,   tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), w,   tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), p,   tmp5, wrk3d, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
 ! BCs at ymin
@@ -245,7 +245,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
      ELSE;                                         inb_scal_loc = inb_scal     ; ENDIF
 
      DO is = 1,inb_scal_loc
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, z1(1,1,1,is), tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), z1(1,1,1,is), tmp2, wrk3d, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
 ! BCs at ymin

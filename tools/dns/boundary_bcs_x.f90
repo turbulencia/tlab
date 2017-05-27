@@ -43,12 +43,10 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
   TARGET aux2d
 
 ! -------------------------------------------------------------------
-  TINTEGER j, k, is, nt, inb_scal_loc, isize, iflag_min, iflag_max, idir, ip0
+  TINTEGER j, k, is, nt, inb_scal_loc, isize, iflag_min, iflag_max, idir, ip0, bcs(2,1)
   TREAL prefactor, pl_out, pl_inf1, pl_inf2, pl_inf3, dummy
 
   TREAL, DIMENSION(:,:,:), POINTER :: tmin, mmin, tmax, mmax, inf_rhs
-
-  TREAL dx(1) ! To use old wrappers to calculate derivatives
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -76,6 +74,8 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
 #define dwdn_loc(j,k)  aux2d(j,k,17)
 #define dpdn_loc(j,k)  aux2d(j,k,18)
 #define dz1dn_loc(j,k) aux2d(j,k,19)
+
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
   ip0 = 19
 
@@ -147,11 +147,11 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
 ! ###################################################################
 ! Flow 
 ! ###################################################################
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, u,   txc(1,1,1,2), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, p,   txc(1,1,1,5), i0,i0, wrk1d,wrk2d,wrk3d)         
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, rho, txc(1,1,1,1), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, v,   txc(1,1,1,3), i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, w,   txc(1,1,1,4), i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u,   txc(1,1,1,2), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), p,   txc(1,1,1,5), wrk3d, wrk2d,wrk3d)         
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), rho, txc(1,1,1,1), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v,   txc(1,1,1,3), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), w,   txc(1,1,1,4), wrk3d, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
 ! Nonreflective BCs at xmin
@@ -278,7 +278,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN; inb_scal_loc = inb_scal + 1
      ELSE;                                         inb_scal_loc = inb_scal;    ENDIF
      DO is = 1,inb_scal_loc
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, z1(1,1,1,is), txc(1,1,1,3), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), z1(1,1,1,is), txc(1,1,1,3), wrk3d, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
 ! Nonreflective BCs at xmin

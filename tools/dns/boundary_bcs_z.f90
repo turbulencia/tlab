@@ -22,7 +22,7 @@
 !# ARGUMENTS 
 !# 
 !########################################################################
-SUBROUTINE BOUNDARY_BCS_Z(dz, M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh1,&
+SUBROUTINE BOUNDARY_BCS_Z(M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh1,&
      tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
@@ -42,7 +42,6 @@ SUBROUTINE BOUNDARY_BCS_Z(dz, M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh
 
   TREAL M2_max
 
-  TREAL, DIMENSION(*)                :: dz
   TREAL, DIMENSION(imax,jmax,kmax)   :: rho, u, v, w, p, gama, h0, h1, h2, h3, h4
   TREAL, DIMENSION(imax,jmax,kmax)   :: tmp1, tmp2, tmp3, tmp4, tmp5
   TREAL, DIMENSION(imax,jmax,kmax,*) :: z1, zh1
@@ -52,7 +51,7 @@ SUBROUTINE BOUNDARY_BCS_Z(dz, M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh
   TREAL wrk3d(*)
 
 ! -------------------------------------------------------------------
-  TINTEGER i, nt, is, iwrk, inb_scal_loc
+  TINTEGER i, nt, is, iwrk, inb_scal_loc, bcs(2,1)
   TREAL prefactor, pl_const
 
 ! ###################################################################
@@ -66,6 +65,8 @@ SUBROUTINE BOUNDARY_BCS_Z(dz, M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh
 #define hw_loc(i)  wrk2d(i,4)
 #define he_loc(i)  wrk2d(i,5)
 #define hz1_loc(i) wrk2d(i,6)
+
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
   iwrk = 7
   nt   = imax*jmax
@@ -85,16 +86,11 @@ SUBROUTINE BOUNDARY_BCS_Z(dz, M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh
 ! ###################################################################
 ! Nonreflective BCs at zmin and zmax
 ! ###################################################################
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, rho, tmp1, i0, i0, wrk1d, wrk2d(1,iwrk), wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-          dz, u,   tmp2, i0, i0, wrk1d, wrk2d(1,iwrk), wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-          dz, v,   tmp3, i0, i0, wrk1d, wrk2d(1,iwrk), wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, w,   tmp4, i0, i0, wrk1d, wrk2d(1,iwrk), wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, p,   tmp5, i0, i0, wrk1d, wrk2d(1,iwrk), wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), rho, tmp1, wrk3d, wrk2d(1,iwrk), wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), u,   tmp2, wrk3d, wrk2d(1,iwrk), wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), v,   tmp3, wrk3d, wrk2d(1,iwrk), wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w,   tmp4, wrk3d, wrk2d(1,iwrk), wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), p,   tmp5, wrk3d, wrk2d(1,iwrk), wrk3d)
 
 ! -------------------------------------------------------------------
 ! BCs at zmin
@@ -174,8 +170,8 @@ SUBROUTINE BOUNDARY_BCS_Z(dz, M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh
         inb_scal_loc = inb_scal 
      ENDIF
      DO is = 1,inb_scal_loc
-        CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-             dz, z1(1,1,1,is), tmp2, i0, i0, wrk1d, wrk2d(1,iwrk), wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), z1(1,1,1,is), tmp2, wrk3d, wrk2d(1,iwrk),wrk3d)
+
 ! -------------------------------------------------------------------
 ! BCs at zmin
 ! -------------------------------------------------------------------

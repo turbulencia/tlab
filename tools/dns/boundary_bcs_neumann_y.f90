@@ -2,9 +2,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2010/11/03 - J.P. Mellado
@@ -16,7 +13,7 @@
 !# Calculate the boundary values of a field s.t. the normal derivative
 !# is zero
 !#
-!# Routine format extracted from PARTIAL_Y
+!# Routine format extracted from OPR_PARTIAL_Y
 !#
 !########################################################################
 !# ARGUMENTS 
@@ -35,7 +32,7 @@ SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1
 #include "integers.h"
 
   TINTEGER nx,ny,nz, ibc
-  TYPE(grid_dt),               INTENT(IN)  :: g
+  TYPE(grid_dt),                      INTENT(IN)  :: g
   TREAL, DIMENSION(nx*nz,ny), TARGET, INTENT(IN)  :: u         ! they are transposed below
   TREAL, DIMENSION(nx*nz,ny), TARGET              :: tmp1,tmp2 ! they are transposed below
   TREAL, DIMENSION(g%size,3), TARGET              :: wrk1d
@@ -88,11 +85,11 @@ SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1
      
   CASE( FDM_COM6_JACOBIAN )
      CALL FDM_C1N6_BCS_LHS(ny,     ibc, g%jac, a,b,c)
-     CALL FDM_C1N6_BCS_RHS(ny,nxz, ibc,     p_org,p_dst)
+     CALL FDM_C1N6_BCS_RHS(ny,nxz, ibc,        p_org,p_dst)
 
   CASE( FDM_COM6_DIRECT   ) !not yet implemented
      CALL FDM_C1N6_BCS_LHS(ny,     ibc, g%jac, a,b,c)
-     CALL FDM_C1N6_BCS_RHS(ny,nxz, ibc,     p_org,p_dst)
+     CALL FDM_C1N6_BCS_RHS(ny,nxz, ibc,        p_org,p_dst)
      
   CASE( FDM_COM8_JACOBIAN ) !not yet implemented
      

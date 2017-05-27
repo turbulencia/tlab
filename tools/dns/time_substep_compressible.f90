@@ -236,23 +236,24 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
 #endif
   ENDIF
 
-  IF ( j1bc .NE. DNS_BCS_PERIODIC ) THEN
+  IF ( .NOT. g(2)%periodic ) THEN
      CALL BOUNDARY_BCS_Y(isize_field, M2_max, rho,u,v,w,p,GAMMA_LOC(1),s, &
           vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), h0,h1,h2,h3,h4,hs,&
           txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), AUX_LOC(1), wrk1d,wrk2d,wrk3d)
   ENDIF
 
-  IF ( i1bc .NE. DNS_BCS_PERIODIC ) THEN
+  IF ( .NOT. g(1)%periodic ) THEN
      CALL BOUNDARY_BCS_X(isize_field, M2_max, etime, rho,u,v,w,p,GAMMA_LOC(1),s, &
           q_inf,s_inf, &
           vaux(vindex(VA_BCS_VI)), vaux(vindex(VA_BCS_VO)), h0,h1,h2,h3,h4,hs,&
           txc, AUX_LOC(1), wrk1d,wrk2d,wrk3d)
   ENDIF
 
-!  CALL BOUNDARY_BCS_Z&
-!       (rho, M2_max, dz, u,v,w,p, GAMMA_LOC(1), s, h0,h1,h2,h3,h4,hs,&
-!       txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
-
+  IF ( .NOT. g(3)%periodic ) THEN
+     CALL BOUNDARY_BCS_Z(M2_max, rho,u,v,w,p, GAMMA_LOC(1), s, h0,h1,h2,h3,h4,hs,&
+          txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+  ENDIF
+  
 #undef GAMMA_LOC
 #undef AUX_LOC
 
