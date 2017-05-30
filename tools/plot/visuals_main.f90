@@ -487,7 +487,7 @@ PROGRAM VISUALS_MAIN
 
               ELSE IF ( opt_vec(iv) .EQ. 7 ) THEN ! temperature
                  IF      ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-                    CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1), wrk3d) !txc2, txc3 not used
+                    CALL THERMO_ANELASTIC_TEMPERATURE(imax,jmax,kmax, s, epbackground, txc(1,1))
                     
                     plot_file = 'Temperature'//time_str(1:MaskSize)
                     CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)

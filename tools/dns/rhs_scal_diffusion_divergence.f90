@@ -3,19 +3,6 @@
 #include "dns_error.h"
 
 !########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/06/08 - J.P. Mellado
-!#              Created
-!# 2007/06/20 - J.P. Mellado
-!#              AIRWATER case included. 
-!# 2007/07/03 - J.P. Mellado
-!#              AIRWATER correction term included.
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Computing terms depending on diffusion velocities, i.e. diffusion
@@ -24,35 +11,27 @@
 !# in the routine RHS_FLOW_CONDUCTION.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
-     (is, dx, dy, dz, vis, z1, T, zh1, diff_x, diff_y, diff_z,&
-     tmp1, tmp2, tmp3, tmp4, wrk1d, wrk2d, wrk3d)
+     (is, vis, z1, T, zh1, diff_x,diff_y,diff_z, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
-  USE THERMO_GLOBAL
-  USE DNS_GLOBAL
-  USE DNS_LOCAL
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : idiffusion, visc, prandtl, schmidt
+  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
+  USE DNS_LOCAL,     ONLY : bcs_out
 
   IMPLICIT NONE
 
-#include "integers.h"
-
   TINTEGER is
-
-  TREAL, DIMENSION(*)                :: dx, dy, dz
-  TREAL, DIMENSION(imax*jmax*kmax)   :: T, vis, zh1
-  TREAL, DIMENSION(imax*jmax*kmax,*) :: z1
-  TREAL, DIMENSION(imax*jmax*kmax)   :: tmp1, tmp2, tmp3, tmp4
-  TREAL, DIMENSION(*)                :: wrk1d, wrk2d, wrk3d
-
-  TREAL diff_x(*), diff_y(*), diff_z(*)
+  TREAL, DIMENSION(isize_field),   INTENT(IN)    :: vis, T
+  TREAL, DIMENSION(isize_field,*), INTENT(IN)    :: z1
+  TREAL, DIMENSION(isize_field),   INTENT(OUT)   :: zh1
+  TREAL, DIMENSION(isize_field),   INTENT(OUT)   :: diff_x, diff_y, diff_z
+  TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4
+  TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d,wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER i1vsout, imxvsout
-  TINTEGER j1vsout, jmxvsout
-  TINTEGER k1vsout, kmxvsout
+  TINTEGER bcs(2,1)
 
   TINTEGER i, im, icp
   TREAL diff, cond, dummy
@@ -63,7 +42,7 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
   CALL IO_WRITE_ASCII(tfile, 'ENTERING RHS_SCAL_DIFFUSION_DIVERGENCE')
 #endif
 
-#include "dns_bcs_out.h"
+  bcs = 0
 
   IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R;            cond = C_0_R
   ELSE;                                  diff = visc/schmidt(is); cond = visc/prandtl; ENDIF
@@ -73,24 +52,17 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
 ! -------------------------------------------------------------------
 ! diffusion velocities in special cases
   IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-     DO i = 1,imax*jmax*kmax
-        tmp4(i) = (z1(i,1)-z1(i,2))/(C_1_R-z1(i,2))
-     ENDDO
-     CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-          dx, tmp4, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-          dy, tmp4, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-          dz, tmp4, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
+     tmp4 = (z1(:,1)-z1(:,2))/(C_1_R-z1(:,2))
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp4, tmp1, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp4, tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d,wrk3d)
 
 ! standard diffusion velocities
   ELSE
-     CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-          dx, z1, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-          dy, z1, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-          dz, z1, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), z1, tmp1, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), z1, tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), z1, tmp3, wrk3d, wrk2d,wrk3d)
+
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -107,38 +79,28 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
            im = 1
         ENDIF
         DO icp = NCP_CHEMKIN,1,-1
-           tmp4(i) = tmp4(i)*T(i) &
-                + (THERMO_AI(icp,im,is)-THERMO_AI(icp,im,NSP))/M_REAL(icp)
+           tmp4(i) = tmp4(i)*T(i) + (THERMO_AI(icp,im,is)-THERMO_AI(icp,im,NSP))/M_REAL(icp)
         ENDDO
 ! factor (diff-cond) added now
         tmp4(i) = (diff-cond)*( tmp4(i)*T(i) + THERMO_AI(6,im,is)-THERMO_AI(6,im,NSP) )
      ENDDO
-     DO i = 1,imax*jmax*kmax
-        diff_x(i) = diff_x(i) + tmp4(i)*tmp1(i)
-        diff_y(i) = diff_y(i) + tmp4(i)*tmp2(i)
-        diff_z(i) = diff_z(i) + tmp4(i)*tmp3(i)
-     ENDDO
+     diff_x = diff_x + tmp4 *tmp1
+     diff_y = diff_y + tmp4 *tmp2
+     diff_z = diff_z + tmp4 *tmp3
 
   ENDIF
 
 ! -------------------------------------------------------------------
 ! mass fraction transport by diffusion velocities
 ! -------------------------------------------------------------------
-  DO i = 1,imax*jmax*kmax
-     tmp1(i) = diff*vis(i)*tmp1(i)
-     tmp2(i) = diff*vis(i)*tmp2(i)
-     tmp3(i) = diff*vis(i)*tmp3(i)
-  ENDDO
-
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tmp3, tmp4, k1vsout, kmxvsout, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tmp2, tmp3, j1vsout, jmxvsout, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp1, tmp2, i1vsout, imxvsout, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     zh1(i) = zh1(i) + tmp2(i) + tmp3(i) + tmp4(i)
-  ENDDO
+  tmp1 = diff *vis *tmp1
+  tmp2 = diff *vis *tmp2
+  tmp3 = diff *vis *tmp3
+  
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(1,2,3), g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(1,2,2), g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(1,2,1), g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  zh1 = zh1 + tmp2 + tmp3 + tmp4
 
 ! ###################################################################
 ! Numerical liquid correction term in the AIRWATER case
@@ -148,12 +110,9 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
      ELSE;                                  diff = visc/schmidt(3); ENDIF
 
 ! gradient of liquid content
-     CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-          dx, z1(1,2), tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-          dy, z1(1,2), tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-          dz, z1(1,2), tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), z1(1,2), tmp1, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), z1(1,2), tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), z1(1,2), tmp3, wrk3d, wrk2d,wrk3d)
 
 ! enthalpy equation
      DO i = 1,imax*jmax*kmax
@@ -163,28 +122,23 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
              ) / (C_1_R-z1(i,2))
         ENTHALPY_L = &
              THERMO_AI(6,1,3)+THERMO_AI(1,1,3)*T(i)
-        diff_x(i) = diff_x(i) + diff*(ENTHALPY_L-ENTHALPY_G)*tmp1(i)
-        diff_y(i) = diff_y(i) + diff*(ENTHALPY_L-ENTHALPY_G)*tmp2(i)
-        diff_z(i) = diff_z(i) + diff*(ENTHALPY_L-ENTHALPY_G)*tmp3(i)
+        diff_x(i) = diff_x(i) + diff *(ENTHALPY_L-ENTHALPY_G) *tmp1(i)
+        diff_y(i) = diff_y(i) + diff *(ENTHALPY_L-ENTHALPY_G) *tmp2(i)
+        diff_z(i) = diff_z(i) + diff *(ENTHALPY_L-ENTHALPY_G) *tmp3(i)
      ENDDO
 
 ! scalar equation
      DO i = 1,imax*jmax*kmax
         dummy = (C_1_R-z1(i,1))/(C_1_R-z1(i,2))
-        tmp1(i) = diff*vis(i)*tmp1(i)*dummy
-        tmp2(i) = diff*vis(i)*tmp2(i)*dummy
-        tmp3(i) = diff*vis(i)*tmp3(i)*dummy
+        tmp1(i) = diff *vis(i) *tmp1(i) *dummy
+        tmp2(i) = diff *vis(i) *tmp2(i) *dummy
+        tmp3(i) = diff *vis(i) *tmp3(i) *dummy
      ENDDO
 
-     CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-          dz, tmp3, tmp4, k1vsout, kmxvsout, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-          dy, tmp2, tmp3, j1vsout, jmxvsout, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-          dx, tmp1, tmp2, i1vsout, imxvsout, wrk1d, wrk2d, wrk3d)
-     DO i = 1,imax*jmax*kmax
-        zh1(i) = zh1(i) + tmp2(i) + tmp3(i) + tmp4(i)
-     ENDDO
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(1,2,3), g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(1,2,2), g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(1,2,1), g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+     zh1 = zh1 + tmp2 + tmp3 + tmp4
 
   ENDIF
 

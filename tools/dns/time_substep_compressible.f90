@@ -162,15 +162,15 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
 ! diffusion transport of enthalpy is accumulated in txc and used then in RHS_FLOW_CONDUCTION
         txc(:,1) = C_0_R; txc(:,2) = C_0_R; txc(:,3) = C_0_R
         DO is = 1,inb_scal
-           CALL RHS_SCAL_DIFFUSION_DIVERGENCE(is, dx,dy,dz, vis, s, T, hs, &
+           CALL RHS_SCAL_DIFFUSION_DIVERGENCE(is, vis, s, T, hs, &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk1d,wrk2d,wrk3d)
         ENDDO
-        CALL RHS_FLOW_CONDUCTION_DIVERGENCE(dx,dy,dz, vis, s, T, h4, &
-             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk1d,wrk2d,wrk3d)
+        CALL RHS_FLOW_CONDUCTION_DIVERGENCE(vis, s, T, h4, &
+             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
      ELSE IF ( idiffusion .EQ. EQNS_EXPLICIT   ) THEN
         DO is = 1,inb_scal
            CALL RHS_SCAL_DIFFUSION_EXPLICIT(is, dx,dy,dz, vis, s, T, hs, h4, &
-                txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+                txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         ENDDO
         CALL RHS_FLOW_CONDUCTION_EXPLICIT(dx, dy, dz, vis, s, T, h4, &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
