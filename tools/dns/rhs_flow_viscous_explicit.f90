@@ -1,12 +1,7 @@
-!########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/08/30 - J.P. Mellado
-!#              Created
-!#
+#include "types.h"
+#include "dns_const.h"
+#include "dns_error.h"
+
 !########################################################################
 !# DESCRIPTION
 !#
@@ -20,38 +15,24 @@
 !# 12 first derivative operations and 9 second derivative operations.
 !# 
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-#include "dns_error.h"
-
-SUBROUTINE RHS_FLOW_VISCOUS_EXPLICIT(dx,dy,dz, vis, u,v,w,p, h1,h2,h3,h4, &
-     tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
+SUBROUTINE RHS_FLOW_VISCOUS_EXPLICIT(vis, u,v,w,p, h1,h2,h3,h4, tmp1,tmp2,tmp3,tmp4,tmp5, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, imode_eqns
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : itransport, visc, mach
   USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL
+  USE DNS_LOCAL,     ONLY : bcs_out, bcs_inf
 
   IMPLICIT NONE
 
-#include "integers.h"
-
-  TREAL dx(imax)
-  TREAL dy(jmax)
-  TREAL dz(kmax_total)
-
-  TREAL vis(*), u(*), v(*), w(*), p(*)
-  TREAL h1(*), h2(*), h3(*), h4(*)
-  TREAL tmp1(*), tmp2(*), tmp3(*), tmp4(*), tmp5(*)
-  TREAL wrk1d(*), wrk2d(*), wrk3d(*)
+  TREAL, DIMENSION(isize_field), INTENT(IN)    :: vis, u,v,w,p
+  TREAL, DIMENSION(isize_field), INTENT(OUT)   :: h1,h2,h3,h4
+  TREAL, DIMENSION(isize_field), INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4,tmp5
+  TREAL, DIMENSION(*),           INTENT(INOUT) :: wrk2d,wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER i1vsin, i1vsout, imxvsin, imxvsout
-  TINTEGER j1vsin, j1vsout, jmxvsin, jmxvsout
-  TINTEGER k1vsin, k1vsout, kmxvsin, kmxvsout
+  TINTEGER bcs(2,1)
   TINTEGER i
   TREAL prefactor, c13, c23, dummy
 
@@ -70,48 +51,34 @@ SUBROUTINE RHS_FLOW_VISCOUS_EXPLICIT(dx,dy,dz, vis, u,v,w,p, h1,h2,h3,h4, &
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
+  bcs = 0
+  
   prefactor = (gama0-C_1_R)*mach*mach
   c13 = C_1_R/C_3_R
   c23 = C_2_R/C_3_R
-
-#include "dns_bcs_inf.h"
-#include "dns_bcs_out.h"
 
 ! ###################################################################
 ! First derivatives in energy equation
 ! ###################################################################
   dummy = prefactor*visc
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, u, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, v, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h4(i) = h4(i) + dummy*vis(i)*( (tmp2(i)+tmp3(i))*(tmp2(i)+tmp3(i)) )
-  ENDDO
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, v, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, w, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h4(i) = h4(i) + dummy*vis(i)*( (tmp2(i)+tmp3(i))*(tmp2(i)+tmp3(i)) )
-  ENDDO
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, u, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, w, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h4(i) = h4(i) + dummy*vis(i)*( (tmp2(i)+tmp3(i))*(tmp2(i)+tmp3(i)) )
-  ENDDO
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), u, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v, tmp3, wrk3d, wrk2d,wrk3d)
+  h4 = h4 + dummy*vis*( (tmp2+tmp3)*(tmp2+tmp3) )
+
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), v, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), w, tmp3, wrk3d, wrk2d,wrk3d)
+  h4 = h4 + dummy*vis*( (tmp2+tmp3)*(tmp2+tmp3) )
+
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), u, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), w, tmp3, wrk3d, wrk2d,wrk3d)
+  h4 = h4 + dummy*vis*( (tmp2+tmp3)*(tmp2+tmp3) )
 
 ! ###################################################################
 ! Dilatation part
 ! ###################################################################
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, u, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, v, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, w, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
 ! energy equation
@@ -128,41 +95,23 @@ SUBROUTINE RHS_FLOW_VISCOUS_EXPLICIT(dx,dy,dz, vis, u,v,w,p, h1,h2,h3,h4, &
 ! ###################################################################
 ! Laplacian terms in the momentum equation
 ! ###################################################################
-  CALL PARTIAL_XX(i0, iunifx, imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, u, tmp1, i0,i0, i1vsin, imxvsin, tmp4, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_YY(i0, iunify, imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, u, tmp2, i0,i0, j1vsout, jmxvsout, tmp4, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_ZZ(i0, iunifz, imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, u, tmp3, i0,i0, k1vsout, kmxvsout, tmp4, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp5, tmp4, i1vsin, imxvsin, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h1(i) = h1(i) + vis(i)*visc*(tmp1(i) + tmp2(i) + tmp3(i) + c13*tmp4(i))
-  ENDDO
+  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs_inf(1,1,1), g(1), u,    tmp1, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs_out(1,1,2), g(2), u,    tmp2, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs_out(1,1,3), g(3), u,    tmp3, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_inf(1,2,1), g(1), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+  h1 = h1 + vis*visc*(tmp1 + tmp2 + tmp3 + c13*tmp4)
 
-  CALL PARTIAL_XX(i0, iunifx,imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, v, tmp1, i0,i0, i1vsout, imxvsout, tmp4, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_YY(i0, iunify, imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, v, tmp2, i0,i0, j1vsin, jmxvsin, tmp4, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_ZZ(i0, iunifz, imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, v, tmp3, i0,i0, k1vsout, kmxvsout, tmp4, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tmp5, tmp4, j1vsin, jmxvsin, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h2(i) = h2(i) + vis(i)*visc*(tmp1(i) + tmp2(i) + tmp3(i) + c13*tmp4(i))
-  ENDDO
+  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs_out(1,1,1), g(1), v,    tmp1, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs_inf(1,1,2), g(2), v,    tmp2, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs_out(1,1,3), g(3), v,    tmp3, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_inf(1,2,2), g(2), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+  h2 = h2 + vis*visc*(tmp1 + tmp2 + tmp3 + c13*tmp4)
 
-  CALL PARTIAL_XX(i0, iunifx,imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, w, tmp1, i0,i0, i1vsout, imxvsout, tmp4, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_YY(i0, iunify, imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, w, tmp2, i0,i0, j1vsout, jmxvsout, tmp4, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_ZZ(i0, iunifz, imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, w, tmp3, i0,i0, k1vsin, kmxvsin, tmp4, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tmp5, tmp4, k1vsin, kmxvsin, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h3(i) = h3(i) + vis(i)*visc*(tmp1(i) + tmp2(i) + tmp3(i) + c13*tmp4(i))
-  ENDDO
+  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs_out(1,1,1), g(1), w,    tmp1, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs_out(1,1,2), g(2), w,    tmp2, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs_inf(1,1,3), g(3), w,    tmp3, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_inf(1,2,3), g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+  h3 = h3 + vis*visc*(tmp1 + tmp2 + tmp3 + c13*tmp4)
 
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_VISCOUS_EXPLICIT')

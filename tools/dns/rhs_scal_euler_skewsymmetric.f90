@@ -1,47 +1,28 @@
-!########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/06/08 - J.P. Mellado
-!#              Created
-!# 2007/08/30 - J.P. Mellado
-!#              Skewsymmetric formulation according to Erlebacher, 1992
-!#              Derived from RHS_FLOW_EULER_DIVERGENCE, 3 additional
-!#              derivative operations are added.
-!#              The mass conservation terms are implemented in the
-!#              routine RHS_FLOW_EULER_SKEWSYMMETRIC
-!#
+#include "types.h"
+#include "dns_const.h"
+
 !########################################################################
 !# DESCRIPTION
 !#
-!########################################################################
-!# ARGUMENTS 
+!# Skewsymmetric formulation according to Erlebacher, 1992
+!# Derived from RHS_FLOW_EULER_DIVERGENCE, 3 additional derivative operations are added.
+!# The mass conservation terms are implemented in the routine RHS_FLOW_EULER_SKEWSYMMETRIC
 !#
 !########################################################################
-SUBROUTINE RHS_SCAL_EULER_SKEWSYMMETRIC&
-     (dx, dy, dz, rho, u, v, w, z1, zh1, tmp1, tmp2, tmp3, tmp4, wrk1d, wrk2d, wrk3d)
+SUBROUTINE RHS_SCAL_EULER_SKEWSYMMETRIC(rho,u,v,w,z1, zh1, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
-#include "types.h"
-
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field
+  USE DNS_GLOBAL,    ONLY : g
 
   IMPLICIT NONE
 
-#include "integers.h"
-
-  TREAL dx(imax)
-  TREAL dy(jmax)
-  TREAL dz(kmax_total)
-
-  TREAL rho(*), u(*), v(*), w(*), z1(*)
-  TREAL zh1(*)
-  TREAL tmp1(*), tmp2(*), tmp3(*), tmp4(*)
-  TREAL wrk1d(*), wrk2d(*), wrk3d(*)
+  TREAL, DIMENSION(isize_field), INTENT(IN)    :: rho,u,v,w,z1
+  TREAL, DIMENSION(isize_field), INTENT(OUT)   :: zh1
+  TREAL, DIMENSION(isize_field), INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4
+  TREAL, DIMENSION(*),           INTENT(INOUT) :: wrk2d,wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER i
+  TINTEGER bcs(2,1), i
   TREAL dummy
 
 ! ###################################################################
@@ -52,26 +33,16 @@ SUBROUTINE RHS_SCAL_EULER_SKEWSYMMETRIC&
      tmp2(i) = dummy*v(i)
      tmp1(i) = dummy*u(i)
   ENDDO
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tmp3, tmp4, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tmp2, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp1, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     zh1(i) = zh1(i) - ( tmp2(i) + tmp3(i) + tmp4(i) )
-  ENDDO
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  zh1 = zh1 - ( tmp2 + tmp3 + tmp4 )
 
 ! convective part
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, z1, tmp4, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, z1, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, z1, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     zh1(i) = zh1(i) - C_05_R*rho(i)*( u(i)*tmp2(i) + v(i)*tmp3(i) + w(i)*tmp4(i) )
-  ENDDO
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), z1, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), z1, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), z1, tmp2, wrk3d, wrk2d,wrk3d)
+  zh1 = zh1 - C_05_R*rho*( u*tmp2 + v*tmp3 + w*tmp4 )
 
   RETURN
 END SUBROUTINE RHS_SCAL_EULER_SKEWSYMMETRIC

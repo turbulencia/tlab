@@ -130,11 +130,11 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
         ENDDO
      ELSE IF ( iadvection .EQ. EQNS_SKEWSYMMETRIC ) THEN
-        CALL RHS_FLOW_EULER_SKEWSYMMETRIC(dx,dy,dz, rho,u,v,w,p,e,s, h0,h1,h2,h3,h4,hs,&
-             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+        CALL RHS_FLOW_EULER_SKEWSYMMETRIC(rho,u,v,w,p,e,s, h0,h1,h2,h3,h4,hs,&
+             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk2d,wrk3d)
         DO is = 1,inb_scal
-           CALL RHS_SCAL_EULER_SKEWSYMMETRIC(dx,dy,dz, rho,u,v,w,s(1,is), hs(1,is),&
-                txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d)
+           CALL RHS_SCAL_EULER_SKEWSYMMETRIC(rho,u,v,w,s(1,is), hs(1,is),&
+                txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
         ENDDO
      ENDIF
 
@@ -150,8 +150,8 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
         CALL RHS_FLOW_VISCOUS_DIVERGENCE(vis, u,v,w,p, h1,h2,h3,h4, &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8),txc(1,9), wrk2d,wrk3d)
      ELSE IF ( iviscous .EQ. EQNS_EXPLICIT   ) THEN
-        CALL RHS_FLOW_VISCOUS_EXPLICIT(dx,dy,dz, vis, u,v,w,p, h1,h2,h3,h4, &
-             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+        CALL RHS_FLOW_VISCOUS_EXPLICIT(vis, u,v,w,p, h1,h2,h3,h4, &
+             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk2d,wrk3d)
      ENDIF
 
 ! -------------------------------------------------------------------
@@ -168,11 +168,10 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
      ELSE IF ( idiffusion .EQ. EQNS_EXPLICIT   ) THEN
         DO is = 1,inb_scal
-           CALL RHS_SCAL_DIFFUSION_EXPLICIT(is, dx,dy,dz, vis, s, T, hs, h4, &
+           CALL RHS_SCAL_DIFFUSION_EXPLICIT(is, vis, s, T, hs, h4, &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         ENDDO
-        CALL RHS_FLOW_CONDUCTION_EXPLICIT(dx, dy, dz, vis, s, T, h4, &
-             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+        CALL RHS_FLOW_CONDUCTION_EXPLICIT(vis, s, T, h4, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk2d,wrk3d)
      ENDIF
 
   ENDIF

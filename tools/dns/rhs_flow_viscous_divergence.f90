@@ -11,8 +11,7 @@
 !# Total energy eqn formulation does 21 derivatives.
 !#
 !########################################################################
-SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE&
-     (vis, u,v,w,p, h1,h2,h3,h4, tau_xx,tau_xy,tau_xz,tau_yy,tau_yz,tau_zz,&
+SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE(vis, u,v,w,p, h1,h2,h3,h4, tau_xx,tau_xy,tau_xz,tau_yy,tau_yz,tau_zz,&
      tmp1,tmp2,tmp3, wrk2d,wrk3d)
 
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, imode_eqns

@@ -1,12 +1,7 @@
-!########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/09/21 - J.P. Mellado
-!#              Created
-!#
+#include "types.h"
+#include "dns_const.h"
+#include "dns_error.h"
+
 !########################################################################
 !# DESCRIPTION
 !#
@@ -18,38 +13,23 @@
 !# Mass diffusion contribbution in RHS_SCAL_DIFFSUION_EXPLICIT.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-#include "dns_error.h"
+SUBROUTINE RHS_FLOW_CONDUCTION_EXPLICIT(vis, z1, T, h4, tmp1,tmp2,tmp3,tmp4,tmp5, wrk2d,wrk3d)
 
-SUBROUTINE RHS_FLOW_CONDUCTION_EXPLICIT&
-     (dx,dy,dz, vis, z1, T, h4, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
-
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
-  USE DNS_LOCAL
+  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : idiffusion, itransport, visc, prandtl
+  USE DNS_LOCAL,     ONLY : bcs_out
 
   IMPLICIT NONE
 
-#include "integers.h"
-
-  TREAL dx(imax)
-  TREAL dy(jmax)
-  TREAL dz(kmax_total)
-
-  TREAL vis(*), T(*), z1(imax*jmax*kmax,*)
-  TREAL h4(*)
-  TREAL tmp1(*), tmp2(*), tmp3(*), tmp4(*), tmp5(*)
-  TREAL wrk1d(*), wrk2d(*), wrk3d(*)
+  TREAL, DIMENSION(isize_field),   INTENT(IN)    :: vis, T
+  TREAL, DIMENSION(isize_field,*), INTENT(IN)    :: z1
+  TREAL, DIMENSION(isize_field),   INTENT(OUT)   :: h4
+  TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4,tmp5
+  TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d,wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER i1vsout, imxvsout
-  TINTEGER j1vsout, jmxvsout
-  TINTEGER k1vsout, kmxvsout
-  TINTEGER i
   TREAL cond
 
 ! ###################################################################
@@ -62,8 +42,6 @@ SUBROUTINE RHS_FLOW_CONDUCTION_EXPLICIT&
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
-#include "dns_bcs_out.h"
-
 ! ###################################################################
   IF ( idiffusion .EQ. EQNS_NONE ) THEN; cond = C_0_R
   ELSE;                                  cond = visc/prandtl; ENDIF
@@ -72,15 +50,10 @@ SUBROUTINE RHS_FLOW_CONDUCTION_EXPLICIT&
   CALL THERMO_CALORIC_ENTHALPY(imax, jmax, kmax, z1, T, tmp4)
 
 ! total flux
-  CALL PARTIAL_ZZ(i0, iunifz, imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tmp4, tmp3, i0,i0, k1vsout, kmxvsout, tmp5, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_YY(i0, iunify, imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tmp4, tmp2, i0,i0, j1vsout, jmxvsout, tmp5, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_XX(i0, iunifx, imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp4, tmp1, i0,i0, i1vsout, imxvsout, tmp5, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h4(i) = h4(i) + cond*vis(i)*( tmp1(i) + tmp2(i) + tmp3(i) )
-  ENDDO
+  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs_out(1,1,3), g(3), tmp4, tmp3, tmp5, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs_out(1,1,2), g(2), tmp4, tmp2, tmp5, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs_out(1,1,1), g(1), tmp4, tmp1, tmp5, wrk2d,wrk3d)
+  h4 = h4 + cond*vis*( tmp1 + tmp2 + tmp3 )
 
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_CONDUCTION_EXPLICIT')
