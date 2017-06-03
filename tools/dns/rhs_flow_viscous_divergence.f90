@@ -1,16 +1,6 @@
-!########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/06/08 - J.P. Mellado
-!#              Created
-!# 2007/08/16 - J.P. Mellado
-!#              Case of internal energy formulation added
-!# 2007/08/30 - J.P. Mellado
-!#              Name change
-!#
+#include "types.h"
+#include "dns_const.h"
+
 !########################################################################
 !# DESCRIPTION
 !#
@@ -21,38 +11,26 @@
 !# Total energy eqn formulation does 21 derivatives.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-
 SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE&
-     (dx,dy,dz, vis, u,v,w,p, h1,h2,h3,h4, tau_xx,tau_xy,tau_xz,tau_yy,tau_yz,tau_zz,&
-     tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
+     (vis, u,v,w,p, h1,h2,h3,h4, tau_xx,tau_xy,tau_xz,tau_yy,tau_yz,tau_zz,&
+     tmp1,tmp2,tmp3, wrk2d,wrk3d)
 
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, imode_eqns
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : visc, mach
   USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL
+  USE DNS_LOCAL,     ONLY : bcs_out, bcs_inf
 
   IMPLICIT NONE
 
-#include "integers.h"
-
-  TREAL dx(imax)
-  TREAL dy(jmax)
-  TREAL dz(kmax_total)
-
-  TREAL vis(*), u(*), v(*), w(*), p(*)
-  TREAL h1(*), h2(*), h3(*), h4(*)
-  TREAL tmp1(*), tmp2(*), tmp3(*)
-  TREAL tau_xx(*), tau_xy(*), tau_xz(*), tau_yy(*), tau_yz(*), tau_zz(*)
-  TREAL wrk1d(*), wrk2d(*), wrk3d(*)
+  TREAL, DIMENSION(isize_field), INTENT(IN)    :: vis, u,v,w,p
+  TREAL, DIMENSION(isize_field), INTENT(OUT)   :: h1,h2,h3,h4
+  TREAL, DIMENSION(isize_field), INTENT(OUT)   :: tau_xx,tau_xy,tau_xz,tau_yy,tau_yz,tau_zz
+  TREAL, DIMENSION(isize_field), INTENT(INOUT) :: tmp1,tmp2,tmp3
+  TREAL, DIMENSION(*),           INTENT(INOUT) :: wrk2d,wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER i1vsin, i1vsout, imxvsin, imxvsout
-  TINTEGER j1vsin, j1vsout, jmxvsin, jmxvsout
-  TINTEGER k1vsin, k1vsout, kmxvsin, kmxvsout
+  TINTEGER bcs(2,1)
   TINTEGER i
   TREAL prefactor, dil, c23
 
@@ -61,10 +39,8 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE&
   CALL IO_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_VISCOUS_DIVERGENCE')
 #endif
 
+  bcs = 0
   prefactor = (gama0-C_1_R)*mach*mach
-
-#include "dns_bcs_inf.h"
-#include "dns_bcs_out.h"
 
 ! ###################################################################
 ! Define viscous stress tensor
@@ -73,12 +49,9 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE&
 ! -------------------------------------------------------------------
 ! diagonal terms
 ! -------------------------------------------------------------------
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, u, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, v, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, w, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)
   c23 = C_2_R/C_3_R*visc
   IF      ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN ! internal energy equation
      DO i = 1,imax*jmax*kmax
@@ -86,8 +59,7 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE&
         tau_yy(i) = c23*vis(i)*( C_2_R*tmp2(i) - (tmp1(i) + tmp3(i)) )
         tau_zz(i) = c23*vis(i)*( C_2_R*tmp3(i) - (tmp1(i) + tmp2(i)) )
         dil = tmp1(i) + tmp2(i) + tmp3(i)
-        h4(i) = h4(i) + prefactor*( &
-             tau_xx(i)*tmp1(i) + tau_yy(i)*tmp2(i) + tau_zz(i)*tmp3(i) - p(i)*dil )
+        h4(i) = h4(i) + prefactor*( tau_xx(i)*tmp1(i) + tau_yy(i)*tmp2(i) + tau_zz(i)*tmp3(i) - p(i)*dil )
      ENDDO
 
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN ! total energy equation
@@ -102,10 +74,8 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE&
 ! -------------------------------------------------------------------
 ! off-diagonal terms
 ! -------------------------------------------------------------------
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, v, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, u, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), u, tmp2, wrk3d, wrk2d,wrk3d)
   IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL   ) THEN ! internal energy equation
      DO i = 1,imax*jmax*kmax
         tau_xy(i) = visc*vis(i)*( tmp1(i) + tmp2(i) )
@@ -113,16 +83,12 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE&
      ENDDO
 
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN ! total energy equation
-     DO i = 1,imax*jmax*kmax
-        tau_xy(i) = visc*vis(i)*( tmp1(i) + tmp2(i) )
-     ENDDO
+     tau_xy = visc *vis *( tmp1 + tmp2 )
 
   ENDIF
 
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, w, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, u, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), w, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), u, tmp2, wrk3d, wrk2d,wrk3d)
 
   IF      ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN ! internal energy equation
      DO i = 1,imax*jmax*kmax
@@ -131,15 +97,12 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE&
      ENDDO
 
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN ! total energy equation
-     DO i = 1,imax*jmax*kmax
-        tau_xz(i) = visc*vis(i)*( tmp1(i) + tmp2(i) )
-     ENDDO
+     tau_xz = visc*vis*( tmp1 + tmp2 )
+     
   ENDIF
 
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, w, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, v, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), w, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), v, tmp2, wrk3d, wrk2d,wrk3d)
 
   IF      ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN ! internal energy equation
      DO i = 1,imax*jmax*kmax
@@ -148,43 +111,27 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE&
      ENDDO
 
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN ! total energy equation
-     DO i = 1,imax*jmax*kmax
-        tau_yz(i) = visc*vis(i)*( tmp1(i) + tmp2(i) )
-     ENDDO
+     tau_yz = visc*vis*( tmp1 + tmp2 )
+
   ENDIF
 
 ! ###################################################################
 ! Momentum equation
 ! ###################################################################
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tau_xx, tmp1, i1vsin, imxvsin, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tau_xy, tmp2, j1vsout, jmxvsout, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tau_xz, tmp3, k1vsout, kmxvsout, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h1(i) = h1(i) + tmp1(i) + tmp2(i) + tmp3(i)
-  ENDDO
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_inf(1,2,1), g(1), tau_xx, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(1,2,2), g(2), tau_xy, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(1,2,3), g(3), tau_xz, tmp3, wrk3d, wrk2d,wrk3d)
+  h1 = h1 + tmp1 + tmp2 + tmp3
 
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tau_xy, tmp1, i1vsout, imxvsout, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tau_yy, tmp2, j1vsin, jmxvsin, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tau_yz, tmp3, k1vsout, kmxvsout, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h2(i) = h2(i) + tmp1(i) + tmp2(i) + tmp3(i)
-  ENDDO
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(1,2,1), g(1), tau_xy, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_inf(1,2,2), g(2), tau_yy, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(1,2,3), g(3), tau_yz, tmp3, wrk3d, wrk2d,wrk3d)
+  h2 = h2 + tmp1 + tmp2 + tmp3
 
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tau_xz, tmp1, i1vsout, imxvsout, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tau_yz, tmp2, j1vsout, jmxvsout, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tau_zz, tmp3, k1vsin, kmxvsin, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h3(i) = h3(i) + tmp1(i) + tmp2(i) + tmp3(i)
-  ENDDO
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(1,2,1), g(1), tau_xz, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(1,2,2), g(2), tau_yz, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_inf(1,2,3), g(3), tau_zz, tmp3, wrk3d, wrk2d,wrk3d)
+  h3 = h3 + tmp1 + tmp2 + tmp3
 
 ! ###################################################################
 ! Energy equation
@@ -198,15 +145,11 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE&
         tau_yy(i) = tau_xy(i)*u(i) + tau_yy(i)*v(i) + tau_yz(i)*w(i)
         tau_zz(i) = tau_xz(i)*u(i) + tau_yz(i)*v(i) + tau_zz(i)*w(i)
      ENDDO
-     CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-          dz, tau_xx, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-          dy, tau_yy, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-          dx, tau_zz, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-     DO i = 1,imax*jmax*kmax
-        h4(i) = h4(i) + prefactor*( tmp1(i)+tmp2(i)+tmp3(i) )
-     ENDDO
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tau_xx, tmp3, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tau_yy, tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tau_zz, tmp1, wrk3d, wrk2d,wrk3d)
+     h4 = h4 + prefactor*( tmp1+tmp2+tmp3 )
+
   ENDIF
 
 #ifdef TRACE_ON

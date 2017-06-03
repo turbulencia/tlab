@@ -2,49 +2,32 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/06/08 - J.P. Mellado
-!#              Created
-!# 2007/08/16 - J.P. Mellado
-!#              Case of internal energy formulation added
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# 15 first derivative operations.
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-SUBROUTINE RHS_FLOW_EULER_DIVERGENCE(dx,dy,dz, rho,u,v,w,p,e, h0,h1,h2,h3,h4,&
-     tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
+SUBROUTINE RHS_FLOW_EULER_DIVERGENCE(rho,u,v,w,p,e, h0,h1,h2,h3,h4, tmp1,tmp2,tmp3,tmp4,tmp5, wrk2d,wrk3d)
 
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, imode_eqns
+  USE DNS_GLOBAL,    ONLY : g, buoyancy
+  USE DNS_GLOBAL,    ONLY : mach
   USE THERMO_GLOBAL, ONLY : gama0
 
   IMPLICIT NONE
 
-#include "integers.h"
-
-  TREAL dx(imax)
-  TREAL dy(jmax)
-  TREAL dz(kmax_total)
-
-  TREAL rho(*), u(*), v(*), w(*), p(*), e(*)
-  TREAL h0(*), h1(*), h2(*), h3(*), h4(*)
-  TREAL tmp1(*), tmp2(*), tmp3(*), tmp4(*), tmp5(*)
-  TREAL wrk1d(*), wrk2d(*), wrk3d(*)
+  TREAL, DIMENSION(isize_field), INTENT(IN)    :: rho,u,v,w,p,e
+  TREAL, DIMENSION(isize_field), INTENT(OUT)   :: h0,h1,h2,h3,h4
+  TREAL, DIMENSION(isize_field), INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4,tmp5
+  TREAL, DIMENSION(*),           INTENT(INOUT) :: wrk2d,wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER i
+  TINTEGER bcs(2,1), i
   TREAL g1, g2, g3, prefactor, dummy
 
 ! ###################################################################
+  bcs = 0
+  
   g1 = buoyancy%vector(1)
   g2 = buoyancy%vector(2)
   g3 = buoyancy%vector(3)
@@ -62,24 +45,16 @@ SUBROUTINE RHS_FLOW_EULER_DIVERGENCE(dx,dy,dz, rho,u,v,w,p,e, h0,h1,h2,h3,h4,&
 ! -------------------------------------------------------------------
 ! mass
 ! -------------------------------------------------------------------
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp4, tmp5, i0, i0, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h0(i) = h0(i) - tmp5(i)
-  ENDDO
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
+  h0 = h0 - tmp5
 
 ! -------------------------------------------------------------------
 ! u-momentum
 ! -------------------------------------------------------------------
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tmp3, tmp4, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tmp2, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp1, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h1(i) = h1(i) - ( tmp2(i) + tmp3(i) + tmp4(i) ) + g1*rho(i)
-  ENDDO
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  h1 = h1 - ( tmp2 + tmp3 + tmp4 ) + g1*rho
 
 ! ###################################################################
 ! Terms \rho v in mass and v-momentum equations
@@ -94,24 +69,16 @@ SUBROUTINE RHS_FLOW_EULER_DIVERGENCE(dx,dy,dz, rho,u,v,w,p,e, h0,h1,h2,h3,h4,&
 ! -------------------------------------------------------------------
 ! mass
 ! -------------------------------------------------------------------
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tmp4, tmp5, i0, i0, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h0(i) = h0(i) - tmp5(i)
-  ENDDO
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
+  h0 = h0 - tmp5
 
 ! -------------------------------------------------------------------
 ! v-momentum
 ! -------------------------------------------------------------------
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tmp3, tmp4, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tmp2, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp1, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h2(i) = h2(i) - ( tmp2(i) + tmp3(i) + tmp4(i) ) + g2*rho(i)
-  ENDDO
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  h2 = h2 - ( tmp2 + tmp3 + tmp4 ) + g2*rho
 
 ! ###################################################################
 ! Terms \rho w in mass and w-momentum equations
@@ -126,24 +93,16 @@ SUBROUTINE RHS_FLOW_EULER_DIVERGENCE(dx,dy,dz, rho,u,v,w,p,e, h0,h1,h2,h3,h4,&
 ! -------------------------------------------------------------------
 ! mass
 ! -------------------------------------------------------------------
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tmp4, tmp5, i0, i0, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h0(i) = h0(i) - tmp5(i)
-  ENDDO
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
+  h0 = h0 - tmp5
 
 ! -------------------------------------------------------------------
 ! w-momentum
 ! -------------------------------------------------------------------
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tmp3, tmp4, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tmp2, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp1, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  DO i = 1,imax*jmax*kmax
-     h3(i) = h3(i) - ( tmp2(i) + tmp3(i) + tmp4(i) ) + g3*rho(i)
-  ENDDO
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  h3 = h3 - ( tmp2 + tmp3 + tmp4 ) + g3*rho
 
 ! ###################################################################
 ! Total enery equation
@@ -154,22 +113,15 @@ SUBROUTINE RHS_FLOW_EULER_DIVERGENCE(dx,dy,dz, rho,u,v,w,p,e, h0,h1,h2,h3,h4,&
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
      prefactor = (gama0-C_1_R)*mach*mach
      DO i = 1,imax*jmax*kmax
-        dummy   = rho(i)*( e(i) + prefactor*C_05_R*(u(i)*u(i)+v(i)*v(i)+w(i)*w(i)) ) &
-             + prefactor*p(i)
+        dummy   = rho(i)*( e(i) + prefactor*C_05_R*(u(i)*u(i)+v(i)*v(i)+w(i)*w(i)) ) + prefactor*p(i)
         tmp3(i) = dummy*w(i)
         tmp2(i) = dummy*v(i)
         tmp1(i) = dummy*u(i)
      ENDDO
-     CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-          dz, tmp3, tmp4, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-          dy, tmp2, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-          dx, tmp1, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-     DO i = 1,imax*jmax*kmax
-        h4(i) = h4(i) - ( tmp2(i) + tmp3(i) + tmp4(i) )&
-             + prefactor*rho(i)*( g1*u(i)+g2*v(i)+g3*w(i) )
-     ENDDO
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+     h4 = h4 - ( tmp2 + tmp3 + tmp4 ) + prefactor*rho*( g1*u+g2*v+g3*w )
 
 ! -------------------------------------------------------------------
 ! Internal energy formulation
@@ -182,15 +134,11 @@ SUBROUTINE RHS_FLOW_EULER_DIVERGENCE(dx,dy,dz, rho,u,v,w,p,e, h0,h1,h2,h3,h4,&
         tmp2(i) = dummy*v(i)
         tmp1(i) = dummy*u(i)
      ENDDO
-     CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-          dz, tmp3, tmp4, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-          dy, tmp2, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-          dx, tmp1, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-     DO i = 1,imax*jmax*kmax
-        h4(i) = h4(i) - ( tmp2(i) + tmp3(i) + tmp4(i) )
-     ENDDO
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+     h4 = h4 - ( tmp2 + tmp3 + tmp4 )
+
   ENDIF
 
   RETURN

@@ -902,7 +902,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      bcs_scal_kmin(:)  = DNS_BCS_NONE; bcs_scal_kmax(:)  = DNS_BCS_NONE
   ENDIF
 
-  bcs_out = 0
+  bcs_inf = 0
   IF ( bcs_visc_imin .EQ. 1 ) bcs_inf(1,2,1) = 1 ! Inflow conditions
   IF ( bcs_visc_imax .EQ. 1 ) bcs_inf(2,2,1) = 1
   IF ( bcs_visc_jmin .EQ. 1 ) bcs_inf(1,2,2) = 1
@@ -910,6 +910,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( bcs_visc_kmin .EQ. 1 ) bcs_inf(1,2,3) = 1
   IF ( bcs_visc_kmax .EQ. 1 ) bcs_inf(2,2,3) = 1
 
+  bcs_out = 0
   IF ( bcs_visc_imin .EQ. 2 ) bcs_out(1,2,1) = 1 ! Outflow conditions
   IF ( bcs_visc_imax .EQ. 2 ) bcs_out(2,2,1) = 1
   IF ( bcs_visc_jmin .EQ. 2 ) bcs_out(1,2,2) = 1

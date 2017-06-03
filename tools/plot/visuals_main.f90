@@ -280,7 +280,7 @@ PROGRAM VISUALS_MAIN
      IF ( opt_vec(iv) .EQ. 5              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
      IF ( opt_vec(iv) .EQ. 6              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
      IF ( opt_vec(iv) .EQ. 7              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,3); ENDIF
-     IF ( opt_vec(iv) .EQ. 8              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,6); ENDIF
+     IF ( opt_vec(iv) .EQ. 8              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,7); ENDIF
      IF ( opt_vec(iv) .EQ. 9              ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,1); ENDIF
      IF ( opt_vec(iv) .GT. 9 .AND. &
           opt_vec(iv) .LE. iscal_offset   ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,4); ENDIF
@@ -525,6 +525,17 @@ PROGRAM VISUALS_MAIN
                  plot_file = 'PressureGradientPower'//time_str(1:MaskSize)
                  CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
 
+                 CALL IO_WRITE_ASCII(lfile,'Computing hydrostatic pressure...')
+                 q = C_0_R
+                 CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,2), txc(1,3),txc(1,4), txc(1,5), wrk1d,wrk2d,wrk3d)
+                 txc(1:isize_field,1) = txc(1:isize_field,1) -txc(1:isize_field,2)
+
+                 plot_file = 'PressureHidrodynamic'//time_str(1:MaskSize)
+                 CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
+                 
+                 plot_file = 'PressureHidrostatic'//time_str(1:MaskSize)
+                 CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
+                 
               ENDIF
 
 ! -------------------------------------------------------------------
