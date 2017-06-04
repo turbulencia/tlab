@@ -168,8 +168,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
         ENDIF
 
      ELSE
-        CALL TIME_SUBSTEP_COMPRESSIBLE(&
-             dte,etime, q,hq,s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
+        CALL TIME_SUBSTEP_COMPRESSIBLE(dte,etime, q,hq,s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
      ENDIF
 
 ! -------------------------------------------------------------------

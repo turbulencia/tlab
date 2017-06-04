@@ -25,8 +25,7 @@
 !# txc   In    3D auxiliar array of size 6 or 9
 !#
 !########################################################################
-SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
-     q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
+SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -70,7 +69,6 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:), POINTER :: u, v, w, e, rho, p, T, vis
   TREAL, DIMENSION(:), POINTER :: h0, h1, h2, h3, h4
-  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -78,10 +76,6 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
 #endif
 
 ! Define pointers
-  x => g(1)%nodes; dx => g(1)%jac(:,1)
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
-  z => g(3)%nodes; dz => g(3)%jac(:,1)
-
   u   => q(:,1)
   v   => q(:,2)
   w   => q(:,3)
@@ -107,11 +101,11 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
        iadvection .EQ. EQNS_SKEWSYMMETRIC .AND. &
        iviscous   .EQ. EQNS_EXPLICIT      .AND. &
        idiffusion .EQ. EQNS_EXPLICIT            ) THEN
-     CALL RHS_FLOW_GLOBAL_2(dx,dy,dz, rho,u,v,w,p,e,T,s, h0,h1,h2,h3,h4,hs,&
-          txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+     CALL RHS_FLOW_GLOBAL_2(rho,u,v,w,p,e,T,s, h0,h1,h2,h3,h4,hs,&
+          txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
      DO is = 1,inb_scal
-        CALL RHS_SCAL_GLOBAL_2(is, dx,dy,dz, rho,u,v,w,s,T, hs, h4,&
-             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+        CALL RHS_SCAL_GLOBAL_2(is, rho,u,v,w,s,T, hs, h4,&
+             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
      ENDDO
 
   ELSE
@@ -162,7 +156,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
         txc(:,1) = C_0_R; txc(:,2) = C_0_R; txc(:,3) = C_0_R
         DO is = 1,inb_scal
            CALL RHS_SCAL_DIFFUSION_DIVERGENCE(is, vis, s, T, hs, &
-                txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk1d,wrk2d,wrk3d)
+                txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
         ENDDO
         CALL RHS_FLOW_CONDUCTION_DIVERGENCE(vis, s, T, h4, &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
@@ -207,7 +201,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, &
 ! ###################################################################
 #ifdef LES
   IF ( iles .EQ. 1 ) THEN
-     CALL LES_RHS(rkm_substep, x,y,z,dx,dy,dz, q,hq, s,hs, txc, vaux, wrk1d,wrk2d,wrk3d)
+     CALL LES_RHS(rkm_substep, q,hq, s,hs, txc, vaux, wrk1d,wrk2d,wrk3d)
   ENDIF
 #endif
 

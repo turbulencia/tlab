@@ -3,57 +3,38 @@
 #include "dns_error.h"
 
 !########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2008/01/17 - J.P. Mellado
-!#              Created
-!# 2008/04/11 - J.P. Mellado
-!#              Array vis removed
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Modified from RHS_SCAL_EULER_SKEWSYMMETRIC to include diffusion terms
 !# from RHS_SCAL_DIFFUSION_EXPLICIT and avoid duplication of derivatives 
-!# in routines PARTIAL_XX, PARTIAL_YY, PARTIAL_ZZ.
+!# in routines OPR_PARTIAL_XX, OPR_PARTIAL_YY, OPR_PARTIAL_ZZ.
 !# Internal energy formulation only.
 !# Additional convective part due to skewsymmetric formulation Y_i d(\rho u_k)/dx_k
 !# done in RHS_FLOW_GLOBAL_2
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-SUBROUTINE RHS_SCAL_GLOBAL_2(is, dx,dy,dz, rho,u,v,w, z1, T, zh1, h4,&
-     tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d)
+SUBROUTINE RHS_SCAL_GLOBAL_2(is, rho,u,v,w, z1, T, zh1, h4, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk2d,wrk3d)
 
+  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, imode_eqns
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : itransport,idiffusion, visc,prandtl,schmidt
+  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
+  USE DNS_LOCAL,     ONLY : bcs_out
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE DNS_CONSTANTS
-  USE THERMO_GLOBAL
-  USE DNS_GLOBAL
-  USE DNS_LOCAL
 
   IMPLICIT NONE
 
-#include "integers.h"
-
   TINTEGER is
-
-  TREAL, DIMENSION(*)              :: dx, dy, dz
-  TREAL, DIMENSION(imax*jmax*kmax) :: T, rho, u, v, w, z1, zh1, h4
-  TREAL, DIMENSION(imax*jmax*kmax) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
-  TREAL, DIMENSION(*)              :: wrk1d, wrk2d, wrk3d
+  TREAL, DIMENSION(isize_field),   INTENT(IN)    :: rho,u,v,w,T, z1
+  TREAL, DIMENSION(isize_field),   INTENT(OUT)   :: zh1,h4
+  TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6
+  TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d,wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER i1vsout, imxvsout
-  TINTEGER j1vsout, jmxvsout
-  TINTEGER k1vsout, kmxvsout
-  TINTEGER i, im, icp
+  TINTEGER bcs(2,1), i, im, icp
   TREAL diff, cond, dummy
 
 ! ###################################################################
@@ -71,8 +52,6 @@ SUBROUTINE RHS_SCAL_GLOBAL_2(is, dx,dy,dz, rho,u,v,w, z1, T, zh1, h4,&
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
-#include "dns_bcs_out.h"
-
   IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R;            cond = C_0_R
   ELSE;                                  diff = visc/schmidt(is); cond = visc/prandtl; ENDIF
 
@@ -89,9 +68,9 @@ SUBROUTINE RHS_SCAL_GLOBAL_2(is, dx,dy,dz, rho,u,v,w, z1, T, zh1, h4,&
   ENDDO
 !$omp end do
 !$omp end parallel
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, tmp3,tmp4, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, tmp2,tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, tmp1,tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3,tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2,tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1,tmp2, wrk3d, wrk2d,wrk3d)
 !$omp parallel default( shared ) private( i )
 !$omp do
   DO i = 1,imax*jmax*kmax
@@ -103,12 +82,9 @@ SUBROUTINE RHS_SCAL_GLOBAL_2(is, dx,dy,dz, rho,u,v,w, z1, T, zh1, h4,&
 ! ###################################################################
 ! convective part + diffusion
 ! ###################################################################
-  CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, z1,tmp6, i0,i0, k1vsout,kmxvsout, tmp3, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, z1,tmp5, i0,i0, j1vsout,jmxvsout, tmp2, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, z1,tmp4, i0,i0, i1vsout,imxvsout, tmp1, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs_out(1,1,3), g(3), z1,tmp6, tmp3, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs_out(1,1,2), g(2), z1,tmp5, tmp2, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs_out(1,1,1), g(1), z1,tmp4, tmp1, wrk2d,wrk3d)
 
 !$omp parallel default( shared ) private( i )
 !$omp do
@@ -144,12 +120,12 @@ SUBROUTINE RHS_SCAL_GLOBAL_2(is, dx,dy,dz, rho,u,v,w, z1, T, zh1, h4,&
 !$omp end parallel
 
 ! cross-gradients
-     CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, tmp4,tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, tmp4,tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, tmp4,tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, z1,  tmp4, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, z1,  tmp5, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, z1,  tmp6, i0,i0, wrk1d,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp4,tmp1, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp4,tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4,tmp3, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), z1,  tmp4, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), z1,  tmp5, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), z1,  tmp6, wrk3d, wrk2d,wrk3d)
 !$omp parallel default( shared ) private( i )
 !$omp do
      DO i = 1,imax*jmax*kmax
