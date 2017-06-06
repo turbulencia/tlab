@@ -541,24 +541,24 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! Uniform
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Grid', 'XUniform', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; iunifx = 0; g(1)%uniform = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; iunifx = 1; g(1)%uniform = .FALSE.
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(1)%uniform = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(1)%uniform = .FALSE.
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Uniform X grid')
      CALL DNS_STOP(DNS_ERROR_UNIFORMX)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Grid', 'YUniform', 'void', sRes)      
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; iunify = 0; g(2)%uniform = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; iunify = 1; g(2)%uniform = .FALSE.
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(2)%uniform = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(2)%uniform = .FALSE.
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Uniform Y grid')
      CALL DNS_STOP(DNS_ERROR_UNIFORMY)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Grid', 'ZUniform', 'void', sRes)      
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; iunifz = 0; g(3)%uniform = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; iunifz = 1; g(3)%uniform = .FALSE.
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(3)%uniform = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(3)%uniform = .FALSE.
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Uniform Z grid')
      CALL DNS_STOP(DNS_ERROR_UNIFORMZ)
@@ -1074,17 +1074,17 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
 ! Test periodicity constrains
 ! -------------------------------------------------------------------
-  IF ( i1bc .EQ. 0 .AND. iunifx .EQ. 1 ) THEN
+  IF ( g(1)%periodic .AND. ( .NOT. g(1)%uniform ) ) THEN
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Grid must be uniform in periodic direction X')
      CALL DNS_STOP(DNS_ERROR_CHECKUNIFX)
   ENDIF
 
-  IF ( j1bc .EQ. 0 .AND. iunify .EQ. 1 ) THEN
+  IF ( g(2)%periodic .AND. ( .NOT. g(2)%uniform ) ) THEN
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Grid must be uniform in periodic direction Y')
      CALL DNS_STOP(DNS_ERROR_CHECKUNIFY)
   ENDIF
 
-  IF ( k1bc .EQ. 0 .AND. iunifz .EQ. 1 ) THEN
+  IF ( g(3)%periodic .AND. ( .NOT. g(3)%uniform ) ) THEN
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Grid must be uniform in periodic direction Z')
      CALL DNS_STOP(DNS_ERROR_CHECKUNIFZ)
   ENDIF

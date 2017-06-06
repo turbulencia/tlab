@@ -125,8 +125,8 @@ PROGRAM VINTEGRAL
   f = du1_a + lambda*u
 
 ! conservation of u*v
-!  CALL OPR_PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, u, du1_a, i0,i0, wrk1d,wrk2d,wrk3d)
-!  CALL OPR_PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, v, dv1_a, i0,i0, wrk1d,wrk2d,wrk3d)
+!  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, du1_a, wrk3d, wrk2d,wrk3d)
+!  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v, dv1_a, wrk3d, wrk2d,wrk3d)
 !  f = du1_a*v + dv1_a*u
 
 ! solve for w_n
@@ -156,7 +156,7 @@ PROGRAM VINTEGRAL
   ENDIF
 
 ! check
-!  CALL OPR_PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, w_n, dw1_n, i0,i0, wrk1d,wrk2d,wrk3d)
+!  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), w_n, dw1_n, wrk3d, wrk2d,wrk3d)
 !  w_n = dw1_n !+ lambda*w_n
 
   IF ( ibc .EQ. 1 ) THEN; print*, dummy, dw1_n(1   )

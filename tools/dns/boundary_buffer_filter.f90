@@ -1,19 +1,3 @@
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
 #include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
@@ -21,7 +5,7 @@
 
 SUBROUTINE BOUNDARY_BUFFER_FILTER(x, rho,u,v,w,e,z1, txc1,txc2,txc3,txc4,txc5, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imax, jmax, kmax, i1bc, j1bc, k1bc
+  USE DNS_GLOBAL, ONLY : imax, jmax, kmax
   USE DNS_GLOBAL, ONLY : icalc_scal, inb_scal
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_LOCAL,  ONLY : buff_nps_jmin, buff_nps_jmax, buff_imax, buff_nps_imax
@@ -41,10 +25,15 @@ SUBROUTINE BOUNDARY_BUFFER_FILTER(x, rho,u,v,w,e,z1, txc1,txc2,txc3,txc4,txc5, w
   TREAL eta, delta, amp, ampr, rho_ratio
 
 ! ###################################################################
+!!! Routines OPR_FILTER have been changed. This routine needs to be updates !!!
+  CALL IO_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
+  CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+
+
 ! BCs for the filters (see routine FILTER)
-  ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 1; ibc_x(4) = 1
-  ibc_y(1) = 1; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0 
-  ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0 
+  ! ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 1; ibc_x(4) = 1
+  ! ibc_y(1) = 1; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0 
+  ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0 
 
 ! ###################################################################
 ! Bottom boundary
@@ -88,16 +77,11 @@ SUBROUTINE BOUNDARY_BUFFER_FILTER(x, rho,u,v,w,e,z1, txc1,txc2,txc3,txc4,txc5, w
         ENDDO
      ENDDO
 
-     CALL OPR_FILTER(i2, buff_nps_imax,jmax,kmax, ibc_x,ibc_y,ibc_z, id, &
-          txc1, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-     CALL OPR_FILTER(i2, buff_nps_imax,jmax,kmax, ibc_x,ibc_y,ibc_z, id, &
-          txc2, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-     CALL OPR_FILTER(i2, buff_nps_imax,jmax,kmax, ibc_x,ibc_y,ibc_z, id, &
-          txc3, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-     CALL OPR_FILTER(i2, buff_nps_imax,jmax,kmax, ibc_x,ibc_y,ibc_z, id, &
-          txc4, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-     CALL OPR_FILTER(i2, buff_nps_imax,jmax,kmax, ibc_x,ibc_y,ibc_z, id, &
-          txc5, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+     CALL OPR_FILTER(i2, buff_nps_imax,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc1, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+     CALL OPR_FILTER(i2, buff_nps_imax,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc2, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+     CALL OPR_FILTER(i2, buff_nps_imax,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc3, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+     CALL OPR_FILTER(i2, buff_nps_imax,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc4, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+     CALL OPR_FILTER(i2, buff_nps_imax,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc5, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
 
 ! thickness \delta_\theta s.t. 2\delta_w = L_buffer/2
      delta = (x(imax)-x(buff_imax))/C_16_R

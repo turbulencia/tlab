@@ -91,7 +91,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
      CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
      DO is = 1,inb_scal
         CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is, q(1,1),q(1,2),q(1,3), s(1,is),hs(1,is), &
-             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+             txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
      ENDDO
         
 ! -----------------------------------------------------------------------

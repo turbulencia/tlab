@@ -3,19 +3,6 @@
 #include "dns_const_mpi.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!# 2011/10/01 - J.P. Mellado
-!#              Adding the buffer zone 
-!# 2011/11/28 - C. Ansorge
-!#              Combining BLAS and OMP
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Momentum equations, nonlinear term in convective form and the 
@@ -32,7 +19,9 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : visc
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : idivergence
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
@@ -65,8 +54,6 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   INTEGER ilen
 #endif
 
-  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
-
 ! #######################################################################
   nxy   = imax*jmax
 
@@ -79,12 +66,9 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
 ! Diffusion and convection terms in Ox momentum eqn
 ! #######################################################################
-  CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, u, tmp6, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, u, tmp5, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)
-  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, &
-       g(1), u,u,u, tmp4, tmp1, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), u, tmp6, tmp3, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), u, tmp5, tmp2, wrk2d,wrk3d)
+  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u, tmp4, tmp1, wrk2d,wrk3d)
 
 !$omp parallel default( shared ) private( ij, srt,end,siz )
   CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
@@ -113,13 +97,10 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
 ! Diffusion and convection terms in Oz momentum eqn
 ! #######################################################################
-  IF ( kmax_total .GT. 1 ) THEN
-  CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, &
-       g(3), w,w,w, tmp6, tmp3, wrk2d,wrk3d)
-  CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, w, tmp5, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, w, tmp4, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+  IF ( g(3)%size .GT. 1 ) THEN
+  CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, g(3), w,w,w, tmp6, tmp3, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), w, tmp5, tmp2, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), w, tmp4, tmp1, wrk2d,wrk3d)
 
 !$omp parallel default( shared ) private( ij, srt,end,siz )
   CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
@@ -150,12 +131,9 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
 ! Diffusion and convection terms in Oy momentum eqn
 ! #######################################################################
-  CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, v, tmp6, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
-  CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, &
-       g(2), v,v,v, tmp5, tmp2, wrk2d,wrk3d)
-  CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, v, tmp4, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), v, tmp6, tmp3, wrk2d,wrk3d)
+  CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, g(2), v,v,v, tmp5, tmp2, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), v, tmp4, tmp1, wrk2d,wrk3d)
 
 !$omp parallel default( shared ) &
 #ifdef USE_BLAS
@@ -210,14 +188,14 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 #endif
 !$omp end parallel
 
-     CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, tmp2, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, tmp3, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, tmp4, tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2, tmp1, wrk3d,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp3, tmp2, wrk3d,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d,wrk2d,wrk3d)
 
   ELSE
-     CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, h2, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, h1, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, h3, tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), h2, tmp1, wrk3d,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), h1, tmp2, wrk3d,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), h3, tmp3, wrk3d,wrk2d,wrk3d)
 
   ENDIF
 
@@ -239,12 +217,13 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   ENDDO
 
 ! pressure in tmp1, Oy derivative in tmp3
-  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
+  ibc = 3
+  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, ibc, &
        tmp1,tmp3, tmp2,tmp4, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
 
 ! horizontal derivatives
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i0, dx, tmp1, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, i0, dz, tmp1, tmp4, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient 

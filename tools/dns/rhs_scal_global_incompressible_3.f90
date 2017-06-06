@@ -3,15 +3,6 @@
 #include "dns_error.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Scalar equation, nonlinear term in divergence form and the 
@@ -19,32 +10,25 @@
 !#
 !########################################################################
 SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3&
-     (is, u,v,w,z1,zh1, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d)
+     (is, u,v,w,s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk2d,wrk3d)
 
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : idiffusion, visc, schmidt
 
   IMPLICIT NONE
 
-#include "integers.h"
-
   TINTEGER is
-
-  TREAL u(*), v(*), w(*), z1(*), zh1(*)
-  TREAL tmp1(*), tmp2(*), tmp3(*), tmp4(*), tmp5(*), tmp6(*)
-  TREAL wrk1d(*), wrk2d(*), wrk3d(*)
+  TREAL, DIMENSION(isize_field) :: u,v,w, s, hs
+  TREAL, DIMENSION(isize_field) :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk3d
+  TREAL, DIMENSION(imax,kmax,2) :: wrk2d
 
 ! -----------------------------------------------------------------------
-  TINTEGER ij, i, k
+  TINTEGER ij, i, k, bcs(2,2)
   TREAL diff
 
-! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: dx,dy,dz
-
 ! #######################################################################
-! Define pointers
-  dx => g(1)%jac(:,1)
-  dy => g(2)%jac(:,1)
-  dz => g(3)%jac(:,1)
+  bcs = 0
 
   IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R
   ELSE;                                  diff = visc/schmidt(is); ENDIF
@@ -52,50 +36,35 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3&
 ! #######################################################################
 ! Diffusion and convection terms in scalar equations
 ! #######################################################################
-  CALL PARTIAL_ZZ(i0, iunifz, imode_fdm, imax, jmax, kmax,  k1bc,&
-       dz, z1, tmp6, i0, i0, i0, i0, tmp3, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_YY(i0, iunify, imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, z1, tmp5, i0, i0, i0, i0, tmp2, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_XX(i0, iunifx, imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, z1, tmp4, i0, i0, i0, i0, tmp1, wrk1d, wrk2d, wrk3d)
-  DO ij = 1,imax*jmax*kmax
-     zh1(ij) = zh1(ij) + diff*( tmp6(ij)+tmp5(ij)+tmp4(ij) )
-  ENDDO
+  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs, g(3), s, tmp6, tmp3, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs, g(2), s, tmp5, tmp2, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs, g(1), s, tmp4, tmp1, wrk2d,wrk3d)
+  hs = hs + diff*( tmp6+tmp5+tmp4 )
 
   DO ij = 1,imax*jmax*kmax
-     tmp6(ij)=z1(ij)*w(ij)
-     tmp5(ij)=z1(ij)*v(ij)
-     tmp4(ij)=z1(ij)*u(ij)
+     tmp6(ij)=s(ij) *w(ij)
+     tmp5(ij)=s(ij) *v(ij)
+     tmp4(ij)=s(ij) *u(ij)
   ENDDO
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tmp6, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp6, tmp3, wrk3d, wrk2d,wrk3d)
 ! which BCs should I use here ?
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tmp5, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp4, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-  DO ij = 1,imax*jmax*kmax
-     zh1(ij) = zh1(ij) - ( tmp3(ij) + tmp2(ij) + tmp1(ij) )
-  ENDDO
-
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp4, tmp1, wrk3d, wrk2d,wrk3d)
+  hs = hs - ( tmp3 + tmp2 + tmp1 )
+     
 ! -----------------------------------------------------------------------
 ! Dilatation term
 ! -----------------------------------------------------------------------
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, w, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, v, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, u, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
-!  DO ij = 1,imax*jmax*kmax
-!     zh1(ij) = zh1(ij) + z1(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
-!  ENDDO
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
+!     hs = hs + s*( tmp3 + tmp2 + tmp1 )
   DO k = 1,kmax
      DO i = 1,imax
         ij = i                 + imax*jmax*(k-1) ! bottom
-        zh1(ij) = zh1(ij) + z1(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
+        hs(ij) = hs(ij) + s(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
         ij = i + imax*(jmax-1) + imax*jmax*(k-1) ! top
-        zh1(ij) = zh1(ij) + z1(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
+        hs(ij) = hs(ij) + s(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
      ENDDO
   ENDDO
 

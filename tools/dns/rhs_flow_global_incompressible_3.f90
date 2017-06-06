@@ -3,15 +3,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Momentum equations, nonlinear term in divergence form and the 
@@ -24,36 +15,34 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3&
      (dte, u,v,w,h1,h2,h3, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
      bcs_hb,bcs_ht, vaux, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : visc
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
   USE DNS_LOCAL,  ONLY : buff_type
 
 IMPLICIT NONE
 
-#include "integers.h"
-
   TREAL dte
   TREAL, DIMENSION(*)             :: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,*) :: q,hq
-  TREAL, DIMENSION(*)             :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, wrk3d
+  TREAL, DIMENSION(*)             :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk3d
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(*)             :: wrk2d, vaux
   TREAL, DIMENSION(imax,kmax,*)   :: bcs_hb, bcs_ht
 
 ! -----------------------------------------------------------------------
-  TINTEGER ij, i, k
+  TINTEGER ij, i, k, ibc, bcs(2,2)
 
-  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
+! #######################################################################
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
 ! #######################################################################
 ! Diffusion and convection terms in momentum equations
 ! #######################################################################
-  CALL PARTIAL_ZZ(i0, iunifz, imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, u, tmp6, i0, i0, i0, i0, tmp3, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_YY(i0, iunify, imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, u, tmp5, i0, i0, i0, i0, tmp2, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_XX(i0, iunifx, imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, u, tmp4, i0, i0, i0, i0, tmp1, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs, g(3), u, tmp6, tmp3, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs, g(2), u, tmp5, tmp2, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs, g(1), u, tmp4, tmp1, wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      h1(ij) = h1(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) )
   ENDDO
@@ -63,23 +52,17 @@ IMPLICIT NONE
      tmp5(ij)=u(ij)*v(ij)
      tmp4(ij)=u(ij)*u(ij)
   ENDDO
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tmp6, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tmp5, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp4, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp6, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp4, tmp1, wrk3d, wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      h1(ij) = h1(ij) - ( tmp3(ij) + tmp2(ij) + tmp1(ij) )
   ENDDO
 
 ! -----------------------------------------------------------------------
-  CALL PARTIAL_ZZ(i0, iunifz, imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, v, tmp6, i0, i0, i0, i0, tmp3, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_YY(i0, iunify, imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, v, tmp5, i0, i0, i0, i0, tmp2, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_XX(i0, iunifx, imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, v, tmp4, i0, i0, i0, i0, tmp1, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs, g(3), v, tmp6, tmp3, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs, g(2), v, tmp5, tmp2, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs, g(1), v, tmp4, tmp1, wrk2d,wrk3d)
 
   DO ij = 1,imax*jmax*kmax
      h2(ij) = h2(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) )
@@ -90,27 +73,21 @@ IMPLICIT NONE
      tmp5(ij)=v(ij)*v(ij)
      tmp4(ij)=v(ij)*u(ij)
   ENDDO
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tmp6, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-! BCs s.t. to make sure that product vd/dy(v) at the boundary is zero because v is zero. 
-!  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-!       dy, tmp5, tmp2, i1, i1, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tmp5, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp4, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp6, tmp3, wrk3d, wrk2d,wrk3d)
+! BCs s.t. to make sure that product vd/dy(v) at the boundary is zero because v is zero.
+!  bcs_loc = 1
+!  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_loc, g(2), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp4, tmp1, wrk3d, wrk2d,wrk3d)
   DO ij = 1,imax*jmax*kmax
      h2(ij) = h2(ij) - ( tmp3(ij) + tmp2(ij) + tmp1(ij) )
   ENDDO
 
 ! -----------------------------------------------------------------------
-  IF ( kmax_total .GT. 1 ) THEN
-     CALL PARTIAL_ZZ(i0, iunifz, imode_fdm, imax, jmax, kmax, k1bc,&
-          dz, w, tmp6, i0, i0, i0, i0, tmp3, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_YY(i0, iunify, imode_fdm, imax, jmax, kmax, j1bc,&
-          dy, w, tmp5, i0, i0, i0, i0, tmp2, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_XX(i0, iunifx, imode_fdm, imax, jmax, kmax, i1bc,&
-          dx, w, tmp4, i0, i0, i0, i0, tmp1, wrk1d, wrk2d, wrk3d)
+  IF ( g(3)%size .GT. 1 ) THEN
+     CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs, g(3), w, tmp6, tmp3, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs, g(2), w, tmp5, tmp2, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs, g(1), w, tmp4, tmp1, wrk2d,wrk3d)
      DO ij = 1,imax*jmax*kmax
         h3(ij) = h3(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) )
      ENDDO
@@ -120,12 +97,9 @@ IMPLICIT NONE
         tmp5(ij)=w(ij)*v(ij)
         tmp4(ij)=w(ij)*u(ij)
      ENDDO
-     CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-          dz, tmp6, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-          dy, tmp5, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-     CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-          dx, tmp4, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp6, tmp3, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp4, tmp1, wrk3d, wrk2d,wrk3d)
      DO ij = 1,imax*jmax*kmax
         h3(ij) = h3(ij) - ( tmp3(ij) + tmp2(ij) + tmp1(ij) )
      ENDDO
@@ -134,12 +108,9 @@ IMPLICIT NONE
 ! -----------------------------------------------------------------------
 ! Dilatation term for Bcs
 ! -----------------------------------------------------------------------
-!  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-!       dz, w, tmp3, i0, i0, wrk1d, wrk2d, wrk3d)
-!  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-!       dy, v, tmp2, i0, i0, wrk1d, wrk2d, wrk3d)
-!  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-!       dx, u, tmp1, i0, i0, wrk1d, wrk2d, wrk3d)
+!  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)
+!  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
+!  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
 !  DO k = 1,kmax
 !     DO i = 1,imax
 !        ij = i                 + imax*jmax*(k-1) ! bottom
@@ -171,12 +142,9 @@ IMPLICIT NONE
      tmp2(ij) = h2(ij) + v(ij)/dte
      tmp3(ij) = h3(ij) + w(ij)/dte
   ENDDO
-  CALL PARTIAL_X(imode_fdm, imax, jmax, kmax, i1bc,&
-       dx, tmp1, tmp4, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, tmp2, tmp5, i0, i0, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax, jmax, kmax, k1bc,&
-       dz, tmp3, tmp6, i0, i0, wrk1d, wrk2d, wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3, tmp6, wrk3d, wrk2d,wrk3d)
 
 ! forcing term in txc2
   DO ij = 1,imax*jmax*kmax
@@ -196,12 +164,13 @@ IMPLICIT NONE
   ENDDO
 
 ! pressure in tmp1, Oy derivative in tmp3
-  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
+  ibc = 3
+  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, ibc, &
        tmp1,tmp3, tmp2,tmp4, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
 
 ! horizontal derivatives
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i0, dx, tmp1, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, i0, dz, tmp1, tmp4, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient 
@@ -226,10 +195,9 @@ IMPLICIT NONE
   ENDDO
 
 ! Impose free-slip BCs du/dy=0, du/dy=0
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, h1, tmp1, i1, i1, wrk1d, wrk2d, wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax, jmax, kmax, j1bc,&
-       dy, h3, tmp2, i1, i1, wrk1d, wrk2d, wrk3d)
+  bcs = 1
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), h1, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), h3, tmp2, wrk3d, wrk2d,wrk3d)
   DO k = 1,kmax
      DO i = 1,imax
         ij = i                 + imax*jmax*(k-1) ! bottom

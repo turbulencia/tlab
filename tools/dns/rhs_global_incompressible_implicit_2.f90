@@ -32,10 +32,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   USE OMP_LIB
 #endif
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, kmax_total
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field, isize_wrk1d,  inb_flow,inb_scal
   USE DNS_GLOBAL, ONLY : icalc_scal
-  USE DNS_GLOBAL, ONLY : imode_fdm, i1bc, j1bc, iunify, k1bc
   USE DNS_GLOBAL, ONLY : visc, schmidt
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
   USE DNS_GLOBAL, ONLY : bbackground
@@ -60,16 +59,17 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 
 ! -----------------------------------------------------------------------
   TINTEGER is,ij, k, nxy, ip_b, ip_t 
-  TINTEGER ibc
+  TINTEGER ibc, bcs(2,2)
   TREAL dummy, u_geo, w_geo, visc_exp, visc_imp, visc_tot, alpha, beta, kef, aug, vdummy  
 
-  TREAL, DIMENSION(:),        POINTER :: p_bcs
+  TREAL, DIMENSION(:), POINTER :: p_bcs
   TREAL, DIMENSION(imax,kmax,4):: bcs_locb, bcs_loct    
-
-  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
 
 ! #######################################################################
   nxy   = imax*jmax
+
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+  
   u_geo = COS(coriolis%parameters(1))
   w_geo =-SIN(coriolis%parameters(1))
 
@@ -118,11 +118,10 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   tmp6(1:isize_field) = h3(1:isize_field) ! SAVE old tendencies until end of implicit substep
 
 ! h3 contains explicit nonlinear w-tendency (nonlinear operator N(u_n))
-  IF ( kmax_total .GT. 1 ) THEN
-     CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, w, h3,   i0,i0, wrk1d,wrk2d,wrk3d) 
-     CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, w, tmp3, i0,i0, wrk1d,wrk2d,wrk3d) 
-     CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-          dy, w, tmp1, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d) ! tmp1 used for BCs below
+  IF ( g(3)%size .GT. 1 ) THEN
+     CALL OPR_PARTIAL_X(OPR_P1,    imax,jmax,kmax, bcs, g(1), w, h3,   wrk3d, wrk2d,wrk3d) 
+     CALL OPR_PARTIAL_Z(OPR_P1,    imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d) 
+     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), w, tmp1, tmp2,  wrk2d,wrk3d) ! tmp1 used for BCs below
 
 ! -----------------------------------------------------------------------
 ! Coriolis (so far, rotation only in the Oy direction) 
@@ -167,10 +166,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   tmp4(1:isize_field) = h1(1:isize_field) ! SAVE old tendencies until end of implicit substep
 
 ! h1 contains explicit nonlinear u-tendency  
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, u, h1,   i0,i0, wrk1d,wrk2d,wrk3d) 
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, u, tmp3, i0,i0, wrk1d,wrk2d,wrk3d) 
-  CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, u, tmp1, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d) ! tmp1 used for BCs below
+  CALL OPR_PARTIAL_X(OPR_P1,    imax,jmax,kmax, bcs, g(1), u, h1,   wrk3d, wrk2d,wrk3d) 
+  CALL OPR_PARTIAL_Z(OPR_P1,    imax,jmax,kmax, bcs, g(3), u, tmp3, wrk3d, wrk2d,wrk3d) 
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), u, tmp1, tmp2,  wrk2d,wrk3d) ! tmp1 used for BCs below
 
 ! -----------------------------------------------------------------------
 ! Coriolis. So far, rotation only in the Oy direction. 
@@ -214,10 +212,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   tmp5(1:isize_field) = h2(1:isize_field) ! SAVE old tendencies until end of implicit substep
 
 ! h2 contains explicit nonlinear v-tendency 
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, v, h2,   i0,i0, wrk1d,wrk2d,wrk3d) 
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, v, tmp3, i0,i0, wrk1d,wrk2d,wrk3d) 
-  CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, v, tmp1, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)   
+  CALL OPR_PARTIAL_X(OPR_P1,    imax,jmax,kmax, bcs, g(1), v, h2,   wrk3d, wrk2d,wrk3d) 
+  CALL OPR_PARTIAL_Z(OPR_P1,    imax,jmax,kmax, bcs, g(3), v, tmp3, wrk3d, wrk2d,wrk3d) 
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), v, tmp1, tmp2,  wrk2d,wrk3d)   
 
 ! -----------------------------------------------------------------------
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
@@ -309,10 +306,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 
         tmp7(1:isize_field) = hs(1:isize_field,is) ! save old values
 
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, s(1,is), hs(1,is), i0,i0, wrk1d,wrk2d,wrk3d) 
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, s(1,is), tmp6,     i0,i0, wrk1d,wrk2d,wrk3d) 
-        CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-             dy, s(1,is), tmp4, i0,i0, i0,i0, tmp5, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1,    imax,jmax,kmax, bcs, g(1), s(1,is), hs(1,is), wrk3d, wrk2d,wrk3d) 
+        CALL OPR_PARTIAL_Z(OPR_P1,    imax,jmax,kmax, bcs, g(3), s(1,is), tmp6,     wrk3d, wrk2d,wrk3d) 
+        CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s(1,is), tmp4,     tmp5,  wrk2d,wrk3d)
 
         DO ij = 1,isize_field; 
           hs(ij,is) = -u(ij)*hs(ij,is) -v(ij)*tmp5(ij) -w(ij)*tmp6(ij) 
@@ -394,9 +390,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 ! #######################################################################
 ! Pressure term (actually solving for dte*p) 
 ! #######################################################################
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, u, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, v, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, w, tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)
      
 ! -----------------------------------------------------------------------
   DO ij = 1,isize_field
@@ -413,12 +409,13 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   ENDDO
 
 ! pressure in tmp1, Oy derivative in tmp3
-  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
+  ibc = 3
+  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, ibc, &
        tmp1,tmp3, tmp2,tmp4, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
 
 ! horizontal derivatives
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i0, dx, tmp1, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, i0, dz, tmp1, tmp4, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient 

@@ -52,7 +52,7 @@ PROGRAM APRIORI
 ! Local variables
 ! -------------------------------------------------------------------
   TINTEGER opt_main, opt_block, opt_order, opt_filter, opt_format
-  TINTEGER iq, is, ij
+  TINTEGER iq, is, ij, bcs(2,2)
   TINTEGER nfield, isize_wrk3d, idummy, iread_flow, iread_scal, jmax_aux, ierr, MaskSize
   CHARACTER*32  fname, inifile, bakfile, flow_file, scal_file, plot_file, time_str
   CHARACTER*32 varname(16)
@@ -81,9 +81,9 @@ PROGRAM APRIORI
   INTEGER icount
 #endif
 
-  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
-
 ! ###################################################################
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+
   inifile = 'dns.ini'
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
@@ -98,7 +98,7 @@ PROGRAM APRIORI
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(y_aux(jmax_total)) ! Reduced vertical grid
+  ALLOCATE(y_aux(g(2)%size)) ! Reduced vertical grid
 
 ! -------------------------------------------------------------------
 ! File names
@@ -235,7 +235,7 @@ PROGRAM APRIORI
   isize_wrk3d = isize_wrk3d + isize_field ! more space in wrk3d array needed in IO_WRITE_VISUALS
 #endif
 
-  jmax_aux = jmax_total/opt_block
+  jmax_aux = g(2)%size/opt_block
 
 ! -------------------------------------------------------------------
   IF ( icalc_flow .EQ. 1 ) ALLOCATE(qf(imax*jmax*kmax,inb_flow))
@@ -394,7 +394,7 @@ PROGRAM APRIORI
         txc(1:isize_field,5) = txc(1:isize_field,5) -qf(1:isize_field,1) *qf(1:isize_field,3)
         txc(1:isize_field,6) = txc(1:isize_field,6) -qf(1:isize_field,2) *qf(1:isize_field,3)
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -424,23 +424,23 @@ PROGRAM APRIORI
         nfield = nfield+1; data(nfield)%field => txc(:,8); varname(nfield) = 'Wy'
         nfield = nfield+1; data(nfield)%field => txc(:,9); varname(nfield) = 'Wz'
 
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, q(:,1),txc(1,1), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, q(:,1),txc(1,2), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, q(:,1),txc(1,3), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), q(:,1),txc(1,1), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), q(:,1),txc(1,2), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), q(:,1),txc(1,3), wrk3d, wrk2d,wrk3d)
 
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, q(:,2),txc(1,4), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, q(:,2),txc(1,5), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, q(:,2),txc(1,6), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), q(:,2),txc(1,4), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), q(:,2),txc(1,5), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), q(:,2),txc(1,6), wrk3d, wrk2d,wrk3d)
 
-        CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, q(:,3),txc(1,7), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, q(:,3),txc(1,8), i0,i0, wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, q(:,3),txc(1,9), i0,i0, wrk1d,wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), q(:,3),txc(1,7), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), q(:,3),txc(1,8), wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), q(:,3),txc(1,9), wrk3d, wrk2d,wrk3d)
 
         DO is = 1,nfield
            CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, txc(1,is), wrk1d,wrk2d,txc(1,10))
         ENDDO
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO

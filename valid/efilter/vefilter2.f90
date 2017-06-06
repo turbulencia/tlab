@@ -30,9 +30,9 @@ PROGRAM VEFILTER2
 ! ###################################################################
   CALL IO_READ_GRID(gfile, imax,jmax,kmax_total, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z)
 
-  CALL FILT4E_INI(imax,       i1bc, g(1)%scale, x, cx)
-  CALL FILT4E_INI(jmax,       j1bc, g(2)%scale, y, cy)
-  CALL FILT4E_INI(kmax_total, k1bc, g(3)%scale, z, cz)
+  ! CALL FLT4E_INI(g(1)%scale, x, cx)
+  ! CALL FLT4E_INI(g(2)%scale, y, cy)
+  ! CALL FLT4E_INI(g(3)%scale, z, cz)
 
   CALL DNS_READ_FIELDS('field.inp', i1, imax,jmax,kmax, i1,i0, i1, a, wrk3d)
 

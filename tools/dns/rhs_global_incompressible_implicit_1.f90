@@ -27,7 +27,13 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
+  USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field, isize_wrk1d, inb_scal
+  USE DNS_GLOBAL, ONLY : icalc_scal
+  USE DNS_GLOBAL, ONLY : visc, schmidt, rossby
+  USE DNS_GLOBAL, ONLY : buoyancy, coriolis
+  USE DNS_GLOBAL, ONLY : bbackground
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax, bcs_scal_jmin, bcs_scal_jmax
   USE DNS_LOCAL,  ONLY : idivergence
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
@@ -50,7 +56,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 
 ! -----------------------------------------------------------------------
   TINTEGER is,ij, k, nxy, ip, ip_b, ip_t 
-  TINTEGER ibc
+  TINTEGER ibc, bcs(2,2)
   TREAL dummy, visc_exp, visc_imp, visc_tot, diff, alpha, beta
 
   TREAL, DIMENSION(:),        POINTER :: p_bcs
@@ -60,8 +66,6 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   INTEGER ilen
 #endif
 
-  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
-
 ! #######################################################################
   nxy    = imax*jmax
 
@@ -69,6 +73,8 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   ilen = isize_field
 #endif
 
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+  
   visc_exp = kex*visc
   visc_imp = kim*visc 
   visc_tot = visc 
@@ -116,29 +122,26 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 ! #######################################################################
   ! h3   contains explicit nonlinear w-tendency (nonlinear operator N(u_n))
   ! tmp9 contains explicit diffusive tendency for w 
-  IF ( kmax_total .GT. 1 ) THEN
-     !CALL PARTIAL_Y(imode_fdm,imax,jmax,kmax,j1bc,dy,w,    tmp2,i0,i0,wrk1d,wrk2d,wrk3d) 
-     !CALL PARTIAL_Y(imode_fdm,imax,jmax,kmax,j1bc,dy,tmp2, tmp1,i0,i0,wrk1d,wrk2d,wrk3d) 
-     CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-          dy, w, tmp1, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)   ! tmp2 used for BCs below
+  IF ( g(3)%size .GT. 1 ) THEN
+     !CALL OPR_PARTIAL_Y(OPR_P1,imax,jmax,kmax,bcs,g(2),w,    tmp2,wrk3d, wrk2d,wrk3d) 
+     !CALL OPR_PARTIAL_Y(OPR_P1,imax,jmax,kmax,bcs,g(2),tmp2, tmp1,wrk3d, wrk2d,wrk3d) 
+     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), w, tmp1, tmp2, wrk2d,wrk3d)   ! tmp2 used for BCs below
      DO ij = 1,isize_field; 
           h3(ij) =           -v(ij)*tmp2(ij)     
         tmp9(ij) =             visc*tmp1(ij)
      ENDDO
 
-     !CALL PARTIAL_X(imode_fdm,imax,jmax,kmax,i1bc,dx,w,    tmp3,i0,i0,wrk1d,wrk2d,wrk3d) 
-     !CALL PARTIAL_X(imode_fdm,imax,jmax,kmax,i1bc,dx,tmp3, tmp1,i0,i0,wrk1d,wrk2d,wrk3d) 
-     CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-          dx, w, tmp1, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
+     !CALL OPR_PARTIAL_X(OPR_P1,imax,jmax,kmax,bcs,g(1),w,    tmp3,wrk3d, wrk2d,wrk3d) 
+     !CALL OPR_PARTIAL_X(OPR_P1,imax,jmax,kmax,bcs,g(1),tmp3, tmp1,wrk3d, wrk2d,wrk3d) 
+     CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), w, tmp1, tmp3, wrk2d,wrk3d)
      DO ij = 1,isize_field; 
           h3(ij) =   h3(ij) -u(ij)*tmp3(ij)
         tmp9(ij) = tmp9(ij) + visc*tmp1(ij)
      ENDDO
 
-     !CALL PARTIAL_Z(imode_fdm,imax,jmax,kmax,k1bc,dz,w,    tmp3,i0,i0,wrk1d,wrk2d,wrk3d) 
-     !CALL PARTIAL_Z(imode_fdm,imax,jmax,kmax,k1bc,dz,tmp3, tmp1,i0,i0,wrk1d,wrk2d,wrk3d) 
-     CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc, &
-          dz, w, tmp1, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)     
+     !CALL OPR_PARTIAL_Z(OPR_P1,imax,jmax,kmax,bcs,g(3),w,    tmp3,wrk3d, wrk2d,wrk3d) 
+     !CALL OPR_PARTIAL_Z(OPR_P1,imax,jmax,kmax,bcs,g(3),tmp3, tmp1,wrk3d, wrk2d,wrk3d) 
+     CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), w, tmp1, tmp3, wrk2d,wrk3d)     
 ! -----------------------------------------------------------------------
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
@@ -174,28 +177,25 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 ! #######################################################################
 !   h1 contains explicit nonlinear u-tendency  
 ! tmp7 contains explicit diffusive u-tendency
-  !CALL PARTIAL_Y(imode_fdm,imax,jmax,kmax,j1bc,dy,u,    tmp2,i0,i0,wrk1d,wrk2d,wrk3d) 
-  !CALL PARTIAL_Y(imode_fdm,imax,jmax,kmax,j1bc,dy,tmp2, tmp1,i0,i0,wrk1d,wrk2d,wrk3d) 
-  CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, u, tmp1, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)   ! tmp2 used for BCs below
+  !CALL OPR_PARTIAL_Y(OPR_P1,imax,jmax,kmax,bcs,g(2),u,    tmp2,wrk3d, wrk2d,wrk3d) 
+  !CALL OPR_PARTIAL_Y(OPR_P1,imax,jmax,kmax,bcs,g(2),tmp2, tmp1,wrk3d, wrk2d,wrk3d) 
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), u, tmp1, tmp2, wrk2d,wrk3d)   ! tmp2 used for BCs below
   DO ij=1,isize_field; 
        h1(ij)  =           - v(ij)*tmp2(ij)  
      tmp7(ij)  =              visc*tmp1(ij)
   ENDDO
 
-  !CALL PARTIAL_X(imode_fdm,imax,jmax,kmax,i1bc,dx,u,    tmp3,i0,i0,wrk1d,wrk2d,wrk3d) 
-  !CALL PARTIAL_X(imode_fdm,imax,jmax,kmax,i1bc,dx,tmp3, tmp1,i0,i0,wrk1d,wrk2d,wrk3d) 
-  CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, u, tmp1, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
+  !CALL OPR_PARTIAL_X(OPR_P1,imax,jmax,kmax,bcs,g(1),u,    tmp3,wrk3d, wrk2d,wrk3d) 
+  !CALL OPR_PARTIAL_X(OPR_P1,imax,jmax,kmax,bcs,g(1),tmp3, tmp1,wrk3d, wrk2d,wrk3d) 
+  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), u, tmp1, tmp3, wrk2d,wrk3d)
   DO ij=1,isize_field; 
        h1(ij) =   h1(ij) - u(ij)*tmp3(ij); 
      tmp7(ij) = tmp7(ij) + visc*tmp1(ij)
   ENDDO
 
-  !CALL PARTIAL_Z(imode_fdm,imax,jmax,kmax,k1bc,dz,u,    tmp3,i0,i0,wrk1d,wrk2d,wrk3d) 
-  !CALL PARTIAL_Z(imode_fdm,imax,jmax,kmax,k1bc,dz,tmp3, tmp1,i0,i0,wrk1d,wrk2d,wrk3d) 
-  CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, u, tmp1, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d) 
+  !CALL OPR_PARTIAL_Z(OPR_P1,imax,jmax,kmax,bcs,g(3),u,    tmp3,wrk3d, wrk2d,wrk3d) 
+  !CALL OPR_PARTIAL_Z(OPR_P1,imax,jmax,kmax,bcs,g(3),tmp3, tmp1,wrk3d, wrk2d,wrk3d) 
+  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), u, tmp1, tmp3, wrk2d,wrk3d) 
 
 ! -----------------------------------------------------------------------
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
@@ -232,30 +232,27 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 ! #######################################################################
 !   h2 contains explicit nonlinear v-tendency 
 ! tmp8 contains explicit diffusive v-tendency
-  !CALL PARTIAL_Y(imode_fdm,imax,jmax,kmax,j1bc,dy,v,    tmp2,i0,i0,wrk1d,wrk2d,wrk3d) 
-  !CALL PARTIAL_Y(imode_fdm,imax,jmax,kmax,j1bc,dy,tmp2, tmp1,i0,i0,wrk1d,wrk2d,wrk3d) 
-  CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, v, tmp1, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)
+  !CALL OPR_PARTIAL_Y(OPR_P1,imax,jmax,kmax,bcs,g(2),v,    tmp2,wrk3d, wrk2d,wrk3d) 
+  !CALL OPR_PARTIAL_Y(OPR_P1,imax,jmax,kmax,bcs,g(2),tmp2, tmp1,wrk3d, wrk2d,wrk3d) 
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), v, tmp1, tmp2, wrk2d,wrk3d)
   DO ij=1,isize_field
        h2(ij) =          - v(ij)*tmp2(ij)
      tmp8(ij) =             visc*tmp1(ij) 
   ENDDO
 
 
-  !CALL PARTIAL_X(imode_fdm,imax,jmax,kmax,i1bc,dx,v,    tmp3,i0,i0,wrk1d,wrk2d,wrk3d) 
-  !CALL PARTIAL_X(imode_fdm,imax,jmax,kmax,i1bc,dx,tmp3, tmp1,i0,i0,wrk1d,wrk2d,wrk3d) 
-  CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, v, tmp1, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
+  !CALL OPR_PARTIAL_X(OPR_P1,imax,jmax,kmax,bcs,g(1),v,    tmp3,wrk3d, wrk2d,wrk3d) 
+  !CALL OPR_PARTIAL_X(OPR_P1,imax,jmax,kmax,bcs,g(1),tmp3, tmp1,wrk3d, wrk2d,wrk3d) 
+  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), v, tmp1, tmp3, wrk2d,wrk3d)
   DO ij=1,isize_field
        h2(ij) =   h2(ij) - u(ij)*tmp3(ij)
      tmp8(ij) = tmp8(ij) + visc*tmp1(ij) 
   ENDDO
 
 
-  !CALL PARTIAL_Z(imode_fdm,imax,jmax,kmax,k1bc,dz,v,    tmp3,i0,i0,wrk1d,wrk2d,wrk3d) 
-  !CALL PARTIAL_Z(imode_fdm,imax,jmax,kmax,k1bc,dz,tmp3, tmp1,i0,i0,wrk1d,wrk2d,wrk3d) 
-  CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, v, tmp1, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d) 
+  !CALL OPR_PARTIAL_Z(OPR_P1,imax,jmax,kmax,bcs,g(3),v,    tmp3,wrk3d, wrk2d,wrk3d) 
+  !CALL OPR_PARTIAL_Z(OPR_P1,imax,jmax,kmax,bcs,g(3),tmp3, tmp1,wrk3d, wrk2d,wrk3d) 
+  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), v, tmp1, tmp3, wrk2d,wrk3d) 
 
 ! -----------------------------------------------------------------------
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
@@ -307,28 +304,25 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
      DO is=1,inb_scal 
         diff = visc_exp / schmidt(is) 
         tmp6 = hs(:,is) 
-        !CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-        !     dx, s(1,is), tmp4, i0,i0,i0,i0, tmp5,wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_X(imode_fdm,imax,jmax,kmax,i1bc,dx,s(1,is),tmp5,i0,i0,wrk1d,wrk2d,wrk3d) 
-        CALL PARTIAL_X(imode_fdm,imax,jmax,kmax,i1bc,dx,tmp5,   tmp4,i0,i0,wrk1d,wrk2d,wrk3d) 
+        !CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), s(1,is), tmp4, tmp5, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s(1,is), tmp5, wrk3d, wrk2d,wrk3d) 
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp5,    tmp4, wrk3d, wrk2d,wrk3d) 
         DO ij=1,isize_field; 
           hs(ij,is) =           -u(ij)*tmp5(ij) 
            tmp7(ij) =             diff*tmp4(ij)  
         ENDDO
         
-        !CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-        !     dy, s(1,is), tmp4, i0,i0,i0,i0, tmp5,wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm,imax,jmax,kmax,j1bc,dy,s(1,is),tmp5,i0,i0,wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Y(imode_fdm,imax,jmax,kmax,j1bc,dy,tmp5,   tmp4,i0,i0,wrk1d,wrk2d,wrk3d) 
+        !CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s(1,is), tmp4, tmp5, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(1,is), tmp5, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp5,    tmp4, wrk3d, wrk2d,wrk3d) 
         DO ij=1,isize_field; 
           hs(ij,is) =hs(ij,is) -v(ij)*tmp5(ij)
            tmp7(ij) = tmp7(ij)  +diff*tmp4(ij)
         ENDDO
         
-        !CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-        !     dz, s(1,is), tmp4, i0,i0,i0,i0, tmp5,wrk1d,wrk2d,wrk3d)
-        CALL PARTIAL_Z(imode_fdm,imax,jmax,kmax,k1bc,dz,s(1,is),tmp5,i0,i0,wrk1d,wrk2d,wrk3d) 
-        CALL PARTIAL_Z(imode_fdm,imax,jmax,kmax,k1bc,dz,tmp5,   tmp4,i0,i0,wrk1d,wrk2d,wrk3d) 
+        !CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), s(1,is), tmp4, tmp5, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s(1,is), tmp5, wrk3d, wrk2d,wrk3d) 
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp5,    tmp4, wrk3d, wrk2d,wrk3d) 
 
         DO ij=1,isize_field; 
           hs(ij,is) =hs(ij,is) -w(ij)*tmp5(ij) 
@@ -419,9 +413,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 ! Pressure term
 ! #######################################################################
   IF ( idivergence .EQ. EQNS_DIVERGENCE ) THEN ! remove residual divergence
-     CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i1bc, dx, u, tmp1, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_Y(imode_fdm, imax,jmax,kmax, j1bc, dy, v, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-     CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, k1bc, dz, w, tmp3, i0,i0, wrk1d,wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)
   ENDIF
 
 ! -----------------------------------------------------------------------
@@ -439,12 +433,13 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   ENDDO
 
 ! pressure in tmp1, Oy derivative in tmp3
-  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
+  ibc = 3
+  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, ibc, &
        tmp1,tmp3, tmp2,tmp4, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
 
 ! horizontal derivatives
-  CALL PARTIAL_X(imode_fdm, imax,jmax,kmax, i0, dx, tmp1, tmp2, i0,i0, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_Z(imode_fdm, imax,jmax,kmax, i0, dz, tmp1, tmp4, i0,i0, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient 

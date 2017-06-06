@@ -2,15 +2,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Scalar equation, nonlinear term in convective form and the 
@@ -21,13 +12,15 @@
 SUBROUTINE RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1&
      (is, u,v,w,s_is,hs_is, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk1d,wrk2d,wrk3d)
 
+#ifdef USE_OPENMP
   USE OMP_LIB
-  USE DNS_GLOBAL
-  USE DNS_LOCAL, ONLY : bcs_scal_jmin, bcs_scal_jmax
+#endif
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : idiffusion, visc, schmidt
+  USE DNS_LOCAL,  ONLY : bcs_scal_jmin, bcs_scal_jmax
 
   IMPLICIT NONE
-
-#include "integers.h"
 
   TINTEGER is
   TREAL, DIMENSION(isize_field)   :: u,v,w, s_is, hs_is
@@ -36,26 +29,23 @@ SUBROUTINE RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1&
   TREAL, DIMENSION(imax,kmax,2)   :: wrk2d
 
 ! -----------------------------------------------------------------------
-  TINTEGER ij, k, nxy, ip, ibc
-  TREAL diff !, diff_liq
-
-  TREAL dx(1), dy(1), dz(1) ! To use old wrappers to calculate derivatives
+  TINTEGER ij, k, nxy, ip, ibc, bcs(2,2)
+  TREAL diff
 
 ! #######################################################################
   nxy = imax*jmax
 
+  bcs = 0
+  
   IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R
   ELSE;                                  diff = visc/schmidt(is); ENDIF
 
 ! #######################################################################
 ! Diffusion and convection terms in scalar equations
 ! #######################################################################
-  CALL PARTIAL_ZZ(i1, iunifz, imode_fdm, imax,jmax,kmax, k1bc,&
-       dz, s_is, tmp6, i0,i0, i0,i0, tmp3, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_YY(i1, iunify, imode_fdm, imax,jmax,kmax, j1bc,&
-       dy, s_is, tmp5, i0,i0, i0,i0, tmp2, wrk1d,wrk2d,wrk3d)
-  CALL PARTIAL_XX(i1, iunifx, imode_fdm, imax,jmax,kmax, i1bc,&
-       dx, s_is, tmp4, i0,i0, i0,i0, tmp1, wrk1d,wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), s_is, tmp6, tmp3, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s_is, tmp5, tmp2, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), s_is, tmp4, tmp1, wrk2d,wrk3d)
 
 !$omp parallel default( shared ) private( ij )
 !$omp do

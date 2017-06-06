@@ -58,8 +58,8 @@ PROGRAM VEFILTER
   ENDIF
 
 ! ###################################################################
-  CALL FILT4E_INI(imax, i1bc, scalex, x, a)
-  CALL OPR_FILTER_X_OLD(i3, imax, jmax, kmax, i1bc, i0, i0, uf, a, wrk3d, wrk3d)
+  ! CALL FILT4E_INI(imax, i1bc, scalex, x, a)
+  ! CALL OPR_FILTER_X_OLD(i3, imax, jmax, kmax, i1bc, i0, i0, uf, a, wrk3d, wrk3d)
 !  CALL  OPR_FILTER(i3, imax, jmax, kmax, kmax, i1bc, i1bc, i1bc, i1, i0, i0, i1, uf, a, a, a, wrk3d)
 
   OPEN(20,file='filter.dat')

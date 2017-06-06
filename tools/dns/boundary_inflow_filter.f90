@@ -17,6 +17,7 @@
 !########################################################################
 SUBROUTINE BOUNDARY_INFLOW_FILTER(u, txc, mean, wrk1d,wrk2d,wrk3d)
   
+  USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL
   USE DNS_LOCAL, ONLY : ifilt_inflow_iwidth, ifilt_inflow_jwidth
 
@@ -35,6 +36,10 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(u, txc, mean, wrk1d,wrk2d,wrk3d)
   TINTEGER id, ibc_x(4), ibc_y(4), ibc_z(4)
 
 ! #######################################################################
+!!! Routines OPR_FILTER have been changed. This routine needs to be updates !!!
+  CALL IO_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
+  CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+
   imx = ifilt_inflow_iwidth
   j1  = (jmax-ifilt_inflow_jwidth)/2+1
   jmx = (jmax+ifilt_inflow_jwidth)/2
@@ -42,9 +47,9 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(u, txc, mean, wrk1d,wrk2d,wrk3d)
   jmx = MIN(MAX(jmx,i1),jmax)
 
 ! BCs for the filters (see routine FILTER)
-  ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 1; ibc_x(4) = 1
-  ibc_y(1) = 1; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0 
-  ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0 
+  ! ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 1; ibc_x(4) = 1
+  ! ibc_y(1) = 1; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0 
+  ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0 
 
   IF ( imx-i1 .LT. 6 ) THEN
      ibc_x(1) = 0
