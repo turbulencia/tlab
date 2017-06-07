@@ -1,5 +1,10 @@
 # Mistral cluster (DKRZ)
 
+if ( NOT BUILD_TYPE )
+   message( WARNING "Setting BUILD_TYPE to default value." )
+   set(BUILD_TYPE LITTLE)
+endif()
+ 
 if ( ${BUILD_TYPE} STREQUAL "PARALLEL" )
    set(ENV{FC} mpif90)
    set(CMAKE_Fortran_COMPILER mpif90) 
@@ -13,7 +18,9 @@ if ( ${BUILD_TYPE} STREQUAL "PARALLEL" )
 else() # compiler for serial build
    set(ENV{FC} ifort)
    set(CMAKE_Fortran_COMPILER ifort) 
-   set(USER_Fortran_FLAGS          "-fpp -DUSE_FFTW -nbs -save-temps -xHost")  
+   set(USER_Fortran_FLAGS          "-fpp -nbs -save-temps -xHost")  
+
+   add_definitions(-DUSE_FFTW)
 
    if    ( ${BUILD_TYPE} STREQUAL "BIG" )
      set(USER_Fortran_FLAGS_RELEASE  "-O3 -convert big_endian")
