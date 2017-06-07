@@ -570,13 +570,15 @@ PROGRAM TRANSFIELDS
         ENDIF
         wrk1d(1:kmax_total,3) = z(1:kmax_total,1) ! we need extra space
 
+        g(2)%size  = jmax_aux
+        g(2)%scale = scaley_dst
 ! Remeshing the fields
         IF ( icalc_flow .GT. 0 ) THEN
            DO iq = 1,inb_flow
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
               CALL TRANS_EXTEND(imax,jmax,kmax, subdomain, q(:,iq), txc(:,1))
-              CALL OPR_INTERPOLATE(imax,jmax_aux,kmax, imax_dst,jmax_dst,kmax_dst, i1bc,j1bc,k1bc, &
-                   g(1)%scale,scaley_dst,g(3)%scale, wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), x_dst,y_dst,z_dst, &
+              CALL OPR_INTERPOLATE(imax,jmax_aux,kmax, imax_dst,jmax_dst,kmax_dst, &
+                   g, wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), x_dst,y_dst,z_dst, &
                    txc(:,1),q_dst(:,iq), txc(:,2), isize_wrk3d, wrk3d)
            ENDDO
         ENDIF
@@ -585,8 +587,8 @@ PROGRAM TRANSFIELDS
            DO is = 1,inb_scal
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
               CALL TRANS_EXTEND(imax,jmax,kmax, subdomain, s(:,is), txc(:,1))
-              CALL OPR_INTERPOLATE(imax,jmax_aux,kmax, imax_dst,jmax_dst,kmax_dst, i1bc,j1bc,k1bc, &
-                   g(1)%scale,scaley_dst,g(3)%scale, wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), x_dst,y_dst,z_dst, &
+              CALL OPR_INTERPOLATE(imax,jmax_aux,kmax, imax_dst,jmax_dst,kmax_dst, &
+                   g, wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), x_dst,y_dst,z_dst, &
                    txc(:,1),s_dst(:,is), txc(:,2), isize_wrk3d, wrk3d)
            ENDDO
         ENDIF

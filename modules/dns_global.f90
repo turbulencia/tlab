@@ -100,8 +100,6 @@ MODULE DNS_GLOBAL
   
 ! to be removed
   TINTEGER :: imax_total,jmax_total,kmax_total
-
-  TINTEGER :: i1bc,j1bc,k1bc                     ! biased
   
 ! ###################################################################
   TYPE(background_dt) :: qbg(3)        ! Velocity background

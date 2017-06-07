@@ -5,9 +5,6 @@
 #endif
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2012/11/01 - J.P. Mellado
@@ -21,10 +18,10 @@
 !# Based on splines library
 !#
 !########################################################################
-SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst,&
-     i1bc,j1bc,k1bc, scalex,scaley,scalez, x_org,y_org,z_org, &
-     x_dst,y_dst,z_dst, u_org,u_dst, txc, isize_wrk3d, wrk3d)
+SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
+     g, x_org,y_org,z_org, x_dst,y_dst,z_dst, u_org,u_dst, txc, isize_wrk3d, wrk3d)
 
+  USE DNS_TYPES,  ONLY : grid_dt
   USE DNS_GLOBAL, ONLY : isize_txc_field
 #ifdef USE_MPI
   USE DNS_CONSTANTS, ONLY : lfile
@@ -35,8 +32,8 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst,&
 
 #include "integers.h"
 
-  TINTEGER nx,ny,nz, nx_dst,ny_dst,nz_dst, i1bc,j1bc,k1bc, isize_wrk3d
-  TREAL scalex,scaley,scalez
+  TINTEGER nx,ny,nz, nx_dst,ny_dst,nz_dst, isize_wrk3d
+  TYPE(grid_dt),                          INTENT(IN)    :: g(3)
   TREAL, DIMENSION(*),                    INTENT(IN)    :: x_org,y_org,z_org, x_dst,y_dst,z_dst
   TREAL, DIMENSION(nx*ny*nz),             INTENT(IN)    :: u_org
   TREAL, DIMENSION(nx_dst*ny_dst*nz_dst), INTENT(OUT)   :: u_dst
@@ -44,23 +41,12 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst,&
   TREAL, DIMENSION(isize_wrk3d),          INTENT(INOUT) :: wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER nx_total, ny_total, nz_total
 
 #ifdef USE_MPI
   TINTEGER id, npage
 #endif
 
 ! ###################################################################
-#ifdef USE_MPI
-  nx_total = nx*ims_npro_i
-  ny_total = ny
-  nz_total = nz*ims_npro_k
-#else
-  nx_total = nx
-  ny_total = ny
-  nz_total = nz
-#endif
-
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
      CALL IO_WRITE_ASCII(lfile,'Initialize MPI type 1 for Ox interpolation.')
@@ -94,23 +80,23 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst,&
 
 ! #######################################################################
 ! Always interpolating along Ox
-  IF ( nx_total .GT. 1 ) THEN
+  IF ( g(1)%size .GT. 1 ) THEN
      CALL OPR_INTERPOLATE_X(nx,    ny,    nz, nx_dst, &
-          i1bc, scalex, x_org,x_dst, u_org,   txc(1,1), txc(1,2),txc(1,3), isize_wrk3d, wrk3d)
+          g(1)%periodic, g(1)%scale, x_org,x_dst, u_org,   txc(1,1), txc(1,2),txc(1,3), isize_wrk3d, wrk3d)
   ELSE
      txc(1:nx*ny*nz,1) = u_org(1:nx*ny*nz)
   ENDIF
 
-  IF ( ny_total .GT. 1 ) THEN
+  IF ( g(2)%size .GT. 1 ) THEN
      CALL OPR_INTERPOLATE_Y(nx_dst,ny,    nz, ny_dst, &
-          j1bc, scaley, y_org,y_dst, txc(1,1),txc(1,2), txc(1,3),txc(1,4), isize_wrk3d, wrk3d)
+          g(2)%periodic, g(2)%scale, y_org,y_dst, txc(1,1),txc(1,2), txc(1,3),txc(1,4), isize_wrk3d, wrk3d)
   ELSE
-     txc(:,2) = txc(:,1)
+     txc(1:nx_dst*ny*nz,2) = txc(1:nx_dst*ny*nz,1)
   ENDIF
 
-  IF ( nz_total .GT. 1 ) THEN
+  IF ( g(3)%size .GT. 1 ) THEN
      CALL OPR_INTERPOLATE_Z(nx_dst,ny_dst,nz, nz_dst, &
-          k1bc, scalez, z_org,z_dst, txc(1,2),u_dst,    txc(1,1),txc(1,3), isize_wrk3d, wrk3d)
+          g(3)%periodic, g(3)%scale, z_org,z_dst, txc(1,2),u_dst,    txc(1,1),txc(1,3), isize_wrk3d, wrk3d)
   ELSE
      u_dst(1:nx_dst*ny_dst*nz_dst) = txc(1:nx_dst*ny_dst*nz_dst,2)
   ENDIF

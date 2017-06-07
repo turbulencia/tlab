@@ -530,10 +530,10 @@ PROGRAM VISUALS_MAIN
                  CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,2), txc(1,3),txc(1,4), txc(1,5), wrk1d,wrk2d,wrk3d)
                  txc(1:isize_field,1) = txc(1:isize_field,1) -txc(1:isize_field,2)
 
-                 plot_file = 'PressureHidrodynamic'//time_str(1:MaskSize)
+                 plot_file = 'PressureHydrodynamic'//time_str(1:MaskSize)
                  CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
                  
-                 plot_file = 'PressureHidrostatic'//time_str(1:MaskSize)
+                 plot_file = 'PressureHydrostatic'//time_str(1:MaskSize)
                  CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
                  
               ENDIF

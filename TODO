@@ -1,4 +1,3 @@
-* Routines partial_* to be substituted by OPR_D*
 * Variable ifilt_step in AVG_FLOW_SPATIAL_LAYER
 * In some routines I do not need icalc_scal, icalc_flow, I can do the same with inb_scal=0
 * Error control in libraries averages, pdfs...
@@ -11,3 +10,5 @@
 * Check the -qNOOVER in the intel compiler to force SIMD in pointers (NO OVERLAP MEMORY)
 * Memory reqs. in two-point statistics to be reduced.
 * Check random number generator in parallel mode; current decorrelation in rand_main.f90 might not be enough.
+* OPR_INTERPOLATE does not work when the grid size changes both in the x,z directions and in the y direction.
+* Update of filter routines for buffer and inflow need to be finished.

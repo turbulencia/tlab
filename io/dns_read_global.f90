@@ -568,24 +568,24 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! Periodic
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Grid', 'XPeriodic', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; i1bc = 0; g(1)%periodic = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; i1bc = 1; g(1)%periodic = .FALSE.
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(1)%periodic = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(1)%periodic = .FALSE.
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Periodic X grid')
      CALL DNS_STOP(DNS_ERROR_IBC)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Grid', 'YPeriodic', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; j1bc = 0; g(2)%periodic = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; j1bc = 1; g(2)%periodic = .FALSE.
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(2)%periodic = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(2)%periodic = .FALSE.
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Periodic Y grid')
      CALL DNS_STOP(DNS_ERROR_JBC)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Grid', 'ZPeriodic', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; k1bc = 0; g(3)%periodic = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; k1bc = 1; g(3)%periodic = .FALSE.
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(3)%periodic = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(3)%periodic = .FALSE.
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Periodic Z grid')
      CALL DNS_STOP(DNS_ERROR_KBC)
@@ -1113,7 +1113,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      
   ENDIF
 
-  IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. i1bc .NE. 0 ) THEN
+  IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. ( .NOT. g(1)%periodic ) ) THEN
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Grid must be uniform and periodic in direction X for temporal simulation')
      CALL DNS_STOP(DNS_ERROR_CHECKUNIFX)
   ENDIF

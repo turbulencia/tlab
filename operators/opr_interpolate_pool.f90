@@ -21,14 +21,14 @@
 !# DESCRIPTION
 !#
 !# All three routines called the same kernel routine INTERPOLATE_1D, 
-!# calls in turn the rouintes from the library spline
+!# calls in turn the routines from the library spline
 !#
 !########################################################################
 
 ! #######################################################################
 ! Interpolation in X
 ! #######################################################################
-SUBROUTINE OPR_INTERPOLATE_X(nx,ny,nz, nx_dst, i1bc, scalex, &
+SUBROUTINE OPR_INTERPOLATE_X(nx,ny,nz, nx_dst, periodic, scalex, &
      x_org,x_dst, u_org,u_dst, u_tmp1,u_tmp2, isize_wrk3d, wrk3d)
 
   USE DNS_GLOBAL, ONLY : isize_txc_field
@@ -38,7 +38,8 @@ SUBROUTINE OPR_INTERPOLATE_X(nx,ny,nz, nx_dst, i1bc, scalex, &
 
   IMPLICIT NONE
 
-  TINTEGER nx,ny,nz, nx_dst, isize_wrk3d, i1bc
+  LOGICAL periodic
+  TINTEGER nx,ny,nz, nx_dst, isize_wrk3d
   TREAL scalex
   TREAL, DIMENSION(*)                       :: x_org, x_dst
   TREAL, DIMENSION(nx    *ny*nz),    TARGET :: u_org
@@ -85,7 +86,7 @@ SUBROUTINE OPR_INTERPOLATE_X(nx,ny,nz, nx_dst, i1bc, scalex, &
 #endif
 
 ! -----------------------------------------------------------------------
-  CALL INTERPOLATE_1D(nx_total,nyz, nx_total_dst, i1bc, scalex, x_org,x_dst, p_a,p_b, isize_wrk3d, wrk3d)
+  CALL INTERPOLATE_1D(periodic, nx_total,nyz, nx_total_dst, scalex, x_org,x_dst, p_a,p_b, isize_wrk3d, wrk3d)
  
 ! -------------------------------------------------------------------
 ! Transposition
@@ -104,7 +105,7 @@ END SUBROUTINE OPR_INTERPOLATE_X
 ! ###################################################################
 ! Interpolation in Oz direction
 ! ###################################################################
-SUBROUTINE OPR_INTERPOLATE_Z(nx,ny,nz, nz_dst, k1bc, scalez, &
+SUBROUTINE OPR_INTERPOLATE_Z(nx,ny,nz, nz_dst, periodic, scalez, &
      z_org,z_dst, u_org,u_dst, u_tmp1,u_tmp2, isize_wrk3d, wrk3d)
 
   USE DNS_GLOBAL, ONLY : isize_txc_field
@@ -114,7 +115,8 @@ SUBROUTINE OPR_INTERPOLATE_Z(nx,ny,nz, nz_dst, k1bc, scalez, &
 
   IMPLICIT NONE
 
-  TINTEGER nx,ny,nz, nz_dst, isize_wrk3d, k1bc
+  LOGICAL periodic
+  TINTEGER nx,ny,nz, nz_dst, isize_wrk3d
   TREAL scalez
   TREAL, DIMENSION(*)                       :: z_org, z_dst
   TREAL, DIMENSION(nx*ny*nz    ),    TARGET :: u_org
@@ -168,7 +170,7 @@ SUBROUTINE OPR_INTERPOLATE_Z(nx,ny,nz, nz_dst, k1bc, scalez, &
 #endif
 
 ! -----------------------------------------------------------------------
-  CALL INTERPOLATE_1D(nz_total,nxy, nz_total_dst, k1bc, scalez, z_org,z_dst, u_tmp1,u_tmp2, isize_wrk3d, wrk3d)
+  CALL INTERPOLATE_1D(periodic, nz_total,nxy, nz_total_dst, scalez, z_org,z_dst, u_tmp1,u_tmp2, isize_wrk3d, wrk3d)
 
 ! -------------------------------------------------------------------
 ! Put arrays back in the right order
@@ -196,12 +198,13 @@ END SUBROUTINE OPR_INTERPOLATE_Z
 ! #######################################################################
 ! Interpolation in Y
 ! #######################################################################
-SUBROUTINE OPR_INTERPOLATE_Y(nx,ny,nz, ny_dst, &
-     j1bc, scaley, y_org,y_dst, u_org,u_dst, u_tmp1,u_tmp2, isize_wrk3d, wrk3d)
+SUBROUTINE OPR_INTERPOLATE_Y(nx,ny,nz, ny_dst, periodic, scaley, &
+     y_org,y_dst, u_org,u_dst, u_tmp1,u_tmp2, isize_wrk3d, wrk3d)
 
   IMPLICIT NONE
 
-  TINTEGER nx,ny,nz, ny_dst, isize_wrk3d, j1bc
+  LOGICAL periodic
+  TINTEGER nx,ny,nz, ny_dst, isize_wrk3d
   TREAL scaley
   TREAL y_org(ny+1)
   TREAL y_dst(ny_dst)
@@ -225,7 +228,7 @@ SUBROUTINE OPR_INTERPOLATE_Y(nx,ny,nz, ny_dst, &
 
 ! -----------------------------------------------------------------------
   ikmax = nx*nz
-  CALL INTERPOLATE_1D(ny,ikmax, ny_dst, j1bc, scaley, y_org,y_dst, u_tmp1,u_tmp2, isize_wrk3d, wrk3d)
+  CALL INTERPOLATE_1D(periodic, ny,ikmax, ny_dst, scaley, y_org,y_dst, u_tmp1,u_tmp2, isize_wrk3d, wrk3d)
 
 ! -------------------------------------------------------------------
 ! Put arrays back in the right order
@@ -246,13 +249,14 @@ END SUBROUTINE OPR_INTERPOLATE_Y
 ! #######################################################################
 ! Interpolation in 1D
 ! #######################################################################
-SUBROUTINE INTERPOLATE_1D(imax,kmax, imax_dst, i1bc, scalex, x_org,x_dst, u_org,u_dst, isize_wrk, wrk)
+SUBROUTINE INTERPOLATE_1D(periodic, imax,kmax, imax_dst, scalex, x_org,x_dst, u_org,u_dst, isize_wrk, wrk)
 
   USE DNS_CONSTANTS, ONLY : efile
 
   IMPLICIT NONE
 
-  TINTEGER imax,kmax, imax_dst, isize_wrk, i1bc
+  LOGICAL periodic
+  TINTEGER imax,kmax, imax_dst, isize_wrk
   TREAL scalex
   TREAL x_org(imax+1)
   TREAL x_dst(imax_dst)
@@ -298,7 +302,7 @@ SUBROUTINE INTERPOLATE_1D(imax,kmax, imax_dst, i1bc, scalex, x_org,x_dst, u_org,
   ENDDO
 
   DO k = 1,kmax
-     IF ( i1bc .EQ. 0 ) THEN
+     IF ( periodic ) THEN
         CALL percur(iopt, imax1, x_org, u_org(1,k), wrk(ip1),        kx, s, &
              nest, nx, wrk(ip2), wrk(ip3), fp, wrk(ip4), lwrk, wrk(ip5), ier)
 
