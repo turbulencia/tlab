@@ -4,6 +4,7 @@
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
 #endif
+#include "avgij_map.h"
 
 !########################################################################
 !# DESCRIPTION
@@ -21,7 +22,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   USE DNS_GLOBAL, ONLY : rbackground, g
   USE DNS_GLOBAL, ONLY : itransport, visc
   USE DNS_GLOBAL, ONLY : itime, rtime
-  USE DNS_GLOBAL, ONLY : nspa_rest, nspa_step, iupdate_stat
+  USE DNS_GLOBAL, ONLY : nstatavg, nstatavg_points
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL 
   USE DNS_TOWER
@@ -51,8 +52,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   TARGET :: q
 
 ! -------------------------------------------------------------------
-  TINTEGER it_loc_data
-  TINTEGER icount_stat, is, iq, ip
+  TINTEGER is, iq, ip
   TINTEGER idummy, splanes_i(5), splanes_j(5), splanes_k(5)
   CHARACTER*32 fname, varname(1)
   CHARACTER*250 line1
@@ -76,11 +76,6 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) vis => q(:,8)
 
   ENDIF
-
-! Spatial mode
-  it_loc_data  = nitera_first + nspa_rest*nspa_step ! Save statistical point information step control
-  iupdate_stat = nitera_first + nspa_step           ! Update statistical information
-  icount_stat  = 1
 
 ! Sizes information for saving planes  
   idummy     = kmax*jmax*nplanes_i*(inb_flow_array+inb_scal_array)
@@ -171,47 +166,28 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
      ENDIF
 
 ! -----------------------------------------------------------------------
-! Specfics of spatially evolving cases
-! -----------------------------------------------------------------------
-     IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-        IF ( itime .EQ. iupdate_stat ) THEN ! Running statistics 
-           CALL DNS_SAVE(icount_stat, q,hq,s, txc, vaux, wrk1d,wrk2d,wrk3d)
-           
-           icount_stat  = icount_stat  + 1
-           iupdate_stat = iupdate_stat + nspa_step
+! Accumulate statistics in spatially evolving cases
+     IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. MOD(itime-nitera_first,nitera_stats_spa) .EQ. 0 ) THEN
+        nstatavg_points = nstatavg_points + g(3)%size
+        CALL DNS_SAVE_AVGIJ(rho,u,v,w,p,vis,T, hq,txc, vaux(vindex(VA_MEAN_WRK)), wrk2d,wrk3d)
+        IF ( icalc_scal .EQ. 1 ) THEN
+           CALL DNS_SAVE_SCBDGIJ(rho,u,v,w,p,s,vis, hq,txc, vaux(vindex(VA_MEAN_WRK)+MA_MOMENTUM_SIZE*nstatavg*jmax), wrk2d,wrk3d)
         ENDIF
-        
-! line and plane data may be written to disk at a different frequency from averages, 
-! this latter is done along with flow/scalar restart files
-        IF ( itime .EQ. it_loc_data ) THEN
-           ! IF ( frunline .EQ. 1 ) THEN
-           !    WRITE(fname,*) itime; fname='ln'//TRIM(ADJUSTL(fname))
-           !    CALL DNS_WRITE_LINE(fname, isize_field, inb_vars, &
-           !         vaux(vindex(VA_TIMES)), vaux(vindex(VA_LINE_SPA_WRK)), wrk3d)
-           ! ENDIF
-           ! IF ( frunplane .EQ. 1 ) THEN
-           !    WRITE(fname,*) itime; fname='pl'//TRIM(ADJUSTL(fname))
-           !    CALL DNS_WRITE_PLANE(fname, isize_field, nstatplnvars, &
-           !         vaux(vindex(VA_TIMES)), vaux(vindex(VA_PLANE_SPA_WRK)), wrk3d)
-           ! ENDIF
-
-           icount_stat = 1
-           it_loc_data = it_loc_data + nspa_rest*nspa_step
-        ENDIF
-      
      ENDIF
-! -----------------------------------------------------------------------
 
+! -----------------------------------------------------------------------
      IF ( tower_mode .EQ. 1 ) THEN 
         CALL DNS_TOWER_ACCUMULATE(q,1,wrk1d)
         CALL DNS_TOWER_ACCUMULATE(s,2,wrk1d)
      ENDIF
 
+! -----------------------------------------------------------------------
      IF ( icalc_trajectories .EQ. 1 ) THEN ! Lagrangian
         WRITE(fname,*) itime; fname = 'trajectories.'//TRIM(ADJUSTL(fname))
         CALL DNS_WRITE_TRAJECTORIES(fname,l_q,l_tags, l_trajectories, l_trajectories_tags, wrk3d,txc,itime, nitera_last, nitera_save, nitera_first)
      END IF
 
+! -----------------------------------------------------------------------
      IF ( MOD(itime-nitera_first,nitera_stats) .EQ. 0 ) THEN ! Calculate statistics
         IF     ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
            CALL STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
@@ -223,6 +199,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
         ENDIF
      ENDIF
      
+! -----------------------------------------------------------------------
      IF ( MOD(itime-nitera_first,nitera_save) .EQ. 0 .OR. &      ! Save restart files
           itime .EQ. nitera_last .OR. INT(logs_data(1)) .NE. 0 ) THEN ! Secure that one restart file is saved
         
@@ -246,13 +223,14 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
            CALL DNS_WRITE_PARTICLE_TAGS(fname, l_tags)
         END IF
 
-        IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. frunstat .EQ. 1 ) THEN ! Spatial; running averages
+        IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. nitera_stats_spa .GT. 0 ) THEN ! Spatial; running averages
            WRITE(fname,*) itime; fname='st'//TRIM(ADJUSTL(fname))
            CALL DNS_WRITE_AVGIJ(fname, vaux(vindex(VA_MEAN_WRK)))
         ENDIF
         
      ENDIF
 
+! -----------------------------------------------------------------------
      IF ( MOD(itime-nitera_first,nitera_pln) .EQ. 0 ) THEN ! Save planes
         IF ( nplanes_k .GT. 0 ) THEN
            CALL REDUCE_Z_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, nplanes_k,planes_k, txc)

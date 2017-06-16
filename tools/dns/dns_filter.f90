@@ -66,7 +66,7 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
   CALL IO_WRITE_ASCII(lfile,line)
 
 ! Statistics
-  IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. frunstat .EQ. 1 ) THEN
+  IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. nitera_stats_spa .GT. 0 ) THEN
      CALL DNS_SAVE_AVGKIN(q(1,5), q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), txc(1,3), txc(1,4), &
           txc(1,5), txc(1,6), txc(1,7), vaux(vindex(VA_MEAN_WRK)), wrk2d)     
   ENDIF

@@ -18,7 +18,7 @@ PROGRAM VPOISSON
   
   TINTEGER i, j, k,  bcs !, ibc_x(4), ibc_y(4), ibc_z(4)
   TINTEGER isize_wrk3d, itype
-  TREAL dummy, error, falpha, lambda
+  TREAL dummy, error, lambda!, falpha
 
 ! ###################################################################
   CALL DNS_INITIALIZE

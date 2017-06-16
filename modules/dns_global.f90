@@ -85,9 +85,6 @@ MODULE DNS_GLOBAL
 ! temporal statistics
   TINTEGER :: inb_mean_temporal, inb_mean_spatial
 
-! spatial statistics
-  TINTEGER :: nspa_rest, nspa_step
-
 ! subarray information (offset)
   TYPE(subarray_dt), DIMENSION(10) :: io_aux
 
@@ -128,7 +125,7 @@ MODULE DNS_GLOBAL
   TREAL    :: stokes                              ! Stokes number of liquid particles
   TREAL    :: settling                            ! sedimentation parameter for liquid particle
 
-  TREAL    :: visc                                ! simply 1/reynolds
+  TREAL    :: visc                                ! 1/reynolds
 
 ! ###################################################################
 ! FFTW
@@ -142,10 +139,10 @@ MODULE DNS_GLOBAL
 ! ###################################################################
 ! Jet Statistics
 ! ###################################################################
-  TINTEGER :: nstatavg, statavg(MAX_STATS_SPATIAL), nstatavg_points, istattimeorg, &
-              nstatlin, statlin_i(MAX_STATS_SPATIAL), statlin_j(MAX_STATS_SPATIAL), &
-              nstatpln, statpln(MAX_STATS_SPATIAL), nstatplnextra, nstatplnvars, &
-              iupdate_stat, istat_min_ver, istat_maj_ver
+  TINTEGER :: nstatavg, statavg(MAX_STATS_SPATIAL), & ! Ox planes at which to accumulate statistics
+              nstatavg_points, &                      ! number of accumulated points
+              istattimeorg, &                         ! time at which accumulation of statistics started
+              istat_min_ver, istat_maj_ver
   TREAL    :: rstattimeorg
 
 END MODULE DNS_GLOBAL

@@ -3,7 +3,7 @@
 #include "avgij_map.h"
 
 SUBROUTINE DNS_SAVE_SCBDGIJ_TS1(NNstat, m_z1, u, v, w, vis, z1, tmp1, tmp2, tmp3, tmp4, tmp5, &
-     tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, mean1d_sc, wrk1d, wrk2d, wrk3d)
+     tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, mean1d_sc, wrk2d, wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : g
@@ -33,7 +33,6 @@ SUBROUTINE DNS_SAVE_SCBDGIJ_TS1(NNstat, m_z1, u, v, w, vis, z1, tmp1, tmp2, tmp3
   TREAL vis(*)
   TREAL z1(imax,jmax,kmax)
   TREAL mean1d_sc(nstatavg,jmax,*)
-  TREAL wrk1d(*)
   TREAL wrk2d(isize_wrk2d,*)
   TREAL wrk3d(*)
   TINTEGER j, bcs(2,1)

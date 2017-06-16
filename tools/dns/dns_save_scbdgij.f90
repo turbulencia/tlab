@@ -1,10 +1,7 @@
 #include "types.h"
 #include "dns_const.h"
+#include "dns_error.h"
 #include "avgij_map.h"
-
-SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, &
-     tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8,tmp9,tmp10,tmp11,tmp12, &
-     mean1d_sc, wrk1d,wrk2d,wrk3d )
 
 ! #####################################################
 ! # Preparing data for statistics.
@@ -27,31 +24,51 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, &
 ! #
 ! # 09/25/00 Juan Pedro Mellado
 ! #####################################################
+SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d )
 
-  USE DNS_GLOBAL
+  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, isize_wrk2d
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : nstatavg, statavg
 
   IMPLICIT NONE
 
-  TREAL, DIMENSION(imax,jmax,kmax)   :: u, v, w, p, rho, vis
-  TREAL, DIMENSION(imax,jmax,kmax,*) :: z1
-  TREAL, DIMENSION(*)                :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6
-  TREAL, DIMENSION(*)                :: tmp7,tmp8,tmp9,tmp10,tmp11,tmp12
+  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(IN)    :: u, v, w, p, rho, vis
+  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)    :: z1
+  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(INOUT), TARGET :: txc, hq
 
   TREAL mean1d_sc(nstatavg,jmax,MS_SCALAR_SIZE,*)
 
-  TREAL wrk1d(*)
   TREAL wrk2d(isize_wrk2d,*)
   TREAL wrk3d(*)
 
   TINTEGER is, bcs(2,1)
   TINTEGER NNstat
 
-  bcs = 0
-  NNstat = nstatavg*jmax
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:,:,:), POINTER :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8,tmp9,tmp10,tmp11,tmp12
 
+! ###################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING DNS_SAVE_SCBDGIJ' )
 #endif
+
+  bcs = 0
+  NNstat = nstatavg*jmax
+
+! Define pointers
+  tmp1 => hq(:,:,:,1)
+  tmp2 => hq(:,:,:,2)
+  tmp3 => hq(:,:,:,3)
+  tmp4 => txc(:,:,:,1)
+  tmp5 => txc(:,:,:,2)
+  tmp6 => txc(:,:,:,3)
+  tmp7 => txc(:,:,:,4)
+  tmp8 => txc(:,:,:,5)
+  tmp9 => txc(:,:,:,6)
+  tmp10 => txc(:,:,:,7)
+  tmp11 => txc(:,:,:,8)
+  tmp12 => txc(:,:,:,9)
 
 ! ################################################################
 ! # Mean Terms
@@ -169,7 +186,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, &
 
   DO is=1, inb_scal
      CALL DNS_SAVE_SCBDGIJ_S2(NNstat, m_rho, m_u, m_v, m_w, m_z1, p, vis, z1(1,1,1,is), &
-          tmp5, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, mean1d_sc(1,1,1,is), wrk1d, wrk2d, wrk3d)
+          tmp5, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, mean1d_sc(1,1,1,is), wrk2d, wrk3d)
   ENDDO
 
 ! ####################################################################
@@ -183,7 +200,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, &
 
   DO is=1, inb_scal
      CALL DNS_SAVE_SCBDGIJ_TS1(NNstat, m_z1, u, v, w, vis, z1(1,1,1,is), tmp1, tmp2, tmp3, &
-          tmp4, tmp5, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, mean1d_sc(1,1,1,is), wrk1d, wrk2d, wrk3d)
+          tmp4, tmp5, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, mean1d_sc(1,1,1,is), wrk2d, wrk3d)
   ENDDO
 
 ! ##################################################################

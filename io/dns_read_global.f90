@@ -33,7 +33,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CHARACTER*32 bakfile
   TINTEGER iMajorVersion, iMinorVersion
   TINTEGER is, inb_scal_local1, inb_scal_local2, idummy
-!  TINTEGER nspa_storage, nlin_storage
   TREAL dummy
 
 ! ###################################################################
@@ -259,14 +258,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   g(1:3)%mode_fdm = imode_fdm
   
-! ###################################################################
-! Iteration Section
-! ###################################################################
-  CALL IO_WRITE_ASCII(bakfile, '#')
-  CALL IO_WRITE_ASCII(bakfile, '#[Iteration]')
-  CALL SCANINIINT(bakfile, inifile, 'Statistics', 'StatSave', '10', nspa_rest)
-  CALL SCANINIINT(bakfile, inifile, 'Statistics', 'StatStep', '10', nspa_step)
-
 ! ###################################################################
 ! Dimensionles parameters
 ! ###################################################################
@@ -598,28 +589,10 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[Statistics]')
   CALL IO_WRITE_ASCII(bakfile, '#IAvera=<plane1,plane2,...>')
-  CALL IO_WRITE_ASCII(bakfile, '#ILines=<plane1,plane2,...>')
-  CALL IO_WRITE_ASCII(bakfile, '#JLines=<plane1,plane2,...>')
-  CALL IO_WRITE_ASCII(bakfile, '#IPlane=<plane1,plane2,...>')
 
   nstatavg = MAX_STATS_SPATIAL
   CALL SCANINICHAR(bakfile, inifile, 'Statistics', 'IAvera', '1', sRes)
   CALL LIST_INTEGER(sRes, nstatavg, statavg)
-
-  nstatlin = MAX_STATS_SPATIAL
-  CALL SCANINICHAR(bakfile, inifile, 'Statistics', 'ILines', '1', sRes)
-  CALL LIST_INTEGER(sRes, nstatlin, statlin_i)
-  idummy = MAX_STATS_SPATIAL
-  CALL SCANINICHAR(bakfile, inifile, 'Statistics', 'JLines', '1', sRes)
-  CALL LIST_INTEGER(sRes, idummy, statlin_j)
-  IF ( idummy .NE. nstatlin ) THEN
-     CALL IO_WRITE_ASCII(efile,'Mismatch in the number of i-j-lines')
-     CALL DNS_STOP(DNS_ERROR_IJMISMATCH)
-  ENDIF
-
-  nstatpln = MAX_STATS_SPATIAL
-  CALL SCANINICHAR(bakfile, inifile, 'Statistics', 'IPlane', '1', sRes)
-  CALL LIST_INTEGER(sRes, nstatpln, statpln)
 
 ! ###################################################################
 ! Flow physical properties of the system
@@ -1118,44 +1091,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL DNS_STOP(DNS_ERROR_CHECKUNIFX)
   ENDIF
 
-  IF ( iMajorVersion*10+iMinorVersion .LE. 42 ) THEN; nstatplnextra = 0
-  ELSE;                                               nstatplnextra = inb_scal + inb_flow; ENDIF
-! Add TOTAL number of variables + extra + temperature
-  nstatplnvars = inb_vars + nstatplnextra + 1 
-
   IF ( inb_vars .GT. MAX_VARS ) THEN
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error MAX_VARS < inb_vars')
      CALL DNS_STOP(DNS_ERROR_TOTALVARS)
-  ENDIF
-
-! Minimum number of plane saves
-  nspa_rest = MAX(i1, nspa_rest)
-
-!  IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-!     IF ( frunplane .EQ. 1 ) THEN
-!        nspa_storage = nstatplnvars*nstatpln*nspa_rest/imax
-!        WRITE(lstr,*) nspa_storage
-!        CALL IO_WRITE_ASCII(bakfile, 'Total Plane Storage :'//lstr)
-!     ENDIF
-!     IF ( frunline .EQ. 1 ) THEN
-!        nlin_storage = inb_vars*nstatlin*nspa_rest/(imax*jmax)
-!        WRITE(lstr,*) nlin_storage
-!        CALL IO_WRITE_ASCII(bakfile, 'Total Line Storage :'//lstr)
-!     ENDIF
-!  ENDIF
-
-! Verification of averages planes
-  IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-     CALL SORT_INTEGER(nstatavg,statavg)
-! include of last plane
-     IF ( statavg(nstatpln) .LT. imax ) THEN
-        nstatavg = nstatavg + 1; statavg(nstatavg) = imax
-     ENDIF
-! include first plane
-     IF ( statavg(1) .NE. 1 ) THEN
-        nstatavg = nstatavg + 1; statavg(nstatavg) = 1
-     ENDIF
-     CALL SORT_INTEGER(nstatavg,statavg)
   ENDIF
 
   RETURN

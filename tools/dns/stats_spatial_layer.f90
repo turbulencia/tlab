@@ -32,7 +32,7 @@ SUBROUTINE STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d)
 ! #######################################################################
 ! Averages
 ! #######################################################################
-  IF ( fstavg .EQ. 1 .AND. frunstat .EQ. 1 ) THEN
+  IF ( fstavg .EQ. 1 ) THEN
 #ifdef USE_MPI
      IF ( ims_pro .EQ. 0 ) THEN
 #endif

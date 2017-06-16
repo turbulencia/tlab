@@ -14,7 +14,7 @@ PROGRAM TRANSGRID
   TREAL, DIMENSION(:,:), ALLOCATABLE         :: wrk1d
   TREAL, DIMENSION(:),   ALLOCATABLE, TARGET :: x,y,z
   TREAL, DIMENSION(:),   ALLOCATABLE, TARGET :: x_ref,y_ref,z_ref
-  TREAL offset, factor
+  TREAL offset, factor1, factor2
 
 ! ###################################################################
 ! Initialize and read reference data
@@ -61,6 +61,7 @@ PROGRAM TRANSGRID
      WRITE(*,'(a)')   '3. Drop planes'
      WRITE(*,'(a)')   '4. Introduce planes'
      WRITE(*,'(a)')   '5. Transfer grid between files'
+     WRITE(*,'(a)')   '6. Stretching'
      WRITE(*,'(a,/)') '9. Exit'
      READ(*,*) option 
 
@@ -83,9 +84,9 @@ PROGRAM TRANSGRID
 
      CASE(2)
         WRITE(*,'(/,"Scaling factor ? ", $)')
-        READ(*,*) factor
-        g(direction)%nodes(:) = g(direction)%nodes(1) + ( g(direction)%nodes(:)-g(direction)%nodes(1)) *factor
-        g(direction)%scale = g(direction)%scale *factor
+        READ(*,*) factor1
+        g(direction)%nodes(:) = g(direction)%nodes(1) + ( g(direction)%nodes(:)-g(direction)%nodes(1)) *factor1
+        g(direction)%scale = g(direction)%scale *factor1
         
      CASE(3) ! Dropping planes
         CALL TRANS_DROP_PLANES(g(direction)%size, g(direction)%nodes, g(direction)%scale)
@@ -118,6 +119,12 @@ PROGRAM TRANSGRID
 
         flag_exit = .TRUE. ! Exit directly to avoid memory allocation problems
 
+     CASE(6) ! Stretching
+        WRITE(*,'(/,"Stretching parameters? ", $)')
+        READ(*,*) factor1, factor2
+
+        g(direction)%nodes = g(direction)%nodes *( C_1_R +factor1 *EXP(-factor2 *g(direction)%nodes ) )
+        
      CASE(9)
         flag_exit = .TRUE.
         

@@ -64,27 +64,6 @@ SUBROUTINE DNS_VAUX(isize_vaux)
      vsize(VA_MEAN_WRK) = 1
   ENDIF
 
-! Line data
-  IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. frunline .EQ. 1 ) THEN 
-     vsize(VA_LINE_SPA_WRK) = nstatlin*kmax*inb_vars*nspa_rest
-  ELSE
-     vsize(VA_LINE_SPA_WRK) = 1
-  ENDIF
-
-! Times
-  IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN 
-     vsize(VA_TIMES) = 2*nspa_rest
-  ELSE
-     vsize(VA_TIMES) = 1
-  ENDIF
-
-! Plane data
-  IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. frunplane .EQ. 1 ) THEN 
-     vsize(VA_PLANE_SPA_WRK) = jmax*kmax*nstatpln*nstatplnvars*nspa_rest
-  ELSE
-     vsize(VA_PLANE_SPA_WRK) = 1
-  ENDIF
-
 ! #######################################################################
 ! LES data
 ! #######################################################################

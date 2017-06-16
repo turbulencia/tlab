@@ -1,9 +1,7 @@
 #include "types.h"
 #include "dns_const.h"
+#include "dns_error.h"
 #include "avgij_map.h"
-
-SUBROUTINE DNS_SAVE_AVGIJ(rho,u,v,w,p,vis,T, &
-     zc,yc,xc,wc,vc,uc,tc,sc,rc,qc,pc,oc, mean1d, wrk1d,wrk2d,wrk3d)
 
 ! #####################################################
 ! # Preparing data for statistics.
@@ -25,17 +23,19 @@ SUBROUTINE DNS_SAVE_AVGIJ(rho,u,v,w,p,vis,T, &
 ! #
 ! # 09/25/00 Juan Pedro Mellado
 ! #####################################################
+SUBROUTINE DNS_SAVE_AVGIJ(rho,u,v,w,p,vis,T, hq,txc, mean1d, wrk2d,wrk3d)
 
-  USE DNS_GLOBAL
+  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_wrk2d
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : itransport, visc
+  USE DNS_GLOBAL, ONLY : nstatavg, statavg
 
   IMPLICIT NONE
 
-  TREAL, DIMENSION(imax,jmax,kmax) :: u, v, w, p, rho, vis, T
-  TREAL, DIMENSION(imax,jmax,*)    :: xc, yc, zc, vc, wc, uc, tc, sc, rc, qc, oc, pc
-
+  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(IN)    :: u, v, w, p, rho, vis, T
+  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(INOUT), TARGET :: txc, hq
   TREAL mean1d(nstatavg,jmax,*)
-
-  TREAL wrk1d(*)
   TREAL wrk2d(isize_wrk2d,*)
   TREAL wrk3d(imax,jmax,kmax)
 
@@ -43,15 +43,38 @@ SUBROUTINE DNS_SAVE_AVGIJ(rho,u,v,w,p,vis,T, &
   TINTEGER NNstat
   TREAL c2, c23, cs2
 
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:,:,:), POINTER :: xc, yc, zc, vc, wc, uc, tc, sc, rc, qc, oc, pc
+
+! ###################################################################
+#ifdef TRACE_ON
+  CALL IO_WRITE_ASCII(tfile, 'ENTERING DNS_SAVE_AVGIJ' )
+#endif
+
+  IF ( imax .LT. nstatavg ) THEN
+     CALL IO_WRITE_ASCII(efile, 'DNS_SAVE_AVGIJ. Not enough space in available arrays.') 
+     CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
+  ENDIF
+  
   bcs = 0
   c2 = C_2_R
   c23 = C_2_R/C_3_R
   cs2 = C_14_R*C_1EM2_R
   NNstat = nstatavg*jmax
 
-#ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING DNS_SAVE_AVGIJ' )
-#endif
+! Define pointers
+  xc => hq(:,:,:,1)
+  yc => hq(:,:,:,2)
+  zc => hq(:,:,:,3)
+  vc => txc(:,:,:,1)
+  wc => txc(:,:,:,2)
+  uc => txc(:,:,:,3)
+  tc => txc(:,:,:,4)
+  sc => txc(:,:,:,5)
+  rc => txc(:,:,:,6)
+  qc => txc(:,:,:,7)
+  oc => txc(:,:,:,8)
+  pc => txc(:,:,:,9)
 
 ! ################
 ! # Single terms #
@@ -105,7 +128,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(rho,u,v,w,p,vis,T, &
      ENDDO
   ELSE
      DO j = 1,NNstat
-        MA_VIS(j)  = MA_VIS(j) + M_REAL(kmax_total)
+        MA_VIS(j)  = MA_VIS(j) + M_REAL(g(3)%size)
      ENDDO
   ENDIF
 
@@ -167,7 +190,7 @@ SUBROUTINE DNS_SAVE_AVGIJ(rho,u,v,w,p,vis,T, &
      ENDDO
   ELSE
      DO j = 1,NNstat
-        MA_VIS2(j) = MA_VIS2(j) + M_REAL(kmax_total)
+        MA_VIS2(j) = MA_VIS2(j) + M_REAL(g(3)%size)
      ENDDO
   ENDIF
 

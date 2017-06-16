@@ -88,8 +88,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#IteraLog=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#Saveplanes=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#RunAvera=<yes/no>')
-  CALL IO_WRITE_ASCII(bakfile, '#RunLines=<yes/no>')
-  CALL IO_WRITE_ASCII(bakfile, '#RunPlane=<yes/no>')
 
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Start',      '0',  nitera_first)
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'End',        '0',  nitera_last )
@@ -98,17 +96,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'IteraLog',   '10', nitera_log  )
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Saveplanes', '-1', nitera_pln  )
 
-  CALL SCANINICHAR(bakfile, inifile, 'Iteration', 'RunAvera', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; frunstat=1
-  ELSE;                                       frunstat=0; ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'Iteration', 'RunLines', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; frunline=1
-  ELSE;                                       frunline=0; ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'Iteration', 'RunPlane', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; frunplane=1
-  ELSE;                                       frunplane=0; ENDIF
+! Accumulate statistics in spatial mode
+  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'SaveStats', '-1', nitera_stats_spa)
 
 ! ###################################################################
 ! Control Limits

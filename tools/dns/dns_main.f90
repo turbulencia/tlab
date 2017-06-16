@@ -430,7 +430,7 @@ PROGRAM DNS
   ENDIF
 
 ! Running average field
-  IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. frunstat .EQ. 1 ) THEN
+  IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. nitera_stats_spa .GT. 0 ) THEN
      WRITE(fname,*) nitera_first; fname = 'st'//TRIM(ADJUSTL(fname))
      CALL DNS_READ_AVGIJ(fname, vaux(vindex(VA_MEAN_WRK))) 
   ENDIF
