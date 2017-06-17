@@ -151,7 +151,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d 
 
   DO is=1, inb_scal
      CALL DNS_SAVE_SCBDGIJ_W1(NNstat, m_w_x, m_w_y, m_rho, &
-          m_u, m_v, m_w, m_z1, z1(1,1,1,is), tmp7, &
+          m_u, m_v, m_z1, z1(1,1,1,is), tmp7, &
           tmp8, tmp11, tmp12, mean1d_sc(1,1,1,is), wrk2d)
   ENDDO
 
@@ -173,7 +173,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d 
 
   DO is=1, inb_scal
      CALL DNS_SAVE_SCBDGIJ_UV2(NNstat, m_v_x, m_u_y, m_rho, &
-          m_u, m_v, m_w, m_z1, z1(1,1,1,is), tmp7, &
+          m_u, m_v, m_z1, z1(1,1,1,is), tmp7, &
           tmp8, tmp11, tmp12, mean1d_sc(1,1,1,is), wrk2d)
   ENDDO
 

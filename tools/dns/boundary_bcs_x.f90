@@ -19,7 +19,7 @@
 !########################################################################
 SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
      q_inf,z1_inf, bcs_vi,bcs_vo, h0,h1,h2,h3,h4,zh1,&
-     txc, aux2d, wrk1d,wrk2d,wrk3d)
+     txc, aux2d, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
@@ -38,7 +38,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
   TREAL, DIMENSION(imax,jmax,kmax,*) :: z1, zh1, txc
   TREAL, DIMENSION(*)                :: q_inf, z1_inf
   TREAL, DIMENSION(jmax,kmax,*)      :: aux2d, bcs_vi, bcs_vo
-  TREAL, DIMENSION(*)                :: wrk1d, wrk2d, wrk3d
+  TREAL, DIMENSION(*)                :: wrk2d, wrk3d
 
   TARGET aux2d
 
@@ -142,7 +142,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
 ! Transverse terms
 ! ###################################################################
   CALL BOUNDARY_BCS_TRANSVERSE_X(u,v,w,p,rho,gama, z1, &
-       tmin, mmin, tmax, mmax, txc(1,1,1,1), txc(1,1,1,2), txc(1,1,1,3), wrk1d, wrk2d, wrk3d)
+       tmin, mmin, tmax, mmax, txc(1,1,1,1), txc(1,1,1,2), txc(1,1,1,3), wrk2d, wrk3d)
 
 ! ###################################################################
 ! Flow 

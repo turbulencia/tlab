@@ -90,17 +90,11 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: u, v, w, rho, p, vis
-  TREAL, DIMENSION(:),     POINTER :: dx, dy, dz
 
 ! ###################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING TIME_COURANT' )
 #endif
-
-! Define pointers
-  dx => g(1)%jac(:,1)
-  dy => g(2)%jac(:,1)
-  dz => g(3)%jac(:,1)
 
   u   => q(:,:,:,1)
   v   => q(:,:,:,2)
@@ -147,12 +141,12 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
      DO k = 1,kmax
         DO ij = 1,imax*jmax
            index = ij-1
-           wrk2d(ij,1) = ABS(u(ij,1,k))/dx(MOD(index,imax)+1+idsp)
-           wrk2d(ij,1) = wrk2d(ij,1) + ABS(v(ij,1,k))/dy((ij-1)/imax+1)
+           wrk2d(ij,1) = ABS(u(ij,1,k))/g(1)%jac(MOD(index,imax)+1+idsp,1)
+           wrk2d(ij,1) = wrk2d(ij,1) + ABS(v(ij,1,k))/g(2)%jac((ij-1)/imax+1,1)
         ENDDO
-        IF ( kmax_total .GT. 1 ) THEN
+        IF ( g(3)%size .GT. 1 ) THEN
            DO ij = 1,imax*jmax
-              wrk2d(ij,1) = wrk2d(ij,1) + ABS(w(ij,1,k))/dz(k+kdsp)
+              wrk2d(ij,1) = wrk2d(ij,1) + ABS(w(ij,1,k))/g(3)%jac(k+kdsp,1)
            ENDDO
         ENDIF
         
@@ -172,13 +166,13 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
      DO k = 1,kmax
         DO ij = 1,imax*jmax
            index = ij-1
-           wrk2d(ij,1) = (ABS(u(ij,1,k))+wrk3d(ij,1,k))/dx(MOD(index,imax)+1+idsp)
+           wrk2d(ij,1) = (ABS(u(ij,1,k))+wrk3d(ij,1,k))/g(1)%jac(MOD(index,imax)+1+idsp,1)
            wrk2d(ij,1) = wrk2d(ij,1) + &
-                (ABS(v(ij,1,k))+wrk3d(ij,1,k))/dy((ij-1)/imax+1)
+                (ABS(v(ij,1,k))+wrk3d(ij,1,k))/g(2)%jac((ij-1)/imax+1,1)
         ENDDO
-        IF ( kmax_total .GT. 1 ) THEN
+        IF ( g(3)%size .GT. 1 ) THEN
            DO ij = 1,imax*jmax
-              wrk2d(ij,1) = wrk2d(ij,1) + (ABS(w(ij,1,k))+wrk3d(ij,1,k))/dz(k+kdsp)
+              wrk2d(ij,1) = wrk2d(ij,1) + (ABS(w(ij,1,k))+wrk3d(ij,1,k))/g(3)%jac(k+kdsp,1)
            ENDDO
         ENDIF
         
@@ -239,12 +233,12 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
      DO k = 1,kmax
         DO ij = 1,imax*jmax
            index = ij-1
-           wrk2d(ij,1) = C_1_R/(dx(MOD(index,imax)+1+idsp)**2) + C_1_R/(dy((ij-1)/imax+1)**2)
+           wrk2d(ij,1) = C_1_R/(g(1)%jac(MOD(index,imax)+1+idsp,1)**2) + C_1_R/(g(2)%jac((ij-1)/imax+1,1)**2)
            wrk2d(ij,1) = (vscfct*visc+vscles)*wrk2d(ij,1)
         ENDDO
-        IF ( kmax_total .GT. 1 ) THEN
+        IF ( g(3)%size .GT. 1 ) THEN
            DO ij=1, imax*jmax
-              wrk2d(ij,1) = wrk2d(ij,1) + (vscfct*visc+vscles)/(dz(k+kdsp)**2)
+              wrk2d(ij,1) = wrk2d(ij,1) + (vscfct*visc+vscles)/(g(3)%jac(k+kdsp,1)**2)
            ENDDO
         ENDIF
 
@@ -262,13 +256,13 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
         DO k = 1,kmax
            DO ij = 1,imax*jmax
               index = ij-1
-              wrk2d(ij,1) = C_1_R/(dx(MOD(index,imax)+1+idsp)**2) + C_1_R/(dy((ij-1)/imax+1)**2)
+              wrk2d(ij,1) = C_1_R/(g(1)%jac(MOD(index,imax)+1+idsp,1)**2) + C_1_R/(g(2)%jac((ij-1)/imax+1,1)**2)
               wrk2d(ij,1) = (vscfct*visc*vis(ij,1,k)/rho(ij,1,k)+vscles)*wrk2d(ij,1)
            ENDDO
-           IF ( kmax_total .GT. 1 ) THEN
+           IF ( g(3)%size .GT. 1 ) THEN
               DO ij=1, imax*jmax
                  wrk2d(ij,1) = wrk2d(ij,1) + &
-                   (vscfct*visc*vis(ij,1,k)/rho(ij,1,k)+vscles)/(dz(k+kdsp)**2)
+                   (vscfct*visc*vis(ij,1,k)/rho(ij,1,k)+vscles)/(g(3)%jac(k+kdsp,1)**2)
               ENDDO
            ENDIF
 
@@ -281,13 +275,13 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
         DO k = 1,kmax
            DO ij = 1,imax*jmax
               index = ij-1
-              wrk2d(ij,1) = C_1_R/(dx(MOD(index,imax)+1+idsp)**2) + C_1_R/(dy((ij-1)/imax+1)**2)
+              wrk2d(ij,1) = C_1_R/(g(1)%jac(MOD(index,imax)+1+idsp,1)**2) + C_1_R/(g(2)%jac((ij-1)/imax+1,1)**2)
               wrk2d(ij,1) = (vscfct*visc/rho(ij,1,k)+vscles)*wrk2d(ij,1)
            ENDDO
-           IF ( kmax_total .GT. 1 ) THEN
+           IF ( g(3)%size .GT. 1 ) THEN
               DO ij=1, imax*jmax
                  wrk2d(ij,1) = wrk2d(ij,1) + &
-                      (vscfct*visc/rho(ij,1,k)+vscles)/(dz(k+kdsp)**2)
+                      (vscfct*visc/rho(ij,1,k)+vscles)/(g(3)%jac(k+kdsp,1)**2)
               ENDDO
            ENDIF
 
@@ -334,14 +328,14 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
         DO k=1, kmax
            DO ij=1, imax*jmax
               index = ij-1
-              wrk2d(ij,1) = C_1_R/(dx(MOD(index,imax)+1+idsp)**3)
-              wrk2d(ij,1) = wrk2d(ij,1) + C_1_R/(dy((ij-1)/imax+1)**3)
+              wrk2d(ij,1) = C_1_R/(g(1)%jac(MOD(index,imax)+1+idsp,1)**3)
+              wrk2d(ij,1) = wrk2d(ij,1) + C_1_R/(g(2)%jac((ij-1)/imax+1,1)**3)
               wrk2d(ij,1) = (mtgfm*vis(ij,1,k)/rho(ij,1,k))*wrk2d(ij,1)
            ENDDO
            
-           IF ( kmax_total .GT. 1 ) THEN
+           IF ( g(3)%size .GT. 1 ) THEN
               DO ij=1, imax*jmax
-                 wrk2d(ij,1) = wrk2d(ij,1) + (mtgfm*vis(ij,1,k)/rho(ij,1,k))/(dz(k+kdsp)**3)
+                 wrk2d(ij,1) = wrk2d(ij,1) + (mtgfm*vis(ij,1,k)/rho(ij,1,k))/(g(3)%jac(k+kdsp,1)**3)
               ENDDO
            ENDIF
 
@@ -353,14 +347,14 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
         DO k=1, kmax
            DO ij=1, imax*jmax
               index = ij-1
-              wrk2d(ij,1) = C_1_R/(dx(MOD(index,imax)+1+idsp)**3)
-              wrk2d(ij,1) = wrk2d(ij,1) + C_1_R/(dy((ij-1)/imax+1)**3)
+              wrk2d(ij,1) = C_1_R/(g(1)%jac(MOD(index,imax)+1+idsp,1)**3)
+              wrk2d(ij,1) = wrk2d(ij,1) + C_1_R/(g(2)%jac((ij-1)/imax+1,1)**3)
               wrk2d(ij,1) = (mtgfm/rho(ij,1,k))*wrk2d(ij,1)
            ENDDO
            
-           IF ( kmax_total .GT. 1 ) THEN
+           IF ( g(3)%size .GT. 1 ) THEN
               DO ij=1, imax*jmax
-                 wrk2d(ij,1) = wrk2d(ij,1) + (mtgfm/rho(ij,1,k))/(dz(k+kdsp)**3)
+                 wrk2d(ij,1) = wrk2d(ij,1) + (mtgfm/rho(ij,1,k))/(g(3)%jac(k+kdsp,1)**3)
               ENDDO
            ENDIF
 
@@ -389,7 +383,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
                 +v(ij,1,k)*v(ij,1,k))
         ENDDO
 
-        IF ( kmax_total .GT. 1 ) THEN
+        IF ( g(3)%size .GT. 1 ) THEN
            DO ij=1, imax*jmax
               wrk2d(ij,1) = wrk2d(ij,1) + rho(ij,1,k)*w(ij,1,k)*w(ij,1,k)
            ENDDO

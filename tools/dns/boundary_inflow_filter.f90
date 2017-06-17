@@ -18,25 +18,23 @@
 SUBROUTINE BOUNDARY_INFLOW_FILTER(u, txc, mean, wrk1d,wrk2d,wrk3d)
   
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL
-  USE DNS_LOCAL, ONLY : ifilt_inflow_iwidth, ifilt_inflow_jwidth
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax
+  USE DNS_LOCAL,     ONLY : FilterInflow, ifilt_inflow_iwidth, ifilt_inflow_jwidth
 
   IMPLICIT NONE
   
 #include "integers.h"
   
-  TREAL u(imax,jmax,kmax)
-  TREAL mean(jmax,kmax)
-  TREAL, DIMENSION(*) :: txc, wrk1d,wrk2d,wrk3d
+  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: u ! Filter in place
+  TREAL, DIMENSION(     jmax,kmax),   INTENT(IN)    :: mean
+  TREAL, DIMENSION(imax*jmax*kmax,2), INTENT(INOUT) :: txc
+  TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk1d,wrk2d,wrk3d
 
 ! -----------------------------------------------------------------------
   TINTEGER i,j,k,ip
   TINTEGER j1, imx, jmx, ifltmx, jfltmx
 
-  TINTEGER id, ibc_x(4), ibc_y(4), ibc_z(4)
-
 ! #######################################################################
-!!! Routines OPR_FILTER have been changed. This routine needs to be updates !!!
   CALL IO_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
   CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
 
@@ -51,55 +49,46 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(u, txc, mean, wrk1d,wrk2d,wrk3d)
   ! ibc_y(1) = 1; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0 
   ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0 
 
-  IF ( imx-i1 .LT. 6 ) THEN
-     ibc_x(1) = 0
-!     CALL IO_WRITE_ASCII(efile, 'Error: Explicit Filter width too small')
-!     CALL DNS_STOP(DNS_ERROR_FLTWIDTH)
-  ENDIF
+  ! IF ( imx-i1 .LT. 6 ) THEN ! Turn if off
+  !    ibc_x(1) = 0
+  ! ENDIF
 
-  IF ( jmx-j1 .LT. 6 ) THEN
-     ibc_y(1) = 0
-!     CALL IO_WRITE_ASCII(efile, 'Error: Explicit Filter width too small')
-!     CALL DNS_STOP(DNS_ERROR_FLTWIDTH)
-  ENDIF
+  ! IF ( jmx-j1 .LT. 6 ) THEN ! Turn it off
+  !    ibc_y(1) = 0
+  ! ENDIF
 
 ! -----------------------------------------------------------------------
 ! Remove mean field
 ! -----------------------------------------------------------------------
-  IF ( ibc_x(1) .EQ. 1 .OR. ibc_y(1) .EQ. 1 .OR. ibc_z(1) .EQ. 1 ) THEN
-     ip = 1
-     DO k = 1,kmax
-        DO j = j1,jmx
-           DO i = i1,imx
-              txc(ip) = u(i,j,k) - mean(j,k)
-              ip = ip + 1
-           ENDDO
+  ip = 1
+  DO k = 1,kmax
+     DO j = j1,jmx
+        DO i = i1,imx
+           wrk3d(ip) = u(i,j,k) - mean(j,k)
+           ip = ip + 1
         ENDDO
      ENDDO
-     ifltmx = imx-i1+1
-     jfltmx = jmx-j1+1
-  ENDIF
+  ENDDO
+  ifltmx = imx-i1+1
+  jfltmx = jmx-j1+1
 
 ! -----------------------------------------------------------------------
-  id = DNS_MPI_K_INFLOW
-  ! CALL OPR_FILTER(i2, ifltmx,jfltmx,kmax, ibc_x,ibc_y,ibc_z, id, &
-  !      txc, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-! Needs to be updated
+!  id = DNS_MPI_K_INFLOW
+! Need to pass a type flag for the transposition
+  CALL OPR_FILTER(ifltmx,jfltmx,kmax, FilterInflow, wrk3d, wrk1d,wrk2d,txc)
   
 ! -----------------------------------------------------------------------
 ! Add mean field
 ! -----------------------------------------------------------------------
-  IF ( ibc_x(1) .EQ. 1 .OR. ibc_y(1) .EQ. 1 .OR. ibc_z(1) .EQ. 1 ) THEN
-     ip = 1
-     DO k = 1,kmax
-        DO j = j1,jmx
-           DO i = i1,imx
-              u(i,j,k) = txc(ip) + mean(j,k)
-              ip = ip + 1
-           ENDDO
+  ip = 1
+  DO k = 1,kmax
+     DO j = j1,jmx
+        DO i = i1,imx
+           u(i,j,k) = wrk3d(ip) + mean(j,k)
+           ip = ip + 1
         ENDDO
      ENDDO
-  ENDIF
+  ENDDO
 
   RETURN
 END SUBROUTINE BOUNDARY_INFLOW_FILTER

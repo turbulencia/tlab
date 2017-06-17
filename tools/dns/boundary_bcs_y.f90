@@ -22,7 +22,7 @@
 !#
 !########################################################################
 SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
-     bcs_hb,bcs_ht, h0,h1,h2,h3,h4,zh1, tmp1,tmp2,tmp3,tmp4,tmp5, aux2d, wrk1d,wrk2d,wrk3d)
+     bcs_hb,bcs_ht, h0,h1,h2,h3,h4,zh1, tmp1,tmp2,tmp3,tmp4,tmp5, aux2d, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
@@ -40,7 +40,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
   TREAL, DIMENSION(imax,jmax,kmax)   :: tmp1, tmp2, tmp3, tmp4, tmp5
   TREAL, DIMENSION(imax,jmax,kmax,*) :: z1, zh1
   TREAL, DIMENSION(imax,kmax,*)      :: aux2d, bcs_ht, bcs_hb
-  TREAL, DIMENSION(*)                :: wrk1d, wrk2d, wrk3d
+  TREAL, DIMENSION(*)                :: wrk2d, wrk3d
 
   TARGET aux2d
 
@@ -132,7 +132,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
 ! Transverse terms
 ! ###################################################################
   CALL BOUNDARY_BCS_TRANSVERSE_Y(u,v,w,p,rho,gama, z1, &
-       tmin,lmin,tmax,lmax, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
+       tmin,lmin,tmax,lmax, tmp1,tmp2,tmp3, wrk2d,wrk3d)
 
 ! ###################################################################
 ! Flow 

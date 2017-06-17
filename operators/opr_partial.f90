@@ -148,7 +148,6 @@ END SUBROUTINE OPR_PARTIAL2
 
 ! ###################################################################
 ! ###################################################################
-! Add here OPR_DX(order,...), OPR_DY(order,...), and OPR_DZ(order,...)
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
 #endif

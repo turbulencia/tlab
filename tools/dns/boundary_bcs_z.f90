@@ -23,7 +23,7 @@
 !# 
 !########################################################################
 SUBROUTINE BOUNDARY_BCS_Z(M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh1,&
-     tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
+     tmp1,tmp2,tmp3,tmp4,tmp5, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
@@ -46,7 +46,6 @@ SUBROUTINE BOUNDARY_BCS_Z(M2_max, rho, u,v,w,p, gama, z1, h0,h1,h2,h3,h4, zh1,&
   TREAL, DIMENSION(imax,jmax,kmax)   :: tmp1, tmp2, tmp3, tmp4, tmp5
   TREAL, DIMENSION(imax,jmax,kmax,*) :: z1, zh1
 
-  TREAL wrk1d(*)
   TREAL wrk2d(imax*jmax,*)
   TREAL wrk3d(*)
 

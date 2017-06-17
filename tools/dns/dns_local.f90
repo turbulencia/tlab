@@ -81,7 +81,7 @@ MODULE DNS_LOCAL
 ! ###########################################################
 ! Filters
 ! ###########################################################
-  TYPE(filter_dt), DIMENSION(3) :: FilterDomain
+  TYPE(filter_dt), DIMENSION(3) :: FilterDomain, FilterInflow, FilterBuffer
 
   TINTEGER :: ifilt_step, ifilt_scalar
 

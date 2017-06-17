@@ -29,7 +29,7 @@
 !#
 !########################################################################
 SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
-     tmin, mmin, tmax, mmax, tmp1, ddy, ddz, wrk1d, wrk2d, wrk3d)
+     tmin, mmin, tmax, mmax, tmp1, ddy, ddz, wrk2d, wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL,    ONLY : g
@@ -52,7 +52,7 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
   TREAL, DIMENSION(imax,jmax,kmax,*)                       :: z1
   TREAL, DIMENSION(jmax,kmax,*)                            :: tmin, tmax, mmin, mmax
 
-  TREAL, DIMENSION(*) :: wrk1d, wrk2d, wrk3d
+  TREAL, DIMENSION(*) :: wrk2d, wrk3d
 
 ! -----------------------------------------------------------------------
   TINTEGER ip, j, k, is, bcs(2,2)  
