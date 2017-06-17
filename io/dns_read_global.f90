@@ -482,17 +482,18 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#YPeriodic=<yes/no>')
   CALL IO_WRITE_ASCII(bakfile, '#ZPeriodic=<yes/no>')
 
-  CALL SCANINIINT(bakfile, inifile, 'Grid', 'Imax', '0', imax_total)
-  CALL SCANINIINT(bakfile, inifile, 'Grid', 'Jmax', '0', jmax_total)
-  CALL SCANINIINT(bakfile, inifile, 'Grid', 'Kmax', '0', kmax_total)
-  g(1)%size = imax_total
-  g(2)%size = jmax_total
-  g(3)%size = kmax_total
-  
+  CALL SCANINIINT(bakfile, inifile, 'Grid', 'Imax', '0', g(1)%size)
+  CALL SCANINIINT(bakfile, inifile, 'Grid', 'Jmax', '0', g(2)%size)
+  CALL SCANINIINT(bakfile, inifile, 'Grid', 'Kmax', '0', g(3)%size)
 ! default
-  imax = imax_total
-  jmax = jmax_total
-  kmax = kmax_total
+  imax = g(1)%size
+  jmax = g(2)%size
+  kmax = g(3)%size
+
+! to be removed
+  imax_total = g(1)%size
+  jmax_total = g(2)%size
+  kmax_total = g(3)%size
 
 ! -------------------------------------------------------------------
 ! Domain decomposition in parallel mode
@@ -500,16 +501,16 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 #ifdef USE_MPI
   IF ( ims_npro .GT. 1 ) THEN
      CALL SCANINIINT(bakfile, inifile, 'Grid', 'Kmax(*)', '-1', kmax)
-     IF ( kmax .GT. 0 .AND. MOD(kmax_total,kmax) .EQ. 0 ) THEN
-        ims_npro_k = kmax_total/kmax
+     IF ( kmax .GT. 0 .AND. MOD(g(3)%size,kmax) .EQ. 0 ) THEN
+        ims_npro_k = g(3)%size/kmax
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Input kmax incorrect')
         CALL DNS_STOP(DNS_ERROR_KMAXTOTAL)
      ENDIF
      
      CALL SCANINIINT(bakfile, inifile, 'Grid', 'Imax(*)', '-1', imax)
-     IF ( imax .GT. 0 .AND. MOD(imax_total,imax) .EQ. 0 ) THEN
-        ims_npro_i = imax_total/imax
+     IF ( imax .GT. 0 .AND. MOD(g(1)%size,imax) .EQ. 0 ) THEN
+        ims_npro_i = g(1)%size/imax
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Input imax incorrect')
         CALL DNS_STOP(DNS_ERROR_KMAXTOTAL)
@@ -986,14 +987,15 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN; inb_wrk2d = 11
   ELSE;                                        inb_wrk2d =  2; ENDIF
 
-  isize_wrk1d = MAX(imax_total,MAX(jmax_total,kmax_total))
+  isize_wrk1d = MAX(g(1)%size,MAX(g(2)%size,g(3)%size))
   isize_wrk2d = MAX(imax*jmax, MAX(imax*kmax,jmax*kmax)  )
 
 ! grid array
   DO is = 1,3
      g(is)%inb_grid = 1                  ! Nodes
      g(is)%inb_grid = g(is)%inb_grid &
-                    + 2                  ! Jacobians of first- and second-order derivatives
+                    + 2              &   ! Jacobians of first- and second-order derivatives
+                    + 2                  ! 1/dx and 1/dx**2 used in time-step stability constraint
 
      IF ( g(is)%periodic ) THEN
         g(is)%inb_grid = g(is)%inb_grid  &

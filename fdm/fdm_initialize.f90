@@ -39,6 +39,8 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   IF ( nx .EQ. 1 ) THEN
      g%jac(1,1) = C_1_R
      g%jac(1,2) = C_1_R
+     g%jac(1,3) = C_0_R
+     g%jac(1,4) = C_0_R
      RETURN
   ENDIF
 
@@ -119,7 +121,12 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 
   ENDIF
 
-  ig = ig + 2
+! ###################################################################
+! Saving operations for the time-stability constraint
+  g%jac(:,3) = C_1_R /g%jac(:,1)
+  g%jac(:,4) = g%jac(:,3) *g%jac(:,3)
+  
+  ig = ig + 4
 
 ! ###################################################################
 ! LU factorization first-order derivative, done in routine TRID*FS

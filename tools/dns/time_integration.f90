@@ -153,7 +153,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
      ENDIF
 
 ! -----------------------------------------------------------------------
-     CALL TIME_COURANT(q,s, wrk2d,wrk3d)
+     CALL TIME_COURANT(q,s, wrk3d)
 
 ! ###################################################################
 ! The rest: Logging, postprocessing and saving

@@ -6,17 +6,6 @@
 #endif
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2008/02/09 - J.P. Mellado
-!#              Cleaned
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Determine the variable time step is a positive cfl is given
@@ -44,15 +33,13 @@
 !# In incompressible mode the arrays rho, p and vis are not used
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
+SUBROUTINE TIME_COURANT(q,s, wrk3d)
 
-SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
-
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_scal, imode_eqns
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : itransport, visc, prandtl, schmidt
   USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL
+  USE DNS_LOCAL,     ONLY : cfl, dtime, rkm_mode, logs_data
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -69,23 +56,19 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
 #include "mpif.h"
 #endif
 
-  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN) :: q, s
-  TREAL, DIMENSION(imax,jmax,kmax)               :: wrk3d
-  TREAL, DIMENSION(imax,jmax)                    :: wrk2d
+  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)    :: q, s
+  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: wrk3d
   
   TARGET :: q
 
 ! -------------------------------------------------------------------
-  TINTEGER k, ij, index, nxy, kdsp, idsp
+  TINTEGER i,j,k, kdsp, idsp
   TREAL dt_loc
-  TREAL cmax, bmax, dmax, dtc, cfld, dtd, rmax, dtr, cflr
-  TREAL vscfct, vsctmp, vscles
+  TREAL cmax,dmax,rmax, dtc,dtd,dtr, cfld,cflr
+  TREAL schmidtfactor, viscles, dummy
 #ifdef CHEMISTRY
   TREAL mtgfm, zmin, zmax, umin, umax
   TREAL vmin, vmax, wmin, wmax
-#endif
-#ifdef USE_MPI
-  TREAL dummy
 #endif
 
 ! Pointers to existing allocated space
@@ -116,8 +99,6 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
   kdsp = 0
 #endif
 
-  nxy = imax*jmax
-
 ! diffusion number set equal to a factor of the given CFL number
 ! A factor 1/4 is used. See header of the routine. 
   cfld = C_025_R*cfl
@@ -138,51 +119,42 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
 ! Calculate global maximum of u/dx + v/dy + w/dz 
 ! -------------------------------------------------------------------
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     DO k = 1,kmax
-        DO ij = 1,imax*jmax
-           index = ij-1
-           wrk2d(ij,1) = ABS(u(ij,1,k))/g(1)%jac(MOD(index,imax)+1+idsp,1)
-           wrk2d(ij,1) = wrk2d(ij,1) + ABS(v(ij,1,k))/g(2)%jac((ij-1)/imax+1,1)
-        ENDDO
-        IF ( g(3)%size .GT. 1 ) THEN
-           DO ij = 1,imax*jmax
-              wrk2d(ij,1) = wrk2d(ij,1) + ABS(w(ij,1,k))/g(3)%jac(k+kdsp,1)
-           ENDDO
-        ENDIF
-        
-        bmax = MAXVAL(wrk2d(1:nxy,1))
-        cmax = MAX(cmax,bmax)
-        
-     ENDDO
-  
+     IF ( g(3)%size .GT. 1 ) THEN
+        DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+           wrk3d(i,j,k) = ABS(u(i,j,k)) *g(1)%jac(i+idsp,3) &
+                        + ABS(v(i,j,k)) *g(2)%jac(j,3)      &
+                        + ABS(w(i,j,k)) *g(3)%jac(k+kdsp,3)
+        ENDDO; ENDDO; ENDDO
+     ELSE
+        DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+           wrk3d(i,j,k) = ABS(u(i,j,k)) *g(1)%jac(i+idsp,3) &
+                        + ABS(v(i,j,k)) *g(2)%jac(j,3)
+        ENDDO; ENDDO; ENDDO
+     ENDIF
+     
 ! -------------------------------------------------------------------
 ! Compressible
 ! Calculate global maximum of (u+c)/dx + (v+c)/dy + (w+c)/dz 
 ! -------------------------------------------------------------------
   ELSE
-! sound speed; positiveness of pressure and density is check in routine DNS_CONTROL
-     wrk3d = SQRT(gama0*p/rho)
+     wrk3d = SQRT(gama0*p/rho) ! sound speed; positiveness of p and rho checked in routine DNS_CONTROL
+     IF ( g(3)%size .GT. 1 ) THEN
+        DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+           wrk3d(i,j,k) = (ABS(u(i,j,k))+wrk3d(i,j,k)) *g(1)%jac(i+idsp,3) &
+                        + (ABS(v(i,j,k))+wrk3d(i,j,k)) *g(2)%jac(j,3)      &
+                        + (ABS(w(i,j,k))+wrk3d(i,j,k)) *g(3)%jac(k+kdsp,3)
+        ENDDO; ENDDO; ENDDO
+     ELSE
+        DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+           wrk3d(i,j,k) = (ABS(u(i,j,k))+wrk3d(i,j,k)) *g(1)%jac(i+idsp,3) &
+                        + (ABS(v(i,j,k))+wrk3d(i,j,k)) *g(2)%jac(j,3)
+        ENDDO; ENDDO; ENDDO
+     ENDIF
 
-     DO k = 1,kmax
-        DO ij = 1,imax*jmax
-           index = ij-1
-           wrk2d(ij,1) = (ABS(u(ij,1,k))+wrk3d(ij,1,k))/g(1)%jac(MOD(index,imax)+1+idsp,1)
-           wrk2d(ij,1) = wrk2d(ij,1) + &
-                (ABS(v(ij,1,k))+wrk3d(ij,1,k))/g(2)%jac((ij-1)/imax+1,1)
-        ENDDO
-        IF ( g(3)%size .GT. 1 ) THEN
-           DO ij = 1,imax*jmax
-              wrk2d(ij,1) = wrk2d(ij,1) + (ABS(w(ij,1,k))+wrk3d(ij,1,k))/g(3)%jac(k+kdsp,1)
-           ENDDO
-        ENDIF
-        
-        bmax = MAXVAL(wrk2d(1:nxy,1))
-        cmax = MAX(cmax,bmax)
-        
-     ENDDO
-     
   ENDIF
 
+  cmax = MAXVAL(wrk3d)
+  
 #ifdef USE_MPI
   CALL MPI_ALLREDUCE(cmax, dummy, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
   cmax = dummy
@@ -196,31 +168,31 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
   dmax = C_0_R
 
 ! maximum diffusivities
-  vscfct = C_1_R
-  vsctmp = C_1_R/prandtl
-  vscfct = MAX(vscfct, vsctmp)
-  vsctmp = C_1_R/MINVAL(schmidt(1:inb_scal))
-  vscfct = MAX(vscfct, vsctmp)
+  schmidtfactor = C_1_R
+  dummy         = C_1_R/prandtl
+  schmidtfactor = MAX(schmidtfactor, dummy)
+  dummy         = C_1_R/MINVAL(schmidt(1:inb_scal))
+  schmidtfactor = MAX(schmidtfactor, dummy)
 
 #ifdef LES
   IF ( iles .EQ. 1 ) THEN
      IF ( iles_type_regu .EQ. LES_REGU_NONE ) THEN
-        vscles = C_0_R
+        viscles = C_0_R
      ELSE IF ( iles_type_regu.EQ.LES_REGU_SMGDYN .OR. iles_type_regu.EQ.LES_REGU_SMGDYNRMS ) THEN
-        vscles = MAX(smg_udiff,smg_ediff)
-        IF ( icalc_scal .EQ. 1 ) vscles = MAX(vscles,smg_zdiff)
+        viscles = MAX(smg_udiff,smg_ediff)
+        IF ( icalc_scal .EQ. 1 ) viscles = MAX(viscles,smg_zdiff)
      ELSE IF ( iles_type_regu .EQ. LES_REGU_SMGSTA ) THEN
-        vscles = C_1_R
-        vsctmp = C_1_R/smg_prandtl
-        vscles = MAX(vscles, vsctmp)
-        vsctmp = C_1_R/smg_schmidt
-        vscles = MAX(vscles, vsctmp)
-        vscles = vscles * smg_udiff
+        viscles = C_1_R
+        dummy = C_1_R/smg_prandtl
+        viscles = MAX(viscles, dummy)
+        dummy = C_1_R/smg_schmidt
+        viscles = MAX(viscles, dummy)
+        viscles = viscles * smg_udiff
      ENDIF
-     IF ( iviscous .EQ. EQNS_NONE ) vscfct = C_0_R
+     IF ( iviscous .EQ. EQNS_NONE ) schmidtfactor = C_0_R
   ELSE
 #endif
-     vscles = C_0_R
+     viscles = C_0_R
 #ifdef LES
   ENDIF
 #endif
@@ -230,22 +202,16 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
 ! Calculate global maximum of \nu*(1/dx^2 + 1/dy^2 + 1/dz^2)
 ! -------------------------------------------------------------------
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     DO k = 1,kmax
-        DO ij = 1,imax*jmax
-           index = ij-1
-           wrk2d(ij,1) = C_1_R/(g(1)%jac(MOD(index,imax)+1+idsp,1)**2) + C_1_R/(g(2)%jac((ij-1)/imax+1,1)**2)
-           wrk2d(ij,1) = (vscfct*visc+vscles)*wrk2d(ij,1)
-        ENDDO
-        IF ( g(3)%size .GT. 1 ) THEN
-           DO ij=1, imax*jmax
-              wrk2d(ij,1) = wrk2d(ij,1) + (vscfct*visc+vscles)/(g(3)%jac(k+kdsp,1)**2)
-           ENDDO
-        ENDIF
-
-        bmax = MAXVAL(wrk2d(1:nxy,1))
-        dmax = MAX(dmax,bmax)
-
-     ENDDO
+     IF ( g(3)%size .GT. 1 ) THEN
+        DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+           wrk3d(i,j,k) = g(1)%jac(i+idsp,4) + g(2)%jac(j,4) + g(3)%jac(k+kdsp,4)
+        ENDDO; ENDDO; ENDDO
+     ELSE
+        DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+           wrk3d(i,j,k) = g(1)%jac(i+idsp,4) + g(2)%jac(j,4)
+        ENDDO; ENDDO; ENDDO
+     ENDIF
+     dmax = (schmidtfactor*visc+viscles) *MAXVAL(wrk3d)
 
 ! -------------------------------------------------------------------
 ! Compressible
@@ -253,44 +219,35 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
 ! -------------------------------------------------------------------
   ELSE
      IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
-        DO k = 1,kmax
-           DO ij = 1,imax*jmax
-              index = ij-1
-              wrk2d(ij,1) = C_1_R/(g(1)%jac(MOD(index,imax)+1+idsp,1)**2) + C_1_R/(g(2)%jac((ij-1)/imax+1,1)**2)
-              wrk2d(ij,1) = (vscfct*visc*vis(ij,1,k)/rho(ij,1,k)+vscles)*wrk2d(ij,1)
-           ENDDO
-           IF ( g(3)%size .GT. 1 ) THEN
-              DO ij=1, imax*jmax
-                 wrk2d(ij,1) = wrk2d(ij,1) + &
-                   (vscfct*visc*vis(ij,1,k)/rho(ij,1,k)+vscles)/(g(3)%jac(k+kdsp,1)**2)
-              ENDDO
-           ENDIF
-
-           bmax = MAXVAL(wrk2d(1:nxy,1))
-           dmax = MAX(dmax,bmax)
-
-        ENDDO
+        IF ( g(3)%size .GT. 1 ) THEN
+           DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+              wrk3d(i,j,k) = ( g(1)%jac(i+idsp,4) + g(2)%jac(j,4) + g(3)%jac(k+kdsp,4) )&
+                            *( schmidtfactor *visc *vis(i,j,k) /rho(i,j,k) +viscles )
+           ENDDO; ENDDO; ENDDO
+        ELSE
+           DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+              wrk3d(i,j,k) = ( g(1)%jac(i+idsp,4) + g(2)%jac(j,4) )&
+                            *( schmidtfactor *visc *vis(i,j,k) /rho(i,j,k) +viscles )
+           ENDDO; ENDDO; ENDDO
+        ENDIF
         
      ELSE ! constant dynamic viscosity
-        DO k = 1,kmax
-           DO ij = 1,imax*jmax
-              index = ij-1
-              wrk2d(ij,1) = C_1_R/(g(1)%jac(MOD(index,imax)+1+idsp,1)**2) + C_1_R/(g(2)%jac((ij-1)/imax+1,1)**2)
-              wrk2d(ij,1) = (vscfct*visc/rho(ij,1,k)+vscles)*wrk2d(ij,1)
-           ENDDO
-           IF ( g(3)%size .GT. 1 ) THEN
-              DO ij=1, imax*jmax
-                 wrk2d(ij,1) = wrk2d(ij,1) + &
-                      (vscfct*visc/rho(ij,1,k)+vscles)/(g(3)%jac(k+kdsp,1)**2)
-              ENDDO
-           ENDIF
-
-           bmax = MAXVAL(wrk2d(1:nxy,1))
-           dmax = MAX(dmax,bmax)
-
-        ENDDO
+        IF ( g(3)%size .GT. 1 ) THEN
+           DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+              wrk3d(i,j,k) = ( g(1)%jac(i+idsp,4) + g(2)%jac(j,4) + g(3)%jac(k+kdsp,4) )&
+                            *( schmidtfactor *visc /rho(i,j,k) +viscles )
+           ENDDO; ENDDO; ENDDO
+        ELSE
+           DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+              wrk3d(i,j,k) = ( g(1)%jac(i+idsp,4) + g(2)%jac(j,4) )&
+                            *( schmidtfactor *visc /rho(i,j,k) +viscles )
+           ENDDO; ENDDO; ENDDO
+        ENDIF
 
      ENDIF
+     
+     dmax = MAXVAL(wrk3d)
+
   ENDIF
 
 #ifdef USE_MPI
@@ -423,7 +380,6 @@ SUBROUTINE TIME_COURANT(q,s, wrk2d,wrk3d)
      dtime = dt_loc
 
   ENDIF
-
 
 ! Real CFL and diffusion numbers being used
   cmax = dtime * cmax
