@@ -1,31 +1,20 @@
-!########################################################################
-!# Tool/Library INIT/ISO
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/25/02 - J.P. Mellado
-!#              Created
-!#
+#include "types.h"
+#include "dns_error.h"
+  
 !########################################################################
 !# DESCRIPTION
 !# 
 !# Transforming a random velocity field to have a given covariance matrix
 !#
 !########################################################################
-!# ARGUMENTS 
-!# 
-!########################################################################
-#include "types.h"
-#include "dns_error.h"
-  
-SUBROUTINE RAND_COVARIANCE(imax, jmax, kmax, kmax_total, u, v, w, cov)
+SUBROUTINE RAND_COVARIANCE(imax,jmax,kmax, u,v,w, cov)
 
   USE DNS_CONSTANTS, ONLY : efile
-
+  USE DNS_GLOBAL, ONLY    : g
+  
   IMPLICIT NONE
   
-  TINTEGER imax, jmax, kmax, kmax_total
+  TINTEGER imax, jmax, kmax
   TREAL, DIMENSION(imax,jmax,kmax) :: u, v, w
   TREAL cov(6)
   
@@ -42,7 +31,7 @@ SUBROUTINE RAND_COVARIANCE(imax, jmax, kmax, kmax_total, u, v, w, cov)
 #define Ryz cov(6)
 
 ! ###################################################################
-  IF ( kmax_total .GT. 1 ) THEN
+  IF ( g(3)%size .GT. 1 ) THEN
      
 ! only 2D case developed
      IF ( Rxz .NE. C_0_R .OR. Ryz .NE. C_0_R ) THEN
@@ -124,8 +113,10 @@ SUBROUTINE ISORMS(imax,jmax,kmax, var1, u)
   u = u - var0
 
   var0 = AVG1V3D(imax,jmax,kmax, i2, u)
-  factor = SQRT(var1/var0)
-  u = u*factor
-
+  IF ( var0 .GT. C_0_R ) THEN
+     factor = SQRT(var1/var0)
+     u = u*factor
+  ENDIF
+  
   RETURN
 END SUBROUTINE ISORMS

@@ -3,17 +3,6 @@
 #include "dns_error.h"
 
 !########################################################################
-!# Tool/Library INIT/ISO
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2007/02/25 - J.P. Mellado
-!#              Adding covariance matrix for anisotropic fields
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Create random velocity/scalar fields according to a given spectrum and
@@ -23,9 +12,6 @@
 !#
 !# For a Gaussian distribution, the covariance matrix can also been 
 !# specified.
-!#
-!########################################################################
-!# ARGUMENTS 
 !#
 !########################################################################
 PROGRAM INIRAND
@@ -134,8 +120,8 @@ PROGRAM INIRAND
 
      ENDDO
      
-     IF ( ipdf .EQ. 2 ) THEN
-        CALL RAND_COVARIANCE(imax,jmax,kmax, kmax_total, q(:,1),q(:,2),q(:,3), ucov)
+     IF ( ipdf .EQ. 2 ) THEN ! Gaussian PDF
+        CALL RAND_COVARIANCE(imax,jmax,kmax, q(:,1),q(:,2),q(:,3), ucov)
      ENDIF
      
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN

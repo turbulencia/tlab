@@ -5,25 +5,6 @@
 #define C_FILE_LOC "INIFLOW"
 
 !########################################################################
-!# Tool/Library INIT/FLOW
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2003/01/01 - J.P. Mellado
-!#              Modified
-!# 2007/03/17 - J.P. Mellado
-!#              Adding shear with gravity
-!# 2007/04/30 - J.P. Mellado
-!#              Splitting calculation into homentropic fluctuations
-!#              and mean profiles, to allow easier introduction of
-!#              buoyancy cases
-!# 2007/10/30 - J.P. Mellado
-!#              Jet added.
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Create an initial condition that approximately satisfies the steady

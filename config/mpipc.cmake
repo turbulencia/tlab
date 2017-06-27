@@ -65,8 +65,8 @@ endif()
 
 set(GNU_SED "gsed")
 
-set(FFTW_INCLUDE_DIR   "/sw/squeeze-x64/numerics/fftw-3.3-openmp-gccsys/include")
-set(FFTW_LIB           "/sw/squeeze-x64/numerics/fftw-3.3-openmp-gccsys/lib/libfftw3.a")
+set(FFTW_INCLUDE_DIR   "/sw/jessie-x64/fftw-3.3.4-openmp-gccsys/include")
+set(FFTW_LIB           "/sw/jessie-x64/fftw-3.3.4-openmp-gccsys/lib/libfftw3.a")
 set(LIBS ${FFTW_LIB} )
 
 add_definitions(-DRESTRICTKEYWORD=__restrict__)
