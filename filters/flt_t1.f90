@@ -23,21 +23,16 @@ SUBROUTINE FLT_T1(kmax, ijmax, nx, cf, z1, zf1)
   TREAL zf1(ijmax,*)
 
 ! -------------------------------------------------------------------
-  TREAL r0, dmul05, dmul1
-  TINTEGER i1, i2
+  TREAL dmul05, dmul1
   TINTEGER k,ij
   TINTEGER ii,im
-
-  i1 = 1
-  i2 = 2
-  r0 = C_0_R
 
   dmul1  = C_1_R/M_REAL(nx)
   dmul05 = C_05_R/M_REAL(nx)
 
-! ##################################################
-! # First nx/2 points where periodicity is imposed #
-! ##################################################
+! ###########################################
+! # First nx/2 points where bcs are imposed #
+! ###########################################
   DO k = 1,nx/2
 ! first 2 points reflect bc
      DO ij = 1,ijmax
@@ -80,12 +75,12 @@ SUBROUTINE FLT_T1(kmax, ijmax, nx, cf, z1, zf1)
      ENDDO
   ENDDO
 
-! #################################################
-! # Last nx/2 points where periodicity is imposed #
-! #################################################
+! ##########################################
+! # Last nx/2 points where bcs are imposed #
+! ##########################################
   DO k = kmax-nx/2+1,kmax
 ! last 2 points account for the bc
-     im = kmax-k+i1
+     im = kmax-k+1
      DO ij = 1,ijmax
         zf1(ij,k) = dmul1*(z1(ij,kmax)*cf(1,im)+&
              z1(ij,kmax-1)*cf(2,im))
@@ -116,27 +111,26 @@ SUBROUTINE FLT_T1ND(kmax, ijmax, nx, cf, z1, zf1)
 
   IMPLICIT NONE
   
-  TINTEGER kmax, ijmax
-  TINTEGER nx
-  TREAL cf(nx+1,kmax)
-  TREAL z1(ijmax,*)
-  TREAL zf1(ijmax,*)
+  TINTEGER, INTENT(IN) :: kmax, ijmax     ! size of line, number of lines (or size of chunk) 
+  TINTEGER, INTENT(IN) :: nx              ! filter size
+  TREAL,    INTENT(IN) :: cf(nx+1,kmax)   ! coefficients
+  TREAL,    INTENT(IN) :: z1(ijmax,kmax)  ! Field to filter, arranged as kmax chunks
+  TREAL,    INTENT(OUT):: zf1(ijmax,kmax) ! Filtered field
 
 ! -------------------------------------------------------------------
-  TREAL r0, dum
-  TINTEGER i1, i2
-  TINTEGER k,ij,ic
-  TINTEGER ii, iiorg
+  TREAL dum
+! The implementation is based on local index ii varying around global index k
+! The offset iiorg is set to get counter ic equal to 1,2,3...
+! The index ij is just the dummy index to apply filter over all ijmax lines
+  TINTEGER k, ii, iiorg, ic 
+  TINTEGER ij
 
-  i1 = 1
-  i2 = 2
-  r0 = C_0_R
-
-! ############################################
-! # First nx/2 points where bc are imposed #
-! ############################################
+! ###########################################
+! # First nx/2 points where bcs are imposed #
+! ###########################################
   DO k = 1,nx/2
      iiorg = nx/2-k+1
+     
      ii = 1
      ic = iiorg + ii
      dum = cf(ic,k)
@@ -150,6 +144,7 @@ SUBROUTINE FLT_T1ND(kmax, ijmax, nx, cf, z1, zf1)
            zf1(ij,k) = zf1(ij,k)+z1(ij,ii)*dum
         ENDDO
      ENDDO
+     
   ENDDO
 
 ! #################################################
@@ -157,6 +152,7 @@ SUBROUTINE FLT_T1ND(kmax, ijmax, nx, cf, z1, zf1)
 ! #################################################
   DO k = 1+nx/2,kmax-nx/2
      iiorg = nx/2-k+1
+     
      ii = k-nx/2
      ic = ii + iiorg
      dum = cf(ic,k)
@@ -170,13 +166,15 @@ SUBROUTINE FLT_T1ND(kmax, ijmax, nx, cf, z1, zf1)
            zf1(ij,k) = zf1(ij,k)+z1(ij,ii)*dum
         ENDDO
      ENDDO
+     
   ENDDO
 
-! ###########################################
-! # Last nx/2 points where bc are imposed #
-! ###########################################
+! ##########################################
+! # Last nx/2 points where bcs are imposed #
+! ##########################################
   DO k = kmax-nx/2+1,kmax
      iiorg = nx/2-k+1
+     
      ii = k-nx/2
      ic = ii + iiorg
      dum = cf(ic,k)
@@ -190,6 +188,7 @@ SUBROUTINE FLT_T1ND(kmax, ijmax, nx, cf, z1, zf1)
            zf1(ij,k) = zf1(ij,k)+z1(ij,ii)*dum
         ENDDO
      ENDDO
+     
   ENDDO
 
   RETURN

@@ -47,7 +47,7 @@ SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
 
 ! #######################################################################
   ELSE
-     ! delta(i)
+     ! calculate delta(i)
      DO i = 1,f%size-1
         wrk1d(i,1) = x(i+1)-x(i)
      ENDDO
@@ -56,7 +56,7 @@ SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
      ELSE
         wrk1d(f%size,1) = wrk1d(f%size-1,1)
      ENDIF
-     ! deltasum(i) = delta(i-1)+delta(i)
+     ! calculate deltasum(i) = delta(i-1)+delta(i)
      DO i = 2,f%size
         wrk1d(i,2) = wrk1d(i-1,1)+wrk1d(i,1)
      ENDDO
@@ -65,7 +65,7 @@ SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
      ELSE
         wrk1d(1,2) = wrk1d(1,1)*C_2_R
      ENDIF
-     ! deltaf(i)
+     ! calculate deltaf(i) = delta(i-nx/2) + delta(i-nx/2+1) + ... + delta(i+nx/2-1) 
      IF ( f%periodic ) THEN
         DO i = 1,f%size
            wrk1d(i,3) = C_0_R
@@ -96,34 +96,34 @@ SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
      ENDIF
 
 ! -----------------------------------------------------------------------
-!    construct the coefficients array
+!    construct the coefficients array as if periodic; corrections for nonperiodic below
      DO i = 1,f%size
-        ii = i-nx/2
-        im = ii+f%size-1
+        ii = i-nx/2               ! I need to use delta(ii)
+        im = ii+f%size-1          ! The index im deals with periodicity
         im = MOD(im,f%size)+1
         ic = ii-i+nx/2+1
         ip = (i-1)*(nx+1) + ic
         f%coeffs(ip,1) = C_05_R*wrk1d(im,1)/wrk1d(i,3)
-        DO ii = i-nx/2+1,i+nx/2-1
-           im = ii+f%size-1
+
+        DO ii = i-nx/2+1,i+nx/2-1 ! I need to use deltasum(ii)
+           im = ii+f%size-1       ! The index im deals with periodicity
            im = MOD(im,f%size)+1
            ic = ii-i+nx/2+1
            ip = (i-1)*(nx+1) + ic
            f%coeffs(ip,1) = C_05_R*wrk1d(im,2)/wrk1d(i,3)
         ENDDO
-        ii = i+nx/2
-        !        im = ii+f%size-1
-        im = (ii-1)+f%size-1
+
+        ii = i+nx/2               ! I need to use delta(ii-1)
+        im = (ii-1)+f%size-1      ! The index im deals with periodicity
         im = MOD(im,f%size)+1
-        !       if ( im .eq. 1 ) im = 2
         ic = ii-i+nx/2+1
         ip = (i-1)*(nx+1) + ic
-        !        f%coeffs(ip,1) = C_05_R*wrk1d(im-1,1)/wrk1d(i,3)
         f%coeffs(ip,1) = C_05_R*wrk1d(im,1)/wrk1d(i,3)
+
      ENDDO
 
 ! -----------------------------------------------------------------------
-!    modification in case of free boundary
+! modification in case of free boundary
      IF ( .NOT. f%periodic ) THEN
         DO i = 1,nx/2
            im = nx/2-i+1
