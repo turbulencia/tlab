@@ -5,6 +5,8 @@
 !#
 !# Top-hat filter coefficients initialization
 !# Trapezoidal rule
+!# Free boundary conditions
+!#  (Ghost cells w/ linear extrapolation of function from the two nodes next to boundary)
 !# 
 !########################################################################
 SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)

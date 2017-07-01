@@ -6,6 +6,7 @@
 !# Top-hat filter
 !# Trapezoidal rule
 !# Free boundary conditions
+!#  (Ghost cells w/ linear extrapolation of function from the two nodes next to boundary)
 !# 
 !########################################################################
 
@@ -16,18 +17,23 @@ SUBROUTINE FLT_T1(kmax, ijmax, nx, cf, z1, zf1)
         
   IMPLICIT NONE
   
-  TINTEGER kmax, ijmax
-  TINTEGER nx
-  TREAL cf(2,nx/2)
-  TREAL z1(ijmax,*)
-  TREAL zf1(ijmax,*)
+  TINTEGER, INTENT(IN) :: kmax, ijmax     ! size of line, number of lines (or size of chunk) 
+  TINTEGER, INTENT(IN) :: nx              ! filter size
+  TREAL,    INTENT(IN) :: cf(2,nx/2)      ! coefficients for BCs; only affect the two nodes next to boundary
+  TREAL,    INTENT(IN) :: z1(ijmax,kmax)  ! Field to filter, arranged as kmax chunks
+  TREAL,    INTENT(OUT):: zf1(ijmax,kmax) ! Filtered field
 
 ! -------------------------------------------------------------------
+! The implementation is based on local index ii varying around global index k
+! The index im is just used at the upper boundary to express coefficients in terms of lower boundary
+! The index ij is just the dummy index to apply filter over all ijmax lines
+  TINTEGER k, ii, im
+  TINTEGER ij
+! In a uniform grid, I just need to divide by the size of the stencil nx
+! There is a factor 1/2, however, that is factorized out from the trapezoidal rule
   TREAL dmul05, dmul1
-  TINTEGER k,ij
-  TINTEGER ii,im
 
-  dmul1  = C_1_R/M_REAL(nx)
+  dmul1  = C_1_R /M_REAL(nx)
   dmul05 = C_05_R/M_REAL(nx)
 
 ! ###########################################
@@ -36,19 +42,19 @@ SUBROUTINE FLT_T1(kmax, ijmax, nx, cf, z1, zf1)
   DO k = 1,nx/2
 ! first 2 points reflect bc
      DO ij = 1,ijmax
-        zf1(ij,k) = dmul1*(z1(ij,1)*cf(1,k)+z1(ij,2)*cf(2,k))
+        zf1(ij,k) = dmul1*( z1(ij,1) *cf(1,k) +z1(ij,2) *cf(2,k) )
      ENDDO
 ! inner points
      DO ii = 3,k+nx/2-1
         DO ij = 1,ijmax
-           zf1(ij,k) = zf1(ij,k)+dmul1*z1(ij,ii)
+           zf1(ij,k) = zf1(ij,k) +dmul1 *z1(ij,ii)
         ENDDO
      ENDDO
 ! last point
      IF ( nx .GT. 2 ) THEN
         ii =  k+nx/2
         DO ij = 1,ijmax
-           zf1(ij,k) = zf1(ij,k)+dmul05*z1(ij,ii)
+           zf1(ij,k) = zf1(ij,k) +dmul05 *z1(ij,ii)
         ENDDO
      ENDIF
   ENDDO
@@ -65,13 +71,13 @@ SUBROUTINE FLT_T1(kmax, ijmax, nx, cf, z1, zf1)
 ! inner points
      DO ii = k-nx/2+1,k+nx/2-1
         DO ij = 1,ijmax
-           zf1(ij,k) = zf1(ij,k)+dmul1*z1(ij,ii)
+           zf1(ij,k) = zf1(ij,k) +dmul1*z1(ij,ii)
         ENDDO
      ENDDO
 ! last point
      ii =  k+nx/2
      DO ij = 1,ijmax
-        zf1(ij,k) = zf1(ij,k)+dmul05*z1(ij,ii)
+        zf1(ij,k) = zf1(ij,k) +dmul05*z1(ij,ii)
      ENDDO
   ENDDO
 
@@ -82,20 +88,19 @@ SUBROUTINE FLT_T1(kmax, ijmax, nx, cf, z1, zf1)
 ! last 2 points account for the bc
      im = kmax-k+1
      DO ij = 1,ijmax
-        zf1(ij,k) = dmul1*(z1(ij,kmax)*cf(1,im)+&
-             z1(ij,kmax-1)*cf(2,im))
+        zf1(ij,k) = dmul1*( z1(ij,kmax)*cf(1,im) +z1(ij,kmax-1)*cf(2,im) )
      ENDDO
 ! inner points
      DO ii = k-nx/2+1,kmax-2
         DO ij = 1,ijmax
-           zf1(ij,k) = zf1(ij,k)+dmul1*z1(ij,ii)
+           zf1(ij,k) = zf1(ij,k) +dmul1 *z1(ij,ii)
         ENDDO
      ENDDO
 ! first point
      IF ( nx .GT. 2 ) THEN
         ii =  k-nx/2
         DO ij = 1,ijmax
-           zf1(ij,k) = zf1(ij,k)+dmul05*z1(ij,ii)
+           zf1(ij,k) = zf1(ij,k) +dmul05 *z1(ij,ii)
         ENDDO
      ENDIF
 
