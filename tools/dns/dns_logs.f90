@@ -2,15 +2,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !########################################################################
@@ -43,9 +34,20 @@ SUBROUTINE DNS_LOGS(iflag)
   USE THERMO_GLOBAL, ONLY : imixture
   USE THERMO_GLOBAL, ONLY : NEWTONRAPHSON_ERROR  
 
+#ifdef USE_MPI
+  USE DNS_MPI, ONLY : ims_err
+#endif
+
   IMPLICIT NONE
 
+#ifdef USE_MPI
+#include "mpif.h"
+#endif
+
   TINTEGER iflag
+#ifdef USE_MPI
+  TREAL dummy
+#endif
 
 ! -----------------------------------------------------------------------
   TINTEGER ip
@@ -120,6 +122,11 @@ SUBROUTINE DNS_LOGS(iflag)
      ENDIF
   
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN
+#ifdef USE_MPI
+        CALL MPI_ALLREDUCE&
+             (NEWTONRAPHSON_ERROR, dummy, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+        NEWTONRAPHSON_ERROR = dummy
+#endif
         WRITE(line2,400) NEWTONRAPHSON_ERROR
 400     FORMAT(1(1X,E10.3))
         line1 = TRIM(line1)//TRIM(line2)

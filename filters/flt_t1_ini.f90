@@ -30,7 +30,7 @@ SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
 
 ! #######################################################################
   IF ( f%uniform ) THEN
-     IF ( .NOT. f%periodic ) THEN
+     IF ( .NOT. f%periodic ) THEN ! I only need info for the two nodes next to the boundary
         DO i = 1,nx/2
            im = nx/2-i+1
            dum = C_0_R

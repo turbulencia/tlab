@@ -30,15 +30,8 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
 
   USE THERMO_GLOBAL, ONLY : MRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
   USE THERMO_GLOBAL, ONLY : NEWTONRAPHSON_ERROR
-#ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_err
-#endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER,                     INTENT(IN)   :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(INOUT):: s
@@ -171,12 +164,6 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
 
      ENDDO
   ENDDO
-
-#ifdef USE_MPI
-  CALL MPI_ALLREDUCE&
-       (NEWTONRAPHSON_ERROR, dummy, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
-  NEWTONRAPHSON_ERROR = dummy
-#endif
 
   RETURN
 END SUBROUTINE THERMO_AIRWATER_PH

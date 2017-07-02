@@ -21,16 +21,8 @@ SUBROUTINE THERMO_AIRWATER_RE(nx, ny, nz, z1, e, rho, T, dqldqt)
 
   USE THERMO_GLOBAL, ONLY : GRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
   USE THERMO_GLOBAL, ONLY : NEWTONRAPHSON_ERROR
-#ifdef USE_MPI
-  USE DNS_MPI
-#endif
 
   IMPLICIT NONE
-
-#include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER nx, ny, nz
   TREAL e(*), z1(nx*ny*nz,*), rho(*), dqldqt(*)
@@ -43,9 +35,6 @@ SUBROUTINE THERMO_AIRWATER_RE(nx, ny, nz, z1, e, rho, T, dqldqt)
   TREAL dsmooth_loc
   TREAL t_loc, qsat, HEAT_CAPACITY_DV, psat
   TREAL alpha, dummy1, dummy2
-#ifdef USE_MPI
-  TREAL dummy
-#endif
 
 ! ###################################################################
   NEWTONRAPHSON_ERROR = C_0_R
@@ -220,12 +209,6 @@ SUBROUTINE THERMO_AIRWATER_RE(nx, ny, nz, z1, e, rho, T, dqldqt)
      ENDIF
 
   ENDDO
-
-#ifdef USE_MPI
-  CALL MPI_ALLREDUCE&
-       (NEWTONRAPHSON_ERROR, dummy, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
-  NEWTONRAPHSON_ERROR = dummy
-#endif
 
   RETURN
 END SUBROUTINE THERMO_AIRWATER_RE
