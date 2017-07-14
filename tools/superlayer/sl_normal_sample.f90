@@ -20,7 +20,7 @@
 !# ARGUMENTS 
 !#
 !########################################################################
-SUBROUTINE SL_NORMAL_SAMPLE(imax,jmax,kmax,kmax_total, nmax, istep,kstep, nfield_loc, nfield, &
+SUBROUTINE SL_NORMAL_SAMPLE(imax,jmax,kmax, nmax, istep,kstep, nfield_loc, nfield, &
      scalex, scalez, factor, x, y, z, sl, b, c, nx, ny, nz)
 
 #include "types.h"
@@ -33,9 +33,9 @@ SUBROUTINE SL_NORMAL_SAMPLE(imax,jmax,kmax,kmax_total, nmax, istep,kstep, nfield
 
 #include "integers.h"
 
-  TINTEGER imax, jmax, kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield
+  TINTEGER imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield
   TREAL scalex, scalez, factor
-  TREAL x(imax), y(jmax), z(kmax_total)
+  TREAL x(*), y(*), z(*)
   TREAL sl(imax,kmax)
   TREAL b(imax,jmax,kmax,nfield_loc)
   TREAL c(nfield,nmax,*)

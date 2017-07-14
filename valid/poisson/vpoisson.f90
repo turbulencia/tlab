@@ -14,7 +14,7 @@ PROGRAM VPOISSON
   TREAL, DIMENSION(:,:,:), ALLOCATABLE :: a, b, c, d, e, f
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: txc
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: wrk1d, wrk2d, bcs_hb, bcs_ht 
-  TREAL, DIMENSION(:),     ALLOCATABLE :: cx, cy, cz, wrk3d
+  TREAL, DIMENSION(:),     ALLOCATABLE :: wrk3d!, cx, cy, cz
   
   TINTEGER i, j, k,  bcs !, ibc_x(4), ibc_y(4), ibc_z(4)
   TINTEGER isize_wrk3d, itype
@@ -40,7 +40,7 @@ PROGRAM VPOISSON
   ALLOCATE(a(imax,jmax,kmax),b(imax,jmax,kmax),c(imax,jmax,kmax))
   ALLOCATE(d(imax,jmax,kmax),e(imax,jmax,kmax),f(imax,jmax,kmax))
   ALLOCATE(txc(isize_txc_field,2),wrk3d(isize_wrk3d))
-  ALLOCATE(cx(6*imax),cy(6*jmax),cz(6*kmax_total))
+  ! ALLOCATE(cx(6*imax),cy(6*jmax),cz(6*kmax_total))
 
 #include "dns_read_grid.h"
 

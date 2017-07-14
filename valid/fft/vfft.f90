@@ -7,7 +7,7 @@
 
 PROGRAM VFFT
 
-USE DNS_GLOBAL, ONLY:  imax,jmax,kmax, imax_total,jmax_total,kmax_total
+USE DNS_GLOBAL, ONLY:  imax,jmax,kmax
 USE DNS_GLOBAL, ONLY:  isize_txc_dimz 
 
 #ifdef USE_MPI 

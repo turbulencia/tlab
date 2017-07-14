@@ -22,7 +22,6 @@
 !########################################################################
 SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )    
 
-  USE DNS_GLOBAL, ONLY : imax_total, kmax_total
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : isize_particle, inb_particle
   USE LAGRANGE_GLOBAL
@@ -49,20 +48,13 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   TINTEGER nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north
 #endif
  
-! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: x,z
- 
-! Define pointers
-  x => g(1)%nodes
-  z => g(3)%nodes
-
 #ifdef USE_MPI
   
   p_buffer_1(1:isize_pbuffer)=> l_comm(isize_max_hf+1:isize_max_hf+isize_pbuffer)
   p_buffer_2(1:isize_pbuffer)=> l_comm(isize_max_hf+isize_pbuffer+1:isize_max_hf+isize_pbuffer*2)
 
-  dx_grid = g(1)%scale/imax_total  
-  dz_grid = g(3)%scale/kmax_total  
+  dx_grid = g(1)%scale /g(1)%size  
+  dz_grid = g(3)%scale /g(3)%size  
   
   !#######################################################################
   ! Particle new postion here!
@@ -79,12 +71,12 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   !#####################################################################
   !Particle sorting for Send/Recv X-Direction
   !#####################################################################        
-    CALL PARTICLE_SORT(x,z,nzone_grid, nzone_west, nzone_east,nzone_south, nzone_north,1,&
+    CALL PARTICLE_SORT(g(1)%nodes,g(3)%nodes,nzone_grid, nzone_west, nzone_east,nzone_south, nzone_north,1,&
                        l_hq, l_tags,l_q )
 
     IF (ims_pro_i .EQ. 0) THEN
       IF (nzone_west .NE. 0) THEN
-        l_q(nzone_grid+1:nzone_grid+nzone_west,1) = l_q(nzone_grid+1:nzone_grid+nzone_west,1) + x(imax_total)+ dx_grid
+        l_q(nzone_grid+1:nzone_grid+nzone_west,1) = l_q(nzone_grid+1:nzone_grid+nzone_west,1) + g(1)%nodes(g(1)%size)+ dx_grid
       END IF
     END IF
 
@@ -92,7 +84,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
     IF( ims_pro_i .EQ. (ims_npro_i-1)) THEN
       IF (nzone_east .NE. 0) THEN
         l_q(nzone_grid+nzone_west+1:nzone_grid+nzone_west+nzone_east,1) =&
-          l_q(nzone_grid+nzone_west+1:nzone_grid+nzone_west+nzone_east,1)-x(imax_total)- dx_grid
+          l_q(nzone_grid+nzone_west+1:nzone_grid+nzone_west+nzone_east,1)-g(1)%nodes(g(1)%size)- dx_grid
       END IF
     END IF
 
@@ -106,14 +98,14 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   !#####################################################################
   !Particle sorting for Send/Recv Z-Direction
   !#####################################################################        
-    CALL PARTICLE_SORT(x,z,nzone_grid, nzone_west, nzone_east,nzone_south,nzone_north,3,&
+    CALL PARTICLE_SORT(g(1)%nodes,g(3)%nodes,nzone_grid, nzone_west, nzone_east,nzone_south,nzone_north,3,&
                          l_hq, l_tags, l_q)
 
 
 !Take care of periodic boundary conditions north-south
     IF (ims_pro_k .EQ. 0) THEN
       IF (nzone_south .NE. 0) THEN
-        l_q(nzone_grid+1:nzone_grid+nzone_south,3) = l_q(nzone_grid+1:nzone_grid+nzone_south,3) + z(kmax_total)+ dz_grid 
+        l_q(nzone_grid+1:nzone_grid+nzone_south,3) = l_q(nzone_grid+1:nzone_grid+nzone_south,3) + g(3)%nodes(g(3)%size)+ dz_grid 
       END IF
     END IF
 
@@ -121,7 +113,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
     IF( ims_pro_k .EQ. (ims_npro_k-1)) THEN
       IF (nzone_north .NE. 0) THEN
         l_q(nzone_grid+nzone_south+1:nzone_grid+nzone_south+nzone_north,3) =&
-          l_q(nzone_grid+nzone_south+1:nzone_grid+nzone_south+nzone_north,3)-z(kmax_total)- dz_grid
+          l_q(nzone_grid+nzone_south+1:nzone_grid+nzone_south+nzone_north,3)-g(3)%nodes(g(3)%size)- dz_grid
       END IF
     END IF
 
@@ -152,22 +144,22 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   !#######################################################################
   ! Move particle to other side of x-grid
   !#######################################################################
-  dx_grid = g(1)%scale/imax_total  
-  dz_grid = g(3)%scale/kmax_total  
+  dx_grid = g(1)%scale/g(1)%size  
+  dz_grid = g(3)%scale/g(3)%size  
   DO i = 1,particle_number
-    IF (l_q(i,1) .GT. x(imax_total)+dx_grid) THEN
-      l_q(i,1) = l_q(i,1) - x(imax_total) - dx_grid
+    IF (l_q(i,1) .GT. g(1)%nodes(g(1)%size)+dx_grid) THEN
+      l_q(i,1) = l_q(i,1) - g(1)%nodes(g(1)%size) - dx_grid
     
-    ELSEIF(l_q(i,1) .LT. x(1)) THEN
-      l_q(i,1) = l_q(i,1) + x(imax_total) + dx_grid
+    ELSEIF(l_q(i,1) .LT. g(1)%nodes(1)) THEN
+      l_q(i,1) = l_q(i,1) + g(1)%nodes(g(1)%size) + dx_grid
     
     END IF
   
-    IF (l_q(i,3) .GT. z(kmax_total)+dz_grid) THEN
-      l_q(i,3) = l_q(i,3) - z(kmax_total) - dz_grid
+    IF (l_q(i,3) .GT. g(3)%nodes(g(3)%size)+dz_grid) THEN
+      l_q(i,3) = l_q(i,3) - g(3)%nodes(g(3)%size) - dz_grid
 
-    ELSEIF(l_q(i,3) .LT. z(1)) THEN
-      l_q(i,3) = l_q(i,3) + z(kmax_total) + dz_grid
+    ELSEIF(l_q(i,3) .LT. g(3)%nodes(1)) THEN
+      l_q(i,3) = l_q(i,3) + g(3)%nodes(g(3)%size) + dz_grid
 
     END IF
   END DO

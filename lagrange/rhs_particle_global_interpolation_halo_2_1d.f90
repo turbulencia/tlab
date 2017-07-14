@@ -1,3 +1,7 @@
+#include "types.h"
+#include "dns_error.h"
+#include "dns_const.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -12,16 +16,12 @@
 !# ARGUMENTS 
 !#
 !########################################################################
-#include "types.h"
-#include "dns_error.h"
-#include "dns_const.h"
-
 SUBROUTINE  RHS_PARTICLE_GLOBAL_INTERPOLATION_HALO_2_1D &
     (halo_field,l_q,particle_property,y,wrk1d,halo_start, halo_end)
 
-USE DNS_GLOBAL, ONLY: imax,jmax,kmax,isize_field, imax_total
+USE DNS_GLOBAL, ONLY: imax,jmax,kmax
 USE DNS_GLOBAL, ONLY: isize_particle
-USE LAGRANGE_GLOBAL, ONLY:  particle_number, jmin_part
+USE LAGRANGE_GLOBAL, ONLY: jmin_part
 #ifdef USE_MPI
    USE DNS_MPI, ONLY: ims_pro_i, ims_pro_k, ims_pro
 #endif

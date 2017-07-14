@@ -363,7 +363,7 @@ PROGRAM VISUALS_MAIN
 #endif
      DO iv = 1,iopt_size
         IF ( opt_vec(iv) .EQ. 0 ) THEN
-           CALL ENSIGHT_GRID('grid.ensight', imax,jmax,kmax_total, subdomain, x,y,z)
+           CALL ENSIGHT_GRID('grid.ensight', g(1)%size, g(2)%size, g(3)%size, subdomain, g(1)%nodes,g(2)%nodes,g(3)%nodes)
         ENDIF
      ENDDO
 #ifdef USE_MPI
@@ -991,7 +991,7 @@ PROGRAM VISUALS_MAIN
         IF ( opt_vec(iv) .EQ. iscal_offset+18 ) THEN
            CALL DNS_READ_PARTICLE(part_file,l_q)
            l_txc = C_1_R; ! We want density
-           CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,1))
+           CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,1))
            str = 'ParticleDensity'
            plot_file = TRIM(ADJUSTL(str))//time_str(1:MaskSize)
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
@@ -1000,7 +1000,7 @@ PROGRAM VISUALS_MAIN
               IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 )  THEN
                  DO is=1,2
                     l_txc(:,1)=l_q(:,3+is) !!! DO WE WANT l_txc(:,is) ???
-                    CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,2))   
+                    CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,2))   
                     txc(:,2) = txc(:,2)/txc(:,1)
                     plot_file = TRIM(ADJUSTL(LAGRANGE_SPNAME(is)))//time_str(1:MaskSize)
                     CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
@@ -1008,7 +1008,7 @@ PROGRAM VISUALS_MAIN
               END IF
               IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
                  l_txc(:,1)=l_q(:,inb_particle) !inb_particle is the last component -> residence times in bil_cloud_4
-                 CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,2))   
+                 CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,2))   
                  plot_file = TRIM(ADJUSTL(LAGRANGE_SPNAME(3)))//time_str(1:MaskSize)
                  CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
               ENDIF

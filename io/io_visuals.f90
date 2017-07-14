@@ -6,7 +6,7 @@
 SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, txc)
 
   USE DNS_TYPES,  ONLY : subarray_dt
-  USE DNS_GLOBAL, ONLY : imax_total, kmax_total, isize_txc_field
+  USE DNS_GLOBAL, ONLY : g, isize_txc_field
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_pro
 #endif
@@ -38,20 +38,20 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
   iflag_mode = 0 ! default
   sizes(1) = isize_txc_field     ! array size
   sizes(2) = 1                   ! lower bound
-  IF      ( subdomain(2)-subdomain(1)+1 .EQ. imax_total .AND. &
+  IF      ( subdomain(2)-subdomain(1)+1 .EQ. g(1)%size .AND. &
             subdomain(6)-subdomain(5)+1 .EQ. 1          ) THEN! xOy plane
      iflag_mode = 1
      sizes(3)   = ny_aux *nx     ! upper bound
      sizes(4)   = 1              ! stride
      
-  ELSE IF ( subdomain(6)-subdomain(5)+1 .EQ. kmax_total .AND. & 
+  ELSE IF ( subdomain(6)-subdomain(5)+1 .EQ. g(3)%size .AND. & 
             subdomain(2)-subdomain(1)+1 .EQ. 1          ) THEN! zOy plane
      iflag_mode = 2
      sizes(3)   = ny_aux *nx *nz ! upper bound
      sizes(4)   = nx             ! stride
      
-  ELSE IF ( subdomain(2)-subdomain(1)+1 .EQ. imax_total .AND. &
-            subdomain(6)-subdomain(5)+1 .EQ. kmax_total ) THEN
+  ELSE IF ( subdomain(2)-subdomain(1)+1 .EQ. g(1)%size .AND. &
+            subdomain(6)-subdomain(5)+1 .EQ. g(3)%size ) THEN
      iflag_mode = 3                                           ! xOy blocks
      sizes(3)   = ny_aux *nx *nz ! upper bound
      sizes(4)   = 1              ! stride

@@ -54,7 +54,7 @@ SUBROUTINE SOLENOIDAL(iwall, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
 #ifdef USE_CGLOC
 ! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
      tmp2 = -tmp1            ! change of forcing term sign
-     CALL CGPOISSON(i1, imax,jmax,kmax,kmax_total, tmp1, tmp2,tmp3,tmp4, ipos,jpos,kpos,ci,cj,ck, wrk2d)
+     CALL CGPOISSON(i1, imax,jmax,kmax,g(3)%size, tmp1, tmp2,tmp3,tmp4, ipos,jpos,kpos,ci,cj,ck, wrk2d)
 #endif
   ENDIF
 

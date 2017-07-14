@@ -19,8 +19,9 @@
 SUBROUTINE  RHS_PARTICLE_GLOBAL_INTERPOLATION_HALO_1 &
     (halo_field,l_q,l_hq,y,wrk1d,halo_start, halo_end)
 
-USE DNS_GLOBAL, ONLY: imax,jmax,kmax, imax_total
-USE DNS_GLOBAL, ONLY: isize_particle, kmax_total, kmax_total, inb_particle
+USE DNS_GLOBAL, ONLY: imax,jmax,kmax
+USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
+USE DNS_GLOBAL, ONLY: g
 USE LAGRANGE_GLOBAL, ONLY: jmin_part, inb_lag_total_interp
 USE LAGRANGE_GLOBAL, ONLY: ilagrange
 USE THERMO_GLOBAL, ONLY: thermo_param
@@ -43,7 +44,7 @@ IMPLICIT NONE
   TREAL delta_inv0, delta_inv2, delta_inv4
  
 
- IF (kmax_total .NE. 1) THEN !3D case
+ IF (g(3)%size .GT. 1) THEN !3D case
     DO i=halo_start,halo_end
   
 #ifdef USE_MPI

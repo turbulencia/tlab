@@ -507,12 +507,12 @@ PROGRAM AVERAGES
               CALL DNS_READ_PARTICLE(fname,l_q) 
                  
               l_txc = C_1_R; ! We want density
-              CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,7))
+              CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,7))
               
               txc(:,7) = txc(:,7) + 0.00000001
               DO is = inb_scal_array+2,inb_scal_particle+inb_scal_array+1
                  l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
-                 CALL PARTICLE_TO_FIELD(l_q,l_txc,x,y,z,wrk1d,wrk2d,wrk3d, txc(1,8))   
+                 CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,8))   
                  txc(:,8) = txc(:,8) /txc(:,7)
                  sbg(is)%mean  = sbg(inb_scal_array)%mean
                  sbg(is)%delta = sbg(inb_scal_array)%delta

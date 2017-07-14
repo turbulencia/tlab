@@ -1,3 +1,7 @@
+#include "types.h"
+#include "dns_error.h"
+#include "dns_const.h"
+
 !########################################################################
 !# Tool/Library
 !#
@@ -12,16 +16,14 @@
 !# ARGUMENTS 
 !#
 !########################################################################
-#include "types.h"
-#include "dns_error.h"
-#include "dns_const.h"
 SUBROUTINE  RHS_PARTICLE_GLOBAL_INTERPOLATION_1D &
-    (field,l_q,particle_property,y,wrk1d, grid_start, grid_end)
+    (field, l_q, particle_property, y, wrk1d, grid_start, grid_end)
 
-USE DNS_GLOBAL, ONLY: imax,jmax,kmax,isize_field
 USE DNS_CONSTANTS, ONLY : efile
-USE DNS_GLOBAL, ONLY: imax_total, kmax_total, isize_particle
-USE LAGRANGE_GLOBAL, ONLY: particle_number, jmin_part
+USE DNS_GLOBAL, ONLY: imax,jmax,kmax
+USE DNS_GLOBAL, ONLY: isize_particle
+USE DNS_GLOBAL, ONLY: g
+USE LAGRANGE_GLOBAL, ONLY: jmin_part
 #ifdef USE_MPI
    USE DNS_MPI, ONLY: ims_pro_i, ims_pro_k, ims_pro
 #endif
@@ -40,7 +42,7 @@ IMPLICIT NONE
   TREAL particle_local_grid_posx, particle_local_grid_posy, particle_local_grid_posz
 
  
-  IF  (kmax_total .NE. 1) THEN ! 3D case
+  IF  ( g(3)%size .GT. 1) THEN ! 3D case
     DO i=grid_start,grid_end
     
 #ifdef USE_MPI

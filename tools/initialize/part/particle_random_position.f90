@@ -107,7 +107,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,isize_wrk3d,wrk1d,wrk2d,wrk
         l_q(i,1)=((rnd_number(1)/ims_npro_i)+(real_buffer_i/real_nbuffer_i))*g(1)%scale
         l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*g(2)%scale
 !        l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*(g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part))*jmax_total
-        IF ( kmax_total .GT. 1) THEN
+        IF ( g(3)%size .GT. 1) THEN
            l_q(i,3)=((rnd_number(3)/ims_npro_k)+(real_buffer_k/real_nbuffer_k))*g(3)%scale
         ELSE
            l_q(i,3)=1
@@ -160,7 +160,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,isize_wrk3d,wrk1d,wrk2d,wrk
         l_q(i,1)=((rnd_number(1)/ims_npro_i)+(real_buffer_i/real_nbuffer_i))*g(1)%scale
 !        l_q(i,2)=g(2)%nodes(rnd_scal(2)) + real_buffer_frac*g(2)%scale/jmax 
         l_q(i,2)=g(2)%nodes(rnd_scal(2)) + real_buffer_frac*(g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part) )
-        IF ( kmax_total .GT. 1) THEN
+        IF ( g(3)%size .GT. 1) THEN
            l_q(i,3)=((rnd_number(3)/ims_npro_k)+(real_buffer_k/real_nbuffer_k))*g(3)%scale
         ELSE
            l_q(i,3)=1
@@ -192,7 +192,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,isize_wrk3d,wrk1d,wrk2d,wrk
       l_q(i,1)=((rnd_number(1)))*g(1)%scale
       l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*g(2)%scale
 !      l_q(i,2)=((rnd_number(2)*y_particle_width)+(y_particle_pos-(y_particle_width/2)))*(g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part))*jmax_total
-      IF ( kmax_total .GT. 1) THEN
+      IF ( g(3)%size .GT. 1) THEN
         l_q(i,3)=((rnd_number(3)*g(3)%scale))
       ELSE
         l_q(i,3)=1
@@ -231,7 +231,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,isize_wrk3d,wrk1d,wrk2d,wrk
        !Set up random numbers
         l_q(i,1)=(rnd_number(1))*g(1)%scale
         l_q(i,2)=g(2)%nodes(rnd_scal(2)) + real_buffer_frac*(g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part) )
-        IF ( kmax_total .GT. 1) THEN
+        IF ( g(3)%size .GT. 1) THEN
            l_q(i,3)=(rnd_number(3))*g(3)%scale
         ELSE
            l_q(i,3)=1

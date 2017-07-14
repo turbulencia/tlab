@@ -25,15 +25,11 @@
 !########################################################################
 !# ARGUMENTS 
 !#
-!# 
-!#
 !########################################################################
 SUBROUTINE PARTICLE_SORT(x,z, nzone_grid, nzone_west, nzone_east,nzone_south,nzone_north,&
                           x_or_z, h_particle, particle_id, particle )    
 
-
-
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, imax_total, kmax_total
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
   USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
   USE LAGRANGE_GLOBAL, ONLY : particle_number, particle_bumper, nzone_max
 

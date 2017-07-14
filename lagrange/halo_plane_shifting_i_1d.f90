@@ -27,7 +27,7 @@
 SUBROUTINE  halo_plane_shifting_i_1d(field,halo_field, halo_field_ik,buffer_send,buffer_recv, &
                                   diagonal_point_send, diagonal_point_recv, upper_left_point)
 
-USE DNS_GLOBAL, ONLY: imax,jmax,kmax, imax_total, kmax_total
+USE DNS_GLOBAL, ONLY: imax,jmax,kmax
 #ifdef USE_MPI
   USE DNS_MPI
 #endif

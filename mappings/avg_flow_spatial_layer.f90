@@ -452,7 +452,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
      fRwT(j,1)= MRATIO*MA_PW(j)*pts/rR(j,1) - fW(j,1)*fT(j,1)
 
 ! the TKE before filtering is stored every iteration
-     dum1 = C_1_R/M_REAL((itime-istattimeorg)*kmax_total)
+     dum1 = C_1_R/M_REAL((itime-istattimeorg)*g(3)%size)
      fTKE_nf(j,1) = C_05_R*( MA_FLT_RUU(j) + MA_FLT_RVV(j) + MA_FLT_RWW(j) -&
           ( MA_FLT_RU(j)*MA_FLT_RU(j) &
           + MA_FLT_RV(j)*MA_FLT_RV(j)&

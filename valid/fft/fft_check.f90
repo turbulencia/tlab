@@ -13,7 +13,7 @@ SUBROUTINE FFT_CHECK(check_mode, err_count,case_count, &
 
 #include "types.h"
 
-USE DNS_GLOBAL, ONLY   :  imax_total, jmax_total, kmax_total, imax, jmax, kmax
+USE DNS_GLOBAL, ONLY   :  g, imax, jmax, kmax
 USE DNS_CONSTANTS, ONLY : lfile
 USE DNS_GLOBAL, ONLY   :  isize_txc_dimx, isize_txc_dimz 
 
@@ -56,7 +56,7 @@ isize_trn3d = (imax/2)* jmax   *(2*kmax)
 CALL OPR_FOURIER_INITIALIZE(tmp1,tmp2,wrk2d,wrk3d)
 
 
-norm = C_1_R / M_REAL(imax_total*kmax_total)
+norm = C_1_R / M_REAL(g(1)%size*g(3)%size)
 
 tmp1(:)  = C_0_R
 tmp3(:)  = C_0_R
@@ -80,13 +80,13 @@ ENDDO
 SELECT CASE ( check_mode ) 
 CASE (1)
    label = 'fft_check:    delta'
-   nxz = imax_total*kmax_total
+   nxz = g(1)%size*g(3)%size
    dummy          = M_REAL(nxz) / (M_REAL(nxz)-C_1_R)
    field_variance = C_2_R * ( M_REAL(nxz) - C_1_R) / nxz / nxz 
-   field_variance = dummy * field_variance * M_REAL(jmax_total) / C_2_R
+   field_variance = dummy * field_variance * M_REAL(g(2)%size) / C_2_R
 CASE (2)
    label = 'fft_check:   cosine'
-   field_variance = C_05_R * jmax_total
+   field_variance = C_05_R * g(2)%size
 CASE (3) 
    label = 'fft_check:   random' 
 CASE DEFAULT
@@ -286,7 +286,7 @@ CONTAINS
           SETUP_CHECK = C_0_R
        ENDIF
     CASE (2) ! cosine check
-       SETUP_CHECK = COS(C_2_R*C_PI_R * M_REAL(i-1) / M_REAL(imax_total))
+       SETUP_CHECK = COS(C_2_R*C_PI_R * M_REAL(i-1) / M_REAL(g(1)%size))
     CASE (3) ! random check 
        CALL RANDOM_NUMBER(SETUP_CHECK) 
     CASE default
@@ -306,10 +306,10 @@ CONTAINS
     SELECT CASE ( check_mode ) 
     CASE (1)  ! delta-function check 
        IF  ( MOD(j,i2) .EQ. 1 ) THEN
-          arg = C_PI_R*C_2_R*M_REAL(k-1)/M_REAL(kmax_total)  
+          arg = C_PI_R*C_2_R*M_REAL(k-1)/M_REAL(g(3)%size)  
           re = cos(arg)  + cos(  C_2_R*arg) 
           im = sin(-arg) + sin(- C_2_R*arg) 
-          power_check = ( re*re+im*im ) / M_REAL(imax_total*imax_total*kmax_total*kmax_total)
+          power_check = ( re*re+im*im ) / M_REAL(g(1)%size*g(1)%size*g(3)%size*g(3)%size)
        ELSE 
           power_check = C_0_R
        ENDIF

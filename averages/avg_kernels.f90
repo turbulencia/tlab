@@ -93,6 +93,10 @@ END FUNCTION COV2V1D
 !########################################################################
 TREAL FUNCTION AVG1V2D(nx,ny,nz, j, imom, a)
 
+#ifdef USE_MPI
+  USE DNS_MPI, ONLY : ims_npro_i,ims_npro_k
+#endif
+
   IMPLICIT NONE
 
 #ifdef USE_MPI
@@ -107,7 +111,7 @@ TREAL FUNCTION AVG1V2D(nx,ny,nz, j, imom, a)
   TINTEGER i,k
 #ifdef USE_MPI
   INTEGER ims_err
-  TREAL sum_mpi, norm_mpi
+  TREAL sum_mpi!, norm_mpi
 #endif
 
 ! ###################################################################
@@ -118,15 +122,20 @@ TREAL FUNCTION AVG1V2D(nx,ny,nz, j, imom, a)
      ENDDO
   ENDDO
 
-#ifdef USE_MPI
-  sum_mpi = AVG1V2D
-  CALL MPI_ALLREDUCE(sum_mpi, AVG1V2D,  1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-  sum_mpi = M_REAL(nx*nz)
-  CALL MPI_ALLREDUCE(sum_mpi, norm_mpi, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-  AVG1V2D = AVG1V2D/norm_mpi
-#else
   AVG1V2D = AVG1V2D/M_REAL(nx*nz)
+#ifdef USE_MPI
+  sum_mpi = AVG1V2D/M_REAL(ims_npro_i*ims_npro_k)
+  CALL MPI_ALLREDUCE(sum_mpi, AVG1V2D,  1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
+! #ifdef USE_MPI
+!   sum_mpi = AVG1V2D
+!   CALL MPI_ALLREDUCE(sum_mpi, AVG1V2D,  1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+!   sum_mpi = M_REAL(nx*nz)
+!   CALL MPI_ALLREDUCE(sum_mpi, norm_mpi, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+!   AVG1V2D = AVG1V2D/norm_mpi
+! #else
+!   AVG1V2D = AVG1V2D/M_REAL(nx*nz)
+! #endif
 
   RETURN
 END FUNCTION AVG1V2D
@@ -277,7 +286,7 @@ END FUNCTION COV2V2D
 TREAL FUNCTION AVG1V3D(nx,ny,nz, imom, a)
 
 #ifdef USE_MPI
-  USE DNS_GLOBAL, ONLY : imax_total, jmax_total, kmax_total
+  USE DNS_MPI, ONLY : ims_npro
 #endif
 
   IMPLICIT NONE
@@ -304,14 +313,20 @@ TREAL FUNCTION AVG1V3D(nx,ny,nz, imom, a)
      AVG1V3D = AVG1V3D + a(ij)**imom
   ENDDO
 
-#ifdef USE_MPI
-  sum_mpi = AVG1V3D/M_REAL(imax_total*jmax_total)
-  sum_mpi = sum_mpi/M_REAL(kmax_total) ! In two steps is case nx*ny*nz is larger than INT(4)
-  CALL MPI_ALLREDUCE(sum_mpi, AVG1V3D, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-#else
   AVG1V3D = AVG1V3D/M_REAL(nx*ny)
   AVG1V3D = AVG1V3D/M_REAL(nz) ! In two steps is case nx*ny*nz is larger than INT(4)
-#endif
+#ifdef USE_MPI
+  sum_mpi = AVG1V3D/M_REAL(ims_npro)
+  CALL MPI_ALLREDUCE(sum_mpi, AVG1V3D, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+#endif 
+! #ifdef USE_MPI
+!   sum_mpi = AVG1V3D/M_REAL(imax_total*jmax_total)
+!   sum_mpi = sum_mpi/M_REAL(kmax_total) ! In two steps is case nx*ny*nz is larger than INT(4)
+!   CALL MPI_ALLREDUCE(sum_mpi, AVG1V3D, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+! #else
+!   AVG1V3D = AVG1V3D/M_REAL(nx*ny)
+!   AVG1V3D = AVG1V3D/M_REAL(nz) ! In two steps is case nx*ny*nz is larger than INT(4)
+! #endif
 
   RETURN
 END FUNCTION AVG1V3D

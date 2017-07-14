@@ -1,3 +1,10 @@
+#include "types.h"
+#include "dns_error.h"
+#include "dns_const.h"
+#ifdef USE_MPI
+#include "dns_const_mpi.h"
+#endif
+
 !########################################################################
 !# Tool/Library
 !#
@@ -10,31 +17,22 @@
 !# ARGUMENTS 
 !#
 !########################################################################
-#include "types.h"
-#include "dns_error.h"
-#include "dns_const.h"
-#ifdef USE_MPI
-#include "dns_const_mpi.h"
-#endif
-
 SUBROUTINE  PARTICLE_TO_FIELD &
-    (l_q,particle_property,x,y,z,wrk1d,wrk2d,wrk3d, field_out)
+    (l_q,particle_property, wrk1d,wrk2d,wrk3d, field_out)
 
-USE DNS_GLOBAL, ONLY: imax,jmax,kmax, isize_particle
-USE DNS_GLOBAL, ONLY: g
-USE LAGRANGE_GLOBAL, ONLY: jmin_part
+  USE DNS_GLOBAL, ONLY: imax,jmax,kmax, isize_particle
+  USE DNS_GLOBAL, ONLY: g
+  USE LAGRANGE_GLOBAL, ONLY: jmin_part
 #ifdef USE_MPI
    USE DNS_MPI, ONLY: ims_npro, ims_pro, ims_err
 #endif
 
-IMPLICIT NONE
+   IMPLICIT NONE
 #include "integers.h"
 #ifdef USE_MPI
 #include "mpif.h"
 #endif
 
-
-  TREAL, DIMENSION(*)                   :: x,y,z
   TREAL, DIMENSION(imax,jmax,kmax)      ::field_out ! will be txc
   TREAL, DIMENSION(isize_particle,3)    ::l_q
   TREAL, DIMENSION(imax+1,jmax,kmax+1)  :: wrk3d
@@ -49,14 +47,10 @@ IMPLICIT NONE
 !#######################################################################
   wrk3d=C_0_R
   wrk1d(1)= g(1)%scale/g(1)%size ! wrk1d 1-3 intervalls
-  wrk1d(2)= y(jmin_part+1)-y(jmin_part)
+  wrk1d(2)= g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part)
   wrk1d(3)= g(3)%scale/g(3)%size
 
-
-
-
-
-  CALL RHS_PARTICLE_TO_FIELD(l_q, particle_property, y, wrk1d, wrk3d)
+  CALL RHS_PARTICLE_TO_FIELD(l_q, particle_property, wrk1d, wrk3d)
 
   CALL MPI_BARRIER(MPI_COMM_WORLD, ims_err)
 
@@ -87,11 +81,11 @@ IMPLICIT NONE
 !#######################################################################
   wrk3d=C_0_R
   wrk1d(1)= g(1)%scale/g(1)%size ! wrk1d 1-3 intervalls
-  wrk1d(2)= y(jmin_part+1)-y(jmin_part)
+  wrk1d(2)= g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part)
   wrk1d(3)= g(3)%scale/g(3)%size
 !  wrk1d(2)= g(2)%scale/g(2)%size ! needed for interpolation
 
-  CALL RHS_PARTICLE_TO_FIELD(l_q, particle_property, y, wrk1d, wrk3d)
+  CALL RHS_PARTICLE_TO_FIELD(l_q, particle_property, wrk1d, wrk3d)
 
 !#######################################################################
 !Put wrk3d into continious memory field_out

@@ -17,7 +17,7 @@
 !# Includes the scalar to benefit from the same reduction
 !#
 !########################################################################
-SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
+SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      (dte, u,v,w,h1,h2,h3, q,hq, s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
      bcs_hb,bcs_ht, vaux, wrk1d,wrk2d,wrk3d)
 
@@ -84,7 +84,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
 ! Diffusion and convection terms in Oz momentum eqn
 ! #######################################################################
-  IF ( kmax_total .GT. 1 ) THEN
+  IF ( g(3)%size .GT. 1 ) THEN
 
   CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, g(3), w,w,w,    tmp1, tmp6, wrk2d,wrk3d) ! tmp6 contains w transposed
   CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, bcs, g(1), w,u,tmp5, tmp4, tmp2, wrk2d,wrk3d) ! tmp5 contains u transposed

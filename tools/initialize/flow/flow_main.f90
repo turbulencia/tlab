@@ -128,12 +128,12 @@ PROGRAM INIFLOW
            CALL IO_WRITE_ASCII(lfile, 'Initializing conjugate gradient, non-uniform grid, second-order.')
            cg_unif = 1; cg_ord = 2
 ! to be rewritten in terms of grid derived type
-           ! CALL CGBC2(cg_unif, imode_fdm, imax,jmax,kmax,kmax_total, &
+           ! CALL CGBC2(cg_unif, imode_fdm, imax,jmax,kmax,g(3)%size, &
            !      i1bc,j1bc,k1bc, scalex,scaley,scalez, dx,dy,dz, ipos,jpos,kpos,ci,cj,ck, wrk2d)
         ELSE
            CALL IO_WRITE_ASCII(lfile, 'Initializing conjugate gradient, uniform grid, fourth-order.')
            cg_unif = 0; cg_ord = 4
-           ! CALL CGBC4(cg_unif, imax,jmax,kmax,kmax_total, &
+           ! CALL CGBC4(cg_unif, imax,jmax,kmax,g(3)%size, &
            !      i1bc,j1bc,k1bc, scalex,scaley,scalez, dx,dy,dz, ipos,jpos,kpos,ci,cj,ck, wrk2d)
         ENDIF
 #else

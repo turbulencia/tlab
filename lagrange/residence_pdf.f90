@@ -21,9 +21,8 @@
 !########################################################################
 SUBROUTINE RESIDENCE_PDF(fname,l_hq,l_q)
 
-  USE DNS_GLOBAL, ONLY: isize_field,isize_particle, inb_particle
+  USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
   USE LAGRANGE_GLOBAL, ONLY :  particle_number
-  USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
   USE DNS_MPI
 #endif

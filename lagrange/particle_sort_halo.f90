@@ -25,17 +25,14 @@
 !########################################################################
 !# ARGUMENTS 
 !#
-!# 
-!#
 !########################################################################
 SUBROUTINE PARTICLE_SORT_HALO(x,z, nzone_grid, halo_zone_x, halo_zone_z, halo_zone_diagonal,&
                           l_hq, l_tags, l_q )    
 
-
-
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, imax_total, kmax_total
+  USE DNS_GLOBAL, ONLY : imax,kmax
   USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL, ONLY : particle_number, particle_bumper, nzone_max
+  USE DNS_GLOBAL, ONLY: g
+  USE LAGRANGE_GLOBAL, ONLY : particle_number
 
 #ifdef USE_MPI
   USE DNS_MPI
@@ -65,15 +62,14 @@ SUBROUTINE PARTICLE_SORT_HALO(x,z, nzone_grid, halo_zone_x, halo_zone_z, halo_zo
       halo_zone_z=0
       halo_zone_diagonal=0
 
-
 #ifdef USE_MPI
     right_limit=x(imax*(ims_pro_i+1))  ! right_limit is east
     upper_limit=z(kmax*(ims_pro_k+1))  !upper_limit is north
 #else
-    right_limit=x(imax_total)  ! right_limit is east
-    upper_limit=z(kmax_total)  
+    right_limit=x(g(2)%size)  ! right_limit is east
+    upper_limit=z(g(3)%size)  
 #endif
-!    right_limit=x(imax_total)  ! right_limit is east
+!    right_limit=x(g(2)%size)  ! right_limit is east
 
 !#######################################################################
 !Sorting structure grid-halo_x-halo_z-halo_diagonal

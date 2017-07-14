@@ -117,7 +117,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, txc(1,6), wrk3d, wrk2d,wrk3d)
 
   CALL SL_NORMAL_SAMPLE&
-       (imax,jmax,kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
+       (imax,jmax,kmax, nmax, istep, kstep, nfield_loc, nfield, &
        g(1)%scale, g(3)%scale, normal_factor, &
        g(1)%nodes,g(2)%nodes,g(3)%nodes, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
@@ -140,7 +140,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, txc(1,6), wrk3d, wrk2d,wrk3d)
 
   CALL SL_NORMAL_SAMPLE&
-       (imax,jmax,kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
+       (imax,jmax,kmax, nmax, istep, kstep, nfield_loc, nfield, &
        g(1)%scale, g(3)%scale, normal_factor,&
        g(1)%nodes,g(2)%nodes,g(3)%nodes, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
@@ -166,7 +166,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, txc(1,6), wrk3d, wrk2d,wrk3d)
 
   CALL SL_NORMAL_SAMPLE&
-       (imax,jmax,kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
+       (imax,jmax,kmax, nmax, istep, kstep, nfield_loc, nfield, &
        g(1)%scale, g(3)%scale, normal_factor,&
        g(1)%nodes,g(2)%nodes,g(3)%nodes, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
@@ -193,7 +193,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, txc(1,6), wrk3d, wrk2d,wrk3d)
 
   CALL SL_NORMAL_SAMPLE&
-       (imax,jmax,kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
+       (imax,jmax,kmax, nmax, istep, kstep, nfield_loc, nfield, &
        g(1)%scale, g(3)%scale, normal_factor, &
        g(1)%nodes,g(2)%nodes,g(3)%nodes, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
@@ -228,7 +228,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, txc(1,6), wrk3d, wrk2d,wrk3d)
 
   CALL SL_NORMAL_SAMPLE&
-       (imax,jmax,kmax, kmax_total, nmax, istep, kstep, nfield_loc, nfield, &
+       (imax,jmax,kmax, nmax, istep, kstep, nfield_loc, nfield, &
        g(1)%scale, g(3)%scale, normal_factor, &
        g(1)%nodes,g(2)%nodes,g(3)%nodes, sl, txc, profiles(ipfield,1,1,1), txc(1,4), txc(1,5), txc(1,6))
 
