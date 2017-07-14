@@ -119,26 +119,12 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
              q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
              vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, wrk1d,wrk2d,wrk3d)
         
-        ! IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-        !    IF ( damkohler(1) .LE. C_0_R )  THEN
-        !       DO is = 1,inb_scal
-        !          CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_AIRWATER(is, q(1,1),q(1,2),q(1,3),s(1,1), hs(1,is), &
-        !               txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d,hq(1,1),hq(1,2),hq(1,3))
-        !       ENDDO
-        !    ELSE
-        !       CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_SUPSAT(q(1,1),q(1,2),q(1,3), hq(1,1),hq(1,2),hq(1,3), s, hs, &
-        !            txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk1d,wrk2d,wrk3d)
-        !    ENDIF
-
-        ! ELSE
-           CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
-           DO is = 1,inb_scal
-              CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is, q(1,1),q(1,2),q(1,3), s(1,is),hs(1,is), &
-                   txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
-           ENDDO
-
-        ! ENDIF
-        
+        CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
+        DO is = 1,inb_scal
+           CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is, q(1,1),q(1,2),q(1,3), s(1,is),hs(1,is), &
+                txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
+        ENDDO
+           
      ELSE IF ( imode_rhs .EQ. EQNS_RHS_COMBINED    ) THEN 
         CALL FI_SOURCES_FLOW(q,s, hq, txc(1,1),          wrk1d,wrk2d,wrk3d)
         CALL FI_SOURCES_SCAL(  s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)

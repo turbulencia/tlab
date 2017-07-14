@@ -354,10 +354,15 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ENDIF
      
      coriolis%parameters(:) = C_0_R
-     CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Parameters', '0.0', sRes)
+     CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Parameters', '0.0,1.0', sRes)
      idummy = MAX_PROF
      CALL LIST_REAL(sRes, idummy, coriolis%parameters)
 
+     IF ( coriolis%parameters(2) .EQ. C_0_R ) THEN
+        CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Default normalized geostrophic velocity set to one.')
+        CALL DNS_STOP(DNS_ERROR_OPTION)
+     ENDIF
+     
   ENDIF
 
 ! Consistency check

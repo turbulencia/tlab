@@ -36,8 +36,6 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field, isize_wrk1d,  inb_flow,inb_scal
   USE DNS_GLOBAL, ONLY : icalc_scal
   USE DNS_GLOBAL, ONLY : visc, schmidt
-  USE DNS_GLOBAL, ONLY : buoyancy, coriolis
-  USE DNS_GLOBAL, ONLY : bbackground
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
   USE DNS_LOCAL,  ONLY : buff_type
@@ -60,19 +58,16 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 ! -----------------------------------------------------------------------
   TINTEGER is,ij, k, nxy, ip_b, ip_t 
   TINTEGER ibc, bcs(2,2)
-  TREAL dummy, u_geo, w_geo, visc_exp, visc_imp, visc_tot, alpha, beta, kef, aug, vdummy  
+  TREAL dummy, visc_exp, visc_imp, visc_tot, alpha, beta, kef, aug, vdummy!, u_geo, w_geo
 
   TREAL, DIMENSION(:), POINTER :: p_bcs
   TREAL, DIMENSION(imax,kmax,4):: bcs_locb, bcs_loct    
 
 ! #######################################################################
   nxy   = imax*jmax
-
+  
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
   
-  u_geo = COS(coriolis%parameters(1))
-  w_geo =-SIN(coriolis%parameters(1))
-
   visc_exp = kex*visc
   visc_imp = kim*visc 
   visc_tot = visc 
@@ -123,30 +118,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
      CALL OPR_PARTIAL_Z(OPR_P1,    imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d) 
      CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), w, tmp1, tmp2,  wrk2d,wrk3d) ! tmp1 used for BCs below
 
-! -----------------------------------------------------------------------
-! Coriolis (so far, rotation only in the Oy direction) 
-! -----------------------------------------------------------------------
-     IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
-        dummy = coriolis%vector(2)
-        DO ij = 1,isize_field
-           h3(ij) = -u(ij)*h3(ij) -v(ij)*tmp2(ij) - w(ij)*tmp3(ij) + dummy*( u(ij)-u_geo )
-        ENDDO
-     ELSE
-        DO ij=1,isize_field  
-           h3(ij) = -u(ij)*h3(ij) -v(ij)*tmp2(ij) - w(ij)*tmp3(ij)
-        ENDDO
-     ENDIF
-! -----------------------------------------------------------------------
-! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
-! -----------------------------------------------------------------------
-     IF ( buoyancy%active(3) ) THEN
-        wrk1d(:,1) = C_0_R
-        CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
-        dummy = buoyancy%vector(3)
-        DO ij = 1,isize_field
-             h3(ij) = h3(ij) + dummy*wrk3d(ij)
-        ENDDO
-     ENDIF
+     DO ij=1,isize_field  
+        h3(ij) = -u(ij)*h3(ij) -v(ij)*tmp2(ij) - w(ij)*tmp3(ij)
+     ENDDO
 
 ! -----------------------------------------------------------------------
 ! Diffusion part of the BCs for intermediate velocity
@@ -161,7 +135,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   ENDIF
 
 ! #######################################################################
-! Diffusion and convection terms in Ox momentum eqn
+
 ! #######################################################################
   tmp4(1:isize_field) = h1(1:isize_field) ! SAVE old tendencies until end of implicit substep
 
@@ -170,31 +144,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   CALL OPR_PARTIAL_Z(OPR_P1,    imax,jmax,kmax, bcs, g(3), u, tmp3, wrk3d, wrk2d,wrk3d) 
   CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), u, tmp1, tmp2,  wrk2d,wrk3d) ! tmp1 used for BCs below
 
-! -----------------------------------------------------------------------
-! Coriolis. So far, rotation only in the Oy direction. 
-! -----------------------------------------------------------------------
-  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
-     dummy = coriolis%vector(2)
-     DO ij = 1, isize_field 
-        h1(ij) = -u(ij)*h1(ij) -v(ij)*tmp2(ij) -w(ij)*tmp3(ij) + dummy*( w_geo-w(ij) )
-     ENDDO
-  ELSE
-     DO ij=1,isize_field 
-        h1(ij) = -u(ij)*h1(ij) -v(ij)*tmp2(ij) -w(ij)*tmp3(ij) 
-     ENDDO
-  ENDIF
-
-! -----------------------------------------------------------------------
-! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
-! -----------------------------------------------------------------------
-  IF ( buoyancy%active(1) ) THEN
-     wrk1d(:,1) = C_0_R
-     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
-     dummy = buoyancy%vector(1)
-     DO ij = 1,isize_field
-          h1(ij) =   h1(ij) + dummy*wrk3d(ij)
-     ENDDO
-  ENDIF
+  DO ij=1,isize_field 
+     h1(ij) = -u(ij)*h1(ij) -v(ij)*tmp2(ij) -w(ij)*tmp3(ij) 
+  ENDDO
 
 ! -----------------------------------------------------------------------
 ! Diffusion part of the BCs for intermediate velocity
@@ -216,20 +168,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   CALL OPR_PARTIAL_Z(OPR_P1,    imax,jmax,kmax, bcs, g(3), v, tmp3, wrk3d, wrk2d,wrk3d) 
   CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), v, tmp1, tmp2,  wrk2d,wrk3d)   
 
-! -----------------------------------------------------------------------
-! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
-! -----------------------------------------------------------------------
-  IF ( buoyancy%active(2) ) THEN
-     CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, bbackground)
-     dummy = buoyancy%vector(2)
-     DO ij = 1,isize_field
-          h2(ij) = -u(ij)*h2(ij) -v(ij)*tmp2(ij) -w(ij)*tmp3(ij)  + dummy*wrk3d(ij)
-     ENDDO
-  ELSE
-     DO ij = 1,isize_field
-        h2(ij) = -u(ij)*h2(ij) -v(ij)*tmp2(ij) -w(ij)*tmp3(ij)
-     ENDDO
-  ENDIF
+  DO ij = 1,isize_field
+     h2(ij) = -u(ij)*h2(ij) -v(ij)*tmp2(ij) -w(ij)*tmp3(ij)
+  ENDDO
 
 ! -----------------------------------------------------------------------
 ! Diffusion part of the BCs for intermediate velocity
@@ -241,6 +182,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
      bcs_loct(:,k,2) = vdummy*tmp1(ip_t:); ip_t = ip_t + nxy ! top
   ENDDO
 
+! #######################################################################
+  CALL FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
+  
 ! #######################################################################
 ! Impose buffer zone as relaxation terms (Flow)
 ! #######################################################################

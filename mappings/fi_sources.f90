@@ -47,8 +47,8 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 ! Coriolis. So far, rotation only in the Oy direction. 
 ! -----------------------------------------------------------------------
   IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
-     u_geo = COS(coriolis%parameters(1))
-     w_geo =-SIN(coriolis%parameters(1))
+     u_geo = COS(coriolis%parameters(1)) *coriolis%parameters(2)
+     w_geo =-SIN(coriolis%parameters(1)) *coriolis%parameters(2)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, dummy,srt,end,siz )
@@ -57,7 +57,7 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
      dummy = coriolis%vector(2)
      DO ij = srt,end
         hq(ij,1) = hq(ij,1) + dummy*( w_geo-q(ij,3) )
-        hq(ij,3) = hq(ij,3) + dummy*( q(ij,1)-u_geo ) 
+        hq(ij,3) = hq(ij,3) + dummy*( q(ij,1)-u_geo )
      ENDDO
 !$omp end parallel
 
