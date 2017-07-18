@@ -373,7 +373,7 @@ END SUBROUTINE RADIAL_SAMPLESIZE
 !########################################################################
 SUBROUTINE WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_CONSTANTS, ONLY : lfile
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_pro, ims_err
 #endif
@@ -400,7 +400,10 @@ SUBROUTINE WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
 #define LOC_STATUS 'unknown'
 
      DO iv = 1,nvar
-        name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
+        name = TRIM(ADJUSTL(fname))
+        IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
+        
+        CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 
 #include "dns_open_file.h"
         WRITE(LOC_UNIT_ID) SNGL(pow(1:nxy,iv))
@@ -503,7 +506,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
      CALL MPI_COMM_SPLIT(ims_comm_x, ims_color, ims_pro, ims_comm_x_aux, ims_err)
 
      IF ( ims_color .EQ. 0 ) THEN
-        mpio_aux(1)%active = .TRUE.
+        IF ( ims_pro_k .EQ. 0 ) mpio_aux(1)%active = .TRUE.
         mpio_aux(1)%communicator = ims_comm_x_aux
         
         ndims = 2 ! Subarray for the output of the Ox cross-correlation
@@ -529,7 +532,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
      CALL MPI_COMM_SPLIT(ims_comm_z, ims_color, ims_pro, ims_comm_z_aux, ims_err)
 
      IF ( ims_color .EQ. 0 ) THEN
-        mpio_aux(2)%active = .TRUE.
+        IF ( ims_pro_i .EQ. 0 ) mpio_aux(2)%active = .TRUE.
         mpio_aux(2)%communicator = ims_comm_z_aux
 
         ndims = 2 ! Subarray for the output of the Oz cross-correlation

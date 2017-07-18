@@ -575,7 +575,7 @@ PROGRAM SPECTRA
 ! Reduce 2D correlation into array wrk3d and accumulate 1D correlation
               wrk3d = C_0_R
               CALL REDUCE_CORRELATION(imax,jmax,kmax, opt_block, kr_total, &
-                   txc(:,2), wrk3d, outx(:,iv),outz(:,iv),outr(:,iv), wrk1d(:,2),wrk1d(:,4),icalc_radial) 
+                   txc(1,2), wrk3d, outx(1,iv),outz(1,iv),outr(1,iv), wrk1d(1,2),wrk1d(1,4),icalc_radial) 
            ENDIF
 
 ! Check Parseval's relation
