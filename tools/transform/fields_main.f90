@@ -269,9 +269,9 @@ PROGRAM TRANSFIELDS
   CALL LIST_INTEGER(sRes, idummy, subdomain)
   
   IF ( idummy .LT. 6 ) THEN ! default
-     subdomain(1) = 1; subdomain(2) = imax_total
-     subdomain(3) = 1; subdomain(4) = jmax_total
-     subdomain(5) = 1; subdomain(6) = kmax_total
+     subdomain(1) = 1; subdomain(2) = g(1)%size
+     subdomain(3) = 1; subdomain(4) = g(2)%size
+     subdomain(5) = 1; subdomain(6) = g(3)%size
   ENDIF
   
 ! -------------------------------------------------------------------
@@ -282,14 +282,14 @@ PROGRAM TRANSFIELDS
      kmax_total_dst = subdomain(6)-subdomain(5)+1
 
   ELSE IF ( opt_main .EQ. 2      ) THEN ! Extend 
-     imax_total_dst = imax_total + subdomain(2) + subdomain(1)
-     jmax_total_dst = jmax_total + subdomain(4) + subdomain(3)
-     kmax_total_dst = kmax_total
+     imax_total_dst = g(1)%size + subdomain(2) + subdomain(1)
+     jmax_total_dst = g(2)%size + subdomain(4) + subdomain(3)
+     kmax_total_dst = g(3)%size
 
   ELSE
-     imax_total_dst = imax_total
-     jmax_total_dst = jmax_total
-     kmax_total_dst = kmax_total
+     imax_total_dst = g(1)%size
+     jmax_total_dst = g(2)%size
+     kmax_total_dst = g(3)%size
   ENDIF
 
 #ifdef USE_MPI
@@ -464,15 +464,15 @@ PROGRAM TRANSFIELDS
 ! Cropping
 ! ###################################################################
      IF ( opt_main .EQ. 1 ) THEN
-        IF ( subdomain(5) .NE. 1 .OR. subdomain(6) .NE. kmax_total) THEN
+        IF ( subdomain(5) .NE. 1 .OR. subdomain(6) .NE. g(3)%size) THEN
            CALL IO_WRITE_ASCII(efile,'TRANSFORM. Cropping only in Oy.')
            CALL DNS_STOP(DNS_ERROR_UNDEVELOP)           
         ENDIF
-        IF ( subdomain(1) .NE. 1 .OR. subdomain(2) .NE. imax_total) THEN
+        IF ( subdomain(1) .NE. 1 .OR. subdomain(2) .NE. g(1)%size) THEN
            CALL IO_WRITE_ASCII(efile,'TRANSFORM. Cropping only in Oy.')
            CALL DNS_STOP(DNS_ERROR_UNDEVELOP)           
         ENDIF
-        IF ( subdomain(3) .LT. 1 .OR. subdomain(4) .GT. jmax_total) THEN
+        IF ( subdomain(3) .LT. 1 .OR. subdomain(4) .GT. g(2)%size) THEN
            CALL IO_WRITE_ASCII(efile,'TRANSFORM. Cropping out of bounds in Oy.')
            CALL DNS_STOP(DNS_ERROR_UNDEVELOP)           
         ENDIF
@@ -517,39 +517,39 @@ PROGRAM TRANSFIELDS
              scalex_dst,scaley_dst,scalez_dst, x_dst,y_dst,z_dst)
 
 ! Check grids. In the Oy direction, we allow to have a larger box
-        jmax_aux = jmax_total; subdomain = 0
+        jmax_aux = g(2)%size; subdomain = 0
 
 ! To be updated: we need to distinguish between periodic and nonperiodic cases.
 !        dummy = (x_dst(imax_total_dst)-x(imax_total)) / (x(imax_total)-x(imax_total-1))
-        dummy = (scalex_dst-g(1)%scale) / (x(imax_total,1)-x(imax_total-1,1))
+        dummy = (scalex_dst-g(1)%scale) / (x(g(1)%size,1)-x(g(1)%size-1,1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Ox scales are not equal at the end.')
            CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
         ENDIF
-        wrk1d(1:imax_total,1) = x(1:imax_total,1) ! we need extra space
+        wrk1d(1:g(1)%size,1) = x(1:g(1)%size,1) ! we need extra space
         
-        dummy = (y_dst(jmax_total_dst)-y(jmax_total,1)) / (y(jmax_total,1)-y(jmax_total-1,1))
-!        dummy = (scaley_dst-g(2)%scale) / (y(jmax_total)-y(jmax_total-1))
+        dummy = (y_dst(jmax_total_dst)-y(g(2)%size,1)) / (y(g(2)%size,1)-y(g(2)%size-1,1))
+!        dummy = (scaley_dst-g(2)%scale) / (y(g(2)%size)-y(g(2)%size-1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            IF ( dummy .GT. C_0_R ) THEN
-              subdomain(4) = ABS(jmax_total_dst - jmax_total) ! additional planes at the top
+              subdomain(4) = ABS(jmax_total_dst - g(2)%size) ! additional planes at the top
               jmax_aux = jmax_aux + subdomain(4)
-              dummy = (y_dst(jmax_total_dst)-y(jmax_total,1)) / INT(subdomain(4))
+              dummy = (y_dst(jmax_total_dst)-y(g(2)%size,1)) / INT(subdomain(4))
 !              dummy = (scaley_dst-g(2)%scale) / INT(subdomain(4))
            ELSE
               CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oy scales are not equal at the end.')
               CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
            ENDIF
         ENDIF
-        wrk1d(1+subdomain(3):jmax_total+subdomain(3),2) = y(1:jmax_total,1) ! we need extra space
-        DO ip = jmax_total+1,jmax_aux
+        wrk1d(1+subdomain(3):g(2)%size+subdomain(3),2) = y(1:g(2)%size,1) ! we need extra space
+        DO ip = g(2)%size+1,jmax_aux
            wrk1d(ip,2) = wrk1d(ip-1,2) + dummy
         ENDDO
 
         dummy = (y_dst(1)-y(1,1)) / (y(2,1)-y(1,1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            IF ( dummy .LT. C_0_R ) THEN
-              subdomain(3) = ABS(jmax_total_dst - jmax_total) ! additional planes at the beginning
+              subdomain(3) = ABS(jmax_total_dst - g(2)%size) ! additional planes at the beginning
               jmax_aux = jmax_aux + subdomain(3)
               dummy = (y_dst(1)-y(1,1)) / INT(subdomain(3))
            ELSE
@@ -557,18 +557,18 @@ PROGRAM TRANSFIELDS
               CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
            ENDIF
         ENDIF
-        wrk1d(1+subdomain(3):jmax_total+subdomain(3),2) = y(1:jmax_total,1) ! we need extra space
+        wrk1d(1+subdomain(3):g(2)%size+subdomain(3),2) = y(1:g(2)%size,1) ! we need extra space
         DO ip = subdomain(3),1,-1
            wrk1d(ip,2) = wrk1d(ip+1,2) + dummy ! dummy is negative
         ENDDO
            
 !        dummy = (z_dst(kmax_total_dst)-z(kmax_total)) / (z(kmax_total)-z(kmax_total-1))
-        dummy = (scalez_dst-g(3)%scale) / (z(kmax_total,1)-z(kmax_total-1,1))
+        dummy = (scalez_dst-g(3)%scale) / (z(g(3)%size,1)-z(g(3)%size-1,1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oz scales are not equal')
            CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
         ENDIF
-        wrk1d(1:kmax_total,3) = z(1:kmax_total,1) ! we need extra space
+        wrk1d(1:g(3)%size,3) = z(1:g(3)%size,1) ! we need extra space
 
         g(2)%size  = jmax_aux
         g(2)%scale = scaley_dst
@@ -610,8 +610,8 @@ PROGRAM TRANSFIELDS
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 5 ) THEN
         IF ( opt_filter .EQ. DNS_FILTER_ALPHA  ) dummy =-C_1_R /(alpha*g(1)%jac(1,1))**2
-        IF ( opt_filter .EQ. DNS_FILTER_CUTOFF ) dummy = C_1_R /M_REAL(imax_total*kmax_total)
-        IF ( opt_filter .EQ. DNS_FILTER_ERF    ) dummy = C_1_R /M_REAL(imax_total*kmax_total)
+        IF ( opt_filter .EQ. DNS_FILTER_CUTOFF ) dummy = C_1_R /M_REAL(g(1)%size*g(3)%size)
+        IF ( opt_filter .EQ. DNS_FILTER_ERF    ) dummy = C_1_R /M_REAL(g(1)%size*g(3)%size)
 
         IF ( icalc_flow .GT. 0 ) THEN
            DO iq = 1,inb_flow
@@ -993,7 +993,7 @@ END SUBROUTINE TRANS_BLEND
 !########################################################################
 SUBROUTINE TRANS_CUTOFF_2D(nx,ny,nz, spc_param, a)
 
-  USE DNS_GLOBAL, ONLY : kmax_total, isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
   USE DNS_GLOBAL, ONLY : g 
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
@@ -1016,8 +1016,8 @@ SUBROUTINE TRANS_CUTOFF_2D(nx,ny,nz, spc_param, a)
 #else
      kglobal = k
 #endif
-     IF ( kglobal .LE. kmax_total/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
-     ELSE;                                    fk =-M_REAL(kmax_total+1-kglobal)/g(3)%scale; ENDIF
+     IF ( kglobal .LE. g(3)%size/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
+     ELSE;                                    fk =-M_REAL(g(3)%size+1-kglobal)/g(3)%scale; ENDIF
 
      DO i = 1,nx/2+1
 #ifdef USE_MPI
@@ -1066,7 +1066,7 @@ END SUBROUTINE TRANS_CUTOFF_2D
 !########################################################################
 SUBROUTINE TRANS_ERF_2D(nx,ny,nz, spc_param, a)
 
-  USE DNS_GLOBAL, ONLY : kmax_total, isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
   USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
@@ -1099,8 +1099,8 @@ SUBROUTINE TRANS_ERF_2D(nx,ny,nz, spc_param, a)
 #else
      kglobal = k
 #endif
-     IF ( kglobal .LE. kmax_total/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
-     ELSE;                                    fk =-M_REAL(kmax_total+1-kglobal)/g(3)%scale; ENDIF
+     IF ( kglobal .LE. g(3)%size/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
+     ELSE;                                    fk =-M_REAL(g(3)%size+1-kglobal)/g(3)%scale; ENDIF
 
      DO i = 1,nx/2+1
 #ifdef USE_MPI

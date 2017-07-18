@@ -66,7 +66,7 @@ CONTAINS
     USE DNS_LOCAL, ONLY : nitera_save
 
 #ifdef USE_MPI 
-    USE DNS_GLOBAL,ONLY : imax_total,jmax_total,kmax_total 
+    USE DNS_GLOBAL,ONLY : g
     USE DNS_MPI, ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro
 #endif 
          
@@ -136,9 +136,9 @@ CONTAINS
     CALL MPI_Allreduce(tower_jmax, tower_jmax_total, 1, MPI_INTEGER4, MPI_SUM, MPI_COMM_WORLD,i)
     CALL MPI_Allreduce(tower_kmax, tower_kmax_total, 1, MPI_INTEGER4, MPI_SUM, MPI_COMM_WORLD,i)
  
-    tower_imax_total = tower_imax_total / (kmax_total/kmax * jmax_total/jmax) 
-    tower_jmax_total = tower_jmax_total / (imax_total/imax * kmax_total/kmax)
-    tower_kmax_total = tower_kmax_total / (imax_total/imax * jmax_total/jmax)
+    tower_imax_total = tower_imax_total / (g(3)%size/kmax * g(2)%size/jmax) 
+    tower_jmax_total = tower_jmax_total / (g(1)%size/imax * g(3)%size/kmax)
+    tower_kmax_total = tower_kmax_total / (g(1)%size/imax * g(2)%size/jmax)
 #else  
     tower_imax_total = tower_imax
     tower_jmax_total = tower_jmax

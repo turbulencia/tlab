@@ -123,7 +123,7 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
   ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
 
-  ALLOCATE(y_aux(jmax_total)) ! Reduced vertical grid
+  ALLOCATE(y_aux(g(2)%size)) ! Reduced vertical grid
 
 ! -------------------------------------------------------------------
 ! File names 
@@ -187,8 +187,8 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 ! Definitions
 ! -------------------------------------------------------------------
-! in case jmax_total is not divisible by opt_block, drop the upper most planes
-  jmax_aux = jmax_total/opt_block
+! in case g(2)%size is not divisible by opt_block, drop the upper most planes
+  jmax_aux = g(2)%size/opt_block
 
   flag_buoyancy = 0 ! default
   
@@ -219,10 +219,10 @@ PROGRAM SPECTRA
 
 ! -------------------------------------------------------------------
 !  maximum wavenumber & length lag; radial data is not really parallelized yet
-  kx_total = MAX(imax_total/2,1); ky_total = MAX(jmax_total/2,1); kz_total = MAX(kmax_total/2,1)
+  kx_total = MAX(g(1)%size/2,1); ky_total = MAX(g(2)%size/2,1); kz_total = MAX(g(3)%size/2,1)
 
   IF ( opt_main .EQ. 4 ) THEN    ! Cross-correlations need the full length
-     kx_total = MAX(imax_total,1); ky_total = MAX(jmax_total,1); kz_total = MAX(kmax_total,1)
+     kx_total = MAX(g(1)%size,1); ky_total = MAX(g(2)%size,1); kz_total = MAX(g(3)%size,1)
   ENDIF
 
   IF ( opt_main .GE. 5 ) THEN ! 3D spectrum
@@ -380,9 +380,9 @@ PROGRAM SPECTRA
 
 ! Normalization
   IF ( opt_main .GE. 5 ) THEN ! 3D spectra
-     norm = C_1_R / M_REAL(imax_total*kmax_total*jmax_total) 
+     norm = C_1_R / M_REAL(g(1)%size*g(3)%size*g(2)%size) 
   ELSE
-     norm = C_1_R / M_REAL(imax_total*kmax_total) 
+     norm = C_1_R / M_REAL(g(1)%size*g(3)%size) 
   ENDIF
 
 ! Define tags
@@ -579,7 +579,7 @@ PROGRAM SPECTRA
            ENDIF
 
 ! Check Parseval's relation
-           ip = jmax_total - MOD(jmax_total,opt_block)  ! Drop the uppermost ny%nblock 
+           ip = g(2)%size - MOD(g(2)%size,opt_block)  ! Drop the uppermost ny%nblock 
            WRITE(line,100) MAXVAL( ABS(wrk1d(1:ip,4) - wrk1d(1:ip,1)) )
            WRITE(str, *  ) MAXLOC( ABS(wrk1d(1:ip,4) - wrk1d(1:ip,1)) )
            line = 'Checking Parseval: Maximum residual '//TRIM(ADJUSTL(line))//' at level '//TRIM(ADJUSTL(str))//'.'
@@ -650,7 +650,7 @@ PROGRAM SPECTRA
            sizes(1) = kxmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
            CALL IO_WRITE_SUBARRAY4(i1, fname, varname, outx, sizes, wrk3d)
 
-           IF ( kmax_total .GT. 1 ) THEN
+           IF ( g(3)%size .GT. 1 ) THEN
               WRITE(fname,*) itime; fname = 'z'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
               sizes(1) = kzmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
               CALL IO_WRITE_SUBARRAY4(i2, fname, varname, outz, sizes, wrk3d)
