@@ -95,7 +95,7 @@ PROGRAM PDFS
   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
   ALLOCATE(gate(isize_field))
 
-  ALLOCATE(y_aux(jmax_total)) ! Reduced vertical grid
+  ALLOCATE(y_aux(g(2)%size)) ! Reduced vertical grid
 
 ! -------------------------------------------------------------------
 ! File names
@@ -192,8 +192,8 @@ PROGRAM PDFS
 ! -------------------------------------------------------------------
 ! Definitions
 ! -------------------------------------------------------------------
-! in case jmax_total is not divisible by opt_block, drop the upper most planes
-  jmax_aux = jmax_total/opt_block
+! in case g(2)%size is not divisible by opt_block, drop the upper most planes
+  jmax_aux = g(2)%size/opt_block
 
 ! -------------------------------------------------------------------
 ! Further allocation of memory space
@@ -393,7 +393,7 @@ PROGRAM PDFS
 
         ibc(1:nfield) = 2
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -420,7 +420,7 @@ PROGRAM PDFS
            ENDIF
         ENDDO
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -455,7 +455,7 @@ PROGRAM PDFS
         data(3)%field => txc(:,2); varname(3) = 'DiffusionNuG_iLapG_i'  ; ibc(3) = 2
         data(4)%field => txc(:,4); varname(4) = 'StrainAMsN_iN_jS_ij'   ; ibc(4) = 2
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -514,7 +514,7 @@ PROGRAM PDFS
         data(5)%field => txc(:,8); varname(5) = 'Baroclinic';             ibc(5) = 2
         data(6)%field => txc(:,4); varname(6) = 'RateAN_iN_jS_ij'     ;   ibc(6) = 2
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -561,7 +561,7 @@ PROGRAM PDFS
         data(3)%field => txc(:,3); varname(3) = 'DiffusionNuS_ijLapS_ij'   ; ibc(3) = 2
         data(4)%field => txc(:,1); varname(4) = 'Pressure2S_ijP_ij'        ; ibc(4) = 2
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -593,7 +593,7 @@ PROGRAM PDFS
         CALL JPDF3D(fname, i0, opt_gate, i0, imax, jmax, kmax, i0, i0,&
              gate, txc(1,2), txc(1,1), opt_bins, opt_bins, wrk2d(1,1), wrk2d(1,2), wrk2d(1,3), wrk1d)
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -613,7 +613,7 @@ PROGRAM PDFS
         data(1)%field => txc(:,1); varname(1) = 'StrainAG_iG_i'; ibc(1) = 2
         data(2)%field => txc(:,2); varname(2) = 'StrainA';       ibc(2) = 2
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk3d)
            ENDDO
@@ -691,7 +691,7 @@ PROGRAM PDFS
         CALL JPDF3D(fname, i1, opt_gate, i1, imax, jmax, kmax, i0, i0,&
              gate, s, txc(1,4), opt_bins, opt_bins, wrk2d(1,1), wrk2d(1,2), wrk2d(1,3), wrk1d)
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -720,7 +720,7 @@ PROGRAM PDFS
 !           ibc(2) = 2
         ENDIF
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -749,7 +749,7 @@ PROGRAM PDFS
         data(2)%field => txc(:,8); varname(2) = 'Lambda2'; ibc(2) = 2
         data(3)%field => txc(:,9); varname(3) = 'Lambda3'; ibc(3) = 2
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -812,7 +812,7 @@ PROGRAM PDFS
         data(5)%field => txc(:,8); varname(5) = 'cos(G,lambda2)'; ibc(5) = 2
         data(6)%field => txc(:,9); varname(6) = 'cos(G,lambda3)'; ibc(6) = 2
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -837,7 +837,7 @@ PROGRAM PDFS
 
         ibc(1:nfield) = 2
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO

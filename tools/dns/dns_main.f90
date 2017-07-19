@@ -160,7 +160,7 @@ PROGRAM DNS
      isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_lag_total_interp*2))
   END IF
   IF ( tower_mode .EQ. 1 ) THEN 
-     isize_wrk3d = MAX(isize_wrk3d,nitera_save*(jmax_total+2))
+     isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))
   ENDIF
 
 #ifdef LES

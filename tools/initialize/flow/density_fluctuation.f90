@@ -13,7 +13,7 @@
 SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
 
   USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, jmax_total, isize_field, area
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, area
   USE DNS_GLOBAL,    ONLY : imode_flow
   USE DNS_GLOBAL,    ONLY : rbg, tbg
   USE THERMO_GLOBAL, ONLY : imixture
@@ -56,9 +56,9 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
 ! Broadband case
 ! -------------------------------------------------------------------
   IF ( code .EQ. 4 ) THEN
-     idummy = jmax_total; jmax_total = 1
+     idummy = g(2)%size; g(2)%size = 1
      CALL DNS_READ_FIELDS('scal.rand', i1, imax,i1,kmax, i1,i0, isize_field, disp, wrk3d)
-     jmax_total = idummy
+     g(2)%size = idummy
 ! remove mean
      dummy = AVG_IK(imax, i1, kmax, i1, disp, dx, dz, area)
      disp = disp -dummy

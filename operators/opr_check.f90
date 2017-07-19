@@ -122,7 +122,7 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
      WRITE(str,100) M_REAL(t_dif)/PROC_CYCLES
 
      norm = C_1_R/M_REAL( g(1)%size *g(3)%size )
-!     norm = norm /M_REAL(jmax_total) ! for large domains we need to do it in two steps !
+!     norm = norm /M_REAL(g(2)%size) ! for large domains we need to do it in two steps !
 
 #ifdef USE_MPI         
      dummy = MAXVAL(ABS(norm*a(1:isize_field,2)-a(1:isize_field,1)))

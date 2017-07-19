@@ -155,7 +155,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags,l_com
        l_hq, l_tags, l_q)
 
   wrk1d(1)= g(1)%scale/g(1)%size ! wrk1d 1-3 intervalls
-!  wrk1d(2)= g(2)%scale/jmax_total ! needed for interpolation
+!  wrk1d(2)= g(2)%scale/g(2)%size ! needed for interpolation
   wrk1d(2)= g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part)
   wrk1d(3)= g(3)%scale/g(3)%size
 
@@ -239,7 +239,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags,l_com
        l_hq, l_tags, l_q)
 
   wrk1d(1)= g(1)%scale/g(1)%size ! wrk1d 1-3 intervalls
-!  wrk1d(2)= g(2)%scale/jmax_total ! needed for interpolation
+!  wrk1d(2)= g(2)%scale/g(2)%size ! needed for interpolation
   wrk1d(2)= g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part)
   wrk1d(3)= g(3)%scale/g(3)%size
 

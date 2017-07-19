@@ -1,3 +1,4 @@
+
 !########################################################################
 !# Tool/Library SUPERLAYER
 !#
@@ -287,9 +288,9 @@ PROGRAM SL_BOUNDARY
 
 ! save surfaces w/o header
         WRITE(fname,*) itime; fname = 'sl'//TRIM(ADJUSTL(fname))
-        idummy = jmax_total; jmax_total = 1
+        idummy = g(2)%size; g(2)%size = 1
         CALL DNS_WRITE_FIELDS(fname, i0, imax,i1,kmax, i2, isize_field, sl, wrk3d)
-        jmax_total = idummy
+        g(2)%size = idummy
 
 ! save scalar dissipation as scalar field
         ! WRITE(fname,*) itime; fname = 'chi'//TRIM(ADJUSTL(fname))

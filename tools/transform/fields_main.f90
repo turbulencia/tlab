@@ -520,7 +520,7 @@ PROGRAM TRANSFIELDS
         jmax_aux = g(2)%size; subdomain = 0
 
 ! To be updated: we need to distinguish between periodic and nonperiodic cases.
-!        dummy = (x_dst(imax_total_dst)-x(imax_total)) / (x(imax_total)-x(imax_total-1))
+!        dummy = (x_dst(imax_total_dst)-x(g(1)%size)) / (x(g(1)%size)-x(g(1)%size-1))
         dummy = (scalex_dst-g(1)%scale) / (x(g(1)%size,1)-x(g(1)%size-1,1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Ox scales are not equal at the end.')
@@ -562,7 +562,7 @@ PROGRAM TRANSFIELDS
            wrk1d(ip,2) = wrk1d(ip+1,2) + dummy ! dummy is negative
         ENDDO
            
-!        dummy = (z_dst(kmax_total_dst)-z(kmax_total)) / (z(kmax_total)-z(kmax_total-1))
+!        dummy = (z_dst(kmax_total_dst)-z(g(3)%size)) / (z(g(3)%size)-z(g(3)%size-1))
         dummy = (scalez_dst-g(3)%scale) / (z(g(3)%size,1)-z(g(3)%size-1,1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
            CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oz scales are not equal')

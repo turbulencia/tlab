@@ -116,7 +116,7 @@ PROGRAM AVERAGES
   ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
   ALLOCATE(gate(isize_field))
 
-  ALLOCATE(y_aux(jmax_total)) ! Reduced vertical grid
+  ALLOCATE(y_aux(g(2)%size)) ! Reduced vertical grid
 
 ! -------------------------------------------------------------------
 ! File names
@@ -218,8 +218,8 @@ PROGRAM AVERAGES
 ! -------------------------------------------------------------------
 ! Definitions
 ! -------------------------------------------------------------------
-! in case jmax_total is not divisible by opt_block, drop the upper most planes
-  jmax_aux = jmax_total/opt_block
+! in case g(2)%size is not divisible by opt_block, drop the upper most planes
+  jmax_aux = g(2)%size/opt_block
 
   flag_buoyancy = 0 ! default
   
@@ -573,7 +573,7 @@ PROGRAM AVERAGES
            CALL MINMAX(imax,jmax,kmax, s, umin,umax)
         ENDIF
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -612,7 +612,7 @@ PROGRAM AVERAGES
            nfield = nfield+1; data(nfield)%field => s(:,1);  varname(nfield) = 'Scalar1'
         ENDIF
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -698,7 +698,7 @@ PROGRAM AVERAGES
         data(6)%field => txc(:,8); varname(6) = 'Baroclinic'
         data(7)%field => txc(:,5); varname(7) = 'RateAN_iN_jS_ij'
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -752,7 +752,7 @@ PROGRAM AVERAGES
         data(3)%field => txc(:,3); varname(3) = 'DiffusionNuS_ijLapS_ij'
         data(4)%field => txc(:,1); varname(4) = 'Pressure2S_ijP_ij'
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -791,7 +791,7 @@ PROGRAM AVERAGES
         data(4)%field => txc(:,2); varname(4) = 'DiffusionNuG_iLapG_i'
         data(5)%field => txc(:,5); varname(5) = 'StrainAMsN_iN_jS_ij'
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -818,7 +818,7 @@ PROGRAM AVERAGES
         data(2)%field => txc(:,2); varname(2) = 'InvariantQ'
         data(3)%field => txc(:,1); varname(3) = 'InvariantR'
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -848,7 +848,7 @@ PROGRAM AVERAGES
         data(4)%field => s(:,1);   varname(4) = 'Theta'
         data(5)%field => txc(:,4); varname(5) = 'Phi'
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -872,7 +872,7 @@ PROGRAM AVERAGES
         data(2)%field => txc(:,8); varname(2) = 'Lambda2'
         data(3)%field => txc(:,9); varname(3) = 'Lambda3'
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -934,7 +934,7 @@ PROGRAM AVERAGES
         data(5)%field => txc(:,8); varname(5) = 'cos(G,lambda2)'
         data(6)%field => txc(:,9); varname(6) = 'cos(G,lambda3)'
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -956,7 +956,7 @@ PROGRAM AVERAGES
         data(2)%field => txc(:,2); varname(2) = 'dvdy'
         data(3)%field => txc(:,3); varname(3) = 'dwdz'
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -1009,7 +1009,7 @@ PROGRAM AVERAGES
            CALL DNS_STOP(DNS_ERROR_WRKSIZE)
         ENDIF
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -1040,7 +1040,7 @@ PROGRAM AVERAGES
            CALL DNS_STOP(DNS_ERROR_WRKSIZE)
         ENDIF
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -1058,7 +1058,7 @@ PROGRAM AVERAGES
 
         data(1)%field => txc(:,1); varname(1) = 'Eps'
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO
@@ -1089,7 +1089,7 @@ PROGRAM AVERAGES
            CALL DNS_STOP(DNS_ERROR_WRKSIZE)
         ENDIF
 
-        IF (  jmax_aux*opt_block .NE. jmax_total ) THEN
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
               CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
            ENDDO

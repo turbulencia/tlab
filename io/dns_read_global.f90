@@ -359,8 +359,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL LIST_REAL(sRes, idummy, coriolis%parameters)
 
      IF ( coriolis%parameters(2) .EQ. C_0_R ) THEN
-        CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Default normalized geostrophic velocity set to one.')
-        CALL DNS_STOP(DNS_ERROR_OPTION)
+        CALL IO_WRITE_ASCII(lfile,'DNS_READ_GLOBAL. Default normalized geostrophic velocity set to one.')
      ENDIF
      
   ENDIF

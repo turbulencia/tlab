@@ -320,7 +320,7 @@ TREAL FUNCTION AVG1V3D(nx,ny,nz, imom, a)
   CALL MPI_ALLREDUCE(sum_mpi, AVG1V3D, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif 
 ! #ifdef USE_MPI
-!   sum_mpi = AVG1V3D/M_REAL(imax_total*jmax_total)
+!   sum_mpi = AVG1V3D/M_REAL(imax_total*g(2)%size)
 !   sum_mpi = sum_mpi/M_REAL(kmax_total) ! In two steps is case nx*ny*nz is larger than INT(4)
 !   CALL MPI_ALLREDUCE(sum_mpi, AVG1V3D, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 ! #else

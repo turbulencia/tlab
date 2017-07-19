@@ -97,8 +97,8 @@ PROGRAM INIRAND
      CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   ENDIF
 
-  IF ( jmax_total .EQ. 1 ) THEN; ifourier_type = 2; 
-  ELSE;                          ifourier_type = 3; ENDIF
+  IF ( g(2)%size .EQ. 1 ) THEN; ifourier_type = 2; 
+  ELSE;                         ifourier_type = 3; ENDIF
 
 ! ###################################################################
   IF ( icalc_flow .EQ. 1 ) THEN
