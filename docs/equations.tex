@@ -40,7 +40,7 @@ and
   p  = (\gamma_0 \mathrm{\bf M}^2)^{-1}\rho T \;.
   \label{eq:state}
 \end{equation}
-The specific heat ratio, $\gamma$, is constant and equal to the reference value $\gamma_0=1/(1-R_0/C_{p0})$ and the dimensionless numbers are defined using the reference scales $\mathrm{L}_0$, $\mathrm{U}_0$, $\rho_0$ and $\mathrm{T}_0$ in the usual way,
+The specific heat ratio, $\gamma$, is constant and equal to the reference value $\gamma_0=1/(1-R_0/C_{p0})$, where $R_0$ is the specific gas constant of the gas under consideration and $C_{p0}$ is its specific heat capacity at constant pressure. The dimensionless numbers are defined using the reference scales $\mathrm{L}_0$, $\mathrm{U}_0$, $\rho_0$ and $\mathrm{T}_0$ in the usual way,
 \begin{alignat*}{3}
   \mathrm{\bf Re} & = \frac{\rho_0 \mathrm{U}_0 \mathrm{L}_0}{\mu_0} & \qquad 
   \mathrm{\bf Pr} & = \frac{\mu_0}{(\lambda_0/C_{p0})} & \qquad
@@ -105,7 +105,7 @@ and
 \begin{equation}
   p = (\gamma_0 \mathrm{\bf M}^2)^{-1} \frac{\rho T}{W} 
 \end{equation}
-It can be verified that given all the thermo-chemical properties of the components of the mixture as a function of temperature, the previous set of equations are closed. Notice that $\gamma$ is no longer a constant and depend on the composition of the mixture.
+It can be verified that given all the thermo-chemical properties of the components of the mixture as a function of temperature, the previous set of equations are closed. Notice that $\gamma$ is no longer a constant and depend on the composition of the mixture. The reference specific gas constant is defined by $R_0\equiv \mathcal{R}/W_0$, where $\mathcal{R}$ is the universal gas constant and $W_0$ is the molecular weight of the reference species. The nondimensional specific gas constant of the gas mixture is given by $R=W^{-1}$.
 
 The functions $Y_i^e(\rho,e,\zeta_j)$ need to be provided. The total number of species is $N$, need not be equal to the total number of scalars transported. (If you want, one set is prognostic variables and the other one is diagnostic variables.) This includes the simplest possible case of $Y_i^e = \zeta_i$. Another case is equilibrium, e.g. Burke-Schumann approximation, where mass fraction of all species is related to the mixture fraction variable, $\zeta$.  In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction of unity Lewis number the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$. These relationships are obtained by assuming equal diffusivity of all species and a single-step infinitely fast chemical reaction.  For further discussion on the formulation see \cite{Williams:1985}.
 
@@ -236,7 +236,7 @@ The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of th
 
 \section{Anelastic formulation}
 
-We retain a background vertical variation of thermodynamic variables $\{\rho_\mathrm{bg},\, p_\mathrm{bg},\, T_\mathrm{bg},\, R_\mathrm{bg}\equiv W_\mathrm{bg}^{-1}\}$. The background profiles are steady and satisfy the hydrostatic balance,
+We retain a background vertical variation of thermodynamic variables $\{\rho_\mathrm{bg},\, p_\mathrm{bg},\, T_\mathrm{bg},\, R_\mathrm{bg}=W_\mathrm{bg}^{-1}\}$. The background profiles are steady and satisfy the hydrostatic balance,
 \begin{equation}
   \partial_2\,p_\mathrm{bg}=-\mathbf{H}^{-1}\, g_2\,\rho_\mathrm{bg}\;,\qquad p_\mathrm{bg}|_{x_2=x_{2,0}}=p_{\mathrm{bg},0}\;,
 \end{equation}
@@ -246,9 +246,9 @@ We retain a background vertical variation of thermodynamic variables $\{\rho_\ma
 \end{equation}
 $\mathbf{g}$ is defined opposite to the gravitational acceleration (the problem is formulated in terms of the buoyancy), and
 \begin{equation}
-  \mathbf{H} = \frac{(R_0/W_0)T_0}{gL_0}
+  \mathbf{H} = \frac{R_0T_0}{gL_0}
 \end{equation}
-is a nondimensional scale height. The pressure is nondimensionalized with $p_0=$10$^5$~Pa and the reference density is obtained from $\rho_0=p_0[(R_0/W_0)T_0]^{-1}$. We need two additional constraints, which are set through the background profile information in the file {\tt dns.ini}. Typically, we impose the static energy (enthalpy plus potential energy) and the composition.
+is a nondimensional scale height. The pressure is nondimensionalized with $p_0=$10$^5$~Pa and the reference density is obtained from $\rho_0=p_0(R_0T_0)^{-1}$. We need two additional constraints, which are set through the background profile information in the file {\tt dns.ini}. Typically, we impose the static energy (enthalpy plus potential energy) and the composition.
 % 
 If there is only one species, then $R_\mathrm{bg}=1$ and we only need one additional constraint.
 
