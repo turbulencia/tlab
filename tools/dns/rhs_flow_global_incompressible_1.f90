@@ -24,7 +24,6 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_GLOBAL, ONLY : visc
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : idivergence
-  USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
   USE DNS_LOCAL,  ONLY : buff_type
 
   IMPLICIT NONE
@@ -152,9 +151,10 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! Impose buffer zone as relaxation terms
 ! #######################################################################
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
-     CALL BOUNDARY_BUFFER_RELAXATION_FLOW(&
-          vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,hq)
+     CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
+     ! CALL BOUNDARY_BUFFER_RELAXATION_FLOW_OLD(&
+     !      vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
+     !      vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,hq)
   ENDIF
 
 ! #######################################################################

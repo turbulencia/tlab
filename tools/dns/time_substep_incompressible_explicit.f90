@@ -42,7 +42,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   USE DNS_GLOBAL,    ONLY : icalc_particle, isize_particle
   USE THERMO_GLOBAL, ONLY : imixture
 
-  USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
+!  USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
   USE DNS_LOCAL,  ONLY : VA_BCS_HT, VA_BCS_HB, vindex
   USE DNS_LOCAL,  ONLY : buff_type
   USE DNS_LOCAL,  ONLY : imode_rhs
@@ -168,9 +168,10 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
      ! Flow part needs to be taken into account in the pressure
      DO is = 1,inb_scal
-        CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is,&
-             vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-             vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,s(1,is),hs(1,is))
+     CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, q,s, hs) ! array q is not used
+     !    CALL BOUNDARY_BUFFER_RELAXATION_SCAL_OLD(is,&
+     !         vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
+     !         vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,s(1,is),hs(1,is))
      ENDDO
   ENDIF
 

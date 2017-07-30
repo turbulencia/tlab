@@ -21,16 +21,18 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
      bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
 
   USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
-  USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim, icalc_scal
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal,inb_vars, isize_field
+  USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim!, icalc_scal
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal!,inb_vars, isize_field
   USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : itime
   USE DNS_GLOBAL,    ONLY : mach, pbg, qbg
   USE DNS_GLOBAL,    ONLY : area
   USE THERMO_GLOBAL, ONLY : imixture, gama0
-  USE DNS_LOCAL
+  USE DNS_LOCAL,     ONLY : BuffFlowJmin,BuffFlowJmax,BuffFlowImin,BuffFlowImax, buff_type
+  USE DNS_LOCAL,     ONLY : BuffScalJmin,BuffScalJmax,BuffScalImin,BuffScalImax
+  USE DNS_LOCAL,     ONLY : bcs_euler_drift, bcs_p_imin,bcs_p_imax, bcs_p_jmin,bcs_p_jmax, bcs_p_kmin,bcs_p_kmax
 #ifdef USE_MPI
   USE DNS_GLOBAL,    ONLY : inb_scal_array
+  USE DNS_LOCAL,     ONLY : ifilt_inflow,ifilt_inflow_iwidth,ifilt_inflow_jwidth
   USE DNS_MPI
 #endif
 
@@ -41,11 +43,12 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
 #include "mpif.h"
 #endif
 
-  TREAL, DIMENSION(imax,         buff_nps_jmin,kmax,*) :: buffer_hb
-  TREAL, DIMENSION(imax,         buff_nps_jmax,kmax,*) :: buffer_ht
-  TREAL, DIMENSION(buff_nps_imin,jmax,         kmax,*) :: buffer_vi
-  TREAL, DIMENSION(buff_nps_imax,jmax,         kmax,*) :: buffer_vo
-
+  ! TREAL, DIMENSION(imax,         buff_nps_jmin,kmax,*) :: buffer_hb
+  ! TREAL, DIMENSION(imax,         buff_nps_jmax,kmax,*) :: buffer_ht
+  ! TREAL, DIMENSION(buff_nps_imin,jmax,         kmax,*) :: buffer_vi
+  ! TREAL, DIMENSION(buff_nps_imax,jmax,         kmax,*) :: buffer_vo
+  TREAL buffer_hb, buffer_ht, buffer_vi, buffer_vo
+  
   TREAL, DIMENSION(imax,kmax,*)      :: bcs_hb, bcs_ht
   TREAL, DIMENSION(jmax,kmax,*)      :: bcs_vi, bcs_vo
   TREAL, DIMENSION(imax*jmax*kmax,*) :: q, s, txc
@@ -54,15 +57,16 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
   TARGET :: q
 
 ! -------------------------------------------------------------------
-  TINTEGER i,j,k, iq,is, ip, idummy,io_sizes(5)
+  TINTEGER i,j,k, is, ip!, idummy!,io_sizes(5)
   TREAL AVG1V1D, AVG_IK, prefactor, dummy
   TREAL diam_loc, thick_loc, ycenter, r1, r05, FLOW_JET_TEMPORAL
-  TREAL var_max, var_min
+  ! TREAL var_max, var_min
 
-  CHARACTER*32 name, str, varname(inb_vars)
-  CHARACTER*128 line 
+  ! CHARACTER*32 name, str, varname(inb_vars)
+  ! CHARACTER*128 line 
 
 #ifdef USE_MPI
+  CHARACTER*32 str
   TINTEGER isize_loc,id
 #endif
   
@@ -81,18 +85,18 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
 ! -------------------------------------------------------------------
 ! Filters at boundaries
 ! -------------------------------------------------------------------
-  IF ( buff_nps_imax .GT. 1 ) THEN ! Required for outflow explicit filter in Ox
+  IF ( BuffFlowImax%size .GT. 1 ) THEN ! Required for outflow explicit filter in Ox
      CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Ox BCs explicit filter.')
      id    = DNS_MPI_K_OUTBCS
-     isize_loc = buff_nps_imax*jmax
+     isize_loc = BuffFlowImax%size*jmax
      CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF
 
-  IF ( buff_nps_jmin .GT. 1 ) THEN ! Required for outflow explicit filter in Oy
+  IF ( BuffFlowJmin%size .GT. 1 ) THEN ! Required for outflow explicit filter in Oy
      CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Oy BCs explicit filter.')
      id    = DNS_MPI_K_TOPBCS
-     isize_loc = imax*buff_nps_jmin
+     isize_loc = imax*BuffFlowJmin%size
      CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF
@@ -144,11 +148,6 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
 
 #endif
 
-! ###################################################################
-! Buffer zone treatment
-! ###################################################################
-  IF ( buff_type .GT. 0 .OR. bcs_euler_drift .EQ. 1 ) THEN
-
 ! Define pointers
   u   => q(:,1)
   v   => q(:,2)
@@ -162,192 +161,198 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
   r1        = C_1_R
   r05       = C_05_R
 
-! Prepare data for subarrays
-  DO iq = 1,inb_flow
-     WRITE(varname(iq),*) iq;          varname(iq) = TRIM(ADJUSTL(varname(iq)))
-  ENDDO
-  DO is = 1,inb_scal
-     WRITE(varname(is+inb_flow),*) is; varname(is) = TRIM(ADJUSTL(varname(is)))
-  ENDDO
+! ###################################################################
+! Buffer zone treatment
+! ###################################################################
+  IF ( buff_type .GT. 0 .OR. bcs_euler_drift .EQ. 1 ) THEN
+     CALL BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
 
-#ifdef USE_MPI
-! I/O routines not yet developed for this particular case
-  IF ( ims_npro_i .GT. 1 .AND. ( buff_nps_imin .GT. 0 .OR. buff_nps_imax .GT. 0 ) ) THEN
-     CALL IO_WRITE_ASCII(efile,'BOUNDARY_INIT. I/O routines undeveloped.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)     
-  ENDIF
-#endif
+! ! Prepare data for subarrays
+!   DO iq = 1,inb_flow
+!      WRITE(varname(iq),*) iq;          varname(iq) = TRIM(ADJUSTL(varname(iq)))
+!   ENDDO
+!   DO is = 1,inb_scal
+!      WRITE(varname(is+inb_flow),*) is; varname(is) = TRIM(ADJUSTL(varname(is)))
+!   ENDDO
 
-! -------------------------------------------------------------------
-! Read buffer zones
-! -------------------------------------------------------------------
-  IF ( buff_load .EQ. 1 ) THEN
+! #ifdef USE_MPI
+! ! I/O routines not yet developed for this particular case
+!   IF ( ims_npro_i .GT. 1 .AND. ( buff_nps_imin .GT. 0 .OR. BuffFlowImax%size .GT. 0 ) ) THEN
+!      CALL IO_WRITE_ASCII(efile,'BOUNDARY_INIT. I/O routines undeveloped.')
+!      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)     
+!   ENDIF
+! #endif
+
+! ! -------------------------------------------------------------------
+! ! Read buffer zones
+! ! -------------------------------------------------------------------
+!   IF ( buff_load .EQ. 1 ) THEN
         
-     IF ( buff_nps_jmin .GT. 0 ) THEN
-        name = 'flow.bcs.jmin'
-        ! CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmin,kmax, &
-        !      inb_flow, i0, isize_field, buffer_hb,                   wrk3d)
-        idummy = imax*buff_nps_jmin*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
-        CALL IO_READ_SUBARRAY8(i4, name, varname,             buffer_hb,                   io_sizes, wrk3d)
-        IF ( icalc_scal .EQ. 1 ) THEN
-        name = 'scal.bcs.jmin'
-        ! CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmin,kmax, &
-        !      inb_scal, i0, isize_field, buffer_hb(1,1,1,inb_flow+1), wrk3d)
-        io_sizes(5) = inb_scal
-        CALL IO_READ_SUBARRAY8(i4, name, varname(inb_flow+1), buffer_hb(1,1,1,inb_flow+1), io_sizes, wrk3d)
-        ENDIF
-     ENDIF
+!      IF ( buff_nps_jmin .GT. 0 ) THEN
+!         name = 'flow.bcs.jmin'
+!         ! CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmin,kmax, &
+!         !      inb_flow, i0, isize_field, buffer_hb,                   wrk3d)
+!         idummy = imax*buff_nps_jmin*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
+!         CALL IO_READ_SUBARRAY8(i4, name, varname,             buffer_hb,                   io_sizes, wrk3d)
+!         IF ( icalc_scal .EQ. 1 ) THEN
+!         name = 'scal.bcs.jmin'
+!         ! CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmin,kmax, &
+!         !      inb_scal, i0, isize_field, buffer_hb(1,1,1,inb_flow+1), wrk3d)
+!         io_sizes(5) = inb_scal
+!         CALL IO_READ_SUBARRAY8(i4, name, varname(inb_flow+1), buffer_hb(1,1,1,inb_flow+1), io_sizes, wrk3d)
+!         ENDIF
+!      ENDIF
 
-     IF ( buff_nps_jmax .GT. 0 ) THEN 
-        name = 'flow.bcs.jmax'
-        ! CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmax,kmax, &
-        !      inb_flow, i0, isize_field, buffer_ht,                   wrk3d)
-        idummy = imax*buff_nps_jmax*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
-        CALL IO_READ_SUBARRAY8(i5, name, varname,             buffer_ht,                   io_sizes, wrk3d)
-        IF ( icalc_scal .EQ. 1 ) THEN
-        name = 'scal.bcs.jmax'
-        ! CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmax,kmax, &
-        !      inb_scal, i0, isize_field, buffer_ht(1,1,1,inb_flow+1), wrk3d)
-        io_sizes(5) = inb_scal
-        CALL IO_READ_SUBARRAY8(i5, name, varname(inb_flow+1), buffer_ht(1,1,1,inb_flow+1), io_sizes, wrk3d)
-        ENDIF
-     ENDIF
+!      IF ( buff_nps_jmax .GT. 0 ) THEN 
+!         name = 'flow.bcs.jmax'
+!         ! CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmax,kmax, &
+!         !      inb_flow, i0, isize_field, buffer_ht,                   wrk3d)
+!         idummy = imax*buff_nps_jmax*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
+!         CALL IO_READ_SUBARRAY8(i5, name, varname,             buffer_ht,                   io_sizes, wrk3d)
+!         IF ( icalc_scal .EQ. 1 ) THEN
+!         name = 'scal.bcs.jmax'
+!         ! CALL DNS_READ_FIELDS(name, i0, imax,buff_nps_jmax,kmax, &
+!         !      inb_scal, i0, isize_field, buffer_ht(1,1,1,inb_flow+1), wrk3d)
+!         io_sizes(5) = inb_scal
+!         CALL IO_READ_SUBARRAY8(i5, name, varname(inb_flow+1), buffer_ht(1,1,1,inb_flow+1), io_sizes, wrk3d)
+!         ENDIF
+!      ENDIF
 
-     IF ( buff_nps_imin .GT. 0 ) THEN 
-        name = 'flow.bcs.imin'
-        CALL DNS_READ_FIELDS(name, i0, buff_nps_imin,jmax,kmax, &
-             inb_flow, i0, isize_field, buffer_vi,                   wrk3d)
-        IF ( icalc_scal .EQ. 1 ) THEN
-        name = 'scal.bcs.imin'
-        CALL DNS_READ_FIELDS(name, i0, buff_nps_imin,jmax,kmax, &
-             inb_scal, i0, isize_field, buffer_vi(1,1,1,inb_flow+1), wrk3d)
-        ENDIF
-     ENDIF
+!      IF ( buff_nps_imin .GT. 0 ) THEN 
+!         name = 'flow.bcs.imin'
+!         CALL DNS_READ_FIELDS(name, i0, buff_nps_imin,jmax,kmax, &
+!              inb_flow, i0, isize_field, buffer_vi,                   wrk3d)
+!         IF ( icalc_scal .EQ. 1 ) THEN
+!         name = 'scal.bcs.imin'
+!         CALL DNS_READ_FIELDS(name, i0, buff_nps_imin,jmax,kmax, &
+!              inb_scal, i0, isize_field, buffer_vi(1,1,1,inb_flow+1), wrk3d)
+!         ENDIF
+!      ENDIF
 
-     IF ( buff_nps_imax .GT. 0 ) THEN 
-        name = 'flow.bcs.imax'
-        CALL DNS_READ_FIELDS(name, i0, buff_nps_imax,jmax,kmax, &
-             inb_flow, i0, isize_field, buffer_vo,                   wrk3d)
-        IF ( icalc_scal .EQ. 1 ) THEN
-        name = 'scal.bcs.imax'
-        CALL DNS_READ_FIELDS(name, i0, buff_nps_imax,jmax,kmax, &
-             inb_scal, i0, isize_field, buffer_vo(1,1,1,inb_flow+1), wrk3d)
-        ENDIF
-     ENDIF
+!      IF ( buff_nps_imax .GT. 0 ) THEN 
+!         name = 'flow.bcs.imax'
+!         CALL DNS_READ_FIELDS(name, i0, buff_nps_imax,jmax,kmax, &
+!              inb_flow, i0, isize_field, buffer_vo,                   wrk3d)
+!         IF ( icalc_scal .EQ. 1 ) THEN
+!         name = 'scal.bcs.imax'
+!         CALL DNS_READ_FIELDS(name, i0, buff_nps_imax,jmax,kmax, &
+!              inb_scal, i0, isize_field, buffer_vo(1,1,1,inb_flow+1), wrk3d)
+!         ENDIF
+!      ENDIF
 
-  ELSE
-! -------------------------------------------------------------------
-! Setting and saving buffer zones
-! -------------------------------------------------------------------
-     IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
-        DO j = 1,imax*jmax*kmax
-           txc(j,2) = e(j) + C_05_R*prefactor*(u(j)*u(j)+v(j)*v(j)+w(j)*w(j))
-        ENDDO
-     ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     ELSE
-        txc(:,1) = C_1_R
-     ENDIF
+!   ELSE
+! ! -------------------------------------------------------------------
+! ! Setting and saving buffer zones
+! ! -------------------------------------------------------------------
+!      IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
+!         DO j = 1,imax*jmax*kmax
+!            txc(j,2) = e(j) + C_05_R*prefactor*(u(j)*u(j)+v(j)*v(j)+w(j)*w(j))
+!         ENDDO
+!      ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
+!      ELSE
+!         txc(:,1) = C_1_R
+!      ENDIF
 
-     IF ( buff_nps_jmin .GT. 0 ) THEN 
-        CALL BOUNDARY_INIT_HB(q,s, txc, buffer_hb)
+!      IF ( buff_nps_jmin .GT. 0 ) THEN 
+!         CALL BOUNDARY_INIT_HB(q,s, txc, buffer_hb, buffer_hb(1,1,1,inb_flow+1))
 
-        WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.jmin.'//TRIM(ADJUSTL(name))
-        ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmin,kmax,&
-        !      inb_flow, isize_field, buffer_hb,                   wrk3d)
-        idummy = imax*buff_nps_jmin*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
-        CALL IO_WRITE_SUBARRAY8(i4, name, varname,             buffer_hb,                   io_sizes, wrk3d)
-        IF ( icalc_scal .EQ. 1 ) THEN
-        WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_scal))//'bcs.jmin.'//TRIM(ADJUSTL(name))
-        ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmin,kmax,&
-        !      inb_scal, isize_field, buffer_hb(1,1,1,inb_flow+1), wrk3d)
-        io_sizes(5) = inb_scal
-        CALL IO_WRITE_SUBARRAY8(i4, name, varname(inb_flow+1), buffer_hb(1,1,1,inb_flow+1), io_sizes, wrk3d)
-        ENDIF
-     ENDIF
+!         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.jmin.'//TRIM(ADJUSTL(name))
+!         ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmin,kmax,&
+!         !      inb_flow, isize_field, buffer_hb,                   wrk3d)
+!         idummy = imax*buff_nps_jmin*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
+!         CALL IO_WRITE_SUBARRAY8(i4, name, varname,             buffer_hb,                   io_sizes, wrk3d)
+!         IF ( icalc_scal .EQ. 1 ) THEN
+!         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_scal))//'bcs.jmin.'//TRIM(ADJUSTL(name))
+!         ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmin,kmax,&
+!         !      inb_scal, isize_field, buffer_hb(1,1,1,inb_flow+1), wrk3d)
+!         io_sizes(5) = inb_scal
+!         CALL IO_WRITE_SUBARRAY8(i4, name, varname(inb_flow+1), buffer_hb(1,1,1,inb_flow+1), io_sizes, wrk3d)
+!         ENDIF
+!      ENDIF
 
-     IF ( buff_nps_jmax .GT. 0 ) THEN 
-        CALL BOUNDARY_INIT_HT(q,s, txc, buffer_ht)
+!      IF ( buff_nps_jmax .GT. 0 ) THEN 
+!         CALL BOUNDARY_INIT_HT(q,s, txc, buffer_ht, buffer_ht(1,1,1,inb_flow+1))
 
-        WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.jmax.'//TRIM(ADJUSTL(name))
-        ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmax,kmax,&
-        !      inb_flow, isize_field, buffer_ht,                   wrk3d)
-        idummy = imax*buff_nps_jmax*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
-        CALL IO_WRITE_SUBARRAY8(i5, name, varname,             buffer_ht,                   io_sizes, wrk3d)
-        IF ( icalc_scal .EQ. 1 ) THEN
-        WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_scal))//'bcs.jmax.'//TRIM(ADJUSTL(name))
-        ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmax,kmax,&
-        !      inb_scal, isize_field, buffer_ht(1,1,1,inb_flow+1), wrk3d)
-        io_sizes(5) = inb_scal
-        CALL IO_WRITE_SUBARRAY8(i5, name, varname(inb_flow+1), buffer_ht(1,1,1,inb_flow+1), io_sizes, wrk3d)
-        ENDIF
-     ENDIF
+!         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.jmax.'//TRIM(ADJUSTL(name))
+!         ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmax,kmax,&
+!         !      inb_flow, isize_field, buffer_ht,                   wrk3d)
+!         idummy = imax*buff_nps_jmax*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
+!         CALL IO_WRITE_SUBARRAY8(i5, name, varname,             buffer_ht,                   io_sizes, wrk3d)
+!         IF ( icalc_scal .EQ. 1 ) THEN
+!         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_scal))//'bcs.jmax.'//TRIM(ADJUSTL(name))
+!         ! CALL DNS_WRITE_FIELDS(name, i0, imax,buff_nps_jmax,kmax,&
+!         !      inb_scal, isize_field, buffer_ht(1,1,1,inb_flow+1), wrk3d)
+!         io_sizes(5) = inb_scal
+!         CALL IO_WRITE_SUBARRAY8(i5, name, varname(inb_flow+1), buffer_ht(1,1,1,inb_flow+1), io_sizes, wrk3d)
+!         ENDIF
+!      ENDIF
    
-     IF ( buff_nps_imin .GT. 0 ) THEN 
-        CALL BOUNDARY_INIT_VI(q,s, txc, buffer_vi)
+!      IF ( buff_nps_imin .GT. 0 ) THEN 
+!         CALL BOUNDARY_INIT_VI(q,s, txc, buffer_vi, buffer_vi(1,1,1,inb_flow+1))
 
-        WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.imin.'//TRIM(ADJUSTL(name))
-        CALL DNS_WRITE_FIELDS(name, i0, buff_nps_imin,jmax,kmax,&
-             inb_flow, isize_field, buffer_vi,                   wrk3d)
-        IF ( icalc_scal .EQ. 1 ) THEN
-        WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_scal))//'bcs.imin.'//TRIM(ADJUSTL(name))
-        CALL DNS_WRITE_FIELDS(name, i0, buff_nps_imin,jmax,kmax,&
-             inb_scal, isize_field, buffer_vi(1,1,1,inb_flow+1), wrk3d)
-        ENDIF
-     ENDIF
+!         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.imin.'//TRIM(ADJUSTL(name))
+!         CALL DNS_WRITE_FIELDS(name, i0, buff_nps_imin,jmax,kmax,&
+!              inb_flow, isize_field, buffer_vi,                   wrk3d)
+!         IF ( icalc_scal .EQ. 1 ) THEN
+!         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_scal))//'bcs.imin.'//TRIM(ADJUSTL(name))
+!         CALL DNS_WRITE_FIELDS(name, i0, buff_nps_imin,jmax,kmax,&
+!              inb_scal, isize_field, buffer_vi(1,1,1,inb_flow+1), wrk3d)
+!         ENDIF
+!      ENDIF
 
-     IF ( buff_nps_imax .GT. 0 ) THEN
-        CALL BOUNDARY_INIT_VO(q,s, txc, buffer_vo)
+!      IF ( buff_nps_imax .GT. 0 ) THEN
+!         CALL BOUNDARY_INIT_VO(q,s, txc, buffer_vo, buffer_vo(1,1,1,inb_flow+1))
 
-        WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.imax.'//TRIM(ADJUSTL(name))
-        CALL DNS_WRITE_FIELDS(name, i0, buff_nps_imax,jmax,kmax,&
-             inb_flow, isize_field, buffer_vo,                   wrk3d)
-        IF ( icalc_scal .EQ. 1 ) THEN
-        WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_scal))//'bcs.imax.'//TRIM(ADJUSTL(name))
-        CALL DNS_WRITE_FIELDS(name, i0, buff_nps_imax,jmax,kmax,&
-             inb_scal, isize_field, buffer_vo(1,1,1,inb_flow+1), wrk3d)
-        ENDIF
-     ENDIF
+!         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.imax.'//TRIM(ADJUSTL(name))
+!         CALL DNS_WRITE_FIELDS(name, i0, buff_nps_imax,jmax,kmax,&
+!              inb_flow, isize_field, buffer_vo,                   wrk3d)
+!         IF ( icalc_scal .EQ. 1 ) THEN
+!         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_scal))//'bcs.imax.'//TRIM(ADJUSTL(name))
+!         CALL DNS_WRITE_FIELDS(name, i0, buff_nps_imax,jmax,kmax,&
+!              inb_scal, isize_field, buffer_vo(1,1,1,inb_flow+1), wrk3d)
+!         ENDIF
+!      ENDIF
 
-  ENDIF
+!   ENDIF
      
-! -------------------------------------------------------------------
-! Control; so far only horizontal buffer layers...
-! -------------------------------------------------------------------
-  IF ( buff_nps_jmax .GT. 0 ) THEN
-  DO is = 1, inb_flow + inb_scal
-     var_max = MAXVAL(buffer_ht(:,:,:,is)); var_min = MINVAL(buffer_ht(:,:,:,is))
-#ifdef USE_MPI
-     CALL MPI_ALLREDUCE(var_max, dummy, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
-     var_max = dummy
-     CALL MPI_ALLREDUCE(var_min, dummy, 1, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
-     var_min = dummy
-#endif
-     WRITE(line,10) var_max
-     WRITE(str, 10) var_min
-     line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
-     WRITE(str,*) is
-     line = 'Bounds of field '//TRIM(ADJUSTL(str))//' at upper buffer are '//TRIM(ADJUSTL(line))
-     CALL IO_WRITE_ASCII(lfile,line)
-  ENDDO
-  ENDIF
+! ! -------------------------------------------------------------------
+! ! Control; so far only horizontal buffer layers...
+! ! -------------------------------------------------------------------
+!   IF ( buff_nps_jmax .GT. 0 ) THEN
+!   DO is = 1, inb_flow + inb_scal
+!      var_max = MAXVAL(buffer_ht(:,:,:,is)); var_min = MINVAL(buffer_ht(:,:,:,is))
+! #ifdef USE_MPI
+!      CALL MPI_ALLREDUCE(var_max, dummy, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+!      var_max = dummy
+!      CALL MPI_ALLREDUCE(var_min, dummy, 1, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
+!      var_min = dummy
+! #endif
+!      WRITE(line,10) var_max
+!      WRITE(str, 10) var_min
+!      line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
+!      WRITE(str,*) is
+!      line = 'Bounds of field '//TRIM(ADJUSTL(str))//' at upper buffer are '//TRIM(ADJUSTL(line))
+!      CALL IO_WRITE_ASCII(lfile,line)
+!   ENDDO
+!   ENDIF
 
-  IF ( buff_nps_jmin .GT. 0 ) THEN 
-  DO is = 1, inb_flow + inb_scal
-     var_max = MAXVAL(buffer_hb(:,:,:,is)); var_min = MINVAL(buffer_hb(:,:,:,is))
-#ifdef USE_MPI
-     CALL MPI_ALLREDUCE(var_max, dummy, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
-     var_max = dummy
-     CALL MPI_ALLREDUCE(var_min, dummy, 1, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
-     var_min = dummy
-#endif
-     WRITE(line,10) var_max
-     WRITE(str, 10) var_min
-     line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
-     WRITE(str,*) is
-     line = 'Bounds of field '//TRIM(ADJUSTL(str))//' at lower buffer are '//TRIM(ADJUSTL(line))
-     CALL IO_WRITE_ASCII(lfile,line)
-  ENDDO
-  ENDIF
+!   IF ( buff_nps_jmin .GT. 0 ) THEN 
+!   DO is = 1, inb_flow + inb_scal
+!      var_max = MAXVAL(buffer_hb(:,:,:,is)); var_min = MINVAL(buffer_hb(:,:,:,is))
+! #ifdef USE_MPI
+!      CALL MPI_ALLREDUCE(var_max, dummy, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+!      var_max = dummy
+!      CALL MPI_ALLREDUCE(var_min, dummy, 1, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
+!      var_min = dummy
+! #endif
+!      WRITE(line,10) var_max
+!      WRITE(str, 10) var_min
+!      line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
+!      WRITE(str,*) is
+!      line = 'Bounds of field '//TRIM(ADJUSTL(str))//' at lower buffer are '//TRIM(ADJUSTL(line))
+!      CALL IO_WRITE_ASCII(lfile,line)
+!   ENDDO
+!   ENDIF
 
   ENDIF
 
@@ -360,45 +365,46 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
 ! Using buffer fields; bottom
 ! -------------------------------------------------------------------
      IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
-        DO j = 1,imax*buff_nps_jmin*kmax
-           dummy = C_05_R*prefactor*( buffer_hb(j,1,1,1)*buffer_hb(j,1,1,1) &
-                                    + buffer_hb(j,1,1,2)*buffer_hb(j,1,1,2) &
-                                    + buffer_hb(j,1,1,3)*buffer_hb(j,1,1,3) )/buffer_hb(j,1,1,5)
-           txc(j,1) = ( buffer_hb(j,1,1,4) - dummy )/buffer_hb(j,1,1,5)
+        DO j = 1,imax*BuffFlowJmin%size*kmax
+           dummy = C_05_R*prefactor*( BuffFlowJmin%Ref(j,1,1,1)*BuffFlowJmin%Ref(j,1,1,1) &
+                                    + BuffFlowJmin%Ref(j,1,1,2)*BuffFlowJmin%Ref(j,1,1,2) &
+                                    + BuffFlowJmin%Ref(j,1,1,3)*BuffFlowJmin%Ref(j,1,1,3) )/BuffFlowJmin%Ref(j,1,1,5)
+           txc(j,1) = ( BuffFlowJmin%Ref(j,1,1,4) - dummy )/BuffFlowJmin%Ref(j,1,1,5)
         ENDDO
      ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-        DO j = 1,imax*buff_nps_jmin*kmax
-           txc(j,1) = buffer_hb(j,1,1,4)/buffer_hb(j,1,1,5)
+        DO j = 1,imax*BuffFlowJmin%size*kmax
+           txc(j,1) = BuffFlowJmin%Ref(j,1,1,4)/BuffFlowJmin%Ref(j,1,1,5)
         ENDDO
      ENDIF
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
 ! in AIRWATER case the s array is moved to txc4 because q_l in computed
 ! just after s(1) !!
-        DO j = 1,imax*buff_nps_jmin*kmax
-           txc(j,4) = buffer_hb(j,1,1,inb_flow+1)
+        DO j = 1,imax*BuffFlowJmin%size*kmax
+           txc(j,4) = BuffScalJmin%Ref(j,1,1,1)
         ENDDO
-        CALL THERMO_CALORIC_TEMPERATURE(imax,buff_nps_jmin,kmax, txc(1,4),&
-             txc(1,1), buffer_hb(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(imax,buff_nps_jmin,kmax, txc(1,4),&
-             buffer_hb(1,1,1,5), txc(1,2), txc(1,1))
+        CALL THERMO_CALORIC_TEMPERATURE(imax,BuffFlowJmin%size,kmax, txc(1,4),&
+             txc(1,1), BuffFlowJmin%Ref(1,1,1,5), txc(1,2), txc(1,3))
+        CALL THERMO_THERMAL_PRESSURE(imax,BuffFlowJmin%size,kmax, txc(1,4),&
+             BuffFlowJmin%Ref(1,1,1,5), txc(1,2), txc(1,1))
      ELSE
-        CALL THERMO_CALORIC_TEMPERATURE(imax,buff_nps_jmin,kmax, buffer_hb(1,1,1,inb_flow+1), &
-             txc(1,1), buffer_hb(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(imax,buff_nps_jmin,kmax, buffer_hb(1,1,1,inb_flow+1), &
-             buffer_hb(1,1,1,5), txc(1,2), txc(1,1))
+        CALL THERMO_CALORIC_TEMPERATURE(imax,BuffFlowJmin%size,kmax, BuffScalJmin%Ref, &
+             txc(1,1), BuffFlowJmin%Ref(1,1,1,5), txc(1,2), txc(1,3))
+        CALL THERMO_THERMAL_PRESSURE(imax,BuffFlowJmin%size,kmax, BuffScalJmin%Ref, &
+             BuffFlowJmin%Ref(1,1,1,5), txc(1,2), txc(1,1))
      ENDIF
-     bcs_p_jmin = AVG_IK(imax,buff_nps_jmin,kmax, i1, txc(1,1), g(1)%jac,g(3)%jac, area)
+     bcs_p_jmin = AVG_IK(imax,BuffFlowJmin%size,kmax, i1, txc(1,1), g(1)%jac,g(3)%jac, area)
 
 ! reference plane for BCS at bottom: rho, u_i, p, z_i
      DO k = 1,kmax; DO i = 1,imax
-        bcs_hb(i,k,1) = buffer_hb(i,1,k,5)               ! density
-        bcs_hb(i,k,2) = buffer_hb(i,1,k,2)/bcs_hb(i,k,1) ! normal velocity, in this case v
-        bcs_hb(i,k,3) = buffer_hb(i,1,k,1)/bcs_hb(i,k,1)
-        bcs_hb(i,k,4) = buffer_hb(i,1,k,3)/bcs_hb(i,k,1)
-        ip = i + (k-1)*imax*buff_nps_jmin
+        bcs_hb(i,k,1) = BuffFlowJmin%Ref(i,1,k,5)                ! density
+        bcs_hb(i,k,2) = BuffFlowJmin%Ref(i,1,k,2) /bcs_hb(i,k,1) ! normal velocity, in this case v
+        bcs_hb(i,k,3) = BuffFlowJmin%Ref(i,1,k,1) /bcs_hb(i,k,1)
+        bcs_hb(i,k,4) = BuffFlowJmin%Ref(i,1,k,3) /bcs_hb(i,k,1)
+        ip = i + (k-1)*imax*BuffFlowJmin%size
         bcs_hb(i,k,5) = txc(ip,1)                        ! pressure
-        DO is = inb_flow+1,inb_vars
-           bcs_hb(i,k,is) = buffer_hb(i,1,k,is)/bcs_hb(i,k,1)
+        DO is = 1,inb_scal
+           ip = inb_flow +is
+           bcs_hb(i,k,ip) = BuffScalJmin%Ref(i,1,k,is) /bcs_hb(i,k,1)
         ENDDO
      ENDDO; ENDDO
 
@@ -406,45 +412,46 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
 ! Using buffer fields; top
 ! -------------------------------------------------------------------
      IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        DO j = 1,imax*buff_nps_jmax*kmax
-           dummy = C_05_R*prefactor*( buffer_ht(j,1,1,1)*buffer_ht(j,1,1,1) &
-                                    + buffer_ht(j,1,1,2)*buffer_ht(j,1,1,2) &
-                                    + buffer_ht(j,1,1,3)*buffer_ht(j,1,1,3) )/buffer_ht(j,1,1,5)
-           txc(j,1) = ( buffer_ht(j,1,1,4) - dummy )/buffer_ht(j,1,1,5)
+        DO j = 1,imax*BuffFlowJmax%size*kmax
+           dummy = C_05_R*prefactor*( BuffFlowJmax%Ref(j,1,1,1)*BuffFlowJmax%Ref(j,1,1,1) &
+                                    + BuffFlowJmax%Ref(j,1,1,2)*BuffFlowJmax%Ref(j,1,1,2) &
+                                    + BuffFlowJmax%Ref(j,1,1,3)*BuffFlowJmax%Ref(j,1,1,3) )/BuffFlowJmax%Ref(j,1,1,5)
+           txc(j,1) = ( BuffFlowJmax%Ref(j,1,1,4) - dummy )/BuffFlowJmax%Ref(j,1,1,5)
         ENDDO
      ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-        DO j = 1,imax*buff_nps_jmax*kmax
-           txc(j,1) = buffer_ht(j,1,1,4)/buffer_ht(j,1,1,5)
+        DO j = 1,imax*BuffFlowJmax%size*kmax
+           txc(j,1) = BuffFlowJmax%Ref(j,1,1,4)/BuffFlowJmax%Ref(j,1,1,5)
         ENDDO
      ENDIF
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
 ! in AIRWATER case the s array is moved to txc4 because q_l in computed
 ! just after s(1) !!
-        DO j = 1,imax*buff_nps_jmax*kmax
-           txc(j,4) = buffer_ht(j,1,1,inb_flow+1)
+        DO j = 1,imax*BuffFlowJmax%size*kmax
+           txc(j,4) = BuffScalJmax%Ref(j,1,1,1)
         ENDDO
-        CALL THERMO_CALORIC_TEMPERATURE(imax,buff_nps_jmax,kmax, txc(1,4),&
+        CALL THERMO_CALORIC_TEMPERATURE(imax,BuffFlowJmax%size,kmax, txc(1,4),&
              txc(1,1), buffer_hb(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(imax,buff_nps_jmax,kmax, txc(1,4),&
-             buffer_ht(1,1,1,5), txc(1,2), txc(1,1))
+        CALL THERMO_THERMAL_PRESSURE(imax,BuffFlowJmax%size,kmax, txc(1,4),&
+             BuffFlowJmax%Ref(1,1,1,5), txc(1,2), txc(1,1))
      ELSE
-        CALL THERMO_CALORIC_TEMPERATURE(imax,buff_nps_jmax,kmax, buffer_ht(1,1,1,inb_flow+1), &
-             txc(1,1), buffer_ht(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(imax,buff_nps_jmax,kmax, buffer_ht(1,1,1,inb_flow+1), &
-             buffer_ht(1,1,1,5), txc(1,2), txc(1,1))
+        CALL THERMO_CALORIC_TEMPERATURE(imax,BuffFlowJmax%size,kmax, BuffScalJmax%Ref, &
+             txc(1,1), BuffFlowJmax%Ref(1,1,1,5), txc(1,2), txc(1,3))
+        CALL THERMO_THERMAL_PRESSURE(imax,BuffFlowJmax%size,kmax, BuffScalJmax%Ref, &
+             BuffFlowJmax%Ref(1,1,1,5), txc(1,2), txc(1,1))
      ENDIF
-     bcs_p_jmax = AVG_IK(imax,buff_nps_jmax,kmax, buff_nps_jmax, txc(1,1), g(1)%jac,g(3)%jac, area)
+     bcs_p_jmax = AVG_IK(imax,BuffFlowJmax%size,kmax, BuffFlowJmax%size, txc(1,1), g(1)%jac,g(3)%jac, area)
 
 ! reference plane for BCS at top: rho, u_i, p, z_i
      DO k = 1,kmax; DO i = 1,imax
-        bcs_ht(i,k,1) = buffer_ht(i,buff_nps_jmax,k,5)               ! density
-        bcs_ht(i,k,2) = buffer_ht(i,buff_nps_jmax,k,2)/bcs_ht(i,k,1) ! normal velocity, in this case v
-        bcs_ht(i,k,3) = buffer_ht(i,buff_nps_jmax,k,1)/bcs_ht(i,k,1)               
-        bcs_ht(i,k,4) = buffer_ht(i,buff_nps_jmax,k,3)/bcs_ht(i,k,1)
-        ip = i + (buff_nps_jmax-1)*imax + (k-1)*imax*buff_nps_jmax
+        bcs_ht(i,k,1) = BuffFlowJmax%Ref(i,BuffFlowJmax%size,k,5)               ! density
+        bcs_ht(i,k,2) = BuffFlowJmax%Ref(i,BuffFlowJmax%size,k,2)/bcs_ht(i,k,1) ! normal velocity, in this case v
+        bcs_ht(i,k,3) = BuffFlowJmax%Ref(i,BuffFlowJmax%size,k,1)/bcs_ht(i,k,1)               
+        bcs_ht(i,k,4) = BuffFlowJmax%Ref(i,BuffFlowJmax%size,k,3)/bcs_ht(i,k,1)
+        ip = i + (BuffFlowJmax%size-1)*imax + (k-1)*imax*BuffFlowJmax%size
         bcs_ht(i,k,5) = txc(ip,1)                                    ! pressure
-        DO is = inb_flow+1,inb_vars
-           bcs_ht(i,k,is) = buffer_ht(i,buff_nps_jmax,k,is)/bcs_ht(i,k,1)
+        DO is = 1,inb_scal
+           ip = inb_flow +is
+           bcs_ht(i,k,ip) = BuffScalJmax%Ref(i,BuffFlowJmax%size,k,is) /bcs_ht(i,k,1)
         ENDDO
      ENDDO; ENDDO
 
@@ -455,47 +462,48 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
 ! Using buffer fields; left
 ! -------------------------------------------------------------------
      IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        DO j = 1,buff_nps_imin*jmax*kmax
-           dummy = C_05_R*prefactor*( buffer_vi(j,1,1,1)*buffer_vi(j,1,1,1) &
-                                    + buffer_vi(j,1,1,2)*buffer_vi(j,1,1,2) &
-                                    + buffer_vi(j,1,1,3)*buffer_vi(j,1,1,3) )/buffer_vi(j,1,1,5)
-           txc(j,1) = ( buffer_vi(j,1,1,4) - dummy )/buffer_vi(j,1,1,5)
+        DO j = 1,BuffFlowImin%size*jmax*kmax
+           dummy = C_05_R*prefactor*( BuffFlowImin%Ref(j,1,1,1)*BuffFlowImin%Ref(j,1,1,1) &
+                                    + BuffFlowImin%Ref(j,1,1,2)*BuffFlowImin%Ref(j,1,1,2) &
+                                    + BuffFlowImin%Ref(j,1,1,3)*BuffFlowImin%Ref(j,1,1,3) )/BuffFlowImin%Ref(j,1,1,5)
+           txc(j,1) = ( BuffFlowImin%Ref(j,1,1,4) - dummy )/BuffFlowImin%Ref(j,1,1,5)
         ENDDO
      ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-        DO j = 1,buff_nps_imin*jmax*kmax
-           txc(j,1) = buffer_vi(j,1,1,4)/buffer_vi(j,1,1,5)
+        DO j = 1,BuffFlowImin%size*jmax*kmax
+           txc(j,1) = BuffFlowImin%Ref(j,1,1,4)/BuffFlowImin%Ref(j,1,1,5)
         ENDDO
      ENDIF
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
 ! in AIRWATER case the s array is moved to txc4 because q_l in computed
 ! just after s(1) !!
-        DO j = 1,buff_nps_imin*jmax*kmax
-           txc(j,4) = buffer_vi(j,1,1,inb_flow+1)
+        DO j = 1,BuffFlowImin%size*jmax*kmax
+           txc(j,4) = BuffScalImin%Ref(j,1,1,1)
         ENDDO
-        CALL THERMO_CALORIC_TEMPERATURE(buff_nps_imin,jmax,kmax, txc(1,4),&
-             txc(1,1), buffer_vi(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(buff_nps_imin,jmax,kmax, txc(1,4),&
-             buffer_vi(1,1,1,5), txc(1,2), txc(1,1))
+        CALL THERMO_CALORIC_TEMPERATURE(BuffFlowImin%size,jmax,kmax, txc(1,4),&
+             txc(1,1), BuffFlowImin%Ref(1,1,1,5), txc(1,2), txc(1,3))
+        CALL THERMO_THERMAL_PRESSURE(BuffFlowImin%size,jmax,kmax, txc(1,4),&
+             BuffFlowImin%Ref(1,1,1,5), txc(1,2), txc(1,1))
      ELSE
-        CALL THERMO_CALORIC_TEMPERATURE(buff_nps_imin,jmax,kmax, buffer_vi(1,1,1,inb_flow+1), &
-             txc(1,1), buffer_vi(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(buff_nps_imin,jmax,kmax, buffer_vi(1,1,1,inb_flow+1), &
-             buffer_vi(1,1,1,5), txc(1,2), txc(1,1))
+        CALL THERMO_CALORIC_TEMPERATURE(BuffFlowImin%size,jmax,kmax, BuffScalImin%Ref, &
+             txc(1,1), BuffFlowImin%Ref(1,1,1,5), txc(1,2), txc(1,3))
+        CALL THERMO_THERMAL_PRESSURE(BuffFlowImin%size,jmax,kmax, BuffScalImin%Ref, &
+             BuffFlowImin%Ref(1,1,1,5), txc(1,2), txc(1,1))
      ENDIF
 ! reference value at the center of the vertical length
      j = jmax/2
-     bcs_p_imin = AVG1V1D(buff_nps_imin,jmax,kmax, i1,j, i1, txc(1,1))
+     bcs_p_imin = AVG1V1D(BuffFlowImin%size,jmax,kmax, i1,j, i1, txc(1,1))
 
 ! reference plane for BCS at xmin: rho, u_i, p, z_i
      DO k = 1,kmax; DO j = 1,jmax
-        bcs_vi(j,k,1) = buffer_vi(1,j,k,5)                    ! density
-        bcs_vi(j,k,2) = buffer_vi(1,j,k,1)/bcs_vi(j,k,1)
-        bcs_vi(j,k,3) = buffer_vi(1,j,k,2)/bcs_vi(j,k,1)
-        bcs_vi(j,k,4) = buffer_vi(1,j,k,3)/bcs_vi(j,k,1)
-        ip = 1 + (j-1)*buff_nps_imin + (k-1)*buff_nps_imin*jmax
+        bcs_vi(j,k,1) = BuffFlowImin%Ref(1,j,k,5)                    ! density
+        bcs_vi(j,k,2) = BuffFlowImin%Ref(1,j,k,1)/bcs_vi(j,k,1)
+        bcs_vi(j,k,3) = BuffFlowImin%Ref(1,j,k,2)/bcs_vi(j,k,1)
+        bcs_vi(j,k,4) = BuffFlowImin%Ref(1,j,k,3)/bcs_vi(j,k,1)
+        ip = 1 + (j-1)*BuffFlowImin%size + (k-1)*BuffFlowImin%size*jmax
         bcs_vi(j,k,5) = txc(ip,1)                             ! pressure
-        DO is = inb_flow+1,inb_vars
-           bcs_vi(j,k,is) = buffer_vi(1,j,k,is)/bcs_vi(j,k,1)
+        DO is = 1,inb_scal
+           ip = inb_flow +is
+           bcs_vi(j,k,ip) = BuffScalImin%Ref(1,j,k,is)/bcs_vi(j,k,1)
         ENDDO
      ENDDO; ENDDO
 
@@ -504,64 +512,66 @@ SUBROUTINE BOUNDARY_INIT(buffer_ht, buffer_hb, buffer_vi, buffer_vo, &
      thick_loc = qbg(1)%diam/C_8_R
      ycenter   = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
      DO k = 1,kmax; DO j = 1,jmax
-        bcs_vi(j,k,inb_vars+1) = FLOW_JET_TEMPORAL(i2, thick_loc, r1, r05, diam_loc, ycenter, dummy, g(2)%nodes(j))
+        bcs_vi(j,k,inb_flow+inb_scal+1) = FLOW_JET_TEMPORAL(i2, thick_loc, r1, r05, diam_loc, ycenter, dummy, g(2)%nodes(j))
      ENDDO; ENDDO
 
 ! -------------------------------------------------------------------
 ! Using buffer fields; right
 ! -------------------------------------------------------------------
      IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        DO j = 1,buff_nps_imax*jmax*kmax
-           dummy = C_05_R*prefactor*( buffer_vo(j,1,1,1)*buffer_vo(j,1,1,1) &
-                                    + buffer_vo(j,1,1,2)*buffer_vo(j,1,1,2) &
-                                    + buffer_vo(j,1,1,3)*buffer_vo(j,1,1,3) )/buffer_vo(j,1,1,5)
-           txc(j,1) = ( buffer_vo(j,1,1,4) - dummy )/buffer_vo(j,1,1,5)
+        DO j = 1,BuffFlowImax%size*jmax*kmax
+           dummy = C_05_R*prefactor*( BuffFlowImax%Ref(j,1,1,1)*BuffFlowImax%Ref(j,1,1,1) &
+                                    + BuffFlowImax%Ref(j,1,1,2)*BuffFlowImax%Ref(j,1,1,2) &
+                                    + BuffFlowImax%Ref(j,1,1,3)*BuffFlowImax%Ref(j,1,1,3) )/BuffFlowImax%Ref(j,1,1,5)
+           txc(j,1) = ( BuffFlowImax%Ref(j,1,1,4) - dummy )/BuffFlowImax%Ref(j,1,1,5)
         ENDDO
      ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-        DO j = 1,buff_nps_imax*jmax*kmax
-           txc(j,1) = buffer_vo(j,1,1,4)/buffer_vo(j,1,1,5)
+        DO j = 1,BuffFlowImax%size*jmax*kmax
+           txc(j,1) = BuffFlowImax%Ref(j,1,1,4)/BuffFlowImax%Ref(j,1,1,5)
         ENDDO
      ENDIF
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
 ! in AIRWATER case the s array is moved to txc4 because q_l in computed
 ! just after s(1) !!
-        DO j = 1,buff_nps_imax*jmax*kmax
-           txc(j,4) = buffer_vo(j,1,1,inb_flow+1)
+        DO j = 1,BuffFlowImax%size*jmax*kmax
+           txc(j,4) = BuffScalImax%Ref(j,1,1,1)
         ENDDO
-        CALL THERMO_CALORIC_TEMPERATURE(buff_nps_imax,jmax,kmax, txc(1,4),&
-             txc(1,1), buffer_vo(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(buff_nps_imax,jmax,kmax, txc(1,4),&
-             buffer_vo(1,1,1,5), txc(1,2), txc(1,1))
+        CALL THERMO_CALORIC_TEMPERATURE(BuffFlowImax%size,jmax,kmax, txc(1,4),&
+             txc(1,1), BuffFlowImax%Ref(1,1,1,5), txc(1,2), txc(1,3))
+        CALL THERMO_THERMAL_PRESSURE(BuffFlowImax%size,jmax,kmax, txc(1,4),&
+             BuffFlowImax%Ref(1,1,1,5), txc(1,2), txc(1,1))
      ELSE
-        CALL THERMO_CALORIC_TEMPERATURE(buff_nps_imax,jmax,kmax, buffer_vo(1,1,1,inb_flow+1), &
-             txc(1,1), buffer_vo(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(buff_nps_imax,jmax,kmax, buffer_vo(1,1,1,inb_flow+1), &
-             buffer_vo(1,1,1,5), txc(1,2), txc(1,1))
+        CALL THERMO_CALORIC_TEMPERATURE(BuffFlowImax%size,jmax,kmax, BuffScalImax%Ref, &
+             txc(1,1), BuffFlowImax%Ref(1,1,1,5), txc(1,2), txc(1,3))
+        CALL THERMO_THERMAL_PRESSURE(BuffFlowImax%size,jmax,kmax, BuffScalImax%Ref, &
+             BuffFlowImax%Ref(1,1,1,5), txc(1,2), txc(1,1))
      ENDIF
 ! reference value at the center of the vertical length
      j = jmax/2
-     bcs_p_imax = AVG1V1D(buff_nps_imax,jmax,kmax, buff_nps_imax,j, i1, txc(1,1))
+     bcs_p_imax = AVG1V1D(BuffFlowImax%size,jmax,kmax, BuffFlowImax%size,j, i1, txc(1,1))
 
 ! reference plane for BCS at xmax: rho, u_i, p, z_i
      DO k = 1,kmax; DO j = 1,jmax
-!        bcs_vo(j,k,1) = buffer_vo(buff_nps_imax,j,k,1)
-!        bcs_vo(j,k,2) = buffer_vo(buff_nps_imax,j,k,2)/buffer_vo(buff_nps_imax,j,k,1)
-!        bcs_vo(j,k,3) = buffer_vo(buff_nps_imax,j,k,3)/buffer_vo(buff_nps_imax,j,k,1)
-!        bcs_vo(j,k,4) = buffer_vo(buff_nps_imax,j,k,4)/buffer_vo(buff_nps_imax,j,k,1)
-!        ip = buff_nps_imax + (j-1)*buff_nps_imin + (k-1)*buff_nps_imin*jmax
+!        bcs_vo(j,k,1) = BuffFlowImax%Ref(BuffFlowImax%size,j,k,1)
+!        bcs_vo(j,k,2) = BuffFlowImax%Ref(BuffFlowImax%size,j,k,2)/BuffFlowImax%Ref(BuffFlowImax%size,j,k,1)
+!        bcs_vo(j,k,3) = BuffFlowImax%Ref(BuffFlowImax%size,j,k,3)/BuffFlowImax%Ref(BuffFlowImax%size,j,k,1)
+!        bcs_vo(j,k,4) = BuffFlowImax%Ref(BuffFlowImax%size,j,k,4)/BuffFlowImax%Ref(BuffFlowImax%size,j,k,1)
+!        ip = BuffFlowImax%size + (j-1)*BuffFlowImin%size + (k-1)*BuffFlowImin%size*jmax
 !        bcs_vo(j,k,5) = txc(ip,1)
 !        DO is = 1,inb_scal
-!           bcs_vo(j,k,5+is) = buffer_vo(buff_nps_imax,j,k,5+is)/buffer_vo(buff_nps_imax,j,k,1)
+!           ip = inb_flow +is
+!           bcs_vo(j,k,ip) = BuffScalImax%Ref(BuffFlowImax%size,j,k,is)/BuffFlowImax%Ref(BuffFlowImax%size,j,k,1)
 !        ENDDO
 ! try to use only the coflow values
-        bcs_vo(j,k,1) = buffer_vo(buff_nps_imax,1,k,5)
-        bcs_vo(j,k,2) = buffer_vo(buff_nps_imax,1,k,1)/bcs_vo(j,k,1)
+        bcs_vo(j,k,1) = BuffFlowImax%Ref(BuffFlowImax%size,1,k,5)
+        bcs_vo(j,k,2) = BuffFlowImax%Ref(BuffFlowImax%size,1,k,1)/bcs_vo(j,k,1)
         bcs_vo(j,k,3) = C_0_R
-        bcs_vo(j,k,4) = buffer_vo(buff_nps_imax,1,k,3)/bcs_vo(j,k,1)
-        ip = buff_nps_imax + (1-1)*buff_nps_imin + (k-1)*buff_nps_imin*jmax
+        bcs_vo(j,k,4) = BuffFlowImax%Ref(BuffFlowImax%size,1,k,3)/bcs_vo(j,k,1)
+        ip = BuffFlowImax%size + (1-1)*BuffFlowImin%size + (k-1)*BuffFlowImin%size*jmax
         bcs_vo(j,k,5) = txc(ip,1)
-        DO is = inb_flow+1,inb_vars
-           bcs_vo(j,k,is) = buffer_vo(buff_nps_imax,1,k,is)/bcs_vo(j,k,1)
+        DO is = 1,inb_scal
+           ip = inb_flow +is
+           bcs_vo(j,k,ip) = BuffScalImax%Ref(BuffFlowImax%size,1,k,is)/bcs_vo(j,k,1)
         ENDDO
      ENDDO; ENDDO
      

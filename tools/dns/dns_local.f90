@@ -1,7 +1,7 @@
 #include "types.h"
 
 MODULE DNS_LOCAL
-  USE DNS_TYPES,  ONLY : filter_dt, grid_dt
+  USE DNS_TYPES,  ONLY : filter_dt, grid_dt, buffer_dt
   USE DNS_GLOBAL, ONLY : MAX_NSP, MAX_VARS 
 #ifdef USE_PSFFT  
   USE NB3DFFT,    ONLY : NB3DFFT_SCHEDLTYPE
@@ -65,19 +65,24 @@ MODULE DNS_LOCAL
 ! ################################################################
 ! Buffer zone
 ! ################################################################
-  TINTEGER :: buff_type
+  TINTEGER :: buff_type, buff_load
+! Relaxation type
+  TYPE(buffer_dt) :: BuffFlowImin,BuffFlowImax,BuffFlowJmin,BuffFlowJmax
+  TYPE(buffer_dt) :: BuffScalImin,BuffScalImax,BuffScalJmin,BuffScalJmax
 
+  TINTEGER :: buff_hard_on(MAX_VARS)
+  TREAL    :: buff_hard(MAX_VARS,2)
+
+! To be removed
   TINTEGER :: buff_nps_imin, buff_nps_imax
   TINTEGER :: buff_nps_jmin, buff_nps_jmax
   TINTEGER :: buff_nps_u_jmin, buff_nps_u_jmax, buff_nps_e_jmin, buff_nps_e_jmax, buff_nps_s_jmin, buff_nps_s_jmax
   TINTEGER :: buff_imin, buff_imax
   TINTEGER :: buff_u_jmin,buff_u_jmax, buff_e_jmin,buff_e_jmax, buff_s_jmin,buff_s_jmax
 
-! Relaxation type
   TREAL    :: buff_param_u(2), buff_param_s(2)
-  TINTEGER :: buff_v_free, buff_load, buff_hard_on(MAX_VARS)
-  TREAL    :: buff_hard(MAX_VARS,2)
-
+  TINTEGER :: buff_v_free
+  
 ! ###########################################################
 ! Filters
 ! ###########################################################

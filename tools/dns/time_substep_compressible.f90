@@ -253,13 +253,15 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, v
 ! Impose buffer zone as relaxation terms
 ! ###################################################################
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
-     CALL BOUNDARY_BUFFER_RELAXATION_FLOW(&
-          vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,hq)
+     CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
+     ! CALL BOUNDARY_BUFFER_RELAXATION_FLOW_OLD(&
+     !      vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
+     !      vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,hq)
      DO is = 1,inb_scal
-     CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is,&
-          vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-          vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,s(1,is),hs(1,is))
+        CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, rho,s, hs) 
+     ! CALL BOUNDARY_BUFFER_RELAXATION_SCAL_OLD(is,&
+     !      vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
+     !      vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,s(1,is),hs(1,is))
      ENDDO
   ENDIF
 

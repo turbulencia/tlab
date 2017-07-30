@@ -31,7 +31,7 @@
 !# In this respect, inflow and outflow cases must be reviewed.
 !#
 !########################################################################
-SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(buffer_ht,buffer_hb,buffer_vi,buffer_vo, q,hq)
+SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW_OLD(buffer_ht,buffer_hb,buffer_vi,buffer_vo, q,hq)
   
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : g
@@ -217,12 +217,12 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(buffer_ht,buffer_hb,buffer_vi,buffer_
   ENDIF
 
   RETURN
-END SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW
+END SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW_OLD
 
 ! #######################################################################
 ! Scalar
 ! #######################################################################
-SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, buffer_ht,buffer_hb,buffer_vi,buffer_vo, q, s,hs)
+SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL_OLD(is, buffer_ht,buffer_hb,buffer_vi,buffer_vo, q, s,hs)
   
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : g
@@ -330,4 +330,4 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, buffer_ht,buffer_hb,buffer_vi,buf
   ENDIF
 
   RETURN
-END SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL
+END SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL_OLD

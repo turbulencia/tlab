@@ -306,6 +306,27 @@ PROGRAM DNS
   ENDIF
   
 ! ###################################################################
+! Initialize buffer
+! ###################################################################
+  IF ( BuffFlowImin%size .GT. 0 ) &
+       ALLOCATE( BuffFlowImin%ref(BuffFlowImin%size,jmax,kmax,inb_flow), BuffFlowImin%tau(BuffFlowImin%size,inb_flow) )
+  IF ( BuffFlowImax%size .GT. 0 ) &
+       ALLOCATE( BuffFlowImax%ref(BuffFlowImax%size,jmax,kmax,inb_flow), BuffFlowImax%tau(BuffFlowImax%size,inb_flow) )
+  IF ( BuffFlowJmin%size .GT. 0 ) &
+       ALLOCATE( BuffFlowJmin%ref(imax,BuffFlowJmin%size,kmax,inb_flow), BuffFlowJmin%tau(BuffFlowJmin%size,inb_flow) )
+  IF ( BuffFlowJmax%size .GT. 0 ) &
+       ALLOCATE( BuffFlowJmax%ref(imax,BuffFlowJmax%size,kmax,inb_flow), BuffFlowJmax%tau(BuffFlowJmax%size,inb_flow) )
+  
+  IF ( BuffScalImin%size .GT. 0 ) &
+       ALLOCATE( BuffScalImin%ref(BuffScalImin%size,jmax,kmax,inb_scal), BuffScalImin%tau(BuffScalImin%size,inb_scal) )
+  IF ( BuffScalImax%size .GT. 0 ) &
+       ALLOCATE( BuffScalImax%ref(BuffScalImax%size,jmax,kmax,inb_scal), BuffScalImax%tau(BuffScalImax%size,inb_scal) )
+  IF ( BuffScalJmin%size .GT. 0 ) &
+       ALLOCATE( BuffScalJmin%ref(imax,BuffScalJmin%size,kmax,inb_scal), BuffScalJmin%tau(BuffScalJmin%size,inb_scal) )
+  IF ( BuffScalJmax%size .GT. 0 ) &
+       ALLOCATE( BuffScalJmax%ref(imax,BuffScalJmax%size,kmax,inb_scal), BuffScalJmax%tau(BuffScalJmax%size,inb_scal) )
+  
+! ###################################################################
 ! Initialize filters
 ! ###################################################################
   FilterDomain(:)%size       = g(:)%size

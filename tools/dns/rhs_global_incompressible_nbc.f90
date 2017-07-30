@@ -459,9 +459,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      ! Impose buffer zone as relaxation terms
      ! #######################################################################
      IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
-        CALL BOUNDARY_BUFFER_RELAXATION_FLOW(&
-             vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-             vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), u,h1)
+        CALL BOUNDARY_BUFFER_RELAXATION_FLOW(u,h1)
      ENDIF
 
      tdummy = C_1_R / dte   
