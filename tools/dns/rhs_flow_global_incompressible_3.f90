@@ -13,7 +13,7 @@
 !########################################################################
 SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3&
      (dte, u,v,w,h1,h2,h3, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
-     bcs_hb,bcs_ht, vaux, wrk1d,wrk2d,wrk3d)
+     bcs_hb,bcs_ht, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE DNS_GLOBAL, ONLY : g
@@ -27,7 +27,7 @@ IMPLICIT NONE
   TREAL, DIMENSION(isize_field,*) :: q,hq
   TREAL, DIMENSION(*)             :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk3d
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
-  TREAL, DIMENSION(*)             :: wrk2d, vaux
+  TREAL, DIMENSION(*)             :: wrk2d
   TREAL, DIMENSION(imax,kmax,*)   :: bcs_hb, bcs_ht
 
 ! -----------------------------------------------------------------------
@@ -126,9 +126,6 @@ IMPLICIT NONE
 ! #######################################################################
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
-     ! CALL BOUNDARY_BUFFER_RELAXATION_FLOW_OLD(&
-     !      vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-     !      vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,hq)
   ENDIF
 
 ! #######################################################################

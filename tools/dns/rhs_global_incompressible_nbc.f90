@@ -15,7 +15,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42,&
      bt1,bt2,bt3,bt4,&
      h1,h2,h3,hs,&
-     bcs_hb,bcs_ht,vaux,&
+     bcs_hb,bcs_ht,&
      wrk1d,wrk2d,wrk3d) 
   USE, INTRINSIC :: iso_c_binding, ONLY : c_int,c_loc,c_ptr,c_f_pointer 
 
@@ -72,7 +72,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   TREAL, DIMENSION(isize_field),                INTENT(INOUT):: tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42
   TREAL, DIMENSION(isize_field)  :: bt1,bt2,bt3,bt4
   TREAL, DIMENSION(isize_wrk1d,*):: wrk1d
-  TREAL, DIMENSION(*)            :: wrk2d,wrk3d,vaux
+  TREAL, DIMENSION(*)            :: wrk2d,wrk3d
   !
   ! LOCAL VARIABLES 
   ! 

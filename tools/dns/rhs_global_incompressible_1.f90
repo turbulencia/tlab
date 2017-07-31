@@ -19,7 +19,7 @@
 !########################################################################
 SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      (dte, u,v,w,h1,h2,h3, q,hq, s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
-     bcs_hb,bcs_ht, vaux, wrk1d,wrk2d,wrk3d)
+     bcs_hb,bcs_ht, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -42,7 +42,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
   TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
-  TREAL, DIMENSION(*)             :: wrk2d,wrk3d, vaux
+  TREAL, DIMENSION(*)             :: wrk2d,wrk3d
   TREAL, DIMENSION(imax,kmax,inb_vars) :: bcs_hb, bcs_ht
 
   TARGET tmp2, h2
@@ -165,9 +165,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Impose buffer zone as relaxation terms
 ! #######################################################################
   IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
-     ! CALL BOUNDARY_BUFFER_RELAXATION_FLOW_OLD(&
-     !      vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-     !      vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,hq)
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
   ENDIF
 

@@ -33,8 +33,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, v
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL, ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex, bcs_euler_drift
-  USE DNS_LOCAL, ONLY : VA_BCS_HT, VA_BCS_HB, VA_BCS_VO, VA_BCS_VI
+  USE DNS_LOCAL, ONLY : VA_BCS_HT, VA_BCS_HB, VA_BCS_VO, VA_BCS_VI, vindex, bcs_euler_drift
   USE DNS_LOCAL, ONLY : buff_type
 #ifdef LES
   USE DNS_LOCAL, ONLY : rkm_substep
@@ -349,7 +348,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, v
 ! ###################################################################
   IF ( buff_type .EQ. 2 .OR. buff_type .EQ. 3 ) THEN
      ! CALL BOUNDARY_BUFFER_FILTER&
-     !      (x, rho,u,v,w,e,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+     !      (rho,u,v,w,e,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
      ! OPR_FILTER has changed and this routine needs to be updated
   ENDIF
 

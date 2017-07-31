@@ -65,23 +65,13 @@ MODULE DNS_LOCAL
 ! ################################################################
 ! Buffer zone
 ! ################################################################
-  TINTEGER :: buff_type, buff_load
-! Relaxation type
+  TINTEGER :: buff_type
+  LOGICAL  :: BuffLoad
   TYPE(buffer_dt) :: BuffFlowImin,BuffFlowImax,BuffFlowJmin,BuffFlowJmax
   TYPE(buffer_dt) :: BuffScalImin,BuffScalImax,BuffScalJmin,BuffScalJmax
 
   TINTEGER :: buff_hard_on(MAX_VARS)
   TREAL    :: buff_hard(MAX_VARS,2)
-
-! To be removed
-  TINTEGER :: buff_nps_imin, buff_nps_imax
-  TINTEGER :: buff_nps_jmin, buff_nps_jmax
-  TINTEGER :: buff_nps_u_jmin, buff_nps_u_jmax, buff_nps_e_jmin, buff_nps_e_jmax, buff_nps_s_jmin, buff_nps_s_jmax
-  TINTEGER :: buff_imin, buff_imax
-  TINTEGER :: buff_u_jmin,buff_u_jmax, buff_e_jmin,buff_e_jmax, buff_s_jmin,buff_s_jmax
-
-  TREAL    :: buff_param_u(2), buff_param_s(2)
-  TINTEGER :: buff_v_free
   
 ! ###########################################################
 ! Filters
@@ -136,58 +126,53 @@ MODULE DNS_LOCAL
 ! vaux array
 ! ###################################################################
 #ifdef LES
-  TINTEGER, PARAMETER :: vindex_size=30
+  TINTEGER, PARAMETER :: vindex_size=26
 #else
-  TINTEGER, PARAMETER :: vindex_size=9
+  TINTEGER, PARAMETER :: vindex_size=5
 #endif
 
   TINTEGER, DIMENSION(vindex_size) :: vindex, vsize
 
 ! -------------------------------------------------------------------
-  INTEGER VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI
-  PARAMETER (VA_BUFF_HT=1)
-  PARAMETER (VA_BUFF_HB=2)
-  PARAMETER (VA_BUFF_VI=3)
-  PARAMETER (VA_BUFF_VO=4)
   INTEGER VA_BCS_HT, VA_BCS_HB, VA_BCS_VO, VA_BCS_VI
-  PARAMETER (VA_BCS_HT=5)
-  PARAMETER (VA_BCS_HB=6)
-  PARAMETER (VA_BCS_VI=7)
-  PARAMETER (VA_BCS_VO=8)
+  PARAMETER (VA_BCS_HT=1)
+  PARAMETER (VA_BCS_HB=2)
+  PARAMETER (VA_BCS_VI=3)
+  PARAMETER (VA_BCS_VO=4)
 
   INTEGER VA_MEAN_WRK
-  PARAMETER (VA_MEAN_WRK=9)
+  PARAMETER (VA_MEAN_WRK=5)
 
 ! -------------------------------------------------------------------
 #ifdef LES
   INTEGER VA_LES_FLT0X, VA_LES_FLT0Y, VA_LES_FLT0Z
-  PARAMETER (VA_LES_FLT0X=10)
-  PARAMETER (VA_LES_FLT0Y=11)
-  PARAMETER (VA_LES_FLT0Z=12)
+  PARAMETER (VA_LES_FLT0X=6)
+  PARAMETER (VA_LES_FLT0Y=7)
+  PARAMETER (VA_LES_FLT0Z=8)
   INTEGER VA_LES_FLT1X, VA_LES_FLT1Y, VA_LES_FLT1Z
-  PARAMETER (VA_LES_FLT1X=13)
-  PARAMETER (VA_LES_FLT1Y=14)
-  PARAMETER (VA_LES_FLT1Z=15)
+  PARAMETER (VA_LES_FLT1X=9)
+  PARAMETER (VA_LES_FLT1Y=10)
+  PARAMETER (VA_LES_FLT1Z=11)
   INTEGER VA_LES_FLT2X, VA_LES_FLT2Y, VA_LES_FLT2Z
-  PARAMETER (VA_LES_FLT2X=16)
-  PARAMETER (VA_LES_FLT2Y=17)
-  PARAMETER (VA_LES_FLT2Z=18)
+  PARAMETER (VA_LES_FLT2X=12)
+  PARAMETER (VA_LES_FLT2Y=13)
+  PARAMETER (VA_LES_FLT2Z=14)
   INTEGER VA_LES_SGSCOEFU, VA_LES_SGSCOEFE, VA_LES_SGSCOEFZ
-  PARAMETER (VA_LES_SGSCOEFU=19)
-  PARAMETER (VA_LES_SGSCOEFE=20)
-  PARAMETER (VA_LES_SGSCOEFZ=21)
+  PARAMETER (VA_LES_SGSCOEFU=15)
+  PARAMETER (VA_LES_SGSCOEFE=16)
+  PARAMETER (VA_LES_SGSCOEFZ=17)
   INTEGER VA_LES_ARM_UF, VA_LES_ARM_PF, VA_LES_ARM_ZF
-  PARAMETER (VA_LES_ARM_UF=22)
-  PARAMETER (VA_LES_ARM_PF=23)
-  PARAMETER (VA_LES_ARM_ZF=24)
+  PARAMETER (VA_LES_ARM_UF=18)
+  PARAMETER (VA_LES_ARM_PF=19)
+  PARAMETER (VA_LES_ARM_ZF=20)
   INTEGER VA_LES_ARM_UH, VA_LES_ARM_PH, VA_LES_ARM_ZH
-  PARAMETER (VA_LES_ARM_UH=25)
-  PARAMETER (VA_LES_ARM_PH=26)
-  PARAMETER (VA_LES_ARM_ZH=37)
+  PARAMETER (VA_LES_ARM_UH=21)
+  PARAMETER (VA_LES_ARM_PH=22)
+  PARAMETER (VA_LES_ARM_ZH=23)
   INTEGER VA_ARM_WRK, VA_ARM_C0, VA_LES_FDF_BS
-  PARAMETER (VA_ARM_WRK   =28)
-  PARAMETER (VA_ARM_C0    =29)
-  PARAMETER (VA_LES_FDF_BS=30) 
+  PARAMETER (VA_ARM_WRK   =24)
+  PARAMETER (VA_ARM_C0    =25)
+  PARAMETER (VA_LES_FDF_BS=26) 
 #endif
   
 END MODULE DNS_LOCAL

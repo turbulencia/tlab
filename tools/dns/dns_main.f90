@@ -499,10 +499,8 @@ PROGRAM DNS
 ! ###################################################################
 ! Initialize data for boundary conditions
 ! ###################################################################
-  CALL BOUNDARY_INIT(vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-                     vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), &
-                     vaux(vindex(VA_BCS_HT)),  vaux(vindex(VA_BCS_HB)),  &
-                     vaux(vindex(VA_BCS_VI)),  vaux(vindex(VA_BCS_VO)),  &
+  CALL BOUNDARY_INIT(vaux(vindex(VA_BCS_HT)),  vaux(vindex(VA_BCS_HB)), &
+                     vaux(vindex(VA_BCS_VI)),  vaux(vindex(VA_BCS_VO)), &
                      q,s, txc, wrk3d)
 
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
@@ -560,7 +558,7 @@ SUBROUTINE DNS_MPIO_AUX()
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : inb_flow_array, inb_scal_array
   USE DNS_LOCAL,  ONLY : nplanes_i,nplanes_j,nplanes_k, planes_i,planes_k
-  USE DNS_LOCAL,  ONLY : buff_nps_jmin, buff_nps_jmax
+  USE DNS_LOCAL,  ONLY : BuffFlowJmin, BuffFlowJmax
   USE DNS_MPI
   
   IMPLICIT NONE
@@ -632,14 +630,14 @@ SUBROUTINE DNS_MPIO_AUX()
 ! Subarray information to read and write buffer regions
 ! ###################################################################
   id = 4
-  IF ( buff_nps_jmin .GT. 0 ) THEN ! At the lower boundary
+  IF ( BuffFlowJmin%size .GT. 0 ) THEN ! At the lower boundary
      mpio_aux(id)%active = .TRUE.
      mpio_aux(id)%communicator = MPI_COMM_WORLD
      
      ndims = 3
-     sizes(1)  =imax *ims_npro_i; sizes(2)   = buff_nps_jmin; sizes(3)   = kmax *ims_npro_k
-     locsize(1)=imax;             locsize(2) = buff_nps_jmin; locsize(3) = kmax
-     offset(1) =ims_offset_i;     offset(2)  = 0;             offset(3)  = ims_offset_k
+     sizes(1)  =imax *ims_npro_i; sizes(2)   = BuffFlowJmin%size; sizes(3)   = kmax *ims_npro_k
+     locsize(1)=imax;             locsize(2) = BuffFlowJmin%size; locsize(3) = kmax
+     offset(1) =ims_offset_i;     offset(2)  = 0;                 offset(3)  = ims_offset_k
      
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
           MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)
@@ -648,14 +646,14 @@ SUBROUTINE DNS_MPIO_AUX()
   ENDIF
 
   id = 5
-  IF ( buff_nps_jmax .GT. 0 ) THEN ! At the upper boundary
+  IF ( BuffFlowJmax%size .GT. 0 ) THEN ! At the upper boundary
      mpio_aux(id)%active = .TRUE.
      mpio_aux(id)%communicator = MPI_COMM_WORLD
      
      ndims = 3
-     sizes(1)  =imax *ims_npro_i; sizes(2)   = buff_nps_jmax; sizes(3)   = kmax *ims_npro_k
-     locsize(1)=imax;             locsize(2) = buff_nps_jmax; locsize(3) = kmax
-     offset(1) =ims_offset_i;     offset(2)  = 0;             offset(3)  = ims_offset_k
+     sizes(1)  =imax *ims_npro_i; sizes(2)   = BuffFlowJmax%size; sizes(3)   = kmax *ims_npro_k
+     locsize(1)=imax;             locsize(2) = BuffFlowJmax%size; locsize(3) = kmax
+     offset(1) =ims_offset_i;     offset(2)  = 0;                 offset(3)  = ims_offset_k
      
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
           MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)

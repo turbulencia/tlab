@@ -1,6 +1,7 @@
 #include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
+#include "dns_const_mpi.h"
 
 !########################################################################
 !# DESCRIPTION
@@ -19,7 +20,7 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
   USE DNS_GLOBAL,    ONLY : itime
   USE DNS_GLOBAL,    ONLY : mach
   USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL,     ONLY : BuffFlowJmin,BuffFlowJmax,BuffFlowImin,BuffFlowImax, buff_load
+  USE DNS_LOCAL,     ONLY : BuffFlowJmin,BuffFlowJmax,BuffFlowImin,BuffFlowImax, BuffLoad
   USE DNS_LOCAL,     ONLY : BuffScalJmin,BuffScalJmax,BuffScalImin,BuffScalImax
 #ifdef USE_MPI
   USE DNS_CONSTANTS, ONLY : efile
@@ -134,7 +135,7 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
   
 ! ###################################################################
 ! Read buffer zones
-  IF ( buff_load .EQ. 1 ) THEN
+  IF ( BuffLoad ) THEN
 
      IF ( BuffFlowJmin%size .GT. 0 ) THEN
         name = TRIM(ADJUSTL(tag_flow))//'bcs.jmin'
@@ -518,3 +519,544 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, rho,s, hs)
   RETURN
 END SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL
 
+!########################################################################
+!########################################################################
+SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
+
+  USE DNS_CONSTANTS, ONLY : lfile
+  USE DNS_GLOBAL,    ONLY : imax, jmax, kmax
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns
+  USE DNS_GLOBAL,    ONLY : inb_flow, inb_scal, area
+  USE DNS_LOCAL,     ONLY : BuffFlowJmax, BuffScalJmax, buff_hard, buff_hard_on
+
+  IMPLICIT NONE
+
+#include "integers.h"
+
+  TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN)  :: q, s, txc
+  TREAL, DIMENSION(imax,BuffFlowJmax%size,kmax,*) :: buffer_q
+  TREAL, DIMENSION(imax,BuffScalJmax%size,kmax,*) :: buffer_s
+
+  TARGET txc, q
+
+! -------------------------------------------------------------------
+  TREAL AVG_IK, AVG1V1D, COV2V2D, COV2V1D
+  TINTEGER i, j, is, iq, jloc
+
+  TREAL, DIMENSION(:), POINTER :: r_loc, e_loc
+
+! ###################################################################
+  IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN; e_loc => txc(:,2); r_loc => q(:,5)
+  ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN; e_loc => q(:,4);   r_loc => q(:,5);
+  ELSE;                                                                  r_loc => txc(:,1); ENDIF
+
+! ###################################################################
+! Temporally evolving shear layer
+! ###################################################################
+  IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
+
+! Flow variables
+     DO iq = 1,3
+        DO j = 1, BuffFlowJmax%size
+           jloc = jmax -BuffScalJmax%size +j
+           IF ( buff_hard_on(iq) .EQ. 0 ) &
+                buff_hard(iq,1) = COV2V2D(imax,jmax,kmax, jloc, r_loc,q(1,iq))
+           buffer_q(:,j,:,iq) = buff_hard(iq,1)
+        ENDDO
+     ENDDO
+
+! if compressible; energy can have a different buffer extent
+     IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
+        DO j = 1, BuffFlowJmax%size
+           jloc = jmax -BuffScalJmax%size +j
+           IF ( buff_hard_on(4) .EQ. 0 ) &
+                buff_hard(4,1) = COV2V2D(imax,jmax,kmax, jloc, r_loc,e_loc)
+           buffer_q(:,j,:,4) = buff_hard(4,1)
+           IF ( buff_hard_on(5) .EQ. 0 ) &
+                buff_hard(5,1) = AVG_IK(imax,jmax,kmax, jloc, r_loc, g(1)%jac,g(3)%jac, area)
+           buffer_q(:,j,:,5) = buff_hard(5,1)
+        ENDDO
+     ENDIF
+     
+! Scalars
+     IF ( BuffScalJmax%size .GT. 0 ) THEN
+        DO is = 1,inb_scal
+           DO j = 1,BuffScalJmax%size
+              jloc = jmax -BuffScalJmax%size +j
+              IF ( buff_hard_on(inb_flow+is) .EQ. 0 ) &
+                   buff_hard(inb_flow+is,1) = COV2V2D(imax,jmax,kmax, jloc, r_loc,s(1,is))
+              buffer_s(:,j,:,is) = buff_hard(inb_flow+is,1)
+           ENDDO
+        ENDDO
+     ENDIF
+     
+! ###################################################################
+! Spatially evolving jet
+! ###################################################################
+  ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN  
+
+! Flow variables
+     DO iq = 1,3
+        DO j = 1, BuffFlowJmax%size
+           jloc = jmax -BuffScalJmax%size +j
+           DO i = 1,imax
+              IF ( buff_hard_on(iq) .EQ. 0 ) &
+                   buff_hard(iq,1) = COV2V1D(imax,jmax,kmax, i,jloc, r_loc,q(1,iq))
+              buffer_q(i,j,:,iq) = buff_hard(iq,1)
+           ENDDO
+        ENDDO
+     ENDDO
+        
+! if compressible; energy can have a different buffer extent
+     IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
+        DO j = 1, BuffFlowJmax%size
+           jloc = jmax -BuffScalJmax%size +j
+           DO i = 1,imax
+              IF ( buff_hard_on(4) .EQ. 0 ) &
+                   buff_hard(4,1) = COV2V1D(imax,jmax,kmax, i,jloc, r_loc,e_loc)
+              buffer_q(i,j,:,4) = buff_hard(4,1)
+              IF ( buff_hard_on(5) .EQ. 0 ) &
+                   buff_hard(5,1) = AVG1V1D(imax,jmax,kmax, i,jloc, i1, r_loc)
+              buffer_q(i,j,:,5) = buff_hard(5,1)
+           ENDDO
+        ENDDO
+     ENDIF
+        
+! Scalars
+     IF ( BuffScalJmax%size .GT. 0 ) THEN
+        DO is = 1,inb_scal
+           DO j = 1,BuffScalJmax%size
+              jloc = jmax -BuffScalJmax%size +j
+              DO i = 1,imax
+                 IF ( buff_hard_on(inb_flow+is) .EQ. 0 ) &
+                      buff_hard(inb_flow+is,1) = COV2V1D(imax,jmax,kmax, i,jloc, r_loc,s(1,is))
+                 buffer_s(i,j,:,is) = buff_hard(inb_flow+is,1)
+              ENDDO
+           ENDDO
+        ENDDO
+     ENDIF
+  
+  ENDIF
+
+  RETURN
+END SUBROUTINE BOUNDARY_INIT_HT
+
+!########################################################################
+!########################################################################
+SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
+
+  USE DNS_CONSTANTS, ONLY : lfile
+  USE DNS_GLOBAL,    ONLY : imax, jmax, kmax
+  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns
+  USE DNS_GLOBAL,    ONLY : inb_flow, inb_scal, area
+  USE DNS_LOCAL,     ONLY : BuffFlowJmin, BuffScalJmin, buff_hard, buff_hard_on
+
+  IMPLICIT NONE
+
+#include "integers.h"
+
+  TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN)  :: q, s, txc
+  TREAL, DIMENSION(imax,BuffFlowJmin%size,kmax,*) :: buffer_q
+  TREAL, DIMENSION(imax,BuffScalJmin%size,kmax,*) :: buffer_s
+
+  TARGET txc, q
+
+! -------------------------------------------------------------------
+  TREAL AVG_IK, AVG1V1D, COV2V2D, COV2V1D
+  TINTEGER i, j, is, iq
+
+  TREAL, DIMENSION(:), POINTER :: r_loc, e_loc
+
+! ###################################################################
+  IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN; e_loc => txc(:,2); r_loc => q(:,5)
+  ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN; e_loc => q(:,4);   r_loc => q(:,5);
+  ELSE;                                                                  r_loc => txc(:,1); ENDIF
+
+! ###################################################################
+! Temporally evolving shear layer
+! ###################################################################
+  IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
+
+! Flow variables
+     DO iq = 1,3
+        DO j = 1, BuffFlowJmin%size
+           IF ( buff_hard_on(iq) .EQ. 0 ) &
+                buff_hard(iq,2) = COV2V2D(imax,jmax,kmax, j, r_loc,q(1,iq))
+           buffer_q(:,j,:,iq) = buff_hard(iq,2)
+        ENDDO
+     ENDDO
+     
+! if compressible; energy can have a different buffer extent
+     IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
+        DO j = 1, BuffFlowJmin%size
+           IF ( buff_hard_on(4) .EQ. 0 ) &
+                buff_hard(4,2) = COV2V2D(imax,jmax,kmax, j, r_loc,e_loc)
+           buffer_q(:,j,:,4) = buff_hard(4,2)
+           IF ( buff_hard_on(5) .EQ. 0 ) &
+                buff_hard(5,2) = AVG_IK(imax,jmax,kmax, j, r_loc, g(1)%jac,g(3)%jac, area)
+           buffer_q(:,j,:,5) = buff_hard(5,2)
+        ENDDO
+     ENDIF
+
+! Scalars
+     IF ( BuffScalJmin%size .GT. 0 ) THEN
+        DO is = 1,inb_scal
+           DO j = 1,BuffScalJmin%size
+              IF ( buff_hard_on(inb_flow+is) .EQ. 0 ) &
+                   buff_hard(inb_flow+is,2) = COV2V2D(imax,jmax,kmax, j, r_loc,s(1,is))
+              buffer_s(:,j,:,is) = buff_hard(inb_flow+is,2)
+           ENDDO
+        ENDDO
+     ENDIF
+
+! ###################################################################
+! Spatially evolving jet
+! ###################################################################
+  ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN  
+
+! Flow variables
+     DO iq = 1,3
+        DO j = 1, BuffFlowJmin%size
+           DO i = 1,imax
+              IF ( buff_hard_on(iq) .EQ. 0 ) &
+                buff_hard(iq,2) = COV2V1D(imax,jmax,kmax, i,j, r_loc,q(1,iq))
+              buffer_q(i,j,:,iq) = buff_hard(iq,2)
+           ENDDO
+        ENDDO
+     ENDDO
+     
+! if compressible; energy can have a different buffer extent
+     IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
+        DO j = 1, BuffFlowJmin%size
+           DO i = 1,imax
+              IF ( buff_hard_on(4) .EQ. 0 ) &
+                   buff_hard(4,2) = COV2V1D(imax,jmax,kmax, i,j, r_loc,e_loc)
+              buffer_q(i,j,:,4) = buff_hard(4,2)
+              IF ( buff_hard_on(5) .EQ. 0 ) &
+                   buff_hard(5,2) = AVG1V1D(imax,jmax,kmax, i,j, i1, r_loc)
+              buffer_q(i,j,:,5) = buff_hard(5,2)
+           ENDDO
+        ENDDO
+     ENDIF
+
+! Scalars
+     IF ( BuffScalJmin%size .GT. 0 ) THEN
+        DO is = 1,inb_scal
+           DO j = 1,BuffScalJmin%size
+              DO i = 1,imax
+                 IF ( buff_hard_on(inb_flow+is) .EQ. 0 ) &
+                      buff_hard(inb_flow+is,2) = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is))
+                 buffer_s(i,j,:,is) = buff_hard(inb_flow+is,2)
+              ENDDO
+           ENDDO
+        ENDDO
+     ENDIF
+
+  ENDIF
+
+  RETURN
+END SUBROUTINE BOUNDARY_INIT_HB
+
+!########################################################################
+!########################################################################
+!It only makes sense in spatially evolving cases.
+SUBROUTINE BOUNDARY_INIT_VI(q,s, txc, buffer_q, buffer_s)
+
+  USE DNS_GLOBAL, ONLY : imax, jmax, kmax
+  USE DNS_GLOBAL, ONLY : imode_eqns, inb_scal, inb_vars
+  USE DNS_LOCAL,  ONLY : BuffFlowImin, BuffScalImin
+
+  IMPLICIT NONE
+
+#include "integers.h"
+
+  TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN)  :: q, s, txc
+  TREAL, DIMENSION(BuffFlowImin%size,jmax,kmax,*) :: buffer_q
+  TREAL, DIMENSION(BuffScalImin%size,jmax,kmax,*) :: buffer_s
+
+  TARGET txc, q
+
+! -------------------------------------------------------------------
+  TREAL AVG1V1D, COV2V1D
+  TREAL dbuff(inb_vars)
+  TINTEGER i, j, iq, is
+
+  TREAL, DIMENSION(:), POINTER :: r_loc, e_loc
+
+! ###################################################################
+  IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN; e_loc => txc(:,2); r_loc => q(:,5)
+  ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN; e_loc => q(:,4);   r_loc => q(:,5);
+  ELSE;                                                                  r_loc => txc(:,1); ENDIF
+
+! ###################################################################
+! Shear layer and jet profile
+! ###################################################################
+  DO iq = 1,3
+     DO j = 1,jmax
+        DO i = 1,BuffFlowImin%size
+           dbuff(iq) = COV2V1D(imax,jmax,kmax, i,j, r_loc,q(1,iq))
+           buffer_q(i,j,:,iq) = dbuff(iq)
+        ENDDO
+     ENDDO
+  ENDDO
+
+! if compressible
+  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
+     DO j = 1,jmax
+        DO i = 1,BuffFlowImin%size
+           dbuff(4) = COV2V1D(imax,jmax,kmax, i,j, r_loc,e_loc)
+           buffer_q(i,j,:,4) = dbuff(4)
+           dbuff(5) = AVG1V1D(imax,jmax,kmax, i,j, i1, r_loc)
+           buffer_q(i,j,:,5) = dbuff(5)
+        ENDDO
+     ENDDO
+  ENDIF
+     
+  IF ( BuffScalImin%size .GT. 0 ) THEN
+     DO is = 1,inb_scal
+        DO j = 1,jmax
+           DO i = 1,BuffScalImin%size
+              dbuff(is) = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is))
+              buffer_s(i,j,:,is) = dbuff(is)
+           ENDDO
+        ENDDO
+     ENDDO
+  ENDIF
+  
+  RETURN
+END SUBROUTINE BOUNDARY_INIT_VI
+
+!########################################################################
+!########################################################################
+!It only makes sense in spatially evolving cases.
+SUBROUTINE BOUNDARY_INIT_VO(q,s, txc, buffer_q, buffer_s)
+
+  USE DNS_GLOBAL, ONLY : imax, jmax, kmax
+  USE DNS_GLOBAL, ONLY : imode_eqns, inb_scal, inb_vars
+  USE DNS_LOCAL,  ONLY : BuffFlowImax, BuffScalImax
+
+  IMPLICIT NONE
+
+#include "integers.h"
+
+  TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN)  :: q, s, txc
+  TREAL, DIMENSION(BuffFlowImax%size,jmax,kmax,*) :: buffer_q
+  TREAL, DIMENSION(BuffScalImax%size,jmax,kmax,*) :: buffer_s
+
+  TARGET txc, q
+
+! -------------------------------------------------------------------
+  TREAL AVG1V1D, COV2V1D
+  TREAL dbuff(inb_vars)
+  TINTEGER i, j, iq, is, iloc
+
+  TREAL, DIMENSION(:), POINTER :: r_loc, e_loc
+
+! ###################################################################
+  IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN; e_loc => txc(:,2); r_loc => q(:,5)
+  ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN; e_loc => q(:,4);   r_loc => q(:,5);
+  ELSE;                                                                  r_loc => txc(:,1); ENDIF
+
+! ###################################################################
+! Shear layer and jet profile
+! ###################################################################
+  DO iq = 1,3
+     DO j = 1,jmax
+        DO i = 1,BuffFlowImax%size
+           iloc = imax -BuffScalImax%size +i
+           dbuff(iq) = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,q(1,iq))
+           buffer_q(i,j,:,iq) = dbuff(iq)
+        ENDDO
+     ENDDO
+  ENDDO
+  
+! if compressible
+  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
+     DO j = 1,jmax
+        DO i = 1,BuffFlowImax%size
+           iloc = imax -BuffScalImax%size +i
+           dbuff(4) = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,e_loc)
+           buffer_q(i,j,:,4) = dbuff(4)
+           dbuff(5) = AVG1V1D(imax,jmax,kmax, iloc,j, i1, r_loc)
+           buffer_q(i,j,:,5) = dbuff(5)
+        ENDDO
+     ENDDO
+  ENDIF
+  
+  IF ( BuffScalImax%size .GT. 0 ) THEN
+     DO is = 1,inb_scal
+        DO j = 1,jmax
+           DO i = 1,BuffScalImax%size
+              iloc = imax -BuffScalImax%size +i
+              dbuff(is) = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,s(1,is))
+              buffer_s(i,j,:,is) = dbuff(is)
+           ENDDO
+        ENDDO
+     ENDDO
+  ENDIF
+  
+  RETURN
+END SUBROUTINE BOUNDARY_INIT_VO
+
+!########################################################################
+!########################################################################
+SUBROUTINE BOUNDARY_BUFFER_FILTER(rho,u,v,w,e,z1, txc1,txc2,txc3,txc4,txc5, wrk1d,wrk2d,wrk3d)
+
+  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_GLOBAL, ONLY : imax, jmax, kmax
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : icalc_scal, inb_scal
+  USE DNS_LOCAL,  ONLY : BuffFlowImax, BuffFlowImax, BuffFlowJmin, BuffFlowJmax
+
+  IMPLICIT NONE
+
+#include "integers.h"
+
+  TREAL, DIMENSION(imax,jmax,kmax  )        :: rho, u, v, w, e
+  TREAL, DIMENSION(imax,jmax,kmax,*)        :: z1
+  TREAL, DIMENSION(BuffFlowImax%size,jmax,kmax) :: txc1, txc2, txc3, txc4, txc5 
+  TREAL, DIMENSION(*)                       :: wrk1d,wrk2d,wrk3d
+
+! -------------------------------------------------------------------
+  TINTEGER id, iloc, i, j, k, is, ibc_x(4), ibc_y(4), ibc_z(4), buff_imax
+  TREAL eta, delta, amp, ampr, rho_ratio
+
+! ###################################################################
+!!! Routines OPR_FILTER have been changed. This routine needs to be updates !!!
+  CALL IO_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
+  CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+
+
+! BCs for the filters (see routine FILTER)
+  ! ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 1; ibc_x(4) = 1
+  ! ibc_y(1) = 1; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0 
+  ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0 
+
+! ###################################################################
+! Bottom boundary
+! ###################################################################
+  IF ( BuffFlowJmin%size .GT. 1 ) THEN
+     CALL IO_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
+     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+  ENDIF
+
+! ###################################################################
+! Top boundary
+! ###################################################################
+  IF ( BuffFlowJmax%size .GT. 1 ) THEN
+     CALL IO_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
+     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+  ENDIF
+
+! ###################################################################
+! Outflow boundary
+! ###################################################################
+  IF ( BuffFlowImax%size .GT. 1 ) THEN
+     id = DNS_MPI_K_OUTBCS
+     buff_imax = imax -BuffFlowImax%size +iloc
+! -------------------------------------------------------------------
+! Flow
+! -------------------------------------------------------------------
+     DO k = 1,kmax
+        DO j = 1,jmax
+           DO iloc = 1,BuffFlowImax%size ! Outflow boundary
+              i = imax -BuffFlowImax%size +iloc
+              txc1(iloc,j,k) = rho(i,j,k)
+              txc2(iloc,j,k) = rho(i,j,k)*u(i,j,k)
+              txc3(iloc,j,k) = rho(i,j,k)*v(i,j,k)
+              txc4(iloc,j,k) = rho(i,j,k)*w(i,j,k)
+              txc5(iloc,j,k) = rho(i,j,k)*e(i,j,k)
+!              txc2(iloc,j,k) = u(i,j,k)
+!              txc3(iloc,j,k) = v(i,j,k)
+!              txc4(iloc,j,k) = w(i,j,k)
+!              txc5(iloc,j,k) = e(i,j,k)
+           ENDDO
+        ENDDO
+     ENDDO
+
+     CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc1, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+     CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc2, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+     CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc3, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+     CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc4, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+     CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc5, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+
+! thickness \delta_\theta s.t. 2\delta_w = L_buffer/2
+     delta = (g(1)%nodes(imax)-g(1)%nodes(buff_imax))/C_16_R
+     DO i = buff_imax,imax
+        iloc = i-buff_imax+1
+
+        eta = g(1)%nodes(i) - C_05_R*( g(1)%nodes(imax)+g(1)%nodes(buff_imax) )
+        amp = C_05_R*(C_1_R+TANH(C_05_R*eta/delta))
+        ampr= C_1_R-amp
+
+        DO k = 1,kmax
+           DO j = 1,jmax
+              rho_ratio = rho(i,j,k)
+              rho(i,j,k) = ampr*rho(i,j,k) + amp*txc1(iloc,j,k)
+              rho_ratio = rho_ratio/rho(i,j,k)
+
+              u(i,j,k) = ampr*rho_ratio*u(i,j,k) + amp*txc2(iloc,j,k)/rho(i,j,k)
+              v(i,j,k) = ampr*rho_ratio*v(i,j,k) + amp*txc3(iloc,j,k)/rho(i,j,k)
+              w(i,j,k) = ampr*rho_ratio*w(i,j,k) + amp*txc4(iloc,j,k)/rho(i,j,k)
+              e(i,j,k) = ampr*rho_ratio*e(i,j,k) + amp*txc5(iloc,j,k)/rho(i,j,k)
+
+! store rho_ratio to be used in scalar section
+              txc1(iloc,j,k) = rho_ratio
+
+!              rho(i,j,k) = ampr*rho(i,j,k) + amp*txc1(iloc,j,k)
+!              u(i,j,k)   = ampr*u(i,j,k)   + amp*txc2(iloc,j,k)
+!              v(i,j,k)   = ampr*v(i,j,k)   + amp*txc3(iloc,j,k)
+!              w(i,j,k)   = ampr*w(i,j,k)   + amp*txc4(iloc,j,k)
+!              e(i,j,k)   = ampr*e(i,j,k)   + amp*txc5(iloc,j,k)
+
+           ENDDO
+        ENDDO
+     ENDDO
+
+! -------------------------------------------------------------------
+! Scalar
+! -------------------------------------------------------------------
+     IF ( icalc_scal .EQ. 1 ) THEN
+        DO is = 1,inb_scal
+
+           DO k = 1,kmax
+              DO j = 1,jmax
+                 DO iloc = 1,BuffFlowImax%size ! Outflow boundary
+                    i = imax -BuffFlowImax%size +iloc
+                    txc2(iloc,j,k) = rho(i,j,k)*z1(i,j,k,is)
+!                    txc2(iloc,j,k) = z1(i,j,k,is)
+                 ENDDO
+              ENDDO
+           ENDDO
+
+           CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, &
+                txc2, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+
+! thickness \delta_\theta s.t. 2\delta_w = L_buffer/2
+           delta = (g(1)%nodes(imax)-g(1)%nodes(buff_imax))/C_16_R
+           DO i = buff_imax,imax
+              iloc = i-buff_imax+1
+
+              eta = g(1)%nodes(i) - C_05_R*( g(1)%nodes(imax)+g(1)%nodes(buff_imax) )
+              amp = C_05_R*(C_1_R+TANH(C_05_R*eta/delta))
+              ampr= C_1_R-amp
+
+              DO k = 1,kmax
+                 DO j = 1,jmax
+                    z1(i,j,k,is) = ampr*txc1(iloc,j,k)*z1(i,j,k,is) + &
+                         amp*txc2(iloc,j,k)/rho(i,j,k)
+!                    z1(i,j,k,is) = ampr*z1(i,j,k,is) + amp*txc2(iloc,j,k)
+                 ENDDO
+              ENDDO
+
+           ENDDO
+
+        ENDDO
+     ENDIF
+
+  ENDIF
+
+  RETURN
+END SUBROUTINE BOUNDARY_BUFFER_FILTER

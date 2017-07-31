@@ -86,7 +86,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
      CALL FI_SOURCES_FLOW(q,s, hq, txc(1,1), wrk1d,wrk2d,wrk3d)
      CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
           q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-          vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, wrk1d,wrk2d,wrk3d)
+          vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), wrk1d,wrk2d,wrk3d)
      
      CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
      DO is = 1,inb_scal
@@ -101,7 +101,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
      CALL FI_SOURCES_FLOW(q,s, hq, txc(1,1), wrk1d,wrk2d,wrk3d)
      CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
           q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-          vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, wrk1d,wrk2d,wrk3d)
+          vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), wrk1d,wrk2d,wrk3d)
      
      CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
      DO is = 1,inb_scal
@@ -117,7 +117,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
         CALL FI_SOURCES_FLOW(q,s, hq, txc(1,1), wrk1d,wrk2d,wrk3d)
         CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
              q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, wrk1d,wrk2d,wrk3d)
+             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), wrk1d,wrk2d,wrk3d)
         
         CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
         DO is = 1,inb_scal
@@ -130,7 +130,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
         CALL FI_SOURCES_SCAL(  s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
         CALL RHS_GLOBAL_INCOMPRESSIBLE_1(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
              q,hq, s,hs, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, wrk1d,wrk2d,wrk3d)
+             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), wrk1d,wrk2d,wrk3d)
 
      ELSE IF ( imode_rhs .EQ. EQNS_RHS_NONBLOCKING ) THEN 
 #ifdef USE_PSFFT 
@@ -169,9 +169,6 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
      ! Flow part needs to be taken into account in the pressure
      DO is = 1,inb_scal
      CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, q,s, hs) ! array q is not used
-     !    CALL BOUNDARY_BUFFER_RELAXATION_SCAL_OLD(is,&
-     !         vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-     !         vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,s(1,is),hs(1,is))
      ENDDO
   ENDIF
 

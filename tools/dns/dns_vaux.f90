@@ -41,11 +41,6 @@ SUBROUTINE DNS_VAUX(isize_vaux)
 #endif
   
 ! #######################################################################
-  vsize(VA_BUFF_HT) = imax*kmax*inb_vars*buff_nps_jmax
-  vsize(VA_BUFF_HB) = imax*kmax*inb_vars*buff_nps_jmin
-  vsize(VA_BUFF_VI) = jmax*kmax*inb_vars*buff_nps_imin
-  vsize(VA_BUFF_VO) = jmax*kmax*inb_vars*buff_nps_imax
-
   vsize(VA_BCS_HT) = imax*kmax* inb_vars
   vsize(VA_BCS_HB) = imax*kmax* inb_vars
   vsize(VA_BCS_VI) = jmax*kmax*(inb_vars+1)

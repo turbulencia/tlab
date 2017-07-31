@@ -21,8 +21,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
      (dte, kex,kim,kco, &
      q,hq,u,v,w,h1,h2,h3,s,hs,&
      tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8,tmp9, &
-     bcs_hb,bcs_ht, vaux, &
-     wrk1d,wrk2d,wrk3d)
+     bcs_hb,bcs_ht, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -48,7 +47,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   TREAL, DIMENSION(isize_field,inb_scal),INTENT(INOUT):: s,hs 
   TREAL, DIMENSION(isize_txc_field),     INTENT(OUT)  :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8,tmp9
   TREAL, DIMENSION(isize_wrk1d,*),       INTENT(OUT)  :: wrk1d
-  TREAL, DIMENSION(*),                   INTENT(OUT)  :: wrk2d,wrk3d, vaux
+  TREAL, DIMENSION(*),                   INTENT(OUT)  :: wrk2d,wrk3d
   TREAL, DIMENSION(imax,kmax,*),         INTENT(OUT)  :: bcs_hb, bcs_ht
 
   TARGET tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,h2,wrk2d,u,v,w

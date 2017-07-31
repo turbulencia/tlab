@@ -23,10 +23,8 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(dte,etime, kex,kim, kco, &
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL,    ONLY : isize_field, isize_txc_field
   USE DNS_GLOBAL,    ONLY : imode_eqns
-
-  USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
-  USE DNS_LOCAL,  ONLY : VA_BCS_HT, VA_BCS_HB
-  USE DNS_LOCAL,  ONLY : rkm_mode
+  USE DNS_LOCAL,     ONLY : VA_BCS_HT, VA_BCS_HB, vindex
+  USE DNS_LOCAL,     ONLY : rkm_mode
 
   IMPLICIT NONE
 
@@ -51,14 +49,13 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(dte,etime, kex,kim, kco, &
              dte, kex,kim,kco,  &
              q, hq, q(:,1),q(:,2),q(:,3), hq(1,1),hq(1,2),hq(1,3), s,hs, &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), &
-             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),vaux, wrk1d,wrk2d,wrk3d)
+             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), wrk1d,wrk2d,wrk3d)
 ! pressure-correction algorithm; to be checked
         ! CALL RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(&
         !      dte, kex,kim,kco,  &
         !      q, hq, q(:,1),q(:,2),q(:,3), hq(1,1),hq(1,2),hq(1,3), s,hs, &
         !      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), txc(1,8), &
-        !      vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),&
-        !      vaux,wrk1d,wrk2d,wrk3d)
+        !      vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)),wrk1d,wrk2d,wrk3d)
      ELSE 
         CALL IO_WRITE_ASCII(efile,'TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT. Undeveloped formulation.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)

@@ -22,7 +22,7 @@ SUBROUTINE STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d)
   TREAL, DIMENSION(*) :: txc, vaux, wrk1d, wrk2d
 
 ! -----------------------------------------------------------------------
-  TINTEGER is
+  TINTEGER is, buff_u_jmin, buff_u_jmax
 
 ! #######################################################################
 #ifdef TRACE_ON
@@ -36,6 +36,8 @@ SUBROUTINE STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d)
 #ifdef USE_MPI
      IF ( ims_pro .EQ. 0 ) THEN
 #endif
+        buff_u_jmin = BuffFlowJmax%size
+        buff_u_jmax = jmax -BuffFlowJmax%size +1
         CALL AVG_FLOW_SPATIAL_LAYER(isize_txc, buff_u_jmin,buff_u_jmax, &
              vaux(vindex(VA_MEAN_WRK)), txc, wrk1d,wrk2d)
         
