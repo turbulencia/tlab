@@ -88,6 +88,12 @@
 #define DNS_BCS_DIRICHLET   3
 #define DNS_BCS_NEUMANN     4
 
+! Buffer
+#define DNS_BUFFER_NONE     0
+#define DNS_BUFFER_RELAX    1
+#define DNS_BUFFER_FILTER   2
+#define DNS_BUFFER_BOTH     3
+
 ! Filters
 #define DNS_FILTER_NONE     0
 #define DNS_FILTER_COMPACT  1

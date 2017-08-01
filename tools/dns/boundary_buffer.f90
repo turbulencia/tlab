@@ -350,100 +350,132 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
      ELSE;                                       iq_max = 4; ENDIF
         
      DO iq = 1,iq_max
-           
-        DO jloc = 1,BuffFlowJmin%size ! Bottom boundary
-           j = jloc
-           hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmin%Tau(jloc,iq) *( rho(:,j,:) *q(:,j,:,iq) -BuffFlowJmin%Ref(:,jloc,:,iq))
-        ENDDO
-        
-        DO jloc = 1,BuffFlowJmax%size ! Top boundary
-           j = jmax -BuffFlowJmax%size +jloc
-           hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmax%Tau(jloc,iq) *( rho(:,j,:) *q(:,j,:,iq) -BuffFlowJmax%Ref(:,jloc,:,iq))
-        ENDDO
-        
-        DO iloc = 1,BuffFlowImin%size ! Inflow boundary
-           i = iloc
-           hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImin%Tau(iloc,iq) *( rho(i,:,:) *q(i,:,:,iq) -BuffFlowImin%Ref(iloc,:,:,iq))
-        ENDDO
-        
-        DO iloc = 1,BuffFlowImax%size ! Outflow boundary
-           i = imax -BuffFlowImax%size +iloc
-           hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImax%Tau(iloc,iq) *( rho(i,:,:) *q(i,:,:,iq) -BuffFlowImax%Ref(iloc,:,:,iq))
-        ENDDO
 
+        IF ( BuffFlowJmin%active(iq) ) THEN
+           DO jloc = 1,BuffFlowJmin%size ! Bottom boundary
+              j = jloc
+              hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmin%Tau(jloc,iq) *( rho(:,j,:) *q(:,j,:,iq) -BuffFlowJmin%Ref(:,jloc,:,iq))
+           ENDDO
+        ENDIF
+        
+        IF ( BuffFlowJmax%active(iq) ) THEN
+           DO jloc = 1,BuffFlowJmax%size ! Top boundary
+              j = jmax -BuffFlowJmax%size +jloc
+              hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmax%Tau(jloc,iq) *( rho(:,j,:) *q(:,j,:,iq) -BuffFlowJmax%Ref(:,jloc,:,iq))
+           ENDDO
+        ENDIF
+        
+        IF ( BuffFlowImin%active(iq) ) THEN
+           DO iloc = 1,BuffFlowImin%size ! Inflow boundary
+              i = iloc
+              hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImin%Tau(iloc,iq) *( rho(i,:,:) *q(i,:,:,iq) -BuffFlowImin%Ref(iloc,:,:,iq))
+           ENDDO
+        ENDIF
+        
+        IF ( BuffFlowImax%active(iq) ) THEN
+           DO iloc = 1,BuffFlowImax%size ! Outflow boundary
+              i = imax -BuffFlowImax%size +iloc
+              hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImax%Tau(iloc,iq) *( rho(i,:,:) *q(i,:,:,iq) -BuffFlowImax%Ref(iloc,:,:,iq))
+           ENDDO
+        ENDIF
+        
      ENDDO
 
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
         iq = 4
 
-        DO jloc = 1,BuffFlowJmin%size ! Bottom boundary
-           j = jloc
-           hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmin%Tau(jloc,iq) *( rho(:,j,:) *( q(:,j,:,iq) &
-                +prefactor *( q(:,j,:,1)*q(:,j,:,1) +q(:,j,:,2)*q(:,j,:,2) +q(:,j,:,3)*q(:,j,:,3) ) ) -BuffFlowJmin%Ref(:,jloc,:,iq))
-        ENDDO
+        IF ( BuffFlowJmin%active(iq) ) THEN
+           DO jloc = 1,BuffFlowJmin%size ! Bottom boundary
+              j = jloc
+              hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmin%Tau(jloc,iq) *( rho(:,j,:) *( q(:,j,:,iq) &
+                   +prefactor *( q(:,j,:,1)*q(:,j,:,1) +q(:,j,:,2)*q(:,j,:,2) +q(:,j,:,3)*q(:,j,:,3) ) ) -BuffFlowJmin%Ref(:,jloc,:,iq))
+           ENDDO
+        ENDIF
         
-        DO jloc = 1,BuffFlowJmax%size ! Top boundary
-           j = jmax -BuffFlowJmax%size +jloc
-           hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmax%Tau(jloc,iq) *( rho(:,j,:) *( q(:,j,:,iq) &
-                +prefactor *( q(:,j,:,1)*q(:,j,:,1) +q(:,j,:,2)*q(:,j,:,2) +q(:,j,:,3)*q(:,j,:,3) ) ) -BuffFlowJmax%Ref(:,jloc,:,iq))
-        ENDDO
+        IF ( BuffFlowJmax%active(iq) ) THEN
+           DO jloc = 1,BuffFlowJmax%size ! Top boundary
+              j = jmax -BuffFlowJmax%size +jloc
+              hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmax%Tau(jloc,iq) *( rho(:,j,:) *( q(:,j,:,iq) &
+                   +prefactor *( q(:,j,:,1)*q(:,j,:,1) +q(:,j,:,2)*q(:,j,:,2) +q(:,j,:,3)*q(:,j,:,3) ) ) -BuffFlowJmax%Ref(:,jloc,:,iq))
+           ENDDO
+        ENDIF
         
-        DO iloc = 1,BuffFlowImin%size ! Inflow boundary
-           i = iloc
-           hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImin%Tau(iloc,iq) *( rho(i,:,:) *( q(i,:,:,iq)&
-                +prefactor *( q(i,:,:,1)*q(i,:,:,1) +q(i,:,:,2)*q(i,:,:,2) +q(i,:,:,3)*q(i,:,:,3) ) ) -BuffFlowImin%Ref(iloc,:,:,iq))
-        ENDDO
+        IF ( BuffFlowImin%active(iq) ) THEN
+           DO iloc = 1,BuffFlowImin%size ! Inflow boundary
+              i = iloc
+              hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImin%Tau(iloc,iq) *( rho(i,:,:) *( q(i,:,:,iq)&
+                   +prefactor *( q(i,:,:,1)*q(i,:,:,1) +q(i,:,:,2)*q(i,:,:,2) +q(i,:,:,3)*q(i,:,:,3) ) ) -BuffFlowImin%Ref(iloc,:,:,iq))
+           ENDDO
+        ENDIF
         
-        DO iloc = 1,BuffFlowImax%size ! Outflow boundary
-           i = imax -BuffFlowImax%size +iloc
-           hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImax%Tau(iloc,iq) *( rho(i,:,:) *( q(i,:,:,iq)&
-                +prefactor *( q(i,:,:,1)*q(i,:,:,1) +q(i,:,:,2)*q(i,:,:,2) +q(i,:,:,3)*q(i,:,:,3) ) ) -BuffFlowImax%Ref(iloc,:,:,iq))
-        ENDDO
+        IF ( BuffFlowImax%active(iq) ) THEN
+           DO iloc = 1,BuffFlowImax%size ! Outflow boundary
+              i = imax -BuffFlowImax%size +iloc
+              hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImax%Tau(iloc,iq) *( rho(i,:,:) *( q(i,:,:,iq)&
+                   +prefactor *( q(i,:,:,1)*q(i,:,:,1) +q(i,:,:,2)*q(i,:,:,2) +q(i,:,:,3)*q(i,:,:,3) ) ) -BuffFlowImax%Ref(iloc,:,:,iq))
+           ENDDO
+        ENDIF
      ENDIF
      
      iq = 5 ! Density
-     DO jloc = 1,BuffFlowJmin%size ! Bottom boundary
-        j = jloc
-        hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmin%Tau(jloc,iq) *( q(:,j,:,iq) -BuffFlowJmin%Ref(:,jloc,:,iq))
-     ENDDO
-     
-     DO jloc = 1,BuffFlowJmax%size ! Top boundary
-        j = jmax -BuffFlowJmax%size +jloc
-        hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmax%Tau(jloc,iq) *( q(:,j,:,iq) -BuffFlowJmax%Ref(:,jloc,:,iq))
-     ENDDO
-     
-     DO iloc = 1,BuffFlowImin%size ! Inflow boundary
-        i = iloc
-        hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImin%Tau(iloc,iq) *( q(i,:,:,iq) -BuffFlowImin%Ref(iloc,:,:,iq))
-     ENDDO
-     
-     DO iloc = 1,BuffFlowImax%size ! Outflow boundary
-        i = imax -BuffFlowImax%size +iloc
-        hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImax%Tau(iloc,iq) *( q(i,:,:,iq) -BuffFlowImax%Ref(iloc,:,:,iq))
-     ENDDO
-     
-  CASE ( DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC )
-     DO iq = 1,inb_flow
-           
+     IF ( BuffFlowJmin%active(iq) ) THEN
         DO jloc = 1,BuffFlowJmin%size ! Bottom boundary
            j = jloc
            hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmin%Tau(jloc,iq) *( q(:,j,:,iq) -BuffFlowJmin%Ref(:,jloc,:,iq))
         ENDDO
-        
+     ENDIF
+     
+     IF ( BuffFlowJmax%active(iq) ) THEN
         DO jloc = 1,BuffFlowJmax%size ! Top boundary
            j = jmax -BuffFlowJmax%size +jloc
            hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmax%Tau(jloc,iq) *( q(:,j,:,iq) -BuffFlowJmax%Ref(:,jloc,:,iq))
         ENDDO
-        
+     ENDIF
+     
+     IF ( BuffFlowImin%active(iq) ) THEN
         DO iloc = 1,BuffFlowImin%size ! Inflow boundary
            i = iloc
            hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImin%Tau(iloc,iq) *( q(i,:,:,iq) -BuffFlowImin%Ref(iloc,:,:,iq))
         ENDDO
-        
+     ENDIF
+     
+     IF ( BuffFlowImax%active(iq) ) THEN
         DO iloc = 1,BuffFlowImax%size ! Outflow boundary
            i = imax -BuffFlowImax%size +iloc
            hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImax%Tau(iloc,iq) *( q(i,:,:,iq) -BuffFlowImax%Ref(iloc,:,:,iq))
         ENDDO
+     ENDIF
+     
+  CASE ( DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC )
+     DO iq = 1,inb_flow
+        
+        IF ( BuffFlowJmin%active(iq) ) THEN
+           DO jloc = 1,BuffFlowJmin%size ! Bottom boundary
+              j = jloc
+              hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmin%Tau(jloc,iq) *( q(:,j,:,iq) -BuffFlowJmin%Ref(:,jloc,:,iq))
+           ENDDO
+        ENDIF
+        
+        IF ( BuffFlowJmax%active(iq) ) THEN
+           DO jloc = 1,BuffFlowJmax%size ! Top boundary
+              j = jmax -BuffFlowJmax%size +jloc
+              hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmax%Tau(jloc,iq) *( q(:,j,:,iq) -BuffFlowJmax%Ref(:,jloc,:,iq))
+           ENDDO
+        ENDIF
+        
+        IF ( BuffFlowImin%active(iq) ) THEN
+           DO iloc = 1,BuffFlowImin%size ! Inflow boundary
+              i = iloc
+              hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImin%Tau(iloc,iq) *( q(i,:,:,iq) -BuffFlowImin%Ref(iloc,:,:,iq))
+           ENDDO
+        ENDIF
+        
+        IF ( BuffFlowImax%active(iq) ) THEN
+           DO iloc = 1,BuffFlowImax%size ! Outflow boundary
+              i = imax -BuffFlowImax%size +iloc
+              hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImax%Tau(iloc,iq) *( q(i,:,:,iq) -BuffFlowImax%Ref(iloc,:,:,iq))
+           ENDDO
+        ENDIF
         
      ENDDO
      
@@ -473,46 +505,62 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, rho,s, hs)
   SELECT CASE( imode_eqns )
 
   CASE ( DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL )     
-     DO jloc = 1,BuffScalJmin%size ! Bottom boundary
-        j = jloc
-        hs(:,j,:) = hs(:,j,:) -BuffScalJmin%Tau(jloc,is) *( rho(:,j,:) *s(:,j,:) -BuffScalJmin%Ref(:,jloc,:,is))
-     ENDDO
+     IF ( BuffScalJmin%active(is) ) THEN
+        DO jloc = 1,BuffScalJmin%size ! Bottom boundary
+           j = jloc
+           hs(:,j,:) = hs(:,j,:) -BuffScalJmin%Tau(jloc,is) *( rho(:,j,:) *s(:,j,:) -BuffScalJmin%Ref(:,jloc,:,is))
+        ENDDO
+     ENDIF
      
-     DO jloc = 1,BuffScalJmax%size ! Top boundary
-        j = jmax -BuffScalJmax%size +jloc
-        hs(:,j,:) = hs(:,j,:) -BuffScalJmax%Tau(jloc,is) *( rho(:,j,:) *s(:,j,:) -BuffScalJmax%Ref(:,jloc,:,is))
-     ENDDO
+     IF ( BuffScalJmax%active(is) ) THEN
+        DO jloc = 1,BuffScalJmax%size ! Top boundary
+           j = jmax -BuffScalJmax%size +jloc
+           hs(:,j,:) = hs(:,j,:) -BuffScalJmax%Tau(jloc,is) *( rho(:,j,:) *s(:,j,:) -BuffScalJmax%Ref(:,jloc,:,is))
+        ENDDO
+     ENDIF
      
-     DO iloc = 1,BuffScalImin%size ! Inflow boundary
-        i = iloc
-        hs(i,:,:) = hs(i,:,:) -BuffScalImin%Tau(iloc,is) *( rho(i,:,:) *s(i,:,:) -BuffScalImin%Ref(iloc,:,:,is))
-     ENDDO
+     IF ( BuffScalImin%active(is) ) THEN
+        DO iloc = 1,BuffScalImin%size ! Inflow boundary
+           i = iloc
+           hs(i,:,:) = hs(i,:,:) -BuffScalImin%Tau(iloc,is) *( rho(i,:,:) *s(i,:,:) -BuffScalImin%Ref(iloc,:,:,is))
+        ENDDO
+     ENDIF
      
-     DO iloc = 1,BuffScalImax%size ! Outflow boundary
-        i = imax -BuffScalImax%size +iloc
-        hs(i,:,:) = hs(i,:,:) -BuffScalImax%Tau(iloc,is) *( rho(i,:,:) *s(i,:,:) -BuffScalImax%Ref(iloc,:,:,is))
-     ENDDO
+     IF ( BuffScalImax%active(is) ) THEN
+        DO iloc = 1,BuffScalImax%size ! Outflow boundary
+           i = imax -BuffScalImax%size +iloc
+           hs(i,:,:) = hs(i,:,:) -BuffScalImax%Tau(iloc,is) *( rho(i,:,:) *s(i,:,:) -BuffScalImax%Ref(iloc,:,:,is))
+        ENDDO
+     ENDIF
      
   CASE ( DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC )
-     DO jloc = 1,BuffScalJmin%size ! Bottom boundary
-        j = jloc
-        hs(:,j,:) = hs(:,j,:) -BuffScalJmin%Tau(jloc,is) *( s(:,j,:) -BuffScalJmin%Ref(:,jloc,:,is))
-     ENDDO
+     IF ( BuffScalJmin%active(is) ) THEN
+        DO jloc = 1,BuffScalJmin%size ! Bottom boundary
+           j = jloc
+           hs(:,j,:) = hs(:,j,:) -BuffScalJmin%Tau(jloc,is) *( s(:,j,:) -BuffScalJmin%Ref(:,jloc,:,is))
+        ENDDO
+     ENDIF
      
-     DO jloc = 1,BuffScalJmax%size ! Top boundary
-        j = jmax -BuffScalJmax%size +jloc
-        hs(:,j,:) = hs(:,j,:) -BuffScalJmax%Tau(jloc,is) *( s(:,j,:) -BuffScalJmax%Ref(:,jloc,:,is))
-     ENDDO
+     IF ( BuffScalJmax%active(is) ) THEN
+        DO jloc = 1,BuffScalJmax%size ! Top boundary
+           j = jmax -BuffScalJmax%size +jloc
+           hs(:,j,:) = hs(:,j,:) -BuffScalJmax%Tau(jloc,is) *( s(:,j,:) -BuffScalJmax%Ref(:,jloc,:,is))
+        ENDDO
+     ENDIF
      
-     DO iloc = 1,BuffScalImin%size ! Inflow boundary
-        i = iloc
-        hs(i,:,:) = hs(i,:,:) -BuffScalImin%Tau(iloc,is) *( s(i,:,:) -BuffScalImin%Ref(iloc,:,:,is))
-     ENDDO
-     
-     DO iloc = 1,BuffScalImax%size ! Outflow boundary
-        i = imax -BuffScalImax%size +iloc
-        hs(i,:,:) = hs(i,:,:) -BuffScalImax%Tau(iloc,is) *( s(i,:,:) -BuffScalImax%Ref(iloc,:,:,is))
-     ENDDO
+     IF ( BuffScalImin%active(is) ) THEN
+        DO iloc = 1,BuffScalImin%size ! Inflow boundary
+           i = iloc
+           hs(i,:,:) = hs(i,:,:) -BuffScalImin%Tau(iloc,is) *( s(i,:,:) -BuffScalImin%Ref(iloc,:,:,is))
+        ENDDO
+     ENDIF
+  
+     IF ( BuffScalImax%active(is) ) THEN
+        DO iloc = 1,BuffScalImax%size ! Outflow boundary
+           i = imax -BuffScalImax%size +iloc
+           hs(i,:,:) = hs(i,:,:) -BuffScalImax%Tau(iloc,is) *( s(i,:,:) -BuffScalImax%Ref(iloc,:,:,is))
+        ENDDO
+     ENDIF
      
   END SELECT
      
@@ -523,12 +571,11 @@ END SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL
 !########################################################################
 SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
 
-  USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_GLOBAL,    ONLY : imax, jmax, kmax
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns
-  USE DNS_GLOBAL,    ONLY : inb_flow, inb_scal, area
-  USE DNS_LOCAL,     ONLY : BuffFlowJmax, BuffScalJmax, buff_hard, buff_hard_on
+  USE DNS_GLOBAL,    ONLY : inb_scal, area
+  USE DNS_LOCAL,     ONLY : BuffFlowJmax, BuffScalJmax
 
   IMPLICIT NONE
 
@@ -559,37 +606,35 @@ SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
 ! Flow variables
      DO iq = 1,3
         DO j = 1, BuffFlowJmax%size
-           jloc = jmax -BuffScalJmax%size +j
-           IF ( buff_hard_on(iq) .EQ. 0 ) &
-                buff_hard(iq,1) = COV2V2D(imax,jmax,kmax, jloc, r_loc,q(1,iq))
-           buffer_q(:,j,:,iq) = buff_hard(iq,1)
+           jloc = jmax -BuffFlowJmax%size +j
+           IF ( .NOT. BuffFlowJmax%hard ) &
+                BuffFlowJmax%hardvalues(iq) = COV2V2D(imax,jmax,kmax, jloc, r_loc,q(1,iq))
+           buffer_q(:,j,:,iq) = BuffFlowJmax%hardvalues(iq)
         ENDDO
      ENDDO
 
 ! if compressible; energy can have a different buffer extent
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
         DO j = 1, BuffFlowJmax%size
-           jloc = jmax -BuffScalJmax%size +j
-           IF ( buff_hard_on(4) .EQ. 0 ) &
-                buff_hard(4,1) = COV2V2D(imax,jmax,kmax, jloc, r_loc,e_loc)
-           buffer_q(:,j,:,4) = buff_hard(4,1)
-           IF ( buff_hard_on(5) .EQ. 0 ) &
-                buff_hard(5,1) = AVG_IK(imax,jmax,kmax, jloc, r_loc, g(1)%jac,g(3)%jac, area)
-           buffer_q(:,j,:,5) = buff_hard(5,1)
+           jloc = jmax -BuffFlowJmax%size +j
+           IF ( .NOT. BuffFlowJmax%hard ) &
+                BuffFlowJmax%hardvalues(4) = COV2V2D(imax,jmax,kmax, jloc, r_loc,e_loc)
+           buffer_q(:,j,:,4) = BuffFlowJmax%hardvalues(4)
+           IF ( .NOT. BuffFlowJmax%hard ) &
+                BuffFlowJmax%hardvalues(5) = AVG_IK(imax,jmax,kmax, jloc, r_loc, g(1)%jac,g(3)%jac, area)
+           buffer_q(:,j,:,5) = BuffFlowJmax%hardvalues(5)
         ENDDO
      ENDIF
      
 ! Scalars
-     IF ( BuffScalJmax%size .GT. 0 ) THEN
-        DO is = 1,inb_scal
-           DO j = 1,BuffScalJmax%size
-              jloc = jmax -BuffScalJmax%size +j
-              IF ( buff_hard_on(inb_flow+is) .EQ. 0 ) &
-                   buff_hard(inb_flow+is,1) = COV2V2D(imax,jmax,kmax, jloc, r_loc,s(1,is))
-              buffer_s(:,j,:,is) = buff_hard(inb_flow+is,1)
-           ENDDO
+     DO is = 1,inb_scal
+        DO j = 1,BuffScalJmax%size
+           jloc = jmax -BuffScalJmax%size +j
+           IF ( .NOT. BuffScalJmax%hard ) &
+                BuffScalJmax%hardvalues(is) = COV2V2D(imax,jmax,kmax, jloc, r_loc,s(1,is))
+           buffer_s(:,j,:,is) = BuffScalJmax%hardvalues(is)
         ENDDO
-     ENDIF
+     ENDDO
      
 ! ###################################################################
 ! Spatially evolving jet
@@ -599,11 +644,11 @@ SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
 ! Flow variables
      DO iq = 1,3
         DO j = 1, BuffFlowJmax%size
-           jloc = jmax -BuffScalJmax%size +j
+           jloc = jmax -BuffFlowJmax%size +j
            DO i = 1,imax
-              IF ( buff_hard_on(iq) .EQ. 0 ) &
-                   buff_hard(iq,1) = COV2V1D(imax,jmax,kmax, i,jloc, r_loc,q(1,iq))
-              buffer_q(i,j,:,iq) = buff_hard(iq,1)
+              IF ( .NOT. BuffFlowJmax%hard ) &
+                   BuffFlowJmax%hardvalues(iq) = COV2V1D(imax,jmax,kmax, i,jloc, r_loc,q(1,iq))
+              buffer_q(i,j,:,iq) = BuffFlowJmax%hardvalues(iq)
            ENDDO
         ENDDO
      ENDDO
@@ -611,31 +656,29 @@ SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
 ! if compressible; energy can have a different buffer extent
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
         DO j = 1, BuffFlowJmax%size
-           jloc = jmax -BuffScalJmax%size +j
+           jloc = jmax -BuffFlowJmax%size +j
            DO i = 1,imax
-              IF ( buff_hard_on(4) .EQ. 0 ) &
-                   buff_hard(4,1) = COV2V1D(imax,jmax,kmax, i,jloc, r_loc,e_loc)
-              buffer_q(i,j,:,4) = buff_hard(4,1)
-              IF ( buff_hard_on(5) .EQ. 0 ) &
-                   buff_hard(5,1) = AVG1V1D(imax,jmax,kmax, i,jloc, i1, r_loc)
-              buffer_q(i,j,:,5) = buff_hard(5,1)
+              IF ( .NOT. BuffFlowJmax%hard ) &
+                   BuffFlowJmax%hardvalues(4) = COV2V1D(imax,jmax,kmax, i,jloc, r_loc,e_loc)
+              buffer_q(i,j,:,4) = BuffFlowJmax%hardvalues(4)
+              IF ( .NOT. BuffFlowJmax%hard ) &
+                   BuffFlowJmax%hardvalues(5) = AVG1V1D(imax,jmax,kmax, i,jloc, i1, r_loc)
+              buffer_q(i,j,:,5) = BuffFlowJmax%hardvalues(5)
            ENDDO
         ENDDO
      ENDIF
         
 ! Scalars
-     IF ( BuffScalJmax%size .GT. 0 ) THEN
-        DO is = 1,inb_scal
-           DO j = 1,BuffScalJmax%size
-              jloc = jmax -BuffScalJmax%size +j
-              DO i = 1,imax
-                 IF ( buff_hard_on(inb_flow+is) .EQ. 0 ) &
-                      buff_hard(inb_flow+is,1) = COV2V1D(imax,jmax,kmax, i,jloc, r_loc,s(1,is))
-                 buffer_s(i,j,:,is) = buff_hard(inb_flow+is,1)
-              ENDDO
+     DO is = 1,inb_scal
+        DO j = 1,BuffScalJmax%size
+           jloc = jmax -BuffScalJmax%size +j
+           DO i = 1,imax
+              IF ( .NOT. BuffScalJmax%hard ) &
+                   BuffScalJmax%hardvalues(is) = COV2V1D(imax,jmax,kmax, i,jloc, r_loc,s(1,is))
+              buffer_s(i,j,:,is) = BuffScalJmax%hardvalues(is)
            ENDDO
         ENDDO
-     ENDIF
+     ENDDO
   
   ENDIF
 
@@ -646,12 +689,11 @@ END SUBROUTINE BOUNDARY_INIT_HT
 !########################################################################
 SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
 
-  USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_GLOBAL,    ONLY : imax, jmax, kmax
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns
-  USE DNS_GLOBAL,    ONLY : inb_flow, inb_scal, area
-  USE DNS_LOCAL,     ONLY : BuffFlowJmin, BuffScalJmin, buff_hard, buff_hard_on
+  USE DNS_GLOBAL,    ONLY : inb_scal, area
+  USE DNS_LOCAL,     ONLY : BuffFlowJmin, BuffScalJmin
 
   IMPLICIT NONE
 
@@ -682,34 +724,32 @@ SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
 ! Flow variables
      DO iq = 1,3
         DO j = 1, BuffFlowJmin%size
-           IF ( buff_hard_on(iq) .EQ. 0 ) &
-                buff_hard(iq,2) = COV2V2D(imax,jmax,kmax, j, r_loc,q(1,iq))
-           buffer_q(:,j,:,iq) = buff_hard(iq,2)
+           IF ( .NOT. BuffFlowJmin%hard ) &
+                BuffFlowJmin%hardvalues(iq) = COV2V2D(imax,jmax,kmax, j, r_loc,q(1,iq))
+           buffer_q(:,j,:,iq) = BuffFlowJmin%hardvalues(iq)
         ENDDO
      ENDDO
      
 ! if compressible; energy can have a different buffer extent
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
         DO j = 1, BuffFlowJmin%size
-           IF ( buff_hard_on(4) .EQ. 0 ) &
-                buff_hard(4,2) = COV2V2D(imax,jmax,kmax, j, r_loc,e_loc)
-           buffer_q(:,j,:,4) = buff_hard(4,2)
-           IF ( buff_hard_on(5) .EQ. 0 ) &
-                buff_hard(5,2) = AVG_IK(imax,jmax,kmax, j, r_loc, g(1)%jac,g(3)%jac, area)
-           buffer_q(:,j,:,5) = buff_hard(5,2)
+           IF ( .NOT. BuffFlowJmin%hard ) &
+                BuffFlowJmin%hardvalues(4) = COV2V2D(imax,jmax,kmax, j, r_loc,e_loc)
+           buffer_q(:,j,:,4) = BuffFlowJmin%hardvalues(4)
+           IF ( .NOT. BuffFlowJmin%hard ) &
+                BuffFlowJmin%hardvalues(5) = AVG_IK(imax,jmax,kmax, j, r_loc, g(1)%jac,g(3)%jac, area)
+           buffer_q(:,j,:,5) = BuffFlowJmin%hardvalues(5)
         ENDDO
      ENDIF
 
 ! Scalars
-     IF ( BuffScalJmin%size .GT. 0 ) THEN
-        DO is = 1,inb_scal
-           DO j = 1,BuffScalJmin%size
-              IF ( buff_hard_on(inb_flow+is) .EQ. 0 ) &
-                   buff_hard(inb_flow+is,2) = COV2V2D(imax,jmax,kmax, j, r_loc,s(1,is))
-              buffer_s(:,j,:,is) = buff_hard(inb_flow+is,2)
-           ENDDO
+     DO is = 1,inb_scal
+        DO j = 1,BuffScalJmin%size
+           IF ( .NOT. BuffScalJmin%hard ) &
+                BuffScalJmin%hardvalues(is) = COV2V2D(imax,jmax,kmax, j, r_loc,s(1,is))
+           buffer_s(:,j,:,is) = BuffScalJmin%hardvalues(is)
         ENDDO
-     ENDIF
+     ENDDO
 
 ! ###################################################################
 ! Spatially evolving jet
@@ -720,9 +760,9 @@ SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
      DO iq = 1,3
         DO j = 1, BuffFlowJmin%size
            DO i = 1,imax
-              IF ( buff_hard_on(iq) .EQ. 0 ) &
-                buff_hard(iq,2) = COV2V1D(imax,jmax,kmax, i,j, r_loc,q(1,iq))
-              buffer_q(i,j,:,iq) = buff_hard(iq,2)
+              IF ( .NOT. BuffFlowJmin%hard ) &
+                BuffFlowJmin%hardvalues(iq) = COV2V1D(imax,jmax,kmax, i,j, r_loc,q(1,iq))
+              buffer_q(i,j,:,iq) = BuffFlowJmin%hardvalues(iq)
            ENDDO
         ENDDO
      ENDDO
@@ -731,28 +771,26 @@ SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
         DO j = 1, BuffFlowJmin%size
            DO i = 1,imax
-              IF ( buff_hard_on(4) .EQ. 0 ) &
-                   buff_hard(4,2) = COV2V1D(imax,jmax,kmax, i,j, r_loc,e_loc)
-              buffer_q(i,j,:,4) = buff_hard(4,2)
-              IF ( buff_hard_on(5) .EQ. 0 ) &
-                   buff_hard(5,2) = AVG1V1D(imax,jmax,kmax, i,j, i1, r_loc)
-              buffer_q(i,j,:,5) = buff_hard(5,2)
+              IF ( .NOT. BuffFlowJmin%hard ) &
+                   BuffFlowJmin%hardvalues(4) = COV2V1D(imax,jmax,kmax, i,j, r_loc,e_loc)
+              buffer_q(i,j,:,4) = BuffFlowJmin%hardvalues(4)
+              IF ( .NOT. BuffFlowJmin%hard ) &
+                   BuffFlowJmin%hardvalues(5) = AVG1V1D(imax,jmax,kmax, i,j, i1, r_loc)
+              buffer_q(i,j,:,5) = BuffFlowJmin%hardvalues(5)
            ENDDO
         ENDDO
      ENDIF
 
 ! Scalars
-     IF ( BuffScalJmin%size .GT. 0 ) THEN
-        DO is = 1,inb_scal
-           DO j = 1,BuffScalJmin%size
-              DO i = 1,imax
-                 IF ( buff_hard_on(inb_flow+is) .EQ. 0 ) &
-                      buff_hard(inb_flow+is,2) = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is))
-                 buffer_s(i,j,:,is) = buff_hard(inb_flow+is,2)
-              ENDDO
+     DO is = 1,inb_scal
+        DO j = 1,BuffScalJmin%size
+           DO i = 1,imax
+              IF ( .NOT. BuffScalJmin%hard ) &
+                   BuffScalJmin%hardvalues(is) = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is))
+              buffer_s(i,j,:,is) = BuffScalJmin%hardvalues(is)
            ENDDO
         ENDDO
-     ENDIF
+     ENDDO
 
   ENDIF
 
@@ -814,16 +852,14 @@ SUBROUTINE BOUNDARY_INIT_VI(q,s, txc, buffer_q, buffer_s)
      ENDDO
   ENDIF
      
-  IF ( BuffScalImin%size .GT. 0 ) THEN
-     DO is = 1,inb_scal
-        DO j = 1,jmax
-           DO i = 1,BuffScalImin%size
-              dbuff(is) = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is))
-              buffer_s(i,j,:,is) = dbuff(is)
-           ENDDO
+  DO is = 1,inb_scal
+     DO j = 1,jmax
+        DO i = 1,BuffScalImin%size
+           dbuff(is) = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is))
+           buffer_s(i,j,:,is) = dbuff(is)
         ENDDO
      ENDDO
-  ENDIF
+  ENDDO
   
   RETURN
 END SUBROUTINE BOUNDARY_INIT_VI
@@ -865,7 +901,7 @@ SUBROUTINE BOUNDARY_INIT_VO(q,s, txc, buffer_q, buffer_s)
   DO iq = 1,3
      DO j = 1,jmax
         DO i = 1,BuffFlowImax%size
-           iloc = imax -BuffScalImax%size +i
+           iloc = imax -BuffFlowImax%size +i
            dbuff(iq) = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,q(1,iq))
            buffer_q(i,j,:,iq) = dbuff(iq)
         ENDDO
@@ -876,7 +912,7 @@ SUBROUTINE BOUNDARY_INIT_VO(q,s, txc, buffer_q, buffer_s)
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      DO j = 1,jmax
         DO i = 1,BuffFlowImax%size
-           iloc = imax -BuffScalImax%size +i
+           iloc = imax -BuffFlowImax%size +i
            dbuff(4) = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,e_loc)
            buffer_q(i,j,:,4) = dbuff(4)
            dbuff(5) = AVG1V1D(imax,jmax,kmax, iloc,j, i1, r_loc)
@@ -885,17 +921,15 @@ SUBROUTINE BOUNDARY_INIT_VO(q,s, txc, buffer_q, buffer_s)
      ENDDO
   ENDIF
   
-  IF ( BuffScalImax%size .GT. 0 ) THEN
-     DO is = 1,inb_scal
-        DO j = 1,jmax
-           DO i = 1,BuffScalImax%size
-              iloc = imax -BuffScalImax%size +i
-              dbuff(is) = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,s(1,is))
-              buffer_s(i,j,:,is) = dbuff(is)
-           ENDDO
+  DO is = 1,inb_scal
+     DO j = 1,jmax
+        DO i = 1,BuffScalImax%size
+           iloc = imax -BuffScalImax%size +i
+           dbuff(is) = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,s(1,is))
+           buffer_s(i,j,:,is) = dbuff(is)
         ENDDO
      ENDDO
-  ENDIF
+  ENDDO
   
   RETURN
 END SUBROUTINE BOUNDARY_INIT_VO

@@ -31,8 +31,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   ! 
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : bcs_scal_jmin, bcs_scal_jmax
-  USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
-  USE DNS_LOCAL,  ONLY : buff_type 
+  USE DNS_LOCAL,  ONLY : BuffType 
   USE DNS_LOCAL,  ONLY : rkm_substep,rkm_endstep,tower_mode 
 
   USE DNS_TOWER
@@ -458,7 +457,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      ! #######################################################################
      ! Impose buffer zone as relaxation terms
      ! #######################################################################
-     IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
+     IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
         CALL BOUNDARY_BUFFER_RELAXATION_FLOW(u,h1)
      ENDIF
 

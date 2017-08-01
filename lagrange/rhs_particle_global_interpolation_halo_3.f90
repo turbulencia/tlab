@@ -19,12 +19,13 @@
 SUBROUTINE  RHS_PARTICLE_GLOBAL_INTERPOLATION_HALO_3 &
     (halo_field,l_q,l_hq,y,wrk1d,halo_start, halo_end)
 
-USE DNS_GLOBAL, ONLY: imax,jmax,kmax
+USE DNS_GLOBAL, ONLY: jmax
 USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
 USE LAGRANGE_GLOBAL, ONLY: jmin_part, inb_lag_total_interp
 USE LAGRANGE_GLOBAL, ONLY: ilagrange
 USE THERMO_GLOBAL, ONLY: thermo_param
 #ifdef USE_MPI
+USE DNS_GLOBAL, ONLY: imax,kmax
    USE DNS_MPI, ONLY: ims_pro_i, ims_pro_k, ims_pro
 #endif
 

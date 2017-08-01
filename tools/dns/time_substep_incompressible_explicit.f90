@@ -44,7 +44,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 
 !  USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
   USE DNS_LOCAL,  ONLY : VA_BCS_HT, VA_BCS_HB, vindex
-  USE DNS_LOCAL,  ONLY : buff_type
+  USE DNS_LOCAL,  ONLY : BuffType
   USE DNS_LOCAL,  ONLY : imode_rhs
 
   IMPLICIT NONE
@@ -165,10 +165,10 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 ! #######################################################################
 ! Impose buffer zone as relaxation terms
 ! #######################################################################
-  IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
-     ! Flow part needs to be taken into account in the pressure
+  IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
+! Flow part needs to be taken into account in the pressure
      DO is = 1,inb_scal
-     CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, q,s, hs) ! array q is not used
+        CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, wrk3d,s, hs) ! wrk3d not used in incompressible
      ENDDO
   ENDIF
 

@@ -35,7 +35,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   USE DNS_GLOBAL, ONLY : bbackground
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax, bcs_scal_jmin, bcs_scal_jmax
   USE DNS_LOCAL,  ONLY : idivergence
-  USE DNS_LOCAL,  ONLY : buff_type
+  USE DNS_LOCAL,  ONLY : BuffType
 
   IMPLICIT NONE
 
@@ -273,10 +273,9 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 ! #######################################################################
 ! Impose buffer zone as relaxation terms (Flow)
 ! #######################################################################
-  IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
-     CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q,hq ) 
+  IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
+     CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q,hq) 
   ENDIF
-
 
 ! Explicit part of time integration
 ! tmp4-6 contain tendencies, h1-3 contain old tendencies
@@ -328,7 +327,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 ! #######################################################################
 ! Impose buffer zone as relaxation terms (Scalar #is) 
 ! #######################################################################
-        IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
+        IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
            CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, q,s(1,is), hs(1,is) ) 
         ENDIF
         

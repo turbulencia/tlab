@@ -6,7 +6,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile
   USE DNS_GLOBAL,    ONLY : pbg, rbg
-  USE DNS_GLOBAL,    ONLY : imode_sim, icalc_scal, inb_flow,inb_scal
+  USE DNS_GLOBAL,    ONLY : imode_sim, inb_flow,inb_scal
   USE DNS_GLOBAL,    ONLY : imax,jmax
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_LOCAL
@@ -421,12 +421,16 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#ParametersJmax=<values>')
   CALL IO_WRITE_ASCII(bakfile, '#ParametersImin=<values>')
   CALL IO_WRITE_ASCII(bakfile, '#ParametersImax=<values>')
+  CALL IO_WRITE_ASCII(bakfile, '#HardValuesJmin=<values>')
+  CALL IO_WRITE_ASCII(bakfile, '#HardValuesJmax=<values>')
+  CALL IO_WRITE_ASCII(bakfile, '#HardValuesImin=<values>')
+  CALL IO_WRITE_ASCII(bakfile, '#HardValuesImax=<values>')
 
   CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'Type', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'       ) THEN; buff_type = 0
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'relaxation' ) THEN; buff_type = 1
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'filter'     ) THEN; buff_type = 2
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'both'       ) THEN; buff_type = 3
+  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'       ) THEN; BuffType = DNS_BUFFER_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'relaxation' ) THEN; BuffType = DNS_BUFFER_RELAX 
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'filter'     ) THEN; BuffType = DNS_BUFFER_FILTER
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'both'       ) THEN; BuffType = DNS_BUFFER_BOTH
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong BufferType option.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
@@ -456,9 +460,10 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
 
-  IF ( buff_type .GT. 0 ) THEN
-! ###################################################################
 ! Parameters
+  IF ( BuffType .NE. DNS_BUFFER_NONE ) THEN
+
+     BuffFlowImin%active(:) = .FALSE.; BuffFlowImin%hard = .FALSE.
      IF ( BuffFlowImin%size .GT. 0 ) THEN
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'ParametersUImin', 'void', sRes)
         IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN
@@ -478,14 +483,30 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
            CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersUImin.')
            CALL DNS_STOP(DNS_ERROR_OPTION)
         ENDIF
+        DO is = 1,inb_flow
+           IF ( BuffFlowImin%strength(is) .NE. C_0_R ) BuffFlowImin%active(is) = .TRUE.
+        ENDDO
+        
+        CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesUImin', 'void', sRes1)
+        IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
+           is = inb_flow; CALL LIST_REAL(sRes1, is, BuffFlowImin%hardvalues)
+           IF ( is .EQ. inb_flow ) THEN
+              BuffFlowImin%hard = .TRUE.
+           ELSE
+              CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValuesUImin.')
+              CALL DNS_STOP(DNS_ERROR_OPTION)
+           ENDIF
+        ENDIF
+        
      ENDIF
 
+     BuffScalImin%active(:) = .FALSE.; BuffScalImin%hard = .FALSE.
      IF ( BuffScalImin%size .GT. 0 ) THEN
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'ParametersSImin', 'void', sRes1)
-        IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN
+        IF ( TRIM(ADJUSTL(sRes1)) .EQ. 'void' ) THEN
            CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'ParametersS', 'void', sRes1)
         ENDIF
-        IF ( sRes1 .EQ. 'void' ) THEN
+        IF ( TRIM(ADJUSTL(sRes1)) .EQ. 'void' ) THEN
            sRes1 = sRes
            CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Field ParametersS default to ParametersU.') 
         ENDIF
@@ -503,8 +524,24 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
            CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersSImin.')
            CALL DNS_STOP(DNS_ERROR_OPTION)
         ENDIF
+        DO is = 1,inb_scal
+           IF ( BuffScalImin%strength(is) .NE. C_0_R ) BuffScalImin%active(is) = .TRUE.
+        ENDDO
+        
+        CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesSImin', 'void', sRes1)
+        IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
+           is = inb_scal; CALL LIST_REAL(sRes1, is, BuffScalImin%hardvalues)
+           IF ( is .EQ. inb_scal ) THEN
+              BuffScalImin%hard = .TRUE.
+           ELSE
+              CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValuesSImin.')
+              CALL DNS_STOP(DNS_ERROR_OPTION)
+           ENDIF
+        ENDIF
+        
      ENDIF
 
+     BuffFlowImax%active(:) = .FALSE.; BuffFlowImax%hard = .FALSE.
      IF ( BuffFlowImax%size .GT. 0 ) THEN
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'ParametersUImax', 'void', sRes)
         IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN
@@ -524,14 +561,30 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
            CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersUImax.')
            CALL DNS_STOP(DNS_ERROR_OPTION)
         ENDIF
+        DO is = 1,inb_flow
+           IF ( BuffFlowImax%strength(is) .NE. C_0_R ) BuffFlowImax%active(is) = .TRUE.
+        ENDDO
+        
+        CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesUImax', 'void', sRes1)
+        IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
+           is = inb_flow; CALL LIST_REAL(sRes1, is, BuffFlowImax%hardvalues)
+           IF ( is .EQ. inb_flow ) THEN
+              BuffFlowImax%hard = .TRUE.
+           ELSE
+              CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValuesUImax.')
+              CALL DNS_STOP(DNS_ERROR_OPTION)
+           ENDIF
+        ENDIF
+        
      ENDIF
 
+     BuffScalImax%active(:) = .FALSE.; BuffScalImax%hard = .FALSE.
      IF ( BuffScalImax%size .GT. 0 ) THEN
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'ParametersSImax', 'void', sRes1)
-        IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN
+        IF ( TRIM(ADJUSTL(sRes1)) .EQ. 'void' ) THEN
            CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'ParametersS', 'void', sRes1)
         ENDIF
-        IF ( sRes1 .EQ. 'void' ) THEN
+        IF ( TRIM(ADJUSTL(sRes1)) .EQ. 'void' ) THEN
            sRes1 = sRes
            CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Field ParametersS default to ParametersU.') 
         ENDIF
@@ -549,8 +602,24 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
            CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersSImax.')
            CALL DNS_STOP(DNS_ERROR_OPTION)
         ENDIF
+        DO is = 1,inb_scal
+           IF ( BuffScalImax%strength(is) .NE. C_0_R ) BuffScalImax%active(is) = .TRUE.
+        ENDDO
+        
+        CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesSImax', 'void', sRes1)
+        IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
+           is = inb_scal; CALL LIST_REAL(sRes1, is, BuffScalImax%hardvalues)
+           IF ( is .EQ. inb_scal ) THEN
+              BuffScalImax%hard = .TRUE.
+           ELSE
+              CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValuesSImax.')
+              CALL DNS_STOP(DNS_ERROR_OPTION)
+           ENDIF
+        ENDIF
+        
      ENDIF
 
+     BuffFlowJmin%active(:) = .FALSE.; BuffFlowJmin%hard = .FALSE.
      IF ( BuffFlowJmin%size .GT. 0 ) THEN
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'ParametersUJmin', 'void', sRes)
         IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN
@@ -570,14 +639,30 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
            CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersUJmin.')
            CALL DNS_STOP(DNS_ERROR_OPTION)
         ENDIF
+        DO is = 1,inb_flow
+           IF ( BuffFlowJmin%strength(is) .NE. C_0_R ) BuffFlowJmin%active(is) = .TRUE.
+        ENDDO
+        
+        CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesUJmin', 'void', sRes1)
+        IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
+           is = inb_flow; CALL LIST_REAL(sRes1, is, BuffFlowJmin%hardvalues)
+           IF ( is .EQ. inb_flow ) THEN
+              BuffFlowJmin%hard = .TRUE.
+           ELSE
+              CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValuesUJmin.')
+              CALL DNS_STOP(DNS_ERROR_OPTION)
+           ENDIF
+        ENDIF
+        
      ENDIF
 
+     BuffScalJmin%active(:) = .FALSE.; BuffScalJmin%hard = .FALSE.
      IF ( BuffScalJmin%size .GT. 0 ) THEN
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'ParametersSJmin', 'void', sRes1)
-        IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN
+        IF ( TRIM(ADJUSTL(sRes1)) .EQ. 'void' ) THEN
            CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'ParametersS', 'void', sRes1)
         ENDIF
-        IF ( sRes1 .EQ. 'void' ) THEN
+        IF ( TRIM(ADJUSTL(sRes1)) .EQ. 'void' ) THEN
            sRes1 = sRes
            CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Field ParametersS default to ParametersU.') 
         ENDIF
@@ -595,8 +680,24 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
            CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersSJmin.')
            CALL DNS_STOP(DNS_ERROR_OPTION)
         ENDIF
+        DO is = 1,inb_scal
+           IF ( BuffScalJmin%strength(is) .NE. C_0_R ) BuffScalJmin%active(is) = .TRUE.
+        ENDDO
+        
+        CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesSJmin', 'void', sRes1)
+        IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
+           is = inb_scal; CALL LIST_REAL(sRes1, is, BuffScalJmin%hardvalues)
+           IF ( is .EQ. inb_scal ) THEN
+              BuffScalJmin%hard = .TRUE.
+           ELSE
+              CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValuesSJmin.')
+              CALL DNS_STOP(DNS_ERROR_OPTION)
+           ENDIF
+        ENDIF
+        
      ENDIF
 
+     BuffFlowJmax%active(:) = .FALSE.; BuffFlowJmax%hard = .FALSE.
      IF ( BuffFlowJmax%size .GT. 0 ) THEN
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'ParametersUJmax', 'void', sRes)
         IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN
@@ -616,14 +717,30 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
            CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersUJmax.')
            CALL DNS_STOP(DNS_ERROR_OPTION)
         ENDIF
+        DO is = 1,inb_flow
+           IF ( BuffFlowJmax%strength(is) .NE. C_0_R ) BuffFlowJmax%active(is) = .TRUE.
+        ENDDO
+        
+        CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesUJmax', 'void', sRes1)
+        IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
+           is = inb_flow; CALL LIST_REAL(sRes1, is, BuffFlowJmax%hardvalues)
+           IF ( is .EQ. inb_flow ) THEN
+              BuffFlowJmax%hard = .TRUE.
+           ELSE
+              CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValuesUJmax.')
+              CALL DNS_STOP(DNS_ERROR_OPTION)
+           ENDIF
+        ENDIF
+        
      ENDIF
 
+     BuffScalJmax%active(:) = .FALSE.; BuffScalJmax%hard = .FALSE.
      IF ( BuffScalJmax%size .GT. 0 ) THEN
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'ParametersSJmax', 'void', sRes1)
-        IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN
+        IF ( TRIM(ADJUSTL(sRes1)) .EQ. 'void' ) THEN
            CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'ParametersS', 'void', sRes1)
         ENDIF
-        IF ( sRes1 .EQ. 'void' ) THEN
+        IF ( TRIM(ADJUSTL(sRes1)) .EQ. 'void' ) THEN
            sRes1 = sRes
            CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Field ParametersS default to ParametersU.') 
         ENDIF
@@ -641,72 +758,23 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
            CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersSJmax.')
            CALL DNS_STOP(DNS_ERROR_OPTION)
         ENDIF
+        DO is = 1,inb_scal
+           IF ( BuffScalJmax%strength(is) .NE. C_0_R ) BuffScalJmax%active(is) = .TRUE.
+        ENDDO
+        
+        CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesSJmax', 'void', sRes1)
+        IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
+           is = inb_scal; CALL LIST_REAL(sRes1, is, BuffScalJmax%hardvalues)
+           IF ( is .EQ. inb_scal ) THEN
+              BuffScalJmax%hard = .TRUE.
+           ELSE
+              CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValuesSJmax.')
+              CALL DNS_STOP(DNS_ERROR_OPTION)
+           ENDIF
+        ENDIF
+        
      ENDIF
   
-! -------------------------------------------------------------------
-! Fixed values
-! -------------------------------------------------------------------
-     CALL IO_WRITE_ASCII(bakfile, '#HardU=<yes/no>')
-     CALL IO_WRITE_ASCII(bakfile, '#U(B)=<value>')
-     CALL IO_WRITE_ASCII(bakfile, '#U(T)=<value>')
-     CALL IO_WRITE_ASCII(bakfile, '#HardV=<yes/no>')
-     CALL IO_WRITE_ASCII(bakfile, '#V(B)=<value>')
-     CALL IO_WRITE_ASCII(bakfile, '#V(T)=<value>')
-     CALL IO_WRITE_ASCII(bakfile, '#HardW=<yes/no>')
-     CALL IO_WRITE_ASCII(bakfile, '#W(B)=<value>')
-     CALL IO_WRITE_ASCII(bakfile, '#W(T)=<value>')
-     CALL IO_WRITE_ASCII(bakfile, '#HardE=<yes/no>')
-     CALL IO_WRITE_ASCII(bakfile, '#E(B)=<value>')
-     CALL IO_WRITE_ASCII(bakfile, '#E(T)=<value>')
-     CALL IO_WRITE_ASCII(bakfile, '#HardRho=<yes/no>')
-     CALL IO_WRITE_ASCII(bakfile, '#Rho(B)=<value>')
-     CALL IO_WRITE_ASCII(bakfile, '#Rho(T)=<value>')
-     CALL IO_WRITE_ASCII(bakfile, '#HardZ=<yes/no>')
-     CALL IO_WRITE_ASCII(bakfile, '#Z(B)=<value>')
-     CALL IO_WRITE_ASCII(bakfile, '#Z(T)=<value>')
-
-     CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardU', 'no', sRes)
-     IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; buff_hard_on(1) = 1
-        CALL SCANINIREAL(bakfile, inifile, 'BufferZone', 'U(T)', '0.0', buff_hard(1,1))
-        CALL SCANINIREAL(bakfile, inifile, 'BufferZone', 'U(B)', '0.0', buff_hard(1,2))
-     ELSE;                                       buff_hard_on(1) = 0; ENDIF
-
-     CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardV', 'no', sRes)
-     IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; buff_hard_on(2) = 1
-        CALL SCANINIREAL(bakfile, inifile, 'BufferZone', 'V(T)', '0.0', buff_hard(2,1))
-        CALL SCANINIREAL(bakfile, inifile, 'BufferZone', 'V(B)', '0.0', buff_hard(2,2))
-     ELSE;                                       buff_hard_on(2) = 0; ENDIF
-
-     CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardW', 'no', sRes)
-     IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; buff_hard_on(3) = 1
-        CALL SCANINIREAL(bakfile, inifile, 'BufferZone', 'W(T)', '0.0', buff_hard(3,1))
-        CALL SCANINIREAL(bakfile, inifile, 'BufferZone', 'W(B)', '0.0', buff_hard(3,2))
-     ELSE;                                       buff_hard_on(3) = 0; ENDIF
-
-     CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardE', 'no', sRes)
-     IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; buff_hard_on(4) = 1
-        CALL SCANINIREAL(bakfile, inifile, 'BufferZone', 'E(T)', '0.0', buff_hard(4,1))
-        CALL SCANINIREAL(bakfile, inifile, 'BufferZone', 'E(B)', '0.0', buff_hard(4,2))
-     ELSE;                                       buff_hard_on(4) = 0; ENDIF
-
-     CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardRho', 'no', sRes)
-     IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; buff_hard_on(5) = 1
-        CALL SCANINIREAL(bakfile, inifile, 'BufferZone', 'Rho(T)', '1.0', buff_hard(5,1))
-        CALL SCANINIREAL(bakfile, inifile, 'BufferZone', 'Rho(B)', '1.0', buff_hard(5,2))
-     ELSE;                                       buff_hard_on(5) = 0; ENDIF
-
-     IF ( icalc_scal .EQ. 1 ) THEN
-        DO is = 1,inb_scal
-           IF ( inb_scal .EQ. 1 ) THEN; lstr = 'HardZ'
-           ELSE;                        WRITE(lstr,'(A5,I1)') 'HardZ', is; ENDIF
-           CALL SCANINICHAR(bakfile, inifile, 'BufferZone', TRIM(ADJUSTL(lstr)), 'no', sRes)
-           IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; buff_hard_on(inb_flow+is) = 1
-              CALL SCANINIREAL(bakfile, inifile, 'BufferZone', 'Z(T)', '0.0', buff_hard(inb_flow+is,1))
-              CALL SCANINIREAL(bakfile, inifile, 'BufferZone', 'Z(B)', '0.0', buff_hard(inb_flow+is,2))
-           ELSE;                                       buff_hard_on(inb_flow+is) = 0; ENDIF
-        ENDDO
-     ENDIF
-
   ENDIF
 
 ! ###################################################################

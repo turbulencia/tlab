@@ -18,7 +18,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3&
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : visc
-  USE DNS_LOCAL,  ONLY : buff_type
+  USE DNS_LOCAL,  ONLY : BuffType
 
 IMPLICIT NONE
 
@@ -124,7 +124,7 @@ IMPLICIT NONE
 ! #######################################################################
 ! Impose buffer zone as relaxation terms
 ! #######################################################################
-  IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
+  IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
   ENDIF
 

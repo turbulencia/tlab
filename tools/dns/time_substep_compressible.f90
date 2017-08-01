@@ -34,7 +34,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, v
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : gama0
   USE DNS_LOCAL, ONLY : VA_BCS_HT, VA_BCS_HB, VA_BCS_VO, VA_BCS_VI, vindex, bcs_euler_drift
-  USE DNS_LOCAL, ONLY : buff_type
+  USE DNS_LOCAL, ONLY : BuffType
 #ifdef LES
   USE DNS_LOCAL, ONLY : rkm_substep
 #endif
@@ -251,16 +251,10 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, v
 ! ###################################################################
 ! Impose buffer zone as relaxation terms
 ! ###################################################################
-  IF ( buff_type .EQ. 1 .OR. buff_type .EQ. 3 ) THEN
+  IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
-     ! CALL BOUNDARY_BUFFER_RELAXATION_FLOW_OLD(&
-     !      vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-     !      vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,hq)
      DO is = 1,inb_scal
         CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, rho,s, hs) 
-     ! CALL BOUNDARY_BUFFER_RELAXATION_SCAL_OLD(is,&
-     !      vaux(vindex(VA_BUFF_HT)), vaux(vindex(VA_BUFF_HB)), &
-     !      vaux(vindex(VA_BUFF_VI)), vaux(vindex(VA_BUFF_VO)), q,s(1,is),hs(1,is))
      ENDDO
   ENDIF
 
@@ -346,10 +340,10 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, v
 ! ###################################################################
 ! Impose buffer zone as filter
 ! ###################################################################
-  IF ( buff_type .EQ. 2 .OR. buff_type .EQ. 3 ) THEN
-     ! CALL BOUNDARY_BUFFER_FILTER&
-     !      (rho,u,v,w,e,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
-     ! OPR_FILTER has changed and this routine needs to be updated
+  IF ( BuffType .EQ. DNS_BUFFER_FILTER .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
+! CALL BOUNDARY_BUFFER_FILTER&
+!      (rho,u,v,w,e,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+! OPR_FILTER has changed and this routine needs to be updated
   ENDIF
 
 ! ###################################################################

@@ -17,7 +17,7 @@
 !# routine
 !#
 !########################################################################
-SUBROUTINE BOUNDARY_INIT(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
+SUBROUTINE BOUNDARY_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
 
   USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
   USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim
@@ -26,7 +26,7 @@ SUBROUTINE BOUNDARY_INIT(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
   USE DNS_GLOBAL,    ONLY : mach, pbg, qbg
   USE DNS_GLOBAL,    ONLY : area
   USE THERMO_GLOBAL, ONLY : imixture, gama0
-  USE DNS_LOCAL,     ONLY : BuffFlowJmin,BuffFlowJmax,BuffFlowImin,BuffFlowImax, buff_type
+  USE DNS_LOCAL,     ONLY : BuffFlowJmin,BuffFlowJmax,BuffFlowImin,BuffFlowImax, BuffType
   USE DNS_LOCAL,     ONLY : BuffScalJmin,BuffScalJmax,BuffScalImin,BuffScalImax
   USE DNS_LOCAL,     ONLY : bcs_euler_drift, bcs_p_imin,bcs_p_imax, bcs_p_jmin,bcs_p_jmax, bcs_p_kmin,bcs_p_kmax
 #ifdef USE_MPI
@@ -137,7 +137,7 @@ SUBROUTINE BOUNDARY_INIT(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
 ! ###################################################################
 ! Buffer zone treatment
 ! ###################################################################
-  IF ( buff_type .GT. 0 .OR. bcs_euler_drift .EQ. 1 ) THEN
+  IF ( BuffType .NE. DNS_BUFFER_NONE .OR. bcs_euler_drift .EQ. 1 ) THEN
      CALL BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
   ENDIF
 
@@ -390,5 +390,4 @@ SUBROUTINE BOUNDARY_INIT(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
 
 10 FORMAT(G_FORMAT_R)
 
-END SUBROUTINE BOUNDARY_INIT
-
+END SUBROUTINE BOUNDARY_INITIALIZE

@@ -65,25 +65,18 @@ MODULE DNS_LOCAL
 ! ################################################################
 ! Buffer zone
 ! ################################################################
-  TINTEGER :: buff_type
+  TINTEGER :: BuffType
   LOGICAL  :: BuffLoad
   TYPE(buffer_dt) :: BuffFlowImin,BuffFlowImax,BuffFlowJmin,BuffFlowJmax
   TYPE(buffer_dt) :: BuffScalImin,BuffScalImax,BuffScalJmin,BuffScalJmax
-
-  TINTEGER :: buff_hard_on(MAX_VARS)
-  TREAL    :: buff_hard(MAX_VARS,2)
+  TYPE(filter_dt), DIMENSION(3) :: FilterBuffer
   
 ! ###########################################################
 ! Filters
 ! ###########################################################
-  TYPE(filter_dt), DIMENSION(3) :: FilterDomain, FilterInflow, FilterBuffer
+  TYPE(filter_dt), DIMENSION(3) :: FilterDomain
 
   TINTEGER :: ifilt_step, ifilt_scalar
-
-  ! This info should be put into a filter_dt
-  TINTEGER :: ifilt_inflow, ifilt_inflow_iwidth, ifilt_inflow_jwidth
-  TINTEGER :: ifilt_inflow_step
-
 
 ! ###################################################################
 ! Inflow field in spatial mode
@@ -92,6 +85,11 @@ MODULE DNS_LOCAL
 
   TINTEGER :: ifrc_mode, ifrc_ifield
   TREAL    :: frc_length, frc_adapt
+
+  TYPE(filter_dt), DIMENSION(3) :: FilterInflow
+  ! This info should be put into FilterInflow derived type
+  TINTEGER :: ifilt_inflow, ifilt_inflow_iwidth, ifilt_inflow_jwidth
+  TINTEGER :: ifilt_inflow_step
 
 ! ###################################################################
 ! Discrete forcing
