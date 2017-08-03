@@ -556,7 +556,7 @@ SUBROUTINE DNS_MPIO_AUX()
 ! ###################################################################
   idummy = inb_flow_array +inb_scal_array
 
-  id = 1
+  id = MPIO_SUBARRAY_PLANES_XOY
   IF ( nplanes_k .GT. 0 ) THEN ! Saving full vertical xOy planes; writing only info of PE containing the first plane
      IF ( ims_pro_k .EQ. ( planes_k(1) /kmax) ) mpio_aux(id)%active = .TRUE.
      mpio_aux(id)%communicator = ims_comm_x
@@ -572,7 +572,7 @@ SUBROUTINE DNS_MPIO_AUX()
      
   ENDIF
 
-  id = 2
+  id = MPIO_SUBARRAY_PLANES_ZOY
   IF ( nplanes_i .GT. 0 ) THEN ! Saving full vertical zOy planes; writing only info of PE containing the first plane
      IF ( ims_pro_i .EQ.  ( planes_i(1) /imax) ) mpio_aux(id)%active = .TRUE.
      mpio_aux(id)%communicator = ims_comm_z
@@ -588,7 +588,7 @@ SUBROUTINE DNS_MPIO_AUX()
 
   ENDIF
 
-  id = 3
+  id = MPIO_SUBARRAY_PLANES_XOZ
   IF ( nplanes_j .GT. 0 ) THEN ! Saving full blocks xOz planes
      mpio_aux(id)%active = .TRUE.
      mpio_aux(id)%communicator = MPI_COMM_WORLD

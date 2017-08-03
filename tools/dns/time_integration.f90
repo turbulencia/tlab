@@ -1,9 +1,7 @@
 #include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
-#ifdef USE_MPI
 #include "dns_const_mpi.h"
-#endif
 #include "avgij_map.h"
 
 !########################################################################
@@ -235,7 +233,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
         IF ( nplanes_k .GT. 0 ) THEN
            CALL REDUCE_Z_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, nplanes_k,planes_k, txc)
            WRITE(fname,*) itime; fname = 'planesK.'//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(i1, fname, varname, txc, splanes_k, hq)
+           CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_XOY, fname, varname, txc, splanes_k, hq)
         ENDIF
 
         IF ( nplanes_j .GT. 0 ) THEN
@@ -256,13 +254,13 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
            ENDIF
            CALL REDUCE_Y_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, wrk3d, nplanes_j,nplanes_j_aux,planes_j, txc)
            WRITE(fname,*) itime; fname = 'planesJ.'//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(i3, fname, varname, txc, splanes_j, hq)
+           CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_XOZ, fname, varname, txc, splanes_j, hq)
         ENDIF
 
         IF ( nplanes_i .GT. 0 ) THEN
            CALL REDUCE_X_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, nplanes_i,planes_i, txc)
            WRITE(fname,*) itime; fname = 'planesI.'//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(i2, fname, varname, txc, splanes_i, hq)
+           CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_ZOY, fname, varname, txc, splanes_i, hq)
         ENDIF
 
      ENDIF
