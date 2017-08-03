@@ -41,14 +41,9 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:), POINTER :: e, rho, p, T, vis
-  TREAL, DIMENSION(:), POINTER :: y, dx,dy,dz
 
 ! #######################################################################
 ! Define pointers
-                   dx => g(1)%jac(:,1)
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
-                   dz => g(3)%jac(:,1)
-
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      e   => q(:,4)
      rho => q(:,5)
@@ -73,7 +68,7 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
 
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. ffltdmp .EQ. 1 .AND. flag_save ) THEN
      CALL FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)         
-     CALL DNS_AVG_KIN(i1, itime, rtime, imax,jmax,kmax, y, dx,dz, area, q, txc, vaux(vindex(VA_MEAN_WRK)), wrk3d)
+     CALL DNS_AVG_KIN(i1, itime, rtime, imax,jmax,kmax,q, txc, vaux(vindex(VA_MEAN_WRK)), wrk3d)
   ENDIF
   
 ! filtering
@@ -116,7 +111,7 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
 ! statistics
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. ffltdmp .EQ. 1 .AND. flag_save ) THEN
      CALL FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)         
-     CALL DNS_AVG_KIN(i2, itime, rtime, imax,jmax,kmax, y, dx,dz, area, q, txc, vaux(vindex(VA_MEAN_WRK)), wrk3d)
+     CALL DNS_AVG_KIN(i2, itime, rtime, imax,jmax,kmax, q, txc, vaux(vindex(VA_MEAN_WRK)), wrk3d)
   ENDIF
   
 ! recalculation of diagnostic variables
@@ -146,9 +141,10 @@ END SUBROUTINE DNS_FILTER
 #define Eps_0(j)  mean2d(j,7)
 #define Eps_1(j)  mean2d(j,8)
 
-SUBROUTINE DNS_AVG_KIN(iflag, itime, rtime, nx,ny,nz, y, dx,dz, area, q, eps, mean2d, wrk3d)
+SUBROUTINE DNS_AVG_KIN(iflag, itime, rtime, nx,ny,nz, q, eps, mean2d, wrk3d)
 
   USE DNS_GLOBAL, ONLY : imode_eqns
+  USE DNS_GLOBAL, ONLY : g, area
 
   IMPLICIT NONE
 
@@ -158,8 +154,7 @@ SUBROUTINE DNS_AVG_KIN(iflag, itime, rtime, nx,ny,nz, y, dx,dz, area, q, eps, me
 #endif
 
   TINTEGER iflag, itime, nx,ny,nz
-  TREAL rtime, area
-  TREAL, DIMENSION(*),          INTENT(IN)    :: y, dx, dz
+  TREAL rtime
   TREAL, DIMENSION(nx,ny,nz,*), INTENT(IN)    :: q
   TREAL, DIMENSION(nx,ny,nz),   INTENT(IN)    :: eps
   TREAL, DIMENSION(nx,ny,nz),   INTENT(INOUT) :: wrk3d
@@ -177,7 +172,7 @@ SUBROUTINE DNS_AVG_KIN(iflag, itime, rtime, nx,ny,nz, y, dx,dz, area, q, eps, me
   DO j = 1,ny
 
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-        rR(j) = AVG_IK(nx, ny, nz, j, q(1,1,1,5), dx, dz, area)
+        rR(j) = AVG_IK(nx, ny, nz, j, q(1,1,1,5), g(1)%jac, g(3)%jac, area)
         DO k = 1,nz; DO i = 1,nx
            wrk3d(i,1,k) = q(i,j,k,5) *q(i,j,k,1)
            wrk3d(i,2,k) = q(i,j,k,5) *q(i,j,k,2)
@@ -194,20 +189,20 @@ SUBROUTINE DNS_AVG_KIN(iflag, itime, rtime, nx,ny,nz, y, dx,dz, area, q, eps, me
      
      ENDIF
 
-     fU(j) = AVG_IK(nx,ny,nz, i1, wrk3d, dx,dz, area) /rR(j)
-     fV(j) = AVG_IK(nx,ny,nz, i2, wrk3d, dx,dz, area) /rR(j)
-     fW(j) = AVG_IK(nx,ny,nz, i3, wrk3d, dx,dz, area) /rR(j)
+     fU(j) = AVG_IK(nx,ny,nz, i1, wrk3d, g(1)%jac,g(3)%jac, area) /rR(j)
+     fV(j) = AVG_IK(nx,ny,nz, i2, wrk3d, g(1)%jac,g(3)%jac, area) /rR(j)
+     fW(j) = AVG_IK(nx,ny,nz, i3, wrk3d, g(1)%jac,g(3)%jac, area) /rR(j)
 
      DO k = 1,nz; DO i = 1,nx
         wrk3d(i,1,k) = rR(j) *((q(i,j,k,1)-fU(j))**2 + (q(i,j,k,2)-fV(j))**2 + (q(i,j,k,3)-fW(j))**2) *C_05_R
      ENDDO; ENDDO
 
      IF ( iflag .EQ. 1 ) THEN
-        Kin_0(j) = AVG_IK(nx,ny,nz, i1, wrk3d, dx,dz, area)
-        Eps_0(j) = AVG_IK(nx,ny,nz, j,  eps,   dx,dz, area)
+        Kin_0(j) = AVG_IK(nx,ny,nz, i1, wrk3d, g(1)%jac,g(3)%jac, area)
+        Eps_0(j) = AVG_IK(nx,ny,nz, j,  eps,   g(1)%jac,g(3)%jac, area)
      ELSE
-        Kin_1(j) = AVG_IK(nx,ny,nz, i1, wrk3d, dx,dz, area)
-        Eps_1(j) = AVG_IK(nx,ny,nz, j,  eps,   dx,dz, area)
+        Kin_1(j) = AVG_IK(nx,ny,nz, i1, wrk3d, g(1)%jac,g(3)%jac, area)
+        Eps_1(j) = AVG_IK(nx,ny,nz, j,  eps,   g(1)%jac,g(3)%jac, area)
      ENDIF
 
   ENDDO
@@ -230,7 +225,7 @@ SUBROUTINE DNS_AVG_KIN(iflag, itime, rtime, nx,ny,nz, y, dx,dz, area, q, eps, me
         WRITE(21, '(A)') 'I J Y Eps_before Eps_after Kin_before Kin_after'
 
         DO j=1, ny
-           WRITE(21,1000) 1, j, y(j), Eps_0(j), Eps_1(j), Kin_0(j), Kin_1(j)
+           WRITE(21,1000) 1, j, g(2)%nodes(j), Eps_0(j), Eps_1(j), Kin_0(j), Kin_1(j)
         ENDDO
 
         CLOSE(21)
