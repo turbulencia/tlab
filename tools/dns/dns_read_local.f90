@@ -10,7 +10,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE DNS_GLOBAL,    ONLY : imax,jmax
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_LOCAL
-
+  USE BOUNDARY_BUFFER
+  
   IMPLICIT NONE
 
 #include "integers.h"

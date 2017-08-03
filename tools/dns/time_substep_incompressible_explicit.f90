@@ -41,11 +41,9 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   USE DNS_GLOBAL,    ONLY : damkohler, epbackground,pbackground
   USE DNS_GLOBAL,    ONLY : icalc_particle, isize_particle
   USE THERMO_GLOBAL, ONLY : imixture
-
-!  USE DNS_LOCAL,  ONLY : VA_BUFF_HT, VA_BUFF_HB, VA_BUFF_VO, VA_BUFF_VI, vindex
-  USE DNS_LOCAL,  ONLY : VA_BCS_HT, VA_BCS_HB, vindex
-  USE DNS_LOCAL,  ONLY : BuffType
-  USE DNS_LOCAL,  ONLY : imode_rhs
+  USE DNS_LOCAL,     ONLY : VA_BCS_HT, VA_BCS_HB, vindex
+  USE DNS_LOCAL,     ONLY : imode_rhs
+  USE BOUNDARY_BUFFER
 
   IMPLICIT NONE
 

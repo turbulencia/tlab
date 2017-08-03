@@ -69,14 +69,4 @@ MODULE DNS_TYPES
      TREAL, DIMENSION(:,:), POINTER :: coeffs ! pointer to coefficients
   END TYPE filter_dt
   
-  TYPE buffer_dt
-     SEQUENCE
-     TINTEGER type                              ! relaxation, filter...
-     TINTEGER size                              ! # points in buffer layer
-     LOGICAL active(MAX_VARS), hard
-     TREAL strength(MAX_VARS), sigma(MAX_VARS), hardvalues(MAX_VARS)  ! parameters in relaxation term
-     TREAL, ALLOCATABLE, DIMENSION(:,:)     :: tau  ! pointer to relaxation timescale
-     TREAL, ALLOCATABLE, DIMENSION(:,:,:,:) :: ref  ! pointer to reference fields
-  END TYPE buffer_dt
-  
 END MODULE DNS_TYPES

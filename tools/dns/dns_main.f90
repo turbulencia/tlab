@@ -306,27 +306,6 @@ PROGRAM DNS
   ENDIF
   
 ! ###################################################################
-! Initialize buffer
-! ###################################################################
-  IF ( BuffFlowImin%size .GT. 0 ) &
-       ALLOCATE( BuffFlowImin%ref(BuffFlowImin%size,jmax,kmax,inb_flow), BuffFlowImin%tau(BuffFlowImin%size,inb_flow) )
-  IF ( BuffFlowImax%size .GT. 0 ) &
-       ALLOCATE( BuffFlowImax%ref(BuffFlowImax%size,jmax,kmax,inb_flow), BuffFlowImax%tau(BuffFlowImax%size,inb_flow) )
-  IF ( BuffFlowJmin%size .GT. 0 ) &
-       ALLOCATE( BuffFlowJmin%ref(imax,BuffFlowJmin%size,kmax,inb_flow), BuffFlowJmin%tau(BuffFlowJmin%size,inb_flow) )
-  IF ( BuffFlowJmax%size .GT. 0 ) &
-       ALLOCATE( BuffFlowJmax%ref(imax,BuffFlowJmax%size,kmax,inb_flow), BuffFlowJmax%tau(BuffFlowJmax%size,inb_flow) )
-  
-  IF ( BuffScalImin%size .GT. 0 ) &
-       ALLOCATE( BuffScalImin%ref(BuffScalImin%size,jmax,kmax,inb_scal), BuffScalImin%tau(BuffScalImin%size,inb_scal) )
-  IF ( BuffScalImax%size .GT. 0 ) &
-       ALLOCATE( BuffScalImax%ref(BuffScalImax%size,jmax,kmax,inb_scal), BuffScalImax%tau(BuffScalImax%size,inb_scal) )
-  IF ( BuffScalJmin%size .GT. 0 ) &
-       ALLOCATE( BuffScalJmin%ref(imax,BuffScalJmin%size,kmax,inb_scal), BuffScalJmin%tau(BuffScalJmin%size,inb_scal) )
-  IF ( BuffScalJmax%size .GT. 0 ) &
-       ALLOCATE( BuffScalJmax%ref(imax,BuffScalJmax%size,kmax,inb_scal), BuffScalJmax%tau(BuffScalJmax%size,inb_scal) )
-  
-! ###################################################################
 ! Initialize filters
 ! ###################################################################
   FilterDomain(:)%size       = g(:)%size
@@ -558,7 +537,6 @@ SUBROUTINE DNS_MPIO_AUX()
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : inb_flow_array, inb_scal_array
   USE DNS_LOCAL,  ONLY : nplanes_i,nplanes_j,nplanes_k, planes_i,planes_k
-  USE DNS_LOCAL,  ONLY : BuffFlowJmin, BuffFlowJmax
   USE DNS_MPI
   
   IMPLICIT NONE
@@ -622,41 +600,6 @@ SUBROUTINE DNS_MPIO_AUX()
      
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
-     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
-
-  ENDIF
-
-! ###################################################################
-! Subarray information to read and write buffer regions
-! ###################################################################
-  id = 4
-  IF ( BuffFlowJmin%size .GT. 0 ) THEN ! At the lower boundary
-     mpio_aux(id)%active = .TRUE.
-     mpio_aux(id)%communicator = MPI_COMM_WORLD
-     
-     ndims = 3
-     sizes(1)  =imax *ims_npro_i; sizes(2)   = BuffFlowJmin%size; sizes(3)   = kmax *ims_npro_k
-     locsize(1)=imax;             locsize(2) = BuffFlowJmin%size; locsize(3) = kmax
-     offset(1) =ims_offset_i;     offset(2)  = 0;                 offset(3)  = ims_offset_k
-     
-     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)
-     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
-
-  ENDIF
-
-  id = 5
-  IF ( BuffFlowJmax%size .GT. 0 ) THEN ! At the upper boundary
-     mpio_aux(id)%active = .TRUE.
-     mpio_aux(id)%communicator = MPI_COMM_WORLD
-     
-     ndims = 3
-     sizes(1)  =imax *ims_npro_i; sizes(2)   = BuffFlowJmax%size; sizes(3)   = kmax *ims_npro_k
-     locsize(1)=imax;             locsize(2) = BuffFlowJmax%size; locsize(3) = kmax
-     offset(1) =ims_offset_i;     offset(2)  = 0;                 offset(3)  = ims_offset_k
-     
-     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)
      CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
 
   ENDIF

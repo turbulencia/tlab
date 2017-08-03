@@ -31,7 +31,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   ! 
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : bcs_scal_jmin, bcs_scal_jmax
-  USE DNS_LOCAL,  ONLY : BuffType 
+  USE BOUNDARY_BUFFER
   USE DNS_LOCAL,  ONLY : rkm_substep,rkm_endstep,tower_mode 
 
   USE DNS_TOWER

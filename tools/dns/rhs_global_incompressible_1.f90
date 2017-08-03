@@ -29,9 +29,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : bcs_scal_jmin, bcs_scal_jmax
   USE DNS_LOCAL,  ONLY : idivergence
-  USE DNS_LOCAL,  ONLY : BuffType 
   USE DNS_LOCAL,  ONLY : rkm_substep,rkm_endstep,tower_mode 
   USE DNS_TOWER 
+  USE BOUNDARY_BUFFER
 
   IMPLICIT NONE
 

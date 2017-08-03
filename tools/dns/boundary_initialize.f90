@@ -22,13 +22,11 @@ SUBROUTINE BOUNDARY_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
   USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
   USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal
-  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : g,area
   USE DNS_GLOBAL,    ONLY : mach, pbg, qbg
-  USE DNS_GLOBAL,    ONLY : area
   USE THERMO_GLOBAL, ONLY : imixture, gama0
-  USE DNS_LOCAL,     ONLY : BuffFlowJmin,BuffFlowJmax,BuffFlowImin,BuffFlowImax, BuffType
-  USE DNS_LOCAL,     ONLY : BuffScalJmin,BuffScalJmax,BuffScalImin,BuffScalImax
   USE DNS_LOCAL,     ONLY : bcs_euler_drift, bcs_p_imin,bcs_p_imax, bcs_p_jmin,bcs_p_jmax, bcs_p_kmin,bcs_p_kmax
+  USE BOUNDARY_BUFFER
 #ifdef USE_MPI
   USE DNS_GLOBAL,    ONLY : inb_scal_array
   USE DNS_LOCAL,     ONLY : ifilt_inflow,ifilt_inflow_iwidth,ifilt_inflow_jwidth
@@ -387,7 +385,5 @@ SUBROUTINE BOUNDARY_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
 #endif
 
   RETURN
-
-10 FORMAT(G_FORMAT_R)
 
 END SUBROUTINE BOUNDARY_INITIALIZE

@@ -1,8 +1,8 @@
 #include "types.h"
 
 MODULE DNS_LOCAL
-  USE DNS_TYPES,  ONLY : filter_dt, grid_dt, buffer_dt
-  USE DNS_GLOBAL, ONLY : MAX_NSP, MAX_VARS 
+  USE DNS_TYPES,  ONLY : filter_dt, grid_dt
+  USE DNS_GLOBAL, ONLY : MAX_NSP
 #ifdef USE_PSFFT  
   USE NB3DFFT,    ONLY : NB3DFFT_SCHEDLTYPE
 #endif
@@ -62,15 +62,6 @@ MODULE DNS_LOCAL
   TINTEGER :: bcs_scal_jmin(MAX_NSP), bcs_scal_jmax(MAX_NSP), bcs_flow_jmin, bcs_flow_jmax
   TINTEGER :: bcs_scal_kmin(MAX_NSP), bcs_scal_kmax(MAX_NSP), bcs_flow_kmin, bcs_flow_kmax
 
-! ################################################################
-! Buffer zone
-! ################################################################
-  TINTEGER :: BuffType
-  LOGICAL  :: BuffLoad
-  TYPE(buffer_dt) :: BuffFlowImin,BuffFlowImax,BuffFlowJmin,BuffFlowJmax
-  TYPE(buffer_dt) :: BuffScalImin,BuffScalImax,BuffScalJmin,BuffScalJmax
-  TYPE(filter_dt), DIMENSION(3) :: FilterBuffer
-  
 ! ###########################################################
 ! Filters
 ! ###########################################################

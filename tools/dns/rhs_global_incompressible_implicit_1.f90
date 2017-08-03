@@ -35,7 +35,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   USE DNS_GLOBAL, ONLY : bbackground
   USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax, bcs_scal_jmin, bcs_scal_jmax
   USE DNS_LOCAL,  ONLY : idivergence
-  USE DNS_LOCAL,  ONLY : BuffType
+  USE BOUNDARY_BUFFER
 
   IMPLICIT NONE
 

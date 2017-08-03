@@ -4,47 +4,89 @@
 #include "dns_const_mpi.h"
 
 !########################################################################
-!# DESCRIPTION
+!# Implementation of relaxation terms in buffer regions of the
+!# computational domain
+!#
+!# Data is read in dns_read_local
 !#
 !# Note that with the energy formulation the forcing terms have been
 !# made proportional to differences on the conserved variables,
 !# i.e. rho, rho*V, rho*(e+v^2/2). 
 !#
 !########################################################################
-SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
-
-  USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile
-  USE DNS_GLOBAL,    ONLY : imode_eqns
+MODULE BOUNDARY_BUFFER
+  
+  USE DNS_TYPES,  ONLY : filter_dt
+  USE DNS_GLOBAL, ONLY : MAX_VARS
+  
+  USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile,efile
+  USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, isize_field
-  USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : g, area
   USE DNS_GLOBAL,    ONLY : itime
   USE DNS_GLOBAL,    ONLY : mach
   USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL,     ONLY : BuffFlowJmin,BuffFlowJmax,BuffFlowImin,BuffFlowImax, BuffLoad
-  USE DNS_LOCAL,     ONLY : BuffScalJmin,BuffScalJmax,BuffScalImin,BuffScalImax
 #ifdef USE_MPI
-  USE DNS_CONSTANTS, ONLY : efile
   USE DNS_MPI
 #endif
-
+  
   IMPLICIT NONE
+  SAVE
+  
+  TYPE buffer_dt
+     SEQUENCE
+     TINTEGER type                                  ! relaxation, filter...
+     TINTEGER size                                  ! # points in buffer layer
+     LOGICAL active(MAX_VARS), hard
+     TREAL strength(MAX_VARS), sigma(MAX_VARS)      ! parameters in relaxation term
+     TREAL hardvalues(MAX_VARS)                     ! Fixed reference values
+     TREAL, ALLOCATABLE, DIMENSION(:,:)     :: tau  ! relaxation timescale for each field
+     TREAL, ALLOCATABLE, DIMENSION(:,:,:,:) :: ref  ! reference fields
+  END TYPE buffer_dt
+  
+  TINTEGER,        PUBLIC :: BuffType
+  LOGICAL,         PUBLIC :: BuffLoad
+  TYPE(buffer_dt), PUBLIC :: BuffFlowImin,BuffFlowImax,BuffFlowJmin,BuffFlowJmax
+  TYPE(buffer_dt), PUBLIC :: BuffScalImin,BuffScalImax,BuffScalJmin,BuffScalJmax
+!  TYPE(filter_dt), DIMENSION(3) :: FilterBuffer  
 
+  PUBLIC :: BOUNDARY_BUFFER_INITIALIZE
+  PUBLIC :: BOUNDARY_BUFFER_RELAXATION_FLOW
+  PUBLIC :: BOUNDARY_BUFFER_RELAXATION_SCAL
+  PUBLIC :: BOUNDARY_BUFFER_FILTER
+  
+  PRIVATE
+  
+  TINTEGER j,jloc, i,iloc, iq,is, idummy
+  TREAL dummy, prefactor
+
+CONTAINS
+  
+SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
+    
+  IMPLICIT NONE
+    
 #include "integers.h"
 #ifdef USE_MPI
 #include "mpif.h"
 #endif
-
+    
   TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN)    :: q, s
   TREAL, DIMENSION(imax*jmax*kmax,2), INTENT(INOUT) :: txc
   TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk3d
-  
+    
 ! -------------------------------------------------------------------
-  TINTEGER j,jloc, i,iloc, iq,is, idummy,io_sizes(5)
-  TREAL dummy, var_max,var_min, prefactor
+  TINTEGER io_sizes(5)
+  TREAL var_max,var_min
 
   CHARACTER*32 name, str, varname(inb_flow+inb_scal)
   CHARACTER*128 line 
 
+#ifdef USE_MPI
+  TINTEGER                :: ndims, idummy, id
+  TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
+#endif
+  
 ! ###################################################################
 ! Prepare data for subarrays
   DO iq = 1,MAX(inb_flow,inb_scal)
@@ -57,8 +99,62 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
      CALL IO_WRITE_ASCII(efile,'BOUNDARY_INIT. I/O routines undeveloped.')
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)     
   ENDIF
+
+! Subarray information to read and write buffer regions
+  id = MPIO_SUBARRAY_BUFFER_JMIN
+  IF ( BuffFlowJmin%size .GT. 0 ) THEN ! At the lower boundary
+     mpio_aux(id)%active = .TRUE.
+     mpio_aux(id)%communicator = MPI_COMM_WORLD
+     
+     ndims = 3
+     sizes(1)  =imax *ims_npro_i; sizes(2)   = BuffFlowJmin%size; sizes(3)   = kmax *ims_npro_k
+     locsize(1)=imax;             locsize(2) = BuffFlowJmin%size; locsize(3) = kmax
+     offset(1) =ims_offset_i;     offset(2)  = 0;                 offset(3)  = ims_offset_k
+     
+     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+          MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+
+  ENDIF
+
+  id = MPIO_SUBARRAY_BUFFER_JMAX
+  IF ( BuffFlowJmax%size .GT. 0 ) THEN ! At the upper boundary
+     mpio_aux(id)%active = .TRUE.
+     mpio_aux(id)%communicator = MPI_COMM_WORLD
+     
+     ndims = 3
+     sizes(1)  =imax *ims_npro_i; sizes(2)   = BuffFlowJmax%size; sizes(3)   = kmax *ims_npro_k
+     locsize(1)=imax;             locsize(2) = BuffFlowJmax%size; locsize(3) = kmax
+     offset(1) =ims_offset_i;     offset(2)  = 0;                 offset(3)  = ims_offset_k
+     
+     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+          MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+
+  ENDIF
 #endif
 
+! ###################################################################
+! Allocate memory space
+! ###################################################################
+  IF ( BuffFlowImin%size .GT. 0 ) &
+       ALLOCATE( BuffFlowImin%ref(BuffFlowImin%size,jmax,kmax,inb_flow), BuffFlowImin%tau(BuffFlowImin%size,inb_flow) )
+  IF ( BuffFlowImax%size .GT. 0 ) &
+       ALLOCATE( BuffFlowImax%ref(BuffFlowImax%size,jmax,kmax,inb_flow), BuffFlowImax%tau(BuffFlowImax%size,inb_flow) )
+  IF ( BuffFlowJmin%size .GT. 0 ) &
+       ALLOCATE( BuffFlowJmin%ref(imax,BuffFlowJmin%size,kmax,inb_flow), BuffFlowJmin%tau(BuffFlowJmin%size,inb_flow) )
+  IF ( BuffFlowJmax%size .GT. 0 ) &
+       ALLOCATE( BuffFlowJmax%ref(imax,BuffFlowJmax%size,kmax,inb_flow), BuffFlowJmax%tau(BuffFlowJmax%size,inb_flow) )
+  
+  IF ( BuffScalImin%size .GT. 0 ) &
+       ALLOCATE( BuffScalImin%ref(BuffScalImin%size,jmax,kmax,inb_scal), BuffScalImin%tau(BuffScalImin%size,inb_scal) )
+  IF ( BuffScalImax%size .GT. 0 ) &
+       ALLOCATE( BuffScalImax%ref(BuffScalImax%size,jmax,kmax,inb_scal), BuffScalImax%tau(BuffScalImax%size,inb_scal) )
+  IF ( BuffScalJmin%size .GT. 0 ) &
+       ALLOCATE( BuffScalJmin%ref(imax,BuffScalJmin%size,kmax,inb_scal), BuffScalJmin%tau(BuffScalJmin%size,inb_scal) )
+  IF ( BuffScalJmax%size .GT. 0 ) &
+       ALLOCATE( BuffScalJmax%ref(imax,BuffScalJmax%size,kmax,inb_scal), BuffScalJmax%tau(BuffScalJmax%size,inb_scal) )
+  
 ! ###################################################################
 ! Define profiles of relaxation times
   DO iq = 1,inb_flow
@@ -140,23 +236,23 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
      IF ( BuffFlowJmin%size .GT. 0 ) THEN
         name = TRIM(ADJUSTL(tag_flow))//'bcs.jmin'
         idummy = imax*BuffFlowJmin%size*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
-        CALL IO_READ_SUBARRAY8(i4, name, varname, BuffFlowJmin%ref, io_sizes, wrk3d)
+        CALL IO_READ_SUBARRAY8(MPIO_SUBARRAY_BUFFER_JMIN, name, varname, BuffFlowJmin%ref, io_sizes, wrk3d)
      ENDIF
      IF ( BuffScalJmin%size .GT. 0 ) THEN
         name = TRIM(ADJUSTL(tag_scal))//'bcs.jmin'
         idummy = imax*BuffScalJmin%size*kmax; io_sizes = (/idummy,1,idummy,1,inb_scal/)
-        CALL IO_READ_SUBARRAY8(i4, name, varname, BuffScalJmin%ref, io_sizes, wrk3d)
+        CALL IO_READ_SUBARRAY8(MPIO_SUBARRAY_BUFFER_JMIN, name, varname, BuffScalJmin%ref, io_sizes, wrk3d)
      ENDIF
 
      IF ( BuffFlowJmax%size .GT. 0 ) THEN 
         name = TRIM(ADJUSTL(tag_flow))//'bcs.jmax'
         idummy = imax*BuffFlowJmax%size*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
-        CALL IO_READ_SUBARRAY8(i5, name, varname, BuffFlowJmax%ref, io_sizes, wrk3d)
+        CALL IO_READ_SUBARRAY8(MPIO_SUBARRAY_BUFFER_JMAX, name, varname, BuffFlowJmax%ref, io_sizes, wrk3d)
      ENDIF
      IF ( BuffFlowJmax%size .GT. 0 ) THEN
         name = TRIM(ADJUSTL(tag_scal))//'bcs.jmax'
         idummy = imax*BuffScalJmax%size*kmax; io_sizes = (/idummy,1,idummy,1,inb_scal/)
-        CALL IO_READ_SUBARRAY8(i5, name, varname, BuffScalJmax%ref, io_sizes, wrk3d)
+        CALL IO_READ_SUBARRAY8(MPIO_SUBARRAY_BUFFER_JMAX, name, varname, BuffScalJmax%ref, io_sizes, wrk3d)
      ENDIF
 
      IF ( BuffFlowImin%size .GT. 0 ) THEN 
@@ -193,12 +289,12 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.jmin.'//TRIM(ADJUSTL(name))
         idummy = imax*BuffFlowJmin%size*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
-        CALL IO_WRITE_SUBARRAY8(i4, name, varname, BuffFlowJmin%ref, io_sizes, wrk3d)
+        CALL IO_WRITE_SUBARRAY8(MPIO_SUBARRAY_BUFFER_JMIN, name, varname, BuffFlowJmin%ref, io_sizes, wrk3d)
      ENDIF
      IF ( BuffScalJmin%size .GT. 0 ) THEN 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_scal))//'bcs.jmin.'//TRIM(ADJUSTL(name))
         idummy = imax*BuffScalJmin%size*kmax; io_sizes = (/idummy,1,idummy,1,inb_scal/)
-        CALL IO_WRITE_SUBARRAY8(i4, name, varname, BuffScalJmin%ref, io_sizes, wrk3d)
+        CALL IO_WRITE_SUBARRAY8(MPIO_SUBARRAY_BUFFER_JMIN, name, varname, BuffScalJmin%ref, io_sizes, wrk3d)
      ENDIF
 
      IF ( BuffFlowJmax%size .GT. 0 ) THEN 
@@ -206,12 +302,12 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.jmax.'//TRIM(ADJUSTL(name))
         idummy = imax*BuffFlowJmax%size*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
-        CALL IO_WRITE_SUBARRAY8(i5, name, varname, BuffFlowJmax%ref,                   io_sizes, wrk3d)
+        CALL IO_WRITE_SUBARRAY8(MPIO_SUBARRAY_BUFFER_JMAX, name, varname, BuffFlowJmax%ref,                   io_sizes, wrk3d)
      ENDIF
      IF ( BuffScalJmax%size .GT. 0 ) THEN 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_scal))//'bcs.jmax.'//TRIM(ADJUSTL(name))
         idummy = imax*BuffScalJmax%size*kmax; io_sizes = (/idummy,1,idummy,1,inb_scal/)
-        CALL IO_WRITE_SUBARRAY8(i5, name, varname, BuffScalJmax%ref, io_sizes, wrk3d)
+        CALL IO_WRITE_SUBARRAY8(MPIO_SUBARRAY_BUFFER_JMAX, name, varname, BuffScalJmax%ref, io_sizes, wrk3d)
      ENDIF
 
      IF ( BuffFlowImin%size .GT. 0 ) THEN 
@@ -319,12 +415,6 @@ END SUBROUTINE BOUNDARY_BUFFER_INITIALIZE
 ! ###################################################################
 ! ###################################################################
 SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
-  
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : imode_eqns, inb_flow
-  USE DNS_GLOBAL, ONLY : mach
-  USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL,  ONLY : BuffFlowJmin, BuffFlowJmax, BuffFlowImin, BuffFlowImax
 
   IMPLICIT NONE
 
@@ -334,8 +424,7 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
   TARGET q
   
 ! -------------------------------------------------------------------
-  TINTEGER i,j, iloc,jloc, iq, iq_max
-  TREAL prefactor
+  TINTEGER iq_max
 
   TREAL, DIMENSION(:,:,:), POINTER :: rho
   
@@ -487,10 +576,6 @@ END SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW
 ! ###################################################################
 ! ###################################################################
 SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, rho,s, hs)
-  
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : imode_eqns
-  USE DNS_LOCAL,  ONLY : BuffScalJmin, BuffScalJmax, BuffScalImin, BuffScalImax
 
   IMPLICIT NONE
 
@@ -499,7 +584,6 @@ SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, rho,s, hs)
   TREAL, DIMENSION(imax,jmax,kmax), INTENT(OUT) :: hs
 
 ! -------------------------------------------------------------------
-  TINTEGER i,j, iloc,jloc
 
 ! ###################################################################
   SELECT CASE( imode_eqns )
@@ -571,12 +655,6 @@ END SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL
 !########################################################################
 SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
 
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns
-  USE DNS_GLOBAL,    ONLY : inb_scal, area
-  USE DNS_LOCAL,     ONLY : BuffFlowJmax, BuffScalJmax
-
   IMPLICIT NONE
 
 #include "integers.h"
@@ -589,7 +667,6 @@ SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
 
 ! -------------------------------------------------------------------
   TREAL AVG_IK, AVG1V1D, COV2V2D, COV2V1D
-  TINTEGER i, j, is, iq, jloc
 
   TREAL, DIMENSION(:), POINTER :: r_loc, e_loc
 
@@ -689,12 +766,6 @@ END SUBROUTINE BOUNDARY_INIT_HT
 !########################################################################
 SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
 
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns
-  USE DNS_GLOBAL,    ONLY : inb_scal, area
-  USE DNS_LOCAL,     ONLY : BuffFlowJmin, BuffScalJmin
-
   IMPLICIT NONE
 
 #include "integers.h"
@@ -707,7 +778,6 @@ SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
 
 ! -------------------------------------------------------------------
   TREAL AVG_IK, AVG1V1D, COV2V2D, COV2V1D
-  TINTEGER i, j, is, iq
 
   TREAL, DIMENSION(:), POINTER :: r_loc, e_loc
 
@@ -802,10 +872,6 @@ END SUBROUTINE BOUNDARY_INIT_HB
 !It only makes sense in spatially evolving cases.
 SUBROUTINE BOUNDARY_INIT_VI(q,s, txc, buffer_q, buffer_s)
 
-  USE DNS_GLOBAL, ONLY : imax, jmax, kmax
-  USE DNS_GLOBAL, ONLY : imode_eqns, inb_scal, inb_vars
-  USE DNS_LOCAL,  ONLY : BuffFlowImin, BuffScalImin
-
   IMPLICIT NONE
 
 #include "integers.h"
@@ -818,8 +884,7 @@ SUBROUTINE BOUNDARY_INIT_VI(q,s, txc, buffer_q, buffer_s)
 
 ! -------------------------------------------------------------------
   TREAL AVG1V1D, COV2V1D
-  TREAL dbuff(inb_vars)
-  TINTEGER i, j, iq, is
+  TREAL dbuff(inb_flow+inb_scal)
 
   TREAL, DIMENSION(:), POINTER :: r_loc, e_loc
 
@@ -869,10 +934,6 @@ END SUBROUTINE BOUNDARY_INIT_VI
 !It only makes sense in spatially evolving cases.
 SUBROUTINE BOUNDARY_INIT_VO(q,s, txc, buffer_q, buffer_s)
 
-  USE DNS_GLOBAL, ONLY : imax, jmax, kmax
-  USE DNS_GLOBAL, ONLY : imode_eqns, inb_scal, inb_vars
-  USE DNS_LOCAL,  ONLY : BuffFlowImax, BuffScalImax
-
   IMPLICIT NONE
 
 #include "integers.h"
@@ -885,8 +946,7 @@ SUBROUTINE BOUNDARY_INIT_VO(q,s, txc, buffer_q, buffer_s)
 
 ! -------------------------------------------------------------------
   TREAL AVG1V1D, COV2V1D
-  TREAL dbuff(inb_vars)
-  TINTEGER i, j, iq, is, iloc
+  TREAL dbuff(inb_flow+inb_scal)
 
   TREAL, DIMENSION(:), POINTER :: r_loc, e_loc
 
@@ -938,12 +998,6 @@ END SUBROUTINE BOUNDARY_INIT_VO
 !########################################################################
 SUBROUTINE BOUNDARY_BUFFER_FILTER(rho,u,v,w,e,z1, txc1,txc2,txc3,txc4,txc5, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL, ONLY : imax, jmax, kmax
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : icalc_scal, inb_scal
-  USE DNS_LOCAL,  ONLY : BuffFlowImax, BuffFlowImax, BuffFlowJmin, BuffFlowJmax
-
   IMPLICIT NONE
 
 #include "integers.h"
@@ -954,7 +1008,7 @@ SUBROUTINE BOUNDARY_BUFFER_FILTER(rho,u,v,w,e,z1, txc1,txc2,txc3,txc4,txc5, wrk1
   TREAL, DIMENSION(*)                       :: wrk1d,wrk2d,wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER id, iloc, i, j, k, is, ibc_x(4), ibc_y(4), ibc_z(4), buff_imax
+  TINTEGER id, k, ibc_x(4), ibc_y(4), ibc_z(4), buff_imax
   TREAL eta, delta, amp, ampr, rho_ratio
 
 ! ###################################################################
@@ -1052,7 +1106,7 @@ SUBROUTINE BOUNDARY_BUFFER_FILTER(rho,u,v,w,e,z1, txc1,txc2,txc3,txc4,txc5, wrk1
 ! -------------------------------------------------------------------
 ! Scalar
 ! -------------------------------------------------------------------
-     IF ( icalc_scal .EQ. 1 ) THEN
+!     IF ( icalc_scal .EQ. 1 ) THEN
         DO is = 1,inb_scal
 
            DO k = 1,kmax
@@ -1088,9 +1142,10 @@ SUBROUTINE BOUNDARY_BUFFER_FILTER(rho,u,v,w,e,z1, txc1,txc2,txc3,txc4,txc5, wrk1
            ENDDO
 
         ENDDO
-     ENDIF
+!     ENDIF
 
   ENDIF
 
   RETURN
 END SUBROUTINE BOUNDARY_BUFFER_FILTER
+END MODULE
