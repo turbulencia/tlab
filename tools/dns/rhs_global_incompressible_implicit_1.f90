@@ -328,7 +328,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 ! Impose buffer zone as relaxation terms (Scalar #is) 
 ! #######################################################################
         IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
-           CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, q,s(1,is), hs(1,is) ) 
+           CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, wrk3d,s(1,is), hs(1,is) ) 
         ENDIF
         
 

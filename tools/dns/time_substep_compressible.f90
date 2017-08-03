@@ -254,7 +254,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, v
   IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
      CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
      DO is = 1,inb_scal
-        CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, rho,s, hs) 
+        CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, rho,s(1,is), hs(1,is)) 
      ENDDO
   ENDIF
 

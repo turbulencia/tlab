@@ -166,7 +166,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
 ! Flow part needs to be taken into account in the pressure
      DO is = 1,inb_scal
-        CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, wrk3d,s, hs) ! wrk3d not used in incompressible
+        CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, wrk3d,s(1,is), hs(1,is)) ! wrk3d not used in incompressible
      ENDDO
   ENDIF
 
