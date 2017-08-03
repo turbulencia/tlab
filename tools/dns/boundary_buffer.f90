@@ -285,7 +285,7 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
      ENDIF
 
      IF ( BuffFlowJmin%size .GT. 0 ) THEN 
-        CALL BOUNDARY_INIT_HB(q,s, txc, BuffFlowJmin%ref, BuffScalJmin%ref)
+        CALL BOUNDARY_BUFFER_JMIN(q,s, txc)
 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.jmin.'//TRIM(ADJUSTL(name))
         idummy = imax*BuffFlowJmin%size*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
@@ -298,7 +298,7 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
      ENDIF
 
      IF ( BuffFlowJmax%size .GT. 0 ) THEN 
-        CALL BOUNDARY_INIT_HT(q,s, txc, BuffFlowJmax%ref, BuffScalJmax%ref)
+        CALL BOUNDARY_BUFFER_JMAX(q,s, txc)
 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.jmax.'//TRIM(ADJUSTL(name))
         idummy = imax*BuffFlowJmax%size*kmax; io_sizes = (/idummy,1,idummy,1,inb_flow/)
@@ -311,7 +311,7 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
      ENDIF
 
      IF ( BuffFlowImin%size .GT. 0 ) THEN 
-        CALL BOUNDARY_INIT_VI(q,s, txc, BuffFlowImin%ref, BuffScalImin%ref)
+        CALL BOUNDARY_BUFFER_IMIN(q,s, txc)
 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.imin.'//TRIM(ADJUSTL(name))
         CALL DNS_WRITE_FIELDS(name, i0, BuffFlowImin%size,jmax,kmax, inb_flow, isize_field, BuffFlowImin%ref, wrk3d)
@@ -322,7 +322,7 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
      ENDIF
 
      IF ( BuffFlowImax%size .GT. 0 ) THEN
-        CALL BOUNDARY_INIT_VO(q,s, txc, BuffFlowImax%ref, BuffScalImax%ref)
+        CALL BOUNDARY_BUFFER_IMAX(q,s, txc)
 
         WRITE(name, *) itime; name = TRIM(ADJUSTL(tag_flow))//'bcs.imax.'//TRIM(ADJUSTL(name))
         CALL DNS_WRITE_FIELDS(name, i0, BuffFlowImax%size,jmax,kmax, inb_flow, isize_field, BuffFlowImax%ref, wrk3d)
@@ -653,15 +653,13 @@ END SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL
 
 !########################################################################
 !########################################################################
-SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
+SUBROUTINE BOUNDARY_BUFFER_JMAX(q,s, txc)
 
   IMPLICIT NONE
 
 #include "integers.h"
 
   TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN)  :: q, s, txc
-  TREAL, DIMENSION(imax,BuffFlowJmax%size,kmax,*) :: buffer_q
-  TREAL, DIMENSION(imax,BuffScalJmax%size,kmax,*) :: buffer_s
 
   TARGET txc, q
 
@@ -686,7 +684,7 @@ SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
            jloc = jmax -BuffFlowJmax%size +j
            IF ( .NOT. BuffFlowJmax%hard ) &
                 BuffFlowJmax%hardvalues(iq) = COV2V2D(imax,jmax,kmax, jloc, r_loc,q(1,iq))
-           buffer_q(:,j,:,iq) = BuffFlowJmax%hardvalues(iq)
+           BuffFlowJmax%ref(:,j,:,iq) = BuffFlowJmax%hardvalues(iq)
         ENDDO
      ENDDO
 
@@ -696,10 +694,10 @@ SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
            jloc = jmax -BuffFlowJmax%size +j
            IF ( .NOT. BuffFlowJmax%hard ) &
                 BuffFlowJmax%hardvalues(4) = COV2V2D(imax,jmax,kmax, jloc, r_loc,e_loc)
-           buffer_q(:,j,:,4) = BuffFlowJmax%hardvalues(4)
+           BuffFlowJmax%ref(:,j,:,4) = BuffFlowJmax%hardvalues(4)
            IF ( .NOT. BuffFlowJmax%hard ) &
                 BuffFlowJmax%hardvalues(5) = AVG_IK(imax,jmax,kmax, jloc, r_loc, g(1)%jac,g(3)%jac, area)
-           buffer_q(:,j,:,5) = BuffFlowJmax%hardvalues(5)
+           BuffFlowJmax%ref(:,j,:,5) = BuffFlowJmax%hardvalues(5)
         ENDDO
      ENDIF
      
@@ -709,7 +707,7 @@ SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
            jloc = jmax -BuffScalJmax%size +j
            IF ( .NOT. BuffScalJmax%hard ) &
                 BuffScalJmax%hardvalues(is) = COV2V2D(imax,jmax,kmax, jloc, r_loc,s(1,is))
-           buffer_s(:,j,:,is) = BuffScalJmax%hardvalues(is)
+           BuffScalJmax%ref(:,j,:,is) = BuffScalJmax%hardvalues(is)
         ENDDO
      ENDDO
      
@@ -725,7 +723,7 @@ SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
            DO i = 1,imax
               IF ( .NOT. BuffFlowJmax%hard ) &
                    BuffFlowJmax%hardvalues(iq) = COV2V1D(imax,jmax,kmax, i,jloc, r_loc,q(1,iq))
-              buffer_q(i,j,:,iq) = BuffFlowJmax%hardvalues(iq)
+              BuffFlowJmax%ref(i,j,:,iq) = BuffFlowJmax%hardvalues(iq)
            ENDDO
         ENDDO
      ENDDO
@@ -737,10 +735,10 @@ SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
            DO i = 1,imax
               IF ( .NOT. BuffFlowJmax%hard ) &
                    BuffFlowJmax%hardvalues(4) = COV2V1D(imax,jmax,kmax, i,jloc, r_loc,e_loc)
-              buffer_q(i,j,:,4) = BuffFlowJmax%hardvalues(4)
+              BuffFlowJmax%ref(i,j,:,4) = BuffFlowJmax%hardvalues(4)
               IF ( .NOT. BuffFlowJmax%hard ) &
                    BuffFlowJmax%hardvalues(5) = AVG1V1D(imax,jmax,kmax, i,jloc, i1, r_loc)
-              buffer_q(i,j,:,5) = BuffFlowJmax%hardvalues(5)
+              BuffFlowJmax%ref(i,j,:,5) = BuffFlowJmax%hardvalues(5)
            ENDDO
         ENDDO
      ENDIF
@@ -752,7 +750,7 @@ SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
            DO i = 1,imax
               IF ( .NOT. BuffScalJmax%hard ) &
                    BuffScalJmax%hardvalues(is) = COV2V1D(imax,jmax,kmax, i,jloc, r_loc,s(1,is))
-              buffer_s(i,j,:,is) = BuffScalJmax%hardvalues(is)
+              BuffScalJmax%ref(i,j,:,is) = BuffScalJmax%hardvalues(is)
            ENDDO
         ENDDO
      ENDDO
@@ -760,19 +758,17 @@ SUBROUTINE BOUNDARY_INIT_HT(q,s, txc, buffer_q, buffer_s)
   ENDIF
 
   RETURN
-END SUBROUTINE BOUNDARY_INIT_HT
+END SUBROUTINE BOUNDARY_BUFFER_JMAX
 
 !########################################################################
 !########################################################################
-SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
+SUBROUTINE BOUNDARY_BUFFER_JMIN(q,s, txc)
 
   IMPLICIT NONE
 
 #include "integers.h"
 
   TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN)  :: q, s, txc
-  TREAL, DIMENSION(imax,BuffFlowJmin%size,kmax,*) :: buffer_q
-  TREAL, DIMENSION(imax,BuffScalJmin%size,kmax,*) :: buffer_s
 
   TARGET txc, q
 
@@ -796,7 +792,7 @@ SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
         DO j = 1, BuffFlowJmin%size
            IF ( .NOT. BuffFlowJmin%hard ) &
                 BuffFlowJmin%hardvalues(iq) = COV2V2D(imax,jmax,kmax, j, r_loc,q(1,iq))
-           buffer_q(:,j,:,iq) = BuffFlowJmin%hardvalues(iq)
+           BuffFlowJmin%ref(:,j,:,iq) = BuffFlowJmin%hardvalues(iq)
         ENDDO
      ENDDO
      
@@ -805,10 +801,10 @@ SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
         DO j = 1, BuffFlowJmin%size
            IF ( .NOT. BuffFlowJmin%hard ) &
                 BuffFlowJmin%hardvalues(4) = COV2V2D(imax,jmax,kmax, j, r_loc,e_loc)
-           buffer_q(:,j,:,4) = BuffFlowJmin%hardvalues(4)
+           BuffFlowJmin%ref(:,j,:,4) = BuffFlowJmin%hardvalues(4)
            IF ( .NOT. BuffFlowJmin%hard ) &
                 BuffFlowJmin%hardvalues(5) = AVG_IK(imax,jmax,kmax, j, r_loc, g(1)%jac,g(3)%jac, area)
-           buffer_q(:,j,:,5) = BuffFlowJmin%hardvalues(5)
+           BuffFlowJmin%ref(:,j,:,5) = BuffFlowJmin%hardvalues(5)
         ENDDO
      ENDIF
 
@@ -817,7 +813,7 @@ SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
         DO j = 1,BuffScalJmin%size
            IF ( .NOT. BuffScalJmin%hard ) &
                 BuffScalJmin%hardvalues(is) = COV2V2D(imax,jmax,kmax, j, r_loc,s(1,is))
-           buffer_s(:,j,:,is) = BuffScalJmin%hardvalues(is)
+           BuffScalJmin%ref(:,j,:,is) = BuffScalJmin%hardvalues(is)
         ENDDO
      ENDDO
 
@@ -832,7 +828,7 @@ SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
            DO i = 1,imax
               IF ( .NOT. BuffFlowJmin%hard ) &
                 BuffFlowJmin%hardvalues(iq) = COV2V1D(imax,jmax,kmax, i,j, r_loc,q(1,iq))
-              buffer_q(i,j,:,iq) = BuffFlowJmin%hardvalues(iq)
+              BuffFlowJmin%ref(i,j,:,iq) = BuffFlowJmin%hardvalues(iq)
            ENDDO
         ENDDO
      ENDDO
@@ -843,10 +839,10 @@ SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
            DO i = 1,imax
               IF ( .NOT. BuffFlowJmin%hard ) &
                    BuffFlowJmin%hardvalues(4) = COV2V1D(imax,jmax,kmax, i,j, r_loc,e_loc)
-              buffer_q(i,j,:,4) = BuffFlowJmin%hardvalues(4)
+              BuffFlowJmin%ref(i,j,:,4) = BuffFlowJmin%hardvalues(4)
               IF ( .NOT. BuffFlowJmin%hard ) &
                    BuffFlowJmin%hardvalues(5) = AVG1V1D(imax,jmax,kmax, i,j, i1, r_loc)
-              buffer_q(i,j,:,5) = BuffFlowJmin%hardvalues(5)
+              BuffFlowJmin%ref(i,j,:,5) = BuffFlowJmin%hardvalues(5)
            ENDDO
         ENDDO
      ENDIF
@@ -857,7 +853,7 @@ SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
            DO i = 1,imax
               IF ( .NOT. BuffScalJmin%hard ) &
                    BuffScalJmin%hardvalues(is) = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is))
-              buffer_s(i,j,:,is) = BuffScalJmin%hardvalues(is)
+              BuffScalJmin%ref(i,j,:,is) = BuffScalJmin%hardvalues(is)
            ENDDO
         ENDDO
      ENDDO
@@ -865,26 +861,22 @@ SUBROUTINE BOUNDARY_INIT_HB(q,s, txc, buffer_q, buffer_s)
   ENDIF
 
   RETURN
-END SUBROUTINE BOUNDARY_INIT_HB
+END SUBROUTINE BOUNDARY_BUFFER_JMIN
 
 !########################################################################
 !########################################################################
-!It only makes sense in spatially evolving cases.
-SUBROUTINE BOUNDARY_INIT_VI(q,s, txc, buffer_q, buffer_s)
+SUBROUTINE BOUNDARY_BUFFER_IMIN(q,s, txc)
 
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN)  :: q, s, txc
-  TREAL, DIMENSION(BuffFlowImin%size,jmax,kmax,*) :: buffer_q
-  TREAL, DIMENSION(BuffScalImin%size,jmax,kmax,*) :: buffer_s
+  TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN) :: q, s, txc
 
   TARGET txc, q
 
 ! -------------------------------------------------------------------
   TREAL AVG1V1D, COV2V1D
-  TREAL dbuff(inb_flow+inb_scal)
 
   TREAL, DIMENSION(:), POINTER :: r_loc, e_loc
 
@@ -899,8 +891,8 @@ SUBROUTINE BOUNDARY_INIT_VI(q,s, txc, buffer_q, buffer_s)
   DO iq = 1,3
      DO j = 1,jmax
         DO i = 1,BuffFlowImin%size
-           dbuff(iq) = COV2V1D(imax,jmax,kmax, i,j, r_loc,q(1,iq))
-           buffer_q(i,j,:,iq) = dbuff(iq)
+           dummy = COV2V1D(imax,jmax,kmax, i,j, r_loc,q(1,iq))
+           BuffFlowImin%ref(i,j,:,iq) = dummy
         ENDDO
      ENDDO
   ENDDO
@@ -909,10 +901,10 @@ SUBROUTINE BOUNDARY_INIT_VI(q,s, txc, buffer_q, buffer_s)
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      DO j = 1,jmax
         DO i = 1,BuffFlowImin%size
-           dbuff(4) = COV2V1D(imax,jmax,kmax, i,j, r_loc,e_loc)
-           buffer_q(i,j,:,4) = dbuff(4)
-           dbuff(5) = AVG1V1D(imax,jmax,kmax, i,j, i1, r_loc)
-           buffer_q(i,j,:,5) = dbuff(5)
+           dummy = COV2V1D(imax,jmax,kmax, i,j, r_loc,e_loc)
+           BuffFlowImin%ref(i,j,:,4) = dummy
+           dummy = AVG1V1D(imax,jmax,kmax, i,j, i1, r_loc)
+           BuffFlowImin%ref(i,j,:,5) = dummy
         ENDDO
      ENDDO
   ENDIF
@@ -920,33 +912,29 @@ SUBROUTINE BOUNDARY_INIT_VI(q,s, txc, buffer_q, buffer_s)
   DO is = 1,inb_scal
      DO j = 1,jmax
         DO i = 1,BuffScalImin%size
-           dbuff(is) = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is))
-           buffer_s(i,j,:,is) = dbuff(is)
+           dummy = COV2V1D(imax,jmax,kmax, i,j, r_loc,s(1,is))
+           BuffScalImin%ref(i,j,:,is) = dummy
         ENDDO
      ENDDO
   ENDDO
   
   RETURN
-END SUBROUTINE BOUNDARY_INIT_VI
+END SUBROUTINE BOUNDARY_BUFFER_IMIN
 
 !########################################################################
 !########################################################################
-!It only makes sense in spatially evolving cases.
-SUBROUTINE BOUNDARY_INIT_VO(q,s, txc, buffer_q, buffer_s)
+SUBROUTINE BOUNDARY_BUFFER_IMAX(q,s, txc)
 
   IMPLICIT NONE
 
 #include "integers.h"
 
   TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN)  :: q, s, txc
-  TREAL, DIMENSION(BuffFlowImax%size,jmax,kmax,*) :: buffer_q
-  TREAL, DIMENSION(BuffScalImax%size,jmax,kmax,*) :: buffer_s
 
   TARGET txc, q
 
 ! -------------------------------------------------------------------
   TREAL AVG1V1D, COV2V1D
-  TREAL dbuff(inb_flow+inb_scal)
 
   TREAL, DIMENSION(:), POINTER :: r_loc, e_loc
 
@@ -962,8 +950,8 @@ SUBROUTINE BOUNDARY_INIT_VO(q,s, txc, buffer_q, buffer_s)
      DO j = 1,jmax
         DO i = 1,BuffFlowImax%size
            iloc = imax -BuffFlowImax%size +i
-           dbuff(iq) = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,q(1,iq))
-           buffer_q(i,j,:,iq) = dbuff(iq)
+           dummy = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,q(1,iq))
+           BuffFlowImax%ref(i,j,:,iq) = dummy
         ENDDO
      ENDDO
   ENDDO
@@ -973,10 +961,10 @@ SUBROUTINE BOUNDARY_INIT_VO(q,s, txc, buffer_q, buffer_s)
      DO j = 1,jmax
         DO i = 1,BuffFlowImax%size
            iloc = imax -BuffFlowImax%size +i
-           dbuff(4) = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,e_loc)
-           buffer_q(i,j,:,4) = dbuff(4)
-           dbuff(5) = AVG1V1D(imax,jmax,kmax, iloc,j, i1, r_loc)
-           buffer_q(i,j,:,5) = dbuff(5)
+           dummy = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,e_loc)
+           BuffFlowImax%ref(i,j,:,4) = dummy
+           dummy = AVG1V1D(imax,jmax,kmax, iloc,j, i1, r_loc)
+           BuffFlowImax%ref(i,j,:,5) = dummy
         ENDDO
      ENDDO
   ENDIF
@@ -985,14 +973,14 @@ SUBROUTINE BOUNDARY_INIT_VO(q,s, txc, buffer_q, buffer_s)
      DO j = 1,jmax
         DO i = 1,BuffScalImax%size
            iloc = imax -BuffScalImax%size +i
-           dbuff(is) = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,s(1,is))
-           buffer_s(i,j,:,is) = dbuff(is)
+           dummy = COV2V1D(imax,jmax,kmax, iloc,j, r_loc,s(1,is))
+           BuffScalImax%ref(i,j,:,is) = dummy
         ENDDO
      ENDDO
   ENDDO
   
   RETURN
-END SUBROUTINE BOUNDARY_INIT_VO
+END SUBROUTINE BOUNDARY_BUFFER_IMAX
 
 !########################################################################
 !########################################################################
