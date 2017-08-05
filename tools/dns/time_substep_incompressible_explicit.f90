@@ -138,7 +138,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
              txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), txc(1,8),txc(1,9),txc(1,10), &
              txc(1,11),txc(1,12),txc(1,13),txc(1,14),&
              hq(1,1),hq(1,2),hq(1,3), hs(1,1), &
-             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), vaux, &
+             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), &
              wrk1d,wrk2d,wrk3d)
 #else
         CALL IO_WRITE_ASCII(efile,'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Need compiling flag -DUSE_PSFFT.')
