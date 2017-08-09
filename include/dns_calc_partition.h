@@ -15,7 +15,7 @@
      ENDIF
 
      IF      ( opt_cond .EQ. 1 ) THEN ! External file
-        WRITE(fname,*) itime; fname = 'par'//TRIM(ADJUSTL(fname)); params_size = 2
+        WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
         CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
         igate_size = INT(params(2))
         IF ( igate_size .GT. igate_size_max ) THEN

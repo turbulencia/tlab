@@ -242,14 +242,17 @@ PROGRAM AVERAGES
   nfield     = 2
 
   IF      ( opt_cond .EQ. 2 ) THEN
+     inb_txc    = MAX(inb_txc,1)
      iread_scal = 1
-     inb_txc    = 1
   ELSE IF ( opt_cond .EQ. 3 ) THEN
-     inb_txc = MAX(inb_txc,3)
+     inb_txc    = MAX(inb_txc,3)
      iread_flow = 1
   ELSE IF ( opt_cond .EQ. 4 ) THEN
-     inb_txc = MAX(inb_txc,3)
+     inb_txc    = MAX(inb_txc,3)
      iread_scal = 1
+  ELSE IF ( opt_cond .EQ. 5 ) THEN
+     inb_txc    = MAX(inb_txc,1)
+     iread_flow = 1
   ENDIF
 
   SELECT CASE ( opt_main )
@@ -538,7 +541,7 @@ PROGRAM AVERAGES
         CALL INTER2D_N(fname, varname, rtime, imax,jmax,kmax, igate_size, y, gate, igate_vec)
         
         IF ( opt_cond .GT. 1 ) THEN ! write only if the gate information has not been read
-           WRITE(fname,*) itime; fname = 'par'//TRIM(ADJUSTL(fname))
+           WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname))
            params(1) = rtime; params(2) = M_REAL(igate_size); params_size = 2
            CALL IO_WRITE_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
         ENDIF

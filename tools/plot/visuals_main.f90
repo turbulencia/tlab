@@ -409,7 +409,13 @@ PROGRAM VISUALS_MAIN
 ! Calculate intermittency
 ! -------------------------------------------------------------------
      IF ( opt_gate .EQ. 1 ) THEN
+        
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+           opt_cond_scal = inb_scal_array
+        ENDIF
+        
 #include "dns_calc_partition.h"
+        
      ENDIF
 
 ! -------------------------------------------------------------------

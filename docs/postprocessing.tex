@@ -91,7 +91,7 @@ For example, {\tt Stride=0,0,0} would not save any data; {\tt Stride=1,1,1} woul
   \caption{Internal organization of tower files.}
    \end{figure}  
   \item[netCDF output]~ \\ 
-    The python script \[\texttt{tlab/scripts/python/tower\_merge.py}\] is available to bundle tower files from one restart into a single netCDF file which 
+    The python script \[\texttt{tlab/scripts/python/tower2nc.py}\] is available to bundle tower files from one restart into a single netCDF file which 
     is then self-descriptive through its Meta-data. The script handles tower files of multiple restarts, but it will generate one netCDF file per restart.  
     The python script is executed in the directory where the tower file resides. 
     It relies on 

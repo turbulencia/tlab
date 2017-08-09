@@ -19,7 +19,7 @@ else :
     command = 'touch {}'.format(lock_fname) 
     system('touch {}'.format(lock_fname) )
 
-quit()
+#quit()
 
 def read_record(file, mode):
     reclen,=struct.unpack(mode[0]+'i',f.read(4))

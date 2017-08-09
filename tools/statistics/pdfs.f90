@@ -9,6 +9,7 @@ PROGRAM PDFS
   USE DNS_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : efile,lfile ,gfile, tag_flow,tag_scal
   USE DNS_GLOBAL
+  USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -201,21 +202,21 @@ PROGRAM PDFS
   iread_flow = 0
   iread_scal = 0
   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN; inb_txc = 6;
-  ELSE;                                                     inb_txc = 1; ENDIF
+  ELSE;                                                                                             inb_txc = 1; ENDIF
   nfield     = 2 
 
   IF      ( opt_cond .EQ. 2 ) THEN
+     inb_txc    = MAX(inb_txc,1)
      iread_scal = 1
-     inb_txc    = 1
   ELSE IF ( opt_cond .EQ. 3 ) THEN
-     inb_txc = MAX(inb_txc,3)
-     iread_scal = 1
+     inb_txc    = MAX(inb_txc,3)
+     iread_flow = 1
   ELSE IF ( opt_cond .EQ. 4 ) THEN
-     inb_txc = MAX(inb_txc,3)
-     iread_flow = 1
+     inb_txc    = MAX(inb_txc,3)
+     iread_scal = 1
   ELSE IF ( opt_cond .EQ. 5 ) THEN
+     inb_txc    = MAX(inb_txc,1)
      iread_flow = 1
-     inb_txc    = 1
   ENDIF
 
   SELECT CASE ( opt_main )
@@ -350,6 +351,10 @@ PROGRAM PDFS
 ! Calculate intermittency
 ! -------------------------------------------------------------------
      IF ( opt_cond .GT. 0 ) THEN
+
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+           opt_cond_scal = inb_scal_array
+        ENDIF
 
 #include "dns_calc_partition.h"
 
