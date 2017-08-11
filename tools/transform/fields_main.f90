@@ -179,10 +179,10 @@ PROGRAM TRANSFIELDS
 #ifdef USE_MPI
 #else
         IF      ( opt_filter .EQ. DNS_FILTER_COMPACT ) THEN
-           WRITE(*,*) 'Alpha Coeffcient ?'
+           WRITE(*,*) 'Alpha Coefficient?'
            READ(*,*) alpha
         ELSE IF ( opt_filter .EQ. DNS_FILTER_ALPHA   ) THEN
-           WRITE(*,*) 'Alpha (multiple of space step) ?'
+           WRITE(*,*) 'Alpha (in multiples of grid step)?'
            READ(*,*) alpha
         ELSE IF ( opt_filter .EQ. DNS_FILTER_CUTOFF  ) THEN
            WRITE(*,*) 'Frequency interval ?'

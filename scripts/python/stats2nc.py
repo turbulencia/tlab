@@ -32,30 +32,36 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
   gzip_str   = '.gz'
 
   files_from_list = 0
+  headertotal = 0
   # specify the number of vertical profs and time variables 
   if ( avgtype == 'avg'):
-    headerprof = 199
+#    headerprof = 199
     headertime = 14 
     headerlength    = 21
-  elif ( avgtype == 'avg1s' or avgtype == 'avg2s' or avgtype == 'avg3s' or avgtype == 'avg4s' ): 
-    headerprof = 44
+  elif ( avgtype == 'avg1s' or avgtype == 'avg2s' or avgtype == 'avg3s' or avgtype == 'avg4s' or avgtype == 'avg5s'): 
+#    headerprof = 47
+#    headerprof = 45
     headertime = 11
     headerlength = 8
   elif( avgtype == 'int' ):
     headerlength = 4
-    headerprof = 4
+#    headerprof = 4
     headertime = 0
   elif( avgtype == 'cov' ):
     headerlength = 6
-    headerprof = 6
+#    headerprof = 6
     headertime = 3
+  elif( avgtype == 'cavg' ):
+    headerlength = 6
+#    headerprof = 6
+    headertime = 5
   else :
     print 'WARNING : unknown filetype!' 
     print 'WARNING : assuming all data is vertical profiles' 
     headerlength= 4
-    headerprof = -1 
+#    headerprof = -1 
     headertime = -1 
-  headertotal= headerprof + headertime
+#  headertotal= headerprof + headertime
   
   ###########################################################
   # get times automatically from files in directory 
@@ -139,7 +145,7 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
         return -1 
       elif ( size(header) != headertotal ):
         headertotal = size(header)
-        headerprof  = headertotal
+        headerprof  = headertotal -headertime
 
       avg['Time'] = zeros(ntimes)
       avg['Iteration'] = zeros(ntimes)
