@@ -25,10 +25,10 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, area
   USE DNS_GLOBAL, ONLY : froude, visc, rossby
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
-  USE DNS_GLOBAL, ONLY : rbg, sbg, qbg
+  USE DNS_GLOBAL, ONLY : pbg, rbg, sbg, qbg
   USE DNS_GLOBAL, ONLY : bbackground, epbackground, pbackground, rbackground, tbackground
   USE THERMO_GLOBAL, ONLY : imixture, MRATIO, GRATIO
-  USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV
+  USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV, gama0
 #ifdef TRACE_ON
   USE DNS_CONSTANTS, ONLY : tfile
 #endif
@@ -751,6 +751,15 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      CALL THERMO_ANELASTIC_RELATIVEHUMIDITY(imax,jmax,kmax, s, epbackground,pbackground, T_LOC(1,1,1), wrk3d)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,        g(1)%jac,g(3)%jac, relhum(1), wrk1d, area)
      
+     CALL THERMO_ANELASTIC_THETA  (imax,jmax,kmax, s, epbackground,pbackground, wrk3d)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,        g(1)%jac,g(3)%jac, potem_fr(1), wrk1d, area)
+     CALL THERMO_ANELASTIC_THETA_V(imax,jmax,kmax, s, epbackground,pbackground, wrk3d)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,        g(1)%jac,g(3)%jac, potem_eq(1), wrk1d, area)
+     
+     dummy = C_1_R /( pbg%parameters(1) *gama0 )
+     bfreq_fr(:) = -rR_y(:) /rbackground(:) -dummy *rR(:) /pbackground(:) 
+     bfreq_fr(:) = bfreq_fr(:) *buoyancy%vector(2)
+
   ELSE
 
 ! -------------------------------------------------------------------

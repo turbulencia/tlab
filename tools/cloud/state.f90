@@ -77,7 +77,7 @@ PROGRAM STATE
      CALL THERMO_THERMAL_DENSITY(i1, i1, i1, z1, p, t, r)
 
      s(1) = h; s(2:3) = z1(1:2)
-     CALL THERMO_ANELASTIC_THETA(i1,i1,i1, s, ep,p, theta)
+     CALL THERMO_ANELASTIC_THETA_L(i1,i1,i1, s, ep,p, theta)
      CALL THERMO_ANELASTIC_THETA_E(i1,i1,i1, s, ep,p, theta_e)
 
   ELSE IF ( iopt .EQ. 2 ) THEN
@@ -94,7 +94,7 @@ PROGRAM STATE
      CALL THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, t, h)
 
      s(1) = h; s(2:3) = z1(1:2)
-     CALL THERMO_ANELASTIC_THETA(i1,i1,i1, s, ep,p, theta)
+     CALL THERMO_ANELASTIC_THETA_L(i1,i1,i1, s, ep,p, theta)
      CALL THERMO_ANELASTIC_THETA_E(i1,i1,i1, s, ep,p, theta_e)
 
   ELSE IF ( iopt .EQ. 3 ) THEN
@@ -112,7 +112,7 @@ PROGRAM STATE
      qs = qs/(C_1_R+qs)
      CALL THERMO_THERMAL_DENSITY(i1,i1,i1, z1,p,T, r)
      CALL THERMO_CALORIC_ENERGY(i1,i1,i1, z1, T, e)
-     CALL THERMO_ANELASTIC_THETA(i1,i1,i1, s, ep,p, theta)
+     CALL THERMO_ANELASTIC_THETA_L(i1,i1,i1, s, ep,p, theta)
      CALL THERMO_ANELASTIC_THETA_E(i1,i1,i1, s, ep,p, theta_e)
 
 ! check

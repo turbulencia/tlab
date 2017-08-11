@@ -112,9 +112,10 @@ SUBROUTINE THERMO_ANELASTIC_DENSITY(nx,ny,nz, s, e,p, rho)
   TINTEGER ij, i, jk, is
   TREAL WMEAN_INV, P_LOC, E_LOC, T_LOC
   
-  TREAL Rd, Rdv, Cd, Cdv, Lv0, Cvl
+  TREAL Rv, Rd, Rdv, Cd, Cdv, Lv0, Cvl
 
 ! ###################################################################
+  Rv = WGHT_INV(1)
   Rd = WGHT_INV(2)
   Rdv= WGHT_INV(1) - WGHT_INV(2)
   Cd = THERMO_AI(1,1,2)
@@ -168,7 +169,7 @@ SUBROUTINE THERMO_ANELASTIC_DENSITY(nx,ny,nz, s, e,p, rho)
            ij = ij +1
            
            T_LOC = (s(ij,1) - E_LOC + s(ij,3)*Lv0 )  / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
-           WMEAN_INV = Rd + s(ij,2) *Rdv - s(ij,3)*WGHT_INV(1)
+           WMEAN_INV = Rd + s(ij,2) *Rdv - s(ij,3) *Rv
            rho(ij) = P_LOC /(WMEAN_INV*T_LOC)
            
         ENDDO
@@ -196,9 +197,10 @@ SUBROUTINE THERMO_ANELASTIC_BUOYANCY(nx,ny,nz, s, e,p,r, b)
   TINTEGER ij, i, jk, is
   TREAL WMEAN_INV, P_LOC, E_LOC, R_LOC, R_LOC_INV, T_LOC
   
-  TREAL Rd, Rdv, Cd, Cdv, Lv0, Cvl
+  TREAL Rv, Rd, Rdv, Cd, Cdv, Lv0, Cvl
 
 ! ###################################################################
+  Rv = WGHT_INV(1)
   Rd = WGHT_INV(2)
   Rdv= WGHT_INV(1) - WGHT_INV(2)
   Cd = THERMO_AI(1,1,2)
@@ -258,7 +260,7 @@ SUBROUTINE THERMO_ANELASTIC_BUOYANCY(nx,ny,nz, s, e,p,r, b)
            ij = ij +1
            
            T_LOC = (s(ij,1) - E_LOC + s(ij,3) *Lv0 ) / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
-           WMEAN_INV = Rd + s(ij,2) *Rdv - s(ij,3)*WGHT_INV(1)
+           WMEAN_INV = Rd + s(ij,2) *Rdv - s(ij,3) *Rv
            b(ij) = R_LOC_INV *( R_LOC -P_LOC /(WMEAN_INV*T_LOC) )
            
         ENDDO
@@ -382,9 +384,186 @@ SUBROUTINE THERMO_ANELASTIC_RELATIVEHUMIDITY(nx,ny,nz, s, e,p, T,rh)
 END SUBROUTINE THERMO_ANELASTIC_RELATIVEHUMIDITY
 
 !########################################################################
-! Liquid water potential temperature
+! Potential temperature
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_THETA(nx,ny,nz, s, e,p, theta)
+
+  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
+
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
+  TREAL, DIMENSION(*),          INTENT(IN)  :: e,p
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: theta
+
+! -------------------------------------------------------------------
+  TINTEGER ij, i, jk, is
+  TREAL P_LOC, E_LOC, T_LOC
+
+  TREAL Rd, Cd, Cdv, Lv0, Cvl, kappa
+  
+! ###################################################################
+  Rd = WGHT_INV(2)
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Lv0=-THERMO_AI(6,1,3)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+
+  kappa = Rd *GRATIO /Cd
+          
+  IF      ( imixture .EQ. 0 ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = s(ij,1) - E_LOC
+           
+           theta(ij) = T_LOC / P_LOC**kappa
+
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC )  / ( Cd + s(ij,2) *Cdv )
+
+           theta(ij) = T_LOC / P_LOC**kappa
+
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+       
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC + s(ij,3)*Lv0 ) / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
+
+           theta(ij) = T_LOC / P_LOC**kappa
+
+        ENDDO
+     
+     ENDDO
+  ENDIF
+  
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_THETA
+
+!########################################################################
+! Virtual Potential temperature
+!########################################################################
+SUBROUTINE THERMO_ANELASTIC_THETA_V(nx,ny,nz, s, e,p, theta)
+
+  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
+
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
+  TREAL, DIMENSION(*),          INTENT(IN)  :: e,p
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: theta
+
+! -------------------------------------------------------------------
+  TINTEGER ij, i, jk, is
+  TREAL P_LOC, E_LOC, T_LOC
+
+  TREAL Rv, Rd, Rdv, Cd, Cdv, Lv0, Cvl, kappa
+  
+! ###################################################################
+  Rv = WGHT_INV(1)
+  Rd = WGHT_INV(2)
+  Rdv= WGHT_INV(1) - WGHT_INV(2)
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Lv0=-THERMO_AI(6,1,3)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+
+  kappa = Rd *GRATIO /Cd
+          
+  IF      ( imixture .EQ. 0 ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = s(ij,1) - E_LOC
+           
+           theta(ij) = T_LOC / P_LOC**kappa
+
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC )  / ( Cd + s(ij,2) *Cdv )
+
+           theta(ij) = T_LOC *( Rd + s(ij,2) *Rdv )/ P_LOC**kappa
+
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+       
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC + s(ij,3)*Lv0 ) / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
+
+           theta(ij) = T_LOC *( Rd + s(ij,2) *Rdv - s(ij,3) *Rv )/ P_LOC**kappa
+
+        ENDDO
+     
+     ENDDO
+  ENDIF
+  
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_THETA_V
+
+!########################################################################
+! Liquid water potential temperature
+! Gas constants are multiplied by GRATIO because they always enter as ratios wrt Cps
+!########################################################################
+SUBROUTINE THERMO_ANELASTIC_THETA_L(nx,ny,nz, s, e,p, theta)
 
   USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
 
@@ -470,10 +649,11 @@ SUBROUTINE THERMO_ANELASTIC_THETA(nx,ny,nz, s, e,p, theta)
   ENDIF
   
   RETURN
-END SUBROUTINE THERMO_ANELASTIC_THETA
+END SUBROUTINE THERMO_ANELASTIC_THETA_L
 
 !########################################################################
 ! Equivalent potential temperature
+! Gas constants are multiplied by GRATIO because they always enter as ratios wrt Cps
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_THETA_E(nx,ny,nz, s, e,p, theta)
 
