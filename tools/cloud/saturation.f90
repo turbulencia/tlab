@@ -10,8 +10,8 @@ PROGRAM SATURATION
 
 #include "integers.h"
 
-  TREAL t_min, t_max, t_del, t, psat, qsat, dummy, t_loc, p, l
-  TINTEGER iopt, ipsat
+  TREAL t_min, t_max, t_del, t, psat, qsat, dummy, t_loc, p, dpsat!, dpsat2
+  TINTEGER iopt!, ipsat
 
 ! ###################################################################
   CALL DNS_INITIALIZE
@@ -19,6 +19,7 @@ PROGRAM SATURATION
   imixture = MIXT_TYPE_AIRWATER
   CALL THERMO_INITIALIZE
   MRATIO = C_1_R
+  IF ( gama0 .GT. C_0_R ) GRATIO = (gama0-C_1_R)/gama0
 
   WRITE(*,*) '1 - Saturation pressure as a function of T'
   WRITE(*,*) '2 - Saturation specific humidity as a function of T-p'
@@ -48,18 +49,20 @@ PROGRAM SATURATION
   DO WHILE ( t .LE. t_max ) 
 
      t_loc = (t+273.15)/TREF
-     CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t_loc, psat)
+     CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t_loc,  psat)
+     CALL THERMO_POLYNOMIAL_DPSAT(i1, i1, i1, t_loc, dpsat)
      dummy = C_1_R/(MRATIO*p/psat-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
      qsat = dummy/(C_1_R+dummy)
      IF ( iopt .EQ. 1 ) THEN
-        l = C_0_R
-        DO ipsat = NPSAT,2,-1
-           l = l*t_loc + THERMO_PSAT(ipsat)*M_REAL(ipsat-1)
-        ENDDO        
-        WRITE(21,*) t, t_loc*TREF, psat, l*t_loc**2/psat*WGHT_INV(1)*(RGAS*TREF/WREF), &
+        ! dpsat2 = C_0_R
+        ! DO ipsat = NPSAT,2,-1
+        !    dpsat2 = dpsat2 *t_loc + THERMO_PSAT(ipsat)*M_REAL(ipsat-1)
+        ! ENDDO
+        ! PRINT*,dpsat-dpsat2
+        WRITE(21,1000) t, t_loc*TREF, psat, dpsat*t_loc**2/psat*WGHT_INV(1)*(RGAS*TREF/WREF), &
              ((THERMO_AI(1,1,1)-THERMO_AI(1,1,3))*t_loc+THERMO_AI(6,1,1)-THERMO_AI(6,1,3))*(RGAS*TREF/WREF)/GRATIO
      ELSE IF ( iopt .EQ. 2 ) THEN
-        WRITE(21,*) t, t_loc, qsat*1.d3
+        WRITE(21,2000) t, t_loc, qsat*1.d3
      ENDIF
 
      t = t+t_del
@@ -67,7 +70,9 @@ PROGRAM SATURATION
 
   CLOSE(21)
 
-  CALL DNS_STOP
-
   STOP
+  
+1000 FORMAT(5(1X,G_FORMAT_R))
+2000 FORMAT(3(1X,G_FORMAT_R))
+
 END PROGRAM SATURATION

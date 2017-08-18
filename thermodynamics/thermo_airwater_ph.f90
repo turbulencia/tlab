@@ -3,16 +3,6 @@
 #include "dns_error.h"
 
 !########################################################################
-!# HISTORY
-!#
-!# 2007/04/07 - Alberto de Lozar
-!#              Created
-!# 2016/10/15 - J.P. Mellado
-!#              Cleaning
-!# 2017/02/17 - J.P. Mellado
-!#              Adapting for background p profile
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Calculating the equilibrium T and q_l for given enthalpy and pressure.
@@ -86,8 +76,8 @@ SUBROUTINE THERMO_AIRWATER_PH(nx,ny,nz, s,h, e,p)
         T_LOC   = H_LOC /( Cd +s(ij,1) *Cdv )
         
 ! calculate saturation specific humidity q_sat(T,p)
-        psat = C_0_R
-        DO ipsat = NPSAT,1,-1
+        psat = THERMO_PSAT(NPSAT)
+        DO ipsat = NPSAT-1,1,-1
            psat = psat*T_LOC + THERMO_PSAT(ipsat)
         ENDDO
         dummy = rd_ov_rv /( P_LOC/psat -C_1_R )

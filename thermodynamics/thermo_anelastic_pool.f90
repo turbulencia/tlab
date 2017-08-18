@@ -275,7 +275,7 @@ END SUBROUTINE THERMO_ANELASTIC_BUOYANCY
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_QVEQU(nx,ny,nz, s, e,p, T,qvequ)
 
-  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, THERMO_PSAT, NPSAT, WGHT_INV, MRATIO
+  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, WGHT_INV, MRATIO, THERMO_PSAT, NPSAT
 
   IMPLICIT NONE
 
@@ -746,6 +746,217 @@ SUBROUTINE THERMO_ANELASTIC_THETA_E(nx,ny,nz, s, e,p, theta)
   
   RETURN
 END SUBROUTINE THERMO_ANELASTIC_THETA_E
+
+!########################################################################
+!########################################################################
+SUBROUTINE THERMO_ANELASTIC_LAPSE_FR(nx,ny,nz, s, dTdy, e, lapse, frequency)
+
+  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, GRATIO
+  USE DNS_GLOBAL,    ONLY : pbg
+  
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(IN)  :: dTdy
+  TREAL, DIMENSION(*),          INTENT(IN)  :: e
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: lapse, frequency
+
+! -------------------------------------------------------------------
+  TINTEGER ij, i, jk, is
+  TREAL E_LOC, T_LOC
+
+  TREAL Cd, Cdv, Cvl, Lv0
+  
+! ###################################################################
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+  Lv0=-THERMO_AI(6,1,3)
+
+  IF      ( imixture .EQ. 0 ) THEN
+     lapse = GRATIO /pbg%parameters(1)
+
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = s(ij,1) - E_LOC
+           frequency(ij) = ( lapse(ij) + dTdy(ij) )/ T_LOC
+           
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN 
+     lapse = GRATIO /pbg%parameters(1) /( Cd  + s(:,2) *Cdv )
+
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC ) / ( Cd + s(ij,2) *Cdv )
+           frequency(ij) = ( lapse(ij) + dTdy(ij) )/ T_LOC
+           
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     lapse = GRATIO /pbg%parameters(1) /( Cd + s(:,2) *Cdv + s(:,3) *Cvl )
+     
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC + s(ij,3)*Lv0 ) / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
+           frequency(ij) = ( lapse(ij) + dTdy(ij) )/ T_LOC
+           
+        ENDDO
+     
+     ENDDO
+
+  ENDIF
+
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_LAPSE_FR
+
+!########################################################################
+!########################################################################
+SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU(nx,ny,nz, s, dTdy,dqldy, e,p,r, lapse, frequency)
+
+  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO, THERMO_PSAT, NPSAT
+  USE DNS_GLOBAL,    ONLY : pbg
+  
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(IN)  :: dTdy,dqldy 
+  TREAL, DIMENSION(*),          INTENT(IN)  :: e,p,r
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: lapse, frequency
+
+! -------------------------------------------------------------------
+  TINTEGER ij, i, jk, is, ipsat
+  TREAL P_LOC, E_LOC, T_LOC, R_LOC, RT_INV, psat, dpsat
+
+  TREAL Rv, Rd, Rdv, Cd, Cdv, Lv0, Cvl, Lv, Cl
+
+  TREAL scaleheightinv, one_p_eps, rd_ov_rv, qvequ, qsat, dummy
+  
+! ###################################################################
+  Rv = WGHT_INV(1)
+  Rd = WGHT_INV(2)              
+  Rdv= WGHT_INV(1) - WGHT_INV(2)
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+  Lv0=-THERMO_AI(6,1,3)
+
+  scaleheightinv = GRATIO /pbg%parameters(1)
+  rd_ov_rv = WGHT_INV(2) /WGHT_INV(1)
+    
+  IF      ( imixture .EQ. 0 ) THEN
+     lapse     = scaleheightinv
+
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = s(ij,1) - E_LOC
+           frequency(ij) = ( lapse(ij) + dTdy(ij) )/ T_LOC
+           
+        ENDDO
+     
+     ENDDO
+     
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN
+     lapse = scaleheightinv /( Cd  + s(:,2) *Cdv )
+
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC ) / ( Cd + s(ij,2) *Cdv )
+           frequency(ij) = ( lapse(ij) + dTdy(ij) )/ T_LOC
+           
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+        R_LOC = r(is)
+        
+        RT_INV = R_LOC /P_LOC /pbg%parameters(1)
+        
+        DO i = 1,nx
+           ij = ij +1
+
+           T_LOC = (s(ij,1) - E_LOC + s(ij,3)*Lv0 ) / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
+           
+           psat = THERMO_PSAT(NPSAT); dpsat = C_0_R
+           DO ipsat = NPSAT-1,1,-1
+              psat  = psat *T_LOC + THERMO_PSAT(ipsat)
+              dpsat = dpsat*T_LOC + THERMO_PSAT(ipsat+1) *M_REAL(ipsat)
+           ENDDO
+           dummy = rd_ov_rv /( P_LOC/psat -C_1_R )
+           qsat = dummy /( C_1_R +dummy )
+
+! We cannot use ql directly (s(:,3)) because the smoothing function imposes
+! and exponentially small value, but nonzero           
+           IF ( qsat .GE. s(ij,2) ) THEN
+              lapse(ij)     = scaleheightinv /( Cd  + s(ij,2) *Cdv )
+              frequency(ij) = ( lapse(ij) + dTdy(ij) )/ T_LOC
+              
+           ELSE
+              qvequ = dummy *( C_1_R -s(ij,2) )
+              
+              one_p_eps = C_1_R /( C_1_R - psat /P_LOC )
+              Cl = Cd  + s(ij,2) *Cdv 
+              Lv = Lv0 - T_LOC *Cvl
+              
+              lapse(ij) = scaleheightinv + RT_INV *qvequ *Lv  *one_p_eps
+              lapse(ij) = lapse(ij) /( Cl + qvequ *( Lv *dpsat /psat *one_p_eps - Cvl) )
+
+              frequency(ij) = qvequ *( lapse(ij) *dpsat /psat -RT_INV )* one_p_eps - dqldy(ij)
+              frequency(ij) = ( lapse(ij) + dTdy(ij) )/ T_LOC &
+                            - frequency(ij) *Rv /( Rd + s(ij,2) *Rdv - s(ij,3) *Rv )
+
+           ENDIF
+           
+        ENDDO
+        
+     ENDDO
+     
+  ENDIF
+     
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU
 
 !########################################################################
 !########################################################################

@@ -25,10 +25,10 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, area
   USE DNS_GLOBAL, ONLY : froude, visc, rossby
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
-  USE DNS_GLOBAL, ONLY : pbg, rbg, sbg, qbg
+  USE DNS_GLOBAL, ONLY : rbg, sbg, qbg
   USE DNS_GLOBAL, ONLY : bbackground, epbackground, pbackground, rbackground, tbackground
   USE THERMO_GLOBAL, ONLY : imixture, MRATIO, GRATIO
-  USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV, gama0
+  USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV
 #ifdef TRACE_ON
   USE DNS_CONSTANTS, ONLY : tfile
 #endif
@@ -410,9 +410,14 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   sg(ng) = 14
 
   groupname(ng) = 'Stratification'
-  varname(ng)   = 'Pot Source rSb BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq '&
-                //'PotTemp_fr PotTemp_eq SaturationPressure rP0 RelativeHumidity Ri_f Ri_g'
-
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     varname(ng)= 'Pot Source rSb BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq '&
+                //'PotTemp PotTemp_v SaturationPressure rPref RelativeHumidity Ri_f Ri_g'
+  ELSE
+     varname(ng)= 'Pot Source rSb BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq '&
+                //'PotTemp_fr PotTemp_eq SaturationPressure rPref RelativeHumidity Ri_f Ri_g'
+  ENDIF
+  
 ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
 #define eddy_diff(j)     mean2d(j,ig(17)  )
@@ -755,11 +760,23 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,        g(1)%jac,g(3)%jac, potem_fr(1), wrk1d, area)
      CALL THERMO_ANELASTIC_THETA_V(imax,jmax,kmax, s, epbackground,pbackground, wrk3d)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,        g(1)%jac,g(3)%jac, potem_eq(1), wrk1d, area)
-     
-     dummy = C_1_R /( pbg%parameters(1) *gama0 )
-     bfreq_fr(:) = -rR_y(:) /rbackground(:) -dummy *rR(:) /pbackground(:) 
+
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), T_LOC(1,1,1), dudz, wrk3d, wrk2d,wrk3d)
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) &
+          CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(1,1,1,3),   dudy, wrk3d, wrk2d,wrk3d)
+
+     CALL THERMO_ANELASTIC_LAPSE_FR (imax,jmax,kmax, s,dudz,      epbackground,                         GAMMA_LOC(1,1,1),wrk3d)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, GAMMA_LOC(1,1,1), g(1)%jac,g(3)%jac, lapse_fr(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,            g(1)%jac,g(3)%jac, bfreq_fr(1), wrk1d, area)
+     ! dummy = C_1_R /( pbg%parameters(1) *gama0 )
+     ! bfreq_fr(:) = -rR_y(:) /rbackground(:) -dummy *rR(:) /pbackground(:) 
      bfreq_fr(:) = bfreq_fr(:) *buoyancy%vector(2)
 
+     CALL THERMO_ANELASTIC_LAPSE_EQU(imax,jmax,kmax, s,dudz,dudy, epbackground,pbackground,rbackground, GAMMA_LOC(1,1,1),wrk3d)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, GAMMA_LOC(1,1,1), g(1)%jac,g(3)%jac, lapse_eq(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,            g(1)%jac,g(3)%jac, bfreq_eq(1), wrk1d, area)
+     bfreq_eq(:) = bfreq_eq(:) *buoyancy%vector(2)
+     
   ELSE
 
 ! -------------------------------------------------------------------
