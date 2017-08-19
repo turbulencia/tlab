@@ -36,12 +36,12 @@
 !########################################################################
 SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
 
+  USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL, ONLY : fft_plan_fx_bcs,fft_plan_fx,fft_plan_bx
   USE DNS_GLOBAL, ONLY : fft_plan_fy,fft_plan_by
   USE DNS_GLOBAL, ONLY : fft_plan_fz,fft_plan_bz
-  USE DNS_GLOBAL, ONLY : imax,jmax, imax_total,jmax_total,kmax_total
-  USE DNS_GLOBAL, ONLY : isize_txc_field
-  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_GLOBAL, ONLY : imax,jmax, isize_txc_field
+  USE DNS_GLOBAL, ONLY : g
 
 #ifdef USE_MPI
   USE DNS_MPI
@@ -58,7 +58,7 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
 #endif
 
   TREAL, DIMENSION(isize_txc_field), INTENT(INOUT) :: tmp, wrk3d
-  TREAL, DIMENSION(imax_total+2),    INTENT(INOUT) :: wrk1d, wrk2d
+  TREAL, DIMENSION(g(1)%size+2),     INTENT(INOUT) :: wrk1d, wrk2d
 
 ! -----------------------------------------------------------------------
   TINTEGER isize_stride, isize_disp, isize_fft_z, isize_fft_y, isize_fft_x
@@ -92,23 +92,23 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
 
   isize_stride = isize_fft_z
 
-  IF ( kmax_total .GT. 1 ) THEN
+  IF ( g(3)%size .GT. 1 ) THEN
 #ifdef _DEBUG
-     CALL dfftw_plan_many_dft(fft_plan_fz, i1, kmax_total, isize_fft_z, &
-          tmp,   kmax_total, isize_stride, i1, &
-          wrk3d, kmax_total, isize_stride, i1, FFTW_FORWARD, FFTW_ESTIMATE)
+     CALL dfftw_plan_many_dft(fft_plan_fz, i1, g(3)%size, isize_fft_z, &
+          tmp,   g(3)%size, isize_stride, i1, &
+          wrk3d, g(3)%size, isize_stride, i1, FFTW_FORWARD, FFTW_ESTIMATE)
      
-     CALL dfftw_plan_many_dft(fft_plan_bz, i1, kmax_total, isize_fft_z, &
-          tmp,   kmax_total, isize_stride, i1, &
-          wrk3d, kmax_total, isize_stride, i1, FFTW_BACKWARD, FFTW_ESTIMATE)
+     CALL dfftw_plan_many_dft(fft_plan_bz, i1, g(3)%size, isize_fft_z, &
+          tmp,   g(3)%size, isize_stride, i1, &
+          wrk3d, g(3)%size, isize_stride, i1, FFTW_BACKWARD, FFTW_ESTIMATE)
 #else
-     CALL dfftw_plan_many_dft(fft_plan_fz, i1, kmax_total, isize_fft_z, &
-          tmp,   kmax_total, isize_stride, i1, &
-          wrk3d, kmax_total, isize_stride, i1, FFTW_FORWARD, FFTW_MEASURE)
+     CALL dfftw_plan_many_dft(fft_plan_fz, i1, g(3)%size, isize_fft_z, &
+          tmp,   g(3)%size, isize_stride, i1, &
+          wrk3d, g(3)%size, isize_stride, i1, FFTW_FORWARD, FFTW_MEASURE)
      
-     CALL dfftw_plan_many_dft(fft_plan_bz, i1, kmax_total, isize_fft_z, &
-          tmp,   kmax_total, isize_stride, i1, &
-          wrk3d, kmax_total, isize_stride, i1, FFTW_BACKWARD, FFTW_MEASURE)
+     CALL dfftw_plan_many_dft(fft_plan_bz, i1, g(3)%size, isize_fft_z, &
+          tmp,   g(3)%size, isize_stride, i1, &
+          wrk3d, g(3)%size, isize_stride, i1, FFTW_BACKWARD, FFTW_MEASURE)
 #endif
   ENDIF
 
@@ -130,30 +130,30 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
      isize_disp = (imax/2+1)*ims_npro_i
   ELSE
 #endif
-     isize_disp = imax_total/2+1
+     isize_disp = g(1)%size/2+1
 #ifdef _DEBUG
-     CALL dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, imax_total, wrk1d,wrk2d, FFTW_ESTIMATE)
+     CALL dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d,wrk2d, FFTW_ESTIMATE)
 #else
-     CALL dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, imax_total, wrk1d,wrk2d, FFTW_MEASURE)
+     CALL dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d,wrk2d, FFTW_MEASURE)
 #endif
 #ifdef USE_MPI
   ENDIF
 #endif
 
 #ifdef _DEBUG
-  CALL dfftw_plan_many_dft_r2c(fft_plan_fx, i1, imax_total, isize_fft_x, &
-       tmp,   imax_total,     i1, imax_total, &
-       wrk3d, imax_total/2+1, i1, isize_disp, FFTW_ESTIMATE)
-  CALL dfftw_plan_many_dft_c2r(fft_plan_bx, i1, imax_total, isize_fft_x, &
-       tmp,   imax_total/2+1, i1, isize_disp, &
-       wrk3d, imax_total,     i1, imax_total, FFTW_ESTIMATE)
+  CALL dfftw_plan_many_dft_r2c(fft_plan_fx, i1, g(1)%size, isize_fft_x, &
+       tmp,   g(1)%size,     i1, g(1)%size, &
+       wrk3d, g(1)%size/2+1, i1, isize_disp, FFTW_ESTIMATE)
+  CALL dfftw_plan_many_dft_c2r(fft_plan_bx, i1, g(1)%size, isize_fft_x, &
+       tmp,   g(1)%size/2+1, i1, isize_disp, &
+       wrk3d, g(1)%size,     i1, g(1)%size, FFTW_ESTIMATE)
 #else
-  CALL dfftw_plan_many_dft_r2c(fft_plan_fx, i1, imax_total, isize_fft_x, &
-       tmp,   imax_total,     i1, imax_total, &
-       wrk3d, imax_total/2+1, i1, isize_disp, FFTW_MEASURE)
-  CALL dfftw_plan_many_dft_c2r(fft_plan_bx, i1, imax_total, isize_fft_x, &
-       tmp,   imax_total/2+1, i1, isize_disp, &
-       wrk3d, imax_total,     i1, imax_total, FFTW_MEASURE)
+  CALL dfftw_plan_many_dft_r2c(fft_plan_fx, i1, g(1)%size, isize_fft_x, &
+       tmp,   g(1)%size,     i1, g(1)%size, &
+       wrk3d, g(1)%size/2+1, i1, isize_disp, FFTW_MEASURE)
+  CALL dfftw_plan_many_dft_c2r(fft_plan_bx, i1, g(1)%size, isize_fft_x, &
+       tmp,   g(1)%size/2+1, i1, isize_disp, &
+       wrk3d, g(1)%size,     i1, g(1)%size, FFTW_MEASURE)
 #endif
   
 ! -----------------------------------------------------------------------
@@ -163,23 +163,23 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
 
   isize_stride = isize_fft_y
 
-  IF ( jmax_total .GT. 1 ) THEN
+  IF ( g(2)%size .GT. 1 ) THEN
 #ifdef _DEBUG
-     CALL dfftw_plan_many_dft(fft_plan_fy, i1, jmax_total, isize_fft_y, &
-          tmp,   jmax_total, isize_stride, i1, &
-          wrk3d, jmax_total, isize_stride, i1, FFTW_FORWARD, FFTW_ESTIMATE)
+     CALL dfftw_plan_many_dft(fft_plan_fy, i1, g(2)%size, isize_fft_y, &
+          tmp,   g(2)%size, isize_stride, i1, &
+          wrk3d, g(2)%size, isize_stride, i1, FFTW_FORWARD, FFTW_ESTIMATE)
      
-     CALL dfftw_plan_many_dft(fft_plan_by, i1, jmax_total, isize_fft_y, &
-          tmp,   jmax_total, isize_stride, i1, &
-          wrk3d, jmax_total, isize_stride, i1, FFTW_BACKWARD, FFTW_ESTIMATE)
+     CALL dfftw_plan_many_dft(fft_plan_by, i1, g(2)%size, isize_fft_y, &
+          tmp,   g(2)%size, isize_stride, i1, &
+          wrk3d, g(2)%size, isize_stride, i1, FFTW_BACKWARD, FFTW_ESTIMATE)
 #else
-     CALL dfftw_plan_many_dft(fft_plan_fy, i1, jmax_total, isize_fft_y, &
-          tmp,   jmax_total, isize_stride, i1, &
-          wrk3d, jmax_total, isize_stride, i1, FFTW_FORWARD, FFTW_MEASURE)
+     CALL dfftw_plan_many_dft(fft_plan_fy, i1, g(2)%size, isize_fft_y, &
+          tmp,   g(2)%size, isize_stride, i1, &
+          wrk3d, g(2)%size, isize_stride, i1, FFTW_FORWARD, FFTW_MEASURE)
      
-     CALL dfftw_plan_many_dft(fft_plan_by, i1, jmax_total, isize_fft_y, &
-          tmp,   jmax_total, isize_stride, i1, &
-          wrk3d, jmax_total, isize_stride, i1, FFTW_BACKWARD, FFTW_MEASURE)
+     CALL dfftw_plan_many_dft(fft_plan_by, i1, g(2)%size, isize_fft_y, &
+          tmp,   g(2)%size, isize_stride, i1, &
+          wrk3d, g(2)%size, isize_stride, i1, FFTW_BACKWARD, FFTW_MEASURE)
 #endif
   ENDIF
 
@@ -196,8 +196,9 @@ END SUBROUTINE OPR_FOURIER_INITIALIZE
 !########################################################################
 SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2)
 
-  USE DNS_GLOBAL, ONLY : imax_total, isize_txc_dimz
   USE DNS_GLOBAL, ONLY : fft_plan_fx, fft_plan_fx_bcs
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -212,7 +213,7 @@ SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2
 #ifdef USE_MPI
   TCOMPLEX, DIMENSION((nx/2+1)*ims_npro_i,*)       :: wrk1
 #else
-  TCOMPLEX, DIMENSION(imax_total/2+1,*)            :: wrk1
+  TCOMPLEX, DIMENSION(g(1)%size/2+1,*)             :: wrk1
 #endif
 
 ! -----------------------------------------------------------------------
@@ -246,7 +247,7 @@ SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2
      id = DNS_MPI_I_POISSON1
      DO k = 1,ims_size_i(id)
         inew = (nx/2+1)*ims_npro_i
-        iold = imax_total/2 + 1
+        iold = g(1)%size/2 + 1
         wrk1(inew,k) = wrk1(iold,k)
         DO ip = ims_npro_i,2,-1
            DO i = nx/2,1,-1
@@ -295,7 +296,7 @@ SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
   USE DNS_GLOBAL, ONLY : isize_txc_dimz
   USE DNS_GLOBAL, ONLY : fft_plan_bx
 #ifdef USE_MPI 
-  USE DNS_GLOBAL, ONLY : imax_total
+  USE DNS_GLOBAL, ONLY : g
   USE DNS_MPI,    ONLY : ims_npro_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i, ims_size_i
 #endif 
 
@@ -347,7 +348,7 @@ SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
         ENDDO
      ENDDO
      iold = ims_npro_i*(nx/2+1)
-     inew = imax_total/2 + 1
+     inew = g(1)%size/2 + 1
      out(inew,k) = out(iold,k)
   ENDDO
   
@@ -387,7 +388,8 @@ END SUBROUTINE OPR_FOURIER_B_X_EXEC
 SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out) 
   
   USE DNS_GLOBAL, ONLY : fft_plan_fz, fft_reordering 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz, kmax_total 
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_npro_k, ims_ts_k, ims_tr_k, ims_ds_k, ims_dr_k, ims_err,ims_size_k
 #endif 
@@ -397,9 +399,9 @@ SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
 #include "integers.h"
 
 #ifdef USE_MPI
-  TCOMPLEX, DIMENSION(ims_size_k(DNS_MPI_K_POISSON)/2,kmax_total), TARGET :: in,out
+  TCOMPLEX, DIMENSION(ims_size_k(DNS_MPI_K_POISSON)/2,g(3)%size), TARGET :: in,out
 #else 
-  TCOMPLEX, DIMENSION(isize_txc_dimz/2,kmax_total),                TARGET :: in,out
+  TCOMPLEX, DIMENSION(isize_txc_dimz/2,g(3)%size),                TARGET :: in,out
 #endif
 
 ! -----------------------------------------------------------------------
@@ -430,16 +432,16 @@ SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
   CALL dfftw_execute_dft(fft_plan_fz, p_org, p_dst)
 
   IF ( fft_reordering .EQ. i1 ) THEN ! re-shuffle spectra in z
-     DO k = 1,kmax_total/2
-        k_old1 = k + kmax_total/2
+     DO k = 1,g(3)%size/2
+        k_old1 = k + g(3)%size/2
         k_new1 = k 
         k_old2 = k
-        k_new2 = k + kmax_total/2
+        k_new2 = k + g(3)%size/2
 
         p_org(:,k_new1) = p_dst(:,k_old1) 
         p_org(:,k_new2) = p_dst(:,k_old2)  
      ENDDO
-     DO k = 1,kmax_total
+     DO k = 1,g(3)%size
         p_dst(:,k) = p_org(:,k)
      ENDDO
   ENDIF
@@ -460,7 +462,8 @@ END SUBROUTINE OPR_FOURIER_F_Z_EXEC
 SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out) 
   
   USE DNS_GLOBAL, ONLY : fft_plan_bz, fft_reordering 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz, kmax_total 
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_npro_k, ims_ts_k, ims_tr_k, ims_ds_k, ims_dr_k, ims_size_k
 #endif 
@@ -470,9 +473,9 @@ SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
 #include "integers.h"
 
 #ifdef USE_MPI
-  TCOMPLEX, DIMENSION(ims_size_k(DNS_MPI_K_POISSON)/2,kmax_total), TARGET :: in,out
+  TCOMPLEX, DIMENSION(ims_size_k(DNS_MPI_K_POISSON)/2,g(3)%size), TARGET :: in,out
 #else 
-  TCOMPLEX, DIMENSION(isize_txc_dimz/2,kmax_total),                TARGET :: in,out
+  TCOMPLEX, DIMENSION(isize_txc_dimz/2,g(3)%size),                TARGET :: in,out
 #endif
 
 ! -----------------------------------------------------------------------
@@ -501,16 +504,16 @@ SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
 #endif
 
   IF ( fft_reordering .EQ. i1 ) THEN ! re-shuffle spectra in z
-     DO k = 1,kmax_total/2
-        k_new1 = k + kmax_total/2
+     DO k = 1,g(3)%size/2
+        k_new1 = k + g(3)%size/2
         k_old1 = k 
         k_new2 = k
-        k_old2 = k + kmax_total/2
+        k_old2 = k + g(3)%size/2
 
         p_dst(:,k_new1) = p_org(:,k_old1) 
         p_dst(:,k_new2) = p_org(:,k_old2)  
      ENDDO
-     DO k = 1,kmax_total
+     DO k = 1,g(3)%size
         p_org(:,k) = p_dst(:,k)
      ENDDO
   ENDIF
@@ -580,7 +583,8 @@ END SUBROUTINE OPR_FOURIER_B_Z_EXEC
 ! #######################################################################
 SUBROUTINE OPR_FOURIER_SPECTRA_3D(nx,ny,nz, isize_psd, u, psd, wrk1d)
 
-  USE DNS_GLOBAL, ONLY : imax_total, jmax_total, kmax_total, isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k, ims_pro, ims_err 
 #endif
@@ -609,12 +613,12 @@ SUBROUTINE OPR_FOURIER_SPECTRA_3D(nx,ny,nz, isize_psd, u, psd, wrk1d)
 #else
      kglobal = k
 #endif
-     IF ( kglobal .LE. kmax_total/2+1 ) THEN; fk = M_REAL(kglobal-1)
-     ELSE;                                    fk =-M_REAL(kmax_total+1-kglobal); ENDIF
+     IF ( kglobal .LE. g(3)%size/2+1 ) THEN; fk = M_REAL(kglobal-1)
+     ELSE;                                   fk =-M_REAL(g(3)%size+1-kglobal); ENDIF
 
      DO j = 1,ny
-        IF ( j       .LE. jmax_total/2+1 ) THEN; fj = M_REAL(j-1)
-        ELSE;                                    fj =-M_REAL(jmax_total+1-j); ENDIF
+        IF ( j       .LE. g(2)%size/2+1 ) THEN; fj = M_REAL(j-1)
+        ELSE;                                   fj =-M_REAL(g(2)%size+1-j); ENDIF
               
 
         DO i = 1,nx/2+1
@@ -623,8 +627,8 @@ SUBROUTINE OPR_FOURIER_SPECTRA_3D(nx,ny,nz, isize_psd, u, psd, wrk1d)
 #else
            iglobal = i
 #endif
-           IF ( iglobal .LE. imax_total/2+1 ) THEN; fi = M_REAL(iglobal-1)
-           ELSE;                                    fi =-M_REAL(imax_total+1-iglobal); ENDIF
+           IF ( iglobal .LE. g(1)%size/2+1 ) THEN; fi = M_REAL(iglobal-1)
+           ELSE;                                   fi =-M_REAL(g(1)%size+1-iglobal); ENDIF
 
 
            fr = CEILING( SQRT( M_REAL(fi**2 + fj**2 + fk**2) ) )

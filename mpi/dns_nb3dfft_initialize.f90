@@ -15,7 +15,8 @@ SUBROUTINE DNS_NB3DFFT_INITIALIZE
   USE DNS_CONSTANTS, ONLY : efile
 #ifdef USE_PSFFT 
   USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, imax_total,jmax_total,kmax_total
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
+  USE DNS_GLOBAL, ONLY : g
   USE DNS_MPI
   USE NB3DFFT, ONLY : nb3dfft_test_setup, nb3dfft_setup, get_dims 
 #endif 
@@ -27,14 +28,14 @@ SUBROUTINE DNS_NB3DFFT_INITIALIZE
   CALL IO_WRITE_ASCII(lfile,'Initialize nonblocking communication.')
 
   ims_nb_proc_grid = (/ ims_npro_i, ims_npro_k /) 
-  CALL NB3DFFT_SETUP(ims_nb_proc_grid, imax_total,jmax_total,kmax_total, &
+  CALL NB3DFFT_SETUP(ims_nb_proc_grid, g(1)%size,g(2)%size,g(3)%size, &
        ims_nb_msize)
 
   CALL GET_DIMS(ims_nb_xsrt,ims_nb_xend,ims_nb_xsiz,1,1) 
   CALL GET_DIMS(ims_nb_ysrt,ims_nb_yend,ims_nb_ysiz,1,2) 
   CALL GET_DIMS(ims_nb_zsrt,ims_nb_zend,ims_nb_zsiz,1,3) 
 
-  IF (       ims_nb_xsrt(1) .EQ. 1 .AND. ims_nb_xend(1) .EQ. imax_total &
+  IF (       ims_nb_xsrt(1) .EQ. 1 .AND. ims_nb_xend(1) .EQ. g(1)%size &
        .AND. ims_nb_xsiz(2)*ims_nb_xsiz(3) .EQ. ims_size_i(DNS_MPI_I_PARTIAL) ) THEN  
      ! Decomp standing in X okay
   ELSE  
@@ -53,7 +54,7 @@ SUBROUTINE DNS_NB3DFFT_INITIALIZE
      CALL DNS_STOP(DNS_ERROR_PARPARTITION)
   ENDIF
 
-  IF (      ims_nb_zsrt(3) .EQ. 1 .AND. ims_nb_zend(3) .EQ. kmax_total & 
+  IF (      ims_nb_zsrt(3) .EQ. 1 .AND. ims_nb_zend(3) .EQ. g(3)%size & 
        .AND.ims_nb_zsiz(1)*ims_nb_zsiz(2) .EQ. ims_size_k(DNS_MPI_K_PARTIAL) ) THEN 
      ! Decomp standing in Z okay 
   ELSE 

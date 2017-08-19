@@ -489,15 +489,11 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINIINT(bakfile, inifile, 'Grid', 'Imax', '0', g(1)%size)
   CALL SCANINIINT(bakfile, inifile, 'Grid', 'Jmax', '0', g(2)%size)
   CALL SCANINIINT(bakfile, inifile, 'Grid', 'Kmax', '0', g(3)%size)
+
 ! default
   imax = g(1)%size
   jmax = g(2)%size
   kmax = g(3)%size
-
-! to be removed
-  imax_total = g(1)%size
-  jmax_total = g(2)%size
-  kmax_total = g(3)%size
 
 ! -------------------------------------------------------------------
 ! Domain decomposition in parallel mode
@@ -586,7 +582,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Periodic Z grid')
      CALL DNS_STOP(DNS_ERROR_KBC)
   ENDIF
-
 
 ! ###################################################################
 ! Statistics Control   

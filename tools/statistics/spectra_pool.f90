@@ -9,7 +9,7 @@
 SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
      spec_2d, data_x,data_z,spec_r, tmp_x,tmp_z,wrk2d)
 
-  USE DNS_GLOBAL, ONLY : kmax_total
+  USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI 
   USE DNS_MPI
 #endif 
@@ -31,9 +31,9 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
   TREAL, DIMENSION(isize_aux,nz,2), INTENT(INOUT) :: tmp_z ! need space for transpostion
 
 #ifdef USE_MPI 
-  TREAL, DIMENSION(isize_aux/ims_npro_k,kmax_total,2), INTENT(INOUT) :: wrk2d
+  TREAL, DIMENSION(isize_aux/ims_npro_k,g(3)%size,2), INTENT(INOUT) :: wrk2d
 #else
-  TREAL, DIMENSION(ny,kmax_total,2), INTENT(INOUT) :: wrk2d
+  TREAL, DIMENSION(ny,g(3)%size,2), INTENT(INOUT) :: wrk2d
 #endif
 
 ! -----------------------------------------------------------------------
@@ -54,11 +54,11 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
      
      tmp_x(:,:,1) = tmp_x(:,:,1) + spec_2d(:,:,k)
 
-     IF ( kz_global .LE. kmax_total/2 ) THEN; kz_global = kmax_total/2 - kz_global + 2; flag = 1
-     ELSE;                                    kz_global = kz_global - kmax_total/2;     flag = 0
+     IF ( kz_global .LE. g(3)%size/2 ) THEN; kz_global = g(3)%size/2 - kz_global + 2; flag = 1
+     ELSE;                                    kz_global = kz_global - g(3)%size/2;     flag = 0
      ENDIF
 ! drop the Nyquist frequency; we add it to the previous mode to keep structure below
-     IF ( kz_global .EQ. kmax_total/2+1 ) kz_global = MAX(kmax_total/2,1)
+     IF ( kz_global .EQ. g(3)%size/2+1 ) kz_global = MAX(g(3)%size/2,1)
         
      DO i=1,nx
 #ifdef USE_MPI 
@@ -124,13 +124,13 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
 #endif
 
 
-  DO k = 1,kmax_total
+  DO k = 1,g(3)%size
      kz_global = k
-     IF ( kz_global .LE. kmax_total/2 ) THEN; kz_global = kmax_total/2 - kz_global + 2
-     ELSE;                                    kz_global = kz_global - kmax_total/2
+     IF ( kz_global .LE. g(3)%size/2 ) THEN; kz_global = g(3)%size/2 - kz_global + 2
+     ELSE;                                    kz_global = kz_global - g(3)%size/2
      ENDIF
 ! drop the Nyquist frequency; we add it to the previous mode to keep structure below
-     IF ( kz_global .EQ. kmax_total/2+1 ) kz_global = MAX(kmax_total/2,1)
+     IF ( kz_global .EQ. g(3)%size/2+1 ) kz_global = MAX(g(3)%size/2,1)
 
      wrk2d(1:ny_local,kz_global,2) = wrk2d(1:ny_local,kz_global,2) + wrk2d(1:ny_local,k,1)
         
@@ -138,8 +138,8 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
 
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     count = kmax_total/2 /ims_npro_k ! add strides for the transposition
-     DO k = 1,kmax_total/2,count
+     count = g(3)%size/2 /ims_npro_k ! add strides for the transposition
+     DO k = 1,g(3)%size/2,count
         wrk2d(1:ny_local*count,(k-1)*2+1,1) =  wrk2d(1:ny_local*count,k,2)
      ENDDO
 
@@ -148,7 +148,7 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
   ELSE
 #endif
 
-     tmp_z(1:isize_aux*nz,1,1) = wrk2d(1:ny_local*kmax_total,1,2)
+     tmp_z(1:isize_aux*nz,1,1) = wrk2d(1:ny_local*g(3)%size,1,2)
 
 #ifdef USE_MPI
   ENDIF

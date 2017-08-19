@@ -89,14 +89,8 @@ MODULE DNS_GLOBAL
   TYPE(subarray_dt), DIMENSION(10) :: io_aux
 
 ! ###################################################################
-! Grid
-! ###################################################################
-  TYPE(grid_dt), DIMENSION(3) :: g
-
-  TREAL    :: area,volume
-  
-! to be removed
-  TINTEGER :: imax_total,jmax_total,kmax_total
+  TYPE(grid_dt), DIMENSION(3) :: g     ! Grid information along 3 directions
+  TREAL :: area,volume                 ! Horizontal area and volume
   
 ! ###################################################################
   TYPE(background_dt) :: qbg(3)        ! Velocity background

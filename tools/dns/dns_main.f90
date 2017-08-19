@@ -516,7 +516,7 @@ PROGRAM DNS
   IF ( ifourier .EQ. 1 ) THEN
      CALL dfftw_destroy_plan(fft_plan_fx)
      CALL dfftw_destroy_plan(fft_plan_bx)
-     IF ( kmax_total .GT. 1 ) THEN
+     IF ( g(3)%size .GT. 1 ) THEN
         CALL dfftw_destroy_plan(fft_plan_fz)
         CALL dfftw_destroy_plan(fft_plan_bz)
      ENDIF
