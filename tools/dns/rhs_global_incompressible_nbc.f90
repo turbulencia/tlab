@@ -23,7 +23,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
   USE DNS_CONSTANTS, ONLY : lfile,wfile,efile
   !
-  USE DNS_GLOBAL, ONLY : g, imax_total
+  USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imode_eqns
   USE DNS_GLOBAL, ONLY : inb_flow,inb_vars,inb_scal,inb_scal_array,visc,schmidt,prandtl 
   USE DNS_GLOBAL, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
@@ -244,9 +244,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
            CALL NB3DFFT_R2R_XUNPACK(bt1,tmp11, info(FUYX), t_tmp);t_comp=t_comp+t_tmp    
            !
            t_tmp = -MPI_WTime() 
-           CALL DNS_TRANSPOSE(bt1,imax_total,nyz_trans,imax_total,tmpu,nyz_trans)
+           CALL DNS_TRANSPOSE(bt1,g(1)%size,nyz_trans,g(1)%size,tmpu,nyz_trans)
            CALL OPR_BURGERS(0, nyz_trans, bcs, g(1), tmpu,tmpu,tmp11, wrk2d,wrk3d)  
-           CALL DNS_TRANSPOSE(tmp11,nyz_trans,imax_total,nyz_trans,bt1,imax_total) 
+           CALL DNS_TRANSPOSE(tmp11,nyz_trans,g(1)%size,nyz_trans,bt1,g(1)%size) 
            t_ser = t_ser + (t_tmp + MPI_WTime()) 
            !
            CALL NB3DFFT_R2R_XYCOMM(bt1,bt1,tmp12,tmp11,info(BUXY), t_tmp);t_comp=t_comp+t_tmp  
@@ -273,9 +273,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
            CALL NB3DFFT_R2R_XUNPACK(bt3,tmp31,info(FWYX),t_tmp); t_comp=t_comp+t_tmp;  
            !
            t_tmp = -MPI_WTime()
-           CALL DNS_TRANSPOSE(bt3,imax_total,nyz_trans,imax_total,tmp31,nyz_trans) 
+           CALL DNS_TRANSPOSE(bt3,g(1)%size,nyz_trans,g(1)%size,tmp31,nyz_trans) 
            CALL OPR_BURGERS(0, nyz_trans, bcs, g(1), tmp31,tmpu,tmp32, wrk2d,wrk3d) 
-           CALL DNS_TRANSPOSE(tmp32,nyz_trans,imax_total,nyz_trans,bt3,imax_total)   
+           CALL DNS_TRANSPOSE(tmp32,nyz_trans,g(1)%size,nyz_trans,bt3,g(1)%size)   
            t_ser = t_ser + (t_tmp + MPI_WTime())
            !
            CALL NB3DFFT_R2R_XYCOMM(bt3,bt3,tmp32,tmp31,info(BWXY),t_tmp); t_comp=t_comp+t_tmp;
@@ -349,9 +349,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
            CALL NB3DFFT_R2R_XUNPACK(bt1,tmp11,info(FVYX),t_tmp); t_comp=t_comp+t_tmp;  
            ! 
            t_tmp = -MPI_WTime()
-           CALL DNS_TRANSPOSE(bt1,imax_total,nyz_trans,imax_total,tmp11,nyz_trans) 
+           CALL DNS_TRANSPOSE(bt1,g(1)%size,nyz_trans,g(1)%size,tmp11,nyz_trans) 
            CALL OPR_BURGERS(0, nyz_trans, bcs, g(1), tmp11,tmpu,tmp12, wrk2d,wrk3d) 
-           CALL DNS_TRANSPOSE(tmp12,nyz_trans,imax_total,nyz_trans,bt1,imax_total)  
+           CALL DNS_TRANSPOSE(tmp12,nyz_trans,g(1)%size,nyz_trans,bt1,g(1)%size)  
            t_ser = t_ser + (t_tmp+MPI_WTime())
            !
            CALL NB3DFFT_R2R_XYCOMM(bt1,bt1,tmp12,tmp11,info(BVXY),t_tmp); t_comp=t_comp+t_tmp;
@@ -373,9 +373,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
            CALL NB3DFFT_R2R_XUNPACK(bt3,tmp31,info(F1YX),t_tmp); t_comp=t_comp+t_tmp;  
            !
            t_tmp = -MPI_WTime()
-           CALL DNS_TRANSPOSE(bt3,imax_total,nyz_trans,imax_total,tmp31,nyz_trans) 
+           CALL DNS_TRANSPOSE(bt3,g(1)%size,nyz_trans,g(1)%size,tmp31,nyz_trans) 
            CALL OPR_BURGERS(0, nyz_trans, bcs, g(1), tmp31,tmpu,tmp32, wrk2d,wrk3d) 
-           CALL DNS_TRANSPOSE(tmp32,nyz_trans,imax_total,nyz_trans,bt3,imax_total) 
+           CALL DNS_TRANSPOSE(tmp32,nyz_trans,g(1)%size,nyz_trans,bt3,g(1)%size) 
            t_ser = t_ser + (t_tmp+MPI_WTime()) 
            !
            CALL NB3DFFT_R2R_XYCOMM(bt3,bt3,tmp32,tmp31,info(B1XY),t_tmp); t_comp=t_comp+t_tmp;
@@ -489,9 +489,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
               CALL NB3DFFT_R2R_XUNPACK(bt1,tmp11,info(F2YX),t_tmp); t_comp=t_comp+t_tmp; 
               !
               t_tmp = -MPI_WTime() 
-              CALL DNS_TRANSPOSE(bt1,imax_total,nyz_trans,imax_total,tmp11,nyz_trans) 
+              CALL DNS_TRANSPOSE(bt1,g(1)%size,nyz_trans,g(1)%size,tmp11,nyz_trans) 
               CALL OPR_BURGERS(0, nyz_trans, bcs, g(1), tmp11,tmpu,tmp12, wrk2d,wrk3d) 
-              CALL DNS_TRANSPOSE(tmp12,nyz_trans,imax_total,nyz_trans,bt1,imax_total) 
+              CALL DNS_TRANSPOSE(tmp12,nyz_trans,g(1)%size,nyz_trans,bt1,g(1)%size) 
               t_ser = t_ser + (t_tmp+MPI_WTime())
               !
               CALL NB3DFFT_R2R_XYCOMM(bt1,bt1,tmp12,tmp11,info(B2XY),t_tmp); t_comp=t_comp+t_tmp;
@@ -515,9 +515,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
            CALL NB3DFFT_R2R_XUNPACK(bt3,tmp31,info(FPYX),t_tmp); t_comp=t_comp+t_tmp; 
            !
            t_tmp = -MPI_WTime()
-           CALL DNS_TRANSPOSE(bt3,imax_total,nyz_trans,imax_total,tmp31,nyz_trans) 
+           CALL DNS_TRANSPOSE(bt3,g(1)%size,nyz_trans,g(1)%size,tmp31,nyz_trans) 
            CALL OPR_PARTIAL1(nyz_trans, bcs, g(1), tmp31,tmp32, wrk2d) 
-           CALL DNS_TRANSPOSE(tmp32,nyz_trans,imax_total,nyz_trans,bt3,imax_total) 
+           CALL DNS_TRANSPOSE(tmp32,nyz_trans,g(1)%size,nyz_trans,bt3,g(1)%size) 
            t_ser = t_ser + (t_tmp+MPI_WTime())
            !
            CALL NB3DFFT_R2R_XYCOMM(bt3,bt3,tmp32,tmp31,info(BPXY),t_tmp); t_comp=t_comp+t_tmp;
