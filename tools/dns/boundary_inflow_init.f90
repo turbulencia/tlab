@@ -1,6 +1,7 @@
 #include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
+#include "dns_const_mpi.h"
 
 !########################################################################
 !# DESCRIPTION
@@ -17,7 +18,8 @@ SUBROUTINE BOUNDARY_INFLOW_INIT(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
   USE DNS_LOCAL,     ONLY : ifrc_mode, ifrc_ifield
   USE DNS_LOCAL,     ONLY : g_inf
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro_i
+  USE DNS_LOCAL,     ONLY : FilterInflow
+  USE DNS_MPI
 #endif
 
   IMPLICIT NONE
@@ -46,8 +48,12 @@ SUBROUTINE BOUNDARY_INFLOW_INIT(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
   CHARACTER*32 fname, sname, str
   CHARACTER*128 line
 
+#ifdef USE_MPI
+  TINTEGER isize_loc,id
+#endif
+
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: u_inf, v_inf, w_inf, p_inf, rho_inf
+  TREAL, DIMENSION(:), POINTER :: p_inf, rho_inf
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -62,10 +68,20 @@ SUBROUTINE BOUNDARY_INFLOW_INIT(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
   ENDIF
 #endif
 
+! #######################################################################
+! Definining types for parallel mode
+! #######################################################################
+#ifdef USE_MPI
+  IF ( FilterInflow(1)%type .NE. DNS_FILTER_NONE ) THEN !  Required for inflow explicit filter
+     CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for inflow filter.')
+     id    = DNS_MPI_K_INFLOW
+     isize_loc = FilterInflow(1)%size *FilterInflow(2)%size
+     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
+          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+  ENDIF
+#endif
+
 ! Define pointers
-  u_inf   => q_inf(:,1)
-  v_inf   => q_inf(:,2)
-  w_inf   => q_inf(:,3)
   p_inf   => q_inf(:,4)
   rho_inf => q_inf(:,5)
 
@@ -106,15 +122,10 @@ SUBROUTINE BOUNDARY_INFLOW_INIT(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
      itimetmp = itime
      visctmp  = visc
      CALL DNS_READ_FIELDS(fname, i2, g_inf(1)%size,g_inf(2)%size,kmax, inb_flow, i0, iwrk_size, q_inf, wrk3d)
-     rtime = rtimetmp
-     itime = itimetmp
-     visc  = visctmp
-
-     rtimetmp = rtime
-     itimetmp = itime
      CALL DNS_READ_FIELDS(sname, i1, g_inf(1)%size,g_inf(2)%size,kmax, inb_scal, i0, iwrk_size, s_inf, wrk3d)
      rtime = rtimetmp
      itime = itimetmp
+     visc  = visctmp
 
 ! array p contains the internal energy. Now we put in the pressure 
      CALL THERMO_CALORIC_TEMPERATURE&

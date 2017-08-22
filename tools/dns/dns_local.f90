@@ -78,8 +78,6 @@ MODULE DNS_LOCAL
   TREAL    :: frc_length, frc_adapt
 
   TYPE(filter_dt), DIMENSION(3) :: FilterInflow
-  ! This info should be put into FilterInflow derived type
-  TINTEGER :: ifilt_inflow, ifilt_inflow_iwidth, ifilt_inflow_jwidth
   TINTEGER :: ifilt_inflow_step
 
 ! ###################################################################

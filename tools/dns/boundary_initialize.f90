@@ -29,7 +29,6 @@ SUBROUTINE BOUNDARY_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
   USE BOUNDARY_BUFFER
 #ifdef USE_MPI
   USE DNS_GLOBAL,    ONLY : inb_scal_array
-  USE DNS_LOCAL,     ONLY : ifilt_inflow,ifilt_inflow_iwidth,ifilt_inflow_jwidth
   USE DNS_MPI
 #endif
 
@@ -81,14 +80,6 @@ SUBROUTINE BOUNDARY_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
      CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Oy BCs explicit filter.')
      id    = DNS_MPI_K_TOPBCS
      isize_loc = imax*BuffFlowJmin%size
-     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
-          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-  ENDIF
-
-  IF ( ifilt_inflow .EQ. 1 ) THEN !  Required for inflow explicit filter
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for inflow filter.')
-     id    = DNS_MPI_K_INFLOW
-     isize_loc = ifilt_inflow_iwidth*ifilt_inflow_jwidth
      CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF

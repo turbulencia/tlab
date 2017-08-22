@@ -107,38 +107,25 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
      ENDIF
 
 ! -----------------------------------------------------------------------
-! Specfics of spatially evolving cases
-! -----------------------------------------------------------------------
-     IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN        
-        IF ( ifilt_inflow .EQ. 1 .AND. MOD(itime,ifilt_inflow_step) .EQ. 0 ) THEN ! Inflow filter
-           CALL BOUNDARY_INFLOW_FILTER(rho, txc, vaux(vindex(VA_BCS_VI))            , wrk1d,wrk2d,wrk3d)
-           CALL BOUNDARY_INFLOW_FILTER(u,   txc, vaux(vindex(VA_BCS_VI)+jmax*kmax)  , wrk1d,wrk2d,wrk3d)
-           CALL BOUNDARY_INFLOW_FILTER(v,   txc, vaux(vindex(VA_BCS_VI)+jmax*kmax*2), wrk1d,wrk2d,wrk3d)
-           CALL BOUNDARY_INFLOW_FILTER(w,   txc, vaux(vindex(VA_BCS_VI)+jmax*kmax*3), wrk1d,wrk2d,wrk3d)
-           CALL BOUNDARY_INFLOW_FILTER(p,   txc, vaux(vindex(VA_BCS_VI)+jmax*kmax*4), wrk1d,wrk2d,wrk3d)
-           IF ( icalc_scal .EQ. 1 .AND. ifilt_scalar .EQ. 1 ) THEN
-              DO is = 1,inb_scal
-                 CALL BOUNDARY_INFLOW_FILTER(s(1,is),txc,vaux(vindex(VA_BCS_VI)+jmax*kmax*(4+is)), wrk1d,wrk2d,wrk3d)
-              ENDDO
-           ENDIF
-           
+     IF ( MOD(itime-nitera_first,ifilt_inflow_step) .EQ. 0 ) THEN ! Inflow filter in spatial mode
+        CALL BOUNDARY_INFLOW_FILTER(vaux(vindex(VA_BCS_VI)), q,s, txc, wrk1d,wrk2d,wrk3d)
+        
 ! recalculation of p and T
-           IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-              CALL THERMO_AIRWATER_RP(imax,jmax,kmax, s, p, rho, T, wrk3d)
-           ELSE
-              CALL THERMO_THERMAL_TEMPERATURE(imax,jmax,kmax, s, p, rho, T)
-           ENDIF
-           CALL THERMO_CALORIC_ENERGY(imax,jmax,kmax, s, T, e)
-           IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, vis)
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+           CALL THERMO_AIRWATER_RP(imax,jmax,kmax, s, p, rho, T, wrk3d)
+        ELSE
+           CALL THERMO_THERMAL_TEMPERATURE(imax,jmax,kmax, s, p, rho, T)
+        ENDIF
+        CALL THERMO_CALORIC_ENERGY(imax,jmax,kmax, s, T, e)
+        IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, vis)
 ! This recalculation of T and p is made to make sure that the same numbers are
 ! obtained in statistics postprocessing as in the simulation; avg* files
 ! can then be compared with diff command.
-           IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-              CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
-              CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
-           ENDIF
-           
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+           CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
+           CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
         ENDIF
+        
      ENDIF
 
 ! -----------------------------------------------------------------------

@@ -840,40 +840,43 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[InflowFilter]')
-  CALL IO_WRITE_ASCII(bakfile, '#Active=<yes/no>')
+  CALL IO_WRITE_ASCII(bakfile, '#Type=<yes/no>')
   CALL IO_WRITE_ASCII(bakfile, '#IWidth=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#JWidth=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#Step=<value>')
 
-  IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-  CALL SCANINICHAR(bakfile, inifile, 'InflowFilter', 'Active', 'no', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; ifilt_inflow = 0
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; ifilt_inflow = 1
+  FilterInflow(:)%delta = 2
+  FilterInflow(:)%alpha = 0.49
+  CALL SCANINICHAR(bakfile, inifile, 'InflowFilter', 'Type', 'none', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; idummy = DNS_FILTER_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; idummy = DNS_FILTER_COMPACT
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'tophat'    ) THEN; idummy = DNS_FILTER_TOPHAT
   ELSE
-     CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'Active', '0', ifilt_inflow)
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong InflowFilter.Type')
+     CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
 
-  IF ( ifilt_inflow .EQ. 1 ) THEN
-     CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'IWidth', '1', ifilt_inflow_iwidth)
+  CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'Step', '0', ifilt_inflow_step)
+  IF ( ifilt_inflow_step .EQ. 0               ) idummy     = DNS_FILTER_NONE
+  IF ( idummy            .EQ. DNS_FILTER_NONE ) ifilt_step = 0 
+  
+  FilterInflow(:)%type = idummy
+
+  IF ( idummy .NE. DNS_FILTER_NONE ) THEN
+     CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'IWidth', '1', FilterInflow(1)%size)
      
-     IF ( ifilt_inflow_iwidth .GT. imax ) THEN
-        CALL IO_WRITE_ASCII(efile, 'Error: Inflow filter i width larger than imax')
+     IF ( FilterInflow(1)%size .GT. imax ) THEN
+        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Inflow filter i width larger than imax')
         CALL DNS_STOP(DNS_ERROR_INFFLTDOM)
      ENDIF
         
-     CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'JWidth', '1', ifilt_inflow_jwidth)
+     CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'JWidth', '1', FilterInflow(2)%size)
      
-     IF ( ifilt_inflow_jwidth .GT. jmax ) THEN
-        CALL IO_WRITE_ASCII(efile, 'Error: Inflow filter j width larger than jmax')
+     IF ( FilterInflow(1)%size .GT. jmax ) THEN
+        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Inflow filter j width larger than jmax')
         CALL DNS_STOP(DNS_ERROR_INFFLTDOM)
      ENDIF
      
-     CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'Step', '1', ifilt_inflow_step)
-  ENDIF
-
-  ELSE
-     ifilt_inflow = 0
-
   ENDIF
 
 ! ###################################################################
@@ -1065,11 +1068,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   END IF
 
 ! Avoid dividing by zero in time_integration routine
-  IF ( ifilt_step   .LE. 0 ) ifilt_step   = nitera_last - nitera_first + 1
-  IF ( nitera_save  .LE. 0 ) nitera_save  = nitera_last - nitera_first + 1
-  IF ( nitera_stats .LE. 0 ) nitera_stats = nitera_last - nitera_first + 1
-  IF ( nitera_log   .LE. 0 ) nitera_log   = nitera_last - nitera_first + 1
-  IF ( nitera_pln   .LE. 0 ) nitera_pln   = nitera_last - nitera_first + 1
+  IF ( nitera_save       .LE. 0 ) nitera_save       = nitera_last - nitera_first + 1
+  IF ( nitera_stats      .LE. 0 ) nitera_stats      = nitera_last - nitera_first + 1
+  IF ( nitera_log        .LE. 0 ) nitera_log        = nitera_last - nitera_first + 1
+  IF ( nitera_pln        .LE. 0 ) nitera_pln        = nitera_last - nitera_first + 1
+  IF ( ifilt_step        .LE. 0 ) ifilt_step        = nitera_last - nitera_first + 1
+  IF ( ifilt_inflow_step .LE. 0 ) ifilt_inflow_step = nitera_last - nitera_first + 1
 
 ! -------------------------------------------------------------------
 ! Control limits
