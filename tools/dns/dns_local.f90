@@ -66,8 +66,7 @@ MODULE DNS_LOCAL
 ! Filters
 ! ###########################################################
   TYPE(filter_dt), DIMENSION(3) :: FilterDomain
-
-  TINTEGER :: ifilt_step, ifilt_scalar
+  TINTEGER :: FilterDomainStep
 
 ! ###################################################################
 ! Inflow field in spatial mode
@@ -78,7 +77,7 @@ MODULE DNS_LOCAL
   TREAL    :: frc_length, frc_adapt
 
   TYPE(filter_dt), DIMENSION(3) :: FilterInflow
-  TINTEGER :: ifilt_inflow_step
+  TINTEGER :: FilterInflowStep
 
 ! ###################################################################
 ! Discrete forcing

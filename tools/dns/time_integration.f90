@@ -25,6 +25,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   USE DNS_LOCAL 
   USE DNS_TOWER
   USE LAGRANGE_GLOBAL, ONLY : icalc_trajectories
+  USE BOUNDARY_INFLOW
 #ifdef LES
   USE LES_GLOBAL, ONLY : iles
 #endif
@@ -100,14 +101,14 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
      itime = itime + 1
      rtime = rtime + dtime
 
-     IF ( MOD(itime-nitera_first,ifilt_step) .EQ. 0 ) THEN
-        IF ( MOD(itime-nitera_first,nitera_stats) .EQ. 0 ) THEN; flag_save = .TRUE.
-        ELSE;                                                    flag_save = .FALSE.; ENDIF
+     IF ( MOD(itime-nitera_first,FilterDomainStep) .EQ. 0 ) THEN
+        IF ( MOD(itime-nitera_first,nitera_stats)  .EQ. 0 ) THEN; flag_save = .TRUE.
+        ELSE;                                                     flag_save = .FALSE.; ENDIF
         CALL DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
      ENDIF
 
 ! -----------------------------------------------------------------------
-     IF ( MOD(itime-nitera_first,ifilt_inflow_step) .EQ. 0 ) THEN ! Inflow filter in spatial mode
+     IF ( MOD(itime-nitera_first,FilterInflowStep) .EQ. 0 ) THEN ! Inflow filter in spatial mode
         CALL BOUNDARY_INFLOW_FILTER(vaux(vindex(VA_BCS_VI)), q,s, txc, wrk1d,wrk2d,wrk3d)
         
 ! recalculation of p and T

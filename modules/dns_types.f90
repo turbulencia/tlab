@@ -61,9 +61,10 @@ MODULE DNS_TYPES
 
   TYPE filter_dt
      SEQUENCE
-     TINTEGER type, size, inb_filter, delta
-     TREAL alpha
-     TINTEGER bcs_min, bcs_max
+     TINTEGER type, size, inb_filter
+     TINTEGER delta, repeat                   ! Filter with for top-hat and # repetitions
+     TREAL alpha                              ! Filter coefficient for compact
+     TINTEGER bcs_min, bcs_max                ! boundary conditions
      LOGICAL uniform, periodic
      TINTEGER mpitype
      TREAL, DIMENSION(:,:), POINTER :: coeffs ! pointer to coefficients

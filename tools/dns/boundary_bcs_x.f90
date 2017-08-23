@@ -25,6 +25,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture, gama0, THERMO_AI
   USE DNS_LOCAL
+  USE BOUNDARY_INFLOW
 
   IMPLICIT NONE
 

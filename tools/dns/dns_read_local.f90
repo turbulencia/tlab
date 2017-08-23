@@ -813,18 +813,14 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit4' ) THEN; idummy = DNS_FILTER_4E  
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'adm'       ) THEN; idummy = DNS_FILTER_ADM; ENDIF
 
-  CALL SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', ifilt_step)
-  IF ( ifilt_step .EQ. 0               ) idummy     = DNS_FILTER_NONE
-  IF ( idummy     .EQ. DNS_FILTER_NONE ) ifilt_step = 0 
+  CALL SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', FilterDomainStep)
+  IF ( FilterDomainStep .EQ. 0               ) idummy     = DNS_FILTER_NONE
+  IF ( idummy     .EQ. DNS_FILTER_NONE ) FilterDomainStep = 0 
   
   FilterDomain(:)%type = idummy
   FilterDomain(2:3)%delta = FilterDomain(1)%delta
   FilterDomain(2:3)%alpha = FilterDomain(1)%alpha
   
-  CALL SCANINICHAR(bakfile, inifile, 'Filter', 'Scalar', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; ifilt_scalar = 1
-  ELSE;                                       ifilt_scalar = 0; ENDIF
-
 ! active/no active
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveX', 'yes', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(1)%type = DNS_FILTER_NONE 
@@ -856,9 +852,9 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
 
-  CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'Step', '0', ifilt_inflow_step)
-  IF ( ifilt_inflow_step .EQ. 0               ) idummy     = DNS_FILTER_NONE
-  IF ( idummy            .EQ. DNS_FILTER_NONE ) ifilt_step = 0 
+  CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'Step', '0', FilterInflowStep)
+  IF ( FilterInflowStep .EQ. 0               ) idummy     = DNS_FILTER_NONE
+  IF ( idummy            .EQ. DNS_FILTER_NONE ) FilterDomainStep = 0 
   
   FilterInflow(:)%type = idummy
 
@@ -1068,12 +1064,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   END IF
 
 ! Avoid dividing by zero in time_integration routine
-  IF ( nitera_save       .LE. 0 ) nitera_save       = nitera_last - nitera_first + 1
-  IF ( nitera_stats      .LE. 0 ) nitera_stats      = nitera_last - nitera_first + 1
-  IF ( nitera_log        .LE. 0 ) nitera_log        = nitera_last - nitera_first + 1
-  IF ( nitera_pln        .LE. 0 ) nitera_pln        = nitera_last - nitera_first + 1
-  IF ( ifilt_step        .LE. 0 ) ifilt_step        = nitera_last - nitera_first + 1
-  IF ( ifilt_inflow_step .LE. 0 ) ifilt_inflow_step = nitera_last - nitera_first + 1
+  IF ( nitera_save      .LE. 0 ) nitera_save      = nitera_last - nitera_first + 1
+  IF ( nitera_stats     .LE. 0 ) nitera_stats     = nitera_last - nitera_first + 1
+  IF ( nitera_log       .LE. 0 ) nitera_log       = nitera_last - nitera_first + 1
+  IF ( nitera_pln       .LE. 0 ) nitera_pln       = nitera_last - nitera_first + 1
+  IF ( FilterDomainStep .LE. 0 ) FilterDomainStep = nitera_last - nitera_first + 1
+  IF ( FilterInflowStep .LE. 0 ) FilterInflowStep = nitera_last - nitera_first + 1
 
 ! -------------------------------------------------------------------
 ! Control limits

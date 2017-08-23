@@ -19,7 +19,9 @@
 SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_GLOBAL
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal,inb_scal_array, isize_field, isize_wrk1d
+  USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim, itransport
+  USE DNS_GLOBAL,    ONLY : itime, rtime
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL
 
@@ -36,7 +38,7 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
   TARGET q
 
 ! -----------------------------------------------------------------------
-  TINTEGER id, iq,is,ij
+  TINTEGER iq,is,ij
   CHARACTER*250 line
 
 ! Pointers to existing allocated space
@@ -81,15 +83,12 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
      ENDDO
   ENDIF
   
-  id = 1
   DO iq = 1,inb_flow
      CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, q(1,iq), wrk1d,wrk2d,txc)
   ENDDO
-  IF ( icalc_scal .EQ. 1 .AND. ifilt_scalar .EQ. 1 ) THEN
-     DO is = 1,inb_scal
-        CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, s(1,is), wrk1d,wrk2d,txc)
-     ENDDO
-  ENDIF
+  DO is = 1,inb_scal
+     CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, s(1,is), wrk1d,wrk2d,txc)
+  ENDDO
   
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN ! re-contruct fields per unit mass
      DO iq = 1,inb_flow-1
@@ -100,12 +99,10 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
      ENDDO
   ENDIF
 
-  IF ( icalc_scal .EQ. 1 .AND. ifilt_scalar .EQ. 1 ) THEN
-     IF ( ilimit_scal .EQ. 1 ) THEN
-        DO ij = 1,isize_field
-           s(ij,is) = MIN(MAX(s(ij,is),s_bound_min(is)), s_bound_max(is))
-        ENDDO
-     ENDIF
+  IF ( ilimit_scal .EQ. 1 ) THEN
+     DO ij = 1,isize_field
+        s(ij,is) = MIN(MAX(s(ij,is),s_bound_min(is)), s_bound_max(is))
+     ENDDO
   ENDIF
 
 ! statistics
