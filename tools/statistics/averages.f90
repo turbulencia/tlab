@@ -1,5 +1,6 @@
 #include "types.h"
 #include "dns_const.h"
+#include "dns_const_mpi.h"
 #include "dns_error.h"
 
 #define C_FILE_LOC "AVERAGES"
@@ -32,11 +33,12 @@ PROGRAM AVERAGES
 ! Arrays declarations
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE         :: x,y,z
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE, TARGET :: q, s, txc
-  TREAL, DIMENSION(:),      ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
+  TREAL, DIMENSION(:),      ALLOCATABLE, SAVE         :: wrk1d,wrk3d
+  TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE         :: wrk2d
 
   TREAL, DIMENSION(:),      ALLOCATABLE, SAVE         :: mean, y_aux
   INTEGER(1), DIMENSION(:), ALLOCATABLE, SAVE         :: gate
-  TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE         :: surface
+  TREAL, DIMENSION(:,:,:),  ALLOCATABLE, SAVE         :: surface
 
   TYPE(pointers_dt), DIMENSION(16) :: data
 
@@ -54,7 +56,7 @@ PROGRAM AVERAGES
 
   TINTEGER opt_main, opt_block, opt_order, opt_bins, opt_bcs, flag_buoyancy
   TINTEGER opt_cond, opt_cond_scal, opt_threshold
-  TINTEGER nfield, isize_wrk3d, is, ij, n, bcs(2,2)
+  TINTEGER nfield, isize_wrk3d, is, ij, k, n, bcs(2,2)
   TREAL diff, umin, umax, dummy
   TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3
   TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
@@ -77,7 +79,11 @@ PROGRAM AVERAGES
   TINTEGER params_size
   TREAL params(params_size_max)
 
+  TINTEGER io_sizes(5)
+  
 #ifdef USE_MPI
+  TINTEGER                :: ndims, id
+  TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
   INTEGER icount
 #endif
 
@@ -113,7 +119,7 @@ PROGRAM AVERAGES
 ! Allocating memory space
 ! -------------------------------------------------------------------
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
+  ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
   ALLOCATE(gate(isize_field))
 
   ALLOCATE(y_aux(g(2)%size)) ! Reduced vertical grid
@@ -212,6 +218,33 @@ PROGRAM AVERAGES
   IF ( opt_main .GT. 1 .AND. opt_gate .GT.0 ) THEN
 
 #include "dns_read_partition.h"
+
+  ENDIF
+
+! Subarray information to read and write envelopes
+  IF ( opt_main .EQ. 2 .AND. opt_cond .GT. 1 .AND. igate_size .GT. 0 ) THEN
+     io_sizes = (/imax*2*igate_size*kmax,1,imax*2*igate_size*kmax,1,1/)
+
+#ifdef USE_MPI
+     id = MPIO_SUBARRAY_ENVELOPES
+     
+     mpio_aux(id)%active = .TRUE.
+     mpio_aux(id)%communicator = MPI_COMM_WORLD
+     
+     ndims = 3
+     sizes(1)  =imax *ims_npro_i; sizes(2)   = igate_size *2; sizes(3)   = kmax *ims_npro_k
+     locsize(1)=imax;             locsize(2) = igate_size *2; locsize(3) = kmax
+     offset(1) =ims_offset_i;     offset(2)  = 0;             offset(3)  = ims_offset_k
+     
+     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+          MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+
+#else
+     io_aux(:)%offset = 0
+#endif
+
+     ALLOCATE(surface(imax,2*igate_size,kmax))
 
   ENDIF
 
@@ -340,12 +373,6 @@ PROGRAM AVERAGES
         ALLOCATE(mean(MAX(jmax*5,(MAX(opt_bins,2)*opt_order*nfield))))
      ELSE 
         ALLOCATE(mean(MAX(opt_bins,2)*opt_order*nfield))
-     ENDIF
-  ENDIF
-
-  IF ( opt_main .EQ. 2 ) THEN
-     IF ( opt_cond .EQ. 1 ) THEN; ALLOCATE(surface(imax*kmax,2*igate_size_max))
-     ELSE;                        ALLOCATE(surface(imax*kmax,2*igate_size))
      ENDIF
   ENDIF
 
@@ -545,20 +572,24 @@ PROGRAM AVERAGES
            WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname))
            params(1) = rtime; params(2) = M_REAL(igate_size); params_size = 2
            CALL IO_WRITE_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
+
+           DO n = 1,igate_size
+              CALL BOUNDARY_LOWER_INT1(imax,jmax,kmax, igate_vec(n), y, gate, wrk3d, wrk2d, wrk2d(1,2))
+              DO k = 1,kmax ! rearranging
+                 ij = (k-1) *imax +1
+                 surface(1:imax,n           ,k) = wrk2d(ij:ij+imax-1,1)
+              ENDDO
+              CALL BOUNDARY_UPPER_INT1(imax,jmax,kmax, igate_vec(n), y, gate, wrk3d, wrk2d, wrk2d(1,2))
+              DO k = 1,kmax ! rearranging
+                 ij = (k-1) *imax +1
+                 surface(1:imax,n+igate_size,k) = wrk2d(ij:ij+imax-1,1)
+              ENDDO
+           ENDDO
+           varname = ''
+           WRITE(fname,*) itime; fname = 'envelopesJ.'//TRIM(ADJUSTL(fname))
+           CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_ENVELOPES, fname, varname, surface, io_sizes, wrk3d)
+           
         ENDIF
-
-! Envelopes
-        DO n = 1,igate_size
-           WRITE(str,*) n; str = 'Envelope'//TRIM(ADJUSTL(str))
-           line = 'Calculating '//TRIM(ADJUSTL(str)); CALL IO_WRITE_ASCII(lfile,line)
-           CALL BOUNDARY_LOWER_INT1(imax,jmax,kmax, igate_vec(n), y, gate, wrk3d, surface(:,n           ), wrk2d)
-           CALL BOUNDARY_UPPER_INT1(imax,jmax,kmax, igate_vec(n), y, gate, wrk3d, surface(:,n+igate_size), wrk2d)
-        ENDDO
-
-        WRITE(fname,*) itime; fname = 'lower.'//TRIM(ADJUSTL(fname))
-        CALL DNS_WRITE_FIELDS(fname, i1, imax,i1,kmax, igate_size, isize_wrk3d, surface,                 wrk3d)
-        WRITE(fname,*) itime; fname = 'upper.'//TRIM(ADJUSTL(fname))
-        CALL DNS_WRITE_FIELDS(fname, i1, imax,i1,kmax, igate_size, isize_wrk3d, surface(:,1+igate_size), wrk3d)
 
 ! ###################################################################
 ! Scalar gradient conditioned on Z

@@ -44,14 +44,13 @@ PROGRAM VISUALS_MAIN
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: wrk1d
   
   INTEGER(1), DIMENSION(:),   ALLOCATABLE, SAVE :: gate
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: surface
 
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
   CHARACTER*512 sRes
   CHARACTER*32 fname, inifile, bakfile
-  CHARACTER*32 flow_file, scal_file, part_file, aux_file, plot_file, time_str
+  CHARACTER*32 flow_file, scal_file, part_file, plot_file, time_str
   CHARACTER*64 str, line
 
   TINTEGER opt_format, flag_buoyancy
@@ -155,7 +154,6 @@ PROGRAM VISUALS_MAIN
      WRITE(*,'(I2,A)') iscal_offset+10,'. VelocityGradientInvariants'
      WRITE(*,'(I2,A)') iscal_offset+11,'. Space partition'
      WRITE(*,'(I2,A)') iscal_offset+12,'. Buoyancy'
-     WRITE(*,'(I2,A)') iscal_offset+13,'. Envelopes'
      WRITE(*,'(I2,A)') iscal_offset+14,'. HorizontalDivergence'
      WRITE(*,'(I2,A)') iscal_offset+15,'. Turbulent quantities'
      WRITE(*,'(I2,A)') iscal_offset+16,'. Radiative forcing'
@@ -319,11 +317,6 @@ PROGRAM VISUALS_MAIN
      inb_particle_txc = 1 ! so far, not needed
 #include "dns_alloc_larrays.h"
   ENDIF
-
-  DO iv = 1,iopt_size
-     IF ( opt_vec(iv) .EQ. iscal_offset+13 ) idummy = 1 ! envelopes/superlayers
-  ENDDO
-  IF ( idummy .EQ. 1 ) ALLOCATE(surface(imax*kmax,inb_scal))
 
 ! -------------------------------------------------------------------
 ! Read the grid 
@@ -885,31 +878,6 @@ PROGRAM VISUALS_MAIN
               
            ENDIF
 
-        ENDIF
-
-! ###################################################################
-! envelopes/superlayers
-! ###################################################################
-        IF ( opt_vec(iv) .EQ. iscal_offset+13 ) THEN
-! we use the # scalars as a surrogate for the # envelopes to have control through dns.ini
-           WRITE(aux_file,*) itime; aux_file='lower.'//TRIM(ADJUSTL(aux_file))
-           CALL DNS_READ_FIELDS(aux_file, i1, imax,i1,kmax, inb_scal,i0, isize_wrk2d, surface, wrk2d)
-
-           DO is = 1,inb_scal 
-              subdomain(3) = 1; subdomain(4) = 1
-              WRITE(str,*) is; plot_file = 'LowerEnvelope'//TRIM(ADJUSTL(str))//time_str(1:MaskSize)
-              CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,i1,kmax, i1, subdomain, surface(1,is), wrk3d)
-           ENDDO
-
-           WRITE(aux_file,*) itime; aux_file='upper.'//TRIM(ADJUSTL(aux_file))
-           CALL DNS_READ_FIELDS(aux_file, i1, imax,i1,kmax, inb_scal,i0, isize_wrk2d, surface, wrk2d)
-
-           DO is = 1,inb_scal 
-              subdomain(3) = 1; subdomain(4) = 1
-              WRITE(str,*) is; plot_file = 'UpperEnvelope'//TRIM(ADJUSTL(str))//time_str(1:MaskSize)
-              CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,i1,kmax, i1, subdomain, surface(1,is), wrk3d)
-
-           ENDDO
         ENDIF
 
 ! ###################################################################
