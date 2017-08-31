@@ -960,6 +960,128 @@ END SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU
 
 !########################################################################
 !########################################################################
+SUBROUTINE THERMO_ANELASTIC_DEWPOINT(nx,ny,nz, s, e,p, Td)
+
+  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, THERMO_PSAT, NPSAT
+  
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
+  TREAL, DIMENSION(*),          INTENT(IN)  :: e,p
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: Td
+
+! -------------------------------------------------------------------
+  TINTEGER ij, i, jk, is, ipsat
+  TINTEGER inr, nrmax
+  TREAL P_LOC, E_LOC, T_LOC, psat, dpsat, dummy, qsat
+
+  TREAL Rv, Rd, Rdv, Cd, Cdv, Lv0, Cvl, rd_ov_rv 
+!  TREAL NEWTONRAPHSON_ERROR
+  
+! ###################################################################
+! maximum number of iterations in Newton-Raphson
+  nrmax = 5
+
+! initialize homogeneous data
+  Rv = WGHT_INV(1)
+  Rd = WGHT_INV(2)              
+  Rdv= WGHT_INV(1) - WGHT_INV(2)
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+  Lv0=-THERMO_AI(6,1,3)
+
+  rd_ov_rv = WGHT_INV(2) /WGHT_INV(1)
+
+  IF      ( imixture .EQ. 0 ) THEN
+     
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+! Using actual temperature as initial condition
+           T_LOC = ( s(ij,1) - E_LOC ) / ( Cd + s(ij,2) *Cdv )
+           
+! executing Newton-Raphson 
+           DO inr = 1,nrmax
+              psat = THERMO_PSAT(NPSAT); dpsat = C_0_R
+              DO ipsat = NPSAT-1,1,-1
+                 psat  = psat *T_LOC + THERMO_PSAT(ipsat)
+                 dpsat = dpsat*T_LOC + THERMO_PSAT(ipsat+1) *M_REAL(ipsat)
+              ENDDO
+              
+              psat = psat -P_LOC *s(ij,2) *Rv /( Rd + s(ij,2) *Rdv )
+              
+              T_LOC = T_LOC -psat /dpsat
+           ENDDO
+!           NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
+           Td(ij) = T_LOC
+           
+        ENDDO
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        P_LOC = MRATIO *p(is)
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+
+! Using actual temperature as initial condition
+           T_LOC = (s(ij,1) - E_LOC + s(ij,3)*Lv0 ) / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
+
+! We cannot use ql directly (s(:,3)) because the smoothing function imposes
+! and exponentially small value, but nonzero           
+           psat = THERMO_PSAT(NPSAT)
+           DO ipsat = NPSAT-1,1,-1
+              psat  = psat *T_LOC + THERMO_PSAT(ipsat)
+           ENDDO
+           dummy = rd_ov_rv /( P_LOC/psat -C_1_R )
+           qsat = dummy /( C_1_R +dummy )
+
+           IF ( qsat .LE. s(ij,2) ) THEN
+              Td(ij) = T_LOC
+
+           ELSE
+! executing Newton-Raphson 
+              DO inr = 1,nrmax
+                 psat = THERMO_PSAT(NPSAT); dpsat = C_0_R
+                 DO ipsat = NPSAT-1,1,-1
+                    psat  = psat *T_LOC + THERMO_PSAT(ipsat)
+                    dpsat = dpsat*T_LOC + THERMO_PSAT(ipsat+1) *M_REAL(ipsat)
+                 ENDDO
+                 
+!                 psat = psat -P_LOC *(s(ij,2)-s(ij,3)) *Rv /( Rd +s(ij,2) *Rdv -s(ij,3) *Rv )
+                 psat = psat -P_LOC *s(ij,2) *Rv /( Rd +s(ij,2) *Rdv )
+                 
+                 T_LOC = T_LOC -psat /dpsat
+              ENDDO
+              ! NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
+              ! print*,NEWTONRAPHSON_ERROR
+              Td(ij) = T_LOC
+              
+           ENDIF
+           
+        ENDDO
+     ENDDO
+     
+  ENDIF
+     
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_DEWPOINT
+
+!########################################################################
+!########################################################################
 SUBROUTINE THERMO_ANELASTIC_WEIGHT_INPLACE(nx,ny,nz, weight, a)
 
   IMPLICIT NONE
@@ -1091,3 +1213,71 @@ SUBROUTINE THERMO_ANELASTIC_LWP(nx,ny,nz, g, r, ql, lwp, wrk1d,wrk3d)
      
   RETURN
 END SUBROUTINE THERMO_ANELASTIC_LWP
+
+!########################################################################
+!########################################################################
+! Just to check what the effect of using a wrong cp would be
+SUBROUTINE THERMO_ANELASTIC_STATIC_CONSTANTCP(nx,ny,nz, s, e, result)
+
+  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI
+
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
+  TREAL, DIMENSION(*),          INTENT(IN)  :: e
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: result
+
+! -------------------------------------------------------------------
+  TINTEGER ij, i, jk, is
+  TREAL E_LOC, T_LOC
+
+  TREAL Cd, Cdv, Lv0, Cvl, Lv
+
+! ###################################################################
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Lv0=-THERMO_AI(6,1,3)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+
+  IF      ( imixture .EQ. 0 ) THEN
+     result = s(:,1)
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC ) / ( Cd + s(ij,2) *Cdv )
+           result(ij) = T_LOC *Cd +E_LOC
+           
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        E_LOC = e(is)
+       
+        DO i = 1,nx
+           ij = ij +1
+           
+           T_LOC = (s(ij,1) - E_LOC + s(ij,3)*Lv0 )  / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
+
+           Lv = Lv0 - T_LOC *Cvl
+           result(ij) = T_LOC *Cd +E_LOC - s(ij,3) *Lv
+           
+        ENDDO
+     
+     ENDDO
+  ENDIF
+  
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_STATIC_CONSTANTCP
+

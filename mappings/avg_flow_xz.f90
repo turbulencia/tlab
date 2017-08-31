@@ -405,17 +405,17 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 #define psat(j)      mean2d(j,ig(16)+9)
 #define pref(j)      mean2d(j,ig(16)+10)
 #define relhum(j)    mean2d(j,ig(16)+11)
-#define ri_f(j)      mean2d(j,ig(16)+12)
-#define ri_g(j)      mean2d(j,ig(16)+13)
+#define dewpoint(j)  mean2d(j,ig(16)+12)
+#define tref(j)      mean2d(j,ig(16)+13)
   sg(ng) = 14
 
   groupname(ng) = 'Stratification'
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      varname(ng)= 'Pot Source rSb BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq '&
-                //'PotTemp PotTemp_v SaturationPressure rPref RelativeHumidity Ri_f Ri_g'
+                //'PotTemp PotTemp_v SaturationPressure rPref RelativeHumidity Dewpoint rTref'
   ELSE
      varname(ng)= 'Pot Source rSb BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq '&
-                //'PotTemp_fr PotTemp_eq SaturationPressure rPref RelativeHumidity Ri_f Ri_g'
+                //'PotTemp_fr PotTemp_eq SaturationPressure rPref RelativeHumidity Dewpoint rTref'
   ENDIF
   
 ! -----------------------------------------------------------------------
@@ -503,7 +503,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
      CALL THERMO_ANELASTIC_DENSITY(imax,jmax,kmax, s, epbackground,pbackground, dwdx)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdx, g(1)%jac,g(3)%jac, rR(1),  wrk1d, area)     
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdx, g(1)%jac,g(3)%jac, rR(1), wrk1d, area)     
      
      fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
 
@@ -535,12 +535,6 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rP(1),  rP_y(1),  wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rR(1),  rR_y(1),  wrk3d, wrk2d,wrk3d)
  
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     pref(:) = pbackground(:)
-  ELSE
-     pref(:) = rP(:)
-  ENDIF
-  
 ! #######################################################################
 ! Main covariances (do not overwrite dudz; it contains p for incompressible case)
 ! #######################################################################
@@ -777,6 +771,9 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,            g(1)%jac,g(3)%jac, bfreq_eq(1), wrk1d, area)
      bfreq_eq(:) = bfreq_eq(:) *buoyancy%vector(2)
      
+     CALL THERMO_ANELASTIC_DEWPOINT(imax,jmax,kmax, s, epbackground,pbackground, wrk3d)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, dewpoint(1), wrk1d, area)
+     
   ELSE
 
 ! -------------------------------------------------------------------
@@ -942,6 +939,14 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 #undef GAMMA_LOC
 #undef T_LOC
 
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     pref(:) = pbackground(:)
+     tref(:) = tbackground(:)
+  ELSE
+     pref(:) = rP(:)
+     tref(:) = rT(:)
+  ENDIF
+  
 ! ###################################################################
 ! Potential energy
 !
@@ -1423,10 +1428,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      dummy =  rU_y(j)**2 + rW_y(j)**2 
      IF ( dummy .NE. C_0_R ) THEN
         eddy_visc(j) = SQRT( (Rxy(j)**2+Ryz(j)**2) / dummy )
-        ri_g(j)      = rB_y(j) / dummy
      ELSE
         eddy_visc(j) = C_BIG_R
-        ri_g(j)      = C_BIG_R
      ENDIF
      
      IF ( eddy_diff(j) .NE. C_0_R ) THEN
@@ -1514,14 +1517,6 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      SourcePot(:) = C_0_R
      
   ENDIF
-
-  DO j = 1,jmax
-     IF ( Prd(j) .NE. C_0_R ) THEN
-        ri_f(j) =-Buo(j) / Prd(j) ! BuoyancyDestruction / ShearProduction
-     ELSE
-        ri_f(j) = C_BIG_R
-     ENDIF
-  ENDDO
 
 ! Kolmogorov microscale and Taylor Reynolds number
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC )THEN

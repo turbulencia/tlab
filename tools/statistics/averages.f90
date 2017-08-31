@@ -496,6 +496,7 @@ PROGRAM AVERAGES
               IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
                  is = is + 1
                  CALL THERMO_ANELASTIC_THETA_L(imax,jmax,kmax, s, epbackground,pbackground, txc(1,7))
+!                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, epbackground, txc(1,7))
                  CALL AVG_SCAL_XZ(is, q,s, txc(1,7), &
                       txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
               ENDIF

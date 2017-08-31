@@ -10,7 +10,7 @@ PROGRAM STATE
 
 #include "integers.h"
 
-  TREAL p, ps, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep, theta, theta_e
+  TREAL p, ps, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep, theta, theta_e, Td
   TREAL heat1, heat2, cp1, cp2, alpha, as, bs
   TREAL r1, h1, s(3)
   TREAL Cd, Cdv, Cvl
@@ -79,6 +79,7 @@ PROGRAM STATE
      s(1) = h; s(2:3) = z1(1:2)
      CALL THERMO_ANELASTIC_THETA_L(i1,i1,i1, s, ep,p, theta)
      CALL THERMO_ANELASTIC_THETA_E(i1,i1,i1, s, ep,p, theta_e)
+     CALL THERMO_ANELASTIC_DEWPOINT(i1,i1,i1, s, ep,p, Td)
 
   ELSE IF ( iopt .EQ. 2 ) THEN
      z1(1) = qt
@@ -96,6 +97,7 @@ PROGRAM STATE
      s(1) = h; s(2:3) = z1(1:2)
      CALL THERMO_ANELASTIC_THETA_L(i1,i1,i1, s, ep,p, theta)
      CALL THERMO_ANELASTIC_THETA_E(i1,i1,i1, s, ep,p, theta_e)
+     CALL THERMO_ANELASTIC_DEWPOINT(i1,i1,i1, s, ep,p, Td)
 
   ELSE IF ( iopt .EQ. 3 ) THEN
      h = h/TREF/1.007
@@ -114,6 +116,7 @@ PROGRAM STATE
      CALL THERMO_CALORIC_ENERGY(i1,i1,i1, z1, T, e)
      CALL THERMO_ANELASTIC_THETA_L(i1,i1,i1, s, ep,p, theta)
      CALL THERMO_ANELASTIC_THETA_E(i1,i1,i1, s, ep,p, theta_e)
+     CALL THERMO_ANELASTIC_DEWPOINT(i1,i1,i1, s, ep,p, Td)
 
 ! check
      CALL THERMO_ANELASTIC_DENSITY(i1,i1,i1, s, ep,p, r1)
@@ -129,6 +132,7 @@ PROGRAM STATE
   WRITE(*,1000) 'Pressure (bar) ....................:', p
   WRITE(*,1000) 'Saturation pressure (bar) .........:', ps
   WRITE(*,1000) 'Temperature (K) ...................:', t*TREF !- 273.15
+  WRITE(*,1000) 'Dewpoint temperature (K) ..........:', Td*TREF
   WRITE(*,1000) 'Specific heat capacity ............:', Cd + qt *Cdv + ql *Cvl
   WRITE(*,1000) 'Specific energy ...................:', e
   WRITE(*,1000) 'Specific enthalpy .................:', h
