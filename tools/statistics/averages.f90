@@ -644,7 +644,9 @@ PROGRAM AVERAGES
         ENDIF
      
         IF ( icalc_scal .EQ. 1 ) THEN
-           nfield = nfield+1; data(nfield)%field => s(:,1);  varname(nfield) = 'Scalar1'
+           DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
+              nfield = nfield+1; data(nfield)%field => s(:,is); WRITE(varname(nfield),*) is; varname(nfield) = 'Scalar'//TRIM(ADJUSTL(varname(nfield)))
+           ENDDO
         ENDIF
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
