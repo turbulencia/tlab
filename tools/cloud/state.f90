@@ -25,7 +25,8 @@ PROGRAM STATE
   IF ( gama0 .GT. C_0_R ) GRATIO = (gama0-C_1_R)/gama0
   ep = C_0_R
   dsmooth = C_0_R
-     
+  pbg%parameters(1) = C_1_R
+  
   Cd = THERMO_AI(1,1,2)
   Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
   Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
@@ -79,7 +80,7 @@ PROGRAM STATE
      s(1) = h; s(2:3) = z1(1:2)
      CALL THERMO_ANELASTIC_THETA_L(i1,i1,i1, s, ep,p, theta)
      CALL THERMO_ANELASTIC_THETA_E(i1,i1,i1, s, ep,p, theta_e)
-     CALL THERMO_ANELASTIC_DEWPOINT(i1,i1,i1, s, ep,p, Td)
+     CALL THERMO_ANELASTIC_DEWPOINT(i1,i1,i1, s, ep,p,r, Td, dummy)
 
   ELSE IF ( iopt .EQ. 2 ) THEN
      z1(1) = qt
@@ -97,7 +98,7 @@ PROGRAM STATE
      s(1) = h; s(2:3) = z1(1:2)
      CALL THERMO_ANELASTIC_THETA_L(i1,i1,i1, s, ep,p, theta)
      CALL THERMO_ANELASTIC_THETA_E(i1,i1,i1, s, ep,p, theta_e)
-     CALL THERMO_ANELASTIC_DEWPOINT(i1,i1,i1, s, ep,p, Td)
+     CALL THERMO_ANELASTIC_DEWPOINT(i1,i1,i1, s, ep,p,r, Td, dummy)
 
   ELSE IF ( iopt .EQ. 3 ) THEN
      h = h/TREF/1.007
@@ -116,7 +117,7 @@ PROGRAM STATE
      CALL THERMO_CALORIC_ENERGY(i1,i1,i1, z1, T, e)
      CALL THERMO_ANELASTIC_THETA_L(i1,i1,i1, s, ep,p, theta)
      CALL THERMO_ANELASTIC_THETA_E(i1,i1,i1, s, ep,p, theta_e)
-     CALL THERMO_ANELASTIC_DEWPOINT(i1,i1,i1, s, ep,p, Td)
+     CALL THERMO_ANELASTIC_DEWPOINT(i1,i1,i1, s, ep,p,r, Td, dummy)
 
 ! check
      CALL THERMO_ANELASTIC_DENSITY(i1,i1,i1, s, ep,p, r1)

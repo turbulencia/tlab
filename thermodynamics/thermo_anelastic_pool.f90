@@ -960,24 +960,26 @@ END SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU
 
 !########################################################################
 !########################################################################
-SUBROUTINE THERMO_ANELASTIC_DEWPOINT(nx,ny,nz, s, e,p, Td)
+SUBROUTINE THERMO_ANELASTIC_DEWPOINT(nx,ny,nz, s, e,p,r, Td,Lapse)
 
   USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, THERMO_PSAT, NPSAT
+  USE DNS_GLOBAL,    ONLY : pbg
   
   IMPLICIT NONE
 
   TINTEGER,                     INTENT(IN)  :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
-  TREAL, DIMENSION(*),          INTENT(IN)  :: e,p
-  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: Td
+  TREAL, DIMENSION(*),          INTENT(IN)  :: e,p,r
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: Td,Lapse
 
 ! -------------------------------------------------------------------
   TINTEGER ij, i, jk, is, ipsat
   TINTEGER inr, nrmax
-  TREAL P_LOC, E_LOC, T_LOC, psat, dpsat, dummy, qsat
+  TREAL P_LOC, E_LOC, T_LOC, R_LOC, psat, dpsat, dummy, qsat
 
   TREAL Rv, Rd, Rdv, Cd, Cdv, Lv0, Cvl, rd_ov_rv 
 !  TREAL NEWTONRAPHSON_ERROR
+  TREAL scaleheightinv
   
 ! ###################################################################
 ! maximum number of iterations in Newton-Raphson
@@ -993,6 +995,7 @@ SUBROUTINE THERMO_ANELASTIC_DEWPOINT(nx,ny,nz, s, e,p, Td)
   Lv0=-THERMO_AI(6,1,3)
 
   rd_ov_rv = WGHT_INV(2) /WGHT_INV(1)
+  scaleheightinv = C_1_R /pbg%parameters(1)
 
   IF      ( imixture .EQ. 0 ) THEN
      
@@ -1002,6 +1005,7 @@ SUBROUTINE THERMO_ANELASTIC_DEWPOINT(nx,ny,nz, s, e,p, Td)
         is = MOD(jk,ny) +1
         P_LOC = MRATIO *p(is)
         E_LOC = e(is)
+        R_LOC = r(is)
         
         DO i = 1,nx
            ij = ij +1
@@ -1016,13 +1020,12 @@ SUBROUTINE THERMO_ANELASTIC_DEWPOINT(nx,ny,nz, s, e,p, Td)
                  psat  = psat *T_LOC + THERMO_PSAT(ipsat)
                  dpsat = dpsat*T_LOC + THERMO_PSAT(ipsat+1) *M_REAL(ipsat)
               ENDDO
-              
-              psat = psat -P_LOC *s(ij,2) *Rv /( Rd + s(ij,2) *Rdv )
-              
-              T_LOC = T_LOC -psat /dpsat
+! we seek root of function:    psat -P_LOC *s(ij,2) *Rv /( Rd +s(ij,2) *Rdv )                               
+              T_LOC = T_LOC -( psat -P_LOC *s(ij,2) *Rv /( Rd +s(ij,2) *Rdv ) )/dpsat
            ENDDO
 !           NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
            Td(ij) = T_LOC
+           Lapse(ij) = scaleheightinv *R_LOC/ P_LOC *psat /dpsat
            
         ENDDO
      ENDDO
@@ -1033,6 +1036,7 @@ SUBROUTINE THERMO_ANELASTIC_DEWPOINT(nx,ny,nz, s, e,p, Td)
         is = MOD(jk,ny) +1
         P_LOC = MRATIO *p(is)
         E_LOC = e(is)
+        R_LOC = r(is)
         
         DO i = 1,nx
            ij = ij +1
@@ -1060,15 +1064,14 @@ SUBROUTINE THERMO_ANELASTIC_DEWPOINT(nx,ny,nz, s, e,p, Td)
                     psat  = psat *T_LOC + THERMO_PSAT(ipsat)
                     dpsat = dpsat*T_LOC + THERMO_PSAT(ipsat+1) *M_REAL(ipsat)
                  ENDDO
-                 
-!                 psat = psat -P_LOC *(s(ij,2)-s(ij,3)) *Rv /( Rd +s(ij,2) *Rdv -s(ij,3) *Rv )
-                 psat = psat -P_LOC *s(ij,2) *Rv /( Rd +s(ij,2) *Rdv )
-                 
-                 T_LOC = T_LOC -psat /dpsat
+!                                 psat -P_LOC *(s(ij,2)-s(ij,3)) *Rv /( Rd +s(ij,2) *Rdv -s(ij,3) *Rv )
+! we seek root of function:       psat -P_LOC *s(ij,2) *Rv /( Rd +s(ij,2) *Rdv )                 
+                 T_LOC = T_LOC -( psat -P_LOC *s(ij,2) *Rv /( Rd +s(ij,2) *Rdv ) )/dpsat
               ENDDO
               ! NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
               ! print*,NEWTONRAPHSON_ERROR
               Td(ij) = T_LOC
+              Lapse(ij) = scaleheightinv *R_LOC/ P_LOC *psat /dpsat
               
            ENDIF
            

@@ -394,8 +394,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
 #define Pot(j)       mean2d(j,ig(16)  )
-#define SourcePot(j) mean2d(j,ig(16)+1)
-#define rSb(j)       mean2d(j,ig(16)+2)
+#define rref(j)      mean2d(j,ig(16)+1)
+#define tref(j)      mean2d(j,ig(16)+2)
 #define bfreq_fr(j)  mean2d(j,ig(16)+3)
 #define bfreq_eq(j)  mean2d(j,ig(16)+4)
 #define lapse_fr(j)  mean2d(j,ig(16)+5)
@@ -406,16 +406,16 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 #define pref(j)      mean2d(j,ig(16)+10)
 #define relhum(j)    mean2d(j,ig(16)+11)
 #define dewpoint(j)  mean2d(j,ig(16)+12)
-#define tref(j)      mean2d(j,ig(16)+13)
+#define lapse_dew(j) mean2d(j,ig(16)+13)
   sg(ng) = 14
 
   groupname(ng) = 'Stratification'
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     varname(ng)= 'Pot Source rSb BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq '&
-                //'PotTemp PotTemp_v SaturationPressure rPref RelativeHumidity Dewpoint rTref'
+     varname(ng)= 'Pot rRref rTref BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq '&
+                //'PotTemp PotTemp_v SaturationPressure rPref RelativeHumidity Dewpoint LapseRate_dew'
   ELSE
-     varname(ng)= 'Pot Source rSb BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq '&
-                //'PotTemp_fr PotTemp_eq SaturationPressure rPref RelativeHumidity Dewpoint rTref'
+     varname(ng)= 'Pot rRref rTref BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq '&
+                //'PotTemp_fr PotTemp_eq SaturationPressure rPref RelativeHumidity Dewpoint LapseRate_dew'
   ENDIF
   
 ! -----------------------------------------------------------------------
@@ -759,6 +759,11 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) &
           CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(1,1,1,3),   dudy, wrk3d, wrk2d,wrk3d)
 
+     CALL THERMO_ANELASTIC_LAPSE_EQU(imax,jmax,kmax, s,dudz,dudy, epbackground,pbackground,rbackground, GAMMA_LOC(1,1,1),wrk3d)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, GAMMA_LOC(1,1,1), g(1)%jac,g(3)%jac, lapse_eq(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,            g(1)%jac,g(3)%jac, bfreq_eq(1), wrk1d, area)
+     bfreq_eq(:) = bfreq_eq(:) *buoyancy%vector(2)
+     
      CALL THERMO_ANELASTIC_LAPSE_FR (imax,jmax,kmax, s,dudz,      epbackground,                         GAMMA_LOC(1,1,1),wrk3d)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, GAMMA_LOC(1,1,1), g(1)%jac,g(3)%jac, lapse_fr(1), wrk1d, area)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,            g(1)%jac,g(3)%jac, bfreq_fr(1), wrk1d, area)
@@ -766,13 +771,10 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      ! bfreq_fr(:) = -rR_y(:) /rbackground(:) -dummy *rR(:) /pbackground(:) 
      bfreq_fr(:) = bfreq_fr(:) *buoyancy%vector(2)
 
-     CALL THERMO_ANELASTIC_LAPSE_EQU(imax,jmax,kmax, s,dudz,dudy, epbackground,pbackground,rbackground, GAMMA_LOC(1,1,1),wrk3d)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, GAMMA_LOC(1,1,1), g(1)%jac,g(3)%jac, lapse_eq(1), wrk1d, area)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,            g(1)%jac,g(3)%jac, bfreq_eq(1), wrk1d, area)
-     bfreq_eq(:) = bfreq_eq(:) *buoyancy%vector(2)
-     
-     CALL THERMO_ANELASTIC_DEWPOINT(imax,jmax,kmax, s, epbackground,pbackground, wrk3d)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, dewpoint(1), wrk1d, area)
+     ! GAMMA_LOC(1,1,1) should contains lapse_fr, since lapse_dew = lapse_fr when saturated
+     CALL THERMO_ANELASTIC_DEWPOINT(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d,GAMMA_LOC(1,1,1))
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,            g(1)%jac,g(3)%jac, dewpoint(1), wrk1d, area)
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, GAMMA_LOC(1,1,1), g(1)%jac,g(3)%jac, lapse_dew(1),wrk1d, area)
      
   ELSE
 
@@ -942,9 +944,11 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      pref(:) = pbackground(:)
      tref(:) = tbackground(:)
+     rref(:) = rbackground(:)
   ELSE
      pref(:) = rP(:)
      tref(:) = rT(:)
+     rref(:) = rR(:)
   ENDIF
   
 ! ###################################################################
@@ -986,8 +990,6 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         
         CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rB(1), rB_y(1), wrk3d, wrk2d,wrk3d)
 
-        rSb(:) = C_0_R ! not yet developed
-                
      ENDIF
      
   ELSE ! Compressible case is not yet finished
@@ -996,8 +998,6 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      Bzz(:) =-rR(:)*rWf(:)*buoyancy%vector(3)
 
 !     pmod(:) =-rP_y(:) +buoyancy%vector(2) *rR(:)
-
-     rSb(:) = C_0_R
 
   ENDIF
 
@@ -1510,11 +1510,9 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 ! Potential energy equation
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      Pot(:)       = -rB(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale *sbg(inb_scal)%ymean)
-     SourcePot(:) =-rSb(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale *sbg(inb_scal)%ymean)
      
   ELSE
      Pot(:)       =-rR(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale*rbg%ymean)*buoyancy%vector(2)
-     SourcePot(:) = C_0_R
      
   ENDIF
 
