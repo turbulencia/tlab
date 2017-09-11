@@ -237,7 +237,7 @@ SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s,u1,u2
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
   TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
-  TREAL, DIMENSION(nx*nz,2),  INTENT(INOUT) :: wrk2d
+  TREAL, DIMENSION(nx*nz),    INTENT(INOUT) :: wrk2d
 
   TARGET s,u1,u2, tmp1, result, wrk3d
 
@@ -286,17 +286,10 @@ SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 ! Put arrays back in the order in which they came in
   IF ( nz .GT. 1 ) THEN
 #ifdef USE_ESSL
-     CALL DGETMO       (p_dst1,               nz, nz, nx, wrk2d(1,1), nx) ! Passing dsdx at jmin
-     CALL DGETMO       (p_dst1(nxz*(ny-1)+1), nz, nz, nx, wrk2d(1,2), nx) ! Passing dsdx at jmax
      CALL DGETMO       (p_dst2, nz, nz, nxy, result, nxy)
 #else
-     CALL DNS_TRANSPOSE(p_dst1,               nz, nx, nz, wrk2d(1,1), nx) ! Passing dsdx at jmin
-     CALL DNS_TRANSPOSE(p_dst1(nxz*(ny-1)+1), nz, nx, nz, wrk2d(1,2), nx) ! Passing dsdx at jmax
      CALL DNS_TRANSPOSE(p_dst2, nz, nxy, nz, result, nxy)
 #endif
-  ELSE
-     wrk2d(1:nx*nz,1) = p_dst1(1:nx*nz) 
-     wrk2d(1:nx*nz,2) = p_dst1(nxz*(ny-1)+1:nx*ny*nz)
   ENDIF
 
   NULLIFY(p_org,p_dst1,p_dst2, p_vel)

@@ -80,7 +80,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   TREAL tdummy
   TREAL, DIMENSION(:), POINTER :: p_bcs 
   !
-  TREAL, DIMENSION(inb_scal)      :: err_s, diff  
+  TREAL, DIMENSION(inb_scal)      :: err_s !, diff  
   ! 
   TYPE(nb3dfft_infoType), DIMENSION(24) :: info
   INTEGER(KIND=4),DIMENSION(2) :: cur_time
@@ -103,11 +103,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
-  ! IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN .OR.&
-  !      bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) THEN 
-  !    CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
-  ! ENDIF
-
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
   nbcsetup_ = nbcsetup
@@ -118,10 +113,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   ptime =0
 
   nxy=imax*jmax 
-
-  DO is=1,inb_scal
-     diff(is) = visc*prandtl*schmidt(is) 
-  ENDDO
 
   rtime = -MPI_WTime()  
   t_run = rtime
@@ -179,62 +170,32 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      id = DNS_MPI_K_PARTIAL;   nxy_trans = ims_size_k(id)   
      !
      ! kick off transpose U y->x and W y->z
-     CALL NB3DFFT_R2R_YXCOMM(u,bt1, bt1, tmp11,info(FUYX),t_tmp);  t_comp=t_comp+t_tmp 
-     CALL NB3DFFT_R2R_YZCOMM(w,tmpw,tmpw,bt2,  info(FWYZ),t_tmp);  t_comp=t_comp+t_tmp  
+     CALL NB3DFFT_R2R_YXCOMM(u,bt1,  bt1,  tmp11,info(FUYX),t_tmp);t_comp=t_comp+t_tmp 
+     CALL NB3DFFT_R2R_YZCOMM(w,tmpw, tmpw, bt2,  info(FWYZ),t_tmp);t_comp=t_comp+t_tmp  
      CALL NB3DFFT_R2R_YXCOMM(w,bt3,  bt3,  tmp31,info(FWYX),t_tmp);t_comp=t_comp+t_tmp   
+     CALL NB3DFFT_R2R_YZCOMM(u,tmp41,tmp41,bt4,  info(FUYZ),t_tmp);t_comp=t_comp+t_tmp  
      !
      ! Vertical derivatives, and Vertical advection  
      !   
      t_tmp = -MPI_WTime()
-     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), u,tmp41, tmp42, wrk2d,wrk3d)
-     h1=h1+visc*tmp41 - v*tmp42
 
-     ! -----------------------------------------------------------------------
-     ! BCs s.t. derivative d/dy(u) is zero
-     ! -----------------------------------------------------------------------
-     IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN ) THEN
-        ip_b =                 1
-        DO k = 1,kmax
-           p_bcs => tmp42(ip_b:); bcs_hb(1:imax,k,1) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-        ENDDO
-     ENDIF
-     IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) THEN
-        ip_t = imax*(jmax-1) + 1
-        DO k = 1,kmax
-           p_bcs => tmp42(ip_t:); bcs_ht(1:imax,k,1) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
-        ENDDO
-     ENDIF
-
-     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), v,tmp41, tmp42, wrk2d,wrk3d)
-     h2=h2+visc*tmp41 - v*tmp42
-     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), w,tmp41, tmp42, wrk2d,wrk3d)
-     h3=h3+visc*tmp41 - v*tmp42
-
-     ! -----------------------------------------------------------------------
-     ! BCs s.t. derivative d/dy(w) is zero
-     ! -----------------------------------------------------------------------
-     IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN ) THEN
-        ip_b =                 1
-        DO k = 1,kmax
-           p_bcs => tmp42(ip_b:); bcs_hb(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-        ENDDO
-     ENDIF
-     IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) THEN
-        ip_t = imax*(jmax-1) + 1
-        DO k = 1,kmax
-           p_bcs => tmp42(ip_t:); bcs_ht(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
-        ENDDO
-     ENDIF
-
-     ! -----------------------------------------------------------------------
+     CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, g(2), v,v,v,     tmp21, tmp22, wrk2d,wrk3d) ! store v transposed in tmp22
+     h2 = h2 + tmp21
+     CALL OPR_BURGERS_Y(i1,i0, imax,jmax,kmax, bcs, g(2), u,v,tmp22, tmp21, tmpu,  wrk2d,wrk3d) ! using tmp22
+     h1 = h1 + tmp21
+     CALL OPR_BURGERS_Y(i1,i0, imax,jmax,kmax, bcs, g(2), w,v,tmp22, tmp21, tmpu,  wrk2d,wrk3d) ! using tmp22
+     h3 = h3 + tmp21
+     DO is = 1,inb_scal
+        CALL OPR_BURGERS_Y(i1,is, imax,jmax,kmax, bcs, g(2), s(1,is),v,tmp22, tmp21, tmpu, wrk2d,wrk3d) ! using tmp22
+        hs(:,is) = hs(:,is) + tmp21
+     ENDDO
+     !
      ! Source terms
-     ! -----------------------------------------------------------------------
-     CALL FI_SOURCES_FLOW(u,s, h1, tmp41,       wrk1d,wrk2d,wrk3d)
-     CALL FI_SOURCES_SCAL(  s, hs, tmp41,tmp42, wrk1d,wrk2d,wrk3d)
+     !
+     CALL FI_SOURCES_FLOW(u,s, h1, tmp21,       wrk1d,wrk2d,wrk3d)
+     CALL FI_SOURCES_SCAL(  s, hs, tmp21,tmp22, wrk1d,wrk2d,wrk3d)
 
      t_ser    = t_ser + (t_tmp +MPI_WTime())
-     !
-     CALL NB3DFFT_R2R_YZCOMM(u,tmp41,tmp41,bt4,  info(FUYZ),t_tmp);t_comp=t_comp+t_tmp  
 
      finished = 0
      DO WHILE ( finished /= 2 )   
@@ -270,6 +231,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      DO WHILE ( finished /= 4 ) 
         IF ( NB3DFFT_R2R_READY(info(FWYX), t_tmp) )  THEN
            t_test=t_test+t_tmp 
+           ! u dw/dx + 1/Re d2w/dx2
            CALL NB3DFFT_R2R_XUNPACK(bt3,tmp31,info(FWYX),t_tmp); t_comp=t_comp+t_tmp;  
            !
            t_tmp = -MPI_WTime()
@@ -283,6 +245,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
         ENDIF
         IF ( NB3DFFT_R2R_READY(info(FUYZ), t_tmp) ) THEN  
            t_test=t_test+t_tmp  
+           ! w du/dz + 1/Re d2u/dz2
            CALL NB3DFFT_R2R_ZUNPACK(tmp41,bt4,info(FUYZ),t_tmp); t_comp=t_comp+t_tmp;  
            ! 
            t_tmp = -MPI_WTime() 
@@ -341,7 +304,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
            finished = finished+1 
         ENDIF
      ENDDO
-     ! u and w are finished 
+     ! u and w are finished and v and s1 are initiated
      !
      DO WHILE ( finished /= 12 ) 
         IF ( NB3DFFT_R2R_READY(info(FVYX), t_tmp) )  THEN
@@ -442,17 +405,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
            finished = finished+1
         ENDIF
      ENDDO
-     ! u,v,w,s1  finished 
+     ! u,v,w,s1 are finished and s2 initiated
      ! we can prepare the pressure solver, and update tendencies 
      !
      t_tmp = -MPI_WTime() 
-     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s(1,1),tmp31, tmp32, wrk2d,wrk3d)
-     hs(:,1) = hs(:,1) + diff(1)*tmp31-v*tmp32 
-     !
-     IF ( inb_scal .GT. 1 ) THEN
-     CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s(1,2),tmp31, tmp32, wrk2d,wrk3d)
-     hs(:,2) = hs(:,2) + diff(2)*tmp31-v*tmp32 
-     ENDIF
 
      ! #######################################################################
      ! Impose buffer zone as relaxation terms

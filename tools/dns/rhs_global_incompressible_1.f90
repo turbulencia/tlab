@@ -89,8 +89,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
      CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, bcs, g(1), w,u,tmp5, tmp1, tmp6, wrk2d,wrk3d) ! tmp5 contains u transposed
      CALL OPR_BURGERS_Y(i1,i0, imax,jmax,kmax, bcs, g(2), w,v,tmp4, tmp2, tmp6, wrk2d,wrk3d) ! tmp4 contains v transposed
-     IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN ) bcs_hb(:,:,2) = wrk2d(:,:,1)                  ! BCs s.t. derivative d/dy(w) is zero
-     IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) bcs_ht(:,:,2) = wrk2d(:,:,2)
      CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, g(3), w,w,w,    tmp3, tmp6, wrk2d,wrk3d) ! store w transposed in tmp6
 
 !$omp parallel default( shared ) &
@@ -122,8 +120,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! The term \nu u'' - u u' has been already added in the beginning
 ! #######################################################################
   CALL OPR_BURGERS_Y(i1,i0, imax,jmax,kmax, bcs, g(2), u,v,tmp4, tmp2, tmp1, wrk2d,wrk3d) ! tmp4 contains w transposed
-  IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN ) bcs_hb(:,:,1) = wrk2d(:,:,1)                  ! BCs s.t. derivative d/dy(u) is zero
-  IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) bcs_ht(:,:,1) = wrk2d(:,:,2)
   CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), u,w,tmp6, tmp3, tmp1, wrk2d,wrk3d) ! tmp6 contains w transposed
 
 !$omp parallel default( shared ) &
