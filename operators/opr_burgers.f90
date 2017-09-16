@@ -150,14 +150,12 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
   IMPLICIT NONE
 
   TINTEGER ivel, is, nx,ny,nz
-  TINTEGER, DIMENSION(2,*),   INTENT(IN)    :: bcs ! BCs at xmin (1,*) and xmax (2,*)
-  TYPE(grid_dt),              INTENT(IN)    :: g
-  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s,u1,u2
-  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
-  TREAL, DIMENSION(ny*nz),    INTENT(INOUT) :: wrk2d
-
-  TARGET s,u1,u2, tmp1, result, wrk3d
+  TINTEGER, DIMENSION(2,*),   INTENT(IN)            :: bcs ! BCs at xmin (1,*) and xmax (2,*)
+  TYPE(grid_dt),              INTENT(IN)            :: g
+  TREAL, DIMENSION(nx*ny*nz), INTENT(IN),    TARGET :: s,u1,u2
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT),   TARGET :: result
+  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT), TARGET :: tmp1, wrk3d
+  TREAL, DIMENSION(ny*nz),    INTENT(INOUT)         :: wrk2d
 
 ! -------------------------------------------------------------------
   TINTEGER nyz
@@ -229,21 +227,20 @@ END SUBROUTINE OPR_BURGERS_X
 SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
+  USE DNS_GLOBAL, ONLY : subsidence
   IMPLICIT NONE
 
   TINTEGER ivel, is, nx,ny,nz
-  TINTEGER, DIMENSION(2,*),   INTENT(IN)    :: bcs ! BCs at xmin (1,*) and xmax (2,*)
-  TYPE(grid_dt),              INTENT(IN)    :: g
-  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s,u1,u2
-  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
-  TREAL, DIMENSION(nx*nz),    INTENT(INOUT) :: wrk2d
-
-  TARGET s,u1,u2, tmp1, result, wrk3d
+  TINTEGER, DIMENSION(2,*),   INTENT(IN)            :: bcs ! BCs at xmin (1,*) and xmax (2,*)
+  TYPE(grid_dt),              INTENT(IN)            :: g
+  TREAL, DIMENSION(nx*nz,ny), INTENT(IN),    TARGET :: s,u1,u2
+  TREAL, DIMENSION(nx*nz,ny), INTENT(OUT),   TARGET :: result
+  TREAL, DIMENSION(nx*nz,ny), INTENT(INOUT), TARGET :: tmp1, wrk3d
+  TREAL, DIMENSION(nx*nz),    INTENT(INOUT)         :: wrk2d
 
 ! -------------------------------------------------------------------
-  TINTEGER nxy, nxz
-  TREAL, DIMENSION(:),   POINTER :: p_org, p_dst1, p_dst2, p_vel
+  TINTEGER nxy, nxz, j
+  TREAL, DIMENSION(:,:), POINTER :: p_org, p_dst1, p_dst2, p_vel
 
 ! ###################################################################
   IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
@@ -278,10 +275,16 @@ SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
      IF ( nz .EQ. 1 ) THEN; p_vel => u1         ! I do not need the transposed
      ELSE;                  p_vel => u2; ENDIF  ! I do     need the transposed
   ENDIF
-
+  
 ! ###################################################################
   CALL OPR_BURGERS(is, nxz, bcs, g, p_org, p_vel, p_dst2, wrk2d,p_dst1)
-  
+
+  IF ( subsidence%type == EQNS_SUB_CONSTANT_LOCAL ) THEN
+     DO j = 1,ny
+        p_dst2(:,j) = p_dst2(:,j) +g%nodes(j) *subsidence%parameters(1) *p_dst1(:,j)
+     ENDDO
+  ENDIF
+
 ! ###################################################################
 ! Put arrays back in the order in which they came in
   IF ( nz .GT. 1 ) THEN
@@ -311,14 +314,12 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
   IMPLICIT NONE
 
   TINTEGER ivel, is, nx,ny,nz
-  TINTEGER, DIMENSION(2,*),   INTENT(IN)    :: bcs ! BCs at xmin (1,*) and xmax (2,*)
-  TYPE(grid_dt),              INTENT(IN)    :: g
-  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s,u1,u2
-  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
-  TREAL, DIMENSION(nx*ny),    INTENT(INOUT) :: wrk2d
-
-  TARGET s,u1,u2, tmp1, result, wrk3d
+  TINTEGER, DIMENSION(2,*),   INTENT(IN)            :: bcs ! BCs at xmin (1,*) and xmax (2,*)
+  TYPE(grid_dt),              INTENT(IN)            :: g
+  TREAL, DIMENSION(nx*ny*nz), INTENT(IN),    TARGET :: s,u1,u2
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT),   TARGET :: result
+  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT), TARGET :: tmp1, wrk3d
+  TREAL, DIMENSION(nx*ny),    INTENT(INOUT)         :: wrk2d
 
 ! -------------------------------------------------------------------
   TINTEGER nxy

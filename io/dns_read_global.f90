@@ -410,6 +410,10 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   ENDIF
 
+! This subsidence type is implemented in opr_burgers_y only
+! to speed up calculation  
+  IF ( subsidence%type .EQ. EQNS_SUB_CONSTANT_LOCAL ) subsidence%active = .FALSE.
+
 ! ###################################################################
 ! Transport
 ! ###################################################################

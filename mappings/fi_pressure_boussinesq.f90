@@ -19,7 +19,7 @@ IMPLICIT NONE
 
 #include "integers.h"
 
-  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)    :: q,s
+  TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN),   TARGET :: q,s
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(OUT)   :: p
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: tmp1,tmp2, wrk3d ! larger arrays for the Poisson solver,
   TREAL, DIMENSION(imax,jmax,kmax,3), INTENT(INOUT) :: tmp3             ! but shape (imax,jmax,kmax) is used
@@ -29,71 +29,72 @@ IMPLICIT NONE
 ! -----------------------------------------------------------------------
   TINTEGER i, k, bcs(2,2)
 
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:), POINTER :: u,v,w
+
 ! #######################################################################
   bcs  = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
   p    = C_0_R
   tmp3 = C_0_R
   
-  CALL FI_SOURCES_FLOW(q,s, tmp3, tmp1, wrk1d,wrk2d,wrk3d)
+! Define pointers
+  u   => q(:,1)
+  v   => q(:,2)
+  w   => q(:,3)
   
 ! #######################################################################
+! Sources
+  CALL FI_SOURCES_FLOW(q,s, tmp3, tmp1, wrk1d,wrk2d,wrk3d)
+
+! Advection and diffusion terms
+  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u,    p, tmp1, wrk2d,wrk3d) ! store u transposed in tmp1  
+  tmp3(:,:,:,1) = tmp3(:,:,:,1) + p
+  CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, bcs, g(1), v,u,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains u transposed
+  tmp3(:,:,:,2) = tmp3(:,:,:,2) + p
+  CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, bcs, g(1), w,u,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains u transposed
+  tmp3(:,:,:,3) = tmp3(:,:,:,3) + p
+
+  CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, g(2), v,v,v,    p, tmp1, wrk2d,wrk3d) ! store v transposed in tmp1
+  tmp3(:,:,:,2) = tmp3(:,:,:,2) + p
+  CALL OPR_BURGERS_Y(i1,i0, imax,jmax,kmax, bcs, g(2), u,v,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains v transposed
+  tmp3(:,:,:,1) = tmp3(:,:,:,1) + p
+  CALL OPR_BURGERS_Y(i1,i0, imax,jmax,kmax, bcs, g(2), w,v,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains v transposed
+  tmp3(:,:,:,3) = tmp3(:,:,:,3) + p
+
+  CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, g(3), w,w,w,    p, tmp1, wrk2d,wrk3d) ! store w transposed in tmp1
+  tmp3(:,:,:,3) = tmp3(:,:,:,3) + p
+  CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), v,w,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains w transposed
+  tmp3(:,:,:,2) = tmp3(:,:,:,2) + p
+  CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), u,w,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains w transposed
+  tmp3(:,:,:,1) = tmp3(:,:,:,1) + p
+
 ! Calculate forcing term Ox
-! #######################################################################
-  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), q(1,1,1,1),tmp2, tmp1, wrk2d,wrk3d)
-  tmp3(:,:,:,1) = tmp3(:,:,:,1) + tmp2 *visc - q(:,:,:,3) *tmp1
-
-  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), q(1,1,1,1),tmp2, tmp1, wrk2d,wrk3d)
-  tmp3(:,:,:,1) = tmp3(:,:,:,1) + tmp2 *visc - q(:,:,:,2) *tmp1
-
-  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), q(1,1,1,1),tmp2, tmp1, wrk2d,wrk3d)
-  tmp3(:,:,:,1) = tmp3(:,:,:,1) + tmp2 *visc - q(:,:,:,1) *tmp1
-
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3(1,1,1,1))
   ENDIF
   CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp3(1,1,1,1),tmp1, wrk3d, wrk2d,wrk3d)
   p = p + tmp1
 
-! #######################################################################
 ! Calculate forcing term Oz
-! #######################################################################
-  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), q(1,1,1,3),tmp2, tmp1, wrk2d,wrk3d)
-  tmp3(:,:,:,3) = tmp3(:,:,:,3) + tmp2 *visc - q(:,:,:,3) *tmp1
-
-  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), q(1,1,1,3),tmp2, tmp1, wrk2d,wrk3d)
-  tmp3(:,:,:,3) = tmp3(:,:,:,3) + tmp2 *visc - q(:,:,:,2) *tmp1
-
-  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), q(1,1,1,3),tmp2, tmp1, wrk2d,wrk3d)
-  tmp3(:,:,:,3) = tmp3(:,:,:,3) + tmp2 *visc - q(:,:,:,1) *tmp1
-
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3(1,1,1,3))
   ENDIF
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3(1,1,1,3),tmp1, wrk3d, wrk2d,wrk3d)
   p = p + tmp1
 
-! #######################################################################
-! Calculate forcing term Oy
-! #######################################################################
-  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), q(1,1,1,2),tmp2, tmp1, wrk2d,wrk3d)
-  tmp3(:,:,:,2) = tmp3(:,:,:,2) + tmp2 *visc - q(:,:,:,3) *tmp1
-
-  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), q(1,1,1,2),tmp2, tmp1, wrk2d,wrk3d)
-  tmp3(:,:,:,2) = tmp3(:,:,:,2) + tmp2 *visc - q(:,:,:,2) *tmp1
-
-  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), q(1,1,1,2),tmp2, tmp1, wrk2d,wrk3d)
-  tmp3(:,:,:,2) = tmp3(:,:,:,2) + tmp2 *visc - q(:,:,:,1) *tmp1
-
 ! Neumann BCs top and bottom
   DO k = 1,kmax; DO i = 1,imax
      wrk2d(i,k,1) = tmp3(i,1   ,k,2)
      wrk2d(i,k,2) = tmp3(i,jmax,k,2)
   ENDDO; ENDDO
-
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      wrk2d(:,:,1) = wrk2d(:,:,1) *rbackground(1)
      wrk2d(:,:,2) = wrk2d(:,:,2) *rbackground(g(2)%size)
+  ENDIF
+
+! Calculate forcing term Oy
+  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3(1,1,1,2))
   ENDIF  
   CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp3(1,1,1,2),tmp1, wrk3d, wrk2d,wrk3d)
