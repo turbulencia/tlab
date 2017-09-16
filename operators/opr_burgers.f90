@@ -106,7 +106,7 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
         ENDIF
 
      CASE( FDM_COM6_DIRECT   )
-        CALL FDM_C2N6ND_RHS(g%size,nlines, g%lu2(1,4), u, result)
+        CALL FDM_C2N6ND_RHS(g%size,nlines, g%lu2(1,4), s, result)
 
      END SELECT
 
