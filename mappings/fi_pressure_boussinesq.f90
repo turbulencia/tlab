@@ -83,16 +83,6 @@ IMPLICIT NONE
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3(1,1,1,3),tmp1, wrk3d, wrk2d,wrk3d)
   p = p + tmp1
 
-! Neumann BCs top and bottom
-  DO k = 1,kmax; DO i = 1,imax
-     wrk2d(i,k,1) = tmp3(i,1   ,k,2)
-     wrk2d(i,k,2) = tmp3(i,jmax,k,2)
-  ENDDO; ENDDO
-  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     wrk2d(:,:,1) = wrk2d(:,:,1) *rbackground(1)
-     wrk2d(:,:,2) = wrk2d(:,:,2) *rbackground(g(2)%size)
-  ENDIF
-
 ! Calculate forcing term Oy
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3(1,1,1,2))
@@ -103,6 +93,12 @@ IMPLICIT NONE
 ! #######################################################################
 ! Solve Poisson equation
 ! #######################################################################
+! Neumann BCs top and bottom
+  DO k = 1,kmax; DO i = 1,imax
+     wrk2d(i,k,1) = tmp3(i,1   ,k,2)
+     wrk2d(i,k,2) = tmp3(i,jmax,k,2)
+  ENDDO; ENDDO
+
   CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, i3, &
        p,wrk3d, tmp1,tmp2, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 

@@ -200,14 +200,18 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      
   ELSE
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, h2)
-        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, h1)
-        CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, h3)
+        CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h2,tmp2)
+        CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h1,tmp3)
+        CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h3,tmp4)
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4,tmp3, wrk3d, wrk2d,wrk3d)
+     ELSE
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), h2,tmp1, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), h1,tmp2, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), h3,tmp3, wrk3d, wrk2d,wrk3d)
      ENDIF
-     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), h2,tmp1, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), h1,tmp2, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), h3,tmp3, wrk3d, wrk2d,wrk3d)
-     
+
   ENDIF
 
 ! -----------------------------------------------------------------------
@@ -229,8 +233,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! Adding density in BCs  
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     bcs_hb = bcs_hb *rbackground(1)
-     bcs_ht = bcs_ht *rbackground(g(2)%size)
+     bcs_hb(:,:,3) = bcs_hb(:,:,3) *rbackground(1)
+     bcs_ht(:,:,3) = bcs_ht(:,:,3) *rbackground(g(2)%size)
   ENDIF
   
 ! pressure in tmp1, Oy derivative in tmp3
