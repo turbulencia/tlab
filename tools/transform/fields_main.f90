@@ -531,7 +531,7 @@ PROGRAM TRANSFIELDS
         dummy = (y_dst(jmax_total_dst)-y(g(2)%size,1)) / (y(g(2)%size,1)-y(g(2)%size-1,1))
 !        dummy = (scaley_dst-g(2)%scale) / (y(g(2)%size)-y(g(2)%size-1))
         IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
-           IF ( dummy .GT. C_0_R ) THEN
+           IF ( dummy .GT. C_0_R .AND. jmax_total_dst .GT. g(2)%size ) THEN ! Otherwise I need additional space...
               subdomain(4) = ABS(jmax_total_dst - g(2)%size) ! additional planes at the top
               jmax_aux = jmax_aux + subdomain(4)
               dummy = (y_dst(jmax_total_dst)-y(g(2)%size,1)) / INT(subdomain(4))
