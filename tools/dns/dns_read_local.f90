@@ -9,6 +9,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE DNS_GLOBAL,    ONLY : imode_sim, inb_flow,inb_scal
   USE DNS_GLOBAL,    ONLY : imax,jmax
   USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : FilterDomain, MAX_PROF
   USE DNS_LOCAL
   USE BOUNDARY_BUFFER
   
@@ -21,7 +22,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
   CHARACTER*512 sRes, sRes1
   CHARACTER*32 bakfile, lstr
-  TINTEGER is,idummy,inb_scal_local1
+  TINTEGER is,ig,idummy,inb_scal_local1
   TREAL dummy(inb_flow+inb_scal+1)
   
 ! ###################################################################
@@ -788,75 +789,56 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'ViscChange', 'Time', '0.0', visctime)
 
 ! ###################################################################
-! Filter
+! Domain Filter
 ! ###################################################################
-  CALL IO_WRITE_ASCII(bakfile, '#')
-  CALL IO_WRITE_ASCII(bakfile, '#[Filter]')
-  CALL IO_WRITE_ASCII(bakfile, '#Type=<none/compact/tophat/explicit6/adm>')
-  CALL IO_WRITE_ASCII(bakfile, '#Alpha=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#Delta=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#Step=<filter step>')
-  CALL IO_WRITE_ASCII(bakfile, '#Scalar=<yes/no>')
-  CALL IO_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
-  CALL IO_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
-  CALL IO_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
-
-  FilterDomain(1)%delta = 2
-  FilterDomain(1)%alpha = 0.49
-  CALL SCANINICHAR(bakfile, inifile, 'Filter', 'Type', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; idummy = DNS_FILTER_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; idummy = DNS_FILTER_COMPACT
-     CALL SCANINIREAL(bakfile, inifile, 'Filter', 'Alpha', '0.49', FilterDomain(1)%alpha)
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'tophat'    ) THEN; idummy = DNS_FILTER_TOPHAT
-     CALL SCANINIINT(bakfile, inifile, 'Filter', 'Delta', '2', FilterDomain(1)%delta)
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit6' ) THEN; idummy = DNS_FILTER_6E  
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit4' ) THEN; idummy = DNS_FILTER_4E  
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'adm'       ) THEN; idummy = DNS_FILTER_ADM; ENDIF
-
   CALL SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', FilterDomainStep)
-  IF ( FilterDomainStep .EQ. 0               ) idummy     = DNS_FILTER_NONE
-  IF ( idummy     .EQ. DNS_FILTER_NONE ) FilterDomainStep = 0 
+  IF ( FilterDomainStep .EQ. 0 ) FilterDomain(:)%type = DNS_FILTER_NONE
   
-  FilterDomain(:)%type = idummy
-  FilterDomain(2:3)%delta = FilterDomain(1)%delta
-  FilterDomain(2:3)%alpha = FilterDomain(1)%alpha
-  
-! active/no active
-  CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveX', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(1)%type = DNS_FILTER_NONE 
-     
-  CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveY', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(2)%type = DNS_FILTER_NONE
-
-  CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveZ', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(3)%type = DNS_FILTER_NONE
-
-! -------------------------------------------------------------------
+! ###################################################################
 ! Inflow Filter
-! -------------------------------------------------------------------
+! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[InflowFilter]')
   CALL IO_WRITE_ASCII(bakfile, '#Type=<yes/no>')
   CALL IO_WRITE_ASCII(bakfile, '#IWidth=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#JWidth=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#Step=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-  FilterInflow(:)%delta = 2
-  FilterInflow(:)%alpha = 0.49
+  FilterInflow(:)%size       = g(:)%size
+  FilterInflow(:)%periodic   = g(:)%periodic
+  FilterInflow(:)%uniform    = g(:)%uniform
+  FilterInflow(:)%inb_filter = 5          ! default
+
   CALL SCANINICHAR(bakfile, inifile, 'InflowFilter', 'Type', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; idummy = DNS_FILTER_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; idummy = DNS_FILTER_COMPACT
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'tophat'    ) THEN; idummy = DNS_FILTER_TOPHAT
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; FilterInflow(:)%type = DNS_FILTER_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; FilterInflow(:)%type = DNS_FILTER_COMPACT
+     FilterInflow(:)%parameters(1) = 0.49 ! default alpha value
+     FilterInflow(:)%inb_filter    = 6
+     FilterInflow(:)%BcsMin        = DNS_FILTER_BCS_BIASED
+     FilterInflow(:)%BcsMax        = DNS_FILTER_BCS_BIASED
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'tophat'    ) THEN; FilterInflow(:)%type = DNS_FILTER_TOPHAT
+     FilterInflow(:)%parameters(1) = 2    ! default filter size (in grid-step units)
+     FilterInflow(:)%parameters(2) = 1    ! default number of repetitions
+     FilterInflow(:)%inb_filter    = INT(FilterInflow(:)%parameters(1)) +1
+     FilterInflow(:)%BcsMin        = DNS_FILTER_BCS_FREE
+     FilterInflow(:)%BcsMax        = DNS_FILTER_BCS_FREE
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong InflowFilter.Type')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
 
-  CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'Step', '0', FilterInflowStep)
-  IF ( FilterInflowStep .EQ. 0               ) idummy     = DNS_FILTER_NONE
-  IF ( idummy            .EQ. DNS_FILTER_NONE ) FilterDomainStep = 0 
+  CALL SCANINICHAR(bakfile, inifile, 'InflowFilter', 'Parameters', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
+     idummy = MAX_PROF
+     CALL LIST_REAL(sRes, idummy, FilterInflow(1)%parameters(:) )
+     DO ig = 1,3
+        FilterInflow(ig)%parameters(:) = FilterInflow(1)%parameters(:)
+     ENDDO
+  ENDIF
   
-  FilterInflow(:)%type = idummy
+  CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'Step', '0', FilterInflowStep)
+  IF ( FilterInflowStep .EQ. 0 ) FilterInflow(:)%type = DNS_FILTER_NONE
 
   IF ( idummy .NE. DNS_FILTER_NONE ) THEN
      CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'IWidth', '1', FilterInflow(1)%size)

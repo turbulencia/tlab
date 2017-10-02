@@ -22,8 +22,11 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal,inb_scal_array, isize_field, isize_wrk1d
   USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim, itransport
   USE DNS_GLOBAL,    ONLY : itime, rtime
+  USE DNS_GLOBAL,    ONLY : FilterDomain
   USE THERMO_GLOBAL, ONLY : imixture
-  USE DNS_LOCAL
+  USE DNS_LOCAL,     ONLY : nitera_stats_spa, ffltdmp
+  USE DNS_LOCAL,     ONLY : vindex, VA_MEAN_WRK
+  USE DNS_LOCAL,     ONLY : ilimit_scal, s_bound_min, s_bound_max  
 
   IMPLICIT NONE
 

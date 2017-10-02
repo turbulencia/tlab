@@ -38,6 +38,18 @@ MODULE DNS_TYPES
      TREAL, DIMENSION(:,:), POINTER :: mwn   ! pointer to modified wavenumbers
   END TYPE grid_dt
 
+  TYPE filter_dt
+     SEQUENCE
+     TINTEGER type
+     TINTEGER size, inb_filter
+     LOGICAL uniform, periodic
+     LOGICAL,  DIMENSION(MAX_PARS) :: active
+     TREAL,    DIMENSION(MAX_PARS) :: parameters
+     TINTEGER BcsMin, BcsMax                  ! boundary conditions
+     TINTEGER mpitype
+     TREAL, DIMENSION(:,:), POINTER :: coeffs ! pointer to coefficients
+  END TYPE filter_dt
+  
   TYPE pointers_dt
      SEQUENCE
      TREAL, DIMENSION(:), POINTER :: field
@@ -59,15 +71,4 @@ MODULE DNS_TYPES
 #endif
   END type subarray_dt
 
-  TYPE filter_dt
-     SEQUENCE
-     TINTEGER type, size, inb_filter
-     TINTEGER delta, repeat                   ! Filter with for top-hat and # repetitions
-     TREAL alpha                              ! Filter coefficient for compact
-     TINTEGER bcs_min, bcs_max                ! boundary conditions
-     LOGICAL uniform, periodic
-     TINTEGER mpitype
-     TREAL, DIMENSION(:,:), POINTER :: coeffs ! pointer to coefficients
-  END TYPE filter_dt
-  
 END MODULE DNS_TYPES

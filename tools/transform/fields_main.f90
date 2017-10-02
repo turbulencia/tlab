@@ -41,14 +41,13 @@ PROGRAM TRANSFIELDS
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk3d
 
 ! Filters
-  TYPE(filter_dt), DIMENSION(3)                              :: FilterDomain
   TREAL,           DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z
 
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
-  TINTEGER opt_main, opt_filter, opt_function
-  TINTEGER iq, is, k, ip, ip_b, ip_t
+  TINTEGER opt_main, opt_function
+  TINTEGER iq, is, ig, k, ip, ip_b, ip_t
   TINTEGER isize_wrk3d, idummy, iread_flow, iread_scal, ierr
   CHARACTER*32 inifile, bakfile, flow_file, scal_file
   CHARACTER*64 str, line
@@ -60,8 +59,6 @@ PROGRAM TRANSFIELDS
   TREAL dummy
 
 ! Filter variables
-  TREAL alpha
-  TINTEGER delta
   TREAL, DIMENSION(:), POINTER :: p_bcs
 
   TINTEGER itime_size, it
@@ -100,7 +97,6 @@ PROGRAM TRANSFIELDS
 ! Read local options
 ! -------------------------------------------------------------------
   opt_main     =-1 ! default values
-  opt_filter   = 0
   opt_function = 0
   
   CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamTransform', '-1', sRes)
@@ -154,55 +150,10 @@ PROGRAM TRANSFIELDS
   ENDIF
 
 ! -------------------------------------------------------------------
-  IF ( opt_main .EQ. 5 ) THEN
-     IF ( sRes .EQ. '-1' ) THEN
-#ifdef USE_MPI
-#else
-        WRITE(*,'(A)') 'Filter type ?'
-        WRITE(*,'(A)') '1. Compact Fourth-Order'
-        WRITE(*,'(A)') '2. Explicit Sixth-Order'
-        WRITE(*,'(A)') '3. Explicit Fourth-Order'
-        WRITE(*,'(A)') '4. Deconvolution'
-        WRITE(*,'(A)') '5. Alpha'
-        WRITE(*,'(A)') '6. Spectral cut-off' 
-        WRITE(*,'(A)') '7. Gaussian Filter' 
-        WRITE(*,'(A)') '8. Tophat' 
-        READ(*,*) opt_filter
-#endif
-     ELSE
-        opt_filter = DINT(opt_vec(2))
-     ENDIF
+  IF ( opt_main .EQ. 5 .AND. FilterDomain(1)%type .EQ. DNS_FILTER_NONE ) THEN
+     CALL IO_WRITE_ASCII(efile,'TRANSFORM. Filter information needs to be provided in block [Filter].')
+     CALL DNS_STOP(DNS_ERROR_OPTION)
      
-     alpha = C_0_R
-     delta = 2
-     IF ( sRes .EQ. '-1' ) THEN
-#ifdef USE_MPI
-#else
-        IF      ( opt_filter .EQ. DNS_FILTER_COMPACT ) THEN
-           WRITE(*,*) 'Alpha Coefficient?'
-           READ(*,*) alpha
-        ELSE IF ( opt_filter .EQ. DNS_FILTER_ALPHA   ) THEN
-           WRITE(*,*) 'Alpha (in multiples of grid step)?'
-           READ(*,*) alpha
-        ELSE IF ( opt_filter .EQ. DNS_FILTER_CUTOFF  ) THEN
-           WRITE(*,*) 'Frequency interval ?'
-           READ(*,*) opt_vec(3), opt_vec(4)
-        ELSE IF ( opt_filter .EQ. DNS_FILTER_ERF     ) THEN 
-           WRITE(*,*) 'Transition wavenumber (in physical units)' 
-           WRITE(*,*) '   >0: high-pass filter' 
-           WRITE(*,*) '   <0: low-pass  filter'
-           WRITE(*,*) 'and Characteristic Width--in log units (relative to domain size)?'   
-           WRITE(*,*) '   positive real number.'
-           READ(*,*) opt_vec(3), opt_vec(4) 
-        ELSE IF ( opt_filter .EQ. DNS_FILTER_TOPHAT ) THEN
-           WRITE(*,*) 'Delta (in multiples of grid step)?'
-           READ(*,*) delta
-        ENDIF
-#endif
-     ELSE
-        alpha = opt_vec(3)
-        delta = DINT(opt_vec(3))
-     ENDIF
   ENDIF
   
 ! -------------------------------------------------------------------
@@ -316,13 +267,11 @@ PROGRAM TRANSFIELDS
      isize_txc_field = MAX(isize_txc_field,imax_dst*jmax_dst*kmax_dst)
      inb_txc         = 5
   ELSE IF ( opt_main .EQ. 5 ) THEN ! Filter
-     inb_txc         = 3
+     inb_txc         = 4
   ELSE IF ( opt_main .EQ. 6 ) THEN
      inb_txc         = 5
      inb_scal_dst    = 1
   ENDIF
-
-  IF ( opt_filter .EQ. DNS_FILTER_ALPHA ) inb_txc = MAX(inb_txc,4) ! needs more space
 
   IF ( ifourier .EQ. 1 ) inb_txc = MAX(inb_txc,1)
  
@@ -361,36 +310,7 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
 ! Initialize filters
 ! -------------------------------------------------------------------
-  IF ( opt_main .EQ. 5 ) THEN ! Filters
-     FilterDomain(:)%type       = opt_filter
-     FilterDomain(:)%delta      = delta
-     FilterDomain(:)%alpha      = alpha
-     FilterDomain(:)%size       = g(:)%size
-     FilterDomain(:)%periodic   = g(:)%periodic
-     FilterDomain(:)%uniform    = g(:)%uniform
-     FilterDomain(:)%inb_filter = FilterDomain(:)%delta +1 ! Default
-     FilterDomain(:)%bcs_min    = 0
-     FilterDomain(:)%bcs_max    = 0
-     
-     DO is = 1,3
-        IF ( FilterDomain(is)%size .EQ. 1 ) FilterDomain(is)%type = DNS_FILTER_NONE
-        
-        SELECT CASE( FilterDomain(is)%type )
-           
-        CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
-           FilterDomain(is)%inb_filter = 5
-           
-        CASE( DNS_FILTER_COMPACT )
-           FilterDomain(is)%inb_filter = 6
-        
-        CASE( DNS_FILTER_TOPHAT )
-           IF ( MOD(FilterDomain(is)%delta,2) .NE. 0 ) THEN
-              CALL IO_WRITE_ASCII(efile, 'DNS_MAIN. Filter delta is not even.')
-              CALL DNS_STOP(DNS_ERROR_PARAMETER)
-           ENDIF
-           
-        END SELECT
-     ENDDO
+  IF ( opt_main .EQ. 5 ) THEN
      
      ALLOCATE( filter_x( FilterDomain(1)%size, FilterDomain(1)%inb_filter))
      FilterDomain(1)%coeffs => filter_x
@@ -399,26 +319,24 @@ PROGRAM TRANSFIELDS
      ALLOCATE( filter_z( FilterDomain(3)%size, FilterDomain(3)%inb_filter))
      FilterDomain(3)%coeffs => filter_z
      
-     DO is = 1,3     
-        SELECT CASE( FilterDomain(is)%type )
+     DO ig = 1,3     
+        SELECT CASE( FilterDomain(ig)%type )
            
         CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
-           CALL FLT_E4_INI(g(is)%scale, g(is)%nodes, FilterDomain(is))
+           CALL FLT_E4_INI(g(ig)%scale, g(ig)%nodes, FilterDomain(ig))
            
         CASE( DNS_FILTER_COMPACT )
-           CALL FLT_C4_INI(             g(is)%jac,   FilterDomain(is))
+           CALL FLT_C4_INI(             g(ig)%jac,   FilterDomain(ig))
         
+        CASE( DNS_FILTER_ALPHA  )
+           FilterDomain(ig)%parameters(2) =-C_1_R /( FilterDomain(ig)%parameters(1) *g(ig)%jac(1,1) )**2
+           
         CASE( DNS_FILTER_TOPHAT )
-           CALL FLT_T1_INI(g(is)%scale, g(is)%nodes, FilterDomain(is), wrk1d)
+           CALL FLT_T1_INI(g(ig)%scale, g(ig)%nodes, FilterDomain(ig), wrk1d)
            
         END SELECT
      END DO
      
-#ifdef USE_MPI
-     FilterDomain(1)%mpitype = DNS_MPI_I_PARTIAL 
-     FilterDomain(3)%mpitype = DNS_MPI_K_PARTIAL
-#endif
-
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -609,26 +527,26 @@ PROGRAM TRANSFIELDS
 ! Filter
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 5 ) THEN
-        IF ( opt_filter .EQ. DNS_FILTER_ALPHA  ) dummy =-C_1_R /(alpha*g(1)%jac(1,1))**2
-        IF ( opt_filter .EQ. DNS_FILTER_CUTOFF ) dummy = C_1_R /M_REAL(g(1)%size*g(3)%size)
-        IF ( opt_filter .EQ. DNS_FILTER_ERF    ) dummy = C_1_R /M_REAL(g(1)%size*g(3)%size)
+        IF ( FilterDomain(1)%type .EQ. DNS_FILTER_ALPHA  ) dummy =-C_1_R /(FilterDomain(1)%parameters(1)*g(1)%jac(1,1))**2
+        IF ( FilterDomain(1)%type .EQ. DNS_FILTER_CUTOFF ) dummy = C_1_R /M_REAL(g(1)%size*g(3)%size)
+        IF ( FilterDomain(1)%type .EQ. DNS_FILTER_ERF    ) dummy = C_1_R /M_REAL(g(1)%size*g(3)%size)
 
         IF ( icalc_flow .GT. 0 ) THEN
            DO iq = 1,inb_flow
               CALL IO_WRITE_ASCII(lfile,'Filtering...')
               
-              IF      ( opt_filter .EQ. DNS_FILTER_CUTOFF .OR. opt_filter .EQ. DNS_FILTER_ERF ) THEN
+              IF      ( FilterDomain(1)%type .EQ. DNS_FILTER_CUTOFF .OR. FilterDomain(1)%type .EQ. DNS_FILTER_ERF ) THEN
                  txc(1:isize_field,1) = q(1:isize_field,iq)
                  CALL OPR_FOURIER_F(i2, imax,jmax,kmax, txc(:,1),txc(:,2), txc(:,3),wrk2d,wrk3d) 
-                 IF      ( opt_filter .EQ. DNS_FILTER_CUTOFF ) THEN 
-                    CALL TRANS_CUTOFF_2D(imax,jmax,kmax, opt_vec(3), txc(:,2)) 
-                 ELSE IF ( opt_filter .EQ. DNS_FILTER_ERF    ) THEN 
-                    CALL TRANS_ERF_2D(imax,jmax,kmax,opt_vec(3),txc(:,2))  
+                 IF      ( FilterDomain(1)%type .EQ. DNS_FILTER_CUTOFF ) THEN 
+                    CALL TRANS_CUTOFF_2D(imax,jmax,kmax, FilterDomain(1)%parameters, txc(:,2)) 
+                 ELSE IF ( FilterDomain(1)%type .EQ. DNS_FILTER_ERF    ) THEN 
+                    CALL TRANS_ERF_2D(imax,jmax,kmax,FilterDomain(1)%parameters,txc(:,2))  
                  ENDIF
                  CALL OPR_FOURIER_B(i2, imax,jmax,kmax, txc(:,2), txc(:,1), wrk3d)
                  q_dst(1:isize_field,iq) = txc(1:isize_field,1) *dummy
 
-              ELSE IF ( opt_filter .EQ. DNS_FILTER_ALPHA  ) THEN
+              ELSE IF ( FilterDomain(1)%type .EQ. DNS_FILTER_ALPHA  ) THEN
                  ip   =                 1
                  ip_b =                 1
                  ip_t = imax*(jmax-1) + 1
@@ -654,18 +572,18 @@ PROGRAM TRANSFIELDS
            DO is = 1,inb_scal
               CALL IO_WRITE_ASCII(lfile,'Filtering...')
               
-              IF      ( opt_filter .EQ. DNS_FILTER_CUTOFF .OR. opt_filter .EQ. DNS_FILTER_ERF ) THEN
+              IF      ( FilterDomain(1)%type .EQ. DNS_FILTER_CUTOFF .OR. FilterDomain(1)%type .EQ. DNS_FILTER_ERF ) THEN
                  txc(1:isize_field,1) = s(1:isize_field,is)
                  CALL OPR_FOURIER_F(i2, imax,jmax,kmax, txc(:,1),txc(:,2), txc(:,3),wrk2d,wrk3d) 
-                 IF      ( opt_filter .EQ. DNS_FILTER_CUTOFF ) THEN 
-                    CALL TRANS_CUTOFF_2D(imax,jmax,kmax, opt_vec(3), txc(:,2)) 
-                 ELSE IF ( opt_filter .EQ. DNS_FILTER_ERF    ) THEN 
-                    CALL TRANS_ERF_2D(imax,jmax,kmax, opt_vec(3), txc(:,2)) 
+                 IF      ( FilterDomain(1)%type .EQ. DNS_FILTER_CUTOFF ) THEN 
+                    CALL TRANS_CUTOFF_2D(imax,jmax,kmax, FilterDomain(1)%parameters, txc(:,2)) 
+                 ELSE IF ( FilterDomain(1)%type .EQ. DNS_FILTER_ERF    ) THEN 
+                    CALL TRANS_ERF_2D(imax,jmax,kmax, FilterDomain(1)%parameters, txc(:,2)) 
                  ENDIF
                  CALL OPR_FOURIER_B(i2, imax,jmax,kmax, txc(1,2), txc(1,1), wrk3d)
                  s_dst(1:isize_field,is) = txc(1:isize_field,1) *dummy
 
-              ELSE IF ( opt_filter .EQ. DNS_FILTER_ALPHA ) THEN
+              ELSE IF ( FilterDomain(1)%type .EQ. DNS_FILTER_ALPHA ) THEN
                  ! Not yet included
 
               ELSE ! Rest; ADM needs two arrays in txc, rest just 1
@@ -1017,7 +935,7 @@ SUBROUTINE TRANS_CUTOFF_2D(nx,ny,nz, spc_param, a)
      kglobal = k
 #endif
      IF ( kglobal .LE. g(3)%size/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
-     ELSE;                                    fk =-M_REAL(g(3)%size+1-kglobal)/g(3)%scale; ENDIF
+     ELSE;                                   fk =-M_REAL(g(3)%size+1-kglobal)/g(3)%scale; ENDIF
 
      DO i = 1,nx/2+1
 #ifdef USE_MPI

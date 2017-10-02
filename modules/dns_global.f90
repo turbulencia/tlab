@@ -28,7 +28,7 @@ MODULE DNS_CONSTANTS
 END MODULE DNS_CONSTANTS
 
 MODULE DNS_GLOBAL
-  USE DNS_TYPES,     ONLY : grid_dt, subarray_dt, term_dt, background_dt
+  USE DNS_TYPES,     ONLY : grid_dt, filter_dt, subarray_dt, term_dt, background_dt
   USE DNS_CONSTANTS, ONLY : MAX_VARS, MAX_PROF, MAX_JETS, MAX_NSP
   USE DNS_CONSTANTS, ONLY : MAX_STATS_SPATIAL
   IMPLICIT NONE
@@ -120,6 +120,11 @@ MODULE DNS_GLOBAL
   TREAL    :: settling                            ! sedimentation parameter for liquid particle
 
   TREAL    :: visc                                ! 1/reynolds
+
+! ###########################################################
+! Filters
+! ###########################################################
+  TYPE(filter_dt), DIMENSION(3) :: FilterDomain
 
 ! ###################################################################
 ! FFTW

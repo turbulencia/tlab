@@ -45,14 +45,13 @@ PROGRAM APRIORI
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk3d
 
 ! Filters
-  TYPE(filter_dt), DIMENSION(3)                              :: FilterDomain
   TREAL,           DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z
 
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
-  TINTEGER opt_main, opt_block, opt_order, opt_filter, opt_format
-  TINTEGER iq, is, ij, bcs(2,2)
+  TINTEGER opt_main, opt_block, opt_order, opt_format
+  TINTEGER iq, is, ig, ij, bcs(2,2)
   TINTEGER nfield, isize_wrk3d, idummy, iread_flow, iread_scal, jmax_aux, ierr, MaskSize
   CHARACTER*32  fname, inifile, bakfile, flow_file, scal_file, plot_file, time_str
   CHARACTER*32 varname(16)
@@ -61,10 +60,6 @@ PROGRAM APRIORI
 
   TREAL dummy
 
-! Filter variables
-  TREAL alpha
-  TINTEGER delta
-  
   INTEGER(1) opt_gate
   INTEGER(1), DIMENSION(1) :: gate
   
@@ -109,7 +104,6 @@ PROGRAM APRIORI
 ! Read local options
 ! -------------------------------------------------------------------
   opt_main   =-1 ! default values
-  opt_filter = 0
   opt_format = 2
 
   opt_block  = 1 ! not used yet
@@ -131,58 +125,6 @@ PROGRAM APRIORI
   ELSE
      opt_main = DINT(opt_vec(1))
   ENDIF
-
-! -------------------------------------------------------------------
-! Filter information
-  
-     IF ( sRes .EQ. '-1' ) THEN
-#ifdef USE_MPI
-#else
-        WRITE(*,'(A)') 'Filter type ?'
-        WRITE(*,'(A)') '1. Compact Fourth-Order'
-        WRITE(*,'(A)') '2. Explicit Sixth-Order'
-        WRITE(*,'(A)') '3. Explicit Fourth-Order'
-        WRITE(*,'(A)') '4. Deconvolution'
-        ! WRITE(*,'(A)') '5. Alpha'             ! Not yet implemented here
-        ! WRITE(*,'(A)') '6. Spectral cut-off' 
-        ! WRITE(*,'(A)') '7. Gaussian Filter' 
-        WRITE(*,'(A)') '8. Tophat' 
-        READ(*,*) opt_filter
-#endif
-     ELSE
-        opt_filter = DINT(opt_vec(2))
-     ENDIF
-     
-     alpha = C_0_R
-     delta = 2
-     IF ( sRes .EQ. '-1' ) THEN
-#ifdef USE_MPI
-#else
-        IF      ( opt_filter .EQ. DNS_FILTER_COMPACT ) THEN
-           WRITE(*,*) 'Alpha Coeffcient ?'
-           READ(*,*) alpha
-        ELSE IF ( opt_filter .EQ. DNS_FILTER_ALPHA   ) THEN
-           WRITE(*,*) 'Alpha (multiple of space step) ?'
-           READ(*,*) alpha
-        ELSE IF ( opt_filter .EQ. DNS_FILTER_CUTOFF  ) THEN
-           WRITE(*,*) 'Frequency interval ?'
-           READ(*,*) opt_vec(3), opt_vec(4)
-        ELSE IF ( opt_filter .EQ. DNS_FILTER_ERF     ) THEN 
-           WRITE(*,*) 'Transition wavenumber (in physical units)' 
-           WRITE(*,*) '   >0: high-pass filter' 
-           WRITE(*,*) '   <0: low-pass  filter'
-           WRITE(*,*) 'and Characteristic Width--in log units (relative to domain size)?'   
-           WRITE(*,*) '   positive real number.'
-           READ(*,*) opt_vec(3), opt_vec(4) 
-        ELSE IF ( opt_filter .EQ. DNS_FILTER_TOPHAT ) THEN
-           WRITE(*,*) 'Delta (in multiples of grid step)?'
-           READ(*,*) delta
-        ENDIF
-#endif
-     ELSE
-        alpha = opt_vec(3)
-        delta = DINT(opt_vec(3))
-     ENDIF
 
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Subdomain', '-1', sRes)
@@ -213,8 +155,7 @@ PROGRAM APRIORI
   iread_flow = icalc_flow
   iread_scal = icalc_scal
 
-  inb_txc    = 3
-  IF ( opt_filter .EQ. DNS_FILTER_ALPHA ) inb_txc = MAX(inb_txc,4) ! needs more space
+  inb_txc    = 4
   IF ( ifourier .EQ. 1 ) inb_txc = MAX(inb_txc,1)
 
   SELECT CASE ( opt_main )
@@ -265,36 +206,6 @@ PROGRAM APRIORI
 ! -------------------------------------------------------------------
 ! Initialize filters
 ! -------------------------------------------------------------------
-  FilterDomain(:)%type       = opt_filter
-  FilterDomain(:)%delta      = delta
-  FilterDomain(:)%alpha      = alpha
-  FilterDomain(:)%size       = g(:)%size
-  FilterDomain(:)%periodic   = g(:)%periodic
-  FilterDomain(:)%uniform    = g(:)%uniform
-  FilterDomain(:)%inb_filter = FilterDomain(:)%delta +1 ! Default
-  FilterDomain(:)%bcs_min    = 0
-  FilterDomain(:)%bcs_max    = 0
-  
-  DO is = 1,3
-     IF ( FilterDomain(is)%size .EQ. 1 ) FilterDomain(is)%type = DNS_FILTER_NONE
-     
-     SELECT CASE( FilterDomain(is)%type )
-        
-     CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
-        FilterDomain(is)%inb_filter = 5
-        
-     CASE( DNS_FILTER_COMPACT )
-        FilterDomain(is)%inb_filter = 6
-        
-     CASE( DNS_FILTER_TOPHAT )
-        IF ( MOD(FilterDomain(is)%delta,2) .NE. 0 ) THEN
-           CALL IO_WRITE_ASCII(efile, 'DNS_MAIN. Filter delta is not even.')
-           CALL DNS_STOP(DNS_ERROR_PARAMETER)
-        ENDIF
-        
-     END SELECT
-  ENDDO
-  
   ALLOCATE( filter_x( FilterDomain(1)%size, FilterDomain(1)%inb_filter))
   FilterDomain(1)%coeffs => filter_x
   ALLOCATE( filter_y( FilterDomain(2)%size, FilterDomain(2)%inb_filter))
@@ -302,25 +213,23 @@ PROGRAM APRIORI
   ALLOCATE( filter_z( FilterDomain(3)%size, FilterDomain(3)%inb_filter))
   FilterDomain(3)%coeffs => filter_z
   
-  DO is = 1,3     
-     SELECT CASE( FilterDomain(is)%type )
+  DO ig = 1,3     
+     SELECT CASE( FilterDomain(ig)%type )
         
      CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
-        CALL FLT_E4_INI(g(is)%scale, g(is)%nodes, FilterDomain(is))
+        CALL FLT_E4_INI(g(ig)%scale, g(ig)%nodes, FilterDomain(ig))
         
      CASE( DNS_FILTER_COMPACT )
-        CALL FLT_C4_INI(             g(is)%jac,   FilterDomain(is))
+        CALL FLT_C4_INI(             g(ig)%jac,   FilterDomain(ig))
         
+     CASE( DNS_FILTER_ALPHA  )
+        FilterDomain(ig)%parameters(2) =-C_1_R /( FilterDomain(ig)%parameters(1) *g(ig)%jac(1,1) )**2
+           
      CASE( DNS_FILTER_TOPHAT )
-        CALL FLT_T1_INI(g(is)%scale, g(is)%nodes, FilterDomain(is), wrk1d)
+        CALL FLT_T1_INI(g(ig)%scale, g(ig)%nodes, FilterDomain(ig), wrk1d)
         
      END SELECT
   END DO
-  
-#ifdef USE_MPI
-  FilterDomain(1)%mpitype = DNS_MPI_I_PARTIAL 
-  FilterDomain(3)%mpitype = DNS_MPI_K_PARTIAL
-#endif
   
 ! -------------------------------------------------------------------
 ! Initialize Poisson solver

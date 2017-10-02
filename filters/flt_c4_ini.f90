@@ -32,7 +32,7 @@ SUBROUTINE FLT_C4_INI(dx, f)
 ! #######################################################################
   IF ( f%size .GT. 1 ) THEN
      
-  alpha = f%alpha
+  alpha = f%parameters(1)
   
 ! #######################################################################
 ! Calculate constants for LHS

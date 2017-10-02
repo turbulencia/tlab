@@ -21,12 +21,15 @@ SUBROUTINE OPR_FILTER_1D(nlines, f, u,result, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d, wrk3d
   
 ! -------------------------------------------------------------------
+  TINTEGER delta
   
 ! ###################################################################
+  delta = INT(f%parameters(1))
+  
   SELECT CASE( f%type )
      
   CASE( DNS_FILTER_COMPACT )
-     CALL FLT_C4(f%size,nlines, f%periodic, f%bcs_min,f%bcs_max, f%coeffs, u,result, wrk1d)
+     CALL FLT_C4(f%size,nlines, f%periodic, f%bcsmin,f%bcsmax, f%coeffs, u,result, wrk1d)
      IF ( f%periodic ) THEN
         CALL TRIDPFS(f%size,        wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
         CALL TRIDPSS(f%size,nlines, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), result, wrk2d)
@@ -36,32 +39,32 @@ SUBROUTINE OPR_FILTER_1D(nlines, f, u,result, wrk1d,wrk2d,wrk3d)
      ENDIF
 
   CASE( DNS_FILTER_6E      )
-     CALL FLT_E6 (f%size,nlines, f%periodic, f%bcs_min, f%bcs_max,           u,result)
+     CALL FLT_E6 (f%size,nlines, f%periodic, f%bcsmin, f%bcsmax,           u,result)
 
   CASE( DNS_FILTER_4E      )
-     CALL FLT_E4 (f%size,nlines, f%periodic,                       f%coeffs, u,result)
+     CALL FLT_E4 (f%size,nlines, f%periodic,                     f%coeffs, u,result)
 
   CASE( DNS_FILTER_ADM     )
-     CALL FLT_ADM(f%size,nlines, f%periodic,                       f%coeffs, u,result, wrk3d)
+     CALL FLT_ADM(f%size,nlines, f%periodic,                     f%coeffs, u,result, wrk3d)
 
   CASE( DNS_FILTER_TOPHAT )
      IF ( f%periodic ) THEN
         IF ( f%uniform ) THEN
-           IF      ( f%delta .EQ. 2 ) THEN; CALL FLT_T1PD2(f%size,nlines,          u,result)
-           ELSE IF ( f%delta .EQ. 4 ) THEN; CALL FLT_T1PD4(f%size,nlines,          u,result)
-           ELSE;                            CALL FLT_T1P  (f%size,nlines, f%delta, u,result)
+           IF      ( delta .EQ. 2 ) THEN; CALL FLT_T1PD2(f%size,nlines,        u,result)
+           ELSE IF ( delta .EQ. 4 ) THEN; CALL FLT_T1PD4(f%size,nlines,        u,result)
+           ELSE;                          CALL FLT_T1P  (f%size,nlines, delta, u,result)
            ENDIF
         ELSE
-           CALL FLT_T1P_ND(f%size,nlines, f%delta, f%coeffs, u,result)
+           CALL FLT_T1P_ND(f%size,nlines, delta, f%coeffs, u,result)
         ENDIF
      ELSE
         IF ( f%uniform ) THEN
-           CALL FLT_T1(f%size,nlines, f%delta, f%coeffs, u,result)
+           CALL FLT_T1(f%size,nlines, delta, f%coeffs, u,result)
         ELSE
-           IF      ( f%delta .EQ. 2 ) THEN; CALL FLT_T1NDD2(f%size,nlines,          f%coeffs, u,result)
-           ELSE IF ( f%delta .EQ. 4 ) THEN; CALL FLT_T1NDD4(f%size,nlines,          f%coeffs, u,result)
-           ELSE IF ( f%delta .EQ. 6 ) THEN; CALL FLT_T1NDD6(f%size,nlines,          f%coeffs, u,result)
-           ELSE;                            CALL FLT_T1ND  (f%size,nlines, f%delta, f%coeffs, u,result)
+           IF      ( delta .EQ. 2 ) THEN; CALL FLT_T1NDD2(f%size,nlines,        f%coeffs, u,result)
+           ELSE IF ( delta .EQ. 4 ) THEN; CALL FLT_T1NDD4(f%size,nlines,        f%coeffs, u,result)
+           ELSE IF ( delta .EQ. 6 ) THEN; CALL FLT_T1NDD6(f%size,nlines,        f%coeffs, u,result)
+           ELSE;                          CALL FLT_T1ND  (f%size,nlines, delta, f%coeffs, u,result)
            ENDIF
         ENDIF
      ENDIF

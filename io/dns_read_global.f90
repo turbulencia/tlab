@@ -1,6 +1,9 @@
 #include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
+#ifdef USE_MPI
+#include "dns_const_mpi.h"
+#endif
 
 !########################################################################
 !# DESCRIPTION
@@ -32,7 +35,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CHARACTER*64 lstr, default
   CHARACTER*32 bakfile
   TINTEGER iMajorVersion, iMinorVersion
-  TINTEGER is, inb_scal_local1, inb_scal_local2, idummy
+  TINTEGER is, ig, inb_scal_local1, inb_scal_local2, idummy
   TREAL dummy
 
 ! ###################################################################
@@ -586,6 +589,90 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Periodic Z grid')
      CALL DNS_STOP(DNS_ERROR_KBC)
   ENDIF
+
+! ###################################################################
+! Filter
+! ###################################################################
+  CALL IO_WRITE_ASCII(bakfile, '#')
+  CALL IO_WRITE_ASCII(bakfile, '#[Filter]')
+  CALL IO_WRITE_ASCII(bakfile, '#Type=<none/compact/explicit6/explicit4/adm/alpha/SpectralCutoff/SpectralErf/tophat>')
+  CALL IO_WRITE_ASCII(bakfile, '#Parameters=<values>')
+  CALL IO_WRITE_ASCII(bakfile, '#Step=<filter step>')
+  CALL IO_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
+  CALL IO_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
+  CALL IO_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
+
+  FilterDomain(:)%size       = g(:)%size
+  FilterDomain(:)%periodic   = g(:)%periodic
+  FilterDomain(:)%uniform    = g(:)%uniform
+  FilterDomain(:)%inb_filter = 5          ! default
+
+  CALL SCANINICHAR(bakfile, inifile, 'Filter', 'Type', 'none', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; FilterDomain(:)%type = DNS_FILTER_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; FilterDomain(:)%type = DNS_FILTER_COMPACT
+     FilterDomain(:)%parameters(1) = 0.49 ! default alpha value
+     FilterDomain(:)%inb_filter    = 6
+     FilterDomain(:)%BcsMin        = DNS_FILTER_BCS_BIASED
+     FilterDomain(:)%BcsMax        = DNS_FILTER_BCS_BIASED
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit6' ) THEN; FilterDomain(:)%type = DNS_FILTER_6E  
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit4' ) THEN; FilterDomain(:)%type = DNS_FILTER_4E  
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'adm'       ) THEN; FilterDomain(:)%type = DNS_FILTER_ADM
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'tophat'    ) THEN; FilterDomain(:)%type = DNS_FILTER_TOPHAT
+     FilterDomain(:)%parameters(1) = 2    ! default filter size (in grid-step units)
+     FilterDomain(:)%parameters(2) = 1    ! default number of repetitions
+     FilterDomain(:)%BcsMin        = DNS_FILTER_BCS_FREE
+     FilterDomain(:)%BcsMax        = DNS_FILTER_BCS_FREE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'spectralcutoff' ) THEN; FilterDomain(:)%type = DNS_FILTER_CUTOFF
+     ! The frequency interval is (Parameter1, Parameter2)
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'spectralerf'    ) THEN; FilterDomain(:)%type = DNS_FILTER_ERF
+     ! Parameter1 is the transition wavenumber in physical units:
+     ! >0: high-pass filter
+     ! <0; low-pass filter
+     ! Parameter2 is the characteristic width--in log units (relative to domain size)'   
+  ELSE
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Filter.Type.')
+     CALL DNS_STOP(DNS_ERROR_OPTION)
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'Filter', 'Parameters', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
+     idummy = MAX_PROF
+     CALL LIST_REAL(sRes, idummy, FilterDomain(1)%parameters(:) )
+     DO ig = 1,3
+        FilterDomain(ig)%parameters(:) = FilterDomain(1)%parameters(:)
+     ENDDO
+  ENDIF
+  
+  CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveX', 'yes', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(1)%type = DNS_FILTER_NONE 
+     
+  CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveY', 'yes', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(2)%type = DNS_FILTER_NONE
+
+  CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveZ', 'yes', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(3)%type = DNS_FILTER_NONE
+
+! To eventually allow for control field by field
+  DO ig = 1,3
+     FilterDomain(ig)%active(:) = .TRUE.
+  ENDDO
+
+! Further control
+  DO ig = 1,3
+     IF ( FilterDomain(ig)%size .EQ. 1 ) FilterDomain(ig)%type = DNS_FILTER_NONE
+     IF ( FilterDomain(ig)%type .EQ. DNS_FILTER_TOPHAT ) THEN
+        FilterDomain(:)%inb_filter = INT(FilterDomain(:)%parameters(1)) +1
+        IF ( MOD(INT(FilterDomain(is)%parameters(1)),2) .NE. 0 ) THEN
+           CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Filter delta is not even.')
+           CALL DNS_STOP(DNS_ERROR_PARAMETER)
+        ENDIF
+     ENDIF
+  ENDDO
+  
+#ifdef USE_MPI
+  FilterDomain(1)%mpitype = DNS_MPI_I_PARTIAL 
+  FilterDomain(3)%mpitype = DNS_MPI_K_PARTIAL
+#endif
 
 ! ###################################################################
 ! Statistics Control   

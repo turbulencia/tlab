@@ -63,7 +63,7 @@ PROGRAM DNS
   
   CHARACTER*32 fname, inifile
   CHARACTER*128 str, line
-  TINTEGER idummy, is
+  TINTEGER idummy, ig
   TINTEGER ierr, isize_wrk3d, isize_vaux, isize_loc
   TREAL dummy
 
@@ -308,34 +308,7 @@ PROGRAM DNS
   
 ! ###################################################################
 ! Initialize filters
-! ###################################################################
-  FilterDomain(:)%size       = g(:)%size
-  FilterDomain(:)%periodic   = g(:)%periodic
-  FilterDomain(:)%uniform    = g(:)%uniform
-  FilterDomain(:)%inb_filter = FilterDomain(:)%delta +1 ! Default
-  FilterDomain(:)%bcs_min    = 0
-  FilterDomain(:)%bcs_max    = 0
-  
-  DO is = 1,3
-     IF ( FilterDomain(is)%size .EQ. 1 ) FilterDomain(is)%type = DNS_FILTER_NONE
-     
-     SELECT CASE( FilterDomain(is)%type )
-     
-     CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
-        FilterDomain(is)%inb_filter = 5
-        
-     CASE( DNS_FILTER_COMPACT )
-        FilterDomain(is)%inb_filter = 6
-        
-     CASE( DNS_FILTER_TOPHAT )
-        IF ( MOD(FilterDomain(is)%delta,2) .NE. 0 ) THEN
-           CALL IO_WRITE_ASCII(efile, 'DNS_MAIN. Filter delta is not even.')
-           CALL DNS_STOP(DNS_ERROR_PARAMETER)
-        ENDIF
-        
-     END SELECT
-  ENDDO
-  
+! ###################################################################  
   ALLOCATE( filter_x( FilterDomain(1)%size, FilterDomain(1)%inb_filter))
   FilterDomain(1)%coeffs => filter_x
   ALLOCATE( filter_y( FilterDomain(2)%size, FilterDomain(2)%inb_filter))
@@ -343,26 +316,24 @@ PROGRAM DNS
   ALLOCATE( filter_z( FilterDomain(3)%size, FilterDomain(3)%inb_filter))
   FilterDomain(3)%coeffs => filter_z
 
-  DO is = 1,3     
-     SELECT CASE( FilterDomain(is)%type )
+  DO ig = 1,3     
+     SELECT CASE( FilterDomain(ig)%type )
         
      CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
-        CALL FLT_E4_INI(g(is)%scale, g(is)%nodes, FilterDomain(is))
+        CALL FLT_E4_INI(g(ig)%scale, g(ig)%nodes, FilterDomain(ig))
         
      CASE( DNS_FILTER_COMPACT )
-        CALL FLT_C4_INI(             g(is)%jac,   FilterDomain(is))
+        CALL FLT_C4_INI(             g(ig)%jac,   FilterDomain(ig))
         
+     CASE( DNS_FILTER_ALPHA  )
+        FilterDomain(ig)%parameters(2) =-C_1_R /( FilterDomain(ig)%parameters(1) *g(ig)%jac(1,1) )**2
+           
      CASE( DNS_FILTER_TOPHAT )
-        CALL FLT_T1_INI(g(is)%scale, g(is)%nodes, FilterDomain(is), wrk1d)
+        CALL FLT_T1_INI(g(ig)%scale, g(ig)%nodes, FilterDomain(ig), wrk1d)
         
      END SELECT
   END DO
 
-#ifdef USE_MPI
-  FilterDomain(1)%mpitype = DNS_MPI_I_PARTIAL 
-  FilterDomain(3)%mpitype = DNS_MPI_K_PARTIAL
-#endif
-  
 ! ####################################################################
 ! Initializing position of l_q(particles)
 ! ####################################################################
