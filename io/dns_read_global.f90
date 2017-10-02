@@ -595,7 +595,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[Filter]')
-  CALL IO_WRITE_ASCII(bakfile, '#Type=<none/compact/explicit6/explicit4/adm/alpha/SpectralCutoff/SpectralErf/tophat>')
+  CALL IO_WRITE_ASCII(bakfile, '#Type=<none/compact/explicit6/explicit4/adm/alpha/SpectralBand/SpectralErf/tophat>')
   CALL IO_WRITE_ASCII(bakfile, '#Parameters=<values>')
   CALL IO_WRITE_ASCII(bakfile, '#Step=<filter step>')
   CALL IO_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
@@ -622,7 +622,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      FilterDomain(:)%parameters(2) = 1    ! default number of repetitions
      FilterDomain(:)%BcsMin        = DNS_FILTER_BCS_FREE
      FilterDomain(:)%BcsMax        = DNS_FILTER_BCS_FREE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'spectralcutoff' ) THEN; FilterDomain(:)%type = DNS_FILTER_CUTOFF
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'spectralcutoff' ) THEN; FilterDomain(:)%type = DNS_FILTER_BAND
      ! The frequency interval is (Parameter1, Parameter2)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'spectralerf'    ) THEN; FilterDomain(:)%type = DNS_FILTER_ERF
      ! Parameter1 is the transition wavenumber in physical units:

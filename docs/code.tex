@@ -439,6 +439,19 @@ root-mean-square.\\
 initialize the thermodynamic fields.\\
 \end{longtable}
 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\rowcolors{1}{gray!25}{gray!10}
+% 
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+  % 
+  \multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Filter]}\\
+  % 
+  \tt Type & \tt None, Compact, Explicit6, Explicit4, Adm, SpectralBand, SpectralErf, Alpha, TopHat & Type of domain filter used in simulation (if any) and postprocessing.\\
+  \tt Parameters & {\em value1, value2, ...} & Values definining the filter, e.g., $\alpha$ in compact, or $\Delta$ in tophat.\\ 
+  \tt ActiveX & \tt yes,no & Active or not in direction $Ox$.\\ 
+\multicolumn{3}{l}{Similarly in the other directions $Oy$ and $Oz$.}\\
+\end{longtable}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \rowcolors{1}{gray!25}{gray!10}
 %
@@ -477,6 +490,21 @@ of the inflow perturbation.\\
 %% \item \textbf{3DXPhi} (\textit{Phix3d}): Same as above, but for the 3D pertubations.
 %% \item \textbf{3DZPhi} (\textit{Phiz3d}): Same as above.
 
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\rowcolors{1}{gray!25}{gray!10}
+% 
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+  % 
+  \multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Inflow]}\\
+  % 
+  \tt Type & \tt None, Discrete, BroadbandPeriodic,  BroadbandSequential & Type of
+  inflow forcing to use 
+  in a spatially evolving simulation.\\
+  \tt Adapt & \it value & Interval in global time units for starting the inflow
+  forcing.\\ 
+\end{longtable}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \rowcolors{1}{gray!25}{gray!10}
 %
@@ -504,20 +532,6 @@ level $\alpha_3$; number of bins $\alpha_4$.\\
 $\alpha_1$ (see {\tt tools/statistics/spectra.f90}); block size
 $\alpha_2$; save full spectra $\alpha_3$; average over iterations $\alpha_4$.\\
 \tt ParamVisuals & $\alpha_1,\,\alpha_2,\,\ldots$ & List of fields to be calculated (see {\tt tools/plot/visuals.f90}).\\
-\end{longtable}
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\rowcolors{1}{gray!25}{gray!10}
-%
-\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
-%
-\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Inflow]}\\
-%
-\tt Type & \tt None, Discrete, BroadbandPeriodic,  BroadbandSequential & Type of
-inflow forcing to use 
-in a spatially evolving simulation.\\
-\tt Adapt & \it value & Interval in global time units for starting the inflow
-forcing.\\ 
 \end{longtable}
 
 }

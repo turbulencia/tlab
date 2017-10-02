@@ -45,7 +45,7 @@ PROGRAM APRIORI
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk3d
 
 ! Filters
-  TREAL,           DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z
+!  TREAL,           DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z
 
 ! -------------------------------------------------------------------
 ! Local variables
@@ -206,14 +206,9 @@ PROGRAM APRIORI
 ! -------------------------------------------------------------------
 ! Initialize filters
 ! -------------------------------------------------------------------
-  ALLOCATE( filter_x( FilterDomain(1)%size, FilterDomain(1)%inb_filter))
-  FilterDomain(1)%coeffs => filter_x
-  ALLOCATE( filter_y( FilterDomain(2)%size, FilterDomain(2)%inb_filter))
-  FilterDomain(2)%coeffs => filter_y
-  ALLOCATE( filter_z( FilterDomain(3)%size, FilterDomain(3)%inb_filter))
-  FilterDomain(3)%coeffs => filter_z
-  
   DO ig = 1,3     
+     ALLOCATE( FilterDomain(ig)%coeffs( FilterDomain(ig)%size, FilterDomain(ig)%inb_filter))
+     
      SELECT CASE( FilterDomain(ig)%type )
         
      CASE( DNS_FILTER_4E, DNS_FILTER_ADM )

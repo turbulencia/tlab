@@ -101,7 +101,7 @@
 #define DNS_FILTER_4E       3
 #define DNS_FILTER_ADM      4
 #define DNS_FILTER_ALPHA    5
-#define DNS_FILTER_CUTOFF   6
+#define DNS_FILTER_BAND     6
 #define DNS_FILTER_ERF      7
 #define DNS_FILTER_TOPHAT   8
 

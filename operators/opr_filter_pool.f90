@@ -295,3 +295,139 @@ SUBROUTINE OPR_FILTER_Z(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
   RETURN
 END SUBROUTINE OPR_FILTER_Z
+
+!########################################################################
+! Spectral band filter
+!########################################################################
+SUBROUTINE OPR_FILTER_BAND_2D(nx,ny,nz, spc_param, a)
+
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : g 
+#ifdef USE_MPI
+  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
+#endif
+
+  IMPLICIT NONE
+
+  TINTEGER nx,ny,nz
+  TREAL,    DIMENSION(*)                                  :: spc_param
+  TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz), INTENT(INOUT) :: a
+  
+! -----------------------------------------------------------------------
+  TINTEGER i,j,k, iglobal,kglobal, ip
+  TREAL fi,fk,f
+
+! #######################################################################
+  DO k = 1,nz
+#ifdef USE_MPI
+     kglobal = k + ims_offset_k
+#else
+     kglobal = k
+#endif
+     IF ( kglobal .LE. g(3)%size/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
+     ELSE;                                   fk =-M_REAL(g(3)%size+1-kglobal)/g(3)%scale; ENDIF
+
+     DO i = 1,nx/2+1
+#ifdef USE_MPI
+        iglobal = i + ims_offset_i/2
+#else
+        iglobal = i
+#endif
+        fi = M_REAL(iglobal-1)/g(1)%scale
+        
+        f = SQRT(fi**2 + fk**2)
+        
+! apply spectral cutoff
+        DO j = 1,ny
+           ip = (j-1)*(nx/2+1) + i 
+           IF ( (f-spc_param(1))*(spc_param(2)-f) .LT. C_0_R ) a(ip,k) = C_0_R
+        ENDDO
+        
+     ENDDO
+  ENDDO
+
+  RETURN
+END SUBROUTINE OPR_FILTER_BAND_2D
+
+!########################################################################
+!# DESCRIPTION
+!#
+!# Spectral filter with smooth (error-function) transition. 
+!# The error function filter-response function is imposed 
+!# in logarithmic wavenumber space. 
+!#
+!########################################################################
+!# ARGUMENTS 
+!#
+!#    spc_param(1) physical frequency for transition 
+!#                 > 0: High-pass 
+!#                 < 0: Low-pass
+!#    spc_param(2) width of transition in logarithmic wavenumber space
+!# 
+!########################################################################
+SUBROUTINE OPR_FILTER_ERF_2D(nx,ny,nz, spc_param, a)
+
+  USE DNS_GLOBAL, ONLY : isize_txc_dimz
+  USE DNS_GLOBAL, ONLY : g
+#ifdef USE_MPI
+  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
+#endif
+
+  IMPLICIT NONE
+
+  TINTEGER nx,ny,nz
+  TREAL,    DIMENSION(*)                                  :: spc_param
+  TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz), INTENT(INOUT) :: a
+  
+! -----------------------------------------------------------------------
+  TINTEGER i,j,k, iglobal,kglobal, ip 
+  TINTEGER sign_pass, off_pass 
+  TREAL fi,fk,f,fcut_log,damp
+
+! ####################################################################### 
+  IF ( spc_param(1) .GT. 0 ) THEN; 
+     sign_pass = 1.   ! HIGHPASS
+     off_pass  = 0.
+  ELSE                ! spc_param(1) <= 0 
+     sign_pass =-1.   ! LOWPASS  
+     off_pass  = 1.
+  ENDIF
+
+  fcut_log = LOG(spc_param(1)) 
+  DO k = 1,nz
+#ifdef USE_MPI
+     kglobal = k + ims_offset_k
+#else
+     kglobal = k
+#endif
+     IF ( kglobal .LE. g(3)%size/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
+     ELSE;                                   fk =-M_REAL(g(3)%size+1-kglobal)/g(3)%scale; ENDIF
+
+     DO i = 1,nx/2+1
+#ifdef USE_MPI
+        iglobal = i + ims_offset_i/2
+#else
+        iglobal = i
+#endif
+        fi = M_REAL(iglobal-1)/g(1)%scale
+        
+        f = SQRT(fi**2 + fk**2) 
+        IF ( f .GT. 0 )  THEN;  damp = (ERF((LOG(f) - fcut_log)/spc_param(2)) + 1.)/2.
+        ELSE ;                  damp = C_0_R; 
+        ENDIF
+
+        ! Set to high- or low-pass
+        ! high-pass: damp = 0.0 + damp 
+        ! low-pass:  damp = 1.0 - damp 
+        damp = off_pass + sign_pass*damp  
+
+        ! apply filter
+        DO j = 1,ny
+           ip = (j-1)*(nx/2+1) + i 
+           a(ip,k) = damp*a(ip,k)
+        ENDDO
+     ENDDO
+  ENDDO
+
+  RETURN
+END SUBROUTINE OPR_FILTER_ERF_2D

@@ -41,13 +41,13 @@ PROGRAM TRANSFIELDS
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk3d
 
 ! Filters
-  TREAL,           DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z
+  ! TREAL,           DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z
 
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
   TINTEGER opt_main, opt_function
-  TINTEGER iq, is, ig, k, ip, ip_b, ip_t
+  TINTEGER iq, is, ig, ip !k, ip, ip_b, ip_t
   TINTEGER isize_wrk3d, idummy, iread_flow, iread_scal, ierr
   CHARACTER*32 inifile, bakfile, flow_file, scal_file
   CHARACTER*64 str, line
@@ -57,9 +57,6 @@ PROGRAM TRANSFIELDS
   TINTEGER imax_dst,jmax_dst,kmax_dst, imax_total_dst,jmax_total_dst,kmax_total_dst, jmax_aux, inb_scal_dst
   TREAL scalex_dst, scaley_dst, scalez_dst
   TREAL dummy
-
-! Filter variables
-  TREAL, DIMENSION(:), POINTER :: p_bcs
 
   TINTEGER itime_size, it
   TINTEGER itime_vec(itime_size_max)
@@ -153,7 +150,6 @@ PROGRAM TRANSFIELDS
   IF ( opt_main .EQ. 5 .AND. FilterDomain(1)%type .EQ. DNS_FILTER_NONE ) THEN
      CALL IO_WRITE_ASCII(efile,'TRANSFORM. Filter information needs to be provided in block [Filter].')
      CALL DNS_STOP(DNS_ERROR_OPTION)
-     
   ENDIF
   
 ! -------------------------------------------------------------------
@@ -311,15 +307,9 @@ PROGRAM TRANSFIELDS
 ! Initialize filters
 ! -------------------------------------------------------------------
   IF ( opt_main .EQ. 5 ) THEN
-     
-     ALLOCATE( filter_x( FilterDomain(1)%size, FilterDomain(1)%inb_filter))
-     FilterDomain(1)%coeffs => filter_x
-     ALLOCATE( filter_y( FilterDomain(2)%size, FilterDomain(2)%inb_filter))
-     FilterDomain(2)%coeffs => filter_y
-     ALLOCATE( filter_z( FilterDomain(3)%size, FilterDomain(3)%inb_filter))
-     FilterDomain(3)%coeffs => filter_z
-     
      DO ig = 1,3     
+        ALLOCATE( FilterDomain(ig)%coeffs( FilterDomain(ig)%size, FilterDomain(ig)%inb_filter))
+     
         SELECT CASE( FilterDomain(ig)%type )
            
         CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
@@ -328,10 +318,10 @@ PROGRAM TRANSFIELDS
         CASE( DNS_FILTER_COMPACT )
            CALL FLT_C4_INI(             g(ig)%jac,   FilterDomain(ig))
         
-        CASE( DNS_FILTER_ALPHA  )
+        CASE( DNS_FILTER_ALPHA   )
            FilterDomain(ig)%parameters(2) =-C_1_R /( FilterDomain(ig)%parameters(1) *g(ig)%jac(1,1) )**2
            
-        CASE( DNS_FILTER_TOPHAT )
+        CASE( DNS_FILTER_TOPHAT  )
            CALL FLT_T1_INI(g(ig)%scale, g(ig)%nodes, FilterDomain(ig), wrk1d)
            
         END SELECT
@@ -527,73 +517,22 @@ PROGRAM TRANSFIELDS
 ! Filter
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 5 ) THEN
-        IF ( FilterDomain(1)%type .EQ. DNS_FILTER_ALPHA  ) dummy =-C_1_R /(FilterDomain(1)%parameters(1)*g(1)%jac(1,1))**2
-        IF ( FilterDomain(1)%type .EQ. DNS_FILTER_CUTOFF ) dummy = C_1_R /M_REAL(g(1)%size*g(3)%size)
-        IF ( FilterDomain(1)%type .EQ. DNS_FILTER_ERF    ) dummy = C_1_R /M_REAL(g(1)%size*g(3)%size)
-
         IF ( icalc_flow .GT. 0 ) THEN
            DO iq = 1,inb_flow
               CALL IO_WRITE_ASCII(lfile,'Filtering...')
-              
-              IF      ( FilterDomain(1)%type .EQ. DNS_FILTER_CUTOFF .OR. FilterDomain(1)%type .EQ. DNS_FILTER_ERF ) THEN
-                 txc(1:isize_field,1) = q(1:isize_field,iq)
-                 CALL OPR_FOURIER_F(i2, imax,jmax,kmax, txc(:,1),txc(:,2), txc(:,3),wrk2d,wrk3d) 
-                 IF      ( FilterDomain(1)%type .EQ. DNS_FILTER_CUTOFF ) THEN 
-                    CALL TRANS_CUTOFF_2D(imax,jmax,kmax, FilterDomain(1)%parameters, txc(:,2)) 
-                 ELSE IF ( FilterDomain(1)%type .EQ. DNS_FILTER_ERF    ) THEN 
-                    CALL TRANS_ERF_2D(imax,jmax,kmax,FilterDomain(1)%parameters,txc(:,2))  
-                 ENDIF
-                 CALL OPR_FOURIER_B(i2, imax,jmax,kmax, txc(:,2), txc(:,1), wrk3d)
-                 q_dst(1:isize_field,iq) = txc(1:isize_field,1) *dummy
-
-              ELSE IF ( FilterDomain(1)%type .EQ. DNS_FILTER_ALPHA  ) THEN
-                 ip   =                 1
-                 ip_b =                 1
-                 ip_t = imax*(jmax-1) + 1
-                 DO k = 1,kmax
-                    p_bcs => q(ip_b:,iq); wrk2d(ip:ip+imax-1,1) = p_bcs(1:imax); ip_b = ip_b + imax*jmax ! bottom
-                    p_bcs => q(ip_t:,iq); wrk2d(ip:ip+imax-1,2) = p_bcs(1:imax); ip_t = ip_t + imax*jmax ! top
-                    ip = ip + imax
-                 ENDDO
-                 q_dst(:,iq) = q(:,iq)*dummy ! forcing term
-                 CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, i0, dummy,&
-                      q_dst(1,iq), txc(1,2),txc(1,3), &
-                      wrk2d(1,1),wrk2d(1,2), wrk1d,wrk1d(1,5),wrk3d)
-                 
-              ELSE ! Rest; ADM needs two arrays in txc, rest just 1
-                 q_dst(:,iq) = q(:,iq) 
-                 CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, q_dst(1,iq), wrk1d,wrk2d,txc)
-              ENDIF
+              q_dst(:,iq) = q(:,iq) ! in-place operation
+              CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, q_dst(1,iq), wrk1d,wrk2d,txc)
            ENDDO
-           
         ENDIF
-
+        
         IF ( icalc_scal .GT. 0 ) THEN
            DO is = 1,inb_scal
               CALL IO_WRITE_ASCII(lfile,'Filtering...')
-              
-              IF      ( FilterDomain(1)%type .EQ. DNS_FILTER_CUTOFF .OR. FilterDomain(1)%type .EQ. DNS_FILTER_ERF ) THEN
-                 txc(1:isize_field,1) = s(1:isize_field,is)
-                 CALL OPR_FOURIER_F(i2, imax,jmax,kmax, txc(:,1),txc(:,2), txc(:,3),wrk2d,wrk3d) 
-                 IF      ( FilterDomain(1)%type .EQ. DNS_FILTER_CUTOFF ) THEN 
-                    CALL TRANS_CUTOFF_2D(imax,jmax,kmax, FilterDomain(1)%parameters, txc(:,2)) 
-                 ELSE IF ( FilterDomain(1)%type .EQ. DNS_FILTER_ERF    ) THEN 
-                    CALL TRANS_ERF_2D(imax,jmax,kmax, FilterDomain(1)%parameters, txc(:,2)) 
-                 ENDIF
-                 CALL OPR_FOURIER_B(i2, imax,jmax,kmax, txc(1,2), txc(1,1), wrk3d)
-                 s_dst(1:isize_field,is) = txc(1:isize_field,1) *dummy
-
-              ELSE IF ( FilterDomain(1)%type .EQ. DNS_FILTER_ALPHA ) THEN
-                 ! Not yet included
-
-              ELSE ! Rest; ADM needs two arrays in txc, rest just 1
-                 s_dst(:,is) = s(:,is) 
-                 CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, s_dst(1,is), wrk1d,wrk2d,txc)
-                 
-              ENDIF
+              s_dst(:,is) = s(:,is) ! in-place operation
+              CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, s_dst(1,is), wrk1d,wrk2d,txc)
            ENDDO
         ENDIF
-
+        
 ! ###################################################################
 ! Transformation
 ! ###################################################################
@@ -896,155 +835,3 @@ SUBROUTINE TRANS_BLEND(nx,ny,nz, params, y, a, b)
 RETURN 
 
 END SUBROUTINE TRANS_BLEND
-
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# b <- b + f(y)*a
-!#
-!########################################################################
-SUBROUTINE TRANS_CUTOFF_2D(nx,ny,nz, spc_param, a)
-
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : g 
-#ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
-#endif
-
-  IMPLICIT NONE
-
-  TINTEGER nx,ny,nz
-  TREAL,    DIMENSION(*)                                  :: spc_param
-  TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz), INTENT(INOUT) :: a
-  
-! -----------------------------------------------------------------------
-  TINTEGER i,j,k, iglobal,kglobal, ip
-  TREAL fi,fk,f
-
-! #######################################################################
-  DO k = 1,nz
-#ifdef USE_MPI
-     kglobal = k + ims_offset_k
-#else
-     kglobal = k
-#endif
-     IF ( kglobal .LE. g(3)%size/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
-     ELSE;                                   fk =-M_REAL(g(3)%size+1-kglobal)/g(3)%scale; ENDIF
-
-     DO i = 1,nx/2+1
-#ifdef USE_MPI
-        iglobal = i + ims_offset_i/2
-#else
-        iglobal = i
-#endif
-        fi = M_REAL(iglobal-1)/g(1)%scale
-        
-        f = SQRT(fi**2 + fk**2)
-        
-! apply spectral cutoff
-        DO j = 1,ny
-           ip = (j-1)*(nx/2+1) + i 
-           IF ( (f-spc_param(1))*(spc_param(2)-f) .LT. C_0_R ) a(ip,k) = C_0_R
-        ENDDO
-        
-     ENDDO
-  ENDDO
-
-  RETURN
-END SUBROUTINE TRANS_CUTOFF_2D
-
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Spectral filter with smooth (error-function) transition. 
-!# The error function filter-response function is imposed 
-!# in logarithmic wavenumber space. 
-!# 
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!#    spc_param(1) physical frequency for transition 
-!#                 > 0: High-pass 
-!#                 < 0: Low-pass
-!#    spc_param(2) width of transition in logarithmic wavenumber space
-!# 
-!########################################################################
-SUBROUTINE TRANS_ERF_2D(nx,ny,nz, spc_param, a)
-
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : g
-#ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
-#endif
-
-  IMPLICIT NONE
-
-  TINTEGER nx,ny,nz
-  TREAL,    DIMENSION(*)                                  :: spc_param
-  TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz), INTENT(INOUT) :: a
-  
-! -----------------------------------------------------------------------
-  TINTEGER i,j,k, iglobal,kglobal, ip 
-  TINTEGER sign_pass, off_pass 
-  TREAL fi,fk,f,fcut_log,damp
-
-! ####################################################################### 
-  IF ( spc_param(1) .GT. 0 ) THEN; 
-     sign_pass = 1.   ! HIGHPASS
-     off_pass  = 0.
-  ELSE                ! spc_param(1) <= 0 
-     sign_pass =-1.   ! LOWPASS  
-     off_pass  = 1.
-  ENDIF
-
-  fcut_log = LOG(spc_param(1)) 
-  DO k = 1,nz
-#ifdef USE_MPI
-     kglobal = k + ims_offset_k
-#else
-     kglobal = k
-#endif
-     IF ( kglobal .LE. g(3)%size/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
-     ELSE;                                    fk =-M_REAL(g(3)%size+1-kglobal)/g(3)%scale; ENDIF
-
-     DO i = 1,nx/2+1
-#ifdef USE_MPI
-        iglobal = i + ims_offset_i/2
-#else
-        iglobal = i
-#endif
-        fi = M_REAL(iglobal-1)/g(1)%scale
-        
-        f = SQRT(fi**2 + fk**2) 
-        IF ( f .GT. 0 )  THEN;  damp = (ERF((LOG(f) - fcut_log)/spc_param(2)) + 1.)/2.
-        ELSE ;                  damp = C_0_R; 
-        ENDIF
-
-        ! Set to high- or low-pass
-        ! high-pass: damp = 0.0 + damp 
-        ! low-pass:  damp = 1.0 - damp 
-        damp = off_pass + sign_pass*damp  
-
-        ! apply filter
-        DO j = 1,ny
-           ip = (j-1)*(nx/2+1) + i 
-           a(ip,k) = damp*a(ip,k)
-        ENDDO
-     ENDDO
-  ENDDO
-
-  RETURN
-END SUBROUTINE TRANS_ERF_2D
