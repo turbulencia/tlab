@@ -279,7 +279,7 @@ Oz direction (MPI parallel mode).\\
 (incompressible mode). The symbol {\tt \#} is the number of the scalar.\\
 \tt Scalar\#Imax & \tt none, dirichlet, neumman & Scalar boundary condition at $x_\text{max}$
 (incompressible mode). The symbol {\tt \#} is the number of the scalar.\\
-\multicolumn{3}{l}{Similarly in the other directions {\tt I} and {\tt J}.}\\
+\multicolumn{3}{l}{\it Similarly in the other directions $Oy$ and $Oz$.}\\
 \multicolumn{3}{l}{Compressible-case information to be filled.}\\
 \end{longtable}
 
@@ -340,7 +340,7 @@ of the profile, relative to the total scale, equation~(\ref{equ:profile}).\\
 equation~(\ref{equ:profile}).\\
 \tt DiamVelocity  & {\em value} & Reference profile diameter (jet mode).\\ 
 %
-\multicolumn{3}{l}{Similarly for density or temperature}\\
+\multicolumn{3}{l}{\it Similarly for density or temperature}\\
 %
 \end{longtable}
 
@@ -446,10 +446,12 @@ initialize the thermodynamic fields.\\
   % 
   \multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Filter]}\\
   % 
-  \tt Type & \tt None, Compact, Explicit6, Explicit4, Adm, SpectralBand, SpectralErf, Alpha, TopHat & Type of domain filter used in simulation (if any) and postprocessing.\\
+  \tt Type & \tt None, Adm, Alpha, TopHat, Compact, Explicit6, Explicit4, SpectralBand, SpectralErf & Type of filter used in simulation (if any) and postprocessing.\\
   \tt Parameters & {\em value1, value2, ...} & Values definining the filter, e.g., $\alpha$ in compact, or $\Delta$ in tophat.\\ 
-  \tt ActiveX & \tt yes,no & Active or not in direction $Ox$.\\ 
-\multicolumn{3}{l}{Similarly in the other directions $Oy$ and $Oz$.}\\
+  \tt ActiveY & \tt yes,no & Active or not in direction $Oy$.\\ 
+  \tt BcsJmin & \tt Biased, Free, Solid, Zero & Type of boundary condition at $y_\text{min}$. See section~\ref{sec:filters}.\\ 
+  \tt BcsJmax & \tt Biased, Free, Solid, Zero & Type of boundary condition at $y_\text{max}$. See section~\ref{sec:filters}.\\ 
+\multicolumn{3}{l}{\it Similarly in the other directions $Ox$ and $Oz$.}\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

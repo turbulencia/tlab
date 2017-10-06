@@ -49,7 +49,7 @@ $\{s_j=h_0(j-1):\, j = 1,\ldots,n\}$.
 
 In case of a hyperbolic tangent (i.e. {\tt opts=5}), the mapping is
 \begin{equation}
-\frac{dx}{ds} = 1 + \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
+\frac{\mathrm{d}x}{\mathrm{d}s} = 1 + \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
 \end{equation}
 that is, the grid step $\Delta x =dx/dj$ varies between the uniform values $h_0$
 and $h_1$, the transition occurring at $s=s_{t1}$ and over a length $\delta_1$. The
@@ -76,10 +76,10 @@ mapping is then
 \end{equation}
 
 In case of {\tt opts=6} a hyperbolic tangent variation of the stretching factor
-$f=d/dx (\Delta x)$ (so defined, $f+1$ an approximation to the ratio $(\Delta x)
+$f=\mathrm{d}/\mathrm{d}x (\Delta x)$ (so defined, $f+1$ an approximation to the ratio $(\Delta x)
 _{j+1}/(\Delta x) _{j} $) is imposed by solving the linear equation
 \begin{equation}
-\frac{d^2x}{ds^2} - (f/h_0)\frac{dx}{ds} = 0 \;,
+\frac{\mathrm{d}^2x}{\mathrm{d}s^2} - (f/h_0)\frac{\mathrm{d}x}{\mathrm{d}s} = 0 \;,
 \end{equation}
 where $f$ is given by
 \begin{equation}
@@ -90,7 +90,7 @@ ${\tt vals}$. The non-dimensional parameter $f$ then varies from $0$ to $\Delta
 f_1$; values smaller that $0.1$ are recommended (less that 10\% stretching). A
 first integral of this problem leads to
 \begin{equation}
-\frac{dx}{ds} =
+\frac{\mathrm{d}x}{\mathrm{d}s} =
 \left[1+\exp\left(\frac{s-s_{t1}}{\delta_1}\right)\right]^{\delta_1(\Delta f_1/h_0)} \;.
 \end{equation}
 This equation for $x(s)$ needs to be solved numerically, but already shows that
@@ -104,7 +104,7 @@ As before, two transitions are possible if the {\tt opts} record is set to $6,2$
 \end{equation}
 which implies
 \begin{equation}
-  \frac{dx}{ds} =
+  \frac{\mathrm{d}x}{\mathrm{d}s} =
   \left[1+\exp\left(\frac{s-s_{t1}}{\delta_1}\right)\right]^{\delta_1(\Delta f_1/h_0)}
   \left[1+\exp\left(\frac{s-s_{t2}}{\delta_2}\right)\right]^{\delta_2(\Delta f_2/h_0)}\;.
 \end{equation}
