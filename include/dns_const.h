@@ -95,20 +95,20 @@
 #define DNS_BUFFER_BOTH     3
 
 ! Filters
-#define DNS_FILTER_NONE     0
-#define DNS_FILTER_COMPACT  1
-#define DNS_FILTER_6E       2
-#define DNS_FILTER_4E       3
-#define DNS_FILTER_ADM      4
-#define DNS_FILTER_ALPHA    5
-#define DNS_FILTER_BAND     6
-#define DNS_FILTER_ERF      7
-#define DNS_FILTER_TOPHAT   8
+#define DNS_FILTER_NONE      0
+#define DNS_FILTER_COMPACT   1
+#define DNS_FILTER_6E        2
+#define DNS_FILTER_4E        3
+#define DNS_FILTER_ADM       4
+#define DNS_FILTER_HELMHOLTZ 5
+#define DNS_FILTER_BAND      6
+#define DNS_FILTER_ERF       7
+#define DNS_FILTER_TOPHAT    8
 
-#define DNS_FILTER_BCS_BIASED 0
-#define DNS_FILTER_BCS_ZERO   1
-#define DNS_FILTER_BCS_FREE   2
-#define DNS_FILTER_BCS_SOLID  3
+#define DNS_FILTER_BCS_ZERO     1
+#define DNS_FILTER_BCS_FREE     2
+#define DNS_FILTER_BCS_SOLID    3
+#define DNS_FILTER_BCS_PERIODIC 4
 
 ! Mean profiles
 #define PROFILE_NONE         0

@@ -595,33 +595,32 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[Filter]')
-  CALL IO_WRITE_ASCII(bakfile, '#Type=<none/compact/explicit6/explicit4/adm/alpha/SpectralBand/SpectralErf/tophat>')
+  CALL IO_WRITE_ASCII(bakfile, '#Type=<none/compact/explicit6/explicit4/adm/helmholtz/SpectralBand/SpectralErf/tophat>')
   CALL IO_WRITE_ASCII(bakfile, '#Parameters=<values>')
   CALL IO_WRITE_ASCII(bakfile, '#Step=<filter step>')
   CALL IO_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
   CALL IO_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
   CALL IO_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
+  CALL IO_WRITE_ASCII(bakfile, '#BcsJmin=<free,solid,zero>')
+  CALL IO_WRITE_ASCII(bakfile, '#BcsJmax=<free,solid,zero>')
 
   FilterDomain(:)%size       = g(:)%size
   FilterDomain(:)%periodic   = g(:)%periodic
   FilterDomain(:)%uniform    = g(:)%uniform
-  FilterDomain(:)%inb_filter = 5          ! default
-
+  FilterDomain(:)%inb_filter = 5        ! default array size
+  default                    = 'free'   ! default boundary condition
+  
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'Type', 'none', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; FilterDomain(:)%type = DNS_FILTER_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; FilterDomain(:)%type = DNS_FILTER_COMPACT
      FilterDomain(:)%parameters(1) = 0.49 ! default alpha value
      FilterDomain(:)%inb_filter    = 6
-     FilterDomain(:)%BcsMin        = DNS_FILTER_BCS_BIASED
-     FilterDomain(:)%BcsMax        = DNS_FILTER_BCS_BIASED
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit6' ) THEN; FilterDomain(:)%type = DNS_FILTER_6E  
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit4' ) THEN; FilterDomain(:)%type = DNS_FILTER_4E  
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'adm'       ) THEN; FilterDomain(:)%type = DNS_FILTER_ADM
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'tophat'    ) THEN; FilterDomain(:)%type = DNS_FILTER_TOPHAT
      FilterDomain(:)%parameters(1) = 2    ! default filter size (in grid-step units)
      FilterDomain(:)%parameters(2) = 1    ! default number of repetitions
-     FilterDomain(:)%BcsMin        = DNS_FILTER_BCS_FREE
-     FilterDomain(:)%BcsMax        = DNS_FILTER_BCS_FREE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'spectralcutoff' ) THEN; FilterDomain(:)%type = DNS_FILTER_BAND
      ! The frequency interval is (Parameter1, Parameter2)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'spectralerf'    ) THEN; FilterDomain(:)%type = DNS_FILTER_ERF
@@ -629,10 +628,33 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ! >0: high-pass filter
      ! <0; low-pass filter
      ! Parameter2 is the characteristic width--in log units (relative to domain size)'   
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'helmholtz'      ) THEN; FilterDomain(:)%type = DNS_FILTER_HELMHOLTZ
+     FilterDomain(:)%parameters(1) = 2    ! default filter size (in grid-step units)
+     default                       = 'zero'
   ELSE
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Filter.Type.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'Filter', 'BcsJmin', TRIM(ADJUSTL(default)), sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'zero'    ) THEN; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_ZERO
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'free'    ) THEN; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_FREE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'solid'   ) THEN; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_SOLID
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'periodic') THEN; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_PERIODIC
+  ELSE
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Filter.BcsJmin.')
+     CALL DNS_STOP(DNS_ERROR_OPTION)
+  ENDIF     
+
+  CALL SCANINICHAR(bakfile, inifile, 'Filter', 'BcsJmax', TRIM(ADJUSTL(default)), sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'zero'    ) THEN; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_ZERO
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'free'    ) THEN; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_FREE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'solid'   ) THEN; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_SOLID
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'periodic') THEN; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_PERIODIC
+  ELSE
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Filter.BcsJmax.')
+     CALL DNS_STOP(DNS_ERROR_OPTION)
+  ENDIF     
 
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'Parameters', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
@@ -645,10 +667,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveX', 'yes', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(1)%type = DNS_FILTER_NONE 
-     
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveY', 'yes', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(2)%type = DNS_FILTER_NONE
-
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveZ', 'yes', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(3)%type = DNS_FILTER_NONE
 
@@ -659,6 +679,10 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
 ! Further control
   DO ig = 1,3
+     IF ( FilterDomain(ig)%periodic ) THEN
+        FilterDomain(ig)%BcsMin = DNS_FILTER_BCS_PERIODIC
+        FilterDomain(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
+     ENDIF
      IF ( FilterDomain(ig)%size .EQ. 1 ) FilterDomain(ig)%type = DNS_FILTER_NONE
      IF ( FilterDomain(ig)%type .EQ. DNS_FILTER_TOPHAT ) THEN
         FilterDomain(:)%inb_filter = INT(FilterDomain(:)%parameters(1)) +1
@@ -670,7 +694,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDDO
   
 #ifdef USE_MPI
-  FilterDomain(1)%mpitype = DNS_MPI_I_PARTIAL 
+  FilterDomain(1)%mpitype = DNS_MPI_I_PARTIAL
   FilterDomain(3)%mpitype = DNS_MPI_K_PARTIAL
 #endif
 

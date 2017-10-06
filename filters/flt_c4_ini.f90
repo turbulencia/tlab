@@ -1,14 +1,6 @@
 #include "types.h"
   
 !########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!# 2009/01/14 - J.P. Mellado
-!#              Cleaned
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# 4th-Order Compact Filter from Lele [J. Comp. Phys., V103, 1992]

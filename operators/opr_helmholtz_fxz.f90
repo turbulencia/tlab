@@ -113,10 +113,8 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, ibc, alpha,&
 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 ! -----------------------------------------------------------------------
      IF      ( ibc .EQ. 3 ) THEN ! Neumman BCs
-!        CALL FDE_BVP_REGULAR_NN(imode_fdm, ny,i2, lambda, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
         CALL FDE_BVP_REGULAR_NN(g(2)%mode_fdm, ny,i2, lambda, g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
      ELSE IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
-!        CALL FDE_BVP_REGULAR_DD(imode_fdm, ny,i2, lambda, dy, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
         CALL FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny,i2, lambda, g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
      ELSE
         CALL IO_WRITE_ASCII(efile,'OPR_HELMHOLT_FXZ. Undeveloped BCs.')

@@ -1,4 +1,5 @@
 #include "types.h"
+#include "dns_const.h"
 
 !########################################################################
 !# DESCRIPTION
@@ -29,7 +30,7 @@ SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
   nx = INT(f%parameters(1)) ! delta
 
 ! #######################################################################
-  IF ( f%uniform ) THEN
+  IF ( f%uniform ) THEN ! Only valid for free bcs
      IF ( .NOT. f%periodic ) THEN ! I only need info for the two nodes next to the boundary
         DO i = 1,nx/2
            im = nx/2-i+1
@@ -79,20 +80,20 @@ SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
         ENDDO
      ELSE
         DO i = 1,nx/2
-           wrk1d(i,3) = wrk1d(1,1)*M_REAL(nx/2-i+1)
+           wrk1d(i,3) = wrk1d(1,1) *M_REAL(nx/2-i+1)
            DO ii = 1,i+nx/2-1
-              wrk1d(i,3) = wrk1d(i,3)+wrk1d(ii,1)
+              wrk1d(i,3) = wrk1d(i,3) +wrk1d(ii,1)
            ENDDO
         ENDDO
         DO i = 1+nx/2,f%size-nx/2
            DO ii = i-nx/2,i+nx/2-1
-              wrk1d(i,3) = wrk1d(i,3)+wrk1d(ii,1)
+              wrk1d(i,3) = wrk1d(i,3) +wrk1d(ii,1)
            ENDDO
         ENDDO
         DO i = f%size-nx/2+1,f%size
-           wrk1d(i,3) = wrk1d(f%size,1)*M_REAL(nx/2-(f%size-i))
+           wrk1d(i,3) = wrk1d(f%size,1) *M_REAL(nx/2-(f%size-i))
            DO ii = i-nx/2,f%size-1
-              wrk1d(i,3) = wrk1d(i,3)+wrk1d(ii,1)
+              wrk1d(i,3) = wrk1d(i,3) +wrk1d(ii,1)
            ENDDO
         ENDDO
      ENDIF
@@ -125,8 +126,10 @@ SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
      ENDDO
 
 ! -----------------------------------------------------------------------
-! modification in case of free boundary
-     IF ( .NOT. f%periodic ) THEN
+! boundary treatment
+     SELECT CASE( f%BcsMin )
+
+     CASE( DNS_FILTER_BCS_FREE ) 
         DO i = 1,nx/2
            im = nx/2-i+1
            dum = C_0_R
@@ -136,20 +139,37 @@ SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
            ic = nx/2-i+2
            ip = (i-1)*(nx+1) + ic
            f%coeffs(ip,1) = f%coeffs(ip,1) + &
-                C_05_R*(wrk1d(1,2)*(dum-C_1_R) + &
-                wrk1d(1,1)*M_REAL(im+1))/wrk1d(i,3)
+                C_05_R*( wrk1d(1,2)*(dum     -C_1_R) +wrk1d(1,1)*M_REAL(im+1) )/wrk1d(i,3)
            ic = nx/2-i+3
            ip = (i-1)*(nx+1) + ic
            f%coeffs(ip,1) = f%coeffs(ip,1) - &
-                C_05_R*(wrk1d(1,2)*(dum-M_REAL(im)) +&
-                wrk1d(1,1)*M_REAL(im))/wrk1d(i,3)
-           ! pad with ceros
+                C_05_R*( wrk1d(1,2)*(dum-M_REAL(im)) +wrk1d(1,1)*M_REAL(im)   )/wrk1d(i,3)
+! pad with ceros
            DO ic=1,nx/2-i+1
               ip = (i-1)*(nx+1) + ic
               f%coeffs(ip,1) = C_0_R
            ENDDO
         ENDDO
 
+     CASE( DNS_FILTER_BCS_SOLID )
+        DO i = 1,nx/2
+           im = nx/2-i+1
+           ic = nx/2-i+2
+           ip = (i-1)*(nx+1) + ic
+           f%coeffs(ip,1) = C_05_R *M_REAL(2*im+1) *wrk1d(1,1) /wrk1d(i,3)
+! pad with ceros
+           DO ic=1,nx/2-i+1
+              ip = (i-1)*(nx+1) + ic
+              f%coeffs(ip,1) = C_0_R
+           ENDDO
+        ENDDO
+        
+     END SELECT
+        
+! -----------------------------------------------------------------------
+     SELECT CASE( f%BcsMax )
+        
+     CASE( DNS_FILTER_BCS_FREE ) 
         DO i = f%size-nx/2+1,f%size
            im = i-f%size+nx/2
            dum = C_0_R
@@ -159,22 +179,33 @@ SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
            ic = nx+1-im-1
            ip = (i-1)*(nx+1) + ic
            f%coeffs(ip,1) = f%coeffs(ip,1) - &
-                C_05_R*(wrk1d(f%size,2)*(dum-M_REAL(im)) +&
-                wrk1d(f%size,1)*M_REAL(im))/wrk1d(i,3)
+                C_05_R*( wrk1d(f%size,2) *(dum-M_REAL(im)) +wrk1d(f%size,1) *M_REAL(im  ) )/ wrk1d(i,3)
            ic = nx+1-im
            ip = (i-1)*(nx+1) + ic
            f%coeffs(ip,1) = f%coeffs(ip,1) + &
-                C_05_R*(wrk1d(f%size,2)*(dum-C_1_R) + &
-                wrk1d(f%size,1)*M_REAL(im+1))/wrk1d(i,3)
-          ! pad with ceros
+                C_05_R*( wrk1d(f%size,2) *(dum-C_1_R     ) +wrk1d(f%size,1) *M_REAL(im+1) )/ wrk1d(i,3)
+! pad with ceros
            DO ic=nx+1-im+1,nx+1
               ip = (i-1)*(nx+1) + ic
               f%coeffs(ip,1) = C_0_R
            ENDDO
         ENDDO
         
-     ENDIF
-
+     CASE( DNS_FILTER_BCS_SOLID )
+        DO i = f%size-nx/2+1,f%size
+           im = i -f%size +nx/2
+           ic = nx +1 -im
+           ip = (i-1)*(nx+1) + ic
+           f%coeffs(ip,1) = C_05_R  *M_REAL(2*im+1) *wrk1d(f%size,1) /wrk1d(i,3)
+! pad with ceros
+           DO ic=nx+1-im+1,nx+1
+              ip = (i-1)*(nx+1) + ic
+              f%coeffs(ip,1) = C_0_R
+           ENDDO
+        ENDDO
+        
+     END SELECT
+     
   ENDIF
 
   RETURN

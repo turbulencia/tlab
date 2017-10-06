@@ -19,25 +19,33 @@ SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
   TREAL,           DIMENSION(ny,*),              INTENT(INOUT) :: wrk1d
   TREAL,           DIMENSION(nx,nz,2),           INTENT(INOUT) :: wrk2d
   TREAL,           DIMENSION(isize_txc_field,*), INTENT(INOUT) :: txc ! size 2 if ADM
-                                                                      ! size 3 if ALPHA
-                                                                      ! size 4 if SPECTRAL
+                                                                      ! size 4 if SPECTRAL, HELMHOLTZ
 ! -------------------------------------------------------------------
   TREAL dummy
-  TINTEGER k
+  TINTEGER k, flag_bcs, n,nmax
   
 ! ###################################################################
 ! Global filters
   SELECT CASE( f(1)%type )
 
-  CASE( DNS_FILTER_ALPHA                  )
-     DO k = 1,nz
-        wrk2d(:,k,1) = u(:,1, k)
-        wrk2d(:,k,2) = u(:,ny,k)
-     ENDDO
-     u = u *f(1)%parameters(2)
-     CALL OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, i0, f(1)%parameters(2),&
-          u, txc(1,1),txc(1,2), &
-          wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),txc(1,3))
+  CASE( DNS_FILTER_HELMHOLTZ )
+     IF      ( f(2)%BcsMin .EQ. DNS_FILTER_BCS_ZERO  ) THEN ! Dirichlet BCs
+        DO k = 1,nz
+           wrk2d(:,k,1) = u(:,1, k)
+           wrk2d(:,k,2) = u(:,ny,k)
+        ENDDO
+        flag_bcs = 0
+     ELSE IF ( f(2)%BcsMin .EQ. DNS_FILTER_BCS_SOLID ) THEN ! Neumann BCs
+        wrk2d(:,:,1) = C_0_R
+        wrk2d(:,:,2) = C_0_R
+        flag_bcs = 3
+     ENDIF
+     
+     txc(1:nx*ny*nz,1) = u(1:nx*ny*nz,1,1) *f(1)%parameters(2) ! I need extended arrays
+     CALL OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, flag_bcs, f(1)%parameters(2),&
+          txc(1,1), txc(1,2),txc(1,3), &
+          wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),txc(1,4))
+     u(1:nx*ny*nz,1,1) = txc(1:nx*ny*nz,1)
      
   CASE( DNS_FILTER_BAND )
      dummy = C_1_R /M_REAL( f(1)%size *f(3)%size )
@@ -59,17 +67,33 @@ SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
      
 ! ###################################################################
 ! Directional filters
-     IF ( f(1)%type .NE. DNS_FILTER_NONE ) THEN
+     IF      ( f(1)%type .EQ. DNS_FILTER_NONE   ) THEN; nmax = 0;
+     ELSE IF ( f(1)%type .EQ. DNS_FILTER_TOPHAT ) THEN; nmax = INT(f(1)%parameters(2));
+     ELSE;                                              nmax = 1; ENDIF
+        DO n = 1,nmax
         CALL OPR_FILTER_X(nx,ny,nz, f(1), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
-     ENDIF
+     END DO
      
-     IF ( f(2)%type .NE. DNS_FILTER_NONE ) THEN
+     IF      ( f(2)%type .EQ. DNS_FILTER_NONE   ) THEN; nmax = 0;
+     ELSE IF ( f(2)%type .EQ. DNS_FILTER_TOPHAT ) THEN; nmax = INT(f(2)%parameters(2));
+     ELSE;                                              nmax = 1; ENDIF
+        DO n = 1,nmax
         CALL OPR_FILTER_Y(nx,ny,nz, f(2), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
-     ENDIF
-     
-     IF ( f(3)%type .NE. DNS_FILTER_NONE ) THEN
+     END DO
+
+     IF      ( f(3)%type .EQ. DNS_FILTER_NONE   ) THEN; nmax = 0;
+     ELSE IF ( f(3)%type .EQ. DNS_FILTER_TOPHAT ) THEN; nmax = INT(f(3)%parameters(2));
+     ELSE;                                              nmax = 1; ENDIF
+     DO n = 1,nmax
         CALL OPR_FILTER_Z(nx,ny,nz, f(3), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
-     ENDIF
+     END DO
+     ! IF ( f(2)%type .NE. DNS_FILTER_NONE ) THEN
+     !    CALL OPR_FILTER_Y(nx,ny,nz, f(2), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
+     ! ENDIF
+     
+     ! IF ( f(3)%type .NE. DNS_FILTER_NONE ) THEN
+     !    CALL OPR_FILTER_Z(nx,ny,nz, f(3), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
+     ! ENDIF
 
   END SELECT
   

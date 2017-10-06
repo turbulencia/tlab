@@ -1,13 +1,6 @@
 #include "types.h"
+#include "dns_const.h"
 
-!########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!# 2009/01/14 - J.P. Mellado
-!#              Cleaned
-!#
 !########################################################################
 !# DESCRIPTION
 !#
@@ -16,16 +9,16 @@
 !# uf_i + alpha*(uf_i-1 + uf_i+1) = a*u_i + b*(u_i-1 + u_i+1) + c*(u_i-2 + u_i+2)
 !#
 !########################################################################
-SUBROUTINE FLT_C4(imax,jkmax, periodic, i1zero, imxzero, cxi, u, uf, txi)
+SUBROUTINE FLT_C4(imax,jkmax, periodic, bcsimin, bcsimax, cxi, u, uf, txi)
 
   IMPLICIT NONE
 
   LOGICAL periodic
-  TINTEGER imax, jkmax, i1zero, imxzero
-  TREAL, DIMENSION(jkmax,imax) :: u, uf
-
-  TREAL txi(imax,5)
-  TREAL cxi(imax,6)
+  TINTEGER,                     INTENT(IN)    :: imax,jkmax, bcsimin, bcsimax
+  TREAL, DIMENSION(jkmax,imax), INTENT(IN)    :: u
+  TREAL, DIMENSION(jkmax,imax), INTENT(OUT)   :: uf
+  TREAL, DIMENSION(imax,6),     INTENT(IN)    :: cxi
+  TREAL, DIMENSION(imax,5),     INTENT(INOUT) :: txi
 
 ! -----------------------------------------------------------------------
   TINTEGER jk, i
@@ -33,8 +26,8 @@ SUBROUTINE FLT_C4(imax,jkmax, periodic, i1zero, imxzero, cxi, u, uf, txi)
 
 ! ###################################################################
   vmult1 = C_1_R; vmultmx = C_1_R
-  IF ( i1zero  .EQ. 1 ) vmult1  = C_0_R ! No filter at i=1
-  IF ( imxzero .EQ. 1 ) vmultmx = C_0_R ! No filter at i=imax
+  IF ( bcsimin .EQ. DNS_FILTER_BCS_ZERO ) vmult1  = C_0_R ! No filter at i=1
+  IF ( bcsimax .EQ. DNS_FILTER_BCS_ZERO ) vmultmx = C_0_R ! No filter at i=imax
 
 ! #######################################################################
 ! Set up the left hand side and factor the matrix
@@ -109,12 +102,12 @@ SUBROUTINE FLT_C4(imax,jkmax, periodic, i1zero, imxzero, cxi, u, uf, txi)
              + cxi(imax,1)*u(jk,imax-4)
      ENDDO
 
-     IF ( i1zero  .EQ. 1 ) THEN ! No filter at i=1
+     IF ( bcsimin .EQ. DNS_FILTER_BCS_ZERO ) THEN ! No filter at i=1
         DO jk=1, jkmax
            uf(jk,   1) = u(jk,   1)
         ENDDO
      ENDIF
-     IF ( imxzero .EQ. 1 ) THEN ! No filter at i=1
+     IF ( bcsimax .EQ. DNS_FILTER_BCS_ZERO ) THEN ! No filter at i=1
         DO jk=1, jkmax
            uf(jk,imax) = u(jk,imax) 
         ENDDO

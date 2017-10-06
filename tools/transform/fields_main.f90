@@ -40,9 +40,6 @@ PROGRAM TRANSFIELDS
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: wrk1d, wrk2d
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk3d
 
-! Filters
-  ! TREAL,           DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: filter_x, filter_y, filter_z
-
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
@@ -318,7 +315,7 @@ PROGRAM TRANSFIELDS
         CASE( DNS_FILTER_COMPACT )
            CALL FLT_C4_INI(             g(ig)%jac,   FilterDomain(ig))
         
-        CASE( DNS_FILTER_ALPHA   )
+        CASE( DNS_FILTER_HELMHOLTZ )
            FilterDomain(ig)%parameters(2) =-C_1_R /( FilterDomain(ig)%parameters(1) *g(ig)%jac(1,1) )**2
            
         CASE( DNS_FILTER_TOPHAT  )

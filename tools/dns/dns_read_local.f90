@@ -815,8 +815,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; FilterInflow(:)%type = DNS_FILTER_COMPACT
      FilterInflow(:)%parameters(1) = 0.49 ! default alpha value
      FilterInflow(:)%inb_filter    = 6
-     FilterInflow(:)%BcsMin        = DNS_FILTER_BCS_BIASED
-     FilterInflow(:)%BcsMax        = DNS_FILTER_BCS_BIASED
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'tophat'    ) THEN; FilterInflow(:)%type = DNS_FILTER_TOPHAT
      FilterInflow(:)%parameters(1) = 2    ! default filter size (in grid-step units)
      FilterInflow(:)%parameters(2) = 1    ! default number of repetitions
