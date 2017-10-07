@@ -180,7 +180,7 @@ where $\epsilon D_1^{-2}D_2$ is a diagonal matrix and could be precomputed. This
 
 See file {\tt dns/opr\_filter}. The kernels of the specific algorithms are in the library {\tt filters}. Used in previous versions for long-term stability, filters are now mainly used for post-processing.
 
-There are global filters and directional filters. Global filters are 2D spectral filters in the horizontal plane, and Helmholtz-based filters. Helmholtz-based filters are defined by
+There are global filters and directional filters. Global filters are spectral filters in the horizontal plane, and Helmholtz-based filters. Band spectral filters remove the energy content outside a band $[\alpha_1,\alpha_2]$ in frequency space. Erf spectral filters are low- and high-pass filters defined at $\alpha_1$ with a thickness $\alpha_2$ in the logarithm of the frequency ($\alpha_1>0$ for high-pass filter, and $\alpha_1<0$ for low-pass filter). Helmholtz-based filters are defined by
 \begin{equation}
   (1-\alpha^2\Delta) f = s \;,
 \end{equation}

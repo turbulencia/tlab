@@ -22,9 +22,16 @@ SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
                                                                       ! size 4 if SPECTRAL, HELMHOLTZ
 ! -------------------------------------------------------------------
   TREAL dummy
-  TINTEGER k, flag_bcs, n,nmax
+  TINTEGER k, flag_bcs, n,nmax, bcs(2,2), nxy, ip_b, ip_t
+
+  TREAL, DIMENSION(:), POINTER :: p_bcs
+  TARGET txc
   
 ! ###################################################################
+  nxy = nx*ny
+
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+
 ! Global filters
   SELECT CASE( f(1)%type )
 
@@ -36,6 +43,15 @@ SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
         ENDDO
         flag_bcs = 0
      ELSE IF ( f(2)%BcsMin .EQ. DNS_FILTER_BCS_NEUMANN   ) THEN
+        CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), u,txc(1,1), txc(1,2), wrk2d,txc(1,2))
+        ip_b =             1
+        ip_t = nx*(ny-1) + 1
+        DO k = 1,nz
+           p_bcs => txc(ip_b:,1); wrk2d(1:nx,k,1) = p_bcs(1:nx); ip_b = ip_b + nxy ! bottom
+           p_bcs => txc(ip_t:,1); wrk2d(1:nx,k,2) = p_bcs(1:nx); ip_t = ip_t + nxy ! top
+        ENDDO
+        flag_bcs = 3
+     ELSE IF ( f(2)%BcsMin .EQ. DNS_FILTER_BCS_SOLID    ) THEN
         wrk2d(:,:,1) = C_0_R
         wrk2d(:,:,2) = C_0_R
         flag_bcs = 3

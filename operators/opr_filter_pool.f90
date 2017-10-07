@@ -34,7 +34,7 @@ SUBROUTINE OPR_FILTER_INITIALIZE(g, f, wrk1d)
      CALL FLT_C4_INI(g%jac, f)
      
   CASE( DNS_FILTER_HELMHOLTZ )
-     f%parameters(2) =-C_1_R /( f%parameters(1) *g%jac(1,1) )**2
+     f%parameters(2) =-C_1_R /( f%parameters(1) )**2
      
   END SELECT
   
