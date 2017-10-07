@@ -29,13 +29,13 @@ SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
   SELECT CASE( f(1)%type )
 
   CASE( DNS_FILTER_HELMHOLTZ )
-     IF      ( f(2)%BcsMin .EQ. DNS_FILTER_BCS_ZERO  ) THEN ! Dirichlet BCs
+     IF      ( f(2)%BcsMin .EQ. DNS_FILTER_BCS_DIRICHLET ) THEN
         DO k = 1,nz
            wrk2d(:,k,1) = u(:,1, k)
            wrk2d(:,k,2) = u(:,ny,k)
         ENDDO
         flag_bcs = 0
-     ELSE IF ( f(2)%BcsMin .EQ. DNS_FILTER_BCS_SOLID ) THEN ! Neumann BCs
+     ELSE IF ( f(2)%BcsMin .EQ. DNS_FILTER_BCS_NEUMANN   ) THEN
         wrk2d(:,:,1) = C_0_R
         wrk2d(:,:,2) = C_0_R
         flag_bcs = 3
@@ -87,13 +87,6 @@ SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
      DO n = 1,nmax
         CALL OPR_FILTER_Z(nx,ny,nz, f(3), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
      END DO
-     ! IF ( f(2)%type .NE. DNS_FILTER_NONE ) THEN
-     !    CALL OPR_FILTER_Y(nx,ny,nz, f(2), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
-     ! ENDIF
-     
-     ! IF ( f(3)%type .NE. DNS_FILTER_NONE ) THEN
-     !    CALL OPR_FILTER_Z(nx,ny,nz, f(3), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
-     ! ENDIF
 
   END SELECT
   

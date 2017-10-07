@@ -308,24 +308,8 @@ PROGRAM DNS
 ! ###################################################################
 ! Initialize filters
 ! ###################################################################  
-  DO ig = 1,3     
-     ALLOCATE( FilterDomain(ig)%coeffs( FilterDomain(ig)%size, FilterDomain(ig)%inb_filter))
-     
-     SELECT CASE( FilterDomain(ig)%type )
-        
-     CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
-        CALL FLT_E4_INI(g(ig)%scale, g(ig)%nodes, FilterDomain(ig))
-        
-     CASE( DNS_FILTER_COMPACT )
-        CALL FLT_C4_INI(             g(ig)%jac,   FilterDomain(ig))
-        
-     CASE( DNS_FILTER_HELMHOLTZ )
-        FilterDomain(ig)%parameters(2) =-C_1_R /( FilterDomain(ig)%parameters(1) *g(ig)%jac(1,1) )**2
-           
-     CASE( DNS_FILTER_TOPHAT )
-        CALL FLT_T1_INI(g(ig)%scale, g(ig)%nodes, FilterDomain(ig), wrk1d)
-        
-     END SELECT
+  DO ig = 1,3
+     CALL OPR_FILTER_INITIALIZE( g(ig), FilterDomain(ig), wrk1d )
   END DO
 
 ! ####################################################################

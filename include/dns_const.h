@@ -105,10 +105,13 @@
 #define DNS_FILTER_ERF       7
 #define DNS_FILTER_TOPHAT    8
 
-#define DNS_FILTER_BCS_ZERO     1
-#define DNS_FILTER_BCS_FREE     2
-#define DNS_FILTER_BCS_SOLID    3
-#define DNS_FILTER_BCS_PERIODIC 4
+#define DNS_FILTER_BCS_PERIODIC  0
+#define DNS_FILTER_BCS_BIASED    1
+#define DNS_FILTER_BCS_FREE      2
+#define DNS_FILTER_BCS_SOLID     3
+#define DNS_FILTER_BCS_DIRICHLET 4
+#define DNS_FILTER_BCS_NEUMANN   5
+#define DNS_FILTER_BCS_ZERO      6
 
 ! Mean profiles
 #define PROFILE_NONE         0

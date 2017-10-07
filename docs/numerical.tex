@@ -180,11 +180,11 @@ where $\epsilon D_1^{-2}D_2$ is a diagonal matrix and could be precomputed. This
 
 See file {\tt dns/opr\_filter}. The kernels of the specific algorithms are in the library {\tt filters}. Used in previous versions for long-term stability, filters are now mainly used for post-processing.
 
-There are global filters and directional filters. Global filters are 2D spectral filters in the horizontal plane, and Helmholtz-based filters. Helmhotz-based filters are defined by
+There are global filters and directional filters. Global filters are 2D spectral filters in the horizontal plane, and Helmholtz-based filters. Helmholtz-based filters are defined by
 \begin{equation}
   (1-\alpha^2\Delta) f = s \;,
 \end{equation}
-where $s$ is the original field, $f$ is the filtered field, and $\alpha$ is the filter size. This equation is transformed into the Helmholtz equation and solved as explained in section~\ref{sec:helmholtz}. This filter is motivated by the Navier-Stokes-alpha model \citep{Foias:2001}.
+where $s$ is the original field, $f$ is the filtered field, and $\alpha$ is the filter size. This equation is transformed into the Helmholtz equation and solved as explained in section~\ref{sec:helmholtz}. This filter is motivated by the Navier-Stokes-alpha model \citep{Foias:2001}. Along the vertical non-periodic direction, we can impose Dirichlet or Neumann boundary conditions, where the former option maintains the value of the field at the boundary and the latter option imposes a zero gradient.
 
 Directional filters are a sequence of one-dimensional filters in each direction. There are compact filters, which are implemented following \cite{Lele:1992}, and top-hat filters (or box filter), which are implemented using the trapezoidal rule to discretize the integral.
 
@@ -215,13 +215,7 @@ where the coefficients are
     c_{5,i} &= (2\Delta_{f,i})^{-1}\Delta_{i+1}\;.
     \end{align}
 \end{subequations}
-Depending on the filter type, the non-periodic boundary conditions can be
-\begin{itemize}
-\item free boundaries, using ghost cells where the function is the linear extrapolation of $s(x)$ based on the values at the two nodes next to the boundary.
-\item solid boundaries, using ghost cells where the function is constant and equal to the boundary value of $s(x)$.
-\item zero boundaries, where the filter is zero at the boundary.
-\end{itemize}
-As an example, consider the solid boundary near $i=1$ for the example above:
+For the tophat filter, we can imposed free or solid boundary conditions along the non-periodic directions. The former option uses ghost cells where the function is the linear extrapolation of $s(x)$ based on the values at the two nodes next to the boundary. The latter option uses ghost cells where the function is constant and equal to the boundary value of $s(x)$. As an example, consider the solid boundary near $i=1$ for the example above:
 \begin{subequations}
   \begin{align}
     f_1 &= \tilde{c}_{3,1}s_{1}+c_{4,1}s_{2}+c_{5,1}s_{3} \;,\\

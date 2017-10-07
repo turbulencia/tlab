@@ -5,6 +5,43 @@
 #endif
 
 ! ###################################################################
+! ###################################################################
+SUBROUTINE OPR_FILTER_INITIALIZE(g, f, wrk1d)
+
+  USE DNS_TYPES, ONLY : grid_dt, filter_dt
+
+  IMPLICIT NONE
+  
+  TYPE(grid_dt),       INTENT(IN)    :: g
+  TYPE(filter_dt),     INTENT(OUT)   :: f
+  TREAL, DIMENSION(*), INTENT(INOUT) :: wrk1d
+  
+! -------------------------------------------------------------------
+  
+! ###################################################################
+  IF ( f%inb_filter .GT. 0 ) &
+       ALLOCATE( f%coeffs( f%size, f%inb_filter ) )
+  
+  SELECT CASE( f%type )
+     
+  CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
+     CALL FLT_E4_INI(g%scale, g%nodes, f)
+     
+  CASE( DNS_FILTER_TOPHAT )
+     CALL FLT_T1_INI(g%scale, g%nodes, f, wrk1d)
+     
+  CASE( DNS_FILTER_COMPACT )
+     CALL FLT_C4_INI(g%jac, f)
+     
+  CASE( DNS_FILTER_HELMHOLTZ )
+     f%parameters(2) =-C_1_R /( f%parameters(1) *g%jac(1,1) )**2
+     
+  END SELECT
+  
+  RETURN
+END SUBROUTINE OPR_FILTER_INITIALIZE
+
+! ###################################################################
 ! Filter kernel along one direction 
 ! ###################################################################
 SUBROUTINE OPR_FILTER_1D(nlines, f, u,result, wrk1d,wrk2d,wrk3d)
