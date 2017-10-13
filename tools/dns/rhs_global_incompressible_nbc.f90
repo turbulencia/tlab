@@ -25,7 +25,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   !
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imode_eqns
-  USE DNS_GLOBAL, ONLY : inb_flow,inb_vars,inb_scal,inb_scal_array,visc,schmidt,prandtl 
+  USE DNS_GLOBAL, ONLY : inb_flow,inb_vars,inb_scal,inb_scal_array
   USE DNS_GLOBAL, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : rbackground, ribackground
   ! 
@@ -79,8 +79,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   TINTEGER :: finished,ip_b,ip_t,ibc, bcs(2,2)
   TREAL tdummy
   TREAL, DIMENSION(:), POINTER :: p_bcs 
-  !
-  TREAL, DIMENSION(inb_scal)      :: err_s !, diff  
   ! 
   TYPE(nb3dfft_infoType), DIMENSION(24) :: info
   INTEGER(KIND=4),DIMENSION(2) :: cur_time
@@ -88,10 +86,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   REAL(KIND=8),DIMENSION(6)      :: t_snd, t_rcv
   TYPE(nb3dfft_schedlType) :: nbcsetup_
   INTEGER :: pkg_cnt
-  TREAL err_x,err_y,err_z,kx,ky,kz,dum 
   TREAL rtime, rtime_loc,t_run,ptime,ctime_loc
 
-  TARGET h2, tmp42 
+  TARGET h2
 
   IF ( inb_scal .GT. 2 ) THEN   
      CALL IO_WRITE_ASCII(efile,&
@@ -177,21 +174,22 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      ! Vertical derivatives, and Vertical advection  
      !   
      t_tmp = -MPI_WTime()
-
      CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, g(2), v,v,v,     tmp21, tmp22, wrk2d,wrk3d) ! store v transposed in tmp22
      h2 = h2 + tmp21
      CALL OPR_BURGERS_Y(i1,i0, imax,jmax,kmax, bcs, g(2), u,v,tmp22, tmp21, tmpu,  wrk2d,wrk3d) ! using tmp22
      h1 = h1 + tmp21
      CALL OPR_BURGERS_Y(i1,i0, imax,jmax,kmax, bcs, g(2), w,v,tmp22, tmp21, tmpu,  wrk2d,wrk3d) ! using tmp22
      h3 = h3 + tmp21
+     t_ser = t_ser + (t_tmp +MPI_WTime())
+
+     CALL NB3DFFT_R2R_YZCOMM(u,tmp41,tmp41,bt4,  info(FUYZ),t_tmp);t_comp=t_comp+t_tmp  
+
+     t_tmp = -MPI_WTime()
      DO is = 1,inb_scal
         CALL OPR_BURGERS_Y(i1,is, imax,jmax,kmax, bcs, g(2), s(1,is),v,tmp22, tmp21, tmpu, wrk2d,wrk3d) ! using tmp22
         hs(:,is) = hs(:,is) + tmp21
      ENDDO
-
-     t_ser    = t_ser + (t_tmp +MPI_WTime())
-
-     CALL NB3DFFT_R2R_YZCOMM(u,tmp41,tmp41,bt4,  info(FUYZ),t_tmp);t_comp=t_comp+t_tmp  
+     t_ser = t_ser + (t_tmp +MPI_WTime())
 
      finished = 0
      DO WHILE ( finished /= 2 )   
@@ -403,34 +401,30 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      ENDDO
      ! u,v,w,s1 are finished and s2 initiated
      ! we can prepare the pressure solver, and update tendencies 
-     !
-     t_tmp = -MPI_WTime() 
 
+     t_tmp = -MPI_WTime() 
      !
      ! Source terms
      !
      CALL FI_SOURCES_FLOW(u,s, h1, tmp31,       wrk1d,wrk2d,wrk3d)
      CALL FI_SOURCES_SCAL(  s, hs, tmp31,tmp32, wrk1d,wrk2d,wrk3d)
-
-     ! #######################################################################
+     !
      ! Impose buffer zone as relaxation terms
-     ! #######################################################################
+     !
      IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
         CALL BOUNDARY_BUFFER_RELAXATION_FLOW(u,h1)
      ENDIF
-
-     tdummy = C_1_R / dte   
-     ! #######################################################################
+     !
      ! Calculate divergence for pressure solver 
-     ! #######################################################################
+     !
+     tdummy = C_1_R / dte   
      tmp32 = h1 + u*tdummy 
      tmp42 = h3 + w*tdummy 
-     t_ser = t_ser + (t_tmp+MPI_WTime())
-
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp32)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp42)
      ENDIF
+     t_ser = t_ser + (t_tmp+MPI_WTime())
      
      CALL NB3DFFT_R2R_YXCOMM(tmp32,bt3,  bt3,  tmp31,info(FPYX),t_tmp);t_comp=t_comp+t_tmp   
      CALL NB3DFFT_R2R_YZCOMM(tmp42,tmp41,tmp41,bt4,  info(FPYZ),t_tmp);t_comp=t_comp+t_tmp   
@@ -589,8 +583,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
 ! Adding density in BCs  
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     bcs_hb = bcs_hb *rbackground(1)
-     bcs_ht = bcs_ht *rbackground(g(2)%size)
+     bcs_hb(:,:,3) = bcs_hb(:,:,3) *rbackground(1)
+     bcs_ht(:,:,3) = bcs_ht(:,:,3) *rbackground(g(2)%size)
   ENDIF
   
 ! pressure in tmp12, Oy derivative in tmp11

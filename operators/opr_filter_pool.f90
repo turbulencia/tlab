@@ -13,7 +13,7 @@ SUBROUTINE OPR_FILTER_INITIALIZE(g, f, wrk1d)
   IMPLICIT NONE
   
   TYPE(grid_dt),       INTENT(IN)    :: g
-  TYPE(filter_dt),     INTENT(OUT)   :: f
+  TYPE(filter_dt),     INTENT(INOUT) :: f
   TREAL, DIMENSION(*), INTENT(INOUT) :: wrk1d
   
 ! -------------------------------------------------------------------

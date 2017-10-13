@@ -22,6 +22,7 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal,inb_scal_array, isize_field, isize_wrk1d
   USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim, itransport
   USE DNS_GLOBAL,    ONLY : itime, rtime
+  USE DNS_GLOBAL,    ONLY : epbackground, pbackground, damkohler
   USE DNS_GLOBAL,    ONLY : FilterDomain
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL,     ONLY : nitera_stats_spa, ffltdmp
@@ -116,8 +117,12 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
   
 ! recalculation of diagnostic variables
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))        
+     IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN
+        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)
+        
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN 
+        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
+        
      ENDIF
 
   ELSE
