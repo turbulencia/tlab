@@ -92,7 +92,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'netcdf'   ) THEN; imode_files = DNS_FILE_NETCDF
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'none'   )   THEN; imode_files = DNS_NOFILE
   ELSE
-     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong file format.')
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Main.FileFormat.')
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
@@ -102,7 +102,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'temporal' ) THEN; imode_sim = DNS_MODE_TEMPORAL
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'spatial'  ) THEN; imode_sim = DNS_MODE_SPATIAL
   ELSE
-     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Simulation must be temporal/spatial')
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.Type must be temporal or spatial')
      CALL DNS_STOP(DNS_ERROR_SIMTYPE)
   ENDIF
 
@@ -111,7 +111,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'jet'         ) THEN; imode_flow = DNS_FLOW_JET
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'isotropic'   ) THEN; imode_flow = DNS_FLOW_ISOTROPIC
   ELSE
-     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Flow type must be shear/jet/isotropic')
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.Flow must be shear, jet or isotropic')
      CALL DNS_STOP(DNS_ERROR_SIMFLOW)
   ENDIF
 
@@ -119,7 +119,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_flow = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_flow = 0
   ELSE
-     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. CalculateFlow must be yes or no')
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.CalculateFlow must be yes or no')
      CALL DNS_STOP(DNS_ERROR_CALCFLOW)
   ENDIF
 
@@ -127,7 +127,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_scal = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_scal = 0
   ELSE
-     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Scalar must be yes or no')
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.CalculateScalar must be yes or no')
      CALL DNS_STOP(DNS_ERROR_CALCSCALAR)
   ENDIF
 
@@ -135,7 +135,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_particle = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_particle = 0
   ELSE
-     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. CalculateParticle must be yes or no')
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.CalculateParticle must be yes or no')
      CALL DNS_STOP(DNS_ERROR_CALCPARTICLE)
   ENDIF
 
@@ -145,7 +145,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'incompressible' ) THEN; imode_eqns = DNS_EQNS_INCOMPRESSIBLE
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'anelastic'      ) THEN; imode_eqns = DNS_EQNS_ANELASTIC
   ELSE
-     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Equations option.')
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong entry Main.Equations option.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -158,7 +158,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwater'      ) THEN; imixture = MIXT_TYPE_AIRWATER
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterlinear') THEN; imixture = MIXT_TYPE_AIRWATER_LINEAR
   ELSE 
-     CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong multispecies model.')
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong entry Main.Mixture model.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -597,12 +597,12 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#[Filter]')
   CALL IO_WRITE_ASCII(bakfile, '#Type=<none/compact/explicit6/explicit4/adm/helmholtz/SpectralBand/SpectralErf/tophat>')
   CALL IO_WRITE_ASCII(bakfile, '#Parameters=<values>')
-  CALL IO_WRITE_ASCII(bakfile, '#Step=<filter step>')
   CALL IO_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
   CALL IO_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
   CALL IO_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
   CALL IO_WRITE_ASCII(bakfile, '#BcsJmin=<free,solid,zero>')
   CALL IO_WRITE_ASCII(bakfile, '#BcsJmax=<free,solid,zero>')
+  CALL IO_WRITE_ASCII(bakfile, '#Step=<filter step>')
 
   FilterDomain(:)%size       = g(:)%size
   FilterDomain(:)%periodic   = g(:)%periodic
@@ -622,8 +622,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      FilterDomain(:)%inb_filter = 5
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'tophat'    ) THEN; FilterDomain(:)%type = DNS_FILTER_TOPHAT
      FilterDomain(:)%parameters(1) = 2    ! default filter size (in grid-step units)
-     FilterDomain(:)%parameters(2) = 1    ! default number of repetitions
-     FilterDomain(:)%inb_filter = INT(FilterDomain(:)%parameters(1)) +1
      default                    = 'free'
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'spectralcutoff' ) THEN; FilterDomain(:)%type = DNS_FILTER_BAND
      ! The frequency interval is (Parameter1, Parameter2)
@@ -678,9 +676,19 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
      idummy = MAX_PROF
      CALL LIST_REAL(sRes, idummy, FilterDomain(1)%parameters(:) )
-     DO ig = 1,3
-        FilterDomain(ig)%parameters(:) = FilterDomain(1)%parameters(:)
+     IF ( idummy .LT. 3 ) & ! Fill 3 directions; if global, filled information is unused
+          FilterDomain(1)%parameters(idummy+1:3) = FilterDomain(1)%parameters(idummy)
+     DO ig = 2,3
+        FilterDomain(ig)%parameters(1) = FilterDomain(1)%parameters(ig)
      ENDDO
+  ENDIF
+
+  CALL SCANINIINT(bakfile, inifile, 'Filter', 'Repeat', '1', idummy)
+  IF ( idummy .GT. 0 ) THEN
+     FilterDomain(:)%repeat = idummy
+  ELSE
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Filter.Repeat must be positive.')
+     CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
   
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveX', 'yes', sRes)
@@ -698,12 +706,15 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! Further control
   DO ig = 1,3
      IF ( FilterDomain(ig)%size .EQ. 1 ) FilterDomain(ig)%type = DNS_FILTER_NONE
+     
      IF ( FilterDomain(ig)%type .EQ. DNS_FILTER_TOPHAT ) THEN
         IF ( MOD(INT(FilterDomain(is)%parameters(1)),2) .NE. 0 ) THEN
-           CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Filter delta is not even.')
+           CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Tophat filter size must be even.')
            CALL DNS_STOP(DNS_ERROR_PARAMETER)
         ENDIF
+        FilterDomain(ig)%inb_filter = INT(FilterDomain(ig)%parameters(1)) +1
      ENDIF
+     
   ENDDO
   
 #ifdef USE_MPI

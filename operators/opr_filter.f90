@@ -22,7 +22,7 @@ SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
                                                                       ! size 4 if SPECTRAL, HELMHOLTZ
 ! -------------------------------------------------------------------
   TREAL dummy
-  TINTEGER k, flag_bcs, n,nmax, bcs(2,2), nxy, ip_b, ip_t
+  TINTEGER k, flag_bcs, n, bcs(2,2), nxy, ip_b, ip_t
 
   TREAL, DIMENSION(:), POINTER :: p_bcs
   TARGET txc
@@ -83,24 +83,15 @@ SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
      
 ! ###################################################################
 ! Directional filters
-     IF      ( f(1)%type .EQ. DNS_FILTER_NONE   ) THEN; nmax = 0;
-     ELSE IF ( f(1)%type .EQ. DNS_FILTER_TOPHAT ) THEN; nmax = INT(f(1)%parameters(2));
-     ELSE;                                              nmax = 1; ENDIF
-        DO n = 1,nmax
+     DO n = 1,f(1)%repeat
         CALL OPR_FILTER_X(nx,ny,nz, f(1), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
      END DO
      
-     IF      ( f(2)%type .EQ. DNS_FILTER_NONE   ) THEN; nmax = 0;
-     ELSE IF ( f(2)%type .EQ. DNS_FILTER_TOPHAT ) THEN; nmax = INT(f(2)%parameters(2));
-     ELSE;                                              nmax = 1; ENDIF
-        DO n = 1,nmax
+     DO n = 1,f(2)%repeat
         CALL OPR_FILTER_Y(nx,ny,nz, f(2), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
      END DO
 
-     IF      ( f(3)%type .EQ. DNS_FILTER_NONE   ) THEN; nmax = 0;
-     ELSE IF ( f(3)%type .EQ. DNS_FILTER_TOPHAT ) THEN; nmax = INT(f(3)%parameters(2));
-     ELSE;                                              nmax = 1; ENDIF
-     DO n = 1,nmax
+     DO n = 1,f(3)%repeat
         CALL OPR_FILTER_Z(nx,ny,nz, f(3), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
      END DO
 

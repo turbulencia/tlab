@@ -46,6 +46,7 @@ MODULE DNS_TYPES
      LOGICAL,  DIMENSION(MAX_PARS) :: active
      TREAL,    DIMENSION(MAX_PARS) :: parameters
      TINTEGER BcsMin, BcsMax                  ! boundary conditions
+     TINTEGER repeat
      TINTEGER mpitype
      TREAL, DIMENSION(:,:), ALLOCATABLE :: coeffs ! pointer to coefficients
   END TYPE filter_dt
