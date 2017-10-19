@@ -68,7 +68,7 @@ SUBROUTINE BOUNDARY_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
 ! -------------------------------------------------------------------
 ! Filters at boundaries
 ! -------------------------------------------------------------------
-  IF ( BuffFlowImax%size .GT. 1 ) THEN ! Required for outflow explicit filter in Ox
+  IF ( BuffType .EQ. DNS_BUFFER_FILTER .AND. BuffFlowImax%size .GT. 1 ) THEN ! Required for outflow explicit filter in Ox
      CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Ox BCs explicit filter.')
      id    = DNS_MPI_K_OUTBCS
      isize_loc = BuffFlowImax%size*jmax
@@ -76,7 +76,7 @@ SUBROUTINE BOUNDARY_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF
 
-  IF ( BuffFlowJmin%size .GT. 1 ) THEN ! Required for outflow explicit filter in Oy
+  IF ( BuffType .EQ. DNS_BUFFER_FILTER .AND. BuffFlowJmin%size .GT. 1 ) THEN ! Required for outflow explicit filter in Oy
      CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Oy BCs explicit filter.')
      id    = DNS_MPI_K_TOPBCS
      isize_loc = imax*BuffFlowJmin%size
