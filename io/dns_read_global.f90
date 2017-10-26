@@ -706,6 +706,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! Further control
   DO ig = 1,3
      IF ( FilterDomain(ig)%size .EQ. 1 ) FilterDomain(ig)%type = DNS_FILTER_NONE
+     IF ( FilterDomain(ig)%type .EQ. DNS_FILTER_TOPHAT .AND. &
+          FilterDomain(ig)%parameters(1) .EQ. 0              ) FilterDomain(ig)%type = DNS_FILTER_NONE
      
      IF ( FilterDomain(ig)%type .EQ. DNS_FILTER_TOPHAT ) THEN
         IF ( MOD(INT(FilterDomain(is)%parameters(1)),2) .NE. 0 ) THEN

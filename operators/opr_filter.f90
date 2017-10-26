@@ -83,18 +83,24 @@ SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
      
 ! ###################################################################
 ! Directional filters
-     DO n = 1,f(1)%repeat
-        CALL OPR_FILTER_X(nx,ny,nz, f(1), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
-     END DO
+     IF ( f(1)%type .NE. DNS_FILTER_NONE ) THEN
+        DO n = 1,f(1)%repeat
+           CALL OPR_FILTER_X(nx,ny,nz, f(1), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
+        END DO
+     ENDIF
      
-     DO n = 1,f(2)%repeat
-        CALL OPR_FILTER_Y(nx,ny,nz, f(2), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
-     END DO
-
-     DO n = 1,f(3)%repeat
-        CALL OPR_FILTER_Z(nx,ny,nz, f(3), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
-     END DO
-
+     IF ( f(2)%type .NE. DNS_FILTER_NONE ) THEN
+        DO n = 1,f(2)%repeat
+           CALL OPR_FILTER_Y(nx,ny,nz, f(2), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
+        END DO
+     ENDIF
+     
+     IF ( f(3)%type .NE. DNS_FILTER_NONE ) THEN
+        DO n = 1,f(3)%repeat
+           CALL OPR_FILTER_Z(nx,ny,nz, f(3), u, txc(1,2), wrk1d,wrk2d,txc(1,1))
+        END DO
+     ENDIF
+     
   END SELECT
   
   RETURN
