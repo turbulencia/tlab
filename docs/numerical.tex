@@ -182,9 +182,9 @@ See file {\tt dns/opr\_filter}. The kernels of the specific algorithms are in th
 
 There are global filters and directional filters. Global filters are spectral filters in the horizontal plane, and Helmholtz-based filters. Band spectral filters remove the energy content outside a band $[\alpha_1,\alpha_2]$ in frequency space. Erf spectral filters are low- and high-pass filters defined at $\alpha_1$ with a thickness $\alpha_2$ in the logarithm of the frequency ($\alpha_1>0$ for high-pass filter, and $\alpha_1<0$ for low-pass filter). Helmholtz-based filters are defined by
 \begin{equation}
-  (1-\alpha^2\Delta) f = s \;,
+  (1-\alpha^2\nabla^2) f = s \;,
 \end{equation}
-where $s$ is the original field, $f$ is the filtered field, and $\alpha$ is the filter size. This equation is transformed into the Helmholtz equation and solved as explained in section~\ref{sec:helmholtz}. This filter is motivated by the Navier-Stokes-alpha model \citep{Foias:2001}. Along the vertical non-periodic direction, we can impose Dirichlet or Neumann boundary conditions, where the former option maintains the value of the field at the boundary and the latter option imposes a zero gradient.
+where $s$ is the original field, $f$ is the filtered field, and $\alpha=\lambda/(2\pi)$ where $\lambda$ is the filter size. This equation is transformed into the Helmholtz equation and solved as explained in section~\ref{sec:helmholtz}. This filter is motivated by the Navier-Stokes-alpha model \citep{Foias:2001}. Along the vertical non-periodic direction, we can impose Dirichlet or Neumann boundary conditions, where the former option maintains the value of the field at the boundary and the latter option imposes a zero gradient.
 
 Directional filters are a sequence of one-dimensional filters in each direction. There are compact filters, which are implemented following \cite{Lele:1992}, and top-hat filters (or box filter), which are implemented using the trapezoidal rule to discretize the integral.
 
