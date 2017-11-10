@@ -193,7 +193,7 @@ SUBROUTINE FI_SOURCES_SCAL(s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
      IF ( transport%active(is) ) THEN
         IF ( is .EQ. 1 ) THEN; flag_grad = 1;
         ELSE;                  flag_grad = 0; ENDIF
-        CALL FI_TRANS_FLUX(transport, flag_grad, imax,jmax,kmax, is, s,tmp1, tmp2, wrk2d,wrk3d)
+        CALL FI_TRANSPORT(transport, flag_grad, imax,jmax,kmax, is, s,tmp1, tmp2, wrk2d,wrk3d)
         
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )

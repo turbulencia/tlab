@@ -6,18 +6,16 @@
 !#
 !# 2015/06/25 - A de Lozar
 !#              Created
-!# 2016/06/25 - A de Lozar
+!# 2016/06/25 - JP Mellado
 !#              Cleaned
 !#
 !########################################################################
 !# DESCRIPTION
 !#
 !# Calculate the transport terms due to settling in an airwater mixture.
-!# There are two options for the settling model, a simplified calculation and
-!# a more exact one (differences of 10^-4)
 !#
 !########################################################################
-SUBROUTINE FI_TRANS_FLUX(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d,wrk3d)
+SUBROUTINE FI_TRANSPORT(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d,wrk3d)
 
   USE DNS_TYPES,  ONLY : term_dt
   USE DNS_GLOBAL, ONLY : g
@@ -64,4 +62,45 @@ SUBROUTINE FI_TRANS_FLUX(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d
   ENDIF
   
   RETURN
-END SUBROUTINE FI_TRANS_FLUX
+END SUBROUTINE FI_TRANSPORT
+
+!########################################################################
+!########################################################################
+SUBROUTINE FI_TRANSPORT_FLUX(transport, nx,ny,nz, is, s,trans)
+
+  USE DNS_TYPES,  ONLY : term_dt
+  
+  IMPLICIT NONE
+
+  TYPE(term_dt),                INTENT(IN)    :: transport
+  TINTEGER,                     INTENT(IN)    :: nx,ny,nz
+  TINTEGER,                     INTENT(IN)    :: is
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)    :: s
+  TREAL, DIMENSION(nx*ny*nz,1), INTENT(OUT)   :: trans ! Transport component. It could have eventually three directions
+
+! -----------------------------------------------------------------------
+  TREAL dummy, exponent
+  TINTEGER is_ref
+  
+!########################################################################
+  exponent = transport%auxiliar(1)
+  is_ref   = transport%scalar(1)
+
+  IF     ( transport%type .EQ. EQNS_TRANS_AIRWATERSIMPLIFIED ) THEN
+     dummy = C_1_R + exponent
+
+     trans(:,1) =-transport%parameters(is) *( s(:,is_ref)**dummy )
+
+  ELSEIF ( transport%type .EQ. EQNS_TRANS_AIRWATER ) THEN
+     dummy = C_1_R + exponent
+
+     IF ( exponent .GT. C_0_R ) THEN
+        trans(:,1) =-(transport%parameters(is) - transport%parameters(5)*s(:,is)) *(s(:,is_ref)**dummy)
+     ELSE
+        trans(:,1) =-(transport%parameters(is) - transport%parameters(5)*s(:,is)) * s(:,is_ref)
+     ENDIF
+
+  ENDIF
+  
+  RETURN
+END SUBROUTINE FI_TRANSPORT_FLUX

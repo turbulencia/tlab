@@ -378,8 +378,8 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   ENDIF
 
   IF ( transport%active(is) ) THEN ! Transport in tmp3
-     CALL FI_TRANS_FLUX(transport, i1, imax,jmax,kmax, is, s,tmp3, dsdy, wrk2d,wrk3d)
-! probably to be split into transport and transport flux, mimicking radiation terms
+     CALL FI_TRANSPORT     (transport, i1, imax,jmax,kmax, is, s,tmp3, dsdy, wrk2d,wrk3d)
+     CALL FI_TRANSPORT_FLUX(transport,     imax,jmax,kmax, is, s,dsdz)
   ENDIF
 
   IF ( is .GT. inb_scal ) THEN     ! Diagnostic variables; I overwrite tmp1 and dsdx and recalculate them.
