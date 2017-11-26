@@ -222,13 +222,13 @@ PROGRAM DNS
   IF ( icalc_particle .EQ. 1 ) THEN
 #include "dns_alloc_larrays.h"
 
-     ALLOCATE(l_trajectories(3,num_trajectories,nitera_save),stat=ierr)
+     ALLOCATE(l_trajectories(3,isize_trajectories,nitera_save),stat=ierr)
      IF ( ierr .NE. 0 ) THEN
         CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_trajectories.')
         CALL DNS_STOP(DNS_ERROR_ALLOC)
      ENDIF
 
-     ALLOCATE(l_trajectories_tags(num_trajectories),stat=ierr)
+     ALLOCATE(l_trajectories_tags(isize_trajectories),stat=ierr)
      IF ( ierr .NE. 0 ) THEN
         CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_trajectories_tags.')
         CALL DNS_STOP(DNS_ERROR_ALLOC)

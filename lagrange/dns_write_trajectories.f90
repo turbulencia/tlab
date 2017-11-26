@@ -39,13 +39,13 @@ SUBROUTINE DNS_WRITE_TRAJECTORIES(fname, l_q, l_tags, l_trajectories, l_trajecto
   INTEGER(8), DIMENSION(isize_particle) :: l_tags
   TREAL, DIMENSION(isize_particle,3) :: txc
   TREAL, DIMENSION(isize_particle,3) :: wrk3d !ALBERTO
-  TREAL, DIMENSION(3,num_trajectories,nitera_save) :: l_trajectories
-  INTEGER(8), DIMENSION(num_trajectories) :: l_trajectories_tags
+  TREAL, DIMENSION(3,isize_trajectories,nitera_save) :: l_trajectories
+  INTEGER(8), DIMENSION(isize_trajectories) :: l_trajectories_tags
 
-  TREAL, DIMENSION(num_trajectories) :: dummy_big_overall ! maybe better pointer to wrk3d 
+  TREAL, DIMENSION(isize_trajectories) :: dummy_big_overall ! maybe better pointer to wrk3d 
   TREAL, DIMENSION(:,:,:), ALLOCATABLE :: big_overall
   TINTEGER  dummy_ims_npro
-  TINTEGER  dummy_num_trajectories
+  TINTEGER  dummy_isize_trajectories
   TINTEGER  nitera_last, nitera_save, nitera_first
 
   TINTEGER i,j, itime
@@ -68,9 +68,9 @@ SUBROUTINE DNS_WRITE_TRAJECTORIES(fname, l_q, l_tags, l_trajectories, l_trajecto
            WRITE(str,*) nitera_last;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
            OPEN(unit=117, file=str, access='stream', form='unformatted')
            READ(117) dummy_ims_npro   !is a integer
-           READ(117, POS=SIZEOFINT+1) dummy_num_trajectories  !is an integer
+           READ(117, POS=SIZEOFINT+1) dummy_isize_trajectories  !is an integer
            READ(117, POS=SIZEOFINT*2+1) dummy_big_overall  !is real(8)
-           READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*num_trajectories) l_trajectories_tags ! attention is integer(8)
+           READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectories) l_trajectories_tags ! attention is integer(8)
            CLOSE(117)
         ENDIF
 
@@ -78,7 +78,7 @@ SUBROUTINE DNS_WRITE_TRAJECTORIES(fname, l_q, l_tags, l_trajectories, l_trajecto
 !Broadcast the ID of the largest particles
 !#######################################################################
         CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
-        CALL MPI_BCAST(l_trajectories_tags,num_trajectories,MPI_INTEGER8,0,MPI_COMM_WORLD,ims_err)
+        CALL MPI_BCAST(l_trajectories_tags,isize_trajectories,MPI_INTEGER8,0,MPI_COMM_WORLD,ims_err)
 
         l_trajectories(:,:,:) = C_0_R
         save_time=1 
@@ -89,7 +89,7 @@ SUBROUTINE DNS_WRITE_TRAJECTORIES(fname, l_q, l_tags, l_trajectories, l_trajecto
 !Search for the largest particles in every processor
 !#######################################################################
      DO i=1,particle_vector(ims_pro+1)
-        DO j=1,num_trajectories
+        DO j=1,isize_trajectories
            IF (l_tags(i) .EQ. l_trajectories_tags(j)) THEN
               l_trajectories(1,j,save_time)=l_q(i,1)
               l_trajectories(2,j,save_time)=l_q(i,2)
@@ -112,10 +112,10 @@ SUBROUTINE DNS_WRITE_TRAJECTORIES(fname, l_q, l_tags, l_trajectories, l_trajecto
 !#######################################################################
      IF (itime .EQ. save_point ) THEN
         IF (ims_pro .EQ. 0) THEN
-           ALLOCATE(big_overall(3,num_trajectories,nitera_save)) ! DO WRK3D later
+           ALLOCATE(big_overall(3,isize_trajectories,nitera_save)) ! DO WRK3D later
            big_overall(:,:,:)=C_0_R
         ENDIF
-        CALL MPI_REDUCE(l_trajectories, big_overall, 3*num_trajectories*nitera_save, MPI_REAL8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
+        CALL MPI_REDUCE(l_trajectories, big_overall, 3*isize_trajectories*nitera_save, MPI_REAL8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
         CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
 
 !#######################################################################
@@ -126,7 +126,7 @@ SUBROUTINE DNS_WRITE_TRAJECTORIES(fname, l_q, l_tags, l_trajectories, l_trajecto
               WRITE(fname,*) i+save_point-nitera_save; fname ='trajectories.'//TRIM(ADJUSTL(fname))
               WRITE(str,*) "vtk";  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! adjust the name with the number for direction
               OPEN(unit=115, file=str)
-              DO j=1,num_trajectories
+              DO j=1,isize_trajectories
                  WRITE (115,*) big_overall(1,j,i),big_overall(2,j,i),big_overall(3,j,i)
               ENDDO
               CLOSE(115)
@@ -152,9 +152,9 @@ SUBROUTINE DNS_WRITE_TRAJECTORIES(fname, l_q, l_tags, l_trajectories, l_trajecto
         WRITE(str,*) nitera_last;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
         OPEN(unit=117, file=str, access='stream', form='unformatted')
         READ(117) dummy_ims_npro   !is a integer
-        READ(117, POS=SIZEOFINT+1) dummy_num_trajectories  !is an integer
+        READ(117, POS=SIZEOFINT+1) dummy_isize_trajectories  !is an integer
         READ(117, POS=SIZEOFINT*2+1) dummy_big_overall  !is real(8)
-        READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*num_trajectories) l_trajectories_tags ! attention is integer(8)
+        READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectories) l_trajectories_tags ! attention is integer(8)
         CLOSE(117)
         l_trajectories = 0
         save_time=1 
@@ -163,7 +163,7 @@ SUBROUTINE DNS_WRITE_TRAJECTORIES(fname, l_q, l_tags, l_trajectories, l_trajecto
 !Search for the largest particles in every processor
 !#######################################################################
      DO i=1,particle_number
-        DO j=1,num_trajectories
+        DO j=1,isize_trajectories
            IF (l_tags(i) .EQ. l_trajectories_tags(j)) THEN
               l_trajectories(1,j,save_time)=l_q(i,1)
               l_trajectories(2,j,save_time)=l_q(i,2)
@@ -180,7 +180,7 @@ SUBROUTINE DNS_WRITE_TRAJECTORIES(fname, l_q, l_tags, l_trajectories, l_trajecto
            WRITE(fname,*) i+save_point-nitera_save; fname = 'trajectories.'//TRIM(ADJUSTL(fname))
            WRITE(str,*) "vtk";  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! adjust the name with the number for direction
            OPEN(unit=115, file=str)
-           DO j=1,num_trajectories
+           DO j=1,isize_trajectories
               WRITE (115,*) l_trajectories(1,j,i),l_trajectories(2,j,i),l_trajectories(3,j,i)
            ENDDO
            CLOSE(115)

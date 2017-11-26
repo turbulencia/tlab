@@ -168,7 +168,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
      ENDIF
 
 ! -----------------------------------------------------------------------
-     IF ( icalc_trajectories .EQ. 1 ) THEN ! Lagrangian
+     IF ( icalc_trajectories .GE. 1 ) THEN ! Lagrangian
         WRITE(fname,*) itime; fname = 'trajectories.'//TRIM(ADJUSTL(fname))
         CALL DNS_WRITE_TRAJECTORIES(fname,l_q,l_tags, l_trajectories, l_trajectories_tags, wrk3d,txc,itime, nitera_last, nitera_save, nitera_first)
      END IF

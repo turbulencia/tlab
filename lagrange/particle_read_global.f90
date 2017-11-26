@@ -65,7 +65,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'CalculateTrajectories', 'none', sRes)
   !Plot all droplets. This version is NOT optimized and writes to disc every time step
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'all' ) THEN; icalc_trajectories = LAG_TRAJECTORY_ALL 
-  !plot the 'Num_trajectories' largest droplets at the simulation last time step from a file created lagrange_traject.x. This function is optimized and does not write
+  !plot the 'isize_trajectories' largest droplets at the simulation last time step from a file created lagrange_traject.x. This function is optimized and does not write
   ! every tinme step to disc 
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'largest') THEN; icalc_trajectories = LAG_TRAJECTORY_LARGEST 
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no' .OR. TRIM(ADJUSTL(sRes)) .eq. 'none' ) THEN; icalc_trajectories = LAG_TRAJECTORY_NONE !Alberto
@@ -74,7 +74,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
      CALL DNS_STOP(DNS_ERROR_CALCTRAJECTORIES)
   ENDIF
 
-  CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Num_trajectories', '50', num_trajectories  )
+  CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Trajectories', '50', isize_trajectories )
 
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'CalculateParticlePDF', 'no', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_particle_pdf = 1

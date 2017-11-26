@@ -50,7 +50,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
   TINTEGER  ierr, i, j, k, particle_pos
 
   TINTEGER  dummy_ims_npro
-  TINTEGER  dummy_num_trajectories
+  TINTEGER  dummy_isize_trajectories
   TINTEGER, DIMENSION(:), ALLOCATABLE :: dummy_proc, all_dummy_proc
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_trajectories_tags
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_tags
@@ -85,12 +85,12 @@ PROGRAM LAGRANGE_POS_TRAJEC
 #include "dns_alloc_larrays.h"
   
 
-  ALLOCATE(dummy_proc(num_trajectories))
-  ALLOCATE(all_dummy_proc(num_trajectories)) 
-  ALLOCATE(dummy_big_overall(num_trajectories))
-  ALLOCATE(l_trajectories_tags(num_trajectories))
-  ALLOCATE(l_trajectories(3,num_trajectories))
-  ALLOCATE(all_l_trajectories(3,num_trajectories)) 
+  ALLOCATE(dummy_proc(isize_trajectories))
+  ALLOCATE(all_dummy_proc(isize_trajectories)) 
+  ALLOCATE(dummy_big_overall(isize_trajectories))
+  ALLOCATE(l_trajectories_tags(isize_trajectories))
+  ALLOCATE(l_trajectories(3,isize_trajectories))
+  ALLOCATE(all_l_trajectories(3,isize_trajectories)) 
 
   l_trajectories(:,:) = C_0_R
   all_l_trajectories(:,:)=C_0_R
@@ -112,9 +112,9 @@ PROGRAM LAGRANGE_POS_TRAJEC
     WRITE(str,*) nitera_last;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
     OPEN(unit=117, file=str, access='stream', form='unformatted')
     READ(117) dummy_ims_npro   !is a integer
-    READ(117, POS=SIZEOFINT+1) dummy_num_trajectories  !is an integer
+    READ(117, POS=SIZEOFINT+1) dummy_isize_trajectories  !is an integer
     READ(117, POS=SIZEOFINT*2+1) dummy_big_overall  !is real(8)
-    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*num_trajectories) l_trajectories_tags ! attention is integer(8)
+    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectories) l_trajectories_tags ! attention is integer(8)
     CLOSE(117)
   ENDIF
 
@@ -122,13 +122,13 @@ PROGRAM LAGRANGE_POS_TRAJEC
   !BROADCAST THE ID OF THE LARGEST PARTICLES
   !#######################################################################
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
-  CALL MPI_BCAST(l_trajectories_tags,num_trajectories,MPI_INTEGER8,0,MPI_COMM_WORLD,ims_err)
+  CALL MPI_BCAST(l_trajectories_tags,isize_trajectories,MPI_INTEGER8,0,MPI_COMM_WORLD,ims_err)
 
   !#######################################################################
   !SEARCH FOR LARGEST PARTICLES
   !#######################################################################
   DO i=1,particle_vector(ims_pro+1)
-    DO j=1,num_trajectories
+    DO j=1,isize_trajectories
       IF (l_tags(i) .EQ. l_trajectories_tags(j)) THEN
         l_trajectories(1,j)=l_q(i,1)
         l_trajectories(2,j)=l_q(i,2)
@@ -141,8 +141,8 @@ PROGRAM LAGRANGE_POS_TRAJEC
   !#######################################################################
   !REDUCE ALL INFORMATION TO ROOT
   !#######################################################################
-  CALL MPI_REDUCE(l_trajectories, all_l_trajectories, 3*num_trajectories, MPI_REAL8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
-  CALL MPI_REDUCE(dummy_proc, all_dummy_proc, num_trajectories, MPI_INTEGER4, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
+  CALL MPI_REDUCE(l_trajectories, all_l_trajectories, 3*isize_trajectories, MPI_REAL8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
+  CALL MPI_REDUCE(dummy_proc, all_dummy_proc, isize_trajectories, MPI_INTEGER4, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
 
   !#######################################################################
@@ -156,7 +156,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
     INQUIRE(UNIT=15, POS=particle_pos) !would be 1
     WRITE (15)  ims_npro  !header
     INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
-    WRITE (15)  num_trajectories  !header
+    WRITE (15)  isize_trajectories  !header
     INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
     WRITE (15)  l_trajectories_tags
     INQUIRE(UNIT=15, POS=particle_pos)  !409
@@ -171,7 +171,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
 !    READ(117) test1   !is a integer
 !    READ(117, POS=SIZEOFINT+1) test2  !is an integer
 !    READ(117, POS=SIZEOFINT*2+1) test3  !is real(8)
-!    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*num_trajectories) test4 ! attention is integer(8)
+!    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectories) test4 ! attention is integer(8)
 !    CLOSE(117)
 !    ENDIF
 

@@ -30,8 +30,8 @@ MODULE LAGRANGE_GLOBAL
   TREAL         :: l_y_base   !set to be 1/3 of cloud domain between two bouyancy stratification for residence times 
 
 
-  TINTEGER      :: icalc_particle_pdf  !if calculation of pdf for particles
-  TINTEGER      :: num_trajectories  !number of followed trajectories
+  TINTEGER      :: isize_trajectories  ! number of followed trajectories
+  TINTEGER      :: icalc_particle_pdf  ! if calculation of pdf for particles
   TREAL         :: y_particle_pdf_pos
   TREAL         :: y_particle_pdf_width
   TREAL         :: x_particle_pdf_pos
