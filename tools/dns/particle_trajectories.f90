@@ -35,7 +35,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_XXX(nitera_last, nitera_save, nitera_first, l_q
   TREAL,      DIMENSION(3,isize_trajectories,nitera_save) :: wrk3d
 
 ! -------------------------------------------------------------------
-  CHARACTER(len=32) fname
+  CHARACTER(len=32) name
   TINTEGER dummy_ims_npro
   TINTEGER dummy_isize_trajectories
 
@@ -68,8 +68,8 @@ SUBROUTINE PARTICLE_TRAJECTORIES_XXX(nitera_last, nitera_save, nitera_first, l_q
 #ifdef USE_MPI
         IF (ims_pro .EQ. 0) THEN
 #endif
-           WRITE(fname,*) nitera_last; fname='largest_particle.'//TRIM(ADJUSTL(fname))
-           OPEN(unit=117, file=fname, access='stream', form='unformatted')
+           WRITE(name,*) nitera_last; name='largest_particle.'//TRIM(ADJUSTL(name))
+           OPEN(unit=117, file=name, access='stream', form='unformatted')
            READ(117) dummy_ims_npro                             !is a integer
            READ(117, POS=SIZEOFINT+1) dummy_isize_trajectories  !is an integer
            READ(117, POS=SIZEOFINT*2+1) wrk3d                   !is real(8)
@@ -114,18 +114,29 @@ SUBROUTINE PARTICLE_TRAJECTORIES_XXX(nitera_last, nitera_save, nitera_first, l_q
      CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
      IF(ims_pro .EQ. 0) THEN
 #endif
-        DO i=1,save_time
-           WRITE(fname,*) i +save_point -nitera_save; fname ='trajectories.'//TRIM(ADJUSTL(fname))//'.vtk'
-           OPEN(unit=115, file=fname)
-           DO j=1,isize_trajectories
+!         DO i=1,save_time
+!            WRITE(name,*) i +save_point -nitera_save; name ='trajectories.'//TRIM(ADJUSTL(name))//'.vtk'
+!            OPEN(unit=115, file=name)
+!            DO j=1,isize_trajectories
+! #ifdef USE_MPI
+!               WRITE (115,*) wrk3d(1,j,i),wrk3d(2,j,i),wrk3d(3,j,i)
+! #else
+!               WRITE (115,*) l_trajectories(1,j,i),l_trajectories(2,j,i),l_trajectories(3,j,i)
+! #endif
+!            ENDDO
+!            CLOSE(115)
+!         ENDDO
+        WRITE(name,*) itime; name ='trajectories.'//TRIM(ADJUSTL(name))
+#define LOC_UNIT_ID 115
+#define LOC_STATUS 'new'        
+#include "dns_open_file.h"
+        REWIND(LOC_UNIT_ID)
 #ifdef USE_MPI
-              WRITE (115,*) wrk3d(1,j,i),wrk3d(2,j,i),wrk3d(3,j,i)
-#else
-              WRITE (115,*) l_trajectories(1,j,i),l_trajectories(2,j,i),l_trajectories(3,j,i)
+        WRITE(LOC_UNIT_ID) SNGL(wrk3d)
+#else        
+        WRITE(LOC_UNIT_ID) SNGL(l_trajectories)
 #endif
-           ENDDO
-           CLOSE(115)
-        ENDDO
+        CLOSE(LOC_UNIT_ID)
 #ifdef USE_MPI
      END IF
 #endif
