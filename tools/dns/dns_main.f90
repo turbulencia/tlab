@@ -35,30 +35,27 @@ PROGRAM DNS
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
 
 ! Flow/Scalar variables and RHS space
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: q,s, h_q,h_s, txc  
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: q,s, h_q,h_s, txc
 
 ! Particle data
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_hq
-
-! Auxiliar memory space
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: vaux
-
-  TREAL,      DIMENSION(:,:),   ALLOCATABLE, SAVE :: l_txc                 ! Lagrangian
-  TREAL,      DIMENSION(:,:,:), ALLOCATABLE, SAVE :: l_trajectories
+  TREAL,      DIMENSION(:,:),   ALLOCATABLE, SAVE :: l_q, l_hq, l_txc
   TREAL,      DIMENSION(:),     ALLOCATABLE, SAVE :: l_comm
-  INTEGER(8), DIMENSION(:),     ALLOCATABLE, SAVE :: l_tags, l_trajectories_tags
+  INTEGER(8), DIMENSION(:),     ALLOCATABLE, SAVE :: l_tags
 
 ! Work arrays
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk1d,wrk2d,wrk3d
 
+! Auxiliar memory space
+  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: vaux
+
 ! Inflow arrays
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x_inf, y_inf, z_inf
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: q_inf, s_inf
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q_inf, s_inf
 
   TARGET q
 
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:),   POINTER :: e, rho, p, T, vis
+  TREAL, DIMENSION(:), POINTER :: e, rho, p, T, vis
   
   CHARACTER*32 fname, inifile
   CHARACTER*128 str, line
@@ -162,6 +159,9 @@ PROGRAM DNS
   IF ( tower_mode .EQ. 1 ) THEN 
      isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))
   ENDIF
+  IF ( icalc_particle .EQ. 1 .AND. isize_trajectories .GT. 0 ) THEN
+     isize_wrk3d = MAX(isize_wrk3d,nitera_save*isize_trajectories*3)
+  ENDIF
 
 #ifdef LES
 #ifdef USE_MPI
@@ -221,18 +221,6 @@ PROGRAM DNS
 ! Lagrangian part
   IF ( icalc_particle .EQ. 1 ) THEN
 #include "dns_alloc_larrays.h"
-
-     ALLOCATE(l_trajectories(3,isize_trajectories,nitera_save),stat=ierr)
-     IF ( ierr .NE. 0 ) THEN
-        CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_trajectories.')
-        CALL DNS_STOP(DNS_ERROR_ALLOC)
-     ENDIF
-
-     ALLOCATE(l_trajectories_tags(isize_trajectories),stat=ierr)
-     IF ( ierr .NE. 0 ) THEN
-        CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_trajectories_tags.')
-        CALL DNS_STOP(DNS_ERROR_ALLOC)
-     ENDIF
      
      ALLOCATE(l_comm(isize_l_comm), stat=ierr)
      IF ( ierr .NE. 0 ) THEN
@@ -289,7 +277,6 @@ PROGRAM DNS
 
   IF ( icalc_particle .EQ. 1 ) THEN ! Lagrangian
      l_q = C_0_R; l_hq = C_0_R
-     l_trajectories = C_0_R; l_trajectories_tags = C_0_R
   ENDIF
 
 ! ###################################################################
@@ -313,7 +300,7 @@ PROGRAM DNS
   END DO
 
 ! ####################################################################
-! Initializing position of l_q(particles)
+! Initializing particles
 ! ####################################################################
   IF ( icalc_particle .EQ. 1 ) THEN
     WRITE(fname,*) nitera_first; fname = "particle_id."//TRIM(ADJUSTL(fname))
@@ -459,7 +446,7 @@ PROGRAM DNS
 ! Do simulation: Integrate equations
 ! ###################################################################
   CALL TIME_INTEGRATION(q,h_q, s,h_s, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
-       l_q, l_hq, l_txc, l_tags, l_comm, l_trajectories, l_trajectories_tags)
+       l_q, l_hq, l_txc, l_tags, l_comm)
 
 ! ###################################################################
 #ifdef USE_FFTW

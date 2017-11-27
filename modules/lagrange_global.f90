@@ -11,7 +11,6 @@ MODULE LAGRANGE_GLOBAL
   TINTEGER      :: ilagrange       !Type of particle
   TLONGINTEGER  :: particle_number  !particle number parameter
   TINTEGER      :: particle_rnd_mode !which initializing mode
-  TINTEGER      :: icalc_trajectories  !if calculation of trajectories
   TINTEGER      :: residence_reset  !if reseidence l_q should be reset
   TINTEGER      :: nzone_max  !maximum size of vector p_buffer in particle_send_recv
   TINTEGER      :: isize_hf_1, isize_hf_2, isize_hf_3
@@ -29,8 +28,9 @@ MODULE LAGRANGE_GLOBAL
   TREAL         :: l_y_lambda !y coordinate where approx radiation begins for residence times (set in dns_main)
   TREAL         :: l_y_base   !set to be 1/3 of cloud domain between two bouyancy stratification for residence times 
 
-
+  TINTEGER      :: itrajectories   !Type of trajectories
   TINTEGER      :: isize_trajectories  ! number of followed trajectories
+
   TINTEGER      :: icalc_particle_pdf  ! if calculation of pdf for particles
   TREAL         :: y_particle_pdf_pos
   TREAL         :: y_particle_pdf_width

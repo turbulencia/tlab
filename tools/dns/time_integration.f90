@@ -11,10 +11,11 @@
 !#
 !########################################################################
 SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
-     l_q, l_hq, l_txc, l_tags, l_comm, l_trajectories, l_trajectories_tags)
+     l_q, l_hq, l_txc, l_tags, l_comm)
   
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, lfile
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal_array, inb_flow_array, isize_particle, inb_particle
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal_array, inb_flow_array
+  USE DNS_GLOBAL, ONLY : isize_particle, inb_particle, inb_particle_txc
   USE DNS_GLOBAL, ONLY : imode_sim, imode_eqns
   USE DNS_GLOBAL, ONLY : icalc_flow, icalc_scal, icalc_particle
   USE DNS_GLOBAL, ONLY : rbackground, g
@@ -24,8 +25,9 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL 
   USE DNS_TOWER
-  USE LAGRANGE_GLOBAL, ONLY : icalc_trajectories
+  USE LAGRANGE_GLOBAL, ONLY : isize_trajectories
   USE BOUNDARY_INFLOW
+  USE PARTICLE_TRAJECTORIES
 #ifdef LES
   USE LES_GLOBAL, ONLY : iles
 #endif
@@ -44,9 +46,10 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   TREAL, DIMENSION(*)             :: q_inf, s_inf
   TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
 
-  TREAL,      DIMENSION(isize_particle,inb_particle) :: l_q, l_hq
-  TREAL,      DIMENSION(*)                           :: l_comm, l_txc, l_trajectories
-  INTEGER(8), DIMENSION(*)                           :: l_tags, l_trajectories_tags
+  INTEGER(8), DIMENSION(isize_particle)                  :: l_tags
+  TREAL,      DIMENSION(isize_particle,inb_particle    ) :: l_q, l_hq
+  TREAL,      DIMENSION(isize_particle,inb_particle_txc) :: l_txc
+  TREAL,      DIMENSION(*)                               :: l_comm
 
   TARGET :: q
 
@@ -168,16 +171,15 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
      ENDIF
 
 ! -----------------------------------------------------------------------
-     IF ( icalc_trajectories .GE. 1 ) THEN ! Lagrangian
-        WRITE(fname,*) itime; fname = 'trajectories.'//TRIM(ADJUSTL(fname))
-        CALL DNS_WRITE_TRAJECTORIES(fname,l_q,l_tags, l_trajectories, l_trajectories_tags, wrk3d,txc,itime, nitera_last, nitera_save, nitera_first)
+     IF ( icalc_particle .EQ. 1 .AND. isize_trajectories .GT. 0 ) THEN
+        CALL PARTICLE_TRAJECTORIES_XXX(nitera_last, nitera_save, nitera_first, l_q, l_tags, wrk3d)
      END IF
 
 ! -----------------------------------------------------------------------
      IF ( MOD(itime-nitera_first,nitera_stats) .EQ. 0 ) THEN ! Calculate statistics
         IF     ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
            CALL STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
-           IF ( icalc_particle .EQ. 1 ) THEN ! Lagrangian
+           IF ( icalc_particle .EQ. 1 ) THEN
               CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
            ENDIF
         ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN

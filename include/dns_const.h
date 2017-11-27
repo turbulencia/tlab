@@ -172,7 +172,7 @@
 
 ! Lagrangian Trajectories  
 #define LAG_TRAJECTORY_NONE     0
-#define LAG_TRAJECTORY_ALL      1
+#define LAG_TRAJECTORY_FIRST    1
 #define LAG_TRAJECTORY_LARGEST  2
 
 #endif
