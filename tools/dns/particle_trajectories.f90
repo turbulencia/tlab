@@ -61,7 +61,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_XXX(nitera_last, nitera_save, nitera_first, l_q
      save_point = nitera_first +nitera_save
      IF      ( itrajectories .EQ. LAG_TRAJECTORY_FIRST   ) THEN ! Track first isize_trajectories particles
         DO j=1,isize_trajectories              
-           l_trajectories_tags(j) = j
+           l_trajectories_tags(j) = INT(j, KIND=8)
         ENDDO
         
      ELSE IF ( itrajectories .EQ. LAG_TRAJECTORY_LARGEST ) THEN ! Read file with tags of largest particles, the ones to track
