@@ -55,12 +55,13 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile,  '#Jmin_part=<value>')
 
   CALL SCANINILONGINT(bakfile, inifile, 'Lagrange', 'Particle_number', '0', particle_number  )
-  CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Particle_rnd_mode', '1', particle_rnd_mode  )
+  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Particle_bumper', '2.0', particle_bumper  )
   CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Jmax_part', '1', jmax_part  )
   CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Jmin_part', '1', jmin_part  )
+
+  CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Particle_rnd_mode', '1', particle_rnd_mode  )
   CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Y_Particle_Pos', '0.5', y_particle_pos  )
   CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Y_Particle_Width', '1.0', y_particle_width  )
-  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Particle_bumper', '2.0', particle_bumper  )
 
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'TrajectoryType', 'first', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'first'   ) THEN; itrajectories = LAG_TRAJECTORY_FIRST

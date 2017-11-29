@@ -110,14 +110,14 @@ PROGRAM INIPART
   DO i = 1,particle_number_each
      l_tags(i) = INT(i, KIND=8) +partcile_offset
   END DO
-  CALL DNS_WRITE_PARTICLE_TAGS('particle_id.ics',l_tags)
+  CALL DNS_WRITE_PARTICLE_TAGS('particle.ics.id',l_tags)
 #else
 
 
   DO i=1,particle_number
      l_tags(i) = INT(i, KIND=8)
   END DO
-  CALL DNS_WRITE_PARTICLE_TAGS('particle_id.ics',l_tags)
+  CALL DNS_WRITE_PARTICLE_TAGS('particle.ics.id',l_tags)
 
 #endif
 

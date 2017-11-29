@@ -207,7 +207,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
         IF ( icalc_particle .EQ. 1 ) THEN
            WRITE(fname,*) itime; fname = 'particle.'//TRIM(ADJUSTL(fname))
            CALL DNS_WRITE_PARTICLE(fname, l_q)
-           WRITE(fname,*) itime; fname = 'particle_id.'//TRIM(ADJUSTL(fname))
+           WRITE(fname,*) itime; fname = 'particle.'//TRIM(ADJUSTL(fname))//'.id'
            CALL DNS_WRITE_PARTICLE_TAGS(fname, l_tags)
         END IF
 

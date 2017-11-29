@@ -101,7 +101,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
   !#######################################################################
   !READ THE (FIRST) FILE
   !#######################################################################
-  WRITE(fname,*) nitera_first; fname = "particle_id."//TRIM(ADJUSTL(fname))
+  WRITE(fname,*) nitera_first; fname = "particle."//TRIM(ADJUSTL(fname))//'.id'
   CALL DNS_READ_PARTICLE_TAGS(fname,l_tags)
   
   WRITE(fname,*) nitera_first; fname = "particle."//TRIM(ADJUSTL(fname))

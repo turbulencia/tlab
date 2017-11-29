@@ -104,7 +104,7 @@ PROGRAM LAGRANGE_TRAJEC
   !#######################################################################
   !READ THE (LAST) FILE
   !#######################################################################
-  WRITE(fname,*) nitera_last; fname = "particle_id."//TRIM(ADJUSTL(fname))
+  WRITE(fname,*) nitera_last; fname = "particle."//TRIM(ADJUSTL(fname))//'.id'
   CALL DNS_READ_PARTICLE_TAGS(fname,l_tags)
   
   WRITE(fname,*) nitera_last; fname = "particle."//TRIM(ADJUSTL(fname))

@@ -131,7 +131,7 @@ PROGRAM LAGRANGE_PDF
      CALL DNS_READ_FIELDS(str, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
      CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,1,1,inb_scal_array))
 
-     WRITE(fname,*) nitera_first; fname = "particle_id."//TRIM(ADJUSTL(fname))
+     WRITE(fname,*) nitera_first; fname = "particle."//TRIM(ADJUSTL(fname))//'.id'
      CALL DNS_READ_PARTICLE_TAGS(fname,l_tags)
 
      WRITE(fname,*) i; fname = "particle."//TRIM(ADJUSTL(fname))

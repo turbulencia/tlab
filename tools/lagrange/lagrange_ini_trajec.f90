@@ -52,7 +52,7 @@ PROGRAM LAGRANGE_INI_TRAJEC
 
 ! -------------------------------------------------------------------
 
-  TINTEGER  ierr,isize_wrk3d, i, dummy, particle_pos
+  TINTEGER  ierr,isize_wrk3d, i
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:),      ALLOCATABLE :: wrk1d,wrk2d, wrk3d
   TREAL, DIMENSION(:,:),    ALLOCATABLE :: txc
@@ -60,11 +60,11 @@ PROGRAM LAGRANGE_INI_TRAJEC
   TREAL, DIMENSION(:,:),    ALLOCATABLE :: l_q, l_txc, l_hq
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_tags
 
-  TINTEGER  dummy_ims_npro
-  TINTEGER  dummy_isize_trajectories
   TINTEGER, DIMENSION(:), ALLOCATABLE :: dummy_proc
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_trajectories_tags, fake_l_trajectories_tags
 #ifdef USE_MPI
+  TINTEGER  dummy_ims_npro
+  TINTEGER  dummy_isize_trajectories
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: all_fake_l_trajectories_tags
 #endif
   TREAL, DIMENSION(:,:), ALLOCATABLE :: l_trajectories
@@ -73,12 +73,13 @@ PROGRAM LAGRANGE_INI_TRAJEC
   TINTEGER nitera_first
 
   CHARACTER*32 inifile
-  CHARACTER*64 str, line, fname
+  CHARACTER*64 str, line
   CHARACTER*32 bakfile
 
 #ifdef USE_MPI
-  TINTEGER  particle_number_each
-  TLONGINTEGER dummy_int1, dummy_int2 ,dummy_int3
+  CHARACTER*64 fname
+  TINTEGER  particle_number_each, particle_pos
+  TLONGINTEGER dummy_int1, dummy_int2 ,dummy_int3, dummy
 #endif
   inifile = 'dns.ini'
 
@@ -231,7 +232,7 @@ all_fake_liquid(:) = C_0_R
   !WRITE THE PARTICLE FILE
   !#######################################################################
   CALL DNS_WRITE_PARTICLE('fake_particle.ics',l_q)
-  CALL DNS_WRITE_PARTICLE_TAGS('fake_particle_id.ics',l_tags)
+  CALL DNS_WRITE_PARTICLE_TAGS('fake_particle.ics.id',l_tags)
 
 
 #endif
