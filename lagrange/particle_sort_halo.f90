@@ -66,10 +66,10 @@ SUBROUTINE PARTICLE_SORT_HALO(x,z, nzone_grid, halo_zone_x, halo_zone_z, halo_zo
     right_limit=x(imax*(ims_pro_i+1))  ! right_limit is east
     upper_limit=z(kmax*(ims_pro_k+1))  !upper_limit is north
 #else
-    right_limit=x(g(2)%size)  ! right_limit is east
+    right_limit=x(g(1)%size)  ! right_limit is east
     upper_limit=z(g(3)%size)  
 #endif
-!    right_limit=x(g(2)%size)  ! right_limit is east
+!    right_limit=x(g(1)%size)  ! right_limit is east
 
 !#######################################################################
 !Sorting structure grid-halo_x-halo_z-halo_diagonal

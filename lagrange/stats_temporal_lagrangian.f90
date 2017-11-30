@@ -25,15 +25,6 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags, txc, mean, w
   TINTEGER is
   CHARACTER*32 fname
 
-! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dy,dz
-
-! #######################################################################
-! Define pointers
-  x => g(1)%nodes; dx => g(1)%jac(:,1)
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
-  z => g(3)%nodes; dz => g(3)%jac(:,1)
-
 ! ###################################################################
 ! Particle calculations
 ! ###################################################################
