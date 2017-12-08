@@ -29,7 +29,7 @@ END MODULE DNS_CONSTANTS
 
 MODULE DNS_GLOBAL
   USE DNS_TYPES,     ONLY : grid_dt, filter_dt, subarray_dt, term_dt, background_dt
-  USE DNS_CONSTANTS, ONLY : MAX_VARS, MAX_PROF, MAX_JETS, MAX_NSP
+  USE DNS_CONSTANTS, ONLY : MAX_VARS, MAX_NSP
   USE DNS_CONSTANTS, ONLY : MAX_STATS_SPATIAL
   IMPLICIT NONE
   SAVE
@@ -124,7 +124,9 @@ MODULE DNS_GLOBAL
 ! ###########################################################
 ! Filters
 ! ###########################################################
-  TYPE(filter_dt), DIMENSION(3) :: FilterDomain
+  TYPE(filter_dt), DIMENSION(3)        :: FilterDomain
+  LOGICAL,         DIMENSION(MAX_VARS) :: FilterDomainActive
+  TINTEGER,        DIMENSION(MAX_VARS) :: FilterDomainBcsFlow, FilterDomainBcsScal 
 
 ! ###################################################################
 ! FFTW

@@ -631,8 +631,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ! <0; low-pass filter
      ! Parameter2 is the characteristic width--in log units (relative to domain size)'   
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'helmholtz'      ) THEN; FilterDomain(:)%type = DNS_FILTER_HELMHOLTZ
-     FilterDomain(:)%parameters(1) = 2    ! default filter size (in grid-step units)
-     default                       = 'dirichlet'
+     FilterDomain(:)%parameters(1) = C_1_R    ! default filter size
   ELSE
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Filter.Type.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
@@ -699,9 +698,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(3)%type = DNS_FILTER_NONE
 
 ! To eventually allow for control field by field
-  DO ig = 1,3
-     FilterDomain(ig)%active(:) = .TRUE.
-  ENDDO
+  FilterDomainActive(:) = .TRUE.
 
 ! Further control
   DO ig = 1,3
@@ -1204,6 +1201,36 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL DNS_STOP(DNS_ERROR_CHECKUNIFZ)
   ENDIF
 
+! -------------------------------------------------------------------
+! Helmholtz filter that maintains prognostic bcs; I need inb_{flow,scal}
+! -------------------------------------------------------------------
+  FilterDomainBcsFlow(:) = FilterDomain(2)%BcsMin
+  FilterDomainBcsScal(:) = FilterDomain(2)%BcsMin
+  
+  IF ( FilterDomain(1)%type   .EQ. DNS_FILTER_HELMHOLTZ     .AND. &
+       FilterDomain(2)%BcsMin .NE. DNS_FILTER_BCS_DIRICHLET .AND. &
+       FilterDomain(2)%BcsMin .NE. DNS_FILTER_BCS_SOLID     .AND. &
+       FilterDomain(2)%BcsMin .NE. DNS_FILTER_BCS_NEUMANN ) THEN
+     CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'void', sRes)
+     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_DIRICHLET
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_NEUMANN
+     ELSE
+        CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. BoundaryConditions.VelocityJmin.')
+        CALL DNS_STOP(DNS_ERROR_IBC)
+     ENDIF
+     FilterDomainBcsFlow(2) = DNS_FILTER_BCS_DIRICHLET ! Normal velocity is always Dirichlet
+     DO is = 1,inb_scal
+        WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Jmin'
+        CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'void', sRes)
+        IF      ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; FilterDomainBcsScal(is) = DNS_FILTER_BCS_DIRICHLET
+        ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; FilterDomainBcsScal(is) = DNS_FILTER_BCS_NEUMANN
+        ELSE
+           CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
+           CALL DNS_STOP(DNS_ERROR_IBC)
+        ENDIF
+     ENDDO
+  ENDIF
+  
 ! -------------------------------------------------------------------
 ! Other parameters
 ! -------------------------------------------------------------------

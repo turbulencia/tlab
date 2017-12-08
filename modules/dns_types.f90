@@ -43,7 +43,6 @@ MODULE DNS_TYPES
      TINTEGER type
      TINTEGER size, inb_filter
      LOGICAL uniform, periodic
-     LOGICAL,  DIMENSION(MAX_PARS) :: active
      TREAL,    DIMENSION(MAX_PARS) :: parameters
      TINTEGER BcsMin, BcsMax                  ! boundary conditions
      TINTEGER repeat

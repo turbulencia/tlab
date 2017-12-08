@@ -4,12 +4,12 @@
 
 SUBROUTINE DNS_READ_LOCAL(inifile)
 
-  USE DNS_CONSTANTS, ONLY : efile, lfile, wfile
+  USE DNS_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
   USE DNS_GLOBAL,    ONLY : pbg, rbg
   USE DNS_GLOBAL,    ONLY : imode_sim, inb_flow,inb_scal
   USE DNS_GLOBAL,    ONLY : imax,jmax
   USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : FilterDomain, MAX_PROF
+  USE DNS_GLOBAL,    ONLY : FilterDomain
   USE DNS_LOCAL
   USE BOUNDARY_BUFFER
   

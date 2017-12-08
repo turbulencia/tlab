@@ -501,6 +501,8 @@ PROGRAM TRANSFIELDS
            DO iq = 1,inb_flow
               CALL IO_WRITE_ASCII(lfile,'Filtering...')
               q_dst(:,iq) = q(:,iq) ! in-place operation
+              IF ( FilterDomain(1)%type .EQ. DNS_FILTER_HELMHOLTZ ) &  ! Bcs depending on field
+                   FilterDomain(2)%BcsMin = FilterDomainBcsFlow(iq)
               CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, q_dst(1,iq), wrk1d,wrk2d,txc)
            ENDDO
         ENDIF
@@ -509,6 +511,8 @@ PROGRAM TRANSFIELDS
            DO is = 1,inb_scal
               CALL IO_WRITE_ASCII(lfile,'Filtering...')
               s_dst(:,is) = s(:,is) ! in-place operation
+              IF ( FilterDomain(1)%type .EQ. DNS_FILTER_HELMHOLTZ ) & ! Bcs depending on field
+                   FilterDomain(2)%BcsMin = FilterDomainBcsScal(is)
               CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, s_dst(1,is), wrk1d,wrk2d,txc)
            ENDDO
         ENDIF
