@@ -131,17 +131,15 @@ fake_l_trajectories_tags(:) = C_0_R
 fake_liquid(:) = C_0_R
 all_fake_liquid(:) = C_0_R
 
-
 ! -------------------------------------------------------------------
 ! Read the grid 
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
-
   !#######################################################################
   !CREATE THE RANDOM PARTICLE FIELD
   !#######################################################################
-  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,isize_wrk3d,wrk1d,wrk2d,wrk3d,txc)
+  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags, txc, wrk1d,wrk2d,wrk3d)
 
   !#######################################################################
   !CREATE THE CORRESPONDING TAGS
@@ -231,8 +229,7 @@ all_fake_liquid(:) = C_0_R
   !#######################################################################
   !WRITE THE PARTICLE FILE
   !#######################################################################
-  CALL DNS_WRITE_PARTICLE('fake_particle.ics',l_q)
-  CALL DNS_WRITE_PARTICLE_TAGS('fake_particle.ics.id',l_tags)
+  CALL IO_WRITE_PARTICLE('part2traj.ics', l_tags, l_q)
 
 
 #endif

@@ -8,7 +8,7 @@
 PROGRAM AVERAGES
 
   USE DNS_TYPES,     ONLY : pointers_dt
-  USE DNS_CONSTANTS, ONLY : efile,lfile,gfile, tag_flow,tag_scal
+  USE DNS_CONSTANTS, ONLY : efile,lfile,gfile, tag_flow,tag_scal,tag_part
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
@@ -534,8 +534,8 @@ PROGRAM AVERAGES
 ! Lagrange Liquid and Liquid without diffusion
         IF ( icalc_particle .EQ. 1 ) THEN
            IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
-              WRITE(fname,*) itime; fname = "particle."//TRIM(ADJUSTL(fname))
-              CALL DNS_READ_PARTICLE(fname,l_q) 
+              WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
+              CALL IO_READ_PARTICLE(fname, l_tags, l_q)
                  
               l_txc = C_1_R; ! We want density
               CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,7))

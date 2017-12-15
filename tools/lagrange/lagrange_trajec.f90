@@ -104,11 +104,8 @@ PROGRAM LAGRANGE_TRAJEC
   !#######################################################################
   !READ THE (LAST) FILE
   !#######################################################################
-  WRITE(fname,*) nitera_last; fname = "particle."//TRIM(ADJUSTL(fname))//'.id'
-  CALL DNS_READ_PARTICLE_TAGS(fname,l_tags)
-  
-  WRITE(fname,*) nitera_last; fname = "particle."//TRIM(ADJUSTL(fname))
-  CALL DNS_READ_PARTICLE(fname,l_q) 
+  WRITE(fname,*) nitera_last; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
+  CALL IO_READ_PARTICLE(fname, l_tags, l_q)
 
   !#######################################################################
   !Every processor searches for the largest particles

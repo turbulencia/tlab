@@ -56,7 +56,7 @@ PROGRAM LAGRANGE_PDF
   TINTEGER nitera_first,nitera_last,nitera_save
 
   CHARACTER*32 inifile
-  CHARACTER*64 str, fname
+  CHARACTER*64 fname, str
   CHARACTER*128 line
   CHARACTER*32 bakfile
 
@@ -121,21 +121,17 @@ PROGRAM LAGRANGE_PDF
   y_pdf_min=y_particle_pdf_pos-0.5*y_particle_pdf_width
   particle_bins=int(0,KIND=8)
 
-  DO i=nitera_first,nitera_last,nitera_save
+  DO i = nitera_first, nitera_last, nitera_save
 
 !#######################################################################
 !READ ALL FILES
 !#######################################################################
-     fname='scal'
-     WRITE(str,*) i;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str))
-     CALL DNS_READ_FIELDS(str, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
+     WRITE(fname,*) i;  fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
+     CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
      CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,1,1,inb_scal_array))
 
-     WRITE(fname,*) nitera_first; fname = "particle."//TRIM(ADJUSTL(fname))//'.id'
-     CALL DNS_READ_PARTICLE_TAGS(fname,l_tags)
-
-     WRITE(fname,*) i; fname = "particle."//TRIM(ADJUSTL(fname))
-     CALL DNS_READ_PARTICLE(fname,l_q) ! h_particle only as dummy
+     WRITE(fname,*) i; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
+     CALL IO_READ_PARTICLE(fname, l_tags, l_q)
 
 ! ######################################################################
 ! Save particle pathlines for particle_pdf

@@ -299,26 +299,6 @@ PROGRAM DNS
      CALL OPR_FILTER_INITIALIZE( g(ig), FilterDomain(ig), wrk1d )
   END DO
 
-! ####################################################################
-! Initializing particles
-! ####################################################################
-  IF ( icalc_particle .EQ. 1 ) THEN
-    WRITE(fname,*) nitera_first; fname = "particle."//TRIM(ADJUSTL(fname))//'.id'
-    CALL DNS_READ_PARTICLE_TAGS(fname,l_tags)
-    
-    WRITE(fname,*) nitera_first; fname = "particle."//TRIM(ADJUSTL(fname))
-    CALL DNS_READ_PARTICLE(fname,l_q) ! h_particle only as dummy
-    ! set boundarys for residence time pdf 
-    IF (inb_particle_aux .EQ. 1) THEN
-       l_y_lambda =  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean - C_2_R
-       l_y_base =   ((g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean -(g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean )/C_2_R &
-                  +  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean
-       IF (residence_reset .EQ. 1) THEN
-          l_q(:,6) = C_0_R
-       ENDIF
-    ENDIF
-  END IF
-
 ! ###################################################################
 ! Initialize spectral Poisson solver
 ! ###################################################################
@@ -366,6 +346,23 @@ PROGRAM DNS
 
   ENDIF
 
+! Particle fields
+  IF ( icalc_particle .EQ. 1 ) THEN
+     WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
+     CALL IO_READ_PARTICLE(fname, l_tags, l_q)
+     
+! set boundarys for residence time pdf 
+     IF ( inb_particle_aux .EQ. 1 ) THEN
+        l_y_lambda =  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean - C_2_R
+        l_y_base =   ((g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean -(g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean )/C_2_R &
+             +  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean
+        IF (residence_reset .EQ. 1) THEN
+           l_q(:,6) = C_0_R
+        ENDIF
+     ENDIF
+     
+  END IF
+  
 ! Running average field
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. nitera_stats_spa .GT. 0 ) THEN
      WRITE(fname,*) nitera_first; fname = 'st'//TRIM(ADJUSTL(fname))

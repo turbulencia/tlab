@@ -13,7 +13,7 @@
 SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
      l_q, l_hq, l_txc, l_tags, l_comm)
   
-  USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, lfile
+  USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, tag_part, lfile
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal_array, inb_flow_array
   USE DNS_GLOBAL, ONLY : isize_particle, inb_particle, inb_particle_txc
   USE DNS_GLOBAL, ONLY : imode_sim, imode_eqns
@@ -205,10 +205,8 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
         ENDIF
 
         IF ( icalc_particle .EQ. 1 ) THEN
-           WRITE(fname,*) itime; fname = 'particle.'//TRIM(ADJUSTL(fname))
-           CALL DNS_WRITE_PARTICLE(fname, l_q)
-           WRITE(fname,*) itime; fname = 'particle.'//TRIM(ADJUSTL(fname))//'.id'
-           CALL DNS_WRITE_PARTICLE_TAGS(fname, l_tags)
+           WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
+           CALL IO_WRITE_PARTICLE(fname, l_tags, l_q)
         END IF
 
         IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. nitera_stats_spa .GT. 0 ) THEN ! Spatial; running averages

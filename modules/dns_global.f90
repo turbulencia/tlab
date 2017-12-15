@@ -24,6 +24,7 @@ MODULE DNS_CONSTANTS
 
   CHARACTER*32, PARAMETER :: tag_flow ='flow.'
   CHARACTER*32, PARAMETER :: tag_scal ='scal.' 
+  CHARACTER*32, PARAMETER :: tag_part ='particle.' 
   
 END MODULE DNS_CONSTANTS
 

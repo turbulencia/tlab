@@ -392,7 +392,7 @@ PROGRAM VISUALS_MAIN
      ENDIF
 
      IF ( iread_part .EQ. 1 ) THEN ! Particle variables
-        WRITE(part_file,*) itime; part_file="particle."//TRIM(ADJUSTL(part_file))
+        WRITE(part_file,*) itime; part_file = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(part_file))
      ENDIF
 
      WRITE(sRes,100) rtime; sRes = 'Physical time '//TRIM(ADJUSTL(sRes))
@@ -963,7 +963,8 @@ PROGRAM VISUALS_MAIN
 ! Particle density
 ! ###################################################################
         IF ( opt_vec(iv) .EQ. iscal_offset+18 ) THEN
-           CALL DNS_READ_PARTICLE(part_file,l_q)
+           CALL IO_READ_PARTICLE(part_file, l_tags, l_q)
+           
            l_txc = C_1_R; ! We want density
            CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,1))
            str = 'ParticleDensity'

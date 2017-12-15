@@ -3,7 +3,14 @@
 import numpy as np   # For array operations.
 import sys
 
-np = 10  # number of particles
+np = 0   # number of particles; if 0, then search dns.ini
+
+if ( np == 0 ):
+    for line in open('dns.ini'):
+        if "trajectorynumber" in line.lower():
+            np = int(line.split("=",1)[1])
+        
+print("{} trajectories.".format(np))
 
 sizeofmask = 6
 

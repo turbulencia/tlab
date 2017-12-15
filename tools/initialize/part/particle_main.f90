@@ -38,11 +38,12 @@ PROGRAM INIPART
   TINTEGER  ierr,isize_wrk3d, i
 
   TREAL, DIMENSION(:,:),    ALLOCATABLE,SAVE,TARGET :: x,y,z
+  TREAL, DIMENSION(:,:),    ALLOCATABLE             :: q,s,txc
   TREAL, DIMENSION(:),      ALLOCATABLE             :: wrk1d,wrk2d, wrk3d
-  TREAL, DIMENSION(:,:),    ALLOCATABLE             :: txc
 
-  TREAL, DIMENSION(:,:),    ALLOCATABLE             :: l_q, l_txc, l_hq
-  INTEGER(8), DIMENSION(:), ALLOCATABLE             :: l_tags
+  TREAL,      DIMENSION(:,:),   ALLOCATABLE, SAVE :: l_q, l_hq, l_txc
+!  TREAL,      DIMENSION(:),     ALLOCATABLE, SAVE :: l_comm
+  INTEGER(8), DIMENSION(:),     ALLOCATABLE, SAVE :: l_tags
 
   CHARACTER*32 inifile
   CHARACTER*64 str, line
@@ -52,6 +53,8 @@ PROGRAM INIPART
   TLONGINTEGER dummy_int1, dummy_int2, partcile_offset
 #endif
   
+!########################################################################
+!########################################################################
   inifile = 'dns.ini'
 
   CALL DNS_INITIALIZE
@@ -66,38 +69,41 @@ PROGRAM INIPART
   CALL DNS_MPI_INITIALIZE
 #endif
 
+! -------------------------------------------------------------------
+! Definitions
+! -------------------------------------------------------------------
   inb_particle_txc = 0 ! so far, not needed
 
-#include "dns_alloc_larrays.h"
-  isize_wrk3d = imax*jmax*kmax
-  IF (jmax_part .EQ. 1) THEN
+! #include "dns_alloc_larrays.h"
+  IF ( jmax_part .EQ. 1 ) THEN
      jmax_part   = jmax ! 1 by default
   ENDIF
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
-  ALLOCATE(x(g(1)%size,g(1)%inb_grid))
-  ALLOCATE(y(g(2)%size,g(2)%inb_grid))
-  ALLOCATE(z(g(3)%size,g(3)%inb_grid))
-
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d))
-  ALLOCATE(wrk3d(isize_wrk3d))
+  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
 
-  IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !Allocte memory to read fields
-     ALLOCATE(txc(isize_field,3))
-     ALLOCATE(l_hq(isize_particle,inb_particle)) !Rubish information. Just to run FIELD_TO_PARTICLE properly
+  inb_flow_array = 0
+  inb_scal_array = 0
+  isize_wrk3d    = imax*jmax*kmax
+  inb_txc        = inb_scal
+#include "dns_alloc_arrays.h"
+#include "dns_alloc_larrays.h"
+  IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
+     ALLOCATE(l_hq(isize_particle,inb_particle)) ! Aux space to run FIELD_TO_PARTICLE properly
   ENDIF
-
+  
 ! -------------------------------------------------------------------
 ! Read the grid 
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
-  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags,isize_wrk3d,wrk1d,wrk2d,wrk3d,txc)
-
-  CALL DNS_WRITE_PARTICLE('particle.ics',l_q)
+! -------------------------------------------------------------------
+! Initialize particle information
+! -------------------------------------------------------------------
+  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags, txc, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_MPI
   particle_number_each = INT( particle_number /INT(ims_npro, KIND=8) ) 
@@ -110,16 +116,15 @@ PROGRAM INIPART
   DO i = 1,particle_number_each
      l_tags(i) = INT(i, KIND=8) +partcile_offset
   END DO
-  CALL DNS_WRITE_PARTICLE_TAGS('particle.ics.id',l_tags)
+
 #else
-
-
   DO i=1,particle_number
      l_tags(i) = INT(i, KIND=8)
   END DO
-  CALL DNS_WRITE_PARTICLE_TAGS('particle.ics.id',l_tags)
 
 #endif
+
+  CALL IO_WRITE_PARTICLE(TRIM(ADJUSTL(tag_part))//'ics', l_tags, l_q)
 
   CALL DNS_END(0)
 

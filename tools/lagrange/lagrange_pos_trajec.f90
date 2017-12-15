@@ -101,11 +101,8 @@ PROGRAM LAGRANGE_POS_TRAJEC
   !#######################################################################
   !READ THE (FIRST) FILE
   !#######################################################################
-  WRITE(fname,*) nitera_first; fname = "particle."//TRIM(ADJUSTL(fname))//'.id'
-  CALL DNS_READ_PARTICLE_TAGS(fname,l_tags)
-  
-  WRITE(fname,*) nitera_first; fname = "particle."//TRIM(ADJUSTL(fname))
-  CALL DNS_READ_PARTICLE(fname,l_q) 
+  WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
+  CALL IO_READ_PARTICLE(fname, l_tags, l_q)
 
   IF (ims_pro .EQ. 0) THEN
     fname = 'largest_particle'
