@@ -278,7 +278,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags,l_com
   IF (ilagrange .EQ. LAG_TYPE_SIMPLE_SETT) THEN
 
 #ifdef USE_MPI
-     local_np = particle_vector(ims_pro+1)
+     local_np = ims_size_p(ims_pro+1)
 #else
      local_np = particle_number
 #endif

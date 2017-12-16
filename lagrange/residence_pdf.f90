@@ -65,7 +65,7 @@ SUBROUTINE RESIDENCE_PDF(fname,l_hq,l_q)
   !Start counting of particles in bins per processor
   !#######################################################################
   
-  DO i=1,particle_vector(ims_pro+1)
+  DO i=1,ims_size_p(ims_pro+1)
     j = 1 + int( l_q(i,inb_particle) / residence_pdf_interval ) !if residence is calles information is on inb_particle=6
     residence_bins_local(j,1)=residence_bins_local(j,1)+1
 

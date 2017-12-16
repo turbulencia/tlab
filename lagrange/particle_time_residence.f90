@@ -27,7 +27,7 @@ SUBROUTINE PARTICLE_TIME_RESIDENCE(dtime, l_q, l_hq)
   USE DNS_GLOBAL, ONLY : inb_particle, isize_particle
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : particle_vector, ims_pro
+  USE DNS_MPI, ONLY : ims_size_p, ims_pro
 #endif
 
   IMPLICIT NONE
@@ -37,7 +37,7 @@ SUBROUTINE PARTICLE_TIME_RESIDENCE(dtime, l_q, l_hq)
   TINTEGER l_i, local_isize_particle
 
 #ifdef USE_MPI
-   local_isize_particle = particle_vector(ims_pro+1)
+   local_isize_particle = ims_size_p(ims_pro+1)
 #else
    local_isize_particle = particle_number
 #endif

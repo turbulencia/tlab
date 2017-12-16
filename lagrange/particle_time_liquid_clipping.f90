@@ -29,7 +29,7 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_h
   USE DNS_GLOBAL, ONLY : isize_field, inb_scal_array
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : particle_vector, ims_pro
+  USE DNS_MPI, ONLY : ims_size_p, ims_pro
 #endif
 
   IMPLICIT NONE
@@ -43,7 +43,7 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_h
   TINTEGER is, l_i, local_isize_particle
 
 #ifdef USE_MPI
-   local_isize_particle = particle_vector(ims_pro+1)
+   local_isize_particle = ims_size_p(ims_pro+1)
 #else
    local_isize_particle = particle_number
 #endif

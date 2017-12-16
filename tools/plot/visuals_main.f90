@@ -89,7 +89,7 @@ PROGRAM VISUALS_MAIN
   CALL DNS_INITIALIZE
 
   CALL DNS_READ_GLOBAL(inifile)
-  IF ( icalc_particle .EQ. 1 ) &
+  IF ( icalc_part .EQ. 1 ) &
      CALL PARTICLE_READ_GLOBAL(inifile)
 
 #ifdef USE_MPI
@@ -307,7 +307,7 @@ PROGRAM VISUALS_MAIN
 #ifdef USE_MPI
   isize_wrk3d = isize_wrk3d + isize_field ! more space in wrk3d array needed in IO_WRITE_VISUALS
 #endif
-  IF ( icalc_particle .eq. 1) THEN
+  IF ( icalc_part .eq. 1) THEN
      isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
   END IF
 

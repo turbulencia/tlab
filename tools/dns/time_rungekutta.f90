@@ -27,7 +27,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE DNS_GLOBAL, ONLY : isize_field, inb_flow,inb_scal, icalc_particle
+  USE DNS_GLOBAL, ONLY : isize_field, inb_flow,inb_scal, icalc_part
   USE DNS_GLOBAL, ONLY : icalc_flow,icalc_scal, imode_eqns
   USE DNS_GLOBAL, ONLY : isize_particle
   USE DNS_GLOBAL, ONLY : rtime, itime
@@ -35,7 +35,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
   USE DNS_LOCAL
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : particle_vector, ims_pro,ims_npro,ims_npro_i,ims_npro_k
+  USE DNS_MPI, ONLY : ims_size_p, ims_pro,ims_npro,ims_npro_i,ims_npro_k
 #endif
 
   IMPLICIT NONE
@@ -133,7 +133,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
      IF ( icalc_flow .EQ. 1 ) THEN
         DO is = 1,inb_flow; hq(:,is) = C_0_R; ENDDO
      ENDIF
-     IF ( icalc_particle .EQ. 1 ) THEN
+     IF ( icalc_part .EQ. 1 ) THEN
         DO is = 1,inb_particle_evolution; l_hq(:,is) = C_0_R; ENDDO
      ENDIF
      IF ( icalc_scal .EQ. 1 ) THEN
@@ -178,7 +178,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
      CALL DNS_CONTROL(flag_control, q,s, txc, wrk2d,wrk3d)
      IF ( INT(logs_data(1)) .NE. 0 ) RETURN ! Error detected
 
-     IF ( icalc_particle .EQ. 1 .AND. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
+     IF ( icalc_part .EQ. 1 .AND. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
         CALL PARTICLE_TIME_RESIDENCE(dtime, l_q, l_hq)
         CALL PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q)
      ENDIF
@@ -216,15 +216,15 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
         ENDIF
 
 #ifdef USE_MPI
-        IF ( icalc_particle .EQ. 1 ) THEN
+        IF ( icalc_part .EQ. 1 ) THEN
            DO is = 1,inb_particle_evolution
-              DO i = 1,particle_vector(ims_pro+1)
+              DO i = 1,ims_size_p(ims_pro+1)
                  l_hq(i,is) = alpha*l_hq(i,is)
               ENDDO
            ENDDO
         ENDIF
 #else
-        IF ( icalc_particle .EQ. 1 ) THEN
+        IF ( icalc_part .EQ. 1 ) THEN
            DO is = 1,inb_particle_evolution
               DO ip = 1,particle_number
                  l_hq(ip,is) = alpha*l_hq(ip,is)

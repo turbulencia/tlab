@@ -28,10 +28,11 @@ MODULE LAGRANGE_GLOBAL
   TREAL         :: l_y_lambda !y coordinate where approx radiation begins for residence times (set in dns_main)
   TREAL         :: l_y_base   !set to be 1/3 of cloud domain between two bouyancy stratification for residence times 
 
-  TINTEGER      :: itrajectories   !Type of trajectories
-  TINTEGER      :: isize_trajectories  ! number of followed trajectories
+  TINTEGER      :: itrajectory       ! Type of trajectories
+  TINTEGER      :: isize_trajectory  ! number of saved trajectories
+  TINTEGER      :: inb_trajectory    ! number of properties saved along trajectories
 
-  TINTEGER      :: icalc_particle_pdf  ! if calculation of pdf for particles
+  TINTEGER      :: icalc_part_pdf  ! if calculation of pdf for particles
   TREAL         :: y_particle_pdf_pos
   TREAL         :: y_particle_pdf_width
   TREAL         :: x_particle_pdf_pos

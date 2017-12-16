@@ -66,7 +66,7 @@ PROGRAM LAGRANGE_PDF
   CALL DNS_INITIALIZE
 
   CALL DNS_READ_GLOBAL(inifile)
-  IF ( icalc_particle .EQ. 1 ) THEN
+  IF ( icalc_part .EQ. 1 ) THEN
      CALL PARTICLE_READ_GLOBAL('dns.ini')
   ENDIF
 #ifdef USE_MPI

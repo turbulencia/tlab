@@ -25,7 +25,7 @@ SUBROUTINE RHS_PARTICLE_TO_FIELD(l_q,particle_property, wrk1d, field)
   USE DNS_GLOBAL, ONLY: isize_particle
   USE LAGRANGE_GLOBAL, ONLY: jmin_part, particle_number
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY: particle_vector, ims_npro, ims_pro , ims_pro_i, ims_pro_k, ims_err
+  USE DNS_MPI, ONLY: ims_size_p, ims_npro, ims_pro , ims_pro_i, ims_pro_k, ims_err
 #endif
 
   IMPLICIT NONE
@@ -45,7 +45,7 @@ SUBROUTINE RHS_PARTICLE_TO_FIELD(l_q,particle_property, wrk1d, field)
 
 #ifdef USE_MPI
 
-  DO i=1,particle_vector(ims_pro+1)
+  DO i=1,ims_size_p(ims_pro+1)
 
      particle_local_grid_posx = l_q(i,1)/wrk1d(1) + 1 - ims_pro_i*imax
      particle_local_grid_posy = ((l_q(i,2)-g(2)%nodes(jmin_part))/wrk1d(2))+jmin_part  

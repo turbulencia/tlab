@@ -113,8 +113,8 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags, txc, wrk1d,wrk2d,wrk3d)
 
     END DO
     !Set up the vector containing the number of particles for every processor
-    particle_vector(1:ims_npro)=C_0_R
-    particle_vector(ims_pro+1)=particle_number_each 
+    ims_size_p(1:ims_npro)=C_0_R
+    ims_size_p(ims_pro+1)=particle_number_each 
 
 !#######################################################################
   ELSEIF (particle_rnd_mode .eq. 2) THEN
@@ -171,8 +171,8 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags, txc, wrk1d,wrk2d,wrk3d)
       
    END DO
 !Set up the vector containing the number of particles for every processor
-   particle_vector(1:ims_npro)=C_0_R
-   particle_vector(ims_pro+1)=particle_number_each 
+   ims_size_p(1:ims_npro)=C_0_R
+   ims_size_p(ims_pro+1)=particle_number_each 
    
 END IF
 
@@ -250,7 +250,7 @@ END IF
 ! Do the rest of the scalra properties of the lagrangian field
 ! ************************************************************
 #ifdef USE_MPI
-  particle_number_local=particle_vector(ims_pro+1)
+  particle_number_local=ims_size_p(ims_pro+1)
 #else
   particle_number_local=particle_number
 #endif

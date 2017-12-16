@@ -132,8 +132,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'CalculateParticle', 'no', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_particle = 1
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_particle = 0
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_part = 1
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_part = 0
   ELSE
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.CalculateParticle must be yes or no')
      CALL DNS_STOP(DNS_ERROR_CALCPARTICLE)

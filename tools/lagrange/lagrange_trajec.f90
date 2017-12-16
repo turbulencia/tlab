@@ -73,7 +73,7 @@ PROGRAM LAGRANGE_TRAJEC
   CALL DNS_INITIALIZE
 
   CALL DNS_READ_GLOBAL(inifile)
-  IF ( icalc_particle .EQ. 1 ) THEN
+  IF ( icalc_part .EQ. 1 ) THEN
      CALL PARTICLE_READ_GLOBAL('dns.ini')
   ENDIF
 #ifdef USE_MPI
@@ -88,14 +88,14 @@ PROGRAM LAGRANGE_TRAJEC
   
 
   
-  ALLOCATE(big_part(isize_trajectories)) 
-  ALLOCATE(tag_big_part(isize_trajectories)) 
+  ALLOCATE(big_part(isize_trajectory)) 
+  ALLOCATE(tag_big_part(isize_trajectory)) 
 #ifdef USE_MPI
   IF (ims_pro .EQ. 0) THEN
-    ALLOCATE(big_all(isize_trajectories*ims_npro)) 
-    ALLOCATE(big_overall(isize_trajectories)) 
-    ALLOCATE(tag_big_all(isize_trajectories*ims_npro)) 
-    ALLOCATE(tag_big_overall(isize_trajectories)) 
+    ALLOCATE(big_all(isize_trajectory*ims_npro)) 
+    ALLOCATE(big_overall(isize_trajectory)) 
+    ALLOCATE(tag_big_all(isize_trajectory*ims_npro)) 
+    ALLOCATE(tag_big_overall(isize_trajectory)) 
   ENDIF
 
 #endif
@@ -111,15 +111,15 @@ PROGRAM LAGRANGE_TRAJEC
   !Every processor searches for the largest particles
   !#######################################################################
 
-  big_part(1:isize_trajectories) = l_q(1:isize_trajectories,5)
-  tag_big_part(1:isize_trajectories) = l_tags(1:isize_trajectories)
+  big_part(1:isize_trajectory) = l_q(1:isize_trajectory,5)
+  tag_big_part(1:isize_trajectory) = l_tags(1:isize_trajectory)
 
 !  IF (ims_pro .EQ. 0) THEN
 !  print*, tag_big_part
 !  print*, big_part
 !  ENDIF
 
-  DO j= isize_trajectories-1,1,-1 
+  DO j= isize_trajectory-1,1,-1 
     swapped = .FALSE.
     DO i = 1,j
       IF ( big_part(i) .GT. big_part(i+1)) THEN !if 49... bigger than 50...
@@ -139,10 +139,10 @@ PROGRAM LAGRANGE_TRAJEC
 
 
 #ifdef USE_MPI
-  !DO k=isize_trajectories+1,particle_vector(ims_pro+1),1
-  DO k=1,particle_vector(ims_pro+1),1
+  !DO k=isize_trajectory+1,ims_size_p(ims_pro+1),1
+  DO k=1,ims_size_p(ims_pro+1),1
 #else
-  !DO k=isize_trajectories+1,particle_number,1
+  !DO k=isize_trajectory+1,particle_number,1
   DO k=1,particle_number,1
 #endif
     IF (l_q(k,5) .GT. big_part(1))THEN
@@ -150,7 +150,7 @@ PROGRAM LAGRANGE_TRAJEC
       tag_big_part(1) = l_tags(k)
 
       swapped = .FALSE.
-      DO i = 1,isize_trajectories-1
+      DO i = 1,isize_trajectory-1
         IF ( big_part(i) .GT. big_part(i+1)) THEN !if 49... bigger than 50...
           !START SWAPPING
           temp(1) = big_part(i) 
@@ -179,8 +179,8 @@ PROGRAM LAGRANGE_TRAJEC
   !#######################################################################
 #ifdef USE_MPI
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err) 
-  CALL MPI_GATHER(big_part, isize_trajectories, MPI_REAL8, big_all, isize_trajectories, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
-  CALL MPI_GATHER(tag_big_part, isize_trajectories, MPI_INTEGER8, tag_big_all, isize_trajectories, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
+  CALL MPI_GATHER(big_part, isize_trajectory, MPI_REAL8, big_all, isize_trajectory, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
+  CALL MPI_GATHER(tag_big_part, isize_trajectory, MPI_INTEGER8, tag_big_all, isize_trajectory, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
 
 
   IF (ims_pro .EQ. 0) THEN
@@ -191,13 +191,13 @@ PROGRAM LAGRANGE_TRAJEC
     
     big_overall=big_part
     tag_big_overall=tag_big_part
-    DO k=isize_trajectories+1,isize_trajectories*ims_npro,1
+    DO k=isize_trajectory+1,isize_trajectory*ims_npro,1
       IF (big_all(k) .GT. big_overall(1))THEN
         big_overall(1) = big_all(k)
         tag_big_overall(1) = tag_big_all(k)
   
         swapped = .FALSE.
-        DO i = 1,isize_trajectories-1
+        DO i = 1,isize_trajectory-1
           IF ( big_overall(i) .GT. big_overall(i+1)) THEN !if 49... bigger than 50...
             !START SWAPPING
             temp(1) = big_overall(i) 
@@ -227,7 +227,7 @@ PROGRAM LAGRANGE_TRAJEC
     INQUIRE(UNIT=15, POS=particle_pos) !would be 1
     WRITE (15)  ims_npro  !header
     INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
-    WRITE (15)  isize_trajectories  !header
+    WRITE (15)  isize_trajectory  !header
     INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
     WRITE (15)  big_overall
     INQUIRE(UNIT=15, POS=particle_pos)  !would be 409 with 50 numbers
@@ -239,7 +239,7 @@ PROGRAM LAGRANGE_TRAJEC
 !    READ(117) test1   !is a integer
 !    READ(117, POS=SIZEOFINT+1) test2  !is an integer
 !    READ(117, POS=SIZEOFINT*2+1) test3  !is real(8)
-!    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectories) test4 ! attention is integer(8)
+!    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectory) test4 ! attention is integer(8)
 !    CLOSE(117)
 
 
@@ -253,7 +253,7 @@ PROGRAM LAGRANGE_TRAJEC
     INQUIRE(UNIT=15, POS=particle_pos) !would be 1
     WRITE (15)  dummy  !only 1
     INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
-    WRITE (15)  isize_trajectories  !header
+    WRITE (15)  isize_trajectory  !header
     INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
     WRITE (15)  big_part
     INQUIRE(UNIT=15, POS=particle_pos)  !would be 409 with 50 numbers
@@ -266,7 +266,7 @@ PROGRAM LAGRANGE_TRAJEC
 !    READ(117) test1   !is a integer
 !    READ(117, POS=SIZEOFINT+1) test2  !is an integer
 !    READ(117, POS=SIZEOFINT*2+1) test3  !is real(8)
-!    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectories) test4 ! attention is integer(8)
+!    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectory) test4 ! attention is integer(8)
 !    CLOSE(117)
 !    print*, test1
 !    print*, test2

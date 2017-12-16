@@ -85,7 +85,7 @@ SUBROUTINE PARTICLE_SORT(x,z, nzone_grid, nzone_west, nzone_east,nzone_south,nzo
 !#######################################################################
 
   i=1 !Starting point of sorting algorythm
-  j=particle_vector(ims_pro+1)  !End point of sorting algorythm
+  j=ims_size_p(ims_pro+1)  !End point of sorting algorythm
 
   DO WHILE (i .LT. j )
     IF ( particle(i,x_or_z) .LT. lower_limit) THEN !If particle is out to West
@@ -173,7 +173,7 @@ SUBROUTINE PARTICLE_SORT(x,z, nzone_grid, nzone_west, nzone_east,nzone_south,nzo
 
 
 
-  j=particle_vector(ims_pro+1)
+  j=ims_size_p(ims_pro+1)
   i=nzone_grid+1 
  
   DO WHILE (i .LT. j )
@@ -225,10 +225,10 @@ SUBROUTINE PARTICLE_SORT(x,z, nzone_grid, nzone_west, nzone_east,nzone_south,nzo
  END IF
 
   !Calculating the number of particles send to east or north
-  nzone_east_north=particle_vector(ims_pro+1) - nzone_grid - nzone_west_south
+  nzone_east_north=ims_size_p(ims_pro+1) - nzone_grid - nzone_west_south
 
 
-!  particle_vector(ims_pro+1) = nzone_grid !For better readability in particle_send_recv
+!  ims_size_p(ims_pro+1) = nzone_grid !For better readability in particle_send_recv
 
   IF (x_or_z .EQ. 1) THEN
     nzone_west=nzone_west_south

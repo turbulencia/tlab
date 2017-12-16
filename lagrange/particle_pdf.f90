@@ -91,7 +91,7 @@ SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q)
   particle_pdf_min = 0  !if needed for future 
 
   IF (x_particle_pdf_width .EQ. 0) THEN !ONLY PART OF Y
-    DO i=1,particle_vector(ims_pro+1)
+    DO i=1,ims_size_p(ims_pro+1)
       IF ( l_q(i,2)/g(2)%scale .GE. y_pdf_min .AND. l_q(i,2)/g(2)%scale .LE. y_pdf_max) THEN
           j = 1 + int( (l_txc(i,1) - particle_pdf_min) / particle_pdf_interval )
           particle_bins_local(j,1)=particle_bins_local(j,1)+1
@@ -103,7 +103,7 @@ SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q)
       ENDIF
     ENDDO
   ELSE !3D BOX
-     DO i=1,particle_vector(ims_pro+1)
+     DO i=1,ims_size_p(ims_pro+1)
       IF ( l_q(i,1)/g(1)%scale .GE. x_pdf_min .AND. l_q(i,1)/g(1)%scale .LE. x_pdf_max) THEN
         IF ( l_q(i,2)/g(2)%scale .GE. y_pdf_min .AND. l_q(i,2)/g(2)%scale .LE. y_pdf_max) THEN
           IF ( l_q(i,3)/g(3)%scale .GE. z_pdf_min .AND. l_q(i,3)/g(3)%scale .LE. z_pdf_max) THEN

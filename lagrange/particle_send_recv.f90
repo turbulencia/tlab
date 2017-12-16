@@ -68,7 +68,7 @@ SUBROUTINE PARTICLE_SEND_RECV(nzone_grid, nzone_west, nzone_east,nzone_south, nz
 
   m=(inb_particle*2)+1 !Sending size of the buffer_parts
 
-  particle_vector(ims_pro+1) = nzone_grid
+  ims_size_p(ims_pro+1) = nzone_grid
 
 
   IF (x_or_z .EQ. 1) THEN !Sending East-West
@@ -128,7 +128,7 @@ SUBROUTINE PARTICLE_SEND_RECV(nzone_grid, nzone_west, nzone_east,nzone_south, nz
  
 
     !#################################################################
-    particle_vector(ims_pro+1)=particle_vector(ims_pro+1)+nzone_send_west !I get nzone_send_west particles form the east
+    ims_size_p(ims_pro+1)=ims_size_p(ims_pro+1)+nzone_send_west !I get nzone_send_west particles form the east
     !#################################################################     
 
     !Construct sending buffer to west in p_buffer_2
@@ -235,7 +235,7 @@ SUBROUTINE PARTICLE_SEND_RECV(nzone_grid, nzone_west, nzone_east,nzone_south, nz
     !#################################################################
     
     !#################################################################
-    particle_vector(ims_pro+1)=particle_vector(ims_pro+1)+nzone_send_east ! Increase the particle number by the particles recieved from west
+    ims_size_p(ims_pro+1)=ims_size_p(ims_pro+1)+nzone_send_east ! Increase the particle number by the particles recieved from west
     !#################################################################
 
     mpireq(1:ims_npro*2)=MPI_REQUEST_NULL
@@ -346,7 +346,7 @@ SUBROUTINE PARTICLE_SEND_RECV(nzone_grid, nzone_west, nzone_east,nzone_south, nz
  
 
     !#################################################################
-    particle_vector(ims_pro+1)=particle_vector(ims_pro+1)+nzone_send_south
+    ims_size_p(ims_pro+1)=ims_size_p(ims_pro+1)+nzone_send_south
     !#################################################################     
 
     IF (nzone_south .NE. 0) THEN
@@ -458,7 +458,7 @@ SUBROUTINE PARTICLE_SEND_RECV(nzone_grid, nzone_west, nzone_east,nzone_south, nz
     !#################################################################
     
     !#################################################################
-    particle_vector(ims_pro+1)=particle_vector(ims_pro+1)+nzone_send_north
+    ims_size_p(ims_pro+1)=ims_size_p(ims_pro+1)+nzone_send_north
     !#################################################################
 
     mpireq(1:ims_npro*2)=MPI_REQUEST_NULL

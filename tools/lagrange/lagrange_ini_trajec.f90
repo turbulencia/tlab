@@ -64,7 +64,7 @@ PROGRAM LAGRANGE_INI_TRAJEC
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_trajectories_tags, fake_l_trajectories_tags
 #ifdef USE_MPI
   TINTEGER  dummy_ims_npro
-  TINTEGER  dummy_isize_trajectories
+  TINTEGER  dummy_isize_trajectory
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: all_fake_l_trajectories_tags
 #endif
   TREAL, DIMENSION(:,:), ALLOCATABLE :: l_trajectories
@@ -86,7 +86,7 @@ PROGRAM LAGRANGE_INI_TRAJEC
   CALL DNS_INITIALIZE
 
   CALL DNS_READ_GLOBAL(inifile)
-  IF ( icalc_particle .EQ. 1 ) THEN
+  IF ( icalc_part .EQ. 1 ) THEN
      CALL PARTICLE_READ_GLOBAL('dns.ini')
   ENDIF
 #ifdef USE_MPI
@@ -117,14 +117,14 @@ PROGRAM LAGRANGE_INI_TRAJEC
 !     ALLOCATE(txc(isize_txc_field,6))
      ALLOCATE(l_hq(isize_particle,inb_particle)) !Rubish information. Just to run FIELD_TO_PARTICLE properly
   ENDIF
-  ALLOCATE(dummy_proc(isize_trajectories))
-  ALLOCATE(l_trajectories_tags(isize_trajectories))
-  ALLOCATE(fake_l_trajectories_tags(isize_trajectories))
-  ALLOCATE(l_trajectories(3,isize_trajectories))
-  ALLOCATE(fake_liquid(isize_trajectories))
-  ALLOCATE(all_fake_liquid(isize_trajectories))
+  ALLOCATE(dummy_proc(isize_trajectory))
+  ALLOCATE(l_trajectories_tags(isize_trajectory))
+  ALLOCATE(fake_l_trajectories_tags(isize_trajectory))
+  ALLOCATE(l_trajectories(3,isize_trajectory))
+  ALLOCATE(fake_liquid(isize_trajectory))
+  ALLOCATE(all_fake_liquid(isize_trajectory))
 #ifdef USE_MPI
-  ALLOCATE(all_fake_l_trajectories_tags(isize_trajectories))
+  ALLOCATE(all_fake_l_trajectories_tags(isize_trajectory))
   all_fake_l_trajectories_tags(:) = C_0_R
 #endif
 fake_l_trajectories_tags(:) = C_0_R
@@ -172,10 +172,10 @@ all_fake_liquid(:) = C_0_R
     WRITE(str,*) nitera_first;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
     OPEN(unit=117, file=str, access='stream', form='unformatted')
     READ(117) dummy_ims_npro   !is a integer
-    READ(117, POS=SIZEOFINT+1) dummy_isize_trajectories  !is an integer
+    READ(117, POS=SIZEOFINT+1) dummy_isize_trajectory  !is an integer
     READ(117, POS=SIZEOFINT*2+1) l_trajectories_tags  !is INTEGER(8)
-    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectories) l_trajectories ! attention is integer(8)
-    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectories+3*isize_trajectories*SIZEOFREAL) dummy_proc ! attention is integer(8)
+    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectory) l_trajectories ! attention is integer(8)
+    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectory+3*isize_trajectory*SIZEOFREAL) dummy_proc ! attention is integer(8)
     CLOSE(117)
   ENDIF
   
@@ -183,16 +183,16 @@ all_fake_liquid(:) = C_0_R
   !BROADCAST INFORMATION OF LARGEST PARTICLES
   !#######################################################################
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
-  CALL MPI_BCAST(l_trajectories_tags,isize_trajectories,MPI_INTEGER8,0,MPI_COMM_WORLD,ims_err)
-  CALL MPI_BCAST(l_trajectories,isize_trajectories*3,MPI_REAL8,0,MPI_COMM_WORLD,ims_err)
-  CALL MPI_BCAST(dummy_proc,isize_trajectories,MPI_INTEGER4,0,MPI_COMM_WORLD,ims_err)
+  CALL MPI_BCAST(l_trajectories_tags,isize_trajectory,MPI_INTEGER8,0,MPI_COMM_WORLD,ims_err)
+  CALL MPI_BCAST(l_trajectories,isize_trajectory*3,MPI_REAL8,0,MPI_COMM_WORLD,ims_err)
+  CALL MPI_BCAST(dummy_proc,isize_trajectory,MPI_INTEGER4,0,MPI_COMM_WORLD,ims_err)
 
   !#######################################################################
   !REPLACE THE FIRST PARTICLES WITH THE LARGEST 
   !CORRESPONDING TO THE PROCESSORS
   !#######################################################################
   dummy=1
-  DO i=1,isize_trajectories
+  DO i=1,isize_trajectory
     IF (ims_pro .EQ. dummy_proc(i))THEN
       l_q(dummy,1)=l_trajectories(1,i)
       l_q(dummy,2)=l_trajectories(2,i)
@@ -206,8 +206,8 @@ all_fake_liquid(:) = C_0_R
   !#######################################################################
   !WRITE FILE WITH NEW FAKE LARGEST IDs
   !#######################################################################
-  CALL MPI_REDUCE(fake_l_trajectories_tags, all_fake_l_trajectories_tags, isize_trajectories, MPI_INTEGER8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
-  CALL MPI_REDUCE(fake_liquid, all_fake_liquid, isize_trajectories, MPI_REAL8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
+  CALL MPI_REDUCE(fake_l_trajectories_tags, all_fake_l_trajectories_tags, isize_trajectory, MPI_INTEGER8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
+  CALL MPI_REDUCE(fake_liquid, all_fake_liquid, isize_trajectory, MPI_REAL8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
 
   !#######################################################################
   !WRITE FILE WITH NEW FAKE LARGEST IDs
@@ -218,7 +218,7 @@ all_fake_liquid(:) = C_0_R
     INQUIRE(UNIT=15, POS=particle_pos) !would be 1
     WRITE (15)  ims_npro  !header
     INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
-    WRITE (15)  isize_trajectories  !header
+    WRITE (15)  isize_trajectory  !header
     INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
     WRITE (15)  fake_liquid ! just to be consistent with other output file
     INQUIRE(UNIT=15, POS=particle_pos)  !would be 409 with 50 numbers

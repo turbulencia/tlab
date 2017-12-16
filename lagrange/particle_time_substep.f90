@@ -59,7 +59,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   !#######################################################################
   ! Particle new postion here!
   !#######################################################################
-    DO i = 1,particle_vector(ims_pro+1)
+    DO i = 1,ims_size_p(ims_pro+1)
       DO is = 1,inb_particle_evolution !coordinaes 1=x 2=y 3=z
       
         !Particle update

@@ -78,7 +78,7 @@ SUBROUTINE PARTICLE_SORT_HALO(x,z, nzone_grid, halo_zone_x, halo_zone_z, halo_zo
 
   i=1 !Starting point of sorting algorythm
 #ifdef USE_MPI
-  j=particle_vector(ims_pro+1)  !End point of sorting algorythm
+  j=ims_size_p(ims_pro+1)  !End point of sorting algorythm
 #else
   j=particle_number
 #endif
@@ -185,7 +185,7 @@ SUBROUTINE PARTICLE_SORT_HALO(x,z, nzone_grid, halo_zone_x, halo_zone_z, halo_zo
   
 
 #ifdef USE_MPI
-  j=particle_vector(ims_pro+1)  !End point of sorting algorythm
+  j=ims_size_p(ims_pro+1)  !End point of sorting algorythm
 #else
   j=particle_number
 #endif
@@ -241,7 +241,7 @@ SUBROUTINE PARTICLE_SORT_HALO(x,z, nzone_grid, halo_zone_x, halo_zone_z, halo_zo
 
 
 #ifdef USE_MPI
-  j=particle_vector(ims_pro+1)  !End point of sorting algorythm
+  j=ims_size_p(ims_pro+1)  !End point of sorting algorythm
 #else
   j=particle_number
 #endif
@@ -297,7 +297,7 @@ SUBROUTINE PARTICLE_SORT_HALO(x,z, nzone_grid, halo_zone_x, halo_zone_z, halo_zo
 
   !Calculating the number of particles send to east or north
 #ifdef USE_MPI
-  halo_zone_diagonal=particle_vector(ims_pro+1) - nzone_grid - halo_zone_x - halo_zone_z
+  halo_zone_diagonal=ims_size_p(ims_pro+1) - nzone_grid - halo_zone_x - halo_zone_z
 #else
   halo_zone_diagonal=particle_number - nzone_grid - halo_zone_x - halo_zone_z
 #endif

@@ -16,7 +16,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
   USE DNS_GLOBAL,      ONLY : isize_particle, inb_particle
   USE LAGRANGE_GLOBAL, ONLY : particle_number
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : particle_vector, ims_pro, ims_npro, ims_err
+  USE DNS_MPI, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
 #endif
 
   IMPLICIT NONE
@@ -53,7 +53,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
 #include "dns_open_file.h"
      READ(LOC_UNIT_ID) ims_npro_loc
      READ(LOC_UNIT_ID, POS=SIZEOFINT+1) particle_number_loc
-     READ(LOC_UNIT_ID, POS=SIZEOFINT+SIZEOFLONGINT+1) particle_vector(1:ims_npro)
+     READ(LOC_UNIT_ID, POS=SIZEOFINT+SIZEOFLONGINT+1) ims_size_p(1:ims_npro)
      CLOSE(LOC_UNIT_ID)
   END IF
 
@@ -70,14 +70,14 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
   ENDIF
 
 ! Broadcast number of particles per processor
-  CALL MPI_BCAST(particle_vector,ims_npro,MPI_INTEGER,0,MPI_COMM_WORLD,ims_err)
+  CALL MPI_BCAST(ims_size_p,ims_npro,MPI_INTEGER,0,MPI_COMM_WORLD,ims_err)
 
 ! Displacement per processor
   mpio_disp = INT(((ims_npro+1)*SIZEOFINT)+SIZEOFLONGINT+1, KIND=8)
   IF ( ims_pro .GT. 0 ) THEN
      count = 0
      DO i = 1,ims_pro
-        count = count +INT(particle_vector(i),KIND=8)
+        count = count +INT(ims_size_p(i),KIND=8)
      ENDDO
      mpio_disp = mpio_disp +count *INT(SIZEOFLONGINT,KIND=8)
   END IF
@@ -88,7 +88,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
   name = TRIM(ADJUSTL(fname))//".id"
   CALL MPI_FILE_OPEN(MPI_COMM_WORLD,name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
   CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_INTEGER8, MPI_INTEGER8, 'native', MPI_INFO_NULL, ims_err)
-  CALL MPI_FILE_READ_ALL(mpio_fh,l_tags, particle_vector(ims_pro+1),MPI_INTEGER8,status,ims_err)
+  CALL MPI_FILE_READ_ALL(mpio_fh,l_tags, ims_size_p(ims_pro+1),MPI_INTEGER8,status,ims_err)
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
 
   IF ( PRESENT(l_q) ) THEN
@@ -96,7 +96,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
         CALL MPI_FILE_OPEN(MPI_COMM_WORLD,name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
         CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
-        CALL MPI_FILE_READ_ALL(mpio_fh,l_q(1,i), particle_vector(ims_pro+1),MPI_REAL8,status,ims_err)
+        CALL MPI_FILE_READ_ALL(mpio_fh,l_q(1,i), ims_size_p(ims_pro+1),MPI_REAL8,status,ims_err)
         CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
      ENDDO
   ENDIF
@@ -147,7 +147,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
   USE DNS_GLOBAL,      ONLY : isize_particle, inb_particle
   USE LAGRANGE_GLOBAL, ONLY : particle_number
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : particle_vector, ims_pro, ims_npro, ims_err
+  USE DNS_MPI, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
 #endif
 
   IMPLICIT NONE
@@ -166,7 +166,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
   TINTEGER mpio_fh
   INTEGER (KIND=8)  mpio_disp, count
   TINTEGER status(MPI_STATUS_SIZE)
-  TINTEGER, DIMENSION(:),   ALLOCATABLE :: particle_vector_buffer
+  TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_size_p_buffer
 #endif
 
   CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(fname))//'...')
@@ -178,17 +178,17 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
 ! -------------------------------------------------------------------
 ! Let Process 0 handle header
 ! -------------------------------------------------------------------  
-  ALLOCATE(particle_vector_buffer(ims_npro))
+  ALLOCATE(ims_size_p_buffer(ims_npro))
 
-  CALL MPI_ALLGATHER(particle_vector(ims_pro+1),1,MPI_INTEGER4,particle_vector_buffer,1,MPI_INTEGER4,MPI_COMM_WORLD,ims_err)
-  particle_vector(:)=particle_vector_buffer(:)
+  CALL MPI_ALLGATHER(ims_size_p(ims_pro+1),1,MPI_INTEGER4,ims_size_p_buffer,1,MPI_INTEGER4,MPI_COMM_WORLD,ims_err)
+  ims_size_p(:)=ims_size_p_buffer(:)
 
   IF ( ims_pro .EQ. 0 ) THEN
      name = TRIM(ADJUSTL(fname))//".id"     
 #include "dns_open_file.h"
      WRITE (LOC_UNIT_ID)  ims_npro
      WRITE (LOC_UNIT_ID)  particle_number
-     WRITE (LOC_UNIT_ID)  particle_vector
+     WRITE (LOC_UNIT_ID)  ims_size_p
      CLOSE(LOC_UNIT_ID)
 
      IF ( PRESENT(l_q) ) THEN
@@ -197,7 +197,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
 #include "dns_open_file.h"
            WRITE (LOC_UNIT_ID)  ims_npro
            WRITE (LOC_UNIT_ID)  particle_number
-           WRITE (LOC_UNIT_ID)  particle_vector
+           WRITE (LOC_UNIT_ID)  ims_size_p
            CLOSE(LOC_UNIT_ID)
         ENDDO
      ENDIF
@@ -208,12 +208,12 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
   IF ( ims_pro .GT. 0 ) THEN
      count = 0
      DO i = 1,ims_pro
-        count = count +INT(particle_vector(i),KIND=8)
+        count = count +INT(ims_size_p(i),KIND=8)
      ENDDO
      mpio_disp = mpio_disp +count *INT(SIZEOFLONGINT,KIND=8)
   END IF
 
-  DEALLOCATE(particle_vector_buffer)
+  DEALLOCATE(ims_size_p_buffer)
 
 ! -------------------------------------------------------------------
 ! Use MPI-IO to write particle tags in each processor
@@ -221,7 +221,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
   name = TRIM(ADJUSTL(fname))//".id"
   CALL MPI_FILE_OPEN(MPI_COMM_WORLD,name,MPI_MODE_WRONLY, MPI_INFO_NULL,mpio_fh,ims_err)
   CALL MPI_FILE_SET_VIEW(mpio_fh,mpio_disp,MPI_INTEGER8,MPI_INTEGER8,'native',MPI_INFO_NULL, ims_err)    
-  CALL MPI_FILE_WRITE_ALL(mpio_fh,l_tags(1:particle_vector(ims_pro+1)),particle_vector(ims_pro+1),MPI_INTEGER8,status,ims_err)
+  CALL MPI_FILE_WRITE_ALL(mpio_fh,l_tags(1:ims_size_p(ims_pro+1)),ims_size_p(ims_pro+1),MPI_INTEGER8,status,ims_err)
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
 
   IF ( PRESENT(l_q) ) THEN
@@ -229,7 +229,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
         CALL MPI_FILE_OPEN(MPI_COMM_WORLD,name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
         CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
-        CALL MPI_FILE_WRITE_ALL(mpio_fh,l_q(1,i), particle_vector(ims_pro+1),MPI_REAL8,status,ims_err)
+        CALL MPI_FILE_WRITE_ALL(mpio_fh,l_q(1,i), ims_size_p(ims_pro+1),MPI_REAL8,status,ims_err)
         CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
      ENDDO
   ENDIF

@@ -34,7 +34,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ALLOCATE(ims_ts_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
   ALLOCATE(ims_tr_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
 
-  ALLOCATE(particle_vector(ims_npro)) ! Particle information
+  ALLOCATE(ims_size_p(ims_npro)) ! Particle information
 
 ! #######################################################################
   ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0

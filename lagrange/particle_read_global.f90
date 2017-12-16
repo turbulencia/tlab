@@ -63,24 +63,29 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Y_Particle_Pos', '0.5', y_particle_pos  )
   CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Y_Particle_Width', '1.0', y_particle_width  )
 
+  inb_trajectory = 3 ! Default, just position
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'TrajectoryType', 'first', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'first'   ) THEN; itrajectories = LAG_TRAJECTORY_FIRST
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'largest' ) THEN; itrajectories = LAG_TRAJECTORY_LARGEST
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'none'    ) THEN; itrajectories = LAG_TRAJECTORY_NONE
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'first'     ) THEN; itrajectory = LAG_TRAJECTORY_FIRST
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'vorticity' ) THEN; itrajectory = LAG_TRAJECTORY_VORTICITY
+     inb_trajectory = 3 + 3 + 1 ! position + vorticity + buoyancy
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'largest'   ) THEN; itrajectory = LAG_TRAJECTORY_LARGEST
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; itrajectory = LAG_TRAJECTORY_NONE
   ELSE
-     CALL IO_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. Invalid option in CalculateTrajectories')
+     CALL IO_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. Invalid option in TrajectoryType')
      CALL DNS_STOP(DNS_ERROR_CALCTRAJECTORIES)
   ENDIF
 
-  CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'TrajectoryNumber', '0', isize_trajectories)
-  IF ( isize_trajectories .GT. particle_number ) THEN
+  CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'TrajectoryNumber', '0', isize_trajectory)
+  IF ( isize_trajectory .GT. particle_number ) THEN
      CALL IO_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. Number of trajectories must be less or equal than number of particles.')
      CALL DNS_STOP(DNS_ERROR_CALCTRAJECTORIES)
   ENDIF
-  
+  IF ( isize_trajectory .LE. 0 ) itrajectory = LAG_TRAJECTORY_NONE
+  IF ( icalc_part .EQ. 0   ) itrajectory = LAG_TRAJECTORY_NONE
+     
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'CalculateParticlePDF', 'no', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_particle_pdf = 1
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_particle_pdf = 0
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_part_pdf = 1
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_part_pdf = 0
   ENDIF
   CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Y_Particle_PDF_Pos', '0.5', y_particle_pdf_pos  )
   CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Y_Particle_PDF_Width', '1.0', y_particle_pdf_width  )
@@ -106,7 +111,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 ! ###################################################################
 ! Initializing size of Lagrangian arrays
 ! ###################################################################
-  CALL LAGRANGE_TYPE_INITIALIZE
+  CALL PARTICLE_TYPE_INITIALIZE
 
   WRITE(lstr,*) inb_particle 
   CALL IO_WRITE_ASCII(lfile, 'Initialize inb_particle = '//TRIM(ADJUSTL(lstr)))
@@ -134,3 +139,59 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 
   RETURN  
 END SUBROUTINE PARTICLE_READ_GLOBAL
+
+! ###################################################################
+! ###################################################################
+SUBROUTINE PARTICLE_TYPE_INITIALIZE
+  
+  USE LAGRANGE_GLOBAL
+
+  USE DNS_GLOBAL, ONLY : inb_particle, inb_particle_txc
+  IMPLICIT NONE
+
+! -------------------------------------------------------------------
+
+
+    inb_particle_txc = 0
+
+   IF   (ilagrange .EQ. LAG_TYPE_TRACER) THEN
+    inb_particle_evolution = 3
+    inb_particle_aux = 0          
+    inb_particle_txc = 0
+    inb_lag_aux_field = 0
+    inb_particle = inb_particle_evolution + inb_particle_aux    !amount of particle properties which are sent
+
+  ELSEIF  (ilagrange .EQ. LAG_TYPE_SIMPLE_SETT) THEN
+    inb_particle_evolution = 3
+    inb_particle_aux = 0          
+    inb_particle_txc = 0
+    inb_lag_aux_field = 0
+    inb_particle = inb_particle_evolution + inb_particle_aux    !amount of particle properties which are sent
+
+  ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3) THEN
+    inb_particle_evolution = 5    !amount of particle properties 
+    inb_particle_aux = 0          !amount of particle properties without runge kutta (only sent and sorted)
+    inb_particle_txc = 1          !l_txc properties
+    inb_lag_aux_field = 4         !field data on txc
+    inb_particle = inb_particle_evolution + inb_particle_aux    !amount of particle properties which are sent
+    LAGRANGE_SPNAME(1) = 'droplet_diff_3'
+    LAGRANGE_SPNAME(2) = 'droplet_nodiff_3'
+
+  ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
+    inb_particle_evolution = 5    !amount of particle properties with runge kutta
+    inb_particle_aux = 1          !amount of particle properties without runge kutta (only sent and sorted)
+    inb_particle_txc = 1          !l_txc properties
+    inb_lag_aux_field = 4         !field data on txc
+    inb_particle = inb_particle_evolution + inb_particle_aux    !amount of particle properties which are sent
+    LAGRANGE_SPNAME(1) = 'droplet_diff_3'
+    LAGRANGE_SPNAME(2) = 'droplet_nodiff_3'
+    LAGRANGE_SPNAME(3) = 'residence_part'
+    
+
+  END IF
+  
+  inb_scal_particle = inb_particle_evolution - 3          !Number of scalar properties solved in the lagrangian
+  inb_lag_total_interp = inb_lag_aux_field + 3  !Number of fields needed by lagrangian (no extra memory, usually txc fields)
+
+  RETURN
+END SUBROUTINE PARTICLE_TYPE_INITIALIZE

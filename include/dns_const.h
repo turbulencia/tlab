@@ -171,8 +171,9 @@
 #define LAG_TYPE_BIL_CLOUD_4   4
 
 ! Lagrangian Trajectories  
-#define LAG_TRAJECTORY_NONE     0
-#define LAG_TRAJECTORY_FIRST    1
-#define LAG_TRAJECTORY_LARGEST  2
+#define LAG_TRAJECTORY_NONE      0
+#define LAG_TRAJECTORY_FIRST     1
+#define LAG_TRAJECTORY_LARGEST   2
+#define LAG_TRAJECTORY_VORTICITY 3
 
 #endif

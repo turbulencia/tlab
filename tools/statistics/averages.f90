@@ -100,7 +100,7 @@ PROGRAM AVERAGES
   CALL DNS_INITIALIZE
 
   CALL DNS_READ_GLOBAL(inifile)
-  IF ( icalc_particle .EQ. 1 ) THEN
+  IF ( icalc_part .EQ. 1 ) THEN
      CALL PARTICLE_READ_GLOBAL(inifile)
   ENDIF
 #ifdef USE_MPI
@@ -382,7 +382,7 @@ PROGRAM AVERAGES
 
 #include "dns_alloc_arrays.h"
 
-  IF ( icalc_particle .EQ. 1 ) THEN
+  IF ( icalc_part .EQ. 1 ) THEN
 #include "dns_alloc_larrays.h"
   ENDIF
 
@@ -532,7 +532,7 @@ PROGRAM AVERAGES
         ENDIF
 
 ! Lagrange Liquid and Liquid without diffusion
-        IF ( icalc_particle .EQ. 1 ) THEN
+        IF ( icalc_part .EQ. 1 ) THEN
            IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
               WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
               CALL IO_READ_PARTICLE(fname, l_tags, l_q)

@@ -31,7 +31,7 @@ MODULE DNS_MPI
   TINTEGER, DIMENSION(:,:), ALLOCATABLE :: ims_ds_k, ims_dr_k
   INTEGER,  DIMENSION(:,:), ALLOCATABLE :: ims_ts_k, ims_tr_k
 
-  TINTEGER, DIMENSION(:),   ALLOCATABLE :: particle_vector ! Particle data  
+  TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_size_p ! Particle data  
 
   TYPE(subarray_dt), DIMENSION(MPIO_SUBARRAY_SIZE) :: mpio_aux
 

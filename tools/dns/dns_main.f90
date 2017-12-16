@@ -69,7 +69,7 @@ PROGRAM DNS
   CALL DNS_INITIALIZE
 
   CALL DNS_READ_GLOBAL(inifile)
-  IF ( icalc_particle .EQ. 1 ) THEN
+  IF ( icalc_part .EQ. 1 ) THEN
      CALL PARTICLE_READ_GLOBAL(inifile)
   ENDIF
 #ifdef CHEMISTRY
@@ -96,7 +96,7 @@ PROGRAM DNS
 
   isize_loc = MAX(g_inf(1)%size*g_inf(2)%size,MAX(g_inf(1)%size*g_inf(3)%size,g_inf(2)%size*g_inf(3)%size))
   isize_wrk2d = MAX(isize_wrk2d, isize_loc)
-  IF ( icalc_particle .eq. 1) THEN
+  IF ( icalc_part .eq. 1) THEN
     isize_wrk2d = MAX(isize_wrk2d, jmax*inb_lag_total_interp)
   END IF
 
@@ -151,7 +151,7 @@ PROGRAM DNS
 ! wkr3d
   isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
-  IF ( icalc_particle .eq. 1) THEN
+  IF ( icalc_part .eq. 1) THEN
      isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
      isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_lag_total_interp*2))
      isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_lag_total_interp*2))
@@ -159,8 +159,8 @@ PROGRAM DNS
   IF ( tower_mode .EQ. 1 ) THEN 
      isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))
   ENDIF
-  IF ( icalc_particle .EQ. 1 .AND. isize_trajectories .GT. 0 ) THEN
-     isize_wrk3d = MAX(isize_wrk3d,nitera_save*isize_trajectories*3)
+  IF ( icalc_part .EQ. 1 .AND. isize_trajectory .GT. 0 ) THEN
+     isize_wrk3d = MAX(isize_wrk3d,nitera_save*isize_trajectory*inb_trajectory)
   ENDIF
 
 #ifdef LES
@@ -219,7 +219,7 @@ PROGRAM DNS
   ENDIF
 
 ! Lagrangian part
-  IF ( icalc_particle .EQ. 1 ) THEN
+  IF ( icalc_part .EQ. 1 ) THEN
 #include "dns_alloc_larrays.h"
      
      ALLOCATE(l_comm(isize_l_comm), stat=ierr)
@@ -275,7 +275,7 @@ PROGRAM DNS
 
   vaux(:) = C_0_R                  ! Auxiliary information
 
-  IF ( icalc_particle .EQ. 1 ) THEN ! Lagrangian
+  IF ( icalc_part .EQ. 1 ) THEN ! Lagrangian
      l_q = C_0_R; l_hq = C_0_R
   ENDIF
 
@@ -347,7 +347,7 @@ PROGRAM DNS
   ENDIF
 
 ! Particle fields
-  IF ( icalc_particle .EQ. 1 ) THEN
+  IF ( icalc_part .EQ. 1 ) THEN
      WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
      CALL IO_READ_PARTICLE(fname, l_tags, l_q)
      

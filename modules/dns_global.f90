@@ -24,7 +24,8 @@ MODULE DNS_CONSTANTS
 
   CHARACTER*32, PARAMETER :: tag_flow ='flow.'
   CHARACTER*32, PARAMETER :: tag_scal ='scal.' 
-  CHARACTER*32, PARAMETER :: tag_part ='particle.' 
+  CHARACTER*32, PARAMETER :: tag_part ='part.' 
+  CHARACTER*32, PARAMETER :: tag_traj ='traj.' 
   
 END MODULE DNS_CONSTANTS
 
@@ -44,7 +45,7 @@ MODULE DNS_GLOBAL
 ! ###################################################################
 ! General options
 ! ###################################################################
-  TINTEGER :: icalc_flow, icalc_scal, icalc_particle
+  TINTEGER :: icalc_flow, icalc_scal, icalc_part
   TINTEGER :: imode_sim                ! type of simulation (spatial, temporal)
   TINTEGER :: imode_flow               ! type of geometry
   TINTEGER :: imode_files              ! files format

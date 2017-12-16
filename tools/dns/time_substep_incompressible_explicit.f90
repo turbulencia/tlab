@@ -39,7 +39,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   USE DNS_GLOBAL,    ONLY : inb_flow,inb_scal, inb_scal_array
   USE DNS_GLOBAL,    ONLY : iadvection, idiffusion, iviscous
   USE DNS_GLOBAL,    ONLY : damkohler, epbackground,pbackground
-  USE DNS_GLOBAL,    ONLY : icalc_particle, isize_particle
+  USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL,     ONLY : VA_BCS_HT, VA_BCS_HB, vindex
   USE DNS_LOCAL,     ONLY : imode_rhs
@@ -156,7 +156,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 ! #######################################################################
 ! Call RHS particle algorithm
 ! #######################################################################
-  IF ( icalc_particle .EQ. 1 ) THEN
+  IF ( icalc_part .EQ. 1 ) THEN
      CALL RHS_PARTICLE_GLOBAL(q,s,wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags, l_comm)
   END IF
 
@@ -213,7 +213,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 ! ######################################################################
 ! Particle POSTION UPDATED and  SEND/RECV TO THE NEW PROCESSOR
 ! ######################################################################
-  IF ( icalc_particle .EQ. 1 ) THEN 
+  IF ( icalc_part .EQ. 1 ) THEN 
     CALL PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq,l_tags, l_comm )    
   END IF 
 

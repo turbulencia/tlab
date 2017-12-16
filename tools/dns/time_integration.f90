@@ -17,7 +17,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal_array, inb_flow_array
   USE DNS_GLOBAL, ONLY : isize_particle, inb_particle, inb_particle_txc
   USE DNS_GLOBAL, ONLY : imode_sim, imode_eqns
-  USE DNS_GLOBAL, ONLY : icalc_flow, icalc_scal, icalc_particle
+  USE DNS_GLOBAL, ONLY : icalc_flow, icalc_scal, icalc_part
   USE DNS_GLOBAL, ONLY : rbackground, g
   USE DNS_GLOBAL, ONLY : itransport, visc
   USE DNS_GLOBAL, ONLY : itime, rtime
@@ -25,7 +25,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL 
   USE DNS_TOWER
-  USE LAGRANGE_GLOBAL, ONLY : isize_trajectories
+  USE LAGRANGE_GLOBAL, ONLY : itrajectory
   USE BOUNDARY_INFLOW
   USE PARTICLE_TRAJECTORIES
 #ifdef LES
@@ -171,7 +171,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
      ENDIF
 
 ! -----------------------------------------------------------------------
-     IF ( icalc_particle .EQ. 1 .AND. isize_trajectories .GT. 0 ) THEN
+     IF ( itrajectory .NE. LAG_TRAJECTORY_NONE ) THEN
         CALL PARTICLE_TRAJECTORIES_XXX(nitera_last, nitera_save, nitera_first, l_q, l_tags, wrk3d)
      END IF
 
@@ -179,7 +179,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
      IF ( MOD(itime-nitera_first,nitera_stats) .EQ. 0 ) THEN ! Calculate statistics
         IF     ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
            CALL STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
-           IF ( icalc_particle .EQ. 1 ) THEN
+           IF ( icalc_part .EQ. 1 ) THEN
               CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
            ENDIF
         ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
@@ -204,7 +204,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
            CALL DNS_TOWER_WRITE(wrk3d) 
         ENDIF
 
-        IF ( icalc_particle .EQ. 1 ) THEN
+        IF ( icalc_part .EQ. 1 ) THEN
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
            CALL IO_WRITE_PARTICLE(fname, l_tags, l_q)
         END IF
