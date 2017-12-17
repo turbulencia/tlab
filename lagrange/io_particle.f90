@@ -37,6 +37,8 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
   TINTEGER mpio_fh
   INTEGER (KIND=8)  mpio_disp, count
   TINTEGER status(MPI_STATUS_SIZE)
+#else
+  TINTEGER idummy
 #endif
 
   CALL IO_WRITE_ASCII(lfile, 'Reading field '//TRIM(ADJUSTL(fname))//'...')
@@ -52,17 +54,11 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
      name = TRIM(ADJUSTL(fname))//".id"
 #include "dns_open_file.h"
      READ(LOC_UNIT_ID) ims_npro_loc
-     READ(LOC_UNIT_ID, POS=SIZEOFINT+1) particle_number_loc
-     READ(LOC_UNIT_ID, POS=SIZEOFINT+SIZEOFLONGINT+1) ims_size_p(1:ims_npro)
+     READ(LOC_UNIT_ID) ims_size_p(1:ims_npro_loc)
      CLOSE(LOC_UNIT_ID)
   END IF
 
 ! Check
-  CALL MPI_BCAST(particle_number_loc,1,MPI_INTEGER,0,MPI_COMM_WORLD,ims_err)
-  IF ( particle_number .NE. particle_number_loc ) THEN
-     CALL IO_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
-     CALL DNS_STOP(DNS_ERROR_PARTICLE)
-  ENDIF
   CALL MPI_BCAST(ims_npro_loc,1,MPI_INTEGER,0,MPI_COMM_WORLD,ims_err)
   IF ( ims_npro .NE. ims_npro_loc) THEN
      CALL IO_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-processors mismatch.')
@@ -73,14 +69,22 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
   CALL MPI_BCAST(ims_size_p,ims_npro,MPI_INTEGER,0,MPI_COMM_WORLD,ims_err)
 
 ! Displacement per processor
-  mpio_disp = INT(((ims_npro+1)*SIZEOFINT)+SIZEOFLONGINT+1, KIND=8)
-  IF ( ims_pro .GT. 0 ) THEN
-     count = 0
-     DO i = 1,ims_pro
-        count = count +INT(ims_size_p(i),KIND=8)
-     ENDDO
-     mpio_disp = mpio_disp +count *INT(SIZEOFLONGINT,KIND=8)
-  END IF
+  mpio_disp = INT(((ims_npro+1)*SIZEOFINT)+1, KIND=8)
+
+  count = 0
+  DO i = 1,ims_pro
+     count = count +INT(ims_size_p(i),KIND=8)
+  ENDDO
+  mpio_disp = mpio_disp +count *INT(SIZEOFLONGINT,KIND=8)
+
+! Check
+  DO i = ims_pro+1,ims_npro
+     count = count +INT(ims_size_p(i),KIND=8)
+  ENDDO
+  IF ( particle_number .NE. count ) THEN
+     CALL IO_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
+     CALL DNS_STOP(DNS_ERROR_PARTICLE)
+  ENDIF
 
 ! -------------------------------------------------------------------
 ! Use MPI-IO to read particle tags in each processor
@@ -107,6 +111,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
 ! #######################################################################
   name = TRIM(ADJUSTL(fname))//".id"
 #include "dns_open_file.h"
+  READ(LOC_UNIT_ID) idummy                   ! dummy, should be 1 in serial
   READ(LOC_UNIT_ID) particle_number_loc
 ! Check
   IF ( particle_number .NE. particle_number_loc ) THEN
@@ -114,7 +119,6 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
      CLOSE(LOC_UNIT_ID)
      CALL DNS_STOP(DNS_ERROR_PARTICLE)
   ENDIF
-!  READ(LOC_UNIT_ID, POS=SIZEOFLONGINT+1) l_tags(1:particle_number)
   READ(LOC_UNIT_ID) l_tags
   CLOSE(LOC_UNIT_ID)
 
@@ -122,6 +126,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
      DO i = 1,inb_particle
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
 #include "dns_open_file.h"
+        READ(LOC_UNIT_ID) idummy             ! dummy, should be 1 in serial
         READ(LOC_UNIT_ID) particle_number_loc
         READ(LOC_UNIT_ID) l_q(:,i)
         CLOSE(LOC_UNIT_ID)
@@ -167,6 +172,8 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
   INTEGER (KIND=8)  mpio_disp, count
   TINTEGER status(MPI_STATUS_SIZE)
   TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_size_p_buffer
+#else
+  TINTEGER idummy
 #endif
 
   CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(fname))//'...')
@@ -183,11 +190,12 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
   CALL MPI_ALLGATHER(ims_size_p(ims_pro+1),1,MPI_INTEGER4,ims_size_p_buffer,1,MPI_INTEGER4,MPI_COMM_WORLD,ims_err)
   ims_size_p(:)=ims_size_p_buffer(:)
 
+  DEALLOCATE(ims_size_p_buffer)
+
   IF ( ims_pro .EQ. 0 ) THEN
      name = TRIM(ADJUSTL(fname))//".id"     
 #include "dns_open_file.h"
      WRITE (LOC_UNIT_ID)  ims_npro
-     WRITE (LOC_UNIT_ID)  particle_number
      WRITE (LOC_UNIT_ID)  ims_size_p
      CLOSE(LOC_UNIT_ID)
 
@@ -196,7 +204,6 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
            WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
 #include "dns_open_file.h"
            WRITE (LOC_UNIT_ID)  ims_npro
-           WRITE (LOC_UNIT_ID)  particle_number
            WRITE (LOC_UNIT_ID)  ims_size_p
            CLOSE(LOC_UNIT_ID)
         ENDDO
@@ -204,16 +211,13 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
   END IF
 
 ! Displacement per processor
-  mpio_disp = INT(((ims_npro+1)*SIZEOFINT)+SIZEOFLONGINT+1, KIND=8)
-  IF ( ims_pro .GT. 0 ) THEN
-     count = 0
-     DO i = 1,ims_pro
-        count = count +INT(ims_size_p(i),KIND=8)
-     ENDDO
-     mpio_disp = mpio_disp +count *INT(SIZEOFLONGINT,KIND=8)
-  END IF
+  mpio_disp = INT(((ims_npro+1)*SIZEOFINT)+1, KIND=8)
 
-  DEALLOCATE(ims_size_p_buffer)
+  count = 0
+  DO i = 1,ims_pro
+     count = count +INT(ims_size_p(i),KIND=8)
+  ENDDO
+  mpio_disp = mpio_disp +count *INT(SIZEOFLONGINT,KIND=8)
 
 ! -------------------------------------------------------------------
 ! Use MPI-IO to write particle tags in each processor
@@ -238,8 +242,10 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
 ! #######################################################################
 ! Serial case
 ! #######################################################################
+  idummy = 1
   name = TRIM(ADJUSTL(fname))//".id"
 #include "dns_open_file.h"
+  WRITE(LOC_UNIT_ID) idummy  
   WRITE(LOC_UNIT_ID) particle_number
   WRITE(LOC_UNIT_ID) l_tags
   CLOSE(LOC_UNIT_ID)
@@ -248,6 +254,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
      DO i = 1,inb_particle
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
 #include "dns_open_file.h"
+        WRITE(LOC_UNIT_ID) idummy  
         WRITE(LOC_UNIT_ID) particle_number
         WRITE(LOC_UNIT_ID) l_q(:,i)
         CLOSE(LOC_UNIT_ID)
