@@ -25,7 +25,7 @@ PROGRAM INIPART
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro, ims_npro
+  USE DNS_MPI, ONLY : ims_pro, ims_npro, ims_size_p
 #endif
   
   IMPLICIT NONE
@@ -42,15 +42,13 @@ PROGRAM INIPART
   TREAL, DIMENSION(:),      ALLOCATABLE             :: wrk1d,wrk2d, wrk3d
 
   TREAL,      DIMENSION(:,:),   ALLOCATABLE, SAVE :: l_q, l_hq, l_txc
-!  TREAL,      DIMENSION(:),     ALLOCATABLE, SAVE :: l_comm
   INTEGER(8), DIMENSION(:),     ALLOCATABLE, SAVE :: l_tags
 
   CHARACTER*32 inifile
   CHARACTER*64 str, line
 
 #ifdef USE_MPI
-  TINTEGER  particle_number_each
-  TLONGINTEGER dummy_int1, dummy_int2, partcile_offset
+  TLONGINTEGER count
 #endif
   
 !########################################################################
@@ -74,7 +72,6 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
   inb_particle_txc = 0 ! so far, not needed
 
-! #include "dns_alloc_larrays.h"
   IF ( jmax_part .EQ. 1 ) THEN
      jmax_part   = jmax ! 1 by default
   ENDIF
@@ -106,15 +103,12 @@ PROGRAM INIPART
   CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags, txc, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_MPI
-  particle_number_each = INT( particle_number /INT(ims_npro, KIND=8) ) 
-
-  dummy_int1 = INT(ims_pro, KIND=8)
-  dummy_int2 = INT(particle_number_each, KIND=8)
-
-  partcile_offset = dummy_int1 *dummy_int2
-
-  DO i = 1,particle_number_each
-     l_tags(i) = INT(i, KIND=8) +partcile_offset
+  count = 0
+  DO i = 1,ims_pro
+     count = count +INT(ims_size_p(i),KIND=8)
+  ENDDO
+  DO i = 1, ims_size_p(ims_pro+1)
+     l_tags(i) = INT(i, KIND=8) +count
   END DO
 
 #else

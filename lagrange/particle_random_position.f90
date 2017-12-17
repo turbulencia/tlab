@@ -62,6 +62,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags, txc, wrk1d,wrk2d,wrk3d)
   TINTEGER particle_number_each
   TREAL real_buffer_i, real_nbuffer_i, real_buffer_k, real_nbuffer_k
   TREAL, DIMENSION(jmax) :: dummy
+  TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_size_p_buffer
 #endif
 
   is=1
@@ -74,8 +75,11 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags, txc, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_MPI
   !Particle number per processor
-  particle_number_each=int(particle_number/INT(ims_npro, KIND=8)) 
-
+  particle_number_each = INT( particle_number /INT(ims_npro, KIND=8) )
+  IF ( ims_pro .LT. INT( MOD(particle_number, INT(ims_npro, KIND=8)) ) ) THEN
+     particle_number_each = particle_number_each +1
+  ENDIF
+  
   !Generate seed - different seed for each processor
   !x_seed=(/1+ims_pro/)
   x_seed = (/ (j,j=1+ims_pro, size_seed+ims_pro) /) !Alberto
@@ -113,7 +117,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags, txc, wrk1d,wrk2d,wrk3d)
 
     END DO
     !Set up the vector containing the number of particles for every processor
-    ims_size_p(1:ims_npro)=C_0_R
+    ims_size_p(1:ims_npro)=0
     ims_size_p(ims_pro+1)=particle_number_each 
 
 !#######################################################################
@@ -171,10 +175,17 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags, txc, wrk1d,wrk2d,wrk3d)
       
    END DO
 !Set up the vector containing the number of particles for every processor
-   ims_size_p(1:ims_npro)=C_0_R
+   ims_size_p(1:ims_npro)=0
    ims_size_p(ims_pro+1)=particle_number_each 
    
 END IF
+
+  ALLOCATE(ims_size_p_buffer(ims_npro))
+
+  CALL MPI_ALLGATHER(ims_size_p(ims_pro+1),1,MPI_INTEGER4,ims_size_p_buffer,1,MPI_INTEGER4,MPI_COMM_WORLD,ims_err)
+  ims_size_p(:)=ims_size_p_buffer(:)
+
+  DEALLOCATE(ims_size_p_buffer)
 
 #else
 

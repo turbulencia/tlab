@@ -30,6 +30,9 @@ fi
 if [ ! -f flow.ics*  ]; then
     EXEC="$EXEC ./iniflow.x"
 fi
+if [ ! -f part.ics*  ]; then
+    EXEC="$EXEC ./inipart.x"
+fi
 
 echo $EXEC
 
