@@ -165,15 +165,12 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
   TREAL,      DIMENSION(isize_particle,inb_particle), OPTIONAL :: l_q 
 
 ! -------------------------------------------------------------------  
-  TINTEGER i
+  TINTEGER i, idummy
   CHARACTER(len=32) name
 #ifdef USE_MPI
   TINTEGER mpio_fh
   INTEGER (KIND=8)  mpio_disp, count
   TINTEGER status(MPI_STATUS_SIZE)
-  TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_size_p_buffer
-#else
-  TINTEGER idummy
 #endif
 
   CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(fname))//'...')
@@ -185,12 +182,8 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
 ! -------------------------------------------------------------------
 ! Let Process 0 handle header
 ! -------------------------------------------------------------------  
-  ALLOCATE(ims_size_p_buffer(ims_npro))
-
-  CALL MPI_ALLGATHER(ims_size_p(ims_pro+1),1,MPI_INTEGER4,ims_size_p_buffer,1,MPI_INTEGER4,MPI_COMM_WORLD,ims_err)
-  ims_size_p(:)=ims_size_p_buffer(:)
-
-  DEALLOCATE(ims_size_p_buffer)
+  idummy = ims_size_p(ims_pro+1)
+  CALL MPI_ALLGATHER(idummy,1,MPI_INTEGER4,ims_size_p,1,MPI_INTEGER4,MPI_COMM_WORLD,ims_err)
 
   IF ( ims_pro .EQ. 0 ) THEN
      name = TRIM(ADJUSTL(fname))//".id"     
