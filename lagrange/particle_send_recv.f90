@@ -36,7 +36,7 @@ SUBROUTINE PARTICLE_SEND_RECV(nzone_grid, nzone_west, nzone_east,nzone_south, nz
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
   USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL, ONLY : particle_number, particle_bumper, nzone_max
+  USE LAGRANGE_GLOBAL, ONLY : particle_number, nzone_max
 
 #ifdef USE_MPI
   USE DNS_MPI

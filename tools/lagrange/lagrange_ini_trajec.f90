@@ -54,11 +54,11 @@ PROGRAM LAGRANGE_INI_TRAJEC
 
   TINTEGER  ierr,isize_wrk3d, i
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:),      ALLOCATABLE :: wrk1d,wrk2d, wrk3d
-  TREAL, DIMENSION(:,:),    ALLOCATABLE :: txc
+  TREAL, DIMENSION(:),      ALLOCATABLE, SAVE :: wrk1d,wrk2d, wrk3d
+  TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE :: txc
   
-  TREAL, DIMENSION(:,:),    ALLOCATABLE :: l_q, l_txc, l_hq
-  INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_tags
+  TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE :: l_q, l_txc
+  INTEGER(8), DIMENSION(:), ALLOCATABLE, SAVE :: l_tags
 
   TINTEGER, DIMENSION(:), ALLOCATABLE :: dummy_proc
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_trajectories_tags, fake_l_trajectories_tags
@@ -96,27 +96,24 @@ PROGRAM LAGRANGE_INI_TRAJEC
 ! Get the local information from the dns.ini
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Start',      '0',  nitera_first)
 
-  
-  inb_particle_txc = 0 ! so far, not needed
-
-#include "dns_alloc_larrays.h"
-  isize_wrk3d = imax*jmax*kmax
-  IF (jmax_part .EQ. 1) THEN
-     jmax_part   = jmax ! 1 by default
-  ENDIF
-  
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d))
+
+  isize_wrk3d = imax*jmax*kmax
+  IF (jmax_part .EQ. 1) THEN
+     jmax_part   = jmax ! 1 by default
+  ENDIF
   ALLOCATE(wrk3d(isize_wrk3d))
 
   IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !Allocte memory to read fields
      ALLOCATE(txc(isize_field,3))
-!     ALLOCATE(txc(isize_txc_field,6))
-     ALLOCATE(l_hq(isize_particle,inb_particle)) !Rubish information. Just to run FIELD_TO_PARTICLE properly
+     inb_particle_txc = 3 +2
   ENDIF
+#include "dns_alloc_larrays.h"
+
   ALLOCATE(dummy_proc(isize_trajectory))
   ALLOCATE(l_trajectories_tags(isize_trajectory))
   ALLOCATE(fake_l_trajectories_tags(isize_trajectory))
@@ -139,7 +136,7 @@ all_fake_liquid(:) = C_0_R
   !#######################################################################
   !CREATE THE RANDOM PARTICLE FIELD
   !#######################################################################
-  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags, txc, wrk1d,wrk2d,wrk3d)
+  CALL PARTICLE_RANDOM_POSITION(l_q,l_tags,l_txc, txc, wrk1d,wrk2d,wrk3d)
 
   !#######################################################################
   !CREATE THE CORRESPONDING TAGS

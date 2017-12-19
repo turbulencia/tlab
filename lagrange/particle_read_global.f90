@@ -8,7 +8,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro
+  USE DNS_MPI, ONLY : ims_npro, ims_pro
 #endif
 
   IMPLICIT NONE
@@ -120,10 +120,15 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(lfile, 'Initialize inb_lag_aux_field = '//TRIM(ADJUSTL(lstr)))
 
 #ifdef USE_MPI
-!     isize_particle=INT(particle_number/INT(ims_npro,KIND=8)*INT(particle_bumper,KIND=8))
-  isize_particle=INT(particle_number/INT(ims_npro,KIND=8)*INT(particle_bumper*100,KIND=8)/INT(100,KIND=8))
+!  isize_particle=INT(particle_number/INT(ims_npro,KIND=8)*INT(particle_bumper,KIND=8))
+!  isize_particle=INT(particle_number/INT(ims_npro,KIND=8)*INT(particle_bumper*100,KIND=8)/INT(100,KIND=8))
+  isize_particle = INT( particle_number /INT(ims_npro, KIND=8) )
+  IF ( ims_pro .LT. INT( MOD(particle_number, INT(ims_npro, KIND=8)) ) ) THEN
+     isize_particle = isize_particle +1
+  ENDIF
+  isize_particle = isize_particle *INT( particle_bumper *100 ) /100
 #else
-  isize_particle=INT(particle_number)
+  isize_particle = INT(particle_number)
 #endif
 
   isize_hf_1 = 2     *jmax*kmax   *inb_lag_total_interp 

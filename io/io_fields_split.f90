@@ -89,7 +89,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 ! We always initialize types here. For the general field files, we could
 ! use DNS_MPI_I_PARTIAL, but we use this routine for other files like
 ! buffer regions of transformed fields.
-     CALL IO_WRITE_ASCII(lfile, 'IO_READ_FIELDS_SPLIT. Initialize MPI types for reading.')
+     CALL IO_WRITE_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
      id = DNS_MPI_I_AUX1
      npage = nz*ny
      CALL DNS_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
@@ -231,7 +231,7 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 ! We always initialize types here. For the general field files, we could
 ! use DNS_MPI_I_PARTIAL, but we use this routine for other files like
 ! buffer regions of transformed fields.
-     CALL IO_WRITE_ASCII(lfile, 'IO_WRITE_FIELDS_SPLIT. Initialize MPI types for writing.')
+     CALL IO_WRITE_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
      id = DNS_MPI_I_AUX1
      npage = nz*ny
      CALL DNS_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &

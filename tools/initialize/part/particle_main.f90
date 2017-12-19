@@ -7,18 +7,6 @@
 
 #define C_FILE_LOC "INIPART"
 
-!########################################################################
-!# HISTORY
-!#
-!# 2013/10/28 - L. Muessle
-!#
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Create an initial condition for the particle field
-!#
-!########################################################################
 PROGRAM INIPART
 
   USE DNS_CONSTANTS
@@ -37,12 +25,12 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
   TINTEGER  ierr,isize_wrk3d, i
 
-  TREAL, DIMENSION(:,:),    ALLOCATABLE,SAVE,TARGET :: x,y,z
-  TREAL, DIMENSION(:,:),    ALLOCATABLE             :: q,s,txc
-  TREAL, DIMENSION(:),      ALLOCATABLE             :: wrk1d,wrk2d, wrk3d
+  TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE, TARGET :: x,y,z
+  TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE :: q,s,txc
+  TREAL, DIMENSION(:),        ALLOCATABLE, SAVE :: wrk1d,wrk2d, wrk3d
 
-  TREAL,      DIMENSION(:,:),   ALLOCATABLE, SAVE :: l_q, l_hq, l_txc
-  INTEGER(8), DIMENSION(:),     ALLOCATABLE, SAVE :: l_tags
+  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
+  INTEGER(8), DIMENSION(:),   ALLOCATABLE, SAVE :: l_tags
 
   CHARACTER*32 inifile
   CHARACTER*64 str, line
@@ -70,8 +58,6 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
 ! Definitions
 ! -------------------------------------------------------------------
-  inb_particle_txc = 0 ! so far, not needed
-
   IF ( jmax_part .EQ. 1 ) THEN
      jmax_part   = jmax ! 1 by default
   ENDIF
@@ -86,11 +72,11 @@ PROGRAM INIPART
   inb_scal_array = 0
   isize_wrk3d    = imax*jmax*kmax
   inb_txc        = inb_scal
+  IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
+     inb_particle_txc = 3 +2
+  ENDIF
 #include "dns_alloc_arrays.h"
 #include "dns_alloc_larrays.h"
-  IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
-     ALLOCATE(l_hq(isize_particle,inb_particle)) ! Aux space to run FIELD_TO_PARTICLE properly
-  ENDIF
   
 ! -------------------------------------------------------------------
 ! Read the grid 
@@ -100,7 +86,7 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
 ! Initialize particle information
 ! -------------------------------------------------------------------
-  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_tags, txc, wrk1d,wrk2d,wrk3d)
+  CALL PARTICLE_RANDOM_POSITION(l_q, l_tags, l_txc, txc, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_MPI
   count = 0
