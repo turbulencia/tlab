@@ -24,9 +24,9 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
 #include "mpif.h"
 #endif  
  
-  CHARACTER(*)                                                 :: fname
+  CHARACTER*(*)                                                :: fname
   INTEGER(8), DIMENSION(isize_particle)                        :: l_tags
-  TREAL,      DIMENSION(isize_particle,inb_particle), OPTIONAL :: l_q 
+  TREAL,      DIMENSION(isize_particle,inb_particle) :: l_q !, OPTIONAL :: l_q 
   
 ! -------------------------------------------------------------------
   TINTEGER i
@@ -90,20 +90,20 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
 ! Use MPI-IO to read particle tags in each processor
 ! -------------------------------------------------------------------
   name = TRIM(ADJUSTL(fname))//".id"
-  CALL MPI_FILE_OPEN(MPI_COMM_WORLD,name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
+  CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
   CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_INTEGER8, MPI_INTEGER8, 'native', MPI_INFO_NULL, ims_err)
-  CALL MPI_FILE_READ_ALL(mpio_fh,l_tags, ims_size_p(ims_pro+1),MPI_INTEGER8,status,ims_err)
+  CALL MPI_FILE_READ_ALL(mpio_fh, l_tags, ims_size_p(ims_pro+1), MPI_INTEGER8, status, ims_err)
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
 
-  IF ( PRESENT(l_q) ) THEN
+!  IF ( PRESENT(l_q) ) THEN
      DO i = 1,inb_particle
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
-        CALL MPI_FILE_OPEN(MPI_COMM_WORLD,name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
+        CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
         CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
-        CALL MPI_FILE_READ_ALL(mpio_fh,l_q(1,i), ims_size_p(ims_pro+1),MPI_REAL8,status,ims_err)
+        CALL MPI_FILE_READ_ALL(mpio_fh, l_q(1,i), ims_size_p(ims_pro+1), MPI_REAL8, status, ims_err)
         CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
      ENDDO
-  ENDIF
+!  ENDIF
   
 #else
 ! #######################################################################
@@ -122,7 +122,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
   READ(LOC_UNIT_ID) l_tags
   CLOSE(LOC_UNIT_ID)
 
-  IF ( PRESENT(l_q) ) THEN
+!  IF ( PRESENT(l_q) ) THEN
      DO i = 1,inb_particle
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
 #include "dns_open_file.h"
@@ -131,7 +131,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
         READ(LOC_UNIT_ID) l_q(:,i)
         CLOSE(LOC_UNIT_ID)
      ENDDO
-  ENDIF
+!  ENDIF
   
 #endif
 
@@ -160,9 +160,9 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
 #include "mpif.h"
 #endif
 
-  CHARACTER(*)                                                 :: fname
+  CHARACTER*(*)                                                :: fname
   INTEGER(8), DIMENSION(isize_particle)                        :: l_tags
-  TREAL,      DIMENSION(isize_particle,inb_particle), OPTIONAL :: l_q 
+  TREAL,      DIMENSION(isize_particle,inb_particle) :: l_q !, OPTIONAL :: l_q 
 
 ! -------------------------------------------------------------------  
   TINTEGER i, idummy
@@ -183,7 +183,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
 ! Let Process 0 handle header
 ! -------------------------------------------------------------------  
   idummy = ims_size_p(ims_pro+1)
-  CALL MPI_ALLGATHER(idummy,1,MPI_INTEGER4,ims_size_p,1,MPI_INTEGER4,MPI_COMM_WORLD,ims_err)
+  CALL MPI_ALLGATHER(idummy, 1, MPI_INTEGER4, ims_size_p, 1, MPI_INTEGER4, MPI_COMM_WORLD, ims_err)
 
   IF ( ims_pro .EQ. 0 ) THEN
      name = TRIM(ADJUSTL(fname))//".id"     
@@ -192,7 +192,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
      WRITE(LOC_UNIT_ID) ims_size_p
      CLOSE(LOC_UNIT_ID)
 
-     IF ( PRESENT(l_q) ) THEN
+!     IF ( PRESENT(l_q) ) THEN
         DO i = 1,inb_particle
            WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
 #include "dns_open_file.h"
@@ -200,7 +200,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
            WRITE(LOC_UNIT_ID) ims_size_p
            CLOSE(LOC_UNIT_ID)
         ENDDO
-     ENDIF
+!     ENDIF
   END IF
 
 ! Displacement per processor
@@ -216,20 +216,20 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
 ! Use MPI-IO to write particle tags in each processor
 ! -------------------------------------------------------------------
   name = TRIM(ADJUSTL(fname))//".id"
-  CALL MPI_FILE_OPEN(MPI_COMM_WORLD,name,MPI_MODE_WRONLY, MPI_INFO_NULL,mpio_fh,ims_err)
-  CALL MPI_FILE_SET_VIEW(mpio_fh,mpio_disp,MPI_INTEGER8,MPI_INTEGER8,'native',MPI_INFO_NULL, ims_err)    
-  CALL MPI_FILE_WRITE_ALL(mpio_fh,l_tags(1:ims_size_p(ims_pro+1)),ims_size_p(ims_pro+1),MPI_INTEGER8,status,ims_err)
+  CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
+  CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_INTEGER8, MPI_INTEGER8, 'native', MPI_INFO_NULL, ims_err)    
+  CALL MPI_FILE_WRITE_ALL(mpio_fh, l_tags, ims_size_p(ims_pro+1), MPI_INTEGER8, status, ims_err)
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
 
-  IF ( PRESENT(l_q) ) THEN
+!  IF ( PRESENT(l_q) ) THEN
      DO i = 1,inb_particle
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
-        CALL MPI_FILE_OPEN(MPI_COMM_WORLD,name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
+        CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
         CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
-        CALL MPI_FILE_WRITE_ALL(mpio_fh,l_q(1,i), ims_size_p(ims_pro+1),MPI_REAL8,status,ims_err)
+        CALL MPI_FILE_WRITE_ALL(mpio_fh, l_q(1,i), ims_size_p(ims_pro+1), MPI_REAL8, status, ims_err)
         CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
      ENDDO
-  ENDIF
+!  ENDIF
   
 #else 
 ! #######################################################################
@@ -243,7 +243,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
   WRITE(LOC_UNIT_ID) l_tags
   CLOSE(LOC_UNIT_ID)
 
-  IF ( PRESENT(l_q) ) THEN
+!  IF ( PRESENT(l_q) ) THEN
      DO i = 1,inb_particle
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
 #include "dns_open_file.h"
@@ -252,7 +252,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
         WRITE(LOC_UNIT_ID) l_q(:,i)
         CLOSE(LOC_UNIT_ID)
      ENDDO
-  ENDIF
+!  ENDIF
 
 #endif 
 

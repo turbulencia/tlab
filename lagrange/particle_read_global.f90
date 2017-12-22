@@ -4,8 +4,9 @@
 
 SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
     
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
+  USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_wrk2d
+  USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_particle
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_npro, ims_pro
@@ -106,7 +107,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'Parameters', '0.0', sRes)
   idummy = MAX_LAGPARAM
   CALL LIST_REAL(sRes, idummy, lagrange_param)
-
+  
 ! ###################################################################
 ! Initializing size of Lagrangian arrays
 ! ###################################################################
@@ -148,9 +149,9 @@ END SUBROUTINE PARTICLE_READ_GLOBAL
 ! ###################################################################
 SUBROUTINE PARTICLE_TYPE_INITIALIZE
   
+  USE DNS_GLOBAL, ONLY : inb_particle, inb_particle_txc
   USE LAGRANGE_GLOBAL
 
-  USE DNS_GLOBAL, ONLY : inb_particle, inb_particle_txc
   IMPLICIT NONE
 
 ! -------------------------------------------------------------------

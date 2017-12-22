@@ -189,7 +189,7 @@ PROGRAM DNS
 ! Allocating additional memory space
 ! -------------------------------------------------------------------
 ! Rhs
-  WRITE(str,*) inb_flow; line = 'Allocating array rhs flow. Size '//TRIM(ADJUSTL(str))//'x'
+  WRITE(str,*) inb_flow; line = 'Allocating array rhs flow of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
   ALLOCATE(h_q(isize_field,inb_flow),    stat=ierr)
@@ -198,7 +198,7 @@ PROGRAM DNS
      CALL DNS_STOP(DNS_ERROR_ALLOC)
   ENDIF
 
-  WRITE(str,*) inb_scal; line = 'Allocating array rhs scal. Size '//TRIM(ADJUSTL(str))//'x'
+  WRITE(str,*) inb_scal; line = 'Allocating array rhs scal of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
   ALLOCATE(h_s(isize_field,inb_scal),    stat=ierr)
@@ -210,7 +210,7 @@ PROGRAM DNS
 ! Array vaux
   CALL DNS_VAUX(isize_vaux)
 
-  WRITE(str,*) isize_vaux; line = 'Allocating array vaux. Size '//TRIM(ADJUSTL(str))
+  WRITE(str,*) isize_vaux; line = 'Allocating array vaux of size '//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
   ALLOCATE(vaux(isize_vaux),stat=ierr)
   IF ( ierr .NE. 0 ) THEN
@@ -222,12 +222,17 @@ PROGRAM DNS
   IF ( icalc_part .EQ. 1 ) THEN
 #include "dns_alloc_larrays.h"
      
+     WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
+     CALL IO_WRITE_ASCII(lfile,line)
      ALLOCATE(l_comm(isize_l_comm), stat=ierr)
      IF ( ierr .NE. 0 ) THEN
         CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
         CALL DNS_STOP(DNS_ERROR_ALLOC)
      ENDIF
      
+     WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
+     WRITE(str,*) inb_particle; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+     CALL IO_WRITE_ASCII(lfile,line)
      ALLOCATE(l_hq(isize_particle,inb_particle),stat=ierr)
      IF ( ierr .NE. 0 ) THEN
         CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
