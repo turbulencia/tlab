@@ -142,8 +142,8 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q, l_tags, l_txc, txc, wrk1d,wrk2d,wrk3d)
      CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_field, txc, wrk3d)
      
      IF ( imixture .EQ.  MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-        CALL FIELD_TO_PARTICLE (txc(1,1,1,1),wrk1d,wrk2d,wrk3d, l_txc(1,4), l_tags, l_txc, l_q)
-        CALL FIELD_TO_PARTICLE (txc(1,1,1,2),wrk1d,wrk2d,wrk3d, l_txc(1,5), l_tags, l_txc, l_q)
+        CALL FIELD_TO_PARTICLE_OLD (txc(1,1,1,1),wrk1d,wrk2d,wrk3d, l_txc(1,4), l_tags, l_txc, l_q)
+        CALL FIELD_TO_PARTICLE_OLD (txc(1,1,1,2),wrk1d,wrk2d,wrk3d, l_txc(1,5), l_tags, l_txc, l_q)
         
         CALL THERMO_AIRWATER_LINEAR(isize_particle,1,1,l_txc(1,4),l_q(1,4))
         
@@ -421,8 +421,8 @@ END IF
      IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
          CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_field, txc, wrk3d) ! Read the scalar fields into txc
           IF ( imixture .EQ.  MIXT_TYPE_AIRWATER_LINEAR) THEN 
-             CALL FIELD_TO_PARTICLE (txc(1,1,1,1),wrk1d,wrk2d,wrk3d, l_buffer(1,1), l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
-             CALL FIELD_TO_PARTICLE (txc(1,1,1,2),wrk1d,wrk2d,wrk3d, l_buffer(1,2), l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
+             CALL FIELD_TO_PARTICLE_OLD (txc(1,1,1,1),wrk1d,wrk2d,wrk3d, l_buffer(1,1), l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
+             CALL FIELD_TO_PARTICLE_OLD (txc(1,1,1,2),wrk1d,wrk2d,wrk3d, l_buffer(1,2), l_tags, l_hq, l_q) ! Not sure about l_q(:,4). Maybe we need a particle txc 
        
              CALL THERMO_AIRWATER_LINEAR(isize_particle,1,1,l_buffer(1,1),l_q(1,4)) !INEFFICIENT. It loops the whole array and not only until particle_number_local
 

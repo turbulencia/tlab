@@ -83,7 +83,7 @@ SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q)
   
   particle_bins_local=0.0
 
-  CALL FIELD_TO_PARTICLE (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q) !Update the liquid function  
+  CALL FIELD_TO_PARTICLE_OLD (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q) !Update the liquid function  
 
   !#######################################################################
   !Start counting of particles in bins per processor
@@ -152,7 +152,7 @@ SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q)
   DEALLOCATE(particle_bins_local)
 #else
 
-  CALL FIELD_TO_PARTICLE (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q)  
+  CALL FIELD_TO_PARTICLE_OLD (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q)  
     
   particle_pdf_min = 0
 

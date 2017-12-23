@@ -93,7 +93,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_XXX(nitera_last, nitera_save, nitera_first, l_q
 #ifdef USE_MPI
   DO i=1,ims_size_p(ims_pro+1)
 #else
-  DO i=1,particle_number
+  DO i=1,INT(particle_number)
 #endif        
      DO j=1,isize_trajectory
         IF ( l_tags(i) .EQ. l_trajectories_tags(j) ) THEN
@@ -116,7 +116,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_XXX(nitera_last, nitera_save, nitera_first, l_q
 #endif
         WRITE(name,*) itime; name =TRIM(ADJUSTL(tag_traj))//TRIM(ADJUSTL(name))
 #define LOC_UNIT_ID 115
-#define LOC_STATUS 'new'        
+#define LOC_STATUS 'unknown'        
 #include "dns_open_file.h"
         REWIND(LOC_UNIT_ID)
 #ifdef USE_MPI

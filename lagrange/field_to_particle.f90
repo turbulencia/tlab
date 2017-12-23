@@ -5,6 +5,112 @@
 #include "dns_const_mpi.h"
 #endif
 
+!#######################################################################
+!#######################################################################
+SUBROUTINE  FIELD_TO_PARTICLE &
+    (nvar, data, l_q,l_hq,l_tags,l_comm, l_txc, wrk1d,wrk2d,wrk3d)
+
+  USE DNS_CONSTANTS,  ONLY : efile
+  USE DNS_TYPES,      ONLY : pointers_dt
+  USE DNS_GLOBAL,     ONLY : isize_particle
+  USE DNS_GLOBAL,     ONLY : g
+  USE LAGRANGE_GLOBAL
+#ifdef USE_MPI
+  USE DNS_GLOBAL,     ONLY : imax,jmax,kmax
+  USE DNS_MPI, ONLY: ims_npro, ims_err, ims_pro
+#endif
+
+  IMPLICIT NONE
+#include "integers.h"
+#ifdef USE_MPI
+#include "mpif.h"
+#endif
+
+  TINTEGER nvar
+  TYPE(pointers_dt), DIMENSION(nvar)                 :: data ! Array of pointer to the fields to be processed
+  TREAL,             DIMENSION(isize_particle,*)     :: l_q, l_hq
+  INTEGER(8),        DIMENSION(isize_particle)       :: l_tags
+  TREAL,             DIMENSION(isize_l_comm), TARGET :: l_comm
+  TREAL,             DIMENSION(isize_particle,nvar)  :: l_txc
+  TREAL,             DIMENSION(*)                    :: wrk1d, wrk2d, wrk3d
+
+! -------------------------------------------------------------------
+  TINTEGER halo_zone_x, halo_zone_z, halo_zone_diagonal 
+  TINTEGER halo_start, halo_end,grid_start, grid_field_counter
+
+  TREAL, DIMENSION(:), POINTER :: halo_field_1, halo_field_2, halo_field_3
+  TREAL, DIMENSION(:), POINTER :: field
+
+!#######################################################################
+  IF ( nvar .GT. inb_lag_total_interp ) THEN
+     CALL IO_WRITE_ASCII(efile,'PARTICLE_HALO. Not enough memory.')
+     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+  ENDIF
+
+! #####################################################################
+  halo_field_1(1:isize_hf_1) => l_comm(1:isize_hf_1)
+  halo_field_2(1:isize_hf_2) => l_comm(isize_hf_1+1:isize_hf_1+isize_hf_2)
+  halo_field_3(1:isize_hf_3) => l_comm(isize_hf_1+isize_hf_2+1:isize_hf_1+isize_hf_2+isize_hf_3)
+
+!#######################################################################
+#ifdef USE_MPI
+  ! CALL HALO_PLANE_SHIFTING_k_1d(field,halo_field_2,wrk3d(1),wrk3d(imax*jmax+1),wrk2d(1),wrk2d(2*(jmax+1)))
+  ! CALL HALO_PLANE_SHIFTING_i_1d(field,halo_field_1,halo_field_3,wrk3d(1),wrk3d((jmax)*(kmax+1)+1),&
+  !      wrk2d(1),wrk2d(jmax+1),wrk2d(2*(jmax+1)))
+
+  CALL PARTICLE_HALO_K(nvar, data, halo_field_2, wrk3d(1), wrk3d(imax*jmax*nvar+1), &
+       wrk2d(1), wrk2d(2*(jmax*nvar+1)))
+
+  CALL PARTICLE_HALO_I(nvar, data, halo_field_1, halo_field_3, wrk3d(1), wrk3d(jmax*(kmax+1)*nvar+1),&
+       wrk2d(1), wrk2d(jmax*nvar+1), wrk2d(2*(jmax*nvar+1)))
+#else
+  CALL PARTICLE_HALO_SERIAL(nvar, data, halo_field_1, halo_field_2, halo_field_3 )
+#endif
+  
+!#######################################################################
+!#######################################################################
+  CALL PARTICLE_SORT_HALO(g(1)%nodes,g(3)%nodes, grid_field_counter, halo_zone_x, halo_zone_z, halo_zone_diagonal,&
+       l_hq, l_tags, l_q)
+
+#ifdef USE_MPI
+  CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
+#endif
+  
+!#######################################################################
+  wrk1d(1)= g(1)%scale / g(1)%size ! wrk1d 1-3 intervalls
+!  wrk1d(2)= g(2)%scale/g(2)%size ! needed for interpolation
+  wrk1d(2)= g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part)
+  wrk1d(3)= g(3)%scale / g(3)%size
+
+  field => data(1)%field
+  
+  grid_start=1
+  CALL RHS_PARTICLE_GLOBAL_INTERPOLATION_1D(field,l_q,l_txc,g(2)%nodes,wrk1d,grid_start,grid_field_counter)
+
+! RHS for particles in halo_zone_x
+  IF (halo_zone_x .NE. 0) THEN
+     halo_start=grid_field_counter+1
+     halo_end=grid_field_counter+halo_zone_x
+     CALL RHS_PARTICLE_GLOBAL_INTERPOLATION_HALO_1_1D(halo_field_1,l_q,l_txc,g(2)%nodes,wrk1d,halo_start,halo_end)
+  END IF
+
+! RHS for particles in halo_zone_z
+  IF (halo_zone_z .NE. 0) THEN
+     halo_start=grid_field_counter+halo_zone_x+1
+     halo_end=grid_field_counter+halo_zone_x+halo_zone_z
+     CALL RHS_PARTICLE_GLOBAL_INTERPOLATION_HALO_2_1D(halo_field_2,l_q,l_txc,g(2)%nodes,wrk1d,halo_start,halo_end)
+  END IF
+
+! RHS for particles in halo_zone_diagonal
+  IF (halo_zone_diagonal .NE. 0) THEN
+     halo_start=grid_field_counter+halo_zone_x+halo_zone_z+1
+     halo_end=grid_field_counter+halo_zone_x+halo_zone_z+halo_zone_diagonal
+     CALL RHS_PARTICLE_GLOBAL_INTERPOLATION_HALO_3_1D(halo_field_3,l_q,l_txc,g(2)%nodes,wrk1d,halo_start,halo_end)
+  END IF
+
+  RETURN
+END SUBROUTINE FIELD_TO_PARTICLE
+
 !########################################################################
 !# Tool/Library
 !#
@@ -17,7 +123,7 @@
 !# ARGUMENTS 
 !#
 !########################################################################
-SUBROUTINE  FIELD_TO_PARTICLE &
+SUBROUTINE  FIELD_TO_PARTICLE_OLD &
     (field, wrk1d,wrk2d,wrk3d, particle_property, l_tags, l_hq, l_q)
 
   USE DNS_GLOBAL, ONLY: imax,jmax,kmax
@@ -143,4 +249,4 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   DEALLOCATE(halo_field_3)
 
   RETURN
-END SUBROUTINE FIELD_TO_PARTICLE
+END SUBROUTINE FIELD_TO_PARTICLE_OLD

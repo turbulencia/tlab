@@ -174,7 +174,7 @@ SUBROUTINE PARTICLE_TYPE_INITIALIZE
   ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3) THEN
      inb_particle_evolution = 5    !amount of particle properties 
      inb_particle_aux = 0          !amount of particle properties without runge kutta (only sent and sorted)
-     inb_particle_txc = 1          !l_txc properties
+     inb_particle_txc = 4          !l_txc properties
      inb_lag_aux_field = 4         !field data on txc
      inb_particle = inb_particle_evolution + inb_particle_aux    !amount of particle properties which are sent
      LAGRANGE_SPNAME(1) = 'droplet_diff_3'
@@ -183,7 +183,7 @@ SUBROUTINE PARTICLE_TYPE_INITIALIZE
   ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
      inb_particle_evolution = 5    !amount of particle properties with runge kutta
      inb_particle_aux = 1          !amount of particle properties without runge kutta (only sent and sorted)
-     inb_particle_txc = 1          !l_txc properties
+     inb_particle_txc = 4          !l_txc properties
      inb_lag_aux_field = 4         !field data on txc
      inb_particle = inb_particle_evolution + inb_particle_aux    !amount of particle properties which are sent
      LAGRANGE_SPNAME(1) = 'droplet_diff_3'
