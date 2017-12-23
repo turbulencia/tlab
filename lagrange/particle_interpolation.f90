@@ -3,10 +3,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# DESCRIPTION
-!#
-!# Here particles are inside the cpu grid.
-!#
 !########################################################################
 SUBROUTINE PARTICLE_INTERPOLATION &
      (iflag, nx,ny,nz,nvar, data_in, data_out, l_q, y, wrk1d, grid_start, grid_end)
@@ -38,31 +34,28 @@ SUBROUTINE PARTICLE_INTERPOLATION &
   TREAL, DIMENSION(:,:,:), POINTER :: tmp
 
 ! ######################################################################
-  IF  ( g(3)%size .NE. 1) THEN ! 3D case
+  IF  ( g(3)%size .NE. 1 ) THEN
 
-     DO i = grid_start,grid_end !loop over all particles inside the grid (no halo)
+     DO i = grid_start,grid_end ! loop over all particles
 
 #ifdef USE_MPI
-        particle_local_grid_posx = l_q(i,1)/wrk1d(1) + 1 - ims_offset_i !ims_pro_i*imax
+        particle_local_grid_posx = l_q(i,1)/wrk1d(1) + 1 - ims_offset_i
         particle_local_grid_posy = ((l_q(i,2)-y(jmin_part))/wrk1d(2))+jmin_part  
-        particle_local_grid_posz = l_q(i,3)/wrk1d(3) + 1 - ims_offset_k !ims_pro_k*kmax
+        particle_local_grid_posz = l_q(i,3)/wrk1d(3) + 1 - ims_offset_k
 #else
         particle_local_grid_posx = l_q(i,1)/wrk1d(1) + 1 
         particle_local_grid_posy = ((l_q(i,2)-y(jmin_part))/wrk1d(2))+jmin_part  
         particle_local_grid_posz = l_q(i,3)/wrk1d(3) + 1
 #endif
 
-        gridpoint(1)= floor(particle_local_grid_posx)       !tracer position to the left (x1)
+        gridpoint(1)= floor(particle_local_grid_posx)       !position to the left (x1)
         gridpoint(2)= gridpoint(1)+1                        !to the right (x2)
         gridpoint(3)= (floor((l_q(i,2)-y(jmin_part))/wrk1d(2)))+jmin_part       !to the bottom 
         gridpoint(4)= gridpoint(3)+1                        !to the top (y2)
         gridpoint(5)= floor(particle_local_grid_posz)       !front side
         gridpoint(6)= gridpoint(5)+1                        !back side
 
-! ###################################################################
-! Interpolation
-! ###################################################################
-        length_g_p(1) = particle_local_grid_posx - gridpoint(1)  !legnth x between x(i) and p
+        length_g_p(1) = particle_local_grid_posx - gridpoint(1)  !legnth between x(i) and p
         length_g_p(2) = gridpoint(2) - particle_local_grid_posx
         length_g_p(3) = particle_local_grid_posy - gridpoint(3)
         length_g_p(4) = gridpoint(4) - particle_local_grid_posy
@@ -70,7 +63,7 @@ SUBROUTINE PARTICLE_INTERPOLATION &
         length_g_p(6) = gridpoint(6) - particle_local_grid_posz  !length between z(i+1) and p
 
         cube_g_p(1) = length_g_p(1) *length_g_p(3) ! cubes
-        cube_g_p(2) = length_g_p(1) *length_g_p(4) !  be carefull multiply other side cube of grid for correct interpolation
+        cube_g_p(2) = length_g_p(1) *length_g_p(4) ! be carefull multiply other side cube of grid for correct interpolation
         cube_g_p(3) = length_g_p(4) *length_g_p(2)
         cube_g_p(4) = length_g_p(2) *length_g_p(3)
 
@@ -87,11 +80,11 @@ SUBROUTINE PARTICLE_INTERPOLATION &
            gridpoint(6)=2
         ENDIF
         
-! ###################################################################
-! Set the field arrays into the particle
-! Two bilinear calculation for each k direction (gridpoint(5) and gridpoint(6)
-! Then multipled by (1-length) for Trilinear aspect
-! ###################################################################
+! -------------------------------------------------------------------
+! Trilinear interpolation
+! Two bilinear interpolations for each k plane (gridpoint(5) and gridpoint(6)
+! Then multipled by (1-length) for trilinear aspect
+! -------------------------------------------------------------------
         DO j = 1,nvar
            tmp(1:nx,1:ny,1:nz) => data_in(j)%field(:)
 
@@ -111,47 +104,41 @@ SUBROUTINE PARTICLE_INTERPOLATION &
 ! ######################################################################
   ELSE !2D case
 
-     DO i=grid_start,grid_end !loop over all particles inside the grid (no halo)
+     DO i = grid_start,grid_end
 
 #ifdef USE_MPI
-        particle_local_grid_posx = l_q(i,1)/wrk1d(1) + 1 - ims_offset_i !ims_pro_i*imax
+        particle_local_grid_posx = l_q(i,1)/wrk1d(1) + 1 - ims_offset_i
         particle_local_grid_posy = ((l_q(i,2)-y(jmin_part))/wrk1d(2))+jmin_part  
 #else
         particle_local_grid_posx = l_q(i,1)/wrk1d(1) + 1 
         particle_local_grid_posy = ((l_q(i,2)-y(jmin_part))/wrk1d(2))+jmin_part  
 #endif
 
-!Calculating gridpoints AFTER particles are shifted
-        gridpoint(1)= floor(particle_local_grid_posx)       !tracer position to the left (x1)
-        gridpoint(2)= gridpoint(1)+1               !to the right (x2)
-        gridpoint(3)= (floor((l_q(i,2)-y(jmin_part))/wrk1d(2)))+jmin_part       !to the bottom 
-        gridpoint(4)= gridpoint(3)+1               !to the top (y2)
+        gridpoint(1)= floor(particle_local_grid_posx)
+        gridpoint(2)= gridpoint(1)+1
+        gridpoint(3)= (floor((l_q(i,2)-y(jmin_part))/wrk1d(2)))+jmin_part
+        gridpoint(4)= gridpoint(3)+1
         gridpoint(5)=1
         gridpoint(6)=1
 
-! ###################################################################
-! Own Interpolation
-! ###################################################################
-        length_g_p(1) = particle_local_grid_posx - gridpoint(1)  !legnth x between x(i) and p
+        length_g_p(1) = particle_local_grid_posx - gridpoint(1)
         length_g_p(2) = gridpoint(2) - particle_local_grid_posx
         length_g_p(3) = particle_local_grid_posy - gridpoint(3)
         length_g_p(4) = gridpoint(4) - particle_local_grid_posy
 
-        cube_g_p(1) = length_g_p(1) *length_g_p(3) ! cubes
-        cube_g_p(2) = length_g_p(1) *length_g_p(4) !  be carefull multiply other side cube of grid for correct interpolation
+        cube_g_p(1) = length_g_p(1) *length_g_p(3)
+        cube_g_p(2) = length_g_p(1) *length_g_p(4)
         cube_g_p(3) = length_g_p(4) *length_g_p(2)
         cube_g_p(4) = length_g_p(2) *length_g_p(3)
 
-!Safety check
-!cube_g_p(5)=cube_g_p(1)+cube_g_p(2)+cube_g_p(3)+cube_g_p(4)
-!IF  (cube_g_p(5) .GT. 1) THEN
-!    print*,'zu grosse wuerfel'
-!END IF
-
-! ###################################################################
-! Two bilinear calculation for each k direction (gridpoint(5) and gridpoint(6)
-! Then multipled by (1-length) for Trilinear aspect
-! ###################################################################
+        IF ( iflag .EQ. 1 ) THEN
+           gridpoint(1)=1
+           gridpoint(2)=2
+        ENDIF
+        
+! -------------------------------------------------------------------
+! Bilinear interpolation
+! -------------------------------------------------------------------
         DO j = 1,nvar
            tmp(1:nx,1:ny,1:nz) => data_in(j)%field(:)
 
