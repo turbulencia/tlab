@@ -33,41 +33,25 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
 
 ! -------------------------------------------------------------------
   TREAL dummy, dummy2
-  TINTEGER halo_start, halo_end, grid_start, grid_field_counter
-  TINTEGER particle_number_local, bcs(2,2), nfield
-  TINTEGER halo_zone_x, halo_zone_z, halo_zone_diagonal 
-  TINTEGER ip1,ip2,ip3, np1,np2,np3, i
+  TINTEGER particle_number_local, bcs(2,2), nvar
+  TINTEGER i, npar
   TREAL delta_inv0, delta_inv2, delta_inv4
   
-!  TREAL, DIMENSION(:), POINTER :: halo_field_1, halo_field_2, halo_field_3
-  TYPE(pointers_dt), DIMENSION(inb_lag_total_interp) :: data, data_out, data_halo1, data_halo2, data_halo3
+  TYPE(pointers_dt), DIMENSION(inb_lag_total_interp) :: data, data_out
 
 ! #####################################################################
   bcs = 0
   
-  ! halo_field_1(1:isize_hf_1) => l_comm(1:isize_hf_1)
-  ! halo_field_2(1:isize_hf_2) => l_comm(isize_hf_1+1:isize_hf_1+isize_hf_2)
-  ! halo_field_3(1:isize_hf_3) => l_comm(isize_hf_1+isize_hf_2+1:isize_hf_1+isize_hf_2+isize_hf_3)
-
-  DO nfield = 1,inb_lag_total_interp
-     np1 = 2*jmax*kmax; ip1 = (nfield-1) *np1 +1
-     data_halo1(nfield)%field(1:np1) => l_comm(ip1:ip1+np1)
-     np2 = imax*jmax*2; ip2 = (nfield-1) *np2 +1 +isize_hf_1
-     data_halo2(nfield)%field(1:np2) => l_comm(ip2:ip2+np2)
-     np3 = 2   *jmax*2; ip3 = (nfield-1) *np3 +1 +isize_hf_1 +isize_hf_2 
-     data_halo3(nfield)%field(1:np3) => l_comm(ip3:ip3+np3)
-  ENDDO
-  
 ! Setting pointers to velocity fields
-  nfield = 0
-  nfield = nfield+1; data(nfield)%field => q(:,1); data_out(nfield)%field => l_hq(:,1)
-  nfield = nfield+1; data(nfield)%field => q(:,2); data_out(nfield)%field => l_hq(:,2)
-  nfield = nfield+1; data(nfield)%field => q(:,3); data_out(nfield)%field => l_hq(:,3)
+  nvar = 0
+  nvar = nvar+1; data(nvar)%field => q(:,1); data_out(nvar)%field => l_hq(:,1)
+  nvar = nvar+1; data(nvar)%field => q(:,2); data_out(nvar)%field => l_hq(:,2)
+  nvar = nvar+1; data(nvar)%field => q(:,3); data_out(nvar)%field => l_hq(:,3)
   
-! #####################################################################
-! Put source terms into txc variables
-! #####################################################################
-  IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !using combination of both versions of equation
+! -------------------------------------------------------------------
+! Additional terms depending on type of particle evolution equations
+! -------------------------------------------------------------------
+  IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
 
      dummy2 = -thermo_param(2)
      dummy  = -thermo_param(1)
@@ -98,103 +82,39 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
      txc(:,4) = dummy2 *txc(:,4)
 
 ! Setting pointers
-     nfield = nfield+1; data(nfield)%field => txc(:,1); data_out(nfield)%field => l_txc(:,1)
-     nfield = nfield+1; data(nfield)%field => txc(:,2); data_out(nfield)%field => l_txc(:,2)
-     nfield = nfield+1; data(nfield)%field => txc(:,3); data_out(nfield)%field => l_txc(:,3)
-     nfield = nfield+1; data(nfield)%field => txc(:,4); data_out(nfield)%field => l_txc(:,4)
+     nvar = nvar+1; data(nvar)%field => txc(:,1); data_out(nvar)%field => l_txc(:,1)
+     nvar = nvar+1; data(nvar)%field => txc(:,2); data_out(nvar)%field => l_txc(:,2)
+     nvar = nvar+1; data(nvar)%field => txc(:,3); data_out(nvar)%field => l_txc(:,3)
+     nvar = nvar+1; data(nvar)%field => txc(:,4); data_out(nvar)%field => l_txc(:,4)
      l_txc(:,1:4) = C_0_R
      
   ENDIF
 
-! ######################################################################
-! Swapping grid information to halo_fields
-! ######################################################################
-#ifdef USE_MPI
-  ! CALL HALO_PLANE_SHIFTING_k(q, txc, halo_field_2, wrk3d(1), wrk3d(imax*jmax*inb_lag_total_interp+1), &
-  !      wrk2d(1), wrk2d(2*(jmax*inb_lag_total_interp+1)))
-
-  CALL PARTICLE_HALO_K(nfield, data, data_halo2(1)%field, wrk3d(1), wrk3d(imax*jmax*inb_lag_total_interp+1), &
-       wrk2d(1), wrk2d(2*(jmax*inb_lag_total_interp+1)))
-
-  ! CALL HALO_PLANE_SHIFTING_i(q, txc, halo_field_1, halo_field_3, wrk3d(1), wrk3d(jmax*(kmax+1)*inb_lag_total_interp+1),&
-  !      wrk2d(1), wrk2d(jmax*inb_lag_total_interp+1), wrk2d(2*(jmax*inb_lag_total_interp+1)))
-
-  CALL PARTICLE_HALO_I(nfield, data, data_halo1(1)%field, data_halo3(1)%field, wrk3d(1), wrk3d(jmax*(kmax+1)*inb_lag_total_interp+1),&
-       wrk2d(1), wrk2d(jmax*inb_lag_total_interp+1), wrk2d(2*(jmax*inb_lag_total_interp+1)))
-#else
-!  CALL HALO_PLANE_SHIFTING_SERIAL(q, txc, halo_field_1, halo_field_2, halo_field_3 )
-
-  CALL PARTICLE_HALO_SERIAL(nfield, data, data_halo1(1)%field, data_halo2(1)%field, data_halo3(1)%field)
-#endif
+! -------------------------------------------------------------------
+! Interpolating field data into particles
+! The interpolated data is added to the existing data, which
+!  consitutes already the evolution equation for particle position
+! -------------------------------------------------------------------
+  CALL FIELD_TO_PARTICLE(nvar, data, npar, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
   
-! #######################################################################
-! Sorting of particles -> NO HALO / HALO ZONES
-! #######################################################################
-! Sorting algorithm:
-! Counting of particles for each zone
-! Zone: 0=grid 1=x_side 2=z_side 3=diagonal 
-!  halo_zone_x=0
-  CALL PARTICLE_SORT_HALO(g(1)%nodes, g(3)%nodes, grid_field_counter, halo_zone_x, halo_zone_z, halo_zone_diagonal, &
-       l_hq, l_tags, l_q)
-
-#ifdef USE_MPI
-  CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
-#endif
-  
-!#######################################################################
-! RHS for particles
-!#######################################################################
-  wrk1d(1)= g(1)%scale/g(1)%size ! wrk1d 1-3 intervalls
-!  wrk1d(2)= g(2)%scale/g(2)%size ! needed for interpolation
-  wrk1d(2)= g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part)
-  wrk1d(3)= g(3)%scale/g(3)%size
-
-! RHS for particles in normal field
-  grid_start=1
-!  CALL RHS_PARTICLE_GLOBAL_INTERPOLATION(q,l_q,l_hq,g(2)%nodes,wrk1d,txc,grid_start,grid_field_counter)
-  CALL PARTICLE_INTERPOLATION(i0, imax,jmax,kmax,nfield, data, data_out, l_q, g(2)%nodes, wrk1d, grid_start, grid_field_counter)
-
-! RHS for particles in halo_zone_x
-  IF (halo_zone_x .NE. 0) THEN
-     halo_start=grid_field_counter+1
-     halo_end=grid_field_counter+halo_zone_x
-!     CALL RHS_PARTICLE_GLOBAL_INTERPOLATION_HALO_1(halo_field_1,l_q,l_hq,g(2)%nodes,wrk1d,halo_start,halo_end)
-     CALL PARTICLE_INTERPOLATION(i1, i2,jmax,kmax,nfield, data_halo1, data_out, l_q, g(2)%nodes, wrk1d, halo_start,halo_end)
-  END IF
-
-! RHS for particles in halo_zone_z
-  IF (halo_zone_z .NE. 0) THEN
-     halo_start=grid_field_counter+halo_zone_x+1
-     halo_end=grid_field_counter+halo_zone_x+halo_zone_z
-!     CALL RHS_PARTICLE_GLOBAL_INTERPOLATION_HALO_2(halo_field_2,l_q,l_hq,g(2)%nodes,wrk1d,halo_start,halo_end)
-     CALL PARTICLE_INTERPOLATION(i2, imax,jmax,i2,nfield, data_halo2, data_out, l_q, g(2)%nodes, wrk1d, halo_start,halo_end)
-  END IF
-
-! RHS for particles in halo_zone_diagonal
-  IF (halo_zone_diagonal .NE. 0) THEN
-     halo_start=grid_field_counter+halo_zone_x+halo_zone_z+1
-     halo_end=grid_field_counter+halo_zone_x+halo_zone_z+halo_zone_diagonal
-!     CALL RHS_PARTICLE_GLOBAL_INTERPOLATION_HALO_3(halo_field_3,l_q,l_hq,g(2)%nodes,wrk1d,halo_start,halo_end)
-     CALL PARTICLE_INTERPOLATION(i3, i2,jmax,i2,nfield, data_halo3, data_out, l_q, g(2)%nodes, wrk1d, halo_start,halo_end)
-  END IF
-
-!#######################################################################
-  IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
-!interpolated_value(4) = equation without ds/dxi 
-!interpolated_value(5) = xi
-!interpolated_value(6) = evaporation/condensation term without d2s/dxi2 
-!interpolated_value(7) = radiation term without ds/dxi
+! -------------------------------------------------------------------
+! Completing evolution equations
+! -------------------------------------------------------------------
+  IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
+! l_txc(1) = equation without ds/dxi 
+! l_txc(2) = xi
+! l_txc(3) = evaporation/condensation term without d2s/dxi2 
+! l_txc(4) = radiation term without ds/dxi
      
      delta_inv0 =  C_1_R  /thermo_param(1)/thermo_param(3)
      delta_inv2 = -C_05_R /thermo_param(1)/thermo_param(3)
      delta_inv4 = -C_025_R/thermo_param(1)/thermo_param(3)
      
-     DO i = 1,halo_end
+     DO i = 1,npar
         l_hq(i,4) = l_hq(i,4) - l_txc(i,1)/(C_1_R + EXP(l_txc(i,2)*delta_inv0))
         
-        l_hq(i,5) = l_hq(i,5)  & 
-             - l_txc(i,4)/(C_1_R + EXP(l_txc(i,2)*delta_inv0)) &
-             - l_txc(i,3)*delta_inv4/(COSH(l_txc(i,2)*delta_inv2)**2) 
+        l_hq(i,5) = l_hq(i,5) - l_txc(i,4)/(C_1_R + EXP(l_txc(i,2)*delta_inv0)) &
+                              - l_txc(i,3)*delta_inv4/(COSH(l_txc(i,2)*delta_inv2)**2) 
      ENDDO
      
   ELSE IF (ilagrange .EQ. LAG_TYPE_SIMPLE_SETT) THEN

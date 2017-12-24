@@ -8,7 +8,7 @@ SUBROUTINE PARTICLE_INTERPOLATION &
      (iflag, nx,ny,nz,nvar, data_in, data_out, l_q, y, wrk1d, grid_start, grid_end)
   
   USE DNS_CONSTANTS,  ONLY : efile
-  USE DNS_TYPES,      ONLY : pointers_dt
+  USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL,     ONLY : isize_particle
   USE DNS_GLOBAL,     ONLY : g
   USE LAGRANGE_GLOBAL,ONLY : jmin_part
@@ -31,8 +31,13 @@ SUBROUTINE PARTICLE_INTERPOLATION &
   TINTEGER i, j
   TREAL particle_local_grid_posx, particle_local_grid_posy, particle_local_grid_posz
 
-  TREAL, DIMENSION(:,:,:), POINTER :: tmp
-
+  TYPE(pointers3d_dt), DIMENSION(nvar) :: tmp
+  
+! ######################################################################
+  DO j = 1,nvar
+     tmp(j)%field(1:nx,1:ny,1:nz) => data_in(j)%field(:)
+  ENDDO
+  
 ! ######################################################################
   IF  ( g(3)%size .NE. 1 ) THEN
 
@@ -86,17 +91,15 @@ SUBROUTINE PARTICLE_INTERPOLATION &
 ! Then multipled by (1-length) for trilinear aspect
 ! -------------------------------------------------------------------
         DO j = 1,nvar
-           tmp(1:nx,1:ny,1:nz) => data_in(j)%field(:)
-
            data_out(j)%field(i) = data_out(j)%field(i) +&
-                ((cube_g_p(3) *tmp(gridpoint(1),gridpoint(3),gridpoint(5)) &
-                 +cube_g_p(4) *tmp(gridpoint(1),gridpoint(4),gridpoint(5)) &
-                 +cube_g_p(1) *tmp(gridpoint(2),gridpoint(4),gridpoint(5)) &
-                 +cube_g_p(2) *tmp(gridpoint(2),gridpoint(3),gridpoint(5)))*length_g_p(6)) &
-               +((cube_g_p(3) *tmp(gridpoint(1),gridpoint(3),gridpoint(6)) &
-                 +cube_g_p(4) *tmp(gridpoint(1),gridpoint(4),gridpoint(6)) &
-                 +cube_g_p(1) *tmp(gridpoint(2),gridpoint(4),gridpoint(6)) &
-                 +cube_g_p(2) *tmp(gridpoint(2),gridpoint(3),gridpoint(6)))*length_g_p(5))
+                ((cube_g_p(3) *tmp(j)%field(gridpoint(1),gridpoint(3),gridpoint(5)) &
+                 +cube_g_p(4) *tmp(j)%field(gridpoint(1),gridpoint(4),gridpoint(5)) &
+                 +cube_g_p(1) *tmp(j)%field(gridpoint(2),gridpoint(4),gridpoint(5)) &
+                 +cube_g_p(2) *tmp(j)%field(gridpoint(2),gridpoint(3),gridpoint(5)))*length_g_p(6)) &
+               +((cube_g_p(3) *tmp(j)%field(gridpoint(1),gridpoint(3),gridpoint(6)) &
+                 +cube_g_p(4) *tmp(j)%field(gridpoint(1),gridpoint(4),gridpoint(6)) &
+                 +cube_g_p(1) *tmp(j)%field(gridpoint(2),gridpoint(4),gridpoint(6)) &
+                 +cube_g_p(2) *tmp(j)%field(gridpoint(2),gridpoint(3),gridpoint(6)))*length_g_p(5))
         ENDDO
         
      END DO
@@ -140,13 +143,11 @@ SUBROUTINE PARTICLE_INTERPOLATION &
 ! Bilinear interpolation
 ! -------------------------------------------------------------------
         DO j = 1,nvar
-           tmp(1:nx,1:ny,1:nz) => data_in(j)%field(:)
-
            data_out(j)%field(i) = data_out(j)%field(i) +&
-                (cube_g_p(3) *tmp(gridpoint(1),gridpoint(3),gridpoint(5)) &
-                +cube_g_p(4) *tmp(gridpoint(1),gridpoint(4),gridpoint(5)) &
-                +cube_g_p(1) *tmp(gridpoint(2),gridpoint(4),gridpoint(5)) &
-                +cube_g_p(2) *tmp(gridpoint(2),gridpoint(3),gridpoint(5)))        
+                (cube_g_p(3) *tmp(j)%field(gridpoint(1),gridpoint(3),gridpoint(5)) &
+                +cube_g_p(4) *tmp(j)%field(gridpoint(1),gridpoint(4),gridpoint(5)) &
+                +cube_g_p(1) *tmp(j)%field(gridpoint(2),gridpoint(4),gridpoint(5)) &
+                +cube_g_p(2) *tmp(j)%field(gridpoint(2),gridpoint(3),gridpoint(5)))        
         ENDDO
         
      END DO

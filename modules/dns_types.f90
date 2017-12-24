@@ -55,6 +55,11 @@ MODULE DNS_TYPES
      TREAL, DIMENSION(:), POINTER :: field
   END TYPE pointers_dt
 
+  TYPE pointers3d_dt
+     SEQUENCE
+     TREAL, DIMENSION(:,:,:), POINTER :: field
+  END TYPE pointers3d_dt
+
 #ifdef USE_MPI
 #include "mpif.h"
 #endif
