@@ -48,6 +48,7 @@ PROGRAM LAGRANGE_PDF
   TREAL, DIMENSION(:,:,:,:), ALLOCATABLE, SAVE :: s  
 
   TREAL, DIMENSION(:,:),    ALLOCATABLE :: l_q, l_txc, l_hq
+  TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_tags
   TLONGINTEGER, DIMENSION(:,:),   ALLOCATABLE         :: particle_bins
   TREAL, DIMENSION(:),   ALLOCATABLE         :: counter_interval
@@ -104,8 +105,25 @@ PROGRAM LAGRANGE_PDF
 
   IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !Allocte memory to read fields
      ALLOCATE(txc(isize_field,3))
-     ALLOCATE(l_hq(isize_particle,inb_particle)) !Rubish information. Just to run FIELD_TO_PARTICLE properly
+!     ALLOCATE(l_hq(isize_particle,inb_particle)) !Rubish information. Just to run FIELD_TO_PARTICLE properly
   ENDIF
+   WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
+  CALL IO_WRITE_ASCII(lfile,line)
+  ALLOCATE(l_comm(isize_l_comm), stat=ierr)
+  IF ( ierr .NE. 0 ) THEN
+     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
+     CALL DNS_STOP(DNS_ERROR_ALLOC)
+  ENDIF
+  
+  WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
+  WRITE(str,*) inb_particle; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+  CALL IO_WRITE_ASCII(lfile,line)
+  ALLOCATE(l_hq(isize_particle,inb_particle),stat=ierr)
+  IF ( ierr .NE. 0 ) THEN
+     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
+     CALL DNS_STOP(DNS_ERROR_ALLOC)
+  ENDIF
+
   ALLOCATE(particle_bins(number_of_bins,3)) 
   ALLOCATE(counter_interval(number_of_bins)) 
 
@@ -139,7 +157,7 @@ PROGRAM LAGRANGE_PDF
      number_of_bins = particle_pdf_max/particle_pdf_interval
 
      WRITE(fname,*) i; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
-     CALL PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q)
+     CALL PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
 
   ENDDO
 

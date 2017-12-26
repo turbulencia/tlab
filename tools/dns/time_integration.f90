@@ -180,7 +180,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
         IF     ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
            CALL STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
            IF ( icalc_part .EQ. 1 ) THEN
-              CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
+              CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags,l_comm, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
            ENDIF
         ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
            CALL STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d)

@@ -23,8 +23,9 @@
 !#
 !#
 !########################################################################
-SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q)
+SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
 
+  USE DNS_TYPES,  ONLY : pointers_dt
   USE DNS_GLOBAL, ONLY: isize_field,isize_particle, inb_particle, inb_scal_array
   USE DNS_GLOBAL, ONLY: g
   USE LAGRANGE_GLOBAL, ONLY :  particle_number
@@ -42,13 +43,16 @@ SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q)
 #ifdef USE_MPI
 #include "mpif.h"
 #endif  
-  TREAL, DIMENSION(isize_field,*) :: s
+  TREAL, DIMENSION(isize_field,*), TARGET :: s
   TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
 
   TREAL, DIMENSION(isize_particle,inb_particle) :: l_q, l_hq 
-  TREAL, DIMENSION(isize_particle,1)                :: l_txc
+  TREAL, DIMENSION(isize_particle,1), TARGET                :: l_txc
+  TREAL, DIMENSION(*)                :: l_comm
   INTEGER(8), DIMENSION(*)           :: l_tags
 
+  TINTEGER nvar,npar
+  TYPE(pointers_dt), DIMENSION(2) :: data, data_out
 
   TLONGINTEGER, DIMENSION(:,:),   ALLOCATABLE         :: particle_bins
   TREAL, DIMENSION(:),   ALLOCATABLE         :: counter_interval
@@ -83,7 +87,10 @@ SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q)
   
   particle_bins_local=0.0
 
-  CALL FIELD_TO_PARTICLE_OLD (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q) !Update the liquid function  
+!  CALL FIELD_TO_PARTICLE_OLD (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q) !Update the liquid function  
+  nvar = 0
+  nvar = nvar+1; data(nvar)%field => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:,1)
+  CALL FIELD_TO_PARTICLE(nvar, data, npar, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
 
   !#######################################################################
   !Start counting of particles in bins per processor
@@ -152,7 +159,10 @@ SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q)
   DEALLOCATE(particle_bins_local)
 #else
 
-  CALL FIELD_TO_PARTICLE_OLD (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q)  
+!  CALL FIELD_TO_PARTICLE_OLD (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q)  
+  nvar = 0
+  nvar = nvar+1; data(nvar)%field => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:,1)
+  CALL FIELD_TO_PARTICLE(nvar, data, npar, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
     
   particle_pdf_min = 0
 

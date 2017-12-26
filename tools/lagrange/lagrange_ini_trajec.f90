@@ -57,8 +57,9 @@ PROGRAM LAGRANGE_INI_TRAJEC
   TREAL, DIMENSION(:),      ALLOCATABLE, SAVE :: wrk1d,wrk2d, wrk3d
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE :: txc
   
-  TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE :: l_q, l_txc
-  INTEGER(8), DIMENSION(:), ALLOCATABLE, SAVE :: l_tags
+  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_hq, l_txc
+  TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
+  INTEGER(8), DIMENSION(:),   ALLOCATABLE, SAVE :: l_tags
 
   TINTEGER, DIMENSION(:), ALLOCATABLE :: dummy_proc
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_trajectories_tags, fake_l_trajectories_tags
@@ -110,9 +111,25 @@ PROGRAM LAGRANGE_INI_TRAJEC
 
   IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !Allocte memory to read fields
      ALLOCATE(txc(isize_field,3))
-     inb_particle_txc = 3 +2
+     ! inb_particle_txc = 3 +2
   ENDIF
 #include "dns_alloc_larrays.h"
+  WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
+  CALL IO_WRITE_ASCII(lfile,line)
+  ALLOCATE(l_comm(isize_l_comm), stat=ierr)
+  IF ( ierr .NE. 0 ) THEN
+     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
+     CALL DNS_STOP(DNS_ERROR_ALLOC)
+  ENDIF
+  
+  WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
+  WRITE(str,*) inb_particle; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+  CALL IO_WRITE_ASCII(lfile,line)
+  ALLOCATE(l_hq(isize_particle,inb_particle),stat=ierr)
+  IF ( ierr .NE. 0 ) THEN
+     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
+     CALL DNS_STOP(DNS_ERROR_ALLOC)
+  ENDIF
 
   ALLOCATE(dummy_proc(isize_trajectory))
   ALLOCATE(l_trajectories_tags(isize_trajectory))
@@ -136,7 +153,7 @@ all_fake_liquid(:) = C_0_R
   !#######################################################################
   !CREATE THE RANDOM PARTICLE FIELD
   !#######################################################################
-  CALL PARTICLE_RANDOM_POSITION(l_q,l_tags,l_txc, txc, wrk1d,wrk2d,wrk3d)
+  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk1d,wrk2d,wrk3d)
 
   !#######################################################################
   !CREATE THE CORRESPONDING TAGS

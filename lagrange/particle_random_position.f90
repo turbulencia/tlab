@@ -5,8 +5,9 @@
 #include "dns_const_mpi.h"
 #endif
 
-SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q, l_tags, l_txc, txc, wrk1d,wrk2d,wrk3d)
+SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk1d,wrk2d,wrk3d)
   
+  USE DNS_TYPES,  ONLY : pointers_dt
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
@@ -20,10 +21,11 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q, l_tags, l_txc, txc, wrk1d,wrk2d,wrk3d)
 #include "mpif.h"
 #endif
 
-  TREAL,      DIMENSION(isize_particle,*) :: l_q, l_txc
-  INTEGER(8), DIMENSION(isize_particle)   :: l_tags
-  TREAL,      DIMENSION(*)                :: wrk1d,wrk2d,wrk3d
-  TREAL,      DIMENSION(imax,jmax,kmax,*) :: txc
+  TREAL,      DIMENSION(isize_particle,*), TARGET :: l_q, l_hq, l_txc
+  INTEGER(8), DIMENSION(isize_particle)           :: l_tags
+  TREAL,      DIMENSION(isize_l_comm),     TARGET :: l_comm
+  TREAL,      DIMENSION(isize_field,*),    TARGET :: txc
+  TREAL,      DIMENSION(*)                        :: wrk1d,wrk2d,wrk3d
 
 ! -------------------------------------------------------------------
   TINTEGER  i, j, is
@@ -36,6 +38,10 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q, l_tags, l_txc, txc, wrk1d,wrk2d,wrk3d)
   TREAL rnd_number(4), rnd_number_second
   TINTEGER rnd_scal(3)
 
+  TINTEGER nvar, npar
+  TYPE(pointers_dt), DIMENSION(inb_lag_total_interp) :: data, data_out
+  TREAL, DIMENSION(:,:,:), POINTER :: txc_3d
+
 !########################################################################
 #ifdef USE_MPI
   particle_number_local = INT( particle_number /INT(ims_npro, KIND=8) )
@@ -45,7 +51,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q, l_tags, l_txc, txc, wrk1d,wrk2d,wrk3d)
   CALL MPI_ALLGATHER(particle_number_local,1,MPI_INTEGER4,ims_size_p,1,MPI_INTEGER4,MPI_COMM_WORLD,ims_err)
 
 #else
-  particle_number_local = particle_number
+  particle_number_local = INT(particle_number)
 
 #endif
   
@@ -95,7 +101,8 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q, l_tags, l_txc, txc, wrk1d,wrk2d,wrk3d)
      
      CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_field, txc, wrk3d)
      is = 1 ! Reference scalar
-     
+     txc_3d(1:imax,1:jmax,1:kmax) => txc(1:isize_field,is)
+
      ! IF ( jmin_part /sbg(is)%ymean .GT. g(2)%size ) THEN
      !    CALL IO_WRITE_ASCII(efile,'PARTICLE_RANDOM_POSITION. JMIN_PART exceeds YCorrScalar value')
      !    CALL DNS_STOP(DNS_ERROR_PARTICLE)
@@ -115,7 +122,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q, l_tags, l_txc, txc, wrk1d,wrk2d,wrk3d)
         real_buffer_frac =             rnd_number(2)*(jmax_part-jmin_part+1) &
                          -       floor(rnd_number(2)*(jmax_part-jmin_part+1))
         
-        dummy = ( txc(rnd_scal(1),rnd_scal(2),rnd_scal(3),is) -sbg(is)%mean )/sbg(is)%delta
+        dummy = ( txc_3d(rnd_scal(1),rnd_scal(2),rnd_scal(3)) -sbg(is)%mean )/sbg(is)%delta
         dummy = abs( dummy + C_05_R )
 
         CALL RANDOM_NUMBER(rnd_number_second)
@@ -141,11 +148,13 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q, l_tags, l_txc, txc, wrk1d,wrk2d,wrk3d)
 
      CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_field, txc, wrk3d)
      
-     IF ( imixture .EQ.  MIXT_TYPE_AIRWATER_LINEAR ) THEN 
-        CALL FIELD_TO_PARTICLE_OLD (txc(1,1,1,1),wrk1d,wrk2d,wrk3d, l_txc(1,4), l_tags, l_txc, l_q)
-        CALL FIELD_TO_PARTICLE_OLD (txc(1,1,1,2),wrk1d,wrk2d,wrk3d, l_txc(1,5), l_tags, l_txc, l_q)
+     IF ( imixture .EQ.  MIXT_TYPE_AIRWATER_LINEAR ) THEN
+        nvar = 0
+        nvar = nvar+1; data(nvar)%field => txc(:,1); data_out(nvar)%field => l_txc(:,1)
+        nvar = nvar+1; data(nvar)%field => txc(:,2); data_out(nvar)%field => l_txc(:,2)        
+        CALL FIELD_TO_PARTICLE(nvar, data, npar, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
         
-        CALL THERMO_AIRWATER_LINEAR(isize_particle,1,1,l_txc(1,4),l_q(1,4))
+        CALL THERMO_AIRWATER_LINEAR(isize_particle,1,1,l_txc(1,1),l_q(1,4))
         
         l_q(:,5) = l_q(:,4) ! l_hq(:,6) for bil_cloud_4 is set =0 in dns_main at initialization
         

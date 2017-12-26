@@ -29,7 +29,8 @@ PROGRAM INIPART
   TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE :: q,s,txc
   TREAL, DIMENSION(:),        ALLOCATABLE, SAVE :: wrk1d,wrk2d, wrk3d
 
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
+  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_hq, l_txc
+  TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
   INTEGER(8), DIMENSION(:),   ALLOCATABLE, SAVE :: l_tags
 
   CHARACTER*32 inifile
@@ -72,11 +73,24 @@ PROGRAM INIPART
   inb_scal_array = 0
   isize_wrk3d    = imax*jmax*kmax
   inb_txc        = inb_scal
-  IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
-     inb_particle_txc = 3 +2
-  ENDIF
 #include "dns_alloc_arrays.h"
 #include "dns_alloc_larrays.h"
+  WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
+  CALL IO_WRITE_ASCII(lfile,line)
+  ALLOCATE(l_comm(isize_l_comm), stat=ierr)
+  IF ( ierr .NE. 0 ) THEN
+     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
+     CALL DNS_STOP(DNS_ERROR_ALLOC)
+  ENDIF
+  
+  WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
+  WRITE(str,*) inb_particle; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+  CALL IO_WRITE_ASCII(lfile,line)
+  ALLOCATE(l_hq(isize_particle,inb_particle),stat=ierr)
+  IF ( ierr .NE. 0 ) THEN
+     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
+     CALL DNS_STOP(DNS_ERROR_ALLOC)
+  ENDIF
   
 ! -------------------------------------------------------------------
 ! Read the grid 
@@ -86,7 +100,7 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
 ! Initialize particle information
 ! -------------------------------------------------------------------
-  CALL PARTICLE_RANDOM_POSITION(l_q, l_tags, l_txc, txc, wrk1d,wrk2d,wrk3d)
+  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_MPI
   count = 0
