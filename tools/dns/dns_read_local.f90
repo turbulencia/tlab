@@ -131,7 +131,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
   d_bound_max = C_BIG_R ! default
   CALL SCANINICHAR(bakfile, inifile, 'Control', 'MaxDilatation', 'void', sRes)
-  IF ( sRes .NE. 'void' ) THEN
+  IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
      idummy = 1
      CALL LIST_REAL(sRes, idummy, d_bound_max)
   ENDIF
@@ -139,7 +139,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   s_bound_min(:) = C_0_R; inb_scal_local1 = MAX_NSP
   IF ( ilimit_scal .EQ. 1 ) THEN
      CALL SCANINICHAR(bakfile, inifile, 'Control', 'MinScalar',  'void', sRes)
-     IF ( sRes .NE. 'void' ) THEN
+     IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
         CALL LIST_REAL(sRes, inb_scal_local1, s_bound_min)
         IF ( inb_scal_local1 .NE. inb_scal ) THEN ! Consistency check
            CALL IO_WRITE_ASCII(efile,'DNS_READ_LOCAL. MinScalar size does not match inb_scal.')
@@ -151,7 +151,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   s_bound_max(:) = C_1_R; inb_scal_local1 = MAX_NSP
   IF ( ilimit_scal .EQ. 1 ) THEN
      CALL SCANINICHAR(bakfile, inifile, 'Control', 'MaxScalar',  'void', sRes)
-     IF ( sRes .NE. 'void' ) THEN
+     IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
         CALL LIST_REAL(sRes, inb_scal_local1, s_bound_max)
         IF ( inb_scal_local1 .NE. inb_scal ) THEN ! Consistency check
            CALL IO_WRITE_ASCII(efile,'DNS_READ_LOCAL. MaxScalar size does not match inb_scal.')
