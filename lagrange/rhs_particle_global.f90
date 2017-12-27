@@ -9,7 +9,7 @@
 !#######################################################################
 SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES,  ONLY : pointers_dt
+  USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_particle
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : visc, radiation
@@ -28,7 +28,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
   TREAL,      DIMENSION(isize_field,*),    TARGET :: q, s, txc
   TREAL,      DIMENSION(isize_particle,*), TARGET :: l_q, l_hq, l_txc
   INTEGER(8), DIMENSION(isize_particle)           :: l_tags
-  TREAL,      DIMENSION(isize_l_comm),     TARGET :: l_comm
+  TREAL,      DIMENSION(isize_l_comm)             :: l_comm
   TREAL,      DIMENSION(*)                        :: wrk1d, wrk2d, wrk3d
 
 ! -------------------------------------------------------------------
@@ -37,16 +37,17 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
   TINTEGER i, npar
   TREAL delta_inv0, delta_inv2, delta_inv4
   
-  TYPE(pointers_dt), DIMENSION(inb_lag_total_interp) :: data, data_out
+  TYPE(pointers3d_dt), DIMENSION(inb_lag_total_interp) :: data
+  TYPE(pointers_dt),   DIMENSION(inb_lag_total_interp) :: data_out
 
 ! #####################################################################
   bcs = 0
   
 ! Setting pointers to velocity fields
   nvar = 0
-  nvar = nvar+1; data(nvar)%field => q(:,1); data_out(nvar)%field => l_hq(:,1)
-  nvar = nvar+1; data(nvar)%field => q(:,2); data_out(nvar)%field => l_hq(:,2)
-  nvar = nvar+1; data(nvar)%field => q(:,3); data_out(nvar)%field => l_hq(:,3)
+  nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => q(:,1); data_out(nvar)%field => l_hq(:,1)
+  nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => q(:,2); data_out(nvar)%field => l_hq(:,2)
+  nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => q(:,3); data_out(nvar)%field => l_hq(:,3)
   
 ! -------------------------------------------------------------------
 ! Additional terms depending on type of particle evolution equations
@@ -82,10 +83,10 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
      txc(:,4) = dummy2 *txc(:,4)
 
 ! Setting pointers
-     nvar = nvar+1; data(nvar)%field => txc(:,1); data_out(nvar)%field => l_txc(:,1)
-     nvar = nvar+1; data(nvar)%field => txc(:,2); data_out(nvar)%field => l_txc(:,2)
-     nvar = nvar+1; data(nvar)%field => txc(:,3); data_out(nvar)%field => l_txc(:,3)
-     nvar = nvar+1; data(nvar)%field => txc(:,4); data_out(nvar)%field => l_txc(:,4)
+     nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => txc(:,1); data_out(nvar)%field => l_txc(:,1)
+     nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => txc(:,2); data_out(nvar)%field => l_txc(:,2)
+     nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => txc(:,3); data_out(nvar)%field => l_txc(:,3)
+     nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => txc(:,4); data_out(nvar)%field => l_txc(:,4)
      l_txc(:,1:4) = C_0_R
      
   ENDIF
@@ -129,6 +130,10 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
 
   ENDIF
 
+  DO i = 1,nvar
+     NULLIFY(data(i)%field,data_out(i)%field)
+  ENDDO
+  
   RETURN
 END SUBROUTINE RHS_PARTICLE_GLOBAL
 
@@ -279,7 +284,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL_OLD(q,s, wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags,l
 ! Zone: 0=grid 1=x_side 2=z_side 3=diagonal 
   halo_zone_x=0
 
-  CALL PARTICLE_SORT_HALO(g(1)%nodes,g(3)%nodes, grid_field_counter, halo_zone_x, halo_zone_z,halo_zone_diagonal,&
+  CALL PARTICLE_SORT_HALO(grid_field_counter, halo_zone_x, halo_zone_z,halo_zone_diagonal,&
        l_hq, l_tags, l_q)
 
   wrk1d(1)= g(1)%scale/g(1)%size ! wrk1d 1-3 intervalls
@@ -363,7 +368,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL_OLD(q,s, wrk1d,wrk2d,wrk3d,txc,l_q,l_hq, l_tags,l
   ENDIF
 
   halo_zone_x=0
-  CALL PARTICLE_SORT_HALO(g(1)%nodes,g(3)%nodes, grid_field_counter, halo_zone_x, halo_zone_z,halo_zone_diagonal,&
+  CALL PARTICLE_SORT_HALO(grid_field_counter, halo_zone_x, halo_zone_z,halo_zone_diagonal,&
        l_hq, l_tags, l_q)
 
   wrk1d(1)= g(1)%scale/g(1)%size ! wrk1d 1-3 intervalls

@@ -7,7 +7,7 @@
 SUBROUTINE PARTICLE_HALO_SERIAL(nvar, data, halo_field_1, halo_field_2, halo_field_3)
 
   USE DNS_CONSTANTS,  ONLY : efile
-  USE DNS_TYPES,      ONLY : pointers_dt
+  USE DNS_TYPES,      ONLY : pointers3d_dt
   USE DNS_GLOBAL,     ONLY : imax,jmax,kmax
   USE DNS_GLOBAL,     ONLY : g
   USE LAGRANGE_GLOBAL,ONLY : inb_lag_total_interp
@@ -15,14 +15,13 @@ SUBROUTINE PARTICLE_HALO_SERIAL(nvar, data, halo_field_1, halo_field_2, halo_fie
   IMPLICIT NONE
 
   TINTEGER nvar
-  TYPE(pointers_dt), DIMENSION(nvar) :: data ! Array of pointer to the fields to be processed
+  TYPE(pointers3d_dt), DIMENSION(nvar) :: data
   TREAL, DIMENSION(2,jmax,kmax,nvar) :: halo_field_1
   TREAL, DIMENSION(imax,jmax,2,nvar) :: halo_field_2
   TREAL, DIMENSION(2,jmax,2,nvar)    :: halo_field_3
 
 ! -------------------------------------------------------------------
   TINTEGER i
-  TREAL, DIMENSION(:,:,:), POINTER :: tmp
   
 !#######################################################################
   IF ( nvar .GT. inb_lag_total_interp ) THEN
@@ -31,18 +30,16 @@ SUBROUTINE PARTICLE_HALO_SERIAL(nvar, data, halo_field_1, halo_field_2, halo_fie
   ENDIF
 
   DO i = 1,nvar
-     tmp(1:imax,1:jmax,1:kmax) => data(i)%field(:)
+     halo_field_1(1,1:jmax,1:kmax,i) = data(i)%field(g(1)%size,1:jmax,1:kmax)  
+     halo_field_1(2,1:jmax,1:kmax,i) = data(i)%field(1,        1:jmax,1:kmax)  
      
-     halo_field_1(1,1:jmax,1:kmax,i) = tmp(g(1)%size,1:jmax,1:kmax)  
-     halo_field_1(2,1:jmax,1:kmax,i) = tmp(1,        1:jmax,1:kmax)  
+     halo_field_2(1:imax,1:jmax,1,i) = data(i)%field(1:imax,1:jmax,g(3)%size)
+     halo_field_2(1:imax,1:jmax,2,i) = data(i)%field(1:imax,1:jmax,1        )
      
-     halo_field_2(1:imax,1:jmax,1,i) = tmp(1:imax,1:jmax,g(3)%size)
-     halo_field_2(1:imax,1:jmax,2,i) = tmp(1:imax,1:jmax,1        )
-     
-     halo_field_3(1,1:jmax,1,i)      = tmp(g(1)%size,1:jmax,g(3)%size)
-     halo_field_3(1,1:jmax,2,i)      = tmp(g(1)%size,1:jmax,1        )
-     halo_field_3(2,1:jmax,1,i)      = tmp(1,        1:jmax,g(3)%size)
-     halo_field_3(2,1:jmax,2,i)      = tmp(1,        1:jmax,1        )
+     halo_field_3(1,1:jmax,1,i)      = data(i)%field(g(1)%size,1:jmax,g(3)%size)
+     halo_field_3(1,1:jmax,2,i)      = data(i)%field(g(1)%size,1:jmax,1        )
+     halo_field_3(2,1:jmax,1,i)      = data(i)%field(1,        1:jmax,g(3)%size)
+     halo_field_3(2,1:jmax,2,i)      = data(i)%field(1,        1:jmax,1        )
   END DO
 
   RETURN
@@ -55,7 +52,7 @@ END SUBROUTINE PARTICLE_HALO_SERIAL
 SUBROUTINE PARTICLE_HALO_K(nvar, data, halo_field, buffer_send, buffer_recv, diagonal_point_send, upper_left_point)
 
   USE DNS_CONSTANTS,  ONLY : efile
-  USE DNS_TYPES,      ONLY : pointers_dt
+  USE DNS_TYPES,      ONLY : pointers3d_dt
   USE DNS_GLOBAL,     ONLY : imax,jmax,kmax
   USE LAGRANGE_GLOBAL,ONLY : inb_lag_total_interp
 
@@ -67,14 +64,13 @@ SUBROUTINE PARTICLE_HALO_K(nvar, data, halo_field, buffer_send, buffer_recv, dia
 #include "mpif.h"
 
   TINTEGER nvar
-  TYPE(pointers_dt), DIMENSION(nvar)  :: data ! Array of pointer to the fields to be processed
+  TYPE(pointers3d_dt), DIMENSION(nvar)  :: data
   TREAL, DIMENSION(imax,jmax,2,nvar)  :: halo_field !ghost plane
   TREAL, DIMENSION(imax,jmax,1,nvar)  :: buffer_send, buffer_recv
   TREAL, DIMENSION(jmax,nvar)         :: diagonal_point_send, upper_left_point
 
 ! -------------------------------------------------------------------
   TINTEGER i
-  TREAL, DIMENSION(:,:,:), POINTER :: tmp
   
   integer source, dest, l
   integer mpireq(ims_npro*2)
@@ -89,22 +85,18 @@ SUBROUTINE PARTICLE_HALO_K(nvar, data, halo_field, buffer_send, buffer_recv, dia
 ! ######################################################################
   IF (ims_npro_k .EQ. 1) THEN  ! Serial code in i-direction
      DO i = 1,nvar
-        tmp(1:imax,1:jmax,1:kmax) => data(i)%field(:)
-        
-        halo_field(1:imax,1:jmax,1,i) = tmp(1:imax,1:jmax,kmax)
-        halo_field(1:imax,1:jmax,2,i) = tmp(1:imax,1:jmax,1)
+        halo_field(1:imax,1:jmax,1,i) = data(i)%field(1:imax,1:jmax,kmax)
+        halo_field(1:imax,1:jmax,2,i) = data(i)%field(1:imax,1:jmax,1)
         
      ENDDO
      
 ! ######################################################################
   ELSE
      DO i = 1,nvar
-        tmp(1:imax,1:jmax,1:kmax) => data(i)%field(:)
-        
-        halo_field(1:imax,1:jmax,1,i) = tmp(1:imax,1:jmax,kmax)
+        halo_field(1:imax,1:jmax,1,i) = data(i)%field(1:imax,1:jmax,kmax)
 
 ! Data to be transfered
-        buffer_send(1:imax,1:jmax,1,i)= tmp(1:imax,1:jmax,1)
+        buffer_send(1:imax,1:jmax,1,i)= data(i)%field(1:imax,1:jmax,1)
         
      ENDDO
      
@@ -146,7 +138,7 @@ SUBROUTINE PARTICLE_HALO_I(nvar, data, halo_field, halo_field_ik, buffer_send, b
      diagonal_point_send, diagonal_point_recv, upper_left_point)
 
   USE DNS_CONSTANTS,  ONLY : efile
-  USE DNS_TYPES,      ONLY : pointers_dt
+  USE DNS_TYPES,      ONLY : pointers3d_dt
   USE DNS_GLOBAL,     ONLY : imax,jmax,kmax
   USE LAGRANGE_GLOBAL,ONLY : inb_lag_total_interp
 
@@ -158,7 +150,7 @@ SUBROUTINE PARTICLE_HALO_I(nvar, data, halo_field, halo_field_ik, buffer_send, b
 #include "mpif.h"
 
   TINTEGER nvar
-  TYPE(pointers_dt), DIMENSION(nvar)   :: data ! Array of pointer to the fields to be processed
+  TYPE(pointers3d_dt), DIMENSION(nvar)   :: data
   TREAL, DIMENSION(2,jmax,kmax,nvar)   :: halo_field  !halo plane in i direction
   TREAL, DIMENSION(2,jmax,2,nvar)      :: halo_field_ik  !ghost plane
   TREAL, DIMENSION(1,jmax,kmax+1,nvar) :: buffer_send, buffer_recv !Buffers needed for the mpi
@@ -166,7 +158,6 @@ SUBROUTINE PARTICLE_HALO_I(nvar, data, halo_field, halo_field_ik, buffer_send, b
 
 ! -------------------------------------------------------------------
   TINTEGER i
-  TREAL, DIMENSION(:,:,:), POINTER :: tmp
   
   integer source
   integer dest
@@ -183,22 +174,18 @@ SUBROUTINE PARTICLE_HALO_I(nvar, data, halo_field, halo_field_ik, buffer_send, b
 ! ######################################################################
   IF ( ims_npro_i .EQ. 1 ) THEN   ! Serial code in i-direction 
      DO i = 1,nvar
-        tmp(1:imax,1:jmax,1:kmax) => data(i)%field(:)
-     
-        halo_field(1,1:jmax,1:kmax,i) = tmp(imax,1:jmax,1:kmax)  
-        halo_field(2,1:jmax,1:kmax,i) = tmp(1,   1:jmax,1:kmax)
+        halo_field(1,1:jmax,1:kmax,i) = data(i)%field(imax,1:jmax,1:kmax)  
+        halo_field(2,1:jmax,1:kmax,i) = data(i)%field(1,   1:jmax,1:kmax)
         
      END DO
 
 ! ######################################################################
   ELSE
      DO i = 1,nvar
-        tmp(1:imax,1:jmax,1:kmax) => data(i)%field(:)
-        
-        halo_field(1,1:jmax,1:kmax,i) = tmp(imax,1:jmax,1:kmax)  
+        halo_field(1,1:jmax,1:kmax,i) = data(i)%field(imax,1:jmax,1:kmax)  
         
 ! Data to be transfered
-        buffer_send(1,1:jmax,1:kmax,i)= tmp(1,   1:jmax,1:kmax)
+        buffer_send(1,1:jmax,1:kmax,i)= data(i)%field(1,   1:jmax,1:kmax)
         
 ! Pack buffer with the additional point for diagonal halo_field_ik
         buffer_send(1,1:jmax,kmax+1,i)= diagonal_point_send(1:jmax,i)
@@ -238,20 +225,16 @@ SUBROUTINE PARTICLE_HALO_I(nvar, data, halo_field, halo_field_ik, buffer_send, b
    
      IF (ims_npro_k .EQ. 1) THEN   !MPI in i-direcition but serial in k-direction
         DO i=1,nvar
-           tmp(1:imax,1:jmax,1:kmax) => data(i)%field(:)
-           
-           halo_field_ik(1,1:jmax,1,i) = tmp(imax,1:jmax,kmax) !point 1,1 is down left
+           halo_field_ik(1,1:jmax,1,i) = data(i)%field(imax,1:jmax,kmax) !point 1,1 is down left
            halo_field_ik(1,1:jmax,2,i) = halo_field(2,1:jmax,kmax,i) !1,2 is down right
-           halo_field_ik(2,1:jmax,1,i) = tmp(imax,1:jmax,1) !2,1 is top left
+           halo_field_ik(2,1:jmax,1,i) = data(i)%field(imax,1:jmax,1) !2,1 is top left
            halo_field_ik(2,1:jmax,2,i) = halo_field(2,1:jmax,1,i) !2,2 is top right
            
         ENDDO
         
      ELSE    ! MPI in both direction (i and k)
         DO i=1,nvar
-           tmp(1:imax,1:jmax,1:kmax) => data(i)%field(:)
-           
-           halo_field_ik(1,1:jmax,1,i) = tmp(imax,1:jmax,kmax) !point 1,1 is down left
+           halo_field_ik(1,1:jmax,1,i) = data(i)%field(imax,1:jmax,kmax) !point 1,1 is down left
            halo_field_ik(1,1:jmax,2,i) = halo_field(2,1:jmax,kmax,i) !1,2 is down right
            halo_field_ik(2,1:jmax,1,i) = upper_left_point(1:jmax,i) !2,1 is top left
            halo_field_ik(2,1:jmax,2,i) = diagonal_point_recv(1:jmax,i) !2,2 is top right

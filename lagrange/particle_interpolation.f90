@@ -20,7 +20,7 @@ SUBROUTINE PARTICLE_INTERPOLATION &
 #include "integers.h"
 
   TINTEGER iflag, nx,ny,nz,nvar, grid_start, grid_end
-  TYPE(pointers_dt), DIMENSION(nvar)             :: data_in     
+  TYPE(pointers3d_dt), DIMENSION(nvar)             :: data_in     
   TYPE(pointers_dt), DIMENSION(nvar)             :: data_out
   TREAL,             DIMENSION(*)                :: y, wrk1d
   TREAL,             DIMENSION(isize_particle,3) :: l_q
@@ -31,13 +31,6 @@ SUBROUTINE PARTICLE_INTERPOLATION &
   TINTEGER i, j
   TREAL particle_local_grid_posx, particle_local_grid_posy, particle_local_grid_posz
 
-  TYPE(pointers3d_dt), DIMENSION(nvar) :: tmp
-  
-! ######################################################################
-  DO j = 1,nvar
-     tmp(j)%field(1:nx,1:ny,1:nz) => data_in(j)%field(:)
-  ENDDO
-  
 ! ######################################################################
   IF  ( g(3)%size .NE. 1 ) THEN
 
@@ -92,14 +85,14 @@ SUBROUTINE PARTICLE_INTERPOLATION &
 ! -------------------------------------------------------------------
         DO j = 1,nvar
            data_out(j)%field(i) = data_out(j)%field(i) +&
-                ((cube_g_p(3) *tmp(j)%field(gridpoint(1),gridpoint(3),gridpoint(5)) &
-                 +cube_g_p(4) *tmp(j)%field(gridpoint(1),gridpoint(4),gridpoint(5)) &
-                 +cube_g_p(1) *tmp(j)%field(gridpoint(2),gridpoint(4),gridpoint(5)) &
-                 +cube_g_p(2) *tmp(j)%field(gridpoint(2),gridpoint(3),gridpoint(5)))*length_g_p(6)) &
-               +((cube_g_p(3) *tmp(j)%field(gridpoint(1),gridpoint(3),gridpoint(6)) &
-                 +cube_g_p(4) *tmp(j)%field(gridpoint(1),gridpoint(4),gridpoint(6)) &
-                 +cube_g_p(1) *tmp(j)%field(gridpoint(2),gridpoint(4),gridpoint(6)) &
-                 +cube_g_p(2) *tmp(j)%field(gridpoint(2),gridpoint(3),gridpoint(6)))*length_g_p(5))
+                ((cube_g_p(3) *data_in(j)%field(gridpoint(1),gridpoint(3),gridpoint(5)) &
+                 +cube_g_p(4) *data_in(j)%field(gridpoint(1),gridpoint(4),gridpoint(5)) &
+                 +cube_g_p(1) *data_in(j)%field(gridpoint(2),gridpoint(4),gridpoint(5)) &
+                 +cube_g_p(2) *data_in(j)%field(gridpoint(2),gridpoint(3),gridpoint(5)))*length_g_p(6)) &
+               +((cube_g_p(3) *data_in(j)%field(gridpoint(1),gridpoint(3),gridpoint(6)) &
+                 +cube_g_p(4) *data_in(j)%field(gridpoint(1),gridpoint(4),gridpoint(6)) &
+                 +cube_g_p(1) *data_in(j)%field(gridpoint(2),gridpoint(4),gridpoint(6)) &
+                 +cube_g_p(2) *data_in(j)%field(gridpoint(2),gridpoint(3),gridpoint(6)))*length_g_p(5))
         ENDDO
         
      END DO
@@ -144,10 +137,10 @@ SUBROUTINE PARTICLE_INTERPOLATION &
 ! -------------------------------------------------------------------
         DO j = 1,nvar
            data_out(j)%field(i) = data_out(j)%field(i) +&
-                (cube_g_p(3) *tmp(j)%field(gridpoint(1),gridpoint(3),gridpoint(5)) &
-                +cube_g_p(4) *tmp(j)%field(gridpoint(1),gridpoint(4),gridpoint(5)) &
-                +cube_g_p(1) *tmp(j)%field(gridpoint(2),gridpoint(4),gridpoint(5)) &
-                +cube_g_p(2) *tmp(j)%field(gridpoint(2),gridpoint(3),gridpoint(5)))        
+                (cube_g_p(3) *data_in(j)%field(gridpoint(1),gridpoint(3),gridpoint(5)) &
+                +cube_g_p(4) *data_in(j)%field(gridpoint(1),gridpoint(4),gridpoint(5)) &
+                +cube_g_p(1) *data_in(j)%field(gridpoint(2),gridpoint(4),gridpoint(5)) &
+                +cube_g_p(2) *data_in(j)%field(gridpoint(2),gridpoint(3),gridpoint(5)))        
         ENDDO
         
      END DO

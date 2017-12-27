@@ -11,7 +11,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
     (nvar, data_in, npar, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS,  ONLY : efile
-  USE DNS_TYPES,      ONLY : pointers_dt
+  USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL,     ONLY : imax,jmax,kmax, isize_particle
   USE DNS_GLOBAL,     ONLY : g
   USE LAGRANGE_GLOBAL
@@ -27,7 +27,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 #endif
 
   TINTEGER nvar, npar
-  TYPE(pointers_dt), DIMENSION(nvar)                 :: data_in
+  TYPE(pointers3d_dt), DIMENSION(nvar)               :: data_in
   TYPE(pointers_dt), DIMENSION(nvar)                 :: data_out
   TREAL,             DIMENSION(isize_particle,*)     :: l_q, l_hq
   INTEGER(8),        DIMENSION(isize_particle)       :: l_tags
@@ -39,7 +39,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   TINTEGER npar_start
   TINTEGER ip1,ip2,ip3, np1,np2,np3, iv
 
-  TYPE(pointers_dt), DIMENSION(nvar) :: data_halo1, data_halo2, data_halo3
+  TYPE(pointers3d_dt), DIMENSION(nvar) :: data_halo1, data_halo2, data_halo3
 
 !#######################################################################
   IF ( nvar .GT. inb_lag_total_interp ) THEN
@@ -47,13 +47,13 @@ SUBROUTINE  FIELD_TO_PARTICLE &
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
+  np1 = 2*jmax*kmax; ip1 = 1
+  np2 = imax*jmax*2; ip2 = 1 +isize_hf_1
+  np3 = 2   *jmax*2; ip3 = 1 +isize_hf_1 +isize_hf_2
   DO iv = 1,nvar
-     np1 = 2*jmax*kmax; ip1 = (iv-1) *np1 +1
-     data_halo1(iv)%field(1:np1) => l_comm(ip1:ip1+np1)
-     np2 = imax*jmax*2; ip2 = (iv-1) *np2 +1 +isize_hf_1
-     data_halo2(iv)%field(1:np2) => l_comm(ip2:ip2+np2)
-     np3 = 2   *jmax*2; ip3 = (iv-1) *np3 +1 +isize_hf_1 +isize_hf_2 
-     data_halo3(iv)%field(1:np3) => l_comm(ip3:ip3+np3)
+     data_halo1(iv)%field(1:2,1:jmax,1:kmax) => l_comm(ip1:ip1+np1-1); ip1 = ip1 +np1
+     data_halo2(iv)%field(1:imax,1:jmax,1:2) => l_comm(ip2:ip2+np2-1); ip2 = ip2 +np2
+     data_halo3(iv)%field(1:2,1:jmax,1:2)    => l_comm(ip3:ip3+np3-1); ip3 = ip3 +np3
   ENDDO
 
 ! #######################################################################
@@ -74,7 +74,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 !#######################################################################
 ! Sorting and counting particles for each zone
 !#######################################################################
-  CALL PARTICLE_SORT_HALO(g(1)%nodes,g(3)%nodes, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal,&
+  CALL PARTICLE_SORT_HALO(grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal,&
        l_hq, l_tags, l_q)
 
 #ifdef USE_MPI
@@ -110,6 +110,10 @@ SUBROUTINE  FIELD_TO_PARTICLE &
      npar       = npar +halo_zone_diagonal
      CALL PARTICLE_INTERPOLATION(i3, i2,jmax,i2,nvar, data_halo3, data_out, l_q, g(2)%nodes, wrk1d, npar_start,npar)
   END IF
+
+  DO iv = 1,nvar
+     NULLIFY(data_halo1(iv)%field,data_halo2(iv)%field,data_halo3(iv)%field)
+  ENDDO
   
   RETURN
 END SUBROUTINE FIELD_TO_PARTICLE
@@ -169,7 +173,7 @@ SUBROUTINE  FIELD_TO_PARTICLE_OLD &
 
 !#######################################################################
 !#######################################################################
-  CALL PARTICLE_SORT_HALO(g(1)%nodes,g(3)%nodes, grid_field_counter, halo_zone_x, halo_zone_z,halo_zone_diagonal,&
+  CALL PARTICLE_SORT_HALO(grid_field_counter, halo_zone_x, halo_zone_z,halo_zone_diagonal,&
        l_hq, l_tags, l_q)
 
 !#######################################################################
@@ -203,7 +207,7 @@ SUBROUTINE  FIELD_TO_PARTICLE_OLD &
 #else
 
   halo_zone_x=0
-  CALL PARTICLE_SORT_HALO(g(1)%nodes,g(3)%nodes, grid_field_counter, halo_zone_x, halo_zone_z,halo_zone_diagonal,&
+  CALL PARTICLE_SORT_HALO(grid_field_counter, halo_zone_x, halo_zone_z,halo_zone_diagonal,&
        l_hq, l_tags, l_q)
 
   wrk1d(1)= g(1)%scale / g(1)%size ! wrk1d 1-3 intervalls

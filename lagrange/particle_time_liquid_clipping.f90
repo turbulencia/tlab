@@ -25,8 +25,8 @@
 !########################################################################
 SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q, l_comm)    
 
-  USE DNS_TYPES,  ONLY : pointers_dt
-  USE DNS_GLOBAL, ONLY : inb_particle, isize_particle
+  USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_particle, isize_particle
   USE DNS_GLOBAL, ONLY : isize_field, inb_scal_array
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
@@ -36,16 +36,17 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_h
   IMPLICIT NONE
 
   TREAL, DIMENSION(isize_field,*), TARGET :: s
-  TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
+  TREAL, DIMENSION(*)                     :: wrk1d, wrk2d, wrk3d
 
   TREAL, DIMENSION(isize_particle,inb_particle) :: l_q, l_hq
-  TREAL, DIMENSION(isize_particle), TARGET               :: l_txc
-  TREAL, DIMENSION(*)               ::  l_comm
-  INTEGER(8), DIMENSION(*)           :: l_tags
+  TREAL, DIMENSION(isize_particle), TARGET      :: l_txc
+  TREAL, DIMENSION(*)                           :: l_comm
+  INTEGER(8), DIMENSION(*)                      :: l_tags
   TINTEGER is, l_i, particle_number_local
 
   TINTEGER nvar,npar
-  TYPE(pointers_dt), DIMENSION(1) :: data, data_out
+  TYPE(pointers3d_dt), DIMENSION(1) :: data
+  TYPE(pointers_dt),   DIMENSION(1) :: data_out
 
 #ifdef USE_MPI
    particle_number_local = ims_size_p(ims_pro+1)
@@ -83,7 +84,7 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_h
 ! ###################################################################
 !      CALL FIELD_TO_PARTICLE_OLD (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q)  !Update the liquid function
       nvar = 0
-      nvar = nvar+1; data(nvar)%field => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:)
+      nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:)
       CALL FIELD_TO_PARTICLE(nvar, data, npar, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
       
       IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
