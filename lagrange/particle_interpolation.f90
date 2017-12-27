@@ -21,9 +21,9 @@ SUBROUTINE PARTICLE_INTERPOLATION &
 
   TINTEGER iflag, nvar, grid_start, grid_end
   TYPE(pointers3d_dt), DIMENSION(nvar)             :: data_in     
-  TYPE(pointers_dt), DIMENSION(nvar)             :: data_out
-  TREAL,             DIMENSION(*)                :: y, wrk1d
-  TREAL,             DIMENSION(isize_particle,3) :: l_q
+  TYPE(pointers_dt),   DIMENSION(nvar)             :: data_out
+  TREAL,               DIMENSION(*)                :: y, wrk1d
+  TREAL,               DIMENSION(isize_particle,3) :: l_q
 
 ! -------------------------------------------------------------------
   TREAL length_g_p(6), cube_g_p(4)

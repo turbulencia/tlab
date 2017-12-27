@@ -8,7 +8,7 @@
 !#######################################################################
 !#######################################################################
 SUBROUTINE  FIELD_TO_PARTICLE &
-    (nvar, data_in, npar, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
+    (nvar, data_in, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
@@ -26,7 +26,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 #include "mpif.h"
 #endif
 
-  TINTEGER nvar, npar
+  TINTEGER nvar
   TYPE(pointers3d_dt), DIMENSION(nvar)               :: data_in
   TYPE(pointers_dt), DIMENSION(nvar)                 :: data_out
   TREAL,             DIMENSION(isize_particle,*)     :: l_q, l_hq
@@ -35,14 +35,17 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   TREAL,             DIMENSION(*)                    :: wrk1d, wrk2d, wrk3d
 
 ! -------------------------------------------------------------------
-  CHARACTER*(32) str
-  CHARACTER*(128) line
   TINTEGER grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal 
-  TINTEGER npar_start, particle_number_local
+  TINTEGER npar_start, npar
   TINTEGER ip1,ip2,ip3, np1,np2,np3, iv
 
   TYPE(pointers3d_dt), DIMENSION(nvar) :: data_halo1, data_halo2, data_halo3
 
+! Check
+  CHARACTER*(32) str
+  CHARACTER*(128) line
+  TINTEGER particle_number_local
+  
 !#######################################################################
   IF ( nvar .GT. inb_lag_total_interp ) THEN
      CALL IO_WRITE_ASCII(efile,'FIELD_TO_PARTICLE. Not enough memory.')

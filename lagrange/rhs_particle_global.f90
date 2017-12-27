@@ -34,7 +34,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
 ! -------------------------------------------------------------------
   TREAL dummy, dummy2
   TINTEGER particle_number_local, bcs(2,2), nvar
-  TINTEGER i, npar
+  TINTEGER i
   TREAL delta_inv0, delta_inv2, delta_inv4
   
   TYPE(pointers3d_dt), DIMENSION(inb_lag_total_interp) :: data
@@ -43,6 +43,12 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
 ! #####################################################################
   bcs = 0
   
+#ifdef USE_MPI
+  particle_number_local = ims_size_p(ims_pro+1)
+#else
+  particle_number_local = INT(particle_number)
+#endif
+
 ! Setting pointers to velocity fields
   nvar = 0
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => q(:,1); data_out(nvar)%field => l_hq(:,1)
@@ -96,7 +102,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
 ! The interpolated data is added to the existing data, which
 !  consitutes already the evolution equation for particle position
 ! -------------------------------------------------------------------
-  CALL FIELD_TO_PARTICLE(nvar, data, npar, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
+  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
   
 ! -------------------------------------------------------------------
 ! Completing evolution equations
@@ -111,7 +117,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
      delta_inv2 = -C_05_R /thermo_param(1)/thermo_param(3)
      delta_inv4 = -C_025_R/thermo_param(1)/thermo_param(3)
      
-     DO i = 1,npar
+     DO i = 1,particle_number_local
         l_hq(i,4) = l_hq(i,4) - l_txc(i,1)/(C_1_R + EXP(l_txc(i,2)*delta_inv0))
         
         l_hq(i,5) = l_hq(i,5) - l_txc(i,4)/(C_1_R + EXP(l_txc(i,2)*delta_inv0)) &
@@ -119,12 +125,6 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
      ENDDO
      
   ELSE IF (ilagrange .EQ. LAG_TYPE_SIMPLE_SETT) THEN
-     
-#ifdef USE_MPI
-     particle_number_local = ims_size_p(ims_pro+1)
-#else
-     particle_number_local = INT(particle_number)
-#endif
 
      l_hq(1:particle_number_local,2) = l_hq(1:particle_number_local,2) - lagrange_param(1)
 

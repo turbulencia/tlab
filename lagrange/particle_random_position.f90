@@ -38,7 +38,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk1d,wr
   TREAL rnd_number(4), rnd_number_second
   TINTEGER rnd_scal(3)
 
-  TINTEGER nvar, npar
+  TINTEGER nvar
   TYPE(pointers3d_dt), DIMENSION(inb_lag_total_interp) :: data
   TYPE(pointers_dt),   DIMENSION(inb_lag_total_interp) :: data_out
 
@@ -151,7 +151,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk1d,wr
         nvar = 0
         nvar = nvar+1; data(nvar)%field => txc(:,:,:,1); data_out(nvar)%field => l_txc(:,1)
         nvar = nvar+1; data(nvar)%field => txc(:,:,:,2); data_out(nvar)%field => l_txc(:,2)        
-        CALL FIELD_TO_PARTICLE(nvar, data, npar, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
+        CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
         
         CALL THERMO_AIRWATER_LINEAR(isize_particle,1,1,l_txc(1,1),l_q(1,4))
         

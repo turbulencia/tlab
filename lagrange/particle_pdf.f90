@@ -51,7 +51,7 @@ SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
   TREAL, DIMENSION(*)                :: l_comm
   INTEGER(8), DIMENSION(*)           :: l_tags
 
-  TINTEGER nvar,npar
+  TINTEGER nvar
   TYPE(pointers3d_dt), DIMENSION(1) :: data
   TYPE(pointers_dt),   DIMENSION(1) :: data_out
 
@@ -86,7 +86,7 @@ SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
 !  CALL FIELD_TO_PARTICLE_OLD (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q) !Update the liquid function  
   nvar = 0
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:,1)
-  CALL FIELD_TO_PARTICLE(nvar, data, npar, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
+  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
     
 #ifdef USE_MPI
   
