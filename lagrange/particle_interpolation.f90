@@ -5,7 +5,7 @@
 !########################################################################
 !########################################################################
 SUBROUTINE PARTICLE_INTERPOLATION &
-     (iflag, nx,ny,nz,nvar, data_in, data_out, l_q, y, wrk1d, grid_start, grid_end)
+     (iflag, nvar, data_in, data_out, l_q, y, wrk1d, grid_start, grid_end)
   
   USE DNS_CONSTANTS,  ONLY : efile
   USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
@@ -19,7 +19,7 @@ SUBROUTINE PARTICLE_INTERPOLATION &
   IMPLICIT NONE
 #include "integers.h"
 
-  TINTEGER iflag, nx,ny,nz,nvar, grid_start, grid_end
+  TINTEGER iflag, nvar, grid_start, grid_end
   TYPE(pointers3d_dt), DIMENSION(nvar)             :: data_in     
   TYPE(pointers_dt), DIMENSION(nvar)             :: data_out
   TREAL,             DIMENSION(*)                :: y, wrk1d

@@ -10,13 +10,13 @@
 SUBROUTINE  FIELD_TO_PARTICLE &
     (nvar, data_in, npar, data_out, l_q,l_hq,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS,  ONLY : efile
+  USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL,     ONLY : imax,jmax,kmax, isize_particle
   USE DNS_GLOBAL,     ONLY : g
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
-  USE DNS_MPI,        ONLY:  ims_err
+  USE DNS_MPI,        ONLY:  ims_err, ims_pro, ims_size_p
 #endif
 
   IMPLICIT NONE
@@ -35,8 +35,10 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   TREAL,             DIMENSION(*)                    :: wrk1d, wrk2d, wrk3d
 
 ! -------------------------------------------------------------------
+  CHARACTER*(32) str
+  CHARACTER*(128) line
   TINTEGER grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal 
-  TINTEGER npar_start
+  TINTEGER npar_start, particle_number_local
   TINTEGER ip1,ip2,ip3, np1,np2,np3, iv
 
   TYPE(pointers3d_dt), DIMENSION(nvar) :: data_halo1, data_halo2, data_halo3
@@ -77,6 +79,24 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   CALL PARTICLE_SORT_HALO(grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal,&
        l_hq, l_tags, l_q)
 
+! Check
+#ifdef USE_MPI
+   particle_number_local = ims_size_p(ims_pro+1)
+#else
+   particle_number_local = INT(particle_number)
+#endif
+
+  npar = grid_zone+ halo_zone_x+ halo_zone_z+ halo_zone_diagonal
+  IF ( particle_number_local .NE. npar ) THEN
+     WRITE(str,*) npar
+     line = 'FIELD_TO_PARTICLE. Npar is '//TRIM(ADJUSTL(str))
+     WRITE(str,*) particle_number_local
+     line = TRIM(ADJUSTL(line))//' whereas np_local is '//TRIM(ADJUSTL(str))
+     CALL IO_WRITE_ASCII(efile,line)
+     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+  ENDIF
+! End of check
+
 #ifdef USE_MPI
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
 #endif
@@ -91,24 +111,24 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 
   npar_start = 1
   npar       = grid_zone
-  CALL PARTICLE_INTERPOLATION(i0, imax,jmax,kmax,nvar, data_in, data_out, l_q, g(2)%nodes, wrk1d, npar_start, npar)
+  CALL PARTICLE_INTERPOLATION(i0, nvar, data_in, data_out, l_q, g(2)%nodes, wrk1d, npar_start, npar)
 
   IF ( halo_zone_x .NE. 0 ) THEN
      npar_start = npar +1
      npar       = npar +halo_zone_x
-     CALL PARTICLE_INTERPOLATION(i1, i2,jmax,kmax,nvar, data_halo1, data_out, l_q, g(2)%nodes, wrk1d, npar_start,npar)
+     CALL PARTICLE_INTERPOLATION(i1, nvar, data_halo1, data_out, l_q, g(2)%nodes, wrk1d, npar_start,npar)
   END IF
   
   IF ( halo_zone_z .NE. 0 ) THEN
      npar_start = npar +1
      npar       = npar +halo_zone_z
-     CALL PARTICLE_INTERPOLATION(i2, imax,jmax,i2,nvar, data_halo2, data_out, l_q, g(2)%nodes, wrk1d, npar_start,npar)
+     CALL PARTICLE_INTERPOLATION(i2, nvar, data_halo2, data_out, l_q, g(2)%nodes, wrk1d, npar_start,npar)
  END IF
 
   IF ( halo_zone_diagonal .NE. 0 ) THEN
      npar_start = npar +1
      npar       = npar +halo_zone_diagonal
-     CALL PARTICLE_INTERPOLATION(i3, i2,jmax,i2,nvar, data_halo3, data_out, l_q, g(2)%nodes, wrk1d, npar_start,npar)
+     CALL PARTICLE_INTERPOLATION(i3, nvar, data_halo3, data_out, l_q, g(2)%nodes, wrk1d, npar_start,npar)
   END IF
 
   DO iv = 1,nvar
