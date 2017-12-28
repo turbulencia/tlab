@@ -55,7 +55,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ENDDO
 
 ! #######################################################################
-  CALL IO_WRITE_ASCII(lfile,'Initialize MPI communicators.')
+  CALL IO_WRITE_ASCII(lfile,'Initializing MPI communicators.')
 
 ! the first index in the grid corresponds to k, the second to i
   dims(1) = ims_npro_k; dims(2) = ims_npro_i; period = .true.; reorder = .false.
@@ -80,7 +80,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
 ! Main
 ! #######################################################################
   IF ( ims_npro_i .GT. 1 ) THEN
-  CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Ox derivatives.')
+  CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Ox derivatives.')
   id = DNS_MPI_I_PARTIAL
   npage = kmax*jmax
   CALL DNS_MPI_TYPE_I(ims_npro_i, imax, npage, i1, i1, i1, i1, &
@@ -88,7 +88,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ENDIF
 
   IF ( ims_npro_k .GT. 1 ) THEN
-  CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Oz derivatives.')
+  CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Oz derivatives.')
   id = DNS_MPI_K_PARTIAL
   npage = imax*jmax
   CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
@@ -97,13 +97,13 @@ SUBROUTINE DNS_MPI_INITIALIZE
 
 ! -----------------------------------------------------------------------
   IF ( ims_npro_i .GT. 1 .AND. ifourier .EQ. 1 ) THEN
-  CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Ox FFTW in Poisson solver.')
+  CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Ox FFTW in Poisson solver.')
   id = DNS_MPI_I_POISSON1 
   npage = isize_txc_dimx ! isize_txc_field/imax
   CALL DNS_MPI_TYPE_I(ims_npro_i, imax, npage, i1, i1, i1, i1, &
        ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
 
-  CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Ox FFTW in Poisson solver.')
+  CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Ox FFTW in Poisson solver.')
   id = DNS_MPI_I_POISSON2 ! isize_txc_field/(imax+2)
   npage = isize_txc_dimx
   CALL DNS_MPI_TYPE_I(ims_npro_i, imax+2, npage, i1, i1, i1, i1, &
@@ -112,7 +112,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ENDIF
 
   IF ( ims_npro_k .GT. 1 .AND. ifourier .EQ. 1 ) THEN
-  CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Oz FFTW in Poisson solver.')
+  CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Oz FFTW in Poisson solver.')
   id = DNS_MPI_K_POISSON
   npage = isize_txc_dimz ! isize_txc_field/kmax
   CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
@@ -123,7 +123,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
 ! Auxiliar depending on simmode
 ! #######################################################################
   ! IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
-  ! CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for spectra/correlations.')
+  ! CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for spectra/correlations.')
   ! id = DNS_MPI_K_SHEAR
   ! CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, imax, i1, jmax, jmax, i1, &
   !      ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))

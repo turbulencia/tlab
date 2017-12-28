@@ -349,7 +349,7 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
         WRITE(str, 10) var_min
         line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
         WRITE(str,*) iq
-        line = 'Bounds of field '//TRIM(ADJUSTL(str))//' at upper buffer are '//TRIM(ADJUSTL(line))
+        line = 'Checking bounds of field '//TRIM(ADJUSTL(str))//' at upper buffer: '//TRIM(ADJUSTL(line))
         CALL IO_WRITE_ASCII(lfile,line)
      ENDDO
   ENDIF
@@ -367,7 +367,7 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
         WRITE(str, 10) var_min
         line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
         WRITE(str,*) iq
-        line = 'Bounds of field '//TRIM(ADJUSTL(str))//' at upper buffer are '//TRIM(ADJUSTL(line))
+        line = 'Checking bounds of field '//TRIM(ADJUSTL(str))//' at upper buffer: '//TRIM(ADJUSTL(line))
         CALL IO_WRITE_ASCII(lfile,line)
      ENDDO
   ENDIF
@@ -385,7 +385,7 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
         WRITE(str, 10) var_min
         line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
         WRITE(str,*) iq
-        line = 'Bounds of field '//TRIM(ADJUSTL(str))//' at lower buffer are '//TRIM(ADJUSTL(line))
+        line = 'Checking bounds of field '//TRIM(ADJUSTL(str))//' at lower buffer: '//TRIM(ADJUSTL(line))
         CALL IO_WRITE_ASCII(lfile,line)
      ENDDO
   ENDIF
@@ -403,7 +403,7 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
         WRITE(str, 10) var_min
         line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
         WRITE(str,*) iq
-        line = 'Bounds of field '//TRIM(ADJUSTL(str))//' at lower buffer are '//TRIM(ADJUSTL(line))
+        line = 'Checking bounds of field '//TRIM(ADJUSTL(str))//' at lower buffer: '//TRIM(ADJUSTL(line))
         CALL IO_WRITE_ASCII(lfile,line)
      ENDDO
   ENDIF

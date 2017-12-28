@@ -526,7 +526,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      IF ( ims_npro_i*ims_npro_k .EQ. ims_npro ) THEN ! check
         WRITE(lstr,*) ims_npro_i; WRITE(sRes,*) ims_npro_k
         lstr = TRIM(ADJUSTL(lstr))//'x'//TRIM(ADJUSTL(sRes))
-        CALL IO_WRITE_ASCII(lfile, 'Initialize domain partition '//TRIM(ADJUSTL(lstr)))
+        CALL IO_WRITE_ASCII(lfile, 'Initializing domain partition '//TRIM(ADJUSTL(lstr)))
      ELSE
         CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Inconsistency in total number of PEs')
         CALL DNS_STOP(DNS_ERROR_KMAXTOTAL)
