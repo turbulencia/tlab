@@ -18,7 +18,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
   CHARACTER*512 sRes
-  CHARACTER*64 lstr
+!  CHARACTER*64 lstr
   CHARACTER*32 bakfile
   TINTEGER idummy
 
@@ -62,27 +62,6 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Y_Particle_Width', '1.0', y_particle_width  )
 
 ! -------------------------------------------------------------------
-  inb_trajectory = 3 ! Default, just position
-  CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'TrajectoryType', 'first', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'first'     ) THEN; itrajectory = LAG_TRAJECTORY_FIRST
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'vorticity' ) THEN; itrajectory = LAG_TRAJECTORY_VORTICITY
-     inb_trajectory = 3 + 3 + 1 ! position + vorticity + buoyancy
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'largest'   ) THEN; itrajectory = LAG_TRAJECTORY_LARGEST
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; itrajectory = LAG_TRAJECTORY_NONE
-  ELSE
-     CALL IO_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. Invalid option in TrajectoryType')
-     CALL DNS_STOP(DNS_ERROR_CALCTRAJECTORIES)
-  ENDIF
-
-  CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'TrajectoryNumber', '0', isize_trajectory)
-  IF ( isize_trajectory .GT. particle_number ) THEN
-     CALL IO_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. Number of trajectories must be less or equal than number of particles.')
-     CALL DNS_STOP(DNS_ERROR_CALCTRAJECTORIES)
-  ENDIF
-  IF ( isize_trajectory .LE. 0 ) itrajectory = LAG_TRAJECTORY_NONE
-  IF ( icalc_part .EQ. 0   ) itrajectory = LAG_TRAJECTORY_NONE
-     
-! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'CalculateParticlePDF', 'no', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_part_pdf = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_part_pdf = 0
@@ -108,17 +87,38 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   idummy = MAX_LAGPARAM
   CALL LIST_REAL(sRes, idummy, lagrange_param)
   
+! -------------------------------------------------------------------
+  inb_trajectory = 3 ! Default, just position
+  CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'TrajectoryType', 'first', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'first'     ) THEN; itrajectory = LAG_TRAJECTORY_FIRST
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'vorticity' ) THEN; itrajectory = LAG_TRAJECTORY_VORTICITY
+     inb_trajectory = 3 + 3 + 1 ! position + vorticity + buoyancy
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'largest'   ) THEN; itrajectory = LAG_TRAJECTORY_LARGEST
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; itrajectory = LAG_TRAJECTORY_NONE
+  ELSE
+     CALL IO_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. Invalid option in TrajectoryType')
+     CALL DNS_STOP(DNS_ERROR_CALCTRAJECTORIES)
+  ENDIF
+
+  CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'TrajectoryNumber', '0', isize_trajectory)
+  IF ( isize_trajectory .GT. particle_number ) THEN
+     CALL IO_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. Number of trajectories must be less or equal than number of particles.')
+     CALL DNS_STOP(DNS_ERROR_CALCTRAJECTORIES)
+  ENDIF
+  IF ( isize_trajectory .LE. 0 ) itrajectory = LAG_TRAJECTORY_NONE
+  IF ( icalc_part .EQ. 0 )       itrajectory = LAG_TRAJECTORY_NONE
+     
 ! ###################################################################
 ! Initializing size of Lagrangian arrays
 ! ###################################################################
   CALL PARTICLE_TYPE_INITIALIZE
 
-  WRITE(lstr,*) inb_particle 
-  CALL IO_WRITE_ASCII(lfile, 'Initialize inb_particle = '//TRIM(ADJUSTL(lstr)))
-  WRITE(lstr,*) inb_lag_total_interp 
-  CALL IO_WRITE_ASCII(lfile, 'Initialize inb_lag_total_interp = '//TRIM(ADJUSTL(lstr)))
-  WRITE(lstr,*) inb_lag_aux_field
-  CALL IO_WRITE_ASCII(lfile, 'Initialize inb_lag_aux_field = '//TRIM(ADJUSTL(lstr)))
+  ! WRITE(lstr,*) inb_particle 
+  ! CALL IO_WRITE_ASCII(lfile, 'Initialize inb_particle = '//TRIM(ADJUSTL(lstr)))
+  ! WRITE(lstr,*) inb_lag_total_interp 
+  ! CALL IO_WRITE_ASCII(lfile, 'Initialize inb_lag_total_interp = '//TRIM(ADJUSTL(lstr)))
+  ! WRITE(lstr,*) inb_lag_aux_field
+  ! CALL IO_WRITE_ASCII(lfile, 'Initialize inb_lag_aux_field = '//TRIM(ADJUSTL(lstr)))
 
 #ifdef USE_MPI
 !  isize_particle=INT(particle_number/INT(ims_npro,KIND=8)*INT(particle_bumper,KIND=8))
