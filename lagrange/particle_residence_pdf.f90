@@ -19,7 +19,7 @@
 !# Calculate the pdf for a certain region
 !# 
 !########################################################################
-SUBROUTINE RESIDENCE_PDF(fname,l_hq,l_q)
+SUBROUTINE PARTICLE_RESIDENCE_PDF(fname,l_hq,l_q)
 
   USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
   USE LAGRANGE_GLOBAL, ONLY :  particle_number
@@ -136,5 +136,5 @@ SUBROUTINE RESIDENCE_PDF(fname,l_hq,l_q)
   DEALLOCATE(residence_counter_interval)
  
   RETURN
-END SUBROUTINE RESIDENCE_PDF
+END SUBROUTINE PARTICLE_RESIDENCE_PDF
 

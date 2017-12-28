@@ -18,10 +18,10 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
   CHARACTER*512 sRes
-!  CHARACTER*64 lstr
   CHARACTER*32 bakfile
   TINTEGER idummy
-
+  TREAL memory_factor
+  
 ! ###################################################################
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
@@ -52,7 +52,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   ENDIF
 
   CALL SCANINILONGINT(bakfile, inifile, 'Lagrange', 'Particle_number', '0', particle_number  )
-  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Particle_bumper', '2.0', particle_bumper  )
+  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Particle_bumper', '2.0', memory_factor  )
   CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Jmax_part', '1', jmax_part  )
   CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Jmin_part', '1', jmin_part  )
 
@@ -113,28 +113,19 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 ! ###################################################################
   CALL PARTICLE_TYPE_INITIALIZE
 
-  ! WRITE(lstr,*) inb_particle 
-  ! CALL IO_WRITE_ASCII(lfile, 'Initialize inb_particle = '//TRIM(ADJUSTL(lstr)))
-  ! WRITE(lstr,*) inb_lag_total_interp 
-  ! CALL IO_WRITE_ASCII(lfile, 'Initialize inb_lag_total_interp = '//TRIM(ADJUSTL(lstr)))
-  ! WRITE(lstr,*) inb_lag_aux_field
-  ! CALL IO_WRITE_ASCII(lfile, 'Initialize inb_lag_aux_field = '//TRIM(ADJUSTL(lstr)))
-
 #ifdef USE_MPI
-!  isize_particle=INT(particle_number/INT(ims_npro,KIND=8)*INT(particle_bumper,KIND=8))
-!  isize_particle=INT(particle_number/INT(ims_npro,KIND=8)*INT(particle_bumper*100,KIND=8)/INT(100,KIND=8))
   isize_particle = INT( particle_number /INT(ims_npro, KIND=8) )
-  IF ( ims_pro .LT. INT( MOD(particle_number, INT(ims_npro, KIND=8)) ) ) THEN
+  IF ( MOD(particle_number, INT(ims_npro, KIND=8)) .NE. 0 ) THEN ! All PEs with equal memory
      isize_particle = isize_particle +1
   ENDIF
-  isize_particle = isize_particle *INT( particle_bumper *100 ) /100
+  isize_particle = isize_particle *INT( memory_factor *100 ) /100
 #else
   isize_particle = INT(particle_number)
 #endif
 
-  isize_hf_1 = 2     *jmax*kmax   *inb_lag_total_interp 
-  isize_hf_2 =   imax*jmax     *2 *inb_lag_total_interp 
-  isize_hf_3 = 2     *jmax     *2 *inb_lag_total_interp 
+  isize_hf_1 = 2     *jmax*kmax   *inb_particle_interp 
+  isize_hf_2 =   imax*jmax     *2 *inb_particle_interp 
+  isize_hf_3 = 2     *jmax     *2 *inb_particle_interp 
   isize_max_hf  = isize_hf_1+isize_hf_2+isize_hf_3
   isize_pbuffer = int(isize_particle/4*(inb_particle*2+1) ) !same size for both buffers
   isize_l_comm  = isize_hf_1+isize_hf_2+isize_hf_3+2*isize_pbuffer
@@ -155,25 +146,24 @@ SUBROUTINE PARTICLE_TYPE_INITIALIZE
   IMPLICIT NONE
 
 ! -------------------------------------------------------------------
-  inb_particle_txc = 0
-
+  inb_particle_txc = 0 ! default
+  inb_particle_interp = 3
+  
   IF   (ilagrange .EQ. LAG_TYPE_TRACER) THEN
      inb_particle_evolution = 3
      inb_particle_aux = 0          
      inb_particle_txc = 1
-     inb_lag_aux_field = 0
-     
+
   ELSEIF  (ilagrange .EQ. LAG_TYPE_SIMPLE_SETT) THEN
      inb_particle_evolution = 3
      inb_particle_aux = 0          
      inb_particle_txc = 1
-     inb_lag_aux_field = 0
      
   ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3) THEN
      inb_particle_evolution = 5    !amount of particle properties 
      inb_particle_aux = 0          !amount of particle properties without runge kutta (only sent and sorted)
      inb_particle_txc = 4          !l_txc properties
-     inb_lag_aux_field = 4         !field data on txc
+     inb_particle_interp = inb_particle_interp +4
      LAGRANGE_SPNAME(1) = 'droplet_diff_3'
      LAGRANGE_SPNAME(2) = 'droplet_nodiff_3'
      
@@ -181,7 +171,7 @@ SUBROUTINE PARTICLE_TYPE_INITIALIZE
      inb_particle_evolution = 5    !amount of particle properties with runge kutta
      inb_particle_aux = 1          !amount of particle properties without runge kutta (only sent and sorted)
      inb_particle_txc = 4          !l_txc properties
-     inb_lag_aux_field = 4         !field data on txc
+     inb_particle_interp = inb_particle_interp +4
      LAGRANGE_SPNAME(1) = 'droplet_diff_3'
      LAGRANGE_SPNAME(2) = 'droplet_nodiff_3'
      LAGRANGE_SPNAME(3) = 'residence_part'
@@ -190,7 +180,6 @@ SUBROUTINE PARTICLE_TYPE_INITIALIZE
   
   inb_particle = inb_particle_evolution + inb_particle_aux    !amount of particle properties which are sent
   inb_scal_particle = inb_particle_evolution - 3          !Number of scalar properties solved in the lagrangian
-  inb_lag_total_interp = inb_lag_aux_field + 3  !Number of fields needed by lagrangian (no extra memory, usually txc fields)
 
   RETURN
 END SUBROUTINE PARTICLE_TYPE_INITIALIZE

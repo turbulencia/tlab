@@ -100,7 +100,7 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
 ! Initialize particle information
 ! -------------------------------------------------------------------
-  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk1d,wrk2d,wrk3d)
+  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
 
 #ifdef USE_MPI
   count = 0

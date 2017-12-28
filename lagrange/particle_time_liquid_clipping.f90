@@ -23,7 +23,7 @@
 !# 
 !#
 !########################################################################
-SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q, l_comm)    
+SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q, l_comm)    
 
   USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_particle, isize_particle
@@ -36,7 +36,7 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_h
   IMPLICIT NONE
 
   TREAL, DIMENSION(isize_field,*), TARGET :: s
-  TREAL, DIMENSION(*)                     :: wrk1d, wrk2d, wrk3d
+  TREAL, DIMENSION(*)                     :: wrk2d, wrk3d
 
   TREAL, DIMENSION(isize_particle,inb_particle) :: l_q, l_hq
   TREAL, DIMENSION(isize_particle), TARGET      :: l_txc
@@ -82,7 +82,6 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s,wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_h
 ! ###################################################################
 ! If no liquid around in Eulerian, set liquid droplet to zero
 ! ###################################################################
-!      CALL FIELD_TO_PARTICLE_OLD (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q)  !Update the liquid function
       nvar = 0
       nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:)
       CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_hq,l_tags,l_comm, wrk2d,wrk3d)

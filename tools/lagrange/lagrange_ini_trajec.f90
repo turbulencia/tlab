@@ -153,7 +153,7 @@ all_fake_liquid(:) = C_0_R
   !#######################################################################
   !CREATE THE RANDOM PARTICLE FIELD
   !#######################################################################
-  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk1d,wrk2d,wrk3d)
+  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
 
   !#######################################################################
   !CREATE THE CORRESPONDING TAGS

@@ -50,13 +50,13 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags,l_comm, txc, 
   IF ( icalc_part_pdf .EQ. 1) THEN
      number_of_bins = particle_pdf_max/particle_pdf_interval
      WRITE(fname,*) itime; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
-     CALL PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
+     CALL PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
   END IF
   
 ! Save particle residence times
   IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
      WRITE(fname,*) itime; fname = "residence_pdf."//TRIM(ADJUSTL(fname))
-     CALL RESIDENCE_PDF(fname,l_hq,l_q)
+     CALL PARTICLE_RESIDENCE_PDF(fname,l_hq,l_q)
   END IF
   
   RETURN

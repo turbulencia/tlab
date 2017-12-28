@@ -23,7 +23,7 @@
 !#
 !#
 !########################################################################
-SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
+SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
 
   USE DNS_TYPES,  ONLY: pointers_dt, pointers3d_dt
   USE DNS_GLOBAL, ONLY: imax,jmax,kmax, isize_field,isize_particle, inb_particle, inb_scal_array
@@ -44,7 +44,7 @@ SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
 #include "mpif.h"
 #endif  
   TREAL, DIMENSION(isize_field,*), TARGET :: s
-  TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
+  TREAL, DIMENSION(*)             :: wrk2d, wrk3d
 
   TREAL, DIMENSION(isize_particle,inb_particle) :: l_q, l_hq 
   TREAL, DIMENSION(isize_particle,1), TARGET                :: l_txc
@@ -83,7 +83,6 @@ SUBROUTINE PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
     z_pdf_min=z_particle_pdf_pos-0.5*z_particle_pdf_width
   ENDIF
 
-!  CALL FIELD_TO_PARTICLE_OLD (s(1,inb_scal_array),wrk1d,wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q) !Update the liquid function  
   nvar = 0
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:,1)
   CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_hq,l_tags,l_comm, wrk2d,wrk3d)

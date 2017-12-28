@@ -97,7 +97,7 @@ PROGRAM DNS
   isize_loc = MAX(g_inf(1)%size*g_inf(2)%size,MAX(g_inf(1)%size*g_inf(3)%size,g_inf(2)%size*g_inf(3)%size))
   isize_wrk2d = MAX(isize_wrk2d, isize_loc)
   IF ( icalc_part .eq. 1) THEN
-    isize_wrk2d = MAX(isize_wrk2d, jmax*inb_lag_total_interp)
+    isize_wrk2d = MAX(isize_wrk2d, jmax*inb_particle_interp)
   END IF
 
 ! txc
@@ -153,8 +153,8 @@ PROGRAM DNS
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
   IF ( icalc_part .eq. 1) THEN
      isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
-     isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_lag_total_interp*2))
-     isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_lag_total_interp*2))
+     isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_particle_interp*2))
+     isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_particle_interp*2))
   END IF
   IF ( tower_mode .EQ. 1 ) THEN 
      isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))

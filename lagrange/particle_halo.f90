@@ -10,7 +10,6 @@ SUBROUTINE PARTICLE_HALO_SERIAL(nvar, data, halo_field_1, halo_field_2, halo_fie
   USE DNS_TYPES,      ONLY : pointers3d_dt
   USE DNS_GLOBAL,     ONLY : imax,jmax,kmax
   USE DNS_GLOBAL,     ONLY : g
-  USE LAGRANGE_GLOBAL,ONLY : inb_lag_total_interp
 
   IMPLICIT NONE
 
@@ -24,11 +23,6 @@ SUBROUTINE PARTICLE_HALO_SERIAL(nvar, data, halo_field_1, halo_field_2, halo_fie
   TINTEGER i
   
 !#######################################################################
-  IF ( nvar .GT. inb_lag_total_interp ) THEN
-     CALL IO_WRITE_ASCII(efile,'PARTICLE_HALO. Not enough memory.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
-
   DO i = 1,nvar
      halo_field_1(1,1:jmax,1:kmax,i) = data(i)%field(g(1)%size,1:jmax,1:kmax)  
      halo_field_1(2,1:jmax,1:kmax,i) = data(i)%field(1,        1:jmax,1:kmax)  
@@ -54,7 +48,6 @@ SUBROUTINE PARTICLE_HALO_K(nvar, data, halo_field, buffer_send, buffer_recv, dia
   USE DNS_CONSTANTS,  ONLY : efile
   USE DNS_TYPES,      ONLY : pointers3d_dt
   USE DNS_GLOBAL,     ONLY : imax,jmax,kmax
-  USE LAGRANGE_GLOBAL,ONLY : inb_lag_total_interp
 
   USE DNS_MPI, ONLY : ims_pro, ims_npro, ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k
   USE DNS_MPI, ONLY : ims_err
@@ -75,12 +68,6 @@ SUBROUTINE PARTICLE_HALO_K(nvar, data, halo_field, buffer_send, buffer_recv, dia
   integer source, dest, l
   integer mpireq(ims_npro*2)
   integer status(MPI_STATUS_SIZE,ims_npro*2)
-
-! ######################################################################
-  IF ( nvar .GT. inb_lag_total_interp ) THEN
-     CALL IO_WRITE_ASCII(efile,'PARTICLE_HALO. Not enough memory.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
 
 ! ######################################################################
   IF (ims_npro_k .EQ. 1) THEN  ! Serial code in i-direction
@@ -118,8 +105,8 @@ SUBROUTINE PARTICLE_HALO_K(nvar, data, halo_field, buffer_send, buffer_recv, dia
       
       l = 2*ims_pro +1
 
-      CALL MPI_ISEND(buffer_send,imax*jmax*inb_lag_total_interp,MPI_REAL8,dest,0,MPI_COMM_WORLD,mpireq(l), ims_err)
-      CALL MPI_IRECV(buffer_recv,imax*jmax*inb_lag_total_interp,MPI_REAL8,source,MPI_ANY_TAG,MPI_COMM_WORLD,mpireq(l+1), ims_err)
+      CALL MPI_ISEND(buffer_send,imax*jmax*nvar,MPI_REAL8,dest,0,MPI_COMM_WORLD,mpireq(l), ims_err)
+      CALL MPI_IRECV(buffer_recv,imax*jmax*nvar,MPI_REAL8,source,MPI_ANY_TAG,MPI_COMM_WORLD,mpireq(l+1), ims_err)
       
       CALL MPI_Waitall(ims_npro*2,mpireq,status,ims_err)
 
@@ -140,7 +127,6 @@ SUBROUTINE PARTICLE_HALO_I(nvar, data, halo_field, halo_field_ik, buffer_send, b
   USE DNS_CONSTANTS,  ONLY : efile
   USE DNS_TYPES,      ONLY : pointers3d_dt
   USE DNS_GLOBAL,     ONLY : imax,jmax,kmax
-  USE LAGRANGE_GLOBAL,ONLY : inb_lag_total_interp
 
   USE DNS_MPI, ONLY : ims_pro, ims_npro, ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k
   USE DNS_MPI, ONLY : ims_err
@@ -164,12 +150,6 @@ SUBROUTINE PARTICLE_HALO_I(nvar, data, halo_field, halo_field_ik, buffer_send, b
   integer l  ! Counter for messages
   integer mpireq(ims_npro*2)
   integer status(MPI_STATUS_SIZE,ims_npro*2)
-
-! ######################################################################
-  IF ( nvar .GT. inb_lag_total_interp ) THEN
-     CALL IO_WRITE_ASCII(efile,'PARTICLE_HALO. Not enough memory.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
 
 ! ######################################################################
   IF ( ims_npro_i .EQ. 1 ) THEN   ! Serial code in i-direction 
@@ -211,8 +191,8 @@ SUBROUTINE PARTICLE_HALO_I(nvar, data, halo_field, halo_field_ik, buffer_send, b
      ENDIF
      l = 2*ims_pro +1
            
-     CALL MPI_ISEND(buffer_send,jmax*(kmax+1)*inb_lag_total_interp,MPI_REAL8,dest,0,MPI_COMM_WORLD,mpireq(l), ims_err)
-     CALL MPI_IRECV(buffer_recv,jmax*(kmax+1)*inb_lag_total_interp,MPI_REAL8,source,MPI_ANY_TAG,MPI_COMM_WORLD,mpireq(l+1), ims_err)
+     CALL MPI_ISEND(buffer_send,jmax*(kmax+1)*nvar,MPI_REAL8,dest,0,MPI_COMM_WORLD,mpireq(l), ims_err)
+     CALL MPI_IRECV(buffer_recv,jmax*(kmax+1)*nvar,MPI_REAL8,source,MPI_ANY_TAG,MPI_COMM_WORLD,mpireq(l+1), ims_err)
      
      CALL MPI_Waitall(ims_npro*2,mpireq,status,ims_err)
 

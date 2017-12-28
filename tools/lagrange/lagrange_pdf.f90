@@ -86,10 +86,10 @@ PROGRAM LAGRANGE_PDF
 #include "dns_alloc_larrays.h"
   isize_wrk3d = imax*jmax*kmax
   isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
-  isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_lag_total_interp*2))
-  isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_lag_total_interp*2))
+  isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_particle_interp*2))
+  isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_particle_interp*2))
 
-  isize_wrk2d = MAX(isize_wrk2d, jmax*inb_lag_total_interp)
+  isize_wrk2d = MAX(isize_wrk2d, jmax*inb_particle_interp)
 
   IF (jmax_part .EQ. 1) THEN
      jmax_part   = jmax ! 1 by default
@@ -157,7 +157,7 @@ PROGRAM LAGRANGE_PDF
      number_of_bins = particle_pdf_max/particle_pdf_interval
 
      WRITE(fname,*) i; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
-     CALL PARTICLE_PDF(fname,s,wrk1d,wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
+     CALL PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
 
   ENDDO
 
