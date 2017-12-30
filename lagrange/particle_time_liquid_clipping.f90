@@ -18,12 +18,7 @@
 !# Sets particle liquid with no eulerian liquid surrounded to zero 
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!# 
-!#
-!########################################################################
-SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q, l_comm)    
+SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q, l_comm)
 
   USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_particle, isize_particle
@@ -49,63 +44,40 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, wrk2d,wrk3d, l_txc, l_tags, l_hq, l_
   TYPE(pointers_dt),   DIMENSION(1) :: data_out
 
 #ifdef USE_MPI
-   particle_number_local = ims_size_p(ims_pro+1)
+  particle_number_local = ims_size_p(ims_pro+1)
 #else
-   particle_number_local = particle_number
+  particle_number_local = INT(particle_number)
 #endif
 
 ! ###################################################################
 ! IF negative liquid set lagrange liquid 0
 ! ###################################################################
-      IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
-         DO is=4,inb_particle_evolution
-            DO l_i=1,particle_number_local
-               IF( l_q(l_i,is) .LT. 0 ) THEN
-                  l_q(l_i,is)=C_0_R
-                  l_q(l_i,6)=C_0_R
-                  l_hq(l_i,6)=C_0_R
-               ENDIF
-            ENDDO
-         ENDDO
-
-      ELSE
-         DO is=4,inb_particle_evolution
-            DO l_i=1,particle_number_local
-               IF( l_q(l_i,is) .LT. 0 ) THEN
-                  l_q(l_i,is)=C_0_R
-               ENDIF
-            ENDDO
-         ENDDO
-
-      ENDIF
+  DO is=4,inb_particle_evolution
+     DO l_i=1,particle_number_local
+        IF( l_q(l_i,is) .LT. 0 ) THEN
+           l_q(l_i,is)=C_0_R
+           l_q(l_i,6)=C_0_R
+           l_hq(l_i,6)=C_0_R
+        ENDIF
+     ENDDO
+  ENDDO
 
 ! ###################################################################
 ! If no liquid around in Eulerian, set liquid droplet to zero
 ! ###################################################################
-      nvar = 0
-      nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:)
-      CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_hq,l_tags,l_comm, wrk2d,wrk3d)
-      
-      IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
-         DO l_i=1,particle_number_local
-            IF (l_txc(l_i) .LT. 0.00001) THEN
-               DO is=4,inb_particle_evolution
-                  l_q(l_i,is)=C_0_R
-                  l_q(l_i,6)=C_0_R
-                  l_hq(l_i,6)=C_0_R
-               ENDDO
-            ENDIF
-         ENDDO
-      ELSE
-         DO l_i=1,particle_number_local
-            IF (l_txc(l_i) .LT. 0.00001) THEN
-               DO is=4,inb_particle_evolution
-                  l_q(l_i,is)=C_0_R
-               ENDDO
-            ENDIF
-         ENDDO
-      ENDIF
- 
+  nvar = 0
+  nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:)
+  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
+
+  DO l_i=1,particle_number_local
+     IF (l_txc(l_i) .LT. 0.00001) THEN
+        DO is=4,inb_particle_evolution
+           l_q(l_i,is)=C_0_R
+           l_q(l_i,6)=C_0_R
+           l_hq(l_i,6)=C_0_R
+        ENDDO
+     ENDIF
+  ENDDO
 
   RETURN
 END SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING

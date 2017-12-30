@@ -23,7 +23,7 @@
 !#
 !#
 !########################################################################
-SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
+SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
 
   USE DNS_TYPES,  ONLY: pointers_dt, pointers3d_dt
   USE DNS_GLOBAL, ONLY: imax,jmax,kmax, isize_field,isize_particle, inb_particle, inb_scal_array
@@ -44,10 +44,10 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
 #include "mpif.h"
 #endif  
   TREAL, DIMENSION(isize_field,*), TARGET :: s
-  TREAL, DIMENSION(*)             :: wrk2d, wrk3d
+  TREAL, DIMENSION(*)                     :: wrk2d, wrk3d
 
-  TREAL, DIMENSION(isize_particle,inb_particle) :: l_q, l_hq 
-  TREAL, DIMENSION(isize_particle,1), TARGET                :: l_txc
+  TREAL, DIMENSION(isize_particle,inb_particle)        :: l_q
+  TREAL, DIMENSION(isize_particle,1),           TARGET :: l_txc
   TREAL, DIMENSION(*)                :: l_comm
   INTEGER(8), DIMENSION(*)           :: l_tags
 
@@ -61,7 +61,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
   TREAL y_pdf_max, y_pdf_min
   TREAL x_pdf_max, x_pdf_min
   TREAL z_pdf_max, z_pdf_min
-  TINTEGER i,j, is, particle_pdf_min
+  TINTEGER i,j, is, particle_pdf_min, particle_number_local
 #ifdef USE_MPI
   TLONGINTEGER, DIMENSION(:,:),   ALLOCATABLE         :: particle_bins_local
   ALLOCATE(particle_bins_local(number_of_bins,3)) 
@@ -69,6 +69,12 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
   
   ALLOCATE(particle_bins(number_of_bins,3)) 
   ALLOCATE(counter_interval(number_of_bins)) 
+
+#ifdef USE_MPI
+  particle_number_local = ims_size_p(ims_pro+1)
+#else
+  particle_number_local = INT(particle_number)
+#endif
 
   y_pdf_max=y_particle_pdf_pos+0.5*y_particle_pdf_width
   y_pdf_min=y_particle_pdf_pos-0.5*y_particle_pdf_width
@@ -85,7 +91,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
 
   nvar = 0
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:,1)
-  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_hq,l_tags,l_comm, wrk2d,wrk3d)
+  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
     
 #ifdef USE_MPI
   
@@ -97,7 +103,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
   particle_pdf_min = 0  !if needed for future 
 
   IF (x_particle_pdf_width .EQ. 0) THEN !ONLY PART OF Y
-    DO i=1,ims_size_p(ims_pro+1)
+    DO i=1,particle_number_local
       IF ( l_q(i,2)/g(2)%scale .GE. y_pdf_min .AND. l_q(i,2)/g(2)%scale .LE. y_pdf_max) THEN
           j = 1 + int( (l_txc(i,1) - particle_pdf_min) / particle_pdf_interval )
           particle_bins_local(j,1)=particle_bins_local(j,1)+1
@@ -109,7 +115,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
       ENDIF
     ENDDO
   ELSE !3D BOX
-     DO i=1,ims_size_p(ims_pro+1)
+     DO i=1,particle_number_local
       IF ( l_q(i,1)/g(1)%scale .GE. x_pdf_min .AND. l_q(i,1)/g(1)%scale .LE. x_pdf_max) THEN
         IF ( l_q(i,2)/g(2)%scale .GE. y_pdf_min .AND. l_q(i,2)/g(2)%scale .LE. y_pdf_max) THEN
           IF ( l_q(i,3)/g(3)%scale .GE. z_pdf_min .AND. l_q(i,3)/g(3)%scale .LE. z_pdf_max) THEN
@@ -160,7 +166,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_hq,l_q,l_comm)
 
   particle_pdf_min = 0
 
-  DO i=1,particle_number
+  DO i=1,particle_number_local
     IF ( l_q(i,2)/g(2)%scale .GE. y_pdf_min .AND. l_q(i,2)/g(2)%scale .LE. y_pdf_max) THEN
         j = 1 + int( (l_txc(i,1) - particle_pdf_min) / particle_pdf_interval )
         particle_bins(j,1)=particle_bins(j,1)+1

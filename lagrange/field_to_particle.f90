@@ -8,7 +8,7 @@
 !#######################################################################
 !#######################################################################
 SUBROUTINE  FIELD_TO_PARTICLE &
-    (nvar, data_in, data_out, l_q,l_hq,l_tags,l_comm, wrk2d,wrk3d)
+    (nvar, data_in, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
@@ -28,7 +28,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   TINTEGER nvar
   TYPE(pointers3d_dt), DIMENSION(nvar)                 :: data_in
   TYPE(pointers_dt),   DIMENSION(nvar)                 :: data_out
-  TREAL,               DIMENSION(isize_particle,*)     :: l_q, l_hq
+  TREAL,               DIMENSION(isize_particle,*)     :: l_q
   INTEGER(8),          DIMENSION(isize_particle)       :: l_tags
   TREAL,               DIMENSION(isize_l_comm), TARGET :: l_comm
   TREAL,               DIMENSION(*)                    :: wrk2d, wrk3d
@@ -40,11 +40,6 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 
   TYPE(pointers3d_dt), DIMENSION(nvar) :: data_halo1, data_halo2, data_halo3
 
-! Check
-  CHARACTER*(32) str
-  CHARACTER*(128) line
-  TINTEGER particle_number_local
-  
 !#######################################################################
   IF ( nvar .GT. inb_particle_interp ) THEN
      CALL IO_WRITE_ASCII(efile,'FIELD_TO_PARTICLE. Not enough memory.')
@@ -78,26 +73,10 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 !#######################################################################
 ! Sorting and counting particles for each zone
 !#######################################################################
-  CALL PARTICLE_SORT_HALO(grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal,&
-       l_hq, l_tags, l_q)
+  CALL PARTICLE_SORT_HALO(l_q,l_tags, nvar,data_out, grid_zone,halo_zone_x,halo_zone_z,halo_zone_diagonal)
 
-! Check
-#ifdef USE_MPI
-   particle_number_local = ims_size_p(ims_pro+1)
-#else
-   particle_number_local = INT(particle_number)
-#endif
-
-  npar = grid_zone+ halo_zone_x+ halo_zone_z+ halo_zone_diagonal
-  IF ( particle_number_local .NE. npar ) THEN
-     WRITE(str,*) npar
-     line = 'FIELD_TO_PARTICLE. Npar is '//TRIM(ADJUSTL(str))
-     WRITE(str,*) particle_number_local
-     line = TRIM(ADJUSTL(line))//' whereas np_local is '//TRIM(ADJUSTL(str))
-     CALL IO_WRITE_ASCII(efile,line)
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
-! End of check
+  ! CALL PARTICLE_SORT_HALO_OLD(grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal,&
+  !      l_hq, l_tags, l_q)
 
 #ifdef USE_MPI
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)

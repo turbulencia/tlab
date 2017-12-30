@@ -23,22 +23,20 @@ PROGRAM INIPART
 #endif
 
 ! -------------------------------------------------------------------
-  TINTEGER  ierr,isize_wrk3d, i
+  TINTEGER  ierr,isize_wrk3d, i, particle_number_local
 
   TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE :: q,s,txc
   TREAL, DIMENSION(:),        ALLOCATABLE, SAVE :: wrk1d,wrk2d, wrk3d
 
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_hq, l_txc
+  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
   TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
   INTEGER(8), DIMENSION(:),   ALLOCATABLE, SAVE :: l_tags
 
   CHARACTER*32 inifile
   CHARACTER*64 str, line
 
-#ifdef USE_MPI
   TLONGINTEGER count
-#endif
   
 !########################################################################
 !########################################################################
@@ -63,6 +61,12 @@ PROGRAM INIPART
      jmax_part   = jmax ! 1 by default
   ENDIF
 
+#ifdef USE_MPI
+  particle_number_local = ims_size_p(ims_pro+1)
+#else
+  particle_number_local = INT(particle_number)
+#endif
+
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
@@ -83,15 +87,6 @@ PROGRAM INIPART
      CALL DNS_STOP(DNS_ERROR_ALLOC)
   ENDIF
   
-  WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
-  WRITE(str,*) inb_particle; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-  CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(l_hq(isize_particle,inb_particle),stat=ierr)
-  IF ( ierr .NE. 0 ) THEN
-     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
-     CALL DNS_STOP(DNS_ERROR_ALLOC)
-  ENDIF
-  
 ! -------------------------------------------------------------------
 ! Read the grid 
 ! -------------------------------------------------------------------
@@ -100,23 +95,17 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
 ! Initialize particle information
 ! -------------------------------------------------------------------
-  CALL PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
+  CALL PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
 
-#ifdef USE_MPI
   count = 0
+#ifdef USE_MPI
   DO i = 1,ims_pro
      count = count +INT(ims_size_p(i),KIND=8)
   ENDDO
-  DO i = 1, ims_size_p(ims_pro+1)
+#endif
+  DO i = 1,particle_number_local
      l_tags(i) = INT(i, KIND=8) +count
   END DO
-
-#else
-  DO i=1,particle_number
-     l_tags(i) = INT(i, KIND=8)
-  END DO
-
-#endif
 
   CALL IO_WRITE_PARTICLE(TRIM(ADJUSTL(tag_part))//'ics', l_tags, l_q)
 

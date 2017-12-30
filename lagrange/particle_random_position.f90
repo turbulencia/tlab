@@ -5,7 +5,7 @@
 #include "dns_const_mpi.h"
 #endif
 
-SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
+SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
   
   USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt 
   USE DNS_CONSTANTS
@@ -21,7 +21,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk2d,wr
 #include "mpif.h"
 #endif
 
-  TREAL,      DIMENSION(isize_particle,*), TARGET :: l_q, l_hq, l_txc
+  TREAL,      DIMENSION(isize_particle,*), TARGET :: l_q, l_txc
   INTEGER(8), DIMENSION(isize_particle)           :: l_tags
   TREAL,      DIMENSION(isize_l_comm),     TARGET :: l_comm
   TREAL,      DIMENSION(imax,jmax,kmax,*), TARGET :: txc
@@ -151,11 +151,11 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_hq,l_txc,l_tags,l_comm, txc, wrk2d,wr
         nvar = 0
         nvar = nvar+1; data(nvar)%field => txc(:,:,:,1); data_out(nvar)%field => l_txc(:,1)
         nvar = nvar+1; data(nvar)%field => txc(:,:,:,2); data_out(nvar)%field => l_txc(:,2)        
-        CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_hq,l_tags,l_comm, wrk2d,wrk3d)
+        CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
         
         CALL THERMO_AIRWATER_LINEAR(isize_particle,1,1,l_txc(1,1),l_q(1,4))
         
-        l_q(:,5) = l_q(:,4) ! l_hq(:,6) for bil_cloud_4 is set =0 in dns_main at initialization
+        l_q(:,5) = l_q(:,4) ! l_q(:,6) for bil_cloud_4 is set =0 in dns_main at initialization
         
      ENDIF
      
