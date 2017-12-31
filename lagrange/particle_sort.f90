@@ -1,13 +1,7 @@
 #include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
-#ifdef USE_MPI
-#include "dns_const_mpi.h"
-#endif
 
-!########################################################################
-!# Tool/Library
-!#
 !########################################################################
 !# HISTORY
 !#
@@ -23,38 +17,34 @@
 !#  Sending to processors in south and north
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-SUBROUTINE PARTICLE_SORT(x,z, nzone_grid, nzone_west, nzone_east,nzone_south,nzone_north,&
-     x_or_z, h_particle, particle_id, particle )    
+SUBROUTINE PARTICLE_SORT(x_or_z, particle, particle_id, h_particle, &
+     nzone_grid,nzone_west,nzone_east,nzone_south,nzone_north)    
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
-  USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL, ONLY : particle_number, nzone_max
+  USE DNS_GLOBAL, ONLY : imax,kmax
+  USE DNS_GLOBAL, ONLY : isize_particle, inb_particle
+  USE DNS_GLOBAL, ONLY : g
   
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k, ims_pro, ims_size_p
 #endif
 
   IMPLICIT NONE
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
-  TREAL, DIMENSION(isize_particle,inb_particle) :: particle
-  TREAL, DIMENSION(isize_particle,inb_particle) :: h_particle
+  TINTEGER nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north, x_or_z
+  TREAL,      DIMENSION(isize_particle,inb_particle) :: particle
+  TREAL,      DIMENSION(isize_particle,inb_particle) :: h_particle
+  INTEGER(8), DIMENSION(isize_particle)              :: particle_id
 
-  TREAL, DIMENSION(*)     :: x,z
-  TREAL                   dx_grid, dz_grid
-
+! -------------------------------------------------------------------
+  TREAL dx_grid, dz_grid
   TREAL dummy, lower_limit, upper_limit
-  TINTEGER nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north
   TINTEGER nzone_west_south, nzone_east_north
-  TINTEGER counter_swap
-  INTEGER(8), DIMENSION(isize_particle)  :: particle_id
+  TINTEGER counter_swap, particle_number_local
   INTEGER(8) dummy_2
-  TINTEGER i, j, k, x_or_z
+  TINTEGER i, j, k
+  
+!#######################################################################
+  particle_number_local = ims_size_p(ims_pro+1)
   
   nzone_west_south=0
   nzone_east_north=0
@@ -63,26 +53,24 @@ SUBROUTINE PARTICLE_SORT(x,z, nzone_grid, nzone_west, nzone_east,nzone_south,nzo
   nzone_east=0
   nzone_grid=0
   
-
-  dx_grid= x(2)-x(1)  ! Distance between gridpoints
-  dz_grid= z(2)-z(1) 
+  dx_grid = g(1)%nodes(2)-g(1)%nodes(1)  ! Distance between gridpoints, to deal with periodicity
+  dz_grid = g(3)%nodes(2)-g(3)%nodes(1) 
   
-  IF (x_or_z .EQ. 1) THEN   !Sort in West-East direction
-     lower_limit=x(imax*ims_pro_i+1)  ! lower_limit is West
-     upper_limit=x(imax*(ims_pro_i+1))+dx_grid  !upper_limit is East
+  IF     (x_or_z .EQ. 1) THEN   !Sort in West-East direction
+     lower_limit=g(1)%nodes(ims_offset_i +1)             !lower_limit is West
+     upper_limit=g(1)%nodes(ims_offset_i +imax) +dx_grid !upper_limit is East
      
   ELSEIF (x_or_z .EQ. 3) THEN !Sort in South-North direction
-     lower_limit=z(kmax*ims_pro_k+1) !lower_limit is south
-     upper_limit=z(kmax*(ims_pro_k+1))+dz_grid !upper_limit is north
+     lower_limit=g(3)%nodes(ims_offset_k +1)             !lower_limit is south
+     upper_limit=g(3)%nodes(ims_offset_k +kmax) +dz_grid !upper_limit is north
   END IF
 
 !#######################################################################
 !Sorting structure grid-west-east or grid-south-north
 !First Algorythm sorts all grid-particle into first part of particle
 !#######################################################################
-
   i=1 !Starting point of sorting algorythm
-  j=ims_size_p(ims_pro+1)  !End point of sorting algorythm
+  j=particle_number_local  !End point of sorting algorythm
 
   DO WHILE (i .LT. j )
      IF ( particle(i,x_or_z) .LT. lower_limit) THEN !If particle is out to West
@@ -149,8 +137,6 @@ SUBROUTINE PARTICLE_SORT(x,z, nzone_grid, nzone_west, nzone_east,nzone_south,nzo
         i=i+1
 
      ELSE  ! Particle is in the grid
-
-
         i=i+1
         nzone_grid=nzone_grid+1
 
@@ -168,9 +154,8 @@ SUBROUTINE PARTICLE_SORT(x,z, nzone_grid, nzone_west, nzone_east,nzone_south,nzo
 
   END IF
 
-
-
-  j=ims_size_p(ims_pro+1)
+! -------------------------------------------------------------------
+  j=particle_number_local
   i=nzone_grid+1 
 
   DO WHILE (i .LT. j )
@@ -222,8 +207,7 @@ SUBROUTINE PARTICLE_SORT(x,z, nzone_grid, nzone_west, nzone_east,nzone_south,nzo
   END IF
 
 !Calculating the number of particles send to east or north
-  nzone_east_north=ims_size_p(ims_pro+1) - nzone_grid - nzone_west_south
-
+  nzone_east_north = particle_number_local - nzone_grid - nzone_west_south
 
 !  ims_size_p(ims_pro+1) = nzone_grid !For better readability in particle_send_recv
 
