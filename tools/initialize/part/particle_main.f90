@@ -61,12 +61,6 @@ PROGRAM INIPART
      jmax_part   = jmax ! 1 by default
   ENDIF
 
-#ifdef USE_MPI
-  particle_number_local = ims_size_p(ims_pro+1)
-#else
-  particle_number_local = INT(particle_number)
-#endif
-
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
@@ -96,6 +90,12 @@ PROGRAM INIPART
 ! Initialize particle information
 ! -------------------------------------------------------------------
   CALL PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
+
+#ifdef USE_MPI
+  particle_number_local = ims_size_p(ims_pro+1)
+#else
+  particle_number_local = INT(particle_number)
+#endif
 
   count = 0
 #ifdef USE_MPI
