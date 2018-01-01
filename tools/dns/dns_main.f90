@@ -16,6 +16,7 @@ PROGRAM DNS
   USE DNS_LOCAL 
   USE DNS_TOWER
   USE BOUNDARY_INFLOW
+  USE PARTICLE_TRAJECTORIES
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -365,6 +366,10 @@ PROGRAM DNS
            l_q(:,6) = C_0_R
         ENDIF
      ENDIF
+     
+     IF ( itrajectory .NE. LAG_TRAJECTORY_NONE ) THEN
+        CALL PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
+     END IF
      
   END IF
   
