@@ -172,7 +172,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 
 ! -----------------------------------------------------------------------
      IF ( itrajectory .NE. LAG_TRAJECTORY_NONE ) THEN
-        CALL PARTICLE_TRAJECTORIES_ACCUMULATE(l_q, l_txc, l_tags)
+        CALL PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk2d,wrk3d)
      END IF
 
 ! -----------------------------------------------------------------------

@@ -6,7 +6,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
     
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_wrk2d
-  USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_particle
+  USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_particle, inb_particle_txc
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_npro, ims_pro
@@ -123,6 +123,11 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   isize_particle = INT(particle_number)
 #endif
 
+  IF ( itrajectory .NE. LAG_TRAJECTORY_NONE ) THEN
+     inb_particle_txc    = MAX(inb_particle_txc,1)
+     inb_particle_interp = MAX(inb_particle_interp,inb_trajectory)
+  ENDIF
+  
   isize_hf_1 = 2     *jmax*kmax   *inb_particle_interp 
   isize_hf_2 =   imax*jmax     *2 *inb_particle_interp 
   isize_hf_3 = 2     *jmax     *2 *inb_particle_interp 
@@ -146,7 +151,7 @@ SUBROUTINE PARTICLE_TYPE_INITIALIZE
   IMPLICIT NONE
 
 ! -------------------------------------------------------------------
-  inb_particle_txc = 0 ! default
+  inb_particle_txc    = 0 ! default
   inb_particle_interp = 3
   
   IF   (ilagrange .EQ. LAG_TYPE_TRACER) THEN
