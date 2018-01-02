@@ -28,7 +28,7 @@ MODULE SCAL_LOCAL
   TREAL    :: A3D(MAX_FRC_FREC), Phix3d(MAX_FRC_FREC), Phiz3d(MAX_FRC_FREC)
 
 ! Gaussian
-  TREAL    :: delta_discrete
+  TREAL    :: delta_discrete, delta_step
 
 ! Alberto Radiation
   TREAL :: rad_ini
