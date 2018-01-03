@@ -6,12 +6,11 @@
 !# Sorting structure grid-halo_x-halo_z-halo_diagonal
 !# First algorithm sorts all grid-particle into first part of particle
 !########################################################################
-SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
+SUBROUTINE PARTICLE_SORT_HALO(grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal, l_hq, l_tags, l_q)
 
-  USE DNS_TYPES,      ONLY : pointers_dt
-  USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
-  USE DNS_GLOBAL,     ONLY : g
-  USE LAGRANGE_GLOBAL,ONLY : particle_number
+  USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
+  USE DNS_GLOBAL, ONLY: g
+  USE LAGRANGE_GLOBAL, ONLY : particle_number
 
 #ifdef USE_MPI
   USE DNS_GLOBAL, ONLY : imax,kmax
@@ -20,15 +19,15 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
 
   IMPLICIT NONE
 
-  TINTEGER grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal, nvar
-  TYPE(pointers_dt), DIMENSION(nvar)                        :: data
-  TREAL,             DIMENSION(isize_particle,inb_particle) :: l_q
-  INTEGER(8),        DIMENSION(isize_particle)              :: l_tags
+  TINTEGER grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal
+  TREAL,      DIMENSION(isize_particle,inb_particle) :: l_q
+  TREAL,      DIMENSION(isize_particle,inb_particle) :: l_hq
+  INTEGER(8), DIMENSION(isize_particle)  :: l_tags
 
 ! -------------------------------------------------------------------
   TREAL dummy, right_limit, upper_limit
   TINTEGER counter_swap, particle_number_local
-  INTEGER(8) idummy
+  INTEGER(8) dummy_2
   TINTEGER i, j, k 
 
 !#######################################################################
@@ -58,8 +57,8 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
   j=particle_number_local  !End point of sorting algorythm
 
   DO WHILE (i .LT. j )
-
      IF ( l_q(i,1) .GT. right_limit) THEN !If particle is out to East
+
         counter_swap=0 !Particle must be swapped
         DO WHILE (counter_swap .eq. 0) !Enter in the swaping region
            IF ( (l_q(j,1) .GT. right_limit) .OR. (l_q(j,3) .GT. upper_limit)  ) THEN !Partcile here in right area
@@ -67,27 +66,24 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
               IF (i .EQ. j) THEN !You finished your upwards loop
                  counter_swap=1
               ENDIF
-           ELSE ! Found a particle which belongs to grid so SWAP
-              idummy   =l_tags(i)
-              l_tags(i)=l_tags(j)
-              l_tags(j)=idummy
-              
+           ELSE ! Forund a particle which belongs to grid so SWAP
               DO k=1,inb_particle
-                 dummy   =l_q(i,k)
+                 dummy=l_q(i,k)
                  l_q(i,k)=l_q(j,k)
                  l_q(j,k)=dummy
-              END DO
 
-              DO k=1,nvar
-                 dummy           =data(k)%field(i)
-                 data(k)%field(i)=data(k)%field(j)
-                 data(k)%field(j)=dummy
+                 dummy_2=l_tags(i)
+                 l_tags(i)=l_tags(j)
+                 l_tags(j)=dummy_2
+
+                 dummy=l_hq(i,k)
+                 l_hq(i,k)=l_hq(j,k)
+                 l_hq(j,k)=dummy
               END DO
 
               j=j-1 
               grid_zone=grid_zone+1
               counter_swap=1
-
            END IF
         END DO
         i=i+1 !Go to next particle
@@ -101,31 +97,28 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
                  counter_swap=1
               ENDIF
            ELSE                    
-              idummy   =l_tags(i)
-              l_tags(i)=l_tags(j)
-              l_tags(j)=idummy
-
               DO k=1,inb_particle
                  dummy=l_q(i,k)
                  l_q(i,k)=l_q(j,k)
                  l_q(j,k)=dummy
-              ENDDO
-              
-              DO k=1,nvar
-                 dummy           =data(k)%field(i)
-                 data(k)%field(i)=data(k)%field(j)
-                 data(k)%field(j)=dummy
-              END DO
 
+                 dummy_2=l_tags(i)
+                 l_tags(i)=l_tags(j)
+                 l_tags(j)=dummy_2
+
+                 dummy=l_hq(i,k)
+                 l_hq(i,k)=l_hq(j,k)
+                 l_hq(j,k)=dummy
+              END DO
               j=j-1                 
               grid_zone=grid_zone+1
               counter_swap=1
-
            END IF
         END DO
         i=i+1
 
      ELSE  ! Particle is in the grid
+
         i=i+1
         grid_zone=grid_zone+1
 
@@ -152,9 +145,9 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
 !           l_q(i,k)=l_q(j,k)
 !           l_q(j,k)=dummy
 
-!           idummy=l_tags(i)
+!           dummy_2=l_tags(i)
 !           l_tags(i)=l_tags(j)
-!           l_tags(j)=idummy
+!           l_tags(j)=dummy_2
 
 !           dummy=l_hq(i,k)
 !           l_hq(i,k)=l_hq(j,k)
@@ -177,20 +170,18 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
               ENDIF
 
            ELSE  !If particle is only out to East
-              idummy   =l_tags(i)
-              l_tags(i)=l_tags(j)
-              l_tags(j)=idummy
-              
               DO k=1,inb_particle
-                 dummy   =l_q(i,k)
+                 dummy=l_q(i,k)
                  l_q(i,k)=l_q(j,k)
                  l_q(j,k)=dummy
-              END DO
 
-              DO k=1,nvar
-                 dummy           =data(k)%field(i)
-                 data(k)%field(i)=data(k)%field(j)
-                 data(k)%field(j)=dummy
+                 dummy_2=l_tags(i)
+                 l_tags(i)=l_tags(j)
+                 l_tags(j)=dummy_2
+
+                 dummy=l_hq(i,k)
+                 l_hq(i,k)=l_hq(j,k)
+                 l_hq(j,k)=dummy
               END DO
 
               counter_swap=1
@@ -229,22 +220,19 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
                  counter_swap=1
               ENDIF
            ELSE  !Particle is only out to the North
-              idummy   =l_tags(i)
-              l_tags(i)=l_tags(j)
-              l_tags(j)=idummy
-              
               DO k=1,inb_particle
-                 dummy   =l_q(i,k)
+                 dummy=l_q(i,k)
                  l_q(i,k)=l_q(j,k)
                  l_q(j,k)=dummy
-              END DO
-              
-              DO k=1,nvar
-                 dummy           =data(k)%field(i)
-                 data(k)%field(i)=data(k)%field(j)
-                 data(k)%field(j)=dummy
-              END DO
 
+                 dummy_2=l_tags(i)
+                 l_tags(i)=l_tags(j)
+                 l_tags(j)=dummy_2
+
+                 dummy=l_hq(i,k)
+                 l_hq(i,k)=l_hq(j,k)
+                 l_hq(j,k)=dummy
+              END DO
               counter_swap=1
               j=j-1
               halo_zone_z=halo_zone_z+1

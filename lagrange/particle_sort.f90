@@ -209,8 +209,6 @@ SUBROUTINE PARTICLE_SORT(x_or_z, particle, particle_id, h_particle, &
 !Calculating the number of particles send to east or north
   nzone_east_north = particle_number_local - nzone_grid - nzone_west_south
 
-!  ims_size_p(ims_pro+1) = nzone_grid !For better readability in particle_send_recv
-
   IF (x_or_z .EQ. 1) THEN
      nzone_west=nzone_west_south
      nzone_east=nzone_east_north 

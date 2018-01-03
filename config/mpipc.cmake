@@ -28,7 +28,7 @@ endif()
 if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build; assuming intel13
    set(ENV{FC} mpif90)
    set(CMAKE_Fortran_COMPILER mpif90) 
-   set(USER_Fortran_FLAGS          " -fpp -save -nbs -convert little_endian -xHost ") 
+   set(USER_Fortran_FLAGS          " -fpp -save -nbs -convert little_endian -xHost -warn unused") 
    set(USER_Fortran_FLAGS_RELEASE  " -O3 ")
 
    add_definitions(-DUSE_FFTW -DUSE_MPI -DUSE_MPI_IO)
