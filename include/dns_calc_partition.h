@@ -23,7 +23,7 @@
            CALL DNS_STOP(DNS_ERROR_ALLOC)
         ENDIF
         DO n = 1,igate_size
-           igate_vec(n) = INT(n) ! It assumes a particular intermittency function in the file
+           igate_vec(n) = INT(n,KIND=1) ! It assumes a particular intermittency function in the file
         ENDDO
 
      ELSE                             ! Local file
@@ -46,10 +46,10 @@
            DO n = 1,igate_size-1
               IF ( txc(ij,1) .LT. gate_threshold(n) ) EXIT
            ENDDO
-           gate(ij) = n ! note that gate can get -- correctly -- the value igate_size
+           gate(ij) = INT(n,KIND=1) ! note that gate can get -- correctly -- the value igate_size
         ENDDO
         DO n = 1,igate_size
-           igate_vec(n) = n
+           igate_vec(n) = INT(n,KIND=1)
         ENDDO
         
      ENDIF

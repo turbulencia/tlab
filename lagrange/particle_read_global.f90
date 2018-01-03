@@ -5,6 +5,7 @@
 SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
     
   USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE DNS_GLOBAL,    ONLY : inb_flow_array, inb_scal_array
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_wrk2d
   USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_particle, inb_particle_txc
   USE LAGRANGE_GLOBAL
@@ -88,11 +89,11 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   CALL LIST_REAL(sRes, idummy, lagrange_param)
   
 ! -------------------------------------------------------------------
-  inb_trajectory = 3 ! Default, just position
+  inb_trajectory = inb_flow_array + inb_scal_array
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'TrajectoryType', 'first', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'first'     ) THEN; itrajectory = LAG_TRAJECTORY_FIRST
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'vorticity' ) THEN; itrajectory = LAG_TRAJECTORY_VORTICITY
-     inb_trajectory = 3 + 3 + 1 ! position + vorticity + buoyancy
+     inb_trajectory = inb_trajectory + 3 ! + vorticity
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'largest'   ) THEN; itrajectory = LAG_TRAJECTORY_LARGEST
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; itrajectory = LAG_TRAJECTORY_NONE
   ELSE
@@ -124,7 +125,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 #endif
 
   IF ( itrajectory .NE. LAG_TRAJECTORY_NONE ) THEN
-     inb_particle_txc    = MAX(inb_particle_txc,1)
+     inb_particle_txc    = MAX(inb_particle_txc,inb_flow_array+inb_scal_array-3)
      inb_particle_interp = MAX(inb_particle_interp,inb_trajectory)
   ENDIF
   

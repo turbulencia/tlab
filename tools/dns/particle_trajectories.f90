@@ -5,6 +5,7 @@
 MODULE PARTICLE_TRAJECTORIES
 
   USE DNS_CONSTANTS,  ONLY : efile, lfile
+  USE DNS_GLOBAL,     ONLY : inb_flow_array, inb_scal_array
   USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
   USE LAGRANGE_GLOBAL,ONLY : particle_number
   USE LAGRANGE_GLOBAL,ONLY : isize_trajectory, inb_trajectory, isize_l_comm, itrajectory
@@ -61,14 +62,8 @@ SUBROUTINE PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
      CALL DNS_STOP(DNS_ERROR_ALLOC)
   ENDIF
   
-! Initialize; track only isize_trajectory particles 
-  IF      ( itrajectory .EQ. LAG_TRAJECTORY_FIRST .OR. &
-            itrajectory .EQ. LAG_TRAJECTORY_VORTICITY ) THEN ! Track first isize_trajectory particles
-     DO j=1,isize_trajectory              
-        l_trajectories_tags(j) = INT(j, KIND=8)
-     ENDDO
-     
-  ELSE IF ( itrajectory .EQ. LAG_TRAJECTORY_LARGEST ) THEN ! Read file with tags of largest particles, the ones to track
+! Initialize
+  IF ( itrajectory .EQ. LAG_TRAJECTORY_LARGEST ) THEN ! Read file with tags of largest particles, the ones to track
      WRITE(name,*) nitera_last; name='largest_particle.'//TRIM(ADJUSTL(name))
 #ifdef USE_MPI
      IF (ims_pro .EQ. 0) THEN
@@ -87,7 +82,14 @@ SUBROUTINE PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
      CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
      CALL MPI_BCAST(l_trajectories_tags,isize_trajectory,MPI_INTEGER8,0,MPI_COMM_WORLD,ims_err)
 #endif
+
+  ELSE ! default track only isize_trajectory particles 
+     DO j=1,isize_trajectory              
+        l_trajectories_tags(j) = INT(j, KIND=8)
+     ENDDO
+          
   ENDIF
+
   l_trajectories = C_0_R
   counter        = 0
   
@@ -131,25 +133,33 @@ SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_q,l_hq,l_txc,l_tags,l_co
   nvar = nvar+1; data(nvar)%field => l_q(:,1)
   nvar = nvar+1; data(nvar)%field => l_q(:,2)
   nvar = nvar+1; data(nvar)%field => l_q(:,3)
+
+! Primitive variables
+  DO iv = 4,inb_flow_array
+     nvar = nvar+1; data_in(nvar)%field(1:imax,1:jmax,1:kmax) => q(:,iv);   data(nvar)%field => l_txc(:,iv-3)
+     l_txc(:,iv-3) = C_0_R ! Field to particle is additive
+  ENDDO
   
+  DO iv = 1,inb_scal_array
+     nvar = nvar+1; data_in(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,iv);   data(nvar)%field => l_txc(:,iv-3+inb_flow_array)
+     l_txc(:,iv-3+inb_flow_array) = C_0_R ! Field to particle is additive
+  ENDDO
+
 ! -------------------------------------------------------------------
 ! Additional information
-  
   IF ( itrajectory .EQ. LAG_TRAJECTORY_VORTICITY ) THEN
      CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3), txc(1,4), wrk2d,wrk3d)
      nvar = nvar+1; data_in(nvar)%field(1:imax,1:jmax,1:kmax) => txc(:,1); data(nvar)%field => l_hq(:,1)
      nvar = nvar+1; data_in(nvar)%field(1:imax,1:jmax,1:kmax) => txc(:,2); data(nvar)%field => l_hq(:,2)
      nvar = nvar+1; data_in(nvar)%field(1:imax,1:jmax,1:kmax) => txc(:,3); data(nvar)%field => l_hq(:,3)
-
-     nvar = nvar+1; data_in(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,1);   data(nvar)%field => l_txc(:,1)
-
      l_hq(:,1:3) = C_0_R ! Field to particle is additive
-     l_txc(:,1)  = C_0_R
+  ENDIF
 
+! -------------------------------------------------------------------
+! Interpolation
+  IF ( nvar-3 .GT. 0 ) THEN
      iv = nvar -3
      CALL FIELD_TO_PARTICLE(iv, data_in(4), data(4), l_q,l_tags,l_comm, wrk2d,wrk3d)
-
-     
   ENDIF
   
 ! -------------------------------------------------------------------

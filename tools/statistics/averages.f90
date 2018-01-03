@@ -187,7 +187,7 @@ PROGRAM AVERAGES
      opt_main = INT(opt_vec(1))
      IF ( iopt_size .GE. 2 ) opt_block = INT(opt_vec(2))
      IF ( opt_main .GT. 2 ) THEN
-        IF ( iopt_size .GE. 3 ) opt_gate  = INT(opt_vec(3))
+        IF ( iopt_size .GE. 3 ) opt_gate  = INT(opt_vec(3),KIND=1)
         IF ( iopt_size .GE. 4 ) opt_order = INT(opt_vec(4))
      ENDIF
      IF ( opt_main .EQ. 3 ) THEN
@@ -215,7 +215,7 @@ PROGRAM AVERAGES
   igate_size    = 0
   opt_threshold = 0
 
-  IF ( opt_main .GT. 1 .AND. opt_gate .GT.0 ) THEN
+  IF ( opt_main .GT. 1 .AND. opt_gate .GT. 0 ) THEN
 
 #include "dns_read_partition.h"
 

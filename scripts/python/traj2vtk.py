@@ -61,7 +61,7 @@ for time in filetimes:
             if eof[iv] != eof[0]:
                 sys.exit("File sizes mismatch")
 
-        itime = int(time) - int( eof[0] /( np*sizeofdata) )
+        itime = int(time) - int( eof[0] /( (np+1)*sizeofdata) )
         while(fin[0].tell() != eof[0]):
             itime = itime +1
             rtime = [ fin[iv].read(sizeofdata) for iv in range(nv) ] # Read physical time

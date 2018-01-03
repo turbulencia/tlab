@@ -157,7 +157,7 @@ PROGRAM PDFS
   ELSE
      opt_main = INT(opt_vec(1))
      IF ( iopt_size .GE. 2 ) opt_block = INT(opt_vec(2))
-     IF ( iopt_size .GE. 3 ) opt_gate  = INT(opt_vec(3))
+     IF ( iopt_size .GE. 3 ) opt_gate  = INT(opt_vec(3),KIND=1)
      IF ( iopt_size .GE. 4 ) opt_bins  = INT(opt_vec(4))
      IF ( iopt_size .GE. 5 ) opt_bcs   = INT(opt_vec(5))
      IF ( opt_main .EQ. 10 ) THEN
