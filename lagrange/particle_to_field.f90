@@ -24,7 +24,7 @@ SUBROUTINE  PARTICLE_TO_FIELD &
   USE DNS_GLOBAL, ONLY: g
   USE LAGRANGE_GLOBAL, ONLY: jmin_part
 #ifdef USE_MPI
-   USE DNS_MPI, ONLY: ims_npro, ims_pro, ims_err
+   USE DNS_MPI, ONLY: ims_err
 #endif
 
    IMPLICIT NONE

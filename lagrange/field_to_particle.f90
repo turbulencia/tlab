@@ -15,7 +15,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   USE DNS_GLOBAL,     ONLY : imax,jmax,kmax, isize_particle
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
-  USE DNS_MPI,        ONLY:  ims_err, ims_pro, ims_size_p
+  USE DNS_MPI,        ONLY:  ims_err
 #endif
 
   IMPLICIT NONE

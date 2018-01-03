@@ -9,7 +9,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_particle, inb_particle_txc
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro, ims_pro
+  USE DNS_MPI, ONLY : ims_npro
 #endif
 
   IMPLICIT NONE

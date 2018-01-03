@@ -31,13 +31,13 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
 ! -------------------------------------------------------------------
   TINTEGER i
   CHARACTER(len=32) name
-  TINTEGER particle_number_loc
 #ifdef USE_MPI
   TINTEGER ims_npro_loc
   TINTEGER mpio_fh
   INTEGER (KIND=8) mpio_disp, count
   TINTEGER status(MPI_STATUS_SIZE)
 #else
+  TINTEGER particle_number_loc
   TINTEGER idummy
 #endif
 

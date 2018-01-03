@@ -41,7 +41,7 @@ SUBROUTINE PARTICLE_TO_FIELD_SEND_RECV_EAST(f_buffer_1,f_buffer_2, field )
 #include "mpif.h"
 
   TINTEGER source_east
-  TINTEGER dest_west, dest_east, dest_south, dest_north
+  TINTEGER dest_east
   TINTEGER l
   TINTEGER mpireq(ims_npro*2)
   TINTEGER status(MPI_STATUS_SIZE, ims_npro*2)

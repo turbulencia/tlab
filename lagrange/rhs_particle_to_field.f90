@@ -25,7 +25,7 @@ SUBROUTINE RHS_PARTICLE_TO_FIELD(l_q,particle_property, wrk1d, field)
   USE DNS_GLOBAL, ONLY: isize_particle
   USE LAGRANGE_GLOBAL, ONLY: jmin_part, particle_number
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY: ims_size_p, ims_npro, ims_pro , ims_pro_i, ims_pro_k, ims_err
+  USE DNS_MPI, ONLY: ims_size_p, ims_pro, ims_pro_i, ims_pro_k
 #endif
 
   IMPLICIT NONE
@@ -40,12 +40,18 @@ SUBROUTINE RHS_PARTICLE_TO_FIELD(l_q,particle_property, wrk1d, field)
   TREAL, DIMENSION(*),intent(in)         ::wrk1d
   TREAL length_g_p(6), cube_g_p(4)
   TINTEGER  gridpoint(6)
-  TINTEGER i 
+  TINTEGER i, particle_number_local 
   TREAL particle_local_grid_posx, particle_local_grid_posy, particle_local_grid_posz
 
 #ifdef USE_MPI
+  particle_number_local = ims_size_p(ims_pro+1)
+#else
+  particle_number_local = particle_number
+#endif
 
-  DO i=1,ims_size_p(ims_pro+1)
+#ifdef USE_MPI
+
+  DO i=1,particle_number_local
 
      particle_local_grid_posx = l_q(i,1)/wrk1d(1) + 1 - ims_pro_i*imax
      particle_local_grid_posy = ((l_q(i,2)-g(2)%nodes(jmin_part))/wrk1d(2))+jmin_part  
@@ -140,7 +146,7 @@ SUBROUTINE RHS_PARTICLE_TO_FIELD(l_q,particle_property, wrk1d, field)
 
 #else
 
-  DO i=1,particle_number
+  DO i=1,particle_number_local
 
      particle_local_grid_posx = l_q(i,1)/wrk1d(1) + 1 
      particle_local_grid_posy = ((l_q(i,2)-g(2)%nodes(jmin_part))/wrk1d(2))+jmin_part  
@@ -237,6 +243,6 @@ SUBROUTINE RHS_PARTICLE_TO_FIELD(l_q,particle_property, wrk1d, field)
 
   END DO
 #endif
-  
+
   RETURN
 END SUBROUTINE RHS_PARTICLE_TO_FIELD
