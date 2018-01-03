@@ -113,7 +113,7 @@ SUBROUTINE SCAL_READ_LOCAL(inifile)
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[Discrete]')
-  CALL IO_WRITE_ASCII(bakfile, '#Type=<Varicose/Sinuous/Gaussian>')
+  CALL IO_WRITE_ASCII(bakfile, '#Type=<Varicose/Sinuous/Gaussian/Step>')
   CALL IO_WRITE_ASCII(bakfile, '#2DAmpl=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#3DAmpl=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#2DPhi=<value>')
@@ -146,12 +146,15 @@ SUBROUTINE SCAL_READ_LOCAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'varicose' ) THEN; imode_discrete = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sinuous'  ) THEN; imode_discrete = 2
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'gaussian' ) THEN; imode_discrete = 3
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'step'     ) THEN; imode_discrete = 4
   ELSE
      CALL IO_WRITE_ASCII(efile, 'SCAL_READ_LOCAL. Error in Discrete.Type.')
      CALL DNS_STOP(DNS_ERROR_INFDISCR)
   ENDIF
 
   CALL SCANINIREAL(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', delta_discrete)
+
+  CALL SCANINIREAL(bakfile, inifile, 'Discrete', 'ThickStep',  '-1.0', delta_step)
 
   RETURN
 END SUBROUTINE SCAL_READ_LOCAL

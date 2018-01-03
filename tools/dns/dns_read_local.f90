@@ -997,7 +997,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[Discrete]')
-  CALL IO_WRITE_ASCII(bakfile, '#Type=<Varicose/Sinuous/Gaussian>')
+  CALL IO_WRITE_ASCII(bakfile, '#Type=<Varicose/Sinuous/Gaussian/Step>')
   CALL IO_WRITE_ASCII(bakfile, '#2DAmpl=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#3DAmpl=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#2DPhi=<value>')
@@ -1027,6 +1027,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'varicose' ) THEN; ifrcdsc_mode = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sinuous'  ) THEN; ifrcdsc_mode = 2
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'gaussian' ) THEN; ifrcdsc_mode = 3
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'step'     ) THEN; ifrcdsc_mode = 4
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Discrete.Type.')
      CALL DNS_STOP(DNS_ERROR_INFDISCR)

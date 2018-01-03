@@ -28,7 +28,7 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
   TINTEGER idummy, idsp,kdsp, io_sizes(5)
   TREAL wx,wz, wxloc,wzloc, dummy, ycenter, thick_loc,delta_loc,mean_loc
   TREAL AVG_IK, FLOW_SHEAR_TEMPORAL
-  TREAL xcenter,zcenter,rcenter, amplify
+  TREAL xcenter,zcenter,rcenter, amplify, axloc
 
   CHARACTER*32 varname
 
@@ -86,6 +86,35 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
 
      ELSE IF ( imode_discrete .EQ. 3 ) THEN ! Gaussian; completed below with modulation
         disp = A2d(1)
+
+     ELSE IF ( imode_discrete .EQ. 4 ) THEN ! Smoothed step funtion Tanh(a*Cos(\xi/b))
+        wx = C_2_R*C_PI_R /g(1)%scale
+        wz = C_2_R*C_PI_R /g(3)%scale
+
+! 1D perturbation along X
+        DO inx2d = 1,nx2d
+           wxloc = M_REAL(inx2d)*wx
+           IF ( delta_step .LE. C_0_R ) THEN; axloc = C_BIG_R;
+           ELSE; axloc = C_2_R /( wxloc *delta_step ); ENDIF
+           DO k = 1,kmax; DO i = 1,imax
+              disp(i,k) = disp(i,k) + A2d(inx2d) *TANH( axloc &
+                                     *COS( wxloc*g(1)%nodes(idsp+i) +Phix2d(inx2d) ) )
+           ENDDO; ENDDO
+        ENDDO
+
+! 2D perturbation along X and Z
+        IF (g(3)%size .GT. 1) THEN
+           DO inx3d = 1,nx3d; DO inz3d = 1,nz3d
+              wxloc = M_REAL(inx3d)*wx; wzloc = M_REAL(inz3d)*wz
+              axloc = C_2_R /( wxloc *delta_step )
+!              azloc = C_2_R /( wzloc *delta_step )
+              DO k = 1,kmax; DO i = 1,imax
+                 disp(i,k) = disp(i,k) + A3d(inx3d) * TANH( axloc &
+                                        *COS( wxloc*g(1)%nodes(idsp+i) +Phix3d(inx3d) ) &
+                                        *COS( wzloc*g(3)%nodes(kdsp+k) +Phiz3d(inz3d) ) )
+              ENDDO; ENDDO
+           ENDDO; ENDDO
+        ENDIF
 
      ENDIF
 
