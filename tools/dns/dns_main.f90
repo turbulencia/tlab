@@ -161,7 +161,7 @@ PROGRAM DNS
      isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))
   ENDIF
   IF ( icalc_part .EQ. 1 .AND. isize_trajectory .GT. 0 ) THEN
-     isize_wrk3d = MAX(isize_wrk3d,nitera_save*isize_trajectory*inb_trajectory)
+     isize_wrk3d = MAX(isize_wrk3d,nitera_save*(1+isize_trajectory))
   ENDIF
 
 #ifdef LES

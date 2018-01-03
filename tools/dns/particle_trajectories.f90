@@ -42,11 +42,12 @@ SUBROUTINE PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
 
 !#######################################################################
   isize_time = nitera_save
-  
-  WRITE(str,*) isize_trajectory*isize_time; line = 'Allocating array l_trajectories of size '//TRIM(ADJUSTL(str))//'x'
+
+! Adding space for saving the time
+  WRITE(str,*) (isize_trajectory+1)*isize_time; line = 'Allocating array l_trajectories of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) inb_trajectory; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(l_trajectories(inb_trajectory,isize_trajectory,isize_time),stat=ierr)
+  ALLOCATE(l_trajectories(isize_trajectory+1,isize_time,inb_trajectory),stat=ierr)
   IF ( ierr .NE. 0 ) THEN
      CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_trajectories.')
      CALL DNS_STOP(DNS_ERROR_ALLOC)
@@ -61,7 +62,8 @@ SUBROUTINE PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
   ENDIF
   
 ! Initialize; track only isize_trajectory particles 
-  IF      ( itrajectory .EQ. LAG_TRAJECTORY_FIRST   ) THEN ! Track first isize_trajectory particles
+  IF      ( itrajectory .EQ. LAG_TRAJECTORY_FIRST .OR. &
+            itrajectory .EQ. LAG_TRAJECTORY_VORTICITY ) THEN ! Track first isize_trajectory particles
      DO j=1,isize_trajectory              
         l_trajectories_tags(j) = INT(j, KIND=8)
      ENDDO
@@ -98,6 +100,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_q,l_hq,l_txc,l_tags,l_co
 
   USE DNS_TYPES, ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL,ONLY : isize_field, imax,jmax,kmax
+  USE DNS_GLOBAL,ONLY : rtime
   
   IMPLICIT NONE
 
@@ -151,13 +154,20 @@ SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_q,l_hq,l_txc,l_tags,l_co
   
 ! -------------------------------------------------------------------
 ! Accumulate time
-
+#ifdef USE_MPI
+  IF ( ims_pro .EQ. 0 ) THEN
+#endif
+     l_trajectories(1,counter,1:nvar) = rtime
+#ifdef USE_MPI
+  ENDIF
+#endif
+  
 ! Accumulating the data
   DO i = 1,particle_number_local
      DO j = 1,isize_trajectory
         IF ( l_tags(i) .EQ. l_trajectories_tags(j) ) THEN
            DO iv = 1,nvar
-              l_trajectories(iv,j,counter) = data(iv)%field(i)
+              l_trajectories(1+j,counter,iv) = data(iv)%field(i)
            ENDDO
         ENDIF
      ENDDO
@@ -177,20 +187,22 @@ SUBROUTINE PARTICLE_TRAJECTORIES_WRITE(fname, wrk3d)
 #endif
   
   CHARACTER*(*) fname
-  TREAL, DIMENSION(inb_trajectory,isize_trajectory,isize_time) :: wrk3d
+  TREAL, DIMENSION(1+isize_trajectory,isize_time) :: wrk3d
 
 ! -------------------------------------------------------------------
   CHARACTER(len=32) name
-
+  TINTEGER iv
+  
 !#######################################################################
+  DO iv = 1,inb_trajectory
 #ifdef USE_MPI
      wrk3d = C_0_R
-     CALL MPI_REDUCE(l_trajectories, wrk3d, inb_trajectory*isize_trajectory*isize_time, MPI_REAL8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
+     CALL MPI_REDUCE(l_trajectories(1,1,iv), wrk3d, (1+isize_trajectory)*isize_time, MPI_REAL8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
      CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
      IF(ims_pro .EQ. 0) THEN
 #endif
-
-        name = fname
+        
+        WRITE(name,*) iv; name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(name))
 #define LOC_UNIT_ID 115
 #define LOC_STATUS 'unknown'        
 #include "dns_open_file.h"
@@ -198,15 +210,17 @@ SUBROUTINE PARTICLE_TRAJECTORIES_WRITE(fname, wrk3d)
 #ifdef USE_MPI
         WRITE(LOC_UNIT_ID) SNGL(wrk3d)
 #else        
-        WRITE(LOC_UNIT_ID) SNGL(l_trajectories)
+        WRITE(LOC_UNIT_ID) SNGL(l_trajectories(:,:,iv))
 #endif
         CLOSE(LOC_UNIT_ID)
 #ifdef USE_MPI
      END IF
 #endif
-     l_trajectories = C_0_R
-     counter        = 0
-
+  ENDDO
+  
+  l_trajectories = C_0_R
+  counter        = 0
+  
   RETURN
 END SUBROUTINE PARTICLE_TRAJECTORIES_WRITE
 
