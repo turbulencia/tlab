@@ -13,7 +13,6 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_wrk1d, imode_eqns
   USE DNS_GLOBAL, ONLY : rbackground
-  USE DNS_GLOBAL, ONLY : visc
 
 IMPLICIT NONE
 

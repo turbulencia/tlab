@@ -19,7 +19,7 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
   USE DNS_LOCAL, ONLY : ilimit_scal, s_bound_min,s_bound_max
   USE DNS_LOCAL, ONLY : logs_data
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro
+  USE DNS_MPI, ONLY : ims_pro, ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -32,14 +32,14 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
   TREAL r_min_loc,r_max_loc, p_min_loc,p_max_loc, dummy
-  TINTEGER ij, is
-  TINTEGER id,jd,kd, idummy(1)
+  TINTEGER ij, is, idummy(3)
   CHARACTER*128 line
   CHARACTER*32 str
   
 ! Pointers to existing allocated space
-  TARGET q
-  TREAL, DIMENSION(:), POINTER :: rho, p
+  TARGET q, wrk3d
+  TREAL, DIMENSION(:),     POINTER :: rho, p
+  TREAL, DIMENSION(:,:,:), POINTER :: loc_max
 
 ! ###################################################################
 ! Scalars
@@ -68,49 +68,40 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
         
         CALL MINMAX(imax,jmax,kmax, txc(1,1), logs_data(11),logs_data(10))
         logs_data(10)=-logs_data(10); logs_data(11)=-logs_data(11)
-        
+
         IF ( MAX(ABS(logs_data(10)),ABS(logs_data(11))) .GT. d_bound_max ) THEN
            CALL IO_WRITE_ASCII(efile, 'DNS_CONTROL. Dilatation out of bounds.')
            logs_data(1) = DNS_ERROR_DILATATION
 
 ! Locating the points where the maximum dilatation occurs
            wrk3d = -txc(:,1)
+           loc_max(1:imax,1:jmax,1:kmax) => wrk3d(1:imax*jmax*kmax)
            
            dummy = MAXVAL(wrk3d)
            IF ( ABS(dummy) .GT. d_bound_max ) THEN
-              idummy = MAXLOC(wrk3d)
-              kd     = (idummy(1)-1) /(imax*jmax) +1
-              idummy(1) = MOD(idummy(1)-1, imax*jmax) +1
-              jd     = (idummy(1)-1) /imax +1
-              id     = MOD(idummy(1)-1, imax) +1
+              idummy = MAXLOC(loc_max)
               WRITE(str,1000) dummy; line = 'Maximum dilatation '//TRIM(ADJUSTL(str))
 #ifdef USE_MPI
-              WRITE(str,*) ims_pro; line = TRIM(ADJUSTL(line))//' at task '//TRIM(ADJUSTL(str))
-              WRITE(str,*) id; line = TRIM(ADJUSTL(line))//' and node '//TRIM(ADJUSTL(str))
-#else
-              WRITE(str,*) id; line = TRIM(ADJUSTL(line))//' at node '//TRIM(ADJUSTL(str))
+              idummy(1) = idummy(1) +ims_offset_i 
+              idummy(3) = idummy(3) +ims_offset_k 
 #endif              
-              WRITE(str,*) jd; line = TRIM(ADJUSTL(line))//':'//TRIM(ADJUSTL(str))
-              WRITE(str,*) kd; line = TRIM(ADJUSTL(line))//':'//TRIM(ADJUSTL(str))//'.' 
+              WRITE(str,*) idummy(1); line = TRIM(ADJUSTL(line))//' at grid node '//TRIM(ADJUSTL(str))
+              WRITE(str,*) idummy(2); line = TRIM(ADJUSTL(line))//':'//TRIM(ADJUSTL(str))
+              WRITE(str,*) idummy(3); line = TRIM(ADJUSTL(line))//':'//TRIM(ADJUSTL(str))//'.' 
               CALL IO_WRITE_ASCII_ALL(lfile, line)
            ENDIF
            
            dummy = MINVAL(wrk3d)
            IF ( ABS(dummy) .GT. d_bound_max ) THEN
-              idummy = MINLOC(wrk3d)
-              kd     = (idummy(1)-1) /(imax*jmax) +1
-              idummy(1) = MOD(idummy(1)-1, imax*jmax) +1
-              jd     = (idummy(1)-1) /imax +1
-              id     = MOD(idummy(1)-1, imax) +1
+              idummy = MINLOC(loc_max)
               WRITE(str,1000) dummy; line = 'Minimum dilatation '//TRIM(ADJUSTL(str))
 #ifdef USE_MPI
-              WRITE(str,*) ims_pro; line = TRIM(ADJUSTL(line))//' at task '//TRIM(ADJUSTL(str))
-              WRITE(str,*) id; line = TRIM(ADJUSTL(line))//' and node '//TRIM(ADJUSTL(str))
-#else
-              WRITE(str,*) id; line = TRIM(ADJUSTL(line))//' at node '//TRIM(ADJUSTL(str))
+              idummy(1) = idummy(1) +ims_offset_i 
+              idummy(3) = idummy(3) +ims_offset_k 
 #endif              
-              WRITE(str,*) jd; line = TRIM(ADJUSTL(line))//':'//TRIM(ADJUSTL(str))
-              WRITE(str,*) kd; line = TRIM(ADJUSTL(line))//':'//TRIM(ADJUSTL(str))//'.' 
+              WRITE(str,*) idummy(1); line = TRIM(ADJUSTL(line))//' at grid node '//TRIM(ADJUSTL(str))
+              WRITE(str,*) idummy(2); line = TRIM(ADJUSTL(line))//':'//TRIM(ADJUSTL(str))
+              WRITE(str,*) idummy(3); line = TRIM(ADJUSTL(line))//':'//TRIM(ADJUSTL(str))//'.' 
               CALL IO_WRITE_ASCII_ALL(lfile, line)
            ENDIF
 
