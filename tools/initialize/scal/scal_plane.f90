@@ -95,7 +95,7 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
         DO inx2d = 1,nx2d
            wxloc = M_REAL(inx2d)*wx
            IF ( delta_step .LE. C_0_R ) THEN; axloc = C_BIG_R;
-           ELSE; axloc = C_2_R /( wxloc *delta_step ); ENDIF
+           ELSE; axloc = C_05_R /( wxloc *delta_step ); ENDIF
            DO k = 1,kmax; DO i = 1,imax
               disp(i,k) = disp(i,k) + A2d(inx2d) *TANH( axloc &
                                      *COS( wxloc*g(1)%nodes(idsp+i) +Phix2d(inx2d) ) )
@@ -106,8 +106,8 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
         IF (g(3)%size .GT. 1) THEN
            DO inx3d = 1,nx3d; DO inz3d = 1,nz3d
               wxloc = M_REAL(inx3d)*wx; wzloc = M_REAL(inz3d)*wz
-              axloc = C_2_R /( wxloc *delta_step )
-!              azloc = C_2_R /( wzloc *delta_step )
+              axloc = C_05_R /( wxloc *delta_step )
+!              azloc = C_05_R /( wzloc *delta_step )
               DO k = 1,kmax; DO i = 1,imax
                  disp(i,k) = disp(i,k) + A3d(inx3d) * TANH( axloc &
                                         *COS( wxloc*g(1)%nodes(idsp+i) +Phix3d(inx3d) ) &
