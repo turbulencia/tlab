@@ -11,7 +11,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
   USE DNS_TYPES,      ONLY : pointers_dt
   USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
   USE DNS_GLOBAL,     ONLY : g
-  USE LAGRANGE_GLOBAL,ONLY : particle_number
+  USE LAGRANGE_GLOBAL,ONLY : particle_number, particle_number_local
 
 #ifdef USE_MPI
   USE DNS_GLOBAL, ONLY : imax,kmax
@@ -27,7 +27,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
 
 ! -------------------------------------------------------------------
   TREAL dummy, right_limit, upper_limit
-  TINTEGER counter_swap, particle_number_local
+  TINTEGER counter_swap
   INTEGER(8) idummy
   TINTEGER i, j, k 
 

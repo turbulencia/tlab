@@ -7,7 +7,7 @@ MODULE PARTICLE_TRAJECTORIES
   USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_GLOBAL,     ONLY : inb_flow_array, inb_scal_array
   USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL,ONLY : particle_number
+  USE LAGRANGE_GLOBAL,ONLY : particle_number, particle_number_local
   USE LAGRANGE_GLOBAL,ONLY : isize_trajectory, inb_trajectory, isize_l_comm, itrajectory
 #ifdef USE_MPI
   USE DNS_MPI,        ONLY : ims_size_p, ims_pro, ims_err
@@ -113,7 +113,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_q,l_hq,l_txc,l_tags,l_co
   TREAL,      DIMENSION(*)                        :: wrk2d, wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER particle_number_local, i, j
+  TINTEGER i, j
   TINTEGER iv, nvar
   TYPE(pointers3d_dt), DIMENSION(inb_trajectory) :: data_in
   TYPE(pointers_dt),   DIMENSION(inb_trajectory) :: data

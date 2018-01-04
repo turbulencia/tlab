@@ -51,8 +51,7 @@ PROGRAM LAGRANGE_INI_TRAJEC
 #endif
 
 ! -------------------------------------------------------------------
-
-  TINTEGER  ierr,isize_wrk3d, i
+  TINTEGER  ierr,isize_wrk3d
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:),      ALLOCATABLE, SAVE :: wrk1d,wrk2d, wrk3d
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE :: txc
@@ -79,7 +78,7 @@ PROGRAM LAGRANGE_INI_TRAJEC
 
 #ifdef USE_MPI
   CHARACTER*64 fname
-  TINTEGER  particle_number_each, particle_pos
+  TINTEGER  particle_number_each, particle_pos, i
   TLONGINTEGER dummy_int1, dummy_int2 ,dummy_int3, dummy
 #endif
   inifile = 'dns.ini'
@@ -145,27 +144,6 @@ all_fake_liquid(:) = C_0_R
   !CREATE THE RANDOM PARTICLE FIELD
   !#######################################################################
   CALL PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
-
-  !#######################################################################
-  !CREATE THE CORRESPONDING TAGS
-  !#######################################################################
-#ifdef USE_MPI
-  particle_number_each=int(particle_number/INT(ims_npro, KIND=8)) 
-  
-  dummy_int1=INT(ims_pro, KIND=8)
-  dummy_int2=particle_number_each
-
-  dummy_int3=dummy_int1*dummy_int2
-
-  DO i=1,particle_number_each
-    l_tags(i)=INT(i, KIND=8)+dummy_int3
-  END DO
-#else
-
-  DO i=1,particle_number
-    l_tags(i)=INT(i, KIND=8)
-  END DO
-#endif
 
 #ifdef USE_MPI
   !#######################################################################

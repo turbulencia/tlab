@@ -34,7 +34,7 @@ SUBROUTINE PARTICLE_TIME_RESIDENCE(dtime, l_q, l_hq)
 
   TREAL dtime
   TREAL, DIMENSION(isize_particle,inb_particle) :: l_q, l_hq
-  TINTEGER l_i, particle_number_local
+  TINTEGER l_i
 
 #ifdef USE_MPI
   particle_number_local = ims_size_p(ims_pro+1)

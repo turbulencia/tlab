@@ -37,7 +37,7 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, wrk2d,wrk3d, l_txc, l_tags, l_hq, l_
   TREAL, DIMENSION(isize_particle), TARGET      :: l_txc
   TREAL, DIMENSION(*)                           :: l_comm
   INTEGER(8), DIMENSION(*)                      :: l_tags
-  TINTEGER is, l_i, particle_number_local
+  TINTEGER is, l_i
 
   TINTEGER nvar
   TYPE(pointers3d_dt), DIMENSION(1) :: data

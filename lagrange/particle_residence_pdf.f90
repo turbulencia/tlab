@@ -21,7 +21,7 @@
 SUBROUTINE PARTICLE_RESIDENCE_PDF(fname,l_hq,l_q)
 
   USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL, ONLY :  particle_number
+  USE LAGRANGE_GLOBAL, ONLY :  particle_number, particle_number_local
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -36,7 +36,7 @@ SUBROUTINE PARTICLE_RESIDENCE_PDF(fname,l_hq,l_q)
   TREAL, DIMENSION(:),   ALLOCATABLE         :: residence_counter_interval
   CHARACTER(*)  ::  fname
   TINTEGER i,j
-  TINTEGER residence_tmax, residence_nbins, particle_number_local
+  TINTEGER residence_tmax, residence_nbins
   TREAL residence_pdf_interval
 #ifdef USE_MPI
   TLONGINTEGER, DIMENSION(:,:),   ALLOCATABLE         :: residence_bins_local

@@ -97,6 +97,12 @@ PROGRAM LAGRANGE_POS_TRAJEC
   dummy_proc(:) = C_0_R
   all_dummy_proc(:) = C_0_R
   
+  
+#ifdef USE_MPI
+  particle_number_local = ims_size_p(ims_pro+1)
+#else
+  particle_number_local = INT(particle_number)
+#endif
 
   !#######################################################################
   !READ THE (FIRST) FILE
@@ -124,7 +130,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
   !#######################################################################
   !SEARCH FOR LARGEST PARTICLES
   !#######################################################################
-  DO i=1,ims_size_p(ims_pro+1)
+  DO i=1,particle_number_local
     DO j=1,isize_trajectory
       IF (l_tags(i) .EQ. l_trajectories_tags(j)) THEN
         l_trajectories(1,j)=l_q(i,1)

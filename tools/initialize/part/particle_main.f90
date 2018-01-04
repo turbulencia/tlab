@@ -12,9 +12,6 @@ PROGRAM INIPART
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
-#ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro, ims_npro, ims_size_p
-#endif
   
   IMPLICIT NONE
 #include "integers.h"
@@ -23,7 +20,7 @@ PROGRAM INIPART
 #endif
 
 ! -------------------------------------------------------------------
-  TINTEGER  ierr,isize_wrk3d, i, particle_number_local
+  TINTEGER  ierr,isize_wrk3d
 
   TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE :: q,s,txc
@@ -36,8 +33,6 @@ PROGRAM INIPART
   CHARACTER*32 inifile
   CHARACTER*64 str, line
 
-  TLONGINTEGER count
-  
 !########################################################################
 !########################################################################
   inifile = 'dns.ini'
@@ -90,22 +85,6 @@ PROGRAM INIPART
 ! Initialize particle information
 ! -------------------------------------------------------------------
   CALL PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
-
-#ifdef USE_MPI
-  particle_number_local = ims_size_p(ims_pro+1)
-#else
-  particle_number_local = INT(particle_number)
-#endif
-
-  count = 0
-#ifdef USE_MPI
-  DO i = 1,ims_pro
-     count = count +INT(ims_size_p(i),KIND=8)
-  ENDDO
-#endif
-  DO i = 1,particle_number_local
-     l_tags(i) = INT(i, KIND=8) +count
-  END DO
 
   CALL IO_WRITE_PARTICLE(TRIM(ADJUSTL(tag_part))//'ics', l_tags, l_q)
 

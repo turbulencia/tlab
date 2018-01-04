@@ -80,7 +80,7 @@ PROGRAM LAGRANGE_PDF
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'End',        '0',  nitera_last )
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Restart',    '50', nitera_save )
 
-  number_of_bins = particle_pdf_max/particle_pdf_interval
+  number_of_bins = INT(particle_pdf_max/particle_pdf_interval)
   inb_particle_txc = 1 
 
 #include "dns_alloc_larrays.h"
@@ -144,7 +144,7 @@ PROGRAM LAGRANGE_PDF
 ! ######################################################################
 ! Save particle pathlines for particle_pdf
 ! ######################################################################
-     number_of_bins = particle_pdf_max/particle_pdf_interval
+     number_of_bins = INT(particle_pdf_max/particle_pdf_interval)
 
      WRITE(fname,*) i; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
      CALL PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)

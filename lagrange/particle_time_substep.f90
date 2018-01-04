@@ -41,7 +41,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   TREAL,      DIMENSION(isize_l_comm), TARGET        :: l_comm
 
 ! -------------------------------------------------------------------
-  TINTEGER is, i, particle_number_local
+  TINTEGER is, i
 
 #ifdef USE_MPI
   TREAL, DIMENSION(:), POINTER :: p_buffer_1, p_buffer_2

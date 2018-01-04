@@ -57,7 +57,7 @@ PROGRAM LAGRANGE_TRAJEC
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_tags
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: tag_big_part
 
- TINTEGER nitera_last
+  TINTEGER nitera_last
 
   CHARACTER*32 inifile
   CHARACTER*64 str,fname
@@ -137,14 +137,14 @@ PROGRAM LAGRANGE_TRAJEC
     IF (.NOT. swapped) EXIT
   ENDDO
 
-
 #ifdef USE_MPI
-  !DO k=isize_trajectory+1,ims_size_p(ims_pro+1),1
-  DO k=1,ims_size_p(ims_pro+1),1
+  particle_number_local = ims_size_p(ims_pro+1)
 #else
-  !DO k=isize_trajectory+1,particle_number,1
-  DO k=1,particle_number,1
+  particle_number_local = INT(particle_number)
 #endif
+
+  !DO k=isize_trajectory+1,particle_number_local,1
+  DO k=1,particle_number_local,1
     IF (l_q(k,5) .GT. big_part(1))THEN
       big_part(1) = l_q(k,5)
       tag_big_part(1) = l_tags(k)

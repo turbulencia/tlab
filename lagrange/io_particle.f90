@@ -14,7 +14,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
 
   USE DNS_CONSTANTS,   ONLY : lfile, efile
   USE DNS_GLOBAL,      ONLY : isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL, ONLY : particle_number
+  USE LAGRANGE_GLOBAL, ONLY : particle_number, particle_number_local
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
 #endif
@@ -86,6 +86,9 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
      CALL DNS_STOP(DNS_ERROR_PARTICLE)
   ENDIF
 
+! Number of particles in local processor
+  particle_number_local = ims_size_p(ims_pro+1)
+
 ! -------------------------------------------------------------------
 ! Use MPI-IO to read particle tags in each processor
 ! -------------------------------------------------------------------
@@ -121,6 +124,10 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
   ENDIF
   READ(LOC_UNIT_ID) l_tags
   CLOSE(LOC_UNIT_ID)
+
+! For homogeneity with MPI version
+! If we need more than 4 bytes, we should be using MPI...
+  particle_number_local = INT(particle_number)
 
 !  IF ( PRESENT(l_q) ) THEN
      DO i = 1,inb_particle

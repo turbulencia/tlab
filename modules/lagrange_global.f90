@@ -10,6 +10,7 @@ MODULE LAGRANGE_GLOBAL
 ! ###################################################################
   TINTEGER      :: ilagrange       !Type of particle
   TLONGINTEGER  :: particle_number  !particle number parameter
+  TINTEGER      :: particle_number_local
   TINTEGER      :: particle_rnd_mode !which initializing mode
   TINTEGER      :: residence_reset  !if reseidence l_q should be reset
   TINTEGER      :: nzone_max  !maximum size of vector p_buffer in particle_send_recv

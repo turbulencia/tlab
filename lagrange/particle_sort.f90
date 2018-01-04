@@ -23,7 +23,7 @@ SUBROUTINE PARTICLE_SORT(x_or_z, particle, particle_id, h_particle, &
   USE DNS_GLOBAL, ONLY : imax,kmax
   USE DNS_GLOBAL, ONLY : isize_particle, inb_particle
   USE DNS_GLOBAL, ONLY : g
-  
+  USE LAGRANGE_GLOBAL, ONLY:particle_number_local  
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k, ims_pro, ims_size_p
 #endif
@@ -39,7 +39,7 @@ SUBROUTINE PARTICLE_SORT(x_or_z, particle, particle_id, h_particle, &
   TREAL dx_grid, dz_grid
   TREAL dummy, lower_limit, upper_limit
   TINTEGER nzone_west_south, nzone_east_north
-  TINTEGER counter_swap, particle_number_local
+  TINTEGER counter_swap
   INTEGER(8) dummy_2
   TINTEGER i, j, k
   

@@ -29,7 +29,6 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
   TINTEGER  i, j, is
-  TINTEGER  particle_number_local
   TINTEGER, ALLOCATABLE :: x_seed(:)
   TINTEGER size_seed
   
@@ -42,6 +41,8 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
   TYPE(pointers3d_dt), DIMENSION(2) :: data
   TYPE(pointers_dt),   DIMENSION(2) :: data_out
 
+  TLONGINTEGER count
+  
 !########################################################################
 #ifdef USE_MPI
   particle_number_local = INT( particle_number /INT(ims_npro, KIND=8) )
@@ -54,6 +55,17 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
   particle_number_local = INT(particle_number)
 
 #endif
+
+! Create tags
+  count = 0
+#ifdef USE_MPI
+  DO i = 1,ims_pro
+     count = count +INT(ims_size_p(i),KIND=8)
+  ENDDO
+#endif
+  DO i = 1,particle_number_local
+     l_tags(i) = INT(i, KIND=8) +count
+  END DO
   
 ! Generate seed - different seed for each processor
   CALL RANDOM_SEED(SIZE=size_seed)

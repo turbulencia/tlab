@@ -23,7 +23,7 @@ SUBROUTINE RHS_PARTICLE_TO_FIELD(l_q,particle_property, wrk1d, field)
   USE DNS_GLOBAL, ONLY: imax,jmax,kmax
   USE DNS_GLOBAL, ONLY: g
   USE DNS_GLOBAL, ONLY: isize_particle
-  USE LAGRANGE_GLOBAL, ONLY: jmin_part, particle_number
+  USE LAGRANGE_GLOBAL, ONLY: jmin_part, particle_number, particle_number_local
 #ifdef USE_MPI
   USE DNS_MPI, ONLY: ims_size_p, ims_pro, ims_pro_i, ims_pro_k
 #endif
@@ -40,7 +40,7 @@ SUBROUTINE RHS_PARTICLE_TO_FIELD(l_q,particle_property, wrk1d, field)
   TREAL, DIMENSION(*),intent(in)         ::wrk1d
   TREAL length_g_p(6), cube_g_p(4)
   TINTEGER  gridpoint(6)
-  TINTEGER i, particle_number_local 
+  TINTEGER i 
   TREAL particle_local_grid_posx, particle_local_grid_posy, particle_local_grid_posz
 
 #ifdef USE_MPI

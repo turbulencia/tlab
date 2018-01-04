@@ -33,7 +33,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
 
 ! -------------------------------------------------------------------
   TREAL dummy, dummy2
-  TINTEGER particle_number_local, bcs(2,2), nvar
+  TINTEGER bcs(2,2), nvar
   TINTEGER i
   TREAL delta_inv0, delta_inv2, delta_inv4
   
