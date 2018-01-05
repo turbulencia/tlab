@@ -30,7 +30,7 @@
 !#
 !########################################################################
 PROGRAM LAGRANGE_POS_TRAJEC
-
+  
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
@@ -80,10 +80,10 @@ PROGRAM LAGRANGE_POS_TRAJEC
 
 ! Get the local information from the dns.ini
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Start','0',  nitera_first)
-    
+
 
 #include "dns_alloc_larrays.h"
-  
+
 
   ALLOCATE(dummy_proc(isize_trajectory))
   ALLOCATE(all_dummy_proc(isize_trajectory)) 
@@ -96,77 +96,70 @@ PROGRAM LAGRANGE_POS_TRAJEC
   all_l_trajectories(:,:)=C_0_R
   dummy_proc(:) = C_0_R
   all_dummy_proc(:) = C_0_R
-  
-  
-#ifdef USE_MPI
-  particle_number_local = ims_size_p(ims_pro+1)
-#else
-  particle_number_local = INT(particle_number)
-#endif
 
-  !#######################################################################
-  !READ THE (FIRST) FILE
-  !#######################################################################
+!#######################################################################
+!READ THE (FIRST) FILE
+!#######################################################################
   WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
   CALL IO_READ_PARTICLE(fname, l_tags, l_q)
 
   IF (ims_pro .EQ. 0) THEN
-    fname = 'largest_particle'
-    WRITE(str,*) nitera_last;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
-    OPEN(unit=117, file=str, access='stream', form='unformatted')
-    READ(117) dummy_ims_npro   !is a integer
-    READ(117, POS=SIZEOFINT+1) dummy_isize_trajectory  !is an integer
-    READ(117, POS=SIZEOFINT*2+1) dummy_big_overall  !is real(8)
-    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectory) l_trajectories_tags ! attention is integer(8)
-    CLOSE(117)
+     fname = 'largest_particle'
+     WRITE(str,*) nitera_last;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
+     OPEN(unit=117, file=str, access='stream', form='unformatted')
+     READ(117) dummy_ims_npro   !is a integer
+     READ(117, POS=SIZEOFINT+1) dummy_isize_trajectory  !is an integer
+     READ(117, POS=SIZEOFINT*2+1) dummy_big_overall  !is real(8)
+     READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectory) l_trajectories_tags ! attention is integer(8)
+     CLOSE(117)
   ENDIF
 
-  !#######################################################################
-  !BROADCAST THE ID OF THE LARGEST PARTICLES
-  !#######################################################################
+!#######################################################################
+!BROADCAST THE ID OF THE LARGEST PARTICLES
+!#######################################################################
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
   CALL MPI_BCAST(l_trajectories_tags,isize_trajectory,MPI_INTEGER8,0,MPI_COMM_WORLD,ims_err)
 
-  !#######################################################################
-  !SEARCH FOR LARGEST PARTICLES
-  !#######################################################################
+!#######################################################################
+!SEARCH FOR LARGEST PARTICLES
+!#######################################################################
   DO i=1,particle_number_local
-    DO j=1,isize_trajectory
-      IF (l_tags(i) .EQ. l_trajectories_tags(j)) THEN
-        l_trajectories(1,j)=l_q(i,1)
-        l_trajectories(2,j)=l_q(i,2)
-        l_trajectories(3,j)=l_q(i,3)
-        dummy_proc(j)=ims_pro
-      ENDIF
-    ENDDO
-  ENDDO 
+     DO j=1,isize_trajectory
+        IF (l_tags(i) .EQ. l_trajectories_tags(j)) THEN
+           l_trajectories(1,j)=l_q(i,1)
+           l_trajectories(2,j)=l_q(i,2)
+           l_trajectories(3,j)=l_q(i,3)
+           dummy_proc(j)=ims_pro
+        ENDIF
+     ENDDO
+  ENDDO
 
-  !#######################################################################
-  !REDUCE ALL INFORMATION TO ROOT
-  !#######################################################################
+!#######################################################################
+!REDUCE ALL INFORMATION TO ROOT
+!#######################################################################
   CALL MPI_REDUCE(l_trajectories, all_l_trajectories, 3*isize_trajectory, MPI_REAL8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
   CALL MPI_REDUCE(dummy_proc, all_dummy_proc, isize_trajectory, MPI_INTEGER4, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
 
-  !#######################################################################
-  !WRITE DATA WITH ROOT
-  !#######################################################################
+!#######################################################################
+!WRITE DATA WITH ROOT
+!#######################################################################
 
   IF (ims_pro .EQ. 0) THEN
-    fname = 'pos_largest_particle_start'
-    WRITE(str,*) nitera_first;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
-    OPEN(unit=15, file=str, access='stream', form='unformatted')
-    INQUIRE(UNIT=15, POS=particle_pos) !would be 1
-    WRITE (15)  ims_npro  !header
-    INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
-    WRITE (15)  isize_trajectory  !header
-    INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
-    WRITE (15)  l_trajectories_tags
-    INQUIRE(UNIT=15, POS=particle_pos)  !409
-    WRITE (15)  all_l_trajectories
-    INQUIRE(UNIT=15, POS=particle_pos)  !would be 1609 with 50 numbers
-    WRITE (15)  all_dummy_proc
-    CLOSE(15)
+     fname = 'pos_largest_particle_start'
+     WRITE(str,*) nitera_first;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
+     OPEN(unit=15, file=str, access='stream', form='unformatted')
+     INQUIRE(UNIT=15, POS=particle_pos) !would be 1
+     WRITE (15)  ims_npro  !header
+     INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
+     WRITE (15)  isize_trajectory  !header
+     INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
+     WRITE (15)  l_trajectories_tags
+     INQUIRE(UNIT=15, POS=particle_pos)  !409
+     WRITE (15)  all_l_trajectories
+     INQUIRE(UNIT=15, POS=particle_pos)  !would be 1609 with 50 numbers
+     WRITE (15)  all_dummy_proc
+     CLOSE(15)
   ENDIF
 !    !Just for testing and as template
 !      IF (ims_pro .EQ. 0) THEN
@@ -180,7 +173,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
 
 #endif
 
-CALL DNS_END(0)
+  CALL DNS_END(0)
 
   STOP
-END PROGRAM LAGRANGE_POS_TRAJEC
+END PROGRAM

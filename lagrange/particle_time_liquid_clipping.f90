@@ -24,9 +24,6 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, wrk2d,wrk3d, l_txc, l_tags, l_hq, l_
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_particle, isize_particle
   USE DNS_GLOBAL, ONLY : isize_field, inb_scal_array
   USE LAGRANGE_GLOBAL
-#ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_size_p, ims_pro
-#endif
 
   IMPLICIT NONE
 
@@ -42,12 +39,6 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, wrk2d,wrk3d, l_txc, l_tags, l_hq, l_
   TINTEGER nvar
   TYPE(pointers3d_dt), DIMENSION(1) :: data
   TYPE(pointers_dt),   DIMENSION(1) :: data_out
-
-#ifdef USE_MPI
-  particle_number_local = ims_size_p(ims_pro+1)
-#else
-  particle_number_local = INT(particle_number)
-#endif
 
 ! ###################################################################
 ! IF negative liquid set lagrange liquid 0

@@ -15,9 +15,6 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
   USE DNS_GLOBAL, ONLY : visc, radiation
   USE LAGRANGE_GLOBAL
   USE THERMO_GLOBAL, ONLY : thermo_param
-#ifdef USE_MPI
-  USE DNS_MPI
-#endif
 
   IMPLICIT NONE
 #ifdef USE_MPI
@@ -43,12 +40,6 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
 ! #####################################################################
   bcs = 0
   
-#ifdef USE_MPI
-  particle_number_local = ims_size_p(ims_pro+1)
-#else
-  particle_number_local = INT(particle_number)
-#endif
-
 ! Setting pointers to velocity fields
   nvar = 0
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => q(:,1); data_out(nvar)%field => l_hq(:,1)

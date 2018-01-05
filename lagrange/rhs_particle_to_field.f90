@@ -23,9 +23,9 @@ SUBROUTINE RHS_PARTICLE_TO_FIELD(l_q,particle_property, wrk1d, field)
   USE DNS_GLOBAL, ONLY: imax,jmax,kmax
   USE DNS_GLOBAL, ONLY: g
   USE DNS_GLOBAL, ONLY: isize_particle
-  USE LAGRANGE_GLOBAL, ONLY: jmin_part, particle_number, particle_number_local
+  USE LAGRANGE_GLOBAL, ONLY: jmin_part, particle_number_local
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY: ims_size_p, ims_pro, ims_pro_i, ims_pro_k
+  USE DNS_MPI, ONLY: ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -44,18 +44,12 @@ SUBROUTINE RHS_PARTICLE_TO_FIELD(l_q,particle_property, wrk1d, field)
   TREAL particle_local_grid_posx, particle_local_grid_posy, particle_local_grid_posz
 
 #ifdef USE_MPI
-  particle_number_local = ims_size_p(ims_pro+1)
-#else
-  particle_number_local = particle_number
-#endif
-
-#ifdef USE_MPI
 
   DO i=1,particle_number_local
 
-     particle_local_grid_posx = l_q(i,1)/wrk1d(1) + 1 - ims_pro_i*imax
+     particle_local_grid_posx = l_q(i,1)/wrk1d(1) + 1 - ims_offset_i
      particle_local_grid_posy = ((l_q(i,2)-g(2)%nodes(jmin_part))/wrk1d(2))+jmin_part  
-     particle_local_grid_posz = l_q(i,3)/wrk1d(3) + 1 - ims_pro_k*kmax
+     particle_local_grid_posz = l_q(i,3)/wrk1d(3) + 1 - ims_offset_k
 
 !###################################################################
 !Calculating gridpoints AFTER particles are shifted

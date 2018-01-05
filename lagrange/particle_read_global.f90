@@ -52,7 +52,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
 
-  CALL SCANINILONGINT(bakfile, inifile, 'Lagrange', 'Particle_number', '0', particle_number  )
+  CALL SCANINILONGINT(bakfile, inifile, 'Lagrange', 'Particle_number', '0', particle_number_total  )
   CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Particle_bumper', '2.0', memory_factor  )
   CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Jmax_part', '1', jmax_part  )
   CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Jmin_part', '1', jmin_part  )
@@ -102,7 +102,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   ENDIF
 
   CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'TrajectoryNumber', '0', isize_trajectory)
-  IF ( isize_trajectory .GT. particle_number ) THEN
+  IF ( isize_trajectory .GT. particle_number_total ) THEN
      CALL IO_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. Number of trajectories must be less or equal than number of particles.')
      CALL DNS_STOP(DNS_ERROR_CALCTRAJECTORIES)
   ENDIF
@@ -115,13 +115,13 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   CALL PARTICLE_TYPE_INITIALIZE
 
 #ifdef USE_MPI
-  isize_particle = INT( particle_number /INT(ims_npro, KIND=8) )
-  IF ( MOD(particle_number, INT(ims_npro, KIND=8)) .NE. 0 ) THEN ! All PEs with equal memory
+  isize_particle = INT( particle_number_total /INT(ims_npro, KIND=8) )
+  IF ( MOD(particle_number_total, INT(ims_npro, KIND=8)) .NE. 0 ) THEN ! All PEs with equal memory
      isize_particle = isize_particle +1
   ENDIF
   isize_particle = isize_particle *INT( memory_factor *100 ) /100
 #else
-  isize_particle = INT(particle_number)
+  isize_particle = INT(particle_number_total)
 #endif
 
   IF ( itrajectory .NE. LAG_TRAJECTORY_NONE ) THEN

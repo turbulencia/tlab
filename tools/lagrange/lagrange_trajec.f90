@@ -26,7 +26,7 @@
 !#
 !########################################################################
 PROGRAM LAGRANGE_TRAJEC
-
+  
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
@@ -79,37 +79,37 @@ PROGRAM LAGRANGE_TRAJEC
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
 #endif
- 
+
 ! Get the local information from the dns.ini
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'End',        '0',  nitera_last )
-    
+
 
 #include "dns_alloc_larrays.h"
-  
 
-  
+
+
   ALLOCATE(big_part(isize_trajectory)) 
   ALLOCATE(tag_big_part(isize_trajectory)) 
 #ifdef USE_MPI
   IF (ims_pro .EQ. 0) THEN
-    ALLOCATE(big_all(isize_trajectory*ims_npro)) 
-    ALLOCATE(big_overall(isize_trajectory)) 
-    ALLOCATE(tag_big_all(isize_trajectory*ims_npro)) 
-    ALLOCATE(tag_big_overall(isize_trajectory)) 
+     ALLOCATE(big_all(isize_trajectory*ims_npro)) 
+     ALLOCATE(big_overall(isize_trajectory)) 
+     ALLOCATE(tag_big_all(isize_trajectory*ims_npro)) 
+     ALLOCATE(tag_big_overall(isize_trajectory)) 
   ENDIF
 
 #endif
-  
 
-  !#######################################################################
-  !READ THE (LAST) FILE
-  !#######################################################################
+
+!#######################################################################
+!READ THE (LAST) FILE
+!#######################################################################
   WRITE(fname,*) nitera_last; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
   CALL IO_READ_PARTICLE(fname, l_tags, l_q)
 
-  !#######################################################################
-  !Every processor searches for the largest particles
-  !#######################################################################
+!#######################################################################
+!Every processor searches for the largest particles
+!#######################################################################
 
   big_part(1:isize_trajectory) = l_q(1:isize_trajectory,5)
   tag_big_part(1:isize_trajectory) = l_tags(1:isize_trajectory)
@@ -120,52 +120,46 @@ PROGRAM LAGRANGE_TRAJEC
 !  ENDIF
 
   DO j= isize_trajectory-1,1,-1 
-    swapped = .FALSE.
-    DO i = 1,j
-      IF ( big_part(i) .GT. big_part(i+1)) THEN !if 49... bigger than 50...
-        !START SWAPPING
-        temp(1) = big_part(i) 
-        big_part(i) = big_part(i+1)
-        big_part(i+1) = temp(1)
+     swapped = .FALSE.
+     DO i = 1,j
+        IF ( big_part(i) .GT. big_part(i+1)) THEN !if 49... bigger than 50...
+!START SWAPPING
+           temp(1) = big_part(i) 
+           big_part(i) = big_part(i+1)
+           big_part(i+1) = temp(1)
 
-        temp(2) = tag_big_part(i) 
-        tag_big_part(i) = tag_big_part(i+1)
-        tag_big_part(i+1) = temp(2)
-        swapped = .TRUE.
-      ENDIF
-    ENDDO
-    IF (.NOT. swapped) EXIT
+           temp(2) = tag_big_part(i) 
+           tag_big_part(i) = tag_big_part(i+1)
+           tag_big_part(i+1) = temp(2)
+           swapped = .TRUE.
+        ENDIF
+     ENDDO
+     IF (.NOT. swapped) EXIT
   ENDDO
 
-#ifdef USE_MPI
-  particle_number_local = ims_size_p(ims_pro+1)
-#else
-  particle_number_local = INT(particle_number)
-#endif
-
-  !DO k=isize_trajectory+1,particle_number_local,1
+!DO k=isize_trajectory+1,particle_number_local,1
   DO k=1,particle_number_local,1
-    IF (l_q(k,5) .GT. big_part(1))THEN
-      big_part(1) = l_q(k,5)
-      tag_big_part(1) = l_tags(k)
+     IF (l_q(k,5) .GT. big_part(1))THEN
+        big_part(1) = l_q(k,5)
+        tag_big_part(1) = l_tags(k)
 
-      swapped = .FALSE.
-      DO i = 1,isize_trajectory-1
-        IF ( big_part(i) .GT. big_part(i+1)) THEN !if 49... bigger than 50...
-          !START SWAPPING
-          temp(1) = big_part(i) 
-          big_part(i) = big_part(i+1)
-          big_part(i+1) = temp(1)
-        
-          temp(2) = tag_big_part(i) 
-          tag_big_part(i) = tag_big_part(i+1)
-          tag_big_part(i+1) = temp(2)
-          swapped = .TRUE.
-        ENDIF
-        IF (.NOT. swapped) EXIT
-      ENDDO
-    
-    ENDIF 
+        swapped = .FALSE.
+        DO i = 1,isize_trajectory-1
+           IF ( big_part(i) .GT. big_part(i+1)) THEN !if 49... bigger than 50...
+!START SWAPPING
+              temp(1) = big_part(i) 
+              big_part(i) = big_part(i+1)
+              big_part(i+1) = temp(1)
+
+              temp(2) = tag_big_part(i) 
+              tag_big_part(i) = tag_big_part(i+1)
+              tag_big_part(i+1) = temp(2)
+              swapped = .TRUE.
+           ENDIF
+           IF (.NOT. swapped) EXIT
+        ENDDO
+
+     ENDIF
   ENDDO
 
 !  IF (ims_pro .EQ. 0) THEN
@@ -173,10 +167,10 @@ PROGRAM LAGRANGE_TRAJEC
 !  print*, tag_big_part
 !  print*, big_part
 !  END IF
-  
-  !#######################################################################
-  !Send all particles to one processor
-  !#######################################################################
+
+!#######################################################################
+!Send all particles to one processor
+!#######################################################################
 #ifdef USE_MPI
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err) 
   CALL MPI_GATHER(big_part, isize_trajectory, MPI_REAL8, big_all, isize_trajectory, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
@@ -185,55 +179,55 @@ PROGRAM LAGRANGE_TRAJEC
 
   IF (ims_pro .EQ. 0) THEN
 
-    !#######################################################################
-    !Determine the oerall biggest 50 of the biggest 50 of each processor
-    !#######################################################################
-    
-    big_overall=big_part
-    tag_big_overall=tag_big_part
-    DO k=isize_trajectory+1,isize_trajectory*ims_npro,1
-      IF (big_all(k) .GT. big_overall(1))THEN
-        big_overall(1) = big_all(k)
-        tag_big_overall(1) = tag_big_all(k)
-  
-        swapped = .FALSE.
-        DO i = 1,isize_trajectory-1
-          IF ( big_overall(i) .GT. big_overall(i+1)) THEN !if 49... bigger than 50...
-            !START SWAPPING
-            temp(1) = big_overall(i) 
-            big_overall(i) = big_overall(i+1)
-            big_overall(i+1) = temp(1)
+!#######################################################################
+!Determine the oerall biggest 50 of the biggest 50 of each processor
+!#######################################################################
 
-            temp(2) = tag_big_overall(i) 
-            tag_big_overall(i) = tag_big_overall(i+1)
-            tag_big_overall(i+1) = temp(2)
-            swapped = .TRUE.
-          ENDIF
-          IF (.NOT. swapped) EXIT
-        ENDDO
-      
-      ENDIF 
-    ENDDO
+     big_overall=big_part
+     tag_big_overall=tag_big_part
+     DO k=isize_trajectory+1,isize_trajectory*ims_npro,1
+        IF (big_all(k) .GT. big_overall(1))THEN
+           big_overall(1) = big_all(k)
+           tag_big_overall(1) = tag_big_all(k)
+
+           swapped = .FALSE.
+           DO i = 1,isize_trajectory-1
+              IF ( big_overall(i) .GT. big_overall(i+1)) THEN !if 49... bigger than 50...
+!START SWAPPING
+                 temp(1) = big_overall(i) 
+                 big_overall(i) = big_overall(i+1)
+                 big_overall(i+1) = temp(1)
+
+                 temp(2) = tag_big_overall(i) 
+                 tag_big_overall(i) = tag_big_overall(i+1)
+                 tag_big_overall(i+1) = temp(2)
+                 swapped = .TRUE.
+              ENDIF
+              IF (.NOT. swapped) EXIT
+           ENDDO
+
+        ENDIF
+     ENDDO
 
 
 
-    !#######################################################################
-    !Write data file with root processor
-    !#######################################################################
+!#######################################################################
+!Write data file with root processor
+!#######################################################################
 
-    fname = 'largest_particle'
-    WRITE(str,*) nitera_last;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
-    OPEN(unit=15, file=str, access='stream', form='unformatted')
-    INQUIRE(UNIT=15, POS=particle_pos) !would be 1
-    WRITE (15)  ims_npro  !header
-    INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
-    WRITE (15)  isize_trajectory  !header
-    INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
-    WRITE (15)  big_overall
-    INQUIRE(UNIT=15, POS=particle_pos)  !would be 409 with 50 numbers
-    WRITE (15)  tag_big_overall
-    CLOSE(15)
-    
+     fname = 'largest_particle'
+     WRITE(str,*) nitera_last;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
+     OPEN(unit=15, file=str, access='stream', form='unformatted')
+     INQUIRE(UNIT=15, POS=particle_pos) !would be 1
+     WRITE (15)  ims_npro  !header
+     INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
+     WRITE (15)  isize_trajectory  !header
+     INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
+     WRITE (15)  big_overall
+     INQUIRE(UNIT=15, POS=particle_pos)  !would be 409 with 50 numbers
+     WRITE (15)  tag_big_overall
+     CLOSE(15)
+
 !    !Just for testing and as template
 !    OPEN(unit=117, file=str, access='stream', form='unformatted')
 !    READ(117) test1   !is a integer
@@ -246,19 +240,19 @@ PROGRAM LAGRANGE_TRAJEC
   ENDIF
 
 #else
-    dummy=1 !amount of processors
-    fname = 'largest_particle'
-    WRITE(str,*) nitera_last;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
-    OPEN(unit=15, file=str, access='stream', form='unformatted')
-    INQUIRE(UNIT=15, POS=particle_pos) !would be 1
-    WRITE (15)  dummy  !only 1
-    INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
-    WRITE (15)  isize_trajectory  !header
-    INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
-    WRITE (15)  big_part
-    INQUIRE(UNIT=15, POS=particle_pos)  !would be 409 with 50 numbers
-    WRITE (15)  tag_big_part
-    CLOSE(15)
+  dummy=1 !amount of processors
+  fname = 'largest_particle'
+  WRITE(str,*) nitera_last;  str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
+  OPEN(unit=15, file=str, access='stream', form='unformatted')
+  INQUIRE(UNIT=15, POS=particle_pos) !would be 1
+  WRITE (15)  dummy  !only 1
+  INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
+  WRITE (15)  isize_trajectory  !header
+  INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
+  WRITE (15)  big_part
+  INQUIRE(UNIT=15, POS=particle_pos)  !would be 409 with 50 numbers
+  WRITE (15)  tag_big_part
+  CLOSE(15)
 
 
 !    !Just for testing and as template
@@ -281,7 +275,7 @@ PROGRAM LAGRANGE_TRAJEC
 !print*, 'here2', ims_pro
 
 
-CALL DNS_END(0)
+  CALL DNS_END(0)
 
   STOP
-END PROGRAM LAGRANGE_TRAJEC
+END PROGRAM

@@ -11,11 +11,11 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
   USE DNS_TYPES,      ONLY : pointers_dt
   USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
   USE DNS_GLOBAL,     ONLY : g
-  USE LAGRANGE_GLOBAL,ONLY : particle_number, particle_number_local
+  USE LAGRANGE_GLOBAL,ONLY : particle_number_local
 
 #ifdef USE_MPI
   USE DNS_GLOBAL, ONLY : imax,kmax
-  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k, ims_pro, ims_size_p
+  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -32,12 +32,6 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
   TINTEGER i, j, k 
 
 !#######################################################################
-#ifdef USE_MPI
-  particle_number_local=ims_size_p(ims_pro+1)
-#else
-  particle_number_local=INT(particle_number)
-#endif
-
 #ifdef USE_MPI
   right_limit=g(1)%nodes(ims_offset_i+imax)  !right_limit is east
   upper_limit=g(3)%nodes(ims_offset_k+kmax)  !upper_limit is north

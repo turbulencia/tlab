@@ -28,7 +28,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
   USE DNS_TYPES,  ONLY: pointers_dt, pointers3d_dt
   USE DNS_GLOBAL, ONLY: imax,jmax,kmax, isize_field,isize_particle, inb_particle, inb_scal_array
   USE DNS_GLOBAL, ONLY: g
-  USE LAGRANGE_GLOBAL, ONLY :  particle_number, particle_number_local
+  USE LAGRANGE_GLOBAL, ONLY :  particle_number_local
   USE LAGRANGE_GLOBAL, ONLY :  number_of_bins, y_particle_pdf_pos, y_particle_pdf_width
   USE LAGRANGE_GLOBAL, ONLY :  y_particle_pdf_pos, y_particle_pdf_width
   USE LAGRANGE_GLOBAL, ONLY :  x_particle_pdf_pos, x_particle_pdf_width
@@ -69,12 +69,6 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
   
   ALLOCATE(particle_bins(number_of_bins,3)) 
   ALLOCATE(counter_interval(number_of_bins)) 
-
-#ifdef USE_MPI
-  particle_number_local = ims_size_p(ims_pro+1)
-#else
-  particle_number_local = INT(particle_number)
-#endif
 
   y_pdf_max=y_particle_pdf_pos+0.5*y_particle_pdf_width
   y_pdf_min=y_particle_pdf_pos-0.5*y_particle_pdf_width

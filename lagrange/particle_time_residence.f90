@@ -26,21 +26,12 @@ SUBROUTINE PARTICLE_TIME_RESIDENCE(dtime, l_q, l_hq)
 
   USE DNS_GLOBAL, ONLY : inb_particle, isize_particle
   USE LAGRANGE_GLOBAL
-#ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_size_p, ims_pro
-#endif
 
   IMPLICIT NONE
 
   TREAL dtime
   TREAL, DIMENSION(isize_particle,inb_particle) :: l_q, l_hq
   TINTEGER l_i
-
-#ifdef USE_MPI
-  particle_number_local = ims_size_p(ims_pro+1)
-#else
-  particle_number_local = particle_number
-#endif
 
   IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
      DO l_i=1,particle_number_local

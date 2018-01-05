@@ -20,8 +20,8 @@
 !########################################################################
 SUBROUTINE PARTICLE_RESIDENCE_PDF(fname,l_hq,l_q)
 
-  USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL, ONLY :  particle_number, particle_number_local
+  USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
+  USE LAGRANGE_GLOBAL,ONLY : particle_number_local
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -43,12 +43,6 @@ SUBROUTINE PARTICLE_RESIDENCE_PDF(fname,l_hq,l_q)
 #endif 
 
 ! #####################################################################
-#ifdef USE_MPI
-  particle_number_local = ims_size_p(ims_pro+1)
-#else
-  particle_number_local = INT(particle_number)
-#endif
-
   residence_tmax = 100
   residence_nbins = 1000
   residence_pdf_interval = real(residence_tmax)/real(residence_nbins)

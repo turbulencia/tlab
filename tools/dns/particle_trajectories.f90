@@ -7,10 +7,10 @@ MODULE PARTICLE_TRAJECTORIES
   USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_GLOBAL,     ONLY : inb_flow_array, inb_scal_array
   USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL,ONLY : particle_number, particle_number_local
+  USE LAGRANGE_GLOBAL,ONLY : particle_number_local
   USE LAGRANGE_GLOBAL,ONLY : isize_trajectory, inb_trajectory, isize_l_comm, itrajectory
 #ifdef USE_MPI
-  USE DNS_MPI,        ONLY : ims_size_p, ims_pro, ims_err
+  USE DNS_MPI,        ONLY : ims_pro, ims_err
 #endif
 
   IMPLICIT NONE
@@ -120,12 +120,6 @@ SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_q,l_hq,l_txc,l_tags,l_co
 
 !#######################################################################
   counter = counter +1
-  
-#ifdef USE_MPI
-  particle_number_local = ims_size_p(ims_pro+1)
-#else
-  particle_number_local = INT(particle_number)
-#endif
   
 ! -------------------------------------------------------------------
 ! Setting pointers to position

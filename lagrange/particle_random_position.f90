@@ -45,14 +45,14 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
   
 !########################################################################
 #ifdef USE_MPI
-  particle_number_local = INT( particle_number /INT(ims_npro, KIND=8) )
-  IF ( ims_pro .LT. INT( MOD(particle_number, INT(ims_npro, KIND=8)) ) ) THEN
+  particle_number_local = INT( particle_number_total /INT(ims_npro, KIND=8) )
+  IF ( ims_pro .LT. INT( MOD(particle_number_total, INT(ims_npro, KIND=8)) ) ) THEN
      particle_number_local = particle_number_local +1
   ENDIF
   CALL MPI_ALLGATHER(particle_number_local,1,MPI_INTEGER4,ims_size_p,1,MPI_INTEGER4,MPI_COMM_WORLD,ims_err)
 
 #else
-  particle_number_local = INT(particle_number)
+  particle_number_local = INT(particle_number_total)
 
 #endif
 

@@ -48,7 +48,7 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags,l_comm, txc, 
   
 ! Save particle pathlines for particle_pdf
   IF ( icalc_part_pdf .EQ. 1) THEN
-     number_of_bins = particle_pdf_max/particle_pdf_interval
+     number_of_bins = INT(particle_pdf_max/particle_pdf_interval)
      WRITE(fname,*) itime; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
      CALL PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
   END IF

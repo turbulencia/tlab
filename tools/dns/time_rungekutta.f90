@@ -31,7 +31,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
   USE DNS_GLOBAL, ONLY : icalc_flow,icalc_scal, imode_eqns
   USE DNS_GLOBAL, ONLY : isize_particle
   USE DNS_GLOBAL, ONLY : rtime, itime
-  USE LAGRANGE_GLOBAL, ONLY : particle_number, particle_number_local, inb_particle_evolution, ilagrange
+  USE LAGRANGE_GLOBAL, ONLY : particle_number_local, inb_particle_evolution, ilagrange
   USE DNS_LOCAL
 
 #ifdef USE_MPI
@@ -216,12 +216,6 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
         ENDIF
 
         IF ( icalc_part .EQ. 1 ) THEN
-#ifdef USE_MPI
-  particle_number_local = ims_size_p(ims_pro+1)
-#else
-  particle_number_local = INT(particle_number)
-#endif
-           
            DO is = 1,inb_particle_evolution
               DO ip = 1,particle_number_local
                  l_hq(ip,is) = alpha*l_hq(ip,is)

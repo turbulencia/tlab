@@ -28,6 +28,7 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
      p_buffer_1, p_buffer_2, l_q, l_hq, l_tags)
   
   USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
+  USE LAGRANGE_GLOBAL, ONLY: particle_number_local
   
   USE DNS_MPI
 
@@ -54,7 +55,7 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
 !#######################################################################
   m=(inb_particle*2)+1 !Sending size of the buffer_parts
 
-  ims_size_p(ims_pro+1) = nzone_grid
+  particle_number_local = nzone_grid
 
 !###################################################################
 !Setting up destination and source + send/recv number of particles which will be send
@@ -105,7 +106,7 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
 ! Send nzone_west particles to west and get nzone_send_west particles from east
 !#################################################################
 !I get nzone_send_west particles form the east  
-  ims_size_p(ims_pro+1)=ims_size_p(ims_pro+1)+nzone_send_west
+  particle_number_local=particle_number_local+nzone_send_west
 
 !Construct sending buffer to west in p_buffer_2
   IF (nzone_west .NE. 0) THEN !I have something to send
@@ -204,7 +205,7 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
 ! Send to east and get from west
 !#################################################################
 ! Increase the particle number by the particles recieved from west
-  ims_size_p(ims_pro+1)=ims_size_p(ims_pro+1)+nzone_send_east
+  particle_number_local=particle_number_local+nzone_send_east
 
   mpireq(1:ims_npro*2)=MPI_REQUEST_NULL
   l = 2*ims_pro +1
@@ -253,6 +254,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
      p_buffer_1, p_buffer_2, l_q, l_hq, l_tags)
   
   USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
+  USE LAGRANGE_GLOBAL, ONLY: particle_number_local
   
   USE DNS_MPI
 
@@ -279,7 +281,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
 !#######################################################################
   m=(inb_particle*2)+1 !Sending size of the buffer_parts
 
-  ims_size_p(ims_pro+1) = nzone_grid
+  particle_number_local = nzone_grid
 
 !###################################################################
 !Setting up destination and source + send/recv number of particles which will be send
@@ -330,7 +332,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
 !#################################################################
 ! Send to west and get from east
 !#################################################################
-  ims_size_p(ims_pro+1)=ims_size_p(ims_pro+1)+nzone_send_south
+  particle_number_local=particle_number_local+nzone_send_south
 
   IF (nzone_south .NE. 0) THEN
 
@@ -432,7 +434,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
 !#################################################################
 ! Send to east and get from west
 !#################################################################
-  ims_size_p(ims_pro+1)=ims_size_p(ims_pro+1)+nzone_send_north
+  particle_number_local=particle_number_local+nzone_send_north
 
   mpireq(1:ims_npro*2)=MPI_REQUEST_NULL
   l = 2*ims_pro +1
