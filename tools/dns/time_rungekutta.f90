@@ -35,7 +35,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
   USE DNS_LOCAL
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_size_p, ims_pro,ims_npro,ims_npro_i,ims_npro_k
+  USE DNS_MPI, ONLY : ims_pro,ims_npro,ims_npro_i,ims_npro_k
 #endif
 
   IMPLICIT NONE

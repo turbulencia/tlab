@@ -358,7 +358,7 @@ PROGRAM DNS
      CALL IO_READ_PARTICLE(fname, l_tags, l_q)
      
 ! set boundarys for residence time pdf 
-     IF ( inb_particle_aux .EQ. 1 ) THEN
+     IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
         l_y_lambda =  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean - C_2_R
         l_y_base =   ((g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean -(g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean )/C_2_R &
              +  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean

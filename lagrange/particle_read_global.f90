@@ -156,36 +156,33 @@ SUBROUTINE PARTICLE_TYPE_INITIALIZE
   inb_particle_interp = 3
   
   IF   (ilagrange .EQ. LAG_TYPE_TRACER) THEN
-     inb_particle_evolution = 3
-     inb_particle_aux = 0          
-     inb_particle_txc = 1
+     inb_particle_evolution = 3 ! # of particle properties in Runge-Kutta
+     inb_particle = 3           ! # of particle properties in array
+     inb_particle_txc = 1       ! # l_txc properties
 
   ELSEIF  (ilagrange .EQ. LAG_TYPE_SIMPLE_SETT) THEN
      inb_particle_evolution = 3
-     inb_particle_aux = 0          
+     inb_particle = 3          
      inb_particle_txc = 1
      
   ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3) THEN
-     inb_particle_evolution = 5    !amount of particle properties 
-     inb_particle_aux = 0          !amount of particle properties without runge kutta (only sent and sorted)
-     inb_particle_txc = 4          !l_txc properties
+     inb_particle_evolution = 5     
+     inb_particle = 5
+     inb_particle_txc = 4          
      inb_particle_interp = inb_particle_interp +4
      LAGRANGE_SPNAME(1) = 'droplet_diff_3'
      LAGRANGE_SPNAME(2) = 'droplet_nodiff_3'
      
   ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
-     inb_particle_evolution = 5    !amount of particle properties with runge kutta
-     inb_particle_aux = 1          !amount of particle properties without runge kutta (only sent and sorted)
-     inb_particle_txc = 4          !l_txc properties
+     inb_particle_evolution = 5
+     inb_particle           = 6
+     inb_particle_txc = 4
      inb_particle_interp = inb_particle_interp +4
      LAGRANGE_SPNAME(1) = 'droplet_diff_3'
      LAGRANGE_SPNAME(2) = 'droplet_nodiff_3'
      LAGRANGE_SPNAME(3) = 'residence_part'
      
   END IF
-  
-  inb_particle = inb_particle_evolution + inb_particle_aux    !amount of particle properties which are sent
-  inb_scal_particle = inb_particle_evolution - 3          !Number of scalar properties solved in the lagrangian
 
   RETURN
 END SUBROUTINE PARTICLE_TYPE_INITIALIZE

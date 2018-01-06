@@ -12,8 +12,7 @@ MODULE LAGRANGE_GLOBAL
   TLONGINTEGER  :: particle_number_total
   TINTEGER      :: particle_number_local
   TINTEGER      :: inb_particle_interp !Total number of interpolated fields into lagrangian
-  TINTEGER      :: inb_particle_evolution !inb_particle  number for time runge kutta
-  TINTEGER      :: inb_particle_aux   ! additional inb_particle property which is not looped in time runge kutta
+  TINTEGER      :: inb_particle_evolution ! inb_particle  number for time runge kutta
   
   TINTEGER      :: particle_rnd_mode !which initializing mode
   TINTEGER      :: residence_reset  !if reseidence l_q should be reset
@@ -22,7 +21,7 @@ MODULE LAGRANGE_GLOBAL
   TINTEGER      :: isize_max_hf, isize_pbuffer
   TINTEGER      :: isize_l_comm
   TINTEGER      :: jmax_part, jmin_part
-  TINTEGER      :: inb_scal_particle ! Number of scalar properties solved in the lagrangian
+
   TREAL         :: y_particle_pos  !position where particles will be initialized
   TREAL         :: y_particle_width  !width of particle distribution
   TREAL         :: l_y_lambda !y coordinate where approx radiation begins for residence times (set in dns_main)
@@ -44,6 +43,6 @@ MODULE LAGRANGE_GLOBAL
   TINTEGER      :: number_of_bins
   
   TREAL         :: lagrange_param(MAX_LAGPARAM)                 ! lagrange function parameters
-  CHARACTER*16, DIMENSION(15) :: LAGRANGE_SPNAME             !Name of different lagrange species
+  CHARACTER*32, DIMENSION(15) :: LAGRANGE_SPNAME             !Name of different lagrange species
 
 END MODULE LAGRANGE_GLOBAL

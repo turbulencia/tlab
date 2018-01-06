@@ -23,7 +23,7 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags,l_comm, txc, 
   TREAL, DIMENSION(*),                               INTENT(INOUT) :: l_comm
 
 ! -------------------------------------------------------------------
-  TINTEGER is
+  TINTEGER is, idummy
   CHARACTER*32 fname
 
 ! ###################################################################
@@ -36,7 +36,8 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags,l_comm, txc, 
      CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,5))
      
      hq(:,1) = hq(:,1) + 0.00000001
-     DO is = inb_scal_array+2,inb_scal_particle+inb_scal_array+1
+     idummy = inb_particle_evolution - 3 ! # scalar properties solved in the lagrangian
+     DO is = inb_scal_array +1 +1, inb_scal_array+1 +idummy
         sbg(is)%mean = C_1_R; sbg(is)%delta = C_0_R; sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
         l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
         CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, hq(1,2))   

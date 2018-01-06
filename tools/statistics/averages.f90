@@ -541,7 +541,8 @@ PROGRAM AVERAGES
               CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,7))
               
               txc(:,7) = txc(:,7) + 0.00000001
-              DO is = inb_scal_array+2,inb_scal_particle+inb_scal_array+1
+              idummy = inb_particle_evolution - 3 ! # scalar properties solved in the lagrangian
+              DO is = inb_scal_array +1 +1, inb_scal_array+1 +idummy
                  l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
                  CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,8))   
                  txc(:,8) = txc(:,8) /txc(:,7)
