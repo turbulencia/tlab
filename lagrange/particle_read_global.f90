@@ -112,7 +112,31 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 ! ###################################################################
 ! Initializing size of Lagrangian arrays
 ! ###################################################################
-  CALL PARTICLE_TYPE_INITIALIZE
+! -------------------------------------------------------------------
+! default
+  inb_particle           = 3 ! # of particle properties in array
+  inb_particle_evolution = 3 ! # of particle properties in Runge-Kutta
+  inb_particle_txc       = 1
+  inb_particle_interp    = 3
+  
+  IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3) THEN
+     inb_particle           = 5
+     inb_particle_evolution = 5     
+     inb_particle_txc       = 4          
+     inb_particle_interp    = inb_particle_interp +4
+     LAGRANGE_SPNAME(1) = 'droplet_diff_3'
+     LAGRANGE_SPNAME(2) = 'droplet_nodiff_3'
+     
+  ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
+     inb_particle           = 6
+     inb_particle_evolution = 5
+     inb_particle_txc       = 4
+     inb_particle_interp    = inb_particle_interp +4
+     LAGRANGE_SPNAME(1) = 'droplet_diff_3'
+     LAGRANGE_SPNAME(2) = 'droplet_nodiff_3'
+     LAGRANGE_SPNAME(3) = 'residence_part'
+     
+  END IF
 
 #ifdef USE_MPI
   isize_particle = INT( particle_number_total /INT(ims_npro, KIND=8) )
@@ -141,48 +165,3 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 
   RETURN  
 END SUBROUTINE PARTICLE_READ_GLOBAL
-
-! ###################################################################
-! ###################################################################
-SUBROUTINE PARTICLE_TYPE_INITIALIZE
-  
-  USE DNS_GLOBAL, ONLY : inb_particle, inb_particle_txc
-  USE LAGRANGE_GLOBAL
-
-  IMPLICIT NONE
-
-! -------------------------------------------------------------------
-  inb_particle_txc    = 0 ! default
-  inb_particle_interp = 3
-  
-  IF   (ilagrange .EQ. LAG_TYPE_TRACER) THEN
-     inb_particle_evolution = 3 ! # of particle properties in Runge-Kutta
-     inb_particle = 3           ! # of particle properties in array
-     inb_particle_txc = 1       ! # l_txc properties
-
-  ELSEIF  (ilagrange .EQ. LAG_TYPE_SIMPLE_SETT) THEN
-     inb_particle_evolution = 3
-     inb_particle = 3          
-     inb_particle_txc = 1
-     
-  ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3) THEN
-     inb_particle_evolution = 5     
-     inb_particle = 5
-     inb_particle_txc = 4          
-     inb_particle_interp = inb_particle_interp +4
-     LAGRANGE_SPNAME(1) = 'droplet_diff_3'
-     LAGRANGE_SPNAME(2) = 'droplet_nodiff_3'
-     
-  ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
-     inb_particle_evolution = 5
-     inb_particle           = 6
-     inb_particle_txc = 4
-     inb_particle_interp = inb_particle_interp +4
-     LAGRANGE_SPNAME(1) = 'droplet_diff_3'
-     LAGRANGE_SPNAME(2) = 'droplet_nodiff_3'
-     LAGRANGE_SPNAME(3) = 'residence_part'
-     
-  END IF
-
-  RETURN
-END SUBROUTINE PARTICLE_TYPE_INITIALIZE
