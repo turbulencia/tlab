@@ -2,19 +2,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!# 2016/05/27 - J.P. Mellado
-!#              Cleaning
-!#
-!########################################################################
-!# DESCRIPTION
-!#
 !########################################################################
 SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
 
@@ -60,6 +47,13 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
 
   ENDIF
   
+! Might be better to filter the pressure instead of the energy in compressible flows
+  ! IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
+  !    iq_loc = (/ 5,1,2,3,6 /) ! Filtered variables: rho, u,v,w, p
+  ! ELSE
+  !    iq_loc = (/ 1,2,3 /)
+  ! ENDIF
+
 ! #######################################################################
 ! Domain filter
 ! #######################################################################
@@ -115,6 +109,7 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
      CALL DNS_AVG_KIN(i2, itime, rtime, imax,jmax,kmax, q, txc, vaux(vindex(VA_MEAN_WRK)), wrk3d)
   ENDIF
   
+! #######################################################################
 ! recalculation of diagnostic variables
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN
@@ -126,8 +121,21 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
      ENDIF
 
   ELSE
+     ! IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     !    CALL THERMO_AIRWATER_RP(imax,jmax,kmax, s, p, rho, T, wrk3d)
+     ! ELSE
+     !    CALL THERMO_THERMAL_TEMPERATURE(imax,jmax,kmax, s, p, rho, T)
+     ! ENDIF
+     ! CALL THERMO_CALORIC_ENERGY(imax,jmax,kmax, s, T, e)
+
+! This recalculation of T and p is made to make sure that the same numbers are
+! obtained in statistics postprocessing as in the simulation; avg* files
+! can then be compared with diff command.
+!     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
      CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
      CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
+!     ENDIF
+     
      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, vis)
 
   ENDIF

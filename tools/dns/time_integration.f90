@@ -104,32 +104,15 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
      itime = itime + 1
      rtime = rtime + dtime
 
+! -----------------------------------------------------------------------
      IF ( MOD(itime-nitera_first,FilterDomainStep) .EQ. 0 ) THEN
         IF ( MOD(itime-nitera_first,nitera_stats)  .EQ. 0 ) THEN; flag_save = .TRUE.
         ELSE;                                                     flag_save = .FALSE.; ENDIF
         CALL DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
      ENDIF
 
-! -----------------------------------------------------------------------
      IF ( MOD(itime-nitera_first,FilterInflowStep) .EQ. 0 ) THEN ! Inflow filter in spatial mode
         CALL BOUNDARY_INFLOW_FILTER(vaux(vindex(VA_BCS_VI)), q,s, txc, wrk1d,wrk2d,wrk3d)
-        
-! recalculation of p and T
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-           CALL THERMO_AIRWATER_RP(imax,jmax,kmax, s, p, rho, T, wrk3d)
-        ELSE
-           CALL THERMO_THERMAL_TEMPERATURE(imax,jmax,kmax, s, p, rho, T)
-        ENDIF
-        CALL THERMO_CALORIC_ENERGY(imax,jmax,kmax, s, T, e)
-        IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, vis)
-! This recalculation of T and p is made to make sure that the same numbers are
-! obtained in statistics postprocessing as in the simulation; avg* files
-! can then be compared with diff command.
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-           CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
-           CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
-        ENDIF
-        
      ENDIF
 
 ! -----------------------------------------------------------------------

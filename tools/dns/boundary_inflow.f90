@@ -12,10 +12,12 @@
 MODULE BOUNDARY_INFLOW
 
   USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow, inb_scal, icalc_flow,icalc_scal
-  USE DNS_GLOBAL,    ONLY : imode_eqns, imode_flow
-  USE DNS_GLOBAL,    ONLY : g, qbg
-  USE DNS_GLOBAL,    ONLY : rtime,itime,visc
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow, inb_scal, inb_scal_array, icalc_flow,icalc_scal
+  USE DNS_GLOBAL,    ONLY : imode_eqns, imode_flow, itransport
+  USE DNS_GLOBAL,    ONLY : g, qbg, epbackground, pbackground
+  USE DNS_GLOBAL,    ONLY : rtime,itime
+  USE DNS_GLOBAL,    ONLY : visc,damkohler
+  USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL,     ONLY : g_inf
   USE DNS_LOCAL,     ONLY : FilterInflow
   
@@ -513,15 +515,33 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, q,s, txc, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(imax*jmax*kmax,2), INTENT(INOUT) :: txc
   TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk1d,wrk2d,wrk3d
 
+  TARGET q
+  
 ! -----------------------------------------------------------------------
   TINTEGER i,j,k,ip, iq, iq_loc(inb_flow), is
   TINTEGER j1, imx, jmx, ifltmx, jfltmx
 
+! Pointers to existing allocated space
+  TREAL, DIMENSION(:,:,:), POINTER :: e, rho, p, T, vis
+
+! ###################################################################
 ! #######################################################################
   CALL IO_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
   ! FilterInflow needs to be initiliazed
   CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
 
+! Define pointers
+  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
+     e   => q(:,:,:,4)
+     rho => q(:,:,:,5)
+     p   => q(:,:,:,6)
+     T   => q(:,:,:,7)
+     
+     IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) vis => q(:,:,:,8)
+
+  ENDIF
+
+! Define counters
   imx = FilterInflow(1)%size
   j1  = ( jmax -FilterInflow(2)%size )/2 +1
   jmx = ( jmax +FilterInflow(2)%size )/2
@@ -563,7 +583,7 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, q,s, txc, wrk1d,wrk2d,wrk3d)
      DO k = 1,kmax
         DO j = j1,jmx
            DO i = i1,imx
-              wrk3d(ip) = q(i,j,k,iq_loc(iq)) + bcs_vi(j,k,iq_loc(iq))
+              q(i,j,k,iq_loc(iq))=  wrk3d(ip) + bcs_vi(j,k,iq_loc(iq))
               ip = ip + 1
            ENDDO
         ENDDO
@@ -597,13 +617,44 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, q,s, txc, wrk1d,wrk2d,wrk3d)
      DO k = 1,kmax
         DO j = j1,jmx
            DO i = i1,imx
-              wrk3d(ip) = s(i,j,k,is) + bcs_vi(j,k,is+inb_flow)
+              s(i,j,k,is) = wrk3d(ip) + bcs_vi(j,k,is+inb_flow)
               ip = ip + 1
            ENDDO
         ENDDO
      ENDDO
      
   ENDDO
+
+! #######################################################################
+! recalculation of diagnostic variables
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN
+        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,1,1,2), s(1,1,1,1), epbackground,pbackground)
+        
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN 
+        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,1,1,inb_scal_array))
+        
+     ENDIF
+
+  ELSE
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+        CALL THERMO_AIRWATER_RP(imax,jmax,kmax, s, p, rho, T, wrk3d)
+     ELSE
+        CALL THERMO_THERMAL_TEMPERATURE(imax,jmax,kmax, s, p, rho, T)
+     ENDIF
+     CALL THERMO_CALORIC_ENERGY(imax,jmax,kmax, s, T, e)
+
+! This recalculation of T and p is made to make sure that the same numbers are
+! obtained in statistics postprocessing as in the simulation; avg* files
+! can then be compared with diff command.
+     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
+        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
+     ENDIF
+     
+     IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, vis)
+
+  ENDIF
 
   RETURN
 END SUBROUTINE BOUNDARY_INFLOW_FILTER
