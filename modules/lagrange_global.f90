@@ -45,4 +45,6 @@ MODULE LAGRANGE_GLOBAL
   TREAL         :: lagrange_param(MAX_LAGPARAM)                 ! lagrange function parameters
   CHARACTER*32, DIMENSION(15) :: LAGRANGE_SPNAME             !Name of different lagrange species
 
+  TINTEGER,   DIMENSION(:),   ALLOCATABLE :: l_g
+
 END MODULE LAGRANGE_GLOBAL

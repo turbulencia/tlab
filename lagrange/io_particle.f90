@@ -14,7 +14,8 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
 
   USE DNS_CONSTANTS,   ONLY : lfile, efile
   USE DNS_GLOBAL,      ONLY : isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL, ONLY : particle_number_total, particle_number_local
+  USE DNS_GLOBAL,      ONLY : g
+  USE LAGRANGE_GLOBAL, ONLY : particle_number_total, particle_number_local, l_g
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
 #endif
@@ -142,6 +143,8 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
   
 #endif
 
+!     CALL PARTICLE_LOCATE_Y( particle_number_local, l_q(:,2), l_g, g(2)%size, g(2)%nodes(:) )
+     
   RETURN
 END SUBROUTINE IO_READ_PARTICLE
 
