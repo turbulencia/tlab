@@ -966,7 +966,7 @@ PROGRAM VISUALS_MAIN
            CALL IO_READ_PARTICLE(part_file, l_tags, l_q)
            
            l_txc = C_1_R; ! We want density
-           CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,1))
+           CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,1), wrk2d,wrk3d)
            str = 'ParticleDensity'
            plot_file = TRIM(ADJUSTL(str))//time_str(1:MaskSize)
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
@@ -975,7 +975,7 @@ PROGRAM VISUALS_MAIN
               IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 )  THEN
                  DO is=1,2
                     l_txc(:,1)=l_q(:,3+is) !!! DO WE WANT l_txc(:,is) ???
-                    CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,2))   
+                    CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,2), wrk2d,wrk3d)   
                     txc(:,2) = txc(:,2)/txc(:,1)
                     plot_file = TRIM(ADJUSTL(LAGRANGE_SPNAME(is)))//time_str(1:MaskSize)
                     CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
@@ -983,7 +983,7 @@ PROGRAM VISUALS_MAIN
               END IF
               IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
                  l_txc(:,1)=l_q(:,inb_particle) !inb_particle is the last component -> residence times in bil_cloud_4
-                 CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,2))   
+                 CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,2), wrk2d,wrk3d)   
                  plot_file = TRIM(ADJUSTL(LAGRANGE_SPNAME(3)))//time_str(1:MaskSize)
                  CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
               ENDIF

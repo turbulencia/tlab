@@ -47,7 +47,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
 ! -------------------------------------------------------------------
 
 #ifdef USE_MPI
-  TINTEGER  ierr, i, j, k, particle_pos
+  TINTEGER  ierr, i, j, particle_pos
 
   TINTEGER  dummy_ims_npro
   TINTEGER  dummy_isize_trajectory

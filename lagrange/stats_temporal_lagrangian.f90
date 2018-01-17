@@ -33,14 +33,14 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags,l_comm, txc, 
   IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
 
      l_txc = C_1_R; ! We want density
-     CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,5))
+     CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,5), wrk2d,wrk3d)
      
      hq(:,1) = hq(:,1) + 0.00000001
      idummy = inb_particle_evolution - 3 ! # scalar properties solved in the lagrangian
      DO is = inb_scal_array +1 +1, inb_scal_array+1 +idummy
         sbg(is)%mean = C_1_R; sbg(is)%delta = C_0_R; sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
         l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
-        CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, hq(1,2))   
+        CALL PARTICLE_TO_FIELD(l_q, l_txc, hq(1,2), wrk2d,wrk3d)   
         hq(:,2) = hq(:,2) /hq(:,1)
         CALL AVG_SCAL_XZ(is, q,s, hq(1,2), &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4), txc(1,5),txc(1,6),mean, wrk1d,wrk2d,wrk3d)

@@ -538,13 +538,13 @@ PROGRAM AVERAGES
               CALL IO_READ_PARTICLE(fname, l_tags, l_q)
                  
               l_txc = C_1_R; ! We want density
-              CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,7))
+              CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,7), wrk2d,wrk3d)
               
               txc(:,7) = txc(:,7) + 0.00000001
               idummy = inb_particle_evolution - 3 ! # scalar properties solved in the lagrangian
               DO is = inb_scal_array +1 +1, inb_scal_array+1 +idummy
                  l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
-                 CALL PARTICLE_TO_FIELD(l_q,l_txc, wrk1d,wrk2d,wrk3d, txc(1,8))   
+                 CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,8), wrk2d,wrk3d)   
                  txc(:,8) = txc(:,8) /txc(:,7)
                  sbg(is)%mean  = sbg(inb_scal_array)%mean
                  sbg(is)%delta = sbg(inb_scal_array)%delta

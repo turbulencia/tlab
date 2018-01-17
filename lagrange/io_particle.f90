@@ -143,7 +143,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
   
 #endif
 
-!     CALL PARTICLE_LOCATE_Y( particle_number_local, l_q(:,2), l_g, g(2)%size, g(2)%nodes(:) )
+  CALL PARTICLE_LOCATE_Y( particle_number_local, l_q(1,2), l_g%nodes, g(2)%size, g(2)%nodes )
      
   RETURN
 END SUBROUTINE IO_READ_PARTICLE
@@ -175,12 +175,14 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
   TREAL,      DIMENSION(isize_particle,inb_particle) :: l_q !, OPTIONAL :: l_q 
 
 ! -------------------------------------------------------------------  
-  TINTEGER i, idummy
+  TINTEGER i
   CHARACTER(len=32) name
 #ifdef USE_MPI
   TINTEGER mpio_fh
   INTEGER (KIND=8)  mpio_disp, count
   TINTEGER status(MPI_STATUS_SIZE)
+#else
+  TINTEGER idummy
 #endif
 
   CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(fname))//'...')

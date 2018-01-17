@@ -4,7 +4,7 @@
 
 !########################################################################
 !########################################################################
-SUBROUTINE PARTICLE_INTERPOLATION &
+SUBROUTINE FIELD_TO_PARTICLE_INTERPOLATE &
      (iflag, nvar, data_in, data_out, l_q, grid_start, grid_end)
   
   USE DNS_CONSTANTS,  ONLY : efile
@@ -74,11 +74,14 @@ SUBROUTINE PARTICLE_INTERPOLATION &
         particle_local_grid_posz = l_q(i,3)                         /dz_loc +1
 #endif
         particle_local_grid_posy = (l_q(i,2)-g(2)%nodes(jmin_part)) /dy_loc +jmin_part  
+!        particle_local_grid_posy = l_g%nodes(i)
 
         gridpoint(1)= floor(particle_local_grid_posx)                   !position to the left (x1)
         gridpoint(2)= gridpoint(1)+1                                    !to the right (x2)
         gridpoint(3)= (floor((l_q(i,2)-g(2)%nodes(jmin_part))/dy_loc))+jmin_part !to the bottom 
         gridpoint(4)= gridpoint(3)+1                                    !to the top (y2)
+        ! gridpoint(3)= l_g%nodes(i)
+        ! gridpoint(4)= l_g%nodes(i) +1
         gridpoint(5)= floor(particle_local_grid_posz)                   !front side
         gridpoint(6)= gridpoint(5)+1                                    !back side
 
@@ -94,19 +97,6 @@ SUBROUTINE PARTICLE_INTERPOLATION &
         cube_g_p(3) = length_g_p(4) *length_g_p(2)
         cube_g_p(4) = length_g_p(2) *length_g_p(3)
 
-        ! IF ( iflag .EQ. 1 ) THEN
-        !    gridpoint(1)=1
-        !    gridpoint(2)=2
-        ! ELSE IF ( iflag .EQ. 2 ) THEN
-        !    gridpoint(5)=1
-        !    gridpoint(6)=2
-        ! ELSE IF ( iflag .EQ. 3 ) THEN
-        !    gridpoint(1)=1
-        !    gridpoint(2)=2
-        !    gridpoint(5)=1
-        !    gridpoint(6)=2
-        ! ENDIF
-        
 ! -------------------------------------------------------------------
 ! Trilinear interpolation
 ! Two bilinear interpolations for each k plane (gridpoint(5) and gridpoint(6)
@@ -155,11 +145,6 @@ SUBROUTINE PARTICLE_INTERPOLATION &
         cube_g_p(3) = length_g_p(4) *length_g_p(2)
         cube_g_p(4) = length_g_p(2) *length_g_p(3)
 
-        ! IF ( iflag .EQ. 1 ) THEN
-        !    gridpoint(1)=1
-        !    gridpoint(2)=2
-        ! ENDIF
-        
 ! -------------------------------------------------------------------
 ! Bilinear interpolation
 ! -------------------------------------------------------------------
@@ -176,7 +161,7 @@ SUBROUTINE PARTICLE_INTERPOLATION &
   ENDIF
 
   RETURN
-END SUBROUTINE PARTICLE_INTERPOLATION
+END SUBROUTINE FIELD_TO_PARTICLE_INTERPOLATE
 
 SUBROUTINE PARTICLE_LOCATE_Y( pmax, y_part, j_part, jmax, y_grid )
 
@@ -199,7 +184,7 @@ SUBROUTINE PARTICLE_LOCATE_Y( pmax, y_part, j_part, jmax, y_grid )
         jc = ( jm +jp ) /2
      END DO
      j_part(ip) = jc
-!     PRINT*, ip, y_grid(jc), y_part(ip), y_grid(jc+1) 
+!     WRITE(*,'(i,3f)') ip, y_grid(jc), y_part(ip), y_grid(jc+1) 
   END DO
   
   RETURN

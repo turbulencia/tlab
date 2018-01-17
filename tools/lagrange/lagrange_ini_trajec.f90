@@ -78,8 +78,8 @@ PROGRAM LAGRANGE_INI_TRAJEC
 
 #ifdef USE_MPI
   CHARACTER*64 fname
-  TINTEGER  particle_number_each, particle_pos, i
-  TLONGINTEGER dummy_int1, dummy_int2 ,dummy_int3, dummy
+  TINTEGER particle_pos, i
+  TLONGINTEGER dummy
 #endif
   inifile = 'dns.ini'
 

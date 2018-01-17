@@ -4,10 +4,21 @@ MODULE LAGRANGE_GLOBAL
   IMPLICIT NONE
   SAVE
 
-   TINTEGER, PARAMETER :: MAX_LAGPARAM = 10 !Maximum size of Lagrange Parameters
+  TYPE particle_dt
+     SEQUENCE
+     TINTEGER size
+     LOGICAL uniform
+     INTEGER(8), DIMENSION(:), ALLOCATABLE :: tags
+     TINTEGER,   DIMENSION(:), ALLOCATABLE :: nodes
+  END TYPE particle_dt
+
+  TINTEGER, PARAMETER :: MAX_LAGPARAM = 10 !Maximum size of Lagrange Parameters
+
 ! ###################################################################
 ! Lagrange Parameter
 ! ###################################################################
+  TYPE(particle_dt) :: l_g
+
   TINTEGER      :: ilagrange
   TLONGINTEGER  :: particle_number_total
   TINTEGER      :: particle_number_local
@@ -44,7 +55,5 @@ MODULE LAGRANGE_GLOBAL
   
   TREAL         :: lagrange_param(MAX_LAGPARAM)                 ! lagrange function parameters
   CHARACTER*32, DIMENSION(15) :: LAGRANGE_SPNAME             !Name of different lagrange species
-
-  TINTEGER,   DIMENSION(:),   ALLOCATABLE :: l_g
 
 END MODULE LAGRANGE_GLOBAL

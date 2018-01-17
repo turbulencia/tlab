@@ -6,19 +6,6 @@
 #endif
 
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2014/02 - L. Muessle
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Taking care of Particle routines in time_substep_incompressible_explicit 
-!#
 !########################################################################
 SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )    
   
@@ -78,7 +65,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
 ! -------------------------------------------------------------------
 !Particle sorting for Send/Recv X-Direction
 ! -------------------------------------------------------------------
-  CALL PARTICLE_SORT(1, l_q,l_tags,l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
+  CALL PARTICLE_SORT(1, l_q, l_tags, l_g%nodes, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
 
   IF (ims_pro_i .EQ. 0) THEN !Take care of periodic boundary conditions west
      IF (nzone_west .NE. 0) THEN
@@ -100,7 +87,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
 ! -------------------------------------------------------------------
 !Particle sorting for Send/Recv Z-Direction
 ! -------------------------------------------------------------------
-  CALL PARTICLE_SORT(3, l_q, l_tags, l_hq, nzone_grid, nzone_west, nzone_east,nzone_south,nzone_north)
+  CALL PARTICLE_SORT(3, l_q, l_tags, l_g%nodes, l_hq, nzone_grid, nzone_west, nzone_east,nzone_south,nzone_north)
 
   IF (ims_pro_k .EQ. 0) THEN !Take care of periodic boundary conditions south
      IF (nzone_south .NE. 0) THEN
@@ -142,5 +129,10 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   
 #endif
   
+!#######################################################################
+! Recalculating closest node below in Y direction
+!#######################################################################
+  CALL PARTICLE_LOCATE_Y( particle_number_local, l_q(1,2), l_g%nodes, g(2)%size, g(2)%nodes )
+
   RETURN
 END SUBROUTINE PARTICLE_TIME_SUBSTEP

@@ -6,7 +6,7 @@
 !# Sorting structure grid-halo_x-halo_z-halo_diagonal
 !# First algorithm sorts all grid-particle into first part of particle
 !########################################################################
-SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
+SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, l_nodes, nvar, data, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
 
   USE DNS_TYPES,      ONLY : pointers_dt
   USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
@@ -24,11 +24,12 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
   TYPE(pointers_dt), DIMENSION(nvar)                        :: data
   TREAL,             DIMENSION(isize_particle,inb_particle) :: l_q
   INTEGER(8),        DIMENSION(isize_particle)              :: l_tags
+  TINTEGER,          DIMENSION(isize_particle)              :: l_nodes
 
 ! -------------------------------------------------------------------
   TREAL dummy, right_limit, upper_limit
-  TINTEGER counter_swap
-  INTEGER(8) idummy
+  TINTEGER counter_swap, idummy
+  INTEGER(8) idummy8
   TINTEGER i, j, k 
 
 !#######################################################################
@@ -62,9 +63,13 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
                  counter_swap=1
               ENDIF
            ELSE ! Found a particle which belongs to grid so SWAP
-              idummy   =l_tags(i)
+              idummy    =l_nodes(i)
+              l_nodes(i)=l_nodes(j)
+              l_nodes(j)=idummy
+              
+              idummy8  =l_tags(i)
               l_tags(i)=l_tags(j)
-              l_tags(j)=idummy
+              l_tags(j)=idummy8
               
               DO k=1,inb_particle
                  dummy   =l_q(i,k)
@@ -95,9 +100,13 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
                  counter_swap=1
               ENDIF
            ELSE                    
-              idummy   =l_tags(i)
+              idummy    =l_nodes(i)
+              l_nodes(i)=l_nodes(j)
+              l_nodes(j)=idummy
+              
+              idummy8  =l_tags(i)
               l_tags(i)=l_tags(j)
-              l_tags(j)=idummy
+              l_tags(j)=idummy8
 
               DO k=1,inb_particle
                  dummy=l_q(i,k)
@@ -146,9 +155,9 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
 !           l_q(i,k)=l_q(j,k)
 !           l_q(j,k)=dummy
 
-!           idummy=l_tags(i)
+!           idummy8=l_tags(i)
 !           l_tags(i)=l_tags(j)
-!           l_tags(j)=idummy
+!           l_tags(j)=idummy8
 
 !           dummy=l_hq(i,k)
 !           l_hq(i,k)=l_hq(j,k)
@@ -171,9 +180,13 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
               ENDIF
 
            ELSE  !If particle is only out to East
-              idummy   =l_tags(i)
+              idummy    =l_nodes(i)
+              l_nodes(i)=l_nodes(j)
+              l_nodes(j)=idummy
+              
+              idummy8  =l_tags(i)
               l_tags(i)=l_tags(j)
-              l_tags(j)=idummy
+              l_tags(j)=idummy8
               
               DO k=1,inb_particle
                  dummy   =l_q(i,k)
@@ -223,9 +236,13 @@ SUBROUTINE PARTICLE_SORT_HALO(l_q, l_tags, nvar, data, grid_zone, halo_zone_x, h
                  counter_swap=1
               ENDIF
            ELSE  !Particle is only out to the North
-              idummy   =l_tags(i)
+              idummy    =l_nodes(i)
+              l_nodes(i)=l_nodes(j)
+              l_nodes(j)=idummy
+              
+              idummy8  =l_tags(i)
               l_tags(i)=l_tags(j)
-              l_tags(j)=idummy
+              l_tags(j)=idummy8
               
               DO k=1,inb_particle
                  dummy   =l_q(i,k)

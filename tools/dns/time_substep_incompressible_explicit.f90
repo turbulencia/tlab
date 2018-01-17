@@ -157,7 +157,6 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 ! Call RHS particle algorithm
 ! #######################################################################
   IF ( icalc_part .EQ. 1 ) THEN
-!     CALL RHS_PARTICLE_GLOBAL_OLD(q,s, wrk1d,wrk2d,wrk3d, txc, l_q,l_hq,l_tags,l_comm)
      CALL RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
   END IF
 

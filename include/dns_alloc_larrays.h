@@ -6,9 +6,9 @@
      CALL DNS_STOP(DNS_ERROR_ALLOC)
   ENDIF
 
-  WRITE(str,*) isize_particle; line = 'Allocating array l_g of size '//TRIM(ADJUSTL(str))
+  WRITE(str,*) isize_particle; line = 'Allocating array l_g.nodes of size '//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(l_g(isize_particle),stat=ierr)
+  ALLOCATE(l_g%nodes(isize_particle),stat=ierr)
   IF ( ierr .NE. 0 ) THEN
      CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for l_g.')
      CALL DNS_STOP(DNS_ERROR_ALLOC)

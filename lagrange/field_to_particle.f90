@@ -12,7 +12,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 
   USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
-  USE DNS_GLOBAL,     ONLY : imax,jmax,kmax, isize_particle, g
+  USE DNS_GLOBAL,     ONLY : imax,jmax,kmax, isize_particle
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI,        ONLY:  ims_err
@@ -73,10 +73,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 !#######################################################################
 ! Sorting and counting particles for each zone
 !#######################################################################
-  CALL PARTICLE_SORT_HALO(l_q,l_tags, nvar,data_out, grid_zone,halo_zone_x,halo_zone_z,halo_zone_diagonal)
-
-  ! CALL PARTICLE_SORT_HALO_OLD(grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal,&
-  !      l_hq, l_tags, l_q)
+  CALL PARTICLE_SORT_HALO(l_q,l_tags,l_g%nodes, nvar,data_out, grid_zone,halo_zone_x,halo_zone_z,halo_zone_diagonal)
 
 #ifdef USE_MPI
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
@@ -85,28 +82,26 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 !#######################################################################
 ! Interpolating
 !#######################################################################
-!  CALL PARTICLE_LOCATE_Y( particle_number_local, l_q(:,2), l_g, g(2)%size, g(2)%nodes(:) )
-
   npar_start = 1
   npar       = grid_zone
-  CALL PARTICLE_INTERPOLATION(i0, nvar, data_in, data_out, l_q, npar_start, npar)
+  CALL FIELD_TO_PARTICLE_INTERPOLATE(i0, nvar, data_in, data_out, l_q, npar_start, npar)
 
   IF ( halo_zone_x .NE. 0 ) THEN
      npar_start = npar +1
      npar       = npar +halo_zone_x
-     CALL PARTICLE_INTERPOLATION(i1, nvar, data_halo1, data_out, l_q, npar_start,npar)
+     CALL FIELD_TO_PARTICLE_INTERPOLATE(i1, nvar, data_halo1, data_out, l_q, npar_start,npar)
   END IF
   
   IF ( halo_zone_z .NE. 0 ) THEN
      npar_start = npar +1
      npar       = npar +halo_zone_z
-     CALL PARTICLE_INTERPOLATION(i2, nvar, data_halo2, data_out, l_q, npar_start,npar)
+     CALL FIELD_TO_PARTICLE_INTERPOLATE(i2, nvar, data_halo2, data_out, l_q, npar_start,npar)
  END IF
 
   IF ( halo_zone_diagonal .NE. 0 ) THEN
      npar_start = npar +1
      npar       = npar +halo_zone_diagonal
-     CALL PARTICLE_INTERPOLATION(i3, nvar, data_halo3, data_out, l_q, npar_start,npar)
+     CALL FIELD_TO_PARTICLE_INTERPOLATE(i3, nvar, data_halo3, data_out, l_q, npar_start,npar)
   END IF
 
   DO iv = 1,nvar
