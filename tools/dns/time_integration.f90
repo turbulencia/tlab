@@ -111,6 +111,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
         CALL DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
      ENDIF
 
+     ! This should be integrated into the inflow buffer, as the filter contribution
      IF ( MOD(itime-nitera_first,FilterInflowStep) .EQ. 0 ) THEN ! Inflow filter in spatial mode
         CALL BOUNDARY_INFLOW_FILTER(vaux(vindex(VA_BCS_VI)), q,s, txc, wrk1d,wrk2d,wrk3d)
      ENDIF

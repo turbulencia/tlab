@@ -243,7 +243,7 @@ SUBROUTINE DNS_AVG_KIN(iflag, itime, rtime, nx,ny,nz, q, eps, mean2d, wrk3d)
 
         CLOSE(21)
 
-1000    FORMAT(I5,(1X,I5),5(1X,E12.5E3))
+1000    FORMAT(I5,(1X,I5),5(1X,G_FORMAT_R))
 
 #ifdef USE_MPI
      ENDIF
