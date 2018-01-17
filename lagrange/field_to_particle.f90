@@ -12,7 +12,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 
   USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
-  USE DNS_GLOBAL,     ONLY : imax,jmax,kmax, isize_particle
+  USE DNS_GLOBAL,     ONLY : imax,jmax,kmax, isize_particle, g
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI,        ONLY:  ims_err
@@ -85,6 +85,8 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 !#######################################################################
 ! Interpolating
 !#######################################################################
+!  CALL PARTICLE_LOCATE_Y( particle_number_local, l_q(:,2), l_g, g(2)%size, g(2)%nodes(:) )
+
   npar_start = 1
   npar       = grid_zone
   CALL PARTICLE_INTERPOLATION(i0, nvar, data_in, data_out, l_q, npar_start, npar)
