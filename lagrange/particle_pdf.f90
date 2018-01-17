@@ -5,23 +5,7 @@
 #include "dns_const_mpi.h"
 #endif
 
-
 !########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Calculate the pdf for a certain region
-!# 
-!########################################################################
-!# ARGUMENTS 
-!#
-!#
 !########################################################################
 SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
 
@@ -66,7 +50,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
   TLONGINTEGER, DIMENSION(:,:),   ALLOCATABLE         :: particle_bins_local
   ALLOCATE(particle_bins_local(number_of_bins,3)) 
 #endif 
-  
+
   ALLOCATE(particle_bins(number_of_bins,3)) 
   ALLOCATE(counter_interval(number_of_bins)) 
 
@@ -75,82 +59,82 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
   particle_bins=int(0,KIND=8)
 
   IF (x_particle_pdf_width .NE. 0) THEN
-    x_pdf_max=x_particle_pdf_pos+0.5*x_particle_pdf_width
-    x_pdf_min=x_particle_pdf_pos-0.5*x_particle_pdf_width
+     x_pdf_max=x_particle_pdf_pos+0.5*x_particle_pdf_width
+     x_pdf_min=x_particle_pdf_pos-0.5*x_particle_pdf_width
   ENDIF
   IF (z_particle_pdf_width .NE. 0) THEN
-    z_pdf_max=z_particle_pdf_pos+0.5*z_particle_pdf_width
-    z_pdf_min=z_particle_pdf_pos-0.5*z_particle_pdf_width
+     z_pdf_max=z_particle_pdf_pos+0.5*z_particle_pdf_width
+     z_pdf_min=z_particle_pdf_pos-0.5*z_particle_pdf_width
   ENDIF
 
   nvar = 0
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:,1)
   CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
-    
+
 #ifdef USE_MPI
-  
+
   particle_bins_local=0.0
 
-  !#######################################################################
-  !Start counting of particles in bins per processor
-  !#######################################################################
+!#######################################################################
+!Start counting of particles in bins per processor
+!#######################################################################
   particle_pdf_min = 0  !if needed for future 
 
   IF (x_particle_pdf_width .EQ. 0) THEN !ONLY PART OF Y
-    DO i=1,particle_number_local
-      IF ( l_q(i,2)/g(2)%scale .GE. y_pdf_min .AND. l_q(i,2)/g(2)%scale .LE. y_pdf_max) THEN
-          j = 1 + int( (l_txc(i,1) - particle_pdf_min) / particle_pdf_interval )
-          particle_bins_local(j,1)=particle_bins_local(j,1)+1
-  
-        DO is=4,5
-            j = 1 + int( (l_q(i,is) - particle_pdf_min) / particle_pdf_interval )
-            particle_bins_local(j,is-2)=particle_bins_local(j,is-2)+1
-        ENDDO
-      ENDIF
-    ENDDO
+     DO i=1,particle_number_local
+        IF ( l_q(i,2)/g(2)%scale .GE. y_pdf_min .AND. l_q(i,2)/g(2)%scale .LE. y_pdf_max) THEN
+           j = 1 + int( (l_txc(i,1) - particle_pdf_min) / particle_pdf_interval )
+           particle_bins_local(j,1)=particle_bins_local(j,1)+1
+
+           DO is=4,5
+              j = 1 + int( (l_q(i,is) - particle_pdf_min) / particle_pdf_interval )
+              particle_bins_local(j,is-2)=particle_bins_local(j,is-2)+1
+           ENDDO
+        ENDIF
+     ENDDO
   ELSE !3D BOX
      DO i=1,particle_number_local
-      IF ( l_q(i,1)/g(1)%scale .GE. x_pdf_min .AND. l_q(i,1)/g(1)%scale .LE. x_pdf_max) THEN
-        IF ( l_q(i,2)/g(2)%scale .GE. y_pdf_min .AND. l_q(i,2)/g(2)%scale .LE. y_pdf_max) THEN
-          IF ( l_q(i,3)/g(3)%scale .GE. z_pdf_min .AND. l_q(i,3)/g(3)%scale .LE. z_pdf_max) THEN
-              j = 1 + int( (l_txc(i,1) - particle_pdf_min) / particle_pdf_interval )
-              particle_bins_local(j,1)=particle_bins_local(j,1)+1
-      
-            DO is=4,5
-                j = 1 + int( (l_q(i,is) - particle_pdf_min) / particle_pdf_interval )
-                particle_bins_local(j,is-2)=particle_bins_local(j,is-2)+1
-            ENDDO
-          ENDIF
+        IF ( l_q(i,1)/g(1)%scale .GE. x_pdf_min .AND. l_q(i,1)/g(1)%scale .LE. x_pdf_max) THEN
+           IF ( l_q(i,2)/g(2)%scale .GE. y_pdf_min .AND. l_q(i,2)/g(2)%scale .LE. y_pdf_max) THEN
+              IF ( l_q(i,3)/g(3)%scale .GE. z_pdf_min .AND. l_q(i,3)/g(3)%scale .LE. z_pdf_max) THEN
+                 j = 1 + int( (l_txc(i,1) - particle_pdf_min) / particle_pdf_interval )
+                 particle_bins_local(j,1)=particle_bins_local(j,1)+1
+
+                 DO is=4,5
+                    j = 1 + int( (l_q(i,is) - particle_pdf_min) / particle_pdf_interval )
+                    particle_bins_local(j,is-2)=particle_bins_local(j,is-2)+1
+                 ENDDO
+              ENDIF
+           ENDIF
         ENDIF
-      ENDIF
-    ENDDO
+     ENDDO
   ENDIF
 
-  !#######################################################################
-  !Reduce all information to root
-  !#######################################################################
+!#######################################################################
+!Reduce all information to root
+!#######################################################################
 
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err) 
   CALL MPI_REDUCE(particle_bins_local, particle_bins, number_of_bins*3, MPI_INTEGER8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
- 
-  !#######################################################################
-  !Create interval for writing
-  !#######################################################################
-  IF(ims_pro .EQ. 0) THEN
-    counter_interval(1)=0
-    counter_interval(2)=particle_pdf_interval
-    DO i=3,number_of_bins
-      counter_interval(i)=counter_interval(i-1)+particle_pdf_interval
-    ENDDO
 
-    !#######################################################################
-    !Write data to file
-    !#######################################################################
-    OPEN(unit=116, file=fname)
-    DO i=1,number_of_bins
-      WRITE (116,'(F6.3, I20.1, I20.1, I20.1)') counter_interval(i), particle_bins(i,1), particle_bins(i,2), particle_bins(i,3)
-    END DO
-    CLOSE(116)
+!#######################################################################
+!Create interval for writing
+!#######################################################################
+  IF(ims_pro .EQ. 0) THEN
+     counter_interval(1)=0
+     counter_interval(2)=particle_pdf_interval
+     DO i=3,number_of_bins
+        counter_interval(i)=counter_interval(i-1)+particle_pdf_interval
+     ENDDO
+
+!#######################################################################
+!Write data to file
+!#######################################################################
+     OPEN(unit=116, file=fname)
+     DO i=1,number_of_bins
+        WRITE (116,'(F6.3, I20.1, I20.1, I20.1)') counter_interval(i), particle_bins(i,1), particle_bins(i,2), particle_bins(i,3)
+     END DO
+     CLOSE(116)
   END IF
 
 
@@ -161,27 +145,27 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
   particle_pdf_min = 0
 
   DO i=1,particle_number_local
-    IF ( l_q(i,2)/g(2)%scale .GE. y_pdf_min .AND. l_q(i,2)/g(2)%scale .LE. y_pdf_max) THEN
+     IF ( l_q(i,2)/g(2)%scale .GE. y_pdf_min .AND. l_q(i,2)/g(2)%scale .LE. y_pdf_max) THEN
         j = 1 + int( (l_txc(i,1) - particle_pdf_min) / particle_pdf_interval )
         particle_bins(j,1)=particle_bins(j,1)+1
 
-      DO is=4,5
-          j = 1 + int( (l_q(i,is) - particle_pdf_min) / particle_pdf_interval )
-          particle_bins(j,is-2)=particle_bins(j,is-2)+1
-     ENDDO
+        DO is=4,5
+           j = 1 + int( (l_q(i,is) - particle_pdf_min) / particle_pdf_interval )
+           particle_bins(j,is-2)=particle_bins(j,is-2)+1
+        ENDDO
 
-    ENDIF
+     ENDIF
   ENDDO
 
   counter_interval(1)=0
   counter_interval(2)=particle_pdf_interval
   DO i=3,number_of_bins
-    counter_interval(i)=counter_interval(i-1)+particle_pdf_interval
+     counter_interval(i)=counter_interval(i-1)+particle_pdf_interval
   ENDDO
-
+  
   OPEN(unit=116, file=fname)
   DO i=1,number_of_bins
-    WRITE (116,'(F6.3, I20.1, I20.1, I20.1)') counter_interval(i), particle_bins(i,1), particle_bins(i,2), particle_bins(i,3)
+     WRITE (116,'(F6.3, I20.1, I20.1, I20.1)') counter_interval(i), particle_bins(i,1), particle_bins(i,2), particle_bins(i,3)
   END DO
   CLOSE(116)
 
@@ -190,7 +174,6 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
 
   DEALLOCATE(particle_bins)
   DEALLOCATE(counter_interval)
- 
+
   RETURN
 END SUBROUTINE PARTICLE_PDF
-

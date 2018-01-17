@@ -18,23 +18,25 @@
 !# Sets particle liquid with no eulerian liquid surrounded to zero 
 !#
 !########################################################################
-SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q, l_comm)
+SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, l_txc, l_tags, l_hq, l_q, l_comm, wrk2d,wrk3d)
 
   USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_particle, isize_particle
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_particle
   USE DNS_GLOBAL, ONLY : isize_field, inb_scal_array
-  USE LAGRANGE_GLOBAL
+  USE LAGRANGE_GLOBAL, ONLY : inb_particle_evolution, particle_number_local
 
   IMPLICIT NONE
 
-  TREAL, DIMENSION(isize_field,*), TARGET :: s
-  TREAL, DIMENSION(*)                     :: wrk2d, wrk3d
+  TREAL, DIMENSION(isize_field,*), TARGET  :: s
 
-  TREAL, DIMENSION(isize_particle,inb_particle) :: l_q, l_hq
-  TREAL, DIMENSION(isize_particle), TARGET      :: l_txc
-  TREAL, DIMENSION(*)                           :: l_comm
-  INTEGER(8), DIMENSION(*)                      :: l_tags
-  TINTEGER is, l_i
+  TREAL, DIMENSION(isize_particle,*)       :: l_q, l_hq
+  TREAL, DIMENSION(isize_particle), TARGET :: l_txc
+  TREAL, DIMENSION(*)                      :: l_comm
+  INTEGER(8), DIMENSION(*)                 :: l_tags
+  
+  TREAL, DIMENSION(*)                      :: wrk2d, wrk3d
+
+  TINTEGER is, i
 
   TINTEGER nvar
   TYPE(pointers3d_dt), DIMENSION(1) :: data
@@ -44,11 +46,11 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, wrk2d,wrk3d, l_txc, l_tags, l_hq, l_
 ! IF negative liquid set lagrange liquid 0
 ! ###################################################################
   DO is=4,inb_particle_evolution
-     DO l_i=1,particle_number_local
-        IF( l_q(l_i,is) .LT. 0 ) THEN
-           l_q(l_i,is)=C_0_R
-           l_q(l_i,6)=C_0_R
-           l_hq(l_i,6)=C_0_R
+     DO i=1,particle_number_local
+        IF ( l_q(i,is) .LT. C_0_R ) THEN
+           l_q(i,is)=C_0_R
+           l_q(i,6)=C_0_R
+           l_hq(i,6)=C_0_R
         ENDIF
      ENDDO
   ENDDO
@@ -60,12 +62,12 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, wrk2d,wrk3d, l_txc, l_tags, l_hq, l_
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:)
   CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
 
-  DO l_i=1,particle_number_local
-     IF (l_txc(l_i) .LT. 0.00001) THEN
+  DO i=1,particle_number_local
+     IF (l_txc(i) .LT. 0.00001) THEN
         DO is=4,inb_particle_evolution
-           l_q(l_i,is)=C_0_R
-           l_q(l_i,6)=C_0_R
-           l_hq(l_i,6)=C_0_R
+           l_q(i,is)=C_0_R
+           l_q(i,6)=C_0_R
+           l_hq(i,6)=C_0_R
         ENDDO
      ENDIF
   ENDDO

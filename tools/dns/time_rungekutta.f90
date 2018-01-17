@@ -180,7 +180,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 
      IF ( icalc_part .EQ. 1 .AND. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
         CALL PARTICLE_TIME_RESIDENCE(dtime, l_q, l_hq)
-        CALL PARTICLE_TIME_LIQUID_CLIPPING(s, wrk2d,wrk3d, l_txc, l_tags, l_hq, l_q, l_comm)
+        CALL PARTICLE_TIME_LIQUID_CLIPPING(s, l_txc, l_tags, l_hq, l_q, l_comm, wrk2d,wrk3d)
      ENDIF
      
 ! -------------------------------------------------------------------
