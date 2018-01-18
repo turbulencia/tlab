@@ -45,7 +45,8 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
   TREAL y_pdf_max, y_pdf_min
   TREAL x_pdf_max, x_pdf_min
   TREAL z_pdf_max, z_pdf_min
-  TINTEGER i,j, is, particle_pdf_min
+  TINTEGER i,j, is
+  TREAL particle_pdf_min
 #ifdef USE_MPI
   TLONGINTEGER, DIMENSION(:,:),   ALLOCATABLE         :: particle_bins_local
   ALLOCATE(particle_bins_local(number_of_bins,3)) 
@@ -69,6 +70,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
 
   nvar = 0
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:,1)
+  l_txc(:,1) = C_0_R
   CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
 
 #ifdef USE_MPI
@@ -78,7 +80,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
 !#######################################################################
 !Start counting of particles in bins per processor
 !#######################################################################
-  particle_pdf_min = 0  !if needed for future 
+  particle_pdf_min = C_0_R  !if needed for future 
 
   IF (x_particle_pdf_width .EQ. 0) THEN !ONLY PART OF Y
      DO i=1,particle_number_local
@@ -142,11 +144,11 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
   DEALLOCATE(particle_bins_local)
 #else
 
-  particle_pdf_min = 0
+  particle_pdf_min = C_0_R
 
   DO i=1,particle_number_local
      IF ( l_q(i,2)/g(2)%scale .GE. y_pdf_min .AND. l_q(i,2)/g(2)%scale .LE. y_pdf_max) THEN
-        j = 1 + int( (l_txc(i,1) - particle_pdf_min) / particle_pdf_interval )
+        j = 1 + int( ( l_txc(i,1) - particle_pdf_min) / particle_pdf_interval )
         particle_bins(j,1)=particle_bins(j,1)+1
 
         DO is=4,5

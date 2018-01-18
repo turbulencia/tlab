@@ -114,7 +114,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
         l_hq(i,5) = l_hq(i,5) - l_txc(i,4)/(C_1_R + EXP(l_txc(i,2)*delta_inv0)) &
                               - l_txc(i,3)*delta_inv4/(COSH(l_txc(i,2)*delta_inv2)**2) 
      ENDDO
-     
+
   ELSE IF (ilagrange .EQ. LAG_TYPE_SIMPLE_SETT) THEN
 
      l_hq(1:particle_number_local,2) = l_hq(1:particle_number_local,2) - lagrange_param(1)

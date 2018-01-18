@@ -155,6 +155,9 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
 !########################################################################
 ! Remaining scalar properties of the lagrangian field
 !########################################################################
+! Calculating closest node below in Y direction
+  CALL PARTICLE_LOCATE_Y( particle_number_local, l_q(1,2), l_g%nodes, g(2)%size, g(2)%nodes )
+  
   IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
 
      CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_field, txc, wrk3d)
@@ -162,10 +165,13 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
      IF ( imixture .EQ.  MIXT_TYPE_AIRWATER_LINEAR ) THEN
         nvar = 0
         nvar = nvar+1; data(nvar)%field => txc(:,:,:,1); data_out(nvar)%field => l_txc(:,1)
-        nvar = nvar+1; data(nvar)%field => txc(:,:,:,2); data_out(nvar)%field => l_txc(:,2)        
+        nvar = nvar+1; data(nvar)%field => txc(:,:,:,2); data_out(nvar)%field => l_txc(:,2)
+        l_txc(:,1:2) = C_0_R
         CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
         
-        CALL THERMO_AIRWATER_LINEAR(isize_particle,1,1,l_txc(1,1),l_q(1,4))
+!        CALL THERMO_AIRWATER_LINEAR(isize_particle,1,1,l_txc(1,1),l_q(1,4))
+        l_q(:,4) = C_0_R
+        CALL THERMO_AIRWATER_LINEAR(particle_number_local,1,1,l_txc(1,1),l_q(1,4))
         
         l_q(:,5) = l_q(:,4) ! l_q(:,6) for bil_cloud_4 is set =0 in dns_main at initialization
         
