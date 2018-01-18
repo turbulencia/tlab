@@ -34,10 +34,12 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
   USE LAGRANGE_GLOBAL, ONLY : particle_number_local, inb_particle_evolution, ilagrange
   USE DNS_LOCAL
 
+#ifdef USE_PROFILE
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_pro,ims_npro,ims_npro_i,ims_npro_k
 #endif
-
+#endif
+  
   IMPLICIT NONE
 
 #ifdef USE_MPI

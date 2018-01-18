@@ -84,7 +84,6 @@ PROGRAM AVERAGES
 #ifdef USE_MPI
   TINTEGER                :: ndims, id
   TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
-  INTEGER icount
 #endif
 
 ! Pointers to existing allocated space
