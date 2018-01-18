@@ -31,7 +31,7 @@ MODULE LAGRANGE_GLOBAL
   TINTEGER      :: isize_hf_1, isize_hf_2, isize_hf_3
   TINTEGER      :: isize_max_hf, isize_pbuffer
   TINTEGER      :: isize_l_comm
-  TINTEGER      :: jmax_part, jmin_part
+!  TINTEGER      :: jmax_part, jmin_part
 
   TREAL         :: y_particle_pos  !position where particles will be initialized
   TREAL         :: y_particle_width  !width of particle distribution

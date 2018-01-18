@@ -91,9 +91,9 @@ PROGRAM LAGRANGE_PDF
 
   isize_wrk2d = MAX(isize_wrk2d, jmax*inb_particle_interp)
 
-  IF (jmax_part .EQ. 1) THEN
-     jmax_part   = jmax ! 1 by default
-  ENDIF
+  ! IF (jmax_part .EQ. 1) THEN
+  !    jmax_part   = jmax ! 1 by default
+  ! ENDIF
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      

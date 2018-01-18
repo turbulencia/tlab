@@ -119,7 +119,7 @@ SUBROUTINE FIELD_TO_PARTICLE_INTERPOLATE &
         length_g_p(3) =(l_q(i,2) - g(2)%nodes(g_p(3))) /(g(2)%nodes(g_p(4))-g(2)%nodes(g_p(3)))
         length_g_p(4) = C_1_R -length_g_p(3)
         
-        cube_g_p(1) = length_g_p(1) *length_g_p(3) ! cubes
+        cube_g_p(1) = length_g_p(1) *length_g_p(3) ! bilear cubes for X and Y
         cube_g_p(2) = length_g_p(1) *length_g_p(4) ! be carefull multiply other side cube of grid for correct interpolation
         cube_g_p(3) = length_g_p(4) *length_g_p(2)
         cube_g_p(4) = length_g_p(2) *length_g_p(3)

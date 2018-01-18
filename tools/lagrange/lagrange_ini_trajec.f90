@@ -103,9 +103,9 @@ PROGRAM LAGRANGE_INI_TRAJEC
   ALLOCATE(wrk2d(isize_wrk2d))
 
   isize_wrk3d = imax*jmax*kmax
-  IF (jmax_part .EQ. 1) THEN
-     jmax_part   = jmax ! 1 by default
-  ENDIF
+  ! IF (jmax_part .EQ. 1) THEN
+  !    jmax_part   = jmax ! 1 by default
+  ! ENDIF
   ALLOCATE(wrk3d(isize_wrk3d))
 
   IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !Allocte memory to read fields

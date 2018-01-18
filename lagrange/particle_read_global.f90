@@ -37,8 +37,6 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile,  '#Y_Particle_Pos=<value>')
   CALL IO_WRITE_ASCII(bakfile,  '#Y_Particle_Width=<value>')
   CALL IO_WRITE_ASCII(bakfile,  '#Particle_bumper=<value>')
-  CALL IO_WRITE_ASCII(bakfile,  '#Jmax_part=<value>')
-  CALL IO_WRITE_ASCII(bakfile,  '#Jmin_part=<value>')
 
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'Type', 'None', sRes)
@@ -54,8 +52,8 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 
   CALL SCANINILONGINT(bakfile, inifile, 'Lagrange', 'Particle_number', '0', particle_number_total  )
   CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Particle_bumper', '2.0', memory_factor  )
-  CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Jmax_part', '1', jmax_part  )
-  CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Jmin_part', '1', jmin_part  )
+  ! CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Jmax_part', '1', jmax_part  )
+  ! CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Jmin_part', '1', jmin_part  )
 
 ! -------------------------------------------------------------------
   CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Particle_rnd_mode', '1', particle_rnd_mode  )
