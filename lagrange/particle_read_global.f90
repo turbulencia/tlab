@@ -151,12 +151,16 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
      inb_particle_interp = MAX(inb_particle_interp,inb_trajectory)
   ENDIF
   
-  isize_hf_1 = 2     *jmax*kmax   *inb_particle_interp 
-  isize_hf_2 =   imax*jmax     *2 *inb_particle_interp 
-  isize_hf_3 = 2     *jmax     *2 *inb_particle_interp 
-  isize_max_hf  = isize_hf_1+isize_hf_2+isize_hf_3
+  ! isize_hf_1 = 2     *jmax*kmax   *inb_particle_interp 
+  ! isize_hf_2 =   imax*jmax     *2 *inb_particle_interp 
+  ! isize_hf_3 = 2     *jmax     *2 *inb_particle_interp 
+!  isize_max_hf  = isize_hf_1+isize_hf_2+isize_hf_3
   isize_pbuffer = int(isize_particle/4*(inb_particle*2+1) ) !same size for both buffers
-  isize_l_comm  = isize_hf_1+isize_hf_2+isize_hf_3+2*isize_pbuffer
+!  isize_l_comm  = isize_hf_1+isize_hf_2+isize_hf_3+2*isize_pbuffer
+  isize_l_comm  = 2     *jmax*kmax   *inb_particle_interp &
+                +   imax*jmax     *2 *inb_particle_interp &
+                + 2     *jmax     *2 *inb_particle_interp 
+  isize_l_comm  = MAX(isize_l_comm,2*isize_pbuffer)
 
   idummy = MAX((imax+1)*jmax, MAX((imax+1)*kmax,jmax*(kmax+1)))
   isize_wrk2d = MAX(isize_wrk2d,idummy)

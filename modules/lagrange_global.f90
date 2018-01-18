@@ -28,9 +28,9 @@ MODULE LAGRANGE_GLOBAL
   TINTEGER      :: particle_rnd_mode !which initializing mode
   TINTEGER      :: residence_reset  !if reseidence l_q should be reset
   TINTEGER      :: nzone_max  !maximum size of vector p_buffer in particle_send_recv
-  TINTEGER      :: isize_hf_1, isize_hf_2, isize_hf_3
-  TINTEGER      :: isize_max_hf, isize_pbuffer
-  TINTEGER      :: isize_l_comm
+!  TINTEGER      :: isize_hf_1, isize_hf_2, isize_hf_3
+  TINTEGER      :: isize_l_comm, isize_pbuffer
+!  TINTEGER      :: isize_max_hf, isize_pbuffer
 !  TINTEGER      :: jmax_part, jmin_part
 
   TREAL         :: y_particle_pos  !position where particles will be initialized

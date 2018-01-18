@@ -47,8 +47,8 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   ENDIF
 
   np1 = 2*jmax*kmax; ip1 = 1
-  np2 = imax*jmax*2; ip2 = 1 +isize_hf_1
-  np3 = 2   *jmax*2; ip3 = 1 +isize_hf_1 +isize_hf_2
+  np2 = imax*jmax*2; ip2 = ip1 +np1 *inb_particle_interp !isize_hf_1
+  np3 = 2   *jmax*2; ip3 = ip2 +np2 *inb_particle_interp !isize_hf_2
   DO iv = 1,nvar
      data_halo1(iv)%field(1:2,1:jmax,1:kmax) => l_comm(ip1:ip1+np1-1); ip1 = ip1 +np1
      data_halo2(iv)%field(1:imax,1:jmax,1:2) => l_comm(ip2:ip2+np2-1); ip2 = ip2 +np2

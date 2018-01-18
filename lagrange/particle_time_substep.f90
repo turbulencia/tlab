@@ -39,8 +39,10 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
 
 !#####################################################################
 #ifdef USE_MPI
-  p_buffer_1(1:isize_pbuffer)=> l_comm(isize_max_hf+1:isize_max_hf+isize_pbuffer)
-  p_buffer_2(1:isize_pbuffer)=> l_comm(isize_max_hf+isize_pbuffer+1:isize_max_hf+isize_pbuffer*2)
+  ! p_buffer_1(1:isize_pbuffer)=> l_comm(isize_max_hf+1:isize_max_hf+isize_pbuffer)
+  ! p_buffer_2(1:isize_pbuffer)=> l_comm(isize_max_hf+isize_pbuffer+1:isize_max_hf+isize_pbuffer*2)
+  p_buffer_1(1:isize_pbuffer)=> l_comm(               1:isize_pbuffer   )
+  p_buffer_2(1:isize_pbuffer)=> l_comm(isize_pbuffer +1:isize_pbuffer *2)
 
 #else
   x_right = g(1)%nodes(1) +g(1)%scale
@@ -106,6 +108,8 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   CALL PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, & 
        p_buffer_1, p_buffer_2, l_q, l_hq, l_tags)
 
+  NULLIFY(p_buffer_1,p_buffer_2)
+  
 #else
 !#######################################################################
 ! Serial
