@@ -11,7 +11,7 @@
 !#
 !########################################################################
 SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
-     l_q, l_hq, l_txc, l_tags, l_comm)
+     l_q, l_hq, l_txc, l_comm)
   
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, tag_part, tag_traj, lfile
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal_array, inb_flow_array
@@ -25,7 +25,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL 
   USE DNS_TOWER
-  USE LAGRANGE_GLOBAL, ONLY : itrajectory
+  USE LAGRANGE_GLOBAL, ONLY : itrajectory, l_g
   USE BOUNDARY_INFLOW
   USE PARTICLE_TRAJECTORIES
 #ifdef LES
@@ -46,10 +46,9 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   TREAL, DIMENSION(*)             :: q_inf, s_inf
   TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
 
-  INTEGER(8), DIMENSION(isize_particle)                  :: l_tags
-  TREAL,      DIMENSION(isize_particle,inb_particle    ) :: l_q, l_hq
-  TREAL,      DIMENSION(isize_particle,inb_particle_txc) :: l_txc
-  TREAL,      DIMENSION(*)                               :: l_comm
+  TREAL, DIMENSION(isize_particle,inb_particle    ) :: l_q, l_hq
+  TREAL, DIMENSION(isize_particle,inb_particle_txc) :: l_txc
+  TREAL, DIMENSION(*)                               :: l_comm
 
   TARGET :: q
 
@@ -99,7 +98,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   DO WHILE ( itime .LT. nitera_last )
 
      CALL TIME_RUNGEKUTTA(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
-          l_q, l_hq, l_txc, l_tags, l_comm)
+          l_q, l_hq, l_txc, l_comm)
 
      itime = itime + 1
      rtime = rtime + dtime
@@ -156,7 +155,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 
 ! -----------------------------------------------------------------------
      IF ( itrajectory .NE. LAG_TRAJECTORY_NONE ) THEN
-        CALL PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk2d,wrk3d)
+        CALL PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
      END IF
 
 ! -----------------------------------------------------------------------
@@ -164,7 +163,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
         IF     ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
            CALL STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
            IF ( icalc_part .EQ. 1 ) THEN
-              CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags,l_comm, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
+              CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_comm, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
            ENDIF
         ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
            CALL STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d)
@@ -190,7 +189,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 
         IF ( icalc_part .EQ. 1 ) THEN
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_PARTICLE(fname, l_tags, l_q)
+           CALL IO_WRITE_PARTICLE(fname, l_g, l_q)
            IF ( itrajectory .NE. LAG_TRAJECTORY_NONE ) THEN
               WRITE(fname,*) itime; fname =TRIM(ADJUSTL(tag_traj))//TRIM(ADJUSTL(fname))
               CALL PARTICLE_TRAJECTORIES_WRITE(fname, wrk3d)

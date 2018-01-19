@@ -58,7 +58,6 @@ PROGRAM LAGRANGE_INI_TRAJEC
   
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
   TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
-  INTEGER(8), DIMENSION(:),   ALLOCATABLE, SAVE :: l_tags
 
   TINTEGER, DIMENSION(:), ALLOCATABLE :: dummy_proc
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_trajectories_tags, fake_l_trajectories_tags
@@ -143,7 +142,7 @@ all_fake_liquid(:) = C_0_R
   !#######################################################################
   !CREATE THE RANDOM PARTICLE FIELD
   !#######################################################################
-  CALL PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
+  CALL PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
 
 #ifdef USE_MPI
   !#######################################################################
@@ -180,7 +179,7 @@ all_fake_liquid(:) = C_0_R
       l_q(dummy,1)=l_trajectories(1,i)
       l_q(dummy,2)=l_trajectories(2,i)
       l_q(dummy,3)=l_trajectories(3,i)
-      fake_l_trajectories_tags(i)=l_tags(dummy)
+      fake_l_trajectories_tags(i)=l_g%tags(dummy)
       fake_liquid(i)=l_q(dummy,5) ! just to be consistent with other output file
       dummy=dummy+1
     ENDIF
@@ -212,7 +211,7 @@ all_fake_liquid(:) = C_0_R
   !#######################################################################
   !WRITE THE PARTICLE FILE
   !#######################################################################
-  CALL IO_WRITE_PARTICLE('part2traj.ics', l_tags, l_q)
+  CALL IO_WRITE_PARTICLE('part2traj.ics', l_g, l_q)
 
 
 #endif

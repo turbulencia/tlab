@@ -7,12 +7,14 @@
 
 !########################################################################
 !########################################################################
-SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )    
+SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )    
   
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL
+  USE LAGRANGE_GLOBAL, ONLY : isize_l_comm
+  USE LAGRANGE_GLOBAL, ONLY : l_g, particle_number_local, inb_particle_evolution
 #ifdef USE_MPI
+  USE LAGRANGE_GLOBAL, ONLY : isize_pbuffer
   USE DNS_MPI
 #endif
 
@@ -22,10 +24,9 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
 #endif
 
   TREAL dte
-  TREAL,      DIMENSION(isize_particle,inb_particle) :: l_q
-  TREAL,      DIMENSION(isize_particle,inb_particle) :: l_hq
-  INTEGER(8), DIMENSION(isize_particle)              :: l_tags
-  TREAL,      DIMENSION(isize_l_comm), TARGET        :: l_comm
+  TREAL, DIMENSION(isize_particle,inb_particle) :: l_q
+  TREAL, DIMENSION(isize_particle,inb_particle) :: l_hq
+  TREAL, DIMENSION(isize_l_comm), TARGET        :: l_comm
 
 ! -------------------------------------------------------------------
   TINTEGER is, i
@@ -39,8 +40,6 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
 
 !#####################################################################
 #ifdef USE_MPI
-  ! p_buffer_1(1:isize_pbuffer)=> l_comm(isize_max_hf+1:isize_max_hf+isize_pbuffer)
-  ! p_buffer_2(1:isize_pbuffer)=> l_comm(isize_max_hf+isize_pbuffer+1:isize_max_hf+isize_pbuffer*2)
   p_buffer_1(1:isize_pbuffer)=> l_comm(               1:isize_pbuffer   )
   p_buffer_2(1:isize_pbuffer)=> l_comm(isize_pbuffer +1:isize_pbuffer *2)
 
@@ -67,7 +66,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
 ! -------------------------------------------------------------------
 !Particle sorting for Send/Recv X-Direction
 ! -------------------------------------------------------------------
-  CALL PARTICLE_SORT(1, l_q, l_tags, l_g%nodes, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
+  CALL PARTICLE_SORT(1, l_g,l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
 
   IF (ims_pro_i .EQ. 0) THEN !Take care of periodic boundary conditions west
      IF (nzone_west .NE. 0) THEN
@@ -84,12 +83,12 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   END IF
 
   CALL PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, & 
-       p_buffer_1, p_buffer_2, l_q, l_hq, l_tags) 
+       p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags) 
 
 ! -------------------------------------------------------------------
 !Particle sorting for Send/Recv Z-Direction
 ! -------------------------------------------------------------------
-  CALL PARTICLE_SORT(3, l_q, l_tags, l_g%nodes, l_hq, nzone_grid, nzone_west, nzone_east,nzone_south,nzone_north)
+  CALL PARTICLE_SORT(3, l_g,l_q, l_hq, nzone_grid, nzone_west, nzone_east,nzone_south,nzone_north)
 
   IF (ims_pro_k .EQ. 0) THEN !Take care of periodic boundary conditions south
      IF (nzone_south .NE. 0) THEN
@@ -106,7 +105,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_tags, l_comm )
   END IF
 
   CALL PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, & 
-       p_buffer_1, p_buffer_2, l_q, l_hq, l_tags)
+       p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags)
 
   NULLIFY(p_buffer_1,p_buffer_2)
   

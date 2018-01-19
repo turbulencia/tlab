@@ -8,22 +8,6 @@
 #define C_FILE_LOC "LAGRANGE_PDF"
 
 !########################################################################
-!# Tool/Library PLOT
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2014/08/11 - L. Muessle
-!#
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Post processing particle pdf
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
 !########################################################################
 PROGRAM LAGRANGE_PDF
   
@@ -47,11 +31,10 @@ PROGRAM LAGRANGE_PDF
   TREAL, DIMENSION(:,:),     ALLOCATABLE       :: txc
   TREAL, DIMENSION(:,:,:,:), ALLOCATABLE, SAVE :: s  
 
-  TREAL, DIMENSION(:,:),    ALLOCATABLE :: l_q, l_txc
-  TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
-  INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_tags
-  TLONGINTEGER, DIMENSION(:,:),   ALLOCATABLE         :: particle_bins
-  TREAL, DIMENSION(:),   ALLOCATABLE         :: counter_interval
+  TREAL, DIMENSION(:,:),     ALLOCATABLE       :: l_q, l_txc
+  TREAL, DIMENSION(:),       ALLOCATABLE, SAVE :: l_comm
+  TLONGINTEGER, DIMENSION(:,:),ALLOCATABLE     :: particle_bins
+  TREAL, DIMENSION(:),       ALLOCATABLE       :: counter_interval
   TREAL y_pdf_max, y_pdf_min
 
   TINTEGER nitera_first,nitera_last,nitera_save
@@ -139,7 +122,7 @@ PROGRAM LAGRANGE_PDF
      CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,1,1,inb_scal_array))
 
      WRITE(fname,*) i; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
-     CALL IO_READ_PARTICLE(fname, l_tags, l_q)
+     CALL IO_READ_PARTICLE(fname, l_g, l_q)
 
 ! ######################################################################
 ! Save particle pathlines for particle_pdf
@@ -147,7 +130,7 @@ PROGRAM LAGRANGE_PDF
      number_of_bins = INT(particle_pdf_max/particle_pdf_interval)
 
      WRITE(fname,*) i; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
-     CALL PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
+     CALL PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk2d,wrk3d)
 
   ENDDO
 

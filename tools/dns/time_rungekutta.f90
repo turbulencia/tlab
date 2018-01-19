@@ -21,8 +21,7 @@
 !#
 !########################################################################
 SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
-     q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
-     l_q, l_hq, l_txc, l_tags, l_comm)
+     q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, l_q,l_hq,l_txc,l_comm)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -52,7 +51,6 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 
   TREAL, DIMENSION(isize_particle,*) :: l_q, l_hq
   TREAL, DIMENSION(*)                :: l_comm, l_txc
-  INTEGER(8), DIMENSION(*)           :: l_tags
 
 ! -------------------------------------------------------------------
   TINTEGER i, is, flag_control
@@ -161,7 +159,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
         IF    ( rkm_mode .EQ. RKM_EXP3 .OR. rkm_mode .EQ. RKM_EXP4 ) THEN 
            CALL TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(&
                 dte,etime, q,hq,s,hs,txc, vaux, wrk1d,wrk2d,wrk3d, &
-                l_q, l_hq, l_txc, l_tags, l_comm)
+                l_q, l_hq, l_txc, l_comm)
 
         ELSE 
            CALL TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(&
@@ -182,7 +180,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 
      IF ( icalc_part .EQ. 1 .AND. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
         CALL PARTICLE_TIME_RESIDENCE(dtime, l_q, l_hq)
-        CALL PARTICLE_TIME_LIQUID_CLIPPING(s, l_txc, l_tags, l_hq, l_q, l_comm, wrk2d,wrk3d)
+        CALL PARTICLE_TIME_LIQUID_CLIPPING(s, l_q,l_hq,l_txc, l_comm, wrk2d,wrk3d)
      ENDIF
      
 ! -------------------------------------------------------------------

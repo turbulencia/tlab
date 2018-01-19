@@ -17,13 +17,13 @@
 !#  Sending to processors in south and north
 !#
 !########################################################################
-SUBROUTINE PARTICLE_SORT(x_or_z, l_q, l_tags, l_nodes, l_hq, &
+SUBROUTINE PARTICLE_SORT(x_or_z, l_g,l_q, l_hq, &
      nzone_grid,nzone_west,nzone_east,nzone_south,nzone_north)    
 
   USE DNS_GLOBAL, ONLY : imax,kmax
   USE DNS_GLOBAL, ONLY : isize_particle, inb_particle
   USE DNS_GLOBAL, ONLY : g
-  USE LAGRANGE_GLOBAL, ONLY: particle_number_local
+  USE LAGRANGE_GLOBAL, ONLY: particle_number_local, particle_dt
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -31,10 +31,9 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_q, l_tags, l_nodes, l_hq, &
   IMPLICIT NONE
 
   TINTEGER nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north, x_or_z
-  TREAL,      DIMENSION(isize_particle,inb_particle) :: l_q
-  TREAL,      DIMENSION(isize_particle,inb_particle) :: l_hq
-  INTEGER(8), DIMENSION(isize_particle)              :: l_tags
-  TINTEGER,   DIMENSION(isize_particle)              :: l_nodes
+  TYPE(particle_dt)                             :: l_g
+  TREAL, DIMENSION(isize_particle,inb_particle) :: l_q
+  TREAL, DIMENSION(isize_particle,inb_particle) :: l_hq
 
 ! -------------------------------------------------------------------
   TREAL dx_grid, dz_grid
@@ -82,13 +81,13 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_q, l_tags, l_nodes, l_hq, &
                  counter_swap=1
               ENDIF
            ELSE ! Forund a particle which belongs to grid so SWAP
-              idummy    =l_nodes(i)
-              l_nodes(i)=l_nodes(j)
-              l_nodes(j)=idummy
+              idummy      =l_g%nodes(i)
+              l_g%nodes(i)=l_g%nodes(j)
+              l_g%nodes(j)=idummy
               
-              idummy8  =l_tags(i)
-              l_tags(i)=l_tags(j)
-              l_tags(j)=idummy8
+              idummy8    =l_g%tags(i)
+              l_g%tags(i)=l_g%tags(j)
+              l_g%tags(j)=idummy8
 
               DO k=1,inb_particle
                  dummy=l_q(i,k)
@@ -118,13 +117,13 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_q, l_tags, l_nodes, l_hq, &
                  counter_swap=1
               ENDIF
            ELSE                    
-              idummy    =l_nodes(i)
-              l_nodes(i)=l_nodes(j)
-              l_nodes(j)=idummy
+              idummy      =l_g%nodes(i)
+              l_g%nodes(i)=l_g%nodes(j)
+              l_g%nodes(j)=idummy
               
-              idummy8  =l_tags(i)
-              l_tags(i)=l_tags(j)
-              l_tags(j)=idummy8
+              idummy8    =l_g%tags(i)
+              l_g%tags(i)=l_g%tags(j)
+              l_g%tags(j)=idummy8
 
               DO k=1,inb_particle
                  dummy=l_q(i,k)
@@ -173,13 +172,13 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_q, l_tags, l_nodes, l_hq, &
         counter_swap=0
         DO WHILE (counter_swap .eq. 0)
            IF (l_q(j,x_or_z) .LT. lower_limit) then !if particle is out to west
-              idummy    =l_nodes(i)
-              l_nodes(i)=l_nodes(j)
-              l_nodes(j)=idummy
+              idummy      =l_g%nodes(i)
+              l_g%nodes(i)=l_g%nodes(j)
+              l_g%nodes(j)=idummy
               
-              idummy8  =l_tags(i)
-              l_tags(i)=l_tags(j)
-              l_tags(j)=idummy8
+              idummy8    =l_g%tags(i)
+              l_g%tags(i)=l_g%tags(j)
+              l_g%tags(j)=idummy8
 
               DO k=1,inb_particle
                  dummy=l_q(i,k)

@@ -45,7 +45,6 @@ PROGRAM AVERAGES
 ! Particle data
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_txc
-  INTEGER(8), DIMENSION(:),   ALLOCATABLE, SAVE :: l_tags
 
 ! -------------------------------------------------------------------
 ! Local variables
@@ -534,7 +533,7 @@ PROGRAM AVERAGES
         IF ( icalc_part .EQ. 1 ) THEN
            IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
               WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
-              CALL IO_READ_PARTICLE(fname, l_tags, l_q)
+              CALL IO_READ_PARTICLE(fname, l_g, l_q)
                  
               l_txc = C_1_R; ! We want density
               CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,7), wrk2d,wrk3d)

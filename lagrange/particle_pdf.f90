@@ -7,12 +7,12 @@
 
 !########################################################################
 !########################################################################
-SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
+SUBROUTINE PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk2d,wrk3d)
 
   USE DNS_TYPES,  ONLY: pointers_dt, pointers3d_dt
   USE DNS_GLOBAL, ONLY: imax,jmax,kmax, isize_field,isize_particle, inb_particle, inb_scal_array
   USE DNS_GLOBAL, ONLY: g
-  USE LAGRANGE_GLOBAL, ONLY :  particle_number_local
+  USE LAGRANGE_GLOBAL, ONLY :  particle_number_local, particle_dt
   USE LAGRANGE_GLOBAL, ONLY :  number_of_bins, y_particle_pdf_pos, y_particle_pdf_width
   USE LAGRANGE_GLOBAL, ONLY :  y_particle_pdf_pos, y_particle_pdf_width
   USE LAGRANGE_GLOBAL, ONLY :  x_particle_pdf_pos, x_particle_pdf_width
@@ -22,26 +22,27 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
   USE DNS_MPI
 #endif
 
-
   IMPLICIT NONE
 #ifdef USE_MPI
 #include "mpif.h"
 #endif  
+
+  CHARACTER*(*) fname
   TREAL, DIMENSION(isize_field,*), TARGET :: s
   TREAL, DIMENSION(*)                     :: wrk2d, wrk3d
 
+  TYPE(particle_dt)                                    :: l_g
   TREAL, DIMENSION(isize_particle,inb_particle)        :: l_q
   TREAL, DIMENSION(isize_particle,1),           TARGET :: l_txc
-  TREAL, DIMENSION(*)                :: l_comm
-  INTEGER(8), DIMENSION(*)           :: l_tags
+  TREAL, DIMENSION(*)                                  :: l_comm
 
+! -------------------------------------------------------------------  
   TINTEGER nvar
   TYPE(pointers3d_dt), DIMENSION(1) :: data
   TYPE(pointers_dt),   DIMENSION(1) :: data_out
 
   TLONGINTEGER, DIMENSION(:,:),   ALLOCATABLE         :: particle_bins
   TREAL, DIMENSION(:),   ALLOCATABLE         :: counter_interval
-  CHARACTER(*)  ::  fname
   TREAL y_pdf_max, y_pdf_min
   TREAL x_pdf_max, x_pdf_min
   TREAL z_pdf_max, z_pdf_min
@@ -71,7 +72,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
   nvar = 0
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:,1)
   l_txc(:,1) = C_0_R
-  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
+  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_g,l_q,l_comm, wrk2d,wrk3d)
 
 #ifdef USE_MPI
 

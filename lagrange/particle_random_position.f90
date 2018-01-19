@@ -5,13 +5,14 @@
 #include "dns_const_mpi.h"
 #endif
 
-SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
+SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
   
   USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
-  USE LAGRANGE_GLOBAL
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE LAGRANGE_GLOBAL, ONLY : particle_dt, particle_number_local, particle_number_total
+  USE LAGRANGE_GLOBAL, ONLY : particle_rnd_mode, y_particle_pos, y_particle_width, ilagrange
+  USE THERMO_GLOBAL,   ONLY : imixture
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -21,9 +22,9 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
 #include "mpif.h"
 #endif
 
+  TYPE(particle_dt)                               :: l_g
   TREAL,      DIMENSION(isize_particle,*), TARGET :: l_q, l_txc
-  INTEGER(8), DIMENSION(isize_particle)           :: l_tags
-  TREAL,      DIMENSION(isize_l_comm),     TARGET :: l_comm
+  TREAL,      DIMENSION(*),                TARGET :: l_comm
   TREAL,      DIMENSION(imax,jmax,kmax,*), TARGET :: txc
   TREAL,      DIMENSION(*)                        :: wrk2d,wrk3d
 
@@ -66,7 +67,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
   ENDDO
 #endif
   DO i = 1,particle_number_local
-     l_tags(i) = INT(i, KIND=8) +count
+     l_g%tags(i) = INT(i, KIND=8) +count
   END DO
   
 ! Generate seed - different seed for each processor
@@ -176,7 +177,7 @@ SUBROUTINE  PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
         nvar = nvar+1; data(nvar)%field => txc(:,:,:,1); data_out(nvar)%field => l_txc(:,1)
         nvar = nvar+1; data(nvar)%field => txc(:,:,:,2); data_out(nvar)%field => l_txc(:,2)
         l_txc(:,1:2) = C_0_R
-        CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
+        CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_g,l_q,l_comm, wrk2d,wrk3d)
         
 !        CALL THERMO_AIRWATER_LINEAR(isize_particle,1,1,l_txc(1,1),l_q(1,4))
         l_q(:,4) = C_0_R

@@ -53,9 +53,8 @@ PROGRAM LAGRANGE_POS_TRAJEC
   TINTEGER  dummy_isize_trajectory
   TINTEGER, DIMENSION(:), ALLOCATABLE :: dummy_proc, all_dummy_proc
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_trajectories_tags
-  INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_tags
-  TREAL, DIMENSION(:), ALLOCATABLE :: dummy_big_overall
-  TREAL, DIMENSION(:,:),    ALLOCATABLE :: l_q, l_txc
+  TREAL, DIMENSION(:),   ALLOCATABLE :: dummy_big_overall
+  TREAL, DIMENSION(:,:), ALLOCATABLE :: l_q, l_txc
   TREAL, DIMENSION(:,:), ALLOCATABLE :: l_trajectories, all_l_trajectories
 
   TINTEGER nitera_first, nitera_last
@@ -101,7 +100,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
 !READ THE (FIRST) FILE
 !#######################################################################
   WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
-  CALL IO_READ_PARTICLE(fname, l_tags, l_q)
+  CALL IO_READ_PARTICLE(fname, l_g, l_q)
 
   IF (ims_pro .EQ. 0) THEN
      fname = 'largest_particle'
@@ -125,7 +124,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
 !#######################################################################
   DO i=1,particle_number_local
      DO j=1,isize_trajectory
-        IF (l_tags(i) .EQ. l_trajectories_tags(j)) THEN
+        IF (l_g%tags(i) .EQ. l_trajectories_tags(j)) THEN
            l_trajectories(1,j)=l_q(i,1)
            l_trajectories(2,j)=l_q(i,2)
            l_trajectories(3,j)=l_q(i,3)

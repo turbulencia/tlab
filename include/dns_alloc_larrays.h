@@ -1,6 +1,6 @@
-  WRITE(str,*) isize_particle; line = 'Allocating array l_tags of size '//TRIM(ADJUSTL(str))
+  WRITE(str,*) isize_particle; line = 'Allocating array l_g.tags of size '//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(l_tags(isize_particle),stat=ierr)
+  ALLOCATE(l_g%tags(isize_particle),stat=ierr)
   IF ( ierr .NE. 0 ) THEN
      CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for l_tags.')
      CALL DNS_STOP(DNS_ERROR_ALLOC)

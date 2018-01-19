@@ -7,13 +7,13 @@
 
 !#######################################################################
 !#######################################################################
-SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
+SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3d)
 
   USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_particle
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : visc, radiation
-  USE LAGRANGE_GLOBAL
+  USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange, particle_number_local, lagrange_param
   USE THERMO_GLOBAL, ONLY : thermo_param
 
   IMPLICIT NONE
@@ -22,11 +22,10 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
 #endif
 #include "integers.h"
 
-  TREAL,      DIMENSION(isize_field,*),    TARGET :: q, s, txc
-  TREAL,      DIMENSION(isize_particle,*), TARGET :: l_q, l_hq, l_txc
-  INTEGER(8), DIMENSION(isize_particle)           :: l_tags
-  TREAL,      DIMENSION(isize_l_comm)             :: l_comm
-  TREAL,      DIMENSION(*)                        :: wrk1d, wrk2d, wrk3d
+  TREAL, DIMENSION(isize_field,*),    TARGET :: q, s, txc
+  TREAL, DIMENSION(isize_particle,*), TARGET :: l_q, l_hq, l_txc
+  TREAL, DIMENSION(*)                        :: l_comm
+  TREAL, DIMENSION(*)                        :: wrk1d, wrk2d, wrk3d
 
 ! -------------------------------------------------------------------
   TREAL dummy, dummy2
@@ -93,7 +92,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk
 ! The interpolated data is added to the existing data, which
 !  consitutes already the evolution equation for particle position
 ! -------------------------------------------------------------------
-  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
+  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_g,l_q,l_comm, wrk2d,wrk3d)
   
 ! -------------------------------------------------------------------
 ! Completing evolution equations

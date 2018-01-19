@@ -54,7 +54,6 @@ PROGRAM LAGRANGE_TRAJEC
   TINTEGER dummy
 #endif
   TREAL, DIMENSION(:,:),    ALLOCATABLE :: l_q, l_txc
-  INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_tags
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: tag_big_part
 
   TINTEGER nitera_last
@@ -105,14 +104,14 @@ PROGRAM LAGRANGE_TRAJEC
 !READ THE (LAST) FILE
 !#######################################################################
   WRITE(fname,*) nitera_last; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
-  CALL IO_READ_PARTICLE(fname, l_tags, l_q)
+  CALL IO_READ_PARTICLE(fname, l_g, l_q)
 
 !#######################################################################
 !Every processor searches for the largest particles
 !#######################################################################
 
   big_part(1:isize_trajectory) = l_q(1:isize_trajectory,5)
-  tag_big_part(1:isize_trajectory) = l_tags(1:isize_trajectory)
+  tag_big_part(1:isize_trajectory) = l_g%tags(1:isize_trajectory)
 
 !  IF (ims_pro .EQ. 0) THEN
 !  print*, tag_big_part
@@ -141,7 +140,7 @@ PROGRAM LAGRANGE_TRAJEC
   DO k=1,particle_number_local,1
      IF (l_q(k,5) .GT. big_part(1))THEN
         big_part(1) = l_q(k,5)
-        tag_big_part(1) = l_tags(k)
+        tag_big_part(1) = l_g%tags(k)
 
         swapped = .FALSE.
         DO i = 1,isize_trajectory-1

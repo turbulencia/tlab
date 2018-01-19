@@ -39,9 +39,8 @@ PROGRAM DNS
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: q,s, h_q,h_s, txc
 
 ! Particle data
-  TREAL,      DIMENSION(:,:),   ALLOCATABLE, SAVE :: l_q, l_hq, l_txc
-  TREAL,      DIMENSION(:),     ALLOCATABLE, SAVE :: l_comm
-  INTEGER(8), DIMENSION(:),     ALLOCATABLE, SAVE :: l_tags
+  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_hq, l_txc
+  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
 
 ! Work arrays
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk1d,wrk2d,wrk3d
@@ -355,7 +354,7 @@ PROGRAM DNS
 ! Particle fields
   IF ( icalc_part .EQ. 1 ) THEN
      WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
-     CALL IO_READ_PARTICLE(fname, l_tags, l_q)
+     CALL IO_READ_PARTICLE(fname, l_g, l_q)
      
 ! set boundarys for residence time pdf 
      IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
@@ -453,7 +452,7 @@ PROGRAM DNS
 ! Do simulation: Integrate equations
 ! ###################################################################
   CALL TIME_INTEGRATION(q,h_q, s,h_s, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
-       l_q, l_hq, l_txc, l_tags, l_comm)
+       l_q, l_hq, l_txc, l_comm)
 
 ! ###################################################################
 #ifdef USE_FFTW

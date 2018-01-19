@@ -28,7 +28,6 @@ PROGRAM INIPART
 
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
   TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
-  INTEGER(8), DIMENSION(:),   ALLOCATABLE, SAVE :: l_tags
 
   CHARACTER*32 inifile
   CHARACTER*64 str, line
@@ -84,9 +83,9 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
 ! Initialize particle information
 ! -------------------------------------------------------------------
-  CALL PARTICLE_RANDOM_POSITION(l_q,l_txc,l_tags,l_comm, txc, wrk2d,wrk3d)
+  CALL PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
 
-  CALL IO_WRITE_PARTICLE(TRIM(ADJUSTL(tag_part))//'ics', l_tags, l_q)
+  CALL IO_WRITE_PARTICLE(TRIM(ADJUSTL(tag_part))//'ics', l_g, l_q)
 
   CALL DNS_END(0)
 

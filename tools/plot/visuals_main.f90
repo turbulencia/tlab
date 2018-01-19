@@ -39,7 +39,6 @@ PROGRAM VISUALS_MAIN
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: q, s, txc
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
-  INTEGER(8), DIMENSION(:),   ALLOCATABLE, SAVE :: l_tags
   TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: wrk2d,wrk3d
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: wrk1d
   
@@ -963,7 +962,7 @@ PROGRAM VISUALS_MAIN
 ! Particle density
 ! ###################################################################
         IF ( opt_vec(iv) .EQ. iscal_offset+18 ) THEN
-           CALL IO_READ_PARTICLE(part_file, l_tags, l_q)
+           CALL IO_READ_PARTICLE(part_file, l_g, l_q)
            
            l_txc = C_1_R; ! We want density
            CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,1), wrk2d,wrk3d)

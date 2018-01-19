@@ -2,11 +2,12 @@
 #include "dns_const.h"
 #include "dns_error.h"
 
-SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags,l_comm, txc, mean, wrk1d,wrk2d,wrk3d)
+SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_comm, txc, mean, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
-  USE LAGRANGE_GLOBAL
+  USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange, inb_particle_evolution
+  USE LAGRANGE_GLOBAL, ONLY : icalc_part_pdf, number_of_bins, particle_pdf_max, particle_pdf_interval
 
   IMPLICIT NONE
 
@@ -19,7 +20,6 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags,l_comm, txc, 
 
   TREAL, DIMENSION(isize_particle,inb_particle),     INTENT(IN)    :: l_q, l_hq
   TREAL, DIMENSION(isize_particle,inb_particle_txc), INTENT(INOUT) :: l_txc
-  INTEGER(8), DIMENSION(*)                                         :: l_tags
   TREAL, DIMENSION(*),                               INTENT(INOUT) :: l_comm
 
 ! -------------------------------------------------------------------
@@ -51,7 +51,7 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_tags,l_comm, txc, 
   IF ( icalc_part_pdf .EQ. 1) THEN
      number_of_bins = INT(particle_pdf_max/particle_pdf_interval)
      WRITE(fname,*) itime; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
-     CALL PARTICLE_PDF(fname,s, wrk2d,wrk3d, l_txc,l_tags,l_q,l_comm)
+     CALL PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk2d,wrk3d)
   END IF
   
 ! Save particle residence times

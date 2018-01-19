@@ -8,12 +8,12 @@
 !#######################################################################
 !#######################################################################
 SUBROUTINE  FIELD_TO_PARTICLE &
-    (nvar, data_in, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
+    (nvar, data_in, data_out, l_g,l_q,l_comm, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL,     ONLY : imax,jmax,kmax, isize_particle
-  USE LAGRANGE_GLOBAL
+  USE LAGRANGE_GLOBAL,ONLY : particle_dt, isize_l_comm, inb_particle_interp
 #ifdef USE_MPI
   USE DNS_MPI,        ONLY:  ims_err
 #endif
@@ -28,8 +28,8 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   TINTEGER nvar
   TYPE(pointers3d_dt), DIMENSION(nvar)                 :: data_in
   TYPE(pointers_dt),   DIMENSION(nvar)                 :: data_out
+  TYPE(particle_dt)                                    :: l_g
   TREAL,               DIMENSION(isize_particle,*)     :: l_q
-  INTEGER(8),          DIMENSION(isize_particle)       :: l_tags
   TREAL,               DIMENSION(isize_l_comm), TARGET :: l_comm
   TREAL,               DIMENSION(*)                    :: wrk2d, wrk3d
 
@@ -47,8 +47,8 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   ENDIF
 
   np1 = 2*jmax*kmax; ip1 = 1
-  np2 = imax*jmax*2; ip2 = ip1 +np1 *inb_particle_interp !isize_hf_1
-  np3 = 2   *jmax*2; ip3 = ip2 +np2 *inb_particle_interp !isize_hf_2
+  np2 = imax*jmax*2; ip2 = ip1 +np1 *nvar !isize_hf_1
+  np3 = 2   *jmax*2; ip3 = ip2 +np2 *nvar !isize_hf_2
   DO iv = 1,nvar
      data_halo1(iv)%field(1:2,1:jmax,1:kmax) => l_comm(ip1:ip1+np1-1); ip1 = ip1 +np1
      data_halo2(iv)%field(1:imax,1:jmax,1:2) => l_comm(ip2:ip2+np2-1); ip2 = ip2 +np2
@@ -73,7 +73,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 !#######################################################################
 ! Sorting and counting particles for each zone
 !#######################################################################
-  CALL PARTICLE_SORT_HALO(l_q,l_tags,l_g%nodes, nvar,data_out, grid_zone,halo_zone_x,halo_zone_z,halo_zone_diagonal)
+  CALL PARTICLE_SORT_HALO(l_g,l_q, nvar,data_out, grid_zone,halo_zone_x,halo_zone_z,halo_zone_diagonal)
 
 #ifdef USE_MPI
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)

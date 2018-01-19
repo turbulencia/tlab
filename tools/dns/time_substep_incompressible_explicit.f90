@@ -28,8 +28,7 @@
 !#
 !########################################################################
 SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
-     q,hq,s,hs, txc, vaux, wrk1d,wrk2d,wrk3d, &
-     l_q, l_hq, l_txc, l_tags, l_comm)
+     q,hq,s,hs, txc, vaux, wrk1d,wrk2d,wrk3d, l_q,l_hq,l_txc,l_comm)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -54,7 +53,6 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 
   TREAL, DIMENSION(isize_particle,*)  :: l_q, l_hq
   TREAL, DIMENSION(*)                 :: l_comm, l_txc
-  INTEGER(8), DIMENSION(*)            :: l_tags
 
 ! -----------------------------------------------------------------------
   TINTEGER ij, is
@@ -157,7 +155,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 ! Call RHS particle algorithm
 ! #######################################################################
   IF ( icalc_part .EQ. 1 ) THEN
-     CALL RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk1d,wrk2d,wrk3d)
+     CALL RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3d)
   END IF
 
 ! #######################################################################
@@ -214,7 +212,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 ! Particle POSTION UPDATED and  SEND/RECV TO THE NEW PROCESSOR
 ! ######################################################################
   IF ( icalc_part .EQ. 1 ) THEN 
-    CALL PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq,l_tags, l_comm )    
+    CALL PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )    
   END IF 
 
 ! ###################################################################

@@ -7,7 +7,7 @@ MODULE PARTICLE_TRAJECTORIES
   USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_GLOBAL,     ONLY : inb_flow_array, inb_scal_array
   USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL,ONLY : particle_number_local
+  USE LAGRANGE_GLOBAL,ONLY : particle_number_local, particle_dt
   USE LAGRANGE_GLOBAL,ONLY : isize_trajectory, inb_trajectory, isize_l_comm, itrajectory
 #ifdef USE_MPI
   USE DNS_MPI,        ONLY : ims_pro, ims_err
@@ -98,7 +98,7 @@ END SUBROUTINE PARTICLE_TRAJECTORIES_INITIALIZE
 
 !#######################################################################
 !#######################################################################
-SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_q,l_hq,l_txc,l_tags,l_comm, wrk2d,wrk3d)
+SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL,ONLY : isize_field, imax,jmax,kmax
@@ -107,8 +107,8 @@ SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_q,l_hq,l_txc,l_tags,l_co
   IMPLICIT NONE
 
   TREAL,      DIMENSION(isize_field,*),    TARGET :: q, s, txc
+  TYPE(particle_dt)                               :: l_g
   TREAL,      DIMENSION(isize_particle,*), TARGET :: l_q, l_hq, l_txc ! l_hq as aux array
-  INTEGER(8), DIMENSION(isize_particle)           :: l_tags
   TREAL,      DIMENSION(isize_l_comm)             :: l_comm
   TREAL,      DIMENSION(*)                        :: wrk2d, wrk3d
 
@@ -153,7 +153,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_q,l_hq,l_txc,l_tags,l_co
 ! Interpolation
   IF ( nvar-3 .GT. 0 ) THEN
      iv = nvar -3
-     CALL FIELD_TO_PARTICLE(iv, data_in(4), data(4), l_q,l_tags,l_comm, wrk2d,wrk3d)
+     CALL FIELD_TO_PARTICLE(iv, data_in(4), data(4), l_g,l_q,l_comm, wrk2d,wrk3d)
   ENDIF
   
 ! -------------------------------------------------------------------
@@ -169,7 +169,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_q,l_hq,l_txc,l_tags,l_co
 ! Accumulating the data
   DO i = 1,particle_number_local
      DO j = 1,isize_trajectory
-        IF ( l_tags(i) .EQ. l_trajectories_tags(j) ) THEN
+        IF ( l_g%tags(i) .EQ. l_trajectories_tags(j) ) THEN
            DO iv = 1,nvar
               l_trajectories(1+j,counter,iv) = data(iv)%field(i)
            ENDDO

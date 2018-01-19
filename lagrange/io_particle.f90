@@ -10,12 +10,12 @@
 #define LOC_UNIT_ID 117
 #define LOC_STATUS 'old'
 
-SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
+SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
 
   USE DNS_CONSTANTS,   ONLY : lfile, efile
   USE DNS_GLOBAL,      ONLY : isize_particle, inb_particle
   USE DNS_GLOBAL,      ONLY : g
-  USE LAGRANGE_GLOBAL, ONLY : particle_number_total, particle_number_local, l_g
+  USE LAGRANGE_GLOBAL, ONLY : particle_dt, particle_number_total, particle_number_local
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
 #endif
@@ -25,9 +25,9 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
 #include "mpif.h"
 #endif  
  
-  CHARACTER*(*)                                                :: fname
-  INTEGER(8), DIMENSION(isize_particle)                        :: l_tags
-  TREAL,      DIMENSION(isize_particle,inb_particle) :: l_q !, OPTIONAL :: l_q 
+  CHARACTER*(*)     fname
+  TYPE(particle_dt) l_g
+  TREAL, DIMENSION(isize_particle,inb_particle) :: l_q !, OPTIONAL :: l_q 
   
 ! -------------------------------------------------------------------
   TINTEGER i
@@ -96,7 +96,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
   name = TRIM(ADJUSTL(fname))//".id"
   CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
   CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_INTEGER8, MPI_INTEGER8, 'native', MPI_INFO_NULL, ims_err)
-  CALL MPI_FILE_READ_ALL(mpio_fh, l_tags, particle_number_local, MPI_INTEGER8, status, ims_err)
+  CALL MPI_FILE_READ_ALL(mpio_fh, l_g%tags, particle_number_local, MPI_INTEGER8, status, ims_err)
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
 
 !  IF ( PRESENT(l_q) ) THEN
@@ -123,7 +123,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_tags, l_q)
      CLOSE(LOC_UNIT_ID)
      CALL DNS_STOP(DNS_ERROR_PARTICLE)
   ENDIF
-  READ(LOC_UNIT_ID) l_tags
+  READ(LOC_UNIT_ID) l_g%tags
   CLOSE(LOC_UNIT_ID)
 
 ! For homogeneity with MPI version
@@ -156,11 +156,11 @@ END SUBROUTINE IO_READ_PARTICLE
 #define LOC_UNIT_ID 118
 #define LOC_STATUS 'unknown'
 
-SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
+SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
 
   USE DNS_CONSTANTS,   ONLY : lfile
   USE DNS_GLOBAL,      ONLY : isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL, ONLY : particle_number_local
+  USE LAGRANGE_GLOBAL, ONLY : particle_dt, particle_number_local
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
 #endif
@@ -170,9 +170,9 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
 #include "mpif.h"
 #endif
 
-  CHARACTER*(*)                                                :: fname
-  INTEGER(8), DIMENSION(isize_particle)                        :: l_tags
-  TREAL,      DIMENSION(isize_particle,inb_particle) :: l_q !, OPTIONAL :: l_q 
+  CHARACTER*(*)     fname
+  TYPE(particle_dt) l_g
+  TREAL, DIMENSION(isize_particle,inb_particle) :: l_q !, OPTIONAL :: l_q 
 
 ! -------------------------------------------------------------------  
   TINTEGER i
@@ -229,7 +229,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
   name = TRIM(ADJUSTL(fname))//".id"
   CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
   CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_INTEGER8, MPI_INTEGER8, 'native', MPI_INFO_NULL, ims_err)    
-  CALL MPI_FILE_WRITE_ALL(mpio_fh, l_tags, particle_number_local, MPI_INTEGER8, status, ims_err)
+  CALL MPI_FILE_WRITE_ALL(mpio_fh, l_g%tags, particle_number_local, MPI_INTEGER8, status, ims_err)
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
 
 !  IF ( PRESENT(l_q) ) THEN
@@ -251,7 +251,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_tags, l_q)
 #include "dns_open_file.h"
   WRITE(LOC_UNIT_ID) idummy  
   WRITE(LOC_UNIT_ID) particle_number_local
-  WRITE(LOC_UNIT_ID) l_tags
+  WRITE(LOC_UNIT_ID) l_g%tags
   CLOSE(LOC_UNIT_ID)
 
 !  IF ( PRESENT(l_q) ) THEN

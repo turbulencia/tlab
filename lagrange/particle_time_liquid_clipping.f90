@@ -3,9 +3,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Lagrange
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2015/03 - L. Muessle
@@ -18,12 +15,12 @@
 !# Sets particle liquid with no eulerian liquid surrounded to zero 
 !#
 !########################################################################
-SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, l_txc, l_tags, l_hq, l_q, l_comm, wrk2d,wrk3d)
+SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
 
   USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_particle
   USE DNS_GLOBAL, ONLY : isize_field, inb_scal_array
-  USE LAGRANGE_GLOBAL, ONLY : inb_particle_evolution, particle_number_local
+  USE LAGRANGE_GLOBAL, ONLY : inb_particle_evolution, particle_number_local, l_g
 
   IMPLICIT NONE
 
@@ -32,7 +29,6 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, l_txc, l_tags, l_hq, l_q, l_comm, wr
   TREAL, DIMENSION(isize_particle,*)       :: l_q, l_hq
   TREAL, DIMENSION(isize_particle), TARGET :: l_txc
   TREAL, DIMENSION(*)                      :: l_comm
-  INTEGER(8), DIMENSION(*)                 :: l_tags
   
   TREAL, DIMENSION(*)                      :: wrk2d, wrk3d
 
@@ -61,7 +57,7 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, l_txc, l_tags, l_hq, l_q, l_comm, wr
   nvar = 0
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:)
   l_txc = C_0_R
-  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_q,l_tags,l_comm, wrk2d,wrk3d)
+  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_g,l_q,l_comm, wrk2d,wrk3d)
 
   DO i=1,particle_number_local
      IF (l_txc(i) .LT. 0.00001) THEN
