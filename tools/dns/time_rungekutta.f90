@@ -28,9 +28,9 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 #endif
   USE DNS_GLOBAL, ONLY : isize_field, inb_flow,inb_scal, icalc_part
   USE DNS_GLOBAL, ONLY : icalc_flow,icalc_scal, imode_eqns
-  USE DNS_GLOBAL, ONLY : isize_particle
+  USE DNS_GLOBAL, ONLY : isize_particle, inb_particle_evolution
   USE DNS_GLOBAL, ONLY : rtime, itime
-  USE LAGRANGE_GLOBAL, ONLY : particle_number_local, inb_particle_evolution, ilagrange
+  USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange
   USE DNS_LOCAL
 
 #ifdef USE_PROFILE
@@ -179,7 +179,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
      IF ( INT(logs_data(1)) .NE. 0 ) RETURN ! Error detected
 
      IF ( icalc_part .EQ. 1 .AND. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
-        CALL PARTICLE_TIME_RESIDENCE(dtime, l_q, l_hq)
+        CALL PARTICLE_TIME_RESIDENCE(dtime, l_g%np, l_q, l_hq)
         CALL PARTICLE_TIME_LIQUID_CLIPPING(s, l_q,l_hq,l_txc, l_comm, wrk2d,wrk3d)
      ENDIF
      
@@ -217,7 +217,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 
         IF ( icalc_part .EQ. 1 ) THEN
            DO is = 1,inb_particle_evolution
-              DO ip = 1,particle_number_local
+              DO ip = 1,l_g%np
                  l_hq(ip,is) = alpha*l_hq(ip,is)
               ENDDO
            ENDDO

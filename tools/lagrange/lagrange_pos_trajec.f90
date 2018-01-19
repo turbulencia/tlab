@@ -122,7 +122,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
 !#######################################################################
 !SEARCH FOR LARGEST PARTICLES
 !#######################################################################
-  DO i=1,particle_number_local
+  DO i=1,l_g%np
      DO j=1,isize_trajectory
         IF (l_g%tags(i) .EQ. l_trajectories_tags(j)) THEN
            l_trajectories(1,j)=l_q(i,1)

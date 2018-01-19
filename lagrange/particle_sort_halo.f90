@@ -11,7 +11,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
   USE DNS_TYPES,      ONLY : pointers_dt
   USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
   USE DNS_GLOBAL,     ONLY : g
-  USE LAGRANGE_GLOBAL,ONLY : particle_dt, particle_number_local
+  USE LAGRANGE_GLOBAL,ONLY : particle_dt
 
 #ifdef USE_MPI
   USE DNS_GLOBAL, ONLY : imax,kmax
@@ -49,7 +49,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
 !#######################################################################
 ! Grid zone
   i=1                      !Starting point of sorting algorythm
-  j=particle_number_local  !End point of sorting algorythm
+  j=l_g%np  !End point of sorting algorythm
 
   DO WHILE (i .LT. j )
 
@@ -166,7 +166,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
 
 ! -------------------------------------------------------------------
   i=grid_zone+1 
-  j=particle_number_local
+  j=l_g%np
 
   DO WHILE (i .LT. j )
      IF (l_q(i,3) .GT. upper_limit) THEN  !If particle is out North
@@ -223,7 +223,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
 
 ! -------------------------------------------------------------------
   i=grid_zone+halo_zone_x+1 
-  j=particle_number_local  !End point of sorting algorythm
+  j=l_g%np  !End point of sorting algorythm
 
   DO WHILE (i .LT. j )
      IF (l_q(i,1) .GT. right_limit) THEN  !If particle is out East
@@ -279,7 +279,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
   END IF
 
 !Calculating the number of particles send to east or north
-  halo_zone_diagonal = particle_number_local -grid_zone -halo_zone_x -halo_zone_z
+  halo_zone_diagonal = l_g%np -grid_zone -halo_zone_x -halo_zone_z
   
   RETURN
 END SUBROUTINE PARTICLE_SORT_HALO

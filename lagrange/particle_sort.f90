@@ -23,7 +23,7 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_g,l_q, l_hq, &
   USE DNS_GLOBAL, ONLY : imax,kmax
   USE DNS_GLOBAL, ONLY : isize_particle, inb_particle
   USE DNS_GLOBAL, ONLY : g
-  USE LAGRANGE_GLOBAL, ONLY: particle_number_local, particle_dt
+  USE LAGRANGE_GLOBAL, ONLY: particle_dt
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -68,7 +68,7 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_g,l_q, l_hq, &
 !First Algorythm sorts all grid-particle into first part of particle
 !#######################################################################
   i=1 !Starting point of sorting algorythm
-  j=particle_number_local  !End point of sorting algorythm
+  j=l_g%np  !End point of sorting algorythm
 
   DO WHILE (i .LT. j )
      IF ( l_q(i,x_or_z) .LT. lower_limit) THEN !If particle is out to West
@@ -161,7 +161,7 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_g,l_q, l_hq, &
   END IF
 
 ! -------------------------------------------------------------------
-  j=particle_number_local
+  j=l_g%np
   i=nzone_grid+1 
 
   DO WHILE (i .LT. j )
@@ -215,7 +215,7 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_g,l_q, l_hq, &
   END IF
 
 !Calculating the number of particles send to east or north
-  nzone_east_north = particle_number_local - nzone_grid - nzone_west_south
+  nzone_east_north = l_g%np - nzone_grid - nzone_west_south
 
   IF (x_or_z .EQ. 1) THEN
      nzone_west=nzone_west_south

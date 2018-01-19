@@ -7,7 +7,7 @@ MODULE PARTICLE_TRAJECTORIES
   USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_GLOBAL,     ONLY : inb_flow_array, inb_scal_array
   USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL,ONLY : particle_number_local, particle_dt
+  USE LAGRANGE_GLOBAL,ONLY : particle_dt
   USE LAGRANGE_GLOBAL,ONLY : isize_trajectory, inb_trajectory, isize_l_comm, itrajectory
 #ifdef USE_MPI
   USE DNS_MPI,        ONLY : ims_pro, ims_err
@@ -167,7 +167,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm,
 #endif
   
 ! Accumulating the data
-  DO i = 1,particle_number_local
+  DO i = 1,l_g%np
      DO j = 1,isize_trajectory
         IF ( l_g%tags(i) .EQ. l_trajectories_tags(j) ) THEN
            DO iv = 1,nvar

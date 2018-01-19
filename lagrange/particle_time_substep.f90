@@ -10,9 +10,9 @@
 SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )    
   
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : isize_particle, inb_particle
+  USE DNS_GLOBAL, ONLY : isize_particle, inb_particle, inb_particle_evolution
   USE LAGRANGE_GLOBAL, ONLY : isize_l_comm
-  USE LAGRANGE_GLOBAL, ONLY : l_g, particle_number_local, inb_particle_evolution
+  USE LAGRANGE_GLOBAL, ONLY : l_g
 #ifdef USE_MPI
   USE LAGRANGE_GLOBAL, ONLY : isize_pbuffer
   USE DNS_MPI
@@ -52,7 +52,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
 !#######################################################################
 ! Particle new position
 !#######################################################################
-  DO i = 1,particle_number_local
+  DO i = 1,l_g%np
      DO is = 1,inb_particle_evolution
         l_q(i,is) = l_q(i,is) + dte*l_hq(i,is)
 
@@ -83,7 +83,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
   END IF
 
   CALL PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, & 
-       p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags) 
+       p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags, l_g%np) 
 
 ! -------------------------------------------------------------------
 !Particle sorting for Send/Recv Z-Direction
@@ -105,14 +105,14 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
   END IF
 
   CALL PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, & 
-       p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags)
+       p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags, l_g%np)
 
   NULLIFY(p_buffer_1,p_buffer_2)
   
 #else
 !#######################################################################
 ! Serial
-  DO i = 1,particle_number_local
+  DO i = 1,l_g%np
      IF    ( l_q(i,1) .GT. x_right       ) THEN
         l_q(i,1) = l_q(i,1) - g(1)%scale
 
@@ -135,7 +135,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
 !#######################################################################
 ! Recalculating closest node below in Y direction
 !#######################################################################
-  CALL PARTICLE_LOCATE_Y( particle_number_local, l_q(1,2), l_g%nodes, g(2)%size, g(2)%nodes )
+  CALL PARTICLE_LOCATE_Y( l_g%np, l_q(1,2), l_g%nodes, g(2)%size, g(2)%nodes )
 
   RETURN
 END SUBROUTINE PARTICLE_TIME_SUBSTEP

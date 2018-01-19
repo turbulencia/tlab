@@ -22,17 +22,11 @@ MODULE LAGRANGE_GLOBAL
 
   TINTEGER      :: ilagrange
   TLONGINTEGER  :: particle_number_total
-  TINTEGER      :: particle_number_local
   TINTEGER      :: inb_particle_interp !Total number of interpolated fields into lagrangian
-  TINTEGER      :: inb_particle_evolution ! inb_particle  number for time runge kutta
+  TINTEGER      :: isize_l_comm, isize_pbuffer
   
   TINTEGER      :: particle_rnd_mode !which initializing mode
   TINTEGER      :: residence_reset  !if reseidence l_q should be reset
-  TINTEGER      :: nzone_max  !maximum size of vector p_buffer in particle_send_recv
-!  TINTEGER      :: isize_hf_1, isize_hf_2, isize_hf_3
-  TINTEGER      :: isize_l_comm, isize_pbuffer
-!  TINTEGER      :: isize_max_hf, isize_pbuffer
-!  TINTEGER      :: jmax_part, jmin_part
 
   TREAL         :: y_particle_pos  !position where particles will be initialized
   TREAL         :: y_particle_width  !width of particle distribution
@@ -43,7 +37,7 @@ MODULE LAGRANGE_GLOBAL
   TINTEGER      :: isize_trajectory  ! number of saved trajectories
   TINTEGER      :: inb_trajectory    ! number of properties saved along trajectories
 
-  TINTEGER      :: icalc_part_pdf  ! if calculation of pdf for particles
+  TINTEGER      :: icalc_part_pdf    ! if calculation of pdf for particles
   TREAL         :: y_particle_pdf_pos
   TREAL         :: y_particle_pdf_width
   TREAL         :: x_particle_pdf_pos

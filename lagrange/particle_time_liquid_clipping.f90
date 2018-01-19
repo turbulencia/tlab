@@ -18,9 +18,9 @@
 SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
 
   USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_particle
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_particle, inb_particle_evolution
   USE DNS_GLOBAL, ONLY : isize_field, inb_scal_array
-  USE LAGRANGE_GLOBAL, ONLY : inb_particle_evolution, particle_number_local, l_g
+  USE LAGRANGE_GLOBAL, ONLY : l_g
 
   IMPLICIT NONE
 
@@ -42,7 +42,7 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
 ! IF negative liquid set lagrange liquid 0
 ! ###################################################################
   DO is=4,inb_particle_evolution
-     DO i=1,particle_number_local
+     DO i=1,l_g%np
         IF ( l_q(i,is) .LT. C_0_R ) THEN
            l_q(i,is)=C_0_R
            l_q(i,6)=C_0_R
@@ -59,7 +59,7 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
   l_txc = C_0_R
   CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_g,l_q,l_comm, wrk2d,wrk3d)
 
-  DO i=1,particle_number_local
+  DO i=1,l_g%np
      IF (l_txc(i) .LT. 0.00001) THEN
         DO is=4,inb_particle_evolution
            l_q(i,is)=C_0_R

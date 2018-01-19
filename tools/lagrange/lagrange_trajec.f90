@@ -136,8 +136,8 @@ PROGRAM LAGRANGE_TRAJEC
      IF (.NOT. swapped) EXIT
   ENDDO
 
-!DO k=isize_trajectory+1,particle_number_local,1
-  DO k=1,particle_number_local,1
+!DO k=isize_trajectory+1,l_g%np,1
+  DO k=1,l_g%np
      IF (l_q(k,5) .GT. big_part(1))THEN
         big_part(1) = l_q(k,5)
         tag_big_part(1) = l_g%tags(k)

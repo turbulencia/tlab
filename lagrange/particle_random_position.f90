@@ -10,7 +10,7 @@ SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
   USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
-  USE LAGRANGE_GLOBAL, ONLY : particle_dt, particle_number_local, particle_number_total
+  USE LAGRANGE_GLOBAL, ONLY : particle_dt, particle_number_total
   USE LAGRANGE_GLOBAL, ONLY : particle_rnd_mode, y_particle_pos, y_particle_width, ilagrange
   USE THERMO_GLOBAL,   ONLY : imixture
 #ifdef USE_MPI
@@ -48,14 +48,14 @@ SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
   
 !########################################################################
 #ifdef USE_MPI
-  particle_number_local = INT( particle_number_total /INT(ims_npro, KIND=8) )
+  l_g%np = INT( particle_number_total /INT(ims_npro, KIND=8) )
   IF ( ims_pro .LT. INT( MOD(particle_number_total, INT(ims_npro, KIND=8)) ) ) THEN
-     particle_number_local = particle_number_local +1
+     l_g%np = l_g%np +1
   ENDIF
-  CALL MPI_ALLGATHER(particle_number_local,1,MPI_INTEGER4,ims_size_p,1,MPI_INTEGER4,MPI_COMM_WORLD,ims_err)
+  CALL MPI_ALLGATHER(l_g%np,1,MPI_INTEGER4,ims_size_p,1,MPI_INTEGER4,MPI_COMM_WORLD,ims_err)
 
 #else
-  particle_number_local = INT(particle_number_total)
+  l_g%np = INT(particle_number_total)
 
 #endif
 
@@ -66,7 +66,7 @@ SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
      count = count +INT(ims_size_p(i),KIND=8)
   ENDDO
 #endif
-  DO i = 1,particle_number_local
+  DO i = 1,l_g%np
      l_g%tags(i) = INT(i, KIND=8) +count
   END DO
   
@@ -99,7 +99,7 @@ SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
      yref   = y_particle_pos -C_05_R *y_particle_width
      yscale = y_particle_width
      
-     DO i = 1,particle_number_local
+     DO i = 1,l_g%np
         DO j = 1,3 ! three directions
            CALL RANDOM_NUMBER(rnd_number(j))
         END DO
@@ -129,7 +129,7 @@ SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
      dy_loc= g(2)%nodes(j_limits(2)) -g(2)%nodes(j_limits(1))
      
      i = 1
-     DO WHILE ( i .LE. particle_number_local ) 
+     DO WHILE ( i .LE. l_g%np ) 
         DO j=1,3
            CALL RANDOM_NUMBER(rnd_number(j))
         END DO
@@ -166,7 +166,7 @@ SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
 ! Remaining scalar properties of the lagrangian field
 !########################################################################
 ! Calculating closest node below in Y direction
-  CALL PARTICLE_LOCATE_Y( particle_number_local, l_q(1,2), l_g%nodes, g(2)%size, g(2)%nodes )
+  CALL PARTICLE_LOCATE_Y( l_g%np, l_q(1,2), l_g%nodes, g(2)%size, g(2)%nodes )
   
   IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
 
@@ -181,7 +181,7 @@ SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
         
 !        CALL THERMO_AIRWATER_LINEAR(isize_particle,1,1,l_txc(1,1),l_q(1,4))
         l_q(:,4) = C_0_R
-        CALL THERMO_AIRWATER_LINEAR(particle_number_local,1,1,l_txc(1,1),l_q(1,4))
+        CALL THERMO_AIRWATER_LINEAR(l_g%np,1,1,l_txc(1,1),l_q(1,4))
         
         l_q(:,5) = l_q(:,4) ! l_q(:,6) for bil_cloud_4 is set =0 in dns_main at initialization
         

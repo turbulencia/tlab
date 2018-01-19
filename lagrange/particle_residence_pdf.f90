@@ -6,22 +6,14 @@
 #endif
 
 !########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Calculate the pdf for a certain region
 !# 
 !########################################################################
-SUBROUTINE PARTICLE_RESIDENCE_PDF(fname,l_hq,l_q)
+SUBROUTINE PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q, l_hq)
 
-  USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
-  USE LAGRANGE_GLOBAL,ONLY : particle_number_local
+  USE DNS_GLOBAL, ONLY : isize_particle, inb_particle
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -30,16 +22,19 @@ SUBROUTINE PARTICLE_RESIDENCE_PDF(fname,l_hq,l_q)
 #ifdef USE_MPI
 #include "mpif.h"
 #endif  
-  TREAL, DIMENSION(isize_particle,inb_particle) :: l_q, l_hq 
 
-  TLONGINTEGER, DIMENSION(:,:),   ALLOCATABLE         :: residence_bins
-  TREAL, DIMENSION(:),   ALLOCATABLE         :: residence_counter_interval
-  CHARACTER(*)  ::  fname
+  CHARACTER*(*) fname
+  TINTEGER particle_number
+  TREAL, DIMENSION(isize_particle,*) :: l_q, l_hq 
+
+! -------------------------------------------------------------------
+  TLONGINTEGER, DIMENSION(:,:), ALLOCATABLE :: residence_bins
+  TREAL,        DIMENSION(:),   ALLOCATABLE :: residence_counter_interval
   TINTEGER i,j
   TINTEGER residence_tmax, residence_nbins
   TREAL residence_pdf_interval
 #ifdef USE_MPI
-  TLONGINTEGER, DIMENSION(:,:),   ALLOCATABLE         :: residence_bins_local
+  TLONGINTEGER, DIMENSION(:,:), ALLOCATABLE :: residence_bins_local
 #endif 
 
 ! #####################################################################
@@ -59,18 +54,17 @@ SUBROUTINE PARTICLE_RESIDENCE_PDF(fname,l_hq,l_q)
 !#######################################################################
 !Start counting of particles in bins per processor
 !#######################################################################
-
-  DO i=1,particle_number_local
+  DO i=1,particle_number
      j = 1 + int( l_q(i,inb_particle) / residence_pdf_interval ) !if residence is calles information is on inb_particle=6
      residence_bins_local(j,1)=residence_bins_local(j,1)+1
 
      j = 1 + int( l_hq(i,inb_particle) / residence_pdf_interval ) !if residence is calles information is on inb_particle=6
      residence_bins_local(j,2)=residence_bins_local(j,2)+1
   ENDDO
+
 !#######################################################################
 !Reduce all information to root
 !#######################################################################
-
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err) 
   CALL MPI_REDUCE(residence_bins_local, residence_bins, residence_nbins*2, MPI_INTEGER8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
 
@@ -98,7 +92,7 @@ SUBROUTINE PARTICLE_RESIDENCE_PDF(fname,l_hq,l_q)
   DEALLOCATE(residence_bins_local)
 #else
 
-  DO i=1,particle_number_local
+  DO i=1,particle_number
      j = 1 + int( l_q(i,inb_particle) / residence_pdf_interval ) !if residence is calles information is on inb_particle=6
      residence_bins(j,1)=residence_bins(j,1)+1
      j = 1 + int( l_hq(i,inb_particle) / residence_pdf_interval ) !if residence is calles information is on inb_particle=6

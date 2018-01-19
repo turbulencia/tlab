@@ -7,7 +7,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL,    ONLY : inb_flow_array, inb_scal_array
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_wrk2d
-  USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_particle, inb_particle_txc
+  USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_particle, inb_particle_txc, inb_particle_evolution 
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_npro
@@ -52,8 +52,6 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 
   CALL SCANINILONGINT(bakfile, inifile, 'Lagrange', 'Particle_number', '0', particle_number_total  )
   CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Particle_bumper', '2.0', memory_factor  )
-  ! CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Jmax_part', '1', jmax_part  )
-  ! CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Jmin_part', '1', jmin_part  )
 
 ! -------------------------------------------------------------------
   CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'Particle_rnd_mode', '1', particle_rnd_mode  )
@@ -151,12 +149,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
      inb_particle_interp = MAX(inb_particle_interp,inb_trajectory)
   ENDIF
   
-  ! isize_hf_1 = 2     *jmax*kmax   *inb_particle_interp 
-  ! isize_hf_2 =   imax*jmax     *2 *inb_particle_interp 
-  ! isize_hf_3 = 2     *jmax     *2 *inb_particle_interp 
-!  isize_max_hf  = isize_hf_1+isize_hf_2+isize_hf_3
   isize_pbuffer = int(isize_particle/4*(inb_particle*2+1) ) !same size for both buffers
-!  isize_l_comm  = isize_hf_1+isize_hf_2+isize_hf_3+2*isize_pbuffer
   isize_l_comm  = 2     *jmax*kmax   *inb_particle_interp &
                 +   imax*jmax     *2 *inb_particle_interp &
                 + 2     *jmax     *2 *inb_particle_interp 

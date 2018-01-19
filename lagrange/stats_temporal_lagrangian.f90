@@ -6,7 +6,7 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_comm, txc, mean, w
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
-  USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange, inb_particle_evolution
+  USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange
   USE LAGRANGE_GLOBAL, ONLY : icalc_part_pdf, number_of_bins, particle_pdf_max, particle_pdf_interval
 
   IMPLICIT NONE
@@ -57,7 +57,7 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_comm, txc, mean, w
 ! Save particle residence times
   IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
      WRITE(fname,*) itime; fname = "residence_pdf."//TRIM(ADJUSTL(fname))
-     CALL PARTICLE_RESIDENCE_PDF(fname,l_hq,l_q)
+     CALL PARTICLE_RESIDENCE_PDF(fname, l_g%np, l_q, l_hq)
   END IF
   
   RETURN

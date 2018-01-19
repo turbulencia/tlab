@@ -28,16 +28,9 @@ SUBROUTINE FIELD_TO_PARTICLE_INTERPOLATE &
   TREAL length_g_p(6), cube_g_p(4)
   TINTEGER  g_p(10), g1loc, g2loc, g5loc, g6loc
   TINTEGER i, j
-!  TREAL particle_local_grid_posx, particle_local_grid_posy, particle_local_grid_posz
-!  TREAL dx_loc, dz_loc !, dy_loc
   TREAL dx_loc_inv, dz_loc_inv
   
 ! ######################################################################
-! Setting grid spacings
-!  dx_loc= g(1)%scale /g(1)%size
-!  dy_loc= g(2)%scale/g(2)%size
-!  dy_loc= g(2)%nodes(jmin_part+1)-g(2)%nodes(jmin_part)
-!  dz_loc= g(3)%scale /g(3)%size
   dx_loc_inv = M_REAL( g(1)%size ) /g(1)%scale
   dz_loc_inv = M_REAL( g(3)%size ) /g(3)%scale
   
@@ -68,29 +61,6 @@ SUBROUTINE FIELD_TO_PARTICLE_INTERPOLATE &
   IF  ( g(3)%size .NE. 1 ) THEN
 
      DO i = grid_start,grid_end ! loop over all particles
-
-! #ifdef USE_MPI
-!         particle_local_grid_posx = l_q(i,1)                         /dx_loc +1 - ims_offset_i
-!         particle_local_grid_posz = l_q(i,3)                         /dz_loc +1 - ims_offset_k
-! #else
-!         particle_local_grid_posx = l_q(i,1)                         /dx_loc +1 
-!         particle_local_grid_posz = l_q(i,3)                         /dz_loc +1
-! #endif
-!         particle_local_grid_posy = (l_q(i,2)-g(2)%nodes(jmin_part)) /dy_loc +jmin_part  
-
-!         g_p(1)= floor(particle_local_grid_posx)                   !position to the left (x1)
-!         g_p(2)= g_p(1)+1                                    !to the right (x2)
-!         g_p(3)= (floor((l_q(i,2)-g(2)%nodes(jmin_part))/dy_loc))+jmin_part !to the bottom 
-!         g_p(4)= g_p(3)+1                                    !to the top (y2)
-!         g_p(5)= floor(particle_local_grid_posz)                   !front side
-!         g_p(6)= g_p(5)+1                                    !back side
-
-!         length_g_p(1) = particle_local_grid_posx - g_p(1)  !length between x(i) and p
-!         length_g_p(2) = g_p(2) - particle_local_grid_posx
-!         length_g_p(3) = particle_local_grid_posy - g_p(3)
-!         length_g_p(4) = g_p(4) - particle_local_grid_posy
-!         length_g_p(5) = particle_local_grid_posz - g_p(5)  !length between z(i) and p
-!         length_g_p(6) = g_p(6) - particle_local_grid_posz  !length between z(i+1) and p
 
         length_g_p(1) = l_q(i,1) *dx_loc_inv            ! Local X position
         g_p(1)        = FLOOR( length_g_p(1) )
@@ -147,23 +117,6 @@ SUBROUTINE FIELD_TO_PARTICLE_INTERPOLATE &
   ELSE !2D case
 
      DO i = grid_start,grid_end
-
-! #ifdef USE_MPI
-!         particle_local_grid_posx = l_q(i,1)/dx_loc + 1 - ims_offset_i
-! #else
-!         particle_local_grid_posx = l_q(i,1)/dx_loc + 1 
-! #endif
-!         particle_local_grid_posy = ((l_q(i,2)-g(2)%nodes(jmin_part))/dy_loc)+jmin_part  
-
-!         g_p(1)= floor(particle_local_grid_posx)
-!         g_p(2)= g_p(1)+1
-!         g_p(3)= (floor((l_q(i,2)-g(2)%nodes(jmin_part))/dy_loc))+jmin_part
-!         g_p(4)= g_p(3)+1
-
-!         length_g_p(1) = particle_local_grid_posx - g_p(1)
-!         length_g_p(2) = g_p(2) - particle_local_grid_posx
-!         length_g_p(3) = particle_local_grid_posy - g_p(3)
-!         length_g_p(4) = g_p(4) - particle_local_grid_posy
 
         length_g_p(1) = l_q(i,1) *dx_loc_inv
         g_p(1)        = FLOOR( length_g_p(1) )

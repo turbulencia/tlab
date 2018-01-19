@@ -13,7 +13,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_particle
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : visc, radiation
-  USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange, particle_number_local, lagrange_param
+  USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange, lagrange_param
   USE THERMO_GLOBAL, ONLY : thermo_param
 
   IMPLICIT NONE
@@ -107,7 +107,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3
      delta_inv2 = -C_05_R /thermo_param(1)/thermo_param(3)
      delta_inv4 = -C_025_R/thermo_param(1)/thermo_param(3)
      
-     DO i = 1,particle_number_local
+     DO i = 1,l_g%np
         l_hq(i,4) = l_hq(i,4) - l_txc(i,1)/(C_1_R + EXP(l_txc(i,2)*delta_inv0))
         
         l_hq(i,5) = l_hq(i,5) - l_txc(i,4)/(C_1_R + EXP(l_txc(i,2)*delta_inv0)) &
@@ -116,7 +116,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3
 
   ELSE IF (ilagrange .EQ. LAG_TYPE_SIMPLE_SETT) THEN
 
-     l_hq(1:particle_number_local,2) = l_hq(1:particle_number_local,2) - lagrange_param(1)
+     l_hq(1:l_g%np,2) = l_hq(1:l_g%np,2) - lagrange_param(1)
 
   ENDIF
 
