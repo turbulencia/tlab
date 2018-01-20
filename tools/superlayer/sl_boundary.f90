@@ -1,7 +1,7 @@
+#include "types.h"
+#include "dns_const.h"
+#include "dns_error.h"
 
-!########################################################################
-!# Tool/Library SUPERLAYER
-!#
 !########################################################################
 !# HISTORY
 !#
@@ -12,13 +12,6 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-#include "dns_error.h"
-
 PROGRAM SL_BOUNDARY
   
   USE DNS_GLOBAL
@@ -157,12 +150,12 @@ PROGRAM SL_BOUNDARY
            READ(*,*) np
         ENDIF
      ELSE
-        iopt = DINT(opt_vec(1))
-        iint = DINT(opt_vec(2))
-        ith  = DINT(opt_vec(3))
+        iopt = INT(opt_vec(1))
+        iint = INT(opt_vec(2))
+        ith  = INT(opt_vec(3))
         threshold = opt_vec(4)
-        isl  = DINT(opt_vec(5))
-        np   = DINT(opt_vec(6))
+        isl  = INT(opt_vec(5))
+        np   = INT(opt_vec(6))
      ENDIF
 
 #ifdef USE_MPI

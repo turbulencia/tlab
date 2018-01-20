@@ -10,7 +10,7 @@
 SUBROUTINE PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk2d,wrk3d)
 
   USE DNS_TYPES,  ONLY: pointers_dt, pointers3d_dt
-  USE DNS_GLOBAL, ONLY: imax,jmax,kmax, isize_field,isize_particle, inb_particle, inb_scal_array
+  USE DNS_GLOBAL, ONLY: imax,jmax,kmax, isize_field,isize_particle, inb_scal_array
   USE DNS_GLOBAL, ONLY: g
   USE LAGRANGE_GLOBAL, ONLY : particle_dt
   USE LAGRANGE_GLOBAL, ONLY : number_of_bins, y_particle_pdf_pos, y_particle_pdf_width

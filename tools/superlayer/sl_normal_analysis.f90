@@ -148,13 +148,13 @@ PROGRAM SL_NORMAL_ANALYSIS
         WRITE(*,*) 'Threshold value ?'
         READ(*,*) threshold
      ELSE
-        iopt  = DINT(opt_vec(1))
-        isl   = DINT(opt_vec(2))
-        nmax  = DINT(opt_vec(3))
-        iavg  = DINT(opt_vec(4))
-        istep = DINT(opt_vec(5))
-        kstep = DINT(opt_vec(6))
-        ith   = DINT(opt_vec(7))
+        iopt  = INT(opt_vec(1))
+        isl   = INT(opt_vec(2))
+        nmax  = INT(opt_vec(3))
+        iavg  = INT(opt_vec(4))
+        istep = INT(opt_vec(5))
+        kstep = INT(opt_vec(6))
+        ith   = INT(opt_vec(7))
         threshold = opt_vec(8)
      ENDIF
 

@@ -1,6 +1,7 @@
-!########################################################################
-!# Tool/Library SUPERLAYER
-!#
+#include "types.h"
+#include "dns_const.h"
+#include "dns_error.h"
+
 !########################################################################
 !# HISTORY
 !#
@@ -8,16 +9,6 @@
 !#              Created
 !#
 !########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!########################################################################
-#include "types.h"
-#include "dns_const.h"
-#include "dns_error.h"
-
 PROGRAM SL_CORRELATION
   
   USE DNS_GLOBAL
@@ -133,7 +124,7 @@ PROGRAM SL_CORRELATION
         IF ( line(1:1) .EQ. 'y' ) THEN; ilog = 1
         ELSE;                           ilog = 0; ENDIF
      ELSE
-        ilog = DINT(opt_vec(1))
+        ilog = INT(opt_vec(1))
      ENDIF
 
 #ifdef USE_MPI

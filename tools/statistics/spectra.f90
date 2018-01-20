@@ -163,10 +163,10 @@ PROGRAM SPECTRA
      READ(*,*) opt_time
 #endif
   ELSE
-     opt_main = DINT(opt_vec(1))
-     IF ( iopt_size .GT. 1 ) opt_block= DINT(opt_vec(2))
-     IF ( iopt_size .GT. 2 ) opt_ffmt = DINT(opt_vec(3))
-     IF ( iopt_size .GT. 3 ) opt_time = DINT(opt_vec(4))
+     opt_main = INT(opt_vec(1))
+     IF ( iopt_size .GT. 1 ) opt_block= INT(opt_vec(2))
+     IF ( iopt_size .GT. 2 ) opt_ffmt = INT(opt_vec(3))
+     IF ( iopt_size .GT. 3 ) opt_time = INT(opt_vec(4))
   ENDIF
 
   IF ( opt_main .LT. 0 ) THEN ! Check
@@ -592,7 +592,7 @@ PROGRAM SPECTRA
         
         IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1 ) THEN  ! Calculate sampling size for radial correlation
            samplesize = C_0_R
-           CALL RADIAL_SAMPLESIZE(imax,jmax,kmax, kr_total, samplesize)
+           CALL RADIAL_SAMPLESIZE(imax,kmax, kr_total, samplesize)
         ENDIF
 
 ! -------------------------------------------------------------------

@@ -112,7 +112,7 @@ PROGRAM TRANSFIELDS
      READ(*,*) opt_main
 #endif
   ELSE
-     opt_main = DINT(opt_vec(1))
+     opt_main = INT(opt_vec(1))
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -160,7 +160,7 @@ PROGRAM TRANSFIELDS
         READ(*,*) opt_function
 #endif
      ELSE
-        opt_function = DINT(opt_vec(2))
+        opt_function = INT(opt_vec(2))
      ENDIF
 
      IF ( sRes .EQ. '-1' ) THEN

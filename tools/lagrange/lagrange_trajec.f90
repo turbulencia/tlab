@@ -43,7 +43,8 @@ PROGRAM LAGRANGE_TRAJEC
 ! -------------------------------------------------------------------
 
   TINTEGER  ierr, i, j, k, particle_pos
-  TREAL ::temp(2)
+  TREAL temp
+  INTEGER(8) itemp
   LOGICAL :: swapped
   TREAL, DIMENSION(:), ALLOCATABLE :: big_part
 #ifdef USE_MPI
@@ -123,13 +124,13 @@ PROGRAM LAGRANGE_TRAJEC
      DO i = 1,j
         IF ( big_part(i) .GT. big_part(i+1)) THEN !if 49... bigger than 50...
 !START SWAPPING
-           temp(1) = big_part(i) 
+           temp = big_part(i) 
            big_part(i) = big_part(i+1)
-           big_part(i+1) = temp(1)
+           big_part(i+1) = temp
 
-           temp(2) = tag_big_part(i) 
+           itemp = tag_big_part(i) 
            tag_big_part(i) = tag_big_part(i+1)
-           tag_big_part(i+1) = temp(2)
+           tag_big_part(i+1) = itemp
            swapped = .TRUE.
         ENDIF
      ENDDO
@@ -146,13 +147,13 @@ PROGRAM LAGRANGE_TRAJEC
         DO i = 1,isize_trajectory-1
            IF ( big_part(i) .GT. big_part(i+1)) THEN !if 49... bigger than 50...
 !START SWAPPING
-              temp(1) = big_part(i) 
+              temp = big_part(i) 
               big_part(i) = big_part(i+1)
-              big_part(i+1) = temp(1)
+              big_part(i+1) = temp
 
-              temp(2) = tag_big_part(i) 
+              itemp = tag_big_part(i) 
               tag_big_part(i) = tag_big_part(i+1)
-              tag_big_part(i+1) = temp(2)
+              tag_big_part(i+1) = itemp
               swapped = .TRUE.
            ENDIF
            IF (.NOT. swapped) EXIT
@@ -193,13 +194,13 @@ PROGRAM LAGRANGE_TRAJEC
            DO i = 1,isize_trajectory-1
               IF ( big_overall(i) .GT. big_overall(i+1)) THEN !if 49... bigger than 50...
 !START SWAPPING
-                 temp(1) = big_overall(i) 
+                 temp = big_overall(i) 
                  big_overall(i) = big_overall(i+1)
-                 big_overall(i+1) = temp(1)
+                 big_overall(i+1) = temp
 
-                 temp(2) = tag_big_overall(i) 
+                 itemp = tag_big_overall(i) 
                  tag_big_overall(i) = tag_big_overall(i+1)
-                 tag_big_overall(i+1) = temp(2)
+                 tag_big_overall(i+1) = itemp
                  swapped = .TRUE.
               ENDIF
               IF (.NOT. swapped) EXIT

@@ -332,7 +332,7 @@ END SUBROUTINE REDUCE_CORRELATION
 
 !########################################################################
 !########################################################################
-SUBROUTINE RADIAL_SAMPLESIZE(nx,ny,nz, nr_total, samplesize)
+SUBROUTINE RADIAL_SAMPLESIZE(nx,nz, nr_total, samplesize)
 
 #ifdef USE_MPI 
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
@@ -340,7 +340,7 @@ SUBROUTINE RADIAL_SAMPLESIZE(nx,ny,nz, nr_total, samplesize)
 
   IMPLICIT NONE 
 
-  TINTEGER,                   INTENT(IN)  :: nx,ny,nz, nr_total
+  TINTEGER,                   INTENT(IN)  :: nx,nz, nr_total
   TREAL, DIMENSION(nr_total), INTENT(OUT) :: samplesize
 
 ! -----------------------------------------------------------------------

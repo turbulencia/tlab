@@ -108,7 +108,7 @@ PROGRAM TRANSFORMAT
         WRITE(*,*) '3. Drop header'
         READ(*,*) iopt
      ELSE
-        iopt = DINT(opt_vec(1))
+        iopt = INT(opt_vec(1))
      ENDIF
 
 #ifdef USE_MPI

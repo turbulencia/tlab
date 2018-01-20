@@ -120,7 +120,7 @@ PROGRAM APRIORI
      READ(*,*) opt_main
 #endif
   ELSE
-     opt_main = DINT(opt_vec(1))
+     opt_main = INT(opt_vec(1))
   ENDIF
 
 ! -------------------------------------------------------------------
