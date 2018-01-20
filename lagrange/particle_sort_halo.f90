@@ -9,7 +9,7 @@
 SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
 
   USE DNS_TYPES,      ONLY : pointers_dt
-  USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
+  USE DNS_GLOBAL,     ONLY : isize_particle, inb_part_array
   USE DNS_GLOBAL,     ONLY : g
   USE LAGRANGE_GLOBAL,ONLY : particle_dt
 
@@ -23,7 +23,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
   TINTEGER grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal, nvar
   TYPE(pointers_dt), DIMENSION(nvar)                        :: data
   TYPE(particle_dt)                                         :: l_g
-  TREAL,             DIMENSION(isize_particle,inb_particle) :: l_q
+  TREAL,             DIMENSION(isize_particle,inb_part_array) :: l_q
 
 ! -------------------------------------------------------------------
   TREAL dummy, right_limit, upper_limit
@@ -70,7 +70,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
               l_g%tags(i)=l_g%tags(j)
               l_g%tags(j)=idummy8
               
-              DO k=1,inb_particle
+              DO k=1,inb_part_array
                  dummy   =l_q(i,k)
                  l_q(i,k)=l_q(j,k)
                  l_q(j,k)=dummy
@@ -107,8 +107,8 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
               l_g%tags(i)=l_g%tags(j)
               l_g%tags(j)=idummy8
 
-              DO k=1,inb_particle
-                 dummy=l_q(i,k)
+              DO k=1,inb_part_array
+                 dummy   =l_q(i,k)
                  l_q(i,k)=l_q(j,k)
                  l_q(j,k)=dummy
               ENDDO
@@ -157,10 +157,6 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
 !           idummy8=l_g%tags(i)
 !           l_g%tags(i)=l_g%tags(j)
 !           l_g%tags(j)=idummy8
-
-!           dummy=l_hq(i,k)
-!           l_hq(i,k)=l_hq(j,k)
-!           l_hq(j,k)=dummy
 !         END DO
 !   END IF 
 
@@ -187,7 +183,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
               l_g%tags(i)=l_g%tags(j)
               l_g%tags(j)=idummy8
               
-              DO k=1,inb_particle
+              DO k=1,inb_part_array
                  dummy   =l_q(i,k)
                  l_q(i,k)=l_q(j,k)
                  l_q(j,k)=dummy
@@ -243,7 +239,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
               l_g%tags(i)=l_g%tags(j)
               l_g%tags(j)=idummy8
               
-              DO k=1,inb_particle
+              DO k=1,inb_part_array
                  dummy   =l_q(i,k)
                  l_q(i,k)=l_q(j,k)
                  l_q(j,k)=dummy

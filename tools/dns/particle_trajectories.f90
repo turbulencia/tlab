@@ -6,7 +6,7 @@ MODULE PARTICLE_TRAJECTORIES
 
   USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_GLOBAL,     ONLY : inb_flow_array, inb_scal_array
-  USE DNS_GLOBAL,     ONLY : isize_particle, inb_particle
+  USE DNS_GLOBAL,     ONLY : isize_particle
   USE LAGRANGE_GLOBAL,ONLY : particle_dt
   USE LAGRANGE_GLOBAL,ONLY : isize_trajectory, inb_trajectory, isize_l_comm, itrajectory
 #ifdef USE_MPI

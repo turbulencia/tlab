@@ -27,7 +27,7 @@
 SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
      p_buffer_1, p_buffer_2, l_q, l_hq, l_tags, particle_number)
   
-  USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
+  USE DNS_GLOBAL, ONLY: isize_particle, inb_part_array, inb_part
   
   USE DNS_MPI
 
@@ -37,10 +37,10 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
 
   TINTEGER nzone_grid, nzone_west, nzone_east
 
-  TREAL, DIMENSION(isize_particle, inb_particle) :: l_q
-  TREAL, DIMENSION(isize_particle, inb_particle) :: l_hq
-  TREAL, DIMENSION(isize_particle)               :: l_tags !Attention. Chosen TREAL on purpose. 
-  TREAL, DIMENSION(*) :: p_buffer_1, p_buffer_2 !allocation = isize_particle/4*7
+  TREAL, DIMENSION(isize_particle,*)  :: l_q
+  TREAL, DIMENSION(isize_particle,*)  :: l_hq
+  TREAL, DIMENSION(isize_particle)    :: l_tags !Attention. Chosen TREAL on purpose. 
+  TREAL, DIMENSION(*)                 :: p_buffer_1, p_buffer_2 !allocation = isize_particle/4*7
   TINTEGER particle_number
   
 ! -------------------------------------------------------------------
@@ -53,7 +53,7 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
   TINTEGER i, k, k_loc, m
 
 !#######################################################################
-  m=(inb_particle*2)+1 !Sending size of the buffer_parts
+  m=(inb_part_array*2)+1 !Sending size of the buffer_parts
 
   particle_number = nzone_grid
 
@@ -113,14 +113,14 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
 
 !Send particles and co. west
      k=0  ! Array index 1,3 for positions, 4,6 for rhs velocities and 7 for id
-     DO k_loc=1,inb_particle !Position        
+     DO k_loc=1,inb_part_array !Position        
         k=k+1
         DO i=1,nzone_west
            p_buffer_2(i+((k-1)*nzone_west)) = l_q(nzone_grid+i,k_loc)
         END DO
      END DO
 
-     DO k_loc=1,inb_particle !Right hand side
+     DO k_loc=1,inb_part !Right hand side
         k=k+1
         DO i=1,nzone_west
            p_buffer_2(i+((k-1)*nzone_west)) = l_hq(nzone_grid+i,k_loc)
@@ -148,7 +148,7 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
 
 !Send particles and co. east
      k=0
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part_array
 
         k=k+1
         DO i=1,nzone_east
@@ -157,7 +157,7 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
 
      END DO
 
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part
 
         k=k+1
         DO i=1,nzone_east
@@ -178,14 +178,14 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
   IF (nzone_send_west .NE. 0) THEN
 !Received particles and co. from east
      k=0 
-     DO k_loc=1,inb_particle     
+     DO k_loc=1,inb_part_array     
         k=k+1
         DO i=1,nzone_send_west 
            l_q(nzone_grid+i,k_loc) = p_buffer_1(i+((k-1)*nzone_send_west))
         END DO
      END DO
 
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part
 
         k=k+1
         DO i=1,nzone_send_west 
@@ -219,7 +219,7 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
   IF (nzone_send_east .NE. 0) THEN
 !Received particles and co. from west
      k=0 
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part_array
 
         k=k+1
         DO i=1,nzone_send_east 
@@ -228,7 +228,7 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
 
      END DO
 
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part
 
         k=k+1
         DO i=1,nzone_send_east
@@ -253,7 +253,7 @@ END SUBROUTINE PARTICLE_SEND_RECV_I
 SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
      p_buffer_1, p_buffer_2, l_q, l_hq, l_tags, particle_number)
   
-  USE DNS_GLOBAL, ONLY: isize_particle, inb_particle
+  USE DNS_GLOBAL, ONLY: isize_particle, inb_part_array, inb_part
   
   USE DNS_MPI
 
@@ -263,10 +263,10 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
 
   TINTEGER nzone_grid, nzone_south, nzone_north
 
-  TREAL, DIMENSION(isize_particle, inb_particle) :: l_q
-  TREAL, DIMENSION(isize_particle, inb_particle) :: l_hq
-  TREAL, DIMENSION(isize_particle)               :: l_tags !Attention. Chosen TREAL on purpose. 
-  TREAL, DIMENSION(*) :: p_buffer_1, p_buffer_2 !allocation = isize_particle/4*7
+  TREAL, DIMENSION(isize_particle,*) :: l_q
+  TREAL, DIMENSION(isize_particle,*) :: l_hq
+  TREAL, DIMENSION(isize_particle)   :: l_tags !Attention. Chosen TREAL on purpose. 
+  TREAL, DIMENSION(*)                :: p_buffer_1, p_buffer_2 !allocation = isize_particle/4*7
   TINTEGER particle_number
   
 ! -------------------------------------------------------------------
@@ -279,7 +279,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
   TINTEGER i, k, k_loc, m
 
 !#######################################################################
-  m=(inb_particle*2)+1 !Sending size of the buffer_parts
+  m=(inb_part_array*2)+1 !Sending size of the buffer_parts
 
   particle_number = nzone_grid
 
@@ -339,7 +339,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
 !Send particles and co. to south
 !Fill p_buffer_2
      k=0
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part_array
 
         k=k+1
         DO i=1,nzone_south
@@ -348,7 +348,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
 
      END DO
 
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part
 
         k=k+1
         DO i=1,nzone_south
@@ -377,7 +377,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
 !Send particles and co. to north
 !Fill p_buffer_2 again
      k=0
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part_array
 
         k=k+1
         DO i=1,nzone_north
@@ -386,11 +386,10 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
 
      END DO
 
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part
 
         k=k+1
         DO i=1,nzone_north
-!           p_buffer_2(i+((k-1)*nzone_north)) = l_hq(nzone_grid+nzone_east+i,k_loc)
            p_buffer_2(i+((k-1)*nzone_north)) = l_hq(nzone_grid+nzone_south+i,k_loc)
         END DO
 
@@ -407,7 +406,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
 
 !Received particles and co. from north
      k=0 
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part_array
 
         k=k+1
         DO i=1,nzone_send_south
@@ -415,7 +414,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
         END DO
      END DO
 
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part
 
         k=k+1
         DO i=1,nzone_send_south
@@ -447,7 +446,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
   IF (nzone_send_north .NE. 0) THEN
 !Received particles and co. from south
      k=0 
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part_array
 
         k=k+1
         DO i=1,nzone_send_north
@@ -456,7 +455,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
 
      END DO
 
-     DO k_loc=1,inb_particle
+     DO k_loc=1,inb_part
 
         k=k+1
         DO i=1,nzone_send_north

@@ -51,8 +51,8 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   TREAL, DIMENSION(isize_txc_field,*) :: txc
   TREAL, DIMENSION(*)                 :: wrk1d,wrk2d,wrk3d, vaux
 
-  TREAL, DIMENSION(isize_particle,*)  :: l_q, l_hq
-  TREAL, DIMENSION(*)                 :: l_comm, l_txc
+  TREAL, DIMENSION(isize_particle,*)  :: l_q, l_hq, l_txc
+  TREAL, DIMENSION(*)                 :: l_comm
 
 ! -----------------------------------------------------------------------
   TINTEGER ij, is

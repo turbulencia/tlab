@@ -10,7 +10,7 @@
 SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )    
   
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : isize_particle, inb_particle, inb_particle_evolution
+  USE DNS_GLOBAL, ONLY : isize_particle, inb_part
   USE LAGRANGE_GLOBAL, ONLY : isize_l_comm
   USE LAGRANGE_GLOBAL, ONLY : l_g
 #ifdef USE_MPI
@@ -24,9 +24,9 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
 #endif
 
   TREAL dte
-  TREAL, DIMENSION(isize_particle,inb_particle) :: l_q
-  TREAL, DIMENSION(isize_particle,inb_particle) :: l_hq
-  TREAL, DIMENSION(isize_l_comm), TARGET        :: l_comm
+  TREAL, DIMENSION(isize_particle,*)     :: l_q
+  TREAL, DIMENSION(isize_particle,*)     :: l_hq
+  TREAL, DIMENSION(isize_l_comm), TARGET :: l_comm
 
 ! -------------------------------------------------------------------
   TINTEGER is, i
@@ -53,7 +53,7 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
 ! Particle new position
 !#######################################################################
   DO i = 1,l_g%np
-     DO is = 1,inb_particle_evolution
+     DO is = 1,inb_part
         l_q(i,is) = l_q(i,is) + dte*l_hq(i,is)
 
      ENDDO

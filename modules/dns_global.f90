@@ -81,9 +81,8 @@ MODULE DNS_GLOBAL
 
 ! Particle arrays
   TINTEGER :: isize_particle           ! max number of particles per processor
-  TINTEGER :: inb_particle             ! number of particle properties
+  TINTEGER :: inb_part, inb_part_array
   TINTEGER :: inb_particle_txc         ! particle arrays for intermediate calculations
-  TINTEGER :: inb_particle_evolution   ! inb_particle number for time runge kutta
 
 ! temporal statistics
   TINTEGER :: inb_mean_temporal, inb_mean_spatial

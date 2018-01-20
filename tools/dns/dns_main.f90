@@ -231,9 +231,9 @@ PROGRAM DNS
      ENDIF
      
      WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
-     WRITE(str,*) inb_particle; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+     WRITE(str,*) inb_part; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile,line)
-     ALLOCATE(l_hq(isize_particle,inb_particle),stat=ierr)
+     ALLOCATE(l_hq(isize_particle,inb_part),stat=ierr)
      IF ( ierr .NE. 0 ) THEN
         CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
         CALL DNS_STOP(DNS_ERROR_ALLOC)

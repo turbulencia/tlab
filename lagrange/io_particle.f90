@@ -13,7 +13,7 @@
 SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
 
   USE DNS_CONSTANTS,   ONLY : lfile, efile
-  USE DNS_GLOBAL,      ONLY : isize_particle, inb_particle
+  USE DNS_GLOBAL,      ONLY : isize_particle, inb_part_array
   USE DNS_GLOBAL,      ONLY : g
   USE LAGRANGE_GLOBAL, ONLY : particle_dt, particle_number_total
 #ifdef USE_MPI
@@ -27,7 +27,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
  
   CHARACTER*(*)     fname
   TYPE(particle_dt) l_g
-  TREAL, DIMENSION(isize_particle,inb_particle) :: l_q !, OPTIONAL :: l_q 
+  TREAL, DIMENSION(isize_particle,inb_part_array) :: l_q !, OPTIONAL :: l_q 
   
 ! -------------------------------------------------------------------
   TINTEGER i
@@ -100,7 +100,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
 
 !  IF ( PRESENT(l_q) ) THEN
-     DO i = 1,inb_particle
+     DO i = 1,inb_part_array
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
         CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
         CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
@@ -131,7 +131,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
   l_g%np = INT(particle_number_total)
 
 !  IF ( PRESENT(l_q) ) THEN
-     DO i = 1,inb_particle
+     DO i = 1,inb_part_array
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
 #include "dns_open_file.h"
         READ(LOC_UNIT_ID) idummy             ! dummy, should be 1 in serial
@@ -159,7 +159,7 @@ END SUBROUTINE IO_READ_PARTICLE
 SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
 
   USE DNS_CONSTANTS,   ONLY : lfile
-  USE DNS_GLOBAL,      ONLY : isize_particle, inb_particle
+  USE DNS_GLOBAL,      ONLY : isize_particle, inb_part_array
   USE LAGRANGE_GLOBAL, ONLY : particle_dt
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
@@ -172,7 +172,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
 
   CHARACTER*(*)     fname
   TYPE(particle_dt) l_g
-  TREAL, DIMENSION(isize_particle,inb_particle) :: l_q !, OPTIONAL :: l_q 
+  TREAL, DIMENSION(isize_particle,inb_part_array) :: l_q !, OPTIONAL :: l_q 
 
 ! -------------------------------------------------------------------  
   TINTEGER i
@@ -204,7 +204,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
      CLOSE(LOC_UNIT_ID)
 
 !     IF ( PRESENT(l_q) ) THEN
-        DO i = 1,inb_particle
+        DO i = 1,inb_part_array
            WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
 #include "dns_open_file.h"
            WRITE(LOC_UNIT_ID) ims_npro
@@ -233,7 +233,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
 
 !  IF ( PRESENT(l_q) ) THEN
-     DO i = 1,inb_particle
+     DO i = 1,inb_part_array
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
         CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
         CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
@@ -255,7 +255,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
   CLOSE(LOC_UNIT_ID)
 
 !  IF ( PRESENT(l_q) ) THEN
-     DO i = 1,inb_particle
+     DO i = 1,inb_part_array
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
 #include "dns_open_file.h"
         WRITE(LOC_UNIT_ID) idummy  

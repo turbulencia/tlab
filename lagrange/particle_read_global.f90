@@ -7,7 +7,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL,    ONLY : inb_flow_array, inb_scal_array
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_wrk2d
-  USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_particle, inb_particle_txc, inb_particle_evolution 
+  USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_part_array, inb_particle_txc, inb_part 
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_npro
@@ -110,27 +110,27 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 ! ###################################################################
 ! -------------------------------------------------------------------
 ! default
-  inb_particle           = 3 ! # of particle properties in array
-  inb_particle_evolution = 3 ! # of particle properties in Runge-Kutta
-  inb_particle_txc       = 1
-  inb_particle_interp    = 3
+  inb_part_array      = 3 ! # of particle properties in array
+  inb_part            = 3 ! # of particle properties in Runge-Kutta
+  inb_particle_txc    = 1
+  inb_particle_interp = 3
   
   IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3) THEN
-     inb_particle           = 5
-     inb_particle_evolution = 5     
-     inb_particle_txc       = 4          
-     inb_particle_interp    = inb_particle_interp +4
-     LAGRANGE_SPNAME(1) = 'droplet_diff_3'
-     LAGRANGE_SPNAME(2) = 'droplet_nodiff_3'
+     inb_part_array       = 5
+     inb_part             = 5
+     inb_particle_txc     = 4          
+     inb_particle_interp  = inb_particle_interp +4
+     LAGRANGE_SPNAME(1)   = 'droplet_diff_3'
+     LAGRANGE_SPNAME(2)   = 'droplet_nodiff_3'
      
   ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
-     inb_particle           = 6
-     inb_particle_evolution = 5
-     inb_particle_txc       = 4
-     inb_particle_interp    = inb_particle_interp +4
-     LAGRANGE_SPNAME(1) = 'droplet_diff_3'
-     LAGRANGE_SPNAME(2) = 'droplet_nodiff_3'
-     LAGRANGE_SPNAME(3) = 'residence_part'
+     inb_part_array       = 5 +2 ! Space for residence time pdf
+     inb_part             = 5
+     inb_particle_txc     = 4
+     inb_particle_interp  = inb_particle_interp +4
+     LAGRANGE_SPNAME(1)   = 'droplet_diff_3'
+     LAGRANGE_SPNAME(2)   = 'droplet_nodiff_3'
+     LAGRANGE_SPNAME(3)   = 'residence_part'
      
   END IF
 
@@ -149,7 +149,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
      inb_particle_interp = MAX(inb_particle_interp,inb_trajectory)
   ENDIF
   
-  isize_pbuffer = int(isize_particle/4*(inb_particle*2+1) ) !same size for both buffers
+  isize_pbuffer = int(isize_particle/4*(inb_part_array*2+1) ) !same size for both buffers
   isize_l_comm  = 2     *jmax*kmax   *inb_particle_interp &
                 +   imax*jmax     *2 *inb_particle_interp &
                 + 2     *jmax     *2 *inb_particle_interp 

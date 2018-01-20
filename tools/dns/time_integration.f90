@@ -15,7 +15,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, tag_part, tag_traj, lfile
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal_array, inb_flow_array
-  USE DNS_GLOBAL, ONLY : isize_particle, inb_particle, inb_particle_txc
+  USE DNS_GLOBAL, ONLY : isize_particle
   USE DNS_GLOBAL, ONLY : imode_sim, imode_eqns
   USE DNS_GLOBAL, ONLY : icalc_flow, icalc_scal, icalc_part
   USE DNS_GLOBAL, ONLY : rbackground, g
@@ -46,9 +46,8 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   TREAL, DIMENSION(*)             :: q_inf, s_inf
   TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
 
-  TREAL, DIMENSION(isize_particle,inb_particle    ) :: l_q, l_hq
-  TREAL, DIMENSION(isize_particle,inb_particle_txc) :: l_txc
-  TREAL, DIMENSION(*)                               :: l_comm
+  TREAL, DIMENSION(isize_particle,*) :: l_q, l_hq, l_txc
+  TREAL, DIMENSION(*)                :: l_comm
 
   TARGET :: q
 
@@ -163,7 +162,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
         IF     ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
            CALL STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
            IF ( icalc_part .EQ. 1 ) THEN
-              CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_hq,l_txc,l_comm, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
+              CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_txc,l_comm, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
            ENDIF
         ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
            CALL STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d)

@@ -21,7 +21,7 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_g,l_q, l_hq, &
      nzone_grid,nzone_west,nzone_east,nzone_south,nzone_north)    
 
   USE DNS_GLOBAL, ONLY : imax,kmax
-  USE DNS_GLOBAL, ONLY : isize_particle, inb_particle
+  USE DNS_GLOBAL, ONLY : isize_particle, inb_part_array, inb_part
   USE DNS_GLOBAL, ONLY : g
   USE LAGRANGE_GLOBAL, ONLY: particle_dt
 #ifdef USE_MPI
@@ -31,9 +31,9 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_g,l_q, l_hq, &
   IMPLICIT NONE
 
   TINTEGER nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north, x_or_z
-  TYPE(particle_dt)                             :: l_g
-  TREAL, DIMENSION(isize_particle,inb_particle) :: l_q
-  TREAL, DIMENSION(isize_particle,inb_particle) :: l_hq
+  TYPE(particle_dt)                  :: l_g
+  TREAL, DIMENSION(isize_particle,*) :: l_q
+  TREAL, DIMENSION(isize_particle,*) :: l_hq
 
 ! -------------------------------------------------------------------
   TREAL dx_grid, dz_grid
@@ -89,12 +89,14 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_g,l_q, l_hq, &
               l_g%tags(i)=l_g%tags(j)
               l_g%tags(j)=idummy8
 
-              DO k=1,inb_particle
-                 dummy=l_q(i,k)
+              DO k=1,inb_part_array
+                 dummy   =l_q(i,k)
                  l_q(i,k)=l_q(j,k)
                  l_q(j,k)=dummy
-
-                 dummy=l_hq(i,k)
+              ENDDO
+              
+              DO k=1,inb_part
+                 dummy    =l_hq(i,k)
                  l_hq(i,k)=l_hq(j,k)
                  l_hq(j,k)=dummy
               END DO
@@ -125,12 +127,14 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_g,l_q, l_hq, &
               l_g%tags(i)=l_g%tags(j)
               l_g%tags(j)=idummy8
 
-              DO k=1,inb_particle
-                 dummy=l_q(i,k)
+              DO k=1,inb_part_array
+                 dummy   =l_q(i,k)
                  l_q(i,k)=l_q(j,k)
                  l_q(j,k)=dummy
-
-                 dummy=l_hq(i,k)
+              ENDDO
+              
+              DO k=1,inb_part
+                 dummy    =l_hq(i,k)
                  l_hq(i,k)=l_hq(j,k)
                  l_hq(j,k)=dummy
               END DO
@@ -180,12 +184,14 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_g,l_q, l_hq, &
               l_g%tags(i)=l_g%tags(j)
               l_g%tags(j)=idummy8
 
-              DO k=1,inb_particle
-                 dummy=l_q(i,k)
+              DO k=1,inb_part_array
+                 dummy   =l_q(i,k)
                  l_q(i,k)=l_q(j,k)
                  l_q(j,k)=dummy
-
-                 dummy=l_hq(i,k)
+              ENDDO
+              
+              DO k=1,inb_part
+                 dummy    =l_hq(i,k)
                  l_hq(i,k)=l_hq(j,k)
                  l_hq(j,k)=dummy
               END DO
