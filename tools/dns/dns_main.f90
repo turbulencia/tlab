@@ -159,9 +159,6 @@ PROGRAM DNS
   IF ( tower_mode .EQ. 1 ) THEN 
      isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))
   ENDIF
-  IF ( icalc_part .EQ. 1 .AND. isize_trajectory .GT. 0 ) THEN
-     isize_wrk3d = MAX(isize_wrk3d,nitera_save*(1+isize_trajectory))
-  ENDIF
 
 #ifdef LES
 #ifdef USE_MPI
@@ -362,7 +359,7 @@ PROGRAM DNS
         l_y_base =   ((g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean -(g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean )/C_2_R &
              +  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean
         IF (residence_reset .EQ. 1) THEN
-           l_q(:,6) = C_0_R
+           l_q(:,6:7) = C_0_R
         ENDIF
      ENDIF
      

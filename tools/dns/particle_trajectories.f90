@@ -16,9 +16,12 @@ MODULE PARTICLE_TRAJECTORIES
   IMPLICIT NONE
   SAVE
   
-  TREAL,      DIMENSION(:,:,:), ALLOCATABLE :: l_trajectories
+  REAL(4),    DIMENSION(:,:,:), ALLOCATABLE :: l_trajectories
   INTEGER(8), DIMENSION(:),     ALLOCATABLE :: l_trajectories_tags
   TINTEGER                                  :: counter, isize_time
+#ifdef USE_MPI
+  REAL(4),    DIMENSION(:,:),   ALLOCATABLE :: mpi_tmp
+#endif
 
 CONTAINS
   
@@ -61,6 +64,16 @@ SUBROUTINE PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
      CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_trajectories_tags.')
      CALL DNS_STOP(DNS_ERROR_ALLOC)
   ENDIF
+
+#ifdef USE_MPI
+  WRITE(str,*) (isize_trajectory+1)*isize_time; line = 'Allocating array mpi_tmp of size '//TRIM(ADJUSTL(str))
+  CALL IO_WRITE_ASCII(lfile,line)
+  ALLOCATE(mpi_tmp(isize_trajectory+1,isize_time),stat=ierr)
+  IF ( ierr .NE. 0 ) THEN
+     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_trajectories.')
+     CALL DNS_STOP(DNS_ERROR_ALLOC)
+  ENDIF
+#endif
   
 ! Initialize
   IF ( itrajectory .EQ. LAG_TRAJECTORY_LARGEST ) THEN ! Read file with tags of largest particles, the ones to track
@@ -161,7 +174,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm,
 #ifdef USE_MPI
   IF ( ims_pro .EQ. 0 ) THEN
 #endif
-     l_trajectories(1,counter,1:nvar) = rtime
+     l_trajectories(1,counter,1:nvar) = SNGL(rtime)
 #ifdef USE_MPI
   ENDIF
 #endif
@@ -171,7 +184,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm,
      DO j = 1,isize_trajectory
         IF ( l_g%tags(i) .EQ. l_trajectories_tags(j) ) THEN
            DO iv = 1,nvar
-              l_trajectories(1+j,counter,iv) = data(iv)%field(i)
+              l_trajectories(1+j,counter,iv) = SNGL(data(iv)%field(i))
            ENDDO
         ENDIF
      ENDDO
@@ -182,7 +195,7 @@ END SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE
 
 !#######################################################################
 !#######################################################################
-SUBROUTINE PARTICLE_TRAJECTORIES_WRITE(fname, wrk3d)
+SUBROUTINE PARTICLE_TRAJECTORIES_WRITE(fname)
 
   IMPLICIT NONE
   
@@ -191,7 +204,6 @@ SUBROUTINE PARTICLE_TRAJECTORIES_WRITE(fname, wrk3d)
 #endif
   
   CHARACTER*(*) fname
-  TREAL, DIMENSION(1+isize_trajectory,isize_time) :: wrk3d
 
 ! -------------------------------------------------------------------
   CHARACTER(len=32) name
@@ -200,8 +212,8 @@ SUBROUTINE PARTICLE_TRAJECTORIES_WRITE(fname, wrk3d)
 !#######################################################################
   DO iv = 1,inb_trajectory
 #ifdef USE_MPI
-     wrk3d = C_0_R
-     CALL MPI_REDUCE(l_trajectories(1,1,iv), wrk3d, (1+isize_trajectory)*isize_time, MPI_REAL8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
+     mpi_tmp = C_0_R
+     CALL MPI_REDUCE(l_trajectories(1,1,iv), mpi_tmp, (1+isize_trajectory)*isize_time, MPI_REAL4, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
      CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
      IF(ims_pro .EQ. 0) THEN
 #endif
@@ -212,9 +224,9 @@ SUBROUTINE PARTICLE_TRAJECTORIES_WRITE(fname, wrk3d)
 #include "dns_open_file.h"
         REWIND(LOC_UNIT_ID)
 #ifdef USE_MPI
-        WRITE(LOC_UNIT_ID) SNGL(wrk3d)
+        WRITE(LOC_UNIT_ID) mpi_tmp
 #else        
-        WRITE(LOC_UNIT_ID) SNGL(l_trajectories(:,:,iv))
+        WRITE(LOC_UNIT_ID) l_trajectories(:,:,iv)
 #endif
         CLOSE(LOC_UNIT_ID)
 #ifdef USE_MPI

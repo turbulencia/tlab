@@ -215,14 +215,6 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
            ENDDO
         ENDIF
 
-        IF ( icalc_part .EQ. 1 ) THEN
-           DO ip = 1,l_g%np
-              DO is = 1,inb_part
-                 l_hq(ip,is) = alpha*l_hq(ip,is)
-              ENDDO
-           ENDDO
-        ENDIF
-
         IF ( icalc_scal .EQ. 1 ) THEN
            DO is = 1,inb_scal
 #ifdef USE_BLAS
@@ -235,6 +227,15 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
            ENDDO
         ENDIF
 !$omp end parallel 
+
+        IF ( icalc_part .EQ. 1 ) THEN
+           DO ip = 1,l_g%np
+              DO is = 1,inb_part
+                 l_hq(ip,is) = alpha*l_hq(ip,is)
+              ENDDO
+           ENDDO
+        ENDIF
+
      ENDIF
 
 ! -------------------------------------------------------------------

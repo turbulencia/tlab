@@ -191,7 +191,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
            CALL IO_WRITE_PARTICLE(fname, l_g, l_q)
            IF ( itrajectory .NE. LAG_TRAJECTORY_NONE ) THEN
               WRITE(fname,*) itime; fname =TRIM(ADJUSTL(tag_traj))//TRIM(ADJUSTL(fname))
-              CALL PARTICLE_TRAJECTORIES_WRITE(fname, wrk3d)
+              CALL PARTICLE_TRAJECTORIES_WRITE(fname)
            END IF
         END IF
 
