@@ -313,7 +313,7 @@ PROGRAM VISUALS_MAIN
 #include "dns_alloc_arrays.h"
 
   IF ( iread_part .EQ. 1 ) THEN ! Particle variables
-     inb_particle_txc = 1 ! so far, not needed
+     inb_part_txc = MAX(inb_part_txc,1)
 #include "dns_alloc_larrays.h"
   ENDIF
 
@@ -966,23 +966,29 @@ PROGRAM VISUALS_MAIN
            
            l_txc = C_1_R; ! We want density
            CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,1), wrk2d,wrk3d)
-           str = 'ParticleDensity'
-           plot_file = TRIM(ADJUSTL(str))//time_str(1:MaskSize)
+
+           plot_file = 'ParticleDensity'//time_str(1:MaskSize)
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
-           txc(:,1) = txc(:,1) + 0.00000001
+
            IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 )  THEN
+              txc(:,1) = txc(:,1) + 0.00000001
               DO is=1,2
                  CALL PARTICLE_TO_FIELD(l_q, l_q(1,3+is), txc(1,2), wrk2d,wrk3d)   
-                 txc(:,2) = txc(:,2)/txc(:,1)
+                 txc(:,2) = txc(:,2) /txc(:,1)
+
                  plot_file = TRIM(ADJUSTL(LAGRANGE_SPNAME(is)))//time_str(1:MaskSize)
                  CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
+
               END DO
            END IF
-           IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
+           
+           IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
               !inb_part_array is the last component -> residence times in bil_cloud_4
               CALL PARTICLE_TO_FIELD(l_q, l_q(1,inb_part_array-1), txc(1,2), wrk2d,wrk3d)   
+
               plot_file = TRIM(ADJUSTL(LAGRANGE_SPNAME(3)))//time_str(1:MaskSize)
               CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
+
            ENDIF
 
         ENDIF

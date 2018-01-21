@@ -64,7 +64,7 @@ PROGRAM LAGRANGE_PDF
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Restart',    '50', nitera_save )
 
   number_of_bins = INT(particle_pdf_max/particle_pdf_interval)
-  inb_particle_txc = 1 
+  inb_part_txc = 1 
 
 #include "dns_alloc_larrays.h"
   isize_wrk3d = imax*jmax*kmax

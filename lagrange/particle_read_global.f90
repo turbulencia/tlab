@@ -7,7 +7,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL,    ONLY : inb_flow_array, inb_scal_array
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_wrk2d
-  USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_part_array, inb_particle_txc, inb_part 
+  USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_part_array, inb_part_txc, inb_part 
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_npro
@@ -112,13 +112,13 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 ! default
   inb_part_array      = 3 ! # of particle properties in array
   inb_part            = 3 ! # of particle properties in Runge-Kutta
-  inb_particle_txc    = 1
+  inb_part_txc        = 1
   inb_particle_interp = 3
   
   IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3) THEN
      inb_part_array       = 5
      inb_part             = 5
-     inb_particle_txc     = 4          
+     inb_part_txc         = 4          
      inb_particle_interp  = inb_particle_interp +4
      LAGRANGE_SPNAME(1)   = 'droplet_diff_3'
      LAGRANGE_SPNAME(2)   = 'droplet_nodiff_3'
@@ -126,7 +126,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
      inb_part_array       = 5 +2 ! Space for residence time pdf
      inb_part             = 5
-     inb_particle_txc     = 4
+     inb_part_txc         = 4
      inb_particle_interp  = inb_particle_interp +4
      LAGRANGE_SPNAME(1)   = 'droplet_diff_3'
      LAGRANGE_SPNAME(2)   = 'droplet_nodiff_3'
@@ -145,7 +145,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 #endif
 
   IF ( itrajectory .NE. LAG_TRAJECTORY_NONE ) THEN
-     inb_particle_txc    = MAX(inb_particle_txc,inb_flow_array+inb_scal_array-3)
+     inb_part_txc        = MAX(inb_part_txc,inb_flow_array+inb_scal_array-3)
      inb_particle_interp = MAX(inb_particle_interp,inb_trajectory)
   ENDIF
   
