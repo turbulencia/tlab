@@ -270,3 +270,31 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
   RETURN
 END SUBROUTINE IO_WRITE_PARTICLE
 
+!#######################################################################
+!#######################################################################
+SUBROUTINE PARTICLE_LOCATE_Y( pmax, y_part, j_part, jmax, y_grid )
+
+  IMPLICIT NONE
+
+  TINTEGER, INTENT(IN) :: pmax, jmax
+  TREAL,    DIMENSION(pmax), INTENT(IN) :: y_part
+  TINTEGER, DIMENSION(pmax), INTENT(OUT) :: j_part
+  TREAL,    DIMENSION(jmax), INTENT(IN) :: y_grid
+  
+  TINTEGER ip, jm, jp, jc
+
+  DO ip = 1,pmax
+     jp = jmax
+     jm = 1
+     jc = ( jm +jp ) /2  
+     DO WHILE ( (y_part(ip)-y_grid(jc))*(y_part(ip)-y_grid(jc+1)) .GT. C_0_R .AND. jc .GT. jm )
+        IF ( y_part(ip) .LT. y_grid(jc) ) THEN; jp = jc;
+        ELSE;                                   jm = jc; END IF
+        jc = ( jm +jp ) /2
+     END DO
+     j_part(ip) = jc
+!     WRITE(*,'(i,3f)') ip, y_grid(jc), y_part(ip), y_grid(jc+1) 
+  END DO
+  
+  RETURN
+END SUBROUTINE PARTICLE_LOCATE_Y

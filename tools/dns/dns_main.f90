@@ -96,9 +96,6 @@ PROGRAM DNS
 
   isize_loc = MAX(g_inf(1)%size*g_inf(2)%size,MAX(g_inf(1)%size*g_inf(3)%size,g_inf(2)%size*g_inf(3)%size))
   isize_wrk2d = MAX(isize_wrk2d, isize_loc)
-  IF ( icalc_part .eq. 1) THEN
-    isize_wrk2d = MAX(isize_wrk2d, jmax*inb_particle_interp)
-  END IF
 
 ! txc
   inb_txc = 9

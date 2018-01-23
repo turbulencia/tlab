@@ -25,21 +25,18 @@ SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, l_q,l_txc,l_comm, wrk2d,wrk3d)
   IMPLICIT NONE
 
   TREAL, DIMENSION(isize_field,*), TARGET  :: s
-
   TREAL, DIMENSION(isize_particle,*)       :: l_q
   TREAL, DIMENSION(isize_particle), TARGET :: l_txc
   TREAL, DIMENSION(*)                      :: l_comm
-  
   TREAL, DIMENSION(*)                      :: wrk2d, wrk3d
 
-  TINTEGER is, i
-
-  TINTEGER nvar
+! -------------------------------------------------------------------
+  TINTEGER is, i, nvar
   TYPE(pointers3d_dt), DIMENSION(1) :: data
   TYPE(pointers_dt),   DIMENSION(1) :: data_out
 
 ! ###################################################################
-! IF negative liquid set lagrange liquid 0
+! If negative liquid set lagrange liquid 0
 ! ###################################################################
   DO is=4,inb_part_array
      DO i=1,l_g%np

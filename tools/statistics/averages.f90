@@ -377,6 +377,9 @@ PROGRAM AVERAGES
   isize_txc   = isize_txc_field*inb_txc
   isize_wrk3d = MAX(isize_field,opt_bins*opt_order*nfield*jmax)
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
+  IF ( icalc_part .eq. 1) THEN
+     isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
+  END IF
 
 #include "dns_alloc_arrays.h"
 

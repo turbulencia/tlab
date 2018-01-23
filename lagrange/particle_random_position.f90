@@ -117,12 +117,6 @@ SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
      CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, i0, isize_field, txc, wrk3d)
      is = 1 ! Reference scalar
 
-     ! IF ( jmin_part /sbg(is)%ymean .GT. g(2)%size ) THEN
-     !    CALL IO_WRITE_ASCII(efile,'PARTICLE_RANDOM_POSITION. JMIN_PART exceeds YCorrScalar value')
-     !    CALL DNS_STOP(DNS_ERROR_PARTICLE)
-     ! END IF
-
-     ! dy_loc= g(2)%nodes(jmin_part+1) -g(2)%nodes(jmin_part)
      y_limits(1) = y_particle_pos -C_05_R *y_particle_width
      y_limits(2) = y_particle_pos +C_05_R *y_particle_width
      CALL PARTICLE_LOCATE_Y( 2, y_limits, j_limits, g(2)%size, g(2)%nodes )
@@ -139,9 +133,6 @@ SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
         rnd_scal(2) = j_limits(1) +floor(rnd_number(2)*(j_limits(2)-j_limits(1)+1))        
         dy_frac     =                    rnd_number(2)*(j_limits(2)-j_limits(1)+1) &
                                  -floor(rnd_number(2)*(j_limits(2)-j_limits(1)+1))
-        ! rnd_scal(2) = jmin_part +floor(rnd_number(2)*(jmax_part-jmin_part+1))
-        ! dy_frac =             rnd_number(2)*(jmax_part-jmin_part+1) &
-        !                  -       floor(rnd_number(2)*(jmax_part-jmin_part+1))
         
         dummy = ( txc(rnd_scal(1),rnd_scal(2),rnd_scal(3),is) -sbg(is)%mean )/sbg(is)%delta
         dummy = abs( dummy + C_05_R )
@@ -179,7 +170,6 @@ SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
         l_txc(:,1:2) = C_0_R
         CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_g,l_q,l_comm, wrk2d,wrk3d)
         
-!        CALL THERMO_AIRWATER_LINEAR(isize_particle,1,1,l_txc(1,1),l_q(1,4))
         l_q(:,4) = C_0_R
         CALL THERMO_AIRWATER_LINEAR(l_g%np,1,1,l_txc(1,1),l_q(1,4))
         
