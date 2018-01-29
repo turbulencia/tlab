@@ -46,7 +46,7 @@ for name in filenames:
     if not (any(time in s for s in filetimes)):
         filetimes.append(time)
 
-a = numpy.zeros((nv,np),dtype=float)
+a = numpy.zeros((nv,np+1),dtype=float)
 
 for time in filetimes:
     for type in filetypes:
@@ -64,13 +64,10 @@ for time in filetimes:
         itime = int(time) - int( eof[0] /( (np+1)*sizeofdata) )
         while(fin[0].tell() != eof[0]):
             itime = itime +1
-            rtime = [ fin[iv].read(sizeofdata) for iv in range(nv) ] # Read physical time
-            # rtime1= [ struct.unpack('>{}f'.format(1), rtime[iv]) for iv in range(nv) ]
-            # print(rtime1)
-            raw = [ fin[iv].read(np*sizeofdata) for iv in range(nv) ] # Read np particles
+            raw = [ fin[iv].read((np+1)*sizeofdata) for iv in range(nv) ] # Read time & np particles
             for iv in range(nv):
-                a[iv] = numpy.array(struct.unpack('>{}f'.format(np), raw[iv]))
-            rawout = struct.pack('>{}f'.format(np*nv),*numpy.transpose(a).reshape(np*nv).tolist())
+                a[iv] = numpy.array(struct.unpack('<{}f'.format(np+1), raw[iv]))
+            rawout = struct.pack('>{}f'.format(np*nv),*numpy.transpose(a)[1:,:].reshape(np*nv).tolist()) #skip the time
 
             fout = open(type+'.'+tag(sizeofmask,itime)+'.vtk','wb')
             fout.write(rawout)
