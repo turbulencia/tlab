@@ -38,7 +38,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   TINTEGER npar_start, npar
   TINTEGER ip1,ip2,ip3, np1,np2,np3, iv
 
-  TYPE(pointers3d_dt), DIMENSION(nvar) :: data_halo1, data_halo2, data_halo3
+  TYPE(pointers3d_dt), DIMENSION(nvar) :: data_halo_i, data_halo_k, data_halo_ik
 
 !#######################################################################
   IF ( nvar .GT. inb_particle_interp ) THEN
@@ -50,25 +50,16 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   np2 = imax*jmax*2; ip2 = ip1 +np1 *nvar !isize_hf_1
   np3 = 2   *jmax*2; ip3 = ip2 +np2 *nvar !isize_hf_2
   DO iv = 1,nvar
-     data_halo1(iv)%field(1:2,1:jmax,1:kmax) => l_comm(ip1:ip1+np1-1); ip1 = ip1 +np1
-     data_halo2(iv)%field(1:imax,1:jmax,1:2) => l_comm(ip2:ip2+np2-1); ip2 = ip2 +np2
-     data_halo3(iv)%field(1:2,1:jmax,1:2)    => l_comm(ip3:ip3+np3-1); ip3 = ip3 +np3
+     data_halo_i(iv)%field(1:2,1:jmax,1:kmax) => l_comm(ip1:ip1+np1-1); ip1 = ip1 +np1
+     data_halo_k(iv)%field(1:imax,1:jmax,1:2) => l_comm(ip2:ip2+np2-1); ip2 = ip2 +np2
+     data_halo_ik(iv)%field(1:2,1:jmax,1:2)   => l_comm(ip3:ip3+np3-1); ip3 = ip3 +np3
   ENDDO
 
 ! #######################################################################
 ! Setting fields in halo regions
 ! ######################################################################
-#ifdef USE_MPI
-  CALL PARTICLE_HALO_K(nvar, data_in, data_halo2(1)%field, wrk3d(1), wrk3d(imax*jmax*nvar+1), &
-       wrk2d(1), wrk2d(2*(jmax*nvar+1)))
-
-  CALL PARTICLE_HALO_I(nvar, data_in, data_halo1(1)%field, data_halo3(1)%field, wrk3d(1), wrk3d(jmax*(kmax+1)*nvar+1),&
-       wrk2d(1), wrk2d(jmax*nvar+1), wrk2d(2*(jmax*nvar+1)))
-
-#else
-  CALL PARTICLE_HALO_SERIAL(nvar, data_in, data_halo1(1)%field, data_halo2(1)%field, data_halo3(1)%field)
-
-#endif
+  CALL PARTICLE_HALO_K(nvar, data_in, data_halo_k(1)%field, wrk3d(1), wrk3d(imax*jmax*nvar+1))
+  CALL PARTICLE_HALO_I(nvar, data_in, data_halo_i(1)%field, data_halo_k(1)%field, data_halo_ik(1)%field, wrk3d(1), wrk3d(jmax*(kmax+1)*nvar+1))
   
 !#######################################################################
 ! Sorting and counting particles for each zone
@@ -89,23 +80,23 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   IF ( halo_zone_x .NE. 0 ) THEN
      npar_start = npar +1
      npar       = npar +halo_zone_x
-     CALL FIELD_TO_PARTICLE_INTERPOLATE(i1, nvar, data_halo1, data_out, l_q, npar_start,npar)
+     CALL FIELD_TO_PARTICLE_INTERPOLATE(i1, nvar, data_halo_i, data_out, l_q, npar_start,npar)
   END IF
   
   IF ( halo_zone_z .NE. 0 ) THEN
      npar_start = npar +1
      npar       = npar +halo_zone_z
-     CALL FIELD_TO_PARTICLE_INTERPOLATE(i2, nvar, data_halo2, data_out, l_q, npar_start,npar)
+     CALL FIELD_TO_PARTICLE_INTERPOLATE(i2, nvar, data_halo_k, data_out, l_q, npar_start,npar)
  END IF
 
   IF ( halo_zone_diagonal .NE. 0 ) THEN
      npar_start = npar +1
      npar       = npar +halo_zone_diagonal
-     CALL FIELD_TO_PARTICLE_INTERPOLATE(i3, nvar, data_halo3, data_out, l_q, npar_start,npar)
+     CALL FIELD_TO_PARTICLE_INTERPOLATE(i3, nvar, data_halo_ik, data_out, l_q, npar_start,npar)
   END IF
 
   DO iv = 1,nvar
-     NULLIFY(data_halo1(iv)%field,data_halo2(iv)%field,data_halo3(iv)%field)
+     NULLIFY(data_halo_i(iv)%field,data_halo_k(iv)%field,data_halo_ik(iv)%field)
   ENDDO
   
   RETURN
