@@ -92,7 +92,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3
 ! The interpolated data is added to the existing data, which
 !  consitutes already the evolution equation for particle position
 ! -------------------------------------------------------------------
-  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_g,l_q,l_comm, wrk2d,wrk3d)
+  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_g,l_q,l_comm, wrk3d)
   
 ! -------------------------------------------------------------------
 ! Completing evolution equations

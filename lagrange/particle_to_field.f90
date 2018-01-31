@@ -195,7 +195,7 @@ SUBROUTINE PARTICLE_TO_FIELD_SEND_RECV_EAST(f_buffer_1,f_buffer_2, field )
   TINTEGER status(MPI_STATUS_SIZE, ims_npro*2)
 
   TREAL, DIMENSION(imax+1,jmax,kmax+1) :: field
-  TREAL, DIMENSION(1,jmax,kmax+1) :: f_buffer_1, f_buffer_2 
+  TREAL, DIMENSION(jmax,kmax+1) :: f_buffer_1, f_buffer_2 
 
   f_buffer_1=C_0_R
   f_buffer_2=C_0_R
@@ -222,7 +222,7 @@ SUBROUTINE PARTICLE_TO_FIELD_SEND_RECV_EAST(f_buffer_1,f_buffer_2, field )
 !#################################################################
 !The buffer is one point larger because the diagonal point is first send EAST
 !and then NORTH
-  f_buffer_1(1,1:jmax,1:(kmax+1))=field(imax+1,1:jmax,1:(kmax+1))
+  f_buffer_1(1:jmax,1:(kmax+1))=field(imax+1,1:jmax,1:(kmax+1))
 
   mpireq(1:ims_npro*2)=MPI_REQUEST_NULL
   l = 2*ims_pro +1
@@ -232,7 +232,7 @@ SUBROUTINE PARTICLE_TO_FIELD_SEND_RECV_EAST(f_buffer_1,f_buffer_2, field )
 
   CALL MPI_Waitall(ims_npro*2,mpireq,status,ims_err)  
 
-  field(1,1:jmax,1:(kmax+1))=field(1,1:jmax,1:(kmax+1)) + f_buffer_2(1,1:jmax,1:(kmax+1))
+  field(1,1:jmax,1:(kmax+1))=field(1,1:jmax,1:(kmax+1)) + f_buffer_2(1:jmax,1:(kmax+1))
 
   RETURN
 END SUBROUTINE PARTICLE_TO_FIELD_SEND_RECV_EAST
@@ -255,7 +255,7 @@ SUBROUTINE PARTICLE_TO_FIELD_SEND_RECV_NORTH(f_buffer_1,f_buffer_2, field )
   TINTEGER status(MPI_STATUS_SIZE, ims_npro*2)
 
   TREAL, DIMENSION(imax+1,jmax,kmax+1) :: field
-  TREAL, DIMENSION(imax+1,jmax,1) :: f_buffer_1, f_buffer_2 
+  TREAL, DIMENSION(imax+1,jmax)        :: f_buffer_1, f_buffer_2 
 
   f_buffer_1=C_0_R
   f_buffer_2=C_0_R
@@ -281,7 +281,7 @@ SUBROUTINE PARTICLE_TO_FIELD_SEND_RECV_NORTH(f_buffer_1,f_buffer_2, field )
 !Setting up the plane which needs to be send NORTH
 !Send this plane NORTH and receive the plane from SOUTH
 !#################################################################
-  f_buffer_1(1:(imax+1),1:jmax,1)=field(1:(imax+1),1:jmax,kmax+1)
+  f_buffer_1(1:(imax+1),1:jmax)=field(1:(imax+1),1:jmax,kmax+1)
 
 !CALL MPI_BARRIER(MPI_COMM_WORLD, ims_err)
 
@@ -293,7 +293,7 @@ SUBROUTINE PARTICLE_TO_FIELD_SEND_RECV_NORTH(f_buffer_1,f_buffer_2, field )
 
   CALL MPI_Waitall(ims_npro*2,mpireq,status,ims_err) 
 
-  field(1:(imax+1),1:jmax,1)=field(1:(imax+1),1:jmax,1) + f_buffer_2(1:(imax+1),1:jmax,1)
+  field(1:(imax+1),1:jmax,1)=field(1:(imax+1),1:jmax,1) + f_buffer_2(1:(imax+1),1:jmax)
 
   RETURN
 END SUBROUTINE PARTICLE_TO_FIELD_SEND_RECV_NORTH

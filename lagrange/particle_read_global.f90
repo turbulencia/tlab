@@ -167,7 +167,6 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 
   idummy = MAX((imax+1)*jmax, MAX((imax+1)*kmax,jmax*(kmax+1)))
   isize_wrk2d = MAX(isize_wrk2d,idummy)
-  isize_wrk2d = MAX(isize_wrk2d, jmax*inb_particle_interp)
 
   RETURN  
 END SUBROUTINE PARTICLE_READ_GLOBAL

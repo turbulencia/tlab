@@ -48,13 +48,6 @@ PROGRAM INIPART
   CALL DNS_MPI_INITIALIZE
 #endif
 
-! ! -------------------------------------------------------------------
-! ! Definitions
-! ! -------------------------------------------------------------------
-!   IF ( jmax_part .EQ. 1 ) THEN
-!      jmax_part   = jmax ! 1 by default
-!   ENDIF
-
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------      
@@ -83,7 +76,7 @@ PROGRAM INIPART
 ! -------------------------------------------------------------------
 ! Initialize particle information
 ! -------------------------------------------------------------------
-  CALL PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
+  CALL PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk3d)
 
   CALL IO_WRITE_PARTICLE(TRIM(ADJUSTL(tag_part))//'ics', l_g, l_q)
 

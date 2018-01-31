@@ -166,7 +166,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm,
 ! Interpolation
   IF ( nvar-3 .GT. 0 ) THEN
      iv = nvar -3
-     CALL FIELD_TO_PARTICLE(iv, data_in(4), data(4), l_g,l_q,l_comm, wrk2d,wrk3d)
+     CALL FIELD_TO_PARTICLE(iv, data_in(4), data(4), l_g,l_q,l_comm, wrk3d)
   ENDIF
   
 ! -------------------------------------------------------------------

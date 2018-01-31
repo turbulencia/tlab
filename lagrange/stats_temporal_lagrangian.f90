@@ -51,7 +51,7 @@ SUBROUTINE STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_txc,l_comm, txc, mean, wrk1d,
   IF ( icalc_part_pdf .EQ. 1) THEN
      number_of_bins = INT(particle_pdf_max/particle_pdf_interval)
      WRITE(fname,*) itime; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
-     CALL PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk2d,wrk3d)
+     CALL PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk3d)
   END IF
   
 ! Save particle residence times

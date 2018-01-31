@@ -8,7 +8,7 @@
 !#######################################################################
 !#######################################################################
 SUBROUTINE  FIELD_TO_PARTICLE &
-    (nvar, data_in, data_out, l_g,l_q,l_comm, wrk2d,wrk3d)
+    (nvar, data_in, data_out, l_g,l_q,l_comm, wrk3d)
 
   USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
@@ -31,7 +31,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   TYPE(particle_dt)                                    :: l_g
   TREAL,               DIMENSION(isize_particle,*)     :: l_q
   TREAL,               DIMENSION(isize_l_comm), TARGET :: l_comm
-  TREAL,               DIMENSION(*)                    :: wrk2d, wrk3d
+  TREAL,               DIMENSION(*)                    :: wrk3d
 
 ! -------------------------------------------------------------------
   TINTEGER grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal 
@@ -55,24 +55,21 @@ SUBROUTINE  FIELD_TO_PARTICLE &
      data_halo_ik(iv)%field(1:2,1:jmax,1:2)   => l_comm(ip3:ip3+np3-1); ip3 = ip3 +np3
   ENDDO
 
-! #######################################################################
+! -------------------------------------------------------------------
 ! Setting fields in halo regions
-! ######################################################################
   CALL PARTICLE_HALO_K(nvar, data_in, data_halo_k(1)%field, wrk3d(1), wrk3d(imax*jmax*nvar+1))
   CALL PARTICLE_HALO_I(nvar, data_in, data_halo_i(1)%field, data_halo_k(1)%field, data_halo_ik(1)%field, wrk3d(1), wrk3d(jmax*(kmax+1)*nvar+1))
   
-!#######################################################################
+! -------------------------------------------------------------------
 ! Sorting and counting particles for each zone
-!#######################################################################
   CALL PARTICLE_SORT_HALO(l_g,l_q, nvar,data_out, grid_zone,halo_zone_x,halo_zone_z,halo_zone_diagonal)
 
 #ifdef USE_MPI
   CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
 #endif
   
-!#######################################################################
+! -------------------------------------------------------------------
 ! Interpolating
-!#######################################################################
   npar_start = 1
   npar       = grid_zone
   CALL FIELD_TO_PARTICLE_INTERPOLATE(i0, nvar, data_in, data_out, l_q, npar_start, npar)
@@ -95,6 +92,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
      CALL FIELD_TO_PARTICLE_INTERPOLATE(i3, nvar, data_halo_ik, data_out, l_q, npar_start,npar)
   END IF
 
+! -------------------------------------------------------------------
   DO iv = 1,nvar
      NULLIFY(data_halo_i(iv)%field,data_halo_k(iv)%field,data_halo_ik(iv)%field)
   ENDDO
@@ -102,12 +100,150 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   RETURN
 END SUBROUTINE FIELD_TO_PARTICLE
 
+!#######################################################################
+!#######################################################################
+SUBROUTINE PARTICLE_HALO_K(nvar, data, halo_field_k, buffer_send, buffer_recv)
+
+  USE DNS_TYPES,  ONLY : pointers3d_dt
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
+
+#ifdef USE_MPI
+  USE DNS_MPI, ONLY : ims_pro, ims_npro, ims_pro_k, ims_npro_k, ims_map_k
+  USE DNS_MPI, ONLY : ims_err
+#endif
+  
+  IMPLICIT NONE
+
+#ifdef USE_MPI
+#include "mpif.h"
+#endif
+  
+  TINTEGER nvar
+  TYPE(pointers3d_dt), DIMENSION(nvar):: data
+  TREAL, DIMENSION(imax,jmax,2,nvar)  :: halo_field_k
+  TREAL, DIMENSION(imax,jmax,1,nvar)  :: buffer_send, buffer_recv
+
+! -------------------------------------------------------------------
+  TINTEGER i
+  
+#ifdef USE_MPI
+  integer source, dest, l, size
+  integer mpireq(ims_npro*2+2)
+  integer status(MPI_STATUS_SIZE,ims_npro*2)
+#endif
+  
+! ######################################################################
+#ifdef USE_MPI
+  IF ( ims_npro_k .EQ. 1 ) THEN
+#endif
+     DO i = 1,nvar
+        halo_field_k(1:imax,1:jmax,1,i) = data(i)%field(1:imax,1:jmax,kmax)
+        halo_field_k(1:imax,1:jmax,2,i) = data(i)%field(1:imax,1:jmax,1   )        
+     ENDDO
+     
+#ifdef USE_MPI
+  ELSE
+     DO i = 1,nvar
+        halo_field_k(1:imax,1:jmax,1,i) = data(i)%field(1:imax,1:jmax,kmax)
+        buffer_send(1:imax,1:jmax,1,i)  = data(i)%field(1:imax,1:jmax,1   ) ! data to be transfered
+     ENDDO
+     
+     mpireq(1:ims_npro*2) = MPI_REQUEST_NULL
+     l      = 2*ims_pro +1
+     dest   = ims_map_k(MOD(ims_pro_k-1 +ims_npro_k,ims_npro_k) +1)
+     source = ims_map_k(MOD(ims_pro_k+1 +ims_npro_k,ims_npro_k) +1)
+     size   = imax*jmax*nvar
+     CALL MPI_ISEND(buffer_send,size,MPI_REAL8,dest,  0,          MPI_COMM_WORLD,mpireq(l),   ims_err)
+     CALL MPI_IRECV(buffer_recv,size,MPI_REAL8,source,MPI_ANY_TAG,MPI_COMM_WORLD,mpireq(l+1), ims_err)
+     CALL MPI_Waitall(ims_npro*2,mpireq,status,ims_err)
+     
+     halo_field_k(1:imax,1:jmax,2,1:nvar) = buffer_recv(1:imax,1:jmax,1,1:nvar)
+
+  END IF
+#endif
+  
+  RETURN
+END SUBROUTINE PARTICLE_HALO_K
+
+!#######################################################################
+!#######################################################################
+SUBROUTINE PARTICLE_HALO_I(nvar, data, halo_field_i, halo_field_k, halo_field_ik, buffer_send, buffer_recv)
+
+  USE DNS_TYPES,      ONLY : pointers3d_dt
+  USE DNS_GLOBAL,     ONLY : imax,jmax,kmax
+
+#ifdef USE_MPI
+  USE DNS_MPI, ONLY : ims_pro, ims_npro, ims_pro_i, ims_npro_i, ims_map_i
+  USE DNS_MPI, ONLY : ims_err
+#endif
+
+  IMPLICIT NONE
+
+#ifdef USE_MPI
+#include "mpif.h"
+#endif
+  
+  TINTEGER nvar
+  TYPE(pointers3d_dt), DIMENSION(nvar):: data
+  TREAL, DIMENSION(2,jmax,kmax,nvar)  :: halo_field_i
+  TREAL, DIMENSION(imax,jmax,2,nvar)  :: halo_field_k 
+  TREAL, DIMENSION(2,jmax,2,nvar)     :: halo_field_ik
+  TREAL, DIMENSION(1,jmax,kmax+1,nvar):: buffer_send, buffer_recv
+
+! -------------------------------------------------------------------
+  TINTEGER i
+  
+#ifdef USE_MPI
+  integer source, dest, l, size
+  integer mpireq(ims_npro*2+2)
+  integer status(MPI_STATUS_SIZE,ims_npro*2)
+#endif
+  
+! ######################################################################
+#ifdef USE_MPI
+  IF ( ims_npro_i .EQ. 1 ) THEN
+#endif
+     DO i = 1,nvar
+        halo_field_i (1,1:jmax,1:kmax,i) = data(i)%field(imax,1:jmax,1:kmax) 
+        halo_field_i (2,1:jmax,1:kmax,i) = data(i)%field(1,   1:jmax,1:kmax) 
+        halo_field_ik(2,1:jmax,2     ,i) = halo_field_k (1,   1:jmax,2     ,i) ! top-right corner
+     END DO
+
+#ifdef USE_MPI
+  ELSE
+     DO i = 1,nvar
+        halo_field_i(1,1:jmax,1:kmax,i) = data(i)%field(imax,1:jmax,1:kmax)  
+        buffer_send(1,1:jmax,1:kmax,i)  = data(i)%field(1,   1:jmax,1:kmax)   ! data to be transfered
+        buffer_send(1,1:jmax,kmax+1,i)  = halo_field_k (1,   1:jmax,2     ,i)
+     ENDDO
+     
+     mpireq(1:ims_npro*2)=MPI_REQUEST_NULL
+     l      = 2*ims_pro +1
+     dest   = ims_map_i(MOD(ims_pro_i-1 +ims_npro_i,ims_npro_i) +1)
+     source = ims_map_i(MOD(ims_pro_i+1 +ims_npro_i,ims_npro_i) +1)
+     size   = jmax*(kmax+1)*nvar
+     CALL MPI_ISEND(buffer_send,size,MPI_REAL8,dest,  0,          MPI_COMM_WORLD,mpireq(l),   ims_err)
+     CALL MPI_IRECV(buffer_recv,size,MPI_REAL8,source,MPI_ANY_TAG,MPI_COMM_WORLD,mpireq(l+1), ims_err)
+     CALL MPI_Waitall(ims_npro*2,mpireq,status,ims_err)
+
+     halo_field_i (2,1:jmax,1:kmax,1:nvar) = buffer_recv(1,1:jmax,1:kmax,1:nvar)
+     halo_field_ik(2,1:jmax,2     ,1:nvar) = buffer_recv(1,1:jmax,kmax+1,1:nvar) ! top-right corner
+     
+  END IF
+#endif
+  
+  halo_field_ik(1,1:jmax,1,1:nvar) = halo_field_i(1,   1:jmax,kmax,1:nvar)
+  halo_field_ik(2,1:jmax,1,1:nvar) = halo_field_i(2,   1:jmax,kmax,1:nvar)
+  halo_field_ik(1,1:jmax,2,1:nvar) = halo_field_k(imax,1:jmax,2   ,1:nvar)
+  
+  RETURN
+END SUBROUTINE PARTICLE_HALO_I
+
 !########################################################################
 !########################################################################
 SUBROUTINE FIELD_TO_PARTICLE_INTERPOLATE &
      (iflag, nvar, data_in, data_out, l_q, grid_start, grid_end)
   
-  USE DNS_CONSTANTS,  ONLY : efile
   USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL,     ONLY : isize_particle
   USE DNS_GLOBAL,     ONLY : g

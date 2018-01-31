@@ -7,7 +7,7 @@
 
 !########################################################################
 !########################################################################
-SUBROUTINE PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk2d,wrk3d)
+SUBROUTINE PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk3d)
 
   USE DNS_TYPES,  ONLY: pointers_dt, pointers3d_dt
   USE DNS_GLOBAL, ONLY: imax,jmax,kmax, isize_field,isize_particle, inb_scal_array
@@ -29,7 +29,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk2d,wrk3d)
 
   CHARACTER*(*) fname
   TREAL, DIMENSION(isize_field,*), TARGET :: s
-  TREAL, DIMENSION(*)                     :: wrk2d, wrk3d
+  TREAL, DIMENSION(*)                     :: wrk3d
 
   TYPE(particle_dt)                          :: l_g
   TREAL, DIMENSION(isize_particle,*)         :: l_q
@@ -72,7 +72,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk2d,wrk3d)
   nvar = 0
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:,1)
   l_txc(:,1) = C_0_R
-  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_g,l_q,l_comm, wrk2d,wrk3d)
+  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_g,l_q,l_comm, wrk3d)
 
 #ifdef USE_MPI
 

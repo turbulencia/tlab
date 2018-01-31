@@ -130,7 +130,7 @@ PROGRAM LAGRANGE_PDF
      number_of_bins = INT(particle_pdf_max/particle_pdf_interval)
 
      WRITE(fname,*) i; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
-     CALL PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk2d,wrk3d)
+     CALL PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk3d)
 
   ENDDO
 

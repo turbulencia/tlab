@@ -138,7 +138,7 @@ all_fake_liquid(:) = C_0_R
   !#######################################################################
   !CREATE THE RANDOM PARTICLE FIELD
   !#######################################################################
-  CALL PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk2d,wrk3d)
+  CALL PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk3d)
 
 #ifdef USE_MPI
   !#######################################################################
