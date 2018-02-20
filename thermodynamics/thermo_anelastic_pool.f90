@@ -96,6 +96,88 @@ SUBROUTINE THERMO_ANELASTIC_TEMPERATURE(nx,ny,nz, s, e, T)
 END SUBROUTINE THERMO_ANELASTIC_TEMPERATURE
 
 !########################################################################
+! Calculating h_l - h; very similar to the temperature routine
+!########################################################################
+SUBROUTINE THERMO_ANELASTIC_STATIC_L(nx,ny,nz, s, e, result)
+
+  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI
+
+  IMPLICIT NONE
+
+  TINTEGER,                     INTENT(IN)  :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
+  TREAL, DIMENSION(*),          INTENT(IN)  :: e
+  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: result
+
+! -------------------------------------------------------------------
+  TINTEGER ij, i, jk, is
+  TREAL E_LOC
+
+  TREAL Cd, Cdv, Lv0, Cvl, Cl
+
+! ###################################################################
+  Cd = THERMO_AI(1,1,2)
+  Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
+  Lv0=-THERMO_AI(6,1,3)
+  Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
+  Cl = THERMO_AI(1,1,3)
+
+  IF      ( imixture .EQ. 0 ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           result(ij) = s(ij,1) - E_LOC
+           
+           result(ij) = Cl *result(ij) +E_LOC -Lv0 -s(ij,1)
+
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        E_LOC = e(is)
+        
+        DO i = 1,nx
+           ij = ij +1
+           
+           result(ij) = (s(ij,1) - E_LOC ) / ( Cd + s(ij,2) *Cdv )
+           
+           result(ij) = Cl *result(ij) +E_LOC -Lv0 -s(ij,1)
+
+        ENDDO
+     
+     ENDDO
+
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     ij = 0
+     DO jk = 0,ny*nz-1
+        is = MOD(jk,ny) +1
+        E_LOC = e(is)
+       
+        DO i = 1,nx
+           ij = ij +1
+           
+           result(ij) = (s(ij,1) - E_LOC + s(ij,3)*Lv0 )  / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
+
+           result(ij) = Cl *result(ij) +E_LOC -Lv0 -s(ij,1)
+           
+        ENDDO
+     
+     ENDDO
+  ENDIF
+  
+  RETURN
+END SUBROUTINE THERMO_ANELASTIC_STATIC_L
+
+!########################################################################
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_DENSITY(nx,ny,nz, s, e,p, rho)
 
