@@ -523,6 +523,29 @@ PROGRAM VISUALS_MAIN
                  plot_file = 'PressureGradientPower'//time_str(1:MaskSize)
                  CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
 
+                 CALL IO_WRITE_ASCII(lfile,'Computing pressure-strain correlation...')
+                 txc(1:isize_field,2) = txc(1:isize_field,1); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(1,2))
+                 txc(1:isize_field,3) = q(1:isize_field,1); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
+                 CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), txc(1,3), txc(1,4), wrk3d, wrk2d,wrk3d)
+                 txc(1:isize_field,3) = txc(1:isize_field,2)*txc(1:isize_field,4)
+                 
+                 plot_file = 'PressureStrainX'//time_str(1:MaskSize)
+                 CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,3), wrk3d)
+                 
+                 txc(1:isize_field,3) = q(1:isize_field,2); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
+                 CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,3), txc(1,4), wrk3d, wrk2d,wrk3d)
+                 txc(1:isize_field,3) = txc(1:isize_field,2)*txc(1:isize_field,4)
+
+                 plot_file = 'PressureStrainY'//time_str(1:MaskSize)
+                 CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,3), wrk3d)
+                 
+                 txc(1:isize_field,3) = q(1:isize_field,3); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
+                 CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), txc(1,3), txc(1,4), wrk3d, wrk2d,wrk3d)
+                 txc(1:isize_field,3) = txc(1:isize_field,2)*txc(1:isize_field,4)
+                 
+                 plot_file = 'PressureStrainZ'//time_str(1:MaskSize)
+                 CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,3), wrk3d)
+
                  CALL IO_WRITE_ASCII(lfile,'Computing hydrostatic pressure...')
                  q = C_0_R
                  CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,2), txc(1,3),txc(1,4), txc(1,5), wrk1d,wrk2d,wrk3d)

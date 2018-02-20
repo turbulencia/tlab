@@ -76,9 +76,9 @@ SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u,v,w,e,rho, p,T,vis
 
-#ifdef USE_MPI
-  TINTEGER id
-#endif
+! #ifdef USE_MPI
+!   TINTEGER id
+! #endif
 #ifdef LES
   TINTEGER ichi
 #endif

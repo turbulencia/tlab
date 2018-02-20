@@ -375,7 +375,7 @@ SUBROUTINE WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
 
   USE DNS_CONSTANTS, ONLY : lfile
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_pro, ims_err
+  USE DNS_MPI,    ONLY : ims_pro
 #endif
 
   IMPLICIT NONE
@@ -436,7 +436,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
   TINTEGER, INTENT(IN) :: opt_main, nblock 
 
 ! -----------------------------------------------------------------------
-  TINTEGER                :: ndims, i
+  TINTEGER                :: ndims
   TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
 
   INTEGER ims_color

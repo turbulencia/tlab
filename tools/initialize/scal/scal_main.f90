@@ -208,7 +208,7 @@ END PROGRAM INISCAL
 
 SUBROUTINE SCAL_MPIO_AUX()
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
+  USE DNS_GLOBAL, ONLY : imax,kmax
   USE DNS_MPI
   
   IMPLICIT NONE
@@ -216,7 +216,7 @@ SUBROUTINE SCAL_MPIO_AUX()
 #include "mpif.h" 
 
 ! -----------------------------------------------------------------------
-  TINTEGER                :: ndims, idummy, id
+  TINTEGER                :: ndims, id
   TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
 
 ! #######################################################################

@@ -663,18 +663,22 @@ SUBROUTINE THERMO_INITIALIZE
      WRITE(str,*) is; str = 'Setting Species'//TRIM(ADJUSTL(str))//'='//TRIM(ADJUSTL(THERMO_SPNAME(is)))
      CALL IO_WRITE_ASCII(lfile, str)
   ENDDO
-  WRITE(str,'(A14,1X,E12.5E3)') 'Setting WREF = ', WREF
+  WRITE(str,1010) 'Setting WREF = ', WREF
   CALL IO_WRITE_ASCII(lfile, str)
-  WRITE(str,'(A14,1X,E12.5E3)') 'Setting TREF = ', TREF
+  WRITE(str,1010) 'Setting TREF = ', TREF
   CALL IO_WRITE_ASCII(lfile, str)
   IF ( NPSAT .GT. 0 ) THEN
-     WRITE(str,'(A14,1X,E12.5E3)') 'Setting RREF = ', RREF
+     WRITE(str,1010) 'Setting RREF = ', RREF
      CALL IO_WRITE_ASCII(lfile, str)
   ENDIF
-  WRITE(str,'(A15,1X,E12.5E3)') 'Setting CPREF = ', CPREF
+  WRITE(str,1020) 'Setting CPREF = ', CPREF
   CALL IO_WRITE_ASCII(lfile, str)
-  WRITE(str,'(A15,1X,E12.5E3)') 'Setting Gama0 = ', gama0
+  WRITE(str,1020) 'Setting Gama0 = ', gama0
   CALL IO_WRITE_ASCII(lfile, str)
 
   RETURN
+
+1010 FORMAT(A14,1X,G_FORMAT_R)
+1020 FORMAT(A15,1X,G_FORMAT_R)
+  
 END SUBROUTINE THERMO_INITIALIZE

@@ -108,7 +108,7 @@ SUBROUTINE INTER2D_N(fname, parname, rtime, imax,jmax,kmax, npar, y, gate, gate_
   ENDIF
 #endif
 
-1010 FORMAT(I5,(1X,I5),(1X,E12.5E3),NVARS_LOC(1X,E12.5E3))
+1010 FORMAT(I5,(1X,I5),(1X,G_FORMAT_R),NVARS_LOC(1X,G_FORMAT_R))
 
   RETURN
 END SUBROUTINE INTER2D_N

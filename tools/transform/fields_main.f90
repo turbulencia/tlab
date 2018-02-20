@@ -61,11 +61,6 @@ PROGRAM TRANSFIELDS
   TINTEGER iopt_size
   TREAL opt_vec(iopt_size_max)
 
-#ifdef USE_MPI
-  TINTEGER npage, id
-  INTEGER icount
-#endif
-
 ! ###################################################################
   inifile = 'dns.ini'
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
