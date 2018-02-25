@@ -18,7 +18,7 @@
 SUBROUTINE FI_TRANSPORT(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d,wrk3d)
 
   USE DNS_TYPES,  ONLY : term_dt
-  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : g, epbackground, inb_scal_array
   
   IMPLICIT NONE
 
@@ -53,9 +53,19 @@ SUBROUTINE FI_TRANSPORT(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d,
      dummy = C_1_R + exponent
 
      IF ( exponent .GT. C_0_R ) THEN
-        tmp(:,1) = (transport%parameters(is) - transport%parameters(5)*s(:,is)) *(s(:,is_ref)**dummy)
+        IF ( is .EQ. 1 .OR. is .EQ. inb_scal_array+2 ) THEN
+           CALL THERMO_ANELASTIC_STATIC_L(nx,ny,nz, s, epbackground, tmp)
+           tmp(:,1) = transport%parameters(is) *tmp(:,1) *(s(:,is_ref)**dummy)
+        ELSE
+           tmp(:,1) = (transport%parameters(is) - transport%parameters(inb_scal_array+3)*s(:,is)) *(s(:,is_ref)**dummy)
+        ENDIF
      ELSE
-        tmp(:,1) = (transport%parameters(is) - transport%parameters(5)*s(:,is)) * s(:,is_ref)
+        IF ( is .EQ. 1 .OR. is .EQ. inb_scal_array+2 ) THEN
+           CALL THERMO_ANELASTIC_STATIC_L(nx,ny,nz, s, epbackground, tmp)
+           tmp(:,1) = transport%parameters(is) *tmp(:,is) *s(:,is_ref)
+        ELSE
+           tmp(:,1) = (transport%parameters(is) - transport%parameters(inb_scal_array+3)*s(:,is)) * s(:,is_ref)
+        ENDIF
      ENDIF
      CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), tmp(1,1), trans(1,1), wrk3d, wrk2d,wrk3d)
 
@@ -69,6 +79,7 @@ END SUBROUTINE FI_TRANSPORT
 SUBROUTINE FI_TRANSPORT_FLUX(transport, nx,ny,nz, is, s,trans)
 
   USE DNS_TYPES,  ONLY : term_dt
+  USE DNS_GLOBAL, ONLY : epbackground, inb_scal_array
   
   IMPLICIT NONE
 
@@ -95,9 +106,19 @@ SUBROUTINE FI_TRANSPORT_FLUX(transport, nx,ny,nz, is, s,trans)
      dummy = C_1_R + exponent
 
      IF ( exponent .GT. C_0_R ) THEN
-        trans(:,1) =-(transport%parameters(is) - transport%parameters(5)*s(:,is)) *(s(:,is_ref)**dummy)
+        IF ( is .EQ. 1 .OR. is .EQ. inb_scal_array+2 ) THEN
+           CALL THERMO_ANELASTIC_STATIC_L(nx,ny,nz, s, epbackground, trans)
+           trans(:,1) =-transport%parameters(is) *trans(:,1) *(s(:,is_ref)**dummy)
+        ELSE
+           trans(:,1) =-(transport%parameters(is) - transport%parameters(inb_scal_array+3)*s(:,is)) *(s(:,is_ref)**dummy)
+        ENDIF
      ELSE
-        trans(:,1) =-(transport%parameters(is) - transport%parameters(5)*s(:,is)) * s(:,is_ref)
+        IF ( is .EQ. 1 .OR. is .EQ. inb_scal_array+2 ) THEN
+           CALL THERMO_ANELASTIC_STATIC_L(nx,ny,nz, s, epbackground, trans)
+           trans(:,1) =-transport%parameters(is) *trans(:,is) *s(:,is_ref)
+        ELSE
+           trans(:,1) =-(transport%parameters(is) - transport%parameters(inb_scal_array+3)*s(:,is)) * s(:,is_ref)
+        ENDIF
      ENDIF
 
   ENDIF

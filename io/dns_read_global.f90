@@ -427,10 +427,19 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   transport%active = .FALSE.
   IF ( transport%type .NE. EQNS_NONE ) THEN
-     transport%parameters(:) = C_0_R
-     CALL SCANINICHAR(bakfile, inifile, 'Transport', 'Parameters', '1.0', sRes)
-     idummy = MAX_PROF
-     CALL LIST_REAL(sRes, idummy, transport%parameters)
+     transport%parameters(:) = C_1_R ! default values
+     CALL SCANINICHAR(bakfile, inifile, 'Transport', 'Parameters', 'void', sRes)
+     IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
+        idummy = MAX_PROF
+        CALL LIST_REAL(sRes, idummy, transport%parameters)
+     ENDIF
+     
+     IF ( settling .GT. C_0_R ) THEN
+        transport%parameters = transport%parameters *settling ! adding the settling number in the parameter definitions
+     ELSE
+        CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Settling number must be nonzero if transport is retained.')
+        CALL DNS_STOP(DNS_ERROR_OPTION)        
+     ENDIF
 
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
         transport%active = .TRUE. ! All scalars are affected
@@ -1235,20 +1244,21 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! Other parameters
 ! -------------------------------------------------------------------
 ! By default, transport and radiation are caused by last scalar
+! The variable inb_scal_array is only available at the end of this routine
   transport%scalar = inb_scal_array
   radiation%scalar = inb_scal_array
   
   IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-     IF ( transport%type .NE. EQNS_NONE ) THEN 
-        transport%scalar = inb_scal_array                ! Transport is caused by liquid
-        transport%parameters(inb_scal_array    ) = C_1_R ! liquid
-        transport%parameters(inb_scal_array + 1) = C_1_R ! buoyancy
-! Adding the settling number in the parameter definitions
-        transport%parameters = transport%parameters *settling
-     ENDIF
+!      IF ( transport%type .NE. EQNS_NONE ) THEN 
+!         ! transport%scalar = inb_scal_array                ! Transport is caused by liquid
+!         ! transport%parameters(inb_scal_array    ) = C_1_R ! liquid
+!         ! transport%parameters(inb_scal_array + 1) = C_1_R ! buoyancy
+! ! Adding the settling number in the parameter definitions
+!         ! transport%parameters = transport%parameters *settling
+!      ENDIF
 
      IF ( radiation%type .NE. EQNS_NONE ) THEN 
-        radiation%scalar = inb_scal_array             ! Radiation is caused by liquid
+        ! radiation%scalar = inb_scal_array             ! Radiation is caused by liquid
         radiation%active(inb_scal_array    ) = .TRUE. ! liquid
         radiation%active(inb_scal_array + 1) = .TRUE. ! buoyancy
      ENDIF
