@@ -173,47 +173,12 @@ PROGRAM PDFS
   ENDIF
 
 ! -------------------------------------------------------------------
-! Defining gate levels for conditioning
-! -------------------------------------------------------------------
-  opt_cond      = 0 ! default values
-  opt_cond_scal = 1
-  igate_size    = 0
-  opt_threshold = 0
-
-  IF ( opt_gate .GT.0 ) THEN
-
-#include "dns_read_partition.h"
-
-  ENDIF
-
-! -------------------------------------------------------------------
-! Definitions
-! -------------------------------------------------------------------
-! in case g(2)%size is not divisible by opt_block, drop the upper most planes
-  jmax_aux = g(2)%size/opt_block
-
-! -------------------------------------------------------------------
-! Further allocation of memory space
-! -------------------------------------------------------------------      
   iread_flow = 0
   iread_scal = 0
   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN; inb_txc = 6;
   ELSE;                                                                                             inb_txc = 1; ENDIF
+  IF ( ifourier .EQ. 1 ) inb_txc = MAX(inb_txc,1)
   nfield     = 2 
-
-  IF      ( opt_cond .EQ. 2 ) THEN
-     inb_txc    = MAX(inb_txc,1)
-     iread_scal = 1
-  ELSE IF ( opt_cond .EQ. 3 ) THEN
-     inb_txc    = MAX(inb_txc,3)
-     iread_flow = 1
-  ELSE IF ( opt_cond .EQ. 4 ) THEN
-     inb_txc    = MAX(inb_txc,3)
-     iread_scal = 1
-  ELSE IF ( opt_cond .EQ. 5 ) THEN
-     inb_txc    = MAX(inb_txc,1)
-     iread_flow = 1
-  ENDIF
 
   SELECT CASE ( opt_main )
 
@@ -285,10 +250,31 @@ PROGRAM PDFS
      nfield = 3
   END SELECT
 
-  IF ( ifourier .EQ. 1 ) inb_txc = MAX(inb_txc,1)
+! -------------------------------------------------------------------
+! Defining gate levels for conditioning
+! -------------------------------------------------------------------
+  opt_cond      = 0 ! default values
+  opt_cond_scal = 1
+  igate_size    = 0
+  opt_threshold = 0
+
+  IF ( opt_gate .GT.0 ) THEN
+
+#include "dns_read_partition.h"
+
+  ENDIF
 
 ! -------------------------------------------------------------------
+! Definitions
+! -------------------------------------------------------------------
+! in case g(2)%size is not divisible by opt_block, drop the upper most planes
+  jmax_aux = g(2)%size/opt_block
+
   npdf_size = opt_bins*nfield
+
+! -------------------------------------------------------------------
+! Further allocation of memory space
+! -------------------------------------------------------------------      
   ALLOCATE(pdf(npdf_size))
 
 ! -------------------------------------------------------------------

@@ -12,6 +12,11 @@
      ELSE IF ( opt_cond .EQ. 5 ) THEN ! Based on vertical velocity
         txc(1:isize_field,1) = q(1:isize_field,2)
        
+     ELSE IF ( opt_cond .EQ. 6 .OR. opt_cond .EQ. 7 ) THEN ! Based on scalar fluctuation
+        CALL IO_WRITE_ASCII(lfile,'Calculating scalar fluctuation...')
+        txc(1:isize_field,1) = s(1:isize_field,opt_cond_scal)
+        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(1,1))
+
      ENDIF
 
      IF      ( opt_cond .EQ. 1 ) THEN ! External file
@@ -22,9 +27,14 @@
            CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Not enough memory for igate_vec.')
            CALL DNS_STOP(DNS_ERROR_ALLOC)
         ENDIF
-        DO n = 1,igate_size
-           igate_vec(n) = INT(n,KIND=1) ! It assumes a particular intermittency function in the file
-        ENDDO
+
+     ELSE IF ( opt_cond .EQ. 7 ) THEN ! double conditioning; flux
+        DO ij = 1,isize_field
+           IF      ( txc(ij,1) .GT. C_0_R .AND. q(ij,2) .GE. C_0_R ) THEN; gate(ij) = 1;
+           ELSE IF ( txc(ij,1) .LE. C_0_R .AND. q(ij,2) .GT. C_0_R ) THEN; gate(ij) = 2;
+           ELSE IF ( txc(ij,1) .LT. C_0_R .AND. q(ij,2) .LE. C_0_R ) THEN; gate(ij) = 3;
+           ELSE;                                                           gate(ij) = 4; ENDIF
+        ENDDO      
 
      ELSE                             ! Local file
         IF ( opt_threshold .EQ. 1 ) THEN ! case of threshold relative to maximum
@@ -48,8 +58,9 @@
            ENDDO
            gate(ij) = INT(n,KIND=1) ! note that gate can get -- correctly -- the value igate_size
         ENDDO
-        DO n = 1,igate_size
-           igate_vec(n) = INT(n,KIND=1)
-        ENDDO
         
      ENDIF
+     
+     DO n = 1,igate_size
+        igate_vec(n) = INT(n,KIND=1)
+     ENDDO

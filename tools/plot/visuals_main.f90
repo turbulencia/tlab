@@ -171,6 +171,44 @@ PROGRAM VISUALS_MAIN
   ENDIF
 
 ! -------------------------------------------------------------------
+  iread_flow = 0
+  iread_scal = 0
+  iread_part = 0
+  inb_txc    = 0
+
+  DO iv = 1,iopt_size
+     IF ( opt_vec(iv) .EQ. 1              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
+     IF ( opt_vec(iv) .EQ. 2              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
+     IF ( opt_vec(iv) .EQ. 3              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
+     IF ( opt_vec(iv) .EQ. 4              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,3); ENDIF
+     IF ( opt_vec(iv) .EQ. 5              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
+     IF ( opt_vec(iv) .EQ. 6              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
+     IF ( opt_vec(iv) .EQ. 7              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,3); ENDIF
+     IF ( opt_vec(iv) .EQ. 8              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,7); ENDIF
+     IF ( opt_vec(iv) .EQ. 9              ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,1); ENDIF
+     IF ( opt_vec(iv) .GT. 9 .AND. &
+          opt_vec(iv) .LE. iscal_offset   ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,4); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+1 ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,3); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+2 ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,3); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+3 ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,6); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+4 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,4); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+5 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,3); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+6 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+7 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,4); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+8 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,3); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+9 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+10) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+12) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,4); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+14) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,2); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+15) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,5); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+16) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+17) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+18) THEN; iread_part = 1;                 inb_txc=MAX(inb_txc,2); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+19) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
+
+  ENDDO
+
+! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Subdomain', '-1', sRes)
   
   IF ( sRes .EQ. '-1' ) THEN
@@ -250,57 +288,6 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
 ! Further allocation of memory space
 ! -------------------------------------------------------------------
-  iread_flow = 0
-  iread_scal = 0
-  iread_part = 0
-  inb_txc    = 0
-
-  IF      ( opt_cond .EQ. 2 ) THEN
-     iread_scal = 1
-     inb_txc    = 1
-  ELSE IF ( opt_cond .EQ. 3 ) THEN
-     inb_txc = MAX(inb_txc,3)
-     iread_scal = 1
-  ELSE IF ( opt_cond .EQ. 4 ) THEN
-     inb_txc = MAX(inb_txc,3)
-     iread_flow = 1
-  ELSE IF ( opt_cond .EQ. 5 ) THEN
-     iread_flow = 1
-     inb_txc    = 1
-  ENDIF
-
-  DO iv = 1,iopt_size
-     IF ( opt_vec(iv) .EQ. 1              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
-     IF ( opt_vec(iv) .EQ. 2              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
-     IF ( opt_vec(iv) .EQ. 3              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
-     IF ( opt_vec(iv) .EQ. 4              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,3); ENDIF
-     IF ( opt_vec(iv) .EQ. 5              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
-     IF ( opt_vec(iv) .EQ. 6              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
-     IF ( opt_vec(iv) .EQ. 7              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,3); ENDIF
-     IF ( opt_vec(iv) .EQ. 8              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,7); ENDIF
-     IF ( opt_vec(iv) .EQ. 9              ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,1); ENDIF
-     IF ( opt_vec(iv) .GT. 9 .AND. &
-          opt_vec(iv) .LE. iscal_offset   ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,4); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+1 ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,3); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+2 ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,3); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+3 ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,6); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+4 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,4); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+5 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,3); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+6 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+7 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,4); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+8 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,3); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+9 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+10) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+12) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,4); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+14) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,2); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+15) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,5); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+16) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+17) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+18) THEN; iread_part = 1;                 inb_txc=MAX(inb_txc,2); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+19) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
-
-  ENDDO
-
   isize_txc   = isize_txc_field *inb_txc
   isize_wrk3d = isize_txc_field
 #ifdef USE_MPI

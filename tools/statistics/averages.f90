@@ -206,85 +206,10 @@ PROGRAM AVERAGES
   ENDIF
 
 ! -------------------------------------------------------------------
-! Defining gate levels for conditioning
-! -------------------------------------------------------------------
-  opt_cond      = 0 ! default values
-  opt_cond_scal = 1
-  igate_size    = 0
-  opt_threshold = 0
-
-  IF ( opt_main .GT. 1 .AND. opt_gate .GT. 0 ) THEN
-
-#include "dns_read_partition.h"
-
-  ENDIF
-
-! Subarray information to read and write envelopes
-  IF ( opt_main .EQ. 2 .AND. opt_cond .GT. 1 .AND. igate_size .GT. 0 ) THEN
-     io_sizes = (/imax*2*igate_size*kmax,1,imax*2*igate_size*kmax,1,1/)
-
-#ifdef USE_MPI
-     id = MPIO_SUBARRAY_ENVELOPES
-     
-     mpio_aux(id)%active = .TRUE.
-     mpio_aux(id)%communicator = MPI_COMM_WORLD
-     
-     ndims = 3
-     sizes(1)  =imax *ims_npro_i; sizes(2)   = igate_size *2; sizes(3)   = kmax *ims_npro_k
-     locsize(1)=imax;             locsize(2) = igate_size *2; locsize(3) = kmax
-     offset(1) =ims_offset_i;     offset(2)  = 0;             offset(3)  = ims_offset_k
-     
-     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
-     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
-
-#else
-     io_aux(:)%offset = 0
-#endif
-
-     ALLOCATE(surface(imax,2*igate_size,kmax))
-
-  ENDIF
-
-! -------------------------------------------------------------------
-! Definitions
-! -------------------------------------------------------------------
-! in case g(2)%size is not divisible by opt_block, drop the upper most planes
-  jmax_aux = g(2)%size/opt_block
-
-  flag_buoyancy = 0 ! default
-  
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
-! in case we need the buoyancy statistics
-     IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
-          buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
-          imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
-          imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-        flag_buoyancy = 1
-     ENDIF
-  ENDIF
-
-! -------------------------------------------------------------------
-! Further allocation of memory space
-! -------------------------------------------------------------------
   iread_flow = 0
   iread_scal = 0
   inb_txc    = 0
   nfield     = 2
-
-  IF      ( opt_cond .EQ. 2 ) THEN
-     inb_txc    = MAX(inb_txc,1)
-     iread_scal = 1
-  ELSE IF ( opt_cond .EQ. 3 ) THEN
-     inb_txc    = MAX(inb_txc,3)
-     iread_flow = 1
-  ELSE IF ( opt_cond .EQ. 4 ) THEN
-     inb_txc    = MAX(inb_txc,3)
-     iread_scal = 1
-  ELSE IF ( opt_cond .EQ. 5 ) THEN
-     inb_txc    = MAX(inb_txc,1)
-     iread_flow = 1
-  ENDIF
 
   SELECT CASE ( opt_main )
 
@@ -364,6 +289,68 @@ PROGRAM AVERAGES
 
   END SELECT
 
+! -------------------------------------------------------------------
+! Defining gate levels for conditioning
+! -------------------------------------------------------------------
+  opt_cond      = 0 ! default values
+  opt_cond_scal = 1
+  igate_size    = 0
+  opt_threshold = 0
+
+  IF ( opt_main .GT. 1 .AND. opt_gate .GT. 0 ) THEN
+
+#include "dns_read_partition.h"
+
+  ENDIF
+
+! Subarray information to read and write envelopes
+  IF ( opt_main .EQ. 2 .AND. opt_cond .GT. 1 .AND. igate_size .GT. 0 ) THEN
+     io_sizes = (/imax*2*igate_size*kmax,1,imax*2*igate_size*kmax,1,1/)
+
+#ifdef USE_MPI
+     id = MPIO_SUBARRAY_ENVELOPES
+     
+     mpio_aux(id)%active = .TRUE.
+     mpio_aux(id)%communicator = MPI_COMM_WORLD
+     
+     ndims = 3
+     sizes(1)  =imax *ims_npro_i; sizes(2)   = igate_size *2; sizes(3)   = kmax *ims_npro_k
+     locsize(1)=imax;             locsize(2) = igate_size *2; locsize(3) = kmax
+     offset(1) =ims_offset_i;     offset(2)  = 0;             offset(3)  = ims_offset_k
+     
+     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+          MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+
+#else
+     io_aux(:)%offset = 0
+#endif
+
+     ALLOCATE(surface(imax,2*igate_size,kmax))
+
+  ENDIF
+
+! -------------------------------------------------------------------
+! Definitions
+! -------------------------------------------------------------------
+! in case g(2)%size is not divisible by opt_block, drop the upper most planes
+  jmax_aux = g(2)%size/opt_block
+
+  flag_buoyancy = 0 ! default
+  
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+! in case we need the buoyancy statistics
+     IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
+          buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
+          imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
+          imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+        flag_buoyancy = 1
+     ENDIF
+  ENDIF
+
+! -------------------------------------------------------------------
+! Further allocation of memory space
+! -------------------------------------------------------------------
   IF ( opt_main .EQ. 1 ) THEN
      ALLOCATE(mean(jmax*MAX_AVG_TEMPORAL))
   ELSE

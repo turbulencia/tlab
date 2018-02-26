@@ -14,6 +14,8 @@
      WRITE(*,*) ' 3. Based on vorticity'
      WRITE(*,*) ' 4. Based on scalar gradient'
      WRITE(*,*) ' 5. Based on vertical velocity'
+     WRITE(*,*) ' 6. Based on scalar fluctuation'
+     WRITE(*,*) ' 7. Based on scalar vertical turbulent flux'
      READ(*,*) opt_cond
 
      IF ( opt_cond .EQ. 3 .OR. opt_cond .EQ. 4 ) THEN
@@ -49,12 +51,37 @@
   ENDIF
 
   IF ( igate_size .GT. 0 ) THEN
-     CALL SORT_REAL(igate_size,gate_threshold)
-     igate_size = igate_size+1 ! # of gate levels is +1 number of thresholds between them
+     IF ( opt_cond .EQ. 7 ) THEN
+        igate_size = 2 **igate_size ! double conditioning
+     ELSE
+        CALL SORT_REAL(igate_size,gate_threshold)
+        igate_size = igate_size+1 ! # of gate levels is +1 number of thresholds between them
+     ENDIF
   ENDIF
-
+  
   IF ( igate_size .GT. igate_size_max ) THEN
      CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Not enough memory for igate_vec.')
      CALL DNS_STOP(DNS_ERROR_ALLOC)
+  ENDIF
+
+  IF      ( opt_cond .EQ. 2 ) THEN
+     inb_txc    = MAX(inb_txc,1)
+     iread_scal = 1
+  ELSE IF ( opt_cond .EQ. 3 ) THEN
+     inb_txc    = MAX(inb_txc,3)
+     iread_flow = 1
+  ELSE IF ( opt_cond .EQ. 4 ) THEN
+     inb_txc    = MAX(inb_txc,3)
+     iread_scal = 1
+  ELSE IF ( opt_cond .EQ. 5 ) THEN
+     inb_txc    = MAX(inb_txc,1)
+     iread_flow = 1
+  ELSE IF ( opt_cond .EQ. 6 ) THEN
+     inb_txc    = MAX(inb_txc,1)
+     iread_scal = 1
+  ELSE IF ( opt_cond .EQ. 7 ) THEN
+     inb_txc    = MAX(inb_txc,1)
+     iread_scal = 1
+     iread_flow = 1
   ENDIF
 
