@@ -74,10 +74,6 @@ PROGRAM VISUALS_MAIN
   TINTEGER params_size
   TREAL params(params_size_max)
 
-#ifdef USE_MPI
-  INTEGER icount
-#endif
-
 !########################################################################
 !########################################################################
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero

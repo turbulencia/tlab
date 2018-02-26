@@ -52,7 +52,7 @@
 
   IF ( igate_size .GT. 0 ) THEN
      IF ( opt_cond .EQ. 7 ) THEN
-        igate_size = 2 **igate_size ! double conditioning
+	igate_size = INT(2.**M_REAL(igate_size)) ! double conditioning
      ELSE
         CALL SORT_REAL(igate_size,gate_threshold)
         igate_size = igate_size+1 ! # of gate levels is +1 number of thresholds between them
