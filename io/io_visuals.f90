@@ -275,7 +275,7 @@ SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
 
 ! ###################################################################
 ! Saving full vertical xOy planes; using subdomain(5) to define the plane
-  IF ( ims_pro_k .EQ. ( subdomain(5) /kmax) ) mpio_aux(1)%active = .TRUE.
+  IF ( ims_pro_k .EQ. ( (subdomain(5)-1) /kmax) ) mpio_aux(1)%active = .TRUE.
   mpio_aux(1)%communicator = ims_comm_x
 
   ndims = 2
@@ -288,7 +288,7 @@ SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
   CALL MPI_Type_commit(mpio_aux(1)%subarray, ims_err)
 
 ! Saving full vertical zOy planes; using subdomain(1) to define the plane
-  IF ( ims_pro_i .EQ.  ( subdomain(1) /imax) ) mpio_aux(2)%active = .TRUE.
+  IF ( ims_pro_i .EQ.  ( (subdomain(1)-1) /imax) ) mpio_aux(2)%active = .TRUE.
   mpio_aux(2)%communicator = ims_comm_z
 
   ndims = 2
