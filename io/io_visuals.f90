@@ -136,8 +136,12 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
 
 ! -------------------------------------------------------------------
   CHARACTER*80 line
+#ifdef USE_MPI
+  TINTEGER ifield
+#else
   TINTEGER i,j,k, ifield
-
+#endif
+  
 ! ###################################################################        
 ! Header in Ensight Gold Variable File Format
 ! ###################################################################        

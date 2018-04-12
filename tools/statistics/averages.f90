@@ -157,7 +157,7 @@ PROGRAM AVERAGES
      WRITE(*,*) '10. Eigenvalues of rate-of-strain tensor'
      WRITE(*,*) '11. Eigenframe of rate-of-strain tensor'
      WRITE(*,*) '12. Longitudinal velocity derivatives'
-     WRITE(*,*) '13. Momentum vertical transport'
+     WRITE(*,*) '13. Vertical fluxes'
      WRITE(*,*) '14. Pressure partition'
      WRITE(*,*) '15. Dissipation'
      WRITE(*,*) '16. Third-order scalar covariances'
@@ -266,9 +266,9 @@ PROGRAM AVERAGES
      inb_txc = MAX(inb_txc,3)
      iread_flow = 1
      iread_scal = 0
-  CASE (13 ) ! Momentum vertical flux
-     nfield = 8
-     inb_txc = MAX(inb_txc,4)
+  CASE (13 ) ! Vertical flux
+     nfield = 2*(3+inb_scal_array)
+     inb_txc = MAX(MAX(inb_txc,3+inb_scal_array),4)
      iread_flow = 1
      iread_scal = 1
   CASE (14 ) ! pressure partition
@@ -994,47 +994,47 @@ PROGRAM AVERAGES
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
-! Momentum vertical transport
+! Vertical fluxes
 ! ###################################################################
      CASE ( 13 )
+        nfield = 0
+
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), u, txc(:,1), wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v, txc(:,2), wrk3d, wrk2d,wrk3d)
         txc(:,1) = ( txc(:,1) + txc(:,2) ) *visc
+        nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'tauyx'
 
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, txc(:,2), wrk3d, wrk2d,wrk3d)
         txc(:,2) =   txc(:,2) *C_2_R       *visc
+        nfield = nfield+1; data(nfield)%field => txc(:,2); varname(nfield) = 'tauyy'
 
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), w, txc(:,3), wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), v, txc(:,4), wrk3d, wrk2d,wrk3d)
         txc(:,3) = ( txc(:,3) + txc(:,4) ) *visc
+        nfield = nfield+1; data(nfield)%field => txc(:,3); varname(nfield) = 'tauyz'
 
-        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(:,1), txc(:,4), wrk3d, wrk2d,wrk3d)
-        txc(:,4) =   txc(:,4) *diff
-
-        is = 0
-        is = is+1; data(is)%field => txc(:,1); varname(is) = 'tauyx'
-        is = is+1; data(is)%field => txc(:,2); varname(is) = 'tauyy'
-        is = is+1; data(is)%field => txc(:,3); varname(is) = 'tauyz'
-        is = is+1; data(is)%field => txc(:,4); varname(is) = 'diffz'
+        DO is = 1,inb_scal_array
+           CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(:,is), txc(:,3+is), wrk3d, wrk2d,wrk3d)
+           txc(:,3+is) =   txc(:,3+is) *diff
+           nfield = nfield+1; data(nfield)%field => txc(:,3+is); WRITE(varname(nfield),*) is; varname(nfield) = 'tauy'//TRIM(ADJUSTL(varname(nfield)))
+        ENDDO
+        
 
         CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, u)
-        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, v)
-        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, w)
-        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(:,1))
         u = u*v
+        nfield = nfield+1; data(nfield)%field => u; varname(nfield) = 'vu'
+        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, v)
+        ! I need v' below
+        nfield = nfield+1; data(nfield)%field => v; varname(nfield) = 'vv'
+        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, w)
         w = w*v
-        s(:,1) = s(:,1)*v
-        v = v*v
-
-        is = is+1; data(is)%field => u; varname(is) = 'vu'
-        is = is+1; data(is)%field => v; varname(is) = 'vv'
-        is = is+1; data(is)%field => w; varname(is) = 'vw'
-        is = is+1; data(is)%field => s(:,1); varname(is) = 'vs'
-
-        IF ( nfield .NE. is ) THEN ! Check
-           CALL IO_WRITE_ASCII(efile, 'AVERAGES. Array space nfield incorrect.')
-           CALL DNS_STOP(DNS_ERROR_WRKSIZE)
-        ENDIF
+        nfield = nfield+1; data(nfield)%field => w; varname(nfield) = 'vw'
+        DO is = 1,inb_scal_array
+           CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(:,is))
+           s(:,is) = s(:,is)*v
+           nfield = nfield+1; data(nfield)%field => s(:,is); WRITE(varname(nfield),*) is; varname(nfield) = 'v'//TRIM(ADJUSTL(varname(nfield)))
+        ENDDO
+        v = v*v ! I need v' above for the scalar fluxes
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
