@@ -3,9 +3,9 @@
 import numpy as np   # For array operations.
 import sys
 
-nx = 128  # number of points in Ox
-ny = 96   # number of points in Oy
-nz = 128  # number of points in OZ
+nx = 512  # number of points in Ox
+ny = 256  # number of points in Oy
+nz = 1    # number of points in OZ
 
 sizeofmask = 6
 
@@ -167,9 +167,9 @@ for time in filetimes:
     ''' % (int(time)) )
 
     for type in filetypes:
-        if ( type == 'VelocityVector' ):
+        if ( type in ['VelocityVector','VorticityVector'] ):
             f.write('''
-        <Attribute AttributeType="Vector" Name="Velocity">
+        <Attribute AttributeType="Vector" Name="%s">
 	  <DataItem ItemType="Function" Function="JOIN($0,$1,$2)" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX; 3">
 	    
 	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
@@ -195,7 +195,57 @@ for time in filetimes:
 	    
 	  </DataItem>
 	</Attribute>
-''' % (type+time+'.1',type+time+'.2',type+time+'.3') )
+''' % (type, type+time+'.1',type+time+'.2',type+time+'.3') )
+        elif ( type in ['StrainTensor','ReynoldsTensor'] ):
+            f.write('''
+        <Attribute AttributeType="Tensor6" Name="%s">
+	  <DataItem ItemType="Function" Function="JOIN($0,$1,$2,$3,$4,$5)" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX; 6">
+	    
+	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+		%s
+	      </DataItem>
+	    </DataItem>
+
+	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+		%s
+	      </DataItem>
+	    </DataItem>
+	    
+	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+		%s
+	      </DataItem>
+	    </DataItem>
+	    
+	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+		%s
+	      </DataItem>
+	    </DataItem>
+
+	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+		%s
+	      </DataItem>
+	    </DataItem>
+	    
+	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+		%s
+	      </DataItem>
+	    </DataItem>
+
+        </DataItem>
+	</Attribute>
+''' % (type, type+time+'.1',type+time+'.4',type+time+'.5', type+time+'.2',type+time+'.6',type+time+'.3') )
         else:
             f.write('''
 	<Attribute Center="Node" Name="%s">

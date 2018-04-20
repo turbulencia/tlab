@@ -890,7 +890,7 @@ PROGRAM AVERAGES
 ! ###################################################################
      CASE ( 10 )
         CALL IO_WRITE_ASCII(lfile,'Computing rate-of-strain tensor...') ! txc1-txc6
-        CALL FI_STRAIN_TENSOR(imax,jmax,kmax, u,v,w, txc(1,1), wrk2d,wrk3d)
+        CALL FI_STRAIN_TENSOR(imax,jmax,kmax, u,v,w, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing eigenvalues...') ! txc6-txc9
         CALL FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1,1), txc(1,7))
@@ -914,7 +914,7 @@ PROGRAM AVERAGES
 ! ###################################################################
      CASE ( 11 )
         CALL IO_WRITE_ASCII(lfile,'Computing rate-of-strain tensor...') ! txc1-txc6
-        CALL FI_STRAIN_TENSOR(imax,jmax,kmax, u,v,w, txc(1,1), wrk2d,wrk3d)
+        CALL FI_STRAIN_TENSOR(imax,jmax,kmax, u,v,w, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
 
         CALL IO_WRITE_ASCII(lfile,'Computing eigenvalues...')           ! txc7-txc9
         CALL FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1,1), txc(1,7))

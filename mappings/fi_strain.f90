@@ -13,16 +13,16 @@
 !########################################################################
 ! Calculate tensor components
 !########################################################################
-SUBROUTINE FI_STRAIN_TENSOR(nx,ny,nz, u,v,w, result, wrk2d,wrk3d)
+SUBROUTINE FI_STRAIN_TENSOR(nx,ny,nz, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk2d,wrk3d)
 
   USE  DNS_GLOBAL, ONLY : g
   
   IMPLICIT NONE
 
-  TINTEGER,                     INTENT(IN)    :: nx,ny,nz
-  TREAL, DIMENSION(nx*ny*nz),   INTENT(IN)    :: u,v,w
-  TREAL, DIMENSION(nx*ny*nz,6), INTENT(OUT)   :: result ! components Sxx, Syy, Szz, Sxy, Sxz, Syz
-  TREAL, DIMENSION(*),          INTENT(INOUT) :: wrk2d,wrk3d
+  TINTEGER,                   INTENT(IN)    :: nx,ny,nz
+  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u,v,w
+  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6 ! components Sxx, Syy, Szz, Sxy, Sxz, Syz
+  TREAL, DIMENSION(*),        INTENT(INOUT) :: wrk2d,wrk3d
 
 ! -------------------------------------------------------------------
   TINTEGER bcs(2,2)
@@ -32,24 +32,24 @@ SUBROUTINE FI_STRAIN_TENSOR(nx,ny,nz, u,v,w, result, wrk2d,wrk3d)
 
 ! Off diagonal terms; result1 used as auxiliar array
 ! Uy, Vx
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), v, result(1,1), wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), u, result(1,4), wrk3d, wrk2d,wrk3d)
-  result(:,4) = C_05_R *( result(:,4) +result(:,1) )
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), v, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), u, tmp4, wrk3d, wrk2d,wrk3d)
+  tmp4 = C_05_R *( tmp4 +tmp1 )
 
 ! Uz, Wx
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), w, result(1,1), wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), u, result(1,5), wrk3d, wrk2d,wrk3d)
-  result(:,5) = C_05_R *( result(:,5) +result(:,1) )
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), w, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), u, tmp5, wrk3d, wrk2d,wrk3d)
+  tmp5 = C_05_R *( tmp5 +tmp1 )
 
 ! Vz, Wy
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), w, result(1,1), wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), v, result(1,6), wrk3d, wrk2d,wrk3d)
-  result(:,6) = C_05_R *( result(:,6) +result(:,1) )
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), w, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), v, tmp6, wrk3d, wrk2d,wrk3d)
+  tmp6 = C_05_R *( tmp6 +tmp1 )
 
 ! diagonal terms
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), u, result(1,1), wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), v, result(1,2), wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), w, result(1,3), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)
 
   RETURN
 END SUBROUTINE FI_STRAIN_TENSOR

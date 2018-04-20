@@ -143,7 +143,7 @@ PROGRAM VISUALS_MAIN
      WRITE(*,'(I2,A)') iscal_offset+ 4,'. VorticityVector'
      WRITE(*,'(I2,A)') iscal_offset+ 5,'. Enstrophy W_iW_i (Ln)'
      WRITE(*,'(I2,A)') iscal_offset+ 6,'. EnstrophyEquation'
-     WRITE(*,'(I2,A)') iscal_offset+ 7,'. StrainTensor (not yet)'
+     WRITE(*,'(I2,A)') iscal_offset+ 7,'. StrainTensor'
      WRITE(*,'(I2,A)') iscal_offset+ 8,'. Strain 2S_ijS_ij (Ln)'
      WRITE(*,'(I2,A)') iscal_offset+ 9,'. StrainEquation'
      WRITE(*,'(I2,A)') iscal_offset+10,'. VelocityGradientInvariants'
@@ -155,6 +155,7 @@ PROGRAM VISUALS_MAIN
      WRITE(*,'(I2,A)') iscal_offset+17,'. Relative humidity'
      WRITE(*,'(I2,A)') iscal_offset+18,'. Particle Density'
      WRITE(*,'(I2,A)') iscal_offset+19,'. Thermodynamic quantities'
+     WRITE(*,'(I2,A)') iscal_offset+20,'. ReynoldsTensor'
      READ(*,'(A512)') sRes        
 #endif
   ENDIF
@@ -190,7 +191,7 @@ PROGRAM VISUALS_MAIN
      IF ( opt_vec(iv) .EQ. iscal_offset+4 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,4); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+5 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,3); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+6 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+7 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,4); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+7 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+8 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,3); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+9 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+10) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
@@ -201,6 +202,7 @@ PROGRAM VISUALS_MAIN
      IF ( opt_vec(iv) .EQ. iscal_offset+17) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+18) THEN; iread_part = 1;                 inb_txc=MAX(inb_txc,2); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+19) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+20) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
 
   ENDDO
 
@@ -741,8 +743,12 @@ PROGRAM VISUALS_MAIN
 ! Strain
 ! -------------------------------------------------------------------
         IF ( opt_vec(iv) .EQ. iscal_offset+7 ) THEN ! Strain Tensor
-           CALL IO_WRITE_ASCII(efile,'VISUALS. Strain tensor undevelop.')
-           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+           CALL IO_WRITE_ASCII(lfile,'Computing strain-rate tensor...')
+           CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
+
+           plot_file = 'StrainTensor'//time_str(1:MaskSize)
+           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i6, subdomain, txc(1,1), wrk3d)
+           
         ENDIF
 
 ! -------------------------------------------------------------------
@@ -1017,6 +1023,27 @@ PROGRAM VISUALS_MAIN
            plot_file = 'Density'//time_str(1:MaskSize)
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
            
+        ENDIF
+
+! ###################################################################
+! Reynolds stress tensor
+! ###################################################################
+        IF (  opt_vec(iv) .EQ. iscal_offset+20) THEN    
+                      
+           txc(1:isize_field,1) = q(1:isize_field,1); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,1))
+           txc(1:isize_field,2) = q(1:isize_field,2); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,2))
+           txc(1:isize_field,3) = q(1:isize_field,3); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
+           
+           txc(1:isize_field,4) = txc(1:isize_field,1) *txc(1:isize_field,2)
+           txc(1:isize_field,5) = txc(1:isize_field,1) *txc(1:isize_field,3)
+           txc(1:isize_field,6) = txc(1:isize_field,2) *txc(1:isize_field,3)
+           txc(1:isize_field,1) = txc(1:isize_field,1) *txc(1:isize_field,1)
+           txc(1:isize_field,2) = txc(1:isize_field,2) *txc(1:isize_field,2)
+           txc(1:isize_field,3) = txc(1:isize_field,3) *txc(1:isize_field,3)
+
+           plot_file = 'ReynoldsTensor'//time_str(1:MaskSize)
+           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i6, subdomain, txc(1,1), wrk3d)
+
         ENDIF
 
      ENDDO
