@@ -934,7 +934,7 @@ SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU(nx,ny,nz, s, dTdy,dqldy, e,p,r, lapse, fre
   TINTEGER ij, i, jk, is, ipsat
   TREAL P_LOC, E_LOC, T_LOC, R_LOC, RT_INV, psat, dpsat
 
-  TREAL Rv, Rd, Rdv, Cd, Cdv, Lv0, Cvl, Lv, Cl
+  TREAL Rv, Rd, Rdv, Cd, Cdv, Lv0, Cvl, Lv, C
 
   TREAL scaleheightinv, one_p_eps, rd_ov_rv, qvequ, qsat, dummy
   
@@ -999,7 +999,8 @@ SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU(nx,ny,nz, s, dTdy,dqldy, e,p,r, lapse, fre
         DO i = 1,nx
            ij = ij +1
 
-           T_LOC = (s(ij,1) - E_LOC + s(ij,3)*Lv0 ) / ( Cd + s(ij,2) *Cdv + s(ij,3) *Cvl )
+           C = Cd + s(ij,2) *Cdv + s(ij,3) *Cvl ! I need it below
+           T_LOC = (s(ij,1) - E_LOC + s(ij,3)*Lv0 ) / C
            
            psat = THERMO_PSAT(NPSAT); dpsat = C_0_R
            DO ipsat = NPSAT-1,1,-1
@@ -1010,7 +1011,7 @@ SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU(nx,ny,nz, s, dTdy,dqldy, e,p,r, lapse, fre
            qsat = dummy /( C_1_R +dummy )
 
 ! We cannot use ql directly (s(:,3)) because the smoothing function imposes
-! and exponentially small value, but nonzero           
+! an exponentially small value, but nonzero           
            IF ( qsat .GE. s(ij,2) ) THEN
               lapse(ij)     = scaleheightinv /( Cd  + s(ij,2) *Cdv )
               frequency(ij) = ( lapse(ij) + dTdy(ij) )/ T_LOC
@@ -1019,11 +1020,10 @@ SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU(nx,ny,nz, s, dTdy,dqldy, e,p,r, lapse, fre
               qvequ = dummy *( C_1_R -s(ij,2) )
               
               one_p_eps = C_1_R /( C_1_R - psat /P_LOC )
-              Cl = Cd  + s(ij,2) *Cdv 
               Lv = Lv0 - T_LOC *Cvl
               
-              lapse(ij) = scaleheightinv + RT_INV *qvequ *Lv  *one_p_eps
-              lapse(ij) = lapse(ij) /( Cl + qvequ *( Lv *dpsat /psat *one_p_eps - Cvl) )
+              lapse(ij) = scaleheightinv + qvequ *one_p_eps *Lv *RT_INV 
+              lapse(ij) = lapse(ij) /( C + qvequ *one_p_eps *Lv *dpsat /psat )
 
               frequency(ij) = qvequ *( lapse(ij) *dpsat /psat -RT_INV )* one_p_eps - dqldy(ij)
               frequency(ij) = ( lapse(ij) + dTdy(ij) )/ T_LOC &
