@@ -105,7 +105,11 @@ SUBROUTINE FDM_C1N6P_RHS(imax,jkmax, u,d)
      ip1 = i+1; ip1=ip1+imax-1; ip1=MOD(ip1,imax)+1
      ip2 = i+2; ip2=ip2+imax-1; ip2=MOD(ip2,imax)+1
 
-     CALL DVES(ilen, u(1,ip1), 1, u(1,im1), 1, d(1,i), 1)
+     !DVES is not part of BLAS but of ESSL - not supported on intel systems 
+     !CALL DVES(ilen, u(1,ip1), 1, u(1,im1), 1, d(1,i), 1)    
+     d(:,i) = -C_1_R*u(:,im1) 
+     alpha=C_1_R
+     CALL DAXPY(ilen, alpha, u(1,ip1), 1, d(1,i), 1)
      alpha = C_01D28_L
      CALL DAXPY(ilen, alpha, u(1,ip2), 1, d(1,i), 1)
      alpha =-C_01D28_L

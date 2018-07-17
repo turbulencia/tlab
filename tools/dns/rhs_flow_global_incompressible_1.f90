@@ -49,7 +49,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 
   TREAL, DIMENSION(:), POINTER :: p_bcs
 
-#ifdef USE_BLAS
+#ifdef USE_ESSL
   INTEGER ilen
 #endif
 
@@ -58,7 +58,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-#ifdef USE_BLAS
+#ifdef USE_ESSL
   ilen = isize_field
 #endif
 
@@ -135,7 +135,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), v, tmp4, tmp1, wrk2d,wrk3d)
 
 !$omp parallel default( shared ) &
-#ifdef USE_BLAS
+#ifdef USE_ESSL
 !$omp private( ilen, srt,end,siz)
 #else
 !$omp private( ij,   srt,end,siz)
@@ -160,7 +160,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   IF ( idivergence .EQ. EQNS_DIVERGENCE ) THEN ! remove residual divergence
 
 !$omp parallel default( shared )&
-#ifdef USE_BLAS
+#ifdef USE_ESSL
 !$omp private( ilen, dummy, srt,end,siz )
 #else 
 !$omp private( ij,   dummy, srt,end,siz )
@@ -169,7 +169,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
      CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
      dummy=C_1_R/dte
      
-#ifdef USE_BLAS
+#ifdef USE_ESSL
      ilen = siz
      CALL DZAXPY(ilen, dummy, v(srt), 1, h2(srt), 1, tmp2(srt), 1)
      CALL DZAXPY(ilen, dummy, u(srt), 1, h1(srt), 1, tmp3(srt), 1)
@@ -226,14 +226,14 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! Add pressure gradient 
 ! -----------------------------------------------------------------------
 !$omp parallel default( shared ) &
-#ifdef USE_BLAS
+#ifdef USE_ESSL
 !$omp private( ilen, srt,end,siz,dummy )
 #else
 !$omp private( ij,   srt,end,siz,dummy )
 #endif
   CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
 
-#ifdef USE_BLAS
+#ifdef USE_ESSL
   ilen = siz 
   dummy=-C_1_R
   CALL DAXPY(ilen, dummy, tmp2(srt), 1, h1(srt),1)
