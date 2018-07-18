@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-#SBATCH --partition=compute,compute2
+##############SBATCH --partition=compute,compute2
+#SBATCH --partition=compute2
 #SBATCH --cpus-per-task=2
 #SBATCH --mail-type=ALL
 #SBATCH --account=mh0738
@@ -36,10 +37,10 @@ touch *
 # Environment settings to run a MPI parallel program
 # compiled with BullxMPI and Mellanox libraries
 # Load environment
-module load intel/17.0.2
-module load mxm/3.4.3082
-module load fca/2.5.2431
-module load bullxmpi_mlx/bullxmpi_mlx-1.2.9.2
+module load intel/16.0.3
+module load mxm
+module load fca
+module load bullxmpi_mlx
 # Settings for Open MPI and MXM (MellanoX Messaging)
 # library
 export OMPI_MCA_pml=cm

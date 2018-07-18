@@ -108,7 +108,7 @@ SUBROUTINE FDM_C2N6P_RHS(imax,jkmax, u,d)
      !DVEA is not part of BLAS , but of ESSL -- not supported on intel systems 
      CALL DCOPY(ilen,u(1,ip1),1,d(1,i),1)  
      alpha=C_1_R
-     CALL DAXPY(ilen,alpha,  u(1,im1), 1, d(1,i), x1) 
+     CALL DAXPY(ilen,alpha,  u(1,im1), 1, d(1,i), 1) 
      alpha =-C_17D08_L
      CALL DAXPY(ilen, alpha, u(1,i  ), 1, d(1,i), 1)
      alpha = C_01D16_L

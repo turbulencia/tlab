@@ -171,11 +171,10 @@ SUBROUTINE TRIDSS_ADD(nmax,len, a,b,c, f, g,h, d)
   TINTEGER :: srt,end,siz
   TREAL    :: dummy1, dummy2
 
+  TINTEGER l
 #ifdef USE_BLAS
   TREAL alpha
   INTEGER ilen
-#else
-  TINTEGER l
 #endif
 
 ! ###################################################################
@@ -189,7 +188,7 @@ SUBROUTINE TRIDSS_ADD(nmax,len, a,b,c, f, g,h, d)
 !$omp parallel default(none) &
 
 #ifdef USE_BLAS
-!$omp private(n,ilen,srt,end,siz,dummy1,dummy2) &
+!$omp private(n,l,ilen,srt,end,siz,dummy1,dummy2) &
 #else
 !$omp private(n,l,srt,end,siz,dummy1,dummy2) &
 #endif
