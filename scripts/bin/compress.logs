@@ -30,7 +30,7 @@ else
    echo "No log files to be archived."
 fi
 
-LIST=`ls dns.x.std* ll_* dns.ini.bak* 2> /dev/null`
+LIST=`ls dns.x.std* ll_* slurm_* dns.ini.bak* 2> /dev/null`
 
 if [ -n "$LIST" ]; then
    mv -f $LIST $TRASH_DIR
