@@ -1,0 +1,152 @@
+#!/bin/bash
+#
+#SBATCH --partition=batch
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=juan-pedro.mellado@mpimet.mpg.de
+#SBATCH --account=hhh07
+########################### CHANGE ONLY THIS ###############################
+########################### END LSF DIRECTIVES #############################
+############################################################################
+########################### DO NOT MODIFY ##################################
+export TOOLS_HOME=$HOME/bin
+
+export PATH=$PATH:$TOOLS_HOME
+export CONFIG_FILE=$TOOLS_HOME/CONFIG.default
+
+. $CONFIG_FILE
+
+ABORT="no"
+
+# Change this to reflect your directories
+LOCALDIR=$WORK/$JOBDIR
+TRASHDIR=$WORK/$JOBDIR-transfered
+
+# Create Working Directories
+mkdir -p $LOCALDIR
+
+cd $LOCALDIR
+
+dns.pre $LOCALDIR $STEP
+
+touch *
+
+#Load environment
+module load Intel
+module load IntelMPI 
+module load imkl
+module load FFTW
+
+# http://www-01.ibm.com/support/docview.wss?uid=isg3T1024294
+# Best practive for LARGE parallel jobs with intelMPI 
+# DOES NOT WORK! 
+#export I_MPI_HYDRA_BOOTSTRAP=lsf # Set to lsf means to use LSF blaunch
+#export I_MPI_HYDRA_BRANCH_COUNT=-1 # The default value is -1 if less than 128 nodes are used. This value also means that there is no hierarchical structure
+#export I_MPI_LSF_USE_COLLECTIVE_LAUNCH=1 # Set to 1 to let Intel MPI use blaunch ?z to launch tasks.
+
+# buffer sizes for infiniband; 
+# keep small to reduce memory overhead for large parallel jobs
+export I_MPI_DAPL_BUFFER_NUM=4
+export I_MPI_DAPL_BUFFER_SIZE=128
+
+export OMP_NUM_THREADS=2
+export OMP_MAX_THREADS=2 
+export KMP_AFFINITY=compact
+
+#IntelMPI process pinning 
+export I_MPI_PIN=yes       # force process pinning 
+export I_MPI_PIN_MODE=pm   # use pinning by launcher; should collocate CPU and memory; not guaranteed for option 'lib' 
+export I_MPI_PIN_DOMAIN=omp 
+
+# Run Simulation
+case $RUNMODE in
+  "preprocess" )
+    preprocess $TIMESTAMP
+    ABORT="yes"
+    ;;
+  "simulation" )
+    simulation $TIMESTAMP
+    if [ $? -ne 0 ]; then
+       ABORT="yes"
+    fi 
+    ;;
+  "postprocess" )
+    postprocess $TIMESTAMP
+    ABORT="yes"
+  ;;
+esac
+
+# Abort on several errors
+if [ -f dns.err ]; then
+    ABORT="yes"
+fi
+	
+if [ -f dns.err.0 ]; then
+    ABORT="yes"
+fi
+
+stat -t core* >/dev/null 2>&1 && ABORT="yes"
+
+#clean 
+if [ -f dns.ini ]; then
+    cp dns.ini dns.ini-$TIMESTAMP
+fi
+LOGFILES="dns.ini.bak dns.log dns.out dns.les partinfos.txt mapping.txt"
+for FILE in $LOGFILES; do
+    if [ -f $FILE ]; then
+        mv $FILE $FILE-$TIMESTAMP
+    fi
+done
+
+# Organize statistics
+STATSDIR=stats-$TIMESTAMP
+if [ ! -e $STATSDIR ]; then
+    mkdir $STATSDIR
+
+    if [ -f dns.ini ]; then
+	cp dns.ini $STATSDIR
+    fi
+
+    if [ -f dns.def ]; then
+       mv dns.def $STATSDIR
+    fi
+
+    LIST=`ls | egrep 'avg[0-9]|?cr[0-9]|?sp[0-9]|pdf[0-9]|cavgXi[0-9]|pdfXi[0-9]|int[0-9]|kin[0-9]'`
+    echo "Moving statistic files into $STATSDIR"
+    if [ -n "$LIST" ]; then
+       mv $LIST $STATSDIR
+    fi
+
+else
+    echo "$STATSDIR exists. Aborting"
+
+fi
+
+if [ $RUNMODE = "simulation" ];then
+
+# Requeue simulation
+    if [ $ABORT = "no" ]; then
+	if [ -f $LOCALDIR/dns.nqs.new-vars ]; then
+	    . $LOCALDIR/dns.nqs.new-vars
+	fi
+
+	if [ -f $LOCALDIR/dns.ini ]; then
+	    ITIME=`awk -F"=" '{ 
+				if ( $1 == "End" ) 
+				    {
+				    print $2 
+				    }
+			    }' $LOCALDIR/dns.ini` 
+	else
+	    echo "Error getting max time"
+	    exit 1
+	fi
+ 
+	if [ $ITIME -lt $MAXITER ]; then
+	    # Submit Script
+	    qsend -name $NAME -time $TIME -maxiter $MAXITER -mem $MEM \
+	          -script $SCRIPT -jobdir $JOBDIR -step $STEP -np $NP -rankspernode $RANKSPERNODE -commmode $COMMMODE
+
+	fi       
+    fi
+fi
+

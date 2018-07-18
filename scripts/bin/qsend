@@ -47,6 +47,10 @@ if [ $system = "juqueen" ]; then
    QSEND_COMMMODE=blocking
    QSEND_RANKSPERNODE=16
 fi
+if [ $system = "juwels" ]; then
+   QSEND_COMMMODE=blocking
+   QSEND_RANKSPERNODE=48
+fi
 
 RUNMODE="simulation"
 
@@ -163,6 +167,9 @@ if [ $# -eq 0 ]; then
    fi
    if [ $system = "juqueen" ]; then
       echo "Communication mode   : $QSEND_COMMMODE"
+      echo "Ranks per node       : $QSEND_RANKSPERNODE"
+   fi
+   if [ $system = "juwels" ]; then
       echo "Ranks per node       : $QSEND_RANKSPERNODE"
    fi
    echo "Script               : $QSEND_SCRIPT"
@@ -470,6 +477,48 @@ if [ $answer = "yes" ]; then
 		}
 	    print $0
 	}' 
+    elif [ $system = "juwels" ]; then
+	LINE='BEGIN {} 
+	    { 
+             if ($4 == "DIRECTIVES" ) 
+		{
+		    print "#SBATCH --job-name='$QSEND_NAME'"
+                    print "#SBATCH --output=slurm_out.%j-'$TIMESTAMP'"
+                    print "#SBATCH --error=slurm_err.%j-'$TIMESTAMP'"
+
+		    total_pe = '$QSEND_NP';
+		    rpn      = '$QSEND_RANKSPERNODE';
+                    nodes = int((total_pe-1)/rpn) + 1;
+
+                    print "#SBATCH --nodes=" nodes
+                    print "#SBATCH --ntasks-per-node='$QSEND_RANKSPERNODE'"
+ 
+		    total_time = '$QSEND_TIME';
+		    hours = int(total_time/3600);
+		    total_time = total_time-hours*3600;
+		    min   = int(total_time/60);
+		    sec   = int(total_time-min*60);
+		    printf "#SBATCH --time=%.2d:%.2d:%.2d\n", hours, min, sec
+
+		}
+	    else if ($4 == "MODIFY")
+		{
+		    print "JOBDIR='$QSEND_JOBDIR'"
+		    print "MEM='$QSEND_MEM'"
+		    print "TIME='$QSEND_TIME'"
+		    print "NAME=\"'$QSEND_NAME'\""
+                    print "MAXITER=\"'$QSEND_MAXITER'\""
+		    print "SCRIPT='$QSEND_SCRIPT'"
+                    print "STEP='$QSEND_STEP'"
+                    print "NP='$QSEND_NP'"
+                    print "ACCOUNT='$account'"
+                    print "TIMESTAMP='$TIMESTAMP'"
+                    print "RUNMODE='$RUNMODE'"
+                    print "RANKSPERNODE='$QSEND_RANKSPERNODE'"
+                    print "COMMMODE='$QSEND_COMMMODE'"
+		}
+	    print $0
+	}' 
 # SUN
     elif [ $system = "sun" ]; then
 	LINE='BEGIN {} 
@@ -752,7 +801,8 @@ if [ $answer = "yes" ]; then
 	    echo "Submiting Job $QSEND_NAME"
 	    chmod +x $QSEND_TMP_SCRIPT
 	    if [[ $site = "fzj" ]]; then
-	        llsubmit $queue $QSEND_TMP_SCRIPT
+#	        llsubmit $queue $QSEND_TMP_SCRIPT
+	        sbatch $queue $QSEND_TMP_SCRIPT
             elif [ $site = "dkrz" ]; then
 		sbatch $queue $QSEND_TMP_SCRIPT
             elif [ $site = "tacc" ]; then

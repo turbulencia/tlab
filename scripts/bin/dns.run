@@ -61,6 +61,9 @@ elif [ $system = "mistral" ]; then
     srun -l --propagate=STACK --cpu_bind=cores \
 	--distribution=block:cyclic $exfile > $STDOUT 2> $STDERR
 
+elif [ $system = "juwels" ]; then
+    srun $exfile > $STDOUT 2> $STDERR
+
 elif [ $system = "juqueen" ]; then
     if [ -n "$3" ]; then
 	runjob         --ranks-per-node $2 --mapping $3 --exp-env PAMID_VERBOSE         \
