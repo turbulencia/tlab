@@ -192,7 +192,7 @@ SUBROUTINE TRIDSS_ADD(nmax,len, a,b,c, f, g,h, d)
 #else
 !$omp private(n,l,srt,end,siz,dummy1,dummy2) &
 #endif
-!$omp shared(f,a,b,c,nmax,len) 
+!$omp shared(f,a,b,c,d,g,h,nmax,len) 
 
   CALL DNS_OMP_PARTITION(len,srt,end,siz)
   IF ( siz .LE. 0 ) THEN 
@@ -469,7 +469,7 @@ SUBROUTINE TRIDPSS_ADD(nmax,len, a,b,c,d,e, f, g,h, wrk)
 #else
 !$omp private(n, l, dummy1, dummy2, srt, end,siz) &
 #endif
-!$omp shared(f,wrk,nmax,a,b,c,d,e,len)
+!$omp shared(f,g,h,wrk,nmax,a,b,c,d,e,len)
 
   CALL DNS_OMP_PARTITION(len,srt,end,siz) 
   IF ( siz .LE. 0 ) THEN 
