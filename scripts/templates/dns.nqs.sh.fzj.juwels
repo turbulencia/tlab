@@ -48,9 +48,11 @@ module load FFTW
 export I_MPI_DAPL_BUFFER_NUM=4
 export I_MPI_DAPL_BUFFER_SIZE=128
 
-export OMP_NUM_THREADS=2
-export OMP_MAX_THREADS=2 
-export KMP_AFFINITY=compact
+if [ $THREADSPERRANK -ge 2 ]; then
+    export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
+    export OMP_MAX_THREADS=${SLURM_CPUS_PER_TASK}
+    export KMP_AFFINITY=compact
+fi
 
 #IntelMPI process pinning 
 export I_MPI_PIN=yes       # force process pinning 
@@ -144,7 +146,8 @@ if [ $RUNMODE = "simulation" ];then
 	if [ $ITIME -lt $MAXITER ]; then
 	    # Submit Script
 	    qsend -name $NAME -time $TIME -maxiter $MAXITER -mem $MEM \
-	          -script $SCRIPT -jobdir $JOBDIR -step $STEP -np $NP -rankspernode $RANKSPERNODE -commmode $COMMMODE
+	          -script $SCRIPT -jobdir $JOBDIR -step $STEP -np $NP \
+                  -rankspernode $RANKSPERNODE -threadsperrank $THREADSPERRANK -commmode $COMMMODE
 
 	fi       
     fi

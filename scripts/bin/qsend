@@ -30,6 +30,8 @@ QSEND_TMP_SCRIPT="dns.nqs.sh-$TIMESTAMP"
 
 # Default values
 QSEND_NAME="dns-run"
+QSEND_JOBDIR=`pwd`
+QSEND_JOBDIR=${QSEND_JOBDIR#"$WORK"/}
 if [ $hpc = "parallel" ]; then
    QSEND_NP=32
 else
@@ -50,6 +52,7 @@ fi
 if [ $system = "juwels" ]; then
    QSEND_COMMMODE=blocking
    QSEND_RANKSPERNODE=48
+   QSEND_THREADSPERRANK=1
 fi
 
 RUNMODE="simulation"
@@ -62,37 +65,29 @@ if [ $# -eq 0 ]; then
 ###################################################
    interactive="yes"
 
-   echo "Enter Job Name"
+   echo "Enter Job Name [$QSEND_NAME] :"
    read value
    if [ -n "$value" ]; then
       QSEND_NAME=$value
    fi
 
-   echo "Enter Job Directory"
-   read QSEND_JOBDIR
-   if [ -z "$QSEND_JOBDIR" ]; then
-      echo "Error: Empty JOBDIR"
-      exit 1
+   echo "Enter Job Directory [$QSEND_JOBDIR] :"
+   read value
+   if [ -n "$value" ]; then
+      QSEND_JOBDIR=$value
    fi
+   # read QSEND_JOBDIR
+   # if [ -z "$QSEND_JOBDIR" ]; then
+   #    echo "Error: Empty JOBDIR"
+   #    exit 1
+   # fi
 
    if [ $hpc = "parallel" ]; then
-      echo "Number of Tasks :"
+      echo "Enter Number of Tasks :"
       read value
       if [ -n "$value" ]; then
 	  QSEND_NP=$value
       fi
-   fi
-
-   echo "Enter Time Requested :(seconds)"
-   read value
-   if [ -n "$value" ]; then
-      QSEND_TIME=$value
-   fi
-
-   echo "Enter Run Mode :(preprocess/simulation/postprocess)"
-   read value
-   if [ -n "$value" ]; then
-      RUNMODE=$value
    fi
 
    if [ $system = "blizzard" ]; then
@@ -124,6 +119,33 @@ if [ $# -eq 0 ]; then
          QSEND_RANKSPERNODE=$value
       fi
 
+   fi
+
+   if [ $system = "juwels" ]; then
+      echo "Enter ranks per node [$QSEND_RANKSPERNODE] :(1-48)"
+      read value
+      if [ -n "$value" ]; then
+         QSEND_RANKSPERNODE=$value
+      fi
+
+      echo "Enter threads per rank [$QSEND_THREADSPERRANK] :(1-48)"
+      read value
+      if [ -n "$value" ]; then
+         QSEND_THREADSPERRANK=$value
+      fi
+
+   fi
+
+   echo "Enter Time Requested :(seconds)"
+   read value
+   if [ -n "$value" ]; then
+      QSEND_TIME=$value
+   fi
+
+   echo "Enter Run Mode [$RUNMODE] :(preprocess/simulation/postprocess)"
+   read value
+   if [ -n "$value" ]; then
+      RUNMODE=$value
    fi
 
    if [ $RUNMODE = "simulation" ]; then
@@ -171,6 +193,7 @@ if [ $# -eq 0 ]; then
    fi
    if [ $system = "juwels" ]; then
       echo "Ranks per node       : $QSEND_RANKSPERNODE"
+      echo "Threads per rank     : $QSEND_THREADSPERRANK"
    fi
    echo "Script               : $QSEND_SCRIPT"
 
@@ -244,6 +267,11 @@ else
 	-rankspernode)
 	    shift
             QSEND_RANKSPERNODE=$1
+            shift
+	    ;;
+	-threadsperrank)
+	    shift
+            QSEND_THREADSPERRANK=$1
             shift
 	    ;;
 	-commmode)
@@ -492,6 +520,8 @@ if [ $answer = "yes" ]; then
 
                     print "#SBATCH --nodes=" nodes
                     print "#SBATCH --ntasks-per-node='$QSEND_RANKSPERNODE'"
+                    if ('$QSEND_THREADSPERRANK' >= 2)
+                       print "#SBATCH --cpus-per-task='$QSEND_THREADSPERRANK'"
  
 		    total_time = '$QSEND_TIME';
 		    hours = int(total_time/3600);
@@ -515,6 +545,7 @@ if [ $answer = "yes" ]; then
                     print "TIMESTAMP='$TIMESTAMP'"
                     print "RUNMODE='$RUNMODE'"
                     print "RANKSPERNODE='$QSEND_RANKSPERNODE'"
+                    print "THREADSPERRANK='$QSEND_THREADSPERRANK'"
                     print "COMMMODE='$QSEND_COMMMODE'"
 		}
 	    print $0
