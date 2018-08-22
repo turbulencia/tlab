@@ -45,9 +45,9 @@ MODULE DNS_LOCAL
 ! Boundary conditions
 ! ###################################################################
 ! Compressible
-  TINTEGER :: bcs_euler_imin, bcs_euler_imax, bcs_visc_imin, bcs_visc_imax
-  TINTEGER :: bcs_euler_jmin, bcs_euler_jmax, bcs_visc_jmin, bcs_visc_jmax
-  TINTEGER :: bcs_euler_kmin, bcs_euler_kmax, bcs_visc_kmin, bcs_visc_kmax
+  TINTEGER :: bcs_euler_imin, bcs_euler_imax
+  TINTEGER :: bcs_euler_jmin, bcs_euler_jmax
+  TINTEGER :: bcs_euler_kmin, bcs_euler_kmax
   TINTEGER :: bcs_inf(2,2,3), bcs_out(2,2,3) ! 1. index: lower and upper values
                                              ! 2. index: derivative order
                                              ! 3. index: direction

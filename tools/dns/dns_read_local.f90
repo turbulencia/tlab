@@ -25,6 +25,10 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   TINTEGER is,ig,idummy,inb_scal_local1
   TREAL dummy(inb_flow+inb_scal+1)
   
+  TINTEGER :: bcs_visc_imin, bcs_visc_imax
+  TINTEGER :: bcs_visc_jmin, bcs_visc_jmax
+  TINTEGER :: bcs_visc_kmin, bcs_visc_kmax
+
 ! ###################################################################
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
@@ -1084,7 +1088,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      bcs_scal_kmin(:)  = DNS_BCS_NONE; bcs_scal_kmax(:)  = DNS_BCS_NONE
   ENDIF
 
-  bcs_inf = 0
+! BCs for OPR_PARTIAL at xmin (1,*) and xmax (2,*)
+  bcs_inf = 0                                    ! default is biased non-zero; if 1, set to zero
   IF ( bcs_visc_imin .EQ. 1 ) bcs_inf(1,2,1) = 1 ! Inflow conditions
   IF ( bcs_visc_imax .EQ. 1 ) bcs_inf(2,2,1) = 1
   IF ( bcs_visc_jmin .EQ. 1 ) bcs_inf(1,2,2) = 1

@@ -16,6 +16,8 @@ PROGRAM DNS
   USE DNS_LOCAL 
   USE DNS_TOWER
   USE BOUNDARY_INFLOW
+  USE BOUNDARY_BUFFER
+  USE BOUNDARY_BCS
   USE PARTICLE_TRAJECTORIES
 #ifdef USE_MPI
   USE DNS_MPI
@@ -415,12 +417,16 @@ PROGRAM DNS
 ! ###################################################################
 ! Initialize data for boundary conditions
 ! ###################################################################
-  CALL BOUNDARY_INITIALIZE(vaux(vindex(VA_BCS_HT)),  vaux(vindex(VA_BCS_HB)), &
+  IF ( BuffType .NE. DNS_BUFFER_NONE .OR. bcs_euler_drift .EQ. 1 ) THEN
+     CALL BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
+  ENDIF
+
+  CALL BOUNDARY_BCS_INITIALIZE(vaux(vindex(VA_BCS_HT)),  vaux(vindex(VA_BCS_HB)), &
                            vaux(vindex(VA_BCS_VI)),  vaux(vindex(VA_BCS_VO)), &
                            q,s, txc, wrk3d)
 
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-     CALL BOUNDARY_INFLOW_INIT(rtime, q_inf,s_inf, txc, wrk2d,wrk3d)
+     CALL BOUNDARY_INFLOW_INITIALIZE(rtime, q_inf,s_inf, txc, wrk2d,wrk3d)
   ENDIF
 
 ! ###################################################################

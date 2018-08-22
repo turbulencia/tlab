@@ -35,7 +35,7 @@ CONTAINS
 !########################################################################
 !########################################################################
 !# Initializing inflow fields for broadband forcing case.
-SUBROUTINE BOUNDARY_INFLOW_INIT(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
+SUBROUTINE BOUNDARY_INFLOW_INITIALIZE(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
 
   IMPLICIT NONE
   
@@ -178,7 +178,7 @@ SUBROUTINE BOUNDARY_INFLOW_INIT(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
 #endif
 
   RETURN
-END SUBROUTINE BOUNDARY_INFLOW_INIT
+END SUBROUTINE BOUNDARY_INFLOW_INITIALIZE
 
 !########################################################################
 !########################################################################
@@ -221,7 +221,7 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, q_inf,s_inf, txc, wrk2d,wrk
 
 ! check if we need to read again inflow data
   IF ( ifrc_mode .EQ. 3 .AND. INT(qbg(1)%mean*etime/g_inf(1)%scale)+1 .NE. ifrc_ifield ) THEN
-     CALL BOUNDARY_INFLOW_INIT(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
+     CALL BOUNDARY_INFLOW_INITIALIZE(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
   ENDIF
 
 ! ###################################################################

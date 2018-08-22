@@ -13,6 +13,10 @@
 !# made proportional to differences on the conserved variables,
 !# i.e. rho, rho*V, rho*(e+v^2/2). 
 !#
+!# The buffer files need to written without header information, so that
+!# the header global variables (like itime) are not updated within this
+!# routine
+!#
 !########################################################################
 MODULE BOUNDARY_BUFFER
   
@@ -62,6 +66,8 @@ MODULE BOUNDARY_BUFFER
 
 CONTAINS
   
+! ###################################################################
+! ###################################################################
 SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
     
   IMPLICIT NONE
@@ -83,17 +89,34 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
   CHARACTER*128 line 
 
 #ifdef USE_MPI
-  TINTEGER                :: ndims, idummy, id
+  TINTEGER                :: ndims, idummy, id, isize_loc
   TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
 #endif
   
 ! ###################################################################
-! Prepare data for subarrays
+! Prepare string tags
   DO iq = 1,MAX(inb_flow,inb_scal)
      WRITE(varname(iq),*) iq; varname(iq) = TRIM(ADJUSTL(varname(iq)))
   ENDDO
 
 #ifdef USE_MPI
+! Filters at boundaries
+  IF ( BuffType .EQ. DNS_BUFFER_FILTER .AND. BuffFlowImax%size .GT. 1 ) THEN ! Required for outflow explicit filter in Ox
+     CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Ox BCs explicit filter.')
+     id    = DNS_MPI_K_OUTBCS
+     isize_loc = BuffFlowImax%size*jmax
+     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
+          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+  ENDIF
+
+  IF ( BuffType .EQ. DNS_BUFFER_FILTER .AND. BuffFlowJmin%size .GT. 1 ) THEN ! Required for outflow explicit filter in Oy
+     CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Oy BCs explicit filter.')
+     id    = DNS_MPI_K_TOPBCS
+     isize_loc = imax*BuffFlowJmin%size
+     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
+          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+  ENDIF
+
 ! I/O routines not yet developed for this particular case
   IF ( ims_npro_i .GT. 1 .AND. ( BuffFlowImin%size .GT. 0 .OR. BuffFLowImax%size .GT. 0 ) ) THEN
      CALL IO_WRITE_ASCII(efile,'BOUNDARY_INIT. I/O routines undeveloped.')

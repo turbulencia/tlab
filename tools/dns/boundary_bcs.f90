@@ -3,25 +3,29 @@
 #include "dns_const.h"
 #include "dns_const_mpi.h"
 
-!########################################################################
-!# DESCRIPTION
-!#
-!# The evolving buffer zone case should be revisited. Similarly, the
-!# treatment of the VI zone should be checked and homogenized.
-!#
-!# The buffer regions are stored now in terms of rho, rho*v,
-!# rho*(e+v^2/2) or rho*e, and rho*Z_i
-!#
-!# The buffer files need to written without header information, so that
-!# the header global variables (like itime) are not updated within this
-!# routine
-!#
-!########################################################################
-SUBROUTINE BOUNDARY_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
+MODULE BOUNDARY_BCS
+
+  IMPLICIT NONE
+  SAVE
+  
+  TYPE bcs_dt
+     SEQUENCE
+     TINTEGER type                                ! dirichlet, neumann, nonreflective, inflow, outflow
+     TREAL, ALLOCATABLE, DIMENSION(:,:,:) :: ref  ! reference fields
+  END type bcs_dt
+  
+  TYPE(bcs_dt), PUBLIC :: BcsFlowImin,BcsFlowImax,BcsFlowJmin,BcsFlowJmax
+  TYPE(bcs_dt), PUBLIC :: BcsScalImin,BcsScalImax,BcsScalJmin,BcsScalJmax
+
+CONTAINS
+  
+! ###################################################################
+! ###################################################################
+SUBROUTINE BOUNDARY_BCS_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
 
   USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
   USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, inb_flow_array,inb_scal_array
   USE DNS_GLOBAL,    ONLY : g,area
   USE DNS_GLOBAL,    ONLY : mach, pbg, qbg
   USE THERMO_GLOBAL, ONLY : imixture, gama0
@@ -44,8 +48,6 @@ SUBROUTINE BOUNDARY_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
   TREAL, DIMENSION(imax*jmax*kmax,*) :: q, s, txc
   TREAL, DIMENSION(*)                :: wrk3d
 
-  TARGET :: q
-
 ! -------------------------------------------------------------------
   TINTEGER i,j,k, is, ip
   TREAL AVG1V1D, AVG_IK, prefactor, dummy
@@ -58,87 +60,84 @@ SUBROUTINE BOUNDARY_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
   
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_INIT' )
+  CALL IO_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_INITIALLIZE' )
 #endif
 
+! ###################################################################
+! Allocate memory space
+! ###################################################################
+! we use inb_flow_array and inb_scal_array to have space for aux fields
+  ALLOCATE( BcsFlowImin%ref(jmax,kmax,inb_flow_array) )
+  ALLOCATE( BcsFlowImax%ref(jmax,kmax,inb_flow_array) )
+  ALLOCATE( BcsFlowJmin%ref(imax,kmax,inb_flow_array) )
+  ALLOCATE( BcsFlowJmax%ref(imax,kmax,inb_flow_array) )
+  
+  ALLOCATE( BcsScalImin%ref(jmax,kmax,inb_scal_array) )
+  ALLOCATE( BcsScalImax%ref(jmax,kmax,inb_scal_array) )
+  ALLOCATE( BcsScalJmin%ref(imax,kmax,inb_scal_array) )
+  ALLOCATE( BcsScalJmax%ref(imax,kmax,inb_scal_array) )
+
 ! #######################################################################
-! Definining types for parallel mode
+! Incompressible mode
+! #######################################################################
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+! So far, nothing to initialize
+     
+  ELSE
+! #######################################################################
+! Compressible mode
 ! #######################################################################
 #ifdef USE_MPI
 ! -------------------------------------------------------------------
-! Filters at boundaries
+! Characteristic BCs
 ! -------------------------------------------------------------------
-  IF ( BuffType .EQ. DNS_BUFFER_FILTER .AND. BuffFlowImax%size .GT. 1 ) THEN ! Required for outflow explicit filter in Ox
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Ox BCs explicit filter.')
-     id    = DNS_MPI_K_OUTBCS
-     isize_loc = BuffFlowImax%size*jmax
-     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
-          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-  ENDIF
-
-  IF ( BuffType .EQ. DNS_BUFFER_FILTER .AND. BuffFlowJmin%size .GT. 1 ) THEN ! Required for outflow explicit filter in Oy
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Oy BCs explicit filter.')
-     id    = DNS_MPI_K_TOPBCS
-     isize_loc = imax*BuffFlowJmin%size
-     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
-          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-  ENDIF
-
-! -------------------------------------------------------------------
-! Characteristic BCs in compressible mode
-! -------------------------------------------------------------------
-  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-
-  IF ( .NOT. g(1)%periodic ) THEN ! Required for NRBCs in Ox
-     id    = DNS_MPI_K_NRBCX
-     isize_loc = MOD(jmax,ims_npro_k)
-     ims_bcs_imax = 2*(inb_flow+inb_scal_array)
-     DO WHILE ( MOD(isize_loc*ims_bcs_imax,ims_npro_k) .GT. 0 ) 
-        ims_bcs_imax = ims_bcs_imax + 1
-     ENDDO
-     WRITE(str,*) ims_bcs_imax
-     str = 'Initialize MPI types for Ox BCs transverse terms. '//TRIM(ADJUSTL(str))//' planes.'
-     CALL IO_WRITE_ASCII(lfile,str)
-     isize_loc = ims_bcs_imax*jmax
-     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
-          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-  ENDIF
-
-  IF ( .NOT. g(2)%periodic ) THEN ! Required for NRBCs in Oy
-     id    = DNS_MPI_K_NRBCY
-     isize_loc = MOD(imax,ims_npro_k)
-     ims_bcs_jmax = 2*(inb_flow+inb_scal_array)
-     DO WHILE ( MOD(isize_loc*ims_bcs_jmax,ims_npro_k) .GT. 0 ) 
-        ims_bcs_jmax = ims_bcs_jmax + 1
-     ENDDO
-     WRITE(str,*) ims_bcs_jmax
-     str = 'Initialize MPI types for Oy BCs transverse terms. '//TRIM(ADJUSTL(str))//' planes.'
-     CALL IO_WRITE_ASCII(lfile,str)
-     isize_loc = imax*ims_bcs_jmax
-     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
-          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-  ENDIF
-
-  ENDIF
-
+     IF ( .NOT. g(1)%periodic ) THEN ! Required for NRBCs in Ox
+        id    = DNS_MPI_K_NRBCX
+        isize_loc = MOD(jmax,ims_npro_k)
+        ims_bcs_imax = 2*(inb_flow+inb_scal_array)
+        DO WHILE ( MOD(isize_loc*ims_bcs_imax,ims_npro_k) .GT. 0 ) 
+           ims_bcs_imax = ims_bcs_imax + 1
+        ENDDO
+        WRITE(str,*) ims_bcs_imax
+        str = 'Initialize MPI types for Ox BCs transverse terms. '//TRIM(ADJUSTL(str))//' planes.'
+        CALL IO_WRITE_ASCII(lfile,str)
+        isize_loc = ims_bcs_imax*jmax
+        CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
+             ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     ENDIF
+     
+     IF ( .NOT. g(2)%periodic ) THEN ! Required for NRBCs in Oy
+        id    = DNS_MPI_K_NRBCY
+        isize_loc = MOD(imax,ims_npro_k)
+        ims_bcs_jmax = 2*(inb_flow+inb_scal_array)
+        DO WHILE ( MOD(isize_loc*ims_bcs_jmax,ims_npro_k) .GT. 0 ) 
+           ims_bcs_jmax = ims_bcs_jmax + 1
+        ENDDO
+        WRITE(str,*) ims_bcs_jmax
+        str = 'Initialize MPI types for Oy BCs transverse terms. '//TRIM(ADJUSTL(str))//' planes.'
+        CALL IO_WRITE_ASCII(lfile,str)
+        isize_loc = imax*ims_bcs_jmax
+        CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
+             ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     ENDIF
 #endif
 
 ! ###################################################################
-! Buffer zone treatment
-! ###################################################################
-  IF ( BuffType .NE. DNS_BUFFER_NONE .OR. bcs_euler_drift .EQ. 1 ) THEN
-     CALL BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
-  ENDIF
-
-! ###################################################################
 ! Compute reference pressure for Poinsot&Lele term in NR Bcs.
-! Note that buffer_?(1,1,1,4) is now the energy, and we need p
 ! ###################################################################
-  IF ( bcs_euler_drift .EQ. 1 ) THEN
-     prefactor = C_05_R *(gama0-C_1_R) *mach*mach
-     r1        = C_1_R
-     r05       = C_05_R
-     
+     bcs_p_imin = pbg%mean; bcs_p_imax = pbg%mean ! default values
+     bcs_p_jmin = pbg%mean; bcs_p_jmax = pbg%mean
+     bcs_p_kmin = pbg%mean; bcs_p_kmax = pbg%mean
+
+     IF ( bcs_euler_drift .EQ. 1 ) THEN
+        prefactor = C_05_R *(gama0-C_1_R) *mach*mach
+        r1        = C_1_R
+        r05       = C_05_R
+        
+! -------------------------------------------------------------------
+! Note that buffer_?(1,1,1,4) is now the energy, and we need p
+! -------------------------------------------------------------------
+
 ! -------------------------------------------------------------------
 ! Using buffer fields; bottom
 ! -------------------------------------------------------------------
@@ -353,28 +352,18 @@ SUBROUTINE BOUNDARY_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
         ENDDO
      ENDDO; ENDDO
      
-  ELSE
-     bcs_p_imin = pbg%mean; bcs_p_imax = pbg%mean
-
   ENDIF
 
-! rest
-  bcs_p_kmin = pbg%mean; bcs_p_kmax = pbg%mean
-
-! -------------------------------------------------------------------
-! No buffer field available
-! -------------------------------------------------------------------
-  ELSE
-     bcs_p_imin = pbg%mean; bcs_p_imax = pbg%mean
-     bcs_p_jmin = pbg%mean; bcs_p_jmax = pbg%mean
-     bcs_p_kmin = pbg%mean; bcs_p_kmax = pbg%mean
+  ENDIF
 
   ENDIF
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_INIT' )
+  CALL IO_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_BCS_INITIALLIZE' )
 #endif
 
   RETURN
 
-END SUBROUTINE BOUNDARY_INITIALIZE
+END SUBROUTINE BOUNDARY_BCS_INITIALIZE
+
+END MODULE BOUNDARY_BCS

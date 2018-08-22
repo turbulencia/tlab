@@ -240,11 +240,6 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, v
           txc, AUX_LOC(1), wrk2d,wrk3d)
   ENDIF
 
-  IF ( .NOT. g(3)%periodic ) THEN
-     CALL BOUNDARY_BCS_Z(M2_max, rho,u,v,w,p, GAMMA_LOC(1), s, h0,h1,h2,h3,h4,hs,&
-          txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk2d,wrk3d)
-  ENDIF
-  
 #undef GAMMA_LOC
 #undef AUX_LOC
 
