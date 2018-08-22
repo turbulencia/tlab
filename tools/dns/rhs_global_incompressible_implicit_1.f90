@@ -33,9 +33,10 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   USE DNS_GLOBAL, ONLY : visc, schmidt, rossby
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
   USE DNS_GLOBAL, ONLY : bbackground
-  USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax, bcs_scal_jmin, bcs_scal_jmax
+  USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : idivergence
   USE BOUNDARY_BUFFER
+  USE BOUNDARY_BCS
 
   IMPLICIT NONE
 
@@ -58,7 +59,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   TREAL dummy, visc_exp, visc_imp, visc_tot, diff, alpha, beta
 
   TREAL, DIMENSION(:),        POINTER :: p_bcs
-  TREAL, DIMENSION(imax,kmax,inb_scal):: bcs_sb, bcs_st 
+!  TREAL, DIMENSION(imax,kmax,inb_scal):: bcs_sb, bcs_st 
 
 #ifdef USE_BLAS
   INTEGER ilen
@@ -100,10 +101,10 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
         bcs_ht(:,k,2) = w(ip_t:ip_t+imax-1)  
      ENDIF
      DO is=1,inb_scal
-        IF ( bcs_scal_jmin(is) .EQ. DNS_BCS_DIRICHLET .AND. &
-             bcs_scal_jmax(is) .EQ. DNS_BCS_DIRICHLET ) THEN 
-           bcs_sb(1:imax,k,is) = s(ip_b:ip_b+imax-1,is) 
-           bcs_st(1:imax,k,is) = s(ip_t:ip_t+imax-1,is) 
+        IF ( BcsScalJmin%type(is) .EQ. DNS_BCS_DIRICHLET .AND. &
+             BcsScalJmax%type(is) .EQ. DNS_BCS_DIRICHLET ) THEN 
+           BcsScalJmin%ref(1:imax,k,is) = s(ip_b:ip_b+imax-1,is) 
+           BcsScalJmax%ref(1:imax,k,is) = s(ip_t:ip_t+imax-1,is) 
         ELSE  ! Only Dirichlet BCs implemented for scalar
            CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
         ENDIF
@@ -341,8 +342,8 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 
         ip_b = 1     ; ip_t = 1+ imax*kmax
         DO k=1,kmax 
-           ip=(k-1)*imax*jmax+1; wrk2d(ip_b:ip_b+imax-1)=-alpha*bcs_sb(1:imax,k,is); ip_b=ip_b+imax
-           ip=ip+(jmax-1)*imax;  wrk2d(ip_t:ip_t+imax-1)=-alpha*bcs_st(1:imax,k,is); ip_t=ip_t+imax
+           ip=(k-1)*imax*jmax+1; wrk2d(ip_b:ip_b+imax-1)=-alpha*BcsScalJmin%ref(1:imax,k,is); ip_b=ip_b+imax
+           ip=ip+(jmax-1)*imax;  wrk2d(ip_t:ip_t+imax-1)=-alpha*BcsScalJmax%ref(1:imax,k,is); ip_t=ip_t+imax
         ENDDO
         ip_b = 1     ; ip_t = 1+ imax*kmax
         CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, i0, beta, &
@@ -475,7 +476,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
      w(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,2); 
      IF ( icalc_scal .NE. 0 ) THEN 
         DO is=1,inb_scal 
-           s(ip_b:ip_b+imax-1,is) = bcs_sb(1:imax,k,is) 
+           s(ip_b:ip_b+imax-1,is) = BcsScalJmin%ref(1:imax,k,is) 
         ENDDO
      ENDIF
      ip_b = ip_b + nxy
@@ -491,7 +492,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
      w(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,2); 
      IF ( icalc_scal .NE. 0 ) THEN 
         DO is=1,inb_scal 
-           s(ip_t:ip_t+imax-1,is) = bcs_st(1:imax,k,is) 
+           s(ip_t:ip_t+imax-1,is) = BcsScalJmax%ref(1:imax,k,is) 
         ENDDO
      ENDIF
      ip_t = ip_t + nxy

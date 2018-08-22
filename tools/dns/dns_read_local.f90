@@ -12,6 +12,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE DNS_GLOBAL,    ONLY : FilterDomain
   USE DNS_LOCAL
   USE BOUNDARY_BUFFER
+  USE BOUNDARY_BCS
   
   IMPLICIT NONE
 
@@ -256,23 +257,23 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
 ! Scalar terms
 ! -------------------------------------------------------------------
-  bcs_scal_imin(:) = DNS_BCS_NONE; bcs_scal_imax(:) = DNS_BCS_NONE
+  BcsScalImin%type(:) = DNS_BCS_NONE; BcsScalImax%type(:) = DNS_BCS_NONE
   IF ( .NOT. g(1)%periodic ) THEN
   DO is = 1,inb_scal
      WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Imin'
      CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'none', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; bcs_scal_imin(is) = DNS_BCS_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; bcs_scal_imin(is) = DNS_BCS_DIRICHLET
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; bcs_scal_imin(is) = DNS_BCS_NEUMANN
+     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalImin%type(is) = DNS_BCS_NONE
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; BcsScalImin%type(is) = DNS_BCS_DIRICHLET
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalImin%type(is) = DNS_BCS_NEUMANN
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
         CALL DNS_STOP(DNS_ERROR_IBC)
      ENDIF
      WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Imax'
      CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'none', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; bcs_scal_imax(is) = DNS_BCS_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; bcs_scal_imax(is) = DNS_BCS_DIRICHLET
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; bcs_scal_imax(is) = DNS_BCS_NEUMANN
+     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalImax%type(is) = DNS_BCS_NONE
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; BcsScalImax%type(is) = DNS_BCS_DIRICHLET
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalImax%type(is) = DNS_BCS_NEUMANN
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
         CALL DNS_STOP(DNS_ERROR_IBC)
@@ -280,23 +281,23 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ENDDO
   ENDIF
 
-  bcs_scal_jmin(:) = DNS_BCS_NONE; bcs_scal_jmax(:) = DNS_BCS_NONE
+  BcsScalJmin%type(:) = DNS_BCS_NONE; BcsScalJmax%type(:) = DNS_BCS_NONE
   IF ( .NOT. g(2)%periodic ) THEN
   DO is = 1,inb_scal
      WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Jmin'
      CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'void', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; bcs_scal_jmin(is) = DNS_BCS_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; bcs_scal_jmin(is) = DNS_BCS_DIRICHLET
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; bcs_scal_jmin(is) = DNS_BCS_NEUMANN
+     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalJmin%type(is) = DNS_BCS_NONE
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; BcsScalJmin%type(is) = DNS_BCS_DIRICHLET
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalJmin%type(is) = DNS_BCS_NEUMANN
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
         CALL DNS_STOP(DNS_ERROR_IBC)
      ENDIF
      WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Jmax'
      CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'void', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; bcs_scal_jmax(is) = DNS_BCS_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; bcs_scal_jmax(is) = DNS_BCS_DIRICHLET
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; bcs_scal_jmax(is) = DNS_BCS_NEUMANN
+     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalJmax%type(is) = DNS_BCS_NONE
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; BcsScalJmax%type(is) = DNS_BCS_DIRICHLET
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalJmax%type(is) = DNS_BCS_NEUMANN
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
         CALL DNS_STOP(DNS_ERROR_IBC)
@@ -304,23 +305,23 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ENDDO
   ENDIF
 
-  bcs_scal_kmin(:) = DNS_BCS_NONE; bcs_scal_kmax(:) = DNS_BCS_NONE
+  BcsScalKmin%type(:) = DNS_BCS_NONE; BcsScalKmax%type(:) = DNS_BCS_NONE
   IF ( .NOT. g(3)%periodic ) THEN
   DO is = 1,inb_scal
      WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Kmin'
      CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'none', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; bcs_scal_kmin(is) = DNS_BCS_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; bcs_scal_kmin(is) = DNS_BCS_DIRICHLET
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; bcs_scal_kmin(is) = DNS_BCS_NEUMANN
+     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalKmin%type(is) = DNS_BCS_NONE
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; BcsScalKmin%type(is) = DNS_BCS_DIRICHLET
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalKmin%type(is) = DNS_BCS_NEUMANN
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
         CALL DNS_STOP(DNS_ERROR_IBC)
      ENDIF
      WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Kmax'
      CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'none', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; bcs_scal_kmax(is) = DNS_BCS_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; bcs_scal_kmax(is) = DNS_BCS_DIRICHLET
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; bcs_scal_kmax(is) = DNS_BCS_NEUMANN
+     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalKmax%type(is) = DNS_BCS_NONE
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; BcsScalKmax%type(is) = DNS_BCS_DIRICHLET
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalKmax%type(is) = DNS_BCS_NEUMANN
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
         CALL DNS_STOP(DNS_ERROR_IBC)
@@ -1073,19 +1074,19 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      bcs_euler_imin    = DNS_BCS_NONE; bcs_euler_imax    = DNS_BCS_NONE
      bcs_visc_imin     = DNS_BCS_NONE; bcs_visc_imax     = DNS_BCS_NONE
      bcs_flow_imin     = DNS_BCS_NONE; bcs_flow_imax     = DNS_BCS_NONE
-     bcs_scal_imin(:)  = DNS_BCS_NONE; bcs_scal_imax(:)  = DNS_BCS_NONE
+     BcsScalImin%type(:)  = DNS_BCS_NONE; BcsScalImax%type(:)  = DNS_BCS_NONE
   ENDIF
   IF ( g(2)%periodic ) THEN;
      bcs_euler_jmin    = DNS_BCS_NONE; bcs_euler_jmax    = DNS_BCS_NONE
      bcs_visc_jmin     = DNS_BCS_NONE; bcs_visc_jmax     = DNS_BCS_NONE
      bcs_flow_jmin     = DNS_BCS_NONE; bcs_flow_jmax     = DNS_BCS_NONE
-     bcs_scal_jmin(:)  = DNS_BCS_NONE; bcs_scal_jmax(:)  = DNS_BCS_NONE
+     BcsScalJmin%type(:)  = DNS_BCS_NONE; BcsScalJmax%type(:)  = DNS_BCS_NONE
   ENDIF
   IF ( g(3)%periodic ) THEN;
      bcs_euler_kmin    = DNS_BCS_NONE; bcs_euler_kmax    = DNS_BCS_NONE
      bcs_visc_kmin     = DNS_BCS_NONE; bcs_visc_kmax     = DNS_BCS_NONE
      bcs_flow_kmin     = DNS_BCS_NONE; bcs_flow_kmax     = DNS_BCS_NONE
-     bcs_scal_kmin(:)  = DNS_BCS_NONE; bcs_scal_kmax(:)  = DNS_BCS_NONE
+     BcsScalKmin%type(:)  = DNS_BCS_NONE; BcsScalKmax%type(:)  = DNS_BCS_NONE
   ENDIF
 
 ! BCs for OPR_PARTIAL at xmin (1,*) and xmax (2,*)
@@ -1124,8 +1125,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
 ! Check if Neumann BCs for scalar are present and warn if so 
      DO is=1,inb_scal
-        IF ( bcs_scal_jmin(is) .EQ. DNS_BCS_NEUMANN .OR. &
-             bcs_scal_jmax(is) .EQ. DNS_BCS_NEUMANN ) THEN 
+        IF ( BcsScalJmin%type(is) .EQ. DNS_BCS_NEUMANN .OR. &
+             BcsScalJmax%type(is) .EQ. DNS_BCS_NEUMANN ) THEN 
            WRITE(sRes, *) is; sRes='DNS_REAL_LOCAL. Scalar'//TRIM(ADJUSTL(sRes))//&
                 ': Finite flux BC not implemented for SEMI-IMPLICITE DIFFUSION' 
            CALL IO_WRITE_ASCII(wfile, TRIM(ADJUSTL(sRes))) 

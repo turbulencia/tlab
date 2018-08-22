@@ -21,9 +21,8 @@
 MODULE BOUNDARY_BUFFER
   
   USE DNS_TYPES,  ONLY : filter_dt
-  USE DNS_GLOBAL, ONLY : MAX_VARS
   
-  USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile,efile
+  USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile,efile, MAX_VARS
   USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, isize_field
   USE DNS_GLOBAL,    ONLY : g, area

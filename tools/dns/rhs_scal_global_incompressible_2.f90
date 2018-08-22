@@ -14,8 +14,8 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2&
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : idiffusion, visc, schmidt
-  USE DNS_LOCAL,  ONLY : bcs_scal_jmin, bcs_scal_jmax
-
+  USE BOUNDARY_BCS
+  
   IMPLICIT NONE
 
   TINTEGER is
@@ -64,8 +64,8 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2&
 ! #######################################################################
   ibc = 0
   wrk2d(:,:,1:2) = C_0_R ! default is dirichlet
-  IF ( bcs_scal_jmin(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
-  IF ( bcs_scal_jmax(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
+  IF ( BcsScalJmin%type(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
+  IF ( BcsScalJmax%type(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
   IF ( ibc .GT. 0 ) THEN
      CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,tmp1,wrk3d)
   ENDIF

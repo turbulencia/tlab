@@ -58,9 +58,9 @@ MODULE DNS_LOCAL
   TREAL    :: bcs_p_imin, bcs_p_imax, bcs_p_jmin, bcs_p_jmax, bcs_p_kmin, bcs_p_kmax
 
 ! Incompressible
-  TINTEGER :: bcs_scal_imin(MAX_NSP), bcs_scal_imax(MAX_NSP), bcs_flow_imin, bcs_flow_imax
-  TINTEGER :: bcs_scal_jmin(MAX_NSP), bcs_scal_jmax(MAX_NSP), bcs_flow_jmin, bcs_flow_jmax
-  TINTEGER :: bcs_scal_kmin(MAX_NSP), bcs_scal_kmax(MAX_NSP), bcs_flow_kmin, bcs_flow_kmax
+  TINTEGER :: bcs_flow_imin, bcs_flow_imax
+  TINTEGER :: bcs_flow_jmin, bcs_flow_jmax
+  TINTEGER :: bcs_flow_kmin, bcs_flow_kmax
 
 ! ###########################################################
 ! Filters

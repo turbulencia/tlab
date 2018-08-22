@@ -5,17 +5,19 @@
 
 MODULE BOUNDARY_BCS
 
+  USE DNS_CONSTANTS, ONLY : MAX_VARS
+
   IMPLICIT NONE
   SAVE
   
   TYPE bcs_dt
      SEQUENCE
-     TINTEGER type                                ! dirichlet, neumann, nonreflective, inflow, outflow
+     TINTEGER type(MAX_VARS)                      ! dirichlet, neumann, nonreflective, inflow, outflow
      TREAL, ALLOCATABLE, DIMENSION(:,:,:) :: ref  ! reference fields
   END type bcs_dt
   
-  TYPE(bcs_dt), PUBLIC :: BcsFlowImin,BcsFlowImax,BcsFlowJmin,BcsFlowJmax
-  TYPE(bcs_dt), PUBLIC :: BcsScalImin,BcsScalImax,BcsScalJmin,BcsScalJmax
+  TYPE(bcs_dt), PUBLIC :: BcsFlowImin,BcsFlowImax,BcsFlowJmin,BcsFlowJmax,BcsFlowKmin,BcsFlowKmax
+  TYPE(bcs_dt), PUBLIC :: BcsScalImin,BcsScalImax,BcsScalJmin,BcsScalJmax,BcsScalKmin,BcsScalKmax
 
 CONTAINS
   
@@ -71,11 +73,15 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
   ALLOCATE( BcsFlowImax%ref(jmax,kmax,inb_flow_array) )
   ALLOCATE( BcsFlowJmin%ref(imax,kmax,inb_flow_array) )
   ALLOCATE( BcsFlowJmax%ref(imax,kmax,inb_flow_array) )
+  ALLOCATE( BcsFlowKmin%ref(imax,jmax,inb_flow_array) ) ! not yet used
+  ALLOCATE( BcsFlowKmax%ref(imax,jmax,inb_flow_array) )
   
   ALLOCATE( BcsScalImin%ref(jmax,kmax,inb_scal_array) )
   ALLOCATE( BcsScalImax%ref(jmax,kmax,inb_scal_array) )
   ALLOCATE( BcsScalJmin%ref(imax,kmax,inb_scal_array) )
   ALLOCATE( BcsScalJmax%ref(imax,kmax,inb_scal_array) )
+  ALLOCATE( BcsScalKmin%ref(imax,jmax,inb_scal_array) ) ! not yet used
+  ALLOCATE( BcsScalKmax%ref(imax,jmax,inb_scal_array) )
 
 ! #######################################################################
 ! Incompressible mode
