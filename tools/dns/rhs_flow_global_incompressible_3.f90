@@ -13,7 +13,7 @@
 !########################################################################
 SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3&
      (dte, u,v,w,h1,h2,h3, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
-     bcs_hb,bcs_ht, wrk1d,wrk2d,wrk3d)
+     wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE DNS_GLOBAL, ONLY : g
@@ -27,8 +27,7 @@ IMPLICIT NONE
   TREAL, DIMENSION(isize_field,*) :: q,hq
   TREAL, DIMENSION(*)             :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk3d
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
-  TREAL, DIMENSION(*)             :: wrk2d
-  TREAL, DIMENSION(imax,kmax,*)   :: bcs_hb, bcs_ht
+  TREAL, DIMENSION(imax,kmax,*)   :: wrk2d
 
 ! -----------------------------------------------------------------------
   TINTEGER ij, i, k, ibc, bcs(2,2)
@@ -153,17 +152,17 @@ IMPLICIT NONE
      DO i = 1,imax
         ij = i                 + imax*jmax*(k-1) ! bottom
 !        tmp1(ij) = h2(ij)
-        bcs_hb(i,k,3) = h2(ij)
+        wrk2d(i,k,1) = h2(ij)
         ij = i + imax*(jmax-1) + imax*jmax*(k-1) ! top
 !        tmp1(ij) = h2(ij)
-        bcs_ht(i,k,3) = h2(ij)
+        wrk2d(i,k,2) = h2(ij)
      ENDDO
   ENDDO
 
 ! pressure in tmp1, Oy derivative in tmp3
   ibc = 3
   CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, ibc, &
-       tmp1,tmp3, tmp2,tmp4, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
+       tmp1,tmp3, tmp2,tmp4, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
 ! horizontal derivatives
   CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)

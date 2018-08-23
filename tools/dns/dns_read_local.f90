@@ -330,54 +330,66 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ENDIF
 
 ! -------------------------------------------------------------------
-! Velocity terms
+! Velocity terms / Euler part in compressible mode
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityImin', 'freeslip', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; bcs_flow_imin = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; bcs_flow_imin = DNS_BCS_DIRICHLET
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; bcs_flow_imin = DNS_BCS_NEUMANN
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowImin%type(1:3) = DNS_BCS_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowImin%type(1:3) = DNS_BCS_DIRICHLET
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; BcsFlowImin%type(1)   = DNS_BCS_DIRICHLET
+                                                        BcsFlowImin%type(2)   = DNS_BCS_NEUMANN
+                                                        BcsFlowImin%type(3)   = DNS_BCS_NEUMANN
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityImin.')
      CALL DNS_STOP(DNS_ERROR_IBC)
   ENDIF
   CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityImax', 'freeslip', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; bcs_flow_imax = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; bcs_flow_imax = DNS_BCS_DIRICHLET
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; bcs_flow_imax = DNS_BCS_NEUMANN
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowImax%type(1:3) = DNS_BCS_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowImax%type(1:3) = DNS_BCS_DIRICHLET
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; BcsFlowImax%type(1)   = DNS_BCS_DIRICHLET
+                                                        BcsFlowImax%type(2)   = DNS_BCS_NEUMANN
+                                                        BcsFlowImax%type(3)   = DNS_BCS_NEUMANN
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityImax.')
      CALL DNS_STOP(DNS_ERROR_IBC)
   ENDIF
-
+  
   CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'freeslip', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; bcs_flow_jmin = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; bcs_flow_jmin = DNS_BCS_DIRICHLET
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; bcs_flow_jmin = DNS_BCS_NEUMANN
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowJmin%type(1:3) = DNS_BCS_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowJmin%type(1:3) = DNS_BCS_DIRICHLET
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; BcsFlowJmin%type(2)   = DNS_BCS_DIRICHLET
+                                                        BcsFlowJmin%type(1)   = DNS_BCS_NEUMANN
+                                                        BcsFlowJmin%type(3)   = DNS_BCS_NEUMANN
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityJmin.')
      CALL DNS_STOP(DNS_ERROR_IBC)
   ENDIF
   CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmax', 'freeslip', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; bcs_flow_jmax = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; bcs_flow_jmax = DNS_BCS_DIRICHLET
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; bcs_flow_jmax = DNS_BCS_NEUMANN
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowJmax%type(1:3) = DNS_BCS_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowJmax%type(1:3) = DNS_BCS_DIRICHLET
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; BcsFlowJmax%type(2)   = DNS_BCS_DIRICHLET
+                                                        BcsFlowJmax%type(1)   = DNS_BCS_NEUMANN
+                                                        BcsFlowJmax%type(3)   = DNS_BCS_NEUMANN
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityJmax.')
      CALL DNS_STOP(DNS_ERROR_IBC)
   ENDIF
-
+  
   CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityKmin', 'freeslip', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; bcs_flow_kmin = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; bcs_flow_kmin = DNS_BCS_DIRICHLET
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; bcs_flow_kmin = DNS_BCS_NEUMANN
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowKmin%type(1:3) = DNS_BCS_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowKmin%type(1:3) = DNS_BCS_DIRICHLET
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; BcsFlowKmin%type(3)   = DNS_BCS_DIRICHLET
+                                                        BcsFlowKmin%type(2)   = DNS_BCS_NEUMANN
+                                                        BcsFlowKmin%type(1)   = DNS_BCS_NEUMANN
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityKmin.')
      CALL DNS_STOP(DNS_ERROR_IBC)
   ENDIF
   CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityKmax', 'freeslip', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; bcs_flow_kmax = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; bcs_flow_kmax = DNS_BCS_DIRICHLET
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; bcs_flow_kmax = DNS_BCS_NEUMANN
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowKmax%type(1:3) = DNS_BCS_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowKmax%type(1:3) = DNS_BCS_DIRICHLET
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; BcsFlowKmax%type(3)   = DNS_BCS_DIRICHLET
+                                                        BcsFlowKmax%type(2)   = DNS_BCS_NEUMANN
+                                                        BcsFlowKmax%type(1)   = DNS_BCS_NEUMANN
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityKmax.')
      CALL DNS_STOP(DNS_ERROR_IBC)
@@ -1073,19 +1085,19 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( g(1)%periodic ) THEN;
      bcs_euler_imin    = DNS_BCS_NONE; bcs_euler_imax    = DNS_BCS_NONE
      bcs_visc_imin     = DNS_BCS_NONE; bcs_visc_imax     = DNS_BCS_NONE
-     bcs_flow_imin     = DNS_BCS_NONE; bcs_flow_imax     = DNS_BCS_NONE
+     BcsFlowImin%type(:)  = DNS_BCS_NONE; BcsFlowImax%type(:)  = DNS_BCS_NONE
      BcsScalImin%type(:)  = DNS_BCS_NONE; BcsScalImax%type(:)  = DNS_BCS_NONE
   ENDIF
   IF ( g(2)%periodic ) THEN;
      bcs_euler_jmin    = DNS_BCS_NONE; bcs_euler_jmax    = DNS_BCS_NONE
      bcs_visc_jmin     = DNS_BCS_NONE; bcs_visc_jmax     = DNS_BCS_NONE
-     bcs_flow_jmin     = DNS_BCS_NONE; bcs_flow_jmax     = DNS_BCS_NONE
+     BcsFlowJmin%type(:)  = DNS_BCS_NONE; BcsFlowJmax%type(:)  = DNS_BCS_NONE
      BcsScalJmin%type(:)  = DNS_BCS_NONE; BcsScalJmax%type(:)  = DNS_BCS_NONE
   ENDIF
   IF ( g(3)%periodic ) THEN;
      bcs_euler_kmin    = DNS_BCS_NONE; bcs_euler_kmax    = DNS_BCS_NONE
      bcs_visc_kmin     = DNS_BCS_NONE; bcs_visc_kmax     = DNS_BCS_NONE
-     bcs_flow_kmin     = DNS_BCS_NONE; bcs_flow_kmax     = DNS_BCS_NONE
+     BcsFlowKmin%type(:)  = DNS_BCS_NONE; BcsFlowKmax%type(:)  = DNS_BCS_NONE
      BcsScalKmin%type(:)  = DNS_BCS_NONE; BcsScalKmax%type(:)  = DNS_BCS_NONE
   ENDIF
 

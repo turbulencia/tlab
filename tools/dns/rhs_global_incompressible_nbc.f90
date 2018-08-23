@@ -15,7 +15,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42,&
      bt1,bt2,bt3,bt4,&
      h1,h2,h3,hs,&
-     bcs_hb,bcs_ht,&
      wrk1d,wrk2d,wrk3d) 
   USE, INTRINSIC :: iso_c_binding, ONLY : c_int,c_loc,c_ptr,c_f_pointer 
 
@@ -29,7 +28,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   USE DNS_GLOBAL, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : rbackground, ribackground
   ! 
-  USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
   USE DNS_LOCAL,  ONLY : rkm_substep,rkm_endstep,tower_mode 
@@ -67,7 +65,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
   TREAL, DIMENSION(isize_field),                INTENT(INOUT):: h1,h2,h3 
   TREAL, DIMENSION(isize_field,inb_scal),       INTENT(OUT)  :: hs 
-  TREAL, DIMENSION(imax,kmax,inb_vars)                       :: bcs_hb, bcs_ht 
   TREAL, DIMENSION(isize_field),                INTENT(INOUT):: tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42
   TREAL, DIMENSION(isize_field)  :: bt1,bt2,bt3,bt4
   TREAL, DIMENSION(isize_wrk1d,*):: wrk1d
@@ -577,19 +574,19 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1
   DO k = 1,kmax
-     p_bcs => h2(ip_b:); bcs_hb(1:imax,k,3) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-     p_bcs => h2(ip_t:); bcs_ht(1:imax,k,3) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+     p_bcs => h2(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+     p_bcs => h2(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
   ENDDO
 
 ! Adding density in BCs  
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     bcs_hb(:,:,3) = bcs_hb(:,:,3) *rbackground(1)
-     bcs_ht(:,:,3) = bcs_ht(:,:,3) *rbackground(g(2)%size)
+     BcsFlowJmin%ref(:,:,2) = BcsFlowJmin%ref(:,:,2) *rbackground(1)
+     BcsFlowJmax%ref(:,:,2) = BcsFlowJmax%ref(:,:,2) *rbackground(g(2)%size)
   ENDIF
   
 ! pressure in tmp12, Oy derivative in tmp11
   CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
-       tmp12,tmp11, tmp41,tmp42, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
+       tmp12,tmp11, tmp41,tmp42, BcsFlowJmin%ref(1,1,2),BcsFlowJmax%ref(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
   IF ( tower_mode .EQ. 1 .AND. rkm_substep .EQ. rkm_endstep ) THEN 
      CALL DNS_TOWER_ACCUMULATE(tmp12,i4,wrk1d) 
@@ -610,54 +607,112 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      
   ENDIF
   
-  bcs_hb(:,:,1:inb_vars) = C_0_R  ! default is no-slip 
-  bcs_ht(:,:,1:inb_vars) = C_0_R
-  
+! #######################################################################
+! Boundary conditions
+! #######################################################################
 ! -----------------------------------------------------------------------
 ! Preliminaries
 ! -----------------------------------------------------------------------
-  ibc = 0
-  IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
-  IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
-  IF ( ibc .GT. 0 ) THEN
-     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), h1, &
-          bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,tmp11,wrk3d)
-     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), h3, &
-          bcs_hb(1,1,2),bcs_ht(1,1,2), wrk1d,tmp11,wrk3d)
-  ENDIF
-
-  DO is = 1,inb_scal
+  BcsFlowJmin%ref = C_0_R ! default is no-slip (dirichlet)
+  BcsFlowJmax%ref = C_0_R
+  BcsScalJmin%ref = C_0_R
+  BcsScalJmax%ref = C_0_R
+  
+  DO iq = 1,inb_flow
      ibc = 0
-     IF ( BcsScalJmin%ref(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
-     IF ( BcsScalJmax%ref(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
+     IF ( BcsFlowJmin%type(iq) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
+     IF ( BcsFlowJmax%type(iq) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
      IF ( ibc .GT. 0 ) THEN
-        CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs(1,is), &
-             BcsScalJmin%ref(1,1,is),BcsScalJmax%ref(1,1,is), wrk1d,tmp11,wrk3d)
+        CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hq(1,iq), &
+             BcsFlowJmin%ref(1,1,iq),BcsFlowJmax%ref(1,1,iq), wrk1d,tmp1,wrk3d)
      ENDIF
   ENDDO
 
+  DO is = 1,inb_scal
+     ibc = 0
+     IF ( BcsScalJmin%type(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
+     IF ( BcsScalJmax%type(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
+     IF ( ibc .GT. 0 ) THEN
+        CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs(1,is), &
+             BcsScalJmin%ref(1,1,is),BcsScalJmax%ref(1,1,is), wrk1d,tmp1,wrk3d)
+     ENDIF
+  ENDDO
 
-  ip_b = 1 
-  DO k=1,kmax 
-     DO is=1,inb_scal
+! -----------------------------------------------------------------------
+! Impose bottom BCs at Jmin 
+! -----------------------------------------------------------------------
+  ip_b =                 1
+  DO k = 1,kmax
+     h1(ip_b:ip_b+imax-1) = BcsFlowJmin%ref(1:imax,k,1)
+     h2(ip_b:ip_b+imax-1) = BcsFlowJmin%ref(1:imax,k,2)
+     h3(ip_b:ip_b+imax-1) = BcsFlowJmin%ref(1:imax,k,3)
+     DO is = 1,inb_scal
         hs(ip_b:ip_b+imax-1,is) = BcsScalJmin%ref(1:imax,k,is) 
      ENDDO
-     h1(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,1)
-     h2(ip_b:ip_b+imax-1) = C_0_R ! no penetration
-     h3(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,2);  
-     ip_b=ip_b+nxy 
+     ip_b = ip_b + nxy
   ENDDO
 
-  ip_t = imax*(jmax-1)+1
-  DO k=1,kmax  
-     DO is=1,inb_scal 
+! -----------------------------------------------------------------------
+! Impose top BCs at Jmax
+! -----------------------------------------------------------------------
+  ip_t = imax*(jmax-1) + 1
+  DO k = 1,kmax
+     h1(ip_t:ip_t+imax-1) = BcsFlowJmax%ref(1:imax,k,1)
+     h2(ip_t:ip_t+imax-1) = BcsFlowJmax%ref(1:imax,k,2)
+     h3(ip_t:ip_t+imax-1) = BcsFlowJmax%ref(1:imax,k,3)
+     DO is = 1,inb_scal
         hs(ip_t:ip_t+imax-1,is) = BcsScalJmax%ref(1:imax,k,is)
      ENDDO
-     h1(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,1)
-     h2(ip_t:ip_t+imax-1) = C_0_R ! no penetration
-     h3(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,2);  
-     ip_t = ip_t + nxy 
+     ip_t = ip_t + nxy
   ENDDO
+!   bcs_hb(:,:,1:inb_vars) = C_0_R  ! default is no-slip 
+!   bcs_ht(:,:,1:inb_vars) = C_0_R
+  
+! ! -----------------------------------------------------------------------
+! ! Preliminaries
+! ! -----------------------------------------------------------------------
+!   ibc = 0
+!   IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
+!   IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
+!   IF ( ibc .GT. 0 ) THEN
+!      CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), h1, &
+!           bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,tmp11,wrk3d)
+!      CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), h3, &
+!           bcs_hb(1,1,2),bcs_ht(1,1,2), wrk1d,tmp11,wrk3d)
+!   ENDIF
+
+!   DO is = 1,inb_scal
+!      ibc = 0
+!      IF ( BcsScalJmin%ref(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
+!      IF ( BcsScalJmax%ref(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
+!      IF ( ibc .GT. 0 ) THEN
+!         CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs(1,is), &
+!              BcsScalJmin%ref(1,1,is),BcsScalJmax%ref(1,1,is), wrk1d,tmp11,wrk3d)
+!      ENDIF
+!   ENDDO
+
+
+!   ip_b = 1 
+!   DO k=1,kmax 
+!      DO is=1,inb_scal
+!         hs(ip_b:ip_b+imax-1,is) = BcsScalJmin%ref(1:imax,k,is) 
+!      ENDDO
+!      h1(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,1)
+!      h2(ip_b:ip_b+imax-1) = C_0_R ! no penetration
+!      h3(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,2);  
+!      ip_b=ip_b+nxy 
+!   ENDDO
+
+!   ip_t = imax*(jmax-1)+1
+!   DO k=1,kmax  
+!      DO is=1,inb_scal 
+!         hs(ip_t:ip_t+imax-1,is) = BcsScalJmax%ref(1:imax,k,is)
+!      ENDDO
+!      h1(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,1)
+!      h2(ip_t:ip_t+imax-1) = C_0_R ! no penetration
+!      h3(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,2);  
+!      ip_t = ip_t + nxy 
+!   ENDDO
 
   ptime = ptime + MPI_WTime()
 !

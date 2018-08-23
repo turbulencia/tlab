@@ -158,13 +158,13 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         IF    ( rkm_mode .EQ. RKM_EXP3 .OR. rkm_mode .EQ. RKM_EXP4 ) THEN 
            CALL TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(&
-                dte,etime, q,hq,s,hs,txc, vaux, wrk1d,wrk2d,wrk3d, &
+                dte,etime, q,hq,s,hs,txc, wrk1d,wrk2d,wrk3d, &
                 l_q, l_hq, l_txc, l_comm)
 
         ELSE 
            CALL TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(&
                 dte,etime, kex(rkm_substep), kim(rkm_substep), kco(rkm_substep), &
-                q,hq,s,hs,txc, vaux, wrk1d,wrk2d,wrk3d)
+                q,hq,s,hs,txc, wrk1d,wrk2d,wrk3d)
         ENDIF
 
      ELSE

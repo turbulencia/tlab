@@ -27,21 +27,21 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
      (dte, kex,kim,kco, &
      q,hq,u,v,w,h1,h2,h3,s,hs,&
      tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8, &
-     bcs_hb,bcs_ht, wrk1d,wrk2d,wrk3d)
+     wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field, isize_wrk1d, inb_scal
+  USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field, isize_wrk1d, inb_scal, inb_flow
   USE DNS_GLOBAL, ONLY : icalc_scal
   USE DNS_GLOBAL, ONLY : visc, schmidt, rossby
   USE DNS_GLOBAL, ONLY : buoyancy, coriolis
   USE DNS_GLOBAL, ONLY : bbackground
-  USE DNS_LOCAL,  ONLY : bcs_flow_jmin, bcs_flow_jmax
   USE DNS_LOCAL,  ONLY : idivergence
   USE BOUNDARY_BUFFER
+  USE BOUNDARY_BCS
 
   IMPLICIT NONE
 
@@ -54,17 +54,16 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
   TREAL, DIMENSION(isize_txc_field),     INTENT(OUT)  :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8
   TREAL, DIMENSION(isize_wrk1d,*),       INTENT(OUT)  :: wrk1d
   TREAL, DIMENSION(*),                   INTENT(OUT)  :: wrk2d,wrk3d
-  TREAL, DIMENSION(imax,kmax,*),         INTENT(OUT)  :: bcs_hb, bcs_ht
 
   TARGET tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,h2,wrk2d,u,v,w
 
 ! -----------------------------------------------------------------------
-  TINTEGER is,ij, k, nxy, ip, ip_b, ip_t 
+  TINTEGER iq,is,ij, k, nxy, ip, ip_b, ip_t 
   TINTEGER ibc, bcs(2,2)
   TREAL dummy, visc_exp, visc_imp, visc_tot, diff, alpha, beta, kef, aug
 
   TREAL, DIMENSION(:),        POINTER :: p_bcs
-  TREAL, DIMENSION(imax,kmax,inb_scal):: bcs_sb, bcs_st 
+  TREAL, DIMENSION(imax,kmax,4:6):: bcs_hb,bcs_ht    
 
   kef= kex/kim
   aug = C_1_R + kef 
@@ -92,10 +91,13 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
   DO k=1,kmax 
      ip_b = (k-1)*imax*jmax +1;    
      ip_t = ip_b + (jmax-1)*imax 
-     bcs_hb(:,k,1) = u(ip_b:ip_b+imax-1); bcs_hb(:,k,2) = w(ip_b:ip_b+imax-1) 
-     bcs_ht(:,k,1) = u(ip_t:ip_t+imax-1); bcs_ht(:,k,2) = w(ip_t:ip_t+imax-1)  
+     ! bcs_hb(:,k,1) = u(ip_b:ip_b+imax-1); bcs_hb(:,k,2) = w(ip_b:ip_b+imax-1) 
+     ! bcs_ht(:,k,1) = u(ip_t:ip_t+imax-1); bcs_ht(:,k,2) = w(ip_t:ip_t+imax-1)  
+     BcsFlowJmin%ref(1:imax,k,1) = u(ip_b:ip_b+imax-1); BcsFlowJmin%ref(1:imax,k,3) = w(ip_b:ip_b+imax-1)
+     BcsFlowJmax%ref(1:imax,k,1) = u(ip_t:ip_t+imax-1); BcsFlowJmax%ref(1:imax,k,3) = w(ip_t:ip_t+imax-1)
      DO is=1,inb_scal
-        bcs_sb(1:imax,k,is) = s(ip_b:ip_b+imax-1,is); bcs_st(1:imax,k,is) = s(ip_t:ip_t+imax-1,is) 
+!        bcs_sb(1:imax,k,is) = s(ip_b:ip_b+imax-1,is); bcs_st(1:imax,k,is) = s(ip_t:ip_t+imax-1,is) 
+        BcsScalJmin%ref(1:imax,k,is) = s(ip_b:ip_b+imax-1,is); BcsScalJmax%ref(1:imax,k,is) = s(ip_t:ip_t+imax-1,is)
      ENDDO
   ENDDO
 
@@ -114,9 +116,11 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
 
      DO k=1,kmax 
         ip=(k-1)*imax*jmax+1; 
-        bcs_hb(1:imax,k,6)=bcs_hb(1:imax,k,2) + visc_tot*dte*tmp2(ip:ip+imax-1) - dte*C_1_R;
+!        bcs_hb(1:imax,k,6)=bcs_hb(1:imax,k,2) + visc_tot*dte*tmp2(ip:ip+imax-1) - dte*C_1_R;
+        bcs_hb(1:imax,k,6)=BcsFlowJmin%ref(1:imax,k,3) + visc_tot*dte*tmp2(ip:ip+imax-1) - dte*C_1_R;
         ip=ip+(jmax-1)*imax;  
-        bcs_ht(1:imax,k,6)=bcs_ht(1:imax,k,2) + visc_tot*dte*tmp2(ip:ip+imax-1) - dte*C_1_R;
+!        bcs_ht(1:imax,k,6)=bcs_ht(1:imax,k,2) + visc_tot*dte*tmp2(ip:ip+imax-1) - dte*C_1_R;
+        bcs_ht(1:imax,k,6)=BcsFlowJmax%ref(1:imax,k,3) + visc_tot*dte*tmp2(ip:ip+imax-1) - dte*C_1_R;
      ENDDO
 
      CALL OPR_PARTIAL_Z(OPR_P1,imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d) 
@@ -157,9 +161,11 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
 
   DO k=1,kmax 
      ip=(k-1)*imax*jmax+1; 
-     bcs_hb(1:imax,k,4)=bcs_hb(1:imax,k,1) + visc_tot*dte*tmp2(ip:ip+imax-1)
+!     bcs_hb(1:imax,k,4)=bcs_hb(1:imax,k,1) + visc_tot*dte*tmp2(ip:ip+imax-1)
+     bcs_hb(1:imax,k,4)=BcsFlowJmin%ref(1:imax,k,1) + visc_tot*dte*tmp2(ip:ip+imax-1)
      ip=ip+(jmax-1)*imax;  
-     bcs_ht(1:imax,k,4)=bcs_ht(1:imax,k,1) + visc_tot*dte*tmp2(ip:ip+imax-1)
+!     bcs_ht(1:imax,k,4)=bcs_ht(1:imax,k,1) + visc_tot*dte*tmp2(ip:ip+imax-1)
+     bcs_ht(1:imax,k,4)=BcsFlowJmax%ref(1:imax,k,1) + visc_tot*dte*tmp2(ip:ip+imax-1)
   ENDDO
 
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), u, tmp3, wrk3d, wrk2d,wrk3d) 
@@ -267,8 +273,10 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
         CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s(1,is), tmp6,     tmp5,  wrk2d,wrk3d)  
 !        CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s,       tmp6,     tmp5,  wrk2d,wrk3d)  
         DO k=1,kmax 
-           ip=(k-1)*imax*jmax+1; bcs_hb(1:imax,k,3)= C_0_R + visc_tot*dte*tmp6(ip:ip+imax-1)
-           ip=ip+(jmax-1)*imax;  bcs_ht(1:imax,k,3)= C_0_R + visc_tot*dte*tmp6(ip:ip+imax-1)
+           ! ip=(k-1)*imax*jmax+1; bcs_hb(1:imax,k,3)= C_0_R + visc_tot*dte*tmp6(ip:ip+imax-1)
+           ! ip=ip+(jmax-1)*imax;  bcs_ht(1:imax,k,3)= C_0_R + visc_tot*dte*tmp6(ip:ip+imax-1)
+           ip=(k-1)*imax*jmax+1; BcsFlowJmin%ref(1:imax,k,2)= C_0_R + visc_tot*dte*tmp6(ip:ip+imax-1)
+           ip=ip+(jmax-1)*imax;  BcsFlowJmax%ref(1:imax,k,2)= C_0_R + visc_tot*dte*tmp6(ip:ip+imax-1)
         ENDDO
         CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s(1,is), tmp6, wrk3d, wrk2d,wrk3d) 
         DO ij=1,isize_field; 
@@ -296,9 +304,15 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
         beta =-C_1_R/alpha 
 
         ip_b = 1     ; ip_t = 1+ imax*kmax
-        DO k=1,kmax 
-           ip=(k-1)*imax*jmax+1; wrk2d(ip_b:ip_b+imax-1)=-alpha*aug*bcs_sb(1:imax,k,is); ip_b=ip_b+imax
-           ip=ip+(jmax-1)*imax;  wrk2d(ip_t:ip_t+imax-1)=-alpha*aug*bcs_st(1:imax,k,is); ip_t=ip_t+imax
+        DO k=1,kmax
+!!!!!! I THINK THIS IS WRONG AND SHOULD USE bcs_hb(:,:,3) and bcs_ht(:,:,3) instead of bcs_sb and bcs_st
+           ! ip=(k-1)*imax*jmax+1; wrk2d(ip_b:ip_b+imax-1)=-alpha*aug*bcs_sb(1:imax,k,is); ip_b=ip_b+imax
+           ! ip=ip+(jmax-1)*imax;  wrk2d(ip_t:ip_t+imax-1)=-alpha*aug*bcs_st(1:imax,k,is); ip_t=ip_t+imax
+!!!!!! I THINK THIS IS WRONG AND SHOULD USE BcsFlowJmin%ref(1:imax,k,2)
+           ! ip=(k-1)*imax*jmax+1; wrk2d(ip_b:ip_b+imax-1)=-alpha*aug*BcsScalJmin%ref(1:imax,k,is); ip_b=ip_b+imax
+           ! ip=ip+(jmax-1)*imax;  wrk2d(ip_t:ip_t+imax-1)=-alpha*aug*BcsScalJmax%ref(1:imax,k,is); ip_t=ip_t+imax
+           ip=(k-1)*imax*jmax+1; wrk2d(ip_b:ip_b+imax-1)=-alpha*aug*BcsFlowJmin%ref(1:imax,k,2); ip_b=ip_b+imax
+           ip=ip+(jmax-1)*imax;  wrk2d(ip_t:ip_t+imax-1)=-alpha*aug*BcsFlowJmax%ref(1:imax,k,2); ip_t=ip_t+imax
         ENDDO
         ip_b = 1     ; ip_t = 1+ imax*kmax
         CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, i0, beta, &
@@ -359,14 +373,14 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1
   DO k = 1,kmax
-     p_bcs => v(ip_b:); bcs_hb(1:imax,k,3) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-     p_bcs => v(ip_t:); bcs_ht(1:imax,k,3) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+     p_bcs => v(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+     p_bcs => v(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
   ENDDO
 
 ! pressure in tmp8, Oy derivative in tmp3
   ibc = 3
   CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, ibc, &
-       tmp1,tmp3, tmp2,tmp4, bcs_hb(1,1,3),bcs_ht(1,1,3), wrk1d,wrk1d(1,5),wrk3d)
+       tmp1,tmp3, tmp2,tmp4, BcsFlowJmin%ref(1,1,2),BcsFlowJmax%ref(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
 ! update pressure with correction from pressure solver 
   DO ij=1,isize_field 
@@ -392,33 +406,43 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
 ! -----------------------------------------------------------------------
 ! Preliminaries
 ! -----------------------------------------------------------------------
-
-  ibc = 0
 ! Default is Dirichlet -> values at boundary are kept const;
-! bcs_hb and bcs_ht initialized to old BC values above 
-  IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
-  IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
-  IF ( ibc .GT. 0 ) THEN
-     ! WATCH OUT - THIS IS REALLY GOING TO GIVE NO-FLUX (instead of constant flux) 
-     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), u, &
-          bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,tmp1,wrk3d)
-     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), w, &
-          bcs_hb(1,1,2),bcs_ht(1,1,2), wrk1d,tmp1,wrk3d)
-  ENDIF
+! BcsFlowJmin/Jmax for u and w initialized to old BC values above
+  BcsFlowJmin%ref(:,:,2) = C_0_R
+  BcsFlowJmax%ref(:,:,2) = C_0_R
+  DO iq = 1,inb_flow
+     ibc = 0
+     IF ( BcsFlowJmin%type(iq) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
+     IF ( BcsFlowJmax%type(iq) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
+     IF ( ibc .GT. 0 ) THEN
+! WATCH OUT - THIS IS REALLY GOING TO GIVE NO-FLUX (instead of constant flux) 
+        CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), q(1,iq), &
+             BcsFlowJmin%ref(1,1,iq),BcsFlowJmax%ref(1,1,iq), wrk1d,tmp1,wrk3d)
+     ENDIF
+  ENDDO
+
+  DO is = 1,inb_scal
+     ibc = 0
+     IF ( BcsScalJmin%type(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
+     IF ( BcsScalJmax%type(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
+     IF ( ibc .GT. 0 ) THEN
+! WATCH OUT - THIS IS REALLY GOING TO GIVE NO-FLUX (instead of constant flux)
+        CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), s(1,is), &
+             BcsScalJmin%ref(1,1,is),BcsScalJmax%ref(1,1,is), wrk1d,tmp1,wrk3d)
+     ENDIF
+  ENDDO
 
 ! -----------------------------------------------------------------------
 ! Impose bottom BCs at Jmin 
 ! -----------------------------------------------------------------------
   ip_b =                 1
   DO k = 1,kmax
-     u(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,1)
-     v(ip_b:ip_b+imax-1) = C_0_R               ! no penetration
-     w(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,2); 
-     IF ( icalc_scal .NE. 0 ) THEN 
-        DO is=1,inb_scal 
-           s(ip_b:ip_b+imax-1,is) = bcs_sb(1:imax,k,is) 
-        ENDDO
-     ENDIF
+     u(ip_b:ip_b+imax-1) = BcsFlowJmin%ref(1:imax,k,1)
+     v(ip_b:ip_b+imax-1) = BcsFlowJmin%ref(1:imax,k,2)
+     w(ip_b:ip_b+imax-1) = BcsFlowJmin%ref(1:imax,k,3)
+     DO is = 1,inb_scal
+        s(ip_b:ip_b+imax-1,is) = BcsScalJmin%ref(1:imax,k,is) 
+     ENDDO
      ip_b = ip_b + nxy
   ENDDO
 
@@ -427,16 +451,62 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
 ! -----------------------------------------------------------------------
   ip_t = imax*(jmax-1) + 1
   DO k = 1,kmax
-     u(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,1)
-     v(ip_t:ip_t+imax-1) = C_0_R               ! no penetration
-     w(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,2); 
-     IF ( icalc_scal .NE. 0 ) THEN 
-        DO is=1,inb_scal 
-           s(ip_t:ip_t+imax-1,is) = bcs_st(1:imax,k,is) 
-        ENDDO
-     ENDIF
+     u(ip_t:ip_t+imax-1) = BcsFlowJmax%ref(1:imax,k,1)
+     v(ip_t:ip_t+imax-1) = BcsFlowJmax%ref(1:imax,k,2)
+     w(ip_t:ip_t+imax-1) = BcsFlowJmax%ref(1:imax,k,3)
+     DO is = 1,inb_scal
+        s(ip_t:ip_t+imax-1,is) = BcsScalJmax%ref(1:imax,k,is)
+     ENDDO
      ip_t = ip_t + nxy
   ENDDO
+! ! -----------------------------------------------------------------------
+! ! Preliminaries
+! ! -----------------------------------------------------------------------
+
+!   ibc = 0
+! ! Default is Dirichlet -> values at boundary are kept const;
+! ! bcs_hb and bcs_ht initialized to old BC values above 
+!   IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
+!   IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
+!   IF ( ibc .GT. 0 ) THEN
+!      ! WATCH OUT - THIS IS REALLY GOING TO GIVE NO-FLUX (instead of constant flux) 
+!      CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), u, &
+!           bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,tmp1,wrk3d)
+!      CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), w, &
+!           bcs_hb(1,1,2),bcs_ht(1,1,2), wrk1d,tmp1,wrk3d)
+!   ENDIF
+
+! ! -----------------------------------------------------------------------
+! ! Impose bottom BCs at Jmin 
+! ! -----------------------------------------------------------------------
+!   ip_b =                 1
+!   DO k = 1,kmax
+!      u(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,1)
+!      v(ip_b:ip_b+imax-1) = C_0_R               ! no penetration
+!      w(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,2); 
+!      IF ( icalc_scal .NE. 0 ) THEN 
+!         DO is=1,inb_scal 
+!            s(ip_b:ip_b+imax-1,is) = bcs_sb(1:imax,k,is) 
+!         ENDDO
+!      ENDIF
+!      ip_b = ip_b + nxy
+!   ENDDO
+
+! ! -----------------------------------------------------------------------
+! ! Impose top BCs at Jmax
+! ! -----------------------------------------------------------------------
+!   ip_t = imax*(jmax-1) + 1
+!   DO k = 1,kmax
+!      u(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,1)
+!      v(ip_t:ip_t+imax-1) = C_0_R               ! no penetration
+!      w(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,2); 
+!      IF ( icalc_scal .NE. 0 ) THEN 
+!         DO is=1,inb_scal 
+!            s(ip_t:ip_t+imax-1,is) = bcs_st(1:imax,k,is) 
+!         ENDDO
+!      ENDIF
+!      ip_t = ip_t + nxy
+!   ENDDO
 
   RETURN
 END SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3

@@ -28,7 +28,7 @@
 !#
 !########################################################################
 SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
-     q,hq,s,hs, txc, vaux, wrk1d,wrk2d,wrk3d, l_q,l_hq,l_txc,l_comm)
+     q,hq,s,hs, txc, wrk1d,wrk2d,wrk3d, l_q,l_hq,l_txc,l_comm)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -40,7 +40,6 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   USE DNS_GLOBAL,    ONLY : damkohler, epbackground,pbackground
   USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle
   USE THERMO_GLOBAL, ONLY : imixture
-  USE DNS_LOCAL,     ONLY : VA_BCS_HT, VA_BCS_HB, vindex
   USE DNS_LOCAL,     ONLY : imode_rhs
   USE BOUNDARY_BUFFER
 
@@ -49,7 +48,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   TREAL dte,etime
   TREAL, DIMENSION(isize_field, *)    :: q,hq, s,hs
   TREAL, DIMENSION(isize_txc_field,*) :: txc
-  TREAL, DIMENSION(*)                 :: wrk1d,wrk2d,wrk3d, vaux
+  TREAL, DIMENSION(*)                 :: wrk1d,wrk2d,wrk3d
 
   TREAL, DIMENSION(isize_particle,*)  :: l_q, l_hq, l_txc
   TREAL, DIMENSION(*)                 :: l_comm
@@ -81,8 +80,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
             idiffusion .EQ. EQNS_EXPLICIT         ) THEN
      CALL FI_SOURCES_FLOW(q,s, hq, txc(1,1), wrk1d,wrk2d,wrk3d)
      CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
-          q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-          vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), wrk1d,wrk2d,wrk3d)
+          q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
      
      CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
      DO is = 1,inb_scal
@@ -96,8 +94,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
             idiffusion .EQ. EQNS_EXPLICIT            ) THEN
      CALL FI_SOURCES_FLOW(q,s, hq, txc(1,1), wrk1d,wrk2d,wrk3d)
      CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
-          q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-          vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), wrk1d,wrk2d,wrk3d)
+          q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
      
      CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
      DO is = 1,inb_scal
@@ -112,8 +109,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
      IF      ( imode_rhs .EQ. EQNS_RHS_SPLIT       ) THEN 
         CALL FI_SOURCES_FLOW(q,s, hq, txc(1,1), wrk1d,wrk2d,wrk3d)
         CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
-             q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), wrk1d,wrk2d,wrk3d)
+             q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
         
         CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
         DO is = 1,inb_scal
@@ -125,8 +121,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
         CALL FI_SOURCES_FLOW(q,s, hq, txc(1,1),          wrk1d,wrk2d,wrk3d)
         CALL FI_SOURCES_SCAL(  s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
         CALL RHS_GLOBAL_INCOMPRESSIBLE_1(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
-             q,hq, s,hs, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), wrk1d,wrk2d,wrk3d)
+             q,hq, s,hs, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
 
      ELSE IF ( imode_rhs .EQ. EQNS_RHS_NONBLOCKING ) THEN 
 #ifdef USE_PSFFT 
@@ -136,7 +131,6 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
              txc(1,3), txc(1,4), txc(1,5), txc(1,6), txc(1,7), txc(1,8),txc(1,9),txc(1,10), &
              txc(1,11),txc(1,12),txc(1,13),txc(1,14),&
              hq(1,1),hq(1,2),hq(1,3), hs(1,1), &
-             vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), &
              wrk1d,wrk2d,wrk3d)
 #else
         CALL IO_WRITE_ASCII(efile,'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Need compiling flag -DUSE_PSFFT.')

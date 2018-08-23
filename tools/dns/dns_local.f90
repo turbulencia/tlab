@@ -57,11 +57,6 @@ MODULE DNS_LOCAL
   TREAL    :: bcs_sigma_trans
   TREAL    :: bcs_p_imin, bcs_p_imax, bcs_p_jmin, bcs_p_jmax, bcs_p_kmin, bcs_p_kmax
 
-! Incompressible
-  TINTEGER :: bcs_flow_imin, bcs_flow_imax
-  TINTEGER :: bcs_flow_jmin, bcs_flow_jmax
-  TINTEGER :: bcs_flow_kmin, bcs_flow_kmax
-
 ! ###########################################################
 ! Filters
 ! ###########################################################
