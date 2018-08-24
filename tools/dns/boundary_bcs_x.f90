@@ -128,7 +128,8 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
 
 ! ###################################################################
 ! forcing terms in array inf_rhs
-  IF ( bcs_euler_imin .EQ. DNS_BCS_INFLOW ) THEN
+!  IF ( bcs_euler_imin .EQ. DNS_BCS_INFLOW ) THEN
+  IF ( ifrc_mode .NE. 0 ) THEN
      isize = inb_flow + inb_scal_array
      inf_rhs(:,:,isize) = C_0_R
 

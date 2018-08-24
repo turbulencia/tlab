@@ -230,38 +230,6 @@ IMPLICIT NONE
      h2(ip_t:ip_t+imax-1) = BcsFlowJmax%ref(1:imax,k,2)
      h3(ip_t:ip_t+imax-1) = BcsFlowJmax%ref(1:imax,k,3); ip_t = ip_t + nxy
   ENDDO
-! ! -----------------------------------------------------------------------
-! ! Preliminaries
-! ! -----------------------------------------------------------------------
-!   ibc = 0
-!   bcs_hb(:,:,1:2) = C_0_R ! default is no-slip (dirichlet)
-!   bcs_ht(:,:,1:2) = C_0_R
-!   IF ( bcs_flow_jmin .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
-!   IF ( bcs_flow_jmax .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
-!   IF ( ibc .GT. 0 ) THEN
-!      CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), h1, bcs_hb(1,1,1),bcs_ht(1,1,1), wrk1d,tmp1,wrk3d)
-!      CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), h3, bcs_hb(1,1,2),bcs_ht(1,1,2), wrk1d,tmp1,wrk3d)
-!   ENDIF
-
-! ! -----------------------------------------------------------------------
-! ! Impose bottom BCs at Jmin 
-! ! -----------------------------------------------------------------------
-!   ip_b =                 1
-!   DO k = 1,kmax
-!      h1(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,1)
-!      h2(ip_b:ip_b+imax-1) = C_0_R               ! no penetration
-!      h3(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,2); ip_b = ip_b + nxy
-!   ENDDO
-
-! ! -----------------------------------------------------------------------
-! ! Impose top BCs at Jmax
-! ! -----------------------------------------------------------------------
-!   ip_t = imax*(jmax-1) + 1
-!   DO k = 1,kmax
-!      h1(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,1)
-!      h2(ip_t:ip_t+imax-1) = C_0_R               ! no penetration
-!      h3(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,2); ip_t = ip_t + nxy
-!   ENDDO
 
   RETURN
 END SUBROUTINE RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2

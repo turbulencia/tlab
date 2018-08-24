@@ -10,7 +10,6 @@ MODULE DNS_LOCAL
   SAVE
 
   TINTEGER, PARAMETER :: MAX_SAVEPLANES = 10
-  TINTEGER, PARAMETER :: MAX_FRC_FREC   = 32
 
 ! ###################################################################
 ! Iteration
@@ -45,9 +44,6 @@ MODULE DNS_LOCAL
 ! Boundary conditions
 ! ###################################################################
 ! Compressible
-  TINTEGER :: bcs_euler_imin, bcs_euler_imax
-  TINTEGER :: bcs_euler_jmin, bcs_euler_jmax
-  TINTEGER :: bcs_euler_kmin, bcs_euler_kmax
   TINTEGER :: bcs_inf(2,2,3), bcs_out(2,2,3) ! 1. index: lower and upper values
                                              ! 2. index: derivative order
                                              ! 3. index: direction
@@ -61,27 +57,6 @@ MODULE DNS_LOCAL
 ! Filters
 ! ###########################################################
   TINTEGER :: FilterDomainStep
-
-! ###################################################################
-! Inflow field in spatial mode
-! ###################################################################
-  TYPE(grid_dt), DIMENSION(3) :: g_inf
-
-  TINTEGER :: ifrc_mode, ifrc_ifield
-  TREAL    :: frc_length, frc_adapt
-
-  TYPE(filter_dt), DIMENSION(3) :: FilterInflow
-  TINTEGER :: FilterInflowStep
-
-! ###################################################################
-! Discrete forcing
-! ###################################################################
-  TINTEGER :: ifrcdsc_mode
-  TREAL    :: frc_delta
-  
-  TINTEGER :: nx2d, nx3d, nz3d
-  TREAL    :: A2D(MAX_FRC_FREC), Phix2d(MAX_FRC_FREC)
-  TREAL    :: A3D(MAX_FRC_FREC), Phix3d(MAX_FRC_FREC), Phiz3d(MAX_FRC_FREC)
 
 ! ###################################################################
 ! Output data

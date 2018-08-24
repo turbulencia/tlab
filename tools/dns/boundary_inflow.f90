@@ -11,6 +11,7 @@
 !########################################################################
 MODULE BOUNDARY_INFLOW
 
+  USE DNS_TYPES,     ONLY : filter_dt, grid_dt
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow, inb_scal, inb_scal_array, icalc_flow,icalc_scal
   USE DNS_GLOBAL,    ONLY : imode_eqns, imode_flow, itransport
@@ -18,18 +19,31 @@ MODULE BOUNDARY_INFLOW
   USE DNS_GLOBAL,    ONLY : rtime,itime
   USE DNS_GLOBAL,    ONLY : visc,damkohler
   USE THERMO_GLOBAL, ONLY : imixture
-  USE DNS_LOCAL,     ONLY : g_inf
-  USE DNS_LOCAL,     ONLY : FilterInflow
-  
-  USE DNS_LOCAL,     ONLY : ifrc_mode, ifrc_ifield, frc_adapt
-  USE DNS_LOCAL,     ONLY : frc_length, frc_adapt, frc_delta, ifrcdsc_mode
-  USE DNS_LOCAL,     ONLY : nx2d, nx3d, nz3d, A2D, A3D, Phix2d, Phix3d, Phiz3d
+
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
 
   IMPLICIT NONE
   SAVE
+  
+  TINTEGER, PARAMETER :: MAX_FRC_FREC   = 32
+
+  TYPE(grid_dt), DIMENSION(3) :: g_inf
+
+  TINTEGER :: ifrc_mode, ifrc_ifield
+  TREAL    :: frc_length, frc_adapt
+
+  TYPE(filter_dt), DIMENSION(3) :: FilterInflow
+  TINTEGER :: FilterInflowStep
+
+! Discrete forcing
+  TINTEGER :: ifrcdsc_mode
+  TREAL    :: frc_delta
+  
+  TINTEGER :: nx2d, nx3d, nz3d
+  TREAL    :: A2D(MAX_FRC_FREC), Phix2d(MAX_FRC_FREC)
+  TREAL    :: A3D(MAX_FRC_FREC), Phix3d(MAX_FRC_FREC), Phiz3d(MAX_FRC_FREC)
 
 CONTAINS
 !########################################################################

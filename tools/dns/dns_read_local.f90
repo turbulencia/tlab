@@ -13,6 +13,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE DNS_LOCAL
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
+  USE BOUNDARY_INFLOW
   
   IMPLICIT NONE
 
@@ -170,9 +171,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[BoundaryConditions]')
-  CALL IO_WRITE_ASCII(bakfile, '#EulerI=<none/nonreflective/inflow/freeslip/noslip>')
-  CALL IO_WRITE_ASCII(bakfile, '#EulerJ=<none/nonreflective/inflow/freeslip/noslip>')
-  CALL IO_WRITE_ASCII(bakfile, '#EulerK=<none/nonreflective/inflow/freeslip/noslip>')
+  CALL IO_WRITE_ASCII(bakfile, '#ScalarImin=<none/dirichlet/neumman>')
+  CALL IO_WRITE_ASCII(bakfile, '#ScalarJmin=<none/dirichlet/neumman>')
+  CALL IO_WRITE_ASCII(bakfile, '#ScalarKmin=<none/dirichlet/neumman>')
+  CALL IO_WRITE_ASCII(bakfile, '#VelocityImin=<none/dirichlet/neumman>')
+  CALL IO_WRITE_ASCII(bakfile, '#VelocityJmin=<none/dirichlet/neumman>')
+  CALL IO_WRITE_ASCII(bakfile, '#VelocityKmin=<none/dirichlet/neumman>')
   CALL IO_WRITE_ASCII(bakfile, '#ViscousI=<none/inflow/outflow>')
   CALL IO_WRITE_ASCII(bakfile, '#ViscousJ=<none/inflow/outflow>')
   CALL IO_WRITE_ASCII(bakfile, '#ViscousK=<none/inflow/outflow>')
@@ -181,78 +185,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#SigmaInfImax=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#SigmaInfJ=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#BetaTransverse=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#ScalarImin=<none/dirichlet/neumman>')
-  CALL IO_WRITE_ASCII(bakfile, '#ScalarJmin=<none/dirichlet/neumman>')
-  CALL IO_WRITE_ASCII(bakfile, '#ScalarKmin=<none/dirichlet/neumman>')
-  CALL IO_WRITE_ASCII(bakfile, '#VelocityImin=<none/dirichlet/neumman>')
-  CALL IO_WRITE_ASCII(bakfile, '#VelocityJmin=<none/dirichlet/neumman>')
-  CALL IO_WRITE_ASCII(bakfile, '#VelocityKmin=<none/dirichlet/neumman>')
-
-! -------------------------------------------------------------------
-! Euler terms
-! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'EulerI', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'          ) THEN; bcs_euler_imin = DNS_BCS_NONE;      bcs_euler_imax = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'nonreflective' ) THEN; bcs_euler_imin = DNS_BCS_NR;        bcs_euler_imax = DNS_BCS_NR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'inflow'        ) THEN; bcs_euler_imin = DNS_BCS_INFLOW;    bcs_euler_imax = DNS_BCS_NR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip'      ) THEN; bcs_euler_imin = DNS_BCS_NEUMANN;   bcs_euler_imax = DNS_BCS_NEUMANN
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'        ) THEN; bcs_euler_imin = DNS_BCS_DIRICHLET; bcs_euler_imax = DNS_BCS_DIRICHLET
-  ELSE
-     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.EulerI.')
-     CALL DNS_STOP(DNS_ERROR_IBC)
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'EulerJ', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'          ) THEN; bcs_euler_jmin = DNS_BCS_NONE;      bcs_euler_jmax = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'nonreflective' ) THEN; bcs_euler_jmin = DNS_BCS_NR;        bcs_euler_jmax = DNS_BCS_NR 
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'inflow'        ) THEN; bcs_euler_jmin = DNS_BCS_INFLOW;    bcs_euler_jmax = DNS_BCS_NR 
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip'      ) THEN; bcs_euler_jmin = DNS_BCS_NEUMANN;   bcs_euler_jmax = DNS_BCS_NEUMANN
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'        ) THEN; bcs_euler_jmin = DNS_BCS_DIRICHLET; bcs_euler_jmax = DNS_BCS_DIRICHLET
-  ELSE
-     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.EulerJ.')
-     CALL DNS_STOP(DNS_ERROR_JBC)
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'EulerK', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'          ) THEN; bcs_euler_kmin = DNS_BCS_NONE;      bcs_euler_kmax = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'nonreflective' ) THEN; bcs_euler_kmin = DNS_BCS_NR;        bcs_euler_kmax = DNS_BCS_NR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'inflow'        ) THEN; bcs_euler_kmin = DNS_BCS_INFLOW;    bcs_euler_kmax = DNS_BCS_NR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip'      ) THEN; bcs_euler_kmin = DNS_BCS_NEUMANN;   bcs_euler_kmax = DNS_BCS_NEUMANN
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'        ) THEN; bcs_euler_kmin = DNS_BCS_DIRICHLET; bcs_euler_kmax = DNS_BCS_DIRICHLET
-  ELSE
-     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.EulerK.')
-     CALL DNS_STOP(DNS_ERROR_KBC)
-  ENDIF
-
-! -------------------------------------------------------------------
-! Viscous terms
-! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousI', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'    ) THEN; bcs_visc_imin = 0;  bcs_visc_imax = 0
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'inflow'  ) THEN; bcs_visc_imin = 1;  bcs_visc_imax = 2
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'outflow' ) THEN; bcs_visc_imin = 2;  bcs_visc_imax = 2
-  ELSE
-     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.ViscousI.')
-     CALL DNS_STOP(DNS_ERROR_IVSICBC)
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousJ', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'    ) THEN; bcs_visc_jmin = 0;  bcs_visc_jmax = 0
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'inflow'  ) THEN; bcs_visc_jmin = 1;  bcs_visc_jmax = 2
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'outflow' ) THEN; bcs_visc_jmin = 2;  bcs_visc_jmax = 2
-  ELSE
-     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.ViscousJ.')
-     CALL DNS_STOP(DNS_ERROR_JVSICBC)
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousK', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'    ) THEN; bcs_visc_kmin = 0;  bcs_visc_kmax = 0
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'inflow'  ) THEN; bcs_visc_kmin = 1;  bcs_visc_kmax = 2
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'outflow' ) THEN; bcs_visc_kmin = 2;  bcs_visc_kmax = 2
-  ELSE
-     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.ViscousK.')
-     CALL DNS_STOP(DNS_ERROR_KVSICBC)
-  ENDIF
 
 ! -------------------------------------------------------------------
 ! Scalar terms
@@ -393,6 +325,36 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityKmax.')
      CALL DNS_STOP(DNS_ERROR_IBC)
+  ENDIF
+
+! -------------------------------------------------------------------
+! Viscous terms
+! -------------------------------------------------------------------
+  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousI', 'none', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'    ) THEN; bcs_visc_imin = 0;  bcs_visc_imax = 0
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'inflow'  ) THEN; bcs_visc_imin = 1;  bcs_visc_imax = 2
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'outflow' ) THEN; bcs_visc_imin = 2;  bcs_visc_imax = 2
+  ELSE
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.ViscousI.')
+     CALL DNS_STOP(DNS_ERROR_IVSICBC)
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousJ', 'none', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'    ) THEN; bcs_visc_jmin = 0;  bcs_visc_jmax = 0
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'inflow'  ) THEN; bcs_visc_jmin = 1;  bcs_visc_jmax = 2
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'outflow' ) THEN; bcs_visc_jmin = 2;  bcs_visc_jmax = 2
+  ELSE
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.ViscousJ.')
+     CALL DNS_STOP(DNS_ERROR_JVSICBC)
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousK', 'none', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'    ) THEN; bcs_visc_kmin = 0;  bcs_visc_kmax = 0
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'inflow'  ) THEN; bcs_visc_kmin = 1;  bcs_visc_kmax = 2
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'outflow' ) THEN; bcs_visc_kmin = 2;  bcs_visc_kmax = 2
+  ELSE
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.ViscousK.')
+     CALL DNS_STOP(DNS_ERROR_KVSICBC)
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -1009,9 +971,9 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      g_inf(1)%uniform  = .TRUE.
   ENDIF
   
-! ###################################################################
+! -------------------------------------------------------------------
 ! Discrete Forcing
-! ###################################################################
+! -------------------------------------------------------------------
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[Discrete]')
   CALL IO_WRITE_ASCII(bakfile, '#Type=<Varicose/Sinuous/Gaussian/Step>')
@@ -1083,22 +1045,19 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
 ! Make sure periodic BCs are not modified
   IF ( g(1)%periodic ) THEN;
-     bcs_euler_imin    = DNS_BCS_NONE; bcs_euler_imax    = DNS_BCS_NONE
-     bcs_visc_imin     = DNS_BCS_NONE; bcs_visc_imax     = DNS_BCS_NONE
      BcsFlowImin%type(:)  = DNS_BCS_NONE; BcsFlowImax%type(:)  = DNS_BCS_NONE
      BcsScalImin%type(:)  = DNS_BCS_NONE; BcsScalImax%type(:)  = DNS_BCS_NONE
+     bcs_visc_imin     = DNS_BCS_NONE; bcs_visc_imax     = DNS_BCS_NONE
   ENDIF
   IF ( g(2)%periodic ) THEN;
-     bcs_euler_jmin    = DNS_BCS_NONE; bcs_euler_jmax    = DNS_BCS_NONE
-     bcs_visc_jmin     = DNS_BCS_NONE; bcs_visc_jmax     = DNS_BCS_NONE
      BcsFlowJmin%type(:)  = DNS_BCS_NONE; BcsFlowJmax%type(:)  = DNS_BCS_NONE
      BcsScalJmin%type(:)  = DNS_BCS_NONE; BcsScalJmax%type(:)  = DNS_BCS_NONE
+     bcs_visc_jmin     = DNS_BCS_NONE; bcs_visc_jmax     = DNS_BCS_NONE
   ENDIF
   IF ( g(3)%periodic ) THEN;
-     bcs_euler_kmin    = DNS_BCS_NONE; bcs_euler_kmax    = DNS_BCS_NONE
-     bcs_visc_kmin     = DNS_BCS_NONE; bcs_visc_kmax     = DNS_BCS_NONE
      BcsFlowKmin%type(:)  = DNS_BCS_NONE; BcsFlowKmax%type(:)  = DNS_BCS_NONE
      BcsScalKmin%type(:)  = DNS_BCS_NONE; BcsScalKmax%type(:)  = DNS_BCS_NONE
+     bcs_visc_kmin     = DNS_BCS_NONE; bcs_visc_kmax     = DNS_BCS_NONE
   ENDIF
 
 ! BCs for OPR_PARTIAL at xmin (1,*) and xmax (2,*)
