@@ -25,7 +25,7 @@
 !# txc   In    3D auxiliar array of size 6 or 9
 !#
 !########################################################################
-SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d)
+SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -33,7 +33,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, v
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL,     ONLY : VA_BCS_HT, VA_BCS_HB, VA_BCS_VO, VA_BCS_VI, vindex, bcs_euler_drift
+  USE DNS_LOCAL,     ONLY : bcs_euler_drift
   USE BOUNDARY_BUFFER
 #ifdef LES
   USE DNS_LOCAL, ONLY : rkm_substep
@@ -56,7 +56,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, v
 
   TREAL, DIMENSION(isize_field,*) :: q, hq, s, hs, txc
   TREAL, DIMENSION(*)             :: q_inf, s_inf
-  TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d, vaux
+  TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
 
   TARGET :: q, hq
 
@@ -228,16 +228,15 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, v
   ENDIF
 
   IF ( .NOT. g(2)%periodic ) THEN
-     CALL BOUNDARY_BCS_Y(isize_field, M2_max, rho,u,v,w,p,GAMMA_LOC(1),s, &
-          vaux(vindex(VA_BCS_HB)),vaux(vindex(VA_BCS_HT)), h0,h1,h2,h3,h4,hs,&
+     CALL BOUNDARY_BCS_Y(isize_field, M2_max,        rho,u,v,w,p,GAMMA_LOC(1),s, &
+          h0,h1,h2,h3,h4,hs,&
           txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), AUX_LOC(1), wrk2d,wrk3d)
   ENDIF
 
   IF ( .NOT. g(1)%periodic ) THEN
      CALL BOUNDARY_BCS_X(isize_field, M2_max, etime, rho,u,v,w,p,GAMMA_LOC(1),s, &
           q_inf,s_inf, &
-          vaux(vindex(VA_BCS_VI)), vaux(vindex(VA_BCS_VO)), h0,h1,h2,h3,h4,hs,&
-          txc, AUX_LOC(1), wrk2d,wrk3d)
+          h0,h1,h2,h3,h4,hs, txc, AUX_LOC(1), wrk2d,wrk3d)
   ENDIF
 
 #undef GAMMA_LOC

@@ -41,11 +41,6 @@ SUBROUTINE DNS_VAUX(isize_vaux)
 #endif
   
 ! #######################################################################
-  vsize(VA_BCS_HT) = imax*kmax* inb_vars
-  vsize(VA_BCS_HB) = imax*kmax* inb_vars
-  vsize(VA_BCS_VI) = jmax*kmax*(inb_vars+1)
-  vsize(VA_BCS_VO) = jmax*kmax* inb_vars
-
 ! -----------------------------------------------------------------------
   inb_mean_spatial = MA_MOMENTUM_SIZE+MS_SCALAR_SIZE*inb_scal
   inb_mean_temporal= MAX_AVG_TEMPORAL

@@ -18,7 +18,7 @@
 !#
 !########################################################################
 SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
-     q_inf,z1_inf, bcs_vi,bcs_vo, h0,h1,h2,h3,h4,zh1,&
+     q_inf,z1_inf, h0,h1,h2,h3,h4,zh1,&
      txc, aux2d, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
@@ -26,6 +26,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
   USE THERMO_GLOBAL, ONLY : imixture, gama0, THERMO_AI
   USE DNS_LOCAL
   USE BOUNDARY_INFLOW
+  USE BOUNDARY_BCS
 
   IMPLICIT NONE
 
@@ -38,14 +39,14 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
   TREAL, DIMENSION(imax,jmax,kmax)   :: rho, u, v, w, p, gama, h0, h1, h2, h3, h4
   TREAL, DIMENSION(imax,jmax,kmax,*) :: z1, zh1, txc
   TREAL, DIMENSION(*)                :: q_inf, z1_inf
-  TREAL, DIMENSION(jmax,kmax,*)      :: aux2d, bcs_vi, bcs_vo
+  TREAL, DIMENSION(jmax,kmax,*)      :: aux2d
   TREAL, DIMENSION(*)                :: wrk2d, wrk3d
 
   TARGET aux2d
 
 ! -------------------------------------------------------------------
   TINTEGER j, k, is, nt, inb_scal_loc, isize, iflag_min, iflag_max, idir, ip0, bcs(2,1)
-  TREAL prefactor, pl_out, pl_inf1, pl_inf2, pl_inf3, dummy
+  TREAL prefactor, pl_out, pl_inf1, pl_inf2, pl_inf3 !, dummy
 
   TREAL, DIMENSION(:,:,:), POINTER :: tmin, mmin, tmax, mmax, inf_rhs
 
@@ -179,8 +180,8 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     CALL BOUNDARY_BCS_FLOW_NR_3(iflag_min, idir, nt, pl_inf3,pl_inf1, inf_rhs, bcs_vi,&
-          bcs_vi(1,1,inb_vars+1), &
+     CALL BOUNDARY_BCS_FLOW_NR_3(iflag_min, idir, nt, pl_inf3,pl_inf1, inf_rhs, BcsFlowImin%ref, &
+          BcsFlowImin%ref(1,1,inb_flow+1), & 
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
@@ -238,8 +239,8 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(1), hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     CALL BOUNDARY_BCS_FLOW_NR_3(iflag_max, idir, nt, pl_out, pl_inf2, inf_rhs, bcs_vo,&
-          dummy, &
+     CALL BOUNDARY_BCS_FLOW_NR_3(iflag_max, idir, nt, pl_out, pl_inf2, inf_rhs, BcsFlowImax%ref, & 
+          BcsFlowImax%ref(1,1,inb_flow+1), & 
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
@@ -299,7 +300,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
            ENDDO
         ENDDO
         CALL BOUNDARY_BCS_SCAL_NR_3(iflag_min, idir, nt, pl_inf3, pl_inf1, &
-             inf_rhs, inf_rhs(1,1,5+is), bcs_vi, bcs_vi(1,1,5+is), bcs_vi(1,1,inb_vars+1), &
+             inf_rhs, inf_rhs(1,1,5+is), BcsFlowImin%ref, BcsScalImin%ref, BcsScalImin%ref(1,1,inb_scal+1), &
              r_loc(1,1), u_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1),&
              drdn_loc(1,1), dudn_loc(1,1), dz1dn_loc(1,1), dpdn_loc(1,1),&
              buoyancy%vector(1), hz1_loc(1,1))
@@ -357,7 +358,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
            ENDDO
         ENDDO
         CALL BOUNDARY_BCS_SCAL_NR_3(iflag_max, idir, nt, pl_out, pl_inf2, &
-             inf_rhs, inf_rhs(1,1,5+is), bcs_vo, bcs_vo(1,1,5+is), dummy, &
+             inf_rhs, inf_rhs(1,1,5+is), BcsFlowImax%ref, BcsScalImax%ref, BcsScalImax%ref(1,1,inb_scal+1), &
              r_loc(1,1), u_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1),&
              drdn_loc(1,1), dudn_loc(1,1), dz1dn_loc(1,1), dpdn_loc(1,1),&
              buoyancy%vector(1), hz1_loc(1,1))

@@ -27,6 +27,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   USE DNS_TOWER
   USE LAGRANGE_GLOBAL, ONLY : itrajectory, l_g
   USE BOUNDARY_INFLOW
+  USE BOUNDARY_BCS
   USE PARTICLE_TRAJECTORIES
 #ifdef LES
   USE LES_GLOBAL, ONLY : iles
@@ -96,7 +97,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 
   DO WHILE ( itime .LT. nitera_last )
 
-     CALL TIME_RUNGEKUTTA(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
+     CALL TIME_RUNGEKUTTA(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
           l_q, l_hq, l_txc, l_comm)
 
      itime = itime + 1
@@ -111,7 +112,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 
      ! This should be integrated into the inflow buffer, as the filter contribution
      IF ( MOD(itime-nitera_first,FilterInflowStep) .EQ. 0 ) THEN ! Inflow filter in spatial mode
-        CALL BOUNDARY_INFLOW_FILTER(vaux(vindex(VA_BCS_VI)), q,s, txc, wrk1d,wrk2d,wrk3d)
+        CALL BOUNDARY_INFLOW_FILTER(BcsFlowImin%ref, BcsScalImin%ref, q,s, txc, wrk1d,wrk2d,wrk3d)
      ENDIF
 
 ! -----------------------------------------------------------------------

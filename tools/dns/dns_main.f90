@@ -421,9 +421,7 @@ PROGRAM DNS
      CALL BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
   ENDIF
 
-  CALL BOUNDARY_BCS_INITIALIZE(vaux(vindex(VA_BCS_HT)),  vaux(vindex(VA_BCS_HB)), &
-                           vaux(vindex(VA_BCS_VI)),  vaux(vindex(VA_BCS_VO)), &
-                           q,s, txc, wrk3d)
+  CALL BOUNDARY_BCS_INITIALIZE(wrk3d)
 
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
      CALL BOUNDARY_INFLOW_INITIALIZE(rtime, q_inf,s_inf, txc, wrk2d,wrk3d)

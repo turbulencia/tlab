@@ -23,15 +23,15 @@ CONTAINS
   
 ! ###################################################################
 ! ###################################################################
-SUBROUTINE BOUNDARY_BCS_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
+SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 
   USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
-  USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim
+  USE DNS_GLOBAL,    ONLY : imode_eqns
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, inb_flow_array,inb_scal_array
   USE DNS_GLOBAL,    ONLY : g,area
   USE DNS_GLOBAL,    ONLY : mach, pbg, qbg
-  USE THERMO_GLOBAL, ONLY : imixture, gama0
-  USE DNS_LOCAL,     ONLY : bcs_euler_drift, bcs_p_imin,bcs_p_imax, bcs_p_jmin,bcs_p_jmax, bcs_p_kmin,bcs_p_kmax
+  USE THERMO_GLOBAL, ONLY : gama0
+  USE DNS_LOCAL,     ONLY : bcs_p_imin,bcs_p_imax, bcs_p_jmin,bcs_p_jmax, bcs_p_kmin,bcs_p_kmax
   USE BOUNDARY_BUFFER
 #ifdef USE_MPI
   USE DNS_GLOBAL,    ONLY : inb_scal_array
@@ -45,13 +45,10 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
 #include "mpif.h"
 #endif
   
-  TREAL, DIMENSION(imax,kmax,*)      :: bcs_hb, bcs_ht
-  TREAL, DIMENSION(jmax,kmax,*)      :: bcs_vi, bcs_vo
-  TREAL, DIMENSION(imax*jmax*kmax,*) :: q, s, txc
   TREAL, DIMENSION(*)                :: wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER i,j,k, is, ip
+  TINTEGER j, is
   TREAL AVG1V1D, AVG_IK, prefactor, dummy
   TREAL diam_loc, thick_loc, ycenter, r1, r05, FLOW_JET_TEMPORAL
 
@@ -69,19 +66,20 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
 ! Allocate memory space
 ! ###################################################################
 ! we use inb_flow_array and inb_scal_array to have space for aux fields
-  ALLOCATE( BcsFlowImin%ref(jmax,kmax,inb_flow_array) )
-  ALLOCATE( BcsFlowImax%ref(jmax,kmax,inb_flow_array) )
-  ALLOCATE( BcsFlowJmin%ref(imax,kmax,inb_flow_array) )
-  ALLOCATE( BcsFlowJmax%ref(imax,kmax,inb_flow_array) )
-  ALLOCATE( BcsFlowKmin%ref(imax,jmax,inb_flow_array) ) ! not yet used
-  ALLOCATE( BcsFlowKmax%ref(imax,jmax,inb_flow_array) )
+! we add space at the end for the shape factor
+  ALLOCATE( BcsFlowImin%ref(jmax,kmax,inb_flow_array+1) )
+  ALLOCATE( BcsFlowImax%ref(jmax,kmax,inb_flow_array+1) )
+  ALLOCATE( BcsFlowJmin%ref(imax,kmax,inb_flow_array+1) )
+  ALLOCATE( BcsFlowJmax%ref(imax,kmax,inb_flow_array+1) )
+  ALLOCATE( BcsFlowKmin%ref(imax,jmax,inb_flow_array+1) ) ! not yet used
+  ALLOCATE( BcsFlowKmax%ref(imax,jmax,inb_flow_array+1) )
   
-  ALLOCATE( BcsScalImin%ref(jmax,kmax,inb_scal_array) )
-  ALLOCATE( BcsScalImax%ref(jmax,kmax,inb_scal_array) )
-  ALLOCATE( BcsScalJmin%ref(imax,kmax,inb_scal_array) )
-  ALLOCATE( BcsScalJmax%ref(imax,kmax,inb_scal_array) )
-  ALLOCATE( BcsScalKmin%ref(imax,jmax,inb_scal_array) ) ! not yet used
-  ALLOCATE( BcsScalKmax%ref(imax,jmax,inb_scal_array) )
+  ALLOCATE( BcsScalImin%ref(jmax,kmax,inb_scal_array+1) )
+  ALLOCATE( BcsScalImax%ref(jmax,kmax,inb_scal_array+1) )
+  ALLOCATE( BcsScalJmin%ref(imax,kmax,inb_scal_array+1) )
+  ALLOCATE( BcsScalJmax%ref(imax,kmax,inb_scal_array+1) )
+  ALLOCATE( BcsScalKmin%ref(imax,jmax,inb_scal_array+1) ) ! not yet used
+  ALLOCATE( BcsScalKmax%ref(imax,jmax,inb_scal_array+1) )
 
 ! #######################################################################
 ! Incompressible mode
@@ -130,238 +128,152 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(bcs_ht,bcs_hb,bcs_vi,bcs_vo, q,s, txc, wrk3d)
 
 ! ###################################################################
 ! Compute reference pressure for Poinsot&Lele term in NR Bcs.
+! Note that buffer_?(1,1,1,4) is now the energy, and we need p
 ! ###################################################################
      bcs_p_imin = pbg%mean; bcs_p_imax = pbg%mean ! default values
      bcs_p_jmin = pbg%mean; bcs_p_jmax = pbg%mean
      bcs_p_kmin = pbg%mean; bcs_p_kmax = pbg%mean
 
-     IF ( bcs_euler_drift .EQ. 1 ) THEN
-        prefactor = C_05_R *(gama0-C_1_R) *mach*mach
-        r1        = C_1_R
-        r05       = C_05_R
+     prefactor = C_05_R *(gama0-C_1_R) *mach*mach
+     r1        = C_1_R
+     r05       = C_05_R
         
-! -------------------------------------------------------------------
-! Note that buffer_?(1,1,1,4) is now the energy, and we need p
-! -------------------------------------------------------------------
-
 ! -------------------------------------------------------------------
 ! Using buffer fields; bottom
 ! -------------------------------------------------------------------
-     IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
-        DO j = 1,imax*BuffFlowJmin%size*kmax
-           dummy = prefactor *( BuffFlowJmin%Ref(j,1,1,1)*BuffFlowJmin%Ref(j,1,1,1) &
-                              + BuffFlowJmin%Ref(j,1,1,2)*BuffFlowJmin%Ref(j,1,1,2) &
-                              + BuffFlowJmin%Ref(j,1,1,3)*BuffFlowJmin%Ref(j,1,1,3) )/BuffFlowJmin%Ref(j,1,1,5)
-           txc(j,1) = ( BuffFlowJmin%Ref(j,1,1,4) - dummy )/BuffFlowJmin%Ref(j,1,1,5)
-        ENDDO
-     ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-        DO j = 1,imax*BuffFlowJmin%size*kmax
-           txc(j,1) = BuffFlowJmin%Ref(j,1,1,4)/BuffFlowJmin%Ref(j,1,1,5)
-        ENDDO
-     ENDIF
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-! in AIRWATER case the s array is moved to txc4 because q_l in computed
-! just after s(1) !!
-        DO j = 1,imax*BuffFlowJmin%size*kmax
-           txc(j,4) = BuffScalJmin%Ref(j,1,1,1)
-        ENDDO
-        CALL THERMO_CALORIC_TEMPERATURE(imax,BuffFlowJmin%size,kmax, txc(1,4),&
-             txc(1,1), BuffFlowJmin%Ref(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(imax,BuffFlowJmin%size,kmax, txc(1,4),&
-             BuffFlowJmin%Ref(1,1,1,5), txc(1,2), txc(1,1))
-     ELSE
-        CALL THERMO_CALORIC_TEMPERATURE(imax,BuffFlowJmin%size,kmax, BuffScalJmin%Ref, &
-             txc(1,1), BuffFlowJmin%Ref(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(imax,BuffFlowJmin%size,kmax, BuffScalJmin%Ref, &
-             BuffFlowJmin%Ref(1,1,1,5), txc(1,2), txc(1,1))
-     ENDIF
-     bcs_p_jmin = AVG_IK(imax,BuffFlowJmin%size,kmax, i1, txc(1,1), g(1)%jac,g(3)%jac, area)
-
-! reference plane for BCS at bottom: rho, u_i, p, z_i
-     DO k = 1,kmax; DO i = 1,imax
-        bcs_hb(i,k,1) = BuffFlowJmin%Ref(i,1,k,5)                ! density
-        bcs_hb(i,k,2) = BuffFlowJmin%Ref(i,1,k,2) /bcs_hb(i,k,1) ! normal velocity, in this case v
-        bcs_hb(i,k,3) = BuffFlowJmin%Ref(i,1,k,1) /bcs_hb(i,k,1)
-        bcs_hb(i,k,4) = BuffFlowJmin%Ref(i,1,k,3) /bcs_hb(i,k,1)
-        ip = i + (k-1)*imax*BuffFlowJmin%size
-        bcs_hb(i,k,5) = txc(ip,1)                        ! pressure
+     IF ( BuffFlowJmin%size .GT. 0 ) THEN
+        BcsFlowJmin%ref(:,:,1) = BuffFlowJmin%Ref(:,1,:,5)                          ! density
+        BcsFlowJmin%ref(:,:,2) = BuffFlowJmin%Ref(:,1,:,2) / BcsFlowJmin%ref(:,:,1) ! normal velocity, in this case v
+        BcsFlowJmin%ref(:,:,3) = BuffFlowJmin%Ref(:,1,:,1) / BcsFlowJmin%ref(:,:,1)
+        BcsFlowJmin%ref(:,:,4) = BuffFlowJmin%Ref(:,1,:,3) / BcsFlowJmin%ref(:,:,1)
+        BcsFlowJmin%ref(:,:,6) = BuffFlowJmin%Ref(:,1,:,4) / BcsFlowJmin%ref(:,:,1) ! energy, to get pressure into ref5 below
+        IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
+           BcsFlowJmin%ref(:,:,6) = BcsFlowJmin%ref(:,:,6) &
+                                  - prefactor *( BcsFlowJmin%ref(:,:,2) *BcsFlowJmin%ref(:,:,2) &
+                                               + BcsFlowJmin%ref(:,:,3) *BcsFlowJmin%ref(:,:,3) &
+                                               + BcsFlowJmin%ref(:,:,4) *BcsFlowJmin%ref(:,:,4) )
+        ENDIF
         DO is = 1,inb_scal
-           ip = inb_flow +is
-           bcs_hb(i,k,ip) = BuffScalJmin%Ref(i,1,k,is) /bcs_hb(i,k,1)
+           BcsScalJmin%ref(:,:,is) = BuffScalJmin%Ref(:,1,:,is) / BcsFlowJmin%ref(:,:,1)
         ENDDO
-     ENDDO; ENDDO
+        CALL THERMO_CALORIC_TEMPERATURE(imax,i1,kmax, BcsScalJmin%Ref, &
+             BcsFlowJmin%ref(1,1,6), BcsFlowJmin%Ref(1,1,1), BcsFlowJmin%Ref(1,1,7), wrk3d)
+        CALL THERMO_THERMAL_PRESSURE(imax,i1,kmax, BcsScalJmin%Ref, &
+             BcsFlowJmin%Ref(1,1,1), BcsFlowJmin%Ref(1,1,7), BcsFlowJmin%Ref(1,1,5))
 
+! reference pressure value
+        bcs_p_jmin = AVG_IK(imax,1,kmax, i1, BcsFlowJmin%Ref(1,1,5), g(1)%jac,g(3)%jac, area)
+
+! shape factor
+        BcsFlowJmin%ref(:,:,inb_flow+1) = C_1_R
+        BcsScalJmin%ref(:,:,inb_scal+1) = C_1_R
+
+     ENDIF
+     
 ! -------------------------------------------------------------------
 ! Using buffer fields; top
 ! -------------------------------------------------------------------
-     IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        DO j = 1,imax*BuffFlowJmax%size*kmax
-           dummy = prefactor *( BuffFlowJmax%Ref(j,1,1,1)*BuffFlowJmax%Ref(j,1,1,1) &
-                              + BuffFlowJmax%Ref(j,1,1,2)*BuffFlowJmax%Ref(j,1,1,2) &
-                              + BuffFlowJmax%Ref(j,1,1,3)*BuffFlowJmax%Ref(j,1,1,3) )/BuffFlowJmax%Ref(j,1,1,5)
-           txc(j,1) = ( BuffFlowJmax%Ref(j,1,1,4) - dummy )/BuffFlowJmax%Ref(j,1,1,5)
-        ENDDO
-     ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-        DO j = 1,imax*BuffFlowJmax%size*kmax
-           txc(j,1) = BuffFlowJmax%Ref(j,1,1,4)/BuffFlowJmax%Ref(j,1,1,5)
-        ENDDO
-     ENDIF
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-! in AIRWATER case the s array is moved to txc4 because q_l in computed
-! just after s(1) !!
-        DO j = 1,imax*BuffFlowJmax%size*kmax
-           txc(j,4) = BuffScalJmax%Ref(j,1,1,1)
-        ENDDO
-        CALL THERMO_CALORIC_TEMPERATURE(imax,BuffFlowJmax%size,kmax, txc(1,4),&
-             txc(1,1), BuffFlowJmax%Ref(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(imax,BuffFlowJmax%size,kmax, txc(1,4),&
-             BuffFlowJmax%Ref(1,1,1,5), txc(1,2), txc(1,1))
-     ELSE
-        CALL THERMO_CALORIC_TEMPERATURE(imax,BuffFlowJmax%size,kmax, BuffScalJmax%Ref, &
-             txc(1,1), BuffFlowJmax%Ref(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(imax,BuffFlowJmax%size,kmax, BuffScalJmax%Ref, &
-             BuffFlowJmax%Ref(1,1,1,5), txc(1,2), txc(1,1))
-     ENDIF
-     bcs_p_jmax = AVG_IK(imax,BuffFlowJmax%size,kmax, BuffFlowJmax%size, txc(1,1), g(1)%jac,g(3)%jac, area)
-
-! reference plane for BCS at top: rho, u_i, p, z_i
-     DO k = 1,kmax; DO i = 1,imax
-        bcs_ht(i,k,1) = BuffFlowJmax%Ref(i,BuffFlowJmax%size,k,5)               ! density
-        bcs_ht(i,k,2) = BuffFlowJmax%Ref(i,BuffFlowJmax%size,k,2)/bcs_ht(i,k,1) ! normal velocity, in this case v
-        bcs_ht(i,k,3) = BuffFlowJmax%Ref(i,BuffFlowJmax%size,k,1)/bcs_ht(i,k,1)               
-        bcs_ht(i,k,4) = BuffFlowJmax%Ref(i,BuffFlowJmax%size,k,3)/bcs_ht(i,k,1)
-        ip = i + (BuffFlowJmax%size-1)*imax + (k-1)*imax*BuffFlowJmax%size
-        bcs_ht(i,k,5) = txc(ip,1)                                    ! pressure
+     IF ( BuffFlowJmax%size .GT. 0 ) THEN
+        j = BuffFlowJmax%size
+        BcsFlowJmax%ref(:,:,1) = BuffFlowJmax%Ref(:,j,:,5)                          ! density
+        BcsFlowJmax%ref(:,:,2) = BuffFlowJmax%Ref(:,j,:,2) / BcsFlowJmax%ref(:,:,1) ! normal velocity, in this case v
+        BcsFlowJmax%ref(:,:,3) = BuffFlowJmax%Ref(:,j,:,1) / BcsFlowJmax%ref(:,:,1)
+        BcsFlowJmax%ref(:,:,4) = BuffFlowJmax%Ref(:,j,:,3) / BcsFlowJmax%ref(:,:,1)
+        BcsFlowJmax%ref(:,:,6) = BuffFlowJmax%Ref(:,j,:,4) / BcsFlowJmax%ref(:,:,1) ! energy, to get pressure into ref5 below
+        IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
+           BcsFlowJmax%ref(:,:,6) = BcsFlowJmax%ref(:,:,6) &
+                                  - prefactor *( BcsFlowJmax%ref(:,:,2) *BcsFlowJmax%ref(:,:,2) &
+                                               + BcsFlowJmax%ref(:,:,3) *BcsFlowJmax%ref(:,:,3) &
+                                               + BcsFlowJmax%ref(:,:,4) *BcsFlowJmax%ref(:,:,4) )
+        ENDIF
         DO is = 1,inb_scal
-           ip = inb_flow +is
-           bcs_ht(i,k,ip) = BuffScalJmax%Ref(i,BuffFlowJmax%size,k,is) /bcs_ht(i,k,1)
+           BcsScalJmax%ref(:,:,is) = BuffScalJmax%Ref(:,j,:,is) / BcsFlowJmax%ref(:,:,1)
         ENDDO
-     ENDDO; ENDDO
+        CALL THERMO_CALORIC_TEMPERATURE(imax,i1,kmax, BcsScalJmax%Ref, &
+             BcsFlowJmax%ref(1,1,6), BcsFlowJmax%Ref(1,1,1), BcsFlowJmax%Ref(1,1,7), wrk3d)
+        CALL THERMO_THERMAL_PRESSURE(imax,i1,kmax, BcsScalJmax%Ref, &
+             BcsFlowJmax%Ref(1,1,1), BcsFlowJmax%Ref(1,1,7), BcsFlowJmax%Ref(1,1,5))
 
-! ###################################################################
-     IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
+! reference pressure value
+        bcs_p_jmin = AVG_IK(imax,1,kmax, i1, BcsFlowJmax%Ref(1,1,5), g(1)%jac,g(3)%jac, area)
 
+! shape factor
+        BcsFlowJmax%ref(:,:,inb_flow+1) = C_1_R
+        BcsScalJmax%ref(:,:,inb_scal+1) = C_1_R
+     ENDIF
+     
 ! -------------------------------------------------------------------
 ! Using buffer fields; left
 ! -------------------------------------------------------------------
-     IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        DO j = 1,BuffFlowImin%size*jmax*kmax
-           dummy = prefactor *( BuffFlowImin%Ref(j,1,1,1)*BuffFlowImin%Ref(j,1,1,1) &
-                              + BuffFlowImin%Ref(j,1,1,2)*BuffFlowImin%Ref(j,1,1,2) &
-                              + BuffFlowImin%Ref(j,1,1,3)*BuffFlowImin%Ref(j,1,1,3) )/BuffFlowImin%Ref(j,1,1,5)
-           txc(j,1) = ( BuffFlowImin%Ref(j,1,1,4) - dummy )/BuffFlowImin%Ref(j,1,1,5)
-        ENDDO
-     ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-        DO j = 1,BuffFlowImin%size*jmax*kmax
-           txc(j,1) = BuffFlowImin%Ref(j,1,1,4)/BuffFlowImin%Ref(j,1,1,5)
-        ENDDO
-     ENDIF
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-! in AIRWATER case the s array is moved to txc4 because q_l in computed
-! just after s(1) !!
-        DO j = 1,BuffFlowImin%size*jmax*kmax
-           txc(j,4) = BuffScalImin%Ref(j,1,1,1)
-        ENDDO
-        CALL THERMO_CALORIC_TEMPERATURE(BuffFlowImin%size,jmax,kmax, txc(1,4),&
-             txc(1,1), BuffFlowImin%Ref(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(BuffFlowImin%size,jmax,kmax, txc(1,4),&
-             BuffFlowImin%Ref(1,1,1,5), txc(1,2), txc(1,1))
-     ELSE
-        CALL THERMO_CALORIC_TEMPERATURE(BuffFlowImin%size,jmax,kmax, BuffScalImin%Ref, &
-             txc(1,1), BuffFlowImin%Ref(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(BuffFlowImin%size,jmax,kmax, BuffScalImin%Ref, &
-             BuffFlowImin%Ref(1,1,1,5), txc(1,2), txc(1,1))
-     ENDIF
-! reference value at the center of the vertical length
-     j = jmax/2
-     bcs_p_imin = AVG1V1D(BuffFlowImin%size,jmax,kmax, i1,j, i1, txc(1,1))
-
-! reference plane for BCS at xmin: rho, u_i, p, z_i
-     DO k = 1,kmax; DO j = 1,jmax
-        bcs_vi(j,k,1) = BuffFlowImin%Ref(1,j,k,5)                    ! density
-        bcs_vi(j,k,2) = BuffFlowImin%Ref(1,j,k,1)/bcs_vi(j,k,1)
-        bcs_vi(j,k,3) = BuffFlowImin%Ref(1,j,k,2)/bcs_vi(j,k,1)
-        bcs_vi(j,k,4) = BuffFlowImin%Ref(1,j,k,3)/bcs_vi(j,k,1)
-        ip = 1 + (j-1)*BuffFlowImin%size + (k-1)*BuffFlowImin%size*jmax
-        bcs_vi(j,k,5) = txc(ip,1)                             ! pressure
+     IF ( BuffFlowImin%size .GT. 0 ) THEN
+        BcsFlowImin%ref(:,:,1) = BuffFlowImin%Ref(:,:,1,5)                          ! density
+        BcsFlowImin%ref(:,:,2) = BuffFlowImin%Ref(:,:,1,1) / BcsFlowImin%ref(:,:,1) ! normal velocity, in this case u
+        BcsFlowImin%ref(:,:,3) = BuffFlowImin%Ref(:,:,1,2) / BcsFlowImin%ref(:,:,1)
+        BcsFlowImin%ref(:,:,4) = BuffFlowImin%Ref(:,:,1,3) / BcsFlowImin%ref(:,:,1)
+        BcsFlowImin%ref(:,:,6) = BuffFlowImin%Ref(:,:,1,4) / BcsFlowImin%ref(:,:,1) ! energy, to get pressure into ref5 below
+        IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
+           BcsFlowImin%ref(:,:,6) = BcsFlowImin%ref(:,:,6) &
+                                  - prefactor *( BcsFlowImin%ref(:,:,2) *BcsFlowImin%ref(:,:,2) &
+                                               + BcsFlowImin%ref(:,:,3) *BcsFlowImin%ref(:,:,3) &
+                                               + BcsFlowImin%ref(:,:,4) *BcsFlowImin%ref(:,:,4) )
+        ENDIF
         DO is = 1,inb_scal
-           ip = inb_flow +is
-           bcs_vi(j,k,ip) = BuffScalImin%Ref(1,j,k,is)/bcs_vi(j,k,1)
+           BcsScalImin%ref(:,:,is) = BuffScalImin%Ref(:,:,1,is) / BcsFlowImin%ref(:,:,1)
         ENDDO
-     ENDDO; ENDDO
+        CALL THERMO_CALORIC_TEMPERATURE(imax,i1,kmax, BcsScalImin%Ref, &
+             BcsFlowImin%ref(1,1,6), BcsFlowImin%Ref(1,1,1), BcsFlowImin%Ref(1,1,7), wrk3d)
+        CALL THERMO_THERMAL_PRESSURE(imax,i1,kmax, BcsScalImin%Ref, &
+             BcsFlowImin%Ref(1,1,1), BcsFlowImin%Ref(1,1,7), BcsFlowImin%Ref(1,1,5))
+
+! reference pressure value at the center of the vertical length
+        j = jmax/2
+        bcs_p_imin = AVG1V1D(i1,jmax,kmax, i1,j, i1, BcsFlowImin%Ref(1,1,5))
 
 ! shape factor
-     diam_loc  = C_3_R*qbg(1)%diam
-     thick_loc = qbg(1)%diam/C_8_R
-     ycenter   = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
-     DO k = 1,kmax; DO j = 1,jmax
-        bcs_vi(j,k,inb_flow+inb_scal+1) = FLOW_JET_TEMPORAL(i2, thick_loc, r1, r05, diam_loc, ycenter, dummy, g(2)%nodes(j))
-     ENDDO; ENDDO
+        diam_loc  = C_3_R*qbg(1)%diam
+        thick_loc = qbg(1)%diam/C_8_R
+        ycenter   = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
+        BcsFlowImin%ref(:,:,inb_flow+1) = FLOW_JET_TEMPORAL(i2, thick_loc, r1, r05, diam_loc, ycenter, dummy, g(2)%nodes(j))
+        BcsScalImin%ref(:,:,inb_scal+1) = FLOW_JET_TEMPORAL(i2, thick_loc, r1, r05, diam_loc, ycenter, dummy, g(2)%nodes(j))
 
+     ENDIF
+     
 ! -------------------------------------------------------------------
 ! Using buffer fields; right
 ! -------------------------------------------------------------------
-     IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        DO j = 1,BuffFlowImax%size*jmax*kmax
-           dummy = prefactor *( BuffFlowImax%Ref(j,1,1,1)*BuffFlowImax%Ref(j,1,1,1) &
-                              + BuffFlowImax%Ref(j,1,1,2)*BuffFlowImax%Ref(j,1,1,2) &
-                              + BuffFlowImax%Ref(j,1,1,3)*BuffFlowImax%Ref(j,1,1,3) )/BuffFlowImax%Ref(j,1,1,5)
-           txc(j,1) = ( BuffFlowImax%Ref(j,1,1,4) - dummy )/BuffFlowImax%Ref(j,1,1,5)
-        ENDDO
-     ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-        DO j = 1,BuffFlowImax%size*jmax*kmax
-           txc(j,1) = BuffFlowImax%Ref(j,1,1,4)/BuffFlowImax%Ref(j,1,1,5)
-        ENDDO
-     ENDIF
-     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-! in AIRWATER case the s array is moved to txc4 because q_l in computed
-! just after s(1) !!
-        DO j = 1,BuffFlowImax%size*jmax*kmax
-           txc(j,4) = BuffScalImax%Ref(j,1,1,1)
-        ENDDO
-        CALL THERMO_CALORIC_TEMPERATURE(BuffFlowImax%size,jmax,kmax, txc(1,4),&
-             txc(1,1), BuffFlowImax%Ref(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(BuffFlowImax%size,jmax,kmax, txc(1,4),&
-             BuffFlowImax%Ref(1,1,1,5), txc(1,2), txc(1,1))
-     ELSE
-        CALL THERMO_CALORIC_TEMPERATURE(BuffFlowImax%size,jmax,kmax, BuffScalImax%Ref, &
-             txc(1,1), BuffFlowImax%Ref(1,1,1,5), txc(1,2), txc(1,3))
-        CALL THERMO_THERMAL_PRESSURE(BuffFlowImax%size,jmax,kmax, BuffScalImax%Ref, &
-             BuffFlowImax%Ref(1,1,1,5), txc(1,2), txc(1,1))
-     ENDIF
-! reference value at the center of the vertical length
-     j = jmax/2
-     bcs_p_imax = AVG1V1D(BuffFlowImax%size,jmax,kmax, BuffFlowImax%size,j, i1, txc(1,1))
-
-! reference plane for BCS at xmax: rho, u_i, p, z_i
-     DO k = 1,kmax; DO j = 1,jmax
-!        bcs_vo(j,k,1) = BuffFlowImax%Ref(BuffFlowImax%size,j,k,1)
-!        bcs_vo(j,k,2) = BuffFlowImax%Ref(BuffFlowImax%size,j,k,2)/BuffFlowImax%Ref(BuffFlowImax%size,j,k,1)
-!        bcs_vo(j,k,3) = BuffFlowImax%Ref(BuffFlowImax%size,j,k,3)/BuffFlowImax%Ref(BuffFlowImax%size,j,k,1)
-!        bcs_vo(j,k,4) = BuffFlowImax%Ref(BuffFlowImax%size,j,k,4)/BuffFlowImax%Ref(BuffFlowImax%size,j,k,1)
-!        ip = BuffFlowImax%size + (j-1)*BuffFlowImin%size + (k-1)*BuffFlowImin%size*jmax
-!        bcs_vo(j,k,5) = txc(ip,1)
-!        DO is = 1,inb_scal
-!           ip = inb_flow +is
-!           bcs_vo(j,k,ip) = BuffScalImax%Ref(BuffFlowImax%size,j,k,is)/BuffFlowImax%Ref(BuffFlowImax%size,j,k,1)
-!        ENDDO
-! try to use only the coflow values
-        bcs_vo(j,k,1) = BuffFlowImax%Ref(BuffFlowImax%size,1,k,5)
-        bcs_vo(j,k,2) = BuffFlowImax%Ref(BuffFlowImax%size,1,k,1)/bcs_vo(j,k,1)
-        bcs_vo(j,k,3) = C_0_R
-        bcs_vo(j,k,4) = BuffFlowImax%Ref(BuffFlowImax%size,1,k,3)/bcs_vo(j,k,1)
-        ip = BuffFlowImax%size + (1-1)*BuffFlowImin%size + (k-1)*BuffFlowImin%size*jmax
-        bcs_vo(j,k,5) = txc(ip,1)
+     IF ( BuffFlowImax%size .GT. 0 ) THEN
+        BcsFlowImax%ref(:,:,1) = BuffFlowImax%Ref(:,:,1,5)                          ! density
+        BcsFlowImax%ref(:,:,2) = BuffFlowImax%Ref(:,:,1,1) / BcsFlowImax%ref(:,:,1) ! normal velocity, in this case u
+        BcsFlowImax%ref(:,:,3) = BuffFlowImax%Ref(:,:,1,2) / BcsFlowImax%ref(:,:,1)
+        BcsFlowImax%ref(:,:,4) = BuffFlowImax%Ref(:,:,1,3) / BcsFlowImax%ref(:,:,1)
+        BcsFlowImax%ref(:,:,6) = BuffFlowImax%Ref(:,:,1,4) / BcsFlowImax%ref(:,:,1) ! energy, to get pressure into ref5 below
+        IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
+           BcsFlowImax%ref(:,:,6) = BcsFlowImax%ref(:,:,6) &
+                                  - prefactor *( BcsFlowImax%ref(:,:,2) *BcsFlowImax%ref(:,:,2) &
+                                               + BcsFlowImax%ref(:,:,3) *BcsFlowImax%ref(:,:,3) &
+                                               + BcsFlowImax%ref(:,:,4) *BcsFlowImax%ref(:,:,4) )
+        ENDIF
         DO is = 1,inb_scal
-           ip = inb_flow +is
-           bcs_vo(j,k,ip) = BuffScalImax%Ref(BuffFlowImax%size,1,k,is)/bcs_vo(j,k,1)
+           BcsScalImax%ref(:,:,is) = BuffScalImax%Ref(:,:,1,is) / BcsFlowImax%ref(:,:,1)
         ENDDO
-     ENDDO; ENDDO
+        CALL THERMO_CALORIC_TEMPERATURE(imax,i1,kmax, BcsScalImax%Ref, &
+             BcsFlowImax%ref(1,1,6), BcsFlowImax%Ref(1,1,1), BcsFlowImax%Ref(1,1,7), wrk3d)
+        CALL THERMO_THERMAL_PRESSURE(imax,i1,kmax, BcsScalImax%Ref, &
+             BcsFlowImax%Ref(1,1,1), BcsFlowImax%Ref(1,1,7), BcsFlowImax%Ref(1,1,5))
+
+! reference value at the center of the vertical length
+        j = jmax/2
+        bcs_p_imin = AVG1V1D(i1,jmax,kmax, i1,j, i1, BcsFlowImax%Ref(1,1,5))
+
+! try to use only the coflow values
+        BcsFlowImax%ref(:,:,3) = C_0_R
+             
+! shape factor
+        BcsFlowImax%ref(:,:,inb_flow+1) = C_1_R
+        BcsScalImax%ref(:,:,inb_scal+1) = C_1_R
+
+     ENDIF
      
-  ENDIF
-
-  ENDIF
-
   ENDIF
 
 #ifdef TRACE_ON

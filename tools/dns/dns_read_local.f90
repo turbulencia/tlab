@@ -384,7 +384,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
 ! Relaxation coefficient for the transverse terms
   CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'BetaTransverse', '-1.0', bcs_sigma_trans)
-  IF ( bcs_sigma_trans .LE. C_0_R ) bcs_sigma_trans = C_0_R
+  IF ( bcs_sigma_trans .LE. C_0_R ) THEN; bcs_sigma_trans = C_0_R
+  ELSE;                                   bcs_euler_drift = MAX(bcs_euler_drift,i1); ENDIF 
 
 ! ###################################################################
 ! Buffer Zone Parameters

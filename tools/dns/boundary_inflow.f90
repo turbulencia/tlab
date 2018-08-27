@@ -518,14 +518,14 @@ END SUBROUTINE BOUNDARY_INFLOW_DISCRETE
 !########################################################################
 ! Filter
 
-SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, q,s, txc, wrk1d,wrk2d,wrk3d)
+SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q,s, txc, wrk1d,wrk2d,wrk3d)
   
   IMPLICIT NONE
   
 #include "integers.h"
   
   TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(INOUT) :: q,s
-  TREAL, DIMENSION(jmax,kmax,*),      INTENT(IN)    :: bcs_vi
+  TREAL, DIMENSION(jmax,kmax,*),      INTENT(IN)    :: bcs_vi, bcs_vi_scal
   TREAL, DIMENSION(imax*jmax*kmax,2), INTENT(INOUT) :: txc
   TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk1d,wrk2d,wrk3d
 
@@ -615,7 +615,7 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, q,s, txc, wrk1d,wrk2d,wrk3d)
      DO k = 1,kmax
         DO j = j1,jmx
            DO i = i1,imx
-              wrk3d(ip) = s(i,j,k,is) - bcs_vi(j,k,is+inb_flow)
+              wrk3d(ip) = s(i,j,k,is) - bcs_vi_scal(j,k,is)
               ip = ip + 1
            ENDDO
         ENDDO
@@ -631,7 +631,7 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, q,s, txc, wrk1d,wrk2d,wrk3d)
      DO k = 1,kmax
         DO j = j1,jmx
            DO i = i1,imx
-              s(i,j,k,is) = wrk3d(ip) + bcs_vi(j,k,is+inb_flow)
+              s(i,j,k,is) = wrk3d(ip) + bcs_vi_scal(j,k,is)
               ip = ip + 1
            ENDDO
         ENDDO
