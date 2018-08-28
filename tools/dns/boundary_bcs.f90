@@ -12,8 +12,11 @@ MODULE BOUNDARY_BCS
   
   TYPE bcs_dt
      SEQUENCE
-     TINTEGER type(MAX_VARS)                      ! dirichlet, neumann, nonreflective, inflow, outflow
+     TINTEGER type(MAX_VARS)                      ! dirichlet, neumann for incompressible
+     TREAL sigma_inf, sigma_out, sigma_trans      ! characteristic formulation for compressible
+     LOGICAL drift
      TREAL, ALLOCATABLE, DIMENSION(:,:,:) :: ref  ! reference fields
+     TREAL pref                                   ! only used in total_energy formulation; should be removed
   END type bcs_dt
   
   TYPE(bcs_dt), PUBLIC :: BcsFlowImin,BcsFlowImax,BcsFlowJmin,BcsFlowJmax,BcsFlowKmin,BcsFlowKmax
@@ -28,10 +31,9 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
   USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
   USE DNS_GLOBAL,    ONLY : imode_eqns
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, inb_flow_array,inb_scal_array
-  USE DNS_GLOBAL,    ONLY : g,area
+  USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : mach, pbg, qbg
   USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL,     ONLY : bcs_p_imin,bcs_p_imax, bcs_p_jmin,bcs_p_jmax, bcs_p_kmin,bcs_p_kmax
   USE BOUNDARY_BUFFER
 #ifdef USE_MPI
   USE DNS_GLOBAL,    ONLY : inb_scal_array
@@ -45,11 +47,11 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 #include "mpif.h"
 #endif
   
-  TREAL, DIMENSION(*)                :: wrk3d
+  TREAL, DIMENSION(*) :: wrk3d
 
 ! -------------------------------------------------------------------
   TINTEGER j, is
-  TREAL AVG1V1D, AVG_IK, prefactor, dummy
+  TREAL prefactor, dummy
   TREAL diam_loc, thick_loc, ycenter, r1, r05, FLOW_JET_TEMPORAL
 
 #ifdef USE_MPI
@@ -130,10 +132,10 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 ! Compute reference pressure for Poinsot&Lele term in NR Bcs.
 ! Note that buffer_?(1,1,1,4) is now the energy, and we need p
 ! ###################################################################
-     bcs_p_imin = pbg%mean; bcs_p_imax = pbg%mean ! default values
-     bcs_p_jmin = pbg%mean; bcs_p_jmax = pbg%mean
-     bcs_p_kmin = pbg%mean; bcs_p_kmax = pbg%mean
-
+     BcsFlowImin%ref(:,:,5) = pbg%mean; BcsFlowImax%ref(:,:,5) = pbg%mean ! default values 
+     BcsFlowJmin%ref(:,:,5) = pbg%mean; BcsFlowJmax%ref(:,:,5) = pbg%mean
+     BcsFlowKmin%ref(:,:,5) = pbg%mean; BcsFlowKmax%ref(:,:,5) = pbg%mean
+     
      prefactor = C_05_R *(gama0-C_1_R) *mach*mach
      r1        = C_1_R
      r05       = C_05_R
@@ -160,9 +162,6 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
              BcsFlowJmin%ref(1,1,6), BcsFlowJmin%Ref(1,1,1), BcsFlowJmin%Ref(1,1,7), wrk3d)
         CALL THERMO_THERMAL_PRESSURE(imax,i1,kmax, BcsScalJmin%Ref, &
              BcsFlowJmin%Ref(1,1,1), BcsFlowJmin%Ref(1,1,7), BcsFlowJmin%Ref(1,1,5))
-
-! reference pressure value
-        bcs_p_jmin = AVG_IK(imax,1,kmax, i1, BcsFlowJmin%Ref(1,1,5), g(1)%jac,g(3)%jac, area)
 
 ! shape factor
         BcsFlowJmin%ref(:,:,inb_flow+1) = C_1_R
@@ -194,9 +193,6 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         CALL THERMO_THERMAL_PRESSURE(imax,i1,kmax, BcsScalJmax%Ref, &
              BcsFlowJmax%Ref(1,1,1), BcsFlowJmax%Ref(1,1,7), BcsFlowJmax%Ref(1,1,5))
 
-! reference pressure value
-        bcs_p_jmin = AVG_IK(imax,1,kmax, i1, BcsFlowJmax%Ref(1,1,5), g(1)%jac,g(3)%jac, area)
-
 ! shape factor
         BcsFlowJmax%ref(:,:,inb_flow+1) = C_1_R
         BcsScalJmax%ref(:,:,inb_scal+1) = C_1_R
@@ -224,10 +220,6 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
              BcsFlowImin%ref(1,1,6), BcsFlowImin%Ref(1,1,1), BcsFlowImin%Ref(1,1,7), wrk3d)
         CALL THERMO_THERMAL_PRESSURE(imax,i1,kmax, BcsScalImin%Ref, &
              BcsFlowImin%Ref(1,1,1), BcsFlowImin%Ref(1,1,7), BcsFlowImin%Ref(1,1,5))
-
-! reference pressure value at the center of the vertical length
-        j = jmax/2
-        bcs_p_imin = AVG1V1D(i1,jmax,kmax, i1,j, i1, BcsFlowImin%Ref(1,1,5))
 
 ! shape factor
         diam_loc  = C_3_R*qbg(1)%diam
@@ -260,10 +252,6 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
              BcsFlowImax%ref(1,1,6), BcsFlowImax%Ref(1,1,1), BcsFlowImax%Ref(1,1,7), wrk3d)
         CALL THERMO_THERMAL_PRESSURE(imax,i1,kmax, BcsScalImax%Ref, &
              BcsFlowImax%Ref(1,1,1), BcsFlowImax%Ref(1,1,7), BcsFlowImax%Ref(1,1,5))
-
-! reference value at the center of the vertical length
-        j = jmax/2
-        bcs_p_imin = AVG1V1D(i1,jmax,kmax, i1,j, i1, BcsFlowImax%Ref(1,1,5))
 
 ! try to use only the coflow values
         BcsFlowImax%ref(:,:,3) = C_0_R

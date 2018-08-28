@@ -36,7 +36,7 @@ SUBROUTINE BOUNDARY_BCS_FLOW_NR_2&
 #include "types.h"
 
   TINTEGER iflag, nt
-  TREAL pl_const, pl_pref
+  TREAL pl_const, pl_pref(*)
   TREAL r(*), un(*), v1(*), v2(*), p(*), gama(*)
   TREAL drdn(*), dundn(*), dv1dn(*), dv2dn(*), dpdn(*), gn
   TREAL hr(*), hun(*), hv1(*), hv2(*), he(*)
@@ -77,7 +77,7 @@ SUBROUTINE BOUNDARY_BCS_FLOW_NR_2&
 ! -------------------------------------------------------------------
            ELSE
               dummy = C_05_R*( r(i)*(C_1_R+Mn)*dundn(i) + (C_1_R+Mn)/c*dpdn(i) &
-                   - r(i)*gn/c - pl_const*(p(i)-pl_pref)/c )
+                   - r(i)*gn/c - pl_const*(p(i)-pl_pref(i))/c )
 
               hr(i)  = dummy
               hun(i) = dummy*c*(C_1_R+Mn)
@@ -123,7 +123,7 @@ SUBROUTINE BOUNDARY_BCS_FLOW_NR_2&
 ! -------------------------------------------------------------------
            ELSE
               dummy = C_05_R*( r(i)*(C_1_R-Mn)*dundn(i) - (C_1_R-Mn)/c*dpdn(i) &
-                   + r(i)*gn/c - pl_const*(p(i)-pl_pref)/c)
+                   + r(i)*gn/c - pl_const*(p(i)-pl_pref(i))/c)
 
               hr(i)  = dummy
               hun(i) =-dummy*c*(C_1_R-Mn)

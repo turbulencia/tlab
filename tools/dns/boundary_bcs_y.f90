@@ -161,13 +161,12 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
      dpdn_loc(i,k) = tmp5(i,1,k)
   ENDDO; ENDDO
   IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
-     CALL BOUNDARY_BCS_FLOW_NR_2(i0, nt, pl_out, bcs_p_jmin,&
+     CALL BOUNDARY_BCS_FLOW_NR_2(i0, nt, pl_out, BcsFlowJmin%ref(1,1,5), &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1), &
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1),&
           buoyancy%vector(2),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      CALL BOUNDARY_BCS_FLOW_NR_3(iflag_min, idir, nt, pl_out, pl_inf, inf_rhs, BcsFlowJmin%ref, &
-!          dummy, &
           BcsFlowJmin%ref(1,1,inb_flow+1), &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
@@ -210,7 +209,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
      dpdn_loc(i,k) = tmp5(i,jmax,k)
   ENDDO; ENDDO
   IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
-     CALL BOUNDARY_BCS_FLOW_NR_2(i1, nt, pl_out, bcs_p_jmax,&
+     CALL BOUNDARY_BCS_FLOW_NR_2(i1, nt, pl_out, BcsFlowJmax%ref(1,1,5), &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1), &
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1),&
           buoyancy%vector(2),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))

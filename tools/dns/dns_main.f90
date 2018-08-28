@@ -417,9 +417,7 @@ PROGRAM DNS
 ! ###################################################################
 ! Initialize data for boundary conditions
 ! ###################################################################
-  IF ( BuffType .NE. DNS_BUFFER_NONE .OR. bcs_euler_drift .EQ. 1 ) THEN
-     CALL BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
-  ENDIF
+  CALL BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
 
   CALL BOUNDARY_BCS_INITIALIZE(wrk3d)
 

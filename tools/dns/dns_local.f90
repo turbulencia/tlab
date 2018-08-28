@@ -51,7 +51,6 @@ MODULE DNS_LOCAL
   TREAL    :: bcs_sigma_out
   TREAL    :: bcs_sigma_inf_imin, bcs_sigma_inf_imax, bcs_sigma_inf_j
   TREAL    :: bcs_sigma_trans
-  TREAL    :: bcs_p_imin, bcs_p_imax, bcs_p_jmin, bcs_p_jmax, bcs_p_kmin, bcs_p_kmax
 
 ! ###########################################################
 ! Filters
