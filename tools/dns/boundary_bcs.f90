@@ -13,23 +13,20 @@ MODULE BOUNDARY_BCS
   TYPE bcs_dt
      SEQUENCE
      TINTEGER type(MAX_VARS)                      ! dirichlet, neumann for incompressible
-     TREAL sigma_inf, sigma_out, sigma_trans      ! characteristic formulation for compressible
-     LOGICAL drift
+     TREAL cinf, cout, ctan                       ! characteristic formulation for compressible
      TREAL, ALLOCATABLE, DIMENSION(:,:,:) :: ref  ! reference fields
-     TREAL pref                                   ! only used in total_energy formulation; should be removed
   END type bcs_dt
   
   TYPE(bcs_dt), PUBLIC :: BcsFlowImin,BcsFlowImax,BcsFlowJmin,BcsFlowJmax,BcsFlowKmin,BcsFlowKmax
   TYPE(bcs_dt), PUBLIC :: BcsScalImin,BcsScalImax,BcsScalJmin,BcsScalJmax,BcsScalKmin,BcsScalKmax
 
-! Compressible
+! Compressible viscous
   TINTEGER :: bcs_inf(2,2,3), bcs_out(2,2,3) ! 1. index: lower and upper values
                                              ! 2. index: derivative order
                                              ! 3. index: direction
   TINTEGER :: bcs_euler_drift
   TREAL    :: bcs_sigma_out
   TREAL    :: bcs_sigma_inf_imin, bcs_sigma_inf_imax, bcs_sigma_inf_j
-  TREAL    :: bcs_sigma_trans
 
 CONTAINS
   

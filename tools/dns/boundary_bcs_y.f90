@@ -126,9 +126,9 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
      iflag_max = 1
   ENDIF
 
-  ! pl_out_min = C_0_R ! default
+  ! pl_out_min = C_0_R ! default is only nonreflective
   ! pl_inf_min = C_0_R
-  ! iflag_min =-1
+  ! iflag_min =-1      
   ! IF ( BcsFlowJmin%cinf .GT. 0 ) THEN
   !    pl_inf_min = BcsFlowJmin%cinf /g(2)%scale
   !    iflag_min =-3
@@ -184,7 +184,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(2), hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
 ! add transverse terms
-     CALL BOUNDARY_BCS_FLOW_NR_4(iflag_min, idir, nt, bcs_sigma_trans, &
+     CALL BOUNDARY_BCS_FLOW_NR_4(iflag_min, idir, nt, BcsFlowJmin%ctan, &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1), &
           tmin(1,1,1), tmin(1,1,3), tmin(1,1,2), tmin(1,1,4), tmin(1,1,5), &
           lmin(1,1,1), lmin(1,1,5), &
@@ -232,7 +232,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(2),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
 ! add transverse terms
-     CALL BOUNDARY_BCS_FLOW_NR_4(iflag_max, idir, nt, bcs_sigma_trans, &
+     CALL BOUNDARY_BCS_FLOW_NR_4(iflag_max, idir, nt, BcsFlowJmax%ctan, &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1), &
           tmax(1,1,1), tmax(1,1,3), tmax(1,1,2), tmax(1,1,4), tmax(1,1,5), &
           lmax(1,1,1), lmax(1,1,5), &
@@ -282,7 +282,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
              drdn_loc(1,1), dudn_loc(1,1), dz1dn_loc(1,1), dpdn_loc(1,1),&
              buoyancy%vector(2), hz1_loc(1,1))
 ! add transverse terms
-        CALL BOUNDARY_BCS_SCAL_NR_4(iflag_min, nt, bcs_sigma_trans, &
+        CALL BOUNDARY_BCS_SCAL_NR_4(iflag_min, nt, BcsScalJmin%ctan, &
              r_loc(1,1), u_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1), &
              tmin(1,1,1), tmin(1,1,3), tmin(1,1,5), tmin(1,1,5+is), &
              hz1_loc(1,1))
@@ -327,7 +327,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
              drdn_loc(1,1), dudn_loc(1,1), dz1dn_loc(1,1), dpdn_loc(1,1),&
              buoyancy%vector(2), hz1_loc(1,1))
 ! add transverse terms
-        CALL BOUNDARY_BCS_SCAL_NR_4(iflag_max, nt, bcs_sigma_trans, &
+        CALL BOUNDARY_BCS_SCAL_NR_4(iflag_max, nt, BcsScalJmax%ctan, &
              r_loc(1,1), u_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1), &
              tmax(1,1,1), tmax(1,1,3), tmax(1,1,5), tmax(1,1,5+is), &
              hz1_loc(1,1))

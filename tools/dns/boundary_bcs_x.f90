@@ -184,13 +184,13 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
 ! add transverse terms
-     CALL BOUNDARY_BCS_FLOW_NR_4(iflag_min, idir, nt, bcs_sigma_trans, &
+     CALL BOUNDARY_BCS_FLOW_NR_4(iflag_min, idir, nt, BcsFlowImin%ctan, &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1), &
           tmin(1,1,1), tmin(1,1,2), tmin(1,1,3), tmin(1,1,4), tmin(1,1,5), &
           mmin(1,1,1), mmin(1,1,5), &
           hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
 ! edge corrections
-     CALL BOUNDARY_BCS_FLOW_NR_EDGE(iflag_min, jmax, kmax, bcs_sigma_trans, &
+     CALL BOUNDARY_BCS_FLOW_NR_EDGE(iflag_min, jmax, kmax, BcsFlowImin%ctan, &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1), &
           mmin(1,1,1), mmin(1,1,2), mmin(1,1,3), mmin(1,1,4), mmin(1,1,5), &
           hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
@@ -243,13 +243,13 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
 ! add transverse terms
-     CALL BOUNDARY_BCS_FLOW_NR_4(iflag_max, idir, nt, bcs_sigma_trans, &
+     CALL BOUNDARY_BCS_FLOW_NR_4(iflag_max, idir, nt, BcsFlowImax%ctan, &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1), &
           tmax(1,1,1), tmax(1,1,2), tmax(1,1,3), tmax(1,1,4), tmax(1,1,5), &
           mmax(1,1,1), mmax(1,1,5), &
           hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
 ! edge corrections
-     CALL BOUNDARY_BCS_FLOW_NR_EDGE(iflag_max, jmax, kmax, bcs_sigma_trans, &
+     CALL BOUNDARY_BCS_FLOW_NR_EDGE(iflag_max, jmax, kmax, BcsFlowImax%ctan, &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1), &
           mmax(1,1,1), mmax(1,1,2), mmax(1,1,3), mmax(1,1,4), mmax(1,1,5), &
           hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
@@ -303,12 +303,12 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
              drdn_loc(1,1), dudn_loc(1,1), dz1dn_loc(1,1), dpdn_loc(1,1),&
              buoyancy%vector(1), hz1_loc(1,1))
 ! add transverse terms
-        CALL BOUNDARY_BCS_SCAL_NR_4(iflag_min, nt, bcs_sigma_trans, &
+        CALL BOUNDARY_BCS_SCAL_NR_4(iflag_min, nt, BcsScalImin%ctan, &
              r_loc(1,1), u_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1), &
              tmin(1,1,1), tmin(1,1,2), tmin(1,1,5), tmin(1,1,5+is), &
              hz1_loc(1,1))
 ! edge corrections
-        CALL BOUNDARY_BCS_SCAL_NR_EDGE(iflag_min, jmax, kmax, bcs_sigma_trans, &
+        CALL BOUNDARY_BCS_SCAL_NR_EDGE(iflag_min, jmax, kmax, BcsScalImin%ctan, &
              r_loc(1,1), u_loc(1,1), v_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1), &
              mmin(1,1,1), mmin(1,1,2), mmin(1,1,3), mmin(1,1,5), mmin(1,1,5+is), hz1_loc(1,1))
 ! special case affects only energy equation
@@ -361,12 +361,12 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
              drdn_loc(1,1), dudn_loc(1,1), dz1dn_loc(1,1), dpdn_loc(1,1),&
              buoyancy%vector(1), hz1_loc(1,1))
 ! add transverse terms
-        CALL BOUNDARY_BCS_SCAL_NR_4(iflag_max, nt, bcs_sigma_trans, &
+        CALL BOUNDARY_BCS_SCAL_NR_4(iflag_max, nt, BcsScalImax%ctan, &
              r_loc(1,1), u_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1), &
              tmax(1,1,1), tmax(1,1,2), tmax(1,1,5), tmax(1,1,5+is), &
              hz1_loc(1,1))
 ! edge corrections
-        CALL BOUNDARY_BCS_SCAL_NR_EDGE(iflag_max, jmax, kmax, bcs_sigma_trans, &
+        CALL BOUNDARY_BCS_SCAL_NR_EDGE(iflag_max, jmax, kmax, BcsScalImax%ctan, &
              r_loc(1,1), u_loc(1,1), v_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1), &
              mmax(1,1,1), mmax(1,1,2), mmax(1,1,3), mmax(1,1,5), mmax(1,1,5+is), hz1_loc(1,1))
 ! special case affects only energy equation
