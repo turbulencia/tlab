@@ -19,7 +19,7 @@ SUBROUTINE RHS_FLOW_CONDUCTION_EXPLICIT(vis, z1, T, h4, tmp1,tmp2,tmp3,tmp4,tmp5
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : idiffusion, itransport, visc, prandtl
-  USE DNS_LOCAL,     ONLY : bcs_out
+  USE BOUNDARY_BCS
 
   IMPLICIT NONE
 

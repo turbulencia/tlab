@@ -17,9 +17,8 @@
 !# Nonperiodic characteristic BCs at xmin and xmax
 !#
 !########################################################################
-SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
-     q_inf,z1_inf, h0,h1,h2,h3,h4,zh1,&
-     txc, aux2d, wrk2d,wrk3d)
+SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
+     q_inf,z1_inf, h0,h1,h2,h3,h4,zh1, txc, aux2d, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
@@ -32,7 +31,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
 
 #include "integers.h"
 
-  TINTEGER itxc
+  TINTEGER iaux
 
   TREAL M2_max, etime
 
@@ -46,7 +45,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
 
 ! -------------------------------------------------------------------
   TINTEGER j, k, is, nt, inb_scal_loc, isize, iflag_min, iflag_max, idir, ip0, bcs(2,1)
-  TREAL prefactor, pl_out, pl_inf1, pl_inf2, pl_inf3 !, dummy
+  TREAL prefactor, pl_out, pl_inf1, pl_inf2, pl_inf3
 
   TREAL, DIMENSION(:,:,:), POINTER :: tmin, mmin, tmax, mmax, inf_rhs
 
@@ -84,7 +83,7 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
   nt = jmax*kmax
   prefactor = (gama0-C_1_R)*mach*mach
 
-  IF ( itxc .LT. nt*(19+5*(inb_flow+inb_scal_array)) ) THEN
+  IF ( iaux .LT. nt*(19+5*(inb_flow+inb_scal_array)) ) THEN
      CALL IO_WRITE_ASCII(efile, 'BOUNDARY_BCS_X. Not enough space in txc.')
      CALL DNS_STOP(DNS_ERROR_IBC)
   ENDIF
@@ -129,7 +128,6 @@ SUBROUTINE BOUNDARY_BCS_X(itxc, M2_max, etime, rho,u,v,w,p,gama,z1, &
 
 ! ###################################################################
 ! forcing terms in array inf_rhs
-!  IF ( bcs_euler_imin .EQ. DNS_BCS_INFLOW ) THEN
   IF ( ifrc_mode .NE. 0 ) THEN
      isize = inb_flow + inb_scal_array
      inf_rhs(:,:,isize) = C_0_R

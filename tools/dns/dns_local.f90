@@ -40,18 +40,6 @@ MODULE DNS_LOCAL
   TREAL    :: visctime, viscstart, viscstop
   TINTEGER :: iviscchg
 
-! ###################################################################
-! Boundary conditions
-! ###################################################################
-! Compressible
-  TINTEGER :: bcs_inf(2,2,3), bcs_out(2,2,3) ! 1. index: lower and upper values
-                                             ! 2. index: derivative order
-                                             ! 3. index: direction
-  TINTEGER :: bcs_euler_drift
-  TREAL    :: bcs_sigma_out
-  TREAL    :: bcs_sigma_inf_imin, bcs_sigma_inf_imax, bcs_sigma_inf_j
-  TREAL    :: bcs_sigma_trans
-
 ! ###########################################################
 ! Filters
 ! ###########################################################

@@ -20,7 +20,8 @@ SUBROUTINE RHS_FLOW_GLOBAL_2(rho,u,v,w,p,e,T, z1, h0,h1,h2,h3,h4, zh1, tmp1,tmp2
   USE DNS_GLOBAL,    ONLY : g, buoyancy
   USE DNS_GLOBAL,    ONLY : itransport,idiffusion, visc,prandtl,mach
   USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL,     ONLY : bcs_out, bcs_inf
+  USE BOUNDARY_BCS
+  
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif

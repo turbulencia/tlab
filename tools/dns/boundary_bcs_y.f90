@@ -48,7 +48,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
 ! -------------------------------------------------------------------
   TINTEGER i, k, is, nt, inb_scal_loc, iflag_min, iflag_max, idir, ip0, bcs(2,1)
   TINTEGER imin_loc, imax_loc
-  TREAL prefactor, pl_out, pl_inf !, dummy
+  TREAL prefactor, pl_out, pl_inf
 
   TREAL, DIMENSION(:,:,:), POINTER :: tmin, lmin, tmax, lmax, inf_rhs
 
@@ -126,6 +126,18 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
      iflag_max = 1
   ENDIF
 
+  ! pl_out_min = C_0_R ! default
+  ! pl_inf_min = C_0_R
+  ! iflag_min =-1
+  ! IF ( BcsFlowJmin%cinf .GT. 0 ) THEN
+  !    pl_inf_min = BcsFlowJmin%cinf /g(2)%scale
+  !    iflag_min =-3
+  ! ENDIF
+  ! IF ( BcsFlowJmin%cout .GT. 0 ) THEN
+  !    pl_out_min = BcsFlowJmin%cout *(C_1_R-M2_max) /g(2)%scale
+  !    iflag_min =-3
+  ! ENDIF
+  
   IF      ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN; imin_loc  = 1; imax_loc = imax
   ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL  ) THEN; imin_loc  = 2; imax_loc = imax-1; ENDIF
 

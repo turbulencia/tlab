@@ -20,7 +20,8 @@ SUBROUTINE RHS_SCAL_GLOBAL_2(is, rho,u,v,w, z1, T, zh1, h4, tmp1,tmp2,tmp3,tmp4,
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : itransport,idiffusion, visc,prandtl,schmidt
   USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
-  USE DNS_LOCAL,     ONLY : bcs_out
+  USE BOUNDARY_BCS
+  
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif

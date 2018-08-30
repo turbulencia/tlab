@@ -33,8 +33,8 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL,     ONLY : bcs_euler_drift
   USE BOUNDARY_BUFFER
+  USE BOUNDARY_BCS
 #ifdef LES
   USE DNS_LOCAL, ONLY : rkm_substep
 #endif

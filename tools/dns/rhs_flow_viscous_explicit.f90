@@ -22,8 +22,8 @@ SUBROUTINE RHS_FLOW_VISCOUS_EXPLICIT(vis, u,v,w,p, h1,h2,h3,h4, tmp1,tmp2,tmp3,t
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : itransport, visc, mach
   USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL,     ONLY : bcs_out, bcs_inf
-
+  USE BOUNDARY_BCS
+  
   IMPLICIT NONE
 
   TREAL, DIMENSION(isize_field), INTENT(IN)    :: vis, u,v,w,p
