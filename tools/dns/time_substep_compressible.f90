@@ -215,7 +215,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
   CALL THERMO_GAMMA(imax, jmax, kmax, s, T, GAMMA_LOC(1))
 
 ! Maximum Mach for Poinsot & Lele reference pressure BC
-  IF ( bcs_euler_drift .EQ. 1 ) THEN
+  IF ( BcsDrift ) THEN
      M2_max = C_0_R
      DO i = 1,isize_field
         dummy = (u(i)*u(i)+v(i)*v(i)+w(i)*w(i))*rho(i)/(GAMMA_LOC(i)*p(i))

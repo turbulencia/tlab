@@ -181,9 +181,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#ViscousJ=<none/inflow/outflow>')
   CALL IO_WRITE_ASCII(bakfile, '#ViscousK=<none/inflow/outflow>')
   CALL IO_WRITE_ASCII(bakfile, '#SigmaOut=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#SigmaInfImin=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#SigmaInfImax=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#SigmaInfJ=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#SigmaInf=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#BetaTransverse=<value>')
 
 ! -------------------------------------------------------------------
@@ -358,34 +356,39 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ENDIF
 
 ! -------------------------------------------------------------------
-! Reference values in characteristic formulation
+! Relaxation coefficients towards reference values in characteristic formulation
 ! -------------------------------------------------------------------
-  bcs_euler_drift = 0
-  CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaOut', '-1.0', bcs_sigma_out)
-  IF ( bcs_sigma_out .LE. C_0_R    ) THEN; bcs_sigma_out = C_0_R
-  ELSE;                                    bcs_euler_drift = MAX(bcs_euler_drift,i1); ENDIF 
-! we need it for the bcs array (see end of routine)
+  BcsDrift = .FALSE.
+  
+! Inflow terms
+  CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaInf', '-1.0', dummy(1))
+  ! IF ( dummy(1) .LE. C_0_R ) THEN; dummy(1) = C_0_R
+  ! ELSE;                            BcsDrift = .TRUE.; ENDIF
+  IF ( dummy(1) .GE. C_0_R ) BcsDrift = .TRUE.
+  BcsFlowImin%cinf = dummy(1); BcsFlowImax%cinf = dummy(1) ! so far, all of them the same
+  BcsFlowJmin%cinf = dummy(1); BcsFlowJmax%cinf = dummy(1)
+  BcsFlowKmin%cinf = dummy(1); BcsFlowKmax%cinf = dummy(1)
+  BcsScalImin%cinf = dummy(1); BcsScalImax%cinf = dummy(1)
+  BcsScalJmin%cinf = dummy(1); BcsScalJmax%cinf = dummy(1)
+  BcsScalKmin%cinf = dummy(1); BcsScalKmax%cinf = dummy(1)
 
-  CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaInfJ', '-1.0', bcs_sigma_inf_j)
-  IF ( bcs_sigma_inf_j .LE. C_0_R   ) THEN; bcs_sigma_inf_j = C_0_R
-  ELSE;                                     bcs_euler_drift = MAX(bcs_euler_drift,i1); ENDIF 
-! we need it for the bcs array (see end of routine)
-
-! implemented s.t. SigmaInfImax cannot be used w/o SigmaInfImin
-  CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaInfImin', '-1.0', bcs_sigma_inf_imin)
-  IF ( bcs_sigma_inf_imin .LE. C_0_R  ) THEN; bcs_sigma_inf_imin = C_0_R
-  ELSE;                                       bcs_euler_drift = MAX(bcs_euler_drift,i1); ENDIF 
-! we need it for the bcs array (see end of routine)
-
-  CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaInfImax', '-1.0', bcs_sigma_inf_imax)
-  IF ( bcs_sigma_inf_imax .LE. C_0_R ) THEN; bcs_sigma_inf_imax = C_0_R
-  ELSE;                                      bcs_euler_drift = MAX(bcs_euler_drift,i1); ENDIF 
-! we need it for the bcs array (see end of routine)
-
-! Relaxation coefficient for the transverse terms
+! Outflow terms
+  CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaOut', '-1.0', dummy(1))
+  ! IF ( dummy(1) .LE. C_0_R ) THEN; dummy(1) = C_0_R
+  ! ELSE;                            BcsDrift =  .TRUE.; ENDIF 
+  IF ( dummy(1) .GE. C_0_R ) BcsDrift = .TRUE.
+  BcsFlowImin%cout = dummy(1); BcsFlowImax%cout = dummy(1) ! so far, all of them the same
+  BcsFlowJmin%cout = dummy(1); BcsFlowJmax%cout = dummy(1)
+  BcsFlowKmin%cout = dummy(1); BcsFlowKmax%cout = dummy(1)
+  BcsScalImin%cout = dummy(1); BcsScalImax%cout = dummy(1)
+  BcsScalJmin%cout = dummy(1); BcsScalJmax%cout = dummy(1)
+  BcsScalKmin%cout = dummy(1); BcsScalKmax%cout = dummy(1)
+  
+! Transverse terms
   CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'BetaTransverse', '-1.0', dummy(1))
-  IF ( dummy(1) .LE. C_0_R ) THEN; dummy(1) = C_0_R
-  ELSE;                            bcs_euler_drift = MAX(bcs_euler_drift,i1); ENDIF 
+  ! IF ( dummy(1) .LE. C_0_R ) THEN; dummy(1) = C_0_R
+  ! ELSE;                            BcsDrift =  .TRUE.; ENDIF 
+  IF ( dummy(1) .GE. C_0_R ) BcsDrift = .TRUE.
   BcsFlowImin%ctan = dummy(1); BcsFlowImax%ctan = dummy(1) ! so far, all of them the same
   BcsFlowJmin%ctan = dummy(1); BcsFlowJmax%ctan = dummy(1)
   BcsFlowKmin%ctan = dummy(1); BcsFlowKmax%ctan = dummy(1)
@@ -1085,15 +1088,13 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( bcs_visc_kmax .EQ. 2 ) bcs_out(2,2,3) = 1
 
 ! Make sure there is array space for reference mean drift
-  IF ( bcs_euler_drift .EQ. 1 ) THEN
-     IF      ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
-        BuffFlowJmin%size = MAX(BuffFlowJmin%size,i1); BuffFlowJmax%size = MAX(BuffFlowJmax%size,i1)
-     ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL  ) THEN
-        BuffFlowJmin%size = MAX(BuffFlowJmin%size,i1); BuffFlowJmax%size = MAX(BuffFlowJmax%size,i1)
+  IF ( BcsDrift ) THEN
+     BuffFlowJmin%size = MAX(BuffFlowJmin%size,i1); BuffFlowJmax%size = MAX(BuffFlowJmax%size,i1)
+     BuffScalJmin%size = BuffFlowJmin%size; BuffScalJmax%size = BuffFlowJmax%size
+     IF ( imode_sim .EQ. DNS_MODE_SPATIAL  ) THEN
         BuffFlowImin%size = MAX(BuffFlowImin%size,i1); BuffFlowImax%size = MAX(BuffFlowImax%size,i1)
      ENDIF
      BuffScalImin%size = BuffFlowImin%size; BuffScalImax%size = BuffFlowImax%size
-     BuffScalJmin%size = BuffFlowJmin%size; BuffScalJmax%size = BuffFlowJmax%size
   ENDIF
 
 ! -------------------------------------------------------------------

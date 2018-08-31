@@ -45,7 +45,7 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
 
 ! -------------------------------------------------------------------
   TINTEGER j, k, is, nt, inb_scal_loc, isize, iflag_min, iflag_max, idir, ip0, bcs(2,1)
-  TREAL prefactor, pl_out, pl_inf1, pl_inf2, pl_inf3
+  TREAL prefactor, pl_out_min,  pl_out_max, pl_inf_min, pl_inf_max, pl_aux
 
   TREAL, DIMENSION(:,:,:), POINTER :: tmin, mmin, tmax, mmax, inf_rhs
 
@@ -111,19 +111,33 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
 ! Note that pl_??? has dimensions of 1/length
 ! -------------------------------------------------------------------
   idir = 1
+
   IF      ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN ! not used
   ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL  ) THEN; iflag_min =-4; iflag_max = 3; ENDIF
 
-  IF ( bcs_euler_drift .EQ. 1) THEN
-     pl_out = bcs_sigma_out*(C_1_R-M2_max)/g(1)%scale
-     pl_inf1 = bcs_sigma_inf_imin *qbg(1)%mean/qbg(1)%diam ! jet inflow region (dimensions 1/time)
-     pl_inf2 = bcs_sigma_inf_imax/g(1)%scale        ! Lx plane
-     pl_inf3 = bcs_sigma_inf_j  /g(2)%scale        ! x0 plane far from jet inflow region
-  ELSE
-     pl_out  = C_0_R
-     pl_inf1 = C_0_R
-     pl_inf2 = C_0_R
-     pl_inf3 = C_0_R
+  pl_out_min = C_0_R ! default is only nonreflective
+  IF ( BcsFlowImin%cout .GT. 0 ) THEN
+     pl_out_min = BcsFlowImin%cout *(C_1_R-M2_max) /g(1)%scale
+  ENDIF
+
+  pl_inf_min = C_0_R ! jet inflow region (dimensions 1/time)
+  IF ( BcsFlowImin%cinf .GT. 0 ) THEN 
+     pl_inf_min = BcsFlowImin%cinf *qbg(1)%mean /qbg(1)%diam
+  ENDIF
+  
+  pl_aux = C_0_R     ! far from jet inflow region
+  IF ( BcsFlowJmin%cinf .GT. 0 ) THEN
+     pl_aux = BcsFlowJmin%cinf  /g(2)%scale
+  ENDIF
+  
+  pl_out_max = C_0_R ! default is only nonreflective
+  IF ( BcsFlowImax%cout .GT. 0 ) THEN
+     pl_out_max = BcsFlowImax%cout *(C_1_R-M2_max) /g(1)%scale
+  ENDIF
+
+  pl_inf_max = C_0_R
+  IF ( BcsFlowImax%cinf .GT. 0 ) THEN
+     pl_inf_max = BcsFlowImax%cinf /g(1)%scale
   ENDIF
 
 ! ###################################################################
@@ -173,12 +187,12 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
      ENDDO
   ENDDO
   IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
-     CALL BOUNDARY_BCS_FLOW_NR_2(i0, nt, pl_out, BcsFlowImin%ref(1,1,5), &
+     CALL BOUNDARY_BCS_FLOW_NR_2(i0, nt, pl_out_min, BcsFlowImin%ref(1,1,5), &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     CALL BOUNDARY_BCS_FLOW_NR_3(iflag_min, idir, nt, pl_inf3,pl_inf1, inf_rhs, BcsFlowImin%ref, &
+     CALL BOUNDARY_BCS_FLOW_NR_3(iflag_min, idir, nt, pl_aux,pl_inf_min, inf_rhs, BcsFlowImin%ref, &
           BcsFlowImin%ref(1,1,inb_flow+1), & 
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
@@ -232,12 +246,12 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
      ENDDO
   ENDDO
   IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
-     CALL BOUNDARY_BCS_FLOW_NR_2(i1, nt, pl_out, BcsFlowImax%ref(1,1,5), &
+     CALL BOUNDARY_BCS_FLOW_NR_2(i1, nt, pl_out_max, BcsFlowImax%ref(1,1,5), &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(1), hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     CALL BOUNDARY_BCS_FLOW_NR_3(iflag_max, idir, nt, pl_out, pl_inf2, inf_rhs, BcsFlowImax%ref, & 
+     CALL BOUNDARY_BCS_FLOW_NR_3(iflag_max, idir, nt, pl_out_max, pl_inf_max, inf_rhs, BcsFlowImax%ref, & 
           BcsFlowImax%ref(1,1,inb_flow+1), & 
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
@@ -297,7 +311,7 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
               dpdn_loc(j,k) = txc(1,j,k,5)
            ENDDO
         ENDDO
-        CALL BOUNDARY_BCS_SCAL_NR_3(iflag_min, idir, nt, pl_inf3, pl_inf1, &
+        CALL BOUNDARY_BCS_SCAL_NR_3(iflag_min, idir, nt, pl_aux, pl_inf_min, &
              inf_rhs, inf_rhs(1,1,5+is), BcsFlowImin%ref, BcsScalImin%ref, BcsScalImin%ref(1,1,inb_scal+1), &
              r_loc(1,1), u_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1),&
              drdn_loc(1,1), dudn_loc(1,1), dz1dn_loc(1,1), dpdn_loc(1,1),&
@@ -355,7 +369,7 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
               dpdn_loc(j,k) = txc(imax,j,k,5)
            ENDDO
         ENDDO
-        CALL BOUNDARY_BCS_SCAL_NR_3(iflag_max, idir, nt, pl_out, pl_inf2, &
+        CALL BOUNDARY_BCS_SCAL_NR_3(iflag_max, idir, nt, pl_out_max, pl_inf_max, &
              inf_rhs, inf_rhs(1,1,5+is), BcsFlowImax%ref, BcsScalImax%ref, BcsScalImax%ref(1,1,inb_scal+1), &
              r_loc(1,1), u_loc(1,1), z1_loc(1,1), p_loc(1,1), g_loc(1,1),&
              drdn_loc(1,1), dudn_loc(1,1), dz1dn_loc(1,1), dpdn_loc(1,1),&
