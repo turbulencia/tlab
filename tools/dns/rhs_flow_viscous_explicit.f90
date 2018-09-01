@@ -18,6 +18,9 @@
 SUBROUTINE RHS_FLOW_VISCOUS_EXPLICIT(vis, u,v,w,p, h1,h2,h3,h4, tmp1,tmp2,tmp3,tmp4,tmp5, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
+#ifdef TRACE_ON 
+  USE DNS_CONSTANTS, ONLY : tfile 
+#endif 
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, imode_eqns
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : itransport, visc, mach

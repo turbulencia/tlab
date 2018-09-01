@@ -17,7 +17,7 @@ if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build
    set(CMAKE_BUILD_TYPE PARALLEL ) 
 
 else() # compiler for serial build
-   set(ENV{FC} /opt/local/bin/gfortran-mp-4.8)
+   set(ENV{FC} /opt/local/bin/gfortran-mp-6)
    set(USER_Fortran_FLAGS          "-cpp -ffree-form -ffree-line-length-2048 -fno-automatic")  
 
 #   add_definitions(-DUSE_PSFFT -DUSE_FFTW)
@@ -25,7 +25,6 @@ else() # compiler for serial build
 
    if    ( ${BUILD_TYPE} STREQUAL "BIG" )
      set(USER_Fortran_FLAGS_RELEASE  "-O3 -fconvert=big-endian    -mtune=native -ffast-math -ffinite-math-only -funroll-loops")
-
      set(CMAKE_BUILD_TYPE RELEASE) 
      
    elseif( ${BUILD_TYPE} STREQUAL "LITTLE" ) 

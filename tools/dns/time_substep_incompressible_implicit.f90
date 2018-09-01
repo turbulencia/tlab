@@ -21,6 +21,9 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(dte,etime, kex,kim, kco, &
   USE OMP_LIB
 #endif
   USE DNS_CONSTANTS, ONLY : efile
+#ifdef TRACE_ON 
+  USE DNS_CONSTANTS, ONLY : tfile 
+#endif
   USE DNS_GLOBAL,    ONLY : isize_field, isize_txc_field
   USE DNS_GLOBAL,    ONLY : imode_eqns
   USE DNS_LOCAL,     ONLY : rkm_mode

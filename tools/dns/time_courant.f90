@@ -35,6 +35,9 @@
 !########################################################################
 SUBROUTINE TIME_COURANT(q,s, wrk3d)
 
+#ifdef TRACE_ON 
+  USE DNS_CONSTANTS, ONLY : tfile 
+#endif
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_scal, imode_eqns
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : itransport, visc, prandtl, schmidt

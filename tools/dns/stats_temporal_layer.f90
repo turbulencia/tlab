@@ -30,6 +30,9 @@
 !########################################################################
 SUBROUTINE STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
 
+#ifdef TRACE_ON 
+  USE DNS_CONSTANTS, ONLY : tfile 
+#endif
   USE DNS_TYPES, ONLY : pointers_dt
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal_array

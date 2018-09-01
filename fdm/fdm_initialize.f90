@@ -4,7 +4,9 @@
 !# Compute dx/di and create LU factorization for first- and second-order derivatives
 
 SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
-
+#ifdef TRACE_ON 
+  USE DNS_CONSTANTS, ONLY : tfile 
+#endif 
   USE DNS_TYPES,  ONLY : grid_dt
   USE DNS_GLOBAL, ONLY : inb_scal
   USE DNS_GLOBAL, ONLY : reynolds, schmidt
@@ -21,7 +23,11 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   TINTEGER i, ip, is, ig, ibc_min, ibc_max, nx
   TREAL r04, r28, r24, r48, r25, r60, dummy
 
-! ###################################################################
+#ifdef TRACE_ON 
+  CALL IO_WRITE_ASCII(tfile,'Entering SUBROUTINE FDM_INITIALIZE') 
+#endif 
+
+! ################################################################### 
   nx = g%size
   
   ig = 1 ! Accumulating counter to define pointers inside array x
@@ -122,7 +128,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   ENDIF
 
 ! ###################################################################
-! Saving operations for the time-stability constraint
+! Saving operations for the time-stability constraint 
   g%jac(:,3) = C_1_R /g%jac(:,1)
   g%jac(:,4) = g%jac(:,3) *g%jac(:,3)
   
@@ -150,9 +156,9 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
         
      END SELECT
      
+     WRITE(*,*) '... solving'
      CALL TRIDPFS(nx, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5))
      ig = ig + 5
-
 ! -------------------------------------------------------------------
 ! Nonperiodic case; tridiagonal for 4 different BCs
 ! -------------------------------------------------------------------
@@ -353,6 +359,10 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   !    CALL IO_WRITE_ASCII(efile, 'FDM_INITIALIZE. Grid size incorrect.')
   !    CALL DNS_STOP(DNS_ERROR_DIMGRID)
   ! ENDIF
+
+#ifdef TRACE_ON 
+  CALL IO_WRITE_ASCII(tfile,'Leaving SUBOURINTE FDM_INITIALIZE') 
+#endif 
   
   RETURN
 END SUBROUTINE FDM_INITIALIZE

@@ -26,6 +26,9 @@
 SUBROUTINE DNS_SAVE_AVGIJ(rho,u,v,w,p,vis,T, hq,txc, mean1d, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS, ONLY : tfile
+#endif 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_wrk2d
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : itransport, visc

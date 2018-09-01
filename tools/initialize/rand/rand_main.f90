@@ -102,6 +102,7 @@ PROGRAM INIRAND
 
 ! ###################################################################
   IF ( icalc_flow .EQ. 1 ) THEN
+     CALL IO_WRITE_ASCII(lfile,'Calculating random fields for flow.')
      DO iq = 1,3
         IF ( flag_type .EQ. 1 ) CALL RAND_PDF(imax,jmax,kmax, seed, isymmetric, ipdf, txc(1,2))
         
@@ -133,6 +134,7 @@ PROGRAM INIRAND
   ENDIF
   
   IF ( icalc_scal .EQ. 1 ) THEN
+     CALL IO_WRITE_ASCII(lfile,'Calculating random fields for scalar.')
      DO is = 1,inb_scal
         IF ( flag_type .EQ. 1 ) CALL RAND_PDF(imax,jmax,kmax, seed, isymmetric, ipdf, txc(1,2))
         

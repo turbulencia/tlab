@@ -16,6 +16,9 @@
 SUBROUTINE RHS_FLOW_GLOBAL_2(rho,u,v,w,p,e,T, z1, h0,h1,h2,h3,h4, zh1, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS, ONLY : tfile
+#endif
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, inb_scal, imode_eqns
   USE DNS_GLOBAL,    ONLY : g, buoyancy
   USE DNS_GLOBAL,    ONLY : itransport,idiffusion, visc,prandtl,mach

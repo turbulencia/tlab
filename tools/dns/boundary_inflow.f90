@@ -13,6 +13,9 @@ MODULE BOUNDARY_INFLOW
 
   USE DNS_TYPES,     ONLY : filter_dt, grid_dt
   USE DNS_CONSTANTS, ONLY : efile, lfile
+#ifdef TRACE_ON 
+  USE DNS_CONSTANTS, ONLY : tfile 
+#endif 
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow, inb_scal, inb_scal_array, icalc_flow,icalc_scal
   USE DNS_GLOBAL,    ONLY : imode_eqns, imode_flow, itransport
   USE DNS_GLOBAL,    ONLY : g, qbg, epbackground, pbackground

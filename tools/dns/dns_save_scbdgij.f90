@@ -27,6 +27,9 @@
 SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d )
 
   USE DNS_CONSTANTS, ONLY : efile
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS, ONLY : tfile
+#endif 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, isize_wrk2d
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : nstatavg, statavg

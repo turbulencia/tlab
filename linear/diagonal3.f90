@@ -287,6 +287,7 @@ SUBROUTINE TRIDPFS(nmax, a,b,c,d,e)
      d(n) =-d(n-1)*c(n-1)
   ENDDO
 
+
 ! Generate n-1 elements
   b(nmax-1) =  b(nmax-1) - a(nmax-1)*c(nmax-2)
   e(nmax-1) = (c(nmax-1) - a(nmax-1)*e(nmax-2))/b(nmax-1)
