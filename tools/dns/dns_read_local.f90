@@ -23,7 +23,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
 ! -------------------------------------------------------------------
   CHARACTER*512 sRes, sRes1
-  CHARACTER*32 bakfile, lstr
+  CHARACTER*64 lstr
+  CHARACTER*32 bakfile
   TINTEGER is,ig,idummy,inb_scal_local1
   TREAL dummy(inb_flow+inb_scal+1)
   
