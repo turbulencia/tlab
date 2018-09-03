@@ -156,7 +156,6 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
         
      END SELECT
      
-     WRITE(*,*) '... solving'
      CALL TRIDPFS(nx, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5))
      ig = ig + 5
 ! -------------------------------------------------------------------
