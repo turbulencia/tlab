@@ -88,6 +88,11 @@
 #define DNS_BCS_DIRICHLET   3
 #define DNS_BCS_NEUMANN     4
 
+! Surface Models
+
+#define DNS_SFC_STATIC      0
+#define DNS_SFC_LINEAR      1
+
 ! Buffer
 #define DNS_BUFFER_NONE     0
 #define DNS_BUFFER_RELAX    1

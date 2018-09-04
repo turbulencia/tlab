@@ -29,7 +29,7 @@ else() # compiler for serial build
      
    elseif( ${BUILD_TYPE} STREQUAL "LITTLE" ) 
      set(USER_Fortran_FLAGS_RELEASE  "-O3 -fconvert=little-endian -mtune=native -ffast-math -ffinite-math-only -funroll-loops") 
-
+     add_definitions(-DTRACE_ON) 
      set(CMAKE_BUILD_TYPE RELEASE) 
      
    else()	

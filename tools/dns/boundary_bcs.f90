@@ -13,6 +13,8 @@ MODULE BOUNDARY_BCS
   TYPE bcs_dt
      SEQUENCE
      TINTEGER type(MAX_VARS)                      ! dirichlet, neumann for incompressible
+     TINTEGER SfcType(MAX_VARS)                   ! Type of Surface Model
+     TREAL cpl(MAX_VARS)                          ! Coupling parameter for surface model
      TREAL cinf, cout, ctan                       ! characteristic formulation for compressible
      TREAL, ALLOCATABLE, DIMENSION(:,:,:) :: ref  ! reference fields
   END type bcs_dt

@@ -174,6 +174,10 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#[BoundaryConditions]')
   CALL IO_WRITE_ASCII(bakfile, '#ScalarImin=<none/dirichlet/neumman>')
   CALL IO_WRITE_ASCII(bakfile, '#ScalarJmin=<none/dirichlet/neumman>')
+  CALL IO_WRITE_ASCII(bakfile, '#ScalarSfcTypeJmin=<static/linear>')
+  CALL IO_WRITE_ASCII(bakfile, '#ScalarSfcTypeJmax=<static/linear>')
+  CALL IO_WRITE_ASCII(bakfile, '#ScalarCouplingJmin=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#ScalarCouplingJmax=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#ScalarKmin=<none/dirichlet/neumman>')
   CALL IO_WRITE_ASCII(bakfile, '#VelocityImin=<none/dirichlet/neumman>')
   CALL IO_WRITE_ASCII(bakfile, '#VelocityJmin=<none/dirichlet/neumman>')
@@ -186,7 +190,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#BetaTransverse=<value>')
 
 ! -------------------------------------------------------------------
-! Scalar terms
+! Scalar terms (including surface model at vertical boundaries)
 ! -------------------------------------------------------------------
   BcsScalImin%type(:) = DNS_BCS_NONE; BcsScalImax%type(:) = DNS_BCS_NONE
   IF ( .NOT. g(1)%periodic ) THEN
@@ -215,6 +219,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   BcsScalJmin%type(:) = DNS_BCS_NONE; BcsScalJmax%type(:) = DNS_BCS_NONE
   IF ( .NOT. g(2)%periodic ) THEN
   DO is = 1,inb_scal
+     !
      WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Jmin'
      CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'void', sRes)
      IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalJmin%type(is) = DNS_BCS_NONE
@@ -222,8 +227,21 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalJmin%type(is) = DNS_BCS_NEUMANN
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
-        CALL DNS_STOP(DNS_ERROR_IBC)
+        CALL DNS_STOP(DNS_ERROR_JBC)
      ENDIF
+     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'SfcTypeJmin'
+     CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'static', sRes)
+     IF ( sRes .eq. 'static' ) THEN
+        BcsScalJmin%SfcType(is) = DNS_SFC_STATIC
+     ELSEIF (sRes .eq. 'linear' ) THEN
+        BcsScalJmin%SfcType(is) = DNS_SFC_LINEAR
+     ELSE
+        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
+        CALL DNS_STOP(DNS_ERROR_JBC)
+     ENDIF
+     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'CouplingJmin'
+     CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), '0.0', BcsScalJmin%cpl(is))
+     !
      WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Jmax'
      CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'void', sRes)
      IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalJmax%type(is) = DNS_BCS_NONE
@@ -231,8 +249,20 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalJmax%type(is) = DNS_BCS_NEUMANN
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
-        CALL DNS_STOP(DNS_ERROR_IBC)
+        CALL DNS_STOP(DNS_ERROR_JBC)
      ENDIF
+     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'SfcTypeJmax'
+     CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'static', sRes)
+     IF ( sRes .eq. 'static' ) THEN
+        BcsScalJmax%SfcType(is) = DNS_SFC_STATIC
+     ELSEIF (sRes .eq. 'linear' ) THEN
+        BcsScalJmax%SfcType(is) = DNS_SFC_LINEAR
+     ELSE
+        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
+        CALL DNS_STOP(DNS_ERROR_JBC)
+     ENDIF
+     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'CouplingJmax'
+     CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), '0.0', BcsScalJmax%cpl(is))
   ENDDO
   ENDIF
 
@@ -246,7 +276,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalKmin%type(is) = DNS_BCS_NEUMANN
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
-        CALL DNS_STOP(DNS_ERROR_IBC)
+        CALL DNS_STOP(DNS_ERROR_KBC)
      ENDIF
      WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Kmax'
      CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'none', sRes)
@@ -255,7 +285,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalKmax%type(is) = DNS_BCS_NEUMANN
      ELSE
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
-        CALL DNS_STOP(DNS_ERROR_IBC)
+        CALL DNS_STOP(DNS_ERROR_KBC)
      ENDIF
   ENDDO
   ENDIF
@@ -292,7 +322,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
                                                         BcsFlowJmin%type(3)   = DNS_BCS_NEUMANN
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityJmin.')
-     CALL DNS_STOP(DNS_ERROR_IBC)
+     CALL DNS_STOP(DNS_ERROR_JBC)
   ENDIF
   CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmax', 'freeslip', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowJmax%type(1:3) = DNS_BCS_NONE
@@ -302,7 +332,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
                                                         BcsFlowJmax%type(3)   = DNS_BCS_NEUMANN
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityJmax.')
-     CALL DNS_STOP(DNS_ERROR_IBC)
+     CALL DNS_STOP(DNS_ERROR_JBC)
   ENDIF
   
   CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityKmin', 'freeslip', sRes)
@@ -313,7 +343,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
                                                         BcsFlowKmin%type(1)   = DNS_BCS_NEUMANN
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityKmin.')
-     CALL DNS_STOP(DNS_ERROR_IBC)
+     CALL DNS_STOP(DNS_ERROR_KBC)
   ENDIF
   CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityKmax', 'freeslip', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowKmax%type(1:3) = DNS_BCS_NONE
@@ -323,8 +353,9 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
                                                         BcsFlowKmax%type(1)   = DNS_BCS_NEUMANN
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityKmax.')
-     CALL DNS_STOP(DNS_ERROR_IBC)
+     CALL DNS_STOP(DNS_ERROR_KBC)
   ENDIF
+
 
 ! -------------------------------------------------------------------
 ! Viscous terms
@@ -1029,8 +1060,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! ###################################################################
 ! Final initialization and control statements
 ! ###################################################################
-  IF ( nitera_first .GE. nitera_last ) THEN
-     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Not started because nitera_first >= nitera_last.' )
+  IF ( nitera_first .GT. nitera_last ) THEN
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Not started because nitera_first > nitera_last.' )
      CALL DNS_STOP(DNS_ERROR_OPTION)
   END IF
 
@@ -1099,6 +1130,26 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ENDIF
 
 ! -------------------------------------------------------------------
+! Interactive Boundary conditions
+! -------------------------------------------------------------------
+  DO is =1,inb_scal
+     IF ( BcsScalJmin%type(is).NE. DNS_BCS_DIRICHLET .AND. &
+          BcsScalJmin%SfcType(is) .NE. DNS_SFC_STATIC ) THEN
+        CALL IO_WRITE_ASCII(efile, &
+             'DNS_READ_LOCAL. Interactive BC at jmin not implemented for non-Dirichlet BC')
+        CALL DNS_STOP(DNS_ERROR_JBC)
+     ENDIF
+     IF ( BcsScalJmax%type(is).NE. DNS_BCS_DIRICHLET .AND. &
+          BcsScalJmax%SfcType(is) .NE. DNS_SFC_STATIC ) THEN
+        WRITE(*,*) BcsScalJmax%type(is), BcsScalJmax%SfcType(is), BcsScalJmax%cpl(is)
+        CALL IO_WRITE_ASCII(efile, &
+             'DNS_READ_LOCAL. Interactive BC at jmax not implemented for non-Dirichlet BC')
+        CALL DNS_STOP(DNS_ERROR_JBC)
+     ENDIF
+  ENDDO
+
+
+! -------------------------------------------------------------------
 ! Implicit RKM part
 ! -------------------------------------------------------------------
   IF ( rkm_mode .EQ. RKM_IMP3_DIFFUSION ) THEN 
@@ -1147,6 +1198,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Nonblocking formulation only valid for 2 scalars.')
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
   ENDIF
+
   
   RETURN
 END SUBROUTINE DNS_READ_LOCAL

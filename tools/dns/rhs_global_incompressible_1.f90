@@ -42,7 +42,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(imax,kmax,*)   :: wrk2d
 
-  TARGET h2
+  TARGET h2, hs
 
 ! -----------------------------------------------------------------------
   TINTEGER iq, is, ij, k, nxy, ip_b, ip_t
@@ -65,6 +65,20 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef USE_ESSL
   ilen = isize_field
 #endif
+
+! Keep the old tendency of the scalar at the boundary
+  ip_b =                 1
+  ip_t = imax*(jmax-1) + 1
+  DO k = 1,kmax
+     DO is =1,inb_scal
+        p_bcs => hs(ip_b:,is); BcsScalJmin%ref(1:imax,k,is) = p_bcs(1:imax)
+        p_bcs => hs(ip_t:,is); BcsScalJmax%ref(1:imax,k,is) = p_bcs(1:imax)
+     ENDDO
+     ip_b = ip_b + nxy ! bottom BC address
+     ip_t = ip_t + nxy ! top BC address
+  ENDDO
+
+
 
 ! #######################################################################
 ! Ox diffusion and convection terms in Ox momentum eqn
@@ -281,6 +295,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
   ENDIF  
 
+  hs(:,1) = C_0_R 
+
 ! #######################################################################
 ! Boundary conditions
 ! #######################################################################
@@ -289,9 +305,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! -----------------------------------------------------------------------
   BcsFlowJmin%ref = C_0_R ! default is no-slip (dirichlet)
   BcsFlowJmax%ref = C_0_R
-  BcsScalJmin%ref = C_0_R
-  BcsScalJmax%ref = C_0_R
-  
+  DO is =1,inb_scal
+     IF ( BcsScalJmin%SfcType(is) .EQ. DNS_SFC_STATIC ) BcsScalJmin%ref(:,:,is) = C_0_R
+     IF ( BcsScalJmax%SfcType(is) .EQ. DNS_SFC_STATIC ) BcsScalJmax%ref(:,:,is) = C_0_R
+  ENDDO
+
   DO iq = 1,inb_flow
      ibc = 0
      IF ( BcsFlowJmin%type(iq) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
@@ -309,6 +327,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      IF ( ibc .GT. 0 ) THEN
         CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs(1,is), &
              BcsScalJmin%ref(1,1,is),BcsScalJmax%ref(1,1,is), wrk1d,tmp1,wrk3d)
+     ENDIF
+
+     IF ( BcsScalJmin%type(is) .NE. DNS_SFC_STATIC) THEN
+        CALL BOUNDARY_SURFACE_J(is,bcs,q,hq,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
      ENDIF
   ENDDO
 
