@@ -57,14 +57,15 @@ SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,q,hq,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
      hfx_anom = hfx - hfx_avg
      BcsScalJmin%ref(:,:,is) = BcsScalJmin%ref(:,:,is) + BcsScalJmin%cpl(is)*hfx_anom
 
-     avg_anom=AVG1V2D(imax,1,kmax,1,1,hfx_anom)
-     avg=AVG1V2D(imax,jmax,kmax,1,1,s)
-     var=AVG1V2D(imax,jmax,kmax,1,2,s)
-     avg2=AVG1V2D(imax,jmax,kmax,2,1,s)
-     var2=AVG1V2D(imax,jmax,kmax,2,2,s) 
-     WRITE(lstr,*) itime,'Jmin: Heat flux:', hfx_avg, avg_anom,MINVAL(hfx_anom),MAXVAL(hfx_anom),avg,var-avg**2,var2-avg2**2
-     CALL IO_WRITE_ASCII(lfile,lstr)
-
+     IF ( rkm_substep .EQ. 1 ) THEN 
+        avg_anom=AVG1V2D(imax,1,kmax,1,1,hfx_anom)
+        avg=AVG1V2D(imax,jmax,kmax,1,1,s)
+        var=AVG1V2D(imax,jmax,kmax,1,2,s)
+        avg2=AVG1V2D(imax,jmax,kmax,2,1,s)
+        var2=AVG1V2D(imax,jmax,kmax,2,2,s)  
+        WRITE(lstr,*) itime,'Jmin: Heat flux:', hfx_avg, avg_anom,MINVAL(hfx_anom),MAXVAL(hfx_anom),avg,var-avg**2,var2-avg2**2
+        CALL IO_WRITE_ASCII(lfile,lstr)
+     ENDIF
      ! TESTING: solve ds/dt=s => s(t) = exp(t) on the the surface boundary
      ! WRITE(*,*) 'Jmin-sfc BEF', itime, MINVAL(BcsScalJmin%ref(:,:,is)), MAXVAL(BcsScalJmin%ref(:,:,is)), s(1,is), BcsScalJmin%cpl(is)
      ! ip=1
@@ -89,13 +90,13 @@ SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,q,hq,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
      hfx_avg = diff*AVG1V2D(imax,jmax,kmax,1,1,tmp1)
      hfx_anom = hfx - hfx_avg
      BcsScalJmax%ref(:,:,is) = BcsScalJmax%ref(:,:,is) + BcsScalJmax%cpl(is)*hfx_anom
-     IF ( rkm_substep .EQ. rkm_endstep ) THEN
+     IF ( rkm_substep .EQ. 1 ) THEN  
+        avg_anom=AVG1V2D(imax,1,kmax,1,1,hfx_anom) 
         avg=AVG1V2D(imax,jmax,kmax,g(2)%size,1,s)
         var=AVG1V2D(imax,jmax,kmax,g(2)%size,2,s) 
         avg2=AVG1V2D(imax,jmax,kmax,g(2)%size-1,1,s) 
         var2=AVG1V2D(imax,jmax,kmax,g(2)%size-1,2,s)
-        WRITE(lstr,*) itime,'Jmax: Heat flux:', hfx_avg, MINVAL(hfx_anom),MAXVAL(hfx_anom),avg,var-avg**2,var2-avg2**2
-
+        WRITE(lstr,*) itime,'Jmax: Heat flux:', hfx_avg, avg_anom,MINVAL(hfx_anom),MAXVAL(hfx_anom),avg,var-avg**2,var2-avg2**2
         CALL IO_WRITE_ASCII(lfile,lstr)
      ENDIF
 

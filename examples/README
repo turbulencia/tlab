@@ -63,6 +63,7 @@ Case43. Stable Ekman layer with sponge at the top.
 Case44. Same as 21, implicit solver.
 Case45. Same as 22, implicit solver.
 Case46. Same as 23, implicit solver.
+Case47. Neutral Ekman layer with sponge at the top and interactive BC at the bottom 
 
 1D cases
 
