@@ -29,12 +29,10 @@ SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,q,hq,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(isize_wrk1d,*)      :: wrk1d
   TREAL, DIMENSION(*)                  :: wrk2d,wrk3d
 
-  TINTEGER nxy,ip,j,k
+  TINTEGER nxy,ip,k
   TREAL, DIMENSION(:,:), POINTER       :: hfx,hfx_anom
   TREAL :: diff,hfx_avg
-  TREAL AVG1V2D 
-  TREAL var,var2,avg,avg2,avg_anom
-  CHARACTER lstr*256
+  TREAL AVG1V2D
 
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile,'ENTERING SUBROUTINE BOUNDARY_SURFACE_J')
@@ -42,7 +40,9 @@ SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,q,hq,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
   diff = visc/schmidt(is)
   nxy = imax*jmax
 
+  ! vertical derivative of scalar for flux at the boundaries
   CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(:,is), tmp1,wrk3d,wrk2d,wrk3d)
+
   ! ------------------------------------------------------------
   ! Bottom Boundary
   ! ------------------------------------------------------------
@@ -50,29 +50,12 @@ SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,q,hq,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
      hfx =>      aux(:,:,1)
      hfx_anom => aux(:,:,2)
      ip=1
-     DO k=1,kmax
+     DO k=1,kmax    ! Calculate the surface flux
         hfx(:,k) = diff*tmp1(ip:ip+imax-1); ip=ip+nxy
      ENDDO
      hfx_avg = diff*AVG1V2D(imax,jmax,kmax,1,1,tmp1)
      hfx_anom = hfx - hfx_avg
      BcsScalJmin%ref(:,:,is) = BcsScalJmin%ref(:,:,is) + BcsScalJmin%cpl(is)*hfx_anom
-
-     IF ( rkm_substep .EQ. 1 ) THEN 
-        avg_anom=AVG1V2D(imax,1,kmax,1,1,hfx_anom)
-        avg=AVG1V2D(imax,jmax,kmax,1,1,s)
-        var=AVG1V2D(imax,jmax,kmax,1,2,s)
-        avg2=AVG1V2D(imax,jmax,kmax,2,1,s)
-        var2=AVG1V2D(imax,jmax,kmax,2,2,s)  
-        WRITE(lstr,*) itime,'Jmin: Heat flux:', hfx_avg, avg_anom,MINVAL(hfx_anom),MAXVAL(hfx_anom),avg,var-avg**2,var2-avg2**2
-        CALL IO_WRITE_ASCII(lfile,lstr)
-     ENDIF
-     ! TESTING: solve ds/dt=s => s(t) = exp(t) on the the surface boundary
-     ! WRITE(*,*) 'Jmin-sfc BEF', itime, MINVAL(BcsScalJmin%ref(:,:,is)), MAXVAL(BcsScalJmin%ref(:,:,is)), s(1,is), BcsScalJmin%cpl(is)
-     ! ip=1
-     ! DO k=1,kmax
-     !    BcsScalJmin%ref(:,k,is) = BcsScalJmin%ref(:,k,is) + s(ip:ip+imax-1,is)*BcsScalJmin%cpl(is)
-     !    ip = ip+nxy
-     ! ENDDO
   ENDIF
 
 
@@ -83,30 +66,12 @@ SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,q,hq,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
      hfx =>      aux(:,:,3)
      hfx_anom => aux(:,:,4)
      ip = imax*(jmax-1) + 1
-     DO k=1,kmax;
+     DO k=1,kmax;     ! Calculate the surface flux
         hfx(:,k) = -diff*tmp1(ip:ip+imax-1); ip=ip+nxy;
      ENDDO
-
      hfx_avg = diff*AVG1V2D(imax,jmax,kmax,1,1,tmp1)
      hfx_anom = hfx - hfx_avg
      BcsScalJmax%ref(:,:,is) = BcsScalJmax%ref(:,:,is) + BcsScalJmax%cpl(is)*hfx_anom
-     IF ( rkm_substep .EQ. 1 ) THEN  
-        avg_anom=AVG1V2D(imax,1,kmax,1,1,hfx_anom) 
-        avg=AVG1V2D(imax,jmax,kmax,g(2)%size,1,s)
-        var=AVG1V2D(imax,jmax,kmax,g(2)%size,2,s) 
-        avg2=AVG1V2D(imax,jmax,kmax,g(2)%size-1,1,s) 
-        var2=AVG1V2D(imax,jmax,kmax,g(2)%size-1,2,s)
-        WRITE(lstr,*) itime,'Jmax: Heat flux:', hfx_avg, avg_anom,MINVAL(hfx_anom),MAXVAL(hfx_anom),avg,var-avg**2,var2-avg2**2
-        CALL IO_WRITE_ASCII(lfile,lstr)
-     ENDIF
-
-     ! TESTING: solve ds/dt=s => s(t) = exp(t) on the the surface boundary
-     ! WRITE(*,*) 'Jmax-sfc BEF', itime, MINVAL(BcsScalJmax%ref(:,:,is)), MAXVAL(BcsScalJmax%ref(:,:,is)), s(imax*(jmax-1)+1,is)
-     ! ip = imax*(jmax-1) + 1
-     ! DO k=1,kmax
-     !    BcsScalJmax%ref(:,k,is) = BcsScalJmax%ref(:,k,is) + s(ip:ip+imax-1,is)*BcsScalJmax%cpl(is)
-     !    ip = ip+nxy
-     ! ENDDO
   ENDIF
 
 
