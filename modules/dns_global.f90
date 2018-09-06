@@ -103,6 +103,7 @@ MODULE DNS_GLOBAL
   TREAL, DIMENSION(:), ALLOCATABLE :: bbackground, epbackground
 
 ! ###################################################################
+  TYPE(term_dt) :: translation! Translation parameters
   TYPE(term_dt) :: buoyancy   ! Buoyancy parameters
   TYPE(term_dt) :: coriolis   ! Coriolis parameters
   TYPE(term_dt) :: radiation  ! Radiation parameters

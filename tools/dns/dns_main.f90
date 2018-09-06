@@ -61,7 +61,7 @@ PROGRAM DNS
   
   CHARACTER*32 fname, inifile
   CHARACTER*128 str, line
-  TINTEGER idummy, ig
+  TINTEGER idummy, ig, iq
   TINTEGER ierr, isize_wrk3d, isize_vaux, isize_loc
   TREAL dummy
 
@@ -417,6 +417,10 @@ PROGRAM DNS
 ! ###################################################################
 ! Initialize data for boundary conditions
 ! ###################################################################
+  DO iq=1,3    ! initialize buffers and time step taking into account translation
+     IF ( translation%active(iq) ) q(:,iq) = q(:,iq) - translation%vector(iq)
+  ENDDO
+
   CALL BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
 
   CALL BOUNDARY_BCS_INITIALIZE(wrk3d)
@@ -436,6 +440,9 @@ PROGRAM DNS
 ! Initialize time step dt
 ! ###################################################################
   CALL TIME_COURANT(q,s, wrk3d)
+  DO iq=1,3
+     IF ( translation%active(iq) ) q(:,iq) = q(:,iq) + translation%vector(iq)
+  ENDDO
 
 ! ###################################################################
 ! Initialize logfiles

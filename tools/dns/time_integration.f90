@@ -22,6 +22,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   USE DNS_GLOBAL, ONLY : itransport, visc
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : nstatavg, nstatavg_points
+  USE DNS_GLOBAL, ONLY : translation
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL 
   USE DNS_TOWER
@@ -97,6 +98,10 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 
   DO WHILE ( itime .LT. nitera_last )
 
+     DO iq=1,3
+        IF ( translation%active(iq) ) q(:,iq) = q(:,iq) - translation%vector(iq)
+     ENDDO
+
      CALL TIME_RUNGEKUTTA(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
           l_q, l_hq, l_txc, l_comm)
 
@@ -127,6 +132,9 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 ! -----------------------------------------------------------------------
      CALL TIME_COURANT(q,s, wrk3d)
 
+     DO iq=1,3
+        IF ( translation%active(iq) ) q(:,iq) = q(:,iq)+translation%vector(iq)
+     ENDDO
 ! ###################################################################
 ! The rest: Logging, postprocessing and saving
 ! ###################################################################
