@@ -30,6 +30,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
+  USE DNS_CONSTANTS,ONLY:efile
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field, isize_wrk1d,  inb_flow,inb_scal
@@ -62,6 +63,17 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 
 ! #######################################################################
   nxy   = imax*jmax
+
+  DO is=1,inb_scal
+     IF ( BcsScalJmin%SfcType(is) .EQ. DNS_SFC_STATIC .AND. &
+          BcsScalJmax%SfcType(is) .EQ. DNS_SFC_STATIC ) THEN
+        CONTINUE
+     ELSE
+        CALL IO_WRITE_ASCII(efile,'Only static surface implemented in implicit mode')
+     ENDIF
+  ENDDO
+
+
   
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
   

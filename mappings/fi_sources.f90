@@ -16,7 +16,7 @@
 SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
-  USE DNS_GLOBAL, ONLY : translation,buoyancy, coriolis, subsidence
+  USE DNS_GLOBAL, ONLY : buoyancy, coriolis, subsidence
   USE DNS_GLOBAL, ONLY : bbackground, pbackground, rbackground, epbackground
 
   IMPLICIT NONE
@@ -56,11 +56,9 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 
      dummy = coriolis%vector(2)
      dtr3=C_0_R; dtr1=C_0_R
-     IF ( translation%active(1) ) dtr1=translation%vector(1)
-     IF ( translation%active(3) ) dtr3=translation%vector(3)
      DO ij = srt,end
-        hq(ij,1) = hq(ij,1) + dummy*( w_geo-q(ij,3)-dtr3 )
-        hq(ij,3) = hq(ij,3) + dummy*( q(ij,1)+dtr1-u_geo )
+        hq(ij,1) = hq(ij,1) + dummy*( w_geo-q(ij,3) )
+        hq(ij,3) = hq(ij,3) + dummy*( q(ij,1)-u_geo )
      ENDDO
 !$omp end parallel
 

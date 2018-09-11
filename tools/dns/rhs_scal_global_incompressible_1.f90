@@ -18,9 +18,11 @@ SUBROUTINE RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : idiffusion, visc, schmidt
-  USE BOUNDARY_BCS
+  USE BOUNDARY_BCS,ONLY: BcsScalJmin, BcsScalJmax
   
   IMPLICIT NONE
+
+#include "integers.h"
 
   TINTEGER is
   TREAL, DIMENSION(isize_field)   :: u,v,w, s_is, hs_is
@@ -28,9 +30,14 @@ SUBROUTINE RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1&
   TREAL, DIMENSION(jmax,*)        :: wrk1d
   TREAL, DIMENSION(imax,kmax,2)   :: wrk2d
 
+  TREAL, DIMENSION(:), POINTER    :: p_bcs
+
+  TARGET hs_is
+
 ! -----------------------------------------------------------------------
-  TINTEGER ij, k, nxy, ip, ibc, bcs(2,2)
+  TINTEGER ij, k, nxy, ip, ip_b, ip_t, ibc, bcs(2,2)
   TREAL diff
+
 
 ! #######################################################################
   nxy = imax*jmax
@@ -39,6 +46,28 @@ SUBROUTINE RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1&
   
   IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R
   ELSE;                                  diff = visc/schmidt(is); ENDIF
+
+
+! #######################################################################
+! Preliminaries for Scalar BC
+! (flow BCs initialized below as they are used for pressure in between)
+! #######################################################################
+! Default is zero (Dirichlet)
+  BcsScalJmin%ref(:,:,is) = C_0_R
+  BcsScalJmax%ref(:,:,is) = C_0_R
+
+! Keep the old tendency of the scalar at the boundary to be used in dynamic BCs
+  ip_b =                 1
+  ip_t = imax*(jmax-1) + 1
+  DO k = 1,kmax
+     IF ( BcsScalJmin%SfcType(is) .EQ. DNS_SFC_LINEAR ) THEN
+        p_bcs => hs_is(ip_b:); BcsScalJmin%ref(1:imax,k,is) = p_bcs(1:imax); ENDIF
+     IF ( BcsScalJmax%SfcType(is) .EQ. DNS_SFC_LINEAR ) THEN
+        p_bcs => hs_is(ip_t:); BcsScalJmax%ref(1:imax,k,is) = p_bcs(1:imax); ENDIF
+     ip_b = ip_b + nxy ! bottom BC address
+     ip_t = ip_t + nxy ! top BC address
+  ENDDO
+
 
 ! #######################################################################
 ! Diffusion and convection terms in scalar equations
@@ -60,27 +89,27 @@ SUBROUTINE RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1&
 ! Boundary conditions
 ! #######################################################################
   ibc = 0
-  wrk2d(:,:,1:2) = C_0_R ! default is dirichlet
   IF ( BcsScalJmin%type(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
   IF ( BcsScalJmax%type(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
   IF ( ibc .GT. 0 ) THEN
-     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs_is, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,tmp1,wrk3d)
+     CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs_is, &
+          BcsScalJmin%ref(1,1,is),BcsScalJmax%ref(1,1,is), wrk1d,tmp1,wrk3d)
   ENDIF
 
-! -----------------------------------------------------------------------
-! Impose bottom at Jmin 
-! -----------------------------------------------------------------------
-  ip = 1
-  DO k = 1,kmax
-     hs_is(ip:ip+imax-1) = wrk2d(1:imax,k,1); ip = ip + nxy
-  ENDDO
+  IF ( BcsScalJmin%type(is) .NE. DNS_SFC_STATIC .OR. &
+       BcsScalJmax%type(is) .NE. DNS_SFC_STATIC ) THEN
+     CALL BOUNDARY_SURFACE_J(is,bcs,s_is,hs_is,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
+  ENDIF
+
 
 ! -----------------------------------------------------------------------
-! Impose top at Jmax
+! Impose BC at Jmin/max
 ! -----------------------------------------------------------------------
-  ip = 1 + imax*(jmax-1) 
+  ip = 1
+  ip_t = 1 + imax*(jmax-1)
   DO k = 1,kmax
-     hs_is(ip:ip+imax-1) = wrk2d(1:imax,k,2); ip = ip + nxy
+     hs_is(ip_b:ip_b+imax-1) = BcsScalJmin%ref(1:imax,k,is); ip_b = ip + nxy
+     hs_is(ip_t:ip_t+imax-1) = BcsScalJmax%ref(1:imax,k,is); ip_t = ip + nxy
   ENDDO
 
   RETURN

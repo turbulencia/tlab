@@ -21,6 +21,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS,ONLY:tfile
+#endif
   USE DNS_GLOBAL, ONLY : imode_eqns
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE DNS_GLOBAL, ONLY : g
@@ -57,6 +60,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   INTEGER ilen
 #endif
 
+#ifdef TRACE_ON
+  CALL IO_WRITE_ASCII(tfile,'ENTERING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
+#endif
+
+
 ! #######################################################################
   nxy = imax*jmax
 
@@ -66,19 +74,27 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ilen = isize_field
 #endif
 
-! Keep the old tendency of the scalar at the boundary
+! #######################################################################
+! Preliminaries for Scalar BC
+! (flow BCs initialized below as they are used for pressure in between)
+! #######################################################################
+! Default is zero
+  BcsScalJmin%ref(:,:,:) = C_0_R
+  BcsScalJmax%ref(:,:,:) = C_0_R
+
+! Keep the old tendency of the scalar at the boundary to be used in dynamic BCs
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1
   DO k = 1,kmax
      DO is =1,inb_scal
-        p_bcs => hs(ip_b:,is); BcsScalJmin%ref(1:imax,k,is) = p_bcs(1:imax)
-        p_bcs => hs(ip_t:,is); BcsScalJmax%ref(1:imax,k,is) = p_bcs(1:imax)
+        IF ( BcsScalJmin%SfcType(is) .EQ. DNS_SFC_LINEAR ) THEN
+             p_bcs => hs(ip_b:,is); BcsScalJmin%ref(1:imax,k,is) = p_bcs(1:imax); ENDIF
+        IF ( BcsScalJmax%SfcType(is) .EQ. DNS_SFC_LINEAR ) THEN
+             p_bcs => hs(ip_t:,is); BcsScalJmax%ref(1:imax,k,is) = p_bcs(1:imax); ENDIF
      ENDDO
      ip_b = ip_b + nxy ! bottom BC address
      ip_t = ip_t + nxy ! top BC address
   ENDDO
-
-
 
 ! #######################################################################
 ! Ox diffusion and convection terms in Ox momentum eqn
@@ -302,11 +318,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Preliminaries
 ! -----------------------------------------------------------------------
   BcsFlowJmin%ref = C_0_R ! default is no-slip (dirichlet)
-  BcsFlowJmax%ref = C_0_R
-  DO is =1,inb_scal
-     IF ( BcsScalJmin%SfcType(is) .EQ. DNS_SFC_STATIC ) BcsScalJmin%ref(:,:,is) = C_0_R
-     IF ( BcsScalJmax%SfcType(is) .EQ. DNS_SFC_STATIC ) BcsScalJmax%ref(:,:,is) = C_0_R
-  ENDDO
+  BcsFlowJmax%ref = C_0_R ! Scalar BCs initialized at start of routine
 
   DO iq = 1,inb_flow
      ibc = 0
@@ -327,8 +339,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
              BcsScalJmin%ref(1,1,is),BcsScalJmax%ref(1,1,is), wrk1d,tmp1,wrk3d)
      ENDIF
 
-     IF ( BcsScalJmin%type(is) .NE. DNS_SFC_STATIC) THEN
-        CALL BOUNDARY_SURFACE_J(is,bcs,q,hq,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
+     IF ( BcsScalJmin%type(is) .NE. DNS_SFC_STATIC .OR. &
+          BcsScalJmax%type(is) .NE. DNS_SFC_STATIC ) THEN
+        CALL BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
      ENDIF
   ENDDO
 
@@ -360,5 +373,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      ip_t = ip_t + nxy
   ENDDO
 
+#ifdef TRACE_ON
+  CALL IO_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
+#endif
   RETURN
 END SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1

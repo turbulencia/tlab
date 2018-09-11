@@ -26,6 +26,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
+  USE DNS_CONSTANTS,ONLY: efile
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field, isize_wrk1d, inb_scal, inb_flow
@@ -99,7 +100,15 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
            BcsScalJmin%ref(1:imax,k,is) = s(ip_b:ip_b+imax-1,is) 
            BcsScalJmax%ref(1:imax,k,is) = s(ip_t:ip_t+imax-1,is) 
         ELSE  ! Only Dirichlet BCs implemented for scalar
-           CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
+           CALL IO_WRITE_ASCII(efile,'Only Dirichlet BCs implemented for scalar in implicit mode')
+           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+        ENDIF
+
+        IF ( BcsScalJmin%SfcType(is) .EQ. DNS_SFC_STATIC .AND. &
+             BcsScalJmax%SfcType(is) .EQ. DNS_SFC_STATIC ) THEN
+           ! Nothing to do
+        ELSE
+           CALL IO_WRITE_ASCII(efile,'Only static surface implemented in implicit mode')
         ENDIF
      ENDDO
   ENDDO

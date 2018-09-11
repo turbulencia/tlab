@@ -20,7 +20,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
   USE OMP_LIB,    ONLY : omp_get_thread_num 
 
-  USE DNS_CONSTANTS, ONLY : lfile,wfile,efile
+  USE DNS_CONSTANTS, ONLY : lfile,wfile,efile,tfile
   !
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imode_eqns
@@ -87,6 +87,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
   TARGET h2
 
+#ifdef TRACE_ON
+  CALL IO_WRITE_ASCII(tfile,'ENTERING SUBROUTINE, RHS_GLOBAL_INCOMPRESSIBLE_NBC')
+#endif
+
   IF ( inb_scal .GT. 2 ) THEN   
      CALL IO_WRITE_ASCII(efile,&
           'Nonblocking Communication not implemented >2 scalars' )
@@ -98,6 +102,29 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   ENDIF
 
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+
+! #######################################################################
+! Preliminaries for Scalar BC
+! (flow BCs initialized below as they are used for pressure in between)
+! #######################################################################
+! Default is zero
+  BcsScalJmin%ref(:,:,:) = C_0_R
+  BcsScalJmax%ref(:,:,:) = C_0_R
+
+! Keep the old tendency of the scalar at the boundary to be used in dynamic BCs
+  ip_b =                 1
+  ip_t = imax*(jmax-1) + 1
+  DO k = 1,kmax
+     DO is =1,inb_scal
+        IF ( BcsScalJmin%SfcType(is) .EQ. DNS_SFC_LINEAR ) THEN
+             p_bcs => hs(ip_b:,is); BcsScalJmin%ref(1:imax,k,is) = p_bcs(1:imax); ENDIF
+        IF ( BcsScalJmax%SfcType(is) .EQ. DNS_SFC_LINEAR ) THEN
+             p_bcs => hs(ip_t:,is); BcsScalJmax%ref(1:imax,k,is) = p_bcs(1:imax); ENDIF
+     ENDDO
+     ip_b = ip_b + nxy ! bottom BC address
+     ip_t = ip_t + nxy ! top BC address
+  ENDDO
+
 
   nbcsetup_ = nbcsetup
   pkg_cnt=24*ims_npro
@@ -615,8 +642,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 ! -----------------------------------------------------------------------
   BcsFlowJmin%ref = C_0_R ! default is no-slip (dirichlet)
   BcsFlowJmax%ref = C_0_R
-  BcsScalJmin%ref = C_0_R
-  BcsScalJmax%ref = C_0_R
   
   DO iq = 1,inb_flow
      ibc = 0
@@ -635,6 +660,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      IF ( ibc .GT. 0 ) THEN
         CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs(1,is), &
              BcsScalJmin%ref(1,1,is),BcsScalJmax%ref(1,1,is), wrk1d,tmp1,wrk3d)
+     ENDIF
+
+     IF ( BcsScalJmin%type(is) .NE. DNS_SFC_STATIC .OR.
+          BcsScalJmax%type(is) .NE. DNS_SFC_STATIC ) THEN
+        CALL BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
      ENDIF
   ENDDO
 
@@ -667,5 +697,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   ENDDO
 
   ptime = ptime + MPI_WTime()
-!
+#ifdef TRACE_ON
+  CALL IO_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC')
+#endif
+  RETURN
 END SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC

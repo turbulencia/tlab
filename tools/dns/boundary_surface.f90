@@ -5,7 +5,7 @@
 ! Calculates and updates interactive surface boundary condition
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,q,hq,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
+SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
 #ifdef TRACE_ON
   USE DNS_CONSTANTS,ONLY : tfile
 #endif
@@ -23,7 +23,7 @@ SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,q,hq,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
 
   TINTEGER is
   TINTEGER, DIMENSION(2,2), INTENT(IN) :: bcs          ! Boundary conditions from derivative operator
-  TREAL, DIMENSION(isize_field,*)      :: q,hq,s,hs 
+  TREAL, DIMENSION(isize_field,*)      :: s,hs
   TREAL, DIMENSION(isize_field)        :: tmp1,tmp2
   TREAL, DIMENSION(imax,kmax,6),TARGET :: aux 
   TREAL, DIMENSION(isize_wrk1d,*)      :: wrk1d

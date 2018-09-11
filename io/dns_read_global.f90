@@ -191,11 +191,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
 
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermTranslation', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'        ) THEN; translation%type = EQNS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'gallilean'   ) THEN; translation%type = EQNS_TRF_GALLILEAN
-  ENDIF
-
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermBodyForce', 'void', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'        ) THEN; buoyancy%type = EQNS_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'explicit'    ) THEN; buoyancy%type = EQNS_EXPLICIT
@@ -302,33 +297,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF ( inb_scal_local1 .NE. inb_scal_local2 ) THEN ! Consistency check
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Schmidt and Damkholer sizes do not match.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
-  ENDIF
-
-! ###################################################################
-! Translation
-! ###################################################################
-  CALL IO_WRITE_ASCII(bakfile, '#')
-  CALL IO_WRITE_ASCII(bakfile, '#[Translation]')
-  CALL IO_WRITE_ASCII(bakfile, '#')
-  CALL IO_WRITE_ASCII(bakfile, '#Vector=<Tx,Ty,Tz>#')
-
-  translation%vector= C_0_R; translation%active = .FALSE.
-  IF ( translation%type .NE. EQNS_NONE ) THEN
-     CALL SCANINICHAR(bakfile, inifile, 'Translation', 'Vector', '1.0,0.0,0.0', sRes)
-     idummy=3
-     CALL LIST_REAL(sRes, idummy, translation%vector)
-
-     IF ( ABS(translation%vector(1)) .GT. C_0_R ) THEN
-        translation%active(1) = .TRUE.; CALL IO_WRITE_ASCII(lfile,' Translation along Ox.')
-     ENDIF
-     IF ( ABS(translation%vector(2)) .GT. C_0_R ) THEN
-        translation%active(2) = .TRUE.; CALL IO_WRITE_ASCII(lfile,' Translation along Oy.')
-        CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Translation in along Oy not implemented')
-        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-     ENDIF
-     IF ( ABS(translation%vector(3)) .GT. C_0_R ) THEN
-        translation%active(3) = .TRUE.; CALL IO_WRITE_ASCII(lfile,' Translation along Oz.')
-     ENDIF
   ENDIF
 
 ! ###################################################################

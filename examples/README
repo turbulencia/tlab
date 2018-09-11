@@ -59,7 +59,6 @@ Case34. Same as 27, but with a stratified bottom interface.
 
 Case41. Neutral Ekman layer without sponge at the top.
 Case42. Neutral Ekman layer with sponge at the top.
-Case43. Neutral Ekman layer with sponge at the top in translating reference frame.
 Case44. Stable Ekman layer with sponge at the top.
 Case45. Same as 21, implicit solver.
 Case46. Same as 22, implicit solver.
