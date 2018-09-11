@@ -3,7 +3,7 @@
 
 !########################################################################
 !########################################################################
-SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
+SUBROUTINE DNS_FILTER(flag_save, q,s, txc, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : lfile
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal,inb_scal_array, isize_field, isize_wrk1d
@@ -12,10 +12,10 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL,    ONLY : epbackground, pbackground, damkohler
   USE DNS_GLOBAL,    ONLY : FilterDomain
   USE THERMO_GLOBAL, ONLY : imixture
-  USE DNS_LOCAL,     ONLY : nitera_stats_spa, ffltdmp
-  USE DNS_LOCAL,     ONLY : vindex, VA_MEAN_WRK
-  USE DNS_LOCAL,     ONLY : ilimit_scal, s_bound_min, s_bound_max  
-
+  USE DNS_LOCAL,     ONLY : ilimit_scal, s_bound_min, s_bound_max
+  USE DNS_LOCAL,     ONLY : nitera_stats_spa
+  USE STATISTICS
+  
   IMPLICIT NONE
 
 #include "integers.h"
@@ -23,7 +23,7 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
   LOGICAL flag_save
   TREAL, DIMENSION(isize_field,*) :: q, s
   TREAL, DIMENSION(isize_field,*) :: txc
-  TREAL, DIMENSION(*)             :: wrk2d, wrk3d, vaux
+  TREAL, DIMENSION(*)             :: wrk2d, wrk3d
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
 
   TARGET q
@@ -63,12 +63,12 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
 ! Statistics
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. nitera_stats_spa .GT. 0 ) THEN
      CALL DNS_SAVE_AVGKIN(q(1,5), q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), txc(1,3), txc(1,4), &
-          txc(1,5), txc(1,6), txc(1,7), vaux(vindex(VA_MEAN_WRK)), wrk2d)     
+          txc(1,5), txc(1,6), txc(1,7), mean_flow, wrk2d)     
   ENDIF
 
-  IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. ffltdmp .EQ. 1 .AND. flag_save ) THEN
+  IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. stats_filter .AND. flag_save ) THEN
      CALL FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)         
-     CALL DNS_AVG_KIN(i1, itime, rtime, imax,jmax,kmax,q, txc, vaux(vindex(VA_MEAN_WRK)), wrk3d)
+     CALL AVG_ENERGY_XZ(i1, itime, rtime, imax,jmax,kmax,q, txc, mean, wrk3d)
   ENDIF
   
 ! filtering
@@ -104,9 +104,9 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
   ENDIF
 
 ! statistics
-  IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. ffltdmp .EQ. 1 .AND. flag_save ) THEN
+  IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. stats_filter .AND. flag_save ) THEN
      CALL FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)         
-     CALL DNS_AVG_KIN(i2, itime, rtime, imax,jmax,kmax, q, txc, vaux(vindex(VA_MEAN_WRK)), wrk3d)
+     CALL AVG_ENERGY_XZ(i2, itime, rtime, imax,jmax,kmax, q, txc, mean, wrk3d)
   ENDIF
   
 ! #######################################################################
@@ -154,7 +154,7 @@ END SUBROUTINE DNS_FILTER
 #define Eps_0(j)  mean2d(j,7)
 #define Eps_1(j)  mean2d(j,8)
 
-SUBROUTINE DNS_AVG_KIN(iflag, itime, rtime, nx,ny,nz, q, eps, mean2d, wrk3d)
+SUBROUTINE AVG_ENERGY_XZ(iflag, itime, rtime, nx,ny,nz, q, eps, mean2d, wrk3d)
 
   USE DNS_GLOBAL, ONLY : imode_eqns
   USE DNS_GLOBAL, ONLY : g, area
@@ -252,4 +252,4 @@ SUBROUTINE DNS_AVG_KIN(iflag, itime, rtime, nx,ny,nz, q, eps, mean2d, wrk3d)
   ENDIF
 
   RETURN
-END SUBROUTINE DNS_AVG_KIN
+END SUBROUTINE AVG_ENERGY_XZ

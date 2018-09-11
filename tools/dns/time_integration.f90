@@ -10,7 +10,7 @@
 !# Performing the time integration over a given number of steps
 !#
 !########################################################################
-SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
+SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
      l_q, l_hq, l_txc, l_comm)
   
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, tag_part, tag_traj, lfile
@@ -21,7 +21,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   USE DNS_GLOBAL, ONLY : rbackground, g
   USE DNS_GLOBAL, ONLY : itransport, visc
   USE DNS_GLOBAL, ONLY : itime, rtime
-  USE DNS_GLOBAL, ONLY : nstatavg, nstatavg_points
+  USE DNS_GLOBAL, ONLY : nstatavg_points
   USE DNS_GLOBAL, ONLY : translation
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL 
@@ -29,6 +29,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
   USE LAGRANGE_GLOBAL, ONLY : itrajectory, l_g
   USE BOUNDARY_INFLOW
   USE BOUNDARY_BCS
+  USE STATISTICS
   USE PARTICLE_TRAJECTORIES
 #ifdef LES
   USE LES_GLOBAL, ONLY : iles
@@ -44,7 +45,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 #include "integers.h"
 
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
-  TREAL, DIMENSION(*)             :: txc, vaux
+  TREAL, DIMENSION(*)             :: txc
   TREAL, DIMENSION(*)             :: q_inf, s_inf
   TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
 
@@ -112,7 +113,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
      IF ( MOD(itime-nitera_first,FilterDomainStep) .EQ. 0 ) THEN
         IF ( MOD(itime-nitera_first,nitera_stats)  .EQ. 0 ) THEN; flag_save = .TRUE.
         ELSE;                                                     flag_save = .FALSE.; ENDIF
-        CALL DNS_FILTER(flag_save, q,s, txc, vaux, wrk1d,wrk2d,wrk3d)
+        CALL DNS_FILTER(flag_save, q,s, txc, wrk1d,wrk2d,wrk3d)
      ENDIF
 
      ! This should be integrated into the inflow buffer, as the filter contribution
@@ -149,9 +150,9 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 ! Accumulate statistics in spatially evolving cases
      IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. MOD(itime-nitera_first,nitera_stats_spa) .EQ. 0 ) THEN
         nstatavg_points = nstatavg_points + g(3)%size
-        CALL DNS_SAVE_AVGIJ(rho,u,v,w,p,vis,T, hq,txc, vaux(vindex(VA_MEAN_WRK)), wrk2d,wrk3d)
+        CALL DNS_SAVE_AVGIJ(rho,u,v,w,p,vis,T, hq,txc, mean_flow, wrk2d,wrk3d)
         IF ( icalc_scal .EQ. 1 ) THEN
-           CALL DNS_SAVE_SCBDGIJ(rho,u,v,w,p,s,vis, hq,txc, vaux(vindex(VA_MEAN_WRK)+MA_MOMENTUM_SIZE*nstatavg*jmax), wrk2d,wrk3d)
+           CALL DNS_SAVE_SCBDGIJ(rho,u,v,w,p,s,vis, hq,txc, mean_scal, wrk2d,wrk3d)
         ENDIF
      ENDIF
 
@@ -169,12 +170,12 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 ! -----------------------------------------------------------------------
      IF ( MOD(itime-nitera_first,nitera_stats) .EQ. 0 ) THEN ! Calculate statistics
         IF     ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
-           CALL STATS_TEMPORAL_LAYER(q,s,hq, txc, vaux, wrk1d,wrk2d,wrk3d)
+           CALL STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
            IF ( icalc_part .EQ. 1 ) THEN
-              CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_txc,l_comm, txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d)
+              CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_txc,l_comm, txc, mean, wrk1d,wrk2d,wrk3d)
            ENDIF
         ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-           CALL STATS_SPATIAL_LAYER(vaux, txc, wrk1d,wrk2d)
+           CALL STATISTICS_SPATIAL_LAYER(txc, wrk1d,wrk2d)
         ENDIF
      ENDIF
      
@@ -206,7 +207,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3
 
         IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. nitera_stats_spa .GT. 0 ) THEN ! Spatial; running averages
            WRITE(fname,*) itime; fname='st'//TRIM(ADJUSTL(fname))
-           CALL DNS_WRITE_AVGIJ(fname, vaux(vindex(VA_MEAN_WRK)))
+           CALL IO_WRITE_AVG_SPATIAL(fname, mean_flow, mean_scal)
         ENDIF
         
      ENDIF

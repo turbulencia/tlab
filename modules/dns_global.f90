@@ -10,9 +10,7 @@ MODULE DNS_CONSTANTS
 
   TINTEGER, PARAMETER :: MAX_NSP = 10 ! Species in the mixture
 
-!  TINTEGER, PARAMETER :: MAX_AVG_TEMPORAL  = 115
   TINTEGER, PARAMETER :: MAX_AVG_TEMPORAL  = 230
-  TINTEGER, PARAMETER :: MAX_AVG_SPATIAL   = 228
   TINTEGER, PARAMETER :: MAX_STATS_SPATIAL = 100 ! Running statistics
 
   CHARACTER*32, PARAMETER :: gfile = 'grid'
@@ -83,9 +81,6 @@ MODULE DNS_GLOBAL
   TINTEGER :: isize_particle              ! max number of particles per processor
   TINTEGER :: inb_part, inb_part_array
   TINTEGER :: inb_part_txc
-
-! temporal statistics
-  TINTEGER :: inb_mean_temporal, inb_mean_spatial
 
 ! subarray information (offset)
   TYPE(subarray_dt), DIMENSION(10) :: io_aux

@@ -22,12 +22,16 @@ MODULE BOUNDARY_BCS
   TYPE(bcs_dt), PUBLIC :: BcsFlowImin,BcsFlowImax,BcsFlowJmin,BcsFlowJmax,BcsFlowKmin,BcsFlowKmax
   TYPE(bcs_dt), PUBLIC :: BcsScalImin,BcsScalImax,BcsScalJmin,BcsScalJmax,BcsScalKmin,BcsScalKmax
 
-  LOGICAL BcsDrift
+  LOGICAL, PUBLIC :: BcsDrift
   
 ! Compressible viscous
-  TINTEGER :: bcs_inf(2,2,3), bcs_out(2,2,3) ! 1. index: lower and upper values
+  TINTEGER, PUBLIC :: bcs_inf(2,2,3), bcs_out(2,2,3) ! 1. index: lower and upper values
                                              ! 2. index: derivative order
                                              ! 3. index: direction
+  PUBLIC :: BOUNDARY_BCS_INITIALIZE
+  
+  PRIVATE
+
 CONTAINS
   
 ! ###################################################################

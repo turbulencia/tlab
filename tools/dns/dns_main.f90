@@ -4,6 +4,7 @@
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
 #endif
+#include "avgij_map.h"
 
 #define C_FILE_LOC "DNS"
 
@@ -18,6 +19,7 @@ PROGRAM DNS
   USE BOUNDARY_INFLOW
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
+  USE STATISTICS
   USE PARTICLE_TRAJECTORIES
 #ifdef USE_MPI
   USE DNS_MPI
@@ -47,9 +49,6 @@ PROGRAM DNS
 ! Work arrays
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk1d,wrk2d,wrk3d
 
-! Auxiliar memory space
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: vaux
-
 ! Inflow arrays
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x_inf, y_inf, z_inf
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q_inf, s_inf
@@ -62,7 +61,7 @@ PROGRAM DNS
   CHARACTER*32 fname, inifile
   CHARACTER*128 str, line
   TINTEGER idummy, ig, iq
-  TINTEGER ierr, isize_wrk3d, isize_vaux, isize_loc
+  TINTEGER ierr, isize_wrk3d, isize_loc
   TREAL dummy
 
 ! ###################################################################
@@ -114,9 +113,13 @@ PROGRAM DNS
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN ! because of the statistics
      inb_txc = MAX(inb_txc,7)
 
-     IF ( fstavg .EQ. 1 ) THEN
-        idummy =  nstatavg*jmax*MAX_AVG_SPATIAL / isize_txc_field
-        IF ( MOD( nstatavg*jmax*MAX_AVG_SPATIAL , isize_txc_field ) .GT. 0 ) idummy = idummy+1
+     IF ( stats_averages ) THEN
+        idummy = MAX(MA_MOMENTUM_SIZE,MS_SCALAR_SIZE)
+        IF ( MOD( nstatavg*jmax*idummy , isize_txc_field ) .GT. 0 ) THEN
+           idummy = nstatavg*jmax*idummy / isize_txc_field + 1
+        ELSE
+           idummy = nstatavg*jmax*idummy / isize_txc_field
+        ENDIF
         inb_txc = MAX(inb_txc,idummy)
      ENDIF
 
@@ -203,17 +206,9 @@ PROGRAM DNS
      CALL DNS_STOP(DNS_ERROR_ALLOC)
   ENDIF
 
-! Array vaux
-  CALL DNS_VAUX(isize_vaux)
-
-  WRITE(str,*) isize_vaux; line = 'Allocating array vaux of size '//TRIM(ADJUSTL(str))
-  CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(vaux(isize_vaux),stat=ierr)
-  IF ( ierr .NE. 0 ) THEN
-     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for vaux.')
-     CALL DNS_STOP(DNS_ERROR_ALLOC)
-  ENDIF
-
+! Statistics
+  CALL STATISTICS_INITIALIZE()
+  
 ! Lagrangian part
   IF ( icalc_part .EQ. 1 ) THEN
 #include "dns_alloc_larrays.h"
@@ -273,8 +268,6 @@ PROGRAM DNS
 
   q_inf(:,:) = C_0_R               ! Inflow fields for spatial simulations
   s_inf(:,:) = C_0_R
-
-  vaux(:) = C_0_R                  ! Auxiliary information
 
   IF ( icalc_part .EQ. 1 ) THEN ! Lagrangian
      l_q = C_0_R; l_hq = C_0_R
@@ -371,7 +364,7 @@ PROGRAM DNS
 ! Running average field
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. nitera_stats_spa .GT. 0 ) THEN
      WRITE(fname,*) nitera_first; fname = 'st'//TRIM(ADJUSTL(fname))
-     CALL DNS_READ_AVGIJ(fname, vaux(vindex(VA_MEAN_WRK))) 
+     CALL IO_READ_AVG_SPATIAL(fname, mean_flow, mean_scal) 
   ENDIF
 
 ! ###################################################################
@@ -454,7 +447,7 @@ PROGRAM DNS
 ! ###################################################################
 ! Do simulation: Integrate equations
 ! ###################################################################
-  CALL TIME_INTEGRATION(q,h_q, s,h_s, q_inf,s_inf, txc, vaux, wrk1d,wrk2d,wrk3d, &
+  CALL TIME_INTEGRATION(q,h_q, s,h_s, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
        l_q, l_hq, l_txc, l_comm)
 
 ! ###################################################################

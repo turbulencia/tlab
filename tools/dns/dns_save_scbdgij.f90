@@ -30,26 +30,25 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d 
 #ifdef TRACE_ON
   USE DNS_CONSTANTS, ONLY : tfile
 #endif 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, isize_wrk2d
+  USE DNS_GLOBAL, ONLY : isize_field, imax,jmax,kmax,inb_scal, isize_wrk2d
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : nstatavg, statavg
 
   IMPLICIT NONE
 
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(IN)    :: u, v, w, p, rho, vis
-  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)    :: z1
-  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(INOUT), TARGET :: txc, hq
-
+  TREAL, DIMENSION(isize_field),   INTENT(IN)    :: u, v, w, p, rho, vis
+  TREAL, DIMENSION(isize_field,*), INTENT(IN)    :: z1
+  TREAL, DIMENSION(isize_field,*), INTENT(INOUT), TARGET :: txc, hq
   TREAL mean1d_sc(nstatavg,jmax,MS_SCALAR_SIZE,*)
-
   TREAL wrk2d(isize_wrk2d,*)
   TREAL wrk3d(*)
 
+! -------------------------------------------------------------------
   TINTEGER is, bcs(2,1)
   TINTEGER NNstat
 
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:,:,:), POINTER :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8,tmp9,tmp10,tmp11,tmp12
+  TREAL, DIMENSION(:), POINTER :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8,tmp9,tmp10,tmp11,tmp12
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -60,18 +59,18 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d 
   NNstat = nstatavg*jmax
 
 ! Define pointers
-  tmp1 => hq(:,:,:,1)
-  tmp2 => hq(:,:,:,2)
-  tmp3 => hq(:,:,:,3)
-  tmp4 => txc(:,:,:,1)
-  tmp5 => txc(:,:,:,2)
-  tmp6 => txc(:,:,:,3)
-  tmp7 => txc(:,:,:,4)
-  tmp8 => txc(:,:,:,5)
-  tmp9 => txc(:,:,:,6)
-  tmp10 => txc(:,:,:,7)
-  tmp11 => txc(:,:,:,8)
-  tmp12 => txc(:,:,:,9)
+  tmp1 => hq(:,1)
+  tmp2 => hq(:,2)
+  tmp3 => hq(:,3)
+  tmp4 => txc(:,1)
+  tmp5 => txc(:,2)
+  tmp6 => txc(:,3)
+  tmp7 => txc(:,4)
+  tmp8 => txc(:,5)
+  tmp9 => txc(:,6)
+  tmp10 => txc(:,7)
+  tmp11 => txc(:,8)
+  tmp12 => txc(:,9)
 
 ! ################################################################
 ! # Mean Terms
@@ -84,13 +83,13 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d 
 #define m_z1  tmp6
 
   CALL REDUCE( imax,jmax,kmax, rho, nstatavg, statavg, m_rho)
-  CALL REDUCE( imax,jmax,kmax, u,  nstatavg, statavg, m_u)
-  CALL REDUCE( imax,jmax,kmax, v,  nstatavg, statavg, m_v)
-  CALL REDUCE( imax,jmax,kmax, w,  nstatavg, statavg, m_w)
+  CALL REDUCE( imax,jmax,kmax, u,   nstatavg, statavg, m_u)
+  CALL REDUCE( imax,jmax,kmax, v,   nstatavg, statavg, m_v)
+  CALL REDUCE( imax,jmax,kmax, w,   nstatavg, statavg, m_w)
 
   DO is=1, inb_scal
      CALL DNS_SAVE_SCBDGIJ_M1(NNstat, m_rho, m_u, m_v, m_w, &
-          m_z1, z1(1,1,1,is), tmp7, tmp8, tmp9, tmp10, tmp11, &
+          m_z1, z1(1,is), tmp7, tmp8, tmp9, tmp10, tmp11, &
           mean1d_sc(1,1,1,is), wrk2d)
   ENDDO
 
@@ -109,7 +108,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d 
 
   DO is=1, inb_scal
      CALL DNS_SAVE_SCBDGIJ_R1(NNstat, m_rho_x, m_rho_y, m_u, &
-          m_v, m_w, m_z1, z1(1,1,1,is), tmp5, tmp7, tmp8, &
+          m_v, m_w, m_z1, z1(1,is), tmp5, tmp7, tmp8, &
           tmp11, tmp12, wrk3d, mean1d_sc(1,1,1,is), wrk2d)
   ENDDO
 
@@ -131,7 +130,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d 
 
   DO is=1, inb_scal
      CALL DNS_SAVE_SCBDGIJ_UV1(NNstat, m_u_x, m_v_y, m_rho, &
-          m_u, m_v, m_w, m_z1, z1(1,1,1,is), tmp5, tmp7, &
+          m_u, m_v, m_w, m_z1, z1(1,is), tmp5, tmp7, &
           tmp8, tmp11, tmp12, wrk3d, mean1d_sc(1,1,1,is), &
           wrk2d)
   ENDDO
@@ -154,7 +153,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d 
 
   DO is=1, inb_scal
      CALL DNS_SAVE_SCBDGIJ_W1(NNstat, m_w_x, m_w_y, m_rho, &
-          m_u, m_v, m_z1, z1(1,1,1,is), tmp7, &
+          m_u, m_v, m_z1, z1(1,is), tmp7, &
           tmp8, tmp11, tmp12, mean1d_sc(1,1,1,is), wrk2d)
   ENDDO
 
@@ -176,7 +175,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d 
 
   DO is=1, inb_scal
      CALL DNS_SAVE_SCBDGIJ_UV2(NNstat, m_v_x, m_u_y, m_rho, &
-          m_u, m_v, m_z1, z1(1,1,1,is), tmp7, &
+          m_u, m_v, m_z1, z1(1,is), tmp7, &
           tmp8, tmp11, tmp12, mean1d_sc(1,1,1,is), wrk2d)
   ENDDO
 
@@ -188,7 +187,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d 
 ! ####################################################################
 
   DO is=1, inb_scal
-     CALL DNS_SAVE_SCBDGIJ_S2(NNstat, m_rho, m_u, m_v, m_w, m_z1, p, vis, z1(1,1,1,is), &
+     CALL DNS_SAVE_SCBDGIJ_S2(NNstat, m_rho, m_u, m_v, m_w, m_z1, p, vis, z1(1,is), &
           tmp5, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, mean1d_sc(1,1,1,is), wrk2d, wrk3d)
   ENDDO
 
@@ -202,7 +201,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d 
 #undef m_w
 
   DO is=1, inb_scal
-     CALL DNS_SAVE_SCBDGIJ_TS1(NNstat, m_z1, u, v, w, vis, z1(1,1,1,is), tmp1, tmp2, tmp3, &
+     CALL DNS_SAVE_SCBDGIJ_TS1(NNstat, m_z1, u, v, w, vis, z1(1,is), tmp1, tmp2, tmp3, &
           tmp4, tmp5, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, mean1d_sc(1,1,1,is), wrk2d, wrk3d)
   ENDDO
 
@@ -224,7 +223,7 @@ SUBROUTINE DNS_SAVE_SCBDGIJ(rho,u,v,w,p,z1, vis, hq,txc, mean1d_sc, wrk2d,wrk3d 
 
   DO is=1, inb_scal
      CALL DNS_SAVE_SCBDGIJ_P1(NNstat, m_p_x, m_p_y, m_p_z, &
-          m_z1, z1(1,1,1,is), tmp7, tmp8, tmp9, &
+          m_z1, z1(1,is), tmp7, tmp8, tmp9, &
           mean1d_sc(1,1,1,is), wrk2d)
   ENDDO
 

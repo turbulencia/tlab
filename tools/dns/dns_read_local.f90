@@ -14,6 +14,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
   USE BOUNDARY_INFLOW
+  USE STATISTICS
   
   IMPLICIT NONE
 
@@ -938,20 +939,20 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#Intermittency=<yes/no>')
 
   CALL SCANINICHAR(bakfile, inifile, 'Statistics', 'Averages', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; fstavg = 1
-  ELSE;                                       fstavg = 0; ENDIF
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; stats_averages = .TRUE.
+  ELSE;                                       stats_averages = .FALSE.; ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Statistics', 'Pdfs', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; fstpdf = 1
-  ELSE;                                       fstpdf = 0; ENDIF
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; stats_pdfs = .TRUE.
+  ELSE;                                       stats_pdfs = .FALSE.; ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Statistics', 'Intermittency', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; fstinter = 1
-  ELSE;                                       fstinter = 0; ENDIF
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; stats_intermittency = .TRUE.
+  ELSE;                                       stats_intermittency = .FALSE.; ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Statistics', 'FilterEnergy', 'no', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ffltdmp = 1
-  ELSE;                                       ffltdmp = 0; ENDIF
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; stats_filter = .TRUE.
+  ELSE;                                       stats_filter = .FALSE.; ENDIF
 
 ! ###################################################################
 ! Inflow forcing conditions
