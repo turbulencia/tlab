@@ -335,9 +335,8 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
 ! Impose buffer zone as filter
 ! ###################################################################
   IF ( BuffType .EQ. DNS_BUFFER_FILTER .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
-! CALL BOUNDARY_BUFFER_FILTER&
-!      (rho,u,v,w,e,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
-! OPR_FILTER has changed and this routine needs to be updated
+     CALL BOUNDARY_BUFFER_FILTER&
+          (rho,u,v,w,e,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
   ENDIF
 
 ! ###################################################################

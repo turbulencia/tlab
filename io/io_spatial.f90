@@ -147,9 +147,10 @@ SUBROUTINE WRT_STHD(unit, irec, major, minor, &
   RETURN
 END SUBROUTINE WRT_STHD
 
+#undef LOC_STATUS
+
 !########################################################################
 !########################################################################
-#define LOC_UNIT_ID i56
 #define LOC_STATUS 'old'
 
 SUBROUTINE IO_READ_AVG_SPATIAL(name,mean_flow,mean_scal)

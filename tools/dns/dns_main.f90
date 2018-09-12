@@ -60,7 +60,7 @@ PROGRAM DNS
   
   CHARACTER*32 fname, inifile
   CHARACTER*128 str, line
-  TINTEGER idummy, ig, iq
+  TINTEGER idummy, ig
   TINTEGER ierr, isize_wrk3d, isize_loc
   TREAL dummy
 

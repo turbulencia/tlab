@@ -29,7 +29,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2&
   TREAL, DIMENSION(:), POINTER :: p_bcs
 
 ! -----------------------------------------------------------------------
-  TINTEGER ij, k, nxy, ip, ip_b, ip_t, ibc, bcs(2,2)
+  TINTEGER ij, k, nxy, ip_b, ip_t, ibc, bcs(2,2)
   TREAL diff
 
 ! #######################################################################

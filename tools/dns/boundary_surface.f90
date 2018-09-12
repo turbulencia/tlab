@@ -10,11 +10,9 @@ SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
   USE DNS_CONSTANTS,ONLY : tfile
 #endif
   USE DNS_CONSTANTS,ONLY : lfile
-  USE DNS_GLOBAL,   ONLY : imax,jmax,kmax,inb_flow,inb_vars,inb_scal,g
+  USE DNS_GLOBAL,   ONLY : imax,jmax,kmax, g
   USE DNS_GLOBAL,   ONLY : isize_field,isize_wrk1d 
-  USE DNS_GLOBAL,   ONLY : visc,itime,schmidt
-  USE DNS_GLOBAL,   ONLY : imode_fdm 
-  USE DNS_LOCAL,    ONLY : dtime, rkm_substep, rkm_endstep
+  USE DNS_GLOBAL,   ONLY : visc,schmidt
   USE BOUNDARY_BCS, ONLY : BcsScalJmin, BcsScalJmax 
 
   IMPLICIT NONE  
