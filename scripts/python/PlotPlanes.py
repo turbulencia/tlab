@@ -2,14 +2,46 @@
 
 import numpy as np
 import struct
-import matplotlib.pyplot as plt
 import sys
+import matplotlib.pyplot as plt
 
-nx = 128 # number of points in Ox
-ny =  96 # number of points in Oy
-nz = 128 # number of points in Oz
+sizeofdata = 4 # in bytes
+# sizeofdata = 1 # for gate files
 
-# do not edit
+etype = ">" # big-endian
+# etype = "<" # little-endian
+
+dtype = "f" # floating number 
+# dtype = 'B' # unsigned character, for gate files
+
+nx = 0 # number of points in Ox; if 0, then search dns.ini
+ny = 0 # number of points in Oy; if 0, then search dns.ini
+nz = 0 # number of points in Oz; if 0, then search dns.ini
+
+# do not edit below this line
+
+# getting grid size from dns.ini, if necessary
+if ( nx == 0 ):
+    for line in open('dns.ini'):
+        if line.lower().replace(" ","").startswith("imax="):
+            nx = int(line.split("=",1)[1])
+            break
+
+if ( ny == 0 ):
+    for line in open('dns.ini'):
+        if line.lower().replace(" ","").startswith("jmax="):
+            ny = int(line.split("=",1)[1])
+            break
+        
+if ( nz == 0 ):
+    for line in open('dns.ini'):
+        if line.lower().replace(" ","").startswith("kmax="):
+            nz = int(line.split("=",1)[1])
+            break
+        
+print("Grid size is {}x{}x{}.".format(nx,ny,nz))
+
+# getting data from stdin
 if ( len(sys.argv) <= 1 ):
     print("Usage: python $0 [xy,xz] list-of-files.")
     quit()
@@ -17,19 +49,18 @@ if ( len(sys.argv) <= 1 ):
 planetype  = sys.argv[1]
 setoffiles = sorted(sys.argv[2:])
 
-sizeofdata = 4 # Single precision
-
+# processing data
 fin = open('grid.'+planetype, 'rb')
-raw = fin.read(nx*sizeofdata)
-x1 = np.array(struct.unpack('>{}f'.format(nx), raw))
+raw = fin.read(nx*4)
+x1 = np.array(struct.unpack(etype+'{}f'.format(nx), raw))
 nx1= nx
 if   ( planetype == 'xy' ):
-    raw = fin.read(ny*sizeofdata)
-    x2 = np.array(struct.unpack('>{}f'.format(ny), raw))
+    raw = fin.read(ny*4)
+    x2 = np.array(struct.unpack(etype+'{}f'.format(ny), raw))
     nx2= ny
 elif ( planetype == 'xz' ):
-    raw = fin.read(nz*sizeofdata)
-    x2 = np.array(struct.unpack('>{}f'.format(nz), raw))
+    raw = fin.read(nz*4)
+    x2 = np.array(struct.unpack(etype+'{}f'.format(nz), raw))
     nx2= nz
 fin.close()
 
@@ -37,7 +68,7 @@ for file in setoffiles:
     print("Processing file %s ..." % file)
     fin = open(file, 'rb')
     raw = fin.read()
-    a = np.array(struct.unpack('>{}f'.format(fin.tell()/sizeofdata), raw))
+    a = np.array(struct.unpack((etype+'{}'+dtype).format(int(fin.tell()/sizeofdata)), raw))
     a = a.reshape((nx2,nx1))
     fin.close()
 
