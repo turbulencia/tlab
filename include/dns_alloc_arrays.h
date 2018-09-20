@@ -1,10 +1,3 @@
-  ALLOCATE(pbackground(g(2)%size))
-  ALLOCATE(rbackground(g(2)%size))
-  ALLOCATE(ribackground(g(2)%size))
-  ALLOCATE(bbackground(g(2)%size))
-  ALLOCATE(tbackground(g(2)%size))
-  ALLOCATE(epbackground(g(2)%size))
-
   WRITE(str,*) g(1)%inb_grid; line = 'Allocating array x of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) g(1)%size; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)

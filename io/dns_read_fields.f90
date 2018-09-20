@@ -96,7 +96,7 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
 #ifdef USE_MPI
 #ifdef USE_MPI_IO
      IF ( itxc .LT. nx*ny*nz ) THEN
-        CALL IO_WRITE_ASCII(efile, 'DNS_WRITE_FIELDS. Work array size error')
+        CALL IO_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Work array size error')
         CALL DNS_STOP(DNS_ERROR_ALLOC)
      ENDIF
 #endif

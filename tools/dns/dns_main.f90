@@ -306,6 +306,11 @@ PROGRAM DNS
   CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
 
 ! ###################################################################
+! Initialize thermodynamic quantities
+! ###################################################################
+  CALL FI_PROFILES(wrk1d)
+     
+! ###################################################################
 ! Read fields
 ! ###################################################################
 ! Flow fields
@@ -370,8 +375,6 @@ PROGRAM DNS
 ! ###################################################################
 ! Initialize thermodynamic quantities
 ! ###################################################################
-  CALL FI_PROFILES(wrk1d)
-     
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
         CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)         

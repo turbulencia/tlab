@@ -22,6 +22,14 @@ SUBROUTINE FI_PROFILES(wrk1d)
   TREAL ycenter, FLOW_SHEAR_TEMPORAL 
  
 ! #######################################################################
+  ALLOCATE(pbackground(g(2)%size))
+  ALLOCATE(rbackground(g(2)%size))
+  ALLOCATE(ribackground(g(2)%size))
+  ALLOCATE(bbackground(g(2)%size))
+  ALLOCATE(tbackground(g(2)%size))
+  ALLOCATE(epbackground(g(2)%size))
+
+! #######################################################################
   rbackground = C_1_R ! defaults
   ribackground= C_1_R
   pbackground = C_1_R

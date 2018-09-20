@@ -68,11 +68,6 @@ PROGRAM APRIORI
   TINTEGER iopt_size
   TREAL opt_vec(iopt_size_max)
 
-#ifdef USE_MPI
-  TINTEGER npage, id
-  INTEGER icount
-#endif
-
 ! ###################################################################
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
