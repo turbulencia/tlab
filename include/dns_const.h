@@ -155,18 +155,19 @@
 #define CHEM_TYPE_QUASIBS     8
 
 ! Mixture Type
-#define MIXT_TYPE_NONE         0
-#define MIXT_TYPE_BS           1
-#define MIXT_TYPE_PETERS1991   2
-#define MIXT_TYPE_PETERS1988   3
-#define MIXT_TYPE_UNIDECOMP    4
-#define MIXT_TYPE_BSZELDOVICH  5
-#define MIXT_TYPE_ONESTEP      6
-#define MIXT_TYPE_BILGER1997   7
-#define MIXT_TYPE_QUASIBS      8
-#define MIXT_TYPE_AIRVAPOR     9
-#define MIXT_TYPE_AIRWATER    10
-#define MIXT_TYPE_AIRWATER_LINEAR    11
+#define MIXT_TYPE_NONE             0
+#define MIXT_TYPE_BS               1
+#define MIXT_TYPE_PETERS1991       2
+#define MIXT_TYPE_PETERS1988       3
+#define MIXT_TYPE_UNIDECOMP        4
+#define MIXT_TYPE_BSZELDOVICH      5
+#define MIXT_TYPE_ONESTEP          6
+#define MIXT_TYPE_BILGER1997       7
+#define MIXT_TYPE_QUASIBS          8
+#define MIXT_TYPE_AIR              9
+#define MIXT_TYPE_AIRVAPOR        10
+#define MIXT_TYPE_AIRWATER        11
+#define MIXT_TYPE_AIRWATER_LINEAR 12
 
 ! Lagrangian Type
 #define LAG_TYPE_NONE          0

@@ -83,10 +83,8 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
   IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
      CALL THERMO_ANELASTIC_BUOYANCY(i1,g(2)%size,i1, wrk1d, epbackground,pbackground,rbackground, bbackground)
   ELSE
-     IF ( buoyancy%active(2) ) THEN ! Check this
-        wrk1d(:,inb_scal_array+1) = C_0_R
-        CALL FI_BUOYANCY(buoyancy, i1,g(2)%size,i1, wrk1d, bbackground, wrk1d(1,inb_scal_array+1))
-     ENDIF
+     wrk1d(:,inb_scal_array+1) = C_0_R
+     CALL FI_BUOYANCY(buoyancy, i1,g(2)%size,i1, wrk1d, bbackground, wrk1d(1,inb_scal_array+1))
   ENDIF
 
 ! #######################################################################

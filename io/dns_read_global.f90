@@ -153,7 +153,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE;                                         ifourier = 0; ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'Mixture', 'None', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'          )     THEN; imixture = MIXT_TYPE_NONE
+  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'          ) THEN; imixture = MIXT_TYPE_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'air'           ) THEN; imixture = MIXT_TYPE_AIR
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airvapor'      ) THEN; imixture = MIXT_TYPE_AIRVAPOR
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwater'      ) THEN; imixture = MIXT_TYPE_AIRWATER
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterlinear') THEN; imixture = MIXT_TYPE_AIRWATER_LINEAR
@@ -1059,6 +1060,12 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      MRATIO = gama0*mach*mach
   ENDIF
 
+  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC .AND. &
+       imixture .NE. MIXT_TYPE_AIR .AND. imixture .NE. MIXT_TYPE_AIRVAPOR .AND. imixture .NE. MIXT_TYPE_AIRWATER ) THEN
+     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Incorrect mixture type.')
+     CALL DNS_STOP(DNS_ERROR_OPTION)
+  END IF
+  
   IF ( buoyancy%type .EQ. EQNS_BOD_LINEAR   .OR. &
        buoyancy%type .EQ. EQNS_BOD_BILINEAR .OR. &
        buoyancy%type .EQ. EQNS_BOD_QUADRATIC ) THEN

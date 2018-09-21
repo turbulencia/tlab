@@ -189,9 +189,23 @@ SUBROUTINE THERMO_INITIALIZE
 ! -------------------------------------------------------------------
 ! Water vapor and air
 ! -------------------------------------------------------------------
+  CASE( MIXT_TYPE_AIR )
+     NSP            = 2
+     inb_scal       = MAX(inb_scal,1) ! at least one scalar
+     inb_scal_array = inb_scal
+
+     THERMO_SPNAME(1) = 'H2O'
+     THERMO_SPNAME(2) = 'AIR'
+
+     WGHT(1) = 18.015
+     WGHT(2) = 28.9644
+
+! -------------------------------------------------------------------
+! Water vapor and air
+! -------------------------------------------------------------------
   CASE( MIXT_TYPE_AIRVAPOR )
      NSP            = 2
-     inb_scal       = NSP
+     inb_scal       = MAX(inb_scal,NSP) ! using inb_scal read in the inifile
      inb_scal_array = inb_scal
 
      THERMO_SPNAME(1) = 'H2O'
@@ -456,7 +470,7 @@ SUBROUTINE THERMO_INITIALIZE
 ! -------------------------------------------------------------------
 ! Water vapor, air and water liquid
 ! -------------------------------------------------------------------
-     CASE( MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR )
+     CASE( MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR )
 
 ! Enthalpy of Formation in Jules/Kmol
 !        HREF(1) =-241.826*C_1E6_R    ! from Burcat&Ruscic

@@ -46,7 +46,7 @@ SUBROUTINE THERMO_ANELASTIC_TEMPERATURE(nx,ny,nz, s, e, T)
   Lv0=-THERMO_AI(6,1,3)
   Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
 
-  IF      ( imixture .EQ. 0 ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      ij = 0
      DO jk = 0,ny*nz-1
         is = MOD(jk,ny) +1
@@ -122,7 +122,7 @@ SUBROUTINE THERMO_ANELASTIC_STATIC_L(nx,ny,nz, s, e, result)
   Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
   Cl = THERMO_AI(1,1,3)
 
-  IF      ( imixture .EQ. 0 ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      ij = 0
      DO jk = 0,ny*nz-1
         is = MOD(jk,ny) +1
@@ -205,7 +205,7 @@ SUBROUTINE THERMO_ANELASTIC_DENSITY(nx,ny,nz, s, e,p, rho)
   Lv0=-THERMO_AI(6,1,3)
   Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
 
-  IF      ( imixture .EQ. 0 ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      ij = 0
      DO jk = 0,ny*nz-1
         is = MOD(jk,ny) +1
@@ -290,7 +290,7 @@ SUBROUTINE THERMO_ANELASTIC_BUOYANCY(nx,ny,nz, s, e,p,r, b)
   Lv0=-THERMO_AI(6,1,3)
   Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
 
-  IF      ( imixture .EQ. 0 ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      ij = 0
      DO jk = 0,ny*nz-1
         is = MOD(jk,ny) +1
@@ -494,7 +494,7 @@ SUBROUTINE THERMO_ANELASTIC_THETA(nx,ny,nz, s, e,p, theta)
 
   kappa = Rd *GRATIO /Cd
           
-  IF      ( imixture .EQ. 0 ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      ij = 0
      DO jk = 0,ny*nz-1
         is = MOD(jk,ny) +1
@@ -583,7 +583,7 @@ SUBROUTINE THERMO_ANELASTIC_THETA_V(nx,ny,nz, s, e,p, theta)
 
   kappa = Rd *GRATIO /Cd
           
-  IF      ( imixture .EQ. 0 ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      ij = 0
      DO jk = 0,ny*nz-1
         is = MOD(jk,ny) +1
@@ -670,7 +670,7 @@ SUBROUTINE THERMO_ANELASTIC_THETA_L(nx,ny,nz, s, e,p, theta)
   Lv0=-THERMO_AI(6,1,3)
   Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
 
-  IF      ( imixture .EQ. 0 ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      ij = 0
      DO jk = 0,ny*nz-1
         is = MOD(jk,ny) +1
@@ -764,7 +764,7 @@ SUBROUTINE THERMO_ANELASTIC_THETA_E(nx,ny,nz, s, e,p, theta)
   Lv0=-THERMO_AI(6,1,3)
   Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
 
-  IF      ( imixture .EQ. 0 ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      ij = 0
      DO jk = 0,ny*nz-1
         is = MOD(jk,ny) +1
@@ -856,7 +856,7 @@ SUBROUTINE THERMO_ANELASTIC_LAPSE_FR(nx,ny,nz, s, dTdy, e, lapse, frequency)
   Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
   Lv0=-THERMO_AI(6,1,3)
 
-  IF      ( imixture .EQ. 0 ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      lapse = GRATIO /pbg%parameters(1)
 
      ij = 0
@@ -950,7 +950,7 @@ SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU(nx,ny,nz, s, dTdy,dqldy, e,p,r, lapse, fre
   scaleheightinv = GRATIO /pbg%parameters(1)
   rd_ov_rv = WGHT_INV(2) /WGHT_INV(1)
     
-  IF      ( imixture .EQ. 0 ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      lapse     = scaleheightinv
 
      ij = 0
@@ -1079,7 +1079,7 @@ SUBROUTINE THERMO_ANELASTIC_DEWPOINT(nx,ny,nz, s, e,p,r, Td,Lapse)
   rd_ov_rv = WGHT_INV(2) /WGHT_INV(1)
   scaleheightinv = C_1_R /pbg%parameters(1)
 
-  IF      ( imixture .EQ. 0 ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      
   ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN
      ij = 0
@@ -1325,7 +1325,7 @@ SUBROUTINE THERMO_ANELASTIC_STATIC_CONSTANTCP(nx,ny,nz, s, e, result)
   Lv0=-THERMO_AI(6,1,3)
   Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
 
-  IF      ( imixture .EQ. 0 ) THEN
+  IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      result = s(:,1)
 
   ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN
