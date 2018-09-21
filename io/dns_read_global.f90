@@ -1156,6 +1156,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
                        + 3 *(1+inb_scal)   ! LU decomposition 2. order w/ diffusivities, 1 bcs
 ! In Direct mode, we only need 10 instead of 3*4 because only 1 bcs is considered
      ENDIF
+     g(is)%inb_grid = g(is)%inb_grid  &
+                    + 1                    ! Density correction in anelastic mode
   END DO
      
 ! auxiliar array txc

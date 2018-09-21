@@ -102,7 +102,6 @@ PROGRAM SPECTRA
 
 #ifdef USE_MPI
   TINTEGER id
-  INTEGER mpi_subarray(3)
 #endif
 
 !########################################################################
@@ -370,7 +369,7 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 ! Initialize thermodynamic quantities
 ! -------------------------------------------------------------------
-  CALL FI_PROFILES(wrk1d)
+  CALL FI_PROFILES_INITIALIZE(wrk1d)
   
 ! -------------------------------------------------------------------
 ! Initialize

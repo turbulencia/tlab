@@ -402,7 +402,7 @@ PROGRAM AVERAGES
 ! -------------------------------------------------------------------
 ! Initialize thermodynamic quantities
 ! -------------------------------------------------------------------
-  CALL FI_PROFILES(wrk1d)
+  CALL FI_PROFILES_INITIALIZE(wrk1d)
   
 ! ###################################################################
 ! Define pointers

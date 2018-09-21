@@ -322,7 +322,7 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
 ! Initialize thermodynamic quantities
 ! -------------------------------------------------------------------
-  CALL FI_PROFILES(wrk1d)
+  CALL FI_PROFILES_INITIALIZE(wrk1d)
 
 ! ###################################################################
 ! Postprocess given list of files

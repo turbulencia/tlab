@@ -1,15 +1,25 @@
 #include "types.h"
 #include "dns_const.h"
+#include "dns_const_mpi.h"
 
-! Calculate reference profiles for anelastic formulation
-SUBROUTINE FI_PROFILES(wrk1d)
+!########################################################################
+!# DESCRIPTION
+!#
+!# Initialize data of reference profiles
+!#
+!########################################################################
+SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
 
-  USE DNS_GLOBAL, ONLY : inb_scal, inb_scal_array
+  USE DNS_CONSTANTS, ONLY : lfile
+  USE DNS_GLOBAL, ONLY : inb_scal, inb_scal_array, imax,jmax,kmax, imode_eqns
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : pbg, sbg, damkohler,froude,schmidt
   USE DNS_GLOBAL, ONLY : rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
   USE DNS_GLOBAL, ONLY : buoyancy
   USE THERMO_GLOBAL, ONLY : imixture, GRATIO
+#ifdef USE_MPI
+  USE DNS_MPI
+#endif
 
   IMPLICIT NONE
 
@@ -18,7 +28,7 @@ SUBROUTINE FI_PROFILES(wrk1d)
   TREAL, DIMENSION(g(2)%size,*), INTENT(INOUT) :: wrk1d
   
 ! -----------------------------------------------------------------------
-  TINTEGER is, j
+  TINTEGER is, j, ip, nlines, offset
   TREAL ycenter, FLOW_SHEAR_TEMPORAL 
  
 ! #######################################################################
@@ -29,6 +39,8 @@ SUBROUTINE FI_PROFILES(wrk1d)
   ALLOCATE(tbackground(g(2)%size))
   ALLOCATE(epbackground(g(2)%size))
 
+! #######################################################################
+! Thermodynamic background profiles
 ! #######################################################################
   rbackground = C_1_R ! defaults
   ribackground= C_1_R
@@ -77,7 +89,9 @@ SUBROUTINE FI_PROFILES(wrk1d)
      ENDIF
   ENDIF
 
-! Add diagnostic fields, if any
+! #######################################################################
+! Add diagnostic fields to reference profile data, if any
+! #######################################################################
   DO is = inb_scal+1,inb_scal_array ! Add diagnostic fields, if any
      sbg(is)%mean = C_1_R; sbg(is)%delta = C_0_R; sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
   ENDDO
@@ -94,5 +108,60 @@ SUBROUTINE FI_PROFILES(wrk1d)
      sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
   ENDIF
 
+! #######################################################################
+! Anelastic density correction term in burgers operator
+! #######################################################################
+  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+     CALL IO_WRITE_ASCII(lfile,'Initialize anelastic density correction in burgers operator.')
+     
+! Density correction term in the burgers operator along X
+     g(1)%anelastic = .TRUE.
+#ifdef USE_MPI         
+     IF ( ims_npro_i .GT. 1 ) THEN
+        nlines = ims_size_i(DNS_MPI_I_PARTIAL)
+        offset = nlines *ims_pro_i
+     ELSE
+#endif
+        nlines = jmax*kmax
+        offset = 0
+#ifdef USE_MPI         
+     ENDIF
+#endif
+     ALLOCATE(g(1)%rhoinv(nlines))
+     DO j = 1,nlines
+        ip = MOD(offset +j -1, g(2)%size) +1
+        g(1)%rhoinv(j) = ribackground(ip)
+     ENDDO
+     
+! Density correction term in the burgers operator along Y; see fdm_initialize
+! implemented directly in the tridiagonal system
+     ip = 0
+     DO is = 0,inb_scal ! case 0 for the velocity
+        g(2)%lu2d(:,           ip+2) = g(2)%lu2d(:,ip+2) *ribackground(:)  ! matrix U; 1/diagonal
+        g(2)%lu2d(:g(2)%size-1,ip+3) = g(2)%lu2d(:,ip+3) *rbackground (2:) ! matrix U; 1. superdiagonal
+        ip = ip + 3
+     ENDDO
+     
+! Density correction term in the burgers operator along Z
+     g(3)%anelastic = .TRUE.
+#ifdef USE_MPI         
+     IF ( ims_npro_k .GT. 1 ) THEN
+        nlines = ims_size_k(DNS_MPI_K_PARTIAL)
+        offset = nlines *ims_pro_k
+     ELSE
+#endif
+        nlines = imax*jmax
+        offset = 0
+#ifdef USE_MPI         
+     ENDIF
+#endif
+     ALLOCATE(g(3)%rhoinv(nlines))  
+     DO j = 1,nlines
+        ip = (offset +j -1) /imax +1
+        g(3)%rhoinv(j) = ribackground(ip)
+     ENDDO
+     
+  END IF
+  
   RETURN
-END SUBROUTINE FI_PROFILES
+END SUBROUTINE FI_PROFILES_INITIALIZE

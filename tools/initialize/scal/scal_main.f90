@@ -91,7 +91,7 @@ PROGRAM INISCAL
 #include "dns_read_grid.h"
 
 ! ###################################################################
-  CALL FI_PROFILES(wrk1d)
+  CALL FI_PROFILES_INITIALIZE(wrk1d)
      
   s = C_0_R
 

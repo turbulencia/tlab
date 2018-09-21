@@ -118,16 +118,24 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
   ENDIF
 
 ! ###################################################################
-! Operation
+! Operation; diffusivity included in 2.-order derivative
 ! ###################################################################
+  IF ( g%anelastic ) THEN
+     DO ij = 1,g%size
+        result(:,ij) = result(:,ij) *g%rhoinv(:) - u(:,ij)*wrk3d(:,ij)
+     ENDDO
+     
+  ELSE
 !$omp parallel default( shared ) private( ij )
 !$omp do
      DO ij = 1,nlines*g%size
-        result(ij,1) = result(ij,1) - u(ij,1)*wrk3d(ij,1) ! diffusivity included in 2.-order derivative
+        result(ij,1) = result(ij,1) - u(ij,1)*wrk3d(ij,1)
      ENDDO
 !$omp end do
 !$omp end parallel
 
+  END IF
+  
   RETURN
 END SUBROUTINE OPR_BURGERS
 

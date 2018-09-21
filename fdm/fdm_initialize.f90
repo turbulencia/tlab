@@ -352,6 +352,15 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   ENDIF
 
 ! ###################################################################
+! Density correction in anelastic mode
+! ###################################################################
+  g%rhoinv => x(:,ig)
+
+  g%anelastic = .FALSE. ! Default; activated in fi_profiles_initialize
+
+  ig = ig +1
+  
+! ###################################################################
 ! Check array sizes
 ! ###################################################################
   ! IF ( ig .NE. g%inb_grid ) THEN

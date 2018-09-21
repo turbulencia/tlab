@@ -43,7 +43,7 @@ PROGRAM VBURGERS
 
 #include "dns_read_grid.h"
 
-  CALL FI_PROFILES(wrk1d)
+  CALL FI_PROFILES_INITIALIZE(wrk1d)
 
   bcs = 0
 
@@ -57,7 +57,8 @@ PROGRAM VBURGERS
   DO k = 1,kmax
      DO j = 1,jmax
         DO i = 1,imax
-           b(i,j,k) = b(i,j,k) *visc - a(i,j,k) *c(i,j,k)
+!           b(i,j,k) = b(i,j,k) *visc - a(i,j,k) *c(i,j,k)
+           b(i,j,k) = b(i,j,k) *visc *ribackground(j)- a(i,j,k) *c(i,j,k)
         ENDDO
      ENDDO
   ENDDO
@@ -76,14 +77,15 @@ PROGRAM VBURGERS
      ENDDO
   ENDDO
   WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-!  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, i1, e, wrk3d)
+!  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, e, wrk3d)
   
 ! ###################################################################
   CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), a,b, c, wrk2d,wrk3d)
   DO k = 1,kmax
      DO j = 1,jmax
         DO i = 1,imax
-           b(i,j,k) = b(i,j,k) *visc - a(i,j,k) *c(i,j,k)
+!           b(i,j,k) = b(i,j,k) *visc - a(i,j,k) *c(i,j,k)
+           b(i,j,k) = b(i,j,k) *visc *ribackground(j)- a(i,j,k) *c(i,j,k)
         ENDDO
      ENDDO
   ENDDO
@@ -102,7 +104,7 @@ PROGRAM VBURGERS
      ENDDO
   ENDDO
   WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-!  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, i1, e, wrk3d)
+!  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, c, wrk3d)
 
 ! ###################################################################
   IF ( g(3)%size .GT. 1 ) THEN
@@ -111,7 +113,8 @@ PROGRAM VBURGERS
   DO k = 1,kmax
      DO j = 1,jmax
         DO i = 1,imax
-           b(i,j,k) = b(i,j,k) *visc - a(i,j,k) *c(i,j,k)
+!           b(i,j,k) = b(i,j,k) *visc - a(i,j,k) *c(i,j,k)
+           b(i,j,k) = b(i,j,k) *visc *ribackground(j)- a(i,j,k) *c(i,j,k)
         ENDDO
      ENDDO
   ENDDO
@@ -130,7 +133,7 @@ PROGRAM VBURGERS
      ENDDO
   ENDDO
   WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-!  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, i1, e, wrk3d)
+!  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, e, wrk3d)
 
   END IF
 

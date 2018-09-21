@@ -28,7 +28,7 @@ MODULE DNS_TYPES
      SEQUENCE
      CHARACTER*8 name
      TINTEGER size, inb_grid, mode_fdm
-     LOGICAL uniform, periodic
+     LOGICAL uniform, periodic, anelastic
      TREAL scale
      TREAL, DIMENSION(:),   POINTER :: nodes
      TREAL, DIMENSION(:,:), POINTER :: jac   ! pointer to Jacobians
@@ -36,6 +36,7 @@ MODULE DNS_TYPES
      TREAL, DIMENSION(:,:), POINTER :: lu2   ! pointer to LU decomposition for 2. derivative
      TREAL, DIMENSION(:,:), POINTER :: lu2d  ! pointer to LU decomposition for 2. derivative inc. diffusion
      TREAL, DIMENSION(:,:), POINTER :: mwn   ! pointer to modified wavenumbers
+     TREAL, DIMENSION(:),   POINTER :: rhoinv! pointer to density correction in anelastic
   END TYPE grid_dt
 
   TYPE filter_dt
