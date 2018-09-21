@@ -56,8 +56,8 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
 #    headerprof = 6
     headertime = 5
   else :
-    print 'WARNING : unknown filetype!' 
-    print 'WARNING : assuming all data is vertical profiles' 
+    print('WARNING : unknown filetype!')
+    print('WARNING : assuming all data is vertical profiles')
     headerlength= 4
 #    headerprof = -1 
     headertime = -1 
@@ -88,7 +88,7 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
                         file_list.append(ClassFile(dummy,filenum))
 
         except IOError:
-            print 'ERROR - File', file, 'does not exist' 
+            print('ERROR - File', file, 'does not exist')
 
     retval = p.wait()
     ntimes = len(file_list)
@@ -98,7 +98,7 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
   if ( files_from_list == 1 ) :
       file_list=sorted(file_list,key=lambda ClassFile: ClassFile.num)
 
-  print 'FILES for', avgtype,':', ntimes 
+  print('FILES for', avgtype,':', ntimes)
 
   ############################################################ 
   if ( ntimes == 0 ) : 
@@ -140,8 +140,8 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
       avg = {}
       header = datastring.split()
       if( headertotal > 0 and size(header) != headertotal ): 
-        print "ERROR - header size of", size(header), 
-        print "ERROR   is not as expected (", headertotal, ")"  
+        print("ERROR - header size of", size(header))
+        print("ERROR   is not as expected (", headertotal, ")")
         return -1 
       elif ( size(header) != headertotal ):
         headertotal = size(header)
@@ -173,11 +173,11 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
 
           if ( avgtype == 'avg1s' and (size(data) - headertotal == -2 ) ): 
             # this is very likely a case of this bug  
-            print "WARNING - encountered avg1s BUG - ignoring missing values"  
+            print("WARNING - encountered avg1s BUG - ignoring missing values")
             magic = -2 
           else :
-            print "ERROR - size of data in line", i," (", size(data), \
-                ") not as expected:", headertotal, " or", headerprof,"."
+            print("ERROR - size of data in line", i," (", size(data), \
+                ") not as expected:", headertotal, " or", headerprof,".")
             return -1 
       # process the vertical profiles
       for n in range(headerprof):
