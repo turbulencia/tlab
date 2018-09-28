@@ -54,7 +54,7 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
   elif( avgtype == 'cavg' ):
     headerlength = 6
 #    headerprof = 6
-    headertime = 5
+    headertime = 28
   else :
     print('WARNING : unknown filetype!')
     print('WARNING : assuming all data is vertical profiles')
@@ -74,7 +74,7 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
                          stdout=subprocess.PIPE) 
     file_list = []
     for file in p.stdout.readlines():
-        dummy = file.strip('\n')
+        dummy = file.decode('utf8').strip('\n')
         try:
             with open(dummy): 
                 if '.nc' not in dummy: 
@@ -83,7 +83,7 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
                     if gzip_str in dummy:
                         cend=cend-len(gzip_str)
 
-                    filenum = string.atoi(dummy[cstart:cend])
+                    filenum = int(dummy[cstart:cend])
                     if ( is_number(filenum) ):
                         file_list.append(ClassFile(dummy,filenum))
 
@@ -120,14 +120,14 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
   
     # process the file
     if gzip_str in filename:
-      f = gz.open(filename,'r')
+      f = gz.open(filename,'rt')
     else:
       f= open(filename,'r')
       
     # retrieve the time
     datastring = f.readline()
-    time = datastring.split()[2]
-    print('{}: it{}  Time={}'.format(avgtype, filenum,time))
+    time = float(datastring.split()[2])
+    print('{}: it{}  Time={}'.format(avgtype, filenum, time))
   
     # process the groups items in the header 
     for i in range(headerlength-2):
@@ -229,7 +229,7 @@ def dict2nc(dict, ncname, flag=0):
   var_it[:] = [int(f) for f in dict['Iteration'][:]]
   
   # now make a loop through all vars.
-  dictkeys = dict.keys()
+  dictkeys = list(dict.keys())
 
   for i in range(size(dictkeys)):
     varname = dictkeys[i]
