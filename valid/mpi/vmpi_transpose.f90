@@ -1,3 +1,5 @@
+!mpif90 -fpp  -nbs -save-temps -xHost -simd -vec-threshold50 -unroll-aggressive    -axcommon-avx512,SSE4.2  -qopt-prefetch -O3 vmpi_transpose.f90 
+
 ! from dns_const.h
 #define TREAL      REAL(8)    ! user-defined types
 #define TINTEGER   INTEGER(4)
@@ -165,12 +167,11 @@ SUBROUTINE DNS_MPI_INITIALIZE
 
   IMPLICIT NONE
   
-#include "integers.h"
 #include "mpif.h"
 
 ! -----------------------------------------------------------------------
   TINTEGER id, ip, npage
-  TINTEGER dims(2)
+  TINTEGER i1, dims(2)
   LOGICAL period(2), remain_dims(2), reorder
 
 ! #######################################################################
@@ -221,6 +222,8 @@ SUBROUTINE DNS_MPI_INITIALIZE
 ! #######################################################################
 ! Derived MPI types to deal with the strides when tranposing data
 ! #######################################################################
+  i1 = 1
+  
   IF ( ims_npro_i .GT. 1 ) THEN
 !  CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Ox derivatives.')
      id = DNS_MPI_I_PARTIAL
