@@ -43,7 +43,8 @@ endif()
 
 
 set(USER_Fortran_FLAGS          " -fpp ${USER_profile_FLAGS} -nbs -save-temps -xHost -simd -vec-threshold50 -unroll-aggressive ${USER_omp_FLAGS} " ) 
-set(USER_Fortran_FLAGS_RELEASE  " -axcommon-avx512,SSE4.2  -qopt-prefetch -O3 " ) 
+set(USER_Fortran_FLAGS_RELEASE  " -axcommon-avx512,SSE4.2 -qopt-prefetch -O3 -ipo" ) 
+#set(USER_Fortran_FLAGS_RELEASE  " -axCORE-AVX2 -qopt-prefetch -O3 -ipo" ) 
 set(USER_Fortran_FLAGS_DEBUG    " -g -traceback -debug all ") 
 
 if ( NOT CMAKE_BUILD_TYPE ) 

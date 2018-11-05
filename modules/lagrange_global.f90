@@ -8,7 +8,7 @@ MODULE LAGRANGE_GLOBAL
      SEQUENCE
      TINTEGER size ! size of arrays
      TINTEGER np   ! number of particles
-     LOGICAL uniform
+     LOGICAL uniform, lpadding(3)
      INTEGER(8), DIMENSION(:), ALLOCATABLE :: tags
      TINTEGER,   DIMENSION(:), ALLOCATABLE :: nodes
   END TYPE particle_dt

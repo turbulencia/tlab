@@ -9,7 +9,7 @@ MODULE DNS_TYPES
 
   TYPE background_dt
      SEQUENCE
-     TINTEGER type
+     TINTEGER type, padding
      TREAL reference, mean, delta, ymean, thick, diam
      TREAL, DIMENSION(MAX_PARS) :: parameters
   END TYPE background_dt
@@ -18,7 +18,7 @@ MODULE DNS_TYPES
      SEQUENCE
      TINTEGER type
      TINTEGER, DIMENSION(MAX_PARS) :: scalar     ! fields defining this term
-     LOGICAL,  DIMENSION(MAX_PARS) :: active     ! fields affected by this term
+     LOGICAL,  DIMENSION(MAX_PARS) :: active, lpadding(3)     ! fields affected by this term
      TREAL,    DIMENSION(MAX_PARS) :: parameters
      TREAL,    DIMENSION(MAX_PARS) :: auxiliar
      TREAL,    DIMENSION(3)        :: vector
@@ -41,9 +41,9 @@ MODULE DNS_TYPES
 
   TYPE filter_dt
      SEQUENCE
-     TINTEGER type
+     TINTEGER type, ipadding
      TINTEGER size, inb_filter
-     LOGICAL uniform, periodic
+     LOGICAL uniform, periodic, lpadding(2)
      TREAL,    DIMENSION(MAX_PARS) :: parameters
      TINTEGER BcsMin, BcsMax                  ! boundary conditions
      TINTEGER repeat
@@ -67,7 +67,7 @@ MODULE DNS_TYPES
 
   TYPE subarray_dt
      SEQUENCE
-     LOGICAL active
+     LOGICAL active, lpadding(3)
      INTEGER communicator
      INTEGER subarray
 #ifdef USE_MPI
