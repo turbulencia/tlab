@@ -80,7 +80,7 @@ SUBROUTINE BLD_GEN(idir, x, imax, scalex)
         ENDIF
      ENDDO
   ELSE
-     x(imax) = isegend(idir_opts(1,idir),idir)
+     IF ( imax .GT. 1 ) x(imax) = isegend(idir_opts(1,idir),idir)
   ENDIF
 
   RETURN
