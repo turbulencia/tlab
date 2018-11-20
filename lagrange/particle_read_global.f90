@@ -17,6 +17,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL,    ONLY : inb_flow_array, inb_scal_array
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_wrk2d
+  USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_part_array, inb_part_txc, inb_part 
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
@@ -73,14 +74,11 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_part_pdf = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_part_pdf = 0
   ENDIF
-  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Y_Particle_PDF_Pos', '0.5', y_particle_pdf_pos  )
-  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Y_Particle_PDF_Width', '1.0', y_particle_pdf_width  )
-  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'X_Particle_PDF_Pos', '0.0', x_particle_pdf_pos  )
-  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'X_Particle_PDF_Width', '0.0', x_particle_pdf_width  )
-  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Z_Particle_PDF_Pos', '0.0', z_particle_pdf_pos  )
-  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Z_Particle_PDF_Width', '0.0', z_particle_pdf_width  )
-  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Particle_PDF_Max', '10', particle_pdf_max  )
-  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'Particle_PDF_Interval', '0.5', particle_pdf_interval  )
+  CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'ParticlePdfSubdomain', '-1', sRes)
+  particle_pdf_subdomain = C_0_R; idummy = 6
+  CALL LIST_REAL(sRes, idummy, particle_pdf_subdomain)
+  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'ParticlePdfMax', '10', particle_pdf_max  )
+  CALL SCANINIREAL(bakfile, inifile, 'Lagrange', 'ParticlePdfInterval', '0.5', particle_pdf_interval  )
 
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'ResidenceReset', 'yes', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; residence_reset = 1

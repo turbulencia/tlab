@@ -33,11 +33,8 @@ PROGRAM LAGRANGE_PDF
 
   TREAL, DIMENSION(:,:),     ALLOCATABLE       :: l_q, l_txc
   TREAL, DIMENSION(:),       ALLOCATABLE, SAVE :: l_comm
-  TLONGINTEGER, DIMENSION(:,:),ALLOCATABLE     :: particle_bins
-  TREAL, DIMENSION(:),       ALLOCATABLE       :: counter_interval
-  TREAL y_pdf_max, y_pdf_min
 
-  TINTEGER nitera_first,nitera_last,nitera_save
+  TINTEGER nitera_first, nitera_last, nitera_save
 
   CHARACTER*32 inifile
   CHARACTER*64 fname, str
@@ -63,7 +60,6 @@ PROGRAM LAGRANGE_PDF
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'End',        '0',  nitera_last )
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Restart',    '50', nitera_save )
 
-  number_of_bins = INT(particle_pdf_max/particle_pdf_interval)
   inb_part_txc = 1 
 
 #include "dns_alloc_larrays.h"
@@ -97,9 +93,6 @@ PROGRAM LAGRANGE_PDF
      CALL DNS_STOP(DNS_ERROR_ALLOC)
   ENDIF
   
-  ALLOCATE(particle_bins(number_of_bins,3)) 
-  ALLOCATE(counter_interval(number_of_bins)) 
-
 ! -------------------------------------------------------------------
 ! Read the grid 
 ! -------------------------------------------------------------------
@@ -108,10 +101,6 @@ PROGRAM LAGRANGE_PDF
 !#######################################################################
 !Setup the file properties
 !#######################################################################
-  y_pdf_max=y_particle_pdf_pos+0.5*y_particle_pdf_width
-  y_pdf_min=y_particle_pdf_pos-0.5*y_particle_pdf_width
-  particle_bins=int(0,KIND=8)
-
   DO i = nitera_first, nitera_last, nitera_save
 
 !#######################################################################
@@ -127,8 +116,6 @@ PROGRAM LAGRANGE_PDF
 ! ######################################################################
 ! Save particle pathlines for particle_pdf
 ! ######################################################################
-     number_of_bins = INT(particle_pdf_max/particle_pdf_interval)
-
      WRITE(fname,*) i; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
      CALL PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk3d)
 

@@ -26,10 +26,10 @@ MODULE LAGRANGE_GLOBAL
   TINTEGER      :: isize_l_comm, isize_pbuffer
   
   TINTEGER      :: particle_rnd_mode !which initializing mode
-  TINTEGER      :: residence_reset  !if reseidence l_q should be reset
-
   TREAL         :: y_particle_pos  !position where particles will be initialized
   TREAL         :: y_particle_width  !width of particle distribution
+
+  TINTEGER      :: residence_reset  !if reseidence l_q should be reset
   TREAL         :: l_y_lambda !y coordinate where approx radiation begins for residence times (set in dns_main)
   TREAL         :: l_y_base   !set to be 1/3 of cloud domain between two bouyancy stratification for residence times 
 
@@ -38,15 +38,9 @@ MODULE LAGRANGE_GLOBAL
   TINTEGER      :: inb_trajectory    ! number of properties saved along trajectories
 
   TINTEGER      :: icalc_part_pdf    ! if calculation of pdf for particles
-  TREAL         :: y_particle_pdf_pos
-  TREAL         :: y_particle_pdf_width
-  TREAL         :: x_particle_pdf_pos
-  TREAL         :: x_particle_pdf_width
-  TREAL         :: z_particle_pdf_pos
-  TREAL         :: z_particle_pdf_width
+  TREAL         :: particle_pdf_subdomain(6)
   TREAL         :: particle_pdf_max 
   TREAL         :: particle_pdf_interval 
-  TINTEGER      :: number_of_bins
   
   TREAL         :: lagrange_param(MAX_LAGPARAM)                 ! lagrange function parameters
   CHARACTER*32, DIMENSION(15) :: LAGRANGE_SPNAME             !Name of different lagrange species
