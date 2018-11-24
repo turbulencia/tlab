@@ -15,12 +15,12 @@ MODULE DNS_MPI
   IMPLICIT NONE
   SAVE
   
-  TINTEGER, PARAMETER :: imax = 64 ! number of grid points per task
-  TINTEGER, PARAMETER :: jmax = 96
-  TINTEGER, PARAMETER :: kmax = 64
+  TINTEGER, PARAMETER :: imax = 84   ! number of grid points per task
+  TINTEGER, PARAMETER :: jmax = 480
+  TINTEGER, PARAMETER :: kmax = 56
 
-  INTEGER, PARAMETER :: ims_npro_i = 2 ! number of tasks in Ox and Oz (no decomposition along Oy)
-  INTEGER, PARAMETER :: ims_npro_k = 2 
+  INTEGER, PARAMETER :: ims_npro_i = 64 ! number of tasks in Ox and Oz (no decomposition along Oy)
+  INTEGER, PARAMETER :: ims_npro_k = 96
   
   TINTEGER, PARAMETER :: nmax = 10     ! number of repetitions of operations
 
@@ -84,6 +84,7 @@ PROGRAM VMPI
   
   CALL DNS_MPI_INITIALIZE
 
+  
   ALLOCATE(a    (imax*jmax*kmax,18)) ! Number of 3d arrays commonly used in the code
   ALLOCATE(wrk3d(imax*jmax*kmax   ))
 
@@ -91,7 +92,7 @@ PROGRAM VMPI
 ! ###################################################################
 ! Create random array
   CALL RANDOM_NUMBER(a(1:imax*jmax*kmax,1))
-
+  
   DO n = 1,nmax
      
 ! -------------------------------------------------------------------
@@ -102,7 +103,13 @@ PROGRAM VMPI
         
         CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES)
 
+        IF ( ims_pro .EQ. 0 ) THEN
+           WRITE(*,'(a)') 'Forward transposition along Ox...'
+        ENDIF
         CALL DNS_MPI_TRPF_I(a(1,1), wrk3d, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+        IF ( ims_pro .EQ. 0 ) THEN
+           WRITE(*,'(a)') 'Backward transposition along Ox...'
+        ENDIF
         CALL DNS_MPI_TRPB_I(wrk3d, a(1,2), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
 
         CALL SYSTEM_CLOCK(t_end,PROC_CYCLES,MAX_CYCLES)
@@ -131,7 +138,13 @@ PROGRAM VMPI
         
         CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES)
         
+        IF ( ims_pro .EQ. 0 ) THEN
+           WRITE(*,'(a)') 'Forward transposition along Oz...'
+        ENDIF
         CALL DNS_MPI_TRPF_K(a(1,1), wrk3d, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+        IF ( ims_pro .EQ. 0 ) THEN
+           WRITE(*,'(a)') 'Backward transposition along Oz...'
+        ENDIF
         CALL DNS_MPI_TRPB_K(wrk3d, a(1,2), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
         CALL SYSTEM_CLOCK(t_end,PROC_CYCLES,MAX_CYCLES)
@@ -429,7 +442,7 @@ SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
      ENDIF
   ENDDO
 
-  CALL MPI_WAITALL(ims_npro_k*2-2, mpireq(3), status(1,3), ims_err)
+  CALL MPI_WAITALL(ims_npro_k*2-2, mpireq(3:), status(1,3), ims_err)
 
   CALL DNS_MPI_TAGUPDT
 
@@ -482,7 +495,7 @@ SUBROUTINE DNS_MPI_TRPF_I(a, b, dsend, drecv, tsend, trecv)
      ENDIF
   ENDDO
 
-  CALL MPI_WAITALL(ims_npro_i*2-2, mpireq(3), status(1,3), ims_err)
+  CALL MPI_WAITALL(ims_npro_i*2-2, mpireq(3:), status(1,3), ims_err)
 
   CALL DNS_MPI_TAGUPDT
 
@@ -544,7 +557,7 @@ SUBROUTINE DNS_MPI_TRPB_K(b, a, dsend, drecv, tsend, trecv)
      ENDIF
   ENDDO
 
-  CALL MPI_WAITALL(ims_npro_k*2-2, mpireq(3), status(1,3), ims_err)
+  CALL MPI_WAITALL(ims_npro_k*2-2, mpireq(3:), status(1,3), ims_err)
 
   CALL DNS_MPI_TAGUPDT
 
@@ -597,7 +610,7 @@ SUBROUTINE DNS_MPI_TRPB_I(b, a, dsend, drecv, tsend, trecv)
      ENDIF
   ENDDO
 
-  CALL MPI_WAITALL(ims_npro_i*2-2, mpireq(3), status(1,3), ims_err)
+  CALL MPI_WAITALL(ims_npro_i*2-2, mpireq(3:), status(1,3), ims_err)
 
   CALL DNS_MPI_TAGUPDT
 
