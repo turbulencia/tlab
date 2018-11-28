@@ -16,6 +16,7 @@
      WRITE(*,*) ' 5. Based on vertical velocity'
      WRITE(*,*) ' 6. Based on scalar fluctuation'
      WRITE(*,*) ' 7. Based on scalar vertical turbulent flux'
+     WRITE(*,*) ' 8. Based on potential vorticity'
      READ(*,*) opt_cond
 
      IF ( opt_cond .EQ. 3 .OR. opt_cond .EQ. 4 ) THEN
@@ -81,6 +82,10 @@
      iread_scal = 1
   ELSE IF ( opt_cond .EQ. 7 ) THEN
      inb_txc    = MAX(inb_txc,1)
+     iread_scal = 1
+     iread_flow = 1
+  ELSE IF ( opt_cond .EQ. 8 ) THEN
+     inb_txc    = MAX(inb_txc,5)
      iread_scal = 1
      iread_flow = 1
   ENDIF

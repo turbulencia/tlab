@@ -17,6 +17,21 @@
         txc(1:isize_field,1) = s(1:isize_field,opt_cond_scal)
         CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(1,1))
 
+     ELSE IF ( opt_cond .EQ. 8 ) THEN ! Based on potential vorticity
+        CALL IO_WRITE_ASCII(lfile,'Calculating potential vorticity...')
+        CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
+
+        txc(1:isize_field,4) = s(1:isize_field,opt_cond_scal)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), txc(1,4),txc(1,5), wrk3d, wrk2d,wrk3d)
+        txc(1:isize_field,1) =                       txc(1:isize_field,1)*txc(1:isize_field,5) 
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,4),txc(1,5), wrk3d, wrk2d,wrk3d)
+        txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,2)*txc(1:isize_field,5) 
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), txc(1,4),txc(1,5), wrk3d, wrk2d,wrk3d)
+        txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,3)*txc(1:isize_field,5) 
+
+        txc(1:isize_field,1) = txc(1:isize_field,1)*txc(1:isize_field,1)
+        txc(1:isize_field,1) = LOG(txc(1:isize_field,1)+C_SMALL_R)
+
      ENDIF
 
      IF      ( opt_cond .EQ. 1 ) THEN ! External file

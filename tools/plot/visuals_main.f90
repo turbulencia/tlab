@@ -156,7 +156,6 @@ PROGRAM VISUALS_MAIN
      WRITE(*,'(I2,A)') iscal_offset+18,'. Particle Density'
      WRITE(*,'(I2,A)') iscal_offset+19,'. Thermodynamic quantities'
      WRITE(*,'(I2,A)') iscal_offset+20,'. ReynoldsTensor'
-     WRITE(*,'(I2,A)') iscal_offset+21,'. PotentialVorticity'
      READ(*,'(A512)') sRes        
 #endif
   ENDIF
@@ -190,7 +189,7 @@ PROGRAM VISUALS_MAIN
      IF ( opt_vec(iv) .EQ. iscal_offset+2 ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,3); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+3 ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,6); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+4 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,4); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+5 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,3); ENDIF
+     IF ( opt_vec(iv) .EQ. iscal_offset+5 ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,7); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+6 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+7 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+8 ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,3); ENDIF
@@ -204,7 +203,6 @@ PROGRAM VISUALS_MAIN
      IF ( opt_vec(iv) .EQ. iscal_offset+18) THEN; iread_part = 1;                 inb_txc=MAX(inb_txc,2); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+19) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
      IF ( opt_vec(iv) .EQ. iscal_offset+20) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,6); ENDIF
-     IF ( opt_vec(iv) .EQ. iscal_offset+21) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,7); ENDIF
 
   ENDDO
 
@@ -720,6 +718,34 @@ PROGRAM VISUALS_MAIN
            ENDIF
            
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
+
+           CALL IO_WRITE_ASCII(lfile,'Computing buoyancy gradient...')
+           IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+              CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,4))
+           ELSE
+              wrk1d(1:jmax,1) = C_0_R
+              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,4), wrk1d)
+           ENDIF
+           dummy =  C_1_R/froude
+           txc(1:isize_field,4) = txc(1:isize_field,4) *dummy
+           CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), txc(1,4),txc(1,1), wrk3d, wrk2d,wrk3d)
+           CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,4),txc(1,2), wrk3d, wrk2d,wrk3d)
+           CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), txc(1,4),txc(1,3), wrk3d, wrk2d,wrk3d)
+
+           CALL IO_WRITE_ASCII(lfile,'Computing vorticity vector...')
+           CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
+           
+           txc(1:isize_field,1) = txc(1:isize_field,1)*txc(1:isize_field,4) &
+                                + txc(1:isize_field,2)*txc(1:isize_field,5) &
+                                + txc(1:isize_field,3)*txc(1:isize_field,6)
+           txc(1:isize_field,1) = txc(1:isize_field,1)*txc(1:isize_field,1)
+           
+           plot_file = 'PotentialEnstrophy'//time_str(1:MaskSize)
+
+           txc(1:isize_field,1)=LOG(txc(1:isize_field,1)+C_SMALL_R)
+           plot_file = 'Ln'//TRIM(ADJUSTL(plot_file))
+
+           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
         ENDIF
         
 ! -------------------------------------------------------------------
@@ -1048,39 +1074,6 @@ PROGRAM VISUALS_MAIN
 
         ENDIF
 
-! ###################################################################
-! Potential Vorticity
-! ###################################################################
-        IF ( opt_vec(iv) .EQ. iscal_offset+21 ) THEN
-           
-           CALL IO_WRITE_ASCII(lfile,'Computing buoyancy gradient...')
-           IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
-              CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,4))
-           ELSE
-              wrk1d(1:jmax,1) = C_0_R
-              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,4), wrk1d)
-           ENDIF
-           dummy =  C_1_R/froude
-           txc(1:isize_field,4) = txc(1:isize_field,4) *dummy
-           CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), txc(1,4),txc(1,1), wrk3d, wrk2d,wrk3d)
-           CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,4),txc(1,2), wrk3d, wrk2d,wrk3d)
-           CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), txc(1,4),txc(1,3), wrk3d, wrk2d,wrk3d)
-
-           CALL IO_WRITE_ASCII(lfile,'Computing vorticity vector...')
-           CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
-           
-           txc(1:isize_field,1) = txc(1:isize_field,1)*txc(1:isize_field,4) &
-                                + txc(1:isize_field,2)*txc(1:isize_field,5) &
-                                + txc(1:isize_field,3)*txc(1:isize_field,6)
-           txc(1:isize_field,1) = txc(1:isize_field,1)*txc(1:isize_field,1)
-           
-           plot_file = 'PotentialVorticity'//time_str(1:MaskSize)
-
-           txc(1:isize_field,1)=LOG(txc(1:isize_field,1)+C_SMALL_R)
-           plot_file = 'Ln'//TRIM(ADJUSTL(plot_file))
-
-           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
-        ENDIF
            
      ENDDO
 

@@ -161,6 +161,7 @@ PROGRAM AVERAGES
      WRITE(*,*) '14. Pressure partition'
      WRITE(*,*) '15. Dissipation'
      WRITE(*,*) '16. Third-order scalar covariances'
+     WRITE(*,*) '17. Potential vorticity'
      READ(*,*) opt_main
 
      WRITE(*,*) 'Planes block size ?'
@@ -285,6 +286,11 @@ PROGRAM AVERAGES
      nfield = 3
      inb_txc = MAX(inb_txc,3)
      iread_flow = 0
+     iread_scal = 1
+  CASE (17 ) ! potential vorticity
+     nfield = 1
+     inb_txc = MAX(inb_txc,4)
+     iread_flow = 1
      iread_scal = 1
 
   END SELECT
@@ -1125,6 +1131,31 @@ PROGRAM AVERAGES
         WRITE(fname,*) itime; fname='cov'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
+
+! ###################################################################
+! Potential vorticity
+! ###################################################################
+     CASE ( 17 )
+        CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
+        txc(1:isize_field,1) =                       txc(1:isize_field,1)*txc(1:isize_field,4) 
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
+        txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,2)*txc(1:isize_field,4) 
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
+        txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,3)*txc(1:isize_field,4) 
+
+        data(1)%field => txc(:,1); varname(1) = 'PV'
+
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
+           DO is = 1,nfield
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+           ENDDO
+        ENDIF
+
+        WRITE(fname,*) itime; fname='avgPV'//TRIM(ADJUSTL(fname))
+        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+             nfield, opt_order, y_aux, gate, data, mean)
+
 
      END SELECT
   ENDDO
