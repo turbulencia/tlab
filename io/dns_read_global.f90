@@ -1258,16 +1258,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   radiation%scalar = inb_scal_array
   
   IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-!      IF ( transport%type .NE. EQNS_NONE ) THEN 
-!         ! transport%scalar = inb_scal_array                ! Transport is caused by liquid
-!         ! transport%parameters(inb_scal_array    ) = C_1_R ! liquid
-!         ! transport%parameters(inb_scal_array + 1) = C_1_R ! buoyancy
-! ! Adding the settling number in the parameter definitions
-!         ! transport%parameters = transport%parameters *settling
-!      ENDIF
-
      IF ( radiation%type .NE. EQNS_NONE ) THEN 
-        ! radiation%scalar = inb_scal_array             ! Radiation is caused by liquid
         radiation%active(inb_scal_array    ) = .TRUE. ! liquid
         radiation%active(inb_scal_array + 1) = .TRUE. ! buoyancy
      ENDIF

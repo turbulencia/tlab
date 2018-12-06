@@ -13,7 +13,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE DNS_GLOBAL, ONLY : buoyancy, radiation, transport
   USE DNS_GLOBAL, ONLY : rbg, sbg, qbg
   USE DNS_GLOBAL, ONLY : rbackground, ribackground
-  USE DNS_GLOBAL, ONLY : visc, schmidt, froude
+  USE DNS_GLOBAL, ONLY : visc, schmidt, froude, settling
   USE THERMO_GLOBAL, ONLY : imixture, thermo_param
 #ifdef USE_MPI
   USE DNS_MPI
@@ -390,7 +390,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         IF ( is .EQ. inb_scal_array+1 ) THEN ! Default values are for liquid; defining them for buoyancy
            coefQ = buoyancy%parameters(inb_scal_array) /froude
            coefR = buoyancy%parameters(inb_scal) /froude
-           DO i = 1,inb_scal; coefT = coefT + transport%parameters(i) *buoyancy%parameters(i) /froude; ENDDO
+           DO i = 1,inb_scal; coefT = coefT + transport%parameters(i) /settling *buoyancy%parameters(i) /froude; ENDDO
         ENDIF
      
         CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdx,dsdy,dsdz) ! calculate xi in dsdx
@@ -419,11 +419,10 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
            dummy= coefQ
            tmp3 = tmp3 *( coefT + dsdy *dummy )
 ! Correction term needs dsdz
-           dummy= dummy
-           dsdy =-s(:,:,:,transport%scalar(1))**(C_1_R+transport%auxiliar(1))
+           CALL FI_TRANSPORT_FLUX(transport, imax,jmax,kmax, is, s,dsdy)
            dsdz = dsdy *dsdz *dummy
         ELSE
-           dsdz = C_0_R
+           tmp3 = C_0_R; dsdz = C_0_R
         ENDIF
         
      ELSE
