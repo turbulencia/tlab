@@ -40,8 +40,8 @@
 !#                      5 local interval, analysis and drop both points
 !#
 !########################################################################
-SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax, jmax, kmax, &
-     nvar, ibc, amin, amax, y, gate, data, nbins, npdf_size, pdf, wrk1d)
+SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
+     nvar, ibc, amin,amax, gate, data, nbins, npdf_size, pdf, wrk1d)
 
   USE DNS_TYPES,  ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : efile
@@ -55,13 +55,12 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax, jmax, kmax, &
 
   CHARACTER*(*) fname
   TREAL rtime
-  TINTEGER imax, jmax, kmax, nvar
+  TINTEGER imax,jmax,kmax, nvar
   TINTEGER ibc(nvar)
   TREAL amin(nvar), amax(nvar)
   TINTEGER nbins, npdf_size
-  TREAL y(jmax)
-  TREAL pdf(nbins,nvar)
-  TREAL wrk1d(nbins,*) 
+  TREAL pdf(nbins+2,jmax+1,nvar)
+  TREAL wrk1d(nbins) 
   CHARACTER*32 varname(nvar)
 
   INTEGER(1) gate(*), igate
@@ -70,7 +69,7 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax, jmax, kmax, &
 
 ! -------------------------------------------------------------------
   TINTEGER j, ip, nplim, iv, ibc_loc
-  TREAL xmin(NVARS_LOC), xmax(NVARS_LOC), plim
+  TREAL plim
 
   CHARACTER*512 line1
 
@@ -81,7 +80,7 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax, jmax, kmax, &
 #endif
 
 ! ###################################################################
-  IF ( npdf_size .LT. nbins*nvar ) THEN
+  IF ( npdf_size .LT. nbins*nvar*(jmax+1) ) THEN
      CALL IO_WRITE_ASCII(efile, 'PDF2D_N. Working array size too small')
      CALL DNS_STOP(DNS_ERROR_WRKSIZE)
   ENDIF
@@ -95,6 +94,65 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax, jmax, kmax, &
 ! maybe this value is never achieved !
   plim = C_1EM4_R
 
+! ###################################################################
+! PDF calculation of 1 variable along planes
+! ###################################################################
+  DO iv = 1,nvar
+     
+     DO j = 1,jmax
+        IF ( igate .EQ. 0 ) THEN
+           CALL PDF1V2D(i1, ibc(iv), imax, jmax, kmax, j, amin(iv), amax(iv), &
+                data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
+        ELSE
+           CALL PDF1V2D1G(i1, ibc(iv), imax, jmax, kmax, j, igate, amin(iv), amax(iv), &
+                gate, data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
+        ENDIF
+
+! threshold for analysis set s.t. single points are removed
+        IF ( ibc(iv) .GT. 1 ) THEN
+           ibc_loc = ibc(iv)-2
+           CALL PDF_ANALIZE(nbins, ibc_loc, pdf(1,j,iv), plim, amin(iv), amax(iv), nplim)
+           IF ( igate .EQ. 0 ) THEN
+              CALL PDF1V2D(i1, i0, imax, jmax, kmax, j, amin(iv), amax(iv), &
+                   data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
+           ELSE
+              CALL PDF1V2D1G(i1, i0, imax, jmax, kmax, j, igate, amin(iv), amax(iv), &
+                   gate, data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
+           ENDIF
+        ENDIF
+
+     ENDDO
+
+! ###################################################################
+! PDF calculation of 1 variable in 3D space
+! ###################################################################
+     j = jmax+1
+  
+     IF ( igate .EQ. 0 ) THEN
+        CALL PDF1V3D(i1, ibc(iv), imax, jmax, kmax, amin(iv), amax(iv), &
+             data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
+     ELSE
+        CALL PDF1V3D1G(i1, ibc(iv), imax, jmax, kmax, igate, amin(iv), amax(iv), &
+             gate, data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
+     ENDIF
+
+! threshold for analysis set s.t. single points are removed
+     IF ( ibc(iv) .GT. 1 ) THEN
+        ibc_loc = ibc(iv)-2
+        CALL PDF_ANALIZE(nbins, ibc_loc, pdf(1,j,iv), plim, amin(iv), amax(iv), nplim)
+        IF ( igate .EQ. 0 ) THEN
+           CALL PDF1V3D(i1, i0, imax, jmax, kmax, amin(iv), amax(iv), &
+                data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
+        ELSE
+           CALL PDF1V3D1G(i1, i0, imax, jmax, kmax, igate, amin(iv), amax(iv), &
+                gate, data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
+        ENDIF
+     ENDIF
+     
+  ENDDO
+
+! ###################################################################
+! ###################################################################
 ! -------------------------------------------------------------------
 ! TkStat file; header
 ! -------------------------------------------------------------------
@@ -131,100 +189,21 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax, jmax, kmax, &
      ENDDO
      WRITE(21,'(A)') TRIM(ADJUSTL(line1))
 
-#ifdef USE_MPI
-  ENDIF
-#endif
-
-! ###################################################################
-! PDF calculation of 1 variable along planes
-! ###################################################################
-  DO j = 1,jmax
-
-     DO iv = 1,nvar
-        IF ( igate .EQ. 0 ) THEN
-           CALL PDF1V2D(i1, ibc(iv), imax, jmax, kmax, j, amin(iv), amax(iv), &
-                data(iv)%field, nbins, xmin(iv), xmax(iv), pdf(1,iv), wrk1d)
-        ELSE
-           CALL PDF1V2D1G(i1, ibc(iv), imax, jmax, kmax, j, igate, amin(iv), amax(iv), &
-                gate, data(iv)%field, nbins, xmin(iv), xmax(iv), pdf(1,iv), wrk1d)
-        ENDIF
-
-! threshold for analysis set s.t. single points are removed
-        IF ( ibc(iv) .GT. 1 ) THEN
-           ibc_loc = ibc(iv)-2
-           CALL PDF_ANALIZE&
-                (nbins, ibc_loc, xmin(iv), xmax(iv), pdf(1,iv), plim, amin(iv), amax(iv), nplim)
-           IF ( igate .EQ. 0 ) THEN
-              CALL PDF1V2D(i1, i0, imax, jmax, kmax, j, amin(iv), amax(iv), &
-                   data(iv)%field, nbins, xmin(iv), xmax(iv), pdf(1,iv), wrk1d)
-           ELSE
-              CALL PDF1V2D1G(i1, i0, imax, jmax, kmax, j, igate, amin(iv), amax(iv), &
-                   gate, data(iv)%field, nbins, xmin(iv), xmax(iv), pdf(1,iv), wrk1d)
-           ENDIF
-        ENDIF
-
-     ENDDO
-
 ! -------------------------------------------------------------------
 ! TkStat output
 ! -------------------------------------------------------------------
-#ifdef USE_MPI
-     IF ( ims_pro .EQ. 0 ) THEN
-#endif
+     DO j = 1, jmax+1
+        
         ip = 1
-        WRITE(21,1020) 1, j, ip, (pdf(ip,iv),iv=1,nvar), (xmin(iv),iv=1,nvar)
+        WRITE(21,1020) 1, j, ip, (pdf(ip,j,iv),iv=1,nvar), (pdf(nbins+1,j,iv),iv=1,nvar)
         DO ip=2, nbins-1
-           WRITE(21,1010) 1, j, ip, (pdf(ip,iv),iv=1,nvar)
+           WRITE(21,1010) 1, j, ip, (pdf(ip,j,iv),iv=1,nvar)
         ENDDO
         ip = nbins
-        WRITE(21,1020) 1, j, ip, (pdf(ip,iv),iv=1,nvar), (xmax(iv),iv=1,nvar)
-
-#ifdef USE_MPI
-     ENDIF
-#endif
-  ENDDO
-
-! ###################################################################
-! PDF calculation of 1 variable in 3D space
-! ###################################################################
-  DO iv = 1,nvar
-     IF ( igate .EQ. 0 ) THEN
-        CALL PDF1V3D(i1, ibc(iv), imax, jmax, kmax, amin(iv), amax(iv), &
-             data(iv)%field, nbins, xmin(iv), xmax(iv), pdf(1,iv), wrk1d)
-     ELSE
-        CALL PDF1V3D1G(i1, ibc(iv), imax, jmax, kmax, igate, amin(iv), amax(iv), &
-             gate, data(iv)%field, nbins, xmin(iv), xmax(iv), pdf(1,iv), wrk1d)
-     ENDIF
-
-! threshold for analysis set s.t. single points are removed
-     IF ( ibc(iv) .GT. 1 ) THEN
-        ibc_loc = ibc(iv)-2
-        CALL PDF_ANALIZE&
-             (nbins, ibc_loc, xmin(iv), xmax(iv), pdf(1,iv), plim, amin(iv), amax(iv), nplim)
-        IF ( igate .EQ. 0 ) THEN
-           CALL PDF1V3D(i1, i0, imax, jmax, kmax, amin(iv), amax(iv), &
-                data(iv)%field, nbins, xmin(iv), xmax(iv), pdf(1,iv), wrk1d)
-        ELSE
-           CALL PDF1V3D1G(i1, i0, imax, jmax, kmax, igate, amin(iv), amax(iv), &
-                gate, data(iv)%field, nbins, xmin(iv), xmax(iv), pdf(1,iv), wrk1d)
-        ENDIF
-     ENDIF
-  ENDDO
-
-! -------------------------------------------------------------------
-! TkStat output
-! -------------------------------------------------------------------
-#ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN
-#endif
-     ip = 1
-     WRITE(21,1020) 1, jmax+1, ip, (pdf(ip,iv),iv=1,nvar), (xmin(iv),iv=1,nvar)
-     DO ip=2, nbins-1
-        WRITE(21,1010) 1, jmax+1, ip, (pdf(ip,iv),iv=1,nvar)
+        WRITE(21,1020) 1, j, ip, (pdf(ip,j,iv),iv=1,nvar), (pdf(nbins+2,j,iv),iv=1,nvar)
+        
      ENDDO
-     ip = nbins
-     WRITE(21,1020) 1, jmax+1, ip, (pdf(ip,iv),iv=1,nvar), (xmax(iv),iv=1,nvar)
-
+     
      CLOSE(21)
 
 #ifdef USE_MPI

@@ -36,13 +36,12 @@ SUBROUTINE PDF3D_N(fname, varname, inorm, ianalyze, rtime, &
   TINTEGER imax, jmax, kmax, nvar
   TINTEGER nbins
   TREAL a(imax,jmax,kmax,nvar)
-  TREAL pdf(nbins,nvar)
+  TREAL pdf(nbins+2,nvar)
   TREAL wrk1d(*)
   CHARACTER*32 fname
   CHARACTER*32 varname(nvar)
 
 ! -------------------------------------------------------------------
-  TREAL xmin(nvar), xmax(nvar)
   TINTEGER ip, nplim, iv
   TREAL amin, amax, plim
 
@@ -70,13 +69,13 @@ SUBROUTINE PDF3D_N(fname, varname, inorm, ianalyze, rtime, &
 ! ###################################################################
   DO iv = 1, nvar
      CALL PDF1V3D(inorm, i1, imax, jmax, kmax, &
-          amin, amax, a(1,1,1,iv), nbins, xmin(iv), xmax(iv), pdf(1,iv), wrk1d)
+          amin, amax, a(1,1,1,iv), nbins, pdf(1,iv), wrk1d)
 
 ! threshold for analysis set s.t. single points are removed
      IF ( ianalyze .EQ. 1 ) THEN
-        CALL PDF_ANALIZE(nbins, i0, xmin(iv), xmax(iv), pdf(1,iv), plim, amin, amax, nplim)
+        CALL PDF_ANALIZE(nbins, i0, pdf(1,iv), plim, amin, amax, nplim)
         CALL PDF1V3D(inorm, i0, imax, jmax, kmax, &
-             amin, amax, a(1,1,1,iv), nbins, xmin(iv), xmax(iv), pdf(1,iv), wrk1d)
+             amin, amax, a(1,1,1,iv), nbins, pdf(1,iv), wrk1d)
      ENDIF
   ENDDO
 
@@ -119,14 +118,14 @@ SUBROUTINE PDF3D_N(fname, varname, inorm, ianalyze, rtime, &
 ! body
 ! -------------------------------------------------------------------
      ip = 1
-     WRITE(21,1030) 1, 1, ip, (pdf(ip,iv), iv=1,nvar), (xmin(iv),iv=1,nvar)
+     WRITE(21,1030) 1, 1, ip, (pdf(ip,iv), iv=1,nvar), (pdf(nbins+1,iv),iv=1,nvar)
 
      DO ip = 2,nbins-1
         WRITE(21,1020) 1, 1, ip, (pdf(ip,iv), iv=1,nvar)
      ENDDO
 
      ip = nbins
-     WRITE(21,1030) 1, 1, ip, (pdf(ip,iv), iv=1,nvar), (xmax(iv),iv=1,nvar)
+     WRITE(21,1030) 1, 1, ip, (pdf(ip,iv), iv=1,nvar), (pdf(nbins+2,iv),iv=1,nvar)
 
 1020 FORMAT(I5,2(1X,I5),L_FORMAT_MAX(1X,E12.3E3))
 1030 FORMAT(I5,2(1X,I5),L_FORMAT_MAX(1X,E12.3E3),L_FORMAT_MAX(1X,E12.3E3))

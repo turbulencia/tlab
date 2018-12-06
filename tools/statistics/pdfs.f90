@@ -186,7 +186,8 @@ PROGRAM PDFS
      iread_scal = 1
      iread_flow = 1
      inb_txc = MAX(inb_txc,6)
-     nfield = 6+1
+     nfield = 4 +inb_scal
+     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) nfield = nfield +2
   CASE( 2 )
      iread_scal = 1
      nfield = inb_scal
@@ -269,8 +270,10 @@ PROGRAM PDFS
 ! -------------------------------------------------------------------
 ! in case g(2)%size is not divisible by opt_block, drop the upper most planes
   jmax_aux = g(2)%size/opt_block
-
-  npdf_size = opt_bins*nfield
+  
+! Space for the min and max of sampling variable at opt_bins+1,opt_bins+2
+! Space for the 3D pdf at jmax_aux+1
+  npdf_size = (jmax_aux+1) *(opt_bins+2) *nfield 
 
 ! -------------------------------------------------------------------
 ! Further allocation of memory space
@@ -375,7 +378,10 @@ PROGRAM PDFS
         ENDIF
 
         IF ( icalc_scal .EQ. 1 ) THEN
-           nfield = nfield+1; data(nfield)%field => s(:,1); varname(nfield) = 'PScalar1'
+           DO is = 1,inb_scal
+              nfield = nfield+1; data(nfield)%field => s(:,is); varname(nfield) = 'PScalar '
+              WRITE(str,*) is; varname(nfield)=TRIM(ADJUSTL(varname(nfield)))//TRIM(ADJUSTL(str))
+           ENDDO
         ENDIF
 
         ibc(1:nfield) = 2
@@ -388,7 +394,7 @@ PROGRAM PDFS
 
         WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
-             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
 
 ! ###################################################################
@@ -415,7 +421,7 @@ PROGRAM PDFS
 
         WRITE(fname,*) itime; fname='pdfSc'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
-             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
 
 ! ###################################################################
@@ -450,7 +456,7 @@ PROGRAM PDFS
 
         WRITE(fname,*) itime; fname='pdfG2'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
-             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
 
 ! ###################################################################
@@ -509,7 +515,7 @@ PROGRAM PDFS
 
         WRITE(fname,*) itime; fname='pdfW2'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
-             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
 
 ! ###################################################################
@@ -556,7 +562,7 @@ PROGRAM PDFS
 
         WRITE(fname,*) itime; fname='pdfS2'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
-             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
 
 ! ###################################################################
@@ -588,7 +594,7 @@ PROGRAM PDFS
 
         WRITE(fname,*) itime; fname='pdfInv'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
-             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
 
 ! ###################################################################
@@ -608,7 +614,7 @@ PROGRAM PDFS
 
         WRITE(fname,*) itime; fname='pdfXi'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
-             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
 
 ! ###################################################################
@@ -686,7 +692,7 @@ PROGRAM PDFS
 
         WRITE(fname,*) itime; fname='pdfGi'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
-             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
 
 ! ###################################################################
@@ -715,7 +721,7 @@ PROGRAM PDFS
 
         WRITE(fname,*) itime; fname='pdfDe'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
-             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
 
 !        WRITE(fname,*) itime; fname='jpdfDe'//TRIM(ADJUSTL(fname))
@@ -744,7 +750,7 @@ PROGRAM PDFS
 
         WRITE(fname,*) itime; fname='pdfEig'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
-             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
 
 ! ###################################################################
@@ -807,7 +813,7 @@ PROGRAM PDFS
 
         WRITE(fname,*) itime; fname='pdfCos'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
-             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
 
 ! ###################################################################
@@ -832,7 +838,7 @@ PROGRAM PDFS
 
         WRITE(fname,*) itime; fname='pdfDer'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
-             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, y_aux, gate, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
 
      END SELECT

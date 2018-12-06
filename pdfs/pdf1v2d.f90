@@ -21,8 +21,8 @@
 !#                If not, calculate locally the min/max
 !#
 !########################################################################
-SUBROUTINE PDF1V2D(inorm, ilim, imax, jmax, kmax, j, &
-     umin_ext, umax_ext, u, nbins, xpdfmin, xpdfmax, pdf, wrk1d)
+SUBROUTINE PDF1V2D(inorm, ilim, imax,jmax,kmax, j, &
+     umin_ext,umax_ext, u, nbins, pdf, wrk1d)
 
   IMPLICIT NONE
 
@@ -36,8 +36,7 @@ SUBROUTINE PDF1V2D(inorm, ilim, imax, jmax, kmax, j, &
   TREAL umin_ext, umax_ext
   TINTEGER nbins
   TREAL u(imax,jmax,kmax)
-  TREAL xpdfmin, xpdfmax
-  TREAL pdf(nbins)
+  TREAL pdf(nbins+2) ! Space at the end for the min and max values in the sample variable
   TREAL wrk1d(nbins)
 
 ! -------------------------------------------------------------------
@@ -87,8 +86,8 @@ SUBROUTINE PDF1V2D(inorm, ilim, imax, jmax, kmax, j, &
   pdfstep = (umax-umin)/M_REAL(nbins)
 
 ! Calculate x coordinate of histogram
-  xpdfmin = umin + pdfstep/C_2_R
-  xpdfmax = umin + pdfstep*(2*nbins-1)/C_2_R
+  pdf(nbins+1) = umin + pdfstep/C_2_R
+  pdf(nbins+2) = umax - pdfstep/C_2_R
 
 ! -------------------------------------------------------------------
 ! Calculate Histogram
@@ -131,8 +130,8 @@ SUBROUTINE PDF1V2D(inorm, ilim, imax, jmax, kmax, j, &
         ELSE
            DO ip = 1,nbins
               pdf(ip) = C_0_R
-!              xpdfmin = C_0_R
-!              xpdfmax = C_0_R
+!              pdf(nbins+1) = C_0_R
+!              pdf(nbins+2) = C_0_R
            ENDDO
         ENDIF
      ENDIF
