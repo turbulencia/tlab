@@ -187,7 +187,7 @@ PROGRAM PDFS
      iread_flow = 1
      inb_txc = MAX(inb_txc,6)
      nfield = 4 +inb_scal
-     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) nfield = nfield +2
+     IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) nfield = nfield +2
   CASE( 2 )
      iread_scal = 1
      nfield = inb_scal
@@ -311,6 +311,11 @@ PROGRAM PDFS
      CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   ENDIF
 
+! -------------------------------------------------------------------
+! Initialize thermodynamic quantities
+! -------------------------------------------------------------------
+  CALL FI_PROFILES_INITIALIZE(wrk1d)
+  
 ! ###################################################################
 ! Calculating statistics
 ! ###################################################################
@@ -379,7 +384,7 @@ PROGRAM PDFS
 
         IF ( icalc_scal .EQ. 1 ) THEN
            DO is = 1,inb_scal
-              nfield = nfield+1; data(nfield)%field => s(:,is); varname(nfield) = 'PScalar '
+              nfield = nfield+1; data(nfield)%field => s(:,is); varname(nfield) = 'P'
               WRITE(str,*) is; varname(nfield)=TRIM(ADJUSTL(varname(nfield)))//TRIM(ADJUSTL(str))
            ENDDO
         ENDIF

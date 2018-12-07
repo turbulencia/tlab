@@ -44,7 +44,7 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
      nvar, ibc, amin,amax, gate, data, nbins, npdf_size, pdf, wrk1d)
 
   USE DNS_TYPES,  ONLY : pointers_dt
-  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_CONSTANTS, ONLY : efile, lfile
 
   IMPLICIT NONE
 
@@ -72,14 +72,16 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
   TREAL plim
 
   CHARACTER*512 line1
+  CHARACTER*64 name
 
 #ifdef USE_MPI
   INTEGER ims_pro, ims_err
-
   CALL MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro,ims_err)
 #endif
 
 ! ###################################################################
+  CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
+
   IF ( npdf_size .LT. nbins*nvar*(jmax+1) ) THEN
      CALL IO_WRITE_ASCII(efile, 'PDF2D_N. Working array size too small')
      CALL DNS_STOP(DNS_ERROR_WRKSIZE)
@@ -150,6 +152,29 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
      ENDIF
      
   ENDDO
+
+! ###################################################################
+! ###################################################################
+#ifdef USE_MPI
+  IF ( ims_pro .EQ. 0 ) THEN
+#endif
+
+#define LOC_UNIT_ID 21
+#define LOC_STATUS 'unknown'
+  DO iv = 1,nvar
+     name = TRIM(ADJUSTL(fname))
+     IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
+
+     CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+#include "dns_open_file.h"
+     WRITE(LOC_UNIT_ID) SNGL(pdf(:,:,iv))
+     CLOSE(LOC_UNIT_ID)
+     
+  ENDDO
+
+#ifdef USE_MPI
+  ENDIF
+#endif
 
 ! ###################################################################
 ! ###################################################################
