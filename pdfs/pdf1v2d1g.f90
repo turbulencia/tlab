@@ -1,3 +1,5 @@
+#include "types.h"
+
 !########################################################################
 !# Tool/Library PDF
 !#
@@ -21,41 +23,33 @@
 !#             If not, calculate locally the min/max
 !#
 !########################################################################
-SUBROUTINE PDF1V2D1G(inorm, ilim, imax,jmax,kmax, j, igate, &
+SUBROUTINE PDF1V2D1G(ilim, imax,jmax,kmax, j, igate, &
      umin_ext,umax_ext, gate, u, nbins, pdf, wrk1d)
 
   IMPLICIT NONE
 
-#include "types.h"
 #ifdef USE_MPI
 #include "mpif.h"
 #endif
 
-  TINTEGER inorm, ilim
-  TINTEGER imax, jmax, kmax, j
+  TINTEGER ilim, imax,jmax,kmax, j, nbins
   TREAL umin_ext, umax_ext
-  TINTEGER nbins
-  TREAL u(imax,jmax,kmax)
-  TREAL pdf(nbins+2) ! Space at the end for the min and max values in the sample variable
-  TREAL wrk1d(nbins)
-  INTEGER(1) gate(imax,jmax,kmax), igate
+  TREAL, INTENT(IN)    :: u(imax,jmax,kmax)
+  TREAL, INTENT(OUT)   :: pdf(nbins+2) ! Space at the end for the min and max values in the sample variable
+  TREAL, INTENT(INOUT) :: wrk1d(nbins)
+  INTEGER(1),INTENT(IN):: gate(imax,jmax,kmax), igate
 
 ! -------------------------------------------------------------------
-  TINTEGER i, k, ip, nsample
-  TREAL umin, umax
-  TREAL pdfstep, pnorm
+  TINTEGER i, k, ip
+  TREAL umin, umax, pdfstep
 
 #ifdef USE_MPI
-  TINTEGER nsample_mpi
   INTEGER ims_err, impi
   TREAL umin_p, umax_p
 #endif
 
 ! ###################################################################
-  nsample = 0
-  DO ip = 1,nbins
-     pdf(ip) = C_0_R
-  ENDDO
+  pdf = C_0_R
 
 ! -------------------------------------------------------------------
 ! Calculate Minimum and Maximum
@@ -103,12 +97,10 @@ SUBROUTINE PDF1V2D1G(inorm, ilim, imax,jmax,kmax, j, igate, &
               IF ( ilim .EQ. 0 ) THEN 
                  IF ( ip .LE. nbins .AND. ip .GE. 1 ) THEN
                     pdf(ip) = pdf(ip) + C_1_R
-                    nsample = nsample + 1
                  ENDIF
               ELSE ! put last point in the last bin
                  ip = MIN(ip,nbins)
                  pdf(ip) = pdf(ip) + C_1_R
-                 nsample = nsample + 1
               ENDIF
            ENDIF
 
@@ -116,31 +108,10 @@ SUBROUTINE PDF1V2D1G(inorm, ilim, imax,jmax,kmax, j, igate, &
      ENDDO
 
 #ifdef USE_MPI
-! Sum all number of points
-     nsample_mpi = nsample
-     CALL MPI_ALLREDUCE(nsample_mpi, nsample, 1, MPI_INTEGER4, MPI_SUM, MPI_COMM_WORLD, ims_err)
-
      impi = nbins
      CALL MPI_ALLREDUCE(pdf, wrk1d, impi, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-     DO ip = 1,nbins
-        pdf(ip) = wrk1d(ip)
-     ENDDO
+     pdf(1:nbins) = wrk1d(1:nbins)
 #endif
-! normalize
-     IF ( inorm .EQ. 1 ) THEN
-        IF ( nsample .GT. 0 ) THEN
-           pnorm = C_1_R/(M_REAL(nsample)*pdfstep)
-           DO ip = 1,nbins
-              pdf(ip) = pdf(ip)*pnorm
-           ENDDO
-        ELSE
-           DO ip = 1,nbins
-              pdf(ip) = C_0_R
-!              pdf(nbins+1) = C_0_R
-!              pdf(nbins+2) = C_0_R
-           ENDDO
-        ENDIF
-     ENDIF
 
   ENDIF
 

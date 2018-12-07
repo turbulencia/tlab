@@ -19,7 +19,7 @@
 !# ARGUMENTS 
 !#
 !########################################################################
-SUBROUTINE PDF3D_N(fname, varname, inorm, ianalyze, rtime, &
+SUBROUTINE PDF3D_N(fname, varname, ianalyze, rtime, &
      imax, jmax, kmax, nvar, nbins, a, pdf, wrk1d)
 
   USE DNS_CONSTANTS, ONLY : efile
@@ -31,7 +31,7 @@ SUBROUTINE PDF3D_N(fname, varname, inorm, ianalyze, rtime, &
 #include "mpif.h"
 #endif
 
-  TINTEGER inorm, ianalyze
+  TINTEGER ianalyze
   TREAL rtime
   TINTEGER imax, jmax, kmax, nvar
   TINTEGER nbins
@@ -68,13 +68,13 @@ SUBROUTINE PDF3D_N(fname, varname, inorm, ianalyze, rtime, &
 ! PDF calculation of 1 variable in 3D space
 ! ###################################################################
   DO iv = 1, nvar
-     CALL PDF1V3D(inorm, i1, imax, jmax, kmax, &
+     CALL PDF1V3D(i1, imax, jmax, kmax, &
           amin, amax, a(1,1,1,iv), nbins, pdf(1,iv), wrk1d)
 
 ! threshold for analysis set s.t. single points are removed
      IF ( ianalyze .EQ. 1 ) THEN
         CALL PDF_ANALIZE(nbins, i0, pdf(1,iv), plim, amin, amax, nplim)
-        CALL PDF1V3D(inorm, i0, imax, jmax, kmax, &
+        CALL PDF1V3D(i0, imax, jmax, kmax, &
              amin, amax, a(1,1,1,iv), nbins, pdf(1,iv), wrk1d)
      ENDIF
   ENDDO
@@ -92,11 +92,6 @@ SUBROUTINE PDF3D_N(fname, varname, inorm, ianalyze, rtime, &
 ! header
 ! -------------------------------------------------------------------
 ! comment section
-     IF ( inorm .EQ. 0 ) THEN
-        WRITE(21,'(A)') '# Histogram (no normalization)'
-     ELSE
-        WRITE(21,'(A)') '# PDF (normalization s.t. integral is 1)'
-     ENDIF
      IF ( ianalyze .EQ. 0 ) THEN
         WRITE(21,'(A)') '# No PDF analysis'
      ELSE

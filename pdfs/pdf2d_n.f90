@@ -1,7 +1,7 @@
 #include "types.h"
 #include "dns_error.h"
 
-#define NVARS_LOC 12
+#define NVARS_LOC 16
 
 !########################################################################
 !# Tool/Library PDF
@@ -103,10 +103,10 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
      
      DO j = 1,jmax
         IF ( igate .EQ. 0 ) THEN
-           CALL PDF1V2D(i1, ibc(iv), imax, jmax, kmax, j, amin(iv), amax(iv), &
+           CALL PDF1V2D(ibc(iv), imax, jmax, kmax, j, amin(iv), amax(iv), &
                 data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
         ELSE
-           CALL PDF1V2D1G(i1, ibc(iv), imax, jmax, kmax, j, igate, amin(iv), amax(iv), &
+           CALL PDF1V2D1G(ibc(iv), imax, jmax, kmax, j, igate, amin(iv), amax(iv), &
                 gate, data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
         ENDIF
 
@@ -115,10 +115,10 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
            ibc_loc = ibc(iv)-2
            CALL PDF_ANALIZE(nbins, ibc_loc, pdf(1,j,iv), plim, amin(iv), amax(iv), nplim)
            IF ( igate .EQ. 0 ) THEN
-              CALL PDF1V2D(i1, i0, imax, jmax, kmax, j, amin(iv), amax(iv), &
+              CALL PDF1V2D(i0, imax, jmax, kmax, j, amin(iv), amax(iv), &
                    data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
            ELSE
-              CALL PDF1V2D1G(i1, i0, imax, jmax, kmax, j, igate, amin(iv), amax(iv), &
+              CALL PDF1V2D1G(i0, imax, jmax, kmax, j, igate, amin(iv), amax(iv), &
                    gate, data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
            ENDIF
         ENDIF
@@ -131,10 +131,10 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
      j = jmax+1
   
      IF ( igate .EQ. 0 ) THEN
-        CALL PDF1V3D(i1, ibc(iv), imax, jmax, kmax, amin(iv), amax(iv), &
+        CALL PDF1V3D(ibc(iv), imax, jmax, kmax, amin(iv), amax(iv), &
              data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
      ELSE
-        CALL PDF1V3D1G(i1, ibc(iv), imax, jmax, kmax, igate, amin(iv), amax(iv), &
+        CALL PDF1V3D1G(ibc(iv), imax, jmax, kmax, igate, amin(iv), amax(iv), &
              gate, data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
      ENDIF
 
@@ -143,10 +143,10 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
         ibc_loc = ibc(iv)-2
         CALL PDF_ANALIZE(nbins, ibc_loc, pdf(1,j,iv), plim, amin(iv), amax(iv), nplim)
         IF ( igate .EQ. 0 ) THEN
-           CALL PDF1V3D(i1, i0, imax, jmax, kmax, amin(iv), amax(iv), &
+           CALL PDF1V3D(i0, imax, jmax, kmax, amin(iv), amax(iv), &
                 data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
         ELSE
-           CALL PDF1V3D1G(i1, i0, imax, jmax, kmax, igate, amin(iv), amax(iv), &
+           CALL PDF1V3D1G(i0, imax, jmax, kmax, igate, amin(iv), amax(iv), &
                 gate, data(iv)%field, nbins, pdf(1,j,iv), wrk1d)
         ENDIF
      ENDIF
@@ -187,7 +187,6 @@ SUBROUTINE PDF2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
      OPEN(unit=21,file=fname)
 
 ! comment section
-     WRITE(21,'(A)') '# PDF (normalization s.t. integral is 1)'
      IF ( igate .EQ. 0 ) THEN
         WRITE(21,'(A)') &
              '# No intermittency conditioning on 3rd variable'
