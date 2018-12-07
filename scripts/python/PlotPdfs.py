@@ -53,7 +53,8 @@ a = a /len(setoffiles)
 for j in range(ny+1):
     samplesize = np.sum(a[j,:nb])
     samplestep = (a[j,nb+1]-a[j,nb]) /( nb -1 )
-    a[j,:nb] = a[j,:nb] /( samplesize *samplestep )
+    if samplestep > 0: # otherwise the pdf is zero, by construction in Tlab
+        a[j,:nb] = a[j,:nb] /( samplesize *samplestep )
     
 # axis information
 #
