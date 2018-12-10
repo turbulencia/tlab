@@ -236,7 +236,7 @@ PROGRAM AVERAGES
      iread_flow = 1
      iread_scal = 1
   CASE ( 6 )
-     nfield = 4
+     nfield = 5
      inb_txc = MAX(inb_txc,8)
      iread_flow = 1
      iread_scal = 1
@@ -745,45 +745,42 @@ PROGRAM AVERAGES
 ! Strain equation
 ! ###################################################################
      CASE ( 6 )
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
-
         CALL IO_WRITE_ASCII(lfile,'Computing strain pressure...')
-        CALL THERMO_CALORIC_TEMPERATURE&
-             (imax, jmax, kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE&
-             (imax, jmax, kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+           CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
+
+        ELSE
+           WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
+           CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, q(1,4), wrk3d)! energy
+           CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, q(1,5), wrk3d)! density
+           CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), q(1,7), wrk3d)
+           CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), q(1,7), txc(1,1))         ! pressure in txc1
+
+        ENDIF
         CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, u,v,w, txc(1,1), &
              txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
-        DO ij = 1,isize_field
-           txc(ij,1)=C_2_R*txc(ij,2)
-        ENDDO
+        txc(1:isize_field,1) = C_2_R *txc(1:isize_field,2)
         
         CALL IO_WRITE_ASCII(lfile,'Computing strain production...')
         CALL FI_STRAIN_PRODUCTION(imax,jmax,kmax, u,v,w, &
              txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
-        DO ij = 1,isize_field
-           txc(ij,2)=C_2_R*txc(ij,2)
-        ENDDO
+        txc(1:isize_field,2) = C_2_R *txc(1:isize_field,2)
 
         CALL IO_WRITE_ASCII(lfile,'Computing strain diffusion...')
         CALL FI_STRAIN_DIFFUSION(imax,jmax,kmax, u,v,w, &
              txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), wrk2d,wrk3d)
-        DO ij = 1,isize_field
-           txc(ij,3)=C_2_R*visc*txc(ij,3)
-        ENDDO
+        txc(1:isize_field,3) = C_2_R *visc *txc(1:isize_field,3)
 
         CALL IO_WRITE_ASCII(lfile,'Computing strain...')
         CALL FI_STRAIN(imax,jmax,kmax, u,v,w, txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
-        DO ij = 1,isize_field
-           txc(ij,4)=C_2_R*txc(ij,4)
-        ENDDO
+        txc(1:isize_field,4) = C_2_R *txc(1:isize_field,4)
+        txc(1:isize_field,5) = log( txc(1:isize_field,4) )
               
         data(1)%field => txc(:,4); varname(1) = 'Strain2S_ijS_i'
-        data(2)%field => txc(:,2); varname(2) = 'ProductionMs2S_ijS_jkS_ki'
-        data(3)%field => txc(:,3); varname(3) = 'DiffusionNuS_ijLapS_ij'
-        data(4)%field => txc(:,1); varname(4) = 'Pressure2S_ijP_ij'
+        data(2)%field => txc(:,5); varname(2) = 'LnStrain2S_ijS_i'
+        data(3)%field => txc(:,2); varname(3) = 'ProductionMs2S_ijS_jkS_ki'
+        data(4)%field => txc(:,3); varname(4) = 'DiffusionNuS_ijLapS_ij'
+        data(5)%field => txc(:,1); varname(5) = 'Pressure2S_ijP_ij'
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
