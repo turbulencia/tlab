@@ -131,6 +131,7 @@ PROGRAM PDFS
      WRITE(*,*) '14. Eigenvalues of rate-of-strain tensor'
      WRITE(*,*) '15. Eigenframe of rate-of-strain tensor'
      WRITE(*,*) '16. Longitudinal velocity derivatives'
+     WRITE(*,*) '17. Potential vorticity'
      READ(*,*) opt_main
 
      WRITE(*,*) 'Planes block size ?'
@@ -249,6 +250,11 @@ PROGRAM PDFS
      iread_scal = 0
      inb_txc = MAX(inb_txc,3)
      nfield = 3
+  CASE (17 ) ! potential vorticity
+     nfield = 1
+     inb_txc = MAX(inb_txc,4)
+     iread_flow = 1
+     iread_scal = 1
   END SELECT
 
 ! -------------------------------------------------------------------
@@ -864,6 +870,34 @@ PROGRAM PDFS
         data(3)%field => txc(:,3); varname(3) = 'dwdz'
 
         ibc(1:nfield) = 2
+
+        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
+           DO is = 1,nfield
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+           ENDDO
+        ENDIF
+
+        WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
+        CALL PDF2D_N(fname, varname, opt_gate, rtime, &
+             imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
+             data, opt_bins, npdf_size, pdf, wrk1d)
+
+! ###################################################################
+! Potential vorticity
+! ###################################################################
+     CASE ( 17 )
+        CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
+        txc(1:isize_field,1) =                       txc(1:isize_field,1)*txc(1:isize_field,4) 
+        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
+        txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,2)*txc(1:isize_field,4) 
+        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
+        txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,3)*txc(1:isize_field,4)
+
+        txc(1:isize_field,1) = txc(1:isize_field,1)*txc(1:isize_field,1)
+        txc(1:isize_field,1) = LOG(txc(1:isize_field,1)+C_SMALL_R)
+
+        data(1)%field => txc(:,1); varname(1) = 'LnPotentialEnstrophy'; ibc(1) = 2
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
