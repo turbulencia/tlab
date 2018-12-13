@@ -42,7 +42,8 @@ endif()
 
 
 
-set(USER_Fortran_FLAGS          " -fpp ${USER_profile_FLAGS} -nbs -save-temps -xHost -simd -vec-threshold50 -unroll-aggressive ${USER_omp_FLAGS} " ) 
+#set(USER_Fortran_FLAGS          " -fpp ${USER_profile_FLAGS} -nbs -save-temps -xHost -simd -vec-threshold50 -unroll-aggressive ${USER_omp_FLAGS} " ) 
+set(USER_Fortran_FLAGS          " -fpp ${USER_profile_FLAGS} -nbs -save-temps -heap-arrays -xHost -simd -vec-threshold50 -unroll-aggressive ${USER_omp_FLAGS} " ) 
 set(USER_Fortran_FLAGS_RELEASE  " -axcommon-avx512,SSE4.2 -qopt-prefetch -O3 -ipo" ) 
 #set(USER_Fortran_FLAGS_RELEASE  " -axCORE-AVX2 -qopt-prefetch -O3 -ipo" ) 
 set(USER_Fortran_FLAGS_DEBUG    " -g -traceback -debug all ") 
@@ -53,7 +54,7 @@ endif()
 
 add_definitions(-DUSE_FFTW -DUSE_BLAS) 
 
-set(FFTW_INCLUDE_DIR "/gpfs/software/juwels/stages/2018a/software/FFTW/3.3.7-ipsmpi-2018a/include/")
+#set(FFTW_INCLUDE_DIR "/gpfs/software/juwels/stages/2018a/software/FFTW/3.3.7-ipsmpi-2018a/include/")
 #set(FFTW_LIB         "/gpfs/software/juwels/stages/2018a/software/FFTW/3.3.7-ipsmpi-2018a/lib/libfftw3.a")
 set(FFTW_LIB         "-lfftw3")
 #set(BLAS_LIB         "/gpfs/software/juwels/stages/2018a/software/imkl/2018.2.199-iimpi-2018a/mkl/lib/intel64/libmkl_blas95_ilp64.a")
