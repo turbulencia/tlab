@@ -30,8 +30,8 @@ PROGRAM PDFS
 ! Arrays declarations
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE   :: x,y,z
   TREAL,      DIMENSION(:,:), ALLOCATABLE, TARGET :: s, q, txc
-  TREAL,      DIMENSION(:,:), ALLOCATABLE         :: wrk1d, wrk2d
-  TREAL,      DIMENSION(:),   ALLOCATABLE         :: pdf, y_aux, wrk3d
+  TREAL,      DIMENSION(:,:), ALLOCATABLE         :: wrk2d
+  TREAL,      DIMENSION(:),   ALLOCATABLE         :: pdf, y_aux, wrk1d, wrk3d
   INTEGER(1), DIMENSION(:),   ALLOCATABLE         :: gate
 
   TYPE(pointers_dt), DIMENSION(16) :: data
@@ -88,7 +88,7 @@ PROGRAM PDFS
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
+  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
   ALLOCATE(gate(isize_field))
 
@@ -195,17 +195,17 @@ PROGRAM PDFS
      iread_scal = 1
      iread_flow = 1
      inb_txc = MAX(inb_txc,6)
-     nfield = 4
+     nfield = 5
   CASE( 4 ) ! Enstrophy equation
      iread_flow = 1
      iread_scal = 1
      inb_txc = MAX(inb_txc,8)
-     nfield = 6
+     nfield = 7
   CASE( 5 ) ! Strain equation
      iread_scal = 1
      iread_flow = 1
      inb_txc = MAX(inb_txc,8)
-     nfield = 4
+     nfield = 5
   CASE( 6 ) ! Invariants
      iread_flow = 1
      inb_txc = MAX(inb_txc,6)
@@ -445,13 +445,14 @@ PROGRAM PDFS
 
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
         CALL FI_GRADIENT(imax,jmax,kmax, s,txc(1,3), txc(1,4), wrk2d,wrk3d)
-        txc(1:isize_field,4) = txc(1:isize_field,1) /txc(1:isize_field,3)
-        txc(1:isize_field,3) = log(txc(1:isize_field,3))
+        txc(1:isize_field,5) = txc(1:isize_field,1) /txc(1:isize_field,3)
+        txc(1:isize_field,4) = log(txc(1:isize_field,3))
 
-        data(1)%field => txc(:,3); varname(1) = 'LnGradientG_iG_i'      ; ibc(1) = 2
-        data(2)%field => txc(:,1); varname(2) = 'ProductionMsG_iG_jS_ij'; ibc(2) = 2
-        data(3)%field => txc(:,2); varname(3) = 'DiffusionNuG_iLapG_i'  ; ibc(3) = 2
-        data(4)%field => txc(:,4); varname(4) = 'StrainAMsN_iN_jS_ij'   ; ibc(4) = 2
+        data(1)%field => txc(:,3); varname(1) = 'GradientG_iG_i'        ; ibc(1) = 2
+        data(2)%field => txc(:,4); varname(2) = 'LnGradientG_iG_i'      ; ibc(2) = 2
+        data(3)%field => txc(:,1); varname(3) = 'ProductionMsG_iG_jS_ij'; ibc(3) = 2
+        data(4)%field => txc(:,2); varname(4) = 'DiffusionNuG_iLapG_i'  ; ibc(4) = 2
+        data(5)%field => txc(:,5); varname(5) = 'StrainAMsN_iN_jS_ij'   ; ibc(5) = 2
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
@@ -459,7 +460,7 @@ PROGRAM PDFS
            ENDDO
         ENDIF
 
-        WRITE(fname,*) itime; fname='pdfG2'//TRIM(ADJUSTL(fname))
+        WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
              imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
@@ -468,21 +469,44 @@ PROGRAM PDFS
 ! Enstrophy equation
 ! ###################################################################
      CASE ( 4 )
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
- 
         CALL IO_WRITE_ASCII(lfile,'Computing baroclinic term...')
-        CALL THERMO_CALORIC_TEMPERATURE&
-             (imax, jmax, kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE&
-             (imax, jmax, kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+           IF ( buoyancy%type .EQ. EQNS_NONE ) THEN
+              txc(:,4) = C_0_R; txc(:,5) = C_0_R; txc(:,6) = C_0_R
+           ELSE
+! calculate buoyancy vector along Oy
+              IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+                 CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d)
+              ELSE
+                 wrk1d(1:jmax) = C_0_R 
+                 CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+              ENDIF
+              DO ij = 1,isize_field
+                 s(ij,1) = wrk3d(ij)*buoyancy%vector(2)
+              ENDDO
+              
+              CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s, txc(1,4), wrk3d, wrk2d,wrk3d)
+              txc(:,4) =-txc(:,4)
+              txc(:,5) = C_0_R
+              CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s, txc(1,6), wrk3d, wrk2d,wrk3d)
+           ENDIF
+
+        ELSE
+           WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
+           CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
+           CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
+           
+           CALL THERMO_CALORIC_TEMPERATURE&
+                (imax,jmax,kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
+           CALL THERMO_THERMAL_PRESSURE&
+                (imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
 ! result vector in txc4, txc5, txc6
-        CALL FI_VORTICITY_BAROCLINIC(imax,jmax,kmax, txc(1,2),txc(1,1), txc(1,4), txc(1,3),txc(1,7), wrk2d,wrk3d)
+           CALL FI_VORTICITY_BAROCLINIC(imax,jmax,kmax, txc(1,2),txc(1,1), txc(1,4), txc(1,3),txc(1,7), wrk2d,wrk3d)
+        ENDIF
 ! result vector in txc1, txc2, txc3
         CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3), txc(1,7), wrk2d,wrk3d)
 ! scalar product, store in txc8
-        DO ij = 1,imax*jmax*kmax
+        DO ij = 1,isize_field
            txc(ij,8) = txc(ij,1)*txc(ij,4) + txc(ij,2)*txc(ij,5) + txc(ij,3)*txc(ij,6)
         ENDDO
         
@@ -503,14 +527,15 @@ PROGRAM PDFS
 
         txc(1:isize_field,5) = txc(1:isize_field,4) *txc(1:isize_field,3) ! -w^2 div(u)
         txc(1:isize_field,4) = txc(1:isize_field,1) /txc(1:isize_field,3) ! production rate 
-        txc(1:isize_field,3) = log(txc(1:isize_field,3))                  ! ln(w^2)
+        txc(1:isize_field,6) = log(txc(1:isize_field,3))                  ! ln(w^2)
 
-        data(1)%field => txc(:,3); varname(1) = 'LnEnstrophyW_iW_i'   ;   ibc(1) = 2
-        data(2)%field => txc(:,1); varname(2) = 'ProductionW_iW_jS_ij';   ibc(2) = 2
-        data(3)%field => txc(:,2); varname(3) = 'DiffusionNuW_iLapW_i';   ibc(3) = 2
-        data(4)%field => txc(:,5); varname(4) = 'DilatationMsW_iW_iDivU'; ibc(4) = 2
-        data(5)%field => txc(:,8); varname(5) = 'Baroclinic';             ibc(5) = 2
-        data(6)%field => txc(:,4); varname(6) = 'RateAN_iN_jS_ij'     ;   ibc(6) = 2
+        data(1)%field => txc(:,3); varname(1) = 'EnstrophyW_iW_i'     ;   ibc(1) = 2
+        data(2)%field => txc(:,6); varname(2) = 'LnEnstrophyW_iW_i'   ;   ibc(2) = 2
+        data(3)%field => txc(:,1); varname(3) = 'ProductionW_iW_jS_ij';   ibc(3) = 2
+        data(4)%field => txc(:,2); varname(4) = 'DiffusionNuW_iLapW_i';   ibc(4) = 2
+        data(5)%field => txc(:,5); varname(5) = 'DilatationMsW_iW_iDivU'; ibc(5) = 2
+        data(6)%field => txc(:,8); varname(6) = 'Baroclinic';             ibc(6) = 2
+        data(7)%field => txc(:,4); varname(7) = 'RateAN_iN_jS_ij'     ;   ibc(7) = 2
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
@@ -518,7 +543,7 @@ PROGRAM PDFS
            ENDDO
         ENDIF
 
-        WRITE(fname,*) itime; fname='pdfW2'//TRIM(ADJUSTL(fname))
+        WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
              imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
@@ -527,15 +552,18 @@ PROGRAM PDFS
 ! Strain equation
 ! ###################################################################
      CASE ( 5 )
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
-
         CALL IO_WRITE_ASCII(lfile,'Computing strain pressure...')
-        CALL THERMO_CALORIC_TEMPERATURE&
-             (imax, jmax, kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE&
-             (imax, jmax, kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+           CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
+
+        ELSE
+           WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
+           CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, q(1,4), wrk3d)! energy
+           CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, q(1,5), wrk3d)! density
+           CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), q(1,7), wrk3d)
+           CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), q(1,7), txc(1,1))         ! pressure in txc1
+
+        ENDIF
         CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), &
              txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         txc(1:isize_field,1) = C_2_R *txc(1:isize_field,2)
@@ -552,12 +580,14 @@ PROGRAM PDFS
 
         CALL IO_WRITE_ASCII(lfile,'Computing strain...')
         CALL FI_STRAIN(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
-        txc(1:isize_field,4) = log( C_2_R *txc(1:isize_field,4) )
+        txc(1:isize_field,4) = C_2_R *txc(1:isize_field,4) 
+        txc(1:isize_field,5) = log( txc(1:isize_field,4) )
               
-        data(1)%field => txc(:,4); varname(1) = 'LnStrain2S_ijS_i'         ; ibc(1) = 2
-        data(2)%field => txc(:,2); varname(2) = 'ProductionMs2S_ijS_jkS_ki'; ibc(2) = 2
-        data(3)%field => txc(:,3); varname(3) = 'DiffusionNuS_ijLapS_ij'   ; ibc(3) = 2
-        data(4)%field => txc(:,1); varname(4) = 'Pressure2S_ijP_ij'        ; ibc(4) = 2
+        data(1)%field => txc(:,4); varname(1) = 'Strain2S_ijS_i'           ; ibc(1) = 2
+        data(2)%field => txc(:,5); varname(2) = 'LnStrain2S_ijS_i'         ; ibc(2) = 2
+        data(3)%field => txc(:,2); varname(3) = 'ProductionMs2S_ijS_jkS_ki'; ibc(3) = 2
+        data(4)%field => txc(:,3); varname(4) = 'DiffusionNuS_ijLapS_ij'   ; ibc(4) = 2
+        data(5)%field => txc(:,1); varname(5) = 'Pressure2S_ijP_ij'        ; ibc(5) = 2
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
@@ -565,7 +595,7 @@ PROGRAM PDFS
            ENDDO
         ENDIF
 
-        WRITE(fname,*) itime; fname='pdfS2'//TRIM(ADJUSTL(fname))
+        WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
              imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
@@ -597,7 +627,7 @@ PROGRAM PDFS
            ENDDO
         ENDIF
 
-        WRITE(fname,*) itime; fname='pdfInv'//TRIM(ADJUSTL(fname))
+        WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
              imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
@@ -617,7 +647,7 @@ PROGRAM PDFS
            ENDDO
         ENDIF
 
-        WRITE(fname,*) itime; fname='pdfXi'//TRIM(ADJUSTL(fname))
+        WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
              imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
@@ -695,7 +725,7 @@ PROGRAM PDFS
            ENDDO
         ENDIF
 
-        WRITE(fname,*) itime; fname='pdfGi'//TRIM(ADJUSTL(fname))
+        WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
              imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
@@ -753,7 +783,7 @@ PROGRAM PDFS
            ENDDO
         ENDIF
 
-        WRITE(fname,*) itime; fname='pdfEig'//TRIM(ADJUSTL(fname))
+        WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
              imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
@@ -816,7 +846,7 @@ PROGRAM PDFS
            ENDDO
         ENDIF
 
-        WRITE(fname,*) itime; fname='pdfCos'//TRIM(ADJUSTL(fname))
+        WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
              imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
@@ -841,7 +871,7 @@ PROGRAM PDFS
            ENDDO
         ENDIF
 
-        WRITE(fname,*) itime; fname='pdfDer'//TRIM(ADJUSTL(fname))
+        WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
         CALL PDF2D_N(fname, varname, opt_gate, rtime, &
              imax*opt_block, jmax_aux, kmax, nfield, ibc, amin, amax, gate, &
              data, opt_bins, npdf_size, pdf, wrk1d)
