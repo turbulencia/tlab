@@ -29,7 +29,7 @@ for file in setoffiles:
     raw = struct.pack('<{}i'.format(entries),*a)
     fout.write(raw)
 
-    entries = (a[0]-entries*4) /sizeofdata  # reading parameters
+    entries = (a[0]-entries*4) //sizeofdata  # reading parameters
     print("Converting %i parameters..." % entries)
     raw = fin.read(entries*sizeofdata)
     a = struct.unpack('>{}d'.format(entries), raw)
