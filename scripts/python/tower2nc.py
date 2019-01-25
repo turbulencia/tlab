@@ -14,7 +14,7 @@ import os
 user = os.environ['USER'] 
 lock_fname = 'lock_tower_merge_for_{}'.format(user) 
 if os.path.isfile(lock_fname):  
-    print 'ERROR: cannot run tower_merge.py, locked by {}'.format(lock_fname)  
+    print('ERROR: cannot run tower_merge.py, locked by {}'.format(lock_fname))
 else :
     command = 'touch {}'.format(lock_fname) 
     system('touch {}'.format(lock_fname) )
@@ -24,17 +24,18 @@ else :
 def read_record(file, mode):
     reclen,=struct.unpack(mode[0]+'i',f.read(4))
     if ( mode[1] == 'i' or mode[1] == 'f'):
-        size = reclen/4
+        size = int(reclen/4)
     elif ( mode[1] == 'd' ):
-        size = reclen/8
+        size = int(reclen/8)
     else:
-        print 'ERROR: unsupported data type for FORTRAN RECORD READ'
-        exit
+        print('ERROR: unsupported data type for FORTRAN RECORD READ')
+        exit 
+    print(mode,size)
     read_string = mode[0]+mode[1]*size
     data=struct.unpack(read_string,f.read(reclen))
     recend,=struct.unpack(mode[0]+'i',f.read(4))
     if ( reclen != recend ) :
-        print 'ERROR: FORTRAN RECORD READ - end tag does not match record size'
+        print('ERROR: FORTRAN RECORD READ - end tag does not match record size')
     return data
 
 # SETUP DIRECTORY WHERE TO PUT PROCESSED DATA
@@ -55,27 +56,27 @@ for line in f:
         stride = [int(i) for i in (line.split('=', 2)[1].split(','))]
 
 if ( stride==-1) :
-    print 'ERROR: Keyword stride not found in dns.ini'
+    print('ERROR: Keyword stride not found in dns.ini')
     exit(1)
 f.close()
 
-f = open('grid','r') 
-str=f.read(4)
-i1,= struct.unpack('>i',str) # READ AS BIG ENDIAN
-i2,= struct.unpack('<i',str) # READ AS LITTLE ENDIAN
+f = open('grid','rb') 
+stg=f.read(4)
+i1,= struct.unpack('>i',stg) # READ AS BIG ENDIAN
+i2,= struct.unpack('<i',stg) # READ AS LITTLE ENDIAN
 
 if ( i1 == 12 ):
     endian='>'
-    print 'BIG ENDIAN DATA'
+    print('BIG ENDIAN DATA')
     reclen = i1
 elif ( i2 == 12):
     endian='<'
-    print 'LITTLE ENDIAN DATA'
+    print('LITTLE ENDIAN DATA')
     reclen = i2
 else:
-    print 'ERROR: Cannot determine Endianness from first Integer in grid file'
-    print '       Assuming BIG     gives:', i1
-    print '       Assuming LITTLE  gives:', i2
+    print('ERROR: Cannot determine Endianness from first Integer in grid file')
+    print('       Assuming BIG     gives:', i1)
+    print('       Assuming LITTLE  gives:', i2)
     quit 
 
 iread=endian+'i'
@@ -89,9 +90,9 @@ xgrid    = [x for x in read_record(f,dread)]
 ygrid    = [y for y in read_record(f,dread)]
 zgrid    = [z for z in read_record(f,dread)]
 
-print 'GRID:  ', griddims
-print '       ', gridsize
-print 'STRIDE:', stride
+print('GRID:  ', griddims)
+print('       ', gridsize)
+print('STRIDE:', stride)
 
 # ##########################################################################################
 # CONSTRUCT TOWER INFORMATION
@@ -118,7 +119,7 @@ varcount = -1
 from glob import glob
 for f in glob('tower.mean.*.?'): 
     dummy = f.split('.',4)   
-    print dummy 
+    print(dummy)
     [start,end] =  dummy[2].split('-')   
     ivar = int(dummy[3])
     if ( ivar > varcount ): 
@@ -134,7 +135,7 @@ end_iteration   = max(end)
 ntimes = max(end) - min(start) + 1
 
 
-print 'NTIMES:', ntimes, 'TOWER SIZE:', ntowery, 'SLICES:', len(end)
+print('NTIMES:', ntimes, 'TOWER SIZE:', ntowery, 'SLICES:', len(end))
 
 # ##########################################################################################
 # BUILD NETCDF FILE 
@@ -216,27 +217,27 @@ for slc in slices:
     # PROCESS TOWERS 
     # ##########################################################################################
 
-    slc_string = '.'+string.zfill(slc[0],6) + '-' + string.zfill(slc[1],6)
+    slc_string = '.'+str(slc[0]).zfill(6) + '-' + str(slc[1]).zfill(6)
     files = []
     vname = ['','u','v','w','p','s']
-    print datetime.datetime.now().strftime("%Y%m%d %I:%M:%S%p") ,\
-        ': processing time slice', slc[0],'-',slc[1],'/',end_iteration
+    print(datetime.datetime.now().strftime("%Y%m%d %I:%M:%S%p") ,\
+          ': processing time slice', slc[0],'-',slc[1],'/',end_iteration)
     for ivar in range(1,int(varcount)+1):
-        name = 'tower.mean' + slc_string + '.' + string.zfill(ivar,1)
+        name = 'tower.mean' + slc_string + '.' + str(ivar)
         try:
             with open(name):
                 files.append(name)
         except IOError:
-            print 'ERROR problem opening file ', name
+            print('ERROR problem opening file ', name)
         for i in itowerx:
             for k in itowerz:
-                name = 'tower.'+string.zfill(i,6)+'x'+string.zfill(k,6) \
-                       + slc_string + '.' + string.zfill(ivar,1)
+                name = 'tower.'+str(i).zfill(6)+'x'+str(k).zfill(6) \
+                       + slc_string + '.' + str(ivar).zfill(1)
                 try:
                     with open(name):
                         files.append(name)
                 except IOError:
-                    print 'ERROR problem opening file ', name
+                    print('ERROR problem opening file ', name)
 
     tower_jmax = len(itowery) 
     ntimes_loc = slc[1] - slc[0] + 1
@@ -244,7 +245,7 @@ for slc in slices:
     iteration_it=array.array('i',(-1  for i in range(0,ntimes_loc)))
 
     for f in files:
-        datf = open(f,'r')
+        datf = open(f,'rb')
         ivar = int(f.split('.',4)[3])
         position = f.split('.',2)[1]
         if ( position == 'mean'):
@@ -275,8 +276,8 @@ for slc in slices:
 
         for i in range(its,ite):
             if ( iteration_it[i] > 0 and int(time_it[i-its]) != iteration_it[i] ):
-                print 'ERROR: Timestamp in file', f, '(', int(time_it[i-its]),')'
-                print '       Does not agree with expected time:', iteration_it[i]
+                print('ERROR: Timestamp in file', f, '(', int(time_it[i-its]),')')
+                print('       Does not agree with expected time:', iteration_it[i])
                 exit(1)
             iteration_rt[i] = time_rt[i-its]
             iteration_it[i] = int(time_it[i-its])
@@ -310,7 +311,7 @@ for slc in slices:
     nc_itvar[:]= iteration_it
                 
     ncfile.close()
-    sys_command='mv tower_new.nc tower'+string.zfill(slc[0],6)+'-'+string.zfill(slc[1],6)+'.nc' 
+    sys_command='mv tower_new.nc tower'+str(slc[0]).zfill(6)+'-'+str(slc[1]).zfill(6)+'.nc' 
     system(sys_command) 
 
 

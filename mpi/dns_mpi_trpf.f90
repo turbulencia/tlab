@@ -70,7 +70,7 @@ SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
      ENDIF
   ENDDO
 
-  CALL MPI_WAITALL(ims_npro_k*2-2, mpireq(3:), status(1,3), ims_err)
+  CALL MPI_WAITALL(ims_npro_k*2-2, mpireq(3:), status(:,3:), ims_err)
 
   CALL DNS_MPI_TAGUPDT
 
@@ -128,7 +128,7 @@ SUBROUTINE DNS_MPI_TRPF_I(a, b, dsend, drecv, tsend, trecv)
      ENDIF
   ENDDO
 
-  CALL MPI_WAITALL(ims_npro_i*2-2, mpireq(3:), status(1,3), ims_err)
+  CALL MPI_WAITALL(ims_npro_i*2-2, mpireq(3:), status(:,3:), ims_err)
 
   CALL DNS_MPI_TAGUPDT
 

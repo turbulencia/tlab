@@ -9,7 +9,7 @@
 
 PROGRAM TRANSFIELDS
 
-  USE DNS_TYPES,  ONLY : filter_dt
+  USE DNS_TYPES,  ONLY : filter_dt, grid_dt
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
 #ifdef USE_MPI
@@ -37,22 +37,27 @@ PROGRAM TRANSFIELDS
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q_dst, s_dst
 
 ! Work arrays
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: wrk1d, wrk2d
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk3d
+  TREAL, DIMENSION(:,:),   ALLOCATABLE, SAVE :: wrk1d, wrk2d
+  TREAL, DIMENSION(:),     ALLOCATABLE, SAVE :: wrk3d
+  TREAL, DIMENSION(:),     ALLOCATABLE, SAVE :: y_aux
+  TREAL, DIMENSION(:,:,:), ALLOCATABLE, SAVE :: txc_aux
 
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
   TINTEGER opt_main, opt_function
-  TINTEGER iq, is, ig, ip !k, ip, ip_b, ip_t
+  TINTEGER iq, is, ig, ip, j,k
   TINTEGER isize_wrk3d, idummy, iread_flow, iread_scal, ierr
   CHARACTER*32 inifile, bakfile, flow_file, scal_file
   CHARACTER*64 str, line
   CHARACTER*512 sRes
   TINTEGER subdomain(6)
 
-  TINTEGER imax_dst,jmax_dst,kmax_dst, imax_total_dst,jmax_total_dst,kmax_total_dst, jmax_aux, inb_scal_dst
-  TREAL scalex_dst, scaley_dst, scalez_dst
+  TYPE(grid_dt), DIMENSION(3) :: g_dst
+  TINTEGER imax_dst,jmax_dst,kmax_dst
+  
+  LOGICAL flag_crop, flag_extend
+  TINTEGER jmax_aux, inb_scal_dst
   TREAL dummy
 
   TINTEGER itime_size, it
@@ -216,29 +221,29 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
   IF      ( opt_main .EQ. 1 .OR. &      ! Crop
             opt_main .EQ. 3      ) THEN ! Remesh
-     imax_total_dst = subdomain(2)-subdomain(1)+1
-     jmax_total_dst = subdomain(4)-subdomain(3)+1
-     kmax_total_dst = subdomain(6)-subdomain(5)+1
+     g_dst(1)%size = subdomain(2)-subdomain(1)+1
+     g_dst(2)%size = subdomain(4)-subdomain(3)+1
+     g_dst(3)%size = subdomain(6)-subdomain(5)+1
 
   ELSE IF ( opt_main .EQ. 2      ) THEN ! Extend 
-     imax_total_dst = g(1)%size + subdomain(2) + subdomain(1)
-     jmax_total_dst = g(2)%size + subdomain(4) + subdomain(3)
-     kmax_total_dst = g(3)%size
+     g_dst(1)%size = g(1)%size + subdomain(2) + subdomain(1)
+     g_dst(2)%size = g(2)%size + subdomain(4) + subdomain(3)
+     g_dst(3)%size = g(3)%size
 
   ELSE
-     imax_total_dst = g(1)%size
-     jmax_total_dst = g(2)%size
-     kmax_total_dst = g(3)%size
+     g_dst(1)%size = g(1)%size
+     g_dst(2)%size = g(2)%size
+     g_dst(3)%size = g(3)%size
   ENDIF
 
 #ifdef USE_MPI
-  imax_dst = imax_total_dst/ims_npro_i
-  jmax_dst = jmax_total_dst
-  kmax_dst = kmax_total_dst/ims_npro_k
+  imax_dst = g_dst(1)%size/ims_npro_i
+  jmax_dst = g_dst(2)%size
+  kmax_dst = g_dst(3)%size/ims_npro_k
 #else
-  imax_dst = imax_total_dst
-  jmax_dst = jmax_total_dst
-  kmax_dst = kmax_total_dst
+  imax_dst = g_dst(1)%size
+  jmax_dst = g_dst(2)%size
+  kmax_dst = g_dst(3)%size
 #endif
 
 ! -------------------------------------------------------------------
@@ -266,15 +271,6 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
   isize_wrk3d = MAX(isize_txc_field,imax_dst*jmax_dst*kmax_dst)
 
-  IF ( opt_main .EQ. 3 ) THEN ! space for splines interpolation
-     idummy      = MAX(imax_total_dst,MAX(jmax_total_dst,kmax_total_dst))
-     isize_wrk1d = MAX(isize_wrk1d,idummy)
-     isize_wrk1d = isize_wrk1d + 1
-
-     idummy = isize_wrk1d*7 + (isize_wrk1d+10)*36
-     isize_wrk3d = MAX(isize_wrk3d,idummy)
-  ENDIF
-
 ! -------------------------------------------------------------------
   IF ( icalc_flow .EQ. 1 ) ALLOCATE(q_dst(imax_dst*jmax_dst*kmax_dst,inb_flow))
   IF ( icalc_scal .EQ. 1 ) ALLOCATE(s_dst(imax_dst*jmax_dst*kmax_dst,inb_scal_dst))
@@ -283,9 +279,9 @@ PROGRAM TRANSFIELDS
   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
 
   IF ( opt_main .EQ. 3 ) THEN
-     ALLOCATE(x_dst(imax_total_dst))
-     ALLOCATE(y_dst(jmax_total_dst))
-     ALLOCATE(z_dst(kmax_total_dst))
+     ALLOCATE(x_dst(g_dst(1)%size))
+     ALLOCATE(y_dst(g_dst(2)%size))
+     ALLOCATE(z_dst(g_dst(3)%size))
   ENDIF
 
 #include "dns_alloc_arrays.h"
@@ -324,6 +320,124 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
   CALL FI_PROFILES_INITIALIZE(wrk1d)
 
+! -------------------------------------------------------------------
+! Initialize remeshing
+! -------------------------------------------------------------------
+  IF ( opt_main .EQ. 3 ) THEN
+     CALL IO_READ_GRID('grid.trn', g_dst(1)%size,g_dst(2)%size,g_dst(3)%size, &
+          g_dst(1)%scale,g_dst(2)%scale,g_dst(3)%scale, x_dst,y_dst,z_dst)
+
+! Check grids; Ox and Oz directions are assumed to be periodic
+     dummy = (g_dst(1)%scale-g(1)%scale) / (x(g(1)%size,1)-x(g(1)%size-1,1))
+     IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
+        CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Ox scales are not equal at the end.')
+        CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
+     ENDIF
+     wrk1d(1:g(1)%size,1) = x(1:g(1)%size,1) ! we need extra space
+     
+     dummy = (g_dst(3)%scale-g(3)%scale) / (z(g(3)%size,1)-z(g(3)%size-1,1))
+     IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
+        CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oz scales are not equal')
+        CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
+     ENDIF
+     wrk1d(1:g(3)%size,3) = z(1:g(3)%size,1) ! we need extra space
+     
+! In the Oy direction, we allow to have a different box
+     jmax_aux = g(2)%size; subdomain = 0
+     
+     dummy = (y_dst(g_dst(2)%size)-y(g(2)%size,1)) / (y(g(2)%size,1)-y(g(2)%size-1,1))
+     IF      ( dummy .GT.  C_1EM3_R ) THEN ! Extend
+        flag_extend  = .TRUE.
+        subdomain(4) = INT(dummy) +1       ! # planes to add at the top
+        jmax_aux     = jmax_aux +subdomain(4)
+     ELSE IF ( dummy .LT. -C_1EM3_R ) THEN ! Crop
+        flag_crop = .TRUE.
+        DO j = jmax-1,1,-1
+           IF ( ( g(2)%nodes(j)-y_dst(g_dst(2)%size) )*( g(2)%nodes(j+1)-y_dst(g_dst(2)%size) ) .LT. C_0_R ) EXIT
+        ENDDO
+        subdomain(4) = j +1                ! top plane of cropped region
+        jmax_aux     = subdomain(4)
+        subdomain(3) = 1
+     ENDIF
+
+     dummy = (y_dst(1)-y(1,1)) / (y(2,1)-y(1,1))
+     IF      ( dummy .LT. -C_1EM3_R ) THEN ! Extend
+        flag_extend = .TRUE.
+        subdomain(3) = INT(ABS(dummy)) +1       ! # planes to add at the bottom
+        jmax_aux     = jmax_aux +subdomain(3)
+     ELSE IF ( dummy .GT.  C_1EM3_R ) THEN ! Crop
+        flag_crop = .TRUE.
+        DO j = 1,jmax-1,1
+           IF ( ( g(2)%nodes(j)-y_dst(1) )*( g(2)%nodes(j+1)-y_dst(1) ) .LT. C_0_R ) EXIT
+        ENDDO
+        subdomain(3) = j                   ! bottom plane of cropped region
+        jmax_aux     = jmax_aux -subdomain(3) +1
+     ENDIF
+
+     IF ( flag_extend .AND. flag_crop ) THEN
+        CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Simultaneous extend and crop is undeveloped.')
+        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+     ENDIF
+
+! Reallocating memory space
+     idummy      = MAX(jmax_aux,MAX(g(1)%size,g(3)%size))
+     isize_wrk1d = MAX(isize_wrk1d,idummy)
+     isize_wrk1d = isize_wrk1d + 1
+     
+     inb_txc         = inb_txc -1    ! Creating txc_aux
+     idummy          = MAX(imax,imax_dst) *MAX(jmax_aux,MAX(jmax,jmax_dst)) *MAX(kmax,kmax_dst)
+     isize_txc_field = MAX(isize_txc_field,idummy)
+     isize_wrk3d     = isize_txc_field
+     
+     idummy = isize_wrk1d*7 + (isize_wrk1d+10)*36
+     isize_wrk3d = MAX(isize_wrk3d,idummy)
+        
+     DEALLOCATE(txc,wrk3d)
+
+     ALLOCATE(txc(isize_txc_field,inb_txc))
+     ALLOCATE(wrk3d(isize_wrk3d))
+     ALLOCATE(y_aux(isize_wrk1d))
+     ALLOCATE(txc_aux(imax,jmax_aux,kmax))
+     
+! Creating grid
+     IF ( flag_crop ) THEN
+        WRITE(str,'(i)') subdomain(4)
+        CALL IO_WRITE_ASCII(lfile, 'Croping above '//TRIM(ADJUSTL(str))//' for remeshing...')
+        WRITE(str,'(i)') subdomain(3)
+        CALL IO_WRITE_ASCII(lfile, 'Croping below '//TRIM(ADJUSTL(str))//' for remeshing...')
+        CALL TRANS_CROP(i1,jmax,1, subdomain, g(2)%nodes, y_aux)
+        
+        y_aux(1)        = y_dst(1)             ! Using min and max of new grid
+        y_aux(jmax_aux) = y_dst(g_dst(2)%size)
+        
+     ELSE
+        y_aux(1+subdomain(3):g(2)%size+subdomain(3)) = y(1:g(2)%size,1) ! we need extra space
+
+        IF ( subdomain(4) .GT. 0 ) THEN
+           WRITE(str,'(i)') subdomain(4)
+           CALL IO_WRITE_ASCII(lfile, 'Adding '//TRIM(ADJUSTL(str))//' planes at the top for remeshing...')
+           dummy = (y_dst(g_dst(2)%size)-y(g(2)%size,1)) / REAL(subdomain(4)) ! distributing the points uniformly
+           DO ip = g(2)%size+subdomain(3)+1,g(2)%size+subdomain(3)+subdomain(4)
+              y_aux(ip) = y_aux(ip-1) + dummy
+           ENDDO
+        ENDIF
+        
+        IF ( subdomain(3) .GT. 0 ) THEN
+           WRITE(str,'(i)') subdomain(3)
+           CALL IO_WRITE_ASCII(lfile, 'Adding '//TRIM(ADJUSTL(str))//' planes at the bottom for remeshing...')
+           dummy = (y_dst(1)-y(1,1)) / REAL(subdomain(3))
+           DO ip = subdomain(3),1,-1
+              y_aux(ip) = y_aux(ip+1) + dummy ! dummy is negative
+           ENDDO
+        ENDIF
+        
+     ENDIF
+
+     g(2)%scale = g_dst(2)%scale  ! watch out, overwriting grid information
+     g(2)%size  = jmax_aux
+        
+  ENDIF
+  
 ! ###################################################################
 ! Postprocess given list of files
 ! ###################################################################
@@ -396,83 +510,44 @@ PROGRAM TRANSFIELDS
 ! Change grid
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 3 ) THEN
-        CALL IO_READ_GRID('grid.trn', imax_total_dst,jmax_total_dst,kmax_total_dst, &
-             scalex_dst,scaley_dst,scalez_dst, x_dst,y_dst,z_dst)
 
-! Check grids. In the Oy direction, we allow to have a larger box
-        jmax_aux = g(2)%size; subdomain = 0
-
-! To be updated: we need to distinguish between periodic and nonperiodic cases.
-!        dummy = (x_dst(imax_total_dst)-x(g(1)%size)) / (x(g(1)%size)-x(g(1)%size-1))
-        dummy = (scalex_dst-g(1)%scale) / (x(g(1)%size,1)-x(g(1)%size-1,1))
-        IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
-           CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Ox scales are not equal at the end.')
-           CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
-        ENDIF
-        wrk1d(1:g(1)%size,1) = x(1:g(1)%size,1) ! we need extra space
-        
-        dummy = (y_dst(jmax_total_dst)-y(g(2)%size,1)) / (y(g(2)%size,1)-y(g(2)%size-1,1))
-!        dummy = (scaley_dst-g(2)%scale) / (y(g(2)%size)-y(g(2)%size-1))
-        IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
-           IF ( dummy .GT. C_0_R .AND. jmax_total_dst .GT. g(2)%size ) THEN ! Otherwise I need additional space...
-              subdomain(4) = ABS(jmax_total_dst - g(2)%size) ! additional planes at the top
-              jmax_aux = jmax_aux + subdomain(4)
-              dummy = (y_dst(jmax_total_dst)-y(g(2)%size,1)) / INT(subdomain(4))
-!              dummy = (scaley_dst-g(2)%scale) / INT(subdomain(4))
-           ELSE
-              CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oy scales are not equal at the end.')
-              CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
-           ENDIF
-        ENDIF
-        wrk1d(1+subdomain(3):g(2)%size+subdomain(3),2) = y(1:g(2)%size,1) ! we need extra space
-        DO ip = g(2)%size+1,jmax_aux
-           wrk1d(ip,2) = wrk1d(ip-1,2) + dummy
-        ENDDO
-
-        dummy = (y_dst(1)-y(1,1)) / (y(2,1)-y(1,1))
-        IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
-           IF ( dummy .LT. C_0_R ) THEN
-              subdomain(3) = ABS(jmax_total_dst - g(2)%size) ! additional planes at the beginning
-              jmax_aux = jmax_aux + subdomain(3)
-              dummy = (y_dst(1)-y(1,1)) / INT(subdomain(3))
-           ELSE
-              CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oy scales are not equal at the beginning.')
-              CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
-           ENDIF
-        ENDIF
-        wrk1d(1+subdomain(3):g(2)%size+subdomain(3),2) = y(1:g(2)%size,1) ! we need extra space
-        DO ip = subdomain(3),1,-1
-           wrk1d(ip,2) = wrk1d(ip+1,2) + dummy ! dummy is negative
-        ENDDO
-           
-!        dummy = (z_dst(kmax_total_dst)-z(g(3)%size)) / (z(g(3)%size)-z(g(3)%size-1))
-        dummy = (scalez_dst-g(3)%scale) / (z(g(3)%size,1)-z(g(3)%size-1,1))
-        IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
-           CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oz scales are not equal')
-           CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
-        ENDIF
-        wrk1d(1:g(3)%size,3) = z(1:g(3)%size,1) ! we need extra space
-
-        g(2)%size  = jmax_aux
-        g(2)%scale = scaley_dst
-! Remeshing the fields
         IF ( icalc_flow .GT. 0 ) THEN
            DO iq = 1,inb_flow
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
-              CALL TRANS_EXTEND(imax,jmax,kmax, subdomain, q(:,iq), txc(:,1))
+              IF ( flag_crop ) THEN
+                 CALL TRANS_CROP(imax,jmax,kmax, subdomain, q(:,iq), txc_aux)
+                 DO k = 1,kmax
+                    txc_aux(:,1,       k) = txc_aux(:,1,         k) &
+                         + (y_aux(1)-y(subdomain(3),1)) *(txc_aux(:,2,k)-txc_aux(:,1,k)) /(y(subdomain(3)+1,1)-y(subdomain(3),1))
+                    txc_aux(:,jmax_aux,k) = txc_aux(:,jmax_aux-1,k) &
+                         + (y_aux(jmax_aux)-y(subdomain(4)-1,1)) *(txc_aux(:,jmax_aux,k)-txc_aux(:,jmax_aux-1,k)) /(y(subdomain(4),1)-y(subdomain(4)-1,1))
+                 ENDDO
+              ELSE
+                 CALL TRANS_EXTEND(imax,jmax,kmax, subdomain, q(:,iq), txc_aux)
+              ENDIF
               CALL OPR_INTERPOLATE(imax,jmax_aux,kmax, imax_dst,jmax_dst,kmax_dst, &
-                   g, wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), x_dst,y_dst,z_dst, &
-                   txc(:,1),q_dst(:,iq), txc(:,2), isize_wrk3d, wrk3d)
+                   g, wrk1d(:,1),y_aux,wrk1d(:,3), x_dst,y_dst,z_dst, &
+                   txc_aux,q_dst(:,iq), txc, isize_wrk3d, wrk3d)
            ENDDO
         ENDIF
               
         IF ( icalc_scal .GT. 0 ) THEN
            DO is = 1,inb_scal
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
-              CALL TRANS_EXTEND(imax,jmax,kmax, subdomain, s(:,is), txc(:,1))
+              IF ( flag_crop ) THEN
+                 CALL TRANS_CROP(imax,jmax,kmax, subdomain, s(:,is), txc_aux)
+                 DO k = 1,kmax
+                    txc_aux(:,1,       k) = txc_aux(:,1,         k) &
+                         + (y_aux(1)-y(subdomain(3),1)) *(txc_aux(:,2,k)-txc_aux(:,1,k)) /(y(subdomain(3)+1,1)-y(subdomain(3),1))
+                    txc_aux(:,jmax_aux,k) = txc_aux(:,jmax_aux-1,k) &
+                         + (y_aux(jmax_aux)-y(subdomain(4)-1,1)) *(txc_aux(:,jmax_aux,k)-txc_aux(:,jmax_aux-1,k)) /(y(subdomain(4),1)-y(subdomain(4)-1,1))
+                 ENDDO
+              ELSE
+                 CALL TRANS_EXTEND(imax,jmax,kmax, subdomain, s(:,is), txc_aux)
+              ENDIF
               CALL OPR_INTERPOLATE(imax,jmax_aux,kmax, imax_dst,jmax_dst,kmax_dst, &
-                   g, wrk1d(:,1),wrk1d(:,2),wrk1d(:,3), x_dst,y_dst,z_dst, &
-                   txc(:,1),s_dst(:,is), txc(:,2), isize_wrk3d, wrk3d)
+                   g, wrk1d(:,1),y_aux,wrk1d(:,3), x_dst,y_dst,z_dst, &
+                   txc_aux,s_dst(:,is), txc, isize_wrk3d, wrk3d)
            ENDDO
         ENDIF
 
