@@ -61,9 +61,9 @@ SUBROUTINE OPR_INTERPOLATE_X(nx,ny,nz, nx_dst, periodic, scalex, &
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-!     id = DNS_MPI_I_PARTIAL
      id = DNS_MPI_I_AUX1
-     CALL DNS_MPI_TRPF_I(u_org, u_tmp1, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     u_tmp2(1:nx*ny*nz) = u_org(1:nx*ny*nz) ! Need additional space for transposition
+     CALL DNS_MPI_TRPF_I(u_tmp2, u_tmp1, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
 
      p_a => u_tmp1
      p_b => u_tmp2
@@ -94,7 +94,8 @@ SUBROUTINE OPR_INTERPOLATE_X(nx,ny,nz, nx_dst, periodic, scalex, &
 #ifdef USE_MPI         
   IF ( ims_npro_i .GT. 1 ) THEN
      id = DNS_MPI_I_AUX2
-     CALL DNS_MPI_TRPB_I(u_tmp2, u_dst, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL DNS_MPI_TRPB_I(u_tmp2, u_tmp1, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     u_dst(1:nx_dst*ny*nz) = u_tmp1(1:nx_dst*ny*nz)
   ENDIF
 #endif
   NULLIFY(p_a,p_b)

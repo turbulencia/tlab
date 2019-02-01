@@ -387,6 +387,15 @@ PROGRAM TRANSFIELDS
      inb_txc         = inb_txc -1    ! Creating txc_aux
      idummy          = MAX(imax,imax_dst) *MAX(jmax_aux,MAX(jmax,jmax_dst)) *MAX(kmax,kmax_dst)
      isize_txc_field = MAX(isize_txc_field,idummy)
+#ifdef USE_MPI
+     idummy = kmax *jmax_aux
+     IF ( MOD(idummy,ims_npro_i) .NE. 0 ) THEN ! add space for MPI transposition
+        idummy = idummy      /ims_npro_i
+        idummy =(idummy +1 ) *ims_npro_i
+     ENDIF
+     idummy = idummy *MAX(imax,imax_dst)
+     isize_txc_field = MAX(isize_txc_field,idummy)
+#endif
      isize_wrk3d     = isize_txc_field
      
      idummy = isize_wrk1d*7 + (isize_wrk1d+10)*36
