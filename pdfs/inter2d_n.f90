@@ -21,7 +21,7 @@
 !# npar    In    Number of partitions of the gate field
 !#
 !########################################################################
-SUBROUTINE INTER2D_N(fname, parname, rtime, imax,jmax,kmax, npar, y, gate, gate_levels)
+SUBROUTINE INTER2D_N(fname, parname, rtime, imax,jmax,kmax, npar, y, gate)
 
 #ifdef USE_MPI
   USE DNS_MPI
@@ -43,11 +43,12 @@ SUBROUTINE INTER2D_N(fname, parname, rtime, imax,jmax,kmax, npar, y, gate, gate_
   TREAL y(jmax)
   CHARACTER*32 parname(npar)
 
-  INTEGER(1) gate(*), gate_levels(npar)
+  INTEGER(1) gate(*)
 
 ! -------------------------------------------------------------------
   TINTEGER ip, j
   TREAL inter(NVARS_LOC)
+  INTEGER(1) gate_level
 
   CHARACTER*512 line1
 
@@ -83,7 +84,8 @@ SUBROUTINE INTER2D_N(fname, parname, rtime, imax,jmax,kmax, npar, y, gate, gate_
   DO j = 1,jmax
 
      DO ip = 1,npar
-        CALL INTER1V2D(imax, jmax, kmax, j, gate_levels(ip), gate, inter(ip))
+        gate_level = INT(ip,KIND=1)
+        CALL INTER1V2D(imax, jmax, kmax, j, gate_level, gate, inter(ip))
      ENDDO
 
 ! -------------------------------------------------------------------

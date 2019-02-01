@@ -53,15 +53,14 @@ PROGRAM VISUALS_MAIN
   CHARACTER*64 str, line
 
   TINTEGER opt_format, flag_buoyancy
-  TINTEGER opt_cond, opt_cond_scal, opt_threshold
-  TINTEGER isize_wrk3d, ij, is, n, bcs(2,2)
+  TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
+  TINTEGER isize_wrk3d, ij, is, bcs(2,2)
   TINTEGER iscal_offset, iread_flow, iread_scal, iread_part, idummy, ierr, MaskSize
-  TREAL diff, umin, umax, dummy
+  TREAL diff, dummy
   TINTEGER subdomain(6)
 
 ! Gates for the definition of the intermittency function (partition of the fields)
   TINTEGER igate_size
-  INTEGER(1) opt_gate, igate_vec(igate_size_max)
   TREAL gate_threshold(igate_size_max)
 
   TINTEGER itime_size, it
@@ -108,7 +107,6 @@ PROGRAM VISUALS_MAIN
 ! Read local options
 ! -------------------------------------------------------------------
   opt_format = 2 ! default values
-  opt_gate   = 0
 
   IF    ( imixture .EQ. MIXT_TYPE_NONE ) THEN; iscal_offset = 9    ! define iscal_offset
   ELSE;                                        iscal_offset = 9+NSP; ENDIF
@@ -254,17 +252,18 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
   opt_cond      = 0 ! default values
   opt_cond_scal = 1
+  opt_cond_relative = 0
   igate_size    = 0
-  opt_threshold = 0
 
   DO iv = 1,iopt_size
-     IF ( opt_vec(iv) .EQ. iscal_offset+11 ) opt_gate = 1 ! partition
-  ENDDO
-  IF ( opt_gate .EQ. 1 ) THEN
-
+     IF ( opt_vec(iv) .EQ. iscal_offset+11 ) THEN
+        
 #include "dns_read_partition.h"
-
-  ENDIF
+        
+        EXIT
+     ENDIF
+     
+  ENDDO
 
 ! -------------------------------------------------------------------
 ! Definitions
@@ -385,13 +384,21 @@ PROGRAM VISUALS_MAIN
 ! -------------------------------------------------------------------
 ! Calculate intermittency
 ! -------------------------------------------------------------------
-     IF ( opt_gate .EQ. 1 ) THEN
-        
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-           opt_cond_scal = inb_scal_array
+     IF ( opt_cond .GT. 0 ) THEN
+        IF      ( opt_cond .EQ. 1 ) THEN ! External file
+           WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
+           CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
+           igate_size = INT(params(2))
+           
+        ELSE
+           IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+              opt_cond_scal = inb_scal_array
+           ENDIF
+           
+           CALL IO_WRITE_ASCII(lfile,'Calculating partition...')
+           CALL FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
+                imax,jmax,kmax, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
         ENDIF
-        
-#include "dns_calc_partition.h"
         
      ENDIF
 

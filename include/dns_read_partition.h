@@ -20,8 +20,8 @@
      READ(*,*) opt_cond
 
      IF ( opt_cond .EQ. 3 .OR. opt_cond .EQ. 4 ) THEN
-        WRITE(*,*) 'Threshold based on relative (1) or absolute (2) values?'
-        READ(*,*) opt_threshold
+        WRITE(*,*) 'Threshold based on absolute (0) or relative (1) values?'
+        READ(*,*) opt_cond_relative
      ENDIF
 
      IF ( opt_cond .GE. 2 ) THEN
@@ -37,7 +37,7 @@
      opt_cond = INT(opt_vec2(idummy))
      IF ( opt_cond .EQ. 3 .OR. opt_cond .EQ. 4 ) THEN
         idummy = idummy + 1
-        opt_threshold = INT(opt_vec2(idummy))
+        opt_cond_relative = INT(opt_vec2(idummy))
      ENDIF
      IF ( opt_cond .GE. 2 ) THEN
         idummy = idummy + 1
@@ -61,7 +61,7 @@
   ENDIF
   
   IF ( igate_size .GT. igate_size_max ) THEN
-     CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Not enough memory for igate_vec.')
+     CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Not enough memory for gate_threshold.')
      CALL DNS_STOP(DNS_ERROR_ALLOC)
   ENDIF
 
