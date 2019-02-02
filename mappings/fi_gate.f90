@@ -12,7 +12,7 @@ SUBROUTINE FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
   TINTEGER,                          INTENT(IN)    :: nx,ny,nz, igate_size
   TREAL,                             INTENT(INOUT) :: gate_threshold(igate_size)
   TREAL,      DIMENSION(nx*ny*nz,*), INTENT(IN)    :: q,s  
-  TREAL,      DIMENSION(nx*ny*nz,4), INTENT(INOUT) :: txc
+  TREAL,      DIMENSION(nx*ny*nz,5), INTENT(INOUT) :: txc
   INTEGER(1), DIMENSION(nx*ny*nz),   INTENT(OUT)   :: gate 
   TREAL,      DIMENSION(*),          INTENT(INOUT) :: wrk2d,wrk3d
   

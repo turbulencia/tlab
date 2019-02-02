@@ -410,9 +410,9 @@ PROGRAM TRANSFIELDS
      
 ! Creating grid
      IF ( flag_crop ) THEN
-        WRITE(str,'(i)') subdomain(4)
+        WRITE(str,'(I3)') subdomain(4)
         CALL IO_WRITE_ASCII(lfile, 'Croping above '//TRIM(ADJUSTL(str))//' for remeshing...')
-        WRITE(str,'(i)') subdomain(3)
+        WRITE(str,'(I3)') subdomain(3)
         CALL IO_WRITE_ASCII(lfile, 'Croping below '//TRIM(ADJUSTL(str))//' for remeshing...')
         CALL TRANS_CROP(i1,jmax,1, subdomain, g(2)%nodes, y_aux)
         
@@ -423,7 +423,7 @@ PROGRAM TRANSFIELDS
         y_aux(1+subdomain(3):g(2)%size+subdomain(3)) = y(1:g(2)%size,1) ! we need extra space
 
         IF ( subdomain(4) .GT. 0 ) THEN
-           WRITE(str,'(i)') subdomain(4)
+           WRITE(str,'(I3)') subdomain(4)
            CALL IO_WRITE_ASCII(lfile, 'Adding '//TRIM(ADJUSTL(str))//' planes at the top for remeshing...')
            dummy = (y_dst(g_dst(2)%size)-y(g(2)%size,1)) / REAL(subdomain(4)) ! distributing the points uniformly
            DO ip = g(2)%size+subdomain(3)+1,g(2)%size+subdomain(3)+subdomain(4)
@@ -432,7 +432,7 @@ PROGRAM TRANSFIELDS
         ENDIF
         
         IF ( subdomain(3) .GT. 0 ) THEN
-           WRITE(str,'(i)') subdomain(3)
+           WRITE(str,'(I3)') subdomain(3)
            CALL IO_WRITE_ASCII(lfile, 'Adding '//TRIM(ADJUSTL(str))//' planes at the bottom for remeshing...')
            dummy = (y_dst(1)-y(1,1)) / REAL(subdomain(3))
            DO ip = subdomain(3),1,-1

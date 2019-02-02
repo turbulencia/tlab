@@ -259,7 +259,9 @@ PROGRAM VISUALS_MAIN
      IF ( opt_vec(iv) .EQ. iscal_offset+11 ) THEN
         
 #include "dns_read_partition.h"
-        
+    
+        IF ( opt_cond .GT. 1 ) inb_txc = MAX(inb_txc,5)
+           
         EXIT
      ENDIF
      

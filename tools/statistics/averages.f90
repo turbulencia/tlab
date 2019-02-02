@@ -306,6 +306,8 @@ PROGRAM AVERAGES
   IF ( opt_main .EQ. 2 .OR. gate_level .NE. 0 ) THEN
 
 #include "dns_read_partition.h"
+
+     IF ( opt_cond .GT. 1 ) inb_txc = MAX(inb_txc,5)
      
   ENDIF
 

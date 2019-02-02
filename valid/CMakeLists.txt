@@ -22,8 +22,3 @@ FILE(GLOB sourcefiles "burgers/*.f90")
 add_executable(vburgers.x ${sourcefiles})
 target_link_libraries(vburgers.x mappings operators flow io thermodynamics averages fdm linear ${LEVEL1_LIBS} ${LIBS})
 
-if ( ${BUILD_TYPE} STREQUAL "PARALLEL" OR ${BUILD_TYPE} STREQUAL "NONBLOCKING" )
-FILE(GLOB sourcefiles "mpi/vmpi_transpose.f90")
-add_executable(vmpi_transpose.x ${sourcefiles})
-target_link_libraries(vmpi_transpose.x) #modules ) #${LEVEL1_LIBS} ${LIBS})
-endif()
