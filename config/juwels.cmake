@@ -30,7 +30,8 @@ if ( ${BUILD_TYPE} STREQUAL "PARALLEL" OR ${BUILD_TYPE} STREQUAL "NONBLOCKING" )
 
    if ( ${HYBRID} STREQUAL "TRUE" )
       add_definitions(-DUSE_OPENMP )
-      set(USER_omp_FLAGS " -qopenmp -mt_mpi " ) 
+#      set(USER_omp_FLAGS " -qopenmp -mt_mpi " ) 
+      set(USER_omp_FLAGS " -qopenmp " ) 
    endif()
 
 # compiler for serial build

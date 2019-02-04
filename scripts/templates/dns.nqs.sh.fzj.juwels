@@ -32,21 +32,13 @@ touch *
 
 #Load environment
 module load Intel
-module load IntelMPI 
+#module load IntelMPI 
+module load ParaStationMPI 
+module load pscom
+
 module load imkl
-module load FFTW
+#module load FFTW
 
-# http://www-01.ibm.com/support/docview.wss?uid=isg3T1024294
-# Best practive for LARGE parallel jobs with intelMPI 
-# DOES NOT WORK! 
-#export I_MPI_HYDRA_BOOTSTRAP=lsf # Set to lsf means to use LSF blaunch
-#export I_MPI_HYDRA_BRANCH_COUNT=-1 # The default value is -1 if less than 128 nodes are used. This value also means that there is no hierarchical structure
-#export I_MPI_LSF_USE_COLLECTIVE_LAUNCH=1 # Set to 1 to let Intel MPI use blaunch ?z to launch tasks.
-
-# buffer sizes for infiniband; 
-# keep small to reduce memory overhead for large parallel jobs
-export I_MPI_DAPL_BUFFER_NUM=4
-export I_MPI_DAPL_BUFFER_SIZE=128
 
 if [ $THREADSPERRANK -ge 2 ]; then
     export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
@@ -54,10 +46,20 @@ if [ $THREADSPERRANK -ge 2 ]; then
     export KMP_AFFINITY=compact
 fi
 
+# Environment variables for switching from pscom’s OpenIB-Plugin
+# to its UCX/UXP-Plugin with UD usage:
+export PSP_OPENIB=0
+export PSP_UCP=1
+export PSP_ONDEMAND=0
+export PSP_GUARD=0
+export UCX_TLS=ud_mlx5,self,sm
+export UCX_NET_DEVICES=mlx5_0:1
+export UCX_IB_DEVICE_SPECS=0x119f:4115:ConnectX-4:5:30
+
 #IntelMPI process pinning 
-export I_MPI_PIN=yes       # force process pinning 
-export I_MPI_PIN_MODE=pm   # use pinning by launcher; should collocate CPU and memory; not guaranteed for option 'lib' 
-export I_MPI_PIN_DOMAIN=omp 
+#export I_MPI_PIN=yes       # force process pinning 
+#export I_MPI_PIN_MODE=pm   # use pinning by launcher; should collocate CPU and memory; not guaranteed for option 'lib' 
+#export I_MPI_PIN_DOMAIN=omp 
 
 # Run Simulation
 case $RUNMODE in
