@@ -4,7 +4,13 @@ We include here results from profiling to identify where to put the effort to fu
 
 \begin{figure}[H]
   \centering
-  \includegraphics[clip,width=\textwidth]{figs/profiling.pdf}
-  \caption{Profiling diagram of {\tt examples/Case43} running 10 iterations. Profiling data obtained from {\tt gfortran -pg} and processed with {\tt gprof}, running the command {\tt gprof path/to/your/executable | gprof2dot.py | dot -Tpdf -o output.pdf}.}
+  \includegraphics[clip,width=0.9\textwidth]{figs/profiling.pdf}
+  \caption{Profiling diagram of {\tt examples/Case43} running 10 iterations in serial mode. Profiling data obtained from {\tt gfortran -pg} and processed with {\tt gprof}, running the command {\tt gprof path/to/your/executable | gprof2dot.py | dot -Tpdf -o output.pdf}.}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[clip,width=0.9\textwidth]{figs/profiling2.pdf}
+  \caption{Profiling diagram of modified {\tt examples/Case43} (768 cube) running 25 iterations in parallel mode with 48 tasks (1 node on juwels).}
 \end{figure}
 
