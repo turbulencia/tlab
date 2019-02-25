@@ -62,7 +62,8 @@ elif [ $system = "mistral" ]; then
 	--distribution=block:cyclic $exfile > $STDOUT 2> $STDERR
 
 elif [ $system = "juwels" ]; then
-    srun $exfile > $STDOUT 2> $STDERR
+    srun --export=ALL,ROMIO_HINTS=/p/home/jusers/ansorge1/juwels/romio_hints \
+	$exfile > $STDOUT 2> $STDERR
 
 elif [ $system = "juqueen" ]; then
     if [ -n "$3" ]; then

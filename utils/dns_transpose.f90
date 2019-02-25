@@ -30,7 +30,7 @@ SUBROUTINE DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
   IMPLICIT NONE
   
   TINTEGER jb,kb
-  PARAMETER(jb=32, kb=32)
+  PARAMETER(jb=64, kb=64)
  
   TINTEGER nra, nca, ma, mb
   TREAL a(ma,*),b(mb,*)

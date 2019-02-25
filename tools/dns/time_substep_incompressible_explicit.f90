@@ -169,10 +169,11 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 ! Perform the time stepping for incompressible equations
 ! #######################################################################
 #ifdef USE_OPENMP
-!$omp parallel default(shared) &
 #ifdef USE_BLAS
+!$omp parallel default(shared) &
 !$omp private (ilen,is,srt,end,siz)
 #else
+!$omp parallel default(shared) &
 !$omp private (ij,  is,srt,end,siz)
 #endif 
 #endif 
