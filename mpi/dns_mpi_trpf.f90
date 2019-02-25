@@ -17,13 +17,26 @@
 !#
 !########################################################################
 SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
+
+  USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_int
   
   USE DNS_MPI, ONLY : ims_time_trans
-  USE DNS_MPI, ONLY : ims_npro_k, ims_pro_k
+  USE DNS_MPI, ONLY : ims_pro,ims_npro_k, ims_pro_k
   USE DNS_MPI, ONLY : ims_comm_z
-  USE DNS_MPI, ONLY : ims_tag, ims_err
+  USE DNS_MPI, ONLY : ims_tag, ims_err 
+  USE DNS_CONSTANTS, ONLY : lfile
+  USE DNS_GLOBAL, ONLY : itime
 
   IMPLICIT NONE
+
+  INTERFACE
+     FUNCTION DNS_USLEEP (useconds)  bind ( C, name="usleep" )
+       IMPORT
+       INTEGER (c_int) :: nb3dfft_nbc_usleep
+       INTEGER (c_int), intent (in), VALUE :: useconds
+     END FUNCTION DNS_USLEEP
+  END INTERFACE
+
   
 #include "mpif.h"
 
@@ -33,11 +46,12 @@ SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
   INTEGER,  DIMENSION(ims_npro_k), INTENT(IN)  :: tsend, trecv ! types
   
 ! -----------------------------------------------------------------------
-  TINTEGER n, l
+  TINTEGER n, l,idummy
   INTEGER status(MPI_STATUS_SIZE,2*ims_npro_k)
   INTEGER mpireq(                2*ims_npro_k)
   INTEGER ip
-
+  TREAL rdum
+  CHARACTER*256 line
 #ifdef PROFILE_ON
   TREAL time_loc_1, time_loc_2
 #endif
@@ -56,9 +70,16 @@ SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
 
   CALL MPI_WAITALL(2, mpireq, status, ims_err)
 
+  IF ( ims_pro.EQ. 0 .AND. itime .EQ. -1 ) THEN
+     WRITE(line,*) 'interrupting for 25ms after each isend/irecv',itime   
+     CALL IO_WRITE_ASCII(lfile,line)
+     idummy = DNS_USLEEP(ims_pro*10000) 
+  ENDIF
 ! #######################################################################
 ! Different processors
-! #######################################################################
+! ####################################################################### 
+
+
   l = 2
   DO n = 1,ims_npro_k
      ip = n - 1
@@ -66,7 +87,9 @@ SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
         l = l + 1      
         CALL MPI_ISEND(a(dsend(n)+1), 1, tsend(n), ip, ims_tag, ims_comm_z, mpireq(l), ims_err)
         l = l + 1
-        CALL MPI_IRECV(b(drecv(n)+1), 1, trecv(n), ip, ims_tag, ims_comm_z, mpireq(l), ims_err)        
+        CALL MPI_IRECV(b(drecv(n)+1), 1, trecv(n), ip, ims_tag, ims_comm_z, mpireq(l), ims_err)           
+        ! Work around for network problems on juwels during first transposition 
+        IF ( itime .EQ. -1 ) idummy=DNS_USLEEP(25000)   
      ENDIF
   ENDDO
 

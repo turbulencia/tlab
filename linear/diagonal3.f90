@@ -88,14 +88,15 @@ SUBROUTINE TRIDSS(nmax,len, a,b,c, f)
   ilen = len
 #endif
 
-!$omp parallel default(none) &
-
 #ifdef USE_BLAS
+!$omp parallel default(none) &
 !$omp private(n,ilen,srt,end,siz,dummy1,dummy2) &
+!$omp shared(f,a,b,c,nmax,len)
 #else
+!$omp parallel default(none) &
 !$omp private(n,l,srt,end,siz,dummy1,dummy2) &
+!$omp shared(f,a,b,c,nmax,len)
 #endif
-!$omp shared(f,a,b,c,nmax,len) 
 
   CALL DNS_OMP_PARTITION(len,srt,end,siz)
   IF ( siz .LE. 0 ) THEN 
@@ -185,14 +186,16 @@ SUBROUTINE TRIDSS_ADD(nmax,len, a,b,c, f, g,h, d)
   ilen = len
 #endif
 
-!$omp parallel default(none) &
 
 #ifdef USE_BLAS
+!$omp parallel default(none) &
 !$omp private(n,l,ilen,srt,end,siz,dummy1,dummy2) &
-#else
-!$omp private(n,l,srt,end,siz,dummy1,dummy2) &
-#endif
 !$omp shared(f,a,b,c,d,g,h,nmax,len) 
+#else
+!$omp parallel default(none) &
+!$omp private(n,l,srt,end,siz,dummy1,dummy2) &
+!$omp shared(f,a,b,c,d,g,h,nmax,len) 
+#endif
 
   CALL DNS_OMP_PARTITION(len,srt,end,siz)
   IF ( siz .LE. 0 ) THEN 
@@ -340,13 +343,15 @@ SUBROUTINE TRIDPSS(nmax,len, a,b,c,d,e, f, wrk)
 ! Forward sweep
 ! -------------------------------------------------------------------
 
-!$omp parallel default( none ) &
 #ifdef USE_BLAS
+!$omp parallel default( none ) &
 !$omp private(n, l,ilen, dummy1, dummy2, srt, end,siz) &
-#else
-!$omp private(n, l, dummy1, dummy2, srt, end,siz) &
-#endif
 !$omp shared(f,wrk,nmax,a,b,c,d,e,len)
+#else
+!$omp parallel default( none ) &
+!$omp private(n, l, dummy1, dummy2, srt, end,siz) &
+!$omp shared(f,wrk,nmax,a,b,c,d,e,len)
+#endif
 
   CALL DNS_OMP_PARTITION(len,srt,end,siz) 
   IF ( siz .LE. 0 ) THEN 
@@ -464,13 +469,15 @@ SUBROUTINE TRIDPSS_ADD(nmax,len, a,b,c,d,e, f, g,h, wrk)
 ! Forward sweep
 ! -------------------------------------------------------------------
 
-!$omp parallel default( none ) &
 #ifdef USE_BLAS
+!$omp parallel default( none ) &
 !$omp private(n, l,ilen, dummy1, dummy2, srt, end,siz) &
-#else
-!$omp private(n, l, dummy1, dummy2, srt, end,siz) &
-#endif
 !$omp shared(f,g,h,wrk,nmax,a,b,c,d,e,len)
+#else
+!$omp parallel default( none ) &
+!$omp private(n, l, dummy1, dummy2, srt, end,siz) &
+!$omp shared(f,g,h,wrk,nmax,a,b,c,d,e,len)
+#endif
 
   CALL DNS_OMP_PARTITION(len,srt,end,siz) 
   IF ( siz .LE. 0 ) THEN 

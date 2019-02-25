@@ -84,10 +84,11 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
            ENDIF
         ENDIF
 
-!$omp parallel default( shared ) &
 #ifdef USE_BLAS
+!$omp parallel default( shared ) &
 !$omp private( ilen, dummy, srt,end,siz)
 #else     
+!$omp parallel default( shared ) &
 !$omp private( ij,   dummy, srt,end,siz )
 #endif
         CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
