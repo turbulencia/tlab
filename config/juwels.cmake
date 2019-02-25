@@ -15,22 +15,22 @@ if ( NOT PROFILE )
    set(PROFILE FALSE) 
 endif() 
 
-
 if ( ${PROFILE} STREQUAL "TRUE" )  
-   set(USER_profile_FLAGS " -p ")
+   set(USER_profile_FLAGS "-g")
 endif() 
-
 
 # compiler for parallel build and hybrid flags	  
 if ( ${BUILD_TYPE} STREQUAL "PARALLEL" OR ${BUILD_TYPE} STREQUAL "NONBLOCKING" )
-   set(ENV{FC} mpif90)
-   set(CMAKE_Fortran_COMPILER mpif90) 
+   set(ENV{FC} scorep-mpif90) 
+   if ( ${PROFILE} STREQUAL "TRUE" ) 
+      set(CMAKE_Fortran_COMPILER scorep-mpif90) 
+   else ()
+      set(CMAKE_Fortran_COMPILER mpif90)
+   endif()				 
 
    add_definitions(-DUSE_MPI -DUSE_MPI_IO -DUSE_ALLTOALL)
 
    if ( ${HYBRID} STREQUAL "TRUE" )
-      add_definitions(-DUSE_OPENMP )
-#      set(USER_omp_FLAGS " -qopenmp -mt_mpi " ) 
       set(USER_omp_FLAGS " -qopenmp " ) 
    endif()
 
@@ -43,9 +43,9 @@ endif()
 
 
 
-#set(USER_Fortran_FLAGS          " -fpp ${USER_profile_FLAGS} -nbs -save-temps -xHost -simd -vec-threshold50 -unroll-aggressive ${USER_omp_FLAGS} " ) 
-set(USER_Fortran_FLAGS          " -fpp ${USER_profile_FLAGS} -nbs -save-temps -heap-arrays -xHost -simd -vec-threshold50 -unroll-aggressive ${USER_omp_FLAGS} " ) 
-set(USER_Fortran_FLAGS_RELEASE  " -axcommon-avx512,SSE4.2 -qopt-prefetch -O3 -ipo" ) 
+#set(USER_Fortran_FLAGS          " -fpp ${USER_profile_FLAGS} -nbs -save-temps -simd-vec-threshold50 -unroll-aggressive ${USER_omp_FLAGS} " ) 
+set(USER_Fortran_FLAGS          " -fpp ${USER_profile_FLAGS} -O3 -nbs -save-temps -heap-arrays -simd -vec-threshold50 -unroll-aggressive ${USER_omp_FLAGS} " ) 
+set(USER_Fortran_FLAGS_RELEASE  " -march=skylake-avx512 -axcommon-avx512,SSE4.2 -qopt-prefetch -O3 -ipo" ) 
 #set(USER_Fortran_FLAGS_RELEASE  " -axCORE-AVX2 -qopt-prefetch -O3 -ipo" ) 
 set(USER_Fortran_FLAGS_DEBUG    " -g -traceback -debug all ") 
 

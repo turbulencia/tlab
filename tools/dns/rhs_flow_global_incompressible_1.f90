@@ -101,10 +101,11 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, g(2), v,v,v, tmp5, tmp2, wrk2d,wrk3d)
   CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), v, tmp4, tmp1, wrk2d,wrk3d)
 
-!$omp parallel default( shared ) &
 #ifdef USE_ESSL
+!$omp parallel default( shared ) &
 !$omp private( ilen, srt,end,siz)
 #else
+!$omp parallel default( shared ) &
 !$omp private( ij,   srt,end,siz)
 #endif 
   CALL DNS_OMP_PARTITION(isize_field, srt,end,siz) 
@@ -126,10 +127,11 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
   IF ( idivergence .EQ. EQNS_DIVERGENCE ) THEN ! remove residual divergence
 
-!$omp parallel default( shared )&
 #ifdef USE_ESSL
+!$omp parallel default( shared )&
 !$omp private( ilen, dummy, srt,end,siz )
 #else 
+!$omp parallel default( shared )&
 !$omp private( ij,   dummy, srt,end,siz )
 #endif 
 
@@ -192,10 +194,11 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! -----------------------------------------------------------------------
 ! Add pressure gradient 
 ! -----------------------------------------------------------------------
-!$omp parallel default( shared ) &
 #ifdef USE_ESSL
+!$omp parallel default( shared ) &
 !$omp private( ilen, srt,end,siz,dummy )
 #else
+!$omp parallel default( shared ) &
 !$omp private( ij,   srt,end,siz,dummy )
 #endif
   CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)

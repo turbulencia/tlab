@@ -189,10 +189,11 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
      IF ( ( rkm_mode .EQ. RKM_EXP3 .OR. rkm_mode .EQ. RKM_EXP4 ) .AND. &
           rkm_substep .LT. rkm_endstep ) THEN
 
-!$omp parallel default(shared) &
 #ifdef USE_BLAS
+!$omp parallel default(shared) &
 !$omp private (ilen,srt,end,siz,alpha,is)
 #else
+!$omp parallel default(shared) &
 !$omp private (i,   srt,end,siz,alpha,is)
 #endif 
 

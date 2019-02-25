@@ -1,11 +1,11 @@
 !mpif90 -fpp  -nbs -save-temps -xHost -simd -vec-threshold50 -unroll-aggressive    -axcommon-avx512,SSE4.2  -qopt-prefetch -O3 vmpi_transpose.f90 
 
 ! from dns_const.h
-#define TREAL      REAL(8)    ! user-defined types
+#define TREAL      REAL(8)    /* user-defined types */
 #define TINTEGER   INTEGER(4)
 
 ! from dns_const_mpi.h
-#define DNS_MPI_K_PARTIAL   1 ! tags and sizes for MPI data
+#define DNS_MPI_K_PARTIAL   1 /* tags and sizes for MPI data*/
 #define DNS_MPI_I_PARTIAL   1
 
 #define DNS_MPI_K_MAXTYPES 10
