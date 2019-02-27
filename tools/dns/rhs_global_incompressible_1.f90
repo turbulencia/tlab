@@ -191,10 +191,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
   IF ( idivergence .EQ. EQNS_DIVERGENCE ) THEN ! remove residual divergence
 
-!$omp parallel default( shared )&
 #ifdef USE_ESSL
+!$omp parallel default( shared )&
 !$omp private( ilen, dummy, srt,end,siz )
 #else 
+!$omp parallel default( shared )&
 !$omp private( ij,   dummy, srt,end,siz )
 #endif 
 
@@ -287,10 +288,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax,jmax,kmax, ribackground, tmp4, h3)
 
   ELSE
-!$omp parallel default( shared ) &
 #ifdef USE_ESSL
+!$omp parallel default( shared ) &
 !$omp private( ilen, srt,end,siz,dummy )
 #else
+!$omp parallel default( shared ) &
 !$omp private( ij,   srt,end,siz,dummy )
 #endif
      CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)

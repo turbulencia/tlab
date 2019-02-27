@@ -64,15 +64,16 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   TREAL, DIMENSION(isize_field,inb_scal_array), INTENT(IN)   :: s
 
   TREAL, DIMENSION(isize_field),                INTENT(INOUT):: h1,h2,h3 
-  TREAL, DIMENSION(isize_field,inb_scal),       INTENT(OUT)  :: hs 
+  TREAL, DIMENSION(isize_field,inb_scal),TARGET,INTENT(OUT)  :: hs 
   TREAL, DIMENSION(isize_field),                INTENT(INOUT):: tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42
   TREAL, DIMENSION(isize_field)  :: bt1,bt2,bt3,bt4
   TREAL, DIMENSION(isize_wrk1d,*):: wrk1d
   TREAL, DIMENSION(*)            :: wrk2d,wrk3d
+  TREAL, DIMENSION(:),POINTER :: p_h 
   !
   ! LOCAL VARIABLES 
   ! 
-  TINTEGER :: nxy_trans,nyz_trans,nxy,id,imeasure,ij,k,is,commID
+  TINTEGER :: nxy_trans,nyz_trans,nxy,id,imeasure,ij,k,is,commID,iq
   TINTEGER :: finished,ip_b,ip_t,ibc, bcs(2,2)
   TREAL tdummy
   TREAL, DIMENSION(:), POINTER :: p_bcs 
@@ -85,7 +86,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   INTEGER :: pkg_cnt
   TREAL rtime, rtime_loc,t_run,ptime,ctime_loc
 
-  TARGET h2
+  TARGET h1,h2,h3
+
 
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile,'ENTERING SUBROUTINE, RHS_GLOBAL_INCOMPRESSIBLE_NBC')
@@ -647,9 +649,12 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      ibc = 0
      IF ( BcsFlowJmin%type(iq) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
      IF ( BcsFlowJmax%type(iq) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
+     IF ( iq .EQ. 1 ) p_h => h1(1:)
+     IF ( iq .EQ. 2 ) p_h => h2(1:)
+     IF ( iq .EQ. 3 ) p_h => h3(1:)
      IF ( ibc .GT. 0 ) THEN
-        CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hq(1,iq), &
-             BcsFlowJmin%ref(1,1,iq),BcsFlowJmax%ref(1,1,iq), wrk1d,tmp1,wrk3d)
+        CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), p_h, &
+             BcsFlowJmin%ref(1,1,iq),BcsFlowJmax%ref(1,1,iq), wrk1d,tmp11,wrk3d)
      ENDIF
   ENDDO
 
@@ -659,12 +664,12 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      IF ( BcsScalJmax%type(is) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
      IF ( ibc .GT. 0 ) THEN
         CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hs(1,is), &
-             BcsScalJmin%ref(1,1,is),BcsScalJmax%ref(1,1,is), wrk1d,tmp1,wrk3d)
+             BcsScalJmin%ref(1,1,is),BcsScalJmax%ref(1,1,is), wrk1d,tmp11,wrk3d)
      ENDIF
 
-     IF ( BcsScalJmin%type(is) .NE. DNS_SFC_STATIC .OR.
+     IF ( BcsScalJmin%type(is) .NE. DNS_SFC_STATIC .OR. &
           BcsScalJmax%type(is) .NE. DNS_SFC_STATIC ) THEN
-        CALL BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
+        CALL BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp11,tmp12,tmp21,wrk1d,wrk2d,wrk3d)
      ENDIF
   ENDDO
 

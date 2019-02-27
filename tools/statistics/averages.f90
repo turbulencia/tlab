@@ -54,7 +54,7 @@ PROGRAM AVERAGES
   CHARACTER*64 str, line
 
   TINTEGER opt_main, opt_block, opt_order, opt_bins, opt_bcs, flag_buoyancy
-  TINTEGER opt_cond, opt_cond_scal, opt_threshold
+  TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
   TINTEGER nfield, isize_wrk3d, is, ij, k, n, bcs(2,2)
   TREAL diff, umin, umax, dummy
   TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3
@@ -62,8 +62,8 @@ PROGRAM AVERAGES
 
 ! Gates for the definition of the intermittency function (partition of the fields)
   TINTEGER igate_size
-  INTEGER(1) opt_gate, igate_vec(igate_size_max)
   TREAL gate_threshold(igate_size_max)
+  INTEGER(1) gate_level
 
 ! Reading variables
   CHARACTER*512 sRes
@@ -132,7 +132,7 @@ PROGRAM AVERAGES
 ! -------------------------------------------------------------------
   opt_main  =-1 ! default values
   opt_block = 1
-  opt_gate  = 1
+  gate_level  = 0
   opt_order = 1
   opt_bins  = 0
   opt_bcs   = 1
@@ -147,7 +147,7 @@ PROGRAM AVERAGES
      WRITE(*,*) 'Option ?'
      WRITE(*,*) ' 1. Conventional averages'
      WRITE(*,*) ' 2. Intermittency or gate function'
-     WRITE(*,*) ' 3. Zonal average of scalar gradient G_iG_i conditioned on scalar'
+     WRITE(*,*) ' 3. Scalar gradient G_iG_i conditioned on scalar'
      WRITE(*,*) ' 4. Main variables'
      WRITE(*,*) ' 5. Enstrophy W_iW_i/2 equation'
      WRITE(*,*) ' 6. Strain 2S_ijS_ij/2 equation'
@@ -169,7 +169,7 @@ PROGRAM AVERAGES
 
      IF ( opt_main .GT. 2 ) THEN
         WRITE(*,*) 'Gate level to be used ?'
-        READ(*,*) opt_gate
+        READ(*,*) gate_level
         WRITE(*,*) 'Number of moments ?'
         READ(*,*) opt_order
      ENDIF
@@ -186,7 +186,7 @@ PROGRAM AVERAGES
      opt_main = INT(opt_vec(1))
      IF ( iopt_size .GE. 2 ) opt_block = INT(opt_vec(2))
      IF ( opt_main .GT. 2 ) THEN
-        IF ( iopt_size .GE. 3 ) opt_gate  = INT(opt_vec(3),KIND=1)
+        IF ( iopt_size .GE. 3 ) gate_level  = INT(opt_vec(3),KIND=1)
         IF ( iopt_size .GE. 4 ) opt_order = INT(opt_vec(4))
      ENDIF
      IF ( opt_main .EQ. 3 ) THEN
@@ -300,17 +300,19 @@ PROGRAM AVERAGES
 ! -------------------------------------------------------------------
   opt_cond      = 0 ! default values
   opt_cond_scal = 1
+  opt_cond_relative = 0
   igate_size    = 0
-  opt_threshold = 0
 
-  IF ( opt_main .GT. 1 .AND. opt_gate .GT. 0 ) THEN
+  IF ( opt_main .EQ. 2 .OR. gate_level .NE. 0 ) THEN
 
 #include "dns_read_partition.h"
 
+     IF ( opt_cond .GT. 1 ) inb_txc = MAX(inb_txc,5)
+     
   ENDIF
 
 ! Subarray information to read and write envelopes
-  IF ( opt_main .EQ. 2 .AND. opt_cond .GT. 1 .AND. igate_size .GT. 0 ) THEN
+  IF ( opt_main .EQ. 2 .AND. opt_cond .GT. 1 .AND. igate_size .NE. 0 ) THEN
      io_sizes = (/imax*2*igate_size*kmax,1,imax*2*igate_size*kmax,1,1/)
 
 #ifdef USE_MPI
@@ -453,15 +455,24 @@ PROGRAM AVERAGES
 ! -------------------------------------------------------------------
 ! Calculate intermittency
 ! -------------------------------------------------------------------
-     IF ( opt_cond .GT. 0 ) THEN
-
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-           opt_cond_scal = inb_scal_array
+     IF ( opt_cond .NE. 0 ) THEN
+        IF      ( opt_cond .EQ. 1 ) THEN ! External file
+           WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
+           CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
+           igate_size = INT(params(2))
+           
+           IF ( opt_main .EQ. 2 ) rtime = params(1)
+           
+        ELSE
+           IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+              opt_cond_scal = inb_scal_array
+           ENDIF
+        
+           CALL IO_WRITE_ASCII(lfile,'Calculating partition...')
+           CALL FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
+                imax,jmax,kmax, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
         ENDIF
-
-#include "dns_calc_partition.h"
-     IF ( opt_main .EQ. 2 .AND. opt_cond .EQ. 1 ) rtime = params(1)
-
+        
      ENDIF
 
 ! -------------------------------------------------------------------
@@ -562,7 +573,7 @@ PROGRAM AVERAGES
            WRITE(varname(n),*) n; varname(n) = 'Partition'//TRIM(ADJUSTL(varname(n)))
         ENDDO
         WRITE(fname,*) itime; fname='int'//TRIM(ADJUSTL(fname))
-        CALL INTER2D_N(fname, varname, rtime, imax,jmax,kmax, igate_size, y, gate, igate_vec)
+        CALL INTER2D_N(fname, varname, rtime, imax,jmax,kmax, igate_size, y, gate)
         
         IF ( opt_cond .GT. 1 ) THEN ! write only if the gate information has not been read
            WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname))
@@ -570,12 +581,13 @@ PROGRAM AVERAGES
            CALL IO_WRITE_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
 
            DO n = 1,igate_size
-              CALL BOUNDARY_LOWER_INT1(imax,jmax,kmax, igate_vec(n), y, gate, wrk3d, wrk2d, wrk2d(1,2))
+              gate_level = INT(n,KIND=1)
+              CALL BOUNDARY_LOWER_INT1(imax,jmax,kmax, gate_level, y, gate, wrk3d, wrk2d, wrk2d(1,2))
               DO k = 1,kmax ! rearranging
                  ij = (k-1) *imax +1
                  surface(1:imax,n           ,k) = wrk2d(ij:ij+imax-1,1)
               ENDDO
-              CALL BOUNDARY_UPPER_INT1(imax,jmax,kmax, igate_vec(n), y, gate, wrk3d, wrk2d, wrk2d(1,2))
+              CALL BOUNDARY_UPPER_INT1(imax,jmax,kmax, gate_level, y, gate, wrk3d, wrk2d, wrk2d(1,2))
               DO k = 1,kmax ! rearranging
                  ij = (k-1) *imax +1
                  surface(1:imax,n+igate_size,k) = wrk2d(ij:ij+imax-1,1)
@@ -611,7 +623,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='cavgZ'//TRIM(ADJUSTL(fname))
-        CALL CAVG2D_N(fname, opt_bcs, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL CAVG2D_N(fname, opt_bcs, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_bins, opt_order, umin, umax, y_aux, gate, s, data, mean, wrk1d)
 
 ! ###################################################################
@@ -652,7 +664,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='cavg'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -738,7 +750,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='avgW2'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -789,7 +801,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='avgS2'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -828,7 +840,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='avgG2'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -855,7 +867,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='avgInv'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -885,7 +897,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='avgGi'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -909,7 +921,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='avgEig'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -971,7 +983,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='avgCos'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -993,7 +1005,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='avgDer'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -1046,7 +1058,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='avgMom'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -1077,7 +1089,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='avgPre'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -1095,7 +1107,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='avgEps'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -1126,7 +1138,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='cov'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 ! ###################################################################
@@ -1150,7 +1162,7 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='avgPV'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, y_aux, gate, data, mean)
 
 

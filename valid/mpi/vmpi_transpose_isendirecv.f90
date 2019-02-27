@@ -49,7 +49,7 @@ PROGRAM VMPI
   REAL(8), DIMENSION(:),   ALLOCATABLE :: b
   
 ! -------------------------------------------------------------------
-  INTEGER(4) it, ip
+  INTEGER(4) it, ip, l, n
   CHARACTER*64 str
 
   INTEGER ims_npro
@@ -157,8 +157,27 @@ PROGRAM VMPI
 ! Transposition along OX
 ! -------------------------------------------------------------------
      IF ( ims_npro_i .GT. 1 ) THEN
-        CALL MPI_ALLTOALLV(a(1,1), ims_size_i, ims_ds_i, MPI_REAL8, &
-                           b,      ims_size_i, ims_dr_i, MPI_REAL8, ims_comm_x, ims_err)
+        ! CALL MPI_ALLTOALLV(a(1,1), ims_size_i, ims_ds_i, MPI_REAL8, &
+        !                    b,      ims_size_i, ims_dr_i, MPI_REAL8, ims_comm_x, ims_err)
+
+        ! Same processor
+        ip = ims_pro_i; n = ip + 1
+        CALL MPI_ISEND(a(ims_ds_i(n)+1,1), ims_size_i(n), MPI_REAL8, ip, ims_tag, ims_comm_x, mpireq(1), ims_err)  
+        CALL MPI_IRECV(b(ims_dr_i(n)+1),   ims_size_i(n), MPI_REAL8, ip, ims_tag, ims_comm_x, mpireq(2), ims_err)
+        CALL MPI_WAITALL(2, mpireq, status, ims_err)
+
+        ! Different processors
+        l = 2
+        DO n = 1,ims_npro_i
+           ip = n-1 
+           IF ( ip .NE. ims_pro_i ) THEN
+              l = l + 1
+              CALL MPI_ISEND(a(ims_ds_i(n)+1,1), ims_size_i(n), MPI_REAL8, ip, ims_tag, ims_comm_x, mpireq(l), ims_err)
+              l = l + 1 
+              CALL MPI_IRECV(b(ims_dr_i(n)+1),   ims_size_i(n), MPI_REAL8, ip, ims_tag, ims_comm_x, mpireq(l), ims_err)
+           ENDIF
+        ENDDO
+        CALL MPI_WAITALL(ims_npro_i*2-2, mpireq(3:), status(1,3), ims_err)
 
         ! Output
         IF ( ims_pro .EQ. 0 ) THEN
@@ -171,9 +190,28 @@ PROGRAM VMPI
 ! Transposition along OZ
 ! -------------------------------------------------------------------
      IF ( ims_npro_k .GT. 1 ) THEN
-        CALL MPI_ALLTOALLV(a(1,1), ims_size_k, ims_ds_k, MPI_REAL8, &
-                           b,      ims_size_k, ims_dr_k, MPI_REAL8, ims_comm_z, ims_err)
-        
+        ! CALL MPI_ALLTOALLV(a(1,1), ims_size_k, ims_ds_k, MPI_REAL8, &
+        !                    b,      ims_size_k, ims_dr_k, MPI_REAL8, ims_comm_z, ims_err)
+
+        ! Same processor
+        ip = ims_pro_k; n = ip + 1
+        CALL MPI_ISEND(a(ims_ds_k(n)+1,1), ims_size_k(n), MPI_REAL8, ip, ims_tag, ims_comm_z, mpireq(1), ims_err)  
+        CALL MPI_IRECV(b(ims_dr_k(n)+1),   ims_size_k(n), MPI_REAL8, ip, ims_tag, ims_comm_z, mpireq(2), ims_err)
+        CALL MPI_WAITALL(2, mpireq, status, ims_err)
+
+        ! Different processors
+        l = 2
+        DO n = 1,ims_npro_k
+           ip = n - 1
+           IF ( ip .NE. ims_pro_k ) THEN
+              l = l + 1      
+              CALL MPI_ISEND(a(ims_ds_k(n)+1,1), ims_size_k(n), MPI_REAL8, ip, ims_tag, ims_comm_z, mpireq(l), ims_err)
+              l = l + 1
+              CALL MPI_IRECV(b(ims_dr_k(n)+1),   ims_size_k(n), MPI_REAL8, ip, ims_tag, ims_comm_z, mpireq(l), ims_err)        
+           ENDIF
+        ENDDO
+        CALL MPI_WAITALL(ims_npro_k*2-2, mpireq(3:), status(1,3), ims_err)
+
         ! Output
         IF ( ims_pro .EQ. 0 ) THEN
            WRITE(*,'(a)') 'It '//TRIM(ADJUSTL(str))//'. Tranpose along K.'
@@ -186,4 +224,3 @@ PROGRAM VMPI
   CALL MPI_FINALIZE(ims_err)
 
 END PROGRAM VMPI
-

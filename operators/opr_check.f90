@@ -6,6 +6,7 @@
 SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY : isize_field,isize_txc_field, isize_wrk2d
+  USE DNS_GLOBAL, ONLY : itime 
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : ifourier !, fft_reordering
   USE DNS_CONSTANTS, ONLY : lfile
@@ -49,8 +50,8 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
   IF ( ims_npro_i .GT. 1 ) THEN
      id = DNS_MPI_I_PARTIAL
 
-     CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES)
-     CALL DNS_MPI_TRPF_I(a(1,1), wrk3d, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES) 
+     CALL DNS_MPI_TRPF_I(a(1,1), wrk3d, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id)) 
      CALL DNS_MPI_TRPB_I(wrk3d, a(1,2), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
      CALL SYSTEM_CLOCK(t_end,PROC_CYCLES,MAX_CYCLES)
 
@@ -77,7 +78,9 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
      id = DNS_MPI_K_PARTIAL
 
      CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES)
+     idummy=itime; itime=-1  ! set itime to -1 for this call to trigger interruption 
      CALL DNS_MPI_TRPF_K(a(1,1), wrk3d, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     itime=idummy 
      CALL DNS_MPI_TRPB_K(wrk3d, a(1,2), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      CALL SYSTEM_CLOCK(t_end,PROC_CYCLES,MAX_CYCLES)
 
