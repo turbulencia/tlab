@@ -1,11 +1,9 @@
 !mpif90 -fpp  -nbs -save-temps -xHost -simd -vec-threshold50 -unroll-aggressive    -axcommon-avx512,SSE4.2  -qopt-prefetch -O3 vmpi_transpose.f90 
-
+!mpif90 -cpp -ffree-form -ffree-line-length-2048 -fno-automatic -O3 -fconvert=little-endian -mtune=native -ffast-math -ffinite-math-only -funroll-loops   
 ! from dns_const.h
-#define TREAL      REAL(8)    /* user-defined types */
-#define TINTEGER   INTEGER(4)
 
 ! from dns_const_mpi.h
-#define DNS_MPI_K_PARTIAL   1 /* tags and sizes for MPI data*/
+#define DNS_MPI_K_PARTIAL   1 ! tags and sizes for MPI data
 #define DNS_MPI_I_PARTIAL   1
 
 #define DNS_MPI_K_MAXTYPES 10
@@ -14,12 +12,18 @@
 MODULE DNS_MPI
   IMPLICIT NONE
   SAVE
-  
-  INTEGER(KIND=4) :: imax_total,jmax_total,kmax_total = 84   ! number of grid points per task
-  INTEGER(KIND=4) :: imax,jmax,kmax
 
-  INTEGER :: ims_npro_i, ims_npro_j, ims_npro_k ! number of tasks in Ox and Oz (no decomposition along Oy)
+  LOGICAL :: ims_trp_blocking
   
+  INTEGER(KIND=4) :: imax,jmax,kmax
+  INTEGER(KIND=4) :: imax_total,jmax_total,kmax_total
+
+
+  INTEGER :: ims_npro
+  INTEGER :: ims_npro_i,ims_npro_j,ims_npro_k     ! number of tasks in Ox and Oz (no decomposition along Oy)
+  
+  INTEGER(KIND=4) :: nmax   ! number of repetitions of operations
+
 ! Data below should not be changed
   INTEGER  :: ims_pro, ims_pro_i, ims_pro_j, ims_pro_k ! task positioning
 
@@ -38,12 +42,15 @@ MODULE DNS_MPI
   INTEGER(KIND=4), DIMENSION(:,:), ALLOCATABLE :: ims_ds_k, ims_dr_k
   INTEGER,  DIMENSION(:,:), ALLOCATABLE :: ims_ts_k, ims_tr_k
 
+  INTEGER(KIND=4), DIMENSION(:), ALLOCATABLE :: ims_plan_trps_i, ims_plan_trpr_i 
+  INTEGER(KIND=4), DIMENSION(:), ALLOCATABLE :: ims_plan_trps_k, ims_plan_trpr_k
+
 END MODULE DNS_MPI
 
 !########################################################################
 ! Main program to test forwards and backwards transposition
 !########################################################################
-PROGRAM VMPI
+PROGRAM VMPI_RTRANSPOSE
 
   USE DNS_MPI
   
@@ -61,16 +68,16 @@ PROGRAM VMPI
   CHARACTER*64 str
   CHARACTER*256 line
 
-  INTEGER ims_npro
-  REAL(KIND=8) dummy, t_x,t_z
-  INTEGER(KIND=4) idummy, id, narg, nmax 
+  REAL(KIND=8) rdum
+  INTEGER(KIND=4) idum, id, narg 
   CHARACTER*32 cdum
+
+  REAL(KIND=8) :: t_x, t_x2,t_z, t_z2
 
 ! ###################################################################
   call MPI_INIT(ims_err)
   call MPI_COMM_SIZE(MPI_COMM_WORLD,ims_npro,ims_err)
   call MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro, ims_err)
-
 
   narg=COMMAND_ARGUMENT_COUNT()   
   IF ( narg .LT. 4 ) THEN 
@@ -104,13 +111,12 @@ PROGRAM VMPI
        ims_npro_k*kmax .NE. kmax_total .OR. & 
        ims_npro_j*jmax .NE. jmax_total ) THEN ! check
      IF ( ims_pro .EQ. 0 ) WRITE(*,'(a)') ims_pro,': Inconsistency in Decomposition'  
-     CALL MPI_Barrier(MPI_COMM_WORLD,ims_err)  ! Make sure ims_pro gets to write the message above
+     CALL MPI_Barrier(MPI_COMM_WORLD,ims_err) 
      CALL MPI_FINALIZE(ims_err)
      STOP
   ENDIF
-
+  
   CALL DNS_MPI_INITIALIZE
-
   
   ALLOCATE(a    (imax*jmax*kmax,18)) ! Number of 3d arrays commonly used in the code
   ALLOCATE(wrk3d(imax*jmax*kmax   ))
@@ -119,7 +125,6 @@ PROGRAM VMPI
 ! ###################################################################
 ! Create random array
   CALL RANDOM_NUMBER(a(1:imax*jmax*kmax,1))
-
 
   IF ( ims_pro .EQ. 0 ) & 
        WRITE(*,*) 'Executing everything once to get caches / stack / network in production state'
@@ -140,11 +145,17 @@ PROGRAM VMPI
       WRITE(*,*) '===== STARTING MEASUREMENT =====' 
       WRITE(*,*) '====='
    END IF
+  DO n = 0,2*nmax-1
 
-
-  
-  DO n = 1,nmax
-     
+     IF ( n .EQ. 0  ) THEN 
+        ims_trp_blocking=.TRUE.   
+        t_x=0.;  t_z=0.; t_x2=0.; t_z2=0.; 
+        IF ( ims_pro .EQ. 0 ) WRITE(*,*) '======== BLOCKING TRANSPOSES ========' 
+     ELSEIF ( n .EQ. nmax ) THEN
+        ims_trp_blocking=.FALSE. 
+        t_x=0.;  t_z=0.; t_x2=0.; t_z2=0.; 
+        IF ( ims_pro .EQ. 0 ) WRITE(*,*) '====== NONBLOCKING TRANSPOSES========' 
+     ENDIF
 ! -------------------------------------------------------------------
 ! Transposition along OX
 ! -------------------------------------------------------------------
@@ -158,17 +169,24 @@ PROGRAM VMPI
 
         CALL SYSTEM_CLOCK(t_end,PROC_CYCLES,MAX_CYCLES)
         
-        idummy = t_end-t_srt
-        CALL MPI_REDUCE(idummy, t_dif, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD, ims_err)
-        WRITE(str,'(E13.5E3)') REAL(t_dif)/PROC_CYCLES 
+        idum = t_end-t_srt
+        CALL MPI_REDUCE(idum, t_dif, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD, ims_err)
+        WRITE(str,'(E13.5E3)') REAL(t_dif)/PROC_CYCLES
         t_x = t_x + REAL(t_dif)/PROC_CYCLES 
-        
-        dummy = MAXVAL(ABS(a(1:imax*jmax*kmax,1)-a(1:imax*jmax*kmax,2)))
-        CALL MPI_REDUCE(dummy, residual, 1, MPI_REAL8, MPI_MAX, 0, MPI_COMM_WORLD, ims_err)
+
+        rdum = MAXVAL(ABS(a(1:imax*jmax*kmax,1)-a(1:imax*jmax*kmax,2)))
+        CALL MPI_REDUCE(rdum, residual, 1, MPI_REAL8, MPI_MAX, 0, MPI_COMM_WORLD, ims_err)
         WRITE(line,'(E13.5E3)') residual
 
-        line = 'Checking MPI transposition for Ox derivatives: Residual '&
-             //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
+        line = ' transposition for Ox derivatives: Residual '&
+             //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.' 
+        IF ( residual .EQ. 0 ) THEN 
+           line = 'PASSED' // ' transposition for Ox derivatives ' // TRIM(ADJUSTL(str)) // ' sec.'
+        ELSE 
+           line = 'FAILED' // ' transposition for Ox derivatives. Residual:' // TRIM(ADJUSTL(line)) & 
+                // ' Duration ' // TRIM(ADJUSTL(str)) //' sec.' 
+        ENDIF
+
         IF ( ims_pro .EQ. 0 ) THEN
            WRITE(*,'(a)') TRIM(ADJUSTL(line))
         ENDIF
@@ -188,35 +206,38 @@ PROGRAM VMPI
 
         CALL SYSTEM_CLOCK(t_end,PROC_CYCLES,MAX_CYCLES)
         
-        idummy = t_end-t_srt
-        CALL MPI_REDUCE(idummy, t_dif, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD, ims_err) 
+        idum = t_end-t_srt
+        CALL MPI_REDUCE(idum, t_dif, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD, ims_err) 
         WRITE(str,'(E13.5E3)') REAL(t_dif)/PROC_CYCLES 
-        t_z = t_z+REAL(t_dif)/PROC_CYCLES
+        t_z = t_z + REAL(t_dif)/PROC_CYCLES  
         
-        dummy = MAXVAL(ABS(a(1:imax*jmax*kmax,1)-a(1:imax*jmax*kmax,2)))
-        CALL MPI_REDUCE(dummy, residual, 1, MPI_REAL8, MPI_MAX, 0, MPI_COMM_WORLD, ims_err)
+        
+        rdum = MAXVAL(ABS(a(1:imax*jmax*kmax,1)-a(1:imax*jmax*kmax,2)))
+        CALL MPI_REDUCE(rdum, residual, 1, MPI_REAL8, MPI_MAX, 0, MPI_COMM_WORLD, ims_err)
         WRITE(line,'(E13.5E3)') residual
 
-        line = 'Checking MPI transposition for Oz derivatives: Residual '&
-             //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
+        IF ( residual .EQ. 0 ) THEN 
+           line = 'PASSED' // ' transposition for Oz derivatives ' // TRIM(ADJUSTL(str)) // ' sec.'
+        ELSE 
+           line = 'FAILED' // ' transposition for Oz derivatives. Residual:' // TRIM(ADJUSTL(line)) & 
+                // ' Duration ' // TRIM(ADJUSTL(str)) //' sec.' 
+        ENDIF
+
         IF ( ims_pro .EQ. 0 ) THEN
            WRITE(*,'(a)') TRIM(ADJUSTL(line))
         ENDIF
         
      ENDIF
 
+     IF ( ( n .EQ. nmax-1 .OR. n .EQ. 2*nmax-1 ) .AND. ims_pro .EQ. 0 ) THEN  
+        WRITE(*,*) 'X TRANSPOSES TIMING: ', t_x / nmax
+        WRITE(*,*) 'Z TRANSPOSES TIMING: ', t_z / nmax
+     ENDIF
   ENDDO
+  
+  CALL MPI_FINALIZE(ims_err)
 
-
-  IF ( ims_pro .EQ. 0 ) THEN 
-     WRITE(*,*) 'X TIMING', t_x/nmax, 'sec.' 
-     WRITE(*,*) 'Z TIMING', t_z/nmax, 'sec.'
-  ENDIF
-
-  CALL MPI_FINALIZE(ims_err) 
-  STOP 
-
-END PROGRAM VMPI
+END PROGRAM VMPI_RTRANSPOSE
 
 ! #######################################################################
 ! Rest of routines
@@ -248,6 +269,11 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ALLOCATE(ims_dr_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
   ALLOCATE(ims_ts_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
   ALLOCATE(ims_tr_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
+
+  ALLOCATE(ims_plan_trps_i(ims_npro_i))
+  ALLOCATE(ims_plan_trpr_i(ims_npro_i)) 
+  ALLOCATE(ims_plan_trps_k(ims_npro_k))
+  ALLOCATE(ims_plan_trpr_k(ims_npro_k)) 
 
 ! #######################################################################
   ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0
@@ -299,7 +325,36 @@ SUBROUTINE DNS_MPI_INITIALIZE
      CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF
-  
+
+
+! ######################################################################
+! Work plans for circular transposes 
+! ######################################################################
+  DO ip=0,ims_npro_i-1
+     ims_plan_trps_i(ip+1) = ip
+     ims_plan_trpr_i(ip+1) = MOD(ims_npro_i-ip,ims_npro_i)
+  ENDDO
+
+  DO ip=0,ims_npro_k-1 
+     ims_plan_trps_k(ip+1) = ip 
+     ims_plan_trpr_k(ip+1) = MOD(ims_npro_k-ip,ims_npro_k) 
+  ENDDO
+
+
+  ims_plan_trps_i = CSHIFT(ims_plan_trps_i,  ims_pro_i  ) 
+  ims_plan_trpr_i = CSHIFT(ims_plan_trpr_i,-(ims_pro_i) ) 
+
+  ims_plan_trps_k = CSHIFT(ims_plan_trps_k,  ims_pro_k  ) 
+  ims_plan_trpr_k = CSHIFT(ims_plan_trpr_k,-(ims_pro_k) ) 
+
+  DO ip=0,ims_npro_i-1
+     IF ( ims_pro .EQ. ip ) THEN 
+        WRITE(*,*) ims_pro, ims_pro_i, 'SEND:', ims_plan_trps_i 
+        WRITE(*,*) ims_pro, ims_pro_i, 'RECV:', ims_plan_trpr_i 
+     ENDIF 
+     CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
+  ENDDO
+
   CALL DNS_MPI_TAGRESET
 
   RETURN
@@ -438,9 +493,11 @@ END SUBROUTINE DNS_MPI_TYPE_K
 ! ###################################################################
 SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
   
-  USE DNS_MPI, ONLY : ims_npro_k, ims_pro_k
+  USE DNS_MPI, ONLY : ims_npro_k
   USE DNS_MPI, ONLY : ims_comm_z
   USE DNS_MPI, ONLY : ims_tag, ims_err
+  USE DNS_MPI, ONLY : ims_plan_trps_k, ims_plan_trpr_k, ims_trp_blocking
+  
 
   IMPLICIT NONE
   
@@ -452,10 +509,10 @@ SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
   INTEGER,  DIMENSION(ims_npro_k), INTENT(IN)  :: tsend, trecv ! types
   
 ! -----------------------------------------------------------------------
-  INTEGER(KIND=4) n, l
+  INTEGER(KIND=4) l, m, ns, nr
   INTEGER status(MPI_STATUS_SIZE,2*ims_npro_k)
   INTEGER mpireq(                2*ims_npro_k)
-  INTEGER ip
+  INTEGER ips, ipr
 
 #ifdef PROFILE_ON
   REAL(KIND=8) time_loc_1, time_loc_2
@@ -466,30 +523,25 @@ SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
   time_loc_1 = MPI_WTIME()
 #endif
 
-! #######################################################################
-! Same processor
-! #######################################################################
-  ip = ims_pro_k; n = ip + 1
-  CALL MPI_ISEND(a(dsend(n)+1), 1, tsend(n), ip, ims_tag, ims_comm_z, mpireq(1), ims_err)  
-  CALL MPI_IRECV(b(drecv(n)+1), 1, trecv(n), ip, ims_tag, ims_comm_z, mpireq(2), ims_err)
-
-  CALL MPI_WAITALL(2, mpireq, status, ims_err)
-
-! #######################################################################
-! Different processors
-! #######################################################################
-  l = 2
-  DO n = 1,ims_npro_k
-     ip = n - 1
-     IF ( ip .NE. ims_pro_k ) THEN
+  l = 0
+  DO m=1,ims_npro_k
+     ns=ims_plan_trps_k(m)+1; ips=ns-1
+     nr=ims_plan_trpr_k(m)+1; ipr=nr-1 
+     IF ( .NOT. ims_trp_blocking ) THEN 
         l = l + 1      
-        CALL MPI_ISEND(a(dsend(n)+1), 1, tsend(n), ip, ims_tag, ims_comm_z, mpireq(l), ims_err)
+        CALL MPI_ISEND(a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, ims_comm_z, mpireq(l), ims_err)
         l = l + 1
-        CALL MPI_IRECV(b(drecv(n)+1), 1, trecv(n), ip, ims_tag, ims_comm_z, mpireq(l), ims_err)        
+        CALL MPI_IRECV(b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag, ims_comm_z, mpireq(l), ims_err)         
+     ELSE 
+        CALL MPI_SENDRECV(& 
+             a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, & 
+             b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag, ims_comm_z, status(1,1), ims_err)
      ENDIF
+
   ENDDO
 
-  CALL MPI_WAITALL(ims_npro_k*2-2, mpireq(3:), status(1,3), ims_err)
+  IF ( .NOT. ims_trp_blocking ) & 
+       CALL MPI_WAITALL(ims_npro_k*2, mpireq(1:), status(1,1), ims_err)
 
   CALL DNS_MPI_TAGUPDT
 
@@ -500,9 +552,11 @@ END SUBROUTINE DNS_MPI_TRPF_K
 !########################################################################
 SUBROUTINE DNS_MPI_TRPF_I(a, b, dsend, drecv, tsend, trecv)
   
-  USE DNS_MPI, ONLY : ims_npro_i, ims_pro_i
+  USE DNS_MPI, ONLY : ims_npro_i
   USE DNS_MPI, ONLY : ims_comm_x
-  USE DNS_MPI, ONLY : ims_tag, ims_err
+  USE DNS_MPI, ONLY : ims_tag, ims_err 
+  USE DNS_MPI, ONLY : ims_plan_trpr_i,ims_plan_trps_i 
+  USE DNS_MPI, ONLY : ims_trp_blocking
 
   IMPLICIT NONE
   
@@ -514,37 +568,34 @@ SUBROUTINE DNS_MPI_TRPF_I(a, b, dsend, drecv, tsend, trecv)
   INTEGER,  DIMENSION(ims_npro_i), INTENT(IN)  :: tsend, trecv ! types
   
 ! -----------------------------------------------------------------------
-  INTEGER(KIND=4) n, l
+  INTEGER(KIND=4) l, m
   INTEGER status(MPI_STATUS_SIZE,2*ims_npro_i)
   INTEGER mpireq(                2*ims_npro_i)
-  INTEGER ip
+  INTEGER ips,ipr, ns, nr
 
-! #######################################################################
-! Same processor
-! #######################################################################
-  ip = ims_pro_i; n = ip + 1
-  CALL MPI_ISEND(a(dsend(n)+1), 1, tsend(n), ip, ims_tag, ims_comm_x, mpireq(1), ims_err)  
-  CALL MPI_IRECV(b(drecv(n)+1), 1, trecv(n), ip, ims_tag, ims_comm_x, mpireq(2), ims_err)
+  l = 0
 
-  CALL MPI_WAITALL(2, mpireq, status, ims_err)
+  DO m=1,ims_npro_i  
 
-! #######################################################################
-! Different processors
-! #######################################################################
-  l = 2
-  DO n = 1,ims_npro_i
-     ip = n-1 
-     IF ( ip .NE. ims_pro_i ) THEN
+     ns=ims_plan_trps_i(m)+1;   ips=ns-1 
+     nr=ims_plan_trpr_i(m)+1;   ipr=nr-1  
+
+     IF ( .NOT. ims_trp_blocking ) THEN  
         l = l + 1
-        CALL MPI_ISEND(a(dsend(n)+1), 1, tsend(n), ip, ims_tag, ims_comm_x, mpireq(l), ims_err)
-        l = l + 1 
-        CALL MPI_IRECV(b(drecv(n)+1), 1, trecv(n), ip, ims_tag, ims_comm_x, mpireq(l), ims_err)
+        CALL MPI_ISEND(a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, ims_comm_x, mpireq(l), ims_err) 
+        l = l + 1
+        CALL MPI_IRECV(b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag, ims_comm_x, mpireq(l), ims_err)  
+     ELSE
+        CALL MPI_SENDRECV(&
+             a(dsend(ns)+1),1,tsend(ns),ips, ims_tag, & 
+             b(drecv(nr)+1),1,trecv(nr),ipr, ims_tag,ims_comm_x,status(1,1),ims_err)   
      ENDIF
   ENDDO
 
-  CALL MPI_WAITALL(ims_npro_i*2-2, mpireq(3:), status(1,3), ims_err)
+  IF ( .NOT. ims_trp_blocking ) & 
+       CALL MPI_WAITALL(ims_npro_i*2, mpireq(1:), status(1,1), ims_err) 
 
-  CALL DNS_MPI_TAGUPDT
+  CALL DNS_MPI_TAGUPDT 
 
   RETURN
 END SUBROUTINE DNS_MPI_TRPF_I
@@ -553,9 +604,10 @@ END SUBROUTINE DNS_MPI_TRPF_I
 !########################################################################
 SUBROUTINE DNS_MPI_TRPB_K(b, a, dsend, drecv, tsend, trecv)
 
-  USE DNS_MPI, ONLY : ims_npro_k, ims_pro_k
+  USE DNS_MPI, ONLY : ims_npro_k
   USE DNS_MPI, ONLY : ims_comm_z
   USE DNS_MPI, ONLY : ims_tag, ims_err
+  USE DNS_MPI, ONLY : ims_plan_trps_k,ims_plan_trpr_k,ims_trp_blocking
 
   IMPLICIT NONE
   
@@ -567,10 +619,10 @@ SUBROUTINE DNS_MPI_TRPB_K(b, a, dsend, drecv, tsend, trecv)
   INTEGER,  DIMENSION(ims_npro_k), INTENT(IN)  :: tsend, trecv
   
 ! -----------------------------------------------------------------------
-  INTEGER(KIND=4) n, l
+  INTEGER(KIND=4) l,m
   INTEGER status(MPI_STATUS_SIZE,2*ims_npro_k)
   INTEGER mpireq(                2*ims_npro_k)
-  INTEGER ip
+  INTEGER ips,ipr,ns,nr
 
 #ifdef PROFILE_ON
   REAL(KIND=8) time_loc_1, time_loc_2
@@ -582,29 +634,27 @@ SUBROUTINE DNS_MPI_TRPB_K(b, a, dsend, drecv, tsend, trecv)
 #endif
 
 ! #######################################################################
-! Same processor
-! #######################################################################
-  ip = ims_pro_k; n = ip + 1
-  CALL MPI_ISEND(b(drecv(n)+1), 1, trecv(n), ip, ims_tag, ims_comm_z, mpireq(1), ims_err)
-  CALL MPI_IRECV(a(dsend(n)+1), 1, tsend(n), ip, ims_tag, ims_comm_z, mpireq(2), ims_err)
-
-  CALL MPI_WAITALL(2, mpireq, status, ims_err)
-
-! #######################################################################
 ! Different processors
 ! #######################################################################
-  l = 2
-  DO n = 1,ims_npro_k
-     ip = n - 1
-     IF ( ip .NE. ims_pro_k ) THEN
+  l = 0
+  !DO n = 1,ims_npro_k 
+  DO m=1,ims_npro_k 
+     ns=ims_plan_trps_k(m)+1; ips=ns-1
+     nr=ims_plan_trpr_k(m)+1; ipr=nr-1  
+     IF ( .NOT. ims_trp_blocking ) THEN 
         l = l + 1
-        CALL MPI_ISEND(b(drecv(n)+1), 1, trecv(n), ip, ims_tag, ims_comm_z, mpireq(l), ims_err)
+        CALL MPI_ISEND(b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag, ims_comm_z, mpireq(l), ims_err)
         l = l + 1
-        CALL MPI_IRECV(a(dsend(n)+1), 1, tsend(n), ip, ims_tag, ims_comm_z, mpireq(l), ims_err)
+        CALL MPI_IRECV(a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, ims_comm_z, mpireq(l), ims_err) 
+     ELSE 
+        CALL MPI_SENDRECV(& 
+             b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag,  & 
+             a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, ims_comm_z, status(1,m), ims_err)  
      ENDIF
   ENDDO
 
-  CALL MPI_WAITALL(ims_npro_k*2-2, mpireq(3:), status(1,3), ims_err)
+  IF ( .NOT. ims_trp_blocking ) & 
+       CALL MPI_WAITALL(ims_npro_k*2, mpireq(1:), status(1,1), ims_err)
 
   CALL DNS_MPI_TAGUPDT
 
@@ -615,9 +665,10 @@ END SUBROUTINE DNS_MPI_TRPB_K
 !########################################################################
 SUBROUTINE DNS_MPI_TRPB_I(b, a, dsend, drecv, tsend, trecv)
 
-  USE DNS_MPI, ONLY : ims_npro_i, ims_pro_i
+  USE DNS_MPI, ONLY : ims_npro_i
   USE DNS_MPI, ONLY : ims_comm_x
-  USE DNS_MPI, ONLY : ims_tag, ims_err
+  USE DNS_MPI, ONLY : ims_tag, ims_err 
+  USE DNS_MPI, ONLY : ims_plan_trpr_i, ims_plan_trps_i, ims_trp_blocking
 
   IMPLICIT NONE
   
@@ -629,35 +680,29 @@ SUBROUTINE DNS_MPI_TRPB_I(b, a, dsend, drecv, tsend, trecv)
   INTEGER,  DIMENSION(ims_npro_i), INTENT(IN)  :: tsend, trecv ! types
   
 ! -----------------------------------------------------------------------
-  INTEGER(KIND=4) n, l
+  INTEGER(KIND=4) ns,nr, m,l
   INTEGER status(MPI_STATUS_SIZE,2*ims_npro_i)
   INTEGER mpireq(                2*ims_npro_i)
-  INTEGER ip
+  INTEGER ips,ipr
 
-! #######################################################################
-! Same processor
-! #######################################################################
-  ip = ims_pro_i; n = ip + 1
-  CALL MPI_ISEND(b(drecv(n)+1), 1, trecv(n), ip, ims_tag, ims_comm_x, mpireq(1), ims_err)
-  CALL MPI_IRECV(a(dsend(n)+1), 1, tsend(n), ip, ims_tag, ims_comm_x, mpireq(2), ims_err)
-
-  CALL MPI_WAITALL(2, mpireq, status, ims_err)
-
-! #######################################################################
-! Different processors
-! #######################################################################
-  l = 2
-  DO n = 1,ims_npro_i
-     ip = n-1
-     IF ( ip .NE. ims_pro_i ) THEN
+  l = 0
+  DO m = 1,ims_npro_i
+     ns=ims_plan_trps_i(m)+1; ips=ns-1
+     nr=ims_plan_trpr_i(m)+1; ipr=nr-1  
+     IF ( .NOT. ims_trp_blocking ) THEN 
         l = l + 1
-        CALL MPI_ISEND(b(drecv(n)+1), 1, trecv(n), ip, ims_tag, ims_comm_x, mpireq(l), ims_err)
+        CALL MPI_ISEND(b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag, ims_comm_x, mpireq(l), ims_err)
         l = l + 1
-        CALL MPI_IRECV(a(dsend(n)+1), 1, tsend(n), ip, ims_tag, ims_comm_x, mpireq(l), ims_err)
+        CALL MPI_IRECV(a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, ims_comm_x, mpireq(l), ims_err)
+     ELSE 
+        CALL MPI_SENDRECV(& 
+             b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag,&
+             a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, ims_comm_x, status(1,m), ims_err) 
      ENDIF
   ENDDO
 
-  CALL MPI_WAITALL(ims_npro_i*2-2, mpireq(3:), status(1,3), ims_err)
+  IF ( .NOT. ims_trp_blocking ) & 
+       CALL MPI_WAITALL(ims_npro_i*2, mpireq(1:), status(1,1), ims_err) 
 
   CALL DNS_MPI_TAGUPDT
 
