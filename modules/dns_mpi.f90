@@ -20,6 +20,8 @@ MODULE DNS_MPI
   TINTEGER, DIMENSION(  :), ALLOCATABLE :: ims_size_i
   TINTEGER, DIMENSION(:,:), ALLOCATABLE :: ims_ds_i, ims_dr_i
   INTEGER,  DIMENSION(:,:), ALLOCATABLE :: ims_ts_i, ims_tr_i
+  INTEGER(KIND=4), DIMENSION(:), ALLOCATABLE :: ims_plan_trps_i, ims_plan_trpr_i 
+
 
 !  INTEGER,  DIMENSION(:  ), ALLOCATABLE :: ims_map_j
 !  TINTEGER, DIMENSION(  :), ALLOCATABLE :: ims_size_j
@@ -30,6 +32,7 @@ MODULE DNS_MPI
   TINTEGER, DIMENSION(  :), ALLOCATABLE :: ims_size_k
   TINTEGER, DIMENSION(:,:), ALLOCATABLE :: ims_ds_k, ims_dr_k
   INTEGER,  DIMENSION(:,:), ALLOCATABLE :: ims_ts_k, ims_tr_k
+  INTEGER(KIND=4), DIMENSION(:), ALLOCATABLE :: ims_plan_trps_k, ims_plan_trpr_k
 
   TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_size_p ! Particle data  
 
