@@ -2,6 +2,10 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
+#ifdef USE_MPI  
+#include "dns_const_mpi.h" 
+#endif
+
 SUBROUTINE DNS_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
@@ -15,6 +19,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE BOUNDARY_BCS
   USE BOUNDARY_INFLOW
   USE STATISTICS
+
+  USE DNS_MPI, ONLY :  ims_pro
   
   IMPLICIT NONE
 
@@ -47,7 +53,9 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#TimeStep=<value (used if CFL is negative)>')
   CALL IO_WRITE_ASCII(bakfile, '#TimeCFL=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#TermDivergence=<none/remove>')
-  CALL IO_WRITE_ASCII(bakfile, '#RhsMode=<split/combined/nonblocking>') 
+  CALL IO_WRITE_ASCII(bakfile, '#RhsMode=<split/combined/nonblocking>')  
+  CALL IO_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')  
+  CALL IO_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>') 
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TimeOrder', 'dummy', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttaexplicit3'  ) THEN; rkm_mode = RKM_EXP3;
@@ -86,6 +94,28 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong RhsMode option.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
+
+#ifdef USE_MPI  
+  CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeITranspose', 'sendrecv',sRes) 
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_i = DNS_MPI_TRP_NONE
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_i = DNS_MPI_TRP_ASYNCHRONOUS
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_i = DNS_MPI_TRP_SENDRECV 
+  ELSE    
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeITranspose option.')
+     CALL DNS_STOP(DNS_ERROR_OPTION) 
+  ENDIF
+
+  CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeKTranspose', 'asynchronous',sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_k = DNS_MPI_TRP_NONE
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_k = DNS_MPI_TRP_ASYNCHRONOUS
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_k = DNS_MPI_TRP_SENDRECV
+  ELSE    
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeKTranspose option.')
+     CALL DNS_STOP(DNS_ERROR_OPTION) 
+  ENDIF
+
+#endif 
+
 
 ! ###################################################################
 ! Iteration Section
