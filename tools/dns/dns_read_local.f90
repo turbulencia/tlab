@@ -20,8 +20,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE BOUNDARY_INFLOW
   USE STATISTICS
 
-  USE DNS_MPI, ONLY :  ims_pro
-  
   IMPLICIT NONE
 
 #include "integers.h"
@@ -113,9 +111,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeKTranspose option.')
      CALL DNS_STOP(DNS_ERROR_OPTION) 
   ENDIF
-
 #endif 
-
 
 ! ###################################################################
 ! Iteration Section
