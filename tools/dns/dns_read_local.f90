@@ -94,7 +94,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ENDIF
 
 #ifdef USE_MPI  
-  CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeITranspose', 'sendrecv',sRes) 
+  CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeITranspose', 'asynchronous',sRes) 
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_i = DNS_MPI_TRP_NONE
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_i = DNS_MPI_TRP_ASYNCHRONOUS
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_i = DNS_MPI_TRP_SENDRECV 
@@ -103,7 +103,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      CALL DNS_STOP(DNS_ERROR_OPTION) 
   ENDIF
 
-  CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeKTranspose', 'sendrecv',sRes)
+  CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeKTranspose', 'asynchronous',sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_k = DNS_MPI_TRP_NONE
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_k = DNS_MPI_TRP_ASYNCHRONOUS
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_k = DNS_MPI_TRP_SENDRECV
