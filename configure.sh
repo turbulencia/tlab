@@ -21,6 +21,8 @@ case $kernel in
                 SYST=juqueen;; 
             laptop* )
                 SYST=archlinux;; 
+            eetac* )
+                SYST=eetac;; 
 	esac 
 esac
 
