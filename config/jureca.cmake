@@ -1,4 +1,4 @@
-# JUWELS (FZ JUELICH) 
+# JURECA (FZ JUELICH) 
 
 if ( NOT BUILD_TYPE )
    message( WARNING "Setting CMAKE_BUILD_TYPE to default value." )
