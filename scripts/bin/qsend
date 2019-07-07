@@ -54,6 +54,11 @@ if [ $system = "juwels" ]; then
    QSEND_RANKSPERNODE=48
    QSEND_THREADSPERRANK=1
 fi
+if [ $system = "jureca" ]; then 
+   QSEND_COMMODE=blocking 
+   QSEND_RANKSPERNODE=24
+   QSEND_THREADSPERRANK=1
+fi
 
 RUNMODE="simulation"
 
@@ -121,7 +126,7 @@ if [ $# -eq 0 ]; then
 
    fi
 
-   if [ $system = "juwels" ]; then
+   if [ $system = "juwels" ] ; then 
       echo "Enter ranks per node [$QSEND_RANKSPERNODE] :(1-48)"
       read value
       if [ -n "$value" ]; then
@@ -135,6 +140,21 @@ if [ $# -eq 0 ]; then
          QSEND_THREADSPERRANK=$value
       fi
 
+   fi
+
+   if [ $system = "jureca" ] ; then 
+      echo "Enter ranks per node [$QSEND_RANKSPERNODE] :(1-24)"
+      read value
+      if [ -n "$value" ]; then
+         QSEND_RANKSPERNODE=$value
+      fi
+
+      QSEND_THREADSPERRANK=$((24/$QSEND_RANKSPERNODE))
+      echo "Enter threads per rank [$QSEND_THREADSPERRANK] :(1-24)"
+      read value
+      if [ -n "$value" ]; then
+         QSEND_THREADSPERRANK=$value
+      fi
    fi
 
    echo "Enter Time Requested :(seconds)"
@@ -192,7 +212,7 @@ if [ $# -eq 0 ]; then
       echo "Communication mode   : $QSEND_COMMMODE"
       echo "Ranks per node       : $QSEND_RANKSPERNODE"
    fi
-   if [ $system = "juwels" ]; then
+   if [ $system = "juwels" ] || [ $system = "jureca" ]; then
       echo "Ranks per node       : $QSEND_RANKSPERNODE"
       echo "Threads per rank     : $QSEND_THREADSPERRANK"
    fi
@@ -506,7 +526,7 @@ if [ $answer = "yes" ]; then
 		}
 	    print $0
 	}' 
-    elif [ $system = "juwels" ]; then
+    elif [ $system = "juwels" ] || [ $system = "jureca" ]; then
 	LINE='BEGIN {} 
 	    { 
              if ($4 == "DIRECTIVES" ) 
