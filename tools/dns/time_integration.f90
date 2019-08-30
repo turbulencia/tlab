@@ -206,6 +206,11 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
 
 ! -----------------------------------------------------------------------
      IF ( MOD(itime-nitera_first,nitera_pln) .EQ. 0 ) THEN ! Save planes
+        WRITE(fname,100) rtime
+        WRITE(line1,*) itime; line1 = 'Writing planes at It'//TRIM(ADJUSTL(line1))//' and time '//TRIM(ADJUSTL(fname))//'.'
+        CALL IO_WRITE_ASCII(lfile,line1)
+100     FORMAT(G_FORMAT_R)
+        
         IF ( nplanes_k .GT. 0 ) THEN
            CALL REDUCE_Z_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, nplanes_k,planes_k, txc)
            WRITE(fname,*) itime; fname = 'planesK.'//TRIM(ADJUSTL(fname))
