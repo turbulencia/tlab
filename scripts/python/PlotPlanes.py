@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 sizeofdata = 4 # in bytes
 # sizeofdata = 1 # for gate files
 
-etype = ">" # big-endian
-# etype = "<" # little-endian
+# etype = ">" # big-endian
+etype = "<" # little-endian
 
 dtype = "f" # floating number 
 # dtype = 'B' # unsigned character, for gate files
@@ -51,18 +51,30 @@ setoffiles = sorted(sys.argv[2:])
 
 # processing data
 fin = open('grid.'+planetype, 'rb')
-raw = fin.read(nx*4)
-x1 = np.array(struct.unpack(etype+'{}f'.format(nx), raw))
-nx1= nx
 if   ( planetype == 'xy' ):
+    raw = fin.read(nx*4)
+    x1 = np.array(struct.unpack(etype+'{}f'.format(nx), raw))
+    nx1= nx
     raw = fin.read(ny*4)
     x2 = np.array(struct.unpack(etype+'{}f'.format(ny), raw))
     nx2= ny
 elif ( planetype == 'xz' ):
+    raw = fin.read(nx*4)
+    x1 = np.array(struct.unpack(etype+'{}f'.format(nx), raw))
+    nx1= nx
+    raw = fin.read(nz*4)
+    x2 = np.array(struct.unpack(etype+'{}f'.format(nz), raw))
+    nx2= nz
+elif ( planetype == 'yz' ):
+    raw = fin.read(ny*4)
+    x1 = np.array(struct.unpack(etype+'{}f'.format(ny), raw))
+    nx1= ny
     raw = fin.read(nz*4)
     x2 = np.array(struct.unpack(etype+'{}f'.format(nz), raw))
     nx2= nz
 fin.close()
+
+levels = np.linspace(-0.537284965,0.537284965,32)
 
 for file in setoffiles:
     print("Processing file %s ..." % file)
@@ -72,15 +84,16 @@ for file in setoffiles:
     a = a.reshape((nx2,nx1))
     fin.close()
 
-    plt.pcolormesh(x1,x2,a)
+    plt.pcolormesh(x1,x2,a)#,vmin=-0.537284965,vmax=0.537284965)
     # plt.contourf(x1,x2,a)
     plt.axis('equal')
     axes = plt.gca()
     axes.set_xlim([x1[0],x1[nx1-1]])
     axes.set_ylim([x2[0],x2[nx2-1]])
     plt.colorbar()
-    plt.title(file)
+    #plt.title(file)
 
     # plt.tight_layout(pad=0.1, w_pad=0.4, h_pad=0.1)
-    # plt.savefig("{}.pdf".format(file))
+    # plt.savefig("{}.jpg".format(file),dpi=150,bbox_inches='tight')
     plt.show()
+    plt.clf()

@@ -1,10 +1,9 @@
 #!/usr/bin/python3
 
-import numpy as np   # For array operations.
 import struct
 import sys
 
-setofplanes = [ 1, 16 ]
+setofplanes = [ 1, 2, 3, 4, 5 ]
 
 sizeofdata = 4 # in bytes
 # sizeofdata = 1 # for gate files
@@ -12,8 +11,8 @@ sizeofdata = 4 # in bytes
 sizeofheader = 0
 # sizeofheader = 36 # for gate files
 
-etype = ">" # big-endian
-# etype = "<" # little-endian
+# etype = ">" # big-endian
+etype = "<" # little-endian
 
 nx = 0 # number of points in Ox; if 0, then search dns.ini
 ny = 0 # number of points in Oy; if 0, then search dns.ini
@@ -44,7 +43,7 @@ print("Grid size is {}x{}x{}.".format(nx,ny,nz))
 
 # getting data from stdin
 if ( len(sys.argv) <= 2 ):
-    print("Usage: python $0 [xy,xz] list-of-files.")
+    print("Usage: python $0 [xy,xz,yz] list-of-files.")
     quit()
 
 planetype  = sys.argv[1]
@@ -54,8 +53,10 @@ if   ( planetype == 'xy' ):
     sizeofmask = len(str(nz)) 
 elif ( planetype == 'xz' ):
     sizeofmask = len(str(ny)) 
+elif ( planetype == 'yz' ):
+    sizeofmask = len(str(nx)) 
 else:
-    print("Usage: python $0 [xy,xz] list-of-files.")
+    print("Usage: python $0 [xy,xz,yz] list-of-files.")
     quit()
 
 # further initialization
@@ -65,46 +66,56 @@ def tag(sizeofmask,number):
         a = '0' + a
     return a
 
-# processing data
-print("Processing file grid ...")
-fin = open('grid', 'rb')
-fout = open('grid.'+planetype,'wb')
-
-fin.seek(56,0)
-raw = fin.read(nx*8)
-a = struct.unpack(etype+'{}d'.format(nx), raw)
-raw = struct.pack(etype+'{}f'.format(nx),*a)
-fout.write(raw)
-
-if   ( planetype == 'xy' ):
-    fin.seek(8,1)
-    raw = fin.read(ny*8)
-    a = struct.unpack(etype+'{}d'.format(ny), raw)
-    raw = struct.pack(etype+'{}f'.format(ny),*a)
-    fout.write(raw)
-elif ( planetype == 'xz' ):
-    fin.seek(8+ny*8+8,1)
-    raw = fin.read(nz*8)
-    a = struct.unpack(etype+'{}d'.format(nz), raw)
-    raw = struct.pack(etype+'{}f'.format(nz),*a)
-    fout.write(raw)
-
-fout.close()
-fin.close()
-
+# extracting planes
 for file in setoffiles:
     print("Processing file %s ..." % file)
-    for plane in setofplanes:
-        fout = open(file+'.'+planetype+tag(sizeofmask,plane),'wb')
-        fin = open(file, 'rb')
+    if file == 'grid':
+        fin = open('grid', 'rb')
+        #
+        fin.seek(56,0)
+        raw = fin.read(nx*8)
+        a = struct.unpack(etype+'{}d'.format(nx), raw)
+        rawx = struct.pack(etype+'{}f'.format(nx),*a)
+        #
+        fin.seek(8,1)
+        raw = fin.read(ny*8)
+        a = struct.unpack(etype+'{}d'.format(ny), raw)
+        rawy = struct.pack(etype+'{}f'.format(ny),*a)
+        #
+        fin.seek(8,1)
+        raw = fin.read(nz*8)
+        a = struct.unpack(etype+'{}d'.format(nz), raw)
+        rawz = struct.pack(etype+'{}f'.format(nz),*a)
+        #
+        fin.close()        
+        
+        fout = open('grid.'+planetype,'wb')
         if   ( planetype == 'xy' ):
-            fin.seek(sizeofheader +(plane-1)*nx*ny*sizeofdata,0)
-            raw = fin.read(nx*ny*sizeofdata)
-            fout.write(raw)
+            fout.write(rawx)
+            fout.write(rawy)
         elif ( planetype == 'xz' ):
-            for k in range(nz):
-                fin.seek(sizeofheader +k*nx*ny*sizeofdata +(plane-1)*nx*sizeofdata,0)
-                raw = fin.read(nx*sizeofdata)
-                fout.write(raw)
+            fout.write(rawx)
+            fout.write(rawz)        
+        elif ( planetype == 'yz' ):
+            fout.write(rawy)
+            fout.write(rawz)        
         fout.close()
-    fin.close()
+
+    else:
+        for plane in setofplanes:
+            fout = open(file+'.'+planetype+tag(sizeofmask,plane),'wb')
+            fin = open(file, 'rb')
+            if   ( planetype == 'xy' ):
+                fin.seek(sizeofheader +(plane-1)*nx*ny*sizeofdata,0)
+                raw = fin.read(nx*ny*sizeofdata)
+                fout.write(raw)
+            elif ( planetype == 'xz' ):
+                for k in range(nz):
+                    fin.seek(sizeofheader +k*nx*ny*sizeofdata +(plane-1)*nx*sizeofdata,0)
+                    raw = fin.read(nx*sizeofdata)
+                    fout.write(raw)
+            elif ( planetype == 'yz' ): 
+                print("Still undeveloped.")
+                
+            fout.close()
+        fin.close()
