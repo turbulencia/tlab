@@ -912,7 +912,7 @@ PROGRAM PDFS
 
         txc(1:isize_field,5) = SQRT( txc(1:isize_field,5) +C_SMALL_R) 
         txc(1:isize_field,6) = SQRT( txc(1:isize_field,6) +C_SMALL_R)
-        txc(1:isize_field,2) = txc(1:isize_field,1) /txc(1:isize_field,5) /txc(1:isize_field,6) ! Cosine of angle between 2 vectors
+        txc(1:isize_field,2) = txc(1:isize_field,1) /( txc(1:isize_field,5) *txc(1:isize_field,6) ) ! Cosine of angle between 2 vectors
        
         txc(1:isize_field,1) = txc(1:isize_field,1)*txc(1:isize_field,1) ! Squared of the potential voticity
         txc(1:isize_field,1) = LOG(txc(1:isize_field,1)+C_SMALL_R)
