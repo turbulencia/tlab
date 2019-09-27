@@ -1035,17 +1035,13 @@ PROGRAM AVERAGES
         ENDDO
         
 
-        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, u)
         u = u*v
         nfield = nfield+1; data(nfield)%field => u; varname(nfield) = 'vu'
-        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, v)
-        ! I need v' below
+        ! I need v below
         nfield = nfield+1; data(nfield)%field => v; varname(nfield) = 'vv'
-        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, w)
         w = w*v
         nfield = nfield+1; data(nfield)%field => w; varname(nfield) = 'vw'
         DO is = 1,inb_scal_array
-           CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(:,is))
            s(:,is) = s(:,is)*v
            nfield = nfield+1; data(nfield)%field => s(:,is); WRITE(varname(nfield),*) is; varname(nfield) = 'v'//TRIM(ADJUSTL(varname(nfield)))
         ENDDO
@@ -1172,7 +1168,5 @@ PROGRAM AVERAGES
   CALL DNS_END(0)
 
   STOP
-
-100 FORMAT(G_FORMAT_R)
 
 END PROGRAM AVERAGES

@@ -64,7 +64,9 @@ elif [ $system = "mistral" ]; then
 elif [ $system = "juwels" ]; then
     srun --export=ALL,ROMIO_HINTS=/p/home/jusers/ansorge1/juwels/romio_hints \
 	$exfile > $STDOUT 2> $STDERR
-
+elif [ $system = "jureca" ]; then
+    srun --export=ALL \
+	$exfile > $STDOUT 2> $STDERR
 elif [ $system = "juqueen" ]; then
     if [ -n "$3" ]; then
 	runjob         --ranks-per-node $2 --mapping $3 --exp-env PAMID_VERBOSE         \

@@ -2,6 +2,10 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
+#ifdef USE_MPI  
+#include "dns_const_mpi.h" 
+#endif
+
 SUBROUTINE DNS_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
@@ -15,7 +19,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE BOUNDARY_BCS
   USE BOUNDARY_INFLOW
   USE STATISTICS
-  
+
   IMPLICIT NONE
 
 #include "integers.h"
@@ -47,7 +51,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#TimeStep=<value (used if CFL is negative)>')
   CALL IO_WRITE_ASCII(bakfile, '#TimeCFL=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#TermDivergence=<none/remove>')
-  CALL IO_WRITE_ASCII(bakfile, '#RhsMode=<split/combined/nonblocking>') 
+  CALL IO_WRITE_ASCII(bakfile, '#RhsMode=<split/combined/nonblocking>')  
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TimeOrder', 'dummy', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttaexplicit3'  ) THEN; rkm_mode = RKM_EXP3;

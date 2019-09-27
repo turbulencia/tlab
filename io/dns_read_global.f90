@@ -85,6 +85,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
   CALL IO_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
   CALL IO_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian8/CompactDirect6>')
+  CALL IO_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')  
+  CALL IO_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>') 
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'FileFormat', 'RawSplit', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'rawarray' ) THEN; imode_files = DNS_FILE_RAWARRAY
@@ -262,6 +264,27 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   g(1:3)%mode_fdm = imode_fdm
   
+! -------------------------------------------------------------------
+#ifdef USE_MPI  
+  CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeITranspose', 'asynchronous',sRes) 
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_i = DNS_MPI_TRP_NONE
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_i = DNS_MPI_TRP_ASYNCHRONOUS
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_i = DNS_MPI_TRP_SENDRECV 
+  ELSE    
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeITranspose option.')
+     CALL DNS_STOP(DNS_ERROR_OPTION) 
+  ENDIF
+
+  CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeKTranspose', 'asynchronous',sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_k = DNS_MPI_TRP_NONE
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_k = DNS_MPI_TRP_ASYNCHRONOUS
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_k = DNS_MPI_TRP_SENDRECV
+  ELSE    
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeKTranspose option.')
+     CALL DNS_STOP(DNS_ERROR_OPTION) 
+  ENDIF
+#endif 
+
 ! ###################################################################
 ! Dimensionles parameters
 ! ###################################################################

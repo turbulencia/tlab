@@ -1,0 +1,6 @@
+site=fzj
+system=jureca
+os=linux
+account=hku24
+queue="batch"
+hpc=parallel

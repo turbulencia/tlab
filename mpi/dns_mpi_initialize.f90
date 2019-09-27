@@ -11,6 +11,8 @@ SUBROUTINE DNS_MPI_INITIALIZE
   USE DNS_CONSTANTS, ONLY : lfile
   USE DNS_MPI
 
+  IMPLICIT NONE
+
 #include "integers.h"
 #include "mpif.h"
 
@@ -26,6 +28,8 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ALLOCATE(ims_dr_i(ims_npro_i,DNS_MPI_I_MAXTYPES))
   ALLOCATE(ims_ts_i(ims_npro_i,DNS_MPI_I_MAXTYPES))
   ALLOCATE(ims_tr_i(ims_npro_i,DNS_MPI_I_MAXTYPES))
+  ALLOCATE(ims_plan_trps_i(ims_npro_i))
+  ALLOCATE(ims_plan_trpr_i(ims_npro_i)) 
 
   ALLOCATE(ims_map_k(ims_npro_k))
   ALLOCATE(ims_size_k(DNS_MPI_K_MAXTYPES))
@@ -33,6 +37,8 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ALLOCATE(ims_dr_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
   ALLOCATE(ims_ts_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
   ALLOCATE(ims_tr_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
+  ALLOCATE(ims_plan_trps_k(ims_npro_k))
+  ALLOCATE(ims_plan_trpr_k(ims_npro_k)) 
 
   ALLOCATE(ims_size_p(ims_npro)) ! Particle information
 
@@ -118,6 +124,32 @@ SUBROUTINE DNS_MPI_INITIALIZE
   CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
        ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF
+
+! ######################################################################
+! Work plans for circular transposes 
+! ######################################################################
+  DO ip=0,ims_npro_i-1
+     ims_plan_trps_i(ip+1) = ip
+     ims_plan_trpr_i(ip+1) = MOD(ims_npro_i-ip,ims_npro_i)
+  ENDDO
+  ims_plan_trps_i = CSHIFT(ims_plan_trps_i,  ims_pro_i  ) 
+  ims_plan_trpr_i = CSHIFT(ims_plan_trpr_i,-(ims_pro_i) ) 
+
+
+  DO ip=0,ims_npro_k-1 
+     ims_plan_trps_k(ip+1) = ip 
+     ims_plan_trpr_k(ip+1) = MOD(ims_npro_k-ip,ims_npro_k) 
+  ENDDO
+  ims_plan_trps_k = CSHIFT(ims_plan_trps_k,  ims_pro_k  ) 
+  ims_plan_trpr_k = CSHIFT(ims_plan_trpr_k,-(ims_pro_k) ) 
+
+  ! DO ip=0,ims_npro_i-1
+  !    IF ( ims_pro .EQ. ip ) THEN 
+  !       WRITE(*,*) ims_pro, ims_pro_i, 'SEND:', ims_plan_trps_i 
+  !       WRITE(*,*) ims_pro, ims_pro_i, 'RECV:', ims_plan_trpr_i 
+  !    ENDIF 
+  !    CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
+  ! ENDDO
 
 ! #######################################################################
 ! Auxiliar depending on simmode

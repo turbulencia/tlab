@@ -25,6 +25,11 @@
 
 #define DNS_MPI_I_MAXTYPES  6
 
+! Control of MPI Transpositions 
+#define DNS_MPI_TRP_NONE         0
+#define DNS_MPI_TRP_ASYNCHRONOUS 1 
+#define DNS_MPI_TRP_SENDRECV     2
+
 #define MPIO_SUBARRAY_VISUALS_XOY  1
 #define MPIO_SUBARRAY_VISUALS_ZOY  2
 #define MPIO_SUBARRAY_VISUALS_XOZ  3
