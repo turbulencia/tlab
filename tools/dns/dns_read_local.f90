@@ -905,6 +905,13 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      nplanes_j = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_j, planes_j)
   ENDIF
   
+  CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PressureJ', 'no', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN
+     pplanes_j = 1
+  ELSE
+     pplanes_j = 0
+  ENDIF
+
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'IntegralsJ', 'no', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; nplanes_j_aux = 1
   ELSE;                                       nplanes_j_aux = 0; ENDIF

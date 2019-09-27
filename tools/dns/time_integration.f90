@@ -14,7 +14,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
      l_q, l_hq, l_txc, l_comm)
   
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, tag_part, tag_traj, lfile
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal_array, inb_flow_array
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal_array, inb_flow_array
   USE DNS_GLOBAL, ONLY : isize_particle
   USE DNS_GLOBAL, ONLY : imode_sim, imode_eqns
   USE DNS_GLOBAL, ONLY : icalc_flow, icalc_scal, icalc_part
@@ -236,13 +236,16 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
            WRITE(fname,*) itime; fname = 'planesJ.'//TRIM(ADJUSTL(fname))
            CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_XOZ, fname, varname, txc, splanes_j, hq) 
 
-           CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1), &
-                txc(1+isize_field),txc(1+2*isize_field),txc(1+3*isize_field), &
-                wrk1d,wrk2d,wrk3d)
-           CALL REDUCE_Y_ALL(imax,jmax,kmax, 1 ,txc, 0,s, wrk3d, nplanes_j,nplanes_j_aux,planes_j, txc)
-           WRITE(fname,*) itime; fname = 'pressrJ.'//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_XOZ_P, fname, varname, txc, splanes_jp, hq) 
-           
+           IF ( pplanes_j .EQ. 1 ) THEN   !calculate and write pressure for xOz planes
+
+              CALL FI_PRESSURE_BOUSSINESQ(q,s,txc(1), &
+                   txc(1+isize_txc_field),txc(1+2*isize_txc_field),txc(1+3*isize_txc_field), &
+                   wrk1d,wrk2d,wrk3d)
+              CALL REDUCE_Y_ALL(imax,jmax,kmax, 1 ,txc(1), 0,s, wrk3d, nplanes_j,nplanes_j_aux,planes_j, txc)
+              WRITE(fname,*) itime; fname = 'pressrJ.'//TRIM(ADJUSTL(fname))
+              ! splanes_jp = (/idummy,1,idummy,1,1/) 
+              CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_XOZ_P, fname, varname, txc, splanes_jp, hq) 
+           ENDIF
         ENDIF
 
         IF ( nplanes_i .GT. 0 ) THEN
