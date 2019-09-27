@@ -55,7 +55,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
 
 ! -------------------------------------------------------------------
   TINTEGER is, iq, ip
-  TINTEGER idummy, splanes_i(5), splanes_j(5), splanes_k(5)
+  TINTEGER idummy, splanes_i(5), splanes_j(5), splanes_k(5), splanes_jp(5) 
   CHARACTER*32 fname, varname(1)
   CHARACTER*250 line1
   LOGICAL flag_save
@@ -68,15 +68,12 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
   u   => q(:,1)
   v   => q(:,2)
   w   => q(:,3)
-
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      e   => q(:,4)
      rho => q(:,5)
      p   => q(:,6)
      T   => q(:,7)
-     
      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) vis => q(:,8)
-
   ENDIF
 
 ! Sizes information for saving planes  
@@ -86,6 +83,8 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
   splanes_k  = (/idummy,1,idummy,1,1/)
   idummy     = imax*kmax*nplanes_j*(inb_flow_array+inb_scal_array)
   splanes_j  = (/idummy,1,idummy,1,1/)
+  idummy     = imax*kmax*nplanes_j 
+  splanes_jp = (/idummy,1,idummy,1,1/) 
   varname    = (/''/)
   
 ! ###################################################################
@@ -230,7 +229,15 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
            ENDIF
            CALL REDUCE_Y_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, wrk3d, nplanes_j,nplanes_j_aux,planes_j, txc)
            WRITE(fname,*) itime; fname = 'planesJ.'//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_XOZ, fname, varname, txc, splanes_j, hq)
+           CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_XOZ, fname, varname, txc, splanes_j, hq) 
+
+           CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1), &
+                txc(1+isize_field),txc(1+2*isize_field),txc(1+3*isize_field), &
+                wrk1d,wrk2d,wrk3d)
+           CALL REDUCE_Y_ALL(imax,jmax,kmax, 1 ,txc, 0,s, wrk3d, nplanes_j,nplanes_j_aux,planes_j, txc)
+           WRITE(fname,*) itime; fname = 'pressrJ.'//TRIM(ADJUSTL(fname))
+           CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_XOZ_P, fname, varname, txc, splanes_jp, hq) 
+           
         ENDIF
 
         IF ( nplanes_i .GT. 0 ) THEN
