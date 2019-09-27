@@ -251,8 +251,8 @@ PROGRAM PDFS
      inb_txc = MAX(inb_txc,3)
      nfield = 3
   CASE (17 ) ! potential vorticity
-     nfield = 1
-     inb_txc = MAX(inb_txc,4)
+     nfield = 2
+     inb_txc = MAX(inb_txc,6)
      iread_flow = 1
      iread_scal = 1
   END SELECT
@@ -897,17 +897,28 @@ PROGRAM PDFS
 ! ###################################################################
      CASE ( 17 )
         CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
+        txc(1:isize_field,6) = txc(1:isize_field,1)*txc(1:isize_field,1) &
+                             + txc(1:isize_field,2)*txc(1:isize_field,2) &
+                             + txc(1:isize_field,3)*txc(1:isize_field,3) ! Enstrophy
         CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
         txc(1:isize_field,1) =                       txc(1:isize_field,1)*txc(1:isize_field,4) 
+        txc(1:isize_field,5) =                       txc(1:isize_field,4)*txc(1:isize_field,4) ! norm grad b
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
         txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,2)*txc(1:isize_field,4) 
+        txc(1:isize_field,5) = txc(1:isize_field,5) +txc(1:isize_field,4)*txc(1:isize_field,4) ! norm grad b
         CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
         txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,3)*txc(1:isize_field,4)
+        txc(1:isize_field,5) = txc(1:isize_field,5) +txc(1:isize_field,4)*txc(1:isize_field,4) ! norm grad b
 
-        txc(1:isize_field,1) = txc(1:isize_field,1)*txc(1:isize_field,1)
+        txc(1:isize_field,5) = SQRT( txc(1:isize_field,5) +C_SMALL_R) 
+        txc(1:isize_field,6) = SQRT( txc(1:isize_field,6) +C_SMALL_R)
+        txc(1:isize_field,2) = txc(1:isize_field,1) /( txc(1:isize_field,5) *txc(1:isize_field,6) ) ! Cosine of angle between 2 vectors
+       
+        txc(1:isize_field,1) = txc(1:isize_field,1)*txc(1:isize_field,1) ! Squared of the potential voticity
         txc(1:isize_field,1) = LOG(txc(1:isize_field,1)+C_SMALL_R)
 
         data(1)%field => txc(:,1); varname(1) = 'LnPotentialEnstrophy'; ibc(1) = 2
+        data(2)%field => txc(:,2); varname(2) = 'CosPotentialEnstrophy';ibc(2) = 2
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
