@@ -9,7 +9,7 @@ MODULE DNS_LOCAL
   IMPLICIT NONE
   SAVE
 
-  TINTEGER, PARAMETER :: MAX_SAVEPLANES = 10
+  TINTEGER, PARAMETER :: MAX_SAVEPLANES = 20
 
 ! ###################################################################
 ! Iteration
