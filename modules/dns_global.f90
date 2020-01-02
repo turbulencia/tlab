@@ -1,4 +1,5 @@
 #include "types.h"
+#include "dns_const_mpi.h"
 
 MODULE DNS_CONSTANTS
   IMPLICIT NONE
@@ -83,7 +84,7 @@ MODULE DNS_GLOBAL
   TINTEGER :: inb_part_txc
 
 ! subarray information (offset)
-  TYPE(subarray_dt), DIMENSION(10) :: io_aux
+  TYPE(subarray_dt), DIMENSION(MPIO_SUBARRAY_SIZE) :: io_aux
 
 ! ###################################################################
   TYPE(grid_dt), DIMENSION(3) :: g     ! Grid information along 3 directions

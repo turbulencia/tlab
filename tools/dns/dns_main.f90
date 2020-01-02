@@ -471,7 +471,7 @@ SUBROUTINE DNS_MPIO_AUX()
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : inb_flow_array, inb_scal_array
-  USE DNS_LOCAL,  ONLY : nplanes_i,nplanes_j,nplanes_k, planes_i,planes_k
+  USE DNS_LOCAL,  ONLY : nplanes_i,nplanes_j,nplanes_k, pplanes_j, planes_i,planes_k
   USE DNS_MPI
   
   IMPLICIT NONE
@@ -523,8 +523,8 @@ SUBROUTINE DNS_MPIO_AUX()
 
   ENDIF
 
-  id = MPIO_SUBARRAY_PLANES_XOZ
-  IF ( nplanes_j .GT. 0 ) THEN ! Saving full blocks xOz planes
+  id = MPIO_SUBARRAY_PLANES_XOZ  !
+  IF ( nplanes_j .GT. 0 ) THEN ! Saving full blocks xOz planes for prognostic variables 
      mpio_aux(id)%active = .TRUE.
      mpio_aux(id)%communicator = MPI_COMM_WORLD
      
@@ -537,6 +537,25 @@ SUBROUTINE DNS_MPIO_AUX()
           MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
      CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
 
+  ENDIF
+
+  IF ( pplanes_j .EQ. 1 ) THEN
+
+     id = MPIO_SUBARRAY_PLANES_XOZ_P  !
+     IF ( nplanes_j .GT. 0 ) THEN ! Saving full blocks xOz planes for prognostic variables 
+        mpio_aux(id)%active = .TRUE.
+        mpio_aux(id)%communicator = MPI_COMM_WORLD
+
+        ndims = 3 ! Subarray for the output of the 2D data
+        sizes(1)  =imax*ims_npro_i; sizes(2)   = nplanes_j; sizes(3)   = kmax *ims_npro_k
+        locsize(1)=imax;            locsize(2) = nplanes_j; locsize(3) = kmax
+        offset(1) =ims_offset_i;    offset(2)  = 0;         offset(3)  = ims_offset_k
+
+        CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+             MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
+        CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+
+     ENDIF
   ENDIF
 
   RETURN

@@ -9,7 +9,7 @@ MODULE DNS_LOCAL
   IMPLICIT NONE
   SAVE
 
-  TINTEGER, PARAMETER :: MAX_SAVEPLANES = 10
+  TINTEGER, PARAMETER :: MAX_SAVEPLANES = 20
 
 ! ###################################################################
 ! Iteration
@@ -43,7 +43,7 @@ MODULE DNS_LOCAL
 ! ###################################################################
 ! Output data
 ! ###################################################################
-  TINTEGER                            :: nplanes_i, nplanes_j, nplanes_k, nplanes_j_aux ! Planes
+  TINTEGER                            :: nplanes_i, nplanes_j, nplanes_k, pplanes_j, nplanes_j_aux ! Planes
   TINTEGER, DIMENSION(MAX_SAVEPLANES) :: planes_i,  planes_j,  planes_k
   
   TINTEGER, DIMENSION(3)              :: tower_stride           ! Towers
