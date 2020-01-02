@@ -14,7 +14,7 @@ PROGRAM DNS
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
   USE LAGRANGE_GLOBAL
-  USE DNS_LOCAL 
+  USE DNS_LOCAL
   USE DNS_TOWER
   USE BOUNDARY_INFLOW
   USE BOUNDARY_BUFFER
@@ -57,7 +57,7 @@ PROGRAM DNS
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:), POINTER :: e, rho, p, T, vis
-  
+
   CHARACTER*32 fname, inifile
   CHARACTER*128 str, line
   TINTEGER idummy, ig
@@ -100,7 +100,7 @@ PROGRAM DNS
 
 ! txc
   inb_txc = 9
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
                                              inb_txc = 6
      IF ( rkm_mode .EQ. RKM_IMP3_DIFFUSION ) inb_txc = inb_txc+1
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL       .AND. &
@@ -127,7 +127,7 @@ PROGRAM DNS
 
 #ifdef USE_PSFFT
   IF ( imode_rhs .EQ. EQNS_RHS_NONBLOCKING ) inb_txc = MAX(inb_txc,15)
-#endif 
+#endif
 
 #ifdef LES
   IF ( iles .EQ. 1 ) THEN ! this number needs to be revised
@@ -158,7 +158,7 @@ PROGRAM DNS
      isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_particle_interp*2))
      isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_particle_interp*2))
   END IF
-  IF ( tower_mode .EQ. 1 ) THEN 
+  IF ( tower_mode .EQ. 1 ) THEN
      isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))
   ENDIF
 
@@ -208,11 +208,11 @@ PROGRAM DNS
 
 ! Statistics
   CALL STATISTICS_INITIALIZE()
-  
+
 ! Lagrangian part
   IF ( icalc_part .EQ. 1 ) THEN
 #include "dns_alloc_larrays.h"
-     
+
      WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile,line)
      ALLOCATE(l_comm(isize_l_comm), stat=ierr)
@@ -220,7 +220,7 @@ PROGRAM DNS
         CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
         CALL DNS_STOP(DNS_ERROR_ALLOC)
      ENDIF
-     
+
      WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
      WRITE(str,*) inb_part; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
      CALL IO_WRITE_ASCII(lfile,line)
@@ -229,7 +229,7 @@ PROGRAM DNS
         CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
         CALL DNS_STOP(DNS_ERROR_ALLOC)
      ENDIF
-  
+
   ENDIF
 
 ! ###################################################################
@@ -242,10 +242,10 @@ PROGRAM DNS
 #endif
 
 ! #######################################################################
-! Initializing tower stuff 
+! Initializing tower stuff
 ! #######################################################################
-  IF ( tower_mode .EQ. 1 ) THEN 
-     CALL DNS_TOWER_INITIALIZE(tower_stride)  
+  IF ( tower_mode .EQ. 1 ) THEN
+     CALL DNS_TOWER_INITIALIZE(tower_stride)
   ENDIF
 
 ! #######################################################################
@@ -274,7 +274,7 @@ PROGRAM DNS
   ENDIF
 
 ! ###################################################################
-! Read the grid 
+! Read the grid
 ! ###################################################################
 #include "dns_read_grid.h"
 
@@ -285,10 +285,10 @@ PROGRAM DNS
      g_inf(2)%nodes => y_inf(:,1)
      g_inf(3)%nodes => z_inf(:,1)
   ENDIF
-  
+
 ! ###################################################################
 ! Initialize filters
-! ###################################################################  
+! ###################################################################
   DO ig = 1,3
      CALL OPR_FILTER_INITIALIZE( g(ig), FilterDomain(ig), wrk1d )
   END DO
@@ -309,7 +309,7 @@ PROGRAM DNS
 ! Initialize thermodynamic quantities
 ! ###################################################################
   CALL FI_PROFILES_INITIALIZE(wrk1d)
-     
+
 ! ###################################################################
 ! Read fields
 ! ###################################################################
@@ -349,8 +349,8 @@ PROGRAM DNS
   IF ( icalc_part .EQ. 1 ) THEN
      WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
      CALL IO_READ_PARTICLE(fname, l_g, l_q)
-     
-! set boundarys for residence time pdf 
+
+! set boundarys for residence time pdf
      IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
         l_y_lambda =  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean - C_2_R
         l_y_base =   ((g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean -(g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean )/C_2_R &
@@ -359,17 +359,17 @@ PROGRAM DNS
            l_q(:,6:7) = C_0_R
         ENDIF
      ENDIF
-     
+
      IF ( itrajectory .NE. LAG_TRAJECTORY_NONE ) THEN
         CALL PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
      END IF
-     
+
   END IF
-  
+
 ! Running average field
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. nitera_stats_spa .GT. 0 ) THEN
      WRITE(fname,*) nitera_first; fname = 'st'//TRIM(ADJUSTL(fname))
-     CALL IO_READ_AVG_SPATIAL(fname, mean_flow, mean_scal) 
+     CALL IO_READ_AVG_SPATIAL(fname, mean_flow, mean_scal)
   ENDIF
 
 ! ###################################################################
@@ -377,9 +377,9 @@ PROGRAM DNS
 ! ###################################################################
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
-        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)         
+        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)
 
-     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN 
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
         CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
 
      ENDIF
@@ -409,7 +409,7 @@ PROGRAM DNS
 ! Check
 ! ###################################################################
   CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
-     
+
 ! ###################################################################
 ! Initialize data for boundary conditions
 ! ###################################################################
@@ -422,7 +422,7 @@ PROGRAM DNS
   ENDIF
 
 ! ###################################################################
-! Initialize LES 
+! Initialize LES
 ! ###################################################################
 #ifdef LES
   IF ( iles .EQ. 1 ) CALL LES_INI(q,s,h_q,h_s, txc, vaux, wrk1d,wrk2d,wrk3d)
@@ -471,80 +471,81 @@ SUBROUTINE DNS_MPIO_AUX()
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : inb_flow_array, inb_scal_array
+  USE DNS_GLOBAL, ONLY : io_aux
   USE DNS_LOCAL,  ONLY : nplanes_i,nplanes_j,nplanes_k, pplanes_j, planes_i,planes_k
   USE DNS_MPI
-  
+
   IMPLICIT NONE
 
-#include "mpif.h" 
+#include "mpif.h"
 
 ! -----------------------------------------------------------------------
   TINTEGER                :: ndims, idummy, id
   TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
 
 ! #######################################################################
-  mpio_aux(:)%active = .FALSE. ! defaults
-  mpio_aux(:)%offset = 0
+  io_aux(:)%active = .FALSE. ! defaults
+  io_aux(:)%offset = 0
 
 ! ###################################################################
 ! Subarray information to write planes
 ! ###################################################################
   idummy = inb_flow_array +inb_scal_array
 
-  id = MPIO_SUBARRAY_PLANES_XOY
+  id = IO_SUBARRAY_PLANES_XOY
   IF ( nplanes_k .GT. 0 ) THEN ! Saving full vertical xOy planes; writing only info of PE containing the first plane
-     IF ( ims_pro_k .EQ. ( planes_k(1) /kmax) ) mpio_aux(id)%active = .TRUE.
-     mpio_aux(id)%communicator = ims_comm_x
-     
+     IF ( ims_pro_k .EQ. ( planes_k(1) /kmax) ) io_aux(id)%active = .TRUE.
+     io_aux(id)%communicator = ims_comm_x
+
      ndims = 2
      sizes(1)   = imax *ims_npro_i; sizes(2)   = jmax *nplanes_k *idummy
      locsize(1) = imax;             locsize(2) = jmax *nplanes_k *idummy
      offset(1)  = ims_offset_i;     offset(2)  = 0
-     
-     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
-          MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
-     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
-     
+
+     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
+
   ENDIF
 
-  id = MPIO_SUBARRAY_PLANES_ZOY
+  id = IO_SUBARRAY_PLANES_ZOY
   IF ( nplanes_i .GT. 0 ) THEN ! Saving full vertical zOy planes; writing only info of PE containing the first plane
-     IF ( ims_pro_i .EQ.  ( planes_i(1) /imax) ) mpio_aux(id)%active = .TRUE.
-     mpio_aux(id)%communicator = ims_comm_z
-     
+     IF ( ims_pro_i .EQ.  ( planes_i(1) /imax) ) io_aux(id)%active = .TRUE.
+     io_aux(id)%communicator = ims_comm_z
+
      ndims = 2
-     sizes(1)   = jmax *nplanes_i *idummy; sizes(2)   = kmax *ims_npro_k 
-     locsize(1) = jmax *nplanes_i *idummy; locsize(2) = kmax 
+     sizes(1)   = jmax *nplanes_i *idummy; sizes(2)   = kmax *ims_npro_k
+     locsize(1) = jmax *nplanes_i *idummy; locsize(2) = kmax
      offset(1)  = 0;                       offset(2)  = ims_offset_k
-     
-     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
-          MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
-     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+
+     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 
   ENDIF
 
-  id = MPIO_SUBARRAY_PLANES_XOZ  !
-  IF ( nplanes_j .GT. 0 ) THEN ! Saving full blocks xOz planes for prognostic variables 
-     mpio_aux(id)%active = .TRUE.
-     mpio_aux(id)%communicator = MPI_COMM_WORLD
-     
+  id = IO_SUBARRAY_PLANES_XOZ
+  IF ( nplanes_j .GT. 0 ) THEN ! Saving full blocks xOz planes for prognostic variables
+     io_aux(id)%active = .TRUE.
+     io_aux(id)%communicator = MPI_COMM_WORLD
+
      ndims = 3 ! Subarray for the output of the 2D data
      sizes(1)  =imax *ims_npro_i; sizes(2)   = nplanes_j*idummy; sizes(3)   = kmax *ims_npro_k
      locsize(1)=imax;             locsize(2) = nplanes_j*idummy; locsize(3) = kmax
      offset(1) =ims_offset_i;     offset(2)  = 0;                offset(3)  = ims_offset_k
-     
+
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
-     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 
   ENDIF
 
   IF ( pplanes_j .EQ. 1 ) THEN
 
-     id = MPIO_SUBARRAY_PLANES_XOZ_P  !
-     IF ( nplanes_j .GT. 0 ) THEN ! Saving full blocks xOz planes for prognostic variables 
-        mpio_aux(id)%active = .TRUE.
-        mpio_aux(id)%communicator = MPI_COMM_WORLD
+     id = IO_SUBARRAY_PLANES_XOZ_P
+     IF ( nplanes_j .GT. 0 ) THEN ! Saving full blocks xOz planes for pressure
+        io_aux(id)%active = .TRUE.
+        io_aux(id)%communicator = MPI_COMM_WORLD
 
         ndims = 3 ! Subarray for the output of the 2D data
         sizes(1)  =imax*ims_npro_i; sizes(2)   = nplanes_j; sizes(3)   = kmax *ims_npro_k
@@ -552,8 +553,8 @@ SUBROUTINE DNS_MPIO_AUX()
         offset(1) =ims_offset_i;    offset(2)  = 0;         offset(3)  = ims_offset_k
 
         CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-             MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
-        CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+             MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
+        CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 
      ENDIF
   ENDIF

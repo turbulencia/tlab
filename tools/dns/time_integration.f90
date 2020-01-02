@@ -12,7 +12,7 @@
 !########################################################################
 SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
      l_q, l_hq, l_txc, l_comm)
-  
+
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, tag_part, tag_traj, lfile
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal_array, inb_flow_array
   USE DNS_GLOBAL, ONLY : isize_particle
@@ -23,7 +23,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : nstatavg_points
   USE THERMO_GLOBAL, ONLY : imixture
-  USE DNS_LOCAL 
+  USE DNS_LOCAL
   USE DNS_TOWER
   USE LAGRANGE_GLOBAL, ONLY : itrajectory, l_g
   USE BOUNDARY_INFLOW
@@ -40,7 +40,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
   IMPLICIT NONE
 #ifdef USE_MPI
 #include "mpif.h"
-#endif  
+#endif
 #include "integers.h"
 
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
@@ -55,11 +55,11 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
 
 ! -------------------------------------------------------------------
   TINTEGER is, iq, ip
-  TINTEGER idummy, splanes_i(5), splanes_j(5), splanes_k(5), splanes_jp(5) 
+  TINTEGER idummy, splanes_i(5), splanes_j(5), splanes_k(5), splanes_jp(5)
   CHARACTER*32 fname, varname(1)
   CHARACTER*250 line1
   LOGICAL flag_save
-  
+
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:), POINTER :: u, v, w, e, rho, p, T, vis
 
@@ -76,22 +76,22 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) vis => q(:,8)
   ENDIF
 
-! Sizes information for saving planes  
+! Sizes information for saving planes
   idummy     = kmax*jmax*nplanes_i*(inb_flow_array+inb_scal_array)
   splanes_i  = (/idummy,1,idummy,1,1/)
   idummy     = imax*jmax*nplanes_k*(inb_flow_array+inb_scal_array)
   splanes_k  = (/idummy,1,idummy,1,1/)
   idummy     = imax*kmax*nplanes_j*(inb_flow_array+inb_scal_array)
   splanes_j  = (/idummy,1,idummy,1,1/)
-  idummy     = imax*kmax*nplanes_j 
-  splanes_jp = (/idummy,1,idummy,1,1/) 
+  idummy     = imax*kmax*nplanes_j
+  splanes_jp = (/idummy,1,idummy,1,1/)
   varname    = (/''/)
-  
+
 ! ###################################################################
 ! Loop on iterations: itime counter
 ! ###################################################################
   itime = nitera_first
-  
+
   WRITE(line1,*) itime; line1 = 'Starting time integration at It'//TRIM(ADJUSTL(line1))//'.'
   CALL IO_WRITE_ASCII(lfile,line1)
 
@@ -148,7 +148,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
      ENDIF
 
 ! -----------------------------------------------------------------------
-     IF ( tower_mode .EQ. 1 ) THEN 
+     IF ( tower_mode .EQ. 1 ) THEN
         CALL DNS_TOWER_ACCUMULATE(q,1,wrk1d)
         CALL DNS_TOWER_ACCUMULATE(s,2,wrk1d)
      ENDIF
@@ -169,11 +169,11 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
            CALL STATISTICS_SPATIAL_LAYER(txc, wrk1d,wrk2d)
         ENDIF
      ENDIF
-     
+
 ! -----------------------------------------------------------------------
      IF ( MOD(itime-nitera_first,nitera_save) .EQ. 0 .OR. &      ! Save restart files
           itime .EQ. nitera_last .OR. INT(logs_data(1)) .NE. 0 ) THEN ! Secure that one restart file is saved
-        
+
         IF ( icalc_flow .EQ. 1 ) THEN
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
            CALL DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, isize_field, q, wrk3d)
@@ -182,9 +182,9 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
            CALL DNS_WRITE_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, isize_field, s, wrk3d)
         ENDIF
-        
+
         IF ( tower_mode .EQ. 1 ) THEN
-           CALL DNS_TOWER_WRITE(wrk3d) 
+           CALL DNS_TOWER_WRITE(wrk3d)
         ENDIF
 
         IF ( icalc_part .EQ. 1 ) THEN
@@ -200,7 +200,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
            WRITE(fname,*) itime; fname='st'//TRIM(ADJUSTL(fname))
            CALL IO_WRITE_AVG_SPATIAL(fname, mean_flow, mean_scal)
         ENDIF
-        
+
      ENDIF
 
 ! -----------------------------------------------------------------------
@@ -209,11 +209,11 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
         WRITE(line1,*) itime; line1 = 'Writing planes at It'//TRIM(ADJUSTL(line1))//' and time '//TRIM(ADJUSTL(fname))//'.'
         CALL IO_WRITE_ASCII(lfile,line1)
 100     FORMAT(G_FORMAT_R)
-        
+
         IF ( nplanes_k .GT. 0 ) THEN
            CALL REDUCE_Z_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, nplanes_k,planes_k, txc)
            WRITE(fname,*) itime; fname = 'planesK.'//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_XOY, fname, varname, txc, splanes_k, hq)
+           CALL IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_XOY, fname, varname, txc, splanes_k, hq)
         ENDIF
 
         IF ( nplanes_j .GT. 0 ) THEN
@@ -234,31 +234,29 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
            ENDIF
            CALL REDUCE_Y_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, wrk3d, nplanes_j,nplanes_j_aux,planes_j, txc)
            WRITE(fname,*) itime; fname = 'planesJ.'//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_XOZ, fname, varname, txc, splanes_j, hq) 
+           CALL IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_XOZ, fname, varname, txc, splanes_j, hq)
 
            IF ( pplanes_j .EQ. 1 ) THEN   !calculate and write pressure for xOz planes
-
               CALL FI_PRESSURE_BOUSSINESQ(q,s,txc(1), &
                    txc(1+isize_txc_field),txc(1+2*isize_txc_field),txc(1+3*isize_txc_field), &
                    wrk1d,wrk2d,wrk3d)
               CALL REDUCE_Y_ALL(imax,jmax,kmax, 1 ,txc(1), 0,s, wrk3d, nplanes_j,nplanes_j_aux,planes_j, txc)
               WRITE(fname,*) itime; fname = 'pressrJ.'//TRIM(ADJUSTL(fname))
-              ! splanes_jp = (/idummy,1,idummy,1,1/) 
-              CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_XOZ_P, fname, varname, txc, splanes_jp, hq) 
+              CALL IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_XOZ_P, fname, varname, txc, splanes_jp, hq)
            ENDIF
         ENDIF
 
         IF ( nplanes_i .GT. 0 ) THEN
            CALL REDUCE_X_ALL(imax,jmax,kmax, inb_flow_array,q, inb_scal_array,s, nplanes_i,planes_i, txc)
            WRITE(fname,*) itime; fname = 'planesI.'//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_PLANES_ZOY, fname, varname, txc, splanes_i, hq)
+           CALL IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_ZOY, fname, varname, txc, splanes_i, hq)
         ENDIF
 
      ENDIF
-     
+
 ! -----------------------------------------------------------------------
      IF ( INT(logs_data(1)) .NE. 0 ) CALL DNS_STOP(INT(logs_data(1)))
-     
+
   ENDDO
 
   RETURN

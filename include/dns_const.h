@@ -31,7 +31,7 @@
 #define EQNS_SKEWSYMMETRIC    2
 #define EQNS_CONVECTIVE       3
 #define EQNS_EXPLICIT         4
- 
+
 #define EQNS_BOD_HOMOGENEOUS  5
 #define EQNS_BOD_LINEAR       6
 #define EQNS_BOD_BILINEAR     7
@@ -67,7 +67,7 @@
 #define FDM_COM6_DIRECT      16
 
 ! Operators
-#define OPR_P1                1 
+#define OPR_P1                1
 #define OPR_P2                2
 #define OPR_P2_P1             3
 #define OPR_P1_BCS            4
@@ -169,6 +169,23 @@
 #define MIXT_TYPE_AIRWATER        11
 #define MIXT_TYPE_AIRWATER_LINEAR 12
 
+! Information for IO subarrays
+#define IO_SUBARRAY_VISUALS_XOY  1
+#define IO_SUBARRAY_VISUALS_ZOY  2
+#define IO_SUBARRAY_VISUALS_XOZ  3
+#define IO_SUBARRAY_PLANES_XOY   4
+#define IO_SUBARRAY_PLANES_ZOY   5
+#define IO_SUBARRAY_PLANES_XOZ   6
+#define IO_SUBARRAY_PLANES_XOZ_P 13
+#define IO_SUBARRAY_BUFFER_JMIN  7
+#define IO_SUBARRAY_BUFFER_JMAX  8
+#define IO_SUBARRAY_SPECTRA_X    9
+#define IO_SUBARRAY_SPECTRA_Z   10
+#define IO_SUBARRAY_SPECTRA_XZ  11
+#define IO_SUBARRAY_ENVELOPES   12
+
+#define IO_SUBARRAY_SIZE        13
+
 ! Lagrangian Type
 #define LAG_TYPE_NONE          0
 #define LAG_TYPE_TRACER        1
@@ -176,7 +193,7 @@
 #define LAG_TYPE_BIL_CLOUD_3   3
 #define LAG_TYPE_BIL_CLOUD_4   4
 
-! Lagrangian Trajectories  
+! Lagrangian Trajectories
 #define LAG_TRAJECTORY_NONE      0
 #define LAG_TRAJECTORY_FIRST     1
 #define LAG_TRAJECTORY_LARGEST   2

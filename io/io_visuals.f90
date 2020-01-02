@@ -43,13 +43,13 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
      iflag_mode = 1
      sizes(3)   = ny_aux *nx     ! upper bound
      sizes(4)   = 1              ! stride
-     
-  ELSE IF ( subdomain(6)-subdomain(5)+1 .EQ. g(3)%size .AND. & 
+
+  ELSE IF ( subdomain(6)-subdomain(5)+1 .EQ. g(3)%size .AND. &
             subdomain(2)-subdomain(1)+1 .EQ. 1          ) THEN! zOy plane
      iflag_mode = 2
      sizes(3)   = ny_aux *nx *nz ! upper bound
      sizes(4)   = nx             ! stride
-     
+
   ELSE IF ( subdomain(2)-subdomain(1)+1 .EQ. g(1)%size .AND. &
             subdomain(6)-subdomain(5)+1 .EQ. g(3)%size ) THEN
      iflag_mode = 3                                           ! xOy blocks
@@ -66,7 +66,7 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
 ! -------------------------------------------------------------------
   ELSE IF ( iformat .EQ. 1 ) THEN  ! ensight; to be removed
      CALL ENSIGHT_FIELD(fname, i1, nx,ny,nz, nfield, subdomain, field, txc)
-     
+
 ! -------------------------------------------------------------------
   ELSE IF ( iformat .EQ. 2 .AND. iflag_mode .GT. 0 ) THEN  ! single precision, using MPI_IO
      IF ( ny_aux .NE. ny ) THEN
@@ -80,7 +80,7 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
         DO ifield = 1,nfield; WRITE(varname(ifield),*) ifield; varname(ifield) = TRIM(ADJUSTL(varname(ifield))); ENDDO
      ENDIF
      CALL IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, field, sizes, txc)
-        
+
 ! -------------------------------------------------------------------
   ELSE                                                     ! single precision, through PE0
      DO ifield = 1,nfield
@@ -110,7 +110,7 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
      ENDDO
 
   ENDIF
-  
+
   RETURN
 END SUBROUTINE IO_WRITE_VISUALS
 
@@ -141,15 +141,15 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
 #else
   TINTEGER i,j,k, ifield
 #endif
-  
-! ###################################################################        
+
+! ###################################################################
 ! Header in Ensight Gold Variable File Format
-! ###################################################################        
+! ###################################################################
 #ifdef USE_MPI
   IF ( ims_pro .EQ. 0 ) THEN
 #endif
 #include "dns_open_file.h"
-     
+
   IF ( iheader .EQ. 1 ) THEN
      line='description line              '
      WRITE(LOC_UNIT_ID) line
@@ -163,10 +163,10 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
 #ifdef USE_MPI
   ENDIF
 #endif
-  
-! ###################################################################        
+
+! ###################################################################
 ! Body
-! ###################################################################        
+! ###################################################################
 ! -------------------------------------------------------------------
 ! parallel
 ! -------------------------------------------------------------------
@@ -211,7 +211,7 @@ SUBROUTINE ENSIGHT_GRID(name, nx,ny,nz, subdomain, x,y,z)
   IMPLICIT NONE
 
 #include "integers.h"
-  
+
   TINTEGER nx,ny,nz, subdomain(6)
   TREAL x(nx), y(ny), z(nz)
   CHARACTER*(*) name
@@ -259,12 +259,12 @@ END SUBROUTINE ENSIGHT_GRID
 
 SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
 
-  USE DNS_GLOBAL, ONLY : imax,kmax
+  USE DNS_GLOBAL, ONLY : imax,kmax, io_aux
   USE DNS_MPI
 
   IMPLICIT NONE
 
-#include "mpif.h" 
+#include "mpif.h"
 
   TINTEGER,                 INTENT(IN)  :: opt_format, subdomain(6)
 
@@ -273,50 +273,50 @@ SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
   TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
 
 ! #######################################################################
-  mpio_aux(:)%active = .FALSE.
-  mpio_aux(:)%offset = 0
-  IF ( opt_format .EQ. 1 ) mpio_aux(:)%offset = 244 ! # bytes of ensight header
+  io_aux(:)%active = .FALSE.
+  io_aux(:)%offset = 0
+  IF ( opt_format .EQ. 1 ) io_aux(:)%offset = 244 ! # bytes of ensight header
 
 ! ###################################################################
 ! Saving full vertical xOy planes; using subdomain(5) to define the plane
-  IF ( ims_pro_k .EQ. ( (subdomain(5)-1) /kmax) ) mpio_aux(1)%active = .TRUE.
-  mpio_aux(1)%communicator = ims_comm_x
+  IF ( ims_pro_k .EQ. ( (subdomain(5)-1) /kmax) ) io_aux(1)%active = .TRUE.
+  io_aux(1)%communicator = ims_comm_x
 
   ndims = 2
   sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1
   locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1
   offset(1)  = ims_offset_i;     offset(2)  = 0
-  
-  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
-       MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(1)%subarray, ims_err)
-  CALL MPI_Type_commit(mpio_aux(1)%subarray, ims_err)
+
+  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+       MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(1)%subarray, ims_err)
+  CALL MPI_Type_commit(io_aux(1)%subarray, ims_err)
 
 ! Saving full vertical zOy planes; using subdomain(1) to define the plane
-  IF ( ims_pro_i .EQ.  ( (subdomain(1)-1) /imax) ) mpio_aux(2)%active = .TRUE.
-  mpio_aux(2)%communicator = ims_comm_z
+  IF ( ims_pro_i .EQ.  ( (subdomain(1)-1) /imax) ) io_aux(2)%active = .TRUE.
+  io_aux(2)%communicator = ims_comm_z
 
   ndims = 2
-                             sizes(1)   = subdomain(4)-subdomain(3)+1; sizes(2)   = kmax *ims_npro_k 
-                             locsize(1) = subdomain(4)-subdomain(3)+1; locsize(2) = kmax 
+                             sizes(1)   = subdomain(4)-subdomain(3)+1; sizes(2)   = kmax *ims_npro_k
+                             locsize(1) = subdomain(4)-subdomain(3)+1; locsize(2) = kmax
                              offset(1)  = 0;                           offset(2)  = ims_offset_k
 
-  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
-       MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(2)%subarray, ims_err)
-  CALL MPI_Type_commit(mpio_aux(2)%subarray, ims_err)
+  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+       MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(2)%subarray, ims_err)
+  CALL MPI_Type_commit(io_aux(2)%subarray, ims_err)
 
 ! Saving full blocks xOz planes
-  mpio_aux(3)%active = .TRUE.
-  mpio_aux(3)%communicator = MPI_COMM_WORLD
+  io_aux(3)%active = .TRUE.
+  io_aux(3)%communicator = MPI_COMM_WORLD
 
   ndims = 3
-  sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1; sizes(3)   = kmax *ims_npro_k 
-  locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1; locsize(3) = kmax 
+  sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1; sizes(3)   = kmax *ims_npro_k
+  locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1; locsize(3) = kmax
   offset(1)  = ims_offset_i;     offset(2)  = 0;                           offset(3)  = ims_offset_k
-  
-  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
-       MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(3)%subarray, ims_err)
-  CALL MPI_Type_commit(mpio_aux(3)%subarray, ims_err)
-  
+
+  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+       MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(3)%subarray, ims_err)
+  CALL MPI_Type_commit(io_aux(3)%subarray, ims_err)
+
   RETURN
 END SUBROUTINE VISUALS_MPIO_AUX
 

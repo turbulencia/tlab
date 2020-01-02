@@ -1,4 +1,5 @@
 #include "types.h"
+#include "dns_const.h"
 #include "dns_const_mpi.h"
 
 MODULE DNS_MPI
@@ -20,7 +21,7 @@ MODULE DNS_MPI
   TINTEGER, DIMENSION(  :), ALLOCATABLE :: ims_size_i
   TINTEGER, DIMENSION(:,:), ALLOCATABLE :: ims_ds_i, ims_dr_i
   INTEGER,  DIMENSION(:,:), ALLOCATABLE :: ims_ts_i, ims_tr_i
-  TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_plan_trps_i, ims_plan_trpr_i  
+  TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_plan_trps_i, ims_plan_trpr_i
   TINTEGER                              :: ims_trp_mode_i
 
 
@@ -34,19 +35,17 @@ MODULE DNS_MPI
   TINTEGER, DIMENSION(:,:), ALLOCATABLE :: ims_ds_k, ims_dr_k
   INTEGER,  DIMENSION(:,:), ALLOCATABLE :: ims_ts_k, ims_tr_k
   TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_plan_trps_k, ims_plan_trpr_k
-  TINTEGER                              :: ims_trp_mode_k 
+  TINTEGER                              :: ims_trp_mode_k
 
-  TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_size_p ! Particle data  
+  TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_size_p ! Particle data
 
-  TYPE(subarray_dt), DIMENSION(MPIO_SUBARRAY_SIZE) :: mpio_aux
-
-#ifdef USE_PSFFT  
-  INTEGER :: ims_nb_thrsupp_provided 
+#ifdef USE_PSFFT
+  INTEGER :: ims_nb_thrsupp_provided
   INTEGER,DIMENSION(2) :: ims_nb_proc_grid
   INTEGER,DIMENSION(3) :: ims_nb_msize
   INTEGER,DIMENSION(3) :: ims_nb_xsrt,ims_nb_xend,ims_nb_xsiz
   INTEGER,DIMENSION(3) :: ims_nb_ysrt,ims_nb_yend,ims_nb_ysiz
   INTEGER,DIMENSION(3) :: ims_nb_zsrt,ims_nb_zend,ims_nb_zsiz
-#endif 
+#endif
 
 END MODULE DNS_MPI

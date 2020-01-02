@@ -50,7 +50,7 @@ MODULE DNS_TYPES
      TINTEGER mpitype
      TREAL, DIMENSION(:,:), ALLOCATABLE :: coeffs ! pointer to coefficients
   END TYPE filter_dt
-  
+
   TYPE pointers_dt
      SEQUENCE
      TREAL, DIMENSION(:), POINTER :: field
@@ -67,10 +67,10 @@ MODULE DNS_TYPES
 
   TYPE subarray_dt
      SEQUENCE
+#ifdef USE_MPI
      LOGICAL active, lpadding(3)
      INTEGER communicator
      INTEGER subarray
-#ifdef USE_MPI
      INTEGER(KIND=MPI_OFFSET_KIND) offset
 #else
      INTEGER offset

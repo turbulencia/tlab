@@ -1,5 +1,5 @@
 #include "types.h"
-#include "dns_const_mpi.h"
+#include "dns_const.h"
 
 MODULE DNS_CONSTANTS
   IMPLICIT NONE
@@ -22,10 +22,10 @@ MODULE DNS_CONSTANTS
   CHARACTER*32, PARAMETER :: tfile = 'dns.trc'
 
   CHARACTER*32, PARAMETER :: tag_flow ='flow.'
-  CHARACTER*32, PARAMETER :: tag_scal ='scal.' 
-  CHARACTER*32, PARAMETER :: tag_part ='part.' 
-  CHARACTER*32, PARAMETER :: tag_traj ='traj.' 
-  
+  CHARACTER*32, PARAMETER :: tag_scal ='scal.'
+  CHARACTER*32, PARAMETER :: tag_part ='part.'
+  CHARACTER*32, PARAMETER :: tag_traj ='traj.'
+
 END MODULE DNS_CONSTANTS
 
 MODULE DNS_GLOBAL
@@ -38,7 +38,7 @@ MODULE DNS_GLOBAL
 ! ###################################################################
 ! OpenMP
 ! ###################################################################
-  TINTEGER :: dns_omp_numThreads 
+  TINTEGER :: dns_omp_numThreads
   TINTEGER :: dns_omp_error
 
 ! ###################################################################
@@ -49,7 +49,7 @@ MODULE DNS_GLOBAL
   TINTEGER :: imode_flow               ! type of geometry
   TINTEGER :: imode_files              ! files format
   TINTEGER :: imode_verbosity          ! level of verbosity used in log files
-  TINTEGER :: imode_eqns               ! set of equations to be solved 
+  TINTEGER :: imode_eqns               ! set of equations to be solved
   TINTEGER :: iadvection, iviscous, idiffusion ! formulation
   TINTEGER :: ifourier
   TINTEGER :: itransport
@@ -84,12 +84,12 @@ MODULE DNS_GLOBAL
   TINTEGER :: inb_part_txc
 
 ! subarray information (offset)
-  TYPE(subarray_dt), DIMENSION(MPIO_SUBARRAY_SIZE) :: io_aux
+  TYPE(subarray_dt), DIMENSION(IO_SUBARRAY_SIZE) :: io_aux
 
 ! ###################################################################
   TYPE(grid_dt), DIMENSION(3) :: g     ! Grid information along 3 directions
   TREAL :: area,volume                 ! Horizontal area and volume
-  
+
 ! ###################################################################
   TYPE(background_dt) :: qbg(3)        ! Velocity background
   TYPE(background_dt) :: sbg(MAX_NSP)  ! Scalars backgrounds
@@ -124,7 +124,7 @@ MODULE DNS_GLOBAL
 ! ###########################################################
   TYPE(filter_dt), DIMENSION(3)        :: FilterDomain
   LOGICAL,         DIMENSION(MAX_VARS) :: FilterDomainActive
-  TINTEGER,        DIMENSION(MAX_VARS) :: FilterDomainBcsFlow, FilterDomainBcsScal 
+  TINTEGER,        DIMENSION(MAX_VARS) :: FilterDomainBcsFlow, FilterDomainBcsScal
 
 ! ###################################################################
 ! FFTW
@@ -133,7 +133,7 @@ MODULE DNS_GLOBAL
   INTEGER(8) :: fft_plan_fy, fft_plan_by
   INTEGER(8) :: fft_plan_fz, fft_plan_bz
 
-  TINTEGER :: fft_reordering 
+  TINTEGER :: fft_reordering
 
 ! ###################################################################
 ! Jet Statistics

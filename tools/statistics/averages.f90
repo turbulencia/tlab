@@ -79,7 +79,7 @@ PROGRAM AVERAGES
   TREAL params(params_size_max)
 
   TINTEGER io_sizes(5)
-  
+
 #ifdef USE_MPI
   TINTEGER                :: ndims, id
   TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
@@ -165,7 +165,7 @@ PROGRAM AVERAGES
      READ(*,*) opt_main
 
      WRITE(*,*) 'Planes block size ?'
-     READ(*,*) opt_block  
+     READ(*,*) opt_block
 
      IF ( opt_main .GT. 2 ) THEN
         WRITE(*,*) 'Gate level to be used ?'
@@ -198,12 +198,12 @@ PROGRAM AVERAGES
 
   IF ( opt_main .LT. 0 ) THEN ! Check
      CALL IO_WRITE_ASCII(efile, 'AVERAGES. Missing input [ParamAverages] in dns.ini.')
-     CALL DNS_STOP(DNS_ERROR_INVALOPT) 
+     CALL DNS_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
-  IF ( opt_block .LT. 1 ) THEN 
-     CALL IO_WRITE_ASCII(efile, 'AVERAGES. Invalid value of opt_block.') 
-     CALL DNS_STOP(DNS_ERROR_INVALOPT) 
+  IF ( opt_block .LT. 1 ) THEN
+     CALL IO_WRITE_ASCII(efile, 'AVERAGES. Invalid value of opt_block.')
+     CALL DNS_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -308,7 +308,7 @@ PROGRAM AVERAGES
 #include "dns_read_partition.h"
 
      IF ( opt_cond .GT. 1 ) inb_txc = MAX(inb_txc,5)
-     
+
   ENDIF
 
 ! Subarray information to read and write envelopes
@@ -316,19 +316,19 @@ PROGRAM AVERAGES
      io_sizes = (/imax*2*igate_size*kmax,1,imax*2*igate_size*kmax,1,1/)
 
 #ifdef USE_MPI
-     id = MPIO_SUBARRAY_ENVELOPES
-     
-     mpio_aux(id)%active = .TRUE.
-     mpio_aux(id)%communicator = MPI_COMM_WORLD
-     
+     id = IO_SUBARRAY_ENVELOPES
+
+     io_aux(id)%active = .TRUE.
+     io_aux(id)%communicator = MPI_COMM_WORLD
+
      ndims = 3
      sizes(1)  =imax *ims_npro_i; sizes(2)   = igate_size *2; sizes(3)   = kmax *ims_npro_k
      locsize(1)=imax;             locsize(2) = igate_size *2; locsize(3) = kmax
      offset(1) =ims_offset_i;     offset(2)  = 0;             offset(3)  = ims_offset_k
-     
+
      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, mpio_aux(id)%subarray, ims_err)
-     CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
+          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
+     CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 
 #else
      io_aux(:)%offset = 0
@@ -345,11 +345,11 @@ PROGRAM AVERAGES
   jmax_aux = g(2)%size/opt_block
 
   flag_buoyancy = 0 ! default
-  
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
 ! in case we need the buoyancy statistics
      IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
-          buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
+          buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &
           imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
           imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
         flag_buoyancy = 1
@@ -362,9 +362,9 @@ PROGRAM AVERAGES
   IF ( opt_main .EQ. 1 ) THEN
      ALLOCATE(mean(jmax*MAX_AVG_TEMPORAL))
   ELSE
-     IF ( opt_main .EQ. 15 ) THEN 
+     IF ( opt_main .EQ. 15 ) THEN
         ALLOCATE(mean(MAX(jmax*5,(MAX(opt_bins,2)*opt_order*nfield))))
-     ELSE 
+     ELSE
         ALLOCATE(mean(MAX(opt_bins,2)*opt_order*nfield))
      ENDIF
   ENDIF
@@ -383,7 +383,7 @@ PROGRAM AVERAGES
   ENDIF
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
@@ -391,7 +391,7 @@ PROGRAM AVERAGES
 ! Define size of blocks
 ! ------------------------------------------------------------------------
   y_aux(:) = 0
-  do ij = 1,jmax                      
+  do ij = 1,jmax
      is = (ij-1)/opt_block + 1
      y_aux(is) = y_aux(is) + y(ij,1)/M_REAL(opt_block)
   enddo
@@ -411,7 +411,7 @@ PROGRAM AVERAGES
 ! Initialize thermodynamic quantities
 ! -------------------------------------------------------------------
   CALL FI_PROFILES_INITIALIZE(wrk1d)
-  
+
 ! ###################################################################
 ! Define pointers
 ! ###################################################################
@@ -429,17 +429,17 @@ PROGRAM AVERAGES
 
      WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))
      CALL IO_WRITE_ASCII(lfile, sRes)
-     
+
      IF ( iread_scal .EQ. 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
         CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
 
         IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
            CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground)
-           
-        ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN 
+
+        ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
            CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
-           
+
         ENDIF
 
      ENDIF
@@ -448,7 +448,7 @@ PROGRAM AVERAGES
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
         CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
      ENDIF
-     
+
      IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R
      ELSE;                                  diff = visc/schmidt(inb_scal); ENDIF
 
@@ -460,19 +460,19 @@ PROGRAM AVERAGES
            WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
            CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
            igate_size = INT(params(2))
-           
+
            IF ( opt_main .EQ. 2 ) rtime = params(1)
-           
+
         ELSE
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
               opt_cond_scal = inb_scal_array
            ENDIF
-        
+
            CALL IO_WRITE_ASCII(lfile,'Calculating partition...')
            CALL FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
                 imax,jmax,kmax, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
         ENDIF
-        
+
      ENDIF
 
 ! -------------------------------------------------------------------
@@ -484,7 +484,7 @@ PROGRAM AVERAGES
 ! Conventional statistics
 ! ###################################################################
      CASE ( 1 )
-        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,3), txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
 
         ELSE
@@ -501,7 +501,7 @@ PROGRAM AVERAGES
            CALL AVG_FLOW_XZ(q,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
                 txc(1,7),txc(1,8),txc(1,9), mean, wrk1d,wrk2d,wrk3d)
         ENDIF
-        
+
         IF ( icalc_scal .EQ. 1 ) THEN
            DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
               CALL AVG_SCAL_XZ(is, q,s, s(1,is), &
@@ -514,17 +514,17 @@ PROGRAM AVERAGES
               IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
                  CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,7))
               ELSE
-                 wrk1d(1:jmax) = C_0_R 
+                 wrk1d(1:jmax) = C_0_R
                  CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,7), wrk1d)
               ENDIF
               txc(1:isize_field,7) = txc(1:isize_field,7) *dummy
 
               CALL AVG_SCAL_XZ(is, q,s, txc(1,7), &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
-              
+
            ENDIF
 
-           IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+           IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
               IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
                  is = is + 1
                  CALL THERMO_ANELASTIC_THETA_L(imax,jmax,kmax, s, epbackground,pbackground, txc(1,7))
@@ -533,7 +533,7 @@ PROGRAM AVERAGES
                       txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
               ENDIF
            ENDIF
-           
+
         ENDIF
 
 ! Lagrange Liquid and Liquid without diffusion
@@ -541,16 +541,16 @@ PROGRAM AVERAGES
            IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
               WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
               CALL IO_READ_PARTICLE(fname, l_g, l_q)
-                 
+
               l_txc = C_1_R; ! We want density
               CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,7), wrk2d,wrk3d)
-              
+
               txc(:,7) = txc(:,7) + 0.00000001
               idummy = inb_part - 3 ! # scalar properties solved in the lagrangian
               DO is = inb_scal_array +1 +1, inb_scal_array+1 +idummy
                  sbg(is)%mean = C_1_R; sbg(is)%delta = C_0_R; sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
                  l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
-                 CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,8), wrk2d,wrk3d)   
+                 CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,8), wrk2d,wrk3d)
                  txc(:,8) = txc(:,8) /txc(:,7)
                  sbg(is)%mean  = sbg(inb_scal_array)%mean
                  sbg(is)%delta = sbg(inb_scal_array)%delta
@@ -563,7 +563,7 @@ PROGRAM AVERAGES
 ! DO from is inb_scal_array+1 to inb_paticle+inb_scal_array
 ! PARTICLE TO FIELD to txc(5)
 ! CALL AVG_SCAL_XZ on new field (substutute by s(1,is)
-!ENDDO 
+!ENDDO
 
 ! ###################################################################
 ! Partition of field
@@ -574,7 +574,7 @@ PROGRAM AVERAGES
         ENDDO
         WRITE(fname,*) itime; fname='int'//TRIM(ADJUSTL(fname))
         CALL INTER2D_N(fname, varname, rtime, imax,jmax,kmax, igate_size, y, gate)
-        
+
         IF ( opt_cond .GT. 1 ) THEN ! write only if the gate information has not been read
            WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname))
            params(1) = rtime; params(2) = M_REAL(igate_size); params_size = 2
@@ -595,8 +595,8 @@ PROGRAM AVERAGES
            ENDDO
            varname = ''
            WRITE(fname,*) itime; fname = 'envelopesJ.'//TRIM(ADJUSTL(fname))
-           CALL IO_WRITE_SUBARRAY4(MPIO_SUBARRAY_ENVELOPES, fname, varname, surface, io_sizes, wrk3d)
-           
+           CALL IO_WRITE_SUBARRAY4(IO_SUBARRAY_ENVELOPES, fname, varname, surface, io_sizes, wrk3d)
+
         ENDIF
 
 ! ###################################################################
@@ -635,10 +635,10 @@ PROGRAM AVERAGES
         nfield = nfield+1; data(nfield)%field => v(:); varname(nfield) = 'V'
         nfield = nfield+1; data(nfield)%field => w(:); varname(nfield) = 'W'
 
-        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
            nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'P'
-           
+
         ELSE
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
            CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
@@ -650,7 +650,7 @@ PROGRAM AVERAGES
            nfield = nfield+1; data(nfield)%field => txc(:,3); varname(nfield) = 'T'
 
         ENDIF
-     
+
         IF ( icalc_scal .EQ. 1 ) THEN
            DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
               nfield = nfield+1; data(nfield)%field => s(:,is); WRITE(varname(nfield),*) is; varname(nfield) = 'Scalar'//TRIM(ADJUSTL(varname(nfield)))
@@ -680,13 +680,13 @@ PROGRAM AVERAGES
               IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
                  CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d)
               ELSE
-                 wrk1d(1:jmax) = C_0_R 
+                 wrk1d(1:jmax) = C_0_R
                  CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
               ENDIF
               DO ij = 1,isize_field
                  s(ij,1) = wrk3d(ij)*buoyancy%vector(2)
               ENDDO
-              
+
               CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s, txc(1,4), wrk3d, wrk2d,wrk3d)
               txc(:,4) =-txc(:,4)
               txc(:,5) = C_0_R
@@ -697,7 +697,7 @@ PROGRAM AVERAGES
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
            CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
            CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
-           
+
            CALL THERMO_CALORIC_TEMPERATURE&
                 (imax,jmax,kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
            CALL THERMO_THERMAL_PRESSURE&
@@ -711,7 +711,7 @@ PROGRAM AVERAGES
         DO ij = 1,isize_field
            txc(ij,8) = txc(ij,1)*txc(ij,4) + txc(ij,2)*txc(ij,5) + txc(ij,3)*txc(ij,6)
         ENDDO
-        
+
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy production...')
         CALL FI_VORTICITY_PRODUCTION(imax,jmax,kmax, u,v,w, txc(1,1),&
              txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -731,7 +731,7 @@ PROGRAM AVERAGES
 
         DO ij = 1,isize_field
            txc(ij,6) = txc(ij,4)*txc(ij,3) ! -w^2 div(u)
-           txc(ij,5) = txc(ij,1)/txc(ij,3) ! production rate 
+           txc(ij,5) = txc(ij,1)/txc(ij,3) ! production rate
            txc(ij,4) = log(txc(ij,3))      ! ln(w^2)
         ENDDO
 
@@ -758,7 +758,7 @@ PROGRAM AVERAGES
 ! ###################################################################
      CASE ( 6 )
         CALL IO_WRITE_ASCII(lfile,'Computing strain pressure...')
-        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
 
         ELSE
@@ -772,7 +772,7 @@ PROGRAM AVERAGES
         CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, u,v,w, txc(1,1), &
              txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         txc(1:isize_field,1) = C_2_R *txc(1:isize_field,2)
-        
+
         CALL IO_WRITE_ASCII(lfile,'Computing strain production...')
         CALL FI_STRAIN_PRODUCTION(imax,jmax,kmax, u,v,w, &
              txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
@@ -787,7 +787,7 @@ PROGRAM AVERAGES
         CALL FI_STRAIN(imax,jmax,kmax, u,v,w, txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         txc(1:isize_field,4) = C_2_R *txc(1:isize_field,4)
         txc(1:isize_field,5) = log( txc(1:isize_field,4) )
-              
+
         data(1)%field => txc(:,4); varname(1) = 'Strain2S_ijS_i'
         data(2)%field => txc(:,5); varname(2) = 'LnStrain2S_ijS_i'
         data(3)%field => txc(:,2); varname(3) = 'ProductionMs2S_ijS_jkS_ki'
@@ -969,7 +969,7 @@ PROGRAM AVERAGES
            eloc2 = txc(ij,3)*txc(ij,4)-txc(ij,6)*txc(ij,1)
            eloc3 = txc(ij,1)*txc(ij,5)-txc(ij,4)*txc(ij,2)
            cos3  = (txc(ij,7)*eloc1 + txc(ij,8)*eloc2 + txc(ij,9)*eloc3)/dummy
-           txc(ij,7) = cos1; txc(ij,8) = cos2; txc(ij,9) = cos3 
+           txc(ij,7) = cos1; txc(ij,8) = cos2; txc(ij,9) = cos3
         ENDDO
 
         data(4)%field => txc(:,7); varname(4) = 'cos(G,lambda1)'
@@ -1033,7 +1033,7 @@ PROGRAM AVERAGES
            txc(:,3+is) =   txc(:,3+is) *diff
            nfield = nfield+1; data(nfield)%field => txc(:,3+is); WRITE(varname(nfield),*) is; varname(nfield) = 'tauy'//TRIM(ADJUSTL(varname(nfield)))
         ENDDO
-        
+
 
         u = u*v
         nfield = nfield+1; data(nfield)%field => u; varname(nfield) = 'vu'
@@ -1065,7 +1065,7 @@ PROGRAM AVERAGES
 
         CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
         is = is+1; data(is)%field => txc(:,1); varname(is) = 'P'
-        
+
         q = C_0_R
         CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,2), txc(1,3),txc(1,4), txc(1,5), wrk1d,wrk2d,wrk3d)
         is = is+1; data(is)%field => txc(:,2); varname(is) = 'Phydro'
@@ -1091,7 +1091,7 @@ PROGRAM AVERAGES
 ! ###################################################################
 ! Dissipation
 ! ###################################################################
-     CASE ( 15 ) 
+     CASE ( 15 )
         CALL FI_DISSIPATION(i1,imax,jmax,kmax, u,v,w, txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
 
         data(1)%field => txc(:,1); varname(1) = 'Eps'
@@ -1116,7 +1116,7 @@ PROGRAM AVERAGES
         txc(1:isize_field,1) = s(1:isize_field,1)   *s(1:isize_field,2)
         txc(1:isize_field,2) = txc(1:isize_field,1) *s(1:isize_field,1)
         txc(1:isize_field,3) = txc(1:isize_field,1) *s(1:isize_field,2)
-        
+
         is = 0
         is = is+1; data(is)%field => txc(:,1); varname(is) = 's1s2'
         is = is+1; data(is)%field => txc(:,2); varname(is) = 's1s2s1'
@@ -1146,19 +1146,19 @@ PROGRAM AVERAGES
                              + txc(1:isize_field,2)*txc(1:isize_field,2) &
                              + txc(1:isize_field,3)*txc(1:isize_field,3) ! Enstrophy
         CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
-        txc(1:isize_field,1) =                       txc(1:isize_field,1)*txc(1:isize_field,4) 
+        txc(1:isize_field,1) =                       txc(1:isize_field,1)*txc(1:isize_field,4)
         txc(1:isize_field,5) =                       txc(1:isize_field,4)*txc(1:isize_field,4) ! norm grad b
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
-        txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,2)*txc(1:isize_field,4) 
+        txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,2)*txc(1:isize_field,4)
         txc(1:isize_field,5) = txc(1:isize_field,5) +txc(1:isize_field,4)*txc(1:isize_field,4) ! norm grad b
         CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
-        txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,3)*txc(1:isize_field,4) 
+        txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,3)*txc(1:isize_field,4)
         txc(1:isize_field,5) = txc(1:isize_field,5) +txc(1:isize_field,4)*txc(1:isize_field,4) ! norm grad b
 
-        txc(1:isize_field,5) = SQRT( txc(1:isize_field,5) +C_SMALL_R) 
+        txc(1:isize_field,5) = SQRT( txc(1:isize_field,5) +C_SMALL_R)
         txc(1:isize_field,6) = SQRT( txc(1:isize_field,6) +C_SMALL_R)
         txc(1:isize_field,2) = txc(1:isize_field,1) /( txc(1:isize_field,5) *txc(1:isize_field,6) ) ! Cosine of angle between 2 vectors
-       
+
         data(1)%field => txc(:,1); varname(1) = 'PV'
         data(2)%field => txc(:,2); varname(2) = 'Cos'
 

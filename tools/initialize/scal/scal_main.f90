@@ -46,7 +46,7 @@ PROGRAM INISCAL
 
   CHARACTER*64 str, line
   CHARACTER*32 inifile
-  
+
 ! ###################################################################
   inifile = 'dns.ini'
 
@@ -65,13 +65,13 @@ PROGRAM INISCAL
   CALL IO_WRITE_ASCII(lfile,'Initializing scalar fiels.')
 
   itime = 0; rtime = C_0_R
-  
+
   isize_wrk3d = isize_field
   isize_wrk3d = MAX(isize_wrk1d*300, isize_wrk3d)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
-! -------------------------------------------------------------------      
+! -------------------------------------------------------------------
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN; ALLOCATE(wrk2d(isize_wrk2d*5))
   ELSE;                                        ALLOCATE(wrk2d(isize_wrk2d  ));  ENDIF
@@ -86,13 +86,13 @@ PROGRAM INISCAL
 #include "dns_alloc_arrays.h"
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
 ! ###################################################################
   CALL FI_PROFILES_INITIALIZE(wrk1d)
-     
+
   s = C_0_R
 
 #ifdef USE_MPI
@@ -114,14 +114,14 @@ PROGRAM INISCAL
            inb_scal_loc = inb_scal - 1
         ENDIF
      ENDIF
-     
+
 ! -------------------------------------------------------------------
 ! Mean
 ! -------------------------------------------------------------------
      DO is = 1,inb_scal_loc
         CALL SCAL_MEAN(is, s(1,is), wrk1d,wrk2d,wrk3d)
      ENDDO
-     
+
 ! -------------------------------------------------------------------
 ! Fluctuation field
 ! -------------------------------------------------------------------
@@ -134,14 +134,14 @@ PROGRAM INISCAL
            CALL SCAL_PLANE(flag_s, is, s(1,is), wrk2d)
         ENDIF
      ENDDO
-     
-! Initial liquid, if needed, in equilibrium; we simply overwrite previous values     
+
+! Initial liquid, if needed, in equilibrium; we simply overwrite previous values
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
         IF ( damkohler(3) .GT. C_0_R .AND. flag_mixture .EQ. 1 ) THEN
            CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)
         ENDIF
      ENDIF
-     
+
 #ifdef CHEMISTRY
 ! ###################################################################
 ! Reacting case
@@ -172,15 +172,15 @@ PROGRAM INISCAL
 ! Add Radiation component after the fluctuation field
 ! ------------------------------------------------------------------
   IF ( radiation%type .NE. EQNS_NONE ) THEN
-     
+
 ! An initial effect of radiation is imposed as an accumulation during a certain interval of time
      IF ( ABS(radiation%parameters(1)) .GT. C_0_R ) THEN
         radiation%parameters(3) = radiation%parameters(3) /radiation%parameters(1) *norm_ini_radiation
      ENDIF
      radiation%parameters(1) = norm_ini_radiation
      IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
-        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)         
-     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
         CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
      ENDIF
      DO is = 1,inb_scal
@@ -189,7 +189,7 @@ PROGRAM INISCAL
            s(1:isize_field,is) = s(1:isize_field,is) + txc(1:isize_field,1)
         ENDIF
      ENDDO
-     
+
   ENDIF
 
 ! ###################################################################
@@ -209,38 +209,39 @@ END PROGRAM INISCAL
 SUBROUTINE SCAL_MPIO_AUX()
 
   USE DNS_GLOBAL, ONLY : imax,kmax
+  USE DNS_GLOBAL, ONLY : io_aux
   USE DNS_MPI
-  
+
   IMPLICIT NONE
 
-#include "mpif.h" 
+#include "mpif.h"
 
 ! -----------------------------------------------------------------------
   TINTEGER                :: ndims, id
   TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
 
 ! #######################################################################
-  mpio_aux(:)%active = .FALSE. ! defaults
-  mpio_aux(:)%offset = 0
+  io_aux(:)%active = .FALSE. ! defaults
+  io_aux(:)%offset = 0
 
 ! ###################################################################
 ! Subarray information to read plane data
 ! ###################################################################
   id = 1
 
-  mpio_aux(id)%active = .TRUE.
-  mpio_aux(id)%communicator = MPI_COMM_WORLD
-  mpio_aux(:)%offset  = 52 ! size of header in bytes
+  io_aux(id)%active = .TRUE.
+  io_aux(id)%communicator = MPI_COMM_WORLD
+  io_aux(:)%offset  = 52 ! size of header in bytes
 
   ndims = 3
   sizes(1)  =imax *ims_npro_i; sizes(2)   = 1; sizes(3)   = kmax *ims_npro_k
   locsize(1)=imax;             locsize(2) = 1; locsize(3) = kmax
   offset(1) =ims_offset_i;     offset(2)  = 0; offset(3)  = ims_offset_k
-  
+
   CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-       MPI_ORDER_FORTRAN, MPI_REAL8, mpio_aux(id)%subarray, ims_err)
-  CALL MPI_Type_commit(mpio_aux(id)%subarray, ims_err)
-  
+       MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
+  CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
+
   RETURN
 END SUBROUTINE SCAL_MPIO_AUX
 
