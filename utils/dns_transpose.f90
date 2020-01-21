@@ -40,6 +40,9 @@ SUBROUTINE DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
   TINTEGER k,j,jj,kk
   TINTEGER last_k, last_j
 
+#ifdef USE_MKL 
+  CALL MKL_DOMATCOPY('c','t',nra,nca,C_1_R,a,ma,b,mb)
+#else #use own implementation
 !$omp parallel default(none) &
 !$omp private(k,j,jj,kk,srt,end,siz,last_k,last_j) &
 !$omp shared(a,b,nca,nra)
@@ -75,6 +78,7 @@ SUBROUTINE DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
 
 !$omp end parallel 
 
+#endif 
   RETURN
 END SUBROUTINE DNS_TRANSPOSE
 
