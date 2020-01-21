@@ -53,7 +53,7 @@ if ( NOT CMAKE_BUILD_TYPE )
   set(CMAKE_BUILD_TYPE RELEASE)  
 endif() 
 
-add_definitions(-DUSE_FFTW -DUSE_BLAS) 
+add_definitions(-DUSE_FFTW -DUSE_BLAS -DUSE_MKL) 
 
 #set(FFTW_INCLUDE_DIR "/gpfs/software/juwels/stages/2018a/software/FFTW/3.3.7-ipsmpi-2018a/include/")
 #set(FFTW_LIB         "/gpfs/software/juwels/stages/2018a/software/FFTW/3.3.7-ipsmpi-2018a/lib/libfftw3.a")
