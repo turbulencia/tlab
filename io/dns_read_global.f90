@@ -85,8 +85,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
   CALL IO_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
   CALL IO_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian8/CompactDirect6>')
-  CALL IO_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')  
-  CALL IO_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>') 
+  CALL IO_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
+  CALL IO_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'FileFormat', 'RawSplit', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'rawarray' ) THEN; imode_files = DNS_FILE_RAWARRAY
@@ -160,7 +160,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airvapor'      ) THEN; imixture = MIXT_TYPE_AIRVAPOR
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwater'      ) THEN; imixture = MIXT_TYPE_AIRWATER
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterlinear') THEN; imixture = MIXT_TYPE_AIRWATER_LINEAR
-  ELSE 
+  ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong entry Main.Mixture model.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
@@ -232,11 +232,11 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermSubsidence option.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
-  
+
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'sutherland'         ) THEN; transport%type = EQNS_TRANS_SUTHERLAND;
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'powerlaw'           ) THEN; transport%type = EQNS_TRANS_POWERLAW; 
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'powerlaw'           ) THEN; transport%type = EQNS_TRANS_POWERLAW;
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwater'           ) THEN; transport%type = EQNS_TRANS_AIRWATER;
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwatersimplified' ) THEN; transport%type = EQNS_TRANS_AIRWATERSIMPLIFIED;
   ELSE;                                                          transport%type = EQNS_NONE; ENDIF
@@ -246,16 +246,16 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermChemistry', 'none', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic'        ) THEN; chemistry%type = EQNS_CHEM_QUADRATIC;
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic3'       ) THEN; chemistry%type = EQNS_CHEM_QUADRATIC3; 
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'layeredrelaxation') THEN; chemistry%type = EQNS_CHEM_LAYEREDRELAXATION; 
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'ozone'            ) THEN; chemistry%type = EQNS_CHEM_OZONE; 
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic3'       ) THEN; chemistry%type = EQNS_CHEM_QUADRATIC3;
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'layeredrelaxation') THEN; chemistry%type = EQNS_CHEM_LAYEREDRELAXATION;
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'ozone'            ) THEN; chemistry%type = EQNS_CHEM_OZONE;
   ELSE;                                                        chemistry%type = EQNS_NONE; ENDIF
 
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'SpaceOrder', 'void', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian4' ) THEN; imode_fdm = FDM_COM4_JACOBIAN; 
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian6' ) THEN; imode_fdm = FDM_COM6_JACOBIAN; 
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian8' ) THEN; imode_fdm = FDM_COM8_JACOBIAN; 
+  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian4' ) THEN; imode_fdm = FDM_COM4_JACOBIAN;
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian6' ) THEN; imode_fdm = FDM_COM6_JACOBIAN;
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian8' ) THEN; imode_fdm = FDM_COM8_JACOBIAN;
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactdirect6'   ) THEN; imode_fdm = FDM_COM6_DIRECT;
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong SpaceOrder option.')
@@ -263,27 +263,27 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
   g(1:3)%mode_fdm = imode_fdm
-  
+
 ! -------------------------------------------------------------------
-#ifdef USE_MPI  
-  CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeITranspose', 'asynchronous',sRes) 
+#ifdef USE_MPI
+  CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeITranspose', 'asynchronous',sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_i = DNS_MPI_TRP_NONE
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_i = DNS_MPI_TRP_ASYNCHRONOUS
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_i = DNS_MPI_TRP_SENDRECV 
-  ELSE    
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_i = DNS_MPI_TRP_SENDRECV
+  ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeITranspose option.')
-     CALL DNS_STOP(DNS_ERROR_OPTION) 
+     CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
 
   CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeKTranspose', 'asynchronous',sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_k = DNS_MPI_TRP_NONE
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_k = DNS_MPI_TRP_ASYNCHRONOUS
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_k = DNS_MPI_TRP_SENDRECV
-  ELSE    
+  ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeKTranspose option.')
-     CALL DNS_STOP(DNS_ERROR_OPTION) 
+     CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
-#endif 
+#endif
 
 ! ###################################################################
 ! Dimensionles parameters
@@ -345,7 +345,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
            buoyancy%vector(:) = buoyancy%vector(:) /froude ! adding the froude number into de vector g
      ELSE
         CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Froude number must be nonzero if buoyancy is retained.')
-        CALL DNS_STOP(DNS_ERROR_OPTION)        
+        CALL DNS_STOP(DNS_ERROR_OPTION)
      ENDIF
 
      buoyancy%parameters(:) = C_0_R
@@ -367,29 +367,29 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF ( coriolis%type .NE. EQNS_NONE ) THEN
      CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Vector', '0.0,1.0,0.0', sRes)
      idummy = 3
-     CALL LIST_REAL(sRes, idummy, coriolis%vector)  
-     
+     CALL LIST_REAL(sRes, idummy, coriolis%vector)
+
      IF ( ABS(coriolis%vector(1)) .GT. C_0_R ) THEN; coriolis%active(2) = .TRUE.; coriolis%active(3) = .TRUE.; CALL IO_WRITE_ASCII(lfile, 'Angular velocity along Ox.'); ENDIF
      IF ( ABS(coriolis%vector(2)) .GT. C_0_R ) THEN; coriolis%active(3) = .TRUE.; coriolis%active(1) = .TRUE.; CALL IO_WRITE_ASCII(lfile, 'Angular velocity along Oy.'); ENDIF
      IF ( ABS(coriolis%vector(3)) .GT. C_0_R ) THEN; coriolis%active(1) = .TRUE.; coriolis%active(2) = .TRUE.; CALL IO_WRITE_ASCII(lfile, 'Angular velocity along Oz.'); ENDIF
-              
+
      IF ( rossby .GT. C_0_R ) THEN
         coriolis%vector(:) = coriolis%vector(:) /rossby ! adding the rossby number into the vector
      ELSE
         CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Rossby number must be nonzero if coriolis is retained.')
-        CALL DNS_STOP(DNS_ERROR_OPTION)        
+        CALL DNS_STOP(DNS_ERROR_OPTION)
      ENDIF
-     
+
      coriolis%parameters(:) = C_0_R
      CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Parameters', '0.0,1.0', sRes)
      idummy = MAX_PROF
      CALL LIST_REAL(sRes, idummy, coriolis%parameters)
 
      IF ( coriolis%parameters(2) .EQ. C_0_R ) THEN
-        CALL IO_WRITE_ASCII(lfile,'DNS_READ_GLOBAL. Default normalized geostrophic velocity set to one.') 
+        CALL IO_WRITE_ASCII(lfile,'DNS_READ_GLOBAL. Default normalized geostrophic velocity set to one.')
         coriolis%parameters(2) = C_1_R
      ENDIF
-     
+
   ENDIF
 
 ! Consistency check
@@ -410,9 +410,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   radiation%active = .FALSE.
   IF ( radiation%type .NE. EQNS_NONE ) THEN
-     CALL SCANINIINT(bakfile, inifile, 'Radiation', 'Scalar', '1', idummy)   
+     CALL SCANINIINT(bakfile, inifile, 'Radiation', 'Scalar', '1', idummy)
      radiation%active(idummy) = .TRUE.
-     
+
      radiation%parameters(:) = C_0_R
      CALL SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', '1.0', sRes)
      idummy = MAX_PROF
@@ -439,7 +439,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
 ! This subsidence type is implemented in opr_burgers_y only
-! to speed up calculation  
+! to speed up calculation
   IF ( subsidence%type .EQ. EQNS_SUB_CONSTANT_LOCAL ) subsidence%active = .FALSE.
 
 ! ###################################################################
@@ -458,12 +458,12 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         idummy = MAX_PROF
         CALL LIST_REAL(sRes, idummy, transport%parameters)
      ENDIF
-     
+
      IF ( settling .GT. C_0_R ) THEN
         transport%parameters = transport%parameters *settling ! adding the settling number in the parameter definitions
      ELSE
         CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Settling number must be nonzero if transport is retained.')
-        CALL DNS_STOP(DNS_ERROR_OPTION)        
+        CALL DNS_STOP(DNS_ERROR_OPTION)
      ENDIF
 
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
@@ -471,9 +471,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
         CALL SCANINIREAL(bakfile, inifile, 'Transport', 'Exponent', '0.0', transport%auxiliar(1))
      ENDIF
-     
+
   ENDIF
-  
+
 ! ###################################################################
 ! Chemistry
 ! ###################################################################
@@ -494,7 +494,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   DO is = 1,inb_scal_local1
      IF ( ABS(damkohler(is)) .GT. C_0_R ) chemistry%active(is) = .TRUE.
   ENDDO
-  
+
 ! ###################################################################
 ! Thermodynamics
 ! ###################################################################
@@ -548,7 +548,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Input kmax incorrect')
         CALL DNS_STOP(DNS_ERROR_KMAXTOTAL)
      ENDIF
-     
+
      CALL SCANINIINT(bakfile, inifile, 'Grid', 'Imax(*)', '-1', imax)
      IF ( imax .GT. 0 .AND. MOD(g(1)%size,imax) .EQ. 0 ) THEN
         ims_npro_i = g(1)%size/imax
@@ -556,7 +556,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Input imax incorrect')
         CALL DNS_STOP(DNS_ERROR_KMAXTOTAL)
      ENDIF
- 
+
      IF ( ims_npro_i*ims_npro_k .EQ. ims_npro ) THEN ! check
         WRITE(lstr,*) ims_npro_i; WRITE(sRes,*) ims_npro_k
         lstr = TRIM(ADJUSTL(lstr))//'x'//TRIM(ADJUSTL(sRes))
@@ -581,7 +581,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL DNS_STOP(DNS_ERROR_UNIFORMX)
   ENDIF
 
-  CALL SCANINICHAR(bakfile, inifile, 'Grid', 'YUniform', 'void', sRes)      
+  CALL SCANINICHAR(bakfile, inifile, 'Grid', 'YUniform', 'void', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(2)%uniform = .TRUE.
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(2)%uniform = .FALSE.
   ELSE
@@ -589,7 +589,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL DNS_STOP(DNS_ERROR_UNIFORMY)
   ENDIF
 
-  CALL SCANINICHAR(bakfile, inifile, 'Grid', 'ZUniform', 'void', sRes)      
+  CALL SCANINICHAR(bakfile, inifile, 'Grid', 'ZUniform', 'void', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(3)%uniform = .TRUE.
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(3)%uniform = .FALSE.
   ELSE
@@ -643,14 +643,14 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   FilterDomain(:)%uniform    = g(:)%uniform
   FilterDomain(:)%inb_filter = 0        ! default array size
   default                    = 'biased' ! default boundary condition
-  
+
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'Type', 'none', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; FilterDomain(:)%type = DNS_FILTER_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; FilterDomain(:)%type = DNS_FILTER_COMPACT
      FilterDomain(:)%parameters(1) = 0.49 ! default alpha value
      FilterDomain(:)%inb_filter    = 6
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit6' ) THEN; FilterDomain(:)%type = DNS_FILTER_6E  
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit4' ) THEN; FilterDomain(:)%type = DNS_FILTER_4E  
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit6' ) THEN; FilterDomain(:)%type = DNS_FILTER_6E
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit4' ) THEN; FilterDomain(:)%type = DNS_FILTER_4E
      FilterDomain(:)%inb_filter = 5
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'adm'       ) THEN; FilterDomain(:)%type = DNS_FILTER_ADM
      FilterDomain(:)%inb_filter = 5
@@ -663,7 +663,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ! Parameter1 is the transition wavenumber in physical units:
      ! >0: high-pass filter
      ! <0; low-pass filter
-     ! Parameter2 is the characteristic width--in log units (relative to domain size)'   
+     ! Parameter2 is the characteristic width--in log units (relative to domain size)'
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'helmholtz'      ) THEN; FilterDomain(:)%type = DNS_FILTER_HELMHOLTZ
      FilterDomain(:)%parameters(1) = C_1_R    ! default filter size
   ELSE
@@ -678,7 +678,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         FilterDomain(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
      ENDIF
   ENDDO
-  
+
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'BcsJmin', TRIM(ADJUSTL(default)), sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'periodic'  ) THEN; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_PERIODIC
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'biased'    ) THEN; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_BIASED
@@ -690,7 +690,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Filter.BcsJmin.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
-  ENDIF     
+  ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'BcsJmax', TRIM(ADJUSTL(default)), sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'periodic'  ) THEN; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_PERIODIC
@@ -703,7 +703,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Filter.BcsJmax.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
-  ENDIF     
+  ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'Parameters', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
@@ -723,9 +723,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Filter.Repeat must be positive.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
-  
+
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveX', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(1)%type = DNS_FILTER_NONE 
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(1)%type = DNS_FILTER_NONE
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveY', 'yes', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) FilterDomain(2)%type = DNS_FILTER_NONE
   CALL SCANINICHAR(bakfile, inifile, 'Filter', 'ActiveZ', 'yes', sRes)
@@ -739,7 +739,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      IF ( FilterDomain(ig)%size .EQ. 1 ) FilterDomain(ig)%type = DNS_FILTER_NONE
      IF ( FilterDomain(ig)%type .EQ. DNS_FILTER_TOPHAT .AND. &
           FilterDomain(ig)%parameters(1) .EQ. 0              ) FilterDomain(ig)%type = DNS_FILTER_NONE
-     
+
      IF ( FilterDomain(ig)%type .EQ. DNS_FILTER_TOPHAT ) THEN
         IF ( MOD(INT(FilterDomain(is)%parameters(1)),2) .NE. 0 ) THEN
            CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Tophat filter size must be even.')
@@ -747,16 +747,16 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         ENDIF
         FilterDomain(ig)%inb_filter = INT(FilterDomain(ig)%parameters(1)) +1
      ENDIF
-     
+
   ENDDO
-  
+
 #ifdef USE_MPI
   FilterDomain(1)%mpitype = DNS_MPI_I_PARTIAL
   FilterDomain(3)%mpitype = DNS_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
-! Statistics Control   
+! Statistics Control
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[Statistics]')
@@ -790,7 +790,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#ProfileTemperature=<None/Linear/Tanh/Erf>')
   CALL IO_WRITE_ASCII(bakfile, '#YCoorTemperature=<Relative Y reference point>')
   CALL IO_WRITE_ASCII(bakfile, '#DiamTemperature=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#ThickTemperature=<value>') 
+  CALL IO_WRITE_ASCII(bakfile, '#ThickTemperature=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#DeltaTemperature=<value>')
 
 ! streamwise velocity
@@ -819,7 +819,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceThickVelocity', '1.0', qbg(1)%parameters(3))
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceDeltaVelocity', '0.0', qbg(1)%parameters(4))
-  
+
 ! crosswise velocity
   CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileVelocityY', 'none', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; qbg(2)%type = PROFILE_NONE
@@ -847,7 +847,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bickley'   ) THEN; qbg(3)%type = PROFILE_BICKLEY
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'gaussian'  ) THEN; qbg(3)%type = PROFILE_GAUSSIAN
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekman'     ) THEN; qbg(3)%type = PROFILE_EKMAN_V
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekmanp'    ) THEN; qbg(3)%type = PROFILE_EKMAN_U_P
+  ! ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekmanp'    ) THEN; qbg(3)%type = PROFILE_EKMAN_U_P
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic' ) THEN; qbg(3)%type = PROFILE_PARABOLIC
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; qbg(3)%type = PROFILE_LINEAR_CROP
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; qbg(3)%type = PROFILE_MIXEDLAYER
@@ -863,6 +863,15 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceThickVelocityZ', '1.0', qbg(3)%parameters(3))
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceDeltaVelocityZ', '0.0', qbg(3)%parameters(4))
+
+! Consistency check
+  IF ( ( qbg(1)%type .EQ. PROFILE_EKMAN_U .OR. qbg(1)%type .EQ. PROFILE_EKMAN_U_P ) &
+       .AND. qbg(3)%type .EQ. PROFILE_NONE ) THEN
+     qbg(3)%type  = PROFILE_EKMAN_V
+     qbg(3)%ymean = qbg(1)%ymean
+     qbg(3)%thick = qbg(1)%thick
+     qbg(3)%delta = qbg(1)%delta
+  ENDIF
 
 ! density
   CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileDensity', 'None', sRes)
@@ -913,15 +922,15 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorPressure',     '0.5', pbg%ymean        )
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ReferencePressure', '0.0', pbg%reference    )
 
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ScaleHeight',       '0.0', pbg%parameters(1)) 
- 
+  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ScaleHeight',       '0.0', pbg%parameters(1))
+
 ! consistency check
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      IF ( rbg%type .EQ. PROFILE_NONE .AND. tbg%type .EQ. PROFILE_NONE ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Specify density or temperature.')
         CALL DNS_STOP(DNS_ERROR_OPTION)
      ENDIF
-     
+
      IF ( rbg%type .NE. PROFILE_NONE .AND. tbg%type .NE. PROFILE_NONE ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Specify only density or only temperature.')
         CALL DNS_STOP(DNS_ERROR_OPTION)
@@ -1002,7 +1011,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      WRITE(lstr,*) is; lstr='ReferenceScalar'//TRIM(ADJUSTL(lstr))
      WRITE(default,*) sbg(is)%mean
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), TRIM(ADJUSTL(default)), sbg(is)%reference)
-     
+
      WRITE(lstr,*) is; lstr='BottomSlopeScalar'//TRIM(ADJUSTL(lstr))
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(1))
      WRITE(lstr,*) is; lstr='UpperSlopeScalar'//TRIM(ADJUSTL(lstr))
@@ -1017,7 +1026,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         WRITE(lstr,*) is; lstr='YCoorSymmetry'//TRIM(ADJUSTL(lstr))
         CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0',  sbg(is)%parameters(1))
      ENDIF
-     
+
   ENDDO
 
 ! use chemkin for the thermodynamic data
@@ -1068,7 +1077,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   IF ( imixture .NE. MIXT_TYPE_NONE ) THEN ! particular mixture (requires implementation)
      CALL THERMO_INITIALIZE                ! gama0 is defined here
-     IF ( inb_scal_local1 .NE. inb_scal )  THEN 
+     IF ( inb_scal_local1 .NE. inb_scal )  THEN
         CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Incorrect number of Schmidt numbers.')
         CALL DNS_STOP(DNS_ERROR_OPTION)
      ENDIF
@@ -1089,7 +1098,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Incorrect mixture type.')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   END IF
-  
+
   IF ( buoyancy%type .EQ. EQNS_BOD_LINEAR   .OR. &
        buoyancy%type .EQ. EQNS_BOD_BILINEAR .OR. &
        buoyancy%type .EQ. EQNS_BOD_QUADRATIC ) THEN
@@ -1098,7 +1107,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         buoyancy%type = EQNS_NONE
      ENDIF
   ENDIF
-  
+
 ! mean_rho and delta_rho need to be defined, because of old version.
 ! Note that rho1 and rho2 are the values defined by equation of state,
 ! being then mean_rho=(rho1+rho2)/2.
@@ -1140,7 +1149,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
            CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. AirWater requires at least first 2 Damkholer numbers zero.')
            CALL DNS_STOP(DNS_ERROR_OPTION)
         ENDIF
-        
+
      ENDIF
 
   ENDIF
@@ -1190,7 +1199,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      g(is)%inb_grid = g(is)%inb_grid  &
                     + 1                    ! Density correction in anelastic mode
   END DO
-     
+
 ! auxiliar array txc
   isize_txc_field = imax*jmax*kmax
   IF ( ifourier .EQ. 1 ) THEN
@@ -1222,7 +1231,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! loop counters over the whole domain are integer*4
   IF ( isize_field .GT. HUGE(imax) ) THEN
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Integer model of 4 bytes not big enough.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)     
+     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -1248,7 +1257,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
   FilterDomainBcsFlow(:) = FilterDomain(2)%BcsMin
   FilterDomainBcsScal(:) = FilterDomain(2)%BcsMin
-  
+
   IF ( FilterDomain(1)%type   .EQ. DNS_FILTER_HELMHOLTZ     .AND. &
        FilterDomain(2)%BcsMin .NE. DNS_FILTER_BCS_DIRICHLET .AND. &
        FilterDomain(2)%BcsMin .NE. DNS_FILTER_BCS_SOLID     .AND. &
@@ -1272,7 +1281,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         ENDIF
      ENDDO
   ENDIF
-  
+
 ! -------------------------------------------------------------------
 ! Other parameters
 ! -------------------------------------------------------------------
@@ -1280,13 +1289,13 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! The variable inb_scal_array is only available at the end of this routine
   transport%scalar = inb_scal_array
   radiation%scalar = inb_scal_array
-  
+
   IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-     IF ( radiation%type .NE. EQNS_NONE ) THEN 
+     IF ( radiation%type .NE. EQNS_NONE ) THEN
         radiation%active(inb_scal_array    ) = .TRUE. ! liquid
         radiation%active(inb_scal_array + 1) = .TRUE. ! buoyancy
      ENDIF
-     
+
   ENDIF
 
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. ( .NOT. g(1)%periodic ) ) THEN

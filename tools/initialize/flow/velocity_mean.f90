@@ -17,8 +17,8 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
   TREAL, DIMENSION(jmax,*),         INTENT(INOUT) :: wrk1d, wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER j, k, iprof_loc
-  TREAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL, ycenter, calpha, salpha, fsign 
+  TINTEGER iq, j, k
+  TREAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL, ycenter, calpha, salpha
   EXTERNAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL
 
 ! ###################################################################
@@ -40,57 +40,44 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
      IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
 
 ! Construct reference profiles into array wrk1d
-        iprof_loc = PROFILE_EKMAN_V           ! Needed for Ekman case
-        calpha = COS(coriolis%parameters(1)); salpha = SIN(coriolis%parameters(1))
-        fsign  = SIGN(C_1_R,coriolis%vector(2))
-        ycenter = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
-        DO j = 1,jmax
-           wrk1d(j,1) =  FLOW_SHEAR_TEMPORAL&
-                (qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, g(2)%nodes(j))
-           wrk1d(j,2) =  FLOW_SHEAR_TEMPORAL& ! Needed for Ekman case
-                (iprof_loc, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, g(2)%nodes(j))
+        DO iq = 1,3
+           ycenter = g(2)%nodes(1) + g(2)%scale *qbg(iq)%ymean
+           DO j = 1,jmax
+              wrk1d(j,iq) = FLOW_SHEAR_TEMPORAL( &
+                            qbg(iq)%type, qbg(iq)%thick, qbg(iq)%delta, qbg(iq)%mean, ycenter, qbg(iq)%parameters, g(2)%nodes(j) &
+                            )
+           ENDDO
         ENDDO
 
 ! Construct velocity field
-        wrk1d(:,2) = fsign*wrk1d(:,2) ! right angular velocity vector (Garratt, 1992, p.42)
-        IF ( qbg(1)%type .EQ. PROFILE_EKMAN_U  .OR. qbg(1)%type .EQ. PROFILE_EKMAN_U_P ) THEN
+        IF ( coriolis%type .NE. EQNS_NONE ) THEN
+           calpha = COS(coriolis%parameters(1)); salpha = SIN(coriolis%parameters(1))
+           wrk1d(:,3) = wrk1d(:,3) *SIGN(C_1_R,coriolis%vector(2)) ! right angular velocity vector (Garratt, 1992, p.42)
+
            DO j = 1,jmax
-              u(:,j,:) = u(:,j,:) + wrk1d(j,1)*calpha + wrk1d(j,2)*salpha 
+              u(:,j,:) = u(:,j,:) + wrk1d(j,1)*calpha + wrk1d(j,3)*salpha
+              v(:,j,:) = v(:,j,:) + wrk1d(j,2)
+              w(:,j,:) = w(:,j,:) - wrk1d(j,1)*salpha + wrk1d(j,3)*calpha
            ENDDO
+
         ELSE
            DO j = 1,jmax
               u(:,j,:) = u(:,j,:) + wrk1d(j,1)
+              v(:,j,:) = v(:,j,:) + wrk1d(j,2)
+              w(:,j,:) = w(:,j,:) + wrk1d(j,3)
            ENDDO
-        ENDIF
-
-        v = v + qbg(2)%mean
-
-        IF ( g(3)%size .GT. 1 ) THEN
-           IF ( qbg(1)%type .EQ. PROFILE_EKMAN_U  .OR. qbg(1)%type .EQ. PROFILE_EKMAN_U_P ) THEN
-              DO j = 1,jmax
-                 w(:,j,:) = w(:,j,:) - wrk1d(j,1)*salpha + wrk1d(j,2)*calpha
-              ENDDO
-           ELSE
-              ycenter = g(2)%nodes(1) + g(2)%scale *qbg(3)%ymean
-              DO j = 1,jmax
-                 wrk1d(j,1) =  FLOW_SHEAR_TEMPORAL&
-                      (qbg(3)%type, qbg(3)%thick, qbg(3)%delta, qbg(3)%mean, ycenter, qbg(3)%parameters, g(2)%nodes(j))
-                 w(:,j,:) = w(:,j,:) + wrk1d(j,1)
-              ENDDO
-!              w = w + qbg(3)%mean
-           ENDIF
-
-        ELSE
-           w = C_0_R ! Spanwise velocity set to zero
 
         ENDIF
+
+! Consistency check
+        IF ( g(3)%size .EQ. 1 ) w = C_0_R
 
 ! -------------------------------------------------------------------
 ! Spatial
 ! -------------------------------------------------------------------
      ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
      ENDIF
-     
+
 ! ###################################################################
 ! Jet case
 ! ###################################################################
@@ -107,7 +94,7 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
            wrk1d(j,1) =  FLOW_JET_TEMPORAL&
                 (qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, qbg(1)%diam, ycenter, qbg(1)%parameters, g(2)%nodes(j))
         ENDDO
-        
+
 ! Construct velocity field
         DO j = 1,jmax
            u(:,j,:) = u(:,j,:) + wrk1d(j,1)
@@ -117,7 +104,7 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
 
         IF ( g(3)%size .GT. 1 ) THEN; w = w + qbg(3)%mean
         ELSE;                         w = C_0_R     ; ENDIF
-        
+
 ! -------------------------------------------------------------------
 ! Spatial
 ! -------------------------------------------------------------------
@@ -143,7 +130,7 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
 #undef rho_vi
 #undef u_vi
 #undef aux
-        
+
         IF ( g(3)%size .GT. 1 ) THEN; w = w + qbg(3)%mean
         ELSE;                         w = C_0_R     ; ENDIF
 
