@@ -135,7 +135,7 @@ PROGRAM PDFS
      READ(*,*) opt_main
 
      WRITE(*,*) 'Planes block size ?'
-     READ(*,*) opt_block  
+     READ(*,*) opt_block
 
      WRITE(*,*) 'Gate level to be used ?'
      READ(*,*) gate_level
@@ -165,12 +165,12 @@ PROGRAM PDFS
 
   IF ( opt_main .LT. 0 ) THEN ! Check
      CALL IO_WRITE_ASCII(efile, 'PDFS. Missing input [ParamPdfs] in dns.ini.')
-     CALL DNS_STOP(DNS_ERROR_INVALOPT) 
+     CALL DNS_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
-  IF ( opt_block .LT. 1 ) THEN 
-     CALL IO_WRITE_ASCII(efile, 'PDFS. Invalid value of opt_block.') 
-     CALL DNS_STOP(DNS_ERROR_INVALOPT) 
+  IF ( opt_block .LT. 1 ) THEN
+     CALL IO_WRITE_ASCII(efile, 'PDFS. Invalid value of opt_block.')
+     CALL DNS_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -179,7 +179,7 @@ PROGRAM PDFS
   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN; inb_txc = 6;
   ELSE;                                                                                             inb_txc = 1; ENDIF
   IF ( ifourier .EQ. 1 ) inb_txc = MAX(inb_txc,1)
-  nfield     = 2 
+  nfield     = 2
 
   SELECT CASE ( opt_main )
 
@@ -211,7 +211,7 @@ PROGRAM PDFS
      iread_flow = 1
      inb_txc = MAX(inb_txc,6)
      nfield = 3
-  CASE( 7 ) ! Chi-flamelet 
+  CASE( 7 ) ! Chi-flamelet
      iread_scal = 1
      iread_flow = 1
      inb_txc = MAX(inb_txc,6)
@@ -278,24 +278,23 @@ PROGRAM PDFS
 ! -------------------------------------------------------------------
 ! in case g(2)%size is not divisible by opt_block, drop the upper most planes
   jmax_aux = g(2)%size/opt_block
-  
+
 ! Space for the min and max of sampling variable at opt_bins+1,opt_bins+2
 ! Space for the 3D pdf at jmax_aux+1
-  npdf_size = (jmax_aux+1) *(opt_bins+2) *nfield 
+  npdf_size = (jmax_aux+1) *(opt_bins+2) *nfield
 
 ! -------------------------------------------------------------------
 ! Further allocation of memory space
-! -------------------------------------------------------------------      
+! -------------------------------------------------------------------
   ALLOCATE(pdf(npdf_size))
 
 ! -------------------------------------------------------------------
-  isize_txc   = isize_txc_field*inb_txc
   isize_wrk3d = MAX(isize_field,isize_txc_field)
 
 #include "dns_alloc_arrays.h"
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
@@ -304,7 +303,7 @@ PROGRAM PDFS
 ! ------------------------------------------------------------------------
   y_aux(:) = 0
   do ij = 1,jmax
-     is = (ij-1)/opt_block + 1 
+     is = (ij-1)/opt_block + 1
      y_aux(is) = y_aux(is) + y(ij,1)/M_REAL(opt_block)
   enddo
 
@@ -323,7 +322,7 @@ PROGRAM PDFS
 ! Initialize thermodynamic quantities
 ! -------------------------------------------------------------------
   CALL FI_PROFILES_INITIALIZE(wrk1d)
-  
+
 ! ###################################################################
 ! Calculating statistics
 ! ###################################################################
@@ -353,12 +352,12 @@ PROGRAM PDFS
            WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
            CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
            igate_size = INT(params(2))
-           
+
         ELSE
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
               opt_cond_scal = inb_scal_array
            ENDIF
-           
+
            CALL IO_WRITE_ASCII(lfile,'Calculating partition...')
            CALL FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
                 imax,jmax,kmax, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
@@ -375,9 +374,9 @@ PROGRAM PDFS
 ! Main variable 2D-PDF
 ! ###################################################################
      CASE( 1 )
-        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
-           
+
         ELSE
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
            CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
@@ -494,13 +493,13 @@ PROGRAM PDFS
               IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
                  CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d)
               ELSE
-                 wrk1d(1:jmax) = C_0_R 
+                 wrk1d(1:jmax) = C_0_R
                  CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
               ENDIF
               DO ij = 1,isize_field
                  s(ij,1) = wrk3d(ij)*buoyancy%vector(2)
               ENDDO
-              
+
               CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s, txc(1,4), wrk3d, wrk2d,wrk3d)
               txc(:,4) =-txc(:,4)
               txc(:,5) = C_0_R
@@ -511,7 +510,7 @@ PROGRAM PDFS
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
            CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
            CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
-           
+
            CALL THERMO_CALORIC_TEMPERATURE&
                 (imax,jmax,kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
            CALL THERMO_THERMAL_PRESSURE&
@@ -525,7 +524,7 @@ PROGRAM PDFS
         DO ij = 1,isize_field
            txc(ij,8) = txc(ij,1)*txc(ij,4) + txc(ij,2)*txc(ij,5) + txc(ij,3)*txc(ij,6)
         ENDDO
-        
+
         CALL IO_WRITE_ASCII(lfile,'Computing enstrophy production...')
         CALL FI_VORTICITY_PRODUCTION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),&
              txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -542,7 +541,7 @@ PROGRAM PDFS
         CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,4), txc(1,5), wrk2d,wrk3d)
 
         txc(1:isize_field,5) = txc(1:isize_field,4) *txc(1:isize_field,3) ! -w^2 div(u)
-        txc(1:isize_field,4) = txc(1:isize_field,1) /txc(1:isize_field,3) ! production rate 
+        txc(1:isize_field,4) = txc(1:isize_field,1) /txc(1:isize_field,3) ! production rate
         txc(1:isize_field,6) = log(txc(1:isize_field,3))                  ! ln(w^2)
 
         data(1)%field => txc(:,3); varname(1) = 'EnstrophyW_iW_i'     ;   ibc(1) = 2
@@ -569,7 +568,7 @@ PROGRAM PDFS
 ! ###################################################################
      CASE ( 5 )
         CALL IO_WRITE_ASCII(lfile,'Computing strain pressure...')
-        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
 
         ELSE
@@ -583,7 +582,7 @@ PROGRAM PDFS
         CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), &
              txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         txc(1:isize_field,1) = C_2_R *txc(1:isize_field,2)
-        
+
         CALL IO_WRITE_ASCII(lfile,'Computing strain production...')
         CALL FI_STRAIN_PRODUCTION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), &
              txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), wrk2d,wrk3d)
@@ -596,9 +595,9 @@ PROGRAM PDFS
 
         CALL IO_WRITE_ASCII(lfile,'Computing strain...')
         CALL FI_STRAIN(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
-        txc(1:isize_field,4) = C_2_R *txc(1:isize_field,4) 
+        txc(1:isize_field,4) = C_2_R *txc(1:isize_field,4)
         txc(1:isize_field,5) = log( txc(1:isize_field,4) )
-              
+
         data(1)%field => txc(:,4); varname(1) = 'Strain2S_ijS_i'           ; ibc(1) = 2
         data(2)%field => txc(:,5); varname(2) = 'LnStrain2S_ijS_i'         ; ibc(2) = 2
         data(3)%field => txc(:,2); varname(3) = 'ProductionMs2S_ijS_jkS_ki'; ibc(3) = 2
@@ -689,7 +688,7 @@ PROGRAM PDFS
              gate, txc(1,2), txc(1,1), opt_bins, opt_bins, wrk2d(1,1), wrk2d(1,2), wrk2d(1,3), wrk1d)
 
 ! ###################################################################
-! Conditional scalar gradient 3D-PDFs 
+! Conditional scalar gradient 3D-PDFs
 ! ###################################################################
      CASE ( 10 )
         CALL FI_GRADIENT(imax,jmax,kmax, s,txc(1,1), txc(1,2), wrk2d,wrk3d)
@@ -701,7 +700,7 @@ PROGRAM PDFS
              i1, opt_bins_2, opt_bins, gate, s, txc, pdf, wrk1d)
 
 ! ###################################################################
-! Joint PDF Scalar and Scalar Gradient 
+! Joint PDF Scalar and Scalar Gradient
 ! ###################################################################
      CASE ( 11 )
         CALL FI_GRADIENT(imax,jmax,kmax, s,txc(1,1), txc(1,2), wrk2d,wrk3d)
@@ -724,7 +723,7 @@ PROGRAM PDFS
            txc(ij,4) = asin(dummy)                 ! with Oy
            s(ij,1)  = atan2(txc(ij,3),txc(ij,1))  ! with Ox in plane xOz
         ENDDO
-        
+
         data(1)%field => txc(:,1); varname(1) = 'GradientX'; ibc(1) = 2
         data(2)%field => txc(:,2); varname(2) = 'GradientY'; ibc(2) = 2
         data(3)%field => txc(:,3); varname(3) = 'GradientZ'; ibc(3) = 2
@@ -849,7 +848,7 @@ PROGRAM PDFS
            eloc2 = txc(ij,3)*txc(ij,4)-txc(ij,6)*txc(ij,1)
            eloc3 = txc(ij,1)*txc(ij,5)-txc(ij,4)*txc(ij,2)
            cos3  = (txc(ij,7)*eloc1 + txc(ij,8)*eloc2 + txc(ij,9)*eloc3)/dummy
-           txc(ij,7) = cos1; txc(ij,8) = cos2; txc(ij,9) = cos3 
+           txc(ij,7) = cos1; txc(ij,8) = cos2; txc(ij,9) = cos3
         ENDDO
 
         data(4)%field => txc(:,7); varname(4) = 'cos(G,lambda1)'; ibc(4) = 2
@@ -901,19 +900,19 @@ PROGRAM PDFS
                              + txc(1:isize_field,2)*txc(1:isize_field,2) &
                              + txc(1:isize_field,3)*txc(1:isize_field,3) ! Enstrophy
         CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
-        txc(1:isize_field,1) =                       txc(1:isize_field,1)*txc(1:isize_field,4) 
+        txc(1:isize_field,1) =                       txc(1:isize_field,1)*txc(1:isize_field,4)
         txc(1:isize_field,5) =                       txc(1:isize_field,4)*txc(1:isize_field,4) ! norm grad b
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
-        txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,2)*txc(1:isize_field,4) 
+        txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,2)*txc(1:isize_field,4)
         txc(1:isize_field,5) = txc(1:isize_field,5) +txc(1:isize_field,4)*txc(1:isize_field,4) ! norm grad b
         CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
         txc(1:isize_field,1) = txc(1:isize_field,1) +txc(1:isize_field,3)*txc(1:isize_field,4)
         txc(1:isize_field,5) = txc(1:isize_field,5) +txc(1:isize_field,4)*txc(1:isize_field,4) ! norm grad b
 
-        txc(1:isize_field,5) = SQRT( txc(1:isize_field,5) +C_SMALL_R) 
+        txc(1:isize_field,5) = SQRT( txc(1:isize_field,5) +C_SMALL_R)
         txc(1:isize_field,6) = SQRT( txc(1:isize_field,6) +C_SMALL_R)
         txc(1:isize_field,2) = txc(1:isize_field,1) /( txc(1:isize_field,5) *txc(1:isize_field,6) ) ! Cosine of angle between 2 vectors
-       
+
         txc(1:isize_field,1) = txc(1:isize_field,1)*txc(1:isize_field,1) ! Squared of the potential voticity
         txc(1:isize_field,1) = LOG(txc(1:isize_field,1)+C_SMALL_R)
 

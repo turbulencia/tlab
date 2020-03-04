@@ -82,7 +82,7 @@ PROGRAM SPECTRA
   TINTEGER nfield, nfield_ref
   TINTEGER is, iv, iv_offset, iv1, iv2, ip, j
   TINTEGER jmax_aux, kxmax,kymax,kzmax
-  TINTEGER icalc_radial 
+  TINTEGER icalc_radial
   TREAL norm, dummy
 
   TINTEGER kx_total,ky_total,kz_total, kr_total, isize_spec2dr
@@ -125,7 +125,7 @@ PROGRAM SPECTRA
   ALLOCATE(y_aux(g(2)%size)) ! Reduced vertical grid
 
 ! -------------------------------------------------------------------
-! File names 
+! File names
 ! -------------------------------------------------------------------
 #include "dns_read_times.h"
 
@@ -170,19 +170,19 @@ PROGRAM SPECTRA
 
   IF ( opt_main .LT. 0 ) THEN ! Check
      CALL IO_WRITE_ASCII(efile, 'SPECTRA. Missing input [ParamSpectra] in dns.ini.')
-     CALL DNS_STOP(DNS_ERROR_INVALOPT) 
+     CALL DNS_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
-  IF ( opt_block .LT. 1 ) THEN 
-     CALL IO_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_block.') 
-     CALL DNS_STOP(DNS_ERROR_INVALOPT) 
+  IF ( opt_block .LT. 1 ) THEN
+     CALL IO_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_block.')
+     CALL DNS_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
-  IF ( opt_time .NE. SPEC_SINGLE .AND. opt_time .NE. SPEC_AVERAGE ) THEN 
+  IF ( opt_time .NE. SPEC_SINGLE .AND. opt_time .NE. SPEC_AVERAGE ) THEN
      CALL IO_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_time.')
-     CALL DNS_STOP(DNS_ERROR_INVALOPT) 
+     CALL DNS_STOP(DNS_ERROR_INVALOPT)
   ENDIF
-   
+
 ! -------------------------------------------------------------------
 ! Definitions
 ! -------------------------------------------------------------------
@@ -190,18 +190,18 @@ PROGRAM SPECTRA
   jmax_aux = g(2)%size/opt_block
 
   flag_buoyancy = 0 ! default
-  
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
 ! in case we need the buoyancy statistics
      IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
-          buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &       
+          buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &
           imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
           imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
         flag_buoyancy = 1
         inb_scal_array= inb_scal_array+1             ! space for the buoyancy field
      ENDIF
   ENDIF
-  
+
   IF      ( opt_main .EQ. 1 ) THEN; flag_mode = 1 ! spectra
   ELSE IF ( opt_main .EQ. 2 ) THEN; flag_mode = 1
   ELSE IF ( opt_main .EQ. 3 ) THEN; flag_mode = 2 ! correlations
@@ -236,14 +236,14 @@ PROGRAM SPECTRA
   ELSE;                        isize_spec2dr = kr_total *jmax_aux; ENDIF
 
 ! -------------------------------------------------------------------
-! Define MPI-type for writing spectra  
+! Define MPI-type for writing spectra
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-  CALL SPECTRA_MPIO_AUX(opt_main, opt_block)  
+  CALL SPECTRA_MPIO_AUX(opt_main, opt_block)
 #else
   io_aux(:)%offset = 0
-#endif 
-  
+#endif
+
 ! -------------------------------------------------------------------
 ! Further allocation of memory space
 ! -------------------------------------------------------------------
@@ -278,7 +278,7 @@ PROGRAM SPECTRA
   isize_aux = jmax_aux
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     IF ( MOD(jmax_aux,ims_npro_k) .NE. 0 ) THEN 
+     IF ( MOD(jmax_aux,ims_npro_k) .NE. 0 ) THEN
         isize_aux = ims_npro_k *(jmax_aux/ims_npro_k+1)
      ENDIF
 
@@ -330,9 +330,8 @@ PROGRAM SPECTRA
      ENDIF
   ENDIF
 
-! extend array by complex nyquist frequency in x (+1 TCOMPLEX = +2 TREAL) 
+! extend array by complex nyquist frequency in x (+1 TCOMPLEX = +2 TREAL)
 !              by boundary conditions in y       (+1 TCOMPLEX = +2 TREAL)
-  isize_txc   = isize_txc_field*inb_txc
 
   isize_wrk3d = isize_txc_field                ! default
   isize_wrk3d = MAX(isize_wrk3d,isize_spec2dr) ! space needed in INTEGRATE_SPECTRUM
@@ -340,20 +339,20 @@ PROGRAM SPECTRA
 #include "dns_alloc_arrays.h"
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
   icalc_radial = 0
   IF ( flag_mode .EQ. 1 .AND. g(1)%size     .EQ. g(3)%size     ) icalc_radial = 1 ! Calculate radial spectra
   IF ( flag_mode .EQ. 2 .AND. g(1)%jac(1,1) .EQ. g(3)%jac(1,1) ) icalc_radial = 1 ! Calculate radial correlations
-  
+
 ! ------------------------------------------------------------------------
 ! Define size of blocks
 ! ------------------------------------------------------------------------
   y_aux(:) = 0
   DO j = 1,jmax
-     is = (j-1)/opt_block + 1 
+     is = (j-1)/opt_block + 1
      y_aux(is) = y_aux(is) + y(j,1)/M_REAL(opt_block)
   ENDDO
 
@@ -370,18 +369,18 @@ PROGRAM SPECTRA
 ! Initialize thermodynamic quantities
 ! -------------------------------------------------------------------
   CALL FI_PROFILES_INITIALIZE(wrk1d)
-  
+
 ! -------------------------------------------------------------------
 ! Initialize
 ! -------------------------------------------------------------------
   outx = C_0_R; outz = C_0_R; outr = C_0_R
-  IF ( opt_ffmt .EQ. 1 ) out2d = C_0_R 
+  IF ( opt_ffmt .EQ. 1 ) out2d = C_0_R
 
 ! Normalization
   IF ( opt_main .GE. 5 ) THEN ! 3D spectra
-     norm = C_1_R / M_REAL(g(1)%size*g(3)%size*g(2)%size) 
+     norm = C_1_R / M_REAL(g(1)%size*g(3)%size*g(2)%size)
   ELSE
-     norm = C_1_R / M_REAL(g(1)%size*g(3)%size) 
+     norm = C_1_R / M_REAL(g(1)%size*g(3)%size)
   ENDIF
 
 ! Define tags
@@ -404,7 +403,7 @@ PROGRAM SPECTRA
      ENDIF
   ENDIF
   iv_offset = iv
-  
+
   IF ( icalc_scal .EQ. 1 ) THEN
      DO is = 1,inb_scal_array
         WRITE(sRes,*) is
@@ -412,7 +411,7 @@ PROGRAM SPECTRA
      ENDDO
   ENDIF
 
-  IF ( nfield_ref .NE. iv ) THEN ! Check 
+  IF ( nfield_ref .NE. iv ) THEN ! Check
      CALL IO_WRITE_ASCII(efile, 'SPECTRA. Array space nfield_ref incorrect.')
      CALL DNS_STOP(DNS_ERROR_WRKSIZE)
   ENDIF
@@ -421,7 +420,7 @@ PROGRAM SPECTRA
   iv = 0
   IF      ( opt_main .EQ. 1 .OR. opt_main .EQ. 3 ) THEN ! Auto-spectra & correlations
      DO ip = 1,iv_offset
-        iv = iv+1; p_pairs(iv,1) = iv; p_pairs(iv,2) = iv 
+        iv = iv+1; p_pairs(iv,1) = iv; p_pairs(iv,2) = iv
      ENDDO
      IF ( icalc_scal .EQ. 1 ) THEN
         DO is = inb_scal_min,inb_scal_max
@@ -429,7 +428,7 @@ PROGRAM SPECTRA
            iv = iv+1; p_pairs(iv,1) = ip; p_pairs(iv,2) = ip
         ENDDO
      ENDIF
-        
+
   ELSE IF ( opt_main .EQ. 2 .OR. opt_main .EQ. 4 ) THEN ! Cross-spectra & correlations
      IF ( icalc_flow .EQ. 1 ) THEN
         iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 2
@@ -455,7 +454,7 @@ PROGRAM SPECTRA
         ! ENDIF
      ELSE
         CALL IO_WRITE_ASCII(efile, 'SPECTRA. Cross-spectra needs flow fields.')
-        CALL DNS_STOP(DNS_ERROR_INVALOPT) 
+        CALL DNS_STOP(DNS_ERROR_INVALOPT)
      ENDIF
 
   ENDIF
@@ -477,7 +476,7 @@ PROGRAM SPECTRA
 
      WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))
      CALL IO_WRITE_ASCII(lfile, sRes)
-     
+
 ! Read data
      IF ( iread_flow .EQ. 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
@@ -490,16 +489,16 @@ PROGRAM SPECTRA
      ENDIF
 
 ! Calculate diagnostic quantities to be processed
-     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL FI_PRESSURE_BOUSSINESQ(q,s, p_aux, txc(1,1),txc(1,2), txc(1,3), wrk1d,wrk2d,wrk3d)
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN 
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
            CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal+1))
         ENDIF
         IF ( flag_buoyancy .EQ. 1 ) THEN
            IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
               CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, s(1,inb_scal_array))
            ELSE
-              wrk1d(1:jmax,1) = C_0_R 
+              wrk1d(1:jmax,1) = C_0_R
               CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, s(1,inb_scal_array), wrk1d)
            ENDIF
            dummy = C_1_R /froude
@@ -509,7 +508,7 @@ PROGRAM SPECTRA
         CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), q(1,7), wrk3d)
         CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), q(1,7), q(1,6))
      ENDIF
-     
+
 ! Remove fluctuation
      IF ( opt_main .GE. 5 ) THEN ! 3D spectra
         DO iv = 1,nfield_ref
@@ -525,7 +524,7 @@ PROGRAM SPECTRA
 ! reset if needed
      IF( opt_time .EQ. SPEC_SINGLE ) THEN
         outx = C_0_R; outz = C_0_R; outr = C_0_R
-        IF ( opt_ffmt .EQ. 1 ) out2d = C_0_R 
+        IF ( opt_ffmt .EQ. 1 ) out2d = C_0_R
      ENDIF
 
 ! ###################################################################
@@ -556,7 +555,7 @@ PROGRAM SPECTRA
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
            ENDIF
 
-           IF      ( flag_mode .EQ. 1 ) THEN ! Spectra                                      
+           IF      ( flag_mode .EQ. 1 ) THEN ! Spectra
               txc(:,1) = txc(:,1) *norm*norm
 
 ! Reduce 2D spectra into array wrk3d
@@ -574,21 +573,21 @@ PROGRAM SPECTRA
 ! Reduce 2D correlation into array wrk3d and accumulate 1D correlation
               wrk3d = C_0_R
               CALL REDUCE_CORRELATION(imax,jmax,kmax, opt_block, kr_total, &
-                   txc(1,2), wrk3d, outx(1,iv),outz(1,iv),outr(1,iv), wrk1d(1,2),wrk1d(1,4),icalc_radial) 
+                   txc(1,2), wrk3d, outx(1,iv),outz(1,iv),outr(1,iv), wrk1d(1,2),wrk1d(1,4),icalc_radial)
            ENDIF
 
 ! Check Parseval's relation
-           ip = g(2)%size - MOD(g(2)%size,opt_block)  ! Drop the uppermost ny%nblock 
+           ip = g(2)%size - MOD(g(2)%size,opt_block)  ! Drop the uppermost ny%nblock
            WRITE(line,100) MAXVAL( ABS(wrk1d(1:ip,4) - wrk1d(1:ip,1)) )
            WRITE(str, *  ) MAXLOC( ABS(wrk1d(1:ip,4) - wrk1d(1:ip,1)) )
            line = 'Checking Parseval: Maximum residual '//TRIM(ADJUSTL(line))//' at level '//TRIM(ADJUSTL(str))//'.'
-           CALL IO_WRITE_ASCII(lfile, line) 
+           CALL IO_WRITE_ASCII(lfile, line)
 
 ! Accumulate 2D information, if needed
            IF ( opt_ffmt .EQ. 1 ) out2d(1:isize_out2d,iv) = out2d(1:isize_out2d,iv) + wrk3d(1:isize_out2d)
 
         ENDDO
-        
+
         IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1 ) THEN  ! Calculate sampling size for radial correlation
            samplesize = C_0_R
            CALL RADIAL_SAMPLESIZE(imax,kmax, kr_total, samplesize)
@@ -597,8 +596,8 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 ! Output
 ! -------------------------------------------------------------------
-        IF ( opt_time .EQ. SPEC_SINGLE .OR. it .EQ. itime_size ) THEN 
-        
+        IF ( opt_time .EQ. SPEC_SINGLE .OR. it .EQ. itime_size ) THEN
+
 ! Normalizing accumulated spectra
            ip = opt_block
            IF( opt_time .EQ. SPEC_AVERAGE ) ip = ip*itime_size
@@ -611,12 +610,12 @@ PROGRAM SPECTRA
 ! Reducing radial data
 #ifdef USE_MPI
            DO iv = 1,nfield
-              CALL MPI_Reduce(outr(1,iv), wrk3d, isize_spec2dr, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err) 
+              CALL MPI_Reduce(outr(1,iv), wrk3d, isize_spec2dr, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
               IF ( ims_pro .EQ. 0 ) outr(1:isize_spec2dr,iv) = wrk3d(1:isize_spec2dr)
            ENDDO
 
            IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1 ) THEN ! Calculate sampling size for radial correlation
-              CALL MPI_Reduce(samplesize, wrk3d, kr_total, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err) 
+              CALL MPI_Reduce(samplesize, wrk3d, kr_total, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
               IF ( ims_pro .EQ. 0 ) samplesize(1:kr_total) = wrk3d(1:kr_total)
            ENDIF
 #endif
@@ -629,7 +628,7 @@ PROGRAM SPECTRA
               DO iv1 = 1, kr_total
                  IF ( samplesize(iv1) .GT. C_0_R ) samplesize(iv1) = C_1_R /samplesize(iv1)
               ENDDO
-                 
+
               DO iv = 1,nfield
                  DO j = 1,jmax_aux
                     DO iv1 = 1, kr_total
@@ -642,7 +641,7 @@ PROGRAM SPECTRA
            ENDIF
 #ifdef USE_MPI
            ENDIF
-#endif                 
+#endif
 
 ! Saving 1D fields
            WRITE(fname,*) itime; fname = 'x'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
@@ -655,23 +654,23 @@ PROGRAM SPECTRA
               CALL IO_WRITE_SUBARRAY4(i2, fname, varname, outz, sizes, wrk3d)
            ENDIF
 
-           IF ( icalc_radial .EQ. 1 ) THEN 
+           IF ( icalc_radial .EQ. 1 ) THEN
               WRITE(fname,*) itime; fname = 'r'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
               CALL WRITE_SPECTRUM1D(fname, varname, kr_total*jmax_aux, nfield, outr)
            ENDIF
-           
+
 ! Saving 2D fields
-           IF ( opt_ffmt .EQ. 1 ) THEN 
+           IF ( opt_ffmt .EQ. 1 ) THEN
               IF ( flag_mode .EQ. 2 ) THEN ! correlations
                  WRITE(fname,*) itime; fname = 'cor'//TRIM(ADJUSTL(fname))
                  sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
                  CALL IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
               ELSE                         ! spectra
-                 WRITE(fname,*) itime; fname = 'pow'//TRIM(ADJUSTL(fname)) 
+                 WRITE(fname,*) itime; fname = 'pow'//TRIM(ADJUSTL(fname))
                  sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1) /2; sizes(4) = 1; sizes(5) = nfield
                  CALL IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
 
-                 WRITE(fname,*) itime; fname = 'pha'//TRIM(ADJUSTL(fname)) 
+                 WRITE(fname,*) itime; fname = 'pha'//TRIM(ADJUSTL(fname))
                  sizes(1) = isize_out2d; sizes(2) = 1+sizes(1) /2; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
                  CALL IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
 
@@ -680,7 +679,7 @@ PROGRAM SPECTRA
            ENDIF
 
         ENDIF
-        
+
 ! ###################################################################
 ! 3D Spectra
 ! ###################################################################
@@ -703,7 +702,7 @@ PROGRAM SPECTRA
   ENDDO ! Loop in itime
 
   CALL DNS_END(0)
-  
+
   STOP
 
 100 FORMAT(G_FORMAT_R)

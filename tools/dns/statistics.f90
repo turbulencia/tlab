@@ -14,7 +14,7 @@ MODULE STATISTICS
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   IMPLICIT NONE
   SAVE
-  
+
 #ifdef USE_MPI
 #include "mpif.h"
 #endif
@@ -22,23 +22,23 @@ MODULE STATISTICS
   TREAL, ALLOCATABLE, PUBLIC, DIMENSION(:,:)     :: mean
   TREAL, ALLOCATABLE, PUBLIC, DIMENSION(:,:,:)   :: mean_flow
   TREAL, ALLOCATABLE, PUBLIC, DIMENSION(:,:,:,:) :: mean_scal
-  
+
   LOGICAL, PUBLIC :: stats_averages, stats_pdfs, stats_intermittency, stats_filter
 
   PUBLIC :: STATISTICS_INITIALIZE
   PUBLIC :: STATISTICS_TEMPORAL_LAYER
   PUBLIC :: STATISTICS_SPATIAL_LAYER
-  
+
   PRIVATE
-  
+
 CONTAINS
-  
+
 ! ###################################################################
 ! ###################################################################
 SUBROUTINE STATISTICS_INITIALIZE()
 
   USE DNS_GLOBAL, ONLY : imode_sim, jmax, inb_scal, nstatavg
-  
+
   IF      ( imode_sim .EQ. DNS_MODE_TEMPORAL) THEN
      ALLOCATE(mean(jmax,MAX_AVG_TEMPORAL))
 
@@ -47,7 +47,7 @@ SUBROUTINE STATISTICS_INITIALIZE()
      ALLOCATE(mean_scal(nstatavg,jmax,MS_SCALAR_SIZE,inb_scal))
 
   ENDIF
-  
+
   RETURN
 END SUBROUTINE STATISTICS_INITIALIZE
 
@@ -58,8 +58,8 @@ END SUBROUTINE STATISTICS_INITIALIZE
 !########################################################################
 SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
 
-#ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS, ONLY : tfile
 #endif
   USE DNS_TYPES, ONLY : pointers_dt
   USE DNS_GLOBAL,    ONLY : g
@@ -88,7 +88,7 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
 !# wrk3d    In     Aux array, with space for REAL(8) 3D field; declared
 !#                 as INTEGER(1) to be used as gate array.
 !#                 PROBLEMS IN JUQUEEN WITH THIS TRICK!!! Maybe use hs?
-  
+
   TARGET :: q,s, txc
 
 ! -------------------------------------------------------------------
@@ -111,7 +111,7 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
 #ifdef LES
   TINTEGER ichi
 #endif
-  
+
 ! ###################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER' )
@@ -143,14 +143,14 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
   ENDIF
 
 ! Calculate pressure
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,3), txc(1,1),txc(1,2), hq, wrk1d,wrk2d,wrk3d)
-     
+
   ELSE
      CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
      CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, vis)
-     
+
   ENDIF
 
 ! ###################################################################
@@ -199,7 +199,7 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
      CALL PDF2D_N(fname, varname, igate, rtime, &
           imax,jmax,kmax, nfield, ibc, amin, amax, g(2)%nodes, wrk3d, &
           data, nbins, isize_field, txc(:,1), wrk1d)
-     
+
   ENDIF
 
 ! ###################################################################
@@ -228,10 +228,10 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
 
            CALL AVG_SCAL_XZ(is, q,s, hq(1,1), &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
-           
+
         ENDIF
 
-        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN 
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
               is = is + 1
               CALL THERMO_ANELASTIC_THETA_L(imax,jmax,kmax, s, epbackground,pbackground, hq(1,1))
@@ -239,7 +239,7 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
            ENDIF
         ENDIF
-           
+
      ENDIF
 
 #ifdef LES
@@ -296,8 +296,8 @@ END SUBROUTINE STATISTICS_TEMPORAL_LAYER
 ! ###################################################################
 SUBROUTINE STATISTICS_SPATIAL_LAYER(txc, wrk1d,wrk2d)
 
-#ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS, ONLY : tfile
 #endif
   USE DNS_GLOBAL
   USE DNS_LOCAL
@@ -314,7 +314,7 @@ SUBROUTINE STATISTICS_SPATIAL_LAYER(txc, wrk1d,wrk2d)
   TREAL, DIMENSION(*) :: txc, wrk1d, wrk2d
 
 ! -----------------------------------------------------------------------
-  TINTEGER is, buff_u_jmin, buff_u_jmax
+  TINTEGER is, buff_u_jmin, buff_u_jmax, isize_txc
 
 ! #######################################################################
 #ifdef TRACE_ON
@@ -328,11 +328,13 @@ SUBROUTINE STATISTICS_SPATIAL_LAYER(txc, wrk1d,wrk2d)
 #ifdef USE_MPI
      IF ( ims_pro .EQ. 0 ) THEN
 #endif
+        isize_txc = inb_txc*isize_txc_field
+
         buff_u_jmin = BuffFlowJmax%size
         buff_u_jmax = jmax -BuffFlowJmax%size +1
         CALL AVG_FLOW_SPATIAL_LAYER(isize_txc, buff_u_jmin,buff_u_jmax, &
              mean_flow, txc, wrk1d,wrk2d)
-        
+
         IF ( icalc_scal .EQ. 1 ) THEN
            DO is = 1,inb_scal
               CALL AVG_SCAL_SPATIAL_LAYER(is, isize_txc, buff_u_jmin,buff_u_jmax, &
@@ -340,7 +342,7 @@ SUBROUTINE STATISTICS_SPATIAL_LAYER(txc, wrk1d,wrk2d)
            ENDDO
         ENDIF
 
-#ifdef LES               
+#ifdef LES
         IF ( iles .EQ. 1 ) THEN
            CALL LES_AVG_SPATIAL_LAYER(isize_txc, x,y, vaux(vindex(VA_MEAN_WRK)), txc, wrk1d,wrk2d)
         ENDIF

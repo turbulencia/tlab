@@ -1167,7 +1167,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      inb_flow_array = inb_flow + 2                                ! space for p, T
      IF ( transport%type .EQ. EQNS_TRANS_SUTHERLAND .OR. transport%type .EQ. EQNS_TRANS_POWERLAW ) inb_flow_array = inb_flow_array + 1 ! space for vis
   ENDIF
-  inb_vars = inb_flow + inb_scal
 
   inb_wrk1d = 16
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN; inb_wrk2d = 11
@@ -1303,8 +1302,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL DNS_STOP(DNS_ERROR_CHECKUNIFX)
   ENDIF
 
-  IF ( inb_vars .GT. MAX_VARS ) THEN
-     CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error MAX_VARS < inb_vars')
+  IF ( inb_flow + inb_scal .GT. MAX_VARS ) THEN
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error MAX_VARS < inb_flow + inb_scal')
      CALL DNS_STOP(DNS_ERROR_TOTALVARS)
   ENDIF
 

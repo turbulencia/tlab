@@ -6,11 +6,11 @@
 !# DESCRIPTION
 !#
 !# Create random velocity/scalar fields according to a given spectrum and
-!# distribution function. 
+!# distribution function.
 !#
 !# Thermodynamics are initialized to a constant mean value, if needed.
 !#
-!# For a Gaussian distribution, the covariance matrix can also been 
+!# For a Gaussian distribution, the covariance matrix can also been
 !# specified.
 !#
 !########################################################################
@@ -42,7 +42,7 @@ PROGRAM INIRAND
   TREAL AVG1V3D, dummy
 
   CHARACTER*32 inifile
-  
+
 ! ###################################################################
   inifile = 'dns.ini'
 
@@ -63,7 +63,7 @@ PROGRAM INIRAND
   seed = seed + ims_pro
 #endif
   seed = - ABS(seed)
-  
+
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
@@ -78,14 +78,13 @@ PROGRAM INIRAND
   IF ( icalc_scal .EQ. 1 ) ALLOCATE(s(isize_field,inb_scal_array))
 
   inb_txc = 3
-  isize_txc = isize_txc_field*inb_txc
   IF ( inb_txc .GT. 0 ) ALLOCATE(txc(isize_txc_field,inb_txc))
 
   isize_wrk3d = isize_txc_field
   ALLOCATE(wrk3d(isize_wrk3d))
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
@@ -97,7 +96,7 @@ PROGRAM INIRAND
      CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   ENDIF
 
-  IF ( g(2)%size .EQ. 1 ) THEN; ifourier_type = 2; 
+  IF ( g(2)%size .EQ. 1 ) THEN; ifourier_type = 2;
   ELSE;                         ifourier_type = 3; ENDIF
 
 ! ###################################################################
@@ -105,10 +104,10 @@ PROGRAM INIRAND
      CALL IO_WRITE_ASCII(lfile,'Calculating random fields for flow.')
      DO iq = 1,3
         IF ( flag_type .EQ. 1 ) CALL RAND_PDF(imax,jmax,kmax, seed, isymmetric, ipdf, txc(1,2))
-        
+
         IF ( ispectrum .GT. 0 ) THEN
            IF ( flag_type .EQ. 1 ) CALL OPR_FOURIER_F(ifourier_type, imax,jmax,kmax, txc(1,2),txc(1,1), txc(1,3),wrk2d,wrk3d)
-           
+
            CALL RAND_PSD(imax,jmax,kmax, ispectrum, spc_param, flag_type, seed, txc(1,1))
            CALL OPR_FOURIER_B(ifourier_type, imax,jmax,kmax, txc(1,1), txc(1,2), wrk3d)
         ENDIF
@@ -120,27 +119,27 @@ PROGRAM INIRAND
         q(1:isize_field,iq)  = txc(1:isize_field,2) * dummy
 
      ENDDO
-     
+
      IF ( ipdf .EQ. 2 ) THEN ! Gaussian PDF
         CALL RAND_COVARIANCE(imax,jmax,kmax, q(:,1),q(:,2),q(:,3), ucov)
      ENDIF
-     
+
      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
         q(:,4) = pbg%mean; q(:,5) = rbg%mean
      ENDIF
-     
+
      CALL DNS_WRITE_FIELDS('flow.rand', i2, imax,jmax,kmax, inb_flow, isize_field, q, txc)
-     
+
   ENDIF
-  
+
   IF ( icalc_scal .EQ. 1 ) THEN
      CALL IO_WRITE_ASCII(lfile,'Calculating random fields for scalar.')
      DO is = 1,inb_scal
         IF ( flag_type .EQ. 1 ) CALL RAND_PDF(imax,jmax,kmax, seed, isymmetric, ipdf, txc(1,2))
-        
+
         IF ( ispectrum .GT. 0 ) THEN
            IF ( flag_type .EQ. 1 ) CALL OPR_FOURIER_F(ifourier_type, imax,jmax,kmax, txc(1,2),txc(1,1), txc(1,3),wrk2d,wrk3d)
-           
+
            CALL RAND_PSD(imax,jmax,kmax, ispectrum, spc_param, flag_type, seed, txc(1,1))
            CALL OPR_FOURIER_B(ifourier_type, imax,jmax,kmax, txc(1,1), txc(1,2), wrk3d)
         ENDIF
@@ -152,11 +151,11 @@ PROGRAM INIRAND
         s(1:isize_field,is)  = txc(1:isize_field,2) * dummy
 
      ENDDO
-     
+
      CALL DNS_WRITE_FIELDS('scal.rand', i1, imax,jmax,kmax, inb_scal, isize_field, s, txc)
-     
+
   ENDIF
-  
+
   CALL DNS_END(0)
 
   STOP

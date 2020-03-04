@@ -369,7 +369,6 @@ PROGRAM AVERAGES
      ENDIF
   ENDIF
 
-  isize_txc   = isize_txc_field*inb_txc
   isize_wrk3d = MAX(isize_field,opt_bins*opt_order*nfield*jmax)
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
   IF ( icalc_part .eq. 1) THEN

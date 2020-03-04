@@ -148,8 +148,6 @@ PROGRAM DNS
   ENDIF
 #endif
 
-  isize_txc = inb_txc*isize_txc_field
-
 ! wkr3d
   isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
