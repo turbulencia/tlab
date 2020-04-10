@@ -19,7 +19,7 @@ case $kernel in
                 SYST=mpipc;; 
             juqueen* )
                 SYST=juqueen;; 
-            laptop* )
+            laptop*|home* )
                 SYST=archlinux;; 
             eetac* )
                 SYST=eetac;; 
