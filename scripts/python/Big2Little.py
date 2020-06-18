@@ -4,11 +4,34 @@ import numpy as np   # For array operations.
 import struct
 import sys
 
-nx = 3072 # number of points in Ox
-ny = 1024 # number of points in Oy
-nz = 4608 # number of points in Oz
+nx = 0 # number of points in Ox; if 0, then search dns.ini
+ny = 0 # number of points in Oy; if 0, then search dns.ini
+nz = 0 # number of points in Oz; if 0, then search dns.ini
 
-# do not edit
+# do not edit below this line
+
+# getting grid size from dns.ini, if necessary
+if ( nx == 0 ):
+    for line in open('dns.ini'):
+        if line.lower().replace(" ","").startswith("imax="):
+            nx = int(line.split("=",1)[1])
+            break
+
+if ( ny == 0 ):
+    for line in open('dns.ini'):
+        if line.lower().replace(" ","").startswith("jmax="):
+            ny = int(line.split("=",1)[1])
+            break
+
+if ( nz == 0 ):
+    for line in open('dns.ini'):
+        if line.lower().replace(" ","").startswith("kmax="):
+            nz = int(line.split("=",1)[1])
+            break
+
+print("Grid size is {}x{}x{}.".format(nx,ny,nz))
+
+# getting data from stdin
 if ( len(sys.argv) <= 1 ):
     print("Usage: python $0 list-of-files.")
     quit()
@@ -36,7 +59,7 @@ for file in setoffiles:
     print(a)
     raw = struct.pack('<{}d'.format(entries),*a)
     fout.write(raw)
-    
+
     print("Converting fields...")
     for k in range(nz):
         raw = fin.read(nx*ny*sizeofdata)
