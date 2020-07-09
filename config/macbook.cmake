@@ -17,8 +17,8 @@ if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build
    set(CMAKE_BUILD_TYPE PARALLEL ) 
 
 else() # compiler for serial build
-   set(ENV{FC} /opt/local/bin/gfortran-mp-6)
-   set(USER_Fortran_FLAGS          "-cpp -ffree-form -ffree-line-length-2048 -fno-automatic")  
+   set(ENV{FC} /opt/local/bin/gfortran-mp-10)
+   set(USER_Fortran_FLAGS          "-cpp -fallow-argument-mismatch -ffree-form -ffree-line-length-2048 -fno-automatic")  
 
 #   add_definitions(-DUSE_PSFFT -DUSE_FFTW)
    add_definitions( -DUSE_FFTW)
