@@ -53,6 +53,7 @@ if [ $system = "juwels" ]; then
    QSEND_COMMMODE=blocking
    QSEND_RANKSPERNODE=48
    QSEND_THREADSPERRANK=1
+   QSEND_QUEUE=batch
 fi
 if [ $system = "jureca" ]; then 
    QSEND_COMMODE=blocking 
@@ -140,6 +141,12 @@ if [ $# -eq 0 ]; then
          QSEND_THREADSPERRANK=$value
       fi
 
+      echo "Enter system partition [$QSEND_QUEUE] : (batch,mem192,devel)"
+      read value
+      if [ -n "$value" ]; then  
+	  QSEND_QUEUE=$value
+      fi 
+
    fi
 
    if [ $system = "jureca" ] ; then 
@@ -197,7 +204,7 @@ if [ $# -eq 0 ]; then
    echo "Job Directory        : $QSEND_JOBDIR"
    if [ $hpc = "parallel" ]; then
       echo "Processors Requested : $QSEND_NP"
-   fi
+   fi 
    echo "Memory Requested     : $QSEND_MEM"
    echo "Time requested       : $QSEND_TIME"
    echo "Run mode             : $RUNMODE"
@@ -212,7 +219,8 @@ if [ $# -eq 0 ]; then
       echo "Communication mode   : $QSEND_COMMMODE"
       echo "Ranks per node       : $QSEND_RANKSPERNODE"
    fi
-   if [ $system = "juwels" ] || [ $system = "jureca" ]; then
+   if [ $system = "juwels" ] || [ $system = "jureca" ]; then 
+      echo "Partition            : $QSEND_QUEUE"
       echo "Ranks per node       : $QSEND_RANKSPERNODE"
       echo "Threads per rank     : $QSEND_THREADSPERRANK"
    fi
@@ -241,6 +249,11 @@ else
 	    QSEND_NAME=$1
 	    shift
 	    ;;
+	-queue)
+	    shift
+	    QSEND_QUEUE=$1
+	    shift
+	    ;; 
 	-time)
 	    shift
 	    QSEND_TIME=$1
@@ -317,7 +330,7 @@ if [ -z "$BALANCE" ]; then
 fi
 
 if [ $BALANCE -lt $QSEND_TIME ]; then
-   echo "You don't have enought time available."
+   echo "You don't have enough time available."
    exit 1
 fi
 
@@ -539,6 +552,7 @@ if [ $answer = "yes" ]; then
 		    rpn      = '$QSEND_RANKSPERNODE';
                     nodes = int((total_pe-1)/rpn) + 1;
 
+                    print "#SBATCH --partition='$QSEND_QUEUE'" 
                     print "#SBATCH --nodes=" nodes
                     print "#SBATCH --ntasks-per-node='$QSEND_RANKSPERNODE'"
                     if ('$QSEND_THREADSPERRANK' >= 2)
@@ -555,6 +569,7 @@ if [ $answer = "yes" ]; then
 	    else if ($4 == "MODIFY")
 		{
 		    print "JOBDIR='$QSEND_JOBDIR'"
+                    print "QUEUE='$QSEND_QUEUE'"
 		    print "MEM='$QSEND_MEM'"
 		    print "TIME='$QSEND_TIME'"
 		    print "NAME=\"'$QSEND_NAME'\""
