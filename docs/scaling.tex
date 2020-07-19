@@ -187,6 +187,81 @@ or $P\approx P_\mathrm{ref}$.
   \label{fig:v_scaling2} 
 \end{figure}
 
+
+\section{Scaling on the cluster \texttt{juwels@fz-juelich.de}} 
+
+With two sockets each holding 24 CPU cores, juwels features 48 physical cores per node and thus 
+introduces a single prime factor three to the number CPUs available. To optimally utilize this, 
+domain sizes should also contain a prime factor three. 
+
+The cluster is heterogeneous and features
+\begin{itemize} 
+  \item[(1)] a partition \texttt{batch} with 2271 standard-memory nodes (2x24 cores, 96 GB )
+  \item[(2)] a partition \texttt{mem192} with 240 enhanced-memory nodes (2x24 cores, 192 GB )
+  \item[(3)] a booster module with 56 GPU-accelerated nodes ( 2x20 cores + 4 GPUs, 192 GB; to be extended in 2020).
+\end{itemize}
+
+Scaling was tested using up to 512 nodes on the \texttt{batch} partition (Tab.~\ref{tab:scaling_juwels} and Fig.~\ref{fig:scaling_juwels}
+and up to 64 nodes of the \texttt{mem192} partition (Tab.~\ref{tab:memory_juwels}).
+There appears to be a significnat memory-overhead of the underlying MPI 
+which sometimes enables to run particular cases in much less than half the number of large-memory nodes as compared 
+to running the same configuration in the \texttt{batch partition}.
+
+In comparison with juwels, the normaliezd performance (CPU-h per $1024^3$ points per iteration) is better by up to a factor of $3$, but only for relatively small cases that can be run within a few (up to 4) nodes. For operational cases (using 32 to 128 nodes), the performance boost is around $2$. For even larger cases utilizing 256 or more nodes, performance boost in comparison with juwels is smaller than 2, and it approaches one from above for jobs using 10000 or more MPI tasks. 
+%
+\begin{table}
+  \caption{Scaling of two cubed cases in the batch partition of \texttt{juwels@fz-juelich.de}; only computation no initialization, no I/O}
+  {\footnotesize\begin{tabular}{r | r r r | r r r | rrr} 
+    \toprule 
+    Case   & \multicolumn{3}{c|}{$1536^3$} & \multicolumn{3}{c}{$3072^3$}\\
+    \midrule
+    \#nodes&        time/it $[s]$ & Speed-up & Eff. & Time/it $[s]$ & Speed-up & Eff.\\ 
+    \midrule 
+                        8 &      113.5&   1.0&  1.00 \\ 
+    \rowcolor{gray!20} 16&        57.5&   2.0&  0.99\\ 
+                       32&        36.3&   3.1&  0.78\\
+    \rowcolor{gray!20} 64&        21.2&   5.4&  0.67& 163.0& 1.0& 1.00\\
+                       96&        15.1&   7.5&  0.63&  98.4& 1.7& 1.10\\
+    \rowcolor{gray!20}128&        11.5&   9.9&  0.62&  92.8& 1.8& 0.88\\
+                      192&         9.1&  12.5&  0.52&  65.1& 2.5& 0.83\\
+    \rowcolor{gray!20}256&         6.7&  16.9&  0.53&  51.4& 3.2& 0.79\\
+                      384&                        &&&  38.1& 4.3& 0.71\\
+    \rowcolor{gray!20}512&                        &&&  29.3& 5.6& 0.70\\ 
+    \bottomrule
+  \end{tabular}}
+  \label{tab:scaling_juwels} 
+\end{table}
+
+\begin{table}
+  \caption{Average timing for total production jobs in the large-memory partition as compared to the batch partition.
+  The batch case using 128 nodes is the smallest configuration for which the case runs in the batch queue. }
+  \begin{centering}{\footnotesize\begin{tabular}{rrr|r|rrr}
+    \toprule
+    Partition               && \multicolumn{4}{c}{mem192}&batch\\
+    \#nodes                 &[1]&    20  &  24  &  32 &  64 & 128\\
+    \midrule 
+    \rowcolor{gray!20}\#tasks per node        &[1]&    16  &  48  &  48 &  48 &  48\\
+    Wall-clock time/it &[s]      &    422 &  286 & 230 & 115 & 76 \\ 
+    \rowcolor{gray!20} Memory used / node& [GB] &    187 &  160 & 124 &  81 & 52 \\
+    total memory & [TB]       &    3.65&  3.75& 3.88& 5.06& 6.5\\
+    \rowcolor{gray!20}node-h / it & [h]             &    2.34& 1.91 & 2.04& 2.05& 2.70\\
+    \midrule
+    Speed-up w.r.t. batch & $[$\%$]$  &    11& \cellcolor{green!62}{\textbf{31}}&22&22&  -\\
+    \midrule\bottomrule
+   
+  \end{tabular}}\\\end{centering}
+  \label{tab:memory_juwels} 
+\end{table} 
+
+
+\begin{figure}
+  \centering\includegraphics[width=0.66\textwidth]{strong_scaling_juwels.pdf}
+  \caption{Strong scaling on juwels (solid lines); dashed lines indicated weak scaling.}
+  \label{fig:scaling_juwels}
+\end{figure} 
+
 \section{Scaling on the cluster \texttt{blizzard@dkrz.de}}
 
-To be done.
+To be done.  
+
+

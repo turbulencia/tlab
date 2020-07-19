@@ -1,6 +1,5 @@
 #!/bin/bash
 #
-#SBATCH --partition=batch
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=juan-pedro.mellado@mpimet.mpg.de
 #SBATCH --account=hhh07
@@ -147,7 +146,7 @@ if [ $RUNMODE = "simulation" ];then
  
 	if [ $ITIME -lt $MAXITER ]; then
 	    # Submit Script
-	    qsend -name $NAME -time $TIME -maxiter $MAXITER -mem $MEM \
+	    qsend -name $NAME -queue $QUEUE -time $TIME -maxiter $MAXITER -mem $MEM \
 	          -script $SCRIPT -jobdir $JOBDIR -step $STEP -np $NP \
                   -rankspernode $RANKSPERNODE -threadsperrank $THREADSPERRANK -commmode $COMMMODE
 
