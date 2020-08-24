@@ -4,7 +4,7 @@
 SUBROUTINE OPR_PARTIAL1(nlines, bcs, g, u,result, wrk2d)
 
   USE DNS_TYPES, ONLY : grid_dt
-  
+
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: nlines ! # of lines to be solved
@@ -22,24 +22,24 @@ SUBROUTINE OPR_PARTIAL1(nlines, bcs, g, u,result, wrk2d)
 ! ###################################################################
   IF ( g%periodic ) THEN
      SELECT CASE( g%mode_fdm )
-        
+
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C1N4P_RHS(g%size,nlines, u, result)
-        
+
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
         CALL FDM_C1N6P_RHS(g%size,nlines, u, result)
-        
+
      CASE( FDM_COM8_JACOBIAN )
         CALL FDM_C1N8P_RHS(g%size,nlines, u, result)
-        
+
      END SELECT
-     
+
      CALL TRIDPSS(g%size,nlines, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5), result,wrk2d)
 
 ! -------------------------------------------------------------------
   ELSE
      SELECT CASE( g%mode_fdm )
-        
+
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C1N4_RHS(g%size,nlines, bcs(1),bcs(2), u, result)
 
@@ -53,12 +53,12 @@ SUBROUTINE OPR_PARTIAL1(nlines, bcs, g, u,result, wrk2d)
         CALL FDM_C1N6_RHS(g%size,nlines, bcs(1),bcs(2), u, result)
 
      END SELECT
-     
-     ip = (bcs(1) + bcs(2)*2)*3 
+
+     ip = (bcs(1) + bcs(2)*2)*3
      CALL TRIDSS(g%size,nlines, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3), result)
 
   ENDIF
-  
+
   RETURN
 END SUBROUTINE OPR_PARTIAL1
 
@@ -67,7 +67,7 @@ END SUBROUTINE OPR_PARTIAL1
 SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
-  
+
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: nlines ! # of lines to be solved
@@ -82,7 +82,7 @@ SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
   TINTEGER ip
-  
+
 ! ###################################################################
 ! Check whether to calculate 1. order derivative
   IF ( .NOT. g%uniform ) THEN
@@ -92,28 +92,29 @@ SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
         CALL OPR_PARTIAL1(nlines, bcs, g, u,wrk3d, wrk2d)
      ENDIF
   ENDIF
-  
+
 ! ###################################################################
   IF ( g%periodic ) THEN
      SELECT CASE( g%mode_fdm )
-        
+
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4P_RHS(g%size,nlines, u, result)
-        
+
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
-        CALL FDM_C2N6P_RHS(g%size,nlines, u, result)
-        
+       ! CALL FDM_C2N6P_RHS(g%size,nlines, u, result)
+       CALL FDM_C2N6HP_RHS(g%size,nlines, u, result)
+
      CASE( FDM_COM8_JACOBIAN )                  ! Not yet implemented
         CALL FDM_C2N6P_RHS(g%size,nlines, u, result)
-        
+
      END SELECT
-     
+
      CALL TRIDPSS(g%size,nlines, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3),g%lu2(1,4),g%lu2(1,5), result,wrk2d)
 
 ! -------------------------------------------------------------------
   ELSE
      SELECT CASE( g%mode_fdm )
-        
+
      CASE( FDM_COM4_JACOBIAN )
         IF ( g%uniform ) THEN
            CALL FDM_C2N4_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
@@ -121,9 +122,11 @@ SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
         ENDIF
      CASE( FDM_COM6_JACOBIAN )
         IF ( g%uniform ) THEN
-           CALL FDM_C2N6_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
+          ! CALL FDM_C2N6_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
+          CALL FDM_C2N6H_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
         ELSE
-           CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, u, wrk3d, result)
+          ! CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, u, wrk3d, result)
+          CALL FDM_C2N6HNJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, u, wrk3d, result)
         ENDIF
 
      CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
@@ -132,17 +135,17 @@ SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
         ELSE
            CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, u, wrk3d, result)
         ENDIF
-        
+
      CASE( FDM_COM6_DIRECT   )
         CALL FDM_C2N6ND_RHS(g%size,nlines, g%lu2(1,4), u, result)
 
      END SELECT
-     
-     ip = (bcs(1,2) + bcs(2,2)*2)*3 
+
+     ip = (bcs(1,2) + bcs(2,2)*2)*3
      CALL TRIDSS(g%size,nlines, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3), result)
 
   ENDIF
-  
+
   RETURN
 END SUBROUTINE OPR_PARTIAL2
 
@@ -190,7 +193,7 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 ! MPI transposition
 ! -------------------------------------------------------------------
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
      CALL DNS_MPI_TRPF_I(u, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
      p_a => result
@@ -209,8 +212,8 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
         p_c => wrk3d
         p_d => tmp1
      ENDIF
-     nyz = ny*nz    
-#ifdef USE_MPI         
+     nyz = ny*nz
+#ifdef USE_MPI
   ENDIF
 #endif
 
@@ -228,10 +231,10 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   CASE( OPR_P2 )
      CALL OPR_PARTIAL2(nyz, bcs, g, p_b,p_c, wrk2d,p_d)
-  
+
   CASE( OPR_P1 )
      CALL OPR_PARTIAL1(nyz, bcs, g, p_b,p_c, wrk2d    )
-     
+
   CASE( OPR_P2_P1 )
      CALL OPR_PARTIAL2(nyz, bcs, g, p_b,p_c, wrk2d,p_d)
 
@@ -239,7 +242,7 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
         CALL OPR_PARTIAL1(nyz, bcs, g, p_b, p_d, wrk2d)
      ENDIF
-     
+
   END SELECT
 
 ! ###################################################################
@@ -258,7 +261,7 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 #endif
   ENDIF
 
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
      IF ( type .EQ. OPR_P2_P1 ) THEN ! only if you really want first derivative back
         CALL DNS_MPI_TRPB_I(p_c, tmp1, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
@@ -309,13 +312,13 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
   IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
      result = C_0_R
      IF ( type .EQ. OPR_P2_P1 ) tmp1 = C_0_R
-     
+
   ELSE
 ! ###################################################################
 ! -------------------------------------------------------------------
 ! MPI Transposition
 ! -------------------------------------------------------------------
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
      CALL DNS_MPI_TRPF_K(u, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      p_a => result
@@ -332,8 +335,8 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
     p_a => u
     p_b => result
     p_c => tmp1
-    nxy = nx*ny 
-#ifdef USE_MPI         
+    nxy = nx*ny
+#ifdef USE_MPI
   ENDIF
 #endif
 
@@ -342,10 +345,10 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   CASE( OPR_P2 )
      CALL OPR_PARTIAL2(nxy, bcs, g, p_a,p_b, wrk2d,p_c)
-  
+
   CASE( OPR_P1 )
      CALL OPR_PARTIAL1(nxy, bcs, g, p_a,p_b, wrk2d    )
-     
+
   CASE( OPR_P2_P1 )
      CALL OPR_PARTIAL2(nxy, bcs, g, p_a,p_b, wrk2d,p_c)
 
@@ -353,12 +356,12 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
         CALL OPR_PARTIAL1(nxy, bcs, g, p_a,p_c, wrk2d)
      ENDIF
-     
+
   END SELECT
 
 ! ###################################################################
 ! Put arrays back in the order in which they came in
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
      CALL DNS_MPI_TRPB_K(p_b, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      IF ( type .EQ. OPR_P2_P1 ) THEN
@@ -406,10 +409,10 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
   IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
      result = C_0_R
      IF ( type .EQ. OPR_P2_P1 ) tmp1 = C_0_R
-     
+
   ELSE
 ! ###################################################################
-  nxy = nx*ny 
+  nxy = nx*ny
   nxz = nx*nz
 
 ! -------------------------------------------------------------------
@@ -440,10 +443,10 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   CASE( OPR_P2 )
      CALL OPR_PARTIAL2(nxz, bcs, g, p_a,p_b, wrk2d,p_c)
-  
+
   CASE( OPR_P1 )
      CALL OPR_PARTIAL1(nxz, bcs, g, p_a,p_b, wrk2d    )
-     
+
   CASE( OPR_P2_P1 )
      CALL OPR_PARTIAL2(nxz, bcs, g, p_a,p_b, wrk2d,p_c)
 
@@ -451,7 +454,7 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
         CALL OPR_PARTIAL1(nxz, bcs, g, p_a,p_c, wrk2d)
      ENDIF
-     
+
   END SELECT
 
 ! ###################################################################
@@ -470,7 +473,7 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 #endif
      ENDIF
   ENDIF
-  
+
   NULLIFY(p_a,p_b,p_c)
 
   ENDIF

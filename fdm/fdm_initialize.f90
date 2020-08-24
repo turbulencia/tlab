@@ -4,17 +4,17 @@
 !# Compute dx/di and create LU factorization for first- and second-order derivatives
 
 SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
-#ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
-#endif 
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS, ONLY : tfile
+#endif
   USE DNS_TYPES,  ONLY : grid_dt
   USE DNS_GLOBAL, ONLY : inb_scal
   USE DNS_GLOBAL, ONLY : reynolds, schmidt
 
   IMPLICIT NONE
-  
+
 #include "integers.h"
-  
+
   TYPE(grid_dt),                               INTENT(INOUT) :: g
   TREAL, DIMENSION(g%size,g%inb_grid), TARGET, INTENT(INOUT) :: x
   TREAL, DIMENSION(g%size,5),                  INTENT(INOUT) :: wrk1d
@@ -23,20 +23,20 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   TINTEGER i, ip, is, ig, ibc_min, ibc_max, nx
   TREAL r04, r28, r24, r48, r25, r60, dummy
 
-#ifdef TRACE_ON 
-  CALL IO_WRITE_ASCII(tfile,'Entering SUBROUTINE FDM_INITIALIZE') 
-#endif 
+#ifdef TRACE_ON
+  CALL IO_WRITE_ASCII(tfile,'Entering SUBROUTINE FDM_INITIALIZE')
+#endif
 
-! ################################################################### 
+! ###################################################################
   nx = g%size
-  
+
   ig = 1 ! Accumulating counter to define pointers inside array x
 
 ! ###################################################################
   g%nodes => x(:,ig)
 
   ig = ig + 1
-  
+
 ! ###################################################################
 ! Jacobians
 ! ###################################################################
@@ -87,7 +87,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C1N4_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
         CALL FDM_C1N4_RHS(nx,i1, i0,i0, x, g%jac(1,1))
-        
+
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
         CALL FDM_C1N6_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
         CALL FDM_C1N6_RHS(nx,i1, i0,i0, x, g%jac(1,1))
@@ -95,7 +95,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
      CASE( FDM_COM8_JACOBIAN )
         CALL FDM_C1N8_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
         CALL FDM_C1N8_RHS(nx,i1, i0,i0, x, g%jac(1,1))
-        
+
      END SELECT
 
      CALL TRIDFS(nx,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
@@ -107,19 +107,21 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
      wrk1d(:,4) = C_1_R; wrk1d(:,5) = C_0_R
 
      SELECT CASE( g%mode_fdm )
-        
+
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4_LHS(nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
         CALL FDM_C2N4_RHS(nx,i1, i0,i0,             x, g%jac(1,2))
-        
+
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
-        CALL FDM_C2N6_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C2N6_RHS( nx,i1, i0,i0,             x, g%jac(1,2))
-        
+       ! CALL FDM_C2N6_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+       ! CALL FDM_C2N6_RHS( nx,i1, i0,i0,             x, g%jac(1,2))
+       CALL FDM_C2N6H_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+       CALL FDM_C2N6H_RHS( nx,i1, i0,i0,             x, g%jac(1,2))
+
      CASE( FDM_COM8_JACOBIAN ) ! Not yet developed; default to 6. order
         CALL FDM_C2N6_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
         CALL FDM_C2N6_RHS( nx,i1, i0,i0,             x, g%jac(1,2))
-        
+
      END SELECT
 
      CALL TRIDFS(nx,     wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
@@ -128,10 +130,10 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   ENDIF
 
 ! ###################################################################
-! Saving operations for the time-stability constraint 
+! Saving operations for the time-stability constraint
   g%jac(:,3) = C_1_R /g%jac(:,1)
   g%jac(:,4) = g%jac(:,3) *g%jac(:,3)
-  
+
   ig = ig + 4
 
 ! ###################################################################
@@ -144,18 +146,18 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
   IF ( g%periodic ) THEN
      SELECT CASE( g%mode_fdm )
-        
+
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C1N4P_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
-        
+
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
         CALL FDM_C1N6P_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
-        
+
      CASE( FDM_COM8_JACOBIAN )
         CALL FDM_C1N8P_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
-        
+
      END SELECT
-     
+
      CALL TRIDPFS(nx, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5))
      ig = ig + 5
 ! -------------------------------------------------------------------
@@ -168,7 +170,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
         ip = i*3
 
         SELECT CASE( g%mode_fdm )
-           
+
         CASE( FDM_COM4_JACOBIAN )
            CALL FDM_C1N4_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
 
@@ -182,11 +184,11 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
            CALL FDM_C1N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
 
         END SELECT
-        
+
         CALL TRIDFS(nx, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
         ig = ig + 3
      ENDDO
-  
+
   ENDIF
 
 ! ###################################################################
@@ -199,21 +201,22 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
   IF ( g%periodic ) THEN
      SELECT CASE( g%mode_fdm )
-        
+
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
-        
+
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )  ! Direct = Jacobian because uniform grid
-        CALL FDM_C2N6P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
+       ! CALL FDM_C2N6P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
+       CALL FDM_C2N6HP_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
 
      CASE( FDM_COM8_JACOBIAN )                   ! Not yet developed
         CALL FDM_C2N6P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
 
      END SELECT
-     
+
      CALL TRIDPFS(nx, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3),g%lu2(1,4),g%lu2(1,5))
      ig = ig + 5
-     
+
 ! -------------------------------------------------------------------
 ! Nonperiodic case; tridiagonal for 4 different BCs
 ! -------------------------------------------------------------------
@@ -223,24 +226,24 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
         ibc_max = i /2
         ip = i*3
         SELECT CASE( g%mode_fdm )
-           
+
         CASE( FDM_COM4_JACOBIAN )
            CALL FDM_C2N4_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
 
         CASE( FDM_COM6_JACOBIAN )
-           
-           CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
+          ! CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
+          CALL FDM_C2N6H_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
 
         CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented
            CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3)) ! 8th not yet developed
 
         CASE( FDM_COM6_DIRECT   )
            IF ( i .EQ. 0 ) CALL FDM_C2N6ND_INITIALIZE(nx, x, g%lu2(1,ip+1), g%lu2(1,ip+4))
-           
+
         END SELECT
 
 ! The direct mode is only implemented for bcs=(0,0); we use the remaining array
-! to save other data        
+! to save other data
         IF  ( g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
            IF ( i .EQ. 0 ) THEN
               g%lu2(:,ip+8:ip+10) = g%lu2(:,ip+1:ip+3) ! saving the array A w/o LU decomposition
@@ -273,9 +276,9 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
         g%lu2d(:,ip+1) = g%lu2(:,1)          ! matrix L; 1. subdiagonal
         g%lu2d(:,ip+2) = g%lu2(:,2) /dummy   ! matrix L; 1/diagonal
         g%lu2d(:,ip+3) = g%lu2(:,3)          ! matrix U is the same
-        g%lu2d(:,ip+4) = g%lu2(:,4) *dummy   ! matrix L; Additional row/column         
+        g%lu2d(:,ip+4) = g%lu2(:,4) *dummy   ! matrix L; Additional row/column
         g%lu2d(:,ip+5) = g%lu2(:,5)          ! matrix U is the same
-           
+
         ig = ig + 5
         ip = ip + 5
 
@@ -289,9 +292,9 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 
         ig = ig + 3
         ip = ip + 3
-        
+
      ENDIF
-     
+
   ENDDO
 
 ! ###################################################################
@@ -304,7 +307,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
         IF ( i .LE. nx/2+1 ) THEN; wrk1d(i,1) = C_2_R*C_PI_R*M_REAL(i-1   )/M_REAL(nx)
         ELSE;                      wrk1d(i,1) = C_2_R*C_PI_R*M_REAL(i-1-nx)/M_REAL(nx); ENDIF
      ENDDO
-        
+
 ! -------------------------------------------------------------------
 ! First-order derivative
 ! -------------------------------------------------------------------
@@ -332,7 +335,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
 ! Second-order derivative
 ! -------------------------------------------------------------------
-     r24 = C_6_R*C_4_R 
+     r24 = C_6_R*C_4_R
 
      SELECT CASE( g%mode_fdm )
 
@@ -359,7 +362,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   g%anelastic = .FALSE. ! Default; activated in fi_profiles_initialize
 
   ig = ig +1
-  
+
 ! ###################################################################
 ! Check array sizes
 ! ###################################################################
@@ -368,9 +371,9 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   !    CALL DNS_STOP(DNS_ERROR_DIMGRID)
   ! ENDIF
 
-#ifdef TRACE_ON 
-  CALL IO_WRITE_ASCII(tfile,'Leaving SUBOURINTE FDM_INITIALIZE') 
-#endif 
-  
+#ifdef TRACE_ON
+  CALL IO_WRITE_ASCII(tfile,'Leaving SUBOURINTE FDM_INITIALIZE')
+#endif
+
   RETURN
 END SUBROUTINE FDM_INITIALIZE

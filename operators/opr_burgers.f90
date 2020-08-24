@@ -46,18 +46,19 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 ! Periodic case
 ! -------------------------------------------------------------------
-  IF ( g%periodic ) THEN 
+  IF ( g%periodic ) THEN
      SELECT CASE( g%mode_fdm )
-        
+
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4P_RHS(g%size,nlines, s, result)
-        
+
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
-        CALL FDM_C2N6P_RHS(g%size,nlines, s, result)
-        
+       ! CALL FDM_C2N6P_RHS(g%size,nlines, s, result)
+       CALL FDM_C2N6HP_RHS(g%size,nlines, s, result)
+
      CASE( FDM_COM8_JACOBIAN )                  ! Not yet implemented; default to 6. order
         CALL FDM_C2N6P_RHS(g%size,nlines, s, result)
-        
+
      END SELECT
 
      ip = is*5 ! LU decomposition containing the diffusivity
@@ -79,12 +80,12 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 !               wrk2d(ip) = g%jac(ip,2) /( g%jac(ip,1) *g%jac(ip,1) ) /reynolds
 ! !           result(:,ip) = result(:,ip) - (wrk2d(ip) + u(:,ip)) *wrk3d(:,ip) ! inside tridss_add
 !            ENDDO
-           
+
 !         ENDIF
 !      ENDIF
 
      SELECT CASE( g%mode_fdm )
-        
+
      CASE( FDM_COM4_JACOBIAN )
         IF ( g%uniform ) THEN
            CALL FDM_C2N4_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        s,        result)
@@ -92,11 +93,12 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
         ENDIF
      CASE( FDM_COM6_JACOBIAN )
         IF ( g%uniform ) THEN
-           CALL FDM_C2N6_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        s,        result)
+          ! CALL FDM_C2N6_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        s,        result)
+          CALL FDM_C2N6H_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        s,        result)
         ELSE
-           CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, s, wrk3d, result)
+          ! CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, s, wrk3d, result)
+          CALL FDM_C2N6HNJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, s, wrk3d, result)
         ENDIF
-!        CALL FDM_C2N6_RHS(g%size,nlines, bcs(1,2),bcs(2,2), s, result)
 
      CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
         IF ( g%uniform ) THEN
@@ -124,7 +126,7 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
      DO ij = 1,g%size
         result(:,ij) = result(:,ij) *g%rhoinv(:) - u(:,ij)*wrk3d(:,ij)
      ENDDO
-     
+
   ELSE
 !$omp parallel default( shared ) private( ij )
 !$omp do
@@ -135,7 +137,7 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 !$omp end parallel
 
   END IF
-  
+
   RETURN
 END SUBROUTINE OPR_BURGERS
 
@@ -176,7 +178,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 ! -------------------------------------------------------------------
 ! MPI transposition
 ! -------------------------------------------------------------------
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
      CALL DNS_MPI_TRPF_I(s, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
      p_a => result
@@ -190,8 +192,8 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
      p_b => tmp1
      p_c => result
      p_d => wrk3d
-     nyz = ny*nz    
-#ifdef USE_MPI         
+     nyz = ny*nz
+#ifdef USE_MPI
   ENDIF
 #endif
 
@@ -219,7 +221,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
   CALL DNS_TRANSPOSE(p_d, nyz, g%size, nyz,        p_c, g%size)
 #endif
 
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
      CALL DNS_MPI_TRPB_I(p_c, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
   ENDIF
@@ -253,10 +255,10 @@ SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 ! ###################################################################
   IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
      result = C_0_R
-     
+
   ELSE
 ! ###################################################################
-  nxy = nx*ny 
+  nxy = nx*ny
   nxz = nx*nz
 
 ! -------------------------------------------------------------------
@@ -283,7 +285,7 @@ SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
      IF ( nz .EQ. 1 ) THEN; p_vel => u1         ! I do not need the transposed
      ELSE;                  p_vel => u2; ENDIF  ! I do     need the transposed
   ENDIF
-  
+
 ! ###################################################################
   CALL OPR_BURGERS(is, nxz, bcs, g, p_org, p_vel, p_dst2, wrk2d,p_dst1)
 
@@ -339,13 +341,13 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 ! ###################################################################
   IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
      result = C_0_R
-     
+
   ELSE
 ! ###################################################################
 ! -------------------------------------------------------------------
 ! MPI transposition
 ! -------------------------------------------------------------------
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
      CALL DNS_MPI_TRPF_K(s, tmp1, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      p_a => tmp1
@@ -357,21 +359,21 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
      p_a => s
      p_b => tmp1
      p_c => result
-     nxy = nx*ny 
-#ifdef USE_MPI         
+     nxy = nx*ny
+#ifdef USE_MPI
   ENDIF
 #endif
 
 ! pointer to velocity
   IF ( ivel .EQ. 0 ) THEN; p_vel => p_a
   ELSE
-#ifdef USE_MPI         
+#ifdef USE_MPI
      IF ( ims_npro_k .GT. 1 ) THEN ! I do     need the transposed
         p_vel => u2
      ELSE
 #endif
         p_vel => u1                ! I do not need the transposed
-#ifdef USE_MPI         
+#ifdef USE_MPI
      ENDIF
 #endif
   ENDIF
@@ -381,7 +383,7 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 
 ! ###################################################################
 ! Put arrays back in the order in which they came in
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
      CALL DNS_MPI_TRPB_K(p_c, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF

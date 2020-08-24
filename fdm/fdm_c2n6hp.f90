@@ -1,9 +1,6 @@
 #include "types.h"
 
 !########################################################################
-!# Tool/Library PADE
-!#
-!########################################################################
 !# HISTORY
 !#
 !# 2020/08/22 - J.P. Mellado
@@ -13,11 +10,11 @@
 !# DESCRIPTION
 !#
 !# Implementation of the second derivative finite difference with
-!# 6th order tridiagonal compact scheme by JCP, Lamballais et al. 2011, JCP 230 3270-3275.
-!#
+!# 6th order tridiagonal compact scheme.
+!# Interior points according to JCP, Lamballais et al. 2011, JCP 230:3270-3275
 !# Eqs. 1,3 with kc = pi**2.
-!# It adds one term in the RHS to better match the exact transfer function,
-!# the resulting FDM being slightly hyperdiffusive instead of hypodiffusive.
+!# It adds one term in the RHS to Lele's Eq. 2.2.7 scheme to better match the
+!# exact transfer function (slightly hyper- instead of strongly hypodiffusive).
 !#
 !# The linear system is normalized to reduce number of operations in RHS
 !#
@@ -35,7 +32,7 @@
 #define C_LHS0_L .147077436439844d+1
 #define C_LHS1_L .536071798487849d+0
 
-SUBROUTINE FDM_C2N6PH_LHS(imax, dx, a,b,c)
+SUBROUTINE FDM_C2N6HP_LHS(imax, dx, a,b,c)
 
   IMPLICIT NONE
 
@@ -67,7 +64,7 @@ SUBROUTINE FDM_C2N6PH_LHS(imax, dx, a,b,c)
   c(imax)   = dx1*C_LHS1_L
 
   RETURN
-END SUBROUTINE FDM_C2N6PH_LHS
+END SUBROUTINE FDM_C2N6HP_LHS
 
 ! #######################################################################
 ! Right-hand side; forcing term
@@ -76,7 +73,7 @@ END SUBROUTINE FDM_C2N6PH_LHS
 #define C_RHS1_L .422670003525653d+0
 #define C_RHS2_L .164180058587192d-1
 
-SUBROUTINE FDM_C2N6PH_RHS(imax,jkmax, u,d)
+SUBROUTINE FDM_C2N6HP_RHS(imax,jkmax, u,d)
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
@@ -132,6 +129,7 @@ SUBROUTINE FDM_C2N6PH_RHS(imax,jkmax, u,d)
   !$omp shared(d,u,imax,jkmax)
 
   CALL DNS_OMP_PARTITION(jkmax,srt,end,siz)
+  imm1 = imax-1
 
   DO i = 1,imax
     im3 = i-3; im3=im3+imm1; im3=MOD(im3,imax)+1
@@ -151,4 +149,4 @@ SUBROUTINE FDM_C2N6PH_RHS(imax,jkmax, u,d)
 #endif
 
   RETURN
-END SUBROUTINE FDM_C2N6PH_RHS
+END SUBROUTINE FDM_C2N6HP_RHS
