@@ -16,15 +16,18 @@
 !# of energy.
 !#
 !# The diffusion number is fixed in terms of the CFL, which is the input.
-!# This depends on the scheme used. From Lele (1992), page 32, we have that, if 
-!# the sixth order tridiagonal scheme is used, then the maximum CFL number 
-!# for a 4RK is 2.9/1.989, about 1.43. For the (5)4RK from CarpenterKennedy1994 
+!# This depends on the scheme used. From Lele (1992), page 32, we have that, if
+!# the sixth order tridiagonal scheme is used, then the maximum CFL number
+!# for a 4RK is 2.9/1.989, about 1.43. For the (5)4RK from CarpenterKennedy1994
 !# used here we have 3.36/1.989, about 1.69.
 !# This holds for periodic case. A safety margin leads to the common value of 1.2.
 !#
 !# If second order finite different operator is used, then the maximum
 !# diffusion number is 2.9/6.857, about 0.42.
 !# For the (5)4RK from CarpenterKennedy1994 it is 4.639/6.857 = 0.68
+!# If the extension by Lamballais et al is used, then the maximum
+!# diffusion number is 2.9/pi^2, about 0.29.
+!# For the (5)4RK from CarpenterKennedy1994 it is 4.639/pi^2 = 0.47.
 !#
 !# If twice the first order finite difference operator is used, then the
 !# maximum diffusion number is 2.9/1.989^2, about 0.73.
@@ -35,8 +38,8 @@
 !########################################################################
 SUBROUTINE TIME_COURANT(q,s, wrk3d)
 
-#ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS, ONLY : tfile
 #endif
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_scal, imode_eqns
   USE DNS_GLOBAL,    ONLY : g
@@ -61,7 +64,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
 
   TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)    :: q, s
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: wrk3d
-  
+
   TARGET :: q
 
 ! -------------------------------------------------------------------
@@ -76,7 +79,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
 #ifdef USE_MPI
   TREAL pmax_aux(3)
 #endif
-  
+
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: rho, p, vis
 
@@ -92,26 +95,26 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
   ENDIF
 
 #ifdef USE_MPI
-  idsp = ims_offset_i 
-  kdsp = ims_offset_k 
-#else 
+  idsp = ims_offset_i
+  kdsp = ims_offset_k
+#else
   idsp = 0
   kdsp = 0
 #endif
 
 ! diffusion number set equal to a factor of the given CFL number
-! A factor 1/4 is used. See header of the routine. 
+! A factor 1/4 is used. See header of the routine.
   cfld = C_025_R*cfl
   cflr = C_05_R *cfl ! this one for the reaction I'm not sure
 
 ! So that the minimum non-zero determines dt at the end
-  dtc = C_BIG_R 
-  dtd = C_BIG_R 
-  dtr = C_BIG_R 
+  dtc = C_BIG_R
+  dtd = C_BIG_R
+  dtr = C_BIG_R
 
 ! Initialize counter of time restrictions
   ipmax = 0
-  
+
 ! ###################################################################
 ! CFL number condition
 ! ###################################################################
@@ -119,7 +122,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
   pmax(1) = C_0_R
 
 ! -------------------------------------------------------------------
-! Incompressible: Calculate global maximum of u/dx + v/dy + w/dz 
+! Incompressible: Calculate global maximum of u/dx + v/dy + w/dz
 ! -------------------------------------------------------------------
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      IF ( g(3)%size .GT. 1 ) THEN
@@ -134,9 +137,9 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
                         + ABS(q(i,j,k,2)) *g(2)%jac(j,3)
         ENDDO; ENDDO; ENDDO
      ENDIF
-     
+
 ! -------------------------------------------------------------------
-! Compressible: Calculate global maximum of (u+c)/dx + (v+c)/dy + (w+c)/dz 
+! Compressible: Calculate global maximum of (u+c)/dx + (v+c)/dy + (w+c)/dz
 ! -------------------------------------------------------------------
   ELSE
      wrk3d = SQRT(gama0*p/rho) ! sound speed; positiveness of p and rho checked in routine DNS_CONTROL
@@ -156,7 +159,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
   ENDIF
 
   pmax(1) = MAXVAL(wrk3d)
-  
+
 ! ###################################################################
 ! Diffusion number condition
 ! ###################################################################
@@ -224,7 +227,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
                             *( schmidtfactor *visc *vis(i,j,k) /rho(i,j,k) +viscles )
            ENDDO; ENDDO; ENDDO
         ENDIF
-        
+
      ELSE ! constant dynamic viscosity
         IF ( g(3)%size .GT. 1 ) THEN
            DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
@@ -239,7 +242,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
         ENDIF
 
      ENDIF
-     
+
      pmax(2) = MAXVAL(wrk3d)
 
   ENDIF
@@ -277,7 +280,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
               wrk2d(ij,1) = wrk2d(ij,1) + C_1_R/(g(2)%jac((ij-1)/imax+1,1)**3)
               wrk2d(ij,1) = (mtgfm*vis(ij,1,k)/rho(ij,1,k))*wrk2d(ij,1)
            ENDDO
-           
+
            IF ( g(3)%size .GT. 1 ) THEN
               DO ij=1, imax*jmax
                  wrk2d(ij,1) = wrk2d(ij,1) + (mtgfm*vis(ij,1,k)/rho(ij,1,k))/(g(3)%jac(k+kdsp,1)**3)
@@ -296,7 +299,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
               wrk2d(ij,1) = wrk2d(ij,1) + C_1_R/(g(2)%jac((ij-1)/imax+1,1)**3)
               wrk2d(ij,1) = (mtgfm/rho(ij,1,k))*wrk2d(ij,1)
            ENDDO
-           
+
            IF ( g(3)%size .GT. 1 ) THEN
               DO ij=1, imax*jmax
                  wrk2d(ij,1) = wrk2d(ij,1) + (mtgfm/rho(ij,1,k))/(g(3)%jac(k+kdsp,1)**3)
@@ -313,14 +316,14 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
 ! Finite rate
 ! -------------------------------------------------------------------
   ELSE IF ( ireactive .EQ. CHEM_FINITE ) THEN
-! I obtain TGFM/(\rho*c^2) (not TGFM/(\rho*u^2)) as eigenvalue if I 
+! I obtain TGFM/(\rho*c^2) (not TGFM/(\rho*u^2)) as eigenvalue if I
 ! assume that omega depends only on \rho as \rho*S, S constant.
      IF ( g(3)%size .GT. 1 ) THEN
         wrk3d = rho *( q(:,:,:,1) *q(:,:,:,1) +q(:,:,:,2) *q(:,:,:,2) +q(:,:,:,3) *q(:,:,:,3) )
      ELSE
         wrk3d = rho *( q(:,:,:,1) *q(:,:,:,1) +q(:,:,:,2) *q(:,:,:,2) )
      ENDIF
-     
+
      bmax = MAXVAL(wrk3d)
      IF (bmax .ge. pmax(ipmax)) pmax(ipmax) = bmax
      pmax(ipmax) = TGFM/pmax(ipmax)
@@ -342,16 +345,16 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
 #ifdef CHEMISTRY
   IF ( pmax(ipmax) .GT. C_0_R ) dtr = cflr/pmax(ipmax)
 #endif
-  
+
 ! -------------------------------------------------------------------
   IF ( cfl .GT. C_0_R ) THEN
-     IF ( rkm_mode .EQ. RKM_EXP3 .OR. rkm_mode .EQ. RKM_EXP4 ) THEN 
+     IF ( rkm_mode .EQ. RKM_EXP3 .OR. rkm_mode .EQ. RKM_EXP4 ) THEN
         dt_loc = MIN(dtc, dtd)
-     ELSE 
-        dt_loc = dtc 
+     ELSE
+        dt_loc = dtc
      ENDIF
      dt_loc = MIN(dt_loc, dtr)
-     
+
      dtime = dt_loc
 
   ENDIF

@@ -18,7 +18,7 @@ and $\boldsymbol{f}_q$ and $\boldsymbol{f}_s$ are the corresponding
 right-hand side of the equations. The energy equation can be also solved in
 terms of the total energy per unit volume $\rho(e+v^2/2)$ instead of the
 internal energy per unit volume $\rho e$. If the incompressible equations are
-solved, then 
+solved, then
 \begin{equation}
   \boldsymbol{q} = (u_1, u_2, u_3)^T \;,\qquad
   \boldsymbol{s} = ( s_1, s_2, \ldots)^T \;.
@@ -36,13 +36,13 @@ Spatial operators are based on finite difference methods (FDM). There are two le
 
 Spatial derivatives are calculated using fourth- or sixth-order compact Pad\'{e} schemes as described by \cite{Lele:1992} and extended by \cite{Shukla:2005} for non-uniform grids. The routines {\tt OPR\_PARTIAL\_X}, {\tt OPR\_PARTIAL\_Y} and {\tt OPR\_PARTIAL\_Z} manage these operations. The kernels of the specific algorithms are in the library {\tt fdm}.
 
-We restrict ourselves to the 5-point stencils
+We genereally restrict ourselves to the 5-point stencils
 \begin{equation}
 a_{-1}s'_{j-1}+a_{0}s'_{j}+a_{+1}s'_{j+1}=
 \frac{1}{h}(b_{-2}s_{j-2}+b_{-1}s_{j-1}+b_{0}s_{j}+b_{+1}s_{j+1}+b_{+2}s_{j+2}) \;,
 \label{equ:coefs}
 \end{equation}
-and similarly for the second-order derivative, where the components of the $n$-dimensional vectors $\mathbf{s}=(s_j)$, $\mathbf{s'}=\delta_x \mathbf{s}=(s'_j)$ and $\mathbf{s''}=\delta_{xx} \mathbf{s}=(s'_j)$ are, respectively, approximations to the values $\{s(x_j):\, j=1,\ldots,n\}$ of a function $s(\cdot)$ defined on a finite interval $[x_1\,,x_n]$ and its first- and second-order derivatives evaluated at those same points $\{x_j\}$. The coefficients for the first-order derivative are given in table~\ref{tab:coeffs}. Global schemes are constructed as a combination of $n$ of these formulae, using biased finite differences at the boundaries in case of non-periodicity.  We define the global algorithm (35653) by using the centered scheme C6 at the $(n-4)$ interior points, and the biased schemes B5 at $j=2$ and B3 at $j=1$ with the corresponding symmetric counterpart at $j=n-1$ and $j=n$, respectively \cite{Carpenter:1993}. Those global schemes can be represented as
+and similarly for the second-order derivative. Excepcionally, we consider a 7-point stencil for the calculation of the second-order derivative following \cite{Lamballais:2011}. The components of the $n$-dimensional vectors $\mathbf{s}=(s_j)$, $\mathbf{s'}=\delta_x \mathbf{s}=(s'_j)$ and $\mathbf{s''}=\delta_{xx} \mathbf{s}=(s'_j)$ are, respectively, approximations to the values $\{s(x_j):\, j=1,\ldots,n\}$ of a function $s(\cdot)$ defined on a finite interval $[x_1\,,x_n]$ and its first- and second-order derivatives evaluated at those same points $\{x_j\}$. The coefficients for the first-order derivative are given in table~\ref{tab:coeffs}. Global schemes are constructed as a combination of $n$ of these formulae, using biased finite differences at the boundaries in case of non-periodicity.  We define the global algorithm (35653) by using the centered scheme C6 at the $(n-4)$ interior points, and the biased schemes B5 at $j=2$ and B3 at $j=1$ with the corresponding symmetric counterpart at $j=n-1$ and $j=n$, respectively \cite{Carpenter:1993}. Those global schemes can be represented as
 \begin{equation}
   A_1\, \delta_x \mathbf{s}=(1/h)B_1\, \mathbf{s} \;, \qquad
   A_2\, \delta_{xx} \mathbf{s}=(1/h^2)B_2\, \mathbf{s}
@@ -53,7 +53,7 @@ where $h=(x_n-x_1)/(n-1)$ is a reference space step and the square matrices $A=(
 \begin{table}[!ht]
 \centering
 \begin{tabular}{l@{\hspace{6ex}}ccc@{\hspace{6ex}}ccccc@{\hspace{6ex}}c}\hline
-&$a_{-1}$&$a_{0}$&$a_{+1}$&$b_{-2}$&$b_{-1}$&$b_{0}$&$b_{+1}$&$b_{+2}$&$t$\\ \hline 
+&$a_{-1}$&$a_{0}$&$a_{+1}$&$b_{-2}$&$b_{-1}$&$b_{0}$&$b_{+1}$&$b_{+2}$&$t$\\ \hline
 C2&0        &1&0       & 0 & $^{-1}\!/\!_2$ & 0 &$^1\!/\!_2$ & 0&
 $\;\,^{1}\!/\!_{3!}\,h^2s^{(3)}$\\
 C4&$^1\!/\!_4$&1&$^1\!/\!_4$& 0 &$ ^{-3}\!/\!_4$ & 0 &$^3\!/\!_4$ & 0&
@@ -68,7 +68,7 @@ $^{-2}\!/\!_{4!}\,h^3s^{(4)}$\\
 B5&$^1\!/\!_6$&1&$^1\!/\!_2$& 0 &$ ^{-10}\!/\!_{18}$ &$ ^{-1}\!/\!_2$ & 1&
 $^{1}\!/\!_{18}$&$^{-2}\!/\!_{6!}\,h^5s^{(6)}$\\\hline
 \end{tabular}
-\caption{Coefficients of the finite-difference formulae (\ref{equ:coefs}). The first three rows are centered differences, the last three are biased differences. The matrix $A_1$ in (\ref{equ:fdm}) is constructed in terms of the coefficients $\{a_i\}$, the matrix $B_1$ in terms of $\{b_i\}$. The last column contains the leading order term of the local truncation error defined by (\ref{equ:truncation1}).}
+\caption{Coefficients of the finite-difference formulae (\ref{equ:coefs}) for the first-order derivative. The first three rows are centered differences, the last three are biased differences. The matrix $A_1$ in (\ref{equ:fdm}) is constructed in terms of the coefficients $\{a_i\}$, the matrix $B_1$ in terms of $\{b_i\}$. The last column contains the leading order term of the local truncation error defined by (\ref{equ:truncation1}).}
 \label{tab:coeffs}
 \end{table}
 
@@ -77,7 +77,7 @@ The local truncation error of the FDM approximation to the first-order derivativ
   \mathbf{t_1}=
   \frac{1}{h}B_1\left(\begin{array}{c}s(x_1)\\\vdots\\s(x_n)\end{array}\right)-
   A_1\left(
-  \begin{array}{c}\frac{ds}{dx}(x_1)\\\vdots\\\frac{ds}{dx}(x_n) 
+  \begin{array}{c}\frac{ds}{dx}(x_1)\\\vdots\\\frac{ds}{dx}(x_n)
   \end{array}\right)\;,
   \label{equ:truncation1}
 \end{equation}
@@ -91,18 +91,18 @@ s_j=\sum_0^{n-1}\hat{s}_k\exp(i\omega_kj)\;,
 \end{equation}
 where $\{\omega_k=(2\pi/n)k:\, k = 0,\ldots,n-1\}$ is the scaled wavenumber and $i=\sqrt{-1}$ is the imaginary unit. We use the library FFTW in the code for this transformation~\footnote{visit {http://www.fftw.org/}}. Note that $\hat{s}_{k+n}=\hat{s}_k$ because $\exp(-i2\pi j)=1$ for any integer number $j$, so that we can write
 \begin{equation}
-  s_j =  \sum_{-n/2+1}^{n/2} \hat{s}_k \exp[i\omega_kj]\;.  
+  s_j =  \sum_{-n/2+1}^{n/2} \hat{s}_k \exp[i\omega_kj]\;.
 \end{equation}
 The expression above coincides with the Fourier series $\sum_{-n/2}^{n/2} \hat{s}_k \exp[i\kappa_kx]$ of the function $s(x)$ over the interval $[0,L]$ particularized at the grid points $\{x_n\}$ provided that the spectral content of the function $s(x)$ beyond the Nyquist frequency $\kappa_{n/2}=(2\pi/L)(n/2)=2\pi/(2h)=\pi/h$ is zero. Then we have the relation $\kappa_kh=\omega_k$ between the wavenumber $\kappa_k=(2\pi/L)k$ and the scaled wavenumber $\omega_k$. In principle, both $\{\hat{s}_k\}$ from $\{s_j\}$ are complex numbers; however, the sequence $\{\hat{s}_k\}$ is typically real and we only need to know the Fourier modes between $k=0$, the mean value, and $k=n/2$, the Nyquist frequency, because of the symmetry. Then, $\omega_k$ varies between 0 and $\pi$ and $\kappa_k$ varies between 0 and $\pi/h$. A third quantity sometimes used in the discussion is the number of points per wavelength $\mathrm{PPW}_k=(L/k)/h=2\pi/\omega_k$; for a given wavelength $L/k$, or wavenumber $\kappa_k$, reducing the grid step $h$ and thus increasing resolution -- increasing $\mathrm{PPW}_k$ -- means reducing the scaled wavenumber $\omega_k$ towards zero.
 
 The previous framework allows us to understand the FDM using the so-called von Neumann analysis. We know that the exact values of $\{s'_j\}$ and $\{s''_j\}$ under the conditions stated above are
 \begin{equation}
-  s'(x_j) =\sum_0^{n-1} (i\omega_k/h)  \hat{s}_k\exp(i\omega_kj)\;,\qquad 
+  s'(x_j) =\sum_0^{n-1} (i\omega_k/h)  \hat{s}_k\exp(i\omega_kj)\;,\qquad
   s''(x_j)=\sum_0^{n-1} (-\omega^2_k/h^2)\hat{s}_k\exp(i\omega_kj)\;,
 \end{equation}
 having simply used the previous relation $\kappa_k=\omega_k/h$. The FDM approximations can be written as
 \begin{equation}
-  s'_j =\sum_0^{n-1} (\lambda_1/h)  \hat{s}_k\exp(i\omega_kj)\;,\qquad 
+  s'_j =\sum_0^{n-1} (\lambda_1/h)  \hat{s}_k\exp(i\omega_kj)\;,\qquad
   s''_j=\sum_0^{n-1} (\lambda_2/h^2)\hat{s}_k\exp(i\omega_kj)\;.
   \label{equ:lambda}
 \end{equation}
@@ -111,10 +111,10 @@ The deviation of the complex functions $\lambda_1(\omega)$ and $\lambda_2(\omega
 \begin{figure}
   \includegraphics[clip,width=0.49\textwidth]{figs/Fdm1}\hfill
   \includegraphics[clip,width=0.49\textwidth]{figs/Fdm2}
-  \caption{Modified wavenumbers of the FDM approximations $\mathbf{s'}$ and $\mathbf{s''}$ to the first- and second-order derivatives, left (red) and right (blue), respectively. (Equivalently, transfer functions associated to the linear operators $\delta_{x}: A_1^{-1}B_1$ and $\delta_{xx}: A_2^{-1}B_2$.) Black lines indicate the exact value and light colors indicate the second-order central FDM. The red line in panel ($b$) corresponds to the operator $\delta_{x}\delta_{x} =(A_1^{-1}B_1)^2$. The interval $[-\pi,0$ is simply the anti-symmetric and symmetric extension of the curves in panels ($a$) and ($b$), respectively. The number inside the figure give the maximum values, to be considered in the time-marching scheme.}\label{fig:fdm}
+  \caption{Modified wavenumbers of the FDM approximations $\mathbf{s'}$ and $\mathbf{s''}$ to the first- and second-order derivatives, left (red) and right (blue), respectively. (Equivalently, transfer functions associated to the linear operators $\delta_{x}: A_1^{-1}B_1$ and $\delta_{xx}: A_2^{-1}B_2$.) Black lines indicate the exact value and light colors indicate the second-order central FDM. The red line in panel ($b$) corresponds to the operator $\delta_{x}\delta_{x} =(A_1^{-1}B_1)^2$. The interval $[-\pi,0$ is simply the anti-symmetric and symmetric extension of the curves in panels ($a$) and ($b$), respectively. The number inside the figure give the maximum values, to be considered in the time-marching scheme. {\bf Need to update figure with new scheme for the second-order derivative from \cite{Lamballais:2011}.}}\label{fig:fdm}
 \end{figure}
 
-It is also useful to use the notation 
+It is also useful to use the notation
 \begin{equation}
   \hat{\mathbf{s}} = W\, \mathbf{s}\,\qquad \mathbf{s}=W^{-1}\hat{\mathbf{s}}\;.
 \end{equation}
@@ -156,7 +156,7 @@ A direct formulation of compact FD approximation to the second-order derivative 
 
 The non-linear advection terms can be formulated in conservative, convective and skew-symmetric forms \citep{Blaisdell:1996,Kravchenko:1997}. The molecular transport terms can be formulated in the conservative and non-conservative forms (this latter if transport coefficients are constant).
 
-In the convective formulation, the routines {\tt OPR\_BURGERS\_*} combine the first and second-order derivative operators as 
+In the convective formulation, the routines {\tt OPR\_BURGERS\_*} combine the first and second-order derivative operators as
 \begin{equation}
 f=\epsilon s'' - u s'\;
 \end{equation}
@@ -249,7 +249,7 @@ together with
 Generalizing to a filter halfsize $n$, we obtain:
 \begin{subequations}
   \begin{align}
-    i=1,\ldots,n\;:\quad 
+    i=1,\ldots,n\;:\quad
     & \Delta_{f,i} = (n-i+1)\Delta_{1}+\sum_{k=1}^{n+i-1}\Delta_{k} \;,\\
     & i_\mathrm{org}=n-i+1\;,\\
     &\tilde{c}_{i_\mathrm{org}+1,i} = (2\Delta_{f,i})^{-1}[2(n-i+1)+1]\Delta_{1}\;,\\
@@ -259,7 +259,7 @@ Generalizing to a filter halfsize $n$, we obtain:
 Near the boundary $i=i_\mathrm{max}$, we obtain:
 \begin{subequations}
   \begin{align}
-    i=i_\mathrm{max}-n+1,\ldots,i_\mathrm{max}\;:\quad 
+    i=i_\mathrm{max}-n+1,\ldots,i_\mathrm{max}\;:\quad
     & \Delta_{f,i} = \sum_{k=i-n}^{i_\mathrm{max}-1}\Delta_{k} +(n+i-i_\mathrm{max})\Delta_{i_\mathrm{max}-1}\;,\\
     & i_\mathrm{org}=n-i+1\;,\\
     &\tilde{c}_{i_\mathrm{org}+i_\mathrm{max},i} = (2\Delta_{f,i})^{-1}[2(n+i-i_\mathrm{max})+1]\Delta_{i_\mathrm{max}-1}\;,\\
@@ -291,7 +291,7 @@ See file {\tt dns/opr\_poisson}. Given the scalar field $s$, obtain the scalar f
 \end{equation}
 complemented with appropriate boundary conditions.  The current version only handles cases with periodic boundary conditions along $Ox$ and $Oz$. It performs a Fourier decomposition along these two directions, to obtain the a set of finite difference equations along $Oy$ of the form
 \begin{equation}
-  \delta_x \delta_x \mathbf{f}|_j - (\lambda_1/h)^2\mathbf{f}|_j=\mathbf{s}|_j 
+  \delta_x \delta_x \mathbf{f}|_j - (\lambda_1/h)^2\mathbf{f}|_j=\mathbf{s}|_j
   \;,\qquad j=2,\ldots,n-1 \;,
 \end{equation}
 $\lambda_1\in\mathbb{R}$, where boundary conditions need to be provided at $j=1$ and $j=n$.  The algorithm is described in \cite{Mellado:2012}. These routines are in the source file {\tt dns/opr\_fde\_pool}.
@@ -305,7 +305,7 @@ See file {\tt dns/opr\_helmholtz}. Given the scalar field $s$, obtain the scalar
 \end{equation}
 complemented with appropriate boundary conditions. The current version only handles cases with periodic boundary conditions along $Ox$ and $Oz$. The algorithm is similar to that used for the Poisson equation. It performs a Fourier decomposition along these two directions, to obtain the a set of finite difference equations along $Oy$ of the form
 \begin{equation}
-  \delta_{xx} \mathbf{f}|_j - (\lambda_2/h^2-\alpha)\mathbf{f}|_j=\mathbf{s}|_j 
+  \delta_x \delta_x \mathbf{f}|_j - (\lambda_2/h^2-\alpha)\mathbf{f}|_j=\mathbf{s}|_j
   \;,\qquad j=2,\ldots,n-1 \;,
 \end{equation}
 $\lambda_2\in\mathbb{R}$, where boundary conditions need to be provided at $j=1$ and $j=n$. The difference is that, for the Helmholtz equation, we also include the case in which the second-order derivative is implemented in terms of the $\delta_{xx}$ FDM operator, not only the $\delta_x\delta_x$ FDM operator.
@@ -378,7 +378,7 @@ $(\lambda\tau)^5$. (The five zeros of this polynomial are enclosed by the light
 blue closed regions in panel~$(a)$.) Also, The crossing points of the boundary
 of the stability region with the real and imaginary axis are $(\lambda
 \tau)_{r}\simeq-4.65$ and $(\lambda \tau)_{i}\simeq\pm 3.34$. These numbers are
-important to determine the maximum CFL numbers associated with the 
+important to determine the maximum CFL numbers associated with the
 advection-diffusion equation, which is the basis for many non-reacting flows (a
 source term adds an additional constraint for stability). For instance, assuming
 periodic boundary conditions for simplicity, we can diagonalize the original
@@ -395,10 +395,10 @@ to be stable. Then, we obtain the conditions
   \frac{\nu\tau}{h^2}<\frac{|(\lambda \tau)_{r}|}{\max{\lambda_2}}\;,\qquad
   \frac{c\tau}{h}<\frac{|(\lambda \tau)_{i}|}{\max{\lambda_1}} \;.
 \end{equation}
-The left-hand side in the expressions above are the CFL numbers $\textrm{CFL}_d$
+The left-hand side in the expressions above are the $\textrm{CFL}$ numbers $\textrm{CFL}_d$
 and $\textrm{CFL}_a$ for the diffusion and the advection operators,
 respectively, and the right-hand side provide the upper bounds
-$\textrm{CFL}_{d,max}=0.68$ and $\textrm{CFL}_{a,max}=1.68$ having used for
+$\textrm{CFL}_{d,max}=0.68$ ($4.65/\pi^2=0.47$ is we use \cite{Lamballais:2011}) and $\textrm{CFL}_{a,max}=1.68$ having used for
 $\max{\lambda_2}$ and $\max{\lambda_1}$ the values shown in
 figure~\ref{fig:fdm}.
 
@@ -430,10 +430,10 @@ uses by default $1/4$ of the limit in the imaginary axis, that is, about
 $\textrm{CFL}_{d}<0.3$.
 
 The dissipation and dispersion error maps corresponding to the third-order
-Runge-Kutta scheme are shown in figure~\ref{fig:rkm3}. The maximum CFL numbers
+Runge-Kutta scheme are shown in figure~\ref{fig:rkm3}. The maximum $\mathrm{CFL}$ numbers
 to guarantee stability for the advection and diffusion operators are
 $\textrm{CFL}_{a,max} = 1.73/1.989=0.871$ and $\textrm{CFL}_{d,max} =
-2.57/6.857=0.366$, respectively.
+2.57/6.857=0.375$ ($2.57/\pi^2=0.26$ is we use \cite{Lamballais:2011}), respectively.
 
 \begin{figure}
 \includegraphics[clip,width=0.49\textwidth]{figs/RK3_exp_diss.jpg}\hfill
@@ -493,7 +493,7 @@ B^R_{22}=B_{22}-\frac{1}{a_{11}}\mathbf{a_{21}}\mathbf{b_{12}}^T \;,\qquad
 Note that $A^R_{22}$ and $B^R_{22}$ have the same bandwidths as $A$ and $B$,
 respectively. The element $s'_1$ can be calculated by
 \begin{equation}
-s'_1=\frac{1}{ha_{11}} 
+s'_1=\frac{1}{ha_{11}}
 \left(\begin{array}{cc}b_{11}\!&\!\mathbf{b_{12}}^T\end{array}\right)
 \mathbf{s} - \frac{1}{a_{11}}
 \mathbf{a_{12}}^T \left(\begin{array}{c}s'_2\\\vdots\\s'_n\end{array}\right)\;.
@@ -533,7 +533,7 @@ algorithms \citep{Carpenter:1993}.
 
 \subsection{Implicit schemes}
 
-To be developed. See \cite{Spalart:1991}. 
+To be developed. See \cite{Spalart:1991}.
 
 The dissipation and dispersion error maps corresponding to the third-order
 implicit Runge-Kutta scheme are shown in figure~\ref{fig:rkm3implicit}. The

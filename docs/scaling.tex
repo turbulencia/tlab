@@ -17,13 +17,13 @@ a measure of the size of the simulations and choose in the following to label
 simulations by $Q$. To label the simulations, we use the common abbreviations
 \begin{equation}
 \kilo=2^{10};\qquad\mega=2^{20};\qquad\giga=2^{30}
-\end{equation} 
+\end{equation}
 for readability. The memory necessary to save one 3D array in double precision
 data format is $8\times Q~\mathrm{Byte}$.  The scaling of the code is discussed
 in terms of speedup $S$ and efficiency $\eta$ defined as
 \begin{equation}
  S:=\frac{T}{T_\mathrm{ref}}\qquad \eta = \frac{T}{NT_\mathrm{ref}} \times 100\%,
-\end{equation} 
+\end{equation}
 where $T$ is the real time to run a particular case, $N$ the number of
 processors and the subscript 'ref' indicates a reference value.
 
@@ -51,9 +51,9 @@ nodes) is observed for the standard domain sizes of up to 4 \giga~grid points.
 
 \begin{table}[!ht]
 \begin{centering}
-\begin{tabular}{p{2cm} p{0.5cm} p{0.5cm} p{0.5cm} p{1.cm} } 
+\begin{tabular}{p{2cm} p{0.5cm} p{0.5cm} p{0.5cm} p{1.cm} }
 \toprule
-Name& $q_x$& $q_y$& $q_z$& $Q$\\ 
+Name& $q_x$& $q_y$& $q_z$& $Q$\\
 \midrule
 \texttt{1024x0384}& 1024& 1024&  384& 384 \mega\\
 \texttt{2048x0192}& 2048& 2048&  192& 768 \mega\\
@@ -63,10 +63,10 @@ Name& $q_x$& $q_y$& $q_z$& $Q$\\
 \texttt{4096x2048}& 4096& 4096& 2048&  32 \giga\\
 \bottomrule \\
 \end{tabular}\\
-\caption{Geometry and labels of the 3D cases.} 
+\caption{Geometry and labels of the 3D cases.}
 \label{tab:sim_table}
 \end{centering}
-\end{table} 
+\end{table}
 
 The code has been run for 2 iterations, i.e. 10 Runge-Kutta stages using the
 fourth-order, five-stages algorithm, and the variance of measured times was
@@ -115,7 +115,7 @@ nodes) to 16 mid-planes (8192 nodes).
 \end{centering}
 \end{figure}
 
-\subsection{Scaling from 32 to 8192 nodes} 
+\subsection{Scaling from 32 to 8192 nodes}
 
 A strong scaling analysis over the entire range of nodes from 32 to 8192 is not
 possible. Hence, we restrict ourselves to a scaling analysis where we consider
@@ -137,7 +137,7 @@ the Fourier transforms $\Sigma_\mathrm{FFT}$ we get
 \begin{equation}
 \frac{\Sigma_{\mathrm{FFT}}}{q_{i}^{2}}\propto 3 q_i \log q_i = Q^{1/3} \log
 Q\Rightarrow \Sigma_\mathrm{FFT}\propto Q\log Q.
-\end{equation} 
+\end{equation}
 For the range of $Q$ considered here, this effect is, however, small since the
 super-linear contribution of $\Sigma_\mathrm{FFT}$ is only $\frac{\log 32\giga
 }{\log 384\mega} \approx 1.2$ and the FFT accounts for a negligible part of the
@@ -145,10 +145,10 @@ computational time ($1\%-5$\% of the computational part, which is
 $0.5$\%-$2.5$\% of the overall time).  The operation count of the rest of the
 algorithms is linear.
 
-Given $P$, one can compute a virtual efficiency and speed-up $\eta_v$ and $S_v$ as 
+Given $P$, one can compute a virtual efficiency and speed-up $\eta_v$ and $S_v$ as
 \begin{equation}
 \eta_v:=\frac{P}{P_\mathrm{ref}}; \qquad S_v:=\frac{N}{N_\mathrm{ref}}\frac{P}{P_\mathrm{ref}}
-\end{equation} 
+\end{equation}
 with respect to a reference. Here, we use the same reference for all simulations
 and cases, namely, the \texttt{32 x 1} decomposition of the case with
 $Q=384$ \mega. For larger numbers of cores $N$ and simulation sizes $Q$ we
@@ -184,18 +184,18 @@ or $P\approx P_\mathrm{ref}$.
   \caption{Upper panel: $S_W$ versus number of nodes for all geometries. Lower
     panel: maximum speedup for a given number of processors $\max(S_W)|_N$; axes
     as in upper panel.  }
-  \label{fig:v_scaling2} 
+  \label{fig:v_scaling2}
 \end{figure}
 
 
-\section{Scaling on the cluster \texttt{juwels@fz-juelich.de}} 
+\section{Scaling on the cluster \texttt{juwels@fz-juelich.de}}
 
-With two sockets each holding 24 CPU cores, juwels features 48 physical cores per node and thus 
-introduces a single prime factor three to the number CPUs available. To optimally utilize this, 
-domain sizes should also contain a prime factor three. 
+With two sockets each holding 24 CPU cores, juwels features 48 physical cores per node and thus
+introduces a single prime factor three to the number CPUs available. To optimally utilize this,
+domain sizes should also contain a prime factor three.
 
 The cluster is heterogeneous and features
-\begin{itemize} 
+\begin{itemize}
   \item[(1)] a partition \texttt{batch} with 2271 standard-memory nodes (2x24 cores, 96 GB )
   \item[(2)] a partition \texttt{mem192} with 240 enhanced-memory nodes (2x24 cores, 192 GB )
   \item[(3)] a booster module with 56 GPU-accelerated nodes ( 2x20 cores + 4 GPUs, 192 GB; to be extended in 2020).
@@ -203,22 +203,22 @@ The cluster is heterogeneous and features
 
 Scaling was tested using up to 512 nodes on the \texttt{batch} partition (Tab.~\ref{tab:scaling_juwels} and Fig.~\ref{fig:scaling_juwels}
 and up to 64 nodes of the \texttt{mem192} partition (Tab.~\ref{tab:memory_juwels}).
-There appears to be a significnat memory-overhead of the underlying MPI 
-which sometimes enables to run particular cases in much less than half the number of large-memory nodes as compared 
+There appears to be a significnat memory-overhead of the underlying MPI
+which sometimes enables to run particular cases in much less than half the number of large-memory nodes as compared
 to running the same configuration in the \texttt{batch partition}.
 
-In comparison with juwels, the normaliezd performance (CPU-h per $1024^3$ points per iteration) is better by up to a factor of $3$, but only for relatively small cases that can be run within a few (up to 4) nodes. For operational cases (using 32 to 128 nodes), the performance boost is around $2$. For even larger cases utilizing 256 or more nodes, performance boost in comparison with juwels is smaller than 2, and it approaches one from above for jobs using 10000 or more MPI tasks. 
+In comparison with juwels, the normaliezd performance (CPU-h per $1024^3$ points per iteration) is better by up to a factor of $3$, but only for relatively small cases that can be run within a few (up to 4) nodes. For operational cases (using 32 to 128 nodes), the performance boost is around $2$. For even larger cases utilizing 256 or more nodes, performance boost in comparison with juwels is smaller than 2, and it approaches one from above for jobs using 10000 or more MPI tasks.
 %
 \begin{table}
   \caption{Scaling of two cubed cases in the batch partition of \texttt{juwels@fz-juelich.de}; only computation no initialization, no I/O}
-  {\footnotesize\begin{tabular}{r | r r r | r r r | rrr} 
-    \toprule 
+  {\footnotesize\begin{tabular}{r | r r r | r r r | rrr}
+    \toprule
     Case   & \multicolumn{3}{c|}{$1536^3$} & \multicolumn{3}{c}{$3072^3$}\\
     \midrule
-    \#nodes&        time/it $[s]$ & Speed-up & Eff. & Time/it $[s]$ & Speed-up & Eff.\\ 
-    \midrule 
-                        8 &      113.5&   1.0&  1.00 \\ 
-    \rowcolor{gray!20} 16&        57.5&   2.0&  0.99\\ 
+    \#nodes&        time/it $[s]$ & Speed-up & Eff. & Time/it $[s]$ & Speed-up & Eff.\\
+    \midrule
+                        8 &      113.5&   1.0&  1.00 \\
+    \rowcolor{gray!20} 16&        57.5&   2.0&  0.99\\
                        32&        36.3&   3.1&  0.78\\
     \rowcolor{gray!20} 64&        21.2&   5.4&  0.67& 163.0& 1.0& 1.00\\
                        96&        15.1&   7.5&  0.63&  98.4& 1.7& 1.10\\
@@ -226,10 +226,10 @@ In comparison with juwels, the normaliezd performance (CPU-h per $1024^3$ points
                       192&         9.1&  12.5&  0.52&  65.1& 2.5& 0.83\\
     \rowcolor{gray!20}256&         6.7&  16.9&  0.53&  51.4& 3.2& 0.79\\
                       384&                        &&&  38.1& 4.3& 0.71\\
-    \rowcolor{gray!20}512&                        &&&  29.3& 5.6& 0.70\\ 
+    \rowcolor{gray!20}512&                        &&&  29.3& 5.6& 0.70\\
     \bottomrule
   \end{tabular}}
-  \label{tab:scaling_juwels} 
+  \label{tab:scaling_juwels}
 \end{table}
 
 \begin{table}
@@ -239,29 +239,27 @@ In comparison with juwels, the normaliezd performance (CPU-h per $1024^3$ points
     \toprule
     Partition               && \multicolumn{4}{c}{mem192}&batch\\
     \#nodes                 &[1]&    20  &  24  &  32 &  64 & 128\\
-    \midrule 
+    \midrule
     \rowcolor{gray!20}\#tasks per node        &[1]&    16  &  48  &  48 &  48 &  48\\
-    Wall-clock time/it &[s]      &    422 &  286 & 230 & 115 & 76 \\ 
+    Wall-clock time/it &[s]      &    422 &  286 & 230 & 115 & 76 \\
     \rowcolor{gray!20} Memory used / node& [GB] &    187 &  160 & 124 &  81 & 52 \\
     total memory & [TB]       &    3.65&  3.75& 3.88& 5.06& 6.5\\
     \rowcolor{gray!20}node-h / it & [h]             &    2.34& 1.91 & 2.04& 2.05& 2.70\\
     \midrule
     Speed-up w.r.t. batch & $[$\%$]$  &    11& \cellcolor{green!62}{\textbf{31}}&22&22&  -\\
     \midrule\bottomrule
-   
+
   \end{tabular}}\\\end{centering}
-  \label{tab:memory_juwels} 
-\end{table} 
+  \label{tab:memory_juwels}
+\end{table}
 
 
 \begin{figure}
-  \centering\includegraphics[width=0.66\textwidth]{strong_scaling_juwels.pdf}
+  \centering\includegraphics[width=0.66\textwidth]{figs/strong_scaling_juwels.pdf}
   \caption{Strong scaling on juwels (solid lines); dashed lines indicated weak scaling.}
   \label{fig:scaling_juwels}
-\end{figure} 
+\end{figure}
 
 \section{Scaling on the cluster \texttt{blizzard@dkrz.de}}
 
-To be done.  
-
-
+To be done.
