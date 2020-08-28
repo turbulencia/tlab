@@ -45,7 +45,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : itransport, visc, prandtl, schmidt
   USE THERMO_GLOBAL, ONLY : gama0
-  USE DNS_LOCAL,     ONLY : cfl, dtime, rkm_mode, logs_data
+  USE DNS_LOCAL,     ONLY : cfla, cfld, cflr, dtime, rkm_mode, logs_data
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -70,7 +70,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
 ! -------------------------------------------------------------------
   TINTEGER i,j,k, kdsp, idsp, ipmax
   TREAL dt_loc
-  TREAL pmax(3), dtc,dtd,dtr, cfld,cflr
+  TREAL pmax(3), dtc,dtd,dtr
   TREAL schmidtfactor, viscles, dummy
 #ifdef CHEMISTRY
   TREAL mtgfm, zmin, zmax, umin, umax
@@ -101,11 +101,6 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
   idsp = 0
   kdsp = 0
 #endif
-
-! diffusion number set equal to a factor of the given CFL number
-! A factor 1/4 is used. See header of the routine.
-  cfld = C_025_R*cfl
-  cflr = C_05_R *cfl ! this one for the reaction I'm not sure
 
 ! So that the minimum non-zero determines dt at the end
   dtc = C_BIG_R
@@ -340,14 +335,14 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
   pmax(1:ipmax) = pmax_aux(1:ipmax)
 #endif
 
-  IF ( pmax(1) .GT. C_0_R ) dtc = cfl /pmax(1) ! Set time step for the given CFL number
+  IF ( pmax(1) .GT. C_0_R ) dtc = cfla /pmax(1) ! Set time step for the given CFL number
   IF ( pmax(2) .GT. C_0_R ) dtd = cfld/pmax(2) ! Set time step for the given diffusion number
 #ifdef CHEMISTRY
   IF ( pmax(ipmax) .GT. C_0_R ) dtr = cflr/pmax(ipmax)
 #endif
 
 ! -------------------------------------------------------------------
-  IF ( cfl .GT. C_0_R ) THEN
+  IF ( cfla .GT. C_0_R ) THEN
      IF ( rkm_mode .EQ. RKM_EXP3 .OR. rkm_mode .EQ. RKM_EXP4 ) THEN
         dt_loc = MIN(dtc, dtd)
      ELSE

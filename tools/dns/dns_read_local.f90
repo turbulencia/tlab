@@ -2,8 +2,8 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
-#ifdef USE_MPI  
-#include "dns_const_mpi.h" 
+#ifdef USE_MPI
+#include "dns_const_mpi.h"
 #endif
 
 SUBROUTINE DNS_READ_LOCAL(inifile)
@@ -32,7 +32,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CHARACTER*32 bakfile
   TINTEGER is,ig,idummy,inb_scal_local1
   TREAL dummy(inb_flow+inb_scal+1)
-  
+
   TINTEGER :: bcs_visc_imin, bcs_visc_imax
   TINTEGER :: bcs_visc_jmin, bcs_visc_jmax
   TINTEGER :: bcs_visc_kmin, bcs_visc_kmax
@@ -50,8 +50,10 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#TimeOrder=<RungeKuttaExplicit3/RungeKuttaExplicit4/RungeKuttaDiffusion3>')
   CALL IO_WRITE_ASCII(bakfile, '#TimeStep=<value (used if CFL is negative)>')
   CALL IO_WRITE_ASCII(bakfile, '#TimeCFL=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#TimeDiffusiveCFL=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#TimeReactiveCFL=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#TermDivergence=<none/remove>')
-  CALL IO_WRITE_ASCII(bakfile, '#RhsMode=<split/combined/nonblocking>')  
+  CALL IO_WRITE_ASCII(bakfile, '#RhsMode=<split/combined/nonblocking>')
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TimeOrder', 'dummy', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttaexplicit3'  ) THEN; rkm_mode = RKM_EXP3;
@@ -68,7 +70,11 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      ENDIF
   ENDIF
 
-  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeCFL',  '0.75', cfl  )
+  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeCFL',          '0.75',              cfla )
+  WRITE(lstr,*) C_025_R *cfla ! Default value for diffusive CFL
+  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeDiffusiveCFL', TRIM(ADJUSTL(lstr)), cfld )
+  WRITE(lstr,*) C_05_R  *cfla ! Default value for reactive CFL
+  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeReactiveCFL',  TRIM(ADJUSTL(lstr)), cflr )
   CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeStep', '0.05', dtime)
 
 ! -------------------------------------------------------------------
@@ -159,7 +165,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         ENDIF
      ENDIF
   ENDIF
-     
+
   s_bound_max(:) = C_1_R; inb_scal_local1 = MAX_NSP
   IF ( ilimit_scal .EQ. 1 ) THEN
      CALL SCANINICHAR(bakfile, inifile, 'Control', 'MaxScalar',  'void', sRes)
@@ -318,7 +324,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityImax.')
      CALL DNS_STOP(DNS_ERROR_IBC)
   ENDIF
-  
+
   CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'freeslip', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowJmin%type(1:3) = DNS_BCS_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowJmin%type(1:3) = DNS_BCS_DIRICHLET
@@ -339,7 +345,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityJmax.')
      CALL DNS_STOP(DNS_ERROR_JBC)
   ENDIF
-  
+
   CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityKmin', 'freeslip', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowKmin%type(1:3) = DNS_BCS_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowKmin%type(1:3) = DNS_BCS_DIRICHLET
@@ -396,7 +402,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! Relaxation coefficients towards reference values in characteristic formulation
 ! -------------------------------------------------------------------
   BcsDrift = .FALSE.
-  
+
 ! Inflow terms
   CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaInf', '-1.0', dummy(1))
   ! IF ( dummy(1) .LE. C_0_R ) THEN; dummy(1) = C_0_R
@@ -412,7 +418,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! Outflow terms
   CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaOut', '-1.0', dummy(1))
   ! IF ( dummy(1) .LE. C_0_R ) THEN; dummy(1) = C_0_R
-  ! ELSE;                            BcsDrift =  .TRUE.; ENDIF 
+  ! ELSE;                            BcsDrift =  .TRUE.; ENDIF
   IF ( dummy(1) .GE. C_0_R ) BcsDrift = .TRUE.
   BcsFlowImin%cout = dummy(1); BcsFlowImax%cout = dummy(1) ! so far, all of them the same
   BcsFlowJmin%cout = dummy(1); BcsFlowJmax%cout = dummy(1)
@@ -420,11 +426,11 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   BcsScalImin%cout = dummy(1); BcsScalImax%cout = dummy(1)
   BcsScalJmin%cout = dummy(1); BcsScalJmax%cout = dummy(1)
   BcsScalKmin%cout = dummy(1); BcsScalKmax%cout = dummy(1)
-  
+
 ! Transverse terms
   CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'BetaTransverse', '-1.0', dummy(1))
   ! IF ( dummy(1) .LE. C_0_R ) THEN; dummy(1) = C_0_R
-  ! ELSE;                            BcsDrift =  .TRUE.; ENDIF 
+  ! ELSE;                            BcsDrift =  .TRUE.; ENDIF
   IF ( dummy(1) .GE. C_0_R ) BcsDrift = .TRUE.
   BcsFlowImin%ctan = dummy(1); BcsFlowImax%ctan = dummy(1) ! so far, all of them the same
   BcsFlowJmin%ctan = dummy(1); BcsFlowJmax%ctan = dummy(1)
@@ -432,7 +438,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   BcsScalImin%ctan = dummy(1); BcsScalImax%ctan = dummy(1)
   BcsScalJmin%ctan = dummy(1); BcsScalJmax%ctan = dummy(1)
   BcsScalKmin%ctan = dummy(1); BcsScalKmax%ctan = dummy(1)
-     
+
 ! ###################################################################
 ! Buffer Zone Parameters
 ! ###################################################################
@@ -444,7 +450,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#PointsJmin=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#PointsJmax=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#PointsImin=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#PointsImax=<value>')  
+  CALL IO_WRITE_ASCII(bakfile, '#PointsImax=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#ParametersJmin=<values>')
   CALL IO_WRITE_ASCII(bakfile, '#ParametersJmax=<values>')
   CALL IO_WRITE_ASCII(bakfile, '#ParametersImin=<values>')
@@ -456,7 +462,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
   CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'Type', 'none', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'       ) THEN; BuffType = DNS_BUFFER_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'relaxation' ) THEN; BuffType = DNS_BUFFER_RELAX 
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'relaxation' ) THEN; BuffType = DNS_BUFFER_RELAX
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'filter'     ) THEN; BuffType = DNS_BUFFER_FILTER
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'both'       ) THEN; BuffType = DNS_BUFFER_BOTH
   ELSE
@@ -474,7 +480,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUImax', '0', BuffFlowImax%size)
   CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUJmin', '0', BuffFlowJmin%size)
   CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUJmax', '0', BuffFlowJmax%size)
-  
+
   CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSImin', '0', BuffScalImin%size)
   CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSImax', '0', BuffScalImax%size)
   CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSJmin', '0', BuffScalJmin%size)
@@ -500,7 +506,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         is = inb_flow+1; CALL LIST_REAL(sRes, is, dummy)
         IF      ( is .EQ. 1 ) THEN
            BuffFlowImin%strength(:) = dummy(1)
-           BuffFlowImin%sigma(:) = C_2_R 
+           BuffFlowImin%sigma(:) = C_2_R
         ELSE IF ( is .EQ. 2 ) THEN
            BuffFlowImin%strength(:) = dummy(1)
            BuffFlowImin%sigma(:) = dummy(2)
@@ -514,7 +520,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         DO is = 1,inb_flow
            IF ( BuffFlowImin%strength(is) .NE. C_0_R ) BuffFlowImin%active(is) = .TRUE.
         ENDDO
-        
+
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesUImin', 'void', sRes1)
         IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
            is = inb_flow; CALL LIST_REAL(sRes1, is, BuffFlowImin%hardvalues)
@@ -525,7 +531,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
               CALL DNS_STOP(DNS_ERROR_OPTION)
            ENDIF
         ENDIF
-        
+
      ENDIF
 
      BuffScalImin%active(:) = .FALSE.; BuffScalImin%hard = .FALSE.
@@ -536,12 +542,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         ENDIF
         IF ( TRIM(ADJUSTL(sRes1)) .EQ. 'void' ) THEN
            sRes1 = sRes
-           CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Field ParametersS default to ParametersU.') 
+           CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Field ParametersS default to ParametersU.')
         ENDIF
         is = inb_scal+1; CALL LIST_REAL(sRes1, is, dummy)
         IF      ( is .EQ. 1 ) THEN
            BuffScalImin%strength(:) = dummy(1)
-           BuffScalImin%sigma(:) = C_2_R 
+           BuffScalImin%sigma(:) = C_2_R
         ELSE IF ( is .EQ. 2 ) THEN
            BuffScalImin%strength(:) = dummy(1)
            BuffScalImin%sigma(:) = dummy(2)
@@ -555,7 +561,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         DO is = 1,inb_scal
            IF ( BuffScalImin%strength(is) .NE. C_0_R ) BuffScalImin%active(is) = .TRUE.
         ENDDO
-        
+
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesSImin', 'void', sRes1)
         IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
            is = inb_scal; CALL LIST_REAL(sRes1, is, BuffScalImin%hardvalues)
@@ -566,7 +572,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
               CALL DNS_STOP(DNS_ERROR_OPTION)
            ENDIF
         ENDIF
-        
+
      ENDIF
 
      BuffFlowImax%active(:) = .FALSE.; BuffFlowImax%hard = .FALSE.
@@ -578,7 +584,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         is = inb_flow+1; CALL LIST_REAL(sRes, is, dummy)
         IF      ( is .EQ. 1 ) THEN
            BuffFlowImax%strength(:) = dummy(1)
-           BuffFlowImax%sigma(:) = C_2_R 
+           BuffFlowImax%sigma(:) = C_2_R
         ELSE IF ( is .EQ. 2 ) THEN
            BuffFlowImax%strength(:) = dummy(1)
            BuffFlowImax%sigma(:) = dummy(2)
@@ -592,7 +598,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         DO is = 1,inb_flow
            IF ( BuffFlowImax%strength(is) .NE. C_0_R ) BuffFlowImax%active(is) = .TRUE.
         ENDDO
-        
+
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesUImax', 'void', sRes1)
         IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
            is = inb_flow; CALL LIST_REAL(sRes1, is, BuffFlowImax%hardvalues)
@@ -603,7 +609,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
               CALL DNS_STOP(DNS_ERROR_OPTION)
            ENDIF
         ENDIF
-        
+
      ENDIF
 
      BuffScalImax%active(:) = .FALSE.; BuffScalImax%hard = .FALSE.
@@ -614,12 +620,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         ENDIF
         IF ( TRIM(ADJUSTL(sRes1)) .EQ. 'void' ) THEN
            sRes1 = sRes
-           CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Field ParametersS default to ParametersU.') 
+           CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Field ParametersS default to ParametersU.')
         ENDIF
         is = inb_scal+1; CALL LIST_REAL(sRes1, is, dummy)
         IF      ( is .EQ. 1 ) THEN
            BuffScalImax%strength(:) = dummy(1)
-           BuffScalImax%sigma(:) = C_2_R 
+           BuffScalImax%sigma(:) = C_2_R
         ELSE IF ( is .EQ. 2 ) THEN
            BuffScalImax%strength(:) = dummy(1)
            BuffScalImax%sigma(:) = dummy(2)
@@ -633,7 +639,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         DO is = 1,inb_scal
            IF ( BuffScalImax%strength(is) .NE. C_0_R ) BuffScalImax%active(is) = .TRUE.
         ENDDO
-        
+
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesSImax', 'void', sRes1)
         IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
            is = inb_scal; CALL LIST_REAL(sRes1, is, BuffScalImax%hardvalues)
@@ -644,7 +650,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
               CALL DNS_STOP(DNS_ERROR_OPTION)
            ENDIF
         ENDIF
-        
+
      ENDIF
 
      BuffFlowJmin%active(:) = .FALSE.; BuffFlowJmin%hard = .FALSE.
@@ -656,7 +662,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         is = inb_flow+1; CALL LIST_REAL(sRes, is, dummy)
         IF      ( is .EQ. 1 ) THEN
            BuffFlowJmin%strength(:) = dummy(1)
-           BuffFlowJmin%sigma(:) = C_2_R 
+           BuffFlowJmin%sigma(:) = C_2_R
         ELSE IF ( is .EQ. 2 ) THEN
            BuffFlowJmin%strength(:) = dummy(1)
            BuffFlowJmin%sigma(:) = dummy(2)
@@ -670,7 +676,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         DO is = 1,inb_flow
            IF ( BuffFlowJmin%strength(is) .NE. C_0_R ) BuffFlowJmin%active(is) = .TRUE.
         ENDDO
-        
+
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesUJmin', 'void', sRes1)
         IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
            is = inb_flow; CALL LIST_REAL(sRes1, is, BuffFlowJmin%hardvalues)
@@ -681,7 +687,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
               CALL DNS_STOP(DNS_ERROR_OPTION)
            ENDIF
         ENDIF
-        
+
      ENDIF
 
      BuffScalJmin%active(:) = .FALSE.; BuffScalJmin%hard = .FALSE.
@@ -692,12 +698,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         ENDIF
         IF ( TRIM(ADJUSTL(sRes1)) .EQ. 'void' ) THEN
            sRes1 = sRes
-           CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Field ParametersS default to ParametersU.') 
+           CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Field ParametersS default to ParametersU.')
         ENDIF
         is = inb_scal+1; CALL LIST_REAL(sRes1, is, dummy)
         IF      ( is .EQ. 1 ) THEN
            BuffScalJmin%strength(:) = dummy(1)
-           BuffScalJmin%sigma(:) = C_2_R 
+           BuffScalJmin%sigma(:) = C_2_R
         ELSE IF ( is .EQ. 2 ) THEN
            BuffScalJmin%strength(:) = dummy(1)
            BuffScalJmin%sigma(:) = dummy(2)
@@ -711,7 +717,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         DO is = 1,inb_scal
            IF ( BuffScalJmin%strength(is) .NE. C_0_R ) BuffScalJmin%active(is) = .TRUE.
         ENDDO
-        
+
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesSJmin', 'void', sRes1)
         IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
            is = inb_scal; CALL LIST_REAL(sRes1, is, BuffScalJmin%hardvalues)
@@ -722,7 +728,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
               CALL DNS_STOP(DNS_ERROR_OPTION)
            ENDIF
         ENDIF
-        
+
      ENDIF
 
      BuffFlowJmax%active(:) = .FALSE.; BuffFlowJmax%hard = .FALSE.
@@ -734,7 +740,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         is = inb_flow+1; CALL LIST_REAL(sRes, is, dummy)
         IF      ( is .EQ. 1 ) THEN
            BuffFlowJmax%strength(:) = dummy(1)
-           BuffFlowJmax%sigma(:) = C_2_R 
+           BuffFlowJmax%sigma(:) = C_2_R
         ELSE IF ( is .EQ. 2 ) THEN
            BuffFlowJmax%strength(:) = dummy(1)
            BuffFlowJmax%sigma(:) = dummy(2)
@@ -748,7 +754,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         DO is = 1,inb_flow
            IF ( BuffFlowJmax%strength(is) .NE. C_0_R ) BuffFlowJmax%active(is) = .TRUE.
         ENDDO
-        
+
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesUJmax', 'void', sRes1)
         IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
            is = inb_flow; CALL LIST_REAL(sRes1, is, BuffFlowJmax%hardvalues)
@@ -759,7 +765,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
               CALL DNS_STOP(DNS_ERROR_OPTION)
            ENDIF
         ENDIF
-        
+
      ENDIF
 
      BuffScalJmax%active(:) = .FALSE.; BuffScalJmax%hard = .FALSE.
@@ -770,7 +776,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         ENDIF
         IF ( TRIM(ADJUSTL(sRes1)) .EQ. 'void' ) THEN
            sRes1 = sRes
-           CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Field ParametersS default to ParametersU.') 
+           CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Field ParametersS default to ParametersU.')
         ENDIF
         is = inb_scal+1; CALL LIST_REAL(sRes1, is, dummy)
         IF      ( is .EQ. 1 ) THEN
@@ -789,7 +795,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         DO is = 1,inb_scal
            IF ( BuffScalJmax%strength(is) .NE. C_0_R ) BuffScalJmax%active(is) = .TRUE.
         ENDDO
-        
+
         CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValuesSJmax', 'void', sRes1)
         IF ( TRIM(ADJUSTL(sRes1)) .NE. 'void' ) THEN
            is = inb_scal; CALL LIST_REAL(sRes1, is, BuffScalJmax%hardvalues)
@@ -800,9 +806,9 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
               CALL DNS_STOP(DNS_ERROR_OPTION)
            ENDIF
         ENDIF
-        
+
      ENDIF
-  
+
   ENDIF
 
 ! ###################################################################
@@ -819,7 +825,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! ###################################################################
   CALL SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', FilterDomainStep)
   IF ( FilterDomainStep .EQ. 0 ) FilterDomain(:)%type = DNS_FILTER_NONE
-  
+
 ! ###################################################################
 ! Inflow Filter
 ! ###################################################################
@@ -860,25 +866,25 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         FilterInflow(ig)%parameters(:) = FilterInflow(1)%parameters(:)
      ENDDO
   ENDIF
-  
+
   CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'Step', '0', FilterInflowStep)
   IF ( FilterInflowStep .EQ. 0 ) FilterInflow(:)%type = DNS_FILTER_NONE
 
   IF ( idummy .NE. DNS_FILTER_NONE ) THEN
      CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'IWidth', '1', FilterInflow(1)%size)
-     
+
      IF ( FilterInflow(1)%size .GT. imax ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Inflow filter i width larger than imax')
         CALL DNS_STOP(DNS_ERROR_INFFLTDOM)
      ENDIF
-        
+
      CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'JWidth', '1', FilterInflow(2)%size)
-     
+
      IF ( FilterInflow(1)%size .GT. jmax ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Inflow filter j width larger than jmax')
         CALL DNS_STOP(DNS_ERROR_INFFLTDOM)
      ENDIF
-     
+
   ENDIF
 
 ! ###################################################################
@@ -894,17 +900,17 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesI', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
      nplanes_i = 0; planes_i = 0
-  ELSE 
+  ELSE
      nplanes_i = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_i, planes_i)
   ENDIF
-  
+
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesJ', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
      nplanes_j = 0; planes_j = 0
-  ELSE 
+  ELSE
      nplanes_j = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_j, planes_j)
   ENDIF
-  
+
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PressureJ', 'no', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN
      pplanes_j = 1
@@ -916,11 +922,11 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; nplanes_j_aux = 1
   ELSE;                                       nplanes_j_aux = 0; ENDIF
   nplanes_j = nplanes_j +nplanes_j_aux
-     
+
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesK', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
      nplanes_k = 0; planes_k = 0
-  ELSE 
+  ELSE
      nplanes_k = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_k, planes_k)
   ENDIF
 
@@ -930,17 +936,17 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[SaveTowers]')
   CALL IO_WRITE_ASCII(bakfile, 'Stride=<value_i,value_j,value_k>')
-  
+
   CALL SCANINICHAR(bakfile, inifile, 'SaveTowers', 'Stride', '0,0,0', sRes)
-  idummy = 3; CALL LIST_INTEGER(sRes,idummy,tower_stride)  
-  IF ( idummy .NE. 3 ) THEN 
-     tower_stride(:) = 0  
+  idummy = 3; CALL LIST_INTEGER(sRes,idummy,tower_stride)
+  IF ( idummy .NE. 3 ) THEN
+     tower_stride(:) = 0
      CALL IO_WRITE_ASCII(bakfile, 'Stride=0,0,0')
      CALL IO_WRITE_ASCII(wfile,   'DNS_READ_LOCAL. Cannot read stride for towers; set to 0,0,0.')
   ENDIF
 
 ! ###################################################################
-! Statistics Control   
+! Statistics Control
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[Statsitics]')
@@ -993,7 +999,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   g_inf(:)%size     = 1       ! default
   g_inf(:)%periodic = g(:)%periodic
   g_inf(:)%uniform  = g(:)%uniform
-  IF ( ifrc_mode .EQ. 2 .OR. ifrc_mode .EQ. 3 .OR. ifrc_mode .EQ. 4 ) THEN                  
+  IF ( ifrc_mode .EQ. 2 .OR. ifrc_mode .EQ. 3 .OR. ifrc_mode .EQ. 4 ) THEN
      CALL SCANINIINT(bakfile, inifile, 'Inflow', 'Imax', '0', idummy)
      IF ( idummy .GT. 0         ) THEN; g_inf(1)%size = idummy
      ELSE
@@ -1014,7 +1020,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Kmax.')
         CALL DNS_STOP(DNS_ERROR_INFTYPE)
      ENDIF
-     
+
   ENDIF
   g_inf(1)%inb_grid = g(1)%inb_grid
   g_inf(2)%inb_grid = 1
@@ -1024,7 +1030,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      g_inf(1)%periodic = .TRUE.
      g_inf(1)%uniform  = .TRUE.
   ENDIF
-  
+
 ! -------------------------------------------------------------------
 ! Discrete Forcing
 ! -------------------------------------------------------------------
@@ -1044,7 +1050,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINICHAR(bakfile,inifile,'Discrete','2DAmpl','0.0',sRes)
   A2D(:)=C_0_R; nx2d = MAX_FRC_FREC ! The amplitude sets the value of nx2d
   CALL LIST_REAL(sRes, nx2d, A2D)
-  
+
   CALL SCANINICHAR(bakfile,inifile,'Discrete','3DXPhi','0.0',sRes)
   Phix3D(:)=C_0_R; nx3d = MAX_FRC_FREC
   CALL LIST_REAL(sRes, nx3d, Phix3d)
@@ -1164,32 +1170,32 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
 ! Implicit RKM part
 ! -------------------------------------------------------------------
-  IF ( rkm_mode .EQ. RKM_IMP3_DIFFUSION ) THEN 
+  IF ( rkm_mode .EQ. RKM_IMP3_DIFFUSION ) THEN
 
-! Check if Neumann BCs for scalar are present and warn if so 
+! Check if Neumann BCs for scalar are present and warn if so
      DO is=1,inb_scal
         IF ( BcsScalJmin%type(is) .EQ. DNS_BCS_NEUMANN .OR. &
-             BcsScalJmax%type(is) .EQ. DNS_BCS_NEUMANN ) THEN 
+             BcsScalJmax%type(is) .EQ. DNS_BCS_NEUMANN ) THEN
            WRITE(sRes, *) is; sRes='DNS_REAL_LOCAL. Scalar'//TRIM(ADJUSTL(sRes))//&
-                ': Finite flux BC not implemented for SEMI-IMPLICITE DIFFUSION' 
-           CALL IO_WRITE_ASCII(wfile, TRIM(ADJUSTL(sRes))) 
+                ': Finite flux BC not implemented for SEMI-IMPLICITE DIFFUSION'
+           CALL IO_WRITE_ASCII(wfile, TRIM(ADJUSTL(sRes)))
            WRITE(sRes, *) is; sRes='DNS_REAL_LOCAL. Scalar'//TRIM(ADJUSTL(sRes))//&
-                ': Setting fluxes at boundary to zero' 
+                ': Setting fluxes at boundary to zero'
            CALL IO_WRITE_ASCII(wfile, TRIM(ADJUSTL(sRes)))
         ENDIF
      ENDDO
 
 ! Check if grid is non-uniform
      IF ( .NOT. g(1)%uniform .AND. g(1)%mode_fdm .NE. FDM_COM6_DIRECT ) THEN
-        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Non-uniform grid requires a direct FDM formulation.') 
-        CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
+        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Non-uniform grid requires a direct FDM formulation.')
+        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
 
   ENDIF
 
 ! -------------------------------------------------------------------
 ! Towers information
-! So far, the use or not use of tower information (tower_mode) is 
+! So far, the use or not use of tower information (tower_mode) is
 ! set by the stride information.
 ! -------------------------------------------------------------------
   IF ( MINVAL(tower_stride).GT.0 ) THEN; tower_mode=1; ELSE;  tower_mode=0; ENDIF
@@ -1199,7 +1205,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      idummy = tower_stride(1) *tower_stride(2) *tower_stride(3)
      IF ( idummy .LT. 5 ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Not enough space in wrk3d array to handle tower information. Increase strides.')
-        CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
+        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
   ENDIF
 
@@ -1208,9 +1214,9 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
   IF ( imode_rhs .EQ. EQNS_RHS_NONBLOCKING .AND. inb_scal .NE. 2 ) THEN
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Nonblocking formulation only valid for 2 scalars.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
+     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
-  
+
   RETURN
 END SUBROUTINE DNS_READ_LOCAL
