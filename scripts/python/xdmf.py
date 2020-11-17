@@ -3,13 +3,35 @@
 import numpy as np   # For array operations.
 import sys
 
-nx = 512  # number of points in Ox
-ny = 256  # number of points in Oy
-nz = 1    # number of points in OZ
+nx = 0 # number of points in Ox; if 0, then search dns.ini
+ny = 0 # number of points in Oy; if 0, then search dns.ini
+nz = 0 # number of points in Oz; if 0, then search dns.ini
 
 sizeofmask = 6
 
-# do not edit
+# do not edit below this line
+
+# getting grid size from dns.ini, if necessary
+if ( nx == 0 ):
+    for line in open('dns.ini'):
+        if line.lower().replace(" ","").startswith("imax="):
+            nx = int(line.split("=",1)[1])
+            break
+
+if ( ny == 0 ):
+    for line in open('dns.ini'):
+        if line.lower().replace(" ","").startswith("jmax="):
+            ny = int(line.split("=",1)[1])
+            break
+
+if ( nz == 0 ):
+    for line in open('dns.ini'):
+        if line.lower().replace(" ","").startswith("kmax="):
+            nz = int(line.split("=",1)[1])
+            break
+
+print("Grid size is {}x{}x{}.".format(nx,ny,nz))
+
 def itnumber(filename):
     main = filename.split(".",1)[0]
     return int(main[len(main)-sizeofmask:len(main)])
@@ -26,7 +48,7 @@ for name in filenames:
     type = main[:len(main)-sizeofmask]
     if not (any(type in s for s in filetypes)):
         filetypes.append(type)
-        
+
 filetimes = []
 for name in filenames:
     main = name.split(".",1)[0]
@@ -82,7 +104,7 @@ f.write('''
 data = (56+nx*8+8, 56+nx*8+8+ny*8+8)
 f.write('''
 <!-- offsets to grid blocks -->
-<!ENTITY SeekGridX  "56"> 
+<!ENTITY SeekGridX  "56">
 <!ENTITY SeekGridY  "%d"> <!-- + DimX*8 + 8-->
 <!ENTITY SeekGridZ  "%d"> <!-- + DimY*8 + 8-->
 
@@ -98,58 +120,58 @@ f.write('''
 
 <Xdmf xmlns:xi="http://www.w3.org/2001/XInclude" Version="2.0">
   <Domain Name="main">
-    
+
     <!-- Hyperslab metadata referenced below -->
-    <DataItem Name="HSMetaData" Dimensions="3 3" Format="XML"> 
+    <DataItem Name="HSMetaData" Dimensions="3 3" Format="XML">
       &HSDimsZ_Start; &HSDimsY_Start; &HSDimsX_Start;
       &HSStrideZ;     &HSStrideY;     &HSStrideX;
       &HSDimsZ;       &HSDimsY;       &HSDimsX;
     </DataItem>
-    
+
     <!-- Defining common topology and common grid to all timeslices -->
-    <Topology TopologyType="3DRectMesh" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">  
+    <Topology TopologyType="3DRectMesh" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
     </Topology>
-    
+
     <Geometry GeometryType="VXVYVZ">
-      
+
       <DataItem Name="X" ItemType="HyperSlab" Dimensions="&HSDimsX;">
 	<DataItem Dimensions="1 3" Format="XML">
           &HSDimsX_Start;
 	  &HSStrideX;
 	  &HSDimsX;
 	</DataItem>
-	<DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridX;" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsX;">
+	<DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridX;" NumberType="Float" Precision="8" Endian="Little" Dimensions="&DimsX;">
 	  grid
 	</DataItem>
       </DataItem>
-      
+
       <DataItem Name="Y" ItemType="HyperSlab" Dimensions="&HSDimsY;">
 	<DataItem Dimensions="1 3" Format="XML">
 	  &HSDimsY_Start;
 	  &HSStrideY;
 	  &HSDimsY;
 	</DataItem>
-	<DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridY;" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsY;">
+	<DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridY;" NumberType="Float" Precision="8" Endian="Little" Dimensions="&DimsY;">
 	  grid
 	</DataItem>
       </DataItem>
-      
+
       <DataItem Name="Z" ItemType="HyperSlab" Dimensions="&HSDimsZ;">
 	<DataItem Dimensions="1 3" Format="XML">
 	  &HSDimsZ_Start;
 	  &HSStrideZ;
 	  &HSDimsZ;
 	</DataItem>
-	<DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridZ;" NumberType="Float" Precision="8" Endian="Big" Dimensions="&DimsZ;">
+	<DataItem ItemType="Uniform" Format="Binary" Seek="&SeekGridZ;" NumberType="Float" Precision="8" Endian="Little" Dimensions="&DimsZ;">
 	  grid
 	</DataItem>
       </DataItem>
-      
+
     </Geometry>
-      
+
     <!-- Collection of timeslices -->
     <Grid GridType="Collection" CollectionType="Temporal">
-      
+
       <Time TimeType="HyperSlab">
 	<DataItem Format="XML" NumberType="Float" Dimensions="3"> <!-- start, stride, count-->
 	  0.0 1.0 %d;
@@ -163,7 +185,7 @@ for time in filetimes:
       <!-- Timeslice -->
       <Grid Name="It%d" GridType="Uniform">
 	<Topology Reference="/Xdmf/Domain/Topology[1]"/>
-	<Geometry Reference="/Xdmf/Domain/Geometry[1]"/>	
+	<Geometry Reference="/Xdmf/Domain/Geometry[1]"/>
     ''' % (int(time)) )
 
     for type in filetypes:
@@ -171,28 +193,28 @@ for time in filetimes:
             f.write('''
         <Attribute AttributeType="Vector" Name="%s">
 	  <DataItem ItemType="Function" Function="JOIN($0,$1,$2)" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX; 3">
-	    
+
 	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
 	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
-	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Little" Dimensions="&DimsZ; &DimsY; &DimsX;">
 		%s
 	      </DataItem>
 	    </DataItem>
 
 	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
 	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
-	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Little" Dimensions="&DimsZ; &DimsY; &DimsX;">
 		%s
 	      </DataItem>
 	    </DataItem>
-	    
+
 	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
 	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
-	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Little" Dimensions="&DimsZ; &DimsY; &DimsX;">
 		%s
 	      </DataItem>
 	    </DataItem>
-	    
+
 	  </DataItem>
 	</Attribute>
 ''' % (type, type+time+'.1',type+time+'.2',type+time+'.3') )
@@ -200,45 +222,45 @@ for time in filetimes:
             f.write('''
         <Attribute AttributeType="Tensor6" Name="%s">
 	  <DataItem ItemType="Function" Function="JOIN($0,$1,$2,$3,$4,$5)" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX; 6">
-	    
+
 	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
 	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
-	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Little" Dimensions="&DimsZ; &DimsY; &DimsX;">
 		%s
 	      </DataItem>
 	    </DataItem>
 
 	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
 	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
-	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
-		%s
-	      </DataItem>
-	    </DataItem>
-	    
-	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
-	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
-	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
-		%s
-	      </DataItem>
-	    </DataItem>
-	    
-	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
-	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
-	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Little" Dimensions="&DimsZ; &DimsY; &DimsX;">
 		%s
 	      </DataItem>
 	    </DataItem>
 
 	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
 	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
-	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Little" Dimensions="&DimsZ; &DimsY; &DimsX;">
 		%s
 	      </DataItem>
 	    </DataItem>
-	    
+
 	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
 	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
-	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Little" Dimensions="&DimsZ; &DimsY; &DimsX;">
+		%s
+	      </DataItem>
+	    </DataItem>
+
+	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Little" Dimensions="&DimsZ; &DimsY; &DimsX;">
+		%s
+	      </DataItem>
+	    </DataItem>
+
+	    <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
+	      <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
+	      <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="4" Endian="Little" Dimensions="&DimsZ; &DimsY; &DimsX;">
 		%s
 	      </DataItem>
 	    </DataItem>
@@ -251,11 +273,11 @@ for time in filetimes:
 	<Attribute Center="Node" Name="%s">
 	  <DataItem ItemType="HyperSlab" Dimensions="&HSDimsZ; &HSDimsY; &HSDimsX;">
 	    <DataItem Reference="/Xdmf/Domain/DataItem[1]"/>
-	    <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Big" Dimensions="&DimsZ; &DimsY; &DimsX;">
+	    <DataItem ItemType="Uniform" Format="Binary" Seek="&SeekData;" NumberType="Float" Precision="&Prec;" Endian="Little" Dimensions="&DimsZ; &DimsY; &DimsX;">
 	      %s
 	    </DataItem>
 	  </DataItem>
-	</Attribute>	
+	</Attribute>
 ''' % (type,type+time) )
 
     f.write('''
