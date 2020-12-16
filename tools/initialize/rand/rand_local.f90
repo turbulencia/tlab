@@ -11,7 +11,7 @@ MODULE RAND_LOCAL
 
 ! random numbers
   TINTEGER :: isymmetric
-  TREAL    :: seed
+  TINTEGER :: seed
 
 ! spectrum
   TINTEGER :: ispectrum

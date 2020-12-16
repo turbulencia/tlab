@@ -889,7 +889,7 @@ PROGRAM VISUALS_MAIN
 ! buoyancy flux along Oy
            txc(1:isize_field,2) = txc(1:isize_field,1) *q(1:isize_field,2)
 
-           plot_file = 'Cvb'//time_str(1:MaskSize)
+           plot_file = 'Fvb'//time_str(1:MaskSize)
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
 
 ! buoyancy fluctuation
@@ -897,6 +897,13 @@ PROGRAM VISUALS_MAIN
 
            plot_file = 'bPrime'//time_str(1:MaskSize)
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
+
+! Covariance between b and v
+           txc(1:isize_field,2) = q(1:isize_field,2); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,2))
+           txc(1:isize_field,2) = txc(1:isize_field,1) *txc(1:isize_field,2)
+
+           plot_file = 'Cvb'//time_str(1:MaskSize)
+           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
 
 ! buoyancy source
            IF ( flag_buoyancy .EQ. 1 ) THEN

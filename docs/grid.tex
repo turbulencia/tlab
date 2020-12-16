@@ -1,8 +1,8 @@
 \chapter{Grid}\label{sec:grid}
 
-The equations are solved using Cartesian co-ordinates and the grid is structured. The grid is constructed by building up the three directions separately (in a 2D case, $Oz$ has simply one node).  Each direction is broken into segments, and each of those segments is built with specified generation algorithms. The first node in each direction is set at zero. 
+The equations are solved using Cartesian co-ordinates and the grid is structured. The grid is constructed by building up the three directions separately (in a 2D case, $Oz$ has simply one node).  Each direction is broken into segments, and each of those segments is built with specified generation algorithms. The first node in each direction is set at zero.
 
-The executable is {\tt inigrid.x} and the data in {\tt dns.ini} is specified in the blocks [IniGridOx], [IniGridOy] and [IniGridOz]. Once created, basic information about the grid is saved into the file {\tt grid.sts}. Grid transformations can be done with {\tt transgrid.x}; the corresponding sources are in the {\tt tools/transform} sub-directory. 
+The executable is {\tt inigrid.x} and the data in {\tt dns.ini} is specified in the blocks [IniGridOx], [IniGridOy] and [IniGridOz]. Once created, basic information about the grid is saved into the file {\tt grid.sts}. Grid transformations can be done with {\tt transgrid.x}; the corresponding sources are in the {\tt tools/transform} sub-directory.
 
 %They allow to print out an ASCII file with the grid positions, add an offset, drop or introduce planes and make a scaling.  (As in the case of the utilities of the main code, a browse through them is recommended, though they are really simple.)
 
@@ -45,7 +45,7 @@ The executable is {\tt inigrid.x} and the data in {\tt dns.ini} is specified in 
 
 \subsection{Explicit mappings}
 A basic grid is considered first with uniform spacing, that is
-$\{s_j=h_0(j-1):\, j = 1,\ldots,n\}$. 
+$\{s_j=h_0(j-1):\, j = 1,\ldots,n\}$.
 
 In case of a hyperbolic tangent (i.e. {\tt opts=5}), the mapping is
 \begin{equation}
@@ -70,7 +70,7 @@ where $s_\mathrm{max} =(n-1)h_0$.
 Two transitions are possible if the {\tt opts} record is set to $5,2$. The
 mapping is then
 \begin{equation}
-\frac{dx}{ds} = 1 
+\frac{dx}{ds} = 1
 + \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
 + \frac{h_2/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t2}}{2\delta_2}\right)\right]\;.
 \end{equation}
@@ -131,7 +131,6 @@ h_{i+1}^1 = h_i^1 r_i^{n_i-1}
 \end{equation}
 and the equation to close the problem is
 \begin{equation}
-L=\sum_{seg}l_i=h_1^1\left( C_1 + r_1^{n_1-1}C_2 + 
+L=\sum_{seg}l_i=h_1^1\left( C_1 + r_1^{n_1-1}C_2 +
 r_1^{n_1-1}r_2^{n_2-1}C_3 + \ldots \right)
 \end{equation}
-
