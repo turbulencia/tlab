@@ -5,7 +5,7 @@
 SUBROUTINE FLOW_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile
-  USE DNS_GLOBAL, ONLY : qbg
+  USE DNS_GLOBAL, ONLY : g, qbg
   USE FLOW_LOCAL
 
   IMPLICIT NONE
@@ -46,7 +46,7 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'velocitybroadband' ) THEN; flag_u = 2
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'vorticitybroadband') THEN; flag_u = 3
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'potentialbroadband') THEN; flag_u = 4
-  ELSE 
+  ELSE
      CALL IO_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Velocity forcing type unknown')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
@@ -73,16 +73,16 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
      ycoor_ini = C_1_R; idummy = 1
      CALL LIST_REAL(sRes, idummy, ycoor_ini)
   ENDIF
-  
-  CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeK', '1.0', norm_ini_u)
-  CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeP', '1.0', norm_ini_p)
+
+  CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeK', '-1.0', norm_ini_u)
+  CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeP', '-1.0', norm_ini_p)
 
 ! Temperature
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'Temperature', 'None', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'           ) THEN; flag_t = 0
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'planebroadband' ) THEN; flag_t = 4
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'planediscrete'  ) THEN; flag_t = 5
-  ELSE 
+  ELSE
      CALL IO_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Temperature forcing type unknown')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
@@ -118,7 +118,7 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[Discrete]')
-  CALL IO_WRITE_ASCII(bakfile, '#Type=<Varicose/Sinuous/Gaussian/Step>')
+  CALL IO_WRITE_ASCII(bakfile, '#Type=<Varicose/Sinuous/Gaussian>')
   CALL IO_WRITE_ASCII(bakfile, '#2DAmpl=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#3DAmpl=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#2DPhi=<value>')
@@ -132,28 +132,30 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   CALL SCANINICHAR(bakfile,inifile,'Discrete','2DAmpl','0.0',sRes)
   A2D(:)=C_0_R; nx2d = MAX_FRC_FREC ! The amplitude sets the value of nx2d
   CALL LIST_REAL(sRes, nx2d, A2D)
-  
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','3DXPhi','0.0',sRes)
-  Phix3D(:)=C_0_R; nx3d = MAX_FRC_FREC
-  CALL LIST_REAL(sRes, nx3d, Phix3d)
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','3DZPhi','0.0',sRes)
-  Phiz3D(:)=C_0_R; nz3d = MAX_FRC_FREC
-  CALL LIST_REAL(sRes, nz3d, Phiz3D)
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','3DAmpl','0.0',sRes)
-  A3D(:)=C_0_R; nx3d = MAX_FRC_FREC ! The amplitude sets the value of nx3d
-  CALL LIST_REAL(sRes, nx3d, A3D)
+
+  nx3d = 0; nz3d = 0
+  IF ( g(3)%size .GT. 1 ) THEN
+    CALL SCANINICHAR(bakfile,inifile,'Discrete','3DXPhi','0.0',sRes)
+    Phix3D(:)=C_0_R; nx3d = MAX_FRC_FREC
+    CALL LIST_REAL(sRes, nx3d, Phix3d)
+    CALL SCANINICHAR(bakfile,inifile,'Discrete','3DZPhi','0.0',sRes)
+    Phiz3D(:)=C_0_R; nz3d = MAX_FRC_FREC
+    CALL LIST_REAL(sRes, nz3d, Phiz3D)
+    CALL SCANINICHAR(bakfile,inifile,'Discrete','3DAmpl','0.0',sRes)
+    A3D(:)=C_0_R; nx3d = MAX_FRC_FREC ! The amplitude sets the value of nx3d
+    CALL LIST_REAL(sRes, nx3d, A3D)
+  ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'Type', 'Varicose', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'varicose' ) THEN; ifrcdsc_mode = 1
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sinuous'  ) THEN; ifrcdsc_mode = 2
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'gaussian' ) THEN; ifrcdsc_mode = 3
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'step'     ) THEN; ifrcdsc_mode = 4
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'varicose' ) THEN; imode_discrete = 1
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sinuous'  ) THEN; imode_discrete = 2
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'gaussian' ) THEN; imode_discrete = 3
   ELSE
      CALL IO_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Error in Discrete.Type.')
      CALL DNS_STOP(DNS_ERROR_INFDISCR)
   ENDIF
 
-  CALL SCANINIREAL(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', frc_delta)
+  CALL SCANINIREAL(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', delta_discrete)
 
   RETURN
 END SUBROUTINE FLOW_READ_LOCAL

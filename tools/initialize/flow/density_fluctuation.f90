@@ -4,7 +4,7 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Setting up a perturbation of the thermodynamic fields by a 
+!# Setting up a perturbation of the thermodynamic fields by a
 !# displacement of the reference center plane.
 !#
 !# Array s enters with the scalar total field, including fluctuations.
@@ -40,7 +40,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
   TREAL xcenter, amplify
 
   TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dz
-  
+
 ! ###################################################################
 ! Define pointers
   x => g(1)%nodes; dx => g(1)%jac(:,1)
@@ -86,7 +86,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
 ! 2D perturbation along X and Z
      IF ( g(3)%size .GT. 1 ) THEN
 #ifdef USE_MPI
-        idsp = ims_offset_k 
+        idsp = ims_offset_k
 #else
         idsp = 0
 #endif
@@ -110,11 +110,11 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
 ! -------------------------------------------------------------------
 ! Modulation
 ! -------------------------------------------------------------------
-  IF ( frc_delta .GT. C_0_R ) THEN
+  IF ( delta_discrete .GT. C_0_R ) THEN
      DO k = 1,kmax
         DO i = 1,imax
            xcenter   = x(i) - g(1)%scale *C_05_R - x(1)
-           amplify   = EXP(-(C_05_R*xcenter/frc_delta)**2)
+           amplify   = EXP(-C_05_R*(xcenter/delta_discrete)**2)
            disp(i,k) = disp(i,k)*amplify
         ENDDO
      ENDDO

@@ -24,11 +24,13 @@ MODULE FLOW_LOCAL
 ! ###################################################################
 ! Discrete forcing
 ! ###################################################################
-  TINTEGER :: ifrcdsc_mode
-  TREAL    :: frc_delta
-  
+  TINTEGER :: imode_discrete
+
   TINTEGER :: nx2d, nx3d, nz3d
   TREAL    :: A2D(MAX_FRC_FREC), Phix2d(MAX_FRC_FREC)
   TREAL    :: A3D(MAX_FRC_FREC), Phix3d(MAX_FRC_FREC), Phiz3d(MAX_FRC_FREC)
+
+! Gaussian modulation
+  TREAL    :: delta_discrete
 
 END MODULE FLOW_LOCAL

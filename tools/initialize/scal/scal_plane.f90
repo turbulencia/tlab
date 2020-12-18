@@ -36,7 +36,7 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
   disp = C_0_R
 
 #ifdef USE_MPI
-  idsp = ims_offset_i; kdsp = ims_offset_k 
+  idsp = ims_offset_i; kdsp = ims_offset_k
 #else
   idsp = 0; kdsp = 0
 #endif
@@ -62,7 +62,7 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
      IF      ( imode_discrete .EQ. 1 .OR. imode_discrete .EQ. 2 ) THEN ! sinusoidal
         wx = C_2_R*C_PI_R /g(1)%scale
         wz = C_2_R*C_PI_R /g(3)%scale
-     
+
 ! 1D perturbation along X
         DO inx2d = 1,nx2d
            wxloc = M_REAL(inx2d)*wx
@@ -127,7 +127,7 @@ SUBROUTINE SCAL_PLANE(iflag, is, s, disp)
         IF ( g(3)%size .GT. 1 ) THEN; zcenter = g(3)%nodes(k+kdsp) - g(3)%scale *Phiz3d(1) - g(3)%nodes(1)
         ELSE;                         zcenter = C_0_R; ENDIF
         rcenter   = SQRT(xcenter**2+zcenter**2)
-        amplify   = EXP(-(C_05_R*rcenter/delta_discrete)**2)
+        amplify   = EXP(-C_05_R*(rcenter/delta_discrete)**2)
         disp(i,k) = disp(i,k)*amplify
      ENDDO; ENDDO
   ENDIF

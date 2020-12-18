@@ -74,14 +74,14 @@ PROGRAM INIFLOW
 ! Definitions
 ! -------------------------------------------------------------------
   itime = 0; rtime = C_0_R
-  
+
   inb_wrk2d   = MAX(inb_wrk2d,6)
 
   r0   = C_0_R
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
-! -------------------------------------------------------------------      
+! -------------------------------------------------------------------
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
 
@@ -111,7 +111,7 @@ PROGRAM INIFLOW
 #endif
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
@@ -119,7 +119,7 @@ PROGRAM INIFLOW
 ! Initialize Poisson Solver
 ! -------------------------------------------------------------------
   IF ( flag_u .NE. 0 ) THEN
-     IF ( ifourier .EQ. 1 .AND. g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz 
+     IF ( ifourier .EQ. 1 .AND. g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz
         CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
 
      ELSE
@@ -143,7 +143,7 @@ PROGRAM INIFLOW
      ENDIF
 
   ENDIF
-  
+
 ! ###################################################################
   q(:,:)  = C_0_R
 
@@ -167,12 +167,12 @@ PROGRAM INIFLOW
 
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      CALL PRESSURE_MEAN(p,txc(1,1),s, wrk1d,wrk2d,wrk3d)
-     
+
 #ifdef CHEMISTRY
      IF ( ireactive .EQ. CHEM_NONE ) THEN
 #endif
         CALL DENSITY_MEAN(rho,p,txc(1,1),s, txc(1,2), wrk1d,wrk2d,wrk3d)
-        
+
 #ifdef CHEMISTRY
      ELSE
         IF ( icalc_scal .EQ. 1 ) THEN
@@ -211,18 +211,18 @@ PROGRAM INIFLOW
      txc(:,1:3) = C_0_R
 
      IF      ( flag_u .EQ. 1 ) THEN
-        CALL VELOCITY_DISCRETE(i1, txc(1,1),txc(1,2),txc(1,3))
+        CALL VELOCITY_DISCRETE(txc(1,1),txc(1,2),txc(1,3), wrk1d)
 
      ELSE IF ( flag_u .GT. 1 ) THEN
         CALL VELOCITY_BROADBAND(flag_u, txc(1,1),txc(1,2),txc(1,3), &
              txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), wrk1d,wrk2d,wrk3d)
-        
+
      ENDIF
 
      IF ( norm_ini_u .GE. C_0_R ) THEN
         CALL NORMALIZE(imax,jmax,kmax, txc(1,1),txc(1,2),txc(1,3), norm_ini_u)
      ENDIF
-     
+
      q(1:isize_field,1:3) =  q(1:isize_field,1:3) + txc(1:isize_field,1:3)
 
   ENDIF
@@ -239,11 +239,11 @@ PROGRAM INIFLOW
         CALL PRESSURE_FLUCTUATION(u,v,w,rho,p,txc(1,1), &
              txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
      ENDIF
-     
+
      IF ( imixture .GT. 0 ) THEN
         CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
      ENDIF
-     
+
      IF ( flag_t .EQ. 4 .OR. flag_t .EQ. 5 ) THEN
         CALL DENSITY_FLUCTUATION(flag_t, s,p,rho, txc(1,1),txc(1,2), wrk2d,wrk3d)
      ENDIF
@@ -262,7 +262,7 @@ PROGRAM INIFLOW
      CALL THERMO_CALORIC_ENERGY(imax,jmax,kmax, s, txc(1,1), p)
   ENDIF
   CALL DNS_WRITE_FIELDS('flow.ics', i2, imax,jmax,kmax, inb_flow, isize_wrk3d, q, wrk3d)
-  
+
   CALL DNS_END(0)
 
   STOP
