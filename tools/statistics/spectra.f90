@@ -644,33 +644,39 @@ PROGRAM SPECTRA
 #endif
 
 ! Saving 1D fields
-           WRITE(fname,*) itime; fname = 'x'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
+           IF ( opt_time .EQ. SPEC_AVERAGE ) THEN
+             WRITE(str,*) itime; WRITE(fname,*) itime_vec(1); str = TRIM(ADJUSTL(fname))//'-'//TRIM(ADJUSTL(str))
+           ELSE
+             WRITE(str,*) itime;
+           ENDIF
+           fname = 'x'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(str))
            sizes(1) = kxmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
            CALL IO_WRITE_SUBARRAY4(i1, fname, varname, outx, sizes, wrk3d)
 
            IF ( g(3)%size .GT. 1 ) THEN
-              WRITE(fname,*) itime; fname = 'z'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
+              fname = 'z'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(str))
               sizes(1) = kzmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
               CALL IO_WRITE_SUBARRAY4(i2, fname, varname, outz, sizes, wrk3d)
            ENDIF
 
            IF ( icalc_radial .EQ. 1 ) THEN
-              WRITE(fname,*) itime; fname = 'r'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(fname))
+              fname = 'r'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(str))
               CALL WRITE_SPECTRUM1D(fname, varname, kr_total*jmax_aux, nfield, outr)
            ENDIF
 
 ! Saving 2D fields
            IF ( opt_ffmt .EQ. 1 ) THEN
               IF ( flag_mode .EQ. 2 ) THEN ! correlations
-                 WRITE(fname,*) itime; fname = 'cor'//TRIM(ADJUSTL(fname))
+                 fname = 'cor'//TRIM(ADJUSTL(str))
                  sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
                  CALL IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
+
               ELSE                         ! spectra
-                 WRITE(fname,*) itime; fname = 'pow'//TRIM(ADJUSTL(fname))
+                 fname = 'pow'//TRIM(ADJUSTL(str))
                  sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1) /2; sizes(4) = 1; sizes(5) = nfield
                  CALL IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
 
-                 WRITE(fname,*) itime; fname = 'pha'//TRIM(ADJUSTL(fname))
+                 fname = 'pha'//TRIM(ADJUSTL(str))
                  sizes(1) = isize_out2d; sizes(2) = 1+sizes(1) /2; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
                  CALL IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
 
