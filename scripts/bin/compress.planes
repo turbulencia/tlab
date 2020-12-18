@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# trash directory
+TRASH_DIR=trash
+
+if [ ! -d $TRASH_DIR ]; then
+    mkdir $TRASH_DIR
+fi
+
+# list of directories to be compressed
+LIST_DIRS=`ls -1d planes-*`
+
+for DIR in $LIST_DIRS; do
+
+FILE_I=${DIR/planes/planesI}.tar
+FILE_J=${DIR/planes/planesJ}.tar
+FILE_K=${DIR/planes/planesK}.tar
+
+if [[ -d $DIR && ( ! -f $FILE_I || ! -f $FILE_J || ! -f $FILE_K ) ]]; then
+    cd $DIR
+
+    LIST=`ls | egrep 'planesI'`
+    echo "Archiving planesI files into $FILE_I..."
+    tar cvf ../$FILE_I $LIST
+
+    LIST=`ls | egrep 'planesJ'`
+    echo "Archiving planesJ files into $FILE_J..."
+    tar cvf ../$FILE_J $LIST
+
+    LIST=`ls | egrep 'planesK'`
+    echo "Archiving planesK files into $FILE_K..."
+    tar cvf ../$FILE_K $LIST
+
+    cd ..
+
+    if [[ -f $FILE_I || -f $FILE_J || -f $FILE_K ]]; then
+	mv -f $DIR $TRASH_DIR
+    fi
+else
+    echo "Files $FILE_I $FILE_J and $FILE_K exist, or $DIR is not a directory. Aborting"
+fi
+
+done
