@@ -70,7 +70,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      ENDIF
   ENDIF
 
-  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeCFL',          '0.75',              cfla )
+  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeCFL',          '1.2',              cfla )
   WRITE(lstr,*) C_025_R *cfla ! Default value for diffusive CFL
   CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeDiffusiveCFL', TRIM(ADJUSTL(lstr)), cfld )
   WRITE(lstr,*) C_05_R  *cfla ! Default value for reactive CFL
