@@ -2,35 +2,30 @@
 
 The system of equations is written as
 \begin{equation}
-  \frac{\partial \boldsymbol{q}}{\partial t} = \boldsymbol{f}_q(\boldsymbol{q},
+  \frac{\partial \mathbf{q}}{\partial t} = \mathbf{f}_q(\mathbf{q},
   \boldsymbol{s},t) \;,\qquad
-  \frac{\partial \boldsymbol{s}}{\partial t} = \boldsymbol{f}_s(\boldsymbol{q},
+  \frac{\partial \mathbf{s}}{\partial t} = \mathbf{f}_s(\mathbf{q},
   \boldsymbol{s},t) \;,
 \label{equ:problem}
 \end{equation}
-where $\boldsymbol{q}$ and $\boldsymbol{s}$ are the flow and scalar
-vectors. For the compressible formulation,
+where $\boldsymbol{q}$ and $\boldsymbol{s}$ are the flow and scalar vectors. For the compressible formulation, we have
 \begin{equation}
-  \boldsymbol{q} = (\rho, \rho u_1, \rho u_2, \rho u_3, \rho e)^T \;,\qquad
-  \boldsymbol{s} = (\rho s_1, \rho s_2, \ldots)^T \;,
+  \mathbf{q} = (\rho, \rho u_1, \rho u_2, \rho u_3, \rho e)^T \;,\qquad
+  \mathbf{s} = (\rho s_1, \rho s_2, \ldots)^T \;.
 \end{equation}
-and $\boldsymbol{f}_q$ and $\boldsymbol{f}_s$ are the corresponding
-right-hand side of the equations. The energy equation can be also solved in
-terms of the total energy per unit volume $\rho(e+v^2/2)$ instead of the
-internal energy per unit volume $\rho e$. If the incompressible equations are
-solved, then
+The energy equation can be also solved in terms of the total energy per unit volume $\rho(e+v^2/2)$ instead of the internal energy per unit volume $\rho e$. For the incompressible equations, we have
 \begin{equation}
-  \boldsymbol{q} = (u_1, u_2, u_3)^T \;,\qquad
-  \boldsymbol{s} = ( s_1, s_2, \ldots)^T \;.
+  \mathbf{q} = (u_1, u_2, u_3)^T \;,\qquad
+  \mathbf{s} = ( s_1, s_2, \ldots)^T \;.
 \end{equation}
 
-The basic formulation is the method of lines, so that the algorithm is a combination of different spatial operators needed to calculate the right-hand side of the equations (typically, derivatives) and a time marching scheme. An implicit treatment of the diffusive terms in the incompressible case has also been implemented.
+The basic formulation is the method of lines, so that the algorithm is a combination of different spatial operators that calculate the right-hand side of the equations (typically, derivatives) and a time marching scheme. An implicit treatment of the diffusive terms in the incompressible case has also been implemented.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Spatial operators}
 
-Spatial operators are based on finite difference methods (FDM). There are two levels of operator routines. The low-level libraries contains the basic algorithms and is explained in this section. It consists of the FDM kernel library {\tt fdm} and three-dimensional operators in the {\tt operators} library. (The latter is still part of the general {\tt dns} library but it should be migrated into its own {\tt operators} library. The file name starts, generally, with {\tt opr\_}.) The high-level library {\tt fields} is composed of routines that are just a combination of the low-level routines.
+Spatial operators are based on finite difference methods (FDM). There are two levels of routines. The low-level libraries contain the basic algorithms and are explained in this section. It consists of the FDM kernel library {\tt fdm} and three-dimensional operators library {\tt operators}. The high-level library {\tt fields} is composed of routines that are just a combination of the low-level routines.
 
 \subsection{Derivatives}\label{sec:fdm}
 
@@ -93,7 +88,7 @@ The coefficients for the first-order derivative are given in table~\ref{tab:coef
   \label{tab:coeffs2}
 \end{table}
 
-Global schemes are constructed as a combination of $n$ of these formulae, using biased finite differences at the boundaries in case of non-periodicity. For the first-order derivative, we define the global algorithm (35653) by using the centered scheme C6 at the $(n-4)$ interior points, and the biased schemes B5 at $j=2$ and B3 at $j=1$ with the corresponding symmetric counterpart at $j=n-1$ and $j=n$, respectively \citep{Carpenter:1993}. For the second-order derivative, we define the global algorithm (3466b43) by using the centered scheme C6b at the $(n-6)$ interior points, C6 at $j=3$ and $j=n-2$, C4 at $j=2$ and $j=n-1$, and the biased scheme B3 at $j=1$ with the corresponding symmetric counterpart at $j=n$.
+Global schemes are constructed as a combination of $n$ of these formulae, using biased finite differences at the boundaries in case of non-periodicity. For the first-order derivative, we define the global algorithm (35653) by using the centered scheme C6 at the $(n-4)$ interior points, and the biased schemes B5 at $j=2$ and B3 at $j=1$ with the corresponding symmetric counterpart at $j=n-1$ and $j=n$, respectively \citep{Carpenter:1993}. For the second-order derivative, we define the global algorithm (3466b43) by using the centered scheme C6b at the $(n-6)$ interior points, C6 at $j=3$ and $j=n-2$, C4 at $j=2$ and $j=n-1$, and the biased scheme B3 at $j=1$ with the corresponding symmetric counterpart at $j=n$. We tried the biased scheme B5 instead of the centered scheme C4 for $j=2$ and $j=n-1$; the eigenvalues were closer to the spectral case, but the truncation errors were larger.
 
 We define the $n$-dimensional vectors
 \begin{equation}
@@ -479,10 +474,10 @@ Then, the original equation can be written as
 \begin{equation}
   \frac{d}{dt}
   \left(\begin{array}{c}s_2\\\vdots\\s_n\end{array}\right) =
-  -(u/h)(A^R_{22})^{-1}B^R_{22}\left(\begin{array}{c}s_2\\\vdots\\s_n\end{array}\right)+
+  -(c/h)(A^R_{22})^{-1}B^R_{22}\left(\begin{array}{c}s_2\\\vdots\\s_n\end{array}\right)+
   \alpha\mathbf{b^R_{21}} \;,
 \end{equation}
-so that the set of complex numbers $-(u\tau/h) \textrm{eig} \{(A^R_{22})^{-1}B^R_{22}\}$ have to fall inside the stability region. \citep{Carpenter:1993}.
+so that the set of complex numbers $-(c\tau/h) \textrm{eig} \{(A^R_{22})^{-1}B^R_{22}\}$ have to fall inside the stability region. \citep{Carpenter:1993}.
 
 The same can be done for the diffusion operator. In this case, we impose 2 boundary conditions. If one of the boundary conditions is imposed at $x=x_n$, then we need to eliminate $s_n$ as we have eliminated before $s_1$ when the boundary condition is imposed at $x=x_1$. We obtain now reduced matrices of size $(n-2)\times(n-2)$. For the compact schemes used in the code, this analysis shows that the CFL conditions derived from the spectral FDM approximations are also applicable to the biased schemes used in non-periodic directions, as observed in figure~\ref{fig:rkm}.
 

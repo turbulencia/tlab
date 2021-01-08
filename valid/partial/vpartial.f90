@@ -63,9 +63,9 @@ PROGRAM VPARTIAL
      DO l = 1,len
 ! single-mode
         u(l,i)     =                                 &
-              SIN(C_2_R*C_PI_R/g%scale*lambda*g%nodes(i)+C_PI_R/C_4_R)
+              SIN(C_2_R*C_PI_R/g%scale*lambda*g%nodes(i))!+C_PI_R/C_4_R)
         du1_a(l,i) = (C_2_R*C_PI_R/g%scale*lambda)    &
-             *COS(C_2_R*C_PI_R/g%scale*lambda*g%nodes(i)+C_PI_R/C_4_R)
+             *COS(C_2_R*C_PI_R/g%scale*lambda*g%nodes(i))!+C_PI_R/C_4_R)
         du2_a(l,i) =-(C_2_R*C_PI_R/g%scale*lambda)**2 &
              *u(l,i)
 ! Gaussian

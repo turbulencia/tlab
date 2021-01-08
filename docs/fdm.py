@@ -1,13 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Nov  3 14:32:39 2019
-
-@author: jpmellado
-"""
-
-# Module of finite-difference approximations
-
 import numpy as np
 
 def fdm1_c6_A(n):
@@ -101,11 +91,16 @@ def fdm2_c6_A(n, kc):
     l[2,-3] = 2. /11.
   
     # 2nd grid point from the boundary
-    l[0,1] = 1. /10
+    l[0,1] = 1. /10     # Centered 4th order
     l[2,1] = 1. /10.
 
     l[0,-2] = 1. /10.
     l[2,-2] = 1. /10.
+    # l[0,1] = 1. /10   # Biased 5th order
+    # l[2,1] =-7. /20.
+
+    # l[0,-2] =-7. /20.
+    # l[2,-2] = 1. /10.
     
     # 1st grid point from the boundary
     l[2,0] = 11.
@@ -153,7 +148,7 @@ def fdm2_c6_B(n, kc):
     r[5,-3] = 3. /44.
 
     # 2nd grid point from the boundary
-    r[2,1] = 6. /5.
+    r[2,1] = 6. /5.     # Centered 4th order
     r[3,1] =-2. *( 6. / 5. )
     r[4,1] = 6. /5.
     r[5,1] = 0.
@@ -165,6 +160,18 @@ def fdm2_c6_B(n, kc):
     r[3,-2] =-2. *( 6. / 5. )
     r[4,-2] = 6. /5.
 
+    # r[2,1] = 99. /80.     # Biased 5th order
+    # r[3,1] =-3.
+    # r[4,1] = 186. /80.
+    # r[5,1] =-3. /5.
+    # r[6,1] = 3. /80.
+ 
+    # r[0,-2] = 3. /80.
+    # r[1,-2] =-3. /5.
+    # r[2,-2] = 186. /80.
+    # r[3,-2] =-3.
+    # r[4,-2] = 99. /80.
+    
     # 1st grid point from the boundary
     r[3,0] = 13.
     r[4,0] =-27.
