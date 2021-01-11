@@ -56,21 +56,17 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#RhsMode=<split/combined/nonblocking>')
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TimeOrder', 'dummy', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttaexplicit3'  ) THEN; rkm_mode = RKM_EXP3;
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttaexplicit4'  ) THEN; rkm_mode = RKM_EXP4;
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttadiffusion3' ) THEN; rkm_mode = RKM_IMP3_DIFFUSION;
+  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttaexplicit3'  ) THEN; rkm_mode = RKM_EXP3;           lstr = '0.6';
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttaexplicit4'  ) THEN; rkm_mode = RKM_EXP4;           lstr = '1.2';
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttadiffusion3' ) THEN; rkm_mode = RKM_IMP3_DIFFUSION; lstr = '0.6';
 !  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttasource3'    ) THEN; rkm_mode = RKM_IMP3_SOURCE;
-  ELSE                                                         ! Old format
-     CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. TimeOrder obsolete.')
-
-     CALL SCANINIINT(bakfile,  inifile, 'Main', 'TimeOrder', '4', rkm_mode)
-     IF ( rkm_mode .LT. 3 .OR. rkm_mode .GT. 4 ) THEN
-        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Runge-Kutta Order equal to 3 or 4')
-        CALL DNS_STOP(DNS_ERROR_RKORDER)
-     ENDIF
+  ELSE
+    CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong TimeOrder option.')
+    CALL DNS_STOP(DNS_ERROR_RKORDER)
   ENDIF
 
-  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeCFL',          '1.2',              cfla )
+ ! Default cfla value set in lstr while reading TimeOrder
+  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeCFL',          TRIM(ADJUSTL(lstr)), cfla )
   WRITE(lstr,*) C_025_R *cfla ! Default value for diffusive CFL
   CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeDiffusiveCFL', TRIM(ADJUSTL(lstr)), cfld )
   WRITE(lstr,*) C_05_R  *cfla ! Default value for reactive CFL

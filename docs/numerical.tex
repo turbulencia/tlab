@@ -37,8 +37,7 @@ We consider FD approximations
   a_{-1}s''_{j-1}+a_{0}s''_{j}+a_{+1}s''_{j+1}=\sum_{k=-3}^{k=3}b_ks_{j+k} \;.
   \label{equ:coefs}
 \end{equation}
-$\{s_j:\, j=1,\ldots,n\}$ are the values of the function $s(x)$ evaluated at $x_j\in[x_1\,,x_n]$. The sets $\{s'_j\}$ and $\{s''_j\}$ denote approximations to the first- and second-order derivatives evaluated at $\{x_j\}$. For the first-order derivatives, we have a 5-point stencil. For the second-order derivatives, we have a 7-point stencil.
-The coefficients for the first-order derivative are given in table~\ref{tab:coeffs1}. The coefficients for the first-order derivative are given in table~\ref{tab:coeffs2}.
+$\{s_j:\, j=1,\ldots,n\}$ are the values of the function $s(x)$ evaluated at $x_j\in[x_1\,,x_n]$. The sets $\{s'_j\}$ and $\{s''_j\}$ denote approximations to the first- and second-order derivatives evaluated at $\{x_j\}$. For the first-order derivatives, we have a 5-point stencil. For the second-order derivatives, we have a 7-point stencil. The coefficients for the first-order derivative are given in table~\ref{tab:coeffs1}. The coefficients for the first-order derivative are given in table~\ref{tab:coeffs2}.
 
 \begin{table}[!ht]
   \small
@@ -72,7 +71,7 @@ The coefficients for the first-order derivative are given in table~\ref{tab:coef
     C2& 0&              1&  0&              0& 0& 1& -2& 1& 0& 0&
     $^{2}\!/\!_{4!}\,h^2s^{(4)}$\\
     C4& $^1\!/\!_{10}$& 1&  $^1\!/\!_{10}$& 0& 0& $^{6}\!/\!_5$& $^{-12}\!/\!_5$& $^6\!/\!_5$& 0& 0&
-    $^{3}\!/\!_{10}\,^{1}\!/\!_{5!}\,h^4s^{(6)}$\\
+    $^{3}\!/\!_{5}\,^{1}\!/\!_{5!}\,h^4s^{(6)}$\\
     C6& $^2\!/\!_{11}$& 1&  $^2\!/\!_{11}$& 0& $^{3}\!/\!_{44}$& $^{12}\!/\!_{11}$& $^{-51}\!/\!_{22}$&
     $^{12}\!/\!_{11}$  &$^{3}\!/\!_{44}$& 0 &
     $^{-23}\!/\!_{11}\,^{1}\!/\!_{7!}\,h^6s^{(8)}$\\
@@ -80,15 +79,15 @@ The coefficients for the first-order derivative are given in table~\ref{tab:coef
     B1 &0      &1&0       & 0 & 0 & 0 & 1 & -2& 1 & 0 &
     $h\,s^{(3)}$\\
     B3 &0      &1&11       & 0 & 0 & 0& 13 & -27& 15 & -1 &
-    $^{2}\!/\!_{4!}\,h^3s^{(5)}$\\
+    $^{-2}\!/\!_{4!}\,h^3s^{(5)}$\\
     B5 &$^1\!/\!_{10}$&1&$^{-7}\!/\!_{20}$& 0& 0& $^{99}\!/\!_{80}$ & $-3$ & $^{186}\!/\!_{80}$& $^{-3}\!/\!_{5}$& $^{3}\!/\!_{80}$&
-    $^{126}\!/\!_{5}\,^{1}\!/\!_{7!}\,h^5s^{(7)}$\\\hline
+    $^{3}\!/\!_{5}\,^{1}\!/\!_{5!}\,h^5s^{(7)}$\\\hline
   \end{tabular}
   \caption{Coefficients of the finite-difference formulae (\ref{equ:coefs}) for the second-order derivative. The first three rows are centered differences, the last three are biased differences. The matrix $A_2$ in (\ref{equ:fdm}) is constructed in terms of the coefficients $\{a_i\}$, the matrix $B_2$ in terms of $\{b_i\}$. The last column contains the leading order term of the local truncation error defined by (\ref{equ:truncation1}).}
   \label{tab:coeffs2}
 \end{table}
 
-Global schemes are constructed as a combination of $n$ of these formulae, using biased finite differences at the boundaries in case of non-periodicity. For the first-order derivative, we define the global algorithm (35653) by using the centered scheme C6 at the $(n-4)$ interior points, and the biased schemes B5 at $j=2$ and B3 at $j=1$ with the corresponding symmetric counterpart at $j=n-1$ and $j=n$, respectively \citep{Carpenter:1993}. For the second-order derivative, we define the global algorithm (3466b43) by using the centered scheme C6b at the $(n-6)$ interior points, C6 at $j=3$ and $j=n-2$, C4 at $j=2$ and $j=n-1$, and the biased scheme B3 at $j=1$ with the corresponding symmetric counterpart at $j=n$. We tried the biased scheme B5 instead of the centered scheme C4 for $j=2$ and $j=n-1$; the eigenvalues were closer to the spectral case, but the truncation errors were larger.
+Global schemes are constructed as a combination of $n$ of these formulae, using biased finite differences at the boundaries in case of non-periodicity. For the first-order derivative, we define the global algorithm (35653) by using the centered scheme C6 at the $(n-4)$ interior points, and the biased schemes B5 at $j=2$ and B3 at $j=1$ with the corresponding symmetric counterpart at $j=n-1$ and $j=n$, respectively \citep{Carpenter:1993}. For the second-order derivative, we define the global algorithm (3466b43) by using the centered scheme C6b at the $(n-6)$ interior points, C6 at $j=3$ and $j=n-2$, C4 at $j=2$ and $j=n-1$, and the biased scheme B3 at $j=1$ with the corresponding symmetric counterpart at $j=n$. We tried the biased scheme B5 instead of the centered scheme C4 for $j=2$ and $j=n-1$; the eigenvalues were closer to the spectral case, but the truncation errors $e_j$ were larger despite $t_j$ begin smaller (see below).
 
 We define the $n$-dimensional vectors
 \begin{equation}
@@ -102,16 +101,17 @@ The global schemes can be represented as
 \end{equation}
 where $h=(x_n-x_1)/(n-1)$ is a reference space step and the square matrices $A=(a_{ij})$ and $B=(b_{ij})$ are narrow banded. If periodic boundary conditions are used, these are imposed at $x_{n+1}$ and not at $x_n$, i.e.  $s(x_{n+1})=s(x_1)$. The size of the domain is then $L=n(x_n-x_1)/(n-1)=nh$ instead of $x_n-x_1=(n-1)h$, and we do not save the information at $x_{n+1}$. The matrices $A$ and $B$ are then circulant instead of banded. The Thomas' algorithm is used to solve those linear systems. An LU decomposition is performed during the initialization and equations are normalized such that the right-hand side contains at least one diagonal of just ones, so as to save memory and computational time (see routine {\tt   fdm\_initialize}). For analysis, one can consider equation~(\ref{equ:fdm}) as the definition of linear finite-difference operators $\delta_x: \mathbb{R}^n \rightarrow \mathbb{R}^n$, $\mathbf{s'} = \delta_x\mathbf{s} = (1/h)(A_1^{-1}B_1)\mathbf{s}$, and $\delta_{xx}: \mathbb{R}^n \rightarrow \mathbb{R}^n$, $\mathbf{s''} = \delta_{xx}\mathbf{s} = (1/h^2)(A_2^{-1}B_2)\mathbf{s}$ \citep{Mellado:2012}.
 
-The local truncation error of the FDM approximation to the first-order derivative in~(\ref{equ:fdm}) is
+The local truncation errors of the FD approximations~(\ref{equ:fdm}) to the first-order derivative, $\{e_{1,j}=ds/dx(x_j)-s'_j\,:\;j=1,\ldots,n\}$, are given by
 \begin{equation}
+  \mathbf{e_1} = -A_1^{-1}\mathbf{t_1}\;,\qquad
   \mathbf{t_1}=
   \frac{1}{h}B_1\left(\begin{array}{c}s(x_1)\\\vdots\\s(x_n)\end{array}\right)-
   A_1\left(
   \begin{array}{c}\frac{ds}{dx}(x_1)\\\vdots\\\frac{ds}{dx}(x_n)
-  \end{array}\right)\;,
+  \end{array}\right)\;.
   \label{equ:truncation1}
 \end{equation}
-which yields $\boldsymbol{\epsilon} = -A_1^{-1}\mathbf{t}$ as the discretization errors $\{\epsilon_j=ds/dx(x_j)-s'_j\,:\;j=1,\ldots,n\}$. A similar expression can be derived for the second-order derivatives. The explicit expression for the components of $\mathbf{t}$ can be found in table~\ref{tab:coeffs1} and table~\ref{tab:coeffs2}.
+A similar expression can be derived for the second-order derivatives. The components of $\mathbf{t_1}$ and $\mathbf{t_2}$ can be found in table~\ref{tab:coeffs1} and table~\ref{tab:coeffs2}.
 
 For notational convenience in the following discussion on Fourier analysis, we change the index so that it varies between $j=0$ and $j=n-1$. We can define a new sequence of numbers $\{\hat{s}_k\}_0^{n-1}$ from $\{s_j\}_0^{n-1}$ by
 \begin{equation}
