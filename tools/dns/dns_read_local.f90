@@ -979,23 +979,23 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#Kmax=<kmax>')
 
   CALL SCANINICHAR(bakfile, inifile, 'Inflow', 'Type', 'None', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none'                ) THEN; ifrc_mode = 0
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'discrete'            ) THEN; ifrc_mode = 1
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'broadbandperiodic'   ) THEN; ifrc_mode = 2
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'broadbandsequential' ) THEN; ifrc_mode = 3
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'both'                ) THEN; ifrc_mode = 4
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none'                ) THEN; inflow_mode = 0
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'discrete'            ) THEN; inflow_mode = 1
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'broadbandperiodic'   ) THEN; inflow_mode = 2
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'broadbandsequential' ) THEN; inflow_mode = 3
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'both'                ) THEN; inflow_mode = 4
   ELSE
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Type.')
      CALL DNS_STOP(DNS_ERROR_INFTYPE)
   ENDIF
 
-  CALL SCANINIREAL(bakfile, inifile, 'Inflow', 'Adapt', '0.0', frc_adapt)
+  CALL SCANINIREAL(bakfile, inifile, 'Inflow', 'Adapt', '0.0', inflow_adapt)
 
 ! Broadband forcing: Grid size of the inflow domain
   g_inf(:)%size     = 1       ! default
   g_inf(:)%periodic = g(:)%periodic
   g_inf(:)%uniform  = g(:)%uniform
-  IF ( ifrc_mode .EQ. 2 .OR. ifrc_mode .EQ. 3 .OR. ifrc_mode .EQ. 4 ) THEN
+  IF ( inflow_mode .EQ. 2 .OR. inflow_mode .EQ. 3 .OR. inflow_mode .EQ. 4 ) THEN
      CALL SCANINIINT(bakfile, inifile, 'Inflow', 'Imax', '0', idummy)
      IF ( idummy .GT. 0         ) THEN; g_inf(1)%size = idummy
      ELSE
@@ -1022,54 +1022,95 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   g_inf(2)%inb_grid = 1
   g_inf(3)%inb_grid = 1
 
-  IF ( ifrc_mode .EQ. 2 ) THEN
+  IF ( inflow_mode .EQ. 2 ) THEN
      g_inf(1)%periodic = .TRUE.
      g_inf(1)%uniform  = .TRUE.
   ENDIF
 
-! -------------------------------------------------------------------
-! Discrete Forcing
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Discrete Forcing
+  ! -------------------------------------------------------------------
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[Discrete]')
-  CALL IO_WRITE_ASCII(bakfile, '#Type=<Varicose/Sinuous/Gaussian/Step>')
-  CALL IO_WRITE_ASCII(bakfile, '#2DAmpl=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#3DAmpl=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#2DPhi=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#3DXPhi=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#3DZPhi=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#Broadening=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#Aplitude=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#ModeX=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#ModeZ=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#PhaseX=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#PhaseZ=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#Type=<Varicose/Sinuous>')
+  CALL IO_WRITE_ASCII(bakfile, '#Parameters=<values>')
 
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','2DPhi', '0.0',sRes)
-  Phix2D(:)=C_0_R; nx2d = MAX_FRC_FREC
-  CALL LIST_REAL(sRes, nx2d, Phix2D)
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','2DAmpl','0.0',sRes)
-  A2D(:)=C_0_R; nx2d = MAX_FRC_FREC ! The amplitude sets the value of nx2d
-  CALL LIST_REAL(sRes, nx2d, A2D)
+  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'Amplitude', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
+  CALL SCANINICHAR(bakfile, inifile, 'Discrete', '2DAmpl', '0.0', sRes)
+  fp%amplitude(:)=C_0_R; fp%size = MAX_MODES
+  CALL LIST_REAL(sRes, fp%size, fp%amplitude)
 
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','3DXPhi','0.0',sRes)
-  Phix3D(:)=C_0_R; nx3d = MAX_FRC_FREC
-  CALL LIST_REAL(sRes, nx3d, Phix3d)
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','3DZPhi','0.0',sRes)
-  Phiz3D(:)=C_0_R; nz3d = MAX_FRC_FREC
-  CALL LIST_REAL(sRes, nz3d, Phiz3D)
-  CALL SCANINICHAR(bakfile,inifile,'Discrete','3DAmpl','0.0',sRes)
-  A3D(:)=C_0_R; nx3d = MAX_FRC_FREC ! The amplitude sets the value of nx3d
-  CALL LIST_REAL(sRes, nx3d, A3D)
-
-
-  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'Type', 'Varicose', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'varicose' ) THEN; ifrcdsc_mode = 1
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sinuous'  ) THEN; ifrcdsc_mode = 2
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'gaussian' ) THEN; ifrcdsc_mode = 3
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'step'     ) THEN; ifrcdsc_mode = 4
+  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'ModeX', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN ! Default
+    DO idummy = 1,fp%size; fp%modex(idummy) = idummy; ENDDO
   ELSE
-     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Discrete.Type.')
-     CALL DNS_STOP(DNS_ERROR_INFDISCR)
+    idummy = MAX_MODES
+    CALL LIST_INTEGER(sRes, idummy, fp%modex)
+    IF ( idummy .NE. fp%size ) THEN
+      CALL IO_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.ModeX.')
+      CALL DNS_STOP(DNS_ERROR_INFDISCR)
+    ENDIF
   ENDIF
 
-  CALL SCANINIREAL(bakfile, inifile, 'Discrete', 'XLength',     '1.0', frc_length)
-  CALL SCANINIREAL(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', frc_delta)
+  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'ModeZ', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN ! Default
+    fp%modez = 0
+  ELSE
+    idummy = MAX_MODES
+    CALL LIST_INTEGER(sRes, idummy, fp%modez)
+    IF ( idummy .NE. fp%size ) THEN
+      CALL IO_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.ModeZ.')
+      CALL DNS_STOP(DNS_ERROR_INFDISCR)
+    ENDIF
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'PhaseX', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
+  CALL SCANINICHAR(bakfile, inifile, 'Discrete', '2DPhi', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN ! Default
+    fp%phasex = 0
+  ELSE
+    idummy = MAX_MODES
+    CALL LIST_REAL(sRes, idummy, fp%phasex)
+    IF ( idummy .NE. fp%size ) THEN
+      CALL IO_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.PhaseX.')
+      CALL DNS_STOP(DNS_ERROR_INFDISCR)
+    ENDIF
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'PhaseZ', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN ! Default
+    fp%phasez = 0
+  ELSE
+    idummy = MAX_MODES
+    CALL LIST_REAL(sRes, idummy, fp%phasez)
+    IF ( idummy .NE. fp%size ) THEN
+      CALL IO_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.PhaseZ.')
+      CALL DNS_STOP(DNS_ERROR_INFDISCR)
+    ENDIF
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'Type', 'Varicose', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; fp%type = PROFILE_NONE
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'varicose' ) THEN; fp%type = PROFILE_GAUSSIAN_ANTISYM
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sinuous'  ) THEN; fp%type = PROFILE_GAUSSIAN_SYM
+  ELSE
+    CALL IO_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Error in Discrete.Type.')
+    CALL DNS_STOP(DNS_ERROR_INFDISCR)
+  ENDIF
+
+  fp%parameters(:) = C_0_R
+  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'Parameters', '-1.0,-1.0', sRes)
+  idummy = MAX_PROF
+  CALL LIST_REAL(sRes, idummy, fp%parameters)
+  ! Parameter 1 is the y-thickness of the perturbation
+  ! Parameter 2 is the x-length of the inflow domain
 
 ! ###################################################################
 ! Final initialization and control statements

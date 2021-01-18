@@ -6,6 +6,15 @@ MODULE DNS_TYPES
 
   TINTEGER, PARAMETER :: MAX_PARS = 10
   TINTEGER, PARAMETER :: MAX_VARS = 20
+  TINTEGER, PARAMETER :: MAX_MODES= 20
+
+  TYPE discrete_dt
+     SEQUENCE
+     TINTEGER type, size
+     TINTEGER, DIMENSION(MAX_MODES) :: modex, modez
+     TREAL,    DIMENSION(MAX_MODES) :: amplitude, phasex, phasez
+     TREAL,    DIMENSION(MAX_PARS)  :: parameters
+  END TYPE discrete_dt
 
   TYPE background_dt
      SEQUENCE

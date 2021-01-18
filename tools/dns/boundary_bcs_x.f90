@@ -13,7 +13,7 @@
 !#
 !########################################################################
 !# DESCRIPTION
-!# 
+!#
 !# Nonperiodic characteristic BCs at xmin and xmax
 !#
 !########################################################################
@@ -105,8 +105,8 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
 ! 2. add fluctuation
 ! 3. add mean
 ! 4. add fluctuation+mean
-! 
-! Relaxation towards a mean profile (Poinsot & Lele term) 
+!
+! Relaxation towards a mean profile (Poinsot & Lele term)
 ! The local value of c is added later at the boundary
 ! Note that pl_??? has dimensions of 1/length
 ! -------------------------------------------------------------------
@@ -121,15 +121,15 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
   ENDIF
 
   pl_inf_min = C_0_R ! jet inflow region (dimensions 1/time)
-  IF ( BcsFlowImin%cinf .GT. 0 ) THEN 
+  IF ( BcsFlowImin%cinf .GT. 0 ) THEN
      pl_inf_min = BcsFlowImin%cinf *qbg(1)%mean /qbg(1)%diam
   ENDIF
-  
+
   pl_aux = C_0_R     ! far from jet inflow region
   IF ( BcsFlowJmin%cinf .GT. 0 ) THEN
      pl_aux = BcsFlowJmin%cinf  /g(2)%scale
   ENDIF
-  
+
   pl_out_max = C_0_R ! default is only nonreflective
   IF ( BcsFlowImax%cout .GT. 0 ) THEN
      pl_out_max = BcsFlowImax%cout *(C_1_R-M2_max) /g(1)%scale
@@ -142,13 +142,13 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
 
 ! ###################################################################
 ! forcing terms in array inf_rhs
-  IF ( ifrc_mode .NE. 0 ) THEN
+  IF ( inflow_mode .NE. 0 ) THEN
      isize = inb_flow + inb_scal_array
      inf_rhs(:,:,isize) = C_0_R
 
-     IF     ( ifrc_mode .EQ. 1 .OR. ifrc_mode .EQ. 4 ) THEN
-        CALL BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
-     ELSEIF ( ifrc_mode .EQ. 2 .OR. ifrc_mode .EQ. 3 ) THEN
+     IF     ( inflow_mode .EQ. 1 .OR. inflow_mode .EQ. 4 ) THEN
+        CALL BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk2d,wrk3d)
+     ELSEIF ( inflow_mode .EQ. 2 .OR. inflow_mode .EQ. 3 ) THEN
         CALL BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, q_inf,z1_inf, txc, wrk2d,wrk3d)
      ENDIF
   ENDIF
@@ -160,10 +160,10 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
        tmin, mmin, tmax, mmax, txc(1,1,1,1), txc(1,1,1,2), txc(1,1,1,3), wrk2d, wrk3d)
 
 ! ###################################################################
-! Flow 
+! Flow
 ! ###################################################################
   CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u,   txc(1,1,1,2), wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), p,   txc(1,1,1,5), wrk3d, wrk2d,wrk3d)         
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), p,   txc(1,1,1,5), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), rho, txc(1,1,1,1), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v,   txc(1,1,1,3), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), w,   txc(1,1,1,4), wrk3d, wrk2d,wrk3d)
@@ -193,7 +193,7 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
           buoyancy%vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      CALL BOUNDARY_BCS_FLOW_NR_3(iflag_min, idir, nt, pl_aux,pl_inf_min, inf_rhs, BcsFlowImin%ref, &
-          BcsFlowImin%ref(1,1,inb_flow+1), & 
+          BcsFlowImin%ref(1,1,inb_flow+1), &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
@@ -251,8 +251,8 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(1), hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     CALL BOUNDARY_BCS_FLOW_NR_3(iflag_max, idir, nt, pl_out_max, pl_inf_max, inf_rhs, BcsFlowImax%ref, & 
-          BcsFlowImax%ref(1,1,inb_flow+1), & 
+     CALL BOUNDARY_BCS_FLOW_NR_3(iflag_max, idir, nt, pl_out_max, pl_inf_max, inf_rhs, BcsFlowImax%ref, &
+          BcsFlowImax%ref(1,1,inb_flow+1), &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
           buoyancy%vector(1),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
@@ -287,7 +287,7 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
   ENDIF
 
 ! ###################################################################
-! Scalar 
+! Scalar
 ! ###################################################################
   IF ( icalc_scal .EQ. 1 ) THEN
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN; inb_scal_loc = inb_scal + 1

@@ -33,8 +33,8 @@ See file {\tt operators/opr\_partial}. Spatial derivatives are calculated using 
 
 We consider FD approximations
 \begin{equation}
-  a_{-1}s'_{j-1}+a_{0}s'_{j}+a_{+1}s'_{j+1}=\sum_{k=-2}^{k=2}b_ks_{j+k} \;,\qquad
-  a_{-1}s''_{j-1}+a_{0}s''_{j}+a_{+1}s''_{j+1}=\sum_{k=-3}^{k=3}b_ks_{j+k} \;.
+  \sum_{k=-1}^{k=1}a_ks'_{j+k}=h^{-1}\sum_{k=-2}^{k=2}b_ks_{j+k} \;,\qquad
+  \sum_{k=-1}^{k=1}a_ks''_{j+k}=h^{-2}\sum_{k=-3}^{k=3}b_ks_{j+k} \;.
   \label{equ:coefs}
 \end{equation}
 $\{s_j:\, j=1,\ldots,n\}$ are the values of the function $s(x)$ evaluated at $x_j\in[x_1\,,x_n]$. The sets $\{s'_j\}$ and $\{s''_j\}$ denote approximations to the first- and second-order derivatives evaluated at $\{x_j\}$. For the first-order derivatives, we have a 5-point stencil. For the second-order derivatives, we have a 7-point stencil. The coefficients for the first-order derivative are given in table~\ref{tab:coeffs1}. The coefficients for the first-order derivative are given in table~\ref{tab:coeffs2}.

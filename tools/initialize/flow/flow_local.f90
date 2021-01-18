@@ -1,18 +1,18 @@
 #include "types.h"
 
 MODULE FLOW_LOCAL
+  USE DNS_TYPES, ONLY : background_dt, discrete_dt
   IMPLICIT NONE
   SAVE
-
-  TINTEGER, PARAMETER :: MAX_FRC_FREC   = 32
 
 ! ###################################################################
 ! Basic options
 ! ###################################################################
   TINTEGER :: flag_u, flag_t, flag_dilatation, flag_mixture
 
-! Geometry and scaling of perturbation
-  TREAL    :: thick_ini, norm_ini_u, norm_ini_p, ycoor_ini
+  TYPE(background_dt) :: Kini                   ! Geometry of perturbation of initial boundary condition
+  TREAL               :: norm_ini_u, norm_ini_p ! Scaling of perturbation
+  TYPE(discrete_dt)   :: fp                     ! Discrete perturbation
 
 ! Boundary conditions
 ! 0  Free-Slip/Free-Slip
@@ -20,17 +20,5 @@ MODULE FLOW_LOCAL
 ! 2  Free-Slip/No-Slip
 ! 3  No-Slip/No-Slip
   TINTEGER :: flag_wall
-
-! ###################################################################
-! Discrete forcing
-! ###################################################################
-  TINTEGER :: imode_discrete
-
-  TINTEGER :: nx2d, nx3d, nz3d
-  TREAL    :: A2D(MAX_FRC_FREC), Phix2d(MAX_FRC_FREC)
-  TREAL    :: A3D(MAX_FRC_FREC), Phix3d(MAX_FRC_FREC), Phiz3d(MAX_FRC_FREC)
-
-! Gaussian modulation
-  TREAL    :: delta_discrete
 
 END MODULE FLOW_LOCAL

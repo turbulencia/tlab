@@ -15,7 +15,7 @@ rc('lines', solid_capstyle='round')
 rc('savefig',    dpi=100)
 
 FiguresToPlot=['spectra','wavenumber','stability']
-# FiguresToPlot=['convergence']
+FiguresToPlot=['convergence']
 
 ###############################################################################
 tag='spectra'
@@ -318,7 +318,7 @@ if tag in FiguresToPlot:
               -tmp *2. *c *( 1. -2. *c *x *x )
 
     # Error analysis of the second-order derivative
-    n = 20
+    n = 10
     x = np.linspace(-1.,1.,n)
     h = (x[n-1]-x[0]) /(n-1)
 
@@ -337,8 +337,8 @@ if tag in FiguresToPlot:
 
     fdm2s = [ scipy.linalg.solve(A2,B2@f[1]) /h**2. for f in fs ]
 
-    e = [ A2@(fdm2s[i]-fs[i][3]) for i in range(len(fdm2s)) ]
-    # e = [ fdm2s[i]-fs[i][3] for i in range(len(fdm2s)) ]
+    # e = [ A2@(fdm2s[i]-fs[i][3]) for i in range(len(fdm2s)) ]
+    e = [ fdm2s[i]-fs[i][3] for i in range(len(fdm2s)) ]
 
     # Plot result
     plt.figure( figsize = (4,3))
@@ -353,75 +353,75 @@ if tag in FiguresToPlot:
     plt.legend(loc="best")
     plt.show()
 
-    # Convergence study: we increment the number of grid points n by factors of 2
-    # between 2**imin and 2**imax
+    # # Convergence study: we increment the number of grid points n by factors of 2
+    # # between 2**imin and 2**imax
 
-    h   = []
-    e1s = []
-    e2s = []
+    # h   = []
+    # e1s = []
+    # e2s = []
 
-    for n in [ 2**i for i in range(4,11)]:
-        x = np.linspace(-1.,1.,n)
-        h.append( (x[n-1]-x[0]) /(n-1) )
+    # for n in [ 2**i for i in range(4,11)]:
+    #     x = np.linspace(-1.,1.,n)
+    #     h.append( (x[n-1]-x[0]) /(n-1) )
 
-        # Define list of functions to be processed
-        fs = [ exp_(x) ]#, sin_(x), cos_(x), gauss_(x)]
+    #     # Define list of functions to be processed
+    #     fs = [ exp_(x) ]#, sin_(x), cos_(x), gauss_(x)]
 
-        # Calculate FD approximation to the first-order derivative and error
-        l1 = fdm.fdm1_c6_A(n)
-        A1 = np.diagflat(l1[0,1:],-1) +np.diagflat(l1[1,:],0) +np.diagflat(l1[2,:-1],1)
+    #     # Calculate FD approximation to the first-order derivative and error
+    #     l1 = fdm.fdm1_c6_A(n)
+    #     A1 = np.diagflat(l1[0,1:],-1) +np.diagflat(l1[1,:],0) +np.diagflat(l1[2,:-1],1)
 
-        r1 = fdm.fdm1_c6_B(n)
-        B1 = np.diagflat(r1[0][2:],-2) +np.diagflat(r1[1][1:],-1) +np.diagflat(r1[2],0) \
-            +np.diagflat(r1[3][:-1],1) +np.diagflat(r1[4][:-2],2)
+    #     r1 = fdm.fdm1_c6_B(n)
+    #     B1 = np.diagflat(r1[0][2:],-2) +np.diagflat(r1[1][1:],-1) +np.diagflat(r1[2],0) \
+    #         +np.diagflat(r1[3][:-1],1) +np.diagflat(r1[4][:-2],2)
 
-        fdm1s = [ scipy.linalg.solve(A1,B1@f[1]) /h[-1] for f in fs ]
+    #     fdm1s = [ scipy.linalg.solve(A1,B1@f[1]) /h[-1] for f in fs ]
 
-        # e1s.append( [ scipy.linalg.norm(fdm1s[i]-fs[i][2]) /np.sqrt(float(n)) for i in range(len(fdm1s)) ] )
-        e1s.append( [ np.amax(np.abs(fdm1s[i]-fs[i][2])) for i in range(len(fdm1s)) ] )
+    #     # e1s.append( [ scipy.linalg.norm(fdm1s[i]-fs[i][2]) /np.sqrt(float(n)) for i in range(len(fdm1s)) ] )
+    #     e1s.append( [ np.amax(np.abs(fdm1s[i]-fs[i][2])) for i in range(len(fdm1s)) ] )
 
-        # Calculate FD approximation to the second-order derivative
-        l2 = fdm.fdm2_c6_A(n, np.pi **2.)
-        # l2 = fdm.fdm2_c6_A(n, 48./7.)
-        A2 = np.diagflat(l2[0,1:],-1) +np.diagflat(l2[1,:],0) +np.diagflat(l2[2,:-1],1)
+    #     # Calculate FD approximation to the second-order derivative
+    #     l2 = fdm.fdm2_c6_A(n, np.pi **2.)
+    #     # l2 = fdm.fdm2_c6_A(n, 48./7.)
+    #     A2 = np.diagflat(l2[0,1:],-1) +np.diagflat(l2[1,:],0) +np.diagflat(l2[2,:-1],1)
 
-        r2 = fdm.fdm2_c6_B(n, np.pi **2.)
-        # r2 = fdm.fdm2_c6_B(n, 48./7.)
-        B2 = np.diagflat(r2[0][3:],-3) +np.diagflat(r2[1][2:],-2) +np.diagflat(r2[2][1:],-1) +np.diagflat(r2[3],0) \
-            +np.diagflat(r2[4][:-1],1) +np.diagflat(r2[5][:-2],2) +np.diagflat(r2[6][:-3],3)
+    #     r2 = fdm.fdm2_c6_B(n, np.pi **2.)
+    #     # r2 = fdm.fdm2_c6_B(n, 48./7.)
+    #     B2 = np.diagflat(r2[0][3:],-3) +np.diagflat(r2[1][2:],-2) +np.diagflat(r2[2][1:],-1) +np.diagflat(r2[3],0) \
+    #         +np.diagflat(r2[4][:-1],1) +np.diagflat(r2[5][:-2],2) +np.diagflat(r2[6][:-3],3)
 
-        fdm2s = [ scipy.linalg.solve(A2,B2@f[1]) /h[-1]**2. for f in fs ]
+    #     fdm2s = [ scipy.linalg.solve(A2,B2@f[1]) /h[-1]**2. for f in fs ]
 
-        # e2s.append( [ scipy.linalg.norm(fdm2s[i]-fs[i][3]) /np.sqrt(float(n)) for i in range(len(fdm2s)) ] )
-        e2s.append( [ np.amax(np.abs(fdm2s[i]-fs[i][3])) for i in range(len(fdm2s)) ] )
+    #     # e2s.append( [ scipy.linalg.norm(fdm2s[i]-fs[i][3]) /np.sqrt(float(n)) for i in range(len(fdm2s)) ] )
+    #     e2s.append( [ np.amax(np.abs(fdm2s[i]-fs[i][3])) for i in range(len(fdm2s)) ] )
 
-        legends = [ f[0] for f in fs ]
+    #     legends = [ f[0] for f in fs ]
 
-    h_ = np.array( h )          # We need arrays to plot
+    # h_ = np.array( h )          # We need arrays to plot
 
-    # e1s_ = np.array( e1s )      # We need arrays to plot
+    # # e1s_ = np.array( e1s )      # We need arrays to plot
+    # # plt.figure( figsize = (4,3))
+    # # for i in range(np.shape(e1s_)[1]):
+    # #     plt.plot( h_/h_[0], e1s_[:,i] )#/e1s_[0,i] )
+    # # plt.legend(legends,loc='best')
+    # # plt.xscale("log")
+    # # plt.yscale("log")
+    # # plt.title("First-order derivative")
+    # # plt.xlabel("Grid spacing $h/h_0$")
+    # # plt.ylabel("Global error $e_2/e_{2,0}$")
+    # # #plt.ylabel("Global error $e_\infty/e_{\infty,0}$")
+    # # plt.show()
+
+    # e2s_ = np.array( e2s )      # We need arrays to plot
     # plt.figure( figsize = (4,3))
-    # for i in range(np.shape(e1s_)[1]):
-    #     plt.plot( h_/h_[0], e1s_[:,i] )#/e1s_[0,i] )
+    # for i in range(np.shape(e2s_)[1]):
+    #     plt.plot( h_/h_[0], e2s_[:,i] )#/e2s_[0,i] )
     # plt.legend(legends,loc='best')
     # plt.xscale("log")
     # plt.yscale("log")
-    # plt.title("First-order derivative")
-    # plt.xlabel("Grid spacing $h/h_0$")
-    # plt.ylabel("Global error $e_2/e_{2,0}$")
-    # #plt.ylabel("Global error $e_\infty/e_{\infty,0}$")
+    # # plt.axis([None,None,1e-10,1e0])
+    # plt.title(r"Second-order derivative")
+    # plt.xlabel(r"Grid spacing $h/h_0$")
+    # plt.ylabel(r"Global error $e_2/e_{2,0}$")
+    # #plt.ylabel(r"Global error $e_\infty/e_{\infty,0}$")
     # plt.show()
-
-    e2s_ = np.array( e2s )      # We need arrays to plot
-    plt.figure( figsize = (4,3))
-    for i in range(np.shape(e2s_)[1]):
-        plt.plot( h_/h_[0], e2s_[:,i] )#/e2s_[0,i] )
-    plt.legend(legends,loc='best')
-    plt.xscale("log")
-    plt.yscale("log")
-    # plt.axis([None,None,1e-10,1e0])
-    plt.title(r"Second-order derivative")
-    plt.xlabel(r"Grid spacing $h/h_0$")
-    plt.ylabel(r"Global error $e_2/e_{2,0}$")
-    #plt.ylabel(r"Global error $e_\infty/e_{\infty,0}$")
-    plt.show()

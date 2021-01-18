@@ -55,7 +55,7 @@ PROGRAM TRANSFIELDS
 
   TYPE(grid_dt), DIMENSION(3) :: g_dst
   TINTEGER imax_dst,jmax_dst,kmax_dst
-  
+
   LOGICAL flag_crop, flag_extend
   TINTEGER jmax_aux, inb_scal_dst
   TREAL dummy
@@ -92,7 +92,7 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
   opt_main     =-1 ! default values
   opt_function = 0
-  
+
   CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamTransform', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_REAL(sRes, iopt_size, opt_vec)
@@ -148,7 +148,7 @@ PROGRAM TRANSFIELDS
      CALL IO_WRITE_ASCII(efile,'TRANSFORM. Filter information needs to be provided in block [Filter].')
      CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
-  
+
 ! -------------------------------------------------------------------
   IF ( opt_main .EQ. 6 ) THEN
      IF ( sRes .EQ. '-1' ) THEN
@@ -194,7 +194,7 @@ PROGRAM TRANSFIELDS
 
   IF ( opt_main .LT. 0 ) THEN ! Check
      CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Missing input [ParamTransform] in dns.ini.')
-     CALL DNS_STOP(DNS_ERROR_INVALOPT) 
+     CALL DNS_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
   IF ( opt_main .EQ. 6 ) THEN; icalc_flow = 0; ENDIF ! Force not to process the flow fields
@@ -211,13 +211,13 @@ PROGRAM TRANSFIELDS
   ENDIF
   idummy = 6
   CALL LIST_INTEGER(sRes, idummy, subdomain)
-  
+
   IF ( idummy .LT. 6 ) THEN ! default
      subdomain(1) = 1; subdomain(2) = g(1)%size
      subdomain(3) = 1; subdomain(4) = g(2)%size
      subdomain(5) = 1; subdomain(6) = g(3)%size
   ENDIF
-  
+
 ! -------------------------------------------------------------------
   IF      ( opt_main .EQ. 1 .OR. &      ! Crop
             opt_main .EQ. 3      ) THEN ! Remesh
@@ -225,7 +225,7 @@ PROGRAM TRANSFIELDS
      g_dst(2)%size = subdomain(4)-subdomain(3)+1
      g_dst(3)%size = subdomain(6)-subdomain(5)+1
 
-  ELSE IF ( opt_main .EQ. 2      ) THEN ! Extend 
+  ELSE IF ( opt_main .EQ. 2      ) THEN ! Extend
      g_dst(1)%size = g(1)%size + subdomain(2) + subdomain(1)
      g_dst(2)%size = g(2)%size + subdomain(4) + subdomain(3)
      g_dst(3)%size = g(3)%size
@@ -252,7 +252,7 @@ PROGRAM TRANSFIELDS
   inb_txc = 0
 
   inb_scal_dst = inb_scal
-  
+
   iread_flow = icalc_flow
   iread_scal = icalc_scal
 
@@ -267,7 +267,7 @@ PROGRAM TRANSFIELDS
   ENDIF
 
   IF ( ifourier .EQ. 1 ) inb_txc = MAX(inb_txc,1)
- 
+
 ! -------------------------------------------------------------------
   isize_wrk3d = MAX(isize_txc_field,imax_dst*jmax_dst*kmax_dst)
 
@@ -287,7 +287,7 @@ PROGRAM TRANSFIELDS
 #include "dns_alloc_arrays.h"
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
@@ -295,9 +295,9 @@ PROGRAM TRANSFIELDS
 ! Initialize filters
 ! -------------------------------------------------------------------
   IF ( opt_main .EQ. 5 ) THEN
-     DO ig = 1,3     
+     DO ig = 1,3
         CALL OPR_FILTER_INITIALIZE( g(ig), FilterDomain(ig), wrk1d )
-     END DO     
+     END DO
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -334,17 +334,17 @@ PROGRAM TRANSFIELDS
         CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
      ENDIF
      wrk1d(1:g(1)%size,1) = x(1:g(1)%size,1) ! we need extra space
-     
+
      dummy = (g_dst(3)%scale-g(3)%scale) / (z(g(3)%size,1)-z(g(3)%size-1,1))
      IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
         CALL IO_WRITE_ASCII(efile, 'TRANSFORM. Oz scales are not equal')
         CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
      ENDIF
      wrk1d(1:g(3)%size,3) = z(1:g(3)%size,1) ! we need extra space
-     
+
 ! In the Oy direction, we allow to have a different box
      jmax_aux = g(2)%size; subdomain = 0
-     
+
      dummy = (y_dst(g_dst(2)%size)-y(g(2)%size,1)) / (y(g(2)%size,1)-y(g(2)%size-1,1))
      IF      ( dummy .GT.  C_1EM3_R ) THEN ! Extend
         flag_extend  = .TRUE.
@@ -383,7 +383,7 @@ PROGRAM TRANSFIELDS
      idummy      = MAX(jmax_aux,MAX(g(1)%size,g(3)%size))
      isize_wrk1d = MAX(isize_wrk1d,idummy)
      isize_wrk1d = isize_wrk1d + 1
-     
+
      inb_txc         = inb_txc -1    ! Creating txc_aux
      idummy          = MAX(imax,imax_dst) *MAX(jmax_aux,MAX(jmax,jmax_dst)) *MAX(kmax,kmax_dst)
      isize_txc_field = MAX(isize_txc_field,idummy)
@@ -397,17 +397,17 @@ PROGRAM TRANSFIELDS
      isize_txc_field = MAX(isize_txc_field,idummy)
 #endif
      isize_wrk3d     = isize_txc_field
-     
+
      idummy = isize_wrk1d*7 + (isize_wrk1d+10)*36
      isize_wrk3d = MAX(isize_wrk3d,idummy)
-        
+
      DEALLOCATE(txc,wrk3d)
 
      ALLOCATE(txc(isize_txc_field,inb_txc))
      ALLOCATE(wrk3d(isize_wrk3d))
      ALLOCATE(y_aux(isize_wrk1d))
      ALLOCATE(txc_aux(imax,jmax_aux,kmax))
-     
+
 ! Creating grid
      IF ( flag_crop ) THEN
         WRITE(str,'(I3)') subdomain(4)
@@ -415,10 +415,10 @@ PROGRAM TRANSFIELDS
         WRITE(str,'(I3)') subdomain(3)
         CALL IO_WRITE_ASCII(lfile, 'Croping below '//TRIM(ADJUSTL(str))//' for remeshing...')
         CALL TRANS_CROP(i1,jmax,1, subdomain, g(2)%nodes, y_aux)
-        
+
         y_aux(1)        = y_dst(1)             ! Using min and max of new grid
         y_aux(jmax_aux) = y_dst(g_dst(2)%size)
-        
+
      ELSE
         y_aux(1+subdomain(3):g(2)%size+subdomain(3)) = y(1:g(2)%size,1) ! we need extra space
 
@@ -430,7 +430,7 @@ PROGRAM TRANSFIELDS
               y_aux(ip) = y_aux(ip-1) + dummy
            ENDDO
         ENDIF
-        
+
         IF ( subdomain(3) .GT. 0 ) THEN
            WRITE(str,'(I3)') subdomain(3)
            CALL IO_WRITE_ASCII(lfile, 'Adding '//TRIM(ADJUSTL(str))//' planes at the bottom for remeshing...')
@@ -439,14 +439,14 @@ PROGRAM TRANSFIELDS
               y_aux(ip) = y_aux(ip+1) + dummy ! dummy is negative
            ENDDO
         ENDIF
-        
+
      ENDIF
 
      g(2)%scale = g_dst(2)%scale  ! watch out, overwriting grid information
      g(2)%size  = jmax_aux
-        
+
   ENDIF
-  
+
 ! ###################################################################
 ! Postprocess given list of files
 ! ###################################################################
@@ -472,17 +472,17 @@ PROGRAM TRANSFIELDS
      IF ( opt_main .EQ. 1 ) THEN
         IF ( subdomain(5) .NE. 1 .OR. subdomain(6) .NE. g(3)%size) THEN
            CALL IO_WRITE_ASCII(efile,'TRANSFORM. Cropping only in Oy.')
-           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)           
+           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
         ENDIF
         IF ( subdomain(1) .NE. 1 .OR. subdomain(2) .NE. g(1)%size) THEN
            CALL IO_WRITE_ASCII(efile,'TRANSFORM. Cropping only in Oy.')
-           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)           
+           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
         ENDIF
         IF ( subdomain(3) .LT. 1 .OR. subdomain(4) .GT. g(2)%size) THEN
            CALL IO_WRITE_ASCII(efile,'TRANSFORM. Cropping out of bounds in Oy.')
-           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)           
+           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
         ENDIF
-        
+
         IF ( icalc_flow .GT. 0 ) THEN
            DO iq = 1,inb_flow
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
@@ -539,7 +539,7 @@ PROGRAM TRANSFIELDS
                    txc_aux,q_dst(:,iq), txc, isize_wrk3d, wrk3d)
            ENDDO
         ENDIF
-              
+
         IF ( icalc_scal .GT. 0 ) THEN
            DO is = 1,inb_scal
               CALL IO_WRITE_ASCII(lfile,'Transfering data to new array...')
@@ -585,7 +585,7 @@ PROGRAM TRANSFIELDS
               CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, q_dst(1,iq), wrk1d,wrk2d,txc)
            ENDDO
         ENDIF
-        
+
         IF ( icalc_scal .GT. 0 ) THEN
            DO is = 1,inb_scal
               CALL IO_WRITE_ASCII(lfile,'Filtering...')
@@ -595,22 +595,22 @@ PROGRAM TRANSFIELDS
               CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, s_dst(1,is), wrk1d,wrk2d,txc)
            ENDDO
         ENDIF
-        
+
 ! ###################################################################
 ! Transformation
 ! ###################################################################
      ELSE IF ( opt_main .EQ. 6 ) THEN
         IF      ( opt_function .EQ. 1 ) THEN
            CALL TRANS_FUNCTION(imax,jmax,kmax, s,s_dst, txc)
-           
+
         ELSE IF ( opt_function .EQ. 2 ) THEN
            s_dst(:,1) = C_0_R
            DO is = 1,MIN(inb_scal,iopt_size)
               s_dst(:,1) = s_dst(:,1) + opt_vec(2+is) *s(:,is)
            ENDDO
-           
+
         ENDIF
-        
+
 ! ###################################################################
 ! Blend
 ! ###################################################################
@@ -643,14 +643,14 @@ PROGRAM TRANSFIELDS
               CALL TRANS_ADD_MEAN(i0, iq, imax,jmax,kmax, y, q(1,iq), q_dst(1,iq))
            ENDDO
         ENDIF
-        
+
         IF ( icalc_scal .GT. 0 ) THEN
            DO is = 1,inb_scal
               CALL IO_WRITE_ASCII(lfile,'Adding mean scal profiles...')
               CALL TRANS_ADD_MEAN(i1, is, imax,jmax,kmax, y, s(1,is), s_dst(1,is))
            ENDDO
         ENDIF
-        
+
      ENDIF
 
 ! ###################################################################
@@ -666,9 +666,9 @@ PROGRAM TRANSFIELDS
            CALL DNS_WRITE_FIELDS(scal_file, i1, imax_dst,jmax_dst,kmax_dst, inb_scal_dst, isize_wrk3d, s_dst,wrk3d)
         ENDIF
      ENDIF
-     
+
   ENDDO
-  
+
 ! ###################################################################
 ! Final operations
 ! ###################################################################
@@ -702,7 +702,7 @@ SUBROUTINE TRANS_CROP(nx,ny,nz, subdomain, a, b)
   TINTEGER nx,ny,nz, subdomain(6)
   TREAL, DIMENSION(nx,ny,nz)                          :: a
   TREAL, DIMENSION(nx,subdomain(4)-subdomain(3)+1,nz) :: b
-  
+
 ! -----------------------------------------------------------------------
   TINTEGER j, k
 
@@ -729,7 +729,7 @@ SUBROUTINE TRANS_EXTEND(nx,ny,nz, planes, a, b)
   TINTEGER nx, ny, nz, planes(6)
   TREAL, DIMENSION(nx,ny,nz)                                         :: a
   TREAL, DIMENSION(planes(1)+nx+planes(2),planes(3)+ny+planes(4),nz) :: b
-  
+
 ! -----------------------------------------------------------------------
   TINTEGER j, k
 
@@ -749,7 +749,7 @@ SUBROUTINE TRANS_EXTEND(nx,ny,nz, planes, a, b)
      ENDDO
 
      DO j = ny+planes(3)+1,ny+planes(3)+planes(4)
-        b(:,j,k) = b(:,ny+planes(3),k)        
+        b(:,j,k) = b(:,ny+planes(3),k)
      ENDDO
 
   ENDDO
@@ -764,7 +764,6 @@ END SUBROUTINE TRANS_EXTEND
 SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL, ONLY : imode_flow
   USE DNS_GLOBAL, ONLY : g, sbg, qbg
 
   IMPLICIT NONE
@@ -773,40 +772,33 @@ SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
   TREAL, DIMENSION(*),        INTENT(IN)  :: y
   TREAL, DIMENSION(nx,ny,nz), INTENT(IN)  :: a
   TREAL, DIMENSION(nx,ny,nz), INTENT(OUT) :: b
-  
-! -----------------------------------------------------------------------
+
+  ! -----------------------------------------------------------------------
   TINTEGER j
   TREAL FLOW_SHEAR_TEMPORAL, ycenter, dummy
   EXTERNAL FLOW_SHEAR_TEMPORAL
 
-! #######################################################################
-  IF ( imode_flow .EQ. DNS_FLOW_SHEAR     ) THEN
-     IF ( flag_mode .EQ. 0 ) THEN ! Velocity
-        IF ( is .EQ. 1 ) THEN ! Only the mean velocity
-        ycenter = y(1) + g(2)%scale *qbg(1)%ymean
-        DO j = 1,ny
-           dummy =  FLOW_SHEAR_TEMPORAL&
-                (qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, y(j))
-            b(:,j,:) = dummy + a(:,j,:)
-        ENDDO
-        ELSE
-           b = a
-        ENDIF
+  ! #######################################################################
+  IF ( flag_mode .EQ. 0 ) THEN ! Velocity
+    IF ( is .EQ. 1 ) THEN ! Only the mean velocity
+      ycenter = y(1) + g(2)%scale *qbg(1)%ymean
+      DO j = 1,ny
+        dummy =  FLOW_SHEAR_TEMPORAL&
+        (qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, y(j))
+        b(:,j,:) = dummy + a(:,j,:)
+      ENDDO
+    ELSE
+      b = a
+    ENDIF
 
-     ELSE                         ! Scalars
-        ycenter = y(1) + g(2)%scale *sbg(is)%ymean
-        DO j = 1,ny
-           dummy =  FLOW_SHEAR_TEMPORAL&
-                (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, y(j))
-           b(:,j,:) = dummy + a(:,j,:)
-        ENDDO
+  ELSE                         ! Scalars
+    ycenter = y(1) + g(2)%scale *sbg(is)%ymean
+    DO j = 1,ny
+      dummy =  FLOW_SHEAR_TEMPORAL&
+      (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, y(j))
+      b(:,j,:) = dummy + a(:,j,:)
+    ENDDO
 
-     ENDIF
-     
-  ELSE 
-     CALL IO_WRITE_ASCII(efile, 'TRANS_ADD_MEAN. Only shear mode developed.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-     
   ENDIF
 
   RETURN
@@ -829,7 +821,7 @@ SUBROUTINE TRANS_FUNCTION(nx,ny,nz, a,b, txc)
   TINTEGER nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz)   :: a, b
   TREAL, DIMENSION(nx*ny*nz,*) :: txc
-  
+
 ! -----------------------------------------------------------------------
   TREAL qt_0,qt_1, h_0,h_1, p
   TREAL LATENT_HEAT
@@ -859,7 +851,7 @@ SUBROUTINE TRANS_FUNCTION(nx,ny,nz, a,b, txc)
   CALL THERMO_POLYNOMIAL_PSAT(nx,ny,nz, txc(1,5), txc(1,1))
   txc(:,1) = C_1_R/(MRATIO*txc(:,4)/txc(:,1)-C_1_R) *WGHT_INV(2) /WGHT_INV(1)
   txc(:,1) = txc(:,1)/(C_1_R+txc(:,1))
- 
+
 ! Calculate parameter \beta (assuming c_p = c_p,d)
   txc(:,3) = WGHT_INV(2)/WGHT_INV(1)/GRATIO*LATENT_HEAT*LATENT_HEAT / ( txc(:,5)*txc(:,5) )
 
@@ -883,7 +875,7 @@ SUBROUTINE TRANS_BLEND(nx,ny,nz, params, y, a, b)
   TREAL, DIMENSION(*)        :: params
   TREAL, DIMENSION(ny)       :: y
   TREAL, DIMENSION(nx,ny,nz) :: a, b
-  
+
 ! -----------------------------------------------------------------------
   TINTEGER j
   TREAL shape, xi
@@ -895,6 +887,6 @@ SUBROUTINE TRANS_BLEND(nx,ny,nz, params, y, a, b)
      b(:,j,:) = b(:,j,:) + shape* a(:,j,:)
   ENDDO
 
-RETURN 
+RETURN
 
 END SUBROUTINE TRANS_BLEND

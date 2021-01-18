@@ -211,7 +211,7 @@ PROGRAM INIFLOW
      txc(:,1:3) = C_0_R
 
      IF      ( flag_u .EQ. 1 ) THEN
-        CALL VELOCITY_DISCRETE(txc(1,1),txc(1,2),txc(1,3), wrk1d)
+        CALL VELOCITY_DISCRETE(txc(1,1),txc(1,2),txc(1,3), wrk1d, wrk2d)
 
      ELSE IF ( flag_u .GT. 1 ) THEN
         CALL VELOCITY_BROADBAND(flag_u, txc(1,1),txc(1,2),txc(1,3), &

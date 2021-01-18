@@ -11,13 +11,13 @@
 !########################################################################
 MODULE BOUNDARY_INFLOW
 
-  USE DNS_TYPES,     ONLY : filter_dt, grid_dt
+  USE DNS_TYPES,     ONLY : filter_dt, grid_dt, discrete_dt, MAX_MODES
   USE DNS_CONSTANTS, ONLY : efile, lfile
-#ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
-#endif 
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS, ONLY : tfile
+#endif
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow, inb_scal, inb_scal_array, icalc_flow,icalc_scal
-  USE DNS_GLOBAL,    ONLY : imode_eqns, imode_flow, itransport
+  USE DNS_GLOBAL,    ONLY : imode_eqns, itransport
   USE DNS_GLOBAL,    ONLY : g, qbg, epbackground, pbackground
   USE DNS_GLOBAL,    ONLY : rtime,itime
   USE DNS_GLOBAL,    ONLY : visc,damkohler
@@ -29,24 +29,17 @@ MODULE BOUNDARY_INFLOW
 
   IMPLICIT NONE
   SAVE
-  
-  TINTEGER, PARAMETER :: MAX_FRC_FREC   = 32
 
   TYPE(grid_dt), DIMENSION(3) :: g_inf
 
-  TINTEGER :: ifrc_mode, ifrc_ifield
-  TREAL    :: frc_length, frc_adapt
+  TINTEGER :: inflow_mode, inflow_ifield
+  TREAL    :: inflow_adapt
 
   TYPE(filter_dt), DIMENSION(3) :: FilterInflow
   TINTEGER :: FilterInflowStep
 
-! Discrete forcing
-  TINTEGER :: ifrcdsc_mode
-  TREAL    :: frc_delta
-  
-  TINTEGER :: nx2d, nx3d, nz3d
-  TREAL    :: A2D(MAX_FRC_FREC), Phix2d(MAX_FRC_FREC)
-  TREAL    :: A3D(MAX_FRC_FREC), Phix3d(MAX_FRC_FREC), Phiz3d(MAX_FRC_FREC)
+  TYPE(discrete_dt) :: fp ! Discrete forcing
+
 
 CONTAINS
 !########################################################################
@@ -55,9 +48,9 @@ CONTAINS
 SUBROUTINE BOUNDARY_INFLOW_INITIALIZE(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
 
   IMPLICIT NONE
-  
+
 #include "integers.h"
-  
+
   TREAL etime
   TREAL, DIMENSION(g_inf(1)%size*&
                    g_inf(2)%size*&
@@ -96,7 +89,7 @@ SUBROUTINE BOUNDARY_INFLOW_INITIALIZE(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
 ! I/O routines not yet developed for this particular case
   IF ( ims_npro_i .GT. 1 ) THEN
      CALL IO_WRITE_ASCII(efile,'BOUNDARY_INIT. I/O routines undeveloped.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)     
+     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 #endif
 
@@ -125,9 +118,9 @@ SUBROUTINE BOUNDARY_INFLOW_INITIALIZE(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
   ENDIF
 
 ! ###################################################################
-  IF ( ifrc_mode .EQ. 2 .OR. ifrc_mode .EQ. 3 .OR. ifrc_mode .EQ. 4 ) THEN
+  IF ( inflow_mode .EQ. 2 .OR. inflow_mode .EQ. 3 .OR. inflow_mode .EQ. 4 ) THEN
 
-! Checking the matching; we could move this outside... 
+! Checking the matching; we could move this outside...
      tolerance = C_1EM10_R
      joffset = ( jmax - g_inf(2)%size )/2
      DO j = 1,g_inf(2)%size
@@ -142,9 +135,9 @@ SUBROUTINE BOUNDARY_INFLOW_INITIALIZE(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
 ! Reading fields
      fname = 'flow.inf'
      sname = 'scal.inf'
-     ifrc_ifield = INT( qbg(1)%mean *etime /g_inf(1)%scale ) + 1
-     IF ( ifrc_mode .EQ. 3 ) THEN
-        WRITE(str,*) ifrc_ifield
+     inflow_ifield = INT( qbg(1)%mean *etime /g_inf(1)%scale ) + 1
+     IF ( inflow_mode .EQ. 3 ) THEN
+        WRITE(str,*) inflow_ifield
         fname = TRIM(ADJUSTL(fname))//TRIM(ADJUSTL(str))
         sname = TRIM(ADJUSTL(sname))//TRIM(ADJUSTL(str))
         line='Reading InflowFile '//TRIM(ADJUSTL(str))
@@ -160,7 +153,7 @@ SUBROUTINE BOUNDARY_INFLOW_INITIALIZE(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
      itime = itimetmp
      visc  = visctmp
 
-! array p contains the internal energy. Now we put in the pressure 
+! array p contains the internal energy. Now we put in the pressure
      CALL THERMO_CALORIC_TEMPERATURE&
           (g_inf(1)%size, g_inf(2)%size, kmax, s_inf, p_inf, rho_inf, txc, wrk3d)
      CALL THERMO_THERMAL_PRESSURE&
@@ -168,19 +161,19 @@ SUBROUTINE BOUNDARY_INFLOW_INITIALIZE(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
 
 ! ###################################################################
 ! Performing the derivatives
-! 
+!
 ! Note that a field f_0(x) is convected with a velocity U along OX, i.e.
 ! f(x,t) = f_0(x-Ut), and therefore \partial f/\partial t = -U df_0/dx.
 ! ###################################################################
      bcs = 0
-     
+
      IF ( icalc_flow .EQ. 1 ) THEN
         DO is = 1, inb_flow
            CALL OPR_PARTIAL_X(OPR_P1, g_inf(1)%size,g_inf(2)%size,kmax, bcs, g_inf(1), q_inf(1,is), txc, wrk3d, wrk2d, wrk3d)
            q_inf(:,is) = -txc(:) *qbg(1)%mean
         ENDDO
      ENDIF
-     
+
      IF ( icalc_scal .EQ. 1 ) THEN
         DO is = 1,inb_scal
            CALL OPR_PARTIAL_X(OPR_P1, g_inf(1)%size,g_inf(2)%size,kmax, bcs, g_inf(1), s_inf(1,is), txc, wrk3d, wrk2d, wrk3d)
@@ -201,9 +194,9 @@ END SUBROUTINE BOUNDARY_INFLOW_INITIALIZE
 !########################################################################
 ! Broadband
 SUBROUTINE BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, q_inf,s_inf, txc, wrk2d,wrk3d)
-  
+
   IMPLICIT NONE
-  
+
   TREAL etime
   TREAL, DIMENSION(jmax,kmax,inb_flow+inb_scal), INTENT(OUT)   :: inf_rhs
   TREAL, DIMENSION(g_inf(1)%size,&
@@ -230,14 +223,14 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, q_inf,s_inf, txc, wrk2d,wrk
 #endif
 
 ! Transient factor
-  IF ( frc_adapt .GT. C_0_R .AND. etime .LE. frc_adapt ) THEN
-     vmult = etime / frc_adapt
+  IF ( inflow_adapt .GT. C_0_R .AND. etime .LE. inflow_adapt ) THEN
+     vmult = etime / inflow_adapt
   ELSE
      vmult = C_1_R
   ENDIF
 
 ! check if we need to read again inflow data
-  IF ( ifrc_mode .EQ. 3 .AND. INT(qbg(1)%mean*etime/g_inf(1)%scale)+1 .NE. ifrc_ifield ) THEN
+  IF ( inflow_mode .EQ. 3 .AND. INT(qbg(1)%mean*etime/g_inf(1)%scale)+1 .NE. inflow_ifield ) THEN
      CALL BOUNDARY_INFLOW_INITIALIZE(etime, q_inf,s_inf, txc, wrk2d,wrk3d)
   ENDIF
 
@@ -274,7 +267,7 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, q_inf,s_inf, txc, wrk2d,wrk
 ! -------------------------------------------------------------------
 ! Periodic
 ! -------------------------------------------------------------------
-  IF ( ifrc_mode .EQ. 2 ) THEN
+  IF ( inflow_mode .EQ. 2 ) THEN
      DO k = 1,kmax
         DO j = 1,g_inf(2)%size
            jglobal = joffset + j
@@ -288,10 +281,10 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, q_inf,s_inf, txc, wrk2d,wrk
                  inf_rhs(jglobal,k,ip) = inf_rhs(jglobal,k,ip) + vmult *BSPLINES3P(s_inf(1,j,k,is), g_inf(1)%size, ileft, xaux)
               ENDDO
            ENDIF
-           
+
         ENDDO
      ENDDO
-    
+
 ! -------------------------------------------------------------------
 ! Sequential
 ! -------------------------------------------------------------------
@@ -302,7 +295,7 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, q_inf,s_inf, txc, wrk2d,wrk
            DO is = 1,inb_flow
               inf_rhs(jglobal,k,is) = inf_rhs(jglobal,k,is) + vmult *BSPLINES3(q_inf(1,j,k,is), g_inf(1)%size, ileft, xaux)
            ENDDO
-           
+
            IF ( icalc_scal .EQ. 1 ) THEN
               DO is = 1,inb_scal
                  ip = inb_flow +is
@@ -312,7 +305,7 @@ SUBROUTINE BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, q_inf,s_inf, txc, wrk2d,wrk
 
         ENDDO
      ENDDO
-           
+
   ENDIF
 
 ! ###################################################################
@@ -335,180 +328,117 @@ END SUBROUTINE BOUNDARY_INFLOW_BROADBAND
 !########################################################################
 ! Discrete
 
-SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
-  
+SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk1d, wrk2d)
+
   IMPLICIT NONE
 
   TREAL etime
   TREAL inf_rhs(jmax,kmax,*)
+  TREAL, DIMENSION(jmax,2), INTENT(INOUT) :: wrk1d
+  TREAL, DIMENSION(kmax,3), INTENT(INOUT) :: wrk2d
 
 ! -------------------------------------------------------------------
-  TINTEGER j, k, jsim, idsp
-  TREAL ycenter, fy, fyp, wx, wz, wxloc, wzloc, xaux
-  TREAL u2d, v2d, u3d, v3d, w3d, vmult
-  TINTEGER inx2d, inx3d, inz3d
+  TINTEGER j, k, im, kdsp
+  TREAL wx, wz, wx_1, wz_1, xaux, vmult, factorx, factorz, dummy
+
+  TREAL FLOW_SHEAR_TEMPORAL, ycenter, yr
+  EXTERNAL FLOW_SHEAR_TEMPORAL
+
+  TREAL, DIMENSION(:), POINTER :: y,z
 
 ! ###################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_DISCRETE' )
 #endif
 
+  ! Define pointers
+  y => g(2)%nodes
+  z => g(3)%nodes
+
 #ifdef USE_MPI
-  idsp = ims_offset_k 
-#else 
-  idsp = 0
+  kdsp = ims_offset_k
+#else
+  kdsp = 0
 #endif
 
-  wx = C_2_R * C_PI_R / frc_length
-  wz = C_2_R * C_PI_R / g(3)%scale
   xaux =-qbg(1)%mean *etime
 
+  ! ###################################################################
+  ! Shape function
+  ! ###################################################################
+  SELECT CASE ( fp%type )
+  CASE ( PROFILE_GAUSSIAN )
+    ycenter = y(1) +g(2)%scale *qbg(1)%ymean
+      DO j = 1,jmax
+        yr = y(j)-ycenter
+        wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, C_0_R, y(j) )
+        wrk1d(j,2) = yr /( fp%parameters(1) **2 ) *wrk1d(j,1) ! Derivative of f
+      ENDDO
+
+  CASE (PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM)
+    ycenter = y(1) +g(2)%scale *qbg(1)%ymean -C_05_R *qbg(1)%diam
+    DO j = 1,jmax
+      yr = y(j) - ycenter
+      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, C_0_R, y(j) )
+      wrk1d(j,2) =-yr /( fp%parameters(1) **2 ) *wrk1d(j,1)
+    ENDDO
+
+    ycenter = y(1) +g(2)%scale *qbg(1)%ymean +C_05_R *qbg(1)%diam
+    IF     ( fp%type .EQ. PROFILE_GAUSSIAN_ANTISYM ) THEN; factorx =-C_1_R ! varicose
+    ELSEIF ( fp%type .EQ. PROFILE_GAUSSIAN_SYM     ) THEN; factorx = C_1_R ! Sinuous
+    ENDIF
+    DO j = 1,jmax
+      yr = y(j) - ycenter
+      dummy = factorx *FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, C_0_R, y(j) )
+      wrk1d(j,1) = wrk1d(j,1) +dummy
+      wrk1d(j,2) = wrk1d(j,2) +yr /( fp%parameters(1) **2 ) *dummy
+    ENDDO
+
+  END SELECT
+
+  ! ###################################################################
+  ! Fourier series
+  ! ###################################################################
+  wx_1 = C_2_R * C_PI_R / fp%parameters(2) ! Fundamental wavelengths
+  wz_1 = C_2_R * C_PI_R / g(3)%scale
+
+  wrk2d = C_0_R
+  DO im = 1,fp%size
+    wx = M_REAL( fp%modex(im) ) *wx_1
+    wz = M_REAL( fp%modez(im) ) *wz_1
+
+    ! Factor to impose solenoidal constraint
+    IF     ( fp%modex(im) .EQ. 0 .AND. fp%modez(im) .EQ. 0 ) THEN; EXIT
+    ELSEIF (                           fp%modez(im) .EQ. 0 ) THEN; factorx= C_1_R /wx; factorz= C_0_R
+    ELSEIF ( fp%modex(im) .EQ. 0                           ) THEN; factorx= C_0_R;     factorz= C_1_R /wz
+    ELSE;                                                          factorx= C_05_R/wx; factorz= C_05_R/wz
+    ENDIF
+
+    DO k = 1,kmax
+      wrk2d(k,2) = wrk2d(k,2) + fp%amplitude(im) *COS( wx *xaux +fp%phasex(im) ) *COS( wz *z(kdsp+k) +fp%phasez(im) )
+      wrk2d(k,1) = wrk2d(k,1) + fp%amplitude(im) *SIN( wx *xaux +fp%phasex(im) ) *COS( wz *z(kdsp+k) +fp%phasez(im) ) *factorx
+      wrk2d(k,3) = wrk2d(k,3) + fp%amplitude(im) *COS( wx *xaux +fp%phasex(im) ) *SIN( wz *z(kdsp+k) +fp%phasez(im) ) *factorz
+    ENDDO
+
+  ENDDO
+
+  ! ###################################################################
+  ! Forcing
+  ! ###################################################################
 ! Transient factor
-  IF ( frc_adapt .GT. C_0_R .AND. etime .LE. frc_adapt ) THEN
-     vmult = etime / frc_adapt
+  IF ( inflow_adapt .GT. C_0_R .AND. etime .LE. inflow_adapt ) THEN
+     vmult = etime / inflow_adapt
   ELSE
      vmult = C_1_R
   ENDIF
 
-! ###################################################################
-! Forcing for shear 
-! ###################################################################
-  IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-
-     DO j = 1, jmax
-
-        ycenter = g(2)%nodes(j) - g(2)%scale *qbg(1)%ymean - g(2)%nodes(1)
-        fy  = EXP(-(ycenter/(C_2_R*frc_delta))**2)*frc_delta
-        fyp =-ycenter*fy/(C_2_R * frc_delta**2)
-
-        ! 2D perturbation
-
-        DO inx2d = 1,nx2d
-
-           wxloc = M_REAL(inx2d)*wx
-
-           DO k = 1,kmax
-              u2d = A2d(inx2d) * wxloc*        COS(wxloc*xaux+Phix2d(inx2d)) * fyp 
-              v2d = A2d(inx2d) * wxloc*wxloc * SIN(wxloc*xaux+Phix2d(inx2d)) * fy
-              inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult *qbg(1)%mean *u2d
-              inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult *qbg(1)%mean *v2d
-           ENDDO
-
-        ENDDO
-
-        ! 3D perturbation
-
-        IF (kmax .GT. 1) THEN
-
-           DO inx3d = 1, nx3d
-              DO inz3d = 1, nz3d
-
-                 wxloc = M_REAL(inx3d)*wx
-                 wzloc = M_REAL(inz3d)*wz
-
-                 DO k=1, kmax
-                    u3d = A3d(inx3d)*wxloc*SIN(wxloc*xaux+Phix3d(inx3d)) * &
-                         SIN(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fyp
-                    v3d = A3d(inx3d)*wxloc*COS(wxloc*xaux+Phix3d(inx3d)) * &
-                         SIN(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fy * &
-                         (wxloc+wzloc)
-                    w3d =-A3d(inx3d)*wxloc*SIN(wxloc*xaux+Phix3d(inx3d)) * &
-                         COS(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fyp
-                    inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult*qbg(1)%mean*u3d
-                    inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult*qbg(1)%mean*v3d
-                    inf_rhs(j,k,4) = inf_rhs(j,k,4) - vmult*qbg(1)%mean*w3d
-                 ENDDO
-
-              ENDDO
-           ENDDO
-
-        ENDIF
-
-     ENDDO
-
-! ###################################################################
-! Forcing for jet
-! ###################################################################
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
-
-     DO j = 1,jmax/2
-
-        jsim = jmax - j + 1
-
-        ycenter = g(2)%nodes(j) - g(2)%scale *qbg(1)%ymean + qbg(1)%diam/C_2_R - g(2)%nodes(1)
-        fy  = EXP(-(ycenter/(C_2_R*frc_delta))**2)*frc_delta
-        fyp =-ycenter*fy/(C_2_R * frc_delta**2)
-
-        ! 2D perturbation
-
-        DO inx2d = 1,nx2d
-
-           wxloc = M_REAL(inx2d)*wx
-
-           DO k = 1,kmax
-              u2d = A2d(inx2d) * wxloc *       COS(wxloc*xaux+Phix2d(inx2d)) *fyp 
-              v2d = A2d(inx2d) * wxloc*wxloc * SIN(wxloc*xaux+Phix2d(inx2d)) *fy
-              inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult*qbg(1)%mean*u2d
-              inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult*qbg(1)%mean*v2d
-              !          varicose
-              IF (ifrcdsc_mode .EQ. 1) THEN
-                 inf_rhs(jsim,k,2) = inf_rhs(jsim,k,2) - vmult*qbg(1)%mean*u2d
-                 inf_rhs(jsim,k,3) = inf_rhs(jsim,k,3) + vmult*qbg(1)%mean*v2d
-                 !          sinuous
-              ELSE
-                 inf_rhs(jsim,k,2) = inf_rhs(jsim,k,2) + vmult*qbg(1)%mean*u2d
-                 inf_rhs(jsim,k,3) = inf_rhs(jsim,k,3) - vmult*qbg(1)%mean*v2d
-              ENDIF
-
-           ENDDO
-
-        ENDDO
-
-        ! 3D perturbation
-
-        IF (kmax .GT. 1) THEN
-
-           DO inx3d = 1, nx3d
-              DO inz3d = 1, nz3d
-
-                 wxloc = M_REAL(inx3d)*wx
-                 wzloc = M_REAL(inz3d)*wz
-
-                 DO k=1, kmax
-                    u3d = A3d(inx3d)*wxloc*SIN(wxloc*xaux+Phix3d(inx3d)) * &
-                         SIN(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fyp
-                    v3d = A3d(inx3d)*wxloc*COS(wxloc*xaux+Phix3d(inx3d)) * &
-                         SIN(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fy * &
-                         (wxloc+wzloc)
-                    w3d =-A3d(inx3d)*wxloc*SIN(wxloc*xaux+Phix3d(inx3d)) * &
-                         COS(wzloc*g(3)%nodes(k)+Phiz3d(inz3d)) * fyp
-                    inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult*qbg(1)%mean*u3d
-                    inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult*qbg(1)%mean*v3d
-                    inf_rhs(j,k,4) = inf_rhs(j,k,4) - vmult*qbg(1)%mean*w3d
-                    !             varicose
-                    IF (ifrcdsc_mode .EQ. 1) THEN
-                       inf_rhs(jsim,k,2) = inf_rhs(jsim,k,2) - vmult*qbg(1)%mean*u3d
-                       inf_rhs(jsim,k,3) = inf_rhs(jsim,k,3) + vmult*qbg(1)%mean*v3d
-                       inf_rhs(jsim,k,4) = inf_rhs(jsim,k,4) - vmult*qbg(1)%mean*w3d
-                       !             sinuous
-                    ELSE
-                       inf_rhs(jsim,k,2) = inf_rhs(jsim,k,2) + vmult*qbg(1)%mean*u3d
-                       inf_rhs(jsim,k,3) = inf_rhs(jsim,k,3) - vmult*qbg(1)%mean*v3d
-                       inf_rhs(jsim,k,4) = inf_rhs(jsim,k,4) + vmult*qbg(1)%mean*w3d
-                    ENDIF
-
-                 ENDDO
-
-              ENDDO
-           ENDDO
-
-        ENDIF
-
-     ENDDO
-
-  ELSE 
-
-  ENDIF
+  DO k = 1,kmax
+    DO j = 1,jmax
+      inf_rhs(j,k,2) = inf_rhs(j,k,2) - vmult *qbg(1)%mean *wrk2d(k,1) *wrk1d(j,2) ! u
+      inf_rhs(j,k,3) = inf_rhs(j,k,3) - vmult *qbg(1)%mean *wrk2d(k,2) *wrk1d(j,1) ! v
+      inf_rhs(j,k,4) = inf_rhs(j,k,4) - vmult *qbg(1)%mean *wrk2d(k,3) *wrk1d(j,2) ! w
+    ENDDO
+  ENDDO
 
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_DISCRETE' )
@@ -522,18 +452,18 @@ END SUBROUTINE BOUNDARY_INFLOW_DISCRETE
 ! Filter
 
 SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q,s, txc, wrk1d,wrk2d,wrk3d)
-  
+
   IMPLICIT NONE
-  
+
 #include "integers.h"
-  
+
   TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(INOUT) :: q,s
   TREAL, DIMENSION(jmax,kmax,*),      INTENT(IN)    :: bcs_vi, bcs_vi_scal
   TREAL, DIMENSION(imax*jmax*kmax,2), INTENT(INOUT) :: txc
   TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk1d,wrk2d,wrk3d
 
   TARGET q
-  
+
 ! -----------------------------------------------------------------------
   TINTEGER i,j,k,ip, iq, iq_loc(inb_flow), is
   TINTEGER j1, imx, jmx, ifltmx, jfltmx
@@ -553,7 +483,7 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q,s, txc, wrk1d,wrk2d,wrk
      rho => q(:,:,:,5)
      p   => q(:,:,:,6)
      T   => q(:,:,:,7)
-     
+
      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) vis => q(:,:,:,8)
 
   ENDIF
@@ -573,10 +503,10 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q,s, txc, wrk1d,wrk2d,wrk
   ELSE
      iq_loc = (/ 1,2,3 /)
   ENDIF
-  
+
 ! #######################################################################
   DO iq = 1,inb_flow
-     
+
 ! -----------------------------------------------------------------------
 ! Remove mean field
 ! -----------------------------------------------------------------------
@@ -589,10 +519,10 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q,s, txc, wrk1d,wrk2d,wrk
            ENDDO
         ENDDO
      ENDDO
-     
+
 ! -----------------------------------------------------------------------
      CALL OPR_FILTER(ifltmx,jfltmx,kmax, FilterInflow, wrk3d, wrk1d,wrk2d,txc)
-     
+
 ! -----------------------------------------------------------------------
 ! Add mean field
 ! -----------------------------------------------------------------------
@@ -605,12 +535,12 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q,s, txc, wrk1d,wrk2d,wrk
            ENDDO
         ENDDO
      ENDDO
-     
+
   ENDDO
 
 ! #######################################################################
   DO is = 1,inb_scal
-     
+
 ! -----------------------------------------------------------------------
 ! Remove mean field
 ! -----------------------------------------------------------------------
@@ -623,10 +553,10 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q,s, txc, wrk1d,wrk2d,wrk
            ENDDO
         ENDDO
      ENDDO
-     
+
 ! -----------------------------------------------------------------------
      CALL OPR_FILTER(ifltmx,jfltmx,kmax, FilterInflow, wrk3d, wrk1d,wrk2d,txc)
-     
+
 ! -----------------------------------------------------------------------
 ! Add mean field
 ! -----------------------------------------------------------------------
@@ -639,7 +569,7 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q,s, txc, wrk1d,wrk2d,wrk
            ENDDO
         ENDDO
      ENDDO
-     
+
   ENDDO
 
 ! #######################################################################
@@ -647,10 +577,10 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q,s, txc, wrk1d,wrk2d,wrk
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN
         CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,1,1,2), s(1,1,1,1), epbackground,pbackground)
-        
-     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN 
+
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
         CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,1,1,inb_scal_array))
-        
+
      ENDIF
 
   ELSE
@@ -668,7 +598,7 @@ SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q,s, txc, wrk1d,wrk2d,wrk
         CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
         CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
      ENDIF
-     
+
      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, vis)
 
   ENDIF

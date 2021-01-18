@@ -4,7 +4,7 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Given a random velocity field, impose a shape function in the 
+!# Given a random velocity field, impose a shape function in the
 !# corresponding vorticity or velocity field and remove solenoidal part.
 !#
 !########################################################################
@@ -12,9 +12,9 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_wrk1d, isize_field
-  USE DNS_GLOBAL, ONLY : imode_flow, visc, area
+  USE DNS_GLOBAL, ONLY : imode_sim, visc, area
   USE DNS_GLOBAL, ONLY : qbg
-  USE FLOW_LOCAL, ONLY : flag_wall, flag_dilatation, thick_ini,  ycoor_ini
+  USE FLOW_LOCAL, ONLY : flag_wall, flag_dilatation, Kini
 
   IMPLICIT NONE
 
@@ -44,7 +44,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
   wz => tmp3
 
   bcs = 0
-  
+
 ! ###################################################################
 ! Read initial random field
 ! ###################################################################
@@ -61,7 +61,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
   CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, w)
 
 ! change sign in the lateral velocity in the upper layer
-  IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
+  IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
      DO j = 1,jmax
         ycenter = g(2)%nodes(j) - g(2)%scale*C_05_R - g(2)%nodes(1)
         amplify = TANH(-C_05_R*ycenter/qbg(1)%thick)
@@ -72,12 +72,12 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 ! ###################################################################
 ! Crop field to specific geometry.
 !
-! If vorticity, this operation implies that div(w) is not zero and 
-! that is the reason for the step at the end removing the dilatation. 
-! Strictly, the field w after this step is not a vorticity because it 
+! If vorticity, this operation implies that div(w) is not zero and
+! that is the reason for the step at the end removing the dilatation.
+! Strictly, the field w after this step is not a vorticity because it
 ! is not solenoidal.
 !
-! Note also that shear and jet cases are easy enough (only f(y)) and the 
+! Note also that shear and jet cases are easy enough (only f(y)) and the
 ! zero dilatation condition could be easily imposed
 !
 ! ###################################################################
@@ -87,7 +87,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
   IF      ( iflag .EQ. 2 ) THEN ! velocity given
      wx = u; wy = v; wz = w
      IF ( g(3)%size .EQ. 1 ) wz = 0
-     
+
   ELSE IF ( iflag .EQ. 3 ) THEN ! vorticity given
      CALL FI_CURL(imax,jmax,kmax, u,v,w, wx,wy,wz, tmp4, wrk2d,wrk3d)
      IF ( g(3)%size .EQ. 1 ) THEN; wx = C_0_R; wy = C_0_R; ENDIF ! exactly zero
@@ -97,47 +97,45 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 
   ENDIF
 
-! -------------------------------------------------------------------
-! Shear layer
-! -------------------------------------------------------------------
-  IF      ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-     DO j = 1,jmax
-        ycenter = g(2)%nodes(j) - g(2)%scale*ycoor_ini - g(2)%nodes(1)
-        IF ( thick_ini .eq. C_0_R ) THEN; amplify = C_0_R
-        ELSE;                             amplify = EXP(-(C_05_R*ycenter/thick_ini)**2); ENDIF
+  ! -------------------------------------------------------------------
+  ! Shear layer
+  ! -------------------------------------------------------------------
+  SELECT CASE ( Kini%type )
+  CASE ( PROFILE_GAUSSIAN )
+    DO j = 1,jmax
+      ycenter = g(2)%nodes(j) - g(2)%scale*Kini%ymean - g(2)%nodes(1)
+      IF ( Kini%thick .eq. C_0_R ) THEN; amplify = C_0_R
+      ELSE;                             amplify = EXP(-(C_05_R*ycenter/Kini%thick)**2); ENDIF
 
-        ymin = (g(2)%nodes(j)-g(2)%nodes(1)   )/thick_ini
-        ymax = (g(2)%nodes(j)-g(2)%nodes(jmax))/thick_ini
-        IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) amplify = amplify *TANH( C_05_R*ymin) !**2
-        IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) amplify = amplify *TANH(-C_05_R*ymax) !**2
-        v(:,j,:) = wy(:,j,:)*amplify
-        IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) amplify = amplify *TANH( C_05_R*ymin) !**2
-        IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) amplify = amplify *TANH(-C_05_R*ymax) !**2
-        u(:,j,:) = wx(:,j,:)*amplify
-        w(:,j,:) = wz(:,j,:)*amplify
+      ymin = (g(2)%nodes(j)-g(2)%nodes(1)   )/Kini%thick
+      ymax = (g(2)%nodes(j)-g(2)%nodes(jmax))/Kini%thick
+      IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) amplify = amplify *TANH( C_05_R*ymin) !**2
+      IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) amplify = amplify *TANH(-C_05_R*ymax) !**2
+      v(:,j,:) = wy(:,j,:)*amplify
+      IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) amplify = amplify *TANH( C_05_R*ymin) !**2
+      IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) amplify = amplify *TANH(-C_05_R*ymax) !**2
+      u(:,j,:) = wx(:,j,:)*amplify
+      w(:,j,:) = wz(:,j,:)*amplify
 
-     ENDDO
+    ENDDO
 
-! -------------------------------------------------------------------
-! Jet
-! -------------------------------------------------------------------
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_JET   ) THEN
-     DO j = 1, jmax           
-        ycenter =   g(2)%nodes(j) - g(2)%scale*ycoor_ini - qbg(1)%diam*C_05_R - g(2)%nodes(1)
-        IF ( thick_ini .eq. C_0_R ) THEN; amplify = C_0_R
-        ELSE;                             amplify = EXP(-(C_05_R*ycenter/thick_ini)**2); ENDIF
+  CASE ( PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM )
+    DO j = 1, jmax
+      ycenter =   g(2)%nodes(j) - g(2)%scale*Kini%ymean - qbg(1)%diam*C_05_R - g(2)%nodes(1)
+      IF ( Kini%thick .eq. C_0_R ) THEN; amplify = C_0_R
+      ELSE;                             amplify = EXP(-(C_05_R*ycenter/Kini%thick)**2); ENDIF
 
-        ycenter =-( g(2)%nodes(j) - g(2)%scale*ycoor_ini + qbg(1)%diam*C_05_R - g(2)%nodes(1) )
-        IF ( thick_ini .eq. C_0_R ) THEN; amplify = C_0_R
-        ELSE;                             amplify = amplify + EXP(-(C_05_R*ycenter/thick_ini)**2); ENDIF
+      ycenter =-( g(2)%nodes(j) - g(2)%scale*Kini%ymean + qbg(1)%diam*C_05_R - g(2)%nodes(1) )
+      IF ( Kini%thick .eq. C_0_R ) THEN; amplify = C_0_R
+      ELSE;                             amplify = amplify + EXP(-(C_05_R*ycenter/Kini%thick)**2); ENDIF
 
-        u(:,j,:) = wx(:,j,:)*amplify
-        v(:,j,:) = wy(:,j,:)*amplify
-        w(:,j,:) = wz(:,j,:)*amplify
+      u(:,j,:) = wx(:,j,:)*amplify
+      v(:,j,:) = wy(:,j,:)*amplify
+      w(:,j,:) = wz(:,j,:)*amplify
 
-     ENDDO
+    ENDDO
 
-  ENDIF
+  END SELECT
 
 ! ###################################################################
 ! If vorticity case, solve lap(u) = - rot vort.
@@ -156,19 +154,19 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
      ELSE;                         ibc = 0; ENDIF ! NoSlip
 
 ! v, w are aux arrays
-     IF ( g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz 
+     IF ( g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz
         wrk2d(:,:,1:2) = C_0_R  ! bcs
         u = -wx                 ! change of forcing term sign
         CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, ibc,&
              u,wrk3d, tmp4,tmp5, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
-        
+
      ELSE                                      ! General treatment
 #ifdef USE_CGLOC
 ! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
         CALL CGPOISSON(i1, imax,jmax,kmax,g(3)%size, u, wx,v,w, ipos,jpos,kpos,ci,cj,ck, wrk2d)
 #endif
      ENDIF
-        
+
 ! -------------------------------------------------------------------
 ! Solve lap(v) = - (rot vort)_y
 ! -------------------------------------------------------------------
@@ -180,7 +178,7 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
         v = -wy                 ! change sign of forcing term
         CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, ibc,&
              v,wrk3d, tmp4,tmp5, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
-        
+
      ELSE                                      ! General treatment
 #ifdef USE_CGLOC
         CALL CGPOISSON(i1, imax,jmax,kmax,g(3)%size, v, wy,w,wx, ipos,jpos,kpos,ci,cj,ck, wrk2d)
@@ -200,16 +198,16 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
            w = -wz                 ! change sign of forcing term
            CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, ibc,&
                 w,wrk3d, tmp4,tmp5, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
-        
+
         ELSE                                      ! General treatment
 #ifdef USE_CGLOC
            CALL CGPOISSON(i1, imax,jmax,kmax,g(3)%size, w, wz,wx,wy, ipos,jpos,kpos,ci,cj,ck, wrk2d)
 #endif
         ENDIF
-        
+
      ELSE
         w = C_0_R
-        
+
      ENDIF
 
   ENDIF
@@ -242,8 +240,8 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 
 ! ###################################################################
 ! Remove Dilatational part
-! 
-! As explained before, due to the fact that w was really not a 
+!
+! As explained before, due to the fact that w was really not a
 ! vorticity field because it was not solenoidal.
 ! ###################################################################
   IF ( flag_dilatation .EQ. 1 ) THEN
@@ -252,4 +250,3 @@ SUBROUTINE VELOCITY_BROADBAND(iflag, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2
 
   RETURN
 END SUBROUTINE VELOCITY_BROADBAND
-
