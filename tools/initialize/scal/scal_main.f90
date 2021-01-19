@@ -18,7 +18,7 @@ PROGRAM INISCAL
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q,s, txc
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
 
-  TINTEGER iread_flow, iread_scal, isize_wrk3d, is, ierr, inb_scal_loc
+  TINTEGER isize_wrk3d, ierr, is, inb_scal_loc
 
   CHARACTER*64 str, line
   CHARACTER*32 inifile
@@ -39,13 +39,11 @@ PROGRAM INISCAL
 #endif
 
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN; ALLOCATE(wrk2d(isize_wrk2d*5))
-  ELSE;                                        ALLOCATE(wrk2d(isize_wrk2d  ));  ENDIF
+  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
   isize_wrk3d = isize_field
-  isize_wrk3d = MAX(isize_wrk1d*300, isize_wrk3d)
 
-  IF ( flag_s .EQ. 1 .OR. flag_s .EQ. 3 .OR. radiation%type .NE. EQNS_NONE ) THEN
-    inb_txc = 1
+  IF ( flag_s .EQ. 1 .OR. flag_s .EQ. 3 .OR. radiation%type .NE. EQNS_NONE ) THEN; inb_txc = 1
+  ELSE;                                                                            inb_txc = 0
   ENDIF
 
 #include "dns_alloc_arrays.h"
@@ -64,8 +62,6 @@ PROGRAM INISCAL
 #endif
 
   itime = 0; rtime = C_0_R
-  iread_flow = 0
-  iread_scal = 1
   s = C_0_R
 
 #ifdef CHEMISTRY
@@ -84,10 +80,10 @@ PROGRAM INISCAL
 
     SELECT CASE( flag_s )
     CASE( 1,2,3 )
-      CALL SCAL_PERTURBATION_VOLUME( is, s(1,is), txc, wrk1d, wrk2d, wrk3d )
+      CALL SCAL_FLUCTUATION_VOLUME( is, s(1,is), txc, wrk1d, wrk2d, wrk3d )
 
     CASE( 4,5,6,7,8,9 )
-      CALL SCAL_PERTURBATION_PLANE(is, s(1,is), wrk2d)
+      CALL SCAL_FLUCTUATION_PLANE(is, s(1,is), wrk2d)
 
     END SELECT
 

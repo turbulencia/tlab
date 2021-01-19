@@ -13,8 +13,6 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
 
   TINTEGER :: bcs_flow_jmin, bcs_flow_jmax ! Boundary conditions
 
-#include "integers.h"
-
   CHARACTER*(*) inifile
 
   ! -------------------------------------------------------------------

@@ -88,7 +88,7 @@ SUBROUTINE SCAL_SHAPE( is, wrk1d )
 END SUBROUTINE SCAL_SHAPE
 
 ! ###################################################################
-SUBROUTINE SCAL_PERTURBATION_VOLUME( is, s, tmp, wrk1d, wrk2d, wrk3d )
+SUBROUTINE SCAL_FLUCTUATION_VOLUME( is, s, tmp, wrk1d, wrk2d, wrk3d )
   IMPLICIT NONE
 
   TINTEGER is
@@ -108,7 +108,7 @@ SUBROUTINE SCAL_PERTURBATION_VOLUME( is, s, tmp, wrk1d, wrk2d, wrk3d )
   idsp = 0; kdsp = 0
 #endif
 
-  xn => g(2)%nodes
+  xn => g(1)%nodes
   zn => g(3)%nodes
 
   CALL SCAL_SHAPE( is, wrk1d )
@@ -153,10 +153,10 @@ SUBROUTINE SCAL_PERTURBATION_VOLUME( is, s, tmp, wrk1d, wrk2d, wrk3d )
   END SELECT
 
   RETURN
-END SUBROUTINE SCAL_PERTURBATION_VOLUME
+END SUBROUTINE SCAL_FLUCTUATION_VOLUME
 
 ! ###################################################################
-SUBROUTINE SCAL_PERTURBATION_PLANE(is, s, disp)
+SUBROUTINE SCAL_FLUCTUATION_PLANE(is, s, disp)
   IMPLICIT NONE
 
   TINTEGER is
@@ -266,6 +266,6 @@ SUBROUTINE SCAL_PERTURBATION_PLANE(is, s, disp)
   END SELECT
 
   RETURN
-END SUBROUTINE SCAL_PERTURBATION_PLANE
+END SUBROUTINE SCAL_FLUCTUATION_PLANE
 
 END MODULE SCAL_LOCAL

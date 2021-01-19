@@ -12,18 +12,11 @@
 !########################################################################
 SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
 
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, area
   USE DNS_GLOBAL,    ONLY : rbg, tbg
   USE THERMO_GLOBAL, ONLY : imixture
   USE FLOW_LOCAL
-#ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
-#endif
 
   IMPLICIT NONE
-
-#include "integers.h"
 
   TINTEGER code
 
@@ -32,18 +25,18 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
   TREAL, DIMENSION(imax,kmax)        :: disp
 
   ! -------------------------------------------------------------------
-  TINTEGER i, j, k, im, idsp,kdsp, idummy, iprof_loc
-  TREAL wx, wz, wx_1, wz_1, dummy, ycenter, mean_loc, delta_loc
-  TREAL AVG_IK, FLOW_SHEAR_TEMPORAL
+  TINTEGER idummy, iprof_loc
+  TREAL dummy, ycenter, mean_loc, delta_loc
+  TREAL AVG1V2D, FLOW_SHEAR_TEMPORAL
   TREAL xcenter, amplify
 
-  TREAL, DIMENSION(:), POINTER :: x,y,z, dx,dz
+  TREAL, DIMENSION(:), POINTER :: x,y,z
 
   ! ###################################################################
   ! Define pointers
-  x => g(1)%nodes; dx => g(1)%jac(:,1)
+  x => g(1)%nodes
   y => g(2)%nodes
-  z => g(3)%nodes; dz => g(3)%jac(:,1)
+  z => g(3)%nodes
 
 #ifdef USE_MPI
   idsp = ims_offset_i; kdsp = ims_offset_k
@@ -63,9 +56,8 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
     idummy = g(2)%size; g(2)%size = 1
     CALL DNS_READ_FIELDS('scal.rand', i1, imax,i1,kmax, i1,i0, isize_field, disp, wrk3d)
     g(2)%size = idummy
-    ! remove mean
-    dummy = AVG_IK(imax, i1, kmax, i1, disp, dx, dz, area)
-    disp = disp -dummy
+    dummy = AVG1V2D(imax,i1,kmax, i1, i1, disp)     ! remove mean
+    disp = disp - dummy
 
   ! -------------------------------------------------------------------
   ! Discrete case
