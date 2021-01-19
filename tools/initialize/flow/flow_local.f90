@@ -43,7 +43,7 @@ SUBROUTINE FLOW_SHAPE( wrk1d )
   TREAL, DIMENSION(jmax,2), INTENT(INOUT) :: wrk1d
 
   ! -------------------------------------------------------------------
-  TREAL FLOW_SHEAR_TEMPORAL, ycenter, yr, dummy, factor, ymin, ymax
+  TREAL FLOW_SHEAR_TEMPORAL, ycenter, yr, dummy, factor
   EXTERNAL FLOW_SHEAR_TEMPORAL
 
   TREAL, DIMENSION(:), POINTER :: yn
@@ -56,47 +56,54 @@ SUBROUTINE FLOW_SHAPE( wrk1d )
     ycenter = yn(1) +g(2)%scale *Kini%ymean
     DO j = 1,jmax
       yr = yn(j)-ycenter
-      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_PARABOLIC, Kini%thick, C_1_R, C_0_R, ycenter, C_0_R, yn(j) )
-      wrk1d(j,2) = yr /( Kini%thick **2 ) *wrk1d(j,1) ! Derivative of f
+      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_PARABOLIC, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
+      wrk1d(j,2) = yr /( Kini%thick **2 ) *wrk1d(j,1) ! Derivative of f, wall-parallel velocity
       wrk1d(j,1) = wrk1d(j,1) **C_2_R
+    ENDDO
+
+  CASE ( PROFILE_GAUSSIAN )
+    ycenter = yn(1) +g(2)%scale *Kini%ymean
+    DO j = 1,jmax
+      yr = yn(j)-ycenter
+      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
+      wrk1d(j,2) = yr /( Kini%thick **2 ) *wrk1d(j,1) ! Derivative of f, wall-parallel velocity
     ENDDO
 
   CASE ( PROFILE_GAUSSIAN_SURFACE )
     ycenter = yn(1) +g(2)%scale *Kini%ymean
     DO j = 1,jmax
-        yr = yn(j)-ycenter
-        wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, C_0_R, yn(j) )
-        wrk1d(j,2) = yr /( Kini%thick **2 ) *wrk1d(j,1) ! Derivative of f
-        IF ( Kini%type .EQ. PROFILE_GAUSSIAN_SURFACE ) THEN
-          wrk1d(j,1) = wrk1d(j,1) *  (yr/Kini%thick)**2
-          wrk1d(j,2) = wrk1d(j,2) *( (yr/Kini%thick)**2 - C_2_R )
-        ENDIF
-      ENDDO
-
-  CASE ( PROFILE_GAUSSIAN ) ! To be checked
-    ycenter = yn(1) +g(2)%scale *Kini%ymean
-    DO j = 1,jmax
       yr = yn(j)-ycenter                  ! wall-normal velocity
-      IF ( Kini%thick .eq. C_0_R ) THEN; wrk1d(j,1) = C_0_R
-      ELSE;                              wrk1d(j,1) = EXP(-(C_05_R*yr/Kini%thick)**2); ENDIF
-      ! wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, C_0_R, yn(j) )
+      ! IF ( Kini%thick .eq. C_0_R ) THEN; wrk1d(j,1) = C_0_R
+      ! ELSE;                              wrk1d(j,1) = EXP(-(C_05_R*yr/Kini%thick)**2); ENDIF
+      ! wrk1d(j,2) = wrk1d(j,1)            ! wall-parallel velocity
+      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
+      wrk1d(j,2) = yr /( Kini%thick **2 ) *wrk1d(j,1) ! Derivative of f, wall-parallel velocity
 
-      ymin = (yn(j)-yn(1)   )/Kini%thick  ! No-slip velocity with solenoidal constraint
-      ymax = (yn(j)-yn(jmax))/Kini%thick
-      IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) wrk1d(j,1) = wrk1d(j,1) *TANH( C_05_R*ymin) ! wall-normal velocity at jmin
-      IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) wrk1d(j,1) = wrk1d(j,1) *TANH(-C_05_R*ymax) ! wall-normal velocity at jmax
+      ! Zero wall-normal derivative of wall-parallel velocity for free-slip and for potentialvelocity mode
+       IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) THEN ! jmin
+        yr = C_05_R *( yn(j)-yn(1)    )/ Kini%thick
+        ! wrk1d(j,1) = wrk1d(j,1) *TANH(yr)
+        ! wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **2
+        wrk1d(j,2) = wrk1d(j,2) *TANH( yr) **3 + &
+                     wrk1d(j,1) +TANH( yr) **2 /COSH( yr ) **2 *C_1_5_R /Kini%thick
+        wrk1d(j,1) = wrk1d(j,1) *TANH( yr) **3
+      ENDIF
 
-      wrk1d(j,2) = wrk1d(j,1)            ! wall-parallel velocity
-      IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) wrk1d(j,2) = wrk1d(j,2) *TANH( C_05_R*ymin) ! wall-parallel velocity at jmin
-      IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) wrk1d(j,2) = wrk1d(j,2) *TANH(-C_05_R*ymax) ! wall-parallel velocity at jmax
-
+      IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) THEN ! jmax
+        yr = C_05_R *( yn(jmax)-yn(j) )/ Kini%thick
+        ! wrk1d(j,1) = wrk1d(j,1) *TANH(yr)
+        ! wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **2
+        wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 - &
+                     wrk1d(j,1) +TANH(yr) **2 /COSH( yr ) **2 *C_1_5_R /Kini%thick
+        wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3
+      ENDIF
     ENDDO
 
   CASE (PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM)
     ycenter = yn(1) +g(2)%scale *Kini%ymean -C_05_R *qbg(1)%diam
     DO j = 1,jmax
       yr = yn(j) - ycenter
-      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, C_0_R, yn(j) )
+      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
       wrk1d(j,2) =-yr /( Kini%thick **2 ) *wrk1d(j,1)
     ENDDO
 
@@ -106,7 +113,7 @@ SUBROUTINE FLOW_SHAPE( wrk1d )
     ENDIF
     DO j = 1,jmax
       yr = yn(j) - ycenter
-      dummy = factor *FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, C_0_R, yn(j) )
+      dummy = factor *FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
       wrk1d(j,1) = wrk1d(j,1) +dummy
       wrk1d(j,2) = wrk1d(j,2) +yr /( Kini%thick **2 ) *dummy
     ENDDO
@@ -279,7 +286,7 @@ SUBROUTINE VELOCITY_BROADBAND(u,v,w, ax,ay,az,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
     bcs2 = 0
     IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) bcs2(1,1) = 1 ! bcs at ymin = 1
     IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) bcs2(2,1) = 1 ! bcs at ymax = 1
-    ! I need to impose BCs to zero to get zero velocity there
+    ! Cannot use fi_curl. I need to impose BCs to zero to get zero velocity there
     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs2,g(2), az,u,   wrk3d, wrk2d,wrk3d)
     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), ay,tmp4, wrk3d, wrk2d,wrk3d)
     u = u-tmp4
@@ -291,13 +298,6 @@ SUBROUTINE VELOCITY_BROADBAND(u,v,w, ax,ay,az,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
       CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs2,g(2), ax,tmp4, wrk3d, wrk2d,wrk3d)
       w = w-tmp4
     ENDIF
-    ! CALL FI_CURL(imax,jmax,kmax, ax,ay,az, u,v,w, tmp4, wrk2d,wrk3d)
-    ! IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) THEN ! bcs at ymin
-    !   u(:,1,:) = C_0_R; v(:,1,:) = C_0_R; w(:,1,:) = C_0_R
-    ! ENDIF
-    ! IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) THEN ! bcs at ymax
-    !   u(:,jmax,:) = C_0_R; v(:,jmax,:) = C_0_R; w(:,jmax,:) = C_0_R
-    ! ENDIF
 
   END SELECT
 
@@ -307,7 +307,7 @@ SUBROUTINE VELOCITY_BROADBAND(u,v,w, ax,ay,az,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
      CALL FI_SOLENOIDAL(flag_wall, imax,jmax,kmax, u,v,w, ax,ay,az,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
   ENDIF
 
-  IF ( g(3)%size .EQ. 1 ) w = 0
+  IF ( g(3)%size .EQ. 1 ) w = C_0_R       ! Impose zero spanwise velocity in 2D case
 
   IF ( norm_ini_u .GE. C_0_R ) CALL FLOW_NORMALIZE(u,v,w)
 

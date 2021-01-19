@@ -101,7 +101,7 @@ SUBROUTINE SCAL_READ_LOCAL(inifile)
 
   DO idummy = 1,inb_scal; Sini(idummy)%parameters(:) = C_0_R; ENDDO
 
-  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'NormalizeS', '1.0', sRes)
+  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'NormalizeS', '-1.0', sRes)
   norm_ini_s(:) = C_0_R; idummy = MAX_NSP
   CALL LIST_REAL(sRes, idummy, norm_ini_s)
   IF ( idummy .NE. inb_scal ) THEN            ! Consistency check

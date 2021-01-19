@@ -56,7 +56,7 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   ELSE;                                      flag_dilatation=1; ENDIF
 
   ! Geometry and scaling of perturbation
-  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ProfileIniK', 'Gaussian', sRes)
+  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ProfileIniK', 'GaussianSurface', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'             ) THEN; Kini%type = PROFILE_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'gaussian'         ) THEN; Kini%type = PROFILE_GAUSSIAN
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'gaussianvaricose' ) THEN; Kini%type = PROFILE_GAUSSIAN_ANTISYM
@@ -87,6 +87,8 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
     CALL LIST_REAL(sRes, idummy, dummy)
     Kini%ymean = dummy(1)
   ENDIF
+
+  Kini%parameters = C_0_R
 
   CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeK', '-1.0', norm_ini_u)
   CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeP', '-1.0', norm_ini_p)

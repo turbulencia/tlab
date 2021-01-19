@@ -119,17 +119,9 @@ SUBROUTINE SCAL_FLUCTUATION_VOLUME( is, s, tmp, wrk1d, wrk2d, wrk3d )
 
     amplify = C_0_R
     DO j = 1,jmax
-      dummy = AVG1V2D(imax,jmax,kmax, j, i1, tmp)     ! Calculate mean
-      tmp(:,j,:) = ( tmp(:,j,:) - dummy )*wrk1d(j,1)  ! Remove mean and apply shape function
-
-      dummy = AVG1V2D(imax,jmax,kmax, j, i2, tmp)     ! Calculate variance
-      amplify = MAX(dummy,amplify)
-
+      dummy = AVG1V2D(imax,jmax,kmax, j, i1, tmp)       ! Calculate mean
+      wrk3d(:,j,:) = ( tmp(:,j,:) - dummy )*wrk1d(j,1)  ! Remove mean and apply shape function
     ENDDO
-
-    amplify = norm_ini_s(is) /SQRT(amplify)           ! Scaling factor to normalize to maximum rms
-
-    s = s + tmp*amplify
 
   CASE( 2 )   ! Discrete case
     wx_1 = C_2_R * C_PI_R / g(1)%scale ! Fundamental wavelengths
@@ -144,13 +136,15 @@ SUBROUTINE SCAL_FLUCTUATION_VOLUME( is, s, tmp, wrk1d, wrk2d, wrk3d )
       ENDDO
     ENDDO
 
-    DO k = 1,kmax
-      DO j = 1,jmax
-        s(:,j,k) = s(:,j,k) + wrk2d(:,k,1) *wrk1d(j,1)
-      ENDDO
-    ENDDO
+    DO k = 1,kmax; DO j = 1,jmax
+      wrk3d(:,j,k) = wrk2d(:,k,1) *wrk1d(j,1)
+    ENDDO; ENDDO
 
   END SELECT
+
+  IF ( norm_ini_s(is) .GT. C_0_R ) CALL SCAL_NORMALIZE( is, wrk3d )
+
+  s = s +wrk3d
 
   RETURN
 END SUBROUTINE SCAL_FLUCTUATION_VOLUME
@@ -267,5 +261,30 @@ SUBROUTINE SCAL_FLUCTUATION_PLANE(is, s, disp)
 
   RETURN
 END SUBROUTINE SCAL_FLUCTUATION_PLANE
+
+! ###################################################################
+SUBROUTINE SCAL_NORMALIZE(is, s)
+  IMPLICIT NONE
+
+  TINTEGER is
+  TREAL, DIMENSION(imax,jmax,kmax), INTENT(INOUT) :: s
+
+  ! -------------------------------------------------------------------
+  TREAL AVG1V2D, dummy, amplify
+  EXTERNAL AVG1V2D
+
+  ! ###################################################################
+  amplify= C_0_R                                      ! Maximum across the layer
+  DO j = 1,jmax
+    dummy = AVG1V2D(imax,jmax,kmax, j, i2, s)
+    amplify = MAX(dummy,amplify)
+  ENDDO
+
+  amplify = SQRT( norm_ini_s(is) /amplify )           ! Scaling factor to normalize to maximum Variance
+
+  s = s *amplify
+
+  RETURN
+END SUBROUTINE SCAL_NORMALIZE
 
 END MODULE SCAL_LOCAL
