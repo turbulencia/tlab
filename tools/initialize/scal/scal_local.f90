@@ -41,7 +41,7 @@ SUBROUTINE SCAL_SHAPE( is, wrk1d )
   TREAL, DIMENSION(jmax,1), INTENT(INOUT) :: wrk1d
 
   ! -------------------------------------------------------------------
-  TREAL FLOW_SHEAR_TEMPORAL, ycenter, dummy, factor, ymin, ymax
+  TREAL FLOW_SHEAR_TEMPORAL, ycenter, dummy, factor, yr
   EXTERNAL FLOW_SHEAR_TEMPORAL
 
   TREAL, DIMENSION(:), POINTER :: yn
@@ -61,10 +61,11 @@ SUBROUTINE SCAL_SHAPE( is, wrk1d )
     DO j = 1, jmax
       wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Sini(is)%thick, C_1_R, C_0_R, ycenter, Sini(is)%parameters, yn(j) )
 
-      ymin = (yn(j)-yn(1)   )/Sini(is)%thick    ! set perturbation and its normal derivative to zero at the boundaries
-      ymax = (yn(j)-yn(jmax))/Sini(is)%thick
-      wrk1d(j,1)  = wrk1d(j,1)  *TANH( C_05_R*ymin) **2
-      wrk1d(j,1)  = wrk1d(j,1)  *TANH(-C_05_R*ymax) **2
+      ! set perturbation and its normal derivative to zero at the boundaries
+      yr = C_05_R*(yn(j)-yn(1)   )/Sini(is)%thick
+      wrk1d(j,1)  = wrk1d(j,1)  *TANH(yr) **2
+      yr =-C_05_R*(yn(j)-yn(jmax))/Sini(is)%thick
+      wrk1d(j,1)  = wrk1d(j,1)  *TANH(yr) **2
     ENDDO
 
   CASE (PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM)
@@ -280,7 +281,7 @@ SUBROUTINE SCAL_NORMALIZE(is, s)
     amplify = MAX(dummy,amplify)
   ENDDO
 
-  amplify = SQRT( norm_ini_s(is) /amplify )           ! Scaling factor to normalize to maximum Variance
+  amplify = norm_ini_s(is) /SQRT( amplify )           ! Scaling factor to normalize to maximum rms
 
   s = s *amplify
 
