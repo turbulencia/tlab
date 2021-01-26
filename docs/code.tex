@@ -375,12 +375,11 @@ PlaneBroadband, DeltaDiscrete, DeltaBroadband, FluxDiscrete, FluxBroadband & Typ
 %
 \multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Broadband]}\\
 %
-\tt Type          & \tt None, Physical, Phase & Randomize fields in physical space or phases in frequency space.\\
-\tt Distribution  & uniform, gaussian & Type of probability density function.\\
+\tt Distribution  & \tt none, uniform, gaussian & Type of PDF. If none, randomize phases in frequency space.\\
+\tt Covariance    & {\it value1, value2, ...} & Covariance matrix.\\
+\tt Spectrum      & \tt quartic, gaussian, ...  & Functional form of the power spectral density, equation~(\ref{equ:spectra}).\\
+\tt f0            & {\it value1, value2, ...} & Parameters that define the functional form.\\
 \tt Seed          & {\it value} & Seed for the random generator.\\
-\tt Covariance    & {\it value1, value2, ...} & Flow covariance matrix.\\
-\tt Spectrum      & \tt uniform, quadratic, quartic, gaussian & Functional form of the power spectral density, equation~(\ref{equ:spectra}).\\
-\tt f0            & {\it value} & Parameters that define the functional form.\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
