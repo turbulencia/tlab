@@ -71,7 +71,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#FileFormat=<RawArray/RawSplit/NetCDF>')
   CALL IO_WRITE_ASCII(bakfile, '#VerbosityLevel=<0/1/2>')
   CALL IO_WRITE_ASCII(bakfile, '#Type=<temporal/spatial>')
-  CALL IO_WRITE_ASCII(bakfile, '#Flow=<shear/jet/isotropic>')
   CALL IO_WRITE_ASCII(bakfile, '#CalculateFlow=<yes/no>')
   CALL IO_WRITE_ASCII(bakfile, '#CalculateScalar=<yes/no>')
   CALL IO_WRITE_ASCII(bakfile, '#Equations=<total/internal/incompressible/anelastic>')
@@ -106,15 +105,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE
      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.Type must be temporal or spatial')
      CALL DNS_STOP(DNS_ERROR_SIMTYPE)
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'Flow', 'shear', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'shear'       ) THEN; imode_flow = DNS_FLOW_SHEAR
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'jet'         ) THEN; imode_flow = DNS_FLOW_JET
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'isotropic'   ) THEN; imode_flow = DNS_FLOW_ISOTROPIC
-  ELSE
-     CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.Flow must be shear, jet or isotropic')
-     CALL DNS_STOP(DNS_ERROR_SIMFLOW)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'CalculateFlow', 'yes', sRes)

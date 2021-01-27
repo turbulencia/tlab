@@ -46,7 +46,6 @@ MODULE DNS_GLOBAL
 ! ###################################################################
   TINTEGER :: icalc_flow, icalc_scal, icalc_part
   TINTEGER :: imode_sim                ! type of simulation (spatial, temporal)
-  TINTEGER :: imode_flow               ! type of geometry
   TINTEGER :: imode_files              ! files format
   TINTEGER :: imode_verbosity          ! level of verbosity used in log files
   TINTEGER :: imode_eqns               ! set of equations to be solved

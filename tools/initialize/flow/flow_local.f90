@@ -335,10 +335,6 @@ SUBROUTINE FLOW_NORMALIZE(u,v,w)
   ENDDO
   amplify = C_05_R *amplify
 
-  ! IF ( imode_flow .EQ. DNS_FLOW_ISOTROPIC ) THEN
-  !   amplify = C_05_R*( AVG1V3D(nx,ny,nz, i2, u) +AVG1V3D(nx,ny,nz, i2, v) +AVG1V3D(nx,ny,nz, i2, w) )
-  ! ENDIF
-
   amplify = SQRT( norm_ini_u /amplify )           ! Scaling factor to normalize to maximum TKE
 
   u = u *amplify

@@ -17,11 +17,11 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Post-processing statistical data accumulated in mean1d. Based on 
+!# Post-processing statistical data accumulated in mean1d. Based on
 !# mappings define in file avgij_map.h
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# itxc    In     size of array stat
 !#
@@ -29,9 +29,9 @@
 SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc, stat, wrk1d)
 
   USE DNS_CONSTANTS, ONLY : efile
-#ifdef TRACE_ON 
+#ifdef TRACE_ON
   USE DNS_CONSTANTS, ONLY : tfile
-#endif 
+#endif
 
   USE DNS_GLOBAL
 
@@ -526,73 +526,62 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc
   ENDDO
 
 ! ###################################################################
-! Integral quantities shear layer
-! ###################################################################
-  IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-
-! ###################################################################
 ! 1D quantities of the jet
 ! ###################################################################
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
-     S2 = sbg(inb_scal)%mean - C_05_R *sbg(inb_scal)%delta
-     U2 = qbg(1)%mean - C_05_R*qbg(1)%delta
+ S2 = sbg(inb_scal)%mean - C_05_R *sbg(inb_scal)%delta
+ U2 = qbg(1)%mean - C_05_R*qbg(1)%delta
 
 ! -------------------------------------------------------------------
 ! Integral balance of scalar
 ! -------------------------------------------------------------------
-     DO n = 1,nstatavg
+ DO n = 1,nstatavg
 ! mean scalar part
-        DO j = jmin_loc,jmax_loc
-           wrk1d(j) = rR(n,j)*fU(n,j)*(fS(n,j)-S2)
-        ENDDO
-        IntExcScaS(n) = SIMPSON_NU(jmax_loc-jmin_loc+1,wrk1d(jmin_loc), g(2)%nodes(jmin_loc))
+    DO j = jmin_loc,jmax_loc
+       wrk1d(j) = rR(n,j)*fU(n,j)*(fS(n,j)-S2)
+    ENDDO
+    IntExcScaS(n) = SIMPSON_NU(jmax_loc-jmin_loc+1,wrk1d(jmin_loc), g(2)%nodes(jmin_loc))
 ! Reynolds stress part
-        DO j = jmin_loc,jmax_loc
-           wrk1d(j) =rR(n,j)*fRus(n,j)
-        ENDDO
-        IntExcScaRsu(n) = SIMPSON_NU(jmax_loc-jmin_loc+1,wrk1d(jmin_loc), g(2)%nodes(jmin_loc))
-     ENDDO
+    DO j = jmin_loc,jmax_loc
+       wrk1d(j) =rR(n,j)*fRus(n,j)
+    ENDDO
+    IntExcScaRsu(n) = SIMPSON_NU(jmax_loc-jmin_loc+1,wrk1d(jmin_loc), g(2)%nodes(jmin_loc))
+ ENDDO
 
 ! -------------------------------------------------------------------
 ! Jet thickness
 ! -------------------------------------------------------------------
 ! Jet half-width based on velocity
-     CALL DELTA_X(nstatavg, jmax, g(2)%nodes, fU(1,1), wrk1d, delta_05_d(1), delta_05_u(1), U2, r05)
+ CALL DELTA_X(nstatavg, jmax, g(2)%nodes, fU(1,1), wrk1d, delta_05_d(1), delta_05_u(1), U2, r05)
 
 ! Jet half-width based on scalar
-     CALL DELTA_X(nstatavg, jmax, g(2)%nodes, fS(1,1), wrk1d, delta_s_d(1), delta_s_u(1), S2, r05)
+ CALL DELTA_X(nstatavg, jmax, g(2)%nodes, fS(1,1), wrk1d, delta_s_d(1), delta_s_u(1), S2, r05)
 
 ! Jet center line based on scalar
-     y_center = g(2)%nodes(1) + sbg(inb_scal)%ymean *g(2)%scale
-     DO n = 1,nstatavg
-        DO j = 1,jmax
-           wrk1d(j) = fS(n,j)
-        ENDDO
-        jloc_max = MAXLOC(wrk1d(1:jmax)); j = jloc_max(1)
-        IF ( wrk1d(j-1) .GT. wrk1d(j+1) ) THEN
-           delta_s_center(n) = C_05_R*(g(2)%nodes(j) +g(2)%nodes(j-1))
-        ELSE
-           delta_s_center(n) = C_05_R*(g(2)%nodes(j) +g(2)%nodes(j+1))
-        ENDIF
-        delta_s_center(n) = delta_s_center(n) - y_center
-     ENDDO
-
-  ENDIF
+ y_center = g(2)%nodes(1) + sbg(inb_scal)%ymean *g(2)%scale
+ DO n = 1,nstatavg
+    DO j = 1,jmax
+       wrk1d(j) = fS(n,j)
+    ENDDO
+    jloc_max = MAXLOC(wrk1d(1:jmax)); j = jloc_max(1)
+    IF ( wrk1d(j-1) .GT. wrk1d(j+1) ) THEN
+       delta_s_center(n) = C_05_R*(g(2)%nodes(j) +g(2)%nodes(j-1))
+    ELSE
+       delta_s_center(n) = C_05_R*(g(2)%nodes(j) +g(2)%nodes(j+1))
+    ENDIF
+    delta_s_center(n) = delta_s_center(n) - y_center
+ ENDDO
 
 ! ###################################################################
 ! Scaling of the quatities
 ! ###################################################################
   DO n = 1,nstatavg
 
-     IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-     ELSE
-        delta_05 = C_05_R*(delta_05_u(n)+delta_05_d(n))
+    delta_05 = C_05_R*(delta_05_u(n)+delta_05_d(n))
 
-        SimSC(n) = C_05_R*(fS(n,jmax/2)+fS(n,jmax/2+1)) - S2
+    SimSC(n) = C_05_R*(fS(n,jmax/2)+fS(n,jmax/2+1)) - S2
 
-        DU = C_05_R*(fU(n,jmax/2)+fU(n,jmax/2+1)) - U2
-        DS = SimSC(n)
-     ENDIF
+    DU = C_05_R*(fU(n,jmax/2)+fU(n,jmax/2+1)) - U2
+    DS = SimSC(n)
 
      DO j = 1,jmax
 
@@ -623,9 +612,7 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc
 ! Saving the data in TkStat format
 ! ###################################################################
   WRITE(name,*) is; WRITE(str,*) itime
-  IF      ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN; name = 'shravg'//TRIM(ADJUSTL(name))//'s'//TRIM(ADJUSTL(str))
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_JET   ) THEN; name = 'jetavg'//TRIM(ADJUSTL(name))//'s'//TRIM(ADJUSTL(str))
-  ENDIF
+  name = 'avg'//TRIM(ADJUSTL(name))//'s'//TRIM(ADJUSTL(str))
 
 #ifdef USE_RECLEN
   OPEN(UNIT=i23,RECL=2580,FILE=name,STATUS='unknown')
@@ -683,13 +670,9 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc
   line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
 ! dependent variables dependent on t only
-  IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
-     line1 = 'Del_Z_u Del_Z_d Del_Zmax Sim_Z Int_mom_Z Int_mom_RuZ'
-     WRITE(i23,1010) 'GROUP = 1D_Quantities '//TRIM(ADJUSTL(line1))
-     line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-  ENDIF
-
+ line1 = 'Del_Z_u Del_Z_d Del_Zmax Sim_Z Int_mom_Z Int_mom_RuZ'
+ WRITE(i23,1010) 'GROUP = 1D_Quantities '//TRIM(ADJUSTL(line1))
+ line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
   WRITE(i23,1010) TRIM(ADJUSTL(line2))
 
@@ -699,23 +682,17 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc
   DO n = 1,nstatavg
      i = statavg(n)
 
-     IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-     ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
-        delta_s  = C_05_R*(delta_s_u(n)+delta_s_d(n))
-        delta_05 = C_05_R*(delta_05_u(n)+delta_05_d(n))
-     ENDIF
+    delta_s  = C_05_R*(delta_s_u(n)+delta_s_d(n))
+    delta_05 = C_05_R*(delta_05_u(n)+delta_05_d(n))
 
-     IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
-        ivauxpos = 6
-        VAUXPOS(1)  = delta_s_u(n)
-        VAUXPOS(2)  = delta_s_d(n)
-        VAUXPOS(3)  = delta_s_center(n)
+    ivauxpos = 6
+    VAUXPOS(1)  = delta_s_u(n)
+    VAUXPOS(2)  = delta_s_d(n)
+    VAUXPOS(3)  = delta_s_center(n)
 !        VAUXPOS(4)  = SimSC(n)
-        VAUXPOS(4)  = (SimSC(1)/SimSC(n))**C_2_R
-        VAUXPOS(5)  = IntExcScaS(n)
-        VAUXPOS(6)  = IntExcScaRsu(n)
-     ELSE IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-     ENDIF
+    VAUXPOS(4)  = (SimSC(1)/SimSC(n))**C_2_R
+    VAUXPOS(5)  = IntExcScaS(n)
+    VAUXPOS(6)  = IntExcScaRsu(n)
 
      DO j = 1,jmax
         ivauxpre = 4

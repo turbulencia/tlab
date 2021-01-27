@@ -17,11 +17,11 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Post-processing statistical data accumulated in mean1d. Based on 
+!# Post-processing statistical data accumulated in mean1d. Based on
 !# mappings define in file avgij_map.h
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# itxc    In     size of array stat, containing postprocess data
 !# mean1d  In     array with raw mean data
@@ -87,7 +87,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 #define fbzz(A,B)   stat(A,B,37)
 #define fbxy(A,B)   stat(A,B,38)
 #define fbxz(A,B)   stat(A,B,39)
-#define fbyz(A,B)   stat(A,B,40) 
+#define fbyz(A,B)   stat(A,B,40)
 
 #define eta(A,B)       stat(A,B,41)
 #define tau(A,B)       stat(A,B,42)
@@ -153,12 +153,12 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 #define dRyzdy(A,B)    stat(A,B,97)
 #define dRyzdz(A,B)    stat(A,B,98)
 
-#define Vortx(A,B)       stat(A,B,99) 
+#define Vortx(A,B)       stat(A,B,99)
 #define Vorty(A,B)       stat(A,B,100)
 #define Vortz(A,B)       stat(A,B,101)
-#define Dil(A,B)         stat(A,B,102) 
+#define Dil(A,B)         stat(A,B,102)
 #define Vortxf2(A,B)     stat(A,B,103)
-#define Vortyf2(A,B)     stat(A,B,104) 
+#define Vortyf2(A,B)     stat(A,B,104)
 #define Vortzf2(A,B)     stat(A,B,105)
 #define Dilf2(A,B)       stat(A,B,106)
 
@@ -360,7 +360,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 #endif
 
   bcs = 0
-  
+
   r05  = C_05_R
   r005 = C_5_R*C_1EM2_R
   r09  = C_9_R/C_10_R
@@ -408,8 +408,8 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
      rUfWf(j,1)= MA_UW(j)*pts - rU(j,1)*rW(j,1)
      rVfWf(j,1)= MA_VW(j)*pts - rV(j,1)*rW(j,1)
      rTKE(j,1) = C_05_R*( rUf2(j,1) + rVf2(j,1) + rWf2(j,1) )
-     rbxx(j,1) = C_05_R*rUf2(j,1)/rTKE(j,1) - c13  
-     rbyy(j,1) = C_05_R*rVf2(j,1)/rTKE(j,1) - c13 
+     rbxx(j,1) = C_05_R*rUf2(j,1)/rTKE(j,1) - c13
+     rbyy(j,1) = C_05_R*rVf2(j,1)/rTKE(j,1) - c13
      rbzz(j,1) = C_05_R*rWf2(j,1)/rTKE(j,1) - c13
      rbxy(j,1) = C_05_R*rUfVf(j,1)/rTKE(j,1)
      rbxz(j,1) = C_05_R*rUfWf(j,1)/rTKE(j,1)
@@ -438,8 +438,8 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
      fRxz(j,1) = MA_RUW(j)*pts/rR(j,1) - fU(j,1)*fW(j,1)
      fRyz(j,1) = MA_RVW(j)*pts/rR(j,1) - fV(j,1)*fW(j,1)
      fTKE(j,1) = C_05_R*( fRxx(j,1) + fRyy(j,1) + fRzz(j,1) )
-     fbxx(j,1) = C_05_R*fRxx(j,1)/fTKE(j,1) - c13  
-     fbyy(j,1) = C_05_R*fRyy(j,1)/fTKE(j,1) - c13 
+     fbxx(j,1) = C_05_R*fRxx(j,1)/fTKE(j,1) - c13
+     fbyy(j,1) = C_05_R*fRyy(j,1)/fTKE(j,1) - c13
      fbzz(j,1) = C_05_R*fRzz(j,1)/fTKE(j,1) - c13
      fbxy(j,1) = C_05_R*fRxy(j,1)/fTKE(j,1)
      fbxz(j,1) = C_05_R*fRxz(j,1)/fTKE(j,1)
@@ -456,7 +456,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
      fTKE_nf(j,1) = C_05_R*( MA_FLT_RUU(j) + MA_FLT_RVV(j) + MA_FLT_RWW(j) -&
           ( MA_FLT_RU(j)*MA_FLT_RU(j) &
           + MA_FLT_RV(j)*MA_FLT_RV(j)&
-          + MA_FLT_RW(j)*MA_FLT_RW(j) )*dum1/rR(j,1) )*dum1/rR(j,1)   
+          + MA_FLT_RW(j)*MA_FLT_RW(j) )*dum1/rR(j,1) )*dum1/rR(j,1)
 
 !     eps_f(j,1) = (fTKE_nf(j,1)-fTKE(j,1))/dt_mean/M_REAL(ifilt_step) ! to be rechecked
 
@@ -570,7 +570,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
           fV(j,1)*fdWdz(j,1) - fW(j,1)*fdVdz(j,1)
 
 ! ###################################################################
-! Viscous shear stress tensor 
+! Viscous shear stress tensor
 ! ###################################################################
      rVis(j,1) = MA_VIS(j)*pts
 
@@ -600,22 +600,22 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 ! -------------------------------------------------------------------
 ! X-, Y-, and Z-Momentum equation
 ! -------------------------------------------------------------------
-     Conv_u(j,1) =-dum2 
+     Conv_u(j,1) =-dum2
      Tran_u(j,1) = (-dPdx(j,1)+MA_TAUXkk(j)*pts)/rR(j,1)
      Reyn_u(j,1) =-dRxxdx(j,1)-dRxydy(j,1)-dRxzdz(j,1)-&
-          (fRxx(j,1)*dRdx(j,1) + fRxy(j,1)*dRdy(j,1) + fRxz(j,1)*dRdz(j,1))/rR(j,1) 
+          (fRxx(j,1)*dRdx(j,1) + fRxy(j,1)*dRdy(j,1) + fRxz(j,1)*dRdz(j,1))/rR(j,1)
      Resi_u(j,1) = Conv_u(j,1) + Tran_u(j,1) + Reyn_u(j,1)
 
      Conv_v(j,1) =-dum3
      Tran_v(j,1) = (-dPdy(j,1)+MA_TAUYkk(j)*pts)/rR(j,1)
      Reyn_v(j,1) =-dRxydx(j,1)-dRyydy(j,1)-dRyzdz(j,1)-&
-          (fRxy(j,1)*dRdx(j,1) + fRyy(j,1)*dRdy(j,1) + fRyz(j,1)*dRdz(j,1))/rR(j,1) 
+          (fRxy(j,1)*dRdx(j,1) + fRyy(j,1)*dRdy(j,1) + fRyz(j,1)*dRdz(j,1))/rR(j,1)
      Resi_v(j,1) = Conv_v(j,1) + Tran_v(j,1) + Reyn_v(j,1)
 
      Conv_w(j,1) =-dum4
      Tran_w(j,1) = (-dPdz(j,1)+MA_TAUZkk(j)*pts)/rR(j,1)
      Reyn_w(j,1) =-dRxzdx(j,1)-dRyzdy(j,1)-dRzzdz(j,1)-&
-          (fRxz(j,1)*dRdx(j,1) + fRyz(j,1)*dRdy(j,1) + fRzz(j,1)*dRdz(j,1))/rR(j,1) 
+          (fRxz(j,1)*dRdx(j,1) + fRyz(j,1)*dRdy(j,1) + fRzz(j,1)*dRdz(j,1))/rR(j,1)
      Resi_w(j,1) = Conv_w(j,1) + Tran_w(j,1) + Reyn_w(j,1)
 
 ! -------------------------------------------------------------------
@@ -637,7 +637,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
           (MA_RUVx(j)+MA_RVVy(j)+MA_RVWz(j))*fV(j,1)-&
           MA_RVVx(j)*fU(j,1) - MA_RVVy(j)*fV(j,1) - MA_RVVz(j)*fW(j,1) )*pts +&
           C_2_R*( fV(j,1)*fV(j,1)*dum1 +&
-          rR(j,1)*(fV(j,1)*fV(j,1)*dum5 + fV(j,1)*dum3 + fV(j,1)*dum3) ) 
+          rR(j,1)*(fV(j,1)*fV(j,1)*dum5 + fV(j,1)*dum3 + fV(j,1)*dum3) )
 
      T1zz(j,1) = (MA_RWWUkk(j) - MA_RWW(j)*dum5   -&
           MA_RUW(j)*fdWdx(j,1) - MA_RVW(j)*fdWdy(j,1) - MA_RWW(j)*fdWdz(j,1) -&
@@ -646,7 +646,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
           (MA_RUWx(j)+MA_RVWy(j)+MA_RWWz(j))*fW(j,1)-&
           MA_RWWx(j)*fU(j,1) - MA_RWWy(j)*fV(j,1) - MA_RWWz(j)*fW(j,1) )*pts +&
           C_2_R*( fW(j,1)*fW(j,1)*dum1 +&
-          rR(j,1)*(fW(j,1)*fW(j,1)*dum5 + fW(j,1)*dum4 + fW(j,1)*dum4) )   
+          rR(j,1)*(fW(j,1)*fW(j,1)*dum5 + fW(j,1)*dum4 + fW(j,1)*dum4) )
 
      T1xy(j,1) = (MA_RUVUkk(j) - MA_RUV(j)*dum5   -&
           MA_RUU(j)*fdVdx(j,1) - MA_RUV(j)*fdVdy(j,1) - MA_RUW(j)*fdVdz(j,1) -&
@@ -655,7 +655,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
           (MA_RUUx(j)+MA_RUVy(j)+MA_RUWz(j))*fV(j,1)-&
           MA_RUVx(j)*fU(j,1) - MA_RUVy(j)*fV(j,1) - MA_RUVz(j)*fW(j,1) )*pts +&
           C_2_R*( fU(j,1)*fV(j,1)*dum1 +&
-          rR(j,1)*(fU(j,1)*fV(j,1)*dum5 + fU(j,1)*dum3 + fV(j,1)*dum2) )   
+          rR(j,1)*(fU(j,1)*fV(j,1)*dum5 + fU(j,1)*dum3 + fV(j,1)*dum2) )
 
      T1xz(j,1) = (MA_RUWUkk(j) - MA_RUW(j)*dum5   -&
           MA_RUU(j)*fdWdx(j,1) - MA_RUV(j)*fdWdy(j,1) - MA_RUW(j)*fdWdz(j,1) -&
@@ -664,7 +664,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
           (MA_RUUx(j)+MA_RUVy(j)+MA_RUWz(j))*fW(j,1) -&
           MA_RUWx(j)*fU(j,1) - MA_RUWy(j)*fV(j,1) - MA_RUWz(j)*fW(j,1) )*pts +&
           C_2_R*( fU(j,1)*fW(j,1)*dum1 +&
-          rR(j,1)*(fU(j,1)*fW(j,1)*dum5 + fU(j,1)*dum4 + fW(j,1)*dum2) )   
+          rR(j,1)*(fU(j,1)*fW(j,1)*dum5 + fU(j,1)*dum4 + fW(j,1)*dum2) )
 
      T1yz(j,1) = (MA_RVWUkk(j) - MA_RVW(j)*dum5   -&
           MA_RUV(j)*fdWdx(j,1) - MA_RVV(j)*fdWdy(j,1) - MA_RVW(j)*fdWdz(j,1) -&
@@ -673,7 +673,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
           (MA_RUVx(j)+MA_RVVy(j)+MA_RVWz(j))*fW(j,1)-&
           MA_RVWx(j)*fU(j,1) - MA_RVWy(j)*fV(j,1) - MA_RVWz(j)*fW(j,1) )*pts +&
           C_2_R*( fV(j,1)*fW(j,1)*dum1 + &
-          rR(j,1)*(fV(j,1)*fW(j,1)*dum5 + fV(j,1)*dum4 + fW(j,1)*dum3) )   
+          rR(j,1)*(fV(j,1)*fW(j,1)*dum5 + fV(j,1)*dum4 + fW(j,1)*dum3) )
 
 ! -------------------------------------------------------------------
 ! Viscous element of transport term of Reynolds equations
@@ -720,7 +720,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
      MnFl_xx(j,1) = C_2_R*(rU(j,1)-fU(j,1))*(MA_TAUXkk(j)*pts-dPdx(j,1))/rR(j,1)
 
      Resi_xx(j,1) = Conv_xx(j,1) + Prod_xx(j,1) + Diss_xx(j,1) + Tran_xx(j,1) +&
-          Pres_xx(j,1) + MnFl_xx(j,1) 
+          Pres_xx(j,1) + MnFl_xx(j,1)
 
 ! -------------------------------------------------------------------
 ! Ryy Reynolds stress equation
@@ -734,10 +734,10 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
      Tran_yy(j,1) =-(T1yy(j,1) + C_2_R*(-T4yy(j,1) + (MA_PVY(j)+MA_VPy(j))*pts -&
           rP(j,1)*rdVdy(j,1) - rV(j,1)*dPdy(j,1) ) )/rR(j,1)
      Pres_yy(j,1) = C_2_R*( MA_PVY(j)*pts - rP(j,1)*rdVdy(j,1) )/rR(j,1)
-     MnFl_yy(j,1) = C_2_R*(rV(j,1)-fV(j,1))*(MA_TAUYkk(j)*pts-dPdy(j,1))/rR(j,1)        
+     MnFl_yy(j,1) = C_2_R*(rV(j,1)-fV(j,1))*(MA_TAUYkk(j)*pts-dPdy(j,1))/rR(j,1)
 
      Resi_yy(j,1) = Conv_yy(j,1) + Prod_yy(j,1) + Diss_yy(j,1) + Tran_yy(j,1) +&
-          Pres_yy(j,1) + MnFl_yy(j,1) 
+          Pres_yy(j,1) + MnFl_yy(j,1)
 
 ! -------------------------------------------------------------------
 ! Rzz Reynolds stress equation
@@ -751,10 +751,10 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
      Tran_zz(j,1) =-(T1zz(j,1) + C_2_R*(-T4zz(j,1) + (MA_PWz(j)+MA_WPz(j))*pts -&
           rP(j,1)*rdWdz(j,1) - rW(j,1)*dPdz(j,1) ) )/rR(j,1)
      Pres_zz(j,1) = C_2_R*( MA_PWz(j)*pts - rP(j,1)*rdWdz(j,1) )/rR(j,1)
-     MnFl_zz(j,1) = C_2_R*(rW(j,1)-fW(j,1))*(MA_TAUZkk(j)*pts-dPdz(j,1))/rR(j,1)        
+     MnFl_zz(j,1) = C_2_R*(rW(j,1)-fW(j,1))*(MA_TAUZkk(j)*pts-dPdz(j,1))/rR(j,1)
 
      Resi_zz(j,1) = Conv_zz(j,1) + Prod_zz(j,1) + Diss_zz(j,1) + Tran_zz(j,1) +&
-          Pres_zz(j,1) + MnFl_zz(j,1) 
+          Pres_zz(j,1) + MnFl_zz(j,1)
 
 ! -------------------------------------------------------------------
 ! Rxy Reynolds stress equation
@@ -776,10 +776,10 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
      Pres_xy(j,1) =( MA_PUy(j)*pts - rP(j,1)*rdUdy(j,1) + &
           MA_PVX(j)*pts - rP(j,1)*rdVdx(j,1) )/rR(j,1)
      MnFl_xy(j,1) = ( (rU(j,1)-fU(j,1))*(MA_TAUYkk(j)*pts-dPdy(j,1)) +&
-          (rV(j,1)-fV(j,1))*(MA_TAUXkk(j)*pts-dPdx(j,1)) )/rR(j,1)     
+          (rV(j,1)-fV(j,1))*(MA_TAUXkk(j)*pts-dPdx(j,1)) )/rR(j,1)
 
      Resi_xy(j,1) = Conv_xy(j,1) + Prod_xy(j,1) + Diss_xy(j,1) + Tran_xy(j,1) +&
-          Pres_xy(j,1) + MnFl_xy(j,1) 
+          Pres_xy(j,1) + MnFl_xy(j,1)
 
 ! -------------------------------------------------------------------
 ! Turbulent kinetic energy equation
@@ -805,7 +805,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
           rP(j,1)*Dil(j,1)+ Conv_p(j,1) )
 
      Resi_p(j,1) = Conv_p(j,1) + Reve_p(j,1) + Diss_p(j,1) + Tran_p(j,1) +&
-          Reyn_p(j,1) - (gama0-1)*rR(j,1)*Pres(j,1)  
+          Reyn_p(j,1) - (gama0-1)*rR(j,1)*Pres(j,1)
 
 ! -------------------------------------------------------------------
 ! Energy equation in terms of T
@@ -824,12 +824,12 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
           Conv_T(j,1) )
 
      Resi_T(j,1) = Conv_T(j,1) + Reve_T(j,1) + Diss_T(j,1) + Tran_T(j,1) +&
-          Reyn_T(j,1) - MRATIO*(gama0-1)*Pres(j,1)      
+          Reyn_T(j,1) - MRATIO*(gama0-1)*Pres(j,1)
 
 ! -------------------------------------------------------------------
-! Turbulent temperature equation 
+! Turbulent temperature equation
 ! -------------------------------------------------------------------
-! !!! Not complete 
+! !!! Not complete
      dfTdx = (MRATIO*dPdx(j,1)-fT(j,1)*dRdx(j,1))/rR(j,1)
      dfTdy = (MRATIO*dPdy(j,1)-fT(j,1)*dRdy(j,1))/rR(j,1)
 
@@ -995,53 +995,53 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 ! ###################################################################
 ! Integral quantities shear layer
 ! ###################################################################
-  IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-
-! Vorticity Thickness
-     DO n = 1,nstatavg
-        DO j = 1,jmax
-           wrk1d(j,1) = fU(n,j)
-        ENDDO
-        CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), wrk1d(1,1), wrk1d(1,2), wrk2d(1,2), wrk2d,wrk2d(1,2) )
-        delta_w_u(n) = (fU(n,jmax)-fU(n,1)) / MINVAL(wrk1d(1:jmax,2))
-     ENDDO
-
-! Momentum thickness
-     DO n = 1,nstatavg
-        UC = qbg(1)%mean
-        DU = qbg(1)%delta
-        DO j = jmin_loc, jmax_loc
-           wrk1d(j,1) = rR(n,j)*( C_025_R - ((fU(n,j)-UC)/DU)**2 )
-        ENDDO
-        delta_m_u(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
-     ENDDO
-
-! Mixing layer limit (U=0.1dU and U=0.9dU)
-     y_center = g(2)%nodes(1) + qbg(1)%ymean*g(2)%scale
-     DO n = 1,nstatavg
-        fU_05 = U2 + C_01_R*qbg(1)%delta
-        DO j = 1,jmax
-           IF ( fU(n,j) .GT. fU_05 .AND. fU(n,j+1) .LE. fU_05 ) THEN
-              delta_01_u(n) = g(2)%nodes(j) + (fU_05-fU(n,j))*(g(2)%nodes(j+1) -g(2)%nodes(j))/(fU(n,j+1)-fU(n,j))
-           ENDIF
-        ENDDO
-        delta_01_u(n) = delta_01_u(n) - y_center
-
-        fU_05 = U2 + r09*qbg(1)%delta
-        DO j = 1,jmax
-           IF ( fU(n,j) .GT. fU_05 .AND. fU(n,j+1) .LE. fU_05 ) THEN
-              delta_01_d(n) = g(2)%nodes(j) + (fU_05-fU(n,j))*(g(2)%nodes(j+1) -g(2)%nodes(j))/(fU(n,j+1)-fU(n,j))
-           ENDIF
-        ENDDO
-        delta_01_d(n) = delta_01_d(n) - y_center
-
-        delta_u_u(n) = C_05_R*( delta_01_u(n) + delta_01_d(n) )
-     ENDDO
-
-! ###################################################################
-! 1D quantities of the jet
-! ###################################################################
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
+!   IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
+!
+! ! Vorticity Thickness
+!      DO n = 1,nstatavg
+!         DO j = 1,jmax
+!            wrk1d(j,1) = fU(n,j)
+!         ENDDO
+!         CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), wrk1d(1,1), wrk1d(1,2), wrk2d(1,2), wrk2d,wrk2d(1,2) )
+!         delta_w_u(n) = (fU(n,jmax)-fU(n,1)) / MINVAL(wrk1d(1:jmax,2))
+!      ENDDO
+!
+! ! Momentum thickness
+!      DO n = 1,nstatavg
+!         UC = qbg(1)%mean
+!         DU = qbg(1)%delta
+!         DO j = jmin_loc, jmax_loc
+!            wrk1d(j,1) = rR(n,j)*( C_025_R - ((fU(n,j)-UC)/DU)**2 )
+!         ENDDO
+!         delta_m_u(n) = SIMPSON_NU(nj,wrk1d(jmin_loc,1), g(2)%nodes(jmin_loc))
+!      ENDDO
+!
+! ! Mixing layer limit (U=0.1dU and U=0.9dU)
+!      y_center = g(2)%nodes(1) + qbg(1)%ymean*g(2)%scale
+!      DO n = 1,nstatavg
+!         fU_05 = U2 + C_01_R*qbg(1)%delta
+!         DO j = 1,jmax
+!            IF ( fU(n,j) .GT. fU_05 .AND. fU(n,j+1) .LE. fU_05 ) THEN
+!               delta_01_u(n) = g(2)%nodes(j) + (fU_05-fU(n,j))*(g(2)%nodes(j+1) -g(2)%nodes(j))/(fU(n,j+1)-fU(n,j))
+!            ENDIF
+!         ENDDO
+!         delta_01_u(n) = delta_01_u(n) - y_center
+!
+!         fU_05 = U2 + r09*qbg(1)%delta
+!         DO j = 1,jmax
+!            IF ( fU(n,j) .GT. fU_05 .AND. fU(n,j+1) .LE. fU_05 ) THEN
+!               delta_01_d(n) = g(2)%nodes(j) + (fU_05-fU(n,j))*(g(2)%nodes(j+1) -g(2)%nodes(j))/(fU(n,j+1)-fU(n,j))
+!            ENDIF
+!         ENDDO
+!         delta_01_d(n) = delta_01_d(n) - y_center
+!
+!         delta_u_u(n) = C_05_R*( delta_01_u(n) + delta_01_d(n) )
+!      ENDDO
+!
+! ! ###################################################################
+! ! 1D quantities of the jet
+! ! ###################################################################
+!   ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
 ! -------------------------------------------------------------------
 ! Integral balance of mass
 ! -------------------------------------------------------------------
@@ -1061,7 +1061,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
            IntMassV(n) = C_0_R
         ELSE IF ( n .EQ. 2 ) THEN
            IntMassV(n) = C_05_R*(wrk1d(1,1)+wrk1d(2,1))*(wrk1d(2,2)-wrk1d(1,2))
-        ELSE 
+        ELSE
            IntMassV(n) = SIMPSON_NU(n,wrk1d(1,1),wrk1d(1,2))
         ENDIF
      ENDDO
@@ -1198,7 +1198,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         delta_u_center(n) = delta_u_center(n) - y_center
      ENDDO
 
-  ENDIF
+  ! ENDIF
 
 ! ###################################################################
 ! Scaling of the quatities
@@ -1209,10 +1209,10 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 
   DO n = 1,nstatavg
 
-     IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-        DU = qbg(1)%delta
-        delta_05 = delta_01_u(n) - delta_01_d(n)
-     ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
+     ! IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
+     !    DU = qbg(1)%delta
+     !    delta_05 = delta_01_u(n) - delta_01_d(n)
+     ! ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
         delta_05 = C_05_R*(delta_u_u(n)+delta_u_d(n))
 
         simuc(n) = C_05_R*(fU(n,jmax/2)+fU(n,jmax/2+1)) - U2
@@ -1226,7 +1226,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 
         DU = simuc(n)
         DH = ABS(simtc(n))
-     ENDIF
+     ! ENDIF
 
 ! reynolds based on half-width
      Reynolds_d(n) = reynolds*rR(n,jmax/2)* C_2_R*delta_05*DU
@@ -1245,7 +1245,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         Vortzf2(n,j) = SQRT(Vortzf2(n,j))/DU*delta_05
         Dilf2(n,j)   = Dilf2(n,j)/DU/DU*delta_05*delta_05
 
-        Conv_xx(n,j) = Conv_xx(n,j)/(DU*DU*DU)*delta_05 
+        Conv_xx(n,j) = Conv_xx(n,j)/(DU*DU*DU)*delta_05
         Prod_xx(n,j) = Prod_xx(n,j)/(DU*DU*DU)*delta_05
         Diss_xx(n,j) = Diss_xx(n,j)/(DU*DU*DU)*delta_05
         Tran_xx(n,j) = Tran_xx(n,j)/(DU*DU*DU)*delta_05
@@ -1253,7 +1253,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         MnFl_xx(n,j) = MnFl_xx(n,j)/(DU*DU*DU)*delta_05
         Resi_xx(n,j) = Resi_xx(n,j)/(DU*DU*DU)*delta_05
 
-        Conv_yy(n,j) = Conv_yy(n,j)/(DU*DU*DU)*delta_05 
+        Conv_yy(n,j) = Conv_yy(n,j)/(DU*DU*DU)*delta_05
         Prod_yy(n,j) = Prod_yy(n,j)/(DU*DU*DU)*delta_05
         Diss_yy(n,j) = Diss_yy(n,j)/(DU*DU*DU)*delta_05
         Tran_yy(n,j) = Tran_yy(n,j)/(DU*DU*DU)*delta_05
@@ -1261,7 +1261,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         MnFl_yy(n,j) = MnFl_yy(n,j)/(DU*DU*DU)*delta_05
         Resi_yy(n,j) = Resi_yy(n,j)/(DU*DU*DU)*delta_05
 
-        Conv_zz(n,j) = Conv_zz(n,j)/(DU*DU*DU)*delta_05 
+        Conv_zz(n,j) = Conv_zz(n,j)/(DU*DU*DU)*delta_05
         Prod_zz(n,j) = Prod_zz(n,j)/(DU*DU*DU)*delta_05
         Diss_zz(n,j) = Diss_zz(n,j)/(DU*DU*DU)*delta_05
         Tran_zz(n,j) = Tran_zz(n,j)/(DU*DU*DU)*delta_05
@@ -1269,7 +1269,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         MnFl_zz(n,j) = MnFl_zz(n,j)/(DU*DU*DU)*delta_05
         Resi_zz(n,j) = Resi_zz(n,j)/(DU*DU*DU)*delta_05
 
-        Conv_xy(n,j) = Conv_xy(n,j)/(DU*DU*DU)*delta_05 
+        Conv_xy(n,j) = Conv_xy(n,j)/(DU*DU*DU)*delta_05
         Prod_xy(n,j) = Prod_xy(n,j)/(DU*DU*DU)*delta_05
         Diss_xy(n,j) = Diss_xy(n,j)/(DU*DU*DU)*delta_05
         Tran_xy(n,j) = Tran_xy(n,j)/(DU*DU*DU)*delta_05
@@ -1278,7 +1278,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         Resi_xy(n,j) = Resi_xy(n,j)/(DU*DU*DU)*delta_05
 
         fTKE(n,j) = fTKE(n,j)/(DU*DU)
-        Conv(n,j) = Conv(n,j)/(DU*DU*DU)*delta_05 
+        Conv(n,j) = Conv(n,j)/(DU*DU*DU)*delta_05
         Prod(n,j) = Prod(n,j)/(DU*DU*DU)*delta_05
         Diss(n,j) = Diss(n,j)/(DU*DU*DU)*delta_05
         Tran(n,j) = Tran(n,j)/(DU*DU*DU)*delta_05
@@ -1305,21 +1305,21 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         Reyn_w(n,j) = Reyn_w(n,j)/(DU*DU)*delta_05
         Resi_w(n,j) = Resi_w(n,j)/(DU*DU)*delta_05
 
-        Conv_p(n,j) = Conv_p(n,j)/(DU*DU*DU)*delta_05 
+        Conv_p(n,j) = Conv_p(n,j)/(DU*DU*DU)*delta_05
         Reve_p(n,j) = Reve_p(n,j)/(DU*DU*DU)*delta_05
         Diss_p(n,j) = Diss_p(n,j)/(DU*DU*DU)*delta_05
         Tran_p(n,j) = Tran_p(n,j)/(DU*DU*DU)*delta_05
         Reyn_p(n,j) = Reyn_p(n,j)/(DU*DU*DU)*delta_05
         Resi_p(n,j) = Resi_p(n,j)/(DU*DU*DU)*delta_05
 
-        Conv_T(n,j) = Conv_T(n,j)/(DH*DU)*delta_05 
+        Conv_T(n,j) = Conv_T(n,j)/(DH*DU)*delta_05
         Reve_T(n,j) = Reve_T(n,j)/(DH*DU)*delta_05
         Diss_T(n,j) = Diss_T(n,j)/(DH*DU)*delta_05
         Tran_T(n,j) = Tran_T(n,j)/(DH*DU)*delta_05
         Reyn_T(n,j) = Reyn_T(n,j)/(DH*DU)*delta_05
         Resi_T(n,j) = Resi_T(n,j)/(DH*DU)*delta_05
 
-        Conv_tt(n,j) = Conv_tt(n,j)/(DH*DH*DU)*delta_05 
+        Conv_tt(n,j) = Conv_tt(n,j)/(DH*DH*DU)*delta_05
         Prod_tt(n,j) = Prod_tt(n,j)/(DH*DH*DU)*delta_05
         Diss_tt(n,j) = Diss_tt(n,j)/(DH*DH*DU)*delta_05
         Tran_tt(n,j) = Tran_tt(n,j)/(DH*DH*DU)*delta_05
@@ -1335,14 +1335,15 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 ! Saving the data in TkStat format
 ! ###################################################################
   WRITE(name,*) itime
-  IF      ( imode_flow .EQ. DNS_FLOW_JET   ) THEN; name = 'jetavg'//TRIM(ADJUSTL(name))
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN; name = 'shravg'//TRIM(ADJUSTL(name)); ENDIF
+  ! IF      ( imode_flow .EQ. DNS_FLOW_JET   ) THEN; name = 'jetavg'//TRIM(ADJUSTL(name))
+  ! ELSE IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN; name = 'shravg'//TRIM(ADJUSTL(name)); ENDIF
+  name = 'avg'//TRIM(ADJUSTL(name))
 
 #ifdef USE_RECLEN
   OPEN(UNIT=i23,RECL=3260,FILE=name,STATUS='unknown')
 #else
   OPEN(UNIT=i23,FILE=name,STATUS='unknown')
-#endif     
+#endif
 
 ! -------------------------------------------------------------------
 ! Header
@@ -1393,7 +1394,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
   line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
   line1 = 'Rzz Conv_zz Prod_zz Diss_zz Tran_zz Pres_zz MnFl_zz Resi_zz '
-  WRITE(i23,1010) 'GROUP = Rzz_Eqn '//TRIM(ADJUSTL(line1)) 
+  WRITE(i23,1010) 'GROUP = Rzz_Eqn '//TRIM(ADJUSTL(line1))
   line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
   line1 = 'Rxy Conv_xy Prod_xy Diss_xy Tran_xy Pres_xy MnFl_xy Resi_xy'
@@ -1445,7 +1446,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
   line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
 ! dependent variables dependent on t only
-  IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
+  ! IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
      line1 ='Del_mom_u Del_mom_d Del_vor_u Del_vor_d '&
           //'Del_half_u Del_half_d Del_lim_u Del_lim_d '&
           //'Del_tem_u Del_tem_d Del_rho_u Del_rho_d Del_Umax '&
@@ -1457,11 +1458,11 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
      WRITE(i23,1010) 'GROUP = 1D_Quantities '//TRIM(ADJUSTL(line1))
      line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-     line1 = 'Delta_m Delta_w y_01 y_09 y_05 Re Re_l'
-     WRITE(i23,1010) 'GROUP = 1D_Quantities '//TRIM(ADJUSTL(line1))
-     line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
-  ENDIF
+  ! ELSE IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
+  !    line1 = 'Delta_m Delta_w y_01 y_09 y_05 Re Re_l'
+  !    WRITE(i23,1010) 'GROUP = 1D_Quantities '//TRIM(ADJUSTL(line1))
+  !    line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
+  ! ENDIF
 
   WRITE(i23,1010) TRIM(ADJUSTL(line2))
 
@@ -1471,16 +1472,16 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
   DO n = 1,nstatavg
      i = statavg(n)
 
-     IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-        delta_05 = delta_01_u(n) - delta_01_d(n)
-        delta_w  = delta_w_u(n)
-     ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
+     ! IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
+     !    delta_05 = delta_01_u(n) - delta_01_d(n)
+     !    delta_w  = delta_w_u(n)
+     ! ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
         delta_05 = C_05_R*(delta_u_u(n)+delta_u_d(n))
         delta_w  = C_05_R*(delta_w_u(n)+delta_w_d(n))
         delta_t  = C_05_R*(delta_t_u(n)+delta_t_d(n))
-     ENDIF
+     ! ENDIF
 
-     IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
+     ! IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
         ivauxpos = VARMX1D+2
         VAUXPOS(1)  = delta_m_u(n)
         VAUXPOS(2)  = delta_m_d(n)
@@ -1510,16 +1511,16 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         VAUXPOS(26) = IntTkePi(n)
         VAUXPOS(27) = IntTkeP(n)
         VAUXPOS(28) = IntTkeF(n)
-     ELSE IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-        ivauxpos = 7
-        VAUXPOS(1) = delta_m_u(n)
-        VAUXPOS(2) = delta_w_u(n)
-        VAUXPOS(3) = delta_01_u(n)
-        VAUXPOS(4) = delta_01_d(n)
-        VAUXPOS(5) = delta_u_u(n)
-        VAUXPOS(6) = Reynolds_d(n)
-        VAUXPOS(7) = Reynolds_l(n)
-     ENDIF
+     ! ELSE IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
+     !    ivauxpos = 7
+     !    VAUXPOS(1) = delta_m_u(n)
+     !    VAUXPOS(2) = delta_w_u(n)
+     !    VAUXPOS(3) = delta_01_u(n)
+     !    VAUXPOS(4) = delta_01_d(n)
+     !    VAUXPOS(5) = delta_u_u(n)
+     !    VAUXPOS(6) = Reynolds_d(n)
+     !    VAUXPOS(7) = Reynolds_l(n)
+     ! ENDIF
 
      DO j = 1,jmax
         ivauxpre = 4

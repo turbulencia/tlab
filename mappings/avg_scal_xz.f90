@@ -7,7 +7,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : g, area
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, idiffusion, itransport
+  USE DNS_GLOBAL, ONLY : imode_eqns, idiffusion, itransport
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal, inb_scal_array
   USE DNS_GLOBAL, ONLY : buoyancy, radiation, transport
@@ -39,7 +39,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 10
   TINTEGER i,j,k, bcs(2,2)
   TREAL diff, SIMPSON_NU, UPPER_THRESHOLD, LOWER_THRESHOLD
-  TREAL delta_m, delta_w, delta_s, delta_s_area, delta_s_position, delta_s_value 
+  TREAL delta_m, delta_w, delta_s, delta_s_area, delta_s_position, delta_s_value
   TREAL smin_loc, smax_loc
   TREAL delta_hb01, delta_ht01, delta_h01
   TREAL delta_sb01, delta_st01, delta_s01
@@ -47,7 +47,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   TINTEGER jloc_max(1)
 
   TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nmax
-  
+
   TREAL dummy, coefT, coefR, coefQ
 
   TREAL VAUXPOS(11)
@@ -61,7 +61,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
 ! ###################################################################
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
-  
+
  ! Define pointers
   u => q(:,:,:,1)
   v => q(:,:,:,2)
@@ -78,23 +78,15 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! -----------------------------------------------------------------------
 ! Independent variables
   ig(1) = 1; ng = 1
-  IF      ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
 #define VAUXPRE1 mean2d(j,ig(1))
 #define VAUXPRE2 mean2d(j,ig(1)+1)
 #define VAUXPRE3 mean2d(j,ig(1)+2)
 #define VAUXPRE4 mean2d(j,ig(1)+3)
 #define VAUXPRE5 mean2d(j,ig(1)+4)
-     sg(1) = 5
+   sg(1) = 5
 
-     varname(1) = 'Y SM SW SS SR'
+   varname(1) = 'Y SM SW SS SR'
 
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
-#define VAUXPRE1 mean2d(j,ig(1))
-     sg(1) = 1
-
-     varname(1) = 'Y'
-     
-  ENDIF
 
 ! -----------------------------------------------------------------------
 ! Dependent variables
@@ -106,7 +98,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 #define rQ(j)     mean2d(j,ig(2)+4)
 #define fQ(j)     mean2d(j,ig(2)+5)
   sg(2) = 6
-     
+
   groupname(2) = 'Mean'
   varname(2)   = 'rS fS rS_y fS_y rQ fQ'
   IF ( radiation%active(is) ) THEN
@@ -115,13 +107,13 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   ENDIF
   IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR .OR. imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
      varname(2) = TRIM(ADJUSTL(varname(2)))//' rQeva'
-     sg(2) = sg(2) + 1     
-  ENDIF  
+     sg(2) = sg(2) + 1
+  ENDIF
   IF ( transport%active(is) ) THEN
      varname(2) = TRIM(ADJUSTL(varname(2)))//' rQtra rQtraC'
      sg(2) = sg(2) + 2
   ENDIF
-  
+
 ! -----------------------------------------------------------------------
   ig(3) = ig(2)+ sg(2); ng = ng + 1
 #define Rsu(j)    mean2d(j,ig(3)  )
@@ -143,7 +135,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
   groupname(3) = 'Fluctuations'
   varname(3)   = 'Rsu Rsv Rsw fS2 fS3 fS4 fS5 fS6 rS2 rS3 rS4 rS5 rS6 fRS rRS'
-  
+
 ! -----------------------------------------------------------------------
   ig(4) = ig(3)+ sg(3); ng = ng + 1
 #define Rss_t(j)  mean2d(j,ig(4)  )
@@ -157,7 +149,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
   groupname(4) = 'fS2Budget'
   varname(4)   = 'Rss_t Pss Ess Tssy Tssy_y Dss Qss'
-  
+
 ! -----------------------------------------------------------------------
   ig(5) = ig(4)+ sg(4); ng = ng + 1
 #define var_x(j)  mean2d(j,ig(5)  )
@@ -175,7 +167,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   varname(5)   = 'VarSx VarSy VarSz SkewSx SkewSy SkewSz FlatSx FlatSy FlatSz'
 
 #define L_AVGMAX 47
-  
+
 ! -----------------------------------------------------------------------
 ! Auxiliary variables depending on y and t; this last group is not written
   ig(6) = ig(5)+ sg(5); ng = ng + 1
@@ -221,7 +213,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      CALL AVG_IK_V(imax,jmax,kmax, jmax, v, g(1)%jac,g(3)%jac, fV(1), wrk1d(1,1), area)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, w, g(1)%jac,g(3)%jac, fW(1), wrk1d(1,1), area)
      rR(:) = C_1_R
-     
+
   ELSE
      dsdx = rho *u
      dsdy = rho *v
@@ -234,7 +226,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      fV(:) = fV(:) /rR(:)
      fW(:) = fW(:) /rR(:)
      fS(:) = fS(:) /rR(:)
-     
+
   ENDIF
 
 ! #######################################################################
@@ -270,7 +262,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      fS4(:) = rS4(:)
      fS5(:) = rS5(:)
      fS6(:) = rS6(:)
-     
+
   ELSE
      DO j = 1,jmax
         wrk3d(:,j,:) = s_local(:,j,:) - fS(j)
@@ -331,7 +323,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC )THEN
      rSRHO(:) = C_0_R
      fSRHO(:) = C_0_R
-     
+
   ELSE
      DO j = 1,jmax
         tmp1(:,j,:) = (rho(:,j,:) - rR(j)) *(s_local(:,j,:) - rS(j))
@@ -346,14 +338,14 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         IF ( rR2(j) .GT. C_0_R ) THEN
            IF ( rS2(j) .GT. C_0_R ) THEN; rSRHO(j) = rSRHO(j)/sqrt(rR2(j)*rS2(j))
            ELSE;                          rSRHO(j) = C_2_R; ENDIF
-           
+
            IF ( fS2(j) .GT. C_0_R ) THEN; fSRHO(j) = fSRHO(j)/sqrt(rR2(j)*fS2(j))
            ELSE;                          fSRHO(j) = C_2_R; ENDIF
-           
+
         ELSE
            rSRHO(j) = C_BIG_R
            fSRHO(j) = C_BIG_R
-        
+
         ENDIF
      ENDDO
   ENDIF
@@ -370,7 +362,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         CALL OPR_RADIATION_FLUX(radiation, imax,jmax,kmax, g(2), tmp2,                          dsdx, wrk1d,wrk3d)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, ribackground, tmp1)
         tmp2 = C_0_R
-        
+
      ELSE
         CALL OPR_RADIATION     (radiation, imax,jmax,kmax, g(2), s(1,1,1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
         CALL OPR_RADIATION_FLUX(radiation, imax,jmax,kmax, g(2), s(1,1,1,radiation%scalar(is)), dsdx, wrk1d,wrk3d)
@@ -392,18 +384,18 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
            coefR = buoyancy%parameters(inb_scal) /froude
            DO i = 1,inb_scal; coefT = coefT + transport%parameters(i) /settling *buoyancy%parameters(i) /froude; ENDDO
         ENDIF
-     
+
         CALL THERMO_AIRWATER_LINEAR_SOURCE(imax,jmax,kmax, s, dsdx,dsdy,dsdz) ! calculate xi in dsdx
         CALL FI_GRADIENT(imax,jmax,kmax, dsdx,tmp2, tmp1, wrk2d,wrk3d)
-        
+
         dummy=-diff *coefQ
         tmp2 = dsdz *tmp2 *dummy         ! evaporation source
-        
+
         IF ( transport%active(is) .OR. radiation%active(is) ) THEN ! preparing correction terms into dsdz
            CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), dsdx,tmp1, wrk3d, wrk2d,wrk3d)
            dsdz = dsdz *tmp1
         ENDIF
-        
+
         IF ( radiation%active(is) ) THEN ! radiation source; needs dsdy
            CALL OPR_RADIATION(radiation, imax,jmax,kmax, g(2), s(1,1,1,radiation%scalar(is)), tmp1, wrk1d,wrk3d)
            dummy= thermo_param(2) *coefQ
@@ -424,14 +416,14 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         ELSE
            tmp3 = C_0_R; dsdz = C_0_R
         ENDIF
-        
+
      ELSE
         IF ( buoyancy%type .NE. EQNS_EXPLICIT ) THEN
            CALL FI_GRADIENT(imax,jmax,kmax, s,dsdx, dsdy, wrk2d,wrk3d)
            CALL FI_BUOYANCY_SOURCE(buoyancy, isize_field, s, dsdx, wrk3d) ! dsdx contains gradient
            tmp1 = wrk3d* diff /froude
         ENDIF
-        
+
      ENDIF
 
   ENDIF
@@ -462,7 +454,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Qss(1), wrk1d(1,1), area) ! transport equation
      Qss(:) = Qss(:) *C_2_R
 
-  ELSE     
+  ELSE
      DO j = 1,jmax
         wrk3d(:,j,:) = wrk3d(:,j,:) *rho(:,j,:)
      ENDDO
@@ -506,7 +498,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, skew_x(1), wrk1d(1,1), area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, g(1)%jac,g(3)%jac, skew_y(1), wrk1d(1,1), area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, g(1)%jac,g(3)%jac, skew_z(1), wrk1d(1,1), area)
-  
+
   tmp1 = tmp1 *dsdx
   DO j = 1,jmax
      tmp2(:,j,:) =  tmp2(:,j,:) *(dsdy(:,j,:) - rS_y(j))
@@ -579,19 +571,19 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC )THEN
      DO j = 1,jmax
         tmp1(:,j,:) = wrk3d(:,j,:)* ( (v(:,j,:)-fV(j))*wrk3d(:,j,:) - C_2_R *diff *(dsdy(:,j,:)-F2(j)) )
-     ENDDO     
+     ENDDO
   ELSE
      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
         DO j = 1,jmax
            tmp1(:,j,:) = wrk3d(:,j,:)* ( rho(:,j,:)*(v(:,j,:)-fV(j))*wrk3d(:,j,:) - C_2_R *diff *(vis(:,j,:)*dsdy(:,j,:)-F2(j)) )
         ENDDO
-        
+
      ELSE
         DO j = 1,jmax
            tmp1(:,j,:) = wrk3d(:,j,:)* ( rho(:,j,:)*(v(:,j,:)-fV(j))*wrk3d(:,j,:) - C_2_R *diff *(           dsdy(:,j,:)-F2(j)) )
         ENDDO
      ENDIF
-     
+
   ENDIF
   CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1,  g(1)%jac,g(3)%jac, Tssy(1), wrk1d(1,1), area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Dss(1),  wrk1d(1,1), area)
@@ -607,8 +599,6 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 ! #######################################################################
 ! Global quantites
 ! #######################################################################
-  IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-
 ! -----------------------------------------------------------------------
 ! Based on delta_u
 ! -----------------------------------------------------------------------
@@ -634,7 +624,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      ENDIF
 
 ! -----------------------------------------------------------------------
-! Based on rbg%delta 
+! Based on rbg%delta
 ! -----------------------------------------------------------------------
      IF ( ABS(rbg%delta) .GT. C_SMALL_R ) THEN
         dummy = rbg%mean + (C_05_R-C_1EM2_R)*rbg%delta
@@ -656,7 +646,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
         wrk1d(1:jmax,1) = fS(jmax) - fS(1:jmax)
         delta_s_area    = SIMPSON_NU(jmax-j+1, wrk1d(j,1), g(2)%nodes(j)) / ABS(sbg(is)%delta)
- 
+
         delta_s          = ABS(sbg(is)%delta)/ABS(fS_y(j))
         delta_s_position = g(2)%nodes(j)
         delta_s_value    = fS(j)
@@ -666,7 +656,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
         delta_sb01 = LOWER_THRESHOLD(jmax, dummy, rS(1), g(2)%nodes)
         dummy      = sbg(is)%mean - (C_05_R-C_1EM3_R) *sbg(is)%delta
         delta_st01 = UPPER_THRESHOLD(jmax, dummy, rS(1), g(2)%nodes)
-        
+
         delta_sb01 =              (g(2)%nodes(1) + sbg(is)%ymean *g(2)%scale) - delta_sb01
         delta_st01 = delta_st01 - (g(2)%nodes(1) + sbg(is)%ymean *g(2)%scale)
         delta_s01  = delta_st01 + delta_sb01
@@ -708,23 +698,13 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      ENDIF
 
 ! Independent variables
-     DO j = 1,jmax            
+     DO j = 1,jmax
         VAUXPRE1 =  g(2)%nodes(j)
         VAUXPRE2 = (g(2)%nodes(j)-g(2)%scale *qbg(1)%ymean  - g(2)%nodes(1))/delta_m
         VAUXPRE3 = (g(2)%nodes(j)-g(2)%scale *qbg(1)%ymean  - g(2)%nodes(1))/delta_w
         VAUXPRE4 = (g(2)%nodes(j)-g(2)%scale *sbg(is)%ymean - g(2)%nodes(1))/delta_s01
         VAUXPRE5 = (g(2)%nodes(j)-g(2)%scale *rbg%ymean     - g(2)%nodes(1))/delta_h01
      ENDDO
-     
-! -----------------------------------------------------------------------
-! Jet
-! -----------------------------------------------------------------------
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN ! Not developed yet
-     DO j = 1,jmax            
-        VAUXPRE1 = g(2)%nodes(j)
-     ENDDO
-     
-  ENDIF
 
 ! #######################################################################
 ! Output
@@ -757,9 +737,9 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      ! WRITE(LOC_UNIT_ID) 'IMAX = ', i1
      ! WRITE(LOC_UNIT_ID) 'JMAX = ', jmax
 
-! Independent variables     
+! Independent variables
      line2 = 'I J '//TRIM(ADJUSTL(varname(1)))
-     
+
 ! Dependent variables depending on y and t
      DO k = 2,ng
         WRITE(LOC_UNIT_ID,1010) 'GROUP = '//TRIM(ADJUSTL(groupname(k)))//' '//TRIM(ADJUSTL(varname(k)))
@@ -768,41 +748,36 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
      ENDDO
 
 ! Dependent variables dependent on t only
-     IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-        line1 = 'Delta_m Delta_w Delta_s Delta_s_Area Delta_s_Position Delta_s_Value'
-        WRITE(LOC_UNIT_ID,1010) 'GROUP = ShearThicknesses '//TRIM(ADJUSTL(line1))
-        ! WRITE(LOC_UNIT_ID) 'GROUP = ShearThicknesses '//TRIM(ADJUSTL(line1))
-        line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
+    line1 = 'Delta_m Delta_w Delta_s Delta_s_Area Delta_s_Position Delta_s_Value'
+    WRITE(LOC_UNIT_ID,1010) 'GROUP = ShearThicknesses '//TRIM(ADJUSTL(line1))
+    ! WRITE(LOC_UNIT_ID) 'GROUP = ShearThicknesses '//TRIM(ADJUSTL(line1))
+    line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
-        line1 = 'Delta_sb01 Delta_st01 Delta_s01 mixing_Youngs mixing_Cook'
-        WRITE(LOC_UNIT_ID,1010) 'GROUP = MixingThicknesses '//TRIM(ADJUSTL(line1))
-        ! WRITE(LOC_UNIT_ID) 'GROUP = MixingThicknesses '//TRIM(ADJUSTL(line1))
-        line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
-
-     ENDIF
+    line1 = 'Delta_sb01 Delta_st01 Delta_s01 mixing_Youngs mixing_Cook'
+    WRITE(LOC_UNIT_ID,1010) 'GROUP = MixingThicknesses '//TRIM(ADJUSTL(line1))
+    ! WRITE(LOC_UNIT_ID) 'GROUP = MixingThicknesses '//TRIM(ADJUSTL(line1))
+    line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
      WRITE(LOC_UNIT_ID,1010) TRIM(ADJUSTL(line2))
      ! WRITE(LOC_UNIT_ID) TRIM(ADJUSTL(line2))
 
-! Body     
-     DO j = 1,jmax            
+! Body
+     DO j = 1,jmax
 
-        ivauxpos = 0        
+        ivauxpos = 0
         IF ( j .EQ. jmax/2 ) THEN
-           IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-              ivauxpos = 11
-              VAUXPOS(1) = delta_m
-              VAUXPOS(2) = delta_w
-              VAUXPOS(3) = delta_s
-              VAUXPOS(4) = delta_s_area
-              VAUXPOS(5) = delta_s_position
-              VAUXPOS(6) = delta_s_value 
-              VAUXPOS(7) = delta_sb01
-              VAUXPOS(8) = delta_st01
-              VAUXPOS(9) = delta_s01
-              VAUXPOS(10)= mixing1
-              VAUXPOS(11)= mixing2
-           ENDIF
+          ivauxpos = 11
+          VAUXPOS(1) = delta_m
+          VAUXPOS(2) = delta_w
+          VAUXPOS(3) = delta_s
+          VAUXPOS(4) = delta_s_area
+          VAUXPOS(5) = delta_s_position
+          VAUXPOS(6) = delta_s_value
+          VAUXPOS(7) = delta_sb01
+          VAUXPOS(8) = delta_st01
+          VAUXPOS(9) = delta_s01
+          VAUXPOS(10)= mixing1
+          VAUXPOS(11)= mixing2
         ENDIF
 
         WRITE(LOC_UNIT_ID,1020) 1, j, (mean2d(j,k),k=1,nmax), (VAUXPOS(k),k=1,ivauxpos)
@@ -822,4 +797,3 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 1020 FORMAT(I5,(1X,I5),L_AVGMAX(1X,G_FORMAT_R),11(1X,G_FORMAT_R))
 
 END SUBROUTINE AVG_SCAL_XZ
-

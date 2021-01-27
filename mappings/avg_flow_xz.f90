@@ -6,11 +6,11 @@
 !# DESCRIPTION
 !#
 !# Calculate statistics along horizontal planes.
-!# 
+!#
 !# Assumes statistical homogeneity in xOz, so that the corresponding
 !# partial derivative terms are assumed to be zero.
 !#
-!# To be used in the incompressible case, the array p has been 
+!# To be used in the incompressible case, the array p has been
 !# pointed to dudz and the pressure field is stored there; do not
 !# use array dudz until pressure block
 !#
@@ -20,7 +20,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imode_eqns, imode_flow, itransport, inb_scal
+  USE DNS_GLOBAL, ONLY : imode_eqns, itransport, inb_scal
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, area
   USE DNS_GLOBAL, ONLY : froude, visc, rossby
@@ -96,22 +96,13 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 ! -----------------------------------------------------------------------
 ! Independent variables
   ig(1) = 1; ng = 1
-  IF      ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
 #define VAUXPRE1 mean2d(j,ig(1))
 #define VAUXPRE2 mean2d(j,ig(1)+1)
 #define VAUXPRE3 mean2d(j,ig(1)+2)
 #define VAUXPRE4 mean2d(j,ig(1)+3)
-     sg(1) = 4
+   sg(1) = 4
 
-     varname(1) = 'Y SM SW SR'
-
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
-#define VAUXPRE1 mean2d(j,ig(1))
-     sg(1) = 1
-
-     varname(1) = 'Y'
-     
-  ENDIF
+   varname(1) = 'Y SM SW SR'
 
 ! -----------------------------------------------------------------------
 ! Dependent variables
@@ -134,10 +125,10 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 #define fh(j)     mean2d(j,ig(2)+15)
 #define fs(j)     mean2d(j,ig(2)+16)
   sg(ng) = 17
-     
+
   groupname(ng) = 'Mean'
   varname(ng)   = 'rR rU rV rW rP rT re rh rs rB fU fV fW fT fe fh fs'
-  
+
 ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
 #define Tke(j)    mean2d(j,ig(3)  )
@@ -161,7 +152,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   groupname(ng) = 'Fluctuations'
   varname(ng)   = 'Tke Rxx Ryy Rzz Rxy Rxz Ryz rP2 rR2 rT2 fT2 re2 fe2 rh2 fh2 rs2 fs2'
-  
+
 ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
 #define vortx(j)  mean2d(j,ig(4)  )
@@ -174,7 +165,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   groupname(ng) = 'Vorticity'
   varname(ng)   = 'Wx Wy Wz Wx2 Wy2 Wz2'
-  
+
 ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
 #define Rxx_t(j)  mean2d(j,ig(5)  )
@@ -417,7 +408,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      varname(ng)= 'Pot rRref rTref BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq '&
                 //'PotTemp_fr PotTemp_eq SaturationPressure rPref RelativeHumidity Dewpoint LapseRate_dew'
   ENDIF
-  
+
 ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
 #define eddy_diff(j)     mean2d(j,ig(17)  )
@@ -427,7 +418,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   groupname(ng) = 'TurbDiffusivities'
   varname(ng)   = 'EddyDiff EddyVisc TurbPrandtl'
-  
+
 ! -----------------------------------------------------------------------
 ! Auxiliary variables depending on y and t; this last group is not written
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
@@ -503,8 +494,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC      ) THEN
      CALL THERMO_ANELASTIC_DENSITY(imax,jmax,kmax, s, epbackground,pbackground, dwdx)
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdx, g(1)%jac,g(3)%jac, rR(1), wrk1d, area)     
-     
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdx, g(1)%jac,g(3)%jac, rR(1), wrk1d, area)
+
      fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
 
   ELSE
@@ -523,7 +514,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   rUf(:) = rU(:) - fU(:)
   rVf(:) = rV(:) - fV(:)
-  rWf(:) = rW(:) - fW(:)  
+  rWf(:) = rW(:) - fW(:)
 
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fU(1), fU_y(1), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fV(1), fV_y(1), wrk3d, wrk2d,wrk3d)
@@ -534,7 +525,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rP(1),  rP_y(1),  wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rR(1),  rR_y(1),  wrk3d, wrk2d,wrk3d)
- 
+
 ! #######################################################################
 ! Main covariances (do not overwrite dudz; it contains p for incompressible case)
 ! #######################################################################
@@ -543,7 +534,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      dwdy(:,j,:) = v(:,j,:) - fV(j)
      dwdz(:,j,:) = w(:,j,:) - fW(j)
   ENDDO
-  
+
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      dvdx = dwdx *dwdx
      dvdy = dwdy *dwdy
@@ -561,7 +552,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      Ryy(:) = Ryy(:) /rR(:)
      Rzz(:) = Rzz(:) /rR(:)
   ENDIF
-  
+
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      dvdx = dwdx *dwdy
      dvdy = dwdx *dwdz
@@ -579,7 +570,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      Rxz(:) = Rxz(:) /rR(:)
      Ryz(:) = Ryz(:) /rR(:)
   ENDIF
-  
+
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Rxx(1), Rxx_y(1), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Ryy(1), Ryy_y(1), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Rzz(1), Rzz_y(1), wrk3d, wrk2d,wrk3d)
@@ -726,7 +717,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 ! dvdz = psat
 ! dwdx = T
 ! dwdy = dpdy
-! dwdz = 
+! dwdz =
 ! ###################################################################
 #define GAMMA_LOC(i,j,k) dudx(i,j,k)
 #define T_LOC(i,j,k)     dwdx(i,j,k)
@@ -743,13 +734,13 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         dvdx(:,j,:) = (T_LOC(:,j,:)-rT(j))**2
      ENDDO
      CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx,         g(1)%jac,g(3)%jac, rT2(1), wrk1d, area)
-     
+
      CALL THERMO_POLYNOMIAL_PSAT(imax,jmax,kmax, T_LOC(1,1,1), dvdz)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz,         g(1)%jac,g(3)%jac, psat(1), wrk1d, area)
 
      CALL THERMO_ANELASTIC_RELATIVEHUMIDITY(imax,jmax,kmax, s, epbackground,pbackground, T_LOC(1,1,1), wrk3d)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,        g(1)%jac,g(3)%jac, relhum(1), wrk1d, area)
-     
+
      CALL THERMO_ANELASTIC_THETA  (imax,jmax,kmax, s, epbackground,pbackground, wrk3d)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,        g(1)%jac,g(3)%jac, potem_fr(1), wrk1d, area)
      CALL THERMO_ANELASTIC_THETA_V(imax,jmax,kmax, s, epbackground,pbackground, wrk3d)
@@ -763,19 +754,19 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      CALL AVG_IK_V(imax,jmax,kmax, jmax, GAMMA_LOC(1,1,1), g(1)%jac,g(3)%jac, lapse_eq(1), wrk1d, area)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,            g(1)%jac,g(3)%jac, bfreq_eq(1), wrk1d, area)
      bfreq_eq(:) = bfreq_eq(:) *buoyancy%vector(2)
-     
+
      CALL THERMO_ANELASTIC_LAPSE_FR (imax,jmax,kmax, s,dudz,      epbackground,                         GAMMA_LOC(1,1,1),wrk3d)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, GAMMA_LOC(1,1,1), g(1)%jac,g(3)%jac, lapse_fr(1), wrk1d, area)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,            g(1)%jac,g(3)%jac, bfreq_fr(1), wrk1d, area)
      ! dummy = C_1_R /( pbg%parameters(1) *gama0 )
-     ! bfreq_fr(:) = -rR_y(:) /rbackground(:) -dummy *rR(:) /pbackground(:) 
+     ! bfreq_fr(:) = -rR_y(:) /rbackground(:) -dummy *rR(:) /pbackground(:)
      bfreq_fr(:) = bfreq_fr(:) *buoyancy%vector(2)
 
      ! GAMMA_LOC(1,1,1) should contains lapse_fr, since lapse_dew = lapse_fr when saturated
      CALL THERMO_ANELASTIC_DEWPOINT(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d,GAMMA_LOC(1,1,1))
      CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,            g(1)%jac,g(3)%jac, dewpoint(1), wrk1d, area)
      CALL AVG_IK_V(imax,jmax,kmax, jmax, GAMMA_LOC(1,1,1), g(1)%jac,g(3)%jac, lapse_dew(1),wrk1d, area)
-     
+
   ELSE
 
 ! -------------------------------------------------------------------
@@ -810,7 +801,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
      CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rT(1),  rT_y(1),  wrk3d, wrk2d,wrk3d)
 
-! Turbulent Mach number        
+! Turbulent Mach number
      M_t(:) = SQRT((Rxx(:)+Ryy(:)+Rzz(:)) /c2(:))
 
 ! Covariances
@@ -834,7 +825,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      DO j = 1,jmax
         IF ( rR2(j) .GT. C_0_R .AND. rP2(j) .GT. C_0_R ) THEN; rRP(j) = rRP(j)/SQRT(rR2(j)*rP2(j))
         ELSE;                                                  rRP(j) = C_2_R; ENDIF
-        
+
         IF ( rR2(j) .GT. C_0_R .AND. rT2(j) .GT. C_0_R ) THEN; rRT(j) = rRT(j)/SQRT(rR2(j)*rT2(j))
         ELSE;                                                  rRT(j) = C_2_R; ENDIF
 
@@ -878,10 +869,10 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 ! Buoyancy frequency & saturation pressure
 ! -------------------------------------------------------------------
      CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), rho, dvdy, wrk3d, wrk2d,wrk3d)
-  
+
      CALL THERMO_POLYNOMIAL_PSAT(imax, jmax, kmax, T_LOC(1,1,1), dvdz)
      CALL THERMO_CP(imax, jmax, kmax, s, GAMMA_LOC(1,1,1), dvdx)
-     
+
      DO j = 1,jmax
         dudy(:,j,:) = dwdy(:,j,:) /p(:,j,:) /GAMMA_LOC(:,j,:) - dvdy(:,j,:) /rho(:,j,:)
         dvdx(:,j,:) = C_1_R /dvdx(:,j,:)
@@ -893,7 +884,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, g(1)%jac,g(3)%jac, psat(1),     wrk1d, area)
      bfreq_fr(:) =-bfreq_fr(:) *buoyancy%vector(2)
      lapse_fr(:) =-lapse_fr(:) *buoyancy%vector(2) *prefactor
-     
+
 #undef S_LOC
 
 #define L_RATIO   dvdx
@@ -922,15 +913,15 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         wrk3d = wrk3d - WGHT_INV(2) /WMEAN_INV *dudy
         CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, bfreq_eq(1), wrk1d, area)
         bfreq_eq(:) =-bfreq_eq(:) *buoyancy%vector(2)
-        
+
         C_RATIO = THERMO_AI(1,1,2)+s(:,:,:,1)*(THERMO_AI(1,1,3)-THERMO_AI(1,1,2))
         C_RATIO = (C_1_R-s(:,:,:,1))*GRATIO*WGHT_INV(2)/C_RATIO
         wrk3d = dwdx /( (MRATIO*p)**C_RATIO ) *EXP( Q_RATIO *C_RATIO *L_RATIO )
         wrk3d = wrk3d *( C_1_R +Q_RATIO )**C_RATIO /( (MRATIO *p /dvdz)**(Q_RATIO*C_RATIO) )
         CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, potem_eq(1), wrk1d, area)
-        
+
      ENDIF
-     
+
 #undef L_RATIO
 #undef Q_RATIO
 #undef WMEAN_INV
@@ -950,7 +941,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      tref(:) = rT(:)
      rref(:) = rR(:)
   ENDIF
-  
+
 ! ###################################################################
 ! Potential energy
 !
@@ -965,7 +956,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         ELSE
            CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, dudx, bbackground)
         ENDIF
-        
+
         CALL AVG_IK_V(imax,jmax,kmax, jmax, dudx, g(1)%jac,g(3)%jac, rB(1), wrk1d, area)
         DO j = 1,jmax
            dvdx(:,j,:) = (u(:,j,:)-rU(j))*(dudx(:,j,:)-rB(j))
@@ -978,20 +969,20 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         Bxy(:) = Bxx(:) *buoyancy%vector(2) + Byy(:) *buoyancy%vector(1) ! buoyancy%vector includes the Froude
         Bxz(:) = Bxx(:) *buoyancy%vector(3) + Bzz(:) *buoyancy%vector(1)
         Byz(:) = Byy(:) *buoyancy%vector(3) + Bzz(:) *buoyancy%vector(2)
-        
+
         Bxx(:) = C_2_R *Bxx(:) *buoyancy%vector(1)
         Byy(:) = C_2_R *Byy(:) *buoyancy%vector(2)
         Bzz(:) = C_2_R *Bzz(:) *buoyancy%vector(3)
-        
+
         dummy = C_1_R /froude
         rB(:) = rB(:) *dummy
 
 !        pmod(:) =-rP_y(:) + SIGN(rB(:),buoyancy%vector(2))
-        
+
         CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rB(1), rB_y(1), wrk3d, wrk2d,wrk3d)
 
      ENDIF
-     
+
   ELSE ! Compressible case is not yet finished
      Bxx(:) =-rR(:)*rUf(:)*buoyancy%vector(1)
      Byy(:) =-rR(:)*rVf(:)*buoyancy%vector(2)
@@ -1303,7 +1294,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         + ( dwdz *C_2_R -wrk3d ) *dvdz + ( dudz +dwdx ) *dvdx + ( dvdz +dwdy ) *dvdy
   IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Eyz(1), wrk1d, area)
-  
+
 ! ##################################################################
 ! Viscous shear-stress tensor
 ! ##################################################################
@@ -1342,21 +1333,21 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ENDDO
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, wrk1d(1,2), wrk1d, area)
   Txxy(:) = Txxy(:) - wrk1d(:,2) *visc *C_2_R
-  Ty3(:)  = Ty3(:)  - wrk1d(:,2) *visc 
+  Ty3(:)  = Ty3(:)  - wrk1d(:,2) *visc
 
   DO j = 1,jmax
      wrk3d(:,j,:) = dvdy(:,j,:) *( v(:,j,:) -fV(j) ) ! -2*v'*tau22'
   ENDDO
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, wrk1d(1,2), wrk1d, area)
   Tyyy(:) = Tyyy(:) - wrk1d(:,2) *visc *C_2_R
-  Ty3(:)  = Ty3(:)  - wrk1d(:,2) *visc       
+  Ty3(:)  = Ty3(:)  - wrk1d(:,2) *visc
 
   DO j = 1,jmax
      wrk3d(:,j,:) = dwdy(:,j,:) *( w(:,j,:) -fW(j) ) ! -2*w'*tau23'
   ENDDO
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, wrk1d(1,2), wrk1d, area)
   Tzzy(:) = Tzzy(:) - wrk1d(:,2) *visc *C_2_R
-  Ty3(:)  = Ty3(:)  - wrk1d(:,2) *visc 
+  Ty3(:)  = Ty3(:)  - wrk1d(:,2) *visc
 
   DO j = 1,jmax
      wrk3d(:,j,:) = dvdy(:,j,:) *( u(:,j,:) -fU(j) ) + dudy(:,j,:) *( v(:,j,:) -fV(j) )! -u'*tau22' -v'*tau12'
@@ -1395,7 +1386,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   Exy(:) =   Exy(:) *visc - Tau_xy(:) *rV_y(:) - Tau_yy(:) *rU_y(:)
   Exz(:) =   Exz(:) *visc - Tau_xy(:) *rW_y(:) - Tau_yz(:) *rU_y(:)
   Eyz(:) =   Eyz(:) *visc - Tau_yy(:) *rW_y(:) - Tau_yz(:) *rV_y(:)
-  
+
 ! ###################################################################
 ! Complete budget equations
 ! ###################################################################
@@ -1404,7 +1395,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      rey_prod(:) =-C_2_R*(rey_flux_y(:)*rR_y(:)+rR2(:)*rV_y(:))
      rey_conv(:) =-rV(:)*rR2_y(:)
      rey_dil1(:) = C_2_R*rR(:)*rey_dil1(:)
-     
+
      DO j = 1,jmax
         IF( rR_y(j) .NE. C_0_R ) THEN
            eddy_diff(j) =-rey_flux_y(j)/rR_y(j)
@@ -1421,38 +1412,38 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
            eddy_diff(j) = C_BIG_R
         ENDIF
      ENDDO
-     
+
   ENDIF
-  
+
   DO j = 1,jmax
-     dummy =  rU_y(j)**2 + rW_y(j)**2 
+     dummy =  rU_y(j)**2 + rW_y(j)**2
      IF ( dummy .NE. C_0_R ) THEN
         eddy_visc(j) = SQRT( (Rxy(j)**2+Ryz(j)**2) / dummy )
      ELSE
         eddy_visc(j) = C_BIG_R
      ENDIF
-     
+
      IF ( eddy_diff(j) .NE. C_0_R ) THEN
         eddy_prandtl(j) = eddy_visc(j)/eddy_diff(j)
      ELSE
         eddy_prandtl(j) = C_0_R
      ENDIF
-     
+
   ENDDO
 
-! Rij Convective Terms 
+! Rij Convective Terms
   Cxx(:) =-fV(:)*Rxx_y(:)
   Cyy(:) =-fV(:)*Ryy_y(:)
   Czz(:) =-fV(:)*Rzz_y(:)
   Cxy(:) =-fV(:)*Rxy_y(:)
   Cxz(:) =-fV(:)*Rxz_y(:)
   Cyz(:) =-fV(:)*Ryz_y(:)
-     
+
 ! Rij Production Terms
   Pxx(:) =-C_2_R*Rxy(:)*fU_y(:)
   Pyy(:) =-C_2_R*Ryy(:)*fV_y(:)
   Pzz(:) =-C_2_R*Ryz(:)*fW_y(:)
-  Pxy(:) =-( Rxy(:)*fV_y(:) + Ryy(:)*fU_y(:) ) 
+  Pxy(:) =-( Rxy(:)*fV_y(:) + Ryy(:)*fU_y(:) )
   Pxz(:) =-( Rxy(:)*fW_y(:) + Ryz(:)*fU_y(:) )
   Pyz(:) =-( Ryy(:)*fW_y(:) + Ryz(:)*fV_y(:) )
 
@@ -1472,7 +1463,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   Dxz(:) = rUf(:)*Tau_yz_y(:) + rWf(:)*Tau_xy_y(:)
   Dyz(:) = rVf(:)*Tau_yz_y(:) + rWf(:)*Tau_yy_y(:)
 
-! Rij Coriolis Terms 
+! Rij Coriolis Terms
   IF (  coriolis%active(1) .AND. coriolis%active(3) ) THEN ! contribution from angular velocity Oy
      dummy = coriolis%vector(2)
      Fxx(:) = dummy *C_2_R * Rxz(:)
@@ -1482,9 +1473,9 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      Fxz(:) = dummy        *(Rzz(:)-Rxx(:))
      Fyz(:) =-dummy        * Rxy(:)
   ENDIF
-     
+
 ! Rij Buoyancy Terms; Calculated in Section Potential Energy
-    
+
 ! Rij Transient terms
   Rxx_t(:) = -Fxx(:) + Bxx(:) + Cxx(:) + Pxx(:) - Exx(:) + ( PIxx(:) - Txxy_y(:) - Gxx(:) + Dxx(:) ) /rR(:)
   Ryy_t(:) = -Fyy(:) + Byy(:) + Cyy(:) + Pyy(:) - Eyy(:) + ( PIyy(:) - Tyyy_y(:) - Gyy(:) + Dyy(:) ) /rR(:)
@@ -1495,7 +1486,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
 ! Kinetic energy equation
   Tke(:)  = C_05_R*(Rxx(:)    + Ryy(:)    + Rzz(:)   )
-  
+
   Buo(:)  = C_05_R*(Bxx(:)    + Byy(:)    + Bzz(:)   )
   Con(:)  = C_05_R*(Cxx(:)    + Cyy(:)    + Czz(:)   )
   Prd(:)  = C_05_R*(Pxx(:)    + Pyy(:)    + Pzz(:)   )
@@ -1504,28 +1495,28 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   Ty_y(:) = C_05_R*(Txxy_y(:) + Tyyy_y(:) + Tzzy_y(:))
   Gkin(:) = C_05_R*(Gxx(:)    + Gyy(:)    + Gzz(:)   )
   Dkin(:) = C_05_R*(Dxx(:)    + Dyy(:)    + Dzz(:)   )
-  
+
   Tke_t(:)= Buo(:) + Con(:) + Prd(:) - Eps(:) + ( - Ty_y(:) + Pi(:) - Gkin(:) + Dkin(:) ) /rR(:)
 
 ! Potential energy equation
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      Pot(:)       = -rB(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale *sbg(inb_scal)%ymean)
-     
+
   ELSE
      Pot(:)       =-rR(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale*rbg%ymean)*buoyancy%vector(2)
-     
+
   ENDIF
 
 ! Kolmogorov microscale and Taylor Reynolds number
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC )THEN
      eta(:) = visc
-     
+
   ELSE
      IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) THEN; wrk3d = visc *vis /rho
      ELSE;                                            wrk3d = visc      /rho ; ENDIF
-     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, eta(1), wrk1d, area)        
+     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, eta(1), wrk1d, area)
   ENDIF
-     
+
   DO j = 1,jmax
      IF ( eta(j) .GT. C_0_R ) THEN; re_x(j) = SQRT(Rxx(j))*lxx(j)/eta(j)
      ELSE;                          re_x(j) = C_BIG_R; ENDIF
@@ -1552,10 +1543,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 6')
 #endif
 
-  IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-
 ! -------------------------------------------------------------------
-! Based on delta_u 
+! Based on delta_u
 ! -------------------------------------------------------------------
 ! Vorticity thickness and momentum thickness
      IF ( ABS(qbg(1)%delta) .GT. C_SMALL_R ) THEN
@@ -1565,7 +1554,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
            wrk1d(j,1) = rR(j)*(C_025_R-(fU(j)/qbg(1)%delta)**2)
         ENDDO
         delta_m = SIMPSON_NU(jmax, wrk1d, g(2)%nodes)/rbg%mean
-           
+
         DO j=1, jmax
            wrk1d(j,1) = ( Tau_xy(j) -  rR(j)*Rxy(j) )*fU_y(j)
         ENDDO
@@ -1589,7 +1578,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         dummy = rbg%mean - (C_05_R-C_1EM2_R)*rbg%delta
         delta_ht01 = UPPER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
 
-        delta_hb01 = (g(2)%nodes(1) + g(2)%scale*rbg%ymean) - delta_hb01  
+        delta_hb01 = (g(2)%nodes(1) + g(2)%scale*rbg%ymean) - delta_hb01
         delta_ht01 = delta_ht01 - (g(2)%nodes(1) + g(2)%scale*rbg%ymean)
         delta_h01  = delta_ht01 + delta_hb01
 
@@ -1598,7 +1587,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         dummy = rbg%mean - (C_05_R-C_025_R)*rbg%delta
         delta_ht25 = UPPER_THRESHOLD(jmax, dummy, rR(1), g(2)%nodes)
 
-        delta_hb25 = (g(2)%nodes(1) + g(2)%scale*rbg%ymean) - delta_hb25  
+        delta_hb25 = (g(2)%nodes(1) + g(2)%scale*rbg%ymean) - delta_hb25
         delta_ht25 = delta_ht25 - (g(2)%nodes(1) + g(2)%scale*rbg%ymean)
         delta_h25  = delta_ht25 + delta_hb25
 
@@ -1643,7 +1632,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
      d_friction = u_friction*rossby
 
-     IF ( u_friction .GT. C_SMALL_R ) THEN 
+     IF ( u_friction .GT. C_SMALL_R ) THEN
         a_friction = ATAN2(Tau_yz(1),Tau_xy(1))*C_18_R*C_10_R/C_PI_R
      ELSE
         a_friction = C_0_R
@@ -1657,17 +1646,6 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         VAUXPRE3 = (g(2)%nodes(j)-g(2)%scale *qbg(1)%ymean -g(2)%nodes(1))/delta_w
         VAUXPRE4 = (g(2)%nodes(j)-g(2)%scale *rbg%ymean    -g(2)%nodes(1))/delta_h01
      ENDDO
-
-! -------------------------------------------------------------------
-! Jet
-! -------------------------------------------------------------------
-  ELSE IF ( imode_flow .EQ. DNS_FLOW_JET ) THEN
-! not developed yet
-     DO j = 1,jmax
-        VAUXPRE1 = g(2)%nodes(j)
-     ENDDO
-
-  ENDIF
 
 ! ###################################################################
 ! Output
@@ -1693,9 +1671,9 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 ! Header
      WRITE(LOC_UNIT_ID, '(A8,E14.7E3)') 'RTIME = ', rtime
 
-! Independent variables     
+! Independent variables
      line2 = 'I J '//TRIM(ADJUSTL(varname(1)))
-     
+
 ! Dependent variables depending on y and t
      DO k = 2,ng
         WRITE(LOC_UNIT_ID,1010) 'GROUP = '//TRIM(ADJUSTL(groupname(k)))//' '//TRIM(ADJUSTL(varname(k)))
@@ -1703,51 +1681,47 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
      ENDDO
 
 ! Dependent variables dependent on t only
-     IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-        line1 = 'Delta_m Delta_m_p Delta_w'
-        WRITE(LOC_UNIT_ID,1010) 'GROUP = ShearThicknesses '//TRIM(ADJUSTL(line1))
-        line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
+    line1 = 'Delta_m Delta_m_p Delta_w'
+    WRITE(LOC_UNIT_ID,1010) 'GROUP = ShearThicknesses '//TRIM(ADJUSTL(line1))
+    line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
-        line1 = 'Delta_hb01 Delta_ht01 Delta_h01 Delta_hb25 Delta_ht25 Delta_h25 '&
-             //'mixing_Youngs mixing_Cook'
-        WRITE(LOC_UNIT_ID,1010) 'GROUP = MixingThicknesses '//TRIM(ADJUSTL(line1))
-        line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
+    line1 = 'Delta_hb01 Delta_ht01 Delta_h01 Delta_hb25 Delta_ht25 Delta_h25 '&
+         //'mixing_Youngs mixing_Cook'
+    WRITE(LOC_UNIT_ID,1010) 'GROUP = MixingThicknesses '//TRIM(ADJUSTL(line1))
+    line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
-        line1 = 'FrictionVelocity FrictionThickness FrictionAngle'
-        WRITE(LOC_UNIT_ID,1010) 'GROUP = FrictionTerms '//TRIM(ADJUSTL(line1))
-        line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
-     ENDIF
+    line1 = 'FrictionVelocity FrictionThickness FrictionAngle'
+    WRITE(LOC_UNIT_ID,1010) 'GROUP = FrictionTerms '//TRIM(ADJUSTL(line1))
+    line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
      WRITE(LOC_UNIT_ID,1010) TRIM(ADJUSTL(line2))
 
-! Body     
-     DO j = 1,jmax            
+! Body
+     DO j = 1,jmax
 
-        ivauxpos = 0        
+        ivauxpos = 0
         IF ( j .EQ. jmax/2 ) THEN
-           IF ( imode_flow .EQ. DNS_FLOW_SHEAR ) THEN
-              ivauxpos = 14
-              VAUXPOS(1) = delta_m
-              VAUXPOS(2) = delta_m_p
-              VAUXPOS(3) = delta_w
-              VAUXPOS(4) = delta_hb01
-              VAUXPOS(5) = delta_ht01
-              VAUXPOS(6) = delta_h01
-              VAUXPOS(7) = delta_hb25
-              VAUXPOS(8) = delta_ht25
-              VAUXPOS(9) = delta_h25
-              VAUXPOS(10)= mixing1
-              VAUXPOS(11)= mixing2
-              VAUXPOS(12)= u_friction
-              VAUXPOS(13)= d_friction
-              VAUXPOS(14)= a_friction
-           ENDIF
+          ivauxpos = 14
+          VAUXPOS(1) = delta_m
+          VAUXPOS(2) = delta_m_p
+          VAUXPOS(3) = delta_w
+          VAUXPOS(4) = delta_hb01
+          VAUXPOS(5) = delta_ht01
+          VAUXPOS(6) = delta_h01
+          VAUXPOS(7) = delta_hb25
+          VAUXPOS(8) = delta_ht25
+          VAUXPOS(9) = delta_h25
+          VAUXPOS(10)= mixing1
+          VAUXPOS(11)= mixing2
+          VAUXPOS(12)= u_friction
+          VAUXPOS(13)= d_friction
+          VAUXPOS(14)= a_friction
         ENDIF
 
         WRITE(LOC_UNIT_ID,1020) 1, j, (mean2d(j,k),k=1,nmax), (VAUXPOS(k),k=1,ivauxpos)
 
      ENDDO
-     
+
      CLOSE(LOC_UNIT_ID)
 
 #ifdef USE_MPI
@@ -1760,4 +1734,3 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 1020 FORMAT(I5,(1X,I5),L_AVGMAX(1X,G_FORMAT_R),14(1X,G_FORMAT_R))
 
 END SUBROUTINE AVG_FLOW_XZ
-
