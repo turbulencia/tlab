@@ -21,15 +21,15 @@
 !# Array u_vo and tem_vo are auxiliar.
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 #include "types.h"
 
-SUBROUTINE FLOW_JET_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem, mean_tem, &
+SUBROUTINE FLOW_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem, mean_tem, &
      ycoor_tem, diam_tem, jet_tem, iprof_u, thick_u, delta_u, mean_u, ycoor_u, diam_u, &
      jet_u, scaley, x, y, z1, p, rho_vi, u_vi, tem_vi, rho_vo, u_vo, tem_vo, wrk1d)
-  
+
   USE DNS_CONSTANTS, ONLY : wfile
 
   IMPLICIT NONE
@@ -50,14 +50,12 @@ SUBROUTINE FLOW_JET_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem,
   TREAL wrk1d(jmax,*)
 
 ! -------------------------------------------------------------------
-  TREAL ycenter
-  TREAL tol, err, param(2)
-  TREAL FLOW_JET_TEMPORAL
+  TREAL FLOW_SHEAR_TEMPORAL, ycenter
+  TREAL tol, err
 
   TINTEGER i, j, n, nmax, ier
 
 ! ###################################################################
-  param = C_0_R
 
 ! Convergence parameters
   nmax = 30
@@ -66,8 +64,8 @@ SUBROUTINE FLOW_JET_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem,
   tem_vi(1:jmax) = C_0_R
   ycenter = y(1) + scaley*ycoor_tem
   DO j = 1,jmax
-     tem_vi(j) = FLOW_JET_TEMPORAL&
-          (iprof_tem, thick_tem, delta_tem, mean_tem, diam_tem, ycenter, param, y(j))
+     tem_vi(j) = FLOW_SHEAR_TEMPORAL&
+          (iprof_tem, thick_tem, delta_tem, mean_tem, ycenter, jet_tem, y(j))
   ENDDO
 
 #define rho_aux(j) wrk1d(j,1)
@@ -86,15 +84,15 @@ SUBROUTINE FLOW_JET_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem,
      DO n = 1,nmax
 ! Velocity profile. Array tem_vo used as auxiliar array
         ycenter = y(1) + scaley*ycoor_u
-        CALL FLOW_JET_SPATIAL_VELOCITY&
+        CALL FLOW_SPATIAL_VELOCITY&
              (i1, jmax, iprof_u, thick_u, delta_u, mean_u, diam_u, ycenter,&
-             jet_u(1), jet_u(2), jet_u(3), x(i), y, &
+             jet_u(2), jet_u(3), jet_u(4), x(i), y, &
              rho_vi, u_vi, rho_aux(1), u_vo, tem_vo, aux(1), wrk1d(1,3))
-! Normalized temperature and density profiles 
+! Normalized temperature and density profiles
         ycenter = y(1) + scaley*ycoor_tem
-        CALL FLOW_JET_SPATIAL_SCALAR&
+        CALL FLOW_SPATIAL_SCALAR&
              (i1, jmax, iprof_tem, thick_tem, delta_tem, mean_tem, diam_tem, diam_u, ycenter,&
-             jet_tem(1), jet_tem(2), jet_tem(3), x(i), y, &
+             jet_tem(2), jet_tem(3), jet_tem(4), x(i), y, &
              rho_vi, u_vi, tem_vi, rho_aux(1), u_vo, tem_vo, aux(1))
         CALL THERMO_THERMAL_DENSITY(i1, jmax, i1, z1, p, tem_vo, wrk1d(1,2))
 ! Convergence criteria (infinity norm)
@@ -111,7 +109,7 @@ SUBROUTINE FLOW_JET_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem,
 
 ! Final check
      IF ( ier .EQ. 1 ) THEN
-        CALL IO_WRITE_ASCII(wfile, 'FLOW_JET_SPATIAL: nmax reached.')
+        CALL IO_WRITE_ASCII(wfile, 'FLOW_SPATIAL: nmax reached.')
      ENDIF
      DO j = 1,jmax
         rho_vo(i,j) = rho_aux(j)
@@ -119,4 +117,4 @@ SUBROUTINE FLOW_JET_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem,
   ENDDO
 
   RETURN
-END SUBROUTINE FLOW_JET_SPATIAL_DENSITY
+END SUBROUTINE FLOW_SPATIAL_DENSITY

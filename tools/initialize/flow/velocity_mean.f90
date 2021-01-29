@@ -18,8 +18,8 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
 
   ! -------------------------------------------------------------------
   TINTEGER iq, j, k
-  TREAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL, ycenter, calpha, salpha
-  EXTERNAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL
+  TREAL FLOW_SHEAR_TEMPORAL, ycenter, calpha, salpha
+  EXTERNAL FLOW_SHEAR_TEMPORAL
 
   !########################################################################
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
@@ -63,9 +63,9 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
     ! u_vi(:)   = u(1,:,1)
 
     ycenter = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
-    CALL FLOW_JET_SPATIAL_VELOCITY(imax,jmax, &
+    CALL FLOW_SPATIAL_VELOCITY(imax,jmax, &
     qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, qbg(1)%diam, ycenter, &
-    qbg(1)%parameters(1), qbg(1)%parameters(2), qbg(1)%parameters(3), &
+    qbg(1)%parameters(2), qbg(1)%parameters(3), qbg(1)%parameters(4), &
     g(1)%nodes, g(2)%nodes, rho_vi(1), u_vi(1), rho, u, v, aux(1), wrk3d)
     IF ( g(3)%size .GT. 1 ) THEN
       DO k = 2,kmax

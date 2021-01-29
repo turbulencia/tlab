@@ -45,8 +45,8 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
   ! -------------------------------------------------------------------
   TREAL ycenter, dummy
   TINTEGER j, k, is, bcs(2,2)
-  TREAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL
-  EXTERNAL FLOW_SHEAR_TEMPORAL, FLOW_JET_TEMPORAL
+  TREAL FLOW_SHEAR_TEMPORAL
+  EXTERNAL FLOW_SHEAR_TEMPORAL
 
   bcs = 0
 
@@ -124,10 +124,8 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
     ! Only if there is a density variation. Constant density is already
     ! initialized in previous routine segment.
     ! -------------------------------------------------------------------
-  ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. rbg%delta .NE. C_0_R ) THEN
-
-    ! temperature/mixture profile are given
-    IF ( rbg%type .EQ. PROFILE_NONE ) THEN
+  ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
+    IF ( rbg%type .EQ. PROFILE_NONE ) THEN ! temperature/mixture profile are given
 #define rho_vi(j) wrk1d(j,1)
 #define u_vi(j)   wrk1d(j,2)
 #define aux1(j)   wrk1d(j,3)
@@ -140,12 +138,11 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
       ! Inflow profile of axial velocity
       ycenter = g(2)%nodes(1) + g(2)%scale*qbg(1)%ymean
       DO j = 1,jmax
-        u_vi(j) = FLOW_JET_TEMPORAL&
-        (qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, qbg(1)%diam, ycenter, qbg(1)%parameters,g(2)%nodes(j))
+        u_vi(j) = FLOW_SHEAR_TEMPORAL(qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters,g(2)%nodes(j))
       ENDDO
 
       ! 2D distribution of density
-      CALL FLOW_JET_SPATIAL_DENSITY(imax, jmax, &
+      CALL FLOW_SPATIAL_DENSITY(imax, jmax, &
       tbg%type, tbg%thick, tbg%delta, tbg%mean, tbg%ymean, tbg%diam, tbg%parameters, &
       qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, qbg(1)%ymean, qbg(1)%diam, qbg(1)%parameters, &
       g(2)%scale, g(1)%nodes, g(2)%nodes, s,p,rho_vi(1),u_vi(1),aux1(1),rho,aux2(1),aux3(1),aux4(1))
@@ -154,12 +151,10 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
         rho(:,:,k) = rho(:,:,1)
       ENDDO
 
-      ! density profile itself is given
-    ELSE
+    ELSE ! density profile itself is given
       ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean
       DO j = 1,jmax
-        dummy =  FLOW_JET_TEMPORAL&
-        (rbg%type, rbg%thick, rbg%delta, rbg%mean, rbg%diam, ycenter, rbg%parameters, g(2)%nodes(j))
+        dummy =  FLOW_SHEAR_TEMPORAL(rbg%type, rbg%thick, rbg%delta, rbg%mean, ycenter, rbg%parameters, g(2)%nodes(j))
         rho(:,j,:) = rho(:,j,:) + dummy
       ENDDO
 

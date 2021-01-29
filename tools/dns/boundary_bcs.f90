@@ -9,7 +9,7 @@ MODULE BOUNDARY_BCS
 
   IMPLICIT NONE
   SAVE
-  
+
   TYPE bcs_dt
      SEQUENCE
      TINTEGER type(MAX_VARS)                      ! dirichlet, neumann for incompressible
@@ -18,30 +18,30 @@ MODULE BOUNDARY_BCS
      TREAL cinf, cout, ctan                       ! characteristic formulation for compressible
      TREAL, ALLOCATABLE, DIMENSION(:,:,:) :: ref  ! reference fields
   END type bcs_dt
-  
+
   TYPE(bcs_dt), PUBLIC :: BcsFlowImin,BcsFlowImax,BcsFlowJmin,BcsFlowJmax,BcsFlowKmin,BcsFlowKmax
   TYPE(bcs_dt), PUBLIC :: BcsScalImin,BcsScalImax,BcsScalJmin,BcsScalJmax,BcsScalKmin,BcsScalKmax
 
   LOGICAL, PUBLIC :: BcsDrift
-  
+
 ! Compressible viscous
   TINTEGER, PUBLIC :: bcs_inf(2,2,3), bcs_out(2,2,3) ! 1. index: lower and upper values
                                              ! 2. index: derivative order
                                              ! 3. index: direction
   PUBLIC :: BOUNDARY_BCS_INITIALIZE
-  
+
   PRIVATE
 
 CONTAINS
-  
+
 ! ###################################################################
 ! ###################################################################
 SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 
   USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
-#ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
-#endif 
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS, ONLY : tfile
+#endif
   USE DNS_GLOBAL,    ONLY : imode_eqns
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, inb_flow_array,inb_scal_array
   USE DNS_GLOBAL,    ONLY : g
@@ -59,19 +59,19 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 #ifdef USE_MPI
 #include "mpif.h"
 #endif
-  
+
   TREAL, DIMENSION(*) :: wrk3d
 
 ! -------------------------------------------------------------------
   TINTEGER j, is
-  TREAL prefactor, dummy
-  TREAL diam_loc, thick_loc, ycenter, r1, r05, FLOW_JET_TEMPORAL
+  TREAL prefactor, dummy, param(5)
+  TREAL diam_loc, thick_loc, ycenter, r1, r05, FLOW_SHEAR_TEMPORAL
 
 #ifdef USE_MPI
   CHARACTER*32 str
   TINTEGER isize_loc,id
 #endif
-  
+
 ! ###################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_INITIALLIZE' )
@@ -88,7 +88,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
   ALLOCATE( BcsFlowJmax%ref(imax,kmax,inb_flow_array+1) )
   ALLOCATE( BcsFlowKmin%ref(imax,jmax,inb_flow_array+1) ) ! not yet used
   ALLOCATE( BcsFlowKmax%ref(imax,jmax,inb_flow_array+1) )
-  
+
   ALLOCATE( BcsScalImin%ref(jmax,kmax,inb_scal_array+1) )
   ALLOCATE( BcsScalImax%ref(jmax,kmax,inb_scal_array+1) )
   ALLOCATE( BcsScalJmin%ref(imax,kmax,inb_scal_array+1) )
@@ -101,7 +101,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 ! #######################################################################
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
 ! So far, nothing to initialize
-     
+
   ELSE
 ! #######################################################################
 ! Compressible mode
@@ -114,7 +114,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         id    = DNS_MPI_K_NRBCX
         isize_loc = MOD(jmax,ims_npro_k)
         ims_bcs_imax = 2*(inb_flow+inb_scal_array)
-        DO WHILE ( MOD(isize_loc*ims_bcs_imax,ims_npro_k) .GT. 0 ) 
+        DO WHILE ( MOD(isize_loc*ims_bcs_imax,ims_npro_k) .GT. 0 )
            ims_bcs_imax = ims_bcs_imax + 1
         ENDDO
         WRITE(str,*) ims_bcs_imax
@@ -124,12 +124,12 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
              ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      ENDIF
-     
+
      IF ( .NOT. g(2)%periodic ) THEN ! Required for NRBCs in Oy
         id    = DNS_MPI_K_NRBCY
         isize_loc = MOD(imax,ims_npro_k)
         ims_bcs_jmax = 2*(inb_flow+inb_scal_array)
-        DO WHILE ( MOD(isize_loc*ims_bcs_jmax,ims_npro_k) .GT. 0 ) 
+        DO WHILE ( MOD(isize_loc*ims_bcs_jmax,ims_npro_k) .GT. 0 )
            ims_bcs_jmax = ims_bcs_jmax + 1
         ENDDO
         WRITE(str,*) ims_bcs_jmax
@@ -145,14 +145,14 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 ! Compute reference pressure for Poinsot&Lele term in NR Bcs.
 ! Note that buffer_?(1,1,1,4) is now the energy, and we need p
 ! ###################################################################
-     BcsFlowImin%ref(:,:,5) = pbg%mean; BcsFlowImax%ref(:,:,5) = pbg%mean ! default values 
+     BcsFlowImin%ref(:,:,5) = pbg%mean; BcsFlowImax%ref(:,:,5) = pbg%mean ! default values
      BcsFlowJmin%ref(:,:,5) = pbg%mean; BcsFlowJmax%ref(:,:,5) = pbg%mean
      BcsFlowKmin%ref(:,:,5) = pbg%mean; BcsFlowKmax%ref(:,:,5) = pbg%mean
-     
+
      prefactor = C_05_R *(gama0-C_1_R) *mach*mach
      r1        = C_1_R
      r05       = C_05_R
-        
+
 ! -------------------------------------------------------------------
 ! Using buffer fields; bottom
 ! -------------------------------------------------------------------
@@ -181,7 +181,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         BcsScalJmin%ref(:,:,inb_scal+1) = C_1_R
 
      ENDIF
-     
+
 ! -------------------------------------------------------------------
 ! Using buffer fields; top
 ! -------------------------------------------------------------------
@@ -210,7 +210,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         BcsFlowJmax%ref(:,:,inb_flow+1) = C_1_R
         BcsScalJmax%ref(:,:,inb_scal+1) = C_1_R
      ENDIF
-     
+
 ! -------------------------------------------------------------------
 ! Using buffer fields; left
 ! -------------------------------------------------------------------
@@ -238,11 +238,12 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         diam_loc  = C_3_R*qbg(1)%diam
         thick_loc = qbg(1)%diam/C_8_R
         ycenter   = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
-        BcsFlowImin%ref(:,:,inb_flow+1) = FLOW_JET_TEMPORAL(i2, thick_loc, r1, r05, diam_loc, ycenter, dummy, g(2)%nodes(j))
-        BcsScalImin%ref(:,:,inb_scal+1) = FLOW_JET_TEMPORAL(i2, thick_loc, r1, r05, diam_loc, ycenter, dummy, g(2)%nodes(j))
+        param=C_0_R; param(5) = diam_loc
+        BcsFlowImin%ref(:,:,inb_flow+1) = FLOW_SHEAR_TEMPORAL(i2, thick_loc, r1, r05, ycenter, param, g(2)%nodes(j))
+        BcsScalImin%ref(:,:,inb_scal+1) = FLOW_SHEAR_TEMPORAL(i2, thick_loc, r1, r05, ycenter, param, g(2)%nodes(j))
 
      ENDIF
-     
+
 ! -------------------------------------------------------------------
 ! Using buffer fields; right
 ! -------------------------------------------------------------------
@@ -268,13 +269,13 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 
 ! try to use only the coflow values
         BcsFlowImax%ref(:,:,3) = C_0_R
-             
+
 ! shape factor
         BcsFlowImax%ref(:,:,inb_flow+1) = C_1_R
         BcsScalImax%ref(:,:,inb_scal+1) = C_1_R
 
      ENDIF
-     
+
   ENDIF
 
 #ifdef TRACE_ON

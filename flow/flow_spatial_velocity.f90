@@ -21,10 +21,10 @@
 !# should also be rewritten in terms of OPR_PARTIAL_ and QUAD routines.
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
-SUBROUTINE FLOW_JET_SPATIAL_VELOCITY&
+SUBROUTINE FLOW_SPATIAL_VELOCITY&
      (imax, jmax, iprof_u, thick_u, delta_u, mean_u, diam_u, ycenter,&
      jet_u_a, jet_u_b, jet_u_flux, x, y, rho_vi, u_vi, rho, u, v, wrk1d, wrk2d)
 
@@ -49,8 +49,8 @@ SUBROUTINE FLOW_JET_SPATIAL_VELOCITY&
 ! -------------------------------------------------------------------
   TREAL c1, c2
   TREAL delta, eta, ExcMom_vi, Q1, Q2, U2, UC
-  TREAL dummy, param(2), flux_aux, diam_loc
-  TREAL SIMPSON_NU, FLOW_JET_TEMPORAL
+  TREAL dummy, param(5), flux_aux, diam_loc
+  TREAL SIMPSON_NU, FLOW_SHEAR_TEMPORAL
   TREAL xi_tr, dxi_tr
 
   TINTEGER i, j, jsym
@@ -62,7 +62,7 @@ SUBROUTINE FLOW_JET_SPATIAL_VELOCITY&
 #ifdef SINGLE_PREC
   c1 =-0.6749e+0
   c2 = 0.027e+0
-#else 
+#else
   c1 =-0.6749d+0
   c2 = 0.027d+0
 #endif
@@ -73,15 +73,15 @@ SUBROUTINE FLOW_JET_SPATIAL_VELOCITY&
 ! Axial velocity, U_c*f(eta)
 ! ###################################################################
 ! -------------------------------------------------------------------
-! Transition as a tanh profile around xi_tr between (0,2xi_tr) 
-! in the slope of the half width. 
-! It is set s.t. the vorticity thickness associated with this 
-! tanh is half of the distance between xi_tr and the estimated end of 
+! Transition as a tanh profile around xi_tr between (0,2xi_tr)
+! in the slope of the half width.
+! It is set s.t. the vorticity thickness associated with this
+! tanh is half of the distance between xi_tr and the estimated end of
 ! transition, 2 xi_tr.
 ! -------------------------------------------------------------------
   xi_tr = C_05_R/jet_u_a - jet_u_b
   IF ( xi_tr .LT. C_0_R ) THEN
-     CALL IO_WRITE_ASCII(wfile, 'FLOW_SPATIAL_JET_VELOCITY. xi_tr negative.')
+     CALL IO_WRITE_ASCII(wfile, 'FLOW_SPATIAL_VELOCITY. xi_tr negative.')
   ENDIF
   dxi_tr=xi_tr/C_8_R
 
@@ -93,10 +93,10 @@ SUBROUTINE FLOW_JET_SPATIAL_VELOCITY&
      diam_loc = C_2_R*delta
 
 ! inflow profile
+     param(5) = diam_loc
      wrk1d(1:jmax,1) = C_0_R
      DO j = 1,jmax
-        wrk1d(j,1) = FLOW_JET_TEMPORAL&
-             (iprof_u, thick_u, delta_u, mean_u, diam_loc, ycenter, param, y(j))
+        wrk1d(j,1) = FLOW_SHEAR_TEMPORAL(iprof_u, thick_u, delta_u, mean_u, ycenter, param, y(j))
      ENDDO
      UC = wrk1d(jmax/2,1)-U2
 
@@ -125,7 +125,7 @@ SUBROUTINE FLOW_JET_SPATIAL_VELOCITY&
      dummy = C_05_R*(C_1_R+TANH(C_05_R*(x(i)/diam_u-xi_tr)/dxi_tr))
      flux_aux = dummy*jet_u_flux + (C_1_R-dummy)*C_1_R
 
-! Calculating UC. 
+! Calculating UC.
 ! Solve second order equation Q1*UC^2+Q2*UC-J=0, positive root.
      DO j = 1,jmax
         wrk1d(j,1) = rho(i,j)*u(i,j)*u(i,j)
@@ -190,4 +190,4 @@ SUBROUTINE FLOW_JET_SPATIAL_VELOCITY&
   ENDIF
 
   RETURN
-END SUBROUTINE FLOW_JET_SPATIAL_VELOCITY
+END SUBROUTINE FLOW_SPATIAL_VELOCITY

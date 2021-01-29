@@ -139,6 +139,8 @@
 #define PROFILE_GAUSSIAN_SURFACE   17
 #define PROFILE_GAUSSIAN_ANTISYM   18
 #define PROFILE_GAUSSIAN_SYM       19
+#define PROFILE_TANH_ANTISYM       20
+#define PROFILE_TANH_SYM           21
 
 ! Chemistry Constants
 #define CHEM_NONE           0

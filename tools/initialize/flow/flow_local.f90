@@ -107,12 +107,12 @@ SUBROUTINE FLOW_SHAPE( wrk1d )
     DO j = 1,jmax
       yr = yn(j) - ycenter
       wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
-      wrk1d(j,2) =-yr /( Kini%thick **2 ) *wrk1d(j,1)
+      wrk1d(j,2) = yr /( Kini%thick **2 ) *wrk1d(j,1)
     ENDDO
 
     ycenter = yn(1) +g(2)%scale *Kini%ymean +C_05_R *qbg(1)%diam
-    IF     ( fp%type .EQ. PROFILE_GAUSSIAN_ANTISYM ) THEN; factor =-C_1_R ! varicose
-    ELSEIF ( fp%type .EQ. PROFILE_GAUSSIAN_SYM     ) THEN; factor = C_1_R ! Sinuous
+    IF     ( Kini%type .EQ. PROFILE_GAUSSIAN_ANTISYM ) THEN; factor =-C_1_R ! varicose
+    ELSEIF ( Kini%type .EQ. PROFILE_GAUSSIAN_SYM     ) THEN; factor = C_1_R ! Sinuous
     ENDIF
     DO j = 1,jmax
       yr = yn(j) - ycenter
