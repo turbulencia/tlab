@@ -55,10 +55,10 @@ FUNCTION PROFILES(iflag, thick, delta, mean, ycenter, param, y)
       amplify = EXP(-C_05_R*xi**C_2_R)
 
     CASE( PROFILE_GAUSSIAN_SYM )
-      amplify = EXP(-C_05_R*(xi-C_05_R*param(5)/thick)**C_2_R) +EXP(C_05_R*(xi+C_05_R*param(5)/thick)**C_2_R)
+      amplify = EXP(-C_05_R*(xi-C_05_R*param(5)/thick)**C_2_R) +EXP(-C_05_R*(xi+C_05_R*param(5)/thick)**C_2_R)
 
     CASE( PROFILE_GAUSSIAN_ANTISYM )
-      amplify = EXP(-C_05_R*(xi-C_05_R*param(5)/thick)**C_2_R) -EXP(C_05_R*(xi+C_05_R*param(5)/thick)**C_2_R)
+      amplify = EXP(-C_05_R*(xi-C_05_R*param(5)/thick)**C_2_R) -EXP(-C_05_R*(xi+C_05_R*param(5)/thick)**C_2_R)
 
     CASE( PROFILE_EKMAN_U )
       amplify = C_1_R -EXP(-xi)*COS(xi)

@@ -39,7 +39,6 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile,'#NormalizeP=<value>')
   CALL IO_WRITE_ASCII(bakfile,'#Mixture=<string>')
 
-  ! velocity
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'Velocity', 'None', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'              ) THEN; flag_u = 0
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'velocitydiscrete'  ) THEN; flag_u = 1
@@ -55,7 +54,8 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   IF ( TRIM(ADJUSTL(sRes)) .eq. 'no' ) THEN; flag_dilatation=0
   ELSE;                                      flag_dilatation=1; ENDIF
 
-  ! Geometry and scaling of perturbation
+  Kini = qbg(1) ! default geometry and scaling of perturbation
+
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ProfileIniK', 'GaussianSurface', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'             ) THEN; Kini%type = PROFILE_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'gaussian'         ) THEN; Kini%type = PROFILE_GAUSSIAN
@@ -70,9 +70,8 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
 
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIniK', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
-  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIni', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; Kini%thick  = qbg(1)%thick;
-  ELSE
+    CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIni', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
     dummy(1) = C_1_R; idummy = 1
     CALL LIST_REAL(sRes, idummy, dummy)
     Kini%thick = dummy(1)
@@ -80,20 +79,16 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
 
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIniK', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
-  CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN; Kini%ymean = qbg(1)%ymean;
-  ELSE
+    CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'void', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
     dummy(1) = C_1_R; idummy = 1
     CALL LIST_REAL(sRes, idummy, dummy)
     Kini%ymean = dummy(1)
   ENDIF
 
-  Kini%parameters = C_0_R
-
   CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeK', '-1.0', norm_ini_u)
   CALL SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeP', '-1.0', norm_ini_p)
 
-  ! Temperature
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'Temperature', 'None', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'           ) THEN; flag_t = 0
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'planebroadband' ) THEN; flag_t = 4
