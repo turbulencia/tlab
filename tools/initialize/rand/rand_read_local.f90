@@ -69,10 +69,10 @@ SUBROUTINE RAND_READ_LOCAL(inifile)
         CALL DNS_STOP(DNS_ERROR_OPTION)
      ENDIF
   ENDIF
-  CALL IO_WRITE_ASCII(bakfile,'Covariance matrix:')
-  WRITE(sRes,'(3E11.4)') ucov(1), ucov(4), ucov(5); CALL IO_WRITE_ASCII(bakfile,sRes)
-  WRITE(sRes,'(3E11.4)') ucov(4), ucov(2), ucov(6); CALL IO_WRITE_ASCII(bakfile,sRes)
-  WRITE(sRes,'(3E11.4)') ucov(5), ucov(6), ucov(3); CALL IO_WRITE_ASCII(bakfile,sRes)
+  ! CALL IO_WRITE_ASCII(bakfile,'Covariance matrix:')
+  ! WRITE(sRes,'(3E11.4)') ucov(1), ucov(4), ucov(5); CALL IO_WRITE_ASCII(bakfile,sRes)
+  ! WRITE(sRes,'(3E11.4)') ucov(4), ucov(2), ucov(6); CALL IO_WRITE_ASCII(bakfile,sRes)
+  ! WRITE(sRes,'(3E11.4)') ucov(5), ucov(6), ucov(3); CALL IO_WRITE_ASCII(bakfile,sRes)
 
   RETURN
 END SUBROUTINE RAND_READ_LOCAL

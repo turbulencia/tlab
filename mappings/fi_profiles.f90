@@ -26,11 +26,11 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
 #include "integers.h"
 
   TREAL, DIMENSION(g(2)%size,*), INTENT(INOUT) :: wrk1d
-  
+
 ! -----------------------------------------------------------------------
   TINTEGER is, j, ip, nlines, offset
-  TREAL ycenter, FLOW_SHEAR_TEMPORAL 
- 
+  TREAL ycenter, PROFILES
+
 ! #######################################################################
   ALLOCATE(pbackground(g(2)%size))
   ALLOCATE(rbackground(g(2)%size))
@@ -52,7 +52,7 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
   DO is = 1,inb_scal
      ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
      DO j = 1,g(2)%size
-        wrk1d(j,is) = FLOW_SHEAR_TEMPORAL(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+        wrk1d(j,is) = PROFILES(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
      ENDDO
 !     wrk1d(:,is) = sbg(is)%reference
   ENDDO
@@ -60,26 +60,26 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
   IF ( pbg%parameters(1) .GT. C_0_R ) THEN
 ! Calculate derived thermodynamic profiles
      epbackground = (g(2)%nodes - g(2)%nodes(1) - g(2)%scale *pbg%ymean) *GRATIO /pbg%parameters(1)
-     
+
      IF ( buoyancy%active(2) ) THEN
 !        CALL FI_HYDROSTATIC_H_OLD(g(2)%size, g(2)%nodes, wrk1d, epbackground, tbackground, pbackground, wrk1d(1,4))
         CALL FI_HYDROSTATIC_H(g(2), wrk1d, epbackground, tbackground, pbackground, wrk1d(1,inb_scal_array+1))
      ENDIF
-     
+
   ENDIF
-  
+
   IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
      CALL THERMO_AIRWATER_PH(i1,g(2)%size,i1, wrk1d(1,2),wrk1d(1,1), epbackground,pbackground )
-  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN 
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
      CALL THERMO_AIRWATER_LINEAR(i1,g(2)%size,i1, wrk1d, wrk1d(1,inb_scal_array))
   ENDIF
-  
+
   IF ( pbg%parameters(1) .GT. C_0_R ) THEN
      CALL THERMO_ANELASTIC_DENSITY(i1,g(2)%size,i1, wrk1d, epbackground,pbackground, rbackground)
      ribackground = C_1_R /rbackground
   ENDIF
-  
-! Calculate buoyancy profile  
+
+! Calculate buoyancy profile
   IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
      CALL THERMO_ANELASTIC_BUOYANCY(i1,g(2)%size,i1, wrk1d, epbackground,pbackground,rbackground, bbackground)
   ELSE
@@ -111,10 +111,10 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
 ! #######################################################################
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL IO_WRITE_ASCII(lfile,'Initialize anelastic density correction in burgers operator.')
-     
+
 ! Density correction term in the burgers operator along X
      g(1)%anelastic = .TRUE.
-#ifdef USE_MPI         
+#ifdef USE_MPI
      IF ( ims_npro_i .GT. 1 ) THEN
         nlines = ims_size_i(DNS_MPI_I_PARTIAL)
         offset = nlines *ims_pro_i
@@ -122,7 +122,7 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
 #endif
         nlines = jmax*kmax
         offset = 0
-#ifdef USE_MPI         
+#ifdef USE_MPI
      ENDIF
 #endif
      ALLOCATE(g(1)%rhoinv(nlines))
@@ -130,7 +130,7 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
         ip = MOD(offset +j -1, g(2)%size) +1
         g(1)%rhoinv(j) = ribackground(ip)
      ENDDO
-     
+
 ! Density correction term in the burgers operator along Y; see fdm_initialize
 ! implemented directly in the tridiagonal system
      ip = 0
@@ -139,10 +139,10 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
         g(2)%lu2d(:g(2)%size-1,ip+3) = g(2)%lu2d(:,ip+3) *rbackground (2:) ! matrix U; 1. superdiagonal
         ip = ip + 3
      ENDDO
-     
+
 ! Density correction term in the burgers operator along Z
      g(3)%anelastic = .TRUE.
-#ifdef USE_MPI         
+#ifdef USE_MPI
      IF ( ims_npro_k .GT. 1 ) THEN
         nlines = ims_size_k(DNS_MPI_K_PARTIAL)
         offset = nlines *ims_pro_k
@@ -150,16 +150,16 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
 #endif
         nlines = imax*jmax
         offset = 0
-#ifdef USE_MPI         
+#ifdef USE_MPI
      ENDIF
 #endif
-     ALLOCATE(g(3)%rhoinv(nlines))  
+     ALLOCATE(g(3)%rhoinv(nlines))
      DO j = 1,nlines
         ip = (offset +j -1) /imax +1
         g(3)%rhoinv(j) = ribackground(ip)
      ENDDO
-     
+
   END IF
-  
+
   RETURN
 END SUBROUTINE FI_PROFILES_INITIALIZE

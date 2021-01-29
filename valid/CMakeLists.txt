@@ -20,5 +20,4 @@ target_link_libraries(vpoisson.x mappings operators io thermodynamics averages f
 
 FILE(GLOB sourcefiles "burgers/*.f90")
 add_executable(vburgers.x ${sourcefiles})
-target_link_libraries(vburgers.x mappings operators flow io thermodynamics averages fdm linear ${LEVEL1_LIBS} ${LIBS})
-
+target_link_libraries(vburgers.x mappings operators io thermodynamics averages fdm linear ${LEVEL1_LIBS} ${LIBS})

@@ -775,15 +775,15 @@ SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
 
   ! -----------------------------------------------------------------------
   TINTEGER j
-  TREAL FLOW_SHEAR_TEMPORAL, ycenter, dummy
-  EXTERNAL FLOW_SHEAR_TEMPORAL
+  TREAL PROFILES, ycenter, dummy
+  EXTERNAL PROFILES
 
   ! #######################################################################
   IF ( flag_mode .EQ. 0 ) THEN ! Velocity
     IF ( is .EQ. 1 ) THEN ! Only the mean velocity
       ycenter = y(1) + g(2)%scale *qbg(1)%ymean
       DO j = 1,ny
-        dummy =  FLOW_SHEAR_TEMPORAL&
+        dummy =  PROFILES&
         (qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, y(j))
         b(:,j,:) = dummy + a(:,j,:)
       ENDDO
@@ -794,7 +794,7 @@ SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
   ELSE                         ! Scalars
     ycenter = y(1) + g(2)%scale *sbg(is)%ymean
     DO j = 1,ny
-      dummy =  FLOW_SHEAR_TEMPORAL&
+      dummy =  PROFILES&
       (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, y(j))
       b(:,j,:) = dummy + a(:,j,:)
     ENDDO

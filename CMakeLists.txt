@@ -73,7 +73,6 @@ add_subdirectory(mpi)
 endif()
 add_subdirectory(operators)
 add_subdirectory(io)
-add_subdirectory(flow)
 add_subdirectory(mappings)
 add_subdirectory(lagrange)
 
@@ -84,4 +83,3 @@ add_subdirectory(tools)
 add_subdirectory(valid)
 
 #add_custom_target(examples message(STATUS "We are making examples"))
-

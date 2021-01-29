@@ -18,8 +18,8 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
 
   ! -------------------------------------------------------------------
   TINTEGER iq, j, k
-  TREAL FLOW_SHEAR_TEMPORAL, ycenter, calpha, salpha
-  EXTERNAL FLOW_SHEAR_TEMPORAL
+  TREAL PROFILES, ycenter, calpha, salpha
+  EXTERNAL PROFILES
 
   !########################################################################
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
@@ -28,9 +28,7 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
     DO iq = 1,3
       ycenter = g(2)%nodes(1) + g(2)%scale *qbg(iq)%ymean
       DO j = 1,jmax
-        wrk1d(j,iq) = FLOW_SHEAR_TEMPORAL( &
-        qbg(iq)%type, qbg(iq)%thick, qbg(iq)%delta, qbg(iq)%mean, ycenter, qbg(iq)%parameters, g(2)%nodes(j) &
-        )
+        wrk1d(j,iq) = PROFILES( qbg(iq)%type, qbg(iq)%thick, qbg(iq)%delta, qbg(iq)%mean, ycenter, qbg(iq)%parameters, g(2)%nodes(j) )
       ENDDO
     ENDDO
 
@@ -59,9 +57,12 @@ SUBROUTINE VELOCITY_MEAN(rho, u,v,w, wrk1d,wrk3d)
 #define rho_vi(j) wrk1d(j,1)
 #define u_vi(j)   wrk1d(j,2)
 #define aux(j)    wrk1d(j,3)
-    ! rho_vi(:) = rho(1,:,1) ! To be checked; not sure rho and are defined
-    ! u_vi(:)   = u(1,:,1)
-
+    ycenter = g(2)%nodes(1) + g(2)%scale *qbg(iq)%ymean
+    DO j = 1,jmax
+      u_vi(j) = PROFILES( qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, g(2)%nodes(j) )
+    ENDDO
+    rho_vi(:) = rho(1,:,1)
+    
     ycenter = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
     CALL FLOW_SPATIAL_VELOCITY(imax,jmax, &
     qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, qbg(1)%diam, ycenter, &

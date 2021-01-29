@@ -341,8 +341,8 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk1d, wrk2d)
   TINTEGER j, k, im, kdsp
   TREAL wx, wz, wx_1, wz_1, xaux, vmult, factorx, factorz, dummy
 
-  TREAL FLOW_SHEAR_TEMPORAL, ycenter, yr
-  EXTERNAL FLOW_SHEAR_TEMPORAL
+  TREAL PROFILES, ycenter, yr
+  EXTERNAL PROFILES
 
   TREAL, DIMENSION(:), POINTER :: y,z
 
@@ -371,7 +371,7 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk1d, wrk2d)
     ycenter = y(1) +g(2)%scale *qbg(1)%ymean
       DO j = 1,jmax
         yr = y(j)-ycenter
-        wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, C_0_R, y(j) )
+        wrk1d(j,1) = PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, C_0_R, y(j) )
         wrk1d(j,2) = yr /( fp%parameters(1) **2 ) *wrk1d(j,1) ! Derivative of f
       ENDDO
 
@@ -379,7 +379,7 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk1d, wrk2d)
     ycenter = y(1) +g(2)%scale *qbg(1)%ymean -C_05_R *qbg(1)%diam
     DO j = 1,jmax
       yr = y(j) - ycenter
-      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, C_0_R, y(j) )
+      wrk1d(j,1) = PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, C_0_R, y(j) )
       wrk1d(j,2) =-yr /( fp%parameters(1) **2 ) *wrk1d(j,1)
     ENDDO
 
@@ -389,7 +389,7 @@ SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk1d, wrk2d)
     ENDIF
     DO j = 1,jmax
       yr = y(j) - ycenter
-      dummy = factorx *FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, C_0_R, y(j) )
+      dummy = factorx *PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, C_0_R, y(j) )
       wrk1d(j,1) = wrk1d(j,1) +dummy
       wrk1d(j,2) = wrk1d(j,2) +yr /( fp%parameters(1) **2 ) *dummy
     ENDDO

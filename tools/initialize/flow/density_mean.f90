@@ -45,8 +45,8 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
   ! -------------------------------------------------------------------
   TREAL ycenter, dummy
   TINTEGER j, k, is, bcs(2,2)
-  TREAL FLOW_SHEAR_TEMPORAL
-  EXTERNAL FLOW_SHEAR_TEMPORAL
+  TREAL PROFILES
+  EXTERNAL PROFILES
 
   bcs = 0
 
@@ -64,16 +64,14 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
       IF ( rbg%type .EQ. PROFILE_NONE ) THEN
         ycenter = g(2)%nodes(1) + g(2)%scale *tbg%ymean
         DO j = 1,jmax
-          dummy =  FLOW_SHEAR_TEMPORAL&
-          (tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, g(2)%nodes(j))
+          dummy =  PROFILES(tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, g(2)%nodes(j))
           TEM_MEAN_LOC(:,j,:) = dummy
         ENDDO
 
         DO is = 1,inb_scal
           ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
           DO j = 1,jmax
-            dummy =  FLOW_SHEAR_TEMPORAL&
-            (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+            dummy =  PROFILES(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
             s(:,j,:,is) = dummy
           ENDDO
         ENDDO
@@ -90,8 +88,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
       ELSE
         ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean
         DO j = 1,jmax
-          dummy =  FLOW_SHEAR_TEMPORAL&
-          (rbg%type, rbg%thick, rbg%delta, rbg%mean, ycenter, rbg%parameters, g(2)%nodes(j))
+          dummy =  PROFILES(rbg%type, rbg%thick, rbg%delta, rbg%mean, ycenter, rbg%parameters, g(2)%nodes(j))
           rho(:,j,:) = rho(:,j,:) + dummy
         ENDDO
 
@@ -138,7 +135,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
       ! Inflow profile of axial velocity
       ycenter = g(2)%nodes(1) + g(2)%scale*qbg(1)%ymean
       DO j = 1,jmax
-        u_vi(j) = FLOW_SHEAR_TEMPORAL(qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters,g(2)%nodes(j))
+        u_vi(j) = PROFILES(qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters,g(2)%nodes(j))
       ENDDO
 
       ! 2D distribution of density
@@ -154,7 +151,7 @@ SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
     ELSE ! density profile itself is given
       ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean
       DO j = 1,jmax
-        dummy =  FLOW_SHEAR_TEMPORAL(rbg%type, rbg%thick, rbg%delta, rbg%mean, ycenter, rbg%parameters, g(2)%nodes(j))
+        dummy =  PROFILES(rbg%type, rbg%thick, rbg%delta, rbg%mean, ycenter, rbg%parameters, g(2)%nodes(j))
         rho(:,j,:) = rho(:,j,:) + dummy
       ENDDO
 

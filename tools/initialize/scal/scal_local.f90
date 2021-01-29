@@ -41,46 +41,26 @@ SUBROUTINE SCAL_SHAPE( is, wrk1d )
   TREAL, DIMENSION(jmax,1), INTENT(INOUT) :: wrk1d
 
   ! -------------------------------------------------------------------
-  TREAL FLOW_SHEAR_TEMPORAL, ycenter, dummy, factor, yr
-  EXTERNAL FLOW_SHEAR_TEMPORAL
+  TREAL PROFILES, ycenter, yr
+  EXTERNAL PROFILES
 
   TREAL, DIMENSION(:), POINTER :: yn
 
   ! ###################################################################
   yn => g(2)%nodes
 
+  ycenter = yn(1) +g(2)%scale *Sini(is)%ymean
+  DO j = 1,jmax
+    wrk1d(j,1) = PROFILES( Sini(is)%type, Sini(is)%thick, C_1_R, C_0_R, ycenter, Sini(is)%parameters, yn(j) )
+  ENDDO
+
   SELECT CASE ( Sini(is)%type )
-  CASE ( PROFILE_GAUSSIAN )
-    ycenter = yn(1) +g(2)%scale *Sini(is)%ymean
-    DO j = 1,jmax
-      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Sini(is)%thick, C_1_R, C_0_R, ycenter, Sini(is)%parameters, yn(j) )
-    ENDDO
-
-  CASE ( PROFILE_GAUSSIAN_SURFACE )
-    ycenter = yn(1) +g(2)%scale *Sini(is)%ymean
+  CASE ( PROFILE_GAUSSIAN_SURFACE ) ! set perturbation and its normal derivative to zero at the boundaries
     DO j = 1, jmax
-      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Sini(is)%thick, C_1_R, C_0_R, ycenter, Sini(is)%parameters, yn(j) )
-
-      ! set perturbation and its normal derivative to zero at the boundaries
       yr = C_05_R*(yn(j)-yn(1)   )/Sini(is)%thick
       wrk1d(j,1)  = wrk1d(j,1)  *TANH(yr) **2
       yr =-C_05_R*(yn(j)-yn(jmax))/Sini(is)%thick
       wrk1d(j,1)  = wrk1d(j,1)  *TANH(yr) **2
-    ENDDO
-
-  CASE (PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM)
-    ycenter = yn(1) +g(2)%scale *Sini(is)%ymean -C_05_R *sbg(is)%diam
-    DO j = 1,jmax
-      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Sini(is)%thick, C_1_R, C_0_R, ycenter, Sini(is)%parameters, yn(j) )
-    ENDDO
-
-    ycenter = yn(1) +g(2)%scale *Sini(is)%ymean +C_05_R *sbg(is)%diam
-    IF     ( Sini(is)%type .EQ. PROFILE_GAUSSIAN_ANTISYM ) THEN; factor =-C_1_R
-    ELSEIF ( Sini(is)%type .EQ. PROFILE_GAUSSIAN_SYM     ) THEN; factor = C_1_R
-    ENDIF
-    DO j = 1,jmax
-      dummy = factor *FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Sini(is)%thick, C_1_R, C_0_R, ycenter, Sini(is)%parameters, yn(j) )
-      wrk1d(j,1) = wrk1d(j,1) +dummy
     ENDDO
 
   END SELECT
@@ -161,7 +141,7 @@ SUBROUTINE SCAL_FLUCTUATION_PLANE(is, s, disp)
   ! -------------------------------------------------------------------
   TINTEGER idummy, io_sizes(5)
   TREAL dummy, ycenter, thick_loc,delta_loc,mean_loc
-  TREAL AVG1V2D, FLOW_SHEAR_TEMPORAL
+  TREAL AVG1V2D, PROFILES
   TREAL xcenter,zcenter,rcenter, amplify
 
   CHARACTER*32 varname
@@ -230,8 +210,7 @@ SUBROUTINE SCAL_FLUCTUATION_PLANE(is, s, disp)
     DO k = 1,kmax; DO i = 1,imax
       ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean + disp(i,k)
       DO j = 1,jmax
-        s(i,j,k) =  FLOW_SHEAR_TEMPORAL&
-        (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+        s(i,j,k) = PROFILES(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
       ENDDO
     ENDDO; ENDDO
 
@@ -240,8 +219,7 @@ SUBROUTINE SCAL_FLUCTUATION_PLANE(is, s, disp)
       ycenter   = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
       thick_loc = sbg(is)%thick + disp(i,k)
       DO j = 1,jmax
-        s(i,j,k) =  FLOW_SHEAR_TEMPORAL&
-        (sbg(is)%type, thick_loc, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+        s(i,j,k) = PROFILES(sbg(is)%type, thick_loc, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
       ENDDO
     ENDDO; ENDDO
 
@@ -253,8 +231,7 @@ SUBROUTINE SCAL_FLUCTUATION_PLANE(is, s, disp)
       IF ( sbg(is)%delta .GT. 0 ) THEN; thick_loc = delta_loc /sbg(is)%delta *sbg(is)%thick;
       ELSE;                             thick_loc = sbg(is)%thick; ENDIF
       DO j = 1,jmax
-        s(i,j,k) =  FLOW_SHEAR_TEMPORAL&
-        (sbg(is)%type, thick_loc, delta_loc, mean_loc, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+        s(i,j,k) = PROFILES(sbg(is)%type, thick_loc, delta_loc, mean_loc, ycenter, sbg(is)%parameters, g(2)%nodes(j))
       ENDDO
     ENDDO; ENDDO
 

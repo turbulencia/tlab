@@ -20,15 +20,14 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
 
   ! -------------------------------------------------------------------
   TINTEGER i, j, ij, k
-  TREAL FLOW_SHEAR_TEMPORAL, ycenter, dummy
-  EXTERNAL FLOW_SHEAR_TEMPORAL
+  TREAL PROFILES, ycenter, dummy
+  EXTERNAL PROFILES
 
   !########################################################################
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
     ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
     DO j = 1,jmax
-      dummy =  FLOW_SHEAR_TEMPORAL&
-      (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+      dummy = PROFILES(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
       s(:,j,:) = dummy + s(:,j,:)
     ENDDO
 
@@ -48,16 +47,14 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
     ! Inflow profile of scalar
     ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
     DO j = 1,jmax
-      z_vi(j) =  FLOW_SHEAR_TEMPORAL&
-      (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+      z_vi(j) = PROFILES(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
     ENDDO
 
     ! Initialize density field
     rho_vi(1:jmax) = C_0_R
     ycenter = g(2)%nodes(1) + g(2)%scale *tbg%ymean
     DO j = 1,jmax
-      dummy = FLOW_SHEAR_TEMPORAL&
-      (tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, g(2)%nodes(j))
+      dummy = PROFILES(tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, g(2)%nodes(j))
       ! pilot to be added: ijet_pilot, rjet_pilot_thickness, XIST
         t_loc(:,j) = dummy
     ENDDO
@@ -72,8 +69,7 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
     u_vi(1:jmax) = C_0_R
     ycenter = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
     DO j = 1,jmax
-      u_vi(j) = FLOW_SHEAR_TEMPORAL&
-      (qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, g(2)%nodes(j))
+      u_vi(j) = PROFILES(qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, g(2)%nodes(j))
       ! pilot to be added: ijet_pilot, rjet_pilot_thickness, rjet_pilot_velocity
     ENDDO
 

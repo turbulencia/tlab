@@ -27,7 +27,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
   ! -------------------------------------------------------------------
   TINTEGER idummy, iprof_loc
   TREAL dummy, ycenter, mean_loc, delta_loc
-  TREAL AVG1V2D, FLOW_SHEAR_TEMPORAL
+  TREAL AVG1V2D, PROFILES
   TREAL xcenter, amplify
 
   TREAL, DIMENSION(:), POINTER :: x,y,z
@@ -103,8 +103,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
           mean_loc  = tbg%mean  + C_05_R*(tbg%parameters(2)+tbg%parameters(1))*disp(i,k) *g(2)%scale
           ycenter   = y(1) + g(2)%scale *tbg%ymean + disp(i,k)
           DO j = 1,jmax
-            T(i,j,k) =  FLOW_SHEAR_TEMPORAL&
-            (tbg%type, tbg%thick, delta_loc, mean_loc, ycenter, tbg%parameters, y(j))
+            T(i,j,k) =  PROFILES(tbg%type, tbg%thick, delta_loc, mean_loc, ycenter, tbg%parameters, y(j))
           ENDDO
         ENDDO
       ENDDO
@@ -121,8 +120,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
           ycenter   = y(1) + g(2)%scale *tbg%ymean + disp(i,k)
           iprof_loc =-tbg%type
           DO j = 1,jmax
-            h(i,j,k) =  FLOW_SHEAR_TEMPORAL&
-            (iprof_loc, tbg%thick, delta_loc, mean_loc, ycenter, tbg%parameters, y(j))
+            h(i,j,k) =  PROFILES(iprof_loc, tbg%thick, delta_loc, mean_loc, ycenter, tbg%parameters, y(j))
           ENDDO
         ENDDO
       ENDDO

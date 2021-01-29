@@ -43,70 +43,63 @@ SUBROUTINE FLOW_SHAPE( wrk1d )
   TREAL, DIMENSION(jmax,2), INTENT(INOUT) :: wrk1d
 
   ! -------------------------------------------------------------------
-  TREAL FLOW_SHEAR_TEMPORAL, ycenter, yr, dummy, factor
-  EXTERNAL FLOW_SHEAR_TEMPORAL
+  TREAL PROFILES, ycenter, yr, dummy, factor
+  EXTERNAL PROFILES
 
   TREAL, DIMENSION(:), POINTER :: yn
 
   ! ###################################################################
   yn => g(2)%nodes
 
+  ycenter = yn(1) +g(2)%scale *Kini%ymean
+  DO j = 1,jmax
+    wrk1d(j,1) = PROFILES( Kini%type, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
+  ENDDO
+
   SELECT CASE ( Kini%type )
-  CASE ( PROFILE_PARABOLIC_SURFACE )
-    ycenter = yn(1) +g(2)%scale *Kini%ymean
+  CASE ( PROFILE_PARABOLIC_SURFACE )                    ! Negative of the derivative of f, wall-parallel velocity
     DO j = 1,jmax
       yr = yn(j)-ycenter
-      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_PARABOLIC, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
-      wrk1d(j,2) = C_05_R *yr /( Kini%thick **2 ) ! Negative of the derivative of f, wall-parallel velocity
+      wrk1d(j,2) = C_05_R *yr /( Kini%thick **2 )
 
       ! Zero wall-parallel velocity for no-slip condition, multiply by parabolic again, f=f*f
-      wrk1d(j,2) = C_2_R* wrk1d(j,2) *wrk1d(j,1)  ! Negative of the derivative of f, wall-parallel velocity
-      wrk1d(j,1) = wrk1d(j,1) **C_2_R             ! Wall-normal velocity
+      wrk1d(j,2) = C_2_R* wrk1d(j,2) *wrk1d(j,1)
+      wrk1d(j,1) = wrk1d(j,1) **C_2_R                   ! Wall-normal velocity
     ENDDO
 
-  CASE ( PROFILE_GAUSSIAN )
-    ycenter = yn(1) +g(2)%scale *Kini%ymean
+  CASE ( PROFILE_GAUSSIAN, PROFILE_GAUSSIAN_SURFACE )   ! Negative of the derivative of f, wall-parallel velocity
     DO j = 1,jmax
       yr = yn(j)-ycenter
-      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
-      wrk1d(j,2) = yr /( Kini%thick **2 ) *wrk1d(j,1) ! Negative of the derivative of f, wall-parallel velocity
+      wrk1d(j,2) = yr /( Kini%thick **2 ) *wrk1d(j,1)
     ENDDO
 
-  CASE ( PROFILE_GAUSSIAN_SURFACE )
-    ycenter = yn(1) +g(2)%scale *Kini%ymean
-    DO j = 1,jmax
-      yr = yn(j)-ycenter
-      ! IF ( Kini%thick .eq. C_0_R ) THEN; wrk1d(j,1) = C_0_R
-      ! ELSE;                              wrk1d(j,1) = EXP(-(C_05_R*yr/Kini%thick)**2); ENDIF
-      ! wrk1d(j,2) = wrk1d(j,1)            ! wall-parallel velocity
-      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
-      wrk1d(j,2) = yr /( Kini%thick **2 ) *wrk1d(j,1) ! Negative of the derivative of f, wall-parallel velocity
-
-      ! Zero wall-normal derivative of wall-parallel velocity for free-slip and for potentialvelocity mode, f=f*tanh
-       IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) THEN ! jmin
-        yr = C_05_R *( yn(j)-yn(1)    )/ Kini%thick
-        ! wrk1d(j,1) = wrk1d(j,1) *TANH(yr)
-        ! wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **2
-        wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 - &     ! Negative of the derivative of f, wall-parallel velocity
-                     wrk1d(j,1) +TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
-        wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3         ! Wall-normal velocity
+    ! Zero wall-normal derivative of wall-parallel velocity for free-slip and for potentialvelocity mode, f=f*tanh
+    IF ( Kini%type .EQ. PROFILE_GAUSSIAN_SURFACE ) THEN
+      IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) THEN ! jmin
+        DO j = 1,jmax
+          yr = C_05_R *( yn(j)-yn(1)    )/ Kini%thick
+          wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 - &     ! Negative of the derivative of f, wall-parallel velocity
+                       wrk1d(j,1) +TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
+          wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3         ! Wall-normal velocity
+        ENDDO
       ENDIF
 
       IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) THEN  ! jmax
-        yr = C_05_R *( yn(jmax)-yn(j) )/ Kini%thick
-        ! wrk1d(j,1) = wrk1d(j,1) *TANH(yr)
-        ! wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **2
-        wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 + &     ! Negative of the derivative of f, wall-parallel velocity
-                     wrk1d(j,1) +TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
-        wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3         ! Wall-normal velocity
+        DO j = 1,jmax
+          yr = C_05_R *( yn(jmax)-yn(j) )/ Kini%thick
+          wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 + &     ! Negative of the derivative of f, wall-parallel velocity
+                       wrk1d(j,1) +TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
+          wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3         ! Wall-normal velocity
+        ENDDO
       ENDIF
-    ENDDO
+      
+    ENDIF
 
   CASE (PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM)
     ycenter = yn(1) +g(2)%scale *Kini%ymean -C_05_R *qbg(1)%diam
     DO j = 1,jmax
       yr = yn(j) - ycenter
-      wrk1d(j,1) = FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
+      wrk1d(j,1) = PROFILES( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
       wrk1d(j,2) = yr /( Kini%thick **2 ) *wrk1d(j,1)
     ENDDO
 
@@ -116,7 +109,7 @@ SUBROUTINE FLOW_SHAPE( wrk1d )
     ENDIF
     DO j = 1,jmax
       yr = yn(j) - ycenter
-      dummy = factor *FLOW_SHEAR_TEMPORAL( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
+      dummy = factor *PROFILES( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
       wrk1d(j,1) = wrk1d(j,1) +dummy
       wrk1d(j,2) = wrk1d(j,2) +yr /( Kini%thick **2 ) *dummy
     ENDDO

@@ -1,1 +1,0 @@
-Routines to calculate mean fields according to pre-defined functions, such as tanh or erf. These functions ultimately define the initial and boundary conditions, and thus the type of flow: temporal or spatial.

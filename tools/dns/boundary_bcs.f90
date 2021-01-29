@@ -65,7 +65,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 ! -------------------------------------------------------------------
   TINTEGER j, is
   TREAL prefactor, dummy, param(5)
-  TREAL diam_loc, thick_loc, ycenter, r1, r05, FLOW_SHEAR_TEMPORAL
+  TREAL diam_loc, thick_loc, ycenter, r1, r05, PROFILES
 
 #ifdef USE_MPI
   CHARACTER*32 str
@@ -239,8 +239,8 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         thick_loc = qbg(1)%diam/C_8_R
         ycenter   = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
         param=C_0_R; param(5) = diam_loc
-        BcsFlowImin%ref(:,:,inb_flow+1) = FLOW_SHEAR_TEMPORAL(i2, thick_loc, r1, r05, ycenter, param, g(2)%nodes(j))
-        BcsScalImin%ref(:,:,inb_scal+1) = FLOW_SHEAR_TEMPORAL(i2, thick_loc, r1, r05, ycenter, param, g(2)%nodes(j))
+        BcsFlowImin%ref(:,:,inb_flow+1) = PROFILES(i2, thick_loc, r1, r05, ycenter, param, g(2)%nodes(j))
+        BcsScalImin%ref(:,:,inb_scal+1) = PROFILES(i2, thick_loc, r1, r05, ycenter, param, g(2)%nodes(j))
 
      ENDIF
 

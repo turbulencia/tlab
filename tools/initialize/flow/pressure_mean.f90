@@ -23,14 +23,14 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 ! -------------------------------------------------------------------
   TINTEGER j, iprof_loc
   TREAL pmin,pmax, ycenter
-  TREAL FLOW_SHEAR_TEMPORAL
+  TREAL PROFILES
 
   TREAL, DIMENSION(:), POINTER :: y,dy
 
 ! ###################################################################
 ! Define pointers
   y => g(2)%nodes; dy => g(2)%jac(:,1)
-   
+
 ! ###################################################################
 ! Constant pressure
 ! ###################################################################
@@ -61,12 +61,10 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
         IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. tbg%type .GT. 0 ) THEN
            DO j = 1,jmax
               ycenter = y(1) + g(2)%scale *tbg%ymean
-              t_loc(j) = FLOW_SHEAR_TEMPORAL&
-                   (tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
+              t_loc(j) = PROFILES(tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
 
               ycenter = y(1) + g(2)%scale *sbg(1)%ymean
-              z1_loc(j) =  FLOW_SHEAR_TEMPORAL&
-                   (sbg(1)%type, sbg(1)%thick, sbg(1)%delta, sbg(1)%mean, ycenter, sbg(1)%parameters, g(2)%nodes(j))
+              z1_loc(j) = PROFILES(sbg(1)%type, sbg(1)%thick, sbg(1)%delta, sbg(1)%mean, ycenter, sbg(1)%parameters, g(2)%nodes(j))
 
            ENDDO
            ! CALL FI_HYDROSTATIC_AIRWATER_T&
@@ -84,12 +82,10 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
            DO j = 1,jmax
               ycenter = y(1) + g(2)%scale *tbg%ymean
               iprof_loc =-tbg%type
-              z1_loc(j) = FLOW_SHEAR_TEMPORAL&
-                   (iprof_loc, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
+              z1_loc(j) = PROFILES(iprof_loc, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
 
               ycenter = y(1) + g(2)%scale *sbg(1)%ymean
-              z2_loc(j) =  FLOW_SHEAR_TEMPORAL&
-                   (sbg(1)%type, sbg(1)%thick, sbg(1)%delta, sbg(1)%mean, ycenter, sbg(1)%parameters, g(2)%nodes(j))
+              z2_loc(j) = PROFILES(sbg(1)%type, sbg(1)%thick, sbg(1)%delta, sbg(1)%mean, ycenter, sbg(1)%parameters, g(2)%nodes(j))
 
            ENDDO
 !           CALL FI_HYDROSTATIC_H_OLD(jmax, y, z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
@@ -106,7 +102,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 !           CALL FI_HYDROSTATIC(i1, jmax, i1, ycenter, y, p_loc(1))
            CALL IO_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 2 undeveloped')
            CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-           
+
            DO j = 1,jmax
               p_loc(j) = pbg%mean*EXP(p_loc(j))
            ENDDO
@@ -122,7 +118,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
      ENDIF
 
 ! -------------------------------------------------------------------
-! 3D array. Simple case of g parallel and opposite to OY 
+! 3D array. Simple case of g parallel and opposite to OY
 ! -------------------------------------------------------------------
      DO j = 1,jmax
         p(:,j,:) = p_loc(j)
@@ -142,6 +138,3 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 
   RETURN
 END SUBROUTINE PRESSURE_MEAN
-
-         
-      
