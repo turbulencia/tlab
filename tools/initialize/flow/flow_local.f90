@@ -40,79 +40,52 @@ CONTAINS
 SUBROUTINE FLOW_SHAPE( wrk1d )
   IMPLICIT NONE
 
-  TREAL, DIMENSION(jmax,2), INTENT(INOUT) :: wrk1d
+  TREAL, DIMENSION(jmax,5), INTENT(INOUT) :: wrk1d
 
   ! -------------------------------------------------------------------
-  TREAL PROFILES, ycenter, yr, dummy, factor
+  TINTEGER bcs(2,2)
+  TREAL PROFILES, ycenter, yr!, dummy, factor
   EXTERNAL PROFILES
 
   TREAL, DIMENSION(:), POINTER :: yn
 
   ! ###################################################################
+  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+
   yn => g(2)%nodes
 
   ycenter = yn(1) +g(2)%scale *Kini%ymean
-  DO j = 1,jmax
+  DO j = 1,jmax                               ! Wall-normal velocity
     wrk1d(j,1) = PROFILES( Kini%type, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
   ENDDO
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), wrk1d(1,1), wrk1d(1,2), wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
+  wrk1d(:,2) =-wrk1d(:,2)                     ! Negative of the derivative of f, wall-parallel velocity
 
   SELECT CASE ( Kini%type )
-  CASE ( PROFILE_PARABOLIC_SURFACE )                    ! Negative of the derivative of f, wall-parallel velocity
-    DO j = 1,jmax
-      yr = yn(j)-ycenter
-      wrk1d(j,2) = C_05_R *yr /( Kini%thick **2 )
+  CASE ( PROFILE_PARABOLIC_SURFACE )
+    ! Zero wall-parallel velocity for no-slip condition, multiply by parabolic again, f=f*f
+    wrk1d(:,2) = C_2_R* wrk1d(:,2) *wrk1d(:,1)          ! Wall-parallel velocity
+    wrk1d(:,1) = wrk1d(:,1) **C_2_R                     ! Wall-normal velocity
 
-      ! Zero wall-parallel velocity for no-slip condition, multiply by parabolic again, f=f*f
-      wrk1d(j,2) = C_2_R* wrk1d(j,2) *wrk1d(j,1)
-      wrk1d(j,1) = wrk1d(j,1) **C_2_R                   ! Wall-normal velocity
-    ENDDO
-
-  CASE ( PROFILE_GAUSSIAN, PROFILE_GAUSSIAN_SURFACE )   ! Negative of the derivative of f, wall-parallel velocity
-    DO j = 1,jmax
-      yr = yn(j)-ycenter
-      wrk1d(j,2) = yr /( Kini%thick **2 ) *wrk1d(j,1)
-    ENDDO
-
-    ! Zero wall-normal derivative of wall-parallel velocity for free-slip and for potentialvelocity mode, f=f*tanh
-    IF ( Kini%type .EQ. PROFILE_GAUSSIAN_SURFACE ) THEN
-      IF ( flag_wall.EQ.1 .OR. flag_wall.EQ.3 ) THEN ! jmin
-        DO j = 1,jmax
-          yr = C_05_R *( yn(j)-yn(1)    )/ Kini%thick
-          wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 - &     ! Negative of the derivative of f, wall-parallel velocity
-                       wrk1d(j,1) +TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
-          wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3         ! Wall-normal velocity
-        ENDDO
-      ENDIF
-
-      IF ( flag_wall.EQ.2 .OR. flag_wall.EQ.3 ) THEN  ! jmax
-        DO j = 1,jmax
-          yr = C_05_R *( yn(jmax)-yn(j) )/ Kini%thick
-          wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 + &     ! Negative of the derivative of f, wall-parallel velocity
-                       wrk1d(j,1) +TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
-          wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3         ! Wall-normal velocity
-        ENDDO
-      ENDIF
-      
+  CASE ( PROFILE_GAUSSIAN_SURFACE )
+    ! Zero wall-normal derivative of wall-parallel velocity for free-slip and potentialvelocity mode, f=f*tanh
+    IF ( flag_wall .EQ. 1 .OR. flag_wall .EQ. 3 ) THEN  ! jmin
+      DO j = 1,jmax
+        yr = C_05_R *( yn(j)-yn(1)    )/ Kini%thick
+        wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 - &       ! Wall-parallel velocity
+                     wrk1d(j,1) +TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
+        wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3           ! Wall-normal velocity
+      ENDDO
     ENDIF
 
-  CASE (PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM)
-    ycenter = yn(1) +g(2)%scale *Kini%ymean -C_05_R *qbg(1)%diam
-    DO j = 1,jmax
-      yr = yn(j) - ycenter
-      wrk1d(j,1) = PROFILES( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
-      wrk1d(j,2) = yr /( Kini%thick **2 ) *wrk1d(j,1)
-    ENDDO
-
-    ycenter = yn(1) +g(2)%scale *Kini%ymean +C_05_R *qbg(1)%diam
-    IF     ( Kini%type .EQ. PROFILE_GAUSSIAN_ANTISYM ) THEN; factor =-C_1_R ! varicose
-    ELSEIF ( Kini%type .EQ. PROFILE_GAUSSIAN_SYM     ) THEN; factor = C_1_R ! Sinuous
+    IF ( flag_wall .EQ. 2 .OR. flag_wall .EQ. 3 ) THEN  ! jmax
+      DO j = 1,jmax
+        yr = C_05_R *( yn(jmax)-yn(j) )/ Kini%thick
+        wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 + &       ! Wall-parallel velocity
+                     wrk1d(j,1) +TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
+        wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3           ! Wall-normal velocity
+      ENDDO
     ENDIF
-    DO j = 1,jmax
-      yr = yn(j) - ycenter
-      dummy = factor *PROFILES( PROFILE_GAUSSIAN, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j) )
-      wrk1d(j,1) = wrk1d(j,1) +dummy
-      wrk1d(j,2) = wrk1d(j,2) +yr /( Kini%thick **2 ) *dummy
-    ENDDO
 
   END SELECT
 
