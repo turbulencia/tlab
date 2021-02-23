@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.linalg
+from scipy import special
 import matplotlib.pyplot as plt
 import fdm
 
@@ -14,8 +15,38 @@ rc('lines', solid_capstyle='round')
 # rc('figure',     dpi=100)
 rc('savefig',    dpi=100)
 
-FiguresToPlot=['spectra','wavenumber','stability']
-FiguresToPlot=['convergence']
+FiguresToPlot = []
+FiguresToPlot +=['profiles']
+# FiguresToPlot +=['spectra']
+# FiguresToPlot +=['wavenumber']
+# FiguresToPlot +=['stability']
+# FiguresToPlot +=['convergence']
+
+###############################################################################
+tag='profiles'
+if tag in FiguresToPlot:
+    fig_id = 0
+
+    n = 100
+    x = np.linspace(-8.,8., num=n)
+
+    fig_id = fig_id +1
+    plt.figure( figsize = (4,3) )
+    plt.plot( x, 0.5 *np.tanh(-0.5 *x),     label=r'tanh')
+    plt.plot( x, 0.5 *special.erf(-0.5 *x), label=r'erf')
+    plt.plot( x, -x,                        label=r'linear')
+    plt.plot( x, np.exp(-0.5 *x**2.),       label=r'Gaussian')
+    plt.plot( x, 1./np.cosh(-0.5 *x) **2.,  label=r'Bickley')
+    plt.plot( x, 1 -(0.5 *x) **2.,          label=r'parabolic')
+    plt.xticks( [-8 +2*i for i in range(9)] )
+    plt.yticks( [-0.5 +0.5*i for i in range(5)] )
+    plt.xlabel(r'spatial variable $\xi$')
+    plt.ylabel(r'function $g(\xi)$')
+    plt.legend( )
+    plt.axis([-8., 8., -1., 1.])
+    plt.tight_layout(pad=0.1)
+    plt.savefig("{}.pdf".format(tag+str(fig_id)))
+    plt.show()
 
 ###############################################################################
 tag='spectra'

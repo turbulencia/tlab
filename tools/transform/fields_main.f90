@@ -24,7 +24,7 @@ PROGRAM TRANSFIELDS
 #endif
 
 ! Parameter definitions
-  TINTEGER, PARAMETER :: itime_size_max = 512
+  TINTEGER, PARAMETER :: itime_size_max = 3000
   TINTEGER, PARAMETER :: iopt_size_max  = 512
 
 ! -------------------------------------------------------------------

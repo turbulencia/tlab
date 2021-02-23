@@ -30,7 +30,7 @@ PROGRAM VISUALS_MAIN
 #endif
 
 ! Parameter definitions
-  TINTEGER, PARAMETER :: itime_size_max = 512
+  TINTEGER, PARAMETER :: itime_size_max = 3000
   TINTEGER, PARAMETER :: iopt_size_max  =  20
   TINTEGER, PARAMETER :: igate_size_max =   8
   TINTEGER, PARAMETER :: params_size_max =  2
