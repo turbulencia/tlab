@@ -3,7 +3,7 @@
 import struct
 import sys
 
-setofplanes = [ 1, 2, 3, 4, 5 ]
+setofplanes = [ 1,2,3,4,5 ]
 
 sizeofdata = 4 # in bytes
 # sizeofdata = 1 # for gate files
@@ -32,13 +32,13 @@ if ( ny == 0 ):
         if line.lower().replace(" ","").startswith("jmax="):
             ny = int(line.split("=",1)[1])
             break
-        
+
 if ( nz == 0 ):
     for line in open('dns.ini'):
         if line.lower().replace(" ","").startswith("kmax="):
             nz = int(line.split("=",1)[1])
             break
-        
+
 print("Grid size is {}x{}x{}.".format(nx,ny,nz))
 
 # getting data from stdin
@@ -50,11 +50,11 @@ planetype  = sys.argv[1]
 setoffiles = sorted(sys.argv[2:])
 
 if   ( planetype == 'xy' ):
-    sizeofmask = len(str(nz)) 
+    sizeofmask = len(str(nz))
 elif ( planetype == 'xz' ):
-    sizeofmask = len(str(ny)) 
+    sizeofmask = len(str(ny))
 elif ( planetype == 'yz' ):
-    sizeofmask = len(str(nx)) 
+    sizeofmask = len(str(nx))
 else:
     print("Usage: python $0 [xy,xz,yz] list-of-files.")
     quit()
@@ -87,18 +87,18 @@ for file in setoffiles:
         a = struct.unpack(etype+'{}d'.format(nz), raw)
         rawz = struct.pack(etype+'{}f'.format(nz),*a)
         #
-        fin.close()        
-        
+        fin.close()
+
         fout = open('grid.'+planetype,'wb')
         if   ( planetype == 'xy' ):
             fout.write(rawx)
             fout.write(rawy)
         elif ( planetype == 'xz' ):
             fout.write(rawx)
-            fout.write(rawz)        
+            fout.write(rawz)
         elif ( planetype == 'yz' ):
             fout.write(rawy)
-            fout.write(rawz)        
+            fout.write(rawz)
         fout.close()
 
     else:
@@ -110,12 +110,17 @@ for file in setoffiles:
                 raw = fin.read(nx*ny*sizeofdata)
                 fout.write(raw)
             elif ( planetype == 'xz' ):
+                fin.seek(sizeofheader +(plane-1)*nx*sizeofdata,0)
                 for k in range(nz):
-                    fin.seek(sizeofheader +k*nx*ny*sizeofdata +(plane-1)*nx*sizeofdata,0)
                     raw = fin.read(nx*sizeofdata)
                     fout.write(raw)
-            elif ( planetype == 'yz' ): 
-                print("Still undeveloped.")
-                
+                    fin.seek((ny-1)*nx*sizeofdata,1)
+            elif ( planetype == 'yz' ):
+                fin.seek(sizeofheader +(plane-1)*sizeofdata,0)
+                for jk in range(ny*nz):
+                    raw = fin.read(sizeofdata)
+                    fout.write(raw)
+                    fin.seek((nx-1)*sizeofdata,1)
+
             fout.close()
         fin.close()

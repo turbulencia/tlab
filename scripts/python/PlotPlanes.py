@@ -11,7 +11,7 @@ sizeofdata = 4 # in bytes
 # etype = ">" # big-endian
 etype = "<" # little-endian
 
-dtype = "f" # floating number 
+dtype = "f" # floating number
 # dtype = 'B' # unsigned character, for gate files
 
 nx = 0 # number of points in Ox; if 0, then search dns.ini
@@ -32,13 +32,13 @@ if ( ny == 0 ):
         if line.lower().replace(" ","").startswith("jmax="):
             ny = int(line.split("=",1)[1])
             break
-        
+
 if ( nz == 0 ):
     for line in open('dns.ini'):
         if line.lower().replace(" ","").startswith("kmax="):
             nz = int(line.split("=",1)[1])
             break
-        
+
 print("Grid size is {}x{}x{}.".format(nx,ny,nz))
 
 # getting data from stdin
@@ -74,8 +74,6 @@ elif ( planetype == 'yz' ):
     nx2= nz
 fin.close()
 
-levels = np.linspace(-0.537284965,0.537284965,32)
-
 for file in setoffiles:
     print("Processing file %s ..." % file)
     fin = open(file, 'rb')
@@ -84,16 +82,17 @@ for file in setoffiles:
     a = a.reshape((nx2,nx1))
     fin.close()
 
-    plt.pcolormesh(x1,x2,a)#,vmin=-0.537284965,vmax=0.537284965)
+    mean, std = np.mean( a ), np.std( a )
+    plt.figure( figsize=(10,8) )
+    plt.pcolormesh(x1,x2,a,shading='auto',vmin=mean-std,vmax=mean+std)
     # plt.contourf(x1,x2,a)
     plt.axis('equal')
-    axes = plt.gca()
-    axes.set_xlim([x1[0],x1[nx1-1]])
-    axes.set_ylim([x2[0],x2[nx2-1]])
+    # plt.gca().set_xlim([x1[0],x1[-1]])
+    # plt.gca().set_ylim([x2[0],x2[-1]])
+    # plt.axis([ x1[0], x1[-1], x2[0], x2[-1]])
     plt.colorbar()
-    #plt.title(file)
-
-    # plt.tight_layout(pad=0.1, w_pad=0.4, h_pad=0.1)
+    plt.tight_layout(pad=2)
+    plt.title(file)
     # plt.savefig("{}.jpg".format(file),dpi=150,bbox_inches='tight')
     plt.show()
-    plt.clf()
+    plt.close()
