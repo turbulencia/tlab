@@ -38,7 +38,6 @@ PROGRAM VISUALS_MAIN
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
   TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: wrk2d,wrk3d
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: wrk1d
-
   INTEGER(1), DIMENSION(:),   ALLOCATABLE, SAVE :: gate
 
   ! -------------------------------------------------------------------
@@ -284,13 +283,13 @@ PROGRAM VISUALS_MAIN
     CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   ENDIF
 
+  CALL FI_PROFILES_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
+
 #ifdef USE_MPI
   CALL VISUALS_MPIO_AUX(opt_format, subdomain)
 #else
   io_aux(:)%offset = 0
 #endif
-
-  CALL FI_PROFILES_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
 
   MaskSize    = 6
 

@@ -96,8 +96,8 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
   TINTEGER nbins, is, flag_buoyancy
   TINTEGER ibc(16), nfield
   TREAL amin(16), amax(16)
-  CHARACTER*32 fname
-  CHARACTER*32 varname(16)
+  CHARACTER*32 fname, varname(16)
+  CHARACTER*64 str
   INTEGER(1) igate !, gate_levels(16)
 
   TYPE(pointers_dt), DIMENSION(16) :: data
@@ -178,27 +178,27 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
 ! ###################################################################
   IF ( stats_pdfs ) THEN
      nfield = 0
-     nfield = nfield+1; data(nfield)%field => u(:); varname(nfield) = 'Pu'
-     nfield = nfield+1; data(nfield)%field => v(:); varname(nfield) = 'Pv'
-     nfield = nfield+1; data(nfield)%field => w(:); varname(nfield) = 'Pw'
-     nfield = nfield+1; data(nfield)%field => p(:); varname(nfield) = 'Pp'
+     nfield = nfield+1; data(nfield)%field => u(:); varname(nfield) = 'u'
+     nfield = nfield+1; data(nfield)%field => v(:); varname(nfield) = 'v'
+     nfield = nfield+1; data(nfield)%field => w(:); varname(nfield) = 'w'
+     nfield = nfield+1; data(nfield)%field => p(:); varname(nfield) = 'p'
      IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        nfield = nfield+1; data(nfield)%field => rho(:); varname(nfield) = 'Pr'
-        nfield = nfield+1; data(nfield)%field => T(:);   varname(nfield) = 'Pt'
+        nfield = nfield+1; data(nfield)%field => rho(:); varname(nfield) = 'r'
+        nfield = nfield+1; data(nfield)%field => T(:);   varname(nfield) = 't'
      ENDIF
 
-     IF ( icalc_scal .EQ. 1 ) THEN
-        nfield = nfield+1; data(nfield)%field => s(:,1);varname(nfield) = 'PScalar1'
-     ENDIF
+     DO is = 1,inb_scal_array
+       nfield = nfield+1; data(nfield)%field => s(:,is); varname(nfield) = 's'
+       WRITE(str,*) is; varname(nfield)=TRIM(ADJUSTL(varname(nfield)))//TRIM(ADJUSTL(str))
+     ENDDO
 
      ibc(1:nfield) = 2 ! BCs in the calculation of the PDFs
      igate = 0         ! no intermittency partition
 
      nbins = 32
      WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-     CALL PDF2D_N(fname, varname, igate, rtime, &
-          imax,jmax,kmax, nfield, ibc, amin, amax, g(2)%nodes, wrk3d, &
-          data, nbins, isize_field, txc(:,1), wrk1d)
+     CALL PDF2D_N(fname, varname, igate, &
+       imax,jmax,kmax, nfield, nbins, ibc, amin, amax, g(2)%nodes, wrk3d, data, txc, wrk1d)
 
   ENDIF
 

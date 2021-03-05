@@ -1,25 +1,15 @@
 #include "types.h"
 
 !########################################################################
-!# HISTORY
-!#
-!# 1999/01/01 - C. Pantano
-!#              Created
-!# 2007/07/11 - J.P. Mellado
-!#              Cleaned
-!# 2018/12/07 - J.P. Mellado
-!#              Cleaned and Saving binary data
-!#
-!########################################################################
 !# DESCRIPTION
 !#
 !# Calculate the PDF over plane of an array u using nbins bins.
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
-!# ilim     In    If set =0, externally forced through umin_ext/umax_ext
-!#                If not, calculate locally the min/max
+!# ilim     In    0, externally forced through umin_ext/umax_ext
+!#                otherwise, calculate locally the min/max
 !#
 !########################################################################
 SUBROUTINE PDF1V2D(ilim, imax,jmax,kmax, j, umin_ext,umax_ext, u, nbins, pdf, wrk1d)
@@ -47,7 +37,7 @@ SUBROUTINE PDF1V2D(ilim, imax,jmax,kmax, j, umin_ext,umax_ext, u, nbins, pdf, wr
 
 ! ###################################################################
   pdf = C_0_R
-  
+
 ! -------------------------------------------------------------------
 ! Calculate Minimum and Maximum
 ! -------------------------------------------------------------------
@@ -109,4 +99,3 @@ SUBROUTINE PDF1V2D(ilim, imax,jmax,kmax, j, umin_ext,umax_ext, u, nbins, pdf, wr
 
   RETURN
 END SUBROUTINE PDF1V2D
-
