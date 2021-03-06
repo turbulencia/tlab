@@ -11,7 +11,7 @@
 !# Partition to be incorporated via a MASK routine before VISUALS_WRITE
 !#
 !########################################################################
-PROGRAM VISUALS_MAIN
+PROGRAM VISUALS
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
@@ -912,7 +912,7 @@ PROGRAM VISUALS_MAIN
 
   100 FORMAT(G_FORMAT_R)
 
-END PROGRAM VISUALS_MAIN
+END PROGRAM VISUALS
 
 !########################################################################
 !# DESCRIPTION
