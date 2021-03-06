@@ -137,3 +137,68 @@ SUBROUTINE PDF2D_N(fname, varname, igate, nx,ny,nz, &
   RETURN
 
 END SUBROUTINE PDF2D_N
+
+!########################################################################
+!########################################################################
+SUBROUTINE JPDF2D( fname, nx,ny,nz, nbins, y, data, pdf, wrk2d )
+
+  USE DNS_TYPES,      ONLY : pointers_dt
+  USE DNS_CONSTANTS,  ONLY : efile, lfile
+
+  IMPLICIT NONE
+
+#include "integers.h"
+#ifdef USE_MPI
+#include "mpif.h"
+#endif
+
+  CHARACTER*(*) fname
+  TINTEGER,           INTENT(IN)    :: nx,ny,nz, nbins(2)
+  TREAL,              INTENT(IN)    :: y(ny)
+  TREAL,              INTENT(OUT)   :: pdf(nbins(1)*nbins(2)+4,ny+1)
+  TREAL,              INTENT(INOUT) :: wrk2d(nbins(1)*nbins(2))
+  TYPE(pointers_dt),  INTENT(IN)    :: data(2)
+
+  ! -------------------------------------------------------------------
+  TINTEGER j
+  CHARACTER*64 name
+
+#ifdef USE_MPI
+  INTEGER ims_pro, ims_err
+  CALL MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro,ims_err)
+#endif
+
+  ! ###################################################################
+  CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
+
+  DO j = 1,ny
+    CALL PDF2V2D( nx,ny,nz, j, data(1)%field,data(2)%field, nbins, pdf(1,j), wrk2d )
+  ENDDO
+
+  ! PDF calculation of 1 variable in 3D space
+  j = ny +1
+  CALL PDF2V3D( nx,ny,nz, data(1)%field,data(2)%field, nbins, pdf(1,j), wrk2d )
+
+  ! ###################################################################
+  ! Save to disk
+  ! ###################################################################
+#ifdef USE_MPI
+  IF ( ims_pro .EQ. 0 ) THEN
+#endif
+
+#define LOC_UNIT_ID 21
+#define LOC_STATUS 'unknown'
+    name = TRIM(ADJUSTL(fname))
+
+    CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+#include "dns_open_file.h"
+    WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(pdf(:,:))
+    CLOSE(LOC_UNIT_ID)
+
+#ifdef USE_MPI
+  ENDIF
+#endif
+
+  RETURN
+
+END SUBROUTINE JPDF2D

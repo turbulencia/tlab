@@ -23,8 +23,8 @@ SUBROUTINE PDF1V2D(ilim, nx,ny,nz, j, umin_ext,umax_ext, u, nbins, pdf, wrk1d)
   TREAL, INTENT(INOUT) :: wrk1d(nbins)
 
   ! -------------------------------------------------------------------
-  TINTEGER i, k, ip
-  TREAL umin, umax, pdfstep
+  TINTEGER i,k, up
+  TREAL umin,umax,ustep
 
 #ifdef USE_MPI
   INTEGER ims_err, impi
@@ -61,26 +61,26 @@ SUBROUTINE PDF1V2D(ilim, nx,ny,nz, j, umin_ext,umax_ext, u, nbins, pdf, wrk1d)
   ENDIF
 
   ! Calculate Step in Histogram
-  pdfstep = (umax-umin)/M_REAL(nbins)
+  ustep = (umax-umin)/M_REAL(nbins)
 
   ! Calculate x coordinate of histogram
-  pdf(nbins+1) = umin + pdfstep/C_2_R
-  pdf(nbins+2) = umax - pdfstep/C_2_R
+  pdf(nbins+1) = umin + ustep/C_2_R
+  pdf(nbins+2) = umax - ustep/C_2_R
 
   ! -------------------------------------------------------------------
   ! Calculate Histogram
   ! -------------------------------------------------------------------
-  IF ( ABS(pdfstep) .GT. C_0_R ) THEN
+  IF ( ABS(ustep) .GT. C_0_R ) THEN
     DO k = 1,nz
       DO i = 1,nx
-        ip = INT((u(i,j,k)-umin)/pdfstep) + 1
+        up = INT((u(i,j,k)-umin)/ustep) + 1
         IF ( ilim .EQ. 0 ) THEN
-          IF ( ip .LE. nbins .AND. ip .GE. 1 ) THEN
-            pdf(ip) = pdf(ip) + C_1_R
+          IF ( up .LE. nbins .AND. up .GE. 1 ) THEN
+            pdf(up) = pdf(up) + C_1_R
           ENDIF
         ELSE ! put last point in the last bin
-          ip = MIN(ip,nbins)
-          pdf(ip) = pdf(ip) + C_1_R
+          up = MIN(up,nbins)
+          pdf(up) = pdf(up) + C_1_R
         ENDIF
       ENDDO
     ENDDO
@@ -120,8 +120,8 @@ SUBROUTINE PDF1V2D1G(ilim, nx,ny,nz, j, igate, umin_ext,umax_ext, gate, u, nbins
   INTEGER(1),INTENT(IN):: gate(nx,ny,nz), igate
 
   ! -------------------------------------------------------------------
-  TINTEGER i, k, ip
-  TREAL umin, umax, pdfstep
+  TINTEGER i, k, up
+  TREAL umin, umax, ustep
 
 #ifdef USE_MPI
   INTEGER ims_err, impi
@@ -160,27 +160,27 @@ SUBROUTINE PDF1V2D1G(ilim, nx,ny,nz, j, igate, umin_ext,umax_ext, gate, u, nbins
   ENDIF
 
   ! Calculate Step in Histogram
-  pdfstep = (umax-umin)/M_REAL(nbins)
+  ustep = (umax-umin)/M_REAL(nbins)
 
   ! Calculate x coordinate of histogram
-  pdf(nbins+1) = umin + pdfstep/C_2_R
-  pdf(nbins+2) = umax - pdfstep/C_2_R
+  pdf(nbins+1) = umin + ustep/C_2_R
+  pdf(nbins+2) = umax - ustep/C_2_R
 
   ! -------------------------------------------------------------------
   ! Calculate Histogram
   ! -------------------------------------------------------------------
-  IF ( ABS(pdfstep) .GT. C_0_R ) THEN
+  IF ( ABS(ustep) .GT. C_0_R ) THEN
     DO k = 1,nz
       DO i = 1,nx
         IF ( gate(i,j,k) .EQ. igate ) THEN
-          ip = INT((u(i,j,k)-umin)/pdfstep) + 1
+          up = INT((u(i,j,k)-umin)/ustep) + 1
           IF ( ilim .EQ. 0 ) THEN
-            IF ( ip .LE. nbins .AND. ip .GE. 1 ) THEN
-              pdf(ip) = pdf(ip) + C_1_R
+            IF ( up .LE. nbins .AND. up .GE. 1 ) THEN
+              pdf(up) = pdf(up) + C_1_R
             ENDIF
           ELSE ! put last point in the last bin
-            ip = MIN(ip,nbins)
-            pdf(ip) = pdf(ip) + C_1_R
+            up = MIN(up,nbins)
+            pdf(up) = pdf(up) + C_1_R
           ENDIF
         ENDIF
 
@@ -216,8 +216,8 @@ SUBROUTINE PDF1V3D(ilim, nx,ny,nz, umin_ext, umax_ext, u, nbins, pdf, wrk1d)
   TREAL, INTENT(INOUT) :: wrk1d(nbins)
 
   ! -------------------------------------------------------------------
-  TINTEGER i, ip
-  TREAL umin, umax, pdfstep
+  TINTEGER i, up
+  TREAL umin, umax, ustep
 #ifdef USE_MPI
   INTEGER impi, ims_err
 #endif
@@ -238,25 +238,25 @@ SUBROUTINE PDF1V3D(ilim, nx,ny,nz, umin_ext, umax_ext, u, nbins, pdf, wrk1d)
   ENDIF
 
   ! Calculate Step in Histogram
-  pdfstep = (umax-umin)/M_REAL(nbins)
+  ustep = (umax-umin)/M_REAL(nbins)
 
   ! Calculate x coordinate of histogram
-  pdf(nbins+1) = umin + pdfstep/C_2_R
-  pdf(nbins+2) = umax - pdfstep/C_2_R
+  pdf(nbins+1) = umin + ustep/C_2_R
+  pdf(nbins+2) = umax - ustep/C_2_R
 
   ! -------------------------------------------------------------------
 ! Calculate Histogram
   ! -------------------------------------------------------------------
-  IF ( ABS(pdfstep) .GT. C_0_R ) THEN
+  IF ( ABS(ustep) .GT. C_0_R ) THEN
     DO i = 1,nx*ny*nz
-      ip = INT((u(i)-umin)/pdfstep) + 1
+      up = INT((u(i)-umin)/ustep) + 1
       IF ( ilim .EQ. 0 ) THEN
-        IF ( ip .LE. nbins .AND. ip .GE. 1 ) THEN
-          pdf(ip) = pdf(ip) + C_1_R
+        IF ( up .LE. nbins .AND. up .GE. 1 ) THEN
+          pdf(up) = pdf(up) + C_1_R
         ENDIF
       ELSE ! put last point in the last bin
-        ip = MIN(ip,nbins)
-        pdf(ip) = pdf(ip) + C_1_R
+        up = MIN(up,nbins)
+        pdf(up) = pdf(up) + C_1_R
       ENDIF
     ENDDO
 
@@ -290,8 +290,8 @@ SUBROUTINE PDF1V3D1G(ilim, nx,ny,nz, igate, umin_ext,umax_ext, gate, u, nbins, p
   INTEGER(1),INTENT(IN):: gate(nx*ny*nz), igate
 
   ! -------------------------------------------------------------------
-  TINTEGER i, ip
-  TREAL umin, umax, pdfstep
+  TINTEGER i, up
+  TREAL umin, umax, ustep
 
 #ifdef USE_MPI
   INTEGER impi, ims_err
@@ -328,26 +328,26 @@ SUBROUTINE PDF1V3D1G(ilim, nx,ny,nz, igate, umin_ext,umax_ext, gate, u, nbins, p
   ENDIF
 
   ! Calculate Step in Histogram
-  pdfstep = (umax-umin)/M_REAL(nbins)
+  ustep = (umax-umin)/M_REAL(nbins)
 
   ! Calculate x coordinate of histogram
-  pdf(nbins+1) = umin + pdfstep/C_2_R
-  pdf(nbins+2) = umax - pdfstep/C_2_R
+  pdf(nbins+1) = umin + ustep/C_2_R
+  pdf(nbins+2) = umax - ustep/C_2_R
 
   ! -------------------------------------------------------------------
   ! Calculate Histogram
   ! -------------------------------------------------------------------
-  IF ( ABS(pdfstep) .GT. C_0_R ) THEN
+  IF ( ABS(ustep) .GT. C_0_R ) THEN
     DO i = 1,nx*ny*nz
       IF ( gate(i) .EQ. igate ) THEN
-        ip = INT((u(i)-umin)/pdfstep) + 1
+        up = INT((u(i)-umin)/ustep) + 1
         IF ( ilim .EQ. 0 ) THEN
-          IF ( ip .LE. nbins .AND. ip .GE. 1 ) THEN
-            pdf(ip) = pdf(ip) + C_1_R
+          IF ( up .LE. nbins .AND. up .GE. 1 ) THEN
+            pdf(up) = pdf(up) + C_1_R
           ENDIF
         ELSE ! put last point in the last bin
-          ip = MIN(ip,nbins)
-          pdf(ip) = pdf(ip) + C_1_R
+          up = MIN(up,nbins)
+          pdf(up) = pdf(up) + C_1_R
         ENDIF
       ENDIF
 
