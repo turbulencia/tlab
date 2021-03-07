@@ -1,46 +1,16 @@
 #include "types.h"
-#include "dns_error.h"
-
-#define NVARS_LOC 20
-#define NMOMS_LOC 4
-! the next macro must be the product of the previous two, for the format
-#define FMT_LOC 80 
 
 !########################################################################
-!# Tool/Library PDF
+!#
+!# Calcualte {<v_i|u>, i=1,...,nv] in ny planes.
+!# A last j-plane is added with the average in all the volume.
+!# Derived from pdf2d_n
 !#
 !########################################################################
-!# HISTORY
-!#
-!# 2007/12/10 - J.P. Mellado
-!#              Created
-!# 2008/04/02 - J.P. Mellado
-!#              Reformulation of the gate signal
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Array b contains the conditioning field.
-!# PDF format of TkStat file is used to allow variable b range at each plane.
-!# The field gate gives a 2nd global conditioning (intermittency).
-!# A last j-plane is added containing the CAVG constructed using all the
-!# volume.
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
-!# igate    In     Gate level. If 0, no intermittency considered
-!# nvar     In     Number of variables
-!# nmom     In     Number of moments
-!# ibc      In     BCs for array b: 1 for local bmin/bmax, 0 for fixed bmin/bmax 
-!#
-!########################################################################
+SUBROUTINE CAVG2D_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, v, y, avg, wrk1d )
 
-SUBROUTINE CAVG2D_N(fname, ibc, varname, igate, rtime, imax,jmax,kmax, &
-     nvar, nbins, nmom, bmin, bmax, y, gate, b, data, cavg, wrk1d)
-
-  USE DNS_TYPES,  ONLY : pointers_dt
-  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_TYPES,      ONLY : pointers_dt
+  USE DNS_CONSTANTS,  ONLY : lfile
 
   IMPLICIT NONE
 
@@ -49,159 +19,66 @@ SUBROUTINE CAVG2D_N(fname, ibc, varname, igate, rtime, imax,jmax,kmax, &
 #include "mpif.h"
 #endif
 
-  CHARACTER*(*) fname
-  TREAL rtime
-  TINTEGER imax,jmax,kmax, nvar, nbins, nmom, ibc
-  TREAL y(jmax)
-  TREAL b(imax,jmax,kmax), bmin, bmax
-  TREAL cavg(nbins,nmom,nvar)
-  TREAL wrk1d(nbins,*)
-  CHARACTER*32 varname(nvar)
+  CHARACTER*(*) fname, varname(nv)
+  TINTEGER,           INTENT(IN)    :: nx,ny,nz, nv, nbins, ibc ! ibc=0 for external interval, 1 for local
+  TREAL,              INTENT(IN)    :: umin,umax, u(nx*ny*nz)   ! conditioning variable
+  INTEGER(1),         INTENT(IN)    :: gate(*), igate           ! discrete conditioning criteria
+  TYPE(pointers_dt),  INTENT(IN)    :: v(nv)                    ! arrays to be averaged
+  TREAL,              INTENT(IN)    :: y(ny)                    ! heights of each plane
+  TREAL,              INTENT(OUT)   :: avg(nbins+2,ny+1,nv)     ! last 2 bins contain the interval bounds
+  TREAL,              INTENT(INOUT) :: wrk1d(nbins,2)
 
-  INTEGER(1) gate(*), igate
-
-  TYPE(pointers_dt), DIMENSION(nvar) :: data
-
-! -------------------------------------------------------------------
-  TINTEGER j, ip, iv, im
-  TREAL xmin(NMOMS_LOC,NVARS_LOC), xmax(NMOMS_LOC,NVARS_LOC)
-
-  CHARACTER*512 line1
-  CHARACTER*32 str
+  ! -------------------------------------------------------------------
+  TINTEGER j, iv
+  CHARACTER*64 name
 
 #ifdef USE_MPI
   INTEGER ims_pro, ims_err
-
   CALL MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro,ims_err)
 #endif
 
-! ###################################################################
-  IF ( NVARS_LOC .LT. nvar .OR. NMOMS_LOC .LT. nmom ) THEN
-     CALL IO_WRITE_ASCII(efile, 'CAVG2D_N. Auxiliar array size too small')
-     CALL DNS_STOP(DNS_ERROR_WRKSIZE)
-  ENDIF
+  ! ###################################################################
+  CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
 
-! -------------------------------------------------------------------
-! TkStat file; header
-! -------------------------------------------------------------------
-#ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN
-#endif
-     OPEN(unit=21,file=fname)
+  DO iv = 1,nv
 
-! comment section
-     WRITE(21,'(A)') '# TkStat PDF format'
-     IF ( igate .EQ. 0 ) THEN
-        WRITE(21,'(A)') '# No conditioning on 3rd variable'
-     ELSE
-        WRITE(21,'(A37,I1)') &
-             '# Conditioning on 3rd variable, level ', igate
-     ENDIF
+    DO j = 1,ny ! calculation in planes
+      IF ( igate .EQ. 0 ) THEN
+        CALL CAVG1V2D(  ibc, nx,ny,nz, j,             umin,umax,u, v(iv)%field, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
+      ELSE
+        CALL CAVG1V2D1G(ibc, nx,ny,nz, j, igate,gate, umin,umax,u, v(iv)%field, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
+      ENDIF
+    ENDDO
 
-     WRITE(21, '(A8,E14.7E3)') 'RTIME = ', rtime
-     WRITE(21, '(A7,I8)') 'IMAX = ', i1
-     WRITE(21, '(A7,I8)') 'JMAX = ', jmax+1
-
-     line1 = 'I J N'
-     DO iv = 1,nvar
-        DO im = 1,nmom
-           WRITE(str,*) im; line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(varname(iv)))//'Mom'//TRIM(ADJUSTL(str))
-        ENDDO
-     ENDDO
-     DO iv = 1,nvar
-        DO im = 1,nmom
-           WRITE(str,*) im; line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(varname(iv)))//'Mom'//TRIM(ADJUSTL(str))//'_X'
-        ENDDO
-     ENDDO
-     WRITE(21,'(A)') TRIM(ADJUSTL(line1))
-
-#ifdef USE_MPI
-  ENDIF
-#endif
-
-! ###################################################################
-! Conditional average calculation of 1 variable in along planes
-! ###################################################################
-  DO j = 1,jmax
-
-     DO iv = 1,nvar
-        DO im = 1,nmom
-           IF ( igate .GT. 0 ) THEN
-              CALL CAVG2V2D1G(ibc, imax, jmax, kmax, j, igate, bmin, bmax, gate, b, &
-                   data(iv)%field, nbins, im, wrk1d(1,1), cavg(1,im,iv), wrk1d(1,2),wrk1d(1,4))
-           ELSE
-              CALL CAVG2V2D(ibc, imax, jmax, kmax, j, bmin, bmax, b, &
-                   data(iv)%field, nbins, im, wrk1d(1,1), cavg(1,im,iv), wrk1d(1,2),wrk1d(1,4))
-           ENDIF
-           xmin(im,iv) = wrk1d(1,    1)
-           xmax(im,iv) = wrk1d(nbins,1)
-
-        ENDDO
-     ENDDO
-
-
-! -------------------------------------------------------------------
-! TkStat output
-! -------------------------------------------------------------------
-#ifdef USE_MPI
-     IF ( ims_pro .EQ. 0 ) THEN
-#endif
-        ip = 1
-        WRITE(21,1020) 1,j,ip,(cavg(ip,im,1),im=1,nmom*nvar),((xmin(im,iv),im=1,nmom),iv=1,nvar)
-        DO ip=2, nbins-1
-           WRITE(21,1010) 1,j, ip, (cavg(ip,im,1),im=1,nmom*nvar)
-        ENDDO
-        ip = nbins
-        WRITE(21,1020) 1,j,ip,(cavg(ip,im,1),im=1,nmom*nvar),((xmax(im,iv),im=1,nmom),iv=1,nvar)
-
-#ifdef USE_MPI
-     ENDIF
-#endif
+    j = ny +1     ! calculation in whole volume, saved as plane ny+1
+    IF ( igate .EQ. 0 ) THEN
+      CALL CAVG1V3D(  ibc, nx,ny,nz,             umin,umax,u, v(iv)%field, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
+    ELSE
+      CALL CAVG1V3D1G(ibc, nx,ny,nz, igate,gate, umin,umax,u, v(iv)%field, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
+    ENDIF
 
   ENDDO
 
-! ###################################################################
-! Conditional average calculation of 1 variable in volume
-! ###################################################################
-  DO iv = 1,nvar
-     DO im = 1,nmom
-        IF ( igate .GT. 0 ) THEN
-           CALL CAVG2V3D1G(ibc, imax, jmax, kmax, igate, bmin, bmax, gate, b, data(iv)%field, &
-                nbins, im, wrk1d(1,1), cavg(1,im,iv), wrk1d(1,2), wrk1d(1,4))
-        ELSE
-           CALL CAVG2V3D(ibc, imax, jmax, kmax, bmin, bmax, b, data(iv)%field, &
-                nbins, im, wrk1d(1,1), cavg(1,im,iv), wrk1d(1,2), wrk1d(1,4))
-        ENDIF
-        xmin(im,iv) = wrk1d(1,    1)
-        xmax(im,iv) = wrk1d(nbins,1)
-
-     ENDDO
-  ENDDO
-
-! -------------------------------------------------------------------
-! TkStat output
-! -------------------------------------------------------------------
+  ! ###################################################################
 #ifdef USE_MPI
   IF ( ims_pro .EQ. 0 ) THEN
 #endif
-     ip = 1
-     WRITE(21,1020) 1,jmax+1,ip,(cavg(ip,iv,1),iv=1,nmom*nvar),((xmin(im,iv),im=1,nmom),iv=1,nvar)
-     DO ip=2, nbins-1
-        WRITE(21,1010) 1, jmax+1, ip, (cavg(ip,iv,1),iv=1,nmom*nvar)
-     ENDDO
-     ip = nbins
-     WRITE(21,1020) 1,jmax+1,ip,(cavg(ip,iv,1),iv=1,nmom*nvar),((xmax(im,iv),im=1,nmom),iv=1,nvar)
 
-     CLOSE(21)
+#define LOC_UNIT_ID 21
+#define LOC_STATUS 'unknown'
+    DO iv = 1,nv
+      name = TRIM(ADJUSTL(fname))
+      IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
+      CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+#include "dns_open_file.h"
+      WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(avg(:,:,iv))
+      CLOSE(LOC_UNIT_ID)
+    ENDDO
+
 #ifdef USE_MPI
   ENDIF
 #endif
 
   RETURN
 
-1010 FORMAT(I5,2(1X,I5),FMT_LOC(1X,E12.3E3))
-1020 FORMAT(I5,2(1X,I5),FMT_LOC(1X,E12.3E3),FMT_LOC(1X,E12.3E3))
-
 END SUBROUTINE CAVG2D_N
-
-

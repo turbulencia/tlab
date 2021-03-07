@@ -351,8 +351,8 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, gate_level, &
-        imax*opt_block, jmax_aux, kmax, nfield, opt_bins(1), ibc, amin, amax, y_aux, gate, data, pdf, wrk1d)
+      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
       ! Scalar gradient equation
@@ -381,8 +381,8 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, gate_level, &
-        imax*opt_block, jmax_aux, kmax, nfield, opt_bins(1), ibc, amin, amax, y_aux, gate, data, pdf, wrk1d)
+      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
       ! Enstrophy equation
@@ -460,8 +460,8 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, gate_level, &
-        imax*opt_block, jmax_aux, kmax, nfield, opt_bins(1), ibc, amin, amax, y_aux, gate, data, pdf, wrk1d)
+      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
       ! Strain equation
@@ -511,8 +511,8 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, gate_level, &
-        imax*opt_block, jmax_aux, kmax, nfield, opt_bins(1), ibc, amin, amax, y_aux, gate, data, pdf, wrk1d)
+      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
       ! Velocity gradient invariants
@@ -537,8 +537,8 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, gate_level, &
-        imax*opt_block, jmax_aux, kmax, nfield, opt_bins(1), ibc, amin, amax, y_aux, gate, data, pdf, wrk1d)
+      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
       ! Chi flamelet equation PDF
@@ -556,8 +556,8 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, gate_level, &
-        imax*opt_block, jmax_aux, kmax, nfield, opt_bins(1), ibc, amin, amax, y_aux, gate, data, pdf, wrk1d)
+      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
       ! Joint PDF W^2 and 2S^2
@@ -625,8 +625,8 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, gate_level, &
-        imax*opt_block, jmax_aux, kmax, nfield, opt_bins(1), ibc, amin, amax, y_aux, gate, data, pdf, wrk1d)
+      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
       ! eigenvalues of rate-of-strain tensor
@@ -646,8 +646,8 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, gate_level, &
-        imax*opt_block, jmax_aux, kmax, nfield, opt_bins(1), ibc, amin, amax, y_aux, gate, data, pdf, wrk1d)
+      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
       ! eigenframe of rate-of-strain tensor
@@ -701,8 +701,8 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, gate_level, &
-        imax*opt_block, jmax_aux, kmax, nfield, opt_bins(1), ibc, amin, amax, y_aux, gate, data, pdf, wrk1d)
+      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
       ! Longitudinal velocity derivatives
@@ -723,8 +723,8 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, gate_level, &
-        imax*opt_block, jmax_aux, kmax, nfield, opt_bins(1), ibc, amin, amax, y_aux, gate, data, pdf, wrk1d)
+      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
       ! Potential vorticity
@@ -759,8 +759,8 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, gate_level, &
-        imax*opt_block, jmax_aux, kmax, nfield, opt_bins(1), ibc, amin, amax, y_aux, gate, data, pdf, wrk1d)
+      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
       ! joint scalar and vertical velocity
@@ -786,8 +786,8 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, gate_level, &
-        imax*opt_block, jmax_aux, kmax, nfield, opt_bins(1), ibc, amin, amax, y_aux, gate, data, pdf, wrk1d)
+      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       WRITE(fname,*) itime; fname='jpdf'//TRIM(ADJUSTL(fname))//'.bv'
       CALL JPDF2D(fname, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, data, pdf, wrk2d )

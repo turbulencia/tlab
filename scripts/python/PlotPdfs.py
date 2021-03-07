@@ -74,6 +74,8 @@ if ndim == 1:
             plt.title("height {:4.2f}".format(y[level-1]))
         else:
             plt.title("Global pdf")
+        plt.tight_layout(pad=0.1)
+        plt.savefig("{}.pdf".format(setoffiles[0]))
         plt.show()
 
     else:
@@ -96,8 +98,8 @@ if ndim == 1:
         plt.xlabel("var1")
         plt.ylabel("height")
         plt.colorbar(label='pdf',format="%.2g")
-        # plt.tight_layout(pad=0.1)
-        # plt.savefig("{}.pdf".format(setoffiles[0]))
+        plt.tight_layout(pad=0.1)
+        plt.savefig("{}.pdf".format(setoffiles[0]))
         plt.show()
 
 if ndim == 2:
@@ -113,6 +115,8 @@ if ndim == 2:
         else:
             plt.title("Global pdf")
         plt.colorbar(label='pdf',format="%.2g")
+        plt.tight_layout(pad=0.1)
+        plt.savefig("{}.pdf".format(setoffiles[0]))
         plt.show()
 
     else:

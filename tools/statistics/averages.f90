@@ -622,8 +622,8 @@ PROGRAM AVERAGES
         ENDIF
 
         WRITE(fname,*) itime; fname='cavgZ'//TRIM(ADJUSTL(fname))
-        CALL CAVG2D_N(fname, opt_bcs, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_bins, opt_order, umin, umax, y_aux, gate, s, data, mean, wrk1d)
+        CALL CAVG2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+             nfield, opt_bins, opt_bcs, umin,umax,s, gate_level,gate, data, y_aux, mean, wrk1d)
 
 ! ###################################################################
 ! Main variables
