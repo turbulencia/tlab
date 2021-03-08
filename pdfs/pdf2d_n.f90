@@ -132,7 +132,7 @@ SUBROUTINE JPDF2D( fname, nx,ny,nz, nbins, y, u, pdf, wrk2d )
   CHARACTER*(*) fname
   TINTEGER,           INTENT(IN)    :: nx,ny,nz, nbins(2)
   TREAL,              INTENT(IN)    :: y(ny)
-  TREAL,              INTENT(OUT)   :: pdf(nbins(1)*nbins(2)+4,ny+1)
+  TREAL,              INTENT(OUT)   :: pdf(nbins(1)*nbins(2) +2 +2*nbins(1),ny+1)
   TREAL,              INTENT(INOUT) :: wrk2d(nbins(1)*nbins(2))
   TYPE(pointers_dt),  INTENT(IN)    :: u(2)
 

@@ -41,7 +41,7 @@ fin.close()
 print("Files with {} bins and {} levels.".format(nb,ny))
 
 # reading data
-nb_size = np.prod(list(nb)) + 2 *ndim
+nb_size = np.prod(list(nb)) + 2 +2*(ndim-1)*nb[0]
 a = np.zeros((nb_size*(ny+1)),dtype=float)
 for file in setoffiles:
     print("Processing file {} ...".format(file))
@@ -104,8 +104,16 @@ if ndim == 1:
 
 if ndim == 2:
     if level > 0:
-        var1 = np.linspace( a[level-1,nb[0]*nb[1]],   a[level-1,nb[0]*nb[1]+1], num=nb[0] )
-        var2 = np.linspace( a[level-1,nb[0]*nb[1]+2], a[level-1,nb[0]*nb[1]+3], num=nb[1] )
+        # axis information
+        var1 = np.empty((nb[1],nb[0]),dtype=float)
+        var2 = np.empty((nb[1],nb[0]),dtype=float)
+        for j in range(nb[1]):
+            var1[j,:] = np.linspace(a[level-1,nb[0]*nb[1]    ],a[level-1,nb[0]*nb[1]+1        ],num=nb[0])
+        for i in range(nb[0]):
+            var2[:,i] = np.linspace(a[level-1,nb[0]*nb[1]+2+i],a[level-1,nb[0]*nb[1]+2+i+nb[0]],num=nb[1])
+
+        # var1 = np.linspace( a[level-1,nb[0]*nb[1]],   a[level-1,nb[0]*nb[1]+1], num=nb[0] )
+        # var2 = np.linspace( a[level-1,nb[0]*nb[1]+2], a[level-1,nb[0]*nb[1]+3], num=nb[1] )
 
         plt.contourf( var1, var2, a[level-1,:nb[0]*nb[1]].reshape(nb[1],nb[0]) )
         plt.xlabel("var1")
