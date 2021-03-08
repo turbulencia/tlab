@@ -433,9 +433,9 @@ SUBROUTINE PDF2V2D(nx,ny,nz, j, u,v, nbins,pdf, wrk2d)
   ENDDO
 #ifdef USE_MPI
   impi = nbins(1)
-  ip = offset +1;    CALL MPI_ALLREDUCE(pdf(ip), wrk2d, 1, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
+  ip = offset +1;    CALL MPI_ALLREDUCE(pdf(ip), wrk2d, impi, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
   pdf(ip:ip+nbins(1)) = wrk2d(1:nbins(1))
-  ip = ip +nbins(1); CALL MPI_ALLREDUCE(pdf(ip), wrk2d, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+  ip = ip +nbins(1); CALL MPI_ALLREDUCE(pdf(ip), wrk2d, impi, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
   pdf(ip:ip+nbins(1)) = wrk2d(1:nbins(1))
 #endif
 
@@ -460,16 +460,16 @@ SUBROUTINE PDF2V2D(nx,ny,nz, j, u,v, nbins,pdf, wrk2d)
     ENDDO
   ENDDO
 
+  DO up = 1,nbins(1) ! Calculate coordinate in the histogram; I need pdf(offset+up) before
+    ip = offset +up;   pdf(ip) = pdf(ip) + wrk2d(up) /C_2_R
+    ip = ip +nbins(1); pdf(ip) = pdf(ip) - wrk2d(up) /C_2_R
+  ENDDO
+
 #ifdef USE_MPI
   impi = nbins(1)*nbins(2)
   CALL MPI_ALLREDUCE(pdf, wrk2d, impi, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
   pdf(1:nbins(1)*nbins(2)) = wrk2d(1:nbins(1)*nbins(2))
 #endif
-
-  DO up = 1,nbins(1) ! Calculate coordinate in the histogram; I need pdf(offset+up) before
-    ip = offset +up;   pdf(ip) = pdf(ip) + wrk2d(up) /C_2_R
-    ip = ip +nbins(1); pdf(ip) = pdf(ip) - wrk2d(up) /C_2_R
-  ENDDO
 
   RETURN
 END SUBROUTINE PDF2V2D
@@ -525,9 +525,9 @@ SUBROUTINE PDF2V3D(nx,ny,nz, u,v, nbins,pdf, wrk2d)
   ENDDO
 #ifdef USE_MPI
   impi = nbins(1)
-  ip = offset +1;    CALL MPI_ALLREDUCE(pdf(ip), wrk2d, 1, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
+  ip = offset +1;    CALL MPI_ALLREDUCE(pdf(ip), wrk2d, impi, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
   pdf(ip:ip+nbins(1)) = wrk2d(1:nbins(1))
-  ip = ip +nbins(1); CALL MPI_ALLREDUCE(pdf(ip), wrk2d, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+  ip = ip +nbins(1); CALL MPI_ALLREDUCE(pdf(ip), wrk2d, impi, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
   pdf(ip:ip+nbins(1)) = wrk2d(1:nbins(1))
 #endif
 
@@ -550,16 +550,16 @@ SUBROUTINE PDF2V3D(nx,ny,nz, u,v, nbins,pdf, wrk2d)
     pdf(ip) = pdf(ip) + C_1_R
   ENDDO
 
+  DO up = 1,nbins(1) ! Calculate coordinate in the histogram; I need pdf(offset+up) before
+    ip = offset +up;   pdf(ip) = pdf(ip) + wrk2d(up) /C_2_R
+    ip = ip +nbins(1); pdf(ip) = pdf(ip) - wrk2d(up) /C_2_R
+  ENDDO
+
 #ifdef USE_MPI
   impi = nbins(1)*nbins(2)
   CALL MPI_ALLREDUCE(pdf, wrk2d, impi, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
   pdf(1:nbins(1)*nbins(2)) = wrk2d(1:nbins(1)*nbins(2))
 #endif
-
-  DO up = 1,nbins(1) ! Calculate coordinate in the histogram; I need pdf(offset+up) before
-    ip = offset +up;   pdf(ip) = pdf(ip) + wrk2d(up) /C_2_R
-    ip = ip +nbins(1); pdf(ip) = pdf(ip) - wrk2d(up) /C_2_R
-  ENDDO
 
   RETURN
 END SUBROUTINE PDF2V3D

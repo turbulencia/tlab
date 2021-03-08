@@ -117,9 +117,8 @@ END SUBROUTINE PDF2D_N
 
 !########################################################################
 !########################################################################
-SUBROUTINE JPDF2D( fname, nx,ny,nz, nbins, y, u, pdf, wrk2d )
+SUBROUTINE JPDF2D( fname, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
 
-  USE DNS_TYPES,      ONLY : pointers_dt
   USE DNS_CONSTANTS,  ONLY : lfile
 
   IMPLICIT NONE
@@ -131,10 +130,10 @@ SUBROUTINE JPDF2D( fname, nx,ny,nz, nbins, y, u, pdf, wrk2d )
 
   CHARACTER*(*) fname
   TINTEGER,           INTENT(IN)    :: nx,ny,nz, nbins(2)
+  TREAL,              INTENT(IN)    :: u(nx*ny*nz), v(nx*ny*nz)
   TREAL,              INTENT(IN)    :: y(ny)
   TREAL,              INTENT(OUT)   :: pdf(nbins(1)*nbins(2) +2 +2*nbins(1),ny+1)
   TREAL,              INTENT(INOUT) :: wrk2d(nbins(1)*nbins(2))
-  TYPE(pointers_dt),  INTENT(IN)    :: u(2)
 
   ! -------------------------------------------------------------------
   TINTEGER j
@@ -149,11 +148,11 @@ SUBROUTINE JPDF2D( fname, nx,ny,nz, nbins, y, u, pdf, wrk2d )
   CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
 
   DO j = 1,ny   ! PDF calculation along planes
-    CALL PDF2V2D( nx,ny,nz, j, u(1)%field,u(2)%field, nbins,pdf(1,j), wrk2d )
+    CALL PDF2V2D( nx,ny,nz, j, u,v, nbins,pdf(1,j), wrk2d )
   ENDDO
 
   j = ny +1     ! PDF calculation in 3D space
-  CALL PDF2V3D( nx,ny,nz, u(1)%field,u(2)%field, nbins,pdf(1,j), wrk2d )
+  CALL PDF2V3D( nx,ny,nz, u,v, nbins,pdf(1,j), wrk2d )
 
   ! ###################################################################
 #ifdef USE_MPI

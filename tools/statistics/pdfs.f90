@@ -106,8 +106,7 @@ PROGRAM PDFS
     WRITE(*,*) ' 5. Velocity gradient invariants'
     WRITE(*,*) ' 6. Flamelet equation'
     WRITE(*,*) ' 7. Joint enstrophy and strain'
-    WRITE(*,*) ' 8. Joint scalar and scalar gradient'
-    WRITE(*,*) ' 9. Conditional scalar gradient G_iG_i'
+    WRITE(*,*) ' 9. Joint scalar and scalar gradient'
     WRITE(*,*) '10. Scalar gradient components'
     WRITE(*,*) '11. Eigenvalues of rate-of-strain tensor'
     WRITE(*,*) '12. Eigenframe of rate-of-strain tensor'
@@ -158,50 +157,47 @@ PROGRAM PDFS
   SELECT CASE ( opt_main )
   CASE( 1 )
     iread_scal = 1; iread_flow = 1; inb_txc = MAX(inb_txc,6)
-    nfield = 4 +inb_scal_array;     isize_pdf = opt_bins(1)+2
+    nfield = 4 +inb_scal_array;     isize_pdf = opt_bins(1) +2
     IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) nfield = nfield +2
   CASE( 2 ) ! Scalar gradient equation
     iread_scal = 1; iread_flow = 1; inb_txc = MAX(inb_txc,6)
-    nfield = 5;                     isize_pdf = opt_bins(1)+2
+    nfield = 5;                     isize_pdf = opt_bins(1) +2
   CASE( 3 ) ! Enstrophy equation
     iread_scal = 1; iread_flow = 1; inb_txc = MAX(inb_txc,8)
-    nfield = 7;                     isize_pdf = opt_bins(1)+2
+    nfield = 7;                     isize_pdf = opt_bins(1) +2
   CASE( 4 ) ! Strain equation
     iread_scal = 1; iread_flow = 1; inb_txc = MAX(inb_txc,8)
-    nfield = 5;                     isize_pdf = opt_bins(1)+2
+    nfield = 5;                     isize_pdf = opt_bins(1) +2
   CASE( 5 ) ! Invariants
                     iread_flow = 1; inb_txc = MAX(inb_txc,6)
-    nfield = 3;                     isize_pdf = opt_bins(1)+2
+    nfield = 3;                     isize_pdf = opt_bins(1)*opt_bins(2) +2 +2*opt_bins(1)
   CASE( 6 ) ! Chi-flamelet
     iread_scal = 1; iread_flow = 1; inb_txc = MAX(inb_txc,6)
-    nfield = 2;                     isize_pdf = opt_bins(1)+2
+    nfield = 2;                     isize_pdf = opt_bins(1) +2
   CASE( 7 )
                     iread_flow = 1; inb_txc = MAX(inb_txc,4)
-    nfield = 2;                     isize_pdf = opt_bins(1)+2
-  CASE( 8 )
-    iread_scal = 1; iread_flow = 1; inb_txc = MAX(inb_txc,3)
-    nfield = 2;                     isize_pdf = opt_bins(1)+2
+    nfield = 2;                     isize_pdf = opt_bins(1)*opt_bins(2) +2 +2*opt_bins(1)
   CASE( 9 )
     iread_scal = 1; iread_flow = 1; inb_txc = MAX(inb_txc,3)
-    nfield = 2;                     isize_pdf = opt_bins(1)+2
+    nfield = 2;                     isize_pdf = opt_bins(1)*opt_bins(2) +2 +2*opt_bins(1)
   CASE( 10 )
     iread_scal = 1;                 inb_txc = MAX(inb_txc,4)
-    nfield = 5;                     isize_pdf = opt_bins(1)+2
+    nfield = 5;                     isize_pdf = opt_bins(1)*opt_bins(2) +2 +2*opt_bins(1)
   CASE( 11 ) ! eigenvalues
                     iread_flow = 1; inb_txc = MAX(inb_txc,9)
-    nfield = 3;                     isize_pdf = opt_bins(1)+2
+    nfield = 3;                     isize_pdf = opt_bins(1) +2
   CASE( 12 ) ! eigenframe
     iread_scal = 1; iread_flow = 1; inb_txc = MAX(inb_txc,9)
-    nfield = 6;                     isize_pdf = opt_bins(1)+2
+    nfield = 6;                     isize_pdf = opt_bins(1) +2
   CASE( 13 ) ! longitudinal velocity derivatives
                     iread_flow = 1; inb_txc = MAX(inb_txc,3)
-    nfield = 3;                     isize_pdf = opt_bins(1)+2
+    nfield = 3;                     isize_pdf = opt_bins(1) +2
   CASE( 14 ) ! potential vorticity
     iread_scal = 1; iread_flow = 1; inb_txc = MAX(inb_txc,6)
-    nfield = 2;                     isize_pdf = opt_bins(1)+2
+    nfield = 2;                     isize_pdf = opt_bins(1) +2
   CASE( 15 ) ! joint s and v
     iread_scal = 1; iread_flow = 1
-    nfield = 2;                     isize_pdf = opt_bins(1)*opt_bins(2)+4
+    nfield = 2;                     isize_pdf = opt_bins(1)*opt_bins(2) +2 +2*opt_bins(1)
   END SELECT
 
   ! -------------------------------------------------------------------
@@ -526,10 +522,6 @@ PROGRAM PDFS
       data(2)%field => txc(:,2); varname(2) = 'InvQ'; ibc(2) = 2
       data(3)%field => txc(:,1); varname(3) = 'InvR'; ibc(3) = 2
 
-      WRITE(fname,*) itime; fname='jpdfRQ'//TRIM(ADJUSTL(fname))
-      CALL JPDF3D(fname, i0, gate_level, i0, imax, jmax, kmax, i0, i0,&
-      gate, txc(1,2), txc(1,1), opt_bins(1), opt_bins(1), wrk2d(1,1), wrk2d(1,2), wrk2d(1,3), wrk1d)
-
       IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
         DO is = 1,nfield
           CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
@@ -539,6 +531,9 @@ PROGRAM PDFS
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
       CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
+
+      WRITE(fname,*) itime; fname='jpdf'//TRIM(ADJUSTL(fname))//'.RQ'
+      CALL JPDF2D(fname, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, data(1)%field,data(2)%field, pdf, wrk2d )
 
       ! ###################################################################
       ! Chi flamelet equation PDF
@@ -567,21 +562,9 @@ PROGRAM PDFS
       CALL FI_STRAIN(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,2), txc(1,3), txc(1,4), wrk2d,wrk3d)
       txc(1:isize_field,2) = C_2_R *txc(1:isize_field,2)
 
-      WRITE(fname,*) itime; fname='jpdfWS'//TRIM(ADJUSTL(fname))
-      CALL JPDF3D(fname, i0, gate_level, i0, imax, jmax, kmax, i0, i0,&
-        gate, txc(1,2), txc(1,1), opt_bins(1), opt_bins(1), wrk2d(1,1), wrk2d(1,2), wrk2d(1,3), wrk1d)
-
-      ! ###################################################################
-      ! Conditional scalar gradient 3D-PDFs
-      ! ###################################################################
-    CASE ( 8 )
-      CALL FI_GRADIENT(imax,jmax,kmax, s,txc(1,1), txc(1,2), wrk2d,wrk3d)
-      varname(1) = 'ScalarGradient'
-      txc(1:isize_field,1) = log(txc(1:isize_field,1))
-
-      WRITE(fname,*) itime; fname='cpdf'//TRIM(ADJUSTL(fname))
-      CALL CPDF3D_N(fname, varname, gate_level, i1, i1, rtime, imax, jmax, kmax,&
-      i1, opt_bins(2), opt_bins(1), gate, s, txc, pdf, wrk1d)
+      WRITE(fname,*) itime; fname='jpdf'//TRIM(ADJUSTL(fname))//'.WS'
+      ! We pass ny=1 and it only calculates 3D pdfs (twice, but it allows us to reuse existing routines)
+      CALL JPDF2D(fname, imax*jmax, 1, kmax, opt_bins, y_aux, txc(1,1),txc(1,2), pdf, wrk2d )
 
       ! ###################################################################
       ! Joint PDF Scalar and Scalar Gradient
@@ -590,9 +573,9 @@ PROGRAM PDFS
       CALL FI_GRADIENT(imax,jmax,kmax, s,txc(1,1), txc(1,2), wrk2d,wrk3d)
       txc(1:isize_field,1) = log(txc(1:isize_field,1))
 
-      WRITE(fname,*) itime; fname='jpdfSG'//TRIM(ADJUSTL(fname))
-      CALL JPDF3D(fname, i1, gate_level, i1, imax, jmax, kmax, i0, i0,&
-      gate, s, txc(1,1), opt_bins(1), opt_bins(1), wrk2d(1,1), wrk2d(1,2), wrk2d(1,3), wrk1d)
+      WRITE(fname,*) itime; fname='jpdf'//TRIM(ADJUSTL(fname))//'.SG'
+      ! We pass ny=1 and it only calculates 3D pdfs (twice, but it allows us to reuse existing routines)
+      CALL JPDF2D(fname, imax*jmax, 1, kmax, opt_bins, y_aux, s(1,1),txc(1,1), pdf, wrk2d )
 
       ! ###################################################################
       ! Scalar gradient components
@@ -615,8 +598,8 @@ PROGRAM PDFS
       data(5)%field => txc(:,4); varname(5) = 'Gphi';   ibc(5) = 2
 
       WRITE(fname,*) itime; fname='jpdfGi'//TRIM(ADJUSTL(fname))
-      CALL JPDF3D(fname, i1, gate_level, i1, imax, jmax, kmax, i0, i0,&
-      gate, s, txc(1,4), opt_bins(1), opt_bins(1), wrk2d(1,1), wrk2d(1,2), wrk2d(1,3), wrk1d)
+      ! We pass ny=1 and it only calculates 3D pdfs (twice, but it allows us to reuse existing routines)
+      CALL JPDF2D(fname, imax*jmax, 1, kmax, opt_bins, y_aux, s(1,1),txc(1,4), pdf, wrk2d )
 
       IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
         DO is = 1,nfield
@@ -790,7 +773,7 @@ PROGRAM PDFS
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       WRITE(fname,*) itime; fname='jpdf'//TRIM(ADJUSTL(fname))//'.bv'
-      CALL JPDF2D(fname, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, data, pdf, wrk2d )
+      CALL JPDF2D(fname, imax*opt_block, jmax_aux, kmax, opt_bins, data(1)%field,data(2)%field, y_aux, pdf, wrk2d )
 
     END SELECT
   ENDDO
