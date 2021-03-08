@@ -415,14 +415,13 @@ SUBROUTINE PDF2V2D(nx,ny,nz, j, u,v, nbins,pdf, wrk2d)
 #endif
 
   ustep = (umax-umin) /M_REAL(nbins(1))         ! Calculate step in histogram
-  IF ( ustep .EQ. C_0_R) THEN ! Just 1 point, force all in first bin; instead of factor 2, any factor >1 would work
-    ustep = (umax-umin) *C_2_R
-  ENDIF
-
-  pdf(nbins(1)*nbins(2)+1) = umin + ustep/C_2_R ! Calculate coordinate of histogram
-  pdf(nbins(1)*nbins(2)+2) = umax - ustep/C_2_R
+  pdf(nbins(1)*nbins(2)+1) = umin +C_05_R*ustep ! Calculate coordinate of histogram
+  pdf(nbins(1)*nbins(2)+2) = umax -C_05_R*ustep
+  IF ( ustep .EQ. C_0_R) ustep = C_1_R          ! Just 1 point, prevent division by zero and force all in first bin
 
   ! Second variable
+  ip = offset +1;    pdf(ip) = v(1,j,1)
+  ip = ip +nbins(1); pdf(ip) = v(1,j,1)
   DO k = 1,nz
     DO i = 1,nx
       up = INT((u(i,j,k)-umin)/ustep) + 1
@@ -439,11 +438,11 @@ SUBROUTINE PDF2V2D(nx,ny,nz, j, u,v, nbins,pdf, wrk2d)
   pdf(ip:ip+nbins(1)) = wrk2d(1:nbins(1))
 #endif
 
-  DO up = 1,nbins(1) ! Calculate Step in Histogram
+  DO up = 1,nbins(1)                                        ! Calculate Step in Histogram
     wrk2d(up) = ( pdf(offset+up+nbins(1)) -pdf(offset+up) ) /M_REAL(nbins(2))
-    IF ( wrk2d(up) .EQ. C_0_R ) THEN ! Just 1 point, force all in first bin
-      wrk2d(up) = ( pdf(offset+up+nbins(1)) -pdf(offset+up) ) *C_2_R
-    ENDIF
+    ip = offset +up;   pdf(ip) = pdf(ip) +C_05_R*wrk2d(up)  ! Calculate coordinate of histogram
+    ip = ip +nbins(1); pdf(ip) = pdf(ip) -C_05_R*wrk2d(up)
+    IF ( wrk2d(up) .EQ. C_0_R ) wrk2d(up) = C_1_R           ! Just 1 point, prevent division by zero and force all in first bin
   ENDDO
 
   ! -------------------------------------------------------------------
@@ -458,11 +457,6 @@ SUBROUTINE PDF2V2D(nx,ny,nz, j, u,v, nbins,pdf, wrk2d)
       ip = (vp-1)*nbins(1) +up
       pdf(ip) = pdf(ip) + C_1_R
     ENDDO
-  ENDDO
-
-  DO up = 1,nbins(1) ! Calculate coordinate in the histogram; I need pdf(offset+up) before
-    ip = offset +up;   pdf(ip) = pdf(ip) + wrk2d(up) /C_2_R
-    ip = ip +nbins(1); pdf(ip) = pdf(ip) - wrk2d(up) /C_2_R
   ENDDO
 
 #ifdef USE_MPI
@@ -491,7 +485,7 @@ SUBROUTINE PDF2V3D(nx,ny,nz, u,v, nbins,pdf, wrk2d)
   TREAL, INTENT(INOUT) :: wrk2d(nbins(1)*nbins(2))              ! nbins(2) should be greater than 2 for enough memory space
 
   ! -------------------------------------------------------------------
-  TINTEGER i,k, up,vp, ip, offset
+  TINTEGER i, up,vp, ip, offset
   TREAL umin,umax,ustep
 #ifdef USE_MPI
   INTEGER ims_err, impi
@@ -508,15 +502,14 @@ SUBROUTINE PDF2V3D(nx,ny,nz, u,v, nbins,pdf, wrk2d)
   ! First variable
   CALL MINMAX(nx,ny,nz, u, umin,umax)
 
-  ustep = (umax-umin) /M_REAL(nbins(1)) ! Calculate Step in Histogram
-  IF ( ustep .EQ. C_0_R) THEN ! Just 1 point, force all in first bin; instead of factor 2, any factor >1 would work
-    ustep = (umax-umin) *C_2_R
-  ENDIF
-
-  pdf(nbins(1)*nbins(2)+1) = umin       ! We use umin/umax for code readibility
-  pdf(nbins(1)*nbins(2)+2) = umax
+  ustep = (umax-umin) /M_REAL(nbins(1))         ! Calculate step in histogram
+  pdf(nbins(1)*nbins(2)+1) = umin +C_05_R*ustep ! Calculate coordinate of histogram
+  pdf(nbins(1)*nbins(2)+2) = umax -C_05_R*ustep
+  IF ( ustep .EQ. C_0_R) ustep = C_1_R          ! Just 1 point, prevent division by zero and force all in first bin
 
   ! Second variable
+  ip = offset +1;    pdf(ip) = v(1)
+  ip = ip +nbins(1); pdf(ip) = v(1)
   DO i = 1,nx*ny*nz
     up = INT((u(i)-umin)/ustep) + 1
     up = MAX(1,MIN(up,nbins(1)))
@@ -531,11 +524,11 @@ SUBROUTINE PDF2V3D(nx,ny,nz, u,v, nbins,pdf, wrk2d)
   pdf(ip:ip+nbins(1)) = wrk2d(1:nbins(1))
 #endif
 
-  DO up = 1,nbins(1) ! Calculate Step in Histogram
+  DO up = 1,nbins(1)                                        ! Calculate Step in Histogram
     wrk2d(up) = ( pdf(offset+up+nbins(1)) -pdf(offset+up) ) /M_REAL(nbins(2))
-    IF ( wrk2d(up) .EQ. C_0_R ) THEN ! Just 1 point, force all in first bin
-      wrk2d(up) = ( pdf(offset+up+nbins(1)) -pdf(offset+up) ) *C_2_R
-    ENDIF
+    ip = offset +up;   pdf(ip) = pdf(ip) +C_05_R*wrk2d(up)  ! Calculate coordinate of histogram
+    ip = ip +nbins(1); pdf(ip) = pdf(ip) -C_05_R*wrk2d(up)
+    IF ( wrk2d(up) .EQ. C_0_R ) wrk2d(up) = C_1_R           ! Just 1 point, prevent division by zero and force all in first bin
   ENDDO
 
   ! -------------------------------------------------------------------
@@ -548,11 +541,6 @@ SUBROUTINE PDF2V3D(nx,ny,nz, u,v, nbins,pdf, wrk2d)
     vp = MAX(1,MIN(vp,nbins(2)))
     ip = (vp-1)*nbins(1) +up
     pdf(ip) = pdf(ip) + C_1_R
-  ENDDO
-
-  DO up = 1,nbins(1) ! Calculate coordinate in the histogram; I need pdf(offset+up) before
-    ip = offset +up;   pdf(ip) = pdf(ip) + wrk2d(up) /C_2_R
-    ip = ip +nbins(1); pdf(ip) = pdf(ip) - wrk2d(up) /C_2_R
   ENDDO
 
 #ifdef USE_MPI
