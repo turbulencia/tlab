@@ -197,8 +197,8 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
 
      nbins = 32
      WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-     CALL PDF2D_N(fname, varname, igate, &
-       imax,jmax,kmax, nfield, nbins, ibc, amin, amax, g(2)%nodes, wrk3d, data, txc, wrk1d)
+     CALL PDF1V_N(fname, varname, imax,jmax,kmax, &
+      nfield, nbins, ibc, amin,amax,data, igate,wrk3d, g(2)%nodes, txc, wrk1d)
 
   ENDIF
 

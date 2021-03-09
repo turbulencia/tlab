@@ -89,7 +89,7 @@ PROGRAM PDFS
   opt_main  =-1 ! default values
   opt_block = 1
   gate_level= 0
-  opt_bins  = 16
+  opt_bins  =16
 
   CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamPdfs', '-1', sRes)
   iopt_size = iopt_size_max
@@ -112,7 +112,7 @@ PROGRAM PDFS
     WRITE(*,*) '12. Eigenframe of rate-of-strain tensor'
     WRITE(*,*) '13. Longitudinal velocity derivatives'
     WRITE(*,*) '14. Potential vorticity'
-    WRITE(*,*) '15. Joint scalar and vertical velocity'
+    WRITE(*,*) '15. Analysis of B and V'
     READ(*,*) opt_main
 
     WRITE(*,*) 'Planes block size ?'
@@ -196,7 +196,7 @@ PROGRAM PDFS
     iread_scal = 1; iread_flow = 1; inb_txc = MAX(inb_txc,6)
     nfield = 2;                     isize_pdf = opt_bins(1) +2
   CASE( 15 ) ! joint s and v
-    iread_scal = 1; iread_flow = 1
+    iread_scal = 1; iread_flow = 1; inb_txc = MAX(inb_txc,8)
     nfield = 2;                     isize_pdf = opt_bins(1)*opt_bins(2) +2 +2*opt_bins(1)
   END SELECT
 
@@ -347,7 +347,7 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
@@ -377,7 +377,7 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
@@ -456,7 +456,7 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
@@ -507,7 +507,7 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
@@ -529,11 +529,11 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       WRITE(fname,*) itime; fname='jpdf'//TRIM(ADJUSTL(fname))//'.RQ'
-      CALL JPDF2D(fname, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, data(1)%field,data(2)%field, pdf, wrk2d )
+      CALL PDF2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, data(1)%field,data(2)%field, pdf, wrk2d )
 
       ! ###################################################################
       ! Chi flamelet equation PDF
@@ -541,8 +541,8 @@ PROGRAM PDFS
     CASE ( 6 )
       CALL FI_STRAIN_A(imax,jmax,kmax, s, q(1,1),q(1,2),q(1,3), &
         txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
-      data(1)%field => txc(:,1); varname(1) = 'StrainAG_iG_i'; ibc(1) = 2
-      data(2)%field => txc(:,2); varname(2) = 'StrainA';       ibc(2) = 2
+      data(1)%field => txc(:,1); varname(1) = 'StrainAGiGi'; ibc(1) = 2
+      data(2)%field => txc(:,2); varname(2) = 'StrainA';     ibc(2) = 2
 
       IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
         DO is = 1,nfield
@@ -551,7 +551,7 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
@@ -564,7 +564,7 @@ PROGRAM PDFS
 
       WRITE(fname,*) itime; fname='jpdf'//TRIM(ADJUSTL(fname))//'.WS'
       ! We pass ny=1 and it only calculates 3D pdfs (twice, but it allows us to reuse existing routines)
-      CALL JPDF2D(fname, imax*jmax, 1, kmax, opt_bins, y_aux, txc(1,1),txc(1,2), pdf, wrk2d )
+      CALL PDF2V(fname, imax*jmax, 1, kmax, opt_bins, y_aux, txc(1,1),txc(1,2), pdf, wrk2d )
 
       ! ###################################################################
       ! Joint PDF Scalar and Scalar Gradient
@@ -575,7 +575,7 @@ PROGRAM PDFS
 
       WRITE(fname,*) itime; fname='jpdf'//TRIM(ADJUSTL(fname))//'.SG'
       ! We pass ny=1 and it only calculates 3D pdfs (twice, but it allows us to reuse existing routines)
-      CALL JPDF2D(fname, imax*jmax, 1, kmax, opt_bins, y_aux, s(1,1),txc(1,1), pdf, wrk2d )
+      CALL PDF2V(fname, imax*jmax, 1, kmax, opt_bins, y_aux, s(1,1),txc(1,1), pdf, wrk2d )
 
       ! ###################################################################
       ! Scalar gradient components
@@ -599,7 +599,7 @@ PROGRAM PDFS
 
       WRITE(fname,*) itime; fname='jpdfGi'//TRIM(ADJUSTL(fname))
       ! We pass ny=1 and it only calculates 3D pdfs (twice, but it allows us to reuse existing routines)
-      CALL JPDF2D(fname, imax*jmax, 1, kmax, opt_bins, y_aux, s(1,1),txc(1,4), pdf, wrk2d )
+      CALL PDF2V(fname, imax*jmax, 1, kmax, opt_bins, y_aux, s(1,1),txc(1,4), pdf, wrk2d )
 
       IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
         DO is = 1,nfield
@@ -608,7 +608,7 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
@@ -629,7 +629,7 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
@@ -684,7 +684,7 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
@@ -695,9 +695,9 @@ PROGRAM PDFS
       CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), q(1,2), txc(1,2), wrk3d, wrk2d,wrk3d)
       CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), q(1,3), txc(1,3), wrk3d, wrk2d,wrk3d)
 
-      data(1)%field => txc(:,1); varname(1) = 'S11'; ibc(1) = 2
-      data(2)%field => txc(:,2); varname(2) = 'S22'; ibc(2) = 2
-      data(3)%field => txc(:,3); varname(3) = 'S33'; ibc(3) = 2
+      data(1)%field => txc(:,1); varname(1) = 'Sxx'; ibc(1) = 2
+      data(2)%field => txc(:,2); varname(2) = 'Syy'; ibc(2) = 2
+      data(3)%field => txc(:,3); varname(3) = 'Szz'; ibc(3) = 2
 
       IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
         DO is = 1,nfield
@@ -706,7 +706,7 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
@@ -742,13 +742,16 @@ PROGRAM PDFS
       ENDIF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
       ! ###################################################################
       ! joint scalar and vertical velocity
       ! ###################################################################
     CASE ( 15 )
+      nfield = 0
+
+      nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'b'; ibc(nfield) = 1
       IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
         CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,1))
       ELSE
@@ -758,22 +761,95 @@ PROGRAM PDFS
       dummy =  C_1_R /froude
       txc(1:isize_field,1) = txc(1:isize_field,1) *dummy
 
-      nfield = 0
-      nfield = nfield+1; data(1)%field => txc(:,1); varname(1) = 'b'; ibc(1) = 1
-      nfield = nfield+1; data(2)%field => q(:,2);   varname(2) = 'v'; ibc(2) = 1
+      nfield = nfield+1; data(nfield)%field => txc(:,2); varname(nfield) = 'v'; ibc(nfield) = 1
+      txc(1:isize_field,2) = q(1:isize_field,2)
 
+      ! I need tmp1 w/o reduction to calculate derivatives
+      CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs, g(3), txc(1,1),txc(1,5), txc(1,6), wrk2d,wrk3d)
+      CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs, g(2), txc(1,1),txc(1,4), txc(1,6), wrk2d,wrk3d)
+      CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs, g(1), txc(1,1),txc(1,3), txc(1,6), wrk2d,wrk3d)
+      txc(1:isize_field,3) = txc(1:isize_field,3) +txc(1:isize_field,4) +txc(1:isize_field,5)
+
+      ! -------------------------------------------------------------------
       IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
         DO is = 1,nfield
           CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
         ENDDO
       ENDIF
-
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
         nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
+      WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))//'.bv'
+      CALL PDF2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), y_aux, pdf, wrk2d )
 
-      WRITE(fname,*) itime; fname='jpdf'//TRIM(ADJUSTL(fname))//'.bv'
-      CALL JPDF2D(fname, imax*opt_block, jmax_aux, kmax, opt_bins, data(1)%field,data(2)%field, y_aux, pdf, wrk2d )
+      ! -------------------------------------------------------------------
+      WRITE(fname,*) itime; fname='cavgB'//TRIM(ADJUSTL(fname))
+      CALL CAVG1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, txc(1,2), y_aux, pdf, wrk1d)
+
+      WRITE(fname,*) itime; fname='cavgBii'//TRIM(ADJUSTL(fname))
+      IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
+        CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, txc(1,3), wrk1d)
+      ENDIF
+      CALL CAVG1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, txc(1,3), y_aux, pdf, wrk1d)
+      fname = TRIM(ADJUSTL(fname))//'.bv'
+      CALL CAVG2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
+
+  ! -------------------------------------------------------------------
+      WRITE(fname,*) itime; fname='cavgU'//TRIM(ADJUSTL(fname))
+      txc(1:isize_field,3) = q(1:isize_field,1)
+      IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
+        CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, txc(1,3), wrk1d)
+      ENDIF
+      CALL CAVG1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, txc(1,3), y_aux, pdf, wrk1d)
+      fname = TRIM(ADJUSTL(fname))//'.bv'
+      CALL CAVG2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
+
+      WRITE(fname,*) itime; fname='cavgW'//TRIM(ADJUSTL(fname))
+      txc(1:isize_field,3) = q(1:isize_field,3)
+      IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
+        CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, txc(1,3), wrk1d)
+      ENDIF
+      CALL CAVG1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, txc(1,3), y_aux, pdf, wrk1d)
+      fname = TRIM(ADJUSTL(fname))//'.bv'
+      CALL CAVG2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
+
+      WRITE(fname,*) itime; fname='cavgVii'//TRIM(ADJUSTL(fname))
+      CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs, g(3), q(1,2),txc(1,5), txc(1,6), wrk2d,wrk3d)
+      CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs, g(2), q(1,2),txc(1,4), txc(1,6), wrk2d,wrk3d)
+      CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs, g(1), q(1,2),txc(1,3), txc(1,6), wrk2d,wrk3d)
+      txc(1:isize_field,3) = txc(1:isize_field,3) +txc(1:isize_field,4) +txc(1:isize_field,5)
+      IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
+        CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, txc(1,3), wrk1d)
+      ENDIF
+      CALL CAVG1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, txc(1,3), y_aux, pdf, wrk1d)
+      fname = TRIM(ADJUSTL(fname))//'.bv'
+      CALL CAVG2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
+
+      ! -------------------------------------------------------------------
+      bbackground = C_0_R
+      CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,3), txc(1,4),txc(1,5), txc(1,6), wrk1d,wrk2d,wrk3d)
+      CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,3),txc(1,4), wrk3d, wrk2d,wrk3d)
+      IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
+        CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, txc(1,3), wrk1d)
+        CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, txc(1,4), wrk1d)
+      ENDIF
+
+      WRITE(fname,*) itime; fname='cavgP'//TRIM(ADJUSTL(fname))
+      CALL CAVG1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, txc(1,3), y_aux, pdf, wrk1d)
+      fname = TRIM(ADJUSTL(fname))//'.bv'
+      CALL CAVG2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
+
+      WRITE(fname,*) itime; fname='cavgPy'//TRIM(ADJUSTL(fname))
+      CALL CAVG1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, txc(1,4), y_aux, pdf, wrk1d)
+      fname = TRIM(ADJUSTL(fname))//'.bv'
+      CALL CAVG2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,4), y_aux, pdf, wrk2d )
 
     END SELECT
   ENDDO

@@ -55,11 +55,9 @@ PROGRAM APRIORI
   CHARACTER*64 str, line
   TINTEGER subdomain(6)
 
-  TREAL dummy
-
   INTEGER(1) opt_gate
   INTEGER(1), DIMENSION(1) :: gate
-  
+
 ! Reading variables
   CHARACTER*512 sRes
   TINTEGER itime_size, it
@@ -101,7 +99,7 @@ PROGRAM APRIORI
   opt_block  = 1 ! not used yet
   opt_gate   = 0
   opt_order  = 1
-  
+
   CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamStructure', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_REAL(sRes, iopt_size, opt_vec)
@@ -130,13 +128,13 @@ PROGRAM APRIORI
   ENDIF
   idummy = 6
   CALL LIST_INTEGER(sRes, idummy, subdomain)
-  
+
   IF ( idummy .LT. 6 ) THEN ! default
      subdomain(1) = 1; subdomain(2) = g(1)%size
      subdomain(3) = 1; subdomain(4) = g(2)%size
      subdomain(5) = 1; subdomain(6) = g(3)%size
   ENDIF
-  
+
  MaskSize    = 6
 
 ! -------------------------------------------------------------------
@@ -155,11 +153,11 @@ PROGRAM APRIORI
   CASE ( 1 )
      inb_txc = MAX(inb_txc,8)
      nfield  = 6
-     
+
   CASE ( 2 )
      inb_txc = MAX(inb_txc,11)
      nfield  = 9
-     
+
   END SELECT
 
 ! -------------------------------------------------------------------
@@ -182,7 +180,7 @@ PROGRAM APRIORI
 #include "dns_alloc_arrays.h"
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
@@ -190,7 +188,7 @@ PROGRAM APRIORI
 ! Define size of blocks
 ! ------------------------------------------------------------------------
   y_aux(:) = 0
-  do ij = 1,jmax                      
+  do ij = 1,jmax
      is = (ij-1)/opt_block + 1
      y_aux(is) = y_aux(is) + y(ij,1)/M_REAL(opt_block)
   enddo
@@ -198,10 +196,10 @@ PROGRAM APRIORI
 ! -------------------------------------------------------------------
 ! Initialize filters
 ! -------------------------------------------------------------------
-  DO ig = 1,3     
+  DO ig = 1,3
      CALL OPR_FILTER_INITIALIZE( g(ig), FilterDomain(ig), wrk1d )
   END DO
-  
+
 ! -------------------------------------------------------------------
 ! Initialize Poisson solver
 ! -------------------------------------------------------------------
@@ -238,7 +236,7 @@ PROGRAM APRIORI
      time_str(MaskSize-LEN_TRIM(ADJUSTL(plot_file))+1:Masksize)=TRIM(ADJUSTL(plot_file))
 
      SELECT CASE( opt_main )
-        
+
 ! ###################################################################
 ! Subgrid stress
 ! ###################################################################
@@ -255,7 +253,7 @@ PROGRAM APRIORI
         nfield = nfield+1; data(nfield)%field => txc(:,4); varname(nfield) = 'Tauxy'
         nfield = nfield+1; data(nfield)%field => txc(:,5); varname(nfield) = 'Tauxz'
         nfield = nfield+1; data(nfield)%field => txc(:,6); varname(nfield) = 'Tauyz'
-        
+
         txc(1:isize_field,1) = q(1:isize_field,1) *q(1:isize_field,1)
         txc(1:isize_field,2) = q(1:isize_field,2) *q(1:isize_field,2)
         txc(1:isize_field,3) = q(1:isize_field,3) *q(1:isize_field,3)
@@ -266,7 +264,7 @@ PROGRAM APRIORI
         DO is = 1,nfield
            CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, txc(1,is), wrk1d,wrk2d,txc(1,7))
         ENDDO
-       
+
         txc(1:isize_field,1) = txc(1:isize_field,1) -qf(1:isize_field,1) *qf(1:isize_field,1)
         txc(1:isize_field,2) = txc(1:isize_field,2) -qf(1:isize_field,2) *qf(1:isize_field,2)
         txc(1:isize_field,3) = txc(1:isize_field,3) -qf(1:isize_field,3) *qf(1:isize_field,3)
@@ -328,7 +326,7 @@ PROGRAM APRIORI
 
         WRITE(fname,*) itime; fname='gradU'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, dummy, data, mean)
+             nfield, opt_order, y_aux, gate, data, mean)
 
         DO is = 1,nfield
            plot_file = TRIM(ADJUSTL(varname(is)))//time_str(1:MaskSize)
@@ -336,7 +334,7 @@ PROGRAM APRIORI
         ENDDO
 
      END SELECT
-     
+
   ENDDO
 
   CALL DNS_END(0)

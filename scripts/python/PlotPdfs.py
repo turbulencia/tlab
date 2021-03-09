@@ -69,11 +69,11 @@ if ndim == 1:
         var1 = np.linspace(a[level-1,nb],a[level-1,nb+1],num=nb)
         plt.plot( var1, a[level-1,:nb])
         plt.xlabel("var1")
-        plt.ylabel("pdf")
+        plt.ylabel("pdf, cavg")
         if level <= ny:
             plt.title("height {:4.2f}".format(y[level-1]))
         else:
-            plt.title("Global pdf")
+            plt.title("Global pdf, cavg")
         plt.tight_layout(pad=0.1)
         plt.savefig("{}.pdf".format(setoffiles[0]))
         plt.show()
@@ -97,7 +97,7 @@ if ndim == 1:
         #plt.contourf(xy[0,:,:],xy[1,:,:],np.log(a[:ny,:nb]),20)
         plt.xlabel("var1")
         plt.ylabel("height")
-        plt.colorbar(label='pdf',format="%.2g")
+        plt.colorbar(label='pdf, cavg',format="%.2g")
         plt.tight_layout(pad=0.1)
         plt.savefig("{}.pdf".format(setoffiles[0]))
         plt.show()
@@ -121,8 +121,8 @@ if ndim == 2:
         if level <= ny:
             plt.title("height {:4.2f}".format(y[level-1]))
         else:
-            plt.title("Global pdf")
-        plt.colorbar(label='pdf',format="%.2g")
+            plt.title("Global pdf, cavg")
+        plt.colorbar(label='pdf, cavg',format="%.2g")
         plt.tight_layout(pad=0.1)
         plt.savefig("{}.pdf".format(setoffiles[0]))
         plt.show()

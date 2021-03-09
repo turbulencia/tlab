@@ -13,7 +13,7 @@
 !#                      5 local interval, analysis and drop both points
 !#
 !########################################################################
-SUBROUTINE PDF2D_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, y, pdf, wrk1d )
+SUBROUTINE PDF1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, y, pdf, wrk1d )
 
   USE DNS_TYPES,      ONLY : pointers_dt
   USE DNS_CONSTANTS,  ONLY : lfile
@@ -113,11 +113,11 @@ SUBROUTINE PDF2D_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate
 
   RETURN
 
-END SUBROUTINE PDF2D_N
+END SUBROUTINE PDF1V_N
 
 !########################################################################
 !########################################################################
-SUBROUTINE JPDF2D( fname, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
+SUBROUTINE PDF2V( fname, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
 
   USE DNS_CONSTANTS,  ONLY : lfile
 
@@ -173,4 +173,4 @@ SUBROUTINE JPDF2D( fname, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
 
   RETURN
 
-END SUBROUTINE JPDF2D
+END SUBROUTINE PDF2V

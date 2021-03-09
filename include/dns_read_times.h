@@ -1,9 +1,9 @@
   CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Files', '-1', sRes)
-  
+
   IF ( sRes .EQ. '-1' ) THEN
 #ifdef PARALLEL
 #else
-     WRITE(*,*) 'Integral Iterations ?'
+     WRITE(*,*) 'Iteration numbers ?'
      READ(*,'(A512)') sRes
 #endif
   ENDIF
@@ -12,6 +12,5 @@
 
   IF ( itime_vec(1) .LT. 0 ) THEN ! Check
      CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Missing input [PostProcessing.Files] in dns.ini.')
-     CALL DNS_STOP(DNS_ERROR_INVALOPT) 
+     CALL DNS_STOP(DNS_ERROR_INVALOPT)
   ENDIF
-  

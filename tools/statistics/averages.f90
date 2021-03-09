@@ -608,8 +608,9 @@ PROGRAM AVERAGES
            txc(ij,2) = log(txc(ij,1))
         ENDDO
 
-        data(1)%field => txc(:,1); varname(1) = 'GradientG_iG_i'
-        data(2)%field => txc(:,2); varname(2) = 'LnGradientG_iG_i'
+        data(1)%field => s(:,1);   varname(1) = 's'
+        data(2)%field => txc(:,1); varname(1) = 'GiGi'
+        data(3)%field => txc(:,2); varname(2) = 'LnGiGi'
 
         IF ( opt_bcs .EQ. 0 ) THEN
            CALL MINMAX(imax,jmax,kmax, s, umin,umax)
@@ -621,9 +622,13 @@ PROGRAM AVERAGES
            ENDDO
         ENDIF
 
-        WRITE(fname,*) itime; fname='cavgZ'//TRIM(ADJUSTL(fname))
-        CALL CAVG2D_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_bins, opt_bcs, umin,umax,s, gate_level,gate, data, y_aux, mean, wrk1d)
+        WRITE(fname,*) itime; fname='cavgGiGi'//TRIM(ADJUSTL(fname))
+        CALL CAVG1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+             i1, opt_bins, opt_bcs, umin,umax,s, gate_level,gate, txc(1,1), y_aux, mean, wrk1d)
+
+        WRITE(fname,*) itime; fname='cavgLnGiGi'//TRIM(ADJUSTL(fname))
+        CALL CAVG1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
+             i1, opt_bins, opt_bcs, umin,umax,s, gate_level,gate, txc(1,2), y_aux, mean, wrk1d)
 
 ! ###################################################################
 ! Main variables

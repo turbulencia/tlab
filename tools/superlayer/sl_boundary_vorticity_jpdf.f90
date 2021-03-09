@@ -140,9 +140,9 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
   igate = 0
   ! CALL JPDF3D(fname, i0, igate, i0, imax, isize, kmax, i0, i0,&
   !      txc(1,3), wrk2d(1,1+isize), wrk2d(1,1), np, np, wrk2d(1,5), wrk2d(1,6), wrk2d(1,7), wrk1d)
-  ! Check, need to pass gate to th new formulation JPDF2D of joint pdfs
+  ! Check, need to pass gate to th new formulation PDF2V of joint pdfs
   ! We pass ny=1 and it only calculates 3D pdfs (twice, but it allows us to reuse existing routines)
-  CALL JPDF2D(fname, imax*isize, 1, kmax, opt_bins, y_aux, wrk2d(1,1+isize), wrk2d(1,1), pdf, wrk2d )
+  CALL PDF2V(fname, imax*isize, 1, kmax, opt_bins, y_aux, wrk2d(1,1+isize), wrk2d(1,1), pdf, wrk2d )
 
   RETURN
 END SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF
