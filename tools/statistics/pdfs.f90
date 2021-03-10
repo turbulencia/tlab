@@ -297,6 +297,11 @@ PROGRAM PDFS
       CALL IO_WRITE_ASCII(lfile,'Calculating partition...')
       CALL FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
         imax,jmax,kmax, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
+
+      IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
+        CALL REDUCE_BLOCK_INPLACE_INT1(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, gate, wrk1d)
+      ENDIF
+
     ENDIF
 
     ! -------------------------------------------------------------------

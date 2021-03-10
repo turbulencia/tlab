@@ -46,10 +46,8 @@ SUBROUTINE CAVG1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igat
 
     DO j = 1,ny             ! calculation in planes
       IF ( igate .EQ. 0 ) THEN
-        ! CALL CAVG1V2D(  ibc(iv), nx,ny,nz, j,             umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
         CALL PDF1V2D(  ibc(iv), nx,ny,nz, j,             umin(iv),umax(iv),u(iv)%field, nbins,avg(1,j,iv), wrk1d, a,wrk1d(1,2))
       ELSE
-        ! CALL CAVG1V2D1G(ibc(iv), nx,ny,nz, j, igate,gate, umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
         CALL PDF1V2D1G(ibc(iv), nx,ny,nz, j, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,avg(1,j,iv), wrk1d, a,wrk1d(1,2))
       ENDIF
       avg(1:nbins,j,iv) = wrk1d(1:nbins,2)
@@ -59,10 +57,8 @@ SUBROUTINE CAVG1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igat
       j = ny +1
 
       IF ( igate .EQ. 0 ) THEN
-        ! CALL CAVG1V2D(  ibc(iv), nx*ny,1,nz, 1,             umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
         CALL PDF1V2D(  ibc(iv), nx*ny,1,nz, 1,             umin(iv),umax(iv),u(iv)%field, nbins,avg(1,j,iv), wrk1d, a,wrk1d(1,2))
       ELSE
-        ! CALL CAVG1V2D1G(ibc(iv), nx*ny,1,nz, 1, igate,gate, umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
         CALL PDF1V2D1G(ibc(iv), nx*ny,1,nz, 1, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,avg(1,j,iv), wrk1d, a,wrk1d(1,2))
       ENDIF
       avg(1:nbins,j,iv) = wrk1d(1:nbins,2)
@@ -133,14 +129,12 @@ SUBROUTINE CAVG2V( fname, nx,ny,nz, nbins, u,v, a, y, avg, wrk2d )
   CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
 
   DO j = 1,ny             ! calculation in planes
-    ! CALL CAVG2V2D( nx,ny,nz, j, u,v, a, nbins,wrk2d,avg(1,j), wrk2d(1,2) )
     CALL PDF2V2D( nx,ny,nz, j, u,v, nbins,avg(1,j), wrk2d, a,wrk2d(1,2) )
     avg(1:nbins(1)*nbins(2),j) = wrk2d(1:nbins(1)*nbins(2),2)
   ENDDO
 
   IF ( ny .GT. 1 ) THEN   ! calculation in whole volume, saved as plane ny+1
     j = ny +1
-    ! CALL CAVG2V2D( nx*ny,1,nz, 1, u,v, a, nbins,wrk2d,avg(1,j), wrk2d(1,2) )
     CALL PDF2V2D( nx*ny,1,nz, 1, u,v, nbins,avg(1,j), wrk2d, a,wrk2d(1,2) )
     avg(1:nbins(1)*nbins(2),j) = wrk2d(1:nbins(1)*nbins(2),2)
   ENDIF

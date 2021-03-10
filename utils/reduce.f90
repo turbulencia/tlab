@@ -49,8 +49,8 @@ SUBROUTINE REDUCE_SUM(imax,jmax,kmax, a1,a2, np,p, b)
 
   IMPLICIT NONE
 
-  TINTEGER imax,jmax,kmax, np                           
-  TINTEGER, DIMENSION(np)            , INTENT(IN)  :: p 
+  TINTEGER imax,jmax,kmax, np
+  TINTEGER, DIMENSION(np)            , INTENT(IN)  :: p
   TREAL,    DIMENSION(imax,jmax,kmax), INTENT(IN)  :: a1,a2
   TREAL,    DIMENSION(np,  jmax,kmax), INTENT(OUT) :: b
 
@@ -74,8 +74,8 @@ SUBROUTINE REDUCE_SUB(imax,jmax,kmax, a1,a2, np,p, b)
 
   IMPLICIT NONE
 
-  TINTEGER imax,jmax,kmax, np                           
-  TINTEGER, DIMENSION(np)            , INTENT(IN)  :: p 
+  TINTEGER imax,jmax,kmax, np
+  TINTEGER, DIMENSION(np)            , INTENT(IN)  :: p
   TREAL,    DIMENSION(imax,jmax,kmax), INTENT(IN)  :: a1,a2
   TREAL,    DIMENSION(np,  jmax,kmax), INTENT(OUT) :: b
 
@@ -99,8 +99,8 @@ SUBROUTINE REDUCE_MUL(imax,jmax,kmax, a1, a2, np, p, b)
 
   IMPLICIT NONE
 
-  TINTEGER imax,jmax,kmax, np                           
-  TINTEGER, DIMENSION(np)            , INTENT(IN)  :: p 
+  TINTEGER imax,jmax,kmax, np
+  TINTEGER, DIMENSION(np)            , INTENT(IN)  :: p
   TREAL,    DIMENSION(imax,jmax,kmax), INTENT(IN)  :: a1,a2
   TREAL,    DIMENSION(np,  jmax,kmax), INTENT(OUT) :: b
 
@@ -124,8 +124,8 @@ SUBROUTINE REDUCE_DIV( imax, jmax, kmax, a1, a2, np, p, b)
 
   IMPLICIT NONE
 
-  TINTEGER imax,jmax,kmax, np                           
-  TINTEGER, DIMENSION(np)            , INTENT(IN)  :: p 
+  TINTEGER imax,jmax,kmax, np
+  TINTEGER, DIMENSION(np)            , INTENT(IN)  :: p
   TREAL,    DIMENSION(imax,jmax,kmax), INTENT(IN)  :: a1,a2
   TREAL,    DIMENSION(np,  jmax,kmax), INTENT(OUT) :: b
 
@@ -177,6 +177,38 @@ END SUBROUTINE REDUCE_BLOCK_INPLACE
 
 ! #######################################################################
 ! #######################################################################
+SUBROUTINE REDUCE_BLOCK_INPLACE_INT1(nx,ny,nz, nx1,ny1,nz1, nx_dst,ny_dst,nz_dst, a, wrk1d)
+
+  IMPLICIT NONE
+
+  TINTEGER,                        INTENT(IN)    :: nx,ny,nz, nx1,ny1,nz1, nx_dst,ny_dst,nz_dst
+  INTEGER(1), DIMENSION(nx*ny*nz), INTENT(INOUT) :: a
+  INTEGER(1), DIMENSION(nx_dst),   INTENT(INOUT) :: wrk1d
+
+! -------------------------------------------------------------------
+  TINTEGER j,k, nxy,nxy_dst, ip,ip_dst
+
+! -------------------------------------------------------------------
+  nxy     = nx    *ny
+  nxy_dst = nx_dst*ny_dst
+
+  DO k = 1,nz_dst
+     ip     = (k-1) *nxy    +(nz1-1) *nxy +(ny1-1)*nx +(nx1-1) +1
+     ip_dst = (k-1) *nxy_dst                                   +1
+     DO j = 1,ny_dst
+        wrk1d(1:nx_dst)           = a(ip:ip+nx_dst-1)
+        a(ip_dst:ip_dst+nx_dst-1) = wrk1d(1:nx_dst)
+
+        ip     = ip     + nx
+        ip_dst = ip_dst + nx_dst
+     ENDDO
+  ENDDO
+
+  RETURN
+END SUBROUTINE REDUCE_BLOCK_INPLACE_INT1
+
+! #######################################################################
+! #######################################################################
 SUBROUTINE REDUCE_BLOCK(nx,ny,nz, nx1,ny1,nz1, nx_dst,ny_dst,nz_dst, a, wrk3d)
 
   IMPLICIT NONE
@@ -220,7 +252,7 @@ SUBROUTINE REDUCE_Y_ALL(nx,ny,nz, nvar1,a1, nvar2,a2, aux, np,np_aux,p, b)
   TREAL,    DIMENSION(nx,np   ,nvar1+nvar2,nz), INTENT(OUT) :: b      ! output array (small)
 
   TINTEGER j, j_loc, ivar, k
-  
+
   DO k = 1,nz
      DO ivar = 1,nvar1
         DO j = 1,np-np_aux
@@ -229,7 +261,7 @@ SUBROUTINE REDUCE_Y_ALL(nx,ny,nz, nvar1,a1, nvar2,a2, aux, np,np_aux,p, b)
         ENDDO
         IF ( np_aux .GT. 0 ) b(1:nx,j,ivar,k) = aux(1:nx,k,ivar            ) ! Additional data, if needed
      ENDDO
-     
+
      DO ivar = 1,nvar2 ! if nvar is 0, then array a2 is not used
         DO j = 1,np-np_aux
            j_loc = p(j)
@@ -237,7 +269,7 @@ SUBROUTINE REDUCE_Y_ALL(nx,ny,nz, nvar1,a1, nvar2,a2, aux, np,np_aux,p, b)
         ENDDO
         IF ( np_aux .GT. 0 ) b(1:nx,j,ivar+nvar1,k) = aux(1:nx,k,ivar+nvar1) ! Additional data, if needed
      ENDDO
-     
+
   ENDDO
 
   RETURN
@@ -255,19 +287,19 @@ SUBROUTINE REDUCE_Z_ALL(nx,ny,nz, nvar1,a1, nvar2,a2, np,p, b)
   TREAL,    DIMENSION(nx*ny,nvar1+nvar2,np), INTENT(OUT) :: b      ! output array (small)
 
   TINTEGER k, k_loc, ivar
-  
+
   DO k = 1,np
      k_loc = p(k)
      DO ivar = 1,nvar1
         b(1:nx*ny,ivar,k) = a1(1:nx*ny,k_loc,ivar)
      ENDDO
-     
+
      DO ivar = 1,nvar2 ! if nvar is 0, then array a2 is not used
         b(1:nx*ny,ivar+nvar1,k) = a2(1:nx*ny,k_loc,ivar)
      ENDDO
-     
+
   ENDDO
-  
+
   RETURN
 END SUBROUTINE REDUCE_Z_ALL
 
@@ -283,7 +315,7 @@ SUBROUTINE REDUCE_X_ALL(nx,ny,nz, nvar1,a1, nvar2,a2, np,p, b)
   TREAL,    DIMENSION(np,ny,nvar1+nvar2,nz), INTENT(OUT) :: b      ! output array (small)
 
   TINTEGER i, i_loc, j, ivar, k
-  
+
   DO k = 1,nz
      DO ivar = 1,nvar1
         DO j = 1,ny
@@ -293,7 +325,7 @@ SUBROUTINE REDUCE_X_ALL(nx,ny,nz, nvar1,a1, nvar2,a2, np,p, b)
            ENDDO
         ENDDO
      ENDDO
-     
+
      DO ivar = 1,nvar2 ! if nvar is 0, then array a2 is not used
         DO j = 1,ny
            DO i = 1,np
@@ -302,8 +334,8 @@ SUBROUTINE REDUCE_X_ALL(nx,ny,nz, nvar1,a1, nvar2,a2, np,p, b)
            ENDDO
         ENDDO
      ENDDO
-     
+
   ENDDO
-  
+
   RETURN
 END SUBROUTINE REDUCE_X_ALL

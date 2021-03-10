@@ -167,7 +167,7 @@ SUBROUTINE AVG1V2D_V(nx,ny,nz, imom, a, avg, wrk)
 ! ###################################################################
   avg(:) = C_0_R
 
-  DO k = 1,nz 
+  DO k = 1,nz
      DO j = 1,ny
         DO i = 1,nx
            avg(j) = avg(j) + a(i,j,k)**imom
@@ -218,7 +218,7 @@ TREAL FUNCTION AVG1V2D1G(nx,ny,nz, j, igate, imom, a, gate)
   nsample = 0
   DO k = 1,nz
      DO i = 1,nx
-        IF ( gate(i,j,k) .EQ. igate ) THEN 
+        IF ( gate(i,j,k) .EQ. igate ) THEN
            AVG1V2D1G = AVG1V2D1G + a(i,j,k)**imom
            nsample = nsample+1
         ENDIF
@@ -237,6 +237,50 @@ TREAL FUNCTION AVG1V2D1G(nx,ny,nz, j, igate, imom, a, gate)
 
   RETURN
 END FUNCTION AVG1V2D1G
+
+!########################################################################
+! Intermittency factor within the plane j 
+!########################################################################
+TREAL FUNCTION INTER1V2D(nx,ny,nz, j, igate, gate)
+
+#ifdef USE_MPI
+  USE DNS_MPI, ONLY : ims_npro_i,ims_npro_k
+#endif
+
+  IMPLICIT NONE
+
+#ifdef USE_MPI
+#include "mpif.h"
+#endif
+
+  TINTEGER,   INTENT(IN) :: nx,ny,nz, j
+  INTEGER(1), INTENT(IN) :: gate(nx,ny,nz), igate
+
+  ! -------------------------------------------------------------------
+  TINTEGER i,k
+#ifdef USE_MPI
+INTEGER ims_err
+TREAL sum_mpi
+#endif
+
+  ! ###################################################################
+  INTER1V2D = C_0_R
+  DO k = 1,nz
+    DO i = 1,nx
+      IF ( gate(i,j,k) .EQ. igate ) THEN
+        INTER1V2D = INTER1V2D + C_1_R
+      ENDIF
+    ENDDO
+  ENDDO
+
+  INTER1V2D = INTER1V2D /M_REAL(nx*nz)
+#ifdef USE_MPI
+  sum_mpi = INTER1V2D/M_REAL(ims_npro_i*ims_npro_k)
+  CALL MPI_ALLREDUCE(sum_mpi, INTER1V2D,  1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+#endif
+
+  RETURN
+END FUNCTION INTER1V2D
 
 ! ###################################################################
 ! Covariance within the plane j
@@ -318,7 +362,7 @@ TREAL FUNCTION AVG1V3D(nx,ny,nz, imom, a)
 #ifdef USE_MPI
   sum_mpi = AVG1V3D/M_REAL(ims_npro)
   CALL MPI_ALLREDUCE(sum_mpi, AVG1V3D, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-#endif 
+#endif
 
   RETURN
 END FUNCTION AVG1V3D
@@ -353,7 +397,7 @@ TREAL FUNCTION AVG1V3D1G(nx,ny,nz, igate, imom, a, gate)
   AVG1V3D1G = C_0_R
   nsample = 0
   DO ij = 1,nx*ny*nz
-     IF ( gate(ij) .EQ. igate ) THEN 
+     IF ( gate(ij) .EQ. igate ) THEN
         AVG1V3D1G = AVG1V3D1G + a(ij)**imom
         nsample = nsample+1
      ENDIF
