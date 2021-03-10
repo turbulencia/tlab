@@ -1,5 +1,8 @@
 #include "types.h"
 
+MODULE PDFS
+
+CONTAINS
 !########################################################################
 !#
 !# Calculate the PDF over plane of an array u using nbins bins.
@@ -8,7 +11,7 @@
 !#                otherwise, calculate locally the min/max
 !#
 !########################################################################
-SUBROUTINE PDF1V2D(ilim, nx,ny,nz, j, umin_ext,umax_ext,u, nbins,pdf, wrk1d)
+SUBROUTINE PDF1V2D(ilim, nx,ny,nz, j, umin_ext,umax_ext,u, nbins,pdf, wrk1d, a,avg)
 
   IMPLICIT NONE
 
@@ -21,6 +24,7 @@ SUBROUTINE PDF1V2D(ilim, nx,ny,nz, j, umin_ext,umax_ext,u, nbins,pdf, wrk1d)
   TREAL, INTENT(IN)    :: u(nx,ny,nz)
   TREAL, INTENT(OUT)   :: pdf(nbins+2) ! Space at the end for min/max values in the sample variable
   TREAL, INTENT(INOUT) :: wrk1d(nbins)
+  TREAL, OPTIONAL      :: a(nx,ny,nz), avg(nbins) ! For conditional average, if needed
 
   ! -------------------------------------------------------------------
   TINTEGER i,k, up
@@ -33,6 +37,7 @@ SUBROUTINE PDF1V2D(ilim, nx,ny,nz, j, umin_ext,umax_ext,u, nbins,pdf, wrk1d)
 
   ! ###################################################################
   pdf = C_0_R
+  IF ( PRESENT(avg) ) avg = C_0_R
 
   ! -------------------------------------------------------------------
   ! Calculate Minimum and Maximum
@@ -74,10 +79,12 @@ SUBROUTINE PDF1V2D(ilim, nx,ny,nz, j, umin_ext,umax_ext,u, nbins,pdf, wrk1d)
       IF ( ilim .EQ. 0 ) THEN
         IF ( up .LE. nbins .AND. up .GE. 1 ) THEN
           pdf(up) = pdf(up) + C_1_R
+          IF ( PRESENT(a) .AND. PRESENT(avg) ) avg(up) = avg(up) + a(i,j,k)
         ENDIF
       ELSE ! put last point in the last bin
         up = MIN(up,nbins)
         pdf(up) = pdf(up) + C_1_R
+        IF ( PRESENT(a) .AND. PRESENT(avg) ) avg(up) = avg(up) + a(i,j,k)
       ENDIF
     ENDDO
   ENDDO
@@ -86,7 +93,19 @@ SUBROUTINE PDF1V2D(ilim, nx,ny,nz, j, umin_ext,umax_ext,u, nbins,pdf, wrk1d)
   impi = nbins
   CALL MPI_ALLREDUCE(pdf, wrk1d, impi, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
   pdf(1:nbins) = wrk1d(1:nbins)
+  if ( PRESENT(avg) ) then
+    CALL MPI_ALLREDUCE(avg, wrk1d, impi, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+    avg(1:nbins) = wrk1d(1:nbins)
+  end if
 #endif
+
+  IF ( PRESENT(avg) ) THEN            ! Save avg data in pdf array
+    DO up = 1,nbins
+      IF ( pdf(up) .GT. C_0_R ) THEN  ! Avg remains zero if there is no point in this interval
+        avg(up) = avg(up) /pdf(up)
+      ENDIF
+    ENDDO
+  ENDIF
 
   RETURN
 END SUBROUTINE PDF1V2D
@@ -99,7 +118,7 @@ END SUBROUTINE PDF1V2D
 !# igate  In   Level of the gate signal to use as intermittency function
 !#
 !########################################################################
-SUBROUTINE PDF1V2D1G(ilim, nx,ny,nz, j, igate,gate, umin_ext,umax_ext,u, nbins,pdf, wrk1d)
+SUBROUTINE PDF1V2D1G(ilim, nx,ny,nz, j, igate,gate, umin_ext,umax_ext,u, nbins,pdf, wrk1d, a,avg)
 
   IMPLICIT NONE
 
@@ -113,6 +132,7 @@ SUBROUTINE PDF1V2D1G(ilim, nx,ny,nz, j, igate,gate, umin_ext,umax_ext,u, nbins,p
   TREAL, INTENT(OUT)   :: pdf(nbins+2) ! Space at the end for the min and max values in the sample variable
   TREAL, INTENT(INOUT) :: wrk1d(nbins)
   INTEGER(1),INTENT(IN):: gate(nx,ny,nz), igate
+  TREAL, OPTIONAL      :: a(nx,ny,nz), avg(nbins)
 
   ! -------------------------------------------------------------------
   TINTEGER i, k, up
@@ -125,6 +145,7 @@ SUBROUTINE PDF1V2D1G(ilim, nx,ny,nz, j, igate,gate, umin_ext,umax_ext,u, nbins,p
 
   ! ###################################################################
   pdf = C_0_R
+  IF ( PRESENT(avg) ) avg = C_0_R
 
   ! -------------------------------------------------------------------
   ! Calculate Minimum and Maximum
@@ -169,10 +190,12 @@ SUBROUTINE PDF1V2D1G(ilim, nx,ny,nz, j, igate,gate, umin_ext,umax_ext,u, nbins,p
         IF ( ilim .EQ. 0 ) THEN
           IF ( up .LE. nbins .AND. up .GE. 1 ) THEN
             pdf(up) = pdf(up) + C_1_R
+            IF ( PRESENT(a) .AND. PRESENT(avg) ) avg(up) = avg(up) + a(i,j,k)
           ENDIF
         ELSE ! put last point in the last bin
           up = MIN(up,nbins)
           pdf(up) = pdf(up) + C_1_R
+          IF ( PRESENT(a) .AND. PRESENT(avg) ) avg(up) = avg(up) + a(i,j,k)
         ENDIF
       ENDIF
 
@@ -183,7 +206,19 @@ SUBROUTINE PDF1V2D1G(ilim, nx,ny,nz, j, igate,gate, umin_ext,umax_ext,u, nbins,p
   impi = nbins
   CALL MPI_ALLREDUCE(pdf, wrk1d, impi, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
   pdf(1:nbins) = wrk1d(1:nbins)
+  if ( PRESENT(avg) ) then
+    CALL MPI_ALLREDUCE(avg, wrk1d, impi, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+    avg(1:nbins) = wrk1d(1:nbins)
+  end if
 #endif
+
+  IF ( PRESENT(avg) ) THEN            ! Save avg data in pdf array
+    DO up = 1,nbins
+      IF ( pdf(up) .GT. C_0_R ) THEN  ! Avg remains zero if there is no point in this interval
+        avg(up) = avg(up) /pdf(up)
+      ENDIF
+    ENDDO
+  ENDIF
 
   RETURN
 END SUBROUTINE PDF1V2D1G
@@ -191,7 +226,7 @@ END SUBROUTINE PDF1V2D1G
 !########################################################################
 ! Joint PDFs
 !########################################################################
-SUBROUTINE PDF2V2D(nx,ny,nz, j, u,v, nbins,pdf, wrk2d)
+SUBROUTINE PDF2V2D(nx,ny,nz, j, u,v, nbins,pdf, wrk2d, a,avg)
 
   IMPLICIT NONE
 
@@ -203,6 +238,7 @@ SUBROUTINE PDF2V2D(nx,ny,nz, j, u,v, nbins,pdf, wrk2d)
   TREAL, INTENT(IN)    :: u(nx,ny,nz), v(nx,ny,nz)
   TREAL, INTENT(OUT)   :: pdf(nbins(1)*nbins(2) +2 +2*nbins(1)) ! Space at the end for min/max values of sample variable
   TREAL, INTENT(INOUT) :: wrk2d(nbins(1)*nbins(2))              ! nbins(2) should be greater than 2 for enough memory space
+  TREAL, OPTIONAL      :: a(nx,ny,nz), avg(nbins(1)*nbins(2))
 
   ! -------------------------------------------------------------------
   TINTEGER i,k, up,vp, ip, offset
@@ -215,6 +251,7 @@ SUBROUTINE PDF2V2D(nx,ny,nz, j, u,v, nbins,pdf, wrk2d)
 
   ! ###################################################################
   pdf = C_0_R
+  IF ( PRESENT(avg) ) avg = C_0_R
 
   offset = nbins(1)*nbins(2) +2
 
@@ -278,6 +315,7 @@ SUBROUTINE PDF2V2D(nx,ny,nz, j, u,v, nbins,pdf, wrk2d)
       vp = MAX(1,MIN(vp,nbins(2)))
       ip = (vp-1)*nbins(1) +up
       pdf(ip) = pdf(ip) + C_1_R
+      IF ( PRESENT(a) .AND. PRESENT(avg) ) avg(ip) = avg(ip) + a(i,j,k)
     ENDDO
   ENDDO
 
@@ -290,97 +328,22 @@ SUBROUTINE PDF2V2D(nx,ny,nz, j, u,v, nbins,pdf, wrk2d)
   impi = nbins(1)*nbins(2)
   CALL MPI_ALLREDUCE(pdf, wrk2d, impi, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
   pdf(1:nbins(1)*nbins(2)) = wrk2d(1:nbins(1)*nbins(2))
+  if ( PRESENT(avg) ) then
+    CALL MPI_ALLREDUCE(avg, wrk2d, impi, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+    avg(1:nbins(1)*nbins(2)) = wrk2d(1:nbins(1)*nbins(2))
+  end if
 #endif
+
+  if ( PRESENT(avg) ) then
+    DO ip = 1,nbins(1)*nbins(2)
+      IF ( pdf(ip) .GT. C_0_R ) THEN ! Avg remains zero if there is no point in this interval
+        avg(ip) = avg(ip) /pdf(ip)
+      ENDIF
+    ENDDO
+  end if
 
   RETURN
 END SUBROUTINE PDF2V2D
-
-!########################################################################
-! Now the same, but using calculating the PDF over the whole array u
-!########################################################################
-SUBROUTINE PDF2V3D(nx,ny,nz, u,v, nbins,pdf, wrk2d)
-
-  IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
-
-  TINTEGER nx,ny,nz, nbins(2)
-  TREAL, INTENT(IN)    :: u(nx*ny*nz), v(nx*ny*nz)
-  TREAL, INTENT(OUT)   :: pdf(nbins(1)*nbins(2) +2 +2*nbins(1)) ! Space at the end for min/max values of sample variable
-  TREAL, INTENT(INOUT) :: wrk2d(nbins(1)*nbins(2))              ! nbins(2) should be greater than 2 for enough memory space
-
-  ! -------------------------------------------------------------------
-  TINTEGER i, up,vp, ip, offset
-  TREAL umin,umax,ustep
-#ifdef USE_MPI
-  INTEGER ims_err, impi
-#endif
-
-  ! ###################################################################
-  pdf = C_0_R
-
-  offset = nbins(1)*nbins(2) +2
-
-  ! -------------------------------------------------------------------
-  ! Calculate Minimum and Maximum
-  ! -------------------------------------------------------------------
-  ! First variable
-  CALL MINMAX(nx,ny,nz, u, umin,umax)
-
-  ustep = (umax-umin) /M_REAL(nbins(1))         ! Calculate step in histogram
-  pdf(nbins(1)*nbins(2)+1) = umin +C_05_R*ustep ! Calculate coordinate of histogram
-  pdf(nbins(1)*nbins(2)+2) = umax -C_05_R*ustep
-  IF ( ustep .EQ. C_0_R) ustep = C_1_R          ! Just 1 point, prevent division by zero and force all in first bin
-
-  ! Second variable
-  ip = offset +1;    pdf(ip) = v(1)
-  ip = ip +nbins(1); pdf(ip) = v(1)
-  DO i = 1,nx*ny*nz
-    up = INT((u(i)-umin)/ustep) + 1
-    up = MAX(1,MIN(up,nbins(1)))
-    ip = offset +up;   pdf(ip) = MIN(pdf(ip),v(i))
-    ip = ip +nbins(1); pdf(ip) = MAX(pdf(ip),v(i))
-  ENDDO
-#ifdef USE_MPI
-  impi = nbins(1)
-  ip = offset +1;    CALL MPI_ALLREDUCE(pdf(ip), wrk2d, impi, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
-  pdf(ip:ip+nbins(1)) = wrk2d(1:nbins(1))
-  ip = ip +nbins(1); CALL MPI_ALLREDUCE(pdf(ip), wrk2d, impi, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
-  pdf(ip:ip+nbins(1)) = wrk2d(1:nbins(1))
-#endif
-
-  DO up = 1,nbins(1)                                        ! Calculate Step in Histogram
-    wrk2d(up) = ( pdf(offset+up+nbins(1)) -pdf(offset+up) ) /M_REAL(nbins(2))
-    IF ( wrk2d(up) .EQ. C_0_R ) wrk2d(up) = C_1_R           ! Just 1 point, prevent division by zero and force all in first bin
-  ENDDO
-
-  ! -------------------------------------------------------------------
-  ! Calculate Histogram
-  ! -------------------------------------------------------------------
-  DO i = 1,nx*ny*nz
-    up = INT((u(i)-umin)          /ustep    ) + 1
-    up = MAX(1,MIN(up,nbins(1)))
-    vp = INT((v(i)-pdf(offset+up))/wrk2d(up)) + 1
-    vp = MAX(1,MIN(vp,nbins(2)))
-    ip = (vp-1)*nbins(1) +up
-    pdf(ip) = pdf(ip) + C_1_R
-  ENDDO
-
-  DO up = 1,nbins(1)                                        ! Calculate coordinate of histogram; I needed the minimum before
-    ip = offset +up;   pdf(ip) = pdf(ip) +C_05_R*wrk2d(up)
-    ip = ip +nbins(1); pdf(ip) = pdf(ip) -C_05_R*wrk2d(up)
-  ENDDO
-
-#ifdef USE_MPI
-  impi = nbins(1)*nbins(2)
-  CALL MPI_ALLREDUCE(pdf, wrk2d, impi, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-  pdf(1:nbins(1)*nbins(2)) = wrk2d(1:nbins(1)*nbins(2))
-#endif
-
-  RETURN
-END SUBROUTINE PDF2V3D
 
 !########################################################################
 !# Recalculating max/min for a given threshold.
@@ -460,3 +423,4 @@ SUBROUTINE PDF_ANALIZE(nbins, ibc, pdf, ylim, umin, umax, nplim)
 
   RETURN
 END SUBROUTINE PDF_ANALIZE
+END MODULE

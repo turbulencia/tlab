@@ -32,7 +32,7 @@ else() # compiler for serial build
 
    else()
 #     set(USER_Fortran_FLAGS_DEBUG "-O0 -p -ggdb -Wall -fbacktrace -ffpe-trap=invalid,zero,overflow,underflow,precision,denormal")
-     set(USER_Fortran_FLAGS_DEBUG "-O0 -ggdb -Wall -fbacktrace -fconvert=big-endian -fallow-argument-mismatch -ffpe-trap=invalid,zero,overflow")
+     set(USER_Fortran_FLAGS_DEBUG "-O0 -ggdb -Wall -fbacktrace -fconvert=little-endian -fallow-argument-mismatch -ffpe-trap=invalid,zero,overflow")
 
      add_definitions(-D_DEBUG)
 

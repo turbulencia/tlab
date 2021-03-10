@@ -17,6 +17,7 @@ SUBROUTINE PDF1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate
 
   USE DNS_TYPES,      ONLY : pointers_dt
   USE DNS_CONSTANTS,  ONLY : lfile
+  USE PDFS
 
   IMPLICIT NONE
 
@@ -128,6 +129,7 @@ END SUBROUTINE PDF1V_N
 SUBROUTINE PDF2V( fname, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
 
   USE DNS_CONSTANTS,  ONLY : lfile
+  USE PDFS
 
   IMPLICIT NONE
 

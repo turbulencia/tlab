@@ -58,12 +58,12 @@ a = a.reshape((ny+1,nb_size))
 if ndim == 1:
     nb = nb[0]
 
-    # normalinzing histograms to obtain pdf (s.t. it integrates to 1 using midpoint rule)
-    for j in range(ny+1):
-        samplesize = np.sum(a[j,:nb])
-        samplestep = (a[j,nb+1]-a[j,nb]) /( nb -1 )
-        if samplestep *samplesize > 0: # otherwise the pdf is zero, by construction in Tlab
-            a[j,:nb] = a[j,:nb] /( samplesize *samplestep )
+    # # normalinzing histograms to obtain pdf (s.t. it integrates to 1 using midpoint rule)
+    # for j in range(ny+1):
+    #     samplesize = np.sum(a[j,:nb])
+    #     samplestep = (a[j,nb+1]-a[j,nb]) /( nb -1 )
+    #     if samplestep *samplesize > 0: # otherwise the pdf is zero, by construction in Tlab
+    #         a[j,:nb] = a[j,:nb] /( samplesize *samplestep )
 
     if level > 0:
         var1 = np.linspace(a[level-1,nb],a[level-1,nb+1],num=nb)
@@ -71,9 +71,9 @@ if ndim == 1:
         plt.xlabel("var1")
         plt.ylabel("pdf, cavg")
         if level <= ny:
-            plt.title("height {:4.2f}".format(y[level-1]))
+            plt.title(setoffiles[0]+" - height {:4.2f}".format(y[level-1]))
         else:
-            plt.title("Global pdf, cavg")
+            plt.title(setoffiles[0]+" - global")
         plt.tight_layout(pad=0.1)
         plt.savefig("{}.pdf".format(setoffiles[0]))
         plt.show()
@@ -91,9 +91,9 @@ if ndim == 1:
         levels = 20                 # Default
         # nymin = int(ny/10)        # defined by intermediate interval
         # nymax = nymin *3
-        nymin = 0
-        nymax = int(2*ny/3)
-        levels=np.linspace(np.amin(a[nymin:nymax,:nb]),np.amax(a[nymin:nymax,:nb]),num=20)
+        # nymin = 0
+        # nymax = int(2*ny/3)
+        # levels=np.linspace(np.amin(a[nymin:nymax,:nb]),np.amax(a[nymin:nymax,:nb]),num=20)
         # levels=np.linspace(np.amin(a[:ny,:nb]),np.amax(a[:ny,:nb]),num=20) *0.5
 
         plt.contourf(var1,y_ex,a[:ny,:nb],levels)
@@ -123,9 +123,9 @@ if ndim == 2:
         plt.xlabel("var1")
         plt.ylabel("var2")
         if level <= ny:
-            plt.title("height {:4.2f}".format(y[level-1]))
+            plt.title(setoffiles[0]+" - height {:4.2f}".format(y[level-1]))
         else:
-            plt.title("Global pdf, cavg")
+            plt.title(setoffiles[0]+" - global")
         plt.colorbar(label='pdf, cavg',format="%.2g")
         plt.tight_layout(pad=0.1)
         plt.savefig("{}.pdf".format(setoffiles[0]))
