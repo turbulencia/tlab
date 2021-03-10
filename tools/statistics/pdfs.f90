@@ -785,7 +785,7 @@ PROGRAM PDFS
       ! -------------------------------------------------------------------
       WRITE(fname,*) itime; fname='cavgB'//TRIM(ADJUSTL(fname))
       CALL CAVG1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
-        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, txc(1,2), y_aux, pdf, wrk1d)
+        nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, txc(1,1), y_aux, pdf, wrk1d)
 
       WRITE(fname,*) itime; fname='cavgBii'//TRIM(ADJUSTL(fname))
       IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN

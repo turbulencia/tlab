@@ -20,13 +20,13 @@ SUBROUTINE CAVG1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igat
 #endif
 
   CHARACTER*(*) fname, varname(nv)
-  TINTEGER,           INTENT(IN)    :: nx,ny,nz, nv, nbins, ibc ! ibc=0 for external interval, 1 for local
-  TREAL,              INTENT(IN)    :: umin(nv),umax(nv)        ! Random variables
+  TINTEGER,           INTENT(IN)    :: nx,ny,nz, nv, nbins, ibc(nv) ! ibc=0 for external interval, 1 for local
+  TREAL,              INTENT(IN)    :: umin(nv),umax(nv)            ! Random variables
   TYPE(pointers_dt),  INTENT(IN)    :: u(nv)
-  INTEGER(1),         INTENT(IN)    :: gate(*), igate           ! discrete conditioning criteria
+  INTEGER(1),         INTENT(IN)    :: gate(*), igate               ! discrete conditioning criteria
   TREAL,              INTENT(IN)    :: a(nx*ny*nz)
-  TREAL,              INTENT(IN)    :: y(ny)                    ! heights of each plane
-  TREAL,              INTENT(OUT)   :: avg(nbins+2,ny+1,nv)     ! last 2 bins contain the interval bounds
+  TREAL,              INTENT(IN)    :: y(ny)                        ! heights of each plane
+  TREAL,              INTENT(OUT)   :: avg(nbins+2,ny+1,nv)         ! last 2 bins contain the interval bounds
   TREAL,              INTENT(INOUT) :: wrk1d(nbins,2)
 
   ! -------------------------------------------------------------------
@@ -45,9 +45,9 @@ SUBROUTINE CAVG1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igat
 
     DO j = 1,ny             ! calculation in planes
       IF ( igate .EQ. 0 ) THEN
-        CALL CAVG1V2D(  ibc, nx,ny,nz, j,             umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
+        CALL CAVG1V2D(  ibc(iv), nx,ny,nz, j,             umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
       ELSE
-        CALL CAVG1V2D1G(ibc, nx,ny,nz, j, igate,gate, umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
+        CALL CAVG1V2D1G(ibc(iv), nx,ny,nz, j, igate,gate, umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
       ENDIF
     ENDDO
 
@@ -55,19 +55,12 @@ SUBROUTINE CAVG1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igat
       j = ny +1
 
       IF ( igate .EQ. 0 ) THEN
-        CALL CAVG1V2D(  ibc, nx*ny,1,nz, 1,             umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
+        CALL CAVG1V2D(  ibc(iv), nx*ny,1,nz, 1,             umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
       ELSE
-        CALL CAVG1V2D1G(ibc, nx*ny,1,nz, 1, igate,gate, umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
+        CALL CAVG1V2D1G(ibc(iv), nx*ny,1,nz, 1, igate,gate, umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
       ENDIF
 
     ENDIF
-
-    ! j = ny +1     ! calculation in whole volume, saved as plane ny+1
-    ! IF ( igate .EQ. 0 ) THEN
-    !   CALL CAVG1V3D(  ibc, nx,ny,nz,             umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
-    ! ELSE
-    !   CALL CAVG1V3D1G(ibc, nx,ny,nz, igate,gate, umin(iv),umax(iv),u(iv)%field, a, nbins,wrk1d,avg(1,j,iv), wrk1d(1,2))
-    ! ENDIF
 
   ENDDO
 
@@ -139,8 +132,6 @@ SUBROUTINE CAVG2V( fname, nx,ny,nz, nbins, u,v, a, y, avg, wrk2d )
     j = ny +1
     CALL CAVG2V2D( nx*ny,1,nz, 1, u,v, a, nbins,wrk2d,avg(1,j), wrk2d(1,2) )
   ENDIF
-  ! j = ny +1     ! avg calculation in 3D space
-  ! CALL CAVG2V3D( nx,ny,nz, u,v, a, nbins,wrk2d,avg(1,j), wrk2d(1,2) )
 
   ! ###################################################################
 #ifdef USE_MPI

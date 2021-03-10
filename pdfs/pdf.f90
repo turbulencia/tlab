@@ -93,23 +93,6 @@ SUBROUTINE PDF1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate
 
     ENDIF
 
-    ! j = ny +1   ! PDF calculation of 1 variable in 3D space
-    ! IF ( igate .EQ. 0 ) THEN
-    !   CALL PDF1V3D(  ibc(iv), nx,ny,nz,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-    ! ELSE
-    !   CALL PDF1V3D1G(ibc(iv), nx,ny,nz, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-    ! ENDIF
-    !
-    ! IF ( ibc(iv) .GT. 1 ) THEN ! threshold for analysis set s.t. single points are removed
-    !   ibc_loc = ibc(iv)-2
-    !   CALL PDF_ANALIZE(nbins, ibc_loc, pdf(1,j,iv), plim, umin(iv), umax(iv), nplim)
-    !   IF ( igate .EQ. 0 ) THEN
-    !     CALL PDF1V3D(  i0, nx,ny,nz,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-    !   ELSE
-    !     CALL PDF1V3D1G(i0, nx,ny,nz, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-    !   ENDIF
-    ! ENDIF
-
   ENDDO
 
   ! ###################################################################
@@ -180,8 +163,6 @@ SUBROUTINE PDF2V( fname, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
     j = ny +1
     CALL PDF2V2D( nx*ny,1,nz, 1, u,v, nbins,pdf(1,j), wrk2d )
   ENDIF
-  ! j = ny +1     ! PDF calculation in 3D space
-  ! CALL PDF2V3D( nx,ny,nz, u,v, nbins,pdf(1,j), wrk2d )
 
   ! ###################################################################
 #ifdef USE_MPI

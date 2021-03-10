@@ -62,7 +62,7 @@ if ndim == 1:
     for j in range(ny+1):
         samplesize = np.sum(a[j,:nb])
         samplestep = (a[j,nb+1]-a[j,nb]) /( nb -1 )
-        if samplestep > 0: # otherwise the pdf is zero, by construction in Tlab
+        if samplestep *samplesize > 0: # otherwise the pdf is zero, by construction in Tlab
             a[j,:nb] = a[j,:nb] /( samplesize *samplestep )
 
     if level > 0:
@@ -88,13 +88,17 @@ if ndim == 1:
         #   var1[j,:] = var1[j,:]-0.5*nbstep # colormesh uses coordinates for the corners of the region
 
         # choose an interval to define the color range
-        nymin = int(ny/10)
-        nymax = nymin *3
-        levels=np.linspace(0.,np.amax(a[nymin:nymax,:nb]),num=20)
+        levels = 20                 # Default
+        # nymin = int(ny/10)        # defined by intermediate interval
+        # nymax = nymin *3
+        nymin = 0
+        nymax = int(2*ny/3)
+        levels=np.linspace(np.amin(a[nymin:nymax,:nb]),np.amax(a[nymin:nymax,:nb]),num=20)
+        # levels=np.linspace(np.amin(a[:ny,:nb]),np.amax(a[:ny,:nb]),num=20) *0.5
 
-        #plt.pcolormesh(xy[0,:,:],xy[1,:,:],a[:ny,:nb],levels)
-        plt.contourf(var1,y_ex,a[:ny,:nb],levels)    # this is faster
-        #plt.contourf(xy[0,:,:],xy[1,:,:],np.log(a[:ny,:nb]),20)
+        plt.contourf(var1,y_ex,a[:ny,:nb],levels)
+        # plt.pcolormesh(var1,y_ex,a[:ny,:nb],levels)
+
         plt.xlabel("var1")
         plt.ylabel("height")
         plt.colorbar(label='pdf, cavg',format="%.2g")

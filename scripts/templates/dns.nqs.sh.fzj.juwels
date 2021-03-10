@@ -30,12 +30,12 @@ dns.pre $LOCALDIR $STEP
 touch *
 
 #Load environment
-#module purge 
-#module use /gpfs/software/juwels/otherstages 
+#module purge
+#module use /gpfs/software/juwels/otherstages
 #module load Stages/2018b
 module load Intel
-#module load IntelMPI 
-module load ParaStationMPI 
+#module load IntelMPI
+module load ParaStationMPI
 #module load pscom
 module load imkl
 module load FFTW
@@ -60,7 +60,7 @@ fi
 export PSP_GUARD=0
 export PSP_ONDEMAND=1
 export PSP_UCP=1
- 
+
 # Run Simulation
 case $RUNMODE in
   "preprocess" )
@@ -71,7 +71,7 @@ case $RUNMODE in
     simulation $TIMESTAMP
     if [ $? -ne 0 ]; then
        ABORT="yes"
-    fi 
+    fi
     ;;
   "postprocess" )
     postprocess $TIMESTAMP
@@ -83,14 +83,14 @@ esac
 if [ -f dns.err ]; then
     ABORT="yes"
 fi
-	
+
 if [ -f dns.err.0 ]; then
     ABORT="yes"
 fi
 
 stat -t core* >/dev/null 2>&1 && ABORT="yes"
 
-#clean 
+#clean
 if [ -f dns.ini ]; then
     cp dns.ini dns.ini-$TIMESTAMP
 fi
@@ -114,7 +114,7 @@ if [ ! -e $STATSDIR ]; then
        mv dns.def $STATSDIR
     fi
 
-    LIST=`ls | egrep 'avg[0-9]|?cr[0-9]|?sp[0-9]|pdf[0-9]|cavgXi[0-9]|pdfXi[0-9]|int[0-9]|kin[0-9]'`
+    LIST=`ls | egrep 'avg[0-9]|?cr[0-9]|?sp[0-9]|pdf[0-9]|cavg*|int[0-9]|kin[0-9]'`
     echo "Moving statistic files into $STATSDIR"
     if [ -n "$LIST" ]; then
        mv $LIST $STATSDIR
@@ -130,7 +130,7 @@ PLANESDIR=planes-$TIMESTAMP
 if [ ! -e $PLANESDIR ]; then
     mkdir $PLANESDIR
     mv planes?.* $PLANESDIR
-   
+
 else
     echo "$PLANESDIR exists. Aborting"
 
@@ -145,24 +145,23 @@ if [ $RUNMODE = "simulation" ];then
 	fi
 
 	if [ -f $LOCALDIR/dns.ini ]; then
-	    ITIME=`awk -F"=" '{ 
-				if ( $1 == "End" ) 
+	    ITIME=`awk -F"=" '{
+				if ( $1 == "End" )
 				    {
-				    print $2 
+				    print $2
 				    }
-			    }' $LOCALDIR/dns.ini` 
+			    }' $LOCALDIR/dns.ini`
 	else
 	    echo "Error getting max time"
 	    exit 1
 	fi
- 
+
 	if [ $ITIME -lt $MAXITER ]; then
 	    # Submit Script
 	    qsend -name $NAME -queue $QUEUE -time $TIME -maxiter $MAXITER -mem $MEM \
 	          -script $SCRIPT -jobdir $JOBDIR -step $STEP -np $NP \
                   -rankspernode $RANKSPERNODE -threadsperrank $THREADSPERRANK -commmode $COMMMODE
 
-	fi       
+	fi
     fi
 fi
-
