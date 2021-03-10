@@ -67,7 +67,7 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL,    ONLY : buoyancy, imode_eqns, icalc_scal
   USE DNS_GLOBAL,    ONLY : itransport, froude
   USE DNS_GLOBAL,    ONLY : epbackground, pbackground, rbackground
-  USE DNS_GLOBAL,    ONLY : itime, rtime
+  USE DNS_GLOBAL,    ONLY : itime
   USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
   USE DNS_MPI

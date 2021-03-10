@@ -53,14 +53,14 @@ SUBROUTINE PDF1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate
 
   DO iv = 1,nv
 
-    DO j = 1,ny  ! PDF calculation of 1 variable along planes
+    DO j = 1,ny                   ! calculation in planes
       IF ( igate .EQ. 0 ) THEN
         CALL PDF1V2D(  ibc(iv), nx,ny,nz, j,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
       ELSE
         CALL PDF1V2D1G(ibc(iv), nx,ny,nz, j, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
       ENDIF
 
-      IF ( ibc(iv) .GT. 1 ) THEN ! threshold for analysis set s.t. single points are removed
+      IF ( ibc(iv) .GT. 1 ) THEN  ! threshold for analysis set s.t. single points are removed
         ibc_loc = ibc(iv)-2
         CALL PDF_ANALIZE(nbins, ibc_loc, pdf(1,j,iv), plim, umin(iv), umax(iv), nplim)
         IF ( igate .EQ. 0 ) THEN
@@ -72,22 +72,43 @@ SUBROUTINE PDF1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate
 
     ENDDO
 
-    j = ny +1   ! PDF calculation of 1 variable in 3D space
-    IF ( igate .EQ. 0 ) THEN
-      CALL PDF1V3D(  ibc(iv), nx,ny,nz,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-    ELSE
-      CALL PDF1V3D1G(ibc(iv), nx,ny,nz, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+    IF ( ny .GT. 1 ) THEN         ! calculation in whole volume, saved as plane ny+1
+      j = ny +1
+
+      IF ( igate .EQ. 0 ) THEN
+        CALL PDF1V2D(  ibc(iv), nx*ny,1,nz, 1,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+      ELSE
+        CALL PDF1V2D1G(ibc(iv), nx*ny,1,nz, 1, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+      ENDIF
+
+      IF ( ibc(iv) .GT. 1 ) THEN  ! threshold for analysis set s.t. single points are removed
+        ibc_loc = ibc(iv)-2
+        CALL PDF_ANALIZE(nbins, ibc_loc, pdf(1,j,iv), plim, umin(iv), umax(iv), nplim)
+        IF ( igate .EQ. 0 ) THEN
+          CALL PDF1V2D(  i0, nx*ny,1,nz, 1,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+        ELSE
+          CALL PDF1V2D1G(i0, nx*ny,1,nz, 1, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+        ENDIF
+      ENDIF
+
     ENDIF
 
-    IF ( ibc(iv) .GT. 1 ) THEN ! threshold for analysis set s.t. single points are removed
-      ibc_loc = ibc(iv)-2
-      CALL PDF_ANALIZE(nbins, ibc_loc, pdf(1,j,iv), plim, umin(iv), umax(iv), nplim)
-      IF ( igate .EQ. 0 ) THEN
-        CALL PDF1V3D(  i0, nx,ny,nz,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-      ELSE
-        CALL PDF1V3D1G(i0, nx,ny,nz, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-      ENDIF
-    ENDIF
+    ! j = ny +1   ! PDF calculation of 1 variable in 3D space
+    ! IF ( igate .EQ. 0 ) THEN
+    !   CALL PDF1V3D(  ibc(iv), nx,ny,nz,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+    ! ELSE
+    !   CALL PDF1V3D1G(ibc(iv), nx,ny,nz, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+    ! ENDIF
+    !
+    ! IF ( ibc(iv) .GT. 1 ) THEN ! threshold for analysis set s.t. single points are removed
+    !   ibc_loc = ibc(iv)-2
+    !   CALL PDF_ANALIZE(nbins, ibc_loc, pdf(1,j,iv), plim, umin(iv), umax(iv), nplim)
+    !   IF ( igate .EQ. 0 ) THEN
+    !     CALL PDF1V3D(  i0, nx,ny,nz,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+    !   ELSE
+    !     CALL PDF1V3D1G(i0, nx,ny,nz, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+    !   ENDIF
+    ! ENDIF
 
   ENDDO
 
@@ -103,7 +124,11 @@ SUBROUTINE PDF1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate
       IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
       CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 #include "dns_open_file.h"
-      WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(pdf(:,:,iv))
+      IF ( ny .GT. 1 ) THEN
+        WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(pdf(:,:,iv))
+      ELSE
+        WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(pdf(:,1,iv))
+      ENDIF
       CLOSE(LOC_UNIT_ID)
     ENDDO
 
@@ -147,12 +172,16 @@ SUBROUTINE PDF2V( fname, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
   ! ###################################################################
   CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
 
-  DO j = 1,ny   ! PDF calculation along planes
+  DO j = 1,ny               ! calculation in planes
     CALL PDF2V2D( nx,ny,nz, j, u,v, nbins,pdf(1,j), wrk2d )
   ENDDO
 
-  j = ny +1     ! PDF calculation in 3D space
-  CALL PDF2V3D( nx,ny,nz, u,v, nbins,pdf(1,j), wrk2d )
+  IF ( ny .GT. 1 ) THEN     ! calculation in whole volume, saved as plane ny+1
+    j = ny +1
+    CALL PDF2V2D( nx*ny,1,nz, 1, u,v, nbins,pdf(1,j), wrk2d )
+  ENDIF
+  ! j = ny +1     ! PDF calculation in 3D space
+  ! CALL PDF2V3D( nx,ny,nz, u,v, nbins,pdf(1,j), wrk2d )
 
   ! ###################################################################
 #ifdef USE_MPI
@@ -164,7 +193,11 @@ SUBROUTINE PDF2V( fname, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
     name = TRIM(ADJUSTL(fname))
     CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 #include "dns_open_file.h"
-    WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(pdf(:,:))
+    IF ( ny .GT. 1 ) THEN
+      WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(pdf(:,:))
+    ELSE
+      WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(pdf(:,1))
+    ENDIF
     CLOSE(LOC_UNIT_ID)
 
 #ifdef USE_MPI
