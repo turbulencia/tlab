@@ -61,13 +61,13 @@ SUBROUTINE PDF1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate
            CALL PDF1V2D1G(ibc(iv), nx,ny,nz, j, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
         ENDIF
 
-        IF ( ibc(iv) .GT. 1 ) THEN  ! threshold for analysis set s.t. single points are removed
+        IF ( ibc(iv) .GT. 1 ) THEN
            ibc_loc = ibc(iv)-2; umin_loc = umin(iv); umax_loc = umax(iv)
            CALL PDF_ANALIZE(ibc_loc, nbins,pdf(1,j,iv), umin_loc,umax_loc, plim,nplim)
            IF ( igate .EQ. 0 ) THEN
-              CALL PDF1V2D(  i0, nx,ny,nz, j,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+              CALL PDF1V2D(  i0, nx,ny,nz, j,             umin_loc,umax_loc,u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
            ELSE
-              CALL PDF1V2D1G(i0, nx,ny,nz, j, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+              CALL PDF1V2D1G(i0, nx,ny,nz, j, igate,gate, umin_loc,umax_loc,u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
            ENDIF
         ENDIF
 
@@ -82,13 +82,13 @@ SUBROUTINE PDF1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate
            CALL PDF1V2D1G(ibc(iv), nx*ny,1,nz, 1, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
         ENDIF
 
-        IF ( ibc(iv) .GT. 1 ) THEN  ! threshold for analysis set s.t. single points are removed
+        IF ( ibc(iv) .GT. 1 ) THEN
            ibc_loc = ibc(iv)-2; umin_loc = umin(iv); umax_loc = umax(iv)
            CALL PDF_ANALIZE(ibc_loc, nbins,pdf(1,j,iv), umin_loc,umax_loc, plim,nplim)
            IF ( igate .EQ. 0 ) THEN
-              CALL PDF1V2D(  i0, nx*ny,1,nz, 1,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+              CALL PDF1V2D(  i0, nx*ny,1,nz, 1,             umin_loc,umax_loc,u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
            ELSE
-              CALL PDF1V2D1G(i0, nx*ny,1,nz, 1, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
+              CALL PDF1V2D1G(i0, nx*ny,1,nz, 1, igate,gate, umin_loc,umax_loc,u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
            ENDIF
         ENDIF
 
