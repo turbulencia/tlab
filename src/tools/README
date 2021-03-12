@@ -1,7 +1,7 @@
 Library dependencies
 --------------------
-tools -> mappings -> io      -> parallel       -> utils
-                     flow       thermodynamics    FFTW [external]
+tools -> mappings -> io      -> mpi            -> utils
+                                thermodynamics    FFTW [external]
                      operators  fdm
                                 linear
                                 averages
@@ -9,4 +9,3 @@ tools -> mappings -> io      -> parallel       -> utils
                                 filters
                                 quadpack [external, from NETLIB]
                                 fitpack  [external, from NETLIB]
-
