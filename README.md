@@ -2,6 +2,8 @@
 
 Tools to simulate and analyze turbulent flows in 2D and 3D configurations. The numerical schemes are based on compact finite differences with structured meshes, where grid stretching allowed. Time advancement in based on Runge-Kutta schemes. There are two possible modes [temporal|spatial], which corresponds to temporally evolving flows and spatially evolving flows, respectively. This parameter refers to the statistical homogeneities of the configuration, and it partly defines the boundary conditions and the calculation of statistical properties. Hybrid parallelization using MPI in two directions and OpenMPI in big loops.
 
+Some examples of applications can be found in this [website](https://jpmellado.github.io/gallery.html).
+
 See [`doc/manual.pdf`](./doc/manual.pdf) for more information.
 
 ## Install
