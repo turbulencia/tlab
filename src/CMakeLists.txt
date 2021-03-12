@@ -1,6 +1,6 @@
-cmake_minimum_required (VERSION 2.8.1)
+cmake_minimum_required (VERSION 2.8...3.13)
 # specify the location of loadable modules (.cmake extension)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/config)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../config)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # load system specific settings if not set, force default.cmake

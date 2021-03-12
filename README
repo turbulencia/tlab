@@ -1,7 +1,0 @@
-Tools to simulate and analyze different configurations of 2D and 3D turbulent flows.
-
-Numerical schemes are based on compact finite difference methods on structured meshes. Stretching allowed.
-
-There are two possible modes [temporal|spatial], which corresponds to temporally evolving flows, or spatially evolving flows. This qualifier refers to the statistical homogeneities of the configuration, and it partially defines the boundary conditions, and the calculation of statistical properties.
-
-See manual for more information.
