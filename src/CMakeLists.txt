@@ -4,7 +4,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../config
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # load system specific settings if not set, force default.cmake
-# cmake .. -DSYST=mpipc
+# cmake ../src -DSYST=mpipc
 if(NOT SYST)
   set(SYST default)
 endif()
@@ -49,7 +49,7 @@ else()
 endif()
 
 # start the project only after the system specific settings are loaded
-project(dns Fortran)
+project(tlab Fortran)
 
 # set the include dirs
 set(INCLUDE_DIRS ${FFTW_INCLUDE_DIR} ${PSFFT_INCLUDE_DIR})
