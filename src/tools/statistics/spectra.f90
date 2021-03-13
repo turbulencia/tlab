@@ -63,7 +63,7 @@ PROGRAM SPECTRA
 
   TREAL, DIMENSION(:,:), ALLOCATABLE :: out2d, outx,outz,outr
 
-  TYPE(pointers_dt), DIMENSION(16) :: data
+  TYPE(pointers_dt), DIMENSION(16) :: vars
 
   TARGET q, s, p_aux
 
@@ -391,15 +391,15 @@ PROGRAM SPECTRA
 ! Define reference pointers and tags
   iv = 0
   IF ( icalc_flow .EQ. 1 ) THEN
-     iv = iv+1; data(iv)%field => q(:,1); tag_var(iv) = 'u'
-     iv = iv+1; data(iv)%field => q(:,2); tag_var(iv) = 'v'
-     iv = iv+1; data(iv)%field => q(:,3); tag_var(iv) = 'w'
+     iv = iv+1; vars(iv)%field => q(:,1); tag_var(iv) = 'u'
+     iv = iv+1; vars(iv)%field => q(:,2); tag_var(iv) = 'v'
+     iv = iv+1; vars(iv)%field => q(:,3); tag_var(iv) = 'w'
      IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        iv = iv+1; data(iv)%field => q(:,6); tag_var(iv) = 'p'
-        iv = iv+1; data(iv)%field => q(:,5); tag_var(iv) = 'r'
-        iv = iv+1; data(iv)%field => q(:,7); tag_var(iv) = 't'
+        iv = iv+1; vars(iv)%field => q(:,6); tag_var(iv) = 'p'
+        iv = iv+1; vars(iv)%field => q(:,5); tag_var(iv) = 'r'
+        iv = iv+1; vars(iv)%field => q(:,7); tag_var(iv) = 't'
      ELSE
-        iv = iv+1; data(iv)%field => p_aux;  tag_var(iv) = 'p'
+        iv = iv+1; vars(iv)%field => p_aux;  tag_var(iv) = 'p'
      ENDIF
   ENDIF
   iv_offset = iv
@@ -407,7 +407,7 @@ PROGRAM SPECTRA
   IF ( icalc_scal .EQ. 1 ) THEN
      DO is = 1,inb_scal_array
         WRITE(sRes,*) is
-        iv = iv+1; data(iv)%field => s(:,is); tag_var(iv) = TRIM(ADJUSTL(sRes))
+        iv = iv+1; vars(iv)%field => s(:,is); tag_var(iv) = TRIM(ADJUSTL(sRes))
      ENDDO
   ENDIF
 
@@ -512,12 +512,12 @@ PROGRAM SPECTRA
 ! Remove fluctuation
      IF ( opt_main .GE. 5 ) THEN ! 3D spectra
         DO iv = 1,nfield_ref
-           dummy = AVG1V3D(imax,jmax,kmax, i1, data(iv)%field)
-           data(iv)%field =  data(iv)%field - dummy
+           dummy = AVG1V3D(imax,jmax,kmax, i1, vars(iv)%field)
+           vars(iv)%field =  vars(iv)%field - dummy
         ENDDO
      ELSE
         DO iv = 1,nfield_ref
-           CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, data(iv)%field)
+           CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, vars(iv)%field)
         ENDDO
      ENDIF
 
@@ -540,17 +540,17 @@ PROGRAM SPECTRA
 
            wrk1d(:,1:3) = C_0_R ! variance to normalize and check Parseval's relation
            DO j=1,jmax
-              wrk1d(j,1) = COV2V2D(imax,jmax,kmax,j,data(iv1)%field,data(iv2)%field)
-              wrk1d(j,2) = COV2V2D(imax,jmax,kmax,j,data(iv1)%field,data(iv1)%field)
-              wrk1d(j,3) = COV2V2D(imax,jmax,kmax,j,data(iv2)%field,data(iv2)%field)
+              wrk1d(j,1) = COV2V2D(imax,jmax,kmax,j,vars(iv1)%field,vars(iv2)%field)
+              wrk1d(j,2) = COV2V2D(imax,jmax,kmax,j,vars(iv1)%field,vars(iv1)%field)
+              wrk1d(j,3) = COV2V2D(imax,jmax,kmax,j,vars(iv2)%field,vars(iv2)%field)
            ENDDO
 
-           txc(1:isize_field,1) =  data(iv1)%field(1:isize_field)
+           txc(1:isize_field,1) =  vars(iv1)%field(1:isize_field)
            IF ( iv2 .EQ. iv1 ) THEN
               CALL OPR_FOURIER_CONVOLUTION_FXZ(i1, flag_mode, imax,jmax,kmax, &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
            ELSE
-              txc(1:isize_field,2) = data(iv2)%field(1:isize_field)
+              txc(1:isize_field,2) = vars(iv2)%field(1:isize_field)
               CALL OPR_FOURIER_CONVOLUTION_FXZ(i2, flag_mode, imax,jmax,kmax, &
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
            ENDIF
@@ -692,7 +692,7 @@ PROGRAM SPECTRA
      ELSE IF ( opt_main .EQ. 5 ) THEN
 
         DO iv = 1,nfield
-           txc(1:isize_field,1) = data(iv)%field(1:isize_field)
+           txc(1:isize_field,1) = vars(iv)%field(1:isize_field)
            CALL OPR_FOURIER_F(i3, imax,jmax,kmax, txc(1,1),txc(1,2), txc(1,3),wrk2d,wrk3d)
 
            CALL OPR_FOURIER_SPECTRA_3D(imax,jmax,kmax, isize_spec2dr, txc(1,2), outr(1,iv), wrk3d)

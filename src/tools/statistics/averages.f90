@@ -24,13 +24,13 @@ PROGRAM AVERAGES
 #include "mpif.h"
 #endif
 
-! Parameter definitions
+  ! Parameter definitions
   TINTEGER, PARAMETER :: itime_size_max = 512
   TINTEGER, PARAMETER :: iopt_size_max  =  20
   TINTEGER, PARAMETER :: igate_size_max =   8
   TINTEGER, PARAMETER :: params_size_max =  2
 
-! Arrays declarations
+  ! Arrays declarations
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE         :: x,y,z
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE, TARGET :: q, s, txc
   TREAL, DIMENSION(:),      ALLOCATABLE, SAVE         :: wrk1d,wrk3d
@@ -40,32 +40,31 @@ PROGRAM AVERAGES
   INTEGER(1), DIMENSION(:), ALLOCATABLE, SAVE         :: gate
   TREAL, DIMENSION(:,:,:),  ALLOCATABLE, SAVE         :: surface
 
-  TYPE(pointers_dt), DIMENSION(16) :: data
+  TYPE(pointers_dt), DIMENSION(16) :: vars
 
-! Particle data
+  ! Particle data
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_txc
 
-! -------------------------------------------------------------------
-! Local variables
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Local variables
+  ! -------------------------------------------------------------------
   CHARACTER*32 fname, inifile, bakfile
   CHARACTER*32 varname(16)
   CHARACTER*64 str, line
 
-  TINTEGER opt_main, opt_block, opt_order, opt_bins, opt_bcs, flag_buoyancy
+  TINTEGER opt_main, opt_block, opt_order
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
   TINTEGER nfield, isize_wrk3d, is, ij, k, n, bcs(2,2)
-  TREAL diff, umin, umax, dummy
-  TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3
+  TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3, dummy
   TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
 
-! Gates for the definition of the intermittency function (partition of the fields)
+  ! Gates for the definition of the intermittency function (partition of the fields)
   TINTEGER igate_size
   TREAL gate_threshold(igate_size_max)
   INTEGER(1) gate_level
 
-! Reading variables
+  ! Reading variables
   CHARACTER*512 sRes
 
   TINTEGER itime_size, it
@@ -85,11 +84,11 @@ PROGRAM AVERAGES
   TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
 #endif
 
-! Pointers to existing allocated space
+  ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u, v, w
 
-!########################################################################
-!########################################################################
+  !########################################################################
+  !########################################################################
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
   inifile = 'dns.ini'
@@ -113,29 +112,18 @@ PROGRAM AVERAGES
   ENDIF
 #endif
 
-! -------------------------------------------------------------------
-! Allocating memory space
-! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
-  ALLOCATE(gate(isize_field))
-
-  ALLOCATE(y_aux(g(2)%size)) ! Reduced vertical grid
-
-! -------------------------------------------------------------------
-! File names
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! File names
+  ! -------------------------------------------------------------------
 #include "dns_read_times.h"
 
-! -------------------------------------------------------------------
-! Additional options
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Additional options
+  ! -------------------------------------------------------------------
   opt_main  =-1 ! default values
   opt_block = 1
-  gate_level  = 0
+  gate_level= 0
   opt_order = 1
-  opt_bins  = 0
-  opt_bcs   = 1
 
   CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamAverages', '-1', sRes)
   iopt_size = iopt_size_max
@@ -147,7 +135,6 @@ PROGRAM AVERAGES
      WRITE(*,*) 'Option ?'
      WRITE(*,*) ' 1. Conventional averages'
      WRITE(*,*) ' 2. Intermittency or gate function'
-     WRITE(*,*) ' 3. Scalar gradient G_iG_i conditioned on scalar'
      WRITE(*,*) ' 4. Main variables'
      WRITE(*,*) ' 5. Enstrophy W_iW_i/2 equation'
      WRITE(*,*) ' 6. Strain 2S_ijS_ij/2 equation'
@@ -174,25 +161,12 @@ PROGRAM AVERAGES
         READ(*,*) opt_order
      ENDIF
 
-     IF ( opt_main .EQ. 3 ) THEN
-        WRITE(*,*) 'Number of bins ?'
-        READ(*,*) opt_bins
-        WRITE(*,*) 'Local interval (1) or homogeneous (0) ?'
-        READ(*,*) opt_bcs
-     ENDIF
-
 #endif
   ELSE
      opt_main = INT(opt_vec(1))
      IF ( iopt_size .GE. 2 ) opt_block = INT(opt_vec(2))
-     IF ( opt_main .GT. 2 ) THEN
-        IF ( iopt_size .GE. 3 ) gate_level  = INT(opt_vec(3),KIND=1)
-        IF ( iopt_size .GE. 4 ) opt_order = INT(opt_vec(4))
-     ENDIF
-     IF ( opt_main .EQ. 3 ) THEN
-        opt_bins = INT(opt_vec(5))
-        opt_bcs  = INT(opt_vec(6))
-     ENDIF
+     IF ( iopt_size .GE. 3 ) gate_level= INT(opt_vec(3),KIND=1)
+     IF ( iopt_size .GE. 4 ) opt_order = INT(opt_vec(4))
 
   ENDIF
 
@@ -206,7 +180,7 @@ PROGRAM AVERAGES
      CALL DNS_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
   iread_flow = 0
   iread_scal = 0
   inb_txc    = 0
@@ -216,102 +190,80 @@ PROGRAM AVERAGES
 
   CASE ( 1 )
      inb_txc = MAX(inb_txc,9)
-     iread_flow = icalc_flow
-     iread_scal = icalc_scal
+     iread_flow = icalc_flow; iread_scal = icalc_scal
   CASE ( 2 )
      ifourier = 0
-  CASE ( 3 )
-     nfield = 2
-     inb_txc = MAX(inb_txc,3)
-     iread_scal = 1
   CASE ( 4 )
      nfield = 6+inb_scal
      inb_txc = MAX(inb_txc,3)
-     iread_scal = 1
-     iread_flow = 1
+     iread_scal = 1; iread_flow = 1
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) inb_txc = MAX(inb_txc,6)
   CASE ( 5 ) ! enstrophy
      nfield = 7
-     inb_txc = MAX(inb_txc,8)
-     iread_flow = 1
-     iread_scal = 1
+     iread_flow = 1; iread_scal = 1; inb_txc = MAX(inb_txc,8)
   CASE ( 6 )
      nfield = 5
-     inb_txc = MAX(inb_txc,8)
-     iread_flow = 1
-     iread_scal = 1
+     iread_flow = 1; iread_scal = 1; inb_txc = MAX(inb_txc,8)
   CASE ( 7 ) ! scalar gradient
      nfield = 5
-     inb_txc = MAX(inb_txc,6)
-     iread_scal = 1
-     iread_flow = 1
+     iread_flow = 1; iread_scal = 1; inb_txc = MAX(inb_txc,6)
   CASE ( 8 )
      nfield = 3
-     inb_txc = MAX(inb_txc,6)
-     iread_flow = 1
+
+     iread_flow = 1;                 inb_txc = MAX(inb_txc,6)
   CASE ( 9 )
      nfield = 5
-     inb_txc = MAX(inb_txc,4)
-     iread_scal = 1
+     iread_scal = 1; inb_txc = MAX(inb_txc,4)
   CASE (10 ) ! eigenvalues
      nfield = 3
-     inb_txc = MAX(inb_txc,9)
-     iread_flow = 1
+     iread_flow = 1;                 inb_txc = MAX(inb_txc,9)
   CASE (11 ) ! eigenframe
      nfield = 6
-     inb_txc = MAX(inb_txc,10)
-     iread_flow = 1
-     iread_scal = 1
+     iread_flow = 1; iread_scal = 1; inb_txc = MAX(inb_txc,10)
   CASE (12 ) ! longitudinal velocity derivatives
      nfield = 3
-     inb_txc = MAX(inb_txc,3)
-     iread_flow = 1
-     iread_scal = 0
+     iread_flow = 1; iread_scal = 0; inb_txc = MAX(inb_txc,3)
   CASE (13 ) ! Vertical flux
      nfield = 2*(3+inb_scal_array)
-     inb_txc = MAX(MAX(inb_txc,3+inb_scal_array),4)
-     iread_flow = 1
-     iread_scal = 1
+     iread_flow = 1; iread_scal = 1; inb_txc = MAX(MAX(inb_txc,3+inb_scal_array),4)
   CASE (14 ) ! pressure partition
      nfield = 3
-     inb_txc = MAX(inb_txc,7)
-     iread_flow = 1
-     iread_scal = 1
+     iread_flow = 1; iread_scal = 1; inb_txc = MAX(inb_txc,7)
   CASE (15 ) ! dissipation partition
      nfield = 1
-     inb_txc = MAX(inb_txc,6)
-     iread_flow = 1
-     iread_scal = 0
+     iread_flow = 1; iread_scal = 0; inb_txc = MAX(inb_txc,6)
   CASE (16 ) ! third-order scalar covariances
      nfield = 3
-     inb_txc = MAX(inb_txc,3)
-     iread_flow = 0
-     iread_scal = 1
+     iread_flow = 0; iread_scal = 1; inb_txc = MAX(inb_txc,3)
   CASE (17 ) ! potential vorticity
      nfield = 2
-     inb_txc = MAX(inb_txc,6)
-     iread_flow = 1
-     iread_scal = 1
-
+     iread_flow = 1; iread_scal = 1; inb_txc = MAX(inb_txc,6)
   END SELECT
 
-! -------------------------------------------------------------------
-! Defining gate levels for conditioning
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Defining gate levels for conditioning
+  ! -------------------------------------------------------------------
   opt_cond      = 0 ! default values
-  opt_cond_scal = 1
   opt_cond_relative = 0
   igate_size    = 0
 
   IF ( opt_main .EQ. 2 .OR. gate_level .NE. 0 ) THEN
-
 #include "dns_read_partition.h"
-
      IF ( opt_cond .GT. 1 ) inb_txc = MAX(inb_txc,5)
-
   ENDIF
 
-! Subarray information to read and write envelopes
+  ! -------------------------------------------------------------------
+  ! Allocating memory space
+  ! -------------------------------------------------------------------
+  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
+  ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
+  ALLOCATE(gate(isize_field))
+
+  ! in case g(2)%size is not divisible by opt_block, drop the upper most planes
+  jmax_aux = g(2)%size/opt_block
+  ALLOCATE(y_aux(g(2)%size)) ! Reduced vertical grid
+
+  ! Subarray information to read and write envelopes
   IF ( opt_main .EQ. 2 .AND. opt_cond .GT. 1 .AND. igate_size .NE. 0 ) THEN
      io_sizes = (/imax*2*igate_size*kmax,1,imax*2*igate_size*kmax,1,1/)
 
@@ -338,91 +290,53 @@ PROGRAM AVERAGES
 
   ENDIF
 
-! -------------------------------------------------------------------
-! Definitions
-! -------------------------------------------------------------------
-! in case g(2)%size is not divisible by opt_block, drop the upper most planes
-  jmax_aux = g(2)%size/opt_block
-
-  flag_buoyancy = 0 ! default
-
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-! in case we need the buoyancy statistics
-     IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
-          buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &
-          imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
-          imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-        flag_buoyancy = 1
-     ENDIF
-  ENDIF
-
-! -------------------------------------------------------------------
-! Further allocation of memory space
-! -------------------------------------------------------------------
   IF ( opt_main .EQ. 1 ) THEN
      ALLOCATE(mean(jmax*MAX_AVG_TEMPORAL))
   ELSE
-     IF ( opt_main .EQ. 15 ) THEN
-        ALLOCATE(mean(MAX(jmax*5,(MAX(opt_bins,2)*opt_order*nfield))))
-     ELSE
-        ALLOCATE(mean(MAX(opt_bins,2)*opt_order*nfield))
-     ENDIF
+     ALLOCATE(mean(2*opt_order*nfield))
   ENDIF
 
-  isize_wrk3d = MAX(isize_field,opt_bins*opt_order*nfield*jmax)
+  isize_wrk3d = MAX(isize_field,2*opt_order*nfield*jmax)
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
-  IF ( icalc_part .eq. 1) THEN
+  IF ( icalc_part .EQ. 1) THEN
      isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
   END IF
-
 #include "dns_alloc_arrays.h"
 
   IF ( icalc_part .EQ. 1 ) THEN
 #include "dns_alloc_larrays.h"
   ENDIF
 
-! -------------------------------------------------------------------
-! Read the grid
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Initialize
+  ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
-! ------------------------------------------------------------------------
-! Define size of blocks
-! ------------------------------------------------------------------------
-  y_aux(:) = 0
-  do ij = 1,jmax
-     is = (ij-1)/opt_block + 1
-     y_aux(is) = y_aux(is) + y(ij,1)/M_REAL(opt_block)
-  enddo
-
-! -------------------------------------------------------------------
-! Initialize Poisson solver
-! -------------------------------------------------------------------
-  IF ( ifourier .EQ. 1 ) THEN
+  IF ( ifourier .EQ. 1 ) THEN         ! For Poisson solver
      CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
   ENDIF
 
-  IF ( iread_flow .EQ. 1 ) THEN ! We need array space
+  IF ( iread_flow .EQ. 1 ) THEN       ! We need array space
      CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   ENDIF
 
-! -------------------------------------------------------------------
-! Initialize thermodynamic quantities
-! -------------------------------------------------------------------
-  CALL FI_PROFILES_INITIALIZE(wrk1d)
+  CALL FI_PROFILES_INITIALIZE(wrk1d)  ! Initialize thermodynamic quantities
 
-! ###################################################################
-! Define pointers
-! ###################################################################
+  y_aux(:) = 0                        ! Reduced vertical grid
+  DO ij = 1,jmax_aux*opt_block
+     is = (ij-1)/opt_block + 1
+     y_aux(is) = y_aux(is) + y(ij,1)/M_REAL(opt_block)
+  ENDDO
+
   IF ( iread_flow .EQ. 1 ) THEN
      u => q(:,1)
      v => q(:,2)
      w => q(:,3)
   ENDIF
 
-! ###################################################################
-! Postprocess given list of files
-! ###################################################################
+  ! ###################################################################
+  ! Postprocess given list of files
+  ! ###################################################################
   DO it = 1,itime_size
      itime = itime_vec(it)
 
@@ -448,40 +362,35 @@ PROGRAM AVERAGES
         CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
      ENDIF
 
-     IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R
-     ELSE;                                  diff = visc/schmidt(inb_scal); ENDIF
+     ! -------------------------------------------------------------------
+     ! Calculate intermittency
+     ! -------------------------------------------------------------------
+     IF      ( opt_cond .EQ. 1 ) THEN ! External file
+        WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
+        CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
+        igate_size = INT(params(2))
 
-! -------------------------------------------------------------------
-! Calculate intermittency
-! -------------------------------------------------------------------
-     IF ( opt_cond .NE. 0 ) THEN
-        IF      ( opt_cond .EQ. 1 ) THEN ! External file
-           WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
-           CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
-           igate_size = INT(params(2))
+        IF ( opt_main .EQ. 2 ) rtime = params(1)
 
-           IF ( opt_main .EQ. 2 ) rtime = params(1)
-
-        ELSE
-           IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-              opt_cond_scal = inb_scal_array
-           ENDIF
-
-           CALL IO_WRITE_ASCII(lfile,'Calculating partition...')
-           CALL FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
-                imax,jmax,kmax, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
+     ELSE IF ( opt_cond .GT. 1 ) THEN
+        opt_cond_scal = 1
+        IF ( imixture .EQ. MIXT_TYPE_AIRWATER .OR. imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+           opt_cond_scal = inb_scal_array
         ENDIF
 
+        CALL IO_WRITE_ASCII(lfile,'Calculating partition...')
+        CALL FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
+             imax,jmax,kmax, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
      ENDIF
 
-! -------------------------------------------------------------------
-! Type of averages
-! -------------------------------------------------------------------
+     ! -------------------------------------------------------------------
+     ! Type of averages
+     ! -------------------------------------------------------------------
      SELECT CASE ( opt_main )
 
-! ###################################################################
-! Conventional statistics
-! ###################################################################
+        ! ###################################################################
+        ! Conventional statistics
+        ! ###################################################################
      CASE ( 1 )
         IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,3), txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
@@ -507,10 +416,13 @@ PROGRAM AVERAGES
                    txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
            ENDDO
 
-! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
-           IF ( flag_buoyancy .EQ. 1 ) THEN
+           ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
+           IF ( buoyancy%TYPE .EQ. EQNS_BOD_QUADRATIC   .OR. &
+                buoyancy%TYPE .EQ. EQNS_BOD_BILINEAR    .OR. &
+                imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
+                imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
               dummy = C_1_R/froude
-              IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+              IF ( buoyancy%TYPE .EQ. EQNS_EXPLICIT ) THEN
                  CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,7))
               ELSE
                  wrk1d(1:jmax) = C_0_R
@@ -527,7 +439,7 @@ PROGRAM AVERAGES
               IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
                  is = is + 1
                  CALL THERMO_ANELASTIC_THETA_L(imax,jmax,kmax, s, epbackground,pbackground, txc(1,7))
-!                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, epbackground, txc(1,7))
+                 !                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, epbackground, txc(1,7))
                  CALL AVG_SCAL_XZ(is, q,s, txc(1,7), &
                       txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
               ENDIF
@@ -535,7 +447,7 @@ PROGRAM AVERAGES
 
         ENDIF
 
-! Lagrange Liquid and Liquid without diffusion
+        ! Lagrange Liquid and Liquid without diffusion
         IF ( icalc_part .EQ. 1 ) THEN
            IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
               WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
@@ -559,14 +471,14 @@ PROGRAM AVERAGES
               ENDDO
            ENDIF
         ENDIF
-! DO from is inb_scal_array+1 to inb_paticle+inb_scal_array
-! PARTICLE TO FIELD to txc(5)
-! CALL AVG_SCAL_XZ on new field (substutute by s(1,is)
-!ENDDO
+        ! DO from is inb_scal_array+1 to inb_paticle+inb_scal_array
+        ! PARTICLE TO FIELD to txc(5)
+        ! CALL AVG_SCAL_XZ on new field (substutute by s(1,is)
+        !ENDDO
 
-! ###################################################################
-! Partition of field
-! ###################################################################
+        ! ###################################################################
+        ! Partition of field
+        ! ###################################################################
      CASE ( 2 )
         DO n = 1,igate_size
            WRITE(varname(n),*) n; varname(n) = 'Partition'//TRIM(ADJUSTL(varname(n)))
@@ -598,50 +510,18 @@ PROGRAM AVERAGES
 
         ENDIF
 
-! ###################################################################
-! Scalar gradient conditioned on Z
-! ###################################################################
-     CASE ( 3 )
-        CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
-        CALL FI_GRADIENT(imax,jmax,kmax, s,txc(1,1), txc(1,2),  wrk2d,wrk3d)
-        DO ij = 1,isize_field
-           txc(ij,2) = log(txc(ij,1))
-        ENDDO
-
-        data(1)%field => s(:,1);   varname(1) = 's'
-        data(2)%field => txc(:,1); varname(1) = 'GiGi'
-        data(3)%field => txc(:,2); varname(2) = 'LnGiGi'
-
-        IF ( opt_bcs .EQ. 0 ) THEN
-           CALL MINMAX(imax,jmax,kmax, s, umin,umax)
-        ENDIF
-
-        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
-           DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
-           ENDDO
-        ENDIF
-
-        WRITE(fname,*) itime; fname='cavgGiGi'//TRIM(ADJUSTL(fname))
-        CALL CAVG1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
-             i1, opt_bins, opt_bcs, umin,umax,s, gate_level,gate, txc(1,1), y_aux, mean, wrk1d)
-
-        WRITE(fname,*) itime; fname='cavgLnGiGi'//TRIM(ADJUSTL(fname))
-        CALL CAVG1V_N(fname, varname, imax*opt_block, jmax_aux, kmax, &
-             i1, opt_bins, opt_bcs, umin,umax,s, gate_level,gate, txc(1,2), y_aux, mean, wrk1d)
-
-! ###################################################################
-! Main variables
-! ###################################################################
+        ! ###################################################################
+        ! Main variables
+        ! ###################################################################
      CASE ( 4 )
         nfield = 0
-        nfield = nfield+1; data(nfield)%field => u(:); varname(nfield) = 'U'
-        nfield = nfield+1; data(nfield)%field => v(:); varname(nfield) = 'V'
-        nfield = nfield+1; data(nfield)%field => w(:); varname(nfield) = 'W'
+        nfield = nfield+1; vars(nfield)%field => u(:); varname(nfield) = 'U'
+        nfield = nfield+1; vars(nfield)%field => v(:); varname(nfield) = 'V'
+        nfield = nfield+1; vars(nfield)%field => w(:); varname(nfield) = 'W'
 
         IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
            CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
-           nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'P'
+           nfield = nfield+1; vars(nfield)%field => txc(:,1); varname(nfield) = 'P'
 
         ELSE
            WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
@@ -649,39 +529,39 @@ PROGRAM AVERAGES
            CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
            CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
            CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1))
-           nfield = nfield+1; data(nfield)%field => txc(:,2); varname(nfield) = 'R'
-           nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'P'
-           nfield = nfield+1; data(nfield)%field => txc(:,3); varname(nfield) = 'T'
+           nfield = nfield+1; vars(nfield)%field => txc(:,2); varname(nfield) = 'R'
+           nfield = nfield+1; vars(nfield)%field => txc(:,1); varname(nfield) = 'P'
+           nfield = nfield+1; vars(nfield)%field => txc(:,3); varname(nfield) = 'T'
 
         ENDIF
 
         IF ( icalc_scal .EQ. 1 ) THEN
            DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
-              nfield = nfield+1; data(nfield)%field => s(:,is); WRITE(varname(nfield),*) is; varname(nfield) = 'Scalar'//TRIM(ADJUSTL(varname(nfield)))
+              nfield = nfield+1; vars(nfield)%field => s(:,is); WRITE(varname(nfield),*) is; varname(nfield) = 'Scalar'//TRIM(ADJUSTL(varname(nfield)))
            ENDDO
         ENDIF
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='cavg'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! Enstrophy equation
-! ###################################################################
+        ! ###################################################################
+        ! Enstrophy equation
+        ! ###################################################################
      CASE ( 5 )
         CALL IO_WRITE_ASCII(lfile,'Computing baroclinic term...')
         IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-           IF ( buoyancy%type .EQ. EQNS_NONE ) THEN
+           IF ( buoyancy%TYPE .EQ. EQNS_NONE ) THEN
               txc(:,4) = C_0_R; txc(:,5) = C_0_R; txc(:,6) = C_0_R
            ELSE
-! calculate buoyancy vector along Oy
-              IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
+              ! calculate buoyancy vector along Oy
+              IF ( buoyancy%TYPE .EQ. EQNS_EXPLICIT ) THEN
                  CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d)
               ELSE
                  wrk1d(1:jmax) = C_0_R
@@ -706,12 +586,12 @@ PROGRAM AVERAGES
                 (imax,jmax,kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
            CALL THERMO_THERMAL_PRESSURE&
                 (imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
-! result vector in txc4, txc5, txc6
+           ! result vector in txc4, txc5, txc6
            CALL FI_VORTICITY_BAROCLINIC(imax,jmax,kmax, txc(1,2),txc(1,1), txc(1,4), txc(1,3),txc(1,7), wrk2d,wrk3d)
         ENDIF
-! result vector in txc1, txc2, txc3
+        ! result vector in txc1, txc2, txc3
         CALL FI_CURL(imax,jmax,kmax, u,v,w, txc(1,1),txc(1,2),txc(1,3), txc(1,7), wrk2d,wrk3d)
-! scalar product, store in txc8
+        ! scalar product, store in txc8
         DO ij = 1,isize_field
            txc(ij,8) = txc(ij,1)*txc(ij,4) + txc(ij,2)*txc(ij,5) + txc(ij,3)*txc(ij,6)
         ENDDO
@@ -736,30 +616,30 @@ PROGRAM AVERAGES
         DO ij = 1,isize_field
            txc(ij,6) = txc(ij,4)*txc(ij,3) ! -w^2 div(u)
            txc(ij,5) = txc(ij,1)/txc(ij,3) ! production rate
-           txc(ij,4) = log(txc(ij,3))      ! ln(w^2)
+           txc(ij,4) = LOG(txc(ij,3))      ! ln(w^2)
         ENDDO
 
-        data(1)%field => txc(:,3); varname(1) = 'EnstrophyW_iW_i'
-        data(2)%field => txc(:,4); varname(2) = 'LnEnstrophyW_iW_i'
-        data(3)%field => txc(:,1); varname(3) = 'ProductionW_iW_jS_ij'
-        data(4)%field => txc(:,2); varname(4) = 'DiffusionNuW_iLapW_i'
-        data(5)%field => txc(:,6); varname(5) = 'DilatationMsW_iW_iDivU'
-        data(6)%field => txc(:,8); varname(6) = 'Baroclinic'
-        data(7)%field => txc(:,5); varname(7) = 'RateAN_iN_jS_ij'
+        vars(1)%field => txc(:,3); varname(1) = 'EnstrophyW_iW_i'
+        vars(2)%field => txc(:,4); varname(2) = 'LnEnstrophyW_iW_i'
+        vars(3)%field => txc(:,1); varname(3) = 'ProductionW_iW_jS_ij'
+        vars(4)%field => txc(:,2); varname(4) = 'DiffusionNuW_iLapW_i'
+        vars(5)%field => txc(:,6); varname(5) = 'DilatationMsW_iW_iDivU'
+        vars(6)%field => txc(:,8); varname(6) = 'Baroclinic'
+        vars(7)%field => txc(:,5); varname(7) = 'RateAN_iN_jS_ij'
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='avgW2'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! Strain equation
-! ###################################################################
+        ! ###################################################################
+        ! Strain equation
+        ! ###################################################################
      CASE ( 6 )
         CALL IO_WRITE_ASCII(lfile,'Computing strain pressure...')
         IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
@@ -790,66 +670,66 @@ PROGRAM AVERAGES
         CALL IO_WRITE_ASCII(lfile,'Computing strain...')
         CALL FI_STRAIN(imax,jmax,kmax, u,v,w, txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         txc(1:isize_field,4) = C_2_R *txc(1:isize_field,4)
-        txc(1:isize_field,5) = log( txc(1:isize_field,4) )
+        txc(1:isize_field,5) = LOG( txc(1:isize_field,4) )
 
-        data(1)%field => txc(:,4); varname(1) = 'Strain2S_ijS_i'
-        data(2)%field => txc(:,5); varname(2) = 'LnStrain2S_ijS_i'
-        data(3)%field => txc(:,2); varname(3) = 'ProductionMs2S_ijS_jkS_ki'
-        data(4)%field => txc(:,3); varname(4) = 'DiffusionNuS_ijLapS_ij'
-        data(5)%field => txc(:,1); varname(5) = 'Pressure2S_ijP_ij'
+        vars(1)%field => txc(:,4); varname(1) = 'Strain2S_ijS_i'
+        vars(2)%field => txc(:,5); varname(2) = 'LnStrain2S_ijS_i'
+        vars(3)%field => txc(:,2); varname(3) = 'ProductionMs2S_ijS_jkS_ki'
+        vars(4)%field => txc(:,3); varname(4) = 'DiffusionNuS_ijLapS_ij'
+        vars(5)%field => txc(:,1); varname(5) = 'Pressure2S_ijP_ij'
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='avgS2'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! Scalar gradient equation
-! ###################################################################
+        ! ###################################################################
+        ! Scalar gradient equation
+        ! ###################################################################
      CASE ( 7 )
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient production...')
         CALL FI_GRADIENT_PRODUCTION(imax,jmax,kmax, s, u,v,w, &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
 
-! array u used as auxiliar
+        ! array u used as auxiliar
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient diffusion...')
         CALL FI_GRADIENT_DIFFUSION(imax,jmax,kmax, s, &
              txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),u, wrk2d,wrk3d)
         DO ij = 1,isize_field
-           txc(ij,2) = diff*txc(ij,2)
+           txc(ij,2) = visc /schmidt(inb_scal) *txc(ij,2)
         ENDDO
 
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient...')
         CALL FI_GRADIENT(imax,jmax,kmax, s,txc(1,3), txc(1,4), wrk2d,wrk3d)
         DO ij = 1,isize_field
            txc(ij,5) = txc(ij,1)/txc(ij,3)
-           txc(ij,4) = log(txc(ij,3))
+           txc(ij,4) = LOG(txc(ij,3))
         ENDDO
 
-        data(1)%field => txc(:,3); varname(1) = 'GradientG_iG_i'
-        data(2)%field => txc(:,4); varname(2) = 'LnGradientG_iG_i'
-        data(3)%field => txc(:,1); varname(3) = 'ProductionMsG_iG_jS_ij'
-        data(4)%field => txc(:,2); varname(4) = 'DiffusionNuG_iLapG_i'
-        data(5)%field => txc(:,5); varname(5) = 'StrainAMsN_iN_jS_ij'
+        vars(1)%field => txc(:,3); varname(1) = 'GradientG_iG_i'
+        vars(2)%field => txc(:,4); varname(2) = 'LnGradientG_iG_i'
+        vars(3)%field => txc(:,1); varname(3) = 'ProductionMsG_iG_jS_ij'
+        vars(4)%field => txc(:,2); varname(4) = 'DiffusionNuG_iLapG_i'
+        vars(5)%field => txc(:,5); varname(5) = 'StrainAMsN_iN_jS_ij'
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='avgG2'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! Velocity gradient invariants
-! ###################################################################
+        ! ###################################################################
+        ! Velocity gradient invariants
+        ! ###################################################################
      CASE ( 8 )
         CALL IO_WRITE_ASCII(lfile,'Computing third invariant R...')
         CALL FI_INVARIANT_R(imax,jmax,kmax, u,v,w, txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -860,53 +740,53 @@ PROGRAM AVERAGES
         CALL IO_WRITE_ASCII(lfile,'Computing first invariant P...')
         CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, txc(1,3), txc(1,4), wrk2d,wrk3d)
 
-        data(1)%field => txc(:,3); varname(1) = 'InvariantP'
-        data(2)%field => txc(:,2); varname(2) = 'InvariantQ'
-        data(3)%field => txc(:,1); varname(3) = 'InvariantR'
+        vars(1)%field => txc(:,3); varname(1) = 'InvariantP'
+        vars(2)%field => txc(:,2); varname(2) = 'InvariantQ'
+        vars(3)%field => txc(:,1); varname(3) = 'InvariantR'
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='avgInv'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! Scalar gradient components
-! ###################################################################
+        ! ###################################################################
+        ! Scalar gradient components
+        ! ###################################################################
      CASE ( 9 )
         CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s, txc(1,1), wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s, txc(1,2), wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s, txc(1,3), wrk3d, wrk2d,wrk3d)
-! Angles; s array is overwritten to save space
+        ! Angles; s array is overwritten to save space
         DO ij = 1,isize_field
-           dummy = txc(ij,2)/sqrt(txc(ij,1)*txc(ij,1)+txc(ij,2)*txc(ij,2)+txc(ij,3)*txc(ij,3))
-           txc(ij,4) = asin(dummy)                 ! with Oy
-           s(ij,1)  = atan2(txc(ij,3),txc(ij,1))  ! with Ox in plane xOz
+           dummy = txc(ij,2)/SQRT(txc(ij,1)*txc(ij,1)+txc(ij,2)*txc(ij,2)+txc(ij,3)*txc(ij,3))
+           txc(ij,4) = ASIN(dummy)                 ! with Oy
+           s(ij,1)  = ATAN2(txc(ij,3),txc(ij,1))  ! with Ox in plane xOz
         ENDDO
 
-        data(1)%field => txc(:,1); varname(1) = 'GradientX'
-        data(2)%field => txc(:,2); varname(2) = 'GradientY'
-        data(3)%field => txc(:,3); varname(3) = 'GradientZ'
-        data(4)%field => s(:,1);   varname(4) = 'Theta'
-        data(5)%field => txc(:,4); varname(5) = 'Phi'
+        vars(1)%field => txc(:,1); varname(1) = 'GradientX'
+        vars(2)%field => txc(:,2); varname(2) = 'GradientY'
+        vars(3)%field => txc(:,3); varname(3) = 'GradientZ'
+        vars(4)%field => s(:,1);   varname(4) = 'Theta'
+        vars(5)%field => txc(:,4); varname(5) = 'Phi'
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='avgGi'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! eigenvalues of rate-of-strain tensor
-! ###################################################################
+        ! ###################################################################
+        ! eigenvalues of rate-of-strain tensor
+        ! ###################################################################
      CASE ( 10 )
         CALL IO_WRITE_ASCII(lfile,'Computing rate-of-strain tensor...') ! txc1-txc6
         CALL FI_STRAIN_TENSOR(imax,jmax,kmax, u,v,w, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -914,23 +794,23 @@ PROGRAM AVERAGES
         CALL IO_WRITE_ASCII(lfile,'Computing eigenvalues...') ! txc6-txc9
         CALL FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1,1), txc(1,7))
 
-        data(1)%field => txc(:,7); varname(1) = 'Lambda1'
-        data(2)%field => txc(:,8); varname(2) = 'Lambda2'
-        data(3)%field => txc(:,9); varname(3) = 'Lambda3'
+        vars(1)%field => txc(:,7); varname(1) = 'Lambda1'
+        vars(2)%field => txc(:,8); varname(2) = 'Lambda2'
+        vars(3)%field => txc(:,9); varname(3) = 'Lambda3'
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='avgEig'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! eigenframe of rate-of-strain tensor
-! ###################################################################
+        ! ###################################################################
+        ! eigenframe of rate-of-strain tensor
+        ! ###################################################################
      CASE ( 11 )
         CALL IO_WRITE_ASCII(lfile,'Computing rate-of-strain tensor...') ! txc1-txc6
         CALL FI_STRAIN_TENSOR(imax,jmax,kmax, u,v,w, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -941,12 +821,12 @@ PROGRAM AVERAGES
         CALL IO_WRITE_ASCII(lfile,'Computing eigenframe...')            ! txc1-txc6
         CALL FI_TENSOR_EIGENFRAME(imax, jmax, kmax, txc(1,1), txc(1,7))
 
-! local direction cosines of vorticity vector
+        ! local direction cosines of vorticity vector
         CALL IO_WRITE_ASCII(lfile,'Computing vorticity vector...')      ! txc7-txc9
         CALL FI_CURL(imax,jmax,kmax, u,v,w, txc(1,7),txc(1,8),txc(1,9), txc(1,10), wrk2d,wrk3d)
 
         DO ij = 1,isize_field
-           dummy = sqrt(txc(ij,7)*txc(ij,7)+txc(ij,8)*txc(ij,8)+txc(ij,9)*txc(ij,9))
+           dummy = SQRT(txc(ij,7)*txc(ij,7)+txc(ij,8)*txc(ij,8)+txc(ij,9)*txc(ij,9))
            u(ij) = (txc(ij,7)*txc(ij,1) + txc(ij,8)*txc(ij,2) + txc(ij,9)*txc(ij,3))/dummy
            v(ij) = (txc(ij,7)*txc(ij,4) + txc(ij,8)*txc(ij,5) + txc(ij,9)*txc(ij,6))/dummy
            eloc1 = txc(ij,2)*txc(ij,6)-txc(ij,5)*txc(ij,3)
@@ -955,18 +835,18 @@ PROGRAM AVERAGES
            w(ij) = (txc(ij,7)*eloc1 + txc(ij,8)*eloc2 + txc(ij,9)*eloc3)/dummy
         ENDDO
 
-        data(1)%field => u; varname(1) = 'cos(w,lambda1)'
-        data(2)%field => v; varname(2) = 'cos(w,lambda2)'
-        data(3)%field => w; varname(3) = 'cos(w,lambda3)'
+        vars(1)%field => u; varname(1) = 'cos(w,lambda1)'
+        vars(2)%field => v; varname(2) = 'cos(w,lambda2)'
+        vars(3)%field => w; varname(3) = 'cos(w,lambda3)'
 
-! local direction cosines of scalar gradient vector
+        ! local direction cosines of scalar gradient vector
         CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient vector...') ! txc7-txc9
         CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s, txc(1,7), wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s, txc(1,8), wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), s, txc(1,9), wrk3d, wrk2d,wrk3d)
 
         DO ij = 1,isize_field
-           dummy = sqrt(txc(ij,7)*txc(ij,7)+txc(ij,8)*txc(ij,8)+txc(ij,9)*txc(ij,9))
+           dummy = SQRT(txc(ij,7)*txc(ij,7)+txc(ij,8)*txc(ij,8)+txc(ij,9)*txc(ij,9))
            cos1  = (txc(ij,7)*txc(ij,1) + txc(ij,8)*txc(ij,2) + txc(ij,9)*txc(ij,3))/dummy
            cos2  = (txc(ij,7)*txc(ij,4) + txc(ij,8)*txc(ij,5) + txc(ij,9)*txc(ij,6))/dummy
            eloc1 = txc(ij,2)*txc(ij,6)-txc(ij,5)*txc(ij,3)
@@ -976,106 +856,106 @@ PROGRAM AVERAGES
            txc(ij,7) = cos1; txc(ij,8) = cos2; txc(ij,9) = cos3
         ENDDO
 
-        data(4)%field => txc(:,7); varname(4) = 'cos(G,lambda1)'
-        data(5)%field => txc(:,8); varname(5) = 'cos(G,lambda2)'
-        data(6)%field => txc(:,9); varname(6) = 'cos(G,lambda3)'
+        vars(4)%field => txc(:,7); varname(4) = 'cos(G,lambda1)'
+        vars(5)%field => txc(:,8); varname(5) = 'cos(G,lambda2)'
+        vars(6)%field => txc(:,9); varname(6) = 'cos(G,lambda3)'
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='avgCos'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! longitudinal velocity derivatives
-! ###################################################################
+        ! ###################################################################
+        ! longitudinal velocity derivatives
+        ! ###################################################################
      CASE ( 12 )
         CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, txc(1,1), wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, txc(1,2), wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, txc(1,3), wrk3d, wrk2d,wrk3d)
 
-        data(1)%field => txc(:,1); varname(1) = 'dudx'
-        data(2)%field => txc(:,2); varname(2) = 'dvdy'
-        data(3)%field => txc(:,3); varname(3) = 'dwdz'
+        vars(1)%field => txc(:,1); varname(1) = 'dudx'
+        vars(2)%field => txc(:,2); varname(2) = 'dvdy'
+        vars(3)%field => txc(:,3); varname(3) = 'dwdz'
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='avgDer'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! Vertical fluxes
-! ###################################################################
+        ! ###################################################################
+        ! Vertical fluxes
+        ! ###################################################################
      CASE ( 13 )
         nfield = 0
 
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), u, txc(:,1), wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v, txc(:,2), wrk3d, wrk2d,wrk3d)
         txc(:,1) = ( txc(:,1) + txc(:,2) ) *visc
-        nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'tauyx'
+        nfield = nfield+1; vars(nfield)%field => txc(:,1); varname(nfield) = 'tauyx'
 
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, txc(:,2), wrk3d, wrk2d,wrk3d)
         txc(:,2) =   txc(:,2) *C_2_R       *visc
-        nfield = nfield+1; data(nfield)%field => txc(:,2); varname(nfield) = 'tauyy'
+        nfield = nfield+1; vars(nfield)%field => txc(:,2); varname(nfield) = 'tauyy'
 
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), w, txc(:,3), wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), v, txc(:,4), wrk3d, wrk2d,wrk3d)
         txc(:,3) = ( txc(:,3) + txc(:,4) ) *visc
-        nfield = nfield+1; data(nfield)%field => txc(:,3); varname(nfield) = 'tauyz'
+        nfield = nfield+1; vars(nfield)%field => txc(:,3); varname(nfield) = 'tauyz'
 
         DO is = 1,inb_scal_array
            CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(:,is), txc(:,3+is), wrk3d, wrk2d,wrk3d)
-           txc(:,3+is) =   txc(:,3+is) *diff
-           nfield = nfield+1; data(nfield)%field => txc(:,3+is); WRITE(varname(nfield),*) is; varname(nfield) = 'tauy'//TRIM(ADJUSTL(varname(nfield)))
+           txc(:,3+is) =   txc(:,3+is) *visc /schmidt(inb_scal)
+           nfield = nfield+1; vars(nfield)%field => txc(:,3+is); WRITE(varname(nfield),*) is; varname(nfield) = 'tauy'//TRIM(ADJUSTL(varname(nfield)))
         ENDDO
 
 
         u = u*v
-        nfield = nfield+1; data(nfield)%field => u; varname(nfield) = 'vu'
+        nfield = nfield+1; vars(nfield)%field => u; varname(nfield) = 'vu'
         ! I need v below
-        nfield = nfield+1; data(nfield)%field => v; varname(nfield) = 'vv'
+        nfield = nfield+1; vars(nfield)%field => v; varname(nfield) = 'vv'
         w = w*v
-        nfield = nfield+1; data(nfield)%field => w; varname(nfield) = 'vw'
+        nfield = nfield+1; vars(nfield)%field => w; varname(nfield) = 'vw'
         DO is = 1,inb_scal_array
            s(:,is) = s(:,is)*v
-           nfield = nfield+1; data(nfield)%field => s(:,is); WRITE(varname(nfield),*) is; varname(nfield) = 'v'//TRIM(ADJUSTL(varname(nfield)))
+           nfield = nfield+1; vars(nfield)%field => s(:,is); WRITE(varname(nfield),*) is; varname(nfield) = 'v'//TRIM(ADJUSTL(varname(nfield)))
         ENDDO
         v = v*v ! I need v' above for the scalar fluxes
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='avgMom'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! Hydrostatic pressure
-! ###################################################################
+        ! ###################################################################
+        ! Hydrostatic pressure
+        ! ###################################################################
      CASE ( 14 )
         is = 0
 
         CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
-        is = is+1; data(is)%field => txc(:,1); varname(is) = 'P'
+        is = is+1; vars(is)%field => txc(:,1); varname(is) = 'P'
 
         q = C_0_R
         CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,2), txc(1,3),txc(1,4), txc(1,5), wrk1d,wrk2d,wrk3d)
-        is = is+1; data(is)%field => txc(:,2); varname(is) = 'Phydro'
+        is = is+1; vars(is)%field => txc(:,2); varname(is) = 'Phydro'
 
         txc(:,3) = txc(:,1) - txc(:,2)
-        is = is+1; data(is)%field => txc(:,3); varname(is) = 'Padvec'
+        is = is+1; vars(is)%field => txc(:,3); varname(is) = 'Padvec'
 
         IF ( nfield .NE. is ) THEN ! Check
            CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Array space nfield incorrect.')
@@ -1084,35 +964,35 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='avgPre'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! Dissipation
-! ###################################################################
+        ! ###################################################################
+        ! Dissipation
+        ! ###################################################################
      CASE ( 15 )
         CALL FI_DISSIPATION(i1,imax,jmax,kmax, u,v,w, txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
 
-        data(1)%field => txc(:,1); varname(1) = 'Eps'
+        vars(1)%field => txc(:,1); varname(1) = 'Eps'
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='avgEps'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! Covariances among scalars
-! ###################################################################
+        ! ###################################################################
+        ! Covariances among scalars
+        ! ###################################################################
      CASE ( 16 )
         CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(1,1))
         CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(1,2))
@@ -1122,9 +1002,9 @@ PROGRAM AVERAGES
         txc(1:isize_field,3) = txc(1:isize_field,1) *s(1:isize_field,2)
 
         is = 0
-        is = is+1; data(is)%field => txc(:,1); varname(is) = 's1s2'
-        is = is+1; data(is)%field => txc(:,2); varname(is) = 's1s2s1'
-        is = is+1; data(is)%field => txc(:,3); varname(is) = 's1s2s2'
+        is = is+1; vars(is)%field => txc(:,1); varname(is) = 's1s2'
+        is = is+1; vars(is)%field => txc(:,2); varname(is) = 's1s2s1'
+        is = is+1; vars(is)%field => txc(:,3); varname(is) = 's1s2s2'
 
         IF ( nfield .NE. is ) THEN ! Check
            CALL IO_WRITE_ASCII(efile, 'AVERAGES. Array space nfield incorrect.')
@@ -1133,22 +1013,22 @@ PROGRAM AVERAGES
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='cov'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
-! ###################################################################
-! Potential vorticity
-! ###################################################################
+        ! ###################################################################
+        ! Potential vorticity
+        ! ###################################################################
      CASE ( 17 )
         CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
         txc(1:isize_field,6) = txc(1:isize_field,1)*txc(1:isize_field,1) &
-                             + txc(1:isize_field,2)*txc(1:isize_field,2) &
-                             + txc(1:isize_field,3)*txc(1:isize_field,3) ! Enstrophy
+             + txc(1:isize_field,2)*txc(1:isize_field,2) &
+             + txc(1:isize_field,3)*txc(1:isize_field,3) ! Enstrophy
         CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s(1,1), txc(1,4), wrk3d, wrk2d,wrk3d)
         txc(1:isize_field,1) =                       txc(1:isize_field,1)*txc(1:isize_field,4)
         txc(1:isize_field,5) =                       txc(1:isize_field,4)*txc(1:isize_field,4) ! norm grad b
@@ -1163,18 +1043,18 @@ PROGRAM AVERAGES
         txc(1:isize_field,6) = SQRT( txc(1:isize_field,6) +C_SMALL_R)
         txc(1:isize_field,2) = txc(1:isize_field,1) /( txc(1:isize_field,5) *txc(1:isize_field,6) ) ! Cosine of angle between 2 vectors
 
-        data(1)%field => txc(:,1); varname(1) = 'PV'
-        data(2)%field => txc(:,2); varname(2) = 'Cos'
+        vars(1)%field => txc(:,1); varname(1) = 'PV'
+        vars(2)%field => txc(:,2); varname(2) = 'Cos'
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='avgPV'//TRIM(ADJUSTL(fname))
         CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+             nfield, opt_order, y_aux, gate, vars, mean)
 
 
      END SELECT
