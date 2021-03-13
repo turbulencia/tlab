@@ -195,8 +195,8 @@ PROGRAM AVERAGES
   CASE ( 2 )
      ifourier = 0
   CASE ( 3 )
-     nfield = 10
-     iread_flow = 1; iread_scal = 1; inb_txc = MAX(inb_txc,8)
+     nfield = 14
+     iread_flow = 1; iread_scal = 1; inb_txc = MAX(inb_txc,12)
   CASE ( 4 )
      nfield = 6 +inb_scal
      iread_flow = 1; iread_scal = 1; inb_txc = MAX(inb_txc,3)
@@ -528,17 +528,31 @@ PROGRAM AVERAGES
        nfield = nfield+1; vars(nfield)%field => txc(:,4); varname(nfield) = 'Wyy'
        CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), q(1,3), txc(1,4), txc(1,3), wrk2d,wrk3d)
 
-       nfield = nfield+1; vars(nfield)%field => txc(:,5); varname(nfield) = '(UV)y'
+       nfield = nfield+1; vars(nfield)%field => txc(:,5); varname(nfield) = '(VU)y'
        txc(1:isize_field,6) = q(1:isize_field,2) *q(1:isize_field,1)
        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,6), txc(1,5), wrk3d, wrk2d,wrk3d)
-       nfield = nfield+1; vars(nfield)%field => txc(:,6); varname(nfield) = '(WV)y'
-       txc(1:isize_field,7) = q(1:isize_field,2) *q(1:isize_field,3)
-       CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,7), txc(1,6), wrk3d, wrk2d,wrk3d)
 
-       nfield = nfield+1; vars(nfield)%field => txc(:,7); varname(nfield) = 'VUy'
-       txc(1:isize_field,7) = q(1:isize_field,2) *txc(1:isize_field,1)
-       nfield = nfield+1; vars(nfield)%field => txc(:,8); varname(nfield) = 'VWy'
-       txc(1:isize_field,8) = q(1:isize_field,2) *txc(1:isize_field,3)
+       nfield = nfield+1; vars(nfield)%field => txc(:,6); varname(nfield) = 'VUy'
+       txc(1:isize_field,6) = q(1:isize_field,2) *txc(1:isize_field,1)
+       nfield = nfield+1; vars(nfield)%field => txc(:,7); varname(nfield) = 'UUx'
+       CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), q(1,1), txc(1,7), wrk3d, wrk2d,wrk3d)
+       txc(1:isize_field,7) = q(1:isize_field,1) *txc(1:isize_field,7)
+       nfield = nfield+1; vars(nfield)%field => txc(:,8); varname(nfield) = 'WUz'
+       CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), q(1,1), txc(1,8), wrk3d, wrk2d,wrk3d)
+       txc(1:isize_field,8) = q(1:isize_field,3) *txc(1:isize_field,8)
+
+       nfield = nfield+1; vars(nfield)%field => txc(:,9); varname(nfield) = '(WV)y'
+       txc(1:isize_field,10) = q(1:isize_field,2) *q(1:isize_field,3)
+       CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,10), txc(1,9), wrk3d, wrk2d,wrk3d)
+
+       nfield = nfield+1; vars(nfield)%field => txc(:,10); varname(nfield) = 'VWy'
+       txc(1:isize_field,10) = q(1:isize_field,2) *txc(1:isize_field,3)
+       nfield = nfield+1; vars(nfield)%field => txc(:,11); varname(nfield) = 'UWx'
+       CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), q(1,3), txc(1,11), wrk3d, wrk2d,wrk3d)
+       txc(1:isize_field,11) = q(1:isize_field,1) *txc(1:isize_field,11)
+       nfield = nfield+1; vars(nfield)%field => txc(:,12); varname(nfield) = 'WWz'
+       CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), q(1,3), txc(1,12), wrk3d, wrk2d,wrk3d)
+       txc(1:isize_field,12) = q(1:isize_field,3) *txc(1:isize_field,12)
 
        IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
           DO is = 1,nfield
