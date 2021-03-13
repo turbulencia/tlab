@@ -135,6 +135,7 @@ PROGRAM AVERAGES
      WRITE(*,*) 'Option ?'
      WRITE(*,*) ' 1. Conventional averages'
      WRITE(*,*) ' 2. Intermittency or gate function'
+     WRITE(*,*) ' 3. Momentum equation'
      WRITE(*,*) ' 4. Main variables'
      WRITE(*,*) ' 5. Enstrophy W_iW_i/2 equation'
      WRITE(*,*) ' 6. Strain 2S_ijS_ij/2 equation'
@@ -166,7 +167,7 @@ PROGRAM AVERAGES
      opt_main = INT(opt_vec(1))
      IF ( iopt_size .GE. 2 ) opt_block = INT(opt_vec(2))
      IF ( iopt_size .GE. 3 ) gate_level= INT(opt_vec(3),KIND=1)
-     IF ( iopt_size .GE. 4 ) opt_order = INT(opt_vec(4))
+     IF ( iopt_size .GE. 3 ) opt_order = INT(opt_vec(4))
 
   ENDIF
 
@@ -193,10 +194,12 @@ PROGRAM AVERAGES
      iread_flow = icalc_flow; iread_scal = icalc_scal
   CASE ( 2 )
      ifourier = 0
+  CASE ( 3 )
+     nfield = 10
+     iread_flow = 1; iread_scal = 1; inb_txc = MAX(inb_txc,8)
   CASE ( 4 )
-     nfield = 6+inb_scal
-     inb_txc = MAX(inb_txc,3)
-     iread_scal = 1; iread_flow = 1
+     nfield = 6 +inb_scal
+     iread_flow = 1; iread_scal = 1; inb_txc = MAX(inb_txc,3)
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) inb_txc = MAX(inb_txc,6)
   CASE ( 5 ) ! enstrophy
      nfield = 7
@@ -509,6 +512,43 @@ PROGRAM AVERAGES
            CALL IO_WRITE_SUBARRAY4(IO_SUBARRAY_ENVELOPES, fname, varname, surface, io_sizes, wrk3d)
 
         ENDIF
+
+        ! ###################################################################
+        ! Momentum equation
+        ! ###################################################################
+     CASE ( 3 )
+       nfield = 0
+       nfield = nfield+1; vars(nfield)%field => q(:,1);   varname(nfield) = 'U'
+       nfield = nfield+1; vars(nfield)%field => q(:,3);   varname(nfield) = 'W'
+
+       nfield = nfield+1; vars(nfield)%field => txc(:,1); varname(nfield) = 'Uy'
+       nfield = nfield+1; vars(nfield)%field => txc(:,2); varname(nfield) = 'Uyy'
+       CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), q(1,1), txc(1,2), txc(1,1), wrk2d,wrk3d)
+       nfield = nfield+1; vars(nfield)%field => txc(:,3); varname(nfield) = 'Wy'
+       nfield = nfield+1; vars(nfield)%field => txc(:,4); varname(nfield) = 'Wyy'
+       CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), q(1,3), txc(1,4), txc(1,3), wrk2d,wrk3d)
+
+       nfield = nfield+1; vars(nfield)%field => txc(:,5); varname(nfield) = '(UV)y'
+       txc(1:isize_field,6) = q(1:isize_field,2) *q(1:isize_field,1)
+       CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,6), txc(1,5), wrk3d, wrk2d,wrk3d)
+       nfield = nfield+1; vars(nfield)%field => txc(:,6); varname(nfield) = '(WV)y'
+       txc(1:isize_field,7) = q(1:isize_field,2) *q(1:isize_field,3)
+       CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,7), txc(1,6), wrk3d, wrk2d,wrk3d)
+
+       nfield = nfield+1; vars(nfield)%field => txc(:,7); varname(nfield) = 'VUy'
+       txc(1:isize_field,7) = q(1:isize_field,2) *txc(1:isize_field,1)
+       nfield = nfield+1; vars(nfield)%field => txc(:,8); varname(nfield) = 'VWy'
+       txc(1:isize_field,8) = q(1:isize_field,2) *txc(1:isize_field,3)
+
+       IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
+          DO is = 1,nfield
+             CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
+          ENDDO
+       ENDIF
+
+       WRITE(fname,*) itime; fname='cavg'//TRIM(ADJUSTL(fname))
+       CALL AVG2D_N(fname, varname, gate_level, rtime, imax*opt_block, jmax_aux, kmax, &
+            nfield, opt_order, y_aux, gate, vars, mean)
 
         ! ###################################################################
         ! Main variables
@@ -917,7 +957,6 @@ PROGRAM AVERAGES
            txc(:,3+is) =   txc(:,3+is) *visc /schmidt(inb_scal)
            nfield = nfield+1; vars(nfield)%field => txc(:,3+is); WRITE(varname(nfield),*) is; varname(nfield) = 'tauy'//TRIM(ADJUSTL(varname(nfield)))
         ENDDO
-
 
         u = u*v
         nfield = nfield+1; vars(nfield)%field => u; varname(nfield) = 'vu'
