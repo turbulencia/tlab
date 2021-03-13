@@ -82,22 +82,15 @@ set_target_properties(pdfs.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_F
 endif()
 
 # Transformation
-FILE(GLOB sourcefiles "transform/grid*.f90")
+FILE(GLOB sourcefiles "transform/transgrid.f90")
 add_executable(transgrid.x ${sourcefiles})
 target_link_libraries(transgrid.x operators io ${LEVEL1_LIBS} ${LIBS})
 
-FILE(GLOB sourcefiles "transform/fields*.f90")
+FILE(GLOB sourcefiles "transform/transfields.f90")
 add_executable(transfields.x ${sourcefiles})
 target_link_libraries(transfields.x mappings operators io thermodynamics filters fdm linear fitpack ${LEVEL1_LIBS} ${LIBS})
 if (PSFFT_LIB)
 set_target_properties(transfields.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
-endif()
-
-FILE(GLOB sourcefiles "transform/format*.f90")
-add_executable(transformat.x ${sourcefiles})
-target_link_libraries(transformat.x operators io thermodynamics linear ${LEVEL1_LIBS} ${LIBS})
-if (PSFFT_LIB)
-set_target_properties(transformat.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
 endif()
 
 # Lagrangian
