@@ -17,7 +17,7 @@ FILE=$DIR.tar
 if [[ -d $DIR && ! -f $FILE ]]; then
     cd $DIR
 
-    LIST=`ls | egrep 'avg[0-9]|?Csp*[0-9]|?Ccr*[0-9]|?sp*[0-9]|?cr*[0-9]|pdf[0-9]|avgXi[0-9]|pdfXi[0-9]|int[0-9]|cov[0-9]' | egrep -v '\.E' | egrep -v '\.C'`
+    LIST=`ls | egrep 'avg[a-zA-Z]*[0-9]|[xzr](sp|cr)[0-9]|pdf[0-9]|int[0-9]' | egrep -v '\.E' | egrep -v '\.C'`
     echo -e "Compressing statistic files...\n$LIST"
     if [ -n "$LIST" ]; then
        gzip $LIST 
