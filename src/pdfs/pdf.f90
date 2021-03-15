@@ -13,7 +13,7 @@
 !#                      5 local interval, analysis and drop both points
 !#
 !########################################################################
-SUBROUTINE PDF1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, y, pdf, wrk1d )
+SUBROUTINE PDF1V_N( fname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, y, pdf, wrk1d )
 
   USE DNS_TYPES,      ONLY : pointers_dt
   USE DNS_CONSTANTS,  ONLY : lfile
@@ -26,7 +26,7 @@ SUBROUTINE PDF1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate
 #include "mpif.h"
 #endif
 
-  CHARACTER*(*) fname, varname(nv)
+  CHARACTER*(*) fname
   TINTEGER,           INTENT(IN   ) :: nx,ny,nz, nv, nbins, ibc(nv)
   TREAL,              INTENT(IN   ) :: umin(nv),umax(nv)            ! Random variables
   TYPE(pointers_dt),  INTENT(IN   ) :: u(nv)
@@ -102,7 +102,7 @@ SUBROUTINE PDF1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate
 #define LOC_STATUS 'unknown'
     DO iv = 1,nv
       name = TRIM(ADJUSTL(fname))
-      IF ( varname(iv) /= '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
+      IF ( u(iv)%tag /= '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(u(iv)%tag))
       CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 #include "dns_open_file.h"
       IF ( ny > 1 ) THEN

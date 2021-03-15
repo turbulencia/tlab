@@ -178,18 +178,18 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
 ! ###################################################################
   IF ( stats_pdfs ) THEN
      nfield = 0
-     nfield = nfield+1; data(nfield)%field => u(:); varname(nfield) = 'u'
-     nfield = nfield+1; data(nfield)%field => v(:); varname(nfield) = 'v'
-     nfield = nfield+1; data(nfield)%field => w(:); varname(nfield) = 'w'
-     nfield = nfield+1; data(nfield)%field => p(:); varname(nfield) = 'p'
+     nfield = nfield+1; data(nfield)%field => u(:); data(nfield)%tag = 'u'
+     nfield = nfield+1; data(nfield)%field => v(:); data(nfield)%tag = 'v'
+     nfield = nfield+1; data(nfield)%field => w(:); data(nfield)%tag = 'w'
+     nfield = nfield+1; data(nfield)%field => p(:); data(nfield)%tag = 'p'
      IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        nfield = nfield+1; data(nfield)%field => rho(:); varname(nfield) = 'r'
-        nfield = nfield+1; data(nfield)%field => T(:);   varname(nfield) = 't'
+        nfield = nfield+1; data(nfield)%field => rho(:); data(nfield)%tag = 'r'
+        nfield = nfield+1; data(nfield)%field => T(:);   data(nfield)%tag = 't'
      ENDIF
 
      DO is = 1,inb_scal_array
-       nfield = nfield+1; data(nfield)%field => s(:,is); varname(nfield) = 's'
-       WRITE(str,*) is; varname(nfield)=TRIM(ADJUSTL(varname(nfield)))//TRIM(ADJUSTL(str))
+       nfield = nfield+1; data(nfield)%field => s(:,is); data(nfield)%tag = 's'
+       WRITE(str,*) is; data(nfield)%tag=TRIM(ADJUSTL(data(nfield)%tag))//TRIM(ADJUSTL(str))
      ENDDO
 
      ibc(1:nfield) = 2 ! BCs in the calculation of the PDFs
@@ -197,7 +197,7 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
 
      nbins = 32
      WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-     CALL PDF1V_N(fname, varname, imax,jmax,kmax, &
+     CALL PDF1V_N(fname, imax,jmax,kmax, &
       nfield, nbins, ibc, amin,amax,data, igate,wrk3d, g(2)%nodes, txc, wrk1d)
 
   ENDIF

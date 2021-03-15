@@ -6,7 +6,7 @@
 !# Volume calculation in ny+1, if needed.
 !#
 !########################################################################
-SUBROUTINE CAVG1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, a, y, avg, wrk1d )
+SUBROUTINE CAVG1V_N( fname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, a, y, avg, wrk1d )
 
   USE DNS_TYPES,      ONLY : pointers_dt
   USE DNS_CONSTANTS,  ONLY : lfile
@@ -19,7 +19,7 @@ SUBROUTINE CAVG1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igat
 #include "mpif.h"
 #endif
 
-  CHARACTER*(*) fname, varname(nv)
+  CHARACTER*(*) fname
   TINTEGER,           INTENT(IN   ) :: nx,ny,nz, nv, nbins, ibc(nv) ! ibc=0 for external interval, 1 for local
   TREAL,              INTENT(IN   ) :: umin(nv),umax(nv)            ! Random variables
   TYPE(pointers_dt),  INTENT(IN   ) :: u(nv)
@@ -72,7 +72,7 @@ SUBROUTINE CAVG1V_N( fname, varname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igat
 #define LOC_STATUS 'unknown'
     DO iv = 1,nv
       name = TRIM(ADJUSTL(fname))
-      IF ( varname(iv) /= '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
+      IF ( u(iv)%tag /= '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(u(iv)%tag))
       CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 #include "dns_open_file.h"
       IF ( ny > 1 ) THEN

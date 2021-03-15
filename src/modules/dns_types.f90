@@ -62,6 +62,7 @@ MODULE DNS_TYPES
 
   TYPE pointers_dt
      SEQUENCE
+     CHARACTER*32                 :: tag
      TREAL, DIMENSION(:), POINTER :: field
   END TYPE pointers_dt
 

@@ -25,7 +25,7 @@ CONTAINS
   !#                otherwise, calculate locally the min/max
   !#
   !########################################################################
-  SUBROUTINE PDF1V2D(ilim, nx,ny,nz, j, umin_ext,umax_ext,u, nbins,pdf, wrk1d, a,avg)
+  SUBROUTINE PDF1V2D( ilim, nx,ny,nz, j, umin_ext,umax_ext,u, nbins,pdf, wrk1d, a,avg )
     IMPLICIT NONE
 
     TINTEGER ilim, nx,ny,nz, j, nbins
@@ -118,7 +118,7 @@ CONTAINS
   !# igate  In   Level of the gate signal to use as intermittency function
   !#
   !########################################################################
-  SUBROUTINE PDF1V2D1G(ilim, nx,ny,nz, j, igate,gate, umin_ext,umax_ext,u, nbins,pdf, wrk1d, a,avg)
+  SUBROUTINE PDF1V2D1G( ilim, nx,ny,nz, j, igate,gate, umin_ext,umax_ext,u, nbins,pdf, wrk1d, a,avg )
     IMPLICIT NONE
 
     TINTEGER ilim, nx,ny,nz, j, nbins
@@ -212,7 +212,7 @@ CONTAINS
   !########################################################################
   ! Joint PDFs
   !########################################################################
-  SUBROUTINE PDF2V2D(nx,ny,nz, j, u,v, nbins,pdf, wrk2d, a,avg)
+  SUBROUTINE PDF2V2D( nx,ny,nz, j, u,v, nbins,pdf, wrk2d, a,avg )
     IMPLICIT NONE
 
     TINTEGER nx,ny,nz, j, nbins(2)
@@ -322,7 +322,7 @@ CONTAINS
   !# Adding nplim, the count of points above threshold.
   !# BCs flag ibc to drop extreme points.
   !########################################################################
-  SUBROUTINE PDF_ANALIZE(ibc, nbins,pdf, umin_ext,umax_ext, plim,nplim)
+  SUBROUTINE PDF_ANALIZE( ibc, nbins,pdf, umin_ext,umax_ext, plim,nplim )
     IMPLICIT NONE
 
     TINTEGER, INTENT(IN   ) :: ibc,nbins
