@@ -15,11 +15,11 @@
 !# DESCRIPTION
 !#
 !# Calculating the first nmom moments of the nvar fields defined by the
-!# pointers array data
+!# pointers array vars
 !#
 !########################################################################
-SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
-     nvar, nmom, y, gate, data, avg_loc)
+SUBROUTINE AVG2D_N(fname, rtime, imax,jmax,kmax, &
+     nvar, nmom, vars, igate, gate, y, avg_loc)
 
   USE DNS_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : efile
@@ -31,14 +31,14 @@ SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
 #include "mpif.h"
 #endif
 
-  CHARACTER*(*) fname, varname(nvar)
+  CHARACTER*(*) fname
   TREAL rtime
   TINTEGER,                 INTENT(IN) :: imax,jmax,kmax
   TINTEGER,                 INTENT(IN) :: nvar  ! Number of variables to process
   TINTEGER,                 INTENT(IN) :: nmom  ! Number of moments to consider in the analysis
   INTEGER(1),               INTENT(IN) :: igate ! Gate level in gate array to be used. If 0, no intermittency considered
   INTEGER(1), DIMENSION(*), INTENT(IN) :: gate  ! Array with the mask field corresponding to the different gate levels
-  TYPE(pointers_dt), DIMENSION(nvar)   :: data ! Array of pointer to the fields to be processed
+  TYPE(pointers_dt), DIMENSION(nvar)   :: vars ! Array of pointer to the fields to be processed
   TREAL y(jmax)
   TREAL avg_loc(nmom,nvar,2)
 
@@ -79,7 +79,7 @@ SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
      line1 = ' '
      DO iv = 1,nvar
         DO im = 1,nmom
-           WRITE(str,*) im; line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(varname(iv)))//'Mom'//TRIM(ADJUSTL(str))
+           WRITE(str,*) im; line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(vars(iv)%tag))//'Mom'//TRIM(ADJUSTL(str))
         ENDDO
      ENDDO
      WRITE(21,'(A)') 'GROUP = Plane '//TRIM(ADJUSTL(line1))
@@ -88,12 +88,12 @@ SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
      line1 = ' '
      DO iv = 1,nvar
         DO im = 1,nmom
-           WRITE(str,*) im; line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(varname(iv)))//'Mom'//TRIM(ADJUSTL(str))//'Vol'
+           WRITE(str,*) im; line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(vars(iv)%tag))//'Mom'//TRIM(ADJUSTL(str))//'Vol'
         ENDDO
      ENDDO
      WRITE(21,'(A)') 'GROUP = Volume '//TRIM(ADJUSTL(line1))
      line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
-     
+
      WRITE(21,'(A)') TRIM(ADJUSTL(line2))
 
 #ifdef USE_MPI
@@ -106,9 +106,9 @@ SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
   DO iv = 1,nvar
      DO im = 1,nmom
         IF ( igate .GT. 0 ) THEN
-           moment(im) = AVG1V3D1G(imax,jmax,kmax, igate, im, data(iv)%field, gate)
+           moment(im) = AVG1V3D1G(imax,jmax,kmax, igate, im, vars(iv)%field, gate)
         ELSE
-           moment(im) = AVG1V3D(imax,jmax,kmax, im, data(iv)%field)
+           moment(im) = AVG1V3D(imax,jmax,kmax, im, vars(iv)%field)
         ENDIF
 
 ! -------------------------------------------------------------------
@@ -145,9 +145,9 @@ SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
      DO iv = 1,nvar
         DO im = 1,nmom
            IF ( igate .GT. 0 ) THEN
-              moment(im) = AVG1V2D1G(imax,jmax,kmax, j, igate, im, data(iv)%field, gate)
+              moment(im) = AVG1V2D1G(imax,jmax,kmax, j, igate, im, vars(iv)%field, gate)
            ELSE
-              moment(im) = AVG1V2D(imax,jmax,kmax, j, im, data(iv)%field)
+              moment(im) = AVG1V2D(imax,jmax,kmax, j, im, vars(iv)%field)
            ENDIF
 
 ! -------------------------------------------------------------------
@@ -167,10 +167,10 @@ SUBROUTINE AVG2D_N(fname, varname, igate, rtime, imax,jmax,kmax, &
                  avg_loc(im,iv,1) = avg_loc(im,iv,1) + num/den*moment(im-k)*((-moment(1))**k)
               ENDDO
               avg_loc(im,iv,1) = avg_loc(im,iv,1) + (-moment(1))**im
-              
+
            ELSE
               avg_loc(im,iv,1) = moment(im)
-              
+
            ENDIF
 
         ENDDO

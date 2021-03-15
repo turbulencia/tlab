@@ -96,7 +96,7 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
   TINTEGER nbins, is, flag_buoyancy
   TINTEGER ibc(16), nfield
   TREAL amin(16), amax(16)
-  CHARACTER*32 fname, varname(16)
+  CHARACTER*32 fname
   CHARACTER*64 str
   INTEGER(1) igate !, gate_levels(16)
 

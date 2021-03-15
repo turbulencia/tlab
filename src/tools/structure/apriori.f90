@@ -38,7 +38,7 @@ PROGRAM APRIORI
 
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: mean, y_aux
 
-  TYPE(pointers_dt), DIMENSION(16) :: data
+  TYPE(pointers_dt), DIMENSION(16) :: vars
 
 ! Work arrays
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: wrk1d, wrk2d
@@ -51,7 +51,6 @@ PROGRAM APRIORI
   TINTEGER iq, is, ig, ij, bcs(2,2)
   TINTEGER nfield, isize_wrk3d, idummy, iread_flow, iread_scal, jmax_aux, ierr, MaskSize
   CHARACTER*32  fname, inifile, bakfile, flow_file, scal_file, plot_file, time_str
-  CHARACTER*32 varname(16)
   CHARACTER*64 str, line
   TINTEGER subdomain(6)
 
@@ -247,12 +246,12 @@ PROGRAM APRIORI
         ENDDO
 
         nfield = 0
-        nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'Tauxx'
-        nfield = nfield+1; data(nfield)%field => txc(:,2); varname(nfield) = 'Tauyy'
-        nfield = nfield+1; data(nfield)%field => txc(:,3); varname(nfield) = 'Tauzz'
-        nfield = nfield+1; data(nfield)%field => txc(:,4); varname(nfield) = 'Tauxy'
-        nfield = nfield+1; data(nfield)%field => txc(:,5); varname(nfield) = 'Tauxz'
-        nfield = nfield+1; data(nfield)%field => txc(:,6); varname(nfield) = 'Tauyz'
+        nfield = nfield+1; vars(nfield)%field => txc(:,1); vars(nfield)%tag = 'Tauxx'
+        nfield = nfield+1; vars(nfield)%field => txc(:,2); vars(nfield)%tag = 'Tauyy'
+        nfield = nfield+1; vars(nfield)%field => txc(:,3); vars(nfield)%tag = 'Tauzz'
+        nfield = nfield+1; vars(nfield)%field => txc(:,4); vars(nfield)%tag = 'Tauxy'
+        nfield = nfield+1; vars(nfield)%field => txc(:,5); vars(nfield)%tag = 'Tauxz'
+        nfield = nfield+1; vars(nfield)%field => txc(:,6); vars(nfield)%tag = 'Tauyz'
 
         txc(1:isize_field,1) = q(1:isize_field,1) *q(1:isize_field,1)
         txc(1:isize_field,2) = q(1:isize_field,2) *q(1:isize_field,2)
@@ -274,16 +273,16 @@ PROGRAM APRIORI
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='tau'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+        CALL AVG2D_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
+             nfield, opt_order, vars, opt_gate, gate, y_aux, mean)
 
         DO is = 1,nfield
-           plot_file = TRIM(ADJUSTL(varname(is)))//time_str(1:MaskSize)
+           plot_file = TRIM(ADJUSTL(vars(is)%tag))//time_str(1:MaskSize)
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,is), wrk3d)
         ENDDO
 
@@ -292,15 +291,15 @@ PROGRAM APRIORI
 ! ###################################################################
      CASE( 2 )
         nfield = 0
-        nfield = nfield+1; data(nfield)%field => txc(:,1); varname(nfield) = 'Ux'
-        nfield = nfield+1; data(nfield)%field => txc(:,2); varname(nfield) = 'Uy'
-        nfield = nfield+1; data(nfield)%field => txc(:,3); varname(nfield) = 'Uz'
-        nfield = nfield+1; data(nfield)%field => txc(:,4); varname(nfield) = 'Vx'
-        nfield = nfield+1; data(nfield)%field => txc(:,5); varname(nfield) = 'Vy'
-        nfield = nfield+1; data(nfield)%field => txc(:,6); varname(nfield) = 'Vz'
-        nfield = nfield+1; data(nfield)%field => txc(:,7); varname(nfield) = 'Wx'
-        nfield = nfield+1; data(nfield)%field => txc(:,8); varname(nfield) = 'Wy'
-        nfield = nfield+1; data(nfield)%field => txc(:,9); varname(nfield) = 'Wz'
+        nfield = nfield+1; vars(nfield)%field => txc(:,1); vars(nfield)%tag = 'Ux'
+        nfield = nfield+1; vars(nfield)%field => txc(:,2); vars(nfield)%tag = 'Uy'
+        nfield = nfield+1; vars(nfield)%field => txc(:,3); vars(nfield)%tag = 'Uz'
+        nfield = nfield+1; vars(nfield)%field => txc(:,4); vars(nfield)%tag = 'Vx'
+        nfield = nfield+1; vars(nfield)%field => txc(:,5); vars(nfield)%tag = 'Vy'
+        nfield = nfield+1; vars(nfield)%field => txc(:,6); vars(nfield)%tag = 'Vz'
+        nfield = nfield+1; vars(nfield)%field => txc(:,7); vars(nfield)%tag = 'Wx'
+        nfield = nfield+1; vars(nfield)%field => txc(:,8); vars(nfield)%tag = 'Wy'
+        nfield = nfield+1; vars(nfield)%field => txc(:,9); vars(nfield)%tag = 'Wz'
 
         CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), q(:,1),txc(1,1), wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), q(:,1),txc(1,2), wrk3d, wrk2d,wrk3d)
@@ -320,16 +319,16 @@ PROGRAM APRIORI
 
         IF (  jmax_aux*opt_block .NE. g(2)%size ) THEN
            DO is = 1,nfield
-              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, data(is)%field, wrk1d)
+              CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
            ENDDO
         ENDIF
 
         WRITE(fname,*) itime; fname='gradU'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, varname, opt_gate, rtime, imax*opt_block, jmax_aux, kmax, &
-             nfield, opt_order, y_aux, gate, data, mean)
+        CALL AVG2D_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
+             nfield, opt_order, vars, opt_gate, gate, y_aux, mean)
 
         DO is = 1,nfield
-           plot_file = TRIM(ADJUSTL(varname(is)))//time_str(1:MaskSize)
+           plot_file = TRIM(ADJUSTL(vars(is)%tag))//time_str(1:MaskSize)
            CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,is), wrk3d)
         ENDDO
 
