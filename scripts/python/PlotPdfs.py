@@ -31,6 +31,8 @@ setoffiles = sorted(sys.argv[3:])
 # the last level contains the global pdfs
 # the last two entries per level are min/max values
 fin = open(setoffiles[0], 'rb')
+raw = fin.read( 4 )
+t   = struct.unpack((etype+'f'), raw)
 raw = fin.read( (1+ndim)*4 )
 ny  = struct.unpack((etype+'{}i').format(1+ndim), raw)[0]
 nb  = struct.unpack((etype+'{}i').format(1+ndim), raw)[1:]
@@ -46,7 +48,7 @@ a = np.zeros((nb_size*(ny+1)),dtype=float)
 for file in setoffiles:
     print("Processing file {} ...".format(file))
     fin = open(file, 'rb')
-    fin.seek( (1+ndim)*4 + ny*sizeofdata ) # Skip the y-coordinates
+    fin.seek( 4 +(1+ndim)*4 + ny*sizeofdata ) # Skip the y-coordinates
     raw = fin.read()
     a   = a +np.array(struct.unpack((etype+'{}'+dtype).format(int(nb_size*(ny+1))), raw))
     fin.close()

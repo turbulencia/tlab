@@ -67,7 +67,7 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL,    ONLY : buoyancy, imode_eqns, icalc_scal
   USE DNS_GLOBAL,    ONLY : itransport, froude
   USE DNS_GLOBAL,    ONLY : epbackground, pbackground, rbackground
-  USE DNS_GLOBAL,    ONLY : itime
+  USE DNS_GLOBAL,    ONLY : itime, rtime
   USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
   USE DNS_MPI
@@ -197,7 +197,7 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
 
      nbins = 32
      WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-     CALL PDF1V_N(fname, imax,jmax,kmax, &
+     CALL PDF1V_N(fname, rtime, imax,jmax,kmax, &
       nfield, nbins, ibc, amin,amax,data, igate,wrk3d, g(2)%nodes, txc, wrk1d)
 
   ENDIF

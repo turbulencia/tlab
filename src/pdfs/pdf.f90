@@ -13,7 +13,7 @@
 !#                      5 local interval, analysis and drop both points
 !#
 !########################################################################
-SUBROUTINE PDF1V_N( fname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, y, pdf, wrk1d )
+SUBROUTINE PDF1V_N( fname, time, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, y, pdf, wrk1d )
 
   USE DNS_TYPES,      ONLY : pointers_dt
   USE DNS_CONSTANTS,  ONLY : lfile
@@ -26,14 +26,15 @@ SUBROUTINE PDF1V_N( fname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, y,
 #include "mpif.h"
 #endif
 
-  CHARACTER*(*) fname
-  TINTEGER,           INTENT(IN   ) :: nx,ny,nz, nv, nbins, ibc(nv)
-  TREAL,              INTENT(IN   ) :: umin(nv),umax(nv)            ! Random variables
-  TYPE(pointers_dt),  INTENT(IN   ) :: u(nv)
-  INTEGER(1),         INTENT(IN   ) :: gate(*), igate               ! discrete conditioning criteria
-  TREAL,              INTENT(IN   ) :: y(ny)                        ! heights of each plane
-  TREAL,              INTENT(  OUT) :: pdf(nbins+2,ny+1,nv)         ! last 2 bins contain the interval bounds
-  TREAL,              INTENT(INOUT) :: wrk1d(nbins)
+  CHARACTER*(*),     INTENT(IN   ) :: fname
+  TREAL,             INTENT(IN   ) :: time
+  TINTEGER,          INTENT(IN   ) :: nx,ny,nz, nv, nbins, ibc(nv)
+  TREAL,             INTENT(IN   ) :: umin(nv),umax(nv)            ! Random variables
+  TYPE(pointers_dt), INTENT(IN   ) :: u(nv)
+  INTEGER(1),        INTENT(IN   ) :: gate(*), igate               ! discrete conditioning criteria
+  TREAL,             INTENT(IN   ) :: y(ny)                        ! heights of each plane
+  TREAL,             INTENT(  OUT) :: pdf(nbins+2,ny+1,nv)         ! last 2 bins contain the interval bounds
+  TREAL,             INTENT(INOUT) :: wrk1d(nbins)
 
   ! -------------------------------------------------------------------
   TINTEGER iv, j, nplim, ibc_loc
@@ -106,9 +107,9 @@ SUBROUTINE PDF1V_N( fname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, y,
       CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 #include "dns_open_file.h"
       IF ( ny > 1 ) THEN
-        WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(pdf(:,:,iv))
+        WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:,:,iv))
       ELSE
-        WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(pdf(:,1,iv))
+        WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:,1,iv))
       END IF
       CLOSE(LOC_UNIT_ID)
     END DO
@@ -123,7 +124,7 @@ END SUBROUTINE PDF1V_N
 
 !########################################################################
 !########################################################################
-SUBROUTINE PDF2V( fname, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
+SUBROUTINE PDF2V( fname, time, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
 
   USE DNS_CONSTANTS,  ONLY : lfile
   USE PDFS
@@ -135,12 +136,13 @@ SUBROUTINE PDF2V( fname, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
 #include "mpif.h"
 #endif
 
-  CHARACTER*(*) fname
-  TINTEGER, INTENT(IN   ) :: nx,ny,nz, nbins(2)
-  TREAL,    INTENT(IN   ) :: u(nx*ny*nz), v(nx*ny*nz)
-  TREAL,    INTENT(IN   ) :: y(ny)
-  TREAL,    INTENT(  OUT) :: pdf(nbins(1)*nbins(2) +2 +2*nbins(1),ny+1)
-  TREAL,    INTENT(INOUT) :: wrk2d(nbins(1)*nbins(2))
+  CHARACTER*(*), INTENT(IN   ) :: fname
+  TREAL,         INTENT(IN   ) :: time
+  TINTEGER,      INTENT(IN   ) :: nx,ny,nz, nbins(2)
+  TREAL,         INTENT(IN   ) :: u(nx*ny*nz), v(nx*ny*nz)
+  TREAL,         INTENT(IN   ) :: y(ny)
+  TREAL,         INTENT(  OUT) :: pdf(nbins(1)*nbins(2) +2 +2*nbins(1),ny+1)
+  TREAL,         INTENT(INOUT) :: wrk2d(nbins(1)*nbins(2))
 
   ! -------------------------------------------------------------------
   TINTEGER j
@@ -174,9 +176,9 @@ SUBROUTINE PDF2V( fname, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
     CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 #include "dns_open_file.h"
     IF ( ny > 1 ) THEN
-      WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(pdf(:,:))
+      WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:,:))
     ELSE
-      WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(pdf(:,1))
+      WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:,1))
     END IF
     CLOSE(LOC_UNIT_ID)
 #ifdef USE_MPI

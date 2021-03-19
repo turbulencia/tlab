@@ -190,10 +190,10 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
      isize = 2
   ENDIF
   WRITE(fname,*) itime; fname='pdfSl'//TRIM(ADJUSTL(fname))
-  ! CALL PDF3D_N(fname, varname, i1, rtime, &
+  ! CALL PDF3D_N(fname, rtime, i1, rtime, &
   !      imax, isize, kmax, nfield, np, txc, pdf, wrk1d)
   ! Need to adapt to the new formulation of PDF1V_N
-  ! CALL PDF1V_N(fname, varname, imax*isize, 1, kmax, &
+  ! CALL PDF1V_N(fname, rtime, imax*isize, 1, kmax, &
   !    nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
 
   RETURN

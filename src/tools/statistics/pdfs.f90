@@ -489,7 +489,7 @@ PROGRAM PDFS
       END IF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))//'.RQ'
-      CALL PDF2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, txc(1,1),txc(1,2), pdf, wrk2d )
+      CALL PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, txc(1,1),txc(1,2), pdf, wrk2d )
 
       ! ###################################################################
       ! Chi flamelet equation PDF
@@ -521,7 +521,7 @@ PROGRAM PDFS
       END IF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))//'.WS'
-      CALL PDF2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, txc(1,1),txc(1,2), pdf, wrk2d )
+      CALL PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, txc(1,1),txc(1,2), pdf, wrk2d )
 
       ! ###################################################################
       ! Joint PDF Scalar and Scalar Gradient
@@ -544,14 +544,14 @@ PROGRAM PDFS
       END IF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))//'.SLnG'
-      CALL PDF2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, s(1,1),txc(1,2), y_aux, pdf, wrk2d )
+      CALL PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, s(1,1),txc(1,2), y_aux, pdf, wrk2d )
 
       WRITE(fname,*) itime; fname='cavgGiGi'//TRIM(ADJUSTL(fname))
-      CALL CAVG1V_N(fname, imax*opt_block, jmax_aux, kmax, &
+      CALL CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
           1, opt_bins(1), ibc, vmin,vmax,vars, gate_level,gate, txc(1,1), y_aux, pdf, wrk1d)
 
       WRITE(fname,*) itime; fname='cavgLnGiGi'//TRIM(ADJUSTL(fname))
-      CALL CAVG1V_N(fname, imax*opt_block, jmax_aux, kmax, &
+      CALL CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
           1, opt_bins(1), ibc, vmin,vmax,vars, gate_level,gate, txc(1,2), y_aux, pdf, wrk1d)
 
       ! ###################################################################
@@ -577,7 +577,7 @@ PROGRAM PDFS
       ifield = ifield+1; vars(ifield)%field => txc(:,4); vars(ifield)%tag = 'Gphi';   ibc(ifield) = 2
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))//'.GphiS'
-      CALL PDF2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, s(1,1),txc(1,4), y_aux, pdf, wrk2d )
+      CALL PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, s(1,1),txc(1,4), y_aux, pdf, wrk2d )
 
       ! ###################################################################
       ! eigenvalues of rate-of-strain tensor
@@ -712,21 +712,21 @@ PROGRAM PDFS
       END IF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))//'.bv'
-      CALL PDF2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), y_aux, pdf, wrk2d )
+      CALL PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), y_aux, pdf, wrk2d )
 
       ! -------------------------------------------------------------------
       WRITE(fname,*) itime; fname='cavgB'//TRIM(ADJUSTL(fname))
-      CALL CAVG1V_N(fname, imax*opt_block, jmax_aux, kmax, &
+      CALL CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
           ifield, opt_bins(1), ibc, vmin,vmax,vars, gate_level,gate, txc(1,1), y_aux, pdf, wrk1d)
 
       WRITE(fname,*) itime; fname='cavgBii'//TRIM(ADJUSTL(fname))
       IF (  jmax_aux*opt_block /= g(2)%size ) THEN
         CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, txc(1,3), wrk1d)
       END IF
-      CALL CAVG1V_N(fname, imax*opt_block, jmax_aux, kmax, &
+      CALL CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
           ifield, opt_bins(1), ibc, vmin,vmax,vars, gate_level,gate, txc(1,3), y_aux, pdf, wrk1d)
       fname = TRIM(ADJUSTL(fname))//'.bv'
-      CALL CAVG2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
+      CALL CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
 
       ! -------------------------------------------------------------------
       WRITE(fname,*) itime; fname='cavgU'//TRIM(ADJUSTL(fname))
@@ -734,20 +734,20 @@ PROGRAM PDFS
       IF (  jmax_aux*opt_block /= g(2)%size ) THEN
         CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, txc(1,3), wrk1d)
       END IF
-      CALL CAVG1V_N(fname, imax*opt_block, jmax_aux, kmax, &
+      CALL CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
           ifield, opt_bins(1), ibc, vmin,vmax,vars, gate_level,gate, txc(1,3), y_aux, pdf, wrk1d)
       fname = TRIM(ADJUSTL(fname))//'.bv'
-      CALL CAVG2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
+      CALL CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
 
       WRITE(fname,*) itime; fname='cavgW'//TRIM(ADJUSTL(fname))
       txc(1:isize_field,3) = q(1:isize_field,3)
       IF (  jmax_aux*opt_block /= g(2)%size ) THEN
         CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, txc(1,3), wrk1d)
       END IF
-      CALL CAVG1V_N(fname, imax*opt_block, jmax_aux, kmax, &
+      CALL CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
           ifield, opt_bins(1), ibc, vmin,vmax,vars, gate_level,gate, txc(1,3), y_aux, pdf, wrk1d)
       fname = TRIM(ADJUSTL(fname))//'.bv'
-      CALL CAVG2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
+      CALL CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
 
       WRITE(fname,*) itime; fname='cavgVii'//TRIM(ADJUSTL(fname))
       CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs, g(3), q(1,2),txc(1,5), txc(1,6), wrk2d,wrk3d)
@@ -757,10 +757,10 @@ PROGRAM PDFS
       IF (  jmax_aux*opt_block /= g(2)%size ) THEN
         CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, txc(1,3), wrk1d)
       END IF
-      CALL CAVG1V_N(fname, imax*opt_block, jmax_aux, kmax, &
+      CALL CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
           ifield, opt_bins(1), ibc, vmin,vmax,vars, gate_level,gate, txc(1,3), y_aux, pdf, wrk1d)
       fname = TRIM(ADJUSTL(fname))//'.bv'
-      CALL CAVG2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
+      CALL CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
 
       ! -------------------------------------------------------------------
       bbackground = C_0_R
@@ -772,16 +772,16 @@ PROGRAM PDFS
       END IF
 
       WRITE(fname,*) itime; fname='cavgP'//TRIM(ADJUSTL(fname))
-      CALL CAVG1V_N(fname, imax*opt_block, jmax_aux, kmax, &
+      CALL CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
           ifield, opt_bins(1), ibc, vmin,vmax,vars, gate_level,gate, txc(1,3), y_aux, pdf, wrk1d)
       fname = TRIM(ADJUSTL(fname))//'.bv'
-      CALL CAVG2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
+      CALL CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,3), y_aux, pdf, wrk2d )
 
       WRITE(fname,*) itime; fname='cavgPy'//TRIM(ADJUSTL(fname))
-      CALL CAVG1V_N(fname, imax*opt_block, jmax_aux, kmax, &
+      CALL CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
           ifield, opt_bins(1), ibc, vmin,vmax,vars, gate_level,gate, txc(1,4), y_aux, pdf, wrk1d)
       fname = TRIM(ADJUSTL(fname))//'.bv'
-      CALL CAVG2V(fname, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,4), y_aux, pdf, wrk2d )
+      CALL CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1,1),txc(1,2), txc(1,4), y_aux, pdf, wrk2d )
 
     END SELECT
 
@@ -799,7 +799,7 @@ PROGRAM PDFS
       END IF
 
       WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF1V_N(fname, imax*opt_block, jmax_aux, kmax, &
+      CALL PDF1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
           ifield, opt_bins(1), ibc, vmin,vmax,vars, gate_level,gate, y_aux, pdf, wrk1d)
 
     END IF

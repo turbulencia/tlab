@@ -6,7 +6,7 @@
 !# Volume calculation in ny+1, if needed.
 !#
 !########################################################################
-SUBROUTINE CAVG1V_N( fname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, a, y, avg, wrk1d )
+SUBROUTINE CAVG1V_N( fname, time, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, a, y, avg, wrk1d )
 
   USE DNS_TYPES,      ONLY : pointers_dt
   USE DNS_CONSTANTS,  ONLY : lfile
@@ -19,7 +19,8 @@ SUBROUTINE CAVG1V_N( fname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, a
 #include "mpif.h"
 #endif
 
-  CHARACTER*(*) fname
+  CHARACTER*(*),      INTENT(IN   ) :: fname
+  TREAL,              INTENT(IN   ) :: time
   TINTEGER,           INTENT(IN   ) :: nx,ny,nz, nv, nbins, ibc(nv) ! ibc=0 for external interval, 1 for local
   TREAL,              INTENT(IN   ) :: umin(nv),umax(nv)            ! Random variables
   TYPE(pointers_dt),  INTENT(IN   ) :: u(nv)
@@ -76,9 +77,9 @@ SUBROUTINE CAVG1V_N( fname, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, a
       CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 #include "dns_open_file.h"
       IF ( ny > 1 ) THEN
-        WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(avg(:,:,iv))
+        WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(avg(:,:,iv))
       ELSE
-        WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(avg(:,1,iv))
+        WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(avg(:,1,iv))
       END IF
       CLOSE(LOC_UNIT_ID)
     END DO
@@ -93,7 +94,7 @@ END SUBROUTINE CAVG1V_N
 
 !########################################################################
 !########################################################################
-SUBROUTINE CAVG2V( fname, nx,ny,nz, nbins, u,v, a, y, avg, wrk2d )
+SUBROUTINE CAVG2V( fname, time, nx,ny,nz, nbins, u,v, a, y, avg, wrk2d )
 
   USE DNS_CONSTANTS,  ONLY : lfile
   USE PDFS
@@ -105,12 +106,13 @@ SUBROUTINE CAVG2V( fname, nx,ny,nz, nbins, u,v, a, y, avg, wrk2d )
 #include "mpif.h"
 #endif
 
-  CHARACTER*(*) fname
-  TINTEGER, INTENT(IN   ) :: nx,ny,nz, nbins(2)
-  TREAL,    INTENT(IN   ) :: u(nx*ny*nz), v(nx*ny*nz), a(nx*ny*nz)
-  TREAL,    INTENT(IN   ) :: y(ny)
-  TREAL,    INTENT(  OUT) :: avg(nbins(1)*nbins(2) +2 +2*nbins(1),ny+1)
-  TREAL,    INTENT(INOUT) :: wrk2d(nbins(1)*nbins(2),2)
+  CHARACTER*(*), INTENT(IN   ) :: fname
+  TREAL,         INTENT(IN   ) :: time
+  TINTEGER,      INTENT(IN   ) :: nx,ny,nz, nbins(2)
+  TREAL,         INTENT(IN   ) :: u(nx*ny*nz), v(nx*ny*nz), a(nx*ny*nz)
+  TREAL,         INTENT(IN   ) :: y(ny)
+  TREAL,         INTENT(  OUT) :: avg(nbins(1)*nbins(2) +2 +2*nbins(1),ny+1)
+  TREAL,         INTENT(INOUT) :: wrk2d(nbins(1)*nbins(2),2)
 
   ! -------------------------------------------------------------------
   TINTEGER j
@@ -145,9 +147,9 @@ SUBROUTINE CAVG2V( fname, nx,ny,nz, nbins, u,v, a, y, avg, wrk2d )
     CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 #include "dns_open_file.h"
     IF ( ny > 1 ) THEN
-      WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(avg(:,:))
+      WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(avg(:,:))
     ELSE
-      WRITE(LOC_UNIT_ID) ny, nbins, SNGL(y(:)), SNGL(avg(:,1))
+      WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(avg(:,1))
     END IF
     CLOSE(LOC_UNIT_ID)
 #ifdef USE_MPI
