@@ -286,6 +286,8 @@ PROGRAM AVERAGES
 
   IF ( opt_main == 1 ) THEN
     ALLOCATE(mean(jmax*MAX_AVG_TEMPORAL))
+  ELSE IF ( opt_main == 2 ) THEN
+    ALLOCATE(mean(igate_size*(jmax_aux+1)))
   ELSE
     ALLOCATE(mean(opt_order*nfield*(jmax_aux+1)))
   END IF
@@ -481,7 +483,7 @@ PROGRAM AVERAGES
         WRITE(varname(is),*) is; varname(is) = 'Partition'//TRIM(ADJUSTL(varname(is)))
       END DO
       WRITE(fname,*) itime; fname='int'//TRIM(ADJUSTL(fname))
-      CALL INTER2D_N(fname, varname, rtime, imax,jmax,kmax, igate_size, y, gate)
+      CALL INTER2D_N(fname, varname, rtime, imax,jmax,kmax, igate_size, y, gate, mean)
 
       IF ( opt_cond > 1 ) THEN ! write only if the gate information has not been read
         WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname))

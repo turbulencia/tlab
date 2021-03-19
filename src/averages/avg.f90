@@ -13,7 +13,7 @@
 SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
 
   USE DNS_TYPES,     ONLY : pointers_dt
-  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_CONSTANTS, ONLY : efile, lfile
 
   IMPLICIT NONE
 
@@ -44,6 +44,8 @@ SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
 #endif
 
   ! ###################################################################
+  CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
+
   IF ( nv*nm > L_FORMAT_MAX ) THEN
     CALL IO_WRITE_ASCII(efile,'AVG2D_N. Format length too short.')
     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
@@ -164,3 +166,86 @@ SUBROUTINE RAW_TO_CENTRAL( nm, moments )
 
   RETURN
 END SUBROUTINE RAW_TO_CENTRAL
+
+!########################################################################
+!#
+!# Intermittency factors, i.e., area fraction occupied by each gate level
+!#
+!########################################################################
+SUBROUTINE INTER2D_N(fname, parname, rtime, nx,ny,nz, npar, y, gate, inter)
+
+  USE DNS_CONSTANTS, ONLY : efile, lfile
+
+  IMPLICIT NONE
+
+#ifdef USE_MPI
+#include "mpif.h"
+#endif
+
+  CHARACTER*(*) fname, parname(npar)
+  TREAL rtime
+  TINTEGER,   INTENT(IN   ) :: nx,ny,nz, npar ! npar is the number of partitions in gate field
+  TREAL,      INTENT(IN   ) :: y(ny)          ! heights of each plane
+  INTEGER(1), INTENT(IN   ) :: gate(*)        ! field with partitions
+  TREAL,      INTENT(  OUT) :: inter(npar,ny) ! intermittency factor
+
+  ! -------------------------------------------------------------------
+  TINTEGER ip, j
+  TREAL INTER1V2D
+  INTEGER(1) gate_level
+
+  CHARACTER*512 line1
+
+#ifdef USE_MPI
+  INTEGER ims_pro, ims_err
+  CALL MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro,ims_err)
+#endif
+
+  ! ###################################################################
+  CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
+
+  IF ( npar > L_FORMAT_MAX ) THEN
+    CALL IO_WRITE_ASCII(efile,'INTER2D_N. Format length too short.')
+    CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+  END IF
+
+  DO j = 1,ny
+    DO ip = 1,npar
+      gate_level = INT(ip,KIND=1)
+      inter(ip,j) = INTER1V2D(nx,ny,nz, j, gate_level, gate)
+    ENDDO
+  END DO
+
+  ! ###################################################################
+  ! -------------------------------------------------------------------
+  ! TkStat file
+  ! -------------------------------------------------------------------
+#ifdef USE_MPI
+  IF ( ims_pro .EQ. 0 ) THEN
+#endif
+    OPEN(unit=21,file=fname)
+
+    WRITE(21, '(A8,E14.7E3)') 'RTIME = ', rtime
+    WRITE(21, '(A7,I8)') 'IMAX = ', 1
+    WRITE(21, '(A7,I8)') 'JMAX = ', ny
+
+    line1 = 'I J Y'
+    DO ip = 1,npar
+      line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(parname(ip)))
+    ENDDO
+    WRITE(21,'(A)') TRIM(ADJUSTL(line1))
+
+    DO j = 1,ny
+      WRITE(21,1030) 1, j, y(j), (inter(ip,j),ip=1,npar)
+    ENDDO
+
+    CLOSE(21)
+#ifdef USE_MPI
+  ENDIF
+#endif
+
+  RETURN
+
+1030 FORMAT(I5,(1X,I5),(1X,G_FORMAT_R),L_FORMAT_MAX(1X,G_FORMAT_R))
+
+END SUBROUTINE INTER2D_N
