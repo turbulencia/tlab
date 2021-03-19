@@ -87,7 +87,7 @@ PROGRAM SPECTRA
 
   TINTEGER kx_total,ky_total,kz_total, kr_total, isize_spec2dr
 
-  TREAL AVG1V3D, COV2V2D
+  TREAL AVG1V2D, COV2V2D
 
   TINTEGER inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
 
@@ -512,7 +512,7 @@ PROGRAM SPECTRA
 ! Remove fluctuation
      IF ( opt_main .GE. 5 ) THEN ! 3D spectra
         DO iv = 1,nfield_ref
-           dummy = AVG1V3D(imax,jmax,kmax, i1, vars(iv)%field)
+          dummy = AVG1V2D(imax*jmax,i1,kmax, i1, i1, vars(iv)%field)  ! 3D average
            vars(iv)%field =  vars(iv)%field - dummy
         ENDDO
      ELSE

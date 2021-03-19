@@ -127,15 +127,6 @@ TREAL FUNCTION AVG1V2D(nx,ny,nz, j, imom, a)
   sum_mpi = AVG1V2D/M_REAL(ims_npro_i*ims_npro_k)
   CALL MPI_ALLREDUCE(sum_mpi, AVG1V2D,  1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
-! #ifdef USE_MPI
-!   sum_mpi = AVG1V2D
-!   CALL MPI_ALLREDUCE(sum_mpi, AVG1V2D,  1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-!   sum_mpi = M_REAL(nx*nz)
-!   CALL MPI_ALLREDUCE(sum_mpi, norm_mpi, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-!   AVG1V2D = AVG1V2D/norm_mpi
-! #else
-!   AVG1V2D = AVG1V2D/M_REAL(nx*nz)
-! #endif
 
   RETURN
 END FUNCTION AVG1V2D
@@ -239,7 +230,7 @@ TREAL FUNCTION AVG1V2D1G(nx,ny,nz, j, igate, imom, a, gate)
 END FUNCTION AVG1V2D1G
 
 !########################################################################
-! Intermittency factor within the plane j 
+! Intermittency factor within the plane j
 !########################################################################
 TREAL FUNCTION INTER1V2D(nx,ny,nz, j, igate, gate)
 
@@ -323,95 +314,3 @@ TREAL FUNCTION COV2V2D(nx,ny,nz, j, a, b)
 
   RETURN
 END FUNCTION COV2V2D
-
-!########################################################################
-! Average of array a
-!########################################################################
-TREAL FUNCTION AVG1V3D(nx,ny,nz, imom, a)
-
-#ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro
-#endif
-
-  IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
-
-  TINTEGER,                   INTENT(IN) :: nx,ny,nz
-  TINTEGER,                   INTENT(IN) :: imom ! Moment order
-  TREAL, DIMENSION(nx*ny*nz), INTENT(IN) :: a
-
-! -------------------------------------------------------------------
-  TINTEGER ij
-
-#ifdef USE_MPI
-  INTEGER ims_err
-  TREAL sum_mpi
-#endif
-
-! ###################################################################
-  AVG1V3D = C_0_R
-  DO ij = 1, nx*ny*nz
-     AVG1V3D = AVG1V3D + a(ij)**imom
-  ENDDO
-
-  AVG1V3D = AVG1V3D/M_REAL(nx*ny)
-  AVG1V3D = AVG1V3D/M_REAL(nz) ! In two steps is case nx*ny*nz is larger than INT(4)
-#ifdef USE_MPI
-  sum_mpi = AVG1V3D/M_REAL(ims_npro)
-  CALL MPI_ALLREDUCE(sum_mpi, AVG1V3D, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-#endif
-
-  RETURN
-END FUNCTION AVG1V3D
-
-!########################################################################
-! Average of array a  conditioned on the intermittency signal given by array gate
-!########################################################################
-TREAL FUNCTION AVG1V3D1G(nx,ny,nz, igate, imom, a, gate)
-
-  IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
-
-  TINTEGER,                        INTENT(IN) :: nx,ny,nz
-  INTEGER(1),                      INTENT(IN) :: igate ! Gate level to use
-  TINTEGER,                        INTENT(IN) :: imom  ! Moment order
-  TREAL, DIMENSION(nx*ny*nz),      INTENT(IN) :: a
-  INTEGER(1), DIMENSION(nx*ny*nz), INTENT(IN) :: gate
-
-! -------------------------------------------------------------------
-  TINTEGER ij, nsample
-
-#ifdef USE_MPI
-  TINTEGER nsample_mpi
-  TREAL sum_mpi
-  INTEGER ims_err
-#endif
-
-! ###################################################################
-  AVG1V3D1G = C_0_R
-  nsample = 0
-  DO ij = 1,nx*ny*nz
-     IF ( gate(ij) .EQ. igate ) THEN
-        AVG1V3D1G = AVG1V3D1G + a(ij)**imom
-        nsample = nsample+1
-     ENDIF
-  ENDDO
-
-#ifdef USE_MPI
-  nsample_mpi = nsample
-  CALL MPI_ALLREDUCE(nsample_mpi, nsample, 1, MPI_INTEGER4, MPI_SUM, MPI_COMM_WORLD, ims_err)
-
-  sum_mpi = AVG1V3D1G
-  CALL MPI_ALLREDUCE(sum_mpi, AVG1V3D1G, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-#endif
-
-  IF ( nsample .GT. 0 ) AVG1V3D1G = AVG1V3D1G/M_REAL(nsample)
-
-  RETURN
-END FUNCTION AVG1V3D1G

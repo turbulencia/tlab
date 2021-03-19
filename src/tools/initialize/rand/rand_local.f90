@@ -144,14 +144,14 @@ CONTAINS
     TREAL, DIMENSION(imax,jmax,kmax), INTENT(INOUT) :: a
 
     ! -------------------------------------------------------------------
-    TREAL AVG1V3D, dummy
-    EXTERNAL AVG1V3D
+    TREAL AVG1V2D, dummy
+    EXTERNAL AVG1V2D
 
     ! ###################################################################
-    dummy = AVG1V3D(imax,jmax,kmax, i1, a)
+    dummy = AVG1V2D(imax*jmax,i1,kmax, i1, i1, a) ! 3D average
     a = a -dummy
 
-    dummy = AVG1V3D(imax,jmax,kmax, i2, a)
+    dummy = AVG1V2D(imax*jmax,i1,kmax, i1, i2, a) ! 3D average
     IF ( dummy .GT. C_0_R ) THEN
       dummy = SQRT(variance/dummy)
       a  = a *dummy
