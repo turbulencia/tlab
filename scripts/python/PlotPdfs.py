@@ -27,12 +27,12 @@ level = int(sys.argv[2])                # -1 to plot whole map instead of indivi
 setoffiles = sorted(sys.argv[3:])
 
 # obtain size from first file
-# the first data is size and vertical coordinates
+# the first data is the time and we skip it
+# then comes the size and vertical coordinates
 # the last level contains the global pdfs
 # the last two entries per level are min/max values
 fin = open(setoffiles[0], 'rb')
-raw = fin.read( 4 )
-t   = struct.unpack((etype+'f'), raw)[0]
+fin.seek( 4 )
 raw = fin.read( (1+ndim)*4 )
 ny  = struct.unpack((etype+'{}i').format(1+ndim), raw)[0]
 nb  = struct.unpack((etype+'{}i').format(1+ndim), raw)[1:]
@@ -46,9 +46,12 @@ print("Files with {} bins and {} levels.".format(nb,ny))
 nb_size = np.prod(list(nb)) + 2 +2*(ndim-1)*nb[0]
 a = np.zeros((nb_size*(ny+1)),dtype=float)
 for file in setoffiles:
-    print("Processing file {} with time {:4.2f}...".format(file,t))
+    print("Processing file {}. ".format(file),end="")
     fin = open(file, 'rb')
-    fin.seek( 4 +(1+ndim)*4 + ny*sizeofdata ) # Skip the y-coordinates
+    raw = fin.read( 4 )                         # Read the time
+    t = struct.unpack((etype+'f'), raw)[0]
+    print("Time {:4.2f}...".format(t))
+    fin.seek( (1+ndim)*4 + ny*sizeofdata, 1 )   # Skip the y-coordinates
     raw = fin.read()
     a   = a +np.array(struct.unpack((etype+'{}'+dtype).format(int(nb_size*(ny+1))), raw))
     fin.close()
