@@ -32,7 +32,7 @@ setoffiles = sorted(sys.argv[3:])
 # the last two entries per level are min/max values
 fin = open(setoffiles[0], 'rb')
 raw = fin.read( 4 )
-t   = struct.unpack((etype+'f'), raw)
+t   = struct.unpack((etype+'f'), raw)[0]
 raw = fin.read( (1+ndim)*4 )
 ny  = struct.unpack((etype+'{}i').format(1+ndim), raw)[0]
 nb  = struct.unpack((etype+'{}i').format(1+ndim), raw)[1:]
@@ -46,7 +46,7 @@ print("Files with {} bins and {} levels.".format(nb,ny))
 nb_size = np.prod(list(nb)) + 2 +2*(ndim-1)*nb[0]
 a = np.zeros((nb_size*(ny+1)),dtype=float)
 for file in setoffiles:
-    print("Processing file {} ...".format(file))
+    print("Processing file {} with time {:4.2f}...".format(file,t))
     fin = open(file, 'rb')
     fin.seek( 4 +(1+ndim)*4 + ny*sizeofdata ) # Skip the y-coordinates
     raw = fin.read()
