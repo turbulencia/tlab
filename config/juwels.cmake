@@ -61,6 +61,12 @@ set(BLAS_LIB         "-lmkl_intel_lp64 -lmkl_sequential -lmkl_core")
 set(INCLUDE_DIRS ${FFTW_INCLUDE_DIR})
 set(LIBS         ${FFTW_LIB} ${BLAS_LIB})
 
+# add_definitions(-DUSE_NETCDF)
+# set(NC_INCLUDE_DIR     "/usr/include")
+# set(NC_LIB             "-L/usr/lib -lnetcdff -lnetcdf")
+# set(INCLUDE_DIRS ${INCLUDE_DIRS} ${NC_INCLUDE_DIR})
+# set(LIBS ${LIBS} ${NC_LIB})
+
 if ( ${BUILD_TYPE} STREQUAL "NONBLOCKING" ) # use NB3DFFT library
   add_definitions(-DUSE_PSFFT)
 

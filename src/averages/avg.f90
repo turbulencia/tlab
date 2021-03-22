@@ -10,10 +10,13 @@
 !# Calculating the first nm moments of the nv fields defined by the pointers array vars
 !#
 !########################################################################
-SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
+SUBROUTINE AVG2D_N(fname, itime,rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
 
   USE DNS_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : efile, lfile
+#ifdef USE_NETCDF
+  USE NETCDF
+#endif
 
   IMPLICIT NONE
 
@@ -23,6 +26,7 @@ SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
 #endif
 
   CHARACTER*(*) fname
+  TINTEGER itime
   TREAL rtime
   TINTEGER,          INTENT(IN   ) :: nx,ny,nz, nv, nm ! Number of moments to consider in the analysis
   TYPE(pointers_dt), INTENT(IN   ) :: vars(nv)         ! Array of pointer to the fields to be processed
@@ -33,7 +37,9 @@ SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
   ! -------------------------------------------------------------------
   TINTEGER j,iv,im
   TREAL AVG1V2D, AVG1V2D1G
-
+#ifdef USE_NETCDF
+  INTEGER fid, dtid,dyid, tid,yid,itid, vid(nv*nm)
+#endif
   CHARACTER*32 str
   CHARACTER*1024 line1
   CHARACTER*2048 line2
@@ -68,10 +74,8 @@ SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
     DO iv = 1,nv
       DO im = 1,nm
         IF ( igate > 0 ) THEN
-          ! avg(im,iv,j) = AVG1V3D1G(nx,ny,nz, igate, im, vars(iv)%field, gate)
           avg(im,iv,j) = AVG1V2D1G(nx*ny,1,nz, 1, igate, im, vars(iv)%field, gate)
         ELSE
-          ! avg(im,iv,j) = AVG1V3D(nx,ny,nz, im, vars(iv)%field)
           avg(im,iv,j) = AVG1V2D(nx*ny,1,nz, 1, im, vars(iv)%field)
         END IF
       END DO
@@ -79,6 +83,39 @@ SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
     END DO
   END IF
 
+  ! ###################################################################
+#ifdef USE_NETCDF
+  CALL NC_CHECK( NF90_CREATE( TRIM(ADJUSTL(fname))//'.nc', NF90_NETCDF4, fid ) )
+
+  CALL NC_CHECK( NF90_DEF_DIM( fid, "t", NF90_UNLIMITED, dtid) )
+  CALL NC_CHECK( NF90_DEF_DIM( fid, "y", ny+1,           dyid) )
+
+  CALL NC_CHECK( Nf90_DEF_VAR( fid, "t",  NF90_FLOAT, (/ dtid /), tid) )
+  CALL NC_CHECK( Nf90_DEF_VAR( fid, "y",  NF90_FLOAT, (/ dyid /), yid) )
+  CALL NC_CHECK( Nf90_DEF_VAR( fid, "it", NF90_INT,   (/ dtid /),itid) )
+  DO iv = 1,nv
+    im = 1          ! The mean
+    CALL NC_CHECK( Nf90_DEF_VAR( fid, TRIM(ADJUSTL(vars(iv)%tag)), NF90_FLOAT, (/ dyid, dtid /), vid(im+(iv-1)*nm)) )
+    DO im = 2,nm    ! In case moments larger than 1 are used
+      WRITE(str,*) im; str=TRIM(ADJUSTL(vars(iv)%tag))//'Mom'//TRIM(ADJUSTL(str))
+      CALL NC_CHECK( Nf90_DEF_VAR( fid, TRIM(ADJUSTL(str)), NF90_FLOAT, (/ dyid, dtid /), vid(im+(iv-1)*nm)) )
+    END DO
+  END DO
+
+  CALL NC_CHECK( NF90_ENDDEF( fid ) )
+
+  CALL NC_CHECK( NF90_PUT_VAR( fid, tid, rtime ) )
+  CALL NC_CHECK( NF90_PUT_VAR( fid,itid, itime ) )
+  CALL NC_CHECK( NF90_PUT_VAR( fid, yid, y     ) )
+  DO iv = 1,nv
+    DO im = 1,nm
+      CALL NC_CHECK( NF90_PUT_VAR( fid, vid(im+(iv-1)*nm), avg(im,iv,1:ny+1) ) )
+    END DO
+  END DO
+
+  CALL NC_CHECK( NF90_CLOSE( fid ) )
+
+#else
   ! ###################################################################
   ! -------------------------------------------------------------------
   ! TkStat file
@@ -128,6 +165,7 @@ SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
   END IF
 #endif
 
+#endif
   RETURN
 
 1010 FORMAT(I5,(1X,I5),L_FORMAT_MAX(1X,G_FORMAT_R))
@@ -249,3 +287,22 @@ SUBROUTINE INTER2D_N(fname, parname, rtime, nx,ny,nz, npar, y, gate, inter)
 1030 FORMAT(I5,(1X,I5),(1X,G_FORMAT_R),L_FORMAT_MAX(1X,G_FORMAT_R))
 
 END SUBROUTINE INTER2D_N
+
+#ifdef USE_NETCDF
+SUBROUTINE NC_CHECK( status )
+
+  USE DNS_CONSTANTS, ONLY : efile
+  USE NETCDF
+
+  IMPLICIT NONE
+
+  INTEGER, INTENT(IN) :: status
+
+  IF ( status /= nf90_noerr ) THEN
+    CALL IO_WRITE_ASCII(efile,'NETCDF error signal '//TRIM(ADJUSTL(NF90_STRERROR(status))))
+    CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+  END IF
+
+  RETURN
+END SUBROUTINE
+#endif

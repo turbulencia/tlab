@@ -37,6 +37,11 @@ endif()
 
 set(FFTW_INCLUDE_DIR   "/usr/local/include")
 set(FFTW_LIB           "/usr/local/lib/libfftw3.a")
-
 set(INCLUDE_DIRS ${FFTW_INCLUDE_DIR})
 set(LIBS ${FFTW_LIB})
+
+add_definitions(-DUSE_NETCDF)
+set(NC_INCLUDE_DIR     "/usr/include")
+set(NC_LIB             "-L/usr/lib -lnetcdff -lnetcdf")
+set(INCLUDE_DIRS ${INCLUDE_DIRS} ${NC_INCLUDE_DIR})
+set(LIBS ${LIBS} ${NC_LIB})

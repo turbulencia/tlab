@@ -527,7 +527,7 @@ PROGRAM AVERAGES
       ifield = ifield+1; vars(ifield)%field => txc(:,4); vars(ifield)%tag = 'Wyy'
       CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), q(1,3), txc(1,4), txc(1,3), wrk2d,wrk3d)
 
-      ifield = ifield+1; vars(ifield)%field => txc(:,5); vars(ifield)%tag = '(VU)y'
+      ifield = ifield+1; vars(ifield)%field => txc(:,5); vars(ifield)%tag = 'VU)y'
       txc(1:isize_field,6) = q(1:isize_field,2) *q(1:isize_field,1)
       CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,6), txc(1,5), wrk3d, wrk2d,wrk3d)
 
@@ -540,7 +540,7 @@ PROGRAM AVERAGES
       CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), q(1,1), txc(1,8), wrk3d, wrk2d,wrk3d)
       txc(1:isize_field,8) = q(1:isize_field,3) *txc(1:isize_field,8)
 
-      ifield = ifield+1; vars(ifield)%field => txc(:,9); vars(ifield)%tag = '(WV)y'
+      ifield = ifield+1; vars(ifield)%field => txc(:,9); vars(ifield)%tag = 'WV)y'
       txc(1:isize_field,10) = q(1:isize_field,2) *q(1:isize_field,3)
       CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,10), txc(1,9), wrk3d, wrk2d,wrk3d)
 
@@ -967,7 +967,7 @@ PROGRAM AVERAGES
         END DO
       END IF
 
-      CALL AVG2D_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
+      CALL AVG2D_N(fname, itime, rtime, imax*opt_block, jmax_aux, kmax, &
           nfield, opt_order, vars, gate_level,gate, y_aux, mean)
 
     END IF
