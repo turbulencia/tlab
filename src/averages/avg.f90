@@ -84,45 +84,46 @@ SUBROUTINE AVG2D_N(fname, itime,rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, av
   END IF
 
   ! ###################################################################
+  #ifdef USE_MPI
+    IF ( ims_pro == 0 ) THEN
+  #endif
+
 #ifdef USE_NETCDF
-  CALL NC_CHECK( NF90_CREATE( TRIM(ADJUSTL(fname))//'.nc', NF90_NETCDF4, fid ) )
+    CALL NC_CHECK( NF90_CREATE( TRIM(ADJUSTL(fname))//'.nc', NF90_NETCDF4, fid ) )
 
-  CALL NC_CHECK( NF90_DEF_DIM( fid, "t", NF90_UNLIMITED, dtid) )
-  CALL NC_CHECK( NF90_DEF_DIM( fid, "y", ny+1,           dyid) )
+    CALL NC_CHECK( NF90_DEF_DIM( fid, "t", NF90_UNLIMITED, dtid) )
+    CALL NC_CHECK( NF90_DEF_DIM( fid, "y", ny+1,           dyid) )
 
-  CALL NC_CHECK( Nf90_DEF_VAR( fid, "t",  NF90_FLOAT, (/ dtid /), tid) )
-  CALL NC_CHECK( Nf90_DEF_VAR( fid, "y",  NF90_FLOAT, (/ dyid /), yid) )
-  CALL NC_CHECK( Nf90_DEF_VAR( fid, "it", NF90_INT,   (/ dtid /),itid) )
-  DO iv = 1,nv
-    im = 1          ! The mean
-    CALL NC_CHECK( Nf90_DEF_VAR( fid, TRIM(ADJUSTL(vars(iv)%tag)), NF90_FLOAT, (/ dyid, dtid /), vid(im+(iv-1)*nm)) )
-    DO im = 2,nm    ! In case moments larger than 1 are used
-      WRITE(str,*) im; str=TRIM(ADJUSTL(vars(iv)%tag))//'Mom'//TRIM(ADJUSTL(str))
-      CALL NC_CHECK( Nf90_DEF_VAR( fid, TRIM(ADJUSTL(str)), NF90_FLOAT, (/ dyid, dtid /), vid(im+(iv-1)*nm)) )
+    CALL NC_CHECK( Nf90_DEF_VAR( fid, "t",  NF90_FLOAT, (/ dtid /), tid) )
+    CALL NC_CHECK( Nf90_DEF_VAR( fid, "y",  NF90_FLOAT, (/ dyid /), yid) )
+    CALL NC_CHECK( Nf90_DEF_VAR( fid, "it", NF90_INT,   (/ dtid /),itid) )
+    DO iv = 1,nv
+      im = 1          ! The mean
+      CALL NC_CHECK( Nf90_DEF_VAR( fid, TRIM(ADJUSTL(vars(iv)%tag)), NF90_FLOAT, (/ dyid, dtid /), vid(im+(iv-1)*nm)) )
+      DO im = 2,nm    ! In case moments larger than 1 are used
+        WRITE(str,*) im; str=TRIM(ADJUSTL(vars(iv)%tag))//'Mom'//TRIM(ADJUSTL(str))
+        CALL NC_CHECK( Nf90_DEF_VAR( fid, TRIM(ADJUSTL(str)), NF90_FLOAT, (/ dyid, dtid /), vid(im+(iv-1)*nm)) )
+      END DO
     END DO
-  END DO
 
-  CALL NC_CHECK( NF90_ENDDEF( fid ) )
+    CALL NC_CHECK( NF90_ENDDEF( fid ) )
 
-  CALL NC_CHECK( NF90_PUT_VAR( fid, tid, rtime ) )
-  CALL NC_CHECK( NF90_PUT_VAR( fid,itid, itime ) )
-  CALL NC_CHECK( NF90_PUT_VAR( fid, yid, y     ) )
-  DO iv = 1,nv
-    DO im = 1,nm
-      CALL NC_CHECK( NF90_PUT_VAR( fid, vid(im+(iv-1)*nm), avg(im,iv,1:ny+1) ) )
+    CALL NC_CHECK( NF90_PUT_VAR( fid, tid, rtime ) )
+    CALL NC_CHECK( NF90_PUT_VAR( fid,itid, itime ) )
+    CALL NC_CHECK( NF90_PUT_VAR( fid, yid, y     ) )
+    DO iv = 1,nv
+      DO im = 1,nm
+        CALL NC_CHECK( NF90_PUT_VAR( fid, vid(im+(iv-1)*nm), avg(im,iv,1:ny+1) ) )
+      END DO
     END DO
-  END DO
 
-  CALL NC_CHECK( NF90_CLOSE( fid ) )
+    CALL NC_CHECK( NF90_CLOSE( fid ) )
 
 #else
   ! ###################################################################
   ! -------------------------------------------------------------------
   ! TkStat file
   ! -------------------------------------------------------------------
-#ifdef USE_MPI
-  IF ( ims_pro == 0 ) THEN
-#endif
     OPEN(unit=21,file=fname)
 
     WRITE(21, '(A8,E14.7E3)') 'RTIME = ', rtime
@@ -161,11 +162,13 @@ SUBROUTINE AVG2D_N(fname, itime,rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, av
     END DO
 
     CLOSE(21)
+
+#endif
+
 #ifdef USE_MPI
   END IF
 #endif
 
-#endif
   RETURN
 
 1010 FORMAT(I5,(1X,I5),L_FORMAT_MAX(1X,G_FORMAT_R))
