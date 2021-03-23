@@ -124,14 +124,21 @@ if ndim == 2:
         # var1 = np.linspace( a[level-1,nb[0]*nb[1]],   a[level-1,nb[0]*nb[1]+1], num=nb[0] )
         # var2 = np.linspace( a[level-1,nb[0]*nb[1]+2], a[level-1,nb[0]*nb[1]+3], num=nb[1] )
 
-        plt.contourf( var1, var2, a[level-1,:nb[0]*nb[1]].reshape(nb[1],nb[0]) )
+        z = a[level-1,:nb[0]*nb[1]].reshape(nb[1],nb[0])
+        surf=plt.contourf( var1, var2, z )
+        #
+        # ax = plt.axes(projection='3d')
+        # ax.plot_surface( var1, var2, z, cmap='viridis', alpha=0.5 )
+        # ax.scatter( var1, var2, color='k')
+        # surf=ax.scatter( var1, var2, z, c=z, cmap='viridis' )
+        #
         plt.xlabel("var1")
         plt.ylabel("var2")
         if level <= ny:
             plt.title(setoffiles[0]+" - height {:4.2f}".format(y[level-1]))
         else:
             plt.title(setoffiles[0]+" - global")
-        plt.colorbar(label='pdf, cavg',format="%.2g")
+        plt.colorbar(surf,label='pdf, cavg',format="%.2g")
         plt.tight_layout(pad=0.1)
         plt.savefig("{}.pdf".format(setoffiles[0]))
         plt.show()

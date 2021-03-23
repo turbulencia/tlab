@@ -84,9 +84,9 @@ SUBROUTINE AVG2D_N(fname, itime,rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, av
   END IF
 
   ! ###################################################################
-  #ifdef USE_MPI
-    IF ( ims_pro == 0 ) THEN
-  #endif
+#ifdef USE_MPI
+  IF ( ims_pro == 0 ) THEN
+#endif
 
 #ifdef USE_NETCDF
     CALL NC_CHECK( NF90_CREATE( TRIM(ADJUSTL(fname))//'.nc', NF90_NETCDF4, fid ) )
