@@ -17,3 +17,5 @@ build_DEBUG/*
 *~
 */*~
 */*/*~
+build_litle/* 
+build_spline/* 
