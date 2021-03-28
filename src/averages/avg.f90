@@ -14,9 +14,6 @@ SUBROUTINE AVG2D_N(fname, itime,rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, av
 
   USE DNS_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : efile, lfile
-#ifdef USE_NETCDF
-  USE NETCDF
-#endif
 
   IMPLICIT NONE
 
@@ -37,25 +34,20 @@ SUBROUTINE AVG2D_N(fname, itime,rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, av
   ! -------------------------------------------------------------------
   TINTEGER j,iv,im
   TREAL AVG1V2D, AVG1V2D1G
-#ifdef USE_NETCDF
-  INTEGER fid, dtid,dyid, tid,yid,itid, vid(nv*nm)
-#endif
+  CHARACTER(LEN=32) varname(L_FORMAT_MAX)
+
+#ifndef USE_NETCDF
   CHARACTER*32 str
   CHARACTER*1024 line1
   CHARACTER*2048 line2
-
 #ifdef USE_MPI
   INTEGER ims_pro, ims_err
   CALL MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro,ims_err)
 #endif
+#endif
 
   ! ###################################################################
   CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
-
-  IF ( nv*nm > L_FORMAT_MAX ) THEN
-    CALL IO_WRITE_ASCII(efile,'AVG2D_N. Format length too short.')
-    CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  END IF
 
   DO j = 1,ny                   ! calculation in planes
     DO iv = 1,nv
@@ -70,60 +62,32 @@ SUBROUTINE AVG2D_N(fname, itime,rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, av
     END DO
   END DO
 
-  IF ( ny > 1 ) THEN            ! calculation in whole volume, saved as plane j=ny+1
-    DO iv = 1,nv
-      DO im = 1,nm
-        IF ( igate > 0 ) THEN
-          avg(im,iv,j) = AVG1V2D1G(nx*ny,1,nz, 1, igate, im, vars(iv)%field, gate)
-        ELSE
-          avg(im,iv,j) = AVG1V2D(nx*ny,1,nz, 1, im, vars(iv)%field)
-        END IF
-      END DO
-      CALL RAW_TO_CENTRAL( nm, avg(1,iv,j) )
-    END DO
-  END IF
-
   ! ###################################################################
+#ifdef USE_NETCDF
+    DO iv = 1,nv
+      im = 1          ! The mean
+      varname(im+(iv-1)*nm) = TRIM(ADJUSTL(vars(iv)%tag))
+      DO im = 2,nm    ! In case moments larger than 1 are used
+        WRITE(varname(im+(iv-1)*nm),*) im
+        varname(im+(iv-1)*nm)=TRIM(ADJUSTL(vars(iv)%tag))//'.'//TRIM(ADJUSTL(varname(im+(iv-1)*nm)))
+      END DO
+    END DO
+
+    CALL IO_WRITE_AVERAGES( fname, itime,rtime, nv,ny, y, varname, avg)
+
+#else
+  ! -------------------------------------------------------------------
+  ! TkStat file
+  ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_pro == 0 ) THEN
 #endif
 
-#ifdef USE_NETCDF
-    CALL NC_CHECK( NF90_CREATE( TRIM(ADJUSTL(fname))//'.nc', NF90_NETCDF4, fid ) )
+    IF ( nv*nm > L_FORMAT_MAX ) THEN
+      CALL IO_WRITE_ASCII(efile,'AVG2D_N. Format length too short.')
+      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+    END IF
 
-    CALL NC_CHECK( NF90_DEF_DIM( fid, "t", NF90_UNLIMITED, dtid) )
-    CALL NC_CHECK( NF90_DEF_DIM( fid, "y", ny+1,           dyid) )
-
-    CALL NC_CHECK( Nf90_DEF_VAR( fid, "t",  NF90_FLOAT, (/ dtid /), tid) )
-    CALL NC_CHECK( Nf90_DEF_VAR( fid, "y",  NF90_FLOAT, (/ dyid /), yid) )
-    CALL NC_CHECK( Nf90_DEF_VAR( fid, "it", NF90_INT,   (/ dtid /),itid) )
-    DO iv = 1,nv
-      im = 1          ! The mean
-      CALL NC_CHECK( Nf90_DEF_VAR( fid, TRIM(ADJUSTL(vars(iv)%tag)), NF90_FLOAT, (/ dyid, dtid /), vid(im+(iv-1)*nm)) )
-      DO im = 2,nm    ! In case moments larger than 1 are used
-        WRITE(str,*) im; str=TRIM(ADJUSTL(vars(iv)%tag))//'Mom'//TRIM(ADJUSTL(str))
-        CALL NC_CHECK( Nf90_DEF_VAR( fid, TRIM(ADJUSTL(str)), NF90_FLOAT, (/ dyid, dtid /), vid(im+(iv-1)*nm)) )
-      END DO
-    END DO
-
-    CALL NC_CHECK( NF90_ENDDEF( fid ) )
-
-    CALL NC_CHECK( NF90_PUT_VAR( fid, tid, rtime ) )
-    CALL NC_CHECK( NF90_PUT_VAR( fid,itid, itime ) )
-    CALL NC_CHECK( NF90_PUT_VAR( fid, yid, y     ) )
-    DO iv = 1,nv
-      DO im = 1,nm
-        CALL NC_CHECK( NF90_PUT_VAR( fid, vid(im+(iv-1)*nm), avg(im,iv,1:ny+1) ) )
-      END DO
-    END DO
-
-    CALL NC_CHECK( NF90_CLOSE( fid ) )
-
-#else
-  ! ###################################################################
-  ! -------------------------------------------------------------------
-  ! TkStat file
-  ! -------------------------------------------------------------------
     OPEN(unit=21,file=fname)
 
     WRITE(21, '(A8,E14.7E3)') 'RTIME = ', rtime
@@ -141,39 +105,38 @@ SUBROUTINE AVG2D_N(fname, itime,rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, av
     WRITE(21,'(A)') 'GROUP = Plane '//TRIM(ADJUSTL(line1))
     line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
-    line1 = ' '
-    DO iv = 1,nv
-      DO im = 1,nm
-        WRITE(str,*) im; line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(vars(iv)%tag))//'Mom'//TRIM(ADJUSTL(str))//'Vol'
-      END DO
-    END DO
-    WRITE(21,'(A)') 'GROUP = Volume '//TRIM(ADJUSTL(line1))
-    line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
+    ! line1 = ' '
+    ! DO iv = 1,nv
+    !   DO im = 1,nm
+    !     WRITE(str,*) im; line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(vars(iv)%tag))//'Mom'//TRIM(ADJUSTL(str))//'Vol'
+    !   END DO
+    ! END DO
+    ! WRITE(21,'(A)') 'GROUP = Volume '//TRIM(ADJUSTL(line1))
+    ! line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
     WRITE(21,'(A)') TRIM(ADJUSTL(line2))
 
     DO j = 1,ny
-      IF ( j == ny/2 ) THEN
-        WRITE(21,1020) 1, j, y(j), (avg(im,1,j),im=1,nm*nv), &
-            (avg(im,1,ny+1),im=1,nm*nv)
-      ELSE
+      ! IF ( j == ny/2 ) THEN
+      !   WRITE(21,1020) 1, j, y(j), (avg(im,1,j),im=1,nm*nv), &
+      !       (avg(im,1,ny+1),im=1,nm*nv)
+      ! ELSE
         WRITE(21,1010) 1, j, y(j), (avg(im,1,j),im=1,nm*nv)
-      END IF
+      ! END IF
     END DO
 
     CLOSE(21)
-
-#endif
 
 #ifdef USE_MPI
   END IF
 #endif
 
-  RETURN
-
 1010 FORMAT(I5,(1X,I5),L_FORMAT_MAX(1X,G_FORMAT_R))
 1020 FORMAT(I5,(1X,I5),L_FORMAT_MAX(1X,G_FORMAT_R),L_FORMAT_MAX(1X,G_FORMAT_R))
 
+#endif
+
+  RETURN
 END SUBROUTINE AVG2D_N
 
 ! ###################################################################
@@ -290,22 +253,3 @@ SUBROUTINE INTER2D_N(fname, parname, rtime, nx,ny,nz, npar, y, gate, inter)
 1030 FORMAT(I5,(1X,I5),(1X,G_FORMAT_R),L_FORMAT_MAX(1X,G_FORMAT_R))
 
 END SUBROUTINE INTER2D_N
-
-#ifdef USE_NETCDF
-SUBROUTINE NC_CHECK( status )
-
-  USE DNS_CONSTANTS, ONLY : efile
-  USE NETCDF
-
-  IMPLICIT NONE
-
-  INTEGER, INTENT(IN) :: status
-
-  IF ( status /= nf90_noerr ) THEN
-    CALL IO_WRITE_ASCII(efile,'NETCDF error signal '//TRIM(ADJUSTL(NF90_STRERROR(status))))
-    CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  END IF
-
-  RETURN
-END SUBROUTINE
-#endif
