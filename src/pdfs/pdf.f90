@@ -160,8 +160,7 @@ SUBROUTINE PDF2V( fname, time, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
     CALL PDF2V2D( nx,ny,nz, j, u,v, nbins,pdf(1,j), wrk2d )
   END DO
 
-  IF ( ny > 1 ) THEN     ! calculation in whole volume, saved as plane ny+1
-    j = ny +1
+  IF ( ny > 1 ) THEN        ! calculation in whole volume, saved as plane ny+1
     CALL PDF2V2D( nx*ny,1,nz, 1, u,v, nbins,pdf(1,j), wrk2d )
   END IF
 

@@ -169,7 +169,7 @@ SUBROUTINE STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
 !      varname(1) = 'Vorticity'; gate_levels(1) = 1
 
 !      WRITE(fname,*) itime; fname='int'//TRIM(ADJUSTL(fname))
-!      CALL INTER2D_N(fname, varname, rtime, imax,jmax,kmax, i1, y, wrk3d, gate_levels)
+!      CALL INTER2D_N(fname, varname, rtime, imax,jmax,kmax, i1, y, wrk3d, gate_levels, mean)
 
 !   ENDIF
 
