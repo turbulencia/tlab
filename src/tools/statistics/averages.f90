@@ -483,7 +483,7 @@ PROGRAM AVERAGES
         WRITE(varname(is),*) is; varname(is) = 'Partition'//TRIM(ADJUSTL(varname(is)))
       END DO
       WRITE(fname,*) itime; fname='int'//TRIM(ADJUSTL(fname))
-      CALL INTER2D_N(fname, varname, rtime, imax,jmax,kmax, igate_size, y, gate, mean)
+      CALL INTER_N_XZ(fname, itime,rtime, imax,jmax,kmax, igate_size, varname, gate, y, mean)
 
       IF ( opt_cond > 1 ) THEN ! write only if the gate information has not been read
         WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname))
@@ -967,7 +967,7 @@ PROGRAM AVERAGES
         END DO
       END IF
 
-      CALL AVG2D_N(fname, itime, rtime, imax*opt_block, jmax_aux, kmax, &
+      CALL AVG_N_XZ(fname, itime, rtime, imax*opt_block, jmax_aux, kmax, &
           nfield, opt_order, vars, gate_level,gate, y_aux, mean)
 
     END IF

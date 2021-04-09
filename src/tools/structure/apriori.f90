@@ -278,7 +278,7 @@ PROGRAM APRIORI
         ENDIF
 
         WRITE(fname,*) itime; fname='tau'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, itime, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG_N_XZ(fname, itime, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, vars, opt_gate, gate, y_aux, mean)
 
         DO is = 1,nfield
@@ -324,7 +324,7 @@ PROGRAM APRIORI
         ENDIF
 
         WRITE(fname,*) itime; fname='gradU'//TRIM(ADJUSTL(fname))
-        CALL AVG2D_N(fname, itime, rtime, imax*opt_block, jmax_aux, kmax, &
+        CALL AVG_N_XZ(fname, itime, rtime, imax*opt_block, jmax_aux, kmax, &
              nfield, opt_order, vars, opt_gate, gate, y_aux, mean)
 
         DO is = 1,nfield
