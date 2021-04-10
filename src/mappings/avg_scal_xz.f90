@@ -136,7 +136,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   sg(ng) = 9
 
   groupname(ng) = 'DerivativeFluctuations'
-  varname(ng)   = 'Sx2 Sy2 Sz2 Sx3 Sy3 Sz3 Sx4 Sy4 Sz4'
+  varname(ng)   = 'S_x2 S_y2 S_z2 S_x3 S_y3 S_z3 S_x4 S_y4 S_z4'
 
 #define L_AVGMAX 38
 
@@ -497,10 +497,10 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   WRITE(line1,*) is; line1='avg'//TRIM(ADJUSTL(line1))//'s'
   WRITE(name,*) itime; name=TRIM(ADJUSTL(line1))//TRIM(ADJUSTL(name))
   CALL IO_WRITE_AVERAGES( name, itime,rtime, nvar,jmax, g(2)%nodes, varname2, mean2d )
-#endif
 
+! #else
   ! -----------------------------------------------------------------------
-  ! TkStat file; header
+  ! TkStat file
   ! -----------------------------------------------------------------------
   IF ( L_AVGMAX .LT. nmax ) THEN
     CALL IO_WRITE_ASCII(efile,'AVERAGES_SCAL_XZ. Not enough space in format definition.')
@@ -545,9 +545,10 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   END IF
 #endif
 
-  RETURN
-
 1010 FORMAT(A)
 1020 FORMAT(I5,(1X,I5),L_AVGMAX(1X,G_FORMAT_R),11(1X,G_FORMAT_R))
 
+#endif
+
+  RETURN
 END SUBROUTINE AVG_SCAL_XZ
