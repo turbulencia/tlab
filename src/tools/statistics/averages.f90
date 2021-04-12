@@ -96,14 +96,6 @@ PROGRAM AVERAGES
   CALL DNS_MPI_INITIALIZE
 #endif
 
-#ifdef USE_MPI
-  IF ( ims_pro == 0 ) THEN
-#endif
-    CALL AVG_DEFS_TEMPORAL
-#ifdef USE_MPI
-  END IF
-#endif
-
   ! -------------------------------------------------------------------
   ! File names
   ! -------------------------------------------------------------------

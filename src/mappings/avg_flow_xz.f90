@@ -1380,7 +1380,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   WRITE(name,*) itime; name='avg'//TRIM(ADJUSTL(name))
   CALL IO_WRITE_AVERAGES( name, itime,rtime, nvar,jmax, g(2)%nodes, varname2, mean2d )
 
-! #else
+#else
 ! -----------------------------------------------------------------------
 ! TkStat file
 ! -----------------------------------------------------------------------
