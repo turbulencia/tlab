@@ -22,7 +22,7 @@ SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, nv,ny, y, varname, var )
   TREAL,            INTENT(IN   ) :: rtime
   TINTEGER,         INTENT(IN   ) :: ny,nv
   TREAL,            INTENT(IN   ) :: y(ny)
-  TREAL,            INTENT(IN   ) :: var(nv,ny)
+  TREAL,            INTENT(IN   ) :: var(ny,nv)
 
   ! -------------------------------------------------------------------
   INTEGER iv
@@ -53,11 +53,11 @@ SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, nv,ny, y, varname, var )
 
     CALL NC_CHECK( NF90_ENDDEF( fid ) )
 
-    CALL NC_CHECK( NF90_PUT_VAR( fid, tid, rtime ) )
+    CALL NC_CHECK( NF90_PUT_VAR( fid, tid, SNGL(rtime) ) )
     CALL NC_CHECK( NF90_PUT_VAR( fid,itid, itime ) )
-    CALL NC_CHECK( NF90_PUT_VAR( fid, yid, y     ) )
+    CALL NC_CHECK( NF90_PUT_VAR( fid, yid, SNGL(y)     ) )
     DO iv = 1,nv
-      CALL NC_CHECK( NF90_PUT_VAR( fid, vid(iv), var(iv,1:ny) ) )
+      CALL NC_CHECK( NF90_PUT_VAR( fid, vid(iv), SNGL(var(1:ny,iv)) ) )
     END DO
 
     CALL NC_CHECK( NF90_CLOSE( fid ) )
