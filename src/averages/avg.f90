@@ -10,7 +10,7 @@
 !# Calculating the first nm moments of the nv fields defined by the pointers array vars
 !#
 !########################################################################
-SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
+SUBROUTINE AVG2D_N(fname, itime,rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
 
   USE DNS_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : efile, lfile
@@ -23,6 +23,7 @@ SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
 #endif
 
   CHARACTER*(*) fname
+  TINTEGER itime
   TREAL rtime
   TINTEGER,          INTENT(IN   ) :: nx,ny,nz, nv, nm ! Number of moments to consider in the analysis
   TYPE(pointers_dt), INTENT(IN   ) :: vars(nv)         ! Array of pointer to the fields to be processed
@@ -33,23 +34,20 @@ SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
   ! -------------------------------------------------------------------
   TINTEGER j,iv,im
   TREAL AVG1V2D, AVG1V2D1G
+  CHARACTER(LEN=32) varname(L_FORMAT_MAX)
 
+#ifndef USE_NETCDF
   CHARACTER*32 str
   CHARACTER*1024 line1
   CHARACTER*2048 line2
-
 #ifdef USE_MPI
   INTEGER ims_pro, ims_err
   CALL MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro,ims_err)
 #endif
+#endif
 
   ! ###################################################################
   CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
-
-  IF ( nv*nm > L_FORMAT_MAX ) THEN
-    CALL IO_WRITE_ASCII(efile,'AVG2D_N. Format length too short.')
-    CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  END IF
 
   DO j = 1,ny                   ! calculation in planes
     DO iv = 1,nv
@@ -64,28 +62,32 @@ SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
     END DO
   END DO
 
-  IF ( ny > 1 ) THEN            ! calculation in whole volume, saved as plane j=ny+1
-    DO iv = 1,nv
-      DO im = 1,nm
-        IF ( igate > 0 ) THEN
-          ! avg(im,iv,j) = AVG1V3D1G(nx,ny,nz, igate, im, vars(iv)%field, gate)
-          avg(im,iv,j) = AVG1V2D1G(nx*ny,1,nz, 1, igate, im, vars(iv)%field, gate)
-        ELSE
-          ! avg(im,iv,j) = AVG1V3D(nx,ny,nz, im, vars(iv)%field)
-          avg(im,iv,j) = AVG1V2D(nx*ny,1,nz, 1, im, vars(iv)%field)
-        END IF
-      END DO
-      CALL RAW_TO_CENTRAL( nm, avg(1,iv,j) )
-    END DO
-  END IF
-
   ! ###################################################################
+#ifdef USE_NETCDF
+    DO iv = 1,nv
+      im = 1          ! The mean
+      varname(im+(iv-1)*nm) = TRIM(ADJUSTL(vars(iv)%tag))
+      DO im = 2,nm    ! In case moments larger than 1 are used
+        WRITE(varname(im+(iv-1)*nm),*) im
+        varname(im+(iv-1)*nm)=TRIM(ADJUSTL(vars(iv)%tag))//'.'//TRIM(ADJUSTL(varname(im+(iv-1)*nm)))
+      END DO
+    END DO
+
+    CALL IO_WRITE_AVERAGES( fname, itime,rtime, nv,ny, y, varname, avg)
+
+#else
   ! -------------------------------------------------------------------
   ! TkStat file
   ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_pro == 0 ) THEN
 #endif
+
+    IF ( nv*nm > L_FORMAT_MAX ) THEN
+      CALL IO_WRITE_ASCII(efile,'AVG2D_N. Format length too short.')
+      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+    END IF
+
     OPEN(unit=21,file=fname)
 
     WRITE(21, '(A8,E14.7E3)') 'RTIME = ', rtime
@@ -103,36 +105,38 @@ SUBROUTINE AVG2D_N(fname, rtime, nx,ny,nz, nv, nm, vars, igate,gate, y, avg)
     WRITE(21,'(A)') 'GROUP = Plane '//TRIM(ADJUSTL(line1))
     line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
-    line1 = ' '
-    DO iv = 1,nv
-      DO im = 1,nm
-        WRITE(str,*) im; line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(vars(iv)%tag))//'Mom'//TRIM(ADJUSTL(str))//'Vol'
-      END DO
-    END DO
-    WRITE(21,'(A)') 'GROUP = Volume '//TRIM(ADJUSTL(line1))
-    line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
+    ! line1 = ' '
+    ! DO iv = 1,nv
+    !   DO im = 1,nm
+    !     WRITE(str,*) im; line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(vars(iv)%tag))//'Mom'//TRIM(ADJUSTL(str))//'Vol'
+    !   END DO
+    ! END DO
+    ! WRITE(21,'(A)') 'GROUP = Volume '//TRIM(ADJUSTL(line1))
+    ! line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
 
     WRITE(21,'(A)') TRIM(ADJUSTL(line2))
 
     DO j = 1,ny
-      IF ( j == ny/2 ) THEN
-        WRITE(21,1020) 1, j, y(j), (avg(im,1,j),im=1,nm*nv), &
-            (avg(im,1,ny+1),im=1,nm*nv)
-      ELSE
+      ! IF ( j == ny/2 ) THEN
+      !   WRITE(21,1020) 1, j, y(j), (avg(im,1,j),im=1,nm*nv), &
+      !       (avg(im,1,ny+1),im=1,nm*nv)
+      ! ELSE
         WRITE(21,1010) 1, j, y(j), (avg(im,1,j),im=1,nm*nv)
-      END IF
+      ! END IF
     END DO
 
     CLOSE(21)
+
 #ifdef USE_MPI
   END IF
 #endif
 
-  RETURN
-
 1010 FORMAT(I5,(1X,I5),L_FORMAT_MAX(1X,G_FORMAT_R))
 1020 FORMAT(I5,(1X,I5),L_FORMAT_MAX(1X,G_FORMAT_R),L_FORMAT_MAX(1X,G_FORMAT_R))
 
+#endif
+
+  RETURN
 END SUBROUTINE AVG2D_N
 
 ! ###################################################################

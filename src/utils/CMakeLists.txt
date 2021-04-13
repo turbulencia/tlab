@@ -1,5 +1,4 @@
 FILE(GLOB sourcefiles "../utils/*.f90")
-include_directories(${INCLUDE_DIRS} "../include")
 
 # retrieve the git hash from the current commit
 find_package(Git)

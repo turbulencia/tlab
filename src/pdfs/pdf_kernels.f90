@@ -28,12 +28,12 @@ CONTAINS
   SUBROUTINE PDF1V2D( ilim, nx,ny,nz, j, umin_ext,umax_ext,u, nbins,pdf, wrk1d, a,avg )
     IMPLICIT NONE
 
-    TINTEGER ilim, nx,ny,nz, j, nbins
-    TREAL umin_ext,umax_ext
-    TREAL, INTENT(IN   ) :: u(nx,ny,nz)
-    TREAL, INTENT(  OUT) :: pdf(nbins+2)            ! Space at the end for min/max bins of u
-    TREAL, INTENT(INOUT) :: wrk1d(nbins)
-    TREAL, OPTIONAL      :: a(nx,ny,nz), avg(nbins) ! For conditional average, if needed
+    TINTEGER, INTENT(IN   ) :: ilim, nx,ny,nz, j, nbins
+    TREAL,    INTENT(IN   ) :: umin_ext,umax_ext
+    TREAL,    INTENT(IN   ) :: u(nx,ny,nz)
+    TREAL,    INTENT(  OUT) :: pdf(nbins+2)            ! Space at the end for min/max bins of u
+    TREAL,    INTENT(INOUT) :: wrk1d(nbins)
+    TREAL,    OPTIONAL      :: a(nx,ny,nz), avg(nbins) ! For conditional average, if needed
 
     ! ###################################################################
     pdf = C_0_R
@@ -121,13 +121,13 @@ CONTAINS
   SUBROUTINE PDF1V2D1G( ilim, nx,ny,nz, j, igate,gate, umin_ext,umax_ext,u, nbins,pdf, wrk1d, a,avg )
     IMPLICIT NONE
 
-    TINTEGER ilim, nx,ny,nz, j, nbins
-    TREAL umin_ext, umax_ext
-    TREAL, INTENT(IN   ) :: u(nx,ny,nz)
-    TREAL, INTENT(  OUT) :: pdf(nbins+2)            ! Space at the end for min/max bins of u
-    TREAL, INTENT(INOUT) :: wrk1d(nbins)
-    INTEGER(1),INTENT(IN):: gate(nx,ny,nz), igate
-    TREAL, OPTIONAL      :: a(nx,ny,nz), avg(nbins) ! For conditional average, if needed
+    TINTEGER,   INTENT(IN   ) :: ilim, nx,ny,nz, j, nbins
+    TREAL,      INTENT(IN   ) :: umin_ext, umax_ext
+    TREAL,      INTENT(IN   ) :: u(nx,ny,nz)
+    TREAL,      INTENT(  OUT) :: pdf(nbins+2)            ! Space at the end for min/max bins of u
+    TREAL,      INTENT(INOUT) :: wrk1d(nbins)
+    INTEGER(1), INTENT(IN)    :: gate(nx,ny,nz), igate
+    TREAL,      OPTIONAL      :: a(nx,ny,nz), avg(nbins) ! For conditional average, if needed
 
     ! ###################################################################
     pdf = C_0_R
@@ -141,8 +141,8 @@ CONTAINS
       umax = umax_ext
 
     ELSE
-      umin = u(1,j,1)
-      umax = u(1,j,1)
+      umin = C_BIG_R
+      umax =-C_BIG_R
       DO k = 1,nz
         DO i = 1,nx
           IF ( gate(i,j,k) == igate ) THEN
@@ -215,11 +215,11 @@ CONTAINS
   SUBROUTINE PDF2V2D( nx,ny,nz, j, u,v, nbins,pdf, wrk2d, a,avg )
     IMPLICIT NONE
 
-    TINTEGER nx,ny,nz, j, nbins(2)
-    TREAL, INTENT(IN   ) :: u(nx,ny,nz), v(nx,ny,nz)
-    TREAL, INTENT(  OUT) :: pdf(nbins(1)*nbins(2) +2 +2*nbins(1)) ! Space at the end for min/max bins of u,v
-    TREAL, INTENT(INOUT) :: wrk2d(nbins(1)*nbins(2))              ! nbins(2) should be greater than 2 for enough memory space
-    TREAL, OPTIONAL      :: a(nx,ny,nz), avg(nbins(1)*nbins(2))   ! For conditional average, if needed
+    TINTEGER, INTENT(IN   ) :: nx,ny,nz, j, nbins(2)
+    TREAL,    INTENT(IN   ) :: u(nx,ny,nz), v(nx,ny,nz)
+    TREAL,    INTENT(  OUT) :: pdf(nbins(1)*nbins(2) +2 +2*nbins(1)) ! Space at the end for min/max bins of u,v
+    TREAL,    INTENT(INOUT) :: wrk2d(nbins(1),nbins(2))              ! nbins(2) should be greater than 2 for enough memory space
+    TREAL,    OPTIONAL      :: a(nx,ny,nz), avg(nbins(1)*nbins(2))   ! For conditional average, if needed
 
     ! ###################################################################
     pdf = C_0_R
@@ -253,27 +253,32 @@ CONTAINS
     IF ( ustep == C_0_R) ustep = C_1_R            ! Just 1 point, prevent division by zero and force all in first bin
 
     ! Second variable
-    ip = offset +1;    pdf(ip) = v(1,j,1)
-    ip = ip +nbins(1); pdf(ip) = v(1,j,1)
+#define vmin(j)   wrk2d(j,1)
+#define vmax(j)   wrk2d(j,2)
+#define vstep(j)  wrk2d(j,3)
+    vmin(1:nbins(1)) = C_BIG_R  ! To calculate min
+    vmax(1:nbins(1)) =-C_BIG_R  ! To calculate max
     DO k = 1,nz
       DO i = 1,nx
         up = INT((u(i,j,k)-umin)/ustep) + 1
-        up = MAX(1,MIN(up,nbins(1)))
-        ip = offset +up;   pdf(ip) = MIN(pdf(ip),v(i,j,k))
-        ip = ip +nbins(1); pdf(ip) = MAX(pdf(ip),v(i,j,k))
+        up = MIN(up,nbins(1))
+        vmin(up) = MIN(vmin(up),v(i,j,k))
+        vmax(up) = MAX(vmax(up),v(i,j,k))
       END DO
     END DO
 #ifdef USE_MPI
     impi = nbins(1)
-    ip = offset +1;    CALL MPI_ALLREDUCE(pdf(ip), wrk2d, impi, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
-    pdf(ip:ip+nbins(1)) = wrk2d(1:nbins(1))
-    ip = ip +nbins(1); CALL MPI_ALLREDUCE(pdf(ip), wrk2d, impi, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
-    pdf(ip:ip+nbins(1)) = wrk2d(1:nbins(1))
+    CALL MPI_ALLREDUCE(vmin(1), vstep(1), impi, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
+    vmin(1:nbins(1)) = vstep(1:nbins(1))
+    CALL MPI_ALLREDUCE(vmax(1), vstep(1), impi, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+    vmax(1:nbins(1)) = vstep(1:nbins(1))
 #endif
 
     DO up = 1,nbins(1)                                          ! Calculate step in histogram
-      wrk2d(up) = ( pdf(offset+up+nbins(1)) -pdf(offset+up) ) /M_REAL(nbins(2))
-      IF ( wrk2d(up) == C_0_R ) wrk2d(up) = C_1_R               ! Just 1 point, prevent division by zero and force all in first bin
+      vstep(up) = ( vmax(up) -vmin(up) ) /M_REAL(nbins(2))
+      ip = offset +up;   pdf(ip) = vmin(up) +C_05_R*vstep(up)   ! Calculate coordinate of histogram
+      ip = ip +nbins(1); pdf(ip) = vmax(up) -C_05_R*vstep(up)
+      IF ( vstep(up) == C_0_R ) vstep(up) = C_1_R               ! Just 1 point, prevent division by zero and force all in first bin
     END DO
 
     ! -------------------------------------------------------------------
@@ -281,28 +286,27 @@ CONTAINS
     ! -------------------------------------------------------------------
     DO k = 1,nz
       DO i = 1,nx
-        up = INT((u(i,j,k)-umin)          /ustep    ) + 1
-        up = MAX(1,MIN(up,nbins(1)))
-        vp = INT((v(i,j,k)-pdf(offset+up))/wrk2d(up)) + 1
-        vp = MAX(1,MIN(vp,nbins(2)))
+        up = INT((u(i,j,k)-umin)    /ustep    ) + 1
+        up = MIN(up,nbins(1))
+        vp = INT((v(i,j,k)-vmin(up))/vstep(up)) + 1
+        vp = MIN(vp,nbins(2))
         ip = (vp-1)*nbins(1) +up
         pdf(ip) = pdf(ip) + C_1_R
         IF ( PRESENT(a) .AND. PRESENT(avg) ) avg(ip) = avg(ip) + a(i,j,k)
       END DO
     END DO
 
-    DO up = 1,nbins(1)                                        ! Calculate coordinate of histogram; I needed the minimum before
-      ip = offset +up;   pdf(ip) = pdf(ip) +C_05_R*wrk2d(up)
-      ip = ip +nbins(1); pdf(ip) = pdf(ip) -C_05_R*wrk2d(up)
-    END DO
+#undef vmin
+#undef vmax
+#undef vstep
 
 #ifdef USE_MPI
     impi = nbins(1)*nbins(2)
     CALL MPI_ALLREDUCE(pdf, wrk2d, impi, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-    pdf(1:nbins(1)*nbins(2)) = wrk2d(1:nbins(1)*nbins(2))
+    pdf(1:nbins(1)*nbins(2)) = wrk2d(1:nbins(1)*nbins(2),1)
     IF ( PRESENT(avg) ) THEN
       CALL MPI_ALLREDUCE(avg, wrk2d, impi, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-      avg(1:nbins(1)*nbins(2)) = wrk2d(1:nbins(1)*nbins(2))
+      avg(1:nbins(1)*nbins(2)) = wrk2d(1:nbins(1)*nbins(2),1)
     END IF
 #endif
 

@@ -8,7 +8,5 @@ FILE(GLOB to_remove "../lagrange/particle_send_recv.f90")
 list(REMOVE_ITEM sourcefiles ${to_remove})
 endif()
 
-include_directories(${INCLUDE_DIRS} "../include")
-
 add_library(lagrange STATIC ${sourcefiles})
 add_dependencies(lagrange modules)
