@@ -30,8 +30,12 @@ SUBROUTINE DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
   IMPLICIT NONE
   
   TINTEGER jb,kb
+#ifdef HLRS_HAWK
+  PARAMETER(jb=16,kb=8)
+#else
   PARAMETER(jb=64, kb=64)
- 
+#endif
+
   TINTEGER nra, nca, ma, mb
   TREAL a(ma,*),b(mb,*)
 

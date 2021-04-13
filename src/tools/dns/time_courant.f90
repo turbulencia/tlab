@@ -43,6 +43,7 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
 #endif
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_scal, imode_eqns
   USE DNS_GLOBAL,    ONLY : g
+  USE DNS_GLOBAL,    ONLY : inb_flow_array, inb_scal_array
   USE DNS_GLOBAL,    ONLY : itransport, visc, prandtl, schmidt
   USE THERMO_GLOBAL, ONLY : gama0
   USE DNS_LOCAL,     ONLY : cfla, cfld, cflr, dtime, rkm_mode, logs_data
@@ -62,7 +63,8 @@ SUBROUTINE TIME_COURANT(q,s, wrk3d)
 #include "mpif.h"
 #endif
 
-  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)    :: q, s
+  TREAL, DIMENSION(imax,jmax,kmax,inb_flow_array), INTENT(IN) :: q
+  TREAL, DIMENSION(imax,jmax,kmax,inb_scal_array), INTENT(IN) :: s
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: wrk3d
 
   TARGET :: q

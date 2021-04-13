@@ -15,12 +15,15 @@
 !# use array dudz until pressure block
 !#
 !########################################################################
+
+
 SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : imode_eqns, itransport, inb_scal
+  USE DNS_GLOBAL, ONLY : inb_scal_array,inb_flow_array
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, area
   USE DNS_GLOBAL, ONLY : froude, visc, rossby
@@ -43,7 +46,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 #include "mpif.h"
 #endif
 
-  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)    :: q,s
+  TREAL, DIMENSION(imax,jmax,kmax,inb_flow_array), INTENT(IN)    :: q
+  TREAL, DIMENSION(imax,jmax,kmax,inb_scal_array), INTENT(IN)    :: s
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, wrk3d
   TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: mean2d, wrk1d
   TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk2d
