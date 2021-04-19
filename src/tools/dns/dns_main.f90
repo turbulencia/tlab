@@ -246,18 +246,6 @@ PROGRAM DNS
      CALL DNS_TOWER_INITIALIZE(tower_stride)
   ENDIF
 
-! #######################################################################
-! Log files
-! #######################################################################
-#ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN
-#endif
-     IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN; CALL AVG_DEFS_TEMPORAL
-     ELSE;                                         CALL AVG_DEFS_SPATIAL; ENDIF
-#ifdef USE_MPI
-  ENDIF
-#endif
-
 ! ###################################################################
 ! Initialize arrays to zero
 ! ###################################################################

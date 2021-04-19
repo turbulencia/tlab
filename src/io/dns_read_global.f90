@@ -14,7 +14,7 @@
 !########################################################################
 SUBROUTINE DNS_READ_GLOBAL(inifile)
 
-  USE DNS_CONSTANTS, ONLY : lfile, efile, wfile
+  USE DNS_CONSTANTS, ONLY : lfile, efile, wfile, MajorVersion, MinorVersion
   USE DNS_GLOBAL
   USE THERMO_GLOBAL
 #ifdef USE_MPI
@@ -34,14 +34,11 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CHARACTER*512 sRes
   CHARACTER*64 lstr, default
   CHARACTER*32 bakfile
-  TINTEGER iMajorVersion, iMinorVersion
   TINTEGER is, ig, inb_scal_local1, inb_scal_local2, idummy
   TREAL dummy
 
 ! ###################################################################
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
-
-  iMajorVersion = 6; iMinorVersion = 2
 
   CALL IO_WRITE_ASCII(lfile, 'Reading global input data.')
 
@@ -53,13 +50,13 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#Minor=<minor version number>')
 
   CALL SCANINIINT(bakfile, inifile, 'Version', 'Major', '0', idummy)
-  IF ( iMajorVersion .NE. idummy ) THEN
+  IF ( MajorVersion .NE. idummy ) THEN
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Major version error.')
      CALL DNS_STOP(DNS_ERROR_VERSION)
   ENDIF
   CALL SCANINIINT(bakfile, inifile, 'Version', 'Minor', '0', idummy)
-  IF ( iMinorVersion .NE. idummy ) THEN
-     WRITE(sRes,'(I5)') iMinorVersion
+  IF ( MinorVersion .NE. idummy ) THEN
+     WRITE(sRes,'(I5)') MinorVersion
      CALL IO_WRITE_ASCII(wfile, 'DNS_REAL_GLOBAL. Minor version warning. Expected : '//sRes)
   ENDIF
 
