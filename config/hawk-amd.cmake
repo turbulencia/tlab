@@ -32,8 +32,8 @@ if ( ${BUILD_TYPE} STREQUAL "PARALLEL" OR ${BUILD_TYPE} STREQUAL "NONBLOCKING" )
 
 # compiler for serial build
 else( ${BUILD_TYPE} STREQUAL "SERIAL" ) 
-  set(ENV{FC} aocc-flang)
-  set(CMAKE_Fortran_COMPILER aocc-flang)
+  set(ENV{FC} mpif90)
+  set(CMAKE_Fortran_COMPILER mpif90)
 
 endif()     
 
@@ -51,7 +51,7 @@ endif()
 add_definitions(-DUSE_FFTW -DHLRS_HAWK) # -DUSE_BLAS -DUSE_MKL) 
 
 set(FFTW_LIB   "-lfftw3")
-set(FFTW_INCLUDE_DIR "/opt/hlrs/spack/rev-004_2020-06-17/fftw/3.3.8-clang-9.0.0-2buapgdw/include/")
+#set(FFTW_INCLUDE_DIR "/opt/hlrs/spack/rev-004_2020-06-17/fftw/3.3.8-clang-9.0.0-2buapgdw/include/")
 set(LIBS             "${FFTW_LIB} -l:libamdlibm.a -lm")
 
 set(GNU_SED "gsed")
