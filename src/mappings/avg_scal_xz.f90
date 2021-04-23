@@ -151,7 +151,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   sg(ng) = 14
 
   groupname(ng) = 'RsvBudget'
-  varname(ng)   = 'Rsv_t Csv Psv Esv Tsvy1 Tsvy2 Tsvy3 Tsvy_y Dsv Gsv Bsv Fsv Qsv'
+  varname(ng)   = 'Rsv_t Csv Psv Esv PIsv Tsvy1 Tsvy2 Tsvy3 Tsvy_y Dsv Gsv Bsv Fsv Qsv'
 
   ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
