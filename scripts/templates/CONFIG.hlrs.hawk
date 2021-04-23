@@ -1,0 +1,6 @@
+site=hlrs
+system=hawk
+os=linux
+account=trainabl
+queue=""
+hpc=parallel
