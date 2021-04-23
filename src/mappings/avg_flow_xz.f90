@@ -7,26 +7,17 @@
 !# Assumes statistical homogeneity in xOz, so that the corresponding
 !# partial derivative terms are assumed to be zero.
 !#
-!# To be used in the incompressible case, the array p has been
+!# In the incompressible case, the array p has been
 !# pointed to dudz and the pressure field is stored there; do not
 !# use array dudz until pressure block
 !#
 !########################################################################
 
-
 SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imode_eqns, itransport, inb_scal
-  USE DNS_GLOBAL, ONLY : inb_scal_array,inb_flow_array
-  USE DNS_GLOBAL, ONLY : itime, rtime
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, area
-  USE DNS_GLOBAL, ONLY : froude, visc
-  USE DNS_GLOBAL, ONLY : buoyancy, coriolis
-  USE DNS_GLOBAL, ONLY : rbg, sbg
-  USE DNS_GLOBAL, ONLY : bbackground, epbackground, pbackground, rbackground, tbackground
+  USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture, MRATIO, GRATIO
   USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV
 #ifdef TRACE_ON
@@ -54,13 +45,12 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   TREAL dummy
   TREAL c23, prefactor
 
-  TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nmax
+  TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nv
 
   CHARACTER*32 name, groupname(MAX_VARS_GROUPS)
   CHARACTER*250 line1, varname(MAX_VARS_GROUPS)
   CHARACTER*1300 line2
 
-  TINTEGER nvar
   CHARACTER(LEN=32) varname2(MAX_AVG_TEMPORAL)
 
   ! Pointers to existing allocated space
@@ -424,15 +414,15 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   sg(ng) = 26
 
   ! -----------------------------------------------------------------------
-  nmax = ig(ng) +sg(ng) -1
-  IF ( MAX_AVG_TEMPORAL .LT. nmax ) THEN
+  nv = ig(ng) +sg(ng) -1
+  IF ( MAX_AVG_TEMPORAL .LT. nv ) THEN
     CALL IO_WRITE_ASCII(efile,'AVERAGES_FLOW_XZ. Not enough space in local arrays.')
     CALL DNS_STOP(LES_ERROR_AVGTMP)
   END IF
-  mean2d(:,1:nmax) = C_0_R
+  mean2d(:,1:nv) = C_0_R
 
   ng   = ng -1
-  nmax = ig(ng) +sg(ng) -1 ! the last group is not written out
+  nv = ig(ng) +sg(ng) -1 ! the last group is not written out
 
   ! #######################################################################
   WRITE(line1,*) itime; line1 = 'Calculating flow statistics at It'//TRIM(ADJUSTL(line1))//'...'
@@ -445,11 +435,16 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 2')
 #endif
 
+  ! Velocity
   CALL AVG_IK_V(imax,jmax,kmax, jmax, u, g(1)%jac,g(3)%jac, rU(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, v, g(1)%jac,g(3)%jac, rV(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, w, g(1)%jac,g(3)%jac, rW(1), wrk1d, area)
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, p, g(1)%jac,g(3)%jac, rP(1), wrk1d, area)
 
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rU(1), rU_y(1), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rV(1), rV_y(1), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rW(1), rW_y(1), wrk3d, wrk2d,wrk3d)
+
+  ! Density and Fabre avrages
   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
     rR(:) = rbackground(:)
 
@@ -462,13 +457,14 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
     fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
 
   ELSE
+    CALL AVG_IK_V(imax,jmax,kmax, jmax, rho,  g(1)%jac,g(3)%jac, rR(1), wrk1d, area)
+
     dwdx = rho *u
     dwdy = rho *v
     dwdz = rho *w
     CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdx, g(1)%jac,g(3)%jac, fU(1), wrk1d, area)
     CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdy, g(1)%jac,g(3)%jac, fV(1), wrk1d, area)
     CALL AVG_IK_V(imax,jmax,kmax, jmax, dwdz, g(1)%jac,g(3)%jac, fW(1), wrk1d, area)
-    CALL AVG_IK_V(imax,jmax,kmax, jmax, rho,  g(1)%jac,g(3)%jac, rR(1), wrk1d, area)
     fU(:) = fU(:) /rR(:)
     fV(:) = fV(:) /rR(:)
     fW(:) = fW(:) /rR(:)
@@ -479,15 +475,14 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   rVf(:) = rV(:) - fV(:)
   rWf(:) = rW(:) - fW(:)
 
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rR(1), rR_y(1), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fU(1), fU_y(1), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fV(1), fV_y(1), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fW(1), fW_y(1), wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rU(1), rU_y(1), wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rV(1), rV_y(1), wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rW(1), rW_y(1), wrk3d, wrk2d,wrk3d)
 
+  ! Pressure
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, p, g(1)%jac,g(3)%jac, rP(1), wrk1d, area)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rP(1),  rP_y(1),  wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rR(1),  rR_y(1),  wrk3d, wrk2d,wrk3d)
 
   ! #######################################################################
   ! Main covariances (do not overwrite dudz; it contains p for incompressible case)
@@ -510,11 +505,9 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, g(1)%jac,g(3)%jac, Rxx(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, g(1)%jac,g(3)%jac, Ryy(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, g(1)%jac,g(3)%jac, Rzz(1), wrk1d, area)
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-    Rxx(:) = Rxx(:) /rR(:)
-    Ryy(:) = Ryy(:) /rR(:)
-    Rzz(:) = Rzz(:) /rR(:)
-  END IF
+  Rxx(:) = Rxx(:) /rR(:)
+  Ryy(:) = Ryy(:) /rR(:)
+  Rzz(:) = Rzz(:) /rR(:)
 
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
     dvdx = dwdx *dwdy
@@ -528,11 +521,9 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdx, g(1)%jac,g(3)%jac, Rxy(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdy, g(1)%jac,g(3)%jac, Rxz(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dvdz, g(1)%jac,g(3)%jac, Ryz(1), wrk1d, area)
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-    Rxy(:) = Rxy(:) /rR(:)
-    Rxz(:) = Rxz(:) /rR(:)
-    Ryz(:) = Ryz(:) /rR(:)
-  END IF
+  Rxy(:) = Rxy(:) /rR(:)
+  Rxz(:) = Rxz(:) /rR(:)
+  Ryz(:) = Ryz(:) /rR(:)
 
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Rxx(1), Rxx_y(1), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Ryy(1), Ryy_y(1), wrk3d, wrk2d,wrk3d)
@@ -541,10 +532,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Rxz(1), Rxz_y(1), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Ryz(1), Ryz_y(1), wrk3d, wrk2d,wrk3d)
 
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
-    rR2(:) = C_0_R
-
-  ELSE
+  ! Density
+  IF ( .NOT. (imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE) ) THEN
     IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
       CALL THERMO_ANELASTIC_DENSITY(imax,jmax,kmax, s, epbackground,pbackground, wrk3d)
       DO j = 1,jmax
@@ -802,17 +791,6 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
     fT2(:) = fT2(:) /rR(:)
 
     DO j = 1,jmax
-      IF ( rR2(j) .GT. C_0_R .AND. rP2(j) .GT. C_0_R ) THEN; rRP(j) = rRP(j)/SQRT(rR2(j)*rP2(j))
-      ELSE;                                                  rRP(j) = C_2_R
-      END IF
-
-      IF ( rR2(j) .GT. C_0_R .AND. rT2(j) .GT. C_0_R ) THEN; rRT(j) = rRT(j)/SQRT(rR2(j)*rT2(j))
-      ELSE;                                                  rRT(j) = C_2_R
-      END IF
-
-    END DO
-
-    DO j = 1,jmax
       dudy(:,j,:) =             (e(:,j,:)-re(j))**2
       dudz(:,j,:) = rho(:,j,:) *(e(:,j,:)-fe(j))**2
     END DO
@@ -1027,14 +1005,14 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, vortz2(1), wrk1d, area)
 
   ! ###################################################################
-  ! Derivatives Fluctuations. Taylor Microscales
+  ! Derivatives Fluctuations
   ! ###################################################################
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 11')
 #endif
 
   ! -------------------------------------------------------------------
-  ! Longitudinal terms and Taylor microscales
+  ! Longitudinal terms
   wrk3d = dudx  *dudx
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, U_x2(1),  wrk1d, area)
   wrk3d = wrk3d *dudx
@@ -1378,17 +1356,16 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   DO k = 1,ng
     line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(varname(k)))
   END DO
-  nvar = MAX_AVG_TEMPORAL
-  CALL LIST_STRING( line2, nvar, varname2 )
+  CALL LIST_STRING( line2, nv, varname2 )
 
   WRITE(name,*) itime; name='avg'//TRIM(ADJUSTL(name))
-  CALL IO_WRITE_AVERAGES( name, itime,rtime, nvar,jmax, g(2)%nodes, varname2, mean2d )
+  CALL IO_WRITE_AVERAGES( name, itime,rtime, nv,jmax, g(2)%nodes, varname2, mean2d )
 
 #else
 ! -----------------------------------------------------------------------
 ! TkStat file
 ! -----------------------------------------------------------------------
-  IF ( L_AVGMAX .LT. nmax ) THEN
+  IF ( L_AVGMAX .LT. nv ) THEN
     CALL IO_WRITE_ASCII(efile,'AVERAGES_FLOW_XZ. Not enough space in format definition.')
     CALL DNS_STOP(LES_ERROR_AVGTMP)
   END IF
@@ -1423,7 +1400,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
     WRITE(LOC_UNIT_ID,1010) TRIM(ADJUSTL(line2))
 
     DO j = 1,jmax
-      WRITE(LOC_UNIT_ID,1020) 1, j, g(2)%nodes(j), (mean2d(j,k),k=1,nmax)
+      WRITE(LOC_UNIT_ID,1020) 1, j, g(2)%nodes(j), (mean2d(j,k),k=1,nv)
     END DO
 
     CLOSE(LOC_UNIT_ID)

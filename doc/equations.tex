@@ -1,35 +1,37 @@
 \chapter{Governing equations}\label{sec:equations}
 
+\def\Re{\mathrm{\bf Re}}
+\def\Pr{\mathrm{\bf Pr}}
+\def\Sc{\mathrm{\bf Sc}}
+\def\Le{\mathrm{\bf Le}}
+\def\Fr{\mathrm{\bf Fr}}
+\def\Ro{\mathrm{\bf Ro}}
+\def\Ma{\mathrm{\bf Ma}}
+\def\Da{\mathrm{\bf Da}}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Compressible formulation}
 
-The energy equation is written in terms of the specific internal energy (sensible plus formation). Viscosity, thermal conductivity, diffusivity and the specific heat ratio can depend on the temperature. The equation of state corresponding to an ideal gas is assumed.
-
-\begin{equation}
-\setlength{\extrarowheight}{1ex}
-\begin{array}{rll}
-  \partial_t \rho =&
-  -\partial_k (\rho u_k)  & \\
-  \partial_t (\rho u_i) =& 
-  -\partial_k (\rho u_i u_k )- \partial_i p &
-  +\mathrm{\bf Re}^{-1}\partial_k \tau_{ik}\\
-  & & +\mathrm{\bf Fr}^{-1} g_i\,b+\mathrm{\bf Ro}^{-1}\rho\epsilon_{ijk} f_ku_j  \\
-  \partial_t (\rho e) =& 
-  -\partial_k (\rho e u_k ) &
-  +\mathrm{\bf Re}^{-1}\mathrm{\bf Pr}^{-1} \partial_k \left(\lambda^{*} \partial_k T\right) \\
-  & &-(\gamma_0-1)\mathrm{\bf M}^2\,p\, \partial_k u_k  + (\gamma_0-1)\mathrm{\bf M}^2\mathrm{\bf Re}^{-1}\,\phi \\
-  \partial_t (\rho \zeta_i)=&
-  -\partial_k (\rho \zeta_i u_k) &
-  - \mathrm{\bf Re}^{-1}\mathrm{\bf Sc_i}^{-1} \partial_k j_{ik}
-\end{array}
-\end{equation}
+The energy equation is written in terms of the specific internal energy (sensible plus formation). Viscosity, thermal conductivity, diffusivity and the specific heat ratio can depend on the temperature. The equation of state corresponding to an ideal gas is assumed:
+\begin{subequations}
+  \begin{align}
+    \partial_t \rho       =& -\partial_k (\rho u_k)                                       \\
+    \partial_t (\rho u_i) =& -\partial_k (\rho u_i u_k )- \partial_i p
+    && +\Re^{-1}\partial_k \tau_{ik}                                            \nonumber \\
+    & && +\Fr^{-1} \rho g_i\,b +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                         \\
+    \partial_t (\rho e)   =& -\partial_k (\rho e u_k )
+    && +\Re^{-1}\Pr^{-1} \partial_k \left(\lambda^{*}\partial_kT\right)         \nonumber \\
+    & &&-(\gamma_0-1)\Ma^2\,p\, \partial_k u_k  + (\gamma_0-1)\Ma^2\Re^{-1}\phi           \\
+    \partial_t (\rho \zeta_i) =& -\partial_k (\rho \zeta_i u_k)
+    && -\Re^{-1}\Sc_i^{-1} \partial_k j_{ik}
+  \end{align}
+\end{subequations}
 with
 \begin{equation}
-  \tau_{ij} \equiv  \mu^*\left[\partial_j u_i +  \partial_i u_j - 
-  (2/3)\, \partial_k u_k\,\delta_{ij}\right]\;,\qquad
-  \phi \equiv \tau_{ij} \partial_j u_i\;,\qquad
-  j_{ik}  \equiv -(\rho D)_i^{*}\, \partial_k \zeta_i
+  \tau_{ij} \equiv \mu^*\left[\partial_j u_i +\partial_i u_j -(2/3)\, \partial_k u_k\,\delta_{ij}\right]\;,\qquad
+  \phi      \equiv \tau_{ij} \partial_j u_i\;,\qquad
+  j_{ik}    \equiv -(\rho D)_i^{*}\, \partial_k \zeta_i
 \end{equation}
 and
 \begin{equation}
@@ -37,73 +39,68 @@ and
 \end{equation}
 and
 \begin{equation}
-  p  = (\gamma_0 \mathrm{\bf M}^2)^{-1}\rho T \;.
+  p  = (\gamma_0 \Ma^2)^{-1}\rho T \;.
   \label{eq:state}
 \end{equation}
 The specific heat ratio, $\gamma$, is constant and equal to the reference value $\gamma_0=1/(1-R_0/C_{p0})$, where $R_0$ is the specific gas constant of the gas under consideration and $C_{p0}$ is its specific heat capacity at constant pressure. The dimensionless numbers are defined using the reference scales $\mathrm{L}_0$, $\mathrm{U}_0$, $\rho_0$ and $\mathrm{T}_0$ in the usual way,
 \begin{alignat*}{3}
-  \mathrm{\bf Re} & = \frac{\rho_0 \mathrm{U}_0 \mathrm{L}_0}{\mu_0} & \qquad 
-  \mathrm{\bf Pr} & = \frac{\mu_0}{(\lambda_0/C_{p0})} & \qquad
-  \mathrm{\bf Sc}_i & = \frac{\mu_0}{\rho_0 D_{i0}} 
+  \Re & = \frac{\rho_0 \mathrm{U}_0 \mathrm{L}_0}{\mu_0} & \qquad
+  \Pr & = \frac{\mu_0}{(\lambda_0/C_{p0})} & \qquad
+  \Sc_i & = \frac{\mu_0}{\rho_0 D_{i0}}
 \end{alignat*}
 and
 \begin{equation*}
-  \mathrm{\bf M}  = \frac{\mathrm{U}_0}{\sqrt{\gamma_0 R_0 \mathrm{T}_0}} 
+  \Ma  = \frac{\mathrm{U}_0}{\sqrt{\gamma_0 R_0 \mathrm{T}_0}}
 \end{equation*}
 and
 \begin{alignat*}{2}
-\mathrm{\bf Fr} & = \frac{\mathrm{U}_0^2}{g\mathrm{L}_0} & \qquad \mathrm{\bf
-  Ro} = \frac{\mathrm{U}_0}{\mathrm{L}_0f} \;.
+  \Fr & = \frac{\mathrm{U}_0^2}{g\mathrm{L}_0} & \qquad \Ro = \frac{\mathrm{U}_0}{\mathrm{L}_0f} \;.
 \end{alignat*}
-Thermal energy variables are normalized with $C_{p0}T_0$. The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=\rho$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the vector is complete determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
+Thermal energy variables are normalized with $C_{p0}T_0$. The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the vector is complete determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
 
 \subsection{Multi-species compressible flows}
 
-\begin{equation}
-\setlength{\extrarowheight}{1ex}
-\begin{array}{rll}
-  \partial_t \rho =&
-  -\partial_k (\rho u_k)  & \\
-  \partial_t (\rho u_i) =& 
-  -\partial_k (\rho u_i u_k )-\partial_i p  &
-  +\mathrm{\bf Re}^{-1}\partial_k \tau_{ik} \\
-  & & +\mathrm{\bf Fr}^{-1} g_i\,b+\mathrm{\bf Ro}^{-1}\rho\epsilon_{ijk} f_ku_j  \\
-  \partial_t (\rho e) =& 
-  -\partial_k (\rho e u_k ) &
-  +\mathrm{\bf Re}^{-1}\mathrm{\bf Pr}^{-1} \partial_k \left[\color{red}{(\lambda/C_p)^{*} \partial_k h}\right] \\
-  & & \color{red}{+\mathrm{\bf Re}^{-1}\mathrm{\bf Pr}^{-1} \partial_k\left[\sum\left(\mathrm{\bf Le_i}^{-1}(\rho D)_i^*-
-  (\lambda/C_p)^*\right)h_i \partial_k Y_i\right]} \\
-  & &-(\gamma_0-1)\mathrm{\bf M}^2\,p\, \partial_k u_k  + (\gamma_0-1)\mathrm{\bf M}^2\mathrm{\bf Re}^{-1}\,\phi \\
-  \partial_t (\rho \zeta_i)=&
-  -\partial_k (\rho \zeta_i u_k) &
-  - \mathrm{\bf Re}^{-1}\mathrm{\bf Sc_i}^{-1} \partial_k j_{ik}
-\end{array}
-\end{equation}
+We consider a mixture of $N$ species or constituents with mass fractions $Y_i$:
+\begin{subequations}
+  \begin{align}
+    \partial_t \rho       =& -\partial_k (\rho u_k)                                                \\
+    \partial_t (\rho u_i) =& -\partial_k (\rho u_i u_k )-\partial_i p
+    && +\Re^{-1}\partial_k \tau_{ik}                                                    \nonumber\\
+    & && +\Fr^{-1} g_i\,b +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                                     \\
+    \partial_t (\rho e)   =& -\partial_k (\rho e u_k )
+    && +\Re^{-1}\Pr^{-1}\partial_k\color{red}{\left[(\lambda/C_p)^{*}\partial_kh\right]}\nonumber\\
+    & && \color{red}{+\Re^{-1}\Pr^{-1} \partial_k\left[\sum\left(\Le_i^{-1}(\rho D)_i^*
+    -(\lambda/C_p)^*\right)h_i \partial_k  Y_i\right]}                                  \nonumber\\
+    & && -(\gamma_0-1)\Ma^2\,p\, \partial_k u_k  + (\gamma_0-1)\Ma^2\Re^{-1}\phi                 \\
+    \partial_t (\rho \zeta_i)=& -\partial_k (\rho \zeta_i u_k)
+    && -\Re^{-1}\Sc_i^{-1} \partial_k j_{ik}
+  \end{align}
+\end{subequations}
 and
 \begin{equation}
   \mu^{*} = T^{n_\mu}\;,\qquad (\lambda/C_p)^{*} = T^{n_\kappa} \;,\qquad (\rho
   D)_i^{*} = T^{n_{D,i}}
 \end{equation}
-and 
+and
 \begin{equation}
-\mathrm{\bf Sc}_i = \mathrm{\bf Le}_i \mathrm{\bf Pr}
+  \mathrm{\bf Sc}_i = \mathrm{\bf Le}_i \mathrm{\bf Pr}
 \end{equation}
-and 
+and
 \begin{equation}
-  Y_i = Y^e_i(\zeta_j)\;, \qquad \sum^N_1 Y_i=1 
+  Y_i = Y^e_i(\zeta_j)\;, \qquad \sum^N_1 Y_i=1
 \end{equation}
 \begin{equation}
   h = \sum^N_1 h_{i} Y_i \;,\qquad h_{i} = \Delta h^0_i + \int^{T}_{T_0}
-  C_{pi}(T) dT\;,\qquad e = h - \frac{\gamma_0-1}{\gamma_0}\frac{T}{W} 
+  C_{pi}(T) dT\;,\qquad e = h - \frac{\gamma_0-1}{\gamma_0}\frac{T}{W}
 \end{equation}
 \begin{equation}
   C_p = \sum^N_1 C_{pi}(T) Y_i\;,\qquad
   \gamma = \frac{W C_p}{W C_p-\frac{\gamma_0-1}{\gamma_0}} \;,\qquad
-  \frac{1}{W} = \sum^N_1 \frac{Y_i}{W_i} 
+  \frac{1}{W} = \sum^N_1 \frac{Y_i}{W_i}
 \end{equation}
 and
 \begin{equation}
-  p = (\gamma_0 \mathrm{\bf M}^2)^{-1} \frac{\rho T}{W} 
+  p = (\gamma_0 \mathrm{\bf M}^2)^{-1} \frac{\rho T}{W}
 \end{equation}
 It can be verified that given all the thermo-chemical properties of the components of the mixture as a function of temperature, the previous set of equations are closed. Notice that $\gamma$ is no longer a constant and depend on the composition of the mixture. The reference specific gas constant is defined by $R_0\equiv \mathcal{R}/W_0$, where $\mathcal{R}$ is the universal gas constant and $W_0$ is the molecular weight of the reference species. The nondimensional specific gas constant of the gas mixture is given by $R=W^{-1}$.
 
@@ -113,35 +110,27 @@ The functions $Y_i^e(\rho,e,\zeta_j)$ need to be provided. The total number of s
 
 Add reaction terms to the scalar equations
 \begin{equation}
-\begin{array}{rlll}
-  \partial_t (\rho \zeta_i)=&
-  - \partial_k (\rho \zeta_i u_k) &
-  - \mathrm{\bf Re}^{-1}\mathrm{\bf Sc}_i^{-1} \partial_k j_{ik} & \color{red}{+ \mathrm{\bf Da}_i\,w_i}
-\end{array}
+  \partial_t (\rho \zeta_i)= -\partial_k (\rho \zeta_i u_k)
+  - \mathrm{\bf Re}^{-1}\mathrm{\bf Sc}_i^{-1} \partial_k j_{ik} \color{red}{+\Da_i\,w_i}
 \end{equation}
-and $\mathrm{\bf Da}_i$ are the Damk{\"o}hler numbers. A reaction mechanism needs to be given to obtain $w_i(\rho,e,\zeta_j)$.
+and $\Da_i$ are the Damk{\"o}hler numbers. A reaction mechanism needs to be given to obtain $w_i(\rho,e,\zeta_j)$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Incompressible formulation}
 
 The Boussinesq approximation is used:
-\begin{equation}
-\setlength{\extrarowheight}{1ex}
-\begin{array}{rlll}
-  0 =&
-  -\partial_k u_k   & \\
-  \partial_t  u_i =& 
-  -\partial_k ( u_i u_k )-\partial_i p &
-  +\mathrm{\bf Re}^{-1}\qquad\;\partial_k \left( \mu^{*} \partial_k u_i\right) &
-  +\mathrm{\bf Fr}^{-1}\, g_i\,b+\mathrm{\bf Ro}^{-1}\,\epsilon_{ijk} f_k\,u_j  \\
-  \partial_t \zeta_i =&
-  -\partial_k (\zeta_i u_k) &
-  + \mathrm{\bf Re}^{-1}\mathrm{\bf Sc}_i^{-1}\, \partial_k \left( \mu^{*}\partial_k\zeta_i\right) &+ \mathrm{\bf Da}_i\,w_i
-\end{array}
-\end{equation}
-
-The body force is now the buoyancy and the buoyancy function $b^e(\zeta_i)$ needs to be provided. The buoyancy function is assumed to be normalized by a reference buoyancy (acceleration) $b_0$ so that $\mathrm{\bf   Fr}=U_0^2/(b_0L_0)$. (Note that non-dimensional numbers represent the relative magnitude of physical processes and thus they are positive semi-definite; the sign or direction associated with the process, if any, in indicated in the corresponding parameters.)
+\begin{subequations}
+  \begin{align}
+    0                   =& -\partial_k u_k                                          \\
+    \partial_t  u_i     =& -\partial_k ( u_i u_k )-\partial_i p                     &
+    +\Re^{-1}\qquad\;\partial_k \left( \mu^{*} \partial_k u_i\right)  &
+    +\Fr^{-1}\, g_i\,b +\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j  \\
+    \partial_t \zeta_i  =& -\partial_k (\zeta_i u_k)                                &
+    +\Re^{-1}\Sc_i^{-1}\, \partial_k \left( \mu^{*}\partial_k\zeta_i\right) &+ \Da_i\,w_i
+  \end{align}
+\end{subequations}
+The body force is now the buoyancy and the buoyancy function $b^e(\zeta_i)$ needs to be provided. The buoyancy function is assumed to be normalized by a reference buoyancy (acceleration) $b_0$ so that $\Fr=U_0^2/(b_0L_0)$. (Note that non-dimensional numbers represent the relative magnitude of physical processes and thus they are positive semi-definite; the sign or direction associated with the process, if any, in indicated in the corresponding parameters.)
 
 So far, only the case $\mu^*=1$ in the equations above has been implemented.
 
@@ -149,18 +138,18 @@ Because of the decoupling between the momentum and the internal energy evolution
 
 Some scalars can be diagnostic and not prognostic variables, so that there is no evolution equation associated with them. One common example is liquid content in a moist air formulation assuming phase equilibrium. The two global variables {\tt inb\_scal} and {\tt inb\_scal\_array} accounts for that possibility. In principle, this should be specified through the variable {\tt imixture}. The routine {\tt thermodynamics/thermo\_initialize} defines the mixture properties. The average statistical data is calculated for all of them, prognostic and diagnostic variables.
 
-Different expressions for the buoyancy and the Coriolis terms are possible depending on the geometry and the definition of the (kinematic) modified pressure. 
+Different expressions for the buoyancy and the Coriolis terms are possible depending on the geometry and the definition of the (kinematic) modified pressure.
 
 For the buoyancy (see routine {\tt flow/flow\_buoyancy}), the most common expressions are a linear or bilinear relation to the scalar fields as
 \begin{equation}
-b^e=\alpha_1\zeta_1+\alpha_2\zeta_2+\ldots+\alpha_\mathrm{\tt inb\_scal\_array+1}\;,
+  b^e=\alpha_1\zeta_1+\alpha_2\zeta_2+\ldots+\alpha_\mathrm{\tt inb\_scal\_array+1}\;,
 \end{equation}
-where the coefficients $\alpha_i$ need to be provided. A quadratic form 
+where the coefficients $\alpha_i$ need to be provided. A quadratic form
 \begin{equation}
-b^e=-\frac{4\alpha_0}{\alpha_1^2}\zeta_1(\zeta_1-\alpha_1) \;,
+  b^e=-\frac{4\alpha_0}{\alpha_1^2}\zeta_1(\zeta_1-\alpha_1) \;,
 \end{equation}
 is also available, so that the maximum buoyancy $\alpha_0$ is achieved at
-$\zeta_1=\alpha_1/2$. 
+$\zeta_1=\alpha_1/2$.
 
 % Another option is a piece-wise linear function
 % \begin{equation}
@@ -199,38 +188,34 @@ $\zeta_1=\alpha_1/2$.
 % need $\alpha_6$ for the analysis of the source term of the buoyancy evolution
 % equation.)
 
-Note that the buoyancy field is {\it always} treated as a diagnostic variable and the average statistical data -- actually from the momentum source term $Fr^{-1}b$ -- is calculated as an additional scalar field on top of {\tt   inb\_scal\_array} scalars (prognostic plus diagnostic). The only exception occurs when the buoyancy function is merely a linear relation because, in that case, the corresponding statistical information can be easily obtained from the corresponding scalar field.
+Note that the buoyancy field is {\it always} treated as a diagnostic variable and the average statistical data -- actually from the momentum source term $\Fr^{-1}b$ -- is calculated as an additional scalar field on top of {\tt   inb\_scal\_array} scalars (prognostic plus diagnostic). The only exception occurs when the buoyancy function is merely a linear relation because, in that case, the corresponding statistical information can be easily obtained from the corresponding scalar field.
 
 In case of the Coriolis force term, the case that is currently implemented in that of an Ekman layer forming when a flow in geostrophic balance if bounded by a (smooth) solid wall perpendicular to the angular velocity vector. The direction $Ox_2$ is defined along the angular velocity, so that $f_1=f_3=0$. The momentum equation reads then
-\begin{equation}
-\setlength{\extrarowheight}{1ex}
-\begin{array}{rlll}
-  \partial_t  u_1 =& 
-  -\partial_k ( u_1 u_k ) -\partial_1 p &
-  +\mathrm{\bf Re}^{-1}\,\partial_k  \left( \mu^{*} \partial_k u_1\right) &
-  +\mathrm{\bf Fr}^{-1}\, g_1\,b+\mathrm{\bf Ro}^{-1}\,f_2\,(u_{3,g}-u_3) \\
-  \partial_t  u_2 =& 
-  -\partial_k ( u_2 u_k ) -\partial_2 p &
-  +\mathrm{\bf Re}^{-1}\,\partial_k  \left( \mu^{*} \partial_k u_2\right) &
-  +\mathrm{\bf Fr}^{-1}\, g_2\,b \\
-  \partial_t  u_3 =& 
-  -\partial_k ( u_3 u_k ) -\partial_3 p &
-  +\mathrm{\bf Re}^{-1}\,\partial_k  \left( \mu^{*} \partial_k u_3\right) &
-  +\mathrm{\bf Fr}^{-1}\, g_3\,b+\mathrm{\bf Ro}^{-1}\,f_2\,(u_1-u_{1,g}) 
-\end{array}
-\end{equation}
+\begin{subequations}
+  \begin{align}
+    \partial_t  u_1 =& -\partial_k ( u_1 u_k ) -\partial_1 p &
+    +\Re^{-1}\,\partial_k  \left( \mu^{*} \partial_k u_1\right) &
+    +\Fr^{-1}\, g_1\,b +\Ro^{-1}\,f_2\,(u_{3,g}-u_3) \\
+    \partial_t  u_2 =& -\partial_k ( u_2 u_k ) -\partial_2 p &
+    +\Re^{-1}\,\partial_k  \left( \mu^{*} \partial_k u_2\right) &
+    +\Fr^{-1}\, g_2\,b \\
+    \partial_t  u_3 =& -\partial_k ( u_3 u_k ) -\partial_3 p &
+    +\Re^{-1}\,\partial_k  \left( \mu^{*} \partial_k u_3\right) &
+    +\Fr^{-1}\, g_3\,b +\Ro^{-1}\,f_2\,(u_1-u_{1,g})
+  \end{align}
+\end{subequations}
 The geostrophic velocity vector $(u_{1,g},\,u_{2,g},\,u_{3,g}) = (\cos\alpha,\,0,\,-\sin\alpha)$ is defined in terms of the input parameter $\alpha$ (rotation angle around $Ox_2$), to be provided.
 
 Radiation heating or cooling can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{R}\,r\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the corresponding non-dimensional heat parameter and the radiation function $r^e(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) heat parameter $Q$. So far, $\mathrm{\bf Da}_\mathrm{R}=1$ (to be added at the end of the input list of the Damk{\"o}hler numbers?). One possible formulation is a one-dimensional bulk model (see routine {\tt flow/flow\_radiation}), which is represented by radiation functions of the form
 \begin{equation}
-r^e=\alpha_0 \zeta_{\gamma}\exp\left[
--\alpha_1^{-1}\int_z^\infty\zeta_{\gamma}(z')\,\mathrm{d}z'\right] \;.
+  r^e=\alpha_0 \zeta_{\gamma}\exp\left[
+  -\alpha_1^{-1}\int_z^\infty\zeta_{\gamma}(z')\,\mathrm{d}z'\right] \;.
 \end{equation}
 The scalar indeces $\{\beta\,,\gamma\}$ and the parameters $\{\alpha_0\,,\alpha_1\}$ need to be provided. Default values are $\beta=1$ and $\gamma=${\tt inb\_scal\_array}. The scalar fields can be average profiles, instead of instantaneous values, and non-linear mapping functions can be specified.
 
 For complex thermodynamics (e.g., airwater), the field $\zeta_\mathrm{\tt inb\_scal\_array}$ is calculated from a nonlinear mapping applied on the field
 \begin{equation}
-\xi =1+\alpha_1\zeta_1+\ldots+\alpha_\mathrm{\tt inb\_scal}\zeta_\mathrm{\tt inb\_scal}\;.
+  \xi =1+\alpha_1\zeta_1+\ldots+\alpha_\mathrm{\tt inb\_scal}\zeta_\mathrm{\tt inb\_scal}\;.
 \end{equation}
 The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of the nonlinear mapping.
 
@@ -240,7 +225,7 @@ We retain a background vertical variation of thermodynamic variables $\{\rho_\ma
 \begin{equation}
   \partial_2\,p_\mathrm{bg}=-\mathbf{H}^{-1}\, g_2\,\rho_\mathrm{bg}\;,\qquad p_\mathrm{bg}|_{x_2=x_{2,0}}=p_{\mathrm{bg},0}\;,
 \end{equation}
- and the thermal equation of state,
+and the thermal equation of state,
 \begin{equation}
   p_\mathrm{bg}  = \rho_\mathrm{bg} R_\mathrm{bg} T_\mathrm{bg} \;.
 \end{equation}
@@ -249,24 +234,19 @@ $\mathbf{g}$ is defined opposite to the gravitational acceleration (the problem 
   \mathbf{H} = \frac{R_0T_0}{gL_0}
 \end{equation}
 is a nondimensional scale height. The pressure is nondimensionalized with $p_0=$10$^5$~Pa and the reference density is obtained from $\rho_0=p_0(R_0T_0)^{-1}$. We need two additional constraints, which are set through the background profile information in the file {\tt dns.ini}. Typically, we impose the static energy (enthalpy plus potential energy) and the composition.
-% 
+%
 If there is only one species, then $R_\mathrm{bg}=1$ and we only need one additional constraint.
 
 The evolution equations are:
-\begin{equation}
-\setlength{\extrarowheight}{1ex}
-\begin{array}{rlll}
-  0 =&
-  -\partial_k(\rho_\mathrm{bg}u_k)   & \\
-  \partial_t  u_i =& 
-  -\partial_k ( u_i u_k )-\rho_\mathrm{bg}^{-1}\partial_i p' &
-  +\mathrm{\bf Re}^{-1}\qquad\;\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) &
-  +\mathrm{\bf Fr}^{-1}\, g_i\,b+\mathrm{\bf Ro}^{-1}\,\epsilon_{ijk} f_k\,u_j  \\
-  \partial_t \zeta_i =&
-  -\partial_k (\zeta_i u_k) &
-  + \mathrm{\bf Re}^{-1}\mathrm{\bf Sc}_i^{-1}\, \rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*}\partial_k\zeta_i\right) &+ \mathrm{\bf Da}_i\,\rho_\mathrm{bg}^{-1}w_i
-\end{array}
-\end{equation}
+\begin{subequations}
+  \begin{align}
+    0                 =& -\partial_k(\rho_\mathrm{bg}u_k)   & \\
+    \partial_t  u_i   =& -\partial_k ( u_i u_k )-\rho_\mathrm{bg}^{-1}\partial_i p' &
+    +\Re^{-1}\qquad\;\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) & +\Fr^{-1}\, g_i\,b+\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j  \\
+    \partial_t\zeta_i =& -\partial_k (\zeta_i u_k) &
+    + \Re^{-1}\Sc_i^{-1}\, \rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*}\partial_k\zeta_i\right) &+ \Da_i\,\rho_\mathrm{bg}^{-1}w_i
+  \end{align}
+\end{subequations}
 where the buoyancy is
 \begin{equation}
   b=\rho_\mathrm{bg}^{-1}(\rho_\mathrm{bg}-\rho) \;.
@@ -274,8 +254,8 @@ where the buoyancy is
 The pressure deviation satisfies the following Poisson equation:
 \begin{equation}
   \partial_i\partial_ip'=\partial_i\left[\rho_\mathrm{bg}\left(
--\partial_k ( u_i u_k )+\mathrm{\bf Re}^{-1}\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) +\mathrm{\bf Fr}^{-1}\, g_i\,b+\mathrm{\bf Ro}^{-1}\,\epsilon_{ijk} f_k\,u_j  
-\right)\right]\;.
+  -\partial_k ( u_i u_k )+\Re^{-1}\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) +\Fr^{-1}\, g_i\,b+\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j
+  \right)\right]\;.
 \end{equation}
 The first scalar is the static energy
 \begin{equation}
