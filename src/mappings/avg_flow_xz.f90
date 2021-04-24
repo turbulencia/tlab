@@ -11,6 +11,8 @@
 !# pointed to dudz and the pressure field is stored there; do not
 !# use array dudz until pressure block
 !#
+!# Reynolds and Favre averages
+!#
 !########################################################################
 
 SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d, wrk1d,wrk2d,wrk3d)

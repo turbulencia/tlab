@@ -324,12 +324,12 @@ and similarly for the other second-order term $f\dv{\mathbf{G}}$.
 
 Consider the momentum equations:
 \begin{align}
-  &f = u_i\;, && F_k=p\,\delta_{ik}-\tau_{ik}\;, && S_f = b\, g_i- \epsilon_{imk} c_m u_k\;,\\
-  &g = u_j\;, && G_k=p\,\delta_{jk}-\tau_{jk}\;, && S_g = b\, g_j- \epsilon_{jmk} c_m u_k\;.
+  &f = u_i\;, && F_k=p\,\delta_{ik}-\tau_{ik}\;, && S_f = b\, g_i- \epsilon_{imk} f_m u_k\;,\\
+  &g = u_j\;, && G_k=p\,\delta_{jk}-\tau_{jk}\;, && S_g = b\, g_j- \epsilon_{jmk} f_m u_k\;.
 \end{align}
 Substituting into Eq.~(\ref{equ:covfg}), we find
 \begin{equation}\label{equ:Rij}
-  \pt{R_{ij}}{t}  = C_{ij}  +P_{ij} -\varepsilon_{ij}
+  \pt{R_{ij}}{t}  = C_{ij}  +P_{ij} -E_{ij}
   +\avr{\rho}^{-1} ( \Pi_{ij} - \pt{T_{ijk}}{k} + M_{ij} ) +B_{ij} -F_{ij}
 \end{equation}
 where
@@ -341,8 +341,8 @@ where
   \tag{mean-gradient (shear) production}
     P_{ij}  &=-R_{ik} \pt{\avf{u}_j}{k} -R_{jk} \pt{\avf{u}_i}{k} \\
   \tag{viscous dissipation}
-    \varepsilon_{ij} &=\phantom{-} \avr{\rho}^{-1} ( \avr{\tau'_{jk} \pt{u''_i}{k}} +
-                                                    +\avr{\tau'_{ik} \pt{u''_j}{k}} )\\
+    E_{ij}  &=\phantom{-} \avr{\rho}^{-1} ( \avr{\tau'_{jk} \pt{u''_i}{k}} +
+                                           +\avr{\tau'_{ik} \pt{u''_j}{k}} )\\
   \tag{turbulent transport}
     T_{ijk} &=\phantom{-} \avr{\rho u''_i u''_j u''_k}
                          +\avr{p'u'_i}\delta_{jk} +\avr{p'u'_j}\delta_{ik}
@@ -355,13 +355,13 @@ where
   \tag{buoyancy production-destruction}
     B_{ij}  &=\phantom{-} \avf{b''u''_j}\,g_i+\avf{b''u''_i}\,g_j \\
   \tag{Coriolis redistribution}
-    F_{ij}  &=\phantom{-} \epsilon_{imk}c_m R_{jk} +\epsilon_{jmk}c_m R_{ik}
+    F_{ij}  &=\phantom{-} \epsilon_{imk}f_m R_{jk} +\epsilon_{jmk}f_m R_{ik}
 \end{align}
 Depending on symmetries, several terms can be zero (within statistical convergence). Note that if $b\equiv 1$, then $B_{ij}=0$. The mean flux term is sometimes written as $M_{ij}=D_{ij}-G_{ij}$, the first term grouping the mean viscous stress contributions and the last term the mean pressure contributions. In cases of constant density, then $\avr{u''_j}=0$ and $M_{ij}=D_{ij}=G_{ij}=0$.
 
 Contracting indices, the budget equation for the turbulent kinetic energy $K=R_{ii}/2$ reads
 \begin{equation}
-  \pt{K}{t} = C +P +B -\varepsilon +\avr{\rho}^{-1} \left( \Pi -\pt{T_k}{k} +M \right)\;.
+  \pt{K}{t} = C +P +B -E +\avr{\rho}^{-1} \left( \Pi -\pt{T_k}{k} +M \right)\;.
 \end{equation}
 Note that $F_{ii}=0$. If the flow is solenoidal, then $\Pi=0$.
 
@@ -369,13 +369,13 @@ Note that $F_{ii}=0$. If the flow is solenoidal, then $\Pi=0$.
 
 Consider the momentum and scalar equations:
 \begin{align}
-  &f = u_i\;,   && F_k =p\,\delta_{ik}-\tau_{ik}\;,  && S_f = b\, g_i- \epsilon_{imk} c_m u_k\;,\\
+  &f = u_i\;,   && F_k =p\,\delta_{ik}-\tau_{ik}\;,  && S_f = b\, g_i- \epsilon_{imk} f_m u_k\;,\\
   &g = \zeta\;, && G_k =-q_{k}\;,                    && S_g = w\;.
 \end{align}
 Substituting into Eq.~(\ref{equ:covfg}), we find
 \begin{equation}\label{equ:Ris}
-  \pt{R_{i \zeta}}{t}= C_{i\zeta} +P_{i\zeta} -\varepsilon_{i\zeta}
-  +\avr{\rho}^{-1} ( -\pt{T_{i\zeta k}}{k} +M_{i\zeta} ) +B_{i\zeta} -F_{i\zeta} +Q_{i\zeta}
+  \pt{R_{i \zeta}}{t}= C_{i\zeta} +P_{i\zeta} -E_{i\zeta}
+  +\avr{\rho}^{-1} ( \Pi_{i\zeta} -\pt{T_{i\zeta k}}{k} +M_{i\zeta} ) +B_{i\zeta} -F_{i\zeta} +Q_{i\zeta}
 \end{equation}
 where
 \begin{align}
@@ -386,10 +386,10 @@ where
   \tag{mean-gradient and tilting production}
     P_{i\zeta}    &=-R_{ik}\,\pt{\avf{\zeta}}{k} -R_{\zeta k}\,\pt{\avf{u}_i}{k} \\
   \tag{molecular destruction}
-    \varepsilon_{i\zeta} &=\phantom{-} \avr{\rho}^{-1} ( \avr{q_k'\pt{u_i''}{k}}
-                                                        +\avr{\tau_{ik}' \pt{\zeta''}{k}} ) \\
+    E_{i\zeta} &=\phantom{-} \avr{\rho}^{-1} ( \avr{q_k'\pt{u_i''}{k}}
+                                              +\avr{\tau_{ik}' \pt{\zeta''}{k}} ) \\
   \tag{pressure-flux interaction}
-    \Pi_{i\zeta}  &=\phantom{-} \avr{\rho}^{-1}\avr{p'\pt{\zeta''}{i}}\\
+    \Pi_{i\zeta}  &=\phantom{-} \avr{p'\pt{\zeta''}{i}}\\
   \tag{\text{turbulent transport}}
     T_{i\zeta k}  &=\phantom{-} \avr{\rho \zeta''u''_ku''_i } +\avr{p's''}\delta_{ik}
                                -\avr{\tau'_{ik}s''}-\avr{q_k'u_i''}\\
@@ -399,7 +399,7 @@ where
   \tag{buoyancy iteraction}
     B_{i\zeta}    &=\phantom{-} \avf{b''\zeta''}g_i \\
   \tag{Coriolis interation}
-    F_{i\zeta}    &=\phantom{-} \epsilon_{imk} c_m R_{k\zeta} \\
+    F_{i\zeta}    &=\phantom{-} \epsilon_{imk} f_m R_{k\zeta} \\
   \tag{source}
     Q_{i\zeta}    &=\phantom{-} \avf{w''u_i''}
 \end{align}
@@ -414,7 +414,7 @@ Consider the scalar equation twice:
 \end{align}
 Substituting into Eq.~(\ref{equ:covfg}), we find
 \begin{equation}\label{equ:Rss}
-  \pt{R_{\zeta \zeta}}{t}= C_{\zeta\zeta}+P_{\zeta\zeta} - \varepsilon_{\zeta\zeta}
+  \pt{R_{\zeta \zeta}}{t}= C_{\zeta\zeta}+P_{\zeta\zeta} - E_{\zeta\zeta}
   +\avr{\rho}^{-1} (- \pt{T_{\zeta\zeta k}}{k} +M_{\zeta\zeta} ) + Q_{\zeta\zeta}
 \end{equation}
 where
@@ -426,7 +426,7 @@ where
   \tag{mean-gradient production}
     P_{\zeta \zeta} &=-2 R_{k \zeta}\,\pt{\avf{\zeta}}{k}\\
   \tag{molecular destruction}
-    \varepsilon_{\zeta\zeta} &=\phantom{-} 2 \avr{\rho}^{-1}\avr{q_k' \pt{\zeta''}{k}}\\
+    E_{\zeta\zeta} &=\phantom{-} 2 \avr{\rho}^{-1}\avr{q_k' \pt{\zeta''}{k}}\\
   \tag{turbulent transport}
     T_{\zeta\zeta k}&=\phantom{-} \avr{\rho \zeta''^{2} u''_k } -2 \avr{q_k'\zeta''}\\
   \tag{mean flux}
