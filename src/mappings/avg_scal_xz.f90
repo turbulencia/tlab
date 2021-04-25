@@ -297,8 +297,8 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rW(1), rW_y(1), wrk3d, wrk2d,wrk3d)
 
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fU(1), fU_y(1), wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fU(1), fV_y(1), wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fU(1), fW_y(1), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fV(1), fV_y(1), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fW(1), fW_y(1), wrk3d, wrk2d,wrk3d)
 
   dsdx = v *u
   IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) dsdx = dsdx *rho
@@ -330,6 +330,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fS(1), fS_y(1), wrk3d, wrk2d,wrk3d)
 
   ! -----------------------------------------------------------------------
+  ! Moments
   DO j = 1,jmax
     wrk3d(:,j,:) = s_local(:,j,:) - rS(j)
   END DO
@@ -363,9 +364,8 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), fS2(1), Rss_y(1), wrk3d, wrk2d,wrk3d)
 
-  ! #######################################################################
+  ! -----------------------------------------------------------------------
   ! Cross terms
-  ! #######################################################################
   DO j = 1,jmax
     wrk3d(:,j,:) = s_local(:,j,:) -fS(j)
   END DO
@@ -391,9 +391,9 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   ! turbulent transport terms
   DO j = 1,jmax
     tmp1(:,j,:) = dsdy(:,j,:) *(s_local(:,j,:) -fS(j))
-    dsdx(:,j,:) = dsdx(:,j,:) *(u(:,j,:)       -fU(j))
+    dsdx(:,j,:) = dsdx(:,j,:) *(v(:,j,:)       -fV(j))
     dsdy(:,j,:) = dsdy(:,j,:) *(v(:,j,:)       -fV(j))
-    dsdz(:,j,:) = dsdz(:,j,:) *(w(:,j,:)       -fW(j))
+    dsdz(:,j,:) = dsdz(:,j,:) *(v(:,j,:)       -fV(j))
   END DO
   CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, Tssy1(1), wrk1d, area)
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, g(1)%jac,g(3)%jac, Tsuy1(1), wrk1d, area)
@@ -555,47 +555,43 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)
 
-  wrk3d = tmp2 *C_2_R -tmp1 -tmp3
+  wrk3d = ( tmp2 *C_2_R -tmp1 -tmp3 ) *c23 *visc
   IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Tau_yy(1), wrk1d, area)
-  Tau_yy(:) = Tau_yy(:) *visc *c23
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Tau_yy(1), Tau_yy_y(1), wrk3d, wrk2d,wrk3d)
 
   ! Transport term
   DO j = 1,jmax
-    wrk3d(:,j,:) = (wrk3d(:,j,:) -Tau_yy(j)) *(s_local(:,j,:) -fS(j))
+    wrk3d(:,j,:) =-(wrk3d(:,j,:) -Tau_yy(j)) *(s_local(:,j,:) -fS(j))
   END DO
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Tsvy2(1), wrk1d, area)
-  Tsvy2(:)  =-Tsvy2(:)  *visc *c23
 
   ! Dissipation terms; mean terms substracted below
   wrk3d = dsdx *( ( tmp1 *C_2_R -tmp2 -tmp3 ) *c23 *visc + tmp1 *diff )
   IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, g(1)%jac,g(3)%jac, Esu(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Esu(1), wrk1d, area)
 
   wrk3d = dsdy *( ( tmp2 *C_2_R -tmp1 -tmp3 ) *c23 *visc + tmp2 *diff )
   IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, g(1)%jac,g(3)%jac, Esv(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Esv(1), wrk1d, area)
 
   wrk3d = dsdz *( ( tmp3 *C_2_R -tmp1 -tmp2 ) *c23 *visc + tmp3 *diff )
   IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp2, g(1)%jac,g(3)%jac, Esw(1), wrk1d, area)
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Esw(1), wrk1d, area)
 
   ! -----------------------------------------------------------------------
   CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), v, tmp2, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), u, tmp1, wrk3d, wrk2d,wrk3d)
-  wrk3d = tmp1 +tmp2
+  wrk3d = ( tmp1 +tmp2 ) *visc
   IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Tau_yx(1), wrk1d, area)
-  Tau_yx(:) = Tau_yx(:) *visc
-  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Tau_yy(1), Tau_yx_y(1), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Tau_yx(1), Tau_yx_y(1), wrk3d, wrk2d,wrk3d)
 
   ! Transport term
   DO j = 1,jmax
-    wrk3d(:,j,:) = (wrk3d(:,j,:) -Tau_yx(j)) *(s_local(:,j,:) -fS(j))
+    wrk3d(:,j,:) =-(wrk3d(:,j,:) -Tau_yx(j)) *(s_local(:,j,:) -fS(j))
   END DO
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Tsuy2(1), wrk1d, area)
-  Tsuy2(:)  =-Tsuy2(:)  *visc
 
   ! Dissipation terms; mean terms substracted below
   wrk3d = dsdy *( ( tmp1 +tmp2 ) *visc + tmp1 *diff )
@@ -611,18 +607,16 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   ! -----------------------------------------------------------------------
   CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), w, tmp3, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), v, tmp2, wrk3d, wrk2d,wrk3d)
-  wrk3d = tmp3 +tmp2
+  wrk3d = ( tmp3 +tmp2 ) *visc
   IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) wrk3d = wrk3d *vis
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Tau_yz(1), wrk1d, area)
-  Tau_yz(:) = Tau_yz(:) *visc
-  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Tau_yy(1), Tau_yz_y(1), wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Tau_yz(1), Tau_yz_y(1), wrk3d, wrk2d,wrk3d)
 
   ! Transport term
   DO j = 1,jmax
-    wrk3d(:,j,:) = (wrk3d(:,j,:) -Tau_yz(j)) *(s_local(:,j,:) -fS(j))
+    wrk3d(:,j,:) =-(wrk3d(:,j,:) -Tau_yz(j)) *(s_local(:,j,:) -fS(j))
   END DO
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Tswy2(1), wrk1d, area)
-  Tswy2(:)  =-Tswy2(:)  *visc
 
   ! Dissipation terms; mean terms substracted below
   wrk3d = dsdz *( ( tmp3 +tmp2 ) *visc + tmp2 *diff )
@@ -681,15 +675,13 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   ! Molecular fluxes
   IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) dsdy = dsdy *vis
   CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdy, g(1)%jac,g(3)%jac, Fy(1), wrk1d, area)
-  Fy(:) = Fy(:) *diff
-  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Fy(1),   Fy_y(1),   wrk3d, wrk2d,wrk3d)
 
   ! Contribution to turbulent transport
   DO j = 1,jmax
-    wrk3d(:,j,:)= dsdy(:,j,:) *(s_local(:,j,:) -fS(j))
-    tmp1(:,j,:) = dsdy(:,j,:) *(u(:,j,:)       -fU(j))
-    tmp2(:,j,:) = dsdy(:,j,:) *(v(:,j,:)       -fV(j))
-    tmp3(:,j,:) = dsdy(:,j,:) *(w(:,j,:)       -fW(j))
+    wrk3d(:,j,:)= ( dsdy(:,j,:) -Fy(j) ) *(s_local(:,j,:) -fS(j))
+    tmp1(:,j,:) = ( dsdy(:,j,:) -Fy(j) ) *(u(:,j,:)       -fU(j))
+    tmp2(:,j,:) = ( dsdy(:,j,:) -Fy(j) ) *(v(:,j,:)       -fV(j))
+    tmp3(:,j,:) = ( dsdy(:,j,:) -Fy(j) ) *(w(:,j,:)       -fW(j))
   END DO
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Tssy2(1), wrk1d, area)
   Tssy2(:) =-Tssy2(:) *diff *C_2_R
@@ -699,6 +691,9 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   Tsvy2(:) = Tsvy2(:) -aux(:) *diff
   CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp3, g(1)%jac,g(3)%jac, aux(1), wrk1d, area)
   Tswy2(:) = Tswy2(:) -aux(:) *diff
+
+  Fy(:) = Fy(:) *diff
+  CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), Fy(1),   Fy_y(1),   wrk3d, wrk2d,wrk3d)
 
   ! Contribution to dissipation
   Ess(:) = ( Ess(:) -Fy(:)     *rS_y(:) -Fy(:) *rS_y(:) ) /rR(:)
@@ -744,9 +739,9 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
   ! Production terms
   Pss(:)   =-Rsv(:) *fS_y(:) *C_2_R
-  Psu(:)   =-Rsu(:) *fV_y(:) -Rvu(:) *fS_y(:)
+  Psu(:)   =-Rsv(:) *fU_y(:) -Rvu(:) *fS_y(:)
   Psv(:)   =-Rsv(:) *fV_y(:) -Rvv(:) *fS_y(:)
-  Psw(:)   =-Rsw(:) *fV_y(:) -Rvw(:) *fS_y(:)
+  Psw(:)   =-Rsv(:) *fW_y(:) -Rvw(:) *fS_y(:)
 
   ! Diffusion variable-density terms
   Dss(:)   = (rS(:)-fS(:)) *Fy_y(:) *C_2_R
