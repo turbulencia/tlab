@@ -21,7 +21,7 @@ else() # compiler for serial build
    set(USER_Fortran_FLAGS          "-cpp -fallow-argument-mismatch -ffree-form -ffree-line-length-2048 -fno-automatic")
 
 #   add_definitions(-DUSE_PSFFT -DUSE_FFTW)
-   add_definitions( -DUSE_FFTW)
+   add_definitions( -DUSE_FFTW -DUSE_NETCDF)
 
    if    ( ${BUILD_TYPE} STREQUAL "BIG" )
      set(USER_Fortran_FLAGS_RELEASE  "-O3 -fconvert=big-endian    -mtune=native -ffast-math -ffinite-math-only -funroll-loops")
@@ -29,7 +29,7 @@ else() # compiler for serial build
 
    elseif( ${BUILD_TYPE} STREQUAL "LITTLE" )
      set(USER_Fortran_FLAGS_RELEASE  "-O3 -fconvert=little-endian -mtune=native -ffast-math -ffinite-math-only -funroll-loops")
-     add_definitions(-DTRACE_ON)
+#     add_definitions(-DTRACE_ON)
      set(CMAKE_BUILD_TYPE RELEASE)
 
    else()
@@ -47,10 +47,12 @@ set(GNU_SED "gsed")
 
 set(FFTW_INCLUDE_DIR   "/opt/local/include")
 set(FFTW_LIB           "/opt/local/lib/libfftw3.a")
+set(NCDF_INCLUDE_DIR   "/opt/local/include")
+set(NCDF_LIBPATH           "/opt/local/lib")
 #set(FFTW_INCLUDE_DIR   "/usr/local/fftw_intel14/include")
 #set(FFTW_LIB           "/usr/local/fftw_intel14/lib/libfftw3.a")
-set(INCLUDE_DIRS ${FFTW_INCLUDE_DIR})
-set(LIBS ${FFTW_LIB} )
+set(INCLUDE_DIRS ${FFTW_INCLUDE_DIR} ${NCDF_INCLUDE_DIR} )
+set(LIBS ${FFTW_LIB} ${NCDF_LIBPATH}/libnetcdff.a ${NCDF_LIBPATH}/libnetcdf.dylib )
 
 add_definitions(-DRESTRICTKEYWORD=__restrict__)
 
