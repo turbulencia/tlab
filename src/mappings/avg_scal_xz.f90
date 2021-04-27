@@ -40,7 +40,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
   ! -----------------------------------------------------------------------
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 10
-  TINTEGER i,j,k, bcs(2,2)
+  TINTEGER i,j,k,ivar,bcs(2,2)
   TREAL diff, dummy, coefT, coefR, coefQ, c23
 
   TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nmax
@@ -50,7 +50,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   CHARACTER*850 line2
 
   TINTEGER nvar
-  CHARACTER(LEN=32) varname2(MAX_AVG_TEMPORAL)
+  CHARACTER(LEN=32) varname2(MAX_AVG_TEMPORAL), vargroup2(MAX_AVG_TEMPORAL) 
 
   ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: u,v,w,p, rho, vis
@@ -795,15 +795,20 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   ! #######################################################################
 #ifdef USE_NETCDF
   line2 = ''
+  ivar=1
   DO k = 1,ng
-    line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(varname(k)))
+     line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(varname(k)))
+     DO j=1,sg(k)
+        vargroup2(ivar)=groupname(k)
+        ivar=ivar+1 
+     ENDDO
   END DO
   nvar = MAX_AVG_TEMPORAL
   CALL LIST_STRING( line2, nvar, varname2 )
 
   WRITE(line1,*) is; line1='avg'//TRIM(ADJUSTL(line1))//'s'
   WRITE(name,*) itime; name=TRIM(ADJUSTL(line1))//TRIM(ADJUSTL(name))
-  CALL IO_WRITE_AVERAGES( name, itime,rtime, nvar,jmax, g(2)%nodes, varname2, mean2d )
+  CALL IO_WRITE_AVERAGES( name, itime,rtime, nvar,jmax, g(2)%nodes, varname2, vargroup2, mean2d )
 
 #else
   ! -----------------------------------------------------------------------

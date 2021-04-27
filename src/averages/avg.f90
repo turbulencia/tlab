@@ -34,10 +34,10 @@ SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, av
   ! -------------------------------------------------------------------
   TINTEGER j,iv,im
   TREAL AVG1V2D, AVG1V2D1G, moments(nm)
-  CHARACTER(LEN=32) varname(nm)
+  CHARACTER(LEN=32) varname(nm), vargroup(nm) 
 
-#ifndef USE_NETCDF
   CHARACTER*32 str
+#ifndef USE_NETCDF
   CHARACTER*1024 line1
   CHARACTER*2048 line2
 #ifdef USE_MPI
@@ -68,13 +68,18 @@ SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, av
   DO iv = 1,nv
     im = 1          ! The mean
     varname(im+(iv-1)*nm) = TRIM(ADJUSTL(vars(iv)%tag))
+    WRITE(str,*) im
+    vargroup(im+(iv-1)*nm)= 'Moment'//TRIM(ADJUSTL(str))
+    
     DO im = 2,nm    ! In case moments larger than 1 are used
       WRITE(varname(im+(iv-1)*nm),*) im
       varname(im+(iv-1)*nm)=TRIM(ADJUSTL(vars(iv)%tag))//'.'//TRIM(ADJUSTL(varname(im+(iv-1)*nm)))
+      WRITE(str,*) im
+      vargroup(im+(iv-1)*nm)= 'Moment'//TRIM(ADJUSTL(str))
     END DO
   END DO
 
-  CALL IO_WRITE_AVERAGES( fname, itime,rtime, nm*nv,ny, y, varname, avg )
+  CALL IO_WRITE_AVERAGES( fname, itime,rtime, nm*nv,ny, y, varname, vargroup, avg )
 
 #else
   ! -------------------------------------------------------------------
@@ -205,8 +210,7 @@ SUBROUTINE INTER_N_XZ(fname, itime,rtime, nx,ny,nz, np, parname, gate, y, inter)
 
   ! ###################################################################
 #ifdef USE_NETCDF
-  CALL IO_WRITE_AVERAGES( fname, itime,rtime, np,ny, y, parname, inter )
-
+  CALL IO_WRITE_AVERAGES( fname, itime,rtime, np,ny, y, parname, parname, inter )
 #else
   ! -------------------------------------------------------------------
   ! TkStat file
