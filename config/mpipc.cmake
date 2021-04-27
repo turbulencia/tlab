@@ -44,7 +44,11 @@ endif()
 
 set(GNU_SED "gsed")
 
-set(FFTW_INCLUDE_DIR   "/sw/jessie-x64/fftw-3.3.4-openmp-gccsys/include")
-set(FFTW_LIB           "/sw/jessie-x64/fftw-3.3.4-openmp-gccsys/lib/libfftw3.a")
-set(INCLUDE_DIRS ${FFTW_INCLUDE_DIR})
-set(LIBS ${FFTW_LIB} )
+# set(FFTW_INCLUDE_DIR   "/sw/jessie-x64/fftw-3.3.4-openmp-gccsys/include")
+# set(FFTW_LIB           "/sw/jessie-x64/fftw-3.3.4-openmp-gccsys/lib/libfftw3.a")
+# set(LIBS ${FFTW_LIB} )
+
+# new for notebook
+set(FFTW_INCLUDE_DIR   "/usr/local/include")
+set(FFTW_LIB           "/usr/lib/x86_64-linux-gnu/libfftw3.a")
+set(LIBS ${FFTW_LIB})
