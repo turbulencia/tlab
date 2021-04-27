@@ -6,7 +6,7 @@
 !# Write N profiles in netCDF format
 !#
 !########################################################################
-SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, nv,ny, y, varname, var )
+SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, nv,ny, y, varname, vargroup, var )
 
   USE DNS_CONSTANTS, ONLY : lfile
   USE NETCDF
@@ -17,7 +17,7 @@ SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, nv,ny, y, varname, var )
 #include "mpif.h"
 #endif
 
-  CHARACTER(LEN=*), INTENT(IN   ) :: fname, varname(nv)
+  CHARACTER(LEN=*), INTENT(IN   ) :: fname, varname(nv), vargroup(nv) 
   TINTEGER,         INTENT(IN   ) :: itime
   TREAL,            INTENT(IN   ) :: rtime
   TINTEGER,         INTENT(IN   ) :: ny,nv
@@ -49,6 +49,7 @@ SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, nv,ny, y, varname, var )
     CALL NC_CHECK( Nf90_DEF_VAR( fid, "it", NF90_INT,   (/ dtid /),itid) )
     DO iv = 1,nv
       CALL NC_CHECK( Nf90_DEF_VAR( fid, TRIM(ADJUSTL(varname(iv))), NF90_FLOAT, (/ dyid, dtid /), vid(iv)) )
+      CALL NC_CHECK( NF90_PUT_ATT( fid, vid(iv), 'group', vargroup(iv) ) )
     END DO
 
     CALL NC_CHECK( NF90_ENDDEF( fid ) )

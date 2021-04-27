@@ -43,7 +43,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   ! -------------------------------------------------------------------
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 20
-  TINTEGER j,k, bcs(2,2)
+  TINTEGER j,k, ivar, bcs(2,2)
   TREAL dummy
   TREAL c23, prefactor
 
@@ -53,7 +53,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CHARACTER*250 line1, varname(MAX_VARS_GROUPS)
   CHARACTER*1300 line2
 
-  CHARACTER(LEN=32) varname2(MAX_AVG_TEMPORAL)
+  CHARACTER(LEN=32) varname2(MAX_AVG_TEMPORAL), vargroup2(MAX_AVG_TEMPORAL) 
 
   ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: u,v,w,p, e,rho, vis
@@ -1364,13 +1364,19 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! ###################################################################
 #ifdef USE_NETCDF
   line2 = ''
+  ivar=1 
   DO k = 1,ng
-    line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(varname(k)))
+     line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(varname(k)))
+     DO j=1,sg(k)
+        vargroup2(ivar)=groupname(k) 
+        ivar=ivar+1
+     ENDDO
   END DO
+
   CALL LIST_STRING( line2, nv, varname2 )
 
   WRITE(name,*) itime; name='avg'//TRIM(ADJUSTL(name))
-  CALL IO_WRITE_AVERAGES( name, itime,rtime, nv,jmax, g(2)%nodes, varname2, mean2d )
+  CALL IO_WRITE_AVERAGES( name, itime,rtime, nv,jmax, g(2)%nodes, varname2, vargroup2, mean2d )
 
 #else
 ! -----------------------------------------------------------------------
