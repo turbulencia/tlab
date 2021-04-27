@@ -287,39 +287,44 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
-#define U_ii2(j) mean2d(j,ig(12)  )
-#define U_x2(j)  mean2d(j,ig(12)+1)
-#define U_y2(j)  mean2d(j,ig(12)+2)
-#define U_z2(j)  mean2d(j,ig(12)+3)
-#define V_x2(j)  mean2d(j,ig(12)+4)
-#define V_y2(j)  mean2d(j,ig(12)+5)
-#define V_z2(j)  mean2d(j,ig(12)+6)
-#define W_x2(j)  mean2d(j,ig(12)+7)
-#define W_y2(j)  mean2d(j,ig(12)+8)
-#define W_z2(j)  mean2d(j,ig(12)+9)
-#define U_x3(j)  mean2d(j,ig(12)+10)
-#define U_y3(j)  mean2d(j,ig(12)+11)
-#define U_z3(j)  mean2d(j,ig(12)+12)
-#define V_x3(j)  mean2d(j,ig(12)+13)
-#define V_y3(j)  mean2d(j,ig(12)+14)
-#define V_z3(j)  mean2d(j,ig(12)+15)
-#define W_x3(j)  mean2d(j,ig(12)+16)
-#define W_y3(j)  mean2d(j,ig(12)+17)
-#define W_z3(j)  mean2d(j,ig(12)+18)
-#define U_x4(j)  mean2d(j,ig(12)+19)
-#define U_y4(j)  mean2d(j,ig(12)+20)
-#define U_z4(j)  mean2d(j,ig(12)+21)
-#define V_x4(j)  mean2d(j,ig(12)+22)
-#define V_y4(j)  mean2d(j,ig(12)+23)
-#define V_z4(j)  mean2d(j,ig(12)+24)
-#define W_x4(j)  mean2d(j,ig(12)+25)
-#define W_y4(j)  mean2d(j,ig(12)+26)
-#define W_z4(j)  mean2d(j,ig(12)+27)
-  sg(ng) = 28
+#define U_y1(j)  mean2d(j,ig(12)  )
+#define V_y1(j)  mean2d(j,ig(12)+1)
+#define W_y1(j)  mean2d(j,ig(12)+2)
+#define U_ii2(j) mean2d(j,ig(12)+3)
+#define U_x2(j)  mean2d(j,ig(12)+4)
+#define U_y2(j)  mean2d(j,ig(12)+5)
+#define U_z2(j)  mean2d(j,ig(12)+6)
+#define V_x2(j)  mean2d(j,ig(12)+7)
+#define V_y2(j)  mean2d(j,ig(12)+8)
+#define V_z2(j)  mean2d(j,ig(12)+9)
+#define W_x2(j)  mean2d(j,ig(12)+10)
+#define W_y2(j)  mean2d(j,ig(12)+11)
+#define W_z2(j)  mean2d(j,ig(12)+12)
+#define U_x3(j)  mean2d(j,ig(12)+13)
+#define U_y3(j)  mean2d(j,ig(12)+14)
+#define U_z3(j)  mean2d(j,ig(12)+15)
+#define V_x3(j)  mean2d(j,ig(12)+16)
+#define V_y3(j)  mean2d(j,ig(12)+17)
+#define V_z3(j)  mean2d(j,ig(12)+18)
+#define W_x3(j)  mean2d(j,ig(12)+19)
+#define W_y3(j)  mean2d(j,ig(12)+20)
+#define W_z3(j)  mean2d(j,ig(12)+21)
+#define U_x4(j)  mean2d(j,ig(12)+22)
+#define U_y4(j)  mean2d(j,ig(12)+23)
+#define U_z4(j)  mean2d(j,ig(12)+24)
+#define V_x4(j)  mean2d(j,ig(12)+25)
+#define V_y4(j)  mean2d(j,ig(12)+26)
+#define V_z4(j)  mean2d(j,ig(12)+27)
+#define W_x4(j)  mean2d(j,ig(12)+28)
+#define W_y4(j)  mean2d(j,ig(12)+29)
+#define W_z4(j)  mean2d(j,ig(12)+30)
+  sg(ng) = 31
 
   groupname(ng) = 'DerivativeFluctuations'
-  varname(ng)   = 'U_ii2 U_x2 U_y2 U_z2 V_x2 V_y2 V_z2 W_x2 W_y2 W_z2 '&
-            //'U_x3 U_y3 U_z3 V_x3 V_y3 V_z3 W_x3 W_y3 W_z3 U_x4 U_y4 U_z4 V_x4 V_y4 V_z4 W_x4 W_y4 W_z4'
+  varname(ng)   = 'U_y1 V_y1 W_y1 U_ii2 '&
+       // 'U_x2 U_y2 U_z2 V_x2 V_y2 V_z2 W_x2 W_y2 W_z2 '&
+       // 'U_x3 U_y3 U_z3 V_x3 V_y3 V_z3 W_x3 W_y3 W_z3 '&
+       // 'U_x4 U_y4 U_z4 V_x4 V_y4 V_z4 W_x4 W_y4 W_z4'
 
   ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
@@ -379,7 +384,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         //'PotTemp_fr PotTemp_eq SaturationPressure rPref RelativeHumidity Dewpoint LapseRate_dew'
   END IF
 
-#define L_AVGMAX 188
+#define L_AVGMAX 191
 
   ! -----------------------------------------------------------------------
   ! Auxiliary variables depending on y and t; this last group is not written
@@ -446,6 +451,10 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rV(1), rV_y(1), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rW(1), rW_y(1), wrk3d, wrk2d,wrk3d)
 
+  U_y1(:) = rU_y(:)
+  V_y1(:) = rV_y(:)
+  W_y1(:) = rW_y(:) 
+  
   ! Density and Fabre avrages
   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
     rR(:) = rbackground(:)
