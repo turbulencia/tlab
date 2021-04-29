@@ -215,7 +215,7 @@ SUBROUTINE INTER_N_XZ(fname, itime,rtime, nx,ny,nz, np, parname, gate, y, inter)
   IF ( ims_pro .EQ. 0 ) THEN
 #endif
 
-    IF ( npar > L_FORMAT_MAX ) THEN
+    IF ( np > L_FORMAT_MAX ) THEN
       CALL IO_WRITE_ASCII(efile,'INTER2D_N. Format length too short.')
       CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
     END IF
