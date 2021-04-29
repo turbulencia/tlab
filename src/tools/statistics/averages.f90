@@ -386,7 +386,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 1 )
       IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
-        CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,3), txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
+        CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,9), txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
 
       ELSE
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
@@ -398,13 +398,9 @@ PROGRAM AVERAGES
 
       END IF
 
-      IF ( icalc_flow == 1 ) THEN
-        CALL AVG_FLOW_XZ(q,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
-            txc(1,7),txc(1,8),txc(1,9), mean, wrk1d,wrk2d,wrk3d)
-      END IF
-
       IF ( icalc_scal == 1 ) THEN
         DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
+          txc(1:isize_field,6) = txc(1:isize_field,9) ! Pass the pressure in tmp6
           CALL AVG_SCAL_XZ(is, q,s, s(1,is), &
               txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
         END DO
@@ -412,15 +408,16 @@ PROGRAM AVERAGES
         ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
         IF ( buoyancy%TYPE == EQNS_BOD_QUADRATIC   .OR. buoyancy%TYPE == EQNS_BOD_BILINEAR    .OR. &
             imixture == MIXT_TYPE_AIRWATER        .OR. imixture == MIXT_TYPE_AIRWATER_LINEAR ) THEN
-          dummy = C_1_R/froude
           IF ( buoyancy%TYPE == EQNS_EXPLICIT ) THEN
             CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,7))
           ELSE
             wrk1d(1:jmax) = C_0_R
             CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,7), wrk1d)
           END IF
+          dummy = C_1_R/froude
           txc(1:isize_field,7) = txc(1:isize_field,7) *dummy
 
+          txc(1:isize_field,6) = txc(1:isize_field,9) ! Pass the pressure in tmp6
           CALL AVG_SCAL_XZ(is, q,s, txc(1,7), &
               txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
 
@@ -431,6 +428,7 @@ PROGRAM AVERAGES
             is = is + 1
             CALL THERMO_ANELASTIC_THETA_L(imax,jmax,kmax, s, epbackground,pbackground, txc(1,7))
             !                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, epbackground, txc(1,7))
+            txc(1:isize_field,6) = txc(1:isize_field,9) ! Pass the pressure in tmp6
             CALL AVG_SCAL_XZ(is, q,s, txc(1,7), &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
           END IF
@@ -447,7 +445,7 @@ PROGRAM AVERAGES
           l_txc = C_1_R; ! We want density
           CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,7), wrk2d,wrk3d)
 
-          txc(:,7) = txc(:,7) + 0.00000001
+          txc(:,7) = txc(:,7) + C_SMALL_R
           idummy = inb_part - 3 ! # scalar properties solved in the lagrangian
           DO is = inb_scal_array +1 +1, inb_scal_array+1 +idummy
             sbg(is)%mean = C_1_R; sbg(is)%delta = C_0_R; sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
@@ -457,15 +455,18 @@ PROGRAM AVERAGES
             sbg(is)%mean  = sbg(inb_scal_array)%mean
             sbg(is)%delta = sbg(inb_scal_array)%delta
             sbg(is)%ymean = sbg(inb_scal_array)%ymean
+            txc(1:isize_field,6) = txc(1:isize_field,9) ! Pass the pressure in tmp6
             CALL AVG_SCAL_XZ(is, q,s, txc(1,8), &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
           END DO
         END IF
       END IF
-      ! DO from is inb_scal_array+1 to inb_paticle+inb_scal_array
-      ! PARTICLE TO FIELD to txc(5)
-      ! CALL AVG_SCAL_XZ on new field (substutute by s(1,is)
-      !END DO
+
+      IF ( icalc_flow == 1 ) THEN
+        txc(1:isize_field,3) = txc(1:isize_field,9) ! Pass the pressure in tmp3
+        CALL AVG_FLOW_XZ(q,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), &
+            txc(1,7),txc(1,8),txc(1,9), mean, wrk1d,wrk2d,wrk3d)
+      END IF
 
       ! ###################################################################
       ! Partition of field
