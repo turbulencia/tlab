@@ -1128,6 +1128,9 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( FilterDomainStep .LE. 0 ) FilterDomainStep = nitera_last - nitera_first + 1
   IF ( FilterInflowStep .LE. 0 ) FilterInflowStep = nitera_last - nitera_first + 1
 
+  IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) nitera_stats_spa =-1 ! Never call avg_spatial routines
+  IF ( nitera_stats_spa .LE. 0 ) nitera_stats_spa = nitera_last - nitera_first + 1
+
 ! -------------------------------------------------------------------
 ! Control limits
 ! I need rbg%mean
