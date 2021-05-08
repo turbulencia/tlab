@@ -4,9 +4,9 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Calculate the pressure field from a divergence free velocity field 
+!# Calculate the pressure field from a divergence free velocity field
 !# and a body force.
-!# 
+!#
 !########################################################################
 SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
 
@@ -19,10 +19,10 @@ IMPLICIT NONE
 #include "integers.h"
 
   TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN),   TARGET :: q,s
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(OUT)   :: p
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: tmp1,tmp2, wrk3d ! larger arrays for the Poisson solver,
-  TREAL, DIMENSION(imax,jmax,kmax,3), INTENT(INOUT) :: tmp3             ! but shape (imax,jmax,kmax) is used
-  TREAL, DIMENSION(isize_wrk1d,16),   INTENT(INOUT) :: wrk1d            ! to work out forcing term and BCs for p
+  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(OUT)   :: p                ! larger arrays for the Poisson solver,
+  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: tmp1,tmp2, wrk3d ! but shape (imax,jmax,kmax) is used
+  TREAL, DIMENSION(imax,jmax,kmax,3), INTENT(INOUT) :: tmp3             ! to work out forcing term and BCs for p
+  TREAL, DIMENSION(isize_wrk1d,16),   INTENT(INOUT) :: wrk1d
   TREAL, DIMENSION(imax,kmax,2),      INTENT(INOUT) :: wrk2d
 
 ! -----------------------------------------------------------------------
@@ -36,18 +36,18 @@ IMPLICIT NONE
 
   p    = C_0_R
   tmp3 = C_0_R
-  
+
 ! Define pointers
   u   => q(:,1)
   v   => q(:,2)
   w   => q(:,3)
-  
+
 ! #######################################################################
 ! Sources
   CALL FI_SOURCES_FLOW(q,s, tmp3, tmp1, wrk1d,wrk2d,wrk3d)
 
 ! Advection and diffusion terms
-  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u,    p, tmp1, wrk2d,wrk3d) ! store u transposed in tmp1  
+  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u,    p, tmp1, wrk2d,wrk3d) ! store u transposed in tmp1
   tmp3(:,:,:,1) = tmp3(:,:,:,1) + p
   CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, bcs, g(1), v,u,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains u transposed
   tmp3(:,:,:,2) = tmp3(:,:,:,2) + p
@@ -85,7 +85,7 @@ IMPLICIT NONE
 ! Calculate forcing term Oy
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3(1,1,1,2))
-  ENDIF  
+  ENDIF
   CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp3(1,1,1,2),tmp1, wrk3d, wrk2d,wrk3d)
   p = p + tmp1
 
