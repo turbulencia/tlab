@@ -1,9 +1,6 @@
 #include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
-#ifdef USE_MPI
-#include "dns_const_mpi.h"
-#endif
 #include "avgij_map.h"
 
 #define C_FILE_LOC "DNS"
@@ -22,9 +19,6 @@ PROGRAM DNS
   USE BOUNDARY_BCS
   USE STATISTICS
   USE PARTICLE_TRAJECTORIES
-#ifdef USE_MPI
-  USE DNS_MPI
-#endif
 #ifdef LES
   USE LES_GLOBAL
 #endif
@@ -32,9 +26,6 @@ PROGRAM DNS
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
@@ -63,7 +54,6 @@ PROGRAM DNS
   CHARACTER*128 str, line
   TINTEGER idummy, ig
   TINTEGER ierr, isize_wrk3d, isize_loc
-  TREAL dummy
 
 ! ###################################################################
   inifile = 'dns.ini'
@@ -86,9 +76,6 @@ PROGRAM DNS
   CALL DNS_MPI_INITIALIZE
   IF ( imode_rhs .EQ. EQNS_RHS_NONBLOCKING ) CALL DNS_NB3DFFT_INITIALIZE
 #endif
-
-  itime        = nitera_first
-  logs_data(1) = 0 ! Status
 
 ! #######################################################################
 ! Memory management
@@ -205,9 +192,6 @@ PROGRAM DNS
      CALL DNS_STOP(DNS_ERROR_ALLOC)
   ENDIF
 
-! Statistics
-  CALL STATISTICS_INITIALIZE()
-
 ! Lagrangian part
   IF ( icalc_part .EQ. 1 ) THEN
 #include "dns_alloc_larrays.h"
@@ -231,21 +215,21 @@ PROGRAM DNS
 
   ENDIF
 
-! ###################################################################
-! Subarray for writing planes
-! ###################################################################
+  ! -------------------------------------------------------------------
+  ! Allocating other stuff
+  ! -------------------------------------------------------------------
+  CALL STATISTICS_INITIALIZE()
   CALL PLANES_INITIALIZE()
-
-! #######################################################################
-! Initializing tower stuff
-! #######################################################################
   IF ( tower_mode .EQ. 1 ) THEN
      CALL DNS_TOWER_INITIALIZE(tower_stride)
   ENDIF
 
 ! ###################################################################
-! Initialize arrays to zero
+! Initialize data
 ! ###################################################################
+  itime        = nitera_first
+  logs_data(1) = 0 ! Status
+
   q(:,:) = C_0_R; h_q(:,:) = C_0_R ! Basic fields and rhs
   s(:,:) = C_0_R; h_s(:,:) = C_0_R
 
@@ -296,37 +280,28 @@ PROGRAM DNS
 ! ###################################################################
 ! Read fields
 ! ###################################################################
-! Flow fields
-  iviscchg  = 0 ! Default is no continuous change in viscosity
-  viscstop  = visc
-  WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-  CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
-  viscstart = visc
+  visc_stop  = visc ! Value read in inifile
 
-  IF ( viscstart .NE. viscstop ) THEN ! check if viscosity has been changed
-     WRITE(str,*) viscstart
-     str = 'Changing original viscosity '//TRIM(ADJUSTL(str))//' to new value.'
-     CALL IO_WRITE_ASCII(lfile,str)
-     IF ( visctime .GT. C_0_R ) THEN ! Continuous change
-        iviscchg = 1; visctime = (viscstart - viscstop)/visctime
-     ELSE
-        visc = viscstop
-     ENDIF
-  ENDIF
-
-! Scalar fields
   IF ( icalc_scal .EQ. 1 ) THEN
-     dummy = rtime ! flow data controls global data
      WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
      CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
-     rtime = dummy
-
-     IF ( itime .NE. nitera_first ) THEN ! files may contain different values
-        CALL IO_WRITE_ASCII(wfile, 'DNS_MAIN: Scalar ItNumber size mismatch; enforced.')
-        itime = nitera_first
-     ENDIF
-
   ENDIF
+
+  WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
+  CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
+
+  flag_viscosity = .FALSE.
+  IF ( visc /= visc_stop ) THEN
+    WRITE(str,*) visc
+    CALL IO_WRITE_ASCII(lfile,'Changing original viscosity '//TRIM(ADJUSTL(str))//' to new value.')
+    IF ( visc_time > C_0_R ) THEN
+      visc_rate = ( visc_stop -visc ) /visc_time
+      visc_time = rtime +visc_time                 ! Stop when this time is reached
+      flag_viscosity = .TRUE.
+    ELSE
+      visc = visc_stop
+    ENDIF
+  END IF
 
 ! Particle fields
   IF ( icalc_part .EQ. 1 ) THEN

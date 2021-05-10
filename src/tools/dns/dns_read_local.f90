@@ -815,7 +815,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#[ViscChange]')
   CALL IO_WRITE_ASCII(bakfile, '#Time=<time>')
 
-  CALL SCANINIREAL(bakfile, inifile, 'ViscChange', 'Time', '0.0', visctime)
+  CALL SCANINIREAL(bakfile, inifile, 'ViscChange', 'Time', '0.0', visc_time)
 
 ! ###################################################################
 ! Domain Filter

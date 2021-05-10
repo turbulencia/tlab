@@ -78,13 +78,13 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
     ENDIF
 
     ! -----------------------------------------------------------------------
-    IF ( iviscchg == 1 ) THEN ! Change viscosity if necessary
-      visc = visc - dtime*visctime
-      IF ( ( (visc < viscstop) .AND. (viscstart > viscstop) )   .OR. &
-          ( (visc > viscstop) .AND. (viscstart < viscstop) ) ) THEN
-        iviscchg = 0; visc = viscstop
+    IF ( flag_viscosity ) THEN          ! Change viscosity if necessary
+      visc = visc +visc_rate *dtime
+      IF ( rtime .GT. visc_time ) THEN
+        visc = visc_stop                ! Fix new value without any roundoff
+        flag_viscosity = .FALSE.
       ENDIF
-    ENDIF
+    END IF
 
     ! -----------------------------------------------------------------------
     CALL TIME_COURANT(q,s, wrk3d)
