@@ -1,0 +1,11 @@
+{   
+    "[fortran]": {
+        "editor.acceptSuggestionOnEnter": "off",
+    },
+    "[fortran_fixed-form]": {
+        "editor.acceptSuggestionOnEnter": "off",
+    },
+    "[FortranFreeForm]": {
+        "editor.acceptSuggestionOnEnter": "off",
+    },
+}

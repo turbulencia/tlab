@@ -33,6 +33,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_TOWER 
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
+  USE DNS_IBM
 
   IMPLICIT NONE
 
@@ -275,7 +276,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL DNS_TOWER_ACCUMULATE(tmp1,i4,wrk1d) 
   ENDIF
 
-! horizontal derivatives
+! horizontal derivatives ! no splines!
   CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1,tmp2, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1,tmp4, wrk3d, wrk2d,wrk3d)
   
@@ -330,6 +331,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hq(1,iq), &
              BcsFlowJmin%ref(1,1,iq),BcsFlowJmax%ref(1,1,iq), wrk1d,tmp1,wrk3d)
      ENDIF
+    ! BC IBM Geo
   ENDDO
 
   DO is = 1,inb_scal
@@ -345,6 +347,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
           BcsScalJmax%type(is) .NE. DNS_SFC_STATIC ) THEN
         CALL BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
      ENDIF
+     ! BC IBM Geo
   ENDDO
 
 ! -----------------------------------------------------------------------
@@ -373,7 +376,46 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         hs(ip_t:ip_t+imax-1,is) = BcsScalJmax%ref(1:imax,k,is)
      ENDDO
      ip_t = ip_t + nxy
+
   ENDDO
+
+! #######################################################################
+! IBM - Direct Forcing (zeros in solid, interface on gridpoints)
+! 
+! First attempt: one bar in streamwise direction
+!
+! #######################################################################
+
+! -----------------------------------------------------------------------
+! Preliminaries - get geometry information
+! -----------------------------------------------------------------------
+
+! -----------------------------------------------------------------------
+! Impose one bar at bottom Jmin, no MPI
+! -----------------------------------------------------------------------
+
+! 3d serial case 41 for ekman flow
+  ip_b = imax*jmax*(int(kmax/2) - 10) + 1
+  do k = 1,20
+    do is = 1,20
+      h1(ip_b:ip_b+imax-1) = C_0_R
+      h2(ip_b:ip_b+imax-1) = C_0_R
+      h3(ip_b:ip_b+imax-1) = C_0_R
+      ! overwrite ini flow fields with new geometry BC
+      u(ip_b:ip_b+imax-1) = C_0_R
+      v(ip_b:ip_b+imax-1) = C_0_R
+      w(ip_b:ip_b+imax-1) = C_0_R
+      !
+      ip_b =  ip_b + imax
+    end do
+    !        
+    ip_b = imax*jmax*(int(kmax/2) - 10 + k)
+  end do
+
+  call BOUNDARY_BCS_IBM(imax,jmax,kmax,g(1))
+! -----------------------------------------------------------------------
+! Impose top BCs at Jmax
+! -----------------------------------------------------------------------
 
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
