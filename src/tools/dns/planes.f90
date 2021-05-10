@@ -13,11 +13,16 @@ MODULE PLANES
 
   IMPLICIT NONE
   SAVE
+  PRIVATE
+
+  TINTEGER, PARAMETER,                 PUBLIC :: MAX_SAVEPLANES = 20
+  TINTEGER,                            PUBLIC :: nplanes_i, nplanes_j, nplanes_k
+  TINTEGER,                            PUBLIC :: pplanes_j, nplanes_j_aux ! to be removed
+  TINTEGER, DIMENSION(MAX_SAVEPLANES), PUBLIC :: planes_i,  planes_j,  planes_k
 
   TINTEGER idummy, splanes_i(5), splanes_j(5), splanes_k(5), splanes_jp(5)
   CHARACTER*32 varname(1)
 
-  PRIVATE
   PUBLIC :: PLANES_INITIALIZE, PLANES_SAVE
 
 CONTAINS
@@ -116,11 +121,6 @@ CONTAINS
 #ifdef USE_MPI
 
   SUBROUTINE DNS_MPIO_AUX()
-
-    USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-    USE DNS_GLOBAL, ONLY : inb_flow_array, inb_scal_array
-    USE DNS_GLOBAL, ONLY : io_aux
-    USE DNS_LOCAL,  ONLY : nplanes_i,nplanes_j,nplanes_k, pplanes_j, planes_i,planes_k
     USE DNS_MPI
 
     IMPLICIT NONE
