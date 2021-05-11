@@ -42,7 +42,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   TREAL dte
   TREAL, DIMENSION(isize_field)   :: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
-  TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk3d
+  TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,wrk3d,epsi
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(imax,kmax,*)   :: wrk2d
 
@@ -394,28 +394,41 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Impose one bar at bottom Jmin, no MPI
 ! -----------------------------------------------------------------------
 
-! 3d serial case 41 for ekman flow
-  ip_b = imax*jmax*(int(kmax/2) - 10) + 1
-  do k = 1,20
-    do is = 1,20
-      h1(ip_b:ip_b+imax-1) = C_0_R
-      h2(ip_b:ip_b+imax-1) = C_0_R
-      h3(ip_b:ip_b+imax-1) = C_0_R
-      ! overwrite ini flow fields with new geometry BC
-      u(ip_b:ip_b+imax-1) = C_0_R
-      v(ip_b:ip_b+imax-1) = C_0_R
-      w(ip_b:ip_b+imax-1) = C_0_R
-      !
-      ip_b =  ip_b + imax
-    end do
-    !        
-    ip_b = imax*jmax*(int(kmax/2) - 10 + k)
-  end do
+! ! 3d serial case 41 for ekman flow
+!   ip_b = imax*jmax*(int(kmax/2) - 10) + 1
+!   do k = 1,20
+!     do is = 1,20
+!       h1(ip_b:ip_b+imax-1) = C_0_R
+!       h2(ip_b:ip_b+imax-1) = C_0_R
+!       h3(ip_b:ip_b+imax-1) = C_0_R
+!       ! overwrite ini flow fields with new geometry BC
+!       u(ip_b:ip_b+imax-1) = C_0_R
+!       v(ip_b:ip_b+imax-1) = C_0_R
+!       w(ip_b:ip_b+imax-1) = C_0_R
+!       !
+!       ip_b =  ip_b + imax
+!     end do
+!     !        
+!     ip_b = imax*jmax*(int(kmax/2) - 10 + k)
+!   end do
 
-  call BOUNDARY_BCS_IBM(imax,jmax,kmax,g(1))
+  call BOUNDARY_BCS_IBM_FLOW(imax,jmax,kmax,g(1),g(2),g(3),epsi)
+ 
+ 
+  h1(:) = (C_1_R - epsi(:)) * h1(:)
+  h2(:) = (C_1_R - epsi(:)) * h2(:)
+  h3(:) = (C_1_R - epsi(:)) * h3(:)
+  ! overwrite ini flow fields with new geometry BC
+  u(:)  = (C_1_R - epsi(:)) * u(:)
+  v(:)  = (C_1_R - epsi(:)) * v(:)
+  w(:)  = (C_1_R - epsi(:)) * w(:)
+
+ 
 ! -----------------------------------------------------------------------
 ! Impose top BCs at Jmax
 ! -----------------------------------------------------------------------
+
+
 
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')

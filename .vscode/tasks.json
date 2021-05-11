@@ -68,53 +68,102 @@
       },
       //-----------------------------------------------------------------------------------------------------------------//
       {
-        "label":"build_debug",
+        "label":"build_debug_little",
         "dependsOn":[
-          "build_dir_debug",
-          "cmake_debug",
-          "compile_debug",
-          "test_dir_debug",
-          "clear_test_debug",
-          "create_links_debug",
-          "run_ini_debug"
+          "build_dir_debug_little",
+          "cmake_debug_little",
+          "compile_debug_little",
+          "test_dir_debug_little",
+          "clear_test_debug_little",
+          "create_links_debug_little",
+          "run_ini_debug_little"
         ],
         "dependsOrder": "sequence"
       },
       {
-        "label": "build_dir_debug",
+        "label": "build_dir_debug_little",
         "type": "shell",
-        "command": "if [ ! -d ./build_debug ]; then mkdir build_debug; else cd build_debug && rm -rf * ;fi"
+        "command": "if [ ! -d ./build_debug_little ]; then mkdir build_debug_little; else cd build_debug_little && rm -rf * ;fi"
       },
       {
-        "label": "cmake_debug",
+        "label": "cmake_debug_little",
         "type": "shell",
-        "command": "cd build_debug && cmake ../src -DSYST=dell_notebook -DBUILD_TYPE=DEBUG"
+        "command": "cd build_debug_little && cmake ../src -DSYST=dell_notebook -DBUILD_TYPE=DEBUG"
       },
       {
-        "label": "compile_debug",
+        "label": "compile_debug_little",
         "type": "shell",
-        "command": "cd build_debug && make -j"
+        "command": "cd build_debug_little && make -j"
       },
       {
-        "label": "test_dir_debug",
+        "label": "test_dir_debug_little",
         "type": "shell",
-        "command":"if [ ! -d ./test_debug ]; then mkdir test_debug;fi"
+        "command":"if [ ! -d ./test_debug_little ]; then mkdir test_debug_little;fi"
       },
       {
-        "label": "clear_test_debug",
+        "label": "clear_test_debug_little",
         "type": "shell",
-        "command": "cd test_debug && find . ! -name dns.ini -delete"
+        "command": "cd test_debug_little && rm -rf * "//find . ! -name dns.ini -delete"
       },
       {
-        "label": "create_links_debug",
+        "label": "create_links_debug_little",
         "type": "shell",
-        "command": "cd test_debug && ln -s ../build_debug/inigrid.x inigrid.x && ln -s ../build_debug/inirand.x inirand.x  && ln -s ../build_debug/iniscal.x iniscal.x   && ln -s ../build_debug/iniflow.x iniflow.x && ln -s ../build_debug/dns.x dns.x"
+        "command": "cd test_debug_little && ln -s ../test_files/dns.ini dns.ini && ln -s ../build_debug_little/inigrid.x inigrid.x && ln -s ../build_debug_little/inirand.x inirand.x  && ln -s ../build_debug_little/iniscal.x iniscal.x   && ln -s ../build_debug_little/iniflow.x iniflow.x && ln -s ../build_debug_little/dns.x dns.x"
       },
       {
-        "label": "run_ini_debug",
+        "label": "run_ini_debug_little",
         "type": "shell",
-        "command": "cd test_debug && ./inigrid.x && ./inirand.x && ./iniflow.x && ./iniscal.x && mv flow.ics.1 flow.0.1 && mv flow.ics.2 flow.0.2 && mv flow.ics.3 flow.0.3 && mv scal.ics.1 scal.0.1"
+        "command": "cd test_debug_little && ./inigrid.x && ./inirand.x && ./iniflow.x && ./iniscal.x && mv flow.ics.1 flow.0.1 && mv flow.ics.2 flow.0.2 && mv flow.ics.3 flow.0.3 && mv scal.ics.1 scal.0.1"
       }, 
+      //-----------------------------------------------------------------------------------------------------------------// following is not working yet
+      // {
+      //   "label":"build_debug_parallel",
+      //   "dependsOn":[
+      //     "build_dir_debug_parallel",
+      //     "cmake_debug_parallel",
+      //     "compile_debug_parallel",
+      //     "test_dir_debug_parallel",
+      //     "clear_test_debug_parallel",
+      //     "create_links_debug_parallel",
+      //     "run_ini_debug"
+      //   ],
+      //   "dependsOrder": "sequence"
+      // },
+      // {
+      //   "label": "build_dir_debug_parallel",
+      //   "type": "shell",
+      //   "command": "if [ ! -d ./build_debug_parallel ]; then mkdir build_debug_parallel; else cd build_debug_parallel && rm -rf * ;fi"
+      // },
+      // {
+      //   "label": "cmake_debug_parallel",
+      //   "type": "shell",
+      //   "command": "cd build_debug_parallel && cmake ../src -DSYST=dell_notebook -DBUILD_TYPE=DEBUG_PARALLEL"
+      // },
+      // {
+      //   "label": "compile_debug_parallel",
+      //   "type": "shell",
+      //   "command": "cd build_debug_parallel && make -j"
+      // },
+      // {
+      //   "label": "test_dir_debug_parallel",
+      //   "type": "shell",
+      //   "command":"if [ ! -d ./test_debug_parallel ]; then mkdir test_debug_parallel;fi"
+      // },
+      // {
+      //   "label": "clear_test_debug_parallel",
+      //   "type": "shell",
+      //   "command": "cd test_debug_parallel && rm -rf * "//find . ! -name dns.ini -delete"
+      // },
+      // {
+      //   "label": "create_links_debug_parallel",
+      //   "type": "shell",
+      //   "command": "cd test_debug_parallel && ln -s ../test_files/dns.ini dns.ini && ln -s ../build_debug_parallel/inigrid.x inigrid.x && ln -s ../build_debug_parallel/inirand.x inirand.x  && ln -s ../build_debug_parallel/iniscal.x iniscal.x   && ln -s ../build_debug_parallel/iniflow.x iniflow.x && ln -s ../build_debug_parallel/dns.x dns.x"
+      // },
+      // {
+      //   "label": "run_ini_debug_parallel",
+      //   "type": "shell",
+      //   "command": "cd test_debug_parallel && ./inigrid.x && ./inirand.x && ./iniflow.x && ./iniscal.x && mv flow.ics.1 flow.0.1 && mv flow.ics.2 flow.0.2 && mv flow.ics.3 flow.0.3 && mv scal.ics.1 scal.0.1"
+      // }, 
       //-----------------------------------------------------------------------------------------------------------------//
       {
         "label":"prep_test_little",
@@ -128,12 +177,12 @@
       {
         "label": "clear_test_little",
         "type": "shell",
-        "command": "cd test_little && find . ! -name dns.ini -delete"
+        "command": "cd test_little && rm -rf * "//find . ! -name dns.ini -delete"
       },
       {
         "label": "create_links_little",
         "type": "shell",
-        "command": "cd test_little && ln -s ../build_little/inigrid.x inigrid.x && ln -s ../build_little/inirand.x inirand.x  && ln -s ../build_little/iniscal.x iniscal.x   && ln -s ../build_little/iniflow.x iniflow.x && ln -s ../build_little/dns.x dns.x"
+        "command": "cd test_little && ln -s ../test_files/dns.ini dns.ini && ln -s ../build_little/inigrid.x inigrid.x && ln -s ../build_little/inirand.x inirand.x  && ln -s ../build_little/iniscal.x iniscal.x   && ln -s ../build_little/iniflow.x iniflow.x && ln -s ../build_little/dns.x dns.x"
       },
       {
         "label": "run_ini_little",
@@ -153,12 +202,12 @@
       {
         "label": "clear_test_parallel",
         "type": "shell",
-        "command": "cd test_parallel && find . ! -name dns.ini -delete"
+        "command": "cd test_parallel && rm -rf * "//find . ! -name dns.ini -delete"    
       },
       {
         "label": "create_links_parallel",
         "type": "shell",
-        "command": "cd test_parallel && ln -s ../build_parallel/inigrid.x inigrid.x && ln -s ../build_parallel/inirand.x inirand.x  && ln -s ../build_parallel/iniscal.x iniscal.x   && ln -s ../build_parallel/iniflow.x iniflow.x && ln -s ../build_parallel/dns.x dns.x"
+        "command": "cd test_parallel && ln -s ../test_files/dns.ini dns.ini && ln -s ../build_parallel/inigrid.x inigrid.x && ln -s ../build_parallel/inirand.x inirand.x  && ln -s ../build_parallel/iniscal.x iniscal.x   && ln -s ../build_parallel/iniflow.x iniflow.x && ln -s ../build_parallel/dns.x dns.x"
       },
       {
         "label": "run_ini_parallel",

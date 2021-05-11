@@ -5,13 +5,13 @@
             "name": "run_debug_little",
             "type": "cppdbg",
             "request": "launch",
-            "program":"${workspaceRoot}/test_debug/dns.x",
+            "program":"${workspaceRoot}/test_debug_little/dns.x",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceRoot}/test_debug/",
+            "cwd": "${workspaceRoot}/test_debug_little/",
             "externalConsole": false,
             "MIMode": "gdb",
-            "preLaunchTask": "build_debug"
+            "preLaunchTask": "build_debug_little"
         }
     ]
 }  

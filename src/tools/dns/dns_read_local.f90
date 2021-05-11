@@ -436,6 +436,21 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   BcsScalKmin%ctan = dummy(1); BcsScalKmax%ctan = dummy(1)
 
 ! ###################################################################
+! Immersed Boundary Method (IBM)
+! ###################################################################
+  CALL IO_WRITE_ASCII(bakfile, '#')
+  CALL IO_WRITE_ASCII(bakfile, '#[IBM]')
+  CALL IO_WRITE_ASCII(bakfile, 'XBars=<value_i,value_j,value_k>')
+
+  CALL SCANINICHAR(bakfile, inifile, 'IBM', 'XBars', '0,0,0', sRes)
+  idummy = 3; CALL LIST_INTEGER(sRes,idummy,xbars_geo)
+  IF ( idummy .NE. 3 ) THEN
+     xbars_geo(:) = 0
+     CALL IO_WRITE_ASCII(bakfile, 'XBars=0,0,0')
+     CALL IO_WRITE_ASCII(wfile,   'DNS_READ_LOCAL. Cannot read xbars for IBM; set to 0,0,0.')
+  ENDIF
+
+! ###################################################################
 ! Buffer Zone Parameters
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
@@ -1203,7 +1218,24 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      ENDIF
   ENDDO
 
+! -------------------------------------------------------------------
+! Immersed Boundary Method (IBM)
+! So far, the use or not use of an IBM is
+! set by the XBars_geo information.
+! -------------------------------------------------------------------
+  IF ( MINVAL(xbars_geo).GT.0 ) THEN; ibm_mode=1; ELSE;  ibm_mode=0; ENDIF
 
+   ! check
+  IF ( ( ibm_mode .eq. 1 ) .and. ( mod(g(3)%size, 2*xbars_geo(1)) .eq. 0 ) ) THEN
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Interfaces of bars have to be on gridpoints.')
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Requirenments: mod(jmax_total,(2*nbars))==0 & mod(wbar,2)==0.')
+     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+  ELSEIF ( ( mod(real(g(3)%size/(2*xbars_geo(1))),0.5) .eq. 0 ) .and. ( mod(xbars_geo(3),2) .ne. 1) ) THEN
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Interfaces of bars have to be on gridpoints.')
+     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Requirenments: mod(jmax_total/(2*nbars),0.5)==0 & mod(wbar,2)==1.')
+     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)         
+  ENDIF
+  
 ! -------------------------------------------------------------------
 ! Implicit RKM part
 ! -------------------------------------------------------------------
