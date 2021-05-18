@@ -46,6 +46,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(imax,kmax,*)   :: wrk2d
 
+  TINTEGER, save                  :: n ! debugging IBM
+
   TARGET h2, hs
 
 ! -----------------------------------------------------------------------
@@ -412,9 +414,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !     ip_b = imax*jmax*(int(kmax/2) - 10 + k)
 !   end do
 
-  call BOUNDARY_BCS_IBM_FLOW(imax,jmax,kmax,g(1),g(2),g(3),epsi)
- 
- 
+  ! for debugging, just initialized once
+  if (n .eq. 0) then 
+    call INITIALIZE_GEOMETRY(epsi) 
+  end if
+  n = n + 1
+
+  ! apply new BCs
   h1(:) = (C_1_R - epsi(:)) * h1(:)
   h2(:) = (C_1_R - epsi(:)) * h2(:)
   h3(:) = (C_1_R - epsi(:)) * h3(:)

@@ -1,14 +1,10 @@
 #include "types.h"
 #include "dns_const.h"
 
-! #include "dns_error.h"        ! needed if DNS_STOP is used, in this case: define specific error 
-                                ! (e.g. number of objects do not fit with grid)
-! #ifdef USE_MPI
-! #include "dns_const_mpi.h"    ! most likely not needed, if no specific MPI calls are present
-! #endif
+!  #include "dns_error.h"  ! needed if DNS_STOP is used, in this case: define specific error 
 
 !########################################################################
-!# HISTORY
+!# HISTORY / ATHORS
 !#
 !# 2021/05/XX - J. Kostelecky
 !#              Created
@@ -16,8 +12,7 @@
 !########################################################################
 !# DESCRIPTION OF SUBROUTINES
 !#
-!# Calculate the boundary values for immersed object(s) in the flow  
-!# domain. The epsilon field epsi can be seen as an indicator field:
+!# epsilon field 'epsi' is an indicator field:
 !#    epsi(i,j,k) = 0   for  flow
 !#    epsi(i,j,k) = 1   for  solid
 !#
@@ -36,39 +31,86 @@
 !#                           
 !#
 !########################################################################
+!# SUBROUTINES IN MODULE
+!#
+!# 
+!#                            
+!#                           
+!#
+!########################################################################
 module DNS_IBM
 
-  ! use 
+  use DNS_GLOBAL, only: imax,jmax,kmax    
+  use DNS_LOCAL,  only: xbars_geo
 
   implicit none
 
-  ! TINTEGER
-  ! TREAL 
+  TREAL, dimension(:,:,:), allocatable :: xepsi, zepsi
+  TREAL, dimension(:,:),   allocatable :: nobjx, nobjy, nobjz ! number of objects in x/y/z 
+  TREAL, dimension(:,:,:), allocatable :: xobji, yobji, zobji ! location of starting interfaces of object (fluid --> solid)
+  TREAL, dimension(:,:,:), allocatable :: xobjf, yobjf, zobjf ! location of ending   interfaces of object (solid --> fluid)
+  TINTEGER                             :: ximax, xjmax, xkmax, zimax, zjmax, zkmax ! new array dimensions after transpositions
 
-  ! all functions/subroutines are private by default, make neeeded ones public 
+  ! all functions/subroutines are private by default, make needed subroutines public 
   private 
-  public :: BOUNDARY_BCS_IBM_FLOW
+  public  :: INITIALIZE_GEOMETRY
 
 contains
   !########################################################################
-  subroutine INITIALIZE_IBM()
+  subroutine INITIALIZE_IBM()       ! called once in dns_main.f90 before time integration starts, initialize IBM procedure
     !
     implicit none
+    !     
+! #ifdef USE_MPI 
+! #include "mpif.h"
+! #endif 
     !
     return
   end subroutine INITIALIZE_IBM
   !########################################################################
-  subroutine BOUNDARY_BCS_IBM_FLOW(nx, ny, nz, g1, g2, g3, epsi)  ! (ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1,tmp2)
+  subroutine INITIALIZE_GEOMETRY(epsi)  ! should be called once in dns_main.f90 before time integration starts
+                                        ! after calling, all relevant geometry information needed for the IBM are available
+    !
+    implicit none
+    !
+#ifdef USE_MPI 
+#include "mpif.h"
+#endif 
+    
+    TREAL, dimension(imax,jmax,kmax):: epsi
 
-    use DNS_TYPES, only     : grid_dt
-    use DNS_CONSTANTS, only : lfile
+    ! ================================================================== !
 
-    use DNS_GLOBAL,only     : imax,jmax,kmax
+    ! generate geometry (epsi) of immersed objects (define own routine)
+    call GEOMETRY_XBARS(epsi) 
+
+    ! transpose geometry (epsi) and allocate memory
+    call TRANSPOSE_GEOMETRY(epsi)  ! xepsi, zepsi
+
+    ! generate relevant geometry fields             
+    call GENERATE_GEOMETRY(epsi)   ! xepsi, zepsi, nobjx, nobjy, nobjz, xobji, xobjf, yobji, yobjf, zobji, zobjf
+    
+    ! write/read geometry fields to/from disk
+    ! call WRITE_GEOMETRY()           
+    
+    return
+  end subroutine INITIALIZE_GEOMETRY
+  !########################################################################
+  subroutine GEOMETRY_XBARS(epsi)
+    ! -------------------------------------------------------------------
+    ! if square bars in x-/streamwise direction equally distributed
+    ! -------------------------------------------------------------------
+    ! Requirenments (interfaces of bars have to be on gridpoints, center doesn't matter), if:
+    !   kmax_total/(2*nbars) = integer         :: wbar = even   (center is on gridpoints)
+    !   kmax_total/(2*nbars) = x * 1/2         :: wbar = uneven (center is between grid points)
+    ! -------------------------------------------------------------------
+
+    use DNS_GLOBAL,    only: g
 
 #ifdef USE_MPI 
-    use DNS_MPI, only       : ims_offset_i, ims_offset_j, ims_offset_k
-    use DNS_MPI, only       : ims_pro,  ims_pro_i,  ims_pro_j,  ims_pro_k          ! each number of each proc
-    use DNS_MPI, only       : ims_npro, ims_npro_i, ims_npro_j, ims_npro_k         ! total numbers of proc
+    use DNS_MPI,       only: ims_offset_i, ims_offset_j, ims_offset_k
+    use DNS_MPI,       only: ims_pro,  ims_pro_i,  ims_pro_j,  ims_pro_k          ! each number of each proc
+    use DNS_MPI,       only: ims_npro, ims_npro_i, ims_npro_j, ims_npro_k         ! total numbers of proc
 #endif 
 
     implicit none
@@ -83,79 +125,62 @@ contains
     TINTEGER, parameter  :: ims_npro_i=1,   ims_npro_j=1,   ims_npro_k=1,   ims_npro=0 
 #endif
 
-    ! later in dns.ini file
-    TINTEGER, parameter        :: nbars = 4                ! number of bars in
-    TINTEGER, parameter        :: hbar  = 10, wbar = 10    ! width, height of bars in gridpoints
-    TREAL                      :: zcenter_bar
-    TINTEGER, dimension(nbars) :: zstart_bar, zend_bar
+    TINTEGER                                         :: nbars, hbar, wbar
+    TREAL,    dimension(imax,jmax,kmax), intent(out) :: epsi ! or: intent(inout)?
+    TREAL                                            :: zcenter_bar
+    TINTEGER, dimension(xbars_geo(1))                :: zstart_bar, zend_bar
+    TINTEGER                                         :: istart, iend, jstart, jend, kstart, kend
+    TINTEGER                                         :: i,j,k,l
 
-    ! ini
-    TINTEGER,intent(in)                           :: nx,ny,nz!, ibc
-    TYPE(grid_dt),                    intent(in)  :: g1, g2, g3  ! grid informations
-    TREAL, dimension(imax,jmax,kmax), intent(out) :: epsi
-    ! -------------------------------------------------------------------
-    TINTEGER                                      :: istart, iend, jstart, jend, kstart, kend
-    TINTEGER                                      :: i,j,k,l
+    ! debugging 
+    CHARACTER(32)                                    :: fname
+    TREAL, dimension(imax*jmax*kmax)                 :: wrk3d
 
-    
-    CHARACTER*250 line1
+    ! ================================================================== !
 
-
-    !###################################################################
-
-    ! global array indicies for each mpi task (indices starting with 1)
-    ! istart = ims_offset_i+1; iend = ims_offset_i + imax    
-    ! jstart = ims_offset_j+1; jend = ims_offset_j + jmax 
-    ! kstart = ims_offset_k+1; kend = ims_offset_k + kmax 
+    ! global array indicies for each mpi task (indices starting with 0)
     istart = ims_offset_i; iend = ims_offset_i + imax - 1    
     jstart = ims_offset_j; jend = ims_offset_j + jmax - 1
     kstart = ims_offset_k; kend = ims_offset_k + kmax - 1
+
     ! debugging
-    if ( ims_pro .EQ. 0 ) then 
+    if ( ims_pro .eq. 0 ) then 
       write(*,*) '======== Initialization of Grid and Decomposition ======='
       write(*,*) 'GRID:        ', imax*ims_npro_i,' x ', jmax,' x ', kmax*ims_npro_k 
       write(*,*) 'DECOMP: ranks', ims_npro_i,' x ',1,' x ',ims_npro_k 
       write(*,*) '        grid ', imax,      ' x ',jmax,      ' x ',kmax 
-      ! WRITE(*,*) '======== Global Grid Information of each Task     ======='
     end if
     ! IF ( ims_pro .EQ. 0 ) THEN; write(*,*) 'Task ', ims_pro, 'with indices: ', istart,'x',iend,' # ',jstart,'x',jend,' # ',kstart,'x',kend;ENDIF
     ! IF ( ims_pro .EQ. 1 ) THEN; write(*,*) 'Task ', ims_pro, 'with indices: ', istart,'x',iend,' # ',jstart,'x',jend,' # ',kstart,'x',kend;ENDIF
     ! IF ( ims_pro .EQ. 2 ) THEN; write(*,*) 'Task ', ims_pro, 'with indices: ', istart,'x',iend,' # ',jstart,'x',jend,' # ',kstart,'x',kend;ENDIF
     ! IF ( ims_pro .EQ. 3 ) THEN; write(*,*) 'Task ', ims_pro, 'with indices: ', istart,'x',iend,' # ',jstart,'x',jend,' # ',kstart,'x',kend;ENDIF
-
-    ! if square bars in x-/streamwise direction equally distributed
-        ! -------------------------------------------------------------------
-        ! Requirenments (interfaces of bars have to be on gridpoints, center doesn't matter), if:
-        !   kmax_total/(2*nbars) = integer         :: wbar = even   (center is on gridpoints)
-        !   kmax_total/(2*nbars) = x * 1/2         :: wbar = uneven (center is between grid points)
-        !
-        ! 
-        ! -------------------------------------------------------------------
-
-
-    ! global z-positions of bars
+   
+    ! geometry informtion from dns.ini
+    nbars=xbars_geo(1); hbar=xbars_geo(2); wbar=xbars_geo(3)  
+   
+    ! global z-positions of bars, equally distributed on gridpoints
     do l = 1, nbars
-      zcenter_bar   = g3%size / nbars * (l - 0.5)
+      zcenter_bar   = g(3)%size / nbars * (l - 0.5)
       zstart_bar(l) = int(zcenter_bar - 0.5 * wbar)
       zend_bar(l)   = int(zcenter_bar + 0.5 * wbar)
     end do
 
-    if ( ims_pro .EQ. 0 ) then
-      write(*,*) '======== Z - Positions of Bars                    ======='
+    ! debugging
+    if ( ims_pro .eq. 0 ) then
+      write(*,*) '======== Z - Positions of Bars =========================='
       do l = 1, nbars
-        write(*,*) zstart_bar(l), ' ---- ', zend_bar(l)
+        write(*,*)'bar', l, ' start:', zstart_bar(l), '  end:', zend_bar(l)
       end do
     end if
     
     ! ini epsi
-    ! write(*,*) 'everthing fine 1'
     epsi(:,:,:) = C_0_R
-    ! write(*,*) 'everthing fine 2'
     
+    ! streamwise aligned square bars, equaly spaced, interfaces on gridpoints (define own geometry)
     do j = 1, hbar   
       do k = 1, kmax 
         do l = 1, nbars 
-          if( ((k+kstart).ge.zstart_bar(l)) .and. ((k+kstart).le.zend_bar(l)) ) then 
+          if( ((k+kstart).gt.zstart_bar(l)) .and. ((k+kstart).le.zend_bar(l)) ) then 
             do i = 1, imax
               epsi(i,j,k) = C_1_R
             end do
@@ -164,13 +189,176 @@ contains
       end do
     end do 
 
-    ! WRITE(*,*) '=== array positions of bars==='
-    ! write(*,*) 'epsilon size x ', size(epsi,1)
-    ! write(*,*) 'epsilon size y ', size(epsi,2)
-    ! write(*,*) 'epsilon size z ', size(epsi,3)
-    ! write(*,*) 'iend-istart    ', iend - istart
-    ! write(*,*) 'jend-jstart    ', jend - jstart
-    ! write(*,*) 'kend-kstart    ', kend - kstart
+    ! write epsi field
+    write(fname,*) i0; 
+    fname = TRIM(ADJUSTL('epsi'))//TRIM(ADJUSTL(fname))
+    if (ims_pro .eq. 0) then
+      write(*,*) '========================================================='  
+      write(*,*) fname ! debugging
+    end if
+    call DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, 1, imax*jmax*kmax, epsi, wrk3d)
+
+    return
+  end subroutine GEOMETRY_XBARS
+  !########################################################################
+  subroutine GENERATE_GEOMETRY(epsi)!, nobjx, nobjy, nobjz, xobji, xobjf, yobji, yobjf, zobji, zobj)  
+    !
+#ifdef USE_MPI
+    use DNS_MPI, only: ims_pro
+#endif    
+    !
+    implicit none
+    !
+#include "integers.h"
+    !
+#ifdef USE_MPI 
+#include "mpif.h"
+#endif 
+
+    TREAL, dimension(imax,jmax,kmax)  :: epsi   ! intent() ?
+    TINTEGER                          :: nobjx_max, nobjy_max, nobjz_max, num
+    TINTEGER                          :: i,j,k,l
+
+    CHARACTER(32)                     :: fname
+    TREAL, DIMENSION(imax*kmax)       :: wrk3d
+
+    ! ================================================================== !
+
+    ! ini nobj arrays
+    nobjx(:,:) = C_0_R; nobjy(:,:) = C_0_R; nobjz(:,:) = C_0_R
+    nobjx_max  = C_0_R; nobjy_max  = C_0_R; nobjz_max  = C_0_R
+
+    ! number of objects in y-direction
+    do i = 1, imax
+      do k = 1, kmax
+        num = 0
+        if(epsi(i,1,k) .eq. 1) then
+          nobjy(i,k) = 1
+          num = 1
+        end if
+        do j = 1, jmax-1       
+          if((epsi(i,j,k) .eq. 0) .and. (epsi(i,j+1,k) .eq. 1)) then
+            nobjy(i,k) = nobjy(i,k) + 1
+            num = num + 1
+          end if
+        end do
+        if (num .gt. nobjy_max) then
+          nobjy_max = num    
+        end if
+      end do    
+    end do
+
+    ! debugging
+    if (ims_pro .eq. 0) then
+      write(*,*) '========================================================='
+      write(*,*) 'nobjy_max   =', nobjy_max
+      ! write nobjy field
+    end if
+    write(fname,*) i0; 
+    fname = TRIM(ADJUSTL('nobjy'))//TRIM(ADJUSTL(fname))
+    if (ims_pro .eq. 0) then  
+      write(*,*) fname ! debugging
+    end if
+    call DNS_WRITE_FIELDS(fname, i2, imax,1,kmax, 1, imax*1*kmax, nobjy, wrk3d)
+
+    ! number of objects in x-direction
+
+    return
+  end subroutine GENERATE_GEOMETRY
+    !########################################################################
+  subroutine TRANSPOSE_GEOMETRY(epsi) !,xepsi,yepsi,zepsi 
+    !
+#ifdef USE_MPI
+    use DNS_MPI, only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+    use DNS_MPI, only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use DNS_MPI, only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
+#endif    
+    !
+    implicit none
+    !
+#include "integers.h"
+    !
+#ifdef USE_MPI 
+#include "mpif.h"
+#include "dns_const_mpi.h"
+#endif 
+
+    TREAL, dimension(imax,jmax,kmax)  :: epsi
+
+#ifdef USE_MPI
+    TINTEGER, parameter               :: idi = DNS_MPI_I_PARTIAL
+    TINTEGER, parameter               :: idk = DNS_MPI_K_PARTIAL
+#endif
+
+    ! ================================================================== !
+
+    ! new array indices
+#ifdef USE_MPI
+    ximax = ims_npro_i * imax ! imax_total
+    xjmax = jmax / ims_npro_i 
+    xkmax = kmax
+    !
+    zimax = imax
+    zjmax = jmax / ims_npro_k
+    zkmax = ims_npro_k * kmax ! kmax_total
+#else
+    ximax = imax; xjmax = jmax; xkmax = kmax
+    zimax = imax; zjmax = jmax; zkmax = kmax
+#endif
+
+    ! allocate memory for arrays
+    allocate(xepsi(ximax,xjmax,xkmax), zepsi(zimax,zjmax,zkmax))
+    allocate(nobjx(xjmax,xkmax), nobjy(imax,kmax), nobjz(zimax,zjmax))
+    allocate(xobji(xbars_geo(1),xjmax,xkmax), yobji(xbars_geo(1),imax,kmax), zobji(xbars_geo(1),zimax,zjmax))
+    allocate(xobjf(xbars_geo(1),xjmax,xkmax), yobjf(xbars_geo(1),imax,kmax), zobjf(xbars_geo(1),zimax,zjmax))
+
+    ! debugging
+    if ( ims_pro .eq. 0 ) then 
+      write(*,*) '======== TRANSPOSING GEOMETRY ==========================='
+      write(*,*) 'Array xepsi: ', size(xepsi,1), ' x ', size(xepsi,2), ' x ', size(xepsi,3)
+      write(*,*) 'Array yepsi: ', size(epsi,1), ' x ', size(epsi,2), ' x ', size(epsi,3)
+      write(*,*) 'Array zepsi: ', size(zepsi,1), ' x ', size(zepsi,2), ' x ', size(zepsi,3)    
+    end if
+
+    ! transpose in x-direction
+#ifdef USE_MPI
+    if ( ims_npro_i .gt. 1 ) then
+      call DNS_MPI_TRPF_I(epsi, xepsi, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
+    else
+#endif
+      xepsi = epsi
+#ifdef USE_MPI
+    end if
+#endif
+
+    ! transpose in z-direction
+#ifdef USE_MPI
+    if ( ims_npro_k .gt. 1 ) then
+      call DNS_MPI_TRPF_K(epsi, zepsi, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+    else
+#endif
+      zepsi = epsi
+#ifdef USE_MPI
+    end if
+#endif
+
+    if ( ims_pro .eq. 0 ) then 
+      write(*,*) '========================================================='
+      write(*,*) 'Transposing and Allocating arrays: done'
+      write(*,*) '========================================================='    
+      write(*,*) 'Generating geometry'     
+    end if
+
+    return
+  end subroutine TRANSPOSE_GEOMETRY
+  !########################################################################
+  subroutine BOUNDARY_BCS_IBM_FLOW()
+
+    implicit none
+    
+#ifdef USE_MPI 
+#include "mpif.h"
+#endif 
 
     return
   end subroutine BOUNDARY_BCS_IBM_FLOW
@@ -178,20 +366,50 @@ contains
   subroutine WRITE_GEOMETRY()
     !
     implicit none
-    !
+  
+#ifdef USE_MPI 
+#include "mpif.h"
+#endif 
+
+    ! write epsi field
+    ! m = m + 1
+    ! WRITE(fname,*) m; 
+    ! fname = TRIM(ADJUSTL('epsi'))//TRIM(ADJUSTL(fname))
+    ! write(*,*) fname ! debugging
+    ! CALL DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, 1, imax*jmax*kmax, epsi, wrk3d)
+    
     return
   end subroutine WRITE_GEOMETRY
   !########################################################################
+  subroutine READ_GEOMETRY() ! if needed: restart/run with already generated geometry
+    !
+    implicit none
+  
+#ifdef USE_MPI 
+#include "mpif.h"
+#endif 
+    !
+    return
+  end subroutine READ_GEOMETRY
+  !########################################################################  
   subroutine BOUNDARY_BCS_IBM_SCAL()
     !
     implicit none
+
+#ifdef USE_MPI 
+#include "mpif.h"
+#endif 
     !
     return
   end subroutine BOUNDARY_BCS_IBM_SCAL
   !########################################################################
-  subroutine IBM_FINALIZE()
+  subroutine IBM_FINALIZE() ! dealloc of arrays? maybe not needed...
     !
     implicit none
+
+#ifdef USE_MPI 
+#include "mpif.h"
+#endif 
     !
     return
   end subroutine IBM_FINALIZE
