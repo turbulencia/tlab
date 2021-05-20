@@ -122,12 +122,9 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
     ! -----------------------------------------------------------------------
     IF ( MOD(itime-nitera_first,nitera_stats) == 0 ) THEN ! Calculate statistics
       IF     ( imode_sim == DNS_MODE_TEMPORAL ) THEN
-        CALL STATISTICS_TEMPORAL_LAYER(q,s,hq, txc, wrk1d,wrk2d,wrk3d)
-        IF ( icalc_part == 1 ) THEN
-          CALL STATS_TEMPORAL_LAGRANGIAN(q,s,hq, l_q,l_txc,l_comm, txc, mean, wrk1d,wrk2d,wrk3d)
-        ENDIF
+        CALL STATISTICS_TEMPORAL(q,s,hq, txc, wrk1d,wrk2d,wrk3d, l_q,l_txc,l_comm)
       ELSE IF ( imode_sim == DNS_MODE_SPATIAL ) THEN
-        CALL STATISTICS_SPATIAL_LAYER(txc, wrk1d,wrk2d)
+        CALL STATISTICS_SPATIAL(txc, wrk1d,wrk2d)
       ENDIF
     ENDIF
 
