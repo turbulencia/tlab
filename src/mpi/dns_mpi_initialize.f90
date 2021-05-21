@@ -26,8 +26,8 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ALLOCATE(ims_size_i(DNS_MPI_I_MAXTYPES))
   ALLOCATE(ims_ds_i(ims_npro_i,DNS_MPI_I_MAXTYPES))
   ALLOCATE(ims_dr_i(ims_npro_i,DNS_MPI_I_MAXTYPES))
-  ALLOCATE(ims_ts_i(ims_npro_i,DNS_MPI_I_MAXTYPES))
-  ALLOCATE(ims_tr_i(ims_npro_i,DNS_MPI_I_MAXTYPES))
+  ALLOCATE(ims_ts_i(1,DNS_MPI_I_MAXTYPES))   ! ims_npro_i, DMS_MPI_I_MAXTYPES
+  ALLOCATE(ims_tr_i(1,DNS_MPI_I_MAXTYPES))   ! ims_npro_i, DNS_MPI_I_MAXTYPES
   ALLOCATE(ims_plan_trps_i(ims_npro_i))
   ALLOCATE(ims_plan_trpr_i(ims_npro_i)) 
 
@@ -35,8 +35,8 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ALLOCATE(ims_size_k(DNS_MPI_K_MAXTYPES))
   ALLOCATE(ims_ds_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
   ALLOCATE(ims_dr_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
-  ALLOCATE(ims_ts_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
-  ALLOCATE(ims_tr_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
+  ALLOCATE(ims_ts_k(1,DNS_MPI_K_MAXTYPES))  ! ims_npro_k,DNS_MPI_K_MAXTYPES
+  ALLOCATE(ims_tr_k(1,DNS_MPI_K_MAXTYPES))  ! ims_npro_k,DNS_MPI_K_MAXTYPES
   ALLOCATE(ims_plan_trps_k(ims_npro_k))
   ALLOCATE(ims_plan_trpr_k(ims_npro_k)) 
 
