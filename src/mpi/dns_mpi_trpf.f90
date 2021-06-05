@@ -48,7 +48,8 @@ SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
   TREAL,    DIMENSION(*),          INTENT(IN)  :: a
   TREAL,    DIMENSION(*),          INTENT(OUT) :: b
   TINTEGER, DIMENSION(ims_npro_k), INTENT(IN)  :: dsend, drecv ! displacements
-  INTEGER,  DIMENSION(ims_npro_k), INTENT(IN)  :: tsend, trecv ! types
+  ! INTEGER,  DIMENSION(ims_npro_k), INTENT(IN)  :: tsend, trecv ! types
+  INTEGER, INTENT(IN) :: tsend, trecv
   
 ! -----------------------------------------------------------------------
   TINTEGER l,m,n,ns,nr,ips,ipr,idummy
@@ -72,13 +73,13 @@ SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
      nr=ims_plan_trpr_k(m)+1; ipr=nr-1 
      IF ( ims_trp_mode_k .EQ. DNS_MPI_TRP_ASYNCHRONOUS) THEN 
         l = l + 1      
-        CALL MPI_ISEND(a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, ims_comm_z, mpireq(l), ims_err)
+        CALL MPI_ISEND(a(dsend(ns)+1), 1, tsend, ips, ims_tag, ims_comm_z, mpireq(l), ims_err)
         l = l + 1
-        CALL MPI_IRECV(b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag, ims_comm_z, mpireq(l), ims_err)         
+        CALL MPI_IRECV(b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_z, mpireq(l), ims_err)         
      ELSEIF ( ims_trp_mode_k .EQ. DNS_MPI_TRP_SENDRECV) THEN 
         CALL MPI_SENDRECV(& 
-             a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, & 
-             b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag, ims_comm_z, status(1,1), ims_err) 
+             a(dsend(ns)+1), 1, tsend, ips, ims_tag, & 
+             b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_z, status(1,1), ims_err) 
      ELSE;  CONTINUE     ! No transpose
      ENDIF
   ENDDO
@@ -113,7 +114,8 @@ SUBROUTINE DNS_MPI_TRPF_I(a, b, dsend, drecv, tsend, trecv)
   TREAL,    DIMENSION(*),          INTENT(IN)  :: a
   TREAL,    DIMENSION(*),          INTENT(OUT) :: b
   TINTEGER, DIMENSION(ims_npro_i), INTENT(IN)  :: dsend, drecv ! displacements
-  INTEGER,  DIMENSION(ims_npro_i), INTENT(IN)  :: tsend, trecv ! types
+  !INTEGER,  DIMENSION(ims_npro_i), INTENT(IN)  :: tsend, trecv ! types
+  INTEGER, INTENT(IN) :: tsend, trecv
   
 ! -----------------------------------------------------------------------
   TINTEGER l,m,ns,nr,ips,ipr
@@ -127,13 +129,13 @@ SUBROUTINE DNS_MPI_TRPF_I(a, b, dsend, drecv, tsend, trecv)
      nr=ims_plan_trpr_i(m)+1;   ipr=nr-1  
      IF ( ims_trp_mode_i .EQ. DNS_MPI_TRP_ASYNCHRONOUS ) THEN  
         l = l + 1
-        CALL MPI_ISEND(a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, ims_comm_x, mpireq(l), ims_err) 
+        CALL MPI_ISEND(a(dsend(ns)+1), 1, tsend, ips, ims_tag, ims_comm_x, mpireq(l), ims_err) 
         l = l + 1
-        CALL MPI_IRECV(b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag, ims_comm_x, mpireq(l), ims_err)  
+        CALL MPI_IRECV(b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_x, mpireq(l), ims_err)  
      ELSEIF ( ims_trp_mode_i .EQ. DNS_MPI_TRP_SENDRECV ) THEN 
         CALL MPI_SENDRECV(&
-             a(dsend(ns)+1),1,tsend(ns),ips, ims_tag, & 
-             b(drecv(nr)+1),1,trecv(nr),ipr, ims_tag,ims_comm_x,status(1,1),ims_err)    
+             a(dsend(ns)+1),1,tsend,ips, ims_tag, & 
+             b(drecv(nr)+1),1,trecv,ipr, ims_tag,ims_comm_x,status(1,1),ims_err)    
      ELSE; CONTINUE ! No transpose
      ENDIF
   ENDDO
