@@ -29,12 +29,13 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
 #include "integers.h"
 
-  TINTEGER,                           INTENT(IN   ) :: is
-  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN   ) :: q, s
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(IN   ) :: s_local
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, wrk3d
-  TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: mean2d, wrk1d
-  TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk2d
+  TINTEGER,                                  INTENT(IN   ) :: is
+  TREAL, DIMENSION(imax,jmax,kmax,inb_flow), INTENT(IN   ) :: q
+  TREAL, DIMENSION(imax,jmax,kmax,inb_scal), INTENT(IN   ) :: s
+  TREAL, DIMENSION(imax,jmax,kmax),          INTENT(IN   ) :: s_local
+  TREAL, DIMENSION(imax,jmax,kmax),          INTENT(INOUT) :: dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, wrk3d
+  TREAL, DIMENSION(jmax,*),                  INTENT(INOUT) :: mean2d, wrk1d
+  TREAL, DIMENSION(*),                       INTENT(INOUT) :: wrk2d
 
   TARGET q, s, tmp3
 

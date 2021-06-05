@@ -149,6 +149,89 @@ SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
   RETURN
 END SUBROUTINE OPR_PARTIAL2
 
+! ###################################################################################
+! ### First Derivative 
+! ### Second Derivative including the diffusivity (is=1,inb_scal) / viscosity (is=0)
+SUBROUTINE OPR_PARTIAL2D(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
+
+  USE DNS_TYPES, ONLY : grid_dt
+
+  IMPLICIT NONE
+
+  TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity
+  TINTEGER,                        INTENT(IN)    :: nlines ! # of lines to be solved
+  TINTEGER, DIMENSION(2,*),        INTENT(IN)    :: bcs    ! BCs at xmin (1,*) and xmax (2,*):
+                                                           !     0 biased, non-zero
+                                                           !     1 forced to zero
+  TYPE(grid_dt),                   INTENT(IN)    :: g
+  TREAL, DIMENSION(nlines,g%size), INTENT(IN)    :: u
+  TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result
+  TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
+  TREAL, DIMENSION(nlines,g%size), INTENT(INOUT) :: wrk3d  ! First derivative
+
+! -------------------------------------------------------------------
+  TINTEGER ip
+
+! ###################################################################
+! always calculate first derivative as this routine is normally called from opr_burgers 
+  CALL OPR_PARTIAL1(nlines, bcs, g, u,wrk3d, wrk2d)
+
+  ! ###################################################################
+  IF ( g%periodic ) THEN
+     SELECT CASE( g%mode_fdm )
+
+     CASE( FDM_COM4_JACOBIAN )
+        CALL FDM_C2N4P_RHS(g%size,nlines, u, result)
+
+     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
+       ! CALL FDM_C2N6P_RHS(g%size,nlines, u, result)
+       CALL FDM_C2N6HP_RHS(g%size,nlines, u, result)
+
+     CASE( FDM_COM8_JACOBIAN )                  ! Not yet implemented
+        CALL FDM_C2N6P_RHS(g%size,nlines, u, result)
+
+     END SELECT
+     ip=is*5 ! LU decomposition containing the diffusivity 
+     CALL TRIDPSS(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3),g%lu2d(1,ip+4),g%lu2d(1,ip+5), result,wrk2d)
+
+! -------------------------------------------------------------------
+  ELSE
+     SELECT CASE( g%mode_fdm )
+
+     CASE( FDM_COM4_JACOBIAN )
+        IF ( g%uniform ) THEN
+           CALL FDM_C2N4_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
+        ELSE ! Not yet implemented
+        ENDIF
+     CASE( FDM_COM6_JACOBIAN )
+        IF ( g%uniform ) THEN
+          ! CALL FDM_C2N6_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
+          CALL FDM_C2N6H_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
+        ELSE
+          ! CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, u, wrk3d, result)
+          CALL FDM_C2N6HNJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, u, wrk3d, result)
+        ENDIF
+
+     CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
+        IF ( g%uniform ) THEN
+           CALL FDM_C2N6_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
+        ELSE
+           CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, u, wrk3d, result)
+        ENDIF
+
+     CASE( FDM_COM6_DIRECT   )
+        CALL FDM_C2N6ND_RHS(g%size,nlines, g%lu2(1,4), u, result)
+
+     END SELECT
+
+     ip = is*3 ! LU decomposition containing the diffusivity ! (bcs(1,2) + bcs(2,2)*2)*3
+     CALL TRIDSS(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3), result)
+
+  ENDIF
+
+  RETURN
+END SUBROUTINE OPR_PARTIAL2D
+
 ! ###################################################################
 ! ###################################################################
 #ifdef USE_MPI

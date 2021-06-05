@@ -52,6 +52,7 @@ CONTAINS
     USE DNS_TYPES, ONLY : pointers_dt
     USE DNS_GLOBAL,    ONLY : g
     USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal_array
+    USE DNS_GLOBAL,    ONLY : inb_flow, inb_scal
     USE DNS_GLOBAL,    ONLY : buoyancy, imode_eqns, icalc_scal
     USE DNS_GLOBAL,    ONLY : itransport, froude
     USE DNS_GLOBAL,    ONLY : epbackground, pbackground, rbackground
@@ -67,14 +68,15 @@ CONTAINS
 
     IMPLICIT NONE
 
-    TREAL, DIMENSION(isize_field,    *), INTENT(IN)    :: q,s
-    TREAL, DIMENSION(isize_field,    *), INTENT(INOUT) :: hq ! auxiliary array
-    TREAL, DIMENSION(isize_txc_field,6), INTENT(INOUT) :: txc
-    TREAL, DIMENSION(*),                 INTENT(INOUT) :: wrk1d,wrk2d,wrk3d
+    TREAL, DIMENSION(isize_field,inb_flow), INTENT(IN)    :: q
+    TREAL, DIMENSION(isize_field,inb_scal), INTENT(IN)    :: s
+    TREAL, DIMENSION(isize_field,inb_flow), INTENT(INOUT) :: hq ! auxiliary array
+    TREAL, DIMENSION(isize_txc_field,6),    INTENT(INOUT) :: txc
+    TREAL, DIMENSION(*),                    INTENT(INOUT) :: wrk1d,wrk2d,wrk3d
 
-    TREAL, DIMENSION(isize_particle,*),  INTENT(IN)    :: l_q
-    TREAL, DIMENSION(isize_particle,*),  INTENT(INOUT) :: l_txc
-    TREAL, DIMENSION(*),                 INTENT(INOUT) :: l_comm
+    TREAL, DIMENSION(isize_particle,*),     INTENT(IN)    :: l_q
+    TREAL, DIMENSION(isize_particle,*),     INTENT(INOUT) :: l_txc
+    TREAL, DIMENSION(*),                    INTENT(INOUT) :: l_comm
 
     TARGET :: q,s, txc
 
