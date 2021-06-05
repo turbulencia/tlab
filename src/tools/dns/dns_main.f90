@@ -48,7 +48,7 @@ PROGRAM DNS
   TARGET q
 
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: e, rho, p, T, vis
+  TREAL, DIMENSION(:), POINTER :: e, rho, p, T
 
   CHARACTER*32 fname, inifile
   CHARACTER*128 str, line
@@ -170,9 +170,6 @@ PROGRAM DNS
   ALLOCATE(q_inf(g_inf(1)%size*g_inf(2)%size*kmax,inb_flow_array))
   ALLOCATE(s_inf(g_inf(1)%size*g_inf(2)%size*kmax,inb_scal_array))
 
-! -------------------------------------------------------------------
-! Allocating additional memory space
-! -------------------------------------------------------------------
 ! Rhs
   WRITE(str,*) inb_flow; line = 'Allocating array rhs flow of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
@@ -348,11 +345,9 @@ PROGRAM DNS
      p   => q(:,6)
      T   => q(:,7)
 
-     IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) vis => q(:,8)
-
      CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
      CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
-     IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, vis)
+     IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, q(:,8))
 
 #ifdef CHEMISTRY
      IF ( ireactive .NE. CHEM_NONE ) THEN ! Calculate TGFM if reactive case
@@ -416,7 +411,7 @@ PROGRAM DNS
   ENDIF
 #endif
 
-  CALL DNS_END(0)
+  CALL DNS_END(INT(logs_data(1)))
 
   STOP
 END PROGRAM DNS

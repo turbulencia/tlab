@@ -30,8 +30,6 @@ MODULE DNS_LOCAL
 ! ###################################################################
 ! Variable viscosity
 ! ###################################################################
-  ! TREAL    :: visctime, viscstart, viscstop
-  ! TINTEGER :: iviscchg
   LOGICAL :: flag_viscosity
   TREAL   :: visc_stop, visc_time, visc_rate
 
