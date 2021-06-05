@@ -411,7 +411,5 @@ PROGRAM DNS
   ENDIF
 #endif
 
-  CALL DNS_END(INT(logs_data(1)))
-
-  STOP
+  CALL DNS_STOP(INT(logs_data(1)))
 END PROGRAM DNS

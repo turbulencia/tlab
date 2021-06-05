@@ -683,10 +683,7 @@ PROGRAM TRANSFIELDS
      ENDIF
   ENDIF
 
-  CALL DNS_END(0)
-
-  STOP
-
+  CALL DNS_STOP(0)
 END PROGRAM TRANSFIELDS
 
 !########################################################################

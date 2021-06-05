@@ -906,12 +906,8 @@ PROGRAM VISUALS
 
   ENDDO
 
-  CALL DNS_END(0)
-
-  STOP
-
   100 FORMAT(G_FORMAT_R)
-
+  CALL DNS_STOP(0)
 END PROGRAM VISUALS
 
 !########################################################################

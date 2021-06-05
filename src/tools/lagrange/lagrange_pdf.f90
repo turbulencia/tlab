@@ -10,14 +10,14 @@
 !########################################################################
 !########################################################################
 PROGRAM LAGRANGE_PDF
-  
+
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
-    
+
   IMPLICIT NONE
 #include "integers.h"
 #ifdef USE_MPI
@@ -29,7 +29,7 @@ PROGRAM LAGRANGE_PDF
   TREAL, DIMENSION(:,:),     ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:),       ALLOCATABLE       :: wrk1d,wrk2d, wrk3d
   TREAL, DIMENSION(:,:),     ALLOCATABLE       :: txc
-  TREAL, DIMENSION(:,:,:,:), ALLOCATABLE, SAVE :: s  
+  TREAL, DIMENSION(:,:,:,:), ALLOCATABLE, SAVE :: s
 
   TREAL, DIMENSION(:,:),     ALLOCATABLE       :: l_q, l_txc
   TREAL, DIMENSION(:),       ALLOCATABLE, SAVE :: l_comm
@@ -60,7 +60,7 @@ PROGRAM LAGRANGE_PDF
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'End',        '0',  nitera_last )
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Restart',    '50', nitera_save )
 
-  inb_part_txc = 1 
+  inb_part_txc = 1
 
 #include "dns_alloc_larrays.h"
   isize_wrk3d = imax*jmax*kmax
@@ -75,7 +75,7 @@ PROGRAM LAGRANGE_PDF
   ! ENDIF
 ! -------------------------------------------------------------------
 ! Allocating memory space
-! -------------------------------------------------------------------      
+! -------------------------------------------------------------------
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d))
   ALLOCATE(wrk3d(isize_wrk3d))
@@ -92,9 +92,9 @@ PROGRAM LAGRANGE_PDF
      CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
      CALL DNS_STOP(DNS_ERROR_ALLOC)
   ENDIF
-  
+
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
@@ -121,7 +121,5 @@ PROGRAM LAGRANGE_PDF
 
   ENDDO
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL DNS_STOP(0)
 END PROGRAM

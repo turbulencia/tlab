@@ -141,9 +141,7 @@ PROGRAM INISCAL
 ! ###################################################################
   CALL DNS_WRITE_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, isize_wrk3d, s, wrk3d)
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL DNS_STOP(0)
 END PROGRAM INISCAL
 
 ! ###################################################################
