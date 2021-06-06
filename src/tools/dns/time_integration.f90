@@ -1,8 +1,6 @@
 #include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
-#include "dns_const_mpi.h"
-#include "avgij_map.h"
 
 !########################################################################
 !#
@@ -50,14 +48,12 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
   LOGICAL flag_save
 
   ! ###################################################################
-  ! Loop on iterations: itime counter
-  ! ###################################################################
-  itime = nitera_first
-
   WRITE(line1,*) itime; line1 = 'Starting time integration at It'//TRIM(ADJUSTL(line1))//'.'
   CALL IO_WRITE_ASCII(lfile,line1)
 
-  DO WHILE ( itime < nitera_last )
+  DO
+    IF ( itime >= nitera_last   ) EXIT
+    IF ( INT(logs_data(1)) /= 0 ) EXIT
 
     CALL TIME_RUNGEKUTTA(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc, l_comm)
 
@@ -67,7 +63,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
     ! -----------------------------------------------------------------------
     IF ( MOD(itime-nitera_first,FilterDomainStep) == 0 ) THEN
       IF ( MOD(itime-nitera_first,nitera_stats)  == 0 ) THEN; flag_save = .TRUE.
-      ELSE;                                                     flag_save = .FALSE.
+      ELSE;                                                   flag_save = .FALSE.
       ENDIF
       CALL DNS_FILTER(flag_save, q,s, txc, wrk1d,wrk2d,wrk3d)
     ENDIF
@@ -129,13 +125,14 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
     ENDIF
 
     ! -----------------------------------------------------------------------
-    IF ( MOD(itime-nitera_first,nitera_save) == 0 .OR. &      ! Save restart files
+    IF ( MOD(itime-nitera_first,nitera_save) == 0 .OR. &        ! Save restart files
         itime == nitera_last .OR. INT(logs_data(1)) /= 0 ) THEN ! Secure that one restart file is saved
 
       IF ( icalc_flow == 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
         CALL DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, isize_field, q, wrk3d)
       ENDIF
+
       IF ( icalc_scal == 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
         CALL DNS_WRITE_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, isize_field, s, wrk3d)
@@ -162,12 +159,9 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
     ENDIF
 
     ! -----------------------------------------------------------------------
-    IF ( MOD(itime-nitera_first,nitera_pln) == 0 ) THEN ! Save planes
+    IF ( MOD(itime-nitera_first,nitera_pln) == 0 ) THEN
       CALL PLANES_SAVE( q,s, hq,txc, wrk1d,wrk2d,wrk3d )
     ENDIF
-
-    ! -----------------------------------------------------------------------
-    IF ( INT(logs_data(1)) /= 0 ) CALL DNS_STOP(INT(logs_data(1)))
 
   ENDDO
 
