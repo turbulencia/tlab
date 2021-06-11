@@ -256,6 +256,8 @@ PROGRAM DNS
   ! ###################################################################
   ! Read fields
   ! ###################################################################
+  itime = nitera_first
+
   visc_stop  = visc ! Value read in inifile
 
   IF ( icalc_scal == 1 ) THEN
