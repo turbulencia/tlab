@@ -955,13 +955,13 @@ PROGRAM AVERAGES
       END IF
 
       IF (  jmax_aux*opt_block /= g(2)%size ) THEN
-        DO ifield = 1,nfield
-          CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(ifield)%field, wrk1d)
+        DO is = 1,ifield
+          CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
         END DO
       END IF
 
       CALL AVG_N_XZ(fname, itime, rtime, imax*opt_block, jmax_aux, kmax, &
-          nfield, opt_order, vars, gate_level,gate, y_aux, mean)
+          ifield, opt_order, vars, gate_level,gate, y_aux, mean)
 
     END IF
 
