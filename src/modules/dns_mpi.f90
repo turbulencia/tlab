@@ -26,7 +26,7 @@ MODULE DNS_MPI
 
 
 !  INTEGER,  DIMENSION(:  ), ALLOCATABLE :: ims_map_j
-!  TINTEGER, DIMENSION(  :), ALLOCATABLE :: ims_size_j
+  TINTEGER, DIMENSION(  :), ALLOCATABLE :: ims_size_j ! IBM
 !  TINTEGER, DIMENSION(:,:), ALLOCATABLE :: ims_ds_j, ims_dr_j
 !  INTEGER,  DIMENSION(:,:), ALLOCATABLE :: ims_ts_j, ims_tr_j
 

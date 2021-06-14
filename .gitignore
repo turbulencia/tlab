@@ -26,6 +26,7 @@ test_little/*
 test_parallel/*
 test_files/*
 test/*
+files_history/*
 *~
 */*~
 */*/*~

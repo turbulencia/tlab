@@ -40,6 +40,8 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ALLOCATE(ims_plan_trps_k(ims_npro_k))
   ALLOCATE(ims_plan_trpr_k(ims_npro_k)) 
 
+  ALLOCATE(ims_size_j(DNS_MPI_J_MAXTYPES)) ! Particle information
+
   ALLOCATE(ims_size_p(ims_npro)) ! Particle information
 
 ! #######################################################################
@@ -100,6 +102,10 @@ SUBROUTINE DNS_MPI_INITIALIZE
   CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
        ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF
+
+  id = DNS_MPI_J_PARTIAL
+  npage = imax*kmax
+  ims_size_j(id) = npage
 
 ! -----------------------------------------------------------------------
   IF ( ims_npro_i .GT. 1 .AND. ifourier .EQ. 1 ) THEN

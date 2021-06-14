@@ -33,7 +33,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_TOWER 
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-  USE DNS_IBM
+  USE DNS_IBM,    ONLY : eps
 
   IMPLICIT NONE
 
@@ -42,11 +42,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   TREAL dte
   TREAL, DIMENSION(isize_field)   :: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
-  TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,wrk3d,epsi
+  TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,wrk3d
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(imax,kmax,*)   :: wrk2d
-
-  TINTEGER, save                  :: n ! debugging IBM
 
   TARGET h2, hs
 
@@ -398,8 +396,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! ! 3d serial case 41 for ekman flow
 !   ip_b = imax*jmax*(int(kmax/2) - 10) + 1
-!   do k = 1,20
-!     do is = 1,20
+!   do k = 1,20     ! width in k
+!     do is = 1,20  ! height in j
 !       h1(ip_b:ip_b+imax-1) = C_0_R
 !       h2(ip_b:ip_b+imax-1) = C_0_R
 !       h3(ip_b:ip_b+imax-1) = C_0_R
@@ -415,19 +413,20 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !   end do
 
   ! for debugging, just initialized once
-  if (n .eq. 0) then 
-    call INITIALIZE_GEOMETRY(epsi) 
-  end if
-  n = n + 1
 
+  ! if (n .eq. 0) then 
+  !   call INITIALIZE_GEOMETRY(epsi) 
+  ! end if
+  ! n = n + 1
+  ! epsi = reshape(eps,(/isize_field/))
   ! apply new BCs
-  h1(:) = (C_1_R - epsi(:)) * h1(:)
-  h2(:) = (C_1_R - epsi(:)) * h2(:)
-  h3(:) = (C_1_R - epsi(:)) * h3(:)
+  h1(:) = (C_1_R - eps(:)) * h1(:)
+  h2(:) = (C_1_R - eps(:)) * h2(:)
+  h3(:) = (C_1_R - eps(:)) * h3(:)
   ! overwrite ini flow fields with new geometry BC
-  u(:)  = (C_1_R - epsi(:)) * u(:)
-  v(:)  = (C_1_R - epsi(:)) * v(:)
-  w(:)  = (C_1_R - epsi(:)) * w(:)
+  u(:)  = (C_1_R - eps(:)) * u(:)
+  v(:)  = (C_1_R - eps(:)) * v(:)
+  w(:)  = (C_1_R - eps(:)) * w(:)
 
  
 ! -----------------------------------------------------------------------

@@ -16,6 +16,7 @@ PROGRAM DNS
   USE LAGRANGE_GLOBAL
   USE DNS_LOCAL
   USE DNS_TOWER
+  USE DNS_IBM
   USE BOUNDARY_INFLOW
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
@@ -63,6 +64,7 @@ PROGRAM DNS
   TINTEGER idummy, ig
   TINTEGER ierr, isize_wrk3d, isize_loc
   TREAL dummy
+  LOGICAL ibm_allocated
 
 ! ###################################################################
   inifile = 'dns.ini'
@@ -202,6 +204,12 @@ PROGRAM DNS
   IF ( ierr .NE. 0 ) THEN
      CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_s.')
      CALL DNS_STOP(DNS_ERROR_ALLOC)
+  ENDIF
+
+! IBM
+  IF ( ibm_mode .EQ. 1 ) THEN
+    ibm_allocated = .FALSE.
+    CALL ALLOCATE_IBM(ibm_allocated)
   ENDIF
 
 ! Statistics
@@ -406,6 +414,14 @@ PROGRAM DNS
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
      CALL BOUNDARY_INFLOW_INITIALIZE(rtime, q_inf,s_inf, txc, wrk2d,wrk3d)
   ENDIF
+
+! ###################################################################
+! Initialize IBM
+! ###################################################################
+  IF ( ibm_mode .EQ. 1 ) THEN
+    CALL INITIALIZE_GEOMETRY(txc, wrk3d)
+    ! CALL INITIALIZE_IBM()
+  ENDIF  
 
 ! ###################################################################
 ! Initialize LES

@@ -25,6 +25,10 @@
 
 #define DNS_MPI_I_MAXTYPES  6
 
+! IBM
+#define DNS_MPI_J_PARTIAL   1 
+#define DNS_MPI_J_MAXTYPES  1
+
 ! Control of MPI Transpositions
 #define DNS_MPI_TRP_NONE         0
 #define DNS_MPI_TRP_ASYNCHRONOUS 1
