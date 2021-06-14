@@ -43,7 +43,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   ! -------------------------------------------------------------------
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 20
-  TINTEGER j,k, ivar, bcs(2,2)
+  TINTEGER j, bcs(2,2)
   TREAL dummy
   TREAL c23, prefactor
 
@@ -51,9 +51,6 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   CHARACTER*32 name, groupname(MAX_VARS_GROUPS)
   CHARACTER*250 line1, varname(MAX_VARS_GROUPS)
-  CHARACTER*1300 line2
-
-  CHARACTER(LEN=32) varname2(MAX_AVG_TEMPORAL), vargroup2(MAX_AVG_TEMPORAL) 
 
   ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: u,v,w,p, e,rho, vis
@@ -384,8 +381,6 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         //'PotTemp_fr PotTemp_eq SaturationPressure rPref RelativeHumidity Dewpoint LapseRate_dew'
   END IF
 
-#define L_AVGMAX 191
-
   ! -----------------------------------------------------------------------
   ! Auxiliary variables depending on y and t; this last group is not written
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
@@ -423,7 +418,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! -----------------------------------------------------------------------
   nv = ig(ng) +sg(ng) -1
   IF ( MAX_AVG_TEMPORAL .LT. nv ) THEN
-    CALL IO_WRITE_ASCII(efile,'AVERAGES_FLOW_XZ. Not enough space in local arrays.')
+    CALL IO_WRITE_ASCII(efile,'AVG_FLOW_XZ. Not enough space in local arrays.')
     CALL DNS_STOP(LES_ERROR_AVGTMP)
   END IF
   mean2d(:,1:nv) = C_0_R
@@ -453,8 +448,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   U_y1(:) = rU_y(:)
   V_y1(:) = rV_y(:)
-  W_y1(:) = rW_y(:) 
-  
+  W_y1(:) = rW_y(:)
+
   ! Density and Fabre avrages
   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
     rR(:) = rbackground(:)
@@ -1362,74 +1357,16 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! ###################################################################
   ! Output
   ! ###################################################################
-#ifdef USE_NETCDF
-  line2 = ''
-  ivar=1 
-  DO k = 1,ng
-     line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(varname(k)))
-     DO j=1,sg(k)
-        vargroup2(ivar)=groupname(k) 
-        ivar=ivar+1
-     ENDDO
-  END DO
-
-  CALL LIST_STRING( line2, nv, varname2 )
+  ! 14 t-dependent variables, for consistency with old format
+  ng = ng +1
+  groupname(ng) = ''
+  varname(ng)   = 'dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy'
+  ng = ng +1; groupname(ng) = ''; varname(ng) = ''
+  ng = ng +1; groupname(ng) = ''; varname(ng) = ''
+  ng = ng +1; groupname(ng) = ''; varname(ng) = ''
 
   WRITE(name,*) itime; name='avg'//TRIM(ADJUSTL(name))
-  CALL IO_WRITE_AVERAGES( name, itime,rtime, nv,jmax, g(2)%nodes, varname2, vargroup2, mean2d )
-
-#else
-! -----------------------------------------------------------------------
-! TkStat file
-! -----------------------------------------------------------------------
-  IF ( L_AVGMAX .LT. nv ) THEN
-    CALL IO_WRITE_ASCII(efile,'AVERAGES_FLOW_XZ. Not enough space in format definition.')
-    CALL DNS_STOP(LES_ERROR_AVGTMP)
-  END IF
-
-#ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN
-#endif
-
-  WRITE(name,*) itime; name='avg'//TRIM(ADJUSTL(name))
-
-#define LOC_UNIT_ID 23
-#define LOC_STATUS 'unknown'
-#ifdef USE_RECLEN
-    OPEN(UNIT=LOC_UNIT_ID, RECL=1050, FILE=name, STATUS=LOC_STATUS) ! this is probably outdated
-#else
-    OPEN(UNIT=LOC_UNIT_ID, FILE=name, STATUS=LOC_STATUS)
-#endif
-
-    WRITE(LOC_UNIT_ID, '(A8,E14.7E3)') 'RTIME = ', rtime
-    line2 = 'I J Y'  ! Independent variables
-    DO k = 1,ng      ! Dependent variables depending on y and t
-      WRITE(LOC_UNIT_ID,1010) 'GROUP = '//TRIM(ADJUSTL(groupname(k)))//' '//TRIM(ADJUSTL(varname(k)))
-      line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(varname(k)))
-    END DO
-    DO k = 1,14       ! Dependent variables depending on t, for consistency with old format
-      line2 = TRIM(ADJUSTL(line2))//' '//'dummy'
-    END DO
-    WRITE(LOC_UNIT_ID,1010) 'GROUP ='
-    WRITE(LOC_UNIT_ID,1010) 'GROUP ='
-    WRITE(LOC_UNIT_ID,1010) 'GROUP ='
-    WRITE(LOC_UNIT_ID,1010) 'GROUP ='
-    WRITE(LOC_UNIT_ID,1010) TRIM(ADJUSTL(line2))
-
-    DO j = 1,jmax
-      WRITE(LOC_UNIT_ID,1020) 1, j, g(2)%nodes(j), (mean2d(j,k),k=1,nv)
-    END DO
-
-    CLOSE(LOC_UNIT_ID)
-
-#ifdef USE_MPI
-  END IF
-#endif
-
-1010 FORMAT(A)
-1020 FORMAT(I5,(1X,I5),L_AVGMAX(1X,G_FORMAT_R),14(1X,G_FORMAT_R))
-
-#endif
+  CALL IO_WRITE_AVERAGES( name, itime,rtime, jmax,nv,ng, g(2)%nodes, varname, groupname, mean2d )
 
   RETURN
 END SUBROUTINE AVG_FLOW_XZ

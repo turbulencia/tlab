@@ -19,18 +19,18 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# This program reads the ID(TAG) of the largest particle file from the 
+!# This program reads the ID(TAG) of the largest particle file from the
 !# the program l_trajec.x and then determines the position of these
 !# largest particles at the start point of the simulation.
 !#
 !#
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 PROGRAM LAGRANGE_POS_TRAJEC
-  
+
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
@@ -85,11 +85,11 @@ PROGRAM LAGRANGE_POS_TRAJEC
 
 
   ALLOCATE(dummy_proc(isize_trajectory))
-  ALLOCATE(all_dummy_proc(isize_trajectory)) 
+  ALLOCATE(all_dummy_proc(isize_trajectory))
   ALLOCATE(dummy_big_overall(isize_trajectory))
   ALLOCATE(l_trajectories_tags(isize_trajectory))
   ALLOCATE(l_trajectories(3,isize_trajectory))
-  ALLOCATE(all_l_trajectories(3,isize_trajectory)) 
+  ALLOCATE(all_l_trajectories(3,isize_trajectory))
 
   l_trajectories(:,:) = C_0_R
   all_l_trajectories(:,:)=C_0_R
@@ -150,7 +150,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
      OPEN(unit=15, file=str, access='stream', form='unformatted')
      INQUIRE(UNIT=15, POS=particle_pos) !would be 1
      WRITE (15)  ims_npro  !header
-     INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
+     INQUIRE(UNIT=15, POS=particle_pos) !would be 5
      WRITE (15)  isize_trajectory  !header
      INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
      WRITE (15)  l_trajectories_tags
@@ -172,7 +172,5 @@ PROGRAM LAGRANGE_POS_TRAJEC
 
 #endif
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL DNS_STOP(0)
 END PROGRAM

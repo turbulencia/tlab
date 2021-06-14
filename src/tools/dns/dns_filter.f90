@@ -15,7 +15,7 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, wrk1d,wrk2d,wrk3d)
   USE DNS_LOCAL,     ONLY : ilimit_scal, s_bound_min, s_bound_max
   USE DNS_LOCAL,     ONLY : nitera_stats_spa
   USE STATISTICS
-  
+
   IMPLICIT NONE
 
 #include "integers.h"
@@ -42,11 +42,11 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, wrk1d,wrk2d,wrk3d)
      rho => q(:,5)
      p   => q(:,6)
      T   => q(:,7)
-     
+
      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) vis => q(:,8)
 
   ENDIF
-  
+
 ! Might be better to filter the pressure instead of the energy in compressible flows
   ! IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
   !    iq_loc = (/ 5,1,2,3,6 /) ! Filtered variables: rho, u,v,w, p
@@ -62,15 +62,15 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! Statistics
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL .AND. nitera_stats_spa .GT. 0 ) THEN
-     CALL DNS_SAVE_AVGKIN(q(1,5), q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), txc(1,3), txc(1,4), &
-          txc(1,5), txc(1,6), txc(1,7), mean_flow, wrk2d)     
+     CALL AVG_TKE_ZT_REDUCE(q(1,5), q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), txc(1,3), txc(1,4), &
+          txc(1,5), txc(1,6), txc(1,7), mean_flow, wrk2d)
   ENDIF
 
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. stats_filter .AND. flag_save ) THEN
-     CALL FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)         
+     CALL FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
      CALL AVG_ENERGY_XZ(i1, itime, rtime, imax,jmax,kmax,q, txc, mean, wrk3d)
   ENDIF
-  
+
 ! filtering
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN ! contruct fields per unit volume
      DO iq = 1,inb_flow-1
@@ -80,14 +80,14 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, wrk1d,wrk2d,wrk3d)
         s(:,is) = s(:,is) *q(:,inb_flow)
      ENDDO
   ENDIF
-  
+
   DO iq = 1,inb_flow
      CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, q(1,iq), wrk1d,wrk2d,txc)
   ENDDO
   DO is = 1,inb_scal
      CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, s(1,is), wrk1d,wrk2d,txc)
   ENDDO
-  
+
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN ! re-contruct fields per unit mass
      DO iq = 1,inb_flow-1
         q(:,iq) = q(:,iq) /q(:,inb_flow)
@@ -105,19 +105,19 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, wrk1d,wrk2d,wrk3d)
 
 ! statistics
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. stats_filter .AND. flag_save ) THEN
-     CALL FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)         
+     CALL FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
      CALL AVG_ENERGY_XZ(i2, itime, rtime, imax,jmax,kmax, q, txc, mean, wrk3d)
   ENDIF
-  
+
 ! #######################################################################
 ! recalculation of diagnostic variables
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN
         CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)
-        
-     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN 
+
+     ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
         CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
-        
+
      ENDIF
 
   ELSE
@@ -135,14 +135,14 @@ SUBROUTINE DNS_FILTER(flag_save, q,s, txc, wrk1d,wrk2d,wrk3d)
      CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
      CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
 !     ENDIF
-     
+
      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, vis)
 
   ENDIF
 
   RETURN
 END SUBROUTINE DNS_FILTER
-     
+
 ! #######################################################################
 ! #######################################################################
 #define rR(j)     mean2d(j,1)
@@ -199,7 +199,7 @@ SUBROUTINE AVG_ENERGY_XZ(iflag, itime, rtime, nx,ny,nz, q, eps, mean2d, wrk3d)
            wrk3d(i,2,k) = q(i,j,k,2)
            wrk3d(i,3,k) = q(i,j,k,3)
         ENDDO; ENDDO
-     
+
      ENDIF
 
      fU(j) = AVG_IK(nx,ny,nz, i1, wrk3d, g(1)%jac,g(3)%jac, area) /rR(j)

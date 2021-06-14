@@ -19,6 +19,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE BOUNDARY_BCS
   USE BOUNDARY_INFLOW
   USE STATISTICS
+  USE PLANES
 
   IMPLICIT NONE
 
@@ -829,7 +830,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#[ViscChange]')
   CALL IO_WRITE_ASCII(bakfile, '#Time=<time>')
 
-  CALL SCANINIREAL(bakfile, inifile, 'ViscChange', 'Time', '0.0', visctime)
+  CALL SCANINIREAL(bakfile, inifile, 'ViscChange', 'Time', '0.0', visc_time)
 
 ! ###################################################################
 ! Domain Filter
@@ -1142,6 +1143,9 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( nitera_pln       .LE. 0 ) nitera_pln       = nitera_last - nitera_first + 1
   IF ( FilterDomainStep .LE. 0 ) FilterDomainStep = nitera_last - nitera_first + 1
   IF ( FilterInflowStep .LE. 0 ) FilterInflowStep = nitera_last - nitera_first + 1
+
+  IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) nitera_stats_spa =-1 ! Never call avg_spatial routines
+  IF ( nitera_stats_spa .LE. 0 ) nitera_stats_spa = nitera_last - nitera_first + 1
 
 ! -------------------------------------------------------------------
 ! Control limits

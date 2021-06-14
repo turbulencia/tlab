@@ -19,14 +19,14 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Post processing to find the largest particles 
+!# Post processing to find the largest particles
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 PROGRAM LAGRANGE_TRAJEC
-  
+
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
@@ -88,14 +88,14 @@ PROGRAM LAGRANGE_TRAJEC
 
 
 
-  ALLOCATE(big_part(isize_trajectory)) 
-  ALLOCATE(tag_big_part(isize_trajectory)) 
+  ALLOCATE(big_part(isize_trajectory))
+  ALLOCATE(tag_big_part(isize_trajectory))
 #ifdef USE_MPI
   IF (ims_pro .EQ. 0) THEN
-     ALLOCATE(big_all(isize_trajectory*ims_npro)) 
-     ALLOCATE(big_overall(isize_trajectory)) 
-     ALLOCATE(tag_big_all(isize_trajectory*ims_npro)) 
-     ALLOCATE(tag_big_overall(isize_trajectory)) 
+     ALLOCATE(big_all(isize_trajectory*ims_npro))
+     ALLOCATE(big_overall(isize_trajectory))
+     ALLOCATE(tag_big_all(isize_trajectory*ims_npro))
+     ALLOCATE(tag_big_overall(isize_trajectory))
   ENDIF
 
 #endif
@@ -119,16 +119,16 @@ PROGRAM LAGRANGE_TRAJEC
 !  print*, big_part
 !  ENDIF
 
-  DO j= isize_trajectory-1,1,-1 
+  DO j= isize_trajectory-1,1,-1
      swapped = .FALSE.
      DO i = 1,j
         IF ( big_part(i) .GT. big_part(i+1)) THEN !if 49... bigger than 50...
 !START SWAPPING
-           temp = big_part(i) 
+           temp = big_part(i)
            big_part(i) = big_part(i+1)
            big_part(i+1) = temp
 
-           itemp = tag_big_part(i) 
+           itemp = tag_big_part(i)
            tag_big_part(i) = tag_big_part(i+1)
            tag_big_part(i+1) = itemp
            swapped = .TRUE.
@@ -147,11 +147,11 @@ PROGRAM LAGRANGE_TRAJEC
         DO i = 1,isize_trajectory-1
            IF ( big_part(i) .GT. big_part(i+1)) THEN !if 49... bigger than 50...
 !START SWAPPING
-              temp = big_part(i) 
+              temp = big_part(i)
               big_part(i) = big_part(i+1)
               big_part(i+1) = temp
 
-              itemp = tag_big_part(i) 
+              itemp = tag_big_part(i)
               tag_big_part(i) = tag_big_part(i+1)
               tag_big_part(i+1) = itemp
               swapped = .TRUE.
@@ -172,7 +172,7 @@ PROGRAM LAGRANGE_TRAJEC
 !Send all particles to one processor
 !#######################################################################
 #ifdef USE_MPI
-  CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err) 
+  CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
   CALL MPI_GATHER(big_part, isize_trajectory, MPI_REAL8, big_all, isize_trajectory, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
   CALL MPI_GATHER(tag_big_part, isize_trajectory, MPI_INTEGER8, tag_big_all, isize_trajectory, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
 
@@ -194,11 +194,11 @@ PROGRAM LAGRANGE_TRAJEC
            DO i = 1,isize_trajectory-1
               IF ( big_overall(i) .GT. big_overall(i+1)) THEN !if 49... bigger than 50...
 !START SWAPPING
-                 temp = big_overall(i) 
+                 temp = big_overall(i)
                  big_overall(i) = big_overall(i+1)
                  big_overall(i+1) = temp
 
-                 itemp = tag_big_overall(i) 
+                 itemp = tag_big_overall(i)
                  tag_big_overall(i) = tag_big_overall(i+1)
                  tag_big_overall(i+1) = itemp
                  swapped = .TRUE.
@@ -220,7 +220,7 @@ PROGRAM LAGRANGE_TRAJEC
      OPEN(unit=15, file=str, access='stream', form='unformatted')
      INQUIRE(UNIT=15, POS=particle_pos) !would be 1
      WRITE (15)  ims_npro  !header
-     INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
+     INQUIRE(UNIT=15, POS=particle_pos) !would be 5
      WRITE (15)  isize_trajectory  !header
      INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
      WRITE (15)  big_overall
@@ -246,7 +246,7 @@ PROGRAM LAGRANGE_TRAJEC
   OPEN(unit=15, file=str, access='stream', form='unformatted')
   INQUIRE(UNIT=15, POS=particle_pos) !would be 1
   WRITE (15)  dummy  !only 1
-  INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
+  INQUIRE(UNIT=15, POS=particle_pos) !would be 5
   WRITE (15)  isize_trajectory  !header
   INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
   WRITE (15)  big_part
@@ -271,11 +271,9 @@ PROGRAM LAGRANGE_TRAJEC
 
 
 
-!CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err) 
+!CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
 !print*, 'here2', ims_pro
 
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL DNS_STOP(0)
 END PROGRAM

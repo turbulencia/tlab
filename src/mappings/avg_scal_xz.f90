@@ -29,28 +29,25 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
 #include "integers.h"
 
-  TINTEGER,                           INTENT(IN   ) :: is
-  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN   ) :: q, s
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(IN   ) :: s_local
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, wrk3d
-  TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: mean2d, wrk1d
-  TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk2d
+  TINTEGER,                                  INTENT(IN   ) :: is
+  TREAL, DIMENSION(imax,jmax,kmax,inb_flow), INTENT(IN   ) :: q
+  TREAL, DIMENSION(imax,jmax,kmax,inb_scal), INTENT(IN   ) :: s
+  TREAL, DIMENSION(imax,jmax,kmax),          INTENT(IN   ) :: s_local
+  TREAL, DIMENSION(imax,jmax,kmax),          INTENT(INOUT) :: dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, wrk3d
+  TREAL, DIMENSION(jmax,*),                  INTENT(INOUT) :: mean2d, wrk1d
+  TREAL, DIMENSION(*),                       INTENT(INOUT) :: wrk2d
 
   TARGET q, s, tmp3
 
   ! -----------------------------------------------------------------------
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 10
-  TINTEGER i,j,k,ivar,bcs(2,2)
+  TINTEGER i,j,k,bcs(2,2)
   TREAL diff, dummy, coefT, coefR, coefQ, c23
 
-  TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nmax
+  TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nv
 
   CHARACTER*32 name, groupname(MAX_VARS_GROUPS)
   CHARACTER*250 line1, varname(MAX_VARS_GROUPS)
-  CHARACTER*850 line2
-
-  TINTEGER nvar
-  CHARACTER(LEN=32) varname2(MAX_AVG_TEMPORAL), vargroup2(MAX_AVG_TEMPORAL) 
 
   ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: u,v,w,p, rho, vis
@@ -223,9 +220,6 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
     varname(ng) = TRIM(ADJUSTL(varname(ng)))//' Css'//TRIM(ADJUSTL(name))
   END DO
 
-  ! I add here the case of 3 scalars in the last group, i.e., 6 variables, as a typical maximum value
-#define L_AVGMAX 81
-
   ! -----------------------------------------------------------------------
   ! Auxiliary variables depending on y and t; this last group is not written
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
@@ -262,15 +256,15 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   sg(ng) = 30
 
   ! -----------------------------------------------------------------------
-  nmax = ig(ng) +sg(ng) -1
-  IF ( MAX_AVG_TEMPORAL < nmax ) THEN
-    CALL IO_WRITE_ASCII(efile,'AVERAGES_SCAL_XZ. Not enough space in local arrays.')
+  nv = ig(ng) +sg(ng) -1
+  IF ( MAX_AVG_TEMPORAL < nv ) THEN
+    CALL IO_WRITE_ASCII(efile,'AVG_SCAL_XZ. Not enough space in local arrays.')
     CALL DNS_STOP(LES_ERROR_AVGTMP)
   END IF
-  mean2d(:,1:nmax) = C_0_R
+  mean2d(:,1:nv) = C_0_R
 
   ng   = ng -1
-  nmax = ig(ng) +sg(ng) -1 ! the last group is not written out
+  nv = ig(ng) +sg(ng) -1 ! the last group is not written out
 
   ! #######################################################################
   WRITE(line1,*) itime; line1 = 'Calculating scal statistics at It'//TRIM(ADJUSTL(line1))//'...'
@@ -793,74 +787,15 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   ! ###################################################################
   ! Output
   ! #######################################################################
-#ifdef USE_NETCDF
-  line2 = ''
-  ivar=1
-  DO k = 1,ng
-     line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(varname(k)))
-     DO j=1,sg(k)
-        vargroup2(ivar)=groupname(k)
-        ivar=ivar+1 
-     ENDDO
-  END DO
-  nvar = MAX_AVG_TEMPORAL
-  CALL LIST_STRING( line2, nvar, varname2 )
+  ! 11 t-dependent variables, for consistency with old format
+  ng = ng +1
+  groupname(ng) = ''
+  varname(ng)   = 'dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy'
+  ng = ng +1; groupname(ng) = ''; varname(ng) = ''
 
   WRITE(line1,*) is; line1='avg'//TRIM(ADJUSTL(line1))//'s'
   WRITE(name,*) itime; name=TRIM(ADJUSTL(line1))//TRIM(ADJUSTL(name))
-  CALL IO_WRITE_AVERAGES( name, itime,rtime, nvar,jmax, g(2)%nodes, varname2, vargroup2, mean2d )
-
-#else
-  ! -----------------------------------------------------------------------
-  ! TkStat file
-  ! -----------------------------------------------------------------------
-  IF ( L_AVGMAX < nmax ) THEN
-    CALL IO_WRITE_ASCII(efile,'AVERAGES_SCAL_XZ. Not enough space in format definition.')
-    CALL DNS_STOP(LES_ERROR_AVGTMP)
-  END IF
-
-#ifdef USE_MPI
-  IF ( ims_pro == 0 ) THEN
-#endif
-
-    WRITE(line1,*) is; line1='avg'//TRIM(ADJUSTL(line1))//'s'
-    WRITE(name,*) itime; name=TRIM(ADJUSTL(line1))//TRIM(ADJUSTL(name))
-
-#define LOC_UNIT_ID 23
-#define LOC_STATUS 'unknown'
-#ifdef USE_RECLEN
-    OPEN(UNIT=LOC_UNIT_ID, RECL=1050, FILE=name, STATUS=LOC_STATUS) ! this is probably outdated
-#else
-    OPEN(UNIT=LOC_UNIT_ID, FILE=name, STATUS=LOC_STATUS)
-#endif
-
-    WRITE(LOC_UNIT_ID, '(A8,E14.7E3)') 'RTIME = ', rtime
-    line2 = 'I J Y'     ! Independent variables
-    DO k = 1,ng         ! Dependent variables depending on y and t
-      WRITE(LOC_UNIT_ID,1010) 'GROUP = '//TRIM(ADJUSTL(groupname(k)))//' '//TRIM(ADJUSTL(varname(k)))
-      line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(varname(k)))
-    END DO
-    DO k = 1,11         ! Dependent variables depending on t, for consistency with old format
-      line2 = TRIM(ADJUSTL(line2))//' '//'dummy'
-    END DO
-    WRITE(LOC_UNIT_ID,1010) 'GROUP = '//TRIM(ADJUSTL(line1))
-    WRITE(LOC_UNIT_ID,1010) 'GROUP = '//TRIM(ADJUSTL(line1))
-    WRITE(LOC_UNIT_ID,1010) TRIM(ADJUSTL(line2))
-
-    DO j = 1,jmax
-      WRITE(LOC_UNIT_ID,1020) 1, j, g(2)%nodes(j), (mean2d(j,k),k=1,nmax)
-    END DO
-
-    CLOSE(LOC_UNIT_ID)
-
-#ifdef USE_MPI
-  END IF
-#endif
-
-1010 FORMAT(A)
-1020 FORMAT(I5,(1X,I5),L_AVGMAX(1X,G_FORMAT_R),11(1X,G_FORMAT_R))
-
-#endif
+  CALL IO_WRITE_AVERAGES( name, itime,rtime, jmax,nv,ng, g(2)%nodes, varname, groupname, mean2d )
 
   RETURN
 END SUBROUTINE AVG_SCAL_XZ

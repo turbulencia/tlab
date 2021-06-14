@@ -197,7 +197,5 @@ PROGRAM INIFLOW
   ! ###################################################################
   CALL DNS_WRITE_FIELDS('flow.ics', i2, imax,jmax,kmax, inb_flow, isize_wrk3d, q, wrk3d)
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL DNS_STOP(0)
 END PROGRAM INIFLOW

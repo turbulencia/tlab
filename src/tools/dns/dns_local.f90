@@ -9,8 +9,6 @@ MODULE DNS_LOCAL
   IMPLICIT NONE
   SAVE
 
-  TINTEGER, PARAMETER :: MAX_SAVEPLANES = 20
-
 ! ###################################################################
 ! Iteration
 ! ###################################################################
@@ -32,8 +30,8 @@ MODULE DNS_LOCAL
 ! ###################################################################
 ! Variable viscosity
 ! ###################################################################
-  TREAL    :: visctime, viscstart, viscstop
-  TINTEGER :: iviscchg
+  LOGICAL :: flag_viscosity
+  TREAL   :: visc_stop, visc_time, visc_rate
 
 ! ###########################################################
 ! Filters
@@ -49,9 +47,6 @@ MODULE DNS_LOCAL
 ! ###################################################################
 ! Output data
 ! ###################################################################
-  TINTEGER                            :: nplanes_i, nplanes_j, nplanes_k, pplanes_j, nplanes_j_aux ! Planes
-  TINTEGER, DIMENSION(MAX_SAVEPLANES) :: planes_i,  planes_j,  planes_k
-
   TINTEGER, DIMENSION(3)              :: tower_stride           ! Towers
   TINTEGER                            :: tower_mode
 

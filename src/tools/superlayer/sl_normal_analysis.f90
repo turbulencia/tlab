@@ -3,7 +3,7 @@
 #include "dns_error.h"
 
 PROGRAM SL_NORMAL_ANALYSIS
-  
+
   USE DNS_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI
@@ -63,7 +63,7 @@ PROGRAM SL_NORMAL_ANALYSIS
 #endif
 
   TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
-  
+
 ! ###################################################################
   CALL DNS_INITIALIZE
 
@@ -181,7 +181,7 @@ PROGRAM SL_NORMAL_ANALYSIS
   ALLOCATE(mean(nmax*nfield*2))
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
@@ -209,10 +209,10 @@ PROGRAM SL_NORMAL_ANALYSIS
 ! -------------------------------------------------------------------
      WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
      CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i0, isize_wrk3d, q, wrk3d)
-     
+
      WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
      CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,inb_scal, isize_wrk3d, z1, wrk3d)
-     
+
      CALL THERMO_CALORIC_TEMPERATURE(imax, jmax, kmax, z1, p, field, txc, wrk3d)
      CALL THERMO_THERMAL_PRESSURE(imax, jmax, kmax, z1, field, txc, p)
 
@@ -227,13 +227,11 @@ PROGRAM SL_NORMAL_ANALYSIS
 ! Scalar gradient analysis
 ! -------------------------------------------------------------------
      ELSE IF ( iopt .EQ. 2 ) THEN
-        CALL SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, & 
+        CALL SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, &
              u, v, w, z1, field, sl, profiles, txc, wrk1d, wrk2d, wrk3d)
      ENDIF
-     
+
   ENDDO
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL DNS_STOP(0)
 END PROGRAM SL_NORMAL_ANALYSIS
