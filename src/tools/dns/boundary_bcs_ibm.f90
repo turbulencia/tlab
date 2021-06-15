@@ -47,7 +47,7 @@ module DNS_IBM
 
   TREAL, dimension(:,:,:), allocatable :: eps_aux                ! eps_aux field for debugging and geometry generation
   TREAL, dimension(:),     allocatable :: epsi, epsj, epsk, eps  ! eps transposed in i/j/k
-  TREAL, dimension(:,:),   allocatable :: nobi, nobj, nobk       ! number of objects        in i/j/k 
+  TREAL, dimension(:),     allocatable :: nobi, nobj, nobk       ! number of objects        in i/j/k 
   ! TREAL, dimension(:,:,:), allocatable :: ! location of starting interfaces of object (fluid --> solid)
   ! TREAL, dimension(:,:,:), allocatable :: ! location of ending   interfaces of object (solid --> fluid)
 
@@ -62,23 +62,50 @@ contains
   subroutine ALLOCATE_IBM(allocated)  ! called once in dns_main.f90 l.210 to allocate needed memory
     !
     use DNS_CONSTANTS, only: lfile, efile
+    !
+#ifdef USE_MPI
+    use DNS_MPI, only: ims_size_i, ims_size_j, ims_size_k 
+#endif    
     !  
     implicit none
 
 #include "dns_error.h"
 #include "integers.h"
+    !
+    !
+#ifdef USE_MPI 
+#include "mpif.h"
+#include "dns_const_mpi.h"
+    TINTEGER, parameter       :: idi = DNS_MPI_I_PARTIAL ! = 1
+    TINTEGER, parameter       :: idj = DNS_MPI_J_PARTIAL ! = 1
+    TINTEGER, parameter       :: idk = DNS_MPI_K_PARTIAL ! = 1 --> idi = idj = idk
+#endif
     ! 
-    logical, intent(inout)    :: allocated       ! flag, just allocate once
+    logical, intent(inout)    :: allocated       ! flag, just allocate memory space once
     TINTEGER                  :: ierr, inb_ibm
-    character(128) :: str, line
+    TINTEGER                  :: nyz, nxz, nxy
+    character(128)            :: str, line
    
     ! ================================================================== !
     inb_ibm = i1 ! can be also defined in dns_read_local.f90 and module dns_global.f90 (cf. inb_flow ...)
 
+    ! npages (cf. dns_mpi_initialize.f90)
+#ifdef USE_MPI 
+    nyz = ims_size_i(idi) ! local
+    nxz = ims_size_j(idj) 
+    nxy = ims_size_k(idk) 
+#else
+    nyz = jmax * kmax     ! global
+    nxz = imax * kmax     
+    nxy = imax * jmax     
+#endif      
+
+    ! ================================================================== !
+
     ! allocate here all ibm related arrays
     if ( .not. allocated ) then 
 
-      ! eps_aux, here 3D-array, for debugging and easy generating geometries
+      ! eps_aux (3D-array), for debugging and easy generating geometries
       write(str,*) inb_ibm; line = 'Allocating array IBM eps_aux of size '//trim(adjustl(str))//'x'
       ! write(str,*) inb_ibm; line = 'Allocating array IBM eps_aux  of size '//trim(adjustl(str))//'x'
       write(str,*) isize_field; line = trim(adjustl(line))//trim(adjustl(str))
@@ -100,6 +127,8 @@ contains
         call IO_WRITE_ASCII(efile,'DNS. Not enough memory for eps.')
         call DNS_STOP(DNS_ERROR_ALLOC)
       end if
+
+      ! ================================================================== !
 
       ! epsi
       write(str,*) inb_ibm; line = 'Allocating array IBM epsi of size '//trim(adjustl(str))//'x'
@@ -134,19 +163,46 @@ contains
         call DNS_STOP(DNS_ERROR_ALLOC)
       end if
 
-      ! allocate smaller arrays (nob*, ...)
-      allocate(nobi(jmax,kmax), nobj(imax,kmax), nobk(imax,jmax))
-      ! allocate( )
-      ! allocate( )
+      ! ================================================================== !
+
+      ! nobi
+      write(str,*) inb_ibm; line = 'Allocating array IBM nobi of size '//trim(adjustl(str))//'x'
+      write(str,*) nyz; line = trim(adjustl(line))//trim(adjustl(str))
+      call IO_WRITE_ASCII(lfile,line)
+      allocate(nobi(nyz), stat=ierr)
+      if ( ierr .ne. 0 ) then
+        call IO_WRITE_ASCII(efile,'DNS. Not enough memory for nobi.')
+        call DNS_STOP(DNS_ERROR_ALLOC)
+      end if
+
+      ! nobj
+      write(str,*) inb_ibm; line = 'Allocating array IBM nobj of size '//trim(adjustl(str))//'x'
+      write(str,*) nxz; line = trim(adjustl(line))//trim(adjustl(str))
+      call IO_WRITE_ASCII(lfile,line)
+      allocate(nobj(nxz), stat=ierr)
+      if ( ierr .ne. 0 ) then
+        call IO_WRITE_ASCII(efile,'DNS. Not enough memory for nobj.')
+        call DNS_STOP(DNS_ERROR_ALLOC)
+      end if
       
+      ! nobk
+      write(str,*) inb_ibm; line = 'Allocating array IBM nobk of size '//trim(adjustl(str))//'x'
+      write(str,*) nxy; line = trim(adjustl(line))//trim(adjustl(str))
+      call IO_WRITE_ASCII(lfile,line)
+      allocate(nobk(nxy), stat=ierr)
+      if ( ierr .ne. 0 ) then
+        call IO_WRITE_ASCII(efile,'DNS. Not enough memory for nobk.')
+        call DNS_STOP(DNS_ERROR_ALLOC)
+      end if
+
+      ! ================================================================== !
+
+      ! set flag
       allocated = .true.
     end if
     !
   return
   end subroutine ALLOCATE_IBM
-!############# DEBUGGING, BLOCK COMMENT (until end of module) ###########
-! #if 0
-!########################################################################
   !########################################################################
   subroutine INITIALIZE_IBM()       ! called once in dns_main.f90 before time integration starts
                                     ! initialize IBM procedure
@@ -180,7 +236,7 @@ contains
     call TRANSPOSE_GEOMETRY(txc)
 
     ! generate relevant geometry fields for IBM routines (nobi, nobj, nobk)
-    ! call GENERATE_GEOMETRY(wrk3d)
+    call GENERATE_GEOMETRY(wrk3d)
     
     ! read/write geometry fields from/to disk
     ! call READ_GEOMETRY() ! call WRITE_GEOMETRY()           
@@ -291,8 +347,6 @@ contains
 
     return
   end subroutine GEOMETRY_XBARS
-!############# DEBUGGING, BLOCK COMMENT (until end of module) ###########
-! #if 0
 !########################################################################
   subroutine TRANSPOSE_GEOMETRY(txc)
     !
@@ -335,9 +389,9 @@ contains
     nxz = ims_size_j(idj) ! npage = imax*kmax
     nxy = ims_size_k(idk) ! npage = imax*jmax
 #else
-    nyz = jmax * kmax ! global
-    nxz = imax * kmax ! global
-    nxy = imax * jmax ! global
+    nyz = jmax * kmax     ! global
+    nxz = imax * kmax     ! global
+    nxy = imax * jmax     ! global
 #endif
 
     ! debugging
@@ -373,6 +427,7 @@ contains
 #ifdef USE_ESSL
     call DGETMO       (eps, nxy, nxy,  kmax, epsj, kmax)
 #else
+
     call DNS_TRANSPOSE(eps, nxy, kmax, nxy,  epsj, kmax)
 #endif
 
@@ -404,8 +459,11 @@ contains
   !########################################################################
   subroutine GENERATE_GEOMETRY(wrk3d)
     !
+    use DNS_GLOBAL, only: g ! type grid, all grid related informations  
+    !
 #ifdef USE_MPI
     use DNS_MPI, only: ims_pro
+    use DNS_MPI, only: ims_size_i, ims_size_j, ims_size_k 
 #endif    
     !
     implicit none
@@ -414,148 +472,126 @@ contains
     !
 #ifdef USE_MPI 
 #include "mpif.h"
+#include "dns_const_mpi.h"
+    TINTEGER, parameter                          :: idi = DNS_MPI_I_PARTIAL ! = 1
+    TINTEGER, parameter                          :: idj = DNS_MPI_J_PARTIAL ! = 1
+    TINTEGER, parameter                          :: idk = DNS_MPI_K_PARTIAL ! = 1 --> idi = idj = idk
 #else
     TINTEGER, parameter                          :: ims_pro=0  
 #endif
 
     TREAL, dimension(isize_field), intent(inout) :: wrk3d 
 
-    TINTEGER                                     :: nobi_max, nobj_max, nobk_max, num
-    TINTEGER                                     :: i, j, k, l
+    TINTEGER                                     :: nobi_max, nobj_max, nobk_max
+    TINTEGER                                     :: i, j, k, ij, ik, jk, ip
+    TINTEGER                                     :: nyz, nxz, nxy
 
     CHARACTER(32)                                :: fname
 
+    ! DEBUG
+    TREAL, dimension(imax*kmax):: nobjj 
+
+
     ! ================================================================== !
 
-    ! ini nobj arrays
-    nobi(:,:) = C_0_R; nobj(:,:) = C_0_R; nobk(:,:) = C_0_R
-    nobi_max  = C_0_R; nobj_max  = C_0_R; nobk_max  = C_0_R
+    ! npages (cf. dns_mpi_initialize.f90)
+#ifdef USE_MPI
+    nyz = ims_size_i(idi) ! local
+    nxz = ims_size_j(idj) 
+    nxy = ims_size_k(idk) 
+#else
+    nyz = jmax * kmax     ! global
+    nxz = imax * kmax     
+    nxy = imax * jmax     
+#endif
 
+    ! initialize 
+    nobi(:)  = C_0_R; nobj(:)  = C_0_R; nobk(:)  = C_0_R
+    nobi_max = i0;    nobj_max = i0;    nobk_max = i0
+
+    ! ================================================================== !
     ! number of objects in x-direction
-    do j = 1, xjmax
-      do k = 1, xkmax
-        num = 0
-        if(epsi(1,j,k) .eq. 1) then
-          nobi(j,k) = 1
-          num = 1
+    ip = 1
+    do i = 1, g(1)%size - 1     ! contiguous i-lines
+      do jk = 1, nyz            ! pages of   i-lines
+        if((ip .eq. 1) .and. (epsi(jk) .eq. 1)) then ! exception: check first plane for objects
+          nobi(jk) = C_1_R
+        end if 
+        if((epsi(ip+jk-1) .eq. 0) .and. (epsi(ip+jk-1+nyz) .eq. 1)) then ! check for interface 
+          nobi(jk) = nobi(jk) + C_1_R
         end if
-        do i = 1, ximax-1       
-          if((epsi(i,j,k) .eq. 0) .and. (epsi(i+1,j,k) .eq. 1)) then
-            nobi(j,k) = nobi(j,k) + 1
-            num = num + 1
-          end if
-        end do
-        if (num .gt. nobi_max) then
-          nobi_max = num    
-        end if
-      end do    
+      end do
+      ip = ip + nyz
     end do
 
-    ! ! number of objects in y-direction
-    ! do i = 1, imax
-    !   do k = 1, kmax
-    !     num = 0
-    !     if(eps(i,1,k) .eq. 1) then
-    !       nobj(i,k) = 1
-    !       num = 1
-    !     end if
-    !     do j = 1, jmax-1       
-    !       if((eps(i,j,k) .eq. 0) .and. (eps(i,j+1,k) .eq. 1)) then
-    !         nobj(i,k) = nobj(i,k) + 1
-    !         num = num + 1
-    !       end if
-    !     end do
-    !     if (num .gt. nobj_max) then
-    !       nobj_max = num    
-    !     end if
-    !   end do    
-    ! end do
-
-    ! ! number of objects in z-direction
-    ! do i = 1, zimax
-    !   do j = 1, zjmax
-    !     num = 0
-    !     if(epsk(i,j,1) .eq. 1) then
-    !       nobk(i,j) = 1
-    !       num = 1
-    !     end if
-    !     do k = 1, zkmax-1       
-    !       if((epsk(i,j,k) .eq. 0) .and. (epsk(i,j,k+1) .eq. 1)) then
-    !         nobk(i,j) = nobk(i,j) + 1
-    !         num = num + 1
-    !       end if
-    !     end do
-    !     if (num .gt. nobk_max) then
-    !       nobk_max = num    
-    !     end if
-    !   end do    
-    ! end do
+    ! ! nobi_max = int(maxval(nobi)) 
+    ! ! CALL MPI_REDUCE(idummy,t_dif,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD) 
+ 
+    ! ================================================================== !
+    ! number of objects in y-direction
+    ip = 1
+    do j = 1, g(2)%size - 1     ! contiguous j-lines
+      do ik = 1, nxz            ! pages of   j-lines
+        if((ip .eq. 1) .and. (epsj(ik) .eq. 1)) then ! exception: check first plane for objects
+          nobj(ik) = C_1_R
+        end if 
+        if((epsj(ip+ik-1) .eq. 0) .and. (epsj(ip+ik-1+nxz) .eq. 1)) then ! check for interface 
+          nobj(ik) = nobj(ik) + C_1_R
+        end if
+      end do
+      ip = ip + nxz
+    end do
+    ! nobj_max = int(maxval(nobj))   
+    ! ================================================================== !
+    ! number of objects in z-direction
+    ip = 1
+    do k = 1, g(3)%size - 1     ! contiguous k-lines
+      do ij = 1, nxy            ! pages of   k-lines
+        if((ip .eq. 1) .and. (epsk(ij) .eq. 1)) then ! exception: check first plane for objects
+          nobk(ij) = C_1_R
+        end if 
+        if((epsk(ip+ij-1) .eq. 0) .and. (epsk(ip+ij-1+nxy) .eq. 1)) then ! check for interface 
+          nobk(ij) = nobk(ij) + C_1_R
+        end if
+      end do
+      ip = ip + nxy
+    end do
+    ! ! nobk_max = int(maxval(nobk))    
+    ! ! ================================================================== !
 
     ! debugging
     if (ims_pro .eq. 0) then
       write(*,*) '========================================================='
       write(*,*) 'nobi_max   =', nobi_max
-      ! write nobi field
+      write(*,*) 'nobj_max   =', nobj_max
+      write(*,*) 'nobk_max   =', nobk_max
+      write(*,*) '========================================================='
     end if
+
+    ! write nobi fields
     write(fname,*) i0; 
     fname = trim(adjustl('nobi'))//trim(adjustl(fname))
     if (ims_pro .eq. 0) then  
       write(*,*) fname ! debugging
     end if
-    call DNS_WRITE_FIELDS(fname, i2, 1,xjmax,xkmax, 1, 1*xjmax*xkmax, nobi, wrk3d)
+    call DNS_WRITE_FIELDS(fname, i2, i1,   jmax, kmax, i1, jmax*kmax,   nobi, wrk3d)
+    
 
-    ! ! debugging
-    ! if (ims_pro .eq. 0) then
-    !   write(*,*) '========================================================='
-    !   write(*,*) 'nobj_max   =', nobj_max
-    !   ! write nobj field
-    ! end if
-    ! write(fname,*) i0; 
-    ! fname = trim(adjustl('nobj'))//trim(adjustl(fname))
-    ! if (ims_pro .eq. 0) then  
-    !   write(*,*) fname ! debugging
-    ! end if
-    ! call DNS_WRITE_FIELDS(fname, i2, imax,1,kmax, 1, imax*1*kmax, nobj, wrk3d)
-
-    ! ! debugging
-    ! if (ims_pro .eq. 0) then
-    !   write(*,*) '========================================================='
-    !   write(*,*) 'nobk_max   =', nobk_max
-    !   ! write nobk field
-    ! end if
-    ! write(fname,*) i0; 
-    ! fname = trim(adjustl('nobk'))//trim(adjustl(fname))
-    ! if (ims_pro .eq. 0) then  
-    !   write(*,*) fname ! debugging
-    ! end if
-    ! call DNS_WRITE_FIELDS(fname, i2, zimax,zjmax,1, 1, zimax*zjmax*1, nobk, wrk3d)
-
-    ! if (ims_pro .eq. 0) then
-    !   write(*,*) '====================nobi(1,k)============================='
-    !   do k = 1, xkmax
-    !     write(*,*) nobi(1,k)
-    !   end do     ! else if (ims_pro .eq. 1) then
-    !   write(*,*) '====================nobi(10,k)============================'
-    !   do k = 1, xkmax
-    !     write(*,*) nobi(10,k)
-    !   end do     ! else if (ims_pro .eq. 1) then
-    !   write(*,*) '====================nobi(11,k)============================'
-    !   do k = 1, xkmax
-    !     write(*,*) nobi(11,k)
-    !   end do     ! else if (ims_pro .eq. 1) then
-    !   write(*,*) '====================epsi(1,1,k)==========================='
-    !   do k = 1, xkmax
-    !     write(*,*) epsi(1,1,k)
-    !   end do     ! else if (ims_pro .eq. 1) then
-    !   write(*,*) '====================epsi(1,10,k)=========================='
-    !   do k = 1, xkmax
-    !     write(*,*) epsi(1,10,k)
-    !   end do     ! else if (ims_pro .eq. 1) then
-    !   write(*,*) '====================epsi(1,11,k)=========================='
-    !   do k = 1, xkmax
-    !     write(*,*) epsi(1,11,k)
-    !   end do     ! else if (ims_pro .eq. 1) then
-    ! end if
+    ! write nobj fields
+    write(fname,*) i0; 
+    fname = trim(adjustl('nobj'))//trim(adjustl(fname))
+    if (ims_pro .eq. 0) then  
+      write(*,*) fname ! debugging
+    end if
+    call DNS_WRITE_FIELDS(fname, i2, imax,i1,   kmax, i1, imax*kmax,   nobj, wrk3d)
+    
+    ! write nobk fields
+    write(fname,*) i0; 
+    fname = trim(adjustl('nobk'))//trim(adjustl(fname))
+    if (ims_pro .eq. 0) then
+      write(*,*) fname ! debugging
+    end if
+    call DNS_WRITE_FIELDS(fname, i2, imax,jmax,i1, i1, imax*jmax, nobk, wrk3d)
 
     return
   end subroutine GENERATE_GEOMETRY
