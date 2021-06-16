@@ -462,7 +462,7 @@ contains
     use DNS_GLOBAL, only: g ! type grid, all grid related informations  
     !
 #ifdef USE_MPI
-    use DNS_MPI, only: ims_pro
+    use DNS_MPI, only: ims_pro, ims_npro
     use DNS_MPI, only: ims_size_i, ims_size_j, ims_size_k 
 #endif    
     !
@@ -477,7 +477,7 @@ contains
     TINTEGER, parameter                          :: idj = DNS_MPI_J_PARTIAL ! = 1
     TINTEGER, parameter                          :: idk = DNS_MPI_K_PARTIAL ! = 1 --> idi = idj = idk
 #else
-    TINTEGER, parameter                          :: ims_pro=0  
+    TINTEGER, parameter                          :: ims_pro=0 , ims_npro=1
 #endif
 
     TREAL, dimension(isize_field), intent(inout) :: wrk3d 
@@ -487,10 +487,6 @@ contains
     TINTEGER                                     :: nyz, nxz, nxy
 
     CHARACTER(32)                                :: fname
-
-    ! DEBUG
-    TREAL, dimension(imax*kmax):: nobjj 
-
 
     ! ================================================================== !
 
@@ -523,10 +519,8 @@ contains
       end do
       ip = ip + nyz
     end do
-
-    ! ! nobi_max = int(maxval(nobi)) 
-    ! ! CALL MPI_REDUCE(idummy,t_dif,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD) 
- 
+    
+    ! nobi_max = int(maxval(nobi)) then MPI all reduce 
     ! ================================================================== !
     ! number of objects in y-direction
     ip = 1
@@ -541,7 +535,6 @@ contains
       end do
       ip = ip + nxz
     end do
-    ! nobj_max = int(maxval(nobj))   
     ! ================================================================== !
     ! number of objects in z-direction
     ip = 1
@@ -556,8 +549,7 @@ contains
       end do
       ip = ip + nxy
     end do
-    ! ! nobk_max = int(maxval(nobk))    
-    ! ! ================================================================== !
+    ! ================================================================== !
 
     ! debugging
     if (ims_pro .eq. 0) then
@@ -574,8 +566,7 @@ contains
     if (ims_pro .eq. 0) then  
       write(*,*) fname ! debugging
     end if
-    call DNS_WRITE_FIELDS(fname, i2, i1,   jmax, kmax, i1, jmax*kmax,   nobi, wrk3d)
-    
+    call DNS_WRITE_FIELDS(fname, i2, i1, g(2)%size, g(3)%size/ims_npro, i1, nyz, nobi, wrk3d)
 
     ! write nobj fields
     write(fname,*) i0; 
@@ -583,7 +574,7 @@ contains
     if (ims_pro .eq. 0) then  
       write(*,*) fname ! debugging
     end if
-    call DNS_WRITE_FIELDS(fname, i2, imax,i1,   kmax, i1, imax*kmax,   nobj, wrk3d)
+    call DNS_WRITE_FIELDS(fname, i2, g(1)%size, i1, g(3)%size/ims_npro, i1, nxz, nobj, wrk3d)
     
     ! write nobk fields
     write(fname,*) i0; 
@@ -591,7 +582,8 @@ contains
     if (ims_pro .eq. 0) then
       write(*,*) fname ! debugging
     end if
-    call DNS_WRITE_FIELDS(fname, i2, imax,jmax,i1, i1, imax*jmax, nobk, wrk3d)
+    call DNS_WRITE_FIELDS(fname, i2, g(1)%size, g(2)%size/ims_npro, i1, i1, nxy, nobk, wrk3d)
+
 
     return
   end subroutine GENERATE_GEOMETRY
