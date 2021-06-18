@@ -111,6 +111,8 @@
 #define DNS_ERROR_CALCTRAJECTORIES  203
 #define DNS_ERROR_RESIDENCERESET    204
 
+#define DNS_ERROR_IBM_NOB_MAX       300
+
 #include "les_error.h"
 
 #endif

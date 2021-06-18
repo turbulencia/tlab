@@ -10,7 +10,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
   USE DNS_GLOBAL,    ONLY : pbg, rbg
-  USE DNS_GLOBAL,    ONLY : imode_sim, inb_flow,inb_scal
+  USE DNS_GLOBAL,    ONLY : imode_sim, inb_flow,inb_scal, imode_ibm
   USE DNS_GLOBAL,    ONLY : imax,jmax
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : FilterDomain
@@ -1227,10 +1227,10 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! So far, the use or not use of an IBM is
 ! set by the XBars_geo information.
 ! -------------------------------------------------------------------
-  IF ( MINVAL(xbars_geo).GT.0 ) THEN; ibm_mode=1; ELSE;  ibm_mode=0; ENDIF
+  IF ( MINVAL(xbars_geo).GT.0 ) THEN; imode_ibm=1; ELSE;  imode_ibm=0; ENDIF
 
   ! check
-  IF ( ibm_mode .eq. 1 ) THEN
+  IF ( imode_ibm .eq. 1 ) THEN
      IF ( ( mod(g(3)%size,2*xbars_geo(1)) .eq. 0 ) .and. ( mod(xbars_geo(3),2) .ne. 0 ) ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Interfaces of bars have to be on gridpoints.')
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Requirenments: mod(jmax_total,(2*nbars))==0 & mod(wbar,2)==0.')

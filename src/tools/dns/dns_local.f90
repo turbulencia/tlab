@@ -42,7 +42,6 @@ MODULE DNS_LOCAL
 ! Immersed Boundary Method (IBM)
 ! ###########################################################
   TINTEGER, DIMENSION(3)              :: xbars_geo               ! bars in x, xbars_geo(3)=[nbars,hbar,wbar]
-  TINTEGER                            :: ibm_mode
   
 ! ###################################################################
 ! Output data

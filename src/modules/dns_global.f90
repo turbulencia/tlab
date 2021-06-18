@@ -58,6 +58,8 @@ MODULE DNS_GLOBAL
 
   TINTEGER :: imode_fdm                ! finite-difference method for spatial operators
 
+  TINTEGER :: imode_ibm                ! IBM mode
+
 ! ###################################################################
 ! Iteration
 ! ###################################################################

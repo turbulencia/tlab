@@ -8,4 +8,5 @@
     "[FortranFreeForm]": {
         "editor.acceptSuggestionOnEnter": "off",
     },
+    "workbench.editor.enablePreview": false,
 }
