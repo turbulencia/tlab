@@ -53,6 +53,7 @@ MODULE BOUNDARY_BUFFER
   TYPE(buffer_dt), PUBLIC :: BuffFlowImin,BuffFlowImax,BuffFlowJmin,BuffFlowJmax
   TYPE(buffer_dt), PUBLIC :: BuffScalImin,BuffScalImax,BuffScalJmin,BuffScalJmax
 !  TYPE(filter_dt), DIMENSION(3) :: FilterBuffer
+! BufferFilter should then be a block in dns.ini as [Filter], which is read in io_read_global.
 
   PUBLIC :: BOUNDARY_BUFFER_INITIALIZE
   PUBLIC :: BOUNDARY_BUFFER_RELAXATION_FLOW

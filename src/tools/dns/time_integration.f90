@@ -20,8 +20,6 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
   USE DNS_LOCAL
   USE DNS_TOWER
   USE LAGRANGE_GLOBAL, ONLY : itrajectory, l_g
-  USE BOUNDARY_INFLOW, ONLY : BOUNDARY_INFLOW_FILTER, FilterInflowStep
-  USE BOUNDARY_BCS, ONLY : BcsFlowImin, BcsScalImin
   USE STATISTICS
   USE PARTICLE_TRAJECTORIES
   USE AVG_SCAL_ZT
@@ -66,11 +64,6 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
       ELSE;                                                   flag_save = .FALSE.
       ENDIF
       CALL DNS_FILTER(flag_save, q,s, txc, wrk1d,wrk2d,wrk3d)
-    ENDIF
-
-    ! This should be integrated into the inflow buffer, as the filter contribution
-    IF ( MOD(itime-nitera_first,FilterInflowStep) == 0 ) THEN ! Inflow filter in spatial mode
-      CALL BOUNDARY_INFLOW_FILTER(BcsFlowImin%ref, BcsScalImin%ref, q,s, txc, wrk1d,wrk2d,wrk3d)
     ENDIF
 
     ! -----------------------------------------------------------------------
