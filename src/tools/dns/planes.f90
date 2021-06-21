@@ -155,10 +155,9 @@ CONTAINS
     CHARACTER*250 line1
 
     ! ###################################################################
-    WRITE(fname,100) rtime
+    WRITE(fname,*) rtime
     WRITE(line1,*) itime; line1 = 'Writing planes at It'//TRIM(ADJUSTL(line1))//' and time '//TRIM(ADJUSTL(fname))//'.'
     CALL IO_WRITE_ASCII(lfile,line1)
-    100 FORMAT(G_FORMAT_R)
 
     CALL FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
 
