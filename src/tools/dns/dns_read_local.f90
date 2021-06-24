@@ -11,7 +11,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
   USE DNS_GLOBAL,    ONLY : pbg, rbg
   USE DNS_GLOBAL,    ONLY : imode_sim, inb_flow,inb_scal, imode_ibm
-  USE DNS_GLOBAL,    ONLY : imax,jmax
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : FilterDomain
   USE DNS_LOCAL
@@ -31,7 +30,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CHARACTER*512 sRes, sRes1
   CHARACTER*64 lstr
   CHARACTER*32 bakfile
-  TINTEGER is,ig,idummy,inb_scal_local1
+  TINTEGER is,idummy,inb_scal_local1
   TREAL dummy(inb_flow+inb_scal+1)
 
   TINTEGER :: bcs_visc_imin, bcs_visc_imax
@@ -148,7 +147,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINICHAR(bakfile, inifile, 'Control', 'MaxDilatation', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
      idummy = 1
-     CALL LIST_REAL(sRes, idummy, d_bound_max)
+     CALL LIST_REAL(sRes, idummy, dummy)
+     d_bound_max = dummy(1)
   ENDIF
 
   s_bound_min(:) = C_0_R; inb_scal_local1 = MAX_NSP
@@ -839,67 +839,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( FilterDomainStep .EQ. 0 ) FilterDomain(:)%type = DNS_FILTER_NONE
 
 ! ###################################################################
-! Inflow Filter
-! ###################################################################
-  CALL IO_WRITE_ASCII(bakfile, '#')
-  CALL IO_WRITE_ASCII(bakfile, '#[InflowFilter]')
-  CALL IO_WRITE_ASCII(bakfile, '#Type=<yes/no>')
-  CALL IO_WRITE_ASCII(bakfile, '#IWidth=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#JWidth=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#Step=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#Parameters=<value>')
-
-  FilterInflow(:)%size       = g(:)%size
-  FilterInflow(:)%periodic   = g(:)%periodic
-  FilterInflow(:)%uniform    = g(:)%uniform
-  FilterInflow(:)%inb_filter = 5          ! default
-
-  CALL SCANINICHAR(bakfile, inifile, 'InflowFilter', 'Type', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; FilterInflow(:)%type = DNS_FILTER_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; FilterInflow(:)%type = DNS_FILTER_COMPACT
-     FilterInflow(:)%parameters(1) = 0.49 ! default alpha value
-     FilterInflow(:)%inb_filter    = 6
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'tophat'    ) THEN; FilterInflow(:)%type = DNS_FILTER_TOPHAT
-     FilterInflow(:)%parameters(1) = 2    ! default filter size (in grid-step units)
-     FilterInflow(:)%parameters(2) = 1    ! default number of repetitions
-     FilterInflow(:)%inb_filter    = INT(FilterInflow(:)%parameters(1)) +1
-     FilterInflow(:)%BcsMin        = DNS_FILTER_BCS_FREE
-     FilterInflow(:)%BcsMax        = DNS_FILTER_BCS_FREE
-  ELSE
-     CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong InflowFilter.Type')
-     CALL DNS_STOP(DNS_ERROR_OPTION)
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'InflowFilter', 'Parameters', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
-     idummy = MAX_PROF
-     CALL LIST_REAL(sRes, idummy, FilterInflow(1)%parameters(:) )
-     DO ig = 1,3
-        FilterInflow(ig)%parameters(:) = FilterInflow(1)%parameters(:)
-     ENDDO
-  ENDIF
-
-  CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'Step', '0', FilterInflowStep)
-  IF ( FilterInflowStep .EQ. 0 ) FilterInflow(:)%type = DNS_FILTER_NONE
-
-  IF ( idummy .NE. DNS_FILTER_NONE ) THEN
-     CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'IWidth', '1', FilterInflow(1)%size)
-
-     IF ( FilterInflow(1)%size .GT. imax ) THEN
-        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Inflow filter i width larger than imax')
-        CALL DNS_STOP(DNS_ERROR_INFFLTDOM)
-     ENDIF
-
-     CALL SCANINIINT(bakfile, inifile, 'InflowFilter', 'JWidth', '1', FilterInflow(2)%size)
-
-     IF ( FilterInflow(1)%size .GT. jmax ) THEN
-        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Inflow filter j width larger than jmax')
-        CALL DNS_STOP(DNS_ERROR_INFFLTDOM)
-     ENDIF
-
-  ENDIF
-
-! ###################################################################
 ! Save planes to disk
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
@@ -907,39 +846,26 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#PlanesI=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#PlanesJ=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#PlanesK=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#IntegralsJ=<yes/no>')
 
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesI', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
-     nplanes_i = 0; planes_i = 0
+     iplanes%n = 0; iplanes%nodes = 0
   ELSE
-     nplanes_i = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_i, planes_i)
+     iplanes%n = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, iplanes%n, iplanes%nodes)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesJ', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
-     nplanes_j = 0; planes_j = 0
+     jplanes%n = 0; jplanes%nodes = 0
   ELSE
-     nplanes_j = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_j, planes_j)
+     jplanes%n = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, jplanes%n, jplanes%nodes)
   ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PressureJ', 'no', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN
-     pplanes_j = 1
-  ELSE
-     pplanes_j = 0
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'IntegralsJ', 'no', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; nplanes_j_aux = 1
-  ELSE;                                       nplanes_j_aux = 0; ENDIF
-  nplanes_j = nplanes_j +nplanes_j_aux
 
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesK', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
-     nplanes_k = 0; planes_k = 0
+     kplanes%n = 0; kplanes%nodes = 0
   ELSE
-     nplanes_k = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_k, planes_k)
+     kplanes%n = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, kplanes%n, kplanes%nodes)
   ENDIF
 
 ! ###################################################################
@@ -1142,7 +1068,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( nitera_log       .LE. 0 ) nitera_log       = nitera_last - nitera_first + 1
   IF ( nitera_pln       .LE. 0 ) nitera_pln       = nitera_last - nitera_first + 1
   IF ( FilterDomainStep .LE. 0 ) FilterDomainStep = nitera_last - nitera_first + 1
-  IF ( FilterInflowStep .LE. 0 ) FilterInflowStep = nitera_last - nitera_first + 1
 
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) nitera_stats_spa =-1 ! Never call avg_spatial routines
   IF ( nitera_stats_spa .LE. 0 ) nitera_stats_spa = nitera_last - nitera_first + 1

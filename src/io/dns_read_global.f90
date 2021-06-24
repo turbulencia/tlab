@@ -623,7 +623,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
   CALL IO_WRITE_ASCII(bakfile, '#BcsJmin=<free,solid,zero>')
   CALL IO_WRITE_ASCII(bakfile, '#BcsJmax=<free,solid,zero>')
-  CALL IO_WRITE_ASCII(bakfile, '#Step=<filter step>')
 
   FilterDomain(:)%size       = g(:)%size
   FilterDomain(:)%periodic   = g(:)%periodic

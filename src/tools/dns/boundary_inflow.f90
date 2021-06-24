@@ -36,7 +36,7 @@ MODULE BOUNDARY_INFLOW
   TREAL    :: inflow_adapt
 
   TYPE(filter_dt), DIMENSION(3) :: FilterInflow
-  TINTEGER :: FilterInflowStep
+  ! TINTEGER :: FilterInflowStep
 
   TYPE(discrete_dt) :: fp ! Discrete forcing
 
@@ -450,6 +450,8 @@ END SUBROUTINE BOUNDARY_INFLOW_DISCRETE
 !########################################################################
 !########################################################################
 ! Filter
+! This should be integrated into the inflow buffer, as the filter contribution
+! BufferFilter should then be a block in dns.ini as [Filter], which is read in io_read_global.
 
 SUBROUTINE BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q,s, txc, wrk1d,wrk2d,wrk3d)
 
