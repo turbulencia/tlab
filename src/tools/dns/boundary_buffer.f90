@@ -17,6 +17,9 @@
 !# the header global variables (like itime) are not updated within this
 !# routine
 !#
+!# These arrays are also used in case we need boundary fields for the
+!# boundary conditions. Should be separated in the future
+!#
 !########################################################################
 MODULE BOUNDARY_BUFFER
 
@@ -102,7 +105,7 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
 
 #ifdef USE_MPI
 ! Filters at boundaries
-  IF ( BuffType .EQ. DNS_BUFFER_FILTER .AND. BuffFlowImax%size .GT. 1 ) THEN ! Required for outflow explicit filter in Ox
+  IF ( BuffFlowImax%type .EQ. DNS_BUFFER_FILTER .AND. BuffFlowImax%size .GT. 1 ) THEN ! Required for outflow explicit filter in Ox
      CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Ox BCs explicit filter.')
      id    = DNS_MPI_K_OUTBCS
      isize_loc = BuffFlowImax%size*jmax
@@ -110,7 +113,7 @@ SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF
 
-  IF ( BuffType .EQ. DNS_BUFFER_FILTER .AND. BuffFlowJmin%size .GT. 1 ) THEN ! Required for outflow explicit filter in Oy
+  IF ( BuffFlowJmin%type .EQ. DNS_BUFFER_FILTER .AND. BuffFlowJmin%size .GT. 1 ) THEN ! Required for outflow explicit filter in Oy
      CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Oy BCs explicit filter.')
      id    = DNS_MPI_K_TOPBCS
      isize_loc = imax*BuffFlowJmin%size

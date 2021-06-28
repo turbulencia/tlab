@@ -470,7 +470,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! Load buffer if used also by BCs
   CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'LoadBuffer', 'no', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; BuffLoad = .TRUE.
-  ELSE;                                       BuffLoad = .FALSE.; ENDIF
+  ELSE;                                       BuffLoad = .FALSE.
+  ENDIF
 
 ! Sizes; read always because allocation checks if # points is zero
   CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUImin', '0', BuffFlowImin%size)
@@ -482,6 +483,11 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSImax', '0', BuffScalImax%size)
   CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSJmin', '0', BuffScalJmin%size)
   CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSJmax', '0', BuffScalJmax%size)
+
+  BuffScalImin%type = BuffType; BuffFlowImin%type = BuffType ! So far, all the same
+  BuffScalImax%type = BuffType; BuffFlowImax%type = BuffType
+  BuffScalJmin%type = BuffType; BuffFlowJmin%type = BuffType
+  BuffScalJmax%type = BuffType; BuffFlowJmax%type = BuffType
 
   IF ( BuffScalImin%size .NE. BuffFlowImin%size .OR. &
        BuffScalImax%size .NE. BuffFlowImax%size .OR. &
