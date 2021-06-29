@@ -129,9 +129,9 @@ SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, ny,nv,ng, y, varnames, groupna
 END SUBROUTINE IO_WRITE_AVERAGES
 
 ! ###################################################################
+#ifdef USE_NETCDF
 SUBROUTINE NC_CHECK( status )
-
-  USE DNS_CONSTANTS, ONLY : efile
+  USE DNS_CONSTANTS, ONLY : efile  
   USE NETCDF
 
   IMPLICIT NONE
@@ -142,6 +142,7 @@ SUBROUTINE NC_CHECK( status )
     CALL IO_WRITE_ASCII(efile,'NETCDF error signal '//TRIM(ADJUSTL(NF90_STRERROR(status))))
     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   END IF
-
+  
   RETURN
 END SUBROUTINE NC_CHECK
+#endif 
