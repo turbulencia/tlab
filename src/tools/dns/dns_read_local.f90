@@ -831,39 +831,26 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL IO_WRITE_ASCII(bakfile, '#PlanesI=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#PlanesJ=<value>')
   CALL IO_WRITE_ASCII(bakfile, '#PlanesK=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#IntegralsJ=<yes/no>')
 
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesI', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
-     nplanes_i = 0; planes_i = 0
+     iplanes%n = 0; iplanes%nodes = 0
   ELSE
-     nplanes_i = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_i, planes_i)
+     iplanes%n = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, iplanes%n, iplanes%nodes)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesJ', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
-     nplanes_j = 0; planes_j = 0
+     jplanes%n = 0; jplanes%nodes = 0
   ELSE
-     nplanes_j = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_j, planes_j)
+     jplanes%n = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, jplanes%n, jplanes%nodes)
   ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PressureJ', 'no', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN
-     pplanes_j = 1
-  ELSE
-     pplanes_j = 0
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'IntegralsJ', 'no', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; nplanes_j_aux = 1
-  ELSE;                                       nplanes_j_aux = 0; ENDIF
-  nplanes_j = nplanes_j +nplanes_j_aux
 
   CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesK', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
-     nplanes_k = 0; planes_k = 0
+     kplanes%n = 0; kplanes%nodes = 0
   ELSE
-     nplanes_k = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, nplanes_k, planes_k)
+     kplanes%n = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, kplanes%n, kplanes%nodes)
   ENDIF
 
 ! ###################################################################

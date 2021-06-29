@@ -11,7 +11,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
     l_q, l_hq, l_txc, l_comm)
 
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, tag_part, tag_traj, lfile
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
   USE DNS_GLOBAL, ONLY : isize_particle
   USE DNS_GLOBAL, ONLY : imode_sim
   USE DNS_GLOBAL, ONLY : icalc_flow, icalc_scal, icalc_part
@@ -33,7 +33,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
 #include "integers.h"
 
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
-  TREAL, DIMENSION(*)             :: txc
+  TREAL, DIMENSION(isize_txc_field,6),    INTENT(INOUT) :: txc
   TREAL, DIMENSION(*)             :: q_inf, s_inf
   TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
 
@@ -153,7 +153,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
 
     ! -----------------------------------------------------------------------
     IF ( MOD(itime-nitera_first,nitera_pln) == 0 ) THEN
-      CALL PLANES_SAVE( q,s, hq,txc, wrk1d,wrk2d,wrk3d )
+      CALL PLANES_SAVE( q,s, txc(1,1), txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d )
     ENDIF
 
   ENDDO
