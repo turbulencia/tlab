@@ -51,6 +51,7 @@ PROGRAM INIFLOW
 #endif
 
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
+  inb_wrk2d=MAX(inb_wrk2d,3)
   ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
   isize_wrk3d = isize_txc_field
 
