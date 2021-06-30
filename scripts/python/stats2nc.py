@@ -6,6 +6,7 @@ import gzip as gz
 import netCDF4
 import subprocess
 import array as arr
+import os 
  
 from pylab import *
 
@@ -23,50 +24,85 @@ def is_number(s):
         return False
 
 
-def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1,reynolds=1):
+def avg2dict(avgtype,avgpath,jmax,ftype='',tstart=-1, tend=-1,tstep=-1,reynolds=1):
 
-  if ( gzip == 1):
-    gzip_count = 3
-    gzip_str   = '.gz'
-  else :
-    gzip_count = 0
-    gzip_str   = ''
+    print('TYPE: ', avgtype)
+    print('PATH: ', avgpath)
+    print('jmax: ', jmax)
+    print('fTYPE:', ftype) 
+    ftype_count = len(ftype) 
 
-  files_from_list = 0
-  
-  ###########################################################
-  # get times automatically from files in directory 
-  ########################################################### 
-  if ( tstart == -1 ) : 
-    files_from_list=1 
-    command = "find " + avgpath + ' -name \"' + avgtype + "[0-9]*\""+gzip_str
-    # print(command)
-    p=subprocess.Popen(command, shell=True,
+    ###########################################################
+    # get times automatically from files in directory 
+    ########################################################### 
+    if ( tstart == -1 ) : 
+        command = "find " + avgpath + ' -name \"' + avgtype + "[0-9]*\""+ftype
+        # print(command)
+        p=subprocess.Popen(command, shell=True,
                          stdout=subprocess.PIPE) 
-    file_list = []
-    ordered_list = []
-    for file in p.stdout.readlines():
-        dummy = file.strip()
-        try:
-            with open(dummy):
-                cstart=len('{}/{}'.format(avgpath,avgtype))
-                cend=len(dummy)-gzip_count             #strip off .gz
-                if ( is_number(dummy[cstart:cend]) ):
-                    iter = int(dummy[cstart:cend])
-                    ordered_list.append([iter,file.strip()])
-        except IOError:
-            print('ERROR - File', file, 'does not exist' )
+        flist = []
+        ordered_list = []
+        for file in p.stdout.readlines():
+            dummy = file.strip()
+            try:
+                with open(dummy):
+                    cstart=len('{}/{}'.format(avgpath,avgtype))
+                    cend=len(dummy)-ftype_count             #strip off .gz
+                    if ( is_number(dummy[cstart:cend]) ):
+                        iter = int(dummy[cstart:cend])
+                        ordered_list.append([iter,file.strip()])
+            except IOError:
+                print('ERROR - File', file, 'does not exist' )
 
-    file_list = [f[1] for f in sorted(ordered_list,key=lambda file:file[0]) ]
+        flist = [f[1] for f in sorted(ordered_list,key=lambda file:file[0]) ]
 
-    retval = p.wait()
-    ntimes = len(file_list)
-  else :
-    ntimes = (tend - tstart) / tstep + 1
+        retval = p.wait()
+        ntimes = len(flist)
+    else :
+        ntimes = (tend - tstart) / tstep + 1
 
-  print('FILES for', avgtype,':', ntimes  )
-  print('      first: {}\n      last:  {}'.format(file_list[0],file_list[-1]))
 
+    print('FILES for', avgtype,':', ntimes )
+
+    if ftype != '.nc' and ntimes > 0  : 
+        print('  -- OLD (ASCII) VERSION --\n      first: {}\n      last:  {}'.format(flist[0],flist[-1]))
+        d,vgd=avg2dict_asc(flist,ntimes,avgtype,avgpath,jmax,ftype,tstart, tend,tstep,reynolds)
+        return d,vgd 
+    elif ftype == 'nc' and ntimes > 0 :
+        print(' -- NEW (NETCDF) VERSION --\n      first: {}\n      last:  {}'.format(flist[0],flist[-1]))
+        mergeNC(avgtype,avgpath,'nc_all.nc') 
+        return
+
+def mergeNC(avgtype,avgpath,ofile,reynolds=1):
+
+    command = 'ncrcat --4 -L 9 {}/{}*.nc {}.nc'.format(avgpath,avgtype,ofile)
+    print(command) 
+    os.system(command)
+
+    # recalculate friction values for backward compatibility
+    f_h=netCDF4.Dataset('{}.nc'.format(ofile),'r+')
+
+    t=f_h['t']
+    du=f_h['U_y1'][:,1]
+    dw=f_h['W_y1'][:,1]
+
+    vF=f_h.createVariable('FrictionVelocity','f8',('t',))
+    vF.setncattr('Group','Friction')
+    vA=f_h.createVariable('FrictionAngle','f8',('t',))
+    vA.setncattr('Group','Friction') 
+
+    nu=2./(reynolds*reynolds) 
+    
+    vF[:] = nu*np.sqrt(nu*np.sqrt(du**2+dw**2))
+    vA[:] = np.arctan2(dw,du)
+
+    
+    return
+
+def avg2dict_asc(file_list,ntimes,avgtype,avgpath,jmax,ftype,tstart=-1, tend=-1,tstep=-1,reynolds=1):
+    
+  ftype_count = len(ftype) 
+    
   ############################################################ 
   if ( ntimes == 0 ) : 
       return -1
@@ -75,12 +111,14 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1,reynolds=1):
   hdrStr_old=''
   update_vList=True
   updateGroups=True
+  t_start=tstart
+  
   for t in range(ntimes):
-    if ( files_from_list == 1 ) :
+    if t_start == -1 :
         filename = file_list[t]
         #number starts after <path>/<file type>
         cstart=len('{}/{}'.format(avgpath,avgtype))
-        cend=len(filename)-gzip_count       #strip off .gz
+        cend=len(filename)-ftype_count       #strip off .gz
         filenum = filename[cstart:cend]
         tend = filenum
         if (t == 0):
@@ -90,33 +128,41 @@ def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1,reynolds=1):
         filename = '{}/{}{}{}'.format(avgpath,avgtype,filenum,gzip_str)
 
     # process the file
-    if ( gzip == 1):
+    if ftype == '.gz':
         f = gz.open(filename,'r')
-    elif (gzip == 0):
+    else:
         f= open(filename,'r')
    
     # retrieve the time
+    # print(filename)
     datastring = f.readline().split()
     if datastring[0] == 'RTIME':
         time = datastring[2]
+    elif datastring[0].decode('UTF-8') == 'RTIME' :
+        time= float(datastring[2])
     else:
         print("ERROR getting time from file for type {}, it {}".format(avgtype,filenum))
+        print(datastring)
         quit()
 
     # process the group items in the header
     datastring = f.readline()
     d0=datastring.split()[0]
+    if type(d0) is bytes :
+        d0=str(d0.decode('UTF-8') )
 
     if filenum == tstart:
         varGroups={}
         groupVars={}
-
-    while d0 == 'GROUP' or d0 == 'IMAX' or d0 == 'JMAX' :
+        
+    while d0 == 'GROUP' or d0 == 'IMAX' or d0 == 'JMAX':
         if d0 == 'GROUP'and updateGroups:
             addGroup(varGroups,datastring,ig)
             ig=ig+1
         datastring = f.readline()
         d0=datastring.split()[0]
+        if type(d0) is bytes:
+            d0=d0.decode('UTF-8')
 
     hdrStr=datastring
     hdr=datastring.split()

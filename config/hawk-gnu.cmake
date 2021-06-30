@@ -49,7 +49,7 @@ else( ${BUILD_TYPE} STREQUAL "SERIAL" )
 endif()     
 
 set(USER_Fortran_FLAGS         "-cpp -ffree-form -ffree-line-length-2048 -fno-automatic") #-fallow-argument-mismatch from gnu-version10
-set(USER_Fortran_FLAGS_RELEASE "-march=znver2 -mtune=znver2 -O3 -ffinite-math-only -fprefetch-loop-arrays --param prefetch-latency=300 -pg")
+set(USER_Fortran_FLAGS_RELEASE "-march=znver2 -mtune=znver2 -O3 -ffinite-math-only -fprefetch-loop-arrays --param prefetch-latency=300")
 # Do not use -funroll-all-loops / -funroll-loops 
 set(USER_Fortran_FLAGS_DEBUG   "-g -traceback -debug all -ffpe-trap=all") 
 
