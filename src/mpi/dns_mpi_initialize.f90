@@ -7,7 +7,8 @@ SUBROUTINE DNS_MPI_INITIALIZE
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax,g
   USE DNS_GLOBAL, ONLY : isize_txc_dimz, isize_txc_dimx
-  USE DNS_GLOBAL, ONLY : imode_sim, ifourier, imode_ibm
+  USE DNS_GLOBAL, ONLY : imode_sim, ifourier
+  USE DNS_GLOBAL, ONLY : xbars_geo, imode_ibm
   USE DNS_CONSTANTS, ONLY : lfile
   USE DNS_MPI
 
@@ -104,11 +105,13 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ENDIF
 
 ! -----------------------------------------------------------------------
+  ! Immersed Boundary Method (IBM)
   IF (imode_ibm .EQ. 1) THEN
     id = DNS_MPI_J_PARTIAL
     npage = imax*kmax
     ims_size_j(id) = npage
 
+    ! ------------------ !
     IF (ims_npro_i .GT. 1) THEN
     CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Ox IBM nobi.')
     id = DNS_MPI_I_IBM_NOB
@@ -122,6 +125,23 @@ SUBROUTINE DNS_MPI_INITIALIZE
     id = DNS_MPI_K_IBM_NOB
     npage = g(1)%size * g(2)%size / ims_npro
     CALL DNS_MPI_TYPE_K(ims_npro_k, i1, npage, i1, i1, i1, i1, &
+          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+    ENDIF
+
+    ! ------------------ !
+    IF (ims_npro_i .GT. 1) THEN
+    CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Ox IBM nobi_b and nobi_e.')
+    id = DNS_MPI_I_IBM_NOB_BE
+    npage = g(2)%size * g(3)%size / ims_npro
+    CALL DNS_MPI_TYPE_I(ims_npro_i, xbars_geo(1), npage, i1, i1, i1, i1, &
+          ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+    ENDIF
+
+    IF ( ims_npro_k .GT. 1 ) THEN
+    CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Oz IBM nobk_b and nobk_e.')
+    id = DNS_MPI_K_IBM_NOB_BE
+    npage = g(1)%size * g(2)%size / ims_npro
+    CALL DNS_MPI_TYPE_K(ims_npro_k, xbars_geo(1), npage, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
     ENDIF
 

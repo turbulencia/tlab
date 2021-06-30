@@ -146,4 +146,9 @@ MODULE DNS_GLOBAL
               istat_min_ver, istat_maj_ver
   TREAL    :: rstattimeorg
 
+! ###########################################################
+! Immersed Boundary Method (IBM)
+! ###########################################################
+  TINTEGER, DIMENSION(3)              :: xbars_geo    ! bars in x, xbars_geo(3)=[nbars,hbar,wbar]
+
 END MODULE DNS_GLOBAL

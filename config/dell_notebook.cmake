@@ -8,7 +8,7 @@ endif()
 if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build
    set(ENV{FC} mpif90)
    set(CMAKE_Fortran_COMPILER mpif90)
-   set(USER_Fortran_FLAGS "-cpp -std=legacy -ffree-form -ffree-line-length-none -fno-automatic -fconvert=little-endian -O3 -ffast-math -mtune=native -march=native")
+   set(USER_Fortran_FLAGS "-cpp -std=legacy -ffree-form -ffree-line-length-none -fno-automatic -fconvert=little-endian -O3 -ffast-math -ffinite-math-only -mtune=native -march=native")
    # set(USER_Fortran_FLAGS_RELEASE "-fconvert=little-endian -O3 -ffast-math -mtune=native -march=native")
 
    add_definitions(-DUSE_FFTW -DUSE_MPI -DUSE_ALLTOALL -DUSE_MPI_IO)
@@ -23,12 +23,12 @@ else() # compiler for serial build
    add_definitions(-DUSE_FFTW)
 
    if    ( ${BUILD_TYPE} STREQUAL "BIG" )
-     set(USER_Fortran_FLAGS_RELEASE "-fconvert=big-endian -ffpe-summary=none -O3 -ffast-math -mtune=native -march=native")
+     set(USER_Fortran_FLAGS_RELEASE "-fconvert=big-endian -ffpe-summary=none -O3 -ffast-math -ffinite-math-only -mtune=native -march=native")
 
      set(CMAKE_BUILD_TYPE RELEASE)
 
    elseif( ${BUILD_TYPE} STREQUAL "LITTLE" )
-     set(USER_Fortran_FLAGS_RELEASE "-fconvert=little-endian -ffpe-summary=none -O3 -ffast-math -mtune=native -march=native")
+     set(USER_Fortran_FLAGS_RELEASE "-fconvert=little-endian -ffpe-summary=none -O3 -ffast-math -ffinite-math-only -mtune=native -march=native")
 
      set(CMAKE_BUILD_TYPE RELEASE)
 

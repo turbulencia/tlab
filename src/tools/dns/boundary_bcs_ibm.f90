@@ -41,21 +41,20 @@
 module DNS_IBM
 
   use DNS_GLOBAL, only: imax, jmax, kmax, isize_field, isize_txc_field, inb_txc
-  use DNS_LOCAL,  only: xbars_geo
+  use DNS_GLOBAL, only: xbars_geo
 
   implicit none
 
   TREAL, dimension(:,:,:), allocatable :: eps_aux                ! eps_aux field for DEBUG and geometry generation
   TREAL, dimension(:),     allocatable :: epsi, epsj, epsk, eps  ! eps transposed in i/j/k
-  TREAL, dimension(:),     allocatable :: nobi, nobj, nobk       ! number of objects        in i/j/k 
-  ! TREAL, dimension(:,:,:), allocatable :: ! location of starting interfaces of object (fluid --> solid)
-  ! TREAL, dimension(:,:,:), allocatable :: ! location of ending   interfaces of object (solid --> fluid)
-
+  TREAL, dimension(:),     allocatable :: nobi, nobj, nobk       ! number of objects in i/j/k 
+  TREAL, dimension(:),     allocatable :: nobi_b, nobj_b, nobk_b ! beginn of objects in i/j/k 
+  TREAL, dimension(:),     allocatable :: nobi_e, nobj_e, nobk_e ! end    of objects in i/j/k 
 
   ! all functions/subroutines are private by default
   ! puplish only needed subroutines here 
   private 
-  public  :: ALLOCATE_IBM, INITIALIZE_GEOMETRY, eps, epsi, epsj, epsk 
+  public  :: ALLOCATE_IBM, INITIALIZE_GEOMETRY, eps
 
 contains
   !########################################################################
@@ -84,10 +83,14 @@ contains
     logical, intent(inout)    :: allocated       ! flag, just allocate memory space once
     TINTEGER                  :: ierr, inb_ibm
     TINTEGER                  :: nyz, nxz, nxy
+    TINTEGER                  :: nob_max
     character(128)            :: str, line
    
     ! ================================================================== !
     inb_ibm = i1 ! can be also defined in dns_read_local.f90 and module dns_global.f90 (cf. inb_flow ...)
+
+    ! max(nobi_max,nobj_max,nobk_max) from dns.ini file
+    nob_max = xbars_geo(1)
 
     ! npages (cf. dns_mpi_initialize.f90)
 #ifdef USE_MPI 
@@ -186,6 +189,70 @@ contains
       allocate(nobk(nxy), stat=ierr)
       if ( ierr .ne. 0 ) then
         call IO_WRITE_ASCII(efile,'DNS. Not enough memory for nobk.')
+        call DNS_STOP(DNS_ERROR_ALLOC)
+      end if
+
+      ! ------------------------------------------------------------------ !
+
+      ! nobi_b
+      write(str,*) inb_ibm; line = 'Allocating array IBM nobi_b of size '//trim(adjustl(str))//'x'
+      write(str,*) nyz*nob_max; line = trim(adjustl(line))//trim(adjustl(str))
+      call IO_WRITE_ASCII(lfile,line)
+      allocate(nobi_b(nyz*nob_max), stat=ierr)
+      if ( ierr .ne. 0 ) then
+        call IO_WRITE_ASCII(efile,'DNS. Not enough memory for nobi_b.')
+        call DNS_STOP(DNS_ERROR_ALLOC)
+      end if
+
+      ! nobj_b
+      write(str,*) inb_ibm; line = 'Allocating array IBM nobj_b of size '//trim(adjustl(str))//'x'
+      write(str,*) nxz*nob_max; line = trim(adjustl(line))//trim(adjustl(str))
+      call IO_WRITE_ASCII(lfile,line)
+      allocate(nobj_b(nxz*nob_max), stat=ierr)
+      if ( ierr .ne. 0 ) then
+        call IO_WRITE_ASCII(efile,'DNS. Not enough memory for nobj_b.')
+        call DNS_STOP(DNS_ERROR_ALLOC)
+      end if
+      
+      ! nobk_b
+      write(str,*) inb_ibm; line = 'Allocating array IBM nobk_b of size '//trim(adjustl(str))//'x'
+      write(str,*) nxy*nob_max; line = trim(adjustl(line))//trim(adjustl(str))
+      call IO_WRITE_ASCII(lfile,line)
+      allocate(nobk_b(nxy*nob_max), stat=ierr)
+      if ( ierr .ne. 0 ) then
+        call IO_WRITE_ASCII(efile,'DNS. Not enough memory for nobk_b.')
+        call DNS_STOP(DNS_ERROR_ALLOC)
+      end if
+
+      ! ------------------------------------------------------------------ !
+
+      ! nobi_e
+      write(str,*) inb_ibm; line = 'Allocating array IBM nobi_e of size '//trim(adjustl(str))//'x'
+      write(str,*) nyz*nob_max; line = trim(adjustl(line))//trim(adjustl(str))
+      call IO_WRITE_ASCII(lfile,line)
+      allocate(nobi_e(nyz*nob_max), stat=ierr)
+      if ( ierr .ne. 0 ) then
+        call IO_WRITE_ASCII(efile,'DNS. Not enough memory for nobi_e.')
+        call DNS_STOP(DNS_ERROR_ALLOC)
+      end if
+
+      ! nobj_e
+      write(str,*) inb_ibm; line = 'Allocating array IBM nobj_e of size '//trim(adjustl(str))//'x'
+      write(str,*) nxz*nob_max; line = trim(adjustl(line))//trim(adjustl(str))
+      call IO_WRITE_ASCII(lfile,line)
+      allocate(nobj_e(nxz*nob_max), stat=ierr)
+      if ( ierr .ne. 0 ) then
+        call IO_WRITE_ASCII(efile,'DNS. Not enough memory for nobj_e.')
+        call DNS_STOP(DNS_ERROR_ALLOC)
+      end if
+      
+      ! nobk_e
+      write(str,*) inb_ibm; line = 'Allocating array IBM nobk_e of size '//trim(adjustl(str))//'x'
+      write(str,*) nxy*nob_max; line = trim(adjustl(line))//trim(adjustl(str))
+      call IO_WRITE_ASCII(lfile,line)
+      allocate(nobk_e(nxy*nob_max), stat=ierr)
+      if ( ierr .ne. 0 ) then
+        call IO_WRITE_ASCII(efile,'DNS. Not enough memory for nobk_e.')
         call DNS_STOP(DNS_ERROR_ALLOC)
       end if
 
@@ -445,7 +512,10 @@ contains
 
     ! ================================================================== !
     ! ================================================================== !
-    ! DEBUG
+    ! DEBUG transposed fields of eps
+    ! ================================================================== !
+    ! ================================================================== !
+
     if ( ims_pro .eq. 0 ) then 
       write(*,*) '========================================================='
       write(*,*) 'Transposing and Allocating arrays: done'
@@ -498,15 +568,17 @@ contains
 #ifdef USE_MPI 
 #include "mpif.h"
 #include "dns_const_mpi.h"
-    TINTEGER, parameter                          :: idi    = DNS_MPI_I_PARTIAL 
-    TINTEGER, parameter                          :: idj    = DNS_MPI_J_PARTIAL 
-    TINTEGER, parameter                          :: idk    = DNS_MPI_K_PARTIAL 
-    TINTEGER, parameter                          :: idnobi = DNS_MPI_I_IBM_NOB 
-    TINTEGER, parameter                          :: idnobk = DNS_MPI_K_IBM_NOB 
+    TINTEGER, parameter                          :: idi        = DNS_MPI_I_PARTIAL 
+    TINTEGER, parameter                          :: idj        = DNS_MPI_J_PARTIAL 
+    TINTEGER, parameter                          :: idk        = DNS_MPI_K_PARTIAL 
+    TINTEGER, parameter                          :: idi_nob    = DNS_MPI_I_IBM_NOB 
+    TINTEGER, parameter                          :: idk_nob    = DNS_MPI_K_IBM_NOB 
+    TINTEGER, parameter                          :: idi_nob_be = DNS_MPI_I_IBM_NOB_BE 
+    TINTEGER, parameter                          :: idk_nob_be = DNS_MPI_K_IBM_NOB_BE
     TINTEGER                                     :: ims_err, max_nob
-    TREAL, dimension(ims_size_i(idi))            :: nobi_out
-    TREAL, dimension(ims_size_j(idj))            :: nobj_out
-    TREAL, dimension(ims_size_k(idk))            :: nobk_out
+    TREAL, dimension(ims_size_i(idi))            :: nobi_out  ! DEBUG
+    TREAL, dimension(ims_size_j(idj))            :: nobj_out  ! DEBUG
+    TREAL, dimension(ims_size_k(idk))            :: nobk_out  ! DEBUG
 #else
     TINTEGER, parameter                          :: ims_pro=0, ims_npro=1
     TREAL, dimension(jmax * kmax)                :: nobi_out
@@ -517,13 +589,13 @@ contains
     TREAL, dimension(isize_field), intent(inout) :: wrk3d 
 
     TINTEGER                                     :: nobi_max, nobj_max, nobk_max!, max_verif
-    TINTEGER                                     :: i, j, k, ij, ik, jk, ip
+    TINTEGER                                     :: i, j, k, ij, ik, jk, ip, inum
     TINTEGER                                     :: nyz, nxz, nxy
 
     CHARACTER(32)                                :: fname
 
     ! DEBUG
-    TREAL, dimension(isize_field)                        :: tmp1, tmp2, tmp3  
+    TREAL, dimension(isize_field)                        :: tmp1, tmp2, tmp3, tmp4 
     TREAL, dimension(isize_field,inb_txc), intent(inout) :: txc 
 
     ! ================================================================== !
@@ -582,7 +654,7 @@ contains
 
 #ifdef USE_MPI
     if ( ims_npro_i .gt. 1 ) then
-      call DNS_MPI_TRPB_I(nobi, nobi_out, ims_ds_i(1,idnobi), ims_dr_i(1,idnobi), ims_ts_i(1,idnobi), ims_tr_i(1,idnobi))
+      call DNS_MPI_TRPB_I(nobi, nobi_out, ims_ds_i(1,idi_nob), ims_dr_i(1,idi_nob), ims_ts_i(1,idi_nob), ims_tr_i(1,idi_nob))
     endif
 #else 
     nobi_out = nobi
@@ -640,14 +712,18 @@ contains
 
 #ifdef USE_MPI
     if ( ims_npro_k .gt. 1 ) then
-      call DNS_MPI_TRPF_K(nobk, nobk_out, ims_ds_k(1,idnobk), ims_dr_k(1,idnobk), ims_ts_k(1,idnobk), ims_tr_k(1,idnobk))
+      call DNS_MPI_TRPF_K(nobk, nobk_out, ims_ds_k(1,idk_nob), ims_dr_k(1,idk_nob), ims_ts_k(1,idk_nob), ims_tr_k(1,idk_nob))
     endif
 #else 
     nobk_out = nobk
 #endif
-
     ! ================================================================== !
-    ! DEBUG
+    ! ================================================================== !
+    ! ================================================================== !
+    ! DEBUG nob fields with  2D fields
+    ! ================================================================== !
+    ! ================================================================== !
+    ! ================================================================== !
     if (ims_pro .eq. 0) then
       write(*,*) '========================================================='
       ! write(*,*) 'max_nob    =', max_verif
@@ -667,7 +743,6 @@ contains
     if (ims_pro .eq. 0) then  
       write(*,*) fname ! DEBUG
     end if
-    ! call DNS_WRITE_FIELDS(fname  , i2, i1, g(2)%size, g(3)%size/ims_npro, i1, nyz, nobi_out, wrk3d)    
     call DNS_WRITE_FIELDS(fname, i2, i1, g(2)%size/ims_npro, g(3)%size, i1, nyz, nobi_out, wrk3d)    
 
     ! write nobj fields
@@ -677,8 +752,6 @@ contains
       write(*,*) fname ! DEBUG
     end if
     call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, i1, g(3)%size, i1, nxz, nobj_out, wrk3d)
-    ! call DNS_WRITE_FIELDS('nobj1', i2, imax, i1, kmax,                    i1, nxz, nobj_out, wrk3d)
-    ! call DNS_WRITE_FIELDS('nobj3', i2, imax,jmax,kmax,                    i1, imax*jmax*kmax, tmp2, wrk3d)
 
     ! write nobk fields
     write(fname,*) i0; 
@@ -688,68 +761,158 @@ contains
     end if
     call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, i1, i1, nxy, nobk_out, wrk3d)
 
+
     ! ================================================================== !
-    ! DEBUG
+    ! ================================================================== !
+    ! ================================================================== !
+    ! DEBUG nob fields with 3D fields
     ! ================================================================== !
     ! ================================================================== !
     ! ================================================================== !
 
-    ! ! verify nobi/j/k_max
-    ! max_verif = max(nobi_max, nobj_max, nobk_max)
-    ! if (max_verif .ne. xbars_geo(1)) then
-    !   call IO_WRITE_ASCII(efile,'DNS. Number of immersed objects unequal dns.ini.')
-    !   call DNS_STOP(DNS_ERROR_IBM_NOB_MAX)
-    ! end if
+    if (ims_pro .eq. 0) then
+      write(*,*) '========================================================='
+      write(*,*) 'Writing geometry in 3D fields'
+      ! write(*,*)
+    end if
 
-    ! ! DEBUG, writing nobj out with the help of 3d fields 
-    ! txc(:,:) = C_0_R
-    ! tmp1(:)  = txc(:,1); tmp2(:) = txc(:,2); tmp3(:) = txc(:,3)
+    txc(:,:) = C_0_R
 
-    ! ip = 1
-    ! do j = 1, g(2)%size - 1     ! contiguous j-lines
-    !   do ik = 1, nxz            ! pages of   j-lines
-    !     if((ip .eq. 1) .and. (epsj(ik) .eq. 1)) then ! exception: check first plane for objects
-    !       tmp1(ik) = C_1_R
-    !     end if 
-    !     if((epsj(ip+ik-1) .eq. 0) .and. (epsj(ip+ik-1+nxz) .eq. 1)) then ! check for interface 
-    !       tmp1(ik) = tmp1(ik) + C_1_R
-    !     end if
-    !   end do
-    !   ip = ip + nxz
-    ! end do
-      
-    ! call DNS_TRANSPOSE(tmp1, kmax, imax*jmax, kmax, tmp2, imax*jmax)
+    ! tmp aux 
+    tmp1(:) = txc(:,1) 
+    tmp2(:) = txc(:,2)
+    tmp3(:) = txc(:,3) 
+    tmp4(:) = txc(:,4) 
+    ! tmp5(:) = txc(:,5) 
+    ! tmp6(:) = txc(:,6) 
+    ! ================================================================== !
+    ! number of objects in x-direction
+    ip = 1
+    do i = 1, g(1)%size - 1     ! contiguous i-lines
+      do jk = 1, nyz            ! pages of   i-lines
+        if((ip .eq. 1) .and. (epsi(jk) .eq. 1)) then ! exception: check first plane for objects
+          tmp1(jk) = C_1_R
+        end if 
+        if((epsi(ip+jk-1) .eq. 0) .and. (epsi(ip+jk-1+nyz) .eq. 1)) then ! check for interface 
+          tmp1(jk) = tmp1(jk) + C_1_R
+        end if
+      end do
+      ip = ip + nyz
+    end do
+
+    call DNS_TRANSPOSE(tmp1, nyz, g(1)%size, nyz,        tmp2, g(1)%size)
+#ifdef USE_MPI
+    if ( ims_npro_i .gt. 1 ) then
+      call DNS_MPI_TRPB_I(tmp2, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
+    endif
+#endif
+    call DNS_WRITE_FIELDS('nobi3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp1, wrk3d)
+    tmp1(:) = C_0_R
+    tmp2(:) = C_0_R
+
+    ! ================================================================== !
+    ! number of objects in y-direction
+    ip = 1
+    do j = 1, g(2)%size - 1     ! contiguous j-lines
+      do ik = 1, nxz            ! pages of   j-lines
+        if((ip .eq. 1) .and. (epsj(ik) .eq. 1)) then ! exception: check first plane for objects
+          tmp1(ik) = C_1_R
+        end if 
+        if((epsj(ip+ik-1) .eq. 0) .and. (epsj(ip+ik-1+nxz) .eq. 1)) then ! check for interface 
+          tmp1(ik) = tmp1(ik) + C_1_R
+        end if
+      end do
+      ip = ip + nxz
+    end do
+
+    call DNS_TRANSPOSE(tmp1, kmax, imax * jmax, kmax, tmp2, imax * jmax)
+    call DNS_WRITE_FIELDS('nobj3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+    tmp1(:) = C_0_R
+    tmp2(:) = C_0_R
+
+    ! ================================================================== !
+    ! number of objects in z-direction
+    ip = 1
+    do k = 1, g(3)%size - 1     ! contiguous k-lines
+      do ij = 1, nxy            ! pages of   k-lines
+        if((ip .eq. 1) .and. (epsk(ij) .eq. 1)) then ! exception: check first plane for objects
+          tmp1(ij) = C_1_R
+        end if 
+        if((epsk(ip+ij-1) .eq. 0) .and. (epsk(ip+ij-1+nxy) .eq. 1)) then ! check for interface 
+          tmp1(ij) = tmp1(ij) + C_1_R
+        end if
+      end do
+      ip = ip + nxy
+    end do
+
+#ifdef USE_MPI
+    if ( ims_npro_k .gt. 1 ) then
+      call DNS_MPI_TRPF_K(tmp1, tmp2, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+    endif
+#endif
+    call DNS_WRITE_FIELDS('nobk3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+
+    tmp1(:) = C_0_R
+    tmp2(:) = C_0_R
+    ! ================================================================== !
+    ! ================================================================== !
+!     ! begin of objects in x-direction
+
+!     ip = 1
+!     do i = 1, g(1)%size - 1     ! contiguous i-lines
+!       inum = C_0_R
+
+!       inumb = C_0_R
+!       inume = C_0_R
+
+
+!       do jk = 1, nyz            ! pages of   i-lines
+!         !
+!         if((i .eq. 1) .and. (epsi(jk) .eq. 1)) then ! exception: check first plane for objects
+!           ! inum = inum + 1
+!           tmp1(jk) = i ! nobi_b
+!         end if
+!         ! 
+!         if((epsi(ip+jk-1) .eq. 0) .and. (epsi(ip+jk-1+nyz) .eq. 1)) then     ! nobi_b check for interface 
+!           ! inum = inum + 1
+!           tmp1(jk) = 
+!         !
+!         elseif((epsi(ip+jk-1) .eq. 1) .and. (epsi(ip+jk-1+nyz) .eq. 0)) then ! nobi_e check for interface 
+!           tmp2(jk) = tmp2(jk) + C_1_R
+!         end if
+!         !
+!         if((i .eq. (g(1)%size - 1)) .and. (epsi(ip+jk-1+nyz) .eq. 1)) then ! exception: check first plane for objects
+!           tmp2(jk) = i ! nobi_e
+!         end if
+!         ! 
+!       end do
+!       ip = ip + nyz
+!       !
+!       if (SUM(tmp1(xx:xx)) .gt. 0)  then ! move on to next slice
+!         jk_num = 
+!       end if
+!     end do
+
+!     call DNS_TRANSPOSE(tmp1, nyz, g(1)%size, nyz,        tmp3, g(1)%size)
+!     call DNS_TRANSPOSE(tmp2, nyz, g(1)%size, nyz,        tmp4, g(1)%size)
+!     #ifdef USE_MPI
+!     if ( ims_npro_i .gt. 1 ) then
+!       call DNS_MPI_TRPB_I(tmp3, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
+!       call DNS_MPI_TRPB_I(tmp4, tmp2, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
+!     endif
+! #endif
+!     call DNS_WRITE_FIELDS('nobi3d_b', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp1, wrk3d)
+!     call DNS_WRITE_FIELDS('nobi3d_e', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+
+!     tmp1(:) = C_0_R
+!     tmp2(:) = C_0_R
+!     tmp3(:) = C_0_R
+!     tmp4(:) = C_0_R
 
     ! ================================================================== !
     ! ================================================================== !
-    ! if (ims_pro .eq. 0) then
-    !   open(14, file = 'nobj_pro0.txt')  
-    !     do i=1,nxz
-    !       write(14,'(F20.14,F20.14)') tmp2(i)
-    !     end do  
-    !   close(14)
-    ! end i
-    ! if (ims_pro .eq. 1) then
-    !   open(14, file = 'nobj_pro1.txt')  
-    !     do i=1,nxz
-    !       write(14,'(F20.14,F20.14)') tmp2(i)
-    !     end do  
-    !   close(14)
-    ! end i
-    ! if (ims_pro .eq. 2) then
-    !   open(14, file = 'nobj_pro2.txt')  
-    !     do i=1,nxz
-    !       write(14,'(F20.14,F20.14)') tmp2(i)
-    !     end do  
-    !   close(14)
-    ! end if
-    ! if (ims_pro .eq. 3) then
-    !   open(14, file = 'nobj_pro3.txt')  
-    !     do i=1,nxz
-    !       write(14,'(F20.14,F20.14)') tmp2(i)
-    !     end do  
-    !   close(14)
-    ! end if
+    ! ================================================================== !
+
     return
   end subroutine GENERATE_GEOMETRY
   !########################################################################

@@ -13,6 +13,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE DNS_GLOBAL,    ONLY : imode_sim, inb_flow,inb_scal, imode_ibm
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : FilterDomain
+  USE DNS_GLOBAL,    ONLY : xbars_geo
   USE DNS_LOCAL
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
