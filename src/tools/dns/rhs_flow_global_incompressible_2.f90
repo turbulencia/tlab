@@ -4,7 +4,7 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Momentum equations, nonlinear term in skew-symmetric form and the 
+!# Momentum equations, nonlinear term in skew-symmetric form and the
 !# viscous term explicit. 9 2nd order + 9+9 1st order derivatives.
 !# Pressure term requires 3 1st order derivatives
 !# Scalar needed for the buoyancy term
@@ -75,7 +75,7 @@ IMPLICIT NONE
   CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), w, tmp6, tmp3, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), w, tmp5, tmp2, wrk2d,wrk3d)
   CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), w, tmp4, tmp1, wrk2d,wrk3d)
-  
+
   DO ij = 1,isize_field
      h3(ij) = h3(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
           - C_05_R*( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
@@ -132,7 +132,7 @@ IMPLICIT NONE
 !     h1(ij) = h1(ij) - C_05_R*u(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
 !     h2(ij) = h2(ij) - C_05_R*v(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
 !     h3(ij) = h3(ij) - C_05_R*w(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
-!  ENDDO 
+!  ENDDO
 ! no big impact of this part, but in the BCs I need it because I already have
 ! add 1/2 of it.
 
@@ -140,7 +140,7 @@ IMPLICIT NONE
 ! Impose buffer zone as relaxation terms
 ! #######################################################################
   IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
-     CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
+     CALL BOUNDARY_BUFFER_RELAX_FLOW(q, hq)
   ENDIF
 
 ! #######################################################################
@@ -184,7 +184,7 @@ IMPLICIT NONE
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
-! Add pressure gradient 
+! Add pressure gradient
 ! -----------------------------------------------------------------------
   DO ij = 1,isize_field
      h1(ij) = h1(ij) - tmp2(ij)
@@ -212,7 +212,7 @@ IMPLICIT NONE
   ENDDO
 
 ! -----------------------------------------------------------------------
-! Impose bottom BCs at Jmin 
+! Impose bottom BCs at Jmin
 ! -----------------------------------------------------------------------
   ip_b =                 1
   DO k = 1,kmax

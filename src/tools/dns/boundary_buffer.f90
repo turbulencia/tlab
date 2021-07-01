@@ -61,14 +61,15 @@ MODULE BOUNDARY_BUFFER
 
   PUBLIC :: BOUNDARY_BUFFER_READBLOCK
   PUBLIC :: BOUNDARY_BUFFER_INITIALIZE
-  PUBLIC :: BOUNDARY_BUFFER_RELAXATION_FLOW
-  PUBLIC :: BOUNDARY_BUFFER_RELAXATION_SCAL
+  PUBLIC :: BOUNDARY_BUFFER_RELAX_FLOW
+  PUBLIC :: BOUNDARY_BUFFER_RELAX_SCAL
+  PUBLIC :: BOUNDARY_BUFFER_RELAX_SCAL_I
   PUBLIC :: BOUNDARY_BUFFER_FILTER
 
   PRIVATE
 
   TINTEGER j,jloc, i,iloc, iq,is, idummy
-  TREAL dummy, prefactor
+  TREAL dummy
 
 CONTAINS
 
@@ -352,243 +353,243 @@ CONTAINS
 
   ! ###################################################################
   ! ###################################################################
-  SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
-
+  SUBROUTINE BOUNDARY_BUFFER_RELAX_SCAL(s,hs, q)
     IMPLICIT NONE
 
-    TREAL, DIMENSION(imax,jmax,kmax,inb_flow), INTENT(IN)  :: q
-    TREAL, DIMENSION(imax,jmax,kmax,inb_flow), INTENT(OUT) :: hq
-
-    TARGET q
-
-    ! -------------------------------------------------------------------
-    TINTEGER iq_max
-
-    TREAL, DIMENSION(:,:,:), POINTER :: rho
+    TREAL, INTENT(IN   ) :: s(isize_field,inb_scal)
+    TREAL, INTENT(  OUT) :: hs(isize_field,inb_scal)
+    TREAL, INTENT(IN   ) :: q(isize_field,inb_flow)   ! In case I need the density
 
     ! ###################################################################
     SELECT CASE( imode_eqns )
-
     CASE ( DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL )
-      prefactor = C_05_R *(gama0-C_1_R) *mach*mach
-      rho => q(:,:,:,5)
+      IF ( BuffScalImin%size > 0 ) CALL RELAX_BLOCK_RHO( 1, BuffScalImin, s,hs, q(:,5) )
+      IF ( BuffScalImax%size > 0 ) CALL RELAX_BLOCK_RHO( 1, BuffScalImax, s,hs, q(:,5) )
+      IF ( BuffScalJmin%size > 0 ) CALL RELAX_BLOCK_RHO( 2, BuffScalJmin, s,hs, q(:,5) )
+      IF ( BuffScalJmax%size > 0 ) CALL RELAX_BLOCK_RHO( 2, BuffScalJmax, s,hs, q(:,5) )
+    CASE DEFAULT
+      IF ( BuffScalImin%size > 0 ) CALL RELAX_BLOCK( 1, BuffScalImin, s,hs )
+      IF ( BuffScalImax%size > 0 ) CALL RELAX_BLOCK( 1, BuffScalImax, s,hs )
+      IF ( BuffScalJmin%size > 0 ) CALL RELAX_BLOCK( 2, BuffScalJmin, s,hs )
+      IF ( BuffScalJmax%size > 0 ) CALL RELAX_BLOCK( 2, BuffScalJmax, s,hs )
+    END SELECT
 
-      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN; iq_max = 3;       ! The energy needs special treatment
-      ELSE;                                       iq_max = 4;
-      ENDIF
+    RETURN
+  END SUBROUTINE BOUNDARY_BUFFER_RELAX_SCAL
 
-      DO iq = 1,iq_max
+  ! ###################################################################
+  ! ###################################################################
+  SUBROUTINE BOUNDARY_BUFFER_RELAX_SCAL_I(is, s,hs)
+    IMPLICIT NONE
 
-        IF ( BuffFlowJmin%active(iq) ) THEN
-          DO jloc = 1,BuffFlowJmin%size ! Bottom boundary
-            j = jloc
-            hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmin%Tau(jloc,iq) *( rho(:,j,:) *q(:,j,:,iq) -BuffFlowJmin%Ref(:,jloc,:,iq))
-          ENDDO
-        ENDIF
+    TINTEGER, INTENT(IN   ) :: is ! field to which relaxation is applied
+    TREAL,    INTENT(IN   ) :: s(isize_field)
+    TREAL,    INTENT(  OUT) :: hs(isize_field)
 
-        IF ( BuffFlowJmax%active(iq) ) THEN
-          DO jloc = 1,BuffFlowJmax%size ! Top boundary
-            j = jmax -BuffFlowJmax%size +jloc
-            hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmax%Tau(jloc,iq) *( rho(:,j,:) *q(:,j,:,iq) -BuffFlowJmax%Ref(:,jloc,:,iq))
-          ENDDO
-        ENDIF
+    ! ###################################################################
+    IF ( BuffScalImin%size > 0 ) CALL RELAX_BLOCK_I( 1, BuffScalImin, s,hs, is )
+    IF ( BuffScalImax%size > 0 ) CALL RELAX_BLOCK_I( 1, BuffScalImax, s,hs, is )
+    IF ( BuffScalJmin%size > 0 ) CALL RELAX_BLOCK_I( 2, BuffScalJmin, s,hs, is )
+    IF ( BuffScalJmax%size > 0 ) CALL RELAX_BLOCK_I( 2, BuffScalJmax, s,hs, is )
 
-        IF ( BuffFlowImin%active(iq) ) THEN
-          DO iloc = 1,BuffFlowImin%size ! Inflow boundary
-            i = iloc
-            hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImin%Tau(iloc,iq) *( rho(i,:,:) *q(i,:,:,iq) -BuffFlowImin%Ref(iloc,:,:,iq))
-          ENDDO
-        ENDIF
+    RETURN
+  END SUBROUTINE BOUNDARY_BUFFER_RELAX_SCAL_I
 
-        IF ( BuffFlowImax%active(iq) ) THEN
-          DO iloc = 1,BuffFlowImax%size ! Outflow boundary
-            i = imax -BuffFlowImax%size +iloc
-            hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImax%Tau(iloc,iq) *( rho(i,:,:) *q(i,:,:,iq) -BuffFlowImax%Ref(iloc,:,:,iq))
-          ENDDO
-        ENDIF
+  ! ###################################################################
+  ! ###################################################################
+  SUBROUTINE BOUNDARY_BUFFER_RELAX_FLOW(q,hq)
+    IMPLICIT NONE
 
+    TREAL, INTENT(IN   ) :: q(isize_field,inb_flow)
+    TREAL, INTENT(  OUT) :: hq(isize_field,inb_flow)
+
+    ! ###################################################################
+    SELECT CASE( imode_eqns )
+    CASE ( DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL )
+      IF ( BuffFlowImin%size > 0 ) CALL RELAX_BLOCK_CF( 1, BuffFlowImin, q,hq )
+      IF ( BuffFlowImax%size > 0 ) CALL RELAX_BLOCK_CF( 1, BuffFlowImax, q,hq )
+      IF ( BuffFlowJmin%size > 0 ) CALL RELAX_BLOCK_CF( 2, BuffFlowJmin, q,hq )
+      IF ( BuffFlowJmax%size > 0 ) CALL RELAX_BLOCK_CF( 2, BuffFlowJmax, q,hq )
+    CASE DEFAULT
+      IF ( BuffFlowImin%size > 0 ) CALL RELAX_BLOCK( 1, BuffFlowImin, q,hq )
+      IF ( BuffFlowImax%size > 0 ) CALL RELAX_BLOCK( 1, BuffFlowImax, q,hq )
+      IF ( BuffFlowJmin%size > 0 ) CALL RELAX_BLOCK( 2, BuffFlowJmin, q,hq )
+      IF ( BuffFlowJmax%size > 0 ) CALL RELAX_BLOCK( 2, BuffFlowJmax, q,hq )
+    END SELECT
+
+    RETURN
+  END SUBROUTINE BOUNDARY_BUFFER_RELAX_FLOW
+
+  ! ###################################################################
+  ! ###################################################################
+  SUBROUTINE RELAX_BLOCK( idir, item, s, hs )
+    IMPLICIT NONE
+
+    TINTEGER,         INTENT(IN   ) :: idir
+    TYPE(buffer_dt),  INTENT(IN   ) :: item
+    TREAL,            INTENT(IN   ) :: s(imax,jmax,kmax,item%nfields)
+    TREAL,            INTENT(  OUT) :: hs(imax,jmax,kmax,item%nfields)
+
+    ! ###################################################################
+    SELECT CASE ( idir )
+    CASE( 1 )
+      DO iq = 1,item%nfields
+        DO jloc = 1, item%size
+          j = item%offset +jloc
+          hs(j,:,:,iq) = hs(j,:,:,iq) -item%Tau(jloc,iq) *( s(j,:,:,iq) -item%Ref(jloc,:,:,iq))
+        ENDDO
       ENDDO
 
-      IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        iq = 4
-
-        IF ( BuffFlowJmin%active(iq) ) THEN
-          DO jloc = 1,BuffFlowJmin%size ! Bottom boundary
-            j = jloc
-            hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmin%Tau(jloc,iq) *( rho(:,j,:) *( q(:,j,:,iq) &
-                +prefactor *( q(:,j,:,1)*q(:,j,:,1) +q(:,j,:,2)*q(:,j,:,2) +q(:,j,:,3)*q(:,j,:,3) ) ) -BuffFlowJmin%Ref(:,jloc,:,iq))
-          ENDDO
-        ENDIF
-
-        IF ( BuffFlowJmax%active(iq) ) THEN
-          DO jloc = 1,BuffFlowJmax%size ! Top boundary
-            j = jmax -BuffFlowJmax%size +jloc
-            hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmax%Tau(jloc,iq) *( rho(:,j,:) *( q(:,j,:,iq) &
-                +prefactor *( q(:,j,:,1)*q(:,j,:,1) +q(:,j,:,2)*q(:,j,:,2) +q(:,j,:,3)*q(:,j,:,3) ) ) -BuffFlowJmax%Ref(:,jloc,:,iq))
-          ENDDO
-        ENDIF
-
-        IF ( BuffFlowImin%active(iq) ) THEN
-          DO iloc = 1,BuffFlowImin%size ! Inflow boundary
-            i = iloc
-            hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImin%Tau(iloc,iq) *( rho(i,:,:) *( q(i,:,:,iq)&
-                +prefactor *( q(i,:,:,1)*q(i,:,:,1) +q(i,:,:,2)*q(i,:,:,2) +q(i,:,:,3)*q(i,:,:,3) ) ) -BuffFlowImin%Ref(iloc,:,:,iq))
-          ENDDO
-        ENDIF
-
-        IF ( BuffFlowImax%active(iq) ) THEN
-          DO iloc = 1,BuffFlowImax%size ! Outflow boundary
-            i = imax -BuffFlowImax%size +iloc
-            hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImax%Tau(iloc,iq) *( rho(i,:,:) *( q(i,:,:,iq)&
-                +prefactor *( q(i,:,:,1)*q(i,:,:,1) +q(i,:,:,2)*q(i,:,:,2) +q(i,:,:,3)*q(i,:,:,3) ) ) -BuffFlowImax%Ref(iloc,:,:,iq))
-          ENDDO
-        ENDIF
-      ENDIF
-
-      iq = 5 ! Density
-      IF ( BuffFlowJmin%active(iq) ) THEN
-        DO jloc = 1,BuffFlowJmin%size ! Bottom boundary
-          j = jloc
-          hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmin%Tau(jloc,iq) *( q(:,j,:,iq) -BuffFlowJmin%Ref(:,jloc,:,iq))
+    CASE( 2 )
+      DO iq = 1,item%nfields
+        DO jloc = 1, item%size
+          j = item%offset +jloc
+          hs(:,j,:,iq) = hs(:,j,:,iq) -item%Tau(jloc,iq) *( s(:,j,:,iq) -item%Ref(:,jloc,:,iq))
         ENDDO
-      ENDIF
-
-      IF ( BuffFlowJmax%active(iq) ) THEN
-        DO jloc = 1,BuffFlowJmax%size ! Top boundary
-          j = jmax -BuffFlowJmax%size +jloc
-          hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmax%Tau(jloc,iq) *( q(:,j,:,iq) -BuffFlowJmax%Ref(:,jloc,:,iq))
-        ENDDO
-      ENDIF
-
-      IF ( BuffFlowImin%active(iq) ) THEN
-        DO iloc = 1,BuffFlowImin%size ! Inflow boundary
-          i = iloc
-          hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImin%Tau(iloc,iq) *( q(i,:,:,iq) -BuffFlowImin%Ref(iloc,:,:,iq))
-        ENDDO
-      ENDIF
-
-      IF ( BuffFlowImax%active(iq) ) THEN
-        DO iloc = 1,BuffFlowImax%size ! Outflow boundary
-          i = imax -BuffFlowImax%size +iloc
-          hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImax%Tau(iloc,iq) *( q(i,:,:,iq) -BuffFlowImax%Ref(iloc,:,:,iq))
-        ENDDO
-      ENDIF
-
-    CASE ( DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC )
-      DO iq = 1,inb_flow
-
-        IF ( BuffFlowJmin%active(iq) ) THEN
-          DO jloc = 1,BuffFlowJmin%size ! Bottom boundary
-            j = jloc
-            hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmin%Tau(jloc,iq) *( q(:,j,:,iq) -BuffFlowJmin%Ref(:,jloc,:,iq))
-          ENDDO
-        ENDIF
-
-        IF ( BuffFlowJmax%active(iq) ) THEN
-          DO jloc = 1,BuffFlowJmax%size ! Top boundary
-            j = jmax -BuffFlowJmax%size +jloc
-            hq(:,j,:,iq) = hq(:,j,:,iq) -BuffFlowJmax%Tau(jloc,iq) *( q(:,j,:,iq) -BuffFlowJmax%Ref(:,jloc,:,iq))
-          ENDDO
-        ENDIF
-
-        IF ( BuffFlowImin%active(iq) ) THEN
-          DO iloc = 1,BuffFlowImin%size ! Inflow boundary
-            i = iloc
-            hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImin%Tau(iloc,iq) *( q(i,:,:,iq) -BuffFlowImin%Ref(iloc,:,:,iq))
-          ENDDO
-        ENDIF
-
-        IF ( BuffFlowImax%active(iq) ) THEN
-          DO iloc = 1,BuffFlowImax%size ! Outflow boundary
-            i = imax -BuffFlowImax%size +iloc
-            hq(i,:,:,iq) = hq(i,:,:,iq) -BuffFlowImax%Tau(iloc,iq) *( q(i,:,:,iq) -BuffFlowImax%Ref(iloc,:,:,iq))
-          ENDDO
-        ENDIF
-
       ENDDO
 
     END SELECT
 
     RETURN
-  END SUBROUTINE BOUNDARY_BUFFER_RELAXATION_FLOW
+  END SUBROUTINE RELAX_BLOCK
 
   ! ###################################################################
   ! ###################################################################
-  SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL(is, rho,s, hs)
-
+  SUBROUTINE RELAX_BLOCK_RHO( idir, item, s, hs, rho )
     IMPLICIT NONE
 
-    TINTEGER,                         INTENT(IN)  :: is
-    TREAL, DIMENSION(imax,jmax,kmax), INTENT(IN)  :: rho, s
-    TREAL, DIMENSION(imax,jmax,kmax), INTENT(OUT) :: hs
-
-    ! -------------------------------------------------------------------
+    TINTEGER,         INTENT(IN   ) :: idir
+    TYPE(buffer_dt),  INTENT(IN   ) :: item
+    TREAL,            INTENT(IN   ) :: s(imax,jmax,kmax,item%nfields)
+    TREAL,            INTENT(  OUT) :: hs(imax,jmax,kmax,item%nfields)
+    TREAL,            INTENT(IN   ) :: rho(imax,jmax,kmax)
 
     ! ###################################################################
-    SELECT CASE( imode_eqns )
-
-    CASE ( DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL )
-      IF ( BuffScalJmin%active(is) ) THEN
-        DO jloc = 1,BuffScalJmin%size ! Bottom boundary
-          j = jloc
-          hs(:,j,:) = hs(:,j,:) -BuffScalJmin%Tau(jloc,is) *( rho(:,j,:) *s(:,j,:) -BuffScalJmin%Ref(:,jloc,:,is))
+    SELECT CASE ( idir )
+    CASE( 1 )
+      DO iq = 1,item%nfields
+        DO jloc = 1, item%size
+          j = item%offset +jloc
+          hs(j,:,:,iq) = hs(j,:,:,iq) -item%Tau(jloc,iq) *( rho(j,:,:) *s(j,:,:,iq) -item%Ref(jloc,:,:,iq))
         ENDDO
-      ENDIF
+      ENDDO
 
-      IF ( BuffScalJmax%active(is) ) THEN
-        DO jloc = 1,BuffScalJmax%size ! Top boundary
-          j = jmax -BuffScalJmax%size +jloc
-          hs(:,j,:) = hs(:,j,:) -BuffScalJmax%Tau(jloc,is) *( rho(:,j,:) *s(:,j,:) -BuffScalJmax%Ref(:,jloc,:,is))
+    CASE( 2 )
+      DO iq = 1,item%nfields
+        DO jloc = 1, item%size
+          j = item%offset +jloc
+          hs(:,j,:,iq) = hs(:,j,:,iq) -item%Tau(jloc,iq) *( rho(:,j,:) *s(:,j,:,iq) -item%Ref(:,jloc,:,iq))
         ENDDO
-      ENDIF
-
-      IF ( BuffScalImin%active(is) ) THEN
-        DO iloc = 1,BuffScalImin%size ! Inflow boundary
-          i = iloc
-          hs(i,:,:) = hs(i,:,:) -BuffScalImin%Tau(iloc,is) *( rho(i,:,:) *s(i,:,:) -BuffScalImin%Ref(iloc,:,:,is))
-        ENDDO
-      ENDIF
-
-      IF ( BuffScalImax%active(is) ) THEN
-        DO iloc = 1,BuffScalImax%size ! Outflow boundary
-          i = imax -BuffScalImax%size +iloc
-          hs(i,:,:) = hs(i,:,:) -BuffScalImax%Tau(iloc,is) *( rho(i,:,:) *s(i,:,:) -BuffScalImax%Ref(iloc,:,:,is))
-        ENDDO
-      ENDIF
-
-    CASE ( DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC )
-      IF ( BuffScalJmin%active(is) ) THEN
-        DO jloc = 1,BuffScalJmin%size ! Bottom boundary
-          j = jloc
-          hs(:,j,:) = hs(:,j,:) -BuffScalJmin%Tau(jloc,is) *( s(:,j,:) -BuffScalJmin%Ref(:,jloc,:,is))
-        ENDDO
-      ENDIF
-
-      IF ( BuffScalJmax%active(is) ) THEN
-        DO jloc = 1,BuffScalJmax%size ! Top boundary
-          j = jmax -BuffScalJmax%size +jloc
-          hs(:,j,:) = hs(:,j,:) -BuffScalJmax%Tau(jloc,is) *( s(:,j,:) -BuffScalJmax%Ref(:,jloc,:,is))
-        ENDDO
-      ENDIF
-
-      IF ( BuffScalImin%active(is) ) THEN
-        DO iloc = 1,BuffScalImin%size ! Inflow boundary
-          i = iloc
-          hs(i,:,:) = hs(i,:,:) -BuffScalImin%Tau(iloc,is) *( s(i,:,:) -BuffScalImin%Ref(iloc,:,:,is))
-        ENDDO
-      ENDIF
-
-      IF ( BuffScalImax%active(is) ) THEN
-        DO iloc = 1,BuffScalImax%size ! Outflow boundary
-          i = imax -BuffScalImax%size +iloc
-          hs(i,:,:) = hs(i,:,:) -BuffScalImax%Tau(iloc,is) *( s(i,:,:) -BuffScalImax%Ref(iloc,:,:,is))
-        ENDDO
-      ENDIF
+      ENDDO
 
     END SELECT
 
     RETURN
-  END SUBROUTINE BOUNDARY_BUFFER_RELAXATION_SCAL
+  END SUBROUTINE RELAX_BLOCK_RHO
+
+  ! ###################################################################
+  ! ###################################################################
+  SUBROUTINE RELAX_BLOCK_I( idir, item, s, hs, iq )
+    IMPLICIT NONE
+
+    TINTEGER,         INTENT(IN   ) :: idir,iq
+    TYPE(buffer_dt),  INTENT(IN   ) :: item
+    TREAL,            INTENT(IN   ) :: s(imax,jmax,kmax)
+    TREAL,            INTENT(  OUT) :: hs(imax,jmax,kmax)
+
+    ! ###################################################################
+    SELECT CASE ( idir )
+    CASE( 1 )
+      DO jloc = 1, item%size
+        j = item%offset +jloc
+        hs(j,:,:) = hs(j,:,:) -item%Tau(jloc,iq) *( s(j,:,:) -item%Ref(jloc,:,:,iq) )
+      ENDDO
+
+    CASE( 2 )
+      DO jloc = 1, item%size
+        j = item%offset +jloc
+        hs(:,j,:) = hs(:,j,:) -item%Tau(jloc,iq) *( s(:,j,:) -item%Ref(:,jloc,:,iq) )
+      ENDDO
+
+    END SELECT
+
+    RETURN
+  END SUBROUTINE RELAX_BLOCK_I
+
+  ! ###################################################################
+  ! ###################################################################
+  SUBROUTINE RELAX_BLOCK_CF( idir, item, q,hq )  ! Compressible flow case
+    IMPLICIT NONE
+
+    TINTEGER,         INTENT(IN   ) :: idir
+    TYPE(buffer_dt),  INTENT(IN   ) :: item
+    TREAL,            INTENT(IN   ) :: q(imax,jmax,kmax,item%nfields)
+    TREAL,            INTENT(  OUT) :: hq(imax,jmax,kmax,item%nfields)
+
+    ! ###################################################################
+    IF ( imode_eqns == DNS_EQNS_TOTAL ) THEN
+      dummy = C_05_R *(gama0-C_1_R) *mach*mach
+    END IF
+
+    SELECT CASE ( idir )
+    CASE( 1 )
+      DO iq = 1,item%nfields-2
+        DO jloc = 1, item%size
+          j = item%offset +jloc
+          hq(j,:,:,iq) = hq(j,:,:,iq) -item%Tau(jloc,iq) *( q(j,:,:,5) *q(j,:,:,iq) -item%Ref(jloc,:,:,iq))
+        ENDDO
+      ENDDO
+      iq = item%nfields-1       ! Energy variable
+        IF ( imode_eqns == DNS_EQNS_TOTAL ) THEN
+          DO jloc = 1, item%size
+            j = item%offset +jloc
+            hq(j,:,:,iq) = hq(j,:,:,iq) -item%Tau(jloc,iq) *( q(j,:,:,5) *( q(j,:,:,iq) &
+                          +dummy *( q(j,:,:,1)*q(j,:,:,1) +q(j,:,:,2)*q(j,:,:,2) +q(j,:,:,3)*q(j,:,:,3) ) ) &
+                          -item%Ref(jloc,:,:,iq) )
+          ENDDO
+        ELSE
+          DO jloc = 1, item%size
+            j = item%offset +jloc
+            hq(j,:,:,iq) = hq(j,:,:,iq) -item%Tau(jloc,iq) *( q(j,:,:,5) *q(j,:,:,iq) -item%Ref(jloc,:,:,iq))
+          ENDDO
+        ENDIF
+      iq = item%nfields         ! Density, should be iq = 5
+        DO jloc = 1, item%size
+          j = item%offset +jloc
+          hq(j,:,:,iq) = hq(j,:,:,iq) -item%Tau(jloc,iq) *( q(j,:,:,iq) -item%Ref(jloc,:,:,iq))
+        ENDDO
+
+    CASE( 2 )
+      DO iq = 1,item%nfields-2
+        DO jloc = 1, item%size
+          j = item%offset +jloc
+          hq(:,j,:,iq) = hq(:,j,:,iq) -item%Tau(jloc,iq) *( q(:,j,:,5) *q(:,j,:,iq) -item%Ref(:,jloc,:,iq))
+        ENDDO
+      ENDDO
+      iq = item%nfields-1       ! Energy variable
+      IF ( imode_eqns == DNS_EQNS_TOTAL ) THEN
+        DO jloc = 1, item%size
+          j = item%offset +jloc
+          hq(:,j,:,iq) = hq(:,j,:,iq) -item%Tau(jloc,iq) *( q(:,j,:,5) *( q(:,j,:,iq) &
+                        +dummy *( q(:,j,:,1)*q(:,j,:,1) +q(:,j,:,2)*q(:,j,:,2) +q(:,j,:,3)*q(:,j,:,3) ) ) &
+                        -item%Ref(:,jloc,:,iq) )
+        END DO
+      ELSE
+        DO jloc = 1, item%size
+          j = item%offset +jloc
+          hq(:,j,:,iq) = hq(:,j,:,iq) -item%Tau(jloc,iq) *( q(:,j,:,5) *q(:,j,:,iq) -item%Ref(:,jloc,:,iq))
+        ENDDO
+      ENDIF
+      iq = item%nfields         ! Density, should be iq = 5
+        DO jloc = 1, item%size
+          j = item%offset +jloc
+          hq(:,j,:,iq) = hq(:,j,:,iq) -item%Tau(jloc,iq) *( q(:,j,:,iq) -item%Ref(:,jloc,:,iq))
+        ENDDO
+
+    END SELECT
+
+    RETURN
+  END SUBROUTINE RELAX_BLOCK_CF
 
   !########################################################################
   !########################################################################
