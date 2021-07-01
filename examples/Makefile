@@ -11,6 +11,7 @@ PRJS=\
      Case08 \
      Case09 \
      Case10 \
+     Case11 \
      Case13 \
      Case14 \
      Case15 \
@@ -38,7 +39,6 @@ PRJS=\
      Case47 \
      Case50
 
-     # Case11 \
      # Case12 \
 
 FILES=avg* grid* flow* scal* dns.out dns.log dns.err dns.war dns.def dns.ini.bak tower* part* traj* residence*
