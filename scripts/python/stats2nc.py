@@ -6,18 +6,15 @@ import gzip as gz
 import netCDF4
 import subprocess
 import array as arr
-import string
+import os 
  
 from pylab import *
-from operator import itemgetter, attrgetter
 
-class ClassFile: 
-    def __init__(self,name,num): 
-        self.name=name 
-        self.num =num
-    def __repr__(self):
-        return repr((self.name,self.num)) 
-
+def addGroup(gDict,gLine,ig):
+    garr=gLine.split()
+    if  size(garr) > 3:
+        gName=garr[2]
+        gDict[gName] = garr[3:]
 
 def is_number(s):
     try:
@@ -27,175 +24,234 @@ def is_number(s):
         return False
 
 
-def avg2dict(avgtype,avgpath,jmax,gzip,tstart=-1, tend=-1,tstep=-1):
+def avg2dict(avgtype,avgpath,jmax,ftype='',tstart=-1, tend=-1,tstep=-1,reynolds=1):
 
-  gzip_str   = '.gz'
+    print('TYPE: ', avgtype)
+    print('PATH: ', avgpath)
+    print('jmax: ', jmax)
+    print('fTYPE:', ftype) 
+    ftype_count = len(ftype) 
 
-  files_from_list = 0
-  headertotal = 0
-  # specify the number of vertical profs and time variables 
-  if ( avgtype == 'avg'):
-#    headerprof = 199
-    headertime = 14 
-    headerlength    = 21
-  elif ( avgtype == 'avg1s' or avgtype == 'avg2s' or avgtype == 'avg3s' or avgtype == 'avg4s' or avgtype == 'avg5s'): 
-#    headerprof = 47
-#    headerprof = 45
-    headertime = 11
-    headerlength = 8
-  elif( avgtype == 'int' ):
-    headerlength = 4
-#    headerprof = 4
-    headertime = 0
-  elif( avgtype == 'cov' ):
-    headerlength = 6
-#    headerprof = 6
-    headertime = 3
-  elif( avgtype == 'cavg' ):
-    headerlength = 6
-#    headerprof = 6
-    headertime = 28
-  else :
-    print('WARNING : unknown filetype!')
-    print('WARNING : assuming all data is vertical profiles')
-    headerlength= 4
-#    headerprof = -1 
-    headertime = -1 
-#  headertotal= headerprof + headertime
-  
-  ###########################################################
-  # get times automatically from files in directory 
-  ########################################################### 
-  if ( tstart == -1 ) : 
-    files_from_list=1 
-    command = "ls " + avgpath + "/" + avgtype + "*" + " | egrep '" + avgtype + "[0-9]*(" + gzip_str + ")?$" + "'"
-    
-    p = subprocess.Popen(command, shell=True,  
+    ###########################################################
+    # get times automatically from files in directory 
+    ########################################################### 
+    if ( tstart == -1 ) : 
+        command = "find " + avgpath + ' -name \"' + avgtype + "[0-9]*\""+ftype
+        # print(command)
+        p=subprocess.Popen(command, shell=True,
                          stdout=subprocess.PIPE) 
-    file_list = []
-    for file in p.stdout.readlines():
-        dummy = file.decode('utf8').strip('\n')
-        try:
-            with open(dummy): 
-                if '.nc' not in dummy: 
+        flist = []
+        ordered_list = []
+        for file in p.stdout.readlines():
+            dummy = file.strip()
+            try:
+                with open(dummy):
                     cstart=len('{}/{}'.format(avgpath,avgtype))
-                    cend=len(dummy)
-                    if gzip_str in dummy:
-                        cend=cend-len(gzip_str)
+                    cend=len(dummy)-ftype_count             #strip off .gz
+                    if ( is_number(dummy[cstart:cend]) ):
+                        iter = int(dummy[cstart:cend])
+                        ordered_list.append([iter,file.strip()])
+            except IOError:
+                print('ERROR - File', file, 'does not exist' )
 
-                    filenum = int(dummy[cstart:cend])
-                    if ( is_number(filenum) ):
-                        file_list.append(ClassFile(dummy,filenum))
+        flist = [f[1] for f in sorted(ordered_list,key=lambda file:file[0]) ]
 
-        except IOError:
-            print('ERROR - File', file, 'does not exist')
+        retval = p.wait()
+        ntimes = len(flist)
+    else :
+        ntimes = (tend - tstart) / tstep + 1
 
-    retval = p.wait()
-    ntimes = len(file_list)
-  else :
-    ntimes = (tend - tstart) / tstep + 1
 
-  if ( files_from_list == 1 ) :
-      file_list=sorted(file_list,key=lambda ClassFile: ClassFile.num)
+    print('FILES for', avgtype,':', ntimes )
 
-  print('FILES for', avgtype,':', ntimes)
+    if ftype != '.nc' and ntimes > 0  : 
+        print('  -- OLD (ASCII) VERSION --\n      first: {}\n      last:  {}'.format(flist[0],flist[-1]))
+        d,vgd=avg2dict_asc(flist,ntimes,avgtype,avgpath,jmax,ftype,tstart, tend,tstep,reynolds)
+        return d,vgd 
+    elif ftype == 'nc' and ntimes > 0 :
+        print(' -- NEW (NETCDF) VERSION --\n      first: {}\n      last:  {}'.format(flist[0],flist[-1]))
+        mergeNC(avgtype,avgpath,'nc_all.nc') 
+        return
 
+def mergeNC(avgtype,avgpath,ofile,reynolds=1):
+
+    command = 'ncrcat --4 -L 9 {}/{}*.nc {}.nc'.format(avgpath,avgtype,ofile)
+    print(command) 
+    os.system(command)
+
+    # recalculate friction values for backward compatibility
+    f_h=netCDF4.Dataset('{}.nc'.format(ofile),'r+')
+
+    t=f_h['t']
+    du=f_h['U_y1'][:,1]
+    dw=f_h['W_y1'][:,1]
+
+    vF=f_h.createVariable('FrictionVelocity','f8',('t',))
+    vF.setncattr('Group','Friction')
+    vA=f_h.createVariable('FrictionAngle','f8',('t',))
+    vA.setncattr('Group','Friction') 
+
+    nu=2./(reynolds*reynolds) 
+    
+    vF[:] = nu*np.sqrt(nu*np.sqrt(du**2+dw**2))
+    vA[:] = np.arctan2(dw,du)
+
+    
+    return
+
+def avg2dict_asc(file_list,ntimes,avgtype,avgpath,jmax,ftype,tstart=-1, tend=-1,tstep=-1,reynolds=1):
+    
+  ftype_count = len(ftype) 
+    
   ############################################################ 
   if ( ntimes == 0 ) : 
-    return -1 
-  for t in range(ntimes): 
-    if ( files_from_list == 1 ) :
-      filename = file_list[t].name 
-      filenum = file_list[t].num 
-      #number starts after <path>/<file type>
-      tend = filenum
-      if (t == 0): 
-        tstart = filenum
-    else: 
-      filenum = tstart+t*tstep
-      if ( gzip == 1):
-        filename = '{}/{}{}{}'.format(avgpath,avgtype,filenum,gzip_str)
-      else:
-        filename = '{}/{}{}'.format(avgpath,avgtype,filenum)
-  
-    # process the file
-    if gzip_str in filename:
-      f = gz.open(filename,'rt')
-    else:
-      f= open(filename,'r')
-      
-    # retrieve the time
-    datastring = f.readline()
-    time = float(datastring.split()[2])
-    print('{}: it{}  Time={}'.format(avgtype, filenum, time))
-  
-    # process the groups items in the header 
-    for i in range(headerlength-2):
-      dummy = f.readline()
-   
-    # read the variable labels
-    datastring = f.readline()
-    
-    if(filenum == tstart): 
-      avg = {}
-      header = datastring.split()
-      if( headertotal > 0 and size(header) != headertotal ): 
-        print("ERROR - header size of", size(header))
-        print("ERROR   is not as expected (", headertotal, ")")
-        return -1 
-      elif ( size(header) != headertotal ):
-        headertotal = size(header)
-        headerprof  = headertotal -headertime
+      return -1
 
-      avg['Time'] = zeros(ntimes)
-      avg['Iteration'] = zeros(ntimes)
-      for n in range(headerprof):
-        avg[header[n]] = zeros((ntimes, jmax))
-      for n in range(headerprof, headertotal):
-        avg[header[n]] = zeros(ntimes)
+  ig=0
+  hdrStr_old=''
+  update_vList=True
+  updateGroups=True
+  t_start=tstart
   
+  for t in range(ntimes):
+    if t_start == -1 :
+        filename = file_list[t]
+        #number starts after <path>/<file type>
+        cstart=len('{}/{}'.format(avgpath,avgtype))
+        cend=len(filename)-ftype_count       #strip off .gz
+        filenum = filename[cstart:cend]
+        tend = filenum
+        if (t == 0):
+            tstart = filenum
+    else:
+        filenum = tstart+t*tstep
+        filename = '{}/{}{}{}'.format(avgpath,avgtype,filenum,gzip_str)
+
+    # process the file
+    if ftype == '.gz':
+        f = gz.open(filename,'r')
+    else:
+        f= open(filename,'r')
+   
+    # retrieve the time
+    # print(filename)
+    datastring = f.readline().split()
+    if datastring[0] == 'RTIME':
+        time = datastring[2]
+    elif datastring[0].decode('UTF-8') == 'RTIME' :
+        time= float(datastring[2])
+    else:
+        print("ERROR getting time from file for type {}, it {}".format(avgtype,filenum))
+        print(datastring)
+        quit()
+
+    # process the group items in the header
+    datastring = f.readline()
+    d0=datastring.split()[0]
+    if type(d0) is bytes :
+        d0=str(d0.decode('UTF-8') )
+
+    if filenum == tstart:
+        varGroups={}
+        groupVars={}
+        
+    while d0 == 'GROUP' or d0 == 'IMAX' or d0 == 'JMAX':
+        if d0 == 'GROUP'and updateGroups:
+            addGroup(varGroups,datastring,ig)
+            ig=ig+1
+        datastring = f.readline()
+        d0=datastring.split()[0]
+        if type(d0) is bytes:
+            d0=d0.decode('UTF-8')
+
+    hdrStr=datastring
+    hdr=datastring.split()
+    data = f.readline().split()
+    
+    if hdrStr != hdrStr_old:   # if there is a first or new header, we need to update 
+        hdrTotal=size(hdr)
+        hdrProf=size(data)
+        hdrBulk=hdrTotal-hdrProf
+        hdrStr_old = hdrStr
+        update_vList = True
+        print('New HEADER for file {}\n  ...  {} VARIABLES total ( {} profiles +  {} bulk)'.format(filename,hdrTotal,hdrProf,hdrBulk))
+    else:
+        update_vList = False
+
+    for n in range(hdrTotal * ( 1 if updateGroups else 0 )):
+        v=hdr[n]
+        for g in varGroups.keys():
+            if v in varGroups[g]:
+                groupVars[v]=g
+                break
+        updateGroups=False
+
+    if(filenum == tstart):
+    #initialize netCDF file
+        avg = {}
+        avg['Time'] = zeros(ntimes)
+        avg['Iteration'] = zeros(ntimes)
+
+        for n in range(hdrTotal):
+            v=hdr[n]
+            if n < hdrProf:
+                avg[v] = zeros((ntimes, jmax))
+            else:
+                avg[v] = zeros(ntimes)
+
+    elif update_vList:
+    # variables are initialized, but the header has changed => need to check whether we have to define something new
+        for n in range(hdrProf):
+            v=hdr[n]
+            if not v in avg:
+                print('   ... new variable {} at it {} ({})'.format(v,filenum,t))
+                if n < hdrProf:
+                    avg[v] = zeros((ntimes,jmax))
+                else:
+                    avg[v] = zeros(ntimes)
+                # if there are new variables, we will parse the group header next time to retrieve group informations
+                updateGroups=True
+
     # process the data
     # first store the time
-    avg['Time'][t] = time 
+    avg['Time'][t] = time
     avg['Iteration'][t] = filenum
-  
+
     for i in range(jmax):
-      datastring = f.readline()
-      data = datastring.split()
-      magic = 0
-      if ( size(data) != headerprof ):
-        if ( size(data) != headertotal ): 
+        if i>0:
+            data = f.readline().split() 
 
-############################################################
-# WORK AROUND FOR avg1s BUG  in certain versions of the 
-# code (ignore the missing two values by setting magic=-2) 
-############################################################
+        if ( len(data) != hdrProf and len(data) != hdrTotal ) :
+            print("ERROR: length of line ({}) neither matches expected number of profiles ({})".format(len(data),hdrProf))
+            print("       nor expected number of total variables ({})".format(hdrTotal)) 
+        # process the vertical profiles
+        for n in range(hdrProf):
+            avg[hdr[n]][t,i] = data[n]
+  
+        # process the time series
+        if(len(data) == hdrTotal):
+            for n in range(hdrProf, hdrTotal):
+                avg[hdr[n]][t] = data[n]
 
-          if ( avgtype == 'avg1s' and (size(data) - headertotal == -2 ) ): 
-            # this is very likely a case of this bug  
-            print("WARNING - encountered avg1s BUG - ignoring missing values")
-            magic = -2 
-          else :
-            print("ERROR - size of data in line", i," (", size(data), \
-                ") not as expected:", headertotal, " or", headerprof,".")
-            return -1 
-      # process the vertical profiles
-      for n in range(headerprof):
-        avg[header[n]][t,i] = data[n]
-  
-      # process the time series
-      if(len(data) == headertotal+magic):
-        for n in range(headerprof, headertotal+magic):
-          avg[header[n]][t] = data[n]
-  
+    # calculate friction velocity and angle for backward compatibility
+    if (  ( 'FrictionVelocity' in avg and not 'FrictionVelocity' in hdr ) or
+          ( 'FrictionAngle'    in avg and not 'FrictionAngle'    in hdr ) ):
+        dudy = avg['U_y1'][t,0]
+        dwdy = avg['W_y1'][t,0]
+        us = np.sqrt(np.sqrt(dudy**2+dwdy**2)/(reynolds*reynolds/2))
+        al = np.arctan2(dwdy,dudy)*180/np.pi if us>1e-12 else 0. 
+
+        print('Calculating u* and alpha:',us,al,np.average(avg['FrictionVelocity'][:t]),np.average(avg['FrictionAngle'][:t] ) )
+        avg['FrictionVelocity'][t] = us
+        avg['FrictionAngle'][t] = al 
+
     f.close()
     
-  avg['Iteration'] = [int(f) for f in avg['Iteration'][:]]
-  return avg
+  return avg,groupVars
 
 #############################################################
 
-def dict2nc(dict, ncname, flag=0):
+def dict2nc(dict, ncname, flag=0,groups=-1):
   # process the dictionaries to netcdf files
   avgnc  = netCDF4.Dataset("{}.nc".format(ncname), "w")
 
@@ -214,7 +270,7 @@ def dict2nc(dict, ncname, flag=0):
 
   # create variables
   var_t = avgnc.createVariable('t', 'f8',('t',)) 
-  var_t.units='Days since 0000-01-01 00:00'
+  var_t.units='seconds'
   var_y = avgnc.createVariable('y', 'f8',('y',)) 
   var_y.long_name='Height above Surface' 
   var_y.positive='up'
@@ -228,24 +284,25 @@ def dict2nc(dict, ncname, flag=0):
   var_y[:]  = dict['Y']   [0,:] 
   var_it[:] = [int(f) for f in dict['Iteration'][:]]
   
-  # now make a loop through all vars.
-  dictkeys = list(dict.keys())
-
-  for i in range(size(dictkeys)):
-    varname = dictkeys[i]
-    if(not(  (varname == "Iteration") or (varname == "Y") or \
-             (varname == "Time") or (varname == "I") or (varname == "J") ) ):
-      vardata = dict[varname]
-      if(len(vardata.shape) == 2):
-        if( (vardata.shape[0] == ntimes) and (vardata.shape[1] == jmax) ):
+  # now make a loop through all vars in dict.
+  for varname in dict.keys(): 
+      if(not(  (varname == "Iteration") or (varname == "Y") or \
+                   (varname == "Time") or (varname == "I") or (varname == "J") ) ):
+          vardata = dict[varname]
+          if(len(vardata.shape) == 2):
+              if( (vardata.shape[0] == ntimes) and (vardata.shape[1] == jmax) ):
           #print("Storing {} in 2D (t,y) array".format(varname))
-          var_name = avgnc.createVariable(varname,'f8',('t','y',))
-          var_name[:,:] = vardata
-      if(len(vardata.shape) == 1):
-        if(vardata.shape[0] == ntimes):
+                  var_name = avgnc.createVariable(varname,'f8',('t','y',))
+                  var_name[:,:] = vardata
+          if(len(vardata.shape) == 1):
+              if(vardata.shape[0] == ntimes):
           #print("Storing {} in 1D (t) array".format(varname))
-          var_name = avgnc.createVariable(varname,'f8',('t',))
-          var_name[:] = vardata
+                  var_name = avgnc.createVariable(varname,'f8',('t',))
+                  var_name[:] = vardata
+
+  if groups != -1:
+      for v in groups.keys():
+          avgnc[v].setncattr('Group',groups[v])
 
   # close the file
   avgnc.close()
