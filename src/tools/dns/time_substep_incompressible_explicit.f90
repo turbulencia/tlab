@@ -21,8 +21,8 @@
 !# DESCRIPTION
 !#
 !# Branching among different formulations of the RHS.
-!# 
-!# Be careful to define here the pointers and to enter the RHS routines 
+!#
+!# Be careful to define here the pointers and to enter the RHS routines
 !# with individual fields. Definition of pointer inside of RHS routines
 !# decreased performance considerably (at least in JUGENE)
 !#
@@ -34,8 +34,8 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   USE OMP_LIB
 #endif
   USE DNS_CONSTANTS, ONLY : efile, lfile
-#ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS, ONLY : tfile
 #endif
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field
   USE DNS_GLOBAL,    ONLY : inb_flow,inb_scal, inb_scal_array
@@ -58,7 +58,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 
 ! -----------------------------------------------------------------------
   TINTEGER ij, is
-  TINTEGER srt,end,siz    !  Variables for OpenMP Partitioning 
+  TINTEGER srt,end,siz    !  Variables for OpenMP Partitioning
 
 #ifdef USE_BLAS
   INTEGER ilen
@@ -79,55 +79,55 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 
 ! -----------------------------------------------------------------------
   IF      ( iadvection .EQ. EQNS_DIVERGENCE .AND. &
-            iviscous   .EQ. EQNS_EXPLICIT   .AND. & 
+            iviscous   .EQ. EQNS_EXPLICIT   .AND. &
             idiffusion .EQ. EQNS_EXPLICIT         ) THEN
      CALL FI_SOURCES_FLOW(q,s, hq, txc(1,1), wrk1d,wrk2d,wrk3d)
      CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
           q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
-     
+
      CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
      DO is = 1,inb_scal
         CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is, q(1,1),q(1,2),q(1,3), s(1,is),hs(1,is), &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
      ENDDO
-        
+
 ! -----------------------------------------------------------------------
   ELSE IF ( iadvection .EQ. EQNS_SKEWSYMMETRIC .AND. &
-            iviscous   .EQ. EQNS_EXPLICIT      .AND. & 
+            iviscous   .EQ. EQNS_EXPLICIT      .AND. &
             idiffusion .EQ. EQNS_EXPLICIT            ) THEN
      CALL FI_SOURCES_FLOW(q,s, hq, txc(1,1), wrk1d,wrk2d,wrk3d)
      CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
           q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
-     
+
      CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
      DO is = 1,inb_scal
         CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is, q(1,1),q(1,2),q(1,3), s(1,is),hs(1,is), &
              txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
      ENDDO
-     
+
 ! -----------------------------------------------------------------------
   ELSE IF ( iadvection .EQ. EQNS_CONVECTIVE .AND. &
-            iviscous   .EQ. EQNS_EXPLICIT   .AND. & 
+            iviscous   .EQ. EQNS_EXPLICIT   .AND. &
             idiffusion .EQ. EQNS_EXPLICIT         ) THEN
-     IF      ( imode_rhs .EQ. EQNS_RHS_SPLIT       ) THEN 
+     IF      ( imode_rhs .EQ. EQNS_RHS_SPLIT       ) THEN
         CALL FI_SOURCES_FLOW(q,s, hq, txc(1,1), wrk1d,wrk2d,wrk3d)
         CALL RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
              q,hq, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
-        
+
         CALL FI_SOURCES_SCAL(s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
         DO is = 1,inb_scal
            CALL RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is, q(1,1),q(1,2),q(1,3), s(1,is),hs(1,is), &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
         ENDDO
-           
-     ELSE IF ( imode_rhs .EQ. EQNS_RHS_COMBINED    ) THEN 
+
+     ELSE IF ( imode_rhs .EQ. EQNS_RHS_COMBINED    ) THEN
         CALL FI_SOURCES_FLOW(q,s, hq, txc(1,1),          wrk1d,wrk2d,wrk3d)
         CALL FI_SOURCES_SCAL(  s, hs, txc(1,1),txc(1,2), wrk1d,wrk2d,wrk3d)
         CALL RHS_GLOBAL_INCOMPRESSIBLE_1(dte, q(1,1),q(1,2),q(1,3),hq(1,1),hq(1,2),hq(1,3), &
              q,hq, s,hs, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk1d,wrk2d,wrk3d)
 
-     ELSE IF ( imode_rhs .EQ. EQNS_RHS_NONBLOCKING ) THEN 
-#ifdef USE_PSFFT 
+     ELSE IF ( imode_rhs .EQ. EQNS_RHS_NONBLOCKING ) THEN
+#ifdef USE_PSFFT
         CALL RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte, &
              q(1,1),q(1,2),q(1,3),s(1,1),&
              txc(1,1), txc(1,2), &
@@ -140,12 +140,12 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
         CALL DNS_STOP(DNS_ERROR_PSFFT)
 #endif
      ENDIF
-     
+
 ! -----------------------------------------------------------------------
   ELSE
      CALL IO_WRITE_ASCII(efile,'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Undeveloped formulation.')
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-     
+
   ENDIF
 
 ! #######################################################################
@@ -160,9 +160,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 ! #######################################################################
   IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
 ! Flow part needs to be taken into account in the pressure
-     DO is = 1,inb_scal
-        CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, wrk3d,s(1,is), hs(1,is)) ! wrk3d not used in incompressible
-     ENDDO
+    CALL BOUNDARY_BUFFER_RELAX_SCAL(s,hs, q)
   ENDIF
 
 ! #######################################################################
@@ -175,13 +173,13 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 #else
 !$omp parallel default(shared) &
 !$omp private (ij,  is,srt,end,siz)
-#endif 
-#endif 
+#endif
+#endif
 
      CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
-#ifdef USE_BLAS 
+#ifdef USE_BLAS
      ilen = siz
-#endif 
+#endif
      DO is = 1,inb_flow
 
 #ifdef USE_BLAS
@@ -197,21 +195,21 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
 #ifdef BLAS
         CALL DAXPY(ilen, dte, hs(srt,is), 1, s(srt,is), 1)
 #else
-        DO ij = srt,end 
+        DO ij = srt,end
            s(ij,is) = s(ij,is) + dte*hs(ij,is)
         ENDDO
 #endif
      ENDDO
 #ifdef USE_OPENMP
-!$omp end parallel 
-#endif 
-        
+!$omp end parallel
+#endif
+
 ! ######################################################################
 ! Particle POSTION UPDATED and  SEND/RECV TO THE NEW PROCESSOR
 ! ######################################################################
-  IF ( icalc_part .EQ. 1 ) THEN 
-    CALL PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )    
-  END IF 
+  IF ( icalc_part .EQ. 1 ) THEN
+    CALL PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
+  END IF
 
 ! ###################################################################
 ! Calculate other intensive thermodynamic variables
@@ -219,7 +217,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
   IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN
      CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)
 
-  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN 
+  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
      CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
 
   ENDIF

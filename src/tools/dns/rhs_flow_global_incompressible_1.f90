@@ -5,7 +5,7 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Momentum equations, nonlinear term in convective form and the 
+!# Momentum equations, nonlinear term in convective form and the
 !# viscous term explicit: 9 2nd order + 9 1st order derivatives.
 !# Pressure term requires 3 1st order derivatives
 !# BCs need 2 1st order derivatives in Oy
@@ -44,7 +44,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   TINTEGER ibc, bcs(2,2)
   TREAL dummy
 
-  TINTEGER siz, srt, end    !  Variables for OpenMP Partitioning 
+  TINTEGER siz, srt, end    !  Variables for OpenMP Partitioning
 
   TREAL, DIMENSION(:), POINTER :: p_bcs
 
@@ -85,7 +85,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), w, tmp4, tmp1, wrk2d,wrk3d)
 
 !$omp parallel default( shared ) private( ij, srt,end,siz )
-  CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
+  CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
   DO ij = srt,end
      h3(ij) = h3(ij) + tmp6(ij) + visc*( tmp5(ij)+tmp4(ij) ) &
           - ( v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
@@ -107,19 +107,19 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 #else
 !$omp parallel default( shared ) &
 !$omp private( ij,   srt,end,siz)
-#endif 
-  CALL DNS_OMP_PARTITION(isize_field, srt,end,siz) 
+#endif
+  CALL DNS_OMP_PARTITION(isize_field, srt,end,siz)
   DO ij = srt,end
      h2(ij) = h2(ij) + tmp5(ij) + visc*( tmp6(ij)+tmp4(ij) ) &
           - ( w(ij)*tmp3(ij) + u(ij)*tmp1(ij) )
   ENDDO
-!$omp end parallel 
+!$omp end parallel
 
 ! #######################################################################
 ! Impose buffer zone as relaxation terms
 ! #######################################################################
   IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
-     CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
+     CALL BOUNDARY_BUFFER_RELAX_FLOW(q, hq)
   ENDIF
 
 ! #######################################################################
@@ -130,14 +130,14 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef USE_ESSL
 !$omp parallel default( shared )&
 !$omp private( ilen, dummy, srt,end,siz )
-#else 
+#else
 !$omp parallel default( shared )&
 !$omp private( ij,   dummy, srt,end,siz )
 #endif 
 
      CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
      dummy=C_1_R/dte
-     
+
 #ifdef USE_ESSL
      ilen = siz
      CALL DZAXPY(ilen, dummy, v(srt), 1, h2(srt), 1, tmp2(srt), 1)
@@ -145,7 +145,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
      CALL DZAXPY(ilen, dummy, w(srt), 1, h3(srt), 1, tmp4(srt), 1)
 
 #else
-     DO ij = srt,end 
+     DO ij = srt,end
         tmp2(ij) = h2(ij) + v(ij)*dummy
         tmp3(ij) = h1(ij) + u(ij)*dummy
         tmp4(ij) = h3(ij) + w(ij)*dummy
@@ -192,7 +192,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
-! Add pressure gradient 
+! Add pressure gradient
 ! -----------------------------------------------------------------------
 #ifdef USE_ESSL
 !$omp parallel default( shared ) &
@@ -204,7 +204,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
 
 #ifdef USE_ESSL
-  ilen = siz 
+  ilen = siz
   dummy=-C_1_R
   CALL DAXPY(ilen, dummy, tmp2(srt), 1, h1(srt),1)
   CALL DAXPY(ilen, dummy, tmp3(srt), 1, h2(srt),1)
@@ -240,7 +240,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   ENDDO
 
 ! -----------------------------------------------------------------------
-! Impose bottom BCs at Jmin 
+! Impose bottom BCs at Jmin
 ! -----------------------------------------------------------------------
   ip_b =                 1
   DO k = 1,kmax
@@ -261,4 +261,3 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 
   RETURN
 END SUBROUTINE RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1
-
