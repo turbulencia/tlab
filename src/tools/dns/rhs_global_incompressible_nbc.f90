@@ -438,7 +438,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
      ! Impose buffer zone as relaxation terms
      !
      IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
-        CALL BOUNDARY_BUFFER_RELAXATION_FLOW(u,h1)
+        CALL BOUNDARY_BUFFER_RELAX_FLOW(u,h1)
      ENDIF
      !
      ! Calculate divergence for pressure solver

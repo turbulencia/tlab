@@ -20,7 +20,7 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# txc   In    3D auxiliar array of size 6 or 9
 !#
@@ -91,7 +91,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
   h3 => hq(:,3)
   h4 => hq(:,4)
   h0 => hq(:,5)
- 
+
 ! ###################################################################
 ! Evaluate standard RHS of equations
 ! global formulation
@@ -206,7 +206,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
 
 ! ###################################################################
 ! Impose boundary conditions
-! Temperature array T is used as auxiliary array because it is no 
+! Temperature array T is used as auxiliary array because it is no
 ! longer used until the fields are updated
 ! ###################################################################
 #define GAMMA_LOC(i) txc(i,6)
@@ -246,14 +246,12 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
 ! Impose buffer zone as relaxation terms
 ! ###################################################################
   IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
-     CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
-     DO is = 1,inb_scal
-        CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, rho,s(1,is), hs(1,is)) 
-     ENDDO
+     CALL BOUNDARY_BUFFER_RELAX_FLOW(q,hq)
+     CALL BOUNDARY_BUFFER_RELAX_SCAL(s,hs, q)
   ENDIF
 
 ! ###################################################################
-! Perform the time stepping 
+! Perform the time stepping
 ! ###################################################################
   rho_ratio = C_1_R
   prefactor = (gama0-C_1_R)*mach*mach

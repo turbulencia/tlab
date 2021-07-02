@@ -5,7 +5,7 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Momentum equations, nonlinear term in divergence form and the 
+!# Momentum equations, nonlinear term in divergence form and the
 !# viscous term explicit. 9 2nd order + 9 1st order derivatives.
 !# Pressure term requires 3 1st order derivatives
 !# Scalar needed for the buoyancy term
@@ -124,7 +124,7 @@ IMPLICIT NONE
 ! Impose buffer zone as relaxation terms
 ! #######################################################################
   IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
-     CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
+     CALL BOUNDARY_BUFFER_RELAX_FLOW(q, hq)
   ENDIF
 
 ! #######################################################################
@@ -169,7 +169,7 @@ IMPLICIT NONE
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
-! Add pressure gradient 
+! Add pressure gradient
 ! -----------------------------------------------------------------------
   DO ij = 1,imax*jmax*kmax
      h1(ij) = h1(ij) - tmp2(ij)
