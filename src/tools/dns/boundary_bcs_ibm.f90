@@ -464,7 +464,7 @@ contains
       write(*,*) '======== Debug transposing geometry ====================='
       write(*,*) 'ims_size_i(1)    ', nyz
       write(*,*) 'nyz=jmax*kmax    ', jmax * kmax
-      write(*,*) 'nxy=jmax*kmax    ', imax * jmax 
+      write(*,*) 'nxy=imax*kmax    ', imax * jmax 
       write(*,*) 'isize_field      ', isize_field
       write(*,*) 'isize_txc_field  ', isize_txc_field
       write(*,*) 'inb_txc          ', inb_txc
@@ -586,17 +586,17 @@ contains
     TREAL, dimension(jmax * kmax)                  :: nobi_out    ! DEBUG
     TREAL, dimension(imax * kmax)                  :: nobj_out    ! DEBUG
     TREAL, dimension(imax * jmax)                  :: nobk_out    ! DEBUG
-    TREAL, dimension(jmax * kmax)                  :: nobi_b_out  ! DEBUG
-    TREAL, dimension(imax * kmax)                  :: nobj_b_out  ! DEBUG
-    TREAL, dimension(imax * jmax)                  :: nobk_b_out  ! DEBUG
-    TREAL, dimension(jmax * kmax)                  :: nobi_e_out  ! DEBUG
-    TREAL, dimension(imax * kmax)                  :: nobj_e_out  ! DEBUG
-    TREAL, dimension(imax * jmax)                  :: nobk_e_out  ! DEBUG
+    TREAL, dimension(jmax * kmax * xbars_geo(1))   :: nobi_b_out  ! DEBUG
+    TREAL, dimension(imax * kmax * xbars_geo(1))   :: nobj_b_out  ! DEBUG
+    TREAL, dimension(imax * jmax * xbars_geo(1))   :: nobk_b_out  ! DEBUG
+    TREAL, dimension(jmax * kmax * xbars_geo(1))   :: nobi_e_out  ! DEBUG
+    TREAL, dimension(imax * kmax * xbars_geo(1))   :: nobj_e_out  ! DEBUG
+    TREAL, dimension(imax * jmax * xbars_geo(1))   :: nobk_e_out  ! DEBUG
 #endif
 
     TREAL, dimension(isize_field), intent(inout)   :: wrk3d 
 
-    TINTEGER                                       :: nobi_max, nobj_max, nobk_max!, max_verif
+    TINTEGER                                       :: nobi_max, nobj_max, nobk_max
     TINTEGER                                       :: i, j, k, ij, ik, jk, ip, inum
     TINTEGER                                       :: nyz, nxz, nxy
     TINTEGER                                       :: nob_max
@@ -604,8 +604,8 @@ contains
     CHARACTER(32)                                  :: fname
 
     ! DEBUG
-    TREAL, dimension(isize_field)                        :: tmp1, tmp2, tmp3, tmp4 
     TREAL, dimension(isize_field,inb_txc), intent(inout) :: txc 
+    TREAL, dimension(isize_field)                        :: tmp1, tmp2, tmp3, tmp4 
 
     ! ================================================================== !
 
@@ -670,6 +670,7 @@ contains
       call DNS_MPI_TRPB_I(nobi, nobi_out, ims_ds_i(1,idi_nob), ims_dr_i(1,idi_nob), ims_ts_i(1,idi_nob), ims_tr_i(1,idi_nob))
     endif
 #else 
+
     nobi_out = nobi
 #endif
 
@@ -786,7 +787,7 @@ contains
 
     call DNS_TRANSPOSE(nobj_b, kmax, imax * nob_max, kmax, nobj_b_out, imax * nob_max)
     call DNS_TRANSPOSE(nobj_e, kmax, imax * nob_max, kmax, nobj_e_out, imax * nob_max)
-
+    
     ! ================================================================== !
     ! number of objects in z-direction
     ip = i1
@@ -873,7 +874,6 @@ contains
     ! ================================================================== !
     if (ims_pro .eq. 0) then
       write(*,*) '========================================================='
-      ! write(*,*) 'max_nob    =', max_verif
       write(*,*) 'nbars      =', xbars_geo(1)
       write(*,*) 'nobi_max   =', nobi_max
       write(*,*) 'nobj_max   =', nobj_max
@@ -960,11 +960,13 @@ contains
     end if
     call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, nob_max, i1, nxy*nob_max, nobk_e_out, wrk3d)
 
-
     ! ================================================================== !
     ! ================================================================== !
     ! ================================================================== !
     ! DEBUG nob fields with 3D fields
+
+    ! BLOCK COMMENT UNTIL END OF SUBROUTINE
+#if 0
     ! ================================================================== !
     ! ================================================================== !
     ! ================================================================== !
@@ -980,8 +982,7 @@ contains
     tmp2(:) = txc(:,2)
     tmp3(:) = txc(:,3) 
     tmp4(:) = txc(:,4) 
-    ! tmp5(:) = txc(:,5) 
-    ! tmp6(:) = txc(:,6) 
+
     ! ================================================================== !
     ! number of objects in x-direction
     ip = i1
@@ -1002,8 +1003,10 @@ contains
     if ( ims_npro_i .gt. 1 ) then
       call DNS_MPI_TRPB_I(tmp2, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
     endif
-#endif
     call DNS_WRITE_FIELDS('nobi3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp1, wrk3d)
+#else
+    call DNS_WRITE_FIELDS('nobi3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+#endif
     tmp1(:) = C_0_R
     tmp2(:) = C_0_R
 
@@ -1046,11 +1049,15 @@ contains
     if ( ims_npro_k .gt. 1 ) then
       call DNS_MPI_TRPB_K(tmp1, tmp2, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
     endif
-#endif
     call DNS_WRITE_FIELDS('nobk3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+#else
+    call DNS_WRITE_FIELDS('nobk3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp1, wrk3d)
+#endif
 
     tmp1(:) = C_0_R
     tmp2(:) = C_0_R
+
+    if (ims_pro .eq. 0) write(*,*) 'done writing nob3d'
     ! ================================================================== !
     ! ================================================================== !
     ! begin and end of objects in x-direction
@@ -1092,16 +1099,18 @@ contains
       call DNS_MPI_TRPB_I(tmp3, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
       call DNS_MPI_TRPB_I(tmp4, tmp2, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
     endif
-#endif
-
     call DNS_WRITE_FIELDS('nobi3d_b', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp1, wrk3d)
     call DNS_WRITE_FIELDS('nobi3d_e', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+#else
+    call DNS_WRITE_FIELDS('nobi3d_b', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp3, wrk3d)
+    call DNS_WRITE_FIELDS('nobi3d_e', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp4, wrk3d)
+#endif
 
     tmp1(:) = C_0_R
     tmp2(:) = C_0_R
     tmp3(:) = C_0_R
     tmp4(:) = C_0_R
-
+    if (ims_pro .eq. 0) write(*,*) 'done writing nobi3d_be'
     ! ================================================================== !
     ! begin and end of objects in y-direction
 
@@ -1145,6 +1154,7 @@ contains
     tmp2(:) = C_0_R
     tmp3(:) = C_0_R
     tmp4(:) = C_0_R  
+    if (ims_pro .eq. 0) write(*,*) 'done writing nobj3d_be'
 
     ! ================================================================== !
     ! begin and end of objects in z-direction
@@ -1184,17 +1194,23 @@ contains
       call DNS_MPI_TRPB_K(tmp1, tmp3, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
       call DNS_MPI_TRPB_K(tmp2, tmp4, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
     endif
-#endif
-
     call DNS_WRITE_FIELDS('nobk3d_b', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp3, wrk3d)
     call DNS_WRITE_FIELDS('nobk3d_e', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp4, wrk3d)
+#else
+    call DNS_WRITE_FIELDS('nobk3d_b', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp1, wrk3d)
+    call DNS_WRITE_FIELDS('nobk3d_e', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+#endif
 
     tmp1(:) = C_0_R
     tmp2(:) = C_0_R
     tmp3(:) = C_0_R
     tmp4(:) = C_0_R  
+    if (ims_pro .eq. 0) write(*,*) 'done writing nobk3d_be'
 
     ! ================================================================== !
+    ! ================================================================== !
+    ! END OF BLOCK COMMENT
+#endif
     ! ================================================================== !
     ! ================================================================== !
 
