@@ -18,7 +18,7 @@
 !#
 !########################################################################
 SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
-     q_inf,z1_inf, h0,h1,h2,h3,h4,zh1, txc, aux2d, wrk2d,wrk3d)
+     h0,h1,h2,h3,h4,zh1, txc, aux2d, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
@@ -37,9 +37,8 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
 
   TREAL, DIMENSION(imax,jmax,kmax)   :: rho, u, v, w, p, gama, h0, h1, h2, h3, h4
   TREAL, DIMENSION(imax,jmax,kmax,*) :: z1, zh1, txc
-  TREAL, DIMENSION(*)                :: q_inf, z1_inf
   TREAL, DIMENSION(jmax,kmax,*)      :: aux2d
-  TREAL, DIMENSION(*)                :: wrk2d, wrk3d
+  TREAL, DIMENSION(*)                :: wrk1d,wrk2d, wrk3d
 
   TARGET aux2d
 
@@ -149,7 +148,7 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
      IF     ( inflow_mode .EQ. 1 .OR. inflow_mode .EQ. 4 ) THEN
         CALL BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk2d,wrk3d)
      ELSEIF ( inflow_mode .EQ. 2 .OR. inflow_mode .EQ. 3 ) THEN
-        CALL BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, q_inf,z1_inf, txc, wrk2d,wrk3d)
+        CALL BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, txc, wrk1d,wrk2d,wrk3d)
      ENDIF
   ENDIF
 

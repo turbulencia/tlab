@@ -7,7 +7,7 @@
 !# Performing the time integration over a given number of steps
 !#
 !########################################################################
-SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
+SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, &
     l_q, l_hq, l_txc, l_comm)
 
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, tag_part, tag_traj, lfile
@@ -34,7 +34,6 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
 
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
   TREAL, DIMENSION(isize_txc_field,6),    INTENT(INOUT) :: txc
-  TREAL, DIMENSION(*)             :: q_inf, s_inf
   TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
 
   TREAL, DIMENSION(isize_particle,*) :: l_q, l_hq, l_txc
@@ -53,7 +52,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
     IF ( itime >= nitera_last   ) EXIT
     IF ( INT(logs_data(1)) /= 0 ) EXIT
 
-    CALL TIME_RUNGEKUTTA(q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc, l_comm)
+    CALL TIME_RUNGEKUTTA(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc, l_comm)
 
     itime = itime + 1
     rtime = rtime + dtime

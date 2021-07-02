@@ -25,7 +25,7 @@
 !# txc   In    3D auxiliar array of size 6 or 9
 !#
 !########################################################################
-SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d)
+SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -55,7 +55,6 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
   TREAL dte, etime
 
   TREAL, DIMENSION(isize_field,*) :: q, hq, s, hs, txc
-  TREAL, DIMENSION(*)             :: q_inf, s_inf
   TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
 
   TARGET :: q, hq
@@ -235,8 +234,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
 
   IF ( .NOT. g(1)%periodic ) THEN
      CALL BOUNDARY_BCS_X(isize_field, M2_max, etime, rho,u,v,w,p,GAMMA_LOC(1),s, &
-          q_inf,s_inf, &
-          h0,h1,h2,h3,h4,hs, txc, AUX_LOC(1), wrk2d,wrk3d)
+          h0,h1,h2,h3,h4,hs, txc, AUX_LOC(1), wrk1d,wrk2d,wrk3d)
   ENDIF
 
 #undef GAMMA_LOC

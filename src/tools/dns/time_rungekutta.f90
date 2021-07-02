@@ -20,8 +20,7 @@
 !# Runge-Kutta semi-implicit 3th order from Spalart, Moser & Rogers (1991)
 !#
 !########################################################################
-SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
-     q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, l_q,l_hq,l_txc,l_comm)
+SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, txc, wrk1d,wrk2d,wrk3d, l_q,l_hq,l_txc,l_comm)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -38,15 +37,14 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
   USE DNS_MPI, ONLY : ims_pro,ims_npro,ims_npro_i,ims_npro_k
 #endif
 #endif
-  
+
   IMPLICIT NONE
 
 #ifdef USE_MPI
 #include "mpif.h"
-#endif 
+#endif
 
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
-  TREAL, DIMENSION(*)             :: q_inf,s_inf
   TREAL, DIMENSION(*)             :: txc, wrk1d,wrk2d,wrk3d
 
   TREAL, DIMENSION(isize_particle,*) :: l_q, l_hq
@@ -57,13 +55,13 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
   INTEGER(8) ip
   TREAL dte, etime, alpha
   TREAL kdt(5), kco(4), ktime(5)
-  TREAL kex(3), kim(3) 
+  TREAL kex(3), kim(3)
 
-  TINTEGER srt,end,siz ! Variables for OpenMP Paritioning  
+  TINTEGER srt,end,siz ! Variables for OpenMP Paritioning
 #ifdef USE_PROFILE
-  TINTEGER t_srt,t_end,t_dif,idummy,PROC_CYCLES,MAX_CYCLES 
+  TINTEGER t_srt,t_end,t_dif,idummy,PROC_CYCLES,MAX_CYCLES
   CHARACTER*256 time_string
-#endif 
+#endif
 
 #ifdef USE_BLAS
   INTEGER ilen
@@ -82,12 +80,12 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 ! -------------------------------------------------------------------
 ! Scheme coeefficients
 ! -------------------------------------------------------------------
-  IF      ( rkm_mode .EQ. RKM_EXP3 ) THEN 
-     kdt(1:3)   = (/ C_1_R/C_3_R, C_15_R/C_16_R,  C_8_R/C_15_R /) 
-     ktime(1:3) = (/ C_0_R,       C_1_R/C_3_R,    C_3_R/C_4_R  /) 
-     kco(1:2)   = (/-C_5_R/C_9_R,-C_153_R/C_128_R /) 
+  IF      ( rkm_mode .EQ. RKM_EXP3 ) THEN
+     kdt(1:3)   = (/ C_1_R/C_3_R, C_15_R/C_16_R,  C_8_R/C_15_R /)
+     ktime(1:3) = (/ C_0_R,       C_1_R/C_3_R,    C_3_R/C_4_R  /)
+     kco(1:2)   = (/-C_5_R/C_9_R,-C_153_R/C_128_R /)
 
-  ELSE IF ( rkm_mode .EQ. RKM_EXP4 ) THEN 
+  ELSE IF ( rkm_mode .EQ. RKM_EXP4 ) THEN
      kdt(1) = C_1432997174477_R/C_9575080441755_R
      kdt(2) = C_5161836677717_R/C_13612068292357_R
      kdt(3) = C_1720146321549_R/C_2090206949498_R
@@ -105,21 +103,21 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
      kco(3) = -C_3550918686646_R/C_2091501179385_R
      kco(4) = -C_1275806237668_R/C_842570457699_R
 
-  ELSE IF ( rkm_mode .EQ. RKM_IMP3_DIFFUSION ) THEN 
-     kdt(1:3)   = (/   C_8_R/C_15_R,   C_5_R/C_12_R,  C_3_R/C_4_R /) 
+  ELSE IF ( rkm_mode .EQ. RKM_IMP3_DIFFUSION ) THEN
+     kdt(1:3)   = (/   C_8_R/C_15_R,   C_5_R/C_12_R,  C_3_R/C_4_R /)
 
      kim(1:3)   = (/ C_111_R/C_256_R,  C_1_R/C_2_R,   C_2_R/C_9_R /)
-     kex(1:3)   = (/ C_145_R/C_256_R, -C_9_R/C_50_R , C_2_R/C_9_R/) 
+     kex(1:3)   = (/ C_145_R/C_256_R, -C_9_R/C_50_R , C_2_R/C_9_R/)
      kco(1:3)   = (/ C_0_R,          -C_17_R/C_25_R, -C_5_R/C_9_R /)
      ! TO DO - calculate ktime from coefficients  ktime
-     ktime(1:3) = (/ C_0_R,  C_0_R, C_0_R /)   
+     ktime(1:3) = (/ C_0_R,  C_0_R, C_0_R /)
 
-     ! Coefficients from Spalart, Moser, Rogers (1991) 
+     ! Coefficients from Spalart, Moser, Rogers (1991)
      ! kim = beta/gamma
      ! kex = alpha/gamma
      ! kco = zeta/gamma
      !
-     ! alpha = (/ 29./96.,   -3./40,    1./6. /)          
+     ! alpha = (/ 29./96.,   -3./40,    1./6. /)
      ! beta  = (/ 37./160.,   5./24.,   1./6. /)
      ! gamma = (/  8./15.,    5./12.,   3./4. /)
      ! zeta  = (/  0.,      -17./60.,  -5./12./)
@@ -129,7 +127,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 ! -------------------------------------------------------------------
 ! Initialize arrays to zero for the explcit low-storage algorithm
 ! -------------------------------------------------------------------
-  IF ( rkm_mode .EQ. RKM_EXP3 .OR. rkm_mode .EQ. RKM_EXP4 ) THEN 
+  IF ( rkm_mode .EQ. RKM_EXP3 .OR. rkm_mode .EQ. RKM_EXP4 ) THEN
      IF ( icalc_flow .EQ. 1 ) THEN
         DO is = 1,inb_flow; hq(:,is) = C_0_R; ENDDO
      ENDIF
@@ -156,19 +154,19 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
      CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES)
 #endif
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-        IF    ( rkm_mode .EQ. RKM_EXP3 .OR. rkm_mode .EQ. RKM_EXP4 ) THEN 
+        IF    ( rkm_mode .EQ. RKM_EXP3 .OR. rkm_mode .EQ. RKM_EXP4 ) THEN
            CALL TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(&
                 dte,etime, q,hq,s,hs,txc, wrk1d,wrk2d,wrk3d, &
                 l_q, l_hq, l_txc, l_comm)
 
-        ELSE 
+        ELSE
            CALL TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(&
                 dte,etime, kex(rkm_substep), kim(rkm_substep), kco(rkm_substep), &
                 q,hq,s,hs,txc, wrk1d,wrk2d,wrk3d)
         ENDIF
 
      ELSE
-        CALL TIME_SUBSTEP_COMPRESSIBLE(dte,etime, q,hq,s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d)
+        CALL TIME_SUBSTEP_COMPRESSIBLE(dte,etime, q,hq,s,hs, txc, wrk1d,wrk2d,wrk3d)
      ENDIF
 
 ! -------------------------------------------------------------------
@@ -182,7 +180,7 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
         CALL PARTICLE_TIME_RESIDENCE(dtime, l_g%np, l_q)
         CALL PARTICLE_TIME_LIQUID_CLIPPING(s, l_q,l_txc, l_comm, wrk3d)
      ENDIF
-     
+
 ! -------------------------------------------------------------------
 ! Update RHS hq and hs in the explicit low-storage algorithm
 ! -------------------------------------------------------------------
@@ -195,12 +193,12 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 #else
 !$omp parallel default(shared) &
 !$omp private (i,   srt,end,siz,alpha,is)
-#endif 
+#endif
 
         CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
-#ifdef USE_BLAS 
+#ifdef USE_BLAS
         ilen = siz
-#endif 
+#endif
 
         alpha = kco(rkm_substep)
 
@@ -221,13 +219,13 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
 #ifdef USE_BLAS
               CALL DSCAL(ilen, alpha, hs(srt,is), 1)
 #else
-              DO i = srt,end 
+              DO i = srt,end
                  hs(i,is) = alpha*hs(i,is)
               ENDDO
 #endif
            ENDDO
         ENDIF
-!$omp end parallel 
+!$omp end parallel
 
         IF ( icalc_part .EQ. 1 ) THEN
            DO ip = 1,l_g%np
@@ -246,21 +244,21 @@ SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, &
      CALL SYSTEM_CLOCK(t_end,PROC_CYCLES,MAX_CYCLES)
      idummy = t_end-t_srt
 
-#ifdef USE_MPI 
-     CALL MPI_REDUCE(idummy,t_dif,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD) 
-     IF ( ims_pro .EQ. 0 ) THEN 
-        WRITE(time_string,999) ims_npro, ims_npro_i, ims_npro_k, rkm_substep, t_dif/1.0d0/PROC_CYCLES/ims_npro 
-999     FORMAT(I5.5,' (ims_npro_i X ims_npro_k:',I4.4,'x',I4.4,1x,') RK-Substep',I1,':', E13.5,'s') 
-        CALL IO_WRITE_ASCII(lfile, time_string) 
+#ifdef USE_MPI
+     CALL MPI_REDUCE(idummy,t_dif,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD)
+     IF ( ims_pro .EQ. 0 ) THEN
+        WRITE(time_string,999) ims_npro, ims_npro_i, ims_npro_k, rkm_substep, t_dif/1.0d0/PROC_CYCLES/ims_npro
+999     FORMAT(I5.5,' (ims_npro_i X ims_npro_k:',I4.4,'x',I4.4,1x,') RK-Substep',I1,':', E13.5,'s')
+        CALL IO_WRITE_ASCII(lfile, time_string)
      ENDIF
-#else 
+#else
      t_dif = idummy
-     WRITE(time_string,999) rkm_substep, t_dif/1.0d0/PROC_CYCLES/ims_npro 
-999  FORMAT('RK-Substep',I1,':', E13.5,'s') 
-     CALL IO_WRITE_ASCII(lfile,time_string) 
-#endif 
+     WRITE(time_string,999) rkm_substep, t_dif/1.0d0/PROC_CYCLES/ims_npro
+999  FORMAT('RK-Substep',I1,':', E13.5,'s')
+     CALL IO_WRITE_ASCII(lfile,time_string)
+#endif
 
-#endif 
+#endif
 
   ENDDO
 

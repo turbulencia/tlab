@@ -41,10 +41,6 @@ PROGRAM DNS
   ! Work arrays
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk1d,wrk2d,wrk3d
 
-  ! Inflow arrays
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x_inf, y_inf, z_inf
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q_inf, s_inf
-
   TARGET q
 
   ! Pointers to existing allocated space
@@ -53,7 +49,7 @@ PROGRAM DNS
   CHARACTER*32 fname, inifile
   CHARACTER*128 str, line
   TINTEGER idummy, ig
-  TINTEGER ierr, isize_wrk3d, isize_loc
+  TINTEGER ierr, isize_wrk3d
 
   ! ###################################################################
   inifile = 'dns.ini'
@@ -80,12 +76,6 @@ PROGRAM DNS
   ! #######################################################################
   ! Memory management
   ! #######################################################################
-  isize_loc = MAX(g_inf(1)%size,MAX(g_inf(2)%size,g_inf(3)%size))
-  isize_wrk1d = MAX(isize_wrk1d,isize_loc)
-
-  isize_loc = MAX(g_inf(1)%size*g_inf(2)%size,MAX(g_inf(1)%size*g_inf(3)%size,g_inf(2)%size*g_inf(3)%size))
-  isize_wrk2d = MAX(isize_wrk2d, isize_loc)
-
   ! txc
   inb_txc = 9
   IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
@@ -119,19 +109,19 @@ PROGRAM DNS
 
 #ifdef LES
   IF ( iles == 1 ) THEN ! this number needs to be revised
-    isize_loc = 13
+    idummy = 13
 
     IF ( iles_type_regu == LES_REGU_SMGDYN .OR. iles_type_regu == LES_REGU_SMGDYNRMS ) THEN
-      IF ( iles_type_tran == LES_TRAN_NONE ) isize_loc = 10
-      isize_loc = isize_loc + 4 ! space for aux_sg in dynamic smagorinsky
+      IF ( iles_type_tran == LES_TRAN_NONE ) idummy = 10
+      idummy = idummy + 4 ! space for aux_sg in dynamic smagorinsky
     ENDIF
-    IF ( iles_type_chem == LES_CHEM_QUASIBS ) isize_loc = isize_loc + 4 ! space for chi
+    IF ( iles_type_chem == LES_CHEM_QUASIBS ) idummy = idummy + 4 ! space for chi
 
     idummy =  isize_wrk1d*isize_wrk1d*3 / isize_txc_field
     IF ( MOD( isize_wrk1d*isize_wrk1d*3 , isize_txc_field ) > 0 ) idummy = idummy+1
-    isize_loc = MAX(isize_loc,idummy)
+    idummy = MAX(idummy,idummy)
 
-    inb_txc = MAX(isize_loc, inb_txc)
+    inb_txc = MAX(idummy, inb_txc)
 
   ENDIF
 #endif
@@ -163,12 +153,6 @@ PROGRAM DNS
   ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
 
 #include "dns_alloc_arrays.h"
-
-  ALLOCATE(x_inf(g_inf(1)%size,g_inf(1)%inb_grid)) ! Inflow fields for spatial simulations
-  ALLOCATE(y_inf(g_inf(2)%size,g_inf(2)%inb_grid))
-  ALLOCATE(z_inf(g_inf(3)%size,g_inf(3)%inb_grid))
-  ALLOCATE(q_inf(g_inf(1)%size*g_inf(2)%size*kmax,inb_flow_array))
-  ALLOCATE(s_inf(g_inf(1)%size*g_inf(2)%size*kmax,inb_scal_array))
 
   ! Rhs
   WRITE(str,*) inb_flow; line = 'Allocating array rhs flow of size '//TRIM(ADJUSTL(str))//'x'
@@ -225,14 +209,6 @@ PROGRAM DNS
   ! Read the grid
   ! ###################################################################
 #include "dns_read_grid.h"
-
-  IF ( g_inf(1)%size > 1 ) THEN ! Inflow fields for spatial simulations
-    CALL IO_READ_GRID('grid.inf', g_inf(1)%size, g_inf(2)%size, g_inf(3)%size,  &
-        g_inf(1)%scale,g_inf(2)%scale,g_inf(3)%scale, x_inf,y_inf,z_inf)
-    CALL FDM_INITIALIZE(x_inf, g_inf(1), wrk1d)
-    g_inf(2)%nodes => y_inf(:,1)
-    g_inf(3)%nodes => z_inf(:,1)
-  ENDIF
 
   ! ###################################################################
   ! Initialize operators and reference data
@@ -357,7 +333,7 @@ PROGRAM DNS
   CALL BOUNDARY_BCS_INITIALIZE(wrk3d)
 
   IF ( imode_sim == DNS_MODE_SPATIAL ) THEN
-    CALL BOUNDARY_INFLOW_INITIALIZE(rtime, q_inf,s_inf, txc, wrk2d,wrk3d)
+    CALL BOUNDARY_INFLOW_INITIALIZE(rtime, txc, wrk1d,wrk2d,wrk3d)
   ENDIF
 
   ! ###################################################################
@@ -383,8 +359,7 @@ PROGRAM DNS
   ! ###################################################################
   itime = nitera_first
 
-  CALL TIME_INTEGRATION(q,h_q, s,h_s, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d, &
-      l_q, l_hq, l_txc, l_comm)
+  CALL TIME_INTEGRATION(q,h_q, s,h_s, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc, l_comm)
 
   ! ###################################################################
 #ifdef USE_FFTW

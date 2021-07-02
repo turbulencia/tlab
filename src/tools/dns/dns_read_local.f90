@@ -10,9 +10,10 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
   USE DNS_GLOBAL,    ONLY : pbg, rbg
-  USE DNS_GLOBAL,    ONLY : imode_sim, inb_flow,inb_scal
+  USE DNS_GLOBAL,    ONLY : imode_sim, inb_flow,inb_scal, isize_wrk1d, isize_wrk2d
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : FilterDomain
+  USE DNS_TYPES,     ONLY : MAX_MODES
   USE DNS_LOCAL
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
@@ -654,6 +655,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      g_inf(1)%periodic = .TRUE.
      g_inf(1)%uniform  = .TRUE.
   ENDIF
+
+  idummy = MAX(g_inf(1)%size,MAX(g_inf(2)%size,g_inf(3)%size))
+  isize_wrk1d = MAX(isize_wrk1d,idummy)
+
+  idummy = MAX(g_inf(1)%size*g_inf(2)%size,MAX(g_inf(1)%size*g_inf(3)%size,g_inf(2)%size*g_inf(3)%size))
+  isize_wrk2d = MAX(isize_wrk2d, idummy)
 
   ! -------------------------------------------------------------------
   ! Discrete Forcing
