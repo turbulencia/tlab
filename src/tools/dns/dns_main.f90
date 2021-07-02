@@ -192,7 +192,7 @@ PROGRAM DNS
   ENDIF
 
 ! IBM
-  IF ( imode_ibm .EQ. 1 ) THEN
+  IF ( imode_ibm == 1 ) THEN
     ibm_allocated = .FALSE.
     CALL ALLOCATE_IBM(ibm_allocated)
   ENDIF
@@ -371,7 +371,7 @@ PROGRAM DNS
   ! ###################################################################
   ! Initialize IBM
   ! ###################################################################
-  IF ( imode_ibm .EQ. 1 ) THEN
+  IF ( imode_ibm == 1 ) THEN
     CALL INITIALIZE_GEOMETRY(txc, wrk3d)
     ! CALL INITIALIZE_IBM()
   ENDIF  
