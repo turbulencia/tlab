@@ -8,7 +8,7 @@
 PROGRAM AVERAGES
 
   USE DNS_TYPES,     ONLY : pointers_dt
-  USE DNS_CONSTANTS, ONLY : efile,lfile,gfile, tag_flow,tag_scal,tag_part
+  USE DNS_CONSTANTS, ONLY : ifile,efile,lfile,gfile, tag_flow,tag_scal,tag_part
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
@@ -44,7 +44,7 @@ PROGRAM AVERAGES
   ! Local variables
   ! -------------------------------------------------------------------
   CHARACTER*512 sRes
-  CHARACTER*32 fname, inifile, bakfile
+  CHARACTER*32 fname, bakfile
   CHARACTER*32 varname(16)
   CHARACTER*64 str, line
 
@@ -82,14 +82,13 @@ PROGRAM AVERAGES
   !########################################################################
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part == 1 ) THEN
-    CALL PARTICLE_READ_GLOBAL(inifile)
+    CALL PARTICLE_READ_GLOBAL(ifile)
   END IF
 
 #ifdef USE_MPI
@@ -109,7 +108,7 @@ PROGRAM AVERAGES
   gate_level= 0
   opt_order = 1
 
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamAverages', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamAverages', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_REAL(sRes, iopt_size, opt_vec)
 

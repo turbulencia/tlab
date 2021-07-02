@@ -23,15 +23,12 @@ PROGRAM INIRAND
   TINTEGER iq, is, isize_wrk3d, ierr
 
   CHARACTER*64 str, line
-  CHARACTER*32 inifile
 
   ! ###################################################################
-  inifile = 'dns.ini'
-
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
-  CALL RAND_READ_LOCAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
+  CALL RAND_READ_LOCAL(ifile)
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
 #endif

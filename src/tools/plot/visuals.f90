@@ -44,7 +44,7 @@ PROGRAM VISUALS
   ! Local variables
   ! -------------------------------------------------------------------
   CHARACTER*512 sRes
-  CHARACTER*32 fname, inifile, bakfile
+  CHARACTER*32 fname, bakfile
   CHARACTER*32 flow_file, scal_file, part_file, plot_file, time_str
   CHARACTER*64 str, line
 
@@ -73,13 +73,12 @@ PROGRAM VISUALS
   !########################################################################
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
-  IF ( icalc_part .EQ. 1 ) CALL PARTICLE_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
+  IF ( icalc_part .EQ. 1 ) CALL PARTICLE_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
@@ -99,7 +98,7 @@ PROGRAM VISUALS
   ELSE;                                        iscal_offset = 9+NSP
   ENDIF
 
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamVisuals', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamVisuals', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_INTEGER(sRes, iopt_size, opt_vec)
 
@@ -192,7 +191,7 @@ PROGRAM VISUALS
   ENDDO
 
   ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Subdomain', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
   IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI
@@ -211,7 +210,7 @@ PROGRAM VISUALS
   ENDIF
 
   ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Format', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Format', '-1', sRes)
 
   IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI

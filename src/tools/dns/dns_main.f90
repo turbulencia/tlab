@@ -46,27 +46,25 @@ PROGRAM DNS
   ! Pointers to existing allocated space
   TREAL, DIMENSION(:), POINTER :: e, rho, p, T
 
-  CHARACTER*32 fname, inifile
+  CHARACTER*32 fname
   CHARACTER*128 str, line
   TINTEGER idummy, ig
   TINTEGER ierr, isize_wrk3d
 
   ! ###################################################################
-  inifile = 'dns.ini'
-
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part == 1 ) THEN
-    CALL PARTICLE_READ_GLOBAL(inifile)
+    CALL PARTICLE_READ_GLOBAL(ifile)
   ENDIF
 #ifdef CHEMISTRY
-  CALL CHEM_READ_GLOBAL(inifile)
+  CALL CHEM_READ_GLOBAL(ifile)
 #endif
 #ifdef LES
-  CALL LES_READ_INI(inifile)
+  CALL LES_READ_INI(ifile)
 #endif
-  CALL DNS_READ_LOCAL(inifile)
+  CALL DNS_READ_LOCAL(ifile)
 
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
@@ -234,7 +232,7 @@ PROGRAM DNS
   ! ###################################################################
   itime = nitera_first
 
-  visc_stop  = visc ! Value read in inifile
+  visc_stop  = visc ! Value read in ifile
 
   IF ( icalc_scal == 1 ) THEN
     WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))

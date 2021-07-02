@@ -70,7 +70,7 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
-  CHARACTER*32 fname, inifile, bakfile
+  CHARACTER*32 fname, bakfile
   CHARACTER*32 varname(16)
   CHARACTER*64 str, line
   CHARACTER*8  tag_file, tag_name, tag_var(16)
@@ -106,12 +106,11 @@ PROGRAM SPECTRA
 
 !########################################################################
 !########################################################################
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
@@ -137,7 +136,7 @@ PROGRAM SPECTRA
   opt_ffmt  = 0
   opt_time  = 0
 
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamSpectra', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamSpectra', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_REAL(sRes, iopt_size, opt_vec)
 

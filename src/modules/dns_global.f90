@@ -18,6 +18,7 @@ MODULE DNS_CONSTANTS
   TINTEGER, PARAMETER :: MAX_STATS_SPATIAL = 100 ! Running statistics
 
   CHARACTER*32, PARAMETER :: gfile = 'grid'
+  CHARACTER*32, PARAMETER :: ifile = 'dns.ini'
   CHARACTER*32, PARAMETER :: ofile = 'dns.out'
   CHARACTER*32, PARAMETER :: lfile = 'dns.log'
   CHARACTER*32, PARAMETER :: efile = 'dns.err'

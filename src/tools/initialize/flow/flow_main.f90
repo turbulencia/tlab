@@ -33,17 +33,14 @@ PROGRAM INIFLOW
   TINTEGER isize_wrk3d, ierr
 
   CHARACTER*64 str, line
-  CHARACTER*32 inifile
 
   !########################################################################
-  inifile = 'dns.ini'
-
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
-  CALL FLOW_READ_LOCAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
+  CALL FLOW_READ_LOCAL(ifile)
 #ifdef CHEMISTRY
-  CALL CHEM_READ_GLOBAL(inifile)
+  CALL CHEM_READ_GLOBAL(ifile)
 #endif
 
 #ifdef USE_MPI

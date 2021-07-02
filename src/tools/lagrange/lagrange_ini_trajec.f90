@@ -71,7 +71,6 @@ PROGRAM LAGRANGE_INI_TRAJEC
 
   TINTEGER nitera_first
 
-  CHARACTER*32 inifile
   CHARACTER*64 str, line
   CHARACTER*32 bakfile
 
@@ -80,20 +79,21 @@ PROGRAM LAGRANGE_INI_TRAJEC
   TINTEGER particle_pos, i
   TLONGINTEGER dummy
 #endif
-  inifile = 'dns.ini'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) THEN
-     CALL PARTICLE_READ_GLOBAL('dns.ini')
+     CALL PARTICLE_READ_GLOBAL(ifile)
   ENDIF
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
 #endif
 
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
+
 ! Get the local information from the dns.ini
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Start',      '0',  nitera_first)
+  CALL SCANINIINT(bakfile, ifile, 'Iteration', 'Start',      '0',  nitera_first)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space

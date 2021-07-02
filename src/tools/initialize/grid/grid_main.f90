@@ -4,7 +4,7 @@
 PROGRAM INIGRID
 
   USE DNS_TYPES, ONLY     : grid_dt
-  USE DNS_CONSTANTS, ONLY : gfile
+  USE DNS_CONSTANTS, ONLY : gfile, ifile
   USE GRID_LOCAL
 #ifdef USE_MPI
   USE DNS_MPI
@@ -13,8 +13,8 @@ PROGRAM INIGRID
 
 #include "integers.h"
 
-  CHARACTER*32, PARAMETER                  :: ifile = 'dns.ini', sfile = 'grid.sts'
-  TYPE(grid_dt), DIMENSION(3)       :: g
+  CHARACTER*32  sfile
+  TYPE(grid_dt), DIMENSION(3)              :: g
   TINTEGER                                 :: nmax
   TREAL, DIMENSION(:), ALLOCATABLE, TARGET :: x,y,z
   TREAL, DIMENSION(:), ALLOCATABLE         :: work1,work2
@@ -28,6 +28,8 @@ PROGRAM INIGRID
 ! #######################################################################
 ! Initialize
 ! #######################################################################
+  sfile = TRIM(ADJUSTL(gfile))//'.sts'
+
   g(1)%name = 'x'
   g(2)%name = 'y'
   g(3)%name = 'z'
