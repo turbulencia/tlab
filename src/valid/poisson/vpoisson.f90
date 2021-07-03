@@ -1,8 +1,8 @@
-#include "types.h"  
+#include "types.h"
 #include "dns_const.h"
 
 PROGRAM VPOISSON
-  
+
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
 
@@ -13,16 +13,16 @@ PROGRAM VPOISSON
   TREAL, DIMENSION(:,:),   ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:,:), ALLOCATABLE :: a, b, c, d, e, f
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: txc
-  TREAL, DIMENSION(:,:),   ALLOCATABLE :: wrk1d, wrk2d, bcs_hb, bcs_ht 
+  TREAL, DIMENSION(:,:),   ALLOCATABLE :: wrk1d, wrk2d, bcs_hb, bcs_ht
   TREAL, DIMENSION(:),     ALLOCATABLE :: wrk3d!, cx, cy, cz
-  
+
   TINTEGER i, j, k,  bcs !, ibc_x(4), ibc_y(4), ibc_z(4)
-  TINTEGER isize_wrk3d, itype
+  TINTEGER itype
   TREAL dummy, error, lambda!, falpha
 
 ! ###################################################################
   CALL DNS_INITIALIZE
-  
+
   CALL DNS_READ_GLOBAL('dns.ini')
 
   isize_wrk3d = isize_txc_field
@@ -51,13 +51,13 @@ PROGRAM VPOISSON
   ! CALL FLT_C4_INI(kmax_total, k1bc, falpha, dz, cz)
 ! BCs for the filters (see routine FILTER)
   ! ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 0; ibc_x(4) = 0
-  ! ibc_y(1) = 0; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0 
-  ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0 
+  ! ibc_y(1) = 0; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0
+  ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0
 
   bcs = 0
 
   CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
-  
+
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
@@ -101,12 +101,12 @@ PROGRAM VPOISSON
   ! CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), c, d, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), a,d, c, wrk2d,wrk3d)
   b = b + d
-     
+
   ! CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, c, wrk3d, wrk2d,wrk3d)
   ! CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), c, d, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), a,d, c, wrk2d,wrk3d)
   b = b + d
-!  bcs_hb(:,:) = c(:,1,   :); bcs_ht(:,:) = c(:,jmax,:) ! Neumann BCs 
+!  bcs_hb(:,:) = c(:,1,   :); bcs_ht(:,:) = c(:,jmax,:) ! Neumann BCs
 
 ! ###################################################################
   IF ( itype .EQ. 2 ) THEN
@@ -142,7 +142,7 @@ PROGRAM VPOISSON
   ENDDO
   WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
   CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, i1, e, wrk3d)
-  
+
 ! first derivative
   error = C_0_R
   dummy = C_0_R
@@ -158,6 +158,6 @@ PROGRAM VPOISSON
   ENDDO
   WRITE(*,*) 'Relative error in df/dy ....: ', sqrt(error)/sqrt(dummy)
 !  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, i1, e, wrk3d)
-  
+
   STOP
 END PROGRAM VPOISSON

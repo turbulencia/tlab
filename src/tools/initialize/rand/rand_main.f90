@@ -20,7 +20,7 @@ PROGRAM INIRAND
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q, s, txc
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
 
-  TINTEGER iq, is, isize_wrk3d, ierr
+  TINTEGER iq, is, ierr
 
   CHARACTER*64 str, line
 

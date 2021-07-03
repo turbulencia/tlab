@@ -30,7 +30,7 @@ PROGRAM INIFLOW
   TARGET q, wrk3d
   TREAL, DIMENSION(:),   POINTER :: e, rho, p, T
 
-  TINTEGER isize_wrk3d, ierr
+  TINTEGER ierr
 
   CHARACTER*64 str, line
 

@@ -69,18 +69,19 @@ MODULE DNS_GLOBAL
 ! Arrays size
 ! ###################################################################
 ! fields
-  TINTEGER :: imax,jmax,kmax, isize_field ! locally per processor
-  TINTEGER :: inb_flow, inb_flow_array    ! transported & array space
-  TINTEGER :: inb_scal, inb_scal_array    ! transported & array space
+  TINTEGER :: imax,jmax,kmax, isize_field     ! locally per processor
+  TINTEGER :: inb_flow, inb_flow_array        ! transported & array space
+  TINTEGER :: inb_scal, inb_scal_array        ! transported & array space
 
 ! auxiliary arrays
-  TINTEGER :: isize_wrk1d,     inb_wrk1d  ! 1D arrays
-  TINTEGER :: isize_wrk2d,     inb_wrk2d  ! 2D arrays
-  TINTEGER :: isize_txc_field, inb_txc    ! 3D arrays for intermediate calculations
+  TINTEGER :: isize_wrk1d,     inb_wrk1d      ! 1D arrays
+  TINTEGER :: isize_wrk2d,     inb_wrk2d      ! 2D arrays
+  TINTEGER :: isize_wrk3d                     ! 2D arrays
+  TINTEGER :: isize_txc_field, inb_txc        ! 3D arrays for intermediate calculations
   TINTEGER :: isize_txc_dimx, isize_txc_dimz  ! partition for MPI data transposition
 
 ! Particle arrays
-  TINTEGER :: isize_particle              ! max number of particles per processor
+  TINTEGER :: isize_particle                  ! max number of particles per processor
   TINTEGER :: inb_part, inb_part_array
   TINTEGER :: inb_part_txc
 

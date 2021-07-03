@@ -20,7 +20,7 @@ PROGRAM INIPART
 #endif
 
   ! -------------------------------------------------------------------
-  TINTEGER  ierr,isize_wrk3d
+  TINTEGER  ierr
 
   TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE :: q,s,txc

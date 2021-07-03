@@ -25,7 +25,7 @@ PROGRAM LAGRANGE_PDF
 #endif
 
 ! -------------------------------------------------------------------
-  TINTEGER  ierr,isize_wrk3d, i
+  TINTEGER  ierr, i
   TREAL, DIMENSION(:,:),     ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:),       ALLOCATABLE       :: wrk1d,wrk2d, wrk3d
   TREAL, DIMENSION(:,:),     ALLOCATABLE       :: txc
@@ -36,29 +36,27 @@ PROGRAM LAGRANGE_PDF
 
   TINTEGER nitera_first, nitera_last, nitera_save
 
-  CHARACTER*32 inifile
   CHARACTER*64 fname, str
   CHARACTER*128 line
   CHARACTER*32 bakfile
 
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) THEN
      CALL PARTICLE_READ_GLOBAL('dns.ini')
   ENDIF
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
 #endif
-!  CALL DNS_READ_LOCAL(inifile) !for nitera stuff
+!  CALL DNS_READ_LOCAL(ifile) !for nitera stuff
 
 ! Get the local information from the dns.ini
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Start',      '0',  nitera_first)
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'End',        '0',  nitera_last )
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Restart',    '50', nitera_save )
+  CALL SCANINIINT(bakfile, ifile, 'Iteration', 'Start',      '0',  nitera_first)
+  CALL SCANINIINT(bakfile, ifile, 'Iteration', 'End',        '0',  nitera_last )
+  CALL SCANINIINT(bakfile, ifile, 'Iteration', 'Restart',    '50', nitera_save )
 
   inb_part_txc = 1
 

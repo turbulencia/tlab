@@ -24,32 +24,33 @@ PROGRAM DNS
 #endif
 
   IMPLICIT NONE
+  SAVE
 
 #include "integers.h"
 
   ! -------------------------------------------------------------------
-  ! Grid and associated arrays
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
+  TREAL, DIMENSION(:,:), ALLOCATABLE :: x,y,z     ! Grid and associated arrays
 
-  ! Flow/Scalar variables and RHS space
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: q,s, h_q,h_s, txc
+  TREAL, DIMENSION(:,:), ALLOCATABLE :: q,s       ! Eulerian fields
+  TREAL, DIMENSION(:,:), ALLOCATABLE :: txc       ! Temporary space for Eulerian fields
 
-  ! Particle data
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_hq, l_txc
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
+  TREAL, DIMENSION(:,:), ALLOCATABLE :: l_q       ! Lagrangian fields
+  TREAL, DIMENSION(:,:), ALLOCATABLE :: l_txc     ! Temporary space for Lagrangian fields
 
-  ! Work arrays
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk1d,wrk2d,wrk3d
+  TREAL, DIMENSION(:),   ALLOCATABLE :: wrk1d,wrk2d,wrk3d   ! Work arrays (scratch space)
 
-  TARGET q
+  TREAL, DIMENSION(:,:), ALLOCATABLE :: h_q,h_s   ! Right-hand sides Eulerian fields
+  TREAL, DIMENSION(:,:), ALLOCATABLE :: l_hq      ! Right-hand sides Lagrangian fields
+  TREAL, DIMENSION(:),   ALLOCATABLE :: l_comm    ! Communication space for Lagrangian fields
+
+  TARGET q, x,y,z
 
   ! Pointers to existing allocated space
   TREAL, DIMENSION(:), POINTER :: e, rho, p, T
 
   CHARACTER*32 fname
   CHARACTER*128 str, line
-  TINTEGER idummy, ig
-  TINTEGER ierr, isize_wrk3d
+  TINTEGER idummy, ig, ierr
 
   ! ###################################################################
   CALL DNS_INITIALIZE
@@ -105,25 +106,6 @@ PROGRAM DNS
   IF ( imode_rhs == EQNS_RHS_NONBLOCKING ) inb_txc = MAX(inb_txc,15)
 #endif
 
-#ifdef LES
-  IF ( iles == 1 ) THEN ! this number needs to be revised
-    idummy = 13
-
-    IF ( iles_type_regu == LES_REGU_SMGDYN .OR. iles_type_regu == LES_REGU_SMGDYNRMS ) THEN
-      IF ( iles_type_tran == LES_TRAN_NONE ) idummy = 10
-      idummy = idummy + 4 ! space for aux_sg in dynamic smagorinsky
-    ENDIF
-    IF ( iles_type_chem == LES_CHEM_QUASIBS ) idummy = idummy + 4 ! space for chi
-
-    idummy =  isize_wrk1d*isize_wrk1d*3 / isize_txc_field
-    IF ( MOD( isize_wrk1d*isize_wrk1d*3 , isize_txc_field ) > 0 ) idummy = idummy+1
-    idummy = MAX(idummy,idummy)
-
-    inb_txc = MAX(idummy, inb_txc)
-
-  ENDIF
-#endif
-
   ! wkr3d
   isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
@@ -151,52 +133,15 @@ PROGRAM DNS
   ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
 
 #include "dns_alloc_arrays.h"
-
-  ! Rhs
-  WRITE(str,*) inb_flow; line = 'Allocating array rhs flow of size '//TRIM(ADJUSTL(str))//'x'
-  WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-  CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(h_q(isize_field,inb_flow),    stat=ierr)
-  IF ( ierr /= 0 ) THEN
-    CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_q.')
-    CALL DNS_STOP(DNS_ERROR_ALLOC)
-  ENDIF
-
-  WRITE(str,*) inb_scal; line = 'Allocating array rhs scal of size '//TRIM(ADJUSTL(str))//'x'
-  WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-  CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(h_s(isize_field,inb_scal),    stat=ierr)
-  IF ( ierr /= 0 ) THEN
-    CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_s.')
-    CALL DNS_STOP(DNS_ERROR_ALLOC)
-  ENDIF
-
-  ! Lagrangian part
   IF ( icalc_part == 1 ) THEN
 #include "dns_alloc_larrays.h"
-
-    WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
-    CALL IO_WRITE_ASCII(lfile,line)
-    ALLOCATE(l_comm(isize_l_comm), stat=ierr)
-    IF ( ierr /= 0 ) THEN
-      CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
-      CALL DNS_STOP(DNS_ERROR_ALLOC)
-    ENDIF
-
-    WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
-    WRITE(str,*) inb_part; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-    CALL IO_WRITE_ASCII(lfile,line)
-    ALLOCATE(l_hq(isize_particle,inb_part),stat=ierr)
-    IF ( ierr /= 0 ) THEN
-      CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
-      CALL DNS_STOP(DNS_ERROR_ALLOC)
-    ENDIF
-
   ENDIF
 
   ! -------------------------------------------------------------------
   ! Allocating other stuff
   ! -------------------------------------------------------------------
+  CALL DNS_ALLOCATE()
+
   CALL STATISTICS_INITIALIZE()
   CALL PLANES_INITIALIZE()
   IF ( tower_mode == 1 ) THEN
@@ -335,13 +280,6 @@ PROGRAM DNS
   ENDIF
 
   ! ###################################################################
-  ! Initialize LES
-  ! ###################################################################
-#ifdef LES
-  IF ( iles == 1 ) CALL LES_INI(q,s,h_q,h_s, txc, vaux, wrk1d,wrk2d,wrk3d)
-#endif
-
-  ! ###################################################################
   ! Initialize time step dt
   ! ###################################################################
   CALL TIME_COURANT(q,s, wrk3d)
@@ -372,4 +310,51 @@ PROGRAM DNS
 #endif
 
   CALL DNS_STOP(INT(logs_data(1)))
+
+CONTAINS
+  SUBROUTINE DNS_ALLOCATE()
+  IMPLICIT NONE
+
+  ! ###################################################################
+  WRITE(str,*) inb_flow; line = 'Allocating array rhs flow of size '//TRIM(ADJUSTL(str))//'x'
+  WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+  CALL IO_WRITE_ASCII(lfile,line)
+  ALLOCATE(h_q(isize_field,inb_flow),    stat=ierr)
+  IF ( ierr /= 0 ) THEN
+    CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_q.')
+    CALL DNS_STOP(DNS_ERROR_ALLOC)
+  ENDIF
+
+  WRITE(str,*) inb_scal; line = 'Allocating array rhs scal of size '//TRIM(ADJUSTL(str))//'x'
+  WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+  CALL IO_WRITE_ASCII(lfile,line)
+  ALLOCATE(h_s(isize_field,inb_scal),    stat=ierr)
+  IF ( ierr /= 0 ) THEN
+    CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_s.')
+    CALL DNS_STOP(DNS_ERROR_ALLOC)
+  ENDIF
+
+  ! -------------------------------------------------------------------
+  IF ( icalc_part == 1 ) THEN
+    WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
+    CALL IO_WRITE_ASCII(lfile,line)
+    ALLOCATE(l_comm(isize_l_comm), stat=ierr)
+    IF ( ierr /= 0 ) THEN
+      CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
+      CALL DNS_STOP(DNS_ERROR_ALLOC)
+    ENDIF
+
+    WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
+    WRITE(str,*) inb_part; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+    CALL IO_WRITE_ASCII(lfile,line)
+    ALLOCATE(l_hq(isize_particle,inb_part),stat=ierr)
+    IF ( ierr /= 0 ) THEN
+      CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
+      CALL DNS_STOP(DNS_ERROR_ALLOC)
+    ENDIF
+
+  ENDIF
+
+  RETURN
+  END SUBROUTINE DNS_ALLOCATE
 END PROGRAM DNS

@@ -78,7 +78,7 @@ PROGRAM SPECTRA
 
   TINTEGER opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
   TINTEGER flag_mode, iread_flow, iread_scal, ierr
-  TINTEGER isize_wrk3d, isize_out2d, isize_aux, sizes(5)
+  TINTEGER isize_out2d, isize_aux, sizes(5)
   TINTEGER nfield, nfield_ref
   TINTEGER is, iv, iv_offset, iv1, iv2, ip, j
   TINTEGER jmax_aux, kxmax,kymax,kzmax

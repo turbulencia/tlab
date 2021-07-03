@@ -49,7 +49,7 @@ PROGRAM APRIORI
 ! -------------------------------------------------------------------
   TINTEGER opt_main, opt_block, opt_order, opt_format
   TINTEGER iq, is, ig, ij, bcs(2,2)
-  TINTEGER nfield, isize_wrk3d, idummy, iread_flow, iread_scal, jmax_aux, ierr, MaskSize
+  TINTEGER nfield, idummy, iread_flow, iread_scal, jmax_aux, ierr, MaskSize
   CHARACTER*32  fname, bakfile, flow_file, scal_file, plot_file, time_str
   CHARACTER*64 str, line
   TINTEGER subdomain(6)

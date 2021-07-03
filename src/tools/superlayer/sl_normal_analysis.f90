@@ -45,7 +45,7 @@ PROGRAM SL_NORMAL_ANALYSIS
   TREAL wrk3d(:)
   ALLOCATABLE wrk3d
 
-  TINTEGER iopt, isl, ith, isize_wrk3d, itxc_size, iavg
+  TINTEGER iopt, isl, ith, itxc_size, iavg
   TREAL threshold
   TINTEGER ibuffer_npy
   TINTEGER nmax, istep, kstep, nprof_size, nfield
