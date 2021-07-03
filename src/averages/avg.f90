@@ -29,8 +29,8 @@ SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, av
   TREAL AVG1V2D, AVG1V2D1G, moments(nm)
 
   CHARACTER*32 str
-  CHARACTER*32 groupname(3) ! 3 groups for consistency with old TkStat format
-  CHARACTER*250 varname(3)  ! to be reduce to just 1 group in the future
+  CHARACTER*32 groupname(1) ! 3 groups for consistency with old TkStat format
+  CHARACTER*250 varname(1)  ! to be reduce to just 1 group in the future
 
   ! ###################################################################
   CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
@@ -62,8 +62,8 @@ SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, av
       ENDIF
     END DO
   END DO
-  ! for consistency with old format I pass 2 groups
-  CALL IO_WRITE_AVERAGES( fname, itime,rtime, ny,nv*nm,2, y, varname, groupname, avg )
+  ! for consistency with old format I pass 2 groups; no longer (Cedrick Jul 3rd 2021) 
+  CALL IO_WRITE_AVERAGES( fname, itime,rtime, ny,nv*nm,1, y, varname, groupname, avg )
 
   RETURN
 END SUBROUTINE AVG_N_XZ
@@ -124,8 +124,8 @@ SUBROUTINE INTER_N_XZ(fname, itime,rtime, nx,ny,nz, np, parname, gate, y, inter)
   TREAL INTER1V2D
   INTEGER(1) gate_level
 
-  CHARACTER*32 groupname(2) ! Two groups for consistency with old TkStat format
-  CHARACTER*250 varname(2)  ! to be reduce to just 1 group in the future
+  CHARACTER*32 groupname(1) ! Two groups for consistency with old TkStat format
+  CHARACTER*250 varname(1)  ! to be reduce to just 1 group in the future
 
   ! ###################################################################
   CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
@@ -146,7 +146,7 @@ SUBROUTINE INTER_N_XZ(fname, itime,rtime, nx,ny,nz, np, parname, gate, y, inter)
     varname(1) = TRIM(ADJUSTL(varname(1)))//' '//TRIM(ADJUSTL(parname(ip)))
   ENDDO
   ! for consistency with old format I pass 2 groups
-  CALL IO_WRITE_AVERAGES( fname, itime,rtime, ny,np,2, y, varname, groupname, inter )
+  CALL IO_WRITE_AVERAGES( fname, itime,rtime, ny,np,1, y, varname, groupname, inter )
 
   RETURN
 END SUBROUTINE INTER_N_XZ
