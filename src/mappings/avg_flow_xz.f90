@@ -1358,12 +1358,12 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! Output
   ! ###################################################################
   ! 14 t-dependent variables, for consistency with old format
-  ng = ng +1
-  groupname(ng) = ''
-  varname(ng)   = 'dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy'
-  ng = ng +1; groupname(ng) = ''; varname(ng) = ''
-  ng = ng +1; groupname(ng) = ''; varname(ng) = ''
-  ng = ng +1; groupname(ng) = ''; varname(ng) = ''
+  ! ng = ng +1
+  ! groupname(ng) = ''
+  ! varname(ng)   = 'dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy'
+  ! ng = ng +1; groupname(ng) = ''; varname(ng) = ''
+  ! ng = ng +1; groupname(ng) = ''; varname(ng) = ''
+  ! ng = ng +1; groupname(ng) = ''; varname(ng) = ''
 
   WRITE(name,*) itime; name='avg'//TRIM(ADJUSTL(name))
   CALL IO_WRITE_AVERAGES( name, itime,rtime, jmax,nv,ng, g(2)%nodes, varname, groupname, mean2d )
