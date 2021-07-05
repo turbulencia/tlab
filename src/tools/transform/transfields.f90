@@ -47,7 +47,7 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
   TINTEGER opt_main, opt_function
   TINTEGER iq, is, ig, ip, j,k
-  TINTEGER isize_wrk3d, idummy, iread_flow, iread_scal, ierr
+  TINTEGER idummy, iread_flow, iread_scal, ierr
   CHARACTER*32 bakfile, flow_file, scal_file
   CHARACTER*64 str, line
   CHARACTER*512 sRes

@@ -39,7 +39,7 @@ PROGRAM PDFS
 
   TINTEGER opt_main, opt_block, opt_bins(2)
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
-  TINTEGER nfield, ifield, isize_wrk3d, ij, is, bcs(2,2), isize_pdf
+  TINTEGER nfield, ifield, ij, is, bcs(2,2), isize_pdf
   TREAL dummy, eloc1, eloc2, eloc3, cos1, cos2, cos3
   TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
   TINTEGER ibc(16)

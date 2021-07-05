@@ -1,8 +1,8 @@
-#include "types.h"  
+#include "types.h"
 #include "dns_const.h"
 
 PROGRAM VTGVORTEX
-  
+
   USE DNS_GLOBAL
 
   IMPLICIT NONE
@@ -12,15 +12,14 @@ PROGRAM VTGVORTEX
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:), ALLOCATABLE :: txc, q
   TREAL, DIMENSION(:),   ALLOCATABLE :: wrk1d, wrk2d, wrk3d
-  
+
   TINTEGER ij, iv, iopt
-  TINTEGER isize_wrk3d
   TREAL dummy, error
   CHARACTER*(32) fname
 
 ! ###################################################################
   CALL DNS_INITIALIZE
-  
+
   CALL DNS_READ_GLOBAL('dns.ini')
 
   isize_wrk3d = isize_txc_field
@@ -42,7 +41,7 @@ PROGRAM VTGVORTEX
 
 ! ###################################################################
   CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
-  
+
   WRITE(*,*) '1-ICs / 2-Error ?'; READ(*,*) iopt
 
   IF      ( iopt .EQ. 1 ) THEN
@@ -64,7 +63,7 @@ PROGRAM VTGVORTEX
   WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
   CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
   txc(:,1) = C_0_R; txc(:,4) = C_0_R
-!  CALL FI_FORCING_1(imax,jmax,kmax,  & 
+!  CALL FI_FORCING_1(imax,jmax,kmax,  &
 !       rtime,visc, txc(1,1),txc(1,4), q(1,1),q(1,2),q(1,3),q(1,4), wrk2d,wrk3d)
 !  CALL FI_FORCING_0(imax,jmax,kmax, rtime,visc, q(1,1),q(1,2), txc(1,1),txc(1,4))
 !  CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
@@ -76,7 +75,7 @@ PROGRAM VTGVORTEX
   x = x - mean_u*rtime
   CALL FLOW_TAYLORGREEN(imax,jmax,kmax, rtime,visc, x,y,z, txc(1,1),txc(1,2),txc(1,3),txc(1,4))
   txc(:,1) = txc(:,1) + mean_u
-  
+
 ! Error
   DO iv = 1,4
      error = C_0_R

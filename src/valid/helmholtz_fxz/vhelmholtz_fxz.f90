@@ -32,7 +32,6 @@ PROGRAM VHELMHOLTZ_FXZ
   TINTEGER nfield, nmeasure
   PARAMETER(nfield=4,nmeasure=1)
   TINTEGER opt
-  TINTEGER isize_wrk3d
   TREAL dummy, error, rms, max_error, beta ,t_new,t_old
   CHARACTER*8 :: date
   CHARACTER*10:: time1,time2

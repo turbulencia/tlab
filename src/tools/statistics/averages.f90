@@ -50,7 +50,7 @@ PROGRAM AVERAGES
 
   TINTEGER opt_main, opt_block, opt_order
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
-  TINTEGER nfield, ifield, isize_wrk3d, is, ij, k, bcs(2,2)
+  TINTEGER nfield, ifield, is, ij, k, bcs(2,2)
   TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3, dummy
   TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
 

@@ -50,7 +50,7 @@ PROGRAM VISUALS
 
   TINTEGER opt_format
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
-  TINTEGER isize_wrk3d, ij, is, bcs(2,2)
+  TINTEGER ij, is, bcs(2,2)
   TINTEGER iscal_offset, iread_flow, iread_scal, iread_part, idummy, ierr, MaskSize
   TREAL diff, dummy
   TINTEGER subdomain(6)

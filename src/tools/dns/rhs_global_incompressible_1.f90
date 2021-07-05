@@ -29,7 +29,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : rbackground, ribackground
   USE DNS_LOCAL,  ONLY : idivergence
-  USE DNS_LOCAL,  ONLY : rkm_substep,rkm_endstep,tower_mode
+  USE DNS_LOCAL,  ONLY : tower_mode
+  USE TIME,       ONLY : rkm_substep,rkm_endstep
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS

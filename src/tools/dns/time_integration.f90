@@ -7,8 +7,7 @@
 !# Performing the time integration over a given number of steps
 !#
 !########################################################################
-SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, &
-    l_q, l_hq, l_txc, l_comm)
+SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc, l_comm)
 
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, tag_part, tag_traj, lfile
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
@@ -17,6 +16,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, &
   USE DNS_GLOBAL, ONLY : icalc_flow, icalc_scal, icalc_part
   USE DNS_GLOBAL, ONLY : visc
   USE DNS_GLOBAL, ONLY : itime, rtime
+  USE TIME
   USE DNS_LOCAL
   USE DNS_TOWER
   USE LAGRANGE_GLOBAL, ONLY : itrajectory, l_g
@@ -75,7 +75,7 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, &
     END IF
 
     ! -----------------------------------------------------------------------
-    CALL TIME_COURANT(q,s, wrk3d)
+    CALL TIME_COURANT(q, wrk3d)
 
     ! ###################################################################
     ! The rest: Logging, postprocessing and saving

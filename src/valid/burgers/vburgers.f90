@@ -16,7 +16,6 @@ PROGRAM VBURGERS
   TREAL, DIMENSION(:),     ALLOCATABLE :: wrk3d, tmp1
 
   TINTEGER i, j, k,  bcs(2,2)
-  TINTEGER isize_wrk3d
   TREAL dummy, error
 
 ! ###################################################################

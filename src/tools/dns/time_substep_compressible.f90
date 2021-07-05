@@ -35,9 +35,6 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, txc, wrk1d,wrk2d,wr
   USE THERMO_GLOBAL, ONLY : gama0
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-#ifdef LES
-  USE DNS_LOCAL, ONLY : rkm_substep
-#endif
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -191,15 +188,6 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, txc, wrk1d,wrk2d,wr
            CALL CHEM_QUASIBS(rho, T, gama, s, hs, h4)
         ENDIF
      ENDIF
-  ENDIF
-#endif
-
-! ###################################################################
-! Evaluate LES terms of the RHS of equations
-! ###################################################################
-#ifdef LES
-  IF ( iles .EQ. 1 ) THEN
-     CALL LES_RHS(rkm_substep, q,hq, s,hs, txc, vaux, wrk1d,wrk2d,wrk3d)
   ENDIF
 #endif
 
