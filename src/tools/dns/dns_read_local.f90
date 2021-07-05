@@ -15,6 +15,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE DNS_GLOBAL,    ONLY : FilterDomain
   USE DNS_TYPES,     ONLY : MAX_MODES
   USE DNS_LOCAL
+  USE TIME,          ONLY : rkm_mode, dtime, cfla, cfld, cflr
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
   USE BOUNDARY_INFLOW

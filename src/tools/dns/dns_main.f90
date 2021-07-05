@@ -12,6 +12,7 @@ PROGRAM DNS
   USE THERMO_GLOBAL, ONLY : imixture
   USE LAGRANGE_GLOBAL
   USE DNS_LOCAL
+  USE TIME
   USE DNS_TOWER
   USE PLANES
   USE BOUNDARY_INFLOW
@@ -280,9 +281,10 @@ PROGRAM DNS
   ENDIF
 
   ! ###################################################################
-  ! Initialize time step dt
+  ! Initialize time marching scheme
   ! ###################################################################
-  CALL TIME_COURANT(q,s, wrk3d)
+  CALL TIME_INITIALIZE()
+  CALL TIME_COURANT(q, wrk3d)
 
   ! ###################################################################
   ! Initialize logfiles

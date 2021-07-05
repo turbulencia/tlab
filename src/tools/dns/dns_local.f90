@@ -12,8 +12,6 @@ MODULE DNS_LOCAL
 ! ###################################################################
 ! Iteration
 ! ###################################################################
-  TINTEGER :: rkm_mode, rkm_substep, rkm_endstep
-  TREAL    :: cfla, cfld, cflr, dtime
   TINTEGER :: nitera_first, nitera_last, nitera_save, nitera_stats, nitera_log, nitera_pln
   TINTEGER :: nitera_stats_spa ! Accumulate statistics in spatial mode
 
