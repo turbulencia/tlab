@@ -211,17 +211,6 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT(dte,etime, &
     CALL PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
   END IF
 
-! ###################################################################
-! Calculate other intensive thermodynamic variables
-! ###################################################################
-  IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN
-     CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)
-
-  ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
-     CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
-
-  ENDIF
-
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'LEAVING TIME_SUBSTEP_INCOMPRESSIBLE')
 #endif

@@ -319,19 +319,14 @@ PROGRAM VISUALS
     IF ( iread_scal .EQ. 1 ) THEN ! Scalar variables
       WRITE(scal_file,*) itime; scal_file = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(scal_file))
       CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
-
-      IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
-        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground)
-      ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
-        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
-      ENDIF
-
     ENDIF
 
     IF ( iread_flow .EQ. 1 ) THEN ! Flow variables
       WRITE(flow_file,*) itime; flow_file = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(flow_file))
       CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
     ENDIF
+
+    CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
 
     IF ( iread_part .EQ. 1 ) THEN ! Particle variables
       WRITE(part_file,*) itime; part_file = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(part_file))
@@ -486,13 +481,12 @@ PROGRAM VISUALS
 
         ELSE IF ( opt_vec(iv) .EQ. 7 ) THEN ! temperature
           plot_file = 'Temperature'//time_str(1:MaskSize)
-          CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), txc(1,1), wrk3d)
+          txc(1:isize_field,1) = q(1:isize_field,7)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
         ELSE IF ( opt_vec(iv) .EQ. 8 ) THEN ! pressure
           plot_file = 'Pressure'//time_str(1:MaskSize)
-          CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), txc(1,2), wrk3d)
-          CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), txc(1,2), txc(1,1))
+          txc(1:isize_field,1) = q(1:isize_field,6)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
         ENDIF
@@ -664,10 +658,9 @@ PROGRAM VISUALS
           CALL IO_WRITE_ASCII(efile,'VISUALS. Strain eqn for incompressible undeveloped.')
           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
         ELSE
-          CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), txc(1,1), wrk3d)
-          CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), txc(1,1), q(1,4)) ! pressure in q4
+          txc(:,6) = q(:,6)
         ENDIF
-        CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3),q(1,4), &
+        CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3),txc(1,6), &
           txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk2d,wrk3d)
         txc(1:isize_field,1) = C_2_R *txc(1:isize_field,1)
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)

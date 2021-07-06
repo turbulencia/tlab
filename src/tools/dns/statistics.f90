@@ -54,7 +54,7 @@ CONTAINS
     USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal_array
     USE DNS_GLOBAL,    ONLY : inb_flow, inb_scal
     USE DNS_GLOBAL,    ONLY : buoyancy, imode_eqns, icalc_scal
-    USE DNS_GLOBAL,    ONLY : itransport, froude
+    USE DNS_GLOBAL,    ONLY : froude
     USE DNS_GLOBAL,    ONLY : epbackground, pbackground, rbackground
     USE DNS_GLOBAL,    ONLY : itime, rtime
     USE THERMO_GLOBAL, ONLY : imixture
@@ -124,12 +124,6 @@ CONTAINS
     ! Calculate pressure
     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
       CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,3), txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
-
-    ELSE
-      CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
-      CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
-      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, q(1,8))
-
     END IF
 
     ! ###################################################################

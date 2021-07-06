@@ -223,6 +223,8 @@ CONTAINS
 
       END SELECT
 
+      CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
+
       ! -------------------------------------------------------------------
       ! Control updated values
       ! -------------------------------------------------------------------

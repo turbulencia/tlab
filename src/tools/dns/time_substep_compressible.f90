@@ -323,13 +323,6 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, txc, wrk1d,wrk2d,wr
           (rho,u,v,w,e,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
   ENDIF
 
-! ###################################################################
-! Calculate other intensive thermodynamic variables
-! ###################################################################
-  CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
-  CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
-  IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, vis)
-
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'LEAVING TIME_SUBSTEP')
 #endif

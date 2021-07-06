@@ -44,10 +44,7 @@ PROGRAM DNS
   TREAL, DIMENSION(:,:), ALLOCATABLE :: l_hq      ! Right-hand sides Lagrangian fields
   TREAL, DIMENSION(:),   ALLOCATABLE :: l_comm    ! Communication space for Lagrangian fields
 
-  TARGET q, x,y,z
-
-  ! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: e, rho, p, T
+  TARGET x,y,z
 
   CHARACTER*32 fname
   CHARACTER*128 str, line
@@ -202,6 +199,11 @@ PROGRAM DNS
   ENDIF
 
   ! ###################################################################
+  ! Initialize diagnostic thermodynamic quantities
+  ! ###################################################################
+  CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
+
+  ! ###################################################################
   ! Initialize change in viscosity
   ! ###################################################################
   flag_viscosity = .FALSE.
@@ -231,37 +233,6 @@ PROGRAM DNS
       ENDIF
     ENDIF
   END IF
-
-  ! ###################################################################
-  ! Initialize thermodynamic quantities
-  ! ###################################################################
-  IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
-    IF      ( imixture == MIXT_TYPE_AIRWATER .AND. damkohler(3) <= C_0_R ) THEN ! Calculate q_l
-      CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)
-
-    ELSE IF ( imixture == MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
-      CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
-
-    ENDIF
-
-  ELSE
-    e   => q(:,4)
-    rho => q(:,5)
-    p   => q(:,6)
-    T   => q(:,7)
-
-    CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
-    CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
-    IF ( itransport == EQNS_TRANS_SUTHERLAND .OR. itransport == EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, q(:,8))
-
-#ifdef CHEMISTRY
-    IF ( ireactive /= CHEM_NONE ) THEN ! Calculate TGFM if reactive case
-      CALL THERMO_GAMMA(imax,jmax,kmax, s, T, wrk3d)
-      CALL CHEM_BURKESCHUMANN(imax,jmax,kmax, s, T, wrk3d, h_q(1,1))
-    ENDIF
-#endif
-
-  ENDIF
 
   ! ###################################################################
   ! Check

@@ -263,19 +263,14 @@ PROGRAM PDFS
     IF ( iread_scal == 1 ) THEN
       WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
       CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
-
-      IF      ( imixture == MIXT_TYPE_AIRWATER .AND. damkohler(3) <= C_0_R ) THEN ! Calculate q_l
-        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground)
-      ELSE IF ( imixture == MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
-        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
-      END IF
-
     END IF
 
     IF ( iread_flow == 1 ) THEN
       WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-      CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
+      CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q, wrk3d)
     END IF
+
+    CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
 
     ! -------------------------------------------------------------------
     ! Calculate intermittency
@@ -313,26 +308,16 @@ PROGRAM PDFS
       ! Main variable 2D-PDF
       ! ###################################################################
     CASE( 1 )
-      IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
-        CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
-
-      ELSE
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
-
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,1),txc(1,2),txc(1,3), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1))
-
-      END IF
-
       ifield = ifield+1; vars(ifield)%field => q(:,1);   vars(ifield)%tag = 'u'
       ifield = ifield+1; vars(ifield)%field => q(:,2);   vars(ifield)%tag = 'v'
       ifield = ifield+1; vars(ifield)%field => q(:,3);   vars(ifield)%tag = 'w'
-      ifield = ifield+1; vars(ifield)%field => txc(:,1); vars(ifield)%tag = 'p'
-      IF ( imode_eqns == DNS_EQNS_INTERNAL .OR. imode_eqns == DNS_EQNS_TOTAL ) THEN
-        ifield = ifield+1; vars(ifield)%field => txc(:,2); vars(ifield)%tag = 'r'
-        ifield = ifield+1; vars(ifield)%field => txc(:,3); vars(ifield)%tag = 't'
+      IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
+        CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
+        ifield = ifield+1; vars(ifield)%field => txc(:,1); vars(ifield)%tag = 'p'
+      ELSE
+        ifield = ifield+1; vars(ifield)%field => q(:,6); vars(ifield)%tag = 'p'
+        ifield = ifield+1; vars(ifield)%field => q(:,5); vars(ifield)%tag = 'r'
+        ifield = ifield+1; vars(ifield)%field => q(:,7); vars(ifield)%tag = 't'
       END IF
 
       DO is = 1,inb_scal_array
@@ -390,14 +375,7 @@ PROGRAM PDFS
         END IF
 
       ELSE
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
-
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
-        ! result vector in txc4, txc5, txc6
-        CALL FI_VORTICITY_BAROCLINIC(imax,jmax,kmax, txc(1,2),txc(1,1), txc(1,4), txc(1,3),txc(1,7), wrk2d,wrk3d)
+        CALL FI_VORTICITY_BAROCLINIC(imax,jmax,kmax,q(1,5),q(1,6), txc(1,4), txc(1,3),txc(1,7), wrk2d,wrk3d)
       END IF
       ! result vector in txc1, txc2, txc3
       CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3), txc(1,7), wrk2d,wrk3d)
@@ -435,17 +413,12 @@ PROGRAM PDFS
 
       IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
         CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
-
+        CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), &
+            txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       ELSE
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, q(1,4), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, q(1,5), wrk3d)! density
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), q(1,7), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), q(1,7), txc(1,1))         ! pressure in txc1
-
+        CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), q(1,6), &
+            txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       END IF
-      CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), &
-          txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       txc(1:isize_field,1) = C_2_R *txc(1:isize_field,2)
 
       CALL FI_STRAIN_PRODUCTION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), &

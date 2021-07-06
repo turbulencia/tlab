@@ -476,7 +476,6 @@ PROGRAM SPECTRA
      WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))
      CALL IO_WRITE_ASCII(lfile, sRes)
 
-! Read data
      IF ( iread_flow .EQ. 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
         CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q, wrk3d)
@@ -487,12 +486,11 @@ PROGRAM SPECTRA
         CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
      ENDIF
 
-! Calculate diagnostic quantities to be processed
+     CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
+
+! Calculate additional diagnostic quantities to be processed
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL FI_PRESSURE_BOUSSINESQ(q,s, p_aux, txc(1,1),txc(1,2), txc(1,3), wrk1d,wrk2d,wrk3d)
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-           CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal+1))
-        ENDIF
         IF ( flag_buoyancy .EQ. 1 ) THEN
            IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
               CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, s(1,inb_scal_array))
@@ -503,9 +501,6 @@ PROGRAM SPECTRA
            dummy = C_1_R /froude
            s(:,inb_scal_array) = s(:,inb_scal_array)*dummy
         ENDIF
-     ELSE
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), q(1,7), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), q(1,7), q(1,6))
      ENDIF
 
 ! Remove fluctuation
