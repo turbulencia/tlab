@@ -21,7 +21,7 @@ PROGRAM VPOISSON
   TREAL dummy, error, lambda!, falpha
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
   CALL DNS_READ_GLOBAL('dns.ini')
 

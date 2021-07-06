@@ -67,7 +67,7 @@ PROGRAM SL_NORMAL_ANALYSIS
 ! ###################################################################
   bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
   CALL DNS_READ_GLOBAL(ifile)
 

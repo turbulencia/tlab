@@ -48,7 +48,7 @@ PROGRAM VHELMHOLTZ_FXZ
 #endif
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
   CALL DNS_READ_GLOBAL('dns.ini')
 #ifdef USE_MPI

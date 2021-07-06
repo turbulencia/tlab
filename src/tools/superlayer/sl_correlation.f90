@@ -58,7 +58,7 @@ PROGRAM SL_CORRELATION
   TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
   CALL DNS_READ_GLOBAL('dns.ini')
 

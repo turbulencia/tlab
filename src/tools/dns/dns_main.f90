@@ -51,7 +51,7 @@ PROGRAM DNS
   TINTEGER idummy, ig, ierr
 
   ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part == 1 ) THEN

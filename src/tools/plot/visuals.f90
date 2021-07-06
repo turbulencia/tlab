@@ -75,7 +75,7 @@ PROGRAM VISUALS
 
   bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_INITIALIZE
+  CALL DNS_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) CALL PARTICLE_READ_GLOBAL(ifile)

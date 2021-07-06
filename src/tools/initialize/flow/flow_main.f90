@@ -35,7 +35,7 @@ PROGRAM INIFLOW
   CHARACTER*64 str, line
 
   !########################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   CALL FLOW_READ_LOCAL(ifile)

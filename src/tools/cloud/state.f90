@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 PROGRAM STATE
-  
+
   USE DNS_GLOBAL
   USE THERMO_GLOBAL
 
@@ -17,7 +17,7 @@ PROGRAM STATE
   TINTEGER iopt
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
   imixture = MIXT_TYPE_AIRWATER
   CALL THERMO_INITIALIZE
@@ -26,7 +26,7 @@ PROGRAM STATE
   ep = C_0_R
   dsmooth = C_0_R
   pbg%parameters(1) = C_1_R
-  
+
   Cd = THERMO_AI(1,1,2)
   Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)
   Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
@@ -137,15 +137,15 @@ PROGRAM STATE
   WRITE(*,1000) 'Specific heat capacity ............:', Cd + qt *Cdv + ql *Cvl
   WRITE(*,1000) 'Specific energy ...................:', e
   WRITE(*,1000) 'Specific enthalpy .................:', h
-  WRITE(*,1000) 'Reference latent heat (kJ/kg) .....:', -THERMO_AI(6,1,3) *1.007 *TREF 
-  WRITE(*,1000) 'Latent heat (kJ/kg) ...............:', (-THERMO_AI(6,1,3)-t*(THERMO_AI(1,1,3)-THERMO_AI(1,1,1)) ) *1.007 *TREF 
+  WRITE(*,1000) 'Reference latent heat (kJ/kg) .....:', -THERMO_AI(6,1,3) *1.007 *TREF
+  WRITE(*,1000) 'Latent heat (kJ/kg) ...............:', (-THERMO_AI(6,1,3)-t*(THERMO_AI(1,1,3)-THERMO_AI(1,1,1)) ) *1.007 *TREF
   WRITE(*,1000) 'Liquid-water potential T (K) ......:', theta*TREF
   WRITE(*,1000) 'Equivalent potential T (K) ........:', theta_e*TREF
   IF ( iopt .EQ. 3 ) THEN
      WRITE(*,1000) 'Density ...........................:', r1
      WRITE(*,1000) 'Specific enthalpy .................:', h1
   ENDIF
-    
+
 ! ###################################################################
   WRITE(*,*) ' '
   WRITE(*,*) 'Calculate reversal linear coefficients (1-yes/0-no) ?'

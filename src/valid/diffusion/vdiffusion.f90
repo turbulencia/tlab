@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 PROGRAM VDIFFUSION
-  
+
   USE DNS_GLOBAL
 
   IMPLICIT NONE
@@ -12,15 +12,15 @@ PROGRAM VDIFFUSION
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:), ALLOCATABLE :: q, s, s_r
   TREAL, DIMENSION(:),   ALLOCATABLE :: wrk1d, wrk2d, wrk3d
-  
+
   TINTEGER i, j, ij, iopt
   TINTEGER isize_wrk3d
   TREAL dummy, error, pi_loc, factor, wavenumber, x_loc
   CHARACTER*(32) fname
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
-  
+  CALL DNS_START
+
   CALL DNS_READ_GLOBAL('dns.ini')
 
   isize_wrk3d = isize_field
@@ -70,7 +70,7 @@ PROGRAM VDIFFUSION
   factor = EXP(-visc*rtime*(C_2_R*pi_loc/scalex*wavenumber)**2)
   DO j = 1,jmax; DO i = 1,imax
      ij = i + imax*(j-1)
-     x_loc = x(i) - mean_u*rtime; 
+     x_loc = x(i) - mean_u*rtime;
      s_r(ij,1) = factor*SIN(C_2_R*pi_loc/scalex*wavenumber*x_loc)
   ENDDO; ENDDO
 
@@ -90,9 +90,8 @@ PROGRAM VDIFFUSION
      fname = 'error'
      CALL DNS_WRITE_FIELDS(fname, i1, imax,jmax,kmax, i1, i1, wrk3d, wrk3d)
   ENDIF
-  
+
   ENDIF
 
   STOP
 END PROGRAM VDIFFUSION
-

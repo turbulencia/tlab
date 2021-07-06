@@ -35,7 +35,7 @@ PROGRAM INIGRID
   g(3)%name = 'z'
 
 #ifdef USE_MPI
-  CALL DNS_INITIALIZE
+  CALL DNS_START()
   IF ( ims_pro .EQ. 0 ) THEN
 #endif
 

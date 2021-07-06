@@ -1,7 +1,7 @@
 #include "types.h"  
 
 PROGRAM VFFTW
-  
+
   USE DNS_GLOBAL
 
   IMPLICIT NONE
@@ -15,9 +15,9 @@ PROGRAM VFFTW
   TREAL,    DIMENSION(:,:,:), POINTER :: a, b, c
   TCOMPLEX, DIMENSION(:,:,:), POINTER :: a1, a2, a3
   TREAL,    DIMENSION(:),     POINTER :: wrk1d, wrk2d, wrk3d
-  
+
   TCOMPLEX :: Img
- 
+
   integer*4 i, j, k, ij
   INTEGER(8) fft_plan_fx, fft_plan_fz
   INTEGER(8) fft_plan_bx, fft_plan_bz
@@ -26,8 +26,8 @@ PROGRAM VFFTW
   TREAL dummy, error
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
-  
+  CALL DNS_START
+
   CALL DNS_READ_GLOBAL('dns.ini')
 
 ! -------------------------------------------------------------------
@@ -59,7 +59,7 @@ PROGRAM VFFTW
 !!           c(i,j,k) = sin(C_2_R*C_PI_R/scalex*x(i)*C_2_R) &
 !!                    * sin(C_2_R*C_PI_R/scalez*z(k)*C_5_R) * (-C_2_R*C_PI_R/scalez*C_5_R)&
 !!                    * M_REAL(j-1)/M_REAL(jmax-1)*C_01_R
-!           
+!
 !        ENDDO
 !     ENDDO
 !  ENDDO
@@ -113,7 +113,7 @@ PROGRAM VFFTW
         DO k = 1,kmax_total
 !           dummy = C_2_R*C_PI_R*M_REAL(i-1)/M_REAL(imax)
 !           dummy = ( C_14_R/C_9_R*sin(dummy) + C_1_R/C_18_R*sin(2*dummy) ) &
-!                 / ( C_1_R + C_2_R/C_3_R*cos(dummy) ) 
+!                 / ( C_1_R + C_2_R/C_3_R*cos(dummy) )
 !           a3(k,i,j) = dummy*Img * a3(k,i,j) * M_REAL(imax)/scalex
 
            IF ( k .LE. kmax_total/2 ) THEN
@@ -122,7 +122,7 @@ PROGRAM VFFTW
               dummy = C_2_R*C_PI_R*M_REAL(k-1-kmax_total)/M_REAL(kmax_total)
            ENDIF
            dummy = ( C_14_R/C_9_R*sin(dummy) + C_1_R/C_18_R*sin(2*dummy) ) &
-                 / ( C_1_R + C_2_R/C_3_R*cos(dummy) ) 
+                 / ( C_1_R + C_2_R/C_3_R*cos(dummy) )
            a3(k,i,j) = dummy*Img * a3(k,i,j) * M_REAL(kmax_total)/scalez
 
         ENDDO
@@ -169,6 +169,6 @@ PROGRAM VFFTW
      ENDDO
   ENDDO
   WRITE(*,*) 'Relative error ....: ', sqrt(error)/sqrt(dummy)
-  
+
   STOP
 END PROGRAM VFFTW

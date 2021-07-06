@@ -33,7 +33,7 @@ TREAL                               :: norm
 err_count = i0
 case_count= i0
 
-CALL DNS_INITIALIZE
+CALL DNS_START
 CALL DNS_READ_GLOBAL('dns.ini')
 #ifdef USE_MPI
 CALL DNS_MPI_INITIALIZE
