@@ -59,7 +59,6 @@ PROGRAM LAGRANGE_TRAJEC
 
   TINTEGER nitera_last
 
-  CHARACTER*32 inifile
   CHARACTER*64 str,fname
   CHARACTER*128 line
   CHARACTER*32 bakfile
@@ -67,12 +66,11 @@ PROGRAM LAGRANGE_TRAJEC
 !  TINTEGER test1, test2
 !  TREAL test3(50)
 !  INTEGER(8) test4(50)
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) THEN
      CALL PARTICLE_READ_GLOBAL('dns.ini')
   ENDIF
@@ -81,7 +79,7 @@ PROGRAM LAGRANGE_TRAJEC
 #endif
 
 ! Get the local information from the dns.ini
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'End',        '0',  nitera_last )
+  CALL SCANINIINT(bakfile, ifile, 'Iteration', 'End',        '0',  nitera_last )
 
 
 #include "dns_alloc_larrays.h"

@@ -59,17 +59,15 @@ PROGRAM LAGRANGE_POS_TRAJEC
 
   TINTEGER nitera_first, nitera_last
 
-  CHARACTER*32 inifile
   CHARACTER*64 str,fname
   CHARACTER*128 line
   CHARACTER*32 bakfile
 
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) THEN
      CALL PARTICLE_READ_GLOBAL('dns.ini')
   ENDIF
@@ -78,8 +76,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
 #endif
 
 ! Get the local information from the dns.ini
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Start','0',  nitera_first)
-
+  CALL SCANINIINT(bakfile, ifile, 'Iteration', 'Start','0',  nitera_first)
 
 #include "dns_alloc_larrays.h"
 

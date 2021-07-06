@@ -93,7 +93,7 @@ def mergeNC(avgtype,avgpath,ofile,reynolds=1):
 
     nu=2./(reynolds*reynolds) 
     
-    vF[:] = nu*np.sqrt(nu*np.sqrt(du**2+dw**2))
+    vF[:] = np.sqrt(nu*np.sqrt(du**2+dw**2))
     vA[:] = np.arctan2(dw,du)
 
     

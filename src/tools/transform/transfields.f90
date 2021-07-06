@@ -47,8 +47,8 @@ PROGRAM TRANSFIELDS
 ! -------------------------------------------------------------------
   TINTEGER opt_main, opt_function
   TINTEGER iq, is, ig, ip, j,k
-  TINTEGER isize_wrk3d, idummy, iread_flow, iread_scal, ierr
-  CHARACTER*32 inifile, bakfile, flow_file, scal_file
+  TINTEGER idummy, iread_flow, iread_scal, ierr
+  CHARACTER*32 bakfile, flow_file, scal_file
   CHARACTER*64 str, line
   CHARACTER*512 sRes
   TINTEGER subdomain(6)
@@ -67,12 +67,11 @@ PROGRAM TRANSFIELDS
   TREAL opt_vec(iopt_size_max)
 
 ! ###################################################################
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
@@ -93,7 +92,7 @@ PROGRAM TRANSFIELDS
   opt_main     =-1 ! default values
   opt_function = 0
 
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamTransform', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamTransform', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -200,7 +199,7 @@ PROGRAM TRANSFIELDS
   IF ( opt_main .EQ. 6 ) THEN; icalc_flow = 0; ENDIF ! Force not to process the flow fields
 
 ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Subdomain', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
   IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI

@@ -20,7 +20,7 @@ PROGRAM INIPART
 #endif
 
   ! -------------------------------------------------------------------
-  TINTEGER  ierr,isize_wrk3d
+  TINTEGER  ierr
 
   TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE :: q,s,txc
@@ -29,19 +29,16 @@ PROGRAM INIPART
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
   TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
 
-  CHARACTER*32 inifile
   CHARACTER*64 str, line
 
   !########################################################################
   !########################################################################
-  inifile = 'dns.ini'
-
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
 
   IF ( icalc_part .EQ. 1 ) THEN
-    CALL PARTICLE_READ_GLOBAL(inifile)
+    CALL PARTICLE_READ_GLOBAL(ifile)
 #ifdef USE_MPI
     CALL DNS_MPI_INITIALIZE
 #endif
@@ -79,6 +76,6 @@ PROGRAM INIPART
     CALL IO_WRITE_PARTICLE(TRIM(ADJUSTL(tag_part))//'ics', l_g, l_q)
 
   ENDIF
-  
+
   CALL DNS_STOP(0)
 END PROGRAM INIPART

@@ -70,7 +70,7 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
-  CHARACTER*32 fname, inifile, bakfile
+  CHARACTER*32 fname, bakfile
   CHARACTER*32 varname(16)
   CHARACTER*64 str, line
   CHARACTER*8  tag_file, tag_name, tag_var(16)
@@ -78,7 +78,7 @@ PROGRAM SPECTRA
 
   TINTEGER opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
   TINTEGER flag_mode, iread_flow, iread_scal, ierr
-  TINTEGER isize_wrk3d, isize_out2d, isize_aux, sizes(5)
+  TINTEGER isize_out2d, isize_aux, sizes(5)
   TINTEGER nfield, nfield_ref
   TINTEGER is, iv, iv_offset, iv1, iv2, ip, j
   TINTEGER jmax_aux, kxmax,kymax,kzmax
@@ -106,12 +106,11 @@ PROGRAM SPECTRA
 
 !########################################################################
 !########################################################################
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
@@ -137,7 +136,7 @@ PROGRAM SPECTRA
   opt_ffmt  = 0
   opt_time  = 0
 
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamSpectra', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamSpectra', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_REAL(sRes, iopt_size, opt_vec)
 

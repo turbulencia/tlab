@@ -788,10 +788,10 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   ! Output
   ! #######################################################################
   ! 11 t-dependent variables, for consistency with old format
-  ng = ng +1
-  groupname(ng) = ''
-  varname(ng)   = 'dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy'
-  ng = ng +1; groupname(ng) = ''; varname(ng) = ''
+  ! ng = ng +1
+  ! groupname(ng) = ''
+  ! varname(ng)   = 'dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy'
+  ! ng = ng +1; groupname(ng) = ''; varname(ng) = ''
 
   WRITE(line1,*) is; line1='avg'//TRIM(ADJUSTL(line1))//'s'
   WRITE(name,*) itime; name=TRIM(ADJUSTL(line1))//TRIM(ADJUSTL(name))

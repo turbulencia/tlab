@@ -8,7 +8,7 @@
 !########################################################################
 !# HISTORY
 !#
-!# 2012/07/16 Cedrick Ansorge - created 
+!# 2012/07/16 Cedrick Ansorge - created
 !#
 !########################################################################
 !# DESCRIPTION
@@ -21,16 +21,16 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(dte,etime, kex,kim, kco, &
   USE OMP_LIB
 #endif
   USE DNS_CONSTANTS, ONLY : efile
-#ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS, ONLY : tfile
 #endif
   USE DNS_GLOBAL,    ONLY : isize_field, isize_txc_field
   USE DNS_GLOBAL,    ONLY : imode_eqns
-  USE DNS_LOCAL,     ONLY : rkm_mode
+  USE TIME,          ONLY : rkm_mode
 
   IMPLICIT NONE
 
-  TREAL,                              INTENT(IN)    :: dte,etime 
+  TREAL,                              INTENT(IN)    :: dte,etime
   TREAL,                              INTENT(IN)    :: kex,kim, kco
   TREAL, DIMENSION(isize_field, *),   INTENT(INOUT) :: q,hq, s,hs
   TREAL, DIMENSION(isize_txc_field,9),INTENT(INOUT) :: txc
@@ -57,7 +57,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(dte,etime, kex,kim, kco, &
         !      q, hq, q(:,1),q(:,2),q(:,3), hq(1,1),hq(1,2),hq(1,3), s,hs, &
         !      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), txc(1,8), &
         !      wrk1d,wrk2d,wrk3d)
-     ELSE 
+     ELSE
         CALL IO_WRITE_ASCII(efile,'TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT. Undeveloped formulation.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
 
@@ -71,7 +71,7 @@ SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT(dte,etime, kex,kim, kco, &
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
 
   ENDIF
-  
+
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile, 'LEAVING TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT')
 #endif

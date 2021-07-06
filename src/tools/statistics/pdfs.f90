@@ -7,7 +7,7 @@
 PROGRAM PDFS
 
   USE DNS_TYPES,     ONLY : pointers_dt
-  USE DNS_CONSTANTS, ONLY : efile,lfile ,gfile, tag_flow,tag_scal
+  USE DNS_CONSTANTS, ONLY : ifile,efile,lfile ,gfile, tag_flow,tag_scal
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
@@ -34,12 +34,12 @@ PROGRAM PDFS
   ! Local variables
   ! -------------------------------------------------------------------
   CHARACTER*512 sRes
-  CHARACTER*32 fname, inifile, bakfile
+  CHARACTER*32 fname, bakfile
   CHARACTER*64 str, line
 
   TINTEGER opt_main, opt_block, opt_bins(2)
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
-  TINTEGER nfield, ifield, isize_wrk3d, ij, is, bcs(2,2), isize_pdf
+  TINTEGER nfield, ifield, ij, is, bcs(2,2), isize_pdf
   TREAL dummy, eloc1, eloc2, eloc3, cos1, cos2, cos3
   TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
   TINTEGER ibc(16)
@@ -65,12 +65,11 @@ PROGRAM PDFS
   !########################################################################
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
@@ -89,7 +88,7 @@ PROGRAM PDFS
   gate_level= 0
   opt_bins  =16
 
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamPdfs', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamPdfs', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_INTEGER(sRes, iopt_size, opt_vec)
 

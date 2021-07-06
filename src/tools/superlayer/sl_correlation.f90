@@ -37,7 +37,7 @@ PROGRAM SL_CORRELATION
 
   TARGET q
 
-  TINTEGER  isize_wrk3d, ilog
+  TINTEGER  ilog
   CHARACTER*32 fname
 
   TINTEGER itime_size_max, itime_size, i

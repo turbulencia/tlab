@@ -54,7 +54,7 @@ PROGRAM SL_BOUNDARY
   TREAL threshold, vmin, vmax
   TINTEGER buff_nps_u_jmin, buff_nps_u_jmax
   CHARACTER*64 str
-  CHARACTER*32 fname, inifile, bakfile
+  CHARACTER*32 fname, bakfile
 
   TINTEGER itime_size_max, itime_size, i
   PARAMETER(itime_size_max=128)
@@ -70,18 +70,17 @@ PROGRAM SL_BOUNDARY
   TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
 
 ! ###################################################################
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
 #endif
 
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUJmax', '0', buff_nps_u_jmax)
+  CALL SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)
+  CALL SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmax', '0', buff_nps_u_jmax)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space

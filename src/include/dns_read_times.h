@@ -1,4 +1,4 @@
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Files', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Files', '-1', sRes)
 
   IF ( sRes .EQ. '-1' ) THEN
 #ifdef PARALLEL

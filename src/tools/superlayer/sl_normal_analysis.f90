@@ -45,11 +45,11 @@ PROGRAM SL_NORMAL_ANALYSIS
   TREAL wrk3d(:)
   ALLOCATABLE wrk3d
 
-  TINTEGER iopt, isl, ith, isize_wrk3d, itxc_size, iavg
+  TINTEGER iopt, isl, ith, itxc_size, iavg
   TREAL threshold
   TINTEGER ibuffer_npy
   TINTEGER nmax, istep, kstep, nprof_size, nfield
-  CHARACTER*32 fname, inifile, bakfile
+  CHARACTER*32 fname, bakfile
 
   TINTEGER itime_size_max, itime_size, i
   PARAMETER(itime_size_max=128)
@@ -65,15 +65,17 @@ PROGRAM SL_NORMAL_ANALYSIS
   TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
 
 ! ###################################################################
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
+
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL('dns.ini')
+  CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
 #endif
 
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)
+  CALL SCANINIINT(bakfile, ifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)
 
   isize_wrk3d = imax*jmax*kmax
   itxc_size = imax*jmax*kmax*7
