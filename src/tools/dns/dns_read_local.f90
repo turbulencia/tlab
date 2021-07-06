@@ -860,11 +860,11 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
 ! Immersed Boundary Method (IBM)
 ! So far, the use or not use of an IBM is
-! set by the XBars_geo information.
+! set by the XBars_geo information in dns.ini file.
 ! -------------------------------------------------------------------
   IF ( MINVAL(xbars_geo).GT.0 ) THEN; imode_ibm=1; ELSE;  imode_ibm=0; ENDIF
 
-  ! check
+  ! Check
   IF ( imode_ibm .eq. 1 ) THEN
      IF ( ( mod(g(3)%size,2*xbars_geo(1)) .eq. 0 ) .and. ( mod(xbars_geo(3),2) .ne. 0 ) ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Interfaces of bars have to be on gridpoints.')

@@ -51,9 +51,10 @@ module DNS_IBM
   TREAL, dimension(:),     allocatable :: nobi_b, nobj_b, nobk_b ! beginn of objects in i/j/k 
   TREAL, dimension(:),     allocatable :: nobi_e, nobj_e, nobk_e ! end    of objects in i/j/k 
 
-  ! all functions/subroutines are private by default
-  ! puplish only needed subroutines here 
+  ! all functions/subroutines are private by default 
   private 
+
+  ! puplish only needed subroutines here  
   public  :: ALLOCATE_IBM, INITIALIZE_GEOMETRY, eps
 
 contains
@@ -462,9 +463,12 @@ contains
     ! DEBUG
     if ( ims_pro .eq. 0 ) then 
       write(*,*) '======== Debug transposing geometry ====================='
-      write(*,*) 'ims_size_i(1)    ', nyz
-      write(*,*) 'nyz=jmax*kmax    ', jmax * kmax
-      write(*,*) 'nxy=imax*kmax    ', imax * jmax 
+      write(*,*) 'ims_size_i(1)    ', ims_size_i(idi)
+      write(*,*) 'ims_size_j(1)    ', ims_size_j(idj)
+      write(*,*) 'ims_size_k(1)    ', ims_size_j(idk)      
+      write(*,*) 'nyz              ', jmax * kmax
+      write(*,*) 'nxz              ', imax * kmax
+      write(*,*) 'nxy              ', imax * jmax 
       write(*,*) 'isize_field      ', isize_field
       write(*,*) 'isize_txc_field  ', isize_txc_field
       write(*,*) 'inb_txc          ', inb_txc
@@ -621,22 +625,14 @@ contains
 #endif
 
     ! ================================================================== !
-    ! DEBUG
-    if ( ims_pro .eq. 0 ) then 
-      write(*,*) 'ims_size_i(1)    ', nyz
-      write(*,*) 'ims_size_j(1)    ', nxz
-      write(*,*) 'ims_size_k(1)    ', nxy
-      write(*,*) 'nyz              ', jmax * kmax
-      write(*,*) 'nxz              ', imax * kmax
-      write(*,*) 'nxy              ', imax * jmax 
-    end if
-    ! ================================================================== !
     ! max(nobi_max,nobj_max,nobk_max) from dns.ini file
     nob_max = xbars_geo(1)
 
     ! initialize 
-    nobi(:)  = C_0_R; nobj(:)  = C_0_R; nobk(:)  = C_0_R
-    nobi_max = i0;    nobj_max = i0;    nobk_max = i0
+    nobi(:)    = C_0_R; nobj(:)    = C_0_R; nobk(:)    = C_0_R
+    nobi_b(:)  = C_0_R; nobj_b(:)  = C_0_R; nobk_b(:)  = C_0_R
+    nobi_e(:)  = C_0_R; nobj_e(:)  = C_0_R; nobk_e(:)  = C_0_R
+    nobi_max   = i0;    nobj_max   = i0;    nobk_max   = i0
 
     ! ================================================================== !
     ! number of objects in x-direction
@@ -711,7 +707,6 @@ contains
 
     nobi_b_out = nobi_b
     nobi_e_out = nobi_e
-    
     call DNS_TRANSPOSE(nobi_b_out, nyz, nob_max, nyz, nobi_b, nob_max)
     call DNS_TRANSPOSE(nobi_e_out, nyz, nob_max, nyz, nobi_e, nob_max)
 #ifdef USE_MPI
@@ -724,7 +719,7 @@ contains
     nobi_e_out = nobi_e
 #endif
 
-    ! ================================================================== !
+! ================================================================== !
     ! number of objects in y-direction
     ip = i1
     do j = 1, g(2)%size - 1     ! contiguous j-lines
@@ -820,30 +815,38 @@ contains
     nobk_out = nobk
 #endif
 
-    ! ================================================================== !
-    ! begin and end of objects in z-direction
+    if (ims_pro .eq. 0) then
+      write(*,*) '========================================================='
+      write(*,*) 'nobk_b     =', size(nobk_b)
+      write(*,*) 'nobk_b_out =', size(nobk_b_out)
+      write(*,*) 'nobk_e     =', size(nobk_e)
+      write(*,*) 'nobk_e_out =', size(nobk_e_out)
+    end if
+
+    ! ! ================================================================== !
+    ! ! begin and end of objects in z-direction
     ip = i1
     do k = 1, g(3)%size - 1     ! contiguous k-lines
       do ij = 1, nxy            ! pages of   k-lines
         if((k .eq. 1) .and. (epsk(ij) .eq. C_1_R)) then ! exception: check first plane for interface
-          nobk_b(ij) = dble(k)    ! nobk_b
+          nobk_b(ij) = dble(k) ! nobj_b
         end if
         if((epsk(ip+ij-1) .eq. C_0_R) .and. (epsk(ip+ij-1+nxy) .eq. C_1_R)) then     ! nobk_b check for interface 
           inum = i0
-          do while (nobk_b(ij+inum) .ne. C_0_R)
-            inum = inum + nxy
-          end do
-          nobk_b(ij+inum) = dble(k)
+          do while (nobk_b(inum+ij) .ne. C_0_R)
+            inum = inum + nxy            
+          end do 
+          nobk_b(inum+ij) = dble(k)
         elseif((epsk(ip+ij-1) .eq. C_1_R) .and. (epsk(ip+ij-1+nxy) .eq. C_0_R)) then ! nobk_e check for interface 
           inum = i0
-          do while (nobk_e(ij+inum) .ne. C_0_R)
-            inum = inum + nxy
-          end do
-          nobk_e(ij+inum) = dble(k)
+          do while (nobk_e(inum+ij) .ne. C_0_R)
+            inum = inum + nxy            
+          end do 
+          nobk_e(inum+ij) = dble(k)        
         end if
         if((k .eq. (g(3)%size - 1)) .and. (epsk(ip+ij-1+nxy) .eq. C_1_R)) then ! exception: check last plane for interface
           inum = i0
-          do while (tmp2(inum+ij) .ne. C_0_R)
+          do while (nobk_e(inum+ij) .ne. C_0_R)
             inum = inum + nxy           
           end do 
           nobk_e(inum+ij) = dble(g(3)%size)    
@@ -889,7 +892,7 @@ contains
     if (ims_pro .eq. 0) then  
       write(*,*) fname ! DEBUG
     end if
-    call DNS_WRITE_FIELDS(fname, i2, i1, g(2)%size/ims_npro, g(3)%size, i1, nyz, nobi_out, wrk3d)    
+    call DNS_WRITE_FIELDS(fname, i2, i1, g(2)%size/ims_npro, g(3)%size, i1, nyz, nobi_out, wrk3d)
 
     ! write nobi_b fields
     write(fname,*) i0; 
@@ -924,7 +927,6 @@ contains
       write(*,*) fname ! DEBUG
     end if
     call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, nob_max, g(3)%size, i1, nxz*nob_max, nobj_b_out, wrk3d)
-
 
     ! write nobj_e fields
     write(fname,*) i0; 
@@ -964,9 +966,6 @@ contains
     ! ================================================================== !
     ! ================================================================== !
     ! DEBUG nob fields with 3D fields
-
-    ! BLOCK COMMENT UNTIL END OF SUBROUTINE
-#if 0
     ! ================================================================== !
     ! ================================================================== !
     ! ================================================================== !
@@ -1183,7 +1182,7 @@ contains
           do while (tmp2(inum+ij) .ne. C_0_R)
             inum = inum + nxy           
           end do 
-          tmp2(inum+ij) = tmp2(inum+ij) + dble(g(3)%size)    
+          tmp2(inum+ij) = dble(g(3)%size)    
         end if
       end do
       ip = ip + nxy
@@ -1206,13 +1205,6 @@ contains
     tmp3(:) = C_0_R
     tmp4(:) = C_0_R  
     if (ims_pro .eq. 0) write(*,*) 'done writing nobk3d_be'
-
-    ! ================================================================== !
-    ! ================================================================== !
-    ! END OF BLOCK COMMENT
-#endif
-    ! ================================================================== !
-    ! ================================================================== !
 
     return
   end subroutine GENERATE_GEOMETRY
