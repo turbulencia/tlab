@@ -12,6 +12,7 @@ PROGRAM TRANSFIELDS
   USE DNS_TYPES,  ONLY : filter_dt, grid_dt
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -27,18 +28,11 @@ PROGRAM TRANSFIELDS
   TINTEGER, PARAMETER :: itime_size_max = 3000
   TINTEGER, PARAMETER :: iopt_size_max  = 512
 
-! -------------------------------------------------------------------
-! Grid and associated arrays
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
+  ! -------------------------------------------------------------------
+  ! Additional local arrays
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: x_dst,y_dst,z_dst
-
-! Fields
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: q,     s,    txc
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q_dst, s_dst
 
-! Work arrays
-  TREAL, DIMENSION(:,:),   ALLOCATABLE, SAVE :: wrk1d, wrk2d
-  TREAL, DIMENSION(:),     ALLOCATABLE, SAVE :: wrk3d
   TREAL, DIMENSION(:),     ALLOCATABLE, SAVE :: y_aux
   TREAL, DIMENSION(:,:,:), ALLOCATABLE, SAVE :: txc_aux
 
@@ -274,16 +268,13 @@ PROGRAM TRANSFIELDS
   IF ( icalc_flow .EQ. 1 ) ALLOCATE(q_dst(imax_dst*jmax_dst*kmax_dst,inb_flow))
   IF ( icalc_scal .EQ. 1 ) ALLOCATE(s_dst(imax_dst*jmax_dst*kmax_dst,inb_scal_dst))
 
-  ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
-
   IF ( opt_main .EQ. 3 ) THEN
      ALLOCATE(x_dst(g_dst(1)%size))
      ALLOCATE(y_dst(g_dst(2)%size))
      ALLOCATE(z_dst(g_dst(3)%size))
   ENDIF
 
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid

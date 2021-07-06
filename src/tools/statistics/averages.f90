@@ -11,8 +11,10 @@ PROGRAM AVERAGES
   USE DNS_CONSTANTS, ONLY : ifile,efile,lfile,gfile, tag_flow,tag_scal,tag_part
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE THERMO_GLOBAL, ONLY : imixture
   USE LAGRANGE_GLOBAL
+  USE LAGRANGE_ARRAYS
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -30,15 +32,12 @@ PROGRAM AVERAGES
   TINTEGER, PARAMETER :: igate_size_max =   8
   TINTEGER, PARAMETER :: params_size_max=   2
 
-  ! Arrays declarations
-  TREAL,      ALLOCATABLE, SAVE         :: x(:,:),y(:,:),z(:,:)
-  TREAL,      ALLOCATABLE, SAVE, TARGET :: q(:,:), s(:,:), txc(:,:)
-  TREAL,      ALLOCATABLE, SAVE         :: wrk2d(:,:)
-  TREAL,      ALLOCATABLE, SAVE         :: mean(:), y_aux(:), wrk1d(:), wrk3d(:)
+  ! -------------------------------------------------------------------
+  ! Additional local arrays
+  TREAL,      ALLOCATABLE, SAVE         :: mean(:), y_aux(:)
   INTEGER(1), ALLOCATABLE, SAVE         :: gate(:)
   TYPE(pointers_dt)                     :: vars(16)
   TREAL,      ALLOCATABLE, SAVE         :: surface(:,:,:)       ! Gate envelopes
-  TREAL,      ALLOCATABLE, SAVE         :: l_q(:,:), l_txc(:,:) ! Particle data
 
   ! -------------------------------------------------------------------
   ! Local variables
@@ -46,13 +45,12 @@ PROGRAM AVERAGES
   CHARACTER*512 sRes
   CHARACTER*32 fname, bakfile
   CHARACTER*32 varname(16)
-  CHARACTER*64 str, line
 
   TINTEGER opt_main, opt_block, opt_order
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
   TINTEGER nfield, ifield, is, ij, k, bcs(2,2)
   TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3, dummy
-  TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
+  TINTEGER jmax_aux, iread_flow, iread_scal, idummy
 
   ! Gates for the definition of the intermittency function (partition of the fields)
   TINTEGER igate_size
@@ -240,8 +238,6 @@ PROGRAM AVERAGES
   ! -------------------------------------------------------------------
   ! Allocating memory space
   ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
   ALLOCATE(gate(isize_field))
 
   ! in case g(2)%size is not divisible by opt_block, drop the upper most planes
@@ -288,11 +284,10 @@ PROGRAM AVERAGES
   IF ( icalc_part == 1) THEN
     isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
   END IF
-#include "dns_alloc_arrays.h"
 
-  IF ( icalc_part == 1 ) THEN
-#include "dns_alloc_larrays.h"
-  END IF
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
+
+  CALL PARTICLE_ALLOCATE(C_FILE_LOC)
 
   ! -------------------------------------------------------------------
   ! Initialize
@@ -394,7 +389,7 @@ PROGRAM AVERAGES
           IF ( buoyancy%TYPE == EQNS_EXPLICIT ) THEN
             CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,7))
           ELSE
-            wrk1d(1:jmax) = C_0_R
+            wrk1d(1:jmax,1) = C_0_R
             CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,7), wrk1d)
           END IF
           dummy = C_1_R/froude
@@ -572,7 +567,7 @@ PROGRAM AVERAGES
           IF ( buoyancy%TYPE == EQNS_EXPLICIT ) THEN
             CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d)
           ELSE
-            wrk1d(1:jmax) = C_0_R
+            wrk1d(1:jmax,1) = C_0_R
             CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
           END IF
           DO ij = 1,isize_field

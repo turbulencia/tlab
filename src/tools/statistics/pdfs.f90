@@ -9,6 +9,7 @@ PROGRAM PDFS
   USE DNS_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : ifile,efile,lfile ,gfile, tag_flow,tag_scal
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
   USE DNS_MPI
@@ -23,10 +24,9 @@ PROGRAM PDFS
   TINTEGER, PARAMETER :: igate_size_max =   8
   TINTEGER, PARAMETER :: params_size_max =  2
 
-  TREAL,      ALLOCATABLE, SAVE   :: x(:,:), y(:,:), z(:,:)
-  TREAL,      ALLOCATABLE, TARGET :: s(:,:), q(:,:), txc(:,:)
-  TREAL,      ALLOCATABLE         :: wrk2d(:,:)
-  TREAL,      ALLOCATABLE         :: pdf(:), y_aux(:), wrk1d(:), wrk3d(:)
+  ! -------------------------------------------------------------------
+  ! Additional local arrays
+  TREAL,      ALLOCATABLE         :: pdf(:), y_aux(:)
   INTEGER(1), ALLOCATABLE         :: gate(:)
   TYPE(pointers_dt)               :: vars(16)
 
@@ -212,9 +212,6 @@ PROGRAM PDFS
   ! -------------------------------------------------------------------
   ! Allocating memory space
   ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  inb_wrk2d = MAX(inb_wrk2d,4)
-  ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
   ALLOCATE(gate(isize_field))
 
   ! in case g(2)%size is not divisible by opt_block, drop the upper most planes
@@ -225,8 +222,9 @@ PROGRAM PDFS
   ! Space for the 3D pdf at jmax_aux+1
   ALLOCATE( pdf( isize_pdf *(jmax_aux+1) *nfield ) )
 
+  inb_wrk2d = MAX(inb_wrk2d,4)
   isize_wrk3d = MAX(isize_field,isize_txc_field)
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
   ! -------------------------------------------------------------------
   ! Initialize
@@ -363,7 +361,7 @@ PROGRAM PDFS
           IF ( buoyancy%TYPE == EQNS_EXPLICIT ) THEN
             CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d)
           ELSE
-            wrk1d(1:jmax) = C_0_R
+            wrk1d(1:jmax,1) = C_0_R
             CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
           END IF
           s(1:isize_field,1) = wrk3d(1:isize_field) *buoyancy%vector(2)
@@ -660,7 +658,7 @@ PROGRAM PDFS
       IF ( buoyancy%TYPE == EQNS_EXPLICIT ) THEN
         CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,1))
       ELSE
-        wrk1d(1:jmax) = C_0_R
+        wrk1d(1:jmax,1) = C_0_R
         CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
       END IF
       dummy =  C_1_R /froude

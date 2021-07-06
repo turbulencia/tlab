@@ -8,6 +8,7 @@ PROGRAM INIRAND
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE RAND_LOCAL
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_pro
@@ -16,13 +17,7 @@ PROGRAM INIRAND
   IMPLICIT NONE
 
   ! -------------------------------------------------------------------
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q, s, txc
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
-
-  TINTEGER iq, is, ierr
-
-  CHARACTER*64 str, line
+  TINTEGER iq, is
 
   ! ###################################################################
   CALL DNS_START()
@@ -33,13 +28,11 @@ PROGRAM INIRAND
   CALL DNS_MPI_INITIALIZE
 #endif
 
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
   isize_wrk3d = isize_txc_field
 
   inb_txc = 3
 
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
 #include "dns_read_grid.h"
 

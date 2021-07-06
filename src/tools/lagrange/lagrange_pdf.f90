@@ -13,7 +13,10 @@ PROGRAM LAGRANGE_PDF
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE LAGRANGE_GLOBAL
+  USE LAGRANGE_ARRAYS
+
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -25,16 +28,11 @@ PROGRAM LAGRANGE_PDF
 #endif
 
 ! -------------------------------------------------------------------
-  TINTEGER  ierr, i
-  TREAL, DIMENSION(:,:),     ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:),       ALLOCATABLE       :: wrk1d,wrk2d, wrk3d
-  TREAL, DIMENSION(:,:),     ALLOCATABLE       :: txc
-  TREAL, DIMENSION(:,:,:,:), ALLOCATABLE, SAVE :: s
-
-  TREAL, DIMENSION(:,:),     ALLOCATABLE       :: l_q, l_txc
+! Additional local arrays
   TREAL, DIMENSION(:),       ALLOCATABLE, SAVE :: l_comm
 
   TINTEGER nitera_first, nitera_last, nitera_save
+  TINTEGER ierr, i
 
   CHARACTER*64 fname, str
   CHARACTER*128 line
@@ -60,7 +58,8 @@ PROGRAM LAGRANGE_PDF
 
   inb_part_txc = 1
 
-#include "dns_alloc_larrays.h"
+  CALL PARTICLE_ALLOCATE(C_FILE_LOC)
+
   isize_wrk3d = imax*jmax*kmax
   isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
   isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_particle_interp*2))
@@ -74,15 +73,16 @@ PROGRAM LAGRANGE_PDF
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d))
+  ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
+  ALLOCATE(wrk2d(isize_wrk2d,1))
   ALLOCATE(wrk3d(isize_wrk3d))
 
-  ALLOCATE(s(imax,jmax,kmax, inb_scal_array))
+  ALLOCATE(s(isize_field, inb_scal_array))
 
   IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !Allocte memory to read fields
      ALLOCATE(txc(isize_field,3))
   ENDIF
+
    WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
   ALLOCATE(l_comm(isize_l_comm), stat=ierr)
@@ -106,7 +106,7 @@ PROGRAM LAGRANGE_PDF
 !#######################################################################
      WRITE(fname,*) i;  fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
      CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
-     CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,1,1,inb_scal_array))
+     CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
 
      WRITE(fname,*) i; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
      CALL IO_READ_PARTICLE(fname, l_g, l_q)

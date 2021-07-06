@@ -13,6 +13,7 @@ PROGRAM APRIORI
   USE DNS_TYPES,  ONLY : filter_dt
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -28,21 +29,12 @@ PROGRAM APRIORI
   TINTEGER, PARAMETER :: itime_size_max = 512
   TINTEGER, PARAMETER :: iopt_size_max  = 512
 
-! -------------------------------------------------------------------
-! Grid and associated arrays
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-
-! Fields
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: q,s,txc
+  ! -------------------------------------------------------------------
+  ! Additional local arrays
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: qf,sf
-
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: mean, y_aux
-
   TYPE(pointers_dt), DIMENSION(16) :: vars
 
-! Work arrays
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: wrk1d, wrk2d
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk3d
 
 ! -------------------------------------------------------------------
 ! Local variables
@@ -170,12 +162,9 @@ PROGRAM APRIORI
   IF ( icalc_flow .EQ. 1 ) ALLOCATE(qf(imax*jmax*kmax,inb_flow))
   IF ( icalc_scal .EQ. 1 ) ALLOCATE(sf(imax*jmax*kmax,inb_scal))
 
-  ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
-
   ALLOCATE(mean(2*opt_order*nfield))
 
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid

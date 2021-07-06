@@ -15,9 +15,11 @@ PROGRAM VISUALS
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE THERMO_GLOBAL, ONLY : imixture
   USE THERMO_GLOBAL, ONLY : NSP, THERMO_SPNAME
   USE LAGRANGE_GLOBAL
+  USE LAGRANGE_ARRAYS
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -32,12 +34,7 @@ PROGRAM VISUALS
   TINTEGER, PARAMETER :: igate_size_max =   8
   TINTEGER, PARAMETER :: params_size_max =  2
 
-  ! Arrays declarations
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: q, s, txc
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
-  TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: wrk2d,wrk3d
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: wrk1d
+  ! Additional local arrays
   INTEGER(1), DIMENSION(:),   ALLOCATABLE, SAVE :: gate
 
   ! -------------------------------------------------------------------
@@ -251,8 +248,6 @@ PROGRAM VISUALS
   ! -------------------------------------------------------------------
   ! Allocating memory space
   ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
   ALLOCATE(gate(isize_field))
 
   isize_wrk3d = isize_txc_field
@@ -262,11 +257,12 @@ PROGRAM VISUALS
   IF ( icalc_part .eq. 1) THEN
     isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
   END IF
-#include "dns_alloc_arrays.h"
+
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
   IF ( iread_part .EQ. 1 ) THEN ! Particle variables
     inb_part_txc = MAX(inb_part_txc,1)
-#include "dns_alloc_larrays.h"
+    CALL PARTICLE_ALLOCATE(C_FILE_LOC)
   ENDIF
 
   ! -------------------------------------------------------------------

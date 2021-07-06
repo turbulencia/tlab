@@ -34,6 +34,7 @@ PROGRAM SPECTRA
   USE DNS_TYPES, ONLY : pointers_dt, subarray_dt
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
   USE DNS_MPI
@@ -55,17 +56,14 @@ PROGRAM SPECTRA
   TINTEGER, PARAMETER :: itime_size_max = 512
   TINTEGER, PARAMETER :: iopt_size_max  =  20
 
-! Arrays declarations
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q, s
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: wrk1d,wrk2d, txc
-  TREAL, DIMENSION(:),   ALLOCATABLE :: wrk3d, p_aux, y_aux, samplesize
-
+  ! -------------------------------------------------------------------
+  ! Additional local arrays
+  TREAL, DIMENSION(:),   ALLOCATABLE :: p_aux, y_aux, samplesize
   TREAL, DIMENSION(:,:), ALLOCATABLE :: out2d, outx,outz,outr
 
   TYPE(pointers_dt), DIMENSION(16) :: vars
 
-  TARGET q, s, p_aux
+  TARGET p_aux
 
 ! -------------------------------------------------------------------
 ! Local variables
@@ -119,8 +117,6 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
-
   ALLOCATE(y_aux(g(2)%size)) ! Reduced vertical grid
 
 ! -------------------------------------------------------------------
@@ -335,7 +331,7 @@ PROGRAM SPECTRA
   isize_wrk3d = isize_txc_field                ! default
   isize_wrk3d = MAX(isize_wrk3d,isize_spec2dr) ! space needed in INTEGRATE_SPECTRUM
 
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid

@@ -34,6 +34,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
+  USE LAGRANGE_ARRAYS
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -54,7 +55,6 @@ PROGRAM LAGRANGE_POS_TRAJEC
   TINTEGER, DIMENSION(:), ALLOCATABLE :: dummy_proc, all_dummy_proc
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_trajectories_tags
   TREAL, DIMENSION(:),   ALLOCATABLE :: dummy_big_overall
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: l_q, l_txc
   TREAL, DIMENSION(:,:), ALLOCATABLE :: l_trajectories, all_l_trajectories
 
   TINTEGER nitera_first, nitera_last
@@ -78,8 +78,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
 ! Get the local information from the dns.ini
   CALL SCANINIINT(bakfile, ifile, 'Iteration', 'Start','0',  nitera_first)
 
-#include "dns_alloc_larrays.h"
-
+  CALL PARTICLE_ALLOCATE(C_FILE_LOC)
 
   ALLOCATE(dummy_proc(isize_trajectory))
   ALLOCATE(all_dummy_proc(isize_trajectory))

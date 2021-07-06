@@ -9,8 +9,10 @@ PROGRAM DNS
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE THERMO_GLOBAL, ONLY : imixture
   USE LAGRANGE_GLOBAL
+  USE LAGRANGE_ARRAYS
   USE DNS_LOCAL
   USE TIME
   USE DNS_TOWER
@@ -20,9 +22,6 @@ PROGRAM DNS
   USE BOUNDARY_BCS
   USE STATISTICS
   USE PARTICLE_TRAJECTORIES
-#ifdef LES
-  USE LES_GLOBAL
-#endif
 
   IMPLICIT NONE
   SAVE
@@ -30,21 +29,10 @@ PROGRAM DNS
 #include "integers.h"
 
   ! -------------------------------------------------------------------
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: x,y,z     ! Grid and associated arrays
-
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: q,s       ! Eulerian fields
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: txc       ! Temporary space for Eulerian fields
-
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: l_q       ! Lagrangian fields
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: l_txc     ! Temporary space for Lagrangian fields
-
-  TREAL, DIMENSION(:),   ALLOCATABLE :: wrk1d,wrk2d,wrk3d   ! Work arrays (scratch space)
-
+  ! Additional local arrays
   TREAL, DIMENSION(:,:), ALLOCATABLE :: h_q,h_s   ! Right-hand sides Eulerian fields
   TREAL, DIMENSION(:,:), ALLOCATABLE :: l_hq      ! Right-hand sides Lagrangian fields
   TREAL, DIMENSION(:),   ALLOCATABLE :: l_comm    ! Communication space for Lagrangian fields
-
-  TARGET x,y,z
 
   CHARACTER*32 fname
   CHARACTER*128 str, line
@@ -60,9 +48,6 @@ PROGRAM DNS
 #ifdef CHEMISTRY
   CALL CHEM_READ_GLOBAL(ifile)
 #endif
-#ifdef LES
-  CALL LES_READ_INI(ifile)
-#endif
   CALL DNS_READ_LOCAL(ifile)
 
 #ifdef USE_MPI
@@ -73,16 +58,15 @@ PROGRAM DNS
   ! #######################################################################
   ! Memory management
   ! #######################################################################
-  ! txc
-  inb_txc = 9
-  IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
+  SELECT CASE ( imode_eqns )
+  CASE( DNS_EQNS_INCOMPRESSIBLE,DNS_EQNS_ANELASTIC )
     inb_txc = 6
     IF ( rkm_mode == RKM_IMP3_DIFFUSION ) inb_txc = inb_txc+1
-  ELSE IF ( imode_eqns == DNS_EQNS_INTERNAL       .AND. &
-      iadvection == EQNS_SKEWSYMMETRIC      .AND. &
-      iviscous   == EQNS_EXPLICIT                 ) THEN
-    inb_txc = 6
-  ENDIF
+  CASE( DNS_EQNS_INTERNAL,DNS_EQNS_TOTAL)
+    inb_txc = 9
+    IF ( imode_eqns == DNS_EQNS_INTERNAL .AND. iadvection == EQNS_SKEWSYMMETRIC .AND. &
+      iviscous   == EQNS_EXPLICIT ) inb_txc = 6
+  END SELECT
   IF ( imixture == MIXT_TYPE_AIRWATER .AND. damkohler(3) > C_0_R ) inb_txc = inb_txc + 1
 
   IF ( imode_sim == DNS_MODE_SPATIAL ) THEN ! because of the statistics
@@ -104,7 +88,6 @@ PROGRAM DNS
   IF ( imode_rhs == EQNS_RHS_NONBLOCKING ) inb_txc = MAX(inb_txc,15)
 #endif
 
-  ! wkr3d
   isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
   IF ( icalc_part == 1) THEN
@@ -116,32 +99,19 @@ PROGRAM DNS
     isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))
   ENDIF
 
-#ifdef LES
-#ifdef USE_MPI
-  IF ( ims_npro > 1 ) THEN ! wrk3d for OZ filter in PARALLEL mode may require more space in LES
-    isize_wrk3d = MAX(isize_wrk3d,imax*jmax*(isgs_f0size + isgs_f1size + kmax))
-  ENDIF
-#endif
-#endif
+  ! -------------------------------------------------------------------
+  ! Allocating memory space
+  ! -------------------------------------------------------------------
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
-  ! -------------------------------------------------------------------
-  ! Allocating basic memory space
-  ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
+  CALL PARTICLE_ALLOCATE(C_FILE_LOC)
 
-#include "dns_alloc_arrays.h"
-  IF ( icalc_part == 1 ) THEN
-#include "dns_alloc_larrays.h"
-  ENDIF
-
-  ! -------------------------------------------------------------------
-  ! Allocating other stuff
-  ! -------------------------------------------------------------------
   CALL DNS_ALLOCATE()
 
   CALL STATISTICS_INITIALIZE()
+
   CALL PLANES_INITIALIZE()
+
   IF ( tower_mode == 1 ) THEN
     CALL DNS_TOWER_INITIALIZE(tower_stride)
   ENDIF
@@ -154,20 +124,16 @@ PROGRAM DNS
   ! ###################################################################
   ! Initialize operators and reference data
   ! ###################################################################
-  ! Filters
   DO ig = 1,3
     CALL OPR_FILTER_INITIALIZE( g(ig), FilterDomain(ig), wrk1d )
   END DO
 
-  ! Spectral Poisson solver
   IF ( ifourier == 1 ) THEN
     CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
   ENDIF
 
-  ! Check operators
   CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
 
-  ! Thermodynamic quantities
   CALL FI_PROFILES_INITIALIZE(wrk1d)
 
   ! ###################################################################
