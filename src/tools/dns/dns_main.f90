@@ -14,6 +14,7 @@ PROGRAM DNS
   USE LAGRANGE_GLOBAL
   USE LAGRANGE_ARRAYS
   USE DNS_LOCAL
+  USE DNS_ARRAYS
   USE TIME
   USE DNS_TOWER
   USE PLANES
@@ -29,11 +30,6 @@ PROGRAM DNS
 #include "integers.h"
 
   ! -------------------------------------------------------------------
-  ! Additional local arrays
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: h_q,h_s   ! Right-hand sides Eulerian fields
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: l_hq      ! Right-hand sides Lagrangian fields
-  TREAL, DIMENSION(:),   ALLOCATABLE :: l_comm    ! Communication space for Lagrangian fields
-
   CHARACTER*32 fname
   CHARACTER*128 str, line
   TINTEGER idummy, ig, ierr
@@ -234,7 +230,7 @@ PROGRAM DNS
   ! ###################################################################
   itime = nitera_first
 
-  CALL TIME_INTEGRATION(q,h_q, s,h_s, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc, l_comm)
+  CALL TIME_INTEGRATION()
 
   ! ###################################################################
 #ifdef USE_FFTW
@@ -258,7 +254,7 @@ CONTAINS
   WRITE(str,*) inb_flow; line = 'Allocating array rhs flow of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(h_q(isize_field,inb_flow),    stat=ierr)
+  ALLOCATE(hq(isize_field,inb_flow),    stat=ierr)
   IF ( ierr /= 0 ) THEN
     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_q.')
     CALL DNS_STOP(DNS_ERROR_ALLOC)
@@ -267,7 +263,7 @@ CONTAINS
   WRITE(str,*) inb_scal; line = 'Allocating array rhs scal of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(h_s(isize_field,inb_scal),    stat=ierr)
+  ALLOCATE(hs(isize_field,inb_scal),    stat=ierr)
   IF ( ierr /= 0 ) THEN
     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_s.')
     CALL DNS_STOP(DNS_ERROR_ALLOC)

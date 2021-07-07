@@ -148,22 +148,15 @@ CONTAINS
 
   ! ###################################################################
   ! ###################################################################
-  SUBROUTINE TIME_RUNGEKUTTA(q,hq,s,hs, txc, wrk1d,wrk2d,wrk3d, l_q,l_hq,l_txc,l_comm)
+  SUBROUTINE TIME_RUNGEKUTTA()
+    USE TLAB_ARRAYS
+    USE LAGRANGE_ARRAYS
+    USE DNS_ARRAYS
     IMPLICIT NONE
 
 #ifdef USE_MPI
 #include "mpif.h"
 #endif
-
-    TREAL q(isize_field,inb_flow_array)
-    TREAL s(isize_field,inb_scal_array)
-    TREAL hq(isize_field,inb_flow)
-    TREAL hs(isize_field,inb_scal)
-    TREAL, DIMENSION(*)             :: txc, wrk1d,wrk2d,wrk3d
-
-    TREAL l_q(isize_particle,inb_part_array)
-    TREAL l_hq(isize_particle,inb_part)
-    TREAL, DIMENSION(*)                :: l_comm, l_txc
 
     ! -------------------------------------------------------------------
     TINTEGER is, flag_control

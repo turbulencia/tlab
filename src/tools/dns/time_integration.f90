@@ -7,19 +7,21 @@
 !# Performing the time integration over a given number of steps
 !#
 !########################################################################
-SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc, l_comm)
+SUBROUTINE TIME_INTEGRATION()
 
   USE DNS_CONSTANTS, ONLY : tag_flow, tag_scal, tag_part, tag_traj, lfile
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
-  USE DNS_GLOBAL, ONLY : isize_particle
+  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field
   USE DNS_GLOBAL, ONLY : imode_sim
   USE DNS_GLOBAL, ONLY : icalc_flow, icalc_scal, icalc_part
   USE DNS_GLOBAL, ONLY : visc
   USE DNS_GLOBAL, ONLY : itime, rtime
+  USE TLAB_ARRAYS
   USE TIME
   USE DNS_LOCAL
+  USE DNS_ARRAYS
   USE DNS_TOWER
   USE LAGRANGE_GLOBAL, ONLY : itrajectory, l_g
+  USE LAGRANGE_ARRAYS
   USE STATISTICS
   USE PARTICLE_TRAJECTORIES
   USE AVG_SCAL_ZT
@@ -32,17 +34,9 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc
 
 #include "integers.h"
 
-  TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
-  TREAL, DIMENSION(isize_txc_field,6),    INTENT(INOUT) :: txc
-  TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
-
-  TREAL, DIMENSION(isize_particle,*) :: l_q, l_hq, l_txc
-  TREAL, DIMENSION(*)                :: l_comm
-
   ! -------------------------------------------------------------------
   CHARACTER*32 fname
   CHARACTER*250 line1
-  LOGICAL flag_save
 
   ! ###################################################################
   WRITE(line1,*) itime; line1 = 'Starting time integration at It'//TRIM(ADJUSTL(line1))//'.'
@@ -52,20 +46,15 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc
     IF ( itime >= nitera_last   ) EXIT
     IF ( INT(logs_data(1)) /= 0 ) EXIT
 
-    CALL TIME_RUNGEKUTTA(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc, l_comm)
+    CALL TIME_RUNGEKUTTA()
 
     itime = itime + 1
     rtime = rtime + dtime
 
-    ! -----------------------------------------------------------------------
     IF ( MOD(itime-nitera_first,FilterDomainStep) == 0 ) THEN
-      IF ( MOD(itime-nitera_first,nitera_stats)  == 0 ) THEN; flag_save = .TRUE.
-      ELSE;                                                   flag_save = .FALSE.
-      ENDIF
-      CALL DNS_FILTER(flag_save, q,s, txc, wrk1d,wrk2d,wrk3d)
+      CALL DNS_FILTER()
     ENDIF
 
-    ! -----------------------------------------------------------------------
     IF ( flag_viscosity ) THEN          ! Change viscosity if necessary
       visc = visc +visc_rate *dtime
       IF ( rtime .GT. visc_time ) THEN
@@ -74,7 +63,6 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc
       ENDIF
     END IF
 
-    ! -----------------------------------------------------------------------
     CALL TIME_COURANT(q, wrk3d)
 
     ! ###################################################################
@@ -82,41 +70,27 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc
     ! ###################################################################
     IF ( MOD(itime-nitera_first,nitera_log) == 0 .OR. INT(logs_data(1)) /= 0 ) THEN ! Log files
       CALL DNS_LOGS(i2)
-#ifdef LES
-      IF ( iles == 1 ) CALL LES_LOGS(i2)
-#endif
     ENDIF
 
-    ! -----------------------------------------------------------------------
-    ! Accumulate statistics in spatially evolving cases
-    IF ( MOD(itime-nitera_first,nitera_stats_spa) == 0 ) THEN
-      CALL AVG_FLOW_ZT_REDUCE(q, hq,txc, mean_flow, wrk2d,wrk3d)
-      IF ( icalc_scal == 1 ) THEN
-        CALL AVG_SCAL_ZT_REDUCE(q,s, hq,txc, mean_scal, wrk2d,wrk3d)
-      ENDIF
-    ENDIF
-
-    ! -----------------------------------------------------------------------
     IF ( tower_mode == 1 ) THEN
       CALL DNS_TOWER_ACCUMULATE(q,1,wrk1d)
       CALL DNS_TOWER_ACCUMULATE(s,2,wrk1d)
     ENDIF
 
-    ! -----------------------------------------------------------------------
     IF ( itrajectory /= LAG_TRAJECTORY_NONE ) THEN
       CALL PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
     END IF
 
-    ! -----------------------------------------------------------------------
-    IF ( MOD(itime-nitera_first,nitera_stats) == 0 ) THEN ! Calculate statistics
-      IF     ( imode_sim == DNS_MODE_TEMPORAL ) THEN
-        CALL STATISTICS_TEMPORAL(q,s,hq, txc, wrk1d,wrk2d,wrk3d, l_q,l_txc,l_comm)
-      ELSE IF ( imode_sim == DNS_MODE_SPATIAL ) THEN
-        CALL STATISTICS_SPATIAL(txc, wrk1d,wrk2d)
-      ENDIF
+    IF ( MOD(itime-nitera_first,nitera_stats_spa) == 0 ) THEN   ! Accumulate statistics in spatially evolving cases
+      IF ( icalc_flow == 1 ) CALL AVG_FLOW_ZT_REDUCE(q,   hq,txc, mean_flow, wrk2d,wrk3d)
+      IF ( icalc_scal == 1 ) CALL AVG_SCAL_ZT_REDUCE(q,s, hq,txc, mean_scal, wrk2d,wrk3d)
     ENDIF
 
-    ! -----------------------------------------------------------------------
+    IF ( MOD(itime-nitera_first,nitera_stats) == 0 ) THEN       ! Calculate statistics
+      IF ( imode_sim == DNS_MODE_TEMPORAL ) CALL STATISTICS_TEMPORAL()
+      IF ( imode_sim == DNS_MODE_SPATIAL  ) CALL STATISTICS_SPATIAL()
+    ENDIF
+
     IF ( MOD(itime-nitera_first,nitera_save) == 0 .OR. &        ! Save restart files
         itime == nitera_last .OR. INT(logs_data(1)) /= 0 ) THEN ! Secure that one restart file is saved
 
@@ -150,7 +124,6 @@ SUBROUTINE TIME_INTEGRATION(q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc
 
     ENDIF
 
-    ! -----------------------------------------------------------------------
     IF ( MOD(itime-nitera_first,nitera_pln) == 0 ) THEN
       CALL PLANES_SAVE( q,s, txc(1,1), txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d )
     ENDIF
