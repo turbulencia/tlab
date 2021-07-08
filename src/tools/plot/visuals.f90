@@ -44,13 +44,13 @@ PROGRAM VISUALS
   ! Local variables
   ! -------------------------------------------------------------------
   CHARACTER*512 sRes
-  CHARACTER*32 fname, inifile, bakfile
+  CHARACTER*32 fname, bakfile
   CHARACTER*32 flow_file, scal_file, part_file, plot_file, time_str
   CHARACTER*64 str, line
 
   TINTEGER opt_format
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
-  TINTEGER isize_wrk3d, ij, is, bcs(2,2)
+  TINTEGER ij, is, bcs(2,2)
   TINTEGER iscal_offset, iread_flow, iread_scal, iread_part, idummy, ierr, MaskSize
   TREAL diff, dummy
   TINTEGER subdomain(6)
@@ -73,13 +73,12 @@ PROGRAM VISUALS
   !########################################################################
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
-  IF ( icalc_part .EQ. 1 ) CALL PARTICLE_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
+  IF ( icalc_part .EQ. 1 ) CALL PARTICLE_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
@@ -99,7 +98,7 @@ PROGRAM VISUALS
   ELSE;                                        iscal_offset = 9+NSP
   ENDIF
 
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamVisuals', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamVisuals', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_INTEGER(sRes, iopt_size, opt_vec)
 
@@ -192,7 +191,7 @@ PROGRAM VISUALS
   ENDDO
 
   ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Subdomain', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
   IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI
@@ -211,7 +210,7 @@ PROGRAM VISUALS
   ENDIF
 
   ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Format', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Format', '-1', sRes)
 
   IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI
@@ -906,12 +905,8 @@ PROGRAM VISUALS
 
   ENDDO
 
-  CALL DNS_END(0)
-
-  STOP
-
   100 FORMAT(G_FORMAT_R)
-
+  CALL DNS_STOP(0)
 END PROGRAM VISUALS
 
 !########################################################################

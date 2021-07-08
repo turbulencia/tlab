@@ -43,7 +43,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   ! -------------------------------------------------------------------
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 20
-  TINTEGER j,k, bcs(2,2)
+  TINTEGER j, bcs(2,2)
   TREAL dummy
   TREAL c23, prefactor
 
@@ -51,9 +51,6 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   CHARACTER*32 name, groupname(MAX_VARS_GROUPS)
   CHARACTER*250 line1, varname(MAX_VARS_GROUPS)
-  CHARACTER*1300 line2
-
-  CHARACTER(LEN=32) varname2(MAX_AVG_TEMPORAL)
 
   ! Pointers to existing allocated space
   TREAL, DIMENSION(:,:,:), POINTER :: u,v,w,p, e,rho, vis
@@ -287,39 +284,44 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
-#define U_ii2(j) mean2d(j,ig(12)  )
-#define U_x2(j)  mean2d(j,ig(12)+1)
-#define U_y2(j)  mean2d(j,ig(12)+2)
-#define U_z2(j)  mean2d(j,ig(12)+3)
-#define V_x2(j)  mean2d(j,ig(12)+4)
-#define V_y2(j)  mean2d(j,ig(12)+5)
-#define V_z2(j)  mean2d(j,ig(12)+6)
-#define W_x2(j)  mean2d(j,ig(12)+7)
-#define W_y2(j)  mean2d(j,ig(12)+8)
-#define W_z2(j)  mean2d(j,ig(12)+9)
-#define U_x3(j)  mean2d(j,ig(12)+10)
-#define U_y3(j)  mean2d(j,ig(12)+11)
-#define U_z3(j)  mean2d(j,ig(12)+12)
-#define V_x3(j)  mean2d(j,ig(12)+13)
-#define V_y3(j)  mean2d(j,ig(12)+14)
-#define V_z3(j)  mean2d(j,ig(12)+15)
-#define W_x3(j)  mean2d(j,ig(12)+16)
-#define W_y3(j)  mean2d(j,ig(12)+17)
-#define W_z3(j)  mean2d(j,ig(12)+18)
-#define U_x4(j)  mean2d(j,ig(12)+19)
-#define U_y4(j)  mean2d(j,ig(12)+20)
-#define U_z4(j)  mean2d(j,ig(12)+21)
-#define V_x4(j)  mean2d(j,ig(12)+22)
-#define V_y4(j)  mean2d(j,ig(12)+23)
-#define V_z4(j)  mean2d(j,ig(12)+24)
-#define W_x4(j)  mean2d(j,ig(12)+25)
-#define W_y4(j)  mean2d(j,ig(12)+26)
-#define W_z4(j)  mean2d(j,ig(12)+27)
-  sg(ng) = 28
+#define U_y1(j)  mean2d(j,ig(12)  )
+#define V_y1(j)  mean2d(j,ig(12)+1)
+#define W_y1(j)  mean2d(j,ig(12)+2)
+#define U_ii2(j) mean2d(j,ig(12)+3)
+#define U_x2(j)  mean2d(j,ig(12)+4)
+#define U_y2(j)  mean2d(j,ig(12)+5)
+#define U_z2(j)  mean2d(j,ig(12)+6)
+#define V_x2(j)  mean2d(j,ig(12)+7)
+#define V_y2(j)  mean2d(j,ig(12)+8)
+#define V_z2(j)  mean2d(j,ig(12)+9)
+#define W_x2(j)  mean2d(j,ig(12)+10)
+#define W_y2(j)  mean2d(j,ig(12)+11)
+#define W_z2(j)  mean2d(j,ig(12)+12)
+#define U_x3(j)  mean2d(j,ig(12)+13)
+#define U_y3(j)  mean2d(j,ig(12)+14)
+#define U_z3(j)  mean2d(j,ig(12)+15)
+#define V_x3(j)  mean2d(j,ig(12)+16)
+#define V_y3(j)  mean2d(j,ig(12)+17)
+#define V_z3(j)  mean2d(j,ig(12)+18)
+#define W_x3(j)  mean2d(j,ig(12)+19)
+#define W_y3(j)  mean2d(j,ig(12)+20)
+#define W_z3(j)  mean2d(j,ig(12)+21)
+#define U_x4(j)  mean2d(j,ig(12)+22)
+#define U_y4(j)  mean2d(j,ig(12)+23)
+#define U_z4(j)  mean2d(j,ig(12)+24)
+#define V_x4(j)  mean2d(j,ig(12)+25)
+#define V_y4(j)  mean2d(j,ig(12)+26)
+#define V_z4(j)  mean2d(j,ig(12)+27)
+#define W_x4(j)  mean2d(j,ig(12)+28)
+#define W_y4(j)  mean2d(j,ig(12)+29)
+#define W_z4(j)  mean2d(j,ig(12)+30)
+  sg(ng) = 31
 
   groupname(ng) = 'DerivativeFluctuations'
-  varname(ng)   = 'U_ii2 U_x2 U_y2 U_z2 V_x2 V_y2 V_z2 W_x2 W_y2 W_z2 '&
-            //'U_x3 U_y3 U_z3 V_x3 V_y3 V_z3 W_x3 W_y3 W_z3 U_x4 U_y4 U_z4 V_x4 V_y4 V_z4 W_x4 W_y4 W_z4'
+  varname(ng)   = 'U_y1 V_y1 W_y1 U_ii2 '&
+       // 'U_x2 U_y2 U_z2 V_x2 V_y2 V_z2 W_x2 W_y2 W_z2 '&
+       // 'U_x3 U_y3 U_z3 V_x3 V_y3 V_z3 W_x3 W_y3 W_z3 '&
+       // 'U_x4 U_y4 U_z4 V_x4 V_y4 V_z4 W_x4 W_y4 W_z4'
 
   ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
@@ -379,8 +381,6 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
         //'PotTemp_fr PotTemp_eq SaturationPressure rPref RelativeHumidity Dewpoint LapseRate_dew'
   END IF
 
-#define L_AVGMAX 188
-
   ! -----------------------------------------------------------------------
   ! Auxiliary variables depending on y and t; this last group is not written
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
@@ -418,7 +418,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! -----------------------------------------------------------------------
   nv = ig(ng) +sg(ng) -1
   IF ( MAX_AVG_TEMPORAL .LT. nv ) THEN
-    CALL IO_WRITE_ASCII(efile,'AVERAGES_FLOW_XZ. Not enough space in local arrays.')
+    CALL IO_WRITE_ASCII(efile,'AVG_FLOW_XZ. Not enough space in local arrays.')
     CALL DNS_STOP(LES_ERROR_AVGTMP)
   END IF
   mean2d(:,1:nv) = C_0_R
@@ -445,6 +445,10 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rU(1), rU_y(1), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rV(1), rV_y(1), wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), rW(1), rW_y(1), wrk3d, wrk2d,wrk3d)
+
+  U_y1(:) = rU_y(:)
+  V_y1(:) = rV_y(:)
+  W_y1(:) = rW_y(:)
 
   ! Density and Fabre avrages
   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
@@ -1353,68 +1357,16 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! ###################################################################
   ! Output
   ! ###################################################################
-#ifdef USE_NETCDF
-  line2 = ''
-  DO k = 1,ng
-    line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(varname(k)))
-  END DO
-  CALL LIST_STRING( line2, nv, varname2 )
+  ! 14 t-dependent variables, for consistency with old format
+  ! ng = ng +1
+  ! groupname(ng) = ''
+  ! varname(ng)   = 'dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy'
+  ! ng = ng +1; groupname(ng) = ''; varname(ng) = ''
+  ! ng = ng +1; groupname(ng) = ''; varname(ng) = ''
+  ! ng = ng +1; groupname(ng) = ''; varname(ng) = ''
 
   WRITE(name,*) itime; name='avg'//TRIM(ADJUSTL(name))
-  CALL IO_WRITE_AVERAGES( name, itime,rtime, nv,jmax, g(2)%nodes, varname2, mean2d )
-
-#else
-! -----------------------------------------------------------------------
-! TkStat file
-! -----------------------------------------------------------------------
-  IF ( L_AVGMAX .LT. nv ) THEN
-    CALL IO_WRITE_ASCII(efile,'AVERAGES_FLOW_XZ. Not enough space in format definition.')
-    CALL DNS_STOP(LES_ERROR_AVGTMP)
-  END IF
-
-#ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN
-#endif
-
-  WRITE(name,*) itime; name='avg'//TRIM(ADJUSTL(name))
-
-#define LOC_UNIT_ID 23
-#define LOC_STATUS 'unknown'
-#ifdef USE_RECLEN
-    OPEN(UNIT=LOC_UNIT_ID, RECL=1050, FILE=name, STATUS=LOC_STATUS) ! this is probably outdated
-#else
-    OPEN(UNIT=LOC_UNIT_ID, FILE=name, STATUS=LOC_STATUS)
-#endif
-
-    WRITE(LOC_UNIT_ID, '(A8,E14.7E3)') 'RTIME = ', rtime
-    line2 = 'I J Y'  ! Independent variables
-    DO k = 1,ng      ! Dependent variables depending on y and t
-      WRITE(LOC_UNIT_ID,1010) 'GROUP = '//TRIM(ADJUSTL(groupname(k)))//' '//TRIM(ADJUSTL(varname(k)))
-      line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(varname(k)))
-    END DO
-    DO k = 1,14       ! Dependent variables depending on t, for consistency with old format
-      line2 = TRIM(ADJUSTL(line2))//' '//'dummy'
-    END DO
-    WRITE(LOC_UNIT_ID,1010) 'GROUP ='
-    WRITE(LOC_UNIT_ID,1010) 'GROUP ='
-    WRITE(LOC_UNIT_ID,1010) 'GROUP ='
-    WRITE(LOC_UNIT_ID,1010) 'GROUP ='
-    WRITE(LOC_UNIT_ID,1010) TRIM(ADJUSTL(line2))
-
-    DO j = 1,jmax
-      WRITE(LOC_UNIT_ID,1020) 1, j, g(2)%nodes(j), (mean2d(j,k),k=1,nv)
-    END DO
-
-    CLOSE(LOC_UNIT_ID)
-
-#ifdef USE_MPI
-  END IF
-#endif
-
-1010 FORMAT(A)
-1020 FORMAT(I5,(1X,I5),L_AVGMAX(1X,G_FORMAT_R),14(1X,G_FORMAT_R))
-
-#endif
+  CALL IO_WRITE_AVERAGES( name, itime,rtime, jmax,nv,ng, g(2)%nodes, varname, groupname, mean2d )
 
   RETURN
 END SUBROUTINE AVG_FLOW_XZ

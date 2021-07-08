@@ -20,18 +20,15 @@ PROGRAM INIRAND
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q, s, txc
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
 
-  TINTEGER iq, is, isize_wrk3d, ierr
+  TINTEGER iq, is, ierr
 
   CHARACTER*64 str, line
-  CHARACTER*32 inifile
 
   ! ###################################################################
-  inifile = 'dns.ini'
-
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
-  CALL RAND_READ_LOCAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
+  CALL RAND_READ_LOCAL(ifile)
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
 #endif
@@ -75,7 +72,5 @@ PROGRAM INIRAND
   ENDDO
   CALL DNS_WRITE_FIELDS('scal.rand', i1, imax,jmax,kmax, inb_scal, isize_field, s, txc)
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL DNS_STOP(0)
 END PROGRAM INIRAND

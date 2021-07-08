@@ -18,20 +18,17 @@ PROGRAM INISCAL
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q,s, txc
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
 
-  TINTEGER isize_wrk3d, ierr, is, inb_scal_loc
+  TINTEGER ierr, is, inb_scal_loc
 
   CHARACTER*64 str, line
-  CHARACTER*32 inifile
 
 ! ###################################################################
-  inifile = 'dns.ini'
-
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
-  CALL SCAL_READ_LOCAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
+  CALL SCAL_READ_LOCAL(ifile)
 #ifdef CHEMISTRY
-  CALL CHEM_READ_GLOBAL(inifile)
+  CALL CHEM_READ_GLOBAL(ifile)
 #endif
 
 #ifdef USE_MPI
@@ -141,9 +138,7 @@ PROGRAM INISCAL
 ! ###################################################################
   CALL DNS_WRITE_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, isize_wrk3d, s, wrk3d)
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL DNS_STOP(0)
 END PROGRAM INISCAL
 
 ! ###################################################################

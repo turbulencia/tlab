@@ -30,20 +30,17 @@ PROGRAM INIFLOW
   TARGET q, wrk3d
   TREAL, DIMENSION(:),   POINTER :: e, rho, p, T
 
-  TINTEGER isize_wrk3d, ierr
+  TINTEGER ierr
 
   CHARACTER*64 str, line
-  CHARACTER*32 inifile
 
   !########################################################################
-  inifile = 'dns.ini'
-
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
-  CALL FLOW_READ_LOCAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
+  CALL FLOW_READ_LOCAL(ifile)
 #ifdef CHEMISTRY
-  CALL CHEM_READ_GLOBAL(inifile)
+  CALL CHEM_READ_GLOBAL(ifile)
 #endif
 
 #ifdef USE_MPI
@@ -51,6 +48,7 @@ PROGRAM INIFLOW
 #endif
 
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
+  inb_wrk2d=MAX(inb_wrk2d,3)
   ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
   isize_wrk3d = isize_txc_field
 
@@ -197,7 +195,5 @@ PROGRAM INIFLOW
   ! ###################################################################
   CALL DNS_WRITE_FIELDS('flow.ics', i2, imax,jmax,kmax, inb_flow, isize_wrk3d, q, wrk3d)
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL DNS_STOP(0)
 END PROGRAM INIFLOW

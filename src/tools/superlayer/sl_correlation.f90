@@ -10,7 +10,7 @@
 !#
 !########################################################################
 PROGRAM SL_CORRELATION
-  
+
   USE DNS_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI
@@ -37,7 +37,7 @@ PROGRAM SL_CORRELATION
 
   TARGET q
 
-  TINTEGER  isize_wrk3d, ilog
+  TINTEGER  ilog
   CHARACTER*32 fname
 
   TINTEGER itime_size_max, itime_size, i
@@ -56,7 +56,7 @@ PROGRAM SL_CORRELATION
   TREAL, DIMENSION(:),   POINTER :: u, v, w
 
   TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
-  
+
 ! ###################################################################
   CALL DNS_INITIALIZE
 
@@ -139,7 +139,7 @@ PROGRAM SL_CORRELATION
 ! NONE
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
@@ -174,7 +174,5 @@ PROGRAM SL_CORRELATION
 
   ENDDO
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL DNS_STOP(0)
 END PROGRAM SL_CORRELATION

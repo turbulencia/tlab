@@ -4,13 +4,13 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Evolution equations, nonlinear term in convective form and the 
+!# Evolution equations, nonlinear term in convective form and the
 !# viscous term explicit: 9 2nd order + 9 1st order derivatives.
 !# Pressure term requires 3 1st order derivatives
 !#
-!# It is written such that u and w transposes are calculated first for the 
+!# It is written such that u and w transposes are calculated first for the
 !# Ox and Oz momentum equations, stored in tmp5 and tmp6 and then used as needed.
-!# This saves 2 MPI transpositions. 
+!# This saves 2 MPI transpositions.
 !# Includes the scalar to benefit from the same reduction
 !#
 !########################################################################
@@ -25,14 +25,24 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_CONSTANTS,ONLY:tfile
 #endif
   USE DNS_GLOBAL, ONLY : imode_eqns
+  USE DNS_GLOBAL, ONLY : imode_ibm, burgers_ibm
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : rbackground, ribackground
   USE DNS_LOCAL,  ONLY : idivergence
-  USE DNS_LOCAL,  ONLY : rkm_substep,rkm_endstep,tower_mode 
-  USE DNS_TOWER 
+  USE DNS_LOCAL,  ONLY : tower_mode
+  USE TIME,       ONLY : rkm_substep,rkm_endstep
+  USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
+  USE DNS_IBM,    ONLY : eps
+
+! ############################################# ! 
+! DEBUG ####################################### !
+#ifdef USE_MPI
+  use DNS_MPI,    only: ims_pro
+#endif
+! ############################################# !   
 
   IMPLICIT NONE
 
@@ -41,18 +51,25 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   TREAL dte
   TREAL, DIMENSION(isize_field)   :: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
-  TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk3d
+  TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,wrk3d
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(imax,kmax,*)   :: wrk2d
 
   TARGET h2, hs
 
+! ############################################# ! 
+! DEBUG ####################################### !
+#ifdef USE_MPI
+#else
+    TINTEGER, parameter  ::  ims_pro=0  
+#endif
+! ############################################# ! 
 ! -----------------------------------------------------------------------
   TINTEGER iq, is, ij, k, nxy, ip_b, ip_t
   TINTEGER ibc, bcs(2,2)
   TREAL dummy
 
-  TINTEGER siz, srt, end    !  Variables for OpenMP Partitioning 
+  TINTEGER siz, srt, end    !  Variables for OpenMP Partitioning
 
   TREAL, DIMENSION(:), POINTER :: p_bcs
 
@@ -69,7 +86,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   nxy = imax*jmax
 
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
-  
+
 #ifdef USE_ESSL
   ilen = isize_field
 #endif
@@ -96,11 +113,18 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      ip_t = ip_t + nxy ! top BC address
   ENDDO
 
+! ###################################################################
+! Preliminaries for IBM use
+! (if .true., OPR_BURGERS_X/Y/Z uses modified fields for derivatives)
+! ###################################################################
+  IF ( imode_ibm == 1 ) burgers_ibm = .true. ! global flag for IBM usage
+  if (ims_pro == 0) write(*,*) 'burgers_ibm start of rhs', burgers_ibm
+
 ! #######################################################################
 ! Ox diffusion and convection terms in Ox momentum eqn
 ! Initializing tmp5 for the rest of terms
 ! #######################################################################
-  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u, tmp1, tmp5, wrk2d,wrk3d) ! store u transposed in tmp5  
+  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u, tmp1, tmp5, wrk2d,wrk3d) ! store u transposed in tmp5
   h1 = h1 + tmp1
 
 ! #######################################################################
@@ -121,7 +145,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-     CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
+     CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
      DO ij = srt,end
         h3(ij) = h3(ij) +tmp1(ij) +tmp2(ij) +tmp3(ij)
      ENDDO
@@ -137,11 +161,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-  CALL DNS_OMP_PARTITION(isize_field, srt,end,siz) 
+  CALL DNS_OMP_PARTITION(isize_field, srt,end,siz)
   DO ij = srt,end
      h2(ij) = h2(ij) + tmp1(ij) +tmp3(ij)
   ENDDO
-!$omp end parallel 
+!$omp end parallel
 
 ! #######################################################################
 ! Diffusion and convection terms in Ox momentum eqn
@@ -162,10 +186,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Diffusion and convection terms in scalar eqns
 ! #######################################################################
   DO is = 1,inb_scal
-     
+
      CALL OPR_BURGERS_Y(i1,is, imax,jmax,kmax, bcs, g(2), s(1,is),v,tmp4, tmp2, tmp1, wrk2d,wrk3d) ! Not enough tmp arrays
      hs(:,is) = hs(:,is) +tmp2
-     
+
      CALL OPR_BURGERS_X(i1,is, imax,jmax,kmax, bcs, g(1), s(1,is),u,tmp5, tmp1, tmp2, wrk2d,wrk3d) ! tmp5 contains u transposed
      CALL OPR_BURGERS_Z(i1,is, imax,jmax,kmax, bcs, g(3), s(1,is),w,tmp6, tmp3, tmp2, wrk2d,wrk3d) ! tmp6 contains w transposed
 
@@ -176,14 +200,14 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         hs(ij,is) = hs(ij,is) +tmp1(ij) +tmp3(ij)
      ENDDO
 !$omp end parallel
-     
+
   ENDDO
-  
+
 ! #######################################################################
 ! Impose buffer zone as relaxation terms
 ! #######################################################################
   IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
-     CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
+     CALL BOUNDARY_BUFFER_RELAX_FLOW(q, hq)
   ENDIF
 
 ! #######################################################################
@@ -194,14 +218,14 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef USE_ESSL
 !$omp parallel default( shared )&
 !$omp private( ilen, dummy, srt,end,siz )
-#else 
+#else
 !$omp parallel default( shared )&
 !$omp private( ij,   dummy, srt,end,siz )
-#endif 
+#endif
 
      CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
      dummy=C_1_R/dte
-     
+
 #ifdef USE_ESSL
      ilen = siz
      CALL DZAXPY(ilen, dummy, v(srt), 1, h2(srt), 1, tmp2(srt), 1)
@@ -209,7 +233,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL DZAXPY(ilen, dummy, w(srt), 1, h3(srt), 1, tmp4(srt), 1)
 
 #else
-     DO ij = srt,end 
+     DO ij = srt,end
         tmp2(ij) = h2(ij) + v(ij)*dummy
         tmp3(ij) = h1(ij) + u(ij)*dummy
         tmp4(ij) = h3(ij) + w(ij)*dummy
@@ -226,7 +250,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4,tmp3, wrk3d, wrk2d,wrk3d)
-     
+
   ELSE
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h2,tmp2)
@@ -260,27 +284,27 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      p_bcs => h2(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
   ENDDO
 
-! Adding density in BCs  
+! Adding density in BCs
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      BcsFlowJmin%ref(:,:,2) = BcsFlowJmin%ref(:,:,2) *rbackground(1)
      BcsFlowJmax%ref(:,:,2) = BcsFlowJmax%ref(:,:,2) *rbackground(g(2)%size)
   ENDIF
-  
+
 ! pressure in tmp1, Oy derivative in tmp3
   CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
        tmp1,tmp3, tmp2,tmp4, BcsFlowJmin%ref(1,1,2),BcsFlowJmax%ref(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
-! Saving pressure for towers to tmp array 
-  IF ( tower_mode .EQ. 1 .AND. rkm_substep .EQ. rkm_endstep ) THEN 
-     CALL DNS_TOWER_ACCUMULATE(tmp1,i4,wrk1d) 
+! Saving pressure for towers to tmp array
+  IF ( tower_mode .EQ. 1 .AND. rkm_substep .EQ. rkm_endstep ) THEN
+     CALL DNS_TOWER_ACCUMULATE(tmp1,i4,wrk1d)
   ENDIF
 
-! horizontal derivatives
+! horizontal derivatives ! no splines!
   CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1,tmp2, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1,tmp4, wrk3d, wrk2d,wrk3d)
-  
+
 ! -----------------------------------------------------------------------
-! Add pressure gradient 
+! Add pressure gradient
 ! -----------------------------------------------------------------------
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax,jmax,kmax, ribackground, tmp2, h1)
@@ -296,9 +320,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp private( ij,   srt,end,siz,dummy )
 #endif
      CALL DNS_OMP_PARTITION(isize_field,srt,end,siz)
-     
+
 #ifdef USE_ESSL
-     ilen = siz 
+     ilen = siz
      dummy=-C_1_R
      CALL DAXPY(ilen, dummy, tmp2(srt), 1, h1(srt),1)
      CALL DAXPY(ilen, dummy, tmp3(srt), 1, h2(srt),1)
@@ -311,7 +335,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      ENDDO
 #endif
 !$omp end parallel
-  ENDIF  
+  ENDIF
 
 ! #######################################################################
 ! Boundary conditions
@@ -330,6 +354,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hq(1,iq), &
              BcsFlowJmin%ref(1,1,iq),BcsFlowJmax%ref(1,1,iq), wrk1d,tmp1,wrk3d)
      ENDIF
+    ! BC IBM Geo
   ENDDO
 
   DO is = 1,inb_scal
@@ -345,10 +370,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
           BcsScalJmax%type(is) .NE. DNS_SFC_STATIC ) THEN
         CALL BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
      ENDIF
+     ! BC IBM Geo
   ENDDO
 
 ! -----------------------------------------------------------------------
-! Impose bottom BCs at Jmin 
+! Impose bottom BCs at Jmin
 ! -----------------------------------------------------------------------
   ip_b =                 1
   DO k = 1,kmax
@@ -356,7 +382,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      h2(ip_b:ip_b+imax-1) = BcsFlowJmin%ref(1:imax,k,2)
      h3(ip_b:ip_b+imax-1) = BcsFlowJmin%ref(1:imax,k,3)
      DO is = 1,inb_scal
-        hs(ip_b:ip_b+imax-1,is) = BcsScalJmin%ref(1:imax,k,is) 
+        hs(ip_b:ip_b+imax-1,is) = BcsScalJmin%ref(1:imax,k,is)
      ENDDO
      ip_b = ip_b + nxy
   ENDDO
@@ -373,7 +399,69 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         hs(ip_t:ip_t+imax-1,is) = BcsScalJmax%ref(1:imax,k,is)
      ENDDO
      ip_t = ip_t + nxy
+
   ENDDO
+
+! #######################################################################
+! IBM - Direct Forcing (zeros in solid, interface on gridpoints)
+! 
+! First attempt: one bar in streamwise direction
+!
+! #######################################################################
+
+! -----------------------------------------------------------------------
+! Preliminaries - get geometry information
+! -----------------------------------------------------------------------
+
+! -----------------------------------------------------------------------
+! Impose one bar at bottom Jmin, no MPI
+! -----------------------------------------------------------------------
+
+! ! 3d serial case 41 for ekman flow
+!   ip_b = imax*jmax*(int(kmax/2) - 10) + 1
+!   do k = 1,20     ! width in k
+!     do is = 1,20  ! height in j
+!       h1(ip_b:ip_b+imax-1) = C_0_R
+!       h2(ip_b:ip_b+imax-1) = C_0_R
+!       h3(ip_b:ip_b+imax-1) = C_0_R
+!       ! overwrite ini flow fields with new geometry BC
+!       u(ip_b:ip_b+imax-1) = C_0_R
+!       v(ip_b:ip_b+imax-1) = C_0_R
+!       w(ip_b:ip_b+imax-1) = C_0_R
+!       !
+!       ip_b =  ip_b + imax
+!     end do
+!     !        
+!     ip_b = imax*jmax*(int(kmax/2) - 10 + k)
+!   end do
+
+  ! for debugging, just initialized once
+
+  ! if (n .eq. 0) then 
+  !   call INITIALIZE_GEOMETRY(epsi) 
+  ! end if
+  ! n = n + 1
+  ! epsi = reshape(eps,(/isize_field/))
+  ! apply new BCs
+  h1(:) = (C_1_R - eps(:)) * h1(:)
+  h2(:) = (C_1_R - eps(:)) * h2(:)
+  h3(:) = (C_1_R - eps(:)) * h3(:)
+  ! overwrite ini flow fields with new geometry BC
+  u(:)  = (C_1_R - eps(:)) * u(:)
+  v(:)  = (C_1_R - eps(:)) * v(:)
+  w(:)  = (C_1_R - eps(:)) * w(:)
+
+ 
+! -----------------------------------------------------------------------
+! Impose top BCs at Jmax
+! -----------------------------------------------------------------------
+
+! ###################################################################
+! Final for IBM use (set flag back to .false.)
+! ###################################################################
+  IF ( imode_ibm == 1 ) burgers_ibm = .false.
+  if (ims_pro == 0) write(*,*) 'burgers_ibm end of rhs', burgers_ibm
+  if (ims_pro == 0) write(*,*) '========================================================='
 
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')

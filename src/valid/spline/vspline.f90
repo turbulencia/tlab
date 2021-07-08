@@ -175,17 +175,17 @@ program vspline
 ! ###################################################################
 ! write out data to files
   open(11, file = 'data_points.txt')  
-   do i=1,imax
+    do i=1,imax
       write(11,'(F18.14,F18.14)') x(i), y(i)
-   end do  
+    end do  
   close(11)
 
   open(12, file = 'data_exact.txt')
   open(13, file = 'data_spline.txt')  
-   do i=1,imax_new
+    do i=1,imax_new
       write(12,'(F18.14,F18.14)') x_new(i), y_new(i)
       write(13,'(F18.14,F18.14)') x_new(i), y_sp(i)
-   end do  
+    end do  
   close(12)
   close(13)
 ! ###################################################################
@@ -305,17 +305,17 @@ program vspline
 ! ###################################################################
 ! write out data to files, one line of field y2r, y2c
   open(14, file = 'data_points_large.txt')  
-   do i=1,imax2
+    do i=1,imax2
       write(14,'(F20.14,F20.14)') x2(i), y2c(i,1)
-   end do  
+    end do  
   close(14)
 
   open(15, file = 'data_spline_large_row.txt')
   open(16, file = 'data_spline_large_column.txt')  
-   do i=1,imax2_new
+    do i=1,imax2_new
       write(15,'(F20.14,F20.14)') x2_new(i), y2c_new(i,1)
       write(16,'(F20.14,F20.14)') x2_new(i), y2r_new(1,i)
-   end do  
+    end do  
   close(15)
   close(16)  
 ! ###################################################################

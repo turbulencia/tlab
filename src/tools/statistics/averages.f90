@@ -8,7 +8,7 @@
 PROGRAM AVERAGES
 
   USE DNS_TYPES,     ONLY : pointers_dt
-  USE DNS_CONSTANTS, ONLY : efile,lfile,gfile, tag_flow,tag_scal,tag_part
+  USE DNS_CONSTANTS, ONLY : ifile,efile,lfile,gfile, tag_flow,tag_scal,tag_part
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture
@@ -44,13 +44,13 @@ PROGRAM AVERAGES
   ! Local variables
   ! -------------------------------------------------------------------
   CHARACTER*512 sRes
-  CHARACTER*32 fname, inifile, bakfile
+  CHARACTER*32 fname, bakfile
   CHARACTER*32 varname(16)
   CHARACTER*64 str, line
 
   TINTEGER opt_main, opt_block, opt_order
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
-  TINTEGER nfield, ifield, isize_wrk3d, is, ij, k, bcs(2,2)
+  TINTEGER nfield, ifield, is, ij, k, bcs(2,2)
   TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3, dummy
   TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
 
@@ -82,14 +82,13 @@ PROGRAM AVERAGES
   !########################################################################
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part == 1 ) THEN
-    CALL PARTICLE_READ_GLOBAL(inifile)
+    CALL PARTICLE_READ_GLOBAL(ifile)
   END IF
 
 #ifdef USE_MPI
@@ -109,7 +108,7 @@ PROGRAM AVERAGES
   gate_level= 0
   opt_order = 1
 
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamAverages', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamAverages', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -955,20 +954,17 @@ PROGRAM AVERAGES
       END IF
 
       IF (  jmax_aux*opt_block /= g(2)%size ) THEN
-        DO ifield = 1,nfield
-          CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(ifield)%field, wrk1d)
+        DO is = 1,ifield
+          CALL REDUCE_BLOCK_INPLACE(imax,jmax,kmax, i1,i1,i1, imax,jmax_aux*opt_block,kmax, vars(is)%field, wrk1d)
         END DO
       END IF
 
       CALL AVG_N_XZ(fname, itime, rtime, imax*opt_block, jmax_aux, kmax, &
-          nfield, opt_order, vars, gate_level,gate, y_aux, mean)
+          ifield, opt_order, vars, gate_level,gate, y_aux, mean)
 
     END IF
 
   END DO
 
-  CALL DNS_END(0)
-
-  STOP
-
+  CALL DNS_STOP(0)
 END PROGRAM AVERAGES

@@ -2,8 +2,6 @@
 #include "dns_error.h"
 
 #define NMOMS_MAX 10
-! the next macro is for the format (NVARS x NMOMS)
-#define L_FORMAT_MAX 40
 
 !########################################################################
 !#
@@ -17,11 +15,6 @@ SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, av
 
   IMPLICIT NONE
 
-#include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
-
   CHARACTER*(*) fname
   TINTEGER itime
   TREAL rtime
@@ -34,17 +27,10 @@ SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, av
   ! -------------------------------------------------------------------
   TINTEGER j,iv,im
   TREAL AVG1V2D, AVG1V2D1G, moments(nm)
-  CHARACTER(LEN=32) varname(nm)
 
-#ifndef USE_NETCDF
   CHARACTER*32 str
-  CHARACTER*1024 line1
-  CHARACTER*2048 line2
-#ifdef USE_MPI
-  INTEGER ims_pro, ims_err
-  CALL MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro,ims_err)
-#endif
-#endif
+  CHARACTER*32 groupname(1) ! 3 groups for consistency with old TkStat format
+  CHARACTER*250 varname(1)  ! to be reduce to just 1 group in the future
 
   ! ###################################################################
   CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
@@ -64,63 +50,20 @@ SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, av
   END DO
 
   ! ###################################################################
-#ifdef USE_NETCDF
+  ! Output
+  ! ###################################################################
+  varname(:) = ''
+  groupname(:) = ''
   DO iv = 1,nv
-    im = 1          ! The mean
-    varname(im+(iv-1)*nm) = TRIM(ADJUSTL(vars(iv)%tag))
-    DO im = 2,nm    ! In case moments larger than 1 are used
-      WRITE(varname(im+(iv-1)*nm),*) im
-      varname(im+(iv-1)*nm)=TRIM(ADJUSTL(vars(iv)%tag))//'.'//TRIM(ADJUSTL(varname(im+(iv-1)*nm)))
+    DO im = 1,nm
+      varname(1) = TRIM(ADJUSTL(varname(1)))//' '//TRIM(ADJUSTL(vars(iv)%tag))
+      IF ( im > 1 ) THEN
+        WRITE(str,*) im; varname(1) = TRIM(ADJUSTL(varname(1)))//'.'//TRIM(ADJUSTL(str))
+      ENDIF
     END DO
   END DO
-
-  CALL IO_WRITE_AVERAGES( fname, itime,rtime, nm*nv,ny, y, varname, avg )
-
-#else
-  ! -------------------------------------------------------------------
-  ! TkStat file
-  ! -------------------------------------------------------------------
-#ifdef USE_MPI
-  IF ( ims_pro == 0 ) THEN
-#endif
-
-    IF ( nv*nm > L_FORMAT_MAX ) THEN
-      CALL IO_WRITE_ASCII(efile,'AVG2D_N. Format length too short.')
-      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-    END IF
-
-    OPEN(unit=21,file=fname)
-
-    WRITE(21, '(A8,E14.7E3)') 'RTIME = ', rtime
-    WRITE(21, '(A7,I8)') 'IMAX = ', i1
-    WRITE(21, '(A7,I8)') 'JMAX = ', ny
-
-    line2 = 'I J Y'
-
-    line1 = ' '
-    DO iv = 1,nv
-      DO im = 1,nm
-        WRITE(str,*) im; line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(vars(iv)%tag))//'Mom'//TRIM(ADJUSTL(str))
-      END DO
-    END DO
-    WRITE(21,'(A)') 'GROUP = Plane '//TRIM(ADJUSTL(line1))
-    line2 = TRIM(ADJUSTL(line2))//' '//TRIM(ADJUSTL(line1))
-
-    WRITE(21,'(A)') TRIM(ADJUSTL(line2))
-
-    DO j = 1,ny
-      WRITE(21,1010) 1, j, y(j), (avg(j,im,1),im=1,nm*nv)
-    END DO
-
-    CLOSE(21)
-
-#ifdef USE_MPI
-  END IF
-#endif
-
-1010 FORMAT(I5,(1X,I5),L_FORMAT_MAX(1X,G_FORMAT_R))
-
-#endif
+  ! for consistency with old format I pass 2 groups; no longer (Cedrick Jul 3rd 2021) 
+  CALL IO_WRITE_AVERAGES( fname, itime,rtime, ny,nv*nm,1, y, varname, groupname, avg )
 
   RETURN
 END SUBROUTINE AVG_N_XZ
@@ -168,10 +111,6 @@ SUBROUTINE INTER_N_XZ(fname, itime,rtime, nx,ny,nz, np, parname, gate, y, inter)
 
   IMPLICIT NONE
 
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
-
   CHARACTER*(*) fname, parname(np)
   TINTEGER itime
   TREAL rtime
@@ -185,13 +124,8 @@ SUBROUTINE INTER_N_XZ(fname, itime,rtime, nx,ny,nz, np, parname, gate, y, inter)
   TREAL INTER1V2D
   INTEGER(1) gate_level
 
-#ifndef USE_NETCDF
-  CHARACTER*512 line1
-#ifdef USE_MPI
-  INTEGER ims_pro, ims_err
-  CALL MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro,ims_err)
-#endif
-#endif
+  CHARACTER*32 groupname(1) ! Two groups for consistency with old TkStat format
+  CHARACTER*250 varname(1)  ! to be reduce to just 1 group in the future
 
   ! ###################################################################
   CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
@@ -204,47 +138,15 @@ SUBROUTINE INTER_N_XZ(fname, itime,rtime, nx,ny,nz, np, parname, gate, y, inter)
   END DO
 
   ! ###################################################################
-#ifdef USE_NETCDF
-  CALL IO_WRITE_AVERAGES( fname, itime,rtime, np,ny, y, parname, inter )
-
-#else
-  ! -------------------------------------------------------------------
-  ! TkStat file
-  ! -------------------------------------------------------------------
-#ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN
-#endif
-
-    IF ( np > L_FORMAT_MAX ) THEN
-      CALL IO_WRITE_ASCII(efile,'INTER2D_N. Format length too short.')
-      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-    END IF
-
-    OPEN(unit=21,file=fname)
-
-    WRITE(21, '(A8,E14.7E3)') 'RTIME = ', rtime
-    WRITE(21, '(A7,I8)') 'IMAX = ', 1
-    WRITE(21, '(A7,I8)') 'JMAX = ', ny
-
-    line1 = 'I J Y'
-    DO ip = 1,np
-      line1 = TRIM(ADJUSTL(line1))//' '//TRIM(ADJUSTL(parname(ip)))
-    ENDDO
-    WRITE(21,'(A)') TRIM(ADJUSTL(line1))
-
-    DO j = 1,ny
-      WRITE(21,1030) 1, j, y(j), (inter(j,ip),ip=1,np)
-    ENDDO
-
-    CLOSE(21)
-
-#ifdef USE_MPI
-  ENDIF
-#endif
-
-1030 FORMAT(I5,(1X,I5),(1X,G_FORMAT_R),L_FORMAT_MAX(1X,G_FORMAT_R))
-
-#endif
+  ! Output
+  ! ###################################################################
+  varname(:) = ''
+  groupname(:) = ''
+  DO ip = 1,np
+    varname(1) = TRIM(ADJUSTL(varname(1)))//' '//TRIM(ADJUSTL(parname(ip)))
+  ENDDO
+  ! for consistency with old format I pass 2 groups
+  CALL IO_WRITE_AVERAGES( fname, itime,rtime, ny,np,1, y, varname, groupname, inter )
 
   RETURN
 END SUBROUTINE INTER_N_XZ

@@ -22,16 +22,16 @@
 !# Reads position data of the largest files for the start of simulation.
 !#
 !# Position data from the start of simulation is provided by program
-!# l_pos_trajec.x. The file is called pos_largest_file_start. 
-!# 
-!# Less particles are created by setting smaller number for 
+!# l_pos_trajec.x. The file is called pos_largest_file_start.
+!#
+!# Less particles are created by setting smaller number for
 !# particle_number in dns.ini. Afterwards particles are exchanged with
 !# position of the largest particles determined before with l_trajec.x
 !# and l_pos_trajec.x
 !#
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 PROGRAM LAGRANGE_INI_TRAJEC
@@ -39,7 +39,7 @@ PROGRAM LAGRANGE_INI_TRAJEC
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
- 
+
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -51,11 +51,11 @@ PROGRAM LAGRANGE_INI_TRAJEC
 #endif
 
 ! -------------------------------------------------------------------
-  TINTEGER  ierr,isize_wrk3d
+  TINTEGER  ierr
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:),      ALLOCATABLE, SAVE :: wrk1d,wrk2d, wrk3d
   TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE :: txc
-  
+
   TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
   TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
 
@@ -71,7 +71,6 @@ PROGRAM LAGRANGE_INI_TRAJEC
 
   TINTEGER nitera_first
 
-  CHARACTER*32 inifile
   CHARACTER*64 str, line
   CHARACTER*32 bakfile
 
@@ -80,24 +79,25 @@ PROGRAM LAGRANGE_INI_TRAJEC
   TINTEGER particle_pos, i
   TLONGINTEGER dummy
 #endif
-  inifile = 'dns.ini'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) THEN
-     CALL PARTICLE_READ_GLOBAL('dns.ini')
+     CALL PARTICLE_READ_GLOBAL(ifile)
   ENDIF
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
 #endif
 
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
+
 ! Get the local information from the dns.ini
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Start',      '0',  nitera_first)
+  CALL SCANINIINT(bakfile, ifile, 'Iteration', 'Start',      '0',  nitera_first)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
-! -------------------------------------------------------------------      
+! -------------------------------------------------------------------
   ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   ALLOCATE(wrk2d(isize_wrk2d))
 
@@ -115,7 +115,7 @@ PROGRAM LAGRANGE_INI_TRAJEC
      CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
      CALL DNS_STOP(DNS_ERROR_ALLOC)
   ENDIF
-  
+
   ALLOCATE(dummy_proc(isize_trajectory))
   ALLOCATE(l_trajectories_tags(isize_trajectory))
   ALLOCATE(fake_l_trajectories_tags(isize_trajectory))
@@ -131,7 +131,7 @@ fake_liquid(:) = C_0_R
 all_fake_liquid(:) = C_0_R
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
@@ -156,7 +156,7 @@ all_fake_liquid(:) = C_0_R
     READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_trajectory+3*isize_trajectory*SIZEOFREAL) dummy_proc ! attention is integer(8)
     CLOSE(117)
   ENDIF
-  
+
   !#######################################################################
   !BROADCAST INFORMATION OF LARGEST PARTICLES
   !#######################################################################
@@ -166,7 +166,7 @@ all_fake_liquid(:) = C_0_R
   CALL MPI_BCAST(dummy_proc,isize_trajectory,MPI_INTEGER4,0,MPI_COMM_WORLD,ims_err)
 
   !#######################################################################
-  !REPLACE THE FIRST PARTICLES WITH THE LARGEST 
+  !REPLACE THE FIRST PARTICLES WITH THE LARGEST
   !CORRESPONDING TO THE PROCESSORS
   !#######################################################################
   dummy=1
@@ -195,7 +195,7 @@ all_fake_liquid(:) = C_0_R
     OPEN(unit=15, file=fname, access='stream', form='unformatted')
     INQUIRE(UNIT=15, POS=particle_pos) !would be 1
     WRITE (15)  ims_npro  !header
-    INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
+    INQUIRE(UNIT=15, POS=particle_pos) !would be 5
     WRITE (15)  isize_trajectory  !header
     INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
     WRITE (15)  fake_liquid ! just to be consistent with other output file
@@ -211,7 +211,5 @@ all_fake_liquid(:) = C_0_R
 
 
 #endif
-CALL DNS_END(0)
-
-  STOP
+CALL DNS_STOP(0)
 END PROGRAM LAGRANGE_INI_TRAJEC

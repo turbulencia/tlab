@@ -7,9 +7,9 @@ endif()
 
 
 if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build
-   set(ENV{FC} /opt/local/bin/mpif90)
-   set(CMAKE_Fortran_COMPILER /opt/local/bin/mpif90)
-   set(USER_Fortran_FLAGS     "-ffree-form -ffree-line-length-2048 -fno-automatic -O3 -cpp -arch x86_64 -ffast-math -ffinite-math-only -funroll-loops -mtune=native -Wunused")
+   set(ENV{FC} /opt/local/bin/mpif90-mpich-gcc10)
+   set(CMAKE_Fortran_COMPILER /opt/local/bin/mpif90-mpich-gcc10)
+   set(USER_Fortran_FLAGS     "-fallow-argument-mismatch -ffree-form -ffree-line-length-2048 -fno-automatic -O3 -cpp -arch x86_64 -ffast-math -ffinite-math-only -funroll-loops -mtune=native -Wunused")
 #   set(USER_Fortran_FLAGS_RELEASE  "-O3 -cpp -arch x86_64 -ffast-math -ffinite-math-only -funroll-loops -mtune=native ")
 
    add_definitions(-DUSE_MPI -DUSE_ALLTOALL -DUSE_MPI_IO -DUSE_FFTW)
@@ -21,7 +21,7 @@ else() # compiler for serial build
    set(USER_Fortran_FLAGS          "-cpp -fallow-argument-mismatch -ffree-form -ffree-line-length-2048 -fno-automatic")
 
 #   add_definitions(-DUSE_PSFFT -DUSE_FFTW)
-   add_definitions( -DUSE_FFTW -DUSE_NETCDF)
+   add_definitions( -DUSE_FFTW)
 
    if    ( ${BUILD_TYPE} STREQUAL "BIG" )
      set(USER_Fortran_FLAGS_RELEASE  "-O3 -fconvert=big-endian    -mtune=native -ffast-math -ffinite-math-only -funroll-loops")
@@ -42,6 +42,8 @@ else() # compiler for serial build
    endif()
 
 endif()
+
+add_definitions(-DUSE_NETCDF)
 
 set(GNU_SED "gsed")
 

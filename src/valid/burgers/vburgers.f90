@@ -1,8 +1,8 @@
-#include "types.h"  
+#include "types.h"
 #include "dns_const.h"
 
 PROGRAM VBURGERS
-  
+
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
 
@@ -14,18 +14,17 @@ PROGRAM VBURGERS
   TREAL, DIMENSION(:,:,:), ALLOCATABLE :: a, b, c
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: wrk1d, wrk2d
   TREAL, DIMENSION(:),     ALLOCATABLE :: wrk3d, tmp1
-  
+
   TINTEGER i, j, k,  bcs(2,2)
-  TINTEGER isize_wrk3d
   TREAL dummy, error
 
 ! ###################################################################
   CALL DNS_INITIALIZE
-  
+
   CALL DNS_READ_GLOBAL('dns.ini')
-#ifdef USE_MPI 
-  CALL DNS_MPI_INITIALIZE  
-#endif 
+#ifdef USE_MPI
+  CALL DNS_MPI_INITIALIZE
+#endif
 
   isize_wrk3d = isize_txc_field
 
@@ -62,10 +61,10 @@ PROGRAM VBURGERS
         ENDDO
      ENDDO
   ENDDO
-  
+
   CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), a,a,a, c, tmp1, wrk2d,wrk3d)
   c = c -b
-  
+
   error = C_0_R
   dummy = C_0_R
   DO k = 1,kmax
@@ -78,7 +77,7 @@ PROGRAM VBURGERS
   ENDDO
   WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
 !  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, e, wrk3d)
-  
+
 ! ###################################################################
   CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), a,b, c, wrk2d,wrk3d)
   DO k = 1,kmax
@@ -89,10 +88,10 @@ PROGRAM VBURGERS
         ENDDO
      ENDDO
   ENDDO
-  
+
   CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, g(2), a,a,a, c, tmp1, wrk2d,wrk3d)
   c = c -b
-  
+
   error = C_0_R
   dummy = C_0_R
   DO k = 1,kmax
@@ -108,7 +107,7 @@ PROGRAM VBURGERS
 
 ! ###################################################################
   IF ( g(3)%size .GT. 1 ) THEN
-     
+
   CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), a,b, c, wrk2d,wrk3d)
   DO k = 1,kmax
      DO j = 1,jmax
@@ -118,10 +117,10 @@ PROGRAM VBURGERS
         ENDDO
      ENDDO
   ENDDO
-  
+
   CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, g(3), a,a,a, c, tmp1, wrk2d,wrk3d)
   c = c -b
-  
+
   error = C_0_R
   dummy = C_0_R
   DO k = 1,kmax
@@ -137,7 +136,5 @@ PROGRAM VBURGERS
 
   END IF
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL DNS_STOP(0)
 END PROGRAM VBURGERS

@@ -24,7 +24,7 @@
 !# Read & write a file of size (nx*ims_npro_i)x(ny*ims_npro_y)x(nz*ims_npro_z)
 !#
 !# There are PARALLEL (only MPI_IO) and SERIAL modes
-!# 
+!#
 !# IEEE double precision floating point representation.
 !# Unformatted records
 !# Byte ordering is big-endian
@@ -117,7 +117,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 
   ELSE
      mpio_disp = 0
-     
+
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -146,7 +146,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 #else
 ! ###################################################################
 ! Serial case
-! ###################################################################      
+! ###################################################################
 #include "dns_open_file.h"
   REWIND(LOC_UNIT_ID)
 
@@ -172,7 +172,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 END SUBROUTINE IO_READ_FIELDS_SPLIT
 
 #undef LOC_UNIT_ID
-#undef LOC_STATUS 
+#undef LOC_STATUS
 
 !########################################################################
 !########################################################################
@@ -243,12 +243,12 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 ! -------------------------------------------------------------------
   IF ( ims_pro .EQ. 0 ) THEN
 #include "dns_open_file.h"
-     IF ( iheader .GT. 0 ) THEN 
+     IF ( iheader .GT. 0 ) THEN
         CALL IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total,ny_total,nz_total,nt, params)
 
 ! Displacement to start of field
         header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
-        
+
      ELSE
         header_offset = 0
 
@@ -288,7 +288,7 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 #else
 ! ###################################################################
 ! Serial case
-! ###################################################################      
+! ###################################################################
 #include "dns_open_file.h"
 
 ! -------------------------------------------------------------------
@@ -327,7 +327,7 @@ SUBROUTINE IO_READ_HEADER(unit, offset, nx,ny,nz,nt, params)
 !########################################################################
   READ(unit) offset, nx_loc, ny_loc, nz_loc, nt_loc
 
-  isize = offset - 5*SIZEOFINT 
+  isize = offset - 5*SIZEOFINT
   IF ( isize .GT. 0 .AND. MOD(isize,SIZEOFREAL) .EQ. 0 ) THEN
      isize = isize/SIZEOFREAL
      READ(unit) params(1:isize)
@@ -346,7 +346,7 @@ SUBROUTINE IO_READ_HEADER(unit, offset, nx,ny,nz,nt, params)
   ENDIF
 
   IF ( nt .NE. nt_loc ) THEN
-     CALL IO_WRITE_ASCII(wfile, 'IO_READ_HEADER. ItNumber size mismatch. Updated to filename value.')
+     CALL IO_WRITE_ASCII(wfile, 'IO_READ_HEADER. ItNumber mismatch. Filename value ignored.')
 !     nt = nt_loc
   ENDIF
 
@@ -356,7 +356,7 @@ END SUBROUTINE IO_READ_HEADER
 !########################################################################
 !########################################################################
 SUBROUTINE IO_WRITE_HEADER(unit, isize, nx,ny,nz,nt, params)
-  
+
   IMPLICIT NONE
 
   TINTEGER unit, isize, nx,ny,nz,nt

@@ -59,13 +59,13 @@ SUBROUTINE DNS_MPI_TRPB_K(b, a, dsend, drecv, tsend, trecv)
      nr=ims_plan_trpr_k(m)+1; ipr=nr-1  
      IF ( ims_trp_mode_k .EQ. DNS_MPI_TRP_ASYNCHRONOUS ) THEN 
         l = l + 1
-        CALL MPI_ISEND(b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag, ims_comm_z, mpireq(l), ims_err)
+        CALL MPI_ISEND(b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag, ims_comm_z, mpireq(l), ims_err)
         l = l + 1
-        CALL MPI_IRECV(a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, ims_comm_z, mpireq(l), ims_err) 
+        CALL MPI_IRECV(a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_z, mpireq(l), ims_err) 
      ELSEIF ( ims_trp_mode_k .EQ. DNS_MPI_TRP_SENDRECV ) THEN 
         CALL MPI_SENDRECV(& 
-             b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag,  & 
-             a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, ims_comm_z, status(1,m), ims_err)   
+             b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag,  & 
+             a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_z, status(1,m), ims_err)   
      ELSE; CONTINUE   ! No transpose
      ENDIF
   ENDDO
@@ -113,13 +113,13 @@ SUBROUTINE DNS_MPI_TRPB_I(b, a, dsend, drecv, tsend, trecv)
      nr=ims_plan_trpr_i(m)+1; ipr=nr-1  
      IF ( ims_trp_mode_i .EQ. DNS_MPI_TRP_ASYNCHRONOUS ) THEN 
         l = l + 1
-        CALL MPI_ISEND(b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag, ims_comm_x, mpireq(l), ims_err)
+        CALL MPI_ISEND(b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag, ims_comm_x, mpireq(l), ims_err)
         l = l + 1
-        CALL MPI_IRECV(a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, ims_comm_x, mpireq(l), ims_err)
+        CALL MPI_IRECV(a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_x, mpireq(l), ims_err)
      ELSEIF ( ims_trp_mode_i .EQ. DNS_MPI_TRP_SENDRECV ) THEN 
         CALL MPI_SENDRECV(& 
-             b(drecv(nr)+1), 1, trecv(nr), ipr, ims_tag,&
-             a(dsend(ns)+1), 1, tsend(ns), ips, ims_tag, ims_comm_x, status(1,m), ims_err)  
+             b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag,&
+             a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_x, status(1,m), ims_err)  
      ELSE; CONTINUE    ! No transpose
      ENDIF
   ENDDO

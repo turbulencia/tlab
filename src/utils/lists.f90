@@ -24,9 +24,6 @@ SUBROUTINE LIST_STRING(line, n, a)
       l2 = INDEX(line(l1:lmax),' ')                 ! relative position of first blank in remaining string
 
       i = i +1
-      IF ( i > n ) THEN
-        CALL DNS_STOP(DNS_ERROR_PARAMETER)
-      END IF
       IF ( l2 == 0 ) THEN                           ! we found the last element
         a(i) = line(l1:lmax)
         EXIT
@@ -34,6 +31,7 @@ SUBROUTINE LIST_STRING(line, n, a)
         a(i) = line(l1:l1+l2-1)
         l1 = lmax -LEN_TRIM(ADJUSTL(line(l1+l2:lmax))) +1
       END IF
+      IF ( i == n ) EXIT
 
     END DO
   END IF

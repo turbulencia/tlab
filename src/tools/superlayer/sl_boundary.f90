@@ -13,7 +13,7 @@
 !#
 !########################################################################
 PROGRAM SL_BOUNDARY
-  
+
   USE DNS_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI,   ONLY : ims_pro, ims_err
@@ -29,7 +29,7 @@ PROGRAM SL_BOUNDARY
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  
+
 ! Flow variables
   TREAL, DIMENSION(:,:), ALLOCATABLE, TARGET :: q
   TREAL, DIMENSION(:),   ALLOCATABLE         :: s, field
@@ -39,7 +39,7 @@ PROGRAM SL_BOUNDARY
 
 ! Surface arrays
   TREAL, DIMENSION(:,:), ALLOCATABLE         :: sl, samples
-  
+
   TREAL txc(:)
   ALLOCATABLE txc
 
@@ -54,7 +54,7 @@ PROGRAM SL_BOUNDARY
   TREAL threshold, vmin, vmax
   TINTEGER buff_nps_u_jmin, buff_nps_u_jmax
   CHARACTER*64 str
-  CHARACTER*32 fname, inifile, bakfile
+  CHARACTER*32 fname, bakfile
 
   TINTEGER itime_size_max, itime_size, i
   PARAMETER(itime_size_max=128)
@@ -68,20 +68,19 @@ PROGRAM SL_BOUNDARY
 #endif
 
   TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
-  
+
 ! ###################################################################
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
 #endif
 
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUJmax', '0', buff_nps_u_jmax)
+  CALL SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)
+  CALL SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmax', '0', buff_nps_u_jmax)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space
@@ -172,7 +171,7 @@ PROGRAM SL_BOUNDARY
 ! -------------------------------------------------------------------
 ! Further allocation of memory space
 ! -------------------------------------------------------------------
-  IF      ( iopt .EQ. 1 ) THEN; itxc_size = isize_field*2; nfield = 1; 
+  IF      ( iopt .EQ. 1 ) THEN; itxc_size = isize_field*2; nfield = 1;
   ELSE IF ( iopt .EQ. 2 ) THEN; itxc_size = isize_field*6; nfield = 5; iread_flow = 1; iread_scal = 1
   ELSE IF ( iopt .GE. 3 ) THEN; itxc_size = isize_field*6; nfield = 4; iread_flow = 1; iread_scal = 0
   ENDIF
@@ -192,7 +191,7 @@ PROGRAM SL_BOUNDARY
   IF ( iopt .LE. 2 ) ALLOCATE(field(isize_field))
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
 #include "dns_read_grid.h"
 
@@ -230,7 +229,7 @@ PROGRAM SL_BOUNDARY
      IF ( iopt .EQ. 1 ) THEN
         jmin_loc = MAX(1,buff_nps_u_jmin)                 ! remove buffers
         jmax_loc = MIN(jmax,jmax - buff_nps_u_jmax +1)
-        
+
 ! Based on scalar
         IF ( iint .EQ. 1 ) THEN
            IF      ( ith .EQ. 1 ) THEN ! relative to max
@@ -241,7 +240,7 @@ PROGRAM SL_BOUNDARY
            ENDIF
            CALL SL_UPPER_BOUNDARY(imax,jmax,kmax, jmax_loc, vmin, y, s, txc, sl(1,1), wrk2d)
            CALL SL_LOWER_BOUNDARY(imax,jmax,kmax, jmin_loc, vmin, y, s, txc, sl(1,2), wrk2d)
-        
+
 ! Based on vorticity
         ELSE IF ( iint .EQ. 2 ) THEN
            CALL IO_WRITE_ASCII(lfile,'Calculating vorticity...')
@@ -252,7 +251,7 @@ PROGRAM SL_BOUNDARY
            ELSE IF ( ith .EQ. 2 ) THEN ! absolute
               vmin = threshold
            ENDIF
-           
+
            CALL SL_UPPER_BOUNDARY(imax,jmax,kmax, jmax_loc, vmin, y, field, txc, sl(1,1), wrk2d)
            CALL SL_LOWER_BOUNDARY(imax,jmax,kmax, jmin_loc, vmin, y, field, txc, sl(1,2), wrk2d)
 
@@ -269,7 +268,7 @@ PROGRAM SL_BOUNDARY
            ELSE IF ( ith .EQ. 2 ) THEN ! absolute
               vmin = threshold
            ENDIF
-           
+
            CALL SL_UPPER_BOUNDARY(imax,jmax,kmax, jmax_loc, vmin, y, field, txc, sl(1,1), wrk2d)
            CALL SL_LOWER_BOUNDARY(imax,jmax,kmax, jmin_loc, vmin, y, field, txc, sl(1,2), wrk2d)
 
@@ -307,7 +306,5 @@ PROGRAM SL_BOUNDARY
 
   ENDDO
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL DNS_STOP(0)
 END PROGRAM SL_BOUNDARY

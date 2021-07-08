@@ -49,8 +49,8 @@ PROGRAM APRIORI
 ! -------------------------------------------------------------------
   TINTEGER opt_main, opt_block, opt_order, opt_format
   TINTEGER iq, is, ig, ij, bcs(2,2)
-  TINTEGER nfield, isize_wrk3d, idummy, iread_flow, iread_scal, jmax_aux, ierr, MaskSize
-  CHARACTER*32  fname, inifile, bakfile, flow_file, scal_file, plot_file, time_str
+  TINTEGER nfield, idummy, iread_flow, iread_scal, jmax_aux, ierr, MaskSize
+  CHARACTER*32  fname, bakfile, flow_file, scal_file, plot_file, time_str
   CHARACTER*64 str, line
   TINTEGER subdomain(6)
 
@@ -68,12 +68,11 @@ PROGRAM APRIORI
 ! ###################################################################
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
@@ -99,7 +98,7 @@ PROGRAM APRIORI
   opt_gate   = 0
   opt_order  = 1
 
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamStructure', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamStructure', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -116,7 +115,7 @@ PROGRAM APRIORI
   ENDIF
 
 ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Subdomain', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
   IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI
@@ -336,8 +335,5 @@ PROGRAM APRIORI
 
   ENDDO
 
-  CALL DNS_END(0)
-
-  STOP
-
+  CALL DNS_STOP(0)
 END PROGRAM APRIORI

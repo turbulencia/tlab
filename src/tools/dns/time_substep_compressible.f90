@@ -20,12 +20,12 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# txc   In    3D auxiliar array of size 6 or 9
 !#
 !########################################################################
-SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, wrk1d,wrk2d,wrk3d)
+SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, txc, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -35,9 +35,6 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
   USE THERMO_GLOBAL, ONLY : gama0
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-#ifdef LES
-  USE DNS_LOCAL, ONLY : rkm_substep
-#endif
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -55,7 +52,6 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
   TREAL dte, etime
 
   TREAL, DIMENSION(isize_field,*) :: q, hq, s, hs, txc
-  TREAL, DIMENSION(*)             :: q_inf, s_inf
   TREAL, DIMENSION(*)             :: wrk1d, wrk2d, wrk3d
 
   TARGET :: q, hq
@@ -91,7 +87,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
   h3 => hq(:,3)
   h4 => hq(:,4)
   h0 => hq(:,5)
- 
+
 ! ###################################################################
 ! Evaluate standard RHS of equations
 ! global formulation
@@ -196,17 +192,8 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
 #endif
 
 ! ###################################################################
-! Evaluate LES terms of the RHS of equations
-! ###################################################################
-#ifdef LES
-  IF ( iles .EQ. 1 ) THEN
-     CALL LES_RHS(rkm_substep, q,hq, s,hs, txc, vaux, wrk1d,wrk2d,wrk3d)
-  ENDIF
-#endif
-
-! ###################################################################
 ! Impose boundary conditions
-! Temperature array T is used as auxiliary array because it is no 
+! Temperature array T is used as auxiliary array because it is no
 ! longer used until the fields are updated
 ! ###################################################################
 #define GAMMA_LOC(i) txc(i,6)
@@ -235,8 +222,7 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
 
   IF ( .NOT. g(1)%periodic ) THEN
      CALL BOUNDARY_BCS_X(isize_field, M2_max, etime, rho,u,v,w,p,GAMMA_LOC(1),s, &
-          q_inf,s_inf, &
-          h0,h1,h2,h3,h4,hs, txc, AUX_LOC(1), wrk2d,wrk3d)
+          h0,h1,h2,h3,h4,hs, txc, AUX_LOC(1), wrk1d,wrk2d,wrk3d)
   ENDIF
 
 #undef GAMMA_LOC
@@ -246,14 +232,12 @@ SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE(dte, etime, q,hq, s,hs, q_inf,s_inf, txc, w
 ! Impose buffer zone as relaxation terms
 ! ###################################################################
   IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
-     CALL BOUNDARY_BUFFER_RELAXATION_FLOW(q, hq)
-     DO is = 1,inb_scal
-        CALL BOUNDARY_BUFFER_RELAXATION_SCAL(is, rho,s(1,is), hs(1,is)) 
-     ENDDO
+     CALL BOUNDARY_BUFFER_RELAX_FLOW(q,hq)
+     CALL BOUNDARY_BUFFER_RELAX_SCAL(s,hs, q)
   ENDIF
 
 ! ###################################################################
-! Perform the time stepping 
+! Perform the time stepping
 ! ###################################################################
   rho_ratio = C_1_R
   prefactor = (gama0-C_1_R)*mach*mach
