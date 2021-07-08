@@ -14,8 +14,8 @@ build_BIG/*
 build_LITTLE/* 
 build_PARALLEL/*
 build_DEBUG/*
+build_litle/*
+build_spline/*
 *~
 */*~
 */*/*~
-build_litle/* 
-build_spline/* 
