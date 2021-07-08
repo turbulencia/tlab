@@ -52,10 +52,10 @@ module DNS_IBM
   TREAL, dimension(:),     allocatable :: epsi, epsj, epsk, eps  ! eps    transposed in i/j/k
   TREAL, dimension(:),     allocatable :: nobi, nobj, nobk       ! number of objects in i/j/k 
   TREAL, dimension(:),     allocatable :: nobi_b, nobj_b, nobk_b ! beginn of objects in i/j/k 
-  TREAL, dimension(:),     allocatable :: nobi_e, nobj_e, nobk_e ! end    of objects in i/j/k 
-
+  TREAL, dimension(:),     allocatable :: nobi_e, nobj_e, nobk_e ! end    of objects in i/j/k
+  
   ! puplish only needed subroutines here  
-  public :: ALLOCATE_IBM, INITIALIZE_GEOMETRY, OPR_PARTIAL2D_IBM
+  public :: ALLOCATE_IBM, INITIALIZE_GEOMETRY
 
   ! puplish only needed fields here  
   public :: eps
@@ -821,7 +821,6 @@ contains
 #endif
 
     if (ims_pro == 0) then
-      write(*,*) '========================================================='
       write(*,*) 'nobk_b     =', size(nobk_b)
       write(*,*) 'nobk_b_out =', size(nobk_b_out)
       write(*,*) 'nobk_e     =', size(nobk_e)
@@ -1211,135 +1210,11 @@ contains
     tmp4(:) = C_0_R  
 
     if (ims_pro == 0) write(*,*) 'done writing nobk3d_b, nobk3d_e'
+    if (ims_pro == 0) write(*,*) '========================================================='
 
     return
   end subroutine GENERATE_GEOMETRY
   !########################################################################
-    ! -------------------------------------------------------------------
-    ! Here: 
-    ! -------------------------------------------------------------------
-    ! First Derivative 
-    ! Second Derivative includes
-    !       factor 1    (is=-1)
-    !       viscosity   (is= 0)
-    !       diffusivity (is= 1,inb_scal)
-    ! -------------------------------------------------------------------
-
-  SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
-
-    USE DNS_TYPES, ONLY : grid_dt
-  
-    IMPLICIT NONE
-  
-    TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity
-    TINTEGER,                        INTENT(IN)    :: nlines ! # of lines to be solved
-    TINTEGER, DIMENSION(2,*),        INTENT(IN)    :: bcs    ! BCs at xmin (1,*) and xmax (2,*):
-                                                             !     0 biased, non-zero
-                                                             !     1 forced to zero
-    TYPE(grid_dt),                   INTENT(IN)    :: g
-    TREAL, DIMENSION(nlines,g%size), INTENT(IN)    :: u
-    TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result
-    TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
-    TREAL, DIMENSION(nlines,g%size), INTENT(INOUT) :: wrk3d  ! First derivative
-  
-    TREAL, DIMENSION(:,:), POINTER :: lu2_p
-  
-  
-  ! -------------------------------------------------------------------
-    TINTEGER ip
-  
-    ! ###################################################################
-    ! always calculate first derivative as this routine is normally called from opr_burgers 
-    ! ###################################################################
-    CALL OPR_PARTIAL1(nlines, bcs, g, u,wrk3d, wrk2d)
-  
-    IF ( is .GE. 0 ) THEN
-       IF ( g%periodic ) THEN
-          lu2_p => g%lu2d(:,is*5+1:)  ! periodic;     including diffusivity/viscosity
-       ELSE
-          lu2_p => g%lu2d(:,is*3+1:)  ! non-periodic; including diffusivity/viscosity
-       ENDIF
-    ELSE
-       IF ( g%periodic ) THEN
-          lu2_p => g%lu2(:,1:)        ! periodic;     plain derivative
-       ELSE
-          ip = (bcs(1,2)+bcs(2,2)*2)*3! non-periodic; plain derivative
-          lu2_p => g%lu2(:,ip+1:)
-       ENDIF
-    ENDIF
-  
-    ! ###################################################################
-    IF ( g%periodic ) THEN
-       SELECT CASE( g%mode_fdm )
-  
-       CASE( FDM_COM4_JACOBIAN )
-          CALL FDM_C2N4P_RHS(g%size,nlines, u, result)
-  
-       CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
-          CALL FDM_C2N6HP_RHS(g%size,nlines, u, result)
-  
-       CASE( FDM_COM8_JACOBIAN )                  ! Not yet implemented
-          CALL FDM_C2N6P_RHS(g%size,nlines, u, result)
-  
-       END SELECT
-  
-       CALL TRIDPSS(g%size,nlines, lu2_p(1,1),lu2_p(1,2),lu2_p(1,3),lu2_p(1,4),lu2_p(1,5), result,wrk2d)
-  
-    ! -------------------------------------------------------------------
-    ELSE
-       SELECT CASE( g%mode_fdm )
-  
-       CASE( FDM_COM4_JACOBIAN )
-          IF ( g%uniform ) THEN
-             CALL FDM_C2N4_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
-          ELSE ! Not yet implemented
-          ENDIF
-  
-       CASE( FDM_COM6_JACOBIAN )
-          IF ( g%uniform ) THEN
-            CALL FDM_C2N6H_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
-          ELSE
-             ! need first derivative from above 
-            CALL FDM_C2N6HNJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, u, wrk3d, result)
-          ENDIF
-  
-       CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
-          IF ( g%uniform ) THEN
-             CALL FDM_C2N6_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
-          ELSE
-             ! Need first derivative from above
-             CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, u, wrk3d, result)
-          ENDIF
-  
-       CASE( FDM_COM6_DIRECT   )
-          CALL FDM_C2N6ND_RHS(g%size,nlines, g%lu2(1,4), u, result)
-  
-       END SELECT
-  
-       CALL TRIDSS(g%size,nlines, lu2_p(1,1),lu2_p(1,2),lu2_p(1,3), result)
-  
-    ENDIF
-  
-    RETURN
-  END SUBROUTINE OPR_PARTIAL2D_IBM
-  
-  
- ! ###################################################################
- ! ###################################################################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   subroutine BOUNDARY_BCS_IBM_FLOW()
 
     implicit none

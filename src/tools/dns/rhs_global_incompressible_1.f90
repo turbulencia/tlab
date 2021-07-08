@@ -25,6 +25,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_CONSTANTS,ONLY:tfile
 #endif
   USE DNS_GLOBAL, ONLY : imode_eqns
+  USE DNS_GLOBAL, ONLY : imode_ibm, burgers_ibm
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : rbackground, ribackground
@@ -35,6 +36,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
   USE DNS_IBM,    ONLY : eps
+
+! ############################################# ! 
+! DEBUG ####################################### !
+#ifdef USE_MPI
+  use DNS_MPI,    only: ims_pro
+#endif
+! ############################################# !   
 
   IMPLICIT NONE
 
@@ -49,6 +57,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
   TARGET h2, hs
 
+! ############################################# ! 
+! DEBUG ####################################### !
+#ifdef USE_MPI
+#else
+    TINTEGER, parameter  ::  ims_pro=0  
+#endif
+! ############################################# ! 
 ! -----------------------------------------------------------------------
   TINTEGER iq, is, ij, k, nxy, ip_b, ip_t
   TINTEGER ibc, bcs(2,2)
@@ -97,6 +112,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      ip_b = ip_b + nxy ! bottom BC address
      ip_t = ip_t + nxy ! top BC address
   ENDDO
+
+! ###################################################################
+! Preliminaries for IBM use
+! (if .true., OPR_BURGERS_X/Y/Z uses modified fields for derivatives)
+! ###################################################################
+  IF ( imode_ibm == 1 ) burgers_ibm = .true. ! global flag for IBM usage
+  if (ims_pro == 0) write(*,*) 'burgers_ibm start of rhs', burgers_ibm
 
 ! #######################################################################
 ! Ox diffusion and convection terms in Ox momentum eqn
@@ -434,7 +456,12 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Impose top BCs at Jmax
 ! -----------------------------------------------------------------------
 
-
+! ###################################################################
+! Final for IBM use (set flag back to .false.)
+! ###################################################################
+  IF ( imode_ibm == 1 ) burgers_ibm = .false.
+  if (ims_pro == 0) write(*,*) 'burgers_ibm end of rhs', burgers_ibm
+  if (ims_pro == 0) write(*,*) '========================================================='
 
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')

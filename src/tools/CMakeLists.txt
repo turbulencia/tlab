@@ -18,7 +18,7 @@ list(REMOVE_ITEM sourcefiles ${to_remove})
 endif()
 
 add_executable(dns.x ${sourcefiles})
-target_link_libraries(dns.x mappings operators lagrange pdfs averages filters fdm linear io thermodynamics ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(dns.x mappings operators ibm lagrange pdfs averages filters fdm linear io thermodynamics ${LEVEL1_LIBS} ${LIBS})
 if (PSFFT_LIB)
 set_source_files_properties(dns/rhs_global_incompressible_nbc.f90 PROPERTIES COMPILE_FLAGS "${PSFFT_COMPILE_FLAGS}")
 set_target_properties(dns.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")

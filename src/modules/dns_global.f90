@@ -152,5 +152,7 @@ MODULE DNS_GLOBAL
 ! Immersed Boundary Method (IBM)
 ! ###########################################################
   TINTEGER, DIMENSION(3)              :: xbars_geo    ! bars in x, xbars_geo(3)=[nbars,hbar,wbar]
+  LOGICAL                             :: burgers_ibm, burgers_x_ibm, burgers_y_ibm,burgers_z_ibm
+
 
 END MODULE DNS_GLOBAL
