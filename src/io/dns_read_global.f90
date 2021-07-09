@@ -1062,7 +1062,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
 ! ###################################################################
-! Final initialization
+! Final consistency check and initialization
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
 
@@ -1307,6 +1307,19 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error MAX_VARS < inb_flow + inb_scal')
      CALL DNS_STOP(DNS_ERROR_TOTALVARS)
   ENDIF
+
+  SELECT CASE ( imode_eqns )
+  CASE( DNS_EQNS_INCOMPRESSIBLE,DNS_EQNS_ANELASTIC )
+    IF ( iviscous /= EQNS_EXPLICIT ) THEN
+      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Main.TermViscous undeveloped.')
+      CALL DNS_STOP(DNS_ERROR_OPTION)
+    END IF
+    IF ( idiffusion /= EQNS_EXPLICIT ) THEN
+      CALL IO_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Main.TermDiffusion undeveloped.')
+      CALL DNS_STOP(DNS_ERROR_OPTION)
+    END IF
+  CASE( DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL )
+  END SELECT
 
   RETURN
 END SUBROUTINE DNS_READ_GLOBAL

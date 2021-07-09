@@ -10,7 +10,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
   USE DNS_GLOBAL,    ONLY : pbg, rbg
-  USE DNS_GLOBAL,    ONLY : imode_sim, inb_flow,inb_scal, isize_wrk1d, isize_wrk2d
+  USE DNS_GLOBAL,    ONLY : inb_flow,inb_scal, isize_wrk1d, isize_wrk2d
+  USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : FilterDomain
   USE DNS_TYPES,     ONLY : MAX_MODES
@@ -865,6 +866,11 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Non-uniform grid requires a direct FDM formulation.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
+
+     IF ( imode_eqns /= DNS_EQNS_INCOMPRESSIBLE ) THEN
+       CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Implicit formulation only available for incompressible case.')
+       CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+    ENDIF
 
   ENDIF
 
