@@ -1,13 +1,4 @@
-module IBM_TEST
-
-  public
-  contains
-  !######################################################################
-  subroutine TEST()
-
-    implicit none
-
-    write(*,*) '======== This is an IBM lib test ==================='
-  end subroutine TEST
-!########################################################################
-end module IBM_TEST
+SUBROUTINE DNS_IBM_TEST()
+  ! USE DNS_IBM
+  WRITE(*,*) 'TESTING IBM COMPILATION'
+END SUBROUTINE DNS_IBM_TEST
