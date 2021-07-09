@@ -19,7 +19,7 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
   USE DNS_TYPES,     ONLY : grid_dt
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL,    ONLY : burgers_ibm
-  USE DNS_IBM,       ONLY : ibm_idummy 
+  ! USE DNS_IBM,       ONLY : ibm_idummy 
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity
@@ -45,7 +45,7 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
   ! wrk3d: 1st derivative; result: 2nd derivative including diffusivity
   IF (burgers_ibm) THEN
     CALL OPR_PARTIAL2D_IBM(is,nlines,bcs,g,s,result,wrk2d,wrk3d)
-    CALL DNS_IBM_TEST()
+    ! CALL DNS_IBM_TEST()
   ELSE
     CALL OPR_PARTIAL2D(    is,nlines,bcs,g,s,result,wrk2d,wrk3d)
   ENDIF

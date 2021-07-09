@@ -291,7 +291,6 @@ PROGRAM DNS
   ! ###################################################################
   IF ( imode_ibm == 1 ) THEN
     CALL INITIALIZE_GEOMETRY(txc, wrk3d)
-    ! CALL INITIALIZE_IBM()
   ENDIF  
 
   ! ###################################################################

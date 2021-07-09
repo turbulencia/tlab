@@ -443,6 +443,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ! n = n + 1
   ! epsi = reshape(eps,(/isize_field/))
   ! apply new BCs
+
+
   h1(:) = (C_1_R - eps(:)) * h1(:)
   h2(:) = (C_1_R - eps(:)) * h2(:)
   h3(:) = (C_1_R - eps(:)) * h3(:)
