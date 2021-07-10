@@ -1,7 +1,6 @@
 #include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
-#include "avgij_map.h"
 
 #define C_FILE_LOC "DNS"
 
@@ -10,7 +9,6 @@ PROGRAM DNS
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE TLAB_ARRAYS
-  USE THERMO_GLOBAL, ONLY : imixture
   USE LAGRANGE_GLOBAL
   USE LAGRANGE_ARRAYS
   USE DNS_LOCAL
@@ -31,8 +29,8 @@ PROGRAM DNS
 
   ! -------------------------------------------------------------------
   CHARACTER*32 fname
-  CHARACTER*128 str, line
-  TINTEGER idummy, ig, ierr
+  CHARACTER*128 str
+  TINTEGER ig
 
   ! ###################################################################
   CALL DNS_START()
@@ -40,7 +38,7 @@ PROGRAM DNS
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part == 1 ) THEN
     CALL PARTICLE_READ_GLOBAL(ifile)
-  ENDIF
+  END IF
 #ifdef CHEMISTRY
   CALL CHEM_READ_GLOBAL(ifile)
 #endif
@@ -52,52 +50,8 @@ PROGRAM DNS
 #endif
 
   ! #######################################################################
-  ! Memory management
-  ! #######################################################################
-  SELECT CASE ( imode_eqns )
-  CASE( DNS_EQNS_INCOMPRESSIBLE,DNS_EQNS_ANELASTIC )
-    inb_txc = 6
-    IF ( rkm_mode == RKM_IMP3_DIFFUSION ) inb_txc = inb_txc+1
-  CASE( DNS_EQNS_INTERNAL,DNS_EQNS_TOTAL)
-    inb_txc = 9
-    IF ( imode_eqns == DNS_EQNS_INTERNAL .AND. iadvection == EQNS_SKEWSYMMETRIC .AND. &
-      iviscous   == EQNS_EXPLICIT ) inb_txc = 6
-  END SELECT
-  IF ( imixture == MIXT_TYPE_AIRWATER .AND. damkohler(3) > C_0_R ) inb_txc = inb_txc + 1
-
-  IF ( imode_sim == DNS_MODE_SPATIAL ) THEN ! because of the statistics
-    inb_txc = MAX(inb_txc,7)
-
-    IF ( stats_averages ) THEN
-      idummy = MAX(MA_MOMENTUM_SIZE,MS_SCALAR_SIZE)
-      IF ( MOD( nstatavg*jmax*idummy , isize_txc_field ) > 0 ) THEN
-        idummy = nstatavg*jmax*idummy / isize_txc_field + 1
-      ELSE
-        idummy = nstatavg*jmax*idummy / isize_txc_field
-      ENDIF
-      inb_txc = MAX(inb_txc,idummy)
-    ENDIF
-
-  ENDIF
-
-#ifdef USE_PSFFT
-  IF ( imode_rhs == EQNS_RHS_NONBLOCKING ) inb_txc = MAX(inb_txc,15)
-#endif
-
-  isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
-  isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
-  IF ( icalc_part == 1) THEN
-    isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
-    isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_particle_interp*2))
-    isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_particle_interp*2))
-  END IF
-  IF ( tower_mode == 1 ) THEN
-    isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))
-  ENDIF
-
-  ! -------------------------------------------------------------------
   ! Allocating memory space
-  ! -------------------------------------------------------------------
+  ! #######################################################################
   CALL TLAB_ALLOCATE(C_FILE_LOC)
 
   CALL PARTICLE_ALLOCATE(C_FILE_LOC)
@@ -110,7 +64,7 @@ PROGRAM DNS
 
   IF ( tower_mode == 1 ) THEN
     CALL DNS_TOWER_INITIALIZE(tower_stride)
-  ENDIF
+  END IF
 
   ! ###################################################################
   ! Read the grid
@@ -126,7 +80,7 @@ PROGRAM DNS
 
   IF ( ifourier == 1 ) THEN
     CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
-  ENDIF
+  END IF
 
   CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
 
@@ -142,7 +96,7 @@ PROGRAM DNS
   IF ( icalc_scal == 1 ) THEN
     WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
     CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
-  ENDIF
+  END IF
 
   WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
   CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
@@ -158,7 +112,7 @@ PROGRAM DNS
   IF ( imode_sim == DNS_MODE_SPATIAL .AND. nitera_stats_spa > 0 ) THEN
     WRITE(fname,*) nitera_first; fname = 'st'//TRIM(ADJUSTL(fname))
     CALL IO_READ_AVG_SPATIAL(fname, mean_flow, mean_scal)
-  ENDIF
+  END IF
 
   ! ###################################################################
   ! Initialize diagnostic thermodynamic quantities
@@ -178,7 +132,7 @@ PROGRAM DNS
       flag_viscosity = .TRUE.
     ELSE
       visc = visc_stop
-    ENDIF
+    END IF
   END IF
 
   ! ###################################################################
@@ -192,8 +146,8 @@ PROGRAM DNS
           +  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean
       IF (residence_reset == 1) THEN
         l_q(:,6:7) = C_0_R
-      ENDIF
-    ENDIF
+      END IF
+    END IF
   END IF
 
   ! ###################################################################
@@ -211,7 +165,7 @@ PROGRAM DNS
 
   IF ( imode_sim == DNS_MODE_SPATIAL ) THEN
     CALL BOUNDARY_INFLOW_INITIALIZE(rtime, txc, wrk1d,wrk2d,wrk3d)
-  ENDIF
+  END IF
 
   ! ###################################################################
   ! Initialize time marching scheme
@@ -240,15 +194,20 @@ PROGRAM DNS
     IF ( g(3)%size > 1 ) THEN
       CALL dfftw_destroy_plan(fft_plan_fz)
       CALL dfftw_destroy_plan(fft_plan_bz)
-    ENDIF
-  ENDIF
+    END IF
+  END IF
 #endif
 
   CALL DNS_STOP(INT(logs_data(1)))
 
 CONTAINS
+  ! #######################################################################
+  ! #######################################################################
   SUBROUTINE DNS_ALLOCATE()
   IMPLICIT NONE
+
+  TINTEGER ierr
+  CHARACTER*128 line
 
   ! ###################################################################
   WRITE(str,*) inb_flow; line = 'Allocating array rhs flow of size '//TRIM(ADJUSTL(str))//'x'
@@ -258,7 +217,7 @@ CONTAINS
   IF ( ierr /= 0 ) THEN
     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_q.')
     CALL DNS_STOP(DNS_ERROR_ALLOC)
-  ENDIF
+  END IF
 
   WRITE(str,*) inb_scal; line = 'Allocating array rhs scal of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
@@ -267,7 +226,7 @@ CONTAINS
   IF ( ierr /= 0 ) THEN
     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_s.')
     CALL DNS_STOP(DNS_ERROR_ALLOC)
-  ENDIF
+  END IF
 
   ! -------------------------------------------------------------------
   IF ( icalc_part == 1 ) THEN
@@ -277,7 +236,7 @@ CONTAINS
     IF ( ierr /= 0 ) THEN
       CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
       CALL DNS_STOP(DNS_ERROR_ALLOC)
-    ENDIF
+    END IF
 
     WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
     WRITE(str,*) inb_part; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
@@ -286,9 +245,9 @@ CONTAINS
     IF ( ierr /= 0 ) THEN
       CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
       CALL DNS_STOP(DNS_ERROR_ALLOC)
-    ENDIF
+    END IF
 
-  ENDIF
+  END IF
 
   RETURN
   END SUBROUTINE DNS_ALLOCATE

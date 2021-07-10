@@ -1,6 +1,7 @@
 #include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
+#include "avgij_map.h"
 
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
@@ -8,13 +9,17 @@
 
 SUBROUTINE DNS_READ_LOCAL(inifile)
 
+  USE DNS_TYPES,     ONLY : MAX_MODES
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
-  USE DNS_GLOBAL,    ONLY : pbg, rbg
-  USE DNS_GLOBAL,    ONLY : inb_flow,inb_scal, isize_wrk1d, isize_wrk2d
-  USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns
+  USE DNS_GLOBAL,    ONLY : pbg, rbg, damkohler
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_txc_field, isize_wrk1d,isize_wrk2d,isize_wrk3d
+  USE DNS_GLOBAL,    ONLY : inb_flow,inb_scal,inb_txc
+  USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns, iadvection, iviscous, icalc_part
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : FilterDomain
-  USE DNS_TYPES,     ONLY : MAX_MODES
+  USE DNS_GLOBAL,    ONLY : nstatavg
+  USE THERMO_GLOBAL, ONLY : imixture
+  USE LAGRANGE_GLOBAL,ONLY: inb_particle_interp
   USE DNS_LOCAL
   USE TIME,          ONLY : rkm_mode, dtime, cfla, cfld, cflr
   USE BOUNDARY_BUFFER
@@ -898,6 +903,49 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
+  ! -------------------------------------------------------------------
+  ! Array sizes
+  ! -------------------------------------------------------------------
+  SELECT CASE ( imode_eqns )
+  CASE( DNS_EQNS_INCOMPRESSIBLE,DNS_EQNS_ANELASTIC )
+    inb_txc = 6
+    IF ( rkm_mode == RKM_IMP3_DIFFUSION ) inb_txc = inb_txc+1
+  CASE( DNS_EQNS_INTERNAL,DNS_EQNS_TOTAL)
+    inb_txc = 9
+    IF ( imode_eqns == DNS_EQNS_INTERNAL .AND. iadvection == EQNS_SKEWSYMMETRIC .AND. &
+      iviscous   == EQNS_EXPLICIT ) inb_txc = 6
+  END SELECT
+  IF ( imixture == MIXT_TYPE_AIRWATER .AND. damkohler(3) > C_0_R ) inb_txc = inb_txc + 1
+
+  IF ( imode_sim == DNS_MODE_SPATIAL ) THEN ! because of the statistics
+    inb_txc = MAX(inb_txc,7)
+
+    IF ( stats_averages ) THEN
+      idummy = MAX(MA_MOMENTUM_SIZE,MS_SCALAR_SIZE)
+      IF ( MOD( nstatavg*jmax*idummy , isize_txc_field ) > 0 ) THEN
+        idummy = nstatavg*jmax*idummy / isize_txc_field + 1
+      ELSE
+        idummy = nstatavg*jmax*idummy / isize_txc_field
+      ENDIF
+      inb_txc = MAX(inb_txc,idummy)
+    ENDIF
+
+  ENDIF
+
+#ifdef USE_PSFFT
+  IF ( imode_rhs == EQNS_RHS_NONBLOCKING ) inb_txc = MAX(inb_txc,15)
+#endif
+
+  isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
+  isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
+  IF ( icalc_part == 1) THEN
+    isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
+    isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_particle_interp*2))
+    isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_particle_interp*2))
+  END IF
+  IF ( tower_mode == 1 ) THEN
+    isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))
+  ENDIF
 
   RETURN
 END SUBROUTINE DNS_READ_LOCAL
