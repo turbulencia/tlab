@@ -55,3 +55,24 @@ SUBROUTINE PARTICLE_ALLOCATE(C_FILE_LOC)
 
   RETURN
 END SUBROUTINE PARTICLE_ALLOCATE
+
+! ###################################################################
+! ###################################################################
+SUBROUTINE PARTICLE_INITIALIZE()
+  USE DNS_GLOBAL, ONLY : g, sbg
+  USE LAGRANGE_GLOBAL
+  USE LAGRANGE_ARRAYS
+  IMPLICIT NONE
+
+  ! set boundarys for residence time pdf
+  IF ( ilagrange == LAG_TYPE_BIL_CLOUD_4 ) THEN
+    l_y_lambda =  (g(2)%nodes(g(2)%size)-g(2)%nodes(1)) *sbg(1)%ymean - C_2_R
+    l_y_base =   ((g(2)%nodes(g(2)%size)-g(2)%nodes(1)) *sbg(1)%ymean -(g(2)%nodes(g(2)%size)-g(2)%nodes(1)) *sbg(3)%ymean )/C_2_R &
+        +  (g(2)%nodes(g(2)%size)-g(2)%nodes(1)) *sbg(3)%ymean
+    IF (residence_reset == 1) THEN
+      l_q(:,6:7) = C_0_R
+    END IF
+  END IF
+
+  RETURN
+END SUBROUTINE PARTICLE_INITIALIZE

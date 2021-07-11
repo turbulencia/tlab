@@ -136,25 +136,17 @@ PROGRAM DNS
   END IF
 
   ! ###################################################################
-  ! Initialize Lagrangian stuff
-  ! ###################################################################
-  IF ( icalc_part == 1 ) THEN
-    ! set boundarys for residence time pdf
-    IF ( ilagrange == LAG_TYPE_BIL_CLOUD_4 ) THEN
-      l_y_lambda =  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean - C_2_R
-      l_y_base =   ((g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean -(g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean )/C_2_R &
-          +  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean
-      IF (residence_reset == 1) THEN
-        l_q(:,6:7) = C_0_R
-      END IF
-    END IF
-  END IF
-
-  ! ###################################################################
   ! Check
   ! ###################################################################
   logs_data(1) = 0 ! Status
   CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
+
+  ! ###################################################################
+  ! Initialize particle simumulation
+  ! ###################################################################
+  IF ( icalc_part == 1 ) THEN
+    CALL PARTICLE_INITIALIZE()
+  END IF
 
   ! ###################################################################
   ! Initialize data for boundary conditions
@@ -187,17 +179,6 @@ PROGRAM DNS
   CALL TIME_INTEGRATION()
 
   ! ###################################################################
-#ifdef USE_FFTW
-  IF ( ifourier == 1 ) THEN
-    CALL dfftw_destroy_plan(fft_plan_fx)
-    CALL dfftw_destroy_plan(fft_plan_bx)
-    IF ( g(3)%size > 1 ) THEN
-      CALL dfftw_destroy_plan(fft_plan_fz)
-      CALL dfftw_destroy_plan(fft_plan_bz)
-    END IF
-  END IF
-#endif
-
   CALL DNS_STOP(INT(logs_data(1)))
 
 CONTAINS
