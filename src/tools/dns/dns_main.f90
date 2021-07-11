@@ -21,6 +21,7 @@ PROGRAM DNS
   USE BOUNDARY_BCS
   USE STATISTICS
   USE PARTICLE_TRAJECTORIES
+  USE AVG_SCAL_ZT
 
   IMPLICIT NONE
   SAVE
@@ -28,8 +29,7 @@ PROGRAM DNS
 #include "integers.h"
 
   ! -------------------------------------------------------------------
-  CHARACTER*32 fname
-  CHARACTER*128 str
+  CHARACTER*32 fname, str
   TINTEGER ig
 
   ! ###################################################################
@@ -50,9 +50,11 @@ PROGRAM DNS
 #endif
 
   ! #######################################################################
-  ! Allocating memory space
+  ! Initialize memory space and grid data
   ! #######################################################################
   CALL TLAB_ALLOCATE(C_FILE_LOC)
+
+#include "dns_read_grid.h"
 
   CALL PARTICLE_ALLOCATE(C_FILE_LOC)
 
@@ -65,11 +67,6 @@ PROGRAM DNS
   IF ( tower_mode == 1 ) THEN
     CALL DNS_TOWER_INITIALIZE(tower_stride)
   END IF
-
-  ! ###################################################################
-  ! Read the grid
-  ! ###################################################################
-#include "dns_read_grid.h"
 
   ! ###################################################################
   ! Initialize operators and reference data
@@ -87,7 +84,7 @@ PROGRAM DNS
   CALL FI_PROFILES_INITIALIZE(wrk1d)
 
   ! ###################################################################
-  ! Read fields
+  ! Initialize fields
   ! ###################################################################
   itime = nitera_first
 
@@ -101,6 +98,8 @@ PROGRAM DNS
   WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
   CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
 
+  CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )  ! Initialize diagnostic thermodynamic quantities
+
   IF ( icalc_part == 1 ) THEN
     WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
     CALL IO_READ_PARTICLE(fname, l_g, l_q)
@@ -113,11 +112,6 @@ PROGRAM DNS
     WRITE(fname,*) nitera_first; fname = 'st'//TRIM(ADJUSTL(fname))
     CALL IO_READ_AVG_SPATIAL(fname, mean_flow, mean_scal)
   END IF
-
-  ! ###################################################################
-  ! Initialize diagnostic thermodynamic quantities
-  ! ###################################################################
-  CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
 
   ! ###################################################################
   ! Initialize change in viscosity
@@ -176,7 +170,96 @@ PROGRAM DNS
   ! ###################################################################
   itime = nitera_first
 
-  CALL TIME_INTEGRATION()
+  WRITE(str,*) itime
+  CALL IO_WRITE_ASCII(lfile,'Starting time integration at It'//TRIM(ADJUSTL(str))//'.')
+
+  DO
+    IF ( itime >= nitera_last   ) EXIT
+    IF ( INT(logs_data(1)) /= 0 ) EXIT
+
+    CALL TIME_RUNGEKUTTA()
+
+    itime = itime + 1
+    rtime = rtime + dtime
+
+    IF ( MOD(itime-nitera_first,FilterDomainStep) == 0 ) THEN
+      CALL DNS_FILTER()
+    END IF
+
+    IF ( flag_viscosity ) THEN          ! Change viscosity if necessary
+      visc = visc +visc_rate *dtime
+      IF ( rtime .GT. visc_time ) THEN
+        visc = visc_stop                ! Fix new value without any roundoff
+        flag_viscosity = .FALSE.
+      END IF
+    END IF
+
+    CALL TIME_COURANT(q, wrk3d)
+
+    ! -------------------------------------------------------------------
+    ! The rest: Logging, postprocessing and saving
+    ! -------------------------------------------------------------------
+    IF ( MOD(itime-nitera_first,nitera_log) == 0 .OR. INT(logs_data(1)) /= 0 ) THEN
+      CALL DNS_LOGS(i2)
+    END IF
+
+    IF ( tower_mode == 1 ) THEN
+      CALL DNS_TOWER_ACCUMULATE(q,1,wrk1d)
+      CALL DNS_TOWER_ACCUMULATE(s,2,wrk1d)
+    END IF
+
+    IF ( itrajectory /= LAG_TRAJECTORY_NONE ) THEN
+      CALL PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
+    END IF
+
+    IF ( MOD(itime-nitera_first,nitera_stats_spa) == 0 ) THEN   ! Accumulate statistics in spatially evolving cases
+      IF ( icalc_flow == 1 ) CALL AVG_FLOW_ZT_REDUCE(q,   hq,txc, mean_flow, wrk2d,wrk3d)
+      IF ( icalc_scal == 1 ) CALL AVG_SCAL_ZT_REDUCE(q,s, hq,txc, mean_scal, wrk2d,wrk3d)
+    END IF
+
+    IF ( MOD(itime-nitera_first,nitera_stats) == 0 ) THEN       ! Calculate statistics
+      IF ( imode_sim == DNS_MODE_TEMPORAL ) CALL STATISTICS_TEMPORAL()
+      IF ( imode_sim == DNS_MODE_SPATIAL  ) CALL STATISTICS_SPATIAL()
+    END IF
+
+    IF ( MOD(itime-nitera_first,nitera_save) == 0 .OR. &        ! Save restart files
+        itime == nitera_last .OR. INT(logs_data(1)) /= 0 ) THEN ! Secure that one restart file is saved
+
+      IF ( icalc_flow == 1 ) THEN
+        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
+        CALL DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, isize_field, q, wrk3d)
+      END IF
+
+      IF ( icalc_scal == 1 ) THEN
+        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
+        CALL DNS_WRITE_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, isize_field, s, wrk3d)
+      END IF
+
+      IF ( tower_mode == 1 ) THEN
+        CALL DNS_TOWER_WRITE(wrk3d)
+      END IF
+
+      IF ( icalc_part == 1 ) THEN
+        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
+        CALL IO_WRITE_PARTICLE(fname, l_g, l_q)
+        IF ( itrajectory /= LAG_TRAJECTORY_NONE ) THEN
+          WRITE(fname,*) itime; fname =TRIM(ADJUSTL(tag_traj))//TRIM(ADJUSTL(fname))
+          CALL PARTICLE_TRAJECTORIES_WRITE(fname)
+        END IF
+      END IF
+
+      IF ( imode_sim == DNS_MODE_SPATIAL .AND. nitera_stats_spa > 0 ) THEN ! Spatial; running averages
+        WRITE(fname,*) itime; fname='st'//TRIM(ADJUSTL(fname))
+        CALL IO_WRITE_AVG_SPATIAL(fname, mean_flow, mean_scal)
+      END IF
+
+    END IF
+
+    IF ( MOD(itime-nitera_first,nitera_pln) == 0 ) THEN
+      CALL PLANES_SAVE( q,s, txc(1,1), txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d )
+    END IF
+
+  END DO
 
   ! ###################################################################
   CALL DNS_STOP(INT(logs_data(1)))
