@@ -287,11 +287,6 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
 !   TREAL, DIMENSION(nlines,g%size)                :: u_ibm
   
 ! -------------------------------------------------------------------
-
-  ! pointer
-  p_vel   => u
-  p_wrk3d => wrk3d
-   
 ! ############################################# ! 
   ! debugging
 #ifdef USE_MPI
@@ -299,6 +294,11 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
   TINTEGER, parameter  ::  ims_pro=0  
 #endif
 ! ############################################ ! 
+
+  ! pointer
+  p_vel   => u
+  p_wrk3d => wrk3d
+   
 
   ! IBM not for scalar fields! (will be implemented later)
   ! modify incoming u fields (fill solids with spline functions, depending on direction)
