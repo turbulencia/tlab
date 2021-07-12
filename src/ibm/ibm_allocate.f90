@@ -234,6 +234,18 @@ subroutine IBM_ALLOCATE(allocated)
 
     ! ------------------------------------------------------------------ !
 
+    ! u_ibm
+    write(str,*) inb_ibm; line = 'Allocating array IBM u_ibm of size '//trim(adjustl(str))//'x'
+    write(str,*) isize_field; line = trim(adjustl(line))//trim(adjustl(str))
+    call IO_WRITE_ASCII(lfile,line)
+    allocate(u_ibm(isize_field), stat=ierr)
+    if ( ierr /= 0 ) then
+    call IO_WRITE_ASCII(efile,'DNS. Not enough memory for u_ibm.')
+    call DNS_STOP(DNS_ERROR_ALLOC)
+    end if
+
+    ! ------------------------------------------------------------------ !
+
     ! set alloc flag: done
     allocated = .true.
 

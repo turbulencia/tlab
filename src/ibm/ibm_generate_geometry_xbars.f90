@@ -33,7 +33,7 @@
 !#
 !########################################################################
 
-subroutine IBM_IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
+subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 
   use DNS_IBM
   use DNS_GLOBAL, only: g
@@ -131,6 +131,6 @@ subroutine IBM_IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   call DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, i1, imax*jmax*kmax, eps, wrk3d)
 
   return
-end subroutine IBM_IBM_GENERATE_GEOMETRY_XBARS
+end subroutine IBM_GENERATE_GEOMETRY_XBARS
 
 !########################################################################

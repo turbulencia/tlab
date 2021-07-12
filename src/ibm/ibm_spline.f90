@@ -32,20 +32,20 @@
 !#
 !########################################################################
 
-subroutine IBM_SPLINZ(txc, wrk3d) 
+subroutine IBM_SPLINE_Z(u, wrk3d) 
   
   use DNS_IBM
-  use DNS_GLOBAL, only: g   
-  use DNS_GLOBAL, only: imax, jmax, kmax 
-  use DNS_GLOBAL, only: isize_field, inb_txc !,isize_txc_field
+  ! use DNS_GLOBAL, only: g   
+  ! use DNS_GLOBAL, only: imax, jmax, kmax 
+  use DNS_GLOBAL, only: isize_field!, inb_txc !,isize_txc_field
   
-#ifdef USE_MPI
-  use DNS_MPI,    only: ims_pro, ims_npro
-  use DNS_MPI,    only: ims_size_i, ims_size_j, ims_size_k    
-  use DNS_MPI,    only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i 
-  use DNS_MPI,    only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  use DNS_MPI,    only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
-#endif    
+! #ifdef USE_MPI
+  ! use DNS_MPI,    only: ims_pro, ims_npro
+  ! use DNS_MPI,    only: ims_size_i, ims_size_j, ims_size_k    
+  ! use DNS_MPI,    only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i 
+  ! use DNS_MPI,    only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  ! use DNS_MPI,    only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
+! #endif    
   
   implicit none
   
@@ -54,63 +54,51 @@ subroutine IBM_SPLINZ(txc, wrk3d)
 #ifdef USE_MPI 
 #include "mpif.h"
 #include "dns_const_mpi.h"  
-  TINTEGER, parameter                            :: idi        = DNS_MPI_I_PARTIAL 
-  TINTEGER, parameter                            :: idj        = DNS_MPI_J_PARTIAL 
-  TINTEGER, parameter                            :: idk        = DNS_MPI_K_PARTIAL 
-  TINTEGER, parameter                            :: idi_nob    = DNS_MPI_I_IBM_NOB 
-  TINTEGER, parameter                            :: idk_nob    = DNS_MPI_K_IBM_NOB 
-  TINTEGER, parameter                            :: idi_nob_be = DNS_MPI_I_IBM_NOB_BE 
-  TINTEGER, parameter                            :: idk_nob_be = DNS_MPI_K_IBM_NOB_BE
-  TINTEGER                                       :: ims_err, max_nob
-  TREAL, dimension(ims_size_i(idi))              :: nobi_out    ! DEBUG
-  TREAL, dimension(ims_size_j(idj))              :: nobj_out    ! DEBUG
-  TREAL, dimension(ims_size_k(idk))              :: nobk_out    ! DEBUG
-  TREAL, dimension(ims_size_i(idi)*xbars_geo(1)) :: nobi_b_out  ! DEBUG
-  TREAL, dimension(ims_size_j(idj)*xbars_geo(1)) :: nobj_b_out  ! DEBUG
-  TREAL, dimension(ims_size_k(idk)*xbars_geo(1)) :: nobk_b_out  ! DEBUG
-  TREAL, dimension(ims_size_i(idi)*xbars_geo(1)) :: nobi_e_out  ! DEBUG
-  TREAL, dimension(ims_size_j(idj)*xbars_geo(1)) :: nobj_e_out  ! DEBUG
-  TREAL, dimension(ims_size_k(idk)*xbars_geo(1)) :: nobk_e_out  ! DEBUG
-#else
-  TINTEGER, parameter                            :: ims_pro=0, ims_npro=1
-  TREAL, dimension(jmax * kmax)                  :: nobi_out    ! DEBUG
-  TREAL, dimension(imax * kmax)                  :: nobj_out    ! DEBUG
-  TREAL, dimension(imax * jmax)                  :: nobk_out    ! DEBUG
-  TREAL, dimension(jmax * kmax * xbars_geo(1))   :: nobi_b_out  ! DEBUG
-  TREAL, dimension(imax * kmax * xbars_geo(1))   :: nobj_b_out  ! DEBUG
-  TREAL, dimension(imax * jmax * xbars_geo(1))   :: nobk_b_out  ! DEBUG
-  TREAL, dimension(jmax * kmax * xbars_geo(1))   :: nobi_e_out  ! DEBUG
-  TREAL, dimension(imax * kmax * xbars_geo(1))   :: nobj_e_out  ! DEBUG
-  TREAL, dimension(imax * jmax * xbars_geo(1))   :: nobk_e_out  ! DEBUG
+!   TINTEGER, parameter                            :: idi        = DNS_MPI_I_PARTIAL 
+!   TINTEGER, parameter                            :: idj        = DNS_MPI_J_PARTIAL 
+!   TINTEGER, parameter                            :: idk        = DNS_MPI_K_PARTIAL 
+!   ! TINTEGER, parameter                            :: idi_nob    = DNS_MPI_I_IBM_NOB 
+!   ! TINTEGER, parameter                            :: idk_nob    = DNS_MPI_K_IBM_NOB 
+!   ! TINTEGER, parameter                            :: idi_nob_be = DNS_MPI_I_IBM_NOB_BE 
+!   ! TINTEGER, parameter                            :: idk_nob_be = DNS_MPI_K_IBM_NOB_BE
+!   ! TINTEGER                                       :: ims_err, max_nob
+! #else
+!   TINTEGER, parameter                            :: ims_pro=0, ims_npro=1
 #endif
 
+  TREAL, dimension(isize_field), intent(in)      :: u 
+  ! TREAL, dimension(isize_field), intent(out)     :: u_ibm 
   TREAL, dimension(isize_field), intent(inout)   :: wrk3d 
 
-  TINTEGER                                       :: nobi_max, nobj_max, nobk_max
-  TINTEGER                                       :: i, j, k, ij, ik, jk, ip, inum
-  TINTEGER                                       :: nyz, nxz, nxy
-  TINTEGER                                       :: nob_max
+  ! TINTEGER                                       :: nobi_max, nobj_max, nobk_max
+  ! TINTEGER                                       :: i, j, k, ij, ik, jk, ip, inum
+  ! TINTEGER                                       :: nyz, nxz, nxy
+  ! TINTEGER                                       :: nob_max
 
-  CHARACTER(32)                                  :: fname
+  ! CHARACTER(32)                                  :: fname
 
-  ! DEBUG
-  TREAL, dimension(isize_field,inb_txc), intent(inout) :: txc 
-  TREAL, dimension(isize_field)                        :: tmp1, tmp2, tmp3, tmp4 
+  ! ! DEBUG
+  ! TREAL, dimension(isize_field,inb_txc), intent(inout) :: txc 
+  ! TREAL, dimension(isize_field)                        :: tmp1, tmp2, tmp3, tmp4 
 
   ! ================================================================== !
 
-  ! npages (cf. dns_mpi_initialize.f90)
-#ifdef USE_MPI
-  nyz = ims_size_i(idi) ! local
-  nxz = ims_size_j(idj) 
-  nxy = ims_size_k(idk) 
-#else
-  nyz = jmax * kmax     ! global
-  nxz = imax * kmax     
-  nxy = imax * jmax     
-#endif
+!   ! npages (cf. dns_mpi_initialize.f90)
+! #ifdef USE_MPI
+!   nyz = ims_size_i(idi) ! local
+!   nxz = ims_size_j(idj) 
+!   nxy = ims_size_k(idk) 
+! #else
+!   nyz = jmax * kmax     ! global
+!   nxz = imax * kmax     
+!   nxy = imax * jmax     
+! #endif
   
 !   ! ================================================================== !
+
+  ! u_ibm(:) = u(:)
+
+
 !   ! number of objects in z-direction
 !   ip = i1
 !   do k = 1, g(3)%size - 1     ! contiguous k-lines
@@ -197,6 +185,6 @@ subroutine IBM_SPLINZ(txc, wrk3d)
  
 
   return
-end subroutine IBM_SPLINZ
+end subroutine IBM_SPLINE_Z
 
 !########################################################################

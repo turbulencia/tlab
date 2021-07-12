@@ -35,7 +35,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-  USE DNS_IBM,    ONLY : burgers_ibm, eps
+  USE DNS_IBM,    ONLY : ibm_burgers, eps
 
 ! ############################################# ! 
 ! DEBUG ####################################### !
@@ -117,8 +117,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Preliminaries for IBM use
 ! (if .true., OPR_BURGERS_X/Y/Z uses modified fields for derivatives)
 ! ###################################################################
-  IF ( imode_ibm == 1 ) burgers_ibm = .true. ! global flag for IBM usage
-  if (ims_pro == 0) write(*,*) 'burgers_ibm start of rhs', burgers_ibm
+  IF ( imode_ibm == 1 ) ibm_burgers = .true.
+  ! debug
+  if (ims_pro == 0) write(*,*) 'ibm_burgers start of rhs (no scal)', ibm_burgers
 
 ! #######################################################################
 ! Ox diffusion and convection terms in Ox momentum eqn
@@ -183,10 +184,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
 
 ! ###################################################################
-! IBM not implemented for scalar fields yet (set burgers_ibm flag back to .false.)
+! IBM not implemented for scalar fields yet (set ibm_burgers flag back to .false.)
 ! ###################################################################
-  IF ( imode_ibm == 1 ) burgers_ibm = .false.
-  if (ims_pro == 0) write(*,*) 'burgers_ibm end of rhs', burgers_ibm
+  IF ( imode_ibm == 1 ) ibm_burgers = .false.
+  ! debug
+  if (ims_pro == 0) write(*,*) 'ibm_burgers end of rhs (no scal)', ibm_burgers
   if (ims_pro == 0) write(*,*) '========================================================='
 
 ! #######################################################################
@@ -460,7 +462,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   v(:)  = (C_1_R - eps(:)) * v(:)
   w(:)  = (C_1_R - eps(:)) * w(:)
 
- 
 ! -----------------------------------------------------------------------
 ! Impose top BCs at Jmax
 ! -----------------------------------------------------------------------
@@ -468,8 +469,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! ! ###################################################################
 ! ! Final for IBM use (set flag back to .false.)
 ! ! ###################################################################
-!   IF ( imode_ibm == 1 ) burgers_ibm = .false.
-!   if (ims_pro == 0) write(*,*) 'burgers_ibm end of rhs', burgers_ibm
+!   IF ( imode_ibm == 1 ) ibm_burgers = .false.
+!   if (ims_pro == 0) write(*,*) 'ibm_burgers end of rhs', ibm_burgers
 !   if (ims_pro == 0) write(*,*) '========================================================='
 
 #ifdef TRACE_ON

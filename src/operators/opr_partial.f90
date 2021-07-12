@@ -18,7 +18,7 @@ SUBROUTINE OPR_PARTIAL1(nlines, bcs, g, u,result, wrk2d)
 
 ! -------------------------------------------------------------------
   TINTEGER ip
-
+  
 ! ###################################################################
   IF ( g%periodic ) THEN
      SELECT CASE( g%mode_fdm )
@@ -260,52 +260,69 @@ END SUBROUTINE OPR_PARTIAL2D
 ! ###################################################################
 SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
 
-   USE DNS_TYPES, ONLY : grid_dt
-   USE DNS_IBM,   ONLY : burgers_ibm, burgers_x_ibm, burgers_y_ibm, burgers_z_ibm
+  USE DNS_TYPES, ONLY : grid_dt
+!   USE DNS_IBM
 
 ! ############################################# ! 
 ! DEBUG
 #ifdef USE_MPI
-   use DNS_MPI,    only: ims_pro
+  use DNS_MPI,    only: ims_pro
 #endif
 ! ############################################# ! 
    
-   IMPLICIT NONE
+  IMPLICIT NONE
    
-   TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity
-   TINTEGER,                        INTENT(IN)    :: nlines ! # of lines to be solved
-   TINTEGER, DIMENSION(2,*),        INTENT(IN)    :: bcs    ! BCs at xmin (1,*) and xmax (2,*):
+  TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity
+  TINTEGER,                        INTENT(IN)    :: nlines ! # of lines to be solved
+  TINTEGER, DIMENSION(2,*),        INTENT(IN)    :: bcs    ! BCs at xmin (1,*) and xmax (2,*):
                                                             !     0 biased, non-zero
                                                             !     1 forced to zero
-   TYPE(grid_dt),                   INTENT(IN)    :: g
-   TREAL, DIMENSION(nlines,g%size), INTENT(IN)    :: u
-   TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result
-   TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
-   TREAL, DIMENSION(nlines,g%size), INTENT(INOUT) :: wrk3d  ! First derivative 
-   
-   ! -------------------------------------------------------------------
+  TYPE(grid_dt),                   INTENT(IN)    :: g
+  TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result
+  TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
+  TREAL, DIMENSION(nlines,g%size), INTENT(IN),    TARGET :: u
+  TREAL, DIMENSION(nlines,g%size), INTENT(INOUT), TARGET :: wrk3d  ! First derivative 
+
+  TREAL, DIMENSION(:,:), POINTER :: p_vel, p_ibm, p_wrk3d
+!   TREAL, DIMENSION(nlines,g%size)                :: u_ibm
+  
+! -------------------------------------------------------------------
+
+  ! pointer
+  p_vel   => u
+  p_wrk3d => wrk3d
    
 ! ############################################# ! 
-! DEBUG
+  ! debugging
 #ifdef USE_MPI
 #else
-   TINTEGER, parameter  ::  ims_pro=0  
+  TINTEGER, parameter  ::  ims_pro=0  
 #endif
-   if (ims_pro == 0) write(*,*) 'OPR_PARTIAL2D_IBM is used'
-   if (ims_pro == 0) write(*,*) 'burgers_x_ibm', burgers_x_ibm
-   if (ims_pro == 0) write(*,*) 'burgers_y_ibm', burgers_y_ibm
-   if (ims_pro == 0) write(*,*) 'burgers_z_ibm', burgers_z_ibm
-! ############################################# ! 
-   ! right now: IBM not for scalar fields! (will be implemented later)
-   ! modify incoming u fields (fill solids with spline functions)
-   ! depending on direction (one of bugers_xyz_ibm is true if burgers_ibm=.true.)
+! ############################################ ! 
 
-   ! IF (burgers_x_ibm) CALL IBM_SPLINE_X()
-   ! IF (burgers_y_ibm) CALL IBM_SPLINE_Y() 
-   ! IF (burgers_z_ibm) CALL IBM_SPLINE_Z() 
+  ! IBM not for scalar fields! (will be implemented later)
+  ! modify incoming u fields (fill solids with spline functions, depending on direction)
 
-   ! call OPR_PARTIAL2D now with modified u fields
-   CALL OPR_PARTIAL2D(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
+   SELECT CASE (g%name)
+   CASE('x')
+     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
+     p_ibm => p_vel
+   !   CALL IBM_SPLINE_X(u, u_ibm, wrk3d)
+   CASE('y')
+     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
+     p_ibm => p_vel
+   !   CALL IBM_SPLINE_Y(u, u_ibm, wrk3d)
+   CASE('z')
+     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
+   !   CALL IBM_SPLINE_Z(u, u_ibm, wrk3d)
+   !   CALL IBM_TEST()
+     p_ibm => p_vel
+   END SELECT
+
+   ! now with modified u fields
+   CALL OPR_PARTIAL2D(is,nlines, bcs, g, p_ibm, result, wrk2d, wrk3d)
+
+   NULLIFY(p_vel, p_ibm, p_wrk3d)
    
    RETURN
 END SUBROUTINE OPR_PARTIAL2D_IBM

@@ -4,7 +4,7 @@ subroutine IBM_TEST()
 
 end subroutine IBM_TEST
 !########################################################################
-subroutine IBM_TWRITE_GEOMETRY()
+subroutine IBM_WRITE_GEOMETRY()
   !
   implicit none
 
@@ -13,9 +13,9 @@ subroutine IBM_TWRITE_GEOMETRY()
 #endif 
   
   return
-end subroutine IBM_TWRITE_GEOMETRY
+end subroutine IBM_WRITE_GEOMETRY
 !########################################################################
-subroutine IBM_TREAD_GEOMETRY() ! if needed: restart/run with already generated geometry
+subroutine IBM_READ_GEOMETRY() ! if needed: restart/run with already generated geometry
   !
   implicit none
 
@@ -24,7 +24,7 @@ subroutine IBM_TREAD_GEOMETRY() ! if needed: restart/run with already generated 
 #endif 
   !
   return
-end subroutine IBM_TREAD_GEOMETRY
+end subroutine IBM_READ_GEOMETRY
 !########################################################################  
 subroutine IBM_BOUNDARY_BCS_IBM_SCAL()
   !

@@ -46,7 +46,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   ! ================================================================== !
 
   ! generate native 3d-geometry field (eps_aux) of immersed objects (define your own geomtry here)
-  call IBM_IBM_GENERATE_GEOMETRY_XBARS(wrk3d) 
+  call IBM_GENERATE_GEOMETRY_XBARS(wrk3d) 
 
   ! transpose eps in epsi, epsj, epsk and allocate neccessary memory
   call IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
@@ -56,7 +56,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   
   ! not coded yet
   ! read/write geometry fields from/to disk
-  ! call READ_GEOMETRY() ! call WRITE_GEOMETRY()           
+  ! call IBM_READ_GEOMETRY() ! call IBM_WRITE_GEOMETRY()           
   
   return
 end subroutine IBM_INITIALIZE_GEOMETRY
