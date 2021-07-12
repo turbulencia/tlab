@@ -28,6 +28,11 @@ module DNS_IBM
   TREAL, dimension(:),     allocatable :: nobi_b,  nobj_b, nobk_b     ! beginn of objects in i/j/k 
   TREAL, dimension(:),     allocatable :: nobi_e,  nobj_e, nobk_e     ! end    of objects in i/j/k
 
+  logical :: burgers_ibm, burgers_x_ibm, burgers_y_ibm, burgers_z_ibm 
+
+  TINTEGER, dimension(3)               :: xbars_geo                   ! bars in x, xbars_geo(3)=[nbars,hbar,wbar]
+
+
 end module DNS_IBM
 
 !########################################################################

@@ -18,8 +18,8 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 
   USE DNS_TYPES,     ONLY : grid_dt
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL,    ONLY : burgers_ibm
-  ! USE DNS_IBM,       ONLY : ibm_idummy 
+  USE DNS_IBM,       ONLY : burgers_ibm
+
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity
@@ -45,7 +45,6 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
   ! wrk3d: 1st derivative; result: 2nd derivative including diffusivity
   IF (burgers_ibm) THEN
     CALL OPR_PARTIAL2D_IBM(is,nlines,bcs,g,s,result,wrk2d,wrk3d)
-    ! CALL DNS_IBM_TEST()
   ELSE
     CALL OPR_PARTIAL2D(    is,nlines,bcs,g,s,result,wrk2d,wrk3d)
   ENDIF
@@ -84,7 +83,7 @@ END SUBROUTINE OPR_BURGERS
 SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
-  USE DNS_GLOBAL, ONLY : burgers_ibm, burgers_x_ibm
+  USE DNS_IBM,   ONLY : burgers_ibm, burgers_x_ibm
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -173,7 +172,7 @@ SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 
   USE DNS_TYPES, ONLY : grid_dt
   USE DNS_GLOBAL, ONLY : subsidence
-  USE DNS_GLOBAL, ONLY : burgers_ibm, burgers_y_ibm
+  USE DNS_IBM,    ONLY : burgers_ibm, burgers_y_ibm
 
   IMPLICIT NONE
 
@@ -258,7 +257,7 @@ END SUBROUTINE OPR_BURGERS_Y
 SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
-  USE DNS_GLOBAL, ONLY : burgers_ibm, burgers_z_ibm
+  USE DNS_IBM,   ONLY : burgers_ibm, burgers_z_ibm
 #ifdef USE_MPI
   USE DNS_MPI
 #endif

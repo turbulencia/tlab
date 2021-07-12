@@ -8,7 +8,8 @@ SUBROUTINE DNS_MPI_INITIALIZE
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax,g
   USE DNS_GLOBAL, ONLY : isize_txc_dimz, isize_txc_dimx
   USE DNS_GLOBAL, ONLY : imode_sim, ifourier
-  USE DNS_GLOBAL, ONLY : xbars_geo, imode_ibm
+  USE DNS_GLOBAL, ONLY : imode_ibm
+  USE DNS_IBM,    ONLY : xbars_geo
   USE DNS_CONSTANTS, ONLY : lfile
   USE DNS_MPI
 

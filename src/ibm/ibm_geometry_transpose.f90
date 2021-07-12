@@ -32,7 +32,7 @@
 !#
 !########################################################################
 
-subroutine GEOMETRY_TRANSPOSE(wrk3d,txc)
+subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
   
   use DNS_IBM
   use DNS_GLOBAL, only: g
@@ -170,6 +170,6 @@ subroutine GEOMETRY_TRANSPOSE(wrk3d,txc)
   ! ================================================================== !
 
   return
-end subroutine GEOMETRY_TRANSPOSE
+end subroutine IBM_GEOMETRY_TRANSPOSE
 
 !########################################################################

@@ -13,7 +13,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE DNS_GLOBAL,    ONLY : imode_sim, inb_flow,inb_scal, imode_ibm, isize_wrk1d, isize_wrk2d
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : FilterDomain
-  USE DNS_GLOBAL,    ONLY : xbars_geo
+  USE DNS_IBM,       ONLY : xbars_geo
   USE DNS_TYPES,     ONLY : MAX_MODES
   USE DNS_LOCAL
   USE TIME,          ONLY : rkm_mode, dtime, cfla, cfld, cflr
@@ -444,7 +444,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! ###################################################################
   CALL IO_WRITE_ASCII(bakfile, '#')
   CALL IO_WRITE_ASCII(bakfile, '#[IBM]')
-  CALL IO_WRITE_ASCII(bakfile, 'XBars=<value_i,value_j,value_k>')
+  CALL IO_WRITE_ASCII(bakfile, 'XBars=<nbars,hbars,wbars>') ! xbars_geo(3)=[number,height,width]
 
   CALL SCANINICHAR(bakfile, inifile, 'IBM', 'XBars', '0,0,0', sRes)
   idummy = 3; CALL LIST_INTEGER(sRes,idummy,xbars_geo)

@@ -31,7 +31,7 @@
 !#
 !########################################################################
 
-subroutine INITIALIZE_GEOMETRY(txc, wrk3d)  
+subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)  
   
   use DNS_IBM
   
@@ -46,19 +46,19 @@ subroutine INITIALIZE_GEOMETRY(txc, wrk3d)
   ! ================================================================== !
 
   ! generate native 3d-geometry field (eps_aux) of immersed objects (define your own geomtry here)
-  call GENERATE_GEOMETRY_XBARS(wrk3d) 
+  call IBM_IBM_GENERATE_GEOMETRY_XBARS(wrk3d) 
 
   ! transpose eps in epsi, epsj, epsk and allocate neccessary memory
-  call GEOMETRY_TRANSPOSE(wrk3d,txc)
+  call IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
 
   ! generate relevant geometry fields for IBM routines (nobi, nobj, nobk)
-  call GENERATE_GEOMETRY(wrk3d,txc) ! txc for DEBUG
+  call IBM_GENERATE_GEOMETRY(wrk3d,txc) ! txc for DEBUG
   
   ! not coded yet
   ! read/write geometry fields from/to disk
   ! call READ_GEOMETRY() ! call WRITE_GEOMETRY()           
   
   return
-end subroutine INITIALIZE_GEOMETRY
+end subroutine IBM_INITIALIZE_GEOMETRY
 
 !########################################################################

@@ -1,7 +1,6 @@
 #include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
-#include "dns_error.h"
 
 !########################################################################
 !# HISTORY / ATHORS
@@ -33,13 +32,12 @@
 !#
 !########################################################################
 
-subroutine GENERATE_GEOMETRY(wrk3d,txc)
+subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   
   use DNS_IBM
   use DNS_GLOBAL, only: g   
   use DNS_GLOBAL, only: imax, jmax, kmax 
-  use DNS_GLOBAL, only: isize_field, isize_txc_field, inb_txc
-  use DNS_GLOBAL, only: xbars_geo  
+  use DNS_GLOBAL, only: isize_field, inb_txc !,isize_txc_field
   
 #ifdef USE_MPI
   use DNS_MPI,    only: ims_pro, ims_npro
@@ -113,6 +111,7 @@ subroutine GENERATE_GEOMETRY(wrk3d,txc)
 #endif
 
   ! ================================================================== !
+ 
   ! max(nobi_max,nobj_max,nobk_max) from dns.ini file
   nob_max = xbars_geo(1)
 
@@ -696,6 +695,6 @@ subroutine GENERATE_GEOMETRY(wrk3d,txc)
   if (ims_pro == 0) write(*,*) '========================================================='
 
   return
-end subroutine GENERATE_GEOMETRY
+end subroutine IBM_GENERATE_GEOMETRY
 
 !########################################################################

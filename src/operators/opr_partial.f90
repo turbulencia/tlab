@@ -258,15 +258,10 @@ SUBROUTINE OPR_PARTIAL2D(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
 END SUBROUTINE OPR_PARTIAL2D
 ! ###################################################################
 ! ###################################################################
-! ### First Derivative 
-! ### Second Derivative includes
-! ###       factor 1    (is=-1)
-! ###       viscosity   (is= 0)
-! ###       diffusivity (is= 1,inb_scal)
 SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
 
    USE DNS_TYPES, ONLY : grid_dt
-   ! USE DNS_IBM_TEST
+   USE DNS_IBM,   ONLY : burgers_ibm, burgers_x_ibm, burgers_y_ibm, burgers_z_ibm
 
 ! ############################################# ! 
 ! DEBUG
@@ -286,13 +281,9 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
    TREAL, DIMENSION(nlines,g%size), INTENT(IN)    :: u
    TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result
    TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
-   TREAL, DIMENSION(nlines,g%size), INTENT(INOUT) :: wrk3d  ! First derivative
-   
-   TREAL, DIMENSION(:,:), POINTER :: lu2_p
-   
+   TREAL, DIMENSION(nlines,g%size), INTENT(INOUT) :: wrk3d  ! First derivative 
    
    ! -------------------------------------------------------------------
-   TINTEGER ip
    
 ! ############################################# ! 
 ! DEBUG
@@ -300,88 +291,25 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
 #else
    TINTEGER, parameter  ::  ims_pro=0  
 #endif
-! ############################################# ! 
    if (ims_pro == 0) write(*,*) 'OPR_PARTIAL2D_IBM is used'
-   ! call test()    
+   if (ims_pro == 0) write(*,*) 'burgers_x_ibm', burgers_x_ibm
+   if (ims_pro == 0) write(*,*) 'burgers_y_ibm', burgers_y_ibm
+   if (ims_pro == 0) write(*,*) 'burgers_z_ibm', burgers_z_ibm
+! ############################################# ! 
+   ! right now: IBM not for scalar fields! (will be implemented later)
+   ! modify incoming u fields (fill solids with spline functions)
+   ! depending on direction (one of bugers_xyz_ibm is true if burgers_ibm=.true.)
 
-   ! ###################################################################
-   ! always calculate first derivative as this routine is normally called from opr_burgers 
-   ! ###################################################################
-   CALL OPR_PARTIAL1(nlines, bcs, g, u,wrk3d, wrk2d)
-   
-   IF ( is .GE. 0 ) THEN
-      IF ( g%periodic ) THEN
-         lu2_p => g%lu2d(:,is*5+1:)  ! periodic;     including diffusivity/viscosity
-      ELSE
-         lu2_p => g%lu2d(:,is*3+1:)  ! non-periodic; including diffusivity/viscosity
-      ENDIF
-   ELSE
-      IF ( g%periodic ) THEN
-         lu2_p => g%lu2(:,1:)        ! periodic;     plain derivative
-      ELSE
-         ip = (bcs(1,2)+bcs(2,2)*2)*3! non-periodic; plain derivative
-         lu2_p => g%lu2(:,ip+1:)
-      ENDIF
-   ENDIF
-   
-   
-   ! ###################################################################
-   IF ( g%periodic ) THEN
-      SELECT CASE( g%mode_fdm )
-   
-      CASE( FDM_COM4_JACOBIAN )
-         CALL FDM_C2N4P_RHS(g%size,nlines, u, result)
-   
-      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
-         CALL FDM_C2N6HP_RHS(g%size,nlines, u, result)
-   
-      CASE( FDM_COM8_JACOBIAN )                  ! Not yet implemented
-         CALL FDM_C2N6P_RHS(g%size,nlines, u, result)
-   
-      END SELECT
-   
-      CALL TRIDPSS(g%size,nlines, lu2_p(1,1),lu2_p(1,2),lu2_p(1,3),lu2_p(1,4),lu2_p(1,5), result,wrk2d)
-   
-   ! -------------------------------------------------------------------
-   ELSE
-      SELECT CASE( g%mode_fdm )
-   
-      CASE( FDM_COM4_JACOBIAN )
-         IF ( g%uniform ) THEN
-            CALL FDM_C2N4_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
-         ELSE ! Not yet implemented
-         ENDIF
-   
-      CASE( FDM_COM6_JACOBIAN )
-         IF ( g%uniform ) THEN
-            CALL FDM_C2N6H_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
-         ELSE
-            ! need first derivative from above 
-            CALL FDM_C2N6HNJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, u, wrk3d, result)
-         ENDIF
-   
-      CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
-         IF ( g%uniform ) THEN
-            CALL FDM_C2N6_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
-         ELSE
-            ! Need first derivative from above
-            CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, u, wrk3d, result)
-         ENDIF
-   
-      CASE( FDM_COM6_DIRECT   )
-         CALL FDM_C2N6ND_RHS(g%size,nlines, g%lu2(1,4), u, result)
-   
-      END SELECT
-   
-      CALL TRIDSS(g%size,nlines, lu2_p(1,1),lu2_p(1,2),lu2_p(1,3), result)
-   
-   ENDIF
+   ! IF (burgers_x_ibm) CALL IBM_SPLINE_X()
+   ! IF (burgers_y_ibm) CALL IBM_SPLINE_Y() 
+   ! IF (burgers_z_ibm) CALL IBM_SPLINE_Z() 
+
+   ! call OPR_PARTIAL2D now with modified u fields
+   CALL OPR_PARTIAL2D(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
    
    RETURN
-   END SUBROUTINE OPR_PARTIAL2D_IBM
+END SUBROUTINE OPR_PARTIAL2D_IBM
 
-! ###################################################################
-! ###################################################################
 
 ! ###################################################################
 ! ###################################################################

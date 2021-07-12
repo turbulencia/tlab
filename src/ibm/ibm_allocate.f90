@@ -32,13 +32,12 @@
 !#
 !########################################################################
 
-subroutine ALLOCATE_IBM(allocated)
+subroutine IBM_ALLOCATE(allocated)
 
   use DNS_IBM
   use DNS_CONSTANTS, only: lfile, efile
   use DNS_GLOBAL,    only: imax, jmax, kmax 
   use DNS_GLOBAL,    only: isize_field
-  use DNS_GLOBAL,    only: xbars_geo
 
 #ifdef USE_MPI
   use DNS_MPI,       only: ims_size_i, ims_size_j, ims_size_k 
@@ -241,6 +240,6 @@ subroutine ALLOCATE_IBM(allocated)
   end if
 
   return
-end subroutine ALLOCATE_IBM
+end subroutine IBM_ALLOCATE
 
 !########################################################################

@@ -1,21 +1,10 @@
-SUBROUTINE DNS_IBM_TEST()
-  ! USE DNS_IBM
-  WRITE(*,*) 'TESTING IBM COMPILATION'
-END SUBROUTINE DNS_IBM_TEST
+subroutine IBM_TEST()
 
+  write(*,*) 'TESTING IBM COMPILATION'
 
-subroutine BOUNDARY_BCS_IBM_FLOW()
-
-  implicit none
-  
-#ifdef USE_MPI 
-#include "mpif.h"
-#endif 
-
-  return
-end subroutine BOUNDARY_BCS_IBM_FLOW
+end subroutine IBM_TEST
 !########################################################################
-subroutine WRITE_GEOMETRY()
+subroutine IBM_TWRITE_GEOMETRY()
   !
   implicit none
 
@@ -24,9 +13,9 @@ subroutine WRITE_GEOMETRY()
 #endif 
   
   return
-end subroutine WRITE_GEOMETRY
+end subroutine IBM_TWRITE_GEOMETRY
 !########################################################################
-subroutine READ_GEOMETRY() ! if needed: restart/run with already generated geometry
+subroutine IBM_TREAD_GEOMETRY() ! if needed: restart/run with already generated geometry
   !
   implicit none
 
@@ -35,9 +24,9 @@ subroutine READ_GEOMETRY() ! if needed: restart/run with already generated geome
 #endif 
   !
   return
-end subroutine READ_GEOMETRY
+end subroutine IBM_TREAD_GEOMETRY
 !########################################################################  
-subroutine BOUNDARY_BCS_IBM_SCAL()
+subroutine IBM_BOUNDARY_BCS_IBM_SCAL()
   !
   implicit none
 
@@ -46,7 +35,7 @@ subroutine BOUNDARY_BCS_IBM_SCAL()
 #endif 
   !
   return
-end subroutine BOUNDARY_BCS_IBM_SCAL
+end subroutine IBM_BOUNDARY_BCS_IBM_SCAL
 !########################################################################
 subroutine IBM_FINALIZE() ! dealloc of arrays? maybe not needed...
   !

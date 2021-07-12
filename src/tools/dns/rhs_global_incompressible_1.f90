@@ -25,7 +25,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_CONSTANTS,ONLY:tfile
 #endif
   USE DNS_GLOBAL, ONLY : imode_eqns
-  USE DNS_GLOBAL, ONLY : imode_ibm, burgers_ibm
+  USE DNS_GLOBAL, ONLY : imode_ibm
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : rbackground, ribackground
@@ -35,7 +35,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-  USE DNS_IBM,    ONLY : eps
+  USE DNS_IBM,    ONLY : burgers_ibm, eps
 
 ! ############################################# ! 
 ! DEBUG ####################################### !
@@ -181,6 +181,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      h1(ij) = h1(ij) +tmp2(ij) +tmp3(ij)
   ENDDO
 !$omp end parallel
+
+! ###################################################################
+! IBM not implemented for scalar fields yet (set burgers_ibm flag back to .false.)
+! ###################################################################
+  IF ( imode_ibm == 1 ) burgers_ibm = .false.
+  if (ims_pro == 0) write(*,*) 'burgers_ibm end of rhs', burgers_ibm
+  if (ims_pro == 0) write(*,*) '========================================================='
 
 ! #######################################################################
 ! Diffusion and convection terms in scalar eqns
@@ -438,7 +445,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ! for debugging, just initialized once
 
   ! if (n .eq. 0) then 
-  !   call INITIALIZE_GEOMETRY(epsi) 
+  !   call IBM_INITIALIZE_GEOMETRY(epsi) 
   ! end if
   ! n = n + 1
   ! epsi = reshape(eps,(/isize_field/))
@@ -458,12 +465,12 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Impose top BCs at Jmax
 ! -----------------------------------------------------------------------
 
-! ###################################################################
-! Final for IBM use (set flag back to .false.)
-! ###################################################################
-  IF ( imode_ibm == 1 ) burgers_ibm = .false.
-  if (ims_pro == 0) write(*,*) 'burgers_ibm end of rhs', burgers_ibm
-  if (ims_pro == 0) write(*,*) '========================================================='
+! ! ###################################################################
+! ! Final for IBM use (set flag back to .false.)
+! ! ###################################################################
+!   IF ( imode_ibm == 1 ) burgers_ibm = .false.
+!   if (ims_pro == 0) write(*,*) 'burgers_ibm end of rhs', burgers_ibm
+!   if (ims_pro == 0) write(*,*) '========================================================='
 
 #ifdef TRACE_ON
   CALL IO_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
