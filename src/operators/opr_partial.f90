@@ -315,7 +315,7 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
    CASE('z')
      IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
    !   CALL IBM_SPLINE_Z(u, u_ibm, wrk3d)
-   !   CALL IBM_TEST()
+     CALL IBM_TEST()
      p_ibm => p_vel
    END SELECT
 
