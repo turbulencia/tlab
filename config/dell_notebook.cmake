@@ -35,7 +35,7 @@ else() # compiler for serial build
    # else()
    elseif( ${BUILD_TYPE} STREQUAL "DEBUG" )
 #     set(USER_Fortran_FLAGS_DEBUG "-O0 -p -ggdb -Wall -fbacktrace -ffpe-trap=invalid,zero,overflow,underflow,precision,denormal")
-     set(USER_Fortran_FLAGS_DEBUG "-O0 -ggdb -Wall -fbacktrace -fconvert=little-endian -ffpe-trap=invalid,zero,overflow")
+     set(USER_Fortran_FLAGS_DEBUG "-O0 -ggdb3 -Wall -fbacktrace -fconvert=little-endian -ffpe-trap=invalid,zero,overflow")
 
      add_definitions(-D_DEBUG)
 

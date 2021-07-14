@@ -32,7 +32,61 @@
 !#
 !########################################################################
 
-subroutine IBM_SPLINE_Z(u, wrk3d) 
+subroutine IBM_SPLINE_X(u, u_mod) 
+  
+  use DNS_IBM
+  use DNS_GLOBAL, only: isize_field
+
+  implicit none
+  
+#include "integers.h"
+  
+#ifdef USE_MPI 
+#include "mpif.h"
+#include "dns_const_mpi.h"  
+#endif
+
+  TREAL, dimension(isize_field), intent(in)      :: u 
+  TREAL, dimension(isize_field), intent(out)     :: u_mod 
+  
+  ! ================================================================== !
+
+  ! nothing implemented yet
+  u_mod(:) = u(:)
+
+  return
+end subroutine IBM_SPLINE_X
+
+!########################################################################
+
+subroutine IBM_SPLINE_Y(u, u_mod) 
+  
+  use DNS_IBM
+  use DNS_GLOBAL, only: isize_field
+
+  implicit none
+  
+#include "integers.h"
+  
+#ifdef USE_MPI 
+#include "mpif.h"
+#include "dns_const_mpi.h"  
+#endif
+
+  TREAL, dimension(isize_field), intent(in)      :: u 
+  TREAL, dimension(isize_field), intent(out)     :: u_mod 
+  
+  ! ================================================================== !
+
+  ! nothing implemented yet
+  u_mod(:) = u(:)
+
+  return
+end subroutine IBM_SPLINE_Y
+
+!########################################################################\
+
+subroutine IBM_SPLINE_Z(u, u_mod) 
   
   use DNS_IBM
   ! use DNS_GLOBAL, only: g   
@@ -67,8 +121,8 @@ subroutine IBM_SPLINE_Z(u, wrk3d)
 #endif
 
   TREAL, dimension(isize_field), intent(in)      :: u 
-  ! TREAL, dimension(isize_field), intent(out)     :: u_ibm 
-  TREAL, dimension(isize_field), intent(inout)   :: wrk3d 
+  TREAL, dimension(isize_field), intent(out)     :: u_mod 
+  ! TREAL, dimension(isize_field), intent(inout)   :: wrk3d 
 
   ! TINTEGER                                       :: nobi_max, nobj_max, nobk_max
   ! TINTEGER                                       :: i, j, k, ij, ik, jk, ip, inum
@@ -94,9 +148,10 @@ subroutine IBM_SPLINE_Z(u, wrk3d)
 !   nxy = imax * jmax     
 ! #endif
   
-!   ! ================================================================== !
+  ! ================================================================== !
 
-  ! u_ibm(:) = u(:)
+  ! nothing implemented yet
+  u_mod(:) = u(:)
 
 
 !   ! number of objects in z-direction

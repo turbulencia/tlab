@@ -261,7 +261,7 @@ END SUBROUTINE OPR_PARTIAL2D
 SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
-!   USE DNS_IBM
+  USE DNS_IBM,   ONLY : u_ibm
 
 ! ############################################# ! 
 ! DEBUG
@@ -272,23 +272,25 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
    
   IMPLICIT NONE
    
-  TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity
-  TINTEGER,                        INTENT(IN)    :: nlines ! # of lines to be solved
-  TINTEGER, DIMENSION(2,*),        INTENT(IN)    :: bcs    ! BCs at xmin (1,*) and xmax (2,*):
-                                                            !     0 biased, non-zero
-                                                            !     1 forced to zero
-  TYPE(grid_dt),                   INTENT(IN)    :: g
-  TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
-  TREAL, DIMENSION(nlines,g%size), INTENT(IN),    TARGET :: u
-  TREAL, DIMENSION(nlines,g%size), INTENT(INOUT), TARGET :: wrk3d  ! First derivative 
+  TINTEGER,                        INTENT(IN)             :: is     ! scalar index; if 0, then velocity
+  TINTEGER,                        INTENT(IN)             :: nlines ! # of lines to be solved
+  TINTEGER, DIMENSION(2,*),        INTENT(IN)             :: bcs    ! BCs at xmin (1,*) and xmax (2,*):
+                                                                    !     0 biased, non-zero
+                                                                    !     1 forced to zero
+  TYPE(grid_dt),                   INTENT(IN)             :: g
+  TREAL, DIMENSION(nlines,g%size), INTENT(IN),    TARGET  :: u
+  TREAL, DIMENSION(nlines,g%size), INTENT(OUT)            :: result
+  TREAL, DIMENSION(nlines),        INTENT(INOUT)          :: wrk2d
+  TREAL, DIMENSION(nlines,g%size), INTENT(INOUT)          :: wrk3d  ! First derivative 
 
-  TREAL, DIMENSION(:,:), POINTER :: p_vel, p_ibm, p_wrk3d
-!   TREAL, DIMENSION(nlines,g%size)                :: u_ibm
+  TREAL, DIMENSION(:,:),                          POINTER :: p_vel
+  TREAL, DIMENSION(:),                            POINTER :: p_ibm
   
-! -------------------------------------------------------------------
+  
+  ! -------------------------------------------------------------------
+
 ! ############################################# ! 
-  ! debugging
+! debugging
 #ifdef USE_MPI
 #else
   TINTEGER, parameter  ::  ims_pro=0  
@@ -296,33 +298,36 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
 ! ############################################ ! 
 
   ! pointer
-  p_vel   => u
-  p_wrk3d => wrk3d
-   
+  p_vel => u
+  p_ibm => u_ibm
+
+  ! -------------------------------------------------------------------
 
   ! IBM not for scalar fields! (will be implemented later)
   ! modify incoming u fields (fill solids with spline functions, depending on direction)
 
-   SELECT CASE (g%name)
-   CASE('x')
-     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-     p_ibm => p_vel
-   !   CALL IBM_SPLINE_X(u, u_ibm, wrk3d)
-   CASE('y')
-     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-     p_ibm => p_vel
-   !   CALL IBM_SPLINE_Y(u, u_ibm, wrk3d)
-   CASE('z')
-     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-   !   CALL IBM_SPLINE_Z(u, u_ibm, wrk3d)
-     CALL IBM_TEST()
-     p_ibm => p_vel
-   END SELECT
+  SELECT CASE (g%name)
+   
+  CASE('x')
+    IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
+    CALL IBM_SPLINE_X(p_vel, u_ibm)
+   
+  CASE('y')
+    IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
+    CALL IBM_SPLINE_Y(p_vel, u_ibm)
 
-   ! now with modified u fields
-   CALL OPR_PARTIAL2D(is,nlines, bcs, g, p_ibm, result, wrk2d, wrk3d)
+  CASE('z')
+    IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
+    CALL IBM_SPLINE_Z(p_vel, u_ibm)
+   
+  END SELECT
 
-   NULLIFY(p_vel, p_ibm, p_wrk3d)
+  ! now with modified u fields
+  CALL OPR_PARTIAL2D(is,nlines, bcs, g, p_ibm, result, wrk2d, wrk3d)
+
+  ! -------------------------------------------------------------------
+
+   NULLIFY(p_vel, p_ibm)
    
    RETURN
 END SUBROUTINE OPR_PARTIAL2D_IBM
