@@ -35,13 +35,13 @@ PROGRAM PDFS
   ! -------------------------------------------------------------------
   CHARACTER*512 sRes
   CHARACTER*32 fname, bakfile
-  CHARACTER*64 str, line
+  CHARACTER*64 str
 
   TINTEGER opt_main, opt_block, opt_bins(2)
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
   TINTEGER nfield, ifield, ij, is, bcs(2,2), isize_pdf
   TREAL dummy, eloc1, eloc2, eloc3, cos1, cos2, cos3
-  TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
+  TINTEGER jmax_aux, iread_flow, iread_scal, idummy
   TINTEGER ibc(16)
   TREAL vmin(16), vmax(16)
   LOGICAL reduce_data

@@ -43,12 +43,12 @@ PROGRAM VISUALS
   CHARACTER*512 sRes
   CHARACTER*32 fname, bakfile
   CHARACTER*32 flow_file, scal_file, part_file, plot_file, time_str
-  CHARACTER*64 str, line
+  CHARACTER*64 str
 
   TINTEGER opt_format
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
   TINTEGER ij, is, bcs(2,2)
-  TINTEGER iscal_offset, iread_flow, iread_scal, iread_part, idummy, ierr, MaskSize
+  TINTEGER iscal_offset, iread_flow, iread_scal, iread_part, idummy, MaskSize
   TREAL diff, dummy
   TINTEGER subdomain(6)
 
