@@ -32,10 +32,11 @@
 !#
 !########################################################################
 
-subroutine IBM_SPLINE_X(u, u_mod) 
+subroutine IBM_SPLINE_X(u, u_mod, nlines, g)
   
   use DNS_IBM
   use DNS_GLOBAL, only: isize_field
+  use DNS_TYPES,  only: grid_dt
 
   implicit none
   
@@ -46,8 +47,13 @@ subroutine IBM_SPLINE_X(u, u_mod)
 #include "dns_const_mpi.h"  
 #endif
 
-  TREAL, dimension(isize_field), intent(in)      :: u 
-  TREAL, dimension(isize_field), intent(out)     :: u_mod 
+type(grid_dt),                  intent(in) :: g
+
+TREAL, dimension(isize_field), intent(in)      :: u 
+TREAL, dimension(isize_field), intent(out)     :: u_mod 
+
+TINTEGER, intent(in) :: nlines
+
   
   ! ================================================================== !
 
@@ -59,10 +65,11 @@ end subroutine IBM_SPLINE_X
 
 !########################################################################
 
-subroutine IBM_SPLINE_Y(u, u_mod) 
+subroutine IBM_SPLINE_Y(u, u_mod, nlines, g)
   
   use DNS_IBM
   use DNS_GLOBAL, only: isize_field
+  use DNS_TYPES,  only: grid_dt
 
   implicit none
   
@@ -73,9 +80,12 @@ subroutine IBM_SPLINE_Y(u, u_mod)
 #include "dns_const_mpi.h"  
 #endif
 
+  type(grid_dt),                  intent(in) :: g
+
   TREAL, dimension(isize_field), intent(in)      :: u 
   TREAL, dimension(isize_field), intent(out)     :: u_mod 
   
+  TINTEGER, intent(in) :: nlines
   ! ================================================================== !
 
   ! nothing implemented yet
@@ -84,162 +94,254 @@ subroutine IBM_SPLINE_Y(u, u_mod)
   return
 end subroutine IBM_SPLINE_Y
 
-!########################################################################\
+!########################################################################
 
-subroutine IBM_SPLINE_Z(u, u_mod) 
+subroutine IBM_SPLINE_Z(u, u_mod, nlines, g)
   
-  use DNS_IBM
-  ! use DNS_GLOBAL, only: g   
-  ! use DNS_GLOBAL, only: imax, jmax, kmax 
-  use DNS_GLOBAL, only: isize_field!, inb_txc !,isize_txc_field
-  
-! #ifdef USE_MPI
-  ! use DNS_MPI,    only: ims_pro, ims_npro
-  ! use DNS_MPI,    only: ims_size_i, ims_size_j, ims_size_k    
-  ! use DNS_MPI,    only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i 
-  ! use DNS_MPI,    only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  ! use DNS_MPI,    only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
-! #endif    
-  
+  use DNS_IBM,       only: nobk, nobk_b, nobk_e
+  use DNS_IBM,       only: nflu
+  use DNS_GLOBAL,    only: imax, jmax, kmax 
+  use DNS_GLOBAL,    only: isize_field
+  use DNS_CONSTANTS, only: efile
+  use DNS_TYPES,     only: grid_dt
+
+
+#ifdef USE_MPI
+  use DNS_MPI,       only: ims_pro ! for debugging
+#endif  
+   
   implicit none
   
 #include "integers.h"
-  
+
+! MPI just for debugging
 #ifdef USE_MPI 
 #include "mpif.h"
 #include "dns_const_mpi.h"  
-!   TINTEGER, parameter                            :: idi        = DNS_MPI_I_PARTIAL 
-!   TINTEGER, parameter                            :: idj        = DNS_MPI_J_PARTIAL 
-!   TINTEGER, parameter                            :: idk        = DNS_MPI_K_PARTIAL 
-!   ! TINTEGER, parameter                            :: idi_nob    = DNS_MPI_I_IBM_NOB 
-!   ! TINTEGER, parameter                            :: idk_nob    = DNS_MPI_K_IBM_NOB 
-!   ! TINTEGER, parameter                            :: idi_nob_be = DNS_MPI_I_IBM_NOB_BE 
-!   ! TINTEGER, parameter                            :: idk_nob_be = DNS_MPI_K_IBM_NOB_BE
-!   ! TINTEGER                                       :: ims_err, max_nob
-! #else
-!   TINTEGER, parameter                            :: ims_pro=0, ims_npro=1
+#else
+  TINTEGER, parameter :: ims_pro=0, ims_npro=1
 #endif
+  
+  TREAL, dimension(isize_field), intent(in)  :: u 
+  TREAL, dimension(isize_field), intent(out) :: u_mod 
 
-  TREAL, dimension(isize_field), intent(in)      :: u 
-  TREAL, dimension(isize_field), intent(out)     :: u_mod 
-  ! TREAL, dimension(isize_field), intent(inout)   :: wrk3d 
+  ! vectors for spline interpolation
+  TREAL, dimension(2*nflu+2) :: xa, ya
+  TREAL, dimension(2*nflu+2) :: xb, yb
 
-  ! TINTEGER                                       :: nobi_max, nobj_max, nobk_max
-  ! TINTEGER                                       :: i, j, k, ij, ik, jk, ip, inum
-  ! TINTEGER                                       :: nyz, nxz, nxy
-  ! TINTEGER                                       :: nob_max
+  type(grid_dt),                  intent(in) :: g
 
-  ! CHARACTER(32)                                  :: fname
-
-  ! ! DEBUG
-  ! TREAL, dimension(isize_field,inb_txc), intent(inout) :: txc 
-  ! TREAL, dimension(isize_field)                        :: tmp1, tmp2, tmp3, tmp4 
+  TINTEGER, intent(in) :: nlines ! nlines == nxy
+  TINTEGER                                   :: k, ij, ip, ia, iob, kflu
+  TINTEGER                                   :: ip_fl, iu_fl, ip_ir, iu_ir
+  TINTEGER                                   :: nyz, nxz, nxy
+  character, dimension(64)                   :: line
 
   ! ================================================================== !
+  if (ims_pro == 0) write(*,*) '========================================================='
 
-!   ! npages (cf. dns_mpi_initialize.f90)
-! #ifdef USE_MPI
-!   nyz = ims_size_i(idi) ! local
-!   nxz = ims_size_j(idj) 
-!   nxy = ims_size_k(idk) 
-! #else
-!   nyz = jmax * kmax     ! global
-!   nxz = imax * kmax     
-!   nxy = imax * jmax     
-! #endif
+  ! modify u field with splines in solid region
+  ! equally spaced grid in z 
+
+  ! index convention on k-axis
+  ! ||...-ip_fl-x-(fluid points)-x-ip_il||---(solid points)---||ip_ir-x-(fluid points)-x-ip_fr-...||
+
+  nxy = nlines
+
+  do ij = 1, nxy            ! index of ij-plane, loop over plane and check for objects in each line
+    if(nobk(ij) /= i0) then ! if k-line contains immersed object(s) --yes-->  spline interpolation
+      ip = i0
+      do iob = 1, nobk(ij)  ! loop over immersed object(s)
+        ! build vectors for spline interpolation and  each single object 
+        ! ================================================================== !
+        ! index to remember current position in vectors
+        ia = i1
+
+        ! first interface node (ip_il = nobk_b(ip+ij) ) (build left half of vectors)     
+        if(nobk_b(ip+ij) >= (nflu+1)) then ! obj is immersed
+          
+          ! k-axis indices
+          ip_fl = nobk_b(ip+ij) - nflu   ! k-axis index of most left fluid point
+
+          ! coresponding indices in u-field (interface iu_il = ip_il * nxy + ij)
+          iu_fl = ip_fl * nxy + ij       ! u-index of most left fluid point
+
+          ! loop over nflu-fluid points (from left to right)
+          do kflu = 1, nflu
+            xa(ia) =   ip_fl + (kflu - 1)     ! could be also done with actual grid nod positions      
+            ya(ia) = u(iu_fl + (kflu - 1) * nxy)
+            ia     = ia + 1
+          end do
+
+          ! set left interface
+          xa(ia) = nobk_b(ip+ij)
+          ya(ia) = C_0_R
+          ia     = ia + 1
+         
+        ! not implemented yet  
+        else if((nobk_b(ip+ij) < (nflu+1)) .and. ((nobk_b(ip+ij) > i0))) then
+          ! periodic conditions for xa and ya needed!
+          ! not implemented yet
+          write(line, *) 'IBM_spline Z not implemented yet'
+          call IO_WRITE_ASCII(efile, line)
+          call DNS_STOP(DNS_ERROR_IBM_SPLINE) 
+
+        else ! if (nobk_b(ip+ij) == i0)
+          ! object is half immersed or object exents over full length
+          ! not implemented yet
+          write(line, *) 'IBM_spline Z not implemented yet'
+          call IO_WRITE_ASCII(efile, line)
+          call DNS_STOP(DNS_ERROR_IBM_SPLINE) 
+        end if 
+
+        ! ================================================================== !
+
+        ! find second interface
+        if(nobk_e(ip+ij) <= (g%size - nflu)) then ! obj is immersed
+          
+          ! k-axis indices
+          ip_ir = nobk_e(ip+ij)        ! k-axis index of right interface  point
+          ! ip_fr = nobk_e(ip+ij) + nflu   ! k-axis index of most right fluid point
+
+          ! coresponding indices in u-field
+          iu_ir = ip_ir * nxy + ij     ! u-index of right interface  point
+          ! iu_fr = ip_fr * nxy + ij       ! u-index of most right fluid point
+
+          ! set right interface
+          xa(ia) = ip_ir 
+          ya(ia) = C_0_R
+          ia     = ia + 1
+
+          ! loop over nflu fluid points, from left to right
+          do kflu = 1, nflu
+            xa(ia) =   ip_ir + kflu
+            ya(ia) = u(iu_ir + kflu * nxy)
+            ia     = ia + 1
+          end do
+          
+        ! not implemented yet  
+        else if((nobk_e(ip+ij) > (g%size - nflu)) .and. ((nobk_e(ip+ij) < g%size))) then
+          ! periodic conditions for xa and ya needed!
+          ! not implemented yet
+          write(line, *) 'IBM_spline Z not implemented yet'
+          call IO_WRITE_ASCII(efile, line)
+          call DNS_STOP(DNS_ERROR_IBM_SPLINE) 
+
+        else ! if (nobk_e(ip+ij) == g%size)
+          ! object is half immersed or object exents over full length
+          ! not implemented yet
+          write(line, *) 'IBM_spline Z not implemented yet'
+          call IO_WRITE_ASCII(efile, line)
+          call DNS_STOP(DNS_ERROR_IBM_SPLINE) 
+        end if 
+        if (ims_pro == 0) write(*,*) 'xa', xa
+        if (ims_pro == 0) write(*,*) 'ya', ya
+
+        ! ================================================================== !
+        ! spline interpolation
+        call IBM_SPLINE(xa, ya, xb, yb)
+
+        ! ================================================================== !
+        ! fill gap in u_ibm 
+
+
+        ! ================================================================== !
+        ip = ip + nxy
+      end do
+    end if
+  end do
+
+  if (ims_pro == 0) write(*,*) '========================================================='
+  
+  return
+end subroutine IBM_SPLINE_Z
+
+!########################################################################
+
+subroutine IBM_SPLINE(xa, ya, xb, yb) 
+  
+  use DNS_IBM, only: nflu, kspl
+   
+  implicit none
+  
+#include "integers.h"
+
+  TREAL, dimension(2*nflu+2), intent(in)  :: xa, ya
+  TREAL, dimension(2*nflu+2), intent(out) :: xb, yb 
   
   ! ================================================================== !
 
-  ! nothing implemented yet
-  u_mod(:) = u(:)
 
 
-!   ! number of objects in z-direction
-!   ip = i1
-!   do k = 1, g(3)%size - 1     ! contiguous k-lines
-!     do ij = 1, nxy            ! pages of   k-lines
-!       if((ip == 1) .and. (epsk(ij) == C_1_R)) then ! exception: check first plane for objects
-!         nobk(ij) = C_1_R
-!       end if 
-!       if((epsk(ip+ij-1) == C_0_R) .and. (epsk(ip+ij-1+nxy) == C_1_R)) then ! check for interface 
-!         nobk(ij) = nobk(ij) + C_1_R
-!       end if
-!     end do
-!     ip = ip + nxy
-!   end do
 
-!   nobk_max = int(maxval(nobk))
-! #ifdef USE_MPI
-!   max_nob = nobk_max
-!   call MPI_ALLREDUCE(max_nob, nobk_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
-! #endif
 
-!   ! ------------------------------------------------------------------ !
-!   ! DEBUG
 
-! #ifdef USE_MPI
-!   if ( ims_npro_k > 1 ) then
-!     call DNS_MPI_TRPB_K(nobk, nobk_out, ims_ds_k(1,idk_nob), ims_dr_k(1,idk_nob), ims_ts_k(1,idk_nob), ims_tr_k(1,idk_nob))
-!   endif
-! #else 
-!   nobk_out = nobk
-! #endif
+! ! ###################################################################
+! ! spline function parameter
+!   iopt = 0     ! (iopt=0 or 1) smoothing spline, weighted least-squares spline (iopt=-1)
+!   s    = C_0_R ! control the tradeoff between closeness of fit and smoothness
 
-!   if (ims_pro == 0) then
-!     write(*,*) 'nobk_b     =', size(nobk_b)
-!     write(*,*) 'nobk_b_out =', size(nobk_b_out)
-!     write(*,*) 'nobk_e     =', size(nobk_e)
-!     write(*,*) 'nobk_e_out =', size(nobk_e_out)
+
+!     ! evaluation of spline function [curfit(iopt,m,x,y,w,xb,xe,k,s,nest,n,t,c,fp,wrk,lwrk,iwrk,ier)]
+!     !s    : (in case iopt>=0) s must specify the smoothing factor. 
+!     !       if s=0 then interpolation spline, data points coincident with spline points
+!     !t    : array,length n, which contains the position of the knots.
+!     !n    : integer, giving the total number of knots of s(x).
+!     !c    : array,length n, which contains the b-spline coefficients.
+!     !k    : integer, giving the degree of s(x).
+!     !x    : array,length m, which contains the points where s(x) must
+!     !fp   : contains the weighted sum of squared residuals of the spline approximation
+!     !ier  : ier contains a non-positive value on exit [-2,-1,0], if error ier=[1,2,3,10]
+!   call curfit(iopt,imax,x,y,w,xb,xe,k,s,nest,n,t,c,fp,wrk,lwrk,iwrk,ier)
+  
+!   if ( (ier /= 0) .and. (ier /= -1) ) then
+!     write(line, *) 'INTERPOLATE_1D. Curfit error code = ', ier
+!     call IO_WRITE_ASCII(efile, line)
+!     call DNS_STOP(DNS_ERROR_CURFIT)
 !   end if
 
-!   ! ! ================================================================== !
-!   ! ! begin and end of objects in z-direction
-!   ip = i1
-!   do k = 1, g(3)%size - 1     ! contiguous k-lines
-!     do ij = 1, nxy            ! pages of   k-lines
-!       if((k == 1) .and. (epsk(ij) == C_1_R)) then ! exception: check first plane for interface
-!         nobk_b(ij) = dble(k) ! nobj_b
-!       end if
-!       if((epsk(ip+ij-1) == C_0_R) .and. (epsk(ip+ij-1+nxy) == C_1_R)) then     ! nobk_b check for interface 
-!         inum = i0
-!         do while (nobk_b(inum+ij) /= C_0_R)
-!           inum = inum + nxy            
-!         end do 
-!         nobk_b(inum+ij) = dble(k)
-!       elseif((epsk(ip+ij-1) == C_1_R) .and. (epsk(ip+ij-1+nxy) == C_0_R)) then ! nobk_e check for interface 
-!         inum = i0
-!         do while (nobk_e(inum+ij) /= C_0_R)
-!           inum = inum + nxy            
-!         end do 
-!         nobk_e(inum+ij) = dble(k)        
-!       end if
-!       if((k == (g(3)%size - 1)) .and. (epsk(ip+ij-1+nxy) == C_1_R)) then ! exception: check last plane for interface
-!         inum = i0
-!         do while (nobk_e(inum+ij) /= C_0_R)
-!           inum = inum + nxy           
-!         end do 
-!         nobk_e(inum+ij) = dble(g(3)%size)    
-!       end if
-!     end do
-!     ip = ip + nxy
-!   end do
 
-!   ! ------------------------------------------------------------------ !
-!   ! DEBUG
+!     ! evaluation of the spline [call splev(t,n,c,k,x,y,m,ier)] function to evaluate a B-spline or its derivatives
+!     !###### input parameters:
+!     !t    : array,length n, which contains the position of the knots.
+!     !n    : integer, giving the total number of knots of s(x).
+!     !c    : array,length n, which contains the b-spline coefficients.
+!     !k    : integer, giving the degree of s(x).
+!     !x    : array,length m, which contains the points where s(x) must be evaluated.
+!     !m    : integer, giving the number of points where s(x) must be evaluated.
+!     !###### output parameter:
+!     !y    : array,length m, giving the value of s(x) at the different points.
+!     !ier  : error flag: ier = 0 : normal return, ier =10 : invalid input data (see restrictions)
+!   call splev(t,n,c,k,x_new,y_sp,imax_new,ier)
+  
+!   if (ier /= 0) then
+!     write(line, *) 'INTERPOLATE_1D. Splev error code = ', ier
+!     call IO_WRITE_ASCII(efile, line)
+!     call DNS_STOP(DNS_ERROR_CURFIT)
+!   end if
+  
 
-! #ifdef USE_MPI
-!   if ( ims_npro_k > 1 ) then
-!     call DNS_MPI_TRPB_K(nobk_b, nobk_b_out, ims_ds_k(1,idk_nob_be), ims_dr_k(1,idk_nob_be), ims_ts_k(1,idk_nob_be), ims_tr_k(1,idk_nob_be))
-!     call DNS_MPI_TRPB_K(nobk_e, nobk_e_out, ims_ds_k(1,idk_nob_be), ims_dr_k(1,idk_nob_be), ims_ts_k(1,idk_nob_be), ims_tr_k(1,idk_nob_be))
-!   endif
-! #else 
-!   nobk_b_out = nobk_b
-!   nobk_e_out = nobk_e
-! #endif
 
- 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   return
-end subroutine IBM_SPLINE_Z
+end subroutine IBM_SPLINE
 
 !########################################################################

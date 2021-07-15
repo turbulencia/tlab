@@ -37,7 +37,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   use DNS_IBM
   use DNS_GLOBAL, only: g   
   use DNS_GLOBAL, only: imax, jmax, kmax 
-  use DNS_GLOBAL, only: isize_field, inb_txc !,isize_txc_field
+  use DNS_GLOBAL, only: isize_field, inb_txc
   
 #ifdef USE_MPI
   use DNS_MPI,    only: ims_pro, ims_npro
@@ -62,31 +62,53 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   TINTEGER, parameter                            :: idi_nob_be = DNS_MPI_I_IBM_NOB_BE 
   TINTEGER, parameter                            :: idk_nob_be = DNS_MPI_K_IBM_NOB_BE
   TINTEGER                                       :: ims_err, max_nob
-  TREAL, dimension(ims_size_i(idi))              :: nobi_out    ! DEBUG
-  TREAL, dimension(ims_size_j(idj))              :: nobj_out    ! DEBUG
-  TREAL, dimension(ims_size_k(idk))              :: nobk_out    ! DEBUG
-  TREAL, dimension(ims_size_i(idi)*xbars_geo(1)) :: nobi_b_out  ! DEBUG
-  TREAL, dimension(ims_size_j(idj)*xbars_geo(1)) :: nobj_b_out  ! DEBUG
-  TREAL, dimension(ims_size_k(idk)*xbars_geo(1)) :: nobk_b_out  ! DEBUG
-  TREAL, dimension(ims_size_i(idi)*xbars_geo(1)) :: nobi_e_out  ! DEBUG
-  TREAL, dimension(ims_size_j(idj)*xbars_geo(1)) :: nobj_e_out  ! DEBUG
-  TREAL, dimension(ims_size_k(idk)*xbars_geo(1)) :: nobk_e_out  ! DEBUG
+  ! debugging arrays
+  TREAL, dimension(ims_size_i(idi))              :: nobi_out     ! DEBUG
+  TREAL, dimension(ims_size_j(idj))              :: nobj_out     ! DEBUG
+  TREAL, dimension(ims_size_k(idk))              :: nobk_out     ! DEBUG
+  TREAL, dimension(ims_size_i(idi)*xbars_geo(1)) :: nobi_b_out   ! DEBUG
+  TREAL, dimension(ims_size_j(idj)*xbars_geo(1)) :: nobj_b_out   ! DEBUG
+  TREAL, dimension(ims_size_k(idk)*xbars_geo(1)) :: nobk_b_out   ! DEBUG
+  TREAL, dimension(ims_size_i(idi)*xbars_geo(1)) :: nobi_e_out   ! DEBUG
+  TREAL, dimension(ims_size_j(idj)*xbars_geo(1)) :: nobj_e_out   ! DEBUG
+  TREAL, dimension(ims_size_k(idk)*xbars_geo(1)) :: nobk_e_out   ! DEBUG
+  ! for type casting (tlab subroutines just with real)
+  TREAL, dimension(ims_size_i(idi))              :: nobi_real    ! DEBUG
+  TREAL, dimension(ims_size_j(idj))              :: nobj_real    ! DEBUG
+  TREAL, dimension(ims_size_k(idk))              :: nobk_real    ! DEBUG
+  TREAL, dimension(ims_size_i(idi)*xbars_geo(1)) :: nobi_b_real  ! DEBUG
+  TREAL, dimension(ims_size_j(idj)*xbars_geo(1)) :: nobj_b_real  ! DEBUG
+  TREAL, dimension(ims_size_k(idk)*xbars_geo(1)) :: nobk_b_real  ! DEBUG
+  TREAL, dimension(ims_size_i(idi)*xbars_geo(1)) :: nobi_e_real  ! DEBUG
+  TREAL, dimension(ims_size_j(idj)*xbars_geo(1)) :: nobj_e_real  ! DEBUG
+  TREAL, dimension(ims_size_k(idk)*xbars_geo(1)) :: nobk_e_real  ! DEBUG
 #else
-  TINTEGER, parameter                            :: ims_pro=0, ims_npro=1
-  TREAL, dimension(jmax * kmax)                  :: nobi_out    ! DEBUG
-  TREAL, dimension(imax * kmax)                  :: nobj_out    ! DEBUG
-  TREAL, dimension(imax * jmax)                  :: nobk_out    ! DEBUG
-  TREAL, dimension(jmax * kmax * xbars_geo(1))   :: nobi_b_out  ! DEBUG
-  TREAL, dimension(imax * kmax * xbars_geo(1))   :: nobj_b_out  ! DEBUG
-  TREAL, dimension(imax * jmax * xbars_geo(1))   :: nobk_b_out  ! DEBUG
-  TREAL, dimension(jmax * kmax * xbars_geo(1))   :: nobi_e_out  ! DEBUG
-  TREAL, dimension(imax * kmax * xbars_geo(1))   :: nobj_e_out  ! DEBUG
-  TREAL, dimension(imax * jmax * xbars_geo(1))   :: nobk_e_out  ! DEBUG
+  TINTEGER, parameter                               :: ims_pro=0, ims_npro=1
+  ! debugging arrays
+  TREAL, dimension(jmax * kmax)                  :: nobi_out     ! DEBUG
+  TREAL, dimension(imax * kmax)                  :: nobj_out     ! DEBUG
+  TREAL, dimension(imax * jmax)                  :: nobk_out     ! DEBUG
+  TREAL, dimension(jmax * kmax * xbars_geo(1))   :: nobi_b_out   ! DEBUG
+  TREAL, dimension(imax * kmax * xbars_geo(1))   :: nobj_b_out   ! DEBUG
+  TREAL, dimension(imax * jmax * xbars_geo(1))   :: nobk_b_out   ! DEBUG
+  TREAL, dimension(jmax * kmax * xbars_geo(1))   :: nobi_e_out   ! DEBUG
+  TREAL, dimension(imax * kmax * xbars_geo(1))   :: nobj_e_out   ! DEBUG
+  TREAL, dimension(imax * jmax * xbars_geo(1))   :: nobk_e_out   ! DEBUG
+  ! for type casting (tlab subroutines just with real)
+  TREAL, dimension(jmax * kmax)                  :: nobi_real    ! DEBUG
+  TREAL, dimension(imax * kmax)                  :: nobj_real    ! DEBUG
+  TREAL, dimension(imax * jmax)                  :: nobk_real    ! DEBUG
+  TREAL, dimension(jmax * kmax * xbars_geo(1))   :: nobi_b_real  ! DEBUG
+  TREAL, dimension(imax * kmax * xbars_geo(1))   :: nobj_b_real  ! DEBUG
+  TREAL, dimension(imax * jmax * xbars_geo(1))   :: nobk_b_real  ! DEBUG
+  TREAL, dimension(jmax * kmax * xbars_geo(1))   :: nobi_e_real  ! DEBUG
+  TREAL, dimension(imax * kmax * xbars_geo(1))   :: nobj_e_real  ! DEBUG
+  TREAL, dimension(imax * jmax * xbars_geo(1))   :: nobk_e_real  ! DEBUG
 #endif
 
   TREAL, dimension(isize_field), intent(inout)   :: wrk3d 
 
-  TINTEGER                                       :: nobi_max, nobj_max, nobk_max
+  TREAL                                          :: nobi_max, nobj_max, nobk_max
   TINTEGER                                       :: i, j, k, ij, ik, jk, ip, inum
   TINTEGER                                       :: nyz, nxz, nxy
   TINTEGER                                       :: nob_max
@@ -116,10 +138,10 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   nob_max = xbars_geo(1)
 
   ! initialize 
-  nobi(:)    = C_0_R; nobj(:)    = C_0_R; nobk(:)    = C_0_R
-  nobi_b(:)  = C_0_R; nobj_b(:)  = C_0_R; nobk_b(:)  = C_0_R
-  nobi_e(:)  = C_0_R; nobj_e(:)  = C_0_R; nobk_e(:)  = C_0_R
-  nobi_max   = i0;    nobj_max   = i0;    nobk_max   = i0
+  nobi(:)   = i0; nobj(:)   = i0; nobk(:)   = i0
+  nobi_b(:) = i0; nobj_b(:) = i0; nobk_b(:) = i0
+  nobi_e(:) = i0; nobj_e(:) = i0; nobk_e(:) = i0
+  nobi_max  = i0; nobj_max  = i0; nobk_max  = i0
 
   ! ================================================================== !
   ! number of objects in x-direction
@@ -127,16 +149,16 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   do i = 1, g(1)%size - 1     ! contiguous i-lines
     do jk = 1, nyz            ! pages of   i-lines
       if((ip == 1) .and. (epsi(jk) == C_1_R)) then ! exception: check first plane for objects
-        nobi(jk) = C_1_R
+        nobi(jk) = i1
       end if 
       if((epsi(ip+jk-1) == C_0_R) .and. (epsi(ip+jk-1+nyz) == C_1_R)) then ! check for interface 
-        nobi(jk) = nobi(jk) + C_1_R
+        nobi(jk) = nobi(jk) + i1
       end if
     end do
     ip = ip + nyz
   end do
 
-  nobi_max = int(maxval(nobi))
+  nobi_max = maxval(nobi)
 #ifdef USE_MPI
   max_nob = nobi_max
   call MPI_ALLREDUCE(max_nob, nobi_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
@@ -145,16 +167,16 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   ! ------------------------------------------------------------------ !
   ! DEBUG
 
-  nobi_out = nobi
+  nobi_real = dble(nobi)
+  nobi_out  = nobi_real
   
-  call DNS_TRANSPOSE(nobi_out, nyz, i1, nyz, nobi, i1)
+  call DNS_TRANSPOSE(nobi_out, nyz, i1, nyz, nobi_real, i1)
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
-    call DNS_MPI_TRPB_I(nobi, nobi_out, ims_ds_i(1,idi_nob), ims_dr_i(1,idi_nob), ims_ts_i(1,idi_nob), ims_tr_i(1,idi_nob))
+    call DNS_MPI_TRPB_I(nobi_real, nobi_out, ims_ds_i(1,idi_nob), ims_dr_i(1,idi_nob), ims_ts_i(1,idi_nob), ims_tr_i(1,idi_nob))
   endif
 #else 
-
-  nobi_out = nobi
+  nobi_out = nobi_real
 #endif
 
   ! ================================================================== !
@@ -163,27 +185,27 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   do i = 1, g(1)%size - 1     ! contiguous i-lines
     do jk = 1, nyz            ! pages of   i-lines
       if((i == 1) .and. (epsi(jk) == C_1_R)) then ! exception: check first plane for interface
-        nobi_b(jk) = dble(i) ! nobi_b
+        nobi_b(jk) = i ! nobi_b
       end if
       if((epsi(ip+jk-1) == C_0_R) .and. (epsi(ip+jk-1+nyz) == C_1_R)) then     ! nobi_b check for interface 
         inum = i0
-        do while (nobi_b(inum+jk) /= C_0_R)
+        do while (nobi_b(inum+jk) /= i0)
           inum = inum + nyz            
         end do 
-        nobi_b(inum+jk) = dble(i)
+        nobi_b(inum+jk) = i
       elseif((epsi(ip+jk-1) == C_1_R) .and. (epsi(ip+jk-1+nyz) == C_0_R)) then ! nobi_e check for interface 
         inum = i0
-        do while (nobi_e(inum+jk) /= C_0_R)
+        do while (nobi_e(inum+jk) /= i0)
           inum = inum + nyz            
         end do 
-        nobi_e(inum+jk) = dble(i)        
+        nobi_e(inum+jk) = i        
       end if
       if((i == (g(1)%size - 1)) .and. (epsi(ip+jk-1+nyz) == C_1_R)) then ! exception: check last plane for interface
         inum = i0
-        do while (nobi_e(inum+jk) /= C_0_R)
+        do while (nobi_e(inum+jk) /= i0)
           inum = inum + nyz            
         end do 
-        nobi_e(inum+jk) = dble(g(1)%size)    
+        nobi_e(inum+jk) = g(1)%size    
       end if
     end do
     ip = ip + nyz
@@ -191,19 +213,20 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 
   ! ------------------------------------------------------------------ !
   ! DEBUG
-
-  nobi_b_out = nobi_b
-  nobi_e_out = nobi_e
-  call DNS_TRANSPOSE(nobi_b_out, nyz, nob_max, nyz, nobi_b, nob_max)
-  call DNS_TRANSPOSE(nobi_e_out, nyz, nob_max, nyz, nobi_e, nob_max)
+  nobi_b_real = dble(nobi_b)
+  nobi_e_real = dble(nobi_e)
+  nobi_b_out  = nobi_b_real
+  nobi_e_out  = nobi_e_real
+  call DNS_TRANSPOSE(nobi_b_out, nyz, nob_max, nyz, nobi_b_real, nob_max)
+  call DNS_TRANSPOSE(nobi_e_out, nyz, nob_max, nyz, nobi_e_real, nob_max)
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
-    call DNS_MPI_TRPB_I(nobi_b, nobi_b_out, ims_ds_i(1,idi_nob_be), ims_dr_i(1,idi_nob_be), ims_ts_i(1,idi_nob_be), ims_tr_i(1,idi_nob_be))
-    call DNS_MPI_TRPB_I(nobi_e, nobi_e_out, ims_ds_i(1,idi_nob_be), ims_dr_i(1,idi_nob_be), ims_ts_i(1,idi_nob_be), ims_tr_i(1,idi_nob_be))
+    call DNS_MPI_TRPB_I(nobi_b_real, nobi_b_out, ims_ds_i(1,idi_nob_be), ims_dr_i(1,idi_nob_be), ims_ts_i(1,idi_nob_be), ims_tr_i(1,idi_nob_be))
+    call DNS_MPI_TRPB_I(nobi_e_real, nobi_e_out, ims_ds_i(1,idi_nob_be), ims_dr_i(1,idi_nob_be), ims_ts_i(1,idi_nob_be), ims_tr_i(1,idi_nob_be))
   endif
 #else
-  nobi_b_out = nobi_b
-  nobi_e_out = nobi_e
+  nobi_b_out = nobi_b_real
+  nobi_e_out = nobi_e_real
 #endif
 
 ! ================================================================== !
@@ -212,16 +235,16 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   do j = 1, g(2)%size - 1     ! contiguous j-lines
     do ik = 1, nxz            ! pages of   j-lines
       if((ip == 1) .and. (epsj(ik) == C_1_R)) then ! exception: check first plane for objects
-        nobj(ik) = C_1_R
+        nobj(ik) = i1
       end if 
       if((epsj(ip+ik-1) == C_0_R) .and. (epsj(ip+ik-1+nxz) == C_1_R)) then ! check for interface 
-        nobj(ik) = nobj(ik) + C_1_R
+        nobj(ik) = nobj(ik) + i1
       end if
     end do
     ip = ip + nxz
   end do
 
-  nobj_max = int(maxval(nobj))
+  nobj_max = maxval(nobj)
 #ifdef USE_MPI
   max_nob = nobj_max
   call MPI_ALLREDUCE(max_nob, nobj_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
@@ -229,8 +252,8 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 
   ! ------------------------------------------------------------------ !
   ! DEBUG
-
-  call DNS_TRANSPOSE(nobj, kmax, imax, kmax, nobj_out, imax)
+  nobj_real = dble(nobj)
+  call DNS_TRANSPOSE(nobj_real, kmax, imax, kmax, nobj_out, imax)
 
   ! ================================================================== !
   ! begin and end of objects in y-direction
@@ -238,27 +261,27 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   do j = 1, g(2)%size - 1     ! contiguous j-lines
     do ik = 1, nxz            ! pages of   j-lines
       if((j == 1) .and. (epsj(ik) == C_1_R)) then ! exception: check first plane for interface
-        nobj_b(ik) = dble(j) ! nobj_b
+        nobj_b(ik) = j ! nobj_b
       end if
       if((epsj(ip+ik-1) == C_0_R) .and. (epsj(ip+ik-1+nxz) == C_1_R)) then     ! nobj_b check for interface 
         inum = i0
-        do while (nobj_b(inum+ik) /= C_0_R)
+        do while (nobj_b(inum+ik) /= i0)
           inum = inum + nxz            
         end do 
-        nobj_b(inum+ik) = dble(j)
+        nobj_b(inum+ik) = j
       elseif((epsj(ip+ik-1) == C_1_R) .and. (epsj(ip+ik-1+nxz) == C_0_R)) then ! nobj_e check for interface 
         inum = i0
-        do while (nobj_e(inum+ik) /= C_0_R)
+        do while (nobj_e(inum+ik) /= i0)
           inum = inum + nxz            
         end do 
-        nobj_e(inum+ik) = dble(j)        
+        nobj_e(inum+ik) = j        
       end if
       if((j == (g(2)%size - 1)) .and. (epsj(ip+ik-1+nxz) == C_1_R)) then ! exception: check last plane for interface
         inum = i0
-        do while (nobj_e(inum+ik) /= C_0_R)
+        do while (nobj_e(inum+ik) /= i0)
           inum = inum + nxz           
         end do 
-        nobj_e(inum+ik) = dble(g(2)%size)    
+        nobj_e(inum+ik) = g(2)%size    
       end if
     end do
     ip = ip + nxz
@@ -266,9 +289,10 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 
   ! ------------------------------------------------------------------ !
   ! DEBUG
-
-  call DNS_TRANSPOSE(nobj_b, kmax, imax * nob_max, kmax, nobj_b_out, imax * nob_max)
-  call DNS_TRANSPOSE(nobj_e, kmax, imax * nob_max, kmax, nobj_e_out, imax * nob_max)
+  nobj_b_real = dble(nobj_b)
+  nobj_e_real = dble(nobj_e)
+  call DNS_TRANSPOSE(nobj_b_real, kmax, imax * nob_max, kmax, nobj_b_out, imax * nob_max)
+  call DNS_TRANSPOSE(nobj_e_real, kmax, imax * nob_max, kmax, nobj_e_out, imax * nob_max)
   
   ! ================================================================== !
   ! number of objects in z-direction
@@ -276,16 +300,16 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   do k = 1, g(3)%size - 1     ! contiguous k-lines
     do ij = 1, nxy            ! pages of   k-lines
       if((ip == 1) .and. (epsk(ij) == C_1_R)) then ! exception: check first plane for objects
-        nobk(ij) = C_1_R
+        nobk(ij) = i1
       end if 
       if((epsk(ip+ij-1) == C_0_R) .and. (epsk(ip+ij-1+nxy) == C_1_R)) then ! check for interface 
-        nobk(ij) = nobk(ij) + C_1_R
+        nobk(ij) = nobk(ij) + i1
       end if
     end do
     ip = ip + nxy
   end do
 
-  nobk_max = int(maxval(nobk))
+  nobk_max = maxval(nobk)
 #ifdef USE_MPI
   max_nob = nobk_max
   call MPI_ALLREDUCE(max_nob, nobk_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
@@ -293,13 +317,13 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 
   ! ------------------------------------------------------------------ !
   ! DEBUG
-
+  nobk_real = dble(nobk)
 #ifdef USE_MPI
   if ( ims_npro_k > 1 ) then
-    call DNS_MPI_TRPB_K(nobk, nobk_out, ims_ds_k(1,idk_nob), ims_dr_k(1,idk_nob), ims_ts_k(1,idk_nob), ims_tr_k(1,idk_nob))
+    call DNS_MPI_TRPB_K(nobk_real, nobk_out, ims_ds_k(1,idk_nob), ims_dr_k(1,idk_nob), ims_ts_k(1,idk_nob), ims_tr_k(1,idk_nob))
   endif
 #else 
-  nobk_out = nobk
+  nobk_out = nobk_real
 #endif
 
   if (ims_pro == 0) then
@@ -315,27 +339,27 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   do k = 1, g(3)%size - 1     ! contiguous k-lines
     do ij = 1, nxy            ! pages of   k-lines
       if((k == 1) .and. (epsk(ij) == C_1_R)) then ! exception: check first plane for interface
-        nobk_b(ij) = dble(k) ! nobj_b
+        nobk_b(ij) = k ! nobj_b
       end if
       if((epsk(ip+ij-1) == C_0_R) .and. (epsk(ip+ij-1+nxy) == C_1_R)) then     ! nobk_b check for interface 
         inum = i0
-        do while (nobk_b(inum+ij) /= C_0_R)
+        do while (nobk_b(inum+ij) /= i0)
           inum = inum + nxy            
         end do 
-        nobk_b(inum+ij) = dble(k)
+        nobk_b(inum+ij) = k
       elseif((epsk(ip+ij-1) == C_1_R) .and. (epsk(ip+ij-1+nxy) == C_0_R)) then ! nobk_e check for interface 
         inum = i0
-        do while (nobk_e(inum+ij) /= C_0_R)
+        do while (nobk_e(inum+ij) /= i0)
           inum = inum + nxy            
         end do 
-        nobk_e(inum+ij) = dble(k)        
+        nobk_e(inum+ij) = k        
       end if
       if((k == (g(3)%size - 1)) .and. (epsk(ip+ij-1+nxy) == C_1_R)) then ! exception: check last plane for interface
         inum = i0
-        do while (nobk_e(inum+ij) /= C_0_R)
+        do while (nobk_e(inum+ij) /= i0)
           inum = inum + nxy           
         end do 
-        nobk_e(inum+ij) = dble(g(3)%size)    
+        nobk_e(inum+ij) = g(3)%size    
       end if
     end do
     ip = ip + nxy
@@ -343,15 +367,16 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 
   ! ------------------------------------------------------------------ !
   ! DEBUG
-
+  nobk_b_real = dble(nobk_b)
+  nobk_e_real = dble(nobk_e)
 #ifdef USE_MPI
   if ( ims_npro_k > 1 ) then
-    call DNS_MPI_TRPB_K(nobk_b, nobk_b_out, ims_ds_k(1,idk_nob_be), ims_dr_k(1,idk_nob_be), ims_ts_k(1,idk_nob_be), ims_tr_k(1,idk_nob_be))
-    call DNS_MPI_TRPB_K(nobk_e, nobk_e_out, ims_ds_k(1,idk_nob_be), ims_dr_k(1,idk_nob_be), ims_ts_k(1,idk_nob_be), ims_tr_k(1,idk_nob_be))
+    call DNS_MPI_TRPB_K(nobk_b_real, nobk_b_out, ims_ds_k(1,idk_nob_be), ims_dr_k(1,idk_nob_be), ims_ts_k(1,idk_nob_be), ims_tr_k(1,idk_nob_be))
+    call DNS_MPI_TRPB_K(nobk_e_real, nobk_e_out, ims_ds_k(1,idk_nob_be), ims_dr_k(1,idk_nob_be), ims_ts_k(1,idk_nob_be), ims_tr_k(1,idk_nob_be))
   endif
 #else 
-  nobk_b_out = nobk_b
-  nobk_e_out = nobk_e
+  nobk_b_out = nobk_b_real
+  nobk_e_out = nobk_e_real
 #endif
 
   ! ================================================================== !

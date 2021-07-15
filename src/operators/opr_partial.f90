@@ -310,15 +310,15 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
    
   CASE('x')
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-    CALL IBM_SPLINE_X(p_vel, u_ibm)
+    CALL IBM_SPLINE_X(p_vel, u_ibm, nlines, g)
    
   CASE('y')
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-    CALL IBM_SPLINE_Y(p_vel, u_ibm)
+    CALL IBM_SPLINE_Y(p_vel, u_ibm, nlines, g)
 
   CASE('z')
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-    CALL IBM_SPLINE_Z(p_vel, u_ibm)
+    CALL IBM_SPLINE_Z(p_vel, u_ibm, nlines, g)
    
   END SELECT
 
