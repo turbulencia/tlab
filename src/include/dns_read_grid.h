@@ -9,4 +9,3 @@
 
   area = g(1)%scale
   IF ( g(3)%size .GT. 1 ) area = area *g(3)%scale ! 3D case
-  volume = area *g(2)%scale

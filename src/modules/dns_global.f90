@@ -89,13 +89,13 @@ MODULE DNS_GLOBAL
   TYPE(subarray_dt), DIMENSION(IO_SUBARRAY_SIZE) :: io_aux
 
 ! ###################################################################
-  TYPE(grid_dt), DIMENSION(3) :: g     ! Grid information along 3 directions
-  TREAL :: area,volume                 ! Horizontal area and volume
+  TYPE(grid_dt), DIMENSION(3) :: g      ! Grid information along 3 directions
+  TREAL :: area                         ! Horizontal area and volume
 
 ! ###################################################################
-  TYPE(background_dt) :: qbg(3)        ! Velocity background
-  TYPE(background_dt) :: sbg(MAX_NSP)  ! Scalars backgrounds
-  TYPE(background_dt) :: pbg, rbg, tbg ! Pressure, density, temperature backgrounds
+  TYPE(background_dt) :: qbg(3)         ! Velocity background
+  TYPE(background_dt) :: sbg(MAX_NSP)   ! Scalars backgrounds
+  TYPE(background_dt) :: pbg, rbg, tbg  ! Pressure, density, temperature backgrounds
 
   TREAL, DIMENSION(:), ALLOCATABLE :: pbackground, tbackground, rbackground, ribackground
   TREAL, DIMENSION(:), ALLOCATABLE :: bbackground, epbackground
