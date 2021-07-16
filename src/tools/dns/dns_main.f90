@@ -54,7 +54,10 @@ PROGRAM DNS
   ! #######################################################################
   CALL TLAB_ALLOCATE(C_FILE_LOC)
 
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   CALL PARTICLE_ALLOCATE(C_FILE_LOC)
 

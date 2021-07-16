@@ -1,4 +1,4 @@
-#include "types.h"  
+#include "types.h"
 
 PROGRAM VFFTW
 
@@ -28,7 +28,7 @@ PROGRAM VFFTW
 ! ###################################################################
   CALL DNS_START
 
-  CALL DNS_READ_GLOBAL('dns.ini')
+  CALL DNS_READ_GLOBAL(ifile)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space
@@ -45,7 +45,10 @@ PROGRAM VFFTW
   Img=(-1.0,0.0)
   Img=sqrt(Img)
 
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! ###################################################################
 !  Define forcing term

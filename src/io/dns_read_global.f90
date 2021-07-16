@@ -523,6 +523,10 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   jmax = g(2)%size
   kmax = g(3)%size
 
+  g(1)%name = 'x'
+  g(2)%name = 'y'
+  g(3)%name = 'z'
+
 ! -------------------------------------------------------------------
 ! Domain decomposition in parallel mode
 ! -------------------------------------------------------------------

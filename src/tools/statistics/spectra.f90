@@ -336,7 +336,10 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-#include "dns_read_grid.h"
+CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+CALL FDM_INITIALIZE(x, g(1), wrk1d)
+CALL FDM_INITIALIZE(y, g(2), wrk1d)
+CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   icalc_radial = 0
   IF ( flag_mode .EQ. 1 .AND. g(1)%size     .EQ. g(3)%size     ) icalc_radial = 1 ! Calculate radial spectra
