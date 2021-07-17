@@ -15,7 +15,7 @@ MODULE STATISTICS
 
   PRIVATE
 
-  LOGICAL, PUBLIC :: stats_averages, stats_pdfs, stats_intermittency, stats_filter, stats_buoyancy
+  LOGICAL, PUBLIC :: stats_averages, stats_pdfs, stats_intermittency, stats_buoyancy
 
   PUBLIC :: STATISTICS_INITIALIZE, STATISTICS_TEMPORAL, STATISTICS_SPATIAL
 

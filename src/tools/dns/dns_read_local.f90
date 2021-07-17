@@ -599,10 +599,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; stats_intermittency = .TRUE.
   ELSE;                                       stats_intermittency = .FALSE.; ENDIF
 
-  CALL SCANINICHAR(bakfile, inifile, 'Statistics', 'FilterEnergy', 'no', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; stats_filter = .TRUE.
-  ELSE;                                       stats_filter = .FALSE.; ENDIF
-
 ! ###################################################################
 ! Inflow forcing conditions
 ! ###################################################################
