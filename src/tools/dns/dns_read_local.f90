@@ -769,7 +769,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( nitera_pln       .LE. 0 ) nitera_pln       = nitera_last - nitera_first + 1
   IF ( FilterDomainStep .LE. 0 ) FilterDomainStep = nitera_last - nitera_first + 1
 
-  IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) nitera_stats_spa =-1 ! Never call avg_spatial routines
+  IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) nitera_stats_spa =-1 ! Never call avg_spatial routines
   IF ( nitera_stats_spa .LE. 0 ) nitera_stats_spa = nitera_last - nitera_first + 1
 
 ! -------------------------------------------------------------------
