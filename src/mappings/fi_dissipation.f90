@@ -177,12 +177,11 @@ END SUBROUTINE FI_RTKE
 !########################################################################
 ! Reynolds fluctuations of array a
 !########################################################################
-SUBROUTINE FI_FLUCTUATION_INPLACE(nx,ny,nz, dx,dz, area, a)
-
+SUBROUTINE FI_FLUCTUATION_INPLACE(nx,ny,nz, a)
+  USE DNS_GLOBAL, ONLY : g, area
   IMPLICIT NONE
 
   TINTEGER, INTENT(IN)    :: nx,ny,nz
-  TREAL,    INTENT(IN)    :: dx(*),dz(*), area
   TREAL,    INTENT(INOUT) :: a(nx,ny,nz)
 
   ! -------------------------------------------------------------------
@@ -191,7 +190,7 @@ SUBROUTINE FI_FLUCTUATION_INPLACE(nx,ny,nz, dx,dz, area, a)
 
   ! ###################################################################
   DO j = 1,ny
-    dummy = AVG_IK(nx,ny,nz, j, a, dx,dz, area)
+    dummy = AVG_IK(nx,ny,nz, j, a, g(1)%jac,g(3)%jac, area)
     a(:,j,:) = a(:,j,:) - dummy
   END DO
 

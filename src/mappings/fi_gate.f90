@@ -4,7 +4,7 @@
 SUBROUTINE FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
                    nx,ny,nz, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : g, area
+  USE DNS_GLOBAL, ONLY : g
 
   IMPLICIT NONE
 
@@ -40,7 +40,7 @@ SUBROUTINE FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
 
   ELSE IF ( opt_cond .EQ. 6 .OR. opt_cond .EQ. 7 ) THEN ! Based on scalar fluctuation
      txc(:,1) = s(:,opt_cond_scal)
-     CALL FI_FLUCTUATION_INPLACE(nx,ny,nz, g(1)%jac,g(3)%jac, area, txc(1,1))
+     CALL FI_FLUCTUATION_INPLACE(nx,ny,nz, txc(1,1))
 
   ELSE IF ( opt_cond .EQ. 8 ) THEN ! Based on potential vorticity
      CALL FI_CURL(nx,ny,nz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)

@@ -440,22 +440,22 @@ PROGRAM VISUALS
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
 
           CALL IO_WRITE_ASCII(lfile,'Computing pressure-strain correlation...')
-          txc(1:isize_field,2) = txc(1:isize_field,1); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(1,2))
+          txc(1:isize_field,2) = txc(1:isize_field,1); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(1,2))
 
           plot_file = 'PressureStrainX'//time_str(1:MaskSize)
-          txc(1:isize_field,3) = q(1:isize_field,1); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
+          txc(1:isize_field,3) = q(1:isize_field,1); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,3))
           CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), txc(1,3), txc(1,4), wrk3d, wrk2d,wrk3d)
           txc(1:isize_field,3) = txc(1:isize_field,2)*txc(1:isize_field,4)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,3), wrk3d)
 
           plot_file = 'PressureStrainY'//time_str(1:MaskSize)
-          txc(1:isize_field,3) = q(1:isize_field,2); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
+          txc(1:isize_field,3) = q(1:isize_field,2); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,3))
           CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,3), txc(1,4), wrk3d, wrk2d,wrk3d)
           txc(1:isize_field,3) = txc(1:isize_field,2)*txc(1:isize_field,4)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,3), wrk3d)
 
           plot_file = 'PressureStrainZ'//time_str(1:MaskSize)
-          txc(1:isize_field,3) = q(1:isize_field,3); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
+          txc(1:isize_field,3) = q(1:isize_field,3); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,3))
           CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), txc(1,3), txc(1,4), wrk3d, wrk2d,wrk3d)
           txc(1:isize_field,3) = txc(1:isize_field,2)*txc(1:isize_field,4)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,3), wrk3d)
@@ -724,11 +724,11 @@ PROGRAM VISUALS
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
 
         plot_file = 'bPrime'//time_str(1:MaskSize)  ! buoyancy fluctuation
-        CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(1,1))
+        CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(1,1))
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
         plot_file = 'Cvb'//time_str(1:MaskSize)     ! Covariance between b and v
-        txc(1:isize_field,2) = q(1:isize_field,2); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,2))
+        txc(1:isize_field,2) = q(1:isize_field,2); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,2))
         txc(1:isize_field,2) = txc(1:isize_field,1) *txc(1:isize_field,2)
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
 
@@ -768,9 +768,9 @@ PROGRAM VISUALS
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
         plot_file = 'Tke'//time_str(1:MaskSize)
-        txc(1:isize_field,1) = q(1:isize_field,1); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,1))
-        txc(1:isize_field,2) = q(1:isize_field,2); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,2))
-        txc(1:isize_field,3) = q(1:isize_field,3); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
+        txc(1:isize_field,1) = q(1:isize_field,1); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,1))
+        txc(1:isize_field,2) = q(1:isize_field,2); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,2))
+        txc(1:isize_field,3) = q(1:isize_field,3); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,3))
         txc(1:isize_field,4) = C_05_R *( txc(1:isize_field,1)**2 +txc(1:isize_field,2)**2 +txc(1:isize_field,3)**2 )
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,4), wrk3d)
 
