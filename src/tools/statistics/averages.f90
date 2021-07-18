@@ -868,8 +868,8 @@ PROGRAM AVERAGES
       CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
-      CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(1,1))
-      CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(1,2))
+      CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(1,1))
+      CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(1,2))
 
       txc(1:isize_field,1) = s(1:isize_field,1)   *s(1:isize_field,2)
       txc(1:isize_field,2) = txc(1:isize_field,1) *s(1:isize_field,1)

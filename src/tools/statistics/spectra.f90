@@ -510,7 +510,7 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
         ENDDO
      ELSE
         DO iv = 1,nfield_ref
-           CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, vars(iv)%field)
+           CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, vars(iv)%field)
         ENDDO
      ENDIF
 
