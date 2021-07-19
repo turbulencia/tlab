@@ -8,22 +8,17 @@ PROGRAM INISCAL
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE THERMO_GLOBAL, ONLY : imixture
   USE SCAL_LOCAL
 
   IMPLICIT NONE
 
 ! -------------------------------------------------------------------
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q,s, txc
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
-
-  TINTEGER ierr, is, inb_scal_loc
-
-  CHARACTER*64 str, line
+  TINTEGER is, inb_scal_loc
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   CALL SCAL_READ_LOCAL(ifile)
@@ -35,17 +30,18 @@ PROGRAM INISCAL
   CALL DNS_MPI_INITIALIZE
 #endif
 
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
   isize_wrk3d = isize_field
 
   IF ( flag_s .EQ. 1 .OR. flag_s .EQ. 3 .OR. radiation%type .NE. EQNS_NONE ) THEN; inb_txc = 1
   ELSE;                                                                            inb_txc = 0
   ENDIF
 
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE()
 
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! ###################################################################
   CALL IO_WRITE_ASCII(lfile,'Initializing scalar fiels.')

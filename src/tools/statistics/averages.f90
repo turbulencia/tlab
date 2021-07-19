@@ -11,8 +11,10 @@ PROGRAM AVERAGES
   USE DNS_CONSTANTS, ONLY : ifile,efile,lfile,gfile, tag_flow,tag_scal,tag_part
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE THERMO_GLOBAL, ONLY : imixture
   USE LAGRANGE_GLOBAL
+  USE LAGRANGE_ARRAYS
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -30,15 +32,12 @@ PROGRAM AVERAGES
   TINTEGER, PARAMETER :: igate_size_max =   8
   TINTEGER, PARAMETER :: params_size_max=   2
 
-  ! Arrays declarations
-  TREAL,      ALLOCATABLE, SAVE         :: x(:,:),y(:,:),z(:,:)
-  TREAL,      ALLOCATABLE, SAVE, TARGET :: q(:,:), s(:,:), txc(:,:)
-  TREAL,      ALLOCATABLE, SAVE         :: wrk2d(:,:)
-  TREAL,      ALLOCATABLE, SAVE         :: mean(:), y_aux(:), wrk1d(:), wrk3d(:)
+  ! -------------------------------------------------------------------
+  ! Additional local arrays
+  TREAL,      ALLOCATABLE, SAVE         :: mean(:), y_aux(:)
   INTEGER(1), ALLOCATABLE, SAVE         :: gate(:)
   TYPE(pointers_dt)                     :: vars(16)
   TREAL,      ALLOCATABLE, SAVE         :: surface(:,:,:)       ! Gate envelopes
-  TREAL,      ALLOCATABLE, SAVE         :: l_q(:,:), l_txc(:,:) ! Particle data
 
   ! -------------------------------------------------------------------
   ! Local variables
@@ -46,13 +45,12 @@ PROGRAM AVERAGES
   CHARACTER*512 sRes
   CHARACTER*32 fname, bakfile
   CHARACTER*32 varname(16)
-  CHARACTER*64 str, line
 
   TINTEGER opt_main, opt_block, opt_order
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
   TINTEGER nfield, ifield, is, ij, k, bcs(2,2)
   TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3, dummy
-  TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
+  TINTEGER jmax_aux, iread_flow, iread_scal, idummy
 
   ! Gates for the definition of the intermittency function (partition of the fields)
   TINTEGER igate_size
@@ -84,7 +82,7 @@ PROGRAM AVERAGES
 
   bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_INITIALIZE
+  CALL DNS_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part == 1 ) THEN
@@ -240,8 +238,6 @@ PROGRAM AVERAGES
   ! -------------------------------------------------------------------
   ! Allocating memory space
   ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
   ALLOCATE(gate(isize_field))
 
   ! in case g(2)%size is not divisible by opt_block, drop the upper most planes
@@ -288,16 +284,18 @@ PROGRAM AVERAGES
   IF ( icalc_part == 1) THEN
     isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
   END IF
-#include "dns_alloc_arrays.h"
 
-  IF ( icalc_part == 1 ) THEN
-#include "dns_alloc_larrays.h"
-  END IF
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
+
+  CALL PARTICLE_ALLOCATE(C_FILE_LOC)
 
   ! -------------------------------------------------------------------
   ! Initialize
   ! -------------------------------------------------------------------
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   IF ( ifourier == 1 ) THEN         ! For Poisson solver
     CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
@@ -333,21 +331,14 @@ PROGRAM AVERAGES
     IF ( iread_scal == 1 ) THEN
       WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
       CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
-
-      IF      ( imixture == MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
-        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground)
-
-      ELSE IF ( imixture == MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
-        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
-
-      END IF
-
     END IF
 
     IF ( iread_flow == 1 ) THEN
       WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-      CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
+      CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q, wrk3d)
     END IF
+
+    CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
 
     ! -------------------------------------------------------------------
     ! Calculate intermittency
@@ -386,15 +377,6 @@ PROGRAM AVERAGES
     CASE ( 1 )
       IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
         CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,9), txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
-
-      ELSE
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, q(1,4), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, q(1,5), wrk3d)! density
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), q(1,7), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), q(1,7), q(1,6))
-        IF ( itransport == EQNS_TRANS_SUTHERLAND .OR. itransport == EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, q(1,7), q(1,8))
-
       END IF
 
       IF ( icalc_scal == 1 ) THEN
@@ -410,7 +392,7 @@ PROGRAM AVERAGES
           IF ( buoyancy%TYPE == EQNS_EXPLICIT ) THEN
             CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,7))
           ELSE
-            wrk1d(1:jmax) = C_0_R
+            wrk1d(1:jmax,1) = C_0_R
             CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,7), wrk1d)
           END IF
           dummy = C_1_R/froude
@@ -560,17 +542,10 @@ PROGRAM AVERAGES
       IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
         CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
         ifield = ifield+1; vars(ifield)%field => txc(:,1); vars(ifield)%tag = 'P'
-
       ELSE
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1))
-        ifield = ifield+1; vars(ifield)%field => txc(:,2); vars(ifield)%tag = 'R'
-        ifield = ifield+1; vars(ifield)%field => txc(:,1); vars(ifield)%tag = 'P'
-        ifield = ifield+1; vars(ifield)%field => txc(:,3); vars(ifield)%tag = 'T'
-
+        ifield = ifield+1; vars(ifield)%field => q(:,5); vars(ifield)%tag = 'R'
+        ifield = ifield+1; vars(ifield)%field => q(:,6); vars(ifield)%tag = 'P'
+        ifield = ifield+1; vars(ifield)%field => q(:,7); vars(ifield)%tag = 'T'
       END IF
 
       IF ( icalc_scal == 1 ) THEN
@@ -595,7 +570,7 @@ PROGRAM AVERAGES
           IF ( buoyancy%TYPE == EQNS_EXPLICIT ) THEN
             CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d)
           ELSE
-            wrk1d(1:jmax) = C_0_R
+            wrk1d(1:jmax,1) = C_0_R
             CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
           END IF
           DO ij = 1,isize_field
@@ -609,15 +584,9 @@ PROGRAM AVERAGES
         END IF
 
       ELSE
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
-
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
-
-        CALL FI_VORTICITY_BAROCLINIC(imax,jmax,kmax, txc(1,2),txc(1,1), txc(1,4), txc(1,3),txc(1,7), wrk2d,wrk3d)
+        CALL FI_VORTICITY_BAROCLINIC(imax,jmax,kmax, q(1,5),q(1,6), txc(1,4), txc(1,3),txc(1,7), wrk2d,wrk3d)
       END IF
+
       CALL FI_CURL(imax,jmax,kmax, u,v,w, txc(1,1),txc(1,2),txc(1,3), txc(1,7), wrk2d,wrk3d)
       txc(1:isize_field,8) = txc(1:isize_field,1)*txc(1:isize_field,4) &
           + txc(1:isize_field,2)*txc(1:isize_field,5) + txc(1:isize_field,3)*txc(1:isize_field,6)
@@ -654,17 +623,12 @@ PROGRAM AVERAGES
 
       IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
         CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
-
+        CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, u,v,w, txc(1,1), &
+            txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       ELSE
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, q(1,4), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, q(1,5), wrk3d)! density
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), q(1,7), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), q(1,7), txc(1,1))         ! pressure in txc1
-
+        CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, u,v,w, q(1,6), &
+            txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       END IF
-      CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, u,v,w, txc(1,1), &
-          txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       txc(1:isize_field,1) = C_2_R *txc(1:isize_field,2)
 
       CALL FI_STRAIN_PRODUCTION(imax,jmax,kmax, u,v,w, &
@@ -904,8 +868,8 @@ PROGRAM AVERAGES
       CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
-      CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(1,1))
-      CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, s(1,2))
+      CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, s(1,1))
+      CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, s(1,2))
 
       txc(1:isize_field,1) = s(1:isize_field,1)   *s(1:isize_field,2)
       txc(1:isize_field,2) = txc(1:isize_field,1) *s(1:isize_field,1)

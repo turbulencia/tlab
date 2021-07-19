@@ -7,7 +7,6 @@
 PROGRAM VHELMHOLTZ_FXZ
 
   USE DNS_TYPES, ONLY : pointers_dt
-  USE DNS_GLOBAL, ONLY : area,volume
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_wrk1d,inb_wrk2d,isize_wrk1d,isize_wrk2d,gfile,isize_txc_field
 #ifdef USE_MPI
   USE DNS_MPI,     ONLY : ims_pro, ims_err
@@ -48,7 +47,7 @@ PROGRAM VHELMHOLTZ_FXZ
 #endif
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
   CALL DNS_READ_GLOBAL('dns.ini')
 #ifdef USE_MPI
@@ -73,7 +72,10 @@ PROGRAM VHELMHOLTZ_FXZ
   ALLOCATE(txc(isize_txc_field,nfield+1),wrk3d(isize_wrk3d))
   ALLOCATE(cx(6*imax),cy(6*jmax),cz(6*g(3)%size))
 
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
 

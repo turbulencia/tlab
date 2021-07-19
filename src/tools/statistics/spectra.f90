@@ -34,6 +34,7 @@ PROGRAM SPECTRA
   USE DNS_TYPES, ONLY : pointers_dt, subarray_dt
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
   USE DNS_MPI
@@ -55,17 +56,14 @@ PROGRAM SPECTRA
   TINTEGER, PARAMETER :: itime_size_max = 512
   TINTEGER, PARAMETER :: iopt_size_max  =  20
 
-! Arrays declarations
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q, s
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: wrk1d,wrk2d, txc
-  TREAL, DIMENSION(:),   ALLOCATABLE :: wrk3d, p_aux, y_aux, samplesize
-
+  ! -------------------------------------------------------------------
+  ! Additional local arrays
+  TREAL, DIMENSION(:),   ALLOCATABLE :: p_aux, y_aux, samplesize
   TREAL, DIMENSION(:,:), ALLOCATABLE :: out2d, outx,outz,outr
 
   TYPE(pointers_dt), DIMENSION(16) :: vars
 
-  TARGET q, s, p_aux
+  TARGET p_aux
 
 ! -------------------------------------------------------------------
 ! Local variables
@@ -108,7 +106,7 @@ PROGRAM SPECTRA
 !########################################################################
   bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_INITIALIZE
+  CALL DNS_START()
 
   CALL DNS_READ_GLOBAL(ifile)
 
@@ -119,8 +117,6 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
-
   ALLOCATE(y_aux(g(2)%size)) ! Reduced vertical grid
 
 ! -------------------------------------------------------------------
@@ -335,12 +331,15 @@ PROGRAM SPECTRA
   isize_wrk3d = isize_txc_field                ! default
   isize_wrk3d = MAX(isize_wrk3d,isize_spec2dr) ! space needed in INTEGRATE_SPECTRUM
 
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-#include "dns_read_grid.h"
+CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+CALL FDM_INITIALIZE(x, g(1), wrk1d)
+CALL FDM_INITIALIZE(y, g(2), wrk1d)
+CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   icalc_radial = 0
   IF ( flag_mode .EQ. 1 .AND. g(1)%size     .EQ. g(3)%size     ) icalc_radial = 1 ! Calculate radial spectra
@@ -476,7 +475,6 @@ PROGRAM SPECTRA
      WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))
      CALL IO_WRITE_ASCII(lfile, sRes)
 
-! Read data
      IF ( iread_flow .EQ. 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
         CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q, wrk3d)
@@ -487,12 +485,11 @@ PROGRAM SPECTRA
         CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
      ENDIF
 
-! Calculate diagnostic quantities to be processed
+     CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
+
+! Calculate additional diagnostic quantities to be processed
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL FI_PRESSURE_BOUSSINESQ(q,s, p_aux, txc(1,1),txc(1,2), txc(1,3), wrk1d,wrk2d,wrk3d)
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-           CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal+1))
-        ENDIF
         IF ( flag_buoyancy .EQ. 1 ) THEN
            IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
               CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, s(1,inb_scal_array))
@@ -503,9 +500,6 @@ PROGRAM SPECTRA
            dummy = C_1_R /froude
            s(:,inb_scal_array) = s(:,inb_scal_array)*dummy
         ENDIF
-     ELSE
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), q(1,7), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), q(1,7), q(1,6))
      ENDIF
 
 ! Remove fluctuation
@@ -516,7 +510,7 @@ PROGRAM SPECTRA
         ENDDO
      ELSE
         DO iv = 1,nfield_ref
-           CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, vars(iv)%field)
+           CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, vars(iv)%field)
         ENDDO
      ENDIF
 

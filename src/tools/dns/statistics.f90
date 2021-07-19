@@ -2,9 +2,6 @@
 #include "dns_const.h"
 #include "dns_error.h"
 #include "avgij_map.h"
-#ifdef LES
-#include "les_const.h"
-#endif
 
 MODULE STATISTICS
 
@@ -18,7 +15,7 @@ MODULE STATISTICS
 
   PRIVATE
 
-  LOGICAL, PUBLIC :: stats_averages, stats_pdfs, stats_intermittency, stats_filter, stats_buoyancy
+  LOGICAL, PUBLIC :: stats_averages, stats_pdfs, stats_intermittency, stats_buoyancy
 
   PUBLIC :: STATISTICS_INITIALIZE, STATISTICS_TEMPORAL, STATISTICS_SPATIAL
 
@@ -44,41 +41,28 @@ CONTAINS
 
   !########################################################################
   !########################################################################
-  SUBROUTINE STATISTICS_TEMPORAL(q,s,hq, txc, wrk1d,wrk2d,wrk3d, l_q,l_txc,l_comm)
+  SUBROUTINE STATISTICS_TEMPORAL()
 
 #ifdef TRACE_ON
     USE DNS_CONSTANTS, ONLY : tfile
 #endif
-    USE DNS_TYPES, ONLY : pointers_dt
+    USE DNS_TYPES,     ONLY : pointers_dt
     USE DNS_GLOBAL,    ONLY : g
-    USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal_array
-    USE DNS_GLOBAL,    ONLY : inb_flow, inb_scal
+    USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, inb_scal_array
     USE DNS_GLOBAL,    ONLY : buoyancy, imode_eqns, icalc_scal
-    USE DNS_GLOBAL,    ONLY : itransport, froude
+    USE DNS_GLOBAL,    ONLY : froude
     USE DNS_GLOBAL,    ONLY : epbackground, pbackground, rbackground
     USE DNS_GLOBAL,    ONLY : itime, rtime
-    USE THERMO_GLOBAL, ONLY : imixture
-    USE DNS_GLOBAL,      ONLY : isize_particle, inb_part, icalc_part
+    USE DNS_GLOBAL,      ONLY : inb_part, icalc_part
     USE DNS_GLOBAL,      ONLY : sbg, schmidt
+    USE TLAB_ARRAYS
+    USE DNS_ARRAYS
+    USE THERMO_GLOBAL, ONLY : imixture
     USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange
     USE LAGRANGE_GLOBAL, ONLY : icalc_part_pdf
-#ifdef LES
-    USE LES_GLOBAL, ONLY : iles, iles_type_chem
-#endif
+    USE LAGRANGE_ARRAYS
 
     IMPLICIT NONE
-
-    TREAL, DIMENSION(isize_field,inb_flow), INTENT(IN)    :: q
-    TREAL, DIMENSION(isize_field,inb_scal), INTENT(IN)    :: s
-    TREAL, DIMENSION(isize_field,inb_flow), INTENT(INOUT) :: hq ! auxiliary array
-    TREAL, DIMENSION(isize_txc_field,6),    INTENT(INOUT) :: txc
-    TREAL, DIMENSION(*),                    INTENT(INOUT) :: wrk1d,wrk2d,wrk3d
-
-    TREAL, DIMENSION(isize_particle,*),     INTENT(IN)    :: l_q
-    TREAL, DIMENSION(isize_particle,*),     INTENT(INOUT) :: l_txc
-    TREAL, DIMENSION(*),                    INTENT(INOUT) :: l_comm
-
-    TARGET :: q,s, txc
 
     ! -------------------------------------------------------------------
     TREAL dummy, amin(16), amax(16)
@@ -89,9 +73,6 @@ CONTAINS
     INTEGER(1) igate
     INTEGER(1), ALLOCATABLE, SAVE :: gate(:)
 
-    ! Pointers to existing allocated space
-    TREAL, DIMENSION(:),   POINTER :: u,v,w,e,rho, p,T
-
     ! ###################################################################
 #ifdef TRACE_ON
     CALL IO_WRITE_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER' )
@@ -99,37 +80,17 @@ CONTAINS
 
     stats_buoyancy = .FALSE.  ! default
 
-    ! Define pointers
-    u   => q(:,1)
-    v   => q(:,2)
-    w   => q(:,3)
-    IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-      e   => q(:,4)
-      rho => q(:,5)
-      p   => q(:,6)
-      T   => q(:,7)
-    ELSE
-      e   => txc(:,6) ! not used, but argument in LES routines
-      rho => txc(:,6) ! not used
-      ! in case we need the buoyancy statistics
-      IF ( buoyancy%TYPE .EQ. EQNS_BOD_QUADRATIC   .OR. &
-          buoyancy%TYPE .EQ. EQNS_BOD_BILINEAR    .OR. &
-          imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
-          imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-        stats_buoyancy = .TRUE.
-      END IF
-      p   => txc(:,3)
+    ! in case we need the buoyancy statistics
+    IF ( buoyancy%TYPE .EQ. EQNS_BOD_QUADRATIC   .OR. &
+        buoyancy%TYPE .EQ. EQNS_BOD_BILINEAR    .OR. &
+        imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
+        imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
+      stats_buoyancy = .TRUE.
     END IF
 
     ! Calculate pressure
     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
       CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,3), txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
-
-    ELSE
-      CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
-      CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
-      IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, q(1,8))
-
     END IF
 
     ! ###################################################################
@@ -137,7 +98,7 @@ CONTAINS
     ! ###################################################################
     IF ( stats_intermittency ) THEN
       ALLOCATE(gate(isize_field))
-      CALL FI_VORTICITY(imax,jmax,kmax, u,v,w, txc(1,1), txc(1,2),txc(1,4), wrk2d,wrk3d)
+      CALL FI_VORTICITY(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,4), wrk2d,wrk3d)
 
       ! calculate vorticity gate based on 1% threshold
       CALL MINMAX(imax,jmax,kmax, txc(1,1), amin(1),amax(1))
@@ -160,13 +121,15 @@ CONTAINS
     ! ###################################################################
     IF ( stats_pdfs ) THEN
       nfield = 0
-      nfield = nfield+1; vars(nfield)%field => u(:); vars(nfield)%tag = 'u'
-      nfield = nfield+1; vars(nfield)%field => v(:); vars(nfield)%tag = 'v'
-      nfield = nfield+1; vars(nfield)%field => w(:); vars(nfield)%tag = 'w'
-      nfield = nfield+1; vars(nfield)%field => p(:); vars(nfield)%tag = 'p'
-      IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        nfield = nfield+1; vars(nfield)%field => rho(:); vars(nfield)%tag = 'r'
-        nfield = nfield+1; vars(nfield)%field => T(:);   vars(nfield)%tag = 't'
+      nfield = nfield+1; vars(nfield)%field => q(:,1); vars(nfield)%tag = 'u'
+      nfield = nfield+1; vars(nfield)%field => q(:,2); vars(nfield)%tag = 'v'
+      nfield = nfield+1; vars(nfield)%field => q(:,3); vars(nfield)%tag = 'w'
+      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+        nfield = nfield+1; vars(nfield)%field => txc(:,3); vars(nfield)%tag = 'p'
+      ELSE
+        nfield = nfield+1; vars(nfield)%field => q(:,6); vars(nfield)%tag = 'p'
+        nfield = nfield+1; vars(nfield)%field => q(:,5); vars(nfield)%tag = 'r'
+        nfield = nfield+1; vars(nfield)%field => q(:,7); vars(nfield)%tag = 't'
       END IF
 
       DO is = 1,inb_scal_array
@@ -200,7 +163,7 @@ CONTAINS
           IF ( buoyancy%TYPE .EQ. EQNS_EXPLICIT ) THEN
             CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, hq(1,1))
           ELSE
-            wrk1d(1:jmax) = C_0_R
+            wrk1d(1:jmax,1) = C_0_R
             CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, hq(1,1), wrk1d) ! note that wrk3d is defined as integer.
           END IF
           dummy = C_1_R/froude
@@ -257,47 +220,6 @@ CONTAINS
 
       END IF
 
-#ifdef LES
-      ! -------------------------------------------------------------------
-      ! LES
-      ! -------------------------------------------------------------------
-      IF ( iles .EQ. 1 ) THEN
-        CALL LES_AVG_FLOW_TEMPORAL_LAYER&
-            (rho,u,v,w,e, hq(1,1),hq(1,2),hq(1,3),hq(1,4), &
-            txc, vaux(vindex(VA_MEAN_WRK)), wrk1d,wrk2d,wrk3d,&
-            vaux(vindex(VA_LES_FLT0X)),vaux(vindex(VA_LES_FLT0Y)),vaux(vindex(VA_LES_FLT0Z)), &
-            vaux(vindex(VA_LES_FLT1X)),vaux(vindex(VA_LES_FLT1Y)),vaux(vindex(VA_LES_FLT1Z)), &
-            vaux(vindex(VA_LES_FLT2X)),vaux(vindex(VA_LES_FLT2Y)),vaux(vindex(VA_LES_FLT2Z)), &
-            vaux(vindex(VA_LES_ARM_UF)), vaux(vindex(VA_LES_ARM_PF)),&
-            vaux(vindex(VA_LES_ARM_UH)), vaux(vindex(VA_LES_ARM_PH)))
-        IF ( iles_type_chem .EQ. LES_CHEM_QUASIBS ) THEN
-          ichi = inb_txc-1; txc(:,ichi) = C_0_R
-        ELSE
-          ! this memory address is not used
-          ichi = 1
-        END IF
-        IF ( icalc_scal .EQ. 1 ) THEN
-          DO is = 1,inb_scal
-            CALL LES_AVG_SCAL_TEMPORAL_LAYER&
-                (is, rho,u,v,w, s(1,is), hq(1,1),hq(1,2),hq(1,3),hq(1,4), &
-                txc, vaux(vindex(VA_MEAN_WRK)), txc(1,ichi), wrk1d,wrk2d,wrk3d, &
-                vaux(vindex(VA_LES_FLT0X)),vaux(vindex(VA_LES_FLT0Y)),vaux(vindex(VA_LES_FLT0Z)), &
-                vaux(vindex(VA_LES_FLT1X)),vaux(vindex(VA_LES_FLT1Y)),vaux(vindex(VA_LES_FLT1Z)), &
-                vaux(vindex(VA_LES_FLT2X)),vaux(vindex(VA_LES_FLT2Y)),vaux(vindex(VA_LES_FLT2Z)), &
-                vaux(vindex(VA_LES_ARM_UF)),vaux(vindex(VA_LES_ARM_ZF)),&
-                vaux(vindex(VA_LES_ARM_UH)),vaux(vindex(VA_LES_ARM_ZH)))
-          END DO
-        END IF
-        !        IF ( iles_type_chem .EQ. LES_CHEM_QUASIBS ) THEN
-        !           CALL LES_AVG_CHEM_BS(x, y, z, dx, dy, dz, rho, &
-        !                u, s, gama, txc, vaux(vindex(VA_MEAN_WRK)), &
-        !                txc(1,ichi), wrk1d, wrk2d, wrk3d,&
-        !                vaux(vindex(VA_LES_FLT0X)), vaux(vindex(VA_LES_FLT0Y)), &
-        !                vaux(vindex(VA_LES_FLT0Z)), vaux(vindex(VA_LES_FDF_BS)))
-        !        END IF
-      END IF
-#endif
-
     END IF
 
 #ifdef TRACE_ON
@@ -309,24 +231,20 @@ CONTAINS
 
   ! ###################################################################
   ! ###################################################################
-  SUBROUTINE STATISTICS_SPATIAL(txc, wrk1d,wrk2d)
+  SUBROUTINE STATISTICS_SPATIAL()
 
 #ifdef TRACE_ON
     USE DNS_CONSTANTS, ONLY : tfile
 #endif
     USE DNS_GLOBAL
+    USE TLAB_ARRAYS
     USE DNS_LOCAL
     USE BOUNDARY_BUFFER
 #ifdef USE_MPI
     USE DNS_MPI
 #endif
-#ifdef LES
-    USE LES_GLOBAL, ONLY : iles
-#endif
 
     IMPLICIT NONE
-
-    TREAL, DIMENSION(*) :: txc, wrk1d, wrk2d
 
     ! -----------------------------------------------------------------------
     TINTEGER is, buff_u_jmin, buff_u_jmax, isize_txc

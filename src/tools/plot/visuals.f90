@@ -5,7 +5,6 @@
 #define C_FILE_LOC "VISUALS"
 
 !########################################################################
-!# DESCRIPTION
 !#
 !# Creating data blocks for visualizations. Derived from ensight.f
 !# Partition to be incorporated via a MASK routine before VISUALS_WRITE
@@ -15,9 +14,11 @@ PROGRAM VISUALS
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE THERMO_GLOBAL, ONLY : imixture
   USE THERMO_GLOBAL, ONLY : NSP, THERMO_SPNAME
   USE LAGRANGE_GLOBAL
+  USE LAGRANGE_ARRAYS
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -32,12 +33,7 @@ PROGRAM VISUALS
   TINTEGER, PARAMETER :: igate_size_max =   8
   TINTEGER, PARAMETER :: params_size_max =  2
 
-  ! Arrays declarations
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: q, s, txc
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
-  TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: wrk2d,wrk3d
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: wrk1d
+  ! Additional local arrays
   INTEGER(1), DIMENSION(:),   ALLOCATABLE, SAVE :: gate
 
   ! -------------------------------------------------------------------
@@ -46,12 +42,12 @@ PROGRAM VISUALS
   CHARACTER*512 sRes
   CHARACTER*32 fname, bakfile
   CHARACTER*32 flow_file, scal_file, part_file, plot_file, time_str
-  CHARACTER*64 str, line
+  CHARACTER*64 str
 
   TINTEGER opt_format
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
   TINTEGER ij, is, bcs(2,2)
-  TINTEGER iscal_offset, iread_flow, iread_scal, iread_part, idummy, ierr, MaskSize
+  TINTEGER iscal_offset, iread_flow, iread_scal, iread_part, idummy, MaskSize
   TREAL diff, dummy
   TINTEGER subdomain(6)
 
@@ -75,7 +71,7 @@ PROGRAM VISUALS
 
   bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_INITIALIZE
+  CALL DNS_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) CALL PARTICLE_READ_GLOBAL(ifile)
@@ -251,8 +247,6 @@ PROGRAM VISUALS
   ! -------------------------------------------------------------------
   ! Allocating memory space
   ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
   ALLOCATE(gate(isize_field))
 
   isize_wrk3d = isize_txc_field
@@ -262,17 +256,21 @@ PROGRAM VISUALS
   IF ( icalc_part .eq. 1) THEN
     isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
   END IF
-#include "dns_alloc_arrays.h"
+
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
   IF ( iread_part .EQ. 1 ) THEN ! Particle variables
     inb_part_txc = MAX(inb_part_txc,1)
-#include "dns_alloc_larrays.h"
+    CALL PARTICLE_ALLOCATE(C_FILE_LOC)
   ENDIF
 
   ! -------------------------------------------------------------------
   ! Initialize
   ! -------------------------------------------------------------------
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   IF ( ifourier .EQ. 1 .AND. inb_txc .GE. 1 ) THEN ! For Poisson solver
     CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
@@ -319,19 +317,14 @@ PROGRAM VISUALS
     IF ( iread_scal .EQ. 1 ) THEN ! Scalar variables
       WRITE(scal_file,*) itime; scal_file = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(scal_file))
       CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
-
-      IF      ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. damkohler(3) .LE. C_0_R ) THEN ! Calculate q_l
-        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground)
-      ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
-        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
-      ENDIF
-
     ENDIF
 
     IF ( iread_flow .EQ. 1 ) THEN ! Flow variables
       WRITE(flow_file,*) itime; flow_file = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(flow_file))
       CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
     ENDIF
+
+    CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
 
     IF ( iread_part .EQ. 1 ) THEN ! Particle variables
       WRITE(part_file,*) itime; part_file = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(part_file))
@@ -447,22 +440,22 @@ PROGRAM VISUALS
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
 
           CALL IO_WRITE_ASCII(lfile,'Computing pressure-strain correlation...')
-          txc(1:isize_field,2) = txc(1:isize_field,1); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(1,2))
+          txc(1:isize_field,2) = txc(1:isize_field,1); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(1,2))
 
           plot_file = 'PressureStrainX'//time_str(1:MaskSize)
-          txc(1:isize_field,3) = q(1:isize_field,1); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
+          txc(1:isize_field,3) = q(1:isize_field,1); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,3))
           CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), txc(1,3), txc(1,4), wrk3d, wrk2d,wrk3d)
           txc(1:isize_field,3) = txc(1:isize_field,2)*txc(1:isize_field,4)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,3), wrk3d)
 
           plot_file = 'PressureStrainY'//time_str(1:MaskSize)
-          txc(1:isize_field,3) = q(1:isize_field,2); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
+          txc(1:isize_field,3) = q(1:isize_field,2); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,3))
           CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,3), txc(1,4), wrk3d, wrk2d,wrk3d)
           txc(1:isize_field,3) = txc(1:isize_field,2)*txc(1:isize_field,4)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,3), wrk3d)
 
           plot_file = 'PressureStrainZ'//time_str(1:MaskSize)
-          txc(1:isize_field,3) = q(1:isize_field,3); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
+          txc(1:isize_field,3) = q(1:isize_field,3); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,3))
           CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), txc(1,3), txc(1,4), wrk3d, wrk2d,wrk3d)
           txc(1:isize_field,3) = txc(1:isize_field,2)*txc(1:isize_field,4)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,3), wrk3d)
@@ -486,13 +479,12 @@ PROGRAM VISUALS
 
         ELSE IF ( opt_vec(iv) .EQ. 7 ) THEN ! temperature
           plot_file = 'Temperature'//time_str(1:MaskSize)
-          CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), txc(1,1), wrk3d)
+          txc(1:isize_field,1) = q(1:isize_field,7)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
         ELSE IF ( opt_vec(iv) .EQ. 8 ) THEN ! pressure
           plot_file = 'Pressure'//time_str(1:MaskSize)
-          CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), txc(1,2), wrk3d)
-          CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), txc(1,2), txc(1,1))
+          txc(1:isize_field,1) = q(1:isize_field,6)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
         ENDIF
@@ -664,10 +656,9 @@ PROGRAM VISUALS
           CALL IO_WRITE_ASCII(efile,'VISUALS. Strain eqn for incompressible undeveloped.')
           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
         ELSE
-          CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), txc(1,1), wrk3d)
-          CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), txc(1,1), q(1,4)) ! pressure in q4
+          txc(:,6) = q(:,6)
         ENDIF
-        CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3),q(1,4), &
+        CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3),txc(1,6), &
           txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk2d,wrk3d)
         txc(1:isize_field,1) = C_2_R *txc(1:isize_field,1)
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
@@ -733,11 +724,11 @@ PROGRAM VISUALS
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
 
         plot_file = 'bPrime'//time_str(1:MaskSize)  ! buoyancy fluctuation
-        CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(1,1))
+        CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(1,1))
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
         plot_file = 'Cvb'//time_str(1:MaskSize)     ! Covariance between b and v
-        txc(1:isize_field,2) = q(1:isize_field,2); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,2))
+        txc(1:isize_field,2) = q(1:isize_field,2); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,2))
         txc(1:isize_field,2) = txc(1:isize_field,1) *txc(1:isize_field,2)
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
 
@@ -777,9 +768,9 @@ PROGRAM VISUALS
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
         plot_file = 'Tke'//time_str(1:MaskSize)
-        txc(1:isize_field,1) = q(1:isize_field,1); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,1))
-        txc(1:isize_field,2) = q(1:isize_field,2); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,2))
-        txc(1:isize_field,3) = q(1:isize_field,3); CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, txc(:,3))
+        txc(1:isize_field,1) = q(1:isize_field,1); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,1))
+        txc(1:isize_field,2) = q(1:isize_field,2); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,2))
+        txc(1:isize_field,3) = q(1:isize_field,3); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(:,3))
         txc(1:isize_field,4) = C_05_R *( txc(1:isize_field,1)**2 +txc(1:isize_field,2)**2 +txc(1:isize_field,3)**2 )
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,4), wrk3d)
 

@@ -2,7 +2,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# DESCRIPTION
 !#
 !# Calculates turbulent dissipation per unit volume \rho \epsilon = \tau'_{ij}u'_{ij}
 !# It assumes constant visocsity
@@ -12,7 +11,7 @@ SUBROUTINE FI_DISSIPATION(flag, nx,ny,nz, u,v,w, eps, tmp1,tmp2,tmp3,tmp4, wrk1d
 
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : area,visc
-  
+
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: flag ! 0 for tau_ji  * u_i,j
@@ -30,7 +29,7 @@ SUBROUTINE FI_DISSIPATION(flag, nx,ny,nz, u,v,w, eps, tmp1,tmp2,tmp3,tmp4, wrk1d
 ! ###################################################################
   bcs = 0
   i1 = 1
-  
+
 ! Diagonal terms
   CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
@@ -46,7 +45,7 @@ SUBROUTINE FI_DISSIPATION(flag, nx,ny,nz, u,v,w, eps, tmp1,tmp2,tmp3,tmp4, wrk1d
      ENDDO
   ENDIF
   eps = wrk3d *tmp1
-  
+
 ! 22
   wrk3d = C_2_R *tmp2 -tmp4 ! )*vis
   IF ( flag .EQ. 1 ) THEN
@@ -69,7 +68,7 @@ SUBROUTINE FI_DISSIPATION(flag, nx,ny,nz, u,v,w, eps, tmp1,tmp2,tmp3,tmp4, wrk1d
      ENDDO
   ENDIF
   eps = eps +wrk3d *tmp3
-     
+
 ! Off-diagonal terms
 ! 12
   CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), u, tmp1, wrk3d, wrk2d,wrk3d)
@@ -121,3 +120,79 @@ SUBROUTINE FI_DISSIPATION(flag, nx,ny,nz, u,v,w, eps, tmp1,tmp2,tmp3,tmp4, wrk1d
 
   RETURN
 END SUBROUTINE FI_DISSIPATION
+
+! #######################################################################
+! Calculate kinetic energy of fluctuating field per unit volume
+! #######################################################################
+#define rR(j)     wrk1d(j,1)
+#define fU(j)     wrk1d(j,2)
+#define fV(j)     wrk1d(j,3)
+#define fW(j)     wrk1d(j,4)
+#define aux(j)    wrk1d(j,5)
+
+SUBROUTINE FI_RTKE(nx,ny,nz, q, wrk1d,wrk3d)
+
+  USE DNS_GLOBAL, ONLY : imode_eqns
+  USE DNS_GLOBAL, ONLY : g, area, rbackground
+
+  IMPLICIT NONE
+
+  TINTEGER nx,ny,nz
+  TREAL, DIMENSION(nx,ny,nz,*), INTENT(IN   ) :: q
+  TREAL, DIMENSION(ny,5),       INTENT(INOUT) :: wrk1d
+  TREAL, DIMENSION(nx,ny,nz),   INTENT(INOUT) :: wrk3d
+
+  ! -----------------------------------------------------------------------
+  TINTEGER j
+
+  ! #######################################################################
+  SELECT CASE ( imode_eqns )
+  CASE( DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL)
+    CALL AVG_IK_V(nx,ny,nz, ny, q(1,1,1,5), g(1)%jac,g(3)%jac, rR(1), aux(1), area)
+    wrk3d = q(:,:,:,5) *q(:,:,:,1)
+    CALL AVG_IK_V(nx,ny,nz, ny, wrk3d,      g(1)%jac,g(3)%jac, fU(1), aux(1), area)
+    fU(:) = fU(:) /rR(:)
+    wrk3d = q(:,:,:,5) *q(:,:,:,2)
+    CALL AVG_IK_V(nx,ny,nz, ny, wrk3d,      g(1)%jac,g(3)%jac, fV(1), aux(1), area)
+    fV(:) = fV(:) /rR(:)
+    wrk3d = q(:,:,:,5) *q(:,:,:,3)
+    CALL AVG_IK_V(nx,ny,nz, ny, wrk3d,      g(1)%jac,g(3)%jac, fW(1), aux(1), area)
+    fW(:) = fW(:) /rR(:)
+
+  CASE( DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+    rR(:) = rbackground(:)
+    CALL AVG_IK_V(nx,ny,nz, ny, q(1,1,1,1), g(1)%jac,g(3)%jac, fU(1), aux(1), area)
+    CALL AVG_IK_V(nx,ny,nz, ny, q(1,1,1,2), g(1)%jac,g(3)%jac, fV(1), aux(1), area)
+    CALL AVG_IK_V(nx,ny,nz, ny, q(1,1,1,3), g(1)%jac,g(3)%jac, fW(1), aux(1), area)
+
+  END SELECT
+
+  DO j = 1,ny
+    wrk3d(:,j,:) = C_05_R *rR(j) *( (q(:,j,:,1)-fU(j))**2 + (q(:,j,:,2)-fV(j))**2 + (q(:,j,:,3)-fW(j))**2 )
+  ENDDO
+
+  RETURN
+END SUBROUTINE FI_RTKE
+
+!########################################################################
+! Reynolds fluctuations of array a
+!########################################################################
+SUBROUTINE FI_FLUCTUATION_INPLACE(nx,ny,nz, a)
+  USE DNS_GLOBAL, ONLY : g, area
+  IMPLICIT NONE
+
+  TINTEGER, INTENT(IN)    :: nx,ny,nz
+  TREAL,    INTENT(INOUT) :: a(nx,ny,nz)
+
+  ! -------------------------------------------------------------------
+  TREAL dummy, AVG_IK
+  TINTEGER j
+
+  ! ###################################################################
+  DO j = 1,ny
+    dummy = AVG_IK(nx,ny,nz, j, a, g(1)%jac,g(3)%jac, area)
+    a(:,j,:) = a(:,j,:) - dummy
+  END DO
+
+  RETURN
+END SUBROUTINE FI_FLUCTUATION_INPLACE

@@ -15,16 +15,16 @@ PROGRAM SMOOTH
   TINTEGER opt
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
   imixture = MIXT_TYPE_AIRWATER
   CALL THERMO_INITIALIZE
   MRATIO = C_1_R
   IF ( gama0 .GT. C_0_R ) GRATIO = (gama0-C_1_R)/gama0
   ep = C_0_R
-  
+
   WRITE(*,*) 'Case d-e (1) or d-p (2) or p-h (3) ?'
-  READ(*,*) opt 
+  READ(*,*) opt
 
   WRITE(*,*) 'Minimum qt ?'
   READ(*,*) qt_min
@@ -58,7 +58,7 @@ PROGRAM SMOOTH
   WRITE(21,*) '# qt, ql, qv, qs(T), r, T, p, e, h'
 
   qt = qt_min
-  DO WHILE ( qt .LE. qt_max ) 
+  DO WHILE ( qt .LE. qt_max )
 
      z1(1) = qt
      IF ( opt .EQ. 1 ) THEN

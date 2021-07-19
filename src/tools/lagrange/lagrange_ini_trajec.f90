@@ -38,7 +38,9 @@ PROGRAM LAGRANGE_INI_TRAJEC
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE LAGRANGE_GLOBAL
+  USE LAGRANGE_ARRAYS
 
 #ifdef USE_MPI
   USE DNS_MPI
@@ -51,12 +53,7 @@ PROGRAM LAGRANGE_INI_TRAJEC
 #endif
 
 ! -------------------------------------------------------------------
-  TINTEGER  ierr
-  TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:),      ALLOCATABLE, SAVE :: wrk1d,wrk2d, wrk3d
-  TREAL, DIMENSION(:,:),    ALLOCATABLE, SAVE :: txc
-
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
+! Additional local arrays
   TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
 
   TINTEGER, DIMENSION(:), ALLOCATABLE :: dummy_proc
@@ -69,7 +66,7 @@ PROGRAM LAGRANGE_INI_TRAJEC
   TREAL, DIMENSION(:,:), ALLOCATABLE :: l_trajectories
   TREAL, DIMENSION(:),   ALLOCATABLE :: fake_liquid, all_fake_liquid
 
-  TINTEGER nitera_first
+  TINTEGER nitera_first, ierr
 
   CHARACTER*64 str, line
   CHARACTER*32 bakfile
@@ -80,7 +77,7 @@ PROGRAM LAGRANGE_INI_TRAJEC
   TLONGINTEGER dummy
 #endif
 
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) THEN
@@ -98,8 +95,8 @@ PROGRAM LAGRANGE_INI_TRAJEC
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d))
+  ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
+  ALLOCATE(wrk2d(isize_wrk2d,1))
 
   isize_wrk3d = imax*jmax*kmax
   ALLOCATE(wrk3d(isize_wrk3d))
@@ -107,7 +104,9 @@ PROGRAM LAGRANGE_INI_TRAJEC
   IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN !Allocte memory to read fields
      ALLOCATE(txc(isize_field,3))
   ENDIF
-#include "dns_alloc_larrays.h"
+
+  CALL PARTICLE_ALLOCATE(C_FILE_LOC)
+
   WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
   ALLOCATE(l_comm(isize_l_comm), stat=ierr)
@@ -133,7 +132,10 @@ all_fake_liquid(:) = C_0_R
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-#include "dns_read_grid.h"
+CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+CALL FDM_INITIALIZE(x, g(1), wrk1d)
+CALL FDM_INITIALIZE(y, g(2), wrk1d)
+CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   !#######################################################################
   !CREATE THE RANDOM PARTICLE FIELD

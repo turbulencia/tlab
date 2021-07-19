@@ -11,7 +11,9 @@ PROGRAM INIPART
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE LAGRANGE_GLOBAL
+  USE LAGRANGE_ARRAYS
 
   IMPLICIT NONE
 #include "integers.h"
@@ -22,18 +24,13 @@ PROGRAM INIPART
   ! -------------------------------------------------------------------
   TINTEGER  ierr
 
-  TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:,:),      ALLOCATABLE, SAVE :: q,s,txc
-  TREAL, DIMENSION(:),        ALLOCATABLE, SAVE :: wrk1d,wrk2d, wrk3d
-
-  TREAL,      DIMENSION(:,:), ALLOCATABLE, SAVE :: l_q, l_txc
   TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
 
   CHARACTER*64 str, line
 
   !########################################################################
   !########################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
   CALL DNS_READ_GLOBAL(ifile)
 
@@ -46,27 +43,30 @@ PROGRAM INIPART
     ! -------------------------------------------------------------------
     ! Allocating memory space
     ! -------------------------------------------------------------------
-    ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-    ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
-
     inb_flow_array = 0
     inb_scal_array = 0
     isize_wrk3d    = imax*jmax*kmax
     inb_txc        = inb_scal
-#include "dns_alloc_arrays.h"
-#include "dns_alloc_larrays.h"
+
+    CALL TLAB_ALLOCATE(C_FILE_LOC)
+
+    CALL PARTICLE_ALLOCATE(C_FILE_LOC)
+
     WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
     CALL IO_WRITE_ASCII(lfile,line)
     ALLOCATE(l_comm(isize_l_comm), stat=ierr)
     IF ( ierr .NE. 0 ) THEN
-      CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
+      CALL IO_WRITE_ASCII(efile,C_FILE_LOC//'Not enough memory for l_comm.')
       CALL DNS_STOP(DNS_ERROR_ALLOC)
     ENDIF
 
     ! -------------------------------------------------------------------
     ! Read the grid
     ! -------------------------------------------------------------------
-#include "dns_read_grid.h"
+    CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+    CALL FDM_INITIALIZE(x, g(1), wrk1d)
+    CALL FDM_INITIALIZE(y, g(2), wrk1d)
+    CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
     ! -------------------------------------------------------------------
     ! Initialize particle information

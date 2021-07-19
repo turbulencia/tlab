@@ -21,7 +21,7 @@ END MODULE DNS_MPI
 MODULE DNS_GLOBAL
   IMPLICIT NONE
   SAVE
-  
+
   TINTEGER :: imax_total, jmax_total, kmax_total
 
 END MODULE DNS_GLOBAL
@@ -33,7 +33,7 @@ PROGRAM VMPI_IO
   USE DNS_GLOBAL
 
   IMPLICIT NONE
-  
+
 #ifdef USE_MPI
 #include "mpif.h"
 #endif
@@ -73,7 +73,7 @@ PROGRAM VMPI_IO
   ALLOCATE(wrk3d(imax*jmax*kmax)                )
 
 ! ###################################################################
-! from DNS_INITIALIZE
+! from DNS_START
   call MPI_INIT(ims_err)
   call MPI_COMM_SIZE(MPI_COMM_WORLD,ims_npro,ims_err)
   call MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro, ims_err)
@@ -82,7 +82,7 @@ PROGRAM VMPI_IO
 ! from DNS_MPI_INITIALIZE
   ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0
   ims_pro_k =     ims_pro/ims_npro_i  ! Starting at 0
-  
+
 ! ###################################################################
   it_max = 20
 
@@ -177,7 +177,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 
   ELSE
      mpio_disp = 0
-     
+
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -200,7 +200,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 END SUBROUTINE IO_READ_FIELDS_SPLIT
 
 #undef LOC_UNIT_ID
-#undef LOC_STATUS 
+#undef LOC_STATUS
 
 !########################################################################
 SUBROUTINE IO_READ_HEADER(unit, offset, nx,ny,nz,nt, params)
@@ -216,10 +216,9 @@ SUBROUTINE IO_READ_HEADER(unit, offset, nx,ny,nz,nt, params)
 !########################################################################
   READ(unit) offset, nx_loc, ny_loc, nz_loc, nt_loc
 
-  isize = offset - 5*SIZEOFINT 
+  isize = offset - 5*SIZEOFINT
   isize = isize/SIZEOFREAL
   READ(unit) params(1:isize)
 
   RETURN
 END SUBROUTINE IO_READ_HEADER
-

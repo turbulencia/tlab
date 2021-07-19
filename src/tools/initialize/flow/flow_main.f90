@@ -8,6 +8,7 @@ PROGRAM INIFLOW
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_ARRAYS
   USE THERMO_GLOBAL, ONLY : imixture
   USE FLOW_LOCAL
 #ifdef USE_CGLOC
@@ -20,22 +21,15 @@ PROGRAM INIFLOW
   IMPLICIT NONE
 
   ! -------------------------------------------------------------------
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q, s, txc
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
+  ! Additional local arrays
 #ifdef USE_CGLOC
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: ci,cj,ck, ipos,jpos,kpos
 #endif
 
-  TARGET q, wrk3d
   TREAL, DIMENSION(:),   POINTER :: e, rho, p, T
 
-  TINTEGER ierr
-
-  CHARACTER*64 str, line
-
   !########################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   CALL FLOW_READ_LOCAL(ifile)
@@ -47,18 +41,19 @@ PROGRAM INIFLOW
   CALL DNS_MPI_INITIALIZE
 #endif
 
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
   inb_wrk2d=MAX(inb_wrk2d,3)
-  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
   isize_wrk3d = isize_txc_field
 
   IF ( flag_u .EQ. 0 ) THEN; inb_txc = 2
   ELSE;                      inb_txc = 8
   ENDIF
 
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 #ifdef USE_CGLOC
   IF ( flag_u .NE. 0 )THEN
@@ -79,8 +74,6 @@ PROGRAM INIFLOW
     rho => q(:,5)
     p   => q(:,6)
     T   => q(:,7)
-  ELSE
-    rho => wrk3d ! array not used
   ENDIF
 
   IF ( flag_u .NE. 0 ) THEN ! Initialize Poisson Solver
@@ -152,7 +145,7 @@ PROGRAM INIFLOW
   CALL IO_WRITE_ASCII(tfile, 'INIFLOW: Section 2')
 #endif
 
-  CALL VELOCITY_MEAN( rho, q(1,1),q(1,2),q(1,3), wrk1d,wrk3d )
+  CALL VELOCITY_MEAN( q(1,1),q(1,2),q(1,3), wrk1d,wrk3d )
 
   SELECT CASE( flag_u )
   CASE( 1 )

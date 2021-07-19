@@ -1,7 +1,6 @@
 #include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
-#include "avgij_map.h"
 
 #define C_FILE_LOC "DNS"
 
@@ -9,9 +8,11 @@ PROGRAM DNS
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE TLAB_ARRAYS
   USE LAGRANGE_GLOBAL
+  USE LAGRANGE_ARRAYS
   USE DNS_LOCAL
+  USE DNS_ARRAYS
   USE TIME
   USE DNS_TOWER
   USE DNS_IBM
@@ -21,9 +22,7 @@ PROGRAM DNS
   USE BOUNDARY_BCS
   USE STATISTICS
   USE PARTICLE_TRAJECTORIES
-#ifdef LES
-  USE LES_GLOBAL
-#endif
+  USE AVG_SCAL_ZT
 
   IMPLICIT NONE
   SAVE
@@ -31,6 +30,7 @@ PROGRAM DNS
 #include "integers.h"
 
   ! -------------------------------------------------------------------
+<<<<<<< HEAD
   TREAL, DIMENSION(:,:), ALLOCATABLE :: x,y,z     ! Grid and associated arrays
 
   TREAL, DIMENSION(:,:), ALLOCATABLE :: q,s       ! Eulerian fields
@@ -54,19 +54,20 @@ PROGRAM DNS
   CHARACTER*128 str, line
   TINTEGER idummy, ig, ierr
   LOGICAL ibm_allocated
+=======
+  CHARACTER*32 fname, str
+  TINTEGER ig
+>>>>>>> upstream/master
 
   ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part == 1 ) THEN
     CALL PARTICLE_READ_GLOBAL(ifile)
-  ENDIF
+  END IF
 #ifdef CHEMISTRY
   CALL CHEM_READ_GLOBAL(ifile)
-#endif
-#ifdef LES
-  CALL LES_READ_INI(ifile)
 #endif
   CALL DNS_READ_LOCAL(ifile)
 
@@ -76,79 +77,26 @@ PROGRAM DNS
 #endif
 
   ! #######################################################################
-  ! Memory management
+  ! Initialize memory space and grid data
   ! #######################################################################
-  ! txc
-  inb_txc = 9
-  IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
-    inb_txc = 6
-    IF ( rkm_mode == RKM_IMP3_DIFFUSION ) inb_txc = inb_txc+1
-  ELSE IF ( imode_eqns == DNS_EQNS_INTERNAL       .AND. &
-      iadvection == EQNS_SKEWSYMMETRIC      .AND. &
-      iviscous   == EQNS_EXPLICIT                 ) THEN
-    inb_txc = 6
-  ENDIF
-  IF ( imixture == MIXT_TYPE_AIRWATER .AND. damkohler(3) > C_0_R ) inb_txc = inb_txc + 1
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
-  IF ( imode_sim == DNS_MODE_SPATIAL ) THEN ! because of the statistics
-    inb_txc = MAX(inb_txc,7)
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
-    IF ( stats_averages ) THEN
-      idummy = MAX(MA_MOMENTUM_SIZE,MS_SCALAR_SIZE)
-      IF ( MOD( nstatavg*jmax*idummy , isize_txc_field ) > 0 ) THEN
-        idummy = nstatavg*jmax*idummy / isize_txc_field + 1
-      ELSE
-        idummy = nstatavg*jmax*idummy / isize_txc_field
-      ENDIF
-      inb_txc = MAX(inb_txc,idummy)
-    ENDIF
+  CALL PARTICLE_ALLOCATE(C_FILE_LOC)
 
-  ENDIF
-
-#ifdef USE_PSFFT
-  IF ( imode_rhs == EQNS_RHS_NONBLOCKING ) inb_txc = MAX(inb_txc,15)
-#endif
-
-  ! wkr3d
-  isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
-  isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
-  IF ( icalc_part == 1) THEN
-    isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
-    isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_particle_interp*2))
-    isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_particle_interp*2))
-  END IF
-  IF ( tower_mode == 1 ) THEN
-    isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))
-  ENDIF
-
-#ifdef LES
-#ifdef USE_MPI
-  IF ( ims_npro > 1 ) THEN ! wrk3d for OZ filter in PARALLEL mode may require more space in LES
-    isize_wrk3d = MAX(isize_wrk3d,imax*jmax*(isgs_f0size + isgs_f1size + kmax))
-  ENDIF
-#endif
-#endif
-
-  ! -------------------------------------------------------------------
-  ! Allocating basic memory space
-  ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
-
-#include "dns_alloc_arrays.h"
-  IF ( icalc_part == 1 ) THEN
-#include "dns_alloc_larrays.h"
-  ENDIF
-
-  ! -------------------------------------------------------------------
-  ! Allocating other stuff
-  ! -------------------------------------------------------------------
   CALL DNS_ALLOCATE()
 
   CALL STATISTICS_INITIALIZE()
+
   CALL PLANES_INITIALIZE()
+
   IF ( tower_mode == 1 ) THEN
     CALL DNS_TOWER_INITIALIZE(tower_stride)
+<<<<<<< HEAD
   ENDIF
   IF ( imode_ibm == 1 ) THEN ! IBM
     ibm_allocated = .FALSE.
@@ -159,28 +107,27 @@ PROGRAM DNS
   ! Read the grid
   ! ###################################################################
 #include "dns_read_grid.h"
+=======
+  END IF
+>>>>>>> upstream/master
 
   ! ###################################################################
   ! Initialize operators and reference data
   ! ###################################################################
-  ! Filters
   DO ig = 1,3
     CALL OPR_FILTER_INITIALIZE( g(ig), FilterDomain(ig), wrk1d )
   END DO
 
-  ! Spectral Poisson solver
   IF ( ifourier == 1 ) THEN
     CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
-  ENDIF
+  END IF
 
-  ! Check operators
   CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
 
-  ! Thermodynamic quantities
   CALL FI_PROFILES_INITIALIZE(wrk1d)
 
   ! ###################################################################
-  ! Read fields
+  ! Initialize fields
   ! ###################################################################
   itime = nitera_first
 
@@ -189,10 +136,12 @@ PROGRAM DNS
   IF ( icalc_scal == 1 ) THEN
     WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
     CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
-  ENDIF
+  END IF
 
   WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
   CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
+
+  CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )  ! Initialize diagnostic thermodynamic quantities
 
   IF ( icalc_part == 1 ) THEN
     WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
@@ -205,7 +154,7 @@ PROGRAM DNS
   IF ( imode_sim == DNS_MODE_SPATIAL .AND. nitera_stats_spa > 0 ) THEN
     WRITE(fname,*) nitera_first; fname = 'st'//TRIM(ADJUSTL(fname))
     CALL IO_READ_AVG_SPATIAL(fname, mean_flow, mean_scal)
-  ENDIF
+  END IF
 
   ! ###################################################################
   ! Initialize change in viscosity
@@ -220,60 +169,21 @@ PROGRAM DNS
       flag_viscosity = .TRUE.
     ELSE
       visc = visc_stop
-    ENDIF
+    END IF
   END IF
-
-  ! ###################################################################
-  ! Initialize Lagrangian stuff
-  ! ###################################################################
-  IF ( icalc_part == 1 ) THEN
-    ! set boundarys for residence time pdf
-    IF ( ilagrange == LAG_TYPE_BIL_CLOUD_4 ) THEN
-      l_y_lambda =  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean - C_2_R
-      l_y_base =   ((g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(1)%ymean -(g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean )/C_2_R &
-          +  (g(2)%nodes(jmax)-g(2)%nodes(1)) *sbg(3)%ymean
-      IF (residence_reset == 1) THEN
-        l_q(:,6:7) = C_0_R
-      ENDIF
-    ENDIF
-  END IF
-
-  ! ###################################################################
-  ! Initialize thermodynamic quantities
-  ! ###################################################################
-  IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
-    IF      ( imixture == MIXT_TYPE_AIRWATER .AND. damkohler(3) <= C_0_R ) THEN ! Calculate q_l
-      CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2), s(1,1), epbackground,pbackground)
-
-    ELSE IF ( imixture == MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
-      CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
-
-    ENDIF
-
-  ELSE
-    e   => q(:,4)
-    rho => q(:,5)
-    p   => q(:,6)
-    T   => q(:,7)
-
-    CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, e, rho, T, wrk3d)
-    CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, rho, T, p)
-    IF ( itransport == EQNS_TRANS_SUTHERLAND .OR. itransport == EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(imax,jmax,kmax, T, q(:,8))
-
-#ifdef CHEMISTRY
-    IF ( ireactive /= CHEM_NONE ) THEN ! Calculate TGFM if reactive case
-      CALL THERMO_GAMMA(imax,jmax,kmax, s, T, wrk3d)
-      CALL CHEM_BURKESCHUMANN(imax,jmax,kmax, s, T, wrk3d, h_q(1,1))
-    ENDIF
-#endif
-
-  ENDIF
 
   ! ###################################################################
   ! Check
   ! ###################################################################
   logs_data(1) = 0 ! Status
   CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
+
+  ! ###################################################################
+  ! Initialize particle simumulation
+  ! ###################################################################
+  IF ( icalc_part == 1 ) THEN
+    CALL PARTICLE_INITIALIZE()
+  END IF
 
   ! ###################################################################
   ! Initialize data for boundary conditions
@@ -284,7 +194,7 @@ PROGRAM DNS
 
   IF ( imode_sim == DNS_MODE_SPATIAL ) THEN
     CALL BOUNDARY_INFLOW_INITIALIZE(rtime, txc, wrk1d,wrk2d,wrk3d)
-  ENDIF
+  END IF
 
   ! ###################################################################
   ! Initialize IBM
@@ -310,44 +220,127 @@ PROGRAM DNS
   ! ###################################################################
   itime = nitera_first
 
-  CALL TIME_INTEGRATION(q,h_q, s,h_s, txc, wrk1d,wrk2d,wrk3d, l_q, l_hq, l_txc, l_comm)
+  WRITE(str,*) itime
+  CALL IO_WRITE_ASCII(lfile,'Starting time integration at It'//TRIM(ADJUSTL(str))//'.')
+
+  DO
+    IF ( itime >= nitera_last   ) EXIT
+    IF ( INT(logs_data(1)) /= 0 ) EXIT
+
+    CALL TIME_RUNGEKUTTA()
+
+    itime = itime + 1
+    rtime = rtime + dtime
+
+    IF ( MOD(itime-nitera_first,FilterDomainStep) == 0 ) THEN
+      CALL DNS_FILTER()
+    END IF
+
+    IF ( flag_viscosity ) THEN          ! Change viscosity if necessary
+      visc = visc +visc_rate *dtime
+      IF ( rtime .GT. visc_time ) THEN
+        visc = visc_stop                ! Fix new value without any roundoff
+        flag_viscosity = .FALSE.
+      END IF
+    END IF
+
+    CALL TIME_COURANT(q, wrk3d)
+
+    ! -------------------------------------------------------------------
+    ! The rest: Logging, postprocessing and saving
+    ! -------------------------------------------------------------------
+    IF ( MOD(itime-nitera_first,nitera_log) == 0 .OR. INT(logs_data(1)) /= 0 ) THEN
+      CALL DNS_LOGS(i2)
+    END IF
+
+    IF ( tower_mode == 1 ) THEN
+      CALL DNS_TOWER_ACCUMULATE(q,1,wrk1d)
+      CALL DNS_TOWER_ACCUMULATE(s,2,wrk1d)
+    END IF
+
+    IF ( itrajectory /= LAG_TRAJECTORY_NONE ) THEN
+      CALL PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
+    END IF
+
+    IF ( MOD(itime-nitera_first,nitera_stats_spa) == 0 ) THEN   ! Accumulate statistics in spatially evolving cases
+      IF ( icalc_flow == 1 ) CALL AVG_FLOW_ZT_REDUCE(q,   hq,txc, mean_flow, wrk2d,wrk3d)
+      IF ( icalc_scal == 1 ) CALL AVG_SCAL_ZT_REDUCE(q,s, hq,txc, mean_scal, wrk2d,wrk3d)
+    END IF
+
+    IF ( MOD(itime-nitera_first,nitera_stats) == 0 ) THEN       ! Calculate statistics
+      IF ( imode_sim == DNS_MODE_TEMPORAL ) CALL STATISTICS_TEMPORAL()
+      IF ( imode_sim == DNS_MODE_SPATIAL  ) CALL STATISTICS_SPATIAL()
+    END IF
+
+    IF ( MOD(itime-nitera_first,nitera_save) == 0 .OR. &        ! Save restart files
+        itime == nitera_last .OR. INT(logs_data(1)) /= 0 ) THEN ! Secure that one restart file is saved
+
+      IF ( icalc_flow == 1 ) THEN
+        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
+        CALL DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, isize_field, q, wrk3d)
+      END IF
+
+      IF ( icalc_scal == 1 ) THEN
+        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
+        CALL DNS_WRITE_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, isize_field, s, wrk3d)
+      END IF
+
+      IF ( tower_mode == 1 ) THEN
+        CALL DNS_TOWER_WRITE(wrk3d)
+      END IF
+
+      IF ( icalc_part == 1 ) THEN
+        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
+        CALL IO_WRITE_PARTICLE(fname, l_g, l_q)
+        IF ( itrajectory /= LAG_TRAJECTORY_NONE ) THEN
+          WRITE(fname,*) itime; fname =TRIM(ADJUSTL(tag_traj))//TRIM(ADJUSTL(fname))
+          CALL PARTICLE_TRAJECTORIES_WRITE(fname)
+        END IF
+      END IF
+
+      IF ( imode_sim == DNS_MODE_SPATIAL .AND. nitera_stats_spa > 0 ) THEN ! Spatial; running averages
+        WRITE(fname,*) itime; fname='st'//TRIM(ADJUSTL(fname))
+        CALL IO_WRITE_AVG_SPATIAL(fname, mean_flow, mean_scal)
+      END IF
+
+    END IF
+
+    IF ( MOD(itime-nitera_first,nitera_pln) == 0 ) THEN
+      CALL PLANES_SAVE( q,s, txc(1,1), txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d )
+    END IF
+
+  END DO
 
   ! ###################################################################
-#ifdef USE_FFTW
-  IF ( ifourier == 1 ) THEN
-    CALL dfftw_destroy_plan(fft_plan_fx)
-    CALL dfftw_destroy_plan(fft_plan_bx)
-    IF ( g(3)%size > 1 ) THEN
-      CALL dfftw_destroy_plan(fft_plan_fz)
-      CALL dfftw_destroy_plan(fft_plan_bz)
-    ENDIF
-  ENDIF
-#endif
-
   CALL DNS_STOP(INT(logs_data(1)))
 
 CONTAINS
+  ! #######################################################################
+  ! #######################################################################
   SUBROUTINE DNS_ALLOCATE()
   IMPLICIT NONE
+
+  TINTEGER ierr
+  CHARACTER*128 line
 
   ! ###################################################################
   WRITE(str,*) inb_flow; line = 'Allocating array rhs flow of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(h_q(isize_field,inb_flow),    stat=ierr)
+  ALLOCATE(hq(isize_field,inb_flow),    stat=ierr)
   IF ( ierr /= 0 ) THEN
     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_q.')
     CALL DNS_STOP(DNS_ERROR_ALLOC)
-  ENDIF
+  END IF
 
   WRITE(str,*) inb_scal; line = 'Allocating array rhs scal of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
   CALL IO_WRITE_ASCII(lfile,line)
-  ALLOCATE(h_s(isize_field,inb_scal),    stat=ierr)
+  ALLOCATE(hs(isize_field,inb_scal),    stat=ierr)
   IF ( ierr /= 0 ) THEN
     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_s.')
     CALL DNS_STOP(DNS_ERROR_ALLOC)
-  ENDIF
+  END IF
 
   ! -------------------------------------------------------------------
   IF ( icalc_part == 1 ) THEN
@@ -357,7 +350,7 @@ CONTAINS
     IF ( ierr /= 0 ) THEN
       CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
       CALL DNS_STOP(DNS_ERROR_ALLOC)
-    ENDIF
+    END IF
 
     WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
     WRITE(str,*) inb_part; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
@@ -366,9 +359,9 @@ CONTAINS
     IF ( ierr /= 0 ) THEN
       CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
       CALL DNS_STOP(DNS_ERROR_ALLOC)
-    ENDIF
+    END IF
 
-  ENDIF
+  END IF
 
   RETURN
   END SUBROUTINE DNS_ALLOCATE

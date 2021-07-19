@@ -30,6 +30,7 @@ PROGRAM LAGRANGE_TRAJEC
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE LAGRANGE_GLOBAL
+  USE LAGRANGE_ARRAYS
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -42,7 +43,7 @@ PROGRAM LAGRANGE_TRAJEC
 
 ! -------------------------------------------------------------------
 
-  TINTEGER  ierr, i, j, k, particle_pos
+  TINTEGER  i, j, k, particle_pos
   TREAL temp
   INTEGER(8) itemp
   LOGICAL :: swapped
@@ -54,13 +55,11 @@ PROGRAM LAGRANGE_TRAJEC
 #else
   TINTEGER dummy
 #endif
-  TREAL, DIMENSION(:,:),    ALLOCATABLE :: l_q, l_txc
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: tag_big_part
 
   TINTEGER nitera_last
 
   CHARACTER*64 str,fname
-  CHARACTER*128 line
   CHARACTER*32 bakfile
 
 !  TINTEGER test1, test2
@@ -68,11 +67,11 @@ PROGRAM LAGRANGE_TRAJEC
 !  INTEGER(8) test4(50)
   bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) THEN
-     CALL PARTICLE_READ_GLOBAL('dns.ini')
+     CALL PARTICLE_READ_GLOBAL(ifile)
   ENDIF
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
@@ -81,10 +80,7 @@ PROGRAM LAGRANGE_TRAJEC
 ! Get the local information from the dns.ini
   CALL SCANINIINT(bakfile, ifile, 'Iteration', 'End',        '0',  nitera_last )
 
-
-#include "dns_alloc_larrays.h"
-
-
+  CALL PARTICLE_ALLOCATE(C_FILE_LOC)
 
   ALLOCATE(big_part(isize_trajectory))
   ALLOCATE(tag_big_part(isize_trajectory))

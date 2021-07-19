@@ -53,3 +53,15 @@ MODULE DNS_LOCAL
 #endif
 
 END MODULE DNS_LOCAL
+
+MODULE DNS_ARRAYS
+  IMPLICIT NONE
+  SAVE
+  PRIVATE
+
+  TREAL, ALLOCATABLE, PUBLIC :: hq(:,:)      ! Right-hand sides Eulerian fields
+  TREAL, ALLOCATABLE, PUBLIC :: hs(:,:)      ! Right-hand sides Eulerian fields
+  TREAL, ALLOCATABLE, PUBLIC :: l_hq(:,:)    ! Right-hand sides Lagrangian fields
+  TREAL, ALLOCATABLE, PUBLIC :: l_comm(:)    ! Communication space for Lagrangian fields
+
+END MODULE DNS_ARRAYS

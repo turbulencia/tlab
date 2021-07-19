@@ -18,9 +18,9 @@ PROGRAM VTGVORTEX
   CHARACTER*(32) fname
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
-  CALL DNS_READ_GLOBAL('dns.ini')
+  CALL DNS_READ_GLOBAL(ifile)
 
   isize_wrk3d = isize_txc_field
 
@@ -37,7 +37,10 @@ PROGRAM VTGVORTEX
   ALLOCATE(  q(isize_field,    4))
   ALLOCATE(txc(isize_txc_field,4))
 
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! ###################################################################
   CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)

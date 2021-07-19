@@ -16,14 +16,14 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 
 !########################################################################
 ! Read routine
 !########################################################################
-SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z)
+SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z, area)
 
   USE DNS_CONSTANTS, ONLY : efile
 
@@ -33,11 +33,12 @@ SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z)
   TINTEGER imax, jmax, kmax
   TREAL scalex, scaley, scalez
   TREAL x(imax), y(jmax), z(kmax)
+  TREAL, OPTIONAL :: area
 
 ! -----------------------------------------------------------------------
   TINTEGER imaxdum, jmaxdum, kmaxdum
   TREAL scale(3)
-  CHARACTER*(32) line 
+  CHARACTER*(32) line
 
 ! #######################################################################
   OPEN(50,file=name, status='old',form='unformatted')
@@ -63,6 +64,11 @@ SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z)
   READ(50) y
   READ(50) z
   CLOSE(50)
+
+  IF ( PRESENT(area) ) THEN
+    area = scalex
+    IF ( kmax > 1 ) area = area *scalez ! 3D case
+  ENDIF
 
   RETURN
 

@@ -3,6 +3,8 @@
 SUBROUTINE DNS_STOP(ic)
 
   USE DNS_CONSTANTS, ONLY : lfile, efile
+  USE DNS_GLOBAL, ONLY : g
+  USE DNS_GLOBAL, ONLY : ifourier, fft_plan_fx, fft_plan_bx, fft_plan_fz, fft_plan_bz
 
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_time_min, ims_time_max, ims_time_trans, ims_err
@@ -18,6 +20,17 @@ SUBROUTINE DNS_STOP(ic)
 
   ! -------------------------------------------------------------------
   CHARACTER*256 line
+
+#ifdef USE_FFTW
+    IF ( ifourier == 1 ) THEN
+      CALL dfftw_destroy_plan(fft_plan_fx)
+      CALL dfftw_destroy_plan(fft_plan_bx)
+      IF ( g(3)%size > 1 ) THEN
+        CALL dfftw_destroy_plan(fft_plan_fz)
+        CALL dfftw_destroy_plan(fft_plan_bz)
+      END IF
+    END IF
+#endif
 
   ! ###################################################################
   IF ( ic /= 0 ) THEN

@@ -21,9 +21,9 @@ PROGRAM VPOISSON
   TREAL dummy, error, lambda!, falpha
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
-  CALL DNS_READ_GLOBAL('dns.ini')
+  CALL DNS_READ_GLOBAL(ifile)
 
   isize_wrk3d = isize_txc_field
 
@@ -42,7 +42,10 @@ PROGRAM VPOISSON
   ALLOCATE(txc(isize_txc_field,2),wrk3d(isize_wrk3d))
   ! ALLOCATE(cx(6*imax),cy(6*jmax),cz(6*kmax_total))
 
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! Filter routines have been updated.
 ! falpha = 0.49d0
