@@ -116,8 +116,8 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   CHARACTER(32)                                  :: fname
 
   ! DEBUG
-  TREAL, dimension(isize_field,inb_txc), intent(inout) :: txc 
-  TREAL, dimension(isize_field)                        :: tmp1, tmp2, tmp3, tmp4 
+  TREAL, dimension(isize_field,inb_txc), intent(inout) :: txc   ! DEBUG
+  TREAL, dimension(isize_field)                        :: tmp1, tmp2, tmp3, tmp4   ! DEBUG
 
   ! ================================================================== !
 

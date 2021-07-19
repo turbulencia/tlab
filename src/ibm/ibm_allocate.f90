@@ -36,7 +36,8 @@ subroutine IBM_ALLOCATE(allocated)
 
   use DNS_IBM
   use DNS_CONSTANTS, only: lfile, efile
-  use DNS_GLOBAL,    only: imax, jmax, kmax 
+  use DNS_GLOBAL,    only: imax, jmax, kmax
+  use DNS_GLOBAL,    only: g
   use DNS_GLOBAL,    only: isize_field
 
 #ifdef USE_MPI
@@ -57,7 +58,6 @@ subroutine IBM_ALLOCATE(allocated)
 
   logical, intent(inout)    :: allocated       ! flag, just allocate memory space once
   
-  TINTEGER                  :: wrk_ibm_size, iwrk_ibm_size, m, nest
   TINTEGER                  :: ierr, inb_ibm
   TINTEGER                  :: nyz, nxz, nxy
   TINTEGER                  :: nob_max
@@ -248,14 +248,11 @@ subroutine IBM_ALLOCATE(allocated)
     end if
 
     ! ------------------------------------------------------------------ !
-    ! wrk_ibm array sizes see cf. descriptions of fipack routines 
-
-    ! wrk_ibm [contains: w(m); t(nest); c(nest); wrk(m*(k+1)+nest*(7+3*k))]
-    m             = 2 * (nflu + 1) ! number of data points m > k (k==kspl)
-    nest          = m + kspl + 1
-    wrk_ibm_size  = m + 2*nest + m*(kspl+1)+nest*(7+3*kspl)
-    iwrk_ibm_size =              m*(kspl+1)+nest*(7+3*kspl) ! for integer array
-
+    ! wrk_ibm [contains: w(nsp); t(nest); c(nest); wrk(nsp*(kspl+1)+nest*(7+3*kspl))], cf. fitpack
+    nsp           = 2 * nflu + 2    ! number of data points (with 2 interface points) nsp > kspl
+    nest          = nsp + kspl + 1
+    wrk_ibm_size  = nsp + 2*nest + nsp*(kspl+1)+nest*(7+3*kspl)
+    iwrk_ibm_size =                nsp*(kspl+1)+nest*(7+3*kspl) ! for integer array
     write(str,*) inb_ibm; line = 'Allocating array IBM wrk_ibm of size '//trim(adjustl(str))//'x'
     write(str,*) wrk_ibm_size; line = trim(adjustl(line))//trim(adjustl(str))
     call IO_WRITE_ASCII(lfile,line)
@@ -272,6 +269,45 @@ subroutine IBM_ALLOCATE(allocated)
     allocate(iwrk_ibm(iwrk_ibm_size), stat=ierr)
     if ( ierr /= 0 ) then
     call IO_WRITE_ASCII(efile,'DNS. Not enough memory for iwrk_ibm.')
+    call DNS_STOP(DNS_ERROR_ALLOC)
+    end if
+
+    ! xa, ya spline arrarys input
+    write(str,*) inb_ibm; line = 'Allocating array IBM xa of size '//trim(adjustl(str))//'x'
+    write(str,*) nsp; line = trim(adjustl(line))//trim(adjustl(str))
+    call IO_WRITE_ASCII(lfile,line)
+    allocate(xa(nsp), stat=ierr)
+    if ( ierr /= 0 ) then
+    call IO_WRITE_ASCII(efile,'DNS. Not enough memory for xa.')
+    call DNS_STOP(DNS_ERROR_ALLOC)
+    end if
+    !
+    write(str,*) inb_ibm; line = 'Allocating array IBM ya of size '//trim(adjustl(str))//'x'
+    write(str,*) nsp; line = trim(adjustl(line))//trim(adjustl(str))
+    call IO_WRITE_ASCII(lfile,line)
+    allocate(ya(nsp), stat=ierr)
+    if ( ierr /= 0 ) then
+    call IO_WRITE_ASCII(efile,'DNS. Not enough memory for ya.')
+    call DNS_STOP(DNS_ERROR_ALLOC)
+    end if
+
+    ! xb, yb spline arrarys output
+    wrk1d_ibm_size = max(g(1)%size,max(g(2)%size,g(3)%size)) ! gap size not known, max assumed
+    write(str,*) inb_ibm; line = 'Allocating array IBM xb of size '//trim(adjustl(str))//'x'
+    write(str,*) wrk1d_ibm_size; line = trim(adjustl(line))//trim(adjustl(str))
+    call IO_WRITE_ASCII(lfile,line)
+    allocate(xb(wrk1d_ibm_size), stat=ierr)
+    if ( ierr /= 0 ) then
+    call IO_WRITE_ASCII(efile,'DNS. Not enough memory for xb.')
+    call DNS_STOP(DNS_ERROR_ALLOC)
+    end if
+    !
+    write(str,*) inb_ibm; line = 'Allocating array IBM yb of size '//trim(adjustl(str))//'x'
+    write(str,*) wrk1d_ibm_size; line = trim(adjustl(line))//trim(adjustl(str))
+    call IO_WRITE_ASCII(lfile,line)
+    allocate(yb(wrk1d_ibm_size), stat=ierr)
+    if ( ierr /= 0 ) then
+    call IO_WRITE_ASCII(efile,'DNS. Not enough memory for yb.')
     call DNS_STOP(DNS_ERROR_ALLOC)
     end if
 

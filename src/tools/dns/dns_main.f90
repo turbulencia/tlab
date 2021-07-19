@@ -30,34 +30,9 @@ PROGRAM DNS
 #include "integers.h"
 
   ! -------------------------------------------------------------------
-<<<<<<< HEAD
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: x,y,z     ! Grid and associated arrays
-
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: q,s       ! Eulerian fields
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: txc       ! Temporary space for Eulerian fields
-
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: l_q       ! Lagrangian fields
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: l_txc     ! Temporary space for Lagrangian fields
-
-  TREAL, DIMENSION(:),   ALLOCATABLE :: wrk1d,wrk2d,wrk3d   ! Work arrays (scratch space)
-
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: h_q,h_s   ! Right-hand sides Eulerian fields
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: l_hq      ! Right-hand sides Lagrangian fields
-  TREAL, DIMENSION(:),   ALLOCATABLE :: l_comm    ! Communication space for Lagrangian fields
-
-  TARGET q, x,y,z
-
-  ! Pointers to existing allocated space
-  TREAL, DIMENSION(:), POINTER :: e, rho, p, T
-
-  CHARACTER*32 fname
-  CHARACTER*128 str, line
-  TINTEGER idummy, ig, ierr
-  LOGICAL ibm_allocated
-=======
   CHARACTER*32 fname, str
   TINTEGER ig
->>>>>>> upstream/master
+  LOGICAL ibm_allocated
 
   ! ###################################################################
   CALL DNS_START()
@@ -96,20 +71,12 @@ PROGRAM DNS
 
   IF ( tower_mode == 1 ) THEN
     CALL DNS_TOWER_INITIALIZE(tower_stride)
-<<<<<<< HEAD
   ENDIF
+  
   IF ( imode_ibm == 1 ) THEN ! IBM
     ibm_allocated = .FALSE.
     CALL IBM_ALLOCATE(ibm_allocated)
   ENDIF
-
-  ! ###################################################################
-  ! Read the grid
-  ! ###################################################################
-#include "dns_read_grid.h"
-=======
-  END IF
->>>>>>> upstream/master
 
   ! ###################################################################
   ! Initialize operators and reference data

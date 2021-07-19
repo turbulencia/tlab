@@ -11,24 +11,16 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
   USE DNS_TYPES,     ONLY : MAX_MODES
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
-<<<<<<< HEAD
-  USE DNS_GLOBAL,    ONLY : pbg, rbg
-  USE DNS_GLOBAL,    ONLY : imode_sim, inb_flow,inb_scal, imode_ibm, isize_wrk1d, isize_wrk2d
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : FilterDomain
-  USE DNS_IBM,       ONLY : xbars_geo
-  USE DNS_TYPES,     ONLY : MAX_MODES
-=======
   USE DNS_GLOBAL,    ONLY : pbg, rbg, damkohler
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_txc_field, isize_wrk1d,isize_wrk2d,isize_wrk3d
   USE DNS_GLOBAL,    ONLY : inb_flow,inb_scal,inb_txc
-  USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns, iadvection, iviscous, icalc_part
+  USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns, imode_ibm, iadvection, iviscous, icalc_part
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : FilterDomain
   USE DNS_GLOBAL,    ONLY : nstatavg
+  USE DNS_IBM,       ONLY : xbars_geo
   USE THERMO_GLOBAL, ONLY : imixture
   USE LAGRANGE_GLOBAL,ONLY: inb_particle_interp
->>>>>>> upstream/master
   USE DNS_LOCAL
   USE TIME,          ONLY : rkm_mode, dtime, cfla, cfld, cflr
   USE BOUNDARY_BUFFER

@@ -38,8 +38,10 @@ module DNS_IBM
   TREAL,    dimension(:),     allocatable, target :: u_ibm               ! with splines in solid regions
 
   ! work array for splines
-  TREAL,    dimension(:),     allocatable ::  wrk_ibm
+  TREAL,    dimension(:),     allocatable :: wrk_ibm
   TINTEGER, dimension(:),     allocatable :: iwrk_ibm
+  !
+  TREAL,    dimension(:),     allocatable :: xa, xb, ya, yb
 
   ! flag - which fdm calls are with u or u_ibm (opr_burgers.f90)
   logical :: ibm_burgers 
@@ -49,9 +51,11 @@ module DNS_IBM
                                                                          ! nbars = max(nobi_max,nobj_max,nobk_max)                                                                          
 
   ! IBM parameters
-  TINTEGER, parameter                     :: nflu = 3                    ! number of fluid points used for Splines (on one side)
-                                                                         ! iflu >= kspl
+  TINTEGER, parameter                     :: nflu = 3                    ! number of fluid points used for Splines (on one side) nflu >= kspl
   TINTEGER, parameter                     :: kspl = 3                    ! spline order kspl=[1,5] (best: 3 or 5)
+  !
+  TINTEGER                                :: nsp, nest
+  TINTEGER                                :: wrk_ibm_size, iwrk_ibm_size, wrk1d_ibm_size
 
   ! ibm_dt type (--> introduce ibm_type in modules/dns_types) not implemented yet
   ! type(ibm_dt) :: xbars
