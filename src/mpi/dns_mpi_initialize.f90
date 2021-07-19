@@ -45,6 +45,17 @@ SUBROUTINE DNS_MPI_INITIALIZE
 ! #######################################################################
   ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0
   ims_pro_k =     ims_pro/ims_npro_i  ! Starting at 0
+
+#ifdef HLRS_HAWK
+  ! On hawk, we tested that 192 yields optimum performace;
+  ! Blocking will thus only take effect in very large cases 
+  ims_sizBlock_k=192
+#else
+  ! We assume that this will help to release some of the very heavy
+  ! network load in transpositions on most systems
+  ims_sizBlock_k=64
+  ! ims_sizBlock_k=1e5   -- would essentially switch off the blocking 
+#endif
   
   ims_offset_i = ims_pro_i *imax
   ims_offset_j = 0
