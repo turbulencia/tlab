@@ -4,10 +4,9 @@
 SUBROUTINE DNS_START
 #ifdef USE_OPENMP
   USE OMP_LIB
-#endif 
+#endif
 
   USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE DNS_GLOBAL, ONLY : istat_min_ver, istat_maj_ver
   USE DNS_GLOBAL, ONLY : dns_omp_numThreads
   USE DNS_GLOBAL, ONLY : imode_verbosity
 
@@ -26,9 +25,6 @@ SUBROUTINE DNS_START
 
   !########################################################################
   imode_verbosity = 1 ! default value; needed already here
-
-  istat_maj_ver = 1
-  istat_min_ver = 0
 
   ! -------------------------------------------------------------------
   ! Inititalize MPI parallel mode

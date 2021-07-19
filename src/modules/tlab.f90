@@ -131,7 +131,6 @@ CONTAINS
 #ifdef USE_OPENMP
     USE OMP_LIB
 #endif
-    USE DNS_GLOBAL, ONLY : istat_min_ver, istat_maj_ver
     USE DNS_GLOBAL, ONLY : dns_omp_numThreads
     USE DNS_GLOBAL, ONLY : imode_verbosity
 #ifdef USE_MPI
@@ -148,9 +147,6 @@ CONTAINS
 
     !########################################################################
     imode_verbosity = 1 ! default value; needed already here
-
-    istat_maj_ver = 1
-    istat_min_ver = 0
 
     ! -------------------------------------------------------------------
     ! Inititalize MPI parallel mode

@@ -142,8 +142,7 @@ MODULE DNS_GLOBAL
 ! ###################################################################
   TINTEGER :: nstatavg, statavg(MAX_STATS_SPATIAL), & ! Ox planes at which to accumulate statistics
               nstatavg_points, &                      ! number of accumulated points
-              istattimeorg, &                         ! time at which accumulation of statistics started
-              istat_min_ver, istat_maj_ver
+              istattimeorg                            ! time at which accumulation of statistics started
   TREAL    :: rstattimeorg
 
 END MODULE DNS_GLOBAL
