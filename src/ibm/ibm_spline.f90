@@ -272,6 +272,44 @@ subroutine IBM_SPLINE(xa, ya, xb, yb)
   ! ================================================================== !
 
 
+!   ! wrk_ibm
+!         ! contains the following arrays for for curfit():
+!           ! w(m)
+!           ! t(nest)
+!           ! c(nest)
+!           ! wrk(m*(k+1)+nest*(7+3*k))
+!           ! iwrk(lwrk=m*(k+1)+nest*(7+3*k))    
+!             ! m            = 2 * (nflu + 1) ! number of data points m > k (k==kspl)
+!             ! nest         = m + kspl + 1
+!             ! nest         = 2 * (nflu + 1) + kspl + 1
+!             ! wkk_ibm_size = m + 2*nest + 2*(m*(k+1)+nest*(7+3*k))
+!     wrk_ibm_size = (2 * (nflu + 1)) + 2*(2 * (nflu + 1) + kspl + 1) + &
+!     2*((2 * (nflu + 1))*(kspl+1)+(2 * (nflu + 1) + kspl + 1)*(7+3*kspl))
+
+  
+
+!   ! #######################################################################
+!   iopt = 0
+!   xb = x_org(1); xe = x_org(imax)                  ! just used in the non-periodic case
+!   imax1 = imax+1; x_org(imax1) = x_org(1) + scalex ! the periodic case
+!   kx = 5                                           ! order of the splines interpolation
+!   s = C_0_R
+!   nest = imax1 + 2*kx                              ! the periodic case requires maximum sizes
+!   lwrk = imax1*(kx+1)+nest*(8+5*kx)
+
+! ! Working array relative possitions
+!   ip1 = 1           ! w
+!   ip2 = ip1 + imax1 ! t
+!   ip3 = ip2 + nest  ! c
+!   ip4 = ip3 + nest  ! wrk
+!   ip5 = ip4 + lwrk  ! iwkr
+!   ip6 = ip5 + nest  ! returned value
+
+!   IF ( isize_wrk .LT. ip6 ) THEN
+!      CALL IO_WRITE_ASCII(efile, 'INTERPOLATE_1D. Temporary Array not large enough')
+!      CALL DNS_STOP(DNS_ERROR_CURFIT)
+!   ENDIF
+
 
 
 

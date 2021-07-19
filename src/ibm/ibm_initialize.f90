@@ -56,7 +56,10 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   
   ! not coded yet
   ! read/write geometry fields from/to disk
-  ! call IBM_READ_GEOMETRY() ! call IBM_WRITE_GEOMETRY()           
+  ! call IBM_READ_GEOMETRY() ! call IBM_WRITE_GEOMETRY()
+  
+  ! deallocate not needed arrays
+  call IBM_DEALLOCATE()
   
   return
 end subroutine IBM_INITIALIZE_GEOMETRY

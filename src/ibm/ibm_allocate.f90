@@ -56,9 +56,12 @@ subroutine IBM_ALLOCATE(allocated)
 #endif
 
   logical, intent(inout)    :: allocated       ! flag, just allocate memory space once
+  
+  TINTEGER                  :: wrk_ibm_size, iwrk_ibm_size, m, nest
   TINTEGER                  :: ierr, inb_ibm
   TINTEGER                  :: nyz, nxz, nxy
   TINTEGER                  :: nob_max
+  
   character(128)            :: str, line
 
   ! ================================================================== !
@@ -241,6 +244,34 @@ subroutine IBM_ALLOCATE(allocated)
     allocate(u_ibm(isize_field), stat=ierr)
     if ( ierr /= 0 ) then
     call IO_WRITE_ASCII(efile,'DNS. Not enough memory for u_ibm.')
+    call DNS_STOP(DNS_ERROR_ALLOC)
+    end if
+
+    ! ------------------------------------------------------------------ !
+    ! wrk_ibm array sizes see cf. descriptions of fipack routines 
+
+    ! wrk_ibm [contains: w(m); t(nest); c(nest); wrk(m*(k+1)+nest*(7+3*k))]
+    m             = 2 * (nflu + 1) ! number of data points m > k (k==kspl)
+    nest          = m + kspl + 1
+    wrk_ibm_size  = m + 2*nest + m*(kspl+1)+nest*(7+3*kspl)
+    iwrk_ibm_size =              m*(kspl+1)+nest*(7+3*kspl) ! for integer array
+
+    write(str,*) inb_ibm; line = 'Allocating array IBM wrk_ibm of size '//trim(adjustl(str))//'x'
+    write(str,*) wrk_ibm_size; line = trim(adjustl(line))//trim(adjustl(str))
+    call IO_WRITE_ASCII(lfile,line)
+    allocate(wrk_ibm(wrk_ibm_size), stat=ierr)
+    if ( ierr /= 0 ) then
+    call IO_WRITE_ASCII(efile,'DNS. Not enough memory for wrk_ibm.')
+    call DNS_STOP(DNS_ERROR_ALLOC)
+    end if
+
+    ! iwrk_ibm [contains: iwrk(lwrk=m*(k+1)+nest*(7+3*k)) --> integer array]   
+    write(str,*) inb_ibm; line = 'Allocating array IBM iwrk_ibm of size '//trim(adjustl(str))//'x'
+    write(str,*) iwrk_ibm_size; line = trim(adjustl(line))//trim(adjustl(str))
+    call IO_WRITE_ASCII(lfile,line)
+    allocate(iwrk_ibm(iwrk_ibm_size), stat=ierr)
+    if ( ierr /= 0 ) then
+    call IO_WRITE_ASCII(efile,'DNS. Not enough memory for iwrk_ibm.')
     call DNS_STOP(DNS_ERROR_ALLOC)
     end if
 
