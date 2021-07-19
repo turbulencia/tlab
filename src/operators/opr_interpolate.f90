@@ -25,6 +25,7 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
   USE DNS_GLOBAL, ONLY : isize_txc_field
 #ifdef USE_MPI
   USE DNS_CONSTANTS, ONLY : lfile
+  USE TLAB_CORE
   USE DNS_MPI
 #endif
 
@@ -49,7 +50,7 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
 ! ###################################################################
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI type 1 for Ox interpolation.')
+     CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 1 for Ox interpolation.')
      id = DNS_MPI_I_AUX1
      npage = nz*ny
      IF ( MOD(npage,ims_npro_i) .NE. 0 ) THEN ! add space for MPI transposition
@@ -59,7 +60,7 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
      CALL DNS_MPI_TYPE_I(ims_npro_i, nx,     npage, i1, i1, i1, i1, &
           ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
 
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI type 2 for Ox interpolation.')
+     CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 2 for Ox interpolation.')
      id = DNS_MPI_I_AUX2
      npage = nz*ny
      IF ( MOD(npage,ims_npro_i) .NE. 0 ) THEN ! add space for MPI transposition
@@ -71,13 +72,13 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
   ENDIF
 
   IF ( ims_npro_k .GT. 1 ) THEN
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI type 1 for Oz interpolation.')
+     CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 1 for Oz interpolation.')
      id = DNS_MPI_K_AUX1
      npage = nx_dst*ny_dst
      CALL DNS_MPI_TYPE_K(ims_npro_k, nz,     npage, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI type 2 for Oz interpolation.')
+     CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 2 for Oz interpolation.')
      id = DNS_MPI_K_AUX2
      npage = nx_dst*ny_dst
      CALL DNS_MPI_TYPE_K(ims_npro_k, nz_dst, npage, i1, i1, i1, i1, &
@@ -108,6 +109,6 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
   ELSE
      u_dst(1:nx_dst*ny_dst*nz_dst) = txc(1:nx_dst*ny_dst*nz_dst,2)
   ENDIF
-  
+
   RETURN
 END SUBROUTINE OPR_INTERPOLATE

@@ -202,8 +202,8 @@
 
 #else
       D1MACH = C_0_R
-      CALL IO_WRITE_ASCII(efile,'D1MACH not to be used in CRAY (single prec.)')
-      CALL DNS_STOP(DNS_ERROR_CRAY)
+      CALL TLAB_WRITE_ASCII(efile,'D1MACH not to be used in CRAY (single prec.)')
+      CALL TLAB_STOP(DNS_ERROR_CRAY)
       RETURN
       END
 #endif

@@ -63,7 +63,7 @@ CONTAINS
 
     ! ###################################################################
 #ifdef TRACE_ON
-    CALL IO_WRITE_ASCII(tfile, 'ENTERING AVG_SCAL_ZT_REDUCE' )
+    CALL TLAB_WRITE_ASCII(tfile, 'ENTERING AVG_SCAL_ZT_REDUCE' )
 #endif
 
     bcs = 0
@@ -251,7 +251,7 @@ CONTAINS
 #undef m_p_z
 
 #ifdef TRACE_ON
-    CALL IO_WRITE_ASCII(tfile, 'LEAVING AVG_SCAL_ZT_REDUCE' )
+    CALL TLAB_WRITE_ASCII(tfile, 'LEAVING AVG_SCAL_ZT_REDUCE' )
 #endif
 
     RETURN

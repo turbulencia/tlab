@@ -428,20 +428,20 @@ SUBROUTINE IO_READ_HEADER(unit, offset, nx,ny,nz,nt, params)
      READ(unit) params(1:isize)
 
 !  ELSE
-!     CALL IO_WRITE_ASCII(efile,'IO_READ_HEADER. Header format incorrect.')
-!     CALL DNS_STOP(DNS_ERROR_RECLEN)
+!     CALL TLAB_WRITE_ASCII(efile,'IO_READ_HEADER. Header format incorrect.')
+!     CALL TLAB_STOP(DNS_ERROR_RECLEN)
 
 !  ENDIF
 
 ! Check
 !  IF ( nx .NE. nx_loc .OR. ny .NE. ny_loc .OR. nz .NE. nz_loc ) THEN
 !     CLOSE(unit)
-!     CALL IO_WRITE_ASCII(efile, 'IO_READ_HEADER: Grid size mismatch')
-!     CALL DNS_STOP(DNS_ERROR_DIMGRID)
+!     CALL TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER: Grid size mismatch')
+!     CALL TLAB_STOP(DNS_ERROR_DIMGRID)
 !  ENDIF
 
 !  IF ( nt .NE. nt_loc ) THEN
-!     CALL IO_WRITE_ASCII(wfile, 'IO_READ_HEADER: ItNumber size mismatch')
+!     CALL TLAB_WRITE_ASCII(wfile, 'IO_READ_HEADER: ItNumber size mismatch')
 !     nt = nt_loc
 !  ENDIF
 

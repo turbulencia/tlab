@@ -9,6 +9,7 @@
 SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, ny,nv,ng, y, varnames, groupnames, avg )
 
   USE DNS_CONSTANTS, ONLY : lfile,efile
+  USE TLAB_CORE
 #ifdef USE_NETCDF
   USE NETCDF
 #endif
@@ -42,7 +43,7 @@ SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, ny,nv,ng, y, varnames, groupna
 #endif
 
   ! ###################################################################
-  CALL IO_WRITE_ASCII(lfile,'Writing '//TRIM(ADJUSTL(fname))//'...')
+  CALL TLAB_WRITE_ASCII(lfile,'Writing '//TRIM(ADJUSTL(fname))//'...')
 
 #ifdef USE_MPI
   IF ( ims_pro == 0 ) THEN
@@ -90,8 +91,8 @@ SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, ny,nv,ng, y, varnames, groupna
 #define L_AVGMAX 250
 
     IF ( L_AVGMAX < nv ) THEN
-      CALL IO_WRITE_ASCII(efile,'IO_WRITE_AVERAGES. Not enough space in format definition.')
-      CALL DNS_STOP(LES_ERROR_AVGTMP)
+      CALL TLAB_WRITE_ASCII(efile,'IO_WRITE_AVERAGES. Not enough space in format definition.')
+      CALL TLAB_STOP(LES_ERROR_AVGTMP)
     END IF
 
 #define LOC_UNIT_ID 23
@@ -131,7 +132,8 @@ END SUBROUTINE IO_WRITE_AVERAGES
 ! ###################################################################
 #ifdef USE_NETCDF
 SUBROUTINE NC_CHECK( status )
-  USE DNS_CONSTANTS, ONLY : efile  
+  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CORE
   USE NETCDF
 
   IMPLICIT NONE
@@ -139,10 +141,10 @@ SUBROUTINE NC_CHECK( status )
   INTEGER, INTENT(IN) :: status
 
   IF ( status /= nf90_noerr ) THEN
-    CALL IO_WRITE_ASCII(efile,'NETCDF error signal '//TRIM(ADJUSTL(NF90_STRERROR(status))))
-    CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+    CALL TLAB_WRITE_ASCII(efile,'NETCDF error signal '//TRIM(ADJUSTL(NF90_STRERROR(status))))
+    CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
   END IF
-  
+
   RETURN
 END SUBROUTINE NC_CHECK
-#endif 
+#endif

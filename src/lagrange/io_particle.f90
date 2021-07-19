@@ -15,6 +15,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
   USE DNS_CONSTANTS,   ONLY : lfile, efile
   USE DNS_GLOBAL,      ONLY : isize_particle, inb_part_array
   USE DNS_GLOBAL,      ONLY : g
+  USE TLAB_CORE
   USE LAGRANGE_GLOBAL, ONLY : particle_dt, particle_number_total
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
@@ -23,12 +24,12 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
   IMPLICIT NONE
 #ifdef USE_MPI
 #include "mpif.h"
-#endif  
- 
+#endif
+
   CHARACTER*(*)     fname
   TYPE(particle_dt) l_g
-  TREAL, DIMENSION(isize_particle,inb_part_array) :: l_q !, OPTIONAL :: l_q 
-  
+  TREAL, DIMENSION(isize_particle,inb_part_array) :: l_q !, OPTIONAL :: l_q
+
 ! -------------------------------------------------------------------
   TINTEGER i
   CHARACTER(len=32) name
@@ -42,7 +43,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
   TINTEGER idummy
 #endif
 
-  CALL IO_WRITE_ASCII(lfile, 'Reading field '//TRIM(ADJUSTL(fname))//'...')
+  CALL TLAB_WRITE_ASCII(lfile, 'Reading field '//TRIM(ADJUSTL(fname))//'...')
 
 #ifdef USE_MPI
 !#######################################################################
@@ -50,7 +51,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
 !#######################################################################
 ! -------------------------------------------------------------------
 ! Let Process 0 handle header
-! -------------------------------------------------------------------  
+! -------------------------------------------------------------------
   IF ( ims_pro .EQ. 0 ) THEN
      name = TRIM(ADJUSTL(fname))//".id"
 #include "dns_open_file.h"
@@ -62,8 +63,8 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
 ! Check
   CALL MPI_BCAST(ims_npro_loc,1,MPI_INTEGER,0,MPI_COMM_WORLD,ims_err)
   IF ( ims_npro .NE. ims_npro_loc) THEN
-     CALL IO_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-processors mismatch.')
-     CALL DNS_STOP(DNS_ERROR_PARTICLE)
+     CALL TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-processors mismatch.')
+     CALL TLAB_STOP(DNS_ERROR_PARTICLE)
   ENDIF
 
 ! Broadcast number of particles per processor
@@ -83,8 +84,8 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
      count = count +INT(ims_size_p(i),KIND=8)
   ENDDO
   IF ( particle_number_total .NE. count ) THEN
-     CALL IO_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
-     CALL DNS_STOP(DNS_ERROR_PARTICLE)
+     CALL TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
+     CALL TLAB_STOP(DNS_ERROR_PARTICLE)
   ENDIF
 
 ! Number of particles in local processor
@@ -108,7 +109,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
         CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
      ENDDO
 !  ENDIF
-  
+
 #else
 ! #######################################################################
 ! Serial case
@@ -119,9 +120,9 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
   READ(LOC_UNIT_ID) particle_number_loc
 ! Check
   IF ( particle_number_total .NE. INT(particle_number_loc,KIND=8) ) THEN
-     CALL IO_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
+     CALL TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
      CLOSE(LOC_UNIT_ID)
-     CALL DNS_STOP(DNS_ERROR_PARTICLE)
+     CALL TLAB_STOP(DNS_ERROR_PARTICLE)
   ENDIF
   READ(LOC_UNIT_ID) l_g%tags
   CLOSE(LOC_UNIT_ID)
@@ -140,11 +141,11 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
         CLOSE(LOC_UNIT_ID)
      ENDDO
 !  ENDIF
-  
+
 #endif
 
   CALL PARTICLE_LOCATE_Y( l_g%np, l_q(1,2), l_g%nodes, g(2)%size, g(2)%nodes )
-     
+
   RETURN
 END SUBROUTINE IO_READ_PARTICLE
 
@@ -160,6 +161,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
 
   USE DNS_CONSTANTS,   ONLY : lfile
   USE DNS_GLOBAL,      ONLY : isize_particle, inb_part_array
+  USE TLAB_CORE
   USE LAGRANGE_GLOBAL, ONLY : particle_dt
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
@@ -172,9 +174,9 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
 
   CHARACTER*(*)     fname
   TYPE(particle_dt) l_g
-  TREAL, DIMENSION(isize_particle,inb_part_array) :: l_q !, OPTIONAL :: l_q 
+  TREAL, DIMENSION(isize_particle,inb_part_array) :: l_q !, OPTIONAL :: l_q
 
-! -------------------------------------------------------------------  
+! -------------------------------------------------------------------
   TINTEGER i
   CHARACTER(len=32) name
 #ifdef USE_MPI
@@ -185,7 +187,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
   TINTEGER idummy
 #endif
 
-  CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(fname))//'...')
+  CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(fname))//'...')
 
 #ifdef USE_MPI
 !#######################################################################
@@ -193,11 +195,11 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
 !#######################################################################
 ! -------------------------------------------------------------------
 ! Let Process 0 handle header
-! -------------------------------------------------------------------  
+! -------------------------------------------------------------------
   CALL MPI_ALLGATHER(l_g%np, 1, MPI_INTEGER4, ims_size_p, 1, MPI_INTEGER4, MPI_COMM_WORLD, ims_err)
 
   IF ( ims_pro .EQ. 0 ) THEN
-     name = TRIM(ADJUSTL(fname))//".id"     
+     name = TRIM(ADJUSTL(fname))//".id"
 #include "dns_open_file.h"
      WRITE(LOC_UNIT_ID) ims_npro
      WRITE(LOC_UNIT_ID) ims_size_p
@@ -228,7 +230,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
 ! -------------------------------------------------------------------
   name = TRIM(ADJUSTL(fname))//".id"
   CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-  CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_INTEGER8, MPI_INTEGER8, 'native', MPI_INFO_NULL, ims_err)    
+  CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_INTEGER8, MPI_INTEGER8, 'native', MPI_INFO_NULL, ims_err)
   CALL MPI_FILE_WRITE_ALL(mpio_fh, l_g%tags, l_g%np, MPI_INTEGER8, status, ims_err)
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
 
@@ -241,15 +243,15 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
         CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
      ENDDO
 !  ENDIF
-  
-#else 
+
+#else
 ! #######################################################################
 ! Serial case
 ! #######################################################################
   idummy = 1
   name = TRIM(ADJUSTL(fname))//".id"
 #include "dns_open_file.h"
-  WRITE(LOC_UNIT_ID) idummy  
+  WRITE(LOC_UNIT_ID) idummy
   WRITE(LOC_UNIT_ID) l_g%np
   WRITE(LOC_UNIT_ID) l_g%tags
   CLOSE(LOC_UNIT_ID)
@@ -258,14 +260,14 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
      DO i = 1,inb_part_array
         WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
 #include "dns_open_file.h"
-        WRITE(LOC_UNIT_ID) idummy  
+        WRITE(LOC_UNIT_ID) idummy
         WRITE(LOC_UNIT_ID) l_g%np
         WRITE(LOC_UNIT_ID) l_q(:,i)
         CLOSE(LOC_UNIT_ID)
      ENDDO
 !  ENDIF
 
-#endif 
+#endif
 
   RETURN
 END SUBROUTINE IO_WRITE_PARTICLE
@@ -280,21 +282,21 @@ SUBROUTINE PARTICLE_LOCATE_Y( pmax, y_part, j_part, jmax, y_grid )
   TREAL,    DIMENSION(pmax), INTENT(IN) :: y_part
   TINTEGER, DIMENSION(pmax), INTENT(OUT) :: j_part
   TREAL,    DIMENSION(jmax), INTENT(IN) :: y_grid
-  
+
   TINTEGER ip, jm, jp, jc
 
   DO ip = 1,pmax
      jp = jmax
      jm = 1
-     jc = ( jm +jp ) /2  
+     jc = ( jm +jp ) /2
      DO WHILE ( (y_part(ip)-y_grid(jc))*(y_part(ip)-y_grid(jc+1)) .GT. C_0_R .AND. jc .GT. jm )
         IF ( y_part(ip) .LT. y_grid(jc) ) THEN; jp = jc;
         ELSE;                                   jm = jc; END IF
         jc = ( jm +jp ) /2
      END DO
      j_part(ip) = jc
-!     WRITE(*,'(i,3f)') ip, y_grid(jc), y_part(ip), y_grid(jc+1) 
+!     WRITE(*,'(i,3f)') ip, y_grid(jc), y_part(ip), y_grid(jc+1)
   END DO
-  
+
   RETURN
 END SUBROUTINE PARTICLE_LOCATE_Y

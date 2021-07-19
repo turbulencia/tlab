@@ -33,6 +33,7 @@ SUBROUTINE AVG_FLOW_ZT_REDUCE(q, hq,txc, mean1d, wrk2d,wrk3d)
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : itransport, visc
   USE DNS_GLOBAL, ONLY : nstatavg, statavg, nstatavg_points
+  USE TLAB_CORE
 
   IMPLICIT NONE
 
@@ -52,12 +53,12 @@ SUBROUTINE AVG_FLOW_ZT_REDUCE(q, hq,txc, mean1d, wrk2d,wrk3d)
 
   ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING AVG_FLOW_ZT_REDUCE' )
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING AVG_FLOW_ZT_REDUCE' )
 #endif
 
   IF ( imax .LT. nstatavg ) THEN
-    CALL IO_WRITE_ASCII(efile, 'AVG_FLOW_ZT_REDUCE. Not enough space in available arrays.')
-    CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+    CALL TLAB_WRITE_ASCII(efile, 'AVG_FLOW_ZT_REDUCE. Not enough space in available arrays.')
+    CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
   nstatavg_points = nstatavg_points + g(3)%size
@@ -3247,7 +3248,7 @@ SUBROUTINE AVG_FLOW_ZT_REDUCE(q, hq,txc, mean1d, wrk2d,wrk3d)
   ENDDO
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING DNS_SAVE_AVGIJ' )
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING DNS_SAVE_AVGIJ' )
 #endif
 
   ! ############

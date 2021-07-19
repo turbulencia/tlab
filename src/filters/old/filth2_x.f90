@@ -22,7 +22,7 @@ SUBROUTINE FILTH2_X(iunifx, i1bc, imax, jmax, kmax, nx0, nx1, cf2x, z1, zf1, wrk
   njk = jmax*kmax
 
   IF ( MOD(nx0,i2) .NE. 0 .AND. MOD(nx1,i2) .NE. 0 ) THEN
-     CALL IO_WRITE_ASCII(efile, 'FILTH2_X. NX2 is not even')
+     CALL TLAB_WRITE_ASCII(efile, 'FILTH2_X. NX2 is not even')
      CALL DNS_STOP(DNS_ERROR_LESEVEN)
   ENDIF
 

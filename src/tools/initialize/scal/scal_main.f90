@@ -9,6 +9,7 @@ PROGRAM INISCAL
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE TLAB_ARRAYS
+  USE TLAB_CORE
   USE THERMO_GLOBAL, ONLY : imixture
   USE SCAL_LOCAL
 
@@ -18,7 +19,7 @@ PROGRAM INISCAL
   TINTEGER is, inb_scal_loc
 
 ! ###################################################################
-  CALL DNS_START()
+  CALL TLAB_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   CALL SCAL_READ_LOCAL(ifile)
@@ -36,7 +37,7 @@ PROGRAM INISCAL
   ELSE;                                                                            inb_txc = 0
   ENDIF
 
-  CALL TLAB_ALLOCATE()
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
   CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
   CALL FDM_INITIALIZE(x, g(1), wrk1d)
@@ -44,7 +45,7 @@ PROGRAM INISCAL
   CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! ###################################################################
-  CALL IO_WRITE_ASCII(lfile,'Initializing scalar fiels.')
+  CALL TLAB_WRITE_ASCII(lfile,'Initializing scalar fiels.')
 
   CALL FI_PROFILES_INITIALIZE(wrk1d)
 
@@ -104,8 +105,8 @@ PROGRAM INISCAL
     ELSE IF ( ireactive .EQ. CHEM_INFINITE .AND. inb_scal .GT. 1 ) THEN
       CALL SCREACT_INFINITE(x, s, isize_wrk3d, wrk3d)
     ENDIF
-    CALL IO_WRITE_ASCII(efile, 'INISCAL. Chemistry part to be checked')
-    CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+    CALL TLAB_WRITE_ASCII(efile, 'INISCAL. Chemistry part to be checked')
+    CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
 
   ENDIF
 #endif
@@ -134,7 +135,7 @@ PROGRAM INISCAL
 ! ###################################################################
   CALL DNS_WRITE_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, isize_wrk3d, s, wrk3d)
 
-  CALL DNS_STOP(0)
+  CALL TLAB_STOP(0)
 END PROGRAM INISCAL
 
 ! ###################################################################

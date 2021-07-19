@@ -16,26 +16,26 @@
 !# DESCRIPTION
 !#
 !# Read scalar restart file. There are USE_MPI and SERIAL modes, and
-!# within the USE_MPI mode there are USE_MPI_IO, USE_SPLIT_IO 
+!# within the USE_MPI mode there are USE_MPI_IO, USE_SPLIT_IO
 !# and PE 0 handling.
-!# 
+!#
 !# IEEE double precision floating point representation.
 !# Unformatted records
 !# Byte ordering is big-endian
 !# Embedded record information (4-bytes integer)
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# nfield     In      Number of fields in the file
-!# iread      In      Control flag, if set to 0 read all fields (array a 
-!#                    w/ space for nfield), if not read only iread (array 
+!# iread      In      Control flag, if set to 0 read all fields (array a
+!#                    w/ space for nfield), if not read only iread (array
 !#                    a only 1 field)
 !# iheader    In      Header control flag:
 !#                    0 No header
-!#                    1 Scalar fields 
-!#                    2 Flow fields 
-!#                    
+!#                    1 Scalar fields
+!#                    2 Flow fields
+!#
 !########################################################################
 #define LOC_UNIT_ID i54
 #define LOC_STATUS 'old'
@@ -43,6 +43,7 @@
 SUBROUTINE IO_READ_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, iread, a, txc)
 
   USE DNS_GLOBAL,ONLY : itime, rtime, visc
+  USE TLAB_CORE
 #ifdef USE_MPI
   USE DNS_MPI,   ONLY : ims_offset_k, ims_npro_i, ims_npro_k, ims_pro, ims_err
 #endif
@@ -289,7 +290,7 @@ SUBROUTINE IO_READ_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, iread, a,
 #else
 ! ###################################################################
 ! Serial case
-! ###################################################################      
+! ###################################################################
 #include "dns_open_file.h"
   REWIND(LOC_UNIT_ID)
 
@@ -326,7 +327,7 @@ SUBROUTINE IO_READ_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, iread, a,
 END SUBROUTINE IO_READ_FIELDS_ARRAY
 
 #undef LOC_UNIT_ID
-#undef LOC_STATUS 
+#undef LOC_STATUS
 
 !########################################################################
 !# Tool/Library DNS
@@ -343,17 +344,17 @@ END SUBROUTINE IO_READ_FIELDS_ARRAY
 !# DESCRIPTION
 !#
 !# Read scalar restart file. There are USE_MPI and SERIAL modes, and
-!# within the USE_MPI mode there are USE_MPI_IO, USE_SPLIT_IO 
+!# within the USE_MPI mode there are USE_MPI_IO, USE_SPLIT_IO
 !# and PE 0 handling.
-!# 
+!#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# nfield     In      Number of fields in the file
 !# iheader    In      Header control flag:
 !#                    0 No header
-!#                    1 Scalar fields 
-!#                    2 Flow fields 
+!#                    1 Scalar fields
+!#                    2 Flow fields
 !#
 !########################################################################
 #define LOC_UNIT_ID i55
@@ -362,6 +363,7 @@ END SUBROUTINE IO_READ_FIELDS_ARRAY
 SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
 
   USE DNS_GLOBAL, ONLY : itime, rtime, visc, prandtl, schmidt ! header info
+  USE TLAB_CORE
   USE THERMO_GLOBAL, ONLY : gama0
 #ifdef USE_MPI
   USE DNS_MPI,   ONLY : ims_offset_k, ims_npro_i, ims_npro_k, ims_pro, ims_err
@@ -426,7 +428,7 @@ SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
 ! header
 ! -------------------------------------------------------------------
 ! Scalar type
-  IF      ( iheader .EQ. 1 ) THEN 
+  IF      ( iheader .EQ. 1 ) THEN
      IF ( ims_pro .EQ. 0 ) THEN
         OPEN(LOC_UNIT_ID,file=name,status=LOC_STATUS,form='unformatted')
         CALL HEADER_WRITE_SCAL(LOC_UNIT_ID, i0, itime, rtime,    nx_total,ny_total,nz_total,&
@@ -444,7 +446,7 @@ SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
      ENDIF
 
 ! Flow type
-  ELSE IF ( iheader .EQ. 2 ) THEN 
+  ELSE IF ( iheader .EQ. 2 ) THEN
      IF ( ims_pro .EQ. 0 ) THEN
         OPEN(LOC_UNIT_ID,file=name,status=LOC_STATUS,form='unformatted')
 !        CALL HEADER_WRITE_FLOW(LOC_UNIT_ID, i0, itime, rtime, dt, nx,ny,nz_total,&
@@ -458,7 +460,7 @@ SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
           2*SIZEOFINT + SIZEOFINT  + SIZEOFREAL + SIZEOFREAL +&
           2*SIZEOFINT + SIZEOFINT  + SIZEOFINT  + SIZEOFINT  +&
           2*SIZEOFINT + SIZEOFREAL + SIZEOFREAL + SIZEOFREAL +&
-          2*SIZEOFINT + SIZEOFREAL + SIZEOFREAL 
+          2*SIZEOFINT + SIZEOFREAL + SIZEOFREAL
 
   ELSE
      IF ( ims_pro .EQ. 0 ) THEN
@@ -605,7 +607,7 @@ SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
 #else
 ! ###################################################################
 ! Serial case
-! ###################################################################      
+! ###################################################################
 #include "dns_open_file.h"
 
 ! -------------------------------------------------------------------
@@ -651,7 +653,7 @@ END SUBROUTINE IO_WRITE_FIELDS_ARRAY
 !# Read header of flow file and do some consistency checks
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# itime    Out     Iteration at which it was created
 !# rtime    Out     Time at which it was created
@@ -661,6 +663,7 @@ SUBROUTINE HEADER_READ_FLOW(unit, irec, itime, rtime, dt, imax,jmax,kmax, &
      visc, gama, prandtl, dummy1, dummy2)
 
   USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CORE
 
   IMPLICIT NONE
 
@@ -718,8 +721,8 @@ SUBROUTINE HEADER_READ_FLOW(unit, irec, itime, rtime, dt, imax,jmax,kmax, &
 ! -------------------------------------------------------------------
   IF ( imaxdum .NE. imax .OR. jmaxdum .NE. jmax .OR. kmaxdum .NE. kmax) THEN
      CLOSE(unit)
-     CALL IO_WRITE_ASCII(efile, 'HEADER_READ_FLOW: Grid size mismatch')
-     CALL DNS_STOP(DNS_ERROR_DIMGRID)
+     CALL TLAB_WRITE_ASCII(efile, 'HEADER_READ_FLOW: Grid size mismatch')
+     CALL TLAB_STOP(DNS_ERROR_DIMGRID)
   ENDIF
 
   RETURN
@@ -742,12 +745,12 @@ END SUBROUTINE HEADER_READ_FLOW
 !# dummy 3 just introduced to keep size of header
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 SUBROUTINE HEADER_WRITE_FLOW(unit, irec, itime, rtime, dt, imax,jmax,kmax,&
      visc, gama, prandtl, dummy1, dummy2)
-  
+
   IMPLICIT NONE
 
   TINTEGER unit, itime, imax, jmax, kmax, irec
@@ -821,15 +824,16 @@ END SUBROUTINE HEADER_WRITE_FLOW
 !# Read header of scalars file and do some consistency checks
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# itime    Out     Iteration at which it was created
 !# rtime    Out     Time at which it was created
 !#
 !########################################################################
 SUBROUTINE HEADER_READ_SCAL(unit, irec, jiter, rtime, imax, jmax, kmax, schmidt, inbsc)
-  
+
   USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CORE
 
   IMPLICIT NONE
 
@@ -887,18 +891,18 @@ SUBROUTINE HEADER_READ_SCAL(unit, irec, jiter, rtime, imax, jmax, kmax, schmidt,
 ! -------------------------------------------------------------------
   IF (imaxdum .NE. imax .OR. jmaxdum .NE. jmax .OR. kmaxdum .NE. kmax) THEN
      CLOSE(unit)
-     CALL IO_WRITE_ASCII(efile, 'HEADER_READ_SCAL. Grid size mismatch')
-     CALL DNS_STOP(DNS_ERROR_DIMGRID)
+     CALL TLAB_WRITE_ASCII(efile, 'HEADER_READ_SCAL. Grid size mismatch')
+     CALL TLAB_STOP(DNS_ERROR_DIMGRID)
   ENDIF
 
   IF ( inbscdum .NE. inbsc ) THEN
-     CALL IO_WRITE_ASCII(efile, 'HEADER_READ_SCAL. Wrong number of scalars in restart file')
-     CALL DNS_STOP(DNS_ERROR_WRONGSCALNB)
+     CALL TLAB_WRITE_ASCII(efile, 'HEADER_READ_SCAL. Wrong number of scalars in restart file')
+     CALL TLAB_STOP(DNS_ERROR_WRONGSCALNB)
   ENDIF
 
   RETURN
 END SUBROUTINE HEADER_READ_SCAL
-      
+
 !########################################################################
 !# Tool/Library IO
 !#
@@ -914,11 +918,11 @@ END SUBROUTINE HEADER_READ_SCAL
 !# Write header
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 SUBROUTINE HEADER_WRITE_SCAL(unit, irec, jiter, rtime, imax,jmax,kmax, schmidt, inbsc)
-  
+
   IMPLICIT NONE
 
   TINTEGER unit, jiter, imax, jmax, kmax, irec
@@ -975,4 +979,3 @@ SUBROUTINE HEADER_WRITE_SCAL(unit, irec, jiter, rtime, imax,jmax,kmax, schmidt, 
 
   RETURN
 END SUBROUTINE HEADER_WRITE_SCAL
-      

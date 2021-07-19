@@ -19,7 +19,7 @@ SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(jmax,*),         INTENT(INOUT) :: wrk1d
 
   ! -------------------------------------------------------------------
-  TINTEGER i, j, ij, k
+  TINTEGER j, k
   TREAL PROFILES, ycenter, dummy
   EXTERNAL PROFILES
 

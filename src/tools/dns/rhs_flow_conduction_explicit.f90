@@ -15,13 +15,13 @@
 !########################################################################
 SUBROUTINE RHS_FLOW_CONDUCTION_EXPLICIT(vis, z1, T, h4, tmp1,tmp2,tmp3,tmp4,tmp5, wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile 
+  USE DNS_CONSTANTS, ONLY : efile
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS, ONLY : tfile 
-#endif 
+  USE DNS_CONSTANTS, ONLY : tfile
+#endif
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field
   USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : idiffusion, itransport, visc, prandtl
+  USE DNS_GLOBAL,    ONLY : idiffusion, visc, prandtl
   USE BOUNDARY_BCS
 
   IMPLICIT NONE
@@ -37,13 +37,8 @@ SUBROUTINE RHS_FLOW_CONDUCTION_EXPLICIT(vis, z1, T, h4, tmp1,tmp2,tmp3,tmp4,tmp5
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_CONDUCTION_EXPLICIT')
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_CONDUCTION_EXPLICIT')
 #endif
-
-  IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
-     CALL IO_WRITE_ASCII(efile,'RHS_FLOW_CONDUCTION_EXPLICIT. Only constant viscosity.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
 
 ! ###################################################################
   IF ( idiffusion .EQ. EQNS_NONE ) THEN; cond = C_0_R
@@ -59,7 +54,7 @@ SUBROUTINE RHS_FLOW_CONDUCTION_EXPLICIT(vis, z1, T, h4, tmp1,tmp2,tmp3,tmp4,tmp5
   h4 = h4 + cond*vis*( tmp1 + tmp2 + tmp3 )
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_CONDUCTION_EXPLICIT')
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_CONDUCTION_EXPLICIT')
 #endif
 
   RETURN

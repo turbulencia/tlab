@@ -20,15 +20,27 @@ MODULE TLAB_ARRAYS
 
 END MODULE TLAB_ARRAYS
 
-MODULE TLAB_MAIN
+MODULE TLAB_CORE
   USE DNS_CONSTANTS, ONLY : lfile, efile
-  USE TLAB_ARRAYS
+#ifdef USE_OPENMP
+  USE OMP_LIB
+#endif
+#ifdef USE_MPI
+  USE DNS_MPI
+#endif
   IMPLICIT NONE
   SAVE
   PRIVATE
 
   CHARACTER*128 str, line
 
+#ifdef USE_MPI
+#include "mpif.h"
+#endif
+
+  PUBLIC :: TLAB_START
+  PUBLIC :: TLAB_STOP
+  PUBLIC :: TLAB_WRITE_ASCII
   PUBLIC :: TLAB_ALLOCATE
 
 CONTAINS
@@ -40,7 +52,7 @@ CONTAINS
     USE DNS_GLOBAL, ONLY : isize_txc_field, inb_txc
     USE DNS_GLOBAL, ONLY : isize_wrk1d, isize_wrk2d, isize_wrk3d, inb_wrk1d, inb_wrk2d
     USE DNS_GLOBAL, ONLY : g
-
+    USE TLAB_ARRAYS
     IMPLICIT NONE
 
     CHARACTER(LEN=*) C_FILE_LOC
@@ -128,20 +140,9 @@ CONTAINS
   ! ###################################################################
   ! ###################################################################
   SUBROUTINE TLAB_START()
-#ifdef USE_OPENMP
-    USE OMP_LIB
-#endif
-    USE DNS_GLOBAL, ONLY : dns_omp_numThreads
     USE DNS_GLOBAL, ONLY : imode_verbosity
-#ifdef USE_MPI
-    USE DNS_MPI
-#endif
-
+    USE DNS_GLOBAL, ONLY : dns_omp_numThreads
     IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
     CHARACTER*10 clock(2)
 
@@ -216,14 +217,7 @@ CONTAINS
   SUBROUTINE TLAB_STOP(error_code)
     USE DNS_GLOBAL, ONLY : g
     USE DNS_GLOBAL, ONLY : ifourier, fft_plan_fx, fft_plan_bx, fft_plan_fz, fft_plan_bz
-#ifdef USE_MPI
-    USE DNS_MPI, ONLY : ims_time_min, ims_time_max, ims_time_trans, ims_err
-#endif
     IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
     INTEGER, INTENT(IN) :: error_code
 
@@ -282,24 +276,22 @@ CONTAINS
 
   ! ###################################################################
   ! ###################################################################
-  SUBROUTINE TLAB_WRITE_ASCII(file, line)
+  SUBROUTINE TLAB_WRITE_ASCII(file, line, flag_all)
     USE DNS_GLOBAL, ONLY : imode_verbosity
-#ifdef USE_MPI
-    USE DNS_MPI, ONLY : ims_pro
-#endif
     IMPLICIT NONE
 
-    CHARACTER*(*), INTENT(IN) :: file, line
+    CHARACTER*(*),  INTENT(IN)            :: file, line
+    LOGICAL,        INTENT(IN), OPTIONAL  :: flag_all
 
     ! -----------------------------------------------------------------------
     CHARACTER*10 clock(2)
 
     ! #######################################################################
 #ifdef USE_MPI
-    IF ( ims_pro .EQ. 0 ) THEN
+    IF ( ims_pro == 0 .OR. PRESENT(flag_all) ) THEN
 #endif
 
-      IF ( imode_verbosity .GT. 0 ) THEN
+      IF ( imode_verbosity > 0 ) THEN
 
         OPEN(UNIT=22, FILE=file, STATUS='unknown',POSITION='APPEND')
         IF      ( imode_verbosity .EQ. 1 ) THEN
@@ -325,4 +317,4 @@ CONTAINS
     RETURN
   END SUBROUTINE TLAB_WRITE_ASCII
 
-END MODULE TLAB_MAIN
+END MODULE TLAB_CORE

@@ -4,6 +4,7 @@ PROGRAM SMOOTH
 #include "dns_const.h"
 
   USE DNS_GLOBAL
+  USE TLAB_CORE
   USE THERMO_GLOBAL
 
   IMPLICIT NONE
@@ -15,7 +16,7 @@ PROGRAM SMOOTH
   TINTEGER opt
 
 ! ###################################################################
-  CALL DNS_START
+  CALL TLAB_START
 
   imixture = MIXT_TYPE_AIRWATER
   CALL THERMO_INITIALIZE

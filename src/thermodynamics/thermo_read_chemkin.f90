@@ -1,6 +1,6 @@
 #include "types.h"
 #include "dns_error.h"
-  
+
 !########################################################################
 !# Tool/Library
 !#
@@ -11,13 +11,14 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 SUBROUTINE THERMO_READ_CHEMKIN(name)
 
   USE THERMO_GLOBAL
   USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_CORE
 
   IMPLICIT NONE
 
@@ -47,17 +48,17 @@ SUBROUTINE THERMO_READ_CHEMKIN(name)
 
 ! Read Header
   READ(i23,*) line
-  CALL IO_WRITE_ASCII(lfile, line)
+  CALL TLAB_WRITE_ASCII(lfile, line)
 
   IF ( TRIM(ADJUSTL(line)) .NE. 'THERMO' ) THEN
-     CALL IO_WRITE_ASCII(efile, 'THERMO_READ_CHEMKIN. Thermodynamic file format error')
-     CALL DNS_STOP(DNS_ERROR_THERMOFORMAT)
+     CALL TLAB_WRITE_ASCII(efile, 'THERMO_READ_CHEMKIN. Thermodynamic file format error')
+     CALL TLAB_STOP(DNS_ERROR_THERMOFORMAT)
   ENDIF
 
 ! Read Temperature ranges
   READ(i23, *) T1, T2, T3
   WRITE(wline,*) T1, T2, T3
-  CALL IO_WRITE_ASCII(lfile, wline(1:80))
+  CALL TLAB_WRITE_ASCII(lfile, wline(1:80))
 
 ! Remove comments
   frun = .TRUE.
@@ -66,7 +67,7 @@ SUBROUTINE THERMO_READ_CHEMKIN(name)
      IF ( line(1:1) .NE. '!' ) frun = .FALSE.
   ENDDO
 
-  frun = .TRUE. 
+  frun = .TRUE.
   DO WHILE ( frun )
 !    Check for end of file
      READ(line,'(A15)',END=50) token
@@ -83,10 +84,10 @@ SUBROUTINE THERMO_READ_CHEMKIN(name)
 !    Process lines
      DO is = 1,NSP
         IF ( TRIM(ADJUSTL(token)) .EQ. THERMO_SPNAME(is) ) THEN
-           CALL IO_WRITE_ASCII(lfile, line)
-           CALL IO_WRITE_ASCII(lfile, line1)
-           CALL IO_WRITE_ASCII(lfile, line2)
-           CALL IO_WRITE_ASCII(lfile, line3)
+           CALL TLAB_WRITE_ASCII(lfile, line)
+           CALL TLAB_WRITE_ASCII(lfile, line1)
+           CALL TLAB_WRITE_ASCII(lfile, line2)
+           CALL TLAB_WRITE_ASCII(lfile, line3)
 
 !          Required species found, process information
 !          Get limit temperatures
@@ -117,8 +118,8 @@ SUBROUTINE THERMO_READ_CHEMKIN(name)
 
   DO is = 1,NSP
      IF ( THERMO_FLAG(is) .EQ. 0 ) THEN
-        CALL IO_WRITE_ASCII(efile, 'THERMO_READ_CHEMKIN. Not all thermodynamic data contained in thermo file')
-        CALL DNS_STOP(DNS_ERROR_THERMOCONT)
+        CALL TLAB_WRITE_ASCII(efile, 'THERMO_READ_CHEMKIN. Not all thermodynamic data contained in thermo file')
+        CALL TLAB_STOP(DNS_ERROR_THERMOCONT)
      ENDIF
   ENDDO
 

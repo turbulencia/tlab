@@ -374,6 +374,7 @@ END SUBROUTINE RADIAL_SAMPLESIZE
 SUBROUTINE WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
 
   USE DNS_CONSTANTS, ONLY : lfile
+  USE TLAB_CORE
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_pro
 #endif
@@ -403,7 +404,7 @@ SUBROUTINE WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
         name = TRIM(ADJUSTL(fname))
         IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
 
-        CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+        CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 
 #include "dns_open_file.h"
         WRITE(LOC_UNIT_ID) SNGL(pow(1:nxy,iv))

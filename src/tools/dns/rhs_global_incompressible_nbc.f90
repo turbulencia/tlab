@@ -90,18 +90,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile,'ENTERING SUBROUTINE, RHS_GLOBAL_INCOMPRESSIBLE_NBC')
+  CALL TLAB_WRITE_ASCII(tfile,'ENTERING SUBROUTINE, RHS_GLOBAL_INCOMPRESSIBLE_NBC')
 #endif
-
-  IF ( inb_scal .GT. 2 ) THEN
-     CALL IO_WRITE_ASCII(efile,&
-          'Nonblocking Communication not implemented >2 scalars' )
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ELSE IF ( inb_scal .LT. 1 ) THEN
-     CALL IO_WRITE_ASCII(efile,&
-          'Nonblocking Communication require at least 1 scalar')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
 
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
@@ -703,7 +693,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
   ptime = ptime + MPI_WTime()
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC')
+  CALL TLAB_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC')
 #endif
   RETURN
 END SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC

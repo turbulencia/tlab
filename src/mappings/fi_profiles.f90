@@ -16,6 +16,7 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
   USE DNS_GLOBAL, ONLY : pbg, sbg, damkohler,froude,schmidt
   USE DNS_GLOBAL, ONLY : rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
   USE DNS_GLOBAL, ONLY : buoyancy
+  USE TLAB_CORE
   USE THERMO_GLOBAL, ONLY : imixture, GRATIO
 #ifdef USE_MPI
   USE DNS_MPI
@@ -110,7 +111,7 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
 ! Anelastic density correction term in burgers operator
 ! #######################################################################
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     CALL IO_WRITE_ASCII(lfile,'Initialize anelastic density correction in burgers operator.')
+     CALL TLAB_WRITE_ASCII(lfile,'Initialize anelastic density correction in burgers operator.')
 
 ! Density correction term in the burgers operator along X
      g(1)%anelastic = .TRUE.

@@ -12,6 +12,7 @@ SUBROUTINE DNS_FILTER()
   USE DNS_GLOBAL,    ONLY : FilterDomain
   USE DNS_GLOBAL,    ONLY : g, area
   USE TLAB_ARRAYS
+  USE TLAB_CORE
   USE DNS_LOCAL,     ONLY : ilimit_scal, s_bound_min, s_bound_max
   USE DNS_LOCAL,     ONLY : nitera_stats_spa, nitera_first,nitera_stats
   USE STATISTICS
@@ -27,7 +28,7 @@ SUBROUTINE DNS_FILTER()
 
   ! #######################################################################
   WRITE(line,*) itime; line = 'Filtering fields at It'//TRIM(ADJUSTL(line))//'.'
-  CALL IO_WRITE_ASCII(lfile,line)
+  CALL TLAB_WRITE_ASCII(lfile,line)
 
   ! -------------------------------------------------------------------
   ! Statistics

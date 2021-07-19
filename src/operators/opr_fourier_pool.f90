@@ -17,10 +17,10 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Forward/Backward Fourier transform of the array a extended by two planes 
+!# Forward/Backward Fourier transform of the array a extended by two planes
 !# in Oy direction (that is, jmax+2).
 !#
-!# In the case of the pressure solver these planes represent the 
+!# In the case of the pressure solver these planes represent the
 !# boundary conditions.
 !#
 !# The transformed complex field is saved to an array with shape
@@ -42,6 +42,7 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL, ONLY : fft_plan_fz,fft_plan_bz
   USE DNS_GLOBAL, ONLY : imax,jmax, isize_txc_field
   USE DNS_GLOBAL, ONLY : g
+  USE TLAB_CORE
 
 #ifdef USE_MPI
   USE DNS_MPI
@@ -71,8 +72,8 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
      IF ( ims_size_i(DNS_MPI_I_POISSON1) .NE. ims_size_i(DNS_MPI_I_POISSON2) ) THEN
-        CALL IO_WRITE_ASCII(efile,'OPR_FOURIER_INITIALIZE. Error in the size in the transposition arrays.')
-        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+        CALL TLAB_WRITE_ASCII(efile,'OPR_FOURIER_INITIALIZE. Error in the size in the transposition arrays.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
   ENDIF
 #endif
@@ -97,7 +98,7 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
      CALL dfftw_plan_many_dft(fft_plan_fz, i1, g(3)%size, isize_fft_z, &
           tmp,   g(3)%size, isize_stride, i1, &
           wrk3d, g(3)%size, isize_stride, i1, FFTW_FORWARD, FFTW_ESTIMATE)
-     
+
      CALL dfftw_plan_many_dft(fft_plan_bz, i1, g(3)%size, isize_fft_z, &
           tmp,   g(3)%size, isize_stride, i1, &
           wrk3d, g(3)%size, isize_stride, i1, FFTW_BACKWARD, FFTW_ESTIMATE)
@@ -105,7 +106,7 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
      CALL dfftw_plan_many_dft(fft_plan_fz, i1, g(3)%size, isize_fft_z, &
           tmp,   g(3)%size, isize_stride, i1, &
           wrk3d, g(3)%size, isize_stride, i1, FFTW_FORWARD, FFTW_MEASURE)
-     
+
      CALL dfftw_plan_many_dft(fft_plan_bz, i1, g(3)%size, isize_fft_z, &
           tmp,   g(3)%size, isize_stride, i1, &
           wrk3d, g(3)%size, isize_stride, i1, FFTW_BACKWARD, FFTW_MEASURE)
@@ -155,7 +156,7 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
        tmp,   g(1)%size/2+1, i1, isize_disp, &
        wrk3d, g(1)%size,     i1, g(1)%size, FFTW_MEASURE)
 #endif
-  
+
 ! -----------------------------------------------------------------------
 ! Oy direction
 ! -----------------------------------------------------------------------
@@ -168,7 +169,7 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
      CALL dfftw_plan_many_dft(fft_plan_fy, i1, g(2)%size, isize_fft_y, &
           tmp,   g(2)%size, isize_stride, i1, &
           wrk3d, g(2)%size, isize_stride, i1, FFTW_FORWARD, FFTW_ESTIMATE)
-     
+
      CALL dfftw_plan_many_dft(fft_plan_by, i1, g(2)%size, isize_fft_y, &
           tmp,   g(2)%size, isize_stride, i1, &
           wrk3d, g(2)%size, isize_stride, i1, FFTW_BACKWARD, FFTW_ESTIMATE)
@@ -176,7 +177,7 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
      CALL dfftw_plan_many_dft(fft_plan_fy, i1, g(2)%size, isize_fft_y, &
           tmp,   g(2)%size, isize_stride, i1, &
           wrk3d, g(2)%size, isize_stride, i1, FFTW_FORWARD, FFTW_MEASURE)
-     
+
      CALL dfftw_plan_many_dft(fft_plan_by, i1, g(2)%size, isize_fft_y, &
           tmp,   g(2)%size, isize_stride, i1, &
           wrk3d, g(2)%size, isize_stride, i1, FFTW_BACKWARD, FFTW_MEASURE)
@@ -184,11 +185,11 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
   ENDIF
 
 #else
-  CALL IO_WRITE_ASCII(efile,'OPR_FOURIER_INITIALIZE. FFTW needed for POISSON solver.')
-  CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-     
+  CALL TLAB_WRITE_ASCII(efile,'OPR_FOURIER_INITIALIZE. FFTW needed for POISSON solver.')
+  CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+
 #endif
-  
+
   RETURN
 END SUBROUTINE OPR_FOURIER_INITIALIZE
 
@@ -207,7 +208,7 @@ SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2
 
   TINTEGER nx,ny,nz
   TREAL,    DIMENSION(nx*ny,*)                     :: in
-  TREAL,    DIMENSION(nx,nz)                       :: in_bcs_hb,in_bcs_ht  
+  TREAL,    DIMENSION(nx,nz)                       :: in_bcs_hb,in_bcs_ht
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz), TARGET :: out
   TCOMPLEX, DIMENSION( nx/2+1,            *)       :: wrk2
 #ifdef USE_MPI
@@ -235,11 +236,11 @@ SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2
      ip = 1
      ip = ip + nx*ny*nz; in(ip:ip+nx*nz-1,1) = in_bcs_hb(1:nx*nz,1)
      ip = ip + nx*nz;    in(ip:ip+nx*nz-1,1) = in_bcs_ht(1:nx*nz,1)
-     
+
 ! Transpose array a into b
      id = DNS_MPI_I_POISSON1
      CALL DNS_MPI_TRPF_I(in, wrk2, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
-     
+
 ! ims_size_k(id) FFTWs
      CALL dfftw_execute_dft_r2c(fft_plan_fx, wrk2, wrk1)
 
@@ -257,11 +258,11 @@ SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2
            ENDDO
         ENDDO
      ENDDO
-     
+
 ! Transpose array back
      id = DNS_MPI_I_POISSON2
      CALL DNS_MPI_TRPB_I(wrk1, wrk2, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
-     
+
 ! reorganize wrk2 into b
      DO k = 1,nz
         ip = 1  + ny*(k-1); out(1:isize_page            ,k) = wrk2(1:isize_page,ip)
@@ -295,16 +296,16 @@ SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
 
   USE DNS_GLOBAL, ONLY : isize_txc_dimz
   USE DNS_GLOBAL, ONLY : fft_plan_bx
-#ifdef USE_MPI 
+#ifdef USE_MPI
   USE DNS_GLOBAL, ONLY : g
   USE DNS_MPI,    ONLY : ims_npro_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i, ims_size_i
-#endif 
+#endif
 
   IMPLICIT NONE
 
   TINTEGER nx,ny,nz
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz),   INTENT(IN),   TARGET :: in
-#ifdef USE_MPI 
+#ifdef USE_MPI
   TCOMPLEX, DIMENSION((nx/2+1)*ims_npro_i,*), INTENT(OUT)          :: out
 #else
   TREAL,    DIMENSION(nx,ny,nz),              INTENT(OUT)          :: out
@@ -312,7 +313,7 @@ SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
   TCOMPLEX, DIMENSION( nx/2+1,            *), INTENT(INOUT)        :: wrk
 
 ! -----------------------------------------------------------------------
-#ifdef USE_MPI 
+#ifdef USE_MPI
   TINTEGER i, k, ip, id, iold, inew, isize_page
 #else
   TINTEGER k
@@ -328,7 +329,7 @@ SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
 ! reorganize in into wrk
   isize_page =(nx/2+1)*ny
   DO k = 1,nz
-     ip = 1  + ny*(k-1); wrk(1:isize_page,ip) = in(1:isize_page,k) 
+     ip = 1  + ny*(k-1); wrk(1:isize_page,ip) = in(1:isize_page,k)
 !     ip = 1  +ny*(nx/2+1)* nz;   wrk(1: nx/2+1,    ip) = in(   ny   *(nx/2+1)+1:,k) !Idonotneed
 !     ip = ip +   (nx/2+1)* nz;   wrk(1: nx/2+1,    ip) = in(  (ny+1)*(nx/2+1)+1:,k) !Idonotneed
   ENDDO
@@ -351,7 +352,7 @@ SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
      inew = g(1)%size/2 + 1
      out(inew,k) = out(iold,k)
   ENDDO
-  
+
 ! ims_size_i(id) FFTWs
   CALL dfftw_execute_dft_c2r(fft_plan_bx, out, wrk)
 
@@ -367,17 +368,17 @@ SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
 !########################################################################
      DO k = 1,nz
         p_tmp => in(1:,k)
-#ifdef USE_MPI 
-        ! divide by two b/o array is declared complex  
+#ifdef USE_MPI
+        ! divide by two b/o array is declared complex
         ip = (nx*ny*(k-1))/2 + 1
         CALL dfftw_execute_dft_c2r(fft_plan_bx, p_tmp, out(ip,1))
-#else 
+#else
         CALL dfftw_execute_dft_c2r(fft_plan_bx, p_tmp, out(1,1,k))
 #endif
      ENDDO
 
 #ifdef USE_MPI
-  ENDIF 
+  ENDIF
 #endif
 
   RETURN
@@ -385,22 +386,22 @@ END SUBROUTINE OPR_FOURIER_B_X_EXEC
 
 !########################################################################
 !########################################################################
-SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out) 
-  
-  USE DNS_GLOBAL, ONLY : fft_plan_fz, fft_reordering 
+SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
+
+  USE DNS_GLOBAL, ONLY : fft_plan_fz, fft_reordering
   USE DNS_GLOBAL, ONLY : isize_txc_dimz
   USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_npro_k, ims_ts_k, ims_tr_k, ims_ds_k, ims_dr_k, ims_err,ims_size_k
-#endif 
+#endif
 
-  IMPLICIT NONE 
-  
+  IMPLICIT NONE
+
 #include "integers.h"
 
 #ifdef USE_MPI
   TCOMPLEX, DIMENSION(ims_size_k(DNS_MPI_K_POISSON)/2,g(3)%size), TARGET :: in,out
-#else 
+#else
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,g(3)%size),                TARGET :: in,out
 #endif
 
@@ -434,12 +435,12 @@ SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
   IF ( fft_reordering .EQ. i1 ) THEN ! re-shuffle spectra in z
      DO k = 1,g(3)%size/2
         k_old1 = k + g(3)%size/2
-        k_new1 = k 
+        k_new1 = k
         k_old2 = k
         k_new2 = k + g(3)%size/2
 
-        p_org(:,k_new1) = p_dst(:,k_old1) 
-        p_org(:,k_new2) = p_dst(:,k_old2)  
+        p_org(:,k_new1) = p_dst(:,k_old1)
+        p_org(:,k_new2) = p_dst(:,k_old2)
      ENDDO
      DO k = 1,g(3)%size
         p_dst(:,k) = p_org(:,k)
@@ -459,22 +460,22 @@ END SUBROUTINE OPR_FOURIER_F_Z_EXEC
 
 !########################################################################
 !########################################################################
-SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out) 
-  
-  USE DNS_GLOBAL, ONLY : fft_plan_bz, fft_reordering 
+SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
+
+  USE DNS_GLOBAL, ONLY : fft_plan_bz, fft_reordering
   USE DNS_GLOBAL, ONLY : isize_txc_dimz
   USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_npro_k, ims_ts_k, ims_tr_k, ims_ds_k, ims_dr_k, ims_size_k
-#endif 
+#endif
 
-  IMPLICIT NONE 
-  
+  IMPLICIT NONE
+
 #include "integers.h"
 
 #ifdef USE_MPI
   TCOMPLEX, DIMENSION(ims_size_k(DNS_MPI_K_POISSON)/2,g(3)%size), TARGET :: in,out
-#else 
+#else
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,g(3)%size),                TARGET :: in,out
 #endif
 
@@ -506,12 +507,12 @@ SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
   IF ( fft_reordering .EQ. i1 ) THEN ! re-shuffle spectra in z
      DO k = 1,g(3)%size/2
         k_new1 = k + g(3)%size/2
-        k_old1 = k 
+        k_old1 = k
         k_new2 = k
         k_old2 = k + g(3)%size/2
 
-        p_dst(:,k_new1) = p_org(:,k_old1) 
-        p_dst(:,k_new2) = p_org(:,k_old2)  
+        p_dst(:,k_new1) = p_org(:,k_old1)
+        p_dst(:,k_new2) = p_org(:,k_old2)
      ENDDO
      DO k = 1,g(3)%size
         p_org(:,k) = p_dst(:,k)
@@ -535,14 +536,14 @@ END SUBROUTINE OPR_FOURIER_B_Z_EXEC
 !########################################################################
 ! SUBROUTINE OPR_FOURIER_B_Z_EXEC(nx,ny,nz, in,out)
 
-!   USE DNS_GLOBAL, ONLY : fft_plan_bz, isize_txc_dimz 
+!   USE DNS_GLOBAL, ONLY : fft_plan_bz, isize_txc_dimz
 ! #ifdef USE_MPI
-!   USE DNS_MPI,    ONLY : ims_npro_k, ims_err, ims_ts_k, ims_tr_k, ims_ds_k, ims_dr_k 
-! #endif 
+!   USE DNS_MPI,    ONLY : ims_npro_k, ims_err, ims_ts_k, ims_tr_k, ims_ds_k, ims_dr_k
+! #endif
 
-!   IMPLICIT NONE 
+!   IMPLICIT NONE
 
-! #include "integers.h" 
+! #include "integers.h"
 ! #ifdef USE_FFTW
 ! #include "fftw3.f"
 ! #endif
@@ -559,18 +560,18 @@ END SUBROUTINE OPR_FOURIER_B_Z_EXEC
 ! ! backwards complex FFT in z
 ! #ifdef USE_MPI
 !   id = DNS_MPI_K_POISSON
- 
+
 !   IF ( ims_npro_k .GT. 1 ) THEN
 !      CALL DNS_MPI_TRPF_K(in, out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
-!      CALL dfftw_execute_dft(fft_plan_bz,out,in) 
-        
+!      CALL dfftw_execute_dft(fft_plan_bz,out,in)
+
 !      CALL DNS_MPI_TRPB_K(in, out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-        
+
 !   ELSE ! ims_npro_k .EQ. 1
 ! #endif
 
-!      CALL dfftw_execute_dft(fft_plan_bz,in,out) 
+!      CALL dfftw_execute_dft(fft_plan_bz,in,out)
 
 ! #ifdef USE_MPI
 !   ENDIF ! ims_npro_k .GT. 1
@@ -586,7 +587,7 @@ SUBROUTINE OPR_FOURIER_SPECTRA_3D(nx,ny,nz, isize_psd, u, psd, wrk1d)
   USE DNS_GLOBAL, ONLY : isize_txc_dimz
   USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k, ims_pro, ims_err 
+  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k, ims_pro, ims_err
 #endif
 
   IMPLICIT NONE
@@ -619,7 +620,7 @@ SUBROUTINE OPR_FOURIER_SPECTRA_3D(nx,ny,nz, isize_psd, u, psd, wrk1d)
      DO j = 1,ny
         IF ( j       .LE. g(2)%size/2+1 ) THEN; fj = M_REAL(j-1)
         ELSE;                                   fj =-M_REAL(g(2)%size+1-j); ENDIF
-              
+
 
         DO i = 1,nx/2+1
 #ifdef USE_MPI
@@ -636,7 +637,7 @@ SUBROUTINE OPR_FOURIER_SPECTRA_3D(nx,ny,nz, isize_psd, u, psd, wrk1d)
 ! -----------------------------------------------------------------------
 ! psd
 ! -----------------------------------------------------------------------
-           ip = (nx+2)*(j-1) + 2*i 
+           ip = (nx+2)*(j-1) + 2*i
 
            r = INT(fr)
            IF ( r .EQ. 0 ) THEN ! zero is not written
@@ -649,14 +650,13 @@ SUBROUTINE OPR_FOURIER_SPECTRA_3D(nx,ny,nz, isize_psd, u, psd, wrk1d)
      ENDDO
   ENDDO
 
-#ifdef USE_MPI 
+#ifdef USE_MPI
      wrk1d = psd
-     CALL MPI_Reduce(wrk1d, psd, isize_psd, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err) 
-     IF ( ims_pro .EQ. 0 ) THEN 
+     CALL MPI_Reduce(wrk1d, psd, isize_psd, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+     IF ( ims_pro .EQ. 0 ) THEN
         psd = wrk1d
      ENDIF
 #endif
 
   RETURN
 END SUBROUTINE OPR_FOURIER_SPECTRA_3D
-

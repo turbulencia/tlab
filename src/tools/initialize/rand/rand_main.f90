@@ -9,6 +9,7 @@ PROGRAM INIRAND
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE TLAB_ARRAYS
+  USE TLAB_CORE
   USE RAND_LOCAL
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_pro
@@ -20,7 +21,7 @@ PROGRAM INIRAND
   TINTEGER iq, is
 
   ! ###################################################################
-  CALL DNS_START()
+  CALL TLAB_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   CALL RAND_READ_LOCAL(ifile)
@@ -40,7 +41,7 @@ PROGRAM INIRAND
   CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   ! ###################################################################
-  CALL IO_WRITE_ASCII(lfile,'Initializing random fiels.')
+  CALL TLAB_WRITE_ASCII(lfile,'Initializing random fiels.')
 
 #ifdef USE_MPI
   seed = seed + ims_pro         ! seed for random generator
@@ -68,5 +69,5 @@ PROGRAM INIRAND
   ENDDO
   CALL DNS_WRITE_FIELDS('scal.rand', i1, imax,jmax,kmax, inb_scal, isize_field, s, txc)
 
-  CALL DNS_STOP(0)
+  CALL TLAB_STOP(0)
 END PROGRAM INIRAND

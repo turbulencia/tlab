@@ -15,6 +15,7 @@ PROGRAM VISUALS
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE TLAB_ARRAYS
+  USE TLAB_CORE
   USE THERMO_GLOBAL, ONLY : imixture
   USE THERMO_GLOBAL, ONLY : NSP, THERMO_SPNAME
   USE LAGRANGE_GLOBAL
@@ -71,7 +72,7 @@ PROGRAM VISUALS
 
   bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_START()
+  CALL TLAB_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) CALL PARTICLE_READ_GLOBAL(ifile)
@@ -144,8 +145,8 @@ PROGRAM VISUALS
   CALL LIST_INTEGER(sRes, iopt_size, opt_vec)
 
   IF ( opt_vec(1) .LT. 0 ) THEN ! Check
-    CALL IO_WRITE_ASCII(efile, 'VISUALS. Missing input [PostProcessing.ParamVisuals] in dns.ini.')
-    CALL DNS_STOP(DNS_ERROR_INVALOPT)
+    CALL TLAB_WRITE_ASCII(efile, 'VISUALS. Missing input [PostProcessing.ParamVisuals] in dns.ini.')
+    CALL TLAB_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
   ! -------------------------------------------------------------------
@@ -312,7 +313,7 @@ PROGRAM VISUALS
     itime = itime_vec(it)
 
     WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))//'.'
-    CALL IO_WRITE_ASCII(lfile, sRes)
+    CALL TLAB_WRITE_ASCII(lfile, sRes)
 
     IF ( iread_scal .EQ. 1 ) THEN ! Scalar variables
       WRITE(scal_file,*) itime; scal_file = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(scal_file))
@@ -331,7 +332,7 @@ PROGRAM VISUALS
     ENDIF
 
     WRITE(sRes,100) rtime; sRes = 'Physical time '//TRIM(ADJUSTL(sRes))
-    CALL IO_WRITE_ASCII(lfile, sRes)
+    CALL TLAB_WRITE_ASCII(lfile, sRes)
 
     ! -------------------------------------------------------------------
     ! Calculate intermittency
@@ -347,7 +348,7 @@ PROGRAM VISUALS
         opt_cond_scal = inb_scal_array
       ENDIF
 
-      CALL IO_WRITE_ASCII(lfile,'Calculating partition...')
+      CALL TLAB_WRITE_ASCII(lfile,'Calculating partition...')
       CALL FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
       imax,jmax,kmax, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
     ENDIF
@@ -439,7 +440,7 @@ PROGRAM VISUALS
                                  + txc(1:isize_field,4)*q(1:isize_field,3) )
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
 
-          CALL IO_WRITE_ASCII(lfile,'Computing pressure-strain correlation...')
+          CALL TLAB_WRITE_ASCII(lfile,'Computing pressure-strain correlation...')
           txc(1:isize_field,2) = txc(1:isize_field,1); CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, txc(1,2))
 
           plot_file = 'PressureStrainX'//time_str(1:MaskSize)
@@ -558,13 +559,13 @@ PROGRAM VISUALS
             ELSE;                                  diff = visc/schmidt(is)
             ENDIF
 
-            CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient production...')
+            CALL TLAB_WRITE_ASCII(lfile,'Computing scalar gradient production...')
             plot_file = 'ScalarGradientProduction'//time_str(1:MaskSize)
             CALL FI_GRADIENT_PRODUCTION(imax,jmax,kmax, s(1,is), q(1,1),q(1,2),q(1,3), &
               txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
             CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
-            CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient diffusion...')
+            CALL TLAB_WRITE_ASCII(lfile,'Computing scalar gradient diffusion...')
             plot_file = TRIM(ADJUSTL(str))//'GradientDiffusion'//time_str(1:MaskSize)
             CALL FI_GRADIENT_DIFFUSION(imax,jmax,kmax, s(1,is), &
               txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -616,13 +617,13 @@ PROGRAM VISUALS
       ENDIF
 
       IF ( opt_vec(iv) .EQ. iscal_offset+6 ) THEN ! EnstrophyEquation
-        CALL IO_WRITE_ASCII(lfile,'Computing enstrophy production...')
+        CALL TLAB_WRITE_ASCII(lfile,'Computing enstrophy production...')
         plot_file = 'EnstrophyProduction'//time_str(1:MaskSize)
         CALL FI_VORTICITY_PRODUCTION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),&
           txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
-        CALL IO_WRITE_ASCII(lfile,'Computing enstrophy diffusion...')
+        CALL TLAB_WRITE_ASCII(lfile,'Computing enstrophy diffusion...')
         plot_file = 'EnstrophyDiffusion'//time_str(1:MaskSize)
         CALL FI_VORTICITY_DIFFUSION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),&
           txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -650,11 +651,11 @@ PROGRAM VISUALS
       ENDIF
 
       IF ( opt_vec(iv) .EQ. iscal_offset+9 ) THEN ! StrainEquation (I need the pressure)
-        CALL IO_WRITE_ASCII(lfile,'Computing strain pressure...')
+        CALL TLAB_WRITE_ASCII(lfile,'Computing strain pressure...')
         plot_file = 'StrainPressure'//time_str(1:MaskSize)
         IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-          CALL IO_WRITE_ASCII(efile,'VISUALS. Strain eqn for incompressible undeveloped.')
-          CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+          CALL TLAB_WRITE_ASCII(efile,'VISUALS. Strain eqn for incompressible undeveloped.')
+          CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
         ELSE
           txc(:,6) = q(:,6)
         ENDIF
@@ -663,14 +664,14 @@ PROGRAM VISUALS
         txc(1:isize_field,1) = C_2_R *txc(1:isize_field,1)
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
-        CALL IO_WRITE_ASCII(lfile,'Computing strain production...')
+        CALL TLAB_WRITE_ASCII(lfile,'Computing strain production...')
         plot_file = 'StrainProduction'//time_str(1:MaskSize)
         CALL FI_STRAIN_PRODUCTION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), &
         txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
         txc(1:isize_field,1)=C_2_R*txc(1:isize_field,1)
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
-        CALL IO_WRITE_ASCII(lfile,'Computing strain diffusion...')
+        CALL TLAB_WRITE_ASCII(lfile,'Computing strain diffusion...')
         plot_file = 'StrainDiffusion'//time_str(1:MaskSize)
         CALL FI_STRAIN_DIFFUSION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), &
           txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -700,8 +701,8 @@ PROGRAM VISUALS
       ! Partition
       ! ###################################################################
       IF ( opt_vec(iv) .EQ. iscal_offset+11 ) THEN
-        CALL IO_WRITE_ASCII(efile,'VISUALS. Partition undevelop.')
-        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+        CALL TLAB_WRITE_ASCII(efile,'VISUALS. Partition undevelop.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
       ENDIF
 
       ! ###################################################################
@@ -897,7 +898,7 @@ PROGRAM VISUALS
   ENDDO
 
   100 FORMAT(G_FORMAT_R)
-  CALL DNS_STOP(0)
+  CALL TLAB_STOP(0)
 END PROGRAM VISUALS
 
 !########################################################################

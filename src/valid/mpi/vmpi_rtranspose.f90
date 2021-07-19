@@ -311,7 +311,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
   i1 = 1
   
   IF ( ims_npro_i .GT. 1 ) THEN
-!  CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Ox derivatives.')
+!  CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Ox derivatives.')
      id = DNS_MPI_I_PARTIAL
      npage = kmax*jmax
      CALL DNS_MPI_TYPE_I(ims_npro_i, imax, npage, i1, i1, i1, i1, &
@@ -319,7 +319,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ENDIF
   
   IF ( ims_npro_k .GT. 1 ) THEN
-!  CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Oz derivatives.')
+!  CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Oz derivatives.')
      id = DNS_MPI_K_PARTIAL
      npage = imax*jmax
      CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &

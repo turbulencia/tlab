@@ -77,7 +77,6 @@ SUBROUTINE WRT_STHD(unit, irec, &
   TINTEGER nstatavg, jmax, nstat, nstatavg_points
   TREAL rtime, rtimeorg
   TINTEGER statavg(nstatavg)
-  TINTEGER major, minor
 
   TREAL tmp(1)
   TINTEGER reclen
@@ -139,6 +138,7 @@ SUBROUTINE IO_READ_AVG_SPATIAL(name,mean_flow,mean_scal)
   USE DNS_GLOBAL, ONLY : istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
   USE DNS_GLOBAL, ONLY : itime, rtime, jmax, inb_scal
   USE DNS_CONSTANTS, ONLY : lfile
+  USE TLAB_CORE
 
 #ifdef USE_MPI
   USE DNS_MPI
@@ -175,7 +175,7 @@ SUBROUTINE IO_READ_AVG_SPATIAL(name,mean_flow,mean_scal)
 ! -------------------------------------------------------------------
      IF ( lfilexist ) THEN
         line = 'Reading field '//TRIM(ADJUSTL(name))//'...'
-        CALL IO_WRITE_ASCII(lfile,line)
+        CALL TLAB_WRITE_ASCII(lfile,line)
 
 #include "dns_open_file.h"
         REWIND(LOC_UNIT_ID)
@@ -201,7 +201,7 @@ SUBROUTINE IO_READ_AVG_SPATIAL(name,mean_flow,mean_scal)
         rstattimeorg = rtime
         mean_flow = C_0_R
         mean_scal = C_0_R
-        CALL IO_WRITE_ASCII(lfile,'Statistics have been initialized.')
+        CALL TLAB_WRITE_ASCII(lfile,'Statistics have been initialized.')
      ENDIF
 
 #ifdef USE_MPI
@@ -217,6 +217,7 @@ SUBROUTINE RD_STHD(unit, irec, iter, rtime, iterorg, rtimeorg,&
      nstatavg, jmax, nstat, nstatavg_points, statavg)
 
   USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CORE
 
   IMPLICIT NONE
 
@@ -275,23 +276,23 @@ SUBROUTINE RD_STHD(unit, irec, iter, rtime, iterorg, rtimeorg,&
 ! #####################
 
   IF (iterdum .NE. iter) THEN
-     CALL IO_WRITE_ASCII(efile,'Stat file error (iter mismatch).')
-     CALL DNS_STOP(DNS_ERROR_STFILE)
+     CALL TLAB_WRITE_ASCII(efile,'Stat file error (iter mismatch).')
+     CALL TLAB_STOP(DNS_ERROR_STFILE)
   ENDIF
 
   IF (jmaxdum .NE. jmax) THEN
-     CALL IO_WRITE_ASCII(efile,'Stat file error (jmax mismatch).')
-     CALL DNS_STOP(DNS_ERROR_STFILE)
+     CALL TLAB_WRITE_ASCII(efile,'Stat file error (jmax mismatch).')
+     CALL TLAB_STOP(DNS_ERROR_STFILE)
   ENDIF
 
   IF (nstatavgdum .NE. nstatavg) THEN
-     CALL IO_WRITE_ASCII(efile,'Stat file error (nstatavg mismatch).')
-     CALL DNS_STOP(DNS_ERROR_STFILE)
+     CALL TLAB_WRITE_ASCII(efile,'Stat file error (nstatavg mismatch).')
+     CALL TLAB_STOP(DNS_ERROR_STFILE)
   ENDIF
 
   IF (nstatdum .NE. nstat) THEN
-     CALL IO_WRITE_ASCII(efile,'Stat file error (nstat mismatch).')
-     CALL DNS_STOP(DNS_ERROR_STFILE)
+     CALL TLAB_WRITE_ASCII(efile,'Stat file error (nstat mismatch).')
+     CALL TLAB_STOP(DNS_ERROR_STFILE)
   ELSE
      nstat = nstatdum
   ENDIF

@@ -6,6 +6,7 @@
 MODULE BOUNDARY_BCS
 
   USE DNS_CONSTANTS, ONLY : MAX_VARS
+  USE TLAB_CORE
 
   IMPLICIT NONE
   SAVE
@@ -64,7 +65,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 
 ! -------------------------------------------------------------------
   TINTEGER j, is
-  TREAL prefactor, dummy, param(5)
+  TREAL prefactor, param(5)
   TREAL diam_loc, thick_loc, ycenter, r1, r05, PROFILES
 
 #ifdef USE_MPI
@@ -74,7 +75,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_INITIALLIZE' )
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_INITIALLIZE' )
 #endif
 
 ! ###################################################################
@@ -119,7 +120,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         ENDDO
         WRITE(str,*) ims_bcs_imax
         str = 'Initialize MPI types for Ox BCs transverse terms. '//TRIM(ADJUSTL(str))//' planes.'
-        CALL IO_WRITE_ASCII(lfile,str)
+        CALL TLAB_WRITE_ASCII(lfile,str)
         isize_loc = ims_bcs_imax*jmax
         CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
              ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
@@ -134,7 +135,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         ENDDO
         WRITE(str,*) ims_bcs_jmax
         str = 'Initialize MPI types for Oy BCs transverse terms. '//TRIM(ADJUSTL(str))//' planes.'
-        CALL IO_WRITE_ASCII(lfile,str)
+        CALL TLAB_WRITE_ASCII(lfile,str)
         isize_loc = imax*ims_bcs_jmax
         CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
              ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
@@ -279,7 +280,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
   ENDIF
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_BCS_INITIALLIZE' )
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_BCS_INITIALLIZE' )
 #endif
 
   RETURN

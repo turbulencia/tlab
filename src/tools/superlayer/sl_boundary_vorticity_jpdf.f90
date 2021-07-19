@@ -39,14 +39,14 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
   jmax_loc = MIN(jmax,jmax - 2*ibuffer_npy +1)
 
   IF ( nfield .LT. L_NFIELDS_MAX ) THEN
-     CALL IO_WRITE_ASCII(efile, 'SL_VORTICITY_JPDF. Samples array size.')
-     CALL DNS_STOP(DNS_ERROR_WRKSIZE)
+     CALL TLAB_WRITE_ASCII(efile, 'SL_VORTICITY_JPDF. Samples array size.')
+     CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
   ELSE
      nfield = L_NFIELDS_MAX
   ENDIF
   IF ( itxc_size .LT. imax*jmax*kmax*6 ) THEN
-     CALL IO_WRITE_ASCII(efile, 'SL_VORTICITY_JPDF. Txc array size.')
-     CALL DNS_STOP(DNS_ERROR_WRKSIZE)
+     CALL TLAB_WRITE_ASCII(efile, 'SL_VORTICITY_JPDF. Txc array size.')
+     CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
   ENDIF
 
 ! ###################################################################
@@ -58,9 +58,9 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! txc2 ....: second invariant Q
 ! -------------------------------------------------------------------
   IF ( iopt .EQ. 3 ) THEN
-     CALL IO_WRITE_ASCII(lfile,'Computing invariant R...')
+     CALL TLAB_WRITE_ASCII(lfile,'Computing invariant R...')
      CALL FI_INVARIANT_R(imax,jmax,kmax, u,v,w, txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
-     CALL IO_WRITE_ASCII(lfile,'Computing invariant Q...')
+     CALL TLAB_WRITE_ASCII(lfile,'Computing invariant Q...')
      CALL FI_INVARIANT_Q(imax,jmax,kmax, u,v,w, txc(1,2), txc(1,3),txc(1,4),txc(1,5), wrk2d,wrk3d)
      suffix = 'RQ '
 
@@ -70,9 +70,9 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! txc2 ....: strain 2 s_ij s_ij
 ! -------------------------------------------------------------------
   ELSE IF ( iopt .EQ. 4 ) THEN
-     CALL IO_WRITE_ASCII(lfile,'Computing vorticity...')
+     CALL TLAB_WRITE_ASCII(lfile,'Computing vorticity...')
      CALL FI_VORTICITY(imax,jmax,kmax, u,v,w, txc(1,1), txc(1,2),txc(1,3), wrk2d,wrk3d)
-     CALL IO_WRITE_ASCII(lfile,'Computing strain...')
+     CALL TLAB_WRITE_ASCII(lfile,'Computing strain...')
      CALL FI_STRAIN(imax,jmax,kmax, u,v,w, txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
      DO ij = 1,imax*jmax*kmax
         txc(ij,2) = C_2_R*txc(ij,2)

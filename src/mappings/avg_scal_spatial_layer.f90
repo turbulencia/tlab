@@ -34,6 +34,7 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc
 #endif
 
   USE DNS_GLOBAL
+  USE TLAB_CORE
 
   IMPLICIT NONE
 
@@ -211,15 +212,15 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING AVG_SCAL_SPATIAL_LAYER' )
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING AVG_SCAL_SPATIAL_LAYER' )
 #endif
 
   c13 = C_1_R/C_3_R
   r05 = C_05_R
 
   if ( nstatavg_points .EQ. 0 ) then
-     CALL IO_WRITE_ASCII(efile,'AVG_SCAL_SPATIAL_LAYER: Zero number of points')
-     CALL DNS_STOP(DNS_ERROR_STATZERO)
+     CALL TLAB_WRITE_ASCII(efile,'AVG_SCAL_SPATIAL_LAYER: Zero number of points')
+     CALL TLAB_STOP(DNS_ERROR_STATZERO)
   ELSE
      pts = C_1_R/M_REAL(nstatavg_points)
   endif
@@ -227,8 +228,8 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc
   eps = visc/schmidt(is)
 
   IF ( itxc .LT. nstatavg*jmax*LAST_INDEX ) THEN
-     CALL IO_WRITE_ASCII(efile,'AVG_SCAL_SPATIAL_LAYER: Not enough space in stat')
-     CALL DNS_STOP(DNS_ERROR_WRKSIZE)
+     CALL TLAB_WRITE_ASCII(efile,'AVG_SCAL_SPATIAL_LAYER: Not enough space in stat')
+     CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
   ENDIF
 
 ! ###################################################################
@@ -762,7 +763,7 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc
   CLOSE(i23)
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING AVG_SCAL_SPATIAL_LAYER' )
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING AVG_SCAL_SPATIAL_LAYER' )
 #endif
 
   RETURN

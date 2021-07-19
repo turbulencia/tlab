@@ -14,6 +14,7 @@ PROGRAM APRIORI
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE TLAB_ARRAYS
+  USE TLAB_CORE
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
@@ -61,7 +62,7 @@ PROGRAM APRIORI
 
   bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_START()
+  CALL TLAB_START()
 
   CALL DNS_READ_GLOBAL(ifile)
 
@@ -203,7 +204,7 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
      itime = itime_vec(it)
 
      WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))
-     CALL IO_WRITE_ASCII(lfile,sRes)
+     CALL TLAB_WRITE_ASCII(lfile,sRes)
 
      IF ( iread_flow .EQ. 1 ) THEN ! Flow variables
         WRITE(flow_file,*) itime; flow_file = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(flow_file))
@@ -326,5 +327,5 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   ENDDO
 
-  CALL DNS_STOP(0)
+  CALL TLAB_STOP(0)
 END PROGRAM APRIORI

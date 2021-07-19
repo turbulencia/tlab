@@ -22,7 +22,7 @@
 !# The sign is the opposite to that paper
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# tmin    In    Transverse term at OxMin
 !# tmax    In    Transverse term at OxMax
@@ -35,10 +35,11 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow, inb_scal_array
   USE DNS_GLOBAL,    ONLY : buoyancy
+  USE TLAB_CORE
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
- 
+
   IMPLICIT NONE
 
 #include "integers.h"
@@ -55,12 +56,12 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
   TREAL, DIMENSION(*) :: wrk2d, wrk3d
 
 ! -----------------------------------------------------------------------
-  TINTEGER ip, j, k, is, bcs(2,2)  
+  TINTEGER ip, j, k, is, bcs(2,2)
   TREAL c
-  
+
 ! #######################################################################
   bcs = 0
-  
+
 ! -------------------------------------------------------------------
 ! Arrange data
 ! -------------------------------------------------------------------
@@ -95,15 +96,15 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
      ENDDO
   ENDDO
   ip = ip + inb_flow + inb_scal_array
-  
+
 ! -------------------------------------------------------------------
 ! Construct t1-t5
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   CALL OPR_PARTIAL_Y(OPR_P1,     ims_bcs_imax,jmax,kmax, bcs, g(2), tmp1, ddy, wrk3d, wrk2d,wrk3d)
 ! Needs to be checked
-  CALL IO_WRITE_ASCII(efile,'BOUNDARY_BCS_TRANSVERSE_X. To be checked')
-  CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+  CALL TLAB_WRITE_ASCII(efile,'BOUNDARY_BCS_TRANSVERSE_X. To be checked')
+  CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
 !  imode_fdm_loc = imode_fdm + (DNS_MPI_K_NRBCX-1)*100
   CALL OPR_PARTIAL_Z(OPR_P1_BCS, ims_bcs_imax,jmax,kmax, bcs, g(3), tmp1, ddz, wrk3d, wrk2d,wrk3d)
 #else
@@ -140,7 +141,7 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
      ENDDO
   ENDDO
   ip = ip + inb_flow + inb_scal_array
-     
+
 ! BCs at x_max
   DO k = 1,kmax
      DO j = 1,jmax
@@ -168,10 +169,10 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
         ENDDO
      ENDDO
   ENDDO
-  ip = ip + inb_flow + inb_scal_array 
-  
+  ip = ip + inb_flow + inb_scal_array
+
 ! -------------------------------------------------------------------
-! Change sign 
+! Change sign
 ! -------------------------------------------------------------------
   DO is = 1, inb_flow + inb_scal_array
      DO k = 1,kmax

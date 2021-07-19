@@ -13,20 +13,20 @@
 !# because of the rearrangement into the dilatation part of part of
 !# the second derivative. No strong impact has been observed due to this.
 !# 12 first derivative operations and 9 second derivative operations.
-!# 
+!#
 !########################################################################
 SUBROUTINE RHS_FLOW_VISCOUS_EXPLICIT(vis, u,v,w,p, h1,h2,h3,h4, tmp1,tmp2,tmp3,tmp4,tmp5, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
-#ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
-#endif 
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, imode_eqns
+#ifdef TRACE_ON
+  USE DNS_CONSTANTS, ONLY : tfile
+#endif
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field
   USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : itransport, visc, mach
+  USE DNS_GLOBAL,    ONLY : visc, mach
   USE THERMO_GLOBAL, ONLY : gama0
   USE BOUNDARY_BCS
-  
+
   IMPLICIT NONE
 
   TREAL, DIMENSION(isize_field), INTENT(IN)    :: vis, u,v,w,p
@@ -41,21 +41,11 @@ SUBROUTINE RHS_FLOW_VISCOUS_EXPLICIT(vis, u,v,w,p, h1,h2,h3,h4, tmp1,tmp2,tmp3,t
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_VISCOUS_EXPLICIT')
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_VISCOUS_EXPLICIT')
 #endif
 
-  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
-     CALL IO_WRITE_ASCII(efile,'RHS_FLOW_VISCOUS_EXPLICIT. Only constant viscosity.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
-
-  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-     CALL IO_WRITE_ASCII(efile,'RHS_FLOW_VISCOUS_EXPLICIT. No total energy formulation.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
-
   bcs = 0
-  
+
   prefactor = (gama0-C_1_R)*mach*mach
   c13 = C_1_R/C_3_R
   c23 = C_2_R/C_3_R
@@ -117,7 +107,7 @@ SUBROUTINE RHS_FLOW_VISCOUS_EXPLICIT(vis, u,v,w,p, h1,h2,h3,h4, tmp1,tmp2,tmp3,t
   h3 = h3 + vis*visc*(tmp1 + tmp2 + tmp3 + c13*tmp4)
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_VISCOUS_EXPLICIT')
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_VISCOUS_EXPLICIT')
 #endif
 
   RETURN

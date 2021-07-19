@@ -4,6 +4,7 @@
 SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
 
   USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CORE
   USE GRID_LOCAL
 
   IMPLICIT NONE
@@ -12,7 +13,7 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
   TINTEGER idir
   TREAL scale
   LOGICAL periodic
-  
+
 ! -------------------------------------------------------------------
   CHARACTER*64 sRes, str, bakfile
   CHARACTER*9 title
@@ -26,29 +27,29 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
   ELSE IF (idir.eq.2) THEN; title = 'IniGridOy'
   ELSE IF (idir.eq.3) THEN; title = 'IniGridOz'; ENDIF
 
-  CALL IO_WRITE_ASCII(bakfile, '['//title//']')
+  CALL TLAB_WRITE_ASCII(bakfile, '['//title//']')
 
 ! -------------------------------------------------------------------
 ! General options
 ! -------------------------------------------------------------------
-  CALL IO_WRITE_ASCII(bakfile, 'segments=<number of segments>')
-  CALL IO_WRITE_ASCII(bakfile, 'periodic=<yes/no>')
-  CALL IO_WRITE_ASCII(bakfile, 'mirrored=<yes/no>')
+  CALL TLAB_WRITE_ASCII(bakfile, 'segments=<number of segments>')
+  CALL TLAB_WRITE_ASCII(bakfile, 'periodic=<yes/no>')
+  CALL TLAB_WRITE_ASCII(bakfile, 'mirrored=<yes/no>')
 
   CALL SCANINIINT(bakfile, inifile, title, 'segments', '1', idir_opts(1,idir))
 
-  CALL SCANINICHAR(bakfile, inifile, title, 'periodic', 'no', sRes) 
+  CALL SCANINICHAR(bakfile, inifile, title, 'periodic', 'no', sRes)
   IF (TRIM(ADJUSTL(sRes)) .eq. 'yes') THEN; idir_opts(2,idir) = 1; periodic = .TRUE.
   ELSE;                                     idir_opts(2,idir) = 0; periodic = .FALSE.; ENDIF
 ! idir_opts(2,idir) to be removed
-     
+
   CALL SCANINICHAR(bakfile, inifile, title, 'mirrored', 'no', sRes)
   IF (TRIM(ADJUSTL(sRes)) .eq. 'yes') THEN; idir_opts(3,idir) = 1
   ELSE;                                     idir_opts(3,idir) = 0; ENDIF
 
   IF (idir_opts(2,idir).eq.1 .and. idir_opts(3,idir).eq.1) THEN
-     CALL IO_WRITE_ASCII(efile, 'GRID_READ_LOCAL. Periodicity with mirroring is not supported.')
-     CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
+     CALL TLAB_WRITE_ASCII(efile, 'GRID_READ_LOCAL. Periodicity with mirroring is not supported.')
+     CALL TLAB_STOP(DNS_ERROR_GRID_SCALE)
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -57,11 +58,11 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
   DO iseg = 1,idir_opts(1,idir)
      WRITE(str,*) iseg
 
-     CALL IO_WRITE_ASCII(bakfile, 'Segment number '//TRIM(ADJUSTL(str)) )
-     CALL IO_WRITE_ASCII(bakfile, 'scales_'//TRIM(ADJUSTL(str))//'=<physical end of the segment>')
-     CALL IO_WRITE_ASCII(bakfile, 'points_'//TRIM(ADJUSTL(str))//'=<points in the segment>')
-     CALL IO_WRITE_ASCII(bakfile, 'opts_'//TRIM(ADJUSTL(str))//'=<option>')
-     CALL IO_WRITE_ASCII(bakfile, 'vals_'//TRIM(ADJUSTL(str))//'=<values>')
+     CALL TLAB_WRITE_ASCII(bakfile, 'Segment number '//TRIM(ADJUSTL(str)) )
+     CALL TLAB_WRITE_ASCII(bakfile, 'scales_'//TRIM(ADJUSTL(str))//'=<physical end of the segment>')
+     CALL TLAB_WRITE_ASCII(bakfile, 'points_'//TRIM(ADJUSTL(str))//'=<points in the segment>')
+     CALL TLAB_WRITE_ASCII(bakfile, 'opts_'//TRIM(ADJUSTL(str))//'=<option>')
+     CALL TLAB_WRITE_ASCII(bakfile, 'vals_'//TRIM(ADJUSTL(str))//'=<values>')
 
 
      CALL SCANINIINT(bakfile,  inifile, title, 'points_'//TRIM(ADJUSTL(str)),'1', isegdim(iseg,idir))
@@ -83,11 +84,10 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
 ! -------------------------------------------------------------------
   scale = isegend(idir_opts(1,idir),idir)
   IF ( scale .LE. C_0_R ) THEN
-     CALL IO_WRITE_ASCII(efile, 'GRID_READ_LOCAL. Scales undefined.')
-     CALL DNS_STOP(DNS_ERROR_GRID_SCALE)
-     
+     CALL TLAB_WRITE_ASCII(efile, 'GRID_READ_LOCAL. Scales undefined.')
+     CALL TLAB_STOP(DNS_ERROR_GRID_SCALE)
+
   ENDIF
 
   RETURN
 END SUBROUTINE GRID_READ_LOCAL
-

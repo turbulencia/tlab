@@ -57,14 +57,14 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   jmax_loc = MIN(jmax,jmax - 2*ibuffer_npy +1)
 
   IF ( nfield .LT. L_NFIELDS_MAX ) THEN
-     CALL IO_WRITE_ASCII(efile, 'SL_NORMAL_VORTICITY. Profiles array size.')
-     CALL DNS_STOP(DNS_ERROR_WRKSIZE)
+     CALL TLAB_WRITE_ASCII(efile, 'SL_NORMAL_VORTICITY. Profiles array size.')
+     CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
   ELSE
      nfield = L_NFIELDS_MAX
   ENDIF
   IF ( itxc_size .LT. imax*jmax*kmax*7 ) THEN
-     CALL IO_WRITE_ASCII(efile, 'SL_NORMAL_VORTICITY. Txc array size.')
-     CALL DNS_STOP(DNS_ERROR_WRKSIZE)
+     CALL TLAB_WRITE_ASCII(efile, 'SL_NORMAL_VORTICITY. Txc array size.')
+     CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
   ENDIF
 
 ! Calculate vorticiy field w_iw_i

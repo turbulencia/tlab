@@ -75,7 +75,7 @@ CONTAINS
 
     ! ###################################################################
 #ifdef TRACE_ON
-    CALL IO_WRITE_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER' )
+    CALL TLAB_WRITE_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER' )
 #endif
 
     stats_buoyancy = .FALSE.  ! default
@@ -223,7 +223,7 @@ CONTAINS
     END IF
 
 #ifdef TRACE_ON
-    CALL IO_WRITE_ASCII(tfile, 'LEAVING STATS_TEMPORAL_LAYER' )
+    CALL TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_TEMPORAL_LAYER' )
 #endif
 
     RETURN
@@ -251,7 +251,7 @@ CONTAINS
 
     ! #######################################################################
 #ifdef TRACE_ON
-    CALL IO_WRITE_ASCII(tfile, 'ENTERING STATS_SPATIAL_LAYER' )
+    CALL TLAB_WRITE_ASCII(tfile, 'ENTERING STATS_SPATIAL_LAYER' )
 #endif
 
     ! #######################################################################
@@ -287,7 +287,7 @@ CONTAINS
     END IF
 
 #ifdef TRACE_ON
-    CALL IO_WRITE_ASCII(tfile, 'LEAVING STATS_SPATIAL_LAYER' )
+    CALL TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_SPATIAL_LAYER' )
 #endif
 
     RETURN

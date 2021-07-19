@@ -26,6 +26,7 @@ MODULE BOUNDARY_BUFFER
   USE DNS_GLOBAL,    ONLY : itime
   USE DNS_GLOBAL,    ONLY : mach
   USE DNS_GLOBAL,    ONLY : io_aux
+  USE TLAB_CORE
   USE THERMO_GLOBAL, ONLY : gama0
 #ifdef USE_MPI
   USE DNS_MPI
@@ -105,8 +106,8 @@ CONTAINS
         variable%strength(1:nfields) = dummies(1:nfields)
         variable%sigma(:) = dummies(nfields+1)
       ELSE
-        CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersUImin.')
-        CALL DNS_STOP(DNS_ERROR_OPTION)
+        CALL TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersUImin.')
+        CALL TLAB_STOP(DNS_ERROR_OPTION)
       ENDIF
       DO is = 1,nfields
         IF ( variable%strength(is) .NE. C_0_R ) variable%active(is) = .TRUE.
@@ -118,8 +119,8 @@ CONTAINS
         IF ( is .EQ. nfields ) THEN
           variable%hard = .TRUE.
         ELSE
-          CALL IO_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValues.'//TRIM(ADJUSTL(tag))//'.')
-          CALL DNS_STOP(DNS_ERROR_OPTION)
+          CALL TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValues.'//TRIM(ADJUSTL(tag))//'.')
+          CALL TLAB_STOP(DNS_ERROR_OPTION)
         ENDIF
       ENDIF
 
@@ -309,7 +310,7 @@ CONTAINS
       WRITE(str, 10) var_min
       line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
       line = 'Checking bounds of field '//TRIM(ADJUSTL(tag))//'.'//TRIM(ADJUSTL(varname(iq)))//': '//TRIM(ADJUSTL(line))
-      CALL IO_WRITE_ASCII(lfile,line)
+      CALL TLAB_WRITE_ASCII(lfile,line)
     ENDDO
 
     ! -----------------------------------------------------------------------
@@ -330,14 +331,14 @@ CONTAINS
     IF ( item%type == DNS_BUFFER_FILTER ) THEN
       SELECT CASE ( idir )
       CASE( 1 )
-        CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Ox BCs explicit filter.')
+        CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI types for Ox BCs explicit filter.')
         id     = DNS_MPI_K_OUTBCS
         idummy = item%size*jmax
         CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, idummy, 1,1,1,1, &
             ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
       CASE( 2 )
-        CALL IO_WRITE_ASCII(lfile,'Initialize MPI types for Oy BCs explicit filter.')
+        CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI types for Oy BCs explicit filter.')
         id     = DNS_MPI_K_TOPBCS
         idummy = imax*item%size
         CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, idummy, 1,1,1,1, &
@@ -610,8 +611,8 @@ CONTAINS
 
     ! ###################################################################
 !!! Routines OPR_FILTER have been changed. This routine needs to be updates !!!
-    CALL IO_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
-    CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+    CALL TLAB_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
+    CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
 
 
     ! BCs for the filters (see routine FILTER)
@@ -623,16 +624,16 @@ CONTAINS
     ! Bottom boundary
     ! ###################################################################
     IF ( BuffFlowJmin%size .GT. 1 ) THEN
-      CALL IO_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
-      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+      CALL TLAB_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
+      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
     ENDIF
 
     ! ###################################################################
     ! Top boundary
     ! ###################################################################
     IF ( BuffFlowJmax%size .GT. 1 ) THEN
-      CALL IO_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
-      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+      CALL TLAB_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
+      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
     ENDIF
 
     ! ###################################################################

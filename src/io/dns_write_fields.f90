@@ -9,7 +9,7 @@
 !# HISTORY
 !#
 !# 2010/04/01 - J.P. Mellado
-!#              Created 
+!#              Created
 !# 2012/12/01 - J.P. Mellado
 !#              Not using global variables {imax,jmax,kmax}_total
 !#              in routines IO_FIELDS_* any more
@@ -18,15 +18,15 @@
 !# DESCRIPTION
 !#
 !# Extracted from DNS_READ_FIELDS to handle different types of file formats
-!# 
+!#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# nfield     In      Number of fields in the file
 !# iheader    In      Header control flag:
 !#                    0 No header
-!#                    1 Scalar fields 
-!#                    2 Flow fields 
+!#                    1 Scalar fields
+!#                    2 Flow fields
 !#
 !########################################################################
 SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
@@ -37,6 +37,7 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
   USE DNS_GLOBAL, ONLY : visc, froude, rossby, damkohler, prandtl, mach
   USE DNS_GLOBAL, ONLY : schmidt
   USE THERMO_GLOBAL, ONLY : gama0
+  USE TLAB_CORE
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_npro_i, ims_npro_k
 #endif
@@ -68,13 +69,13 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
   ny_total = ny
   nz_total = nz
 #endif
-  
+
   line = 'Writing field '//TRIM(ADJUSTL(fname))//' of size'
   WRITE(str,*) nx_total; line = TRIM(ADJUSTL(line))//' '//TRIM(ADJUSTL(str))
   WRITE(str,*) ny_total; line = TRIM(ADJUSTL(line))//'x'//TRIM(ADJUSTL(str))
   WRITE(str,*) nz_total; line = TRIM(ADJUSTL(line))//'x'//TRIM(ADJUSTL(str))//'...'
 
-  CALL IO_WRITE_ASCII(lfile, line)
+  CALL TLAB_WRITE_ASCII(lfile, line)
 
 ! ###################################################################
   IF      ( imode_files .EQ. DNS_FILE_RAWARRAY ) THEN
@@ -85,8 +86,8 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
 #ifdef USE_MPI
 #ifdef USE_MPI_IO
      IF ( itxc .LT. nx*ny*nz ) THEN
-        CALL IO_WRITE_ASCII(efile, 'DNS_WRITE_FIELDS. Work array size error')
-        CALL DNS_STOP(DNS_ERROR_ALLOC)
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_WRITE_FIELDS. Work array size error')
+        CALL TLAB_STOP(DNS_ERROR_ALLOC)
      ENDIF
 #endif
 #endif
@@ -111,8 +112,8 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
      ENDIF
 
      IF ( isize .GT. isize_max ) THEN
-        CALL IO_WRITE_ASCII(efile, 'DNS_WRITE_FIELDS. Parameters array size error.')
-        CALL DNS_STOP(DNS_ERROR_ALLOC)
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_WRITE_FIELDS. Parameters array size error.')
+        CALL TLAB_STOP(DNS_ERROR_ALLOC)
      ENDIF
 
 ! write data
@@ -125,9 +126,9 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
 
      ENDDO
 
-  ELSE IF ( imode_files .EQ. DNS_FILE_NETCDF )  THEN  
-     ! To be implemented 
-  ELSE IF ( imode_files .EQ. DNS_NOFILE )       THEN 
+  ELSE IF ( imode_files .EQ. DNS_FILE_NETCDF )  THEN
+     ! To be implemented
+  ELSE IF ( imode_files .EQ. DNS_NOFILE )       THEN
      ! Do nothing
   ENDIF
 

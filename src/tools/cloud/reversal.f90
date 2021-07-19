@@ -4,6 +4,7 @@ PROGRAM REVERSAL
 #include "dns_const.h"
 
   USE DNS_GLOBAL
+  USE TLAB_CORE
   USE THERMO_GLOBAL
 
   IMPLICIT NONE
@@ -18,7 +19,7 @@ PROGRAM REVERSAL
   TINTEGER n, nmax, iopt, iup
 
 ! ###################################################################
-  CALL DNS_START
+  CALL TLAB_START()
 
   imixture = MIXT_TYPE_AIRWATER
   CALL THERMO_INITIALIZE
@@ -410,7 +411,7 @@ PROGRAM REVERSAL
 
   CLOSE(21)
 
-  CALL DNS_STOP
+  CALL TLAB_STOP
 
   STOP
 1010 FORMAT(10(1X,G_FORMAT_R))

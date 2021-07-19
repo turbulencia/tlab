@@ -19,12 +19,12 @@ SUBROUTINE RHS_FLOW_GLOBAL_2(rho,u,v,w,p,e,T, z1, h0,h1,h2,h3,h4, zh1, tmp1,tmp2
 #ifdef TRACE_ON
   USE DNS_CONSTANTS, ONLY : tfile
 #endif
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, inb_scal, imode_eqns
+  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, inb_scal
   USE DNS_GLOBAL,    ONLY : g, buoyancy
-  USE DNS_GLOBAL,    ONLY : itransport,idiffusion, visc,prandtl,mach
+  USE DNS_GLOBAL,    ONLY : idiffusion, visc,prandtl,mach
   USE THERMO_GLOBAL, ONLY : gama0
   USE BOUNDARY_BCS
-  
+
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
@@ -44,21 +44,11 @@ SUBROUTINE RHS_FLOW_GLOBAL_2(rho,u,v,w,p,e,T, z1, h0,h1,h2,h3,h4, zh1, tmp1,tmp2
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_GLOBAL_2')
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_GLOBAL_2')
 #endif
 
-  IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
-     CALL IO_WRITE_ASCII(efile,'RHS_FLOW_GLOBAL_2. Only constant viscosity.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
-
-  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-     CALL IO_WRITE_ASCII(efile,'RHS_FLOW_GLOBAL_2. No total energy formulation.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
-
   bcs = 0
-  
+
   g1 = buoyancy%vector(1)
   g2 = buoyancy%vector(2)
   g3 = buoyancy%vector(3)
@@ -210,7 +200,7 @@ SUBROUTINE RHS_FLOW_GLOBAL_2(rho,u,v,w,p,e,T, z1, h0,h1,h2,h3,h4, zh1, tmp1,tmp2
   ENDDO
 !$omp end do
 !$omp end parallel
- 
+
 ! ###################################################################
 ! Additional convective part due to skewsymmetric formulation
 ! Terms u_i d(\rho u_k)/dx_k
@@ -244,7 +234,7 @@ SUBROUTINE RHS_FLOW_GLOBAL_2(rho,u,v,w,p,e,T, z1, h0,h1,h2,h3,h4, zh1, tmp1,tmp2
 ! Note that second derivative routines give also first derivatives !
 ! ###################################################################
 ! -------------------------------------------------------------------
-! Cross derivatives 
+! Cross derivatives
 ! -------------------------------------------------------------------
 ! energy equation
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), e, tmp4, wrk3d, wrk2d,wrk3d)
@@ -369,7 +359,7 @@ SUBROUTINE RHS_FLOW_GLOBAL_2(rho,u,v,w,p,e,T, z1, h0,h1,h2,h3,h4, zh1, tmp1,tmp2
 !$omp end parallel
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_GLOBAL_2')
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_GLOBAL_2')
 #endif
 
   RETURN

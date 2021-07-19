@@ -37,7 +37,7 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE(vis, u,v,w,p, h1,h2,h3,h4, tau_xx,tau_xy,
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_VISCOUS_DIVERGENCE')
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_VISCOUS_DIVERGENCE')
 #endif
 
   bcs = 0
@@ -154,7 +154,7 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE(vis, u,v,w,p, h1,h2,h3,h4, tau_xx,tau_xy,
   ENDIF
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_VISCOUS_DIVERGENCE')
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_VISCOUS_DIVERGENCE')
 #endif
 
   RETURN

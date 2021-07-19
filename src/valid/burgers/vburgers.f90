@@ -5,6 +5,7 @@ PROGRAM VBURGERS
 
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
+  USE TLAB_CORE
 
   IMPLICIT NONE
 
@@ -19,7 +20,7 @@ PROGRAM VBURGERS
   TREAL dummy, error
 
 ! ###################################################################
-  CALL DNS_START
+  CALL TLAB_START()
 
   CALL DNS_READ_GLOBAL('dns.ini')
 #ifdef USE_MPI
@@ -139,5 +140,5 @@ PROGRAM VBURGERS
 
   END IF
 
-  CALL DNS_STOP(0)
+  CALL TLAB_STOP(0)
 END PROGRAM VBURGERS

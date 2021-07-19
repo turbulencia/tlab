@@ -29,6 +29,7 @@ SUBROUTINE DNS_LOGS(iflag)
   USE DNS_GLOBAL,    ONLY : imode_eqns
   USE DNS_GLOBAL,    ONLY : itime, rtime, visc
   USE DNS_GLOBAL,    ONLY : damkohler
+  USE TLAB_CORE
   USE DNS_LOCAL,     ONLY : logs_data
   USE TIME,          ONLY : dtime
 
@@ -88,9 +89,9 @@ SUBROUTINE DNS_LOGS(iflag)
      ENDIF
 
      line1 = line1(1:ip-1)//'#'
-     CALL IO_WRITE_ASCII(ofile, REPEAT('#',LEN_TRIM(line1)))
-     CALL IO_WRITE_ASCII(ofile, TRIM(ADJUSTL(line1)))
-     CALL IO_WRITE_ASCII(ofile, REPEAT('#',LEN_TRIM(line1)))
+     CALL TLAB_WRITE_ASCII(ofile, REPEAT('#',LEN_TRIM(line1)))
+     CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(line1)))
+     CALL TLAB_WRITE_ASCII(ofile, REPEAT('#',LEN_TRIM(line1)))
 
   ENDIF
 
@@ -134,7 +135,7 @@ SUBROUTINE DNS_LOGS(iflag)
      ENDIF
 
 ! Output
-     CALL IO_WRITE_ASCII(ofile, TRIM(ADJUSTL(line1)))
+     CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(line1)))
 
   ENDIF
 

@@ -18,12 +18,13 @@
 !# The number of plane to move is given by npl
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 SUBROUTINE DNS_MPI_COPYPLN_1(ijmax, kmax, npl, a, bl, br)
 
   USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CORE
   USE DNS_MPI
 
   IMPLICIT NONE
@@ -46,8 +47,8 @@ SUBROUTINE DNS_MPI_COPYPLN_1(ijmax, kmax, npl, a, bl, br)
 
 ! Careful in case only 2 PEs
      IF ( ims_npro .EQ. 2 ) THEN
-        CALL IO_WRITE_ASCII(efile, 'DNS_MPI_COPYPLN_1. Undeveloped for 2 PEs.')
-        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_MPI_COPYPLN_1. Undeveloped for 2 PEs.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
 
 ! left and right PEs
@@ -64,7 +65,7 @@ SUBROUTINE DNS_MPI_COPYPLN_1(ijmax, kmax, npl, a, bl, br)
      CALL MPI_ISEND(a(1,1),          icount, MPI_REAL8, ims_pro_l, &
           ims_tag, MPI_COMM_WORLD, mpireq(1), ims_err)
      CALL MPI_ISEND(a(1,kmax+1-npl), icount, MPI_REAL8, ims_pro_r, &
-          ims_tag, MPI_COMM_WORLD, mpireq(2), ims_err)         
+          ims_tag, MPI_COMM_WORLD, mpireq(2), ims_err)
 
      CALL MPI_WAITALL(4, mpireq, status, ims_err)
 
@@ -103,8 +104,8 @@ SUBROUTINE DNS_MPI_COPYPLN_2(ijmax, kmax, npl, a, bl, br)
 
 ! Careful in case only 2 PEs
      IF ( ims_npro .EQ. 2 ) THEN
-        CALL IO_WRITE_ASCII(efile, 'DNS_MPI_COPYPLN_2. Undeveloped for 2 PEs.')
-        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_MPI_COPYPLN_2. Undeveloped for 2 PEs.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
 
 ! -----------------------------------------------------------------------
@@ -125,14 +126,14 @@ SUBROUTINE DNS_MPI_COPYPLN_2(ijmax, kmax, npl, a, bl, br)
      CALL MPI_ISEND(a(1,1), icount, MPI_REAL8, ims_pro_l, &
           ims_tag, MPI_COMM_WORLD, mpireq(1), ims_err)
      CALL MPI_ISEND(a(1,1), icount, MPI_REAL8, ims_pro_r, &
-          ims_tag, MPI_COMM_WORLD, mpireq(2), ims_err)         
+          ims_tag, MPI_COMM_WORLD, mpireq(2), ims_err)
 
      CALL MPI_WAITALL(4, mpireq, status, ims_err)
 
      CALL DNS_MPI_TAGUPDT
 
 ! -----------------------------------------------------------------------
-! second-left and second-right PEs. 
+! second-left and second-right PEs.
 ! -----------------------------------------------------------------------
      npl_loc = npl-kmax
 
@@ -149,7 +150,7 @@ SUBROUTINE DNS_MPI_COPYPLN_2(ijmax, kmax, npl, a, bl, br)
      CALL MPI_ISEND(a(1,1),              icount, MPI_REAL8, ims_pro_l, &
           ims_tag, MPI_COMM_WORLD, mpireq(5), ims_err)
      CALL MPI_ISEND(a(1,kmax+1-npl_loc), icount, MPI_REAL8, ims_pro_r, &
-          ims_tag, MPI_COMM_WORLD, mpireq(6), ims_err)         
+          ims_tag, MPI_COMM_WORLD, mpireq(6), ims_err)
 
      CALL MPI_WAITALL(4, mpireq(5), status, ims_err)
 

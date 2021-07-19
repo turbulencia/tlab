@@ -1,11 +1,3 @@
 Library dependencies
 --------------------
-tools -> mappings -> io      -> mpi            -> utils
-                                thermodynamics    FFTW [external]
-                     operators  fdm
-                                linear
-                                averages
-                                pdfs
-                                filters
-                                quadpack [external, from NETLIB]
-                                fitpack  [external, from NETLIB]
+tools -> mappings -> operators -> {fdm,filter,io,thermo,utils,external} -> {tlab_main,tlab_mpi}

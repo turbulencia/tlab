@@ -24,6 +24,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
+USE TLAB_CORE
 
   IMPLICIT NONE
 
@@ -258,8 +259,8 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   ! -----------------------------------------------------------------------
   nv = ig(ng) +sg(ng) -1
   IF ( MAX_AVG_TEMPORAL < nv ) THEN
-    CALL IO_WRITE_ASCII(efile,'AVG_SCAL_XZ. Not enough space in local arrays.')
-    CALL DNS_STOP(LES_ERROR_AVGTMP)
+    CALL TLAB_WRITE_ASCII(efile,'AVG_SCAL_XZ. Not enough space in local arrays.')
+    CALL TLAB_STOP(DNS_ERROR_AVGTMP)
   END IF
   mean2d(:,1:nv) = C_0_R
 
@@ -268,7 +269,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
   ! #######################################################################
   WRITE(line1,*) itime; line1 = 'Calculating scal statistics at It'//TRIM(ADJUSTL(line1))//'...'
-  CALL IO_WRITE_ASCII(lfile,line1)
+  CALL TLAB_WRITE_ASCII(lfile,line1)
 
   ! #######################################################################
   ! Preliminary data of velocity and density

@@ -12,6 +12,7 @@ PROGRAM INIPART
   USE DNS_CONSTANTS
   USE DNS_GLOBAL
   USE TLAB_ARRAYS
+  USE TLAB_CORE
   USE LAGRANGE_GLOBAL
   USE LAGRANGE_ARRAYS
 
@@ -30,7 +31,7 @@ PROGRAM INIPART
 
   !########################################################################
   !########################################################################
-  CALL DNS_START
+  CALL TLAB_START
 
   CALL DNS_READ_GLOBAL(ifile)
 
@@ -53,11 +54,11 @@ PROGRAM INIPART
     CALL PARTICLE_ALLOCATE(C_FILE_LOC)
 
     WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
-    CALL IO_WRITE_ASCII(lfile,line)
+    CALL TLAB_WRITE_ASCII(lfile,line)
     ALLOCATE(l_comm(isize_l_comm), stat=ierr)
     IF ( ierr .NE. 0 ) THEN
-      CALL IO_WRITE_ASCII(efile,C_FILE_LOC//'Not enough memory for l_comm.')
-      CALL DNS_STOP(DNS_ERROR_ALLOC)
+      CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'Not enough memory for l_comm.')
+      CALL TLAB_STOP(DNS_ERROR_ALLOC)
     ENDIF
 
     ! -------------------------------------------------------------------
@@ -77,5 +78,5 @@ PROGRAM INIPART
 
   ENDIF
 
-  CALL DNS_STOP(0)
+  CALL TLAB_STOP(0)
 END PROGRAM INIPART

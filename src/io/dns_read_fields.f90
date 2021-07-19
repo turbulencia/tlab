@@ -9,34 +9,35 @@
 !# HISTORY
 !#
 !# 2010/04/01 - J.P. Mellado
-!#              Created 
+!#              Created
 !# 2012/12/01 - J.P. Mellado
 !#              Not using global variables {imax,jmax,kmax}_total
 !#              in routines IO_FIELDS_* any more
 !#
 !########################################################################
 !# DESCRIPTION
-!# 
+!#
 !# Extracted from DNS_READ_FIELDS to handle different types of file formats
-!# 
+!#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# iheader    In      Header control flag:
 !#                    0 No header
-!#                    1 Scalar fields 
-!#                    2 Flow fields 
+!#                    1 Scalar fields
+!#                    2 Flow fields
 !# nfield     In      Number of fields in the file
-!# iread      In      Control flag, if set to 0 read all fields (array a 
-!#                    w/ space for nfield), if not read only iread (array 
+!# iread      In      Control flag, if set to 0 read all fields (array a
+!#                    w/ space for nfield), if not read only iread (array
 !#                    a only 1 field)
-!#                    
+!#
 !########################################################################
 SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc)
 
   USE DNS_GLOBAL, ONLY : imode_files
   USE DNS_GLOBAL, ONLY : itime, rtime, visc
   USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_CORE
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_npro_i, ims_npro_k, ims_err
 #endif
@@ -64,8 +65,8 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
 
 ! ###################################################################
   IF ( iread .GT. nfield ) THEN
-     CALL IO_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Array size error')
-     CALL DNS_STOP(DNS_ERROR_SCALFORMAT)
+     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Array size error')
+     CALL TLAB_STOP(DNS_ERROR_SCALFORMAT)
   ENDIF
 
 #ifdef USE_MPI
@@ -77,13 +78,13 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
   ny_total = ny
   nz_total = nz
 #endif
-  
+
   line = 'Reading field '//TRIM(ADJUSTL(fname))//' of size'
   WRITE(str,*) nx_total; line = TRIM(ADJUSTL(line))//' '//TRIM(ADJUSTL(str))
   WRITE(str,*) ny_total; line = TRIM(ADJUSTL(line))//'x'//TRIM(ADJUSTL(str))
   WRITE(str,*) nz_total; line = TRIM(ADJUSTL(line))//'x'//TRIM(ADJUSTL(str))//'...'
 
-  CALL IO_WRITE_ASCII(lfile, line)
+  CALL TLAB_WRITE_ASCII(lfile, line)
 
 ! ###################################################################
 ! Read data
@@ -96,8 +97,8 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
 #ifdef USE_MPI
 #ifdef USE_MPI_IO
      IF ( itxc .LT. nx*ny*nz ) THEN
-        CALL IO_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Work array size error')
-        CALL DNS_STOP(DNS_ERROR_ALLOC)
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Work array size error')
+        CALL TLAB_STOP(DNS_ERROR_ALLOC)
      ENDIF
 #endif
 #endif
@@ -114,13 +115,13 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
 
         ENDIF
      ENDDO
-     
+
 ! check size
      IF ( isize .GT. isize_max ) THEN
-        CALL IO_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Parameters array size error')
-        CALL DNS_STOP(DNS_ERROR_ALLOC)
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Parameters array size error')
+        CALL TLAB_STOP(DNS_ERROR_ALLOC)
      ENDIF
-        
+
 ! process header info
      IF      ( iheader .EQ. 1 ) THEN
         rtime = params(1)
@@ -137,9 +138,9 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
 #endif
 
 ! -------------------------------------------------------------------
-  ELSE IF ( imode_files .EQ. DNS_FILE_NETCDF )   THEN  
-     ! To be implemented 
-  ELSE IF ( imode_files .EQ. DNS_NOFILE )        THEN  
+  ELSE IF ( imode_files .EQ. DNS_FILE_NETCDF )   THEN
+     ! To be implemented
+  ELSE IF ( imode_files .EQ. DNS_NOFILE )        THEN
      ! Do nothing
      DO ifield = 1,nfield
         a(:,ifield) = C_0_R
@@ -148,4 +149,3 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
 
   RETURN
 END SUBROUTINE DNS_READ_FIELDS
-

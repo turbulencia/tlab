@@ -18,6 +18,7 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 
   USE DNS_TYPES,     ONLY : grid_dt
   USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CORE
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity
@@ -36,12 +37,12 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 
 ! ###################################################################
   IF ( bcs(1,2) + bcs(2,2) .GT. 0 ) THEN
-     CALL IO_WRITE_ASCII(efile,'OPR_BURGERS. Only developed for biased BCs.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+     CALL TLAB_WRITE_ASCII(efile,'OPR_BURGERS. Only developed for biased BCs.')
+     CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
   CALL OPR_PARTIAL2D(is,nlines,bcs,g,s,result,wrk2d,wrk3d)  ! wrk3d: 1st derivative
-                                                            ! result:2nd derivative including diffusivity   
+                                                            ! result:2nd derivative including diffusivity
 
 ! ###################################################################
 ! Operation; diffusivity included in 2.-order derivative

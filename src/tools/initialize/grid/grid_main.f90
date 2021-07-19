@@ -5,6 +5,7 @@ PROGRAM INIGRID
 
   USE DNS_TYPES, ONLY     : grid_dt
   USE DNS_CONSTANTS, ONLY : gfile, ifile
+  USE TLAB_CORE
   USE GRID_LOCAL
 #ifdef USE_MPI
   USE DNS_MPI
@@ -35,7 +36,7 @@ PROGRAM INIGRID
   g(3)%name = 'z'
 
 #ifdef USE_MPI
-  CALL DNS_START()
+  CALL TLAB_START()
   IF ( ims_pro .EQ. 0 ) THEN
 #endif
 
@@ -136,7 +137,7 @@ PROGRAM INIGRID
 
 #ifdef USE_MPI
 ENDIF
-CALL DNS_STOP(0)
+CALL TLAB_STOP(0)
 #endif
 
 STOP

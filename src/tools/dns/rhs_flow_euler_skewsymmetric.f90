@@ -36,7 +36,7 @@ SUBROUTINE RHS_FLOW_EULER_SKEWSYMMETRIC(rho,u,v,w,p,e, z1, h0,h1,h2,h3,h4, zh1,&
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_EULER_SKEWSYMMETRIC')
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_EULER_SKEWSYMMETRIC')
 #endif
 
   bcs = 0
@@ -249,7 +249,7 @@ SUBROUTINE RHS_FLOW_EULER_SKEWSYMMETRIC(rho,u,v,w,p,e, z1, h0,h1,h2,h3,h4, zh1,&
   h3 = h3 - C_05_R*rho*( u*tmp2 + v*tmp3 + w*tmp4 )
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_EULER_SKEWSYMMETRIC')
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_EULER_SKEWSYMMETRIC')
 #endif
 
   RETURN

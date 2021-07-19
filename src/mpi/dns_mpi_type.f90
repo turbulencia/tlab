@@ -5,7 +5,7 @@
 !# HISTORY
 !#
 !# 1999/01/01 - C. Pantano
-!#              Created 
+!#              Created
 !# 2010/04/12 - J. P. Mellado
 !#              Modified to set homogeneous decomposition
 !#
@@ -19,6 +19,7 @@ SUBROUTINE DNS_MPI_TYPE_I(ims_npro_i, imax, npage, nd, md, n1, n2, &
      nsize, sdisp, rdisp, stype, rtype)
 
   USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CORE
 
   IMPLICIT NONE
 
@@ -40,8 +41,8 @@ SUBROUTINE DNS_MPI_TYPE_I(ims_npro_i, imax, npage, nd, md, n1, n2, &
   IF ( MOD(npage,ims_npro_i) .EQ. 0 ) THEN
      nsize = npage/ims_npro_i
   ELSE
-     CALL IO_WRITE_ASCII(efile, 'DNS_MPI_TYPE_I. Ratio npage/ims_npro_i not an integer.')
-     CALL DNS_STOP(DNS_ERROR_PARPARTITION)
+     CALL TLAB_WRITE_ASCII(efile, 'DNS_MPI_TYPE_I. Ratio npage/ims_npro_i not an integer.')
+     CALL TLAB_STOP(DNS_ERROR_PARPARTITION)
   ENDIF
 
 ! Calculate Displacements in Forward Send/Receive
@@ -73,10 +74,10 @@ SUBROUTINE DNS_MPI_TYPE_I(ims_npro_i, imax, npage, nd, md, n1, n2, &
      IF ( ims_ss .NE. ims_rs ) THEN
         WRITE(str, *) ims_ss; WRITE(line,*) ims_rs
         line='Send size '//TRIM(ADJUSTL(str))//'differs from recv size '//TRIM(ADJUSTL(line))
-        WRITE(str, *) 1  ! i 
+        WRITE(str, *) 1  ! i
         line=TRIM(ADJUSTL(line))//' in message '//TRIM(ADJUSTL(str))
-        CALL IO_WRITE_ASCII(efile, line)
-        CALL DNS_STOP(DNS_ERROR_MPITYPECHECK)
+        CALL TLAB_WRITE_ASCII(efile, line)
+        CALL TLAB_STOP(DNS_ERROR_MPITYPECHECK)
      ENDIF
 
   !ENDDO
@@ -90,6 +91,7 @@ SUBROUTINE DNS_MPI_TYPE_K(ims_npro, nmax, npage, nd, md, n1, n2, &
      nsize, sdisp, rdisp, stype, rtype)
 
   USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CORE
 
   IMPLICIT NONE
 
@@ -110,8 +112,8 @@ SUBROUTINE DNS_MPI_TYPE_K(ims_npro, nmax, npage, nd, md, n1, n2, &
   IF ( MOD(npage,ims_npro) .EQ. 0 ) THEN
      nsize = npage/ims_npro
   ELSE
-     CALL IO_WRITE_ASCII(efile, 'DNS_MPI_TYPE_K. Ratio npage/ims_npro not an integer.')
-     CALL DNS_STOP(DNS_ERROR_PARPARTITION)
+     CALL TLAB_WRITE_ASCII(efile, 'DNS_MPI_TYPE_K. Ratio npage/ims_npro not an integer.')
+     CALL TLAB_STOP(DNS_ERROR_PARPARTITION)
   ENDIF
 
 ! Calculate Displacements in Forward Send/Receive
@@ -141,10 +143,10 @@ SUBROUTINE DNS_MPI_TYPE_K(ims_npro, nmax, npage, nd, md, n1, n2, &
      CALL MPI_TYPE_SIZE(rtype, ims_rs, ims_err)
 
      IF ( ims_ss .NE. ims_rs ) THEN
-        PRINT *, 'Message   : ', 1, ' size is wrong' ! i 
+        PRINT *, 'Message   : ', 1, ' size is wrong' ! i
         PRINT *, 'Send size : ', ims_ss
         PRINT *, 'Recv size : ', ims_rs
-        CALL DNS_STOP(DNS_ERROR_MPITYPECHECK)
+        CALL TLAB_STOP(DNS_ERROR_MPITYPECHECK)
      ENDIF
 
   ! ENDDO

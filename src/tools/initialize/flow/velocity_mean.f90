@@ -16,7 +16,7 @@ SUBROUTINE VELOCITY_MEAN(u,v,w, wrk1d,wrk3d)
   TREAL, DIMENSION(jmax,*),         INTENT(INOUT) :: wrk1d, wrk3d
 
   ! -------------------------------------------------------------------
-  TINTEGER iq, j, k
+  TINTEGER iq, j
   TREAL PROFILES, ycenter, calpha, salpha
   EXTERNAL PROFILES
 

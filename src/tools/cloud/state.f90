@@ -4,6 +4,7 @@
 PROGRAM STATE
 
   USE DNS_GLOBAL
+  USE TLAB_CORE
   USE THERMO_GLOBAL
 
   IMPLICIT NONE
@@ -17,7 +18,7 @@ PROGRAM STATE
   TINTEGER iopt
 
 ! ###################################################################
-  CALL DNS_START
+  CALL TLAB_START()
 
   imixture = MIXT_TYPE_AIRWATER
   CALL THERMO_INITIALIZE
