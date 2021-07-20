@@ -62,12 +62,12 @@ subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
 
   TREAL, dimension(isize_field,inb_txc), intent(inout) :: txc 
   TREAL, dimension(isize_field)                        :: tmp1 
-  TREAL, dimension(isize_field),         intent(inout) :: wrk3d 
+  TREAL, dimension(isize_field),         intent(inout) :: wrk3d ! debug 
 
   TINTEGER                                             :: nyz, nxy
 
   ! DEBUG
-  TREAL, dimension(isize_field)                        :: tmp2, tmp3, tmp4
+  ! TREAL, dimension(isize_field)                        :: tmp2, tmp3, tmp4
 
   ! ================================================================== !
   
