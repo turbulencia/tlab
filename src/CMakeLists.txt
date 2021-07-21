@@ -60,9 +60,6 @@ add_subdirectory(modules)
 
 # produce libraries
 add_subdirectory(utils)
-if( ${BUILD_TYPE} STREQUAL "PARALLEL" OR ${BUILD_TYPE} STREQUAL "NONBLOCKING" )
-  add_subdirectory(mpi)
-endif()
 add_subdirectory(thermodynamics)
 add_subdirectory(io)
 add_subdirectory(fdm)

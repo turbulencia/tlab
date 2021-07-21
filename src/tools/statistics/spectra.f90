@@ -36,11 +36,13 @@ PROGRAM SPECTRA
   USE DNS_GLOBAL
   USE TLAB_ARRAYS
   USE TLAB_CORE
-  USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE DNS_MPI, ONLY : ims_err
+  USE DNS_MPI, ONLY : ims_pro, ims_npro_k
+  USE DNS_MPI, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_PROCS
 #endif
-
+  USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif

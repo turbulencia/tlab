@@ -153,7 +153,7 @@ SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
 END SUBROUTINE OPR_PARTIAL2
 
 ! ###################################################################################
-! ### First Derivative 
+! ### First Derivative
 ! ### Second Derivative includes
 ! ###       factor 1    (is=-1)
 ! ###       viscosity   (is= 0)
@@ -182,7 +182,7 @@ SUBROUTINE OPR_PARTIAL2D(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
   TINTEGER ip
 
   ! ###################################################################
-  ! always calculate first derivative as this routine is normally called from opr_burgers 
+  ! always calculate first derivative as this routine is normally called from opr_burgers
   ! ###################################################################
   CALL OPR_PARTIAL1(nlines, bcs, g, u,wrk3d, wrk2d)
 
@@ -233,7 +233,7 @@ SUBROUTINE OPR_PARTIAL2D(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
         IF ( g%uniform ) THEN
           CALL FDM_C2N6H_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
         ELSE
-           ! need first derivative from above 
+           ! need first derivative from above
           CALL FDM_C2N6HNJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, u, wrk3d, result)
         ENDIF
 
@@ -271,7 +271,9 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE DNS_MPI, ONLY : ims_npro_i
+  USE DNS_MPI, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -390,7 +392,9 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE DNS_MPI, ONLY : ims_npro_k
+  USE DNS_MPI, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE

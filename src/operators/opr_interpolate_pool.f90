@@ -34,7 +34,9 @@ SUBROUTINE OPR_INTERPOLATE_X(nx,ny,nz, nx_dst, periodic, scalex, &
   USE DNS_GLOBAL, ONLY : isize_txc_field
   USE TLAB_CORE
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE DNS_MPI, ONLY : ims_npro_i
+  USE DNS_MPI, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -112,7 +114,9 @@ SUBROUTINE OPR_INTERPOLATE_Z(nx,ny,nz, nz_dst, periodic, scalez, &
 
   USE DNS_GLOBAL, ONLY : isize_txc_field
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE DNS_MPI, ONLY : ims_npro_k
+  USE DNS_MPI, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE

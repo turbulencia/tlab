@@ -9,9 +9,9 @@ PROGRAM VFFT
 
 USE DNS_GLOBAL, ONLY:  imax,jmax,kmax
 USE DNS_GLOBAL, ONLY:  isize_txc_dimz
-
+USE TLAB_CORE
 #ifdef USE_MPI
-USE DNS_MPI
+USE TLAB_MPI_PROCS
 #endif
 
 IMPLICIT NONE
@@ -33,7 +33,7 @@ TREAL                               :: norm
 err_count = i0
 case_count= i0
 
-CALL DNS_START
+CALL TLAB_START()
 CALL DNS_READ_GLOBAL('dns.ini')
 #ifdef USE_MPI
 CALL DNS_MPI_INITIALIZE

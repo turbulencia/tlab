@@ -16,7 +16,7 @@ PROGRAM SL_BOUNDARY
 
   USE DNS_GLOBAL
 #ifdef USE_MPI
-  USE DNS_MPI,   ONLY : ims_pro, ims_err
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE

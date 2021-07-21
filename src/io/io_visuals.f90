@@ -9,6 +9,7 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
   USE DNS_GLOBAL, ONLY : g, isize_txc_field
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_pro
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -121,6 +122,7 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
 
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_pro
+  USE TLAB_MPI_PROCS
 #endif
 
   implicit NONE

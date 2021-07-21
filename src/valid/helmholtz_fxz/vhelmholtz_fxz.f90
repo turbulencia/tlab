@@ -8,8 +8,9 @@ PROGRAM VHELMHOLTZ_FXZ
 
   USE DNS_TYPES, ONLY : pointers_dt
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_wrk1d,inb_wrk2d,isize_wrk1d,isize_wrk2d,gfile,isize_txc_field
+  USE TLAB_CORE
 #ifdef USE_MPI
-  USE DNS_MPI,     ONLY : ims_pro, ims_err
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -47,7 +48,7 @@ PROGRAM VHELMHOLTZ_FXZ
 #endif
 
 ! ###################################################################
-  CALL DNS_START
+  CALL TLAB_START()
 
   CALL DNS_READ_GLOBAL('dns.ini')
 #ifdef USE_MPI

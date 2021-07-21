@@ -11,7 +11,12 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
 
   USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE DNS_MPI, ONLY : ims_err
+  USE DNS_MPI, ONLY : ims_npro_i, ims_npro_k
+  USE DNS_MPI, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE DNS_MPI, ONLY : ims_comm_x, ims_comm_z
+  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE

@@ -61,6 +61,10 @@ Use valgrind to check for memory leaks.
   * [`src/external`](./src/external): of external libraries
   * ...
 
+## Library dependencies
+
+tools → mappings → operators → {fdm,filter,io,thermo,utils,external} → tlab
+
 ## Data structure
 
 **Restart files**

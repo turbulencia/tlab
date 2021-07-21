@@ -1,9 +1,4 @@
-if ( ${BUILD_TYPE} STREQUAL "PARALLEL" OR ${BUILD_TYPE} STREQUAL "NONBLOCKING" )
-set(LEVEL1_LIBS mpi utils modules)
-else()
 set(LEVEL1_LIBS utils modules)
-endif()
-
 if (PSFFT_LIB)
 set(LEVEL1_LIBS ${LEVEL1_LIBS} ${PSFFT_LIB} ${FFTWTHREADS_LIB})
 endif()

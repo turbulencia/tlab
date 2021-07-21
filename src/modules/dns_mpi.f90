@@ -3,7 +3,6 @@
 #include "dns_const_mpi.h"
 
 MODULE DNS_MPI
-  USE DNS_TYPES, ONLY : subarray_dt
   IMPLICIT NONE
   SAVE
 
@@ -13,7 +12,7 @@ MODULE DNS_MPI
   INTEGER  :: ims_pro,  ims_pro_i,  ims_pro_j,  ims_pro_k
   INTEGER  :: ims_npro, ims_npro_i, ims_npro_j, ims_npro_k
   INTEGER  :: ims_offset_i, ims_offset_j, ims_offset_k
-  INTEGER  :: ims_err, ims_tag
+  INTEGER  :: ims_err
   TREAL    :: ims_time_min, ims_time_max, ims_time_trans
   TINTEGER :: ims_bcs_imax, ims_bcs_jmax
 
