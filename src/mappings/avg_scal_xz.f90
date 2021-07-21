@@ -24,7 +24,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 #ifdef USE_MPI
   USE DNS_MPI
 #endif
-USE TLAB_CORE
+USE TLAB_PROCS
 
   IMPLICIT NONE
 

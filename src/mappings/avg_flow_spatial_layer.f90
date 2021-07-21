@@ -32,7 +32,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 
   USE DNS_CONSTANTS, ONLY : efile, tfile
   USE DNS_GLOBAL
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : gama0, MRATIO
   IMPLICIT NONE
 

@@ -9,7 +9,7 @@ MODULE PLANES
   USE DNS_GLOBAL, ONLY : rbackground, g
   USE DNS_GLOBAL, ONLY : itime, rtime
   USE DNS_GLOBAL, ONLY : io_aux
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL
 

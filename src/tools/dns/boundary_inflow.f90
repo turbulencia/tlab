@@ -20,7 +20,7 @@ MODULE BOUNDARY_INFLOW
   USE DNS_GLOBAL,    ONLY : g, qbg, epbackground, pbackground
   USE DNS_GLOBAL,    ONLY : rtime,itime
   USE DNS_GLOBAL,    ONLY : visc,damkohler
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_npro_i, ims_npro_k

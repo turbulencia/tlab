@@ -43,7 +43,7 @@
 SUBROUTINE IO_READ_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, iread, a, txc)
 
   USE DNS_GLOBAL,ONLY : itime, rtime, visc
-  USE TLAB_CORE
+  USE TLAB_PROCS
 #ifdef USE_MPI
   USE DNS_MPI,   ONLY : ims_offset_k, ims_npro_i, ims_npro_k, ims_pro, ims_err
 #endif
@@ -363,7 +363,7 @@ END SUBROUTINE IO_READ_FIELDS_ARRAY
 SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
 
   USE DNS_GLOBAL, ONLY : itime, rtime, visc, prandtl, schmidt ! header info
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : gama0
 #ifdef USE_MPI
   USE DNS_MPI,   ONLY : ims_offset_k, ims_npro_i, ims_npro_k, ims_pro, ims_err
@@ -663,7 +663,7 @@ SUBROUTINE HEADER_READ_FLOW(unit, irec, itime, rtime, dt, imax,jmax,kmax, &
      visc, gama, prandtl, dummy1, dummy2)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE TLAB_CORE
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -833,7 +833,7 @@ END SUBROUTINE HEADER_WRITE_FLOW
 SUBROUTINE HEADER_READ_SCAL(unit, irec, jiter, rtime, imax, jmax, kmax, schmidt, inbsc)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE TLAB_CORE
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 

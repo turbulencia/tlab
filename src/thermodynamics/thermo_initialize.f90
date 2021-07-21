@@ -55,7 +55,7 @@ SUBROUTINE THERMO_INITIALIZE
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE DNS_GLOBAL,    ONLY : inb_scal, inb_scal_array
   USE DNS_GLOBAL,    ONLY : damkohler
-  USE TLAB_CORE
+  USE TLAB_PROCS
   IMPLICIT NONE
 
 ! -------------------------------------------------------------------

@@ -17,7 +17,7 @@ SUBROUTINE FLOW_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem, mea
      jet_u, scaley, x, y, z1, p, rho_vi, u_vi, tem_vi, rho_vo, u_vo, tem_vo, wrk1d)
 
   USE DNS_CONSTANTS, ONLY : wfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -123,7 +123,7 @@ SUBROUTINE FLOW_SPATIAL_VELOCITY&
      jet_u_a, jet_u_b, jet_u_flux, x, y, rho_vi, u_vi, rho, u, v, wrk1d, wrk2d)
 
   USE DNS_CONSTANTS, ONLY : efile, wfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -299,7 +299,7 @@ SUBROUTINE FLOW_SPATIAL_SCALAR(imax, jmax, iprof_z, thick_z, delta_z, mean_z, &
      x, y, rho_vi, u_vi, z_vi, rho, u, z1, wrk1d)
 
   USE DNS_CONSTANTS, ONLY : wfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 

@@ -16,7 +16,7 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
   USE DNS_GLOBAL, ONLY : pbg, sbg, damkohler,froude,schmidt
   USE DNS_GLOBAL, ONLY : rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
   USE DNS_GLOBAL, ONLY : buoyancy
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : imixture, GRATIO
 #ifdef USE_MPI
   USE DNS_MPI

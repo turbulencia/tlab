@@ -29,7 +29,7 @@ SUBROUTINE DNS_LOGS(iflag)
   USE DNS_GLOBAL,    ONLY : imode_eqns
   USE DNS_GLOBAL,    ONLY : itime, rtime, visc
   USE DNS_GLOBAL,    ONLY : damkohler
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE DNS_LOCAL,     ONLY : logs_data
   USE TIME,          ONLY : dtime
 

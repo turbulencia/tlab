@@ -35,7 +35,7 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_Y(u,v,w,p,r,gamma,z1, &
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow, inb_scal_array
   USE DNS_GLOBAL,    ONLY : buoyancy
-  USE TLAB_CORE
+  USE TLAB_PROCS
 #ifdef USE_MPI
   USE DNS_MPI
 #endif

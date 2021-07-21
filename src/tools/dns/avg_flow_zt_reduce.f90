@@ -33,7 +33,7 @@ SUBROUTINE AVG_FLOW_ZT_REDUCE(q, hq,txc, mean1d, wrk2d,wrk3d)
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : itransport, visc
   USE DNS_GLOBAL, ONLY : nstatavg, statavg, nstatavg_points
-  USE TLAB_CORE
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 

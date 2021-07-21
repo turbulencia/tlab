@@ -6,7 +6,7 @@ MODULE RAND_LOCAL
   USE DNS_CONSTANTS, ONLY : efile
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
   USE DNS_GLOBAL, ONLY : g
-  USE TLAB_CORE
+  USE TLAB_PROCS
   
   IMPLICIT NONE
   SAVE

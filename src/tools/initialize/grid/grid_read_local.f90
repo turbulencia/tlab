@@ -4,7 +4,7 @@
 SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE GRID_LOCAL
 
   IMPLICIT NONE

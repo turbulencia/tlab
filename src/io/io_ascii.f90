@@ -23,7 +23,7 @@
 ! Scan file for an integer value
 ! #######################################################################
 SUBROUTINE SCANINIINT(ofile, ifile, title, name, default, value)
-  USE TLAB_CORE
+  USE TLAB_PROCS
   IMPLICIT NONE
 
   CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default
@@ -43,7 +43,7 @@ END SUBROUTINE SCANINIINT
 ! Scan file for an integer value
 ! #######################################################################
 SUBROUTINE SCANINILONGINT(ofile, ifile, title, name, default, value)
-  USE TLAB_CORE
+  USE TLAB_PROCS
   IMPLICIT NONE
 
   CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default
@@ -63,7 +63,7 @@ END SUBROUTINE SCANINILONGINT
 ! Scan file for an real value
 ! #######################################################################
 SUBROUTINE SCANINIREAL(ofile, ifile, title, name, default, value)
-  USE TLAB_CORE
+  USE TLAB_PROCS
   IMPLICIT NONE
 
   CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default
@@ -83,7 +83,7 @@ END SUBROUTINE SCANINIREAL
 ! Scan file for an char value
 ! #######################################################################
 SUBROUTINE SCANINICHAR(ofile, ifile, title, name, default, value)
-  USE TLAB_CORE
+  USE TLAB_PROCS
   IMPLICIT NONE
 
   CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default

@@ -15,7 +15,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
   USE DNS_CONSTANTS,   ONLY : lfile, efile
   USE DNS_GLOBAL,      ONLY : isize_particle, inb_part_array
   USE DNS_GLOBAL,      ONLY : g
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE LAGRANGE_GLOBAL, ONLY : particle_dt, particle_number_total
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
@@ -161,7 +161,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
 
   USE DNS_CONSTANTS,   ONLY : lfile
   USE DNS_GLOBAL,      ONLY : isize_particle, inb_part_array
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE LAGRANGE_GLOBAL, ONLY : particle_dt
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_size_p, ims_pro, ims_npro, ims_err

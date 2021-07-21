@@ -138,7 +138,7 @@ SUBROUTINE IO_READ_AVG_SPATIAL(name,mean_flow,mean_scal)
   USE DNS_GLOBAL, ONLY : istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
   USE DNS_GLOBAL, ONLY : itime, rtime, jmax, inb_scal
   USE DNS_CONSTANTS, ONLY : lfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
 
 #ifdef USE_MPI
   USE DNS_MPI
@@ -217,7 +217,7 @@ SUBROUTINE RD_STHD(unit, irec, iter, rtime, iterorg, rtimeorg,&
      nstatavg, jmax, nstat, nstatavg_points, statavg)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE TLAB_CORE
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 

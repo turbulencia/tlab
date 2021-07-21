@@ -18,7 +18,7 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 
   USE DNS_TYPES,     ONLY : grid_dt
   USE DNS_CONSTANTS, ONLY : efile
-  USE TLAB_CORE
+  USE TLAB_PROCS
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity

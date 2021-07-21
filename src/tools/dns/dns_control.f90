@@ -12,7 +12,7 @@
 SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE DNS_GLOBAL,ONLY : imode_eqns, icalc_scal, inb_scal
   USE DNS_GLOBAL,ONLY : isize_field, imax,jmax,kmax
   USE DNS_GLOBAL,ONLY : rbackground

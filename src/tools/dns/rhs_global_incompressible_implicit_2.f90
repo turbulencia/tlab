@@ -36,7 +36,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field, isize_wrk1d,  inb_flow,inb_scal
   USE DNS_GLOBAL, ONLY : icalc_scal
   USE DNS_GLOBAL, ONLY : visc, schmidt
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
 

@@ -41,7 +41,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 
 #ifdef USE_MPI
   USE DNS_CONSTANTS, ONLY : lfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE DNS_MPI, ONLY : ims_err
   USE DNS_MPI, ONLY : ims_pro, ims_npro_i, ims_npro_k
   USE DNS_MPI, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -187,7 +187,7 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 
 #ifdef USE_MPI
   USE DNS_CONSTANTS, ONLY : lfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE DNS_MPI, ONLY : ims_err
   USE DNS_MPI, ONLY : ims_pro, ims_npro_i, ims_npro_k
   USE DNS_MPI, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -323,7 +323,7 @@ END SUBROUTINE IO_WRITE_FIELDS_SPLIT
 SUBROUTINE IO_READ_HEADER(unit, offset, nx,ny,nz,nt, params)
 
   USE DNS_CONSTANTS, ONLY : efile, wfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 

@@ -10,7 +10,7 @@ SUBROUTINE CAVG1V_N( fname, time, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,g
 
   USE DNS_TYPES,      ONLY : pointers_dt
   USE DNS_CONSTANTS,  ONLY : lfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE PDFS
 
   IMPLICIT NONE
@@ -98,7 +98,7 @@ END SUBROUTINE CAVG1V_N
 SUBROUTINE CAVG2V( fname, time, nx,ny,nz, nbins, u,v, a, y, avg, wrk2d )
 
   USE DNS_CONSTANTS,  ONLY : lfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE PDFS
 
   IMPLICIT NONE

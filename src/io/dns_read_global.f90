@@ -16,7 +16,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : lfile, efile, wfile, MajorVersion, MinorVersion
   USE DNS_GLOBAL
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE THERMO_GLOBAL
 #ifdef USE_MPI
   USE DNS_MPI

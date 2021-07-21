@@ -13,7 +13,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   USE DNS_CONSTANTS,  ONLY : efile, lfile
   USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
   USE DNS_GLOBAL,     ONLY : imax,jmax,kmax, isize_particle
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE LAGRANGE_GLOBAL,ONLY : particle_dt, isize_l_comm, inb_particle_interp
 #ifdef USE_MPI
   USE DNS_MPI,        ONLY:  ims_err

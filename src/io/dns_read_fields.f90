@@ -37,7 +37,7 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
   USE DNS_GLOBAL, ONLY : imode_files
   USE DNS_GLOBAL, ONLY : itime, rtime, visc
   USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
 #ifdef USE_MPI
   USE DNS_MPI,    ONLY : ims_npro_i, ims_npro_k, ims_err
 #endif

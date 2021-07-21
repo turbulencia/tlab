@@ -37,7 +37,7 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
   USE DNS_GLOBAL, ONLY : visc, froude, rossby, damkohler, prandtl, mach
   USE DNS_GLOBAL, ONLY : schmidt
   USE THERMO_GLOBAL, ONLY : gama0
-  USE TLAB_CORE
+  USE TLAB_PROCS
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_npro_i, ims_npro_k
 #endif

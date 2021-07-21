@@ -9,7 +9,7 @@ PROGRAM VFFT
 
 USE DNS_GLOBAL, ONLY:  imax,jmax,kmax
 USE DNS_GLOBAL, ONLY:  isize_txc_dimz
-USE TLAB_CORE
+USE TLAB_PROCS
 #ifdef USE_MPI
 USE TLAB_MPI_PROCS
 #endif

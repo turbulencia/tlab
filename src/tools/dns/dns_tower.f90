@@ -35,7 +35,7 @@
 MODULE DNS_TOWER
 
   USE DNS_GLOBAL, ONLY : inb_flow, inb_scal
-  USE TLAB_CORE
+  USE TLAB_PROCS
   
   TINTEGER tower_imax, tower_jmax,tower_kmax, tower_isize_field
   TINTEGER, TARGET :: tower_isize_plane,tower_isize_plane_total

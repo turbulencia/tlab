@@ -42,7 +42,7 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL, ONLY : fft_plan_fz,fft_plan_bz
   USE DNS_GLOBAL, ONLY : imax,jmax, isize_txc_field
   USE DNS_GLOBAL, ONLY : g
-  USE TLAB_CORE
+  USE TLAB_PROCS
 
 #ifdef USE_MPI
 USE DNS_MPI, ONLY : ims_npro_i, ims_npro_k

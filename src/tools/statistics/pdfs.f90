@@ -10,7 +10,7 @@ PROGRAM PDFS
   USE DNS_CONSTANTS, ONLY : ifile,efile,lfile ,gfile, tag_flow,tag_scal
   USE DNS_GLOBAL
   USE TLAB_ARRAYS
-  USE TLAB_CORE
+  USE TLAB_PROCS
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
 #endif

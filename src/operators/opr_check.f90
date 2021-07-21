@@ -10,7 +10,7 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : ifourier !, fft_reordering
   USE DNS_CONSTANTS, ONLY : lfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_err
   USE DNS_MPI, ONLY : ims_npro_i, ims_npro_k

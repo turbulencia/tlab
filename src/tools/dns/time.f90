@@ -22,7 +22,7 @@ MODULE TIME
   USE DNS_GLOBAL, ONLY : g
   USE DNS_GLOBAL, ONLY : itransport, visc, prandtl, schmidt
   USE DNS_LOCAL,  ONLY : nitera_first, nitera_log, logs_data
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange
 #ifdef USE_MPI
   USE DNS_MPI

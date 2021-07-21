@@ -45,7 +45,7 @@ END SUBROUTINE LIST_STRING
 !# Chops string into list of integers
 !########################################################################
 SUBROUTINE LIST_INTEGER(line, n, a)
-  USE TLAB_CORE
+  USE TLAB_PROCS
   IMPLICIT NONE
 
   CHARACTER*(*),          INTENT(IN)    :: line
@@ -142,7 +142,7 @@ END SUBROUTINE LIST_INTEGER
 !# Chops string into list of real numbers
 !########################################################################
 SUBROUTINE LIST_REAL(line, n, a)
-  USE TLAB_CORE
+  USE TLAB_PROCS
   IMPLICIT NONE
 
   CHARACTER*(*),          INTENT(IN)    :: line

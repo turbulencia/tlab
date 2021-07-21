@@ -10,7 +10,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   USE DNS_TYPES,  ONLY : grid_dt
   USE DNS_GLOBAL, ONLY : inb_scal
   USE DNS_GLOBAL, ONLY : reynolds, schmidt
-  USE TLAB_CORE
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 

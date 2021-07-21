@@ -9,7 +9,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
   USE DNS_GLOBAL,    ONLY : imax,jmax,kmax
   USE DNS_GLOBAL,    ONLY : rbg, pbg, tbg, sbg
   USE DNS_GLOBAL,    ONLY : buoyancy
-  USE TLAB_CORE
+  USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE

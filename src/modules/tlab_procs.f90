@@ -2,25 +2,7 @@
 #include "dns_const.h"
 #include "dns_error.h"
 
-MODULE TLAB_ARRAYS
-  IMPLICIT NONE
-  SAVE
-  PRIVATE
-
-  TREAL, ALLOCATABLE, PUBLIC :: x(:,:),y(:,:),z(:,:)  ! Grid and associated arrays
-  TREAL, ALLOCATABLE, PUBLIC :: q(:,:)                ! Eulerian fields, flow vartiables
-  TREAL, ALLOCATABLE, PUBLIC :: s(:,:)                ! Eulerian fields, scalar variables
-  TREAL, ALLOCATABLE, PUBLIC :: txc(:,:)              ! Temporary space for Eulerian fields
-  TREAL, ALLOCATABLE, PUBLIC :: wrk1d(:,:)            ! Work arrays (scratch space)
-  TREAL, ALLOCATABLE, PUBLIC :: wrk2d(:,:)            ! Work arrays (scratch space)
-  TREAL, ALLOCATABLE, PUBLIC :: wrk3d(:)              ! Work arrays (scratch space)
-
-  TARGET x, y, z
-  TARGET q, s, txc
-
-END MODULE TLAB_ARRAYS
-
-MODULE TLAB_CORE
+MODULE TLAB_PROCS
   USE DNS_CONSTANTS, ONLY : lfile, efile
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -65,28 +47,28 @@ CONTAINS
     WRITE(str,*) g(1)%size; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
     CALL TLAB_WRITE_ASCII(lfile,line)
     ALLOCATE(x(g(1)%size,g(1)%inb_grid),stat=ierr)
-    IF ( ierr .NE. 0 ) THEN
+    IF ( ierr /= 0 ) THEN
       CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for x.')
       CALL TLAB_STOP(DNS_ERROR_ALLOC)
-    ENDIF
+    END IF
 
     WRITE(str,*) g(2)%inb_grid; line = 'Allocating array y of size '//TRIM(ADJUSTL(str))//'x'
     WRITE(str,*) g(2)%size; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
     CALL TLAB_WRITE_ASCII(lfile,line)
     ALLOCATE(y(g(2)%size,g(2)%inb_grid),stat=ierr)
-    IF ( ierr .NE. 0 ) THEN
+    IF ( ierr /= 0 ) THEN
       CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for y.')
       CALL TLAB_STOP(DNS_ERROR_ALLOC)
-    ENDIF
+    END IF
 
     WRITE(str,*) g(3)%inb_grid; line = 'Allocating array z of size '//TRIM(ADJUSTL(str))//'x'
     WRITE(str,*) g(3)%size; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
     CALL TLAB_WRITE_ASCII(lfile,line)
     ALLOCATE(z(g(3)%size,g(3)%inb_grid),stat=ierr)
-    IF ( ierr .NE. 0 ) THEN
+    IF ( ierr /= 0 ) THEN
       CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for z.')
       CALL TLAB_STOP(DNS_ERROR_ALLOC)
-    ENDIF
+    END IF
 
     ! -------------------------------------------------------------------
     IF ( inb_flow_array .GT. 0 ) THEN
@@ -94,22 +76,22 @@ CONTAINS
       WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
       CALL TLAB_WRITE_ASCII(lfile,line)
       ALLOCATE(q(isize_field,inb_flow_array),stat=ierr)
-      IF ( ierr .NE. 0 ) THEN
+      IF ( ierr /= 0 ) THEN
         CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for flow.')
         CALL TLAB_STOP(DNS_ERROR_ALLOC)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     IF ( inb_scal_array .GT. 0 ) THEN
       WRITE(str,*) inb_scal_array; line = 'Allocating array scal  of size '//TRIM(ADJUSTL(str))//'x'
       WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
       CALL TLAB_WRITE_ASCII(lfile,line)
       ALLOCATE(s(isize_field,inb_scal_array),stat=ierr)
-      IF ( ierr .NE. 0 ) THEN
+      IF ( ierr /= 0 ) THEN
         CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for scal.')
         CALL TLAB_STOP(DNS_ERROR_ALLOC)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     ! -------------------------------------------------------------------
     IF ( inb_txc .GT. 0 ) THEN
@@ -117,19 +99,19 @@ CONTAINS
       WRITE(str,*) isize_txc_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
       CALL TLAB_WRITE_ASCII(lfile,line)
       ALLOCATE(txc(isize_txc_field,inb_txc),stat=ierr)
-      IF ( ierr .NE. 0 ) THEN
+      IF ( ierr /= 0 ) THEN
         CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for txc.')
         CALL TLAB_STOP(DNS_ERROR_ALLOC)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     WRITE(str,*) isize_wrk3d; line = 'Allocating array wrk3d of size '//TRIM(ADJUSTL(str))
     CALL TLAB_WRITE_ASCII(lfile,line)
     ALLOCATE(wrk3d(isize_wrk3d),stat=ierr)
-    IF ( ierr .NE. 0 ) THEN
+    IF ( ierr /= 0 ) THEN
       CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for wrk3d.')
       CALL TLAB_STOP(DNS_ERROR_ALLOC)
-    ENDIF
+    END IF
 
     ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
     ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
@@ -159,7 +141,7 @@ CONTAINS
       CALL TLAB_WRITE_ASCII(efile,"DNS_START. MPI Library is missing the needed level of thread support for nonblocking communication.")
       CALL TLAB_WRITE_ASCII(efile,"DNS_START. Try MPI_THREAD_FUNNELED after reading the documentation.")
       CALL TLAB_STOP(DNS_ERROR_PSFFT)
-    ENDIF
+    END IF
 #else
     CALL MPI_INIT(ims_err)
 #endif
@@ -191,7 +173,7 @@ CONTAINS
     IF ( ims_npro .EQ. 0 ) THEN
       CALL TLAB_WRITE_ASCII(efile, 'DNS_START. Number of processors is zero.')
       CALL TLAB_STOP(DNS_ERROR_MINPROC)
-    ENDIF
+    END IF
 
 #endif
 
@@ -238,7 +220,7 @@ CONTAINS
       WRITE(line,*) error_code
       line = 'Error code '//TRIM(ADJUSTL(line))//'.'
       CALL TLAB_WRITE_ASCII(efile,line)
-    ENDIF
+    END IF
 
     CALL GETARG(0,line)
     WRITE(line,*) 'Finalizing program '//TRIM(ADJUSTL(line))
@@ -246,7 +228,7 @@ CONTAINS
       line = TRIM(ADJUSTL(line))//' normally.'
     ELSE
       line = TRIM(ADJUSTL(line))//' abnormally. Check '//TRIM(ADJUSTL(efile))
-    ENDIF
+    END IF
     CALL TLAB_WRITE_ASCII(lfile, line)
 
 #ifdef USE_MPI
@@ -299,22 +281,22 @@ CONTAINS
         ELSE IF ( imode_verbosity .EQ. 2 ) THEN
           CALL DATE_AND_TIME(clock(1),clock(2))
           WRITE(22,'(a)') '['//TRIM(ADJUSTR(clock(2)))//'] '//TRIM(ADJUSTL(line))
-        ENDIF
+        END IF
         CLOSE(22)
 
-      ENDIF
+      END IF
 
 #ifndef PARALLEL
       IF ( file .EQ. efile ) THEN
         WRITE(*,*) TRIM(ADJUSTL(line))
-      ENDIF
+      END IF
 #endif
 
 #ifdef USE_MPI
-    ENDIF
+    END IF
 #endif
 
     RETURN
   END SUBROUTINE TLAB_WRITE_ASCII
 
-END MODULE TLAB_CORE
+END MODULE TLAB_PROCS

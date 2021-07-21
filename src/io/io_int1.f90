@@ -29,7 +29,7 @@
 SUBROUTINE IO_READ_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
 
   USE DNS_CONSTANTS, ONLY : lfile
-  USE TLAB_CORE
+  USE TLAB_PROCS
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_pro, ims_npro_i, ims_npro_k
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_j, ims_offset_k, ims_err
@@ -168,7 +168,7 @@ SUBROUTINE IO_WRITE_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
   USE DNS_MPI, ONLY : ims_pro, ims_npro_i, ims_npro_k
   USE DNS_MPI, ONLY : ims_offset_i, ims_offset_j, ims_offset_k, ims_err
 #endif
-  USE TLAB_CORE
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
