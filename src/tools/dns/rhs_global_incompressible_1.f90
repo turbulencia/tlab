@@ -118,7 +118,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! (if .true., OPR_BURGERS_X/Y/Z uses modified fields for derivatives)
 ! ###################################################################
   IF ( imode_ibm == 1 ) ibm_burgers = .true.
-  ! debug
+  ! debug  
+  if (ims_pro == 0) write(*,*) '========================================================='
   if (ims_pro == 0) write(*,*) 'ibm_burgers start of rhs (no scal)', ibm_burgers
 
 ! #######################################################################

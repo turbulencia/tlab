@@ -286,7 +286,6 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
   TREAL, DIMENSION(:,:),                          POINTER :: p_vel
   TREAL, DIMENSION(:),                            POINTER :: p_ibm
   
-  
   ! -------------------------------------------------------------------
 
 ! ############################################# ! 
@@ -297,9 +296,8 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
 #endif
 ! ############################################ ! 
 
-  ! pointer
+  ! pointer to velocity
   p_vel => u
-  p_ibm => u_ibm
 
   ! -------------------------------------------------------------------
 
@@ -321,6 +319,9 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
     CALL IBM_SPLINE_Z(p_vel, u_ibm, nlines, g)
    
   END SELECT
+
+  ! pointer to modified velocity
+  p_ibm => u_ibm
 
   ! now with modified u fields
   CALL OPR_PARTIAL2D(is,nlines, bcs, g, p_ibm, result, wrk2d, wrk3d)

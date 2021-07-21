@@ -15,17 +15,12 @@ build_LITTLE/*
 build_PARALLEL/*
 build_DEBUG/*
 build/*
-build_test/*
 build_little/*
 build_parallel/*
 build_debug_little/*
-build_debug_parallel/*
 test_debug_little/*
-test_debug_parallel/*
 test_little/*
 test_parallel/*
-test_files/*
-test/*
 files_history/*
 *~
 */*~

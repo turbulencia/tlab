@@ -105,9 +105,15 @@ subroutine IBM_SPLINE_Z(u, u_mod, nlines, g)
   use DNS_CONSTANTS, only: efile
   use DNS_TYPES,     only: grid_dt
 
+  use DNS_GLOBAL, only: imax, jmax, kmax ! debug
+
 ! MPI just for debugging
 #ifdef USE_MPI
   use DNS_MPI,       only: ims_pro
+  use DNS_MPI,       only: ims_size_i, ims_size_j, ims_size_k    
+  use DNS_MPI,       only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i 
+  use DNS_MPI,       only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  use DNS_MPI,       only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
 #endif  
    
   implicit none
@@ -118,18 +124,25 @@ subroutine IBM_SPLINE_Z(u, u_mod, nlines, g)
 #ifdef USE_MPI 
 #include "mpif.h"
 #include "dns_const_mpi.h"  
+  TINTEGER, parameter                         :: idi = DNS_MPI_I_PARTIAL 
+  TINTEGER, parameter                         :: idj = DNS_MPI_J_PARTIAL 
+  TINTEGER, parameter                         :: idk = DNS_MPI_K_PARTIAL 
 #else
-  TINTEGER, parameter :: ims_pro=0, ims_npro=1
+  TINTEGER, parameter                         :: ims_pro=0, ims_npro=1
 #endif
   
   TREAL, dimension(isize_field), intent(in)  :: u 
   TREAL, dimension(isize_field), intent(out) :: u_mod 
   type(grid_dt),                 intent(in)  :: g
-  TINTEGER,                      intent(in)  :: nlines 
+  TINTEGER,                      intent(in)  :: nlines
 
-  TINTEGER                                   :: l, ij, ip, ib, iob, ip_mod
+  TINTEGER                                   :: l, ij, ip, ib, iob, iu_il
   logical                                    :: splines
   character, dimension(128)                  :: line
+
+  ! debug
+  TREAL, dimension(isize_field)              :: wrk3d    ! debug
+  TREAL, dimension(isize_field)              :: u_mod_tr ! debug
 
   ! ================================================================== !
   ! debug
@@ -144,7 +157,7 @@ subroutine IBM_SPLINE_Z(u, u_mod, nlines, g)
   splines = .true. ! 1. case doesn't need splines
   u_mod   = u
 
-  do ij = 1, nlines            ! index of ij-plane, loop over plane and check for objects in each line
+  do ij = 1, nlines         ! index of ij-plane, loop over plane and check for objects in each line
     if(nobk(ij) /= i0) then ! if k-line contains immersed object(s) --yes-->  spline interpolation
       ip = i0
       do iob = 1, nobk(ij)  ! loop over immersed object(s)
@@ -214,12 +227,18 @@ subroutine IBM_SPLINE_Z(u, u_mod, nlines, g)
 
         ! spline interpolation and fill gap in u_ibm
         if (splines) then
-          ip_mod = i0 
-          call IBM_SPLINE(xa, ya, ib, xb(1:ib), wrk_ibm, iwrk_ibm, yb(1:ib))     
+
+          ! generate splines
+          call IBM_SPLINE(xa, ya, ib, xb(1:ib), wrk_ibm, iwrk_ibm, yb(1:ib)) 
+          
+          ! u index of left interface
+          iu_il = (nobk_b(ip+ij) - 1) * nlines + ij     
+          
+          ! replace splines in solid gaps
           do l = 1, ib
-            u_mod(nobk_b(ip+ij) + l * nlines)  = yb(l)
-          if (ims_pro == 0) write(*,*) 'u_mod', u_mod(nobk_b(ip+ij) + l * nlines)
+            u_mod(iu_il + (l-1) * nlines) = yb(l)
           end do
+
         end if
 
         ! ================================================================== !
@@ -236,7 +255,24 @@ subroutine IBM_SPLINE_Z(u, u_mod, nlines, g)
     end if
   end do
 
+  ! ================================================================== !
+  ! debug
   if (ims_pro == 0) write(*,*) '========================================================='
+
+  ! write out u_mod for debugging
+#ifdef USE_MPI
+  if ( ims_npro_k > 1 ) then
+    call DNS_MPI_TRPB_K(u_mod, u_mod_tr, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+  endif
+  call DNS_WRITE_FIELDS('u_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, u_mod_tr, wrk3d)
+#else
+  u_mod_tr = u_mod
+  call DNS_WRITE_FIELDS('u_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, u_mod_tr, wrk3d)
+#endif
+
+  ! stop after writing field
+  call DNS_STOP(DNS_ERROR_IBM_SPLINE)
+  ! ================================================================== !
   
   return
 end subroutine IBM_SPLINE_Z
@@ -322,6 +358,10 @@ subroutine IBM_SPLINE(xa, ya, ib, xb, wrk_ibm, iwrk_ibm, yb)
 
   !    splev(t,            n, c,            k,    x,  y,  m,  ier)
   call splev(wrk_ibm(ip2), n, wrk_ibm(ip3), kspl, xb, yb, ib, ier)
+
+  ! force yb at interface to zero (without this yb approx 10^-16 at interface)
+  yb(1)  = C_0_R
+  yb(ib) = C_0_R
   
   if (ier /= 0) then
     write(line, *) 'INTERPOLATE_1D. Splev error code = ', ier
@@ -361,8 +401,8 @@ subroutine IBM_SPLINE_VECTOR_3XZ(u, xa, ya, xb, ib, ip_il, ip_ir, nlines, plane)
 
   ! needed indices
   ip_fl = ip_il - nflu                ! k-axis index of most left fluid point
-  iu_fl = ip_fl * nlines + plane      ! u-index of most left fluid point
-  iu_ir = ip_ir * nlines + plane      ! u-index of right interface  point
+  iu_fl = (ip_fl - 1) * nlines + plane      ! u-index of most left fluid point
+  iu_ir = (ip_ir - 1) * nlines + plane      ! u-index of right interface  point
 
   ! build left half of xa, ya (from left to right)
   do kflu = 1, nflu

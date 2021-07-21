@@ -192,7 +192,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
         do while (nobi_b(inum+jk) /= i0)
           inum = inum + nyz            
         end do 
-        nobi_b(inum+jk) = i
+        nobi_b(inum+jk) = i + i1
       elseif((epsi(ip+jk-1) == C_1_R) .and. (epsi(ip+jk-1+nyz) == C_0_R)) then ! nobi_e check for interface 
         inum = i0
         do while (nobi_e(inum+jk) /= i0)
@@ -268,7 +268,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
         do while (nobj_b(inum+ik) /= i0)
           inum = inum + nxz            
         end do 
-        nobj_b(inum+ik) = j
+        nobj_b(inum+ik) = j + i1
       elseif((epsj(ip+ik-1) == C_1_R) .and. (epsj(ip+ik-1+nxz) == C_0_R)) then ! nobj_e check for interface 
         inum = i0
         do while (nobj_e(inum+ik) /= i0)
@@ -346,7 +346,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
         do while (nobk_b(inum+ij) /= i0)
           inum = inum + nxy            
         end do 
-        nobk_b(inum+ij) = k
+        nobk_b(inum+ij) = k + i1
       elseif((epsk(ip+ij-1) == C_1_R) .and. (epsk(ip+ij-1+nxy) == C_0_R)) then ! nobk_e check for interface 
         inum = i0
         do while (nobk_e(inum+ij) /= i0)
@@ -475,6 +475,13 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 
   ! ================================================================== !
   ! ================================================================== !
+  ! Block comment: begin
+#if 0
+  ! ================================================================== !
+  ! ================================================================== !
+
+  ! ================================================================== !
+  ! ================================================================== !
   ! ================================================================== !
   ! DEBUG nob fields with 3D fields
   ! ================================================================== !
@@ -583,7 +590,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
         do while (tmp1(inum+jk) /= C_0_R)
           inum = inum + nyz            
         end do 
-        tmp1(inum+jk) = dble(i)
+        tmp1(inum+jk) = dble(i + 1)
       elseif((epsi(ip+jk-1) == C_1_R) .and. (epsi(ip+jk-1+nyz) == C_0_R)) then ! nobi_e check for interface 
         inum = i0
         do while (tmp2(inum+jk) /= C_0_R)
@@ -635,7 +642,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
         do while (tmp1(inum+ik) /= C_0_R)
           inum = inum + nxz            
         end do 
-        tmp1(inum+ik) = dble(j)
+        tmp1(inum+ik) = dble(j + 1)
       elseif((epsj(ip+ik-1) == C_1_R) .and. (epsj(ip+ik-1+nxz) == C_0_R)) then ! nobj_e check for interface 
         inum = i0
         do while (tmp2(inum+ik) /= C_0_R)
@@ -680,7 +687,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
         do while (tmp1(ij+inum) /= C_0_R)
           inum = inum + nxy
         end do
-        tmp1(ij+inum) = dble(k)
+        tmp1(ij+inum) = dble(k + 1)
       elseif((epsk(ip+ij-1) == C_1_R) .and. (epsk(ip+ij-1+nxy) == C_0_R)) then ! nobk_e check for interface 
         inum = i0
         do while (tmp2(ij+inum) /= C_0_R)
@@ -718,6 +725,13 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 
   if (ims_pro == 0) write(*,*) 'done writing nobk3d_b, nobk3d_e'
   if (ims_pro == 0) write(*,*) '========================================================='
+
+  ! ================================================================== !
+  ! ================================================================== !
+  ! Block comment: end
+#endif
+  ! ================================================================== !
+  ! ================================================================== !
 
   return
 end subroutine IBM_GENERATE_GEOMETRY
