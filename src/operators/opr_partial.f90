@@ -258,15 +258,20 @@ SUBROUTINE OPR_PARTIAL2D(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
 END SUBROUTINE OPR_PARTIAL2D
 ! ###################################################################
 ! ###################################################################
-SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
+SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
-  USE DNS_IBM,   ONLY : u_ibm
+  USE DNS_IBM,   ONLY : fld_ibm
+  USE DNS_IBM,   ONLY : nobi,    nobj,   nobk
+  USE DNS_IBM,   ONLY : nobi_b,  nobj_b, nobk_b 
+  USE DNS_IBM,   ONLY : nobi_e,  nobj_e, nobk_e 
+  USE DNS_IBM,   ONLY : isize_nobi,    isize_nobj,    isize_nobk
+  USE DNS_IBM,   ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
 
 ! ############################################# ! 
 ! DEBUG
 #ifdef USE_MPI
-  use DNS_MPI,    only: ims_pro
+  use DNS_MPI,   only : ims_pro
 #endif
 ! ############################################# ! 
    
@@ -283,8 +288,8 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
   TREAL, DIMENSION(nlines),        INTENT(INOUT)          :: wrk2d
   TREAL, DIMENSION(nlines,g%size), INTENT(INOUT)          :: wrk3d  ! First derivative 
 
-  TREAL, DIMENSION(:,:),                          POINTER :: p_vel
-  TREAL, DIMENSION(:),                            POINTER :: p_ibm
+  TREAL, DIMENSION(:,:),                          POINTER :: p_fld
+  TREAL, DIMENSION(:),                            POINTER :: p_fld_ibm
   
   ! -------------------------------------------------------------------
 
@@ -296,8 +301,8 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
 #endif
 ! ############################################ ! 
 
-  ! pointer to velocity
-  p_vel => u
+  ! pointer to field
+  p_fld => u
 
   ! -------------------------------------------------------------------
 
@@ -308,29 +313,30 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
    
   CASE('x')
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-    CALL IBM_SPLINE_X(p_vel, u_ibm, nlines, g)
+    CALL IBM_SPLINE_XZ(p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
    
   CASE('y')
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-    CALL IBM_SPLINE_Y(p_vel, u_ibm, nlines, g)
+    CALL IBM_SPLINE_Y(p_fld, fld_ibm, g, nlines)
+    ! CALL IBM_SPLINE_XZ(p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
 
   CASE('z')
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-    CALL IBM_SPLINE_Z(p_vel, u_ibm, nlines, g)
+    CALL IBM_SPLINE_XZ(p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
    
   END SELECT
 
   ! pointer to modified velocity
-  p_ibm => u_ibm
+  p_fld_ibm => fld_ibm
 
   ! now with modified u fields
-  CALL OPR_PARTIAL2D(is,nlines, bcs, g, p_ibm, result, wrk2d, wrk3d)
+  CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)
 
   ! -------------------------------------------------------------------
 
-   NULLIFY(p_vel, p_ibm)
+  NULLIFY(p_fld, p_fld_ibm)
    
-   RETURN
+  RETURN
 END SUBROUTINE OPR_PARTIAL2D_IBM
 
 

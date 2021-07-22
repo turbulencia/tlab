@@ -81,20 +81,17 @@ plt.figure(figsize=size)
 plt.xlabel("z")
 plt.ylabel("w-velocity")
 for i in range(0,10):
-    plt.plot(grid.z,u_mod[0,i,:], marker='.',label='y-node='+str(i))
+    plt.plot(grid.z,u_mod[-1,i,:], marker='.',label='y-node='+str(i))
 plt.legend(loc=1)
 plt.show()
 
-
+# small check 
 w     = flow.w * (1. - eps)
 w_mod = u_mod  * (1. - eps)
 res   = w - w_mod
 print(str(res.sum()))
 
 sys.exit()
-
-
-
 
 
 #---------------------------------------------------------------------------#
@@ -131,90 +128,3 @@ plt.show()
 
 
 
-
-
-
-
-
-
-
-
-
-
-sys.exit()
-
-
-
-plt.figure(figsize=size)
-for i in range(0,10):
-    plt.plot(grid.z,u_mod[0,i,:], marker='x')
-plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#---------------------------------------------------------------------------#
-# 2d plot - xy
-plt.figure(figsize=size)
-plt.title('2d-plot -- xy-plane -- velocity u')
-plt.xlabel("x")
-plt.ylabel("y")
-#
-plt.pcolormesh(grid.x,grid.y,flow.u[:,:,grid.nz//3].T, shading=shading, cmap='RdBu_r') #shading='gouraud',
-plt.colorbar()
-plt.show()
-#---------------------------------------------------------------------------#
-# 2d plot - xz
-plt.figure(figsize=size)
-plt.title('2d-plot -- xz-plane -- velocity u')
-plt.xlabel("x")
-plt.ylabel("z")
-#
-plt.pcolormesh(grid.x,grid.z,flow.u[:,1,:], shading=shading, cmap='RdBu_r')
-plt.colorbar()
-plt.show()
-
-
-
-
-#-----------------------------------------------------------------------------#
-# plot lines
-#-----------------------------------------------------------------------------#
-
-# plt.figure(figsize=size)
-# for i in range(0,10):
-#     plt.plot(grid.z,field_3d[:,i,0])
-# plt.show()
-
-
-# plt.figure(figsize=size)
-# for i in range(60,70):
-#     plt.plot(grid.y,field_3d[0,:,i])
-# plt.show()
-
-
-#-----------------------------------------------------------------------------#
-# plot with axis
-#-----------------------------------------------------------------------------#
-
-# plt.close("all")
-
-
-
-
-# f = open(path +'epsi','rb')
-# f.seek(0,0)
-# rec = np.fromfile(f, np.dtype('<f8'), 128**2*96)
-# rec = rec.reshape((128,96,128),order='F')
-# f.close()
