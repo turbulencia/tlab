@@ -42,21 +42,28 @@ SUBROUTINE DNS_MPI_INITIALIZE
 
   ALLOCATE(ims_size_p(ims_npro)) ! Particle information
 
-! #######################################################################
-  ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0
-  ims_pro_k =     ims_pro/ims_npro_i  ! Starting at 0
+  
 
 #ifdef HLRS_HAWK
   ! On hawk, we tested that 192 yields optimum performace;
   ! Blocking will thus only take effect in very large cases 
   ims_sizBlock_k=192
+  ims_sizBlock_i=384
 #else
   ! We assume that this will help to release some of the very heavy
   ! network load in transpositions on most systems
   ims_sizBlock_k=64
+  ims_sizBlock_i=128
   ! ims_sizBlock_k=1e5   -- would essentially switch off the blocking 
 #endif
-  
+
+  ALLOCATE(ims_status (MPI_STATUS_SIZE,2*MAX(ims_sizBlock_i,ims_sizBlock_k)))
+  ALLOCATE(ims_request(                2*MAX(ims_sizBlock_i,ims_sizBlock_k)))
+
+! #######################################################################
+  ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0
+  ims_pro_k =     ims_pro/ims_npro_i  ! Starting at 0
+
   ims_offset_i = ims_pro_i *imax
   ims_offset_j = 0
   ims_offset_k = ims_pro_k *kmax

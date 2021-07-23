@@ -66,6 +66,11 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
      line = 'Checking MPI transposition for Ox derivatives: Residual '&
           //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
      CALL IO_WRITE_ASCII(lfile,line)
+
+     line=''
+     WRITE(line,*) ims_sizBlock_i
+     line = '   using blocking of ' // TRIM(ADJUSTL(line)) // ' in  DNS_MPI_TRP<F,B>_I'
+     CALL IO_WRITE_ASCII(lfile,line) 
      
   ENDIF
 #endif
@@ -95,6 +100,12 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
      line = 'Checking MPI transposition for Oz derivatives: Residual '&
           //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
      CALL IO_WRITE_ASCII(lfile,line)
+
+     line=''
+     WRITE(line,*) ims_sizBlock_k
+     line = '   using blocking of ' // TRIM(ADJUSTL(line)) // ' in  DNS_MPI_TRP<F,B>_K'
+     CALL IO_WRITE_ASCII(lfile,line) 
+
      
   ENDIF
 #endif

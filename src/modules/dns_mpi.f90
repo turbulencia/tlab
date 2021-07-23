@@ -18,6 +18,7 @@ MODULE DNS_MPI
   TINTEGER :: ims_bcs_imax, ims_bcs_jmax
 
   INTEGER,  DIMENSION(:  ), ALLOCATABLE :: ims_map_i
+  TINTEGER                              :: ims_sizBlock_i
   TINTEGER, DIMENSION(  :), ALLOCATABLE :: ims_size_i
   TINTEGER, DIMENSION(:,:), ALLOCATABLE :: ims_ds_i, ims_dr_i
   INTEGER,  DIMENSION(:,:), ALLOCATABLE :: ims_ts_i, ims_tr_i
@@ -40,6 +41,10 @@ MODULE DNS_MPI
 
   TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_size_p ! Particle data
 
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: ims_status
+  INTEGER, DIMENSION(  :), ALLOCATABLE :: ims_request 
+
+  
 #ifdef USE_PSFFT
   INTEGER :: ims_nb_thrsupp_provided
   INTEGER,DIMENSION(2) :: ims_nb_proc_grid
