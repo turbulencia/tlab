@@ -92,7 +92,7 @@ SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, ny,nv,ng, y, varnames, groupna
 
     IF ( L_AVGMAX < nv ) THEN
       CALL TLAB_WRITE_ASCII(efile,'IO_WRITE_AVERAGES. Not enough space in format definition.')
-      CALL TLAB_STOP(LES_ERROR_AVGTMP)
+      CALL TLAB_STOP(DNS_ERROR_AVGTMP)
     END IF
 
 #define LOC_UNIT_ID 23
