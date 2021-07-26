@@ -14,8 +14,9 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
 #ifdef USE_MPI
   USE DNS_MPI, ONLY : ims_err
   USE DNS_MPI, ONLY : ims_npro_i, ims_npro_k
-  USE DNS_MPI, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-  USE DNS_MPI, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE DNS_MPI, ONLY : ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE DNS_MPI, ONLY : ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE DNS_MPI, ONLY : ims_sizBlock_i, ims_sizBlock_k 
   USE TLAB_MPI_PROCS
 #endif
 
@@ -72,6 +73,12 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
           //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
      CALL TLAB_WRITE_ASCII(lfile,line)
 
+     IF ( ims_npro_i .GT. ims_sizBlock_i ) THEN 
+        line=''
+        WRITE(line,*) ims_sizBlock_i
+        line = '   using blocking of ' // TRIM(ADJUSTL(line)) // ' in  DNS_MPI_TRP<F,B>_I'
+        CALL TLAB_WRITE_ASCII(lfile,line) 
+     ENDIF
   ENDIF
 #endif
 
@@ -101,6 +108,12 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
           //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
      CALL TLAB_WRITE_ASCII(lfile,line)
 
+     IF ( ims_npro_k .GT. ims_sizBlock_k ) THEN 
+        line=''
+        WRITE(line,*) ims_sizBlock_k
+        line = '   using blocking of ' // TRIM(ADJUSTL(line)) // ' in  DNS_MPI_TRP<F,B>_K'
+        CALL TLAB_WRITE_ASCII(lfile,line) 
+     ENDIF
   ENDIF
 #endif
 

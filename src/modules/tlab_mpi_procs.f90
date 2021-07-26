@@ -62,6 +62,23 @@ CONTAINS
 
     ALLOCATE(ims_size_p(ims_npro))            ! Particle information
 
+#ifdef HLRS_HAWK
+    ! On hawk, we tested that 192 yields optimum performace;
+    ! Blocking will thus only take effect in very large cases 
+    ims_sizBlock_k=192
+    ims_sizBlock_i=384
+#else
+    ! We assume that this will help to release some of the very heavy
+    ! network load in transpositions on most systems
+    ims_sizBlock_k=64
+    ims_sizBlock_i=128
+    ! ims_sizBlock_k=1e5   -- would essentially switch off the blocking 
+#endif
+
+  ALLOCATE(ims_status (MPI_STATUS_SIZE,2*MAX(ims_sizBlock_i,ims_sizBlock_k)))
+  ALLOCATE(ims_request(                2*MAX(ims_sizBlock_i,ims_sizBlock_k)))
+
+    
     ! #######################################################################
     ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0
     ims_pro_k =     ims_pro/ims_npro_i  ! Starting at 0
@@ -353,9 +370,9 @@ CONTAINS
     INTEGER, INTENT(IN) :: tsend, trecv
 
     ! -----------------------------------------------------------------------
-    TINTEGER l,m,n,ns,nr,ips,ipr,idummy
-    INTEGER status(MPI_STATUS_SIZE,2*ims_npro_k)
-    INTEGER mpireq(                2*ims_npro_k)
+    TINTEGER j,l,m,n,ns,nr,ips,ipr,idummy
+    !INTEGER status(MPI_STATUS_SIZE,2*ims_npro_k)
+    !INTEGER mpireq(                2*ims_npro_k)
     INTEGER ip
     TREAL rdum
     CHARACTER*256 line
@@ -367,29 +384,29 @@ CONTAINS
 #ifdef PROFILE_ON
     time_loc_1 = MPI_WTIME()
 #endif
-
-    l=0
-    DO m=1,ims_npro_k
-      ns=ims_plan_trps_k(m)+1; ips=ns-1
-      nr=ims_plan_trpr_k(m)+1; ipr=nr-1
-      IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS) THEN
-        l = l + 1
-        CALL MPI_ISEND(a(dsend(ns)+1), 1, tsend, ips, ims_tag, ims_comm_z, mpireq(l), ims_err)
-        l = l + 1
-        CALL MPI_IRECV(b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_z, mpireq(l), ims_err)
-      ELSEIF ( ims_trp_mode_k == DNS_MPI_TRP_SENDRECV) THEN
-        CALL MPI_SENDRECV(&
-            a(dsend(ns)+1), 1, tsend, ips, ims_tag, &
-            b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_z, status(1,1), ims_err)
-      ELSE;  CONTINUE     ! No transpose
-      END IF
-    END DO
-
-    IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS ) &
-        CALL MPI_WAITALL(ims_npro_k*2, mpireq(1:), status(1,1), ims_err)
-
-    CALL DNS_MPI_TAGUPDT
-
+    DO j=1,ims_npro_k,ims_sizBlock_k
+       l=0
+       DO m=j,MIN(j+ims_sizBlock_k-1,ims_npro_k)
+          ns=ims_plan_trps_k(m)+1; ips=ns-1
+          nr=ims_plan_trpr_k(m)+1; ipr=nr-1
+          IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS) THEN
+             l = l + 1
+             CALL MPI_ISEND(a(dsend(ns)+1), 1, tsend, ips, ims_tag, ims_comm_z, ims_request(l), ims_err)
+             l = l + 1
+             CALL MPI_IRECV(b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_request(l), ims_err)
+          ELSEIF ( ims_trp_mode_k == DNS_MPI_TRP_SENDRECV) THEN
+             CALL MPI_SENDRECV(&
+                  a(dsend(ns)+1), 1, tsend, ips, ims_tag, &
+                  b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_status(1,1), ims_err)
+          ELSE;  CONTINUE     ! No transpose
+          END IF
+       END DO
+       
+       IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS ) &
+            CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
+       
+       CALL DNS_MPI_TAGUPDT
+    ENDDO
 #ifdef PROFILE_ON
     time_loc_2 = MPI_WTIME()
     ims_time_trans = ims_time_trans + (time_loc_2 - time_loc_1)
@@ -410,33 +427,35 @@ CONTAINS
     INTEGER, INTENT(IN) :: tsend, trecv
 
     ! -----------------------------------------------------------------------
-    TINTEGER l,m,ns,nr,ips,ipr
-    INTEGER status(MPI_STATUS_SIZE,2*ims_npro_i)
-    INTEGER mpireq(                2*ims_npro_i)
+    TINTEGER j,l,m,ns,nr,ips,ipr
+    !INTEGER status(MPI_STATUS_SIZE,2*ims_npro_i)
+    !INTEGER mpireq(                2*ims_npro_i)
     INTEGER ip
 
-    l = 0
-    DO m=1,ims_npro_i
-      ns=ims_plan_trps_i(m)+1;   ips=ns-1
-      nr=ims_plan_trpr_i(m)+1;   ipr=nr-1
-      IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) THEN
-        l = l + 1
-        CALL MPI_ISEND(a(dsend(ns)+1), 1, tsend, ips, ims_tag, ims_comm_x, mpireq(l), ims_err)
-        l = l + 1
-        CALL MPI_IRECV(b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_x, mpireq(l), ims_err)
-      ELSEIF ( ims_trp_mode_i == DNS_MPI_TRP_SENDRECV ) THEN
-        CALL MPI_SENDRECV(&
-            a(dsend(ns)+1),1,tsend,ips, ims_tag, &
-            b(drecv(nr)+1),1,trecv,ipr, ims_tag,ims_comm_x,status(1,1),ims_err)
-      ELSE; CONTINUE ! No transpose
-      END IF
-    END DO
-
-    IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) &
-        CALL MPI_WAITALL(ims_npro_i*2, mpireq(1:), status(1,1), ims_err)
-
-    CALL DNS_MPI_TAGUPDT
-
+    DO j=1,ims_npro_i,ims_sizBlock_i
+       l = 0
+       DO m=j,MIN(j+ims_sizBlock_i-1,ims_npro_i)
+          ns=ims_plan_trps_i(m)+1;   ips=ns-1
+          nr=ims_plan_trpr_i(m)+1;   ipr=nr-1
+          IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) THEN
+             l = l + 1
+             CALL MPI_ISEND(a(dsend(ns)+1), 1, tsend, ips, ims_tag, ims_comm_x, ims_request(l), ims_err)
+             l = l + 1
+             CALL MPI_IRECV(b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_x, ims_request(l), ims_err)
+          ELSEIF ( ims_trp_mode_i == DNS_MPI_TRP_SENDRECV ) THEN
+             CALL MPI_SENDRECV(&
+                  a(dsend(ns)+1),1,tsend,ips, ims_tag, &
+                  b(drecv(nr)+1),1,trecv,ipr, ims_tag,ims_comm_x,ims_status(1,1),ims_err)
+          ELSE; CONTINUE ! No transpose
+          END IF
+       END DO
+       
+       IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) &
+            CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
+       
+       CALL DNS_MPI_TAGUPDT
+    ENDDO
+    
     RETURN
   END SUBROUTINE DNS_MPI_TRPF_I
 
@@ -451,9 +470,9 @@ CONTAINS
     INTEGER,  DIMENSION(ims_npro_k), INTENT(IN)  :: tsend, trecv
 
     ! -----------------------------------------------------------------------
-    TINTEGER l,m,ns,nr,ips,ipr
-    INTEGER status(MPI_STATUS_SIZE,2*ims_npro_k)
-    INTEGER mpireq(                2*ims_npro_k)
+    TINTEGER j,l,m,ns,nr,ips,ipr
+    !INTEGER status(MPI_STATUS_SIZE,2*ims_npro_k)
+    !INTEGER mpireq(                2*ims_npro_k)
     INTEGER ip
 
 #ifdef PROFILE_ON
@@ -464,29 +483,30 @@ CONTAINS
 #ifdef PROFILE_ON
     time_loc_1 = MPI_WTIME()
 #endif
+    DO j=1,ims_npro_k,ims_sizBlock_k
+       l = 0
+       DO m=j,MIN(j+ims_sizBlock_k-1,ims_npro_k)
+          ns=ims_plan_trps_k(m)+1; ips=ns-1
+          nr=ims_plan_trpr_k(m)+1; ipr=nr-1
+          IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS ) THEN
+             l = l + 1
+             CALL MPI_ISEND(b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag, ims_comm_z, ims_request(l), ims_err)
+             l = l + 1
+             CALL MPI_IRECV(a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_z, ims_request(l), ims_err)
+          ELSEIF ( ims_trp_mode_k == DNS_MPI_TRP_SENDRECV ) THEN
+             CALL MPI_SENDRECV(&
+                  b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag,  &
+                  a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_z, ims_status(1,1), ims_err)
+          ELSE; CONTINUE   ! No transpose
+          END IF
+       END DO
 
-    l = 0
-    DO m=1,ims_npro_k
-      ns=ims_plan_trps_k(m)+1; ips=ns-1
-      nr=ims_plan_trpr_k(m)+1; ipr=nr-1
-      IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS ) THEN
-        l = l + 1
-        CALL MPI_ISEND(b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag, ims_comm_z, mpireq(l), ims_err)
-        l = l + 1
-        CALL MPI_IRECV(a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_z, mpireq(l), ims_err)
-      ELSEIF ( ims_trp_mode_k == DNS_MPI_TRP_SENDRECV ) THEN
-        CALL MPI_SENDRECV(&
-            b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag,  &
-            a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_z, status(1,m), ims_err)
-      ELSE; CONTINUE   ! No transpose
-      END IF
-    END DO
+       IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS ) &
+            CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
 
-    IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS ) &
-        CALL MPI_WAITALL(ims_npro_k*2, mpireq(1:), status(1,1), ims_err)
-
-    CALL DNS_MPI_TAGUPDT
-
+       CALL DNS_MPI_TAGUPDT
+    ENDDO
+    
 #ifdef PROFILE_ON
     time_loc_2 = MPI_WTIME()
     ims_time_trans = ims_time_trans + (time_loc_2 - time_loc_1)
@@ -506,33 +526,35 @@ CONTAINS
     INTEGER,  DIMENSION(ims_npro_i), INTENT(IN)  :: tsend, trecv ! types
 
     ! -----------------------------------------------------------------------
-    TINTEGER l,m,ns,nr,ips,ipr
-    INTEGER status(MPI_STATUS_SIZE,2*ims_npro_i)
-    INTEGER mpireq(                2*ims_npro_i)
+    TINTEGER j,l,m,ns,nr,ips,ipr
+    !INTEGER status(MPI_STATUS_SIZE,2*ims_npro_i)
+    !INTEGER mpireq(                2*ims_npro_i)
     INTEGER ip
 
-    l = 0
-    DO m = 1,ims_npro_i
-      ns=ims_plan_trps_i(m)+1; ips=ns-1
-      nr=ims_plan_trpr_i(m)+1; ipr=nr-1
-      IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) THEN
-        l = l + 1
-        CALL MPI_ISEND(b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag, ims_comm_x, mpireq(l), ims_err)
-        l = l + 1
-        CALL MPI_IRECV(a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_x, mpireq(l), ims_err)
-      ELSEIF ( ims_trp_mode_i == DNS_MPI_TRP_SENDRECV ) THEN
-        CALL MPI_SENDRECV(&
-            b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag,&
-            a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_x, status(1,m), ims_err)
-      ELSE; CONTINUE    ! No transpose
-      END IF
-    END DO
-
-    IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) &
-        CALL MPI_WAITALL(ims_npro_i*2, mpireq(1:), status(1,1), ims_err)
-
-    CALL DNS_MPI_TAGUPDT
-
+    DO j=1,ims_npro_i,ims_sizBlock_i
+       l = 0
+       DO m = j,MIN(j+ims_sizBlock_i-1,ims_npro_i)
+          ns=ims_plan_trps_i(m)+1; ips=ns-1
+          nr=ims_plan_trpr_i(m)+1; ipr=nr-1
+          IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) THEN
+             l = l + 1
+             CALL MPI_ISEND(b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag, ims_comm_x, ims_request(l), ims_err)
+             l = l + 1
+             CALL MPI_IRECV(a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_x, ims_request(l), ims_err)
+          ELSEIF ( ims_trp_mode_i == DNS_MPI_TRP_SENDRECV ) THEN
+             CALL MPI_SENDRECV(&
+                  b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag,&
+                  a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_x, ims_status(1,1), ims_err)
+          ELSE; CONTINUE    ! No transpose
+          END IF
+       END DO
+       
+       IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) &
+            CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
+       
+       CALL DNS_MPI_TAGUPDT
+    ENDDO
+    
     RETURN
   END SUBROUTINE DNS_MPI_TRPB_I
 
