@@ -51,9 +51,9 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
   USE BOUNDARY_BUFFER
 #ifdef USE_MPI
   USE DNS_GLOBAL,    ONLY : inb_scal_array
-  USE DNS_MPI, ONLY : ims_npro_k
-  USE DNS_MPI, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  USE DNS_MPI, ONLY : ims_bcs_imax, ims_bcs_jmax
+  USE TLAB_MPI_VARS, ONLY : ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_VARS, ONLY : ims_bcs_imax, ims_bcs_jmax
   USE TLAB_MPI_PROCS
 #endif
 

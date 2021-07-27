@@ -16,7 +16,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   USE TLAB_PROCS
   USE LAGRANGE_GLOBAL,ONLY : particle_dt, isize_l_comm, inb_particle_interp
 #ifdef USE_MPI
-  USE DNS_MPI,        ONLY:  ims_err
+  USE TLAB_MPI_VARS,        ONLY:  ims_err
 #endif
 
   IMPLICIT NONE
@@ -109,8 +109,8 @@ SUBROUTINE PARTICLE_HALO_K(nvar, data, halo_field_k, buffer_send, buffer_recv)
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro, ims_npro, ims_pro_k, ims_npro_k, ims_map_k
-  USE DNS_MPI, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro, ims_pro_k, ims_npro_k, ims_map_k
+  USE TLAB_MPI_VARS, ONLY : ims_err
 #endif
 
   IMPLICIT NONE
@@ -174,8 +174,8 @@ SUBROUTINE PARTICLE_HALO_I(nvar, data, halo_field_i, halo_field_k, halo_field_ik
   USE DNS_GLOBAL,     ONLY : imax,jmax,kmax
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro, ims_npro, ims_pro_i, ims_npro_i, ims_map_i
-  USE DNS_MPI, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro, ims_pro_i, ims_npro_i, ims_map_i
+  USE TLAB_MPI_VARS, ONLY : ims_err
 #endif
 
   IMPLICIT NONE
@@ -250,7 +250,7 @@ SUBROUTINE FIELD_TO_PARTICLE_INTERPOLATE &
   USE DNS_GLOBAL,     ONLY : g
   USE LAGRANGE_GLOBAL,ONLY : l_g
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY: ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY: ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE

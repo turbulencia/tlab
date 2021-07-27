@@ -31,7 +31,7 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
   USE DNS_TYPES,  ONLY : grid_dt
   USE DNS_GLOBAL, ONLY : isize_txc_dimz
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE

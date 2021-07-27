@@ -22,7 +22,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE DNS_GLOBAL
   USE THERMO_GLOBAL, ONLY : imixture, thermo_param
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 USE TLAB_PROCS
 

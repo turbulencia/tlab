@@ -23,7 +23,7 @@ SUBROUTINE PARTICLE_TO_FIELD(l_q, particle_property, field_out, wrk2d,wrk3d)
 
   USE DNS_GLOBAL, ONLY: imax,jmax,kmax, isize_particle
 #ifdef USE_MPI
-   USE DNS_MPI, ONLY: ims_err
+   USE TLAB_MPI_VARS, ONLY: ims_err
 #endif
 
    IMPLICIT NONE
@@ -76,7 +76,7 @@ SUBROUTINE PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
   USE DNS_GLOBAL,     ONLY: isize_particle
   USE LAGRANGE_GLOBAL,ONLY: l_g
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY: ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY: ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -182,7 +182,7 @@ END SUBROUTINE PARTICLE_TO_FIELD_INTERPOLATE
 SUBROUTINE PARTICLE_TO_FIELD_SEND_RECV_EAST(f_buffer_1,f_buffer_2, field )
 
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
 
@@ -242,7 +242,7 @@ END SUBROUTINE PARTICLE_TO_FIELD_SEND_RECV_EAST
 SUBROUTINE PARTICLE_TO_FIELD_SEND_RECV_NORTH(f_buffer_1,f_buffer_2, field )
   
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
 

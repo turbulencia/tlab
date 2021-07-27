@@ -11,7 +11,7 @@ MODULE PARTICLE_TRAJECTORIES
   USE LAGRANGE_GLOBAL,ONLY : particle_dt
   USE LAGRANGE_GLOBAL,ONLY : isize_trajectory, inb_trajectory, isize_l_comm, itrajectory
 #ifdef USE_MPI
-  USE DNS_MPI,        ONLY : ims_pro, ims_err
+  USE TLAB_MPI_VARS,        ONLY : ims_pro, ims_err
 #endif
 
   IMPLICIT NONE

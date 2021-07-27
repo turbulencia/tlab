@@ -14,9 +14,9 @@ PROGRAM AVERAGES
   USE TLAB_ARRAYS
   USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_err
-  USE DNS_MPI, ONLY : ims_npro_i, ims_npro_k
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
   USE TLAB_MPI_PROCS
 #endif
   USE THERMO_GLOBAL, ONLY : imixture

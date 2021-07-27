@@ -38,7 +38,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   USE DNS_LOCAL,  ONLY : nbcsetup
 #endif
 
-  USE DNS_MPI,    ONLY : ims_npro, ims_pro, ims_err,ims_size_i,ims_size_k
+  USE TLAB_MPI_VARS,    ONLY : ims_npro, ims_pro, ims_err,ims_size_i,ims_size_k
 
   USE NB3DFFT,    ONLY : nb3dfft_nbc_prepare,nb3dfft_nbc_finish,nb3dfft_infoType
   USE NB3DFFT,    ONLY : nb3dfft_nbc_schedl_start, nb3dfft_nbc_worker_start

@@ -6,7 +6,7 @@ SUBROUTINE FILTH_Z(iunifz, k1bc, imax,jmax,kmax, nz, cfz, z1, zf1, wrk)
   USE DNS_CONSTANTS, ONLY : efile
 
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE

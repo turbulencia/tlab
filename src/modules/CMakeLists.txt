@@ -19,7 +19,7 @@ add_definitions(-DGITHASH="${GITHASH}")
 get_directory_property(defs COMPILE_DEFINITIONS)
 if ( "USE_MPI" IN_LIST defs )
 else()
-  FILE(GLOB to_remove "../modules/dns_mpi.f90") # get the complete path
+  FILE(GLOB to_remove "../modules/tlab_mpi_vars.f90") # get the complete path
   list(REMOVE_ITEM sourcefiles ${to_remove})
   FILE(GLOB to_remove "../modules/tlab_mpi_procs.f90") # get the complete path
   list(REMOVE_ITEM sourcefiles ${to_remove})

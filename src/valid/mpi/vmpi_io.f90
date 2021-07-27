@@ -29,7 +29,7 @@ END MODULE DNS_GLOBAL
 !########################################################################
 PROGRAM VMPI_IO
 
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
   USE DNS_GLOBAL
 
   IMPLICIT NONE
@@ -125,7 +125,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 
   USE DNS_GLOBAL,ONLY : imax_total,jmax_total,kmax_total
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE

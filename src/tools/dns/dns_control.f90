@@ -20,7 +20,7 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
   USE DNS_LOCAL, ONLY : ilimit_scal, s_bound_min,s_bound_max
   USE DNS_LOCAL, ONLY : logs_data
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE

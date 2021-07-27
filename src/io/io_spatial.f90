@@ -27,7 +27,7 @@ SUBROUTINE IO_WRITE_AVG_SPATIAL(name, mean_flow, mean_scal)
   USE DNS_CONSTANTS, ONLY : lfile
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro
+  USE TLAB_MPI_VARS, ONLY : ims_pro
 #endif
 
   IMPLICIT NONE
@@ -141,7 +141,7 @@ SUBROUTINE IO_READ_AVG_SPATIAL(name,mean_flow,mean_scal)
   USE TLAB_PROCS
 
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 #ifdef LES
   USE LES_GLOBAL

@@ -11,11 +11,11 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
 
   USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_err
-  USE DNS_MPI, ONLY : ims_npro_i, ims_npro_k
-  USE DNS_MPI, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  USE DNS_MPI, ONLY : ims_comm_x, ims_comm_z
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_VARS, ONLY : ims_comm_x, ims_comm_z
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
   USE TLAB_MPI_PROCS
 #endif
 
@@ -175,7 +175,7 @@ SUBROUTINE REDUCE_SPECTRUM(nx,ny,nz, nblock, in,out, tmp1,variance)
 ! need to know about domain decomposition in x b/o
 ! nyquist frequency and zero frequency account different for the variance
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_offset_i, ims_pro_i, ims_npro_i, ims_err
+  USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_pro_i, ims_npro_i, ims_err
 #endif
 
   IMPLICIT NONE
@@ -265,7 +265,7 @@ SUBROUTINE REDUCE_CORRELATION(nx,ny,nz, nblock, nr_total, &
 
   USE DNS_GLOBAL, ONLY : isize_wrk1d
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -340,7 +340,7 @@ END SUBROUTINE REDUCE_CORRELATION
 SUBROUTINE RADIAL_SAMPLESIZE(nx,nz, nr_total, samplesize)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -381,7 +381,7 @@ SUBROUTINE WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
   USE DNS_CONSTANTS, ONLY : lfile
   USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_pro
+  USE TLAB_MPI_VARS,    ONLY : ims_pro
 #endif
 
   IMPLICIT NONE
@@ -434,7 +434,7 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
   USE DNS_TYPES,  ONLY : subarray_dt
   USE DNS_GLOBAL, ONLY : imax,jmax,kmax
   USE DNS_GLOBAL, ONLY : io_aux
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
 

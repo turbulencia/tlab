@@ -6,7 +6,7 @@ SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
   USE DNS_TYPES,  ONLY : filter_dt
   USE DNS_GLOBAL, ONLY : isize_txc_field, g
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE

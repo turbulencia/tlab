@@ -15,7 +15,7 @@ PROGRAM INIRAND
 #endif
   USE RAND_LOCAL
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro
+  USE TLAB_MPI_VARS, ONLY : ims_pro
 #endif
 
   IMPLICIT NONE

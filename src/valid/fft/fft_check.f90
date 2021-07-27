@@ -18,7 +18,7 @@ USE DNS_CONSTANTS, ONLY : lfile
 USE DNS_GLOBAL, ONLY   :  isize_txc_dimx, isize_txc_dimz 
 
 #ifdef USE_MPI 
-USE DNS_MPI
+USE TLAB_MPI_VARS
 #endif 
 
 IMPLICIT NONE 

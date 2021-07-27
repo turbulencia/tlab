@@ -6,7 +6,7 @@
 MODULE TLAB_MPI_PROCS
   USE DNS_CONSTANTS, ONLY : lfile, efile
   USE TLAB_PROCS, ONLY : TLAB_WRITE_ASCII, TLAB_STOP
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
   IMPLICIT NONE
   SAVE
   PRIVATE
@@ -64,7 +64,7 @@ CONTAINS
 
 #ifdef HLRS_HAWK
     ! On hawk, we tested that 192 yields optimum performace;
-    ! Blocking will thus only take effect in very large cases 
+    ! Blocking will thus only take effect in very large cases
     ims_sizBlock_k=192
     ims_sizBlock_i=384
 #else
@@ -72,13 +72,13 @@ CONTAINS
     ! network load in transpositions on most systems
     ims_sizBlock_k=64
     ims_sizBlock_i=128
-    ! ims_sizBlock_k=1e5   -- would essentially switch off the blocking 
+    ! ims_sizBlock_k=1e5   -- would essentially switch off the blocking
 #endif
 
   ALLOCATE(ims_status (MPI_STATUS_SIZE,2*MAX(ims_sizBlock_i,ims_sizBlock_k)))
   ALLOCATE(ims_request(                2*MAX(ims_sizBlock_i,ims_sizBlock_k)))
 
-    
+
     ! #######################################################################
     ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0
     ims_pro_k =     ims_pro/ims_npro_i  ! Starting at 0
@@ -401,10 +401,10 @@ CONTAINS
           ELSE;  CONTINUE     ! No transpose
           END IF
        END DO
-       
+
        IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS ) &
             CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
-       
+
        CALL DNS_MPI_TAGUPDT
     ENDDO
 #ifdef PROFILE_ON
@@ -449,13 +449,13 @@ CONTAINS
           ELSE; CONTINUE ! No transpose
           END IF
        END DO
-       
+
        IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) &
             CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
-       
+
        CALL DNS_MPI_TAGUPDT
     ENDDO
-    
+
     RETURN
   END SUBROUTINE DNS_MPI_TRPF_I
 
@@ -506,7 +506,7 @@ CONTAINS
 
        CALL DNS_MPI_TAGUPDT
     ENDDO
-    
+
 #ifdef PROFILE_ON
     time_loc_2 = MPI_WTIME()
     ims_time_trans = ims_time_trans + (time_loc_2 - time_loc_1)
@@ -548,13 +548,13 @@ CONTAINS
           ELSE; CONTINUE    ! No transpose
           END IF
        END DO
-       
+
        IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) &
             CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
-       
+
        CALL DNS_MPI_TAGUPDT
     ENDDO
-    
+
     RETURN
   END SUBROUTINE DNS_MPI_TRPB_I
 

@@ -15,7 +15,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
 
 #ifdef USE_MPI
   USE DNS_GLOBAL, ONLY : imax,kmax
-  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE

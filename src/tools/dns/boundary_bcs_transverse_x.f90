@@ -37,7 +37,7 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
   USE DNS_GLOBAL,    ONLY : buoyancy
   USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE

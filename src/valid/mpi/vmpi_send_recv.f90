@@ -55,7 +55,7 @@ END MODULE DNS_MPI
 !########################################################################
 PROGRAM VMPI
 
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
 
@@ -273,7 +273,7 @@ END SUBROUTINE DNS_MPI_TYPE
 !########################################################################
 SUBROUTINE DNS_MPI_TRPF_K(a, b, ndsp, mdsp, tsend, trecv)
 
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
 
@@ -357,7 +357,7 @@ END SUBROUTINE DNS_MPI_TRPF_K
 !########################################################################
 SUBROUTINE DNS_MPI_TRPB_K(b, a, ndsp, mdsp, tsend, trecv)
 
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
 
@@ -435,7 +435,7 @@ END SUBROUTINE DNS_MPI_TRPB_K
 !########################################################################
 SUBROUTINE DNS_MPI_TAGUPDT
 
-  USE DNS_MPI, ONLY : ims_tag
+  USE TLAB_MPI_VARS, ONLY : ims_tag
 
   IMPLICIT NONE
 
@@ -463,7 +463,7 @@ END SUBROUTINE DNS_MPI_TAGUPDT
 !########################################################################
 SUBROUTINE DNS_MPI_TAGRESET
 
-  USE DNS_MPI, ONLY : ims_tag
+  USE TLAB_MPI_VARS, ONLY : ims_tag
 
   IMPLICIT NONE
 

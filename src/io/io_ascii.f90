@@ -102,7 +102,7 @@ END SUBROUTINE SCANINICHAR
 SUBROUTINE IO_READ_ASCII(fname, title, name, value, default)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro, ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_err
 #endif
   IMPLICIT NONE
 
@@ -186,7 +186,7 @@ END SUBROUTINE IO_READ_ASCII
 SUBROUTINE TLAB_WRITE_ASCII_FIELD(fname, imax,jmax,kmax, u)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro, ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE

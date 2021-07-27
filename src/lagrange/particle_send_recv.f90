@@ -29,7 +29,7 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
   
   USE DNS_GLOBAL, ONLY: isize_particle, inb_part_array, inb_part
   
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
   
@@ -255,7 +255,7 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
   
   USE DNS_GLOBAL, ONLY: isize_particle, inb_part_array, inb_part
   
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
   

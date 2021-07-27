@@ -2,7 +2,7 @@
 #include "dns_const.h"
 #include "dns_const_mpi.h"
 
-MODULE DNS_MPI
+MODULE TLAB_MPI_VARS
   IMPLICIT NONE
   SAVE
 
@@ -31,7 +31,7 @@ MODULE DNS_MPI
 !  INTEGER,  DIMENSION(:,:), ALLOCATABLE :: ims_ts_j, ims_tr_j
 
   INTEGER,  DIMENSION(:  ), ALLOCATABLE :: ims_map_k
-  TINTEGER                              :: ims_sizBlock_k 
+  TINTEGER                              :: ims_sizBlock_k
   TINTEGER, DIMENSION(  :), ALLOCATABLE :: ims_size_k
   TINTEGER, DIMENSION(:,:), ALLOCATABLE :: ims_ds_k, ims_dr_k
   INTEGER,  DIMENSION(:,:), ALLOCATABLE :: ims_ts_k, ims_tr_k
@@ -41,9 +41,9 @@ MODULE DNS_MPI
   TINTEGER, DIMENSION(:),   ALLOCATABLE :: ims_size_p ! Particle data
 
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: ims_status
-  INTEGER, DIMENSION(  :), ALLOCATABLE :: ims_request 
+  INTEGER, DIMENSION(  :), ALLOCATABLE :: ims_request
 
-  
+
 #ifdef USE_PSFFT
   INTEGER :: ims_nb_thrsupp_provided
   INTEGER,DIMENSION(2) :: ims_nb_proc_grid
@@ -53,4 +53,4 @@ MODULE DNS_MPI
   INTEGER,DIMENSION(3) :: ims_nb_zsrt,ims_nb_zend,ims_nb_zsiz
 #endif
 
-END MODULE DNS_MPI
+END MODULE TLAB_MPI_VARS

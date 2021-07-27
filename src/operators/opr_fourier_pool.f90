@@ -45,8 +45,8 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
   USE TLAB_PROCS
 
 #ifdef USE_MPI
-USE DNS_MPI, ONLY : ims_npro_i, ims_npro_k
-USE DNS_MPI, ONLY : ims_size_i, ims_size_k
+USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
+USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_size_k
 #endif
 
   IMPLICIT NONE
@@ -202,8 +202,8 @@ SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2
   USE DNS_GLOBAL, ONLY : isize_txc_dimz, isize_txc_field
   USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro_i
-  USE DNS_MPI, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
   USE TLAB_MPI_PROCS
 #endif
   USE, INTRINSIC :: ISO_C_binding, ONLY : c_f_pointer, c_loc
@@ -312,8 +312,8 @@ SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
   USE DNS_GLOBAL, ONLY : fft_plan_bx
 #ifdef USE_MPI
   USE DNS_GLOBAL, ONLY : g
-  USE DNS_MPI, ONLY : ims_npro_i
-  USE DNS_MPI, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
   USE TLAB_MPI_PROCS
 #endif
   USE, INTRINSIC :: ISO_C_binding, ONLY : c_f_pointer, c_loc
@@ -419,8 +419,8 @@ SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
   USE DNS_GLOBAL, ONLY : isize_txc_dimz, isize_txc_field
   USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro_k
-  USE DNS_MPI, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_VARS, ONLY : ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   USE TLAB_MPI_PROCS
 #endif
   USE, INTRINSIC :: ISO_C_binding, ONLY : c_f_pointer, c_loc
@@ -503,8 +503,8 @@ SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
   USE DNS_GLOBAL, ONLY : isize_txc_dimz, isize_txc_field
   USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro_k
-  USE DNS_MPI, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_VARS, ONLY : ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   USE TLAB_MPI_PROCS
 #endif
   USE, INTRINSIC :: ISO_C_binding, ONLY : c_f_pointer, c_loc
@@ -585,7 +585,7 @@ END SUBROUTINE OPR_FOURIER_B_Z_EXEC
 
 !   USE DNS_GLOBAL, ONLY : fft_plan_bz, isize_txc_dimz
 ! #ifdef USE_MPI
-!   USE DNS_MPI,    ONLY : ims_npro_k, ims_err, ims_ts_k, ims_tr_k, ims_ds_k, ims_dr_k
+!   USE TLAB_MPI_VARS,    ONLY : ims_npro_k, ims_err, ims_ts_k, ims_tr_k, ims_ds_k, ims_dr_k
 ! #endif
 
 !   IMPLICIT NONE
@@ -634,7 +634,7 @@ SUBROUTINE OPR_FOURIER_SPECTRA_3D(nx,ny,nz, isize_psd, u, psd, wrk1d)
   USE DNS_GLOBAL, ONLY : isize_txc_dimz
   USE DNS_GLOBAL, ONLY : g
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k, ims_pro, ims_err
+  USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_offset_k, ims_pro, ims_err
 #endif
 
   IMPLICIT NONE

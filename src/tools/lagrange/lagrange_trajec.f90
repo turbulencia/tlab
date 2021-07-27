@@ -31,8 +31,8 @@ PROGRAM LAGRANGE_TRAJEC
   USE DNS_GLOBAL
   USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_err
-  USE DNS_MPI, ONLY : ims_pro, ims_npro
+  USE TLAB_MPI_VARS, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro
   USE TLAB_MPI_PROCS
 #endif
   USE LAGRANGE_GLOBAL

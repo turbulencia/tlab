@@ -42,7 +42,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, ibc, alpha,&
   USE DNS_GLOBAL,    ONLY : isize_txc_dimz
   USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -156,7 +156,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, g, ibc, alpha,&
   USE DNS_GLOBAL,    ONLY : isize_field, isize_txc_dimz
   USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -287,7 +287,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
   USE DNS_GLOBAL,    ONLY : g
   USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE

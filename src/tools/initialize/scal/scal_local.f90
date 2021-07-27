@@ -8,7 +8,7 @@ MODULE SCAL_LOCAL
   USE DNS_GLOBAL, ONLY : g, sbg
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i,ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i,ims_offset_k
 #endif
 
   IMPLICIT NONE

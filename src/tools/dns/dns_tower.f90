@@ -68,7 +68,7 @@ CONTAINS
 
 #ifdef USE_MPI
     USE DNS_GLOBAL,ONLY : g
-    USE DNS_MPI, ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro
+    USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro
 #endif
 
     IMPLICIT NONE
@@ -210,7 +210,7 @@ CONTAINS
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifdef USE_MPI
-    USE DNS_MPI, ONLY : ims_err
+    USE TLAB_MPI_VARS, ONLY : ims_err
 #endif
 
     USE DNS_GLOBAL, ONLY : imax,jmax,kmax
@@ -305,7 +305,7 @@ CONTAINS
     USE DNS_GLOBAL,    ONLY : itime
     USE DNS_CONSTANTS, ONLY : wfile
 #ifdef USE_MPI
-    USE DNS_MPI,   ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro,ims_err
+    USE TLAB_MPI_VARS,   ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro,ims_err
 #endif
     IMPLICIT NONE
 

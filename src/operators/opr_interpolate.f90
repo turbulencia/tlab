@@ -26,9 +26,9 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
 #ifdef USE_MPI
   USE DNS_CONSTANTS, ONLY : lfile
   USE TLAB_PROCS
-  USE DNS_MPI, ONLY : ims_npro_i, ims_npro_k
-  USE DNS_MPI, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-  USE DNS_MPI, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   USE TLAB_MPI_PROCS
 #endif
 

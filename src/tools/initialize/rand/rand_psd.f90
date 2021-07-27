@@ -6,7 +6,7 @@ SUBROUTINE RAND_PSD(nx,ny,nz, u)
   USE DNS_GLOBAL, ONLY : g
   USE RAND_LOCAL, ONLY : ipdf, seed, ispectrum, spc_param
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE

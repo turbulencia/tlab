@@ -42,9 +42,9 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 #ifdef USE_MPI
   USE DNS_CONSTANTS, ONLY : lfile
   USE TLAB_PROCS
-  USE DNS_MPI, ONLY : ims_err
-  USE DNS_MPI, ONLY : ims_pro, ims_npro_i, ims_npro_k
-  USE DNS_MPI, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_VARS, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
   USE TLAB_MPI_PROCS
 #endif
 
@@ -188,9 +188,9 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 #ifdef USE_MPI
   USE DNS_CONSTANTS, ONLY : lfile
   USE TLAB_PROCS
-  USE DNS_MPI, ONLY : ims_err
-  USE DNS_MPI, ONLY : ims_pro, ims_npro_i, ims_npro_k
-  USE DNS_MPI, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_VARS, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
   USE TLAB_MPI_PROCS
 #endif
 

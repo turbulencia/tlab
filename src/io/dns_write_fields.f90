@@ -39,7 +39,7 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
   USE THERMO_GLOBAL, ONLY : gama0
   USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
 #endif
 
   IMPLICIT NONE

@@ -25,7 +25,7 @@ SUBROUTINE PARTICLE_SORT(x_or_z, l_g,l_q, l_hq, &
   USE DNS_GLOBAL, ONLY : g
   USE LAGRANGE_GLOBAL, ONLY: particle_dt
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE

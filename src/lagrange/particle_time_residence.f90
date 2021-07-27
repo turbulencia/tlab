@@ -45,7 +45,7 @@ SUBROUTINE PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q)
 
   USE DNS_GLOBAL, ONLY : isize_particle, inb_part_array
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE
