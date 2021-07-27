@@ -52,6 +52,7 @@ endif()
 project(tlab Fortran)
 
 # set the include dirs
+set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/modules)
 set(INCLUDE_DIRS ${INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_BINARY_DIR}/modules)
 include_directories(${INCLUDE_DIRS})
 
@@ -64,7 +65,6 @@ add_subdirectory(thermodynamics)
 add_subdirectory(io)
 add_subdirectory(fdm)
 add_subdirectory(filters)
-add_subdirectory(pdfs)
 add_subdirectory(external)
 add_subdirectory(operators)
 add_subdirectory(mappings)
