@@ -1,3 +1,3 @@
-FILE(GLOB sourcefiles "../mappings/*.f90")
+FILE(GLOB sourcefiles "*.f90")
 add_library(mappings STATIC ${sourcefiles})
-add_dependencies(mappings modules)
+add_dependencies(mappings utils modules)

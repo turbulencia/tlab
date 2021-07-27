@@ -1,8 +1,4 @@
-if ( ${BUILD_TYPE} STREQUAL "PARALLEL" OR ${BUILD_TYPE} STREQUAL "NONBLOCKING" )
-set(LEVEL1_LIBS mpi utils modules)
-else()
 set(LEVEL1_LIBS utils modules)
-endif()
 
 FILE(GLOB sourcefiles "partial/*.f90")
 add_executable(vpartial.x ${sourcefiles})
