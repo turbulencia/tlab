@@ -24,10 +24,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef TRACE_ON
   USE DNS_CONSTANTS,ONLY:tfile
 #endif
-  USE DNS_GLOBAL, ONLY : imode_eqns
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : rbackground, ribackground
+  USE TLAB_VARS, ONLY : imode_eqns
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : rbackground, ribackground
   USE DNS_LOCAL,  ONLY : idivergence
   USE DNS_LOCAL,  ONLY : tower_mode
   USE TIME,       ONLY : rkm_substep,rkm_endstep

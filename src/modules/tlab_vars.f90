@@ -1,7 +1,7 @@
 #include "types.h"
 #include "dns_const.h"
 
-MODULE DNS_GLOBAL
+MODULE TLAB_VARS
   USE DNS_TYPES,     ONLY : grid_dt, filter_dt, subarray_dt, term_dt, background_dt
   USE DNS_CONSTANTS, ONLY : MAX_VARS, MAX_NSP
   USE DNS_CONSTANTS, ONLY : MAX_STATS_SPATIAL
@@ -114,4 +114,4 @@ MODULE DNS_GLOBAL
               istattimeorg                            ! time at which accumulation of statistics started
   TREAL    :: rstattimeorg
 
-END MODULE DNS_GLOBAL
+END MODULE TLAB_VARS

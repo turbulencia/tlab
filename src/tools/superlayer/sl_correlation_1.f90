@@ -3,7 +3,7 @@
 SUBROUTINE SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
      strain, vorticity, gradient, tmp1, tmp2, wrk1d, wrk2d, wrk3d)
 
-  USE DNS_GLOBAL
+  USE TLAB_VARS
 
   IMPLICIT NONE
 

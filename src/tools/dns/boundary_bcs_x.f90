@@ -21,7 +21,7 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
      h0,h1,h2,h3,h4,zh1, txc, aux2d, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS
-  USE DNS_GLOBAL
+  USE TLAB_VARS
   USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : imixture, gama0, THERMO_AI
   USE DNS_LOCAL

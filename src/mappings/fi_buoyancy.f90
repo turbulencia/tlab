@@ -21,7 +21,7 @@
 SUBROUTINE FI_BUOYANCY(buoyancy, nx,ny,nz, s, b, wrk1d)
 
   USE DNS_TYPES,  ONLY : term_dt
-  USE DNS_GLOBAL, ONLY : inb_scal_array
+  USE TLAB_VARS, ONLY : inb_scal_array
 
   IMPLICIT NONE
   

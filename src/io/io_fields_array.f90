@@ -42,7 +42,7 @@
 
 SUBROUTINE IO_READ_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, iread, a, txc)
 
-  USE DNS_GLOBAL,ONLY : itime, rtime, visc
+  USE TLAB_VARS,ONLY : itime, rtime, visc
   USE TLAB_PROCS
 #ifdef USE_MPI
   USE TLAB_MPI_VARS,   ONLY : ims_offset_k, ims_npro_i, ims_npro_k, ims_pro, ims_err
@@ -362,7 +362,7 @@ END SUBROUTINE IO_READ_FIELDS_ARRAY
 
 SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
 
-  USE DNS_GLOBAL, ONLY : itime, rtime, visc, prandtl, schmidt ! header info
+  USE TLAB_VARS, ONLY : itime, rtime, visc, prandtl, schmidt ! header info
   USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : gama0
 #ifdef USE_MPI

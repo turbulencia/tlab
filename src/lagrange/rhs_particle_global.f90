@@ -10,9 +10,9 @@
 SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3d)
 
   USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_particle
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : visc, radiation
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_particle
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : visc, radiation
   USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange, lagrange_param
   USE THERMO_GLOBAL, ONLY : thermo_param
 

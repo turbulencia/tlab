@@ -19,9 +19,9 @@ SUBROUTINE RHS_FLOW_CONDUCTION_EXPLICIT(vis, z1, T, h4, tmp1,tmp2,tmp3,tmp4,tmp5
 #ifdef TRACE_ON
   USE DNS_CONSTANTS, ONLY : tfile
 #endif
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : idiffusion, visc, prandtl
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : idiffusion, visc, prandtl
   USE BOUNDARY_BCS
 
   IMPLICIT NONE

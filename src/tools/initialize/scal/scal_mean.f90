@@ -3,10 +3,10 @@
 
 SUBROUTINE SCAL_MEAN(is, s, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : imode_sim
-  USE DNS_GLOBAL, ONLY : pbg, rbg, tbg, sbg, qbg
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : imax,jmax,kmax
+  USE TLAB_VARS, ONLY : imode_sim
+  USE TLAB_VARS, ONLY : pbg, rbg, tbg, sbg, qbg
 
   IMPLICIT NONE
 

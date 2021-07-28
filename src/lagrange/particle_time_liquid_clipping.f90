@@ -18,8 +18,8 @@
 SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, l_q,l_txc,l_comm, wrk3d)
 
   USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_particle, inb_part_array
-  USE DNS_GLOBAL, ONLY : isize_field, inb_scal_array
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_particle, inb_part_array
+  USE TLAB_VARS, ONLY : isize_field, inb_scal_array
   USE LAGRANGE_GLOBAL, ONLY : l_g
 
   IMPLICIT NONE

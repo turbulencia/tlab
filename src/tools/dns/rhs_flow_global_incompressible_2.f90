@@ -14,9 +14,9 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2&
      (dte, u,v,w,h1,h2,h3, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
      wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d, inb_flow
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : visc
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d, inb_flow
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : visc
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
 

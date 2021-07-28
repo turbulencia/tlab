@@ -4,7 +4,7 @@
 SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
      threshold, ibuffer_npy, u,v,w, sl, samples, txc, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL
+  USE TLAB_VARS
 
   IMPLICIT NONE
 

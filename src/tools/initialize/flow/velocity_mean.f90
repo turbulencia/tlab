@@ -3,10 +3,10 @@
 
 SUBROUTINE VELOCITY_MEAN(u,v,w, wrk1d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imode_sim, imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : qbg
-  USE DNS_GLOBAL, ONLY : coriolis
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : imode_sim, imax,jmax,kmax
+  USE TLAB_VARS, ONLY : qbg
+  USE TLAB_VARS, ONLY : coriolis
 
   IMPLICIT NONE
 

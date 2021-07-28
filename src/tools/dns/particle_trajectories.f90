@@ -5,8 +5,8 @@
 MODULE PARTICLE_TRAJECTORIES
 
   USE DNS_CONSTANTS,  ONLY : efile, lfile
-  USE DNS_GLOBAL,     ONLY : inb_flow_array, inb_scal_array
-  USE DNS_GLOBAL,     ONLY : isize_particle
+  USE TLAB_VARS,     ONLY : inb_flow_array, inb_scal_array
+  USE TLAB_VARS,     ONLY : isize_particle
   USE TLAB_PROCS
   USE LAGRANGE_GLOBAL,ONLY : particle_dt
   USE LAGRANGE_GLOBAL,ONLY : isize_trajectory, inb_trajectory, isize_l_comm, itrajectory
@@ -115,8 +115,8 @@ END SUBROUTINE PARTICLE_TRAJECTORIES_INITIALIZE
 SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : pointers_dt, pointers3d_dt
-  USE DNS_GLOBAL,ONLY : isize_field, imax,jmax,kmax
-  USE DNS_GLOBAL,ONLY : rtime
+  USE TLAB_VARS,ONLY : isize_field, imax,jmax,kmax
+  USE TLAB_VARS,ONLY : rtime
 
   IMPLICIT NONE
 

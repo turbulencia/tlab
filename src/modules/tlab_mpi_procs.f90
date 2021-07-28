@@ -29,9 +29,9 @@ CONTAINS
   ! ######################################################################
   ! ######################################################################
   SUBROUTINE DNS_MPI_INITIALIZE
-    USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-    USE DNS_GLOBAL, ONLY : isize_txc_dimz, isize_txc_dimx
-    USE DNS_GLOBAL, ONLY : imode_sim, ifourier
+    USE TLAB_VARS, ONLY : imax,jmax,kmax
+    USE TLAB_VARS, ONLY : isize_txc_dimz, isize_txc_dimx
+    USE TLAB_VARS, ONLY : imode_sim, ifourier
     IMPLICIT NONE
 
 #include "integers.h"
@@ -352,7 +352,7 @@ CONTAINS
   !########################################################################
   SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
     USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_int
-    USE DNS_GLOBAL, ONLY : itime
+    USE TLAB_VARS, ONLY : itime
     IMPLICIT NONE
 
     INTERFACE
@@ -788,8 +788,8 @@ CONTAINS
 
   SUBROUTINE DNS_NB3DFFT_INITIALIZE
 #ifdef USE_PSFFT
-    USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-    USE DNS_GLOBAL, ONLY : g
+    USE TLAB_VARS, ONLY : imax,jmax,kmax
+    USE TLAB_VARS, ONLY : g
     USE NB3DFFT, ONLY : nb3dfft_test_setup, nb3dfft_setup, get_dims
 #endif
 

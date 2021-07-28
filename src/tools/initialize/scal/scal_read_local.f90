@@ -5,8 +5,8 @@
 SUBROUTINE SCAL_READ_LOCAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile, MAX_NSP
-  USE DNS_GLOBAL,    ONLY : inb_scal
-  USE DNS_GLOBAL,    ONLY : sbg
+  USE TLAB_VARS,    ONLY : inb_scal
+  USE TLAB_VARS,    ONLY : sbg
   USE DNS_TYPES,     ONLY : MAX_MODES
   USE TLAB_PROCS
   USE SCAL_LOCAL

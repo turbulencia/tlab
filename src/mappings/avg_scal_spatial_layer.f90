@@ -33,7 +33,7 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc
   USE DNS_CONSTANTS, ONLY : tfile
 #endif
 
-  USE DNS_GLOBAL
+  USE TLAB_VARS
   USE TLAB_PROCS
 
   IMPLICIT NONE

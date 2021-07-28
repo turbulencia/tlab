@@ -9,8 +9,8 @@
 !########################################################################
 SUBROUTINE FI_DISSIPATION(flag, nx,ny,nz, u,v,w, eps, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : area,visc
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : area,visc
 
   IMPLICIT NONE
 
@@ -132,8 +132,8 @@ END SUBROUTINE FI_DISSIPATION
 
 SUBROUTINE FI_RTKE(nx,ny,nz, q, wrk1d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imode_eqns
-  USE DNS_GLOBAL, ONLY : g, area, rbackground
+  USE TLAB_VARS, ONLY : imode_eqns
+  USE TLAB_VARS, ONLY : g, area, rbackground
 
   IMPLICIT NONE
 
@@ -178,7 +178,7 @@ END SUBROUTINE FI_RTKE
 ! Reynolds fluctuations of array a
 !########################################################################
 SUBROUTINE FI_FLUCTUATION_INPLACE(nx,ny,nz, a)
-  USE DNS_GLOBAL, ONLY : g, area
+  USE TLAB_VARS, ONLY : g, area
   IMPLICIT NONE
 
   TINTEGER, INTENT(IN)    :: nx,ny,nz

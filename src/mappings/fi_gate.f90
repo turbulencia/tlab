@@ -4,7 +4,7 @@
 SUBROUTINE FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
                    nx,ny,nz, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
 
   IMPLICIT NONE
 

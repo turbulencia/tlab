@@ -3,7 +3,7 @@ PROGRAM SMOOTH
 #include "types.h"
 #include "dns_const.h"
 
-  USE DNS_GLOBAL
+  USE TLAB_VARS
   USE TLAB_PROCS
   USE THERMO_GLOBAL
 

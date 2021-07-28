@@ -4,8 +4,8 @@
 SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
 
   USE DNS_TYPES,  ONLY : term_dt
-  USE DNS_GLOBAL, ONLY : sbg, damkohler
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : sbg, damkohler
+  USE TLAB_VARS, ONLY : g
 
   IMPLICIT NONE
 

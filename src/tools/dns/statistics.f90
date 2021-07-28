@@ -25,7 +25,7 @@ CONTAINS
   ! ###################################################################
   SUBROUTINE STATISTICS_INITIALIZE()
 
-    USE DNS_GLOBAL, ONLY : imode_sim, jmax, inb_scal, nstatavg
+    USE TLAB_VARS, ONLY : imode_sim, jmax, inb_scal, nstatavg
 
     IF      ( imode_sim .EQ. DNS_MODE_TEMPORAL) THEN
       ALLOCATE(mean(jmax,MAX_AVG_TEMPORAL))
@@ -47,14 +47,14 @@ CONTAINS
     USE DNS_CONSTANTS, ONLY : tfile
 #endif
     USE DNS_TYPES,     ONLY : pointers_dt
-    USE DNS_GLOBAL,    ONLY : g
-    USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, inb_scal_array
-    USE DNS_GLOBAL,    ONLY : buoyancy, imode_eqns, icalc_scal
-    USE DNS_GLOBAL,    ONLY : froude
-    USE DNS_GLOBAL,    ONLY : epbackground, pbackground, rbackground
-    USE DNS_GLOBAL,    ONLY : itime, rtime
-    USE DNS_GLOBAL,      ONLY : inb_part, icalc_part
-    USE DNS_GLOBAL,      ONLY : sbg, schmidt
+    USE TLAB_VARS,    ONLY : g
+    USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field, inb_scal_array
+    USE TLAB_VARS,    ONLY : buoyancy, imode_eqns, icalc_scal
+    USE TLAB_VARS,    ONLY : froude
+    USE TLAB_VARS,    ONLY : epbackground, pbackground, rbackground
+    USE TLAB_VARS,    ONLY : itime, rtime
+    USE TLAB_VARS,      ONLY : inb_part, icalc_part
+    USE TLAB_VARS,      ONLY : sbg, schmidt
     USE TLAB_ARRAYS
     USE DNS_ARRAYS
     USE THERMO_GLOBAL, ONLY : imixture
@@ -236,7 +236,7 @@ CONTAINS
 #ifdef TRACE_ON
     USE DNS_CONSTANTS, ONLY : tfile
 #endif
-    USE DNS_GLOBAL
+    USE TLAB_VARS
     USE TLAB_ARRAYS
     USE DNS_LOCAL
     USE BOUNDARY_BUFFER

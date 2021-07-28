@@ -26,7 +26,7 @@
 !########################################################################
 SUBROUTINE THERMO_VISCOSITY(nx,ny,nz, T, mu)
   
-  USE DNS_GLOBAL, ONLY : itransport
+  USE TLAB_VARS, ONLY : itransport
 
   IMPLICIT NONE
   

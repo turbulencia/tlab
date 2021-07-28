@@ -8,8 +8,8 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   USE DNS_CONSTANTS, ONLY : tfile
 #endif
   USE DNS_TYPES,  ONLY : grid_dt
-  USE DNS_GLOBAL, ONLY : inb_scal
-  USE DNS_GLOBAL, ONLY : reynolds, schmidt
+  USE TLAB_VARS, ONLY : inb_scal
+  USE TLAB_VARS, ONLY : reynolds, schmidt
   USE TLAB_PROCS
 
   IMPLICIT NONE

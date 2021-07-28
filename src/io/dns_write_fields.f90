@@ -31,11 +31,11 @@
 !########################################################################
 SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
 
-  USE DNS_GLOBAL, ONLY : imode_files, imode_eqns
+  USE TLAB_VARS, ONLY : imode_files, imode_eqns
   USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE DNS_GLOBAL, ONLY : itime, rtime
-  USE DNS_GLOBAL, ONLY : visc, froude, rossby, damkohler, prandtl, mach
-  USE DNS_GLOBAL, ONLY : schmidt
+  USE TLAB_VARS, ONLY : itime, rtime
+  USE TLAB_VARS, ONLY : visc, froude, rossby, damkohler, prandtl, mach
+  USE TLAB_VARS, ONLY : schmidt
   USE THERMO_GLOBAL, ONLY : gama0
   USE TLAB_PROCS
 #ifdef USE_MPI

@@ -13,9 +13,9 @@ SUBROUTINE FFT_CHECK(check_mode, err_count,case_count, &
 
 #include "types.h"
 
-USE DNS_GLOBAL, ONLY   :  g, imax, jmax, kmax
+USE TLAB_VARS, ONLY   :  g, imax, jmax, kmax
 USE DNS_CONSTANTS, ONLY : lfile
-USE DNS_GLOBAL, ONLY   :  isize_txc_dimx, isize_txc_dimz 
+USE TLAB_VARS, ONLY   :  isize_txc_dimx, isize_txc_dimz 
 
 #ifdef USE_MPI 
 USE TLAB_MPI_VARS

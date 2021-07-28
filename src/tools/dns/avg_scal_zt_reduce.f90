@@ -31,10 +31,10 @@ MODULE AVG_SCAL_ZT
 #ifdef TRACE_ON
   USE DNS_CONSTANTS, ONLY : tfile
 #endif
-  USE DNS_GLOBAL, ONLY : isize_field, imax,jmax,kmax,inb_scal, isize_wrk2d, imode_eqns
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : nstatavg, statavg
-  USE DNS_GLOBAL, ONLY : itransport, visc
+  USE TLAB_VARS, ONLY : isize_field, imax,jmax,kmax,inb_scal, isize_wrk2d, imode_eqns
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : nstatavg, statavg
+  USE TLAB_VARS, ONLY : itransport, visc
 
   IMPLICIT NONE
   PRIVATE

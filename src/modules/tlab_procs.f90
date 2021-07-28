@@ -30,10 +30,10 @@ CONTAINS
   ! ###################################################################
   ! ###################################################################
   SUBROUTINE TLAB_ALLOCATE(C_FILE_LOC)
-    USE DNS_GLOBAL, ONLY : isize_field, inb_flow_array, inb_scal_array
-    USE DNS_GLOBAL, ONLY : isize_txc_field, inb_txc
-    USE DNS_GLOBAL, ONLY : isize_wrk1d, isize_wrk2d, isize_wrk3d, inb_wrk1d, inb_wrk2d
-    USE DNS_GLOBAL, ONLY : g
+    USE TLAB_VARS, ONLY : isize_field, inb_flow_array, inb_scal_array
+    USE TLAB_VARS, ONLY : isize_txc_field, inb_txc
+    USE TLAB_VARS, ONLY : isize_wrk1d, isize_wrk2d, isize_wrk3d, inb_wrk1d, inb_wrk2d
+    USE TLAB_VARS, ONLY : g
     USE TLAB_ARRAYS
     IMPLICIT NONE
 
@@ -122,8 +122,8 @@ CONTAINS
   ! ###################################################################
   ! ###################################################################
   SUBROUTINE TLAB_START()
-    USE DNS_GLOBAL, ONLY : imode_verbosity
-    USE DNS_GLOBAL, ONLY : dns_omp_numThreads
+    USE TLAB_VARS, ONLY : imode_verbosity
+    USE TLAB_VARS, ONLY : dns_omp_numThreads
     IMPLICIT NONE
 
     CHARACTER*10 clock(2)
@@ -197,8 +197,8 @@ CONTAINS
   ! ###################################################################
   ! ###################################################################
   SUBROUTINE TLAB_STOP(error_code)
-    USE DNS_GLOBAL, ONLY : g
-    USE DNS_GLOBAL, ONLY : ifourier, fft_plan_fx, fft_plan_bx, fft_plan_fz, fft_plan_bz
+    USE TLAB_VARS, ONLY : g
+    USE TLAB_VARS, ONLY : ifourier, fft_plan_fx, fft_plan_bx, fft_plan_fz, fft_plan_bz
     IMPLICIT NONE
 
     INTEGER, INTENT(IN) :: error_code
@@ -259,7 +259,7 @@ CONTAINS
   ! ###################################################################
   ! ###################################################################
   SUBROUTINE TLAB_WRITE_ASCII(file, line, flag_all)
-    USE DNS_GLOBAL, ONLY : imode_verbosity
+    USE TLAB_VARS, ONLY : imode_verbosity
     IMPLICIT NONE
 
     CHARACTER*(*),  INTENT(IN)            :: file, line

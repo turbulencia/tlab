@@ -15,9 +15,9 @@
 SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
 
   USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE DNS_GLOBAL,    ONLY : inb_flow_array, inb_scal_array
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_wrk2d
-  USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_part_array, inb_part_txc, inb_part
+  USE TLAB_VARS,    ONLY : inb_flow_array, inb_scal_array
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_wrk2d
+  USE TLAB_VARS,    ONLY : icalc_part, isize_particle, inb_part_array, inb_part_txc, inb_part
   USE TLAB_PROCS
   USE LAGRANGE_GLOBAL
 #ifdef USE_MPI

@@ -22,7 +22,7 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
      g, x_org,y_org,z_org, x_dst,y_dst,z_dst, u_org,u_dst, txc, isize_wrk3d, wrk3d)
 
   USE DNS_TYPES,  ONLY : grid_dt
-  USE DNS_GLOBAL, ONLY : isize_txc_field
+  USE TLAB_VARS, ONLY : isize_txc_field
 #ifdef USE_MPI
   USE DNS_CONSTANTS, ONLY : lfile
   USE TLAB_PROCS

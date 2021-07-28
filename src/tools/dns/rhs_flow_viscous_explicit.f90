@@ -21,9 +21,9 @@ SUBROUTINE RHS_FLOW_VISCOUS_EXPLICIT(vis, u,v,w,p, h1,h2,h3,h4, tmp1,tmp2,tmp3,t
 #ifdef TRACE_ON
   USE DNS_CONSTANTS, ONLY : tfile
 #endif
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : visc, mach
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : visc, mach
   USE THERMO_GLOBAL, ONLY : gama0
   USE BOUNDARY_BCS
 

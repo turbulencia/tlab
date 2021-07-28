@@ -34,7 +34,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 MODULE DNS_TOWER
 
-  USE DNS_GLOBAL, ONLY : inb_flow, inb_scal
+  USE TLAB_VARS, ONLY : inb_flow, inb_scal
   USE TLAB_PROCS
   
   TINTEGER tower_imax, tower_jmax,tower_kmax, tower_isize_field
@@ -63,11 +63,11 @@ CONTAINS
   SUBROUTINE DNS_TOWER_INITIALIZE(stride)
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    USE DNS_GLOBAL,ONLY : imax,jmax,kmax
+    USE TLAB_VARS,ONLY : imax,jmax,kmax
     USE DNS_LOCAL, ONLY : nitera_save
 
 #ifdef USE_MPI
-    USE DNS_GLOBAL,ONLY : g
+    USE TLAB_VARS,ONLY : g
     USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro
 #endif
 
@@ -213,8 +213,8 @@ CONTAINS
     USE TLAB_MPI_VARS, ONLY : ims_err
 #endif
 
-    USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-    USE DNS_GLOBAL, ONLY : itime,rtime
+    USE TLAB_VARS, ONLY : imax,jmax,kmax
+    USE TLAB_VARS, ONLY : itime,rtime
 
     IMPLICIT NONE
 
@@ -302,7 +302,7 @@ CONTAINS
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     USE DNS_LOCAL,     ONLY : nitera_save
-    USE DNS_GLOBAL,    ONLY : itime
+    USE TLAB_VARS,    ONLY : itime
     USE DNS_CONSTANTS, ONLY : wfile
 #ifdef USE_MPI
     USE TLAB_MPI_VARS,   ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro,ims_err
@@ -443,7 +443,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #include "types.h"
 
-    USE DNS_GLOBAL, ONLY : area, g
+    USE TLAB_VARS, ONLY : area, g
 
     IMPLICIT NONE
 

@@ -5,10 +5,10 @@
 SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL,    ONLY : rbg, pbg, tbg, sbg
-  USE DNS_GLOBAL,    ONLY : buoyancy
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax
+  USE TLAB_VARS,    ONLY : rbg, pbg, tbg, sbg
+  USE TLAB_VARS,    ONLY : buoyancy
   USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : imixture
 

@@ -2,8 +2,8 @@
 
 SUBROUTINE RAND_PSD(nx,ny,nz, u)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : isize_txc_dimz
+  USE TLAB_VARS, ONLY : g
   USE RAND_LOCAL, ONLY : ipdf, seed, ispectrum, spc_param
 #ifdef USE_MPI
   USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_offset_k

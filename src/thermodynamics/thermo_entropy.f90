@@ -25,7 +25,7 @@
 !########################################################################
 SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
 
-  USE DNS_GLOBAL, ONLY : pbg
+  USE TLAB_VARS, ONLY : pbg
 
   USE THERMO_GLOBAL, ONLY : imixture, gama0, GRATIO
   USE THERMO_GLOBAL, ONLY : NSP, NCP_CHEMKIN, WGHT_INV, THERMO_AI, THERMO_TLIM

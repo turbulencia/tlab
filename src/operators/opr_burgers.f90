@@ -164,7 +164,7 @@ END SUBROUTINE OPR_BURGERS_X
 SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
   USE DNS_TYPES, ONLY : grid_dt
-  USE DNS_GLOBAL, ONLY : subsidence
+  USE TLAB_VARS, ONLY : subsidence
   IMPLICIT NONE
 
   TINTEGER ivel, is, nx,ny,nz

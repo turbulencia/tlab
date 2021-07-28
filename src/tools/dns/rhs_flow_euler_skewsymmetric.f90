@@ -16,9 +16,9 @@ SUBROUTINE RHS_FLOW_EULER_SKEWSYMMETRIC(rho,u,v,w,p,e, z1, h0,h1,h2,h3,h4, zh1,&
   USE DNS_CONSTANTS, ONLY : tfile 
 #endif 
 
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, inb_scal, imode_eqns
-  USE DNS_GLOBAL,    ONLY : g, buoyancy
-  USE DNS_GLOBAL,    ONLY : mach
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field, inb_scal, imode_eqns
+  USE TLAB_VARS,    ONLY : g, buoyancy
+  USE TLAB_VARS,    ONLY : mach
   USE THERMO_GLOBAL, ONLY : gama0
 
   IMPLICIT NONE

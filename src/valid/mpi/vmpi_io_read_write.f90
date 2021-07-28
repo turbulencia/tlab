@@ -30,7 +30,7 @@ END MODULE DNS_GLOBAL
 PROGRAM VMPI_IO
 
   USE TLAB_MPI_VARS
-  USE DNS_GLOBAL
+  USE TLAB_VARS
 
   IMPLICIT NONE
 
@@ -154,7 +154,7 @@ END PROGRAM VMPI_IO
 
 SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk)
 
-  USE DNS_GLOBAL,ONLY : imax_total,jmax_total,kmax_total
+  USE TLAB_VARS,ONLY : imax_total,jmax_total,kmax_total
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif
@@ -288,7 +288,7 @@ END SUBROUTINE IO_READ_FIELDS_SPLIT
 
 SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk)
 
-  USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total
+  USE TLAB_VARS, ONLY : imax_total,jmax_total,kmax_total
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif

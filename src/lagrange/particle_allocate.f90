@@ -6,7 +6,7 @@ SUBROUTINE PARTICLE_ALLOCATE(C_FILE_LOC)
   USE DNS_CONSTANTS, ONLY : lfile, efile
   USE LAGRANGE_GLOBAL
   USE LAGRANGE_ARRAYS
-  USE DNS_GLOBAL, ONLY : isize_particle, inb_part_array, inb_part_txc
+  USE TLAB_VARS, ONLY : isize_particle, inb_part_array, inb_part_txc
   USE TLAB_PROCS
 
   IMPLICIT NONE
@@ -60,7 +60,7 @@ END SUBROUTINE PARTICLE_ALLOCATE
 ! ###################################################################
 ! ###################################################################
 SUBROUTINE PARTICLE_INITIALIZE()
-  USE DNS_GLOBAL, ONLY : g, sbg
+  USE TLAB_VARS, ONLY : g, sbg
   USE LAGRANGE_GLOBAL
   USE LAGRANGE_ARRAYS
   IMPLICIT NONE

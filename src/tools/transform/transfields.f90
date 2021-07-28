@@ -11,7 +11,7 @@ PROGRAM TRANSFIELDS
 
   USE DNS_TYPES,  ONLY : filter_dt, grid_dt
   USE DNS_CONSTANTS
-  USE DNS_GLOBAL
+  USE TLAB_VARS
   USE TLAB_ARRAYS
   USE TLAB_PROCS
 #ifdef USE_MPI
@@ -756,7 +756,7 @@ END SUBROUTINE TRANS_EXTEND
 SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL, ONLY : g, sbg, qbg
+  USE TLAB_VARS, ONLY : g, sbg, qbg
 
   IMPLICIT NONE
 
@@ -804,7 +804,7 @@ END SUBROUTINE TRANS_ADD_MEAN
 !########################################################################
 SUBROUTINE TRANS_FUNCTION(nx,ny,nz, a,b, txc)
 
-  USE DNS_GLOBAL, ONLY : inb_scal, epbackground
+  USE TLAB_VARS, ONLY : inb_scal, epbackground
   USE THERMO_GLOBAL, ONLY : imixture, MRATIO, GRATIO, dsmooth
   USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV
 

@@ -13,7 +13,7 @@
 PROGRAM VISUALS
 
   USE DNS_CONSTANTS
-  USE DNS_GLOBAL
+  USE TLAB_VARS
   USE TLAB_ARRAYS
   USE TLAB_PROCS
 #ifdef USE_MPI
@@ -910,8 +910,8 @@ END PROGRAM VISUALS
 !########################################################################
 SUBROUTINE VISUALS_FUNCTION1(nx,ny,nz, s,txc)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_field
-  USE DNS_GLOBAL, ONLY : epbackground, pbackground
+  USE TLAB_VARS, ONLY : isize_txc_field
+  USE TLAB_VARS, ONLY : epbackground, pbackground
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE

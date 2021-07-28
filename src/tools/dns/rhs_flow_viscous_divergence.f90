@@ -16,9 +16,9 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE(vis, u,v,w,p, h1,h2,h3,h4, tau_xx,tau_xy,
 #ifdef TRACE_ON 
   USE DNS_CONSTANTS, ONLY : tfile 
 #endif 
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, imode_eqns
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : visc, mach
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field, imode_eqns
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : visc, mach
   USE THERMO_GLOBAL, ONLY : gama0
   USE BOUNDARY_BCS
 

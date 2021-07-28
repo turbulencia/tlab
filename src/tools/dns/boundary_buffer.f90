@@ -20,12 +20,12 @@ MODULE BOUNDARY_BUFFER
   USE DNS_TYPES,     ONLY : filter_dt
 
   USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, wfile,lfile,efile, MAX_VARS
-  USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, isize_field
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : itime
-  USE DNS_GLOBAL,    ONLY : mach
-  USE DNS_GLOBAL,    ONLY : io_aux
+  USE TLAB_VARS,    ONLY : imode_eqns, imode_sim
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, isize_field
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : itime
+  USE TLAB_VARS,    ONLY : mach
+  USE TLAB_VARS,    ONLY : io_aux
   USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : gama0
 #ifdef USE_MPI

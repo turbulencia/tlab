@@ -19,9 +19,9 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d, inb_flow
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : visc
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d, inb_flow
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : visc
   USE DNS_LOCAL,  ONLY : idivergence
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS

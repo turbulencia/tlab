@@ -29,10 +29,10 @@ SUBROUTINE AVG_FLOW_ZT_REDUCE(q, hq,txc, mean1d, wrk2d,wrk3d)
 #ifdef TRACE_ON
   USE DNS_CONSTANTS, ONLY : tfile
 #endif
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_wrk2d, imode_eqns
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : itransport, visc
-  USE DNS_GLOBAL, ONLY : nstatavg, statavg, nstatavg_points
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_wrk2d, imode_eqns
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : itransport, visc
+  USE TLAB_VARS, ONLY : nstatavg, statavg, nstatavg_points
   USE TLAB_PROCS
 
   IMPLICIT NONE
@@ -3364,7 +3364,7 @@ SUBROUTINE AVG_TKE_ZT_REDUCE(rho, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, t
   ! # 10/12/2000 Juan Pedro Mellado
   ! ##############################################
 
-  USE DNS_GLOBAL
+  USE TLAB_VARS
 
   IMPLICIT NONE
 

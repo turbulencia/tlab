@@ -14,7 +14,7 @@
 !########################################################################
 PROGRAM SL_BOUNDARY
 
-  USE DNS_GLOBAL
+  USE TLAB_VARS
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
 #endif

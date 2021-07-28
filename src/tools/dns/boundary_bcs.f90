@@ -43,14 +43,14 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 #ifdef TRACE_ON
   USE DNS_CONSTANTS, ONLY : tfile
 #endif
-  USE DNS_GLOBAL,    ONLY : imode_eqns
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, inb_flow_array,inb_scal_array
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : mach, pbg, qbg
+  USE TLAB_VARS,    ONLY : imode_eqns
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, inb_flow_array,inb_scal_array
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : mach, pbg, qbg
   USE THERMO_GLOBAL, ONLY : gama0
   USE BOUNDARY_BUFFER
 #ifdef USE_MPI
-  USE DNS_GLOBAL,    ONLY : inb_scal_array
+  USE TLAB_VARS,    ONLY : inb_scal_array
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   USE TLAB_MPI_VARS, ONLY : ims_bcs_imax, ims_bcs_jmax

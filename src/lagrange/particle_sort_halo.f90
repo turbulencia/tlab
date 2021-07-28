@@ -9,12 +9,12 @@
 SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
 
   USE DNS_TYPES,      ONLY : pointers_dt
-  USE DNS_GLOBAL,     ONLY : isize_particle, inb_part_array
-  USE DNS_GLOBAL,     ONLY : g
+  USE TLAB_VARS,     ONLY : isize_particle, inb_part_array
+  USE TLAB_VARS,     ONLY : g
   USE LAGRANGE_GLOBAL,ONLY : particle_dt
 
 #ifdef USE_MPI
-  USE DNS_GLOBAL, ONLY : imax,kmax
+  USE TLAB_VARS, ONLY : imax,kmax
   USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_offset_k
 #endif
 

@@ -15,12 +15,12 @@ MODULE TIME
   USE OMP_LIB
 #endif
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_flow,inb_scal, inb_flow_array,inb_scal_array
-  USE DNS_GLOBAL, ONLY : icalc_flow,icalc_scal,icalc_part, imode_eqns
-  USE DNS_GLOBAL, ONLY : isize_particle, inb_part,inb_part_array
-  USE DNS_GLOBAL, ONLY : rtime, itime
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : itransport, visc, prandtl, schmidt
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, inb_flow,inb_scal, inb_flow_array,inb_scal_array
+  USE TLAB_VARS, ONLY : icalc_flow,icalc_scal,icalc_part, imode_eqns
+  USE TLAB_VARS, ONLY : isize_particle, inb_part,inb_part_array
+  USE TLAB_VARS, ONLY : rtime, itime
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : itransport, visc, prandtl, schmidt
   USE DNS_LOCAL,  ONLY : nitera_first, nitera_log, logs_data
   USE TLAB_PROCS
   USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange
@@ -607,7 +607,7 @@ CONTAINS
   !#
   !########################################################################
   SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT()
-    USE DNS_GLOBAL, ONLY : iadvection
+    USE TLAB_VARS, ONLY : iadvection
     USE TLAB_ARRAYS
     USE DNS_LOCAL, ONLY : imode_rhs
     USE DNS_ARRAYS
@@ -771,7 +771,7 @@ CONTAINS
   !########################################################################
   !########################################################################
   SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE()
-    USE DNS_GLOBAL, ONLY : iadvection, idiffusion, iviscous, mach
+    USE TLAB_VARS, ONLY : iadvection, idiffusion, iviscous, mach
     USE TLAB_ARRAYS
     USE DNS_ARRAYS
     USE THERMO_GLOBAL, ONLY : gama0

@@ -24,7 +24,7 @@ SUBROUTINE DNS_OMP_PARTITION(len, omp_srt, omp_end, omp_siz)
 #endif 
 
 #ifdef USE_OPENMP 
-  USE DNS_GLOBAL, ONLY : dns_omp_numThreads 
+  USE TLAB_VARS, ONLY : dns_omp_numThreads 
 #endif
 
   IMPLICIT NONE 

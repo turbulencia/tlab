@@ -5,10 +5,10 @@
 
 SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : isize_field,isize_txc_field, isize_wrk2d
-  USE DNS_GLOBAL, ONLY : itime
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : ifourier !, fft_reordering
+  USE TLAB_VARS, ONLY : isize_field,isize_txc_field, isize_wrk2d
+  USE TLAB_VARS, ONLY : itime
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : ifourier !, fft_reordering
   USE DNS_CONSTANTS, ONLY : lfile
   USE TLAB_PROCS
 #ifdef USE_MPI

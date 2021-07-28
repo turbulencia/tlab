@@ -16,9 +16,9 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
 #ifdef TRACE_ON 
   USE DNS_CONSTANTS, ONLY : tfile 
 #endif 
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : idiffusion, visc, prandtl, schmidt
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : idiffusion, visc, prandtl, schmidt
   USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
   USE BOUNDARY_BCS
 

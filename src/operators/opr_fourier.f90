@@ -15,9 +15,9 @@
 !########################################################################
 SUBROUTINE OPR_FOURIER_F(flag_mode, nx,ny,nz, in,out, tmp1,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_field, isize_txc_dimz, isize_wrk2d
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : fft_plan_fy
+  USE TLAB_VARS, ONLY : isize_txc_field, isize_txc_dimz, isize_wrk2d
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : fft_plan_fy
 
   IMPLICIT NONE
   
@@ -62,9 +62,9 @@ END SUBROUTINE OPR_FOURIER_F
 ! #######################################################################
 SUBROUTINE OPR_FOURIER_B(flag_mode, nx,ny,nz, in,out, wrk3d)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_field, isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : fft_plan_by
+  USE TLAB_VARS, ONLY : isize_txc_field, isize_txc_dimz
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : fft_plan_by
 
   IMPLICIT NONE
   
@@ -108,9 +108,9 @@ END SUBROUTINE OPR_FOURIER_B
 ! Calculate correlation in array in2
 SUBROUTINE OPR_FOURIER_CONVOLUTION_FXZ(flag1,flag2, nx,ny,nz, in1,in2, tmp1,tmp2, wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : fft_reordering
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : isize_txc_field, isize_wrk2d
+  USE TLAB_VARS, ONLY : fft_reordering
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : isize_txc_field, isize_wrk2d
 
   IMPLICIT NONE
   

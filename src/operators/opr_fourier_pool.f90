@@ -37,11 +37,11 @@
 SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
 
   USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL, ONLY : fft_plan_fx_bcs,fft_plan_fx,fft_plan_bx
-  USE DNS_GLOBAL, ONLY : fft_plan_fy,fft_plan_by
-  USE DNS_GLOBAL, ONLY : fft_plan_fz,fft_plan_bz
-  USE DNS_GLOBAL, ONLY : imax,jmax, isize_txc_field
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : fft_plan_fx_bcs,fft_plan_fx,fft_plan_bx
+  USE TLAB_VARS, ONLY : fft_plan_fy,fft_plan_by
+  USE TLAB_VARS, ONLY : fft_plan_fz,fft_plan_bz
+  USE TLAB_VARS, ONLY : imax,jmax, isize_txc_field
+  USE TLAB_VARS, ONLY : g
   USE TLAB_PROCS
 
 #ifdef USE_MPI
@@ -198,9 +198,9 @@ END SUBROUTINE OPR_FOURIER_INITIALIZE
 !########################################################################
 SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2)
 
-  USE DNS_GLOBAL, ONLY : fft_plan_fx, fft_plan_fx_bcs
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz, isize_txc_field
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : fft_plan_fx, fft_plan_fx_bcs
+  USE TLAB_VARS, ONLY : isize_txc_dimz, isize_txc_field
+  USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -308,10 +308,10 @@ END SUBROUTINE OPR_FOURIER_F_X_EXEC
 !########################################################################
 SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz, isize_txc_field
-  USE DNS_GLOBAL, ONLY : fft_plan_bx
+  USE TLAB_VARS, ONLY : isize_txc_dimz, isize_txc_field
+  USE TLAB_VARS, ONLY : fft_plan_bx
 #ifdef USE_MPI
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
   USE TLAB_MPI_PROCS
@@ -415,9 +415,9 @@ END SUBROUTINE OPR_FOURIER_B_X_EXEC
 !########################################################################
 SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
 
-  USE DNS_GLOBAL, ONLY : fft_plan_fz, fft_reordering
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz, isize_txc_field
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : fft_plan_fz, fft_reordering
+  USE TLAB_VARS, ONLY : isize_txc_dimz, isize_txc_field
+  USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
@@ -499,9 +499,9 @@ END SUBROUTINE OPR_FOURIER_F_Z_EXEC
 !########################################################################
 SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
 
-  USE DNS_GLOBAL, ONLY : fft_plan_bz, fft_reordering
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz, isize_txc_field
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : fft_plan_bz, fft_reordering
+  USE TLAB_VARS, ONLY : isize_txc_dimz, isize_txc_field
+  USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
@@ -583,7 +583,7 @@ END SUBROUTINE OPR_FOURIER_B_Z_EXEC
 !########################################################################
 ! SUBROUTINE OPR_FOURIER_B_Z_EXEC(nx,ny,nz, in,out)
 
-!   USE DNS_GLOBAL, ONLY : fft_plan_bz, isize_txc_dimz
+!   USE TLAB_VARS, ONLY : fft_plan_bz, isize_txc_dimz
 ! #ifdef USE_MPI
 !   USE TLAB_MPI_VARS,    ONLY : ims_npro_k, ims_err, ims_ts_k, ims_tr_k, ims_ds_k, ims_dr_k
 ! #endif
@@ -631,8 +631,8 @@ END SUBROUTINE OPR_FOURIER_B_Z_EXEC
 ! #######################################################################
 SUBROUTINE OPR_FOURIER_SPECTRA_3D(nx,ny,nz, isize_psd, u, psd, wrk1d)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : isize_txc_dimz
+  USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
   USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_offset_k, ims_pro, ims_err
 #endif

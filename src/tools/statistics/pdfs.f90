@@ -8,7 +8,7 @@ PROGRAM PDFS
 
   USE DNS_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : ifile,efile,lfile ,gfile, tag_flow,tag_scal
-  USE DNS_GLOBAL
+  USE TLAB_VARS
   USE TLAB_ARRAYS
   USE TLAB_PROCS
 #ifdef USE_MPI

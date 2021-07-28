@@ -22,11 +22,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
   USE DNS_CONSTANTS, ONLY : lfile,wfile,efile,tfile
   !
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imode_eqns
-  USE DNS_GLOBAL, ONLY : inb_flow,inb_scal,inb_scal_array
-  USE DNS_GLOBAL, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : rbackground, ribackground
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : imode_eqns
+  USE TLAB_VARS, ONLY : inb_flow,inb_scal,inb_scal_array
+  USE TLAB_VARS, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
+  USE TLAB_VARS, ONLY : rbackground, ribackground
   !
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS

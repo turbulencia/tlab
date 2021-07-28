@@ -5,10 +5,10 @@
 MODULE PLANES
 
   USE DNS_CONSTANTS, ONLY : lfile, efile
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal_array, inb_flow_array
-  USE DNS_GLOBAL, ONLY : rbackground, g
-  USE DNS_GLOBAL, ONLY : itime, rtime
-  USE DNS_GLOBAL, ONLY : io_aux
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal_array, inb_flow_array
+  USE TLAB_VARS, ONLY : rbackground, g
+  USE TLAB_VARS, ONLY : itime, rtime
+  USE TLAB_VARS, ONLY : io_aux
   USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : imixture
   USE DNS_LOCAL

@@ -22,8 +22,8 @@
 !########################################################################
 SUBROUTINE IO_WRITE_AVG_SPATIAL(name, mean_flow, mean_scal)
 
-  USE DNS_GLOBAL, ONLY : istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
-  USE DNS_GLOBAL, ONLY : itime, rtime, jmax, inb_scal
+  USE TLAB_VARS, ONLY : istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
+  USE TLAB_VARS, ONLY : itime, rtime, jmax, inb_scal
   USE DNS_CONSTANTS, ONLY : lfile
 
 #ifdef USE_MPI
@@ -135,8 +135,8 @@ END SUBROUTINE WRT_STHD
 
 SUBROUTINE IO_READ_AVG_SPATIAL(name,mean_flow,mean_scal)
 
-  USE DNS_GLOBAL, ONLY : istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
-  USE DNS_GLOBAL, ONLY : itime, rtime, jmax, inb_scal
+  USE TLAB_VARS, ONLY : istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
+  USE TLAB_VARS, ONLY : itime, rtime, jmax, inb_scal
   USE DNS_CONSTANTS, ONLY : lfile
   USE TLAB_PROCS
 

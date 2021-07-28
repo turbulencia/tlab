@@ -15,11 +15,11 @@ MODULE BOUNDARY_INFLOW
 #ifdef TRACE_ON
   USE DNS_CONSTANTS, ONLY : tfile
 #endif
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow, inb_scal, inb_flow_array,inb_scal_array, icalc_flow,icalc_scal
-  USE DNS_GLOBAL,    ONLY : imode_eqns, itransport
-  USE DNS_GLOBAL,    ONLY : g, qbg, epbackground, pbackground
-  USE DNS_GLOBAL,    ONLY : rtime,itime
-  USE DNS_GLOBAL,    ONLY : visc,damkohler
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow, inb_scal, inb_flow_array,inb_scal_array, icalc_flow,icalc_scal
+  USE TLAB_VARS,    ONLY : imode_eqns, itransport
+  USE TLAB_VARS,    ONLY : g, qbg, epbackground, pbackground
+  USE TLAB_VARS,    ONLY : rtime,itime
+  USE TLAB_VARS,    ONLY : visc,damkohler
   USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : imixture
 #ifdef USE_MPI

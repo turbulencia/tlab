@@ -11,11 +11,11 @@
 SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
 
   USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_GLOBAL, ONLY : inb_scal, inb_scal_array, imax,jmax,kmax, imode_eqns
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : pbg, sbg, damkohler,froude,schmidt
-  USE DNS_GLOBAL, ONLY : rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
-  USE DNS_GLOBAL, ONLY : buoyancy
+  USE TLAB_VARS, ONLY : inb_scal, inb_scal_array, imax,jmax,kmax, imode_eqns
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : pbg, sbg, damkohler,froude,schmidt
+  USE TLAB_VARS, ONLY : rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
+  USE TLAB_VARS, ONLY : buoyancy
   USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : imixture, GRATIO
 #ifdef USE_MPI

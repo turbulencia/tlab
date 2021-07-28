@@ -9,9 +9,9 @@
 !########################################################################
 SUBROUTINE RHS_FLOW_EULER_DIVERGENCE(rho,u,v,w,p,e, h0,h1,h2,h3,h4, tmp1,tmp2,tmp3,tmp4,tmp5, wrk2d,wrk3d)
 
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, imode_eqns
-  USE DNS_GLOBAL,    ONLY : g, buoyancy
-  USE DNS_GLOBAL,    ONLY : mach
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field, imode_eqns
+  USE TLAB_VARS,    ONLY : g, buoyancy
+  USE TLAB_VARS,    ONLY : mach
   USE THERMO_GLOBAL, ONLY : gama0
 
   IMPLICIT NONE

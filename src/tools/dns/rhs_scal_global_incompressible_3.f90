@@ -12,9 +12,9 @@
 SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3&
      (is, u,v,w,s,hs, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : idiffusion, visc, schmidt
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : idiffusion, visc, schmidt
 
   IMPLICIT NONE
 

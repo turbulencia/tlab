@@ -11,13 +11,13 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
   USE DNS_TYPES,     ONLY : MAX_MODES
   USE DNS_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
-  USE DNS_GLOBAL,    ONLY : pbg, rbg, damkohler
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_txc_field, isize_wrk1d,isize_wrk2d,isize_wrk3d
-  USE DNS_GLOBAL,    ONLY : inb_flow,inb_scal,inb_txc
-  USE DNS_GLOBAL,    ONLY : imode_sim, imode_eqns, iadvection, iviscous, icalc_part, itransport
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : FilterDomain
-  USE DNS_GLOBAL,    ONLY : nstatavg
+  USE TLAB_VARS,    ONLY : pbg, rbg, damkohler
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_txc_field, isize_wrk1d,isize_wrk2d,isize_wrk3d
+  USE TLAB_VARS,    ONLY : inb_flow,inb_scal,inb_txc
+  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, iadvection, iviscous, icalc_part, itransport
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : FilterDomain
+  USE TLAB_VARS,    ONLY : nstatavg
   USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : imixture
   USE LAGRANGE_GLOBAL,ONLY: inb_particle_interp

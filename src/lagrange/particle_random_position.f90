@@ -9,7 +9,7 @@ SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk3d)
   
   USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt 
   USE DNS_CONSTANTS
-  USE DNS_GLOBAL
+  USE TLAB_VARS
   USE LAGRANGE_GLOBAL, ONLY : particle_dt, particle_number_total
   USE LAGRANGE_GLOBAL, ONLY : particle_rnd_mode, y_particle_pos, y_particle_width, ilagrange
   USE THERMO_GLOBAL,   ONLY : imixture

@@ -342,8 +342,8 @@ END SUBROUTINE OPR_FILTER_Z
 !########################################################################
 SUBROUTINE OPR_FILTER_BAND_2D(nx,ny,nz, spc_param, a)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : isize_txc_dimz
+  USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
   USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -408,8 +408,8 @@ END SUBROUTINE OPR_FILTER_BAND_2D
 !########################################################################
 SUBROUTINE OPR_FILTER_ERF_2D(nx,ny,nz, spc_param, a)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : isize_txc_dimz
+  USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
   USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_offset_k
 #endif

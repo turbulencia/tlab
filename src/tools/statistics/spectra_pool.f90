@@ -9,7 +9,7 @@
 SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
      spec_2d, data_x,data_z,spec_r, tmp_x,tmp_z,wrk2d)
 
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
   USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
@@ -170,7 +170,7 @@ END SUBROUTINE INTEGRATE_SPECTRUM
 !########################################################################
 SUBROUTINE REDUCE_SPECTRUM(nx,ny,nz, nblock, in,out, tmp1,variance)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz
+  USE TLAB_VARS, ONLY : isize_txc_dimz
 
 ! need to know about domain decomposition in x b/o
 ! nyquist frequency and zero frequency account different for the variance
@@ -263,7 +263,7 @@ END SUBROUTINE REDUCE_SPECTRUM
 SUBROUTINE REDUCE_CORRELATION(nx,ny,nz, nblock, nr_total, &
      in, data_2d,data_x,data_z,data_r, variance1, variance2, icalc_radial)
 
-  USE DNS_GLOBAL, ONLY : isize_wrk1d
+  USE TLAB_VARS, ONLY : isize_wrk1d
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -432,8 +432,8 @@ END SUBROUTINE WRITE_SPECTRUM1D
 SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
 
   USE DNS_TYPES,  ONLY : subarray_dt
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : io_aux
+  USE TLAB_VARS, ONLY : imax,jmax,kmax
+  USE TLAB_VARS, ONLY : io_aux
   USE TLAB_MPI_VARS
 
   IMPLICIT NONE

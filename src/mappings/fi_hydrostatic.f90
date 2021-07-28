@@ -24,8 +24,8 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
 
   USE DNS_TYPES, ONLY : grid_dt
 
-  USE DNS_GLOBAL, ONLY : imode_eqns
-  USE DNS_GLOBAL, ONLY : pbg, damkohler, buoyancy
+  USE TLAB_VARS, ONLY : imode_eqns
+  USE TLAB_VARS, ONLY : pbg, damkohler, buoyancy
   USE THERMO_GLOBAL, ONLY : imixture
 
   IMPLICIT NONE

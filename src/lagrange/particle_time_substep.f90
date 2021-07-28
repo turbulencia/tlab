@@ -9,8 +9,8 @@
 !########################################################################
 SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )    
   
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : isize_particle, inb_part
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : isize_particle, inb_part
   USE LAGRANGE_GLOBAL, ONLY : isize_l_comm
   USE LAGRANGE_GLOBAL, ONLY : l_g
 #ifdef USE_MPI

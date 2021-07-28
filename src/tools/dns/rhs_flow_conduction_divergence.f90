@@ -18,9 +18,9 @@ SUBROUTINE RHS_FLOW_CONDUCTION_DIVERGENCE&
 #ifdef TRACE_ON 
   USE DNS_CONSTANTS, ONLY : tfile 
 #endif 
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : idiffusion, visc, prandtl
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : idiffusion, visc, prandtl
   USE THERMO_GLOBAL, ONLY : imixture
   USE BOUNDARY_BCS
 

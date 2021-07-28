@@ -19,7 +19,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
 
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE DNS_GLOBAL
+  USE TLAB_VARS
   USE THERMO_GLOBAL, ONLY : imixture, thermo_param
 #ifdef USE_MPI
   USE TLAB_MPI_VARS

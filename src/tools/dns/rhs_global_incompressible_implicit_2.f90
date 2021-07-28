@@ -31,11 +31,11 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   USE OMP_LIB
 #endif
   USE DNS_CONSTANTS,ONLY:efile
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : isize_field, isize_txc_field, isize_wrk1d,  inb_flow,inb_scal
-  USE DNS_GLOBAL, ONLY : icalc_scal
-  USE DNS_GLOBAL, ONLY : visc, schmidt
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : imax,jmax,kmax
+  USE TLAB_VARS, ONLY : isize_field, isize_txc_field, isize_wrk1d,  inb_flow,inb_scal
+  USE TLAB_VARS, ONLY : icalc_scal
+  USE TLAB_VARS, ONLY : visc, schmidt
   USE TLAB_PROCS
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
