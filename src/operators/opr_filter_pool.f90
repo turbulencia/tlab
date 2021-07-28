@@ -8,7 +8,7 @@
 ! ###################################################################
 SUBROUTINE OPR_FILTER_INITIALIZE(g, f, wrk1d)
 
-  USE DNS_TYPES, ONLY : grid_dt, filter_dt
+  USE TLAB_TYPES, ONLY : grid_dt, filter_dt
 
   IMPLICIT NONE
 
@@ -46,7 +46,7 @@ END SUBROUTINE OPR_FILTER_INITIALIZE
 ! ###################################################################
 SUBROUTINE OPR_FILTER_1D(nlines, f, u,result, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : filter_dt
+  USE TLAB_TYPES, ONLY : filter_dt
 
   IMPLICIT NONE
 
@@ -116,7 +116,7 @@ END SUBROUTINE OPR_FILTER_1D
 ! ###################################################################
 SUBROUTINE OPR_FILTER_X(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : filter_dt
+  USE TLAB_TYPES, ONLY : filter_dt
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -207,7 +207,7 @@ END SUBROUTINE OPR_FILTER_X
 ! ###################################################################
 SUBROUTINE OPR_FILTER_Y(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : filter_dt
+  USE TLAB_TYPES, ONLY : filter_dt
 
   IMPLICIT NONE
 
@@ -269,7 +269,7 @@ END SUBROUTINE OPR_FILTER_Y
 ! ###################################################################
 SUBROUTINE OPR_FILTER_Z(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : filter_dt
+  USE TLAB_TYPES, ONLY : filter_dt
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k

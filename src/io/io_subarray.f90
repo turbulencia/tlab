@@ -4,7 +4,7 @@
 
 SUBROUTINE IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, data, sizes, work)
 
-  USE DNS_TYPES,     ONLY : subarray_dt
+  USE TLAB_TYPES,     ONLY : subarray_dt
   USE DNS_CONSTANTS, ONLY : lfile
   USE TLAB_VARS,    ONLY : io_aux
   USE TLAB_PROCS
@@ -77,7 +77,7 @@ END SUBROUTINE IO_WRITE_SUBARRAY4
 !########################################################################
 SUBROUTINE IO_READ_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
 
-  USE DNS_TYPES,     ONLY : subarray_dt
+  USE TLAB_TYPES,     ONLY : subarray_dt
   USE DNS_CONSTANTS, ONLY : lfile
   USE TLAB_VARS,    ONLY : io_aux
   USE TLAB_PROCS
@@ -150,7 +150,7 @@ END SUBROUTINE IO_READ_SUBARRAY8
 !########################################################################
 SUBROUTINE IO_WRITE_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
 
-  USE DNS_TYPES,     ONLY : subarray_dt
+  USE TLAB_TYPES,     ONLY : subarray_dt
   USE DNS_CONSTANTS, ONLY : lfile
   USE TLAB_VARS,    ONLY : io_aux
   USE TLAB_PROCS

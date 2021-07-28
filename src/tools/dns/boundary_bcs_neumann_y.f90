@@ -25,7 +25,7 @@
 !########################################################################
 SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1,tmp2)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 
   IMPLICIT NONE
 

@@ -22,7 +22,7 @@
 !########################################################################
 SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 
   USE TLAB_VARS, ONLY : imode_eqns
   USE TLAB_VARS, ONLY : pbg, damkohler, buoyancy

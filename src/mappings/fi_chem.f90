@@ -3,7 +3,7 @@
 
 SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
 
-  USE DNS_TYPES,  ONLY : term_dt
+  USE TLAB_TYPES,  ONLY : term_dt
   USE TLAB_VARS, ONLY : sbg, damkohler
   USE TLAB_VARS, ONLY : g
 

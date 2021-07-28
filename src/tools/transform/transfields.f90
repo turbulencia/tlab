@@ -9,7 +9,7 @@
 
 PROGRAM TRANSFIELDS
 
-  USE DNS_TYPES,  ONLY : filter_dt, grid_dt
+  USE TLAB_TYPES,  ONLY : filter_dt, grid_dt
   USE DNS_CONSTANTS
   USE TLAB_VARS
   USE TLAB_ARRAYS

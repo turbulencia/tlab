@@ -9,8 +9,8 @@
 
 PROGRAM APRIORI
 
-  USE DNS_TYPES,  ONLY : pointers_dt
-  USE DNS_TYPES,  ONLY : filter_dt
+  USE TLAB_TYPES,  ONLY : pointers_dt
+  USE TLAB_TYPES,  ONLY : filter_dt
   USE DNS_CONSTANTS
   USE TLAB_VARS
   USE TLAB_ARRAYS

@@ -10,7 +10,7 @@
 !########################################################################
 SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, avg)
 
-  USE DNS_TYPES,     ONLY : pointers_dt
+  USE TLAB_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : efile, lfile
   USE TLAB_PROCS
 

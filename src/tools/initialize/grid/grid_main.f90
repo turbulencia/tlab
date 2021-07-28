@@ -3,7 +3,7 @@
 !# Grid generation tool. Origin is set always to (0,0,0)
 PROGRAM INIGRID
 
-  USE DNS_TYPES, ONLY     : grid_dt
+  USE TLAB_TYPES, ONLY     : grid_dt
   USE DNS_CONSTANTS, ONLY : gfile, ifile
   USE TLAB_PROCS
   USE GRID_LOCAL

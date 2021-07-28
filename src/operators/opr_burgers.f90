@@ -16,7 +16,7 @@
 !########################################################################
 SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 
-  USE DNS_TYPES,     ONLY : grid_dt
+  USE TLAB_TYPES,     ONLY : grid_dt
   USE DNS_CONSTANTS, ONLY : efile
   USE TLAB_PROCS
   IMPLICIT NONE
@@ -77,7 +77,7 @@ END SUBROUTINE OPR_BURGERS
 !########################################################################
 SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -163,7 +163,7 @@ END SUBROUTINE OPR_BURGERS_X
 !########################################################################
 SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
   USE TLAB_VARS, ONLY : subsidence
   IMPLICIT NONE
 
@@ -243,7 +243,7 @@ END SUBROUTINE OPR_BURGERS_Y
 !########################################################################
 SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
 USE TLAB_MPI_VARS, ONLY : ims_npro_k
 USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k

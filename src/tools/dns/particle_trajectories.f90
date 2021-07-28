@@ -114,7 +114,7 @@ END SUBROUTINE PARTICLE_TRAJECTORIES_INITIALIZE
 !#######################################################################
 SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : pointers_dt, pointers3d_dt
+  USE TLAB_TYPES, ONLY : pointers_dt, pointers3d_dt
   USE TLAB_VARS,ONLY : isize_field, imax,jmax,kmax
   USE TLAB_VARS,ONLY : rtime
 

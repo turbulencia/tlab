@@ -46,7 +46,7 @@ CONTAINS
 #ifdef TRACE_ON
     USE DNS_CONSTANTS, ONLY : tfile
 #endif
-    USE DNS_TYPES,     ONLY : pointers_dt
+    USE TLAB_TYPES,     ONLY : pointers_dt
     USE TLAB_VARS,    ONLY : g
     USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field, inb_scal_array
     USE TLAB_VARS,    ONLY : buoyancy, imode_eqns, icalc_scal

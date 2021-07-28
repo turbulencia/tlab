@@ -21,7 +21,7 @@
 !########################################################################
 SUBROUTINE FLT_E4_INI(scalez, z, f)
 
-  USE DNS_TYPES,  ONLY : filter_dt
+  USE TLAB_TYPES,  ONLY : filter_dt
 
   IMPLICIT NONE
 

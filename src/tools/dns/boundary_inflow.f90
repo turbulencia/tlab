@@ -10,7 +10,7 @@
 !########################################################################
 MODULE BOUNDARY_INFLOW
 
-  USE DNS_TYPES,     ONLY : filter_dt, grid_dt, discrete_dt
+  USE TLAB_TYPES,     ONLY : filter_dt, grid_dt, discrete_dt
   USE DNS_CONSTANTS, ONLY : efile, lfile
 #ifdef TRACE_ON
   USE DNS_CONSTANTS, ONLY : tfile

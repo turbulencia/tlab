@@ -2,7 +2,7 @@
 
 PROGRAM VPARTIAL2
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
   IMPLICIT NONE
 
 #include "integers.h"

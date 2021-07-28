@@ -1,7 +1,7 @@
 #include "types.h"
 
 MODULE DNS_LOCAL
-  USE DNS_TYPES,  ONLY : filter_dt, grid_dt
+  USE TLAB_TYPES,  ONLY : filter_dt, grid_dt
   USE TLAB_VARS, ONLY : MAX_NSP
 #ifdef USE_PSFFT
   USE NB3DFFT,    ONLY : NB3DFFT_SCHEDLTYPE

@@ -7,7 +7,7 @@
 
 PROGRAM AVERAGES
 
-  USE DNS_TYPES,     ONLY : pointers_dt
+  USE TLAB_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : ifile,efile,lfile,gfile, tag_flow,tag_scal,tag_part
   USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE TLAB_VARS

@@ -3,7 +3,7 @@
 
 MODULE FLOW_LOCAL
 
-  USE DNS_TYPES,  ONLY : background_dt, discrete_dt
+  USE TLAB_TYPES,  ONLY : background_dt, discrete_dt
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field
   USE TLAB_VARS, ONLY : g, qbg
 

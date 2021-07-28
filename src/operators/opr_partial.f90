@@ -3,7 +3,7 @@
 
 SUBROUTINE OPR_PARTIAL1(nlines, bcs, g, u,result, wrk2d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 
   IMPLICIT NONE
 
@@ -66,7 +66,7 @@ END SUBROUTINE OPR_PARTIAL1
 ! ###################################################################
 SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 
   IMPLICIT NONE
 
@@ -160,7 +160,7 @@ END SUBROUTINE OPR_PARTIAL2
 ! ###       diffusivity (is= 1,inb_scal)
 SUBROUTINE OPR_PARTIAL2D(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 
   IMPLICIT NONE
 
@@ -269,7 +269,7 @@ END SUBROUTINE OPR_PARTIAL2D
 !########################################################################
 SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -390,7 +390,7 @@ END SUBROUTINE OPR_PARTIAL_X
 !########################################################################
 SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
@@ -494,7 +494,7 @@ END SUBROUTINE OPR_PARTIAL_Z
 !########################################################################
 SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif

@@ -9,7 +9,7 @@
 !#######################################################################
 SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt
+  USE TLAB_TYPES,  ONLY : pointers_dt, pointers3d_dt
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_particle
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : visc, radiation

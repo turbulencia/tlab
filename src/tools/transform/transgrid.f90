@@ -2,7 +2,7 @@
 
 PROGRAM TRANSGRID
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
   IMPLICIT NONE
 
   TYPE(grid_dt), DIMENSION(3) :: g, g_ref
@@ -398,7 +398,7 @@ END SUBROUTINE TRANS_ADD_PLANES
 ! ###################################################################
 SUBROUTINE TRANS_DATA(name, grid, work1,work2)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
   IMPLICIT NONE
 
   TYPE(grid_dt) grid

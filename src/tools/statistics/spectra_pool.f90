@@ -431,7 +431,7 @@ END SUBROUTINE WRITE_SPECTRUM1D
 
 SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
 
-  USE DNS_TYPES,  ONLY : subarray_dt
+  USE TLAB_TYPES,  ONLY : subarray_dt
   USE TLAB_VARS, ONLY : imax,jmax,kmax
   USE TLAB_VARS, ONLY : io_aux
   USE TLAB_MPI_VARS

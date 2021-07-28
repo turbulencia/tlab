@@ -6,7 +6,7 @@
 #endif
 PROGRAM VHELMHOLTZ_FXZ
 
-  USE DNS_TYPES, ONLY : pointers_dt
+  USE TLAB_TYPES, ONLY : pointers_dt
   USE TLAB_VARS, ONLY : imax,jmax,kmax, inb_wrk1d,inb_wrk2d,isize_wrk1d,isize_wrk2d,gfile,isize_txc_field
   USE TLAB_PROCS
 #ifdef USE_MPI

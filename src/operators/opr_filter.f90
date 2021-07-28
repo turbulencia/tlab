@@ -3,7 +3,7 @@
 
 SUBROUTINE OPR_FILTER(nx,ny,nz, f, u, wrk1d,wrk2d,txc)
         
-  USE DNS_TYPES,  ONLY : filter_dt
+  USE TLAB_TYPES,  ONLY : filter_dt
   USE TLAB_VARS, ONLY : isize_txc_field, g
 #ifdef USE_MPI
   USE TLAB_MPI_VARS

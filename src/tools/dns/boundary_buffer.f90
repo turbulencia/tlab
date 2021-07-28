@@ -17,7 +17,7 @@
 !########################################################################
 MODULE BOUNDARY_BUFFER
 
-  USE DNS_TYPES,     ONLY : filter_dt
+  USE TLAB_TYPES,     ONLY : filter_dt
 
   USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, wfile,lfile,efile, MAX_VARS
   USE TLAB_VARS,    ONLY : imode_eqns, imode_sim

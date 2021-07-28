@@ -1268,7 +1268,7 @@ END SUBROUTINE THERMO_ANELASTIC_WEIGHT_SUBSTRACT
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_LWP(nx,ny,nz, g, r, ql, lwp, wrk1d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 
   IMPLICIT NONE
 

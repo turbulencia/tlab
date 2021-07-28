@@ -15,7 +15,7 @@
 !########################################################################
 SUBROUTINE PDF1V_N( fname, time, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, y, pdf, wrk1d )
 
-  USE DNS_TYPES,      ONLY : pointers_dt
+  USE TLAB_TYPES,      ONLY : pointers_dt
   USE DNS_CONSTANTS,  ONLY : lfile
   USE TLAB_PROCS
   USE PDFS

@@ -5,7 +5,7 @@
 
 SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, txc)
 
-  USE DNS_TYPES,  ONLY : subarray_dt
+  USE TLAB_TYPES,  ONLY : subarray_dt
   USE TLAB_VARS, ONLY : g, isize_txc_field
 #ifdef USE_MPI
   USE TLAB_MPI_VARS,    ONLY : ims_pro

@@ -6,7 +6,7 @@
 
 PROGRAM PDFS
 
-  USE DNS_TYPES,     ONLY : pointers_dt
+  USE TLAB_TYPES,     ONLY : pointers_dt
   USE DNS_CONSTANTS, ONLY : ifile,efile,lfile ,gfile, tag_flow,tag_scal
   USE TLAB_VARS
   USE TLAB_ARRAYS

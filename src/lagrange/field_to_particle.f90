@@ -11,7 +11,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
     (nvar, data_in, data_out, l_g,l_q,l_comm, wrk3d)
 
   USE DNS_CONSTANTS,  ONLY : efile, lfile
-  USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
+  USE TLAB_TYPES,      ONLY : pointers_dt, pointers3d_dt
   USE TLAB_VARS,     ONLY : imax,jmax,kmax, isize_particle
   USE TLAB_PROCS
   USE LAGRANGE_GLOBAL,ONLY : particle_dt, isize_l_comm, inb_particle_interp
@@ -105,7 +105,7 @@ END SUBROUTINE FIELD_TO_PARTICLE
 !#######################################################################
 SUBROUTINE PARTICLE_HALO_K(nvar, data, halo_field_k, buffer_send, buffer_recv)
 
-  USE DNS_TYPES,  ONLY : pointers3d_dt
+  USE TLAB_TYPES,  ONLY : pointers3d_dt
   USE TLAB_VARS, ONLY : imax,jmax,kmax
 
 #ifdef USE_MPI
@@ -170,7 +170,7 @@ END SUBROUTINE PARTICLE_HALO_K
 !#######################################################################
 SUBROUTINE PARTICLE_HALO_I(nvar, data, halo_field_i, halo_field_k, halo_field_ik, buffer_send, buffer_recv)
 
-  USE DNS_TYPES,      ONLY : pointers3d_dt
+  USE TLAB_TYPES,      ONLY : pointers3d_dt
   USE TLAB_VARS,     ONLY : imax,jmax,kmax
 
 #ifdef USE_MPI
@@ -245,7 +245,7 @@ END SUBROUTINE PARTICLE_HALO_I
 SUBROUTINE FIELD_TO_PARTICLE_INTERPOLATE &
      (iflag, nvar, data_in, data_out, l_q, grid_start, grid_end)
 
-  USE DNS_TYPES,      ONLY : pointers_dt, pointers3d_dt
+  USE TLAB_TYPES,      ONLY : pointers_dt, pointers3d_dt
   USE TLAB_VARS,     ONLY : isize_particle
   USE TLAB_VARS,     ONLY : g
   USE LAGRANGE_GLOBAL,ONLY : l_g
