@@ -11,7 +11,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
   USE TLAB_TYPES,      ONLY : pointers_dt
   USE TLAB_VARS,     ONLY : isize_particle, inb_part_array
   USE TLAB_VARS,     ONLY : g
-  USE LAGRANGE_GLOBAL,ONLY : particle_dt
+  USE LAGRANGE_VARS,ONLY : particle_dt
 
 #ifdef USE_MPI
   USE TLAB_VARS, ONLY : imax,kmax

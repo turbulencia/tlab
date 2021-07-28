@@ -16,7 +16,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
   USE TLAB_VARS,      ONLY : isize_particle, inb_part_array
   USE TLAB_VARS,      ONLY : g
   USE TLAB_PROCS
-  USE LAGRANGE_GLOBAL, ONLY : particle_dt, particle_number_total
+  USE LAGRANGE_VARS, ONLY : particle_dt, particle_number_total
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
 #endif
@@ -162,7 +162,7 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
   USE TLAB_CONSTANTS,   ONLY : lfile
   USE TLAB_VARS,      ONLY : isize_particle, inb_part_array
   USE TLAB_PROCS
-  USE LAGRANGE_GLOBAL, ONLY : particle_dt
+  USE LAGRANGE_VARS, ONLY : particle_dt
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
 #endif

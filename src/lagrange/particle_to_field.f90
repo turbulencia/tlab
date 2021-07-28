@@ -74,7 +74,7 @@ SUBROUTINE PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
   USE TLAB_VARS,     ONLY: imax,jmax,kmax
   USE TLAB_VARS,     ONLY: g
   USE TLAB_VARS,     ONLY: isize_particle
-  USE LAGRANGE_GLOBAL,ONLY: l_g
+  USE LAGRANGE_VARS,ONLY: l_g
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY: ims_offset_i, ims_offset_k
 #endif

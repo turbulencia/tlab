@@ -58,8 +58,8 @@ CONTAINS
     USE TLAB_ARRAYS
     USE DNS_ARRAYS
     USE THERMO_VARS, ONLY : imixture
-    USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange
-    USE LAGRANGE_GLOBAL, ONLY : icalc_part_pdf
+    USE LAGRANGE_VARS, ONLY : l_g, ilagrange
+    USE LAGRANGE_VARS, ONLY : icalc_part_pdf
     USE LAGRANGE_ARRAYS
 
     IMPLICIT NONE

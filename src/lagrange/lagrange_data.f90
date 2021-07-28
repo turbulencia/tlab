@@ -1,6 +1,6 @@
 #include "types.h"
 
-MODULE LAGRANGE_GLOBAL
+MODULE LAGRANGE_VARS
   IMPLICIT NONE
   SAVE
 
@@ -45,7 +45,7 @@ MODULE LAGRANGE_GLOBAL
   TREAL         :: lagrange_param(MAX_LAGPARAM)                 ! lagrange function parameters
   CHARACTER*32, DIMENSION(15) :: LAGRANGE_SPNAME             !Name of different lagrange species
 
-END MODULE LAGRANGE_GLOBAL
+END MODULE LAGRANGE_VARS
 
 MODULE LAGRANGE_ARRAYS
   IMPLICIT NONE
@@ -55,4 +55,4 @@ MODULE LAGRANGE_ARRAYS
   TREAL, ALLOCATABLE, PUBLIC :: l_q(:,:)      ! Lagrangian fields, flow vartiables
   TREAL, ALLOCATABLE, PUBLIC :: l_txc(:,:)    ! Temporary space for Lagrnagian fields
 
-END MODULE
+END MODULE LAGRANGE_ARRAYS

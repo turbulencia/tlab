@@ -20,7 +20,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE TLAB_VARS,    ONLY : nstatavg
   USE TLAB_PROCS
   USE THERMO_VARS, ONLY : imixture
-  USE LAGRANGE_GLOBAL,ONLY: inb_particle_interp
+  USE LAGRANGE_VARS,ONLY: inb_particle_interp
   USE DNS_LOCAL
   USE TIME,          ONLY : rkm_mode, dtime, cfla, cfld, cflr
   USE BOUNDARY_BUFFER

@@ -14,7 +14,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   USE TLAB_TYPES,      ONLY : pointers_dt, pointers3d_dt
   USE TLAB_VARS,     ONLY : imax,jmax,kmax, isize_particle
   USE TLAB_PROCS
-  USE LAGRANGE_GLOBAL,ONLY : particle_dt, isize_l_comm, inb_particle_interp
+  USE LAGRANGE_VARS,ONLY : particle_dt, isize_l_comm, inb_particle_interp
 #ifdef USE_MPI
   USE TLAB_MPI_VARS,        ONLY:  ims_err
 #endif
@@ -248,7 +248,7 @@ SUBROUTINE FIELD_TO_PARTICLE_INTERPOLATE &
   USE TLAB_TYPES,      ONLY : pointers_dt, pointers3d_dt
   USE TLAB_VARS,     ONLY : isize_particle
   USE TLAB_VARS,     ONLY : g
-  USE LAGRANGE_GLOBAL,ONLY : l_g
+  USE LAGRANGE_VARS,ONLY : l_g
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY: ims_offset_i, ims_offset_k
 #endif

@@ -8,8 +8,8 @@ MODULE PARTICLE_TRAJECTORIES
   USE TLAB_VARS,     ONLY : inb_flow_array, inb_scal_array
   USE TLAB_VARS,     ONLY : isize_particle
   USE TLAB_PROCS
-  USE LAGRANGE_GLOBAL,ONLY : particle_dt
-  USE LAGRANGE_GLOBAL,ONLY : isize_trajectory, inb_trajectory, isize_l_comm, itrajectory
+  USE LAGRANGE_VARS,ONLY : particle_dt
+  USE LAGRANGE_VARS,ONLY : isize_trajectory, inb_trajectory, isize_l_comm, itrajectory
 #ifdef USE_MPI
   USE TLAB_MPI_VARS,        ONLY : ims_pro, ims_err
 #endif

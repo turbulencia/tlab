@@ -19,7 +19,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_wrk2d
   USE TLAB_VARS,    ONLY : icalc_part, isize_particle, inb_part_array, inb_part_txc, inb_part
   USE TLAB_PROCS
-  USE LAGRANGE_GLOBAL
+  USE LAGRANGE_VARS
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro
 #endif

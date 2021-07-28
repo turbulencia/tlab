@@ -23,7 +23,7 @@ MODULE TIME
   USE TLAB_VARS, ONLY : itransport, visc, prandtl, schmidt
   USE DNS_LOCAL,  ONLY : nitera_first, nitera_log, logs_data
   USE TLAB_PROCS
-  USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange
+  USE LAGRANGE_VARS, ONLY : l_g, ilagrange
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif

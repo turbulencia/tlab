@@ -14,7 +14,7 @@
 SUBROUTINE PARTICLE_TIME_RESIDENCE(dtime, particle_number, l_q)
 
   USE TLAB_VARS,      ONLY : isize_particle, inb_part_array
-  USE LAGRANGE_GLOBAL, ONLY : l_y_lambda, l_y_base
+  USE LAGRANGE_VARS, ONLY : l_y_lambda, l_y_base
 
   IMPLICIT NONE
 
