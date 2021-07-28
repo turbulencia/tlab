@@ -205,8 +205,8 @@ SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
   USE TLAB_MPI_PROCS
-#endif
   USE, INTRINSIC :: ISO_C_binding, ONLY : c_f_pointer, c_loc
+#endif
 
   IMPLICIT NONE
 
@@ -229,9 +229,8 @@ SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2
 
 #ifdef USE_MPI
   TINTEGER i, id, iold, inew
-#endif
-
   TREAL, POINTER :: r_wrk1(:) => NULL(), r_wrk2(:) => NULL()
+#endif
 
   ! #######################################################################
   isize_line = nx/2+1; isize_page = isize_line*ny
@@ -315,8 +314,8 @@ SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
   USE TLAB_MPI_PROCS
-#endif
   USE, INTRINSIC :: ISO_C_binding, ONLY : c_f_pointer, c_loc
+#endif
 
   IMPLICIT NONE
 
@@ -334,12 +333,11 @@ SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
   ! -----------------------------------------------------------------------
 #ifdef USE_MPI
   TINTEGER i, k, ip, id, iold, inew, isize_page
+  TREAL, POINTER :: r_wrk(:) => NULL(), r_out(:) => NULL()
 #else
   TINTEGER k
 #endif
   TCOMPLEX, DIMENSION(:), POINTER :: p_tmp
-
-  TREAL, POINTER :: r_wrk(:) => NULL(), r_out(:) => NULL()
 
   !########################################################################
   ! Ox Parallel Decomposition
@@ -422,8 +420,8 @@ SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   USE TLAB_MPI_PROCS
-#endif
   USE, INTRINSIC :: ISO_C_binding, ONLY : c_f_pointer, c_loc
+#endif
 
   IMPLICIT NONE
 
@@ -441,9 +439,8 @@ SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
   TINTEGER k, k_old1, k_old2, k_new1, k_new2
 #ifdef USE_MPI
   TINTEGER id
-#endif
-
   TREAL, POINTER :: r_in(:) => NULL(), r_out(:) => NULL()
+#endif
 
   ! #######################################################################
   ! Forward complex FFT in z
@@ -506,8 +503,8 @@ SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   USE TLAB_MPI_PROCS
-#endif
   USE, INTRINSIC :: ISO_C_binding, ONLY : c_f_pointer, c_loc
+#endif
 
   IMPLICIT NONE
 
@@ -525,9 +522,8 @@ SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
   TINTEGER k, k_old1, k_old2, k_new1, k_new2
 #ifdef USE_MPI
   TINTEGER id
-#endif
-
   TREAL, POINTER :: r_in(:) => NULL(), r_out(:) => NULL()
+#endif
 
   ! #######################################################################
   ! Forward complex FFT in z
