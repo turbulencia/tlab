@@ -14,7 +14,7 @@ PROGRAM PDFS
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
 #endif
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE THERMO_VARS, ONLY : imixture
 
   IMPLICIT NONE
 

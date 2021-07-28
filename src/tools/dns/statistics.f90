@@ -57,7 +57,7 @@ CONTAINS
     USE TLAB_VARS,      ONLY : sbg, schmidt
     USE TLAB_ARRAYS
     USE DNS_ARRAYS
-    USE THERMO_GLOBAL, ONLY : imixture
+    USE THERMO_VARS, ONLY : imixture
     USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange
     USE LAGRANGE_GLOBAL, ONLY : icalc_part_pdf
     USE LAGRANGE_ARRAYS

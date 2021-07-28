@@ -19,7 +19,7 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE(vis, u,v,w,p, h1,h2,h3,h4, tau_xx,tau_xy,
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field, imode_eqns
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : visc, mach
-  USE THERMO_GLOBAL, ONLY : gama0
+  USE THERMO_VARS, ONLY : gama0
   USE BOUNDARY_BCS
 
   IMPLICIT NONE

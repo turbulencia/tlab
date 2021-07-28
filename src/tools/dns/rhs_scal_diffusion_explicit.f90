@@ -20,7 +20,7 @@ SUBROUTINE RHS_SCAL_DIFFUSION_EXPLICIT(is, vis, z1, T, zh1, h4, tmp1,tmp2,tmp3,t
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : idiffusion, visc,prandtl,schmidt
-  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
+  USE THERMO_VARS, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
 
   IMPLICIT NONE
 

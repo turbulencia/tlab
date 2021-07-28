@@ -21,7 +21,7 @@ MODULE BOUNDARY_INFLOW
   USE TLAB_VARS,    ONLY : rtime,itime
   USE TLAB_VARS,    ONLY : visc,damkohler
   USE TLAB_PROCS
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE THERMO_VARS, ONLY : imixture
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i

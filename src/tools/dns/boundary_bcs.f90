@@ -47,7 +47,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, inb_flow_array,inb_scal_array
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : mach, pbg, qbg
-  USE THERMO_GLOBAL, ONLY : gama0
+  USE THERMO_VARS, ONLY : gama0
   USE BOUNDARY_BUFFER
 #ifdef USE_MPI
   USE TLAB_VARS,    ONLY : inb_scal_array

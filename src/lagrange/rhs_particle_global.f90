@@ -14,7 +14,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : visc, radiation
   USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange, lagrange_param
-  USE THERMO_GLOBAL, ONLY : thermo_param
+  USE THERMO_VARS, ONLY : thermo_param
 
   IMPLICIT NONE
 #ifdef USE_MPI

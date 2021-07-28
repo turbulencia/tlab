@@ -23,8 +23,8 @@
 !########################################################################
 SUBROUTINE THERMO_THERMAL_TEMPERATURE(nx,ny,nz, s,p,rho, T)
 
-  USE THERMO_GLOBAL, ONLY : imixture, MRATIO
-  USE THERMO_GLOBAL, ONLY : NSP, WGHT_INV
+  USE THERMO_VARS, ONLY : imixture, MRATIO
+  USE THERMO_VARS, ONLY : NSP, WGHT_INV
 
   IMPLICIT NONE
 

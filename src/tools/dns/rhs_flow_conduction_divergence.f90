@@ -21,7 +21,7 @@ SUBROUTINE RHS_FLOW_CONDUCTION_DIVERGENCE&
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : idiffusion, visc, prandtl
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE THERMO_VARS, ONLY : imixture
   USE BOUNDARY_BCS
 
   IMPLICIT NONE

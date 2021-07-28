@@ -1,6 +1,6 @@
 #include "types.h"
 
-MODULE THERMO_GLOBAL
+MODULE THERMO_VARS
   USE TLAB_CONSTANTS, ONLY : MAX_NSP, MAX_PROF
 
   IMPLICIT NONE
@@ -35,10 +35,10 @@ MODULE THERMO_GLOBAL
   TINTEGER                         :: iuse_chemkin    ! If using chemkin data
   CHARACTER*128                    :: chemkin_file
 
-  TREAL                            :: WMEAN, dsmooth  ! Inifinitely fast 
+  TREAL                            :: WMEAN, dsmooth  ! Inifinitely fast
   TREAL, DIMENSION(MAX_NSP)        :: YMASS
 
   TINTEGER                         :: NPSAT           ! Vapor saturation pressure
-  TREAL                            :: THERMO_PSAT(MAX_SAT), NEWTONRAPHSON_ERROR 
+  TREAL                            :: THERMO_PSAT(MAX_SAT), NEWTONRAPHSON_ERROR
 
-END MODULE THERMO_GLOBAL
+END MODULE THERMO_VARS

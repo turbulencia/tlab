@@ -13,7 +13,7 @@ PROGRAM INIFLOW
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
 #endif
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE THERMO_VARS, ONLY : imixture
   USE FLOW_LOCAL
 #ifdef USE_CGLOC
   USE CG_GLOBAL, ONLY : cg_unif, cg_ord

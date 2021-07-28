@@ -16,7 +16,7 @@
 !########################################################################
 SUBROUTINE THERMO_READ_CHEMKIN(name)
 
-  USE THERMO_GLOBAL
+  USE THERMO_VARS
   USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_PROCS
 

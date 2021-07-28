@@ -23,7 +23,7 @@ SUBROUTINE PRESSURE_FLUCTUATION(u,v,w,rho,p,pprime, txc1,txc2,txc3,txc4, wrk1d,w
 
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_wrk1d
-  USE THERMO_GLOBAL, ONLY : gama0
+  USE THERMO_VARS, ONLY : gama0
   USE FLOW_LOCAL,    ONLY : norm_ini_p
 
   IMPLICIT NONE

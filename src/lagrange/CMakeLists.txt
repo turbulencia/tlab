@@ -9,4 +9,4 @@ list(REMOVE_ITEM sourcefiles ${to_remove})
 endif()
 
 add_library(lagrange STATIC ${sourcefiles})
-add_dependencies(lagrange modules)
+add_dependencies(lagrange thermodynamics modules)

@@ -17,7 +17,7 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
   USE TLAB_VARS, ONLY : rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
   USE TLAB_VARS, ONLY : buoyancy
   USE TLAB_PROCS
-  USE THERMO_GLOBAL, ONLY : imixture, GRATIO
+  USE THERMO_VARS, ONLY : imixture, GRATIO
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif

@@ -19,7 +19,7 @@
 !########################################################################
 SUBROUTINE THERMO_AIRWATER_RH(nx, ny, nz, z1, h, rho, T, dqldqt)
 
-  USE THERMO_GLOBAL, ONLY : GRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
+  USE THERMO_VARS, ONLY : GRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif

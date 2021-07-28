@@ -20,7 +20,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE TLAB_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_VARS
-  USE THERMO_GLOBAL, ONLY : imixture, thermo_param
+  USE THERMO_VARS, ONLY : imixture, thermo_param
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif

@@ -19,7 +19,7 @@ SUBROUTINE RHS_FLOW_EULER_SKEWSYMMETRIC(rho,u,v,w,p,e, z1, h0,h1,h2,h3,h4, zh1,&
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field, inb_scal, imode_eqns
   USE TLAB_VARS,    ONLY : g, buoyancy
   USE TLAB_VARS,    ONLY : mach
-  USE THERMO_GLOBAL, ONLY : gama0
+  USE THERMO_VARS, ONLY : gama0
 
   IMPLICIT NONE
 

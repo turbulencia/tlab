@@ -36,7 +36,7 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
   USE TLAB_VARS, ONLY : itime, rtime
   USE TLAB_VARS, ONLY : visc, froude, rossby, damkohler, prandtl, mach
   USE TLAB_VARS, ONLY : schmidt
-  USE THERMO_GLOBAL, ONLY : gama0
+  USE THERMO_VARS, ONLY : gama0
   USE TLAB_PROCS
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k

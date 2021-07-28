@@ -26,7 +26,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
 
   USE TLAB_VARS, ONLY : imode_eqns
   USE TLAB_VARS, ONLY : pbg, damkohler, buoyancy
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE THERMO_VARS, ONLY : imixture
 
   IMPLICIT NONE
 

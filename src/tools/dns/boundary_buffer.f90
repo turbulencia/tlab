@@ -27,7 +27,7 @@ MODULE BOUNDARY_BUFFER
   USE TLAB_VARS,    ONLY : mach
   USE TLAB_VARS,    ONLY : io_aux
   USE TLAB_PROCS
-  USE THERMO_GLOBAL, ONLY : gama0
+  USE THERMO_VARS, ONLY : gama0
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
   USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k

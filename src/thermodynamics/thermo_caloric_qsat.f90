@@ -20,7 +20,7 @@
 !########################################################################
 SUBROUTINE THERMO_CALORIC_QSAT(nx,ny,nz, e,rho, qsat, T)
 
-  USE THERMO_GLOBAL, ONLY : GRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT
+  USE THERMO_VARS, ONLY : GRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT
 
   IMPLICIT NONE
 

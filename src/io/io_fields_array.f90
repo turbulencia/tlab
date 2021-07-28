@@ -364,7 +364,7 @@ SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
 
   USE TLAB_VARS, ONLY : itime, rtime, visc, prandtl, schmidt ! header info
   USE TLAB_PROCS
-  USE THERMO_GLOBAL, ONLY : gama0
+  USE THERMO_VARS, ONLY : gama0
 #ifdef USE_MPI
   USE TLAB_MPI_VARS,   ONLY : ims_offset_k, ims_npro_i, ims_npro_k, ims_pro, ims_err
 #endif

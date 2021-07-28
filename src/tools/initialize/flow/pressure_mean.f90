@@ -10,7 +10,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
   USE TLAB_VARS,    ONLY : rbg, pbg, tbg, sbg
   USE TLAB_VARS,    ONLY : buoyancy
   USE TLAB_PROCS
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE THERMO_VARS, ONLY : imixture
 
   IMPLICIT NONE
 

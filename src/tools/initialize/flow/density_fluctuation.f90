@@ -13,7 +13,7 @@
 SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
 
   USE TLAB_VARS,    ONLY : rbg, tbg
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE THERMO_VARS, ONLY : imixture
   USE FLOW_LOCAL
 
   IMPLICIT NONE

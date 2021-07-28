@@ -26,7 +26,7 @@
 !########################################################################
 SUBROUTINE THERMO_AIRWATER_RP(nx, ny, nz, z1, p, rho, T, dqldqt)
 
-  USE THERMO_GLOBAL, ONLY : GRATIO, MRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
+  USE THERMO_VARS, ONLY : GRATIO, MRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
 
   IMPLICIT NONE
 

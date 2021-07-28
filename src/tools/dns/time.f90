@@ -337,7 +337,7 @@ CONTAINS
   !########################################################################
   SUBROUTINE TIME_COURANT(q, wrk3d)
 
-    USE THERMO_GLOBAL, ONLY : gama0
+    USE THERMO_VARS, ONLY : gama0
 #ifdef CHEMISTRY
     USE CHEM_GLOBAL, ONLY : TGFM
 #endif
@@ -774,7 +774,7 @@ CONTAINS
     USE TLAB_VARS, ONLY : iadvection, idiffusion, iviscous, mach
     USE TLAB_ARRAYS
     USE DNS_ARRAYS
-    USE THERMO_GLOBAL, ONLY : gama0
+    USE THERMO_VARS, ONLY : gama0
     USE BOUNDARY_BUFFER
     USE BOUNDARY_BCS
 

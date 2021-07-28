@@ -42,7 +42,7 @@ PROGRAM SPECTRA
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   USE TLAB_MPI_PROCS
 #endif
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE THERMO_VARS, ONLY : imixture
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif

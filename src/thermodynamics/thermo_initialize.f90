@@ -50,7 +50,7 @@
 !########################################################################
 SUBROUTINE THERMO_INITIALIZE
 
-  USE THERMO_GLOBAL
+  USE THERMO_VARS
 
   USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_VARS,    ONLY : inb_scal, inb_scal_array
