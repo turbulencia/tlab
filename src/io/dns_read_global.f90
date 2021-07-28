@@ -14,7 +14,7 @@
 !########################################################################
 SUBROUTINE DNS_READ_GLOBAL(inifile)
 
-  USE DNS_CONSTANTS, ONLY : lfile, efile, wfile, MajorVersion, MinorVersion
+  USE TLAB_CONSTANTS, ONLY : lfile, efile, wfile, MajorVersion, MinorVersion
   USE TLAB_VARS
   USE TLAB_PROCS
   USE THERMO_GLOBAL

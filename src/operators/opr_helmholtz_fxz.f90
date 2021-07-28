@@ -37,7 +37,7 @@
 SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, ibc, alpha,&
      a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_TYPES,     ONLY : grid_dt
   USE TLAB_VARS,    ONLY : isize_txc_dimz
   USE TLAB_PROCS
@@ -151,7 +151,7 @@ END SUBROUTINE OPR_HELMHOLTZ_FXZ
 SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, g, ibc, alpha,&
      a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_TYPES,     ONLY : grid_dt
   USE TLAB_VARS,    ONLY : isize_field, isize_txc_dimz
   USE TLAB_PROCS
@@ -281,7 +281,7 @@ END SUBROUTINE OPR_HELMHOLTZ_FXZ_2
 SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
      a, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_TYPES,     ONLY : pointers_dt
   USE TLAB_VARS,    ONLY : isize_txc_dimz
   USE TLAB_VARS,    ONLY : g

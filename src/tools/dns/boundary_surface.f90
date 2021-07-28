@@ -7,9 +7,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS,ONLY : tfile
+  USE TLAB_CONSTANTS,ONLY : tfile
 #endif
-  USE DNS_CONSTANTS,ONLY : lfile
+  USE TLAB_CONSTANTS,ONLY : lfile
   USE TLAB_VARS,   ONLY : imax,jmax,kmax, g
   USE TLAB_VARS,   ONLY : isize_field,isize_wrk1d 
   USE TLAB_VARS,   ONLY : visc,schmidt

@@ -3,7 +3,7 @@
 
 MODULE RAND_LOCAL
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
   USE TLAB_VARS, ONLY : g
   USE TLAB_PROCS

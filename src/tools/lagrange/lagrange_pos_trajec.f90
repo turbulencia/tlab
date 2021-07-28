@@ -31,7 +31,7 @@
 !########################################################################
 PROGRAM LAGRANGE_POS_TRAJEC
 
-  USE DNS_CONSTANTS
+  USE TLAB_CONSTANTS
   USE TLAB_VARS
   USE TLAB_PROCS
 #ifdef USE_MPI

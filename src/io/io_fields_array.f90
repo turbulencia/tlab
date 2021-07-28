@@ -662,7 +662,7 @@ END SUBROUTINE IO_WRITE_FIELDS_ARRAY
 SUBROUTINE HEADER_READ_FLOW(unit, irec, itime, rtime, dt, imax,jmax,kmax, &
      visc, gama, prandtl, dummy1, dummy2)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_PROCS
 
   IMPLICIT NONE
@@ -832,7 +832,7 @@ END SUBROUTINE HEADER_WRITE_FLOW
 !########################################################################
 SUBROUTINE HEADER_READ_SCAL(unit, irec, jiter, rtime, imax, jmax, kmax, schmidt, inbsc)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_PROCS
 
   IMPLICIT NONE

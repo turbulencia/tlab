@@ -25,7 +25,7 @@
 !########################################################################
 SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z, area)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_PROCS
 
   IMPLICIT NONE

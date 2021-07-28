@@ -4,7 +4,7 @@
 
 SUBROUTINE FLOW_READ_LOCAL(inifile)
 
-  USE DNS_CONSTANTS, ONLY : efile, lfile, wfile
+  USE TLAB_CONSTANTS, ONLY : efile, lfile, wfile
   USE TLAB_VARS,    ONLY : qbg
   USE TLAB_PROCS
   USE TLAB_TYPES,     ONLY : MAX_MODES

@@ -24,7 +24,7 @@ SUBROUTINE IO_WRITE_AVG_SPATIAL(name, mean_flow, mean_scal)
 
   USE TLAB_VARS, ONLY : istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
   USE TLAB_VARS, ONLY : itime, rtime, jmax, inb_scal
-  USE DNS_CONSTANTS, ONLY : lfile
+  USE TLAB_CONSTANTS, ONLY : lfile
 
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_pro
@@ -137,7 +137,7 @@ SUBROUTINE IO_READ_AVG_SPATIAL(name,mean_flow,mean_scal)
 
   USE TLAB_VARS, ONLY : istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
   USE TLAB_VARS, ONLY : itime, rtime, jmax, inb_scal
-  USE DNS_CONSTANTS, ONLY : lfile
+  USE TLAB_CONSTANTS, ONLY : lfile
   USE TLAB_PROCS
 
 #ifdef USE_MPI
@@ -216,7 +216,7 @@ END SUBROUTINE IO_READ_AVG_SPATIAL
 SUBROUTINE RD_STHD(unit, irec, iter, rtime, iterorg, rtimeorg,&
      nstatavg, jmax, nstat, nstatavg_points, statavg)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_PROCS
 
   IMPLICIT NONE

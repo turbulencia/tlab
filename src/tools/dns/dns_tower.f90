@@ -303,7 +303,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     USE DNS_LOCAL,     ONLY : nitera_save
     USE TLAB_VARS,    ONLY : itime
-    USE DNS_CONSTANTS, ONLY : wfile
+    USE TLAB_CONSTANTS, ONLY : wfile
 #ifdef USE_MPI
     USE TLAB_MPI_VARS,   ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro,ims_err
 #endif

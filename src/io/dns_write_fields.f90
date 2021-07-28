@@ -32,7 +32,7 @@
 SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
 
   USE TLAB_VARS, ONLY : imode_files, imode_eqns
-  USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_VARS, ONLY : itime, rtime
   USE TLAB_VARS, ONLY : visc, froude, rossby, damkohler, prandtl, mach
   USE TLAB_VARS, ONLY : schmidt

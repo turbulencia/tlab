@@ -13,7 +13,7 @@
 SUBROUTINE RHS_FLOW_EULER_SKEWSYMMETRIC(rho,u,v,w,p,e, z1, h0,h1,h2,h3,h4, zh1,&
      tmp1,tmp2,tmp3,tmp4,tmp5, wrk2d,wrk3d)
 #ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
+  USE TLAB_CONSTANTS, ONLY : tfile 
 #endif 
 
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field, inb_scal, imode_eqns

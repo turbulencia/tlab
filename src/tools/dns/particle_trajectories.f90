@@ -4,7 +4,7 @@
 
 MODULE PARTICLE_TRAJECTORIES
 
-  USE DNS_CONSTANTS,  ONLY : efile, lfile
+  USE TLAB_CONSTANTS,  ONLY : efile, lfile
   USE TLAB_VARS,     ONLY : inb_flow_array, inb_scal_array
   USE TLAB_VARS,     ONLY : isize_particle
   USE TLAB_PROCS

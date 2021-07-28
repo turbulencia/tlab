@@ -8,8 +8,8 @@
 PROGRAM AVERAGES
 
   USE TLAB_TYPES,     ONLY : pointers_dt
-  USE DNS_CONSTANTS, ONLY : ifile,efile,lfile,gfile, tag_flow,tag_scal,tag_part
-  USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
+  USE TLAB_CONSTANTS, ONLY : ifile,efile,lfile,gfile, tag_flow,tag_scal,tag_part
+  USE TLAB_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE TLAB_VARS
   USE TLAB_ARRAYS
   USE TLAB_PROCS

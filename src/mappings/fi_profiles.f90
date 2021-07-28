@@ -10,7 +10,7 @@
 !########################################################################
 SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
 
-  USE DNS_CONSTANTS, ONLY : lfile
+  USE TLAB_CONSTANTS, ONLY : lfile
   USE TLAB_VARS, ONLY : inb_scal, inb_scal_array, imax,jmax,kmax, imode_eqns
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : pbg, sbg, damkohler,froude,schmidt

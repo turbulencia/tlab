@@ -14,7 +14,7 @@ SUBROUTINE FFT_CHECK(check_mode, err_count,case_count, &
 #include "types.h"
 
 USE TLAB_VARS, ONLY   :  g, imax, jmax, kmax
-USE DNS_CONSTANTS, ONLY : lfile
+USE TLAB_CONSTANTS, ONLY : lfile
 USE TLAB_VARS, ONLY   :  isize_txc_dimx, isize_txc_dimz 
 
 #ifdef USE_MPI 

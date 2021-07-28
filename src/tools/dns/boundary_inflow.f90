@@ -11,9 +11,9 @@
 MODULE BOUNDARY_INFLOW
 
   USE TLAB_TYPES,     ONLY : filter_dt, grid_dt, discrete_dt
-  USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_CONSTANTS, ONLY : efile, lfile
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS, ONLY : tfile
+  USE TLAB_CONSTANTS, ONLY : tfile
 #endif
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow, inb_scal, inb_flow_array,inb_scal_array, icalc_flow,icalc_scal
   USE TLAB_VARS,    ONLY : imode_eqns, itransport

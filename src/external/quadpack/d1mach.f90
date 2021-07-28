@@ -1,7 +1,7 @@
       FUNCTION D1MACH(I)
 
 #include "types.h"
-        USE DNS_CONSTANTS, ONLY : efile
+        USE TLAB_CONSTANTS, ONLY : efile
 
       TREAL D1MACH
       TINTEGER I

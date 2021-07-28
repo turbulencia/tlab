@@ -25,7 +25,7 @@
 !########################################################################
 SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : imode_sim, inb_scal, imax,jmax,kmax
   USE TLAB_VARS,    ONLY : rbg, tbg, sbg, qbg

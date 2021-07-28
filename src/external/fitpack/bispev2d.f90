@@ -3,7 +3,7 @@
 #include "types.h"
 #include "dns_error.h"
 
-        USE DNS_CONSTANTS, ONLY : efile
+        USE TLAB_CONSTANTS, ONLY : efile
 
       IMPLICIT NONE
 

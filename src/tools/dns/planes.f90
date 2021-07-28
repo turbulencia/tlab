@@ -4,7 +4,7 @@
 
 MODULE PLANES
 
-  USE DNS_CONSTANTS, ONLY : lfile, efile
+  USE TLAB_CONSTANTS, ONLY : lfile, efile
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal_array, inb_flow_array
   USE TLAB_VARS, ONLY : rbackground, g
   USE TLAB_VARS, ONLY : itime, rtime

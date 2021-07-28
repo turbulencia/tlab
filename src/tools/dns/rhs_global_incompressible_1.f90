@@ -22,7 +22,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE OMP_LIB
 #endif
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS,ONLY:tfile
+  USE TLAB_CONSTANTS,ONLY:tfile
 #endif
   USE TLAB_VARS, ONLY : imode_eqns
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d

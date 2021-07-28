@@ -14,7 +14,7 @@
 SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
      (is, vis, z1, T, zh1, diff_x,diff_y,diff_z, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 #ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
+  USE TLAB_CONSTANTS, ONLY : tfile 
 #endif 
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
   USE TLAB_VARS,    ONLY : g

@@ -27,9 +27,9 @@
 
 MODULE AVG_SCAL_ZT
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS, ONLY : tfile
+  USE TLAB_CONSTANTS, ONLY : tfile
 #endif
   USE TLAB_VARS, ONLY : isize_field, imax,jmax,kmax,inb_scal, isize_wrk2d, imode_eqns
   USE TLAB_VARS, ONLY : g

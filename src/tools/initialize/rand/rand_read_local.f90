@@ -3,7 +3,7 @@
 
 SUBROUTINE RAND_READ_LOCAL(inifile)
 
-  USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_PROCS
   USE RAND_LOCAL
 

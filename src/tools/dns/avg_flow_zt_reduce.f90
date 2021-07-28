@@ -25,9 +25,9 @@
 ! #####################################################
 SUBROUTINE AVG_FLOW_ZT_REDUCE(q, hq,txc, mean1d, wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS, ONLY : tfile
+  USE TLAB_CONSTANTS, ONLY : tfile
 #endif
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_wrk2d, imode_eqns
   USE TLAB_VARS, ONLY : g

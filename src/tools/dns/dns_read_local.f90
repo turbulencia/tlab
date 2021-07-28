@@ -10,7 +10,7 @@
 SUBROUTINE DNS_READ_LOCAL(inifile)
 
   USE TLAB_TYPES,     ONLY : MAX_MODES
-  USE DNS_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
+  USE TLAB_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
   USE TLAB_VARS,    ONLY : pbg, rbg, damkohler
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_txc_field, isize_wrk1d,isize_wrk2d,isize_wrk3d
   USE TLAB_VARS,    ONLY : inb_flow,inb_scal,inb_txc

@@ -36,7 +36,7 @@
 !########################################################################
 SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_VARS, ONLY : fft_plan_fx_bcs,fft_plan_fx,fft_plan_bx
   USE TLAB_VARS, ONLY : fft_plan_fy,fft_plan_by
   USE TLAB_VARS, ONLY : fft_plan_fz,fft_plan_bz

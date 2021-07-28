@@ -3,7 +3,7 @@
 #include "dns_error.h"
 
 MODULE TLAB_PROCS
-  USE DNS_CONSTANTS, ONLY : lfile, efile
+  USE TLAB_CONSTANTS, ONLY : lfile, efile
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif

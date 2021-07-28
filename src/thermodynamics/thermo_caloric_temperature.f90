@@ -26,7 +26,7 @@
 !########################################################################
 SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s,e,rho, T, wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : imixture, gama0, GRATIO
   USE THERMO_GLOBAL, ONLY : NSP, NCP_CHEMKIN, WGHT_INV, THERMO_AI

@@ -4,7 +4,7 @@
 
 SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : imax,jmax,kmax
   USE TLAB_VARS,    ONLY : rbg, pbg, tbg, sbg

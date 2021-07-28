@@ -5,7 +5,7 @@
 
 MODULE BOUNDARY_BCS
 
-  USE DNS_CONSTANTS, ONLY : MAX_VARS
+  USE TLAB_CONSTANTS, ONLY : MAX_VARS
   USE TLAB_PROCS
 
   IMPLICIT NONE
@@ -39,9 +39,9 @@ CONTAINS
 ! ###################################################################
 SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
+  USE TLAB_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS, ONLY : tfile
+  USE TLAB_CONSTANTS, ONLY : tfile
 #endif
   USE TLAB_VARS,    ONLY : imode_eqns
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, inb_flow_array,inb_scal_array

@@ -19,7 +19,7 @@ MODULE BOUNDARY_BUFFER
 
   USE TLAB_TYPES,     ONLY : filter_dt
 
-  USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, wfile,lfile,efile, MAX_VARS
+  USE TLAB_CONSTANTS, ONLY : tag_flow,tag_scal, wfile,lfile,efile, MAX_VARS
   USE TLAB_VARS,    ONLY : imode_eqns, imode_sim
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, isize_field
   USE TLAB_VARS,    ONLY : g

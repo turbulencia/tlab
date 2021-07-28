@@ -24,7 +24,7 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
   USE TLAB_TYPES,  ONLY : grid_dt
   USE TLAB_VARS, ONLY : isize_txc_field
 #ifdef USE_MPI
-  USE DNS_CONSTANTS, ONLY : lfile
+  USE TLAB_CONSTANTS, ONLY : lfile
   USE TLAB_PROCS
   USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i

@@ -31,7 +31,7 @@
 SUBROUTINE BOUNDARY_BCS_TRANSVERSE_Y(u,v,w,p,r,gamma,z1, &
      tmin,lmin,tmax,lmax, tmp1,ddx,ddz, wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow, inb_scal_array
   USE TLAB_VARS,    ONLY : buoyancy

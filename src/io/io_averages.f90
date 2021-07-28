@@ -8,7 +8,7 @@
 !########################################################################
 SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, ny,nv,ng, y, varnames, groupnames, avg )
 
-  USE DNS_CONSTANTS, ONLY : lfile,efile
+  USE TLAB_CONSTANTS, ONLY : lfile,efile
   USE TLAB_PROCS
 #ifdef USE_NETCDF
   USE NETCDF
@@ -132,7 +132,7 @@ END SUBROUTINE IO_WRITE_AVERAGES
 ! ###################################################################
 #ifdef USE_NETCDF
 SUBROUTINE NC_CHECK( status )
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_PROCS
   USE NETCDF
 

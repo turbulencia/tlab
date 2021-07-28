@@ -14,7 +14,7 @@ MODULE TIME
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, inb_flow,inb_scal, inb_flow_array,inb_scal_array
   USE TLAB_VARS, ONLY : icalc_flow,icalc_scal,icalc_part, imode_eqns
   USE TLAB_VARS, ONLY : isize_particle, inb_part,inb_part_array

@@ -10,7 +10,7 @@
 PROGRAM TRANSFIELDS
 
   USE TLAB_TYPES,  ONLY : filter_dt, grid_dt
-  USE DNS_CONSTANTS
+  USE TLAB_CONSTANTS
   USE TLAB_VARS
   USE TLAB_ARRAYS
   USE TLAB_PROCS
@@ -755,7 +755,7 @@ END SUBROUTINE TRANS_EXTEND
 !########################################################################
 SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_VARS, ONLY : g, sbg, qbg
 
   IMPLICIT NONE

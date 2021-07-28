@@ -11,7 +11,7 @@
 SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, avg)
 
   USE TLAB_TYPES,     ONLY : pointers_dt
-  USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_PROCS
 
   IMPLICIT NONE
@@ -108,7 +108,7 @@ END SUBROUTINE RAW_TO_CENTRAL
 !########################################################################
 SUBROUTINE INTER_N_XZ(fname, itime,rtime, nx,ny,nz, np, parname, gate, y, inter)
 
-  USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_PROCS
 
   IMPLICIT NONE

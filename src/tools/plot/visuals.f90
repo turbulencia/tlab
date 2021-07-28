@@ -12,7 +12,7 @@
 !########################################################################
 PROGRAM VISUALS
 
-  USE DNS_CONSTANTS
+  USE TLAB_CONSTANTS
   USE TLAB_VARS
   USE TLAB_ARRAYS
   USE TLAB_PROCS

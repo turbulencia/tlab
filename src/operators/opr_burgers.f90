@@ -17,7 +17,7 @@
 SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 
   USE TLAB_TYPES,     ONLY : grid_dt
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_PROCS
   IMPLICIT NONE
 

@@ -4,7 +4,7 @@
 PROGRAM INIGRID
 
   USE TLAB_TYPES, ONLY     : grid_dt
-  USE DNS_CONSTANTS, ONLY : gfile, ifile
+  USE TLAB_CONSTANTS, ONLY : gfile, ifile
   USE TLAB_PROCS
   USE GRID_LOCAL
 #ifdef USE_MPI

@@ -24,7 +24,7 @@
 SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
      h0,h1,h2,h3,h4,zh1, tmp1,tmp2,tmp3,tmp4,tmp5, aux2d, wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS
+  USE TLAB_CONSTANTS
   USE TLAB_VARS
   USE TLAB_PROCS
   USE THERMO_GLOBAL, ONLY : imixture, gama0, THERMO_AI

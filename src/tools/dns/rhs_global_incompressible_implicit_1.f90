@@ -26,7 +26,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE DNS_CONSTANTS,ONLY: efile
+  USE TLAB_CONSTANTS,ONLY: efile
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imax,jmax,kmax
   USE TLAB_VARS, ONLY : isize_field, isize_txc_field, isize_wrk1d, inb_scal, inb_flow

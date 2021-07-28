@@ -378,7 +378,7 @@ END SUBROUTINE RADIAL_SAMPLESIZE
 !########################################################################
 SUBROUTINE WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
 
-  USE DNS_CONSTANTS, ONLY : lfile
+  USE TLAB_CONSTANTS, ONLY : lfile
   USE TLAB_PROCS
 #ifdef USE_MPI
   USE TLAB_MPI_VARS,    ONLY : ims_pro

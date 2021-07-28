@@ -20,7 +20,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
   USE OMP_LIB,    ONLY : omp_get_thread_num
 
-  USE DNS_CONSTANTS, ONLY : lfile,wfile,efile,tfile
+  USE TLAB_CONSTANTS, ONLY : lfile,wfile,efile,tfile
   !
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imode_eqns

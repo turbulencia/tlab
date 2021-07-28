@@ -257,7 +257,7 @@ END SUBROUTINE OPR_INTERPOLATE_Y
 ! #######################################################################
 SUBROUTINE INTERPOLATE_1D(periodic, imax,kmax, imax_dst, scalex, x_org,x_dst, u_org,u_dst, isize_wrk, wrk)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_PROCS
 
   IMPLICIT NONE

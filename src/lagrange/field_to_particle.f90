@@ -10,7 +10,7 @@
 SUBROUTINE  FIELD_TO_PARTICLE &
     (nvar, data_in, data_out, l_g,l_q,l_comm, wrk3d)
 
-  USE DNS_CONSTANTS,  ONLY : efile, lfile
+  USE TLAB_CONSTANTS,  ONLY : efile, lfile
   USE TLAB_TYPES,      ONLY : pointers_dt, pointers3d_dt
   USE TLAB_VARS,     ONLY : imax,jmax,kmax, isize_particle
   USE TLAB_PROCS

@@ -3,7 +3,7 @@
 #include "dns_error.h"
 
 SUBROUTINE PARTICLE_ALLOCATE(C_FILE_LOC)
-  USE DNS_CONSTANTS, ONLY : lfile, efile
+  USE TLAB_CONSTANTS, ONLY : lfile, efile
   USE LAGRANGE_GLOBAL
   USE LAGRANGE_ARRAYS
   USE TLAB_VARS, ONLY : isize_particle, inb_part_array, inb_part_txc

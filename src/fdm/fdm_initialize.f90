@@ -5,7 +5,7 @@
 
 SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS, ONLY : tfile
+  USE TLAB_CONSTANTS, ONLY : tfile
 #endif
   USE TLAB_TYPES,  ONLY : grid_dt
   USE TLAB_VARS, ONLY : inb_scal
