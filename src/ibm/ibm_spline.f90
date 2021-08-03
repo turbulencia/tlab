@@ -137,7 +137,7 @@ subroutine IBM_SPLINE_XZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, 
             ! 1. case: object over full extend of line
             
             ! debug
-            if (ims_pro == 0) write(*,*) 'IBM_SPLINE_XZ Case 1'
+            ! if (ims_pro == 0) write(*,*) 'IBM_SPLINE_XZ Case 1'
             
             ! do nothing
             splines = .false.
@@ -146,7 +146,7 @@ subroutine IBM_SPLINE_XZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, 
             ! 2. case: object is semi-immersed
             
             ! debug
-            if (ims_pro == 0) write(*,*) 'IBM_SPLINE_XZ Case 2'
+            ! if (ims_pro == 0) write(*,*) 'IBM_SPLINE_XZ Case 2'
             
             ! build vectors for spline generation
             splines = .false. ! not implemented yet
@@ -155,7 +155,7 @@ subroutine IBM_SPLINE_XZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, 
             ! 3. case: object is semi-immersed
             
             ! debug
-            if (ims_pro == 0) write(*,*) 'IBM_SPLINE_XZ Case 3'
+            ! if (ims_pro == 0) write(*,*) 'IBM_SPLINE_XZ Case 3'
             
             ! build vectors for spline generation
             splines = .false. ! not implemented yet
@@ -171,7 +171,7 @@ subroutine IBM_SPLINE_XZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, 
             ! 4. case: object is fully immersed
 
             ! debug
-            if (ims_pro == 0) write(*,*) 'IBM_SPLINE_XZ Case 4'
+            ! if (ims_pro == 0) write(*,*) 'IBM_SPLINE_XZ Case 4'
 
             ! build vectors for spline generation
             call IBM_SPLINE_VECTOR_4(fld, xa, ya, xb, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
@@ -180,7 +180,7 @@ subroutine IBM_SPLINE_XZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, 
             ! 5. case: object is semi-immersed
             
             ! debug
-            if (ims_pro == 0) write(*,*) 'IBM_SPLINE_XZ Case 5'
+            ! if (ims_pro == 0) write(*,*) 'IBM_SPLINE_XZ Case 5'
 
             ! build vectors for spline generation
             splines = .false. ! not implemented yet
@@ -189,7 +189,7 @@ subroutine IBM_SPLINE_XZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, 
             ! 6. case: object is semi-immersed
             
             ! debug
-            if (ims_pro == 0) write(*,*) 'IBM_SPLINE_XZ Case 6'
+            ! if (ims_pro == 0) write(*,*) 'IBM_SPLINE_XZ Case 6'
 
             ! build vectors for spline generation
             splines = .false. ! not implemented yet
@@ -221,14 +221,14 @@ subroutine IBM_SPLINE_XZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, 
             fld_mod(iu_il + (l-1) * nlines) = yb(l)
           end do
           
-          ! ================================================================== !
-          ! debug
-          if (ims_pro == 0) write(*,*) 'xa', xa
-          if (ims_pro == 0) write(*,*) 'ya', ya
-          if (ims_pro == 0) write(*,*) 'xb', xb(1:ib)
-          if (ims_pro == 0) write(*,*) 'yb', yb(1:ib)
-          if (ims_pro == 0) write(*,*) '=================='
-          ! ================================================================== !
+          ! ! ================================================================== !
+          ! ! debug
+          ! if (ims_pro == 0) write(*,*) 'xa', xa
+          ! if (ims_pro == 0) write(*,*) 'ya', ya
+          ! if (ims_pro == 0) write(*,*) 'xb', xb(1:ib)
+          ! if (ims_pro == 0) write(*,*) 'yb', yb(1:ib)
+          ! if (ims_pro == 0) write(*,*) '=================='
+          ! ! ================================================================== !
         
         end if
         ip = ip + nlines

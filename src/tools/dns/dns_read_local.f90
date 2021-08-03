@@ -18,7 +18,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE DNS_GLOBAL,    ONLY : g
   USE DNS_GLOBAL,    ONLY : FilterDomain
   USE DNS_GLOBAL,    ONLY : nstatavg
-  USE DNS_IBM,       ONLY : xbars_geo
+  USE DNS_IBM,       ONLY : xbars_geo, kspl, nflu, ibm_spline_global, ibm_procs_idle
   USE THERMO_GLOBAL, ONLY : imixture
   USE LAGRANGE_GLOBAL,ONLY: inb_particle_interp
   USE DNS_LOCAL
@@ -448,16 +448,54 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! ###################################################################
 ! Immersed Boundary Method (IBM)
 ! ###################################################################
+  ! IBM Parameters
   CALL IO_WRITE_ASCII(bakfile, '#')
-  CALL IO_WRITE_ASCII(bakfile, '#[IBM]')
-  CALL IO_WRITE_ASCII(bakfile, 'XBars=<nbars,hbars,wbars>') ! xbars_geo(3)=[number,height,width]
+  CALL IO_WRITE_ASCII(bakfile, '#[IBMParameter]')
+  CALL IO_WRITE_ASCII(bakfile, '#Status=<on/off>')
+  CALL IO_WRITE_ASCII(bakfile, '#SplineOrder=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#FluidPoints=<value>')
+  CALL IO_WRITE_ASCII(bakfile, '#SplineGlobal=<yes/no>')
+  CALL IO_WRITE_ASCII(bakfile, '#ProcsIdle=<yes/no>')
 
-  CALL SCANINICHAR(bakfile, inifile, 'IBM', 'XBars', '0,0,0', sRes)
-  idummy = 3; CALL LIST_INTEGER(sRes,idummy,xbars_geo)
-  IF ( idummy .NE. 3 ) THEN
-     xbars_geo(:) = 0
-     CALL IO_WRITE_ASCII(bakfile, 'XBars=0,0,0')
-     CALL IO_WRITE_ASCII(wfile,   'DNS_READ_LOCAL. Cannot read xbars for IBM; set to 0,0,0.')
+  CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'Status', 'off', sRes)
+  IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm = 0
+  ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm = 1
+  ELSE
+    CALL IO_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong IBM Status option.')
+    CALL DNS_STOP(DNS_ERROR_OPTION)
+  ENDIF
+
+  CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'SplineOrder', '0', kspl)
+  CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'FluidPoints', '0', nflu)
+
+  CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'SplineGlobal', 'yes', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_spline_global = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_spline_global = .FALSE.
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'ProcsIdle', 'no', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_procs_idle = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_procs_idle = .FALSE.
+  ENDIF
+
+  !Geometry
+  CALL IO_WRITE_ASCII(bakfile, '#')
+  CALL IO_WRITE_ASCII(bakfile, '#[IBMGeometry]')
+  CALL IO_WRITE_ASCII(bakfile, '#Type=<XBars>')       
+  CALL IO_WRITE_ASCII(bakfile, '#MaxNumber=<value>') ! max number of elements in one spatial direction
+  CALL IO_WRITE_ASCII(bakfile, '#Length=<value>')    ! in x/i
+  CALL IO_WRITE_ASCII(bakfile, '#Height=<value>')    ! in y/j
+  CALL IO_WRITE_ASCII(bakfile, '#Width=<value>')     ! in z/k
+
+  CALL SCANINICHAR(bakfile, inifile, 'IBMGeometry', 'Type', 'XBars', sRes)
+  IF   (TRIM(ADJUSTL(sRes)) .EQ. 'xbars' ) THEN; xbars_geo%name   = 'xbars'
+    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry', 'MaxNumber', '0', xbars_geo%number)
+    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Length',    '0', xbars_geo%length)
+    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Height',    '0', xbars_geo%height)
+    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Width',     '0', xbars_geo%width)
+  ELSE
+    CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBMGeometryType option.')
+    CALL DNS_STOP(DNS_ERROR_OPTION)
   ENDIF
 
 ! ###################################################################
@@ -861,18 +899,23 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
 ! -------------------------------------------------------------------
 ! Immersed Boundary Method (IBM)
-! So far, the use or not use of an IBM is
-! set by the XBars_geo information in dns.ini file.
 ! -------------------------------------------------------------------
-  IF ( MINVAL(xbars_geo).GT.0 ) THEN; imode_ibm=1; ELSE;  imode_ibm=0; ENDIF
-
-  ! Check
   IF ( imode_ibm .eq. 1 ) THEN
-     IF ( ( mod(g(3)%size,2*xbars_geo(1)) .eq. 0 ) .and. ( mod(xbars_geo(3),2) .ne. 0 ) ) THEN
+     IF (.NOT. ((kspl .EQ. 3) .OR. (kspl .EQ. 5))) THEN
+        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong SplineOrder, choose 3rd. or 5th. order.')
+        CALL DNS_STOP(DNS_ERROR_OPTION)
+     ENDIF 
+     !
+     IF ((.NOT. ibm_spline_global) .AND. (nflu .LT. kspl)) THEN
+        CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong FluidPoints and SplineOrder combination.')
+        CALL DNS_STOP(DNS_ERROR_OPTION)
+     ENDIF 
+    !
+     IF ( ( mod(g(3)%size,2*xbars_geo%number) .eq. 0 ) .and. ( mod(xbars_geo%width,2) .ne. 0 ) ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Interfaces of bars have to be on gridpoints.')
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Requirenments: mod(jmax_total,(2*nbars))==0 & mod(wbar,2)==0.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-     ELSEIF ( ( mod(g(3)%size,2*xbars_geo(1)) .ne. 0 ) .and. ( mod(real(g(3)%size/(2*xbars_geo(1))),0.5) .eq. 0 ) .and. ( mod(xbars_geo(3),2) .ne. 1) ) THEN
+     ELSEIF ( ( mod(g(3)%size,2*xbars_geo%number) .ne. 0 ) .and. ( mod(real(g(3)%size/(2*xbars_geo%number)),0.5) .eq. 0 ) .and. ( mod(xbars_geo%width,2) .ne. 1) ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Interfaces of bars have to be on gridpoints.')
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Requirenments: mod(jmax_total/(2*nbars),0.5)==0 & mod(wbar,2)==1.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)    

@@ -60,7 +60,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 
   TINTEGER                                     :: nbars, hbar, wbar
   TREAL                                        :: zcenter_bar
-  TINTEGER, dimension(xbars_geo(1))            :: zstart_bar, zend_bar
+  TINTEGER, dimension(xbars_geo%number)        :: zstart_bar, zend_bar
   TINTEGER                                     :: istart, iend, jstart, jend, kstart, kend
   TINTEGER                                     :: i,j,k,l
 
@@ -85,7 +85,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   end if
     
   ! geometry (from dns.ini)
-  nbars=xbars_geo(1); hbar=xbars_geo(2); wbar=xbars_geo(3)  
+  nbars=xbars_geo%number; hbar=xbars_geo%height; wbar=xbars_geo%width  
   
   ! global z-positions of bars, equally distributed on gridpoints with equal spacing
   do l = 1, nbars

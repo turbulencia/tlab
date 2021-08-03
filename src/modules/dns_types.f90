@@ -60,13 +60,11 @@ MODULE DNS_TYPES
      TREAL, DIMENSION(:,:), ALLOCATABLE :: coeffs ! pointer to coefficients
   END TYPE filter_dt
 
-!   TYPE ibm_dt
-!      SEQUENCE
-!      CHARACTER(32) :: name !  
-!      TINTEGER      :: nbar, hbar, wbar
-!      LOGICAL       :: ibm_burgers
-!      TREAL         :: 
-!   END TYPE ibm_dt
+  TYPE ibm_geo_dt
+     SEQUENCE
+     CHARACTER(32) :: name
+     TINTEGER      :: number, height, width, length
+  END TYPE ibm_geo_dt
 
   TYPE pointers_dt
      SEQUENCE

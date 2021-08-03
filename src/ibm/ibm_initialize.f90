@@ -55,8 +55,12 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   call IBM_GENERATE_GEOMETRY(wrk3d,txc) ! txc for DEBUG
 
   ! check idle procs
-  call IBM_CHECK_PROCS()
-
+  if (ibm_procs_idle) then
+    call IBM_CHECK_PROCS()
+  else
+    ims_pro_ibm_x = .true.; ims_pro_ibm_y = .true.; ims_pro_ibm_z = .true.
+  end if
+  
   ! not implemented yet
   ! read/write geometry fields from/to disk
   ! call IBM_READ_GEOMETRY() ! call IBM_WRITE_GEOMETRY()

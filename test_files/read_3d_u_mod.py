@@ -19,7 +19,7 @@ flow = mp.Field(path,var='flow',index=index)
 flow.read_3d_field()
 
 # u_mod field 
-f = open(path +'u_mod.1','rb')
+f = open(path +'fld_mod.1','rb')
 f.seek(52,0)
 u_mod = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
 u_mod = u_mod.reshape((grid.nx,grid.ny,grid.nz),order='F')

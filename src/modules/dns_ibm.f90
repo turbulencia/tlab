@@ -18,7 +18,7 @@
 
 module DNS_IBM
 
-  ! use DNS_TYPES, only: ibm_dt ! not really implemented yet
+  use DNS_TYPES, only: ibm_geo_dt
 
   implicit none
 
@@ -46,13 +46,12 @@ module DNS_IBM
   ! flag - which fdm calls are with u or fld_ibm (opr_burgers.f90)
   logical                                 :: ibm_burgers 
 
-  ! informations of type of immersed objects (--> introduce ibm_type in modules/dns_types)
-  TINTEGER, dimension(3)                  :: xbars_geo                   ! bars in x, xbars_geo(3)=[nbars,hbar,wbar]
+  ! read_local from dns.ini file (--> introduce ibm_type in modules/dns_types)
+  logical                                 :: ibm_spline_global, ibm_procs_idle
+  ! TINTEGER, dimension(3)                  :: xbars_geo                   ! bars in x, xbars_geo(3)=[nbars,hbar,wbar]
                                                                          ! nbars = max(nobi_max,nobj_max,nobk_max)                                                                          
-
-  ! IBM parameters
-  TINTEGER, parameter                     :: nflu = 3                    ! number of fluid points used for Splines (on one side) nflu >= kspl
-  TINTEGER, parameter                     :: kspl = 3                    ! spline order kspl=[1,5] (best: 3 or 5)
+  TINTEGER                                :: kspl                        ! spline order kspl=[1,5] (best: 3 or 5)
+  TINTEGER                                :: nflu                        ! number of fluid points used for Splines (on one side) nflu >= kspl
   
   ! array sizes
   TINTEGER                                :: isize_nobi,    isize_nobj,    isize_nobk
@@ -64,7 +63,7 @@ module DNS_IBM
   logical                                 :: ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
 
   ! ibm_dt type (--> introduce ibm_type in modules/dns_types) not implemented yet
-  ! type(ibm_dt) :: xbars
+  type(ibm_geo_dt) :: xbars_geo
 
 end module DNS_IBM
 

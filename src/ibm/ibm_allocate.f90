@@ -69,7 +69,7 @@ subroutine IBM_ALLOCATE(allocated)
   inb_ibm = i1 ! can be also defined in dns_read_local.f90 and module dns_global.f90 (cf. inb_flow ...)
 
   ! max(nobi_max,nobj_max,nobk_max) from dns.ini file
-  nob_max = xbars_geo(1)
+  nob_max = xbars_geo%number
 
   ! npages (cf. dns_mpi_initialize.f90)
 #ifdef USE_MPI 
@@ -92,7 +92,11 @@ subroutine IBM_ALLOCATE(allocated)
   isize_nobj_be   = nxz * nob_max  
   isize_nobk_be   = nxy * nob_max
   !
-  nsp             = 2 * nflu + 2    ! number of data points (with 2 interface points) nsp > kspl
+  if (ibm_spline_global) then
+    nsp           = max(g(1)%size, max(g(2)%size, g(3)%size)) 
+  else
+    nsp           = 2 * nflu + 2    ! number of data points (with 2 interface points) nsp > kspl
+  endif
   ! cf. fitpack package (routines curfit and splev)
   nest            = nsp + kspl + 1
   isize_wrk_ibm   = nsp + 2 * nest + nsp * (kspl + 1) + nest * (7 + 3 * kspl)

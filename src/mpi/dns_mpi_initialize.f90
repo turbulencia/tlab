@@ -134,7 +134,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
     CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Ox IBM nobi_b and nobi_e.')
     id = DNS_MPI_I_IBM_NOB_BE
     npage = g(2)%size * g(3)%size / ims_npro
-    CALL DNS_MPI_TYPE_I(ims_npro_i, xbars_geo(1), npage, i1, i1, i1, i1, &
+    CALL DNS_MPI_TYPE_I(ims_npro_i, xbars_geo%number, npage, i1, i1, i1, i1, &
           ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
     ENDIF
 
@@ -142,7 +142,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
     CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Oz IBM nobk_b and nobk_e.')
     id = DNS_MPI_K_IBM_NOB_BE
     npage = g(1)%size * g(2)%size / ims_npro
-    CALL DNS_MPI_TYPE_K(ims_npro_k, xbars_geo(1), npage, i1, i1, i1, i1, &
+    CALL DNS_MPI_TYPE_K(ims_npro_k, xbars_geo%number, npage, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
     ENDIF
 

@@ -316,6 +316,10 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
     IF (ims_pro_ibm_x) THEN
       CALL IBM_SPLINE_XZ(p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
+      p_fld_ibm => fld_ibm ! pointer to modified velocity
+      CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)
+    ELSE
+      CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld,     result, wrk2d, wrk3d)
     ENDIF
 
   CASE('y')
@@ -323,21 +327,29 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
     IF (ims_pro_ibm_y) THEN
       CALL IBM_SPLINE_Y(p_fld, fld_ibm, g, nlines)
       ! CALL IBM_SPLINE_XZ(p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
+      p_fld_ibm => fld_ibm ! pointer to modified velocity
+      CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)
+    ELSE
+      CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld,     result, wrk2d, wrk3d)
     ENDIF
 
   CASE('z')
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
     IF (ims_pro_ibm_z) THEN
       CALL IBM_SPLINE_XZ(p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
+      p_fld_ibm => fld_ibm ! pointer to modified velocity
+      CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)
+    ELSE
+      CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld,     result, wrk2d, wrk3d)
     ENDIF
    
   END SELECT
 
-  ! pointer to modified velocity
-  p_fld_ibm => fld_ibm
+  ! ! pointer to modified velocity
+  ! p_fld_ibm => fld_ibm
 
   ! now with modified u fields
-  CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)
+  ! CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)
 
   ! -------------------------------------------------------------------
 
