@@ -60,6 +60,9 @@ module DNS_IBM
   TINTEGER                                :: nsp, nest
   TINTEGER                                :: isize_wrk_ibm, isize_iwrk_ibm, isize_wrk1d_ibm
 
+  ! check IBM procs
+  logical                                 :: ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
+
   ! ibm_dt type (--> introduce ibm_type in modules/dns_types) not implemented yet
   ! type(ibm_dt) :: xbars
 

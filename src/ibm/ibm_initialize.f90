@@ -53,12 +53,15 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
 
   ! generate relevant geometry fields for IBM routines (nobi, nobj, nobk)
   call IBM_GENERATE_GEOMETRY(wrk3d,txc) ! txc for DEBUG
-  
-  ! not coded yet
+
+  ! check idle procs
+  call IBM_CHECK_PROCS()
+
+  ! not implemented yet
   ! read/write geometry fields from/to disk
   ! call IBM_READ_GEOMETRY() ! call IBM_WRITE_GEOMETRY()
   
-  ! deallocate not needed arrays
+  ! deallocate not needed arrays after ini
   call IBM_DEALLOCATE()
   
   return

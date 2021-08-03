@@ -267,6 +267,7 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
   USE DNS_IBM,   ONLY : nobi_e,  nobj_e, nobk_e 
   USE DNS_IBM,   ONLY : isize_nobi,    isize_nobj,    isize_nobk
   USE DNS_IBM,   ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
+  USE DNS_IBM,   ONLY : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
 
 ! ############################################# ! 
 ! DEBUG
@@ -313,16 +314,22 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
    
   CASE('x')
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-    CALL IBM_SPLINE_XZ(p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
-   
+    IF (ims_pro_ibm_x) THEN
+      CALL IBM_SPLINE_XZ(p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
+    ENDIF
+
   CASE('y')
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-    CALL IBM_SPLINE_Y(p_fld, fld_ibm, g, nlines)
-    ! CALL IBM_SPLINE_XZ(p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
+    IF (ims_pro_ibm_y) THEN
+      CALL IBM_SPLINE_Y(p_fld, fld_ibm, g, nlines)
+      ! CALL IBM_SPLINE_XZ(p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
+    ENDIF
 
   CASE('z')
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-    CALL IBM_SPLINE_XZ(p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
+    IF (ims_pro_ibm_z) THEN
+      CALL IBM_SPLINE_XZ(p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
+    ENDIF
    
   END SELECT
 
