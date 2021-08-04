@@ -31,27 +31,29 @@ module DNS_IBM
   TINTEGER, dimension(:),     allocatable :: nobi_e,  nobj_e, nobk_e     ! end    of objects in i/j/k
   
   ! descriptive geometry fields (deallocated after initialization of geometry)
-  TREAL,    dimension(:,:,:), allocatable :: eps_aux                     ! eps_aux field (debugging / geometry generation)
+  TREAL,    dimension(:,:,:), allocatable :: eps_aux                     ! eps_aux field 
+                                                                         ! (debugging / geometry generation)
   TREAL,    dimension(:),     allocatable :: epsi, epsj, epsk            ! eps transposed in i/j/k
 
   ! modified field
-  TREAL,    dimension(:),     allocatable, target :: fld_ibm             ! with splines in solid regions
+  TREAL, dimension(:), allocatable, target:: fld_ibm                     ! with splines in solid regions
 
   ! work array for splines
   TREAL,    dimension(:),     allocatable :: wrk_ibm
   TINTEGER, dimension(:),     allocatable :: iwrk_ibm
   !
   TREAL,    dimension(:),     allocatable :: xa, xb, ya, yb
+  logical,  dimension(:),     allocatable :: x_mask, y_mask
 
-  ! flag - which fdm calls are with u or fld_ibm (opr_burgers.f90)
+
+  ! flag - decides which fdm calls are with modiefied field or not (opr_burgers.f90)
   logical                                 :: ibm_burgers 
 
-  ! read_local from dns.ini file (--> introduce ibm_type in modules/dns_types)
+  ! read_local from dns.ini file 
   logical                                 :: ibm_spline_global, ibm_procs_idle
-  ! TINTEGER, dimension(3)                  :: xbars_geo                   ! bars in x, xbars_geo(3)=[nbars,hbar,wbar]
-                                                                         ! nbars = max(nobi_max,nobj_max,nobk_max)                                                                          
   TINTEGER                                :: kspl                        ! spline order kspl=[1,5] (best: 3 or 5)
-  TINTEGER                                :: nflu                        ! number of fluid points used for Splines (on one side) nflu >= kspl
+  TINTEGER                                :: nflu                        ! number of fluid points used for Splines 
+                                                                         ! (on one side) nflu >= kspl
   
   ! array sizes
   TINTEGER                                :: isize_nobi,    isize_nobj,    isize_nobk
@@ -59,11 +61,11 @@ module DNS_IBM
   TINTEGER                                :: nsp, nest
   TINTEGER                                :: isize_wrk_ibm, isize_iwrk_ibm, isize_wrk1d_ibm
 
-  ! check IBM procs
+  ! check IBM procs (active/idle)
   logical                                 :: ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
 
-  ! ibm_dt type (--> introduce ibm_type in modules/dns_types) not implemented yet
-  type(ibm_geo_dt) :: xbars_geo
+  ! ibm_dt type 
+  type(ibm_geo_dt)                        :: xbars_geo                   ! create new here for new geometries
 
 end module DNS_IBM
 

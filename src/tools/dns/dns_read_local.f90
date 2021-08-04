@@ -915,7 +915,9 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Interfaces of bars have to be on gridpoints.')
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Requirenments: mod(jmax_total,(2*nbars))==0 & mod(wbar,2)==0.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-     ELSEIF ( ( mod(g(3)%size,2*xbars_geo%number) .ne. 0 ) .and. ( mod(real(g(3)%size/(2*xbars_geo%number)),0.5) .eq. 0 ) .and. ( mod(xbars_geo%width,2) .ne. 1) ) THEN
+     ELSEIF ( ( mod(g(3)%size,2*xbars_geo%number) .ne. 0 ) .and. & 
+              ( mod(real(g(3)%size/(2*xbars_geo%number)),0.5) .eq. 0 ) .and. &
+              ( mod(xbars_geo%width,2) .ne. 1) ) THEN
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Interfaces of bars have to be on gridpoints.')
         CALL IO_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Requirenments: mod(jmax_total/(2*nbars),0.5)==0 & mod(wbar,2)==1.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)    

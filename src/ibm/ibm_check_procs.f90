@@ -35,7 +35,10 @@
 subroutine IBM_CHECK_PROCS()
   
   use DNS_IBM
+
+#ifdef USE_MPI 
   use DNS_MPI, only: ims_pro
+#endif
   
   implicit none
   
@@ -75,7 +78,7 @@ subroutine IBM_CHECK_PROCS()
     write(*,*) 'Task: ', ims_pro, ' active for IBM spline generation in z'
   end if 
 #else
-  ims_pro_ibm_x = .true.; ims_pro_ibm_y = .true.; ims_pro_ibm_z = .true.
+  ims_pro_ibm_x = .true.; ims_pro_ibm_y = .true.; ims_pro_ibm_z = .true. ! one task with full domain
 #endif
 
   return
