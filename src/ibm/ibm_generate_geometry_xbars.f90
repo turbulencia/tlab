@@ -83,6 +83,15 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
     write(*,*) 'DECOMP: ranks', ims_npro_i,     ' x ', 1,    ' x ', ims_npro_k 
     write(*,*) '        grid ', imax,           ' x ', jmax, ' x ', kmax 
   end if
+  do l = 0, ims_npro - 1
+    if (ims_pro == l) then
+      write(*,'(1X,A,I2,A,I3,A,I3,A,I3,A,I3,A,I3,A,I3)') & 
+      'Task:', ims_pro, &
+      ' |i-part:', istart, '-', iend,&
+      ' |j-part:', jstart, '-', jend,&
+      ' |k-part:', kstart, '-', kend 
+    end if 
+  end do 
     
   ! geometry (from dns.ini)
   nbars=xbars_geo%number; hbar=xbars_geo%height; wbar=xbars_geo%width  
@@ -98,7 +107,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   if ( ims_pro == 0 ) then
     write(*,*) '======== Z - Positions of streamwise aligned bars ======='
     do l = 1, nbars
-      write(*,*)'bar nr.', l, ' start:', zstart_bar(l), ' end:', zend_bar(l)
+      write(*,*)'bar nr.', l, ' start:', zstart_bar(l) + i1, ' end:', zend_bar(l)
     end do
   end if
   
@@ -106,6 +115,9 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   eps_aux(:,:,:) = C_0_R
   
   ! streamwise aligned square bars, equaly spaced, interfaces on gridpoints (define own geometry)
+  !! ============================= Comment =========================== !!
+  !! (k+kstart)>zstart_bar(l) ==> objects start at  zstart_bar(l) + 1  !!
+  !! ================================================================= !!
   do j = 1, hbar   
     do k = 1, kmax 
       do l = 1, nbars 

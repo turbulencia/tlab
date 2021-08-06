@@ -389,9 +389,9 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   if (ims_pro == 0) then
     write(*,*) '========================================================='
     write(*,*) 'nbars      =', xbars_geo%number
-    write(*,*) 'nobi_max   =', nobi_max
-    write(*,*) 'nobj_max   =', nobj_max
-    write(*,*) 'nobk_max   =', nobk_max
+    write(*,*) 'nobi_max   =', int(nobi_max)
+    write(*,*) 'nobj_max   =', int(nobj_max)
+    write(*,*) 'nobk_max   =', int(nobk_max)
     write(*,*) '======== Writing geometry ==============================='
   end if
 

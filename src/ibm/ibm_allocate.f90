@@ -329,6 +329,7 @@ subroutine IBM_ALLOCATE(allocated)
     end if
 
     if (ibm_spline_global) then
+      ! x_mask, y_mask
       write(str,*) inb_ibm; line = 'Allocating array IBM x_mask of size '//trim(adjustl(str))//'x'
       write(str,*) isize_wrk1d_ibm; line = trim(adjustl(line))//trim(adjustl(str))
       call IO_WRITE_ASCII(lfile,line)
@@ -347,7 +348,6 @@ subroutine IBM_ALLOCATE(allocated)
       call DNS_STOP(DNS_ERROR_ALLOC)
       end if
     end if 
-
     ! ------------------------------------------------------------------ !
 
     ! set alloc flag: done

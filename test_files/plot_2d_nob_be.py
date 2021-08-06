@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -77,8 +78,8 @@ nobk_e = np.fromfile(f, np.dtype('<f8'), nob_max*grid.nx*grid.ny)
 nobk_e = nobk_e.reshape((grid.nx,grid.ny,nob_max),order='F')
 f.close()
 
-sys.exit(0)
-
+# sys.exit(0)
+# %%
 #---------------------------------------------------------------------------#
 #---------------------------------------------------------------------------#
 #---------------------------------------------------------------------------#

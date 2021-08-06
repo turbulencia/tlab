@@ -45,7 +45,6 @@ module DNS_IBM
   TREAL,    dimension(:),     allocatable :: xa, xb, ya, yb
   logical,  dimension(:),     allocatable :: x_mask, y_mask
 
-
   ! flag - decides which fdm calls are with modiefied field or not (opr_burgers.f90)
   logical                                 :: ibm_burgers 
 

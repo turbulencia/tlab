@@ -56,14 +56,14 @@ plt.colorbar()
 plt.show()
 #---------------------------------------------------------------------------#
 # 2d plot - xy
-plt.figure(figsize=size)
-plt.title('2d-plot -- xy-plane -- velocity u_mod')
-plt.xlabel("x")
-plt.ylabel("y")
-#
-plt.pcolormesh(grid.x,grid.y,u_mod[:,:,grid.nz//3].T, shading=shading, cmap='RdBu_r') #shading='gouraud',
-plt.colorbar()
-plt.show()
+# plt.figure(figsize=size)
+# plt.title('2d-plot -- xy-plane -- velocity u_mod')
+# plt.xlabel("x")
+# plt.ylabel("y")
+# #
+# plt.pcolormesh(grid.x,grid.y,u_mod[:,:,grid.nz//3].T, shading=shading, cmap='RdBu_r') #shading='gouraud',
+# plt.colorbar()
+# plt.show()
 #---------------------------------------------------------------------------#
 # 2d plot - xz
 plt.figure(figsize=size)
@@ -84,17 +84,28 @@ plt.figure(figsize=size)
 plt.xlabel("y")
 plt.ylabel("v-velocity")
 plt.vlines(grid.y[9], ymin=-0.002, ymax=0.002)
-for i in range(75,85):
-    plt.plot(grid.y[:12],u_mod[0,:12,i], marker='.',label='z-node='+str(i))
+for i in range(107,117):
+    plt.plot(grid.y[:20],u_mod[0,:20,i], marker='.',label='z-node='+str(i))
 plt.legend(loc=1)
 plt.grid(True)
 plt.show()
 
-# # small check 
-# w     = flow.w * (1. - eps)
-# w_mod = u_mod  * (1. - eps)
-# res   = w - w_mod
-# print(str(res.sum()))
+# small check 
+v     = flow.v * (1. - eps)
+v_mod = u_mod  * (1. - eps)
+res   = v - v_mod
+print(str(res.sum()))
+
+# %%
+
+plt.figure(figsize=size)
+plt.xlabel("y")
+plt.ylabel("v-velocity")
+for i in range(7,11):
+    plt.plot(grid.z[:],u_mod[0,i,:], marker='.',label='y-node='+str(i))
+plt.legend(loc=1)
+plt.grid(True)
+plt.show()
 
 # %%
 sys.exit()

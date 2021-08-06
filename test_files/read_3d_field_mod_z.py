@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
@@ -25,6 +26,20 @@ u_mod = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
 u_mod = u_mod.reshape((grid.nx,grid.ny,grid.nz),order='F')
 f.close()
 
+# u_mod field 
+f = open(path +'fld_mod_global.1','rb')
+f.seek(52,0)
+u_mod_glob = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
+u_mod_glob = u_mod_glob.reshape((grid.nx,grid.ny,grid.nz),order='F')
+f.close()
+
+# u_mod field 
+f = open(path +'fld_mod_local.1','rb')
+f.seek(52,0)
+u_mod_loc = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
+u_mod_loc = u_mod_loc.reshape((grid.nx,grid.ny,grid.nz),order='F')
+f.close()
+
 # read eps field
 f = open(path +'eps0.1','rb')
 f.seek(52,0)
@@ -32,9 +47,7 @@ eps = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
 eps = eps.reshape((grid.nx,grid.ny,grid.nz),order='F')
 f.close()
 
-# sys.exit()
-
-
+# %%
 #---------------------------------------------------------------------------#
 # plot settings 
 plt.rcParams['figure.dpi'] = 250 
@@ -75,7 +88,7 @@ plt.colorbar()
 plt.show()
 #---------------------------------------------------------------------------#
 
-# u_mod = u_mod * eps
+# %%
 
 plt.figure(figsize=size)
 plt.xlabel("z")
@@ -91,9 +104,28 @@ w_mod = u_mod  * (1. - eps)
 res   = w - w_mod
 print(str(res.sum()))
 
+
+# %%
+plt.figure(figsize=size)
+plt.xlabel("z")
+plt.ylabel("w-velocity")
+for i in range(0,5):
+    plt.plot(grid.z,u_mod_glob[-1,i,:], marker='.',label='y-node='+str(i))
+    plt.plot(grid.z,u_mod_loc[-1,i,:], marker='x',label='y-node='+str(i))
+plt.legend(loc=1)
+plt.show()
+
+# %%
+plt.figure(figsize=size)
+plt.xlabel("z")
+plt.ylabel("w-velocity")
+for i in range(0,5):
+    plt.plot(grid.z,u_mod_glob[-1,i,:] - u_mod_loc[-1,i,:], marker='.',label='y-node='+str(i))
+    # plt.plot(grid.z,u_mod_loc[-1,i,:], marker='x',label='y-node='+str(i))
+plt.legend(loc=1)
+plt.show()
+
 sys.exit()
-
-
 #---------------------------------------------------------------------------#
 # 2d plot - yz
 plt.figure(figsize=size)
@@ -128,3 +160,5 @@ plt.show()
 
 
 
+
+# %%
