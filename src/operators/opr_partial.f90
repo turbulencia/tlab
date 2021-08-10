@@ -297,7 +297,7 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
   TREAL, DIMENSION(:), POINTER :: p_a, p_b, p_c, p_d
 
 #ifdef USE_MPI
-  TINTEGER, PARAMETER :: id = DNS_MPI_I_PARTIAL
+  TINTEGER, PARAMETER :: id = TLAB_MPI_I_PARTIAL
 #endif
 
 ! ###################################################################
@@ -306,7 +306,7 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL DNS_MPI_TRPF_I(u, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL TLAB_MPI_TRPF_I(u, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
      p_a => result
      p_b => wrk3d
      p_c => result
@@ -375,9 +375,9 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
      IF ( type .EQ. OPR_P2_P1 ) THEN ! only if you really want first derivative back
-        CALL DNS_MPI_TRPB_I(p_c, tmp1, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+        CALL TLAB_MPI_TRPB_I(p_c, tmp1, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
      ENDIF
-     CALL DNS_MPI_TRPB_I(p_b, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL TLAB_MPI_TRPB_I(p_b, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
   ENDIF
 #endif
 
@@ -418,7 +418,7 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
   TREAL, DIMENSION(:), POINTER :: p_a, p_b, p_c
 
 #ifdef USE_MPI
-  TINTEGER, PARAMETER :: id = DNS_MPI_K_PARTIAL
+  TINTEGER, PARAMETER :: id = TLAB_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
@@ -433,7 +433,7 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     CALL DNS_MPI_TRPF_K(u, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPF_K(u, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      p_a => result
      IF ( type .EQ. OPR_P2_P1 ) THEN
         p_b => tmp1
@@ -476,9 +476,9 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     CALL DNS_MPI_TRPB_K(p_b, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPB_K(p_b, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      IF ( type .EQ. OPR_P2_P1 ) THEN
-        CALL DNS_MPI_TRPB_K(p_c, tmp1, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+        CALL TLAB_MPI_TRPB_K(p_c, tmp1, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      ENDIF
   ENDIF
 #endif

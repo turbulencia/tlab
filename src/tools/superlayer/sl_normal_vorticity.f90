@@ -307,7 +307,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 ! TkStat file
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-     CALL DNS_MPI_TAGUPDT
+     CALL TLAB_MPI_TAGUPDT
 
      IF ( ims_pro .EQ. 0 ) THEN
 #endif

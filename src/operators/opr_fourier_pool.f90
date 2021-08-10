@@ -72,7 +72,7 @@ USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_size_k
 
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-    IF ( ims_size_i(DNS_MPI_I_POISSON1) .NE. ims_size_i(DNS_MPI_I_POISSON2) ) THEN
+    IF ( ims_size_i(TLAB_MPI_I_POISSON1) .NE. ims_size_i(TLAB_MPI_I_POISSON2) ) THEN
       CALL TLAB_WRITE_ASCII(efile,'OPR_FOURIER_INITIALIZE. Error in the size in the transposition arrays.')
       CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
     ENDIF
@@ -84,7 +84,7 @@ USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_size_k
   ! -----------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-    isize_fft_z = ims_size_k(DNS_MPI_K_POISSON )/2 ! divide by 2 bcs. we work w complex #
+    isize_fft_z = ims_size_k(TLAB_MPI_K_POISSON )/2 ! divide by 2 bcs. we work w complex #
   ELSE
 #endif
     isize_fft_z = (imax/2+1)*(jmax+2)
@@ -119,7 +119,7 @@ USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_size_k
   ! -----------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-    isize_fft_x = ims_size_i(DNS_MPI_I_POISSON1)
+    isize_fft_x = ims_size_i(TLAB_MPI_I_POISSON1)
   ELSE
 #endif
     isize_fft_x = jmax
@@ -249,14 +249,14 @@ SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2
     ip = ip + nx*nz;    in(ip:ip+nx*nz-1,1) = in_bcs_ht(1:nx*nz,1)
 
     ! Transpose array a into b
-    id = DNS_MPI_I_POISSON1
-    CALL DNS_MPI_TRPF_I(in, r_wrk2, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+    id = TLAB_MPI_I_POISSON1
+    CALL TLAB_MPI_TRPF_I(in, r_wrk2, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
 
     ! ims_size_k(id) FFTWs
     CALL dfftw_execute_dft_r2c(fft_plan_fx, wrk2, wrk1)
 
     ! reorganize wrk1 (FFTW make a stride in wrk1 already before)
-    id = DNS_MPI_I_POISSON1
+    id = TLAB_MPI_I_POISSON1
     DO k = 1,ims_size_i(id)
       inew = (nx/2+1)*ims_npro_i
       iold = g(1)%size/2 + 1
@@ -271,8 +271,8 @@ SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2
     ENDDO
 
     ! Transpose array back
-    id = DNS_MPI_I_POISSON2
-    CALL DNS_MPI_TRPB_I(r_wrk1, r_wrk2, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+    id = TLAB_MPI_I_POISSON2
+    CALL TLAB_MPI_TRPB_I(r_wrk1, r_wrk2, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
 
     ! reorganize wrk2 into b
     DO k = 1,nz
@@ -358,11 +358,11 @@ SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
     ENDDO
 
     ! Transpose array
-    id  = DNS_MPI_I_POISSON2
-    CALL DNS_MPI_TRPF_I(r_wrk, r_out, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+    id  = TLAB_MPI_I_POISSON2
+    CALL TLAB_MPI_TRPF_I(r_wrk, r_out, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
 
     ! reorganize a (FFTW make a stride in a already before)
-    id = DNS_MPI_I_POISSON1
+    id = TLAB_MPI_I_POISSON1
     DO k = 1,ims_size_i(id)
       DO ip = 2,ims_npro_i
         DO i = 1,nx/2
@@ -380,8 +380,8 @@ SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
     CALL dfftw_execute_dft_c2r(fft_plan_bx, out, wrk)
 
     ! Transpose array wrk into out
-    id  = DNS_MPI_I_POISSON1
-    CALL DNS_MPI_TRPB_I(r_wrk, r_out, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+    id  = TLAB_MPI_I_POISSON1
+    CALL TLAB_MPI_TRPB_I(r_wrk, r_out, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
 
     NULLIFY(r_wrk,r_out)
 
@@ -428,7 +428,7 @@ SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
 #include "integers.h"
 
 #ifdef USE_MPI
-  TCOMPLEX, DIMENSION(ims_size_k(DNS_MPI_K_POISSON)/2,g(3)%size), TARGET :: in,out
+  TCOMPLEX, DIMENSION(ims_size_k(TLAB_MPI_K_POISSON)/2,g(3)%size), TARGET :: in,out
 #else
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,g(3)%size),                TARGET :: in,out
 #endif
@@ -445,14 +445,14 @@ SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
   ! #######################################################################
   ! Forward complex FFT in z
 #ifdef USE_MPI
-  id = DNS_MPI_K_POISSON
+  id = TLAB_MPI_K_POISSON
 
   IF ( ims_npro_k .GT. 1 ) THEN
     ! Pass memory address from complex array to real array
     CALL c_f_POINTER(c_LOC(in), r_in, shape=[isize_txc_field])
     CALL c_f_POINTER(c_LOC(out), r_out, shape=[isize_txc_field])
 
-    CALL DNS_MPI_TRPF_K(r_in, r_out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+    CALL TLAB_MPI_TRPF_K(r_in, r_out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
     p_org => out
     p_dst => in
   ELSE
@@ -482,7 +482,7 @@ SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
 
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-    CALL DNS_MPI_TRPB_K(r_in, r_out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+    CALL TLAB_MPI_TRPB_K(r_in, r_out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
     NULLIFY(r_in,r_out)
   ENDIF
 #endif
@@ -511,7 +511,7 @@ SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
 #include "integers.h"
 
 #ifdef USE_MPI
-  TCOMPLEX, DIMENSION(ims_size_k(DNS_MPI_K_POISSON)/2,g(3)%size), TARGET :: in,out
+  TCOMPLEX, DIMENSION(ims_size_k(TLAB_MPI_K_POISSON)/2,g(3)%size), TARGET :: in,out
 #else
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,g(3)%size),                TARGET :: in,out
 #endif
@@ -528,14 +528,14 @@ SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
   ! #######################################################################
   ! Forward complex FFT in z
 #ifdef USE_MPI
-  id = DNS_MPI_K_POISSON
+  id = TLAB_MPI_K_POISSON
 
   IF ( ims_npro_k .GT. 1 ) THEN
     ! Pass memory address from complex array to real array
     CALL c_f_POINTER(c_LOC(in), r_in, shape=[isize_txc_field])
     CALL c_f_POINTER(c_LOC(out), r_out, shape=[isize_txc_field])
 
-    CALL DNS_MPI_TRPF_K(r_in, r_out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+    CALL TLAB_MPI_TRPF_K(r_in, r_out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
     p_org => out
     p_dst => in
   ELSE
@@ -565,7 +565,7 @@ SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
 
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-    CALL DNS_MPI_TRPB_K(r_in, r_out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+    CALL TLAB_MPI_TRPB_K(r_in, r_out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
     NULLIFY(r_in,r_out)
   ENDIF
 #endif
@@ -602,14 +602,14 @@ END SUBROUTINE OPR_FOURIER_B_Z_EXEC
 ! !########################################################################
 ! ! backwards complex FFT in z
 ! #ifdef USE_MPI
-!   id = DNS_MPI_K_POISSON
+!   id = TLAB_MPI_K_POISSON
 
 !   IF ( ims_npro_k .GT. 1 ) THEN
-!      CALL DNS_MPI_TRPF_K(in, out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+!      CALL TLAB_MPI_TRPF_K(in, out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
 !      CALL dfftw_execute_dft(fft_plan_bz,out,in)
 
-!      CALL DNS_MPI_TRPB_K(in, out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+!      CALL TLAB_MPI_TRPB_K(in, out, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
 !   ELSE ! ims_npro_k .EQ. 1
 ! #endif

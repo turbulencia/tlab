@@ -98,7 +98,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
   TINTEGER nyz
   TREAL, DIMENSION(:), POINTER :: p_a,p_b,p_c,p_d, p_vel
 #ifdef USE_MPI
-  TINTEGER, PARAMETER :: id = DNS_MPI_I_PARTIAL
+  TINTEGER, PARAMETER :: id = TLAB_MPI_I_PARTIAL
 #endif
 
 ! ###################################################################
@@ -107,7 +107,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL DNS_MPI_TRPF_I(s, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL TLAB_MPI_TRPF_I(s, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
      p_a => result
      p_b => tmp1
      p_c => wrk3d
@@ -150,7 +150,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-       CALL DNS_MPI_TRPB_I(p_c, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+       CALL TLAB_MPI_TRPB_I(p_c, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
   ENDIF
 #endif
 
@@ -264,7 +264,7 @@ USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   TINTEGER nxy
   TREAL, DIMENSION(:), POINTER :: p_a,p_b,p_c, p_vel
 #ifdef USE_MPI
-  TINTEGER, PARAMETER :: id  = DNS_MPI_K_PARTIAL
+  TINTEGER, PARAMETER :: id  = TLAB_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
@@ -278,7 +278,7 @@ USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     CALL DNS_MPI_TRPF_K(s, tmp1, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPF_K(s, tmp1, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      p_a => tmp1
      p_b => result
      p_c => wrk3d
@@ -314,7 +314,7 @@ USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
 ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     CALL DNS_MPI_TRPB_K(p_c, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPB_K(p_c, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF
 #endif
 

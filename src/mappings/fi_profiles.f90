@@ -117,7 +117,7 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
      g(1)%anelastic = .TRUE.
 #ifdef USE_MPI
      IF ( ims_npro_i .GT. 1 ) THEN
-        nlines = ims_size_i(DNS_MPI_I_PARTIAL)
+        nlines = ims_size_i(TLAB_MPI_I_PARTIAL)
         offset = nlines *ims_pro_i
      ELSE
 #endif
@@ -145,7 +145,7 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
      g(3)%anelastic = .TRUE.
 #ifdef USE_MPI
      IF ( ims_npro_k .GT. 1 ) THEN
-        nlines = ims_size_k(DNS_MPI_K_PARTIAL)
+        nlines = ims_size_k(TLAB_MPI_K_PARTIAL)
         offset = nlines *ims_pro_k
      ELSE
 #endif

@@ -111,8 +111,8 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
   CALL MPI_ALLREDUCE(tmp_z(:,:,1), tmp_z(:,:,2), count, MPI_REAL8, MPI_SUM, ims_comm_x, ims_err)
 
   IF ( ims_npro_k .GT. 1 ) THEN
-     id = DNS_MPI_K_AUX2
-     CALL DNS_MPI_TRPF_K(tmp_z(:,:,2), wrk2d(:,:,1), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     id = TLAB_MPI_K_AUX2
+     CALL TLAB_MPI_TRPF_K(tmp_z(:,:,2), wrk2d(:,:,1), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
   ELSE
      wrk2d(1:ny*nz,1,1) = tmp_z(1:ny*nz,1,2)
@@ -148,7 +148,7 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
         wrk2d(1:ny_local*count,(k-1)*2+1,1) =  wrk2d(1:ny_local*count,k,2)
      ENDDO
 
-     CALL DNS_MPI_TRPB_K(wrk2d(:,:,1), tmp_z(:,:,1), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPB_K(wrk2d(:,:,1), tmp_z(:,:,1), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
   ELSE
 #endif

@@ -29,7 +29,7 @@ PROGRAM INIRAND
   CALL DNS_READ_GLOBAL(ifile)
   CALL RAND_READ_LOCAL(ifile)
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
   isize_wrk3d = isize_txc_field

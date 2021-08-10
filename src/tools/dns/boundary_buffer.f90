@@ -338,16 +338,16 @@ CONTAINS
       SELECT CASE ( idir )
       CASE( 1 )
         CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI types for Ox BCs explicit filter.')
-        id     = DNS_MPI_K_OUTBCS
+        id     = TLAB_MPI_K_OUTBCS
         idummy = item%size*jmax
-        CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, idummy, 1,1,1,1, &
+        CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, idummy, 1,1,1,1, &
             ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
       CASE( 2 )
         CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI types for Oy BCs explicit filter.')
-        id     = DNS_MPI_K_TOPBCS
+        id     = TLAB_MPI_K_TOPBCS
         idummy = imax*item%size
-        CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, idummy, 1,1,1,1, &
+        CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, idummy, 1,1,1,1, &
             ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
       END SELECT
@@ -646,7 +646,7 @@ CONTAINS
     ! Outflow boundary
     ! ###################################################################
     IF ( BuffFlowImax%size .GT. 1 ) THEN
-      id = DNS_MPI_K_OUTBCS
+      id = TLAB_MPI_K_OUTBCS
       buff_imax = imax -BuffFlowImax%size +iloc
       ! -------------------------------------------------------------------
       ! Flow
