@@ -82,7 +82,7 @@ SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
 
   ! --- local declarations -------------------------------------------------------------------
 
-  TINTEGER is,ip
+  TINTEGER is !,ip
   PARAMETER(is=-1)
 
   ! ### end of declarations ##################################################################

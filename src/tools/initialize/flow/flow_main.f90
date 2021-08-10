@@ -117,7 +117,7 @@ PROGRAM INIFLOW
 #endif
 
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-    CALL PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
+    CALL PRESSURE_MEAN(p,T,s, wrk1d)
 
 #ifdef CHEMISTRY
     IF ( ireactive .EQ. CHEM_NONE ) THEN
@@ -149,7 +149,7 @@ PROGRAM INIFLOW
   CALL TLAB_WRITE_ASCII(tfile, 'INIFLOW: Section 2')
 #endif
 
-  CALL VELOCITY_MEAN( q(1,1),q(1,2),q(1,3), wrk1d,wrk3d )
+  CALL VELOCITY_MEAN( q(1,1),q(1,2),q(1,3), wrk1d )
 
   SELECT CASE( flag_u )
   CASE( 1 )

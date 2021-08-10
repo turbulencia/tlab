@@ -199,9 +199,10 @@ END SUBROUTINE OPR_FOURIER_INITIALIZE
 SUBROUTINE OPR_FOURIER_F_X_EXEC(nx,ny,nz, in,in_bcs_hb,in_bcs_ht, out, wrk1,wrk2)
 
   USE TLAB_VARS, ONLY : fft_plan_fx, fft_plan_fx_bcs
-  USE TLAB_VARS, ONLY : isize_txc_dimz, isize_txc_field
+  USE TLAB_VARS, ONLY : isize_txc_dimz
   USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
+  USE TLAB_VARS, ONLY : isize_txc_field
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
   USE TLAB_MPI_PROCS
@@ -307,9 +308,10 @@ END SUBROUTINE OPR_FOURIER_F_X_EXEC
 !########################################################################
 SUBROUTINE OPR_FOURIER_B_X_EXEC(nx,ny,nz, in,out, wrk)
 
-  USE TLAB_VARS, ONLY : isize_txc_dimz, isize_txc_field
+  USE TLAB_VARS, ONLY : isize_txc_dimz
   USE TLAB_VARS, ONLY : fft_plan_bx
 #ifdef USE_MPI
+  USE TLAB_VARS, ONLY : isize_txc_field
   USE TLAB_VARS, ONLY : g
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -414,9 +416,10 @@ END SUBROUTINE OPR_FOURIER_B_X_EXEC
 SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
 
   USE TLAB_VARS, ONLY : fft_plan_fz, fft_reordering
-  USE TLAB_VARS, ONLY : isize_txc_dimz, isize_txc_field
+  USE TLAB_VARS, ONLY : isize_txc_dimz
   USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
+  USE TLAB_VARS, ONLY : isize_txc_field
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   USE TLAB_MPI_PROCS
@@ -497,9 +500,10 @@ END SUBROUTINE OPR_FOURIER_F_Z_EXEC
 SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
 
   USE TLAB_VARS, ONLY : fft_plan_bz, fft_reordering
-  USE TLAB_VARS, ONLY : isize_txc_dimz, isize_txc_field
+  USE TLAB_VARS, ONLY : isize_txc_dimz
   USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
+  USE TLAB_VARS, ONLY : isize_txc_field
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   USE TLAB_MPI_PROCS

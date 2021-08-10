@@ -341,7 +341,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
   TREAL pts, c13, zero
   TREAL dum1, dum2, dum3, dum4, dum5
   TREAL SIMPSON_NU
-  TREAL U2, DU, UC, fU_05, r05, r005, r09, T2, DH, R2
+  TREAL U2, DU, UC, r05, r005, r09, T2, DH, R2
   TREAL y_center, dt_mean
   TREAL delta_05, delta_w, delta_t
   TREAL dfTdx, dfTdy, dRTTdx, dRTTdy, dfTf2dx, dfTf2dy
