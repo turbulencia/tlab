@@ -6,7 +6,7 @@
 TREAL FUNCTION AVG1V1D(nx,ny,nz, i,j, imom, a)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_comm_z, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_comm_z, ims_npro_k
 #endif
 
   IMPLICIT NONE
@@ -84,7 +84,7 @@ END SUBROUTINE SUM1V1D_V
 TREAL FUNCTION COV2V1D(nx,ny,nz, i,j, a,b)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_comm_z, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_comm_z, ims_npro_k
 #endif
 
   IMPLICIT NONE
@@ -124,7 +124,7 @@ END FUNCTION COV2V1D
 TREAL FUNCTION AVG1V2D(nx,ny,nz, j, imom, a)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro_i,ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i,ims_npro_k
 #endif
 
   IMPLICIT NONE
@@ -166,7 +166,7 @@ END FUNCTION AVG1V2D
 SUBROUTINE AVG1V2D_V(nx,ny,nz, imom, a, avg, wrk)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro_i,ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i,ims_npro_k
 #endif
 
   IMPLICIT NONE
@@ -261,7 +261,7 @@ END FUNCTION AVG1V2D1G
 TREAL FUNCTION INTER1V2D(nx,ny,nz, j, igate, gate)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro_i,ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i,ims_npro_k
 #endif
 
   IMPLICIT NONE
@@ -305,7 +305,7 @@ END FUNCTION INTER1V2D
 TREAL FUNCTION COV2V2D(nx,ny,nz, j, a, b)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro_i,ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i,ims_npro_k
 #endif
 
   IMPLICIT NONE
@@ -350,7 +350,7 @@ END FUNCTION COV2V2D
 TREAL FUNCTION AVG_IK(nx,ny,nz, j, a, dx,dz, area)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k, ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k, ims_err
 #endif
 
   IMPLICIT NONE
@@ -403,7 +403,7 @@ END FUNCTION AVG_IK
 SUBROUTINE AVG_IK_V(nx,ny,nz, jm, a, dx,dz, avg, wrk, area)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k, ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k, ims_err
 #endif
 
   IMPLICIT NONE

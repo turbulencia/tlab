@@ -36,14 +36,15 @@
 subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 
   use DNS_IBM
-  use DNS_GLOBAL, only: g
-  use DNS_GLOBAL, only: imax, jmax, kmax 
-  use DNS_GLOBAL, only: isize_field
+  use TLAB_VARS,        only: g
+  use TLAB_VARS,        only: imax, jmax, kmax 
+  use TLAB_VARS,        only: isize_field
 
 #ifdef USE_MPI 
-  use DNS_MPI,    only: ims_offset_i, ims_offset_j, ims_offset_k
-  use DNS_MPI,    only: ims_pro,  ims_pro_i,  ims_pro_j,  ims_pro_k  ! each number of each proc
-  use DNS_MPI,    only: ims_npro, ims_npro_i, ims_npro_j, ims_npro_k ! total numbers of proc
+  use TLAB_MPI_VARS,    only: ims_offset_i, ims_offset_j, ims_offset_k
+  use TLAB_MPI_VARS,    only: ims_pro,  ims_pro_i,  ims_pro_j,  ims_pro_k  ! each number of each proc
+  use TLAB_MPI_VARS,    only: ims_npro, ims_npro_i, ims_npro_j, ims_npro_k ! total numbers of proc
+  use TLAB_MPI_PROCS
 #endif 
 
   implicit none
@@ -65,7 +66,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   TINTEGER                                     :: i,j,k,l
 
   ! DEBUG 
-  character(32)                                :: fname
+  character(len=32)                            :: fname
   TREAL, dimension(isize_field), intent(inout) :: wrk3d
 
   ! ================================================================== !

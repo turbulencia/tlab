@@ -3,12 +3,12 @@
 
 MODULE FLOW_LOCAL
 
-  USE DNS_TYPES,  ONLY : background_dt, discrete_dt
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field
-  USE DNS_GLOBAL, ONLY : g, qbg
+  USE TLAB_TYPES,  ONLY : background_dt, discrete_dt
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field
+  USE TLAB_VARS, ONLY : g, qbg
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i,ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i,ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -153,7 +153,7 @@ CONTAINS
 
   ! ###################################################################
   SUBROUTINE VELOCITY_BROADBAND(u,v,w, ax,ay,az,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
-    USE DNS_GLOBAL, ONLY : visc
+    USE TLAB_VARS, ONLY : visc
     IMPLICIT NONE
 
     TREAL, DIMENSION(imax,jmax,kmax), INTENT(OUT)   :: u,v,w

@@ -15,7 +15,7 @@
 !########################################################################
 SUBROUTINE FI_STRAIN_TENSOR(nx,ny,nz, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk2d,wrk3d)
 
-  USE  DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
   
   IMPLICIT NONE
 
@@ -59,7 +59,7 @@ END SUBROUTINE FI_STRAIN_TENSOR
 !########################################################################
 SUBROUTINE FI_STRAIN(nx,ny,nz, u,v,w, result, tmp1,tmp2, wrk2d,wrk3d)
 
-  USE  DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
   
   IMPLICIT NONE
 
@@ -115,7 +115,7 @@ END SUBROUTINE FI_STRAIN
 !########################################################################
 SUBROUTINE FI_STRAIN_PRODUCTION(nx,ny,nz, u,v,w, result, s_12,s_13,s_23, tmp1,tmp2, wrk2d,wrk3d)
 
-  USE  DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
   
   IMPLICIT NONE
 
@@ -182,7 +182,7 @@ END SUBROUTINE FI_STRAIN_PRODUCTION
 !########################################################################
 SUBROUTINE FI_STRAIN_DIFFUSION(nx,ny,nz, u,v,w, result, strain, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
-  USE  DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
   
   IMPLICIT NONE
 
@@ -278,7 +278,7 @@ END SUBROUTINE FI_STRAIN_DIFFUSION
 !########################################################################
 SUBROUTINE FI_STRAIN_PRESSURE(nx,ny,nz, u,v,w,p, result, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
-  USE  DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
   
   IMPLICIT NONE
 

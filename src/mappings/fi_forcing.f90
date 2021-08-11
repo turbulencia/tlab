@@ -52,7 +52,7 @@ END SUBROUTINE FI_FORCING_0
 !########################################################################
 SUBROUTINE FI_FORCING_1(imax,jmax,kmax, time,visc, h1,h2, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
 
   IMPLICIT NONE
 

@@ -25,12 +25,12 @@
 !########################################################################
 SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : imode_sim, inb_scal, imax,jmax,kmax
-  USE DNS_GLOBAL,    ONLY : rbg, tbg, sbg, qbg
-  USE DNS_GLOBAL,    ONLY : buoyancy
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE TLAB_CONSTANTS, ONLY : efile
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : imode_sim, inb_scal, imax,jmax,kmax
+  USE TLAB_VARS,    ONLY : rbg, tbg, sbg, qbg
+  USE TLAB_VARS,    ONLY : buoyancy
+  USE THERMO_VARS, ONLY : imixture
 
   IMPLICIT NONE
 

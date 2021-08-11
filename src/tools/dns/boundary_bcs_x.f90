@@ -20,9 +20,10 @@
 SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
      h0,h1,h2,h3,h4,zh1, txc, aux2d, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
-  USE THERMO_GLOBAL, ONLY : imixture, gama0, THERMO_AI
+  USE TLAB_CONSTANTS
+  USE TLAB_VARS
+  USE TLAB_PROCS
+  USE THERMO_VARS, ONLY : imixture, gama0, THERMO_AI
   USE DNS_LOCAL
   USE BOUNDARY_INFLOW
   USE BOUNDARY_BCS
@@ -50,7 +51,7 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_X' )
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_X' )
 #endif
 
 #define hr_loc(j,k)  aux2d(j,k,1)
@@ -83,8 +84,8 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
   prefactor = (gama0-C_1_R)*mach*mach
 
   IF ( iaux .LT. nt*(19+5*(inb_flow+inb_scal_array)) ) THEN
-     CALL IO_WRITE_ASCII(efile, 'BOUNDARY_BCS_X. Not enough space in txc.')
-     CALL DNS_STOP(DNS_ERROR_IBC)
+     CALL TLAB_WRITE_ASCII(efile, 'BOUNDARY_BCS_X. Not enough space in txc.')
+     CALL TLAB_STOP(DNS_ERROR_IBC)
   ENDIF
 
 ! Define pointers
@@ -415,7 +416,7 @@ SUBROUTINE BOUNDARY_BCS_X(iaux, M2_max, etime, rho,u,v,w,p,gama,z1, &
   ENDIF
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_BCS_X' )
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_BCS_X' )
 #endif
 
   RETURN

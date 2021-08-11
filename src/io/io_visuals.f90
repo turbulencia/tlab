@@ -5,10 +5,11 @@
 
 SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, txc)
 
-  USE DNS_TYPES,  ONLY : subarray_dt
-  USE DNS_GLOBAL, ONLY : g, isize_txc_field
+  USE TLAB_TYPES,  ONLY : subarray_dt
+  USE TLAB_VARS, ONLY : g, isize_txc_field
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_pro
+  USE TLAB_MPI_VARS,    ONLY : ims_pro
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -120,7 +121,8 @@ END SUBROUTINE IO_WRITE_VISUALS
 SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_mpi)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro
+  USE TLAB_MPI_VARS, ONLY : ims_pro
+  USE TLAB_MPI_PROCS
 #endif
 
   implicit NONE
@@ -259,8 +261,8 @@ END SUBROUTINE ENSIGHT_GRID
 
 SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
 
-  USE DNS_GLOBAL, ONLY : imax,kmax, io_aux
-  USE DNS_MPI
+  USE TLAB_VARS, ONLY : imax,kmax, io_aux
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
 

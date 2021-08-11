@@ -22,16 +22,12 @@
 !########################################################################
 SUBROUTINE IO_WRITE_AVG_SPATIAL(name, mean_flow, mean_scal)
 
-  USE DNS_GLOBAL, ONLY : istat_maj_ver, istat_min_ver
-  USE DNS_GLOBAL, ONLY : istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
-  USE DNS_GLOBAL, ONLY : itime, rtime, jmax, inb_scal
-  USE DNS_CONSTANTS, ONLY : lfile
+  USE TLAB_VARS, ONLY : istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
+  USE TLAB_VARS, ONLY : itime, rtime, jmax, inb_scal
+  USE TLAB_CONSTANTS, ONLY : lfile
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro
-#endif
-#ifdef LES
-  USE LES_GLOBAL
+  USE TLAB_MPI_VARS, ONLY : ims_pro
 #endif
 
   IMPLICIT NONE
@@ -45,7 +41,7 @@ SUBROUTINE IO_WRITE_AVG_SPATIAL(name, mean_flow, mean_scal)
 ! -------------------------------------------------------------------
   CHARACTER*128 :: line
   TINTEGER nstat
-  
+
 ! ###################################################################
   line = 'Writing field '//TRIM(ADJUSTL(name))//'...'
 
@@ -54,14 +50,9 @@ SUBROUTINE IO_WRITE_AVG_SPATIAL(name, mean_flow, mean_scal)
 #endif
 #include "dns_open_file.h"
      nstat = MA_MOMENTUM_SIZE +MS_SCALAR_SIZE*inb_scal
-     CALL WRT_STHD(LOC_UNIT_ID, i0, istat_maj_ver, istat_min_ver, &
+     CALL WRT_STHD(LOC_UNIT_ID, i0, &
           itime, rtime, istattimeorg, rstattimeorg,&
           nstatavg, jmax, nstat, nstatavg_points, statavg)
-#ifdef LES
-     IF ( iles .EQ. 1 ) THEN
-        WRITE(LOC_UNIT_ID) ilesstat_maj_ver, ilesstat_min_ver, iarmavg_pts
-     ENDIF
-#endif
      WRITE(LOC_UNIT_ID) mean_flow
      WRITE(LOC_UNIT_ID) mean_scal
      CLOSE(LOC_UNIT_ID)
@@ -75,7 +66,7 @@ END SUBROUTINE IO_WRITE_AVG_SPATIAL
 
 ! ###################################################################
 ! ###################################################################
-SUBROUTINE WRT_STHD(unit, irec, major, minor, &
+SUBROUTINE WRT_STHD(unit, irec, &
      iter, rtime, iterorg, rtimeorg,&
      nstatavg, jmax, nstat, nstatavg_points, statavg)
 
@@ -86,23 +77,12 @@ SUBROUTINE WRT_STHD(unit, irec, major, minor, &
   TINTEGER nstatavg, jmax, nstat, nstatavg_points
   TREAL rtime, rtimeorg
   TINTEGER statavg(nstatavg)
-  TINTEGER major, minor
 
   TREAL tmp(1)
   TINTEGER reclen
 
-  reclen = SIZEOFINT*2
-  IF ( irec .EQ. 1 ) THEN
-     WRITE(unit) reclen
-     WRITE(unit) major
-     WRITE(unit) minor
-     WRITE(unit) reclen
-  ELSE
-     WRITE(unit) major, minor
-  ENDIF
-
   tmp(1) = rtime
-  reclen = SIZEOFINT+SIZEOFREAL 
+  reclen = SIZEOFINT+SIZEOFREAL
   IF ( irec .EQ. 1 ) THEN
      WRITE(unit) reclen
      WRITE(unit) iter
@@ -113,7 +93,7 @@ SUBROUTINE WRT_STHD(unit, irec, major, minor, &
   ENDIF
 
   tmp(1) = rtimeorg
-  reclen = SIZEOFINT+SIZEOFREAL 
+  reclen = SIZEOFINT+SIZEOFREAL
   IF ( irec .EQ. 1 ) THEN
      WRITE(unit) reclen
      WRITE(unit) iterorg
@@ -154,53 +134,53 @@ END SUBROUTINE WRT_STHD
 #define LOC_STATUS 'old'
 
 SUBROUTINE IO_READ_AVG_SPATIAL(name,mean_flow,mean_scal)
-  
-  USE DNS_GLOBAL, ONLY : istat_maj_ver, istat_min_ver
-  USE DNS_GLOBAL, ONLY : istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
-  USE DNS_GLOBAL, ONLY : itime, rtime, jmax, inb_scal
-  USE DNS_CONSTANTS, ONLY : lfile
+
+  USE TLAB_VARS, ONLY : istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
+  USE TLAB_VARS, ONLY : itime, rtime, jmax, inb_scal
+  USE TLAB_CONSTANTS, ONLY : lfile
+  USE TLAB_PROCS
 
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 #ifdef LES
   USE LES_GLOBAL
 #endif
 
   IMPLICIT NONE
-  
+
 #include "integers.h"
 #ifdef USE_MPI
 #include "mpif.h"
 #endif
-  
+
   CHARACTER*(*) name
   TREAL, DIMENSION(nstatavg*jmax*MA_MOMENTUM_SIZE)        :: mean_flow
   TREAL, DIMENSION(nstatavg*jmax*MS_SCALAR_SIZE*inb_scal) :: mean_scal
-  
+
 ! -------------------------------------------------------------------
   CHARACTER*128 :: line
   LOGICAL lfilexist
   TINTEGER nstat
-  
+
 ! ###################################################################
 #ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN 
+  IF ( ims_pro .EQ. 0 ) THEN
 #endif
      lfilexist = .FALSE.
      INQUIRE(file=name,EXIST=lfilexist)
-     
+
 ! -------------------------------------------------------------------
 ! Read data
 ! -------------------------------------------------------------------
      IF ( lfilexist ) THEN
         line = 'Reading field '//TRIM(ADJUSTL(name))//'...'
-        CALL IO_WRITE_ASCII(lfile,line)
+        CALL TLAB_WRITE_ASCII(lfile,line)
 
 #include "dns_open_file.h"
         REWIND(LOC_UNIT_ID)
         nstat = MA_MOMENTUM_SIZE +MS_SCALAR_SIZE*inb_scal
-        CALL RD_STHD(LOC_UNIT_ID, i0, istat_maj_ver, istat_min_ver, &
+        CALL RD_STHD(LOC_UNIT_ID, i0, &
              itime, rtime, istattimeorg, rstattimeorg, &
              nstatavg, jmax, nstat, nstatavg_points, statavg)
 #ifdef LES
@@ -219,31 +199,25 @@ SUBROUTINE IO_READ_AVG_SPATIAL(name,mean_flow,mean_scal)
         nstatavg_points = 0
         istattimeorg = itime
         rstattimeorg = rtime
-#ifdef LES
-        IF ( iles .EQ. 1 ) THEN
-           ilesstat_maj_ver = 1
-           ilesstat_min_ver = 2
-           iarmavg_pts = 0
-        ENDIF
-#endif
         mean_flow = C_0_R
         mean_scal = C_0_R
-        CALL IO_WRITE_ASCII(lfile,'Statistics have been initialized.')
+        CALL TLAB_WRITE_ASCII(lfile,'Statistics have been initialized.')
      ENDIF
-     
+
 #ifdef USE_MPI
   ENDIF
 #endif
-  
+
   RETURN
 END SUBROUTINE IO_READ_AVG_SPATIAL
 
 ! ###################################################################
 ! ###################################################################
-SUBROUTINE RD_STHD(unit, irec, major, minor, iter, rtime, iterorg, rtimeorg,&
+SUBROUTINE RD_STHD(unit, irec, iter, rtime, iterorg, rtimeorg,&
      nstatavg, jmax, nstat, nstatavg_points, statavg)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -253,20 +227,10 @@ SUBROUTINE RD_STHD(unit, irec, major, minor, iter, rtime, iterorg, rtimeorg,&
   TREAL rtime, rtimeorg
   TINTEGER statavg(nstatavg)
 
-  TINTEGER major, minor
   TINTEGER iterdum
   TINTEGER nstatavgdum, jmaxdum, nstatdum
   TREAL tmp(1)
   TINTEGER reclen
-
-  IF ( irec .EQ. 1 ) THEN
-     READ(unit) reclen
-     READ(unit) major
-     READ(unit) minor
-     READ(unit) reclen
-  ELSE
-     READ(unit) major, minor
-  ENDIF
 
   IF ( irec .EQ. 1 ) THEN
      READ(unit) reclen
@@ -312,27 +276,26 @@ SUBROUTINE RD_STHD(unit, irec, major, minor, iter, rtime, iterorg, rtimeorg,&
 ! #####################
 
   IF (iterdum .NE. iter) THEN
-     CALL IO_WRITE_ASCII(efile,'Stat file error (iter mismatch).')
-     CALL DNS_STOP(DNS_ERROR_STFILE)
+     CALL TLAB_WRITE_ASCII(efile,'Stat file error (iter mismatch).')
+     CALL TLAB_STOP(DNS_ERROR_STFILE)
   ENDIF
 
   IF (jmaxdum .NE. jmax) THEN
-     CALL IO_WRITE_ASCII(efile,'Stat file error (jmax mismatch).')
-     CALL DNS_STOP(DNS_ERROR_STFILE)
+     CALL TLAB_WRITE_ASCII(efile,'Stat file error (jmax mismatch).')
+     CALL TLAB_STOP(DNS_ERROR_STFILE)
   ENDIF
 
   IF (nstatavgdum .NE. nstatavg) THEN
-     CALL IO_WRITE_ASCII(efile,'Stat file error (nstatavg mismatch).')
-     CALL DNS_STOP(DNS_ERROR_STFILE)
+     CALL TLAB_WRITE_ASCII(efile,'Stat file error (nstatavg mismatch).')
+     CALL TLAB_STOP(DNS_ERROR_STFILE)
   ENDIF
 
   IF (nstatdum .NE. nstat) THEN
-     CALL IO_WRITE_ASCII(efile,'Stat file error (nstat mismatch).')
-     CALL DNS_STOP(DNS_ERROR_STFILE)
+     CALL TLAB_WRITE_ASCII(efile,'Stat file error (nstat mismatch).')
+     CALL TLAB_STOP(DNS_ERROR_STFILE)
   ELSE
      nstat = nstatdum
   ENDIF
 
   RETURN
 END SUBROUTINE RD_STHD
-

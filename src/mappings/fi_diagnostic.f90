@@ -8,10 +8,10 @@
 !########################################################################
 SUBROUTINE FI_DIAGNOSTIC( nx,ny,nz, q,s, wrk3d )
 
-  USE DNS_GLOBAL,     ONLY : inb_flow_array, inb_scal_array
-  USE DNS_GLOBAL,     ONLY : imode_eqns, itransport, damkohler
-  USE DNS_GLOBAL,     ONLY : epbackground,pbackground
-  USE THERMO_GLOBAL,  ONLY : imixture
+  USE TLAB_VARS,     ONLY : inb_flow_array, inb_scal_array
+  USE TLAB_VARS,     ONLY : imode_eqns, itransport, damkohler
+  USE TLAB_VARS,     ONLY : epbackground,pbackground
+  USE THERMO_VARS,  ONLY : imixture
 
   IMPLICIT NONE
 

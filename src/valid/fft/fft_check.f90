@@ -13,12 +13,12 @@ SUBROUTINE FFT_CHECK(check_mode, err_count,case_count, &
 
 #include "types.h"
 
-USE DNS_GLOBAL, ONLY   :  g, imax, jmax, kmax
-USE DNS_CONSTANTS, ONLY : lfile
-USE DNS_GLOBAL, ONLY   :  isize_txc_dimx, isize_txc_dimz 
+USE TLAB_VARS, ONLY   :  g, imax, jmax, kmax
+USE TLAB_CONSTANTS, ONLY : lfile
+USE TLAB_VARS, ONLY   :  isize_txc_dimx, isize_txc_dimz 
 
 #ifdef USE_MPI 
-USE DNS_MPI
+USE TLAB_MPI_VARS
 #endif 
 
 IMPLICIT NONE 
@@ -90,7 +90,7 @@ CASE (2)
 CASE (3) 
    label = 'fft_check:   random' 
 CASE DEFAULT
-   CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
+   CALL TLAB_STOP(DNS_ERROR_UNDEVELOP) 
 END SELECT
 
 
@@ -147,7 +147,7 @@ IF (ims_pro .EQ. 0) THEN
    ENDIF
 1000 FORMAT(a, 1x, a6, ' Transform-check.    Max. Residual: ', G13.6)   
    case_count= case_count+1
-   CALL IO_WRITE_ASCII(lfile, line) 
+   CALL TLAB_WRITE_ASCII(lfile, line) 
 
 #ifdef USE_MPI 
 ENDIF
@@ -209,7 +209,7 @@ IF ( ims_pro .EQ. 0 ) THEN
    case_count = case_count + 1
    
 1017 FORMAT(a,1x,a6,1x, 'PSD check.    Max. Residual:', G13.8)
-   CALL IO_WRITE_ASCII(lfile,line) 
+   CALL TLAB_WRITE_ASCII(lfile,line) 
 #ifdef USE_MPI
 ENDIF 
 #endif 
@@ -256,7 +256,7 @@ IF ( ims_pro .EQ. 0 ) THEN
    ENDIF
    case_count = case_count + 1 
    
-   CALL IO_WRITE_ASCII(lfile,line) 
+   CALL TLAB_WRITE_ASCII(lfile,line) 
 1001 FORMAT(a, 1x,a6, 1x, 'PARSEVAL-Identity check. Residual:', &
           1x, G13.8, ' Field:', G13.8, ' Spectrum: ', G13.8)
 
@@ -290,7 +290,7 @@ CONTAINS
     CASE (3) ! random check 
        CALL RANDOM_NUMBER(SETUP_CHECK) 
     CASE default
-       CALL DNS_STOP(DNS_ERROR_UNDEVELOP) 
+       CALL TLAB_STOP(DNS_ERROR_UNDEVELOP) 
     END SELECT
     
   END FUNCTION SETUP_CHECK

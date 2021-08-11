@@ -16,10 +16,10 @@
 !########################################################################
 SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 
-  USE DNS_TYPES,     ONLY : grid_dt
-  USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_IBM,       ONLY : ibm_burgers
-
+  USE TLAB_TYPES,     ONLY : grid_dt
+  USE TLAB_CONSTANTS, ONLY : efile
+  USE DNS_IBM,        ONLY : ibm_burgers
+  USE TLAB_PROCS
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity
@@ -38,8 +38,8 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
   
 ! ###################################################################
   IF ( bcs(1,2) + bcs(2,2) .GT. 0 ) THEN
-     CALL IO_WRITE_ASCII(efile,'OPR_BURGERS. Only developed for biased BCs.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+     CALL TLAB_WRITE_ASCII(efile,'OPR_BURGERS. Only developed for biased BCs.')
+     CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
   ! wrk3d: 1st derivative; result: 2nd derivative including diffusivity
@@ -82,9 +82,11 @@ END SUBROUTINE OPR_BURGERS
 !########################################################################
 SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -153,7 +155,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL DNS_MPI_TRPB_I(p_c, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+       CALL DNS_MPI_TRPB_I(p_c, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
   ENDIF
 #endif
 
@@ -166,9 +168,8 @@ END SUBROUTINE OPR_BURGERS_X
 !########################################################################
 SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
-  USE DNS_GLOBAL, ONLY : subsidence
-
+  USE TLAB_TYPES, ONLY : grid_dt
+  USE TLAB_VARS, ONLY : subsidence
   IMPLICIT NONE
 
   TINTEGER ivel, is, nx,ny,nz
@@ -247,9 +248,11 @@ END SUBROUTINE OPR_BURGERS_Y
 !########################################################################
 SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
-  USE DNS_MPI
+USE TLAB_MPI_VARS, ONLY : ims_npro_k
+USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE

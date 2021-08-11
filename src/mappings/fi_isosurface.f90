@@ -11,7 +11,7 @@
 !########################################################################
 SUBROUTINE FI_ISOSURFACE_ANGLE(nx,ny,nz, a,b, result, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
-  USE  DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
   
   IMPLICIT NONE
 
@@ -71,7 +71,7 @@ END SUBROUTINE FI_ISOSURFACE_ANGLE
 
 SUBROUTINE FI_ISOSURFACE_CURVATURE(nx,ny,nz, s, result, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
-  USE  DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
   
   IMPLICIT NONE
 

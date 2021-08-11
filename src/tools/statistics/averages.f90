@@ -7,17 +7,21 @@
 
 PROGRAM AVERAGES
 
-  USE DNS_TYPES,     ONLY : pointers_dt
-  USE DNS_CONSTANTS, ONLY : ifile,efile,lfile,gfile, tag_flow,tag_scal,tag_part
-  USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
-  USE DNS_GLOBAL
+  USE TLAB_TYPES,     ONLY : pointers_dt
+  USE TLAB_CONSTANTS, ONLY : ifile,efile,lfile,gfile, tag_flow,tag_scal,tag_part
+  USE TLAB_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
+  USE TLAB_VARS
   USE TLAB_ARRAYS
-  USE THERMO_GLOBAL, ONLY : imixture
-  USE LAGRANGE_GLOBAL
-  USE LAGRANGE_ARRAYS
+  USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_PROCS
 #endif
+  USE THERMO_VARS, ONLY : imixture
+  USE LAGRANGE_VARS
+  USE LAGRANGE_ARRAYS
 
   IMPLICIT NONE
 
@@ -82,7 +86,7 @@ PROGRAM AVERAGES
 
   bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_START()
+  CALL TLAB_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part == 1 ) THEN
@@ -153,13 +157,13 @@ PROGRAM AVERAGES
   END IF
 
   IF ( opt_main < 0 ) THEN ! Check
-    CALL IO_WRITE_ASCII(efile, 'AVERAGES. Missing input [ParamAverages] in dns.ini.')
-    CALL DNS_STOP(DNS_ERROR_INVALOPT)
+    CALL TLAB_WRITE_ASCII(efile, 'AVERAGES. Missing input [ParamAverages] in dns.ini.')
+    CALL TLAB_STOP(DNS_ERROR_INVALOPT)
   END IF
 
   IF ( opt_block < 1 ) THEN
-    CALL IO_WRITE_ASCII(efile, 'AVERAGES. Invalid value of opt_block.')
-    CALL DNS_STOP(DNS_ERROR_INVALOPT)
+    CALL TLAB_WRITE_ASCII(efile, 'AVERAGES. Invalid value of opt_block.')
+    CALL TLAB_STOP(DNS_ERROR_INVALOPT)
   END IF
 
   ! -------------------------------------------------------------------
@@ -326,7 +330,7 @@ PROGRAM AVERAGES
     itime = itime_vec(it)
 
     WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))
-    CALL IO_WRITE_ASCII(lfile, sRes)
+    CALL TLAB_WRITE_ASCII(lfile, sRes)
 
     IF ( iread_scal == 1 ) THEN
       WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
@@ -356,7 +360,7 @@ PROGRAM AVERAGES
         opt_cond_scal = inb_scal_array
       END IF
 
-      CALL IO_WRITE_ASCII(lfile,'Calculating partition...')
+      CALL TLAB_WRITE_ASCII(lfile,'Calculating partition...')
       CALL FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
           imax,jmax,kmax, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
 
@@ -488,7 +492,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 3 )
       WRITE(fname,*) itime; fname='avgMom'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       ifield = ifield+1; vars(ifield)%field => q(:,1);   vars(ifield)%tag = 'U'
@@ -532,7 +536,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 4 )
       WRITE(fname,*) itime; fname='avgMain'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       ifield = ifield+1; vars(ifield)%field => u(:); vars(ifield)%tag = 'U'
@@ -559,7 +563,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 5 )
       WRITE(fname,*) itime; fname='avgW2'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       ! result vector in txc4, txc5, txc6
@@ -618,7 +622,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 6 )
       WRITE(fname,*) itime; fname='avgS2'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
@@ -654,7 +658,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 7 )
       WRITE(fname,*) itime; fname='avgG2'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       CALL FI_GRADIENT_PRODUCTION(imax,jmax,kmax, s, u,v,w, &
@@ -679,7 +683,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 8 )
       WRITE(fname,*) itime; fname='avgInv'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       CALL FI_INVARIANT_R(imax,jmax,kmax, u,v,w, txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -695,7 +699,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 9 )
       WRITE(fname,*) itime; fname='avgGi'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s, txc(1,1), wrk3d, wrk2d,wrk3d)
@@ -718,7 +722,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 10 )
       WRITE(fname,*) itime; fname='avgEig'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       CALL FI_STRAIN_TENSOR(imax,jmax,kmax, u,v,w, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -733,7 +737,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 11 )
       WRITE(fname,*) itime; fname='avgCos'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       CALL FI_STRAIN_TENSOR(imax,jmax,kmax, u,v,w, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -778,7 +782,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 12 )
       WRITE(fname,*) itime; fname='avgDer'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, txc(1,1), wrk3d, wrk2d,wrk3d)
@@ -795,7 +799,7 @@ PROGRAM AVERAGES
     CASE ( 13 )
       ifield = 0
       WRITE(fname,*) itime; fname='avgFluxY'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), u, txc(:,1), wrk3d, wrk2d,wrk3d)
@@ -835,7 +839,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 14 )
       WRITE(fname,*) itime; fname='avgP'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
@@ -853,7 +857,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 15 )
       WRITE(fname,*) itime; fname='avgEps'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       CALL FI_DISSIPATION(i1,imax,jmax,kmax, u,v,w, txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
@@ -865,7 +869,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 16 )
       WRITE(fname,*) itime; fname='avgSiCov'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, s(1,1))
@@ -885,7 +889,7 @@ PROGRAM AVERAGES
       ! ###################################################################
     CASE ( 17 )
       WRITE(fname,*) itime; fname='avgPV'//TRIM(ADJUSTL(fname))
-      CALL IO_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing '//TRIM(ADJUSTL(fname))//'...')
       ifield = 0
 
       CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
@@ -913,8 +917,8 @@ PROGRAM AVERAGES
 
     IF ( opt_main > 2 ) THEN
       IF ( nfield < ifield ) THEN ! Check
-        CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Array space nfield incorrect.')
-        CALL DNS_STOP(DNS_ERROR_WRKSIZE)
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Array space nfield incorrect.')
+        CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
       END IF
 
       IF (  jmax_aux*opt_block /= g(2)%size ) THEN
@@ -930,5 +934,5 @@ PROGRAM AVERAGES
 
   END DO
 
-  CALL DNS_STOP(0)
+  CALL TLAB_STOP(0)
 END PROGRAM AVERAGES

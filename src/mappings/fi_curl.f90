@@ -10,8 +10,8 @@
 
 SUBROUTINE FI_CURL(nx,ny,nz, u,v,w, wx,wy,wz, tmp, wrk2d,wrk3d)
 
-  USE  DNS_GLOBAL, ONLY : g
-  
+  USE TLAB_VARS, ONLY : g
+
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
@@ -21,10 +21,10 @@ SUBROUTINE FI_CURL(nx,ny,nz, u,v,w, wx,wy,wz, tmp, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------
   TINTEGER bcs(2,2)
-  
+
 ! ###################################################################
   bcs = 0
-  
+
 ! v,x-u,y
   CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), v, wz,  wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), u, tmp, wrk3d, wrk2d,wrk3d)

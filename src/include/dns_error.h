@@ -104,6 +104,7 @@
 #define DNS_ERROR_CRAY         109
 #define DNS_ERROR_PSFFT        110
 #define DNS_ERROR_DILATATION   111
+#define DNS_ERROR_AVGTMP       112
 
 #define DNS_ERROR_PARTICLE          200
 #define DNS_ERROR_PARTICLE_UNMATCH  201
@@ -112,7 +113,5 @@
 #define DNS_ERROR_RESIDENCERESET    204
 
 #define DNS_ERROR_IBM_SPLINE        300
-
-#include "les_error.h"
 
 #endif

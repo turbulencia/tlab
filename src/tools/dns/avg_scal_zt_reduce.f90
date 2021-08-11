@@ -27,14 +27,14 @@
 
 MODULE AVG_SCAL_ZT
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS, ONLY : tfile
+  USE TLAB_CONSTANTS, ONLY : tfile
 #endif
-  USE DNS_GLOBAL, ONLY : isize_field, imax,jmax,kmax,inb_scal, isize_wrk2d, imode_eqns
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : nstatavg, statavg
-  USE DNS_GLOBAL, ONLY : itransport, visc
+  USE TLAB_VARS, ONLY : isize_field, imax,jmax,kmax,inb_scal, isize_wrk2d, imode_eqns
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : nstatavg, statavg
+  USE TLAB_VARS, ONLY : itransport, visc
 
   IMPLICIT NONE
   PRIVATE
@@ -63,7 +63,7 @@ CONTAINS
 
     ! ###################################################################
 #ifdef TRACE_ON
-    CALL IO_WRITE_ASCII(tfile, 'ENTERING AVG_SCAL_ZT_REDUCE' )
+    CALL TLAB_WRITE_ASCII(tfile, 'ENTERING AVG_SCAL_ZT_REDUCE' )
 #endif
 
     bcs = 0
@@ -251,7 +251,7 @@ CONTAINS
 #undef m_p_z
 
 #ifdef TRACE_ON
-    CALL IO_WRITE_ASCII(tfile, 'LEAVING AVG_SCAL_ZT_REDUCE' )
+    CALL TLAB_WRITE_ASCII(tfile, 'LEAVING AVG_SCAL_ZT_REDUCE' )
 #endif
 
     RETURN

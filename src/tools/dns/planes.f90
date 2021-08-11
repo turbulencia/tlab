@@ -4,12 +4,13 @@
 
 MODULE PLANES
 
-  USE DNS_CONSTANTS, ONLY : lfile, efile
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal_array, inb_flow_array
-  USE DNS_GLOBAL, ONLY : rbackground, g
-  USE DNS_GLOBAL, ONLY : itime, rtime
-  USE DNS_GLOBAL, ONLY : io_aux
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE TLAB_CONSTANTS, ONLY : lfile, efile
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_txc_field, inb_scal_array, inb_flow_array
+  USE TLAB_VARS, ONLY : rbackground, g
+  USE TLAB_VARS, ONLY : itime, rtime
+  USE TLAB_VARS, ONLY : io_aux
+  USE TLAB_PROCS
+  USE THERMO_VARS, ONLY : imixture
   USE DNS_LOCAL
 
   IMPLICIT NONE
@@ -39,7 +40,7 @@ CONTAINS
   SUBROUTINE PLANES_INITIALIZE()
 
 #ifdef USE_MPI
-    USE DNS_MPI
+    USE TLAB_MPI_VARS
 #endif
 
     IMPLICIT NONE
@@ -59,16 +60,16 @@ CONTAINS
     IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) jplanes%size = jplanes%size +2  ! Add LWP and intgral of TWP
 
     IF ( iplanes%size > imax ) THEN
-      CALL IO_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size imax is is insufficient.')
-      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+      CALL TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size imax is is insufficient.')
+      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
     END IF
     IF ( jplanes%size > jmax ) THEN
-      CALL IO_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size jmax is is insufficient.')
-      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+      CALL TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size jmax is is insufficient.')
+      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
     END IF
     IF ( kplanes%size > kmax ) THEN
-      CALL IO_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size kmax is is insufficient.')
-      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+      CALL TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size kmax is is insufficient.')
+      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
     END IF
 
     ! Info for IO routines: total size, lower bound, upper bound, stride, # variables
@@ -157,7 +158,7 @@ CONTAINS
     ! ###################################################################
     WRITE(fname,*) rtime
     WRITE(line1,*) itime; line1 = 'Writing planes at It'//TRIM(ADJUSTL(line1))//' and time '//TRIM(ADJUSTL(fname))//'.'
-    CALL IO_WRITE_ASCII(lfile,line1)
+    CALL TLAB_WRITE_ASCII(lfile,line1)
 
     CALL FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
 

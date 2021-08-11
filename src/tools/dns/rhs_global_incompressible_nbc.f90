@@ -20,13 +20,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
   USE OMP_LIB,    ONLY : omp_get_thread_num
 
-  USE DNS_CONSTANTS, ONLY : lfile,wfile,efile,tfile
+  USE TLAB_CONSTANTS, ONLY : lfile,wfile,efile,tfile
   !
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : imode_eqns
-  USE DNS_GLOBAL, ONLY : inb_flow,inb_scal,inb_scal_array
-  USE DNS_GLOBAL, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : rbackground, ribackground
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : imode_eqns
+  USE TLAB_VARS, ONLY : inb_flow,inb_scal,inb_scal_array
+  USE TLAB_VARS, ONLY : isize_field, isize_wrk1d, imax,jmax,kmax
+  USE TLAB_VARS, ONLY : rbackground, ribackground
   !
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
@@ -38,7 +38,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   USE DNS_LOCAL,  ONLY : nbcsetup
 #endif
 
-  USE DNS_MPI,    ONLY : ims_npro, ims_pro, ims_err,ims_size_i,ims_size_k
+  USE TLAB_MPI_VARS,    ONLY : ims_npro, ims_pro, ims_err,ims_size_i,ims_size_k
 
   USE NB3DFFT,    ONLY : nb3dfft_nbc_prepare,nb3dfft_nbc_finish,nb3dfft_infoType
   USE NB3DFFT,    ONLY : nb3dfft_nbc_schedl_start, nb3dfft_nbc_worker_start
@@ -90,18 +90,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile,'ENTERING SUBROUTINE, RHS_GLOBAL_INCOMPRESSIBLE_NBC')
+  CALL TLAB_WRITE_ASCII(tfile,'ENTERING SUBROUTINE, RHS_GLOBAL_INCOMPRESSIBLE_NBC')
 #endif
-
-  IF ( inb_scal .GT. 2 ) THEN
-     CALL IO_WRITE_ASCII(efile,&
-          'Nonblocking Communication not implemented >2 scalars' )
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ELSE IF ( inb_scal .LT. 1 ) THEN
-     CALL IO_WRITE_ASCII(efile,&
-          'Nonblocking Communication require at least 1 scalar')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
 
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
@@ -703,7 +693,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
   ptime = ptime + MPI_WTime()
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC')
+  CALL TLAB_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC')
 #endif
   RETURN
 END SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC

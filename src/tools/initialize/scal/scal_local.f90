@@ -3,12 +3,12 @@
 
 MODULE SCAL_LOCAL
 
-  USE DNS_TYPES,  ONLY : background_dt, discrete_dt
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_scal, MAX_NSP
-  USE DNS_GLOBAL, ONLY : g, sbg
+  USE TLAB_TYPES,  ONLY : background_dt, discrete_dt
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, inb_scal, MAX_NSP
+  USE TLAB_VARS, ONLY : g, sbg
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i,ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i,ims_offset_k
 #endif
 
   IMPLICIT NONE

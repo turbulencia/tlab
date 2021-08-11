@@ -3,8 +3,9 @@
 
 PROGRAM VPOISSON
 
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
+  USE TLAB_CONSTANTS
+  USE TLAB_VARS
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -21,7 +22,7 @@ PROGRAM VPOISSON
   TREAL dummy, error, lambda!, falpha
 
 ! ###################################################################
-  CALL DNS_START
+  CALL TLAB_START()
 
   CALL DNS_READ_GLOBAL(ifile)
 

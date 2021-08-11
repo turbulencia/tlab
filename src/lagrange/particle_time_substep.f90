@@ -9,13 +9,13 @@
 !########################################################################
 SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )    
   
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : isize_particle, inb_part
-  USE LAGRANGE_GLOBAL, ONLY : isize_l_comm
-  USE LAGRANGE_GLOBAL, ONLY : l_g
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : isize_particle, inb_part
+  USE LAGRANGE_VARS, ONLY : isize_l_comm
+  USE LAGRANGE_VARS, ONLY : l_g
 #ifdef USE_MPI
-  USE LAGRANGE_GLOBAL, ONLY : isize_pbuffer
-  USE DNS_MPI
+  USE LAGRANGE_VARS, ONLY : isize_pbuffer
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE

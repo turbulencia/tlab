@@ -20,7 +20,7 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# All three routines called the same kernel routine INTERPOLATE_1D, 
+!# All three routines called the same kernel routine INTERPOLATE_1D,
 !# calls in turn the routines from the library spline
 !#
 !########################################################################
@@ -31,9 +31,12 @@
 SUBROUTINE OPR_INTERPOLATE_X(nx,ny,nz, nx_dst, periodic, scalex, &
      x_org,x_dst, u_org,u_dst, u_tmp1,u_tmp2, isize_wrk3d, wrk3d)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_field
+  USE TLAB_VARS, ONLY : isize_txc_field
+  USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI 
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -54,7 +57,7 @@ SUBROUTINE OPR_INTERPOLATE_X(nx,ny,nz, nx_dst, periodic, scalex, &
 #endif
 
   TREAL, DIMENSION(:), POINTER :: p_a, p_b
- 
+
 ! #######################################################################
 ! -------------------------------------------------------------------
 ! Transposition
@@ -87,11 +90,11 @@ SUBROUTINE OPR_INTERPOLATE_X(nx,ny,nz, nx_dst, periodic, scalex, &
 
 ! -----------------------------------------------------------------------
   CALL INTERPOLATE_1D(periodic, nx_total,nyz, nx_total_dst, scalex, x_org,x_dst, p_a,p_b, isize_wrk3d, wrk3d)
- 
+
 ! -------------------------------------------------------------------
 ! Transposition
 ! -------------------------------------------------------------------
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
      id = DNS_MPI_I_AUX2
      CALL DNS_MPI_TRPB_I(u_tmp2, u_tmp1, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
@@ -109,9 +112,11 @@ END SUBROUTINE OPR_INTERPOLATE_X
 SUBROUTINE OPR_INTERPOLATE_Z(nx,ny,nz, nz_dst, periodic, scalez, &
      z_org,z_dst, u_org,u_dst, u_tmp1,u_tmp2, isize_wrk3d, wrk3d)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_field
+  USE TLAB_VARS, ONLY : isize_txc_field
 #ifdef USE_MPI
-  USE DNS_MPI 
+  USE TLAB_MPI_VARS, ONLY : ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -132,7 +137,7 @@ SUBROUTINE OPR_INTERPOLATE_Z(nx,ny,nz, nz_dst, periodic, scalez, &
 #endif
 
   TREAL, DIMENSION(:), POINTER :: p_a, p_b
- 
+
 ! #######################################################################
 ! -------------------------------------------------------------------
 ! Transposition
@@ -162,7 +167,7 @@ SUBROUTINE OPR_INTERPOLATE_Z(nx,ny,nz, nz_dst, periodic, scalez, &
 #endif
 
 ! -------------------------------------------------------------------
-! Make z direction the first one 
+! Make z direction the first one
 ! -------------------------------------------------------------------
 #ifdef USE_ESSL
      CALL DGETMO(p_a, nxy, nxy, nz_total, u_tmp1, nz_total)
@@ -185,7 +190,7 @@ SUBROUTINE OPR_INTERPOLATE_Z(nx,ny,nz, nz_dst, periodic, scalez, &
 ! -------------------------------------------------------------------
 ! Transposition
 ! -------------------------------------------------------------------
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
      id = DNS_MPI_K_AUX2
      CALL DNS_MPI_TRPB_K(u_tmp1, u_dst, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
@@ -252,7 +257,8 @@ END SUBROUTINE OPR_INTERPOLATE_Y
 ! #######################################################################
 SUBROUTINE INTERPOLATE_1D(periodic, imax,kmax, imax_dst, scalex, x_org,x_dst, u_org,u_dst, isize_wrk, wrk)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -268,7 +274,7 @@ SUBROUTINE INTERPOLATE_1D(periodic, imax,kmax, imax_dst, scalex, x_org,x_dst, u_
 
 ! -----------------------------------------------------------------------
   TINTEGER i,k
-  TINTEGER iopt, kx, nest, lwrk, nx 
+  TINTEGER iopt, kx, nest, lwrk, nx
   TINTEGER ip1, ip2, ip3, ip4, ip5, ip6, ier, imax1
 
   TREAL xb, xe, s, fp
@@ -293,8 +299,8 @@ SUBROUTINE INTERPOLATE_1D(periodic, imax,kmax, imax_dst, scalex, x_org,x_dst, u_
   ip6 = ip5 + nest  ! returned value
 
   IF ( isize_wrk .LT. ip6 ) THEN
-     CALL IO_WRITE_ASCII(efile, 'INTERPOLATE_1D. Temporary Array not large enough')
-     CALL DNS_STOP(DNS_ERROR_CURFIT)
+     CALL TLAB_WRITE_ASCII(efile, 'INTERPOLATE_1D. Temporary Array not large enough')
+     CALL TLAB_STOP(DNS_ERROR_CURFIT)
   ENDIF
 
 ! #######################################################################
@@ -309,8 +315,8 @@ SUBROUTINE INTERPOLATE_1D(periodic, imax,kmax, imax_dst, scalex, x_org,x_dst, u_
 
         IF ( ier .NE. 0 .AND. ier .NE. -1 ) THEN
            WRITE(line, *) 'INTERPOLATE_1D. Percur error code = ', ier
-           CALL IO_WRITE_ASCII(efile, line)
-           CALL DNS_STOP(DNS_ERROR_CURFIT)
+           CALL TLAB_WRITE_ASCII(efile, line)
+           CALL TLAB_STOP(DNS_ERROR_CURFIT)
         ENDIF
      ELSE
         CALL curfit(iopt, imax,  x_org, u_org(1,k), wrk(ip1), xb,xe, kx, s, &
@@ -318,8 +324,8 @@ SUBROUTINE INTERPOLATE_1D(periodic, imax,kmax, imax_dst, scalex, x_org,x_dst, u_
 
         IF ( ier .NE. 0 .AND. ier .NE. -1 ) THEN
            WRITE(line, *) 'INTERPOLATE_1D. Curfit error code = ', ier
-           CALL IO_WRITE_ASCII(efile, line)
-           CALL DNS_STOP(DNS_ERROR_CURFIT)
+           CALL TLAB_WRITE_ASCII(efile, line)
+           CALL TLAB_STOP(DNS_ERROR_CURFIT)
         ENDIF
      ENDIF
 

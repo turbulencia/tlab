@@ -9,13 +9,13 @@
 !########################################################################
 SUBROUTINE PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk3d)
 
-  USE DNS_TYPES,  ONLY: pointers_dt, pointers3d_dt
-  USE DNS_GLOBAL, ONLY: imax,jmax,kmax, isize_field,isize_particle, inb_scal_array
-  USE DNS_GLOBAL, ONLY: g
-  USE LAGRANGE_GLOBAL, ONLY : particle_dt
-  USE LAGRANGE_GLOBAL, ONLY : particle_pdf_subdomain, particle_pdf_max, particle_pdf_interval
+  USE TLAB_TYPES,  ONLY: pointers_dt, pointers3d_dt
+  USE TLAB_VARS, ONLY: imax,jmax,kmax, isize_field,isize_particle, inb_scal_array
+  USE TLAB_VARS, ONLY: g
+  USE LAGRANGE_VARS, ONLY : particle_dt
+  USE LAGRANGE_VARS, ONLY : particle_pdf_subdomain, particle_pdf_max, particle_pdf_interval
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE

@@ -13,13 +13,13 @@
 SUBROUTINE RHS_FLOW_EULER_SKEWSYMMETRIC(rho,u,v,w,p,e, z1, h0,h1,h2,h3,h4, zh1,&
      tmp1,tmp2,tmp3,tmp4,tmp5, wrk2d,wrk3d)
 #ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
+  USE TLAB_CONSTANTS, ONLY : tfile 
 #endif 
 
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, inb_scal, imode_eqns
-  USE DNS_GLOBAL,    ONLY : g, buoyancy
-  USE DNS_GLOBAL,    ONLY : mach
-  USE THERMO_GLOBAL, ONLY : gama0
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field, inb_scal, imode_eqns
+  USE TLAB_VARS,    ONLY : g, buoyancy
+  USE TLAB_VARS,    ONLY : mach
+  USE THERMO_VARS, ONLY : gama0
 
   IMPLICIT NONE
 
@@ -36,7 +36,7 @@ SUBROUTINE RHS_FLOW_EULER_SKEWSYMMETRIC(rho,u,v,w,p,e, z1, h0,h1,h2,h3,h4, zh1,&
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_EULER_SKEWSYMMETRIC')
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_EULER_SKEWSYMMETRIC')
 #endif
 
   bcs = 0
@@ -249,7 +249,7 @@ SUBROUTINE RHS_FLOW_EULER_SKEWSYMMETRIC(rho,u,v,w,p,e, z1, h0,h1,h2,h3,h4, zh1,&
   h3 = h3 - C_05_R*rho*( u*tmp2 + v*tmp3 + w*tmp4 )
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_EULER_SKEWSYMMETRIC')
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_EULER_SKEWSYMMETRIC')
 #endif
 
   RETURN

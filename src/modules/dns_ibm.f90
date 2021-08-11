@@ -18,7 +18,7 @@
 
 module DNS_IBM
 
-  use DNS_TYPES, only: ibm_geo_dt
+  use TLAB_TYPES, only: ibm_geo_dt
 
   implicit none
 

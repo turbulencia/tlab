@@ -34,22 +34,24 @@
 
 subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
 
-  use DNS_IBM,       only: xa, xb, x_mask, ya, yb, y_mask 
-  use DNS_IBM,       only: nflu, ibm_spline_global
-  use DNS_GLOBAL,    only: isize_field
-  use DNS_CONSTANTS, only: efile
-  use DNS_TYPES,     only: grid_dt
+  use DNS_IBM,        only: xa, xb, x_mask, ya, yb, y_mask 
+  use DNS_IBM,        only: nflu, ibm_spline_global
+  use TLAB_VARS,      only: isize_field
+  use TLAB_CONSTANTS, only: efile
+  use TLAB_TYPES,     only: grid_dt
+  use TLAB_PROCS
 
   ! MPI just for debugging
-  use DNS_GLOBAL,    only: imax, jmax, kmax ! debug
+  use TLAB_VARS,           only: imax, jmax, kmax ! debug
 #ifdef USE_MPI
-  use DNS_MPI,       only: ims_pro
-  use DNS_MPI,       only: ims_size_i, ims_size_j, ims_size_k    
-  use DNS_MPI,       only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i 
-  use DNS_MPI,       only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  use DNS_MPI,       only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
-#endif  
-   
+  use TLAB_MPI_VARS,       only: ims_pro
+  use TLAB_MPI_VARS,       only: ims_size_i, ims_size_j, ims_size_k    
+  use TLAB_MPI_VARS,       only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i 
+  use TLAB_MPI_VARS,       only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  use TLAB_MPI_VARS,       only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
+  use TLAB_MPI_PROCS
+#endif
+
   implicit none
   
 #include "integers.h"
@@ -74,7 +76,6 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
 
   TINTEGER                                       :: l, ii, ip, ia, ib, ic, iob, iu_il
   logical                                        :: splines, global
-  character, dimension(128)                      :: line
 
   ! debug
   TREAL, dimension(isize_field)                  :: wrk3d      ! debug
@@ -117,9 +118,8 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
 
           else if((nob_e(ip+ii) <= (g%size - nflu)) .eqv. g%periodic) then
             ! 2. case: object is semi-immersed - periodic case
-            write(line, *) 'IBM_SPLINE this case is not implemented yet'
-            call IO_WRITE_ASCII(efile, line)
-            call DNS_STOP(DNS_ERROR_NOTIMPL)
+            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE this case is not implemented yet')
+            call TLAB_STOP(DNS_ERROR_NOTIMPL)
 
           else if((nob_e(ip+ii) <= (g%size - nflu)) .neqv. g%periodic) then ! in j-direction
             ! 3. case: object is semi-immersed - non-periodic case - lower boundary
@@ -127,9 +127,8 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
             call IBM_SPLINE_VECTOR(i3, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
 
           else
-            write(line, *) 'IBM_SPLINE not enough fluid points right of the right interface'
-            call IO_WRITE_ASCII(efile, line)
-            call DNS_STOP(DNS_ERROR_IBM_SPLINE)
+            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE not enough fluid points right of the right interface')
+            call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
           end if
         ! ================================================================== !
         else if(nob_b(ip+ii) >= (nflu+1)) then
@@ -148,26 +147,22 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
             
           else if((nob_e(ip+ii) == g%size) .eqv. g%periodic) then
             ! 5. case: object is semi-immersed - periodic case
-            write(line, *) 'IBM_SPLINE this case is not implemented yet'
-            call IO_WRITE_ASCII(efile, line)
-            call DNS_STOP(DNS_ERROR_NOTIMPL)
+            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE this case is not implemented yet')
+            call TLAB_STOP(DNS_ERROR_NOTIMPL)
             
           else if((nob_e(ip+ii) == g%size) .neqv. g%periodic) then  ! in j-direction
             ! 6. case: object is semi-immersed - non-periodic case - upper boundary
-            write(line, *) 'IBM_SPLINE this case is not implemented yet'
-            call IO_WRITE_ASCII(efile, line)
-            call DNS_STOP(DNS_ERROR_NOTIMPL)
+            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE this case is not implemented yet')
+            call TLAB_STOP(DNS_ERROR_NOTIMPL)
 
           else
-            write(line, *) 'IBM_SPLINE not enough fluid points left of the left interface'
-            call IO_WRITE_ASCII(efile, line)
-            call DNS_STOP(DNS_ERROR_IBM_SPLINE)
+            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE not enough fluid points left of the left interface')
+            call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
           end if
         
         else
-          write(line, *) 'IBM_SPLINE this case is not implemented yet'
-          call IO_WRITE_ASCII(efile, line)
-          call DNS_STOP(DNS_ERROR_NOTIMPL)
+          call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE this case is not implemented yet')
+          call TLAB_STOP(DNS_ERROR_NOTIMPL)
         end if
 
         ! ================================================================== !
@@ -200,7 +195,7 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
           ! if (ims_pro == 0) write(*,*) 'xb', xb(1:ib)
           ! if (ims_pro == 0) write(*,*) 'yb', yb(1:ib)
           ! if (ims_pro == 0) write(*,*) '=================='
-          ! call DNS_STOP(DNS_ERROR_IBM_SPLINE)
+          ! call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
           ! ================================================================== !
         end if
         ip = ip + nlines
@@ -233,45 +228,45 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
     end if
   end do
 
-  ! ================================================================== !
-  ! debug -- Block comment with #if 0 and #endif
+!   ! ================================================================== !
+!   ! debug -- Block comment with #if 0 and #endif
+! ! #if 0
+!   if (g%name == 'y') then
+!     ! ================================================================== !
+!     ! debug
+!     if (ims_pro == 0) write(*,*) '========================================================='
+
+!     ! write out fld_mod for debugging
+!     call DNS_TRANSPOSE(fld_mod, kmax, imax*jmax, kmax, fld_mod_tr, imax*jmax)
+!     call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
+
+!     ! stop after writing field
+!     call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
+!   ! ================================================================== !
+!   end if
+! ! #endif
 ! #if 0
-  if (g%name == 'y') then
-    ! ================================================================== !
-    ! debug
-    if (ims_pro == 0) write(*,*) '========================================================='
+!   if (g%name == 'z') then
+!     ! ================================================================== !
+!     ! debug
+!     if (ims_pro == 0) write(*,*) '========================================================='
 
-    ! write out fld_mod for debugging
-    call DNS_TRANSPOSE(fld_mod, kmax, imax*jmax, kmax, fld_mod_tr, imax*jmax)
-    call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
-
-    ! stop after writing field
-    call DNS_STOP(DNS_ERROR_IBM_SPLINE)
-  ! ================================================================== !
-  end if
+!     ! write out fld_mod for debugging
+! #ifdef USE_MPI
+!     if ( ims_npro_k > 1 ) then
+!       call DNS_MPI_TRPB_K(fld_mod, fld_mod_tr, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+!     endif
+!     call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
+! #else
+!     fld_mod_tr = fld_mod
+!     call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
 ! #endif
-#if 0
-  if (g%name == 'z') then
-    ! ================================================================== !
-    ! debug
-    if (ims_pro == 0) write(*,*) '========================================================='
 
-    ! write out fld_mod for debugging
-#ifdef USE_MPI
-    if ( ims_npro_k > 1 ) then
-      call DNS_MPI_TRPB_K(fld_mod, fld_mod_tr, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
-    endif
-    call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
-#else
-    fld_mod_tr = fld_mod
-    call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
-#endif
-
-    ! stop after writing field
-    call DNS_STOP(DNS_ERROR_IBM_SPLINE)
-    ! ================================================================== !
-  end if
-#endif
+!     ! stop after writing field
+!     call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
+!     ! ================================================================== !
+!   end if
+! #endif
   return
 end subroutine IBM_SPLINE_XYZ
 
@@ -279,9 +274,10 @@ end subroutine IBM_SPLINE_XYZ
 
 subroutine IBM_SPLINE(ia, ib, xa, ya, xb, yb)
   
-  use DNS_IBM,       only: isize_iwrk_ibm, nest, nsp, kspl
-  use DNS_IBM,       only: wrk_ibm, iwrk_ibm
-  use DNS_CONSTANTS, only: efile
+  use DNS_IBM,        only: isize_iwrk_ibm, nest, nsp, kspl
+  use DNS_IBM,        only: wrk_ibm, iwrk_ibm
+  use TLAB_CONSTANTS, only: efile
+  use TLAB_PROCS
    
   implicit none
   
@@ -298,7 +294,7 @@ subroutine IBM_SPLINE(ia, ib, xa, ya, xb, yb)
   TINTEGER                             :: iopt, n, l, ier
   TINTEGER                             :: ip1, ip2, ip3, ip4
 
-  character, dimension(128)            :: line
+  character(len=128)                   :: line
   
   ! ================================================================== !
   ! spline function parameter
@@ -338,8 +334,8 @@ subroutine IBM_SPLINE(ia, ib, xa, ya, xb, yb)
   
   if ( (ier /= 0) .and. (ier /= -1) ) then
     write(line, *) 'INTERPOLATE_1D. Curfit error code = ', ier
-    call IO_WRITE_ASCII(efile, line)
-    call DNS_STOP(DNS_ERROR_CURFIT)
+    call TLAB_WRITE_ASCII(efile, line)
+    call TLAB_STOP(DNS_ERROR_CURFIT)
   end if
 
   ! ================================================================== !
@@ -360,8 +356,8 @@ subroutine IBM_SPLINE(ia, ib, xa, ya, xb, yb)
   
   if (ier /= 0) then
     write(line, *) 'INTERPOLATE_1D. Splev error code = ', ier
-    call IO_WRITE_ASCII(efile, line)
-    call DNS_STOP(DNS_ERROR_CURFIT)
+    call TLAB_WRITE_ASCII(efile, line)
+    call TLAB_STOP(DNS_ERROR_CURFIT)
   end if
 
   return
@@ -372,8 +368,8 @@ end subroutine IBM_SPLINE
 subroutine IBM_SPLINE_VECTOR(case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir, nlines, plane) 
 
   use DNS_IBM,    only: nflu, isize_wrk1d_ibm, nsp 
-  use DNS_GLOBAL, only: isize_field
-  use DNS_TYPES,  only: grid_dt
+  use TLAB_VARS,  only: isize_field
+  use TLAB_TYPES, only: grid_dt
    
   implicit none
   
@@ -476,8 +472,8 @@ end subroutine IBM_SPLINE_VECTOR
 subroutine IBM_SPLINE_VECTOR_GLOB(fld, g, xa, ya, xb, x_mask, y_mask, ia, ib, ic, nlines, plane) 
 
   use DNS_IBM,    only: isize_wrk1d_ibm, nsp 
-  use DNS_GLOBAL, only: isize_field
-  use DNS_TYPES,  only: grid_dt
+  use TLAB_VARS,  only: isize_field
+  use TLAB_TYPES, only: grid_dt
    
   implicit none
   
@@ -526,8 +522,8 @@ end subroutine IBM_SPLINE_VECTOR_GLOB
 ! subroutine IBM_SPLINE_VECTOR(case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir, nlines, plane) 
 
 !   use DNS_IBM,    only: nflu, isize_wrk1d_ibm, nsp 
-!   use DNS_GLOBAL, only: isize_field
-!   use DNS_TYPES,  only: grid_dt
+!   use TLAB_VARS, only: isize_field
+!   use TLAB_TYPES,  only: grid_dt
    
 !   implicit none
   

@@ -11,15 +11,15 @@
 !########################################################################
 PROGRAM LAGRANGE_PDF
 
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
+  USE TLAB_CONSTANTS
+  USE TLAB_VARS
   USE TLAB_ARRAYS
-  USE LAGRANGE_GLOBAL
-  USE LAGRANGE_ARRAYS
-
+  USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_PROCS
 #endif
+  USE LAGRANGE_VARS
+  USE LAGRANGE_ARRAYS
 
   IMPLICIT NONE
 #include "integers.h"
@@ -40,7 +40,7 @@ PROGRAM LAGRANGE_PDF
 
   bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_START
+  CALL TLAB_START
 
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) THEN
@@ -84,11 +84,11 @@ PROGRAM LAGRANGE_PDF
   ENDIF
 
    WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
-  CALL IO_WRITE_ASCII(lfile,line)
+  CALL TLAB_WRITE_ASCII(lfile,line)
   ALLOCATE(l_comm(isize_l_comm), stat=ierr)
   IF ( ierr .NE. 0 ) THEN
-     CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
-     CALL DNS_STOP(DNS_ERROR_ALLOC)
+     CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
+     CALL TLAB_STOP(DNS_ERROR_ALLOC)
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -122,5 +122,5 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   ENDDO
 
-  CALL DNS_STOP(0)
+  CALL TLAB_STOP(0)
 END PROGRAM

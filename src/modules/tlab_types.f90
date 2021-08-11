@@ -1,6 +1,6 @@
 #include "types.h"
 
-MODULE DNS_TYPES
+MODULE TLAB_TYPES
   IMPLICIT NONE
   SAVE
 
@@ -93,4 +93,4 @@ MODULE DNS_TYPES
 #endif
   END type subarray_dt
 
-END MODULE DNS_TYPES
+END MODULE TLAB_TYPES

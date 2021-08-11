@@ -31,13 +31,16 @@
 !########################################################################
 PROGRAM LAGRANGE_POS_TRAJEC
 
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
-  USE LAGRANGE_GLOBAL
-  USE LAGRANGE_ARRAYS
+  USE TLAB_CONSTANTS
+  USE TLAB_VARS
+  USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro
+  USE TLAB_MPI_PROCS
 #endif
+  USE LAGRANGE_VARS
+  USE LAGRANGE_ARRAYS
 
   IMPLICIT NONE
 #include "integers.h"
@@ -65,7 +68,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
 
   bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_START
+  CALL TLAB_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) THEN
@@ -168,5 +171,5 @@ PROGRAM LAGRANGE_POS_TRAJEC
 
 #endif
 
-  CALL DNS_STOP(0)
+  CALL TLAB_STOP(0)
 END PROGRAM

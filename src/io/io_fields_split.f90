@@ -40,8 +40,12 @@
 SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk)
 
 #ifdef USE_MPI
-  USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_MPI
+  USE TLAB_CONSTANTS, ONLY : lfile
+  USE TLAB_PROCS
+  USE TLAB_MPI_VARS, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -89,7 +93,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 ! We always initialize types here. For the general field files, we could
 ! use DNS_MPI_I_PARTIAL, but we use this routine for other files like
 ! buffer regions of transformed fields.
-     CALL IO_WRITE_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
+     CALL TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
      id = DNS_MPI_I_AUX1
      npage = nz*ny
      CALL DNS_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
@@ -182,8 +186,12 @@ END SUBROUTINE IO_READ_FIELDS_SPLIT
 SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk)
 
 #ifdef USE_MPI
-  USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_MPI
+  USE TLAB_CONSTANTS, ONLY : lfile
+  USE TLAB_PROCS
+  USE TLAB_MPI_VARS, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -231,7 +239,7 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 ! We always initialize types here. For the general field files, we could
 ! use DNS_MPI_I_PARTIAL, but we use this routine for other files like
 ! buffer regions of transformed fields.
-     CALL IO_WRITE_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
+     CALL TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
      id = DNS_MPI_I_AUX1
      npage = nz*ny
      CALL DNS_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
@@ -314,7 +322,8 @@ END SUBROUTINE IO_WRITE_FIELDS_SPLIT
 !########################################################################
 SUBROUTINE IO_READ_HEADER(unit, offset, nx,ny,nz,nt, params)
 
-  USE DNS_CONSTANTS, ONLY : efile, wfile
+  USE TLAB_CONSTANTS, ONLY : efile, wfile
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -333,20 +342,20 @@ SUBROUTINE IO_READ_HEADER(unit, offset, nx,ny,nz,nt, params)
      READ(unit) params(1:isize)
 
   ELSE
-     CALL IO_WRITE_ASCII(efile, 'IO_READ_HEADER. Header format incorrect.')
-     CALL DNS_STOP(DNS_ERROR_RECLEN)
+     CALL TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER. Header format incorrect.')
+     CALL TLAB_STOP(DNS_ERROR_RECLEN)
 
   ENDIF
 
 ! Check
   IF ( nx .NE. nx_loc .OR. ny .NE. ny_loc .OR. nz .NE. nz_loc ) THEN
      CLOSE(unit)
-     CALL IO_WRITE_ASCII(efile, 'IO_READ_HEADER. Grid size mismatch.')
-     CALL DNS_STOP(DNS_ERROR_DIMGRID)
+     CALL TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER. Grid size mismatch.')
+     CALL TLAB_STOP(DNS_ERROR_DIMGRID)
   ENDIF
 
   IF ( nt .NE. nt_loc ) THEN
-     CALL IO_WRITE_ASCII(wfile, 'IO_READ_HEADER. ItNumber mismatch. Filename value ignored.')
+     CALL TLAB_WRITE_ASCII(wfile, 'IO_READ_HEADER. ItNumber mismatch. Filename value ignored.')
 !     nt = nt_loc
   ENDIF
 

@@ -15,9 +15,9 @@
 !########################################################################
 SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
-  USE DNS_GLOBAL, ONLY : buoyancy, coriolis, subsidence
-  USE DNS_GLOBAL, ONLY : bbackground, pbackground, rbackground, epbackground
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
+  USE TLAB_VARS, ONLY : buoyancy, coriolis, subsidence
+  USE TLAB_VARS, ONLY : bbackground, pbackground, rbackground, epbackground
 
   IMPLICIT NONE
 
@@ -132,11 +132,11 @@ END SUBROUTINE FI_SOURCES_FLOW
 ! #######################################################################
 SUBROUTINE FI_SOURCES_SCAL(s, hs, tmp1,tmp2, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, inb_scal, isize_field, isize_wrk1d
-  USE DNS_GLOBAL, ONLY : imode_eqns
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : radiation, transport, chemistry, subsidence
-  USE DNS_GLOBAL, ONLY : rbackground, ribackground
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, inb_scal, isize_field, isize_wrk1d
+  USE TLAB_VARS, ONLY : imode_eqns
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : radiation, transport, chemistry, subsidence
+  USE TLAB_VARS, ONLY : rbackground, ribackground
 
   IMPLICIT NONE
 

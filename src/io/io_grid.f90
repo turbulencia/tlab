@@ -25,7 +25,8 @@
 !########################################################################
 SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z, area)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -55,8 +56,8 @@ SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z, area)
   IF (imaxdum .NE. imax .OR. jmaxdum .NE. jmax .OR. kmaxdum .NE. kmax) THEN
      CLOSE(50)
      WRITE(line,100) imaxdum,jmaxdum,kmaxdum
-     CALL IO_WRITE_ASCII(efile, 'IO_READ_GRID. Dimensions ('//TRIM(line)//') unmatched.')
-     CALL DNS_STOP(DNS_ERROR_DIMGRID)
+     CALL TLAB_WRITE_ASCII(efile, 'IO_READ_GRID. Dimensions ('//TRIM(line)//') unmatched.')
+     CALL TLAB_STOP(DNS_ERROR_DIMGRID)
   ENDIF
 
 ! -----------------------------------------------------------------------

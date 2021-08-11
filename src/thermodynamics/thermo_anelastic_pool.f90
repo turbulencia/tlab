@@ -25,7 +25,7 @@
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_TEMPERATURE(nx,ny,nz, s, e, T)
 
-  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI
+  USE THERMO_VARS, ONLY : imixture, THERMO_AI
 
   IMPLICIT NONE
 
@@ -100,7 +100,7 @@ END SUBROUTINE THERMO_ANELASTIC_TEMPERATURE
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_STATIC_L(nx,ny,nz, s, e, result)
 
-  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI
+  USE THERMO_VARS, ONLY : imixture, THERMO_AI
 
   IMPLICIT NONE
 
@@ -181,7 +181,7 @@ END SUBROUTINE THERMO_ANELASTIC_STATIC_L
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_DENSITY(nx,ny,nz, s, e,p, rho)
 
-  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO
+  USE THERMO_VARS, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO
 
   IMPLICIT NONE
 
@@ -266,7 +266,7 @@ END SUBROUTINE THERMO_ANELASTIC_DENSITY
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_BUOYANCY(nx,ny,nz, s, e,p,r, b)
 
-  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO
+  USE THERMO_VARS, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO
   
   IMPLICIT NONE
 
@@ -357,7 +357,7 @@ END SUBROUTINE THERMO_ANELASTIC_BUOYANCY
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_QVEQU(nx,ny,nz, s, e,p, T,qvequ)
 
-  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, WGHT_INV, MRATIO, THERMO_PSAT, NPSAT
+  USE THERMO_VARS, ONLY : imixture, THERMO_AI, WGHT_INV, MRATIO, THERMO_PSAT, NPSAT
 
   IMPLICIT NONE
 
@@ -412,7 +412,7 @@ END SUBROUTINE THERMO_ANELASTIC_QVEQU
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_RELATIVEHUMIDITY(nx,ny,nz, s, e,p, T,rh)
 
-  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, THERMO_PSAT, NPSAT, WGHT_INV, MRATIO
+  USE THERMO_VARS, ONLY : imixture, THERMO_AI, THERMO_PSAT, NPSAT, WGHT_INV, MRATIO
 
   IMPLICIT NONE
 
@@ -470,7 +470,7 @@ END SUBROUTINE THERMO_ANELASTIC_RELATIVEHUMIDITY
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_THETA(nx,ny,nz, s, e,p, theta)
 
-  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
+  USE THERMO_VARS, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
 
   IMPLICIT NONE
 
@@ -557,7 +557,7 @@ END SUBROUTINE THERMO_ANELASTIC_THETA
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_THETA_V(nx,ny,nz, s, e,p, theta)
 
-  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
+  USE THERMO_VARS, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
 
   IMPLICIT NONE
 
@@ -647,7 +647,7 @@ END SUBROUTINE THERMO_ANELASTIC_THETA_V
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_THETA_L(nx,ny,nz, s, e,p, theta)
 
-  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
+  USE THERMO_VARS, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
 
   IMPLICIT NONE
 
@@ -739,7 +739,7 @@ END SUBROUTINE THERMO_ANELASTIC_THETA_L
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_THETA_E(nx,ny,nz, s, e,p, theta)
 
-  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
+  USE THERMO_VARS, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO
 
   IMPLICIT NONE
 
@@ -833,8 +833,8 @@ END SUBROUTINE THERMO_ANELASTIC_THETA_E
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_LAPSE_FR(nx,ny,nz, s, dTdy, e, lapse, frequency)
 
-  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, GRATIO
-  USE DNS_GLOBAL,    ONLY : pbg
+  USE THERMO_VARS, ONLY : imixture, THERMO_AI, GRATIO
+  USE TLAB_VARS,    ONLY : pbg
   
   IMPLICIT NONE
 
@@ -919,8 +919,8 @@ END SUBROUTINE THERMO_ANELASTIC_LAPSE_FR
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU(nx,ny,nz, s, dTdy,dqldy, e,p,r, lapse, frequency)
 
-  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO, THERMO_PSAT, NPSAT
-  USE DNS_GLOBAL,    ONLY : pbg
+  USE THERMO_VARS, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, GRATIO, THERMO_PSAT, NPSAT
+  USE TLAB_VARS,    ONLY : pbg
   
   IMPLICIT NONE
 
@@ -1044,8 +1044,8 @@ END SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_DEWPOINT(nx,ny,nz, s, e,p,r, Td,Lapse)
 
-  USE THERMO_GLOBAL, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, THERMO_PSAT, NPSAT
-  USE DNS_GLOBAL,    ONLY : pbg
+  USE THERMO_VARS, ONLY : imixture, WGHT_INV, THERMO_AI, MRATIO, THERMO_PSAT, NPSAT
+  USE TLAB_VARS,    ONLY : pbg
   
   IMPLICIT NONE
 
@@ -1268,7 +1268,7 @@ END SUBROUTINE THERMO_ANELASTIC_WEIGHT_SUBSTRACT
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_LWP(nx,ny,nz, g, r, ql, lwp, wrk1d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 
   IMPLICIT NONE
 
@@ -1304,7 +1304,7 @@ END SUBROUTINE THERMO_ANELASTIC_LWP
 ! Just to check what the effect of using a wrong cp would be
 SUBROUTINE THERMO_ANELASTIC_STATIC_CONSTANTCP(nx,ny,nz, s, e, result)
 
-  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI
+  USE THERMO_VARS, ONLY : imixture, THERMO_AI
 
   IMPLICIT NONE
 

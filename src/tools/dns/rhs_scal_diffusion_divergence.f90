@@ -14,12 +14,12 @@
 SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
      (is, vis, z1, T, zh1, diff_x,diff_y,diff_z, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 #ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
+  USE TLAB_CONSTANTS, ONLY : tfile 
 #endif 
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : idiffusion, visc, prandtl, schmidt
-  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : idiffusion, visc, prandtl, schmidt
+  USE THERMO_VARS, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
   USE BOUNDARY_BCS
 
   IMPLICIT NONE
@@ -41,7 +41,7 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING RHS_SCAL_DIFFUSION_DIVERGENCE')
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_SCAL_DIFFUSION_DIVERGENCE')
 #endif
 
   bcs = 0
@@ -145,7 +145,7 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
   ENDIF
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING RHS_SCAL_DIFFUSION_DIVERGENCE')
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_SCAL_DIFFUSION_DIVERGENCE')
 #endif
 
   RETURN

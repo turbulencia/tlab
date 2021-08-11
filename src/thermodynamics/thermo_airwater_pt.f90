@@ -17,7 +17,7 @@
 !########################################################################
 SUBROUTINE THERMO_AIRWATER_PT(nx, ny, nz, s, p, T)
 
-  USE THERMO_GLOBAL, ONLY : MRATIO, WGHT_INV, dsmooth
+  USE THERMO_VARS, ONLY : MRATIO, WGHT_INV, dsmooth
 
   IMPLICIT NONE
 

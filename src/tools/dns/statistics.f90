@@ -5,7 +5,7 @@
 
 MODULE STATISTICS
 
-  USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
+  USE TLAB_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   IMPLICIT NONE
   SAVE
 
@@ -25,7 +25,7 @@ CONTAINS
   ! ###################################################################
   SUBROUTINE STATISTICS_INITIALIZE()
 
-    USE DNS_GLOBAL, ONLY : imode_sim, jmax, inb_scal, nstatavg
+    USE TLAB_VARS, ONLY : imode_sim, jmax, inb_scal, nstatavg
 
     IF      ( imode_sim .EQ. DNS_MODE_TEMPORAL) THEN
       ALLOCATE(mean(jmax,MAX_AVG_TEMPORAL))
@@ -44,22 +44,22 @@ CONTAINS
   SUBROUTINE STATISTICS_TEMPORAL()
 
 #ifdef TRACE_ON
-    USE DNS_CONSTANTS, ONLY : tfile
+    USE TLAB_CONSTANTS, ONLY : tfile
 #endif
-    USE DNS_TYPES,     ONLY : pointers_dt
-    USE DNS_GLOBAL,    ONLY : g
-    USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, inb_scal_array
-    USE DNS_GLOBAL,    ONLY : buoyancy, imode_eqns, icalc_scal
-    USE DNS_GLOBAL,    ONLY : froude
-    USE DNS_GLOBAL,    ONLY : epbackground, pbackground, rbackground
-    USE DNS_GLOBAL,    ONLY : itime, rtime
-    USE DNS_GLOBAL,      ONLY : inb_part, icalc_part
-    USE DNS_GLOBAL,      ONLY : sbg, schmidt
+    USE TLAB_TYPES,     ONLY : pointers_dt
+    USE TLAB_VARS,    ONLY : g
+    USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field, inb_scal_array
+    USE TLAB_VARS,    ONLY : buoyancy, imode_eqns, icalc_scal
+    USE TLAB_VARS,    ONLY : froude
+    USE TLAB_VARS,    ONLY : epbackground, pbackground, rbackground
+    USE TLAB_VARS,    ONLY : itime, rtime
+    USE TLAB_VARS,      ONLY : inb_part, icalc_part
+    USE TLAB_VARS,      ONLY : sbg, schmidt
     USE TLAB_ARRAYS
     USE DNS_ARRAYS
-    USE THERMO_GLOBAL, ONLY : imixture
-    USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange
-    USE LAGRANGE_GLOBAL, ONLY : icalc_part_pdf
+    USE THERMO_VARS, ONLY : imixture
+    USE LAGRANGE_VARS, ONLY : l_g, ilagrange
+    USE LAGRANGE_VARS, ONLY : icalc_part_pdf
     USE LAGRANGE_ARRAYS
 
     IMPLICIT NONE
@@ -75,7 +75,7 @@ CONTAINS
 
     ! ###################################################################
 #ifdef TRACE_ON
-    CALL IO_WRITE_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER' )
+    CALL TLAB_WRITE_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER' )
 #endif
 
     stats_buoyancy = .FALSE.  ! default
@@ -223,7 +223,7 @@ CONTAINS
     END IF
 
 #ifdef TRACE_ON
-    CALL IO_WRITE_ASCII(tfile, 'LEAVING STATS_TEMPORAL_LAYER' )
+    CALL TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_TEMPORAL_LAYER' )
 #endif
 
     RETURN
@@ -234,14 +234,14 @@ CONTAINS
   SUBROUTINE STATISTICS_SPATIAL()
 
 #ifdef TRACE_ON
-    USE DNS_CONSTANTS, ONLY : tfile
+    USE TLAB_CONSTANTS, ONLY : tfile
 #endif
-    USE DNS_GLOBAL
+    USE TLAB_VARS
     USE TLAB_ARRAYS
     USE DNS_LOCAL
     USE BOUNDARY_BUFFER
 #ifdef USE_MPI
-    USE DNS_MPI
+    USE TLAB_MPI_VARS
 #endif
 
     IMPLICIT NONE
@@ -251,7 +251,7 @@ CONTAINS
 
     ! #######################################################################
 #ifdef TRACE_ON
-    CALL IO_WRITE_ASCII(tfile, 'ENTERING STATS_SPATIAL_LAYER' )
+    CALL TLAB_WRITE_ASCII(tfile, 'ENTERING STATS_SPATIAL_LAYER' )
 #endif
 
     ! #######################################################################
@@ -287,7 +287,7 @@ CONTAINS
     END IF
 
 #ifdef TRACE_ON
-    CALL IO_WRITE_ASCII(tfile, 'LEAVING STATS_SPATIAL_LAYER' )
+    CALL TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_SPATIAL_LAYER' )
 #endif
 
     RETURN

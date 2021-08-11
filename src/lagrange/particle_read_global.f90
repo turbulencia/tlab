@@ -13,15 +13,15 @@
 !########################################################################
 
 SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
-    
-  USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE DNS_GLOBAL,    ONLY : inb_flow_array, inb_scal_array
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_wrk2d
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : icalc_part, isize_particle, inb_part_array, inb_part_txc, inb_part 
-  USE LAGRANGE_GLOBAL
+
+  USE TLAB_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_VARS,    ONLY : inb_flow_array, inb_scal_array
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_wrk2d
+  USE TLAB_VARS,    ONLY : icalc_part, isize_particle, inb_part_array, inb_part_txc, inb_part
+  USE TLAB_PROCS
+  USE LAGRANGE_VARS
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_npro
+  USE TLAB_MPI_VARS, ONLY : ims_npro
 #endif
 
   IMPLICIT NONE
@@ -33,21 +33,21 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   CHARACTER*32 bakfile
   TINTEGER idummy
   TREAL memory_factor
-  
+
 ! ###################################################################
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
-  CALL IO_WRITE_ASCII(lfile, 'Reading particle input data.')
+  CALL TLAB_WRITE_ASCII(lfile, 'Reading particle input data.')
 
 ! -------------------------------------------------------------------
-  CALL IO_WRITE_ASCII(bakfile,  '#')
-  CALL IO_WRITE_ASCII(bakfile,  '#[Lagrange]')
-  CALL IO_WRITE_ASCII(bakfile,  '#Type=<value>')
-  CALL IO_WRITE_ASCII(bakfile,  '#Particle_number=<value>')
-  CALL IO_WRITE_ASCII(bakfile,  '#Particle_rnd_mode=<value>')
-  CALL IO_WRITE_ASCII(bakfile,  '#Y_Particle_Pos=<value>')
-  CALL IO_WRITE_ASCII(bakfile,  '#Y_Particle_Width=<value>')
-  CALL IO_WRITE_ASCII(bakfile,  '#Particle_bumper=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile,  '#')
+  CALL TLAB_WRITE_ASCII(bakfile,  '#[Lagrange]')
+  CALL TLAB_WRITE_ASCII(bakfile,  '#Type=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile,  '#Particle_number=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile,  '#Particle_rnd_mode=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile,  '#Y_Particle_Pos=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile,  '#Y_Particle_Width=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile,  '#Particle_bumper=<value>')
 
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'Type', 'None', sRes)
@@ -56,9 +56,9 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'simplesettling'    ) THEN; ilagrange = LAG_TYPE_SIMPLE_SETT
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bilinearcloudthree') THEN; ilagrange = LAG_TYPE_BIL_CLOUD_3
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bilinearcloudfour' ) THEN; ilagrange = LAG_TYPE_BIL_CLOUD_4
-  ELSE 
-     CALL IO_WRITE_ASCII(efile, 'PARTICLE_READ_GLOBAL. Wrong lagrangian model.')
-     CALL DNS_STOP(DNS_ERROR_OPTION)
+  ELSE
+     CALL TLAB_WRITE_ASCII(efile, 'PARTICLE_READ_GLOBAL. Wrong lagrangian model.')
+     CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
   CALL SCANINILONGINT(bakfile, inifile, 'Lagrange', 'Particle_number', '0', particle_number_total  )
@@ -84,14 +84,14 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; residence_reset = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; residence_reset = 0
   ELSE
-     CALL IO_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. ResidenceReset must be yes or no')
-     CALL DNS_STOP(DNS_ERROR_RESIDENCERESET)
+     CALL TLAB_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. ResidenceReset must be yes or no')
+     CALL TLAB_STOP(DNS_ERROR_RESIDENCERESET)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'Parameters', '0.0', sRes)
   idummy = MAX_LAGPARAM
   CALL LIST_REAL(sRes, idummy, lagrange_param)
-  
+
 ! -------------------------------------------------------------------
   inb_trajectory = inb_flow_array + inb_scal_array
   CALL SCANINICHAR(bakfile, inifile, 'Lagrange', 'TrajectoryType', 'first', sRes)
@@ -101,18 +101,18 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'largest'   ) THEN; itrajectory = LAG_TRAJECTORY_LARGEST
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; itrajectory = LAG_TRAJECTORY_NONE
   ELSE
-     CALL IO_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. Invalid option in TrajectoryType')
-     CALL DNS_STOP(DNS_ERROR_CALCTRAJECTORIES)
+     CALL TLAB_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. Invalid option in TrajectoryType')
+     CALL TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
   ENDIF
 
   CALL SCANINIINT(bakfile, inifile, 'Lagrange', 'TrajectoryNumber', '0', isize_trajectory)
   IF ( isize_trajectory .GT. particle_number_total ) THEN
-     CALL IO_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. Number of trajectories must be less or equal than number of particles.')
-     CALL DNS_STOP(DNS_ERROR_CALCTRAJECTORIES)
+     CALL TLAB_WRITE_ASCII(efile,'PARTICLE_READ_GLOBAL. Number of trajectories must be less or equal than number of particles.')
+     CALL TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
   ENDIF
   IF ( isize_trajectory .LE. 0 ) itrajectory = LAG_TRAJECTORY_NONE
   IF ( icalc_part .EQ. 0 )       itrajectory = LAG_TRAJECTORY_NONE
-     
+
 ! ###################################################################
 ! Initializing size of Lagrangian arrays
 ! ###################################################################
@@ -122,15 +122,15 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
   inb_part            = 3 ! # of particle properties in Runge-Kutta
   inb_part_txc        = 1
   inb_particle_interp = 3
-  
+
   IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3) THEN
      inb_part_array       = 5
      inb_part             = 5
-     inb_part_txc         = 4          
+     inb_part_txc         = 4
      inb_particle_interp  = inb_particle_interp +4
      LAGRANGE_SPNAME(1)   = 'droplet_diff_3'
      LAGRANGE_SPNAME(2)   = 'droplet_nodiff_3'
-     
+
   ELSEIF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
      inb_part_array       = 5 +2 ! Space for residence time pdf
      inb_part             = 5
@@ -139,7 +139,7 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
      LAGRANGE_SPNAME(1)   = 'droplet_diff_3'
      LAGRANGE_SPNAME(2)   = 'droplet_nodiff_3'
      LAGRANGE_SPNAME(3)   = 'residence_part'
-     
+
   END IF
 
 #ifdef USE_MPI
@@ -156,15 +156,15 @@ SUBROUTINE PARTICLE_READ_GLOBAL(inifile)
      inb_part_txc        = MAX(inb_part_txc,inb_flow_array+inb_scal_array-3)
      inb_particle_interp = MAX(inb_particle_interp,inb_trajectory)
   ENDIF
-  
+
   isize_pbuffer = int(isize_particle/4*(inb_part_array*2+1) ) !same size for both buffers
   isize_l_comm  = 2     *jmax*kmax   *inb_particle_interp &
                 +   imax*jmax     *2 *inb_particle_interp &
-                + 2     *jmax     *2 *inb_particle_interp 
+                + 2     *jmax     *2 *inb_particle_interp
   isize_l_comm  = MAX(isize_l_comm,2*isize_pbuffer)
 
   idummy = MAX((imax+1)*jmax, MAX((imax+1)*kmax,jmax*(kmax+1)))
   isize_wrk2d = MAX(isize_wrk2d,idummy)
 
-  RETURN  
+  RETURN
 END SUBROUTINE PARTICLE_READ_GLOBAL

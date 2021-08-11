@@ -35,17 +35,18 @@
 subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
   
   use DNS_IBM
-  use DNS_GLOBAL, only: g
-  use DNS_GLOBAL, only: imax, jmax, kmax 
-  use DNS_GLOBAL, only: isize_field, isize_txc_field, inb_txc 
+  use TLAB_VARS,        only: g
+  use TLAB_VARS,        only: imax, jmax, kmax 
+  use TLAB_VARS,        only: isize_field, isize_txc_field, inb_txc 
   
 #ifdef USE_MPI
-  use DNS_MPI,    only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-  use DNS_MPI,    only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  use DNS_MPI,    only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
-  use DNS_MPI,    only: ims_size_i, ims_size_j, ims_size_k 
-#endif    
-  
+  use TLAB_MPI_VARS,    only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  use TLAB_MPI_VARS,    only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  use TLAB_MPI_VARS,    only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
+  use TLAB_MPI_VARS,    only: ims_size_i, ims_size_j, ims_size_k 
+  use TLAB_MPI_PROCS
+#endif
+
   implicit none
   
 #include "integers.h"

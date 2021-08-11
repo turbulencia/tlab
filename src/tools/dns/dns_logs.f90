@@ -25,18 +25,19 @@
 !########################################################################
 SUBROUTINE DNS_LOGS(iflag)
 
-  USE DNS_CONSTANTS, ONLY : ofile
-  USE DNS_GLOBAL,    ONLY : imode_eqns
-  USE DNS_GLOBAL,    ONLY : itime, rtime, visc
-  USE DNS_GLOBAL,    ONLY : damkohler
+  USE TLAB_CONSTANTS, ONLY : ofile
+  USE TLAB_VARS,    ONLY : imode_eqns
+  USE TLAB_VARS,    ONLY : itime, rtime, visc
+  USE TLAB_VARS,    ONLY : damkohler
+  USE TLAB_PROCS
   USE DNS_LOCAL,     ONLY : logs_data
   USE TIME,          ONLY : dtime
 
-  USE THERMO_GLOBAL, ONLY : imixture
-  USE THERMO_GLOBAL, ONLY : NEWTONRAPHSON_ERROR
+  USE THERMO_VARS, ONLY : imixture
+  USE THERMO_VARS, ONLY : NEWTONRAPHSON_ERROR
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_err
 #endif
 
   IMPLICIT NONE
@@ -88,9 +89,9 @@ SUBROUTINE DNS_LOGS(iflag)
      ENDIF
 
      line1 = line1(1:ip-1)//'#'
-     CALL IO_WRITE_ASCII(ofile, REPEAT('#',LEN_TRIM(line1)))
-     CALL IO_WRITE_ASCII(ofile, TRIM(ADJUSTL(line1)))
-     CALL IO_WRITE_ASCII(ofile, REPEAT('#',LEN_TRIM(line1)))
+     CALL TLAB_WRITE_ASCII(ofile, REPEAT('#',LEN_TRIM(line1)))
+     CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(line1)))
+     CALL TLAB_WRITE_ASCII(ofile, REPEAT('#',LEN_TRIM(line1)))
 
   ENDIF
 
@@ -134,7 +135,7 @@ SUBROUTINE DNS_LOGS(iflag)
      ENDIF
 
 ! Output
-     CALL IO_WRITE_ASCII(ofile, TRIM(ADJUSTL(line1)))
+     CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(line1)))
 
   ENDIF
 

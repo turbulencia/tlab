@@ -45,7 +45,7 @@ END MODULE DNS_MPI
 !########################################################################
 PROGRAM VMPI
 
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
   
   IMPLICIT NONE
   
@@ -223,7 +223,7 @@ END PROGRAM VMPI
 ! #######################################################################
 SUBROUTINE DNS_MPI_INITIALIZE
 
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
   
@@ -285,7 +285,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
   i1 = 1
   
   IF ( ims_npro_i .GT. 1 ) THEN
-!  CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Ox derivatives.')
+!  CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Ox derivatives.')
      id = DNS_MPI_I_PARTIAL
      npage = kmax*jmax
      CALL DNS_MPI_TYPE_I(ims_npro_i, imax, npage, i1, i1, i1, i1, &
@@ -293,7 +293,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ENDIF
   
   IF ( ims_npro_k .GT. 1 ) THEN
-!  CALL IO_WRITE_ASCII(lfile,'Initializing MPI types for Oz derivatives.')
+!  CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Oz derivatives.')
      id = DNS_MPI_K_PARTIAL
      npage = imax*jmax
      CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
@@ -310,7 +310,7 @@ END SUBROUTINE DNS_MPI_INITIALIZE
 SUBROUTINE DNS_MPI_TYPE_I(ims_npro, imax, npage, nd, md, n1, n2, &
      nsize, sdisp, rdisp, stype, rtype)
 
-  USE DNS_MPI, ONLY : ims_pro
+  USE TLAB_MPI_VARS, ONLY : ims_pro
   
   IMPLICIT NONE
 
@@ -375,7 +375,7 @@ END SUBROUTINE DNS_MPI_TYPE_I
 SUBROUTINE DNS_MPI_TYPE_K(ims_npro, nmax, npage, nd, md, n1, n2, &
      nsize, sdisp, rdisp, stype, rtype)
 
-  USE DNS_MPI, ONLY : ims_pro
+  USE TLAB_MPI_VARS, ONLY : ims_pro
 
   IMPLICIT NONE
 
@@ -438,9 +438,9 @@ END SUBROUTINE DNS_MPI_TYPE_K
 ! ###################################################################
 SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
   
-  USE DNS_MPI, ONLY : ims_npro_k, ims_pro_k
-  USE DNS_MPI, ONLY : ims_comm_z
-  USE DNS_MPI, ONLY : ims_tag, ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_npro_k, ims_pro_k
+  USE TLAB_MPI_VARS, ONLY : ims_comm_z
+  USE TLAB_MPI_VARS, ONLY : ims_tag, ims_err
 
   IMPLICIT NONE
   
@@ -500,9 +500,9 @@ END SUBROUTINE DNS_MPI_TRPF_K
 !########################################################################
 SUBROUTINE DNS_MPI_TRPF_I(a, b, dsend, drecv, tsend, trecv)
   
-  USE DNS_MPI, ONLY : ims_npro_i, ims_pro_i
-  USE DNS_MPI, ONLY : ims_comm_x
-  USE DNS_MPI, ONLY : ims_tag, ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_pro_i
+  USE TLAB_MPI_VARS, ONLY : ims_comm_x
+  USE TLAB_MPI_VARS, ONLY : ims_tag, ims_err
 
   IMPLICIT NONE
   
@@ -553,9 +553,9 @@ END SUBROUTINE DNS_MPI_TRPF_I
 !########################################################################
 SUBROUTINE DNS_MPI_TRPB_K(b, a, dsend, drecv, tsend, trecv)
 
-  USE DNS_MPI, ONLY : ims_npro_k, ims_pro_k
-  USE DNS_MPI, ONLY : ims_comm_z
-  USE DNS_MPI, ONLY : ims_tag, ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_npro_k, ims_pro_k
+  USE TLAB_MPI_VARS, ONLY : ims_comm_z
+  USE TLAB_MPI_VARS, ONLY : ims_tag, ims_err
 
   IMPLICIT NONE
   
@@ -615,9 +615,9 @@ END SUBROUTINE DNS_MPI_TRPB_K
 !########################################################################
 SUBROUTINE DNS_MPI_TRPB_I(b, a, dsend, drecv, tsend, trecv)
 
-  USE DNS_MPI, ONLY : ims_npro_i, ims_pro_i
-  USE DNS_MPI, ONLY : ims_comm_x
-  USE DNS_MPI, ONLY : ims_tag, ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_pro_i
+  USE TLAB_MPI_VARS, ONLY : ims_comm_x
+  USE TLAB_MPI_VARS, ONLY : ims_tag, ims_err
 
   IMPLICIT NONE
   
@@ -668,7 +668,7 @@ END SUBROUTINE DNS_MPI_TRPB_I
 !########################################################################
 SUBROUTINE DNS_MPI_TAGUPDT
   
-  USE DNS_MPI, ONLY : ims_tag
+  USE TLAB_MPI_VARS, ONLY : ims_tag
 
   IMPLICIT NONE
   
@@ -685,7 +685,7 @@ END SUBROUTINE DNS_MPI_TAGUPDT
 !########################################################################
 SUBROUTINE DNS_MPI_TAGRESET
   
-  USE DNS_MPI, ONLY : ims_tag
+  USE TLAB_MPI_VARS, ONLY : ims_tag
 
   IMPLICIT NONE
   

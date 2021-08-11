@@ -23,8 +23,9 @@
 ! Scan file for an integer value
 ! #######################################################################
 SUBROUTINE SCANINIINT(ofile, ifile, title, name, default, value)
+  USE TLAB_PROCS
   IMPLICIT NONE
-  
+
   CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default
   TINTEGER,      INTENT(OUT) :: value
 
@@ -32,9 +33,9 @@ SUBROUTINE SCANINIINT(ofile, ifile, title, name, default, value)
 
   CALL IO_READ_ASCII(ifile, title, name, StrValue, default)
   READ(StrValue, *) value
-  
-  CALL IO_WRITE_ASCII(ofile, TRIM(ADJUSTL(name))//'='//TRIM(ADJUSTL(StrValue)) )
-  
+
+  CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(name))//'='//TRIM(ADJUSTL(StrValue)) )
+
   RETURN
 END SUBROUTINE SCANINIINT
 
@@ -42,8 +43,9 @@ END SUBROUTINE SCANINIINT
 ! Scan file for an integer value
 ! #######################################################################
 SUBROUTINE SCANINILONGINT(ofile, ifile, title, name, default, value)
+  USE TLAB_PROCS
   IMPLICIT NONE
-  
+
   CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default
   TLONGINTEGER,  INTENT(OUT) :: value
 
@@ -51,9 +53,9 @@ SUBROUTINE SCANINILONGINT(ofile, ifile, title, name, default, value)
 
   CALL IO_READ_ASCII(ifile, title, name, StrValue, default)
   READ(StrValue, *) value
-  
-  CALL IO_WRITE_ASCII(ofile, TRIM(ADJUSTL(name))//'='//TRIM(ADJUSTL(StrValue)) )
-  
+
+  CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(name))//'='//TRIM(ADJUSTL(StrValue)) )
+
   RETURN
 END SUBROUTINE SCANINILONGINT
 
@@ -61,9 +63,10 @@ END SUBROUTINE SCANINILONGINT
 ! Scan file for an real value
 ! #######################################################################
 SUBROUTINE SCANINIREAL(ofile, ifile, title, name, default, value)
+  USE TLAB_PROCS
   IMPLICIT NONE
 
-  CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default 
+  CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default
   TREAL,         INTENT(OUT) :: value
 
   CHARACTER*(128) StrValue
@@ -71,8 +74,8 @@ SUBROUTINE SCANINIREAL(ofile, ifile, title, name, default, value)
   CALL IO_READ_ASCII(ifile, title, name, StrValue, default)
   READ(StrValue, *) value
 
-  CALL IO_WRITE_ASCII(ofile, TRIM(ADJUSTL(name))//'='//TRIM(ADJUSTL(StrValue)) )
-  
+  CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(name))//'='//TRIM(ADJUSTL(StrValue)) )
+
   RETURN
 END SUBROUTINE SCANINIREAL
 
@@ -80,15 +83,16 @@ END SUBROUTINE SCANINIREAL
 ! Scan file for an char value
 ! #######################################################################
 SUBROUTINE SCANINICHAR(ofile, ifile, title, name, default, value)
+  USE TLAB_PROCS
   IMPLICIT NONE
-  
+
   CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default
   CHARACTER*(*), INTENT(OUT) :: value
-  
+
   CALL IO_READ_ASCII(ifile, title, name, value, default)
-  
-  CALL IO_WRITE_ASCII(ofile, TRIM(ADJUSTL(name))//'='//TRIM(ADJUSTL(value)) )
-  
+
+  CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(name))//'='//TRIM(ADJUSTL(value)) )
+
   RETURN
 END SUBROUTINE SCANINICHAR
 
@@ -97,13 +101,13 @@ END SUBROUTINE SCANINICHAR
 ! #######################################################################
 SUBROUTINE IO_READ_ASCII(fname, title, name, value, default)
 
-#ifdef USE_MPI  
-  USE DNS_MPI, ONLY : ims_pro, ims_err
+#ifdef USE_MPI
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_err
 #endif
   IMPLICIT NONE
 
-#ifdef USE_MPI 
-#include "mpif.h" 
+#ifdef USE_MPI
+#include "mpif.h"
 #endif
   CHARACTER*(*), INTENT(IN)  :: fname, title, name, default
   CHARACTER*(*), INTENT(OUT) :: value
@@ -130,8 +134,8 @@ SUBROUTINE IO_READ_ASCII(fname, title, name, value, default)
 
 ! -----------------------------------------------------------------------
 #ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN 
-#endif 
+  IF ( ims_pro .EQ. 0 ) THEN
+#endif
 
   OPEN(unit=45,file=fname,status='OLD')
 
@@ -140,7 +144,7 @@ SUBROUTINE IO_READ_ASCII(fname, title, name, value, default)
   DO n = 1,LEN(line)
      code = IACHAR(line(n:n)); IF ( code .GE. 65 .AND. code .LE. 90 ) line(n:n) = ACHAR(code+32)
   ENDDO
-  
+
   IF ( TRIM(ADJUSTL(line)) .EQ. '['//TRIM(ADJUSTL(tag1))//']' ) THEN ! Scan within block
 
 30   CONTINUE
@@ -166,12 +170,12 @@ SUBROUTINE IO_READ_ASCII(fname, title, name, value, default)
 
 50 CLOSE(unit=45)
 
-#ifdef USE_MPI 
-  ENDIF 
+#ifdef USE_MPI
+  ENDIF
   n=LEN(value)
-  CALL MPI_BCast(n,    1,MPI_INTEGER4,0,MPI_COMM_WORLD,ims_err) 
+  CALL MPI_BCast(n,    1,MPI_INTEGER4,0,MPI_COMM_WORLD,ims_err)
   CALL MPI_BCast(value,n,MPI_CHAR,0,MPI_COMM_WORLD,ims_err)
-#endif 
+#endif
 
   RETURN
 END SUBROUTINE IO_READ_ASCII
@@ -179,10 +183,10 @@ END SUBROUTINE IO_READ_ASCII
 ! #######################################################################
 ! Write ASCII data; complete fields
 ! #######################################################################
-SUBROUTINE IO_WRITE_ASCII_FIELD(fname, imax,jmax,kmax, u)
-  
+SUBROUTINE TLAB_WRITE_ASCII_FIELD(fname, imax,jmax,kmax, u)
+
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro, ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -217,4 +221,4 @@ SUBROUTINE IO_WRITE_ASCII_FIELD(fname, imax,jmax,kmax, u)
   CLOSE(31)
 
   RETURN
-END SUBROUTINE IO_WRITE_ASCII_FIELD
+END SUBROUTINE TLAB_WRITE_ASCII_FIELD

@@ -16,12 +16,12 @@
 !#              Air-Vapor mixture added
 !# 2013/06/12 - A. de Lozar
 !#              Linear AirWater added for stratocumulus
-!# 
+!#
 !########################################################################
 !# DESCRIPTION
 !#
 !# Extracted from reactini.f to retain only the thermodynamics
-!# initialization of the mixture and make it usuable for 
+!# initialization of the mixture and make it usuable for
 !# multispecies (e.g. RTI) as well.
 !#
 !# inb_scal          # of scalars transported during the simulation and saved
@@ -33,14 +33,14 @@
 !# 2. Multispecies admits the case Y_i=f_i(Z), Z conserved scalar,
 !#    which implies inb_scal=1.
 !# 3. Reactive + general multispecies retains NSP-1 species in scalar
-!#    array z1 (the last one is obtained by sum Y_i=1) and an 
+!#    array z1 (the last one is obtained by sum Y_i=1) and an
 !#    additional conserved scalar, i.e. inb_scal=NSP.
 !# 4. Non-reactive + general multispecies retains NSP-1 species, w/o
 !#    additional conserved scalar.
 !#
 !# Multispecies implies that reference T_0 in non-dimensionalization
 !# is 298 K.
-!# 
+!#
 !# Saturation pressure implies that reference R_0 in non-dimensionalization
 !# is such that reference pressure is 1 bar.
 !#
@@ -49,12 +49,13 @@
 !#
 !########################################################################
 SUBROUTINE THERMO_INITIALIZE
-  
-  USE THERMO_GLOBAL
 
-  USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE DNS_GLOBAL,    ONLY : inb_scal, inb_scal_array
-  USE DNS_GLOBAL,    ONLY : damkohler
+  USE THERMO_VARS
+
+  USE TLAB_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_VARS,    ONLY : inb_scal, inb_scal_array
+  USE TLAB_VARS,    ONLY : damkohler
+  USE TLAB_PROCS
   IMPLICIT NONE
 
 ! -------------------------------------------------------------------
@@ -75,15 +76,15 @@ SUBROUTINE THERMO_INITIALIZE
 ! Molecular Weight in kg/kmol
 ! ###################################################################
   SELECT CASE ( imixture )
-     
+
 ! -------------------------------------------------------------------
 ! Burke-Schuman case
 ! Transport just mixture fraction, and then equilibrium
-! 4 species + Nitrogen + Conserved Scalar         
+! 4 species + Nitrogen + Conserved Scalar
 ! -------------------------------------------------------------------
   CASE( MIXT_TYPE_BS, MIXT_TYPE_QUASIBS )
      NSP            = 5
-     inb_scal       = 1   
+     inb_scal       = 1
      inb_scal_array = inb_scal
 
      THERMO_SPNAME(1) = 'CH4'
@@ -242,42 +243,42 @@ SUBROUTINE THERMO_INITIALIZE
 ! -------------------------------------------------------------------
   CASE( MIXT_TYPE_AIRWATER_LINEAR )
      inb_scal_array = inb_scal + 1 ! using inb_scal read in the inifile
-     NSP            = inb_scal_array 
+     NSP            = inb_scal_array
 
-     THERMO_SPNAME(1) = 'Chi'      ! Mixture fraction 
+     THERMO_SPNAME(1) = 'Chi'      ! Mixture fraction
      THERMO_SPNAME(2) = 'Psi'      ! Deviation in the enthalpy from the mixture fraction
      DO is = 3,inb_scal
-        WRITE(THERMO_SPNAME(is),*) is; THERMO_SPNAME(is) = 'Scalar'//TRIM(ADJUSTL(THERMO_SPNAME(is))) 
+        WRITE(THERMO_SPNAME(is),*) is; THERMO_SPNAME(is) = 'Scalar'//TRIM(ADJUSTL(THERMO_SPNAME(is)))
      ENDDO
      THERMO_SPNAME(NSP) = 'Liquid' ! Normalized Liquid
-     
+
      WGHT(1) = 18.015              ! unused, but defined for re-normalization below
      WGHT(2) = 28.9644
      WGHT(3) = 18.015
      WGHT(4:)= C_1_R
-     
+
   END SELECT
 
 ! ###################################################################
 ! Thermodynamic data
-! 
+!
 ! Specific Heat Cpi, R^0 and SREF in Jules/(Kelvin Kmol), and
 ! enthalpy of formation HREF in Jules/Kmol.
 !
-! General formulation is CHEMKIN format: 7-coefficient NASA 
+! General formulation is CHEMKIN format: 7-coefficient NASA
 ! polynomials (see Burcat&Ruscic):
 !
-! THERMO_AI(i,im,k) = a_i of species k at 
+! THERMO_AI(i,im,k) = a_i of species k at
 !         im=1 hight temperature
 !         im=2 low   temperature
 !
 ! C_{p,i} = \sum_1^5 a_i T^{i-1}
-! h_i     = \sum_1^5 a_i T^i/i + a_6 
+! h_i     = \sum_1^5 a_i T^i/i + a_6
 ! s_{T,i} = a_1 ln(T) + \sum_2^5 a_i T^{i-1}/(i-1) + a_7
 !
-! i.e., dh_i = C_{p,i}dT and ds_{T,i}=C_{p,i}dT/T, where a_6 is 
+! i.e., dh_i = C_{p,i}dT and ds_{T,i}=C_{p,i}dT/T, where a_6 is
 ! related to the formation enthalpy, and a_7 to the formation entropy.
-! HREF and SREF (at TREF) are used to fix last Cpi 6-7 coefficients. 
+! HREF and SREF (at TREF) are used to fix last Cpi 6-7 coefficients.
 !
 ! Note that Burcat&Ruscic give values devided by R^0
 !
@@ -290,7 +291,7 @@ SUBROUTINE THERMO_INITIALIZE
 !
 ! The pressure contribution to the entropy still needs to be added
 !
-! Saturation pressure expansion is needed so far only on the 
+! Saturation pressure expansion is needed so far only on the
 ! vapor case. It is
 !
 ! p_sat(T) = \sum_1^9 a_i T^{i-1}
@@ -362,7 +363,7 @@ SUBROUTINE THERMO_INITIALIZE
 
 ! saturation pressure no needed
         DO ipsat = 1,MAX_SAT
-           THERMO_PSAT(ipsat) = C_0_R 
+           THERMO_PSAT(ipsat) = C_0_R
         ENDDO
         NPSAT = 0
 
@@ -396,7 +397,7 @@ SUBROUTINE THERMO_INITIALIZE
            DO is=1, NSP
               THERMO_AI(6,im,is) = HREF(is) &
                    - THERMO_AI(1,im,is)*TREF
-              THERMO_AI(7,im,is) = SREF(is) 
+              THERMO_AI(7,im,is) = SREF(is)
            ENDDO
         ENDDO
 
@@ -410,7 +411,7 @@ SUBROUTINE THERMO_INITIALIZE
 
 ! saturation pressure no needed
         DO ipsat = 1,MAX_SAT
-           THERMO_PSAT(ipsat) = C_0_R 
+           THERMO_PSAT(ipsat) = C_0_R
         ENDDO
         NPSAT = 0
 
@@ -449,7 +450,7 @@ SUBROUTINE THERMO_INITIALIZE
            DO is=1, NSP
               THERMO_AI(6,im,is) = HREF(is) &
                    - THERMO_AI(1,im,is)*TREF
-              THERMO_AI(7,im,is) = SREF(is) 
+              THERMO_AI(7,im,is) = SREF(is)
            ENDDO
         ENDDO
 
@@ -463,7 +464,7 @@ SUBROUTINE THERMO_INITIALIZE
 
 ! saturation pressure no needed
         DO ipsat = 1,MAX_SAT
-           THERMO_PSAT(ipsat) = C_0_R 
+           THERMO_PSAT(ipsat) = C_0_R
         ENDDO
         NPSAT = 0
 
@@ -474,12 +475,12 @@ SUBROUTINE THERMO_INITIALIZE
 
 ! Enthalpy of Formation in Jules/Kmol
 !        HREF(1) =-241.826*C_1E6_R    ! from Burcat&Ruscic
-!        HREF(2) =-0.126  *C_1E6_R  
+!        HREF(2) =-0.126  *C_1E6_R
         HREF(1) = 33.688*C_1E3_R*TREF ! from B. Stevens; values s.t. THERMO_AI(6,im,1:2) = 0
         HREF(2) = 29.167*C_1E3_R*TREF ! latent heat of vaporization at 298 K is (2501.6-58.690) kJ/kg
         HREF(3) = 33.688*C_1E3_R*TREF-44.009*C_1E6_R
 !        HREF(1) = C_0_R              ! for testing
-!        HREF(2) = C_0_R 
+!        HREF(2) = C_0_R
 !        HREF(3) =-44.009*C_1E6_R
 
 ! Entropy of Formation in Jules/(Kelvin Kmol)
@@ -487,7 +488,7 @@ SUBROUTINE THERMO_INITIALIZE
 !        SREF(2) = 198.824*C_1E3_R
         SREF(1) = C_0_R            ! from B. Stevens
         SREF(2) = C_0_R
-        SREF(3) =-44.009*C_1E6_R/TREF 
+        SREF(3) =-44.009*C_1E6_R/TREF
 
 ! Heat capacity polynomial; using only the low temperature range
         DO im = 1, 2
@@ -507,7 +508,7 @@ SUBROUTINE THERMO_INITIALIZE
 ! 6th and 7th coefficient are calculated from reference enthalpy
            DO is=1, NSP
               THERMO_AI(6,im,is) = HREF(is) - THERMO_AI(1,im,is)*TREF
-              THERMO_AI(7,im,is) = SREF(is) 
+              THERMO_AI(7,im,is) = SREF(is)
            ENDDO
         ENDDO
 
@@ -533,7 +534,7 @@ SUBROUTINE THERMO_INITIALIZE
         NPSAT = 9
 
         DO ipsat = NPSAT+1,MAX_SAT
-           THERMO_PSAT(ipsat) = C_0_R 
+           THERMO_PSAT(ipsat) = C_0_R
         ENDDO
 
 ! going from powers of (T-T_ref) to T, with T_ref = 273.15 K
@@ -557,9 +558,9 @@ SUBROUTINE THERMO_INITIALIZE
 
 ! -------------------------------------------------------------------
      ! CASE DEFAULT
-        
-     !    CALL IO_WRITE_ASCII(efile, 'THERMO_INITIALIZE: Must use chemkin data.')
-     !    CALL DNS_STOP(DNS_ERROR_THERMOCONT)
+
+     !    CALL TLAB_WRITE_ASCII(efile, 'THERMO_INITIALIZE: Must use chemkin data.')
+     !    CALL TLAB_STOP(DNS_ERROR_THERMOCONT)
 
      END SELECT
 
@@ -672,27 +673,27 @@ SUBROUTINE THERMO_INITIALIZE
 ! -------------------------------------------------------------------
 ! Output
 ! -------------------------------------------------------------------
-  CALL IO_WRITE_ASCII(lfile, 'Thermodynamic properties have been initialized.')
+  CALL TLAB_WRITE_ASCII(lfile, 'Thermodynamic properties have been initialized.')
   DO is = 1,NSP
      WRITE(str,*) is; str = 'Setting Species'//TRIM(ADJUSTL(str))//'='//TRIM(ADJUSTL(THERMO_SPNAME(is)))
-     CALL IO_WRITE_ASCII(lfile, str)
+     CALL TLAB_WRITE_ASCII(lfile, str)
   ENDDO
   WRITE(str,1010) 'Setting WREF = ', WREF
-  CALL IO_WRITE_ASCII(lfile, str)
+  CALL TLAB_WRITE_ASCII(lfile, str)
   WRITE(str,1010) 'Setting TREF = ', TREF
-  CALL IO_WRITE_ASCII(lfile, str)
+  CALL TLAB_WRITE_ASCII(lfile, str)
   IF ( NPSAT .GT. 0 ) THEN
      WRITE(str,1010) 'Setting RREF = ', RREF
-     CALL IO_WRITE_ASCII(lfile, str)
+     CALL TLAB_WRITE_ASCII(lfile, str)
   ENDIF
   WRITE(str,1020) 'Setting CPREF = ', CPREF
-  CALL IO_WRITE_ASCII(lfile, str)
+  CALL TLAB_WRITE_ASCII(lfile, str)
   WRITE(str,1020) 'Setting Gama0 = ', gama0
-  CALL IO_WRITE_ASCII(lfile, str)
+  CALL TLAB_WRITE_ASCII(lfile, str)
 
   RETURN
 
 1010 FORMAT(A14,1X,G_FORMAT_R)
 1020 FORMAT(A15,1X,G_FORMAT_R)
-  
+
 END SUBROUTINE THERMO_INITIALIZE

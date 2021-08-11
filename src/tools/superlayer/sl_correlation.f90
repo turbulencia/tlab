@@ -11,9 +11,9 @@
 !########################################################################
 PROGRAM SL_CORRELATION
 
-  USE DNS_GLOBAL
+  USE TLAB_VARS
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -177,5 +177,5 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   ENDDO
 
-  CALL DNS_STOP(0)
+  CALL TLAB_STOP(0)
 END PROGRAM SL_CORRELATION

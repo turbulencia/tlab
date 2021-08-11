@@ -17,16 +17,17 @@
 
 SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
-  USE DNS_CONSTANTS, ONLY : efile, lfile
-  USE DNS_GLOBAL
-  USE THERMO_GLOBAL, ONLY : imixture, MRATIO, GRATIO
-  USE THERMO_GLOBAL, ONLY : THERMO_AI, WGHT_INV
+  USE TLAB_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
+  USE TLAB_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_VARS
+  USE TLAB_PROCS
+  USE THERMO_VARS, ONLY : imixture, MRATIO, GRATIO
+  USE THERMO_VARS, ONLY : THERMO_AI, WGHT_INV
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS, ONLY : tfile
+  USE TLAB_CONSTANTS, ONLY : tfile
 #endif
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE
@@ -418,8 +419,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! -----------------------------------------------------------------------
   nv = ig(ng) +sg(ng) -1
   IF ( MAX_AVG_TEMPORAL .LT. nv ) THEN
-    CALL IO_WRITE_ASCII(efile,'AVG_FLOW_XZ. Not enough space in local arrays.')
-    CALL DNS_STOP(LES_ERROR_AVGTMP)
+    CALL TLAB_WRITE_ASCII(efile,'AVG_FLOW_XZ. Not enough space in local arrays.')
+    CALL TLAB_STOP(DNS_ERROR_AVGTMP)
   END IF
   mean2d(:,1:nv) = C_0_R
 
@@ -428,13 +429,13 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   ! #######################################################################
   WRITE(line1,*) itime; line1 = 'Calculating flow statistics at It'//TRIM(ADJUSTL(line1))//'...'
-  CALL IO_WRITE_ASCII(lfile,line1)
+  CALL TLAB_WRITE_ASCII(lfile,line1)
 
   ! ###################################################################
   ! Averages (do not overwrite dudz; it cotains p for incompressible case)
   ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 2')
+  CALL TLAB_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 2')
 #endif
 
   ! Velocity
@@ -971,7 +972,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! # dwdz = d W / d z
   ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 3')
+  CALL TLAB_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 3')
 #endif
 
   CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, dudx, wrk3d, wrk2d,wrk3d)
@@ -1014,7 +1015,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! Derivatives Fluctuations
   ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 11')
+  CALL TLAB_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 11')
 #endif
 
   ! -------------------------------------------------------------------

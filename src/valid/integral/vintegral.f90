@@ -3,7 +3,7 @@
 
 PROGRAM VINTEGRAL
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 
   IMPLICIT NONE
   

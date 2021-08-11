@@ -4,9 +4,10 @@
 
 SUBROUTINE IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, data, sizes, work)
 
-  USE DNS_TYPES,     ONLY : subarray_dt
-  USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_GLOBAL,    ONLY : io_aux
+  USE TLAB_TYPES,     ONLY : subarray_dt
+  USE TLAB_CONSTANTS, ONLY : lfile
+  USE TLAB_VARS,    ONLY : io_aux
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -45,7 +46,7 @@ SUBROUTINE IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, data, sizes, work)
      name = TRIM(ADJUSTL(fname))
      IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
 
-     CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+     CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 
      work(1:isize) = SNGL(data(sizes(2):sizes(3):sizes(4),iv))
 
@@ -76,9 +77,10 @@ END SUBROUTINE IO_WRITE_SUBARRAY4
 !########################################################################
 SUBROUTINE IO_READ_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
 
-  USE DNS_TYPES,     ONLY : subarray_dt
-  USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_GLOBAL,    ONLY : io_aux
+  USE TLAB_TYPES,     ONLY : subarray_dt
+  USE TLAB_CONSTANTS, ONLY : lfile
+  USE TLAB_VARS,    ONLY : io_aux
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -117,7 +119,7 @@ SUBROUTINE IO_READ_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
      name = TRIM(ADJUSTL(fname))
      IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
 
-     CALL IO_WRITE_ASCII(lfile, 'Reading field '//TRIM(ADJUSTL(name))//'...')
+     CALL TLAB_WRITE_ASCII(lfile, 'Reading field '//TRIM(ADJUSTL(name))//'...')
 
 #ifdef USE_MPI
      CALL MPI_File_open(io_aux(iflag_mode)%communicator, TRIM(ADJUSTL(name)), MPI_MODE_RDONLY,MPI_INFO_NULL,mpio_fh, ims_err)
@@ -148,9 +150,10 @@ END SUBROUTINE IO_READ_SUBARRAY8
 !########################################################################
 SUBROUTINE IO_WRITE_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
 
-  USE DNS_TYPES,     ONLY : subarray_dt
-  USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_GLOBAL,    ONLY : io_aux
+  USE TLAB_TYPES,     ONLY : subarray_dt
+  USE TLAB_CONSTANTS, ONLY : lfile
+  USE TLAB_VARS,    ONLY : io_aux
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -189,7 +192,7 @@ SUBROUTINE IO_WRITE_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
      name = TRIM(ADJUSTL(fname))
      IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
 
-     CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+     CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 
      work(1:isize) = data(sizes(2):sizes(3):sizes(4),iv)
 

@@ -14,17 +14,18 @@ MODULE TIME
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
-  USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, inb_flow,inb_scal, inb_flow_array,inb_scal_array
-  USE DNS_GLOBAL, ONLY : icalc_flow,icalc_scal,icalc_part, imode_eqns
-  USE DNS_GLOBAL, ONLY : isize_particle, inb_part,inb_part_array
-  USE DNS_GLOBAL, ONLY : rtime, itime
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : itransport, visc, prandtl, schmidt
+  USE TLAB_CONSTANTS, ONLY : efile
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, inb_flow,inb_scal, inb_flow_array,inb_scal_array
+  USE TLAB_VARS, ONLY : icalc_flow,icalc_scal,icalc_part, imode_eqns
+  USE TLAB_VARS, ONLY : isize_particle, inb_part,inb_part_array
+  USE TLAB_VARS, ONLY : rtime, itime
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : itransport, visc, prandtl, schmidt
   USE DNS_LOCAL,  ONLY : nitera_first, nitera_log, logs_data
-  USE LAGRANGE_GLOBAL, ONLY : l_g, ilagrange
+  USE TLAB_PROCS
+  USE LAGRANGE_VARS, ONLY : l_g, ilagrange
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE
@@ -288,13 +289,13 @@ CONTAINS
       IF ( ims_pro == 0 ) THEN
         WRITE(time_string,999) ims_npro, ims_npro_i, ims_npro_k, rkm_substep, t_dif/1.0d0/PROC_CYCLES/ims_npro
 999     FORMAT(I5.5,' (ims_npro_i X ims_npro_k:',I4.4,'x',I4.4,1x,') RK-Substep',I1,':', E13.5,'s')
-        CALL IO_WRITE_ASCII(lfile, time_string)
+        CALL TLAB_WRITE_ASCII(lfile, time_string)
       END IF
 #else
       t_dif = idummy
       WRITE(time_string,999) rkm_substep, t_dif/1.0d0/PROC_CYCLES/ims_npro
 999   FORMAT('RK-Substep',I1,':', E13.5,'s')
-      CALL IO_WRITE_ASCII(lfile,time_string)
+      CALL TLAB_WRITE_ASCII(lfile,time_string)
 #endif
 
 #endif
@@ -336,7 +337,7 @@ CONTAINS
   !########################################################################
   SUBROUTINE TIME_COURANT(q, wrk3d)
 
-    USE THERMO_GLOBAL, ONLY : gama0
+    USE THERMO_VARS, ONLY : gama0
 #ifdef CHEMISTRY
     USE CHEM_GLOBAL, ONLY : TGFM
 #endif
@@ -606,7 +607,7 @@ CONTAINS
   !#
   !########################################################################
   SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT()
-    USE DNS_GLOBAL, ONLY : iadvection
+    USE TLAB_VARS, ONLY : iadvection
     USE TLAB_ARRAYS
     USE DNS_LOCAL, ONLY : imode_rhs
     USE DNS_ARRAYS
@@ -678,8 +679,8 @@ CONTAINS
             hq(1,1),hq(1,2),hq(1,3), hs(1,1), &
             wrk1d,wrk2d,wrk3d)
 #else
-        CALL IO_WRITE_ASCII(efile,'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Need compiling flag -DUSE_PSFFT.')
-        CALL DNS_STOP(DNS_ERROR_PSFFT)
+        CALL TLAB_WRITE_ASCII(efile,'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Need compiling flag -DUSE_PSFFT.')
+        CALL TLAB_STOP(DNS_ERROR_PSFFT)
 #endif
       END SELECT
     END SELECT
@@ -759,8 +760,8 @@ CONTAINS
       !      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), txc(1,8), &
       !      wrk1d,wrk2d,wrk3d)
     ELSE
-      CALL IO_WRITE_ASCII(efile,'TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT. Undeveloped formulation.')
-      CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+      CALL TLAB_WRITE_ASCII(efile,'TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT. Undeveloped formulation.')
+      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
 
     END IF
 
@@ -770,10 +771,10 @@ CONTAINS
   !########################################################################
   !########################################################################
   SUBROUTINE TIME_SUBSTEP_COMPRESSIBLE()
-    USE DNS_GLOBAL, ONLY : iadvection, idiffusion, iviscous, mach
+    USE TLAB_VARS, ONLY : iadvection, idiffusion, iviscous, mach
     USE TLAB_ARRAYS
     USE DNS_ARRAYS
-    USE THERMO_GLOBAL, ONLY : gama0
+    USE THERMO_VARS, ONLY : gama0
     USE BOUNDARY_BUFFER
     USE BOUNDARY_BCS
 
@@ -845,8 +846,8 @@ CONTAINS
       ! viscous terms
       ! -------------------------------------------------------------------
       IF ( itransport .NE. 1 ) THEN
-        CALL IO_WRITE_ASCII(efile,'TIME_SUBSTEP_COMPRESSIBLE. Section requires to allocate array vis.')
-        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+        CALL TLAB_WRITE_ASCII(efile,'TIME_SUBSTEP_COMPRESSIBLE. Section requires to allocate array vis.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
       END IF
 
       IF      ( iviscous == EQNS_DIVERGENCE ) THEN

@@ -5,13 +5,14 @@
 !########################################################################
 SUBROUTINE DNS_FILTER()
 
-  USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, isize_field
-  USE DNS_GLOBAL,    ONLY : imode_eqns, imode_sim
-  USE DNS_GLOBAL,    ONLY : itime, rtime
-  USE DNS_GLOBAL,    ONLY : FilterDomain
-  USE DNS_GLOBAL,    ONLY : g, area
+  USE TLAB_CONSTANTS, ONLY : lfile
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, isize_field
+  USE TLAB_VARS,    ONLY : imode_eqns, imode_sim
+  USE TLAB_VARS,    ONLY : itime, rtime
+  USE TLAB_VARS,    ONLY : FilterDomain
+  USE TLAB_VARS,    ONLY : g, area
   USE TLAB_ARRAYS
+  USE TLAB_PROCS
   USE DNS_LOCAL,     ONLY : ilimit_scal, s_bound_min, s_bound_max
   USE DNS_LOCAL,     ONLY : nitera_stats_spa, nitera_first,nitera_stats
   USE STATISTICS
@@ -27,7 +28,7 @@ SUBROUTINE DNS_FILTER()
 
   ! #######################################################################
   WRITE(line,*) itime; line = 'Filtering fields at It'//TRIM(ADJUSTL(line))//'.'
-  CALL IO_WRITE_ASCII(lfile,line)
+  CALL TLAB_WRITE_ASCII(lfile,line)
 
   ! -------------------------------------------------------------------
   ! Statistics

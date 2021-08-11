@@ -35,8 +35,9 @@ else() # compiler for serial build
 
 endif()
 
-set(FFTW_INCLUDE_DIR   "/usr/local/include")
-set(FFTW_LIB           "/usr/local/lib/libfftw3.a")
+#set(FFTW_INCLUDE_DIR   "/usr/local/include")
+#set(FFTW_LIB           "/usr/local/lib/libfftw3.a")
+set(FFTW_LIB           "-lfftw3")
 set(INCLUDE_DIRS ${FFTW_INCLUDE_DIR})
 set(LIBS ${FFTW_LIB})
 

@@ -37,7 +37,8 @@ subroutine IBM_CHECK_PROCS()
   use DNS_IBM
 
 #ifdef USE_MPI 
-  use DNS_MPI, only: ims_pro
+  use TLAB_MPI_VARS, only: ims_pro
+  USE TLAB_MPI_PROCS
 #endif
   
   implicit none

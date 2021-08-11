@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8...3.13)
+cmake_minimum_required (VERSION 3.13)
 # specify the location of loadable modules (.cmake extension)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../config)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -52,6 +52,7 @@ endif()
 project(tlab Fortran)
 
 # set the include dirs
+set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/modules)
 set(INCLUDE_DIRS ${INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_BINARY_DIR}/modules)
 include_directories(${INCLUDE_DIRS})
 
@@ -60,16 +61,10 @@ add_subdirectory(modules)
 
 # produce libraries
 add_subdirectory(utils)
-if( ${BUILD_TYPE} STREQUAL "PARALLEL" OR ${BUILD_TYPE} STREQUAL "NONBLOCKING" )
-  add_subdirectory(mpi)
-endif()
 add_subdirectory(thermodynamics)
 add_subdirectory(io)
 add_subdirectory(fdm)
-add_subdirectory(linear)
 add_subdirectory(filters)
-add_subdirectory(averages)
-add_subdirectory(pdfs)
 add_subdirectory(external)
 add_subdirectory(operators)
 add_subdirectory(mappings)

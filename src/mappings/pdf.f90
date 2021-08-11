@@ -15,8 +15,9 @@
 !########################################################################
 SUBROUTINE PDF1V_N( fname, time, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, y, pdf, wrk1d )
 
-  USE DNS_TYPES,      ONLY : pointers_dt
-  USE DNS_CONSTANTS,  ONLY : lfile
+  USE TLAB_TYPES,      ONLY : pointers_dt
+  USE TLAB_CONSTANTS,  ONLY : lfile
+  USE TLAB_PROCS
   USE PDFS
 
   IMPLICIT NONE
@@ -48,7 +49,7 @@ SUBROUTINE PDF1V_N( fname, time, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,ga
 #endif
 
   ! ###################################################################
-  CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
+  CALL TLAB_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
 
   plim = C_1EM4_R                 ! relative threshold in PDF analysis; adapt to sample sizeo
 
@@ -104,7 +105,7 @@ SUBROUTINE PDF1V_N( fname, time, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,ga
     DO iv = 1,nv
       name = TRIM(ADJUSTL(fname))
       IF ( u(iv)%tag /= '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(u(iv)%tag))
-      CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+      CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 #include "dns_open_file.h"
       IF ( ny > 1 ) THEN
         WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:,:,iv))
@@ -126,7 +127,8 @@ END SUBROUTINE PDF1V_N
 !########################################################################
 SUBROUTINE PDF2V( fname, time, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
 
-  USE DNS_CONSTANTS,  ONLY : lfile
+  USE TLAB_CONSTANTS,  ONLY : lfile
+  USE TLAB_PROCS
   USE PDFS
 
   IMPLICIT NONE
@@ -154,7 +156,7 @@ SUBROUTINE PDF2V( fname, time, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
 #endif
 
   ! ###################################################################
-  CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
+  CALL TLAB_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
 
   DO j = 1,ny               ! calculation in planes
     CALL PDF2V2D( nx,ny,nz, j, u,v, nbins,pdf(1,j), wrk2d )
@@ -172,7 +174,7 @@ SUBROUTINE PDF2V( fname, time, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
 #define LOC_UNIT_ID 21
 #define LOC_STATUS 'unknown'
     name = TRIM(ADJUSTL(fname))
-    CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+    CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 #include "dns_open_file.h"
     IF ( ny > 1 ) THEN
       WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:,:))

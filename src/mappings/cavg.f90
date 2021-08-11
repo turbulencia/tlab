@@ -8,8 +8,9 @@
 !########################################################################
 SUBROUTINE CAVG1V_N( fname, time, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, a, y, avg, wrk1d )
 
-  USE DNS_TYPES,      ONLY : pointers_dt
-  USE DNS_CONSTANTS,  ONLY : lfile
+  USE TLAB_TYPES,      ONLY : pointers_dt
+  USE TLAB_CONSTANTS,  ONLY : lfile
+  USE TLAB_PROCS
   USE PDFS
 
   IMPLICIT NONE
@@ -40,7 +41,7 @@ SUBROUTINE CAVG1V_N( fname, time, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,g
 #endif
 
   ! ###################################################################
-  CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
+  CALL TLAB_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
 
   DO iv = 1,nv
 
@@ -74,7 +75,7 @@ SUBROUTINE CAVG1V_N( fname, time, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,g
     DO iv = 1,nv
       name = TRIM(ADJUSTL(fname))
       IF ( u(iv)%tag /= '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(u(iv)%tag))
-      CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+      CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 #include "dns_open_file.h"
       IF ( ny > 1 ) THEN
         WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(avg(:,:,iv))
@@ -96,7 +97,8 @@ END SUBROUTINE CAVG1V_N
 !########################################################################
 SUBROUTINE CAVG2V( fname, time, nx,ny,nz, nbins, u,v, a, y, avg, wrk2d )
 
-  USE DNS_CONSTANTS,  ONLY : lfile
+  USE TLAB_CONSTANTS,  ONLY : lfile
+  USE TLAB_PROCS
   USE PDFS
 
   IMPLICIT NONE
@@ -124,7 +126,7 @@ SUBROUTINE CAVG2V( fname, time, nx,ny,nz, nbins, u,v, a, y, avg, wrk2d )
 #endif
 
   ! ###################################################################
-  CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
+  CALL TLAB_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
 
   DO j = 1,ny             ! calculation in planes
     CALL PDF2V2D( nx,ny,nz, j, u,v, nbins,avg(1,j), wrk2d, a,wrk2d(1,2) )
@@ -144,7 +146,7 @@ SUBROUTINE CAVG2V( fname, time, nx,ny,nz, nbins, u,v, a, y, avg, wrk2d )
 #define LOC_UNIT_ID 21
 #define LOC_STATUS 'unknown'
     name = TRIM(ADJUSTL(fname))
-    CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+    CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 #include "dns_open_file.h"
     IF ( ny > 1 ) THEN
       WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(avg(:,:))

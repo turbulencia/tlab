@@ -10,8 +10,9 @@
 !########################################################################
 SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, avg)
 
-  USE DNS_TYPES,     ONLY : pointers_dt
-  USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_TYPES,     ONLY : pointers_dt
+  USE TLAB_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -33,7 +34,7 @@ SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, av
   CHARACTER*250 varname(1)  ! to be reduce to just 1 group in the future
 
   ! ###################################################################
-  CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
+  CALL TLAB_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
 
   DO j = 1,ny
     DO iv = 1,nv
@@ -62,7 +63,7 @@ SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, av
       ENDIF
     END DO
   END DO
-  ! for consistency with old format I pass 2 groups; no longer (Cedrick Jul 3rd 2021) 
+  ! for consistency with old format I pass 2 groups; no longer (Cedrick Jul 3rd 2021)
   CALL IO_WRITE_AVERAGES( fname, itime,rtime, ny,nv*nm,1, y, varname, groupname, avg )
 
   RETURN
@@ -107,7 +108,8 @@ END SUBROUTINE RAW_TO_CENTRAL
 !########################################################################
 SUBROUTINE INTER_N_XZ(fname, itime,rtime, nx,ny,nz, np, parname, gate, y, inter)
 
-  USE DNS_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -128,7 +130,7 @@ SUBROUTINE INTER_N_XZ(fname, itime,rtime, nx,ny,nz, np, parname, gate, y, inter)
   CHARACTER*250 varname(1)  ! to be reduce to just 1 group in the future
 
   ! ###################################################################
-  CALL IO_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
+  CALL TLAB_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
 
   DO j = 1,ny
     DO ip = 1,np

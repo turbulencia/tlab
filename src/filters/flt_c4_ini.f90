@@ -10,7 +10,7 @@
 !########################################################################
 SUBROUTINE FLT_C4_INI(dx, f)
   
-  USE DNS_TYPES, ONLY : filter_dt
+  USE TLAB_TYPES, ONLY : filter_dt
 
   IMPLICIT NONE
   

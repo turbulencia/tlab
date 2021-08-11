@@ -3,8 +3,9 @@ PROGRAM SMOOTH
 #include "types.h"
 #include "dns_const.h"
 
-  USE DNS_GLOBAL
-  USE THERMO_GLOBAL
+  USE TLAB_VARS
+  USE TLAB_PROCS
+  USE THERMO_VARS
 
   IMPLICIT NONE
 
@@ -15,7 +16,7 @@ PROGRAM SMOOTH
   TINTEGER opt
 
 ! ###################################################################
-  CALL DNS_START
+  CALL TLAB_START
 
   imixture = MIXT_TYPE_AIRWATER
   CALL THERMO_INITIALIZE

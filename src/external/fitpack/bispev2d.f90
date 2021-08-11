@@ -3,7 +3,7 @@
 #include "types.h"
 #include "dns_error.h"
 
-        USE DNS_CONSTANTS, ONLY : efile
+        USE TLAB_CONSTANTS, ONLY : efile
 
       IMPLICIT NONE
 
@@ -39,8 +39,8 @@
             msg(i:i) = ' '
          ENDDO
          WRITE(msg,*) 'BISPEV ERROR = ',ier
-         CALL IO_WRITE_ASCII(efile, msg)
-         CALL DNS_STOP(DNS_ERROR_REGRID)
+         CALL TLAB_WRITE_ASCII(efile, msg)
+         CALL TLAB_STOP(DNS_ERROR_REGRID)
       ENDIF
 
       RETURN

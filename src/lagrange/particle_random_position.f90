@@ -7,14 +7,14 @@
 
 SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk3d)
   
-  USE DNS_TYPES,  ONLY : pointers_dt, pointers3d_dt 
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
-  USE LAGRANGE_GLOBAL, ONLY : particle_dt, particle_number_total
-  USE LAGRANGE_GLOBAL, ONLY : particle_rnd_mode, y_particle_pos, y_particle_width, ilagrange
-  USE THERMO_GLOBAL,   ONLY : imixture
+  USE TLAB_TYPES,  ONLY : pointers_dt, pointers3d_dt 
+  USE TLAB_CONSTANTS
+  USE TLAB_VARS
+  USE LAGRANGE_VARS, ONLY : particle_dt, particle_number_total
+  USE LAGRANGE_VARS, ONLY : particle_rnd_mode, y_particle_pos, y_particle_width, ilagrange
+  USE THERMO_VARS,   ONLY : imixture
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
   IMPLICIT NONE
 #include "integers.h"

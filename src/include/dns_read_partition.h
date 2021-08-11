@@ -4,8 +4,8 @@
 
   IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI
-     CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Missing input [PostProcessing.Partition] in dns.ini.')
-     CALL DNS_STOP(DNS_ERROR_INVALOPT)
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Missing input [PostProcessing.Partition] in dns.ini.')
+     CALL TLAB_STOP(DNS_ERROR_INVALOPT)
 #else
      WRITE(*,*) 'Intermittency function for the conditioning ?'
      WRITE(*,*) ' 0. None'
@@ -61,8 +61,8 @@
   ENDIF
 
   IF ( igate_size .GT. igate_size_max ) THEN
-     CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Not enough memory for gate_threshold.')
-     CALL DNS_STOP(DNS_ERROR_ALLOC)
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Not enough memory for gate_threshold.')
+     CALL TLAB_STOP(DNS_ERROR_ALLOC)
   ENDIF
 
   IF      ( opt_cond .EQ. 2 ) THEN

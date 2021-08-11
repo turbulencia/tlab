@@ -22,13 +22,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE OMP_LIB
 #endif
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS,ONLY:tfile
+  USE TLAB_CONSTANTS,ONLY:tfile
 #endif
-  USE DNS_GLOBAL, ONLY : imode_eqns
-  USE DNS_GLOBAL, ONLY : imode_ibm
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : rbackground, ribackground
+  USE TLAB_VARS, ONLY : imode_eqns
+  USE TLAB_VARS, ONLY : imode_ibm
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : rbackground, ribackground
   USE DNS_LOCAL,  ONLY : idivergence
   USE DNS_LOCAL,  ONLY : tower_mode
   USE TIME,       ONLY : rkm_substep,rkm_endstep
@@ -40,7 +40,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! ############################################# ! 
 ! DEBUG ####################################### !
 #ifdef USE_MPI
-  use DNS_MPI,    only: ims_pro
+  use TLAB_MPI_VARS,   only : ims_pro
+  USE TLAB_MPI_PROCS
 #endif
 ! ############################################# !   
 
@@ -78,7 +79,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #endif
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile,'ENTERING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
+  CALL TLAB_WRITE_ASCII(tfile,'ENTERING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
 #endif
 
 
@@ -475,7 +476,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !   if (ims_pro == 0) write(*,*) '========================================================='
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
+  CALL TLAB_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
 #endif
   RETURN
 END SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1

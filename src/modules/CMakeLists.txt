@@ -1,4 +1,4 @@
-FILE(GLOB sourcefiles "../modules/*.f90")
+FILE(GLOB sourcefiles "*.f90")
 
 # retrieve the git hash from the current commit
 find_package(Git)
@@ -15,5 +15,14 @@ message(STATUS "Git hash " ${GITHASH})
 
 # send a precompiler statement replacing the git hash
 add_definitions(-DGITHASH="${GITHASH}")
+
+get_directory_property(defs COMPILE_DEFINITIONS)
+if ( "USE_MPI" IN_LIST defs )
+else()
+  FILE(GLOB to_remove "tlab_mpi_vars.f90") # get the complete path
+  list(REMOVE_ITEM sourcefiles ${to_remove})
+  FILE(GLOB to_remove "tlab_mpi_procs.f90") # get the complete path
+  list(REMOVE_ITEM sourcefiles ${to_remove})
+endif()
 
 add_library(modules ${sourcefiles})

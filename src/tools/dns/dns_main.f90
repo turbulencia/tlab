@@ -6,10 +6,14 @@
 
 PROGRAM DNS
 
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
+  USE TLAB_CONSTANTS
+  USE TLAB_VARS
   USE TLAB_ARRAYS
-  USE LAGRANGE_GLOBAL
+  USE TLAB_PROCS
+#ifdef USE_MPI
+  USE TLAB_MPI_PROCS
+#endif
+  USE LAGRANGE_VARS
   USE LAGRANGE_ARRAYS
   USE DNS_LOCAL
   USE DNS_ARRAYS
@@ -23,7 +27,6 @@ PROGRAM DNS
   USE STATISTICS
   USE PARTICLE_TRAJECTORIES
   USE AVG_SCAL_ZT
-
   IMPLICIT NONE
   SAVE
 
@@ -35,7 +38,7 @@ PROGRAM DNS
   LOGICAL ibm_allocated
 
   ! ###################################################################
-  CALL DNS_START()
+  CALL TLAB_START()
 
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part == 1 ) THEN
@@ -48,7 +51,9 @@ PROGRAM DNS
 
 #ifdef USE_MPI
   CALL DNS_MPI_INITIALIZE
+#ifdef USE_PSFFT
   IF ( imode_rhs == EQNS_RHS_NONBLOCKING ) CALL DNS_NB3DFFT_INITIALIZE
+#endif
 #endif
 
   ! #######################################################################
@@ -129,7 +134,7 @@ PROGRAM DNS
   flag_viscosity = .FALSE.
   IF ( visc /= visc_stop ) THEN
     WRITE(str,*) visc
-    CALL IO_WRITE_ASCII(lfile,'Changing original viscosity '//TRIM(ADJUSTL(str))//' to new value.')
+    CALL TLAB_WRITE_ASCII(lfile,'Changing original viscosity '//TRIM(ADJUSTL(str))//' to new value.')
     IF ( visc_time > C_0_R ) THEN
       visc_rate = ( visc_stop -visc ) /visc_time
       visc_time = rtime +visc_time                 ! Stop when this time is reached
@@ -188,7 +193,7 @@ PROGRAM DNS
   itime = nitera_first
 
   WRITE(str,*) itime
-  CALL IO_WRITE_ASCII(lfile,'Starting time integration at It'//TRIM(ADJUSTL(str))//'.')
+  CALL TLAB_WRITE_ASCII(lfile,'Starting time integration at It'//TRIM(ADJUSTL(str))//'.')
 
   DO
     IF ( itime >= nitera_last   ) EXIT
@@ -279,7 +284,7 @@ PROGRAM DNS
   END DO
 
   ! ###################################################################
-  CALL DNS_STOP(INT(logs_data(1)))
+  CALL TLAB_STOP(INT(logs_data(1)))
 
 CONTAINS
   ! #######################################################################
@@ -293,39 +298,39 @@ CONTAINS
   ! ###################################################################
   WRITE(str,*) inb_flow; line = 'Allocating array rhs flow of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-  CALL IO_WRITE_ASCII(lfile,line)
+  CALL TLAB_WRITE_ASCII(lfile,line)
   ALLOCATE(hq(isize_field,inb_flow),    stat=ierr)
   IF ( ierr /= 0 ) THEN
-    CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_q.')
-    CALL DNS_STOP(DNS_ERROR_ALLOC)
+    CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for h_q.')
+    CALL TLAB_STOP(DNS_ERROR_ALLOC)
   END IF
 
   WRITE(str,*) inb_scal; line = 'Allocating array rhs scal of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-  CALL IO_WRITE_ASCII(lfile,line)
+  CALL TLAB_WRITE_ASCII(lfile,line)
   ALLOCATE(hs(isize_field,inb_scal),    stat=ierr)
   IF ( ierr /= 0 ) THEN
-    CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for h_s.')
-    CALL DNS_STOP(DNS_ERROR_ALLOC)
+    CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for h_s.')
+    CALL TLAB_STOP(DNS_ERROR_ALLOC)
   END IF
 
   ! -------------------------------------------------------------------
   IF ( icalc_part == 1 ) THEN
     WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
-    CALL IO_WRITE_ASCII(lfile,line)
+    CALL TLAB_WRITE_ASCII(lfile,line)
     ALLOCATE(l_comm(isize_l_comm), stat=ierr)
     IF ( ierr /= 0 ) THEN
-      CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
-      CALL DNS_STOP(DNS_ERROR_ALLOC)
+      CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
+      CALL TLAB_STOP(DNS_ERROR_ALLOC)
     END IF
 
     WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
     WRITE(str,*) inb_part; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-    CALL IO_WRITE_ASCII(lfile,line)
+    CALL TLAB_WRITE_ASCII(lfile,line)
     ALLOCATE(l_hq(isize_particle,inb_part),stat=ierr)
     IF ( ierr /= 0 ) THEN
-      CALL IO_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
-      CALL DNS_STOP(DNS_ERROR_ALLOC)
+      CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
+      CALL TLAB_STOP(DNS_ERROR_ALLOC)
     END IF
 
   END IF
