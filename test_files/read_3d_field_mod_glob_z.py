@@ -26,6 +26,20 @@ u_mod = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
 u_mod = u_mod.reshape((grid.nx,grid.ny,grid.nz),order='F')
 f.close()
 
+# u_mod field 
+f = open(path +'fld_mod_global.1','rb')
+f.seek(52,0)
+u_mod_glob = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
+u_mod_glob = u_mod_glob.reshape((grid.nx,grid.ny,grid.nz),order='F')
+f.close()
+
+# u_mod field 
+f = open(path +'fld_mod_local.1','rb')
+f.seek(52,0)
+u_mod_loc = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
+u_mod_loc = u_mod_loc.reshape((grid.nx,grid.ny,grid.nz),order='F')
+f.close()
+
 # read eps field
 f = open(path +'eps0.1','rb')
 f.seek(52,0)
@@ -33,12 +47,10 @@ eps = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
 eps = eps.reshape((grid.nx,grid.ny,grid.nz),order='F')
 f.close()
 
-# sys.exit()
-
-
+# %%
 #---------------------------------------------------------------------------#
 # plot settings 
-plt.rcParams['figure.dpi'] = 120 
+plt.rcParams['figure.dpi'] = 250 
 size    = (8,6)
 shading = 'nearest'#'gouraud'
 figs    = 'figs' 
@@ -56,14 +68,14 @@ plt.colorbar()
 plt.show()
 #---------------------------------------------------------------------------#
 # 2d plot - xy
-# plt.figure(figsize=size)
-# plt.title('2d-plot -- xy-plane -- velocity u_mod')
-# plt.xlabel("x")
-# plt.ylabel("y")
-# #
-# plt.pcolormesh(grid.x,grid.y,u_mod[:,:,grid.nz//3].T, shading=shading, cmap='RdBu_r') #shading='gouraud',
-# plt.colorbar()
-# plt.show()
+plt.figure(figsize=size)
+plt.title('2d-plot -- xy-plane -- velocity u_mod')
+plt.xlabel("x")
+plt.ylabel("y")
+#
+plt.pcolormesh(grid.x,grid.y,u_mod[:,:,grid.nz//3].T, shading=shading, cmap='RdBu_r') #shading='gouraud',
+plt.colorbar()
+plt.show()
 #---------------------------------------------------------------------------#
 # 2d plot - xz
 plt.figure(figsize=size)
@@ -76,44 +88,44 @@ plt.colorbar()
 plt.show()
 #---------------------------------------------------------------------------#
 
-# sys.exit()
-
-# u_mod = u_mod * eps
 # %%
+
 plt.figure(figsize=size)
-plt.xlabel("y")
-plt.ylabel("v-velocity")
-plt.vlines(grid.y[9], ymin=-0.002, ymax=0.002)
-for i in range(107,117):
-    plt.plot(grid.y[:20],u_mod[0,:20,i], marker='.',label='z-node='+str(i))
+plt.xlabel("z")
+plt.ylabel("w-velocity")
+for i in range(0,10):
+    plt.plot(grid.z,u_mod[-1,i,:], marker='.',label='y-node='+str(i))
 plt.legend(loc=1)
-plt.grid(True)
 plt.show()
 
 # small check 
-v     = flow.v * (1. - eps)
-v_mod = u_mod  * (1. - eps)
-res   = v - v_mod
+w     = flow.w * (1. - eps)
+w_mod = u_mod  * (1. - eps)
+res   = w - w_mod
 print(str(res.sum()))
 
 
-sys.exit()
-
 # %%
-
 plt.figure(figsize=size)
-plt.xlabel("y")
-plt.ylabel("v-velocity")
-for i in range(7,11):
-    plt.plot(grid.z[:],u_mod[0,i,:], marker='.',label='y-node='+str(i))
+plt.xlabel("z")
+plt.ylabel("w-velocity")
+for i in range(0,5):
+    plt.plot(grid.z,u_mod_glob[-1,i,:], marker='.',label='y-node='+str(i))
+    plt.plot(grid.z,u_mod_loc[-1,i,:], marker='x',label='y-node='+str(i))
 plt.legend(loc=1)
-plt.grid(True)
 plt.show()
 
 # %%
+plt.figure(figsize=size)
+plt.xlabel("z")
+plt.ylabel("w-velocity")
+for i in range(0,5):
+    plt.plot(grid.z,u_mod_glob[-1,i,:] - u_mod_loc[-1,i,:], marker='.',label='y-node='+str(i))
+    # plt.plot(grid.z,u_mod_loc[-1,i,:], marker='x',label='y-node='+str(i))
+plt.legend(loc=1)
+plt.show()
+
 sys.exit()
-
-
 #---------------------------------------------------------------------------#
 # 2d plot - yz
 plt.figure(figsize=size)

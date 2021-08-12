@@ -78,7 +78,7 @@ PROGRAM DNS
     CALL DNS_TOWER_INITIALIZE(tower_stride)
   ENDIF
   
-  IF ( imode_ibm == 1 ) THEN ! IBM
+  IF ( imode_ibm == 1 ) THEN
     ibm_allocated = .FALSE.
     CALL IBM_ALLOCATE(ibm_allocated)
   ENDIF

@@ -42,13 +42,12 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
   use TLAB_PROCS
 
   ! MPI just for debugging
-  use TLAB_VARS,           only: imax, jmax, kmax ! debug
+  use TLAB_VARS,      only: imax, jmax, kmax
 #ifdef USE_MPI
-  use TLAB_MPI_VARS,       only: ims_pro
-  use TLAB_MPI_VARS,       only: ims_size_i, ims_size_j, ims_size_k    
-  use TLAB_MPI_VARS,       only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i 
-  use TLAB_MPI_VARS,       only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  use TLAB_MPI_VARS,       only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
+  use TLAB_MPI_VARS,  only: ims_size_i, ims_size_j, ims_size_k    
+  use TLAB_MPI_VARS,  only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i 
+  use TLAB_MPI_VARS,  only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  use TLAB_MPI_VARS,  only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
   use TLAB_MPI_PROCS
 #endif
 
@@ -228,44 +227,44 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
     end if
   end do
 
-!   ! ================================================================== !
-!   ! debug -- Block comment with #if 0 and #endif
-! ! #if 0
-!   if (g%name == 'y') then
-!     ! ================================================================== !
-!     ! debug
-!     if (ims_pro == 0) write(*,*) '========================================================='
+  ! ================================================================== !
+  ! debug -- Block comment with #if 0 and #endif
+#if 0
+  if (g%name == 'y') then
+    ! ================================================================== !
+    ! debug
+    if (ims_pro == 0) write(*,*) '========================================================='
 
-!     ! write out fld_mod for debugging
-!     call DNS_TRANSPOSE(fld_mod, kmax, imax*jmax, kmax, fld_mod_tr, imax*jmax)
-!     call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
+    ! write out fld_mod for debugging
+    call DNS_TRANSPOSE(fld_mod, kmax, imax*jmax, kmax, fld_mod_tr, imax*jmax)
+    call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
 
-!     ! stop after writing field
-!     call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
-!   ! ================================================================== !
-!   end if
-! ! #endif
+    ! stop after writing field
+    call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
+  ! ================================================================== !
+  end if
+#endif
 ! #if 0
-!   if (g%name == 'z') then
-!     ! ================================================================== !
-!     ! debug
-!     if (ims_pro == 0) write(*,*) '========================================================='
+  if (g%name == 'z') then
+    ! ================================================================== !
+    ! debug
+    if (ims_pro == 0) write(*,*) '========================================================='
 
-!     ! write out fld_mod for debugging
-! #ifdef USE_MPI
-!     if ( ims_npro_k > 1 ) then
-!       call DNS_MPI_TRPB_K(fld_mod, fld_mod_tr, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
-!     endif
-!     call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
-! #else
-!     fld_mod_tr = fld_mod
-!     call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
-! #endif
+    ! write out fld_mod for debugging
+#ifdef USE_MPI
+    if ( ims_npro_k > 1 ) then
+      call DNS_MPI_TRPB_K(fld_mod, fld_mod_tr, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+    endif
+    call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
+#else
+    fld_mod_tr = fld_mod
+    call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
+#endif
 
-!     ! stop after writing field
-!     call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
-!     ! ================================================================== !
-!   end if
+    ! stop after writing field
+    call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
+    ! ================================================================== !
+  end if
 ! #endif
   return
 end subroutine IBM_SPLINE_XYZ
@@ -333,7 +332,7 @@ subroutine IBM_SPLINE(ia, ib, xa, ya, xb, yb)
               wrk_ibm(ip2), wrk_ibm(ip3), fp, wrk_ibm(ip4), isize_iwrk_ibm, iwrk_ibm, ier)
   
   if ( (ier /= 0) .and. (ier /= -1) ) then
-    write(line, *) 'INTERPOLATE_1D. Curfit error code = ', ier
+    write(line, *) 'IBM_SPLINE. Curfit error code = ', ier
     call TLAB_WRITE_ASCII(efile, line)
     call TLAB_STOP(DNS_ERROR_CURFIT)
   end if
@@ -355,7 +354,7 @@ subroutine IBM_SPLINE(ia, ib, xa, ya, xb, yb)
   call splev(wrk_ibm(ip2), n, wrk_ibm(ip3), kspl, xb, yb, ib, ier)
   
   if (ier /= 0) then
-    write(line, *) 'INTERPOLATE_1D. Splev error code = ', ier
+    write(line, *) 'IBM_SPLINE. Splev error code = ', ier
     call TLAB_WRITE_ASCII(efile, line)
     call TLAB_STOP(DNS_ERROR_CURFIT)
   end if
@@ -405,14 +404,16 @@ subroutine IBM_SPLINE_VECTOR(case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir, nli
 
   case(i3) ! one interface on the right, extrapolation in gap
     
-    ! mirror nflu points on the ground
-    !
-    !
-    !
+    ! mirror nflu points on the ground + zeros at left interface
+    do kflu  = 1, nflu + 1
+      ia     =   ia + 1
+      xa(ia) = - g%nodes((nflu + 2) - kflu) 
+      ya(ia) =   C_0_R
+    end do
 
-    ! add zero at left interface
-    ia     = ia + 1
-    ya(ia) = C_0_R       
+    ! add zero at left interface (needed if mirroring is not used)
+    ! ia     = ia + 1
+    ! ya(ia) = C_0_R       
 
     ! set interface (right)
     ia     = ia + 1
@@ -513,74 +514,3 @@ subroutine IBM_SPLINE_VECTOR_GLOB(fld, g, xa, ya, xb, x_mask, y_mask, ia, ib, ic
 
   return
 end subroutine IBM_SPLINE_VECTOR_GLOB
-
-
-!########################################################################
-!### OLD -- Maybe Buggy --- 
-!########################################################################
-
-! subroutine IBM_SPLINE_VECTOR(case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir, nlines, plane) 
-
-!   use DNS_IBM,    only: nflu, isize_wrk1d_ibm, nsp 
-!   use TLAB_VARS, only: isize_field
-!   use TLAB_TYPES,  only: grid_dt
-   
-!   implicit none
-  
-! #include "integers.h"
-
-!   TINTEGER,                          intent(in)  :: case
-!   TREAL, dimension(isize_field),     intent(in)  :: fld 
-!   type(grid_dt),                     intent(in)  :: g   
-!   TREAL, dimension(nsp),             intent(out) :: xa ! max size (not always needed)
-!   TREAL, dimension(nsp),             intent(out) :: ya  
-!   TREAL, dimension(isize_wrk1d_ibm), intent(out) :: xb  
-!   TINTEGER,                          intent(out) :: ia
-!   TINTEGER,                          intent(out) :: ib
-!   TINTEGER,                          intent(in)  :: ip_il, ip_ir, nlines, plane
-
-!   TINTEGER                                       :: kflu, ip_int
-!   TINTEGER                                       :: ip_fl, iu_fl, iu_ir
-
-!   ! ================================================================== !
-
-!   ! index to remember current position in vectors
-!   ia = i0
-!   ib = i0
-
-!   ! needed indices
-!   ip_fl = ip_il - nflu                      ! k-axis index of most left fluid point
-!   iu_fl = (ip_fl - 1) * nlines + plane      ! fld-index of most left fluid point
-!   iu_ir = (ip_ir - 1) * nlines + plane      ! fld-index of right interface  point
-
-!   ! build left half of xa, ya (from left to right)
-!   do kflu = 1, nflu
-!     ia     = ia + 1
-!     xa(ia) = g%nodes(ip_fl + (kflu - 1)) ! dble(ip_fl + (kflu - 1))   
-!     ya(ia) =     fld(iu_fl + (kflu - 1) * nlines)
-!   end do
-
-!   ! set interfaces (left and right)
-!   ia     = ia + 1
-!   xa(ia) = g%nodes(ip_il) ! dble(ip_il)   
-!   ya(ia) = C_0_R       
-!   !
-!   ia     = ia + 1
-!   xa(ia) = g%nodes(ip_ir) ! dble(ip_ir) 
-!   ya(ia) = C_0_R       
-
-!   ! build right half of xa, ya (from left to right)
-!   do kflu = 1, nflu
-!     ia     = ia + 1
-!     xa(ia) = dble(ip_ir + kflu)
-!     ya(ia) =  fld(iu_ir + kflu * nlines)
-!   end do
-
-!   ! build gap vector where splines are evaluated (here: with interface points)
-!   do ip_int = ip_il, ip_ir
-!     ib = ib + 1
-!     xb(ib) = g%nodes(ip_int) ! dble(ip_int)
-!   end do
-
-!   return
-! end subroutine IBM_SPLINE_VECTOR

@@ -29,13 +29,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : rbackground, ribackground
-  USE DNS_LOCAL,  ONLY : idivergence
-  USE DNS_LOCAL,  ONLY : tower_mode
-  USE TIME,       ONLY : rkm_substep,rkm_endstep
+  USE DNS_LOCAL, ONLY : idivergence
+  USE DNS_LOCAL, ONLY : tower_mode
+  USE TIME,      ONLY : rkm_substep,rkm_endstep
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-  USE DNS_IBM,    ONLY : ibm_burgers, eps
+  USE DNS_IBM,   ONLY : ibm_burgers, eps
 
 ! ############################################# ! 
 ! DEBUG ####################################### !
@@ -310,7 +310,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL DNS_TOWER_ACCUMULATE(tmp1,i4,wrk1d)
   ENDIF
 
-! horizontal derivatives ! no splines!
+! horizontal pressure derivatives (no IBM needed here!)
   CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1,tmp2, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1,tmp4, wrk3d, wrk2d,wrk3d)
 
@@ -413,67 +413,18 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
   ENDDO
 
-! #######################################################################
-! IBM - Direct Forcing (zeros in solid, interface on gridpoints)
-! 
-! First attempt: one bar in streamwise direction
-!
-! #######################################################################
-
-! -----------------------------------------------------------------------
-! Preliminaries - get geometry information
-! -----------------------------------------------------------------------
-
-! -----------------------------------------------------------------------
-! Impose one bar at bottom Jmin, no MPI
-! -----------------------------------------------------------------------
-
-! ! 3d serial case 41 for ekman flow
-!   ip_b = imax*jmax*(int(kmax/2) - 10) + 1
-!   do k = 1,20     ! width in k
-!     do is = 1,20  ! height in j
-!       h1(ip_b:ip_b+imax-1) = C_0_R
-!       h2(ip_b:ip_b+imax-1) = C_0_R
-!       h3(ip_b:ip_b+imax-1) = C_0_R
-!       ! overwrite ini flow fields with new geometry BC
-!       u(ip_b:ip_b+imax-1) = C_0_R
-!       v(ip_b:ip_b+imax-1) = C_0_R
-!       w(ip_b:ip_b+imax-1) = C_0_R
-!       !
-!       ip_b =  ip_b + imax
-!     end do
-!     !        
-!     ip_b = imax*jmax*(int(kmax/2) - 10 + k)
-!   end do
-
-  ! for debugging, just initialized once
-
-  ! if (n .eq. 0) then 
-  !   call IBM_INITIALIZE_GEOMETRY(epsi) 
-  ! end if
-  ! n = n + 1
-  ! epsi = reshape(eps,(/isize_field/))
-  ! apply new BCs
-
-
-  h1(:) = (C_1_R - eps(:)) * h1(:)
-  h2(:) = (C_1_R - eps(:)) * h2(:)
-  h3(:) = (C_1_R - eps(:)) * h3(:)
-  ! overwrite ini flow fields with new geometry BC
-  u(:)  = (C_1_R - eps(:)) * u(:)
-  v(:)  = (C_1_R - eps(:)) * v(:)
-  w(:)  = (C_1_R - eps(:)) * w(:)
-
-! -----------------------------------------------------------------------
-! Impose top BCs at Jmax
-! -----------------------------------------------------------------------
-
-! ! ###################################################################
-! ! Final for IBM use (set flag back to .false.)
-! ! ###################################################################
-!   IF ( imode_ibm == 1 ) ibm_burgers = .false.
-!   if (ims_pro == 0) write(*,*) 'ibm_burgers end of rhs', ibm_burgers
-!   if (ims_pro == 0) write(*,*) '========================================================='
+! ###################################################################
+! IBM 
+! ###################################################################
+  IF ( imode_ibm == 1 ) THEN
+    h1(:) = (C_1_R - eps(:)) * h1(:)
+    h2(:) = (C_1_R - eps(:)) * h2(:)
+    h3(:) = (C_1_R - eps(:)) * h3(:)
+    ! overwrite ini flow fields with new geometry BC
+    u(:)  = (C_1_R - eps(:)) * u(:)
+    v(:)  = (C_1_R - eps(:)) * v(:)
+    w(:)  = (C_1_R - eps(:)) * w(:)
+  ENDIF
 
 #ifdef TRACE_ON
   CALL TLAB_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
