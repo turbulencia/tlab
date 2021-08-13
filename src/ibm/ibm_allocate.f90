@@ -32,7 +32,7 @@
 !#
 !########################################################################
 
-subroutine IBM_ALLOCATE(allocated)
+subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
 
   use DNS_IBM
   use TLAB_CONSTANTS, only: lfile, efile
@@ -43,7 +43,6 @@ subroutine IBM_ALLOCATE(allocated)
 
 #ifdef USE_MPI
   use TLAB_MPI_VARS,  only: ims_size_i, ims_size_j, ims_size_k 
-  use TLAB_MPI_PROCS
 #endif    
 
   implicit none
@@ -53,18 +52,19 @@ subroutine IBM_ALLOCATE(allocated)
 #ifdef USE_MPI 
 #include "mpif.h"
 #include "dns_const_mpi.h"
-  TINTEGER, parameter       :: idi = DNS_MPI_I_PARTIAL 
-  TINTEGER, parameter       :: idj = DNS_MPI_J_PARTIAL 
-  TINTEGER, parameter       :: idk = DNS_MPI_K_PARTIAL 
+  TINTEGER, parameter               :: idi = DNS_MPI_I_PARTIAL 
+  TINTEGER, parameter               :: idj = DNS_MPI_J_PARTIAL 
+  TINTEGER, parameter               :: idk = DNS_MPI_K_PARTIAL 
 #endif
 
-  logical, intent(inout)    :: allocated       ! flag, just allocate memory space once
+  character(len=128), intent(in)    :: C_FILE_LOC
+  logical,            intent(inout) :: allocated       ! flag, just allocate memory space once
   
-  TINTEGER                  :: ierr, inb_ibm
-  TINTEGER                  :: nyz, nxz, nxy
-  TINTEGER                  :: nob_max
-  
-  character(len=128)        :: str, line
+  TINTEGER                          :: ierr, inb_ibm
+  TINTEGER                          :: nyz, nxz, nxy
+  TINTEGER                          :: nob_max
+          
+  character(len=128)                :: str, line
 
   ! ================================================================== !
 
@@ -116,7 +116,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(eps_aux(imax,jmax,kmax), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for eps_aux.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  eps_aux.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -126,7 +126,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(eps(isize_field), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for eps.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  eps.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -138,7 +138,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(epsi(isize_field), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for epsi.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  epsi.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -148,7 +148,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(epsj(isize_field), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for epsj.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  epsj.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -158,7 +158,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(epsk(isize_field), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for epsk.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  epsk.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -170,7 +170,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(nobi(isize_nobi), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for nobi.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  nobi.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -180,7 +180,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(nobj(isize_nobj), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for nobj.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  nobj.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -190,7 +190,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(nobk(isize_nobk), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for nobk.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  nobk.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -202,7 +202,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(nobi_b(isize_nobi_be), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for nobi_b.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  nobi_b.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -212,7 +212,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(nobj_b(isize_nobj_be), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for nobj_b.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  nobj_b.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -222,7 +222,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(nobk_b(isize_nobk_be), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for nobk_b.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  nobk_b.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -234,7 +234,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(nobi_e(isize_nobi_be), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for nobi_e.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  nobi_e.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -244,7 +244,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(nobj_e(isize_nobj_be), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for nobj_e.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  nobj_e.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -254,7 +254,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(nobk_e(isize_nobk_be), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for nobk_e.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  nobk_e.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -266,7 +266,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(fld_ibm(isize_field), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for fld_ibm.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  fld_ibm.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -278,7 +278,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(wrk_ibm(isize_wrk_ibm), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for wrk_ibm.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  wrk_ibm.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -288,7 +288,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(iwrk_ibm(isize_iwrk_ibm), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for iwrk_ibm.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  iwrk_ibm.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -298,7 +298,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(xa(nsp), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for xa.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  xa.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
     !
@@ -307,7 +307,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(ya(nsp), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for ya.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  ya.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -317,7 +317,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(xb(isize_wrk1d_ibm), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for xb.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  xb.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
     !
@@ -326,7 +326,7 @@ subroutine IBM_ALLOCATE(allocated)
     call TLAB_WRITE_ASCII(lfile,line)
     allocate(yb(isize_wrk1d_ibm), stat=ierr)
     if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for yb.')
+    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  yb.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
@@ -337,7 +337,7 @@ subroutine IBM_ALLOCATE(allocated)
       call TLAB_WRITE_ASCII(lfile,line)
       allocate(x_mask(isize_wrk1d_ibm), stat=ierr)
       if ( ierr /= 0 ) then
-      call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for x_mask.')
+      call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  x_mask.')
       call TLAB_STOP(DNS_ERROR_ALLOC)
       end if
       !
@@ -346,7 +346,7 @@ subroutine IBM_ALLOCATE(allocated)
       call TLAB_WRITE_ASCII(lfile,line)
       allocate(y_mask(isize_wrk1d_ibm), stat=ierr)
       if ( ierr /= 0 ) then
-      call TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for y_mask.')
+      call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  y_mask.')
       call TLAB_STOP(DNS_ERROR_ALLOC)
       end if
     end if 

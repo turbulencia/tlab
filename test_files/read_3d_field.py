@@ -8,7 +8,7 @@ import my_pylib as mp
 #---------------------------------------------------------------------------#
 # path to 3d-fields
 path  = str(os.path.dirname(__file__) + '/../test_parallel/' ) # name = 'flow.20.1' # file = str(path+name)
-index = 1
+index = 10
 
 #---------------------------------------------------------------------------#
 # read grid and flow fields

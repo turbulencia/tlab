@@ -44,7 +44,6 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   use TLAB_MPI_VARS,    only: ims_offset_i, ims_offset_j, ims_offset_k
   use TLAB_MPI_VARS,    only: ims_pro,  ims_pro_i,  ims_pro_j,  ims_pro_k  ! each number of each proc
   use TLAB_MPI_VARS,    only: ims_npro, ims_npro_i, ims_npro_j, ims_npro_k ! total numbers of proc
-  use TLAB_MPI_PROCS
 #endif 
 
   implicit none
@@ -77,6 +76,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   kstart = ims_offset_k; kend = ims_offset_k + kmax - 1
 
   ! DEBUG
+#ifdef IBM_DEBUG
   if ( ims_pro == 0 ) then 
     write(*,*) '======== Initialization of grid and decomposition ======='
     write(*,*) 'GRID:        ', imax*ims_npro_i,' x ', jmax, ' x ', kmax*ims_npro_k
@@ -93,7 +93,8 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
       ' |k-part:', kstart, '-', kend 
     end if 
   end do 
-    
+#endif
+
   ! geometry (from dns.ini)
   nbars=xbars_geo%number; hbar=xbars_geo%height; wbar=xbars_geo%width  
   
@@ -105,12 +106,14 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   end do
 
   ! DEBUG
+#ifdef IBM_DEBUG
   if ( ims_pro == 0 ) then
     write(*,*) '======== Z - Positions of streamwise aligned bars ======='
     do l = 1, nbars
       write(*,*)'bar nr.', l, ' start:', zstart_bar(l) + i1, ' end:', zend_bar(l)
     end do
   end if
+#endif
   
   ! ini eps_aux
   eps_aux(:,:,:) = C_0_R
@@ -137,10 +140,10 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   ! write eps field
   write(fname,*) i0; 
   fname = trim(adjustl('eps'))//trim(adjustl(fname))
-  if (ims_pro == 0) then
-    write(*,*) '======== Write eps field ================================'
-    write(*,*) fname ! DEBUG
-  end if
+#ifdef IBM_DEBUG
+  if (ims_pro == 0) write(*,*) '======== Write eps field ================================'
+  if (ims_pro == 0) write(*,*) fname 
+#endif
   call DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, i1, imax*jmax*kmax, eps, wrk3d)
 
   return

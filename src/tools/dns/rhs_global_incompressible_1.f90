@@ -39,9 +39,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! ############################################# ! 
 ! DEBUG ####################################### !
+#ifdef IBM_DEBUG
 #ifdef USE_MPI
   use TLAB_MPI_VARS,   only : ims_pro
-  USE TLAB_MPI_PROCS
+#endif
 #endif
 ! ############################################# !   
 
@@ -60,9 +61,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! ############################################# ! 
 ! DEBUG ####################################### !
+#ifdef IBM_DEBUG
 #ifdef USE_MPI
 #else
     TINTEGER, parameter  ::  ims_pro=0  
+#endif
 #endif
 ! ############################################# ! 
 ! -----------------------------------------------------------------------
@@ -119,10 +122,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! (if .true., OPR_BURGERS_X/Y/Z uses modified fields for derivatives)
 ! ###################################################################
   IF ( imode_ibm == 1 ) ibm_burgers = .true.
-  ! debug  
+#ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) '========================================================='
   if (ims_pro == 0) write(*,*) 'ibm_burgers start of rhs (no scal)', ibm_burgers
-
+#endif
 ! #######################################################################
 ! Ox diffusion and convection terms in Ox momentum eqn
 ! Initializing tmp5 for the rest of terms
@@ -189,10 +192,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! IBM not implemented for scalar fields yet (set ibm_burgers flag back to .false.)
 ! ###################################################################
   IF ( imode_ibm == 1 ) ibm_burgers = .false.
-  ! debug
+#ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) 'ibm_burgers end of rhs (no scal)', ibm_burgers
   if (ims_pro == 0) write(*,*) '========================================================='
-
+#endif
 ! #######################################################################
 ! Diffusion and convection terms in scalar eqns
 ! #######################################################################

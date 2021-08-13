@@ -42,7 +42,8 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
   use TLAB_PROCS
 
   ! MPI just for debugging
-  use TLAB_VARS,      only: imax, jmax, kmax
+#ifdef IBM_DEBUG
+use TLAB_VARS,      only: imax, jmax, kmax
 #ifdef USE_MPI
   use TLAB_MPI_VARS,  only: ims_size_i, ims_size_j, ims_size_k    
   use TLAB_MPI_VARS,  only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i 
@@ -50,12 +51,14 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
   use TLAB_MPI_VARS,  only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
   use TLAB_MPI_PROCS
 #endif
+#endif
 
   implicit none
   
 #include "integers.h"
 
 ! MPI just for debugging
+#ifdef IBM_DEBUG
 #ifdef USE_MPI 
 #include "mpif.h"
 #include "dns_const_mpi.h"  
@@ -64,6 +67,7 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
   TINTEGER, parameter                            :: idk = DNS_MPI_K_PARTIAL 
 #else
   TINTEGER, parameter                            :: ims_pro=0, ims_npro=1
+#endif
 #endif
   
   TREAL,    dimension(isize_field),  intent(in)  :: fld 
@@ -81,9 +85,10 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
   TREAL, dimension(isize_field)                  :: fld_mod_tr ! debug
   TINTEGER                                       :: m
   
-  ! ================================================================== !
-  ! debug
+  ! ================================================================== !  
+#ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) '========================================================='
+#endif
   ! ================================================================== !
 
   ! modify field with splines in solid region 
@@ -227,8 +232,10 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
     end if
   end do
 
+#ifdef IBM_DEBUG
   ! ================================================================== !
   ! debug -- Block comment with #if 0 and #endif
+  ! ================================================================== !
 #if 0
   if (g%name == 'y') then
     ! ================================================================== !
@@ -240,10 +247,11 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
     call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
 
     ! stop after writing field
-    call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
-  ! ================================================================== !
+    stop
+    ! ================================================================== !
   end if
-#endif
+! #endif
+
 ! #if 0
   if (g%name == 'z') then
     ! ================================================================== !
@@ -262,10 +270,13 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
 #endif
 
     ! stop after writing field
-    call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
+    stop
     ! ================================================================== !
   end if
-! #endif
+#endif
+  ! ================================================================== !
+
+#endif
   return
 end subroutine IBM_SPLINE_XYZ
 

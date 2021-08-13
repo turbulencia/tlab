@@ -80,7 +80,7 @@ PROGRAM DNS
   
   IF ( imode_ibm == 1 ) THEN
     ibm_allocated = .FALSE.
-    CALL IBM_ALLOCATE(ibm_allocated)
+    CALL IBM_ALLOCATE(C_FILE_LOC, ibm_allocated)
   ENDIF
 
   ! ###################################################################

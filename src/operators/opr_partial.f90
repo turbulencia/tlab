@@ -61,7 +61,93 @@ SUBROUTINE OPR_PARTIAL1(nlines, bcs, g, u,result, wrk2d)
 
   RETURN
 END SUBROUTINE OPR_PARTIAL1
+! ###################################################################
+! ###################################################################
+SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d)
 
+  USE TLAB_TYPES, ONLY : grid_dt
+  USE DNS_IBM,    ONLY : fld_ibm
+  USE DNS_IBM,    ONLY : nobi,    nobj,   nobk
+  USE DNS_IBM,    ONLY : nobi_b,  nobj_b, nobk_b 
+  USE DNS_IBM,    ONLY : nobi_e,  nobj_e, nobk_e 
+  USE DNS_IBM,    ONLY : isize_nobi,    isize_nobj,    isize_nobk
+  USE DNS_IBM,    ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
+  USE DNS_IBM,    ONLY : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
+
+! ############################################# ! 
+! DEBUG
+#ifdef IBM_DEBUG
+#ifdef USE_MPI
+  use TLAB_MPI_VARS,   only : ims_pro
+#endif
+#endif
+! ############################################# ! 
+   
+  IMPLICIT NONE
+   
+  TINTEGER,                        INTENT(IN)    :: nlines ! # of lines to be solved
+  TINTEGER, DIMENSION(2,*),        INTENT(IN)    :: bcs    ! BCs at xmin (1,*) and xmax (2,*):
+                                                           !     0 biased, non-zero
+                                                           !     1 forced to zero
+  TYPE(grid_dt),                   INTENT(IN)    :: g
+  TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: u
+  TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result
+  TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
+
+  ! -------------------------------------------------------------------
+
+! ############################################# ! 
+! debugging
+#ifdef IBM_DEBUG
+#ifdef USE_MPI
+#else
+  TINTEGER, parameter  ::  ims_pro=0  
+#endif
+#endif
+! ############################################ ! 
+
+  ! IBM not for scalar fields! (will be implemented later)
+  ! modify incoming u fields (fill solids with spline functions, depending on direction)
+
+  SELECT CASE (g%name)
+   
+  CASE('x')
+#ifdef IBM_DEBUG
+    IF (ims_pro == 0) write(*,*) 'ibm_partial_', g%name ! debug
+#endif
+    IF (ims_pro_ibm_x) THEN
+      CALL IBM_SPLINE_XYZ(u, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
+      CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
+    ELSE
+      CALL OPR_PARTIAL1(nlines, bcs, g, u,       result, wrk2d)  ! no splines needed  
+    ENDIF
+
+  CASE('y')
+#ifdef IBM_DEBUG
+    IF (ims_pro == 0) write(*,*) 'ibm_partial_', g%name ! debug
+#endif
+    IF (ims_pro_ibm_y) THEN
+      CALL IBM_SPLINE_XYZ(u, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e)
+      CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
+    ELSE
+      CALL OPR_PARTIAL1(nlines, bcs, g, u,       result, wrk2d)  ! no splines needed
+    ENDIF
+
+  CASE('z')
+#ifdef IBM_DEBUG
+    IF (ims_pro == 0) write(*,*) 'ibm_partial_', g%name ! debug
+#endif
+    IF (ims_pro_ibm_z) THEN
+      CALL IBM_SPLINE_XYZ(u, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
+      CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
+    ELSE
+      CALL OPR_PARTIAL1(nlines, bcs, g, u,       result, wrk2d)  ! no splines needed
+    ENDIF
+   
+  END SELECT
+
+  RETURN
+END SUBROUTINE OPR_PARTIAL1_IBM
 ! ###################################################################
 ! ###################################################################
 SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
@@ -151,7 +237,6 @@ SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
 
   RETURN
 END SUBROUTINE OPR_PARTIAL2
-
 ! ###################################################################################
 ! ### First Derivative
 ! ### Second Derivative includes
@@ -261,19 +346,20 @@ END SUBROUTINE OPR_PARTIAL2D
 SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
 
   USE TLAB_TYPES, ONLY : grid_dt
-  USE DNS_IBM,   ONLY : fld_ibm
-  USE DNS_IBM,   ONLY : nobi,    nobj,   nobk
-  USE DNS_IBM,   ONLY : nobi_b,  nobj_b, nobk_b 
-  USE DNS_IBM,   ONLY : nobi_e,  nobj_e, nobk_e 
-  USE DNS_IBM,   ONLY : isize_nobi,    isize_nobj,    isize_nobk
-  USE DNS_IBM,   ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
-  USE DNS_IBM,   ONLY : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
+  USE DNS_IBM,    ONLY : fld_ibm
+  USE DNS_IBM,    ONLY : nobi,    nobj,   nobk
+  USE DNS_IBM,    ONLY : nobi_b,  nobj_b, nobk_b 
+  USE DNS_IBM,    ONLY : nobi_e,  nobj_e, nobk_e 
+  USE DNS_IBM,    ONLY : isize_nobi,    isize_nobj,    isize_nobk
+  USE DNS_IBM,    ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
+  USE DNS_IBM,    ONLY : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
 
 ! ############################################# ! 
 ! DEBUG
+#ifdef IBM_DEBUG
 #ifdef USE_MPI
   use TLAB_MPI_VARS,   only : ims_pro
-  USE TLAB_MPI_PROCS
+#endif
 #endif
 ! ############################################# ! 
    
@@ -297,9 +383,11 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
 
 ! ############################################# ! 
 ! debugging
+#ifdef IBM_DEBUG
 #ifdef USE_MPI
 #else
   TINTEGER, parameter  ::  ims_pro=0  
+#endif
 #endif
 ! ############################################ ! 
 
@@ -314,7 +402,9 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
   SELECT CASE (g%name)
    
   CASE('x')
+#ifdef IBM_DEBUG
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
+#endif
     IF (ims_pro_ibm_x) THEN
       CALL IBM_SPLINE_XYZ(p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
       p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
@@ -324,7 +414,9 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
     ENDIF
 
   CASE('y')
+#ifdef IBM_DEBUG
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
+#endif
     IF (ims_pro_ibm_y) THEN
       CALL IBM_SPLINE_XYZ(p_fld, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e)
       p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
@@ -334,7 +426,9 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
     ENDIF
 
   CASE('z')
+#ifdef IBM_DEBUG
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
+#endif
     IF (ims_pro_ibm_z) THEN
       CALL IBM_SPLINE_XYZ(p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
       p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
@@ -351,8 +445,6 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
    
   RETURN
 END SUBROUTINE OPR_PARTIAL2D_IBM
-
-
 ! ###################################################################
 ! ###################################################################
 #ifdef USE_MPI
@@ -365,6 +457,7 @@ END SUBROUTINE OPR_PARTIAL2D_IBM
 SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   USE TLAB_TYPES, ONLY : grid_dt
+  USE DNS_IBM,    ONLY : ibm_partial
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -439,7 +532,11 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      CALL OPR_PARTIAL2(nyz, bcs, g, p_b,p_c, wrk2d,p_d)
 
   CASE( OPR_P1 )
-     CALL OPR_PARTIAL1(nyz, bcs, g, p_b,p_c, wrk2d    )
+    IF (ibm_partial) THEN
+      CALL OPR_PARTIAL1_IBM(nyz, bcs, g, p_b,p_c, wrk2d    )
+    ELSE
+      CALL OPR_PARTIAL1(    nyz, bcs, g, p_b,p_c, wrk2d    )
+    ENDIF
 
   CASE( OPR_P2_P1 )
      CALL OPR_PARTIAL2(nyz, bcs, g, p_b,p_c, wrk2d,p_d)
@@ -486,6 +583,7 @@ END SUBROUTINE OPR_PARTIAL_X
 SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   USE TLAB_TYPES, ONLY : grid_dt
+  USE DNS_IBM,    ONLY : ibm_partial
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
@@ -555,8 +653,11 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      CALL OPR_PARTIAL2(nxy, bcs, g, p_a,p_b, wrk2d,p_c)
 
   CASE( OPR_P1 )
-     CALL OPR_PARTIAL1(nxy, bcs, g, p_a,p_b, wrk2d    )
-
+    IF (ibm_partial) THEN
+      CALL OPR_PARTIAL1_IBM(nxy, bcs, g, p_a,p_b, wrk2d    )
+    ELSE
+      CALL OPR_PARTIAL1(    nxy, bcs, g, p_a,p_b, wrk2d    )
+    ENDIF
   CASE( OPR_P2_P1 )
      CALL OPR_PARTIAL2(nxy, bcs, g, p_a,p_b, wrk2d,p_c)
 
@@ -590,6 +691,7 @@ END SUBROUTINE OPR_PARTIAL_Z
 SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   USE TLAB_TYPES, ONLY : grid_dt
+  USE DNS_IBM,    ONLY : ibm_partial
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif
@@ -653,7 +755,11 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      CALL OPR_PARTIAL2(nxz, bcs, g, p_a,p_b, wrk2d,p_c)
 
   CASE( OPR_P1 )
-     CALL OPR_PARTIAL1(nxz, bcs, g, p_a,p_b, wrk2d    )
+    IF (ibm_partial) THEN
+      CALL OPR_PARTIAL1_IBM(nxz, bcs, g, p_a,p_b, wrk2d    )
+    ELSE
+      CALL OPR_PARTIAL1(    nxz, bcs, g, p_a,p_b, wrk2d    )
+    ENDIF
 
   CASE( OPR_P2_P1 )
      CALL OPR_PARTIAL2(nxz, bcs, g, p_a,p_b, wrk2d,p_c)

@@ -20,7 +20,9 @@ build_parallel/*
 build_debug_little/*
 test_debug_little/*
 test_little/*
+test_little_channel/*
 test_parallel/*
+test_parallel_channel/*
 files_history/*
 *~
 */*~

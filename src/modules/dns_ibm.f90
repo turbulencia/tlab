@@ -46,7 +46,7 @@ module DNS_IBM
   logical,  dimension(:),     allocatable :: x_mask, y_mask
 
   ! flag - decides which fdm calls are with modiefied field or not (opr_burgers.f90)
-  logical                                 :: ibm_burgers 
+  logical                                 :: ibm_burgers, ibm_partial
 
   ! read_local from dns.ini file 
   logical                                 :: ibm_spline_global, ibm_procs_idle

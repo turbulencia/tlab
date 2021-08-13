@@ -327,12 +327,14 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   nobk_out = nobk_real
 #endif
 
+#ifdef IBM_DEBUG
   if (ims_pro == 0) then
     write(*,*) 'nobk_b     =', size(nobk_b)
     write(*,*) 'nobk_b_out =', size(nobk_b_out)
     write(*,*) 'nobk_e     =', size(nobk_e)
     write(*,*) 'nobk_e_out =', size(nobk_e_out)
   end if
+#endif
 
   ! ! ================================================================== !
   ! ! begin and end of objects in z-direction
@@ -387,6 +389,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   ! ================================================================== !
   ! ================================================================== !
   ! ================================================================== !
+#ifdef IBM_DEBUG
   if (ims_pro == 0) then
     write(*,*) '========================================================='
     write(*,*) 'nbars      =', xbars_geo%number
@@ -395,31 +398,32 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
     write(*,*) 'nobk_max   =', int(nobk_max)
     write(*,*) '======== Writing geometry ==============================='
   end if
+#endif
 
   ! ------------------------------------------------------------------ !
 
   ! write nobi fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobi'))//trim(adjustl(fname))
-  if (ims_pro == 0) then  
-    write(*,*) fname ! DEBUG
-  end if
+#ifdef IBM_DEBUG
+  if (ims_pro == 0) write(*,*) fname
+#endif
   call DNS_WRITE_FIELDS(fname, i2, i1, g(2)%size/ims_npro, g(3)%size, i1, nyz, nobi_out, wrk3d)
 
   ! write nobi_b fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobi_b'))//trim(adjustl(fname))
-  if (ims_pro == 0) then  
-    write(*,*) fname ! DEBUG
-  end if
+#ifdef IBM_DEBUG
+  if (ims_pro == 0) write(*,*) fname
+#endif
   call DNS_WRITE_FIELDS(fname, i2, nob_max, g(2)%size/ims_npro, g(3)%size, i1, nyz*nob_max, nobi_b_out, wrk3d)     
 
   ! write nobi_e fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobi_e'))//trim(adjustl(fname))
-  if (ims_pro == 0) then  
-    write(*,*) fname ! DEBUG
-  end if
+#ifdef IBM_DEBUG
+  if (ims_pro == 0) write(*,*) fname
+#endif
   call DNS_WRITE_FIELDS(fname, i2, nob_max, g(2)%size/ims_npro, g(3)%size, i1, nyz*nob_max, nobi_e_out, wrk3d)     
   
   ! ------------------------------------------------------------------ !
@@ -427,25 +431,25 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   ! write nobj fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobj'))//trim(adjustl(fname))
-  if (ims_pro == 0) then  
-    write(*,*) fname ! DEBUG
-  end if
+#ifdef IBM_DEBUG
+  if (ims_pro == 0) write(*,*) fname
+#endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, i1, g(3)%size, i1, nxz, nobj_out, wrk3d)
 
   ! write nobj_b fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobj_b'))//trim(adjustl(fname))
-  if (ims_pro == 0) then  
-    write(*,*) fname ! DEBUG
-  end if
+#ifdef IBM_DEBUG
+  if (ims_pro == 0) write(*,*) fname
+#endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, nob_max, g(3)%size, i1, nxz*nob_max, nobj_b_out, wrk3d)
 
   ! write nobj_e fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobj_e'))//trim(adjustl(fname))
-  if (ims_pro == 0) then  
-    write(*,*) fname ! DEBUG
-  end if
+#ifdef IBM_DEBUG
+  if (ims_pro == 0) write(*,*) fname
+#endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, nob_max, g(3)%size, i1, nxz*nob_max, nobj_e_out, wrk3d)
   
   ! ------------------------------------------------------------------ !
@@ -453,25 +457,25 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   ! write nobk fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobk'))//trim(adjustl(fname))
-  if (ims_pro == 0) then
-    write(*,*) fname ! DEBUG
-  end if
+#ifdef IBM_DEBUG
+  if (ims_pro == 0) write(*,*) fname
+#endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, i1, i1, nxy, nobk_out, wrk3d)
 
   ! write nobk_b fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobk_b'))//trim(adjustl(fname))
-  if (ims_pro == 0) then
-    write(*,*) fname ! DEBUG
-  end if
+#ifdef IBM_DEBUG
+  if (ims_pro == 0) write(*,*) fname
+#endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, nob_max, i1, nxy*nob_max, nobk_b_out, wrk3d)
 
   ! write nobk_e fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobk_e'))//trim(adjustl(fname))
-  if (ims_pro == 0) then
-    write(*,*) fname ! DEBUG
-  end if
+#ifdef IBM_DEBUG
+  if (ims_pro == 0) write(*,*) fname
+#endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, nob_max, i1, nxy*nob_max, nobk_e_out, wrk3d)
 
   ! ================================================================== !

@@ -85,6 +85,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
 
   ! ================================================================== !
   ! DEBUG
+#ifdef IBM_DEBUG
   if ( ims_pro == 0 ) then 
     write(*,*) '======== Debug transposing geometry ====================='
 #ifdef USE_MPI
@@ -99,6 +100,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
     write(*,*) 'isize_txc_field  ', isize_txc_field
     write(*,*) 'inb_txc          ', inb_txc
   end if
+#endif
   ! ================================================================== !
 
   ! MPI transposition and local transposition in x (make x-direction the last one)
@@ -145,7 +147,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
   ! DEBUG transposed fields of eps
   ! ================================================================== !
   ! ================================================================== !
-
+#ifdef IBM_DEBUG
   if ( ims_pro == 0 ) then 
     write(*,*) '========================================================='
     write(*,*) 'Transposing arrays: done'
@@ -167,10 +169,11 @@ subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
   ! ! check transpositions in z! 
   ! call DNS_MPI_TRPB_K(epsk, tmp2, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
   ! call DNS_WRITE_FIELDS('epsk0', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+#endif
   ! ================================================================== !
   ! ================================================================== !
-
-  return
+  
+return
 end subroutine IBM_GEOMETRY_TRANSPOSE
 
 !########################################################################
