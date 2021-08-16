@@ -9,7 +9,7 @@ import my_pylib as mp
 #---------------------------------------------------------------------------#
 # path to 3d-fields
 path  = str(os.path.dirname(__file__) + '/../test_little_channel/' ) # name = 'flow.20.1' # file = str(path+name)
-index = 10
+index = 30000
 
 #---------------------------------------------------------------------------#
 # read grid and flow fields
@@ -35,7 +35,7 @@ shading = 'nearest'#'gouraud'
 figs    = 'figs' 
 plt.close('all')
 #---------------------------------------------------------------------------#
-# 2d plot - yz
+# 2d plot
 plt.figure(figsize=size)
 plt.title('2d-plot -- xy-plane -- velocity u')
 plt.xlabel("x")
@@ -64,22 +64,47 @@ plt.show()
 #---------------------------------------------------------------------------#
 # u-mean
 plt.figure(figsize=size)
-plt.xlabel("u-velocity")
+plt.xlabel("u_mean-velocity")
 plt.ylabel("y")
+plt.xlim(0,flow.u.mean(axis=0).max())
+plt.ylim(0,grid.y.max())
+plt.grid('True')
 plt.plot(flow.u.mean(axis=0), grid.y, marker='.',label='u_mean')
 plt.legend(loc=1)
 plt.show()
 
+sys.exit()
 # %%
+# ProfileVelocity      = parabolic
+VelocityX            = 0.0
+YCoorVelocity        = 0.5#1.0	# y-coordinate of profile reference point, relative to the total scale, equation (2.1).
+DeltaVelocity        = 1.0	# Reference profile difference, equation (2.1).
+# compute ThickVelocity to ensure u(y=0)=0
+ThickVelocity        = grid.y.max() * YCoorVelocity / (2 * np.sqrt(1 - VelocityX / DeltaVelocity))
+# in this case: ThickVelocity = 0.5 * grid.y.max() * YCoorVelocity
+print('ThickVelocity to ensure u(y=0)=0: ', str(ThickVelocity)) # Reference profile thickness, equation (2.1).
+
+y_start = grid.y[0]
+y_end   = grid.y[-1]
+
+ycenter = y_start + y_end * YCoorVelocity
+yrel    = grid.y - ycenter
+
+xi = yrel / ThickVelocity
+
+amplify = ( 1 - xi/2 ) * ( 1 + xi/2 )
+
+u_profile = VelocityX + DeltaVelocity * amplify 
+
 #---------------------------------------------------------------------------#
-# vertical grid spacing
-dy = grid.y[1:] - grid.y[:-1]
+# plot u(y) -- ini profile
 plt.figure(figsize=size)
-plt.xlabel("nodes")
-plt.ylabel("delta_y -- grid spacing")
-plt.plot(np.arange(1,grid.ny), dy, marker='.',label='dy')
+plt.xlabel("u_mean-velocity")
+plt.ylabel("y")
+plt.xlim(0,1)
+plt.ylim(0,grid.y.max())
+plt.grid('True')
+plt.plot(u_profile, grid.y, marker='.',label='u_mean')
 plt.legend(loc=1)
 plt.show()
-
-
-sys.exit()
+# %%
