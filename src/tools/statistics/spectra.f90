@@ -114,7 +114,7 @@ PROGRAM SPECTRA
   CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
 ! -------------------------------------------------------------------
@@ -281,8 +281,8 @@ PROGRAM SPECTRA
      ENDIF
 
      CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 2 for Oz spectra integration.')
-     id = DNS_MPI_K_AUX2
-     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
+     id = TLAB_MPI_K_AUX2
+     CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
   ENDIF

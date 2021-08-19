@@ -94,7 +94,7 @@ PROGRAM AVERAGES
   END IF
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
   ! -------------------------------------------------------------------

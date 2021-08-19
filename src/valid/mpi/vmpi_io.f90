@@ -79,7 +79,7 @@ PROGRAM VMPI_IO
   call MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro, ims_err)
 
 ! ###################################################################
-! from DNS_MPI_INITIALIZE
+! from TLAB_MPI_INITIALIZE
   ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0
   ims_pro_k =     ims_pro/ims_npro_i  ! Starting at 0
 

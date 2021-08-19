@@ -179,8 +179,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
 
      t_init = t_init + MPI_WTime()
 
-     id = DNS_MPI_I_PARTIAL;   nyz_trans = ims_size_i(id)
-     id = DNS_MPI_K_PARTIAL;   nxy_trans = ims_size_k(id)
+     id = TLAB_MPI_I_PARTIAL;   nyz_trans = ims_size_i(id)
+     id = TLAB_MPI_K_PARTIAL;   nxy_trans = ims_size_k(id)
      !
      ! kick off transpose U y->x and W y->z
      CALL NB3DFFT_R2R_YXCOMM(u,bt1,  bt1,  tmp11,info(FUYX),t_tmp);t_comp=t_comp+t_tmp

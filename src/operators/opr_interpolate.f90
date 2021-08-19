@@ -54,37 +54,37 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
      CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 1 for Ox interpolation.')
-     id = DNS_MPI_I_AUX1
+     id = TLAB_MPI_I_AUX1
      npage = nz*ny
      IF ( MOD(npage,ims_npro_i) .NE. 0 ) THEN ! add space for MPI transposition
         npage = npage      /ims_npro_i
         npage =(npage +1 ) *ims_npro_i
      ENDIF
-     CALL DNS_MPI_TYPE_I(ims_npro_i, nx,     npage, i1, i1, i1, i1, &
+     CALL TLAB_MPI_TYPE_I(ims_npro_i, nx,     npage, i1, i1, i1, i1, &
           ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
 
      CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 2 for Ox interpolation.')
-     id = DNS_MPI_I_AUX2
+     id = TLAB_MPI_I_AUX2
      npage = nz*ny
      IF ( MOD(npage,ims_npro_i) .NE. 0 ) THEN ! add space for MPI transposition
         npage = npage      /ims_npro_i
         npage =(npage +1 ) *ims_npro_i
      ENDIF
-     CALL DNS_MPI_TYPE_I(ims_npro_i, nx_dst, npage, i1, i1, i1, i1, &
+     CALL TLAB_MPI_TYPE_I(ims_npro_i, nx_dst, npage, i1, i1, i1, i1, &
           ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
   ENDIF
 
   IF ( ims_npro_k .GT. 1 ) THEN
      CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 1 for Oz interpolation.')
-     id = DNS_MPI_K_AUX1
+     id = TLAB_MPI_K_AUX1
      npage = nx_dst*ny_dst
-     CALL DNS_MPI_TYPE_K(ims_npro_k, nz,     npage, i1, i1, i1, i1, &
+     CALL TLAB_MPI_TYPE_K(ims_npro_k, nz,     npage, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
      CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 2 for Oz interpolation.')
-     id = DNS_MPI_K_AUX2
+     id = TLAB_MPI_K_AUX2
      npage = nx_dst*ny_dst
-     CALL DNS_MPI_TYPE_K(ims_npro_k, nz_dst, npage, i1, i1, i1, i1, &
+     CALL TLAB_MPI_TYPE_K(ims_npro_k, nz_dst, npage, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
   ENDIF

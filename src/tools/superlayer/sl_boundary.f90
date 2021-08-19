@@ -76,7 +76,7 @@ PROGRAM SL_BOUNDARY
 
   CALL DNS_READ_GLOBAL(ifile)
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
   CALL SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)

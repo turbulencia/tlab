@@ -36,7 +36,7 @@ case_count= i0
 CALL TLAB_START()
 CALL DNS_READ_GLOBAL('dns.ini')
 #ifdef USE_MPI
-CALL DNS_MPI_INITIALIZE
+CALL TLAB_MPI_INITIALIZE
 #endif
 
 isize_fft3d = isize_txc_dimz*kmax

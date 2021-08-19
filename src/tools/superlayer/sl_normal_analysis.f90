@@ -72,7 +72,7 @@ PROGRAM SL_NORMAL_ANALYSIS
   CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
   CALL SCANINIINT(bakfile, ifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)

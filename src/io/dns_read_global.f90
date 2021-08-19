@@ -255,18 +255,18 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeITranspose', 'asynchronous',sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_i = DNS_MPI_TRP_NONE
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_i = DNS_MPI_TRP_ASYNCHRONOUS
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_i = DNS_MPI_TRP_SENDRECV
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_i = TLAB_MPI_TRP_NONE
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_i = TLAB_MPI_TRP_ASYNCHRONOUS
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_i = TLAB_MPI_TRP_SENDRECV
   ELSE
      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeITranspose option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
   CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeKTranspose', 'asynchronous',sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_k = DNS_MPI_TRP_NONE
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_k = DNS_MPI_TRP_ASYNCHRONOUS
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_k = DNS_MPI_TRP_SENDRECV
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_k = TLAB_MPI_TRP_NONE
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_k = TLAB_MPI_TRP_ASYNCHRONOUS
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_k = TLAB_MPI_TRP_SENDRECV
   ELSE
      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeKTranspose option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
@@ -742,8 +742,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDDO
 
 #ifdef USE_MPI
-  FilterDomain(1)%mpitype = DNS_MPI_I_PARTIAL
-  FilterDomain(3)%mpitype = DNS_MPI_K_PARTIAL
+  FilterDomain(1)%mpitype = TLAB_MPI_I_PARTIAL
+  FilterDomain(3)%mpitype = TLAB_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################

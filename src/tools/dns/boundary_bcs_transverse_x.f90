@@ -105,7 +105,7 @@ SUBROUTINE BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
 ! Needs to be checked
   CALL TLAB_WRITE_ASCII(efile,'BOUNDARY_BCS_TRANSVERSE_X. To be checked')
   CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-!  imode_fdm_loc = imode_fdm + (DNS_MPI_K_NRBCX-1)*100
+!  imode_fdm_loc = imode_fdm + (TLAB_MPI_K_NRBCX-1)*100
   CALL OPR_PARTIAL_Z(OPR_P1_BCS, ims_bcs_imax,jmax,kmax, bcs, g(3), tmp1, ddz, wrk3d, wrk2d,wrk3d)
 #else
   CALL OPR_PARTIAL_Y(OPR_P1, ip,jmax,kmax, bcs, g(2), tmp1, ddy, wrk3d, wrk2d,wrk3d)

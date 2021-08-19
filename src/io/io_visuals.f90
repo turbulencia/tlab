@@ -98,7 +98,7 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
 
 #ifdef USE_MPI
         ENDIF
-        CALL DNS_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field(1,ifield), txc(1,1), txc(1,2))
+        CALL TLAB_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field(1,ifield), txc(1,1), txc(1,2))
         IF ( ims_pro .EQ. 0 ) THEN
 #else
            CALL REDUCE_BLOCK_INPLACE(nx,ny,nz, subdomain(1),subdomain(3),subdomain(5), nx_aux,ny_aux,nz_aux, field(1,ifield), txc)
@@ -174,7 +174,7 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   DO ifield = 1,nfield
-     CALL DNS_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field, tmp_mpi(1,1), tmp_mpi(1,2))
+     CALL TLAB_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field, tmp_mpi(1,1), tmp_mpi(1,2))
   END DO
 
 ! -------------------------------------------------------------------

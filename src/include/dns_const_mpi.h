@@ -35,8 +35,8 @@
 #define DNS_MPI_J_MAXTYPES    1
 
 ! Control of MPI Transpositions
-#define DNS_MPI_TRP_NONE         0
-#define DNS_MPI_TRP_ASYNCHRONOUS 1
-#define DNS_MPI_TRP_SENDRECV     2
+#define TLAB_MPI_TRP_NONE         0
+#define TLAB_MPI_TRP_ASYNCHRONOUS 1
+#define TLAB_MPI_TRP_SENDRECV     2
 
 #endif
