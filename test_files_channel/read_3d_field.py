@@ -9,21 +9,21 @@ import my_pylib as mp
 #---------------------------------------------------------------------------#
 # path to 3d-fields
 path  = str(os.path.dirname(__file__) + '/../test_little_channel/' ) # name = 'flow.20.1' # file = str(path+name)
-index = 30000
+index = 10
 
 #---------------------------------------------------------------------------#
 # read grid and flow fields
 grid = mp.DnsGrid(path+'grid')
 
-# orignial field
+# original field
 flow = mp.Field(path,var='flow',index=index)
 flow.read_3d_field()
 
-# # u_mod field 
-# f = open(path +'dil.1','rb')
+#  read field 
+# f = open(path +'field.1','rb')
 # f.seek(52,0)
-# dil = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
-# dil = dil.reshape((grid.nx,grid.ny,grid.nz),order='F')
+# field = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
+# field = field.reshape((grid.nx,grid.ny,grid.nz),order='F')
 # f.close()
 
 # %%
@@ -70,6 +70,17 @@ plt.xlim(0,flow.u.mean(axis=0).max())
 plt.ylim(0,grid.y.max())
 plt.grid('True')
 plt.plot(flow.u.mean(axis=0), grid.y, marker='.',label='u_mean')
+plt.legend(loc=1)
+plt.show()
+
+# v-mean
+plt.figure(figsize=size)
+plt.xlabel("v_mean-velocity")
+plt.ylabel("y")
+# plt.xlim(0,flow.v.mean(axis=0).max())
+plt.ylim(0,grid.y.max())
+plt.grid('True')
+plt.plot(flow.v.mean(axis=0), grid.y, marker='.',label='v_mean')
 plt.legend(loc=1)
 plt.show()
 

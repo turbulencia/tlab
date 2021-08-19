@@ -11,6 +11,19 @@ import netCDF4  as nc
 path = str(os.path.dirname(__file__) + '/../test_little_channel/' )
 grid = mp.DnsGrid(path+'grid')
 
+# grid spacing
+dy = grid.y[1:] - grid.y[:-1]
+
+# positions of mid nodes (dy is plotted here)
+ym = (grid.y[:-1] + grid.y[1:]) / 2 
+
+# print information
+print('stretched grid information in vertical direction')
+print('origin   :', grid.y[0])
+print('end      :', grid.y[-1])
+print('min step :', dy.min())
+print('max step :', dy.max())
+
 # %%
 #---------------------------------------------------------------------------#
 # plot settings 
@@ -21,25 +34,14 @@ figs    = 'figs'
 plt.close('all')
 #-----------------------------------------------------------------------------#
 # plot vertical grid spacing
-dy = grid.y[1:] - grid.y[:-1]
 plt.figure(figsize=size)
 plt.grid(True)
-plt.xlim(0,np.round(grid.ny,decimals=-1))
-plt.ylim(0,0.015)#dy.max())
-plt.xlabel("nodes")
+plt.xlim(0,ym.max())
+plt.ylim(0,1.2*dy.max())
+plt.xlabel("y mid-node postions")
 plt.ylabel("delta_y")
-plt.plot(np.arange(1,grid.ny), dy, marker='.',label='dy')
+plt.plot(grid.y[0],dy[0],   'go', color='red',   label='origin')
+plt.plot(grid.y[-1],dy[-1], 'go', color='black', label='end')
+plt.plot(ym, dy, marker='.',label='dy')
 plt.legend(loc=1)
 plt.show()
-#-----------------------------------------------------------------------------#
-# plot vertical grid distribution of nodes
-plt.figure(figsize=size)
-plt.grid(True)
-plt.xlim(0,np.round(grid.ny,decimals=-1))
-plt.ylim(0,1)#grid.y.max())
-plt.xlabel("nodes")
-plt.ylabel("y-position")
-plt.plot(np.arange(0,grid.ny), grid.y, marker='.',label='y')
-plt.legend(loc=1)
-plt.show()
-# %%

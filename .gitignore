@@ -18,12 +18,15 @@ build/*
 build_little/*
 build_parallel/*
 build_debug_little/*
+build_debug_little_channel/*
 test_debug_little/*
+test_debug_little_channel/*
 test_little/*
 test_little_channel/*
 test_parallel/*
 test_parallel_channel/*
 files_history/*
+test_files_channel/*
 *~
 */*~
 */*/*~

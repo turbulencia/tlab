@@ -10,8 +10,8 @@ import netCDF4  as nc
 # path to avg-fields
 path  = str(os.path.dirname(__file__) + '/../test_little_channel/' )
 name  = 'avg' 
-index_nc = 5
-index_flow = 10
+index_nc = 10
+index_flow = 0
 file  = str(path+name+str(index_nc)+'.nc')
 
 #---------------------------------------------------------------------------#
@@ -25,7 +25,7 @@ avg = nc.Dataset(file, 'r')
 # see all variables: avg.variables.keys()
 
 # # simulation propteries
-# re  = 1000      # Reynoldsnumber of the simulation
+# re  =           # Reynoldsnumber of the simulation
 # ro  = 1         # Rossby number
 # pr  = 1         # Prandtl number
 # rho = 1         # density
@@ -34,7 +34,6 @@ avg = nc.Dataset(file, 'r')
 #-----------------------------------------------------------------------------#
 # load variables
 #-----------------------------------------------------------------------------#
-
 # time and vertical distance
 t=avg.variables['t'][:]
 y=avg.variables['y'][:]
@@ -43,6 +42,8 @@ y=avg.variables['y'][:]
 u=avg.variables['rU'][:,:] # the first index is time, the second is vertical node
 v=avg.variables['rV'][:,:]
 # w=avg.variables['rW'][:,:]
+
+# pressure
 p=avg.variables['rP'][:,:]
 
 # %%
@@ -72,10 +73,12 @@ plt.show()
 # plt.savefig("plots_neutral/velocities.svg")
 
 
+
+
+
+#-----------------------------------------------------------------------------#
 sys.exit()
-
-
-
+'''
 # # Re-stresses / vel. fluc.
 # uu=datafile_nc.variables['Rxx'][:,:] # the first index is time, the second is vertical node
 # uv=datafile_nc.variables['Rxy'][:,:] # the first index is time, the second is vertical node
@@ -366,3 +369,5 @@ plt.savefig("plots_neutral/u_tau.svg")
 
 #-----------------------------------------------------------------------------#
 plt.close("all")
+
+'''
