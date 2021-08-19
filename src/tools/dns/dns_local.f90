@@ -1,21 +1,17 @@
 #include "types.h"
 
 MODULE DNS_LOCAL
-  USE DNS_TYPES,  ONLY : filter_dt, grid_dt
-  USE DNS_GLOBAL, ONLY : MAX_NSP
+  USE TLAB_TYPES,  ONLY : filter_dt, grid_dt
+  USE TLAB_VARS, ONLY : MAX_NSP
 #ifdef USE_PSFFT
   USE NB3DFFT,    ONLY : NB3DFFT_SCHEDLTYPE
 #endif
   IMPLICIT NONE
   SAVE
 
-  TINTEGER, PARAMETER :: MAX_SAVEPLANES = 20
-
 ! ###################################################################
 ! Iteration
 ! ###################################################################
-  TINTEGER :: rkm_mode, rkm_substep, rkm_endstep
-  TREAL    :: cfla, cfld, cflr, dtime
   TINTEGER :: nitera_first, nitera_last, nitera_save, nitera_stats, nitera_log, nitera_pln
   TINTEGER :: nitera_stats_spa ! Accumulate statistics in spatial mode
 
@@ -32,8 +28,8 @@ MODULE DNS_LOCAL
 ! ###################################################################
 ! Variable viscosity
 ! ###################################################################
-  TREAL    :: visctime, viscstart, viscstop
-  TINTEGER :: iviscchg
+  LOGICAL :: flag_viscosity
+  TREAL   :: visc_stop, visc_time, visc_rate
 
 ! ###########################################################
 ! Filters
@@ -43,9 +39,6 @@ MODULE DNS_LOCAL
 ! ###################################################################
 ! Output data
 ! ###################################################################
-  TINTEGER                            :: nplanes_i, nplanes_j, nplanes_k, pplanes_j, nplanes_j_aux ! Planes
-  TINTEGER, DIMENSION(MAX_SAVEPLANES) :: planes_i,  planes_j,  planes_k
-
   TINTEGER, DIMENSION(3)              :: tower_stride           ! Towers
   TINTEGER                            :: tower_mode
 
@@ -60,3 +53,15 @@ MODULE DNS_LOCAL
 #endif
 
 END MODULE DNS_LOCAL
+
+MODULE DNS_ARRAYS
+  IMPLICIT NONE
+  SAVE
+  PRIVATE
+
+  TREAL, ALLOCATABLE, PUBLIC :: hq(:,:)      ! Right-hand sides Eulerian fields
+  TREAL, ALLOCATABLE, PUBLIC :: hs(:,:)      ! Right-hand sides Eulerian fields
+  TREAL, ALLOCATABLE, PUBLIC :: l_hq(:,:)    ! Right-hand sides Lagrangian fields
+  TREAL, ALLOCATABLE, PUBLIC :: l_comm(:)    ! Communication space for Lagrangian fields
+
+END MODULE DNS_ARRAYS

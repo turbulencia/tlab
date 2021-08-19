@@ -16,16 +16,17 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 
 !########################################################################
 ! Read routine
 !########################################################################
-SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z)
+SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z, area)
 
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_CONSTANTS, ONLY : efile
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -33,11 +34,12 @@ SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z)
   TINTEGER imax, jmax, kmax
   TREAL scalex, scaley, scalez
   TREAL x(imax), y(jmax), z(kmax)
+  TREAL, OPTIONAL :: area
 
 ! -----------------------------------------------------------------------
   TINTEGER imaxdum, jmaxdum, kmaxdum
   TREAL scale(3)
-  CHARACTER*(32) line 
+  CHARACTER*(32) line
 
 ! #######################################################################
   OPEN(50,file=name, status='old',form='unformatted')
@@ -54,8 +56,8 @@ SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z)
   IF (imaxdum .NE. imax .OR. jmaxdum .NE. jmax .OR. kmaxdum .NE. kmax) THEN
      CLOSE(50)
      WRITE(line,100) imaxdum,jmaxdum,kmaxdum
-     CALL IO_WRITE_ASCII(efile, 'IO_READ_GRID. Dimensions ('//TRIM(line)//') unmatched.')
-     CALL DNS_STOP(DNS_ERROR_DIMGRID)
+     CALL TLAB_WRITE_ASCII(efile, 'IO_READ_GRID. Dimensions ('//TRIM(line)//') unmatched.')
+     CALL TLAB_STOP(DNS_ERROR_DIMGRID)
   ENDIF
 
 ! -----------------------------------------------------------------------
@@ -63,6 +65,11 @@ SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z)
   READ(50) y
   READ(50) z
   CLOSE(50)
+
+  IF ( PRESENT(area) ) THEN
+    area = scalex
+    IF ( kmax > 1 ) area = area *scalez ! 3D case
+  ENDIF
 
   RETURN
 

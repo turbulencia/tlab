@@ -8,46 +8,46 @@
 ! ###################################################################
 SUBROUTINE OPR_FILTER_INITIALIZE(g, f, wrk1d)
 
-  USE DNS_TYPES, ONLY : grid_dt, filter_dt
+  USE TLAB_TYPES, ONLY : grid_dt, filter_dt
 
   IMPLICIT NONE
-  
+
   TYPE(grid_dt),       INTENT(IN)    :: g
   TYPE(filter_dt),     INTENT(INOUT) :: f
   TREAL, DIMENSION(*), INTENT(INOUT) :: wrk1d
-  
+
 ! -------------------------------------------------------------------
-  
+
 ! ###################################################################
   IF ( f%inb_filter .GT. 0 ) &
        ALLOCATE( f%coeffs( f%size, f%inb_filter ) )
-  
+
   SELECT CASE( f%type )
-     
+
   CASE( DNS_FILTER_4E, DNS_FILTER_ADM )
      CALL FLT_E4_INI(g%scale, g%nodes, f)
-     
+
   CASE( DNS_FILTER_TOPHAT )
      CALL FLT_T1_INI(g%scale, g%nodes, f, wrk1d)
-     
+
   CASE( DNS_FILTER_COMPACT )
      CALL FLT_C4_INI(g%jac, f)
-     
+
   CASE( DNS_FILTER_HELMHOLTZ )
      f%parameters(2) =-C_1_R /( f%parameters(1) )**2
-     
+
   END SELECT
-  
+
   RETURN
 END SUBROUTINE OPR_FILTER_INITIALIZE
 
 ! ###################################################################
-! Filter kernel along one direction 
+! Filter kernel along one direction
 ! ###################################################################
 SUBROUTINE OPR_FILTER_1D(nlines, f, u,result, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : filter_dt
-    
+  USE TLAB_TYPES, ONLY : filter_dt
+
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: nlines     ! # of lines to be solved
@@ -56,15 +56,15 @@ SUBROUTINE OPR_FILTER_1D(nlines, f, u,result, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(nlines,f%size), INTENT(OUT)   :: result     ! filtered filed
   TREAL, DIMENSION(f%size,5),      INTENT(INOUT) :: wrk1d
   TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d, wrk3d
-  
+
 ! -------------------------------------------------------------------
   TINTEGER delta
-  
+
 ! ###################################################################
   delta = INT(f%parameters(1))
-  
+
   SELECT CASE( f%type )
-     
+
   CASE( DNS_FILTER_COMPACT )
      CALL FLT_C4(f%size,nlines, f%periodic, f%bcsmin,f%bcsmax, f%coeffs, u,result, wrk1d)
      IF ( f%periodic ) THEN
@@ -105,9 +105,9 @@ SUBROUTINE OPR_FILTER_1D(nlines, f, u,result, wrk1d,wrk2d,wrk3d)
            ENDIF
         ENDIF
      ENDIF
-     
+
   END SELECT
-  
+
   RETURN
 END SUBROUTINE OPR_FILTER_1D
 
@@ -116,9 +116,11 @@ END SUBROUTINE OPR_FILTER_1D
 ! ###################################################################
 SUBROUTINE OPR_FILTER_X(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : filter_dt
+  USE TLAB_TYPES, ONLY : filter_dt
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -129,7 +131,7 @@ SUBROUTINE OPR_FILTER_X(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(ny*nz),    INTENT(INOUT)         :: wrk2d       ! Aux arrays
   TREAL, DIMENSION(f%size,*), INTENT(INOUT)         :: wrk1d
   TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT)         :: tmp         ! Aux array needed in ADM type
- 
+
 ! -------------------------------------------------------------------
   TINTEGER nyz
 
@@ -141,15 +143,15 @@ SUBROUTINE OPR_FILTER_X(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
 ! ###################################################################
 #ifdef USE_MPI
-  id = f%mpitype ! DNS_MPI_I_PARTIAL
+  id = f%mpitype ! TLAB_MPI_I_PARTIAL
 #endif
 
 ! -------------------------------------------------------------------
 ! Transposition
 ! -------------------------------------------------------------------
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL DNS_MPI_TRPF_I(u, wrk3d, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL TLAB_MPI_TRPF_I(u, wrk3d, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
      p_a => wrk3d
      p_b => u
      nyz = ims_size_i(id)
@@ -157,8 +159,8 @@ SUBROUTINE OPR_FILTER_X(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 #endif
      p_a => u
      p_b => wrk3d
-     nyz = ny*nz    
-#ifdef USE_MPI         
+     nyz = ny*nz
+#ifdef USE_MPI
   ENDIF
 #endif
 
@@ -173,7 +175,7 @@ SUBROUTINE OPR_FILTER_X(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
 ! ###################################################################
   CALL OPR_FILTER_1D(nyz, f, p_b,p_a, wrk1d,wrk2d,tmp)
-  
+
 ! ###################################################################
 ! -------------------------------------------------------------------
 ! Put arrays back in the order in which they came in
@@ -187,9 +189,9 @@ SUBROUTINE OPR_FILTER_X(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 ! Transposition
 ! -------------------------------------------------------------------
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL DNS_MPI_TRPB_I(p_b, p_a, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL TLAB_MPI_TRPB_I(p_b, p_a, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
   ENDIF
 #endif
 
@@ -205,7 +207,7 @@ END SUBROUTINE OPR_FILTER_X
 ! ###################################################################
 SUBROUTINE OPR_FILTER_Y(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : filter_dt
+  USE TLAB_TYPES, ONLY : filter_dt
 
   IMPLICIT NONE
 
@@ -215,14 +217,14 @@ SUBROUTINE OPR_FILTER_Y(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(*),        INTENT(INOUT)         :: wrk2d       ! Aux arrays
   TREAL, DIMENSION(f%size,*), INTENT(INOUT)         :: wrk1d
   TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT)         :: tmp         ! Aux array needed in ADM type
- 
+
 ! -----------------------------------------------------------------------
   TINTEGER nxy, nxz
 
   TREAL, DIMENSION(:), POINTER :: p_org, p_dst
 
 ! #######################################################################
-  nxy = nx*ny 
+  nxy = nx*ny
   nxz = nx*nz
 
 ! -------------------------------------------------------------------
@@ -267,9 +269,11 @@ END SUBROUTINE OPR_FILTER_Y
 ! ###################################################################
 SUBROUTINE OPR_FILTER_Z(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : filter_dt
+  USE TLAB_TYPES, ONLY : filter_dt
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS, ONLY : ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -280,7 +284,7 @@ SUBROUTINE OPR_FILTER_Z(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(nx*ny),    INTENT(INOUT)         :: wrk2d       ! Aux arrays
   TREAL, DIMENSION(f%size,*), INTENT(INOUT)         :: wrk1d
   TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT)         :: tmp         ! Aux array needed in ADM type
- 
+
 ! -------------------------------------------------------------------
   TINTEGER nxy
 
@@ -292,15 +296,15 @@ SUBROUTINE OPR_FILTER_Z(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
 ! ###################################################################
 #ifdef USE_MPI
-  id = f%mpitype ! DNS_MPI_K_PARTIAL
+  id = f%mpitype ! TLAB_MPI_K_PARTIAL
 #endif
 
 ! -------------------------------------------------------------------
 ! Transposition
 ! -------------------------------------------------------------------
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     CALL DNS_MPI_TRPF_K(u, wrk3d, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPF_K(u, wrk3d, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      p_a => wrk3d
      p_b => u
      nxy = ims_size_k(id)
@@ -309,7 +313,7 @@ SUBROUTINE OPR_FILTER_Z(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
      p_a => u
      p_b => wrk3d
      nxy = nx*ny
-#ifdef USE_MPI         
+#ifdef USE_MPI
   ENDIF
 #endif
 
@@ -320,9 +324,9 @@ SUBROUTINE OPR_FILTER_Z(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 ! Transposition
 ! -------------------------------------------------------------------
-#ifdef USE_MPI         
+#ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     CALL DNS_MPI_TRPB_K(p_b, p_a, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPB_K(p_b, p_a, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF
 #endif
 
@@ -338,10 +342,10 @@ END SUBROUTINE OPR_FILTER_Z
 !########################################################################
 SUBROUTINE OPR_FILTER_BAND_2D(nx,ny,nz, spc_param, a)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : g 
+  USE TLAB_VARS, ONLY : isize_txc_dimz
+  USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -349,7 +353,7 @@ SUBROUTINE OPR_FILTER_BAND_2D(nx,ny,nz, spc_param, a)
   TINTEGER nx,ny,nz
   TREAL,    DIMENSION(*)                                  :: spc_param
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz), INTENT(INOUT) :: a
-  
+
 ! -----------------------------------------------------------------------
   TINTEGER i,j,k, iglobal,kglobal, ip
   TREAL fi,fk,f
@@ -371,15 +375,15 @@ SUBROUTINE OPR_FILTER_BAND_2D(nx,ny,nz, spc_param, a)
         iglobal = i
 #endif
         fi = M_REAL(iglobal-1)/g(1)%scale
-        
+
         f = SQRT(fi**2 + fk**2)
-        
+
 ! apply spectral cutoff
         DO j = 1,ny
-           ip = (j-1)*(nx/2+1) + i 
+           ip = (j-1)*(nx/2+1) + i
            IF ( (f-spc_param(1))*(spc_param(2)-f) .LT. C_0_R ) a(ip,k) = C_0_R
         ENDDO
-        
+
      ENDDO
   ENDDO
 
@@ -389,25 +393,25 @@ END SUBROUTINE OPR_FILTER_BAND_2D
 !########################################################################
 !# DESCRIPTION
 !#
-!# Spectral filter with smooth (error-function) transition. 
-!# The error function filter-response function is imposed 
-!# in logarithmic wavenumber space. 
+!# Spectral filter with smooth (error-function) transition.
+!# The error function filter-response function is imposed
+!# in logarithmic wavenumber space.
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
-!#    spc_param(1) physical frequency for transition 
-!#                 > 0: High-pass 
+!#    spc_param(1) physical frequency for transition
+!#                 > 0: High-pass
 !#                 < 0: Low-pass
 !#    spc_param(2) width of transition in logarithmic wavenumber space
-!# 
+!#
 !########################################################################
 SUBROUTINE OPR_FILTER_ERF_2D(nx,ny,nz, spc_param, a)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : isize_txc_dimz
+  USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -415,22 +419,22 @@ SUBROUTINE OPR_FILTER_ERF_2D(nx,ny,nz, spc_param, a)
   TINTEGER nx,ny,nz
   TREAL,    DIMENSION(*)                                  :: spc_param
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz), INTENT(INOUT) :: a
-  
+
 ! -----------------------------------------------------------------------
-  TINTEGER i,j,k, iglobal,kglobal, ip 
-  TINTEGER sign_pass, off_pass 
+  TINTEGER i,j,k, iglobal,kglobal, ip
+  TINTEGER sign_pass, off_pass
   TREAL fi,fk,f,fcut_log,damp
 
-! ####################################################################### 
-  IF ( spc_param(1) .GT. 0 ) THEN; 
+! #######################################################################
+  IF ( spc_param(1) .GT. 0 ) THEN;
      sign_pass = 1.   ! HIGHPASS
      off_pass  = 0.
-  ELSE                ! spc_param(1) <= 0 
-     sign_pass =-1.   ! LOWPASS  
+  ELSE                ! spc_param(1) <= 0
+     sign_pass =-1.   ! LOWPASS
      off_pass  = 1.
   ENDIF
 
-  fcut_log = LOG(spc_param(1)) 
+  fcut_log = LOG(spc_param(1))
   DO k = 1,nz
 #ifdef USE_MPI
      kglobal = k + ims_offset_k
@@ -447,20 +451,20 @@ SUBROUTINE OPR_FILTER_ERF_2D(nx,ny,nz, spc_param, a)
         iglobal = i
 #endif
         fi = M_REAL(iglobal-1)/g(1)%scale
-        
-        f = SQRT(fi**2 + fk**2) 
+
+        f = SQRT(fi**2 + fk**2)
         IF ( f .GT. 0 )  THEN;  damp = (ERF((LOG(f) - fcut_log)/spc_param(2)) + 1.)/2.
-        ELSE ;                  damp = C_0_R; 
+        ELSE ;                  damp = C_0_R;
         ENDIF
 
         ! Set to high- or low-pass
-        ! high-pass: damp = 0.0 + damp 
-        ! low-pass:  damp = 1.0 - damp 
-        damp = off_pass + sign_pass*damp  
+        ! high-pass: damp = 0.0 + damp
+        ! low-pass:  damp = 1.0 - damp
+        damp = off_pass + sign_pass*damp
 
         ! apply filter
         DO j = 1,ny
-           ip = (j-1)*(nx/2+1) + i 
+           ip = (j-1)*(nx/2+1) + i
            a(ip,k) = damp*a(ip,k)
         ENDDO
      ENDDO

@@ -26,11 +26,11 @@ To be developed.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Spatially coarse grained data at full time resolution}
 
-Data can be saved at full temporal resolution with a user-defined spatial coarse graining. In that mode, on top of the standard output, a single file is generated for each horizontal  data point per restart. This allows to maintain full flexibility and at the same time to  avoid parallel I/O at this stage. 
-% 
-For small strides (see table), this approach may produce a large number of files which can cause problems if the data is not converted to netCDF immediately after a simulation is run. 
-% 
-The files can be merged into a netCDF file with the script \texttt{scripts/python/tower2nc.py}. 
+Data can be saved at full temporal resolution with a user-defined spatial coarse graining. In that mode, on top of the standard output, a single file is generated for each horizontal  data point per restart. This allows to maintain full flexibility and at the same time to  avoid parallel I/O at this stage.
+%
+For small strides (see table), this approach may produce a large number of files which can cause problems if the data is not converted to netCDF immediately after a simulation is run.
+%
+The files can be merged into a netCDF file with the script \texttt{scripts/python/tower2nc.py}.
 
 {
 \centering
@@ -50,12 +50,12 @@ The files can be merged into a netCDF file with the script \texttt{scripts/pytho
 
 For example, {\tt Stride=0,0,0} would not save any data; {\tt Stride=1,1,1} would save all points, but it more efficient to use {\tt Iteration.Restart=1}; {\tt Stride=16, 1,16} would save vertical profiles every 16x16 horizontal point. A Stride of 0 has no effect whatsoever (no output will be generated). \textit{Note: vertical corse graining is not tested, but should work. }
 
-\begin{description} 
-\item[File name] ~\\ 
-  \textbf{The file name contains crucial information} which is not stored elsewhere. 
+\begin{description}
+\item[File name] ~\\
+  \textbf{The file name contains crucial information} which is not stored elsewhere.
   Hence, files should not be renamed.
   Output files are named by the following scheme \\[0.25em]
-  \begin{tabular}{r c r c r c r c r c r} 
+  \begin{tabular}{r c r c r c r c r c r}
     tower&.&iloc&$\times$&kloc  &.&$t_\mathrm{start}$&-&$t_\mathrm{end}$&.&ivar\\
     tower&.&000015&$\times$&000015&.&000001&-&000010&.&1
   \end{tabular}\\[0.25em]
@@ -63,59 +63,59 @@ For example, {\tt Stride=0,0,0} would not save any data; {\tt Stride=1,1,1} woul
   Only one scalar is supported, and the variables (ivar) are \\[0.25em]
   \centerline{
     \begin{tabular}{r l}
-      1--3 & velocities ($u,v,w$) \\ 
-      4    & pressure ($p$) \\ 
+      1--3 & velocities ($u,v,w$) \\
+      4    & pressure ($p$) \\
       5    & scalar1 ($s_1$)\\
     \end{tabular}
   }
-  In case of multiple scalars, only the first one will be output. 
+  In case of multiple scalars, only the first one will be output.
 %
 \item[File structure] ~\\
-  The file consists of $nt=it_\mathrm{end}-it_\mathrm{start}+1$ records. Irrespective of the 
-  iteration being an integer, all data is saved in double precision real format, 
-  i.e. one record has $(ny+2)*8\,Bytes$. 
-  The whole file has $8* (it_\mathrm{end}-it_\mathrm{start}+1)  * (ny+2)\,Bytes$. \\ 
+  The file consists of $nt=it_\mathrm{end}-it_\mathrm{start}+1$ records. Irrespective of the
+  iteration being an integer, all data is saved in double precision real format,
+  i.e. one record has $(ny+2)*8\,Bytes$.
+  The whole file has $8* (it_\mathrm{end}-it_\mathrm{start}+1)  * (ny+2)\,Bytes$. \\
   \begin{figure}
     \begin{centering}
-      Inner direction of write $\rightarrow$ \\[0.25em] 
-      \begin{tabular}{| l | l | c | c | c | c | }  
+      Inner direction of write $\rightarrow$ \\[0.25em]
+      \begin{tabular}{| l | l | c | c | c | c | }
         \hline
         $it_\mathrm{start}$ & $t(it_\mathrm{start})$ & $v_{ivar}(y_1)$ & $v_{ivar}(y_2)$ & \ldots & $v_{ivar}(ny)$ \\     \hline
-        $it_\mathrm{start}+1$ & $t(it_\mathrm{start}+1)$ & $v_{ivar}(y_1)$ & $v_{ivar}(y_2)$ & \ldots & $v_{ivar}(ny)$ \\ 
+        $it_\mathrm{start}+1$ & $t(it_\mathrm{start}+1)$ & $v_{ivar}(y_1)$ & $v_{ivar}(y_2)$ & \ldots & $v_{ivar}(ny)$ \\
         $\qquad$\vdots & $\qquad$\vdots & \vdots & \vdots & ~ & \vdots \\
         $it_\mathrm{end}-1$   & $t(it_\mathrm{end}-1)$ & $v_{ivar}(y_1)$ & $v_{ivar}(y_2)$ & \ldots & $v_{ivar}(ny)$ \\ \hline
-        $it_\mathrm{end}$   & $t(it_\mathrm{end})$ & $v_{ivar}(y_1)$ & $v_{ivar}(y_2)$ & \ldots & $v_{ivar}(ny)$ \\ 
+        $it_\mathrm{end}$   & $t(it_\mathrm{end})$ & $v_{ivar}(y_1)$ & $v_{ivar}(y_2)$ & \ldots & $v_{ivar}(ny)$ \\
         \hline
       \end{tabular}\\
     \end{centering}
   \caption{Internal organization of tower files.}
-   \end{figure}  
-  \item[netCDF output]~ \\ 
-    The python script \[\texttt{tlab/scripts/python/tower2nc.py}\] is available to bundle tower files from one restart into a single netCDF file which 
-    is then self-descriptive through its Meta-data. The script handles tower files of multiple restarts, but it will generate one netCDF file per restart.  
-    The python script is executed in the directory where the tower file resides. 
-    It relies on 
-    \begin{itemize}  
-      \item availability of \textbf{all} tower files belonging to one restart, 
+   \end{figure}
+  \item[netCDF output]~ \\
+    The python script \[\texttt{tlab/scripts/python/tower2nc.py}\] is available to bundle tower files from one restart into a single netCDF file which
+    is then self-descriptive through its Meta-data. The script handles tower files of multiple restarts, but it will generate one netCDF file per restart.
+    The python script is executed in the directory where the tower file resides.
+    It relies on
+    \begin{itemize}
+      \item availability of \textbf{all} tower files belonging to one restart,
       \item the \texttt{grid} file used for the simulation,
-      \item the \texttt{dns.ini} used for the simulation (restart etc. does not matter, but the value of \texttt{Stride} 
+      \item the \texttt{dns.ini} used for the simulation (restart etc. does not matter, but the value of \texttt{Stride}
         in the section \texttt{[SaveTowers]} must not change),
-      \item a properly installed \texttt{netCDF4-python} library. (On ZMAW computers, it may be necessary to load a particular 
-        python module).  
-        
-    \end{itemize} 
-    \textbf{The script is not thread-safe}, i.e. it may only be run once at the same time 
-    one the same system. This is ascertained by a lock in the form of an empty file which is touched 
-    in the working directory. 
+      \item a properly installed \texttt{netCDF4-python} library. (On ZMAW computers, it may be necessary to load a particular
+        python module).
+
+    \end{itemize}
+    \textbf{The script is not thread-safe}, i.e. it may only be run once at the same time
+    one the same system. This is ascertained by a lock in the form of an empty file which is touched
+    in the working directory.
     %
-    \par 
-    % 
-    The script moves tower files to a directory named \texttt{towerdump\_}$<$\texttt{TIME\_STAMP}$>$. Once the script 
-    exited successfully and integrity of the netCDF file was checked, this directory may be tarred and archived or removed. 
-    % 
-    Should, for any reason, the script exit before successful completion, the files that were already moved to the \texttt{towerdump} 
-    \textbf{must be copied back} before the script is run again. 
-    % 
+    \par
+    %
+    The script moves tower files to a directory named \texttt{towerdump\_}$<$\texttt{TIME\_STAMP}$>$. Once the script
+    exited successfully and integrity of the netCDF file was checked, this directory may be tarred and archived or removed.
+    %
+    Should, for any reason, the script exit before successful completion, the files that were already moved to the \texttt{towerdump}
+    \textbf{must be copied back} before the script is run again.
+    %
 \end{description}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -179,7 +179,7 @@ $i=\sqrt{-1}$ is the imaginary unit. Therefore,
 relation that can be used to relate integral scales $\ell$ to the Fourier mode
 $E_0$, as follows. First, for the auto-correlation function, we can re-write
 \begin{equation}
-\frac{1}{N/2}\sum_0^{N/2-1}C_n=\frac{E_0}{a_\mathrm{rms}^2}+\frac{1-C_{N/2}}{N} 
+\frac{1}{N/2}\sum_0^{N/2-1}C_n=\frac{E_0}{a_\mathrm{rms}^2}+\frac{1-C_{N/2}}{N}
 \end{equation}
 because
 \begin{equation*}
@@ -214,245 +214,227 @@ terms of different properties.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Summary of budget equations for second-order moments}
 
-\subsection{Reynolds Stresses}
+\newcommand{\pt}[2] {\partial_{#2}{#1}}
+\newcommand{\ptp}[2]{\partial_{#2}\left(#1\right)}
+% \newcommand{\ptp}[1]{\partial_t\left(#1\right)}
+% \newcommand{\pjp}[1]{\partial_j\left(#1\right)}
+\newcommand{\dvp}[1]{\nabla\negmedspace\cdot\negthinspace\left(#1\right)}
+\newcommand{\dv} [1]{\nabla\negmedspace\cdot\negthinspace#1}
+\newcommand{\avr}[1]{\overline{#1}}
+\newcommand{\avf}[1]{\widetilde{#1}}
 
-Reynolds averages are indicated by a line and $u^{'}=u-\bar{u}$.  Favre averages
-are used for quantities per unit mass and are indicated by a tilde,
-e.g. $\tilde{u}=\overline{\rho u}/\overline{\rho}$ and $u^{''}=u-\tilde{u}$ and
-$\widetilde{u^{''2}}=\overline{\rho u^{''2}}/\bar{\rho}$. In case of constant
-density, Favre and Reynolds averages coincide.
-
-The momentum equation written in non conservative form is
+Let $f$ and $g$ be fluid properties per unit mass. We use the Reynolds decomposition
 \begin{equation}
-\rho \frac{\partial u_i}{\partial t} + \rho u_k \frac{\partial u_i}{\partial
-  x_k} = -\frac{\partial p}{\partial x_i} + \frac{\partial \tau_{ik}}{\partial
-  x_k} + b\,g_i - \epsilon_{imk} c_m\,\rho u_k
+  f = \avr{f}+f' \;,
 \end{equation}
-where the non-dimensional numbers $Re$, $Fr$ and $Ro$ are included in the
-corresponding tensors $\tau$, $g$ and $c$ for notational convenience.
-
-Multiplying by $u^{''}_j$ and averaging
+and the Favre decomposition
 \begin{equation}
-\label{eq:ap2}
-\overline{\rho u^{''}_j \frac{\partial (\tilde{u}_i+u^{''}_i)}{\partial t}} +
-\overline{\rho u^{''}_j (\tilde{u}_k+u^{''}_k)\frac{\partial (\tilde{u}_i+u^{''}_i)}{\partial x_k} } =
-- \overline{u^{''}_j \frac{\partial p}{\partial x_i}} +
-\overline{u^{''}_j \frac{\partial \tau_{ik}}{\partial x_k} }
-+\overline{bu^{''}_j}\,g_i-\epsilon_{imk} c_m\overline{\rho u^{''}_j(\tilde{u}_k+u^{''}_k)}
-\end{equation}
-noting that $\overline{\rho u^{''}_j}=0$ we can simplify Eq. (\ref{eq:ap2}) to
-\begin{equation}
-\label{eq:ap3}
-\overline{\rho u^{''}_j \frac{\partial u^{''}_i}{\partial t}} +
-\overline{\rho u^{''}_j u^{''}_k }\frac{\partial \tilde{u}_i}{\partial x_k} +
-\overline{\rho u^{''}_j \frac{\partial u^{''}_i}{\partial x_k} } \tilde{u}_k +
-\overline{\rho u^{''}_k u^{''}_j \frac{\partial u^{''}_i}{\partial x_k} }  =
-- \overline{u^{''}_j \frac{\partial p}{\partial x_i}} +
-\overline{u^{''}_j \frac{\partial \tau_{ik}}{\partial x_k} }
-+\overline{bu^{''}_j}\,g_i-\epsilon_{imk} c_m\overline{\rho u^{''}_ju^{''}_k}
-\end{equation}
-adding Eq. (\ref{eq:ap3}) with the indexes exchanged we get
-\begin{equation}\label{eq:ap4}
-  \begin{split}
-    \overline{\rho \frac{\partial (u^{''}_i u^{''}_j)}{\partial t}} +
-     \overline{\rho \frac{\partial (u^{''}_i u^{''}_j)}{\partial x_k}}
-    \tilde{u}_k = & - (\overline{\rho u^{''}_k u^{''}_i} \frac{\partial 
-      \tilde{u}_j}{\partial x_k}+\overline{\rho u^{''}_k u^{''}_j} 
-    \frac{\partial \tilde{u}_i}{\partial x_k})
-    - \overline{\rho u^{''}_k \frac{\partial (u^{''}_i u^{''}_j)}{\partial 
-        x_k}} \\
-    & - (\overline{u^{''}_j \frac{\partial p}{\partial x_i}+u^{''}_i 
-      \frac{\partial p}{\partial x_j}}) + (\overline{u^{''}_j 
-      \frac{\partial \tau_{ik}}{\partial x_k}+u^{''}_i \frac{\partial 
-        \tau_{jk}}{\partial x_k}}) \\
-    & + (\overline{bu^{''}_j}\,g_i+\overline{bu^{''}_i}\,g_j)\\
-    & - (\epsilon_{imk} c_m\overline{\rho u^{''}_ju^{''}_k} +
-         \epsilon_{jmk} c_m\overline{\rho u^{''}_iu^{''}_k} )
-  \end{split}
-\end{equation}
-
-From the continuity equation 
-\begin{equation}
-  \frac{\partial \rho}{\partial t} + \frac{\partial (\rho u_k)}{\partial 
-  x_k} = 0
-\end{equation}
-and multiplying by $u^{''}_i u^{''}_j$ and averaging
-\begin{equation}
-\label{eq:ap5}
-  \overline{u^{''}_i u^{''}_j \frac{\partial \rho}{\partial t}} +
-  \overline{u^{''}_i u^{''}_j \frac{\partial (\rho u^{''}_k)}{
-      \partial x_k}} + \overline{u^{''}_i u^{''}_j \frac{\partial 
-      (\rho \tilde{u}_k) }{\partial x_k} } = 0
-\end{equation}
-defining
-\begin{equation}
-  R_{ij} = \frac{\overline{\rho u^{''}_i u^{''}_j}}{\bar{\rho}}
-\end{equation}
-and adding Eqs. (\ref{eq:ap4}) and (\ref{eq:ap5}) we get
-\begin{equation}
-\begin{split}
-  \frac{\partial (\bar{\rho} R_{ij})}{\partial t} +
-  \frac{\partial (\bar{\rho} \tilde{u}_k R_{ij})}{\partial x_k} = 
-  & -\bar{\rho}\biggl( R_{ik} \frac{\partial \tilde{u}_j}{\partial x_k} +
-  R_{jk} \frac{\partial \tilde{u}_i}{\partial x_k} \biggr) -
-  \biggl( \frac{\partial (\overline{\rho u^{''}_i u^{''}_j u^{''}_k}) }{
-    \partial x_k} \biggr) \\
-  & - \biggl( \overline{u^{''}_i \frac{\partial 
-      p^{'}}{\partial x_j} + u^{''}_j \frac{\partial p^{'}}{\partial 
-      x_i} } \biggr) + \biggl( \overline{u^{''}_i \frac{\partial 
-      \tau^{'}_{jk}}{\partial x_k} + u^{''}_j \frac{\partial 
-      \tau^{'}_{ik}}{\partial x_k}} \biggr) \\
-  & - \biggl( \bar{u}^{''}_i 
-  \frac{\partial \bar{p}}{\partial x_j} + \bar{u}^{''}_j \frac{\partial 
-    \bar{p}}{ \partial x_i} \biggr) + \biggl( \bar{u}^{''}_i 
-  \frac{\partial \bar{\tau}_{jk}}{\partial x_k} + \bar{u}^{''}_j 
-  \frac{\partial \bar{\tau}_{ik}}{\partial x_k} \biggr) \\
-  & + (\overline{bu^{''}_j}\,g_i+\overline{bu^{''}_i}\,g_j)
-    - \bar{\rho}c_m(\epsilon_{imk} R_{jk} + \epsilon_{jmk} R_{ik} )
-\end{split}
-\end{equation}
-
-The pressure and viscous terms can be decomposed as:
-\begin{equation}
-  \begin{split}
-    \biggl( \overline{ u^{''}_i \frac{\partial 
-        p^{'}}{\partial x_j} + u^{''}_j \frac{\partial p^{'}}{\partial 
-        x_i} } \biggr) = & \biggl( \frac{\partial (\overline{u^{''}_i 
-        p^{'}}) }{\partial x_j} + \frac{\partial (\overline{u^{''}_i 
-        p^{'}})}{\partial x_i} \biggr) - \overline{p^{'}(
-      \frac{\partial u^{''}_i}{\partial x_j}+\frac{\partial u^{''}_j}{
-        \partial x_i})}\\
-    = & \frac{\partial}{\partial x_k} \biggl(\overline{u^{''}_i 
-        p^{'} \delta_{jk} + u^{''}_j p^{'} \delta_{ik}   }\biggr) 
-      - \overline{p^{'}( \frac{\partial u^{''}_i}{\partial x_j}+
-        \frac{\partial u^{''}_j}{\partial x_i})}\\
-      \biggl( \overline{u^{''}_i \frac{\partial 
-      \tau^{'}_{jk}}{\partial x_k} + u^{''}_j \frac{\partial 
-      \tau^{'}_{ik}}{\partial x_k}} \biggr) = & \frac{\partial}{
-    \partial x_k} \biggl( \overline{u^{''}_i \tau^{'}_{jk} +
-    u^{''}_j \tau^{'}_{ik}} \biggr) - \biggl( \overline{\frac{
-      \partial u^{''}_i }{\partial x_k} \tau^{'}_{jk} + \frac{
-      \partial u^{''}_j }{\partial x_k} \tau^{'}_{ik}} \biggr) \\
-  \end{split}
-\end{equation}
-
-Finally, the Reynolds stress equation reads:
-\begin{equation}
-  \frac{\partial R_{ij}}{\partial t}  = C_{ij} - F_{ij} + P_{ij}  + B_{ij} - \varepsilon_{ij} +
-  \frac{1}{\bar{\rho}}\left(\Pi_{ij} - \frac{\partial T_{ijk}}{ \partial
-    x_k}  + \Sigma_{ij} \right)
+  f = \avf{f}+f'' \;,
 \end{equation}
 where
-\begin{eqnarray*}
-  C_{ij} =&  - \tilde{u}_k \frac{\partial
-    R_{ij}}{\partial x_k} & ,\text{advection} \\
-  F_{ij} =&  \epsilon_{imk}c_m R_{jk} + \epsilon_{jmk}c_m R_{ik} &,
-  \text{Coriolis redistribution}\\
-  P_{ij} =&  - \biggl( R_{ik} \frac{\partial \tilde{u}_j}{
-    \partial x_k} + R_{jk} \frac{\partial \tilde{u}_i}{
-    \partial x_k}\biggr) & ,\text{turbulent shear production} \\
-  B_{ij} =& \frac{1}{\bar{\rho}} \biggl(
-  \overline{bu^{''}_j}\,g_i+\overline{bu^{''}_i}\,g_j \biggr) &,
-  \text{turbulent buoyancy production}\\
-  \varepsilon_{ij} =& \frac{1}{\bar{\rho}} \biggl( \overline{ 
-    \tau^{'}_{jk}
-    \frac{\partial u^{''}_i}{\partial x_k} + \tau^{'}_{ik}
-    \frac{\partial u^{''}_j}{\partial x_k}}\biggr) & , \text{turbulent dissipation}\\
-  T_{ijk} =& \overline{\rho u^{''}_i u^{''}_j u^{''}_k} +
-  \overline{p^{'}u^{'}_i} \delta_{jk} + \overline{p^{'}u^{'}_j} 
-  \delta_{ik} - ( \overline{\tau^{'}_{jk} u^{''}_i} + 
-  \overline{\tau^{'}_{ik} u^{''}_j}) & , \text{turbulent transport} \\
-  \Pi_{ij} =& \overline{p^{'}\biggl( \frac{\partial u^{''}_i}{
-      \partial x_j}+ \frac{\partial u^{''}_j}{\partial x_i} \biggr)} & , \text{pressure strain} \\
-  \Sigma_{ij} =&  \overline{u^{''}_i} \biggl( \frac{\partial \bar{\tau}_{jk}}{
-    \partial x_k} - \frac{\partial \bar{p}}{\partial x_j} \biggr) +  
-  \overline{u^{''}_j} \biggl( \frac{\partial \bar{\tau}_{ik}}{
-    \partial x_k} - \frac{\partial \bar{p}}{\partial x_i} \biggr)& , \text{mean flux}\\
-\end{eqnarray*}
-Depending on symmetries, many of these terms are zero (within statistical
-convergence) and substitutes for ensemble average can be used, like plane
-averages of time averages.  Note that if $b\equiv \rho$, then $B_{ij}=0$. The
-mean flux term is sometimes written as $\Sigma_{ij}=D_{ij}-G_{ij}$, the first
-term grouping the mean viscous stress contributions and the last term the mean
-pressure contributions. In cases of constant density, then
-$\overline{u^{''}_j}=0$ and $\Sigma_{ij}=D_{ij}=G_{ij}=0$.
-
-Contracting indices, the budget equation for the turbulent kinetic energy
-$K=R_{ii}/2$ reads
 \begin{equation}
-  \frac{\partial K}{\partial t}  = C + P  + B - \varepsilon +
-  \frac{1}{\bar{\rho}}\left(\Pi - \frac{\partial T_{k}}{ \partial
-    x_k}  + \Sigma \right)
+  \avf{f} = \avr{\rho f}/\avr{\rho} \;.
 \end{equation}
-Note that $F_{ii}=0$, always. If the flow is solenoidal, then $\Pi=0$.
+Favre decomposition proves convenient in variable-density flows. The overbar indicates ensemble average, which is approximated by spatial average, or temporal average, or both, depending on the  configuration. We will refer to it as Reynolds average, and use the term Favre average to refer to the density-weighted averages (property per unit volume). Note that $\avf{f''}=0$ and $\avr{f'}=0$, but
+\begin{equation}
+  \avr{f''}=\avr{f}-\avf{f} \;,
+\end{equation}
+which only zero in constant-density flows, when $\avr{f}$ and $\avf{f}$ coincide.
+The covariances satisfy
+\begin{align}
+  \avr{f'g'}   &= \avr{fg'}  =\avr{f'g}  =\avr{f'g''} =\avr{f''g'} =\avr{fg}-\avr{f}\avr{g} \;,\\
+  \avf{f''g''} &= \avf{fg''} =\avf{f''g} =\avf{f'g''} =\avf{f''g'} =\avf{fg}-\avf{f}\avf{g} \;,\\
+  \avr{fg}-\avr{f}\avf{g} &=\avr{f''g'}-\avr{f}\,\avr{g''}\;.
+\end{align}
 
-\subsection{Energy Equation}
+We consider evolution equations of the following form:
+\begin{subequations}
+  \begin{align}
+    \ptp{\rho f}{t} + \dvp{\rho f\mathbf{v}}& =-\dv{\mathbf{F}} + \rho S_f \;,\\
+    \ptp{\rho g}{t} + \dvp{\rho g\mathbf{v}}& =-\dv{\mathbf{G}} + \rho S_g \;.
+  \end{align}
+\end{subequations}
+Multiplying the first equation by $g$ and the second by $f$ and adding them, one finds the evolution equation for the product $\rho f g$:
+\begin{equation}\label{equ:fg}
+  \begin{split}
+    \ptp{\rho fg}{t} + \dvp{\rho fg\mathbf{v}}=&-g\dv{\mathbf{F}}-f\dv{\mathbf{G}}\\
+    &+ \rho gS_f + \rho fS_g\;,
+  \end{split}
+\end{equation}
+having used the equation of conservation of mass
+\begin{equation}
+  \pt{\rho}{t} + \dvp{\rho\mathbf{v}}=0
+\end{equation}
+in the left hand side.
 
-To be developed (before in terms of the pressure)
+The evolution equation for the mean properties can be written as
+\begin{subequations}
+  \begin{align}
+    \ptp{\avr{\rho}\avf{f}}{t} + \dvp{\avr{\rho}\avf{f}\avf{\mathbf{v}}} &=
+    -\dvp{\avr{\mathbf{F}}+\avr{\rho}\avf{f''\mathbf{v}''}} + \avr{\rho}\avf{S_f} \;,\\
+    \ptp{\avr{\rho}\avf{g}}{t} + \dvp{\avr{\rho}\avf{g}\avf{\mathbf{v}}} &=
+    -\dvp{\avr{\mathbf{G}}+\avr{\rho}\avf{g''\mathbf{v}''}} + \avr{\rho}\avf{S_g} \;.
+  \end{align}
+\end{subequations}
+Multiplying the first equation by $\avf{g}$ and the second by $\avf{f}$ and adding them, one finds the evolution equation for the product $\avr{\rho}\avf{f}\avf{g}$:
+\begin{equation}\label{equ:avfg}
+  \begin{split}
+    \ptp{\avr{\rho} \avf{f}\avf{g}}{t} + \dvp{\avr{\rho} \avf{f}\avf{g}\avf{\mathbf{v}}}=
+    &-\avf{g}\dv{\avr{\mathbf{F}}}-\avf{f}\dv{\avr{\mathbf{G}}}\\
+    &-\dvp{\avr{\rho}\avf{f''\mathbf{v}''}\avf{g}+\avr{\rho}\avf{g''\mathbf{v}''}\avf{f}}\\
+    &+ \avr{\rho}\avf{\mathbf{v}''f''}\cdot\nabla \avf{g}
+     + \avr{\rho}\avf{\mathbf{v}''g''}\cdot\nabla \avf{f}\\
+    &+ \avf{g}\avr{S_f} + \avf{f}\avr{S_g}\;,
+  \end{split}
+\end{equation}
+having used the equation of conservation of mass
+\begin{equation}
+  \pt{\avr{\rho}}{t} + \dvp{\avr{\rho}\avf{\mathbf{v}}}=0
+\end{equation}
+in the left hand side.
+
+Averaging Eq.~(\ref{equ:fg}) and substracting Eq.~(\ref{equ:avfg}) from it, one finds
+\begin{equation}\label{equ:covfg}
+  \begin{split}
+    \ptp{\avr{\rho} \avf{f''g''}}{t} + \dvp{\avr{\rho} \avf{f''g''}\avf{\mathbf{v}}} =
+    &-\dvp{\avr{\rho}\avf{\mathbf{v}''f''g''} + \avr{\mathbf{F}'g''} + \avr{\mathbf{G}'f''}} \\
+    &+\avr{\mathbf{F}'\cdot\nabla g''} + \avr{\mathbf{G}'\cdot\nabla f''} \\
+    &-\avr{\rho}\avf{\mathbf{v}''f''}\cdot\nabla\avf{g} -\avr{\rho}\avf{\mathbf{v}''g''}\cdot\nabla\avf{f} \\
+    &+\avr{\rho}\avf{S''_fg''} +\avr{\rho}\avf{S''_gf''} \\
+    &-\avr{g''}\dv{\avr{\mathbf{F}}}-\avr{f''}\dv{\avr{\mathbf{G}}}\;,
+  \end{split}
+\end{equation}
+having used the relationship
+\begin{equation}
+  \avr{\rho fg\mathbf{v}} = \avr{\rho} \avf{f}\avf{g}\avf{\mathbf{v}}
+  + \avr{\rho}\avf{\mathbf{v}''f''g''}+ \avf{f''g''}\avf{\mathbf{v}}
+  + \avf{f''\mathbf{v}''}\avf{g}+ \avf{g''\mathbf{v}''}\avf{f}\;,
+\end{equation}
+together with
+\begin{equation}
+  \begin{split}
+    \avr{g\dv{\mathbf{F}}}-\avf{g}\dv{\avr{\mathbf{F}}}
+    &= \avr{g''\dv{\mathbf{F}'}}+\avr{g''}\dv{\avr{\mathbf{F}}} \\
+    &= \dvp{\avr{\mathbf{F}'g''}}-\avr{\mathbf{F}'\cdot\nabla g''}+\avr{g''}\dv{\avr{\mathbf{F}}}
+  \end{split}
+\end{equation}
+and similarly for the other second-order term $f\dv{\mathbf{G}}$.
+
+\subsection{Reynolds Stresses}
+
+Consider the momentum equations:
+\begin{align}
+  &f = u_i\;, && F_k=p\,\delta_{ik}-\tau_{ik}\;, && S_f = b\, g_i- \epsilon_{imk} f_m u_k\;,\\
+  &g = u_j\;, && G_k=p\,\delta_{jk}-\tau_{jk}\;, && S_g = b\, g_j- \epsilon_{jmk} f_m u_k\;.
+\end{align}
+Substituting into Eq.~(\ref{equ:covfg}), we find
+\begin{equation}\label{equ:Rij}
+  \pt{R_{ij}}{t}  = C_{ij}  +P_{ij} -E_{ij}
+  +\avr{\rho}^{-1} ( \Pi_{ij} - \pt{T_{ijk}}{k} + M_{ij} ) +B_{ij} -F_{ij}
+\end{equation}
+where
+\begin{align}
+  \tag{Reynolds-stress component}
+    R_{ij}  &=\phantom{-}\avf{u_i''u_j''}\\
+  \tag{mean advection}
+    C_{ij}  &=-\avf{u}_k\,\pt{R_{ij}}{k}\\
+  \tag{mean-gradient (shear) production}
+    P_{ij}  &=-R_{ik} \pt{\avf{u}_j}{k} -R_{jk} \pt{\avf{u}_i}{k} \\
+  \tag{viscous dissipation}
+    E_{ij}  &=\phantom{-} \avr{\rho}^{-1} ( \avr{\tau'_{jk} \pt{u''_i}{k}}
+                                           +\avr{\tau'_{ik} \pt{u''_j}{k}} )\\
+  \tag{turbulent transport}
+    T_{ijk} &=\phantom{-} \avr{\rho u''_i u''_j u''_k}
+                         +\avr{p'u'_i}\delta_{jk} +\avr{p'u'_j}\delta_{ik}
+                         -( \avr{\tau'_{jk} u''_i} +\avr{\tau'_{ik} u''_j} )\\
+  \tag{pressure strain}
+    \Pi_{ij}&=\phantom{-} \avr{ p' ( \pt{u''_i}{j}+ \pt{u''_j}{i} ) }\\
+  \tag{mean flux}
+    M_{ij}  &=\phantom{-} \avr{u''_i} ( \pt{\bar{\tau}_{jk}}{k} - \pt{\bar{p}}{j} )
+                         +\avr{u''_j} ( \pt{\bar{\tau}_{ik}}{k} - \pt{\bar{p}}{i} )\\
+  \tag{buoyancy production-destruction}
+    B_{ij}  &=\phantom{-} \avf{b''u''_j}\,g_i+\avf{b''u''_i}\,g_j \\
+  \tag{Coriolis redistribution}
+    F_{ij}  &=\phantom{-} \epsilon_{imk}f_m R_{jk} +\epsilon_{jmk}f_m R_{ik}
+\end{align}
+Depending on symmetries, several terms can be zero (within statistical convergence). Note that if $b\equiv 1$, then $B_{ij}=0$. The mean flux term is sometimes written as $M_{ij}=D_{ij}-G_{ij}$, the first term grouping the mean viscous stress contributions and the last term the mean pressure contributions. In cases of constant density, then $\avr{u''_j}=0$ and $M_{ij}=D_{ij}=G_{ij}=0$.
+
+Contracting indices, the budget equation for the turbulent kinetic energy $K=R_{ii}/2$ reads
+\begin{equation}
+  \pt{K}{t} = C +P +B -E +\avr{\rho}^{-1} \left( \Pi -\pt{T_k}{k} +M \right)\;.
+\end{equation}
+Note that $F_{ii}=0$. If the flow is solenoidal, then $\Pi=0$.
+
+\subsection{Scalar Fluxes}
+
+Consider the momentum and scalar equations:
+\begin{align}
+  &f = u_i\;,   && F_k =p\,\delta_{ik}-\tau_{ik}\;,  && S_f = b\, g_i- \epsilon_{imk} f_m u_k\;,\\
+  &g = \zeta\;, && G_k =-q_{k}\;,                    && S_g = w\;.
+\end{align}
+Substituting into Eq.~(\ref{equ:covfg}), we find
+\begin{equation}\label{equ:Ris}
+  \pt{R_{i \zeta}}{t}= C_{i\zeta} +P_{i\zeta} -E_{i\zeta}
+  +\avr{\rho}^{-1} ( \Pi_{i\zeta} -\pt{T_{i\zeta k}}{k} +M_{i\zeta} ) +B_{i\zeta} -F_{i\zeta} +Q_{i\zeta}
+\end{equation}
+where
+\begin{align}
+  \tag{scalar-flux component}
+    R_{i\zeta}    &=\phantom{-} \avf{u_i''\zeta''} \\
+  \tag{mean advection}
+    C_{i\zeta}    &=-\avf{u}_k\,\pt{R_{i\zeta}}{k} \\
+  \tag{mean-gradient and tilting production}
+    P_{i\zeta}    &=-R_{ik}\,\pt{\avf{\zeta}}{k} -R_{\zeta k}\,\pt{\avf{u}_i}{k} \\
+  \tag{molecular destruction}
+    E_{i\zeta} &=\phantom{-} \avr{\rho}^{-1} ( \avr{q_k'\pt{u_i''}{k}}
+                                              +\avr{\tau_{ik}' \pt{\zeta''}{k}} ) \\
+  \tag{pressure-flux interaction}
+    \Pi_{i\zeta}  &=\phantom{-} \avr{p'\pt{\zeta''}{i}}\\
+  \tag{\text{turbulent transport}}
+    T_{i\zeta k}  &=\phantom{-} \avr{\rho \zeta''u''_ku''_i } +\avr{p's''}\delta_{ik}
+                               -\avr{\tau'_{ik}s''}-\avr{q_k'u_i''}\\
+  \tag{mean flux}
+    M_{i\zeta}    &=\phantom{-} \avr{u''_i}\pt{\avr{q}_k}{k}
+                               +\avr{\zeta''} ( \pt{\bar{\tau}_{ik}}{k} -\pt{\bar{p}}{i} ) \\
+  \tag{buoyancy iteraction}
+    B_{i\zeta}    &=\phantom{-} \avf{b''\zeta''}g_i \\
+  \tag{Coriolis interation}
+    F_{i\zeta}    &=\phantom{-} \epsilon_{imk} f_m R_{k\zeta} \\
+  \tag{source}
+    Q_{i\zeta}    &=\phantom{-} \avf{w''u_i''}
+\end{align}
+The mean flux term is sometimes written as $M_{i\zeta}=D_{i\zeta}-G_{i\zeta}$, the first term grouping the mean molecular flux contributions and the last term the mean pressure contributions.
 
 \subsection{Scalar Variance}
 
-Similarly, the equation for the scalar r.m.s. is obtained from the scalar
-conservation equations,
-
-\begin{eqnarray*}
-  \frac{\partial}{\partial t}(\rho \zeta) + 
-  \frac{\partial}{\partial x_k}(\rho \zeta u_k) & = & 
-  -\frac{\partial j_k}{\partial x_k}
-  + w
-\end{eqnarray*}
-multiplying by $\zeta^{''}$ and averaging
-\begin{equation}
-  \label{eq:scalar1}
-  \overline{\rho \zeta^{''} \frac{\partial \zeta^{''}}{\partial t}}
-  + \overline{\rho \zeta^{''} u^{''}_k} \frac{\partial \tilde{\zeta}}{\partial x_k}
-  + \overline{\rho \zeta^{''} \frac{\partial \zeta^{''}}{\partial x_k}} \tilde{u}_k
-  + \overline{\rho \zeta^{''} u^{''}_k \frac{\partial \zeta^{''}}{\partial x_k}}
-  = \\
-  -\overline{\zeta^{''}}\frac{\partial \bar{j_k}}{\partial x_k}
-  -\frac{\partial }{\partial x_k}\bigg(\overline{j_k' \zeta^{''}} \bigg)
-  +\overline{j_k' \frac{\partial \zeta^{''}}{\partial x_k}}
-  + \overline{w\zeta^{''}}
-\end{equation}
-
-Adding the mass conservation equation multiplied by $\frac{1}{2}\zeta^{''2}$
-and averaging
-\begin{multline}
-  \label{eq:scalar2}
-  \frac{\partial}{\partial t}(\overline{\rho \zeta^{''2}})
-  + \frac{\partial }{\partial x_k}(\tilde{u}_k \overline{\rho \zeta^{''2}}) =\\
-  -2 \overline{\rho \zeta^{''} u^{''}_k} \frac{\partial \tilde{\zeta}}{
-    \partial x_k} - \frac{\partial}{\partial x_k}\bigg( 
-  \overline{\rho \zeta^{''2} u^{''}_k} + 2\overline{j_k' \zeta^{''} }
-  \bigg) +2 \overline{j_k'\frac{\partial \zeta^{''}}{\partial x_k}}
-  -2\overline{\zeta^{''}}\frac{\partial \bar{j}_k}{\partial x_k}
-  + 2 \overline{w\zeta^{''}}
-\end{multline}
-
-Defining
-\begin{eqnarray}
-  R_{\zeta\zeta} & = & \frac{\overline{\rho \zeta^{''2}}}{\bar{\rho}} \\
-  R_{k \zeta} & = & \frac{\overline{\rho \zeta^{''} u^{''}_k}}{\bar{\rho}}
-\end{eqnarray}
-the previous transport equation can be further simplified to
-\begin{equation}
-  \label{eq:scalar3}
-  \frac{\partial R_{\zeta \zeta}}{\partial t} + 
-  \tilde{u}_k \frac{\partial R_{\zeta \zeta}}{\partial x_k}
-  = P_{\zeta\zeta} - \chi +\frac{1}{\bar{\rho}} \left(
-  - \frac{\partial T_{\zeta\zeta k}}{\partial x_k} + D_{\zeta\zeta} + Q_{\zeta\zeta}\right)
+Consider the scalar equation twice:
+\begin{align}
+  &f = \zeta\;, && F_k=-q_{k}\;, && S_f = w\;,\\
+  &g = \zeta\;, && G_k=-q_{k}\;, && S_g = w\;.
+\end{align}
+Substituting into Eq.~(\ref{equ:covfg}), we find
+\begin{equation}\label{equ:Rss}
+  \pt{R_{\zeta \zeta}}{t}= C_{\zeta\zeta}+P_{\zeta\zeta} - E_{\zeta\zeta}
+  +\avr{\rho}^{-1} (- \pt{T_{\zeta\zeta k}}{k} +M_{\zeta\zeta} ) + Q_{\zeta\zeta}
 \end{equation}
 where
-\begin{eqnarray*}
-  P_{\zeta \zeta} = & -2 R_{k \zeta} \frac{\partial \tilde{\zeta}}{\partial x_k}
-  &,\text{turbulent production}\\
-  \chi = & -\frac{2}{\bar{\rho}} \overline{j_k' \frac{\partial \zeta^{''}}{\partial x_k}}
-  &,\text{turbulent dissipation}\\ 
-  T_{\zeta\zeta k} = & \overline{\rho \zeta^{''2} u^{''}_k } +2
-  \overline{j_k'\zeta^{''}}
-  &,\text{turbulent transport}\\ 
-  D_{\zeta\zeta} = & -2 \overline{\zeta^{''}} \frac{\partial \bar{j}_k}{\partial x_k} 
-     &,\text{mean flux}\\
-  Q_{\zeta\zeta} = & 2\overline{w\zeta^{''}}&,\text{source}
-\end{eqnarray*}
+\begin{align}
+  \tag{scalar variance}
+    R_{\zeta \zeta} &=\phantom{-} \avf{\zeta''\zeta''}\\
+  \tag{mean advection}
+    C_{\zeta \zeta} &=-\avf{u}_k\,\pt{R_{\zeta \zeta}}{k}\\
+  \tag{mean-gradient production}
+    P_{\zeta \zeta} &=-2 R_{k \zeta}\,\pt{\avf{\zeta}}{k}\\
+  \tag{molecular destruction}
+    E_{\zeta\zeta} &=\phantom{-} 2 \avr{\rho}^{-1}\avr{q_k' \pt{\zeta''}{k}}\\
+  \tag{turbulent transport}
+    T_{\zeta\zeta k}&=\phantom{-} \avr{\rho \zeta''^{2} u''_k } -2 \avr{q_k'\zeta''}\\
+  \tag{mean flux}
+    M_{\zeta\zeta}  &=\phantom{-} 2 \avr{\zeta^{''}} \pt{\avr{q}_k}{k}\\
+  \tag{source}
+    Q_{\zeta\zeta}  &=\phantom{-} 2 \avf{w''\zeta''}
+\end{align}
 
+\subsection{Energy Equation}
+
+To be developed.

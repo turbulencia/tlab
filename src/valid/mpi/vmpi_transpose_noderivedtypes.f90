@@ -5,11 +5,11 @@
 #define TINTEGER   INTEGER(4)
 
 ! from dns_const_mpi.h
-#define DNS_MPI_K_PARTIAL   1 ! tags and sizes for MPI data
-#define DNS_MPI_I_PARTIAL   1
+#define TLAB_MPI_K_PARTIAL   1 ! tags and sizes for MPI data
+#define TLAB_MPI_I_PARTIAL   1
 
-#define DNS_MPI_K_MAXTYPES  1
-#define DNS_MPI_I_MAXTYPES  1
+#define TLAB_MPI_K_MAXTYPES  1
+#define TLAB_MPI_I_MAXTYPES  1
 
 MODULE DNS_MPI
   IMPLICIT NONE
@@ -50,7 +50,7 @@ END MODULE DNS_MPI
 !########################################################################
 PROGRAM VMPI
 
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
   
   IMPLICIT NONE
   
@@ -83,7 +83,7 @@ PROGRAM VMPI
      STOP
   ENDIF
   
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 
   
   ALLOCATE(a    (imax*jmax*kmax,18)) ! Number of 3d arrays commonly used in the code
@@ -100,12 +100,12 @@ PROGRAM VMPI
 ! Transposition along OX
 ! -------------------------------------------------------------------
      IF ( ims_npro_i .GT. 1 ) THEN
-        id = DNS_MPI_I_PARTIAL
+        id = TLAB_MPI_I_PARTIAL
         
         CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES)
 
-        CALL DNS_MPI_TRPF_I(a(1,1), wrk3d, ims_ds_i(1,id), ims_dr_i(1,id), ims_size_i(id))
-        CALL DNS_MPI_TRPB_I(wrk3d, a(1,2), ims_ds_i(1,id), ims_dr_i(1,id), ims_size_i(id))
+        CALL TLAB_MPI_TRPF_I(a(1,1), wrk3d, ims_ds_i(1,id), ims_dr_i(1,id), ims_size_i(id))
+        CALL TLAB_MPI_TRPB_I(wrk3d, a(1,2), ims_ds_i(1,id), ims_dr_i(1,id), ims_size_i(id))
 
         CALL SYSTEM_CLOCK(t_end,PROC_CYCLES,MAX_CYCLES)
         
@@ -132,12 +132,12 @@ PROGRAM VMPI
 ! Transposition along OZ
 ! -------------------------------------------------------------------
      IF ( ims_npro_k .GT. 1 ) THEN
-        id = DNS_MPI_K_PARTIAL
+        id = TLAB_MPI_K_PARTIAL
         
         CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES)
         
-        CALL DNS_MPI_TRPF_K(a(1,1), wrk3d, ims_ds_k(1,id), ims_dr_k(1,id), ims_size_k(id))
-        CALL DNS_MPI_TRPB_K(wrk3d, a(1,2), ims_ds_k(1,id), ims_dr_k(1,id), ims_size_k(id))
+        CALL TLAB_MPI_TRPF_K(a(1,1), wrk3d, ims_ds_k(1,id), ims_dr_k(1,id), ims_size_k(id))
+        CALL TLAB_MPI_TRPB_K(wrk3d, a(1,2), ims_ds_k(1,id), ims_dr_k(1,id), ims_size_k(id))
 
         CALL SYSTEM_CLOCK(t_end,PROC_CYCLES,MAX_CYCLES)
         
@@ -169,9 +169,9 @@ END PROGRAM VMPI
 ! #######################################################################
 ! Rest of routines
 ! #######################################################################
-SUBROUTINE DNS_MPI_INITIALIZE
+SUBROUTINE TLAB_MPI_INITIALIZE
 
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
   
@@ -184,14 +184,14 @@ SUBROUTINE DNS_MPI_INITIALIZE
 
 ! #######################################################################
   ALLOCATE(ims_map_i(ims_npro_i))
-  ALLOCATE(ims_size_i(DNS_MPI_I_MAXTYPES))
-  ALLOCATE(ims_ds_i(ims_npro_i,DNS_MPI_I_MAXTYPES))
-  ALLOCATE(ims_dr_i(ims_npro_i,DNS_MPI_I_MAXTYPES))
+  ALLOCATE(ims_size_i(TLAB_MPI_I_MAXTYPES))
+  ALLOCATE(ims_ds_i(ims_npro_i,TLAB_MPI_I_MAXTYPES))
+  ALLOCATE(ims_dr_i(ims_npro_i,TLAB_MPI_I_MAXTYPES))
 
   ALLOCATE(ims_map_k(ims_npro_k))
-  ALLOCATE(ims_size_k(DNS_MPI_K_MAXTYPES))
-  ALLOCATE(ims_ds_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
-  ALLOCATE(ims_dr_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
+  ALLOCATE(ims_size_k(TLAB_MPI_K_MAXTYPES))
+  ALLOCATE(ims_ds_k(ims_npro_k,TLAB_MPI_K_MAXTYPES))
+  ALLOCATE(ims_dr_k(ims_npro_k,TLAB_MPI_K_MAXTYPES))
 
   ALLOCATE(status(MPI_STATUS_SIZE,2*MAX(ims_npro_k,ims_npro_i)))
   ALLOCATE(mpireq(                2*MAX(ims_npro_k,ims_npro_i)))
@@ -230,7 +230,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
 ! Derived MPI types to deal with the strides when tranposing data
 ! #######################################################################
   IF ( ims_npro_i .GT. 1 ) THEN
-     id = DNS_MPI_I_PARTIAL
+     id = TLAB_MPI_I_PARTIAL
      ! Calculate size
      ims_size_i(id) = imax*jmax*kmax /ims_npro_i
      ! Calculate Displacements in Forward Send/Receive
@@ -243,7 +243,7 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ENDIF
   
   IF ( ims_npro_k .GT. 1 ) THEN
-     id = DNS_MPI_K_PARTIAL
+     id = TLAB_MPI_K_PARTIAL
      ! Calculate size
      ims_size_k(id) = imax*jmax*kmax /ims_npro_k
      ! Calculate Displacements in Forward Send/Receive
@@ -256,19 +256,19 @@ SUBROUTINE DNS_MPI_INITIALIZE
   ENDIF
 
 
-  CALL DNS_MPI_TAGRESET
+  CALL TLAB_MPI_TAGRESET
 
   RETURN
-END SUBROUTINE DNS_MPI_INITIALIZE
+END SUBROUTINE TLAB_MPI_INITIALIZE
 
 ! ###################################################################
 ! ###################################################################
-SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, size)
+SUBROUTINE TLAB_MPI_TRPF_K(a, b, dsend, drecv, size)
   
-  USE DNS_MPI, ONLY : ims_npro_k, ims_pro_k
-  USE DNS_MPI, ONLY : ims_comm_z
-  USE DNS_MPI, ONLY : ims_tag, ims_err
-  USE DNS_MPI, ONLY : status, mpireq
+  USE TLAB_MPI_VARS, ONLY : ims_npro_k, ims_pro_k
+  USE TLAB_MPI_VARS, ONLY : ims_comm_z
+  USE TLAB_MPI_VARS, ONLY : ims_tag, ims_err
+  USE TLAB_MPI_VARS, ONLY : status, mpireq
 
   IMPLICIT NONE
   
@@ -308,19 +308,19 @@ SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, size)
 
   CALL MPI_WAITALL(ims_npro_k*2-2, mpireq(3:), status(1,3), ims_err)
 
-  CALL DNS_MPI_TAGUPDT
+  CALL TLAB_MPI_TAGUPDT
 
   RETURN
-END SUBROUTINE DNS_MPI_TRPF_K
+END SUBROUTINE TLAB_MPI_TRPF_K
 
 !########################################################################
 !########################################################################
-SUBROUTINE DNS_MPI_TRPF_I(a, b, dsend, drecv, size)
+SUBROUTINE TLAB_MPI_TRPF_I(a, b, dsend, drecv, size)
   
-  USE DNS_MPI, ONLY : ims_npro_i, ims_pro_i
-  USE DNS_MPI, ONLY : ims_comm_x
-  USE DNS_MPI, ONLY : ims_tag, ims_err
-  USE DNS_MPI, ONLY : status, mpireq
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_pro_i
+  USE TLAB_MPI_VARS, ONLY : ims_comm_x
+  USE TLAB_MPI_VARS, ONLY : ims_tag, ims_err
+  USE TLAB_MPI_VARS, ONLY : status, mpireq
 
   IMPLICIT NONE
   
@@ -360,19 +360,19 @@ SUBROUTINE DNS_MPI_TRPF_I(a, b, dsend, drecv, size)
 
   CALL MPI_WAITALL(ims_npro_i*2-2, mpireq(3:), status(1,3), ims_err)
 
-  CALL DNS_MPI_TAGUPDT
+  CALL TLAB_MPI_TAGUPDT
 
   RETURN
-END SUBROUTINE DNS_MPI_TRPF_I
+END SUBROUTINE TLAB_MPI_TRPF_I
 
 !########################################################################
 !########################################################################
-SUBROUTINE DNS_MPI_TRPB_K(b, a, dsend, drecv, size)
+SUBROUTINE TLAB_MPI_TRPB_K(b, a, dsend, drecv, size)
 
-  USE DNS_MPI, ONLY : ims_npro_k, ims_pro_k
-  USE DNS_MPI, ONLY : ims_comm_z
-  USE DNS_MPI, ONLY : ims_tag, ims_err
-  USE DNS_MPI, ONLY : status, mpireq
+  USE TLAB_MPI_VARS, ONLY : ims_npro_k, ims_pro_k
+  USE TLAB_MPI_VARS, ONLY : ims_comm_z
+  USE TLAB_MPI_VARS, ONLY : ims_tag, ims_err
+  USE TLAB_MPI_VARS, ONLY : status, mpireq
 
   IMPLICIT NONE
   
@@ -412,19 +412,19 @@ SUBROUTINE DNS_MPI_TRPB_K(b, a, dsend, drecv, size)
 
   CALL MPI_WAITALL(ims_npro_k*2-2, mpireq(3:), status(1,3), ims_err)
 
-  CALL DNS_MPI_TAGUPDT
+  CALL TLAB_MPI_TAGUPDT
 
   RETURN
-END SUBROUTINE DNS_MPI_TRPB_K
+END SUBROUTINE TLAB_MPI_TRPB_K
 
 !########################################################################
 !########################################################################
-SUBROUTINE DNS_MPI_TRPB_I(b, a, dsend, drecv, size)
+SUBROUTINE TLAB_MPI_TRPB_I(b, a, dsend, drecv, size)
 
-  USE DNS_MPI, ONLY : ims_npro_i, ims_pro_i
-  USE DNS_MPI, ONLY : ims_comm_x
-  USE DNS_MPI, ONLY : ims_tag, ims_err
-  USE DNS_MPI, ONLY : status, mpireq
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_pro_i
+  USE TLAB_MPI_VARS, ONLY : ims_comm_x
+  USE TLAB_MPI_VARS, ONLY : ims_tag, ims_err
+  USE TLAB_MPI_VARS, ONLY : status, mpireq
 
   IMPLICIT NONE
   
@@ -464,38 +464,38 @@ SUBROUTINE DNS_MPI_TRPB_I(b, a, dsend, drecv, size)
 
   CALL MPI_WAITALL(ims_npro_i*2-2, mpireq(3:), status(1,3), ims_err)
 
-  CALL DNS_MPI_TAGUPDT
+  CALL TLAB_MPI_TAGUPDT
 
   RETURN
-END SUBROUTINE DNS_MPI_TRPB_I
+END SUBROUTINE TLAB_MPI_TRPB_I
 
 !########################################################################
 !########################################################################
-SUBROUTINE DNS_MPI_TAGUPDT
+SUBROUTINE TLAB_MPI_TAGUPDT
   
-  USE DNS_MPI, ONLY : ims_tag
+  USE TLAB_MPI_VARS, ONLY : ims_tag
 
   IMPLICIT NONE
   
   ims_tag = ims_tag+1
   
   IF ( ims_tag .GT. 32000 ) THEN
-     CALL DNS_MPI_TAGRESET
+     CALL TLAB_MPI_TAGRESET
   ENDIF
   
   RETURN
-END SUBROUTINE DNS_MPI_TAGUPDT
+END SUBROUTINE TLAB_MPI_TAGUPDT
 
 !########################################################################
 !########################################################################
-SUBROUTINE DNS_MPI_TAGRESET
+SUBROUTINE TLAB_MPI_TAGRESET
   
-  USE DNS_MPI, ONLY : ims_tag
+  USE TLAB_MPI_VARS, ONLY : ims_tag
 
   IMPLICIT NONE
   
   ims_tag = 0
   
   RETURN
-END SUBROUTINE DNS_MPI_TAGRESET
+END SUBROUTINE TLAB_MPI_TAGRESET
     

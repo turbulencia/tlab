@@ -3,7 +3,7 @@
 #include "types.h"
 #include "dns_error.h"
 
-        USE DNS_CONSTANTS, ONLY : efile
+        USE TLAB_CONSTANTS, ONLY : efile
 
       IMPLICIT NONE
 
@@ -48,8 +48,8 @@
       ip(6) = ip(5) + kwrk
 
       IF ( iwrk_size .LT. ip(6) ) THEN
-         CALL IO_WRITE_ASCII(efile, 'REGRID2D Error: Insuficient work space')
-         CALL DNS_STOP(DNS_ERROR_WRKOVERFLW)
+         CALL TLAB_WRITE_ASCII(efile, 'REGRID2D Error: Insuficient work space')
+         CALL TLAB_STOP(DNS_ERROR_WRKOVERFLW)
       ENDIF
 
       call regrid(iopt, imax, x, jmax, y, f, xb, xe, &
@@ -62,8 +62,8 @@
             msg(i:i) = ' '
          ENDDO
          WRITE(msg,*) 'REGRID ERROR = ',ier
-         CALL IO_WRITE_ASCII(efile, msg)
-         CALL DNS_STOP(DNS_ERROR_REGRID)
+         CALL TLAB_WRITE_ASCII(efile, msg)
+         CALL TLAB_STOP(DNS_ERROR_REGRID)
       ENDIF
 
       DO i=1, 6

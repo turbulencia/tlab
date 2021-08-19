@@ -5,7 +5,8 @@
 
 MODULE BOUNDARY_BCS
 
-  USE DNS_CONSTANTS, ONLY : MAX_VARS
+  USE TLAB_CONSTANTS, ONLY : MAX_VARS
+  USE TLAB_PROCS
 
   IMPLICIT NONE
   SAVE
@@ -38,19 +39,22 @@ CONTAINS
 ! ###################################################################
 SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
+  USE TLAB_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS, ONLY : tfile
+  USE TLAB_CONSTANTS, ONLY : tfile
 #endif
-  USE DNS_GLOBAL,    ONLY : imode_eqns
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, inb_flow_array,inb_scal_array
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : mach, pbg, qbg
-  USE THERMO_GLOBAL, ONLY : gama0
+  USE TLAB_VARS,    ONLY : imode_eqns
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, inb_flow_array,inb_scal_array
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : mach, pbg, qbg
+  USE THERMO_VARS, ONLY : gama0
   USE BOUNDARY_BUFFER
 #ifdef USE_MPI
-  USE DNS_GLOBAL,    ONLY : inb_scal_array
-  USE DNS_MPI
+  USE TLAB_VARS,    ONLY : inb_scal_array
+  USE TLAB_MPI_VARS, ONLY : ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_VARS, ONLY : ims_bcs_imax, ims_bcs_jmax
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -64,7 +68,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 
 ! -------------------------------------------------------------------
   TINTEGER j, is
-  TREAL prefactor, dummy, param(5)
+  TREAL prefactor, param(5)
   TREAL diam_loc, thick_loc, ycenter, r1, r05, PROFILES
 
 #ifdef USE_MPI
@@ -74,7 +78,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_INITIALLIZE' )
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_INITIALLIZE' )
 #endif
 
 ! ###################################################################
@@ -111,7 +115,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 ! Characteristic BCs
 ! -------------------------------------------------------------------
      IF ( .NOT. g(1)%periodic ) THEN ! Required for NRBCs in Ox
-        id    = DNS_MPI_K_NRBCX
+        id    = TLAB_MPI_K_NRBCX
         isize_loc = MOD(jmax,ims_npro_k)
         ims_bcs_imax = 2*(inb_flow+inb_scal_array)
         DO WHILE ( MOD(isize_loc*ims_bcs_imax,ims_npro_k) .GT. 0 )
@@ -119,14 +123,14 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         ENDDO
         WRITE(str,*) ims_bcs_imax
         str = 'Initialize MPI types for Ox BCs transverse terms. '//TRIM(ADJUSTL(str))//' planes.'
-        CALL IO_WRITE_ASCII(lfile,str)
+        CALL TLAB_WRITE_ASCII(lfile,str)
         isize_loc = ims_bcs_imax*jmax
-        CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
+        CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
              ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      ENDIF
 
      IF ( .NOT. g(2)%periodic ) THEN ! Required for NRBCs in Oy
-        id    = DNS_MPI_K_NRBCY
+        id    = TLAB_MPI_K_NRBCY
         isize_loc = MOD(imax,ims_npro_k)
         ims_bcs_jmax = 2*(inb_flow+inb_scal_array)
         DO WHILE ( MOD(isize_loc*ims_bcs_jmax,ims_npro_k) .GT. 0 )
@@ -134,9 +138,9 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         ENDDO
         WRITE(str,*) ims_bcs_jmax
         str = 'Initialize MPI types for Oy BCs transverse terms. '//TRIM(ADJUSTL(str))//' planes.'
-        CALL IO_WRITE_ASCII(lfile,str)
+        CALL TLAB_WRITE_ASCII(lfile,str)
         isize_loc = imax*ims_bcs_jmax
-        CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
+        CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
              ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      ENDIF
 #endif
@@ -279,7 +283,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
   ENDIF
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_BCS_INITIALLIZE' )
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_BCS_INITIALLIZE' )
 #endif
 
   RETURN

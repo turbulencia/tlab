@@ -26,9 +26,10 @@
 !########################################################################
 SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s,e,rho, T, wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
-  USE THERMO_GLOBAL, ONLY : imixture, gama0, GRATIO
-  USE THERMO_GLOBAL, ONLY : NSP, NCP_CHEMKIN, WGHT_INV, THERMO_AI
+  USE TLAB_CONSTANTS, ONLY : efile
+  USE TLAB_PROCS
+  USE THERMO_VARS, ONLY : imixture, gama0, GRATIO
+  USE THERMO_VARS, ONLY : NSP, NCP_CHEMKIN, WGHT_INV, THERMO_AI
 
   IMPlICIT NONE
 
@@ -60,7 +61,7 @@ SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s,e,rho, T, wrk3d)
 ! ###################################################################
   ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
      CALL THERMO_AIRWATER_RE(nx, ny, nz, s, e, rho, T, wrk3d)
-     
+
 ! ###################################################################
 ! General mixture of NSP species. s contains NSP-1 mass fractions
 ! ###################################################################
@@ -93,8 +94,8 @@ SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s,e,rho, T, wrk3d)
 ! General case
 ! -------------------------------------------------------------------
      ELSE
-        CALL IO_WRITE_ASCII(efile, 'THERMO_CALORIC_TEMPERATURE. General case undeveloped.')
-        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+        CALL TLAB_WRITE_ASCII(efile, 'THERMO_CALORIC_TEMPERATURE. General case undeveloped.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
 
      ENDIF
 

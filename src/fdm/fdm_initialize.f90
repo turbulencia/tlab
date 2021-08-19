@@ -5,11 +5,12 @@
 
 SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 #ifdef TRACE_ON
-  USE DNS_CONSTANTS, ONLY : tfile
+  USE TLAB_CONSTANTS, ONLY : tfile
 #endif
-  USE DNS_TYPES,  ONLY : grid_dt
-  USE DNS_GLOBAL, ONLY : inb_scal
-  USE DNS_GLOBAL, ONLY : reynolds, schmidt
+  USE TLAB_TYPES,  ONLY : grid_dt
+  USE TLAB_VARS, ONLY : inb_scal
+  USE TLAB_VARS, ONLY : reynolds, schmidt
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -24,7 +25,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   TREAL r04, r28, r24, r48, r25, r60, dummy
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile,'Entering SUBROUTINE FDM_INITIALIZE')
+  CALL TLAB_WRITE_ASCII(tfile,'Entering SUBROUTINE FDM_INITIALIZE')
 #endif
 
 ! ###################################################################
@@ -367,12 +368,12 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 ! Check array sizes
 ! ###################################################################
   ! IF ( ig .NE. g%inb_grid ) THEN
-  !    CALL IO_WRITE_ASCII(efile, 'FDM_INITIALIZE. Grid size incorrect.')
-  !    CALL DNS_STOP(DNS_ERROR_DIMGRID)
+  !    CALL TLAB_WRITE_ASCII(efile, 'FDM_INITIALIZE. Grid size incorrect.')
+  !    CALL TLAB_STOP(DNS_ERROR_DIMGRID)
   ! ENDIF
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile,'Leaving SUBOURINTE FDM_INITIALIZE')
+  CALL TLAB_WRITE_ASCII(tfile,'Leaving SUBOURINTE FDM_INITIALIZE')
 #endif
 
   RETURN

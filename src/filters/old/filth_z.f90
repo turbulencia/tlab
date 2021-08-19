@@ -6,7 +6,7 @@ SUBROUTINE FILTH_Z(iunifz, k1bc, imax,jmax,kmax, nz, cfz, z1, zf1, wrk)
   USE DNS_CONSTANTS, ONLY : efile
 
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE
@@ -33,7 +33,7 @@ SUBROUTINE FILTH_Z(iunifz, k1bc, imax,jmax,kmax, nz, cfz, z1, zf1, wrk)
   nij = imax*jmax
 
   IF ( MOD(nz,i2) .NE. 0 ) THEN
-     CALL IO_WRITE_ASCII(efile, 'FILTH_Z. NZ is not even')
+     CALL TLAB_WRITE_ASCII(efile, 'FILTH_Z. NZ is not even')
      CALL DNS_STOP(DNS_ERROR_LESEVEN)
   ENDIF
 
@@ -43,11 +43,11 @@ SUBROUTINE FILTH_Z(iunifz, k1bc, imax,jmax,kmax, nz, cfz, z1, zf1, wrk)
 ! 1-1 PE communication
      npl = nz/2
      IF ( npl .LE. kmax ) THEN
-        CALL DNS_MPI_COPYPLN1(nij, kmax, npl, z1, wrk(1,1,1), wrk(1,1,1+npl+kmax))
+        CALL TLAB_MPI_COPYPLN1(nij, kmax, npl, z1, wrk(1,1,1), wrk(1,1,1+npl+kmax))
      ELSE IF ( npl .LE. 2*kmax ) THEN
-        CALL DNS_MPI_COPYPLN2(nij, kmax, npl, z1, wrk(1,1,1), wrk(1,1,1+npl+kmax))
+        CALL TLAB_MPI_COPYPLN2(nij, kmax, npl, z1, wrk(1,1,1), wrk(1,1,1+npl+kmax))
      ELSE
-        CALL IO_WRITE_ASCII(efile, 'FILTH_Z. Size kmax too small for PARALLEL mode.')
+        CALL TLAB_WRITE_ASCII(efile, 'FILTH_Z. Size kmax too small for PARALLEL mode.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
 

@@ -3,10 +3,10 @@
 #include "dns_error.h"
 
 PROGRAM SL_NORMAL_ANALYSIS
-  
-  USE DNS_GLOBAL
+
+  USE TLAB_VARS
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -45,11 +45,11 @@ PROGRAM SL_NORMAL_ANALYSIS
   TREAL wrk3d(:)
   ALLOCATABLE wrk3d
 
-  TINTEGER iopt, isl, ith, isize_wrk3d, itxc_size, iavg
+  TINTEGER iopt, isl, ith, itxc_size, iavg
   TREAL threshold
   TINTEGER ibuffer_npy
   TINTEGER nmax, istep, kstep, nprof_size, nfield
-  CHARACTER*32 fname, inifile, bakfile
+  CHARACTER*32 fname, bakfile
 
   TINTEGER itime_size_max, itime_size, i
   PARAMETER(itime_size_max=128)
@@ -63,17 +63,19 @@ PROGRAM SL_NORMAL_ANALYSIS
 #endif
 
   TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
-  
-! ###################################################################
-  CALL DNS_INITIALIZE
 
-  CALL DNS_READ_GLOBAL('dns.ini')
+! ###################################################################
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
+
+  CALL DNS_START
+
+  CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)
+  CALL SCANINIINT(bakfile, ifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)
 
   isize_wrk3d = imax*jmax*kmax
   itxc_size = imax*jmax*kmax*7
@@ -181,9 +183,12 @@ PROGRAM SL_NORMAL_ANALYSIS
   ALLOCATE(mean(nmax*nfield*2))
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
-#include "dns_read_grid.h"
+CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+CALL FDM_INITIALIZE(x, g(1), wrk1d)
+CALL FDM_INITIALIZE(y, g(2), wrk1d)
+CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! ###################################################################
 ! Define pointers
@@ -209,10 +214,10 @@ PROGRAM SL_NORMAL_ANALYSIS
 ! -------------------------------------------------------------------
      WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
      CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i0, isize_wrk3d, q, wrk3d)
-     
+
      WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
      CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,inb_scal, isize_wrk3d, z1, wrk3d)
-     
+
      CALL THERMO_CALORIC_TEMPERATURE(imax, jmax, kmax, z1, p, field, txc, wrk3d)
      CALL THERMO_THERMAL_PRESSURE(imax, jmax, kmax, z1, field, txc, p)
 
@@ -227,13 +232,11 @@ PROGRAM SL_NORMAL_ANALYSIS
 ! Scalar gradient analysis
 ! -------------------------------------------------------------------
      ELSE IF ( iopt .EQ. 2 ) THEN
-        CALL SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, & 
+        CALL SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, &
              u, v, w, z1, field, sl, profiles, txc, wrk1d, wrk2d, wrk3d)
      ENDIF
-     
+
   ENDDO
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL TLAB_STOP(0)
 END PROGRAM SL_NORMAL_ANALYSIS

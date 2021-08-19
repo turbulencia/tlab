@@ -12,7 +12,7 @@
 !########################################################################
 SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
 
-  USE DNS_TYPES,  ONLY : filter_dt
+  USE TLAB_TYPES,  ONLY : filter_dt
 
   IMPLICIT NONE
 

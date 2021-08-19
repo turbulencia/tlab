@@ -26,7 +26,7 @@ SUBROUTINE SL_NORMAL_SAMPLE(imax,jmax,kmax, nmax, istep,kstep, nfield_loc, nfiel
 #include "types.h"
 
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE

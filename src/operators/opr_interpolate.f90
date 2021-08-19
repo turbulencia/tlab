@@ -21,11 +21,15 @@
 SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
      g, x_org,y_org,z_org, x_dst,y_dst,z_dst, u_org,u_dst, txc, isize_wrk3d, wrk3d)
 
-  USE DNS_TYPES,  ONLY : grid_dt
-  USE DNS_GLOBAL, ONLY : isize_txc_field
+  USE TLAB_TYPES,  ONLY : grid_dt
+  USE TLAB_VARS, ONLY : isize_txc_field
 #ifdef USE_MPI
-  USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_MPI
+  USE TLAB_CONSTANTS, ONLY : lfile
+  USE TLAB_PROCS
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -49,38 +53,38 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
 ! ###################################################################
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI type 1 for Ox interpolation.')
-     id = DNS_MPI_I_AUX1
+     CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 1 for Ox interpolation.')
+     id = TLAB_MPI_I_AUX1
      npage = nz*ny
      IF ( MOD(npage,ims_npro_i) .NE. 0 ) THEN ! add space for MPI transposition
         npage = npage      /ims_npro_i
         npage =(npage +1 ) *ims_npro_i
      ENDIF
-     CALL DNS_MPI_TYPE_I(ims_npro_i, nx,     npage, i1, i1, i1, i1, &
+     CALL TLAB_MPI_TYPE_I(ims_npro_i, nx,     npage, i1, i1, i1, i1, &
           ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
 
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI type 2 for Ox interpolation.')
-     id = DNS_MPI_I_AUX2
+     CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 2 for Ox interpolation.')
+     id = TLAB_MPI_I_AUX2
      npage = nz*ny
      IF ( MOD(npage,ims_npro_i) .NE. 0 ) THEN ! add space for MPI transposition
         npage = npage      /ims_npro_i
         npage =(npage +1 ) *ims_npro_i
      ENDIF
-     CALL DNS_MPI_TYPE_I(ims_npro_i, nx_dst, npage, i1, i1, i1, i1, &
+     CALL TLAB_MPI_TYPE_I(ims_npro_i, nx_dst, npage, i1, i1, i1, i1, &
           ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
   ENDIF
 
   IF ( ims_npro_k .GT. 1 ) THEN
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI type 1 for Oz interpolation.')
-     id = DNS_MPI_K_AUX1
+     CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 1 for Oz interpolation.')
+     id = TLAB_MPI_K_AUX1
      npage = nx_dst*ny_dst
-     CALL DNS_MPI_TYPE_K(ims_npro_k, nz,     npage, i1, i1, i1, i1, &
+     CALL TLAB_MPI_TYPE_K(ims_npro_k, nz,     npage, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI type 2 for Oz interpolation.')
-     id = DNS_MPI_K_AUX2
+     CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 2 for Oz interpolation.')
+     id = TLAB_MPI_K_AUX2
      npage = nx_dst*ny_dst
-     CALL DNS_MPI_TYPE_K(ims_npro_k, nz_dst, npage, i1, i1, i1, i1, &
+     CALL TLAB_MPI_TYPE_K(ims_npro_k, nz_dst, npage, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
   ENDIF
@@ -108,6 +112,6 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
   ELSE
      u_dst(1:nx_dst*ny_dst*nz_dst) = txc(1:nx_dst*ny_dst*nz_dst,2)
   ENDIF
-  
+
   RETURN
 END SUBROUTINE OPR_INTERPOLATE

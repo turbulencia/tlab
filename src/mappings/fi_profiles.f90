@@ -10,15 +10,16 @@
 !########################################################################
 SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
 
-  USE DNS_CONSTANTS, ONLY : lfile
-  USE DNS_GLOBAL, ONLY : inb_scal, inb_scal_array, imax,jmax,kmax, imode_eqns
-  USE DNS_GLOBAL, ONLY : g
-  USE DNS_GLOBAL, ONLY : pbg, sbg, damkohler,froude,schmidt
-  USE DNS_GLOBAL, ONLY : rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
-  USE DNS_GLOBAL, ONLY : buoyancy
-  USE THERMO_GLOBAL, ONLY : imixture, GRATIO
+  USE TLAB_CONSTANTS, ONLY : lfile
+  USE TLAB_VARS, ONLY : inb_scal, inb_scal_array, imax,jmax,kmax, imode_eqns
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : pbg, sbg, damkohler,froude,schmidt
+  USE TLAB_VARS, ONLY : rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
+  USE TLAB_VARS, ONLY : buoyancy
+  USE TLAB_PROCS
+  USE THERMO_VARS, ONLY : imixture, GRATIO
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE
@@ -110,13 +111,13 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
 ! Anelastic density correction term in burgers operator
 ! #######################################################################
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     CALL IO_WRITE_ASCII(lfile,'Initialize anelastic density correction in burgers operator.')
+     CALL TLAB_WRITE_ASCII(lfile,'Initialize anelastic density correction in burgers operator.')
 
 ! Density correction term in the burgers operator along X
      g(1)%anelastic = .TRUE.
 #ifdef USE_MPI
      IF ( ims_npro_i .GT. 1 ) THEN
-        nlines = ims_size_i(DNS_MPI_I_PARTIAL)
+        nlines = ims_size_i(TLAB_MPI_I_PARTIAL)
         offset = nlines *ims_pro_i
      ELSE
 #endif
@@ -144,7 +145,7 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
      g(3)%anelastic = .TRUE.
 #ifdef USE_MPI
      IF ( ims_npro_k .GT. 1 ) THEN
-        nlines = ims_size_k(DNS_MPI_K_PARTIAL)
+        nlines = ims_size_k(TLAB_MPI_K_PARTIAL)
         offset = nlines *ims_pro_k
      ELSE
 #endif

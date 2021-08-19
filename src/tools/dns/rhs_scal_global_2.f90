@@ -6,7 +6,7 @@
 !# DESCRIPTION
 !#
 !# Modified from RHS_SCAL_EULER_SKEWSYMMETRIC to include diffusion terms
-!# from RHS_SCAL_DIFFUSION_EXPLICIT and avoid duplication of derivatives 
+!# from RHS_SCAL_DIFFUSION_EXPLICIT and avoid duplication of derivatives
 !# in routines OPR_PARTIAL_XX, OPR_PARTIAL_YY, OPR_PARTIAL_ZZ.
 !# Internal energy formulation only.
 !# Additional convective part due to skewsymmetric formulation Y_i d(\rho u_k)/dx_k
@@ -15,16 +15,16 @@
 !########################################################################
 SUBROUTINE RHS_SCAL_GLOBAL_2(is, rho,u,v,w, z1, T, zh1, h4, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
-#ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
+  USE TLAB_CONSTANTS, ONLY : efile
+#ifdef TRACE_ON
+  USE TLAB_CONSTANTS, ONLY : tfile
 #endif
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field, imode_eqns
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : itransport,idiffusion, visc,prandtl,schmidt
-  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : idiffusion, visc,prandtl,schmidt
+  USE THERMO_VARS, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
   USE BOUNDARY_BCS
-  
+
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
@@ -43,24 +43,14 @@ SUBROUTINE RHS_SCAL_GLOBAL_2(is, rho,u,v,w, z1, T, zh1, h4, tmp1,tmp2,tmp3,tmp4,
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING RHS_SCAL_GLOBAL_2')
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_SCAL_GLOBAL_2')
 #endif
-
-  IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
-     CALL IO_WRITE_ASCII(efile,'RHS_SCAL_GLOBAL_2. Only constant viscosity.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
-
-  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-     CALL IO_WRITE_ASCII(efile,'RHS_SCAL_GLOBAL_2. No total energy formulation.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
 
   IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R;            cond = C_0_R
   ELSE;                                  diff = visc/schmidt(is); cond = visc/prandtl; ENDIF
 
 ! ###################################################################
-! divergence terms 
+! divergence terms
 ! ###################################################################
 !$omp parallel default( shared ) private( i, dummy )
 !$omp do
@@ -141,7 +131,7 @@ SUBROUTINE RHS_SCAL_GLOBAL_2(is, rho,u,v,w, z1, T, zh1, h4, tmp1,tmp2,tmp3,tmp4,
   ENDIF
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING RHS_SCAL_GLOBAL_2')
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_SCAL_GLOBAL_2')
 #endif
 
   RETURN

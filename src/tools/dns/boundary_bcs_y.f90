@@ -15,7 +15,7 @@
 !#
 !########################################################################
 !# DESCRIPTION
-!# 
+!#
 !# Non-periodic characteristic BCs at ymin and ymax.
 !# The flunctuating inflow forcing has not yet been implemented like
 !# in BOUNDARY_BCS_X.
@@ -24,12 +24,13 @@
 SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
      h0,h1,h2,h3,h4,zh1, tmp1,tmp2,tmp3,tmp4,tmp5, aux2d, wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
-  USE THERMO_GLOBAL, ONLY : imixture, gama0, THERMO_AI
+  USE TLAB_CONSTANTS
+  USE TLAB_VARS
+  USE TLAB_PROCS
+  USE THERMO_VARS, ONLY : imixture, gama0, THERMO_AI
   USE DNS_LOCAL
   USE BOUNDARY_BCS
-  
+
   IMPLICIT NONE
 
 #include "integers.h"
@@ -54,7 +55,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_Y' )
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_Y' )
 #endif
 
 #define hr_loc(i,k)  aux2d(i,k,1)
@@ -80,15 +81,15 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
 #define dz1dn_loc(i,k) aux2d(i,k,19)
 
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
-    
+
   ip0 = 19
 
   nt = imax*kmax
   prefactor = (gama0-C_1_R)*mach*mach
 
   IF ( iaux .LT. nt*(19+5*(inb_flow+inb_scal_array)) ) THEN
-     CALL IO_WRITE_ASCII(efile, 'RHS_BCS_Y. Not enough space.')
-     CALL DNS_STOP(DNS_ERROR_JBC)
+     CALL TLAB_WRITE_ASCII(efile, 'RHS_BCS_Y. Not enough space.')
+     CALL TLAB_STOP(DNS_ERROR_JBC)
   ENDIF
 
 ! Define pointers
@@ -108,15 +109,15 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
 ! 2. add fluctuation
 ! 3. add mean
 ! 4. add fluctuation+mean
-! 
-! Relaxation towards a mean profile (Poinsot & Lele term) 
+!
+! Relaxation towards a mean profile (Poinsot & Lele term)
 ! The local value of c is added later at the boundary
 ! Note that pl_??? has dimensions of 1/length
 ! -------------------------------------------------------------------
   idir = 2
 
   pl_out_min = C_0_R ! default is only nonreflective
-  iflag_min =-1      
+  iflag_min =-1
   IF ( BcsFlowJmin%cout .GT. 0 ) THEN
      pl_out_min = BcsFlowJmin%cout *(C_1_R-M2_max) /g(2)%scale
      iflag_min =-3
@@ -127,9 +128,9 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
      pl_inf_min = BcsFlowJmin%cinf /g(2)%scale
      iflag_min =-3
   ENDIF
-  
+
   pl_out_max = C_0_R ! default is only nonreflective
-  iflag_max =-1      
+  iflag_max =-1
   IF ( BcsFlowJmax%cout .GT. 0 ) THEN
      pl_out_max = BcsFlowJmax%cout *(C_1_R-M2_max) /g(2)%scale
      iflag_max =3
@@ -151,7 +152,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
        tmin,lmin,tmax,lmax, tmp1,tmp2,tmp3, wrk2d,wrk3d)
 
 ! ###################################################################
-! Flow 
+! Flow
 ! ###################################################################
   CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), rho, tmp1, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), u,   tmp2, wrk3d, wrk2d,wrk3d)
@@ -229,7 +230,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1),&
           buoyancy%vector(2),hr_loc(1,1), hu_loc(1,1), hv_loc(1,1), hw_loc(1,1), he_loc(1,1))
   ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-     CALL BOUNDARY_BCS_FLOW_NR_3(iflag_max, idir, nt, pl_out_max, pl_inf_max, inf_rhs, BcsFlowJmax%ref, & 
+     CALL BOUNDARY_BCS_FLOW_NR_3(iflag_max, idir, nt, pl_out_max, pl_inf_max, inf_rhs, BcsFlowJmax%ref, &
           BcsFlowJmax%ref(1,1,inb_flow+1), &
           r_loc(1,1), u_loc(1,1), v_loc(1,1), w_loc(1,1), p_loc(1,1), g_loc(1,1),&
           drdn_loc(1,1), dudn_loc(1,1), dvdn_loc(1,1), dwdn_loc(1,1), dpdn_loc(1,1), &
@@ -256,7 +257,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
   ENDIF
 
 ! ###################################################################
-! Scalar 
+! Scalar
 ! ###################################################################
   IF ( icalc_scal .EQ. 1 ) THEN
      IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN; inb_scal_loc = inb_scal + 1
@@ -298,7 +299,7 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
         IF ( imixture .GT. 0 ) THEN
 ! special case
            IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. is .EQ. 2 ) THEN
-              DO k = 1,kmax; DO i = imin_loc,imax_loc                    
+              DO k = 1,kmax; DO i = imin_loc,imax_loc
                  h4(i,1,k) = h4(i,1,k) + hz1_loc(i,k)*(THERMO_AI(6,1,3)-THERMO_AI(6,1,1))
               ENDDO; ENDDO
 ! general case
@@ -355,13 +356,13 @@ SUBROUTINE BOUNDARY_BCS_Y(iaux, M2_max, rho,u,v,w,p,gama,z1, &
               ENDDO; ENDDO
            ENDIF
         ENDIF
-     
+
      ENDDO
 
   ENDIF
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_BCS_Y' )
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_BCS_Y' )
 #endif
 
   RETURN

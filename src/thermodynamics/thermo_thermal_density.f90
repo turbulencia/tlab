@@ -20,8 +20,8 @@
 !########################################################################
 SUBROUTINE THERMO_THERMAL_DENSITY(nx,ny,nz, s,p,T, rho)
 
-  USE THERMO_GLOBAL, ONLY : imixture, MRATIO
-  USE THERMO_GLOBAL, ONLY : NSP, WGHT_INV
+  USE THERMO_VARS, ONLY : imixture, MRATIO
+  USE THERMO_VARS, ONLY : NSP, WGHT_INV
 
   IMPLICIT NONE
 

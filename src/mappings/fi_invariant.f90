@@ -13,7 +13,7 @@
 !########################################################################
 SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
 
-  USE  DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
   
   IMPLICIT NONE
 
@@ -48,7 +48,7 @@ END SUBROUTINE FI_INVARIANT_P
 !########################################################################
 SUBROUTINE FI_INVARIANT_Q(nx,ny,nz, u,v,w, result, tmp1,tmp2,tmp3, wrk2d,wrk3d)
 
-  USE  DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
   
   IMPLICIT NONE
 
@@ -99,7 +99,7 @@ END SUBROUTINE FI_INVARIANT_Q
 !########################################################################
 SUBROUTINE FI_INVARIANT_R(nx,ny,nz, u,v,w, result, tmp1,tmp2,tmp3,tmp4,tmp5, wrk2d,wrk3d)
 
-  USE  DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
   
   IMPLICIT NONE
 

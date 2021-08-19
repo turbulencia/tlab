@@ -17,8 +17,8 @@
 !########################################################################
 SUBROUTINE FI_TRANSPORT(transport, flag_grad, nx,ny,nz, is, s,trans, tmp, wrk2d,wrk3d)
 
-  USE DNS_TYPES,  ONLY : term_dt
-  USE DNS_GLOBAL, ONLY : g, epbackground, inb_scal_array
+  USE TLAB_TYPES,  ONLY : term_dt
+  USE TLAB_VARS, ONLY : g, epbackground, inb_scal_array
   
   IMPLICIT NONE
 
@@ -78,8 +78,8 @@ END SUBROUTINE FI_TRANSPORT
 !########################################################################
 SUBROUTINE FI_TRANSPORT_FLUX(transport, nx,ny,nz, is, s,trans)
 
-  USE DNS_TYPES,  ONLY : term_dt
-  USE DNS_GLOBAL, ONLY : epbackground, inb_scal_array
+  USE TLAB_TYPES,  ONLY : term_dt
+  USE TLAB_VARS, ONLY : epbackground, inb_scal_array
   
   IMPLICIT NONE
 

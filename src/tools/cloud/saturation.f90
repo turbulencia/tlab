@@ -1,10 +1,11 @@
 PROGRAM SATURATION
-  
+
 #include "types.h"
 #include "dns_const.h"
 
-  USE DNS_GLOBAL
-  USE THERMO_GLOBAL
+  USE TLAB_VARS
+  USE TLAB_PROCS
+  USE THERMO_VARS
 
   IMPLICIT NONE
 
@@ -14,7 +15,7 @@ PROGRAM SATURATION
   TINTEGER iopt!, ipsat
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL TLAB_START
 
   imixture = MIXT_TYPE_AIRWATER
   CALL THERMO_INITIALIZE
@@ -46,7 +47,7 @@ PROGRAM SATURATION
   ENDIF
 
   t = t_min
-  DO WHILE ( t .LE. t_max ) 
+  DO WHILE ( t .LE. t_max )
 
      t_loc = (t+273.15)/TREF
      CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t_loc,  psat)
@@ -71,7 +72,7 @@ PROGRAM SATURATION
   CLOSE(21)
 
   STOP
-  
+
 1000 FORMAT(5(1X,G_FORMAT_R))
 2000 FORMAT(3(1X,G_FORMAT_R))
 

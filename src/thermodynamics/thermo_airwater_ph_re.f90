@@ -16,7 +16,7 @@
 !########################################################################
 SUBROUTINE THERMO_AIRWATER_PH_RE(nx, ny, nz, z1, p, h, T)
 
-  USE THERMO_GLOBAL, ONLY : GRATIO, MRATIO, THERMO_AI
+  USE THERMO_VARS, ONLY : GRATIO, MRATIO, THERMO_AI
 
   IMPLICIT NONE
 
@@ -68,7 +68,7 @@ END SUBROUTINE THERMO_AIRWATER_PH_RE
 ! ###################################################################
 SUBROUTINE THERMO_ANELASTIC_AIRWATER_PH_RE(nx,ny,nz, s, e,p, wrk3d)
 
-  USE THERMO_GLOBAL, ONLY : GRATIO, MRATIO
+  USE THERMO_VARS, ONLY : GRATIO, MRATIO
 
   IMPLICIT NONE
 

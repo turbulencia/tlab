@@ -4,7 +4,7 @@
 SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold, ibuffer_npy, &
      u, v, w, z1, a, sl, samples, pdf, txc, wrk1d, wrk2d, wrk3d)
 
-  USE DNS_GLOBAL
+  USE TLAB_VARS
 
   IMPLICIT NONE
 
@@ -33,14 +33,14 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
   jmax_loc = MIN(jmax,jmax - 2*ibuffer_npy +1)
 
   IF ( nfield .LT. L_NFIELDS_MAX ) THEN
-     CALL IO_WRITE_ASCII(efile, 'SL_VORTICITY_PDF. Samples array size.')
-     CALL DNS_STOP(DNS_ERROR_WRKSIZE)
+     CALL TLAB_WRITE_ASCII(efile, 'SL_VORTICITY_PDF. Samples array size.')
+     CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
   ELSE
      nfield = L_NFIELDS_MAX
   ENDIF
   IF ( itxc_size .LT. imax*jmax*kmax*6 ) THEN
-     CALL IO_WRITE_ASCII(efile, 'SL_VORTICITY_PDF. Txc array size.')
-     CALL DNS_STOP(DNS_ERROR_WRKSIZE)
+     CALL TLAB_WRITE_ASCII(efile, 'SL_VORTICITY_PDF. Txc array size.')
+     CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
   ENDIF
 
 ! Offset to be used in SL_BOUNDARY_SAMPLE

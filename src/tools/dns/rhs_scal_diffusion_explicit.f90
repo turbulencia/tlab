@@ -6,21 +6,21 @@
 !# DESCRIPTION
 !#
 !# Computing terms depending on diffusion velocities, i.e. diffusion
-!# term in the species eqns. and enthalpy transport in energy eqn. 
+!# term in the species eqns. and enthalpy transport in energy eqn.
 !#
 !# Using 2nd order derivative finite difference operators
 !#
 !########################################################################
 SUBROUTINE RHS_SCAL_DIFFUSION_EXPLICIT(is, vis, z1, T, zh1, h4, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk2d,wrk3d)
 
-  USE DNS_CONSTANTS, ONLY : efile
-#ifdef TRACE_ON 
-  USE DNS_CONSTANTS, ONLY : tfile 
+  USE TLAB_CONSTANTS, ONLY : efile
+#ifdef TRACE_ON
+  USE TLAB_CONSTANTS, ONLY : tfile
 #endif
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax, isize_field
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : idiffusion, itransport, visc,prandtl,schmidt
-  USE THERMO_GLOBAL, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : idiffusion, visc,prandtl,schmidt
+  USE THERMO_VARS, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
 
   IMPLICIT NONE
 
@@ -37,19 +37,14 @@ SUBROUTINE RHS_SCAL_DIFFUSION_EXPLICIT(is, vis, z1, T, zh1, h4, tmp1,tmp2,tmp3,t
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'ENTERING RHS_SCAL_DIFFUSION_EXPLICIT')
+  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_SCAL_DIFFUSION_EXPLICIT')
 #endif
 
-  IF ( itransport .EQ. EQNS_TRANS_SUTHERLAND .OR. itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
-     CALL IO_WRITE_ASCII(efile,'RHS_SCAL_DIFFUSION_EXPLICIT. Only constant viscosity.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
-
   bcs = 0
-     
+
   IF ( idiffusion .EQ. EQNS_NONE ) THEN; diff = C_0_R;            cond = C_0_R
   ELSE;                                  diff = visc/schmidt(is); cond = visc/prandtl; ENDIF
-     
+
 ! ###################################################################
   CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs, g(1), z1, tmp1, tmp4, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs, g(2), z1, tmp2, tmp4, wrk2d,wrk3d)
@@ -86,7 +81,7 @@ SUBROUTINE RHS_SCAL_DIFFUSION_EXPLICIT(is, vis, z1, T, zh1, h4, tmp1,tmp2,tmp3,t
   ENDIF
 
 #ifdef TRACE_ON
-  CALL IO_WRITE_ASCII(tfile, 'LEAVING RHS_SCAL_DIFFUSION_EXPLICIT')
+  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_SCAL_DIFFUSION_EXPLICIT')
 #endif
 
   RETURN

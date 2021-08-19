@@ -3,8 +3,9 @@ PROGRAM REVERSAL
 #include "types.h"
 #include "dns_const.h"
 
-  USE DNS_GLOBAL
-  USE THERMO_GLOBAL
+  USE TLAB_VARS
+  USE TLAB_PROCS
+  USE THERMO_VARS
 
   IMPLICIT NONE
 
@@ -18,7 +19,7 @@ PROGRAM REVERSAL
   TINTEGER n, nmax, iopt, iup
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL TLAB_START()
 
   imixture = MIXT_TYPE_AIRWATER
   CALL THERMO_INITIALIZE
@@ -111,7 +112,7 @@ PROGRAM REVERSAL
 ! ###################################################################
   IF ( iopt .EQ. 1 .OR. iopt .EQ. 2 ) THEN
      WRITE(21,*) '# x, qt, h, ql, qv, qsat(T), r, T, p, e'
-     r_max = C_0_R      
+     r_max = C_0_R
      r_old = r_1
      x_c   =-C_1_R
      iup   = 0
@@ -121,7 +122,7 @@ PROGRAM REVERSAL
         qt = qt_1 + x*(qt_2-qt_1)
         h  = h_1  + x*(h_2-h_1)
         ep = C_0_R
-        
+
         z1(1) = qt
         CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, ep,p)
         s(1) = h; s(2:3) = z1(1:2)
@@ -186,7 +187,7 @@ PROGRAM REVERSAL
      dummy = (t_2-t_1)/M_REAL(nmax-1)
      t_2 = t
      t_1 = t - dummy
-     DO WHILE ( (t_2-t_1)/t_1 .GT. C_1EM6_R ) 
+     DO WHILE ( (t_2-t_1)/t_1 .GT. C_1EM6_R )
 
         t = C_05_R*(t_2+t_1)
 
@@ -260,7 +261,7 @@ PROGRAM REVERSAL
      dummy = (t_2-t_1)/M_REAL(nmax-1)
      t_2 = t
      t_1 = t - dummy
-     DO WHILE ( (t_2-t_1)/t_1 .GT. C_1EM6_R ) 
+     DO WHILE ( (t_2-t_1)/t_1 .GT. C_1EM6_R )
 
         t = C_05_R*(t_2+t_1)
 
@@ -335,7 +336,7 @@ PROGRAM REVERSAL
      dummy = (t_2-t_1)/M_REAL(nmax-1)
      t_2 = t
      t_1 = t - dummy
-     DO WHILE ( (t_2-t_1)/t_1 .GT. C_1EM6_R ) 
+     DO WHILE ( (t_2-t_1)/t_1 .GT. C_1EM6_R )
 
         t = C_05_R*(t_2+t_1)
 
@@ -410,8 +411,8 @@ PROGRAM REVERSAL
 
   CLOSE(21)
 
-  CALL DNS_STOP
-  
+  CALL TLAB_STOP
+
   STOP
 1010 FORMAT(10(1X,G_FORMAT_R))
 END PROGRAM REVERSAL

@@ -15,7 +15,7 @@
 !########################################################################
 SUBROUTINE FI_SOLENOIDAL(iwall, nx,ny,nz, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
 
   IMPLICIT NONE
 

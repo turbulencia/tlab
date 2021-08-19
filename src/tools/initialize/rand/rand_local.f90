@@ -3,10 +3,11 @@
 
 MODULE RAND_LOCAL
 
-  USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
-  USE DNS_GLOBAL, ONLY : g
-
+  USE TLAB_CONSTANTS, ONLY : efile
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
+  USE TLAB_VARS, ONLY : g
+  USE TLAB_PROCS
+  
   IMPLICIT NONE
   SAVE
 
@@ -90,8 +91,8 @@ CONTAINS
     ! ###################################################################
     IF ( g(3)%size .GT. 1 ) THEN
       IF ( Rxz .NE. C_0_R .OR. Ryz .NE. C_0_R ) THEN ! only 2D case developed
-        CALL IO_WRITE_ASCII(efile,'Terms Rxz and Ryz not developed yet.')
-        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+        CALL TLAB_WRITE_ASCII(efile,'Terms Rxz and Ryz not developed yet.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
       ENDIF
 
       CALL RAND_NORMALIZE(Rzz, w)

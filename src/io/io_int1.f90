@@ -28,10 +28,11 @@
 
 SUBROUTINE IO_READ_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
 
-  USE DNS_CONSTANTS, ONLY : lfile
+  USE TLAB_CONSTANTS, ONLY : lfile
+  USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro, ims_npro_i, ims_npro_k
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_j, ims_offset_k, ims_err 
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_j, ims_offset_k, ims_err
 #endif
 
   IMPLICIT NONE
@@ -78,16 +79,16 @@ SUBROUTINE IO_READ_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
   WRITE(str,*) ny_total; line = TRIM(ADJUSTL(line))//'x'//TRIM(ADJUSTL(str))
   WRITE(str,*) nz_total; line = TRIM(ADJUSTL(line))//'x'//TRIM(ADJUSTL(str))//'...'
 
-  CALL IO_WRITE_ASCII(lfile, line)
+  CALL TLAB_WRITE_ASCII(lfile, line)
 
 #ifdef USE_MPI
 #ifdef USE_MPI_IO
   ndims = 3
-  sizes(1)   = nx_total;     sizes(2)   = ny_total;     sizes(3)   = nz_total 
-  locsize(1) = nx;           locsize(2) = ny;           locsize(3) = nz 
+  sizes(1)   = nx_total;     sizes(2)   = ny_total;     sizes(3)   = nz_total
+  locsize(1) = nx;           locsize(2) = ny;           locsize(3) = nz
   offset(1)  = ims_offset_i; offset(2)  = ims_offset_j; offset(3)  = ims_offset_k
 
-  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
+  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
        MPI_ORDER_FORTRAN, MPI_INTEGER1, subarray, ims_err)
   CALL MPI_Type_commit(subarray, ims_err)
 #endif
@@ -119,7 +120,7 @@ SUBROUTINE IO_READ_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
 
   ELSE
      mpio_disp = 0
-     
+
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -128,11 +129,11 @@ SUBROUTINE IO_READ_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
   mpio_locsize = nx*ny*nz
 
   CALL MPI_File_open(MPI_COMM_WORLD,TRIM(ADJUSTL(name)),&
-       MPI_MODE_RDONLY,MPI_INFO_NULL,mpio_fh, ims_err) 
+       MPI_MODE_RDONLY,MPI_INFO_NULL,mpio_fh, ims_err)
 
-  CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_INTEGER1, subarray, 'native', MPI_INFO_NULL, ims_err) 
-  CALL MPI_File_read_all(mpio_fh, a, mpio_locsize, MPI_INTEGER1, status, ims_err) 
-  CALL MPI_File_close(mpio_fh, ims_err)  
+  CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_INTEGER1, subarray, 'native', MPI_INFO_NULL, ims_err)
+  CALL MPI_File_read_all(mpio_fh, a, mpio_locsize, MPI_INTEGER1, status, ims_err)
+  CALL MPI_File_close(mpio_fh, ims_err)
 #endif
 
 #else
@@ -153,7 +154,7 @@ SUBROUTINE IO_READ_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
 END SUBROUTINE IO_READ_INT1
 
 #undef LOC_UNIT_ID
-#undef LOC_STATUS 
+#undef LOC_STATUS
 
 !########################################################################
 !########################################################################
@@ -162,11 +163,12 @@ END SUBROUTINE IO_READ_INT1
 
 SUBROUTINE IO_WRITE_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
 
-  USE DNS_CONSTANTS, ONLY : lfile
+  USE TLAB_CONSTANTS, ONLY : lfile
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro, ims_npro_i, ims_npro_k
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_j, ims_offset_k, ims_err 
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_j, ims_offset_k, ims_err
 #endif
+  USE TLAB_PROCS
 
   IMPLICIT NONE
 
@@ -210,16 +212,16 @@ SUBROUTINE IO_WRITE_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
   WRITE(str,*) ny_total; line = TRIM(ADJUSTL(line))//'x'//TRIM(ADJUSTL(str))
   WRITE(str,*) nz_total; line = TRIM(ADJUSTL(line))//'x'//TRIM(ADJUSTL(str))//'...'
 
-  CALL IO_WRITE_ASCII(lfile, line)
+  CALL TLAB_WRITE_ASCII(lfile, line)
 
 #ifdef USE_MPI
 #ifdef USE_MPI_IO
   ndims = 3
-  sizes(1)   = nx_total;     sizes(2)   = ny_total;     sizes(3)   = nz_total 
-  locsize(1) = nx;           locsize(2) = ny;           locsize(3) = nz 
+  sizes(1)   = nx_total;     sizes(2)   = ny_total;     sizes(3)   = nz_total
+  locsize(1) = nx;           locsize(2) = ny;           locsize(3) = nz
   offset(1)  = ims_offset_i; offset(2)  = ims_offset_j; offset(3)  = ims_offset_k
 
-  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, & 
+  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
        MPI_ORDER_FORTRAN, MPI_INTEGER1, subarray, ims_err)
   CALL MPI_Type_commit(subarray, ims_err)
 #endif
@@ -235,7 +237,7 @@ SUBROUTINE IO_WRITE_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
 ! -------------------------------------------------------------------
   IF ( ims_pro .EQ. 0 ) THEN
 #include "dns_open_file.h"
-     IF ( iheader .GT. 0 ) THEN 
+     IF ( iheader .GT. 0 ) THEN
         CALL IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total,ny_total,nz_total,nt, params)
         header_offset = 5*SIZEOFINT + isize*SIZEOFREAL ! Displacement to start of field
      ELSE
@@ -256,18 +258,18 @@ SUBROUTINE IO_WRITE_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
   mpio_locsize = nx*ny*nz
 
   CALL MPI_File_open(MPI_COMM_WORLD,TRIM(ADJUSTL(name)),&
-       IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err) 
+       IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err)
 
-  CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_INTEGER1, subarray, 'native', MPI_INFO_NULL, ims_err) 
-  CALL MPI_File_write_all(mpio_fh, a, mpio_locsize, MPI_INTEGER1, status, ims_err) 
-  CALL MPI_File_close(mpio_fh, ims_err)  
-     
+  CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_INTEGER1, subarray, 'native', MPI_INFO_NULL, ims_err)
+  CALL MPI_File_write_all(mpio_fh, a, mpio_locsize, MPI_INTEGER1, status, ims_err)
+  CALL MPI_File_close(mpio_fh, ims_err)
+
 #endif
 
 #else
 ! ###################################################################
 ! Serial case
-! ###################################################################      
+! ###################################################################
 #include "dns_open_file.h"
   IF ( iheader .GT. 0 ) THEN
      CALL IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total,ny_total,nz_total,nt, params)
@@ -281,4 +283,4 @@ SUBROUTINE IO_WRITE_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
 END SUBROUTINE IO_WRITE_INT1
 
 #undef LOC_UNIT_ID
-#undef LOC_STATUS 
+#undef LOC_STATUS

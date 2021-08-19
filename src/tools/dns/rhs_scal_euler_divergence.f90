@@ -3,8 +3,8 @@
 
 SUBROUTINE RHS_SCAL_EULER_DIVERGENCE(rho,u,v,w, z1, zh1, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax, isize_field
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field
+  USE TLAB_VARS, ONLY : g
 
   IMPLICIT NONE
 

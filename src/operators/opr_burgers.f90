@@ -16,8 +16,9 @@
 !########################################################################
 SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 
-  USE DNS_TYPES,     ONLY : grid_dt
-  USE DNS_CONSTANTS, ONLY : efile
+  USE TLAB_TYPES,     ONLY : grid_dt
+  USE TLAB_CONSTANTS, ONLY : efile
+  USE TLAB_PROCS
   IMPLICIT NONE
 
   TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity
@@ -36,88 +37,12 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 
 ! ###################################################################
   IF ( bcs(1,2) + bcs(2,2) .GT. 0 ) THEN
-     CALL IO_WRITE_ASCII(efile,'OPR_BURGERS. Only developed for biased BCs.')
-     CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+     CALL TLAB_WRITE_ASCII(efile,'OPR_BURGERS. Only developed for biased BCs.')
+     CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
-! First derivative
-  CALL OPR_PARTIAL1(nlines, bcs, g, s,wrk3d, wrk2d)
-
-! -------------------------------------------------------------------
-! Periodic case
-! -------------------------------------------------------------------
-  IF ( g%periodic ) THEN
-     SELECT CASE( g%mode_fdm )
-
-     CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C2N4P_RHS(g%size,nlines, s, result)
-
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
-       ! CALL FDM_C2N6P_RHS(g%size,nlines, s, result)
-       CALL FDM_C2N6HP_RHS(g%size,nlines, s, result)
-
-     CASE( FDM_COM8_JACOBIAN )                  ! Not yet implemented; default to 6. order
-        CALL FDM_C2N6P_RHS(g%size,nlines, s, result)
-
-     END SELECT
-
-     ip = is*5 ! LU decomposition containing the diffusivity
-     CALL TRIDPSS(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3),g%lu2d(1,ip+4),g%lu2d(1,ip+5), result, wrk2d)
-! Trying speed-up by includind operation at the end of this routine inside tridpss, to reduce memory access
-!     CALL TRIDPSS_ADD(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3),g%lu2d(1,ip+4),g%lu2d(1,ip+5), result, u,wrk3d, wrk2d)
-
-! -------------------------------------------------------------------
-! Nonperiodic case
-! -------------------------------------------------------------------
-  ELSE
-! ! Check whether we need 1. order derivative correction
-!      wrk2d(1:g%size) = C_0_R
-!      IF ( .NOT. g%uniform ) THEN
-!         IF ( g%mode_fdm .eq. FDM_COM4_JACOBIAN .OR. &
-!              g%mode_fdm .eq. FDM_COM6_JACOBIAN .OR. &
-!              g%mode_fdm .eq. FDM_COM8_JACOBIAN      ) THEN
-!            DO ip = 1,g%size
-!               wrk2d(ip) = g%jac(ip,2) /( g%jac(ip,1) *g%jac(ip,1) ) /reynolds
-! !           result(:,ip) = result(:,ip) - (wrk2d(ip) + u(:,ip)) *wrk3d(:,ip) ! inside tridss_add
-!            ENDDO
-
-!         ENDIF
-!      ENDIF
-
-     SELECT CASE( g%mode_fdm )
-
-     CASE( FDM_COM4_JACOBIAN )
-        IF ( g%uniform ) THEN
-           CALL FDM_C2N4_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        s,        result)
-        ELSE ! Not yet implemented
-        ENDIF
-     CASE( FDM_COM6_JACOBIAN )
-        IF ( g%uniform ) THEN
-          ! CALL FDM_C2N6_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        s,        result)
-          CALL FDM_C2N6H_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        s,        result)
-        ELSE
-          ! CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, s, wrk3d, result)
-          CALL FDM_C2N6HNJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, s, wrk3d, result)
-        ENDIF
-
-     CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented; defaulting to 6. order
-        IF ( g%uniform ) THEN
-           CALL FDM_C2N6_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        s,        result)
-        ELSE
-           CALL FDM_C2N6NJ_RHS(g%size,nlines, bcs(1,2),bcs(2,2), g%jac, s, wrk3d, result)
-        ENDIF
-
-     CASE( FDM_COM6_DIRECT   )
-        CALL FDM_C2N6ND_RHS(g%size,nlines, g%lu2(1,4), s, result)
-
-     END SELECT
-
-     ip = is*3 ! LU decomposition containing the diffusivity
-     CALL TRIDSS(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3), result)
-! Trying speed-up by includind operation at the end of this routine inside tridss, to reduce memory access
-!     CALL TRIDSS_ADD(g%size,nlines, g%lu2d(1,ip+1),g%lu2d(1,ip+2),g%lu2d(1,ip+3), result, u,wrk3d, wrk2d)
-
-  ENDIF
+  CALL OPR_PARTIAL2D(is,nlines,bcs,g,s,result,wrk2d,wrk3d)  ! wrk3d: 1st derivative
+                                                            ! result:2nd derivative including diffusivity
 
 ! ###################################################################
 ! Operation; diffusivity included in 2.-order derivative
@@ -152,9 +77,11 @@ END SUBROUTINE OPR_BURGERS
 !########################################################################
 SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -171,7 +98,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
   TINTEGER nyz
   TREAL, DIMENSION(:), POINTER :: p_a,p_b,p_c,p_d, p_vel
 #ifdef USE_MPI
-  TINTEGER, PARAMETER :: id = DNS_MPI_I_PARTIAL
+  TINTEGER, PARAMETER :: id = TLAB_MPI_I_PARTIAL
 #endif
 
 ! ###################################################################
@@ -180,7 +107,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL DNS_MPI_TRPF_I(s, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL TLAB_MPI_TRPF_I(s, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
      p_a => result
      p_b => tmp1
      p_c => wrk3d
@@ -223,7 +150,7 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL DNS_MPI_TRPB_I(p_c, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+       CALL TLAB_MPI_TRPB_I(p_c, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
   ENDIF
 #endif
 
@@ -236,8 +163,8 @@ END SUBROUTINE OPR_BURGERS_X
 !########################################################################
 SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
-  USE DNS_GLOBAL, ONLY : subsidence
+  USE TLAB_TYPES, ONLY : grid_dt
+  USE TLAB_VARS, ONLY : subsidence
   IMPLICIT NONE
 
   TINTEGER ivel, is, nx,ny,nz
@@ -316,9 +243,11 @@ END SUBROUTINE OPR_BURGERS_Y
 !########################################################################
 SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 #ifdef USE_MPI
-  USE DNS_MPI
+USE TLAB_MPI_VARS, ONLY : ims_npro_k
+USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -335,7 +264,7 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
   TINTEGER nxy
   TREAL, DIMENSION(:), POINTER :: p_a,p_b,p_c, p_vel
 #ifdef USE_MPI
-  TINTEGER, PARAMETER :: id  = DNS_MPI_K_PARTIAL
+  TINTEGER, PARAMETER :: id  = TLAB_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
@@ -349,7 +278,7 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     CALL DNS_MPI_TRPF_K(s, tmp1, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPF_K(s, tmp1, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      p_a => tmp1
      p_b => result
      p_c => wrk3d
@@ -385,7 +314,7 @@ SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     CALL DNS_MPI_TRPB_K(p_c, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPB_K(p_c, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF
 #endif
 

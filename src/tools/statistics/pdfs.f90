@@ -6,13 +6,15 @@
 
 PROGRAM PDFS
 
-  USE DNS_TYPES,     ONLY : pointers_dt
-  USE DNS_CONSTANTS, ONLY : efile,lfile ,gfile, tag_flow,tag_scal
-  USE DNS_GLOBAL
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE TLAB_TYPES,     ONLY : pointers_dt
+  USE TLAB_CONSTANTS, ONLY : ifile,efile,lfile ,gfile, tag_flow,tag_scal
+  USE TLAB_VARS
+  USE TLAB_ARRAYS
+  USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_PROCS
 #endif
+  USE THERMO_VARS, ONLY : imixture
 
   IMPLICIT NONE
 
@@ -23,10 +25,9 @@ PROGRAM PDFS
   TINTEGER, PARAMETER :: igate_size_max =   8
   TINTEGER, PARAMETER :: params_size_max =  2
 
-  TREAL,      ALLOCATABLE, SAVE   :: x(:,:), y(:,:), z(:,:)
-  TREAL,      ALLOCATABLE, TARGET :: s(:,:), q(:,:), txc(:,:)
-  TREAL,      ALLOCATABLE         :: wrk2d(:,:)
-  TREAL,      ALLOCATABLE         :: pdf(:), y_aux(:), wrk1d(:), wrk3d(:)
+  ! -------------------------------------------------------------------
+  ! Additional local arrays
+  TREAL,      ALLOCATABLE         :: pdf(:), y_aux(:)
   INTEGER(1), ALLOCATABLE         :: gate(:)
   TYPE(pointers_dt)               :: vars(16)
 
@@ -34,14 +35,14 @@ PROGRAM PDFS
   ! Local variables
   ! -------------------------------------------------------------------
   CHARACTER*512 sRes
-  CHARACTER*32 fname, inifile, bakfile
-  CHARACTER*64 str, line
+  CHARACTER*32 fname, bakfile
+  CHARACTER*64 str
 
   TINTEGER opt_main, opt_block, opt_bins(2)
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
-  TINTEGER nfield, ifield, isize_wrk3d, ij, is, bcs(2,2), isize_pdf
+  TINTEGER nfield, ifield, ij, is, bcs(2,2), isize_pdf
   TREAL dummy, eloc1, eloc2, eloc3, cos1, cos2, cos3
-  TINTEGER jmax_aux, iread_flow, iread_scal, ierr, idummy
+  TINTEGER jmax_aux, iread_flow, iread_scal, idummy
   TINTEGER ibc(16)
   TREAL vmin(16), vmax(16)
   LOGICAL reduce_data
@@ -65,15 +66,14 @@ PROGRAM PDFS
   !########################################################################
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_INITIALIZE
+  CALL TLAB_START()
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
   ! -------------------------------------------------------------------
@@ -89,7 +89,7 @@ PROGRAM PDFS
   gate_level= 0
   opt_bins  =16
 
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamPdfs', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamPdfs', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_INTEGER(sRes, iopt_size, opt_vec)
 
@@ -134,13 +134,13 @@ PROGRAM PDFS
   END IF
 
   IF ( opt_main < 0 ) THEN ! Check
-    CALL IO_WRITE_ASCII(efile, 'PDFS. Missing input [ParamPdfs] in dns.ini.')
-    CALL DNS_STOP(DNS_ERROR_INVALOPT)
+    CALL TLAB_WRITE_ASCII(efile, 'PDFS. Missing input [ParamPdfs] in dns.ini.')
+    CALL TLAB_STOP(DNS_ERROR_INVALOPT)
   END IF
 
   IF ( opt_block < 1 ) THEN
-    CALL IO_WRITE_ASCII(efile, 'PDFS. Invalid value of opt_block.')
-    CALL DNS_STOP(DNS_ERROR_INVALOPT)
+    CALL TLAB_WRITE_ASCII(efile, 'PDFS. Invalid value of opt_block.')
+    CALL TLAB_STOP(DNS_ERROR_INVALOPT)
   END IF
 
   ! -------------------------------------------------------------------
@@ -213,9 +213,6 @@ PROGRAM PDFS
   ! -------------------------------------------------------------------
   ! Allocating memory space
   ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  inb_wrk2d = MAX(inb_wrk2d,4)
-  ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
   ALLOCATE(gate(isize_field))
 
   ! in case g(2)%size is not divisible by opt_block, drop the upper most planes
@@ -226,13 +223,17 @@ PROGRAM PDFS
   ! Space for the 3D pdf at jmax_aux+1
   ALLOCATE( pdf( isize_pdf *(jmax_aux+1) *nfield ) )
 
+  inb_wrk2d = MAX(inb_wrk2d,4)
   isize_wrk3d = MAX(isize_field,isize_txc_field)
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
   ! -------------------------------------------------------------------
   ! Initialize
   ! -------------------------------------------------------------------
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   IF ( ifourier == 1 ) THEN         ! For Poisson solver
     CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
@@ -259,24 +260,19 @@ PROGRAM PDFS
     itime = itime_vec(it)
 
     WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))
-    CALL IO_WRITE_ASCII(lfile, sRes)
+    CALL TLAB_WRITE_ASCII(lfile, sRes)
 
     IF ( iread_scal == 1 ) THEN
       WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
       CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
-
-      IF      ( imixture == MIXT_TYPE_AIRWATER .AND. damkohler(3) <= C_0_R ) THEN ! Calculate q_l
-        CALL THERMO_AIRWATER_PH(imax,jmax,kmax, s(1,2),s(1,1), epbackground,pbackground)
-      ELSE IF ( imixture == MIXT_TYPE_AIRWATER_LINEAR                        ) THEN
-        CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
-      END IF
-
     END IF
 
     IF ( iread_flow == 1 ) THEN
       WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-      CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
+      CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q, wrk3d)
     END IF
+
+    CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
 
     ! -------------------------------------------------------------------
     ! Calculate intermittency
@@ -292,7 +288,7 @@ PROGRAM PDFS
         opt_cond_scal = inb_scal_array
       END IF
 
-      CALL IO_WRITE_ASCII(lfile,'Calculating partition...')
+      CALL TLAB_WRITE_ASCII(lfile,'Calculating partition...')
       CALL FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
           imax,jmax,kmax, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
 
@@ -314,26 +310,16 @@ PROGRAM PDFS
       ! Main variable 2D-PDF
       ! ###################################################################
     CASE( 1 )
-      IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
-        CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
-
-      ELSE
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
-
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,1),txc(1,2),txc(1,3), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1))
-
-      END IF
-
       ifield = ifield+1; vars(ifield)%field => q(:,1);   vars(ifield)%tag = 'u'
       ifield = ifield+1; vars(ifield)%field => q(:,2);   vars(ifield)%tag = 'v'
       ifield = ifield+1; vars(ifield)%field => q(:,3);   vars(ifield)%tag = 'w'
-      ifield = ifield+1; vars(ifield)%field => txc(:,1); vars(ifield)%tag = 'p'
-      IF ( imode_eqns == DNS_EQNS_INTERNAL .OR. imode_eqns == DNS_EQNS_TOTAL ) THEN
-        ifield = ifield+1; vars(ifield)%field => txc(:,2); vars(ifield)%tag = 'r'
-        ifield = ifield+1; vars(ifield)%field => txc(:,3); vars(ifield)%tag = 't'
+      IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
+        CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
+        ifield = ifield+1; vars(ifield)%field => txc(:,1); vars(ifield)%tag = 'p'
+      ELSE
+        ifield = ifield+1; vars(ifield)%field => q(:,6); vars(ifield)%tag = 'p'
+        ifield = ifield+1; vars(ifield)%field => q(:,5); vars(ifield)%tag = 'r'
+        ifield = ifield+1; vars(ifield)%field => q(:,7); vars(ifield)%tag = 't'
       END IF
 
       DO is = 1,inb_scal_array
@@ -349,7 +335,7 @@ PROGRAM PDFS
       ! Scalar gradient equation
       ! ###################################################################
     CASE ( 2 )
-      CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient equation...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing scalar gradient equation...')
 
       CALL FI_GRADIENT_PRODUCTION(imax,jmax,kmax, s, q(1,1),q(1,2),q(1,3), &
           txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -370,7 +356,7 @@ PROGRAM PDFS
       ! Enstrophy equation
       ! ###################################################################
     CASE ( 3 )
-      CALL IO_WRITE_ASCII(lfile,'Computing enstrophy equation...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing enstrophy equation...')
 
       IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
         IF ( buoyancy%TYPE == EQNS_NONE ) THEN
@@ -379,7 +365,7 @@ PROGRAM PDFS
           IF ( buoyancy%TYPE == EQNS_EXPLICIT ) THEN
             CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d)
           ELSE
-            wrk1d(1:jmax) = C_0_R
+            wrk1d(1:jmax,1) = C_0_R
             CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
           END IF
           s(1:isize_field,1) = wrk3d(1:isize_field) *buoyancy%vector(2)
@@ -391,14 +377,7 @@ PROGRAM PDFS
         END IF
 
       ELSE
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, txc(1,1), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, txc(1,2), wrk3d)! density
-
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, txc(1,1), txc(1,2), txc(1,3), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, txc(1,2), txc(1,3), txc(1,1)) ! pressure in txc1
-        ! result vector in txc4, txc5, txc6
-        CALL FI_VORTICITY_BAROCLINIC(imax,jmax,kmax, txc(1,2),txc(1,1), txc(1,4), txc(1,3),txc(1,7), wrk2d,wrk3d)
+        CALL FI_VORTICITY_BAROCLINIC(imax,jmax,kmax,q(1,5),q(1,6), txc(1,4), txc(1,3),txc(1,7), wrk2d,wrk3d)
       END IF
       ! result vector in txc1, txc2, txc3
       CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3), txc(1,7), wrk2d,wrk3d)
@@ -432,21 +411,16 @@ PROGRAM PDFS
       ! Strain equation
       ! ###################################################################
     CASE ( 4 )
-      CALL IO_WRITE_ASCII(lfile,'Computing strain equation...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing strain equation...')
 
       IF ( imode_eqns == DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns == DNS_EQNS_ANELASTIC ) THEN
         CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
-
+        CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), &
+            txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       ELSE
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname)) !need to read again thermo data
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i4, isize_wrk3d, q(1,4), wrk3d)! energy
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i5,i5, isize_wrk3d, q(1,5), wrk3d)! density
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), q(1,7), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), q(1,7), txc(1,1))         ! pressure in txc1
-
+        CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), q(1,6), &
+            txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       END IF
-      CALL FI_STRAIN_PRESSURE(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), &
-          txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       txc(1:isize_field,1) = C_2_R *txc(1:isize_field,2)
 
       CALL FI_STRAIN_PRODUCTION(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), &
@@ -471,7 +445,7 @@ PROGRAM PDFS
       ! Velocity gradient invariants
       ! ###################################################################
     CASE ( 5 )
-      CALL IO_WRITE_ASCII(lfile,'Computing velocity gradient invariants...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing velocity gradient invariants...')
 
       CALL FI_INVARIANT_R(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       CALL FI_INVARIANT_Q(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,2), txc(1,3),txc(1,4),txc(1,5), wrk2d,wrk3d)
@@ -495,7 +469,7 @@ PROGRAM PDFS
       ! Chi flamelet equation PDF
       ! ###################################################################
     CASE ( 6 )
-      CALL IO_WRITE_ASCII(lfile,'Computing flamelet equation...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing flamelet equation...')
 
       CALL FI_STRAIN_A(imax,jmax,kmax, s, q(1,1),q(1,2),q(1,3), &
           txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
@@ -507,7 +481,7 @@ PROGRAM PDFS
       ! Joint PDF W^2 and 2S^2
       ! ###################################################################
     CASE ( 7 )
-      CALL IO_WRITE_ASCII(lfile,'Computing enstrophy-strain pdf...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing enstrophy-strain pdf...')
 
       CALL FI_VORTICITY(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3), wrk2d,wrk3d)
       CALL FI_STRAIN(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,2), txc(1,3), txc(1,4), wrk2d,wrk3d)
@@ -527,7 +501,7 @@ PROGRAM PDFS
       ! Joint PDF Scalar and Scalar Gradient
       ! ###################################################################
     CASE ( 9 )
-      CALL IO_WRITE_ASCII(lfile,'Computing scalar-scalar--gradient pdf...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing scalar-scalar--gradient pdf...')
 
       CALL FI_GRADIENT(imax,jmax,kmax, s,txc(1,1), txc(1,2), wrk2d,wrk3d)
       txc(1:isize_field,2) = LOG(txc(1:isize_field,1))
@@ -558,7 +532,7 @@ PROGRAM PDFS
       ! Scalar gradient components
       ! ###################################################################
     CASE ( 10 )
-      CALL IO_WRITE_ASCII(lfile,'Computing scalar gradient components...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing scalar gradient components...')
 
       CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), s, txc(1,1), wrk3d, wrk2d,wrk3d)
       CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s, txc(1,2), wrk3d, wrk2d,wrk3d)
@@ -583,7 +557,7 @@ PROGRAM PDFS
       ! eigenvalues of rate-of-strain tensor
       ! ###################################################################
     CASE ( 11 )
-      CALL IO_WRITE_ASCII(lfile,'Computing eigenvalues of Sij...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing eigenvalues of Sij...')
 
       CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       CALL FI_TENSOR_EIGENVALUES(imax,jmax,kmax, txc(1,1), txc(1,7)) ! txc7-txc9
@@ -596,7 +570,7 @@ PROGRAM PDFS
       ! eigenframe of rate-of-strain tensor
       ! ###################################################################
     CASE ( 12 )
-      CALL IO_WRITE_ASCII(lfile,'Computing eigenframe of Sij...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing eigenframe of Sij...')
 
       CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       CALL FI_TENSOR_EIGENVALUES(imax,jmax,kmax, txc(1,1), txc(1,7)) ! txc7-txc9
@@ -640,7 +614,7 @@ PROGRAM PDFS
       ! Longitudinal velocity derivatives
       ! ###################################################################
     CASE ( 13 )
-      CALL IO_WRITE_ASCII(lfile,'Computing longitudinal velocity derivatives...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing longitudinal velocity derivatives...')
 
       CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), q(1,1), txc(1,1), wrk3d, wrk2d,wrk3d)
       CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), q(1,2), txc(1,2), wrk3d, wrk2d,wrk3d)
@@ -654,7 +628,7 @@ PROGRAM PDFS
       ! Potential vorticity
       ! ###################################################################
     CASE ( 14 )
-      CALL IO_WRITE_ASCII(lfile,'Computing potntial vorticity...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing potntial vorticity...')
 
       CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
       txc(1:isize_field,6) = txc(1:isize_field,1)**2 +txc(1:isize_field,2)**2 +txc(1:isize_field,3)**2 ! Enstrophy
@@ -682,13 +656,13 @@ PROGRAM PDFS
       ! Analysis of B and V
       ! ###################################################################
     CASE ( 15 )
-      CALL IO_WRITE_ASCII(lfile,'Computing analysis of B and V...')
+      CALL TLAB_WRITE_ASCII(lfile,'Computing analysis of B and V...')
 
       ifield = ifield+1; vars(ifield)%field => txc(:,1); vars(ifield)%tag = 'b'; ibc(ifield) = 1
       IF ( buoyancy%TYPE == EQNS_EXPLICIT ) THEN
         CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, txc(1,1))
       ELSE
-        wrk1d(1:jmax) = C_0_R
+        wrk1d(1:jmax,1) = C_0_R
         CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, txc(1,1), wrk1d)
       END IF
       dummy =  C_1_R /froude
@@ -788,8 +762,8 @@ PROGRAM PDFS
     ! ###################################################################
     IF ( ifield > 0 ) THEN
       IF ( nfield < ifield ) THEN
-        CALL IO_WRITE_ASCII(efile, C_FILE_LOC//'. Array space nfield incorrect.')
-        CALL DNS_STOP(DNS_ERROR_WRKSIZE)
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Array space nfield incorrect.')
+        CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
       END IF
 
       IF (  jmax_aux*opt_block /= g(2)%size .AND. reduce_data ) THEN
@@ -806,8 +780,5 @@ PROGRAM PDFS
 
   END DO
 
-  CALL DNS_END(0)
-
-  STOP
-
+  CALL TLAB_STOP(0)
 END PROGRAM PDFS

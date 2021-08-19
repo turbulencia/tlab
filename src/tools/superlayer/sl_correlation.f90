@@ -10,10 +10,10 @@
 !#
 !########################################################################
 PROGRAM SL_CORRELATION
-  
-  USE DNS_GLOBAL
+
+  USE TLAB_VARS
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -37,7 +37,7 @@ PROGRAM SL_CORRELATION
 
   TARGET q
 
-  TINTEGER  isize_wrk3d, ilog
+  TINTEGER  ilog
   CHARACTER*32 fname
 
   TINTEGER itime_size_max, itime_size, i
@@ -56,14 +56,14 @@ PROGRAM SL_CORRELATION
   TREAL, DIMENSION(:),   POINTER :: u, v, w
 
   TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
-  
+
 ! ###################################################################
-  CALL DNS_INITIALIZE
+  CALL DNS_START
 
   CALL DNS_READ_GLOBAL('dns.ini')
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
   isize_wrk3d = imax*jmax*kmax
@@ -139,9 +139,12 @@ PROGRAM SL_CORRELATION
 ! NONE
 
 ! -------------------------------------------------------------------
-! Read the grid 
+! Read the grid
 ! -------------------------------------------------------------------
-#include "dns_read_grid.h"
+CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+CALL FDM_INITIALIZE(x, g(1), wrk1d)
+CALL FDM_INITIALIZE(y, g(2), wrk1d)
+CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! ###################################################################
 ! Define pointers
@@ -174,7 +177,5 @@ PROGRAM SL_CORRELATION
 
   ENDDO
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL TLAB_STOP(0)
 END PROGRAM SL_CORRELATION

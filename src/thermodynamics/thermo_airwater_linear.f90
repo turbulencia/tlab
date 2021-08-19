@@ -18,8 +18,8 @@
 !########################################################################
 SUBROUTINE THERMO_AIRWATER_LINEAR(nx,ny,nz, s, l)
   
-  USE DNS_GLOBAL,    ONLY : inb_scal
-  USE THERMO_GLOBAL, ONLY : thermo_param
+  USE TLAB_VARS,    ONLY : inb_scal
+  USE THERMO_VARS, ONLY : thermo_param
   
   IMPLICIT NONE
   
@@ -64,8 +64,8 @@ END SUBROUTINE THERMO_AIRWATER_LINEAR
 !########################################################################
 SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, xi,der1,der2)
   
-  USE DNS_GLOBAL, ONLY : inb_scal
-  USE THERMO_GLOBAL, ONLY : thermo_param
+  USE TLAB_VARS, ONLY : inb_scal
+  USE THERMO_VARS, ONLY : thermo_param
   
   IMPLICIT NONE
   

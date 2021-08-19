@@ -6,48 +6,45 @@
 
 PROGRAM INIRAND
 
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
+  USE TLAB_CONSTANTS
+  USE TLAB_VARS
+  USE TLAB_ARRAYS
+  USE TLAB_PROCS
+#ifdef USE_MPI
+  USE TLAB_MPI_PROCS
+#endif
   USE RAND_LOCAL
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro
+  USE TLAB_MPI_VARS, ONLY : ims_pro
 #endif
 
   IMPLICIT NONE
 
   ! -------------------------------------------------------------------
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q, s, txc
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
-
-  TINTEGER iq, is, isize_wrk3d, ierr
-
-  CHARACTER*64 str, line
-  CHARACTER*32 inifile
+  TINTEGER iq, is
 
   ! ###################################################################
-  inifile = 'dns.ini'
+  CALL TLAB_START()
 
-  CALL DNS_INITIALIZE
-
-  CALL DNS_READ_GLOBAL(inifile)
-  CALL RAND_READ_LOCAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
+  CALL RAND_READ_LOCAL(ifile)
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
   isize_wrk3d = isize_txc_field
 
   inb_txc = 3
 
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   ! ###################################################################
-  CALL IO_WRITE_ASCII(lfile,'Initializing random fiels.')
+  CALL TLAB_WRITE_ASCII(lfile,'Initializing random fiels.')
 
 #ifdef USE_MPI
   seed = seed + ims_pro         ! seed for random generator
@@ -75,7 +72,5 @@ PROGRAM INIRAND
   ENDDO
   CALL DNS_WRITE_FIELDS('scal.rand', i1, imax,jmax,kmax, inb_scal, isize_field, s, txc)
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL TLAB_STOP(0)
 END PROGRAM INIRAND

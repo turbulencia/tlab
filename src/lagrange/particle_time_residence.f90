@@ -13,8 +13,8 @@
 !########################################################################
 SUBROUTINE PARTICLE_TIME_RESIDENCE(dtime, particle_number, l_q)
 
-  USE DNS_GLOBAL,      ONLY : isize_particle, inb_part_array
-  USE LAGRANGE_GLOBAL, ONLY : l_y_lambda, l_y_base
+  USE TLAB_VARS,      ONLY : isize_particle, inb_part_array
+  USE LAGRANGE_VARS, ONLY : l_y_lambda, l_y_base
 
   IMPLICIT NONE
 
@@ -43,9 +43,9 @@ END SUBROUTINE PARTICLE_TIME_RESIDENCE
 !########################################################################
 SUBROUTINE PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q)
 
-  USE DNS_GLOBAL, ONLY : isize_particle, inb_part_array
+  USE TLAB_VARS, ONLY : isize_particle, inb_part_array
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE

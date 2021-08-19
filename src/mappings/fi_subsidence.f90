@@ -3,8 +3,8 @@
 
 SUBROUTINE FI_SUBSIDENCE(subsidence, nx,ny,nz, s, source, wrk1d,wrk2d,wrk3d)
 
-  USE DNS_TYPES,  ONLY : term_dt
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_TYPES,  ONLY : term_dt
+  USE TLAB_VARS, ONLY : g
 
   IMPLICIT NONE
 

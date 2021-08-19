@@ -21,7 +21,7 @@ END MODULE DNS_MPI
 MODULE DNS_GLOBAL
   IMPLICIT NONE
   SAVE
-  
+
   TINTEGER :: imax_total, jmax_total, kmax_total
 
 END MODULE DNS_GLOBAL
@@ -29,11 +29,11 @@ END MODULE DNS_GLOBAL
 !########################################################################
 PROGRAM VMPI_IO
 
-  USE DNS_MPI
-  USE DNS_GLOBAL
+  USE TLAB_MPI_VARS
+  USE TLAB_VARS
 
   IMPLICIT NONE
-  
+
 #ifdef USE_MPI
 #include "mpif.h"
 #endif
@@ -73,25 +73,25 @@ PROGRAM VMPI_IO
   ALLOCATE(wrk3d(imax*jmax*kmax))
 
 ! ###################################################################
-! from DNS_INITIALIZE
+! from DNS_START
   call MPI_INIT(ims_err)
   call MPI_COMM_SIZE(MPI_COMM_WORLD,ims_npro,ims_err)
   call MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro, ims_err)
 
 ! ###################################################################
-! from DNS_MPI_INITIALIZE
+! from TLAB_MPI_INITIALIZE
   ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0
   ims_pro_k =     ims_pro/ims_npro_i  ! Starting at 0
-  
+
   ims_offset_i = ims_pro_i *imax
   ims_offset_j = 0
   ims_offset_k = ims_pro_k *kmax
-  
+
 !  ims_map_i(1) = ims_pro_k*ims_npro_i
 !  DO ip = 2,ims_npro_i
 !     ims_map_i(ip) = ims_map_i(ip-1) + 1
 !  ENDDO
-  
+
 !  ims_map_k(1) = ims_pro_i
 !  DO ip = 2,ims_npro_k
 !     ims_map_k(ip) = ims_map_k(ip-1) + ims_npro_i
@@ -143,9 +143,9 @@ END PROGRAM VMPI_IO
 !# DESCRIPTION
 !#
 !# Read file. There are USE_MPI (only MPI_IO) and SERIAL modes
-!# 
+!#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 #define LOC_UNIT_ID 54
@@ -154,9 +154,9 @@ END PROGRAM VMPI_IO
 
 SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk)
 
-  USE DNS_GLOBAL,ONLY : imax_total,jmax_total,kmax_total
+  USE TLAB_VARS,ONLY : imax_total,jmax_total,kmax_total
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE
@@ -209,7 +209,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 
   ELSE
      mpio_disp = 0
-     
+
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -227,8 +227,8 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
   CALL MPI_FILE_READ_AT_ALL(mpio_fh, mpio_locoff, p_read, mpio_locsize, MPI_REAL8, status, ims_err)
 
 !  IF ( ims_npro_i .GT. 1 ) THEN
-!     id  = DNS_MPI_I_PARTIAL
-!     CALL DNS_MPI_TRPB_I(p_read, a, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+!     id  = TLAB_MPI_I_PARTIAL
+!     CALL TLAB_MPI_TRPB_I(p_read, a, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 !  ENDIF
 
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
@@ -239,7 +239,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 #else
 ! ###################################################################
 ! Serial case
-! ###################################################################      
+! ###################################################################
   OPEN(LOC_UNIT_ID,file=name,status=LOC_STATUS,form='unformatted',access='stream')
   REWIND(LOC_UNIT_ID)
 
@@ -265,7 +265,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 END SUBROUTINE IO_READ_FIELDS_SPLIT
 
 #undef LOC_UNIT_ID
-#undef LOC_STATUS 
+#undef LOC_STATUS
 
 !########################################################################
 !# Tool/Library DNS
@@ -280,7 +280,7 @@ END SUBROUTINE IO_READ_FIELDS_SPLIT
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 #define LOC_UNIT_ID 55
@@ -288,9 +288,9 @@ END SUBROUTINE IO_READ_FIELDS_SPLIT
 
 SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk)
 
-  USE DNS_GLOBAL, ONLY : imax_total,jmax_total,kmax_total
+  USE TLAB_VARS, ONLY : imax_total,jmax_total,kmax_total
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE
@@ -325,12 +325,12 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 ! -------------------------------------------------------------------
   IF ( ims_pro .EQ. 0 ) THEN
      OPEN(LOC_UNIT_ID,file=name,status=LOC_STATUS,form='unformatted',access='stream')
-     IF ( iheader .GT. 0 ) THEN 
+     IF ( iheader .GT. 0 ) THEN
         CALL IO_WRITE_HEADER(LOC_UNIT_ID, isize, imax_total,jmax_total,kmax_total,nt, params)
 
 ! Displacement to start of field
         header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
-        
+
      ELSE
         header_offset = 0
 
@@ -348,8 +348,8 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 ! fields
 ! -------------------------------------------------------------------
   IF ( ims_npro_i .GT. 1 ) THEN
-!     id  = DNS_MPI_I_PARTIAL
-!     CALL DNS_MPI_TRPF_I(a, wrk, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+!     id  = TLAB_MPI_I_PARTIAL
+!     CALL TLAB_MPI_TRPF_I(a, wrk, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      p_write => wrk
   ELSE
      p_write => a
@@ -371,7 +371,7 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 #else
 ! ###################################################################
 ! Serial case
-! ###################################################################      
+! ###################################################################
   OPEN(LOC_UNIT_ID,file=name,status=LOC_STATUS,form='unformatted',access='stream')
 
 ! -------------------------------------------------------------------
@@ -406,7 +406,7 @@ END SUBROUTINE IO_WRITE_FIELDS_SPLIT
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 SUBROUTINE IO_READ_HEADER(unit, offset, nx,ny,nz,nt, params)
@@ -422,26 +422,26 @@ SUBROUTINE IO_READ_HEADER(unit, offset, nx,ny,nz,nt, params)
 !########################################################################
   READ(unit) offset, nx_loc, ny_loc, nz_loc, nt_loc
 
-  isize = offset - 5*SIZEOFINT 
+  isize = offset - 5*SIZEOFINT
 !  IF ( isize .GT. 0 .AND. MOD(isize,SIZEOFREAL) .EQ. 0 ) THEN
      isize = isize/SIZEOFREAL
      READ(unit) params(1:isize)
 
 !  ELSE
-!     CALL IO_WRITE_ASCII(efile,'IO_READ_HEADER. Header format incorrect.')
-!     CALL DNS_STOP(DNS_ERROR_RECLEN)
+!     CALL TLAB_WRITE_ASCII(efile,'IO_READ_HEADER. Header format incorrect.')
+!     CALL TLAB_STOP(DNS_ERROR_RECLEN)
 
 !  ENDIF
 
 ! Check
 !  IF ( nx .NE. nx_loc .OR. ny .NE. ny_loc .OR. nz .NE. nz_loc ) THEN
 !     CLOSE(unit)
-!     CALL IO_WRITE_ASCII(efile, 'IO_READ_HEADER: Grid size mismatch')
-!     CALL DNS_STOP(DNS_ERROR_DIMGRID)
+!     CALL TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER: Grid size mismatch')
+!     CALL TLAB_STOP(DNS_ERROR_DIMGRID)
 !  ENDIF
 
 !  IF ( nt .NE. nt_loc ) THEN
-!     CALL IO_WRITE_ASCII(wfile, 'IO_READ_HEADER: ItNumber size mismatch')
+!     CALL TLAB_WRITE_ASCII(wfile, 'IO_READ_HEADER: ItNumber size mismatch')
 !     nt = nt_loc
 !  ENDIF
 
@@ -461,11 +461,11 @@ END SUBROUTINE IO_READ_HEADER
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 SUBROUTINE IO_WRITE_HEADER(unit, isize, nx,ny,nz,nt, params)
-  
+
   IMPLICIT NONE
 
   TINTEGER unit, isize, nx,ny,nz,nt

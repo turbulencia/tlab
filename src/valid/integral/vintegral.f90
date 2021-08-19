@@ -3,18 +3,18 @@
 
 PROGRAM VINTEGRAL
 
-  USE DNS_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES, ONLY : grid_dt
 
   IMPLICIT NONE
-  
+
 #include "integers.h"
-  
+
   TYPE(grid_dt) :: g
   TINTEGER imax, jmax, kmax, i, itype, inb_grid, ibc, bcs(2,2)
   PARAMETER(imax=1024, inb_grid=3+4*3+4*3+1*5)
   TREAL x_0
   TREAL, DIMENSION(imax,inb_grid) :: x
-  TREAL u(imax), du1_a(imax), w_n(imax), dw1_n(imax), v(imax), f(imax)!, dv1_a(imax), du2_a(imax)
+  TREAL u(imax), du1_a(imax), w_n(imax), dw1_n(imax), f(imax)!, dv1_a(imax), du2_a(imax)
   TREAL wrk1d(imax,5+2+5), wrk2d(imax), wrk3d(imax)
   TREAL sol, error, wk, lambda, dummy
   TINTEGER imin_loc, imax_loc
@@ -22,7 +22,7 @@ PROGRAM VINTEGRAL
 ! ###################################################################
   itype = 0
   bcs = 0
-  
+
   g%size     = imax
   g%scale    = C_1_R
   g%mode_fdm = FDM_COM6_JACOBIAN
@@ -100,7 +100,7 @@ PROGRAM VINTEGRAL
 !     f = du1_a
 
      ibc = 1
-  
+
      CALL INT_C1N6_LHS(imax,    ibc,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
      CALL INT_C1N6_RHS(imax,i1, ibc, g%jac, f,w_n)
 
@@ -172,7 +172,7 @@ PROGRAM VINTEGRAL
   ELSE IF ( itype .EQ. 2 ) THEN
      wrk1d = 0
 
-     CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g, u, f, v, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g, u, f, wrk3d, wrk2d,wrk3d)
      dummy = lambda*lambda
 !     f = du2_a - dummy*u
      f = f - dummy*u
@@ -216,6 +216,6 @@ PROGRAM VINTEGRAL
 
   STOP
 
-1000 FORMAT(6(1x,e17.10e3)) 
+1000 FORMAT(6(1x,e17.10e3))
 
 END PROGRAM VINTEGRAL

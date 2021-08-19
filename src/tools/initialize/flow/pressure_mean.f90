@@ -2,14 +2,15 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
-SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
+SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d)
 
-  USE DNS_CONSTANTS, ONLY : efile
-  USE DNS_GLOBAL,    ONLY : g
-  USE DNS_GLOBAL,    ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL,    ONLY : rbg, pbg, tbg, sbg
-  USE DNS_GLOBAL,    ONLY : buoyancy
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE TLAB_CONSTANTS, ONLY : efile
+  USE TLAB_VARS,    ONLY : g
+  USE TLAB_VARS,    ONLY : imax,jmax,kmax
+  USE TLAB_VARS,    ONLY : rbg, pbg, tbg, sbg
+  USE TLAB_VARS,    ONLY : buoyancy
+  USE TLAB_PROCS
+  USE THERMO_VARS, ONLY : imixture
 
   IMPLICIT NONE
 
@@ -18,7 +19,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(OUT)   :: p
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: T
   TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(INOUT) :: s
-  TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: wrk1d, wrk2d, wrk3d
+  TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: wrk1d
 
 ! -------------------------------------------------------------------
   TINTEGER j, iprof_loc
@@ -69,8 +70,8 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
            ENDDO
            ! CALL FI_HYDROSTATIC_AIRWATER_T&
            !      (y, dy, z1_loc(1), t_loc(1), p_loc(1), r_loc(1), wrk1d_loc(1), wrk2d, wrk3d)
-           CALL IO_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 1 undeveloped')
-           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+           CALL TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 1 undeveloped')
+           CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
            DO j = 1,jmax
               s(:,j,:,1) = z1_loc(j)
               s(:,j,:,2) = z2_loc(j)
@@ -100,8 +101,8 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
         ELSE
            ycenter = y(1) + tbg%ymean*g(2)%scale
 !           CALL FI_HYDROSTATIC(i1, jmax, i1, ycenter, y, p_loc(1))
-           CALL IO_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 2 undeveloped')
-           CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+           CALL TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 2 undeveloped')
+           CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
 
            DO j = 1,jmax
               p_loc(j) = pbg%mean*EXP(p_loc(j))
@@ -113,8 +114,8 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
 ! Density profile is given
 ! -------------------------------------------------------------------
      ELSE
-        CALL IO_WRITE_ASCII(efile, 'PRESSURE_MEAN. Density case undeveloped')
-        CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+        CALL TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Density case undeveloped')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
 
 ! -------------------------------------------------------------------
@@ -132,8 +133,8 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
   CALL MINMAX(imax,jmax,kmax, p, pmin,pmax)
 
   IF ( pmin .LT. C_0_R .OR. pmax .LT. C_0_R ) THEN
-     CALL IO_WRITE_ASCII(efile, 'PRESSURE_MEAN. Negative pressure.')
-     CALL DNS_STOP(DNS_ERROR_NEGPRESS)
+     CALL TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Negative pressure.')
+     CALL TLAB_STOP(DNS_ERROR_NEGPRESS)
   ENDIF
 
   RETURN

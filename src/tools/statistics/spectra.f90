@@ -31,14 +31,18 @@
 !########################################################################
 PROGRAM SPECTRA
 
-  USE DNS_TYPES, ONLY : pointers_dt, subarray_dt
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE TLAB_TYPES, ONLY : pointers_dt, subarray_dt
+  USE TLAB_CONSTANTS
+  USE TLAB_VARS
+  USE TLAB_ARRAYS
+  USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_PROCS
 #endif
-
+  USE THERMO_VARS, ONLY : imixture
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
@@ -55,22 +59,19 @@ PROGRAM SPECTRA
   TINTEGER, PARAMETER :: itime_size_max = 512
   TINTEGER, PARAMETER :: iopt_size_max  =  20
 
-! Arrays declarations
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q, s
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: wrk1d,wrk2d, txc
-  TREAL, DIMENSION(:),   ALLOCATABLE :: wrk3d, p_aux, y_aux, samplesize
-
+  ! -------------------------------------------------------------------
+  ! Additional local arrays
+  TREAL, DIMENSION(:),   ALLOCATABLE :: p_aux, y_aux, samplesize
   TREAL, DIMENSION(:,:), ALLOCATABLE :: out2d, outx,outz,outr
 
   TYPE(pointers_dt), DIMENSION(16) :: vars
 
-  TARGET q, s, p_aux
+  TARGET p_aux
 
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
-  CHARACTER*32 fname, inifile, bakfile
+  CHARACTER*32 fname, bakfile
   CHARACTER*32 varname(16)
   CHARACTER*64 str, line
   CHARACTER*8  tag_file, tag_name, tag_var(16)
@@ -78,7 +79,7 @@ PROGRAM SPECTRA
 
   TINTEGER opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
   TINTEGER flag_mode, iread_flow, iread_scal, ierr
-  TINTEGER isize_wrk3d, isize_out2d, isize_aux, sizes(5)
+  TINTEGER isize_out2d, isize_aux, sizes(5)
   TINTEGER nfield, nfield_ref
   TINTEGER is, iv, iv_offset, iv1, iv2, ip, j
   TINTEGER jmax_aux, kxmax,kymax,kzmax
@@ -106,22 +107,19 @@ PROGRAM SPECTRA
 
 !########################################################################
 !########################################################################
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_INITIALIZE
+  CALL TLAB_START()
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
-
   ALLOCATE(y_aux(g(2)%size)) ! Reduced vertical grid
 
 ! -------------------------------------------------------------------
@@ -137,7 +135,7 @@ PROGRAM SPECTRA
   opt_ffmt  = 0
   opt_time  = 0
 
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamSpectra', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamSpectra', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -169,18 +167,18 @@ PROGRAM SPECTRA
   ENDIF
 
   IF ( opt_main .LT. 0 ) THEN ! Check
-     CALL IO_WRITE_ASCII(efile, 'SPECTRA. Missing input [ParamSpectra] in dns.ini.')
-     CALL DNS_STOP(DNS_ERROR_INVALOPT)
+     CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Missing input [ParamSpectra] in dns.ini.')
+     CALL TLAB_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
   IF ( opt_block .LT. 1 ) THEN
-     CALL IO_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_block.')
-     CALL DNS_STOP(DNS_ERROR_INVALOPT)
+     CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_block.')
+     CALL TLAB_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
   IF ( opt_time .NE. SPEC_SINGLE .AND. opt_time .NE. SPEC_AVERAGE ) THEN
-     CALL IO_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_time.')
-     CALL DNS_STOP(DNS_ERROR_INVALOPT)
+     CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_time.')
+     CALL TLAB_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -282,9 +280,9 @@ PROGRAM SPECTRA
         isize_aux = ims_npro_k *(jmax_aux/ims_npro_k+1)
      ENDIF
 
-     CALL IO_WRITE_ASCII(lfile,'Initialize MPI type 2 for Oz spectra integration.')
-     id = DNS_MPI_K_AUX2
-     CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
+     CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 2 for Oz spectra integration.')
+     id = TLAB_MPI_K_AUX2
+     CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
   ENDIF
@@ -298,11 +296,11 @@ PROGRAM SPECTRA
 
   WRITE(str,*) nfield; line = 'Allocating array outr  of size '//TRIM(ADJUSTL(str))//'x'
   WRITE(str,*) isize_spec2dr; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-  CALL IO_WRITE_ASCII(lfile,line)
+  CALL TLAB_WRITE_ASCII(lfile,line)
   ALLOCATE(outr(isize_spec2dr, nfield),stat=ierr)
   IF ( ierr .NE. 0 ) THEN
-     CALL IO_WRITE_ASCII(efile,'SPECTRA. Not enough memory for spectral data.')
-     CALL DNS_STOP(DNS_ERROR_ALLOC)
+     CALL TLAB_WRITE_ASCII(efile,'SPECTRA. Not enough memory for spectral data.')
+     CALL TLAB_STOP(DNS_ERROR_ALLOC)
   ENDIF
 
   IF ( flag_mode .EQ. 2 ) THEN
@@ -312,21 +310,21 @@ PROGRAM SPECTRA
   IF ( opt_ffmt .EQ. 1 ) THEN ! need additional space for 2d spectra
      WRITE(str,*) nfield; line = 'Allocating array out2d of size '//TRIM(ADJUSTL(str))//'x'
      WRITE(str,*) isize_out2d; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-     CALL IO_WRITE_ASCII(lfile,line)
+     CALL TLAB_WRITE_ASCII(lfile,line)
      ALLOCATE(out2d(isize_out2d, nfield),stat=ierr)
      IF ( ierr .NE. 0 ) THEN
-        CALL IO_WRITE_ASCII(efile,'SPECTRA. Not enough memory for spectral data.')
-        CALL DNS_STOP(DNS_ERROR_ALLOC)
+        CALL TLAB_WRITE_ASCII(efile,'SPECTRA. Not enough memory for spectral data.')
+        CALL TLAB_STOP(DNS_ERROR_ALLOC)
      ENDIF
   ENDIF
 
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      WRITE(str,*) isize_txc_field; line = 'Allocating array p_aux of size '//TRIM(ADJUSTL(str))
-     CALL IO_WRITE_ASCII(lfile,line)
+     CALL TLAB_WRITE_ASCII(lfile,line)
      ALLOCATE(p_aux(isize_txc_field),stat=ierr)
      IF ( ierr .NE. 0 ) THEN
-        CALL IO_WRITE_ASCII(efile,'SPECTRA. Not enough memory for p_aux.')
-        CALL DNS_STOP(DNS_ERROR_ALLOC)
+        CALL TLAB_WRITE_ASCII(efile,'SPECTRA. Not enough memory for p_aux.')
+        CALL TLAB_STOP(DNS_ERROR_ALLOC)
      ENDIF
   ENDIF
 
@@ -336,12 +334,15 @@ PROGRAM SPECTRA
   isize_wrk3d = isize_txc_field                ! default
   isize_wrk3d = MAX(isize_wrk3d,isize_spec2dr) ! space needed in INTEGRATE_SPECTRUM
 
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-#include "dns_read_grid.h"
+CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+CALL FDM_INITIALIZE(x, g(1), wrk1d)
+CALL FDM_INITIALIZE(y, g(2), wrk1d)
+CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   icalc_radial = 0
   IF ( flag_mode .EQ. 1 .AND. g(1)%size     .EQ. g(3)%size     ) icalc_radial = 1 ! Calculate radial spectra
@@ -412,8 +413,8 @@ PROGRAM SPECTRA
   ENDIF
 
   IF ( nfield_ref .NE. iv ) THEN ! Check
-     CALL IO_WRITE_ASCII(efile, 'SPECTRA. Array space nfield_ref incorrect.')
-     CALL DNS_STOP(DNS_ERROR_WRKSIZE)
+     CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Array space nfield_ref incorrect.')
+     CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
   ENDIF
 
 ! Define pairs
@@ -453,15 +454,15 @@ PROGRAM SPECTRA
         !    iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 5
         ! ENDIF
      ELSE
-        CALL IO_WRITE_ASCII(efile, 'SPECTRA. Cross-spectra needs flow fields.')
-        CALL DNS_STOP(DNS_ERROR_INVALOPT)
+        CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Cross-spectra needs flow fields.')
+        CALL TLAB_STOP(DNS_ERROR_INVALOPT)
      ENDIF
 
   ENDIF
 
   IF ( nfield .NE. iv ) THEN ! Check
-     CALL IO_WRITE_ASCII(efile, 'SPECTRA. Array space nfield incorrect.')
-     CALL DNS_STOP(DNS_ERROR_WRKSIZE)
+     CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Array space nfield incorrect.')
+     CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
   ENDIF
 
   DO iv = 1,nfield ! define variable names
@@ -475,9 +476,8 @@ PROGRAM SPECTRA
      itime = itime_vec(it)
 
      WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))
-     CALL IO_WRITE_ASCII(lfile, sRes)
+     CALL TLAB_WRITE_ASCII(lfile, sRes)
 
-! Read data
      IF ( iread_flow .EQ. 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
         CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q, wrk3d)
@@ -488,12 +488,11 @@ PROGRAM SPECTRA
         CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
      ENDIF
 
-! Calculate diagnostic quantities to be processed
+     CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
+
+! Calculate additional diagnostic quantities to be processed
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL FI_PRESSURE_BOUSSINESQ(q,s, p_aux, txc(1,1),txc(1,2), txc(1,3), wrk1d,wrk2d,wrk3d)
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-           CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal+1))
-        ENDIF
         IF ( flag_buoyancy .EQ. 1 ) THEN
            IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
               CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, s(1,inb_scal_array))
@@ -504,9 +503,6 @@ PROGRAM SPECTRA
            dummy = C_1_R /froude
            s(:,inb_scal_array) = s(:,inb_scal_array)*dummy
         ENDIF
-     ELSE
-        CALL THERMO_CALORIC_TEMPERATURE(imax,jmax,kmax, s, q(1,4), q(1,5), q(1,7), wrk3d)
-        CALL THERMO_THERMAL_PRESSURE(imax,jmax,kmax, s, q(1,5), q(1,7), q(1,6))
      ENDIF
 
 ! Remove fluctuation
@@ -517,7 +513,7 @@ PROGRAM SPECTRA
         ENDDO
      ELSE
         DO iv = 1,nfield_ref
-           CALL REYFLUCT2D(imax,jmax,kmax, g(1)%jac,g(3)%jac, area, vars(iv)%field)
+           CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, vars(iv)%field)
         ENDDO
      ENDIF
 
@@ -581,7 +577,7 @@ PROGRAM SPECTRA
            WRITE(line,100) MAXVAL( ABS(wrk1d(1:ip,4) - wrk1d(1:ip,1)) )
            WRITE(str, *  ) MAXLOC( ABS(wrk1d(1:ip,4) - wrk1d(1:ip,1)) )
            line = 'Checking Parseval: Maximum residual '//TRIM(ADJUSTL(line))//' at level '//TRIM(ADJUSTL(str))//'.'
-           CALL IO_WRITE_ASCII(lfile, line)
+           CALL TLAB_WRITE_ASCII(lfile, line)
 
 ! Accumulate 2D information, if needed
            IF ( opt_ffmt .EQ. 1 ) out2d(1:isize_out2d,iv) = out2d(1:isize_out2d,iv) + wrk3d(1:isize_out2d)
@@ -707,10 +703,6 @@ PROGRAM SPECTRA
 
   ENDDO ! Loop in itime
 
-  CALL DNS_END(0)
-
-  STOP
-
-100 FORMAT(G_FORMAT_R)
-
+  100 FORMAT(G_FORMAT_R)
+  CALL TLAB_STOP(0)
 END PROGRAM SPECTRA

@@ -5,10 +5,11 @@
 
 SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, txc)
 
-  USE DNS_TYPES,  ONLY : subarray_dt
-  USE DNS_GLOBAL, ONLY : g, isize_txc_field
+  USE TLAB_TYPES,  ONLY : subarray_dt
+  USE TLAB_VARS, ONLY : g, isize_txc_field
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_pro
+  USE TLAB_MPI_VARS,    ONLY : ims_pro
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -97,7 +98,7 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
 
 #ifdef USE_MPI
         ENDIF
-        CALL DNS_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field(1,ifield), txc(1,1), txc(1,2))
+        CALL TLAB_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field(1,ifield), txc(1,1), txc(1,2))
         IF ( ims_pro .EQ. 0 ) THEN
 #else
            CALL REDUCE_BLOCK_INPLACE(nx,ny,nz, subdomain(1),subdomain(3),subdomain(5), nx_aux,ny_aux,nz_aux, field(1,ifield), txc)
@@ -120,7 +121,8 @@ END SUBROUTINE IO_WRITE_VISUALS
 SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_mpi)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_pro
+  USE TLAB_MPI_VARS, ONLY : ims_pro
+  USE TLAB_MPI_PROCS
 #endif
 
   implicit NONE
@@ -172,7 +174,7 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   DO ifield = 1,nfield
-     CALL DNS_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field, tmp_mpi(1,1), tmp_mpi(1,2))
+     CALL TLAB_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field, tmp_mpi(1,1), tmp_mpi(1,2))
   END DO
 
 ! -------------------------------------------------------------------
@@ -259,8 +261,8 @@ END SUBROUTINE ENSIGHT_GRID
 
 SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
 
-  USE DNS_GLOBAL, ONLY : imax,kmax, io_aux
-  USE DNS_MPI
+  USE TLAB_VARS, ONLY : imax,kmax, io_aux
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
 

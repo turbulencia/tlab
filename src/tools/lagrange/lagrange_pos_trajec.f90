@@ -19,24 +19,28 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# This program reads the ID(TAG) of the largest particle file from the 
+!# This program reads the ID(TAG) of the largest particle file from the
 !# the program l_trajec.x and then determines the position of these
 !# largest particles at the start point of the simulation.
 !#
 !#
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 PROGRAM LAGRANGE_POS_TRAJEC
-  
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
-  USE LAGRANGE_GLOBAL
+
+  USE TLAB_CONSTANTS
+  USE TLAB_VARS
+  USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro
+  USE TLAB_MPI_PROCS
 #endif
+  USE LAGRANGE_VARS
+  USE LAGRANGE_ARRAYS
 
   IMPLICIT NONE
 #include "integers.h"
@@ -54,42 +58,37 @@ PROGRAM LAGRANGE_POS_TRAJEC
   TINTEGER, DIMENSION(:), ALLOCATABLE :: dummy_proc, all_dummy_proc
   INTEGER(8), DIMENSION(:), ALLOCATABLE :: l_trajectories_tags
   TREAL, DIMENSION(:),   ALLOCATABLE :: dummy_big_overall
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: l_q, l_txc
   TREAL, DIMENSION(:,:), ALLOCATABLE :: l_trajectories, all_l_trajectories
 
   TINTEGER nitera_first, nitera_last
 
-  CHARACTER*32 inifile
   CHARACTER*64 str,fname
   CHARACTER*128 line
   CHARACTER*32 bakfile
 
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_INITIALIZE
+  CALL TLAB_START()
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) THEN
      CALL PARTICLE_READ_GLOBAL('dns.ini')
   ENDIF
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
 ! Get the local information from the dns.ini
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Start','0',  nitera_first)
+  CALL SCANINIINT(bakfile, ifile, 'Iteration', 'Start','0',  nitera_first)
 
-
-#include "dns_alloc_larrays.h"
-
+  CALL PARTICLE_ALLOCATE(C_FILE_LOC)
 
   ALLOCATE(dummy_proc(isize_trajectory))
-  ALLOCATE(all_dummy_proc(isize_trajectory)) 
+  ALLOCATE(all_dummy_proc(isize_trajectory))
   ALLOCATE(dummy_big_overall(isize_trajectory))
   ALLOCATE(l_trajectories_tags(isize_trajectory))
   ALLOCATE(l_trajectories(3,isize_trajectory))
-  ALLOCATE(all_l_trajectories(3,isize_trajectory)) 
+  ALLOCATE(all_l_trajectories(3,isize_trajectory))
 
   l_trajectories(:,:) = C_0_R
   all_l_trajectories(:,:)=C_0_R
@@ -150,7 +149,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
      OPEN(unit=15, file=str, access='stream', form='unformatted')
      INQUIRE(UNIT=15, POS=particle_pos) !would be 1
      WRITE (15)  ims_npro  !header
-     INQUIRE(UNIT=15, POS=particle_pos) !would be 5 
+     INQUIRE(UNIT=15, POS=particle_pos) !would be 5
      WRITE (15)  isize_trajectory  !header
      INQUIRE(UNIT=15, POS=particle_pos)  !would be 9
      WRITE (15)  l_trajectories_tags
@@ -172,7 +171,5 @@ PROGRAM LAGRANGE_POS_TRAJEC
 
 #endif
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL TLAB_STOP(0)
 END PROGRAM

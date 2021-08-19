@@ -20,8 +20,8 @@
 !########################################################################
 SUBROUTINE FI_BUOYANCY(buoyancy, nx,ny,nz, s, b, wrk1d)
 
-  USE DNS_TYPES,  ONLY : term_dt
-  USE DNS_GLOBAL, ONLY : inb_scal_array
+  USE TLAB_TYPES,  ONLY : term_dt
+  USE TLAB_VARS, ONLY : inb_scal_array
 
   IMPLICIT NONE
   
@@ -106,7 +106,7 @@ END SUBROUTINE FI_BUOYANCY
 !########################################################################
 SUBROUTINE FI_BUOYANCY_SOURCE(buoyancy, isize_field, s, gradient, b_source)
 
-  USE DNS_TYPES, ONLY : term_dt
+  USE TLAB_TYPES, ONLY : term_dt
 
   IMPLICIT NONE
 

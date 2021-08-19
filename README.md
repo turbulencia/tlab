@@ -51,15 +51,20 @@ Use valgrind to check for memory leaks.
 * [`config`](./config): configuration files for different architectures and compilers
 * [`doc`](./doc): documentation files
 * [`examples`](./examples): sample cases for reference and for development testing
-* [`scripts`](./scripts): shell and python scripts for job management in supercomputing centers and postprocessing
+* [`scripts`](./scripts): shell and python scripts for job management and postprocessing
 * [`src`](./src): source files  
-  * [`src/tools`](./src/tools): of executables
-  * [`src/mappings`](./src/mappings): of library with level1 mappings that depend on level0 operators but not on fdm routines
-  * [`src/operators`](./src/operators): of library with level0 operators that depend only on fdm routines
-  * [`src/fdm`](./src/fdm): of library with finite difference schemes
-  * [`src/utils`](./src/utils): of library with basic operations with dependencies
-  * [`src/external`](./src/external): of external libraries
+  * [`src/tools`](./src/tools): executables
+  * [`src/mappings`](./src/mappings): library with mappings from 3D fields to 3D, 2D and 1D data
+  * [`src/operators`](./src/operators): library with operators that depend only on fdm routines
+  * [`src/fdm`](./src/fdm): library with finite difference schemes
+  * [`src/utils`](./src/utils): library with basic generic operators
+  * [`src/external`](./src/external): external libraries
+  * [`src/modules`](./src/modules): constants, variables, arrays and basic procedures
   * ...
+
+## Library dependencies
+
+tools → mappings → operators → {fdm,filter,io,thermo,utils,external} → tlab
 
 ## Data structure
 

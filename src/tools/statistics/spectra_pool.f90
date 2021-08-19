@@ -9,9 +9,14 @@
 SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
      spec_2d, data_x,data_z,spec_r, tmp_x,tmp_z,wrk2d)
 
-  USE DNS_GLOBAL, ONLY : g
+  USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_VARS, ONLY : ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  USE TLAB_MPI_VARS, ONLY : ims_comm_x, ims_comm_z
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -106,8 +111,8 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
   CALL MPI_ALLREDUCE(tmp_z(:,:,1), tmp_z(:,:,2), count, MPI_REAL8, MPI_SUM, ims_comm_x, ims_err)
 
   IF ( ims_npro_k .GT. 1 ) THEN
-     id = DNS_MPI_K_AUX2
-     CALL DNS_MPI_TRPF_K(tmp_z(:,:,2), wrk2d(:,:,1), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     id = TLAB_MPI_K_AUX2
+     CALL TLAB_MPI_TRPF_K(tmp_z(:,:,2), wrk2d(:,:,1), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
   ELSE
      wrk2d(1:ny*nz,1,1) = tmp_z(1:ny*nz,1,2)
@@ -143,7 +148,7 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
         wrk2d(1:ny_local*count,(k-1)*2+1,1) =  wrk2d(1:ny_local*count,k,2)
      ENDDO
 
-     CALL DNS_MPI_TRPB_K(wrk2d(:,:,1), tmp_z(:,:,1), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPB_K(wrk2d(:,:,1), tmp_z(:,:,1), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 
   ELSE
 #endif
@@ -165,12 +170,12 @@ END SUBROUTINE INTEGRATE_SPECTRUM
 !########################################################################
 SUBROUTINE REDUCE_SPECTRUM(nx,ny,nz, nblock, in,out, tmp1,variance)
 
-  USE DNS_GLOBAL, ONLY : isize_txc_dimz
+  USE TLAB_VARS, ONLY : isize_txc_dimz
 
 ! need to know about domain decomposition in x b/o
 ! nyquist frequency and zero frequency account different for the variance
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_offset_i, ims_pro_i, ims_npro_i, ims_err
+  USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_pro_i, ims_npro_i, ims_err
 #endif
 
   IMPLICIT NONE
@@ -258,9 +263,9 @@ END SUBROUTINE REDUCE_SPECTRUM
 SUBROUTINE REDUCE_CORRELATION(nx,ny,nz, nblock, nr_total, &
      in, data_2d,data_x,data_z,data_r, variance1, variance2, icalc_radial)
 
-  USE DNS_GLOBAL, ONLY : isize_wrk1d
+  USE TLAB_VARS, ONLY : isize_wrk1d
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -335,7 +340,7 @@ END SUBROUTINE REDUCE_CORRELATION
 SUBROUTINE RADIAL_SAMPLESIZE(nx,nz, nr_total, samplesize)
 
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE
@@ -373,9 +378,10 @@ END SUBROUTINE RADIAL_SAMPLESIZE
 !########################################################################
 SUBROUTINE WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
 
-  USE DNS_CONSTANTS, ONLY : lfile
+  USE TLAB_CONSTANTS, ONLY : lfile
+  USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI,    ONLY : ims_pro
+  USE TLAB_MPI_VARS,    ONLY : ims_pro
 #endif
 
   IMPLICIT NONE
@@ -403,7 +409,7 @@ SUBROUTINE WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
         name = TRIM(ADJUSTL(fname))
         IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
 
-        CALL IO_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+        CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
 
 #include "dns_open_file.h"
         WRITE(LOC_UNIT_ID) SNGL(pow(1:nxy,iv))
@@ -425,10 +431,10 @@ END SUBROUTINE WRITE_SPECTRUM1D
 
 SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
 
-  USE DNS_TYPES,  ONLY : subarray_dt
-  USE DNS_GLOBAL, ONLY : imax,jmax,kmax
-  USE DNS_GLOBAL, ONLY : io_aux
-  USE DNS_MPI
+  USE TLAB_TYPES,  ONLY : subarray_dt
+  USE TLAB_VARS, ONLY : imax,jmax,kmax
+  USE TLAB_VARS, ONLY : io_aux
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
 

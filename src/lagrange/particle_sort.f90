@@ -20,12 +20,12 @@
 SUBROUTINE PARTICLE_SORT(x_or_z, l_g,l_q, l_hq, &
      nzone_grid,nzone_west,nzone_east,nzone_south,nzone_north)    
 
-  USE DNS_GLOBAL, ONLY : imax,kmax
-  USE DNS_GLOBAL, ONLY : isize_particle, inb_part_array, inb_part
-  USE DNS_GLOBAL, ONLY : g
-  USE LAGRANGE_GLOBAL, ONLY: particle_dt
+  USE TLAB_VARS, ONLY : imax,kmax
+  USE TLAB_VARS, ONLY : isize_particle, inb_part_array, inb_part
+  USE TLAB_VARS, ONLY : g
+  USE LAGRANGE_VARS, ONLY: particle_dt
 #ifdef USE_MPI
-  USE DNS_MPI, ONLY : ims_offset_i, ims_offset_k
+  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
 
   IMPLICIT NONE

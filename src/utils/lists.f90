@@ -24,9 +24,6 @@ SUBROUTINE LIST_STRING(line, n, a)
       l2 = INDEX(line(l1:lmax),' ')                 ! relative position of first blank in remaining string
 
       i = i +1
-      IF ( i > n ) THEN
-        CALL DNS_STOP(DNS_ERROR_PARAMETER)
-      END IF
       IF ( l2 == 0 ) THEN                           ! we found the last element
         a(i) = line(l1:lmax)
         EXIT
@@ -34,6 +31,7 @@ SUBROUTINE LIST_STRING(line, n, a)
         a(i) = line(l1:l1+l2-1)
         l1 = lmax -LEN_TRIM(ADJUSTL(line(l1+l2:lmax))) +1
       END IF
+      IF ( i == n ) EXIT
 
     END DO
   END IF
@@ -47,6 +45,7 @@ END SUBROUTINE LIST_STRING
 !# Chops string into list of integers
 !########################################################################
 SUBROUTINE LIST_INTEGER(line, n, a)
+  USE TLAB_PROCS
   IMPLICIT NONE
 
   CHARACTER*(*),          INTENT(IN)    :: line
@@ -94,7 +93,7 @@ SUBROUTINE LIST_INTEGER(line, n, a)
             i = i + 1
             ! check the array is big enough
             IF ( i .GT. n ) THEN
-              CALL DNS_STOP(DNS_ERROR_PARAMETER)
+              CALL TLAB_STOP(DNS_ERROR_PARAMETER)
             END IF
             READ(line(lfirst:ilast),*) a(i)
             lfirst = lloc
@@ -116,7 +115,7 @@ SUBROUTINE LIST_INTEGER(line, n, a)
     l1 = lloc+1
     lloc = INDEX(line(l1:l2),':')
     IF ( lloc .EQ. 0 ) THEN
-      CALL DNS_STOP(DNS_ERROR_PARAMETER)
+      CALL TLAB_STOP(DNS_ERROR_PARAMETER)
     END IF
     lloc = l1 + lloc - 1
     READ(line(l1:lloc-1),*) incr
@@ -125,7 +124,7 @@ SUBROUTINE LIST_INTEGER(line, n, a)
 
     ! check the array is big enough
     IF ( (itmax-a(1))/incr+1 .GT. n ) THEN
-      CALL DNS_STOP(DNS_ERROR_PARAMETER)
+      CALL TLAB_STOP(DNS_ERROR_PARAMETER)
     ELSE
       n = (itmax-a(1))/incr+1
     END IF
@@ -143,6 +142,7 @@ END SUBROUTINE LIST_INTEGER
 !# Chops string into list of real numbers
 !########################################################################
 SUBROUTINE LIST_REAL(line, n, a)
+  USE TLAB_PROCS
   IMPLICIT NONE
 
   CHARACTER*(*),          INTENT(IN)    :: line
@@ -190,7 +190,7 @@ SUBROUTINE LIST_REAL(line, n, a)
             i = i + 1
             ! check the array is big enough
             IF ( i .GT. n ) THEN
-              CALL DNS_STOP(DNS_ERROR_PARAMETER)
+              CALL TLAB_STOP(DNS_ERROR_PARAMETER)
             END IF
             READ(line(lfirst:ilast),*) a(i)
             lfirst = lloc
@@ -212,7 +212,7 @@ SUBROUTINE LIST_REAL(line, n, a)
     l1 = lloc+1
     lloc = INDEX(line(l1:l2),':')
     IF ( lloc .EQ. 0 ) THEN
-      CALL DNS_STOP(DNS_ERROR_PARAMETER)
+      CALL TLAB_STOP(DNS_ERROR_PARAMETER)
     END IF
     lloc = l1 + lloc - 1
     READ(line(l1:lloc-1),*) aincr
@@ -222,7 +222,7 @@ SUBROUTINE LIST_REAL(line, n, a)
 
     ! check the array is big enough
     IF ( INT((amax-a(1))/aincr) +1 .GT. n ) THEN
-      CALL DNS_STOP(DNS_ERROR_PARAMETER)
+      CALL TLAB_STOP(DNS_ERROR_PARAMETER)
     ELSE
       n = INT((amax-a(1))/aincr) +1
     END IF

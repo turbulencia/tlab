@@ -1,9 +1,9 @@
-#include "types.h"  
+#include "types.h"
 #include "dns_const.h"
 
 PROGRAM VDIFFUSION
-  
-  USE DNS_GLOBAL
+
+  USE TLAB_VARS
 
   IMPLICIT NONE
 
@@ -12,16 +12,16 @@ PROGRAM VDIFFUSION
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:), ALLOCATABLE :: q, s, s_r
   TREAL, DIMENSION(:),   ALLOCATABLE :: wrk1d, wrk2d, wrk3d
-  
+
   TINTEGER i, j, ij, iopt
   TINTEGER isize_wrk3d
   TREAL dummy, error, pi_loc, factor, wavenumber, x_loc
   CHARACTER*(32) fname
 
 ! ###################################################################
-  CALL DNS_INITIALIZE
-  
-  CALL DNS_READ_GLOBAL('dns.ini')
+  CALL DNS_START
+
+  CALL DNS_READ_GLOBAL(ifile)
 
   isize_wrk3d = isize_field
 
@@ -39,7 +39,10 @@ PROGRAM VDIFFUSION
   ALLOCATE(  s(isize_field,1))
   ALLOCATE(s_r(isize_field,1))
 
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! ###################################################################
   wavenumber = C_1_R
@@ -70,7 +73,7 @@ PROGRAM VDIFFUSION
   factor = EXP(-visc*rtime*(C_2_R*pi_loc/scalex*wavenumber)**2)
   DO j = 1,jmax; DO i = 1,imax
      ij = i + imax*(j-1)
-     x_loc = x(i) - mean_u*rtime; 
+     x_loc = x(i) - mean_u*rtime;
      s_r(ij,1) = factor*SIN(C_2_R*pi_loc/scalex*wavenumber*x_loc)
   ENDDO; ENDDO
 
@@ -90,9 +93,8 @@ PROGRAM VDIFFUSION
      fname = 'error'
      CALL DNS_WRITE_FIELDS(fname, i1, imax,jmax,kmax, i1, i1, wrk3d, wrk3d)
   ENDIF
-  
+
   ENDIF
 
   STOP
 END PROGRAM VDIFFUSION
-

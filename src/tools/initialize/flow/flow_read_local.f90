@@ -4,9 +4,10 @@
 
 SUBROUTINE FLOW_READ_LOCAL(inifile)
 
-  USE DNS_CONSTANTS, ONLY : efile, lfile, wfile
-  USE DNS_GLOBAL,    ONLY : qbg
-  USE DNS_TYPES,     ONLY : MAX_MODES
+  USE TLAB_CONSTANTS, ONLY : efile, lfile, wfile
+  USE TLAB_VARS,    ONLY : qbg
+  USE TLAB_PROCS
+  USE TLAB_TYPES,     ONLY : MAX_MODES
   USE FLOW_LOCAL
 
   IMPLICIT NONE
@@ -24,20 +25,20 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   ! ###################################################################
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
-  CALL IO_WRITE_ASCII(lfile, 'Reading local input data')
+  CALL TLAB_WRITE_ASCII(lfile, 'Reading local input data')
 
   ! ###################################################################
-  CALL IO_WRITE_ASCII(bakfile,'#')
-  CALL IO_WRITE_ASCII(bakfile,'#[IniFields]')
-  CALL IO_WRITE_ASCII(bakfile,'#Velocity=<option>')
-  CALL IO_WRITE_ASCII(bakfile,'#Temperature=<option>')
-  CALL IO_WRITE_ASCII(bakfile,'#ForceDilatation=<yes/no>')
-  CALL IO_WRITE_ASCII(bakfile,'#ProfileIniK=<value>')
-  CALL IO_WRITE_ASCII(bakfile,'#ThickIniK=<value>')
-  CALL IO_WRITE_ASCII(bakfile,'#YCoorIniK=<value>')
-  CALL IO_WRITE_ASCII(bakfile,'#NormalizeK=<value>')
-  CALL IO_WRITE_ASCII(bakfile,'#NormalizeP=<value>')
-  CALL IO_WRITE_ASCII(bakfile,'#Mixture=<string>')
+  CALL TLAB_WRITE_ASCII(bakfile,'#')
+  CALL TLAB_WRITE_ASCII(bakfile,'#[IniFields]')
+  CALL TLAB_WRITE_ASCII(bakfile,'#Velocity=<option>')
+  CALL TLAB_WRITE_ASCII(bakfile,'#Temperature=<option>')
+  CALL TLAB_WRITE_ASCII(bakfile,'#ForceDilatation=<yes/no>')
+  CALL TLAB_WRITE_ASCII(bakfile,'#ProfileIniK=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile,'#ThickIniK=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile,'#YCoorIniK=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile,'#NormalizeK=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile,'#NormalizeP=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile,'#Mixture=<string>')
 
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'Velocity', 'None', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'              ) THEN; flag_u = 0
@@ -46,8 +47,8 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'vorticitybroadband') THEN; flag_u = 3
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'potentialbroadband') THEN; flag_u = 4
   ELSE
-    CALL IO_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Velocity forcing type unknown')
-    CALL DNS_STOP(DNS_ERROR_OPTION)
+    CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Velocity forcing type unknown')
+    CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ForceDilatation', 'yes', sRes)
@@ -64,8 +65,8 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'gaussiansurface'  ) THEN; Kini%type = PROFILE_GAUSSIAN_SURFACE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolicsurface' ) THEN; Kini%type = PROFILE_PARABOLIC_SURFACE
   ELSE
-    CALL IO_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Wrong ProfileIni parameter.')
-    CALL DNS_STOP(DNS_ERROR_OPTION)
+    CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Wrong ProfileIni parameter.')
+    CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIniK', 'void', sRes)
@@ -94,8 +95,8 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'planebroadband' ) THEN; flag_t = 4
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'planediscrete'  ) THEN; flag_t = 5
   ELSE
-    CALL IO_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Temperature forcing type unknown')
-    CALL DNS_STOP(DNS_ERROR_OPTION)
+    CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Temperature forcing type unknown')
+    CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
   ! Additional parameters
@@ -112,30 +113,30 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; bcs_flow_jmin = DNS_BCS_DIRICHLET; flag_wall=flag_wall+1
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; bcs_flow_jmin = DNS_BCS_NEUMANN
   ELSE
-    CALL IO_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmin.')
-    CALL DNS_STOP(DNS_ERROR_IBC)
+    CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmin.')
+    CALL TLAB_STOP(DNS_ERROR_IBC)
   ENDIF
   CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmax', 'freeslip', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; bcs_flow_jmax = DNS_BCS_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; bcs_flow_jmax = DNS_BCS_DIRICHLET; flag_wall=flag_wall+2
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; bcs_flow_jmax = DNS_BCS_NEUMANN
   ELSE
-    CALL IO_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmax.')
-    CALL DNS_STOP(DNS_ERROR_IBC)
+    CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmax.')
+    CALL TLAB_STOP(DNS_ERROR_IBC)
   ENDIF
 
   ! ###################################################################
   ! Discrete Forcing
   ! ###################################################################
-  CALL IO_WRITE_ASCII(bakfile, '#')
-  CALL IO_WRITE_ASCII(bakfile, '#[Discrete]')
-  CALL IO_WRITE_ASCII(bakfile, '#Aplitude=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#ModeX=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#ModeZ=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#PhaseX=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#PhaseZ=<value>')
-  CALL IO_WRITE_ASCII(bakfile, '#Type=<Gaussian>')
-  CALL IO_WRITE_ASCII(bakfile, '#Broadening=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#')
+  CALL TLAB_WRITE_ASCII(bakfile, '#[Discrete]')
+  CALL TLAB_WRITE_ASCII(bakfile, '#Aplitude=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#ModeX=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#ModeZ=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#PhaseX=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#PhaseZ=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#Type=<Gaussian>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#Broadening=<value>')
 
   CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'Amplitude', 'void', sRes)
   IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
@@ -150,8 +151,8 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
     idummy = MAX_MODES
     CALL LIST_INTEGER(sRes, idummy, fp%modex)
     IF ( idummy .NE. fp%size ) THEN
-      CALL IO_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.ModeX.')
-      CALL DNS_STOP(DNS_ERROR_INFDISCR)
+      CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.ModeX.')
+      CALL TLAB_STOP(DNS_ERROR_INFDISCR)
     ENDIF
   ENDIF
 
@@ -162,8 +163,8 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
     idummy = MAX_MODES
     CALL LIST_INTEGER(sRes, idummy, fp%modez)
     IF ( idummy .NE. fp%size ) THEN
-      CALL IO_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.ModeZ.')
-      CALL DNS_STOP(DNS_ERROR_INFDISCR)
+      CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.ModeZ.')
+      CALL TLAB_STOP(DNS_ERROR_INFDISCR)
     ENDIF
   ENDIF
 
@@ -176,8 +177,8 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
     idummy = MAX_MODES
     CALL LIST_REAL(sRes, idummy, fp%phasex)
     IF ( idummy .NE. fp%size ) THEN
-      CALL IO_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.PhaseX.')
-      CALL DNS_STOP(DNS_ERROR_INFDISCR)
+      CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.PhaseX.')
+      CALL TLAB_STOP(DNS_ERROR_INFDISCR)
     ENDIF
   ENDIF
 
@@ -188,8 +189,8 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
     idummy = MAX_MODES
     CALL LIST_REAL(sRes, idummy, fp%phasez)
     IF ( idummy .NE. fp%size ) THEN
-      CALL IO_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.PhaseZ.')
-      CALL DNS_STOP(DNS_ERROR_INFDISCR)
+      CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.PhaseZ.')
+      CALL TLAB_STOP(DNS_ERROR_INFDISCR)
     ENDIF
   ENDIF
 
@@ -197,8 +198,8 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; fp%type = 0
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'gaussian' ) THEN; fp%type = 1
   ELSE
-    CALL IO_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Error in Discrete.Type.')
-    CALL DNS_STOP(DNS_ERROR_INFDISCR)
+    CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Error in Discrete.Type.')
+    CALL TLAB_STOP(DNS_ERROR_INFDISCR)
   ENDIF
 
   CALL SCANINIREAL(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))

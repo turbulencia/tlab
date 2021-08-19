@@ -9,12 +9,14 @@
 
 PROGRAM APRIORI
 
-  USE DNS_TYPES,  ONLY : pointers_dt
-  USE DNS_TYPES,  ONLY : filter_dt
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
+  USE TLAB_TYPES,  ONLY : pointers_dt
+  USE TLAB_TYPES,  ONLY : filter_dt
+  USE TLAB_CONSTANTS
+  USE TLAB_VARS
+  USE TLAB_ARRAYS
+  USE TLAB_PROCS
 #ifdef USE_MPI
-  USE DNS_MPI
+  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -28,30 +30,20 @@ PROGRAM APRIORI
   TINTEGER, PARAMETER :: itime_size_max = 512
   TINTEGER, PARAMETER :: iopt_size_max  = 512
 
-! -------------------------------------------------------------------
-! Grid and associated arrays
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-
-! Fields
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: q,s,txc
+  ! -------------------------------------------------------------------
+  ! Additional local arrays
   TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: qf,sf
-
   TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: mean, y_aux
-
   TYPE(pointers_dt), DIMENSION(16) :: vars
 
-! Work arrays
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE :: wrk1d, wrk2d
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE :: wrk3d
 
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
   TINTEGER opt_main, opt_block, opt_order, opt_format
   TINTEGER iq, is, ig, ij, bcs(2,2)
-  TINTEGER nfield, isize_wrk3d, idummy, iread_flow, iread_scal, jmax_aux, ierr, MaskSize
-  CHARACTER*32  fname, inifile, bakfile, flow_file, scal_file, plot_file, time_str
-  CHARACTER*64 str, line
+  TINTEGER nfield, idummy, iread_flow, iread_scal, jmax_aux, MaskSize
+  CHARACTER*32  fname, bakfile, flow_file, scal_file, plot_file, time_str
   TINTEGER subdomain(6)
 
   INTEGER(1) opt_gate
@@ -68,15 +60,14 @@ PROGRAM APRIORI
 ! ###################################################################
   bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-  inifile = 'dns.ini'
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-  CALL DNS_INITIALIZE
+  CALL TLAB_START()
 
-  CALL DNS_READ_GLOBAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
 ! -------------------------------------------------------------------
@@ -99,7 +90,7 @@ PROGRAM APRIORI
   opt_gate   = 0
   opt_order  = 1
 
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'ParamStructure', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamStructure', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -116,7 +107,7 @@ PROGRAM APRIORI
   ENDIF
 
 ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'PostProcessing', 'Subdomain', '-1', sRes)
+  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
   IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI
@@ -171,17 +162,17 @@ PROGRAM APRIORI
   IF ( icalc_flow .EQ. 1 ) ALLOCATE(qf(imax*jmax*kmax,inb_flow))
   IF ( icalc_scal .EQ. 1 ) ALLOCATE(sf(imax*jmax*kmax,inb_scal))
 
-  ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
-
   ALLOCATE(mean(2*opt_order*nfield))
 
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-#include "dns_read_grid.h"
+CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+CALL FDM_INITIALIZE(x, g(1), wrk1d)
+CALL FDM_INITIALIZE(y, g(2), wrk1d)
+CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! ------------------------------------------------------------------------
 ! Define size of blocks
@@ -213,7 +204,7 @@ PROGRAM APRIORI
      itime = itime_vec(it)
 
      WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))
-     CALL IO_WRITE_ASCII(lfile,sRes)
+     CALL TLAB_WRITE_ASCII(lfile,sRes)
 
      IF ( iread_flow .EQ. 1 ) THEN ! Flow variables
         WRITE(flow_file,*) itime; flow_file = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(flow_file))
@@ -336,8 +327,5 @@ PROGRAM APRIORI
 
   ENDDO
 
-  CALL DNS_END(0)
-
-  STOP
-
+  CALL TLAB_STOP(0)
 END PROGRAM APRIORI

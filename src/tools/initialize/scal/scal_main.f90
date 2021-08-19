@@ -6,52 +6,49 @@
 
 PROGRAM INISCAL
 
-  USE DNS_CONSTANTS
-  USE DNS_GLOBAL
-  USE THERMO_GLOBAL, ONLY : imixture
+  USE TLAB_CONSTANTS
+  USE TLAB_VARS
+  USE TLAB_ARRAYS
+  USE TLAB_PROCS
+#ifdef USE_MPI
+  USE TLAB_MPI_PROCS
+#endif
+  USE THERMO_VARS, ONLY : imixture
   USE SCAL_LOCAL
 
   IMPLICIT NONE
 
 ! -------------------------------------------------------------------
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE         :: q,s, txc
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: wrk1d,wrk2d,wrk3d
-
-  TINTEGER isize_wrk3d, ierr, is, inb_scal_loc
-
-  CHARACTER*64 str, line
-  CHARACTER*32 inifile
+  TINTEGER is, inb_scal_loc
 
 ! ###################################################################
-  inifile = 'dns.ini'
+  CALL TLAB_START()
 
-  CALL DNS_INITIALIZE
-
-  CALL DNS_READ_GLOBAL(inifile)
-  CALL SCAL_READ_LOCAL(inifile)
+  CALL DNS_READ_GLOBAL(ifile)
+  CALL SCAL_READ_LOCAL(ifile)
 #ifdef CHEMISTRY
-  CALL CHEM_READ_GLOBAL(inifile)
+  CALL CHEM_READ_GLOBAL(ifile)
 #endif
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
   isize_wrk3d = isize_field
 
   IF ( flag_s .EQ. 1 .OR. flag_s .EQ. 3 .OR. radiation%type .NE. EQNS_NONE ) THEN; inb_txc = 1
   ELSE;                                                                            inb_txc = 0
   ENDIF
 
-#include "dns_alloc_arrays.h"
+  CALL TLAB_ALLOCATE(C_FILE_LOC)
 
-#include "dns_read_grid.h"
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! ###################################################################
-  CALL IO_WRITE_ASCII(lfile,'Initializing scalar fiels.')
+  CALL TLAB_WRITE_ASCII(lfile,'Initializing scalar fiels.')
 
   CALL FI_PROFILES_INITIALIZE(wrk1d)
 
@@ -111,8 +108,8 @@ PROGRAM INISCAL
     ELSE IF ( ireactive .EQ. CHEM_INFINITE .AND. inb_scal .GT. 1 ) THEN
       CALL SCREACT_INFINITE(x, s, isize_wrk3d, wrk3d)
     ENDIF
-    CALL IO_WRITE_ASCII(efile, 'INISCAL. Chemistry part to be checked')
-    CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
+    CALL TLAB_WRITE_ASCII(efile, 'INISCAL. Chemistry part to be checked')
+    CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
 
   ENDIF
 #endif
@@ -141,9 +138,7 @@ PROGRAM INISCAL
 ! ###################################################################
   CALL DNS_WRITE_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, isize_wrk3d, s, wrk3d)
 
-  CALL DNS_END(0)
-
-  STOP
+  CALL TLAB_STOP(0)
 END PROGRAM INISCAL
 
 ! ###################################################################
@@ -152,9 +147,9 @@ END PROGRAM INISCAL
 
 SUBROUTINE SCAL_MPIO_AUX()
 
-  USE DNS_GLOBAL, ONLY : imax,kmax
-  USE DNS_GLOBAL, ONLY : io_aux
-  USE DNS_MPI
+  USE TLAB_VARS, ONLY : imax,kmax
+  USE TLAB_VARS, ONLY : io_aux
+  USE TLAB_MPI_VARS
 
   IMPLICIT NONE
 
