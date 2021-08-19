@@ -173,6 +173,8 @@ PROGRAM DNS
   ! ###################################################################
   IF ( imode_ibm == 1 ) THEN
     CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
+    CALL IBM_BCS_FLOW(q, inb_flow) ! apply IBM BCs on ini flow fields
+    ! IF ( icalc_scal == 1 ) CALL IBM_BCS_SCAL(s)
   ENDIF  
 
   ! ###################################################################

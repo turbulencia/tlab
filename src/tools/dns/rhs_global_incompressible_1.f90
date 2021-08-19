@@ -368,7 +368,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hq(1,iq), &
              BcsFlowJmin%ref(1,1,iq),BcsFlowJmax%ref(1,1,iq), wrk1d,tmp1,wrk3d)
      ENDIF
-    ! BC IBM Geo
+     IF ( imode_ibm == 1 ) CALL IBM_BCS_FLOW(hq(1,iq),i1)
   ENDDO
 
   DO is = 1,inb_scal
@@ -384,7 +384,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
           BcsScalJmax%type(is) .NE. DNS_SFC_STATIC ) THEN
         CALL BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
      ENDIF
-     ! BC IBM Geo
+    !  IF ( imode_ibm == 1 ) CALL IBM_BCS_SCAL(hs(1,is),i1)
   ENDDO
 
 ! -----------------------------------------------------------------------
@@ -413,21 +413,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         hs(ip_t:ip_t+imax-1,is) = BcsScalJmax%ref(1:imax,k,is)
      ENDDO
      ip_t = ip_t + nxy
-
   ENDDO
-
-! ###################################################################
-! IBM 
-! ###################################################################
-  IF ( imode_ibm == 1 ) THEN
-    h1(:) = (C_1_R - eps(:)) * h1(:)
-    h2(:) = (C_1_R - eps(:)) * h2(:)
-    h3(:) = (C_1_R - eps(:)) * h3(:)
-    ! overwrite ini flow fields with new geometry BC
-    u(:)  = (C_1_R - eps(:)) * u(:)
-    v(:)  = (C_1_R - eps(:)) * v(:)
-    w(:)  = (C_1_R - eps(:)) * w(:)
-  ENDIF
 
 #ifdef TRACE_ON
   CALL TLAB_WRITE_ASCII(tfile,'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')

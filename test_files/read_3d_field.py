@@ -9,7 +9,7 @@ import my_pylib as mp
 #---------------------------------------------------------------------------#
 # path to 3d-fields
 path  = str(os.path.dirname(__file__) + '/../test_parallel/' ) # name = 'flow.20.1' # file = str(path+name)
-index = 0
+index = 2
 #---------------------------------------------------------------------------#
 # read grid and flow fields
 grid = mp.DnsGrid(path+'grid')
@@ -28,7 +28,7 @@ plt.figure(figsize=size)
 plt.title('2d-plot -- yz-plane -- velocity u')
 plt.xlabel("z")
 plt.ylabel("y")
-plt.pcolormesh(grid.z,grid.y,flow.u[grid.nx//2,:,:], shading=shading ,cmap='RdBu_r')#, norm=midnorm)
+plt.pcolormesh(grid.z,grid.y,flow.u[0,:,:], shading=shading ,cmap='RdBu_r')#, norm=midnorm)
 plt.colorbar()
 plt.show()
 #---------------------------------------------------------------------------#
