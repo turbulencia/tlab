@@ -55,13 +55,13 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 #ifdef USE_MPI 
 #include "mpif.h"
 #include "dns_const_mpi.h"  
-  TINTEGER, parameter                                :: idi        = DNS_MPI_I_PARTIAL 
-  TINTEGER, parameter                                :: idj        = DNS_MPI_J_PARTIAL 
-  TINTEGER, parameter                                :: idk        = DNS_MPI_K_PARTIAL 
-  TINTEGER, parameter                                :: idi_nob    = DNS_MPI_I_IBM_NOB 
-  TINTEGER, parameter                                :: idk_nob    = DNS_MPI_K_IBM_NOB 
-  TINTEGER, parameter                                :: idi_nob_be = DNS_MPI_I_IBM_NOB_BE 
-  TINTEGER, parameter                                :: idk_nob_be = DNS_MPI_K_IBM_NOB_BE
+  TINTEGER, parameter                                :: idi        = TLAB_MPI_I_PARTIAL 
+  TINTEGER, parameter                                :: idj        = TLAB_MPI_J_PARTIAL 
+  TINTEGER, parameter                                :: idk        = TLAB_MPI_K_PARTIAL 
+  TINTEGER, parameter                                :: idi_nob    = TLAB_MPI_I_IBM_NOB 
+  TINTEGER, parameter                                :: idk_nob    = TLAB_MPI_K_IBM_NOB 
+  TINTEGER, parameter                                :: idi_nob_be = TLAB_MPI_I_IBM_NOB_BE 
+  TINTEGER, parameter                                :: idk_nob_be = TLAB_MPI_K_IBM_NOB_BE
   TINTEGER                                           :: ims_err, max_nob
   ! debugging arrays    
   TREAL, dimension(ims_size_i(idi))                  :: nobi_out     ! DEBUG
@@ -174,7 +174,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   call DNS_TRANSPOSE(nobi_out, nyz, i1, nyz, nobi_real, i1)
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
-    call DNS_MPI_TRPB_I(nobi_real, nobi_out, ims_ds_i(1,idi_nob), ims_dr_i(1,idi_nob), ims_ts_i(1,idi_nob), ims_tr_i(1,idi_nob))
+    call TLAB_MPI_TRPB_I(nobi_real, nobi_out, ims_ds_i(1,idi_nob), ims_dr_i(1,idi_nob), ims_ts_i(1,idi_nob), ims_tr_i(1,idi_nob))
   endif
 #else 
   nobi_out = nobi_real
@@ -222,8 +222,8 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   call DNS_TRANSPOSE(nobi_e_out, nyz, nob_max, nyz, nobi_e_real, nob_max)
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
-    call DNS_MPI_TRPB_I(nobi_b_real, nobi_b_out, ims_ds_i(1,idi_nob_be), ims_dr_i(1,idi_nob_be), ims_ts_i(1,idi_nob_be), ims_tr_i(1,idi_nob_be))
-    call DNS_MPI_TRPB_I(nobi_e_real, nobi_e_out, ims_ds_i(1,idi_nob_be), ims_dr_i(1,idi_nob_be), ims_ts_i(1,idi_nob_be), ims_tr_i(1,idi_nob_be))
+    call TLAB_MPI_TRPB_I(nobi_b_real, nobi_b_out, ims_ds_i(1,idi_nob_be), ims_dr_i(1,idi_nob_be), ims_ts_i(1,idi_nob_be), ims_tr_i(1,idi_nob_be))
+    call TLAB_MPI_TRPB_I(nobi_e_real, nobi_e_out, ims_ds_i(1,idi_nob_be), ims_dr_i(1,idi_nob_be), ims_ts_i(1,idi_nob_be), ims_tr_i(1,idi_nob_be))
   endif
 #else
   nobi_b_out = nobi_b_real
@@ -321,7 +321,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   nobk_real = dble(nobk)
 #ifdef USE_MPI
   if ( ims_npro_k > 1 ) then
-    call DNS_MPI_TRPB_K(nobk_real, nobk_out, ims_ds_k(1,idk_nob), ims_dr_k(1,idk_nob), ims_ts_k(1,idk_nob), ims_tr_k(1,idk_nob))
+    call TLAB_MPI_TRPB_K(nobk_real, nobk_out, ims_ds_k(1,idk_nob), ims_dr_k(1,idk_nob), ims_ts_k(1,idk_nob), ims_tr_k(1,idk_nob))
   endif
 #else 
   nobk_out = nobk_real
@@ -374,8 +374,8 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   nobk_e_real = dble(nobk_e)
 #ifdef USE_MPI
   if ( ims_npro_k > 1 ) then
-    call DNS_MPI_TRPB_K(nobk_b_real, nobk_b_out, ims_ds_k(1,idk_nob_be), ims_dr_k(1,idk_nob_be), ims_ts_k(1,idk_nob_be), ims_tr_k(1,idk_nob_be))
-    call DNS_MPI_TRPB_K(nobk_e_real, nobk_e_out, ims_ds_k(1,idk_nob_be), ims_dr_k(1,idk_nob_be), ims_ts_k(1,idk_nob_be), ims_tr_k(1,idk_nob_be))
+    call TLAB_MPI_TRPB_K(nobk_b_real, nobk_b_out, ims_ds_k(1,idk_nob_be), ims_dr_k(1,idk_nob_be), ims_ts_k(1,idk_nob_be), ims_tr_k(1,idk_nob_be))
+    call TLAB_MPI_TRPB_K(nobk_e_real, nobk_e_out, ims_ds_k(1,idk_nob_be), ims_dr_k(1,idk_nob_be), ims_ts_k(1,idk_nob_be), ims_tr_k(1,idk_nob_be))
   endif
 #else 
   nobk_b_out = nobk_b_real
@@ -523,7 +523,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   call DNS_TRANSPOSE(tmp1, nyz, g(1)%size, nyz,        tmp2, g(1)%size)
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
-    call DNS_MPI_TRPB_I(tmp2, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
+    call TLAB_MPI_TRPB_I(tmp2, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
   endif
   call DNS_WRITE_FIELDS('nobi3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp1, wrk3d)
 #else
@@ -569,7 +569,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 
 #ifdef USE_MPI
   if ( ims_npro_k > 1 ) then
-    call DNS_MPI_TRPB_K(tmp1, tmp2, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+    call TLAB_MPI_TRPB_K(tmp1, tmp2, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
   endif
   call DNS_WRITE_FIELDS('nobk3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
 #else
@@ -618,8 +618,8 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   call DNS_TRANSPOSE(tmp2, nyz, g(1)%size, nyz,        tmp4, g(1)%size)
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
-    call DNS_MPI_TRPB_I(tmp3, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
-    call DNS_MPI_TRPB_I(tmp4, tmp2, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
+    call TLAB_MPI_TRPB_I(tmp3, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
+    call TLAB_MPI_TRPB_I(tmp4, tmp2, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
   endif
   call DNS_WRITE_FIELDS('nobi3d_b', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp1, wrk3d)
   call DNS_WRITE_FIELDS('nobi3d_e', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
@@ -713,8 +713,8 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 
 #ifdef USE_MPI
   if ( ims_npro_k > 1 ) then
-    call DNS_MPI_TRPB_K(tmp1, tmp3, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
-    call DNS_MPI_TRPB_K(tmp2, tmp4, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+    call TLAB_MPI_TRPB_K(tmp1, tmp3, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+    call TLAB_MPI_TRPB_K(tmp2, tmp4, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
   endif
   call DNS_WRITE_FIELDS('nobk3d_b', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp3, wrk3d)
   call DNS_WRITE_FIELDS('nobk3d_e', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp4, wrk3d)

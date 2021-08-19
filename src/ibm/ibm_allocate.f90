@@ -52,9 +52,9 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
 #ifdef USE_MPI 
 #include "mpif.h"
 #include "dns_const_mpi.h"
-  TINTEGER, parameter               :: idi = DNS_MPI_I_PARTIAL 
-  TINTEGER, parameter               :: idj = DNS_MPI_J_PARTIAL 
-  TINTEGER, parameter               :: idk = DNS_MPI_K_PARTIAL 
+  TINTEGER, parameter               :: idi = TLAB_MPI_I_PARTIAL 
+  TINTEGER, parameter               :: idj = TLAB_MPI_J_PARTIAL 
+  TINTEGER, parameter               :: idk = TLAB_MPI_K_PARTIAL 
 #endif
 
   character(len=128), intent(in)    :: C_FILE_LOC

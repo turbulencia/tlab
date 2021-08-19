@@ -62,9 +62,9 @@ use TLAB_VARS,      only: imax, jmax, kmax
 #ifdef USE_MPI 
 #include "mpif.h"
 #include "dns_const_mpi.h"  
-  TINTEGER, parameter                            :: idi = DNS_MPI_I_PARTIAL 
-  TINTEGER, parameter                            :: idj = DNS_MPI_J_PARTIAL 
-  TINTEGER, parameter                            :: idk = DNS_MPI_K_PARTIAL 
+  TINTEGER, parameter                            :: idi = TLAB_MPI_I_PARTIAL 
+  TINTEGER, parameter                            :: idj = TLAB_MPI_J_PARTIAL 
+  TINTEGER, parameter                            :: idk = TLAB_MPI_K_PARTIAL 
 #else
   TINTEGER, parameter                            :: ims_pro=0, ims_npro=1
 #endif

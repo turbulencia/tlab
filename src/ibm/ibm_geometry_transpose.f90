@@ -54,9 +54,9 @@ subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
 #ifdef USE_MPI 
 #include "mpif.h"
 #include "dns_const_mpi.h"
-  TINTEGER, parameter                                  :: idi = DNS_MPI_I_PARTIAL 
-  TINTEGER, parameter                                  :: idj = DNS_MPI_J_PARTIAL 
-  TINTEGER, parameter                                  :: idk = DNS_MPI_K_PARTIAL 
+  TINTEGER, parameter                                  :: idi = TLAB_MPI_I_PARTIAL 
+  TINTEGER, parameter                                  :: idj = TLAB_MPI_J_PARTIAL 
+  TINTEGER, parameter                                  :: idk = TLAB_MPI_K_PARTIAL 
 #else
   TINTEGER, parameter                                  :: ims_pro = 0         
 #endif
@@ -106,7 +106,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
   ! MPI transposition and local transposition in x (make x-direction the last one)
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
-    call DNS_MPI_TRPF_I(eps, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
+    call TLAB_MPI_TRPF_I(eps, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
   else
 #endif
   tmp1 = eps
@@ -134,7 +134,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
   ! MPI transposition in z (no local transposition needed, already in right order)
 #ifdef USE_MPI
   if ( ims_npro_k > 1 ) then
-    call DNS_MPI_TRPF_K(eps, epsk, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+    call TLAB_MPI_TRPF_K(eps, epsk, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
   else
 #endif
   epsk = eps
@@ -159,7 +159,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
 
   ! ! check transpositions in x! 
   ! call DNS_TRANSPOSE(epsi, nyz, g(1)%size, nyz, tmp2, g(1)%size)
-  ! call DNS_MPI_TRPB_I(tmp2, tmp3, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
+  ! call TLAB_MPI_TRPB_I(tmp2, tmp3, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
   ! call DNS_WRITE_FIELDS('epsi0', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp3, wrk3d)
   
   ! ! check epsj
@@ -167,7 +167,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
   ! call DNS_WRITE_FIELDS('epsj0', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
 
   ! ! check transpositions in z! 
-  ! call DNS_MPI_TRPB_K(epsk, tmp2, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+  ! call TLAB_MPI_TRPB_K(epsk, tmp2, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
   ! call DNS_WRITE_FIELDS('epsk0', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
 #endif
   ! ================================================================== !
