@@ -12,7 +12,8 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
 
   IMPLICIT NONE
 
-  TINTEGER :: bcs_flow_jmin, bcs_flow_jmax ! Boundary conditions
+  ! now in module flow local
+  ! TINTEGER :: bcs_flow_jmin, bcs_flow_jmax ! Boundary conditions
 
   CHARACTER*(*) inifile
 

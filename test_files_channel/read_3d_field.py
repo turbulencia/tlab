@@ -1,15 +1,15 @@
-# %%
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
 import os
 import my_pylib as mp
+from scipy import integrate
 # import matplotlib.colors as mcolors
 
 #---------------------------------------------------------------------------#
 # path to 3d-fields
 path  = str(os.path.dirname(__file__) + '/../test_little_channel/' ) # name = 'flow.20.1' # file = str(path+name)
-index = 10
+index = 0
 
 #---------------------------------------------------------------------------#
 # read grid and flow fields
@@ -26,7 +26,21 @@ flow.read_3d_field()
 # field = field.reshape((grid.nx,grid.ny,grid.nz),order='F')
 # f.close()
 
-# %%
+#---------------------------------------------------------------------------#
+# bulk velocity
+um = flow.u.mean(axis=(0,2)) # average in x
+ub = integrate.simpson(um, grid.y)
+print('=========================================')
+print('bulk velocity:        ', ub)
+
+# analytical sulution
+ycl      = grid.y.max() / 2                        # centerline
+u_par    = - (1 / ycl**2 ) * (grid.y - ycl)**2 + 1 # parabolic ini velocity profile
+ub_exact = (2/3) * grid.y.max()                    # exact bulk velocity
+print('bulk velocity (exact):', ub_exact)
+print('error [%]:            ', (ub - ub_exact)/ub_exact * 100)
+print('=========================================')
+# sys.exit()
 #---------------------------------------------------------------------------#
 # plot settings 
 plt.rcParams['figure.dpi'] = 250 
@@ -60,16 +74,15 @@ plt.show()
 # plt.colorbar()
 # plt.show()
 
-# %%
 #---------------------------------------------------------------------------#
 # u-mean
 plt.figure(figsize=size)
 plt.xlabel("u_mean-velocity")
 plt.ylabel("y")
-plt.xlim(0,flow.u.mean(axis=0).max())
+plt.xlim(0,flow.u.mean(axis=(0,2)).max())
 plt.ylim(0,grid.y.max())
 plt.grid('True')
-plt.plot(flow.u.mean(axis=0), grid.y, marker='.',label='u_mean')
+plt.plot(flow.u.mean(axis=(0,2)), grid.y, marker='.',label='u_mean')
 plt.legend(loc=1)
 plt.show()
 
@@ -77,15 +90,16 @@ plt.show()
 plt.figure(figsize=size)
 plt.xlabel("v_mean-velocity")
 plt.ylabel("y")
-# plt.xlim(0,flow.v.mean(axis=0).max())
+# plt.xlim(0,flow.v.mean(axis=(0,2)).max())
 plt.ylim(0,grid.y.max())
 plt.grid('True')
-plt.plot(flow.v.mean(axis=0), grid.y, marker='.',label='v_mean')
+plt.plot(flow.v.mean(axis=(0,2)), grid.y, marker='.',label='v_mean')
 plt.legend(loc=1)
 plt.show()
 
-sys.exit()
-# %%
+# sys.exit()
+
+#---------------------------------------------------------------------------#
 # ProfileVelocity      = parabolic
 VelocityX            = 0.0
 YCoorVelocity        = 0.5#1.0	# y-coordinate of profile reference point, relative to the total scale, equation (2.1).
@@ -118,4 +132,3 @@ plt.grid('True')
 plt.plot(u_profile, grid.y, marker='.',label='u_mean')
 plt.legend(loc=1)
 plt.show()
-# %%
