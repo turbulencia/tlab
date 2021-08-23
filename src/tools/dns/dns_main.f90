@@ -151,6 +151,19 @@ PROGRAM DNS
   END IF
 
   ! ###################################################################
+  ! Initialize channel flow simulation
+  ! ###################################################################
+  IF ( imode_channel == DNS_CHANNEL_CFR .OR. imode_channel == DNS_CHANNEL_CPG) THEN
+    CALL FI_CHANNEL_UBULK_INITIALIZE()
+    logs_data(12) = ubulk_parabolic
+  END IF
+  !
+  IF ( imode_channel == DNS_CHANNEL_CPG) THEN
+    f_cpg = (C_2_R / g(2)%nodes(g(2)%size)) * (reynolds / ((reynolds/0.116)**(1.0/0.88)))**C_2_R ! const. streamwise pressure gradient
+    visc  =  C_1_R / ((reynolds/0.116)**(1.0/0.88)) ! new viscosity with centerline Re
+  END IF
+
+  ! ###################################################################
   ! Initialize data for boundary conditions
   ! ###################################################################
   CALL BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)

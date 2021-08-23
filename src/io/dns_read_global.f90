@@ -82,6 +82,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
   CALL TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian8/CompactDirect6>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#ChannelFlowType=<non,ConstantFlowRate,ConstantPressureGradient>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
@@ -251,6 +252,12 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
   g(1:3)%mode_fdm = imode_fdm
+
+! -------------------------------------------------------------------
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'ChannelFlowType', 'none', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'constantflowrate'        ) THEN; imode_channel = DNS_CHANNEL_CFR;
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'constantpressuregradient') THEN; imode_channel = DNS_CHANNEL_CPG;
+  ELSE;                                                               imode_channel = EQNS_NONE; ENDIF
 
 ! -------------------------------------------------------------------
 #ifdef USE_MPI

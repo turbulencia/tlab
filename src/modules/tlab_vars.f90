@@ -114,4 +114,10 @@ MODULE TLAB_VARS
               istattimeorg                            ! time at which accumulation of statistics started
   TREAL    :: rstattimeorg
 
+! ###################################################################
+! Channel flow
+! ###################################################################
+  TINTEGER :: imode_channel            ! channel flow type (cpg or cfr)
+  TREAL    :: ubulk_parabolic, ubulk, f_cpg
+
 END MODULE TLAB_VARS

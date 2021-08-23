@@ -18,6 +18,10 @@
 #define DNS_MODE_TEMPORAL   1
 #define DNS_MODE_SPATIAL    2
 
+! Channel Flow Type
+#define DNS_CHANNEL_CFR     1
+#define DNS_CHANNEL_CPG     2
+
 ! Equations mode
 #define DNS_EQNS_TOTAL            0
 #define DNS_EQNS_INTERNAL         1
