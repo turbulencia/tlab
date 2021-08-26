@@ -5,52 +5,66 @@ import os
 import my_pylib as mp
 from scipy import integrate
 # import matplotlib.colors as mcolors
+# import netCDF4  as nc 
+# import warnings; warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
-#---------------------------------------------------------------------------#
-# path to 3d-fields
-path  = str(os.path.dirname(__file__) + '/../test_little_channel/' ) # name = 'flow.20.1' # file = str(path+name)
-index = 100
+#-----------------------------------------------------------------------------#
+# path to flow fields
+path    = str(os.path.dirname(__file__) + '/../test_little_channel/' )
 
-#---------------------------------------------------------------------------#
-# read grid and flow fields
+# index
+index_flow = 1
+
+# plot settings 
+plt.rcParams['figure.dpi'] = 250 
+size    = (8,6)
+shading = 'gouraud'#'gouraud'
+figs    = 'figs' 
+plt.close('all')
+
+#-----------------------------------------------------------------------------#
+# read grid
 grid = mp.DnsGrid(path+'grid')
 
-# original field
-flow = mp.Field(path,var='flow',index=index)
+# read flow fields
+flow = mp.Field(path,var='flow',index=index_flow)
 flow.read_3d_field()
 
 #  read field 
-# f = open(path +'field.1','rb')
+# f = open(path +'flow.rand.1','rb')
 # f.seek(52,0)
 # field = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
 # field = field.reshape((grid.nx,grid.ny,grid.nz),order='F')
 # f.close()
 
+# simulation propteries
+re_cl      = 4226                 # centerline Re-number
+re_tau_lam = re_cl**0.88 * 0.116  # friction   Re-number (lam.)
+nu         = 1 / re_cl            # kinematic viscosity
+# ro    = 1                    # Rossby number
+# pr    = 1                    # Prandtl number
+# rho   = 1                    # density
+
 #---------------------------------------------------------------------------#
 # bulk velocity of the flow
 um = flow.u.mean(axis=(0,2)) # average in x
 ub = integrate.simpson(um, grid.y)
-print('=========================================')
-print('bulk velocity:        ', ub)
+print('--------------------------------------------------')
+print('Computing bulk velocity ...')
+print('bulk velocity:         ', ub)
 
 # analytical solution
 ucl      = 1                                            # centerline velocity 
 ycl      = grid.y.max() / 2                             # centerline position
-u_par    = - (ucl / ycl**2 ) * (grid.y - ycl)**2 + ucl # parabolic ini velocity profile
+u_par    = - (ucl / ycl**2 ) * (grid.y - ycl)**2 + ucl  # parabolic ini velocity profile
 ub_exact = (2/3) * grid.y.max() * ucl                   # exact bulk velocity
-print('bulk velocity (exact):', ub_exact)
-print('error [%]:            ', (ub - ub_exact)/ub_exact * 100)
-print('=========================================')
-# sys.exit()
+print('bulk velocity (exact): ', ub_exact)
+print('error [%]:             ', (ub - ub_exact)/ub_exact * 100)
+print('--------------------------------------------------')
+
 #---------------------------------------------------------------------------#
-# plot settings 
-plt.rcParams['figure.dpi'] = 250 
-size    = (8,6)
-shading = 'nearest'#'gouraud'
-figs    = 'figs' 
-plt.close('all')
-#---------------------------------------------------------------------------#
-# 2d plot
+# plots - 2d flow fields
+
 plt.figure(figsize=size)
 plt.title('2d-plot -- xy-plane -- velocity u')
 plt.xlabel("x")
@@ -66,14 +80,14 @@ plt.ylabel("y")
 plt.pcolormesh(grid.x,grid.y,flow.v[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
 plt.colorbar()
 plt.show()
-#
-# plt.figure(figsize=size)
-# plt.title('2d-plot -- xy-plane -- velocity w')
-# plt.xlabel("x")
-# plt.ylabel("y")
-# plt.pcolormesh(grid.x,grid.y,flow.w[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
-# plt.colorbar()
-# plt.show()
+
+plt.figure(figsize=size)
+plt.title('2d-plot -- xy-plane -- velocity w')
+plt.xlabel("x")
+plt.ylabel("y")
+plt.pcolormesh(grid.x,grid.y,flow.w[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
+plt.colorbar()
+plt.show()
 
 # #---------------------------------------------------------------------------#
 # # u-mean

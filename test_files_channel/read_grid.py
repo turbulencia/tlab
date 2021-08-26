@@ -1,10 +1,9 @@
-# %%
-import numpy as np
-import sys
+# import numpy as np
+# import sys
 import matplotlib.pyplot as plt
 import os
 import my_pylib as mp
-import netCDF4  as nc 
+# import netCDF4  as nc 
 
 #---------------------------------------------------------------------------#
 # read grid and flow fields
@@ -13,18 +12,19 @@ grid = mp.DnsGrid(path+'grid')
 
 # grid spacing
 dy = grid.y[1:] - grid.y[:-1]
+dx = grid.x[1:] - grid.x[:-1]
 
 # positions of mid nodes (dy is plotted here)
 ym = (grid.y[:-1] + grid.y[1:]) / 2 
 
 # print information
+print('--------------------------------------------------')
 print('stretched grid information in vertical direction')
 print('origin   :', grid.y[0])
 print('end      :', grid.y[-1])
 print('min step :', dy.min())
 print('max step :', dy.max())
-
-# %%
+print('min/max  :', dy.min()/dy.max())
 #---------------------------------------------------------------------------#
 # plot settings 
 plt.rcParams['figure.dpi'] = 250 

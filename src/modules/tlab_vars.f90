@@ -118,6 +118,6 @@ MODULE TLAB_VARS
 ! Channel flow
 ! ###################################################################
   TINTEGER :: imode_channel            ! channel flow type (cpg or cfr)
-  TREAL    :: ubulk_parabolic, ubulk, f_cpg
+  TREAL    :: ubulk_parabolic, ubulk, fcpg, reynolds_cl, reynolds_tau
 
 END MODULE TLAB_VARS

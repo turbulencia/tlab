@@ -3,21 +3,23 @@ import sys
 import matplotlib.pyplot as plt
 import os
 import my_pylib as mp
-from scipy import integrate
-# import matplotlib.colors as mcolors
+import netCDF4  as nc 
+import warnings; warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
-#---------------------------------------------------------------------------#
-# path to 3d-fields
-path  = str(os.path.dirname(__file__) + '/../test_parallel_channel/' ) # name = 'flow.20.1' # file = str(path+name)
-# index = 0
+#-----------------------------------------------------------------------------#
+# path 
+path    = str(os.path.dirname(__file__) + '/../test_little_channel/' )
 
-#---------------------------------------------------------------------------#
-# read grid file
+# plot settings 
+plt.rcParams['figure.dpi'] = 250 
+size    = (8,6)
+shading = 'gouraud'#'gouraud'
+figs    = 'figs' 
+plt.close('all')
+
+#-----------------------------------------------------------------------------#
+# read grid
 grid = mp.DnsGrid(path+'grid')
-
-# # read flow field
-# flow = mp.Field(path,var='flow',index=index)
-# flow.read_3d_field()
 
 #---------------------------------------------------------------------------#
 # ProfileVelocity    = parabolic
@@ -31,27 +33,20 @@ ThickVelocity        = grid.y.max() * YCoorVelocity / (2 * np.sqrt(1 - VelocityX
 print('ThickVelocity to ensure u(y=0)=0: ', str(ThickVelocity)) # Reference profile thickness, equation (2.1).
 
 # compute u_profile
-y_start = grid.y[0]
-y_end   = grid.y[-1]
-ycenter = y_start + y_end * YCoorVelocity
-yrel    = grid.y - ycenter
+y_start   = grid.y[0]
+y_end     = grid.y[-1]
+ycenter   = y_start + y_end * YCoorVelocity
+yrel      = grid.y - ycenter
+xi        = yrel / ThickVelocity
 
-xi = yrel / ThickVelocity
-amplify = ( 1 - xi/2 ) * ( 1 + xi/2 )
+amplify   = ( 1 - xi/2 ) * ( 1 + xi/2 )
 
 u_profile = VelocityX + DeltaVelocity * amplify 
 
 #---------------------------------------------------------------------------#
-# plot settings 
-plt.rcParams['figure.dpi'] = 250 
-size    = (8,6)
-shading = 'nearest'#'gouraud'
-figs    = 'figs' 
-plt.close('all')
-#---------------------------------------------------------------------------#
 # plot u(y) -- ini profile
 plt.figure(figsize=size)
-plt.xlabel("u_mean-velocity")
+plt.xlabel("u_mean ini-velocity")
 plt.ylabel("y")
 plt.xlim(0,1)
 plt.ylim(0,grid.y.max())

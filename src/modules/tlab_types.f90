@@ -37,7 +37,7 @@ MODULE TLAB_TYPES
      SEQUENCE
      CHARACTER*8 name
      TINTEGER size, inb_grid, mode_fdm
-     LOGICAL uniform, periodic, anelastic
+     LOGICAL uniform, periodic, anelastic, channel
      TREAL scale
      TREAL, DIMENSION(:),   POINTER :: nodes
      TREAL, DIMENSION(:,:), POINTER :: jac   ! pointer to Jacobians

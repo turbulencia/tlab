@@ -128,10 +128,10 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
   ! -----------------------------------------------------------------------
   ! Channel flow forcing (current implementation just without bouyancy, coriolis, subsidence)
   ! -----------------------------------------------------------------------
-  IF ( imode_channel .EQ. DNS_CHANNEL_CFR ) THEN
-     CALL FI_CHANNEL_CFR_FORCING(q(1:isize_field,1), q(1:isize_field,2), hq(1:isize_field,1), hq(1:isize_field,2), tmp1, wrk1d, wrk2d, wrk3d)
+  IF     ( imode_channel .EQ. DNS_CHANNEL_CFR ) THEN
+     CALL FI_CHANNEL_CFR_FORCING(q(1:isize_field,1), hq(1:isize_field,1), wrk1d, wrk3d)
   ELSEIF ( imode_channel .EQ. DNS_CHANNEL_CPG ) THEN
-     CALL FI_CHANNEL_CPG_FORCING(q(1:isize_field,1), q(1:isize_field,2), hq(1:isize_field,1), hq(1:isize_field,2), tmp1, wrk1d, wrk2d, wrk3d)
+     CALL FI_CHANNEL_CPG_FORCING(q(1:isize_field,1), hq(1:isize_field,1), wrk1d, wrk3d)
   ENDIF
 
   RETURN

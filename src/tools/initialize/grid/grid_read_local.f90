@@ -1,7 +1,7 @@
 #include "types.h"
 #include "dns_error.h"
 
-SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
+SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic, channel)
 
   USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_PROCS
@@ -12,7 +12,7 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
   CHARACTER*(*) inifile
   TINTEGER idir
   TREAL scale
-  LOGICAL periodic
+  LOGICAL periodic, channel
 
 ! -------------------------------------------------------------------
   CHARACTER*64 sRes, str, bakfile
@@ -35,6 +35,7 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
   CALL TLAB_WRITE_ASCII(bakfile, 'segments=<number of segments>')
   CALL TLAB_WRITE_ASCII(bakfile, 'periodic=<yes/no>')
   CALL TLAB_WRITE_ASCII(bakfile, 'mirrored=<yes/no>')
+  CALL TLAB_WRITE_ASCII(bakfile, 'channel=<yes/no>')
 
   CALL SCANINIINT(bakfile, inifile, title, 'segments', '1', idir_opts(1,idir))
 
@@ -46,6 +47,10 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
   CALL SCANINICHAR(bakfile, inifile, title, 'mirrored', 'no', sRes)
   IF (TRIM(ADJUSTL(sRes)) .eq. 'yes') THEN; idir_opts(3,idir) = 1
   ELSE;                                     idir_opts(3,idir) = 0; ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, title, 'channel', 'no', sRes)
+  IF (TRIM(ADJUSTL(sRes)) .eq. 'yes') THEN; channel = .TRUE.
+  ELSE;                                     channel = .FALSE.; ENDIF
 
   IF (idir_opts(2,idir).eq.1 .and. idir_opts(3,idir).eq.1) THEN
      CALL TLAB_WRITE_ASCII(efile, 'GRID_READ_LOCAL. Periodicity with mirroring is not supported.')

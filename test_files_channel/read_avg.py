@@ -1,68 +1,101 @@
-# %%
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
 import os
 import my_pylib as mp
 import netCDF4  as nc 
+import warnings; warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
-#---------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------#
 # path to avg-fields
-path  = str(os.path.dirname(__file__) + '/../test_little_channel/' )
-name  = 'avg' 
-index_nc = 10
-index_flow = 0
-file  = str(path+name+str(index_nc)+'.nc')
+path    = str(os.path.dirname(__file__) + '/../test_little_channel/' )
+name    = 'avg'
 
-#---------------------------------------------------------------------------#
-# read grid and flow fields
+# index
+index_nc   = 20000
+index_flow = 20000
+file_nc    = str(path+name+str(index_nc)+'.nc')
+
+# plot settings 
+plt.rcParams['figure.dpi'] = 250 
+size    = (8,6)
+shading = 'gouraud'#'gouraud'
+figs    = 'figs' 
+plt.close('all')
+
+#-----------------------------------------------------------------------------#
+# read grid
 grid = mp.DnsGrid(path+'grid')
+
+# read flow fields
 flow = mp.Field(path,var='flow',index=index_flow)
 flow.read_3d_field()
 
-# read avg.nc field
-avg = nc.Dataset(file, 'r')
-# see all variables: avg.variables.keys()
+# read avg.nc netcdf field
+avg = nc.Dataset(file_nc, 'r')
+# avg.variables.keys() # see all variables stored
+#-----------------------------------------------------------------------------#
+# simulation propteries
 
-# # simulation propteries
-# re  =           # Reynoldsnumber of the simulation
-# ro  = 1         # Rossby number
-# pr  = 1         # Prandtl number
-# rho = 1         # density
-# nu  = 2 / re**2 # kinematic viscosity
+# forcing type
+forcing_cpg = True  # constant pressure gradient
+forcing_cfr = False # constant flow rate
 
+re = 180            # reynoldsnumber in dns.ini file
+if forcing_cpg:
+    re_tau = re
+    re_cl  = (re_tau/0.116)**(1/0.88)
+    fcpg   = ( re_tau / re_cl )**2    # constant streamwise pressure gradient
+if forcing_cfr:
+    re_cl  = re 
+    re_tau = re_cl**0.88 * 0.116  
+    
+nu    = 1 / re_cl  # kinematic viscosity, always!
+# ro    = 1          # Rossby number
+# pr    = 1          # Prandtl number
+rho   = 1          # density
+delta = 1          # channel half height
 #-----------------------------------------------------------------------------#
 # load variables
-#-----------------------------------------------------------------------------#
+
 # time and vertical distance
 t=avg.variables['t'][:]
 y=avg.variables['y'][:]
 
-# velocitities
+# velocities
 u=avg.variables['rU'][:,:] # the first index is time, the second is vertical node
 v=avg.variables['rV'][:,:]
-# w=avg.variables['rW'][:,:]
+w=avg.variables['rW'][:,:]
+
+# Re-stresses
+# uv=avg.variables['Rxy'][:,:]
 
 # pressure
 p=avg.variables['rP'][:,:]
 
-# %%
-#---------------------------------------------------------------------------#
-# plot settings 
-plt.rcParams['figure.dpi'] = 250 
-size    = (8,6)
-shading = 'nearest'#'gouraud'
-figs    = 'figs' 
-plt.close('all')
 #-----------------------------------------------------------------------------#
+# balance
+# dudy2 = mp.derivative2(grid.y, u.mean(axis=0), grid.ny)
+# duvdy = mp.derivative1(grid.y, uv.mean(axis=0), grid.ny)
+# dpdx  = nu * dudy2 - duvdy[:,0]
+
+#-----------------------------------------------------------------------------#
+# plots - averages
+
+# prabolic u_mean ini profile
+ucl   = 1                                            # centerline velocity 
+ycl   = grid.y.max() / 2                             # centerline position
+u_par = - (ucl / ycl**2 ) * (grid.y - ycl)**2 + ucl  # parabolic ini velocity profile
+
 # velocities
 plt.figure(figsize=size)
 plt.xlabel("y")
 plt.ylabel("u_i")
+plt.plot(y, u_par, '.', label='u_mean_ini')
 plt.plot(y, u.mean(axis=0), label='u_mean')
 plt.plot(y, v.mean(axis=0), label='v_mean')
 # plt.plot(y, w.mean(axis=0), label='w_mean')
-plt.plot(y, p.mean(axis=0), label='p_mean')
+# plt.plot(y, p.mean(axis=0), label='p_mean')
 plt.legend()
 # plt.xscale('log')
 # plt.title('horizontal - velocities')
@@ -72,12 +105,52 @@ plt.grid(True)
 plt.show()
 # plt.savefig("plots_neutral/velocities.svg")
 
+#-----------------------------------------------------------------------------#
+# plots - 2d flow fields
 
-
-
+plt.figure(figsize=size)
+plt.title('2d-plot -- xy-plane -- velocity u')
+plt.xlabel("x")
+plt.ylabel("y")
+plt.pcolormesh(grid.x,grid.y,flow.u[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
+plt.colorbar()
+plt.show()
+#
+plt.figure(figsize=size)
+plt.title('2d-plot -- xy-plane -- velocity v')
+plt.xlabel("x")
+plt.ylabel("y")
+plt.pcolormesh(grid.x,grid.y,flow.v[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
+plt.colorbar()
+plt.show()
+#
+# plt.figure(figsize=size)
+# plt.title('2d-plot -- xy-plane -- velocity w')
+# plt.xlabel("x")
+# plt.ylabel("y")
+# plt.pcolormesh(grid.x,grid.y,flow.w[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
+# plt.colorbar()
+# plt.show()
 
 #-----------------------------------------------------------------------------#
 sys.exit()
+#-----------------------------------------------------------------------------#
+
+# velocities
+plt.figure(figsize=size)
+plt.xlabel("y")
+plt.ylabel("terms")
+plt.plot(y, nu*dudy2, label='nu*dudy2')
+plt.plot(y, -duvdy,   label='-duvdy')
+plt.plot(y, -dpdx,    label='-dpdx')
+plt.legend()
+plt.grid(True)
+# plt.xlim(1,10000)
+# plt.ylim(0,25)
+plt.show()
+# plt.savefig("plots_neutral/velocities.svg")
+
+
 '''
 # # Re-stresses / vel. fluc.
 # uu=datafile_nc.variables['Rxx'][:,:] # the first index is time, the second is vertical node
