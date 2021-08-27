@@ -3,7 +3,7 @@
 
 subroutine VELOCITY_MEAN_XCOMPACT(u,v,w)
 
-  use TLAB_VARS,     only: g, imax,jmax,kmax
+  use TLAB_VARS,     only: qbg, g, imax,jmax,kmax
 
 #ifdef USE_MPI 
   use TLAB_MPI_VARS, only: ims_pro, ims_offset_j
@@ -43,7 +43,7 @@ subroutine VELOCITY_MEAN_XCOMPACT(u,v,w)
   call random_number(v)
   call random_number(w)
 
-  !modulation of the random noise + initial velocity profile
+  !modulation of the random noise + initial velocity profile (requires ly=2*delta)
   do k=1,kmax
      do j=1,jmax
 
@@ -52,9 +52,9 @@ subroutine VELOCITY_MEAN_XCOMPACT(u,v,w)
         um = exp(-0.2 * y**C_2_R)
 
         do i=1,imax
-           u(i,j,k) = init_noise * um * (C_2_R * u(i,j,k) - C_1_R) + C_1_R - y**C_2_R
-           v(i,j,k) = init_noise * um * (C_2_R * v(i,j,k) - C_1_R)
-           w(i,j,k) = init_noise * um * (C_2_R * w(i,j,k) - C_1_R)
+           u(i,j,k) = (init_noise * um * (C_2_R * u(i,j,k) - C_1_R) + C_1_R - y**C_2_R) * qbg(1)%delta
+           v(i,j,k) = (init_noise * um * (C_2_R * v(i,j,k) - C_1_R)                   ) * qbg(1)%delta
+           w(i,j,k) = (init_noise * um * (C_2_R * w(i,j,k) - C_1_R)                   ) * qbg(1)%delta
         end do
      end do
   end do

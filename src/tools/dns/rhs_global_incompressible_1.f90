@@ -74,11 +74,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef USE_ESSL
   ilen = isize_field
 #endif
-
-  DO ij = 1, isize_field
-    h1(ij) = h1(ij) - 0.12 * v(ij)
-    h2(ij) = h2(ij) + 0.12 * u(ij)
-  ENDDO
   
 ! #######################################################################
 ! Preliminaries for Scalar BC

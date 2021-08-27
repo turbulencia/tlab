@@ -159,11 +159,11 @@ PROGRAM DNS
   END IF
   !
   IF ( imode_channel == DNS_CHANNEL_CPG) THEN
-    ! const. streamwise pressure gradient
-    fcpg = (reynolds_tau / reynolds_cl)**C_2_R 
-    ! fcpg = (C_2_R / reynolds_cl) 
+    ! forcing with const. streamwise pressure gradient
+    fcpg = (reynolds_tau / reynolds_cl)**C_2_R ! turbulent
+    ! fcpg = (C_2_R / reynolds_cl)               ! laminar
   END IF
-  write(*,*) reynolds, reynolds_tau, reynolds_cl, visc, fcpg ! debug
+  ! write(*,*) reynolds, reynolds_tau, reynolds_cl, visc, fcpg ! debug
 
   ! ###################################################################
   ! Initialize data for boundary conditions

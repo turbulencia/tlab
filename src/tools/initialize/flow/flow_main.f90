@@ -166,7 +166,8 @@ PROGRAM INIFLOW
 ! ###################################################################
 ! test option -- xcompact3d (overwrites all other iniflow profiles!)
 ! ###################################################################
-  IF ( imode_channel == DNS_CHANNEL_CFR .OR. imode_channel == DNS_CHANNEL_CPG) THEN
+  ! IF ( imode_channel == DNS_CHANNEL_CFR .OR. imode_channel == DNS_CHANNEL_CPG) THEN
+  IF ( bcs_flow_jmin .EQ. DNS_BCS_DIRICHLET .AND. bcs_flow_jmax .EQ. DNS_BCS_DIRICHLET ) THEN
     CALL VELOCITY_MEAN_XCOMPACT( q(1,1),q(1,2),q(1,3) )
   ENDIF
 

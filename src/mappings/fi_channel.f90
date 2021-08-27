@@ -110,7 +110,7 @@ end subroutine FI_CHANNEL_UBULK
 !########################################################################
 subroutine FI_CHANNEL_UBULK_INITIALIZE()
 
-  use TLAB_VARS,      only : qbg, ubulk_parabolic
+  use TLAB_VARS,      only : g, qbg, ubulk_parabolic
   use TLAB_CONSTANTS, only : efile
   use TLAB_PROCS
 
@@ -122,7 +122,7 @@ subroutine FI_CHANNEL_UBULK_INITIALIZE()
   ! velocity profile is correct (u(y=0)=u(y=Ly)=0)
 
   if(qbg(1)%type == PROFILE_PARABOLIC) then
-    ubulk_parabolic = (C_2_R/C_3_R) * qbg(1)%delta 
+    ubulk_parabolic = (C_1_R / g(2)%nodes(g(2)%size)) * (C_4_R/C_3_R) * qbg(1)%delta 
   else 
     call TLAB_WRITE_ASCII(efile, 'Analytical ubulk cannot be computed. Check initial velocity profile.')
     call TLAB_STOP(DNS_ERROR_UNDEVELOP)

@@ -1081,22 +1081,24 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF ( iviscous .EQ. EQNS_NONE ) THEN; visc = C_0_R
   ELSE;                                visc = C_1_R/reynolds; ENDIF
 
-  ! reynolds==re_tau in dns.ini in this case 
+  ! reynolds = re_tau in dns.ini
   IF ( imode_channel == DNS_CHANNEL_CPG) THEN
      reynolds_tau = reynolds    
      ! centerline reynolds number
-     reynolds_cl  = (reynolds_tau/0.116)**(1.0/0.88)  
+     reynolds_cl  = (reynolds_tau/0.116)**(1.0/0.88) ! turbulent
+     ! reynolds_cl  =  reynolds_tau**C_2_R / C_2_R   ! laminar
      ! new viscosity with centerline reynolds number
      visc         =  C_1_R / reynolds_cl          
      ! replace re_tau with re_cl, since fdm_initialize uses reynolds
      reynolds     = reynolds_cl                   
   END IF
 
-    ! reynolds==re_cl in dns.ini in this case 
+  ! reynolds = re_cl in dns.ini
   IF ( imode_channel == DNS_CHANNEL_CFR) THEN
      reynolds_cl  = reynolds    
      ! friction reynolds number
-     reynolds_tau = reynolds_cl**0.88 * 0.116          
+     reynolds_tau =  reynolds_cl**0.88 * 0.116       ! turbulent       
+     ! reynolds_tau = (reynolds_cl*C_2_R)**0.5       ! laminar       
   END IF
 ! -------------------------------------------------------------------
 ! Initializing thermodynamic data of the mixture

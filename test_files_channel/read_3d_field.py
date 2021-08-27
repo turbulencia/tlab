@@ -10,11 +10,12 @@ from scipy import integrate
 
 #-----------------------------------------------------------------------------#
 # path to flow fields
-# path    = str(os.path.dirname(__file__) + '/../test_little_channel/' )
-path    = str(os.path.dirname(__file__) + '/../test_parallel_channel/' )
-
+path    = str(os.path.dirname(__file__) + '/../test_little_channel/' )
+# path    = str(os.path.dirname(__file__) + '/../test_parallel_channel/' )
+# path    = str(os.path.dirname(__file__) + '/../test_yamo_180/' )
+# 
 # index
-index_flow = 1
+index_flow = 1000
 
 # plot settings 
 plt.rcParams['figure.dpi'] = 250 
@@ -64,7 +65,7 @@ print('--------------------------------------------------')
 print('bulk velocity:         ', ub)
 
 # analytical solution
-ucl      = 1                                            # centerline velocity 
+ucl      = 15.63                                       # centerline velocity 
 ycl      = grid.y.max() / 2                             # centerline position
 u_par    = - (ucl / ycl**2 ) * (grid.y - ycl)**2 + ucl # parabolic ini velocity profile
 ub_exact = (2/3) * ucl                   # exact bulk velocity

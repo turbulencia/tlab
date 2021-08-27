@@ -11,7 +11,7 @@ from scipy import integrate
 path  = str(os.path.dirname(__file__) + '/../test_little_channel/' ) # name = 'flow.20.1' # file = str(path+name)
 path_out  = str(os.path.dirname(__file__) + '/' ) # name = 'flow.20.1' # file = str(path+name)
 
-index = 1000
+index = 0
 #---------------------------------------------------------------------------#
 plt.rcParams['figure.dpi'] = 250 
 size    = (8,6)

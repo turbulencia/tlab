@@ -25,7 +25,7 @@ grid = mp.DnsGrid(path+'grid')
 # ProfileVelocity    = parabolic
 VelocityX            = 0.0
 YCoorVelocity        = 0.5#1.0	# y-coordinate of profile reference point, relative to the total scale, equation (2.1).
-DeltaVelocity        = 1.0	# Reference profile difference, equation (2.1).
+DeltaVelocity        = 1	# Reference profile difference, equation (2.1).
 
 # compute ThickVelocity to ensure u(y=0)=0
 ThickVelocity        = grid.y.max() * YCoorVelocity / (2 * np.sqrt(1 - VelocityX / DeltaVelocity))
@@ -48,7 +48,7 @@ u_profile = VelocityX + DeltaVelocity * amplify
 plt.figure(figsize=size)
 plt.xlabel("u_mean ini-velocity")
 plt.ylabel("y")
-plt.xlim(0,1)
+plt.xlim(0,u_profile.max())
 plt.ylim(0,grid.y.max())
 plt.grid('True')
 plt.plot(u_profile, grid.y, marker='.',label='u_mean')
