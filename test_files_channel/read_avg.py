@@ -8,12 +8,13 @@ import warnings; warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 #-----------------------------------------------------------------------------#
 # path to avg-fields
-path    = str(os.path.dirname(__file__) + '/../test_little_channel/' )
+# path    = str(os.path.dirname(__file__) + '/../test_little_channel/' )
+path    = str(os.path.dirname(__file__) + '/../test_yamo_180/' )
 name    = 'avg'
 
 # index
-index_nc   = 20000
-index_flow = 20000
+index_nc   = 100000
+index_flow = 100000
 file_nc    = str(path+name+str(index_nc)+'.nc')
 
 # plot settings 

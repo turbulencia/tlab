@@ -164,6 +164,13 @@ PROGRAM INIFLOW
   END SELECT
 
 ! ###################################################################
+! test option -- xcompact3d (overwrites all other iniflow profiles!)
+! ###################################################################
+  IF ( imode_channel == DNS_CHANNEL_CFR .OR. imode_channel == DNS_CHANNEL_CPG) THEN
+    CALL VELOCITY_MEAN_XCOMPACT( q(1,1),q(1,2),q(1,3) )
+  ENDIF
+
+! ###################################################################
 ! Impose noslip+impermeability BC on flow fields 
 ! ###################################################################
   
