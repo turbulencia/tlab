@@ -145,6 +145,7 @@
 #define PROFILE_GAUSSIAN_SYM       19
 #define PROFILE_TANH_ANTISYM       20
 #define PROFILE_TANH_SYM           21
+#define PROFILE_PARABOLIC_XCOMPACT3D 22
 
 ! Chemistry Constants
 #define CHEM_NONE           0

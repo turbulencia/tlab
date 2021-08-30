@@ -164,11 +164,12 @@ PROGRAM INIFLOW
   END SELECT
 
 ! ###################################################################
-! test option -- xcompact3d (overwrites all other iniflow profiles!)
+! Test option -- Parabolic mean streamwise velocity profile with
+! different noise, cf. xcompact3d code 
+! (overwrites all other iniflow profiles)
 ! ###################################################################
-  ! IF ( imode_channel == DNS_CHANNEL_CFR .OR. imode_channel == DNS_CHANNEL_CPG) THEN
-  IF ( bcs_flow_jmin .EQ. DNS_BCS_DIRICHLET .AND. bcs_flow_jmax .EQ. DNS_BCS_DIRICHLET ) THEN
-    CALL VELOCITY_MEAN_XCOMPACT( q(1,1),q(1,2),q(1,3) )
+  IF ( qbg(1)%type == PROFILE_PARABOLIC_XCOMPACT3D ) THEN
+    CALL VELOCITY_MEAN_XCOMPACT3D( q(1,1),q(1,2),q(1,3) )
   ENDIF
 
 ! ###################################################################

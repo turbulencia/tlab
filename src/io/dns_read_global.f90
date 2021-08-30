@@ -775,7 +775,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#Pressure=<mean pressure>')
   CALL TLAB_WRITE_ASCII(bakfile, '#Density=<mean density>')
   CALL TLAB_WRITE_ASCII(bakfile, '#Temperature=<mean temperature>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ProfileVelocity=<None/Linear/Tanh/Erf/Ekman/EkmanP/Parabolic>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#ProfileVelocity=<None/Linear/Tanh/Erf/Ekman/EkmanP/Parabolic/ParabolicX>')
   CALL TLAB_WRITE_ASCII(bakfile, '#YCoorVelocity=<Relative Y reference point>')
   CALL TLAB_WRITE_ASCII(bakfile, '#DiamVelocity=<value>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ThickVelocity=<value>')
@@ -807,6 +807,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; qbg(1)%type = PROFILE_MIXEDLAYER
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhsymmetric'     ) THEN; qbg(1)%type = PROFILE_TANH_SYM
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhantisymmetric' ) THEN; qbg(1)%type = PROFILE_TANH_ANTISYM
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolicx' )        THEN; qbg(1)%type = PROFILE_PARABOLIC_XCOMPACT3D
   ELSE
      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong velocity profile.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)

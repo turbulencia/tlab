@@ -8,14 +8,14 @@ from scipy import integrate
 # import netCDF4  as nc 
 # import warnings; warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
-#-----------------------------------------------------------------------------#
+#---------------------------------------------------------------------------#
 # path to flow fields
-path    = str(os.path.dirname(__file__) + '/../test_little_channel/' )
+# path    = str(os.path.dirname(__file__) + '/../test_little_channel/' )
 # path    = str(os.path.dirname(__file__) + '/../test_parallel_channel/' )
-# path    = str(os.path.dirname(__file__) + '/../test_yamo_180/' )
-# 
+path    = str(os.path.dirname(__file__) + '/../test_yamo_180/' )
+ 
 # index
-index_flow = 1000
+index_flow = 200001
 
 # plot settings 
 plt.rcParams['figure.dpi'] = 250 
@@ -24,7 +24,7 @@ shading = 'gouraud'#'gouraud'
 figs    = 'figs' 
 plt.close('all')
 
-#-----------------------------------------------------------------------------#
+#---------------------------------------------------------------------------#
 # read grid
 grid = mp.DnsGrid(path+'grid')
 
@@ -40,10 +40,10 @@ flow.read_3d_field()
 # f.close()
 
 # forcing type
-forcing_cpg = True  # constant pressure gradient
-forcing_cfr = False # constant flow rate
+forcing_cpg = False  # constant pressure gradient
+forcing_cfr = True # constant flow rate
 
-re = 180            # reynoldsnumber in dns.ini file
+re = 5000           # reynoldsnumber in dns.ini file
 if forcing_cpg:
     re_tau = re
     re_cl  = (re_tau/0.116)**(1/0.88)
@@ -65,7 +65,7 @@ print('--------------------------------------------------')
 print('bulk velocity:         ', ub)
 
 # analytical solution
-ucl      = 15.63                                       # centerline velocity 
+ucl      = 1 # 15.63                                       # centerline velocity 
 ycl      = grid.y.max() / 2                             # centerline position
 u_par    = - (ucl / ycl**2 ) * (grid.y - ycl)**2 + ucl # parabolic ini velocity profile
 ub_exact = (2/3) * ucl                   # exact bulk velocity
@@ -84,13 +84,21 @@ plt.colorbar()
 plt.show()
 #
 plt.figure(figsize=size)
+plt.title('2d-plot -- yz-plane -- velocity u')
+plt.xlabel("z")
+plt.ylabel("y")
+plt.pcolormesh(grid.z,grid.y,flow.u[10,:,:], shading=shading ,cmap='RdBu_r')#, norm=midnorm)
+plt.colorbar()
+plt.show()
+#
+plt.figure(figsize=size)
 plt.title('2d-plot -- xy-plane -- velocity v')
 plt.xlabel("x")
 plt.ylabel("y")
 plt.pcolormesh(grid.x,grid.y,flow.v[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
 plt.colorbar()
 plt.show()
-
+#
 plt.figure(figsize=size)
 plt.title('2d-plot -- xy-plane -- velocity w')
 plt.xlabel("x")
@@ -99,7 +107,7 @@ plt.pcolormesh(grid.x,grid.y,flow.w[:,:,0].T, shading=shading ,cmap='RdBu_r')#, 
 plt.colorbar()
 plt.show()
 
-# #---------------------------------------------------------------------------#
+#---------------------------------------------------------------------------#
 # u-mean
 plt.figure(figsize=size)
 plt.xlabel("u_mean-velocity")
@@ -111,6 +119,19 @@ plt.plot(flow.u.mean(axis=(0,2)), grid.y, marker='.',label='u_mean')
 plt.legend(loc=1)
 plt.show()
 
+    
+# plt.figure(figsize=size)
+# plt.xlabel("u_mean-velocity")
+# plt.ylabel("y")
+# plt.xlim(0,1)#flow.u.mean(axis=(0,2)).max())
+# plt.ylim(0,grid.y.max())
+# plt.grid('True')
+# for i in range(0,100,10):
+#     plt.plot(flow.u[i,:,grid.nz//2], grid.y, marker='.',label=str(i))
+# plt.legend(loc=1)
+# plt.show()
+
+        
 # # v-mean
 # plt.figure(figsize=size)
 # plt.xlabel("v_mean-velocity")

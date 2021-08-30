@@ -13,8 +13,8 @@ path    = str(os.path.dirname(__file__) + '/../test_yamo_180/' )
 name    = 'avg'
 
 # index
-index_nc   = 100000
-index_flow = 100000
+index_nc   = 200000
+index_flow = 200000
 file_nc    = str(path+name+str(index_nc)+'.nc')
 
 # plot settings 

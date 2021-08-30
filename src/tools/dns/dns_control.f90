@@ -15,7 +15,7 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
   USE TLAB_PROCS
   USE TLAB_VARS,ONLY : imode_eqns, imode_channel, icalc_scal, inb_scal
   USE TLAB_VARS,ONLY : isize_field, imax,jmax,kmax
-  USE TLAB_VARS,ONLY : rbackground, ubulk
+  USE TLAB_VARS,ONLY : rbackground, ubulk, fcpg, delta_ubulk
   USE DNS_LOCAL, ONLY : ilimit_flow, p_bound_min,p_bound_max, r_bound_min,r_bound_max, d_bound_max
   USE DNS_LOCAL, ONLY : ilimit_scal, s_bound_min,s_bound_max
   USE DNS_LOCAL, ONLY : logs_data
@@ -109,8 +109,12 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
         ENDIF
      ENDIF
      ! Channel flow
-     IF ( imode_channel .EQ. DNS_CHANNEL_CFR .OR. imode_channel .EQ. DNS_CHANNEL_CPG ) THEN
+     IF (      imode_channel .EQ. DNS_CHANNEL_CFR ) THEN
         logs_data(12) = ubulk
+        logs_data(13) = delta_ubulk
+     ELSE IF ( imode_channel .EQ. DNS_CHANNEL_CPG ) THEN
+        logs_data(12) = ubulk
+        logs_data(13) = fcpg
      ENDIF
 
   ELSE

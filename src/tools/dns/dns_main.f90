@@ -154,7 +154,7 @@ PROGRAM DNS
   ! Initialize channel flow simulation
   ! ###################################################################
   IF ( imode_channel == DNS_CHANNEL_CFR .OR. imode_channel == DNS_CHANNEL_CPG) THEN
-    CALL FI_CHANNEL_UBULK_INITIALIZE()
+    CALL FI_CHANNEL_INITIALIZE()
     logs_data(12) = ubulk_parabolic
   END IF
   !
