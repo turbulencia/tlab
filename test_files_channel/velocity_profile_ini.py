@@ -1,10 +1,10 @@
 import numpy as np
-import sys
+# import sys
 import matplotlib.pyplot as plt
 import os
 import my_pylib as mp
-import netCDF4  as nc 
-import warnings; warnings.filterwarnings("ignore", category=DeprecationWarning) 
+# import netCDF4  as nc 
+# import warnings; warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
 #-----------------------------------------------------------------------------#
 # path 
@@ -30,7 +30,8 @@ DeltaVelocity        = 1	# Reference profile difference, equation (2.1).
 # compute ThickVelocity to ensure u(y=0)=0
 ThickVelocity        = grid.y.max() * YCoorVelocity / (2 * np.sqrt(1 - VelocityX / DeltaVelocity))
 # in this case: ThickVelocity = 0.5 * grid.y.max() * YCoorVelocity
-print('ThickVelocity to ensure u(y=0)=0: ', str(ThickVelocity)) # Reference profile thickness, equation (2.1).
+print('--------------------------------------------------')
+print('ThickVelocity [u(0)=0]: ', str(round(ThickVelocity,5))) # Reference profile thickness, equation (2.1).
 
 # compute u_profile
 y_start   = grid.y[0]

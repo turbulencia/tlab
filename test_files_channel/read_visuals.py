@@ -1,9 +1,9 @@
 import numpy as np
-import sys
+# import sys
 import matplotlib.pyplot as plt
 import os
 import my_pylib as mp
-from scipy import integrate
+# from scipy import integrate
 # import matplotlib.colors as mcolors
 # import netCDF4  as nc 
 # import warnings; warnings.filterwarnings("ignore", category=DeprecationWarning) 
@@ -40,14 +40,6 @@ f.close()
 # pre = pre.reshape((grid.nx,grid.ny,grid.nz),order='F')
 # f.close()
 
-# simulation propteries
-re_cl      = 4226                 # centerline Re-number
-re_tau_lam = re_cl**0.88 * 0.116  # friction   Re-number (lam.)
-nu         = 1 / re_cl            # kinematic viscosity
-# ro    = 1                    # Rossby number
-# pr    = 1                    # Prandtl number
-# rho   = 1                    # density
-
 #---------------------------------------------------------------------------#
 # pressure gradient
 pre_xy = pre.mean(axis=2)
@@ -57,7 +49,6 @@ for i in range(0,grid.ny):
 
 #---------------------------------------------------------------------------#
 # plots - 2d fields
-
 # --------------------------#
 plt.figure(figsize=size)
 plt.rcParams.update({'font.size':11})
@@ -77,8 +68,8 @@ plt.title('xy - plane')
 plt.pcolormesh(grid.x,grid.y,dpdx[:,:].T, shading=shading, cmap='RdBu_r')
 plt.colorbar()
 #--------------------------#
-
-# mean pressure
+#---------------------------------------------------------------------------#
+# plots - mean pressure
 plt.figure(figsize=size)
 plt.xlabel('$y$')
 plt.ylabel("$p$")
