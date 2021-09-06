@@ -99,22 +99,14 @@ PROGRAM INIGRID
 ! #######################################################################
 ! Rescale grid for channel flow (with delta = 1)
 ! #######################################################################
-  IF (g(1)%channel .OR. g(2)%channel .OR. g(3)%channel) THEN
-     scaley_new = C_2_R
-     scaley_old = g(2)%scale
-     ! x - nodes and scale
-     g(1)%nodes = g(1)%nodes  / scaley_old
-     g(1)%scale = g(1)%scale  / scaley_old
-     ! y - nodes and scale
-     g(2)%nodes = (g(2)%nodes / scaley_old) * scaley_new
-     g(2)%scale =                             scaley_new  ! udate scaley
-     ! z - nodes and scale
-     IF ( g(3)%size .GT. 1 ) THEN
-        g(3)%nodes = g(3)%nodes  / scaley_old
-        g(3)%scale = g(3)%scale  / scaley_old
-     ENDIF
+  IF (g(2)%channel) THEN
+    ! full channel height h=2*delta (with delta=1)
+    scaley_new = C_2_R
+    scaley_old = g(2)%scale
+    ! y - nodes and scale
+    g(2)%nodes = (g(2)%nodes / scaley_old) * scaley_new
+    g(2)%scale =                             scaley_new  ! update scaley
   ENDIF
-
 ! #######################################################################
 ! Statistics
 ! #######################################################################
