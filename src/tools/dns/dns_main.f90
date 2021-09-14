@@ -153,17 +153,12 @@ PROGRAM DNS
   ! ###################################################################
   ! Initialize channel flow simulation
   ! ###################################################################
-  IF ( imode_channel == DNS_CHANNEL_CFR .OR. imode_channel == DNS_CHANNEL_CPG) THEN
+  IF ( imode_channel == DNS_CHANNEL_CPG) THEN
     CALL FI_CHANNEL_INITIALIZE()
     logs_data(12) = ubulk_parabolic
+    ! constant streamwise pressure gradient forcing term
+    fcpg = (reynolds_tau / reynolds_cl)**C_2_R
   END IF
-  !
-  IF ( imode_channel == DNS_CHANNEL_CPG) THEN
-    ! forcing with const. streamwise pressure gradient
-    fcpg = (reynolds_tau / reynolds_cl)**C_2_R ! turbulent
-    ! fcpg = (C_2_R / reynolds_cl)               ! laminar
-  END IF
-  ! write(*,*) reynolds, reynolds_tau, reynolds_cl, visc, fcpg ! debug
 
   ! ###################################################################
   ! Initialize data for boundary conditions

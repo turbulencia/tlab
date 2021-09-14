@@ -1,111 +1,121 @@
 # import numpy as np
 # import sys
 import matplotlib.pyplot as plt
+from   matplotlib import rc
+rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+## for Palatino and other serif fonts use:
+#rc('font',**{'family':'serif','serif':['Palatino']})
+rc('text', usetex=True)
 import os
 import my_pylib as mp
-# from scipy import integrate
-# import matplotlib.colors as mcolors
 # import netCDF4  as nc 
 # import warnings; warnings.filterwarnings("ignore", category=DeprecationWarning) 
-import sys
-#---------------------------------------------------------------------------#
-# path to flow fields
-path    = str(os.path.dirname(__file__) + '/../test_little_channel/' )
-# path    = str(os.path.dirname(__file__) + '/../test_parallel_channel/' )
-# path    = str(os.path.dirname(__file__) + '/../test_yamo_180/' )
- 
-# index
-index_flow   = 100
-index_scal   = index_flow
-# forcing_flow = 'cfr'
+# import os
+#-----------------------------------------------------------------------------#
+# file
+index        = 0
 forcing_flow = 'cpg'
+# path  = '/home/jonathan/simulations/data/channel_flow/cpg_scal/'
+path = str(os.path.dirname(__file__) + '/../test_little_channel/' )
+# path  = '/home/jonathan/simulations/data/channel_flow/cpg_test/'
 
 # plot settings 
-plt.rcParams['figure.dpi'] = 250 
+font = {'family':'monospace', 'weight':'bold', 'size':14}; rc('font', **font) # font
+plt.rcParams['figure.dpi'] = 210
 size    = (8,6)
-shading = 'gouraud'#'gouraud' #'nearest'
+shading = 'gouraud'#'gouraud'
 figs    = 'figs' 
 plt.close('all')
-
 #---------------------------------------------------------------------------#
 # read grid
 grid = mp.DnsGrid(path+'grid')
 
 # read flow fields
-flow = mp.Field(path,var='flow',index=index_flow, forcing=forcing_flow)
+flow = mp.Field(path,var='flow',index=index, forcing=forcing_flow)
 flow.read_3d_field()
 
 # read scalar fields
-scal = mp.Field(path,var='phi1',index=index_scal)
-scal.read_3d_field()
+scal1 = mp.Field(path,var='phi1',index=index, forcing=forcing_flow)
+scal1.read_3d_field()
 
+# read scalar fields
+scal2 = mp.Field(path,var='phi2',index=index, forcing=forcing_flow)
+scal2.read_3d_field()
 
 # bulk velocity of the flow
-ub, upar = mp.ubulk(flow.u, grid.y)
+ub = mp.ubulk(flow.u, grid.y)
 #---------------------------------------------------------------------------#
 # plots - 2d flow fields
 plt.figure(figsize=size)
-plt.title('2d-plot -- xy-plane -- velocity u')
-plt.xlabel("x")
-plt.ylabel("y")
-plt.pcolormesh(grid.x,grid.y,flow.u[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
+plt.title(r'velocity u')
+plt.xlabel(r'$x/\delta$')
+plt.ylabel(r'$y/\delta$')
+plt.pcolormesh(grid.x,grid.y,flow.u[:,:,grid.nz//2].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
 plt.colorbar()
 plt.show()
-'''
+#
 plt.figure(figsize=size)
-plt.title('2d-plot -- yz-plane -- velocity u')
-plt.xlabel("z")
-plt.ylabel("y")
+plt.title(r'velocity u')
+plt.xlabel(r'$z/\delta$')
+plt.ylabel(r'$y/\delta$')
 plt.pcolormesh(grid.z,grid.y,flow.u[10,:,:], shading=shading ,cmap='RdBu_r')#, norm=midnorm)
 plt.colorbar()
 plt.show()
-#
-plt.figure(figsize=size)
-plt.title('2d-plot -- xy-plane -- velocity v')
-plt.xlabel("x")
-plt.ylabel("y")
-plt.pcolormesh(grid.x,grid.y,flow.v[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
-plt.colorbar()
-plt.show()
-#
-plt.figure(figsize=size)
-plt.title('2d-plot -- xy-plane -- velocity w')
-plt.xlabel("x")
-plt.ylabel("y")
-plt.pcolormesh(grid.x,grid.y,flow.w[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
-plt.colorbar()
-plt.show()
-'''
 #---------------------------------------------------------------------------#
+# plots - 2d scalar fields
+plt.figure(figsize=size)
+plt.title(r'scalar 1')
+plt.xlabel(r'$x/\delta$')
+plt.ylabel(r'$y/\delta$')
+plt.pcolormesh(grid.x,grid.y,scal1.phi1[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
+plt.colorbar()
+plt.show()
+#
+plt.figure(figsize=size)
+plt.title(r'scalar 1')
+plt.xlabel(r'$z/\delta$')
+plt.ylabel(r'$y/\delta$')
+plt.pcolormesh(grid.z,grid.y,scal1.phi1[10,:,:], shading=shading ,cmap='RdBu_r')#, norm=midnorm)
+plt.colorbar()
+plt.show()
+#
+plt.figure(figsize=size)
+plt.title(r'scalar 2')
+plt.xlabel(r'$x/\delta$')
+plt.ylabel(r'$y/\delta$')
+plt.pcolormesh(grid.x,grid.y,scal2.phi2[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
+plt.colorbar()
+plt.show()
+#
+plt.figure(figsize=size)
+plt.title(r'scalar 2')
+plt.xlabel(r'$z/\delta$')
+plt.ylabel(r'$y/\delta$')
+plt.pcolormesh(grid.z,grid.y,scal2.phi2[10,:,:], shading=shading ,cmap='RdBu_r')#, norm=midnorm)
+plt.colorbar()
+plt.show()
+#---------------------------------------------------------------------------#
+# plot means
 # u-mean
 plt.figure(figsize=size)
-plt.xlabel("u_mean-velocity")
-plt.ylabel("y")
-plt.xlim(0,flow.u.mean(axis=(0,2)).max())
-plt.ylim(0,grid.y.max())
+plt.title(r'mean velcocity u')
+plt.xlabel(r'$\overline{u}$')
+plt.ylabel(r'$y/\delta$')
+plt.xlim(0,1)
+plt.ylim(0,2)
 plt.grid('True')
-plt.plot(flow.u.mean(axis=(0,2)), grid.y, marker='.',label='u_mean')
+plt.plot(flow.u.mean(axis=(0,2)), grid.y, marker='.',label=r'$\overline{u}$')
 plt.legend(loc=1)
 plt.show()
-
-#---------------------------------------------------------------------------#
-# plots - 2d scal fields
-plt.figure(figsize=size)
-plt.title('2d-plot -- xy-plane -- scalar')
-plt.xlabel("x")
-plt.ylabel("y")
-plt.pcolormesh(grid.x,grid.y,scal.phi1[:,:,0].T, shading=shading ,cmap='RdBu_r')#, norm=midnorm)
-plt.colorbar()
-plt.show()
-#
 # phi-mean
 plt.figure(figsize=size)
-plt.xlabel("phi1_mean")
-plt.ylabel("y")
-plt.xlim(scal.phi1.mean(axis=(0,2)).min(),scal.phi1.mean(axis=(0,2)).max())
-plt.ylim(0,grid.y.max())
+plt.title(r'mean scalar')
+plt.xlabel(r'$\overline{\Phi}_i$')
+plt.ylabel(r'$y/\delta$')
+plt.xlim(0,1)
+plt.ylim(0,2)
 plt.grid('True')
-plt.plot(scal.phi1.mean(axis=(0,2)), grid.y, marker='.',label='phi_mean')
+plt.plot(scal1.phi1.mean(axis=(0,2)), grid.y, marker='.',label=r'$\overline{\Phi}_1$')
+plt.plot(scal2.phi2.mean(axis=(0,2)), grid.y, marker='.',label=r'$\overline{\Phi}_2$')
 plt.legend(loc=1)
 plt.show()
-

@@ -21,7 +21,7 @@ PROGRAM INIGRID
   TREAL, DIMENSION(:), ALLOCATABLE         :: work1,work2
   TINTEGER idir, iseg, isize_wrk1d, n
   TREAL dxmx, dxmn, axmx, axmn
-  TREAL scaley_old, scaley_new
+  TREAL scale_old, scale_new
 
 #ifdef USE_MPI
 #include "mpif.h"
@@ -44,7 +44,7 @@ PROGRAM INIGRID
   DO idir = 1,3
 
 ! Read data
-     CALL GRID_READ_LOCAL(ifile, idir, g(idir)%scale, g(idir)%periodic, g(idir)%channel)
+     CALL GRID_READ_LOCAL(ifile, idir, g(idir)%scale, g(idir)%periodic, g(idir)%fixed_scale)
 
 ! Add points of all segments
      nmax = isegdim(1,idir)
@@ -94,19 +94,14 @@ PROGRAM INIGRID
 
      IF ( g(idir)%periodic ) g(idir)%size = g(idir)%size - 1
 
+     IF (g(idir)%fixed_scale .GT. C_0_R) THEN                    ! rescale on exact fixed value
+        scale_new     =  g(idir)%fixed_scale; scale_old = g(idir)%scale
+        g(idir)%nodes = (g(idir)%nodes / scale_old) * scale_new  ! rescale nodes
+        g(idir)%scale =                               scale_new  ! update scale
+     ENDIF
+
   ENDDO
 
-! #######################################################################
-! Rescale grid for channel flow (with delta = 1)
-! #######################################################################
-  IF (g(2)%channel) THEN
-    ! full channel height h=2*delta (with delta=1)
-    scaley_new = C_2_R
-    scaley_old = g(2)%scale
-    ! y - nodes and scale
-    g(2)%nodes = (g(2)%nodes / scaley_old) * scaley_new
-    g(2)%scale =                             scaley_new  ! update scaley
-  ENDIF
 ! #######################################################################
 ! Statistics
 ! #######################################################################

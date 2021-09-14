@@ -22,9 +22,7 @@
 !# logs_data10 Minimum dilatation
 !# logs_data11 Maximum dilatation
 !#
-!# logs_data12 UBulk    (Channel flow)
-!# logs_data13 ForceCPG (Channel flow)
-!# logs_data13 ForceCFR (Channel flow)
+!# logs_data12 UBulk (Channel flow)
 !#
 !########################################################################
 SUBROUTINE DNS_LOGS(iflag)
@@ -92,12 +90,8 @@ SUBROUTINE DNS_LOGS(iflag)
         line1 = line1(1:ip)//' '//' NewtonRs'; ip = ip + 1 + 10
      ENDIF
 
-     IF (      imode_channel .EQ. DNS_CHANNEL_CFR ) THEN
+     IF ( imode_channel .EQ. DNS_CHANNEL_CPG ) THEN
         line1 = line1(1:ip)//' '//' UBulk';    ip = ip + 1 + 13
-        line1 = line1(1:ip)//' '//' ForceCFR'; ip = ip + 1 + 13
-     ELSE IF ( imode_channel .EQ. DNS_CHANNEL_CPG ) THEN
-        line1 = line1(1:ip)//' '//' UBulk';    ip = ip + 1 + 13
-        line1 = line1(1:ip)//' '//' ForceCPG'; ip = ip + 1 + 13
      ENDIF
 
      line1 = line1(1:ip-1)//'#'
@@ -146,11 +140,9 @@ SUBROUTINE DNS_LOGS(iflag)
         line1 = TRIM(line1)//TRIM(line2)
      ENDIF
 
-     IF ( imode_channel .EQ. DNS_CHANNEL_CFR .OR. imode_channel .EQ. DNS_CHANNEL_CPG ) THEN
+     IF ( imode_channel .EQ. DNS_CHANNEL_CPG ) THEN
         WRITE(line2,500) logs_data(12)
 500     FORMAT(1X,E13.6)
-        line1 = TRIM(line1)//TRIM(line2)
-        WRITE(line2,500) logs_data(13)
         line1 = TRIM(line1)//TRIM(line2)
      ENDIF
 

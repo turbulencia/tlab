@@ -164,21 +164,10 @@ PROGRAM INIFLOW
   END SELECT
 
 ! ###################################################################
-! Test option -- Parabolic mean streamwise velocity profile with
-! different noise, cf. xcompact3d code 
-! (overwrites all other iniflow profiles)
+! Impose noslip+impermeability BCs at Jmin+Jmax (for Dirichlet BCs)
 ! ###################################################################
-  IF ( qbg(1)%type == PROFILE_PARABOLIC_XCOMPACT3D ) THEN
-    CALL VELOCITY_MEAN_XCOMPACT3D( q(1,1),q(1,2),q(1,3) )
-  ENDIF
-
-! ###################################################################
-! Impose noslip+impermeability BC on flow fields 
-! ###################################################################
-  
   nxy = imax*jmax
 
-  ! Impose bottom BCs at Jmin
   IF ( bcs_flow_jmin .EQ. DNS_BCS_DIRICHLET) THEN
     DO iq = 1,3
       ip_b = 1
@@ -189,7 +178,6 @@ PROGRAM INIFLOW
     ENDDO
   ENDIF
 
-  ! Impose top BCs at Jmax
   IF ( bcs_flow_jmax .EQ. DNS_BCS_DIRICHLET) THEN
     DO iq = 1,3
       ip_t = imax*(jmax-1) + 1

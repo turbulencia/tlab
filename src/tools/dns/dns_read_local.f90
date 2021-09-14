@@ -84,8 +84,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeReactiveCFL',  TRIM(ADJUSTL(lstr)), cflr )
   CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeStep', '0.05', dtime)
   
-  ! Turbulent channel flow rotation (reduce spinup time)
-  CALL SCANINIREAL(bakfile, inifile, 'Main', 'ChannelSpinup', '0.5', channel_rot)
+  ! Channel flow rotation
+  CALL SCANINIREAL(bakfile, inifile, 'Main', 'ChannelSpinup', '0.2', channel_rot)
 
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermDivergence', 'remove', sRes)

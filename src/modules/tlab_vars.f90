@@ -117,10 +117,10 @@ MODULE TLAB_VARS
 ! ###################################################################
 ! Channel flow
 ! ###################################################################
-  TINTEGER :: imode_channel  ! channel flow type (cpg or cfr)
-  TREAL    :: ubulk_parabolic, ubulk, delta_ubulk, fcpg  
+  TINTEGER :: imode_channel
+  TREAL    :: ubulk_parabolic, ubulk, fcpg  
   TREAL    :: reynolds_cl, reynolds_tau
-  ! rotating turbulent channel flow (reducing spinup time)
+  ! rotating turbulent channel flow
   TREAL    :: channel_rot
   TINTEGER :: nitera_spinup, spinuptime 
 

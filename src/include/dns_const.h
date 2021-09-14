@@ -19,8 +19,7 @@
 #define DNS_MODE_SPATIAL    2
 
 ! Channel Flow Type
-#define DNS_CHANNEL_CFR     1
-#define DNS_CHANNEL_CPG     2
+#define DNS_CHANNEL_CPG     1
 
 ! Equations mode
 #define DNS_EQNS_TOTAL            0
@@ -145,7 +144,6 @@
 #define PROFILE_GAUSSIAN_SYM       19
 #define PROFILE_TANH_ANTISYM       20
 #define PROFILE_TANH_SYM           21
-#define PROFILE_PARABOLIC_XCOMPACT3D 22
 
 ! Chemistry Constants
 #define CHEM_NONE           0

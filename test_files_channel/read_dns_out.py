@@ -1,101 +1,83 @@
 import numpy as np
-# import sys
+import sys
 import matplotlib.pyplot as plt
-import os
+from   matplotlib import rc
+rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+## for Palatino and other serif fonts use:
+#rc('font',**{'family':'serif','serif':['Palatino']})
+rc('text', usetex=True)
+# import os
 import my_pylib as mp
+# import netCDF4  as nc 
+# import warnings; warnings.filterwarnings("ignore", category=DeprecationWarning) 
+# import os
 # from scipy import integrate
 # import matplotlib.colors as mcolors
 #---------------------------------------------------------------------------#
 # path to dns.out file
-path = str(os.path.dirname(__file__) + '/../test_yamo_180/' )
+# path = str(os.path.dirname(__file__) + '/../test/' )
+path  = '/home/jonathan/simulations/data/channel_flow/cpg_test/'
 
-# plot settings
-plt.rcParams['figure.dpi'] = 250 
+# plot settings 
+font = {'family':'monospace', 'weight':'bold', 'size':14}; rc('font', **font) # font
+plt.rcParams['figure.dpi'] = 210 
 size    = (8,6)
-shading = 'nearest'#'gouraud'
+shading = 'gouraud'#'gouraud'
 figs    = 'figs' 
 plt.close('all')
 #---------------------------------------------------------------------------#
 # read grid 
 grid = mp.DnsGrid(path+'grid')
-#---------------------------------------------------------------------------#
-# read dns.out
-with open(path+'dns.out', 'r') as f:
-    dns_out = f.readlines()
-    dns_out = np.asanyarray(dns_out)
-    #---------------------------------------------#
-    # get part of header
-    dns_header = dns_out[1]
-    # clean up
-    dns_out_clean = dns_out
-    index_clean   = []
-    for i in range(dns_out.size):
-        if dns_out[i]==dns_header:
-            index_clean.append(i)
-    j = 0
-    for i in index_clean:
-        dns_out_clean = np.delete(dns_out_clean,range(i-1-j,i+3-j), axis=0)
-        j = j + 4
-    #---------------------------------------------#
-    itera      = np.zeros(dns_out_clean.size)
-    time_tot   = np.zeros(dns_out_clean.size)
-    time_dt    = np.zeros(dns_out_clean.size)
-    cfl_number = np.zeros(dns_out_clean.size)
-    dif_number = np.zeros(dns_out_clean.size)
-    visc       = np.zeros(dns_out_clean.size)
-    dil_min    = np.zeros(dns_out_clean.size)
-    dil_max    = np.zeros(dns_out_clean.size)
-    ubulk      = np.zeros(dns_out_clean.size)
-    force      = np.zeros(dns_out_clean.size)
-    #---------------------------------------------#
-    i = 0
-    for line in dns_out_clean:
-        data     = line.split()
-        #-----------------------------------------#
-        itera[i]      = int(data[1])
-        time_tot[i]   = float(data[2])
-        time_dt[i]    = float(data[3])
-        cfl_number[i] = float(data[4])
-        dif_number[i] = float(data[5])
-        visc[i]       = float(data[6])
-        dil_min[i]    = float(data[7])
-        dil_max[i]    = float(data[8])
-        ubulk[i]      = float(data[9])
-        force[i]      = float(data[10])
-        i += 1
-del dns_out, dns_out_clean, data, f, line
+
+# read dns_out
+out = mp.DnsOut(path+'dns.out')
+# sys.exit()
 #---------------------------------------------------------------------------#
 # plots
 
 # plot ubulk - iteration steps
 plt.figure(figsize=size)
-plt.title('streamwise bulk velocity')
-plt.xlabel("iterations")
-plt.ylabel("ubulk")
-plt.ylim(0.6,0.7)
-plt.plot(itera, ubulk,label="ubulk")
+plt.title(r'streamwise bulk velocity')
+plt.xlabel(r"iterations")
+plt.ylabel(r'$u_b$')
+plt.ylim(0.64,0.69)
+plt.plot(out.data[:,0], out.data[:,8],color='blue',label=r'$u_b$')
+plt.hlines(y=out.data[:,8].mean(), xmin=out.data[0,0], xmax=out.data[-1,0], color='blue',  linestyle='--', label=r'$\overline{u}_{b}$')
+plt.hlines(y=2./3.,                xmin=out.data[0,0], xmax=out.data[-1,0], color='green', linestyle='--', label=r'$u_{b,ini}$')
 plt.legend(loc=1)
 plt.grid(True)
 plt.show()
 
 # # plot ubulk - time
 # plt.figure(figsize=size)
-# plt.title('streamwise bulk velocity')
-# plt.xlabel("time_tot")
-# plt.ylabel("ubulk")
+# plt.title(r'streamwise bulk velocity')
+# plt.xlabel(r'time')
+# plt.ylabel(r'$u_b$')
 # plt.ylim(0.6,0.7)
-# plt.plot(time_tot, ubulk,label="ubulk")
+# plt.plot(out.data[:,1], out.data[:,8],label=r'$u_b$')
 # plt.legend(loc=1)
 # plt.grid(True)
 # plt.show()
 
 # # plot time_dt
 # plt.figure(figsize=size)
-# plt.title(' ')
-# plt.xlabel("iterations")
-# plt.ylabel("dt")
-# plt.ylim(0.01,0.025)
-# plt.plot(itera, time_dt,label="dt")
+# plt.title(r'time steps')
+# plt.xlabel(r'iterations')
+# plt.ylabel(r'$\Delta t$')
+# plt.ylim(0.01,0.03)
+# plt.plot(out.data[:,0], out.data[:,2],label=r'$\Delta t$')
 # plt.legend(loc=1)
 # plt.grid(True)
 # plt.show()
+
+# plot ubulk - iteration steps
+plt.figure(figsize=size)
+plt.title(r'Forcing')
+plt.xlabel(r"iterations")
+plt.ylabel(r'$F_1$')
+plt.ylim(0.0005,0.003)
+plt.plot(out.data[:,0], out.data[:,9], color='blue',label=r'$F_1$')
+plt.hlines(y=out.data[:,9].mean(), xmin=out.data[0,0], xmax=out.data[-1,0], color='blue', linestyle='--', label=r'$\overline{F}_{1}$')
+plt.legend(loc=1)
+plt.grid(True)
+plt.show()

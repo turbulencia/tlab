@@ -255,8 +255,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'ChannelFlowType', 'none', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'constantflowrate'        ) THEN; imode_channel = DNS_CHANNEL_CFR;
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'constantpressuregradient') THEN; imode_channel = DNS_CHANNEL_CPG;
+  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'constantpressuregradient') THEN; imode_channel = DNS_CHANNEL_CPG;
   ELSE;                                                               imode_channel = EQNS_NONE; ENDIF
 
 ! -------------------------------------------------------------------
@@ -775,7 +774,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#Pressure=<mean pressure>')
   CALL TLAB_WRITE_ASCII(bakfile, '#Density=<mean density>')
   CALL TLAB_WRITE_ASCII(bakfile, '#Temperature=<mean temperature>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ProfileVelocity=<None/Linear/Tanh/Erf/Ekman/EkmanP/Parabolic/ParabolicX>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#ProfileVelocity=<None/Linear/Tanh/Erf/Ekman/EkmanP/Parabolic>')
   CALL TLAB_WRITE_ASCII(bakfile, '#YCoorVelocity=<Relative Y reference point>')
   CALL TLAB_WRITE_ASCII(bakfile, '#DiamVelocity=<value>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ThickVelocity=<value>')
@@ -807,7 +806,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; qbg(1)%type = PROFILE_MIXEDLAYER
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhsymmetric'     ) THEN; qbg(1)%type = PROFILE_TANH_SYM
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhantisymmetric' ) THEN; qbg(1)%type = PROFILE_TANH_ANTISYM
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolicx' )        THEN; qbg(1)%type = PROFILE_PARABOLIC_XCOMPACT3D
   ELSE
      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong velocity profile.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
@@ -1082,25 +1080,16 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF ( iviscous .EQ. EQNS_NONE ) THEN; visc = C_0_R
   ELSE;                                visc = C_1_R/reynolds; ENDIF
 
-  ! reynolds = re_tau in dns.ini
   IF ( imode_channel == DNS_CHANNEL_CPG) THEN
      reynolds_tau = reynolds    
      ! centerline reynolds number
-     reynolds_cl  = (reynolds_tau/0.116)**(1.0/0.88) ! turbulent
-     ! reynolds_cl  =  reynolds_tau**C_2_R / C_2_R   ! laminar
-     ! new viscosity with centerline reynolds number
+     reynolds_cl  = (reynolds_tau / 0.116) ** (1.0 / 0.88) ! cf. Pope
+     ! viscosity with centerline reynolds number
      visc         =  C_1_R / reynolds_cl          
-     ! replace re_tau with re_cl, since fdm_initialize uses reynolds
+     ! replace (fdm_initialize uses reynolds)
      reynolds     = reynolds_cl                   
   END IF
 
-  ! reynolds = re_cl in dns.ini
-  IF ( imode_channel == DNS_CHANNEL_CFR) THEN
-     reynolds_cl  = reynolds    
-     ! friction reynolds number
-     reynolds_tau =  reynolds_cl**0.88 * 0.116       ! turbulent       
-     ! reynolds_tau = (reynolds_cl*C_2_R)**0.5       ! laminar       
-  END IF
 ! -------------------------------------------------------------------
 ! Initializing thermodynamic data of the mixture
 ! -------------------------------------------------------------------

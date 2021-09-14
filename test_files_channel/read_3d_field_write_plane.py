@@ -5,12 +5,10 @@ import os
 import my_pylib as mp
 #---------------------------------------------------------------------------#
 # path to flow fields
-# path    = str(os.path.dirname(__file__) + '/../test_little_channel/' )
-# path    = str(os.path.dirname(__file__) + '/../test_parallel_channel/' )
-path    = str(os.path.dirname(__file__) + '/../test_yamo_180/' )
+path = str(os.path.dirname(__file__) + '/../test/' )
 
 # indices and files
-index_flow   = 250000
+index_flow   = 0
 index_fields = [1,2] #[1,2,3] # 3d case, here just 2d case
 files        = []
 for i in index_fields: 
@@ -33,25 +31,9 @@ sizeofheader = 52
 etype        = "<" # > big-endian; < little-endian
 dtype        = "f" # float
 
-planetype = 'xy'
-plane     = [1]#,100]
-
-# # rw specified planes from 3d-file
-# for file in files:
-#     print('--------------------------------------------------')
-#     print("Processing file %s ..." % file)
-#     for planenumber in plane:
-#         fin      = open(file, 'rb')
-#         file_out = file + '.' + str(planenumber) + '.' + planetype
-#         print("Write out  file %s ..." % file_out)       
-#         fout     = open(file_out,'wb')
-#         if (planetype == 'xy'):
-#             fin.seek(sizeofheader +(planenumber-1)*grid.nx*grid.ny*sizeofdata,0)
-#             raw = fin.read(grid.nx*grid.ny*sizeofdata)
-#             fout.write(raw)
-#         fin.close()
-#         fout.close()
-
+planetype    = 'xy'
+plane        = [1]#,100]
+#---------------------------------------------------------------------------#
 # rw specified planes from 3d-file with header
 for file in files:
     print('--------------------------------------------------')
@@ -77,7 +59,6 @@ for file in files:
                 np.asarray(header_int_new  ).astype('<i4').tofile(fout)
                 np.asarray(header_float_new).astype('<f8').tofile(fout)
                 raw_plane.astype('<f8').tofile(fout)
-                
 #---------------------------------------------------------------------------#
 # header definition:
     # 5 x type '<i4' 
@@ -91,12 +72,26 @@ for file in files:
         # rossby            1.
 #---------------------------------------------------------------------------#
 # # rw specified planes from 3d-file
+# for file in files:
+#     print('--------------------------------------------------')
+#     print("Processing file %s ..." % file)
+#     for planenumber in plane:
+#         fin      = open(file, 'rb')
+#         file_out = file + '.' + str(planenumber) + '.' + planetype
+#         print("Write out  file %s ..." % file_out)       
+#         fout     = open(file_out,'wb')
+#         if (planetype == 'xy'):
+#             fin.seek(sizeofheader +(planenumber-1)*grid.nx*grid.ny*sizeofdata,0)
+#             raw = fin.read(grid.nx*grid.ny*sizeofdata)
+#             fout.write(raw)
+#         fin.close()
+#         fout.close()
+#---------------------------------------------------------------------------#               
+# # rw specified planes from 3d-file
 # print("Processing file %s ..." % file)
-
 # for planenumber in plane:
 #     fin  = open(file, 'rb')
 #     fout = open(file+'.'+str(planenumber)+'.'+planetype,'wb')
-    
 #     if ( planetype == 'xy' ):
 #         fin.seek(sizeofheader +(planenumber-1)*grid.nx*grid.ny*sizeofdata,0)
 #         raw = fin.read(grid.nx*grid.ny*sizeofdata)
