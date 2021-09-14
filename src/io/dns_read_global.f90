@@ -82,7 +82,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
   CALL TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian8/CompactDirect6>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ChannelFlowType=<non,ConstantFlowRate,ConstantPressureGradient>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#ChannelFlowType=<none,ConstantPressureGradient>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 

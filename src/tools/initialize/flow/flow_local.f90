@@ -20,7 +20,7 @@ MODULE FLOW_LOCAL
   TREAL               :: norm_ini_u, norm_ini_p ! Scaling of perturbation
   TYPE(discrete_dt)   :: fp                     ! Discrete perturbation
 
-  TINTEGER :: bcs_flow_jmin, bcs_flow_jmax
+  TINTEGER :: bcs_flow_jmin, bcs_flow_jmax      ! Boundary conditions
   TINTEGER :: flag_wall ! Boundary conditions: 0  Free-Slip/Free-Slip
   ! 1  No-Slip/Free-Slip
   ! 2  Free-Slip/No-Slip

@@ -74,7 +74,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef USE_ESSL
   ilen = isize_field
 #endif
-  
+
 ! #######################################################################
 ! Preliminaries for Scalar BC
 ! (flow BCs initialized below as they are used for pressure in between)
