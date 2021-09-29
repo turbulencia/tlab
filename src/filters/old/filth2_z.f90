@@ -42,9 +42,9 @@ SUBROUTINE FILTH2_Z(iunifz, k1bc, imax,jmax,kmax, nz0,nz1, cf2z, z1, zf1, wrk)
 ! Trying 1-1 PE communication
      npl = nz/2
      IF ( npl .LE. kmax ) THEN
-        CALL DNS_MPI_COPYPLN1(nij, kmax, npl, z1, wrk(1,1,1), wrk(1,1,1+npl+kmax))
+        CALL TLAB_MPI_COPYPLN1(nij, kmax, npl, z1, wrk(1,1,1), wrk(1,1,1+npl+kmax))
      ELSE IF ( npl .LE. 2*kmax ) THEN
-        CALL DNS_MPI_COPYPLN2(nij, kmax, npl, z1, wrk(1,1,1), wrk(1,1,1+npl+kmax))
+        CALL TLAB_MPI_COPYPLN2(nij, kmax, npl, z1, wrk(1,1,1), wrk(1,1,1+npl+kmax))
      ELSE
         CALL TLAB_WRITE_ASCII(efile, 'FILTH2_Z. Size kmax too small for PARALLEL mode.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)

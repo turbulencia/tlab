@@ -15,20 +15,20 @@ MODULE TLAB_MPI_PROCS
 
   INTEGER  :: ims_tag
 
-  PUBLIC :: DNS_MPI_INITIALIZE
-  PUBLIC :: DNS_MPI_TRPF_K
-  PUBLIC :: DNS_MPI_TRPF_I
-  PUBLIC :: DNS_MPI_TRPB_K
-  PUBLIC :: DNS_MPI_TRPB_I
-  PUBLIC :: DNS_MPI_TYPE_K
-  PUBLIC :: DNS_MPI_TYPE_I
-  PUBLIC :: DNS_MPI_WRITE_PE0_SINGLE
+  PUBLIC :: TLAB_MPI_INITIALIZE
+  PUBLIC :: TLAB_MPI_TRPF_K
+  PUBLIC :: TLAB_MPI_TRPF_I
+  PUBLIC :: TLAB_MPI_TRPB_K
+  PUBLIC :: TLAB_MPI_TRPB_I
+  PUBLIC :: TLAB_MPI_TYPE_K
+  PUBLIC :: TLAB_MPI_TYPE_I
+  PUBLIC :: TLAB_MPI_WRITE_PE0_SINGLE
 
 CONTAINS
 
   ! ######################################################################
   ! ######################################################################
-  SUBROUTINE DNS_MPI_INITIALIZE
+  SUBROUTINE TLAB_MPI_INITIALIZE
     USE TLAB_VARS, ONLY : imax,jmax,kmax
     USE TLAB_VARS, ONLY : isize_txc_dimz, isize_txc_dimx
     USE TLAB_VARS, ONLY : imode_sim, ifourier
@@ -43,24 +43,24 @@ CONTAINS
 
     ! #######################################################################
     ALLOCATE(ims_map_i(ims_npro_i))
-    ALLOCATE(ims_size_i(DNS_MPI_I_MAXTYPES))
-    ALLOCATE(ims_ds_i(ims_npro_i,DNS_MPI_I_MAXTYPES))
-    ALLOCATE(ims_dr_i(ims_npro_i,DNS_MPI_I_MAXTYPES))
-    ALLOCATE(ims_ts_i(1,DNS_MPI_I_MAXTYPES))   ! ims_npro_i, DMS_MPI_I_MAXTYPES
-    ALLOCATE(ims_tr_i(1,DNS_MPI_I_MAXTYPES))   ! ims_npro_i, DNS_MPI_I_MAXTYPES
+    ALLOCATE(ims_size_i(TLAB_MPI_I_MAXTYPES))
+    ALLOCATE(ims_ds_i(ims_npro_i,TLAB_MPI_I_MAXTYPES))
+    ALLOCATE(ims_dr_i(ims_npro_i,TLAB_MPI_I_MAXTYPES))
+    ALLOCATE(ims_ts_i(1,TLAB_MPI_I_MAXTYPES))     ! ims_npro_i, TLAB_MPI_I_MAXTYPES
+    ALLOCATE(ims_tr_i(1,TLAB_MPI_I_MAXTYPES))     ! ims_npro_i, TLAB_MPI_I_MAXTYPES
     ALLOCATE(ims_plan_trps_i(ims_npro_i))
     ALLOCATE(ims_plan_trpr_i(ims_npro_i))
 
     ALLOCATE(ims_map_k(ims_npro_k))
-    ALLOCATE(ims_size_k(DNS_MPI_K_MAXTYPES))
-    ALLOCATE(ims_ds_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
-    ALLOCATE(ims_dr_k(ims_npro_k,DNS_MPI_K_MAXTYPES))
-    ALLOCATE(ims_ts_k(1,DNS_MPI_K_MAXTYPES))  ! ims_npro_k,DNS_MPI_K_MAXTYPES
-    ALLOCATE(ims_tr_k(1,DNS_MPI_K_MAXTYPES))  ! ims_npro_k,DNS_MPI_K_MAXTYPES
+    ALLOCATE(ims_size_k(TLAB_MPI_K_MAXTYPES))
+    ALLOCATE(ims_ds_k(ims_npro_k,TLAB_MPI_K_MAXTYPES))
+    ALLOCATE(ims_dr_k(ims_npro_k,TLAB_MPI_K_MAXTYPES))
+    ALLOCATE(ims_ts_k(1,TLAB_MPI_K_MAXTYPES))     ! ims_npro_k,TLAB_MPI_K_MAXTYPES
+    ALLOCATE(ims_tr_k(1,TLAB_MPI_K_MAXTYPES))     ! ims_npro_k,TLAB_MPI_K_MAXTYPES
     ALLOCATE(ims_plan_trps_k(ims_npro_k))
     ALLOCATE(ims_plan_trpr_k(ims_npro_k))
 
-    ALLOCATE(ims_size_p(ims_npro))            ! Particle information
+    ALLOCATE(ims_size_p(ims_npro))                ! Particle information
 
 #ifdef HLRS_HAWK
     ! On hawk, we tested that 192 yields optimum performace;
@@ -124,41 +124,41 @@ CONTAINS
     ! #######################################################################
     IF ( ims_npro_i > 1 ) THEN
       CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Ox derivatives.')
-      id = DNS_MPI_I_PARTIAL
+      id = TLAB_MPI_I_PARTIAL
       npage = kmax*jmax
-      CALL DNS_MPI_TYPE_I(ims_npro_i, imax, npage, i1, i1, i1, i1, &
+      CALL TLAB_MPI_TYPE_I(ims_npro_i, imax, npage, i1, i1, i1, i1, &
           ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
     END IF
 
     IF ( ims_npro_k > 1 ) THEN
       CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Oz derivatives.')
-      id = DNS_MPI_K_PARTIAL
+      id = TLAB_MPI_K_PARTIAL
       npage = imax*jmax
-      CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
+      CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
     END IF
 
     ! -----------------------------------------------------------------------
     IF ( ims_npro_i > 1 .AND. ifourier == 1 ) THEN
       CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Ox FFTW in Poisson solver.')
-      id = DNS_MPI_I_POISSON1
+      id = TLAB_MPI_I_POISSON1
       npage = isize_txc_dimx ! isize_txc_field/imax
-      CALL DNS_MPI_TYPE_I(ims_npro_i, imax, npage, i1, i1, i1, i1, &
+      CALL TLAB_MPI_TYPE_I(ims_npro_i, imax, npage, i1, i1, i1, i1, &
           ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
 
       CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Ox FFTW in Poisson solver.')
-      id = DNS_MPI_I_POISSON2 ! isize_txc_field/(imax+2)
+      id = TLAB_MPI_I_POISSON2 ! isize_txc_field/(imax+2)
       npage = isize_txc_dimx
-      CALL DNS_MPI_TYPE_I(ims_npro_i, imax+2, npage, i1, i1, i1, i1, &
+      CALL TLAB_MPI_TYPE_I(ims_npro_i, imax+2, npage, i1, i1, i1, i1, &
           ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
 
     END IF
 
     IF ( ims_npro_k > 1 .AND. ifourier == 1 ) THEN
       CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Oz FFTW in Poisson solver.')
-      id = DNS_MPI_K_POISSON
+      id = TLAB_MPI_K_POISSON
       npage = isize_txc_dimz ! isize_txc_field/kmax
-      CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
+      CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
     END IF
 
@@ -193,43 +193,43 @@ CONTAINS
     ! #######################################################################
     ! IF ( imode_sim == DNS_MODE_TEMPORAL ) THEN
     ! CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for spectra/correlations.')
-    ! id = DNS_MPI_K_SHEAR
-    ! CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, imax, i1, jmax, jmax, i1, &
+    ! id = TLAB_MPI_K_SHEAR
+    ! CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, imax, i1, jmax, jmax, i1, &
     !      ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
     ! END IF
 
-    CALL DNS_MPI_TAGRESET
+    CALL TLAB_MPI_TAGRESET
 
     RETURN
-  END SUBROUTINE DNS_MPI_INITIALIZE
+  END SUBROUTINE TLAB_MPI_INITIALIZE
 
   ! ######################################################################
   ! ######################################################################
-  SUBROUTINE DNS_MPI_TAGUPDT
+  SUBROUTINE TLAB_MPI_TAGUPDT
     IMPLICIT NONE
 
     ims_tag = ims_tag+1
     IF ( ims_tag > 32000 ) THEN
-      CALL DNS_MPI_TAGRESET
+      CALL TLAB_MPI_TAGRESET
     END IF
 
     RETURN
-  END SUBROUTINE DNS_MPI_TAGUPDT
+  END SUBROUTINE TLAB_MPI_TAGUPDT
 
   !########################################################################
   !########################################################################
-  SUBROUTINE DNS_MPI_TAGRESET
+  SUBROUTINE TLAB_MPI_TAGRESET
     IMPLICIT NONE
 
     ims_tag = 0
 
     RETURN
-  END SUBROUTINE DNS_MPI_TAGRESET
+  END SUBROUTINE TLAB_MPI_TAGRESET
 
   ! ######################################################################
   ! Pointers and types for transposition across ims_npro processors
   ! ######################################################################
-  SUBROUTINE DNS_MPI_TYPE_I(npro_i, nmax, npage, nd, md, n1, n2, &
+  SUBROUTINE TLAB_MPI_TYPE_I(npro_i, nmax, npage, nd, md, n1, n2, &
       nsize, sdisp, rdisp, stype, rtype)
     IMPLICIT NONE
 
@@ -249,7 +249,7 @@ CONTAINS
     IF ( MOD(npage,npro_i) == 0 ) THEN
       nsize = npage/npro_i
     ELSE
-      CALL TLAB_WRITE_ASCII(efile, 'DNS_MPI_TYPE_I. Ratio npage/npro_i not an integer.')
+      CALL TLAB_WRITE_ASCII(efile, 'TLAB_MPI_TYPE_I. Ratio npage/npro_i not an integer.')
       CALL TLAB_STOP(DNS_ERROR_PARPARTITION)
     END IF
 
@@ -287,11 +287,11 @@ CONTAINS
     END IF
 
     RETURN
-  END SUBROUTINE DNS_MPI_TYPE_I
+  END SUBROUTINE TLAB_MPI_TYPE_I
 
   !########################################################################
   !########################################################################
-  SUBROUTINE DNS_MPI_TYPE_K(npro_k, nmax, npage, nd, md, n1, n2, &
+  SUBROUTINE TLAB_MPI_TYPE_K(npro_k, nmax, npage, nd, md, n1, n2, &
       nsize, sdisp, rdisp, stype, rtype)
     IMPLICIT NONE
 
@@ -310,7 +310,7 @@ CONTAINS
     IF ( MOD(npage,npro_k) == 0 ) THEN
       nsize = npage/npro_k
     ELSE
-      CALL TLAB_WRITE_ASCII(efile, 'DNS_MPI_TYPE_K. Ratio npage/npro_k not an integer.')
+      CALL TLAB_WRITE_ASCII(efile, 'TLAB_MPI_TYPE_K. Ratio npage/npro_k not an integer.')
       CALL TLAB_STOP(DNS_ERROR_PARPARTITION)
     END IF
 
@@ -346,11 +346,11 @@ CONTAINS
     END IF
 
     RETURN
-  END SUBROUTINE DNS_MPI_TYPE_K
+  END SUBROUTINE TLAB_MPI_TYPE_K
 
   !########################################################################
   !########################################################################
-  SUBROUTINE DNS_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
+  SUBROUTINE TLAB_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
     USE, INTRINSIC :: ISO_C_BINDING, ONLY: c_int
     USE TLAB_VARS, ONLY : itime
     IMPLICIT NONE
@@ -366,13 +366,10 @@ CONTAINS
     TREAL,    DIMENSION(*),          INTENT(IN)  :: a
     TREAL,    DIMENSION(*),          INTENT(OUT) :: b
     TINTEGER, DIMENSION(ims_npro_k), INTENT(IN)  :: dsend, drecv ! displacements
-    ! INTEGER,  DIMENSION(ims_npro_k), INTENT(IN)  :: tsend, trecv ! types
     INTEGER, INTENT(IN) :: tsend, trecv
 
     ! -----------------------------------------------------------------------
     TINTEGER j,l,m,n,ns,nr,ips,ipr,idummy
-    !INTEGER status(MPI_STATUS_SIZE,2*ims_npro_k)
-    !INTEGER mpireq(                2*ims_npro_k)
     INTEGER ip
     TREAL rdum
     CHARACTER*256 line
@@ -389,12 +386,12 @@ CONTAINS
        DO m=j,MIN(j+ims_sizBlock_k-1,ims_npro_k)
           ns=ims_plan_trps_k(m)+1; ips=ns-1
           nr=ims_plan_trpr_k(m)+1; ipr=nr-1
-          IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS) THEN
+          IF ( ims_trp_mode_k == TLAB_MPI_TRP_ASYNCHRONOUS) THEN
              l = l + 1
              CALL MPI_ISEND(a(dsend(ns)+1), 1, tsend, ips, ims_tag, ims_comm_z, ims_request(l), ims_err)
              l = l + 1
              CALL MPI_IRECV(b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_request(l), ims_err)
-          ELSEIF ( ims_trp_mode_k == DNS_MPI_TRP_SENDRECV) THEN
+          ELSEIF ( ims_trp_mode_k == TLAB_MPI_TRP_SENDRECV) THEN
              CALL MPI_SENDRECV(&
                   a(dsend(ns)+1), 1, tsend, ips, ims_tag, &
                   b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_status(1,1), ims_err)
@@ -402,10 +399,10 @@ CONTAINS
           END IF
        END DO
 
-       IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS ) &
+       IF ( ims_trp_mode_k == TLAB_MPI_TRP_ASYNCHRONOUS ) &
             CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
 
-       CALL DNS_MPI_TAGUPDT
+       CALL TLAB_MPI_TAGUPDT
     ENDDO
 #ifdef PROFILE_ON
     time_loc_2 = MPI_WTIME()
@@ -413,23 +410,20 @@ CONTAINS
 #endif
 
     RETURN
-  END SUBROUTINE DNS_MPI_TRPF_K
+  END SUBROUTINE TLAB_MPI_TRPF_K
 
   !########################################################################
   !########################################################################
-  SUBROUTINE DNS_MPI_TRPF_I(a, b, dsend, drecv, tsend, trecv)
+  SUBROUTINE TLAB_MPI_TRPF_I(a, b, dsend, drecv, tsend, trecv)
     IMPLICIT NONE
 
     TREAL,    DIMENSION(*),          INTENT(IN)  :: a
     TREAL,    DIMENSION(*),          INTENT(OUT) :: b
     TINTEGER, DIMENSION(ims_npro_i), INTENT(IN)  :: dsend, drecv ! displacements
-    !INTEGER,  DIMENSION(ims_npro_i), INTENT(IN)  :: tsend, trecv ! types
     INTEGER, INTENT(IN) :: tsend, trecv
 
     ! -----------------------------------------------------------------------
     TINTEGER j,l,m,ns,nr,ips,ipr
-    !INTEGER status(MPI_STATUS_SIZE,2*ims_npro_i)
-    !INTEGER mpireq(                2*ims_npro_i)
     INTEGER ip
 
     DO j=1,ims_npro_i,ims_sizBlock_i
@@ -437,12 +431,12 @@ CONTAINS
        DO m=j,MIN(j+ims_sizBlock_i-1,ims_npro_i)
           ns=ims_plan_trps_i(m)+1;   ips=ns-1
           nr=ims_plan_trpr_i(m)+1;   ipr=nr-1
-          IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) THEN
+          IF ( ims_trp_mode_i == TLAB_MPI_TRP_ASYNCHRONOUS ) THEN
              l = l + 1
              CALL MPI_ISEND(a(dsend(ns)+1), 1, tsend, ips, ims_tag, ims_comm_x, ims_request(l), ims_err)
              l = l + 1
              CALL MPI_IRECV(b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_x, ims_request(l), ims_err)
-          ELSEIF ( ims_trp_mode_i == DNS_MPI_TRP_SENDRECV ) THEN
+          ELSEIF ( ims_trp_mode_i == TLAB_MPI_TRP_SENDRECV ) THEN
              CALL MPI_SENDRECV(&
                   a(dsend(ns)+1),1,tsend,ips, ims_tag, &
                   b(drecv(nr)+1),1,trecv,ipr, ims_tag,ims_comm_x,ims_status(1,1),ims_err)
@@ -450,18 +444,18 @@ CONTAINS
           END IF
        END DO
 
-       IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) &
+       IF ( ims_trp_mode_i == TLAB_MPI_TRP_ASYNCHRONOUS ) &
             CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
 
-       CALL DNS_MPI_TAGUPDT
+       CALL TLAB_MPI_TAGUPDT
     ENDDO
 
     RETURN
-  END SUBROUTINE DNS_MPI_TRPF_I
+  END SUBROUTINE TLAB_MPI_TRPF_I
 
   !########################################################################
   !########################################################################
-  SUBROUTINE DNS_MPI_TRPB_K(b, a, dsend, drecv, tsend, trecv)
+  SUBROUTINE TLAB_MPI_TRPB_K(b, a, dsend, drecv, tsend, trecv)
     IMPLICIT NONE
 
     TREAL,    DIMENSION(*),          INTENT(IN)  :: b
@@ -471,8 +465,6 @@ CONTAINS
 
     ! -----------------------------------------------------------------------
     TINTEGER j,l,m,ns,nr,ips,ipr
-    !INTEGER status(MPI_STATUS_SIZE,2*ims_npro_k)
-    !INTEGER mpireq(                2*ims_npro_k)
     INTEGER ip
 
 #ifdef PROFILE_ON
@@ -488,12 +480,12 @@ CONTAINS
        DO m=j,MIN(j+ims_sizBlock_k-1,ims_npro_k)
           ns=ims_plan_trps_k(m)+1; ips=ns-1
           nr=ims_plan_trpr_k(m)+1; ipr=nr-1
-          IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS ) THEN
+          IF ( ims_trp_mode_k == TLAB_MPI_TRP_ASYNCHRONOUS ) THEN
              l = l + 1
              CALL MPI_ISEND(b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag, ims_comm_z, ims_request(l), ims_err)
              l = l + 1
              CALL MPI_IRECV(a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_z, ims_request(l), ims_err)
-          ELSEIF ( ims_trp_mode_k == DNS_MPI_TRP_SENDRECV ) THEN
+          ELSEIF ( ims_trp_mode_k == TLAB_MPI_TRP_SENDRECV ) THEN
              CALL MPI_SENDRECV(&
                   b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag,  &
                   a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_z, ims_status(1,1), ims_err)
@@ -501,10 +493,10 @@ CONTAINS
           END IF
        END DO
 
-       IF ( ims_trp_mode_k == DNS_MPI_TRP_ASYNCHRONOUS ) &
+       IF ( ims_trp_mode_k == TLAB_MPI_TRP_ASYNCHRONOUS ) &
             CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
 
-       CALL DNS_MPI_TAGUPDT
+       CALL TLAB_MPI_TAGUPDT
     ENDDO
 
 #ifdef PROFILE_ON
@@ -513,11 +505,11 @@ CONTAINS
 #endif
 
     RETURN
-  END SUBROUTINE DNS_MPI_TRPB_K
+  END SUBROUTINE TLAB_MPI_TRPB_K
 
   !########################################################################
   !########################################################################
-  SUBROUTINE DNS_MPI_TRPB_I(b, a, dsend, drecv, tsend, trecv)
+  SUBROUTINE TLAB_MPI_TRPB_I(b, a, dsend, drecv, tsend, trecv)
     IMPLICIT NONE
 
     TREAL,    DIMENSION(*),          INTENT(IN)  :: b
@@ -527,8 +519,6 @@ CONTAINS
 
     ! -----------------------------------------------------------------------
     TINTEGER j,l,m,ns,nr,ips,ipr
-    !INTEGER status(MPI_STATUS_SIZE,2*ims_npro_i)
-    !INTEGER mpireq(                2*ims_npro_i)
     INTEGER ip
 
     DO j=1,ims_npro_i,ims_sizBlock_i
@@ -536,12 +526,12 @@ CONTAINS
        DO m = j,MIN(j+ims_sizBlock_i-1,ims_npro_i)
           ns=ims_plan_trps_i(m)+1; ips=ns-1
           nr=ims_plan_trpr_i(m)+1; ipr=nr-1
-          IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) THEN
+          IF ( ims_trp_mode_i == TLAB_MPI_TRP_ASYNCHRONOUS ) THEN
              l = l + 1
              CALL MPI_ISEND(b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag, ims_comm_x, ims_request(l), ims_err)
              l = l + 1
              CALL MPI_IRECV(a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_x, ims_request(l), ims_err)
-          ELSEIF ( ims_trp_mode_i == DNS_MPI_TRP_SENDRECV ) THEN
+          ELSEIF ( ims_trp_mode_i == TLAB_MPI_TRP_SENDRECV ) THEN
              CALL MPI_SENDRECV(&
                   b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag,&
                   a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_x, ims_status(1,1), ims_err)
@@ -549,18 +539,18 @@ CONTAINS
           END IF
        END DO
 
-       IF ( ims_trp_mode_i == DNS_MPI_TRP_ASYNCHRONOUS ) &
+       IF ( ims_trp_mode_i == TLAB_MPI_TRP_ASYNCHRONOUS ) &
             CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
 
-       CALL DNS_MPI_TAGUPDT
+       CALL TLAB_MPI_TAGUPDT
     ENDDO
 
     RETURN
-  END SUBROUTINE DNS_MPI_TRPB_I
+  END SUBROUTINE TLAB_MPI_TRPB_I
 
   !########################################################################
   !########################################################################
-  SUBROUTINE DNS_MPI_WRITE_PE0_SINGLE(iunit, nx,ny,nz, subdomain, u, tmp1, tmp2)
+  SUBROUTINE TLAB_MPI_WRITE_PE0_SINGLE(iunit, nx,ny,nz, subdomain, u, tmp1, tmp2)
     IMPLICIT NONE
 
     TINTEGER iunit, nx,ny,nz, subdomain(6)
@@ -591,13 +581,13 @@ CONTAINS
     koffset_loc = 0
     joffset_loc = 0
 
-    id = DNS_MPI_I_PARTIAL
+    id = TLAB_MPI_I_PARTIAL
 
     ! -------------------------------------------------------------------
     ! Transposing along Ox
     ! -------------------------------------------------------------------
     IF ( ims_npro_i > 1 ) THEN
-      CALL DNS_MPI_TRPF_I(u, tmp1, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+      CALL TLAB_MPI_TRPF_I(u, tmp1, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
       p_org => tmp1
       nyz = ims_size_i(id)
     ELSE
@@ -645,14 +635,14 @@ CONTAINS
     END IF
 
     RETURN
-  END SUBROUTINE DNS_MPI_WRITE_PE0_SINGLE
+  END SUBROUTINE TLAB_MPI_WRITE_PE0_SINGLE
 
   !########################################################################
   !# Moving plane information between adjacent PEs, circulant version.
   !# npl is smaller than 2*kmax
   !# The number of plane to move is given by npl
   !########################################################################
-  SUBROUTINE DNS_MPI_COPYPLN_1(ijmax, kmax, npl, a, bl, br)
+  SUBROUTINE TLAB_MPI_COPYPLN_1(ijmax, kmax, npl, a, bl, br)
     IMPLICIT NONE
 
     TINTEGER ijmax, kmax, npl
@@ -671,7 +661,7 @@ CONTAINS
 
       ! Careful in case only 2 PEs
       IF ( ims_npro == 2 ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_MPI_COPYPLN_1. Undeveloped for 2 PEs.')
+        CALL TLAB_WRITE_ASCII(efile, 'TLAB_MPI_COPYPLN_1. Undeveloped for 2 PEs.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
       END IF
 
@@ -693,16 +683,16 @@ CONTAINS
 
       CALL MPI_WAITALL(4, mpireq, status, ims_err)
 
-      CALL DNS_MPI_TAGUPDT
+      CALL TLAB_MPI_TAGUPDT
 
     END IF
 
     RETURN
-  END SUBROUTINE DNS_MPI_COPYPLN_1
+  END SUBROUTINE TLAB_MPI_COPYPLN_1
 
   !########################################################################
   !########################################################################
-  SUBROUTINE DNS_MPI_COPYPLN_2(ijmax, kmax, npl, a, bl, br)
+  SUBROUTINE TLAB_MPI_COPYPLN_2(ijmax, kmax, npl, a, bl, br)
     IMPLICIT NONE
 
     TINTEGER ijmax, kmax, npl
@@ -722,12 +712,12 @@ CONTAINS
 
       ! Careful in case only 2 PEs
       IF ( ims_npro == 2 ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_MPI_COPYPLN_2. Undeveloped for 2 PEs.')
+        CALL TLAB_WRITE_ASCII(efile, 'TLAB_MPI_COPYPLN_2. Undeveloped for 2 PEs.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
       END IF
 
       ! -----------------------------------------------------------------------
-      ! left and right PEs. Same as in routine DNS_MPI_COPYPLN_1
+      ! left and right PEs. Same as in routine TLAB_MPI_COPYPLN_1
       ! -----------------------------------------------------------------------
       npl_loc = kmax
 
@@ -748,7 +738,7 @@ CONTAINS
 
       CALL MPI_WAITALL(4, mpireq, status, ims_err)
 
-      CALL DNS_MPI_TAGUPDT
+      CALL TLAB_MPI_TAGUPDT
 
       ! -----------------------------------------------------------------------
       ! second-left and second-right PEs.
@@ -772,12 +762,12 @@ CONTAINS
 
       CALL MPI_WAITALL(4, mpireq(5), status, ims_err)
 
-      CALL DNS_MPI_TAGUPDT
+      CALL TLAB_MPI_TAGUPDT
 
     END IF
 
     RETURN
-  END SUBROUTINE DNS_MPI_COPYPLN_2
+  END SUBROUTINE TLAB_MPI_COPYPLN_2
 
   ! ######################################################################
   ! Initialization of PSFFT Library for nonblocking communication
@@ -808,7 +798,7 @@ CONTAINS
     CALL GET_DIMS(ims_nb_zsrt,ims_nb_zend,ims_nb_zsiz,1,3)
 
     IF (       ims_nb_xsrt(1) == 1 .AND. ims_nb_xend(1) == g(1)%size &
-        .AND. ims_nb_xsiz(2)*ims_nb_xsiz(3) == ims_size_i(DNS_MPI_I_PARTIAL) ) THEN
+        .AND. ims_nb_xsiz(2)*ims_nb_xsiz(3) == ims_size_i(TLAB_MPI_I_PARTIAL) ) THEN
       ! Decomp standing in X okay
     ELSE
       CALL TLAB_WRITE_ASCII(efile,'Decomp standing in X-BAD')
@@ -827,7 +817,7 @@ CONTAINS
     END IF
 
     IF (      ims_nb_zsrt(3) == 1 .AND. ims_nb_zend(3) == g(3)%size &
-        .AND.ims_nb_zsiz(1)*ims_nb_zsiz(2) == ims_size_k(DNS_MPI_K_PARTIAL) ) THEN
+        .AND.ims_nb_zsiz(1)*ims_nb_zsiz(2) == ims_size_k(TLAB_MPI_K_PARTIAL) ) THEN
       ! Decomp standing in Z okay
     ELSE
       CALL TLAB_WRITE_ASCII(efile, 'Decomp standing in Z--BAD')

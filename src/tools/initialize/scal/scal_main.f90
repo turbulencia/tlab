@@ -31,7 +31,7 @@ PROGRAM INISCAL
 #endif
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
   isize_wrk3d = isize_field

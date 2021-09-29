@@ -54,7 +54,7 @@ PROGRAM TRANSFIELDS
 
   LOGICAL flag_crop, flag_extend
   TINTEGER jmax_aux, inb_scal_dst
-  TREAL dummy
+  TREAL dummy, area_dst
 
   TINTEGER itime_size, it
   TINTEGER itime_vec(itime_size_max)
@@ -70,7 +70,7 @@ PROGRAM TRANSFIELDS
   CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
 ! -------------------------------------------------------------------
@@ -320,7 +320,7 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 ! -------------------------------------------------------------------
   IF ( opt_main .EQ. 3 ) THEN
      CALL IO_READ_GRID('grid.trn', g_dst(1)%size,g_dst(2)%size,g_dst(3)%size, &
-          g_dst(1)%scale,g_dst(2)%scale,g_dst(3)%scale, x_dst,y_dst,z_dst)
+          g_dst(1)%scale,g_dst(2)%scale,g_dst(3)%scale, x_dst,y_dst,z_dst, area_dst)
 
 ! Check grids; Ox and Oz directions are assumed to be periodic
      dummy = (g_dst(1)%scale-g(1)%scale) / (x(g(1)%size,1)-x(g(1)%size-1,1))

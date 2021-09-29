@@ -82,6 +82,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
   CALL TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian8/CompactDirect6>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#ChannelFlowType=<none,ConstantPressureGradient>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
@@ -253,20 +254,25 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   g(1:3)%mode_fdm = imode_fdm
 
 ! -------------------------------------------------------------------
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'ChannelFlowType', 'none', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'constantpressuregradient') THEN; imode_channel = DNS_CHANNEL_CPG;
+  ELSE;                                                               imode_channel = EQNS_NONE; ENDIF
+
+! -------------------------------------------------------------------
 #ifdef USE_MPI
   CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeITranspose', 'asynchronous',sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_i = DNS_MPI_TRP_NONE
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_i = DNS_MPI_TRP_ASYNCHRONOUS
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_i = DNS_MPI_TRP_SENDRECV
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_i = TLAB_MPI_TRP_NONE
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_i = TLAB_MPI_TRP_ASYNCHRONOUS
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_i = TLAB_MPI_TRP_SENDRECV
   ELSE
      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeITranspose option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
   CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeKTranspose', 'asynchronous',sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_k = DNS_MPI_TRP_NONE
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_k = DNS_MPI_TRP_ASYNCHRONOUS
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_k = DNS_MPI_TRP_SENDRECV
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_k = TLAB_MPI_TRP_NONE
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'asynchronous') THEN; ims_trp_mode_k = TLAB_MPI_TRP_ASYNCHRONOUS
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'sendrecv'    ) THEN; ims_trp_mode_k = TLAB_MPI_TRP_SENDRECV
   ELSE
      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeKTranspose option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
@@ -742,8 +748,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDDO
 
 #ifdef USE_MPI
-  FilterDomain(1)%mpitype = DNS_MPI_I_PARTIAL
-  FilterDomain(3)%mpitype = DNS_MPI_K_PARTIAL
+  FilterDomain(1)%mpitype = TLAB_MPI_I_PARTIAL
+  FilterDomain(3)%mpitype = TLAB_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
@@ -1073,6 +1079,16 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   IF ( iviscous .EQ. EQNS_NONE ) THEN; visc = C_0_R
   ELSE;                                visc = C_1_R/reynolds; ENDIF
+
+  IF ( imode_channel == DNS_CHANNEL_CPG) THEN
+     reynolds_tau = reynolds    
+     ! centerline reynolds number
+     reynolds_cl  = (reynolds_tau / 0.116) ** (1.0 / 0.88) ! cf. Pope
+     ! viscosity with centerline reynolds number
+     visc         =  C_1_R / reynolds_cl          
+     ! replace (fdm_initialize uses reynolds)
+     reynolds     = reynolds_cl                   
+  END IF
 
 ! -------------------------------------------------------------------
 ! Initializing thermodynamic data of the mixture

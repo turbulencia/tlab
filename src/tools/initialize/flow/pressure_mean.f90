@@ -2,7 +2,7 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
-SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
+SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d)
 
   USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_VARS,    ONLY : g
@@ -19,7 +19,7 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(OUT)   :: p
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: T
   TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(INOUT) :: s
-  TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: wrk1d, wrk2d, wrk3d
+  TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: wrk1d
 
 ! -------------------------------------------------------------------
   TINTEGER j, iprof_loc

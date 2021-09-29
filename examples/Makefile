@@ -37,7 +37,8 @@ PRJS=\
      Case45 \
      Case46 \
      Case47 \
-     Case50
+     Case50 \
+     Case61
 
      # Case12 \
 

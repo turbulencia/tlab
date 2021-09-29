@@ -10,7 +10,7 @@
 !# 1999/01/01 - C. Pantano
 !#              Created
 !# 2007/04/26 - J.P. Mellado
-!#              PE 0 handling extracted into DNS_MPI_READ_PE0
+!#              PE 0 handling extracted into TLAB_MPI_READ_PE0
 !#
 !########################################################################
 !# DESCRIPTION
@@ -269,9 +269,9 @@ SUBROUTINE IO_READ_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, iread, a,
      ELSE;                     iz = 1; ENDIF
 
      IF ( iuse_tmp .EQ. 1 ) THEN
-        CALL DNS_MPI_READ_PE0(LOC_UNIT_ID, i1, nx,ny,nz,nz_total, itmp, a(1,iz), tmp)
+        CALL TLAB_MPI_READ_PE0(LOC_UNIT_ID, i1, nx,ny,nz,nz_total, itmp, a(1,iz), tmp)
      ELSE
-        CALL DNS_MPI_READ_PE0(LOC_UNIT_ID, i1, nx,ny,nz,nz_total, itxc, a(1,iz), txc)
+        CALL TLAB_MPI_READ_PE0(LOC_UNIT_ID, i1, nx,ny,nz,nz_total, itxc, a(1,iz), txc)
      ENDIF
 
      IF ( is .EQ. iread ) GOTO 33
@@ -338,7 +338,7 @@ END SUBROUTINE IO_READ_FIELDS_ARRAY
 !# 1999/01/01 - C. Pantano
 !#              Created
 !# 2007/04/26 - J.P. Mellado
-!#              PE 0 handling extracted into DNS_MPI_READ_PE0
+!#              PE 0 handling extracted into TLAB_MPI_READ_PE0
 !#
 !########################################################################
 !# DESCRIPTION
@@ -588,9 +588,9 @@ SUBROUTINE IO_WRITE_FIELDS_ARRAY(name, nx,ny,nz, itxc, iheader, nfield, a, txc)
 ! -------------------------------------------------------------------
   DO is = 1, nfield
      IF ( iuse_tmp .EQ. 1 ) THEN
-        CALL DNS_MPI_WRITE_PE0(LOC_UNIT_ID, i1, nx,ny,nz,nz_total, itmp, a(1,is), tmp)
+        CALL TLAB_MPI_WRITE_PE0(LOC_UNIT_ID, i1, nx,ny,nz,nz_total, itmp, a(1,is), tmp)
      ELSE
-        CALL DNS_MPI_WRITE_PE0(LOC_UNIT_ID, i1, nx,ny,nz,nz_total, itxc, a(1,is), txc)
+        CALL TLAB_MPI_WRITE_PE0(LOC_UNIT_ID, i1, nx,ny,nz,nz_total, itxc, a(1,is), txc)
      ENDIF
   ENDDO
 

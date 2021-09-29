@@ -38,7 +38,7 @@ MODULE TLAB_TYPES
      CHARACTER*8 name
      TINTEGER size, inb_grid, mode_fdm
      LOGICAL uniform, periodic, anelastic
-     TREAL scale
+     TREAL scale, fixed_scale
      TREAL, DIMENSION(:),   POINTER :: nodes
      TREAL, DIMENSION(:,:), POINTER :: jac   ! pointer to Jacobians
      TREAL, DIMENSION(:,:), POINTER :: lu1   ! pointer to LU decomposition for 1. derivative

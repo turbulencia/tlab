@@ -115,7 +115,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 ! Characteristic BCs
 ! -------------------------------------------------------------------
      IF ( .NOT. g(1)%periodic ) THEN ! Required for NRBCs in Ox
-        id    = DNS_MPI_K_NRBCX
+        id    = TLAB_MPI_K_NRBCX
         isize_loc = MOD(jmax,ims_npro_k)
         ims_bcs_imax = 2*(inb_flow+inb_scal_array)
         DO WHILE ( MOD(isize_loc*ims_bcs_imax,ims_npro_k) .GT. 0 )
@@ -125,12 +125,12 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         str = 'Initialize MPI types for Ox BCs transverse terms. '//TRIM(ADJUSTL(str))//' planes.'
         CALL TLAB_WRITE_ASCII(lfile,str)
         isize_loc = ims_bcs_imax*jmax
-        CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
+        CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
              ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      ENDIF
 
      IF ( .NOT. g(2)%periodic ) THEN ! Required for NRBCs in Oy
-        id    = DNS_MPI_K_NRBCY
+        id    = TLAB_MPI_K_NRBCY
         isize_loc = MOD(imax,ims_npro_k)
         ims_bcs_jmax = 2*(inb_flow+inb_scal_array)
         DO WHILE ( MOD(isize_loc*ims_bcs_jmax,ims_npro_k) .GT. 0 )
@@ -140,7 +140,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         str = 'Initialize MPI types for Oy BCs transverse terms. '//TRIM(ADJUSTL(str))//' planes.'
         CALL TLAB_WRITE_ASCII(lfile,str)
         isize_loc = imax*ims_bcs_jmax
-        CALL DNS_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
+        CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
              ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      ENDIF
 #endif

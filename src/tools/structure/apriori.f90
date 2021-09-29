@@ -67,7 +67,7 @@ PROGRAM APRIORI
   CALL DNS_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
 ! -------------------------------------------------------------------

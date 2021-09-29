@@ -1,7 +1,7 @@
 #include "types.h"
 #include "dns_const.h"
 
-SUBROUTINE VELOCITY_MEAN(u,v,w, wrk1d,wrk3d)
+SUBROUTINE VELOCITY_MEAN(u,v,w, wrk1d)
 
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imode_sim, imax,jmax,kmax
@@ -13,7 +13,7 @@ SUBROUTINE VELOCITY_MEAN(u,v,w, wrk1d,wrk3d)
 #include "integers.h"
 
   TREAL, DIMENSION(imax,jmax,kmax), INTENT(OUT)   :: u, v, w
-  TREAL, DIMENSION(jmax,*),         INTENT(INOUT) :: wrk1d, wrk3d
+  TREAL, DIMENSION(jmax,*),         INTENT(INOUT) :: wrk1d
 
   ! -------------------------------------------------------------------
   TINTEGER iq, j
@@ -79,10 +79,10 @@ SUBROUTINE VELOCITY_MEAN(u,v,w, wrk1d,wrk3d)
 ! #undef u_vi
 ! #undef aux
 
-    ENDIF
+  ENDIF
 
-    ! -------------------------------------------------------------------
-    IF ( g(3)%size .EQ. 1 ) w = C_0_R
+  ! -------------------------------------------------------------------
+  IF ( g(3)%size .EQ. 1 ) w = C_0_R
 
-    RETURN
-  END SUBROUTINE VELOCITY_MEAN
+  RETURN
+END SUBROUTINE VELOCITY_MEAN

@@ -75,7 +75,7 @@ PROGRAM LAGRANGE_POS_TRAJEC
      CALL PARTICLE_READ_GLOBAL('dns.ini')
   ENDIF
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
 ! Get the local information from the dns.ini

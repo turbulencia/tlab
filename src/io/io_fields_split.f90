@@ -91,12 +91,12 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 ! ###################################################################
   IF ( ims_npro_i .GT. 1 ) THEN
 ! We always initialize types here. For the general field files, we could
-! use DNS_MPI_I_PARTIAL, but we use this routine for other files like
+! use TLAB_MPI_I_PARTIAL, but we use this routine for other files like
 ! buffer regions of transformed fields.
      CALL TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
-     id = DNS_MPI_I_AUX1
+     id = TLAB_MPI_I_AUX1
      npage = nz*ny
-     CALL DNS_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
+     CALL TLAB_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
           ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
   ENDIF
 
@@ -139,7 +139,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
   CALL MPI_FILE_READ_AT_ALL(mpio_fh, mpio_locoff, p_read, mpio_locsize, MPI_REAL8, status, ims_err)
 
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL DNS_MPI_TRPB_I(p_read, a, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL TLAB_MPI_TRPB_I(p_read, a, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
   ENDIF
 
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
@@ -237,12 +237,12 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 ! ###################################################################
   IF ( ims_npro_i .GT. 1 ) THEN
 ! We always initialize types here. For the general field files, we could
-! use DNS_MPI_I_PARTIAL, but we use this routine for other files like
+! use TLAB_MPI_I_PARTIAL, but we use this routine for other files like
 ! buffer regions of transformed fields.
      CALL TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
-     id = DNS_MPI_I_AUX1
+     id = TLAB_MPI_I_AUX1
      npage = nz*ny
-     CALL DNS_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
+     CALL TLAB_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
           ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
   ENDIF
 
@@ -274,7 +274,7 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 ! fields
 ! -------------------------------------------------------------------
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL DNS_MPI_TRPF_I(a, wrk, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL TLAB_MPI_TRPF_I(a, wrk, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
      p_write => wrk
   ELSE
      p_write => a

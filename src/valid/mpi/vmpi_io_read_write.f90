@@ -79,7 +79,7 @@ PROGRAM VMPI_IO
   call MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro, ims_err)
 
 ! ###################################################################
-! from DNS_MPI_INITIALIZE
+! from TLAB_MPI_INITIALIZE
   ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0
   ims_pro_k =     ims_pro/ims_npro_i  ! Starting at 0
 
@@ -227,8 +227,8 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
   CALL MPI_FILE_READ_AT_ALL(mpio_fh, mpio_locoff, p_read, mpio_locsize, MPI_REAL8, status, ims_err)
 
 !  IF ( ims_npro_i .GT. 1 ) THEN
-!     id  = DNS_MPI_I_PARTIAL
-!     CALL DNS_MPI_TRPB_I(p_read, a, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+!     id  = TLAB_MPI_I_PARTIAL
+!     CALL TLAB_MPI_TRPB_I(p_read, a, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 !  ENDIF
 
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
@@ -348,8 +348,8 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 ! fields
 ! -------------------------------------------------------------------
   IF ( ims_npro_i .GT. 1 ) THEN
-!     id  = DNS_MPI_I_PARTIAL
-!     CALL DNS_MPI_TRPF_I(a, wrk, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+!     id  = TLAB_MPI_I_PARTIAL
+!     CALL TLAB_MPI_TRPF_I(a, wrk, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      p_write => wrk
   ELSE
      p_write => a

@@ -143,7 +143,7 @@ SUBROUTINE OPR_FILTER_X(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
 ! ###################################################################
 #ifdef USE_MPI
-  id = f%mpitype ! DNS_MPI_I_PARTIAL
+  id = f%mpitype ! TLAB_MPI_I_PARTIAL
 #endif
 
 ! -------------------------------------------------------------------
@@ -151,7 +151,7 @@ SUBROUTINE OPR_FILTER_X(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL DNS_MPI_TRPF_I(u, wrk3d, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL TLAB_MPI_TRPF_I(u, wrk3d, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
      p_a => wrk3d
      p_b => u
      nyz = ims_size_i(id)
@@ -191,7 +191,7 @@ SUBROUTINE OPR_FILTER_X(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-     CALL DNS_MPI_TRPB_I(p_b, p_a, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL TLAB_MPI_TRPB_I(p_b, p_a, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
   ENDIF
 #endif
 
@@ -296,7 +296,7 @@ SUBROUTINE OPR_FILTER_Z(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 
 ! ###################################################################
 #ifdef USE_MPI
-  id = f%mpitype ! DNS_MPI_K_PARTIAL
+  id = f%mpitype ! TLAB_MPI_K_PARTIAL
 #endif
 
 ! -------------------------------------------------------------------
@@ -304,7 +304,7 @@ SUBROUTINE OPR_FILTER_Z(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     CALL DNS_MPI_TRPF_K(u, wrk3d, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPF_K(u, wrk3d, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      p_a => wrk3d
      p_b => u
      nxy = ims_size_k(id)
@@ -326,7 +326,7 @@ SUBROUTINE OPR_FILTER_Z(nx,ny,nz, f, u, tmp, wrk1d,wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     CALL DNS_MPI_TRPB_K(p_b, p_a, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPB_K(p_b, p_a, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
   ENDIF
 #endif
 

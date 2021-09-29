@@ -31,6 +31,7 @@ PROGRAM INIFLOW
 #endif
 
   TREAL, DIMENSION(:),   POINTER :: e, rho, p, T
+  TINTEGER                       :: ip_b, ip_t, iq, nxy
 
   !########################################################################
   CALL TLAB_START()
@@ -42,7 +43,7 @@ PROGRAM INIFLOW
 #endif
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #endif
 
   inb_wrk2d=MAX(inb_wrk2d,3)
@@ -117,7 +118,7 @@ PROGRAM INIFLOW
 #endif
 
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-    CALL PRESSURE_MEAN(p,T,s, wrk1d,wrk2d,wrk3d)
+    CALL PRESSURE_MEAN(p,T,s, wrk1d)
 
 #ifdef CHEMISTRY
     IF ( ireactive .EQ. CHEM_NONE ) THEN
@@ -149,7 +150,7 @@ PROGRAM INIFLOW
   CALL TLAB_WRITE_ASCII(tfile, 'INIFLOW: Section 2')
 #endif
 
-  CALL VELOCITY_MEAN( q(1,1),q(1,2),q(1,3), wrk1d,wrk3d )
+  CALL VELOCITY_MEAN( q(1,1),q(1,2),q(1,3), wrk1d )
 
   SELECT CASE( flag_u )
   CASE( 1 )
@@ -161,6 +162,31 @@ PROGRAM INIFLOW
     q(1:isize_field,1:3) =  q(1:isize_field,1:3) + txc(1:isize_field,1:3)
 
   END SELECT
+
+! ###################################################################
+! Impose noslip+impermeability BCs at Jmin+Jmax (for Dirichlet BCs)
+! ###################################################################
+  nxy = imax*jmax
+
+  IF ( bcs_flow_jmin .EQ. DNS_BCS_DIRICHLET) THEN
+    DO iq = 1,3
+      ip_b = 1
+      DO k = 1,kmax
+        q(ip_b:ip_b+imax-1,iq) = C_0_R
+        ip_b = ip_b + nxy
+      ENDDO
+    ENDDO
+  ENDIF
+
+  IF ( bcs_flow_jmax .EQ. DNS_BCS_DIRICHLET) THEN
+    DO iq = 1,3
+      ip_t = imax*(jmax-1) + 1
+      DO k = 1,kmax
+        q(ip_t:ip_t+imax-1,iq) = C_0_R
+        ip_t = ip_t + nxy
+      ENDDO
+    ENDDO
+  ENDIF
 
 ! ###################################################################
 ! Pressure and density fluctuation fields

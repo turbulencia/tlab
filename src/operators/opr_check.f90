@@ -54,11 +54,11 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_i .GT. 1 ) THEN
-     id = DNS_MPI_I_PARTIAL
+     id = TLAB_MPI_I_PARTIAL
 
      CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES)
-     CALL DNS_MPI_TRPF_I(a(1,1), wrk3d, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
-     CALL DNS_MPI_TRPB_I(wrk3d, a(1,2), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL TLAB_MPI_TRPF_I(a(1,1), wrk3d, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     CALL TLAB_MPI_TRPB_I(wrk3d, a(1,2), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
      CALL SYSTEM_CLOCK(t_end,PROC_CYCLES,MAX_CYCLES)
 
      idummy = t_end-t_srt
@@ -76,7 +76,7 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
      IF ( ims_npro_i .GT. ims_sizBlock_i ) THEN 
         line=''
         WRITE(line,*) ims_sizBlock_i
-        line = '   using blocking of ' // TRIM(ADJUSTL(line)) // ' in  DNS_MPI_TRP<F,B>_I'
+        line = '   using blocking of ' // TRIM(ADJUSTL(line)) // ' in  TLAB_MPI_TRP<F,B>_I'
         CALL TLAB_WRITE_ASCII(lfile,line) 
      ENDIF
   ENDIF
@@ -87,13 +87,13 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   IF ( ims_npro_k .GT. 1 ) THEN
-     id = DNS_MPI_K_PARTIAL
+     id = TLAB_MPI_K_PARTIAL
 
      CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES)
      idummy=itime; itime=-1  ! set itime to -1 for this call to trigger interruption
-     CALL DNS_MPI_TRPF_K(a(1,1), wrk3d, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPF_K(a(1,1), wrk3d, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      itime=idummy
-     CALL DNS_MPI_TRPB_K(wrk3d, a(1,2), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+     CALL TLAB_MPI_TRPB_K(wrk3d, a(1,2), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      CALL SYSTEM_CLOCK(t_end,PROC_CYCLES,MAX_CYCLES)
 
      idummy = t_end-t_srt
@@ -111,7 +111,7 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
      IF ( ims_npro_k .GT. ims_sizBlock_k ) THEN 
         line=''
         WRITE(line,*) ims_sizBlock_k
-        line = '   using blocking of ' // TRIM(ADJUSTL(line)) // ' in  DNS_MPI_TRP<F,B>_K'
+        line = '   using blocking of ' // TRIM(ADJUSTL(line)) // ' in  TLAB_MPI_TRP<F,B>_K'
         CALL TLAB_WRITE_ASCII(lfile,line) 
      ENDIF
   ENDIF

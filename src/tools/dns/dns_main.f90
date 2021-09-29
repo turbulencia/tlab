@@ -48,7 +48,7 @@ PROGRAM DNS
   CALL DNS_READ_LOCAL(ifile)
 
 #ifdef USE_MPI
-  CALL DNS_MPI_INITIALIZE
+  CALL TLAB_MPI_INITIALIZE
 #ifdef USE_PSFFT
   IF ( imode_rhs == EQNS_RHS_NONBLOCKING ) CALL DNS_NB3DFFT_INITIALIZE
 #endif
@@ -148,6 +148,16 @@ PROGRAM DNS
   ! ###################################################################
   IF ( icalc_part == 1 ) THEN
     CALL PARTICLE_INITIALIZE()
+  END IF
+
+  ! ###################################################################
+  ! Initialize channel flow simulation
+  ! ###################################################################
+  IF ( imode_channel == DNS_CHANNEL_CPG) THEN
+    CALL FI_CHANNEL_INITIALIZE()
+    logs_data(12) = ubulk_parabolic
+    ! constant streamwise pressure gradient forcing term
+    fcpg = (reynolds_tau / reynolds_cl)**C_2_R
   END IF
 
   ! ###################################################################
