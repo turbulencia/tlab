@@ -79,10 +79,10 @@ SUBROUTINE VELOCITY_MEAN(u,v,w, wrk1d)
 ! #undef u_vi
 ! #undef aux
 
-    ENDIF
+  ENDIF
 
-    ! -------------------------------------------------------------------
-    IF ( g(3)%size .EQ. 1 ) w = C_0_R
+  ! -------------------------------------------------------------------
+  IF ( g(3)%size .EQ. 1 ) w = C_0_R
 
-    RETURN
-  END SUBROUTINE VELOCITY_MEAN
+  RETURN
+END SUBROUTINE VELOCITY_MEAN

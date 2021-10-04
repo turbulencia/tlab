@@ -69,6 +69,10 @@ Case48. Neutral Ekman layer with sponge at the top and interactive BC at the bot
 
 Case50. 1D perturbed laminar Ekman layer, implicit solver.
 
+3D case: Channel flow
+
+Case61. Channel flow with constant streamwise pressure gradient.
+
 ---
 
 make checkrl/checkdb runs the check.sh bash-script inside each directory

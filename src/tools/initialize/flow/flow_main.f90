@@ -31,6 +31,7 @@ PROGRAM INIFLOW
 #endif
 
   TREAL, DIMENSION(:),   POINTER :: e, rho, p, T
+  TINTEGER                       :: ip_b, ip_t, iq, nxy
 
   !########################################################################
   CALL TLAB_START()
@@ -161,6 +162,35 @@ PROGRAM INIFLOW
     q(1:isize_field,1:3) =  q(1:isize_field,1:3) + txc(1:isize_field,1:3)
 
   END SELECT
+
+! ###################################################################
+! Impose noslip+impermeability BCs at Jmin+Jmax (for Dirichlet BCs)
+! --> eliminate perturbations at the boundaries by forcing the fields
+!     to the profile values from velocity_mean
+! ###################################################################
+  CALL VELOCITY_MEAN(txc(1,1),txc(1,2),txc(1,3),wrk1d) 
+
+  nxy = imax*jmax
+
+  IF ( bcs_flow_jmin .EQ. DNS_BCS_DIRICHLET) THEN
+    DO iq = 1,3
+      ip_b = 1
+      DO k = 1,kmax
+        q(ip_b:ip_b+imax-1,iq) = txc(ip_b:ip_b+imax-1,iq)
+        ip_b = ip_b + nxy
+      ENDDO
+    ENDDO
+  ENDIF
+
+  IF ( bcs_flow_jmax .EQ. DNS_BCS_DIRICHLET) THEN
+    DO iq = 1,3
+      ip_t = imax*(jmax-1) + 1
+      DO k = 1,kmax
+        q(ip_t:ip_t+imax-1,iq) = txc(ip_t:ip_t+imax-1,iq) 
+        ip_t = ip_t + nxy
+      ENDDO
+    ENDDO
+  ENDIF
 
 ! ###################################################################
 ! Pressure and density fluctuation fields

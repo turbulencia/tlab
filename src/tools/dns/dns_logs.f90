@@ -22,11 +22,13 @@
 !# logs_data10 Minimum dilatation
 !# logs_data11 Maximum dilatation
 !#
+!# logs_data12 UBulk (Channel flow)
+!#
 !########################################################################
 SUBROUTINE DNS_LOGS(iflag)
 
   USE TLAB_CONSTANTS, ONLY : ofile
-  USE TLAB_VARS,    ONLY : imode_eqns
+  USE TLAB_VARS,    ONLY : imode_eqns,imode_channel
   USE TLAB_VARS,    ONLY : itime, rtime, visc
   USE TLAB_VARS,    ONLY : damkohler
   USE TLAB_PROCS
@@ -88,6 +90,10 @@ SUBROUTINE DNS_LOGS(iflag)
         line1 = line1(1:ip)//' '//' NewtonRs'; ip = ip + 1 + 10
      ENDIF
 
+     IF ( imode_channel .EQ. DNS_CHANNEL_CPG ) THEN
+        line1 = line1(1:ip)//' '//' UBulk';    ip = ip + 1 + 13
+     ENDIF
+
      line1 = line1(1:ip-1)//'#'
      CALL TLAB_WRITE_ASCII(ofile, REPEAT('#',LEN_TRIM(line1)))
      CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(line1)))
@@ -131,6 +137,12 @@ SUBROUTINE DNS_LOGS(iflag)
 #endif
         WRITE(line2,400) NEWTONRAPHSON_ERROR
 400     FORMAT(1(1X,E10.3))
+        line1 = TRIM(line1)//TRIM(line2)
+     ENDIF
+
+     IF ( imode_channel .EQ. DNS_CHANNEL_CPG ) THEN
+        WRITE(line2,500) logs_data(12)
+500     FORMAT(1X,E13.6)
         line1 = TRIM(line1)//TRIM(line2)
      ENDIF
 

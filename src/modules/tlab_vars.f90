@@ -116,4 +116,14 @@ MODULE TLAB_VARS
               istattimeorg                            ! time at which accumulation of statistics started
   TREAL    :: rstattimeorg
 
+! ###################################################################
+! Channel flow
+! ###################################################################
+  TINTEGER :: imode_channel
+  TREAL    :: ubulk_parabolic, ubulk, fcpg  
+  TREAL    :: reynolds_cl, reynolds_tau
+  ! rotating turbulent channel flow
+  TREAL    :: channel_rot
+  TINTEGER :: nitera_spinup, spinuptime 
+
 END MODULE TLAB_VARS
