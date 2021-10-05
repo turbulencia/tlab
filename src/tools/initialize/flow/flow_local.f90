@@ -249,9 +249,9 @@ CONTAINS
        ! ###################################################################
     CASE( 4 ) ! Vector potential given
        DO j = 1,jmax
-          ax(:,j,:) = u(:,j,:) *wrk1d(j,2)
-          ay(:,j,:) = v(:,j,:) *wrk1d(j,1)
-          az(:,j,:) = w(:,j,:) *wrk1d(j,2)
+          ax(:,j,:) = u(:,j,:) *wrk1d(j,1) ! Horizontal components of vector potential give vertical velocity
+          ay(:,j,:) = v(:,j,:) *wrk1d(j,2)
+          az(:,j,:) = w(:,j,:) *wrk1d(j,1)
        ENDDO
 
        bcs2 = 0
