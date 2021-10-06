@@ -20,7 +20,6 @@ MODULE FLOW_LOCAL
   TREAL               :: norm_ini_u, norm_ini_p ! Scaling of perturbation
   TYPE(discrete_dt)   :: fp                     ! Discrete perturbation
 
-  TINTEGER :: bcs_flow_jmin, bcs_flow_jmax      ! Boundary conditions
   TINTEGER :: flag_wall ! Boundary conditions: 0  Free-Slip/Free-Slip
   ! 1  No-Slip/Free-Slip
   ! 2  Free-Slip/No-Slip
@@ -250,9 +249,9 @@ CONTAINS
        ! ###################################################################
     CASE( 4 ) ! Vector potential given
        DO j = 1,jmax
-          ax(:,j,:) = u(:,j,:) *wrk1d(j,2)
-          ay(:,j,:) = v(:,j,:) *wrk1d(j,1)
-          az(:,j,:) = w(:,j,:) *wrk1d(j,2)
+          ax(:,j,:) = u(:,j,:) *wrk1d(j,1)
+          ay(:,j,:) = v(:,j,:) *wrk1d(j,2)
+          az(:,j,:) = w(:,j,:) *wrk1d(j,1)
        ENDDO
 
        bcs2 = 0

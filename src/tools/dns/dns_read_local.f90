@@ -18,7 +18,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : FilterDomain
   USE TLAB_VARS,    ONLY : nstatavg
-  USE TLAB_VARS,    ONLY : channel_rot, nitera_spinup
   USE TLAB_PROCS
   USE THERMO_VARS, ONLY : imixture
   USE LAGRANGE_VARS,ONLY: inb_particle_interp
@@ -64,7 +63,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#TimeReactiveCFL=<value>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermDivergence=<none/remove>')
   CALL TLAB_WRITE_ASCII(bakfile, '#RhsMode=<split/combined/nonblocking>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ChannelSpinup=<value>')
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TimeOrder', 'dummy', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttaexplicit3'  ) THEN; rkm_mode = RKM_EXP3;           lstr = '0.6';
@@ -84,9 +82,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeReactiveCFL',  TRIM(ADJUSTL(lstr)), cflr )
   CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeStep', '0.05', dtime)
   
-  ! Channel flow rotation
-  CALL SCANINIREAL(bakfile, inifile, 'Main', 'ChannelSpinup', '0.2', channel_rot)
-
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermDivergence', 'remove', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'   ) THEN; idivergence = EQNS_NONE
@@ -119,7 +114,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#IteraLog=<value>')
   CALL TLAB_WRITE_ASCII(bakfile, '#Saveplanes=<value>')
   CALL TLAB_WRITE_ASCII(bakfile, '#RunAvera=<yes/no>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#IteraChannelSpinup=<iteration steps channel flow rotation>')
 
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Start',      '0',  nitera_first)
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'End',        '0',  nitera_last )
@@ -127,7 +121,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Statistics', '50', nitera_stats)
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'IteraLog',   '10', nitera_log  )
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Saveplanes', '-1', nitera_pln  )
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'IteraChannelSpinup', '0', nitera_spinup  )
 
 ! Accumulate statistics in spatial mode
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'SaveStats', '-1', nitera_stats_spa)

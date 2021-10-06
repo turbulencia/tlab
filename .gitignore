@@ -14,6 +14,12 @@ build_BIG/*
 build_LITTLE/* 
 build_PARALLEL/*
 build_DEBUG/*
+build_little/* 
+build_parallel/*
+test_little/* 
+test_parallel/*
+test_files/*
+.vscode/*
 *~
 */*~
 */*/*~

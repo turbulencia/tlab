@@ -82,7 +82,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
   CALL TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian8/CompactDirect6>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ChannelFlowType=<none,ConstantPressureGradient>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
@@ -252,11 +251,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
   g(1:3)%mode_fdm = imode_fdm
-
-! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'ChannelFlowType', 'none', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'constantpressuregradient') THEN; imode_channel = DNS_CHANNEL_CPG;
-  ELSE;                                                               imode_channel = EQNS_NONE; ENDIF
 
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
@@ -1079,16 +1073,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   IF ( iviscous .EQ. EQNS_NONE ) THEN; visc = C_0_R
   ELSE;                                visc = C_1_R/reynolds; ENDIF
-
-  IF ( imode_channel == DNS_CHANNEL_CPG) THEN
-     reynolds_tau = reynolds    
-     ! centerline reynolds number
-     reynolds_cl  = (reynolds_tau / 0.116) ** (1.0 / 0.88) ! cf. Pope
-     ! viscosity with centerline reynolds number
-     visc         =  C_1_R / reynolds_cl          
-     ! replace (fdm_initialize uses reynolds)
-     reynolds     = reynolds_cl                   
-  END IF
 
 ! -------------------------------------------------------------------
 ! Initializing thermodynamic data of the mixture

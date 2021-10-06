@@ -151,16 +151,6 @@ PROGRAM DNS
   END IF
 
   ! ###################################################################
-  ! Initialize channel flow simulation
-  ! ###################################################################
-  IF ( imode_channel == DNS_CHANNEL_CPG) THEN
-    CALL FI_CHANNEL_INITIALIZE()
-    logs_data(12) = ubulk_parabolic
-    ! constant streamwise pressure gradient forcing term
-    fcpg = (reynolds_tau / reynolds_cl)**C_2_R
-  END IF
-
-  ! ###################################################################
   ! Initialize data for boundary conditions
   ! ###################################################################
   CALL BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
