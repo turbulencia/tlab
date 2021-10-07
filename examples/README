@@ -71,7 +71,7 @@ Case50. 1D perturbed laminar Ekman layer, implicit solver.
 
 3D case: Channel flow
 
-Case61. Channel flow with constant streamwise pressure gradient.
+Case61. Channel flow with constant streamwise pressure gradient (Re_tau=180).
 
 ---
 
