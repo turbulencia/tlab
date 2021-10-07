@@ -6,7 +6,7 @@ SUBROUTINE VELOCITY_MEAN(u,v,w, wrk1d)
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imode_sim, imax,jmax,kmax
   USE TLAB_VARS, ONLY : qbg
-  USE TLAB_VARS, ONLY : coriolis
+  USE TLAB_VARS, ONLY : rotation
 
   IMPLICIT NONE
 
@@ -32,9 +32,9 @@ SUBROUTINE VELOCITY_MEAN(u,v,w, wrk1d)
     ENDDO
 
     ! Construct velocity field
-    IF ( coriolis%type .NE. EQNS_NONE ) THEN
-      calpha = COS(coriolis%parameters(1)); salpha = SIN(coriolis%parameters(1))
-      wrk1d(:,3) = wrk1d(:,3) *SIGN(C_1_R,coriolis%vector(2)) ! right angular velocity vector (Garratt, 1992, p.42)
+    IF ( rotation%type .EQ. EQNS_COR_NORMALIZED ) THEN
+      calpha = COS(rotation%parameters(1)); salpha = SIN(rotation%parameters(1))
+      wrk1d(:,3) = wrk1d(:,3) *SIGN(C_1_R,rotation%vector(2)) ! right angular velocity vector (Garratt, 1992, p.42)
 
       DO j = 1,jmax
         u(:,j,:) = u(:,j,:) + wrk1d(j,1)*calpha + wrk1d(j,3)*salpha

@@ -138,7 +138,7 @@ Data is case insensitive.
 \tt TermViscous     & \tt divergence, explicit & Formulation of viscous terms.\\
 \tt TermDiffusion   & \tt divergence, explicit & Formulation of diffusion terms.\\
 \tt TermBodyForce   & \tt None, Explicit, Homogeneous, Linear, Bilinear, Quadratic & Formulation of body force terms (see {\tt mappings/fi\_buoyancy}).\\
-\tt TermCoriolis    & \tt None, Explicit, Normalized & Formulation of Coriolis terms.\\
+\tt TermRotation    & \tt None, CoriolisExplicit, CoriolisNormalized, ForceRotation & Formulation of Rotation terms.\\
 \tt TermRadiation   & \tt None, Bulk1dGlobal, Bulk1dLocal & Formulation of radiation terms (see {\tt operators/opr\_radiation}).\\
 \tt SpaceOrder      & \tt CompactJacobian4, CompactJacobian6, CompactDirect6 & Finite difference method used for spatial derivatives.\\
 \tt TimeOrder       & \tt RungeKuttaExplicit3, RungeKuttaExplicit4, RungeKuttaDiffusion3 & Runge-Kutta method used for time advancement.\\
@@ -316,7 +316,7 @@ equation~(\ref{equ:profile}).\\
 \multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Rotation]}\\
 %
 \tt Vector     & {\em value1, value2, value3} & Components of angular velocity vector $(f_1,\,f_2,\,f_3)$, section~\ref{sec:equations}.\\
-\tt Parameters & {\em value1, value2, ...} & Parameters that define the Coriolis force term.\\
+\tt Parameters & {\em value1, value2, ...} & Parameters that define the rotation term.\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

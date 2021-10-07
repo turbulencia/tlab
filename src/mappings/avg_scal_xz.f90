@@ -775,9 +775,11 @@ USE TLAB_PROCS
   Dsw(:) = (rS(:)-fS(:)) *Tau_yz_y(:) +(rW(:)-fW(:)) *Fy_y(:)
 
   ! Coriolis terms
-  dummy  = coriolis%vector(2)
-  Fsu(:) = dummy *Rsw(:)
-  Fsw(:) =-dummy *Rsu(:)
+  IF ( rotation%type .EQ. EQNS_COR_NORMALIZED ) THEN
+    dummy  = rotation%vector(2)
+    Fsu(:) = dummy *Rsw(:)
+    Fsw(:) =-dummy *Rsu(:)
+  ENDIF
 
   ! Transient terms
   Rss_t(:) = Css(:) +Pss(:) -Ess(:)                 +Qss(:) +(          Dss(:)         -Tssy_y(:) ) /rR(:)

@@ -59,6 +59,8 @@
 #define EQNS_SUB_CONSTANT_LOCAL      29
 #define EQNS_SUB_CONSTANT_GLOBAL     30
 
+#define EQNS_ROT_FORCE               31
+
 ! Finite-differences method
 #define FDM_COM4_JACOBIAN     4
 #define FDM_COM6_JACOBIAN     6

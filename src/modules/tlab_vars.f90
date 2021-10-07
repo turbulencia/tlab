@@ -71,7 +71,7 @@ MODULE TLAB_VARS
 
 ! ###################################################################
   TYPE(term_dt) :: buoyancy   ! Buoyancy parameters
-  TYPE(term_dt) :: coriolis   ! Coriolis parameters
+  TYPE(term_dt) :: rotation   ! Rotation parameters
   TYPE(term_dt) :: radiation  ! Radiation parameters
   TYPE(term_dt) :: transport  ! Transport parameters
   TYPE(term_dt) :: chemistry  ! Chemistry parameters

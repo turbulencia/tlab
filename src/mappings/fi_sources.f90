@@ -16,7 +16,7 @@
 SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
-  USE TLAB_VARS, ONLY : buoyancy, coriolis, subsidence
+  USE TLAB_VARS, ONLY : buoyancy, rotation, subsidence
   USE TLAB_VARS, ONLY : bbackground, pbackground, rbackground, epbackground
 
   IMPLICIT NONE
@@ -46,15 +46,15 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 ! -----------------------------------------------------------------------
 ! Coriolis. So far, rotation only in the Oy direction. 
 ! -----------------------------------------------------------------------
-  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
-     u_geo = COS(coriolis%parameters(1)) *coriolis%parameters(2)
-     w_geo =-SIN(coriolis%parameters(1)) *coriolis%parameters(2)
+  IF ( rotation%type .EQ. EQNS_COR_NORMALIZED ) THEN
+     u_geo = COS(rotation%parameters(1)) *rotation%parameters(2)
+     w_geo =-SIN(rotation%parameters(1)) *rotation%parameters(2)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, dummy,srt,end,siz )
      CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
 
-     dummy = coriolis%vector(2)
+     dummy = rotation%vector(2)
      dtr3=C_0_R; dtr1=C_0_R
      DO ij = srt,end
         hq(ij,1) = hq(ij,1) + dummy*( w_geo-q(ij,3) )
