@@ -44,8 +44,9 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 #endif
 
 ! -----------------------------------------------------------------------
-! Coriolis. So far, rotation only in the Oy direction. 
+! Rotation.
 ! -----------------------------------------------------------------------
+  ! Coriolis. So far, rotation only in the Oy direction. 
   IF ( rotation%type .EQ. EQNS_COR_NORMALIZED ) THEN
      u_geo = COS(rotation%parameters(1)) *rotation%parameters(2)
      w_geo =-SIN(rotation%parameters(1)) *rotation%parameters(2)
@@ -63,6 +64,15 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 !$omp end parallel
 
   ENDIF
+
+  ! Rotation Force
+  IF ( rotation%type .EQ. EQNS_ROT_FORCE ) THEN
+     DO ij = 1, isize_field
+        hq(ij,1) = hq(ij,1) + rotation%parameters(1) * (rotation%vector(2)*q(ij,3) - rotation%vector(3)*q(ij,2)) 
+        hq(ij,2) = hq(ij,2) + rotation%parameters(1) * (rotation%vector(3)*q(ij,1) - rotation%vector(1)*q(ij,3))
+        hq(ij,3) = hq(ij,3) + rotation%parameters(1) * (rotation%vector(1)*q(ij,2) - rotation%vector(2)*q(ij,1))
+     ENDDO
+  ENDIF 
 
 ! -----------------------------------------------------------------------
   DO iq = 1,3

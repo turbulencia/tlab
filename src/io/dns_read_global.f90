@@ -352,37 +352,35 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#Vector=<Fx,Fy,Fz>')
   CALL TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-  rotation%vector(:) = C_0_R; rotation%active = .FALSE.
-  IF ( rotation%type .EQ. EQNS_COR_NORMALIZED ) THEN
+  rotation%vector(:) = C_0_R; rotation%parameters(:) = C_0_R; rotation%active = .FALSE.
+  IF ( rotation%type .NE. EQNS_NONE ) THEN
      CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Vector', '0.0,1.0,0.0', sRes)
      idummy = 3
      CALL LIST_REAL(sRes, idummy, rotation%vector)
-
+     
      IF ( ABS(rotation%vector(1)) .GT. C_0_R ) THEN; rotation%active(2) = .TRUE.; rotation%active(3) = .TRUE.; CALL TLAB_WRITE_ASCII(lfile, 'Angular velocity along Ox.'); ENDIF
      IF ( ABS(rotation%vector(2)) .GT. C_0_R ) THEN; rotation%active(3) = .TRUE.; rotation%active(1) = .TRUE.; CALL TLAB_WRITE_ASCII(lfile, 'Angular velocity along Oy.'); ENDIF
      IF ( ABS(rotation%vector(3)) .GT. C_0_R ) THEN; rotation%active(1) = .TRUE.; rotation%active(2) = .TRUE.; CALL TLAB_WRITE_ASCII(lfile, 'Angular velocity along Oz.'); ENDIF
+     
+     CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Parameters', '0.0,1.0', sRes)
+     idummy = MAX_PROF
+     CALL LIST_REAL(sRes, idummy, rotation%parameters)
+  ENDIF
 
+! Coriolis Term with consistency check
+  IF ( rotation%type .EQ. EQNS_COR_NORMALIZED ) THEN
      IF ( rossby .GT. C_0_R ) THEN
         rotation%vector(:) = rotation%vector(:) /rossby ! adding the rossby number into the vector
      ELSE
         CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Rossby number must be nonzero if coriolis is retained.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
-     ENDIF
-
-     rotation%parameters(:) = C_0_R
-     CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Parameters', '0.0,1.0', sRes)
-     idummy = MAX_PROF
-     CALL LIST_REAL(sRes, idummy, rotation%parameters)
+     ENDIF  
 
      IF ( rotation%parameters(2) .EQ. C_0_R ) THEN
         CALL TLAB_WRITE_ASCII(lfile,'DNS_READ_GLOBAL. Default normalized geostrophic velocity set to one.')
         rotation%parameters(2) = C_1_R
      ENDIF
-
-  ENDIF
-
-! Consistency check
-  IF ( rotation%type .EQ. EQNS_COR_NORMALIZED ) THEN
+   
      IF ( rotation%active(2) ) THEN
         CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. CoriolisNormalized option only allows for angular velocity along Oy.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
