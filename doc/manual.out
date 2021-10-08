@@ -1,0 +1,56 @@
+\BOOKMARK [0][-]{chapter*.2}{Preface}{}% 1
+\BOOKMARK [0][-]{chapter*.3}{Contributors}{}% 2
+\BOOKMARK [-1][-]{part.1}{I User Guide}{}% 3
+\BOOKMARK [0][-]{chapter.1}{Governing equations}{part.1}% 4
+\BOOKMARK [1][-]{section.1.1}{Compressible formulation}{chapter.1}% 5
+\BOOKMARK [2][-]{subsection.1.1.1}{Multi-species compressible flows}{section.1.1}% 6
+\BOOKMARK [2][-]{subsection.1.1.2}{Multi-species compressible reacting flows}{section.1.1}% 7
+\BOOKMARK [1][-]{section.1.2}{Incompressible formulation}{chapter.1}% 8
+\BOOKMARK [1][-]{section.1.3}{Anelastic formulation}{chapter.1}% 9
+\BOOKMARK [0][-]{chapter.2}{Boundary and Initial Conditions}{part.1}% 10
+\BOOKMARK [1][-]{section.2.1}{Background profiles}{chapter.2}% 11
+\BOOKMARK [1][-]{section.2.2}{Initial conditions}{chapter.2}% 12
+\BOOKMARK [1][-]{section.2.3}{Boundary conditions}{chapter.2}% 13
+\BOOKMARK [2][-]{subsection.2.3.1}{Compressible formulation}{section.2.3}% 14
+\BOOKMARK [2][-]{subsection.2.3.2}{Incompressible formulation}{section.2.3}% 15
+\BOOKMARK [2][-]{subsection.2.3.3}{Buffer zone}{section.2.3}% 16
+\BOOKMARK [0][-]{chapter.3}{Code}{part.1}% 17
+\BOOKMARK [1][-]{section.3.1}{Executables}{chapter.3}% 18
+\BOOKMARK [1][-]{section.3.2}{Scripts}{chapter.3}% 19
+\BOOKMARK [1][-]{section.3.3}{Input file dns.ini}{chapter.3}% 20
+\BOOKMARK [0][-]{chapter.4}{Grid}{part.1}% 21
+\BOOKMARK [1][-]{section.4.1}{Generation algorithms}{chapter.4}% 22
+\BOOKMARK [2][-]{subsection.4.1.1}{Explicit mappings}{section.4.1}% 23
+\BOOKMARK [2][-]{subsection.4.1.2}{Geometric progression}{section.4.1}% 24
+\BOOKMARK [0][-]{chapter.5}{Post-Processing Tools}{part.1}% 25
+\BOOKMARK [1][-]{section.5.1}{Averages}{chapter.5}% 26
+\BOOKMARK [1][-]{section.5.2}{Probability density functions}{chapter.5}% 27
+\BOOKMARK [1][-]{section.5.3}{Conditional analysis}{chapter.5}% 28
+\BOOKMARK [1][-]{section.5.4}{Spatially coarse grained data at full time resolution}{chapter.5}% 29
+\BOOKMARK [1][-]{section.5.5}{Two-point statistics}{chapter.5}% 30
+\BOOKMARK [1][-]{section.5.6}{Summary of budget equations for second-order moments}{chapter.5}% 31
+\BOOKMARK [2][-]{subsection.5.6.1}{Reynolds Stresses}{section.5.6}% 32
+\BOOKMARK [2][-]{subsection.5.6.2}{Scalar Fluxes}{section.5.6}% 33
+\BOOKMARK [2][-]{subsection.5.6.3}{Scalar Variance}{section.5.6}% 34
+\BOOKMARK [2][-]{subsection.5.6.4}{Energy Equation}{section.5.6}% 35
+\BOOKMARK [-1][-]{part.2}{II Technical Guide}{}% 36
+\BOOKMARK [0][-]{chapter.6}{Numerical Algorithms}{part.2}% 37
+\BOOKMARK [1][-]{section.6.1}{Spatial operators}{chapter.6}% 38
+\BOOKMARK [2][-]{subsection.6.1.1}{Derivatives}{section.6.1}% 39
+\BOOKMARK [2][-]{subsection.6.1.2}{Advection and Diffusion}{section.6.1}% 40
+\BOOKMARK [2][-]{subsection.6.1.3}{Filters}{section.6.1}% 41
+\BOOKMARK [2][-]{subsection.6.1.4}{Fourier transform}{section.6.1}% 42
+\BOOKMARK [2][-]{subsection.6.1.5}{Poisson equation}{section.6.1}% 43
+\BOOKMARK [2][-]{subsection.6.1.6}{Helmholtz equation}{section.6.1}% 44
+\BOOKMARK [1][-]{section.6.2}{Time marching schemes}{chapter.6}% 45
+\BOOKMARK [2][-]{subsection.6.2.1}{Explicit schemes}{section.6.2}% 46
+\BOOKMARK [2][-]{subsection.6.2.2}{Implicit schemes}{section.6.2}% 47
+\BOOKMARK [0][-]{chapter.7}{Parallelization}{part.2}% 48
+\BOOKMARK [1][-]{section.7.1}{Domain decomposition}{chapter.7}% 49
+\BOOKMARK [0][-]{chapter.8}{Scaling}{part.2}% 50
+\BOOKMARK [1][-]{section.8.1}{Scaling on the cluster jugene@fz-juelich.de}{chapter.8}% 51
+\BOOKMARK [2][-]{subsection.8.1.1}{Strong Scaling}{section.8.1}% 52
+\BOOKMARK [2][-]{subsection.8.1.2}{Scaling from 32 to 8192 nodes}{section.8.1}% 53
+\BOOKMARK [1][-]{section.8.2}{Scaling on the cluster juwels@fz-juelich.de}{chapter.8}% 54
+\BOOKMARK [1][-]{section.8.3}{Scaling on the cluster blizzard@dkrz.de}{chapter.8}% 55
+\BOOKMARK [0][-]{chapter.9}{Profiling}{part.2}% 56

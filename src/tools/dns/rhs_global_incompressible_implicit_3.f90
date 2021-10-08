@@ -37,7 +37,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
   USE TLAB_VARS, ONLY : isize_field, isize_txc_field, isize_wrk1d, inb_scal, inb_flow
   USE TLAB_VARS, ONLY : icalc_scal
   USE TLAB_VARS, ONLY : visc, schmidt, rossby
-  USE TLAB_VARS, ONLY : buoyancy, rotation
+  USE TLAB_VARS, ONLY : buoyancy, coriolis
   USE TLAB_VARS, ONLY : bbackground
   USE DNS_LOCAL,  ONLY : idivergence
   USE BOUNDARY_BUFFER
@@ -143,7 +143,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
 ! -----------------------------------------------------------------------
 ! Coriolis (so far, rotation only in the Oy direction)
 ! -----------------------------------------------------------------------
-     IF ( rotation%type .EQ. EQNS_COR_NORMALIZED ) THEN
+     IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
         dummy = C_1_R/rossby
         DO ij = 1,isize_field
            h3(ij) =   h3(ij) + dummy*(u(ij)-C_1_R)
@@ -188,7 +188,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
 ! Coriolis. So far, rotation only in the Oy direction.
 ! -----------------------------------------------------------------------
 
-  IF ( rotation%type .EQ. EQNS_COR_NORMALIZED ) THEN
+  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
      dummy = C_1_R/rossby
      DO ij = 1, isize_field
           h1(ij) =   h1(ij) - dummy*w(ij)

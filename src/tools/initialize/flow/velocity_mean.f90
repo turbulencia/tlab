@@ -6,7 +6,7 @@ SUBROUTINE VELOCITY_MEAN(u,v,w, wrk1d)
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imode_sim, imax,jmax,kmax
   USE TLAB_VARS, ONLY : qbg
-  USE TLAB_VARS, ONLY : rotation
+  USE TLAB_VARS, ONLY : coriolis
 
   IMPLICIT NONE
 

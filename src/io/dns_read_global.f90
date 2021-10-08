@@ -76,7 +76,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#TermViscous=<divergence/explicit>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Homogeneous/Linear/Bilinear/Quadratic>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#TermRotation=<none/CoriolisExplicit/CoriolisNormalized/ForceRotation>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermRadiation=<none/Bulk1dGlobal/Bulk1dLocal>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
@@ -194,13 +194,12 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermRotation', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'       )         THEN; rotation%type = EQNS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'coriolisexplicit'   ) THEN; rotation%type = EQNS_EXPLICIT
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'coriolisnormalized' ) THEN; rotation%type = EQNS_COR_NORMALIZED
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'forcerotation' )      THEN; rotation%type = EQNS_ROT_FORCE
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermCoriolis', 'void', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'       )         THEN; coriolis%type = EQNS_NONE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'coriolisexplicit'   ) THEN; coriolis%type = EQNS_EXPLICIT
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'coriolisnormalized' ) THEN; coriolis%type = EQNS_COR_NORMALIZED
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermRotation option.')
+     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermCoriolis option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -352,37 +351,39 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#Vector=<Fx,Fy,Fz>')
   CALL TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-  rotation%vector(:) = C_0_R; rotation%parameters(:) = C_0_R; rotation%active = .FALSE.
-  IF ( rotation%type .NE. EQNS_NONE ) THEN
+  coriolis%vector(:) = C_0_R; coriolis%active = .FALSE.
+  IF ( coriolis%type .NE. EQNS_NONE ) THEN
      CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Vector', '0.0,1.0,0.0', sRes)
      idummy = 3
-     CALL LIST_REAL(sRes, idummy, rotation%vector)
-     
-     IF ( ABS(rotation%vector(1)) .GT. C_0_R ) THEN; rotation%active(2) = .TRUE.; rotation%active(3) = .TRUE.; CALL TLAB_WRITE_ASCII(lfile, 'Angular velocity along Ox.'); ENDIF
-     IF ( ABS(rotation%vector(2)) .GT. C_0_R ) THEN; rotation%active(3) = .TRUE.; rotation%active(1) = .TRUE.; CALL TLAB_WRITE_ASCII(lfile, 'Angular velocity along Oy.'); ENDIF
-     IF ( ABS(rotation%vector(3)) .GT. C_0_R ) THEN; rotation%active(1) = .TRUE.; rotation%active(2) = .TRUE.; CALL TLAB_WRITE_ASCII(lfile, 'Angular velocity along Oz.'); ENDIF
-     
-     CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Parameters', '0.0,1.0', sRes)
-     idummy = MAX_PROF
-     CALL LIST_REAL(sRes, idummy, rotation%parameters)
-  ENDIF
+     CALL LIST_REAL(sRes, idummy, coriolis%vector)
 
-! Coriolis Term with consistency check
-  IF ( rotation%type .EQ. EQNS_COR_NORMALIZED ) THEN
+     IF ( ABS(coriolis%vector(1)) .GT. C_0_R ) THEN; coriolis%active(2) = .TRUE.; coriolis%active(3) = .TRUE.; CALL TLAB_WRITE_ASCII(lfile, 'Angular velocity along Ox.'); ENDIF
+     IF ( ABS(coriolis%vector(2)) .GT. C_0_R ) THEN; coriolis%active(3) = .TRUE.; coriolis%active(1) = .TRUE.; CALL TLAB_WRITE_ASCII(lfile, 'Angular velocity along Oy.'); ENDIF
+     IF ( ABS(coriolis%vector(3)) .GT. C_0_R ) THEN; coriolis%active(1) = .TRUE.; coriolis%active(2) = .TRUE.; CALL TLAB_WRITE_ASCII(lfile, 'Angular velocity along Oz.'); ENDIF
+
      IF ( rossby .GT. C_0_R ) THEN
-        rotation%vector(:) = rotation%vector(:) /rossby ! adding the rossby number into the vector
+        coriolis%vector(:) = coriolis%vector(:) /rossby ! adding the rossby number into the vector
      ELSE
         CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Rossby number must be nonzero if coriolis is retained.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
-     ENDIF  
-
-     IF ( rotation%parameters(2) .EQ. C_0_R ) THEN
-        CALL TLAB_WRITE_ASCII(lfile,'DNS_READ_GLOBAL. Default normalized geostrophic velocity set to one.')
-        rotation%parameters(2) = C_1_R
      ENDIF
-   
-     IF ( rotation%active(2) ) THEN
-        CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. CoriolisNormalized option only allows for angular velocity along Oy.')
+
+     coriolis%parameters(:) = C_0_R
+     CALL SCANINICHAR(bakfile, inifile, 'Rotation', 'Parameters', '0.0,1.0', sRes)
+     idummy = MAX_PROF
+     CALL LIST_REAL(sRes, idummy, coriolis%parameters)
+
+     IF ( coriolis%parameters(2) .EQ. C_0_R ) THEN
+        CALL TLAB_WRITE_ASCII(lfile,'DNS_READ_GLOBAL. Default normalized geostrophic velocity set to one.')
+        coriolis%parameters(2) = C_1_R
+     ENDIF
+
+  ENDIF
+
+! Consistency check
+  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
+     IF ( coriolis%active(2) ) THEN
+        CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. TermCoriolis option only allows for angular velocity along Oy.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF
   ENDIF

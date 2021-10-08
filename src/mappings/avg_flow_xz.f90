@@ -1312,8 +1312,8 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   Dyz(:) = rVf(:)*Tau_yz_y(:) + rWf(:)*Tau_yy_y(:)
 
   ! Rij Coriolis Terms
-  IF ( rotation%type .EQ. EQNS_COR_NORMALIZED ) THEN ! contribution from angular velocity Oy
-    dummy = rotation%vector(2)
+  IF (  coriolis%active(1) .AND. coriolis%active(3) ) THEN ! contribution from angular velocity Oy
+    dummy = coriolis%vector(2)
     Fxx(:) = dummy *C_2_R * Rxz(:)
     Fyy(:) =        C_0_R
     Fzz(:) =-dummy *C_2_R * Rxz(:)

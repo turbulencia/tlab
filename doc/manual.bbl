@@ -1,0 +1,133 @@
+\begin{thebibliography}{22}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Blaisdell et~al.(1996)Blaisdell, Spyropoulos, and Qin]{Blaisdell:1996}
+G.~A. Blaisdell, E.~T. Spyropoulos, and J.~H. Qin.
+\newblock The effect of the formulation of nonlinear terms on aliasing errors
+  in spectral methods.
+\newblock \emph{App. Num. Math.}, 21:\penalty0 207--219, 1996.
+
+\bibitem[Carpenter and Kennedy(1994)]{Carpenter:1994}
+M.~H. Carpenter and C.~A. Kennedy.
+\newblock Fourth-order 2{N}-storage {R}unge-{K}utta schemes.
+\newblock Technical Report TM-109112, NASA Langley Research Center, 1994.
+
+\bibitem[Carpenter et~al.(1993)Carpenter, Gottlieb, and
+  Abarbanel]{Carpenter:1993}
+M.~H. Carpenter, D.~Gottlieb, and S.~Abarbanel.
+\newblock The stability of numerical boundary treatments for compact high-order
+  finite-difference schemes.
+\newblock \emph{J. Comput. Phys.}, 108:\penalty0 272--295, 1993.
+
+\bibitem[Erlebacher et~al.(1990)Erlebacher, Hussaini, Kreiss, and
+  Sarkar]{Erlebacher:1990}
+G.~Erlebacher, M.~Y. Hussaini, H.~O. Kreiss, and S.~Sarkar.
+\newblock The analysis and simulation of compressible turbulence.
+\newblock \emph{Theor. Comput. Fluid Dynamics}, 2:\penalty0 73--95, 1990.
+
+\bibitem[Foias et~al.(2001)Foias, Holm, and Titi]{Foias:2001}
+C.~Foias, D.~D. Holm, and E.~S. Titi.
+\newblock The {N}avier-{S}tokes-alpha model of fluid turbulence.
+\newblock \emph{Physica {D}}, 152-153:\penalty0 505--519, 2001.
+
+\bibitem[Frigo and Johnson(2005)]{Frigo:2005}
+M.~Frigo and S.~G. Johnson.
+\newblock The design and implementation of {FFTW3}.
+\newblock In \emph{Proceedings of the {IEEE}, vol. 93}, pages 216--231, 2005.
+
+\bibitem[Higuera and Moser(1994)]{Higuera:1994}
+F.~J. Higuera and R.~D. Moser.
+\newblock Effect of chemical heat release in a temporally evolving mixing
+  layer.
+\newblock \emph{CTR Report}, pages 19--40, 1994.
+
+\bibitem[Hu(1996)]{Hu:1996b}
+F.~Q. Hu.
+\newblock On absorbing boundary conditions for linearized {E}uler equations by
+  a perfectly matched layer.
+\newblock \emph{J. Comput. Phys.}, 129:\penalty0 201--219, 1996.
+
+\bibitem[Hu et~al.(1996)Hu, Hussaini, and L.Manthey]{Hu:1996}
+F.~Q. Hu, M.~Y. Hussaini, and J.~L.Manthey.
+\newblock Low-dissipation and low-dispersion {R}unge-{K}utta schemes for
+  computational acoustics.
+\newblock \emph{J. Comput. Phys.}, 124:\penalty0 177--191, 1996.
+
+\bibitem[Kravchenko and Moin(1997)]{Kravchenko:1997}
+A.~G. Kravchenko and P.~Moin.
+\newblock {On the effect of numerical errors in large-eddy simulations of
+  turbulent flows}.
+\newblock \emph{J. Comput. Phys.}, 131:\penalty0 310--322, 1997.
+
+\bibitem[Lamballais et~al.(2011)Lamballais, Fortun{\'e}, and
+  Laizet]{Lamballais:2011}
+E.~Lamballais, V.~Fortun{\'e}, and S.~Laizet.
+\newblock Straightforward high-order numerical dissipation via the viscous term
+  for direct and large eddy simulation.
+\newblock \emph{J. Comput. Phys.}, 230:\penalty0 3270--3275, 2011.
+
+\bibitem[Lele(1992)]{Lele:1992}
+S.~K. Lele.
+\newblock {Compact finite difference schemes with spectral-like resolution}.
+\newblock \emph{J. Comput. Phys.}, 103:\penalty0 16--42, 1992.
+
+\bibitem[Lodato et~al.(2008)Lodato, Domingo, and Vervisch]{Lodato:2008}
+G.~Lodato, P.~Domingo, and L.~Vervisch.
+\newblock Three-dimensional boundary conditions for direct and large eddy
+  simulation of compressible viscous flows.
+\newblock \emph{J. Comput. Phys.}, 227:\penalty0 5105--5143, 2008.
+
+\bibitem[Lomax et~al.(1998)Lomax, Pulliam, and Zingg]{Lomax:1998}
+H.~Lomax, T.~H. Pulliam, and D.~W. Zingg.
+\newblock \emph{Fundamentals of Computational Fluid Dynamics}.
+\newblock Springer, 1998.
+
+\bibitem[Mellado and Ansorge(2012)]{Mellado:2012}
+J.~P. Mellado and C.~Ansorge.
+\newblock Factorization of the {F}ourier transform of the pressure-{P}oisson
+  equation using finite differences in colocated grids.
+\newblock \emph{Z. Angew. Math. Mech.}, 92:\penalty0 380--392, 2012.
+
+\bibitem[Shukla and Zhong(2005)]{Shukla:2005}
+R.~K. Shukla and X.~Zhong.
+\newblock Derivation of high-order compact finite difference schemes for
+  non-uniform grid using polynomial interpolation.
+\newblock \emph{J. Comput. Phys.}, 204:\penalty0 404--429, 2005.
+
+\bibitem[Spalart et~al.(1991)Spalart, Moser, and Rogers]{Spalart:1991}
+P.~R. Spalart, R.~D. Moser, and M.~M. Rogers.
+\newblock Spectral methods for the {N}avier-{S}tokes equations with one
+  infinite and two periodic directions.
+\newblock \emph{J. Comput. Phys.}, 96:\penalty0 297--324, 1991.
+
+\bibitem[Thompson(1987)]{Thompson:1987}
+K.~W. Thompson.
+\newblock Time-dependent boundary conditions for hyperbolic systems.
+\newblock \emph{J. Comput. Phys.}, 68:\penalty0 1--24, 1987.
+
+\bibitem[Thompson(1990)]{Thompson:1990}
+K.~W. Thompson.
+\newblock {Time-dependent boundary conditions for hyperbolic systems, II}.
+\newblock \emph{J. Comput. Phys.}, 89:\penalty0 439--461, 1990.
+
+\bibitem[Williams(1985)]{Williams:1985}
+F.~A. Williams.
+\newblock \emph{Combustion Theory}.
+\newblock Addison Wesley, second edition, 1985.
+
+\bibitem[Williamson(1980)]{Williamson:1980}
+J.~H. Williamson.
+\newblock {Low-storage Runge-Kutta schemes}.
+\newblock \emph{J. Comput. Phys.}, 35:\penalty0 48--56, 1980.
+
+\bibitem[Wilson et~al.(1998)Wilson, Demuren, and Carpenter]{Wilson:1998}
+R.~V. Wilson, A.~O. Demuren, and M.~Carpenter.
+\newblock Higher-order compact schemes for numerical simulation of
+  incompressible flows.
+\newblock Technical Report CR-1998-206922, NASA Langley Research Center, 1998.
+
+\end{thebibliography}
