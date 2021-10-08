@@ -31,7 +31,6 @@ PROGRAM INIFLOW
 #endif
 
   TREAL, DIMENSION(:),   POINTER :: e, rho, p, T
-  TINTEGER                       :: ip_b, ip_t, iq, nxy
 
   !########################################################################
   CALL TLAB_START()

@@ -73,7 +73,7 @@ MODULE TLAB_VARS
 
 ! ###################################################################
   TYPE(term_dt) :: buoyancy   ! Buoyancy parameters
-  TYPE(term_dt) :: coriolis   ! Coriolis parameters
+  TYPE(term_dt) :: rotation   ! Rotation parameters
   TYPE(term_dt) :: radiation  ! Radiation parameters
   TYPE(term_dt) :: transport  ! Transport parameters
   TYPE(term_dt) :: chemistry  ! Chemistry parameters
@@ -115,15 +115,5 @@ MODULE TLAB_VARS
               nstatavg_points, &                      ! number of accumulated points
               istattimeorg                            ! time at which accumulation of statistics started
   TREAL    :: rstattimeorg
-
-! ###################################################################
-! Channel flow
-! ###################################################################
-  TINTEGER :: imode_channel
-  TREAL    :: ubulk_parabolic, ubulk, fcpg  
-  TREAL    :: reynolds_cl, reynolds_tau
-  ! rotating turbulent channel flow
-  TREAL    :: channel_rot
-  TINTEGER :: nitera_spinup, spinuptime 
 
 END MODULE TLAB_VARS

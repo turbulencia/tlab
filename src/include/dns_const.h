@@ -18,9 +18,6 @@
 #define DNS_MODE_TEMPORAL   1
 #define DNS_MODE_SPATIAL    2
 
-! Channel Flow Type
-#define DNS_CHANNEL_CPG     1
-
 ! Equations mode
 #define DNS_EQNS_TOTAL            0
 #define DNS_EQNS_INTERNAL         1
@@ -61,6 +58,8 @@
 
 #define EQNS_SUB_CONSTANT_LOCAL      29
 #define EQNS_SUB_CONSTANT_GLOBAL     30
+
+#define EQNS_ROT_FORCE               31
 
 ! Finite-differences method
 #define FDM_COM4_JACOBIAN     4

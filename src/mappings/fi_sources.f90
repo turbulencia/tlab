@@ -16,7 +16,7 @@
 SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
-  USE TLAB_VARS, ONLY : buoyancy, coriolis, subsidence, imode_channel
+  USE TLAB_VARS, ONLY : buoyancy, rotation, subsidence
   USE TLAB_VARS, ONLY : bbackground, pbackground, rbackground, epbackground
 
   IMPLICIT NONE
@@ -44,17 +44,18 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 #endif
 
 ! -----------------------------------------------------------------------
-! Coriolis. So far, rotation only in the Oy direction. 
+! Rotation.
 ! -----------------------------------------------------------------------
-  IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
-     u_geo = COS(coriolis%parameters(1)) *coriolis%parameters(2)
-     w_geo =-SIN(coriolis%parameters(1)) *coriolis%parameters(2)
+  ! Coriolis. So far, rotation only in the Oy direction. 
+  IF ( rotation%type .EQ. EQNS_COR_NORMALIZED ) THEN
+     u_geo = COS(rotation%parameters(1)) *rotation%parameters(2)
+     w_geo =-SIN(rotation%parameters(1)) *rotation%parameters(2)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, dummy,srt,end,siz )
      CALL DNS_OMP_PARTITION(isize_field,srt,end,siz) 
 
-     dummy = coriolis%vector(2)
+     dummy = rotation%vector(2)
      dtr3=C_0_R; dtr1=C_0_R
      DO ij = srt,end
         hq(ij,1) = hq(ij,1) + dummy*( w_geo-q(ij,3) )
@@ -63,6 +64,15 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 !$omp end parallel
 
   ENDIF
+
+  ! Rotation Force
+  IF ( rotation%type .EQ. EQNS_ROT_FORCE ) THEN
+     DO ij = 1, isize_field
+        hq(ij,1) = hq(ij,1) + rotation%parameters(1) * (rotation%vector(2)*q(ij,3) - rotation%vector(3)*q(ij,2)) 
+        hq(ij,2) = hq(ij,2) + rotation%parameters(1) * (rotation%vector(3)*q(ij,1) - rotation%vector(1)*q(ij,3))
+        hq(ij,3) = hq(ij,3) + rotation%parameters(1) * (rotation%vector(1)*q(ij,2) - rotation%vector(2)*q(ij,1))
+     ENDDO
+  ENDIF 
 
 ! -----------------------------------------------------------------------
   DO iq = 1,3
@@ -124,13 +134,6 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
      ENDIF
      
   ENDDO
-
-  ! -----------------------------------------------------------------------
-  ! Channel flow forcing
-  ! -----------------------------------------------------------------------
-  IF ( imode_channel .EQ. DNS_CHANNEL_CPG ) THEN
-     CALL FI_CHANNEL_CPG_FORCING(q(1:isize_field,1), q(1:isize_field,2), hq(1:isize_field,1), hq(1:isize_field,2), wrk1d, wrk3d)
-  ENDIF
 
   RETURN
 END SUBROUTINE FI_SOURCES_FLOW
