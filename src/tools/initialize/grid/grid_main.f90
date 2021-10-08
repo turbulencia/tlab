@@ -21,6 +21,7 @@ PROGRAM INIGRID
   TREAL, DIMENSION(:), ALLOCATABLE         :: work1,work2
   TINTEGER idir, iseg, isize_wrk1d, n
   TREAL dxmx, dxmn, axmx, axmn
+  TREAL scale_old, scale_new
 
 #ifdef USE_MPI
 #include "mpif.h"
@@ -92,6 +93,13 @@ PROGRAM INIGRID
      END SELECT
 
      IF ( g(idir)%periodic ) g(idir)%size = g(idir)%size - 1
+
+     IF ( fixed_scale(idir) .GT. C_0_R) THEN ! rescale on exact fixed value
+         scale_new     =  fixed_scale(idir); scale_old = g(idir)%scale
+         g(idir)%nodes = (g(idir)%nodes / scale_old) * scale_new  ! rescale nodes
+         g(idir)%nodes(g(idir)%size) =                 scale_new  ! avoid rounding error
+         g(idir)%scale =                               scale_new  ! update scale
+      ENDIF
 
   ENDDO
 

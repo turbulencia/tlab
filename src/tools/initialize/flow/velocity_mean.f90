@@ -32,7 +32,7 @@ SUBROUTINE VELOCITY_MEAN(u,v,w, wrk1d)
     ENDDO
 
     ! Construct velocity field
-    IF ( coriolis%type .NE. EQNS_NONE ) THEN
+    IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
       calpha = COS(coriolis%parameters(1)); salpha = SIN(coriolis%parameters(1))
       wrk1d(:,3) = wrk1d(:,3) *SIGN(C_1_R,coriolis%vector(2)) ! right angular velocity vector (Garratt, 1992, p.42)
 
