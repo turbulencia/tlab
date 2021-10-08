@@ -19,6 +19,7 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
   
 ! ############################################# ! 
 ! DEBUG
+  use TLAB_PROCS, ONLY : TLAB_STOP
 #ifdef IBM_DEBUG
 #ifdef USE_MPI
   use TLAB_MPI_VARS, only : ims_pro
@@ -47,7 +48,7 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
   TINTEGER, parameter                       :: ims_pro=0
 #endif
 #endif
-! ############################################# ! 
+  ! ############################################# ! 
   
 ! ###################################################################
   bcs = 0
@@ -71,14 +72,17 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), w, tmp1,   wrk3d, wrk2d,wrk3d)
 #ifdef IBM_DEBUG 
   call DNS_WRITE_FIELDS('dwdz', i2, nx,ny,nz, i1, nx*ny*nz, tmp1,   wrk3d)
+  call DNS_WRITE_FIELDS('result1', i2, nx,ny,nz, i1, nx*ny*nz, result,   wrk3d)
 #endif
   result =-(result + tmp1)
-
+#ifdef IBM_DEBUG 
+  call DNS_WRITE_FIELDS('result2', i2, nx,ny,nz, i1, nx*ny*nz, result,   wrk3d)
+#endif
   ! -------------------------------------------------------------------
   ! IBM  --  zeros in solid
   IF ( imode_ibm == 1 ) THEN
     ibm_partial = .false.
-    result = (C_1_R - eps) * result
+    result(:) = (C_1_R - eps(:)) * result(:)
   ENDIF
 #ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) '========================================================='
@@ -86,6 +90,7 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
   call DNS_WRITE_FIELDS('dil', i2, nx,ny,nz, i1, nx*ny*nz, result, wrk3d)
 #endif
 
+  ! call TLAB_STOP(i0)
   RETURN
 END SUBROUTINE FI_INVARIANT_P
 

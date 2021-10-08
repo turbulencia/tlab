@@ -466,10 +466,10 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
     CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
-  CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'SplineOrder', '0', kspl)
-  CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'FluidPoints', '0', nflu)
+  CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'SplineOrder', '3', kspl)
+  CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'FluidPoints', '3', nflu)
 
-  CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'SplineGlobal', 'yes', sRes)
+  CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'SplineGlobal', 'no', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_spline_global = .TRUE.
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_spline_global = .FALSE.
   ENDIF

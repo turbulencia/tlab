@@ -1,46 +1,104 @@
-# %%
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
+from   matplotlib import rc
+rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+## for Palatino and other serif fonts use:
+#rc('font',**{'family':'serif','serif':['Palatino']})
+rc('text', usetex=True)
 import os
 import my_pylib as mp
-# import matplotlib.colors as mcolors
+# import netCDF4  as nc 
+# import warnings; warnings.filterwarnings("ignore", category=DeprecationWarning) 
+# import os
+#-----------------------------------------------------------------------------#
+# file
+index        = 0
+# forcing_flow = 'cpg'
+# path  = '/home/jonathan/simulations/data/channel_flow/cpg_scal/'
+path = str(os.path.dirname(__file__) + '/../test_little/' )
+# path  = '/home/jonathan/simulations/data/channel_flow/cpg_test/'
 
+# plot settings 
+font = {'family':'monospace', 'weight':'bold', 'size':14}; rc('font', **font) # font
+plt.rcParams['figure.dpi'] = 210
+size    = (8,6)
+shading = 'gouraud'#'gouraud'
+figs    = 'figs' 
+plt.close('all')
 #---------------------------------------------------------------------------#
-# path to 3d-fields
-path  = str(os.path.dirname(__file__) + '/../test_parallel/' ) # name = 'flow.20.1' # file = str(path+name)
-index = 0
-
-#---------------------------------------------------------------------------#
-# read grid and flow fields
+# read grid
 grid = mp.DnsGrid(path+'grid')
 
-# # orignial field
-# flow = mp.Field(path,var='flow',index=index)
-# flow.read_3d_field()
+# read flow fields
+flow = mp.Field(path,var='flow',index=index)#, forcing=forcing_flow)
+flow.read_3d_field()
 
-# u_mod field 
+# # read scalar fields
+# scal1 = mp.Field(path,var='phi1',index=index)#, forcing=forcing_flow)
+# scal1.read_3d_field()
+
+# read dudx, dvdy, dwdz, dil, eps
+f = open(path +'dudx.1','rb')
+f.seek(52,0)
+dudx = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
+dudx = dudx.reshape((grid.nx,grid.ny,grid.nz),order='F')
+f.close()
+#
+f = open(path +'dvdy.1','rb')
+f.seek(52,0)
+dvdy = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
+dvdy = dudx.reshape((grid.nx,grid.ny,grid.nz),order='F')
+f.close()
+#
 f = open(path +'dwdz.1','rb')
 f.seek(52,0)
-dil = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
-dil = dil.reshape((grid.nx,grid.ny,grid.nz),order='F')
+dwdz = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
+dwdz = dudx.reshape((grid.nx,grid.ny,grid.nz),order='F')
 f.close()
-
-# read eps field
+#
 f = open(path +'eps0.1','rb')
 f.seek(52,0)
 eps = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
 eps = eps.reshape((grid.nx,grid.ny,grid.nz),order='F')
 f.close()
-
-# %%
+#
+f = open(path +'dil.1','rb')
+f.seek(52,0)
+dil = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
+dil = dil.reshape((grid.nx,grid.ny,grid.nz),order='F')
+f.close()
+#
+f = open(path +'result1.1','rb')
+f.seek(52,0)
+result1 = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
+result1 = result1.reshape((grid.nx,grid.ny,grid.nz),order='F')
+f.close()
+#
+f = open(path +'result2.1','rb')
+f.seek(52,0)
+result2 = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
+result2 = result2.reshape((grid.nx,grid.ny,grid.nz),order='F')
+f.close()
 #---------------------------------------------------------------------------#
-# plot settings 
-plt.rcParams['figure.dpi'] = 250 
-size    = (8,6)
-shading = 'nearest'#'gouraud'
-figs    = 'figs' 
-plt.close('all')
+
+dil_py = - (dudx + dvdy + dwdz)
+
+err = dil - dil_py
+
+sys.exit()
+
+
+
+
+
+
+
+
+
+
+
+
 #---------------------------------------------------------------------------#
 #---------------------------------------------------------------------------#
 # 2d plot - yz
@@ -76,7 +134,7 @@ plt.show()
 
 sys.exit()
 
-# %%
+
 
 plt.figure(figsize=size)
 plt.xlabel("z")
@@ -92,8 +150,6 @@ w_mod = u_mod  * (1. - eps)
 res   = w - w_mod
 print(str(res.sum()))
 
-
-# %%
 # plt.figure(figsize=size)
 # plt.xlabel("z")
 # plt.ylabel("w-velocity")
@@ -103,7 +159,7 @@ print(str(res.sum()))
 # plt.legend(loc=1)
 # plt.show()
 
-# %%
+
 # plt.figure(figsize=size)
 # plt.xlabel("z")
 # plt.ylabel("w-velocity")
@@ -143,9 +199,3 @@ plt.ylabel("z")
 plt.pcolormesh(grid.x,grid.z,flow.w[:,1,:], shading=shading, cmap='RdBu_r')
 plt.colorbar()
 plt.show()
-
-
-
-
-
-# %%
