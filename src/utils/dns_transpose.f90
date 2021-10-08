@@ -47,11 +47,7 @@ SUBROUTINE DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
 #ifdef USE_MKL
   CALL MKL_DOMATCOPY('c','t',nra,nca,C_1_R,a,ma,b,mb)
 #else
-<<<<<<< HEAD
-   ! use own implementation
-=======
    !use own implementation
->>>>>>> upstream/master
 !$omp parallel default(none) &
 !$omp private(k,j,jj,kk,srt,end,siz,last_k,last_j) &
 !$omp shared(a,b,nca,nra)
