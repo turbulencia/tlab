@@ -15,6 +15,7 @@ build_LITTLE/*
 build_PARALLEL/*
 build_DEBUG/*
 build/*
+test_files/*
 test_debug/*
 test_little/*
 test_parallel/*
