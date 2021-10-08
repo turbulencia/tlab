@@ -74,7 +74,7 @@ CONTAINS
           DO j = 1,jmax
              yr = C_05_R *( yn(j)-yn(1)    )/ Kini%thick
              wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 - &       ! Wall-parallel velocity
-                  wrk1d(j,1) +TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
+                  wrk1d(j,1) *TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
              wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3           ! Wall-normal velocity
           ENDDO
        ENDIF
@@ -83,7 +83,7 @@ CONTAINS
           DO j = 1,jmax
              yr = C_05_R *( yn(jmax)-yn(j) )/ Kini%thick
              wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 + &       ! Wall-parallel velocity
-                  wrk1d(j,1) +TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
+                  wrk1d(j,1) *TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
              wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3           ! Wall-normal velocity
           ENDDO
        ENDIF
@@ -250,9 +250,9 @@ CONTAINS
        ! ###################################################################
     CASE( 4 ) ! Vector potential given
        DO j = 1,jmax
-          ax(:,j,:) = u(:,j,:) *wrk1d(j,2)
-          ay(:,j,:) = v(:,j,:) *wrk1d(j,1)
-          az(:,j,:) = w(:,j,:) *wrk1d(j,2)
+          ax(:,j,:) = u(:,j,:) *wrk1d(j,1) ! Horizontal components of vector potential give vertical velocity
+          ay(:,j,:) = v(:,j,:) *wrk1d(j,2)
+          az(:,j,:) = w(:,j,:) *wrk1d(j,1)
        ENDDO
 
        bcs2 = 0
