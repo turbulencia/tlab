@@ -1,7 +1,7 @@
 #include "types.h"
 #include "dns_error.h"
 
-SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic, fixed_scale)
+SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
 
   USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_PROCS
@@ -11,7 +11,7 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic, fixed_scale)
 
   CHARACTER*(*) inifile
   TINTEGER idir
-  TREAL scale, fixed_scale
+  TREAL scale
   LOGICAL periodic
 
 ! -------------------------------------------------------------------
@@ -47,8 +47,6 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic, fixed_scale)
   CALL SCANINICHAR(bakfile, inifile, title, 'mirrored', 'no', sRes)
   IF (TRIM(ADJUSTL(sRes)) .eq. 'yes') THEN; idir_opts(3,idir) = 1
   ELSE;                                     idir_opts(3,idir) = 0; ENDIF
-  
-  CALL SCANINIREAL(bakfile, inifile, title, 'fixed_scale','-1',fixed_scale)
 
   CALL SCANINIREAL(bakfile, inifile, title, 'fixed_scale', '-1.0', fixed_scale(idir))
 

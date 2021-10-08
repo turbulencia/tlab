@@ -44,7 +44,7 @@ PROGRAM INIGRID
   DO idir = 1,3
 
 ! Read data
-     CALL GRID_READ_LOCAL(ifile, idir, g(idir)%scale, g(idir)%periodic, g(idir)%fixed_scale)
+     CALL GRID_READ_LOCAL(ifile, idir, g(idir)%scale, g(idir)%periodic)
 
 ! Add points of all segments
      nmax = isegdim(1,idir)

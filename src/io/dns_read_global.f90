@@ -196,8 +196,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermCoriolis', 'void', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'       )         THEN; coriolis%type = EQNS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'coriolisexplicit'   ) THEN; coriolis%type = EQNS_EXPLICIT
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'coriolisnormalized' ) THEN; coriolis%type = EQNS_COR_NORMALIZED
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit'   ) THEN; coriolis%type = EQNS_EXPLICIT
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'normalized' ) THEN; coriolis%type = EQNS_COR_NORMALIZED
   ELSE
      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermCoriolis option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
