@@ -3,11 +3,12 @@
 !                  0   nonperiodic
 ! idir_opts(3,*) = 1   mirrored
 !                  0   nonmirrored
+! fixed_scale(*)       rescale resulting grid to a fixed scale
 !
 ! iseg_opts(1,*,*) = 0   uniform segment
 !                    1   Colonius, Lele and Moin stretching
 !                    2   Second order polynomial stretching
-!                    3   Third order polynomial stretching 
+!                    3   Third order polynomial stretching
 !                    4   Geometric progression
 !                    5   Hyperbolic tangent
 !                    6   Exponential
@@ -27,5 +28,7 @@ MODULE GRID_LOCAL
   TINTEGER, DIMENSION(MAX_OPTIONS,MAX_SEGMENT,3) :: iseg_opts
   TREAL,    DIMENSION(            MAX_SEGMENT,3) :: isegend
   TREAL,    DIMENSION(MAX_PARAMES,MAX_SEGMENT,3) :: iseg_vals
+
+  TREAL, DIMENSION(3) :: fixed_scale
 
 END MODULE GRID_LOCAL

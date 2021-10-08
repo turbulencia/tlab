@@ -94,12 +94,12 @@ PROGRAM INIGRID
 
      IF ( g(idir)%periodic ) g(idir)%size = g(idir)%size - 1
 
-     IF (g(idir)%fixed_scale .GT. C_0_R) THEN                    ! rescale on exact fixed value
-        scale_new     =  g(idir)%fixed_scale; scale_old = g(idir)%scale
-        g(idir)%nodes = (g(idir)%nodes / scale_old) * scale_new  ! rescale nodes
-        g(idir)%nodes(g(idir)%size) =                 scale_new  ! avoid rounding error
-        g(idir)%scale =                               scale_new  ! update scale
-     ENDIF
+     IF ( fixed_scale(idir) .GT. C_0_R) THEN ! rescale on exact fixed value
+         scale_new     =  fixed_scale(idir); scale_old = g(idir)%scale
+         g(idir)%nodes = (g(idir)%nodes / scale_old) * scale_new  ! rescale nodes
+         g(idir)%nodes(g(idir)%size) =                 scale_new  ! avoid rounding error
+         g(idir)%scale =                               scale_new  ! update scale
+      ENDIF
 
   ENDDO
 
