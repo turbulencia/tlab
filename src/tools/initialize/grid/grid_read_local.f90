@@ -50,6 +50,8 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic, fixed_scale)
   
   CALL SCANINIREAL(bakfile, inifile, title, 'fixed_scale','-1',fixed_scale)
 
+  CALL SCANINIREAL(bakfile, inifile, title, 'fixed_scale', '-1.0', fixed_scale(idir))
+
   IF (idir_opts(2,idir).eq.1 .and. idir_opts(3,idir).eq.1) THEN
      CALL TLAB_WRITE_ASCII(efile, 'GRID_READ_LOCAL. Periodicity with mirroring is not supported.')
      CALL TLAB_STOP(DNS_ERROR_GRID_SCALE)
