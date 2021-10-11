@@ -42,9 +42,9 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
   SELECT CASE ( coriolis%type )
   CASE( EQNS_EXPLICIT )
      DO ij = 1, isize_field
-       hq(ij,1) = hq(ij,1) + coriolis%parameters(1) *( coriolis%vector(2)*q(ij,3) - coriolis%vector(3)*q(ij,2) )
-       hq(ij,2) = hq(ij,2) + coriolis%parameters(1) *( coriolis%vector(3)*q(ij,1) - coriolis%vector(1)*q(ij,3) )
-       hq(ij,3) = hq(ij,3) + coriolis%parameters(1) *( coriolis%vector(1)*q(ij,2) - coriolis%vector(2)*q(ij,1) )
+       hq(ij,1) = hq(ij,1) + coriolis%vector(3)*q(ij,2) - coriolis%vector(2)*q(ij,3)
+       hq(ij,2) = hq(ij,2) + coriolis%vector(1)*q(ij,3) - coriolis%vector(3)*q(ij,1)
+       hq(ij,3) = hq(ij,3) + coriolis%vector(2)*q(ij,1) - coriolis%vector(1)*q(ij,2)
      END DO
 
   CASE( EQNS_COR_NORMALIZED ) ! So far, rotation only in the Oy direction.
