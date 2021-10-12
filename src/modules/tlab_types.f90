@@ -64,6 +64,7 @@ MODULE TLAB_TYPES
      SEQUENCE
      CHARACTER(32) :: name
      TINTEGER      :: number, height, width, length
+     LOGICAL       :: mirrored
   END TYPE ibm_geo_dt
 
   TYPE pointers_dt

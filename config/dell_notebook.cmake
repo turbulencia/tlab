@@ -10,7 +10,7 @@ if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build
    set(CMAKE_Fortran_COMPILER mpif90)
    set(USER_Fortran_FLAGS "-cpp -std=legacy -ffree-form -ffree-line-length-none -fno-automatic")
    set(USER_Fortran_FLAGS_RELEASE "-ffpe-summary=none -O3 -fconvert=little-endian -O3 -ffast-math -ffinite-math-only -mtune=native -march=native") # -fallow-argument-mismatch
-   add_definitions(-DUSE_FFTW -DUSE_MPI -DUSE_ALLTOALL -DUSE_MPI_IO -DIBM_DEBUG)# -DIBM_DEBUG)
+   add_definitions(-DUSE_FFTW -DUSE_MPI -DUSE_ALLTOALL -DUSE_MPI_IO)# -DIBM_DEBUG)
    set(CMAKE_BUILD_TYPE RELEASE)
 
 else() # compiler for serial build

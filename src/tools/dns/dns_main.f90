@@ -144,11 +144,11 @@ PROGRAM DNS
     END IF
   END IF
 
-  ! ###################################################################
-  ! Check
-  ! ###################################################################
-  logs_data(1) = 0 ! Status
-  CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
+  ! ! ###################################################################
+  ! ! Check
+  ! ! ###################################################################
+  ! logs_data(1) = 0 ! Status
+  ! CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
 
   ! ###################################################################
   ! Initialize particle simumulation
@@ -176,6 +176,12 @@ PROGRAM DNS
     CALL IBM_BCS_FLOW(q, inb_flow) ! apply IBM BCs on ini flow fields
     ! IF ( icalc_scal == 1 ) CALL IBM_BCS_SCAL(s)
   ENDIF  
+
+  ! ###################################################################
+  ! Check
+  ! ###################################################################
+  logs_data(1) = 0 ! Status
+  CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
 
   ! ###################################################################
   ! Initialize time marching scheme

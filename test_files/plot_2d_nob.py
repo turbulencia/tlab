@@ -62,7 +62,7 @@ nobk3d = np.fromfile(f, np.dtype('<f8'), grid.nx*grid.ny*grid.nz)
 nobk3d = nobk3d.reshape((grid.nx,grid.ny,grid.nz),order='F')
 f.close()
 '''
-sys.exit()
+# sys.exit()
 #---------------------------------------------------------------------------#
 # plot settings 
 plt.rcParams['figure.dpi'] = 180 

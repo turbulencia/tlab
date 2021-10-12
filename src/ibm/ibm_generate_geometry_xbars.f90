@@ -109,6 +109,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 #ifdef IBM_DEBUG
   if ( ims_pro == 0 ) then
     write(*,*) '======== Z - Positions of streamwise aligned bars ======='
+    if (xbars_geo%mirrored) write(*,*) 'Bars are mirrored on upper wall!'
     do l = 1, nbars
       write(*,*)'bar nr.', l, ' start:', zstart_bar(l) + i1, ' end:', zend_bar(l)
     end do
@@ -122,6 +123,8 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   !! ============================= Comment =========================== !!
   !! (k+kstart)>zstart_bar(l) ==> objects start at  zstart_bar(l) + 1  !!
   !! ================================================================= !!
+  
+  ! geometries on lower boundary 
   do j = 1, hbar   
     do k = 1, kmax 
       do l = 1, nbars 
@@ -132,7 +135,22 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
         end if
       end do 
     end do
-  end do 
+  end do
+  
+  ! geometries on upper boundary
+  if (xbars_geo%mirrored) then
+    do j = jmax-hbar+1, jmax   
+      do k = 1, kmax 
+        do l = 1, nbars 
+          if( ((k+kstart)>zstart_bar(l)) .and. ((k+kstart)<=zend_bar(l)) ) then 
+            do i = 1, imax
+              eps_aux(i,j,k) = C_1_R
+            end do
+          end if
+        end do 
+      end do
+    end do
+  end if
 
   ! reshape 3D-eps_aux field into 1D-eps
   eps = reshape(eps_aux,(/isize_field/))

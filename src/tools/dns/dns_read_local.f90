@@ -483,6 +483,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#')
   CALL TLAB_WRITE_ASCII(bakfile, '#[IBMGeometry]')
   CALL TLAB_WRITE_ASCII(bakfile, '#Type=<XBars>')       
+  CALL TLAB_WRITE_ASCII(bakfile, '#Mirrored=<yes/no>')       
   CALL TLAB_WRITE_ASCII(bakfile, '#MaxNumber=<value>') ! max number of elements in one spatial direction
   CALL TLAB_WRITE_ASCII(bakfile, '#Length=<value>')    ! in x/i
   CALL TLAB_WRITE_ASCII(bakfile, '#Height=<value>')    ! in y/j
@@ -490,10 +491,14 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
   CALL SCANINICHAR(bakfile, inifile, 'IBMGeometry', 'Type', 'XBars', sRes)
   IF   (TRIM(ADJUSTL(sRes)) .EQ. 'xbars' ) THEN; xbars_geo%name   = 'xbars'
-    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry', 'MaxNumber', '0', xbars_geo%number)
-    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Length',    '0', xbars_geo%length)
-    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Height',    '0', xbars_geo%height)
-    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Width',     '0', xbars_geo%width)
+    CALL SCANINICHAR(bakfile, inifile, 'IBMGeometry', 'Mirrored', 'no', sRes)
+    IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; xbars_geo%mirrored = .TRUE.
+    ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; xbars_geo%mirrored = .FALSE.
+    ENDIF
+    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry',  'MaxNumber', '0', xbars_geo%number)
+    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry',  'Length',    '0', xbars_geo%length)
+    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry',  'Height',    '0', xbars_geo%height)
+    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry',  'Width',     '0', xbars_geo%width)
   ELSE
     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBMGeometryType option.')
     CALL TLAB_STOP(DNS_ERROR_OPTION)

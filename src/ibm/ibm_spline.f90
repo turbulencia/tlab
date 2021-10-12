@@ -105,11 +105,13 @@ use TLAB_VARS,      only: imax, jmax, kmax
   do ii = 1, nlines        ! index of ii-plane, loop over plane and check for objects in each line
     if(nob(ii) /= i0) then ! if line contains immersed object(s) --yes-->  spline interpolation
       ip = i0
+      
       if (ibm_spline_global) then ! ini vectors once for every full line
         ic     = i0 
         x_mask = .true. 
         y_mask = .true. 
       end if
+
       do iob = 1, nob(ii)  ! loop over immersed object(s)
 
         ! select different cases [1...4] of immersed objects
@@ -117,19 +119,16 @@ use TLAB_VARS,      only: imax, jmax, kmax
         ! ================================================================== !
           if(nob_e(ip+ii) == g%size) then
             ! 1. case: object over full extend of line
-            ! if (ims_pro == 0) write(*,*) 'IBM_SPLINE_VECTOR Case 1' ! debug
             splines = .false. ! do nothing
-
+            ! .............................................................. !
           else if((nob_e(ip+ii) <= (g%size - nflu)) .eqv. g%periodic) then
-            ! 2. case: object is semi-immersed - periodic case
-            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE this case is not implemented yet')
-            call TLAB_STOP(DNS_ERROR_NOTIMPL)
-
+            ! 2. case: object is semi-immersed - periodic case (not implemented yet)
+            call IBM_SPLINE_VECTOR(i2, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
+            ! .............................................................. !
           else if((nob_e(ip+ii) <= (g%size - nflu)) .neqv. g%periodic) then ! in j-direction
             ! 3. case: object is semi-immersed - non-periodic case - lower boundary
-            ! if (ims_pro == 0) write(*,*) 'IBM_SPLINE_VECTOR Case 3' ! debug
             call IBM_SPLINE_VECTOR(i3, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
-
+            ! .............................................................. !
           else
             call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE not enough fluid points right of the right interface')
             call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
@@ -138,7 +137,6 @@ use TLAB_VARS,      only: imax, jmax, kmax
         else if(nob_b(ip+ii) >= (nflu+1)) then
           if(nob_e(ip+ii) <= (g%size - nflu)) then 
             ! 4. case: object is fully immersed (global or local splines)
-            ! if (ims_pro == 0) write(*,*) 'IBM_SPLINE_VECTOR Case 4' ! debug
             if (ibm_spline_global) then
               global                                = .true.  ! flag
               x_mask(nob_b(ip+ii)+1:nob_e(ip+ii)-1) = .false. ! without interface points
@@ -148,22 +146,20 @@ use TLAB_VARS,      only: imax, jmax, kmax
             else
               call IBM_SPLINE_VECTOR(i4, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
             end if
-            
+            ! .............................................................. !
           else if((nob_e(ip+ii) == g%size) .eqv. g%periodic) then
-            ! 5. case: object is semi-immersed - periodic case
-            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE this case is not implemented yet')
-            call TLAB_STOP(DNS_ERROR_NOTIMPL)
-            
+            ! 5. case: object is semi-immersed - periodic case (not implemented yet)
+            call IBM_SPLINE_VECTOR(i5, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
+            ! .............................................................. !
           else if((nob_e(ip+ii) == g%size) .neqv. g%periodic) then  ! in j-direction
-            ! 6. case: object is semi-immersed - non-periodic case - upper boundary
-            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE this case is not implemented yet')
-            call TLAB_STOP(DNS_ERROR_NOTIMPL)
-
+            ! 6. case: object is semi-immersed - non-periodic case - upper boundary (not implemented yet)
+            call IBM_SPLINE_VECTOR(i6, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
+            ! .............................................................. !
           else
             call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE not enough fluid points left of the left interface')
             call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
           end if
-        
+          ! .............................................................. !
         else
           call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE this case is not implemented yet')
           call TLAB_STOP(DNS_ERROR_NOTIMPL)
@@ -205,7 +201,6 @@ use TLAB_VARS,      only: imax, jmax, kmax
         ip = ip + nlines
       end do
     
-
       ! ================================================================== !
 
       ! global splines 
@@ -251,7 +246,6 @@ use TLAB_VARS,      only: imax, jmax, kmax
     ! ================================================================== !
   end if
 ! #endif
-
 ! #if 0
   if (g%name == 'z') then
     ! ================================================================== !
@@ -261,7 +255,7 @@ use TLAB_VARS,      only: imax, jmax, kmax
     ! write out fld_mod for debugging
 #ifdef USE_MPI
     if ( ims_npro_k > 1 ) then
-      call DNS_MPI_TRPB_K(fld_mod, fld_mod_tr, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+      call TLAB_MPI_TRPB_K(fld_mod, fld_mod_tr, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
     endif
     call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
 #else
@@ -377,9 +371,12 @@ end subroutine IBM_SPLINE
 
 subroutine IBM_SPLINE_VECTOR(case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir, nlines, plane) 
 
-  use DNS_IBM,    only: nflu, isize_wrk1d_ibm, nsp 
-  use TLAB_VARS,  only: isize_field
-  use TLAB_TYPES, only: grid_dt
+  use DNS_IBM,        only: nflu, isize_wrk1d_ibm, nsp 
+  use TLAB_VARS,      only: isize_field
+  use TLAB_TYPES,     only: grid_dt
+  use TLAB_PROCS
+  use TLAB_CONSTANTS, only: efile
+
    
   implicit none
   
@@ -398,8 +395,9 @@ subroutine IBM_SPLINE_VECTOR(case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir, nli
   TINTEGER                                       :: kflu, gap
   TINTEGER                                       :: ip_fl, iu_fl, iu_ir
 
-  ! ================================================================== !
+  character(len=128)                             :: str, line
 
+  ! ================================================================== !
   ! index to remember current position in vectors
   ia = i0
   ib = i0
@@ -408,76 +406,147 @@ subroutine IBM_SPLINE_VECTOR(case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir, nli
   ip_fl =  ip_il - nflu                     ! k-axis index of most left fluid point
   iu_fl = (ip_fl - 1) * nlines + plane      ! fld-index of most left fluid point
   iu_ir = (ip_ir - 1) * nlines + plane      ! fld-index of right interface  point
-
   ! ================================================================== !
-
-  select case (case)
-
-  case(i3) ! one interface on the right, extrapolation in gap
-    
-    ! mirror nflu points on the ground + zeros at left interface
-    do kflu  = 1, nflu + 1
-      ia     =   ia + 1
-      xa(ia) = - g%nodes((nflu + 2) - kflu) 
-      ya(ia) =   C_0_R
-    end do
-
-    ! add zero at left interface (needed if mirroring is not used)
-    ! ia     = ia + 1
-    ! ya(ia) = C_0_R       
-
-    ! set interface (right)
-    ia     = ia + 1
-    xa(ia) = g%nodes(ip_ir) 
-    ya(ia) = C_0_R       
-
-    ! build right half of xa, ya (from left to right)
-    do kflu  = 1, nflu
-      ia     = ia + 1
-      xa(ia) = g%nodes(ip_ir + kflu)
-      ya(ia) =     fld(iu_ir + kflu * nlines)
-    end do
-
-    ! -----------------------------------------------------------------
-
-  case(i4)
-
-    ! build left half of xa, ya (from left to right)
-    do kflu  = 1, nflu
-      ia     = ia + 1
-      xa(ia) = g%nodes(ip_fl + (kflu - 1)) ! dble(ip_fl + (kflu - 1))   
-      ya(ia) =     fld(iu_fl + (kflu - 1) * nlines)
-    end do
-
+  ! vectors are built from left to right
+  ! -----------------------------------------------------------------
+    ! build left half of xa, ya
+    select case (case)
+    case(i2, i5)
+      write(str,*) case; line = 'IBM_SPLINE this case is not implemented yet. Current spline case '//trim(adjustl(str))
+      call TLAB_WRITE_ASCII(efile,line)
+      call TLAB_STOP(DNS_ERROR_NOTIMPL)
+    case(i3)
+      ! mirror nflu points on the ground + zeros at left interface
+      do kflu  = 1, nflu
+        ia     = ia + 1
+        xa(ia) = - g%nodes((nflu + 2) - kflu) 
+        ya(ia) =   C_0_R
+      end do
+      ! add zero at right interface (needed if mirroring is not used)
+      ! ia     = ia + 1
+      ! ya(ia) = C_0_R  
+    case(i4, i6)
+      do kflu  = 1, nflu
+        ia     = ia + 1
+        xa(ia) = g%nodes(ip_fl + (kflu - 1)) ! dble(ip_fl + (kflu - 1))   
+        ya(ia) =     fld(iu_fl + (kflu - 1) * nlines)
+      end do
+    end select
+  ! -----------------------------------------------------------------
     ! set interfaces (left and right)
     ia     = ia + 1
     xa(ia) = g%nodes(ip_il) ! dble(ip_il)   
-    ya(ia) = C_0_R       
+    ya(ia) = C_0_R   
     !
     ia     = ia + 1
-    xa(ia) = g%nodes(ip_ir) ! dble(ip_ir) 
+    xa(ia) = g%nodes(ip_ir) 
     ya(ia) = C_0_R       
-
-    ! build right half of xa, ya (from left to right)
-    do kflu  = 1, nflu
-      ia     = ia + 1
-      xa(ia) = g%nodes(ip_ir + kflu) ! dble(ip_ir + kflu)
-      ya(ia) =     fld(iu_ir + kflu * nlines)
-    end do
-
-  end select
-
+  ! -----------------------------------------------------------------
+    ! build right half of xa, ya
+    select case (case)
+    case(i2, i5)
+      write(str,*) case; line = 'IBM_SPLINE this case is not implemented yet. Current spline case '//trim(adjustl(str))
+      call TLAB_WRITE_ASCII(efile,line)
+      call TLAB_STOP(DNS_ERROR_NOTIMPL)
+    case(i3, i4)
+      do kflu  = 1, nflu
+        ia     = ia + 1
+        xa(ia) = g%nodes(ip_ir + kflu)
+        ya(ia) =     fld(iu_ir + kflu * nlines)
+      end do
+    case(i6)
+      ! mirror nflu points on the top + zeros at right interface
+      do kflu  = 1, nflu
+        ia     = ia + 1
+        xa(ia) = g%nodes(g%size) + ( g%nodes(g%size) - g%nodes(g%size - kflu) )
+        ya(ia) = C_0_R
+      end do
+      ! add zero at right interface (needed if mirroring is not used)
+      ! ia     = ia + 1
+      ! ya(ia) = C_0_R  
+    end select
   ! ================================================================== !
-
   ! build gap vector where splines are evaluated (here: with interface points)
-  do gap = ip_il, ip_ir
-    ib      = ib + 1
-    xb(ib)  = g%nodes(gap) ! dble(ip_int)
-  end do
-
+    do gap = ip_il, ip_ir
+      ib      = ib + 1
+      xb(ib)  = g%nodes(gap) ! dble(ip_int)
+    end do
+  ! ================================================================== !
+  ! select case (case)
+  ! case(i3) ! one interface on the right, extrapolation in gap
+  !   ! mirror nflu points on the ground + zeros at left interface
+  !   do kflu  = 1, nflu
+  !     ia     =   ia + 1
+  !     xa(ia) = - g%nodes((nflu + 2) - kflu) 
+  !     ya(ia) =   C_0_R
+  !   end do 
+  !   ! add zero at left interface (needed if mirroring is not used)
+  !   ! ia     = ia + 1
+  !   ! ya(ia) = C_0_R       
+  !   ! set interfaces (left and right)
+  !   ia     = ia + 1
+  !   xa(ia) = g%nodes(ip_il) ! dble(ip_il)   
+  !   ya(ia) = C_0_R   
+  !   !
+  !   ia     = ia + 1
+  !   xa(ia) = g%nodes(ip_ir) 
+  !   ya(ia) = C_0_R       
+  !   ! build right half of xa, ya (from left to right)
+  !   do kflu  = 1, nflu
+  !     ia     = ia + 1
+  !     xa(ia) = g%nodes(ip_ir + kflu)
+  !     ya(ia) =     fld(iu_ir + kflu * nlines)
+  !   end do
+  ! ! -----------------------------------------------------------------
+  ! case(i4)
+  !   ! build left half of xa, ya (from left to right)
+  !   do kflu  = 1, nflu
+  !     ia     = ia + 1
+  !     xa(ia) = g%nodes(ip_fl + (kflu - 1)) ! dble(ip_fl + (kflu - 1))   
+  !     ya(ia) =     fld(iu_fl + (kflu - 1) * nlines)
+  !   end do
+  !   ! set interfaces (left and right)
+  !   ia     = ia + 1
+  !   xa(ia) = g%nodes(ip_il) ! dble(ip_il)   
+  !   ya(ia) = C_0_R       
+  !   !
+  !   ia     = ia + 1
+  !   xa(ia) = g%nodes(ip_ir) ! dble(ip_ir) 
+  !   ya(ia) = C_0_R       
+  !   ! build right half of xa, ya (from left to right)
+  !   do kflu  = 1, nflu
+  !     ia     = ia + 1
+  !     xa(ia) = g%nodes(ip_ir + kflu) ! dble(ip_ir + kflu)
+  !     ya(ia) =     fld(iu_ir + kflu * nlines)
+  !   end do
+  ! ! -----------------------------------------------------------------
+  ! case(i6) ! one interface on the left, extrapolation in gap
+  !   ! build left half of xa, ya (from left to right)
+  !   do kflu  = 1, nflu
+  !     ia     = ia + 1
+  !     xa(ia) = g%nodes(ip_fl + (kflu - 1)) ! dble(ip_fl + (kflu - 1))   
+  !     ya(ia) =     fld(iu_fl + (kflu - 1) * nlines)
+  !   end do
+  !   ! set interfaces (left and right)
+  !   ia     = ia + 1
+  !   xa(ia) = g%nodes(ip_il) ! dble(ip_il)   
+  !   ya(ia) = C_0_R   
+  !   !
+  !   ia     = ia + 1
+  !   xa(ia) = g%nodes(ip_ir) 
+  !   ya(ia) = C_0_R       
+  !   ! mirror nflu points on the top + zeros at right interface
+  !   do kflu  = 1, nflu
+  !     ia     = ia + 1
+  !     xa(ia) = g%nodes(g%size) + ( g%nodes(g%size) - g%nodes(g%size - kflu) )
+  !     ya(ia) = C_0_R
+  !   end do
+  !   ! add zero at right interface (needed if mirroring is not used)
+  !   ! ia     = ia + 1
+  !   ! ya(ia) = C_0_R       
+  ! end select
   return
 end subroutine IBM_SPLINE_VECTOR
-
 
 !########################################################################
 

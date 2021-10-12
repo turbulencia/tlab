@@ -13,7 +13,7 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
 
   USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_PROCS
-  USE TLAB_VARS,ONLY : imode_eqns, icalc_scal, inb_scal
+  USE TLAB_VARS,ONLY : imode_eqns, imode_ibm, icalc_scal, inb_scal
   USE TLAB_VARS,ONLY : isize_field, imax,jmax,kmax
   USE TLAB_VARS,ONLY : rbackground
   USE DNS_LOCAL, ONLY : ilimit_flow, p_bound_min,p_bound_max, r_bound_min,r_bound_max, d_bound_max
@@ -24,6 +24,8 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
 #endif
 
   IMPLICIT NONE
+  
+#include "integers.h"
 
   TINTEGER,                        INTENT(IN)    :: flag_dilatation
   TREAL, DIMENSION(isize_field,*), INTENT(INOUT) :: q,s
@@ -66,6 +68,8 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
         ELSE
            CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), wrk2d,wrk3d)
         ENDIF
+
+        IF ( imode_ibm == 1 ) CALL IBM_BCS_FLOW(txc(1,1),i1) ! IBM - zeros in solid
 
         CALL MINMAX(imax,jmax,kmax, txc(1,1), logs_data(11),logs_data(10))
         logs_data(10)=-logs_data(10); logs_data(11)=-logs_data(11)
