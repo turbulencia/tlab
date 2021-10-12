@@ -72,18 +72,18 @@ CONTAINS
        IF ( flag_wall .EQ. 1 .OR. flag_wall .EQ. 3 ) THEN  ! jmin
           DO j = 1,jmax
              yr = C_05_R *( yn(j)-yn(1)    )/ Kini%thick
-             wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 - &       ! Wall-parallel velocity
-                  wrk1d(j,1) *TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
-             wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3           ! Wall-normal velocity
+             wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **2 - &       ! Wall-parallel velocity
+                  wrk1d(j,1) *TANH(yr) /COSH(yr) **2 /Kini%thick
+             wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **2           ! Wall-normal velocity
           ENDDO
        ENDIF
 
        IF ( flag_wall .EQ. 2 .OR. flag_wall .EQ. 3 ) THEN  ! jmax
           DO j = 1,jmax
              yr = C_05_R *( yn(jmax)-yn(j) )/ Kini%thick
-             wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **3 + &       ! Wall-parallel velocity
-                  wrk1d(j,1) *TANH(yr) **2 /COSH(yr) **2 *C_1_5_R /Kini%thick
-             wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **3           ! Wall-normal velocity
+             wrk1d(j,2) = wrk1d(j,2) *TANH(yr) **2 + &       ! Wall-parallel velocity
+                  wrk1d(j,1) *TANH(yr) /COSH(yr) **2 /Kini%thick
+             wrk1d(j,1) = wrk1d(j,1) *TANH(yr) **2           ! Wall-normal velocity
           ENDDO
        ENDIF
 
