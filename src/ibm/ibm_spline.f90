@@ -43,7 +43,7 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
 
   ! MPI just for debugging
 #ifdef IBM_DEBUG
-use TLAB_VARS,      only: imax, jmax, kmax
+  use TLAB_VARS,      only: imax, jmax, kmax
 #ifdef USE_MPI
   use TLAB_MPI_VARS,  only: ims_size_i, ims_size_j, ims_size_k    
   use TLAB_MPI_VARS,  only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i 
@@ -114,7 +114,7 @@ use TLAB_VARS,      only: imax, jmax, kmax
 
       do iob = 1, nob(ii)  ! loop over immersed object(s)
 
-        ! select different cases [1...4] of immersed objects
+        ! select different cases of immersed objects
         if(nob_b(ip+ii) == i1) then
         ! ================================================================== !
           if(nob_e(ip+ii) == g%size) then
@@ -268,7 +268,7 @@ use TLAB_VARS,      only: imax, jmax, kmax
     ! ================================================================== !
   end if
 #endif
-  ! ================================================================== !
+    ! ================================================================== !
 
 #endif
   return

@@ -401,7 +401,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 #endif
 
   ! ------------------------------------------------------------------ !
-
+#ifdef IBM_DEBUG
   ! write nobi fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobi'))//trim(adjustl(fname))
@@ -478,6 +478,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 #endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, nob_max, i1, nxy*nob_max, nobk_e_out, wrk3d)
 
+#endif
   ! ================================================================== !
   ! ================================================================== !
   ! Block comment: begin
