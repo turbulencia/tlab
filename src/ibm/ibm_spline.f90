@@ -245,7 +245,7 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
     stop
     ! ================================================================== !
   end if
-! #endif
+#endif
 ! #if 0
   if (g%name == 'z') then
     ! ================================================================== !
@@ -270,7 +270,7 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
 #endif
     ! ================================================================== !
 
-#endif
+! #endif
   return
 end subroutine IBM_SPLINE_XYZ
 
