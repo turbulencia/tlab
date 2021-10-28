@@ -289,7 +289,7 @@ PROGRAM SPECTRA
 #endif
 
   isize_wrk2d = MAX(isize_wrk2d,isize_aux*kmax); inb_wrk2d = MAX(inb_wrk2d,6)
-  ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
+!   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
 
   ALLOCATE(outx(kxmax*jmax_aux, nfield))
   ALLOCATE(outz(kzmax*jmax_aux, nfield))

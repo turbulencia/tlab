@@ -13,7 +13,7 @@ import my_pylib as mp
 # import os
 #-----------------------------------------------------------------------------#
 # file
-index        = 20010
+index        = 35000
 forcing_flow = 'cpg'
 # path  = '/home/jonathan/simulations/data/channel_flow/cpg_scal/'
 path = str(os.path.dirname(__file__) + '/../test_parallel/' )
