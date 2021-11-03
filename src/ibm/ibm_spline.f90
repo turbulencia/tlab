@@ -227,11 +227,10 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
     end if
   end do
 
-#ifdef IBM_DEBUG
+#if 0
   ! ================================================================== !
   ! debug -- Block comment with #if 0 and #endif
   ! ================================================================== !
-#if 0
   if (g%name == 'y') then
     ! ================================================================== !
     ! debug
@@ -245,8 +244,7 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
     stop
     ! ================================================================== !
   end if
-#endif
-! #if 0
+  !
   if (g%name == 'z') then
     ! ================================================================== !
     ! debug
@@ -267,10 +265,8 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
     stop
     ! ================================================================== !
   end if
-#endif
     ! ================================================================== !
-
-! #endif
+#endif
   return
 end subroutine IBM_SPLINE_XYZ
 

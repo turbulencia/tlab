@@ -17,7 +17,7 @@ else() # compiler for serial build
    set(ENV{FC} gfortran)
    set(CMAKE_Fortran_COMPILER gfortran)
    set(USER_Fortran_FLAGS "-cpp -std=legacy -ffree-form -ffree-line-length-none -fno-automatic")
-   add_definitions(-DUSE_FFTW -DIBM_DEBUG)# -DIBM_DEBUG)
+   add_definitions(-DUSE_FFTW)# -DIBM_DEBUG)
 
    if    ( ${BUILD_TYPE} STREQUAL "BIG" )
      set(USER_Fortran_FLAGS_RELEASE "-fconvert=big-endian -ffpe-summary=none -O3 -ffast-math -ffinite-math-only -mtune=native -march=native")

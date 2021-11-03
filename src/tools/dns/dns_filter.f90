@@ -8,6 +8,7 @@ SUBROUTINE DNS_FILTER()
   USE TLAB_CONSTANTS, ONLY : lfile
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, isize_field
   USE TLAB_VARS,    ONLY : imode_eqns, imode_sim
+  USE TLAB_VARS,    ONLY : icalc_scal
   USE TLAB_VARS,    ONLY : itime, rtime
   USE TLAB_VARS,    ONLY : FilterDomain
   USE TLAB_VARS,    ONLY : g, area
@@ -88,7 +89,7 @@ SUBROUTINE DNS_FILTER()
   ENDIF
 
   ! -------------------------------------------------------------------
-  IF ( ilimit_scal .EQ. 1 ) THEN
+  IF ( icalc_scal .EQ. 1 .AND. ilimit_scal .EQ. 1 ) THEN
     DO ij = 1,isize_field
       s(ij,is) = MIN(MAX(s(ij,is),s_bound_min(is)), s_bound_max(is))
     ENDDO
