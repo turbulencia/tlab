@@ -23,6 +23,8 @@ case $kernel in
                 SYST=archlinux;; 
             eetac* )
                 SYST=eetac;; 
+            mi* )
+                SYST=uhhpc;; 
 	esac 
 esac
 
