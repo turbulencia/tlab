@@ -44,11 +44,9 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
   ! MPI just for debugging
 #ifdef IBM_DEBUG
   use TLAB_VARS,      only: imax, jmax, kmax
-#ifdef USE_MPI
-  use TLAB_MPI_VARS,  only: ims_size_i, ims_size_j, ims_size_k    
-  use TLAB_MPI_VARS,  only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i 
+#ifdef USE_MPI 
   use TLAB_MPI_VARS,  only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  use TLAB_MPI_VARS,  only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
+  use TLAB_MPI_VARS,  only: ims_npro_k, ims_pro
   use TLAB_MPI_PROCS
 #endif
 #endif

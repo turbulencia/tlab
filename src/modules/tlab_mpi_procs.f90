@@ -143,6 +143,7 @@ CONTAINS
 
     ! -----------------------------------------------------------------------
     ! Immersed Boundary Method (IBM)
+#ifdef IBM_DEBUG
     IF (imode_ibm == 1) THEN
       id = TLAB_MPI_J_PARTIAL
       npage = imax*kmax
@@ -182,7 +183,7 @@ CONTAINS
             ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
       ENDIF
     ENDIF
-
+#endif
     ! -----------------------------------------------------------------------
 
     IF ( ims_npro_i > 1 .AND. ifourier == 1 ) THEN

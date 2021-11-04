@@ -42,7 +42,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
 #ifdef USE_MPI
   use TLAB_MPI_VARS,    only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
   use TLAB_MPI_VARS,    only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  use TLAB_MPI_VARS,    only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
+  use TLAB_MPI_VARS,    only: ims_npro_i, ims_npro_k, ims_pro
   use TLAB_MPI_VARS,    only: ims_size_i, ims_size_j, ims_size_k 
   use TLAB_MPI_PROCS
 #endif

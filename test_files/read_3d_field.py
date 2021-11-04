@@ -1,5 +1,5 @@
 # import numpy as np
-# import sys
+import sys
 import matplotlib.pyplot as plt
 from   matplotlib import rc
 rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
@@ -13,7 +13,7 @@ import my_pylib as mp
 # import os
 #-----------------------------------------------------------------------------#
 # file
-index        = 35000
+index        = 38001
 forcing_flow = 'cpg'
 # path  = '/home/jonathan/simulations/data/channel_flow/cpg_scal/'
 path = str(os.path.dirname(__file__) + '/../test_parallel/' )
@@ -44,6 +44,8 @@ flow.read_3d_field()
 
 # bulk velocity of the flow
 ub = mp.ubulk(flow.u, grid.y)
+#---------------------------------------------------------------------------#
+sys.exit()
 #---------------------------------------------------------------------------#
 # plots - 2d flow fields
 plt.figure(figsize=size)

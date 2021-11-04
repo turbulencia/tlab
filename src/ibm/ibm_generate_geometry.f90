@@ -35,18 +35,24 @@
 subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   
   use DNS_IBM
-  use TLAB_VARS,        only: g   
-  use TLAB_VARS,        only: imax, jmax, kmax 
-  use TLAB_VARS,        only: isize_field, inb_txc
-  
+  use TLAB_VARS,        only: g, imax, jmax, kmax 
+
 #ifdef USE_MPI
-  use TLAB_MPI_VARS,    only: ims_pro, ims_npro
   use TLAB_MPI_VARS,    only: ims_size_i, ims_size_j, ims_size_k    
-  use TLAB_MPI_VARS,    only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i 
-  use TLAB_MPI_VARS,    only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  use TLAB_MPI_VARS,    only: ims_npro_i, ims_npro_j, ims_npro_k, ims_pro
   use TLAB_MPI_PROCS
 #endif    
+  
+  ! --------------------------DEBUG----------------------------------- !  
+  use TLAB_VARS,        only: isize_field, inb_txc
+#ifdef IBM_DEBUG
+#ifdef USE_MPI
+  use TLAB_MPI_VARS,    only: ims_pro, ims_npro
+  use TLAB_MPI_VARS,    only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i   
+  use TLAB_MPI_VARS,    only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k   
+  use TLAB_MPI_VARS,    only: ims_npro_i, ims_npro_j, ims_npro_k       
+#endif  
+#endif
+  ! ------------------------------------------------------------------ !
   
   implicit none
   
@@ -58,67 +64,73 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   TINTEGER, parameter                                :: idi        = TLAB_MPI_I_PARTIAL 
   TINTEGER, parameter                                :: idj        = TLAB_MPI_J_PARTIAL 
   TINTEGER, parameter                                :: idk        = TLAB_MPI_K_PARTIAL 
+  TINTEGER                                           :: ims_err, max_nob
+
+  ! --------------------------DEBUG----------------------------------- !
+#ifdef IBM_DEBUG  
   TINTEGER, parameter                                :: idi_nob    = TLAB_MPI_I_IBM_NOB 
   TINTEGER, parameter                                :: idk_nob    = TLAB_MPI_K_IBM_NOB 
   TINTEGER, parameter                                :: idi_nob_be = TLAB_MPI_I_IBM_NOB_BE 
   TINTEGER, parameter                                :: idk_nob_be = TLAB_MPI_K_IBM_NOB_BE
-  TINTEGER                                           :: ims_err, max_nob
   ! debugging arrays    
-  TREAL, dimension(ims_size_i(idi))                  :: nobi_out     ! DEBUG
-  TREAL, dimension(ims_size_j(idj))                  :: nobj_out     ! DEBUG
-  TREAL, dimension(ims_size_k(idk))                  :: nobk_out     ! DEBUG
-  TREAL, dimension(ims_size_i(idi)*xbars_geo%number) :: nobi_b_out   ! DEBUG
-  TREAL, dimension(ims_size_j(idj)*xbars_geo%number) :: nobj_b_out   ! DEBUG
-  TREAL, dimension(ims_size_k(idk)*xbars_geo%number) :: nobk_b_out   ! DEBUG
-  TREAL, dimension(ims_size_i(idi)*xbars_geo%number) :: nobi_e_out   ! DEBUG
-  TREAL, dimension(ims_size_j(idj)*xbars_geo%number) :: nobj_e_out   ! DEBUG
-  TREAL, dimension(ims_size_k(idk)*xbars_geo%number) :: nobk_e_out   ! DEBUG
-  ! for type casting (tlab subroutines just with real)
-  TREAL, dimension(ims_size_i(idi))                  :: nobi_real    ! DEBUG
-  TREAL, dimension(ims_size_j(idj))                  :: nobj_real    ! DEBUG
-  TREAL, dimension(ims_size_k(idk))                  :: nobk_real    ! DEBUG
-  TREAL, dimension(ims_size_i(idi)*xbars_geo%number) :: nobi_b_real  ! DEBUG
-  TREAL, dimension(ims_size_j(idj)*xbars_geo%number) :: nobj_b_real  ! DEBUG
-  TREAL, dimension(ims_size_k(idk)*xbars_geo%number) :: nobk_b_real  ! DEBUG
-  TREAL, dimension(ims_size_i(idi)*xbars_geo%number) :: nobi_e_real  ! DEBUG
-  TREAL, dimension(ims_size_j(idj)*xbars_geo%number) :: nobj_e_real  ! DEBUG
-  TREAL, dimension(ims_size_k(idk)*xbars_geo%number) :: nobk_e_real  ! DEBUG
+  TREAL, dimension(ims_size_i(idi))                  :: nobi_out     
+  TREAL, dimension(ims_size_j(idj))                  :: nobj_out     
+  TREAL, dimension(ims_size_k(idk))                  :: nobk_out     
+  TREAL, dimension(ims_size_i(idi)*xbars_geo%number) :: nobi_b_out   
+  TREAL, dimension(ims_size_j(idj)*xbars_geo%number) :: nobj_b_out   
+  TREAL, dimension(ims_size_k(idk)*xbars_geo%number) :: nobk_b_out   
+  TREAL, dimension(ims_size_i(idi)*xbars_geo%number) :: nobi_e_out   
+  TREAL, dimension(ims_size_j(idj)*xbars_geo%number) :: nobj_e_out   
+  TREAL, dimension(ims_size_k(idk)*xbars_geo%number) :: nobk_e_out   
+  ! for type casting (tlab subroutines just with re
+  TREAL, dimension(ims_size_i(idi))                  :: nobi_real    
+  TREAL, dimension(ims_size_j(idj))                  :: nobj_real    
+  TREAL, dimension(ims_size_k(idk))                  :: nobk_real    
+  TREAL, dimension(ims_size_i(idi)*xbars_geo%number) :: nobi_b_real  
+  TREAL, dimension(ims_size_j(idj)*xbars_geo%number) :: nobj_b_real  
+  TREAL, dimension(ims_size_k(idk)*xbars_geo%number) :: nobk_b_real  
+  TREAL, dimension(ims_size_i(idi)*xbars_geo%number) :: nobi_e_real  
+  TREAL, dimension(ims_size_j(idj)*xbars_geo%number) :: nobj_e_real  
+  TREAL, dimension(ims_size_k(idk)*xbars_geo%number) :: nobk_e_real  
+#endif
 #else
+#ifdef IBM_DEBUG  
   TINTEGER, parameter                                :: ims_pro=0, ims_npro=1
   ! debugging arrays
-  TREAL, dimension(jmax * kmax)                      :: nobi_out     ! DEBUG
-  TREAL, dimension(imax * kmax)                      :: nobj_out     ! DEBUG
-  TREAL, dimension(imax * jmax)                      :: nobk_out     ! DEBUG
-  TREAL, dimension(jmax * kmax * xbars_geo%number)   :: nobi_b_out   ! DEBUG
-  TREAL, dimension(imax * kmax * xbars_geo%number)   :: nobj_b_out   ! DEBUG
-  TREAL, dimension(imax * jmax * xbars_geo%number)   :: nobk_b_out   ! DEBUG
-  TREAL, dimension(jmax * kmax * xbars_geo%number)   :: nobi_e_out   ! DEBUG
-  TREAL, dimension(imax * kmax * xbars_geo%number)   :: nobj_e_out   ! DEBUG
-  TREAL, dimension(imax * jmax * xbars_geo%number)   :: nobk_e_out   ! DEBUG
+  TREAL, dimension(jmax * kmax)                      :: nobi_out     
+  TREAL, dimension(imax * kmax)                      :: nobj_out     
+  TREAL, dimension(imax * jmax)                      :: nobk_out     
+  TREAL, dimension(jmax * kmax * xbars_geo%number)   :: nobi_b_out   
+  TREAL, dimension(imax * kmax * xbars_geo%number)   :: nobj_b_out   
+  TREAL, dimension(imax * jmax * xbars_geo%number)   :: nobk_b_out   
+  TREAL, dimension(jmax * kmax * xbars_geo%number)   :: nobi_e_out   
+  TREAL, dimension(imax * kmax * xbars_geo%number)   :: nobj_e_out   
+  TREAL, dimension(imax * jmax * xbars_geo%number)   :: nobk_e_out   
   ! for type casting (tlab subroutines just with real)
-  TREAL, dimension(jmax * kmax)                      :: nobi_real    ! DEBUG
-  TREAL, dimension(imax * kmax)                      :: nobj_real    ! DEBUG
-  TREAL, dimension(imax * jmax)                      :: nobk_real    ! DEBUG
-  TREAL, dimension(jmax * kmax * xbars_geo%number)   :: nobi_b_real  ! DEBUG
-  TREAL, dimension(imax * kmax * xbars_geo%number)   :: nobj_b_real  ! DEBUG
-  TREAL, dimension(imax * jmax * xbars_geo%number)   :: nobk_b_real  ! DEBUG
-  TREAL, dimension(jmax * kmax * xbars_geo%number)   :: nobi_e_real  ! DEBUG
-  TREAL, dimension(imax * kmax * xbars_geo%number)   :: nobj_e_real  ! DEBUG
-  TREAL, dimension(imax * jmax * xbars_geo%number)   :: nobk_e_real  ! DEBUG
+  TREAL, dimension(jmax * kmax)                      :: nobi_real    
+  TREAL, dimension(imax * kmax)                      :: nobj_real    
+  TREAL, dimension(imax * jmax)                      :: nobk_real    
+  TREAL, dimension(jmax * kmax * xbars_geo%number)   :: nobi_b_real  
+  TREAL, dimension(imax * kmax * xbars_geo%number)   :: nobj_b_real  
+  TREAL, dimension(imax * jmax * xbars_geo%number)   :: nobk_b_real  
+  TREAL, dimension(jmax * kmax * xbars_geo%number)   :: nobi_e_real  
+  TREAL, dimension(imax * kmax * xbars_geo%number)   :: nobj_e_real  
+  TREAL, dimension(imax * jmax * xbars_geo%number)   :: nobk_e_real  
 #endif
+#endif
+  TREAL, dimension(isize_field), intent(inout)       :: wrk3d        
+  ! ------------------------------------------------------------------ !
 
-  TREAL, dimension(isize_field), intent(inout)       :: wrk3d 
-    
   TREAL                                              :: nobi_max, nobj_max, nobk_max
   TINTEGER                                           :: i, j, k, ij, ik, jk, ip, inum
   TINTEGER                                           :: nyz, nxz, nxy
   TINTEGER                                           :: nob_max
-    
   CHARACTER(len=32)                                  :: fname
     
-  ! DEBUG
-  TREAL, dimension(isize_field,inb_txc), intent(inout) :: txc   ! DEBUG
-  TREAL, dimension(isize_field)                        :: tmp1, tmp2, tmp3, tmp4   ! DEBUG
+  ! --------------------------DEBUG----------------------------------- !
+  TREAL, dimension(isize_field,inb_txc), intent(inout) :: txc                      
+  TREAL, dimension(isize_field)                        :: tmp1, tmp2, tmp3, tmp4   
+  ! ------------------------------------------------------------------ !
 
   ! ================================================================== !
 
@@ -165,9 +177,8 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   call MPI_ALLREDUCE(max_nob, nobi_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
 #endif
 
-  ! ------------------------------------------------------------------ !
-  ! DEBUG
-
+  ! --------------------------DEBUG----------------------------------- !
+#ifdef IBM_DEBUG
   nobi_real = dble(nobi)
   nobi_out  = nobi_real
   
@@ -179,7 +190,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 #else 
   nobi_out = nobi_real
 #endif
-
+#endif
   ! ================================================================== !
   ! begin and end of objects in x-direction
   ip = i1
@@ -212,8 +223,8 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
     ip = ip + nyz
   end do
 
-  ! ------------------------------------------------------------------ !
-  ! DEBUG
+  ! --------------------------DEBUG----------------------------------- !
+#ifdef IBM_DEBUG
   nobi_b_real = dble(nobi_b)
   nobi_e_real = dble(nobi_e)
   nobi_b_out  = nobi_b_real
@@ -229,7 +240,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   nobi_b_out = nobi_b_real
   nobi_e_out = nobi_e_real
 #endif
-
+#endif
 ! ================================================================== !
   ! number of objects in y-direction
   ip = i1
@@ -251,11 +262,11 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   call MPI_ALLREDUCE(max_nob, nobj_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
 #endif
 
-  ! ------------------------------------------------------------------ !
-  ! DEBUG
+  ! --------------------------DEBUG----------------------------------- !
+#ifdef IBM_DEBUG
   nobj_real = dble(nobj)
   call DNS_TRANSPOSE(nobj_real, kmax, imax, kmax, nobj_out, imax)
-
+#endif
   ! ================================================================== !
   ! begin and end of objects in y-direction
   ip = i1
@@ -288,13 +299,13 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
     ip = ip + nxz
   end do
 
-  ! ------------------------------------------------------------------ !
-  ! DEBUG
+  ! --------------------------DEBUG----------------------------------- !
+#ifdef IBM_DEBUG
   nobj_b_real = dble(nobj_b)
   nobj_e_real = dble(nobj_e)
   call DNS_TRANSPOSE(nobj_b_real, kmax, imax * nob_max, kmax, nobj_b_out, imax * nob_max)
   call DNS_TRANSPOSE(nobj_e_real, kmax, imax * nob_max, kmax, nobj_e_out, imax * nob_max)
-  
+#endif 
   ! ================================================================== !
   ! number of objects in z-direction
   ip = i1
@@ -316,8 +327,8 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   call MPI_ALLREDUCE(max_nob, nobk_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
 #endif
 
-  ! ------------------------------------------------------------------ !
-  ! DEBUG
+  ! --------------------------DEBUG----------------------------------- !
+#ifdef IBM_DEBUG
   nobk_real = dble(nobk)
 #ifdef USE_MPI
   if ( ims_npro_k > 1 ) then
@@ -327,7 +338,6 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   nobk_out = nobk_real
 #endif
 
-#ifdef IBM_DEBUG
   if (ims_pro == 0) then
     write(*,*) 'nobk_b     =', size(nobk_b)
     write(*,*) 'nobk_b_out =', size(nobk_b_out)
@@ -335,7 +345,6 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
     write(*,*) 'nobk_e_out =', size(nobk_e_out)
   end if
 #endif
-
   ! ! ================================================================== !
   ! ! begin and end of objects in z-direction
   ip = i1
@@ -368,8 +377,8 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
     ip = ip + nxy
   end do
 
-  ! ------------------------------------------------------------------ !
-  ! DEBUG
+  ! --------------------------DEBUG----------------------------------- !
+#ifdef IBM_DEBUG
   nobk_b_real = dble(nobk_b)
   nobk_e_real = dble(nobk_e)
 #ifdef USE_MPI
@@ -381,15 +390,11 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   nobk_b_out = nobk_b_real
   nobk_e_out = nobk_e_real
 #endif
-
-  ! ================================================================== !
-  ! ================================================================== !
+#endif
   ! ================================================================== !
   ! DEBUG nob fields with  2D fields
-  ! ================================================================== !
-  ! ================================================================== !
-  ! ================================================================== !
 #ifdef IBM_DEBUG
+  ! ================================================================== !
   if (ims_pro == 0) then
     write(*,*) '========================================================='
     write(*,*) 'nbars      =', xbars_geo%number
@@ -398,99 +403,60 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
     write(*,*) 'nobk_max   =', int(nobk_max)
     write(*,*) '======== Writing geometry ==============================='
   end if
-#endif
-
   ! ------------------------------------------------------------------ !
-#ifdef IBM_DEBUG
   ! write nobi fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobi'))//trim(adjustl(fname))
-#ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) fname
-#endif
   call DNS_WRITE_FIELDS(fname, i2, i1, g(2)%size/ims_npro, g(3)%size, i1, nyz, nobi_out, wrk3d)
-
   ! write nobi_b fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobi_b'))//trim(adjustl(fname))
-#ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) fname
-#endif
   call DNS_WRITE_FIELDS(fname, i2, nob_max, g(2)%size/ims_npro, g(3)%size, i1, nyz*nob_max, nobi_b_out, wrk3d)     
-
   ! write nobi_e fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobi_e'))//trim(adjustl(fname))
-#ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) fname
-#endif
   call DNS_WRITE_FIELDS(fname, i2, nob_max, g(2)%size/ims_npro, g(3)%size, i1, nyz*nob_max, nobi_e_out, wrk3d)     
-  
   ! ------------------------------------------------------------------ !
-
   ! write nobj fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobj'))//trim(adjustl(fname))
-#ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) fname
-#endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, i1, g(3)%size, i1, nxz, nobj_out, wrk3d)
-
   ! write nobj_b fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobj_b'))//trim(adjustl(fname))
-#ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) fname
-#endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, nob_max, g(3)%size, i1, nxz*nob_max, nobj_b_out, wrk3d)
-
   ! write nobj_e fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobj_e'))//trim(adjustl(fname))
-#ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) fname
-#endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, nob_max, g(3)%size, i1, nxz*nob_max, nobj_e_out, wrk3d)
-  
   ! ------------------------------------------------------------------ !
-
   ! write nobk fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobk'))//trim(adjustl(fname))
-#ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) fname
-#endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, i1, i1, nxy, nobk_out, wrk3d)
-
   ! write nobk_b fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobk_b'))//trim(adjustl(fname))
-#ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) fname
-#endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, nob_max, i1, nxy*nob_max, nobk_b_out, wrk3d)
-
   ! write nobk_e fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobk_e'))//trim(adjustl(fname))
-#ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) fname
-#endif
   call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, nob_max, i1, nxy*nob_max, nobk_e_out, wrk3d)
-
 #endif
-  ! ================================================================== !
-  ! ================================================================== !
-  ! Block comment: begin
-#if 0
-  ! ================================================================== !
-  ! ================================================================== !
-
-  ! ================================================================== !
   ! ================================================================== !
   ! ================================================================== !
   ! DEBUG nob fields with 3D fields
-  ! ================================================================== !
+  ! Block comment: begin
+#if 0
   ! ================================================================== !
   ! ================================================================== !
 
@@ -581,7 +547,6 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   tmp2(:) = C_0_R
 
   if (ims_pro == 0) write(*,*) 'done writing nobi3d,   nobj3d,   nobk3d'
-  ! ================================================================== !
   ! ================================================================== !
   ! begin and end of objects in x-direction
 
@@ -733,10 +698,8 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   if (ims_pro == 0) write(*,*) '========================================================='
 
   ! ================================================================== !
-  ! ================================================================== !
   ! Block comment: end
 #endif
-  ! ================================================================== !
   ! ================================================================== !
 
   return
