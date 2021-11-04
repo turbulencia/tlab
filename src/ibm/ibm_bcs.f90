@@ -1,7 +1,7 @@
 #include "types.h"
 
 !########################################################################
-!# HISTORY / ATHORS
+!# HISTORY / AUTHORS
 !#
 !# 2021/XX/XX - J. Kostelecky
 !#              Created

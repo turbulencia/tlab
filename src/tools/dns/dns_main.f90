@@ -214,6 +214,10 @@ PROGRAM DNS
 
     IF ( MOD(itime-nitera_first,FilterDomainStep) == 0 ) THEN
       CALL DNS_FILTER()
+      IF ( imode_ibm == 1 ) THEN
+        CALL IBM_BCS_FLOW(q, inb_flow) ! apply IBM BCs
+        ! IF ( icalc_scal == 1 ) CALL IBM_BCS_SCAL(s)
+      ENDIF  
     END IF
 
     IF ( flag_viscosity ) THEN          ! Change viscosity if necessary

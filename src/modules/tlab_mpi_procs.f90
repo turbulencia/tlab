@@ -143,12 +143,12 @@ CONTAINS
 
     ! -----------------------------------------------------------------------
     ! Immersed Boundary Method (IBM)
-#ifdef IBM_DEBUG
     IF (imode_ibm == 1) THEN
       id = TLAB_MPI_J_PARTIAL
       npage = imax*kmax
       ims_size_j(id) = npage
-  
+      
+#ifdef IBM_DEBUG
       ! ------------------ !
       IF (ims_npro_i > 1) THEN
       CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Ox IBM nobi.')
@@ -182,8 +182,8 @@ CONTAINS
       CALL TLAB_MPI_TYPE_K(ims_npro_k, xbars_geo%number, npage, i1, i1, i1, i1, &
             ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
       ENDIF
-    ENDIF
 #endif
+    ENDIF
     ! -----------------------------------------------------------------------
 
     IF ( ims_npro_i > 1 .AND. ifourier == 1 ) THEN
