@@ -117,10 +117,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      ip_t = ip_t + nxy ! top BC address
   ENDDO
 
-! ###################################################################
+! #######################################################################
 ! Preliminaries for IBM use
 ! (if .true., OPR_BURGERS_X/Y/Z uses modified fields for derivatives)
-! ###################################################################
+! #######################################################################
   IF ( imode_ibm == 1 ) ibm_burgers = .true.
 #ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) '========================================================='
@@ -188,9 +188,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ENDDO
 !$omp end parallel
 
-! ###################################################################
+! #######################################################################
 ! IBM not implemented for scalar fields yet (set ibm_burgers flag back to .false.)
-! ###################################################################
+! #######################################################################
   IF ( imode_ibm == 1 ) ibm_burgers = .false.
 #ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) 'ibm_burgers end of rhs (no scal)', ibm_burgers
