@@ -26,7 +26,7 @@ PROGRAM TRANSFIELDS
 #include "mpif.h"
 #endif
 
-! Parameter definitions
+  ! Parameter definitions
   TINTEGER, PARAMETER :: itime_size_max = 3000
   TINTEGER, PARAMETER :: iopt_size_max  = 512
 
@@ -38,9 +38,9 @@ PROGRAM TRANSFIELDS
   TREAL, DIMENSION(:),     ALLOCATABLE, SAVE :: y_aux
   TREAL, DIMENSION(:,:,:), ALLOCATABLE, SAVE :: txc_aux
 
-! -------------------------------------------------------------------
-! Local variables
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Local variables
+  ! -------------------------------------------------------------------
   TINTEGER opt_main, opt_function
   TINTEGER iq, is, ig, ip, j,k
   TINTEGER idummy, iread_flow, iread_scal
@@ -62,7 +62,7 @@ PROGRAM TRANSFIELDS
   TINTEGER iopt_size
   TREAL opt_vec(iopt_size_max)
 
-! ###################################################################
+  ! ###################################################################
   bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
   CALL TLAB_START
@@ -73,18 +73,14 @@ PROGRAM TRANSFIELDS
   CALL TLAB_MPI_INITIALIZE
 #endif
 
-! -------------------------------------------------------------------
-! Allocating memory space
-! -------------------------------------------------------------------
-
-! -------------------------------------------------------------------
-! File names
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! File names
+  ! -------------------------------------------------------------------
 #include "dns_read_times.h"
 
-! -------------------------------------------------------------------
-! Read local options
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Read local options
+  ! -------------------------------------------------------------------
   opt_main     =-1 ! default values
   opt_function = 0
 
@@ -104,14 +100,30 @@ PROGRAM TRANSFIELDS
      WRITE(*,'(A)') '6. Transform scalar fields'
      WRITE(*,'(A)') '7. Blend fields'
      WRITE(*,'(A)') '8. Add mean profiles'
+     WRITE(*,'(A)') '9. Extrude fields in Oz'
      READ(*,*) opt_main
 #endif
   ELSE
      opt_main = INT(opt_vec(1))
   ENDIF
 
-! -------------------------------------------------------------------
-  IF ( opt_main .EQ. 4 ) THEN
+  SELECT CASE ( opt_main )
+  CASE( :0 )
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Missing input [ParamTransform] in dns.ini.')
+     CALL TLAB_STOP(DNS_ERROR_INVALOPT)
+
+  CASE( 1 )
+     IF ( subdomain(1) .NE. 1 .OR. subdomain(2) .NE. g(1)%size .OR. &
+          subdomain(5) .NE. 1 .OR. subdomain(6) .NE. g(3)%size ) THEN
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Cropping only in Oy.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+     ENDIF
+     IF ( subdomain(3) .LT. 1 .OR. subdomain(4) .GT. g(2)%size) THEN
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Cropping out of bounds in Oy.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+     ENDIF
+
+  CASE( 4 )
      IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI
 #else
@@ -124,28 +136,28 @@ PROGRAM TRANSFIELDS
         iopt_size = iopt_size-1
      ENDIF
      IF ( iopt_size .EQ. 0 ) THEN
-        CALL TLAB_WRITE_ASCII(lfile,'TRANSFORM. Performing arithmetic mean of fields.')
+        CALL TLAB_WRITE_ASCII(lfile,C_FILE_LOC//'. Performing arithmetic mean of fields.')
         iopt_size = itime_size
         opt_vec(2:) = C_1_R /M_REAL(itime_size)
      ENDIF
      IF ( iopt_size .NE. itime_size ) THEN
-        CALL TLAB_WRITE_ASCII(efile,'TRANSFORM. Number of coefficient incorrect.')
+        CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Number of coefficient incorrect.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
      IF ( iopt_size .GT. iopt_size_max ) THEN
-        CALL TLAB_WRITE_ASCII(efile,'TRANSFORM. Array opt_vec too small.')
+        CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Array opt_vec too small.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
-  ENDIF
 
-! -------------------------------------------------------------------
-  IF ( opt_main .EQ. 5 .AND. FilterDomain(1)%type .EQ. DNS_FILTER_NONE ) THEN
-     CALL TLAB_WRITE_ASCII(efile,'TRANSFORM. Filter information needs to be provided in block [Filter].')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
+  CASE( 5 )
+     IF ( FilterDomain(1)%TYPE .EQ. DNS_FILTER_NONE ) THEN
+        CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Filter information needs to be provided in block [Filter].')
+        CALL TLAB_STOP(DNS_ERROR_OPTION)
+     ENDIF
 
-! -------------------------------------------------------------------
-  IF ( opt_main .EQ. 6 ) THEN
+  CASE( 6 )
+     icalc_flow = 0 ! Force not to process the flow fields
+
      IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI
 #else
@@ -169,10 +181,8 @@ PROGRAM TRANSFIELDS
      ELSE
         iopt_size = iopt_size-2
      ENDIF
-  ENDIF
 
-! -------------------------------------------------------------------
-  IF ( opt_main .EQ. 7 ) THEN ! 2nd and 3rd entries in opt_vec contain coeffs.
+  CASE( 7 ) ! 2nd and 3rd entries in opt_vec contain coeffs.
      IF ( sRes .EQ. '-1' ) THEN
         WRITE(*,*) 'Coefficients ?'
         READ(*,'(A512)') sRes
@@ -182,19 +192,13 @@ PROGRAM TRANSFIELDS
         iopt_size = iopt_size-1
      ENDIF
      IF ( iopt_size .NE. 2 ) THEN
-        CALL TLAB_WRITE_ASCII(efile,'TRANSFORM. Number of blend coefficient incorrect.')
+        CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Number of blend coefficient incorrect.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
-  ENDIF
 
-  IF ( opt_main .LT. 0 ) THEN ! Check
-     CALL TLAB_WRITE_ASCII(efile, 'TRANSFORM. Missing input [ParamTransform] in dns.ini.')
-     CALL TLAB_STOP(DNS_ERROR_INVALOPT)
-  ENDIF
+  END SELECT
 
-  IF ( opt_main .EQ. 6 ) THEN; icalc_flow = 0; ENDIF ! Force not to process the flow fields
-
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
   IF ( sRes .EQ. '-1' ) THEN
@@ -213,23 +217,24 @@ PROGRAM TRANSFIELDS
      subdomain(5) = 1; subdomain(6) = g(3)%size
   ENDIF
 
-! -------------------------------------------------------------------
-  IF      ( opt_main .EQ. 1 .OR. &      ! Crop
-            opt_main .EQ. 3      ) THEN ! Remesh
+  ! -------------------------------------------------------------------
+  SELECT CASE ( opt_main )
+  CASE( 1, 3, 9 ) ! Crop, remesh, extrude
      g_dst(1)%size = subdomain(2)-subdomain(1)+1
      g_dst(2)%size = subdomain(4)-subdomain(3)+1
      g_dst(3)%size = subdomain(6)-subdomain(5)+1
 
-  ELSE IF ( opt_main .EQ. 2      ) THEN ! Extend
+  CASE( 2 )   ! Extend
      g_dst(1)%size = g(1)%size + subdomain(2) + subdomain(1)
      g_dst(2)%size = g(2)%size + subdomain(4) + subdomain(3)
      g_dst(3)%size = g(3)%size
 
-  ELSE
+  CASE DEFAULT
      g_dst(1)%size = g(1)%size
      g_dst(2)%size = g(2)%size
      g_dst(3)%size = g(3)%size
-  ENDIF
+
+  END SELECT
 
 #ifdef USE_MPI
   imax_dst = g_dst(1)%size/ims_npro_i
@@ -241,9 +246,9 @@ PROGRAM TRANSFIELDS
   kmax_dst = g_dst(3)%size
 #endif
 
-! -------------------------------------------------------------------
-! Further allocation of memory space
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Further allocation of memory space
+  ! -------------------------------------------------------------------
   inb_txc = 0
 
   inb_scal_dst = inb_scal
@@ -263,10 +268,10 @@ PROGRAM TRANSFIELDS
 
   IF ( ifourier .EQ. 1 ) inb_txc = MAX(inb_txc,1)
 
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
   isize_wrk3d = MAX(isize_txc_field,imax_dst*jmax_dst*kmax_dst)
 
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
   IF ( icalc_flow .EQ. 1 ) ALLOCATE(q_dst(imax_dst*jmax_dst*kmax_dst,inb_flow))
   IF ( icalc_scal .EQ. 1 ) ALLOCATE(s_dst(imax_dst*jmax_dst*kmax_dst,inb_scal_dst))
 
@@ -278,66 +283,66 @@ PROGRAM TRANSFIELDS
 
   CALL TLAB_ALLOCATE(C_FILE_LOC)
 
-! -------------------------------------------------------------------
-! Read the grid
-! -------------------------------------------------------------------
-CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
-CALL FDM_INITIALIZE(x, g(1), wrk1d)
-CALL FDM_INITIALIZE(y, g(2), wrk1d)
-CALL FDM_INITIALIZE(z, g(3), wrk1d)
+  ! -------------------------------------------------------------------
+  ! Read the grid
+  ! -------------------------------------------------------------------
+  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
+  CALL FDM_INITIALIZE(x, g(1), wrk1d)
+  CALL FDM_INITIALIZE(y, g(2), wrk1d)
+  CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
-! -------------------------------------------------------------------
-! Initialize filters
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Initialize filters
+  ! -------------------------------------------------------------------
   IF ( opt_main .EQ. 5 ) THEN
      DO ig = 1,3
         CALL OPR_FILTER_INITIALIZE( g(ig), FilterDomain(ig), wrk1d )
      END DO
   ENDIF
 
-! -------------------------------------------------------------------
-! Initialize Poisson solver
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Initialize Poisson solver
+  ! -------------------------------------------------------------------
   IF ( ifourier .EQ. 1 ) CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
 
   IF ( inb_txc .GE. 3 .AND. icalc_flow .GT. 0 ) CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
 
-! -------------------------------------------------------------------
-! Initialize cumulative field
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Initialize cumulative field
+  ! -------------------------------------------------------------------
   IF ( opt_main .EQ. 4 .OR. opt_main .EQ. 7 ) THEN
      IF ( icalc_flow .EQ. 1 ) q_dst = C_0_R
      IF ( icalc_scal .EQ. 1 ) s_dst = C_0_R
   ENDIF
 
-! -------------------------------------------------------------------
-! Initialize thermodynamic quantities
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Initialize thermodynamic quantities
+  ! -------------------------------------------------------------------
   CALL FI_PROFILES_INITIALIZE(wrk1d)
 
-! -------------------------------------------------------------------
-! Initialize remeshing
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! Initialize remeshing
+  ! -------------------------------------------------------------------
   IF ( opt_main .EQ. 3 ) THEN
      CALL IO_READ_GRID('grid.trn', g_dst(1)%size,g_dst(2)%size,g_dst(3)%size, &
           g_dst(1)%scale,g_dst(2)%scale,g_dst(3)%scale, x_dst,y_dst,z_dst, dummy)
 
-! Check grids; Ox and Oz directions are assumed to be periodic
+     ! Check grids; Ox and Oz directions are assumed to be periodic
      dummy = (g_dst(1)%scale-g(1)%scale) / (x(g(1)%size,1)-x(g(1)%size-1,1))
      IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'TRANSFORM. Ox scales are not equal at the end.')
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Ox scales are not equal at the end.')
         CALL TLAB_STOP(DNS_ERROR_GRID_SCALE)
      ENDIF
      wrk1d(1:g(1)%size,1) = x(1:g(1)%size,1) ! we need extra space
 
      dummy = (g_dst(3)%scale-g(3)%scale) / (z(g(3)%size,1)-z(g(3)%size-1,1))
      IF ( ABS(dummy) .GT. C_1EM3_R ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'TRANSFORM. Oz scales are not equal')
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Oz scales are not equal')
         CALL TLAB_STOP(DNS_ERROR_GRID_SCALE)
      ENDIF
      wrk1d(1:g(3)%size,3) = z(1:g(3)%size,1) ! we need extra space
 
-! In the Oy direction, we allow to have a different box
+     ! In the Oy direction, we allow to have a different box
      jmax_aux = g(2)%size; subdomain = 0
 
      dummy = (y_dst(g_dst(2)%size)-y(g(2)%size,1)) / (y(g(2)%size,1)-y(g(2)%size-1,1))
@@ -370,11 +375,11 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
      ENDIF
 
      IF ( flag_extend .AND. flag_crop ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'TRANSFORM. Simultaneous extend and crop is undeveloped.')
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Simultaneous extend and crop is undeveloped.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
 
-! Reallocating memory space
+     ! Reallocating memory space
      idummy      = MAX(jmax_aux,MAX(g(1)%size,g(3)%size))
      isize_wrk1d = MAX(isize_wrk1d,idummy)
      isize_wrk1d = isize_wrk1d + 1
@@ -403,7 +408,7 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
      ALLOCATE(y_aux(isize_wrk1d))
      ALLOCATE(txc_aux(imax,jmax_aux,kmax))
 
-! Creating grid
+     ! Creating grid
      IF ( flag_crop ) THEN
         WRITE(str,'(I3)') subdomain(4)
         CALL TLAB_WRITE_ASCII(lfile, 'Croping above '//TRIM(ADJUSTL(str))//' for remeshing...')
@@ -442,9 +447,9 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   ENDIF
 
-! ###################################################################
-! Postprocess given list of files
-! ###################################################################
+  ! ###################################################################
+  ! Postprocess given list of files
+  ! ###################################################################
   DO it = 1,itime_size
      itime = itime_vec(it)
 
@@ -461,23 +466,10 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
         CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
      ENDIF
 
-! ###################################################################
-! Cropping
-! ###################################################################
+     ! ###################################################################
+     ! Cropping
+     ! ###################################################################
      IF ( opt_main .EQ. 1 ) THEN
-        IF ( subdomain(5) .NE. 1 .OR. subdomain(6) .NE. g(3)%size) THEN
-           CALL TLAB_WRITE_ASCII(efile,'TRANSFORM. Cropping only in Oy.')
-           CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        ENDIF
-        IF ( subdomain(1) .NE. 1 .OR. subdomain(2) .NE. g(1)%size) THEN
-           CALL TLAB_WRITE_ASCII(efile,'TRANSFORM. Cropping only in Oy.')
-           CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        ENDIF
-        IF ( subdomain(3) .LT. 1 .OR. subdomain(4) .GT. g(2)%size) THEN
-           CALL TLAB_WRITE_ASCII(efile,'TRANSFORM. Cropping out of bounds in Oy.')
-           CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        ENDIF
-
         IF ( icalc_flow .GT. 0 ) THEN
            DO iq = 1,inb_flow
               CALL TLAB_WRITE_ASCII(lfile,'Transfering data to new array...')
@@ -492,9 +484,9 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
            ENDDO
         ENDIF
 
-! ###################################################################
-! Extension
-! ###################################################################
+        ! ###################################################################
+        ! Extension
+        ! ###################################################################
      ELSE IF ( opt_main .EQ. 2 ) THEN
         IF ( icalc_flow .GT. 0 ) THEN
            DO iq = 1,inb_flow
@@ -510,9 +502,9 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
            ENDDO
         ENDIF
 
-! ###################################################################
-! Change grid
-! ###################################################################
+        ! ###################################################################
+        ! Change grid
+        ! ###################################################################
      ELSE IF ( opt_main .EQ. 3 ) THEN
 
         IF ( icalc_flow .GT. 0 ) THEN
@@ -555,9 +547,9 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
            ENDDO
         ENDIF
 
-! ###################################################################
-! Linear combination of fields
-! ###################################################################
+        ! ###################################################################
+        ! Linear combination of fields
+        ! ###################################################################
      ELSE IF ( opt_main .EQ. 4 ) THEN
         IF ( icalc_flow .GT. 0 ) THEN
            q_dst = q_dst + q *opt_vec(it+1)
@@ -567,15 +559,15 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
            s_dst = s_dst + s *opt_vec(it+1)
         ENDIF
 
-! ###################################################################
-! Filter
-! ###################################################################
+        ! ###################################################################
+        ! Filter
+        ! ###################################################################
      ELSE IF ( opt_main .EQ. 5 ) THEN
         IF ( icalc_flow .GT. 0 ) THEN
            DO iq = 1,inb_flow
               CALL TLAB_WRITE_ASCII(lfile,'Filtering...')
               q_dst(:,iq) = q(:,iq) ! in-place operation
-              IF ( FilterDomain(1)%type .EQ. DNS_FILTER_HELMHOLTZ ) &  ! Bcs depending on field
+              IF ( FilterDomain(1)%TYPE .EQ. DNS_FILTER_HELMHOLTZ ) &  ! Bcs depending on field
                    FilterDomain(2)%BcsMin = FilterDomainBcsFlow(iq)
               CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, q_dst(1,iq), wrk1d,wrk2d,txc)
            ENDDO
@@ -585,15 +577,15 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
            DO is = 1,inb_scal
               CALL TLAB_WRITE_ASCII(lfile,'Filtering...')
               s_dst(:,is) = s(:,is) ! in-place operation
-              IF ( FilterDomain(1)%type .EQ. DNS_FILTER_HELMHOLTZ ) & ! Bcs depending on field
+              IF ( FilterDomain(1)%TYPE .EQ. DNS_FILTER_HELMHOLTZ ) & ! Bcs depending on field
                    FilterDomain(2)%BcsMin = FilterDomainBcsScal(is)
               CALL OPR_FILTER(imax,jmax,kmax, FilterDomain, s_dst(1,is), wrk1d,wrk2d,txc)
            ENDDO
         ENDIF
 
-! ###################################################################
-! Transformation
-! ###################################################################
+        ! ###################################################################
+        ! Transformation
+        ! ###################################################################
      ELSE IF ( opt_main .EQ. 6 ) THEN
         IF      ( opt_function .EQ. 1 ) THEN
            CALL TRANS_FUNCTION(imax,jmax,kmax, s,s_dst, txc)
@@ -606,9 +598,9 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
         ENDIF
 
-! ###################################################################
-! Blend
-! ###################################################################
+        ! ###################################################################
+        ! Blend
+        ! ###################################################################
      ELSE IF ( opt_main .EQ. 7 ) THEN
         IF ( it .EQ. 1 ) opt_vec(2) = y(1,1) + opt_vec(2) *g(2)%scale
         WRITE(sRes,*) opt_vec(2),opt_vec(3); sRes = 'Blending with '//TRIM(ADJUSTL(sRes))
@@ -628,9 +620,9 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
         IF ( it .EQ. 1 ) opt_vec(3) = -opt_vec(3) ! flipping blending shape
 
-! ###################################################################
-! Adding mean profiles
-! ###################################################################
+        ! ###################################################################
+        ! Adding mean profiles
+        ! ###################################################################
      ELSE IF ( opt_main .EQ. 8 ) THEN
         IF ( icalc_flow .GT. 0 ) THEN
            DO iq = 1,inb_flow
@@ -646,11 +638,29 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
            ENDDO
         ENDIF
 
+        ! ###################################################################
+        ! Extrude
+        ! ###################################################################
+     ELSE IF ( opt_main .EQ. 9 ) THEN
+        IF ( icalc_flow .GT. 0 ) THEN
+           DO iq = 1,inb_flow
+              CALL TLAB_WRITE_ASCII(lfile,'Extruding along Oz...')
+              CALL TRANS_EXTRUDE(imax,jmax,kmax, subdomain, q(1,iq), q_dst(1,iq))
+           ENDDO
+        ENDIF
+
+        IF ( icalc_scal .GT. 0 ) THEN
+           DO is = 1,inb_scal
+              CALL TLAB_WRITE_ASCII(lfile,'Extruding along Oz...')
+              CALL TRANS_EXTRUDE(imax,jmax,kmax, subdomain, s(1,is), s_dst(1,is))
+           ENDDO
+        ENDIF
+
      ENDIF
 
-! ###################################################################
-! Writing transform fields
-! ###################################################################
+     ! ###################################################################
+     ! Writing transform fields
+     ! ###################################################################
      IF ( opt_main .NE. 4 .AND. opt_main .NE. 7 ) THEN
         IF ( icalc_flow .GT. 0 ) THEN
            flow_file=TRIM(ADJUSTL(flow_file))//'.trn'
@@ -664,221 +674,231 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
   ENDDO
 
-! ###################################################################
-! Final operations
-! ###################################################################
+  ! ###################################################################
+  ! Final operations
+  ! ###################################################################
   IF ( opt_main .EQ. 4 .OR. opt_main .EQ. 7 ) THEN
      IF ( icalc_flow .GT. 0 ) THEN
-        flow_file='flow.trn'
+       flow_file=TRIM(ADJUSTL(flow_file))//'.trn'
         CALL DNS_WRITE_FIELDS(flow_file, i2, imax_dst,jmax_dst,kmax_dst, inb_flow, isize_wrk3d, q_dst,wrk3d)
      ENDIF
      IF ( icalc_scal .GT. 0 ) THEN
-        scal_file='scal.trn'
+       scal_file=TRIM(ADJUSTL(scal_file))//'.trn'
         CALL DNS_WRITE_FIELDS(scal_file, i1, imax_dst,jmax_dst,kmax_dst, inb_scal_dst, isize_wrk3d, s_dst,wrk3d)
      ENDIF
   ENDIF
 
   CALL TLAB_STOP(0)
-END PROGRAM TRANSFIELDS
 
-!########################################################################
-!# DESCRIPTION
-!#
-!# Crop array a into array b in the first two indices
-!#
-!########################################################################
-SUBROUTINE TRANS_CROP(nx,ny,nz, subdomain, a, b)
+CONTAINS
+  !########################################################################
+  !# Crop array a into array b in the first two indices
+  !########################################################################
+  SUBROUTINE TRANS_CROP(nx,ny,nz, subdomain, a, b)
+    IMPLICIT NONE
 
-  IMPLICIT NONE
+    TINTEGER nx,ny,nz, subdomain(6)
+    TREAL, DIMENSION(nx,ny,nz)                          :: a
+    TREAL, DIMENSION(nx,subdomain(4)-subdomain(3)+1,nz) :: b
 
-  TINTEGER nx,ny,nz, subdomain(6)
-  TREAL, DIMENSION(nx,ny,nz)                          :: a
-  TREAL, DIMENSION(nx,subdomain(4)-subdomain(3)+1,nz) :: b
-
-! -----------------------------------------------------------------------
-  TINTEGER j, k
-
-! #######################################################################
-  DO k = 1,nz
-     DO j = subdomain(3),subdomain(4)
-        b(:,j-subdomain(3)+1,k) = a(:,j,k)
-     ENDDO
-  ENDDO
-
-  RETURN
-END SUBROUTINE TRANS_CROP
-
-!########################################################################
-!# DESCRIPTION
-!#
-!# Extend array a into array b in the first two indices
-!#
-!########################################################################
-SUBROUTINE TRANS_EXTEND(nx,ny,nz, planes, a, b)
-
-  IMPLICIT NONE
-
-  TINTEGER nx, ny, nz, planes(6)
-  TREAL, DIMENSION(nx,ny,nz)                                         :: a
-  TREAL, DIMENSION(planes(1)+nx+planes(2),planes(3)+ny+planes(4),nz) :: b
-
-! -----------------------------------------------------------------------
-  TINTEGER j, k
-
-! #######################################################################
-  DO k = 1,nz
-     b(1+planes(1):nx+planes(1),1+planes(3):ny+planes(3),k) = a(1:nx,1:ny,k)
-
-! extension in i
-     DO j = 1,ny
-        b(             1:   planes(1)          ,j,k) = b( 1+planes(1),j,k)
-        b(nx+planes(1)+1:nx+planes(1)+planes(2),j,k) = b(nx+planes(1),j,k)
-     ENDDO
-
-! extension in j; corners are now written
-     DO j = 1,planes(3)
-        b(:,j,k) = b(:, 1+planes(3),k)
-     ENDDO
-
-     DO j = ny+planes(3)+1,ny+planes(3)+planes(4)
-        b(:,j,k) = b(:,ny+planes(3),k)
-     ENDDO
-
-  ENDDO
-
-  RETURN
-END SUBROUTINE TRANS_EXTEND
-
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
-
-  USE TLAB_CONSTANTS, ONLY : efile
-  USE TLAB_VARS, ONLY : g, sbg, qbg
-
-  IMPLICIT NONE
-
-  TINTEGER flag_mode, is, nx,ny,nz
-  TREAL, DIMENSION(*),        INTENT(IN)  :: y
-  TREAL, DIMENSION(nx,ny,nz), INTENT(IN)  :: a
-  TREAL, DIMENSION(nx,ny,nz), INTENT(OUT) :: b
-
-  ! -----------------------------------------------------------------------
-  TINTEGER j
-  TREAL PROFILES, ycenter, dummy
-  EXTERNAL PROFILES
-
-  ! #######################################################################
-  IF ( flag_mode .EQ. 0 ) THEN ! Velocity
-    IF ( is .EQ. 1 ) THEN ! Only the mean velocity
-      ycenter = y(1) + g(2)%scale *qbg(1)%ymean
-      DO j = 1,ny
-        dummy =  PROFILES&
-        (qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, y(j))
-        b(:,j,:) = dummy + a(:,j,:)
-      ENDDO
-    ELSE
-      b = a
-    ENDIF
-
-  ELSE                         ! Scalars
-    ycenter = y(1) + g(2)%scale *sbg(is)%ymean
-    DO j = 1,ny
-      dummy =  PROFILES&
-      (sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, y(j))
-      b(:,j,:) = dummy + a(:,j,:)
+    ! #######################################################################
+    DO k = 1,nz
+       DO j = subdomain(3),subdomain(4)
+          b(:,j-subdomain(3)+1,k) = a(:,j,k)
+       ENDDO
     ENDDO
 
-  ENDIF
+    RETURN
+  END SUBROUTINE TRANS_CROP
 
-  RETURN
-END SUBROUTINE TRANS_ADD_MEAN
+  !########################################################################
+  !# Crop array a into array b in the first two indices
+  !########################################################################
+  SUBROUTINE TRANS_EXTRUDE(nx,ny,nz, subdomain, a, b)
+    IMPLICIT NONE
 
-!########################################################################
-!# DESCRIPTION
-!#
-!# Calculate b = f(a)
-!#
-!########################################################################
-SUBROUTINE TRANS_FUNCTION(nx,ny,nz, a,b, txc)
+    TINTEGER nx,ny,nz, subdomain(6)
+    TREAL, INTENT(IN   ) :: a(nx,ny,nz)
+    TREAL, INTENT(  OUT) :: b(subdomain(2)-subdomain(1)+1,subdomain(4)-subdomain(3)+1,subdomain(6)-subdomain(5)+1)
 
-  USE TLAB_VARS, ONLY : inb_scal, epbackground
-  USE THERMO_VARS, ONLY : imixture, MRATIO, GRATIO, dsmooth
-  USE THERMO_VARS, ONLY : THERMO_AI, WGHT_INV
+    ! #######################################################################
+    DO k = 1,subdomain(6)-subdomain(5)+1
+       b(:,:,k) = a(subdomain(1):subdomain(2),subdomain(3):subdomain(4),1)
+    ENDDO
 
-  IMPLICIT NONE
+    RETURN
+  END SUBROUTINE TRANS_EXTRUDE
 
-  TINTEGER nx,ny,nz
-  TREAL, DIMENSION(nx*ny*nz)   :: a, b
-  TREAL, DIMENSION(nx*ny*nz,*) :: txc
+  !########################################################################
+  !# Extend array a into array b in the first two indices
+  !########################################################################
+  SUBROUTINE TRANS_EXTEND(nx,ny,nz, planes, a, b)
 
-! -----------------------------------------------------------------------
-  TREAL qt_0,qt_1, h_0,h_1, p
-  TREAL LATENT_HEAT
+    IMPLICIT NONE
 
-! #######################################################################
-  imixture = MIXT_TYPE_AIRWATER
-  CALL THERMO_INITIALIZE
-  MRATIO  = C_1_R
-  dsmooth = C_0_R
-  inb_scal= 1
+    TINTEGER nx, ny, nz, planes(6)
+    TREAL, DIMENSION(nx,ny,nz)                                         :: a
+    TREAL, DIMENSION(planes(1)+nx+planes(2),planes(3)+ny+planes(4),nz) :: b
 
-  LATENT_HEAT = THERMO_AI(6,1,1)-THERMO_AI(6,1,3)
+    ! -----------------------------------------------------------------------
+    TINTEGER j, k
 
-  qt_0 = 9.0d-3;     qt_1 = 1.5d-3
-  h_0  = 0.955376d0; h_1  = 0.981965d0
-  p    = 0.940d0
+    ! #######################################################################
+    DO k = 1,nz
+       b(1+planes(1):nx+planes(1),1+planes(3):ny+planes(3),k) = a(1:nx,1:ny,k)
 
-  txc(:,1) = h_0  + a(:)*(h_1 -h_0 ) ! total enthalpy
-  txc(:,2) = qt_0 + a(:)*(qt_1-qt_0) ! total water, space for q_l
-  txc(:,3) = C_0_R
-  txc(:,4) = p                       ! pressure
+       ! extension in i
+       DO j = 1,ny
+          b(             1:   planes(1)          ,j,k) = b( 1+planes(1),j,k)
+          b(nx+planes(1)+1:nx+planes(1)+planes(2),j,k) = b(nx+planes(1),j,k)
+       ENDDO
 
-  CALL THERMO_AIRWATER_PH(nx,ny,nz, txc(1,2), txc(1,1), epbackground,p)        ! Calculate q_l
-  CALL THERMO_ANELASTIC_TEMPERATURE(nx,ny,nz, txc(1,1), epbackground, txc(1,5))
+       ! extension in j; corners are now written
+       DO j = 1,planes(3)
+          b(:,j,k) = b(:, 1+planes(3),k)
+       ENDDO
 
-! Calculate saturation specific humidity
-  CALL THERMO_POLYNOMIAL_PSAT(nx,ny,nz, txc(1,5), txc(1,1))
-  txc(:,1) = C_1_R/(MRATIO*txc(:,4)/txc(:,1)-C_1_R) *WGHT_INV(2) /WGHT_INV(1)
-  txc(:,1) = txc(:,1)/(C_1_R+txc(:,1))
+       DO j = ny+planes(3)+1,ny+planes(3)+planes(4)
+          b(:,j,k) = b(:,ny+planes(3),k)
+       ENDDO
 
-! Calculate parameter \beta (assuming c_p = c_p,d)
-  txc(:,3) = WGHT_INV(2)/WGHT_INV(1)/GRATIO*LATENT_HEAT*LATENT_HEAT / ( txc(:,5)*txc(:,5) )
+    ENDDO
 
-! Calculate s
-  b(:) = txc(:,2) - txc(:,1) * ( C_1_R + txc(:,3)*txc(:,2) ) / ( C_1_R + txc(:,3)*txc(:,1) )
+    RETURN
+  END SUBROUTINE TRANS_EXTEND
 
-  RETURN
-END SUBROUTINE TRANS_FUNCTION
+  !########################################################################
+  !# DESCRIPTION
+  !#
+  !########################################################################
+  SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
 
-!########################################################################
-!# DESCRIPTION
-!#
-!# b <- b + f(y)*a
-!#
-!########################################################################
-SUBROUTINE TRANS_BLEND(nx,ny,nz, params, y, a, b)
+    USE TLAB_CONSTANTS, ONLY : efile
+    USE TLAB_VARS, ONLY : g, sbg, qbg
 
-  IMPLICIT NONE
+    IMPLICIT NONE
 
-  TINTEGER nx,ny,nz
-  TREAL, DIMENSION(*)        :: params
-  TREAL, DIMENSION(ny)       :: y
-  TREAL, DIMENSION(nx,ny,nz) :: a, b
+    TINTEGER flag_mode, is, nx,ny,nz
+    TREAL, DIMENSION(*),        INTENT(IN)  :: y
+    TREAL, DIMENSION(nx,ny,nz), INTENT(IN)  :: a
+    TREAL, DIMENSION(nx,ny,nz), INTENT(OUT) :: b
 
-! -----------------------------------------------------------------------
-  TINTEGER j
-  TREAL shape, xi
+    ! -----------------------------------------------------------------------
+    TINTEGER j
+    TREAL PROFILES, ycenter, dummy
+    EXTERNAL PROFILES
 
-! #######################################################################
-  DO j = 1,ny
-     xi = ( y(j) - params(1) ) / params(2)
-     shape = C_05_R*( C_1_R + TANH(-C_05_R*xi) )
-     b(:,j,:) = b(:,j,:) + shape* a(:,j,:)
-  ENDDO
+    ! #######################################################################
+    IF ( flag_mode .EQ. 0 ) THEN ! Velocity
+       IF ( is .EQ. 1 ) THEN ! Only the mean velocity
+          ycenter = y(1) + g(2)%scale *qbg(1)%ymean
+          DO j = 1,ny
+             dummy =  PROFILES&
+                  (qbg(1)%TYPE, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, y(j))
+             b(:,j,:) = dummy + a(:,j,:)
+          ENDDO
+       ELSE
+          b = a
+       ENDIF
 
-RETURN
+    ELSE                         ! Scalars
+       ycenter = y(1) + g(2)%scale *sbg(is)%ymean
+       DO j = 1,ny
+          dummy =  PROFILES&
+               (sbg(is)%TYPE, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, y(j))
+          b(:,j,:) = dummy + a(:,j,:)
+       ENDDO
 
-END SUBROUTINE TRANS_BLEND
+    ENDIF
+
+    RETURN
+  END SUBROUTINE TRANS_ADD_MEAN
+
+  !########################################################################
+  !# DESCRIPTION
+  !#
+  !# Calculate b = f(a)
+  !#
+  !########################################################################
+  SUBROUTINE TRANS_FUNCTION(nx,ny,nz, a,b, txc)
+
+    USE TLAB_VARS, ONLY : inb_scal, epbackground
+    USE THERMO_VARS, ONLY : imixture, MRATIO, GRATIO, dsmooth
+    USE THERMO_VARS, ONLY : THERMO_AI, WGHT_INV
+
+    IMPLICIT NONE
+
+    TINTEGER nx,ny,nz
+    TREAL, DIMENSION(nx*ny*nz)   :: a, b
+    TREAL, DIMENSION(nx*ny*nz,*) :: txc
+
+    ! -----------------------------------------------------------------------
+    TREAL qt_0,qt_1, h_0,h_1, p
+    TREAL LATENT_HEAT
+
+    ! #######################################################################
+    imixture = MIXT_TYPE_AIRWATER
+    CALL THERMO_INITIALIZE
+    MRATIO  = C_1_R
+    dsmooth = C_0_R
+    inb_scal= 1
+
+    LATENT_HEAT = THERMO_AI(6,1,1)-THERMO_AI(6,1,3)
+
+    qt_0 = 9.0d-3;     qt_1 = 1.5d-3
+    h_0  = 0.955376d0; h_1  = 0.981965d0
+    p    = 0.940d0
+
+    txc(:,1) = h_0  + a(:)*(h_1 -h_0 ) ! total enthalpy
+    txc(:,2) = qt_0 + a(:)*(qt_1-qt_0) ! total water, space for q_l
+    txc(:,3) = C_0_R
+    txc(:,4) = p                       ! pressure
+
+    CALL THERMO_AIRWATER_PH(nx,ny,nz, txc(1,2), txc(1,1), epbackground,p)        ! Calculate q_l
+    CALL THERMO_ANELASTIC_TEMPERATURE(nx,ny,nz, txc(1,1), epbackground, txc(1,5))
+
+    ! Calculate saturation specific humidity
+    CALL THERMO_POLYNOMIAL_PSAT(nx,ny,nz, txc(1,5), txc(1,1))
+    txc(:,1) = C_1_R/(MRATIO*txc(:,4)/txc(:,1)-C_1_R) *WGHT_INV(2) /WGHT_INV(1)
+    txc(:,1) = txc(:,1)/(C_1_R+txc(:,1))
+
+    ! Calculate parameter \beta (assuming c_p = c_p,d)
+    txc(:,3) = WGHT_INV(2)/WGHT_INV(1)/GRATIO*LATENT_HEAT*LATENT_HEAT / ( txc(:,5)*txc(:,5) )
+
+    ! Calculate s
+    b(:) = txc(:,2) - txc(:,1) * ( C_1_R + txc(:,3)*txc(:,2) ) / ( C_1_R + txc(:,3)*txc(:,1) )
+
+    RETURN
+  END SUBROUTINE TRANS_FUNCTION
+
+  !########################################################################
+  !# DESCRIPTION
+  !#
+  !# b <- b + f(y)*a
+  !#
+  !########################################################################
+  SUBROUTINE TRANS_BLEND(nx,ny,nz, params, y, a, b)
+
+    IMPLICIT NONE
+
+    TINTEGER nx,ny,nz
+    TREAL, DIMENSION(*)        :: params
+    TREAL, DIMENSION(ny)       :: y
+    TREAL, DIMENSION(nx,ny,nz) :: a, b
+
+    ! -----------------------------------------------------------------------
+    TINTEGER j
+    TREAL shape, xi
+
+    ! #######################################################################
+    DO j = 1,ny
+       xi = ( y(j) - params(1) ) / params(2)
+       shape = C_05_R*( C_1_R + TANH(-C_05_R*xi) )
+       b(:,j,:) = b(:,j,:) + shape* a(:,j,:)
+    ENDDO
+
+    RETURN
+
+  END SUBROUTINE TRANS_BLEND
+
+END PROGRAM TRANSFIELDS
