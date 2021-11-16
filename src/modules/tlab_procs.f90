@@ -252,6 +252,7 @@ CONTAINS
 #ifdef USE_MPI
     CALL MPI_FINALIZE(ims_err)
 #endif
+    STOP
 
     RETURN
   END SUBROUTINE TLAB_STOP

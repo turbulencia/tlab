@@ -57,65 +57,103 @@ typical values are $2-3\delta$.
 \renewcommand{\arraystretch}{1.2}
 \centering
 \rowcolors{1}{gray!25}{white}
-\begin{tabular}{|l r r r p{0.4\textwidth}|}
+\begin{tabular}{|l >{\centering}p{0.2\textwidth} c c p{0.4\textwidth}|}
 %
 \hline
-\multicolumn{1}{>{\columncolor{gray!50}}c}{\bf Type} &
+\multicolumn{1}{|>{\columncolor{gray!50}}c}{\bf Type} &
 \multicolumn{1}{>{\columncolor{gray!50}}c}{\bf $\mathbf{g}(\boldsymbol{\xi})$} &
 \multicolumn{1}{>{\columncolor{gray!50}}c}{\bf $\boldsymbol{\delta}_g/\boldsymbol{\delta}$ }&
 \multicolumn{1}{>{\columncolor{gray!50}}c}{\bf $\boldsymbol{\delta}_i/\boldsymbol{\delta}$ }&
-\multicolumn{1}{>{\columncolor{gray!50}}c}{\bf Notes}\\
+\multicolumn{1}{>{\columncolor{gray!50}}c|}{\bf Notes}\\
 \hline
-Hyperbolic tangent  &  $(1/2)\tanh(-\xi/2)$ & $4$ & & Used in shear layer because it is the
-reference profile commonly used in linear stability analysis. The parameter
-$\delta$ is equal to the momentum thickness. Used because of available linear stability analysis.\\
-Error function & $(1/2)\text{erf}(-\xi/2)$ & $2\sqrt{\pi}$ & & Used in diffusion dominated
-problems because it is a solution of the diffusion equation.\\
-Linear & $-\xi$ & 1 & & Varying $\Delta f$ along $\delta$.\\
-Ekman & $1-\exp(-\xi)\cos(\xi)$& 1 & & Velocity component along geostrophic wind.\\
-\rowcolor{gray!25}
-  & $-\exp(-\xi)\sin(\xi)$&  & & Normal component. \\
-\hline
-Gaussian & $\exp(-\xi^2/2)$ & $1.65$ & $\sqrt{2\pi}$& Gaussian bell with standard deviation equal to $\delta$. \\
-Bickley & $1/\cosh^2(\xi/2)$ & & $4$& Bell shape used in the linear stability of
-jets. Used because of available linear stability analysis.\\
-Parabolic & $(1+\xi/2)(1-\xi/2)$ & & $8/3$& Parabola crossing the
-reference value at $x_{2,ref}\pm 2\delta$. Used for Poiseuille and channel
-flows. The thickness $\delta_i$ is calculated using only the positive part of
-the profile in the integral.\\
+Hyperbolic tangent  & $(1/2)\tanh(-\xi/2)$ & $4$ & &
+                      Used in shear layer because it is the reference profile commonly used in linear stability analysis. The parameter $\delta$ is equal to the momentum thickness. Used because of available linear stability analysis.\\
+Error function      & $(1/2)\text{erf}(-\xi/2)$ & $2\sqrt{\pi}$ & &
+                      Used in diffusion dominated problems because it is a solution of the diffusion equation.\\
+Linear              & $-\xi$ & 1 & & Varying $\Delta f$ along $\delta$.\\
+Ekman               & $1-\exp(-\xi)\cos(\xi)$ \newline $\phantom{1}-\exp(-\xi)\sin(\xi)$& 1 & &
+                      Velocity component along geostrophic wind. \newline Normal component.\\
+Gaussian            & $\exp(-\xi^2/2)$ & $1.65$ & $\sqrt{2\pi}$&
+                      Gaussian bell with standard deviation equal to $\delta$. \\
+Bickley             & $1/\cosh^2(\xi/2)$ & & $4$&
+                      Bell shape used in the linear stability of jets. Used because of available linear stability analysis.\\
+Parabolic           & $(1+\xi/2)(1-\xi/2)$ & & $8/3$&
+                      Parabola crossing the reference value at $x_{2,ref}\pm 2\delta$. Used for Poiseuille and channel flows. The thickness $\delta_i$ is calculated using only the positive part of the profile in the integral.\\
 \hline
 \end{tabular}
-\caption{Different normalized profiles used in equation~(\ref{equ:profile}). The
-  third column contains the gradient thickness $\delta_g$, defined by
-  equation~(\ref{equ:deltag}), written explicitly as a function of the thickness
-  parameter $\delta$. The fourth column contains the integral thickness
-  $\delta_i$, defined by equation~(\ref{equ:deltai})}\label{tab:profile}
+\caption{Different normalized profiles used in equation~(\ref{equ:profile}). The third column contains the gradient thickness $\delta_g$, defined by equation~(\ref{equ:deltag}), written explicitly as a function of the thickness parameter $\delta$. The fourth column contains the integral thickness $\delta_i$, defined by equation~(\ref{equ:deltai})}\label{tab:profile}
 \end{table}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Initial conditions}
 
-There are several reasons to construct elaborated initial conditions beyond simply white random noise. For instance, to ascertain the duration of the initial transient before the flow enters into the fully developed turbulent regime; we can do that by varying the initial conditions and for that we need certain control of those initial conditions. We can also control certain aspects of that transient by using results from stability analysis and exciting or not certain modes; white noise simply excites all of them equally, and also that higher frequency content is dissipated much faster, which might render the energy amount that we use in the initialization misleading. In this respect, it maybe appropriate to say that the control of the duration of that transient is relatively difficult; on the other hand, the peak of turbulence intensities can be indeed controlled, if necessary e.g. because of resolution constraints. Third, it provides us with another tool to validate the code and algorithms, since we can compare results with analytical solutions.
+White noise is typically added to mean profiles to accelerate the transition to turbulence. There are reasons, however, to construct initial conditions that are more elaborated than white noise:
+\begin{itemize}
+  \item To be able to compare with analytical solutions and thereby validate the code and algorithms.
+  \item To ascertain the duration of the initial transient before the flow enters into the fully developed turbulent regime. We can do that by varying the initial conditions in a controlled way.
+  \item To control certain aspects of that transient by using results from stability analysis and exciting or not certain modes. White noise excites all of them equally, and the higher frequency content is dissipated much faster, which might render the energy amount that we use in the initialization misleading. %In this respect, it maybe appropriate to say that the control of the duration of that transient is relatively difficult; on the other hand, the peak of turbulence intensities can be indeed controlled, if necessary e.g. because of resolution constraints.
+\end{itemize}
 
 The first step is to defined a mean background profile according to the previous section. For instance, a hyperbolic tangent profile for the mean streamwise velocity, $\bar{u}_1(x_2)$, while all other mean velocity components are set to zero.  The upper stream has a velocity $u_{1,ref}-\Delta u/2$ and the lower stream has a velocity $u_{1,ref}+\Delta u/2$ (see figure~\ref{fig:profile}). The mean density (or the mean temperature) can be similarly initialized, and a mean pressure is set to a uniform value $p_0$. The mean scalar can be similarly initialized.
 
-In addition to the mean values, broadband fluctuations are used to accelerate the transition to turbulence. This is achieved by generating a random field on which is imposed an isotropic turbulence spectrum of one of the following forms:
+In addition to the mean values, discrete or broadband perturbation can be added.
+
+\subsection{Discrete Perturbations}
+
+For the general case of a scalar field $s$, we consider the linear superposition of $m$ modes of the form
 \begin{equation}
-  \begin{array}{lll}
-    \text{uniform} &    E(f) = &1 \;,\\
-    \text{quadratic} &  E(f) = &(f/f_0)^2 \exp[-2 (f/f_0)] \;,\\
-    \text{quartic} &    E(f) = &(f/f_0)^4 \exp[-2 (f/f_0)^2] \;,\\
-    \text{Gaussian} &   E(f) = & \exp[-(1/2)(f/f_0-1)^2/(\sigma/f_0)^2] \;,
-  \end{array}
-  \label{equ:spectra}
+  s_m = A_mf(y) \cos(w_{xm}x+\phi_{xm})\cos(w_{zm}z+\phi_{zm})\;, \\
 \end{equation}
-where $f$ is the spatial frequency and $f_0$ is the peak spatial frequency. The extent of the turbulence is limited in the cross-stream direction by an exponential decay over a specified thickness of the order of the initial shear layer thickness. The solenoidal constraint is imposed on this random turbulent field. Such quasi-incompressible fluctuations minimize compressibility transients \cite{Erlebacher:1990}. The pressure fluctuations are obtained from the Poisson equation for incompressible flow.
+where $f(y)$ is one of the shape functions discussed before.
+
+For the particular case of the velocity field, we consider the linear superposition of $m$ modes of the form
+\begin{eqnarray}
+  u_m &= &A_mg(y)\,c_{xm}         \sin(\omega_{xm}x+\phi_{xm})\cos(\omega_{zm}z+\phi_{zm})\;, \\
+  v_m &= &A_mf(y)\phantom{c_{xm}} \cos(\omega_{xm}x+\phi_{xm})\cos(\omega_{zm}z+\phi_{zm})\;, \\
+  w_m &= &A_mg(y)\,c_{zm}         \cos(\omega_{xm}x+\phi_{xm})\sin(\omega_{zm}z+\phi_{zm})\;,
+\end{eqnarray}
+where
+\begin{equation*}
+  \begin{array}{lll}
+    c_{xm}=1/\omega_{xm}    & c_{zm}=0            & \text{if } \omega_{zm}=0\;, \\
+    c_{xm}=0           & c_{zm}=1/\omega_{zm}     & \text{if } \omega_{xm}=0\;, \\
+    c_{xm}=1/(2\omega_{xm}) & c_{zm}=1/(2\omega_{zm})  & \text{otherwise}\;,
+  \end{array}
+\end{equation*}
+and $g(y)=-f'(y)$. Each mode satisfies the solenoidal constraint.
+
+\subsection{Broadband Perturbations}
+
+We generate a random field on which an isotropic turbulence spectrum  is imposed according to the spectral functions in Table~\ref{tab:spectra}.
+
+\begin{table}[!h]
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\centering
+\rowcolors{1}{gray!25}{white}
+\begin{tabular}{|l c p{0.4\textwidth}|}
+%
+\hline
+\rowcolor{gray!50}
+\multicolumn{1}{|>{\columncolor{gray!50}}c}{\bf Type} &
+\multicolumn{1}{>{\columncolor{gray!50}}c}{\bf $E(f)$} &
+\multicolumn{1}{>{\columncolor{gray!50}}c|}{\bf Notes}\\
+uniform   & $1$                                 & ~\\
+quadratic & $(f/f_0)^2 \exp[-2 (f/f_0)]$        & ~\\
+quartic   & $(f/f_0)^4 \exp[-2 (f/f_0)^2]$      & ~\\
+Gaussian  & $\exp[-(1/2)(f/f_0-1)^2/(\sigma/f_0)^2]$ & ~\\
+\hline
+\end{tabular}
+\caption{Different spectral functions that can be used to create a random field. The variable $f$ is the spatial frequency and the parameter $f_0$ is the peak spatial frequency. }\label{tab:spectra}
+\end{table}
+
+After these three-dimensional field is created, it is multiplied by a shape function to control the spatial location of this random fluctuation. In case of the velocity field, the solenoidal constraint is imposed on this random field. Such quasi-incompressible fluctuations minimize compressibility transients \cite{Erlebacher:1990}. The pressure fluctuations are obtained from the Poisson equation for incompressible flow.
 
 \begin{SCfigure}
   \includegraphics[clip,width=0.6\textwidth]{figs/spectra}
-  \caption{Different power spectral densities available as initial conditions, equation~(\ref{equ:spectra}). Normalized such that all of them have equal integral. The Gaussian profile is plotted for the case $\sigma/f_0=1/6$ typically used in the simulations.}
-  \label{fig:eq-spc}
+  \caption{Different power spectral densities available as initial conditions, Table~(\ref{tab:spectra}). Normalized such that all of them have equal integral. The Gaussian profile is plotted for the case $\sigma/f_0=1/6$ typically used in the simulations.}
+  \label{fig:spectra}
 \end{SCfigure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
