@@ -2,20 +2,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "run_debug_little_channel",
+            "name": "run_debug_little",
             // "name": "run_debug_little",
             "type": "cppdbg",
             "request": "launch",
-            "program":"${workspaceRoot}/test_debug_little_channel/dns.x",
-            // "program":"${workspaceRoot}/test_debug_little/dns.x",
+            "program":"${workspaceRoot}/test_debug/dns.x",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceRoot}/test_debug_little_channel/",
-            // "cwd": "${workspaceRoot}/test_debug_little/",
+            "cwd": "${workspaceRoot}/test_debug/",
             "externalConsole": false,
             "MIMode": "gdb",
-            "preLaunchTask": "build_debug_little_channel"
-            // "preLaunchTask": "build_debug_little"
+            "preLaunchTask": "build_DEBUG"
         }
     ]
 }  
