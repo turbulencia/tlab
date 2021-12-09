@@ -1,4 +1,4 @@
-PROGRAM VPENTAD
+PROGRAM VPENTADP
 
   IMPLICIT NONE
   
@@ -83,4 +83,4 @@ PROGRAM VPENTAD
   WRITE(*,*) 'Relative error ....:', sqrt(error)/sqrt(sol)
 
   STOP
-END PROGRAM VPENTAD
+END PROGRAM VPENTADP
