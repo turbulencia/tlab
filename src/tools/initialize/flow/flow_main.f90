@@ -27,10 +27,10 @@ PROGRAM INIFLOW
   ! -------------------------------------------------------------------
   ! Additional local arrays
 #ifdef USE_CGLOC
-  TREAL, DIMENSION(:),   ALLOCATABLE, SAVE         :: ci,cj,ck, ipos,jpos,kpos
+  TREAL, DIMENSION(:), ALLOCATABLE, SAVE :: ci,cj,ck, ipos,jpos,kpos
 #endif
 
-  TREAL, DIMENSION(:),   POINTER :: e, rho, p, T
+  TREAL, DIMENSION(:), POINTER :: e, rho, p, T
 
   !########################################################################
   CALL TLAB_START()
@@ -45,12 +45,12 @@ PROGRAM INIFLOW
   CALL TLAB_MPI_INITIALIZE
 #endif
 
-  inb_wrk2d=MAX(inb_wrk2d,3)
+  inb_wrk2d = MAX(inb_wrk2d,3)
   isize_wrk3d = isize_txc_field
 
-  IF ( flag_u .EQ. 0 ) THEN; inb_txc = 2
-  ELSE;                      inb_txc = 8
-  ENDIF
+  IF ( flag_u == 0 ) THEN; inb_txc = 2
+  ELSE;                    inb_txc = 8
+  END IF
 
   CALL TLAB_ALLOCATE(C_FILE_LOC)
 
@@ -59,138 +59,105 @@ PROGRAM INIFLOW
   CALL FDM_INITIALIZE(y, g(2), wrk1d)
   CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
+  IF ( flag_u /= 0 ) THEN ! Initialize Poisson Solver
+     IF ( ifourier == 1 .AND. g(1)%periodic .AND. g(3)%periodic ) THEN
+        CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
+
+     ELSE
 #ifdef USE_CGLOC
-  IF ( flag_u .NE. 0 )THEN
-    ALLOCATE(ci(isize_field*2))
-    ALLOCATE(cj(isize_field*2))
-    ALLOCATE(ck(isize_field*2))
-    ALLOCATE(ipos(imax*4))
-    ALLOCATE(jpos(jmax*4))
-    ALLOCATE(kpos(kmax*4))
-  ENDIF
+        ALLOCATE(ci(isize_field*2))
+        ALLOCATE(cj(isize_field*2))
+        ALLOCATE(ck(isize_field*2))
+        ALLOCATE(ipos(imax*4))
+        ALLOCATE(jpos(jmax*4))
+        ALLOCATE(kpos(kmax*4))
+
+        IF ( .NOT. g(1)%uniform .OR. .NOT. g(2)%uniform ) THEN
+           CALL TLAB_WRITE_ASCII(lfile, 'Initializing conjugate gradient, non-uniform grid, second-order.')
+           cg_unif = 1; cg_ord = 2
+           ! to be rewritten in terms of grid derived type
+           ! CALL CGBC2(cg_unif, imode_fdm, imax,jmax,kmax,g(3)%size, &
+           !      i1bc,j1bc,k1bc, scalex,scaley,scalez, dx,dy,dz, ipos,jpos,kpos,ci,cj,ck, wrk2d)
+        ELSE
+           CALL TLAB_WRITE_ASCII(lfile, 'Initializing conjugate gradient, uniform grid, fourth-order.')
+           cg_unif = 0; cg_ord = 4
+           ! CALL CGBC4(cg_unif, imax,jmax,kmax,g(3)%size, &
+           !      i1bc,j1bc,k1bc, scalex,scaley,scalez, dx,dy,dz, ipos,jpos,kpos,ci,cj,ck, wrk2d)
+        END IF
+#else
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. CG routines needed.')
+        CALL TLAB_STOP(DNS_ERROR_OPTION)
 #endif
+     END IF
+
+  END IF
 
   ! ###################################################################
-  CALL TLAB_WRITE_ASCII(lfile,'Initializing flow fiels.')
-
-  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-    e   => q(:,4)
-    rho => q(:,5)
-    p   => q(:,6)
-    T   => q(:,7)
-  ENDIF
-
-  IF ( flag_u .NE. 0 ) THEN ! Initialize Poisson Solver
-    IF ( ifourier .EQ. 1 .AND. g(1)%periodic .AND. g(3)%periodic ) THEN
-      CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
-
-    ELSE
-#ifdef USE_CGLOC
-      IF ( .NOT. g(1)%uniform .NOT. .OR. g(2)%uniform ) THEN
-        CALL TLAB_WRITE_ASCII(lfile, 'Initializing conjugate gradient, non-uniform grid, second-order.')
-        cg_unif = 1; cg_ord = 2
-        ! to be rewritten in terms of grid derived type
-        ! CALL CGBC2(cg_unif, imode_fdm, imax,jmax,kmax,g(3)%size, &
-        !      i1bc,j1bc,k1bc, scalex,scaley,scalez, dx,dy,dz, ipos,jpos,kpos,ci,cj,ck, wrk2d)
-      ELSE
-        CALL TLAB_WRITE_ASCII(lfile, 'Initializing conjugate gradient, uniform grid, fourth-order.')
-        cg_unif = 0; cg_ord = 4
-        ! CALL CGBC4(cg_unif, imax,jmax,kmax,g(3)%size, &
-        !      i1bc,j1bc,k1bc, scalex,scaley,scalez, dx,dy,dz, ipos,jpos,kpos,ci,cj,ck, wrk2d)
-      ENDIF
-#else
-      CALL TLAB_WRITE_ASCII(efile, 'INIFLOW: CG routines needed.')
-      CALL TLAB_STOP(DNS_ERROR_OPTION)
-#endif
-    ENDIF
-
-  ENDIF
-
   itime = 0; rtime = C_0_R
   q = C_0_R
 
   ! ###################################################################
-  ! Pressure and density mean fields
-  ! ###################################################################
-#ifdef TRACE_ON
-  CALL TLAB_WRITE_ASCII(tfile, 'INIFLOW: Section 1')
-#endif
-
-  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-    CALL PRESSURE_MEAN(p,T,s, wrk1d)
-
-#ifdef CHEMISTRY
-    IF ( ireactive .EQ. CHEM_NONE ) THEN
-#endif
-      CALL DENSITY_MEAN(rho,p,T,s, txc, wrk1d,wrk2d,wrk3d)
-
-#ifdef CHEMISTRY
-    ELSE
-      IF ( icalc_scal .EQ. 1 ) THEN
-        CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal,inb_scal, isize_wrk3d, s(1,inb_scal), wrk3d)
-        IF ( ireactive .EQ. CHEM_FINITE .AND. ichem_config .NE. CHEM_PREMIXED .AND. flag_mixture .EQ. 2 ) THEN ! Initialize density from flame
-          r0   = C_0_R
-          CALL CHEM_READ_TEXT(flame_ini_file, i11, i11, i2, isize_field, r0, s(1,inb_scal), rho, isize_wrk3d, wrk3d)
-        ELSE
-          CALL THERMO_BURKESCHUMANN(rho, s(1,inb_scal))
-        ENDIF
-      ENDIF
-      CALL TLAB_WRITE_ASCII(efile, 'INIFLOW: Chemistry part to be checked')
-      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-    ENDIF
-#endif
-
-  ENDIF
-
-! ###################################################################
-! Velocity
-! ###################################################################
-#ifdef TRACE_ON
-  CALL TLAB_WRITE_ASCII(tfile, 'INIFLOW: Section 2')
-#endif
+  CALL TLAB_WRITE_ASCII(lfile,'Initializing velocity.')
 
   CALL VELOCITY_MEAN( q(1,1),q(1,2),q(1,3), wrk1d )
 
   SELECT CASE( flag_u )
   CASE( 1 )
-    CALL VELOCITY_DISCRETE(txc(1,1),txc(1,2),txc(1,3), wrk1d, wrk2d)
-    q(1:isize_field,1:3) =  q(1:isize_field,1:3) + txc(1:isize_field,1:3)
+     CALL VELOCITY_DISCRETE(txc(1,1),txc(1,2),txc(1,3), wrk1d, wrk2d)
+     q(1:isize_field,1:3) =  q(1:isize_field,1:3) + txc(1:isize_field,1:3)
 
   CASE( 2,3,4 )
-    CALL VELOCITY_BROADBAND(txc(1,1),txc(1,2),txc(1,3), txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), wrk1d,wrk2d,wrk3d)
-    q(1:isize_field,1:3) =  q(1:isize_field,1:3) + txc(1:isize_field,1:3)
+     CALL VELOCITY_BROADBAND(txc(1,1),txc(1,2),txc(1,3), txc(1,4),txc(1,5),txc(1,6),txc(1,7),txc(1,8), wrk1d,wrk2d,wrk3d)
+     q(1:isize_field,1:3) =  q(1:isize_field,1:3) + txc(1:isize_field,1:3)
 
   END SELECT
 
-! ###################################################################
-! Pressure and density fluctuation fields
-! ###################################################################
-#ifdef TRACE_ON
-  CALL TLAB_WRITE_ASCII(tfile, 'INIFLOW: Section 3')
+  ! ###################################################################
+  IF ( imode_eqns == DNS_EQNS_TOTAL .OR. imode_eqns == DNS_EQNS_INTERNAL ) THEN
+     CALL TLAB_WRITE_ASCII(lfile,'Initializing pressure and density.')
+     e   => q(:,4)
+     rho => q(:,5)
+     p   => q(:,6)
+     T   => q(:,7)
+
+     CALL PRESSURE_MEAN(p,T,s, wrk1d)
+     CALL DENSITY_MEAN(rho,p,T,s, txc, wrk1d,wrk2d,wrk3d)
+
+#ifdef CHEMISTRY
+     IF ( ireactive /= CHEM_NONE .AND. icalc_scal == 1 ) THEN
+        CALL DNS_READ_FIELDS(TRIM(ADJUSTL(tag_scal))//'ics', i1, imax,jmax,kmax, inb_scal,inb_scal, isize_wrk3d, s(1,inb_scal), wrk3d)
+        IF ( ireactive == CHEM_FINITE .AND. ichem_config /= CHEM_PREMIXED .AND. flag_mixture == 2 ) THEN ! Initialize density from flame
+           r0   = C_0_R
+           CALL CHEM_READ_TEXT(flame_ini_file, i11, i11, i2, isize_field, r0, s(1,inb_scal), rho, isize_wrk3d, wrk3d)
+        ELSE
+           CALL THERMO_BURKESCHUMANN(rho, s(1,inb_scal))
+        END IF
+     END IF
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Chemistry part to be checked')
+     CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
 #endif
 
-  IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-    IF ( flag_u .NE. 0 ) THEN
-      CALL PRESSURE_FLUCTUATION(q(1,1),q(1,2),q(1,3),rho,p,txc(1,1), &
-      txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
-    ENDIF
+     IF ( flag_u /= 0 ) THEN
+        CALL PRESSURE_FLUCTUATION(q(1,1),q(1,2),q(1,3),rho,p,txc(1,1), &
+             txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+     END IF
 
-    IF ( imixture .GT. 0 ) THEN
-      CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
-    ENDIF
+     IF ( imixture > 0 ) THEN
+        CALL DNS_READ_FIELDS(TRIM(ADJUSTL(tag_scal))//'ics', i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
+     END IF
 
-    IF ( flag_t .EQ. 4 .OR. flag_t .EQ. 5 ) THEN
-      CALL DENSITY_FLUCTUATION(flag_t, s,p,rho, txc(1,1),txc(1,2), wrk2d,wrk3d)
-    ENDIF
+     IF ( flag_t == 4 .OR. flag_t == 5 ) THEN
+        CALL DENSITY_FLUCTUATION(flag_t, s,p,rho, txc(1,1),txc(1,2), wrk2d,wrk3d)
+     END IF
 
-    ! Calculate specfic energy. Array s should contain the species fields at this point.
-    CALL THERMO_THERMAL_TEMPERATURE(imax,jmax,kmax, s, p, rho, txc(1,1))
-    CALL THERMO_CALORIC_ENERGY(imax,jmax,kmax, s, txc(1,1), e)
+     ! Calculate specfic energy. Array s should contain the species fields at this point.
+     CALL THERMO_THERMAL_TEMPERATURE(imax,jmax,kmax, s, p, rho, txc(1,1))
+     CALL THERMO_CALORIC_ENERGY(imax,jmax,kmax, s, txc(1,1), e)
 
-  ENDIF
+  END IF
 
   ! ###################################################################
-  CALL DNS_WRITE_FIELDS('flow.ics', i2, imax,jmax,kmax, inb_flow, isize_wrk3d, q, wrk3d)
+  CALL DNS_WRITE_FIELDS(TRIM(ADJUSTL(tag_flow))//'ics', i2, imax,jmax,kmax, inb_flow, isize_wrk3d, q, wrk3d)
 
   CALL TLAB_STOP(0)
 END PROGRAM INIFLOW
