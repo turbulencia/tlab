@@ -5,7 +5,7 @@ PROGRAM VPENTADP
 #include "types.h"
 #include "integers.h"
 
-  TINTEGER,                     parameter :: nmax = 35, len = 5
+  TINTEGER,                     parameter :: nmax = 32, len = 5
   TREAL,    dimension(nmax,5)             :: a
   TREAL,    dimension(len,nmax)           :: x, f
   TREAL,    dimension(nmax)               :: g, h
@@ -55,10 +55,11 @@ PROGRAM VPENTADP
 ! compute forcing term
   imm1 = nmax - 1 
   DO n = 1,nmax
-     im2 = n-2; im2=im2+imm1; im2=MOD(im2,nmax)+1
-     im1 = n-1; im1=im1+imm1; im1=MOD(im1,nmax)+1
-     ip1 = n+1; ip1=ip1+imm1; ip1=MOD(ip1,nmax)+1
-     ip2 = n+2; ip2=ip2+imm1; ip2=MOD(ip2,nmax)+1
+     im2 = MOD(n+nmax-3,nmax)+1!n-2; im2=im2+imm1; im2=MOD(im2,nmax)+1
+     im1 = MOD(n+nmax-2,nmax)+1!n-1; im1=im1+imm1; im1=MOD(im1,nmax)+1
+     ip1 = MOD(n,       nmax)+1!n+1; ip1=ip1+imm1; ip1=MOD(ip1,nmax)+1
+     ip2 = MOD(n+1,     nmax)+1!n+2; ip2=ip2+imm1; ip2=MOD(ip2,nmax)+1
+     WRITE(*,*) im2,im1,n,ip1,ip2
      DO ij = 1,len
         f(ij,n) = x(ij,im2)*a_a(n) + x(ij,im1)*a_b(n) + x(ij,n)*a_c(n) + x(ij,ip1)*a_d(n) + x(ij,ip2)*a_e(n)
      ENDDO
