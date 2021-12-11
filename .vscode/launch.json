@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "run_debug_little",
+            // "name": "run_debug_little",
+            "type": "cppdbg",
+            "request": "launch",
+            "program":"${workspaceRoot}/test_debug/dns.x",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/test_debug/",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "build_DEBUG"
+        }
+    ]
+}  
