@@ -289,7 +289,6 @@ PROGRAM SPECTRA
 #endif
 
   isize_wrk2d = MAX(isize_wrk2d,isize_aux*kmax); inb_wrk2d = MAX(inb_wrk2d,6)
-!   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
 
   ALLOCATE(outx(kxmax*jmax_aux, nfield))
   ALLOCATE(outz(kzmax*jmax_aux, nfield))
@@ -505,7 +504,7 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
         ENDIF
      ENDIF
 
-! Remove fluctuation
+! remove mean -- fluctuation only for spectrum
      IF ( opt_main .GE. 5 ) THEN ! 3D spectra
         DO iv = 1,nfield_ref
           dummy = AVG1V2D(imax*jmax,i1,kmax, i1, i1, vars(iv)%field)  ! 3D average

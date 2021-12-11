@@ -89,10 +89,12 @@ SUBROUTINE DNS_FILTER()
   ENDIF
 
   ! -------------------------------------------------------------------
-  IF ( icalc_scal .EQ. 1 .AND. ilimit_scal .EQ. 1 ) THEN
-    DO ij = 1,isize_field
-      s(ij,is) = MIN(MAX(s(ij,is),s_bound_min(is)), s_bound_max(is))
-    ENDDO
+  IF ( inb_scal .GT. 0 .AND. ilimit_scal .EQ. 1 ) THEN
+     DO is =1,inb_scal
+        DO ij = 1,isize_field
+           s(ij,is) = MIN(MAX(s(ij,is),s_bound_min(is)), s_bound_max(is))
+        ENDDO
+     ENDDO
   ENDIF
 
   ! -------------------------------------------------------------------

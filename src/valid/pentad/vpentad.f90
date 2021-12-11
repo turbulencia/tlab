@@ -9,7 +9,7 @@ PROGRAM VPENTAD
   TREAL, dimension(nmax,5)          :: a, b, c
   TREAL, dimension(len,nmax)        :: x, f
 
-  TINTEGER n, ij, seed
+  TINTEGER n, ij, seed,im2,im1,ip1,ip2
   TREAL RAN0, error, sol
 
 ! ###################################################################
@@ -68,8 +68,13 @@ PROGRAM VPENTAD
 
 ! compute forcing term
   DO n = 1,nmax
+     im2=MOD(n+nmax-3,nmax)+1
+     im1=MOD(n+nmax-2,nmax)+1
+     ip1=MOD(n,nmax)+1
+     ip2=MOD(n+1,nmax)+1
+     WRITE(*,*) im2,im1,n,ip1,ip2
      DO ij = 1,len
-        f(ij,n) = x(ij,n-2)*a_a(n) + x(ij,n-1)*a_b(n) + x(ij,n)*a_c(n) + x(ij,n+1)*a_d(n) + x(ij,n+2)*a_e(n)
+        f(ij,n) = x(ij,im2)*a_a(n) + x(ij,im1)*a_b(n) + x(ij,n)*a_c(n) + x(ij,ip1)*a_d(n) + x(ij,ip2)*a_e(n)
      ENDDO
   ENDDO
 
