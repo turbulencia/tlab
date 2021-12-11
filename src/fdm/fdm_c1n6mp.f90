@@ -13,8 +13,8 @@
 !# Implementation of the first derivative finite difference with
 !# 6th order pentadiagonal compact scheme by JCP Lele 1992, periodic.
 !# Interior points according to Eq. 2.1.10. Similar truncation error like 
-!# Eq. 2.1.7 with (\alpha=1/3). Here alpha value (\alpha=0.6047306974511406)
-!# is chosen such, that no inflection point in w'(w) appears.
+!# Eq. 2.1.7 with (\alpha=1/3). Here the alpha value is chosen such, 
+!# that no inflection point in w'(w) appears.
 !#
 !########################################################################
 !# ARGUMENTS 
@@ -24,6 +24,14 @@
 !#
 !########################################################################
 #include "types.h"
+
+! coefficients LHS
+#define C_C1N6MP_ALPHA_L 0.604730585697398d+0
+#define C_C1N6MP_BETA_L  0.108558900945626d+0
+! coefficients RHS
+#define C_C1N6MP_AD2_L   0.619462713898740d+0
+#define C_C1N6MP_BD4_L   0.284700510015759d+0
+#define C_C1N6MP_CD6_L   0.814191757092195d-2
 
 ! #######################################################################
 ! Left-hand side; pentadiagonal matrix of the linear system
@@ -41,16 +49,12 @@ SUBROUTINE FDM_C1N6MP_LHS(imax, dx, a,b,c,d,e)
   TREAL                               :: alpha, beta
 
 ! ###################################################################
-! LHS coefficients of the modified pentadiagonal scheme
-  alpha = 0.604730585697398
-  beta  = (C_2_R/C_5_R)*(alpha - C_1_R/C_3_R)
-
   DO i = 1,imax
-    a(i) = beta 
-    b(i) = alpha
-    c(i) = 1
-    d(i) = alpha
-    e(i) = beta 
+    a(i) = C_C1N6MP_BETA_L 
+    b(i) = C_C1N6MP_ALPHA_L
+    c(i) = C_1_R
+    d(i) = C_C1N6MP_ALPHA_L
+    e(i) = C_C1N6MP_BETA_L 
   ENDDO
 
 ! -------------------------------------------------------------------
@@ -92,11 +96,11 @@ SUBROUTINE FDM_C1N6MP_LHS(imax, dx, a,b,c,d,e)
 ! Jacobian Multiplication - short version for only uniform grids
 ! -------------------------------------------------------------------
   ! DO i = 1,imax
-  !    a(i) = beta  * dx(1) 
-  !    b(i) = alpha * dx(1) 
-  !    c(i) =         dx(1) 
-  !    d(i) = alpha * dx(1) 
-  !    e(i) = beta  * dx(1) 
+  !    a(i) = C_C1N6MP_BETA_L  * dx(1) 
+  !    b(i) = C_C1N6MP_ALPHA_L * dx(1) 
+  !    c(i) =                    dx(1) 
+  !    d(i) = C_C1N6MP_ALPHA_L * dx(1) 
+  !    e(i) = C_C1N6MP_BETA_L  * dx(1) 
   ! ENDDO
 
   RETURN
@@ -105,7 +109,7 @@ END SUBROUTINE FDM_C1N6MP_LHS
 ! #######################################################################
 ! Right-hand side; forcing term
 ! #######################################################################
-SUBROUTINE FDM_C1N6P_RHS(imax,jkmax, u,d)
+SUBROUTINE FDM_C1N6MP_RHS(imax,jkmax, u,d)
   
   IMPLICIT NONE
 
@@ -114,28 +118,23 @@ SUBROUTINE FDM_C1N6P_RHS(imax,jkmax, u,d)
   TREAL,   DIMENSION(jkmax,imax),INTENT(OUT):: d
 
 ! -------------------------------------------------------------------
-  TINTEGER                                  :: i, jk, im2, im1, ip1, ip2
-  TINTEGER                                  :: srt,end,siz, imm1
+  TINTEGER                                  :: i, jk
+  TINTEGER                                  :: im3, im2, im1, ip1, ip2, ip3
 
 ! #######################################################################
-
-
-  CALL DNS_OMP_PARTITION(imax,srt,end,siz) 
-  imm1 = imax - 1 
-  DO i = srt,end
-     im2 = i-2; im2=im2+imm1; im2=MOD(im2,imax)+1
-     im1 = i-1; im1=im1+imm1; im1=MOD(im1,imax)+1
-     ip1 = i+1; ip1=ip1+imm1; ip1=MOD(ip1,imax)+1
-     ip2 = i+2; ip2=ip2+imm1; ip2=MOD(ip2,imax)+1
-
-     DO jk = 1,jkmax
-        d(jk,i) = u(jk,ip1) - u(jk,im1) + C_01D28_L*(u(jk,ip2) - u(jk,im2))
-     ENDDO
-
+  DO i = 1, imax
+    im3 = MOD(i+imax-4, imax) + 1 ! n-3 
+    im2 = MOD(i+imax-3, imax) + 1 ! n-2 
+    im1 = MOD(i+imax-2, imax) + 1 ! n-1 
+    ip1 = MOD(i,        imax) + 1 ! n+1 
+    ip2 = MOD(i+1,      imax) + 1 ! n+2 
+    ip3 = MOD(i+2,      imax) + 1 ! n+3 
+    DO jk = 1,jkmax
+      d(jk,i) = C_C1N6MP_AD2_L * (u(jk,ip1) - u(jk,im1)) + &
+                C_C1N6MP_BD4_L * (u(jk,ip2) - u(jk,im2)) + &
+                C_C1N6MP_CD6_L * (u(jk,ip3) - u(jk,im3))  
+    ENDDO
   ENDDO
 
-
   RETURN
-END SUBROUTINE FDM_C1N6P_RHS
-
-
+END SUBROUTINE FDM_C1N6MP_RHS
