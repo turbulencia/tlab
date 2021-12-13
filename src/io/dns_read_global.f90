@@ -243,6 +243,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'SpaceOrder', 'void', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian4' ) THEN; imode_fdm = FDM_COM4_JACOBIAN;
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian6' ) THEN; imode_fdm = FDM_COM6_JACOBIAN;
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacpenta6' ) THEN; imode_fdm = FDM_COM6_JACPENTA;
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian8' ) THEN; imode_fdm = FDM_COM8_JACOBIAN;
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactdirect6'   ) THEN; imode_fdm = FDM_COM6_DIRECT;
   ELSE
@@ -1190,13 +1191,13 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
      IF ( g(is)%periodic ) THEN
         g(is)%inb_grid = g(is)%inb_grid  &
-                       + 5               & ! LU decomposition 1. order
+                       + 7               & ! LU decomposition 1. order
                        + 5               & ! LU decomposition 2. order
                        + 5 *(1+inb_scal) & ! LU decomposition 2. order with diffusivities
                        + 2                 ! modified wavenumbers
      ELSE
         g(is)%inb_grid = g(is)%inb_grid  &
-                       + 3 *4            & ! LU decomposition 1. order, 4 bcs
+                       + 5 *4            & ! LU decomposition 1. order, 4 bcs
                        + 3 *4            & ! LU decomposition 2. order, 4 bcs
                        + 3 *(1+inb_scal)   ! LU decomposition 2. order w/ diffusivities, 1 bcs
 ! In Direct mode, we only need 10 instead of 3*4 because only 1 bcs is considered

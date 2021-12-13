@@ -11,7 +11,7 @@ PROGRAM VINTEGRAL
 
   TYPE(grid_dt) :: g
   TINTEGER imax, jmax, kmax, i, itype, inb_grid, ibc, bcs(2,2)
-  PARAMETER(imax=1024, inb_grid=3+4*3+4*3+1*5)
+  PARAMETER(imax=1024, inb_grid=42)!3+4*3+4*3+1*5)
   TREAL x_0
   TREAL, DIMENSION(imax,inb_grid) :: x
   TREAL u(imax), du1_a(imax), w_n(imax), dw1_n(imax), f(imax)!, dv1_a(imax), du2_a(imax)

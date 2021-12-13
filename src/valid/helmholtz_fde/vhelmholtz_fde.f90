@@ -10,7 +10,7 @@ PROGRAM VHELMHOLTZ_FDE
   
   TINTEGER imode_fdm, imax, jmax, kmax
   TINTEGER len, i, l, wk, inb_grid
-  PARAMETER(imax=2048,len=1,inb_grid=3+4*3+4*3)
+  PARAMETER(imax=2048,len=1,inb_grid=42)!3+4*3+4*3)
   TREAL, DIMENSION(imax,inb_grid) :: x
   TREAL, DIMENSION(len,imax) :: u, du1_n, du2_n, u_n, a, tmp1
   TREAL wrk1d(imax,5+2+2+1), wrk2d(imax*len*5), wrk3d(len,imax*5)
