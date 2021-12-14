@@ -35,7 +35,7 @@ SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1
   TYPE(grid_dt),                      INTENT(IN)  :: g
   TREAL, DIMENSION(nx*nz,ny), TARGET, INTENT(IN)  :: u         ! they are transposed below
   TREAL, DIMENSION(nx*nz,ny), TARGET              :: tmp1,tmp2 ! they are transposed below
-  TREAL, DIMENSION(g%size,3), TARGET              :: wrk1d
+  TREAL, DIMENSION(g%size,5), TARGET              :: wrk1d
   TREAL, DIMENSION(nx*nz),    TARGET, INTENT(OUT) :: bcs_hb,bcs_ht
 
 ! -------------------------------------------------------------------
@@ -43,7 +43,7 @@ SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1
 
   TREAL, DIMENSION(:,:), POINTER :: p_org,p_dst
   TREAL, DIMENSION(:),   POINTER :: p_bcs_hb,p_bcs_ht
-  TREAL, DIMENSION(:),   POINTER :: a,b,c
+  TREAL, DIMENSION(:),   POINTER :: a,b,c,d,e
 
 ! ###################################################################
   IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
@@ -57,6 +57,8 @@ SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1
   a => wrk1d(:,1)
   b => wrk1d(:,2)
   c => wrk1d(:,3)
+  d => wrk1d(:,4)
+  e => wrk1d(:,5)
 
 ! -------------------------------------------------------------------
 ! Make y  direction the last one
@@ -83,13 +85,17 @@ SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1
      
   CASE( FDM_COM4_JACOBIAN ) !not yet implemented
      
-  CASE( FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA )
-     CALL FDM_C1N6_BCS_LHS(ny,     ibc, g%jac, a,b,c)
-     CALL FDM_C1N6_BCS_RHS(ny,nxz, ibc,        p_org,p_dst)
+  CASE( FDM_COM6_JACOBIAN )
+     CALL FDM_C1N6_BCS_LHS( ny,     ibc, g%jac, a,b,c)
+     CALL FDM_C1N6_BCS_RHS( ny,nxz, ibc,        p_org,p_dst)
+
+  CASE( FDM_COM6_JACPENTA )
+     CALL FDM_C1N6M_BCS_LHS(ny,     ibc, g%jac, a,b,c,d,e)
+     CALL FDM_C1N6M_BCS_RHS(ny,nxz, ibc,        p_org,p_dst)
 
   CASE( FDM_COM6_DIRECT   ) !not yet implemented
-     CALL FDM_C1N6_BCS_LHS(ny,     ibc, g%jac, a,b,c)
-     CALL FDM_C1N6_BCS_RHS(ny,nxz, ibc,        p_org,p_dst)
+     CALL FDM_C1N6_BCS_LHS( ny,     ibc, g%jac, a,b,c)
+     CALL FDM_C1N6_BCS_RHS( ny,nxz, ibc,        p_org,p_dst)
      
   CASE( FDM_COM8_JACOBIAN ) !not yet implemented
      
@@ -97,21 +103,39 @@ SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1
   
 ! -------------------------------------------------------------------
   IF      ( ibc .EQ. 1 ) THEN
-     CALL TRIDFS(ny-1,     a(2),b(2),c(2))
-     CALL TRIDSS(ny-1,nxz, a(2),b(2),c(2), p_dst(1,2))
-     p_bcs_hb(:) = p_dst(:,1 ) + c(1) *p_dst(:,2)   
+     IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
+        CALL TRIDFS(ny-1,     a(2),b(2),c(2))
+        CALL TRIDSS(ny-1,nxz, a(2),b(2),c(2), p_dst(1,2))
+        p_bcs_hb(:) = p_dst(:,1 ) + c(1) *p_dst(:,2)   
+     ELSE
+        CALL PENTADFS2(ny-1,     a(2),b(2),c(2),d(2),e(2))
+        CALL PENTADSS2(ny-1,nxz, a(2),b(2),c(2),d(2),e(2), p_dst(1,2))
+        p_bcs_hb(:) = p_dst(:,1 ) + d(1) *p_dst(:,2)
+     ENDIF   
 
   ELSE IF ( ibc .EQ. 2 ) THEN
-     CALL TRIDFS(ny-1,     a,b,c)
-     CALL TRIDSS(ny-1,nxz, a,b,c, p_dst)
-     p_bcs_ht(:) = p_dst(:,ny) + a(ny)*p_dst(:,ny-1)
+     IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
+        CALL TRIDFS(ny-1,     a,b,c)
+        CALL TRIDSS(ny-1,nxz, a,b,c, p_dst)
+        p_bcs_ht(:) = p_dst(:,ny) + a(ny)*p_dst(:,ny-1)  
+     ELSE
+        CALL PENTADFS2(ny-1,     a,b,c,d,e)
+        CALL PENTADSS2(ny-1,nxz, a,b,c,d,e, p_dst)
+        p_bcs_ht(:) = p_dst(:,ny) + b(ny)*p_dst(:,ny-1)  
+     ENDIF     
 
   ELSE IF ( ibc .EQ. 3 ) THEN
-     CALL TRIDFS(ny-2,     a(2),b(2),c(2))
-     CALL TRIDSS(ny-2,nxz, a(2),b(2),c(2), p_dst(1,2))
-     p_bcs_hb(:) = p_dst(:,1 ) + c(1) *p_dst(:,2)   
-     p_bcs_ht(:) = p_dst(:,ny) + a(ny)*p_dst(:,ny-1)
-
+     IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
+        CALL TRIDFS(ny-2,     a(2),b(2),c(2))
+        CALL TRIDSS(ny-2,nxz, a(2),b(2),c(2), p_dst(1,2))
+        p_bcs_hb(:) = p_dst(:,1 ) + c(1) *p_dst(:,2)   
+        p_bcs_ht(:) = p_dst(:,ny) + a(ny)*p_dst(:,ny-1)
+     ELSE
+        CALL PENTADFS2(ny-2,     a(2),b(2),c(2),d(2),e(2))
+        CALL PENTADSS2(ny-2,nxz, a(2),b(2),c(2),d(2),e(2), p_dst(1,2))
+        p_bcs_hb(:) = p_dst(:,1 ) + d(1) *p_dst(:,2)   
+        p_bcs_ht(:) = p_dst(:,ny) + b(ny)*p_dst(:,ny-1)
+     ENDIF
   ENDIF
 
 ! ###################################################################
@@ -127,7 +151,7 @@ SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1
      IF ( ibc .EQ. 2 .OR. ibc .EQ. 3 ) CALL DNS_TRANSPOSE(p_bcs_ht, nz, nx, nz, bcs_ht, nx)
 #endif
   ENDIF
-  NULLIFY(p_org,p_dst,p_bcs_hb,p_bcs_ht,a,b,c)
+  NULLIFY(p_org,p_dst,p_bcs_hb,p_bcs_ht,a,b,c,d,e)
 
   ENDIF
 
