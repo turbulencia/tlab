@@ -83,7 +83,7 @@ SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1
      
   CASE( FDM_COM4_JACOBIAN ) !not yet implemented
      
-  CASE( FDM_COM6_JACOBIAN )
+  CASE( FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA )
      CALL FDM_C1N6_BCS_LHS(ny,     ibc, g%jac, a,b,c)
      CALL FDM_C1N6_BCS_RHS(ny,nxz, ibc,        p_org,p_dst)
 

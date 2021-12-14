@@ -57,7 +57,7 @@ SUBROUTINE FDE_BVP_SINGULAR_DN(imode_fdm, imax,jkmax, dx, u,f,bcs, tmp1, wrk1d)
 ! solve for v in v' = f , v_imax given
 ! -----------------------------------------------------------------------
   f(:,1) = C_0_R
-  IF ( imode_fdm .EQ. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .EQ. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_LHS(imax,       i2,     a,b,c,d,e)
      CALL INT_C1N6_RHS(imax,jkmax, i2, dx, f,tmp1)
      wrk1d(:,6) = C_0_R; wrk1d(1,6) = dx(1); wrk1d(2,6) = a(1)*dx(1) ! for v^1
@@ -78,7 +78,7 @@ SUBROUTINE FDE_BVP_SINGULAR_DN(imode_fdm, imax,jkmax, dx, u,f,bcs, tmp1, wrk1d)
 ! -----------------------------------------------------------------------
 ! solve for u in u' = v, u_1 given
 ! -----------------------------------------------------------------------
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_LHS(imax,       i1,     a,b,c,d,e)
      CALL INT_C1N6_RHS(imax,jkmax, i1, dx, tmp1,u)
   ENDIF
@@ -90,7 +90,7 @@ SUBROUTINE FDE_BVP_SINGULAR_DN(imode_fdm, imax,jkmax, dx, u,f,bcs, tmp1, wrk1d)
   bcs(:,2) =(bcs(:,2)+ c(1)*u(:,1)+ d(1)*u(:,2)+ e(1)*u(:,3))/dx(1) !u^(0)'_1
   
 !obtain u^1, array wrk1d(:,7)
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_RHS(imax,i1, i1, dx, wrk1d(1,6),wrk1d(1,7))
   ENDIF
   CALL PENTADSS(imax-1,i1,    a(2),b(2),c(2),d(2),e(2), wrk1d(2,7))
@@ -142,7 +142,7 @@ SUBROUTINE FDE_BVP_SINGULAR_ND(imode_fdm, imax,jkmax, dx, u,f,bcs, tmp1, wrk1d)
 ! solve for v in v' = f , v_1 given
 ! -----------------------------------------------------------------------
   f(:,imax) = C_0_R
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_LHS(imax,       i1,     a,b,c,d,e)
      CALL INT_C1N6_RHS(imax,jkmax, i1, dx, f,tmp1)
      wrk1d(:,6) = C_0_R; wrk1d(imax,6) = dx(imax); wrk1d(imax-1,6) = e(imax)*dx(imax) ! for v^1
@@ -163,7 +163,7 @@ SUBROUTINE FDE_BVP_SINGULAR_ND(imode_fdm, imax,jkmax, dx, u,f,bcs, tmp1, wrk1d)
 ! -----------------------------------------------------------------------
 ! solve for u in u' = v, u_N given
 ! -----------------------------------------------------------------------
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_LHS(imax,       i2,     a,b,c,d,e)
      CALL INT_C1N6_RHS(imax,jkmax, i2, dx, tmp1,u)
   ENDIF
@@ -175,7 +175,7 @@ SUBROUTINE FDE_BVP_SINGULAR_ND(imode_fdm, imax,jkmax, dx, u,f,bcs, tmp1, wrk1d)
   bcs(:,1) =(bcs(:,1)+ a(imax)*u(:,imax-2)+ b(imax)*u(:,imax-1)+ c(imax)*u(:,imax))/dx(imax) !u^(0)'_imax
   
 !obtain u^1, array wrk1d(:,7)
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_RHS(imax,i1, i2, dx, wrk1d(1,6),wrk1d(1,7))
   ENDIF
   CALL PENTADSS(imax-1,i1,    a,b,c,d,e, wrk1d(1,7))
@@ -227,7 +227,7 @@ SUBROUTINE FDE_BVP_SINGULAR_DD(imode_fdm, imax,jkmax, x,dx, u,f,bcs, tmp1, wrk1d
 ! solve for v = u' in (u')' = f , u'_imax given
 ! -----------------------------------------------------------------------
   f(:,1) = C_0_R
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_LHS(imax,       i2,     a,b,c,d,e)
      CALL INT_C1N6_RHS(imax,jkmax, i2, dx, f,tmp1)
      wrk1d(:,6) = C_0_R; wrk1d(1,6) = dx(1); wrk1d(2,6) = a(1)*dx(1) ! for v^1 
@@ -245,7 +245,7 @@ SUBROUTINE FDE_BVP_SINGULAR_DD(imode_fdm, imax,jkmax, x,dx, u,f,bcs, tmp1, wrk1d
 ! -----------------------------------------------------------------------
 ! solve for u in u' v f, u_1 given
 ! -----------------------------------------------------------------------
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_LHS(imax,       i1,     a,b,c,d,e)
      CALL INT_C1N6_RHS(imax,jkmax, i1, dx, tmp1,u)
   ENDIF
@@ -257,7 +257,7 @@ SUBROUTINE FDE_BVP_SINGULAR_DD(imode_fdm, imax,jkmax, x,dx, u,f,bcs, tmp1, wrk1d
   bcs(:,3) =(bcs(:,3)+ c(1)*u(:,1)+ d(1)*u(:,2)+ e(1)*u(:,3))/dx(1) !u^(0)'_1
   
 !obtain u^1, array wrk1d(:,7)
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_RHS(imax,i1, i1, dx, wrk1d(1,6),wrk1d(1,7))
   ENDIF
   CALL PENTADSS(imax-1,i1,    a(2),b(2),c(2),d(2),e(2), wrk1d(2,7))
@@ -311,7 +311,7 @@ SUBROUTINE FDE_BVP_SINGULAR_NN(imode_fdm, imax,jkmax, dx, u,f,bcs, tmp1, wrk1d)
 ! -----------------------------------------------------------------------
 ! solve for v in v' = f , v_1 given
 ! -----------------------------------------------------------------------
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_LHS(imax,       i1,     a,b,c,d,e)
      CALL INT_C1N6_RHS(imax,jkmax, i1, dx, f,tmp1)
   ENDIF
@@ -325,7 +325,7 @@ SUBROUTINE FDE_BVP_SINGULAR_NN(imode_fdm, imax,jkmax, dx, u,f,bcs, tmp1, wrk1d)
 ! -----------------------------------------------------------------------
 ! solve for u in u' = v, u_1 given
 ! -----------------------------------------------------------------------
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
 !    same l.h.s. as before
      CALL INT_C1N6_RHS(imax,jkmax, i1, dx, tmp1,u)
   ENDIF
@@ -399,7 +399,7 @@ SUBROUTINE FDE_BVP_REGULAR_NN(imode_fdm, imax,jkmax, cst, dx, u,f,bcs, tmp1, wrk
 ! -----------------------------------------------------------------------
   dummy =-lambda
   f(:,1) = C_0_R
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_LHS_E(imax,       i2, dx, dummy, a,b,c,d,e, ep)
      CALL INT_C1N6_RHS  (imax,jkmax, i2, dx,        f,tmp1)
      wrk1d(:,6) = C_0_R; wrk1d(1,6) = dx(1); wrk1d(2,6) = a(1)*dx(1) ! for v^1
@@ -421,7 +421,7 @@ SUBROUTINE FDE_BVP_REGULAR_NN(imode_fdm, imax,jkmax, cst, dx, u,f,bcs, tmp1, wrk
 ! 2nd step; solve for u^(0) and u^(1) and u^(2)
 ! -----------------------------------------------------------------------
   dummy = lambda
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_LHS_E(imax,       i1, dx, dummy, a,b,c,d,e, em)
      CALL INT_C1N6_RHS  (imax,jkmax, i1, dx,        tmp1,u)
   ENDIF
@@ -519,7 +519,7 @@ SUBROUTINE FDE_BVP_REGULAR_DD(imode_fdm, imax,jkmax, cst, dx, u,f,bcs, tmp1, wrk
 ! -----------------------------------------------------------------------
   dummy =-lambda
   f(:,1) = C_0_R
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_LHS_E(imax,       i2, dx, dummy, a,b,c,d,e, ep)
      CALL INT_C1N6_RHS  (imax,jkmax, i2, dx,        f,tmp1)
      wrk1d(:,6) = C_0_R; wrk1d(1,6) = dx(1); wrk1d(2,6) = a(1)*dx(1) ! for v^1
@@ -541,7 +541,7 @@ SUBROUTINE FDE_BVP_REGULAR_DD(imode_fdm, imax,jkmax, cst, dx, u,f,bcs, tmp1, wrk
 ! 2nd step; solve for u^(0) and u^(1) and u^(2)
 ! -----------------------------------------------------------------------
   dummy = lambda
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_LHS_E(imax,       i1, dx, dummy, a,b,c,d,e, em)
      CALL INT_C1N6_RHS  (imax,jkmax, i1, dx,        tmp1,u)
   ENDIF
@@ -552,7 +552,7 @@ SUBROUTINE FDE_BVP_REGULAR_DD(imode_fdm, imax,jkmax, cst, dx, u,f,bcs, tmp1, wrk
   g_1 =(c(1)*em(1)+ d(1)*em(2)+ e(1)*em(3))/dx(1)/lambda + C_1_R ! e^(-)'_1/\lambda + 1
 
 ! obtain u^(2), array wrk1d(:,8)
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_RHS(imax,i1, i1, dx, ep,wrk1d(1,8))
   ENDIF
   CALL PENTADSS(imax-1,i1,    a(2),b(2),c(2),d(2),e(2), wrk1d(2,8))
@@ -565,7 +565,7 @@ SUBROUTINE FDE_BVP_REGULAR_DD(imode_fdm, imax,jkmax, cst, dx, u,f,bcs, tmp1, wrk
   bcs(:,3) =(bcs(:,3)+ c(1)*u(:,1)+ d(1)*u(:,2)+ e(1)*u(:,3))/dx(1) !u^(0)'_1
 
 !obtain u^(1), array wrk1d(:,7)
-  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT ) THEN
+  IF ( imode_fdm .eq. FDM_COM6_JACOBIAN .OR. imode_fdm .EQ. FDM_COM6_DIRECT .OR. imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
      CALL INT_C1N6_RHS(imax,i1, i1, dx, wrk1d(1,6),wrk1d(1,7))
   ENDIF
   CALL PENTADSS(imax-1,i1,    a(2),b(2),c(2),d(2),e(2), wrk1d(2,7))

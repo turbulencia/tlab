@@ -228,7 +228,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, g, ibc, alpha,&
 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 ! -----------------------------------------------------------------------
      IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
-        IF      ( g(2)%mode_fdm .EQ. FDM_COM6_JACOBIAN ) THEN
+        IF      ( g(2)%mode_fdm .EQ. FDM_COM6_JACOBIAN .OR. g(2)%mode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
            CALL INT_C2N6_LHS_E(ny,    g(2)%jac, lambda, &
                 wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
            CALL INT_C2N6_RHS  (ny,i2, g(2)%jac, aux(1,1),aux(1,2))
@@ -364,7 +364,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 ! -----------------------------------------------------------------------
      IF ( ibc .EQ. 0 ) THEN ! Dirichlet BCs
-        IF      ( g(2)%mode_fdm .EQ. FDM_COM6_JACOBIAN ) THEN
+        IF      ( g(2)%mode_fdm .EQ. FDM_COM6_JACOBIAN .OR. g(2)%mode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
            CALL INT_C2N6_LHS_E(ny,    g(2)%jac, lambda, &
                 wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), wrk1d(1,6),wrk1d(1,7))
            CALL INT_C2N6_RHS  (ny,i2, g(2)%jac, aux(1,1,1),aux(1,1,2))
