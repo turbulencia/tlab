@@ -16,7 +16,7 @@
 !# Eq. 2.1.7 with (\alpha=1/3). Here alpha value is chosen such, 
 !# that no inflection point in w'(w) appears.
 !# Carpenter, Gottlieb and Aberbanel, JCP, 1993, study the effect of 
-!# boundary points on stability. Scheme 3-5-c6--penta c6--c6-5-3 
+!# boundary points on stability. Scheme 3-5-tri6c--penta6c--tri6c-5-3 
 !# is implmented.
 !#
 !########################################################################
@@ -412,21 +412,22 @@ SUBROUTINE FDM_C1N6M_BCS_RHS(imax,jkmax, ibc, u,d)
     d(:,1     ) = c0405*u(:,2) +c0105*u(:,3)
 
     ! B22R
-    d(:,2     ) = c0118*u(:,4) +c0809*u(:,3) -c1718*u(:,2) !5th
+    d(:,2     ) = c0118*u(:,4) +c0809*u(:,3) -c1718*u(:,2)                                  !5th
     d(:,3     ) = c0180*(C_5_R*u(:,5)+c0140*u(:,4)-u(:,3)-c0144*u(:,2))
 
     imin_loc = imin_loc + 1
 
-    d(:,imax-1) =-c0118*u(:,imax-3) -u(:,imax-2) +c0102*u(:,imax-1) +c0509*u(:,imax) !5th
-    d(:,imax  ) = c0502*u(:,imax) -C_2_R*u(:,imax-1) -c0102*u(:,imax-2) !3rd
+    d(:,imax-1) =-c0118*u(:,imax-3) -u(:,imax-2) +c0102*u(:,imax-1) +c0509*u(:,imax)        !5th
+    d(:,imax  ) = c0502*u(:,imax) -C_2_R*u(:,imax-1) -c0102*u(:,imax-2)                     !3rd
 ! -------------------------------------------------------------------
   ELSE IF ( ibc .EQ. 2 ) THEN
-    d(:,1     ) =-c0502*u(:,1) +C_2_R*u(:,2) +c0102*u(:,3) !3rd
-    d(:,2     ) = c0118*u(:,4) +u(:,3) -c0102*u(:,2) -c0509*u(:,1) !5th
+    d(:,1     ) =-c0502*u(:,1) +C_2_R*u(:,2) +c0102*u(:,3)                                  !3rd
+    d(:,2     ) = c0118*u(:,4) +u(:,3) -c0102*u(:,2) -c0509*u(:,1)                          !5th
 
     ! B11R
     imax_loc = imax_loc - 1
-    d(:,imax-2) = c0180*(c0144*u(:,imax-1)+u(:,imax-2)-c0140*u(:,imax-3)-C_5_R*u(:,imax-4))!5th
+
+    d(:,imax-2) = c0180*(c0144*u(:,imax-1)+u(:,imax-2)-c0140*u(:,imax-3)-C_5_R*u(:,imax-4)) !5th
     d(:,imax-1) = c1718*u(:,imax-1) -c0809*u(:,imax-2) -c0118*u(:,imax-3)
 
     ! contribution to u_n
@@ -437,12 +438,14 @@ SUBROUTINE FDM_C1N6M_BCS_RHS(imax,jkmax, ibc, u,d)
     d(:,1     ) = c0405*u(:,2) +c0105*u(:,3)
 
     ! B22R
-    d(:,2     ) = c0118*u(:,4) +c0809*u(:,3) -c1718*u(:,2) !5th
+    d(:,2     ) = c0118*u(:,4) +c0809*u(:,3) -c1718*u(:,2)                                  !5th
     d(:,3     ) = c0180*(C_5_R*u(:,5)+c0140*u(:,4)-u(:,3)-c0144*u(:,2))
+
     imin_loc = imin_loc + 1
 
     ! B11R
     imax_loc = imax_loc - 1
+
     d(:,imax-2) = c0180*(c0144*u(:,imax-1)+u(:,imax-2)-c0140*u(:,imax-3)-C_5_R*u(:,imax-4)) !5th
     d(:,imax-1) = c1718*u(:,imax-1) -c0809*u(:,imax-2) -c0118*u(:,imax-3)
 
@@ -450,11 +453,11 @@ SUBROUTINE FDM_C1N6M_BCS_RHS(imax,jkmax, ibc, u,d)
     d(:,imax  ) = c0405*u(:,imax-1) +c0105*u(:,imax-2)
 ! -------------------------------------------------------------------
   ELSE
-    d(:,1     ) =-c0502*u(:,1) +C_2_R*u(:,2) +c0102*u(:,3) !3rd
-    d(:,2     ) = c0118*u(:,4) +u(:,3) -c0102*u(:,2) -c0509*u(:,1) !5th
+    d(:,1     ) =-c0502*u(:,1) +C_2_R*u(:,2) +c0102*u(:,3)                                  !3rd
+    d(:,2     ) = c0118*u(:,4) +u(:,3) -c0102*u(:,2) -c0509*u(:,1)                          !5th
 
-    d(:,imax-1) =-c0118*u(:,imax-3) -u(:,imax-2) +c0102*u(:,imax-1) +c0509*u(:,imax) !5th
-    d(:,imax  ) = c0502*u(:,imax) -C_2_R*u(:,imax-1) -c0102*u(:,imax-2) !3rd
+    d(:,imax-1) =-c0118*u(:,imax-3) -u(:,imax-2) +c0102*u(:,imax-1) +c0509*u(:,imax)        !5th
+    d(:,imax  ) = c0502*u(:,imax) -C_2_R*u(:,imax-1) -c0102*u(:,imax-2)                     !3rd
  
   ENDIF
 
@@ -464,9 +467,10 @@ SUBROUTINE FDM_C1N6M_BCS_RHS(imax,jkmax, ibc, u,d)
   ! 6th-order centered with alpha=(1/3)
   i = imin_loc
   d(:,i) = c0709*(u(:,i+1) - u(:,i-1)) + c0136*(u(:,i+2) - u(:,i-2))
-  i = imax_loc
+  i = imax_loc  
   d(:,i) = c0709*(u(:,i+1) - u(:,i-1)) + c0136*(u(:,i+2) - u(:,i-2))
-  ! 6th-order centered - pentadiagonal
+  
+  ! 6th-order centered 
   DO i = imin_loc+1, imax_loc-1
     d(:,i) = C_C1N6MP_AD2_L * (u(:,i+1) - u(:,i-1)) + &
              C_C1N6MP_BD4_L * (u(:,i+2) - u(:,i-2)) + &
