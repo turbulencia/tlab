@@ -469,7 +469,7 @@ SUBROUTINE FDM_C1N6M_BCS_RHS(imax,jkmax, ibc, u,d)
   ENDIF
 
 ! -------------------------------------------------------------------
-! Interior points
+! Interior points - be carefull scheme combination is asymetric!
 ! -------------------------------------------------------------------
   IF      ( ibc .EQ. 1 ) THEN
     ! 6th-order centered with alpha=(1/3)
@@ -511,18 +511,6 @@ SUBROUTINE FDM_C1N6M_BCS_RHS(imax,jkmax, ibc, u,d)
                C1N6M_CD6 * (u(:,i+3) - u(:,i-3))  
     ENDDO
   ENDIF
-  ! ! 6th-order centered with alpha=(1/3)
-  ! i = imin_loc
-  ! d(:,i) = c0709*(u(:,i+1) - u(:,i-1)) + c0136*(u(:,i+2) - u(:,i-2))
-  ! i = imax_loc  
-  ! d(:,i) = c0709*(u(:,i+1) - u(:,i-1)) + c0136*(u(:,i+2) - u(:,i-2))
-  
-  ! ! 6th-order centered - pentadiagonal
-  ! DO i = imin_loc+1, imax_loc-1
-  !   d(:,i) = C1N6M_AD2 * (u(:,i+1) - u(:,i-1)) + &
-  !            C1N6M_BD4 * (u(:,i+2) - u(:,i-2)) + &
-            !  C1N6M_CD6 * (u(:,i+3) - u(:,i-3))  
-  ! ENDDO
 
   RETURN
 END SUBROUTINE FDM_C1N6M_BCS_RHS
