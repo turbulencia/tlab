@@ -46,17 +46,20 @@
 #include "types.h"
 
 ! coefficients LHS
-#define C_C1N6MP_ALPHA_L 0.604730585697398d+0
-#define C_C1N6MP_BETA_L  0.108558900945626d+0
+#define C1N6M_ALPHA 0.604730585697398d+0
+#define C1N6M_BETA  0.108558900945626d+0
 ! coefficients RHS
-#define C_C1N6MP_AD2_L   0.619462713898740d+0
-#define C_C1N6MP_BD4_L   0.284700510015759d+0
-#define C_C1N6MP_CD6_L   0.814191757092195d-2
+#define C1N6M_AD2   0.619462713898740d+0
+#define C1N6M_BD4   0.284700510015759d+0
+#define C1N6M_CD6   0.814191757092195d-2
 
 !########################################################################
 !Left-hand side; heptadiagonal matrix of the linear system and h
 !########################################################################
 SUBROUTINE INT_C1N6M_LHS_E(imax, ibc, dx, lambda, a,b,c,d,e,f,g, h)
+
+  ! USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
+  ! USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
 
   IMPLICIT NONE
 
@@ -104,13 +107,13 @@ SUBROUTINE INT_C1N6M_LHS_E(imax, ibc, dx, lambda, a,b,c,d,e,f,g, h)
   g(3     ) = C_0_R
 ! sixth-order modified centered
   DO i = 4,imax-3
-    a(i   ) =-C_C1N6MP_CD6_L
-    b(i   ) =-C_C1N6MP_BD4_L + lambda* C_C1N6MP_BETA_L  *dx(i-2)
-    c(i   ) =-C_C1N6MP_AD2_L + lambda* C_C1N6MP_ALPHA_L *dx(i-1)
-    d(i   ) = C_0_R          + lambda                   *dx(i  )
-    e(i   ) = C_C1N6MP_AD2_L + lambda* C_C1N6MP_ALPHA_L *dx(i+1)
-    f(i   ) = C_C1N6MP_BD4_L + lambda* C_C1N6MP_BETA_L  *dx(i+2)
-    g(i   ) = C_C1N6MP_CD6_L
+    a(i   ) =-C1N6M_CD6
+    b(i   ) =-C1N6M_BD4 + lambda* C1N6M_BETA  *dx(i-2)
+    c(i   ) =-C1N6M_AD2 + lambda* C1N6M_ALPHA *dx(i-1)
+    d(i   ) = C_0_R     + lambda              *dx(i  )
+    e(i   ) = C1N6M_AD2 + lambda* C1N6M_ALPHA *dx(i+1)
+    f(i   ) = C1N6M_BD4 + lambda* C1N6M_BETA  *dx(i+2)
+    g(i   ) = C1N6M_CD6
   ENDDO
 ! sixth-order centered (alpha=1/3)
   a(imax-2) = C_0_R
@@ -176,6 +179,8 @@ END SUBROUTINE INT_C1N6M_LHS_E
 !########################################################################
 SUBROUTINE INT_C1N6M_LHS(imax, ibc, a,b,c,d,e,f,g)
 
+  ! USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
+
   IMPLICIT NONE
 
   TINTEGER,               INTENT(IN) :: imax, ibc
@@ -216,13 +221,13 @@ SUBROUTINE INT_C1N6M_LHS(imax, ibc, a,b,c,d,e,f,g)
   f(3       ) = c0136
   g(3       ) = C_0_R
 ! sixth-order modified centered
-  a(4:imax-3) =-C_C1N6MP_CD6_L
-  b(4:imax-3) =-C_C1N6MP_BD4_L
-  c(4:imax-3) =-C_C1N6MP_AD2_L
+  a(4:imax-3) =-C1N6M_CD6
+  b(4:imax-3) =-C1N6M_BD4
+  c(4:imax-3) =-C1N6M_AD2
   d(4:imax-3) = C_0_R         
-  e(4:imax-3) = C_C1N6MP_AD2_L
-  f(4:imax-3) = C_C1N6MP_BD4_L
-  g(4:imax-3) = C_C1N6MP_CD6_L
+  e(4:imax-3) = C1N6M_AD2
+  f(4:imax-3) = C1N6M_BD4
+  g(4:imax-3) = C1N6M_CD6
 ! sixth-order centered  (alpha=1/3)
   a(  imax-2) = C_0_R
   b(  imax-2) =-c0136
@@ -270,6 +275,8 @@ END SUBROUTINE INT_C1N6M_LHS
 ! Right-hand side; forcing term
 ! #######################################################################
 SUBROUTINE INT_C1N6M_RHS(imax,jkmax, ibc, dx, h,l)
+
+  ! USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
 
   IMPLICIT NONE
 
@@ -323,8 +330,8 @@ SUBROUTINE INT_C1N6M_RHS(imax,jkmax, ibc, dx, h,l)
 ! sixth-order modified centered
   DO i = 4,imax-3
     l(:,i) =                      h(:,i  )*dx(i  )                       + &
-             C_C1N6MP_ALPHA_L * ( h(:,i-1)*dx(i-1)  + h(:,i+1)*dx(i+1) ) + &
-             C_C1N6MP_BETA_L  * ( h(:,i-2)*dx(i-2)  + h(:,i+2)*dx(i+2) )
+             C1N6M_ALPHA * ( h(:,i-1)*dx(i-1)  + h(:,i+1)*dx(i+1) ) + &
+             C1N6M_BETA  * ( h(:,i-2)*dx(i-2)  + h(:,i+2)*dx(i+2) )
   ENDDO
 
   RETURN

@@ -26,17 +26,19 @@
 #include "types.h"
 
 ! coefficients LHS
-#define C_C1N6MP_ALPHA_L 0.604730585697398d+0
-#define C_C1N6MP_BETA_L  0.108558900945626d+0
+#define C1N6M_ALPHA 0.604730585697398d+0
+#define C1N6M_BETA  0.108558900945626d+0
 ! coefficients RHS
-#define C_C1N6MP_AD2_L   0.619462713898740d+0
-#define C_C1N6MP_BD4_L   0.284700510015759d+0
-#define C_C1N6MP_CD6_L   0.814191757092195d-2
+#define C1N6M_AD2   0.619462713898740d+0
+#define C1N6M_BD4   0.284700510015759d+0
+#define C1N6M_CD6   0.814191757092195d-2
 
 ! #######################################################################
 ! Left-hand side; pentadiagonal matrix of the linear system
 ! #######################################################################
 SUBROUTINE FDM_C1N6MP_LHS(imax, dx, a,b,c,d,e)
+
+  ! USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
   
   IMPLICIT NONE
 
@@ -49,11 +51,11 @@ SUBROUTINE FDM_C1N6MP_LHS(imax, dx, a,b,c,d,e)
 
 ! ###################################################################
   DO i = 1,imax
-    a(i) = C_C1N6MP_BETA_L 
-    b(i) = C_C1N6MP_ALPHA_L
+    a(i) = C1N6M_BETA 
+    b(i) = C1N6M_ALPHA
     c(i) = C_1_R
-    d(i) = C_C1N6MP_ALPHA_L
-    e(i) = C_C1N6MP_BETA_L 
+    d(i) = C1N6M_ALPHA
+    e(i) = C1N6M_BETA 
   ENDDO
 
 ! -------------------------------------------------------------------
@@ -91,17 +93,6 @@ SUBROUTINE FDM_C1N6MP_LHS(imax, dx, a,b,c,d,e)
   b(1     ) = b(1     ) * dx(imax)
   a(2     ) = a(2     ) * dx(imax)
 
-! -------------------------------------------------------------------
-! Jacobian Multiplication - short version for only uniform grids
-! -------------------------------------------------------------------
-  ! DO i = 1,imax
-  !    a(i) = C_C1N6MP_BETA_L  * dx(1) 
-  !    b(i) = C_C1N6MP_ALPHA_L * dx(1) 
-  !    c(i) =                    dx(1) 
-  !    d(i) = C_C1N6MP_ALPHA_L * dx(1) 
-  !    e(i) = C_C1N6MP_BETA_L  * dx(1) 
-  ! ENDDO
-
   RETURN
 END SUBROUTINE FDM_C1N6MP_LHS
 
@@ -109,6 +100,8 @@ END SUBROUTINE FDM_C1N6MP_LHS
 ! Right-hand side; forcing term
 ! #######################################################################
 SUBROUTINE FDM_C1N6MP_RHS(imax,jkmax, u,d)
+
+  ! USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
   
   IMPLICIT NONE
 
@@ -129,9 +122,9 @@ SUBROUTINE FDM_C1N6MP_RHS(imax,jkmax, u,d)
     ip2 = MOD(i+1,      imax) + 1 ! n+2 
     ip3 = MOD(i+2,      imax) + 1 ! n+3 
     DO jk = 1,jkmax
-      d(jk,i) = C_C1N6MP_AD2_L * (u(jk,ip1) - u(jk,im1)) + &
-                C_C1N6MP_BD4_L * (u(jk,ip2) - u(jk,im2)) + &
-                C_C1N6MP_CD6_L * (u(jk,ip3) - u(jk,im3))  
+      d(jk,i) = C1N6M_AD2 * (u(jk,ip1) - u(jk,im1)) + &
+                C1N6M_BD4 * (u(jk,ip2) - u(jk,im2)) + &
+                C1N6M_CD6 * (u(jk,ip3) - u(jk,im3))  
     ENDDO
   ENDDO
 

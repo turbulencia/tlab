@@ -1,4 +1,6 @@
 #include "types.h"
+#include "dns_const.h"
+
 
 PROGRAM VHELMHOLTZ_FDE
 
@@ -8,6 +10,7 @@ PROGRAM VHELMHOLTZ_FDE
   
 #include "integers.h"
   
+  TYPE(grid_dt) :: g
   TINTEGER imode_fdm, imax, jmax, kmax
   TINTEGER len, i, l, wk, inb_grid
   PARAMETER(imax=2048,len=1,inb_grid=42)!3+4*3+4*3)
@@ -35,7 +38,7 @@ PROGRAM VHELMHOLTZ_FDE
   READ(*,*) w2
 
   DO i = 1,imax
-     x(i) = M_REAL(i-1)/M_REAL(imax-1)*g%scale
+     x(i,1) = M_REAL(i-1)/M_REAL(imax-1)*g%scale
   ENDDO
 !   OPEN(21,file='grid.dat')
 !   DO i = 1,imax

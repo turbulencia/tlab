@@ -1,6 +1,3 @@
-#include "types.h"
-#include "dns_const.h"
-
 PROGRAM VPARTIAL
 
   USE TLAB_TYPES, ONLY : grid_dt

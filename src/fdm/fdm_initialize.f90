@@ -10,6 +10,9 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   USE TLAB_TYPES,  ONLY : grid_dt
   USE TLAB_VARS, ONLY : inb_scal
   USE TLAB_VARS, ONLY : reynolds, schmidt
+  USE TLAB_VARS, ONLY : C1N6M_ALPHA2, C1N6M_BETA2
+  USE TLAB_VARS, ONLY : C1N6M_A, C1N6M_BD2, C1N6M_CD3
+
   USE TLAB_PROCS
 
   IMPLICIT NONE
@@ -36,9 +39,13 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 
 ! ###################################################################
   g%nodes => x(:,ig)
-
+  
   ig = ig + 1
 
+! ###################################################################
+  ! Coefficients of pentadiagonal 6th-order scheme for 1st derivative
+  IF (g%mode_fdm .EQ. FDM_COM6_JACPENTA) CALL FDM_C1N6M_COEFF()
+  
 ! ###################################################################
 ! Jacobians
 ! ###################################################################
@@ -341,22 +348,22 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
      r48 = C_6_R *C_8_R
      r25 = C_5_R *C_5_R /C_4_R
      r60 = C_1_R /( C_6_R *C_10_R )
-     ! 
-     ra1 = 0.123892542779748e+1 ! a
-     rb2 = 0.569401020031518e+0 ! b/2
-     rc3 = 0.162838351418439e-1 ! c/3
-     r2a = 0.120946117139480e+1 ! 2*alpha
-     r2b = 0.217117801891252e+0 ! 2*beta
+     !
+     ra1 = C1N6M_A
+     rb2 = C1N6M_BD2
+     rc3 = C1N6M_CD3
+     r2a = C1N6M_ALPHA2
+     r2b = C1N6M_BETA2
 
      SELECT CASE( g%mode_fdm )
 
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
+     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA )
         g%mwn(:,1)=( r28*sin(wrk1d(:,1))+    sin(C_2_R*wrk1d(:,1))                          )&
                   /( C_18_R +C_12_R*cos(wrk1d(:,1)))
 
-     CASE( FDM_COM6_JACPENTA )
-        g%mwn(:,1)=( ra1*sin(wrk1d(:,1))+rb2*sin(C_2_R*wrk1d(:,1))+rc3*sin(C_3_R*wrk1d(:,1)))&
-                  /( C_1_R  +r2a   *cos(wrk1d(:,1))+r2b*cos(2*wrk1d(:,1)))
+   !   CASE( FDM_COM6_JACPENTA )
+   !      g%mwn(:,1)=( ra1*sin(wrk1d(:,1))+rb2*sin(C_2_R*wrk1d(:,1))+rc3*sin(C_3_R*wrk1d(:,1)))&
+   !                /( C_1_R  +r2a   *cos(wrk1d(:,1))+r2b*cos(2*wrk1d(:,1)))
    
      CASE( FDM_COM8_JACOBIAN )
         g%mwn(:,1)=( r25*sin(wrk1d(:,1))+r04*sin(C_2_R*wrk1d(:,1))-r60*sin(C_3_R*wrk1d(:,1)))&

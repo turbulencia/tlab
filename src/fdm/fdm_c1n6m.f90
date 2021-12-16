@@ -29,17 +29,18 @@
 #include "types.h"
 
 ! coefficients LHS
-#define C_C1N6MP_ALPHA_L 0.604730585697398d+0
-#define C_C1N6MP_BETA_L  0.108558900945626d+0
-! coefficients RHS
-#define C_C1N6MP_AD2_L   0.619462713898740d+0
-#define C_C1N6MP_BD4_L   0.284700510015759d+0
-#define C_C1N6MP_CD6_L   0.814191757092195d-2
+#define C1N6M_ALPHA 0.604730585697398d+0
+#define C1N6M_BETA  0.108558900945626d+0
+#define C1N6M_AD2   0.619462713898740d+0
+#define C1N6M_BD4   0.284700510015759d+0
+#define C1N6M_CD6   0.814191757092195d-2
 
 !########################################################################
 ! Left-hand side; pentadiagonal matrix of the linear system
 !########################################################################
 SUBROUTINE FDM_C1N6M_LHS(imax, imin_set_zero,imax_set_zero, dx,a,b,c,d,e)
+
+  ! USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
 
   IMPLICIT NONE
 
@@ -102,11 +103,11 @@ SUBROUTINE FDM_C1N6M_LHS(imax, imin_set_zero,imax_set_zero, dx,a,b,c,d,e)
   
 ! sixth-order modified centered
   DO i = 4,imax-3
-    a(i) = C_C1N6MP_BETA_L 
-    b(i) = C_C1N6MP_ALPHA_L
+    a(i) = C1N6M_BETA 
+    b(i) = C1N6M_ALPHA
     c(i) = C_1_R
-    d(i) = C_C1N6MP_ALPHA_L
-    e(i) = C_C1N6MP_BETA_L 
+    d(i) = C1N6M_ALPHA
+    e(i) = C1N6M_BETA 
   ENDDO
 
 ! -------------------------------------------------------------------
@@ -151,6 +152,8 @@ END SUBROUTINE FDM_C1N6M_LHS
 ! Right-hand side; forcing term
 ! #######################################################################
 SUBROUTINE FDM_C1N6M_RHS(imax,jkmax, imin_set_zero,imax_set_zero, u,d)
+
+  ! USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
 
   IMPLICIT NONE
 
@@ -202,9 +205,9 @@ SUBROUTINE FDM_C1N6M_RHS(imax,jkmax, imin_set_zero,imax_set_zero, u,d)
     
   DO i = 4,imax-3
     DO jk = 1,jkmax
-      d(jk,i) = C_C1N6MP_AD2_L * (u(jk,i+1) - u(jk,i-1)) + &
-                C_C1N6MP_BD4_L * (u(jk,i+2) - u(jk,i-2)) + &
-                C_C1N6MP_CD6_L * (u(jk,i+3) - u(jk,i-3))  
+      d(jk,i) = C1N6M_AD2 * (u(jk,i+1) - u(jk,i-1)) + &
+                C1N6M_BD4 * (u(jk,i+2) - u(jk,i-2)) + &
+                C1N6M_CD6 * (u(jk,i+3) - u(jk,i-3))  
     ENDDO
   ENDDO
 
@@ -240,6 +243,8 @@ END SUBROUTINE FDM_C1N6M_RHS
 !Left-hand side; tridiagonal matrix of the linear system
 !########################################################################
 SUBROUTINE FDM_C1N6M_BCS_LHS(imax, ibc, dx, a,b,c,d,e)
+
+  ! USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
 
   IMPLICIT NONE
 
@@ -295,11 +300,11 @@ SUBROUTINE FDM_C1N6M_BCS_LHS(imax, ibc, dx, a,b,c,d,e)
   
 ! sixth-order modified centered
   DO i = 4,imax-3
-    a(i) = C_C1N6MP_BETA_L 
-    b(i) = C_C1N6MP_ALPHA_L
+    a(i) = C1N6M_BETA 
+    b(i) = C1N6M_ALPHA
     c(i) = C_1_R
-    d(i) = C_C1N6MP_ALPHA_L
-    e(i) = C_C1N6MP_BETA_L 
+    d(i) = C1N6M_ALPHA
+    e(i) = C1N6M_BETA 
   ENDDO
 
 ! -------------------------------------------------------------------
@@ -371,6 +376,8 @@ END SUBROUTINE FDM_C1N6M_BCS_LHS
 ! Right-hand side; forcing term
 ! #######################################################################
 SUBROUTINE FDM_C1N6M_BCS_RHS(imax,jkmax, ibc, u,d)
+
+  ! USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
 
   IMPLICIT NONE
 
@@ -464,18 +471,58 @@ SUBROUTINE FDM_C1N6M_BCS_RHS(imax,jkmax, ibc, u,d)
 ! -------------------------------------------------------------------
 ! Interior points
 ! -------------------------------------------------------------------
-  ! 6th-order centered with alpha=(1/3)
-  i = imin_loc
-  d(:,i) = c0709*(u(:,i+1) - u(:,i-1)) + c0136*(u(:,i+2) - u(:,i-2))
-  i = imax_loc  
-  d(:,i) = c0709*(u(:,i+1) - u(:,i-1)) + c0136*(u(:,i+2) - u(:,i-2))
+  IF      ( ibc .EQ. 1 ) THEN
+    ! 6th-order centered with alpha=(1/3)
+    i = imax_loc
+    d(:,i) = c0709*(u(:,i+1) - u(:,i-1)) + c0136*(u(:,i+2) - u(:,i-2))
+    ! 6th-order centered - pentadiagonal
+    DO i = imin_loc, imax_loc-1
+      d(:,i) = C1N6M_AD2 * (u(:,i+1) - u(:,i-1)) + &
+               C1N6M_BD4 * (u(:,i+2) - u(:,i-2)) + &
+               C1N6M_CD6 * (u(:,i+3) - u(:,i-3))  
+    ENDDO
+  ELSE IF ( ibc .EQ. 2 ) THEN
+    ! 6th-order centered with alpha=(1/3)
+    i = imin_loc
+    d(:,i) = c0709*(u(:,i+1) - u(:,i-1)) + c0136*(u(:,i+2) - u(:,i-2))
+    ! 6th-order centered - pentadiagonal
+    DO i = imin_loc+1, imax_loc
+      d(:,i) = C1N6M_AD2 * (u(:,i+1) - u(:,i-1)) + &
+               C1N6M_BD4 * (u(:,i+2) - u(:,i-2)) + &
+               C1N6M_CD6 * (u(:,i+3) - u(:,i-3))  
+    ENDDO
+  ELSE IF ( ibc .EQ. 3 ) THEN
+    ! 6th-order centered - pentadiagonal
+    DO i = imin_loc, imax_loc
+      d(:,i) = C1N6M_AD2 * (u(:,i+1) - u(:,i-1)) + &
+               C1N6M_BD4 * (u(:,i+2) - u(:,i-2)) + &
+               C1N6M_CD6 * (u(:,i+3) - u(:,i-3))  
+    ENDDO
+  ELSE
+    ! 6th-order centered with alpha=(1/3)
+    i = imin_loc
+    d(:,i) = c0709*(u(:,i+1) - u(:,i-1)) + c0136*(u(:,i+2) - u(:,i-2))
+    i = imax_loc  
+    d(:,i) = c0709*(u(:,i+1) - u(:,i-1)) + c0136*(u(:,i+2) - u(:,i-2))
+    ! 6th-order centered - pentadiagonal
+    DO i = imin_loc+1, imax_loc-1
+      d(:,i) = C1N6M_AD2 * (u(:,i+1) - u(:,i-1)) + &
+               C1N6M_BD4 * (u(:,i+2) - u(:,i-2)) + &
+               C1N6M_CD6 * (u(:,i+3) - u(:,i-3))  
+    ENDDO
+  ENDIF
+  ! ! 6th-order centered with alpha=(1/3)
+  ! i = imin_loc
+  ! d(:,i) = c0709*(u(:,i+1) - u(:,i-1)) + c0136*(u(:,i+2) - u(:,i-2))
+  ! i = imax_loc  
+  ! d(:,i) = c0709*(u(:,i+1) - u(:,i-1)) + c0136*(u(:,i+2) - u(:,i-2))
   
-  ! 6th-order centered 
-  DO i = imin_loc+1, imax_loc-1
-    d(:,i) = C_C1N6MP_AD2_L * (u(:,i+1) - u(:,i-1)) + &
-             C_C1N6MP_BD4_L * (u(:,i+2) - u(:,i-2)) + &
-             C_C1N6MP_CD6_L * (u(:,i+3) - u(:,i-3))  
-  ENDDO
+  ! ! 6th-order centered - pentadiagonal
+  ! DO i = imin_loc+1, imax_loc-1
+  !   d(:,i) = C1N6M_AD2 * (u(:,i+1) - u(:,i-1)) + &
+  !            C1N6M_BD4 * (u(:,i+2) - u(:,i-2)) + &
+            !  C1N6M_CD6 * (u(:,i+3) - u(:,i-3))  
+  ! ENDDO
 
   RETURN
 END SUBROUTINE FDM_C1N6M_BCS_RHS
