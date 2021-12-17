@@ -45,21 +45,13 @@
 !########################################################################
 #include "types.h"
 
-! coefficients LHS
-#define C1N6M_ALPHA 0.604730585697398d+0
-#define C1N6M_BETA  0.108558900945626d+0
-! coefficients RHS
-#define C1N6M_AD2   0.619462713898740d+0
-#define C1N6M_BD4   0.284700510015759d+0
-#define C1N6M_CD6   0.814191757092195d-2
-
 !########################################################################
 !Left-hand side; heptadiagonal matrix of the linear system and h
 !########################################################################
 SUBROUTINE INT_C1N6M_LHS_E(imax, ibc, dx, lambda, a,b,c,d,e,f,g, h)
 
-  ! USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
-  ! USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
+  USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
+  USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
 
   IMPLICIT NONE
 
@@ -179,7 +171,7 @@ END SUBROUTINE INT_C1N6M_LHS_E
 !########################################################################
 SUBROUTINE INT_C1N6M_LHS(imax, ibc, a,b,c,d,e,f,g)
 
-  ! USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
+  USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
 
   IMPLICIT NONE
 
@@ -276,7 +268,7 @@ END SUBROUTINE INT_C1N6M_LHS
 ! #######################################################################
 SUBROUTINE INT_C1N6M_RHS(imax,jkmax, ibc, dx, h,l)
 
-  ! USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
+  USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
 
   IMPLICIT NONE
 
@@ -329,7 +321,7 @@ SUBROUTINE INT_C1N6M_RHS(imax,jkmax, ibc, dx, h,l)
   l(:,i) = h(:,i)*dx(i) + c0103*( h(:,i-1)*dx(i-1)  + h(:,i+1)*dx(i+1) ) 
 ! sixth-order modified centered
   DO i = 4,imax-3
-    l(:,i) =                      h(:,i  )*dx(i  )                       + &
+    l(:,i) =                 h(:,i  )*dx(i  )                       + &
              C1N6M_ALPHA * ( h(:,i-1)*dx(i-1)  + h(:,i+1)*dx(i+1) ) + &
              C1N6M_BETA  * ( h(:,i-2)*dx(i-2)  + h(:,i+2)*dx(i+2) )
   ENDDO

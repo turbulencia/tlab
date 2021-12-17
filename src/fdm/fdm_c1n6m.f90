@@ -28,19 +28,12 @@
 !########################################################################
 #include "types.h"
 
-! coefficients LHS
-#define C1N6M_ALPHA 0.604730585697398d+0
-#define C1N6M_BETA  0.108558900945626d+0
-#define C1N6M_AD2   0.619462713898740d+0
-#define C1N6M_BD4   0.284700510015759d+0
-#define C1N6M_CD6   0.814191757092195d-2
-
 !########################################################################
 ! Left-hand side; pentadiagonal matrix of the linear system
 !########################################################################
 SUBROUTINE FDM_C1N6M_LHS(imax, imin_set_zero,imax_set_zero, dx,a,b,c,d,e)
 
-  ! USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
+  USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
 
   IMPLICIT NONE
 
@@ -153,7 +146,7 @@ END SUBROUTINE FDM_C1N6M_LHS
 ! #######################################################################
 SUBROUTINE FDM_C1N6M_RHS(imax,jkmax, imin_set_zero,imax_set_zero, u,d)
 
-  ! USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
+  USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
 
   IMPLICIT NONE
 
@@ -244,7 +237,7 @@ END SUBROUTINE FDM_C1N6M_RHS
 !########################################################################
 SUBROUTINE FDM_C1N6M_BCS_LHS(imax, ibc, dx, a,b,c,d,e)
 
-  ! USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
+  USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
 
   IMPLICIT NONE
 
@@ -377,7 +370,7 @@ END SUBROUTINE FDM_C1N6M_BCS_LHS
 ! #######################################################################
 SUBROUTINE FDM_C1N6M_BCS_RHS(imax,jkmax, ibc, u,d)
 
-  ! USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
+  USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
 
   IMPLICIT NONE
 
