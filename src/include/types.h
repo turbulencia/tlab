@@ -96,9 +96,11 @@
 #define C_62_R     62.0
 
 #define C_100_R    100.0
+#define C_101_R    101.0
 #define C_111_R    111.0
 #define C_128_R    128.0
 #define C_145_R    145.0
+#define C_150_R    150.0
 #define C_153_R    153.0
 #define C_256_R    256.0
 
@@ -210,9 +212,11 @@
 #define C_62_R     62.0d0
 
 #define C_100_R    100.0d0
+#define C_101_R    101.0d0
 #define C_111_R    111.0d0
 #define C_128_R    128.0d0
 #define C_145_R    145.0d0
+#define C_150_R    150.0d0
 #define C_153_R    153.0d0
 #define C_256_R    256.0d0
 

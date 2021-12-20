@@ -28,10 +28,10 @@ PROGRAM VPARTIAL
  
 #include "integers.h"
   
-   TYPE(grid_dt)                        :: g
+   TYPE(grid_dt)                      :: g
    
    TINTEGER                           :: jmax,kmax, i, l
-   TINTEGER, PARAMETER                :: imax=128, len=1, inb_grid=42
+   TINTEGER, PARAMETER                :: imax=128, len=1, inb_grid=44
    
    TREAL,    DIMENSION(imax,inb_grid) :: x
    TREAL,    DIMENSION(len,imax)      :: u, wrk3d
@@ -101,9 +101,9 @@ PROGRAM VPARTIAL
         ! du1_a(l,i) = lambda/g%scale*u(l,i)
         ! du2_a(l,i) = lambda/g%scale*du1_a(l,i)
 ! delta-function
-!  u(i)     = MAX(C_0_R,C_2_R-M_REAL(i))
-!  du1_a(i) = C_0_R
-!  du2_a(i) = C_0_R
+        ! u(i)     = MAX(C_0_R,C_2_R-M_REAL(i))
+        ! du1_a(i) = C_0_R
+        ! du2_a(i) = C_0_R
 ! hyperboic tangent
         ! u(l,i)     = lambda*LOG(C_1_R+EXP(g%nodes(i)/lambda))
         ! du1_a(l,i) = C_05_R*(C_1_R+TANH(C_05_R*g%nodes(i)/lambda))

@@ -29,7 +29,13 @@ SUBROUTINE FDM_C1N6M_COEFF()
   IMPLICIT NONE
 
 ! #######################################################################
-
+  ! 10th-order scheme
+  ! C1N6M_ALPHA  = c_1_R/C_2_R
+  ! C1N6M_BETA   = C_1_R   / C_20_R 
+  ! C1N6M_A      = C_17_R  / C_12_R 
+  ! C1N6M_B      = C_101_R / C_150_R
+  ! C1N6M_C      = C_1_R   / C_100_R
+  ! 
   C1N6M_BETA   = (C_2_R/C_5_R )*(-C_1_R/C_3_R +        C1N6M_ALPHA                    )
   C1N6M_A      = (C_1_R/C_6_R )*( C_9_R       +        C1N6M_ALPHA - C_20_R*C1N6M_BETA)
   C1N6M_B      = (C_1_R/C_15_R)*(-C_9_R       + C_32_R*C1N6M_ALPHA + C_62_R*C1N6M_BETA)

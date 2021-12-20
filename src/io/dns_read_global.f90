@@ -1177,7 +1177,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      IF ( transport%type .EQ. EQNS_TRANS_SUTHERLAND .OR. transport%type .EQ. EQNS_TRANS_POWERLAW ) inb_flow_array = inb_flow_array + 1 ! space for vis
   ENDIF
 
-  inb_wrk1d = 16
+  inb_wrk1d = 20
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN; inb_wrk2d = 11
   ELSE;                                        inb_wrk2d =  2; ENDIF
 
