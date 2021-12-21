@@ -29,7 +29,7 @@ PROGRAM VINTEGRAL
 #include "integers.h"
 
   TYPE(grid_dt)                      :: g
-  TINTEGER                           :: jmax,kmax, i, l
+  TINTEGER                           :: jmax,kmax, i
   TINTEGER, PARAMETER                :: imax=128, inb_grid=44
   TREAL,    DIMENSION(imax,inb_grid) :: x
   TREAL,    DIMENSION(imax         ) :: wrk2d, wrk3d

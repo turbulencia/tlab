@@ -46,7 +46,7 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
   TREAL,    DIMENSION(nx,nz),               INTENT(IN)    :: bcs_hb, bcs_ht   ! Boundary-condition fields
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz), INTENT(INOUT) :: tmp1,tmp2, wrk3d
   TCOMPLEX, DIMENSION(ny,2),                INTENT(INOUT) :: aux
-  TCOMPLEX, DIMENSION(ny,8),                INTENT(INOUT) :: wrk1d
+  TCOMPLEX, DIMENSION(ny,7),                INTENT(INOUT) :: wrk1d
 
 ! -----------------------------------------------------------------------
   TINTEGER i, j, k, iglobal, kglobal, ip, isize_line

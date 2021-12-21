@@ -56,7 +56,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, ibc, alpha,&
   TREAL,    DIMENSION(nx,nz)               :: bcs_hb, bcs_ht
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz) :: tmp1,tmp2, wrk3d
   TCOMPLEX, DIMENSION(ny,2)                :: aux
-  TCOMPLEX, DIMENSION(ny,6)                :: wrk1d
+  TCOMPLEX, DIMENSION(ny,7)                :: wrk1d
 
 ! -----------------------------------------------------------------------
   TINTEGER i,j,k, iglobal,kglobal, ip, isize_line

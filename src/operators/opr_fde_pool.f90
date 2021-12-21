@@ -583,7 +583,7 @@ SUBROUTINE FDE_BVP_REGULAR_NN(imode_fdm, imax,jkmax, cst, dx, u,f,bcs, tmp1, wrk
     dummy = wrk1d(1,7); wrk1d(1,7) = C_0_R
     dummy =(dummy+ c(1)*wrk1d(1,7)+ d(1)*wrk1d(2,7)+ e(1)*wrk1d(3,7))/dx(1) ! u^(1)'_1
   ELSEIF ( imode_fdm .EQ. FDM_COM6_JACPENTA ) THEN
-    CALL INT_C1N6M_LHS_E(imax,       i1, dx, dummy, a,b,c,d,g,h, em)
+    CALL INT_C1N6M_LHS_E(imax,       i1, dx, dummy, a,b,c,d,e,g,h, em)
     CALL INT_C1N6M_RHS  (imax,jkmax, i1, dx,        tmp1,u)
     CALL HEPTADFS(imax-1,       a(2),b(2),c(2),d(2),e(2),g(2),h(2))
        

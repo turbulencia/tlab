@@ -357,13 +357,13 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 
      SELECT CASE( g%mode_fdm )
 
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA )
+     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
         g%mwn(:,1)=( r28*sin(wrk1d(:,1))+    sin(C_2_R*wrk1d(:,1))                          )&
                   /( C_18_R +C_12_R*cos(wrk1d(:,1)))
 
-   !   CASE( FDM_COM6_JACPENTA )
-   !      g%mwn(:,1)=( ra1*sin(wrk1d(:,1))+rb2*sin(C_2_R*wrk1d(:,1))+rc3*sin(C_3_R*wrk1d(:,1)))&
-   !                /( C_1_R  +r2a   *cos(wrk1d(:,1))+r2b*cos(2*wrk1d(:,1)))
+     CASE( FDM_COM6_JACPENTA )
+        g%mwn(:,1)=( ra1*sin(wrk1d(:,1))+rb2*sin(C_2_R*wrk1d(:,1))+rc3*sin(C_3_R*wrk1d(:,1)))&
+                  /( C_1_R  +r2a   *cos(wrk1d(:,1))+r2b*cos(2*wrk1d(:,1)))
    
      CASE( FDM_COM8_JACOBIAN )
         g%mwn(:,1)=( r25*sin(wrk1d(:,1))+r04*sin(C_2_R*wrk1d(:,1))-r60*sin(C_3_R*wrk1d(:,1)))&

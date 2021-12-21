@@ -1,6 +1,4 @@
 #include "types.h"
-#include "dns_const.h"
-
 
 PROGRAM VHELMHOLTZ_FDE
 
@@ -10,10 +8,9 @@ PROGRAM VHELMHOLTZ_FDE
   
 #include "integers.h"
   
-  TYPE(grid_dt) :: g
   TINTEGER imode_fdm, imax, jmax, kmax
   TINTEGER len, i, l, wk, inb_grid
-  PARAMETER(imax=2048,len=1,inb_grid=44)!3+4*3+4*3)
+  PARAMETER(imax=2048,len=1,inb_grid=3+4*3+4*3)
   TREAL, DIMENSION(imax,inb_grid) :: x
   TREAL, DIMENSION(len,imax) :: u, du1_n, du2_n, u_n, a, tmp1
   TREAL wrk1d(imax,5+2+2+1), wrk2d(imax*len*5), wrk3d(len,imax*5)
@@ -38,7 +35,7 @@ PROGRAM VHELMHOLTZ_FDE
   READ(*,*) w2
 
   DO i = 1,imax
-     x(i,1) = M_REAL(i-1)/M_REAL(imax-1)*g%scale
+     x(i) = M_REAL(i-1)/M_REAL(imax-1)*g%scale
   ENDDO
 !   OPEN(21,file='grid.dat')
 !   DO i = 1,imax
