@@ -343,12 +343,13 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
 ! First-order derivative
 ! -------------------------------------------------------------------
+     ! tridiagonal scheme
      r04 = C_2_R /C_5_R
      r28 = C_14_R*C_2_R
      r48 = C_6_R *C_8_R
      r25 = C_5_R *C_5_R /C_4_R
      r60 = C_1_R /( C_6_R *C_10_R )
-     !
+     ! pentadiagonal scheme
      ra1 = C1N6M_A
      rb2 = C1N6M_BD2
      rc3 = C1N6M_CD3
