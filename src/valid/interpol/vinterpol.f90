@@ -34,11 +34,12 @@ PROGRAM INTERPOL
   
   TREAL                              :: lambda, error, sol
 
-  TINTEGER, PARAMETER                :: imax=10, len=1, inb_grid=44
+  TINTEGER, PARAMETER                :: imax=100, len=1, inb_grid=44
   
   TREAL,    DIMENSION(imax,inb_grid) :: x
   TREAL,    DIMENSION(imax)          :: x_int, x_aux
   TREAL,    DIMENSION(len,imax)      :: u, u_int, u_aux, u_a, u_b, u_c
+  TREAL,    DIMENSION(len,imax)      :: dudx, dudx_int, dudx_aux
   TREAL,    DIMENSION(imax,5)        :: wrk1d
   TREAL,    DIMENSION(len)           :: wrk2d
 
@@ -52,9 +53,9 @@ PROGRAM INTERPOL
   g%mode_fdm = FDM_COM6_JACOBIAN 
    
 ! Valid stettings
-  g%periodic = .TRUE.
+  g%periodic = .TRUE. ! non-periodic not implmented yet !
   lambda     = 1               
-  test_type  = 2
+  test_type  = 4
  
 ! ###################################################################
 ! Initialize grid    
@@ -86,39 +87,69 @@ PROGRAM INTERPOL
 ! Define the function on both grids
   DO i = 1,imax
     DO l = 1,len
-      u(l,i)     = SIN(C_2_R*C_PI_R/g%scale*lambda*g%nodes(i))
-      u_int(l,i) = SIN(C_2_R*C_PI_R/g%scale*lambda*x_int(i)  )
-      u_aux(l,i) = u_int(l,i)
+      u(l,i)        =                                              &
+                       SIN(C_2_R*C_PI_R/g%scale*lambda*g%nodes(i))
+      u_int(l,i)    =                                              &
+                       SIN(C_2_R*C_PI_R/g%scale*lambda*x_int(i)  )
+      dudx(l,i)     = (C_2_R*C_PI_R/g%scale*lambda)                &
+                      *COS(C_2_R*C_PI_R/g%scale*lambda*g%nodes(i))
+      dudx_int(l,i) = (C_2_R*C_PI_R/g%scale*lambda)                &
+                      *COS(C_2_R*C_PI_R/g%scale*lambda*x_int(i)  )
+      u_aux(l,i)    = u_int(l,i)
+      dudx_aux(l,i) = dudx_int(l,i)
     ENDDO
   ENDDO
 
 ! Switch grid and u (for test_type==2)
-  IF ( test_type .EQ. 2 ) THEN 
+  IF ( test_type .EQ. 2 .OR. test_type .EQ. 4) THEN 
     DO i = 1,imax
       x_int(i) = x(i,1) 
       x(i,1)   = x_aux(i) 
       DO l = 1,len
-        u_int(l,i) = u(l,i) 
-        u(l,i)     = u_aux(l,i) 
+        u_int(l,i)    = u(l,i) 
+        u(l,i)        = u_aux(l,i)
+        ! 
+        dudx_int(l,i) = dudx(l,i) 
+        dudx(l,i)     = dudx_aux(l,i) 
       ENDDO
     ENDDO
   ENDIF
 ! ###################################################################
-! Testing interpolation
-  IF (     test_type .EQ. 1 ) THEN 
+! Testing interpolation and interpolatory 1st derivative
+  IF (     test_type .EQ. 1 .AND. g%periodic .EQV. .TRUE. ) THEN 
     WRITE(*,*) '.......... Interpolation to the right .......... '
     CALL FDM_CINT6P_LHS( imax,  wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
     CALL FDM_CINT6PR_RHS(imax,len, u, u_a)
-    !
     CALL TRIDPFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
     CALL TRIDPSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u_a(1,1),wrk2d(1))
-  ELSEIF ( test_type .EQ. 2 ) THEN 
+  ELSEIF ( test_type .EQ. 2 .AND. g%periodic .EQV. .TRUE. ) THEN 
     WRITE(*,*) '.......... Interpolation to the left ........... '
     CALL FDM_CINT6P_LHS( imax,  wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
     CALL FDM_CINT6PL_RHS(imax,len, u, u_a)
-    !
     CALL TRIDPFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
     CALL TRIDPSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u_a(1,1),wrk2d(1))
+  ELSEIF ( test_type .EQ. 3 .AND. g%periodic .EQV. .TRUE. ) THEN 
+    WRITE(*,*) '.... 1st Interpolatory deriv to the right ..... '
+    CALL FDM_C1INT6P_LHS( imax, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+    CALL FDM_C1INT6PR_RHS(imax,len, u, u_a)
+    CALL TRIDPFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
+    CALL TRIDPSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u_a(1,1),wrk2d(1))
+    DO i = 1,imax
+      DO l = 1,len
+        u_int(l,i) = dudx_int(l,i) 
+      ENDDO
+    ENDDO
+  ELSEIF ( test_type .EQ. 4 .AND. g%periodic .EQV. .TRUE. ) THEN 
+    WRITE(*,*) '.... 1st Interpolatory deriv to the left ..... '
+    CALL FDM_C1INT6P_LHS( imax, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+    CALL FDM_C1INT6PL_RHS(imax,len, u, u_a)
+    CALL TRIDPFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
+    CALL TRIDPSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u_a(1,1),wrk2d(1))
+    DO i = 1,imax
+      DO l = 1,len
+        u_int(l,i) = dudx_int(l,i) 
+      ENDDO
+    ENDDO
   ENDIF
 ! ###################################################################
 ! IO - Error and function values

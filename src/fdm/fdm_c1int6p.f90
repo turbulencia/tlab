@@ -4,21 +4,21 @@
 !########################################################################
 !# HISTORY
 !#
-!# 2021/12/22 - J. Kostelecky
+!# 2021/12/23 - J. Kostelecky
 !#              Created
 !#
 !########################################################################
 !# DESCRIPTION
 !#
-!# Implementation of the finite difference interpolation with
-!# 6th order tridiagonal compact scheme by JCP Lele 1992, periodic.
-!# Interior points according to Eq.C.1.4 (\alpha=3/10, \beta=0, c=0).
-!# System multiplied by 4/3 to eliminate one multiplication in the RHS.
+!# Implementation of the interpolatory finite difference  first derivative
+!# with 6th-order tridiagonal compact scheme by JCP Lele 1992, periodic.
+!# Interior points according to Eq. B.1.1 (\alpha=9/62, \beta=0, c=0).
+!# System multiplied by 62/63 to eliminate one multiplication in the RHS.
 !#
 !########################################################################
 !# ARGUMENTS 
 !#
-!# u    In    function to be interpolated
+!# u    In    function to be diferentiated
 !# d    Out   right-hand side vector of the linear system
 !#
 !########################################################################
@@ -27,11 +27,12 @@
 ! #######################################################################
 ! Left-hand side; tridiagonal matrix of the linear system
 ! #######################################################################
-SUBROUTINE FDM_CINT6P_LHS(imax, a,b,c)
+SUBROUTINE FDM_C1INT6P_LHS(imax, dx, a,b,c)
   
   IMPLICIT NONE
 
   TINTEGER,                  INTENT(IN ):: imax
+  TREAL,    DIMENSION(imax), INTENT(IN ):: dx
   TREAL,    DIMENSION(imax), INTENT(OUT):: a,b,c
 
 ! -------------------------------------------------------------------
@@ -39,18 +40,35 @@ SUBROUTINE FDM_CINT6P_LHS(imax, a,b,c)
 
 ! ###################################################################
   DO i = 1,imax
-     a(i) = C_2_R / C_5_R ! 3/10
-     b(i) = C_4_R / C_3_R ! 1
-     c(i) = C_2_R / C_5_R ! 3/10
+     a(i) = C_9_R  /  C_63_R ! 9/62
+     b(i) = C_62_R /  C_63_R ! 1
+     c(i) = C_9_R  /  C_63_R ! 9/62
   ENDDO
 
+! -------------------------------------------------------------------
+! Jacobian Multiplication
+! -------------------------------------------------------------------
+  c(imax) = c(imax)*dx(1)
+  b(1)    = b(1)   *dx(1)
+  a(2)    = a(2)   *dx(1)
+
+  DO i = 2,imax-1
+    c(i-1) = c(i-1)*dx(i)
+    b(i)   = b(i)  *dx(i)
+    a(i+1) = a(i+1)*dx(i)
+  ENDDO
+
+  c(imax-1) = c(imax-1)*dx(imax)
+  b(imax)   = b(imax)  *dx(imax)
+  a(1)      = a(1)     *dx(imax)
+
   RETURN
-END SUBROUTINE FDM_CINT6P_LHS
+END SUBROUTINE FDM_C1INT6P_LHS
 
 ! #######################################################################
 ! Right-hand side; forcing term ==> interpolation to the right
 ! #######################################################################
-SUBROUTINE FDM_CINT6PR_RHS(imax,jkmax, u,d)
+SUBROUTINE FDM_C1INT6PR_RHS(imax,jkmax, u,d)
   
   IMPLICIT NONE
 
@@ -61,11 +79,11 @@ SUBROUTINE FDM_CINT6PR_RHS(imax,jkmax, u,d)
 ! -------------------------------------------------------------------
   TINTEGER                                    :: i, jk
   TINTEGER                                    :: im1, ip1, ip2, imm1
-  TREAL                                       :: c0115
+  TREAL                                       :: c17189
 
 ! #######################################################################
 
-  c0115 = C_1_R / C_15_R
+  c17189 = C_17_R / C_189_R
 
   imm1 = imax - 1 
   DO i = 1,imax
@@ -74,18 +92,18 @@ SUBROUTINE FDM_CINT6PR_RHS(imax,jkmax, u,d)
      ip2 = i+2; ip2=ip2+imm1; ip2=MOD(ip2,imax)+1
 
      DO jk = 1,jkmax
-        d(jk,i) = u(jk,ip1) + u(jk,i) + c0115*(u(jk,ip2) + u(jk,im1))
+        d(jk,i) = (u(jk,ip1) - u(jk,i)) + c17189*(u(jk,ip2) - u(jk,im1))
      ENDDO
 
   ENDDO
 
   RETURN
-END SUBROUTINE FDM_CINT6PR_RHS
+END SUBROUTINE FDM_C1INT6PR_RHS
 
 ! #######################################################################
 ! Right-hand side; forcing term ==> interpolation to the left
 ! #######################################################################
-SUBROUTINE FDM_CINT6PL_RHS(imax,jkmax, u,d)
+SUBROUTINE FDM_C1INT6PL_RHS(imax,jkmax, u,d)
   
   IMPLICIT NONE
 
@@ -96,11 +114,11 @@ SUBROUTINE FDM_CINT6PL_RHS(imax,jkmax, u,d)
 ! -------------------------------------------------------------------
   TINTEGER                                    :: i, jk
   TINTEGER                                    :: im1, ip1, im2, imm1
-  TREAL                                       :: c0115
+  TREAL                                       :: c17189
 
 ! #######################################################################
 
-  c0115 = C_1_R / C_15_R
+  c17189 = C_17_R / C_189_R
 
   imm1 = imax - 1 
   DO i = 1,imax
@@ -109,10 +127,10 @@ SUBROUTINE FDM_CINT6PL_RHS(imax,jkmax, u,d)
      ip1 = i+1; ip1=ip1+imm1; ip1=MOD(ip1,imax)+1
 
      DO jk = 1,jkmax
-        d(jk,i) = u(jk,i) + u(jk,im1) + c0115*(u(jk,ip1) + u(jk,im2))
+        d(jk,i) = (u(jk,i) - u(jk,im1)) + c17189*(u(jk,ip1) - u(jk,im2))
      ENDDO
 
   ENDDO
 
   RETURN
-END SUBROUTINE FDM_CINT6PL_RHS
+END SUBROUTINE FDM_C1INT6PL_RHS
