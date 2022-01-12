@@ -12,9 +12,8 @@
 !# 
 !# Implementation of the first derivative finite difference with
 !# 6th order pentadiagonal compact scheme by JCP Lele 1992, non-periodic.
-!# Interior points according to Eq. 2.1.10. Similar truncation error like 
-!# Eq. 2.1.7 with (\alpha=1/3). Here alpha value is chosen such, 
-!# that no inflection point in w'(w) appears.
+!# Interior points according to Eq. 2.1.10.
+!#
 !# Carpenter, Gottlieb and Aberbanel, JCP, 1993, study the effect of 
 !# boundary points on stability. Scheme 3-5-tri6c--penta6c--tri6c-5-3 
 !# is implmented.

@@ -12,9 +12,7 @@
 !#
 !# Implementation of the first derivative finite difference with
 !# 6th order pentadiagonal compact scheme by JCP Lele 1992, periodic.
-!# Interior points according to Eq. 2.1.10. Similar truncation error like 
-!# Eq. 2.1.7 with (\alpha=1/3). Here the alpha value is chosen such, 
-!# that no inflection point in w'(w) appears.
+!# Interior points according to Eq. 2.1.10.
 !#
 !########################################################################
 !# ARGUMENTS 

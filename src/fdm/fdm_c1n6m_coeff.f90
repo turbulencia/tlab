@@ -30,10 +30,10 @@ SUBROUTINE FDM_C1N6M_COEFF()
   IMPLICIT NONE
 
 ! #######################################################################
-  
 ! -------------------------------------------------------------------
-! Pentadiagonal 6th-order scheme with similar truncation error as 
-! 6th-order tridiagonal scheme with alpha=1/3. Here, largest possible 
+! Pentadiagonal 6th-order scheme (JCP Lele 1992, Eq. 2.1.10) with 
+! similar truncation error as 6th-order tridiagonal scheme
+! (JCP Lele 1992, Eq. 2.1.7) with alpha=1/3. Here, largest possible 
 ! alpha-value with alpha=0.56. 
 ! (Simulations are unstable for larger alpha values!)
 ! -------------------------------------------------------------------
