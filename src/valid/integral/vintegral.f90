@@ -52,13 +52,12 @@ PROGRAM VINTEGRAL
 
 ! Valid stettings
   g%periodic = .TRUE.
-  wk         = 1 ! Wavenumber
-  lambda     = 1 ! Eigenvalue 
+  wk         = 1 ! WRITE(*,*) 'Wavenumber ?'; READ(*,*) wk
+  lambda     = 1 ! WRITE(*,*) 'Eigenvalue ?'; READ(*,*) lambda 
   test_type  = 1
-  g%mode_fdm = FDM_COM6_JACPENTA 
-  ! g%mode_fdm = FDM_COM6_JACOBIAN 
+  g%mode_fdm = FDM_COM6_JACOBIAN ! FDM_COM6_JACPENTA
 
-  IF (g%mode_fdm .EQ. FDM_COM6_JACPENTA) C1N6M_ALPHA = 0.604730585697398
+  IF (g%mode_fdm .EQ. FDM_COM6_JACPENTA) C1N6M_ALPHA = 0.56
 
 ! ###################################################################
 

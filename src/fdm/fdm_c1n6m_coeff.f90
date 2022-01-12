@@ -30,28 +30,39 @@ SUBROUTINE FDM_C1N6M_COEFF()
   IMPLICIT NONE
 
 ! #######################################################################
+  
+! -------------------------------------------------------------------
+! Pentadiagonal 6th-order scheme with similar truncation error as 
+! 6th-order tridiagonal scheme with alpha=1/3. Here, largest possible 
+! alpha-value with alpha=0.56. 
+! (Simulations are unstable for larger alpha values!)
+! -------------------------------------------------------------------
+  C1N6M_ALPHA  = C_56_R/C_100_R
+  C1N6M_BETA   = (C_2_R/C_5_R )*(-C_1_R/C_3_R +        C1N6M_ALPHA                    )
+  C1N6M_A      = (C_1_R/C_6_R )*( C_9_R       +        C1N6M_ALPHA - C_20_R*C1N6M_BETA)
+  C1N6M_B      = (C_1_R/C_15_R)*(-C_9_R       + C_32_R*C1N6M_ALPHA + C_62_R*C1N6M_BETA)
+  C1N6M_C      = (C_1_R/C_10_R)*( C_1_R       - C_3_R *C1N6M_ALPHA + C_12_R*C1N6M_BETA)
 
 ! -------------------------------------------------------------------
 ! 10th-order scheme (not stable in current implementation)
 ! -------------------------------------------------------------------
-
-  ! C1N6M_ALPHA  = c_1_R/C_2_R
+  ! C1N6M_ALPHA  = C_1_R/C_2_R
   ! C1N6M_BETA   = C_1_R   / C_20_R 
   ! C1N6M_A      = C_17_R  / C_12_R 
   ! C1N6M_B      = C_101_R / C_150_R
   ! C1N6M_C      = C_1_R   / C_100_R
 
 ! -------------------------------------------------------------------
-! Pentadiagonal 6th-order scheme with similar truncation error as 
-! 6th-order tridiagonal scheme with alpha=1/3, here, largest possible
-! alpha=0.56 otherwise unstable.
+! Insert here own values for alpha, beta, a,b,c
 ! -------------------------------------------------------------------
+  ! C1N6M_ALPHA  = 
+  ! C1N6M_BETA   = 
+  ! C1N6M_A      = 
+  ! C1N6M_B      = 
+  ! C1N6M_C      = 
 
-  C1N6M_BETA   = (C_2_R/C_5_R )*(-C_1_R/C_3_R +        C1N6M_ALPHA                    )
-  C1N6M_A      = (C_1_R/C_6_R )*( C_9_R       +        C1N6M_ALPHA - C_20_R*C1N6M_BETA)
-  C1N6M_B      = (C_1_R/C_15_R)*(-C_9_R       + C_32_R*C1N6M_ALPHA + C_62_R*C1N6M_BETA)
-  C1N6M_C      = (C_1_R/C_10_R)*( C_1_R       - C_3_R *C1N6M_ALPHA + C_12_R*C1N6M_BETA)
-  !  
+! #######################################################################
+
   C1N6M_AD2    = C1N6M_A / C_2_R 
   C1N6M_BD4    = C1N6M_B / C_4_R
   C1N6M_CD6    = C1N6M_C / C_6_R

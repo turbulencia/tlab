@@ -93,6 +93,7 @@
 #define C_44_R     44.0
 #define C_50_R     50.0
 #define C_51_R     51.0
+#define C_56_R     56.0
 #define C_62_R     62.0
 
 #define C_100_R    100.0
@@ -209,6 +210,7 @@
 #define C_44_R     44.0d0
 #define C_50_R     50.0d0
 #define C_51_R     51.0d0
+#define C_56_R     56.0d0
 #define C_62_R     62.0d0
 
 #define C_100_R    100.0d0

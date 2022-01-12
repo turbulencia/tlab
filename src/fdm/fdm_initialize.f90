@@ -39,11 +39,11 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 
 ! ###################################################################
   g%nodes => x(:,ig)
-  
+
   ig = ig + 1
 
 ! ###################################################################
-  ! Coefficients of pentadiagonal 6th-order scheme for 1st derivative
+! Coefficients of pentadiagonal 6th-order scheme for 1st derivative
   IF (g%mode_fdm .EQ. FDM_COM6_JACPENTA) CALL FDM_C1N6M_COEFF()
   
 ! ###################################################################

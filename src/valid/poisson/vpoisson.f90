@@ -65,7 +65,7 @@ PROGRAM VPOISSON
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-  CALL DNS_READ_FIELDS('flow.0', i1, imax,jmax,kmax, i1,i0, i1, a, wrk3d)
+  CALL DNS_READ_FIELDS('field.inp', i1, imax,jmax,kmax, i1,i0, i1, a, wrk3d)
 
 ! remove 2\Delta x wave
 !  CALL OPR_FILTER(i1,imax,jmax,kmax, ibc_x,ibc_y,ibc_z, i1, a, cx,cy,cz,wrk1d,wrk2d,wrk3d)
