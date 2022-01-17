@@ -30,13 +30,14 @@ PROGRAM INTERPOL
   
   TYPE(grid_dt)                      :: g
    
-  TINTEGER                           :: jmax,kmax, i, l, test_type
+  TINTEGER                           :: jmax,kmax, i, l, test_type, imaxp
   
   TREAL                              :: lambda, error, sol
 
-  TINTEGER, PARAMETER                :: imax=100, len=1, inb_grid=44
-  
+  TINTEGER, PARAMETER                :: imax=21, len=1, inb_grid=44
+
   TREAL,    DIMENSION(imax,inb_grid) :: x
+
   TREAL,    DIMENSION(imax)          :: x_int, x_aux
   TREAL,    DIMENSION(len,imax)      :: u, u_int, u_aux, u_a, u_b, u_c
   TREAL,    DIMENSION(len,imax)      :: dudx, dudx_int, dudx_aux
@@ -50,12 +51,26 @@ PROGRAM INTERPOL
   g%uniform  = .TRUE.
   jmax       = 1
   kmax       = 1
+  imaxp      = imax - 1 ! pressure grid
   g%mode_fdm = FDM_COM6_JACOBIAN 
    
 ! Valid stettings
-  g%periodic = .TRUE. ! non-periodic not implmented yet !
+  g%periodic = .FALSE. ! .TRUE. 
   lambda     = 1               
-  test_type  = 4
+
+  WRITE(*,*) '........... Test type (1/2/3/4)? ...............'
+  WRITE(*,*) 'Interpolation to the right           = 1'
+  WRITE(*,*) 'Interpolation to the left            = 2'
+  WRITE(*,*) '1st Interpolatory deriv to the right = 3'
+  WRITE(*,*) '1st Interpolatory deriv to the left  = 4'
+  WRITE(*,*) '................................................ '
+  READ(*,*) test_type
+  IF ( g%periodic .EQV. .TRUE. ) THEN
+    WRITE(*,*) '.......... Testing periodic schemes ............'
+  ELSE
+    WRITE(*,*) '........ Testing non-periodic schemes ..........'
+  ENDIF
+  WRITE(*,*) '................................................ '
  
 ! ###################################################################
 ! Initialize grid    
@@ -100,7 +115,7 @@ PROGRAM INTERPOL
     ENDDO
   ENDDO
 
-! Switch grid and u (for test_type==2)
+! Switch grid and u (according to interpolation direction)
   IF ( test_type .EQ. 2 .OR. test_type .EQ. 4) THEN 
     DO i = 1,imax
       x_int(i) = x(i,1) 
@@ -115,44 +130,96 @@ PROGRAM INTERPOL
     ENDDO
   ENDIF
 ! ###################################################################
-! Testing interpolation and interpolatory 1st derivative
-  IF (     test_type .EQ. 1 .AND. g%periodic .EQV. .TRUE. ) THEN 
+! Testing interpolation
+! -------------------------------------------------------------------
+  IF (       test_type .EQ. 1 ) THEN 
     WRITE(*,*) '.......... Interpolation to the right .......... '
-    CALL FDM_CINT6P_LHS( imax,  wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-    CALL FDM_CINT6PR_RHS(imax,len, u, u_a)
-    CALL TRIDPFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
-    CALL TRIDPSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u_a(1,1),wrk2d(1))
-  ELSEIF ( test_type .EQ. 2 .AND. g%periodic .EQV. .TRUE. ) THEN 
+    IF (     g%periodic .EQV. .TRUE. ) THEN
+      CALL FDM_C0INT6P_LHS( imax,  wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+      CALL FDM_C0INT6PR_RHS(imax,len, u, u_a)
+      CALL TRIDPFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
+      CALL TRIDPSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u_a(1,1),wrk2d(1))
+    ElSEIF ( g%periodic .NEQV. .TRUE.) THEN
+      CALL FDM_C0INT6R_LHS( imaxp, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+      CALL FDM_C0INT6R_RHS( imax, imaxp, len, u, u_a)
+      CALL TRIDFS(imaxp,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+      CALL TRIDSS(imaxp, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), u_a(1,1))
+    ENDIF
+! -------------------------------------------------------------------
+    ELSEIF (   test_type .EQ. 2 ) THEN 
     WRITE(*,*) '.......... Interpolation to the left ........... '
-    CALL FDM_CINT6P_LHS( imax,  wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-    CALL FDM_CINT6PL_RHS(imax,len, u, u_a)
-    CALL TRIDPFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
-    CALL TRIDPSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u_a(1,1),wrk2d(1))
-  ELSEIF ( test_type .EQ. 3 .AND. g%periodic .EQV. .TRUE. ) THEN 
+    IF (     g%periodic .EQV. .TRUE. ) THEN
+      CALL FDM_C0INT6P_LHS( imax,  wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+      CALL FDM_C0INT6PL_RHS(imax,len, u, u_a)
+      CALL TRIDPFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
+      CALL TRIDPSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u_a(1,1),wrk2d(1))
+    ElSEIF ( g%periodic .NEQV. .TRUE.) THEN
+      CALL FDM_C0INT6L_LHS( imax, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+      CALL FDM_C0INT6L_RHS( imax, imaxp, len, u, u_a)
+      CALL TRIDFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+      CALL TRIDSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), u_a(1,1))
+    ENDIF
+! -------------------------------------------------------------------
+! Testing interpolatory 1st derivative
+! -------------------------------------------------------------------
+  ELSEIF (   test_type .EQ. 3 ) THEN 
     WRITE(*,*) '.... 1st Interpolatory deriv to the right ..... '
-    CALL FDM_C1INT6P_LHS( imax, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-    CALL FDM_C1INT6PR_RHS(imax,len, u, u_a)
-    CALL TRIDPFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
-    CALL TRIDPSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u_a(1,1),wrk2d(1))
-    DO i = 1,imax
-      DO l = 1,len
-        u_int(l,i) = dudx_int(l,i) 
+    IF (     g%periodic .EQV. .TRUE. ) THEN
+      CALL FDM_C1INT6P_LHS( imax, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+      CALL FDM_C1INT6PR_RHS(imax,len, u, u_a)
+      CALL TRIDPFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
+      CALL TRIDPSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u_a(1,1),wrk2d(1))
+      DO i = 1,imax
+        DO l = 1,len
+          u_int(l,i) = dudx_int(l,i) 
+        ENDDO
       ENDDO
-    ENDDO
-  ELSEIF ( test_type .EQ. 4 .AND. g%periodic .EQV. .TRUE. ) THEN 
+    ElSEIF ( g%periodic .NEQV. .TRUE. ) THEN
+      CALL FDM_C1INT6R_LHS( imax, imaxp, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+      CALL FDM_C1INT6R_RHS( imax, imaxp, len, u, u_a)
+      CALL TRIDFS(imaxp,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+      CALL TRIDSS(imaxp, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), u_a(1,1))
+      DO i = 1,imax
+        DO l = 1,len
+          u_int(l,i) = dudx_int(l,i) 
+        ENDDO
+      ENDDO
+    ENDIF
+! -------------------------------------------------------------------
+  ELSEIF ( test_type .EQ. 4 ) THEN 
     WRITE(*,*) '.... 1st Interpolatory deriv to the left ..... '
-    CALL FDM_C1INT6P_LHS( imax, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-    CALL FDM_C1INT6PL_RHS(imax,len, u, u_a)
-    CALL TRIDPFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
-    CALL TRIDPSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u_a(1,1),wrk2d(1))
-    DO i = 1,imax
-      DO l = 1,len
-        u_int(l,i) = dudx_int(l,i) 
+    IF (     g%periodic .EQV. .TRUE. ) THEN
+      CALL FDM_C1INT6P_LHS( imax, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+      CALL FDM_C1INT6PL_RHS(imax,len, u, u_a)
+      CALL TRIDPFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
+      CALL TRIDPSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), u_a(1,1),wrk2d(1))
+      DO i = 1,imax
+        DO l = 1,len
+          u_int(l,i) = dudx_int(l,i) 
+        ENDDO
       ENDDO
-    ENDDO
+    ElSEIF ( g%periodic .NEQV. .TRUE. ) THEN
+      CALL FDM_C1INT6L_LHS( imax, imaxp, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+      CALL FDM_C1INT6L_RHS( imax, imaxp, len, u, u_a)
+      CALL TRIDFS(imax,      wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+      CALL TRIDSS(imax, len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), u_a(1,1))
+      DO i = 1,imax
+        DO l = 1,len
+          u_int(l,i) = dudx_int(l,i) 
+        ENDDO
+      ENDDO
+    ENDIF    
   ENDIF
 ! ###################################################################
 ! IO - Error and function values
+  IF ( g%periodic .NEQV. .TRUE. ) THEN
+    IF ( test_type .EQ. 1 .OR. test_type .EQ. 3 ) THEN
+      u_a(:,imax)   = C_0_R
+      u_int(:,imax) = C_0_R
+      u(:,imax)     = C_0_R
+    ENDIF
+  ENDIF
+
   OPEN(20,file='interpol.dat')
   error = C_0_R
   sol   = C_0_R
@@ -166,9 +233,9 @@ PROGRAM INTERPOL
   ENDDO
   CLOSE(20)
 
-  WRITE(*,2000) 'Solution L2-norm ...........:', SQRT(g%jac(1,1)*sol) / M_REAL(len)
+  WRITE(*,2000) 'Solution L2-norm ...........:', SQRT(g%jac(1,1)*sol   / M_REAL(len))
   IF ( sol .EQ. C_0_R ) STOP
-  WRITE(*,2000) 'Error L2-norm ..............:', SQRT(g%jac(1,1)*error) 
+  WRITE(*,2000) 'Error L2-norm ..............:', SQRT(g%jac(1,1)*error / M_REAL(len)) 
   WRITE(*,2000) 'Error Linf-norm ............:', MAXVAL(u_c(1,1:imax))
   WRITE(*,2000) 'Relative error .............:', sqrt(error)/sqrt(sol)
 

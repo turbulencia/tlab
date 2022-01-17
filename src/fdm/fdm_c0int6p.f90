@@ -27,7 +27,7 @@
 ! #######################################################################
 ! Left-hand side; tridiagonal matrix of the linear system
 ! #######################################################################
-SUBROUTINE FDM_CINT6P_LHS(imax, a,b,c)
+SUBROUTINE FDM_C0INT6P_LHS(imax, a,b,c)
   
   IMPLICIT NONE
 
@@ -45,12 +45,12 @@ SUBROUTINE FDM_CINT6P_LHS(imax, a,b,c)
   ENDDO
 
   RETURN
-END SUBROUTINE FDM_CINT6P_LHS
+END SUBROUTINE FDM_C0INT6P_LHS
 
 ! #######################################################################
 ! Right-hand side; forcing term ==> interpolation to the right
 ! #######################################################################
-SUBROUTINE FDM_CINT6PR_RHS(imax,jkmax, u,d)
+SUBROUTINE FDM_C0INT6PR_RHS(imax,jkmax, u,d)
   
   IMPLICIT NONE
 
@@ -80,12 +80,12 @@ SUBROUTINE FDM_CINT6PR_RHS(imax,jkmax, u,d)
   ENDDO
 
   RETURN
-END SUBROUTINE FDM_CINT6PR_RHS
+END SUBROUTINE FDM_C0INT6PR_RHS
 
 ! #######################################################################
 ! Right-hand side; forcing term ==> interpolation to the left
 ! #######################################################################
-SUBROUTINE FDM_CINT6PL_RHS(imax,jkmax, u,d)
+SUBROUTINE FDM_C0INT6PL_RHS(imax,jkmax, u,d)
   
   IMPLICIT NONE
 
@@ -115,4 +115,4 @@ SUBROUTINE FDM_CINT6PL_RHS(imax,jkmax, u,d)
   ENDDO
 
   RETURN
-END SUBROUTINE FDM_CINT6PL_RHS
+END SUBROUTINE FDM_C0INT6PL_RHS
