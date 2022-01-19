@@ -27,21 +27,21 @@ PROGRAM INTERPOL
  
 #include "integers.h"
   
-  TYPE(grid_dt)                      :: g, g_pre
-  TINTEGER                           :: jmax,kmax, i, l, test_type
-  TREAL                              :: lambda, error, sol
-
-  TINTEGER, PARAMETER                :: imax=41, len=1, inb_grid=44
-  TINTEGER, PARAMETER                :: imaxp=imax-1 
-
-  TREAL,    DIMENSION(imax, inb_grid):: x
-  TREAL,    DIMENSION(imaxp,inb_grid):: x_pre ! pressure grid (for non-periodic case!)
-
-  TREAL,    DIMENSION(imax)          :: x_int, x_aux
-  TREAL,    DIMENSION(len,imax)      :: u, u_int, u_aux, u_a, u_b, u_c
-  TREAL,    DIMENSION(len,imax)      :: dudx, dudx_int, dudx_aux
-  TREAL,    DIMENSION(imax,5)        :: wrk1d
-  TREAL,    DIMENSION(len)           :: wrk2d
+  TYPE(grid_dt)                       :: g, g_pre
+  TINTEGER                            :: jmax,kmax, i, l, test_type
+  TREAL                               :: lambda, error, sol
+ 
+  TINTEGER, PARAMETER                 :: imax=41, len=1, inb_grid=44
+  TINTEGER, PARAMETER                 :: imaxp=imax-1 
+ 
+  TREAL,    DIMENSION(imax, inb_grid) :: x
+  TREAL,    DIMENSION(imaxp,inb_grid) :: x_pre ! pressure grid (for non-periodic case!)
+ 
+  TREAL,    DIMENSION(imax)           :: x_int, x_aux
+  TREAL,    DIMENSION(len,imax)       :: u, u_int, u_aux, u_a, u_b, u_c
+  TREAL,    DIMENSION(len,imax)       :: dudx, dudx_int, dudx_aux
+  TREAL,    DIMENSION(imax,5)         :: wrk1d
+  TREAL,    DIMENSION(len)            :: wrk2d
 
 ! ###################################################################
 ! Initialize
