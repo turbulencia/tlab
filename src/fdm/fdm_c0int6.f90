@@ -28,9 +28,9 @@
 
 ! #######################################################################
 ! Left-hand side; tridiagonal matrix of the linear system  
-! ==> interpolation to the right
+! ==> interpolation from velocity to pressure grid
 ! #######################################################################
-SUBROUTINE FDM_C0INT6R_LHS(imaxp, a,b,c)
+SUBROUTINE FDM_C0INTVP6_LHS(imaxp, a,b,c)
   
   IMPLICIT NONE
 
@@ -67,13 +67,13 @@ SUBROUTINE FDM_C0INT6R_LHS(imaxp, a,b,c)
 !   c(imaxp-1) = C_1_R / C_6_R
   
   RETURN
-END SUBROUTINE FDM_C0INT6R_LHS
+END SUBROUTINE FDM_C0INTVP6_LHS
 
 ! #######################################################################
 ! Left-hand side; tridiagonal matrix of the linear system
-! ==> interpolation to the left
+! ==> interpolation from pressure to velocity grid
 ! #######################################################################
-SUBROUTINE FDM_C0INT6L_LHS(imax, a,b,c)
+SUBROUTINE FDM_C0INTPV6_LHS(imax, a,b,c)
   
   IMPLICIT NONE
 
@@ -110,12 +110,13 @@ SUBROUTINE FDM_C0INT6L_LHS(imax, a,b,c)
   ENDDO
 
   RETURN
-END SUBROUTINE FDM_C0INT6L_LHS
+END SUBROUTINE FDM_C0INTPV6_LHS
 
 ! #######################################################################
-! Right-hand side; forcing term ==> interpolation to the right
+! Right-hand side; forcing term
+! ==> interpolation from velocity to pressure grid
 ! #######################################################################
-SUBROUTINE FDM_C0INT6R_RHS(imax,imaxp,jkmax, u,d)
+SUBROUTINE FDM_C0INTVP6_RHS(imax,imaxp,jkmax, u,d)
   
   IMPLICIT NONE
 
@@ -152,12 +153,13 @@ SUBROUTINE FDM_C0INT6R_RHS(imax,imaxp,jkmax, u,d)
   ENDDO
 
   RETURN
-END SUBROUTINE FDM_C0INT6R_RHS
+END SUBROUTINE FDM_C0INTVP6_RHS
 
 ! #######################################################################
-! Right-hand side; forcing term ==> interpolation to the left
+! Right-hand side; forcing term
+! ==> interpolation from pressure to velocity grid
 ! #######################################################################
-SUBROUTINE FDM_C0INT6L_RHS(imax,imaxp,jkmax, u,d)
+SUBROUTINE FDM_C0INTPV6_RHS(imax,imaxp,jkmax, u,d)
   
   IMPLICIT NONE
 
@@ -191,4 +193,4 @@ SUBROUTINE FDM_C0INT6L_RHS(imax,imaxp,jkmax, u,d)
   ENDDO
 
   RETURN
-END SUBROUTINE FDM_C0INT6L_RHS
+END SUBROUTINE FDM_C0INTPV6_RHS

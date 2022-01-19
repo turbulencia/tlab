@@ -48,9 +48,10 @@ SUBROUTINE FDM_C0INT6P_LHS(imax, a,b,c)
 END SUBROUTINE FDM_C0INT6P_LHS
 
 ! #######################################################################
-! Right-hand side; forcing term ==> interpolation to the right
+! Right-hand side; forcing term
+! ==> interpolation from velocity to pressure grid
 ! #######################################################################
-SUBROUTINE FDM_C0INT6PR_RHS(imax,jkmax, u,d)
+SUBROUTINE FDM_C0INTVP6P_RHS(imax,jkmax, u,d)
   
   IMPLICIT NONE
 
@@ -80,12 +81,13 @@ SUBROUTINE FDM_C0INT6PR_RHS(imax,jkmax, u,d)
   ENDDO
 
   RETURN
-END SUBROUTINE FDM_C0INT6PR_RHS
+END SUBROUTINE FDM_C0INTVP6P_RHS
 
 ! #######################################################################
-! Right-hand side; forcing term ==> interpolation to the left
+! Right-hand side; forcing term 
+! ==> interpolation from pressure to velocity grid
 ! #######################################################################
-SUBROUTINE FDM_C0INT6PL_RHS(imax,jkmax, u,d)
+SUBROUTINE FDM_C0INTPV6P_RHS(imax,jkmax, u,d)
   
   IMPLICIT NONE
 
@@ -115,4 +117,4 @@ SUBROUTINE FDM_C0INT6PL_RHS(imax,jkmax, u,d)
   ENDDO
 
   RETURN
-END SUBROUTINE FDM_C0INT6PL_RHS
+END SUBROUTINE FDM_C0INTPV6P_RHS

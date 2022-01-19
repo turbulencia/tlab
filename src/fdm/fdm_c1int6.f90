@@ -30,15 +30,14 @@
 
 ! #######################################################################
 ! Left-hand side; tridiagonal matrix of the linear system  
-! ==> interpolation to the right
+! ==> interpolation from velocity to pressure grid
 ! #######################################################################
-SUBROUTINE FDM_C1INT6R_LHS(imax, imaxp, dx, a,b,c)
+SUBROUTINE FDM_C1INTVP6_LHS(imaxp, dx, a,b,c)
   
   IMPLICIT NONE
 
-  TINTEGER,                   INTENT(IN ):: imax  ! velocity grid 
-  TINTEGER,                   INTENT(IN ):: imaxp ! pressure grid (imaxp==imax-1)
-  TREAL,    DIMENSION(imax ), INTENT(IN ):: dx
+  TINTEGER,                   INTENT(IN ):: imaxp ! pressure grid
+  TREAL,    DIMENSION(imaxp), INTENT(IN ):: dx    ! pressure grid
   TREAL,    DIMENSION(imaxp), INTENT(OUT):: a,b,c
 
 ! -------------------------------------------------------------------
@@ -82,41 +81,33 @@ SUBROUTINE FDM_C1INT6R_LHS(imax, imaxp, dx, a,b,c)
 ! -------------------------------------------------------------------
 ! Jacobian Multiplication
 ! -------------------------------------------------------------------
-! just for uniform grids !!!!!!
-  DO i = 1,imaxp
-    a(i) = a(i)*dx(1)
-    b(i) = b(i)*dx(1)
-    c(i) = c(i)*dx(1)
+  c(imaxp) = c(imaxp)*dx(1)
+  b(1)     = b(1)    *dx(1)
+  a(2)     = a(2)    *dx(1)
+
+  DO i = 2,imaxp-1
+    c(i-1) = c(i-1)*dx(i)
+    b(i)   = b(i)  *dx(i)
+    a(i+1) = a(i+1)*dx(i)
   ENDDO
 
-  ! c(imaxp) = c(imaxp)*dx(1)
-  ! b(1)     = b(1)    *dx(1)
-  ! a(2)     = a(2)    *dx(1)
-
-  ! DO i = 2,imaxp-1
-  !   c(i-1) = c(i-1)*dx(i)
-  !   b(i)   = b(i)  *dx(i)
-  !   a(i+1) = a(i+1)*dx(i)
-  ! ENDDO
-
-  ! c(imaxp-1) = c(imaxp-1)*dx(imaxp)
-  ! b(imaxp)   = b(imaxp)  *dx(imaxp)
-  ! a(1)       = a(1)      *dx(imaxp)
+  c(imaxp-1) = c(imaxp-1)*dx(imaxp)
+  b(imaxp)   = b(imaxp)  *dx(imaxp)
+  a(1)       = a(1)      *dx(imaxp)
   
   RETURN
-END SUBROUTINE FDM_C1INT6R_LHS
+END SUBROUTINE FDM_C1INTVP6_LHS
 
 ! #######################################################################
 ! Left-hand side; tridiagonal matrix of the linear system  
-! ==> interpolation to the left
+! ==> interpolation from pressure to velocity grid
 ! #######################################################################
-SUBROUTINE FDM_C1INT6L_LHS(imax, imaxp, dx, a,b,c)
+SUBROUTINE FDM_C1INTPV6_LHS(imax, dx, a,b,c)
   
   IMPLICIT NONE
 
   TINTEGER,                  INTENT(IN ):: imax  ! velocity grid 
-  TINTEGER,                  INTENT(IN ):: imaxp ! pressure grid (imaxp==imax-1)
-  TREAL,    DIMENSION(imax), INTENT(IN ):: dx
+  TREAL,    DIMENSION(imax), INTENT(IN ):: dx    ! veloctiy grid
   TREAL,    DIMENSION(imax), INTENT(OUT):: a,b,c
 
 ! -------------------------------------------------------------------
@@ -160,34 +151,28 @@ SUBROUTINE FDM_C1INT6L_LHS(imax, imaxp, dx, a,b,c)
 ! -------------------------------------------------------------------
 ! Jacobian Multiplication
 ! -------------------------------------------------------------------
-! just for uniform grids !!!!!!
-  DO i = 1,imax
-    a(i) = a(i)*dx(1)
-    b(i) = b(i)*dx(1)
-    c(i) = c(i)*dx(1)
+  c(imax) = c(imax)*dx(1)
+  b(1)    = b(1)   *dx(1)
+  a(2)    = a(2)   *dx(1)
+
+  DO i = 2,imax-1
+    c(i-1) = c(i-1)*dx(i)
+    b(i)   = b(i)  *dx(i)
+    a(i+1) = a(i+1)*dx(i)
   ENDDO
 
-  ! c(imax) = c(imax)*dx(1)
-  ! b(1)    = b(1)   *dx(1)
-  ! a(2)    = a(2)   *dx(1)
-
-  ! DO i = 2,imax-1
-  !   c(i-1) = c(i-1)*dx(i)
-  !   b(i)   = b(i)  *dx(i)
-  !   a(i+1) = a(i+1)*dx(i)
-  ! ENDDO
-
-  ! c(imax-1) = c(imax-1)*dx(imax)
-  ! b(imax)   = b(imax)  *dx(imax)
-  ! a(1)      = a(1)     *dx(imax)
+  c(imax-1) = c(imax-1)*dx(imax)
+  b(imax)   = b(imax)  *dx(imax)
+  a(1)      = a(1)     *dx(imax)
 
   RETURN
-END SUBROUTINE FDM_C1INT6L_LHS
+END SUBROUTINE FDM_C1INTPV6_LHS
 
 ! #######################################################################
-! Right-hand side; forcing term ==> interpolation to the right
+! Right-hand side; forcing term 
+! ==> interpolation from velocity to pressure grid
 ! #######################################################################
-SUBROUTINE FDM_C1INT6R_RHS(imax,imaxp,jkmax, u,d)
+SUBROUTINE FDM_C1INTVP6_RHS(imax,imaxp,jkmax, u,d)
   
   IMPLICIT NONE
 
@@ -231,12 +216,13 @@ SUBROUTINE FDM_C1INT6R_RHS(imax,imaxp,jkmax, u,d)
   ENDDO
 
   RETURN
-END SUBROUTINE FDM_C1INT6R_RHS
+END SUBROUTINE FDM_C1INTVP6_RHS
 
 ! #######################################################################
-! Right-hand side; forcing term ==> interpolation to the left
+! Right-hand side; forcing term 
+! ==> interpolation from pressure to velocity grid
 ! #######################################################################
-SUBROUTINE FDM_C1INT6L_RHS(imax,imaxp,jkmax, u,d)
+SUBROUTINE FDM_C1INTPV6_RHS(imax,imaxp,jkmax, u,d)
   
   IMPLICIT NONE
 
@@ -280,4 +266,4 @@ SUBROUTINE FDM_C1INT6L_RHS(imax,imaxp,jkmax, u,d)
   ENDDO
 
   RETURN
-END SUBROUTINE FDM_C1INT6L_RHS
+END SUBROUTINE FDM_C1INTPV6_RHS
