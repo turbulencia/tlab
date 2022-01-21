@@ -25,6 +25,7 @@ MODULE TLAB_VARS
   TINTEGER :: iadvection, iviscous, idiffusion ! formulation
   TINTEGER :: ifourier
   TINTEGER :: itransport
+  TINTEGER :: istagger                 ! vel./pre. grid staggering
 
   TINTEGER :: imode_fdm                ! finite-difference method for spatial operators
 

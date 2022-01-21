@@ -19,3 +19,7 @@ target_link_libraries(vburgers.x mappings operators io thermodynamics fdm ${LEVE
 FILE(GLOB sourcefiles "interpol/*.f90")
 add_executable(vinterpol.x ${sourcefiles})
 target_link_libraries(vinterpol.x operators io fdm ${LEVEL1_LIBS} ${LIBS})
+
+FILE(GLOB sourcefiles "interpartial/*.f90")
+add_executable(vinterpartial.x ${sourcefiles})
+target_link_libraries(vinterpartial.x mappings operators io thermodynamics fdm ${LEVEL1_LIBS} ${LIBS})

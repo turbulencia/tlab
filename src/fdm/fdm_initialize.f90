@@ -8,7 +8,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   USE TLAB_CONSTANTS, ONLY : tfile
 #endif
   USE TLAB_TYPES,  ONLY : grid_dt
-  USE TLAB_VARS, ONLY : inb_scal
+  USE TLAB_VARS, ONLY : inb_scal, istagger
   USE TLAB_VARS, ONLY : reynolds, schmidt
   USE TLAB_PROCS
 
@@ -298,6 +298,79 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 
   ENDDO
 
+! ###################################################################
+! LU factorization interpolation, done in routine TRID*FS
+! ###################################################################
+  IF ( istagger .EQ. 1 ) THEN
+     g%lu0i => x(:,ig:)
+
+! -------------------------------------------------------------------
+! Periodic case; pentadiagonal
+! -------------------------------------------------------------------
+     IF ( g%periodic ) THEN
+        SELECT CASE( g%mode_fdm )
+        CASE( FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM8_JACOBIAN )
+           CALL FDM_C0INT6P_LHS(nx, g%lu0i(1,1),g%lu0i(1,2),g%lu0i(1,3))
+        END SELECT
+   
+        CALL TRIDPFS(nx, g%lu0i(1,1),g%lu0i(1,2),g%lu0i(1,3),g%lu0i(1,4),g%lu0i(1,5))
+        ig = ig + 5
+! -------------------------------------------------------------------
+! Nonperiodic case; tridiagonal for both directions (vel. <-> pre.)
+! -------------------------------------------------------------------
+     ELSE     
+        SELECT CASE( g%mode_fdm )
+        CASE( FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM8_JACOBIAN )
+           ip = 0 ! velocity --> pressure grid
+           CALL FDM_C0INTVP6_LHS(nx, g%lu0i(1,ip+1),g%lu0i(1,ip+2),g%lu0i(1,ip+3))
+           CALL TRIDFS(nx, g%lu0i(1,ip+1),g%lu0i(1,ip+2),g%lu0i(1,ip+3))
+           ip = 3 ! pressure --> velocity grid
+           CALL FDM_C0INTPV6_LHS(nx, g%lu0i(1,ip+1),g%lu0i(1,ip+2),g%lu0i(1,ip+3))
+           CALL TRIDFS(nx, g%lu0i(1,ip+1),g%lu0i(1,ip+2),g%lu0i(1,ip+3))
+        END SELECT
+
+        ig = ig + 2*3
+     ENDIF
+  ENDIF
+
+! ###################################################################
+! LU factorization first interp. derivative, done in routine TRID*FS
+! ###################################################################
+  IF ( istagger .EQ. 1 ) THEN
+     g%lu1i => x(:,ig:)
+
+! -------------------------------------------------------------------
+! Periodic case; pentadiagonal
+! -------------------------------------------------------------------
+     IF ( g%periodic ) THEN
+        SELECT CASE( g%mode_fdm )
+        CASE( FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM8_JACOBIAN )
+           CALL FDM_C1INT6P_LHS(nx, g%jac, g%lu1i(1,1),g%lu1i(1,2),g%lu1i(1,3))
+        END SELECT
+   
+        CALL TRIDPFS(nx, g%lu1i(1,1),g%lu1i(1,2),g%lu1i(1,3),g%lu1i(1,4),g%lu1i(1,5))
+        ig = ig + 5
+! -------------------------------------------------------------------
+! Nonperiodic case; tridiagonal for both directions (vel. <-> pre.)
+! -------------------------------------------------------------------
+     ELSE     
+        SELECT CASE( g%mode_fdm )
+        CASE( FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM8_JACOBIAN )
+           ! velocity --> pressure grid
+           ip = 0
+           CALL FDM_C1INTVP6_LHS(nx, g%jac, g%lu1i(1,ip+1),g%lu1i(1,ip+2),g%lu1i(1,ip+3))
+           CALL TRIDFS(nx, g%lu1i(1,ip+1),g%lu1i(1,ip+2),g%lu1i(1,ip+3))
+           ! pressure --> velocity grid
+           ip = 3
+           CALL FDM_C1INTPV6_LHS(nx, g%jac, g%lu1i(1,ip+1),g%lu1i(1,ip+2),g%lu1i(1,ip+3))
+           CALL TRIDFS(nx, g%lu1i(1,ip+1),g%lu1i(1,ip+2),g%lu1i(1,ip+3))
+        END SELECT
+  
+        ig = ig + 2*3
+     ENDIF
+  ENDIF
+
+  
 ! ###################################################################
 ! Modified wavenumbers in periodic case
 ! ###################################################################
