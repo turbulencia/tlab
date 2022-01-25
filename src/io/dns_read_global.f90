@@ -1218,19 +1218,26 @@ ENDIF
            g(is)%inb_grid = g(is)%inb_grid  &
                           + 5               & ! LU decomposition interpolation
                           + 5                 ! LU decomposition 1. order interpolatory
+                        
         ELSE
            g(is)%inb_grid = g(is)%inb_grid  &
                           + 3 *2            & ! LU decomposition interpolation,    2 directions
-                          + 3 *2              ! LU decomposition 2. order interp., 2 directions
+                          + 3 *2            & ! LU decomposition 2. order interp., 2 directions
+                          + 1                 ! Jacobians of first-order derivatives on pressure mesh
         ENDIF
      ENDIF
   END DO
 
 ! auxiliar array txc
-  isize_txc_field = imax*jmax*kmax
+  isize_txc_field = imax*(jmax + 1)*kmax
   IF ( ifourier .EQ. 1 ) THEN
-     isize_txc_dimz  = (imax+2)*(jmax+2)
-     isize_txc_dimx  =  kmax   *(jmax+2)
+     IF ( istagger .EQ. 1 ) THEN
+        isize_txc_dimx  =  kmax   *(jmax+4) ! Check! not sure if this is right
+        isize_txc_dimz  = (imax+2)*(jmax+4) ! Check! not sure if this is right
+     ELSE
+        isize_txc_dimz  = (imax+2)*(jmax+2)
+        isize_txc_dimx  =  kmax   *(jmax+2)
+     ENDIF
      isize_txc_field = isize_txc_dimz*kmax ! space for FFTW lib
 #ifdef USE_MPI
      IF ( ims_npro_k .GT. 1 ) THEN

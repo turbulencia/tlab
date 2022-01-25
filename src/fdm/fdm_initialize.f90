@@ -138,6 +138,73 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   ig = ig + 4
 
 ! ###################################################################
+! Staggered non-periodic pressure grid
+! Grid-nodes and Jacobians (first-order derivative) 
+! ###################################################################
+  IF ( (istagger .EQ. 1) .AND. (.NOT. g%periodic) ) THEN 
+! -------------------------------------------------------------------
+! Nodes
+! -------------------------------------------------------------------
+      g%nodesp => x(:,ig)
+      DO i = 1,nx-1
+         g%nodesp(i) = g%nodes(i) + 0.5 * (g%nodes(i+1) - g%nodes(i))
+      ENDDO
+      g%nodesp(nx)   = C_0_R
+   
+      ig = ig + 1
+! -------------------------------------------------------------------
+! Jacobians
+! -------------------------------------------------------------------
+     g%jacp => x(:,ig:)
+     
+     IF ( nx .EQ. 1 ) THEN
+        g%jacp(1,1) = C_1_R
+        g%jacp(1,2) = C_1_R
+        g%jacp(1,3) = C_0_R
+        g%jacp(1,4) = C_0_R
+        RETURN
+     ENDIF
+   
+   ! ###################################################################
+     IF ( g%uniform ) THEN
+   ! first derivative
+        DO i = 2,nx-2
+           g%jacp(i,1) = (g%nodesp(i+1)-g%nodesp(i-1))*C_05_R
+        ENDDO
+   ! Boundary points
+        g%jacp(1,   1) = g%jacp(2,   1)
+        g%jacp(nx-1,1) = g%jacp(nx-2,1)
+        g%jacp(nx,  1) = C_0_R
+     ELSE 
+   ! first derivative wrt computational grid, non-uniform
+   ! second derivative not needed on pressure grid   
+        g%jacp(:,1) = C_1_R
+   
+        SELECT CASE( g%mode_fdm )
+   
+        CASE( FDM_COM4_JACOBIAN )
+           CALL FDM_C1N4_LHS(nx-1,    i0,i0, g%jacp, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+           CALL FDM_C1N4_RHS(nx-1,i1, i0,i0, g%nodesp, g%jacp(1,1))
+   
+        CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
+           CALL FDM_C1N6_LHS(nx-1,    i0,i0, g%jacp, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+           CALL FDM_C1N6_RHS(nx-1,i1, i0,i0, g%nodesp, g%jacp(1,1))
+   
+        CASE( FDM_COM8_JACOBIAN )
+           CALL FDM_C1N8_LHS(nx-1,    i0,i0, g%jacp, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+           CALL FDM_C1N8_RHS(nx-1,i1, i0,i0, g%nodesp, g%jacp(1,1))
+   
+        END SELECT
+   
+        CALL TRIDFS(nx-1,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+        CALL TRIDSS(nx-1, i1, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), g%jacp(1,1))
+
+     ENDIF
+
+     ig = ig + 1
+  ENDIF
+
+! ###################################################################
 ! LU factorization first-order derivative, done in routine TRID*FS
 ! ###################################################################
   g%lu1 => x(:,ig:)
@@ -322,8 +389,8 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
         SELECT CASE( g%mode_fdm )
         CASE( FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM8_JACOBIAN )
            ip = 0 ! velocity --> pressure grid
-           CALL FDM_C0INTVP6_LHS(nx, g%lu0i(1,ip+1),g%lu0i(1,ip+2),g%lu0i(1,ip+3))
-           CALL TRIDFS(nx, g%lu0i(1,ip+1),g%lu0i(1,ip+2),g%lu0i(1,ip+3))
+           CALL FDM_C0INTVP6_LHS(nx-1, g%lu0i(1,ip+1),g%lu0i(1,ip+2),g%lu0i(1,ip+3))
+           CALL TRIDFS(nx-1, g%lu0i(1,ip+1),g%lu0i(1,ip+2),g%lu0i(1,ip+3))
            ip = 3 ! pressure --> velocity grid
            CALL FDM_C0INTPV6_LHS(nx, g%lu0i(1,ip+1),g%lu0i(1,ip+2),g%lu0i(1,ip+3))
            CALL TRIDFS(nx, g%lu0i(1,ip+1),g%lu0i(1,ip+2),g%lu0i(1,ip+3))
@@ -358,8 +425,8 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
         CASE( FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM8_JACOBIAN )
            ! velocity --> pressure grid
            ip = 0
-           CALL FDM_C1INTVP6_LHS(nx, g%jac, g%lu1i(1,ip+1),g%lu1i(1,ip+2),g%lu1i(1,ip+3))
-           CALL TRIDFS(nx, g%lu1i(1,ip+1),g%lu1i(1,ip+2),g%lu1i(1,ip+3))
+           CALL FDM_C1INTVP6_LHS(nx-1, g%jacp, g%lu1i(1,ip+1),g%lu1i(1,ip+2),g%lu1i(1,ip+3))
+           CALL TRIDFS(nx-1, g%lu1i(1,ip+1),g%lu1i(1,ip+2),g%lu1i(1,ip+3))
            ! pressure --> velocity grid
            ip = 3
            CALL FDM_C1INTPV6_LHS(nx, g%jac, g%lu1i(1,ip+1),g%lu1i(1,ip+2),g%lu1i(1,ip+3))

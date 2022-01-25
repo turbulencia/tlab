@@ -41,9 +41,9 @@ PROGRAM VINTERPARTIAL
   TREAL, DIMENSION(:,:,:), ALLOCATABLE :: a, a_int, a_dif
   TREAL, DIMENSION(:,:,:), ALLOCATABLE :: b, c
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: wrk1d, wrk2d
-  TREAL, DIMENSION(:),     ALLOCATABLE :: wrk3d, tmp1
+  TREAL, DIMENSION(:),     ALLOCATABLE :: wrk3d, tmp1, d
 
-  TINTEGER i, j, k,  bcs(2,2)
+  TINTEGER i, j, k,  bcs(2,2), ip_a,ip_b,ip_t
   TREAL dummy, error
 ! ###################################################################
   CALL TLAB_START()
@@ -65,6 +65,7 @@ PROGRAM VINTERPARTIAL
   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
   ALLOCATE(a(imax,jmax,kmax),a_int(imax,jmax,kmax),a_dif(imax,jmax,kmax))
   ALLOCATE(b(imax,jmax,kmax),c(imax,jmax,kmax))
+  ALLOCATE(d(imax*jmax*kmax))
   ALLOCATE(tmp1(isize_txc_field),wrk3d(isize_wrk3d))
 
   CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
@@ -76,7 +77,7 @@ PROGRAM VINTERPARTIAL
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-  CALL DNS_READ_FIELDS('field.inp', i1, imax,jmax,kmax, i1,i0, isize_wrk3d, a, wrk3d)
+  CALL DNS_READ_FIELDS('flow.0', i1, imax,jmax,kmax, i1,i0, isize_wrk3d, a, wrk3d)
 
 ! ###################################################################
 ! x-direction: Interpolation + interpolatory 1st derivative
@@ -212,6 +213,92 @@ PROGRAM VINTERPARTIAL
      ENDIF
      ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
   ENDIF
+! ###################################################################
+! y-direction: Interpolation + interpolatory 1st derivative (non-periodic)
+! ################################################################### 
+! Interpolation: vel. <--> pre. grid
+! Interpolated field on hybrid mesh in tmp1, BCs of tmp1 already applied in partial routine
+  CALL OPR_PARTIAL_Y(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(2), a,     a_int, tmp1, wrk2d,wrk3d)
+! Input field is a_int without values at jmax
+  CALL OPR_PARTIAL_Y(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(2), a_int, b,     tmp1, wrk2d,wrk3d)
+! Update BCs for hybrid mesh
+  b(:,1,:)    = a(:,1,:)   ! Impose bottom BCs at Jmin
+  b(:,jmax,:) = a(:,jmax,:)! Impose top    BCs at Jmax
+  ! Error
+  a_dif = a - b; error = C_0_R; dummy = C_0_R
+  DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+     error = error + a_dif(i,j,k)*a_dif(i,j,k)
+     dummy = dummy + a(i,j,k)*a(i,j,k)
+  ENDDO; ENDDO; ENDDO
+  error = sqrt(error)/sqrt(dummy)
+#ifdef USE_MPI
+  dummy = error
+  CALL MPI_ALLREDUCE(dummy, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  error = error / ims_npro
+#endif
+  IF (ims_pro == 0) THEN
+     WRITE(*,*) 'y-direction: Interpolation + interp. 1st derivative'
+     WRITE(*,*) 'Relative error .............: ', error
+  ENDIF
+  ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
+  ! CALL DNS_WRITE_FIELDS('field.bak', i1, imax,jmax,kmax, i1, isize_wrk3d, b,     wrk3d)
+  ! CALL DNS_WRITE_FIELDS('field.int', i1, imax,jmax,kmax, i1, isize_wrk3d, a_int, wrk3d)
+! -------------------------------------------------------------------
+! 1st interp. deriv + Interpolation: vel. <--> pre. grid
+  CALL OPR_PARTIAL_Y(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(2), a,     a_int, tmp1, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(2), a_int, b,     tmp1, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), a,     c,     tmp1, wrk2d,wrk3d)
+  ! Update BCs for hybrid mesh
+  b(:,1,:)    = c(:,1,:)   ! Impose bottom BCs at Jmin
+  b(:,jmax,:) = c(:,jmax,:)! Impose top    BCs at Jmax
+
+! Difference field and error
+  a_dif = c - b; error = C_0_R; dummy = C_0_R
+  DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+    error = error + a_dif(i,j,k)*a_dif(i,j,k)
+     dummy = dummy + a(i,j,k)*a(i,j,k)
+  ENDDO; ENDDO; ENDDO
+  error = sqrt(error)/sqrt(dummy)
+#ifdef USE_MPI
+  dummy = error
+  CALL MPI_ALLREDUCE(dummy, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  error = error / ims_npro
+#endif
+  IF (ims_pro == 0) THEN
+     WRITE(*,*) 'Relative error .............: ', error
+  ENDIF
+  ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
+  ! CALL DNS_WRITE_FIELDS('field.bak', i1, imax,jmax,kmax, i1, isize_wrk3d, b,     wrk3d)
+  ! CALL DNS_WRITE_FIELDS('field.int', i1, imax,jmax,kmax, i1, isize_wrk3d, a_int, wrk3d)
+  ! CALL DNS_WRITE_FIELDS('field.dy',  i1, imax,jmax,kmax, i1, isize_wrk3d, c,     wrk3d)
+  ! -------------------------------------------------------------------
+! 1st interp. deriv + Interpolation: vel. <--> pre. grid
+  CALL OPR_PARTIAL_Y(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(2), a,     a_int, tmp1, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(2), a_int, b,     tmp1, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), a,     c,     tmp1, wrk2d,wrk3d)
+  ! Update BCs for hybrid mesh
+  b(:,1,:)    = c(:,1,:)   ! Impose bottom BCs at Jmin
+  b(:,jmax,:) = c(:,jmax,:)! Impose top    BCs at Jmax
+! Difference field and error
+  a_dif = c - b; error = C_0_R; dummy = C_0_R
+  DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
+     error = error + a_dif(i,j,k)*a_dif(i,j,k)
+     dummy = dummy + a(i,j,k)*a(i,j,k)
+  ENDDO; ENDDO; ENDDO
+  error = sqrt(error)/sqrt(dummy)
+#ifdef USE_MPI
+  dummy = error
+  CALL MPI_ALLREDUCE(dummy, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  error = error / ims_npro
+#endif
+  IF (ims_pro == 0) THEN
+     WRITE(*,*) 'Relative error .............: ', error
+     WRITE(*,*) '--------------------------------------------------------'
+  ENDIF
+  ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
+  ! CALL DNS_WRITE_FIELDS('field.bak', i1, imax,jmax,kmax, i1, isize_wrk3d, b,     wrk3d)
+  ! CALL DNS_WRITE_FIELDS('field.dy',  i1, imax,jmax,kmax, i1, isize_wrk3d, c,     wrk3d)
+! ###################################################################
 ! ###################################################################
   CALL TLAB_STOP(0)
 END PROGRAM VINTERPARTIAL
