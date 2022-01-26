@@ -11,7 +11,7 @@
 SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_wrk1d, imode_eqns
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_wrk1d, imode_eqns, istagger
   USE TLAB_VARS, ONLY : rbackground
 
 IMPLICIT NONE
@@ -48,46 +48,56 @@ IMPLICIT NONE
 
 ! Advection and diffusion terms
   CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u,    p, tmp1, wrk2d,wrk3d) ! store u transposed in tmp1
-  tmp3(:,:,:,1) = tmp3(:,:,:,1) + p
+  tmp3(:,:,:,1) = tmp3(:,:,:,1) + p(:,:,:)
   CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, bcs, g(1), v,u,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains u transposed
-  tmp3(:,:,:,2) = tmp3(:,:,:,2) + p
+  tmp3(:,:,:,2) = tmp3(:,:,:,2) + p(:,:,:)
   CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, bcs, g(1), w,u,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains u transposed
-  tmp3(:,:,:,3) = tmp3(:,:,:,3) + p
+  tmp3(:,:,:,3) = tmp3(:,:,:,3) + p(:,:,:)
 
   CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, g(2), v,v,v,    p, tmp1, wrk2d,wrk3d) ! store v transposed in tmp1
-  tmp3(:,:,:,2) = tmp3(:,:,:,2) + p
+  tmp3(:,:,:,2) = tmp3(:,:,:,2) + p(:,:,:)
   CALL OPR_BURGERS_Y(i1,i0, imax,jmax,kmax, bcs, g(2), u,v,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains v transposed
-  tmp3(:,:,:,1) = tmp3(:,:,:,1) + p
+  tmp3(:,:,:,1) = tmp3(:,:,:,1) + p(:,:,:)
   CALL OPR_BURGERS_Y(i1,i0, imax,jmax,kmax, bcs, g(2), w,v,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains v transposed
-  tmp3(:,:,:,3) = tmp3(:,:,:,3) + p
+  tmp3(:,:,:,3) = tmp3(:,:,:,3) + p(:,:,:)
 
   CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, g(3), w,w,w,    p, tmp1, wrk2d,wrk3d) ! store w transposed in tmp1
-  tmp3(:,:,:,3) = tmp3(:,:,:,3) + p
+  tmp3(:,:,:,3) = tmp3(:,:,:,3) + p(:,:,:)
   CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), v,w,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains w transposed
-  tmp3(:,:,:,2) = tmp3(:,:,:,2) + p
+  tmp3(:,:,:,2) = tmp3(:,:,:,2) + p(:,:,:)
   CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), u,w,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains w transposed
-  tmp3(:,:,:,1) = tmp3(:,:,:,1) + p
+  tmp3(:,:,:,1) = tmp3(:,:,:,1) + p(:,:,:)
 
 ! Calculate forcing term Ox
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3(1,1,1,1))
   ENDIF
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp3(1,1,1,1),tmp1, wrk3d, wrk2d,wrk3d)
-  p = p + tmp1
+  IF (istagger .EQ. 1 ) THEN
+    CALL OPR_PARTIAL_X(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(1), tmp3(1,1,1,1),tmp2, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp2,         tmp1, wrk3d, wrk2d,wrk3d)
+  ELSE
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp3(1,1,1,1),tmp1, wrk3d, wrk2d,wrk3d)
+  ENDIF
+  p(:,:,:) = p(:,:,:) + tmp1(:,:jmax,:)
 
 ! Calculate forcing term Oz
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3(1,1,1,3))
   ENDIF
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3(1,1,1,3),tmp1, wrk3d, wrk2d,wrk3d)
-  p = p + tmp1
+  IF (istagger .EQ. 1 ) THEN
+     CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), tmp3(1,1,1,3),tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp2,         tmp1, wrk3d, wrk2d,wrk3d)
+  ELSE 
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3(1,1,1,3),tmp1, wrk3d, wrk2d,wrk3d)
+  ENDIF
+  p(:,:,:) = p(:,:,:) + tmp1(:,:jmax,:)
 
 ! Calculate forcing term Oy
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3(1,1,1,2))
   ENDIF
   CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp3(1,1,1,2),tmp1, wrk3d, wrk2d,wrk3d)
-  p = p + tmp1
+  p(:,:,:) = p(:,:,:) + tmp1(:,:jmax,:)
 
 ! #######################################################################
 ! Solve Poisson equation
@@ -100,6 +110,12 @@ IMPLICIT NONE
 
   CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, i3, &
        p,wrk3d, tmp1,tmp2, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
+
+! Interpolate back on velocity grid
+  IF (istagger .EQ. 1 ) THEN
+     CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), p,    tmp1, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp1, p,    wrk3d, wrk2d,wrk3d)
+  ENDIF
 
   RETURN
 END SUBROUTINE FI_PRESSURE_BOUSSINESQ

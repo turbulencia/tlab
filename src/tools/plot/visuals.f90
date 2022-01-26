@@ -164,7 +164,7 @@ PROGRAM VISUALS
     IF ( opt_vec(iv) .EQ. 5              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
     IF ( opt_vec(iv) .EQ. 6              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
     IF ( opt_vec(iv) .EQ. 7              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,3); ENDIF
-    IF ( opt_vec(iv) .EQ. 8              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,7); ENDIF
+    IF ( opt_vec(iv) .EQ. 8              ) THEN; iread_flow = 1; iread_scal = 0; inb_txc=MAX(inb_txc,7); ENDIF
     IF ( opt_vec(iv) .EQ. 9              ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,1); ENDIF
     IF ( opt_vec(iv) .GT. 9 .AND. opt_vec(iv) .LE. iscal_offset   ) THEN
                                                                  iread_scal = 1; inb_txc=MAX(inb_txc,4); ENDIF
@@ -428,10 +428,11 @@ PROGRAM VISUALS
           ENDIF
 
         ELSE IF ( opt_vec(iv) .EQ. 8 ) THEN ! pressure
+          s = C_0_R
           plot_file = 'Pressure'//time_str(1:MaskSize)
           CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
-
+#if 0
           plot_file = 'PressureGradientPower'//time_str(1:MaskSize)
           CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), txc(1,1),txc(1,2), wrk3d, wrk2d,wrk3d)
           CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), txc(1,1),txc(1,3), wrk3d, wrk2d,wrk3d)
@@ -470,7 +471,7 @@ PROGRAM VISUALS
           plot_file = 'PressureHydrodynamic'//time_str(1:MaskSize)
           txc(1:isize_field,1) = txc(1:isize_field,1) -txc(1:isize_field,2)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
-
+#endif
         ENDIF
 
       ELSE ! compressible

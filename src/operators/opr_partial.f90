@@ -387,7 +387,7 @@ SUBROUTINE OPR_PARTIAL1_INT(dir, nlines, bcs, g, u,result, wrk2d, wrk3d)
         ENDDO
       ENDDO
     ELSE
-      CALL TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case only implemented for y-direction.')
+      CALL TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case only implemented for y-direction.')
       CALL TLAB_STOP(DNS_ERROR_NOTIMPL)
     ENDIF
   ! =====================================================================
@@ -407,7 +407,7 @@ SUBROUTINE OPR_PARTIAL1_INT(dir, nlines, bcs, g, u,result, wrk2d, wrk3d)
       ip = 3
       CALL TRIDSS(g%size,nlines, g%lu1i(1,ip+1),g%lu1i(1,ip+2),g%lu1i(1,ip+3), result)
     ELSE
-      CALL TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case only implemented for y-direction.')
+      CALL TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case only implemented for y-direction.')
       CALL TLAB_STOP(DNS_ERROR_NOTIMPL)
     ENDIF
   ENDIF
@@ -448,7 +448,7 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
   TYPE(grid_dt),              INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
+  TREAL, DIMENSION(nx*(ny+1)*nz), INTENT(INOUT) :: tmp1, wrk3d
   TREAL, DIMENSION(ny*nz),    INTENT(INOUT) :: wrk2d
 
   TARGET u, tmp1, result, wrk3d
@@ -585,7 +585,7 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
   TYPE(grid_dt),              INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
+  TREAL, DIMENSION(nx*(ny+1)*nz), INTENT(INOUT) :: tmp1, wrk3d
   TREAL, DIMENSION(nx*ny),    INTENT(INOUT) :: wrk2d
 
   TARGET u, tmp1, result, wrk3d
