@@ -1,88 +1,56 @@
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/01/01 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Stretching function s.t. the grid spacing dx/ds is given by a 
-!# hyperbolic tangent function 
+!# Stretching function s.t. the grid spacing dx/ds is given by a
+!# hyperbolic tangent function
 !#
 !# dx/ds = f_0 + [(f_1-f_0)/2]*[ 1 + TANH[(s-s_1)/(2*delta_1)] ]
 !#             + [(f_2-f_0)/2]*[ 1 + TANH[(s-s_2)/(2*delta_2)] ]
-!#
-!# Assumes just 1 segment
-!#
-!########################################################################
-!# ARGUMENTS 
-!#
+!#             + ...
+!# Not sure why the previous version had
+!#             + f_3 *C_2_R *delta_3*TANH((s-s_3)/delta_3)
 !########################################################################
 #include "types.h"
 
-SUBROUTINE BLD_TANH(idir, x, imax, scalex)
-
-  USE GRID_LOCAL, ONLY : iseg_vals, iseg_opts, idir_opts
-
+SUBROUTINE BLD_TANH(idir, x, imax, scalex, work)
+  USE GRID_LOCAL
   IMPLICIT NONE
 
-  TINTEGER idir, imax
-  TREAL x(imax), scalex
+  TINTEGER, INTENT(IN   ) :: idir, imax
+  TREAL,    INTENT(INOUT) :: x(imax), scalex, work(imax)
 
-! -----------------------------------------------------------------------
-  TREAL s_1, f_1, delta_1
-  TREAL s_2, f_2, delta_2
-  TREAL s_3, f_3, delta_3
-  TINTEGER i, iloc
+  ! -----------------------------------------------------------------------
+  TREAL s(3), f(3), delta(3)    ! superposition of up to 3 modes, each with 3 parameters
+  TINTEGER i, iloc, im, iseg
 
-! #######################################################################
-! define parameters
-  s_1    = iseg_vals(1,1,idir) ! transition point in uniform grid
-  f_1    = iseg_vals(2,1,idir) ! ratio f_1/f_0
-  delta_1= iseg_vals(3,1,idir)
-  IF ( iseg_opts(2,1,idir) .GT. 1 ) THEN ! mode 2
-     s_2    = iseg_vals(4,1,idir) ! transition point in uniform grid
-     f_2    = iseg_vals(5,1,idir) ! ratio f_2/f_0
-     delta_2= iseg_vals(6,1,idir)
-  ENDIF
-  IF ( iseg_opts(2,1,idir) .GT. 2 ) THEN ! mode 3
-     s_3    = iseg_vals(7,1,idir) ! transition point in uniform grid
-     f_3    = iseg_vals(8,1,idir) ! ratio f_2/f_0
-     delta_3= iseg_vals(9,1,idir)
-  ENDIF
+  ! #######################################################################
+  iseg = 1                      ! Assumes just 1 segment
 
-! mirrowing case; first point in array is imax/2 
-  IF ( idir_opts(3,idir) .EQ. 1 ) THEN; iloc = imax/2 ! mirrored case
-  ELSE;                                 iloc = 1;     ENDIF
+  iloc = 1
+  IF ( g_build(idir)%mirrored ) iloc = imax/2 ! mirrored case; first point in array is imax/2
 
-! create uniform reference grid s
+  ! create uniform reference grid s
   DO i=iloc,imax
-     x(i) = M_REAL(i-iloc)/M_REAL(imax-iloc)*scalex
+    x(i) = M_REAL(i-iloc) /M_REAL(imax-iloc) *scalex
   ENDDO
 
-! create grid x as a function of variable s 
-  IF      ( iseg_opts(2,1,idir) .EQ. 3 ) THEN
-     DO i = iloc,imax
-        x(i) = x(i) + (f_1-C_1_R)*delta_1*LOG(EXP((x(i)-s_1)/delta_1)+C_1_R) &
-                    + (f_2-C_1_R)*delta_2*LOG(EXP((x(i)-s_2)/delta_2)+C_1_R) &
-                    + f_3 *C_2_R *delta_3*TANH((x(i)-s_3)/delta_3)
-     ENDDO
-  ELSE IF ( iseg_opts(2,1,idir) .EQ. 2 ) THEN
-     DO i = iloc,imax
-        x(i) = x(i) + (f_1-C_1_R)*delta_1*LOG(EXP((x(i)-s_1)/delta_1)+C_1_R) &
-                    + (f_2-C_1_R)*delta_2*LOG(EXP((x(i)-s_2)/delta_2)+C_1_R)
-     ENDDO
-  ELSE
-     DO i = iloc,imax
-        x(i) = x(i) + (f_1-C_1_R)*delta_1*LOG(EXP((x(i)-s_1)/delta_1)+C_1_R)
-     ENDDO
-  ENDIF
+  ! -----------------------------------------------------------------------
+  ! define local variables for readability below; strides of 3
+  s     = g_build(idir)%vals(1::3,iseg)     ! transition point in uniform grid
+  f     = g_build(idir)%vals(2::3,iseg)     ! ratio dx(i)/dx_0
+  delta = g_build(idir)%vals(3::3,iseg)
 
-! correct value of scale
+  ! create mapping from grid s to grid x
+  work = C_0_R
+  DO im = 1,3                           ! 3 modes at most
+    IF ( ABS(delta(im)) > C_0_R ) THEN
+      work(iloc:imax) = work(iloc:imax) + (f(im)-C_1_R)*delta(im)*LOG(EXP((x(iloc:imax)-s(im))/delta(im))+C_1_R)
+      ! DO i = iloc,imax
+      !   work(i) = work(i) + (f(im)-C_1_R)*delta(im)*LOG(EXP((x(i)-s(im))/delta(im))+C_1_R)
+      ! END DO
+    END IF
+  END DO
+  x = x +work
+
+  ! correct value of scale
   x(:) = x(:) - x(iloc)
   scalex = x(imax)
 
