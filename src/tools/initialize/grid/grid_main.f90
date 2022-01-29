@@ -15,7 +15,7 @@ PROGRAM INIGRID
   CHARACTER*32  sfile
   TYPE(grid_dt)              :: g(3)
   TREAL, ALLOCATABLE, TARGET :: x(:),y(:),z(:)
-  TREAL, ALLOCATABLE         :: work1(:),work2(:)
+  TREAL, ALLOCATABLE         :: wrk1d(:,:)
   TINTEGER idir, iseg, isize_wrk1d, n
   TREAL scale_old, scale_new
 
@@ -51,8 +51,7 @@ PROGRAM INIGRID
   ALLOCATE(z(g(3)%size)); g(3)%nodes => z
 
   isize_wrk1d = MAX(g(1)%size,MAX(g(2)%size,g(3)%size))
-  ALLOCATE(work1(isize_wrk1d))
-  ALLOCATE(work2(isize_wrk1d))
+  ALLOCATE(wrk1d(isize_wrk1d,7))
 
   ! #######################################################################
   ! Construct grid
@@ -65,10 +64,10 @@ PROGRAM INIGRID
       CALL BLD_GEN( idir, g(idir)%nodes, g(idir)%size, g(idir)%scale)
 
     CASE( GTYPE_TANH )
-      CALL BLD_TANH(idir, g(idir)%nodes, g(idir)%size, g(idir)%scale, work1)
+      CALL BLD_TANH(idir, g(idir)%nodes, g(idir)%size, g(idir)%scale, wrk1d)
 
     CASE( GTYPE_EXP )
-      CALL BLD_EXP( idir, g(idir)%nodes, g(idir)%size, g(idir)%scale)
+      CALL BLD_EXP( idir, g(idir)%nodes, g(idir)%size, g(idir)%scale, wrk1d)
 
     END SELECT
 
@@ -97,20 +96,20 @@ PROGRAM INIGRID
       WRITE(20,3000) '['//TRIM(ADJUSTL(g(idir)%name))//'-direction]'
 
       IF ( g(idir)%size > 1 ) THEN
-        work1(2) = g(idir)%nodes(2) - g(idir)%nodes(1)
+        wrk1d(2,1) = g(idir)%nodes(2) - g(idir)%nodes(1)
         DO n = 3,g(idir)%size
-          work1(n) = g(idir)%nodes(n)-g(idir)%nodes(n-1)
-          work2(n) = work1(n)/work1(n-1)
+          wrk1d(n,1) = g(idir)%nodes(n)-g(idir)%nodes(n-1)
+          wrk1d(n,2) = wrk1d(n,1)/wrk1d(n-1,1)
         ENDDO
 
         WRITE(20,2000) 'number of points .......: ',g(idir)%size
         WRITE(20,1000) 'origin .................: ',g(idir)%nodes(1)
         WRITE(20,1000) 'end point ..............: ',g(idir)%nodes(g(idir)%size)
         WRITE(20,1000) 'scale ..................: ',g(idir)%scale
-        WRITE(20,1000) 'minimum step ...........: ',MINVAL(work1(2:g(idir)%size))
-        WRITE(20,1000) 'maximum step ...........: ',MAXVAL(work1(2:g(idir)%size))
-        WRITE(20,1000) 'minimum stretching .....: ',MINVAL(work2(3:g(idir)%size))
-        WRITE(20,1000) 'maximum stretching .....: ',MAXVAL(work2(3:g(idir)%size))
+        WRITE(20,1000) 'minimum step ...........: ',MINVAL(wrk1d(2:g(idir)%size,1))
+        WRITE(20,1000) 'maximum step ...........: ',MAXVAL(wrk1d(2:g(idir)%size,1))
+        WRITE(20,1000) 'minimum stretching .....: ',MINVAL(wrk1d(3:g(idir)%size,2))
+        WRITE(20,1000) 'maximum stretching .....: ',MAXVAL(wrk1d(3:g(idir)%size,2))
 
       ELSE
         WRITE(20,'(a7)') '2D case'
@@ -140,11 +139,11 @@ PROGRAM INIGRID
 CONTAINS
   ! #######################################################################
   ! #######################################################################
-  SUBROUTINE GRID_MIRROR(imax, x, scale)
+  SUBROUTINE GRID_MIRROR(imax, x, scalex)
     IMPLICIT NONE
 
     TINTEGER, INTENT(IN   ) :: imax
-    TREAL,    INTENT(INOUT) :: x(imax), scale
+    TREAL,    INTENT(INOUT) :: x(imax), scalex
 
     ! -----------------------------------------------------------------------
     TINTEGER i
@@ -166,7 +165,7 @@ CONTAINS
     offset = x(1)
     x = x -offset
 
-    scale = x(imax)-x(1)
+    scalex = x(imax)-x(1)
 
     RETURN
   END SUBROUTINE GRID_MIRROR

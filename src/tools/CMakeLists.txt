@@ -22,7 +22,7 @@ endif()
 # Initialization
 FILE(GLOB sourcefiles "initialize/grid/*.f90")
 add_executable(inigrid.x ${sourcefiles})
-target_link_libraries(inigrid.x operators io quadpack ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(inigrid.x operators fdm io ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "initialize/rand/*.f90")
 add_executable(inirand.x ${sourcefiles})
