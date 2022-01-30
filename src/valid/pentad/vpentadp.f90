@@ -30,8 +30,8 @@ PROGRAM VPENTADP
   ! a_d(1) = RAN0(seed)
   ! a_e(1) = RAN0(seed)
 ! example with modified pentadiagonal 6th-order compact scheme
-  alpha  = 0.6047306974511406
-  beta   = 0.1085589456471229
+  alpha  = 0.56
+  beta   = 0.090666666666667
   a_a(1) = beta
   a_b(1) = alpha
   a_c(1) = 1.0

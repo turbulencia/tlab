@@ -33,8 +33,8 @@ See file {\tt operators/opr\_partial}. Spatial derivatives are calculated using 
 
 We consider FD approximations
 \begin{equation}
-  \sum_{k=-1}^{k=1}a_ks'_{j+k}=h^{-1}\sum_{k=-2}^{k=2}b_ks_{j+k} \;,\qquad
-  \sum_{k=-1}^{k=1}a_ks''_{j+k}=h^{-2}\sum_{k=-3}^{k=3}b_ks_{j+k} \;.
+  \sum_{k=-1}^{k=1}a_ks'_{j+k}=h^{-1}\sum_{l=-2}^{l=2}b_ks_{j+l} \;,\qquad
+  \sum_{k=-1}^{k=1}a_ks''_{j+k}=h^{-2}\sum_{l=-3}^{l=3}b_ks_{j+l} \;.
   \label{equ:coefs}
 \end{equation}
 $\{s_j:\, j=1,\ldots,n\}$ are the values of the function $s(x)$ evaluated at $x_j\in[x_1\,,x_n]$. The sets $\{s'_j\}$ and $\{s''_j\}$ denote approximations to the first- and second-order derivatives evaluated at $\{x_j\}$. For the first-order derivatives, we have a 5-point stencil. For the second-order derivatives, we have a 7-point stencil. The coefficients for the first-order derivative are given in table~\ref{tab:coeffs1}. The coefficients for the first-order derivative are given in table~\ref{tab:coeffs2}.
@@ -42,21 +42,22 @@ $\{s_j:\, j=1,\ldots,n\}$ are the values of the function $s(x)$ evaluated at $x_
 \begin{table}[!ht]
   \small
   \centering
-  \begin{tabular}{l@{\hspace{6ex}}ccc@{\hspace{6ex}}ccccc@{\hspace{6ex}}c}\hline
-    &$a_{-1}$&$a_{0}$&$a_{+1}$&$b_{-2}$&$b_{-1}$&$b_{0}$&$b_{+1}$&$b_{+2}$&$t$\\ \hline
-    C2&0        &1&0       & 0 & $^{-1}\!/\!_2$ & 0 &$^1\!/\!_2$ & 0&
+  \begin{tabular}{l@{\hspace{4ex}}ccccc@{\hspace{4ex}}ccccccc@{\hspace{4ex}}c}\hline
+    &$a_{-2}$&$a_{-1}$&$a_{0}$&$a_{+1}$&$a_{+2}$&$b_{-3}$&$b_{-2}$&$b_{-1}$&$b_{0}$&$b_{+1}$&$b_{+2}$&$b_{+3}$&$t$\\ \hline
+    C2 &0 &0          &1 &0           &0    &0&0 & $^{-1}\!/\!_2$ & 0 &$^1\!/\!_2$ & 0&0&
     $\;\,^{1}\!/\!_{3!}\,h^2s^{(3)}$\\
-    C4&$^1\!/\!_4$&1&$^1\!/\!_4$& 0 &$ ^{-3}\!/\!_4$ & 0 &$^3\!/\!_4$ & 0&
-    $^{-1}\!/\!_{5!}\,h^4s^{(5)}$\\
-    C6&$^1\!/\!_3$&1&$^1\!/\!_3$&$ ^{-1}\!/\!_{36}$ &$ ^{-7}\!/\!_9$  & 0 &
-    $^7\!/\!_9$  &$^{1}\!/\!_{36}$&
+    C4 &0 &$^1\!/\!_4$&1 &$^1\!/\!_4$ &0    &0&0 &$ ^{-3}\!/\!_4$ & 0 &$^3\!/\!_4$ & 0&0&
+    $^{-1}\!/\!_{5!}\,h^4s^{(5)}$\\  
+    C6 &0 &$^1\!/\!_3$&1 &$^1\!/\!_3$ &0    &0&$ ^{-1}\!/\!_{36}$ &$ ^{-7}\!/\!_9$  & 0 &
+    $^7\!/\!_9$  &$^{1}\!/\!_{36}$& 0&
     $\;\,^{4}\!/\!_{7!}\,h^6s^{(7)}$\\
-    B1&0      &1&0       & 0 & 0 & -1 & 1 & 0&
+    C6m&{\tiny $\frac{34}{375}$} &{\tiny $\frac{56}{100}$} &1 &{\tiny $\frac{56}{100}$} &{\tiny $\frac{34}{375}$} &{\tiny $\frac{51}{1250}$} &{\tiny $\frac{5453}{5625}$} &{\tiny $\frac{581}{450}$} &0 &{\tiny $\frac{581}{450}$} &{\tiny $\frac{5453}{5625}$} &{\tiny $\frac{51}{1250}$} & $\;\,^{4}\!/\!_{7!}\,h^6s^{(7)}$\\
+    B1 &0 &0          &1 &0           &0    &0&0 & 0 & -1 & 1 & 0&0&
     $\;\,^{1}\!/\!_{2!}\,h\;\,s^{(2)}$\\
-    B3&0      &1&2       & 0 & 0 & $^{-5}\!/\!_2$ & 2 &$ ^1\!/\!_2$&
+    B3 &0 &0          &1 &2           &0    &0&0 & 0 & $^{-5}\!/\!_2$ & 2 &$ ^1\!/\!_2$&0&
     $^{-2}\!/\!_{4!}\,h^3s^{(4)}$\\
-    B5&$^1\!/\!_6$&1&$^1\!/\!_2$& 0 &$ ^{-10}\!/\!_{18}$ &$ ^{-1}\!/\!_2$ & 1&
-    $^{1}\!/\!_{18}$&$^{-2}\!/\!_{6!}\,h^5s^{(6)}$\\\hline
+    B5 &0 &$^1\!/\!_6$&1 &$^1\!/\!_2$ &0    &0&0 &$ ^{-10}\!/\!_{18}$ &$ ^{-1}\!/\!_2$ & 1&
+    $^{1}\!/\!_{18}$&0&$^{-2}\!/\!_{6!}\,h^5s^{(6)}$\\\hline
   \end{tabular}
   \caption{Coefficients of the finite-difference formulae (\ref{equ:coefs}) for the first-order derivative. The first three rows are centered differences, the last three are biased differences. The matrix $A_1$ in (\ref{equ:fdm}) is constructed in terms of the coefficients $\{a_i\}$, the matrix $B_1$ in terms of $\{b_i\}$. The last column contains the leading order term of the local truncation error defined by (\ref{equ:truncation1}).}
   \label{tab:coeffs1}
@@ -87,7 +88,7 @@ $\{s_j:\, j=1,\ldots,n\}$ are the values of the function $s(x)$ evaluated at $x_
   \label{tab:coeffs2}
 \end{table}
 
-Global schemes are constructed as a combination of $n$ of these formulae, using biased finite differences at the boundaries in case of non-periodicity. For the first-order derivative, we define the global algorithm (35653) by using the centered scheme C6 at the $(n-4)$ interior points, and the biased schemes B5 at $j=2$ and B3 at $j=1$ with the corresponding symmetric counterpart at $j=n-1$ and $j=n$, respectively \citep{Carpenter:1993}. For the second-order derivative, we define the global algorithm (3466b43) by using the centered scheme C6b at the $(n-6)$ interior points, C6 at $j=3$ and $j=n-2$, C4 at $j=2$ and $j=n-1$, and the biased scheme B3 at $j=1$ with the corresponding symmetric counterpart at $j=n$. We tried the biased scheme B5 instead of the centered scheme C4 for $j=2$ and $j=n-1$; the eigenvalues were closer to the spectral case, but the truncation errors $e_j$ were larger despite $t_j$ begin smaller (see below).
+Global schemes are constructed as a combination of $n$ of these formulae, using biased finite differences at the boundaries in case of non-periodicity. For the first-order derivative, we define the global algorithm (35653) by using the centered scheme C6 at the $(n-4)$ interior points, and the biased schemes B5 at $j=2$ and B3 at $j=1$ with the corresponding symmetric counterpart at $j=n-1$ and $j=n$, respectively \citep{Carpenter:1993}. For the second-order derivative, we define the global algorithm (3466b43) by using the centered scheme C6b at the $(n-6)$ interior points, C6 at $j=3$ and $j=n-2$, C4 at $j=2$ and $j=n-1$, and the biased scheme B3 at $j=1$ with the corresponding symmetric counterpart at $j=n$. We tried the biased scheme B5 instead of the centered scheme C4 for $j=2$ and $j=n-1$; the eigenvalues were closer to the spectral case, but the truncation errors $e_j$ were larger despite $t_j$ being smaller (see below).
 
 We define the $n$-dimensional vectors
 \begin{equation}
