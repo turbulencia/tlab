@@ -16,8 +16,8 @@ PROGRAM INIGRID
   TYPE(grid_dt)              :: g(3)
   TREAL, ALLOCATABLE, TARGET :: x(:),y(:),z(:)
   TREAL, ALLOCATABLE         :: wrk1d(:,:)
-  TINTEGER idir, iseg, isize_wrk1d, n
-  TREAL scale_old, scale_new
+  TINTEGER idir, iseg, isize_wrk1d, n, nmax, iloc
+  TREAL scale_old, scale_new, ds
 
   ! #######################################################################
   ! Initialize
@@ -51,25 +51,46 @@ PROGRAM INIGRID
   ALLOCATE(z(g(3)%size)); g(3)%nodes => z
 
   isize_wrk1d = MAX(g(1)%size,MAX(g(2)%size,g(3)%size))
-  ALLOCATE(wrk1d(isize_wrk1d,7))
+  ALLOCATE(wrk1d(isize_wrk1d,8))
 
   ! #######################################################################
   ! Construct grid
   ! #######################################################################
   DO idir = 1,3
 
-    SELECT CASE(g_build(idir)%opts(1,1))
+    iloc = 1
+    IF ( g_build(idir)%mirrored ) iloc = g(idir)%size/2 ! mirrored case; first point in array is imax/2
 
-    CASE(:4)
-      CALL BLD_GEN( idir, g(idir)%nodes, g(idir)%size, g(idir)%scale)
+    g(idir)%nodes(iloc) = C_0_R                 ! set origin at zero
 
-    CASE( GTYPE_TANH )
-      CALL BLD_TANH(idir, g(idir)%nodes, g(idir)%size, g(idir)%scale, wrk1d)
+    DO iseg = 1,g_build(idir)%nseg              ! Loop over the segments that build the grid
+      nmax = g_build(idir)%SIZE(iseg)           ! for readability below
+      ! create uniform reference grid s
+      ds = ( g_build(idir)%END(iseg) -g(idir)%nodes(iloc) )/ M_REAL( nmax -1 )
+      DO n=1,nmax-1
+        g(idir)%nodes(iloc+n) = g(idir)%nodes(iloc+n-1) +ds
+      ENDDO
 
-    CASE( GTYPE_EXP )
-      CALL BLD_EXP( idir, g(idir)%nodes, g(idir)%size, g(idir)%scale, wrk1d)
+      SELECT CASE(g_build(idir)%opts(1,iseg))
 
-    END SELECT
+      CASE( GTYPE_UNIFORM )
+        ! already done
+
+      CASE( GTYPE_TANH )
+        CALL BLD_TANH(idir, iseg, g(idir)%nodes(iloc:), nmax, wrk1d)
+
+      CASE( GTYPE_EXP )
+        CALL BLD_EXP( idir, iseg, g(idir)%nodes(iloc:), nmax, wrk1d)
+
+      CASE DEFAULT
+        CALL BLD_THEREST( idir, iseg, g(idir)%nodes(iloc:), nmax)
+
+      END SELECT
+
+      iloc = iloc +nmax -1
+      IF ( nmax > 1 ) g(idir)%scale = g(idir)%nodes(iloc) ! correct value of scale
+
+    ENDDO
 
     IF ( g_build(idir)%mirrored ) CALL GRID_MIRROR(g(idir)%size, g(idir)%nodes, g(idir)%scale)
 
@@ -81,7 +102,6 @@ PROGRAM INIGRID
       g(idir)%nodes(g(idir)%size) =                 scale_new   ! avoid rounding error
       g(idir)%scale =                               scale_new   ! update scale
     ENDIF
-
   ENDDO
 
   ! #######################################################################
