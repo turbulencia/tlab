@@ -91,17 +91,21 @@
 #define C_25_R     25.0
 #define C_26_R     26.0
 #define C_27_R     27.0
+#define C_32_R     32.0
 #define C_36_R     36.0
 #define C_44_R     44.0
 #define C_50_R     50.0
 #define C_51_R     51.0
+#define C_56_R     56.0
 #define C_62_R     62.0
 #define C_63_R     63.0
 
 #define C_100_R    100.0
+#define C_101_R    101.0
 #define C_111_R    111.0
 #define C_128_R    128.0
 #define C_145_R    145.0
+#define C_150_R    150.0
 #define C_153_R    153.0
 #define C_189_R    189.0
 #define C_256_R    256.0
@@ -209,17 +213,21 @@
 #define C_25_R     25.0d0
 #define C_26_R     26.0d0
 #define C_27_R     27.0d0
+#define C_32_R     32.0d0
 #define C_36_R     36.0d0
 #define C_44_R     44.0d0
 #define C_50_R     50.0d0
 #define C_51_R     51.0d0
+#define C_56_R     56.0d0
 #define C_62_R     62.0d0
 #define C_63_R     63.0d0
 
 #define C_100_R    100.0d0
+#define C_101_R    101.0d0
 #define C_111_R    111.0d0
 #define C_128_R    128.0d0
 #define C_145_R    145.0d0
+#define C_150_R    150.0d0
 #define C_153_R    153.0d0
 #define C_189_R    189.0d0
 #define C_256_R    256.0d0

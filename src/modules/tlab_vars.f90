@@ -91,6 +91,15 @@ MODULE TLAB_VARS
 
   TREAL    :: visc                                ! 1/reynolds
 
+! ###################################################################
+! Compact parameters (1st derivative of 6th-order pentadiagonal)
+! ###################################################################
+  TREAL    :: C1N6M_ALPHA,  C1N6M_BETA
+  TREAL    :: C1N6M_ALPHA2, C1N6M_BETA2
+  TREAL    :: C1N6M_A,   C1N6M_B,   C1N6M_C
+  TREAL    :: C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
+  TREAL    ::            C1N6M_BD2, C1N6M_CD3
+
 ! ###########################################################
 ! Filters
 ! ###########################################################
