@@ -34,7 +34,7 @@ PROGRAM VINTERPARTIAL
 #ifdef USE_MPI
 #include "mpif.h"
 #else
-  TINTEGER, PARAMETER                  :: ims_pro=0, ims_npro=1
+  TINTEGER, PARAMETER                  :: ims_pro=0
 #endif
  
   TREAL, DIMENSION(:,:),   ALLOCATABLE, SAVE, TARGET :: x,y,z
@@ -44,7 +44,7 @@ PROGRAM VINTERPARTIAL
   TREAL, DIMENSION(:),     ALLOCATABLE :: wrk3d, tmp1, d
 
   TINTEGER i, j, k,  bcs(2,2), ip_a,ip_b,ip_t
-  TREAL dummy, error
+  TREAL dummy, dummy2, error, error2
 ! ###################################################################
   CALL TLAB_START()
 
@@ -77,7 +77,7 @@ PROGRAM VINTERPARTIAL
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-  CALL DNS_READ_FIELDS('flow.0', i1, imax,jmax,kmax, i1,i0, isize_wrk3d, a, wrk3d)
+  CALL DNS_READ_FIELDS('field.inp', i1, imax,jmax,kmax, i1,i0, isize_wrk3d, a, wrk3d)
 
 ! ###################################################################
 ! x-direction: Interpolation + interpolatory 1st derivative
@@ -86,20 +86,15 @@ PROGRAM VINTERPARTIAL
   CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), a,     a_int, tmp1, wrk2d,wrk3d)
   CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), a_int, b,     tmp1, wrk2d,wrk3d)
 ! Difference field and error
-  a_dif = a - b; error = C_0_R; dummy = C_0_R
-  DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
-     error = error + a_dif(i,j,k)*a_dif(i,j,k)
-     dummy = dummy + a(i,j,k)*a(i,j,k)
-  ENDDO; ENDDO; ENDDO
-  error = sqrt(error)/sqrt(dummy)
+  a_dif = a - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
-  dummy = error
-  CALL MPI_ALLREDUCE(dummy, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-  error = error / ims_npro
+  error2 = error; dummy2 = dummy
+  CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
   IF (ims_pro == 0) THEN
-     WRITE(*,*) 'x-direction: Interpolation + interp. 1st derivative'
-     WRITE(*,*) 'Relative error .............: ', error
+    WRITE(*,*) 'x-direction: Interpolation + interp. 1st derivative'
+    WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
   ENDIF
   ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
 ! -------------------------------------------------------------------
@@ -108,19 +103,14 @@ PROGRAM VINTERPARTIAL
   CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), a_int, b,     tmp1, wrk2d,wrk3d)
   CALL OPR_PARTIAL_X(OPR_P1,        imax,jmax,kmax, bcs, g(1), a,     c,     tmp1, wrk2d,wrk3d)
 ! Difference field and error
-  a_dif = c - b; error = C_0_R; dummy = C_0_R
-  DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
-       error = error + a_dif(i,j,k)*a_dif(i,j,k)
-     dummy = dummy + a(i,j,k)*a(i,j,k)
-  ENDDO; ENDDO; ENDDO
-  error = sqrt(error)/sqrt(dummy)
+  a_dif = c - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
-  dummy = error
-  CALL MPI_ALLREDUCE(dummy, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-  error = error / ims_npro
+  error2 = error; dummy2 = dummy
+  CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
   IF (ims_pro == 0) THEN
-     WRITE(*,*) 'Relative error .............: ', error
+     WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
   ENDIF
   ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
 ! -------------------------------------------------------------------
@@ -129,19 +119,14 @@ PROGRAM VINTERPARTIAL
   CALL OPR_PARTIAL_X(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(1), a_int, b,     tmp1, wrk2d,wrk3d)
   CALL OPR_PARTIAL_X(OPR_P1,        imax,jmax,kmax, bcs, g(1), a,     c,     tmp1, wrk2d,wrk3d)
 ! Difference field and error
-  a_dif = c - b; error = C_0_R; dummy = C_0_R
-  DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
-     error = error + a_dif(i,j,k)*a_dif(i,j,k)
-     dummy = dummy + a(i,j,k)*a(i,j,k)
-  ENDDO; ENDDO; ENDDO
-  error = sqrt(error)/sqrt(dummy)
+  a_dif = c - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
-  dummy = error
-  CALL MPI_ALLREDUCE(dummy, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-  error = error / ims_npro
+  error2 = error; dummy2 = dummy
+  CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
   IF (ims_pro == 0) THEN
-     WRITE(*,*) 'Relative error .............: ', error
+     WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
      WRITE(*,*) '--------------------------------------------------------'
   ENDIF
   ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
@@ -153,20 +138,15 @@ PROGRAM VINTERPARTIAL
      CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), a,     a_int, tmp1, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), a_int, b,     tmp1, wrk2d,wrk3d)
    ! Difference field and error
-     a_dif = a - b; error = C_0_R; dummy = C_0_R
-     DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
-        error = error + a_dif(i,j,k)*a_dif(i,j,k)
-        dummy = dummy + a(i,j,k)*a(i,j,k)
-     ENDDO; ENDDO; ENDDO
-     error = sqrt(error)/sqrt(dummy)
+     a_dif = a - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
-     dummy = error
-     CALL MPI_ALLREDUCE(dummy, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-     error = error / ims_npro
+     error2 = error; dummy2 = dummy
+     CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+     CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
      IF (ims_pro == 0) THEN
         WRITE(*,*) 'z-direction: Interpolation + interp. 1st derivative'
-        WRITE(*,*) 'Relative error .............: ', error
+        WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
      ENDIF
      ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
    ! -------------------------------------------------------------------
@@ -175,19 +155,14 @@ PROGRAM VINTERPARTIAL
      CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), a_int, b,     tmp1, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), a,     c,     tmp1, wrk2d,wrk3d)
    ! Difference field and error
-     a_dif = c - b; error = C_0_R; dummy = C_0_R
-     DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
-        error = error + a_dif(i,j,k)*a_dif(i,j,k)
-        dummy = dummy + a(i,j,k)*a(i,j,k)
-     ENDDO; ENDDO; ENDDO
-     error = sqrt(error)/sqrt(dummy)
+     a_dif = c - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
-     dummy = error
-     CALL MPI_ALLREDUCE(dummy, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-     error = error / ims_npro
+     error2 = error; dummy2 = dummy
+     CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+     CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
      IF (ims_pro == 0) THEN
-        WRITE(*,*) 'Relative error .............: ', error
+        WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
      ENDIF
      ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
    ! -------------------------------------------------------------------
@@ -196,19 +171,14 @@ PROGRAM VINTERPARTIAL
      CALL OPR_PARTIAL_Z(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(3), a_int, b,     tmp1, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), a,     c,     tmp1, wrk2d,wrk3d)
    ! Difference field and error
-     a_dif = c - b; error = C_0_R; dummy = C_0_R
-     DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
-       error = error + a_dif(i,j,k)*a_dif(i,j,k)
-       dummy = dummy + a(i,j,k)*a(i,j,k)
-     ENDDO; ENDDO; ENDDO
-     error = sqrt(error)/sqrt(dummy)
+     a_dif = c - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
-     dummy = error
-     CALL MPI_ALLREDUCE(dummy, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-     error = error / ims_npro
+     error2 = error; dummy2 = dummy
+     CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+     CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
      IF (ims_pro == 0) THEN
-        WRITE(*,*) 'Relative error .............: ', error
+        WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
         WRITE(*,*) '--------------------------------------------------------'
      ENDIF
      ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
@@ -224,21 +194,16 @@ PROGRAM VINTERPARTIAL
 ! Update BCs for hybrid mesh
   b(:,1,:)    = a(:,1,:)   ! Impose bottom BCs at Jmin
   b(:,jmax,:) = a(:,jmax,:)! Impose top    BCs at Jmax
-  ! Error
-  a_dif = a - b; error = C_0_R; dummy = C_0_R
-  DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
-     error = error + a_dif(i,j,k)*a_dif(i,j,k)
-     dummy = dummy + a(i,j,k)*a(i,j,k)
-  ENDDO; ENDDO; ENDDO
-  error = sqrt(error)/sqrt(dummy)
+! Difference field and error
+  a_dif = a - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
-  dummy = error
-  CALL MPI_ALLREDUCE(dummy, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-  error = error / ims_npro
+  error2 = error; dummy2 = dummy
+  CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
   IF (ims_pro == 0) THEN
      WRITE(*,*) 'y-direction: Interpolation + interp. 1st derivative'
-     WRITE(*,*) 'Relative error .............: ', error
+     WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
   ENDIF
   ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
   ! CALL DNS_WRITE_FIELDS('field.bak', i1, imax,jmax,kmax, i1, isize_wrk3d, b,     wrk3d)
@@ -251,21 +216,15 @@ PROGRAM VINTERPARTIAL
   ! Update BCs for hybrid mesh
   b(:,1,:)    = c(:,1,:)   ! Impose bottom BCs at Jmin
   b(:,jmax,:) = c(:,jmax,:)! Impose top    BCs at Jmax
-
 ! Difference field and error
-  a_dif = c - b; error = C_0_R; dummy = C_0_R
-  DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
-    error = error + a_dif(i,j,k)*a_dif(i,j,k)
-     dummy = dummy + a(i,j,k)*a(i,j,k)
-  ENDDO; ENDDO; ENDDO
-  error = sqrt(error)/sqrt(dummy)
+  a_dif = c - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
-  dummy = error
-  CALL MPI_ALLREDUCE(dummy, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-  error = error / ims_npro
+  error2 = error; dummy2 = dummy
+  CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
   IF (ims_pro == 0) THEN
-     WRITE(*,*) 'Relative error .............: ', error
+     WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
   ENDIF
   ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
   ! CALL DNS_WRITE_FIELDS('field.bak', i1, imax,jmax,kmax, i1, isize_wrk3d, b,     wrk3d)
@@ -280,19 +239,14 @@ PROGRAM VINTERPARTIAL
   b(:,1,:)    = c(:,1,:)   ! Impose bottom BCs at Jmin
   b(:,jmax,:) = c(:,jmax,:)! Impose top    BCs at Jmax
 ! Difference field and error
-  a_dif = c - b; error = C_0_R; dummy = C_0_R
-  DO k = 1,kmax; DO j = 1,jmax; DO i = 1,imax
-     error = error + a_dif(i,j,k)*a_dif(i,j,k)
-     dummy = dummy + a(i,j,k)*a(i,j,k)
-  ENDDO; ENDDO; ENDDO
-  error = sqrt(error)/sqrt(dummy)
+  a_dif = c - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
-  dummy = error
-  CALL MPI_ALLREDUCE(dummy, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-  error = error / ims_npro
+  error2 = error; dummy2 = dummy
+  CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
   IF (ims_pro == 0) THEN
-     WRITE(*,*) 'Relative error .............: ', error
+     WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
      WRITE(*,*) '--------------------------------------------------------'
   ENDIF
   ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)

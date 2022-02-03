@@ -955,7 +955,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ELSE 
     isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
   ENDIF
-  ! isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
   IF ( icalc_part == 1) THEN
     isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))

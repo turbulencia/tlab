@@ -259,9 +259,9 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; istagger = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; istagger = 0
   ELSE
-   CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.StaggerGrid must be yes or no')
-   CALL TLAB_STOP(DNS_ERROR_CALCFLOW)
-ENDIF
+     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.StaggerGrid must be yes or no')
+     CALL TLAB_STOP(DNS_ERROR_CALCFLOW)
+  ENDIF
 
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
@@ -1223,7 +1223,7 @@ ENDIF
         ELSE
            g(is)%inb_grid = g(is)%inb_grid  &
                           + 3 *2            & ! LU decomposition interpolation,    2 directions
-                          + 3 *2            & ! LU decomposition 2. order interp., 2 directions
+                          + 3 *2            & ! LU decomposition 1. order interp., 2 directions
                           + 1                 ! Jacobians of first-order derivatives on pressure mesh
         ENDIF
      ENDIF
@@ -1233,8 +1233,10 @@ ENDIF
   isize_txc_field = imax*(jmax + 1)*kmax
   IF ( ifourier .EQ. 1 ) THEN
      IF ( istagger .EQ. 1 ) THEN
-        isize_txc_dimx  =  kmax   *(jmax+4) ! Check! not sure if this is right
-        isize_txc_dimz  = (imax+2)*(jmax+4) ! Check! not sure if this is right
+      !   isize_txc_dimx  =  kmax   *(jmax+4) ! Check! not sure if this is right
+      !   isize_txc_dimz  = (imax+2)*(jmax+4) ! Check! not sure if this is right
+        isize_txc_dimz  = (imax+2)*(jmax+2)
+        isize_txc_dimx  =  kmax   *(jmax+2)
      ELSE
         isize_txc_dimz  = (imax+2)*(jmax+2)
         isize_txc_dimx  =  kmax   *(jmax+2)
