@@ -3,24 +3,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2010/04/01 - J.P. Mellado
-!#              Created
-!# 2012/12/01 - J.P. Mellado
-!#              Not using global variables {imax,jmax,kmax}_total
-!#              in routines IO_FIELDS_* any more
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Extracted from DNS_READ_FIELDS to handle different types of file formats
-!#
-!########################################################################
-!# ARGUMENTS
 !#
 !# nfield     In      Number of fields in the file
 !# iheader    In      Header control flag:
@@ -49,7 +31,7 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
   TREAL, DIMENSION(nx*ny*nz,nfield) :: a
   TREAL, DIMENSION(itxc)            :: txc
 
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
   CHARACTER*32 :: str
   CHARACTER*128 :: line
   TINTEGER nx_total, ny_total, nz_total
@@ -59,7 +41,7 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
   PARAMETER(isize_max=20)
   TREAL params(isize_max)
 
-! ###################################################################
+  ! ###################################################################
 #ifdef USE_MPI
   nx_total = nx*ims_npro_i
   ny_total = ny
@@ -77,60 +59,60 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
 
   CALL TLAB_WRITE_ASCII(lfile, line)
 
-! ###################################################################
-  IF      ( imode_files .EQ. DNS_FILE_RAWARRAY ) THEN
-     CALL IO_WRITE_FIELDS_ARRAY(fname, nx,ny,nz, itxc, iheader, nfield, a, txc)
+  ! ###################################################################
+  SELECT CASE( imode_files )
 
-! ###################################################################
-  ELSE IF ( imode_files .EQ. DNS_FILE_RAWSPLIT ) THEN
+  CASE( DNS_NOFILE )        ! Do nothing
+
+  CASE( DNS_FILE_NETCDF )   ! To be implemented
+
+  CASE DEFAULT              ! One file with header per field
 #ifdef USE_MPI
 #ifdef USE_MPI_IO
-     IF ( itxc .LT. nx*ny*nz ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_WRITE_FIELDS. Work array size error')
-        CALL TLAB_STOP(DNS_ERROR_ALLOC)
-     ENDIF
+    IF ( itxc .LT. nx*ny*nz ) THEN
+      CALL TLAB_WRITE_ASCII(efile, 'DNS_WRITE_FIELDS. Work array size error')
+      CALL TLAB_STOP(DNS_ERROR_ALLOC)
+    ENDIF
 #endif
 #endif
 
-! define header info
-     isize = 0
-     IF      ( iheader .EQ. 1 ) THEN ! Scalar
-        isize = isize+1; params(isize) = rtime
-        isize = isize+1; params(isize) = visc ! inverse of reynolds
-        isize = isize+1+1                     ! prepare space for schmidt and damkohler
+    ! -------------------------------------------------------------------
+    ! process header info
+    isize = 0
+    IF      ( iheader .EQ. 1 ) THEN ! Scalar
+      isize = isize+1; params(isize) = rtime
+      isize = isize+1; params(isize) = visc ! inverse of reynolds
+      isize = isize+1+1                     ! prepare space for schmidt and damkohler
 
-     ELSE IF ( iheader .EQ. 2 ) THEN ! Flow
-        isize = isize+1; params(isize) = rtime
-        isize = isize+1; params(isize) = visc ! inverse of reynolds
-        isize = isize+1; params(isize) = froude
-        isize = isize+1; params(isize) = rossby
-        IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-           isize = isize+1; params(isize) = gama0
-           isize = isize+1; params(isize) = prandtl
-           isize = isize+1; params(isize) = mach
-        ENDIF
-     ENDIF
+    ELSE IF ( iheader .EQ. 2 ) THEN ! Flow
+      isize = isize+1; params(isize) = rtime
+      isize = isize+1; params(isize) = visc ! inverse of reynolds
+      isize = isize+1; params(isize) = froude
+      isize = isize+1; params(isize) = rossby
+      IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
+        isize = isize+1; params(isize) = gama0
+        isize = isize+1; params(isize) = prandtl
+        isize = isize+1; params(isize) = mach
+      ENDIF
+    ENDIF
 
-     IF ( isize .GT. isize_max ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_WRITE_FIELDS. Parameters array size error.')
-        CALL TLAB_STOP(DNS_ERROR_ALLOC)
-     ENDIF
+    IF ( isize .GT. isize_max ) THEN
+      CALL TLAB_WRITE_ASCII(efile, 'DNS_WRITE_FIELDS. Parameters array size error.')
+      CALL TLAB_STOP(DNS_ERROR_ALLOC)
+    ENDIF
 
-! write data
-     DO ifield = 1,nfield
-        IF ( iheader .EQ. 1 ) params(isize-1) = schmidt(ifield)   ! Scalar header
-        IF ( iheader .EQ. 1 ) params(isize  ) = damkohler(ifield) ! Scalar header
-        WRITE(str,'(I2)') ifield
-        str=TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(str))
-        CALL IO_WRITE_FIELDS_SPLIT(str, iheader, nx,ny,nz,itime, isize, params, a(1,ifield),txc)
+    ! -------------------------------------------------------------------
+    ! write data
+    DO ifield = 1,nfield
+      IF ( iheader .EQ. 1 ) params(isize-1) = schmidt(ifield)   ! Scalar header
+      IF ( iheader .EQ. 1 ) params(isize  ) = damkohler(ifield) ! Scalar header
+      WRITE(str,'(I2)') ifield
+      str=TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(str))
+      CALL IO_WRITE_ONE_FIELD(str, iheader, nx,ny,nz,itime, isize, params, a(1,ifield),txc)
 
-     ENDDO
+    ENDDO
 
-  ELSE IF ( imode_files .EQ. DNS_FILE_NETCDF )  THEN
-     ! To be implemented
-  ELSE IF ( imode_files .EQ. DNS_NOFILE )       THEN
-     ! Do nothing
-  ENDIF
+  END SELECT
 
   RETURN
 END SUBROUTINE DNS_WRITE_FIELDS

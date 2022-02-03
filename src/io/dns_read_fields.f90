@@ -3,24 +3,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2010/04/01 - J.P. Mellado
-!#              Created
-!# 2012/12/01 - J.P. Mellado
-!#              Not using global variables {imax,jmax,kmax}_total
-!#              in routines IO_FIELDS_* any more
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Extracted from DNS_READ_FIELDS to handle different types of file formats
-!#
-!########################################################################
-!# ARGUMENTS
 !#
 !# iheader    In      Header control flag:
 !#                    0 No header
@@ -53,7 +35,7 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
   TREAL, DIMENSION(nx*ny*nz,*) :: a
   TREAL, DIMENSION(itxc)       :: txc
 
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
   CHARACTER*32 :: str
   CHARACTER*128 :: line
   TINTEGER nx_total, ny_total, nz_total
@@ -63,10 +45,10 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
   PARAMETER(isize_max=20)
   TREAL params(isize_max)
 
-! ###################################################################
+  ! ###################################################################
   IF ( iread .GT. nfield ) THEN
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Array size error')
-     CALL TLAB_STOP(DNS_ERROR_SCALFORMAT)
+    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Array size error')
+    CALL TLAB_STOP(DNS_ERROR_SCALFORMAT)
   ENDIF
 
 #ifdef USE_MPI
@@ -86,66 +68,61 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
 
   CALL TLAB_WRITE_ASCII(lfile, line)
 
-! ###################################################################
-! Read data
-! ###################################################################
-  IF      ( imode_files .EQ. DNS_FILE_RAWARRAY ) THEN
-     CALL IO_READ_FIELDS_ARRAY(fname, nx,ny,nz, itxc, iheader, nfield, iread, a, txc)
+  ! ###################################################################
+  SELECT CASE( imode_files )
 
-! -------------------------------------------------------------------
-  ELSE IF ( imode_files .EQ. DNS_FILE_RAWSPLIT ) THEN
+  CASE( DNS_NOFILE )        ! Do nothing
+    a(:,1:nfield) = C_0_R
+
+  CASE( DNS_FILE_NETCDF )   ! To be implemented
+
+  CASE DEFAULT              ! One file with header per field
 #ifdef USE_MPI
 #ifdef USE_MPI_IO
-     IF ( itxc .LT. nx*ny*nz ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Work array size error')
-        CALL TLAB_STOP(DNS_ERROR_ALLOC)
-     ENDIF
+    IF ( itxc .LT. nx*ny*nz ) THEN
+      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Work array size error')
+      CALL TLAB_STOP(DNS_ERROR_ALLOC)
+    ENDIF
 #endif
 #endif
 
-! read data
-     DO ifield = 1,nfield
-        IF ( iread .EQ. 0 .OR. iread .EQ. ifield ) THEN
-           WRITE(str,'(I2)') ifield
-           str=TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(str))
-           isize = isize_max
-           IF ( iread .EQ. 0 ) THEN; iz = ifield
-           ELSE;                     iz = 1; ENDIF
-           CALL IO_READ_FIELDS_SPLIT(str, iheader, nx,ny,nz,itime, isize,params, a(1,iz),txc)
-
+    ! -------------------------------------------------------------------
+    ! read data
+    DO ifield = 1,nfield
+      IF ( iread .EQ. 0 .OR. iread .EQ. ifield ) THEN
+        WRITE(str,'(I2)') ifield
+        str=TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(str))
+        isize = isize_max
+        IF ( iread .EQ. 0 ) THEN; iz = ifield
+        ELSE;                     iz = 1
         ENDIF
-     ENDDO
+        CALL IO_READ_ONE_FIELD(str, iheader, nx,ny,nz,itime, isize,params, a(1,iz),txc)
 
-! check size
-     IF ( isize .GT. isize_max ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Parameters array size error')
-        CALL TLAB_STOP(DNS_ERROR_ALLOC)
-     ENDIF
+      ENDIF
+    ENDDO
 
-! process header info
-     IF      ( iheader .EQ. 1 ) THEN
-        rtime = params(1)
-     ELSE IF ( iheader .EQ. 2 ) THEN
-        rtime = params(1)
-        visc  = params(2)
-     ENDIF
+    ! -------------------------------------------------------------------
+    ! process header info
+    IF ( isize .GT. isize_max ) THEN
+      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_FIELDS. Parameters array size error')
+      CALL TLAB_STOP(DNS_ERROR_ALLOC)
+    ENDIF
+
+    IF      ( iheader .EQ. 1 ) THEN
+      rtime = params(1)
+    ELSE IF ( iheader .EQ. 2 ) THEN
+      rtime = params(1)
+      visc  = params(2)
+    ENDIF
 #ifdef USE_MPI
-     CALL MPI_BCAST(itime, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
-     CALL MPI_BCAST(rtime, 1, MPI_REAL8,    0, MPI_COMM_WORLD, ims_err)
-     IF ( iheader .EQ. 2 ) THEN ! Flow type
-     CALL MPI_BCAST(visc,  1, MPI_REAL8,    0, MPI_COMM_WORLD, ims_err)
-     ENDIF
+    CALL MPI_BCAST(itime, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
+    CALL MPI_BCAST(rtime, 1, MPI_REAL8,    0, MPI_COMM_WORLD, ims_err)
+    IF ( iheader .EQ. 2 ) THEN ! Flow type
+      CALL MPI_BCAST(visc,  1, MPI_REAL8,    0, MPI_COMM_WORLD, ims_err)
+    ENDIF
 #endif
 
-! -------------------------------------------------------------------
-  ELSE IF ( imode_files .EQ. DNS_FILE_NETCDF )   THEN
-     ! To be implemented
-  ELSE IF ( imode_files .EQ. DNS_NOFILE )        THEN
-     ! Do nothing
-     DO ifield = 1,nfield
-        a(:,ifield) = C_0_R
-     ENDDO
-  ENDIF
+  END SELECT
 
   RETURN
 END SUBROUTINE DNS_READ_FIELDS
