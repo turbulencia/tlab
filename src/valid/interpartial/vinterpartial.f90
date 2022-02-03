@@ -77,7 +77,7 @@ PROGRAM VINTERPARTIAL
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-  CALL DNS_READ_FIELDS('field.inp', i1, imax,jmax,kmax, i1,i0, isize_wrk3d, a, wrk3d)
+  CALL DNS_READ_FIELDS('flow.0', i1, imax,jmax,kmax, i1,i0, isize_wrk3d, a, wrk3d)
 
 ! ###################################################################
 ! x-direction: Interpolation + interpolatory 1st derivative

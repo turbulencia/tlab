@@ -1230,7 +1230,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   END DO
 
 ! auxiliar array txc
-  isize_txc_field = imax*(jmax + 1)*kmax
+!   isize_txc_field = imax*(jmax + 1)*kmax
+  isize_txc_field = imax*jmax*kmax
   IF ( ifourier .EQ. 1 ) THEN
      IF ( istagger .EQ. 1 ) THEN
       !   isize_txc_dimx  =  kmax   *(jmax+4) ! Check! not sure if this is right

@@ -13,18 +13,10 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_wrk1d, imode_eqns, istagger
   USE TLAB_VARS, ONLY : rbackground
-#ifdef USE_MPI
-  USE TLAB_MPI_PROCS
-  USE TLAB_MPI_VARS
-#endif
-IMPLICIT NONE
+
+  IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#else
-  TINTEGER, PARAMETER                  :: ims_pro=0
-#endif
 
   TREAL, DIMENSION(imax*jmax*kmax,*), INTENT(IN),   TARGET :: q,s
   TREAL, DIMENSION(imax,jmax,kmax),   INTENT(OUT)   :: p                ! larger arrays for the Poisson solver,
@@ -38,9 +30,6 @@ IMPLICIT NONE
 
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:), POINTER :: u,v,w
-
-
-  TREAL dummy, dummy2
 
 ! #######################################################################
   bcs  = 0 ! Boundary conditions for derivative operator set to biased, non-zero
@@ -107,21 +96,14 @@ IMPLICIT NONE
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3(1,1,1,2))
   ENDIF
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp3(1,1,1,2),tmp1, wrk3d, wrk2d,wrk3d)
-  p(:,:,:) = p(:,:,:) + tmp1(:,:jmax,:)
-
-
-  ! #######################################################################
-! check field
-  dummy = sum(p**2)
-#ifdef USE_MPI
-  dummy2 = dummy
-  CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-#endif
-  IF (ims_pro == 0) THEN
-    WRITE(*,*) 'L2 .............: ', sqrt(dummy)
+  IF (istagger .EQ. 1 ) THEN
+    CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), tmp3(1,1,1,2),tmp1, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp1,         tmp2, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp2,         tmp1, wrk3d, wrk2d,wrk3d)
+  ELSE 
+    CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp3(1,1,1,2),tmp1, wrk3d, wrk2d,wrk3d)
   ENDIF
-! #######################################################################
+  p(:,:,:) = p(:,:,:) + tmp1(:,:jmax,:)
 
 ! #######################################################################
 ! Solve Poisson equation
@@ -134,23 +116,6 @@ IMPLICIT NONE
 
   CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, i3, &
        p,wrk3d, tmp1,tmp2, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
-
-
-
-
-! #######################################################################
-  ! check field
-  dummy = sum(p**2)
-#ifdef USE_MPI
-  dummy2 = dummy
-  CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-#endif
-  IF (ims_pro == 0) THEN
-    WRITE(*,*) 'L2 poi..........: ', sqrt(dummy)
-  ENDIF
-! #######################################################################
-
-
 
 ! Interpolate back on velocity grid
   IF (istagger .EQ. 1 ) THEN
