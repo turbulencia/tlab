@@ -23,6 +23,7 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
 #endif
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -108,8 +109,8 @@ SUBROUTINE DNS_WRITE_FIELDS(fname, iheader, nx,ny,nz, nfield, itxc, a, txc)
       IF ( iheader .EQ. 1 ) params(isize  ) = damkohler(ifield) ! Scalar header
       WRITE(str,'(I2)') ifield
       str=TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(str))
-      ! CALL IO_WRITE_ONE_FIELD(str, iheader, nx,ny,nz,itime, isize, params, a(1,ifield),txc)
-      CALL IO_WRITE_SUBARRAY_FIELD(str, iheader, nx,ny,nz,itime, isize, params, a(1,ifield))
+      ! CALL IO_WRITE_FIELD_XPENCIL(str, iheader, nx,ny,nz,itime, isize, params, a(1,ifield),txc)
+      CALL IO_WRITE_FIELD_SUBARRAY(str, iheader, nx,ny,nz,itime, isize, params, a(1,ifield))
 
     ENDDO
 

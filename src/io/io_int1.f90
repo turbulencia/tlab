@@ -34,6 +34,7 @@ SUBROUTINE IO_READ_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
   USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro_i, ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_j, ims_offset_k, ims_err
 #endif
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -169,6 +170,7 @@ SUBROUTINE IO_WRITE_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_j, ims_offset_k, ims_err
 #endif
   USE TLAB_PROCS
+  USE IO_FIELDS
 
   IMPLICIT NONE
 

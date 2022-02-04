@@ -23,7 +23,8 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
 #ifdef USE_MPI
   USE TLAB_MPI_VARS,    ONLY : ims_npro_i, ims_npro_k, ims_err
 #endif
-
+  USE IO_FIELDS
+  
   IMPLICIT NONE
 
 #ifdef USE_MPI
@@ -96,8 +97,8 @@ SUBROUTINE DNS_READ_FIELDS(fname, iheader, nx,ny,nz, nfield, iread, itxc, a, txc
         IF ( iread .EQ. 0 ) THEN; iz = ifield
         ELSE;                     iz = 1
         ENDIF
-        ! CALL IO_READ_ONE_FIELD(str, iheader, nx,ny,nz,itime, isize,params, a(1,iz),txc)
-        CALL IO_READ_SUBARRAY_FIELD(str, iheader, nx,ny,nz,itime, isize,params, a(1,iz))
+        ! CALL IO_READ_FIELD_XPENCIL(str, iheader, nx,ny,nz,itime, isize,params, a(1,iz),txc)
+        CALL IO_READ_FIELD_SUBARRAY(str, iheader, nx,ny,nz,itime, isize,params, a(1,iz))
 
       ENDIF
     ENDDO
