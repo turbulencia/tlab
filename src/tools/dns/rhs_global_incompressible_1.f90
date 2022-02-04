@@ -34,21 +34,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-  ! DEBUG
-#ifdef USE_MPI
-  USE TLAB_MPI_PROCS
-  USE TLAB_MPI_VARS
-#endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-! DEBUG
-#ifdef USE_MPI
-#include "mpif.h"
-#else
-  TINTEGER, PARAMETER             :: ims_pro=0
-#endif
 
   TREAL dte
   TREAL, DIMENSION(isize_field)   :: u,v,w, h1,h2,h3
@@ -63,7 +52,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   TINTEGER iq, is, ij, k, nxy, ip_b, ip_t
   TINTEGER ibc, bcs(2,2)
   TREAL dummy
-  TREAL dummy1, dummy2 ! DEBUG
 
   TINTEGER siz, srt, end    !  Variables for OpenMP Partitioning
 
@@ -236,10 +224,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
      ENDIF
-
      IF (istagger .EQ. 1 ) THEN
       ! Calculate forcing term Oy --> no staggering yet
-        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), tmp2, tmp1, wrk3d, wrk2d,wrk3d)
       ! Stagger Oy forcing in horziontal direction with 0-order interpolation
         CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp1, wrk3d, wrk2d,wrk3d)
@@ -247,14 +234,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL OPR_PARTIAL_X(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(1), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp2, wrk3d, wrk2d,wrk3d)        
       ! Calculate forcing term Oz --> staggering
-        CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), tmp4, tmp6, wrk3d, wrk2d,wrk3d)
-        CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp6, tmp3, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
      ELSE
-        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
-        CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
-        CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4,tmp3, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), tmp2, tmp1, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1,        imax,jmax,kmax, bcs, g(1), tmp3, tmp2, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d,wrk3d)
      ENDIF
-
   ELSE
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h2,tmp2)
@@ -303,22 +289,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL DNS_TOWER_ACCUMULATE(tmp1,i4,wrk1d)
   ENDIF
 
-! ##########################    DEBUG    ###########################
-  ! IF (istagger .EQ. 1 ) THEN
-  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp1, wrk3d, wrk2d,wrk3d)
-  !   CALL DNS_WRITE_FIELDS('pres', i0, imax,jmax,kmax, i1, isize_field, tmp1, tmp6)
-  ! ELSE
-  !   CALL DNS_WRITE_FIELDS('pre',  i0, imax,jmax,kmax, i1, isize_field, tmp1, tmp6)
-  ! ENDIF
-  ! CALL TLAB_STOP(0)  
-!   dummy1 = sum(tmp1**2); dummy2 = dummy1
-! #ifdef USE_MPI
-!   CALL MPI_ALLREDUCE(dummy2, dummy1, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-! #endif
-!   IF (ims_pro == 0) THEN; WRITE(*,*) 'L2 norm pressure ... : ', sqrt(dummy1); ENDIF
-! ###################################################################
-
 ! horizontal derivatives
   IF (istagger .EQ. 1 ) THEN
     ! stagger dp/dy back on velocity grid
@@ -331,8 +301,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
       CALL OPR_PARTIAL_Z(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
       CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
   ELSE
-      CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1,tmp2, wrk3d, wrk2d,wrk3d)
-      CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1,tmp4, wrk3d, wrk2d,wrk3d)
+      CALL OPR_PARTIAL_X(OPR_P1,        imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+      CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
   ENDIF
 
 ! -----------------------------------------------------------------------

@@ -950,8 +950,10 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( imode_rhs == EQNS_RHS_NONBLOCKING ) inb_txc = MAX(inb_txc,15)
 #endif
 
-  IF ( istagger   == 1) THEN
-    isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX((jmax+1),g_inf(2)%size)*kmax
+! needs to be adjusted for hybrid meshs, not for horizontal staggering!
+  IF ( istagger   == 1) THEN 
+    ! isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX((jmax+1),g_inf(2)%size)*kmax
+    isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
   ELSE 
     isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
   ENDIF

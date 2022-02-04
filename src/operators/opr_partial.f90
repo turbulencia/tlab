@@ -294,7 +294,8 @@ SUBROUTINE OPR_PARTIAL0_INT(dir, nlines, bcs, g, u,result, wrk2d, wrk3d)
   TREAL, DIMENSION(nlines,g%size),     INTENT(IN)    :: u
   TREAL, DIMENSION(nlines,g%size),     INTENT(OUT)   :: result
   TREAL, DIMENSION(nlines),            INTENT(INOUT) :: wrk2d
-  TREAL, DIMENSION(nlines,(g%size+1)), INTENT(INOUT) :: wrk3d  ! non-periodic case
+  ! TREAL, DIMENSION(nlines,(g%size+1)), INTENT(INOUT) :: wrk3d  ! non-periodic case
+  TREAL, DIMENSION(nlines,g%size),     INTENT(INOUT) :: wrk3d  ! non-periodic case not considered yet
  
 ! -------------------------------------------------------------------
   TINTEGER                                           :: ip, i, jk
@@ -372,7 +373,8 @@ SUBROUTINE OPR_PARTIAL1_INT(dir, nlines, bcs, g, u,result, wrk2d, wrk3d)
   TREAL, DIMENSION(nlines,g%size),     INTENT(IN)    :: u
   TREAL, DIMENSION(nlines,g%size),     INTENT(OUT)   :: result
   TREAL, DIMENSION(nlines),            INTENT(INOUT) :: wrk2d
-  TREAL, DIMENSION(nlines,(g%size+1)), INTENT(INOUT) :: wrk3d  ! non-periodic case
+  ! TREAL, DIMENSION(nlines,(g%size+1)), INTENT(INOUT) :: wrk3d  ! non-periodic case
+  TREAL, DIMENSION(nlines,g%size),     INTENT(INOUT) :: wrk3d  ! non-periodic case not considered yet
 
 ! -------------------------------------------------------------------
   TINTEGER                                           :: ip, i, jk
@@ -462,7 +464,8 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
   TYPE(grid_dt),              INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*(ny+1)*nz), INTENT(INOUT) :: tmp1, wrk3d
+  ! TREAL, DIMENSION(nx*(ny+1)*nz), INTENT(INOUT) :: tmp1, wrk3d 
+  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d ! just horizontal staggering considered here
   TREAL, DIMENSION(ny*nz),    INTENT(INOUT) :: wrk2d
 
   TARGET u, tmp1, result, wrk3d
@@ -599,7 +602,8 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
   TYPE(grid_dt),              INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u
   TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*(ny+1)*nz), INTENT(INOUT) :: tmp1, wrk3d
+  ! TREAL, DIMENSION(nx*(ny+1)*nz), INTENT(INOUT) :: tmp1, wrk3d
+  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d ! just horizontal staggering considered here
   TREAL, DIMENSION(nx*ny),    INTENT(INOUT) :: wrk2d
 
   TARGET u, tmp1, result, wrk3d
@@ -718,8 +722,9 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
   TYPE(grid_dt),                  INTENT(IN)    :: g
   TREAL, DIMENSION(nx*ny*nz),     INTENT(IN)    :: u
   TREAL, DIMENSION(nx*ny*nz),     INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*(ny+1)*nz), INTENT(INOUT) :: tmp1, wrk3d ! extended size for interpolatory (hybrid) schemes
-                                                               ! non-perdiodic interpolated fields are stored here
+  TREAL, DIMENSION(nx*ny*nz),     INTENT(INOUT) :: tmp1, wrk3d 
+  ! TREAL, DIMENSION(nx*(ny+1)*nz), INTENT(INOUT) :: tmp1, wrk3d ! extended size for interpolatory (hybrid) schemes
+  !                                                              ! non-perdiodic interpolated fields are stored here
   TREAL, DIMENSION(nx*nz),        INTENT(INOUT) :: wrk2d
 
   TARGET u, tmp1, result, wrk3d

@@ -1230,6 +1230,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   END DO
 
 ! auxiliar array txc
+! needs to be adjusted for hybrid meshs, not for horizontal staggering!
 !   isize_txc_field = imax*(jmax + 1)*kmax
   isize_txc_field = imax*jmax*kmax
   IF ( ifourier .EQ. 1 ) THEN

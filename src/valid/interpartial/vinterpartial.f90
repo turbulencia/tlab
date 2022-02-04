@@ -64,8 +64,7 @@ PROGRAM VINTERPARTIAL
   ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d+1))
   ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
   ALLOCATE(a(imax,jmax,kmax),a_int(imax,jmax,kmax),a_dif(imax,jmax,kmax))
-  ALLOCATE(b(imax,jmax,kmax),c(imax,jmax,kmax))
-  ALLOCATE(d(imax*jmax*kmax))
+  ALLOCATE(b(imax,jmax,kmax),c(imax,jmax,kmax),d(imax*jmax*kmax))
   ALLOCATE(tmp1(isize_txc_field),wrk3d(isize_wrk3d))
 
   CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
@@ -183,6 +182,14 @@ PROGRAM VINTERPARTIAL
      ENDIF
      ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
   ENDIF
+
+! #===============================================================# !
+! #===============================================================# !
+! hybrid staggering is commented out 
+#if 0
+! #===============================================================# !
+! #===============================================================# !
+
 ! ###################################################################
 ! y-direction: Interpolation + interpolatory 1st derivative (non-periodic)
 ! ################################################################### 
@@ -254,5 +261,13 @@ PROGRAM VINTERPARTIAL
   ! CALL DNS_WRITE_FIELDS('field.dy',  i1, imax,jmax,kmax, i1, isize_wrk3d, c,     wrk3d)
 ! ###################################################################
 ! ###################################################################
+
+! #===============================================================# !
+! #===============================================================# !
+! hybrid staggering is commented out 
+#endif
+! #===============================================================# !
+! #===============================================================# !
+
   CALL TLAB_STOP(0)
 END PROGRAM VINTERPARTIAL
