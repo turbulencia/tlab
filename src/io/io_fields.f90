@@ -10,6 +10,7 @@
 !########################################################################
 !#
 !# Read & write a file of size (nx*ims_npro_i)x(ny*ims_npro_y)x(nz*ims_npro_z)
+!# with header
 !#
 !# Unformatted records
 !# No embedded record information
@@ -31,13 +32,12 @@ MODULE IO_FIELDS
 
   IMPLICIT NONE
 
-  PUBLIC :: IO_READ_FIELD_SUBARRAY, IO_WRITE_FIELD_SUBARRAY
-  PUBLIC :: IO_READ_FIELD_XPENCIL, IO_WRITE_FIELD_XPENCIL
   PUBLIC :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
+  PUBLIC :: IO_READ_FIELD_XPENCIL, IO_WRITE_FIELD_XPENCIL
+  PUBLIC :: IO_READ_HEADER, IO_WRITE_HEADER
 
   PRIVATE
 
-  TINTEGER header_offset
   TINTEGER nx_total, ny_total, nz_total
   CHARACTER*32 str
   CHARACTER*128 line
@@ -61,130 +61,25 @@ CONTAINS
 
   !########################################################################
   !########################################################################
-  SUBROUTINE IO_READ_FIELD_SUBARRAY(name, iheader, nx,ny,nz,nt, isize,params, a)
-    IMPLICIT NONE
-
-    CHARACTER(LEN=*) name
-    TINTEGER, INTENT(IN   ) :: iheader, nx,ny,nz,nt
-    TINTEGER, INTENT(INOUT) :: isize
-    TREAL,    INTENT(INOUT) :: params(isize)
-    TREAL,    INTENT(  OUT) :: a(nx*ny*nz)
-
-    ! ###################################################################
-#ifdef USE_MPI
-    nx_total = nx*ims_npro_i
-    ny_total = ny
-    nz_total = nz*ims_npro_k
-#else
-    nx_total = nx
-    ny_total = ny
-    nz_total = nz
-#endif
-
-    ! -------------------------------------------------------------------
-    ! header
-#ifdef USE_MPI
-    IF ( ims_pro .EQ. 0 ) THEN
-#endif
-
-      header_offset = 0
-#include "dns_open_file.h"
-      REWIND(LOC_UNIT_ID)
-      IF ( iheader .GT. 0 ) THEN
-        CALL IO_READ_HEADER(LOC_UNIT_ID, header_offset, nx_total,ny_total,nz_total,nt, params)
-        isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
-      ENDIF
-      CLOSE(LOC_UNIT_ID)
-
-#ifdef USE_MPI
-    ENDIF
-    CALL MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
-
-    ! -------------------------------------------------------------------
-    ! field
-    CALL MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
-    mpio_disp = header_offset*SIZEOFBYTE ! Displacement to start of field
-
-    ndims = 3
-    sizes(1)   = nx_total;     sizes(2)   = ny_total;     sizes(3)   = nz_total
-    locsize(1) = nx;           locsize(2) = ny;           locsize(3) = nz
-    offset(1)  = ims_offset_i; offset(2)  = ims_offset_j; offset(3)  = ims_offset_k
-
-    CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-        MPI_ORDER_FORTRAN, MPI_REAL8, subarray, ims_err)
-    CALL MPI_Type_commit(subarray, ims_err)
-
-    mpio_locsize = nx*ny*nz
-    CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-    CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL8, subarray, 'native', MPI_INFO_NULL, ims_err)
-    CALL MPI_File_read_all(mpio_fh, a, mpio_locsize, MPI_REAL8, status, ims_err)
-    CALL MPI_File_close(mpio_fh, ims_err)
-
-#else
-#include "dns_open_file.h"
-    header_offset = header_offset +1
-    READ(LOC_UNIT_ID,POS=header_offset) a
-    CLOSE(LOC_UNIT_ID)
-
-#endif
-
-    RETURN
-  END SUBROUTINE IO_READ_FIELD_SUBARRAY
-
-  !########################################################################
-  !########################################################################
-  SUBROUTINE IO_READ_FIELD_XPENCIL(name, iheader, nx,ny,nz,nt, isize,params, a, wrk)
+    SUBROUTINE IO_READ_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a, wrk)
     IMPLICIT NONE
 
 #include "integers.h"
 
     CHARACTER(LEN=*) name
-    TINTEGER, INTENT(IN   ) :: iheader, nx,ny,nz,nt
-    TINTEGER, INTENT(INOUT) :: isize
-    TREAL,    INTENT(INOUT) :: params(isize), wrk(nx*ny*nz)
+    TINTEGER, INTENT(IN   ) :: header_offset, nx,ny,nz
     TREAL,    INTENT(  OUT) :: a(nx*ny*nz)
+    TREAL,    INTENT(INOUT) :: wrk(nx*ny*nz)
 
     TARGET a, wrk
 
     ! ###################################################################
 #ifdef USE_MPI
-    nx_total = nx*ims_npro_i
-    ny_total = ny
-    nz_total = nz*ims_npro_k
-#else
-    nx_total = nx
-    ny_total = ny
-    nz_total = nz
-#endif
-
-    ! -------------------------------------------------------------------
-    ! header
-#ifdef USE_MPI
-    IF ( ims_pro .EQ. 0 ) THEN
-#endif
-
-      header_offset = 0
-#include "dns_open_file.h"
-      REWIND(LOC_UNIT_ID)
-      IF ( iheader .GT. 0 ) THEN
-        CALL IO_READ_HEADER(LOC_UNIT_ID, header_offset, nx_total,ny_total,nz_total,nt, params)
-        isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
-      ENDIF
-      CLOSE(LOC_UNIT_ID)
-
-#ifdef USE_MPI
-    ENDIF
-    CALL MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
-
-    ! -------------------------------------------------------------------
-    ! field
-    CALL MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
     mpio_disp = header_offset*SIZEOFBYTE ! Displacement to start of field
 
     IF ( ims_npro_i .GT. 1 ) THEN
       ! We always initialize types here. For the general field files, we could
-      ! use TLAB_MPI_I_PARTIAL, but we use this routine for other files like
-      ! buffer regions of transformed fields.
+      ! use TLAB_MPI_I_PARTIAL, but we use this routine for other files.
       CALL TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
       id = TLAB_MPI_I_AUX1
       npage = nz*ny
@@ -214,8 +109,7 @@ CONTAINS
 
 #else
 #include "dns_open_file.h"
-    header_offset = header_offset +1
-    READ(LOC_UNIT_ID,POS=header_offset) a
+    READ(LOC_UNIT_ID,POS=header_offset +1) a
     CLOSE(LOC_UNIT_ID)
 
 #endif
@@ -238,6 +132,8 @@ CONTAINS
     TINTEGER,   INTENT(INOUT) :: isize
     TREAL,      INTENT(INOUT) :: params(isize)
     INTEGER(1), INTENT(  OUT) :: a(nx*ny*nz)
+
+    TINTEGER header_offset
 
     ! ###################################################################
 #ifdef USE_MPI
@@ -314,84 +210,13 @@ CONTAINS
 #define LOC_UNIT_ID 55
 #define LOC_STATUS 'unknown'
 
-  SUBROUTINE IO_WRITE_FIELD_SUBARRAY(name, iheader, nx,ny,nz,nt, isize,params, a)
-    IMPLICIT NONE
-
-    CHARACTER(LEN=*) name
-    TINTEGER,  INTENT(IN   ) :: iheader, nx,ny,nz,nt, isize
-    TREAL,     INTENT(IN   ) :: params(isize)
-    TREAL,     INTENT(IN   ) :: a(nx*ny*nz)
-
-    ! ###################################################################
-#ifdef USE_MPI
-    nx_total = nx*ims_npro_i
-    ny_total = ny
-    nz_total = nz*ims_npro_k
-#else
-    nx_total = nx
-    ny_total = ny
-    nz_total = nz
-#endif
-
-    ! -------------------------------------------------------------------
-    ! header
-#ifdef USE_MPI
-    IF ( ims_pro .EQ. 0 ) THEN
-#endif
-
-      header_offset = 0
-#include "dns_open_file.h"
-      IF ( iheader .GT. 0 ) THEN
-        CALL IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total,ny_total,nz_total,nt, params)
-        header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
-      ENDIF
-      CLOSE(LOC_UNIT_ID)
-
-#ifdef USE_MPI
-    ENDIF
-
-    ! -------------------------------------------------------------------
-    ! field
-    CALL MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
-    mpio_disp = header_offset*SIZEOFBYTE
-
-    CALL MPI_BARRIER(MPI_COMM_WORLD, ims_err)
-
-    ndims = 3
-    sizes(1)   = nx_total;     sizes(2)   = ny_total;     sizes(3)   = nz_total
-    locsize(1) = nx;           locsize(2) = ny;           locsize(3) = nz
-    offset(1)  = ims_offset_i; offset(2)  = ims_offset_j; offset(3)  = ims_offset_k
-
-    CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-        MPI_ORDER_FORTRAN, MPI_REAL8, subarray, ims_err)
-    CALL MPI_Type_commit(subarray, ims_err)
-
-    mpio_locsize = nx*ny*nz
-    CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-    CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL8, subarray, 'native', MPI_INFO_NULL, ims_err)
-    CALL MPI_File_write_all(mpio_fh, a, mpio_locsize, MPI_REAL8, status, ims_err)
-    CALL MPI_File_close(mpio_fh, ims_err)
-
-#else
-#include "dns_open_file.h"
-    header_offset = header_offset +1
-    WRITE(LOC_UNIT_ID,POS=header_offset) a
-    CLOSE(LOC_UNIT_ID)
-#endif
-
-    RETURN
-  END SUBROUTINE IO_WRITE_FIELD_SUBARRAY
-
-  !########################################################################
-  !########################################################################
-  SUBROUTINE IO_WRITE_FIELD_XPENCIL(name, iheader, nx,ny,nz,nt, isize,params, a, wrk)
+  SUBROUTINE IO_WRITE_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a, wrk)
     IMPLICIT NONE
 
 #include "integers.h"
 
     CHARACTER(LEN=*) name
-    TINTEGER,  INTENT(IN   ) :: iheader, nx,ny,nz,nt, isize
-    TREAL,     INTENT(IN   ) :: params(isize)
+    TINTEGER,  INTENT(IN   ) :: header_offset, nx,ny,nz
     TREAL,     INTENT(IN   ) :: a(nx*ny*nz)
     TREAL,     INTENT(INOUT) :: wrk(nx*ny*nz)
 
@@ -399,43 +224,13 @@ CONTAINS
 
     ! ###################################################################
 #ifdef USE_MPI
-    nx_total = nx*ims_npro_i
-    ny_total = ny
-    nz_total = nz*ims_npro_k
-#else
-    nx_total = nx
-    ny_total = ny
-    nz_total = nz
-#endif
-
-    ! -------------------------------------------------------------------
-    ! header
-#ifdef USE_MPI
-    IF ( ims_pro .EQ. 0 ) THEN
-#endif
-
-      header_offset = 0
-#include "dns_open_file.h"
-      IF ( iheader .GT. 0 ) THEN
-        CALL IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total,ny_total,nz_total,nt, params)
-        header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
-      ENDIF
-      CLOSE(LOC_UNIT_ID)
-
-#ifdef USE_MPI
-    ENDIF
-
-    ! -------------------------------------------------------------------
-    ! field
-    CALL MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
     mpio_disp = header_offset*SIZEOFBYTE
 
     CALL MPI_BARRIER(MPI_COMM_WORLD, ims_err)
 
     IF ( ims_npro_i .GT. 1 ) THEN
       ! We always initialize types here. For the general field files, we could
-      ! use TLAB_MPI_I_PARTIAL, but we use this routine for other files like
-      ! buffer regions of transformed fields.
+      ! use TLAB_MPI_I_PARTIAL, but we use this routine for other files.
       CALL TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
       id = TLAB_MPI_I_AUX1
       npage = nz*ny
@@ -461,8 +256,7 @@ CONTAINS
 
 #else
 #include "dns_open_file.h"
-    header_offset = header_offset +1
-    WRITE(LOC_UNIT_ID,POS=header_offset) a
+    WRITE(LOC_UNIT_ID,POS=header_offset+1) a
     CLOSE(LOC_UNIT_ID)
 #endif
 
@@ -483,6 +277,8 @@ CONTAINS
     TINTEGER,   INTENT(IN   ) :: iheader, nx,ny,nz,nt, isize
     TREAL,      INTENT(IN   ) :: params(isize)
     INTEGER(1), INTENT(IN   ) :: a(nx*ny*nz)
+
+    TINTEGER header_offset
 
     ! ###################################################################
 #ifdef USE_MPI
