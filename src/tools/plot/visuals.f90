@@ -24,6 +24,7 @@ PROGRAM VISUALS
   USE THERMO_VARS, ONLY : NSP, THERMO_SPNAME
   USE LAGRANGE_VARS
   USE LAGRANGE_ARRAYS
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -340,7 +341,7 @@ PROGRAM VISUALS
     ! -------------------------------------------------------------------
     IF      ( opt_cond .EQ. 1 ) THEN ! Read external file
       WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
-      CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
+      CALL IO_READ_FIELD_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
       igate_size = INT(params(2))
 
     ELSE IF ( opt_cond .GT. 1 ) THEN

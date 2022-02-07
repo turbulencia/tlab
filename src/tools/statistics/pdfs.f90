@@ -15,6 +15,7 @@ PROGRAM PDFS
   USE TLAB_MPI_PROCS
 #endif
   USE THERMO_VARS, ONLY : imixture
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -279,7 +280,7 @@ PROGRAM PDFS
     ! -------------------------------------------------------------------
     IF      ( opt_cond == 1 ) THEN ! External file
       WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
-      CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
+      CALL IO_READ_FIELD_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
       igate_size = INT(params(2))
 
     ELSE IF ( opt_cond > 1 ) THEN

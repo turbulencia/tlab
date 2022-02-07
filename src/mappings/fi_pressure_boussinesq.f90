@@ -78,10 +78,9 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp33, wrk1d,wrk2d,wrk3d)
   CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), u,w,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains w transposed
   tmp3 = tmp3 + p
 
-! ! set p to zero again -- BUG? 
-!   p = C_0_R
-
-! Calculate forcing term Oy
+  p = C_0_R
+  
+! Calculate forcing term Ox
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
   ENDIF

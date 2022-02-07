@@ -22,6 +22,7 @@ PROGRAM AVERAGES
   USE THERMO_VARS, ONLY : imixture
   USE LAGRANGE_VARS
   USE LAGRANGE_ARRAYS
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -349,7 +350,7 @@ PROGRAM AVERAGES
     ! -------------------------------------------------------------------
     IF      ( opt_cond == 1 ) THEN ! External file
       WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
-      CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
+      CALL IO_READ_FIELD_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
       igate_size = INT(params(2))
 
       IF ( opt_main == 2 ) rtime = params(1)
@@ -466,7 +467,7 @@ PROGRAM AVERAGES
       IF ( opt_cond > 1 ) THEN ! write only if the gate information has not been read
         WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname))
         params(1) = rtime; params(2) = M_REAL(igate_size); params_size = 2
-        CALL IO_WRITE_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
+        CALL IO_WRITE_FIELD_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
 
         DO is = 1,igate_size
           gate_level = INT(is,KIND=1)
