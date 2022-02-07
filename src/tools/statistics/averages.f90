@@ -604,7 +604,7 @@ PROGRAM AVERAGES
       txc(1:isize_field,2) = visc *txc(1:isize_field,2)
 
       CALL FI_VORTICITY(imax,jmax,kmax, u,v,w, txc(1,3), txc(1,4),txc(1,5), wrk2d,wrk3d)  ! Enstrophy
-      CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, txc(1,4),txc(1,5), wrk2d,wrk3d)  ! Dilatation
+      CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)  ! Dilatation
 
       txc(1:isize_field,6) = txc(1:isize_field,4) *txc(1:isize_field,3) ! -w^2 div(u)
       txc(1:isize_field,5) = txc(1:isize_field,1) /txc(1:isize_field,3) ! production rate
@@ -689,7 +689,7 @@ PROGRAM AVERAGES
 
       CALL FI_INVARIANT_R(imax,jmax,kmax, u,v,w, txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       CALL FI_INVARIANT_Q(imax,jmax,kmax, u,v,w, txc(1,2), txc(1,3),txc(1,4),txc(1,5), wrk2d,wrk3d)
-      CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, txc(1,3), txc(1,4), wrk2d,wrk3d)
+      CALL FI_INVARIANT_P(imax,jmax,kmax, u,v,w, txc(1,3), txc(1,4),txc(1,5), wrk2d,wrk3d)
 
       ifield = ifield +1; vars(ifield)%field => txc(:,3); vars(ifield)%tag = 'InvariantP'
       ifield = ifield +1; vars(ifield)%field => txc(:,2); vars(ifield)%tag = 'InvariantQ'

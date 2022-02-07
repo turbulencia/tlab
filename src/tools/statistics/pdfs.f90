@@ -394,7 +394,7 @@ PROGRAM PDFS
 
       CALL FI_VORTICITY(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,3), txc(1,4),txc(1,5), wrk2d,wrk3d)
 
-      CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,4), txc(1,5), wrk2d,wrk3d)
+      CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,4), txc(1,5),txc(1,6), wrk2d,wrk3d)
 
       txc(1:isize_field,5) = txc(1:isize_field,4) *txc(1:isize_field,3) ! -w^2 div(u)
       txc(1:isize_field,4) = txc(1:isize_field,1) /txc(1:isize_field,3) ! production rate
@@ -450,7 +450,7 @@ PROGRAM PDFS
 
       CALL FI_INVARIANT_R(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
       CALL FI_INVARIANT_Q(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,2), txc(1,3),txc(1,4),txc(1,5), wrk2d,wrk3d)
-      CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,3), txc(1,4), wrk2d,wrk3d)
+      CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,3), txc(1,4),txc(1,5), wrk2d,wrk3d)
 
       ifield = ifield+1; vars(ifield)%field => txc(:,3); vars(ifield)%tag = 'InvP'; ibc(ifield) = 2
       ifield = ifield+1; vars(ifield)%field => txc(:,2); vars(ifield)%tag = 'InvQ'; ibc(ifield) = 2

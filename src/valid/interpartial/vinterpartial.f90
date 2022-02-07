@@ -13,6 +13,7 @@
 !# DESCRIPTION
 !#
 !# Validate compact interpolation schemes.
+!# Always turn on staggering in dns.ini! Error otherwise...
 !#
 !########################################################################
 !# ARGUMENTS 
@@ -54,7 +55,6 @@ PROGRAM VINTERPARTIAL
 #endif
 
   isize_wrk3d = isize_txc_field
-
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------

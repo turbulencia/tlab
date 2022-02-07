@@ -8,7 +8,7 @@
 !# and a body force.
 !#
 !########################################################################
-SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp33, wrk1d,wrk2d,wrk3d)
+SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imax,jmax,kmax
@@ -23,7 +23,7 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp33, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(isize_field,* ), INTENT(IN),    TARGET :: q,s
   TREAL, DIMENSION(isize_field   ), INTENT(OUT)           :: p                ! larger arrays for the Poisson solver,
   TREAL, DIMENSION(isize_field   ), INTENT(INOUT)         :: tmp1,tmp2, wrk3d ! but shape (imax,jmax,kmax) is used
-  TREAL, DIMENSION(isize_field,3 ), INTENT(INOUT), TARGET :: tmp33            ! to work out forcing term and BCs for p
+  TREAL, DIMENSION(isize_field,3 ), INTENT(INOUT), TARGET :: tmp              ! to work out forcing term and BCs for p
   TREAL, DIMENSION(isize_wrk1d,16), INTENT(INOUT)         :: wrk1d
   TREAL, DIMENSION(imax,kmax,2   ), INTENT(INOUT)         :: wrk2d
 ! -----------------------------------------------------------------------
@@ -33,28 +33,28 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp33, wrk1d,wrk2d,wrk3d)
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u,v,w
   TREAL, DIMENSION(:),   POINTER :: tmp3,tmp4,tmp5
-  TREAL, DIMENSION(:,:), POINTER :: tmp44
+  TREAL, DIMENSION(:,:), POINTER :: tmp6
 
 ! #######################################################################
   bcs  = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
   p     = C_0_R
-  tmp33 = C_0_R
+  tmp   = C_0_R
 
 ! Define pointers
   u     => q(:,1)
   v     => q(:,2)
   w     => q(:,3)
   
-  tmp44 => tmp33(:,:)
+  tmp6 => tmp(:,:)
 ! #######################################################################
 ! Sources
 
-  CALL FI_SOURCES_FLOW(q,s, tmp44, tmp1, wrk1d,wrk2d,wrk3d)
+  CALL FI_SOURCES_FLOW(q,s, tmp6, tmp1, wrk1d,wrk2d,wrk3d)
 
-  tmp3 => tmp44(:,1)
-  tmp4 => tmp44(:,2)
-  tmp5 => tmp44(:,3)
+  tmp3 => tmp6(:,1)
+  tmp4 => tmp6(:,2)
+  tmp5 => tmp6(:,3)
 
 ! Advection and diffusion terms
   CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u,    p, tmp1, wrk2d,wrk3d) ! store u transposed in tmp1
