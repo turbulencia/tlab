@@ -1,1 +1,0 @@
-../build_DEBUG/inirand.x
