@@ -150,44 +150,46 @@ IMPLICIT NONE
 ! -----------------------------------------------------------------------
 ! Poisson equation
 ! -----------------------------------------------------------------------
+ 
   alpha=C_1_R/dte
-  DO ij = 1,isize_field
-     tmp1(ij) = h1(ij) + u(ij)*alpha
-     tmp2(ij) = h2(ij) + v(ij)*alpha
-     tmp3(ij) = h3(ij) + w(ij)*alpha
-  ENDDO
 
-  ! IF (istagger .EQ. 1 ) THEN
-  !   CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), h1,   tmp5, wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, h1,   wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), u,    tmp5, wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, u,    wrk3d, wrk2d,wrk3d)
-  !   DO ij = 1,isize_field; tmp1(ij) = h1(ij) + u(ij)*alpha; ENDDO   
-  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp1, wrk3d, wrk2d,wrk3d)
-  !   !
-  !   CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), h2,   tmp5, wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, h2,   wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), v,    tmp5, wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, v,    wrk3d, wrk2d,wrk3d)
-  !   DO ij = 1,isize_field; tmp2(ij) = h2(ij) + v(ij)*alpha; ENDDO   
-  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
-  !   !
-  !   CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), h3,   tmp5, wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, h3,   wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), w,    tmp5, wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, w,    wrk3d, wrk2d,wrk3d)
-  !   DO ij = 1,isize_field; tmp3(ij) = h3(ij) + w(ij)*alpha; ENDDO   
-  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
-  ! ELSE
-  !   DO ij = 1,isize_field
-  !     tmp1(ij) = h1(ij) + u(ij)*alpha
-  !     tmp2(ij) = h2(ij) + v(ij)*alpha
-  !     tmp3(ij) = h3(ij) + w(ij)*alpha
-  !  ENDDO
-  ! ENDIF
+  ! DO ij = 1,isize_field
+  !    tmp1(ij) = h1(ij) + u(ij)*alpha
+  !    tmp2(ij) = h2(ij) + v(ij)*alpha
+  !    tmp3(ij) = h3(ij) + w(ij)*alpha
+  ! ENDDO
+
+  IF (istagger .EQ. 1 ) THEN
+    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), h1,   tmp5, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, h1,   wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), u,    tmp5, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, u,    wrk3d, wrk2d,wrk3d)
+    DO ij = 1,isize_field; tmp1(ij) = h1(ij) + u(ij)*alpha; ENDDO   
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp1, wrk3d, wrk2d,wrk3d)
+    !
+    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), h2,   tmp5, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, h2,   wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), v,    tmp5, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, v,    wrk3d, wrk2d,wrk3d)
+    DO ij = 1,isize_field; tmp2(ij) = h2(ij) + v(ij)*alpha; ENDDO   
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+    !
+    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), h3,   tmp5, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, h3,   wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), w,    tmp5, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, w,    wrk3d, wrk2d,wrk3d)
+    DO ij = 1,isize_field; tmp3(ij) = h3(ij) + w(ij)*alpha; ENDDO   
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
+  ELSE
+    DO ij = 1,isize_field
+      tmp1(ij) = h1(ij) + u(ij)*alpha
+      tmp2(ij) = h2(ij) + v(ij)*alpha
+      tmp3(ij) = h3(ij) + w(ij)*alpha
+    ENDDO
+  ENDIF
 
   IF (istagger .EQ. 1 ) THEN
   ! Calculate forcing term Oy --> no staggering yet
