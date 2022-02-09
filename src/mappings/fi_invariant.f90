@@ -29,27 +29,27 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1,tmp2, wrk2d,wrk3d)
 ! ###################################################################
   bcs = 0
 
-  ! Divergence-free condition only holds on pressure nodes
-   IF (istagger .EQ. 1 ) THEN
-  ! x-derivative
-    CALL OPR_PARTIAL_X(OPR_P1_INT_VP, nx,ny,nz, bcs, g(1), u,    tmp2,   wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, nx,ny,nz, bcs, g(3), tmp2, result, wrk3d, wrk2d,wrk3d)
-  ! y-derivative
-    CALL OPR_PARTIAL_Y(OPR_P1,        nx,ny,nz, bcs, g(2), v,    tmp1,   wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, nx,ny,nz, bcs, g(1), tmp1, tmp2,   wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, nx,ny,nz, bcs, g(3), tmp2, tmp1,   wrk3d, wrk2d,wrk3d)
-    result =  result + tmp1
-  ! z-derivative
-    CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, nx,ny,nz, bcs, g(3), w,    tmp2,   wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, nx,ny,nz, bcs, g(1), tmp2, tmp1,   wrk3d, wrk2d,wrk3d)
-    result =-(result + tmp1)
-  ELSE
+  ! ! Divergence-free condition only holds on pressure nodes
+  !  IF (istagger .EQ. 1 ) THEN
+  ! ! x-derivative
+  !   CALL OPR_PARTIAL_X(OPR_P1_INT_VP, nx,ny,nz, bcs, g(1), u,    tmp2,   wrk3d, wrk2d,wrk3d)
+  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, nx,ny,nz, bcs, g(3), tmp2, result, wrk3d, wrk2d,wrk3d)
+  ! ! y-derivative
+  !   CALL OPR_PARTIAL_Y(OPR_P1,        nx,ny,nz, bcs, g(2), v,    tmp1,   wrk3d, wrk2d,wrk3d)
+  !   CALL OPR_PARTIAL_X(OPR_P0_INT_VP, nx,ny,nz, bcs, g(1), tmp1, tmp2,   wrk3d, wrk2d,wrk3d)
+  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, nx,ny,nz, bcs, g(3), tmp2, tmp1,   wrk3d, wrk2d,wrk3d)
+  !   result =  result + tmp1
+  ! ! z-derivative
+  !   CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, nx,ny,nz, bcs, g(3), w,    tmp2,   wrk3d, wrk2d,wrk3d)
+  !   CALL OPR_PARTIAL_X(OPR_P0_INT_VP, nx,ny,nz, bcs, g(1), tmp2, tmp1,   wrk3d, wrk2d,wrk3d)
+  !   result =-(result + tmp1)
+  ! ELSE
     CALL OPR_PARTIAL_X(OPR_P1,        nx,ny,nz, bcs, g(1), u,    result, wrk3d, wrk2d,wrk3d)
     CALL OPR_PARTIAL_Y(OPR_P1,        nx,ny,nz, bcs, g(2), v,    tmp1,   wrk3d, wrk2d,wrk3d)
     result =  result + tmp1
     CALL OPR_PARTIAL_Z(OPR_P1,        nx,ny,nz, bcs, g(3), w,    tmp1,   wrk3d, wrk2d,wrk3d)
     result =-(result + tmp1)
-  ENDIF
+  ! ENDIF
 
   RETURN
 END SUBROUTINE FI_INVARIANT_P

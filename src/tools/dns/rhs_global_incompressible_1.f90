@@ -233,6 +233,10 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
      ENDIF
+! #######################################################################
+! Using first-order interpolatory schemes in rhs-routine leads somhow to 
+! to instabilities of the simulations, simple zeroth-order interpolation
+! circumvents this issue
 #if 0
      IF (istagger .EQ. 1 ) THEN
       ! Calculate forcing term Oy --> no staggering yet
@@ -253,19 +257,21 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d,wrk3d)
      ENDIF
 #endif
+! #######################################################################
      IF (istagger .EQ. 1 ) THEN
-       CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
-       CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
-
-       CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
-       CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
-
-       CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
-       CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+     !  tmp2 on pressure nodes
+        CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+     !  tmp3 on pressure nodes
+        CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
+     !  tmp4 on pressure nodes
+        CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
      ENDIF
-     CALL OPR_PARTIAL_Y(OPR_P1,          imax,jmax,kmax, bcs, g(2), tmp2, tmp1, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_X(OPR_P1,          imax,jmax,kmax, bcs, g(1), tmp3, tmp2, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_Z(OPR_P1,          imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1,           imax,jmax,kmax, bcs, g(2), tmp2, tmp1, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1,           imax,jmax,kmax, bcs, g(1), tmp3, tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1,           imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d,wrk3d)
   ELSE
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h2,tmp2)
@@ -315,28 +321,28 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ENDIF
 
   IF (istagger .EQ. 1 ) THEN
-  ! stagger dp/dy back on velocity grid 
-  ! (don't switch order of both operators, otherwise super unstable)
-    CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
+  !  stagger dp/dy back on velocity grid 
+  !  (don't switch order of both operators, otherwise super unstable)
+     CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
   ! ............................................................................................. !
   ! this is super unstable
-  ! ! horizontal derivatives in x --> interpolate back on velocity grid
-  !   CALL OPR_PARTIAL_X(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(1), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
-  ! ! horizontal derivatives in z --> interpolate back on velocity grid
-  !   CALL OPR_PARTIAL_Z(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
-  !   CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+  ! !  horizontal derivatives in x --> interpolate back on velocity grid
+  !    CALL OPR_PARTIAL_X(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(1), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
+  !    CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+  ! !  horizontal derivatives in z --> interpolate back on velocity grid
+  !    CALL OPR_PARTIAL_Z(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
+  !    CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
   ! ............................................................................................. !
   ! stagger pressure field back on velocity grid
   ! (switching the order of both operators seems to have no impact here)
-    CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp5, tmp1, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp5, tmp1, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
   ENDIF
 
   ! horizontal pressure derivatives
-  CALL OPR_PARTIAL_X(OPR_P1,        imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1,           imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1,           imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient
