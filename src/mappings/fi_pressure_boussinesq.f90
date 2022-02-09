@@ -80,7 +80,7 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
 
   p = C_0_R
   
-! Calculate forcing term Ox
+! Calculate forcing term Oy
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
      CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
   ENDIF
