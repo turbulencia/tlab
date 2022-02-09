@@ -687,7 +687,7 @@ PROGRAM VISUALS
       ! -------------------------------------------------------------------
       IF ( opt_vec(iv) .EQ. iscal_offset+10 ) THEN ! Invariants
         plot_file = 'InvariantP'//time_str(1:MaskSize)
-        CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3), wrk2d,wrk3d)
+        CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), wrk2d,wrk3d)
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
         plot_file = 'InvariantQ'//time_str(1:MaskSize)

@@ -40,7 +40,7 @@ SUBROUTINE FI_SOLENOIDAL(iwall, nx,ny,nz, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d
 ! -------------------------------------------------------------------
 ! Solve lap(phi) = - div(u)
 ! -------------------------------------------------------------------
-  CALL FI_INVARIANT_P(nx,ny,nz, u,v,w, tmp1, tmp2,tmp3, wrk2d,wrk3d)
+  CALL FI_INVARIANT_P(nx,ny,nz, u,v,w, tmp1, tmp2, wrk2d,wrk3d)
 
   IF ( g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz
      wrk2d(:,:,1:2) = C_0_R  ! bcs
