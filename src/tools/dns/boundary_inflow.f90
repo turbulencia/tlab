@@ -22,6 +22,7 @@ MODULE BOUNDARY_INFLOW
   USE TLAB_VARS,    ONLY : visc,damkohler
   USE TLAB_PROCS
   USE THERMO_VARS, ONLY : imixture
+  USE IO_FIELDS
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -154,8 +155,8 @@ CONTAINS
       rtimetmp = rtime
       itimetmp = itime
       visctmp  = visc
-      CALL DNS_READ_FIELDS(fname, i2, g_inf(1)%size,g_inf(2)%size,kmax, inb_flow, i0, iwrk_size, q_inf, wrk3d)
-      CALL DNS_READ_FIELDS(sname, i1, g_inf(1)%size,g_inf(2)%size,kmax, inb_scal, i0, iwrk_size, s_inf, wrk3d)
+      CALL IO_READ_FIELDS(fname, IO_FLOW, g_inf(1)%size,g_inf(2)%size,kmax, inb_flow, i0, q_inf, wrk3d)
+      CALL IO_READ_FIELDS(sname, IO_SCAL, g_inf(1)%size,g_inf(2)%size,kmax, inb_scal, i0, s_inf, wrk3d)
       rtime = rtimetmp
       itime = itimetmp
       visc  = visctmp

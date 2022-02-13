@@ -12,7 +12,8 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
   USE TLAB_MPI_VARS,    ONLY : ims_pro
   USE TLAB_MPI_PROCS
 #endif
-
+  USE IO_FIELDS
+  
   IMPLICIT NONE
 
 #ifdef USE_MPI
@@ -26,7 +27,7 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
   CHARACTER*(*) fname
 
   ! -------------------------------------------------------------------
-  TINTEGER iaux_loc, sizes(5), nx_aux,ny_aux,nz_aux, ifield
+  TINTEGER sizes(5), nx_aux,ny_aux,nz_aux, ifield
   CHARACTER*32 varname(16), name
   TINTEGER iflag_mode
 
@@ -62,8 +63,7 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
 
   ! ###################################################################
   IF      ( iformat .EQ. 0 ) THEN ! standard scalar format
-    iaux_loc = nx*ny*nz
-    CALL DNS_WRITE_FIELDS(fname, i1, nx,ny,nz, nfield, iaux_loc, field, txc)
+    CALL IO_WRITE_FIELDS(fname, IO_SCAL, nx,ny,nz, nfield, field, txc)
 
     ! -------------------------------------------------------------------
   ELSE IF ( iformat .EQ. 1 ) THEN  ! ensight; to be removed
