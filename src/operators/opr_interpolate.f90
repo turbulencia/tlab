@@ -38,7 +38,11 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
 
   TINTEGER nx,ny,nz, nx_dst,ny_dst,nz_dst, isize_wrk3d
   TYPE(grid_dt),                          INTENT(IN)    :: g(3)
-  TREAL, DIMENSION(*),                    INTENT(IN)    :: x_org,y_org,z_org, x_dst,y_dst,z_dst
+  TREAL, DIMENSION(nx+1),                 INTENT(INOUT) :: x_org
+  TREAL, DIMENSION(ny+1),                 INTENT(INOUT) :: y_org
+  TREAL, DIMENSION(nz+1),                 INTENT(INOUT) :: z_org
+  TREAL, DIMENSION(*),                    INTENT(IN)    :: x_dst,y_dst,z_dst
+  !TREAL, DIMENSION(*),                    INTENT(IN)    :: x_org,y_org,z_org, x_dst,y_dst,z_dst
   TREAL, DIMENSION(nx*ny*nz),             INTENT(IN)    :: u_org
   TREAL, DIMENSION(nx_dst*ny_dst*nz_dst), INTENT(OUT)   :: u_dst
   TREAL, DIMENSION(isize_txc_field,*),    INTENT(INOUT) :: txc

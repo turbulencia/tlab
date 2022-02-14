@@ -24,6 +24,7 @@ PROGRAM VISUALS
   USE THERMO_VARS, ONLY : NSP, THERMO_SPNAME
   USE LAGRANGE_VARS
   USE LAGRANGE_ARRAYS
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -164,8 +165,7 @@ PROGRAM VISUALS
     IF ( opt_vec(iv) .EQ. 5              ) THEN; iread_flow = 1;                 inb_txc=MAX(inb_txc,1); ENDIF
     IF ( opt_vec(iv) .EQ. 6              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,2); ENDIF
     IF ( opt_vec(iv) .EQ. 7              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,3); ENDIF
-    IF ( opt_vec(iv) .EQ. 8              ) THEN; iread_flow = 1; iread_scal = 0; inb_txc=MAX(inb_txc,7); ENDIF
-    ! IF ( opt_vec(iv) .EQ. 8              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,7); ENDIF
+    IF ( opt_vec(iv) .EQ. 8              ) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,7); ENDIF
     IF ( opt_vec(iv) .EQ. 9              ) THEN;                 iread_scal = 1; inb_txc=MAX(inb_txc,1); ENDIF
     IF ( opt_vec(iv) .GT. 9 .AND. opt_vec(iv) .LE. iscal_offset   ) THEN
                                                                  iread_scal = 1; inb_txc=MAX(inb_txc,4); ENDIF
@@ -319,15 +319,14 @@ PROGRAM VISUALS
 
     IF ( icalc_scal .EQ. 1 .AND. iread_scal .EQ. 1 ) THEN ! Scalar variables
       WRITE(scal_file,*) itime; scal_file = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(scal_file))
-      CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
+      CALL IO_READ_FIELDS(scal_file, IO_SCAL, imax,jmax,kmax, inb_scal, i0, s, wrk3d)
     ELSEIF (icalc_scal .EQ. 0) THEN
       s = C_0_R
     ENDIF
-  
 
     IF ( iread_flow .EQ. 1 ) THEN ! Flow variables
       WRITE(flow_file,*) itime; flow_file = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(flow_file))
-      CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
+      CALL IO_READ_FIELDS(flow_file, IO_FLOW, imax,jmax,kmax, inb_flow, i0, q, wrk3d)
     ENDIF
 
     CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
@@ -344,7 +343,7 @@ PROGRAM VISUALS
     ! -------------------------------------------------------------------
     IF      ( opt_cond .EQ. 1 ) THEN ! Read external file
       WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
-      CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
+      CALL IO_READ_FIELD_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
       igate_size = INT(params(2))
 
     ELSE IF ( opt_cond .GT. 1 ) THEN
@@ -432,7 +431,6 @@ PROGRAM VISUALS
           ENDIF
 
         ELSE IF ( opt_vec(iv) .EQ. 8 ) THEN ! pressure
-          s = C_0_R
           plot_file = 'Pressure'//time_str(1:MaskSize)
           CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,1), txc(1,2),txc(1,3), txc(1,4), wrk1d,wrk2d,wrk3d)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)

@@ -22,6 +22,7 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
 #ifdef IBM_DEBUG
 #ifdef USE_MPI
   use TLAB_MPI_VARS, only : ims_pro
+  use IO_FIELDS
 #endif
 #endif
 ! ############################################# ! 
@@ -64,13 +65,13 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
   CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), u, result, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), v, tmp1,   wrk3d, wrk2d,wrk3d)
 #ifdef IBM_DEBUG 
-  call DNS_WRITE_FIELDS('dudx', i2, nx,ny,nz, i1, nx*ny*nz, result, wrk3d)
-  call DNS_WRITE_FIELDS('dvdy', i2, nx,ny,nz, i1, nx*ny*nz, tmp1,   wrk3d)
+  call IO_WRITE_FIELDS('dudx', IO_FLOW, nx,ny,nz, i1, result, wrk3d)
+  call IO_WRITE_FIELDS('dvdy', IO_FLOW, nx,ny,nz, i1, tmp1,   wrk3d)
 #endif
   result =  result + tmp1
   CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), w, tmp1,   wrk3d, wrk2d,wrk3d)
-#ifdef IBM_DEBUG 
-  call DNS_WRITE_FIELDS('dwdz', i2, nx,ny,nz, i1, nx*ny*nz, tmp1,   wrk3d)
+#ifdef IBM_DEBUG   
+  call IO_WRITE_FIELDS('dwdz', IO_FLOW, nx,ny,nz, i1, tmp1,   wrk3d)
 #endif
   result =-(result + tmp1)
 
@@ -80,7 +81,7 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
 #ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) '========================================================='
   if (ims_pro == 0) write(*,*) 'ibm_partial in dns_control "FI_INVARIANT_P"', ibm_partial
-  call DNS_WRITE_FIELDS('dil', i2, nx,ny,nz, i1, nx*ny*nz, result, wrk3d)
+  call IO_WRITE_FIELDS('dil',  IO_FLOW, nx,ny,nz, i1, result, wrk3d)
 #endif
 
   RETURN

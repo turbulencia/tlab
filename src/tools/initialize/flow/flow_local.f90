@@ -6,7 +6,7 @@ MODULE FLOW_LOCAL
   USE TLAB_TYPES,  ONLY : background_dt, discrete_dt
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field
   USE TLAB_VARS, ONLY : g, qbg
-
+  USE IO_FIELDS
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_offset_i,ims_offset_k
 #endif
@@ -172,9 +172,9 @@ CONTAINS
     CALL FLOW_SHAPE( wrk1d )
 
     dummy = visc
-    CALL DNS_READ_FIELDS('flow.rand', i2, imax,jmax,kmax, i3,i1, isize_field, u, wrk3d)
-    CALL DNS_READ_FIELDS('flow.rand', i2, imax,jmax,kmax, i3,i2, isize_field, v, wrk3d)
-    CALL DNS_READ_FIELDS('flow.rand', i2, imax,jmax,kmax, i3,i3, isize_field, w, wrk3d)
+    CALL IO_READ_FIELDS('flow.rand', IO_FLOW, imax,jmax,kmax, i3,i1, u, wrk3d)
+    CALL IO_READ_FIELDS('flow.rand', IO_FLOW, imax,jmax,kmax, i3,i2, v, wrk3d)
+    CALL IO_READ_FIELDS('flow.rand', IO_FLOW, imax,jmax,kmax, i3,i3, w, wrk3d)
     visc = dummy
 
     DO j = 1,jmax   ! Remove mean

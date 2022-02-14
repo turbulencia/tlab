@@ -43,6 +43,7 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
 
   ! MPI just for debugging
 #ifdef IBM_DEBUG
+  use IO_FIELDS
   use TLAB_VARS,      only: imax, jmax, kmax
 #ifdef USE_MPI 
   use TLAB_MPI_VARS,  only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
@@ -236,7 +237,7 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
 
     ! write out fld_mod for debugging
     call DNS_TRANSPOSE(fld_mod, kmax, imax*jmax, kmax, fld_mod_tr, imax*jmax)
-    call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
+    call IO_WRITE_FIELDS('fld_mod',  IO_FLOW, imax,jmax,kmax, i1, fld_mod_tr, wrk3d)
 
     ! stop after writing field
     stop
@@ -253,10 +254,10 @@ subroutine IBM_SPLINE_XYZ(fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob,
     if ( ims_npro_k > 1 ) then
       call TLAB_MPI_TRPB_K(fld_mod, fld_mod_tr, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
     endif
-    call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
+    call IO_WRITE_FIELDS('fld_mod',  IO_FLOW, imax,jmax,kmax, i1, fld_mod_tr, wrk3d)
 #else
     fld_mod_tr = fld_mod
-    call DNS_WRITE_FIELDS('fld_mod', i2, imax,jmax,kmax, i1, imax*jmax*kmax, fld_mod_tr, wrk3d)
+    call IO_WRITE_FIELDS('fld_mod',  IO_FLOW, imax,jmax,kmax, i1, fld_mod_tr, wrk3d)
 #endif
 
     ! stop after writing field

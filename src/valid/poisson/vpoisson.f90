@@ -6,6 +6,7 @@ PROGRAM VPOISSON
   USE TLAB_CONSTANTS
   USE TLAB_VARS
   USE TLAB_PROCS
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -65,7 +66,7 @@ PROGRAM VPOISSON
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-  CALL DNS_READ_FIELDS('field.inp', i1, imax,jmax,kmax, i1,i0, i1, a, wrk3d)
+  CALL IO_READ_FIELDS('field.inp', IO_SCAL, imax,jmax,kmax, i1,i0, a, wrk3d)
 
 ! remove 2\Delta x wave
 !  CALL OPR_FILTER(i1,imax,jmax,kmax, ibc_x,ibc_y,ibc_z, i1, a, cx,cy,cz,wrk1d,wrk2d,wrk3d)
@@ -81,7 +82,7 @@ PROGRAM VPOISSON
 
 ! ###################################################################
   f = a; bcs_hb = C_0_R; bcs_ht = C_0_R
-  itype = 2
+  itype = 1
 
   IF      ( itype .EQ. 1 ) THEN
      CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
@@ -90,7 +91,7 @@ PROGRAM VPOISSON
   ELSE IF ( itype .EQ. 2 ) THEN
      WRITE(*,*) 'Eigenvalue ?'
      READ(*,*) lambda
-     ! CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, i0, lambda,&
+     ! CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, i0, lambda,&
      !      a, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
      CALL OPR_HELMHOLTZ_FXZ_2(imax,jmax,kmax, g, i0, lambda,&
           a, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
@@ -120,9 +121,9 @@ PROGRAM VPOISSON
 ! ###################################################################
 ! solve poisson eqn
 ! ###################################################################
-!  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
-!       b,c,d,e, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
-  CALL DNS_WRITE_FIELDS('field.out', i1, imax,jmax,kmax, i1, i1, b, wrk3d)
+  ! CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
+  ! b,c, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
+  CALL IO_WRITE_FIELDS('field.out', IO_SCAL, imax,jmax,kmax, i1, b, wrk3d)
 
   CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, c, wrk3d, wrk2d,wrk3d)
 ! -------------------------------------------------------------------
@@ -145,7 +146,7 @@ PROGRAM VPOISSON
      ENDDO
   ENDDO
   WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, i1, e, wrk3d)
+  CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, e, wrk3d)
 
 ! first derivative
   error = C_0_R
@@ -161,7 +162,7 @@ PROGRAM VPOISSON
      ENDDO
   ENDDO
   WRITE(*,*) 'Relative error in df/dy ....: ', sqrt(error)/sqrt(dummy)
-!  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, i1, e, wrk3d)
+!  CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, e, wrk3d)
 
   STOP
 END PROGRAM VPOISSON

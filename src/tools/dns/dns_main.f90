@@ -27,6 +27,7 @@ PROGRAM DNS
   USE STATISTICS
   USE PARTICLE_TRAJECTORIES
   USE AVG_SCAL_ZT
+  USE IO_FIELDS
   IMPLICIT NONE
   SAVE
 
@@ -107,11 +108,11 @@ PROGRAM DNS
 
   IF ( icalc_scal == 1 ) THEN
     WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-    CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
+    CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal, i0, s, wrk3d)
   END IF
 
   WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-  CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
+  CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, inb_flow, i0, q, wrk3d)
 
   CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )  ! Initialize diagnostic thermodynamic quantities
 
@@ -261,12 +262,12 @@ PROGRAM DNS
 
       IF ( icalc_flow == 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-        CALL DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, inb_flow, isize_field, q, wrk3d)
+        CALL IO_WRITE_FIELDS(fname, IO_FLOW, imax,jmax,kmax, inb_flow, q, wrk3d)
       END IF
 
       IF ( icalc_scal == 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-        CALL DNS_WRITE_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, isize_field, s, wrk3d)
+        CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal, s, wrk3d)
       END IF
 
       IF ( tower_mode == 1 ) THEN

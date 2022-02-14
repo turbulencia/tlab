@@ -1,4 +1,5 @@
 #include "types.h"
+#include "dns_error.h"
 #include "dns_const.h"
 
 !########################################################################
@@ -12,8 +13,10 @@
 !########################################################################
 SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
 
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_VARS,    ONLY : rbg, tbg
   USE THERMO_VARS, ONLY : imixture
+  USE TLAB_PROCS
   USE FLOW_LOCAL
 
   IMPLICIT NONE
@@ -53,9 +56,11 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
   ! Broadband case
   ! -------------------------------------------------------------------
   IF ( code .EQ. 4 ) THEN
-    idummy = g(2)%size; g(2)%size = 1
-    CALL DNS_READ_FIELDS('scal.rand', i1, imax,i1,kmax, i1,i0, isize_field, disp, wrk3d)
-    g(2)%size = idummy
+    ! idummy = g(2)%size; g(2)%size = 1
+    ! CALL DNS_READ_FIELDS('scal.rand', i1, imax,i1,kmax, i1,i0, isize_field, disp, wrk3d)
+    ! g(2)%size = idummy
+    CALL TLAB_WRITE_ASCII(efile, 'INIFLOW. To be written as in scalar case.')
+    CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
     dummy = AVG1V2D(imax,i1,kmax, i1, i1, disp)     ! remove mean
     disp = disp - dummy
 

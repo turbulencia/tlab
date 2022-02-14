@@ -9,10 +9,10 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
 
   IMPLICIT NONE
 
-  CHARACTER*(*) inifile
-  TINTEGER idir
-  TREAL scale
-  LOGICAL periodic
+  CHARACTER(LEN=*), INTENT(IN)    :: inifile
+  TINTEGER,         INTENT(IN)    :: idir
+  TREAL,            INTENT(  OUT) :: scale
+  LOGICAL,          INTENT(  OUT) :: periodic
 
 ! -------------------------------------------------------------------
   CHARACTER*64 sRes, str, bakfile
@@ -23,9 +23,10 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
 ! Defining direction
-  IF      (idir.eq.1) THEN; title = 'IniGridOx'
-  ELSE IF (idir.eq.2) THEN; title = 'IniGridOy'
-  ELSE IF (idir.eq.3) THEN; title = 'IniGridOz'; ENDIF
+  IF      ( idir == 1 ) THEN; title = 'IniGridOx'
+  ELSE IF ( idir == 2 ) THEN; title = 'IniGridOy'
+  ELSE IF ( idir == 3 ) THEN; title = 'IniGridOz'
+  ENDIF
 
   CALL TLAB_WRITE_ASCII(bakfile, '['//title//']')
 
@@ -37,20 +38,19 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
   CALL TLAB_WRITE_ASCII(bakfile, 'mirrored=<yes/no>')
   CALL TLAB_WRITE_ASCII(bakfile, 'fixed_scale=<value>')
 
-  CALL SCANINIINT(bakfile, inifile, title, 'segments', '1', idir_opts(1,idir))
+  CALL SCANINIINT(bakfile, inifile, title, 'segments', '1', g_build(idir)%nseg)
 
+  periodic = .FALSE.
   CALL SCANINICHAR(bakfile, inifile, title, 'periodic', 'no', sRes)
-  IF (TRIM(ADJUSTL(sRes)) .eq. 'yes') THEN; idir_opts(2,idir) = 1; periodic = .TRUE.
-  ELSE;                                     idir_opts(2,idir) = 0; periodic = .FALSE.; ENDIF
-! idir_opts(2,idir) to be removed
+  IF ( TRIM(ADJUSTL(sRes)) == 'yes' ) periodic = .TRUE.
 
+  g_build(idir)%mirrored = .FALSE.
   CALL SCANINICHAR(bakfile, inifile, title, 'mirrored', 'no', sRes)
-  IF (TRIM(ADJUSTL(sRes)) .eq. 'yes') THEN; idir_opts(3,idir) = 1
-  ELSE;                                     idir_opts(3,idir) = 0; ENDIF
+  IF ( TRIM(ADJUSTL(sRes)) == 'yes' ) g_build(idir)%mirrored = .TRUE.
 
-  CALL SCANINIREAL(bakfile, inifile, title, 'fixed_scale', '-1.0', fixed_scale(idir))
+  CALL SCANINIREAL(bakfile, inifile, title, 'fixed_scale', '-1.0', g_build(idir)%fixed_scale )
 
-  IF (idir_opts(2,idir).eq.1 .and. idir_opts(3,idir).eq.1) THEN
+  IF ( periodic .AND. g_build(idir)%mirrored ) THEN
      CALL TLAB_WRITE_ASCII(efile, 'GRID_READ_LOCAL. Periodicity with mirroring is not supported.')
      CALL TLAB_STOP(DNS_ERROR_GRID_SCALE)
   ENDIF
@@ -58,7 +58,7 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
 ! -------------------------------------------------------------------
 ! Loop over the segments
 ! -------------------------------------------------------------------
-  DO iseg = 1,idir_opts(1,idir)
+  DO iseg = 1,g_build(idir)%nseg
      WRITE(str,*) iseg
 
      CALL TLAB_WRITE_ASCII(bakfile, 'Segment number '//TRIM(ADJUSTL(str)) )
@@ -68,25 +68,31 @@ SUBROUTINE GRID_READ_LOCAL (inifile, idir, scale, periodic)
      CALL TLAB_WRITE_ASCII(bakfile, 'vals_'//TRIM(ADJUSTL(str))//'=<values>')
 
 
-     CALL SCANINIINT(bakfile,  inifile, title, 'points_'//TRIM(ADJUSTL(str)),'1', isegdim(iseg,idir))
-     iseg_opts(:,iseg,idir) = 0
-     CALL SCANINICHAR(bakfile, inifile, title, 'opts_'//TRIM(ADJUSTL(str)), '1', sRes)
-     idummy = MAX_PARAMES
-     CALL LIST_INTEGER(sRes, idummy, iseg_opts(1,iseg,idir))
+     CALL SCANINIINT(bakfile,  inifile, title, 'points_'//TRIM(ADJUSTL(str)),   '1', g_build(idir)%size(iseg) )
+     CALL SCANINIREAL(bakfile, inifile, title, 'scales_'//TRIM(ADJUSTL(str)),'-1.0', g_build(idir)%end(iseg)  )
 
-     CALL SCANINIREAL(bakfile, inifile, title, 'scales_'//TRIM(ADJUSTL(str)),'-1.0', isegend(iseg,idir))
-     iseg_vals(:,iseg,idir) = C_0_R
+     g_build(idir)%opts(:,iseg) = 0
+     CALL SCANINICHAR(bakfile, inifile, title, 'opts_'//TRIM(ADJUSTL(str)), '1', sRes)
+     IF      ( TRIM(ADJUSTL(sRes)) == 'uniform' ) THEN; g_build(idir)%opts(1,iseg) = GTYPE_UNIFORM
+     ELSE IF ( TRIM(ADJUSTL(sRes)) == 'tanh'    ) THEN; g_build(idir)%opts(1,iseg) = GTYPE_TANH
+     ELSE IF ( TRIM(ADJUSTL(sRes)) == 'exp'     ) THEN; g_build(idir)%opts(1,iseg) = GTYPE_EXP
+     ELSE
+       idummy = MAX_PARAMES
+       CALL LIST_INTEGER(sRes, idummy, g_build(idir)%opts(1,iseg))
+     END IF
+
+     g_build(idir)%vals(:,iseg) = 0
      CALL SCANINICHAR(bakfile, inifile, title, 'vals_'//TRIM(ADJUSTL(str)), '1.0', sRes)
      idummy = MAX_PARAMES
-     CALL LIST_REAL(sRes, idummy, iseg_vals(1,iseg,idir))
+     CALL LIST_REAL(sRes, idummy, g_build(idir)%vals(1,iseg))
 
   ENDDO
 
 ! -------------------------------------------------------------------
 ! Control
 ! -------------------------------------------------------------------
-  scale = isegend(idir_opts(1,idir),idir)
-  IF ( scale .LE. C_0_R ) THEN
+  scale = g_build(idir)%end(g_build(idir)%nseg)
+  IF ( scale <= C_0_R ) THEN
      CALL TLAB_WRITE_ASCII(efile, 'GRID_READ_LOCAL. Scales undefined.')
      CALL TLAB_STOP(DNS_ERROR_GRID_SCALE)
 

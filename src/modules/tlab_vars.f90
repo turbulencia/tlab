@@ -20,6 +20,7 @@ MODULE TLAB_VARS
   TINTEGER :: icalc_flow, icalc_scal, icalc_part
   TINTEGER :: imode_sim                ! type of simulation (spatial, temporal)
   TINTEGER :: imode_files              ! files format
+  TINTEGER :: imode_precision_files
   TINTEGER :: imode_verbosity          ! level of verbosity used in log files
   TINTEGER :: imode_eqns               ! set of equations to be solved
   TINTEGER :: iadvection, iviscous, idiffusion ! formulation
@@ -91,6 +92,15 @@ MODULE TLAB_VARS
   TREAL    :: settling                            ! sedimentation parameter for liquid particle
 
   TREAL    :: visc                                ! 1/reynolds
+
+! ###################################################################
+! Compact parameters (1st derivative of 6th-order pentadiagonal)
+! ###################################################################
+  TREAL    :: C1N6M_ALPHA,  C1N6M_BETA
+  TREAL    :: C1N6M_ALPHA2, C1N6M_BETA2
+  TREAL    :: C1N6M_A,   C1N6M_B,   C1N6M_C
+  TREAL    :: C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
+  TREAL    ::            C1N6M_BD2, C1N6M_CD3
 
 ! ###########################################################
 ! Filters

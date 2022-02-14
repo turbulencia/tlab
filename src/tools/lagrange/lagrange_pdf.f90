@@ -15,6 +15,7 @@ PROGRAM LAGRANGE_PDF
   USE TLAB_VARS
   USE TLAB_ARRAYS
   USE TLAB_PROCS
+  USE IO_FIELDS
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
 #endif
@@ -108,7 +109,7 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 !READ ALL FILES
 !#######################################################################
      WRITE(fname,*) i;  fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-     CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
+     CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal, i0, s, wrk3d)
      CALL THERMO_AIRWATER_LINEAR(imax,jmax,kmax, s, s(1,inb_scal_array))
 
      WRITE(fname,*) i; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))

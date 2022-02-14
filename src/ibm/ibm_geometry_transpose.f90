@@ -160,15 +160,15 @@ subroutine IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
   ! ! check transpositions in x! 
   ! call DNS_TRANSPOSE(epsi, nyz, g(1)%size, nyz, tmp2, g(1)%size)
   ! call TLAB_MPI_TRPB_I(tmp2, tmp3, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
-  ! call DNS_WRITE_FIELDS('epsi0', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp3, wrk3d)
+  ! call IO_WRITE_FIELDS(...)
   
   ! ! check epsj
   ! call DNS_TRANSPOSE(epsj, kmax, nxy, kmax, tmp2, nxy)
-  ! call DNS_WRITE_FIELDS('epsj0', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+  ! call IO_WRITE_FIELDS(...)
 
   ! ! check transpositions in z! 
   ! call TLAB_MPI_TRPB_K(epsk, tmp2, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
-  ! call DNS_WRITE_FIELDS('epsk0', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+  ! call IO_WRITE_FIELDS(...)
 #endif
   ! ================================================================== !
   ! ================================================================== !

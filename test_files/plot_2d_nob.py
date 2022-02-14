@@ -100,6 +100,7 @@ plt.show()
 #---------------------------------------------------------------------------#
 # sys.exit()
 #---------------------------------------------------------------------------#
+'''
 plt.figure(figsize=size)
 plt.rcParams.update({'font.size':11})
 plt.suptitle('nob_3d fields (for debugging)',fontsize='xx-large')
@@ -126,3 +127,4 @@ plt.pcolormesh(grid.x,grid.y,nobk3d[:,:,0].T, shading=shading, cmap='RdBu_r')
 plt.colorbar()
 #
 plt.show()
+'''

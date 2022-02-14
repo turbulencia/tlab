@@ -2,9 +2,7 @@
 
 The equations are solved using Cartesian co-ordinates and the grid is structured. The grid is constructed by building up the three directions separately (in a 2D case, $Oz$ has simply one node).  Each direction is broken into segments, and each of those segments is built with specified generation algorithms. The first node in each direction is set at zero.
 
-The executable is {\tt inigrid.x} and the data in {\tt dns.ini} is specified in the blocks [IniGridOx], [IniGridOy] and [IniGridOz]. Once created, basic information about the grid is saved into the file {\tt grid.sts}. Grid transformations can be done with {\tt transgrid.x}; the corresponding sources are in the {\tt tools/transform} sub-directory.
-
-%They allow to print out an ASCII file with the grid positions, add an offset, drop or introduce planes and make a scaling.  (As in the case of the utilities of the main code, a browse through them is recommended, though they are really simple.)
+The executable is {\tt inigrid.x} and the data in {\tt dns.ini} is specified in the blocks [IniGridOx], [IniGridOy] and [IniGridOz]. Once created, basic information about the grid is saved into the file {\tt grid.sts}. Grid transformations can be done with {\tt transgrid.x}; the corresponding sources are in the {\tt tools/transform} sub-directory. They allow to print out an ASCII file with the grid positions, add an offset, drop or introduce planes and make a scaling.% (As in the case of the utilities of the main code, a browse through them is recommended, though they are really simple.)
 
 {
 \centering
@@ -29,13 +27,7 @@ The executable is {\tt inigrid.x} and the data in {\tt dns.ini} is specified in 
   moved to zero. In the case of mirroring the number of points is always even.\\
 \tt Scales\_\# & {\it value} & Physical end of the segment number {\tt \#}.\\
 \tt Points\_\# & {\it value} & Number of points in the segment number {\tt \#}. This number includes the first and the last points of the present segment, which are common with the adjacent  ones. (E.g., if one direction has three segments with 11, 16 and 6 points each, the total number of points in that direction will be 31, 30 steps.)\\
-\tt Opts\_\#  &  {\it value1, value2, ...} & List of options for the generation algorithm:
-\begin{enumerate}[leftmargin=*,noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt]
-\item[0] Uniform grid.
-\item[4] Geometric progression. Not used in a loooong time.
-\item[5] Explicit mapping: hyperbolic tangent of the space step.
-\item[6] Explicit mapping: hyperbolic tangent of the stretching factor.
-\end{enumerate}\\
+\tt Opts\_\#  &  {\tt uniform, tanh, exp...} & Type of grid generation algorithm (see text below).\\
 \tt Vals\_\#  &  {\it value1, value2, ...} & List of constants for the different generation algorithms.\\
 \end{longtable}
 
@@ -44,18 +36,17 @@ The executable is {\tt inigrid.x} and the data in {\tt dns.ini} is specified in 
 \section{Generation algorithms}
 
 \subsection{Explicit mappings}
-A basic grid is considered first with uniform spacing, that is
-$\{s_j=h_0(j-1):\, j = 1,\ldots,n\}$.
-
-In case of a hyperbolic tangent (i.e. {\tt opts=5}), the mapping is
+The reference is a grid with a uniform spacing:
 \begin{equation}
-\frac{\mathrm{d}x}{\mathrm{d}s} = 1 + \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
+  \{s_j=h_0(j-1):\, j = 1,\ldots,n\} \;.
 \end{equation}
-that is, the grid step $\Delta x =dx/dj$ varies between the uniform values $h_0$
-and $h_1$, the transition occurring at $s=s_{t1}$ and over a length $\delta_1$. The
-space step $h_0$ corresponds to that of the initial uniform grid. The parameters
-$s_{t1}$, $h_1/h_0$ and $\delta_1$ are provided in the corresponding {\tt vals}
-record of the {\tt dns.ini} file.
+Then, one considers different mappings from this reference grid to the final grid $\{x_j=x(s_j)\}$.
+
+For {\tt opts=tanh}, the mapping $x=x(s)$ is obtained by solving the equation
+\begin{equation}
+\frac{\mathrm{d}x}{\mathrm{d}s} = 1 + \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right] \;,
+\end{equation}
+that is, the grid step $\Delta x \equiv\mathrm{d}x/\mathrm{d}j$ varies according to a hyperbolic tangent function between the uniform values $h_0$ and $h_1$, the transition occurring at $s=s_{t1}$ and over a length $\delta_1$. The grid step $h_0$ corresponds to that of the initial uniform grid. The parameters $s_{t1}$, $h_1/h_0$ and $\delta_1$ are provided in the corresponding {\tt vals} record of the {\tt dns.ini} file.
 
 The mapping can be written explicitly as
 \begin{equation}
@@ -63,41 +54,35 @@ The mapping can be written explicitly as
 \end{equation}
 where $C$ is the integration constant, defined such that $x=0$ for $s=0$. The final extension obeys the relationship
 \begin{equation}
-  x_\mathrm{max}=s_\mathrm{max} + (h_1/h_0-1)\delta_1\ln\left[\frac{\exp(s_\mathrm{max}/\delta_1)+1}{1+\exp(-s_{t1}/\delta_1)}\right],
+  x_\mathrm{max}=s_\mathrm{max} + (h_1/h_0-1)\delta_1\ln\left[\frac{\exp(s_\mathrm{max}/\delta_1)+1}{1+\exp(-s_{t1}/\delta_1)}\right].
 \end{equation}
 where $s_\mathrm{max} =(n-1)h_0$.
 
-Two transitions are possible if the {\tt opts} record is set to $5,2$. The
-mapping is then
+Two transitions are possible if the {\tt vals} record contains 6 elements instead of 3:
 \begin{equation}
 \frac{dx}{ds} = 1
 + \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
 + \frac{h_2/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t2}}{2\delta_2}\right)\right]\;.
 \end{equation}
 
-In case of {\tt opts=6} a hyperbolic tangent variation of the stretching factor
-$f=\mathrm{d}/\mathrm{d}x (\Delta x)$ (so defined, $f+1$ an approximation to the ratio $(\Delta x)
-_{j+1}/(\Delta x) _{j} $) is imposed by solving the linear equation
+For {\tt opts=exp}, the mapping $x=x(s)$ is obtained by solving the equation
 \begin{equation}
 \frac{\mathrm{d}^2x}{\mathrm{d}s^2} - (f/h_0)\frac{\mathrm{d}x}{\mathrm{d}s} = 0 \;,
 \end{equation}
-where $f$ is given by
+where the stretching factor is imposed according to a hyperbolic tangent function
 \begin{equation}
-f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
+f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right] \;.
 \end{equation}
-and the parameters $s_{t1}$, $\Delta f_1$ and $\delta_1$ are provided in the list
-${\tt vals}$. The non-dimensional parameter $f$ then varies from $0$ to $\Delta
-f_1$; values smaller that $0.1$ are recommended (less that 10\% stretching). A
-first integral of this problem leads to
+The stretching factor is defined as $f\equiv\mathrm{d}/\mathrm{d}x (\Delta x)$, so that $f+1$ an approximation to the ratio $(\Delta x)_{j+1}/(\Delta x) _{j}$. The non-dimensional parameter $f$ then varies from $0$ to $\Delta f_1$; values smaller that $0.1$ are recommended (less that 10\% stretching). The parameters $s_{t1}$, $\Delta f_1$ and $\delta_1$ are provided in the corresponding {\tt vals} record of the {\tt dns.ini} file.
+
+A first integral of this problem leads to
 \begin{equation}
 \frac{\mathrm{d}x}{\mathrm{d}s} =
 \left[1+\exp\left(\frac{s-s_{t1}}{\delta_1}\right)\right]^{\delta_1(\Delta f_1/h_0)} \;.
 \end{equation}
-This equation for $x(s)$ needs to be solved numerically, but already shows that
-this mapping leads to an exponential growth of the space step $\Delta x$ and the
-grid $x(s)$. Note that $\delta_1$ admits negative values.
+This equation for $x(s)$ needs to be solved numerically, but already shows that this mapping leads to an exponential growth of the grid spacing $\Delta x$ and the grid $x(s)$. Note that $\delta_1$ admits negative values.
 
-As before, two transitions are possible if the {\tt opts} record is set to $6,2$,
+Two transitions are possible if the {\tt vals} record contains 6 elements instead of 3:
 \begin{equation}
   f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right]
   + \frac{\Delta f_2}{2}\left[ 1 + \tanh\left(\frac{s-s_{t2}}{2\delta_2}\right)\right] \;,
@@ -110,20 +95,15 @@ which implies
 \end{equation}
 
 \subsection{Geometric progression}
-For each segment $i$ the geometric ratio $r_i$ is given (input variable
-$val1$). The rest of the constrains are the number of points in each segment,
-$n_i$ and the total length in that direction, $L$.  The first step of the first
-segment is initialized to 1 (this number does not matter because of the final
-scaling), and then the first segment is generated. The last step size is taken
-as the first one for the second segment, and the sequence continue until the
-last segment. A final rescaling adjusts the physical length of the grid in that
-direction.
 
-The length of each segment in the grid is saved into {\tt grid.sts}. For
-calculating them, if we denote the length of each segment by $l_i$, we have
+These algorithms correspond to {\tt opts=1-4}. (It has not been used in a long time.)
+
+For each segment $i$ the geometric ratio $r_i$ is given (input variable $val1$). The rest of the constrains are the number of points in each segment, $n_i$ and the total length in that direction, $L$.  The first step of the first segment is initialized to 1 (this number does not matter because of the final scaling), and then the first segment is generated. The last step size is taken as the first one for the second segment, and the sequence continue until the last segment. A final rescaling adjusts the physical length of the grid in that direction.
+
+The length of each segment in the grid is saved into {\tt grid.sts}. For calculating them, if we denote the length of each segment by $l_i$, we have
 \begin{equation}
 l_i = h_i^1(1+r_i+r_i^2+\ldots+r_i^{n_i-2})=
-h_i^1\frac{1-r_i^{n_i-1}}{1-r_i}=h_i^1C_i
+h_i^1\frac{1-r_i^{n_i-1}}{1-r_i}=h_i^1C_i \;.
 \end{equation}
 The first step $h_i^1$ of each segment is related to the previous one by
 \begin{equation}
@@ -132,5 +112,5 @@ h_{i+1}^1 = h_i^1 r_i^{n_i-1}
 and the equation to close the problem is
 \begin{equation}
 L=\sum_{seg}l_i=h_1^1\left( C_1 + r_1^{n_1-1}C_2 +
-r_1^{n_1-1}r_2^{n_2-1}C_3 + \ldots \right)
+r_1^{n_1-1}r_2^{n_2-1}C_3 + \ldots \right) \;.
 \end{equation}

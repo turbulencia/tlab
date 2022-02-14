@@ -24,38 +24,52 @@ SUBROUTINE OPR_PARTIAL1(nlines, bcs, g, u,result, wrk2d)
      SELECT CASE( g%mode_fdm )
 
      CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C1N4P_RHS(g%size,nlines, u, result)
+        CALL FDM_C1N4P_RHS( g%size,nlines, u, result)
 
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
-        CALL FDM_C1N6P_RHS(g%size,nlines, u, result)
+        CALL FDM_C1N6P_RHS( g%size,nlines, u, result)
+
+     CASE( FDM_COM6_JACPENTA ) ! Direct = Jacobian because uniform grid
+        CALL FDM_C1N6MP_RHS(g%size,nlines, u, result)
 
      CASE( FDM_COM8_JACOBIAN )
-        CALL FDM_C1N8P_RHS(g%size,nlines, u, result)
+        CALL FDM_C1N8P_RHS( g%size,nlines, u, result)
 
      END SELECT
 
-     CALL TRIDPSS(g%size,nlines, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5), result,wrk2d)
+     IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
+        CALL TRIDPSS(  g%size,nlines, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5),                       result,wrk2d)
+     ELSE
+        CALL PENTADPSS(g%size,nlines, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5),g%lu1(1,6),g%lu1(1,7), result)
+     ENDIF
 
 ! -------------------------------------------------------------------
   ELSE
      SELECT CASE( g%mode_fdm )
 
      CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C1N4_RHS(g%size,nlines, bcs(1),bcs(2), u, result)
+        CALL FDM_C1N4_RHS( g%size,nlines, bcs(1),bcs(2), u, result)
 
      CASE( FDM_COM6_JACOBIAN )
-        CALL FDM_C1N6_RHS(g%size,nlines, bcs(1),bcs(2), u, result)
+        CALL FDM_C1N6_RHS( g%size,nlines, bcs(1),bcs(2), u, result)
+     
+     CASE( FDM_COM6_JACPENTA )
+        CALL FDM_C1N6M_RHS(g%size,nlines, bcs(1),bcs(2), u, result)
 
      CASE( FDM_COM8_JACOBIAN )
-        CALL FDM_C1N8_RHS(g%size,nlines, bcs(1),bcs(2), u, result)
+        CALL FDM_C1N8_RHS( g%size,nlines, bcs(1),bcs(2), u, result)
 
      CASE( FDM_COM6_DIRECT   ) ! Not yet implemented
-        CALL FDM_C1N6_RHS(g%size,nlines, bcs(1),bcs(2), u, result)
+        CALL FDM_C1N6_RHS( g%size,nlines, bcs(1),bcs(2), u, result)
 
      END SELECT
 
-     ip = (bcs(1) + bcs(2)*2)*3
-     CALL TRIDSS(g%size,nlines, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3), result)
+     ip = (bcs(1) + bcs(2)*2)*5
+     IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
+        CALL TRIDSS(   g%size,nlines, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),                             result)
+     ELSE
+        CALL PENTADSS2(g%size,nlines, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5), result)
+   ENDIF
 
   ENDIF
 
@@ -191,7 +205,7 @@ SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
 !      CASE( FDM_COM4_JACOBIAN )
 !         CALL FDM_C2N4P_RHS(g%size,nlines, u, result)
 !
-!      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
+!      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA ) ! Direct = Jacobian because uniform grid
 !        ! CALL FDM_C2N6P_RHS(g%size,nlines, u, result)
 !        CALL FDM_C2N6HP_RHS(g%size,nlines, u, result)
 !
@@ -211,7 +225,7 @@ SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
 !            CALL FDM_C2N4_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
 !         ELSE ! Not yet implemented
 !         ENDIF
-!      CASE( FDM_COM6_JACOBIAN )
+!      CASE( FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA )
 !         IF ( g%uniform ) THEN
 !           CALL FDM_C2N6H_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
 !         ELSE
@@ -294,7 +308,7 @@ SUBROUTINE OPR_PARTIAL2D(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4P_RHS(g%size,nlines, u, result)
 
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
+     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA ) ! Direct = Jacobian because uniform grid
         CALL FDM_C2N6HP_RHS(g%size,nlines, u, result)
 
      CASE( FDM_COM8_JACOBIAN )                  ! Not yet implemented
@@ -314,7 +328,7 @@ SUBROUTINE OPR_PARTIAL2D(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
         ELSE ! Not yet implemented
         ENDIF
 
-     CASE( FDM_COM6_JACOBIAN )
+     CASE( FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA )
         IF ( g%uniform ) THEN
           CALL FDM_C2N6H_RHS  (g%size,nlines, bcs(1,2),bcs(2,2),        u,        result)
         ELSE

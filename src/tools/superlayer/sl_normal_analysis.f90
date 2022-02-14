@@ -8,7 +8,8 @@ PROGRAM SL_NORMAL_ANALYSIS
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
 #endif
-
+  USE IO_FIELDS
+  
   IMPLICIT NONE
 
 #include "integers.h"
@@ -213,10 +214,10 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 ! Binary data
 ! -------------------------------------------------------------------
      WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-     CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i4,i0, isize_wrk3d, q, wrk3d)
+     CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i4,i0, q, wrk3d)
 
      WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-     CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,inb_scal, isize_wrk3d, z1, wrk3d)
+     CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal,inb_scal, z1, wrk3d)
 
      CALL THERMO_CALORIC_TEMPERATURE(imax, jmax, kmax, z1, p, field, txc, wrk3d)
      CALL THERMO_THERMAL_PRESSURE(imax, jmax, kmax, z1, field, txc, p)

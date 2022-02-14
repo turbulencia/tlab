@@ -45,6 +45,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   ! --------------------------DEBUG----------------------------------- !  
   use TLAB_VARS,        only: isize_field, inb_txc
 #ifdef IBM_DEBUG
+  use IO_FIELDS
 #ifdef USE_MPI
   use TLAB_MPI_VARS,    only: ims_pro, ims_npro
   use TLAB_MPI_VARS,    only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i   
@@ -408,49 +409,52 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   write(fname,*) i0; 
   fname = trim(adjustl('nobi'))//trim(adjustl(fname))
   if (ims_pro == 0) write(*,*) fname
-  call DNS_WRITE_FIELDS(fname, i2, i1, g(2)%size/ims_npro, g(3)%size, i1, nyz, nobi_out, wrk3d)
+  ! call DNS_WRITE_FIELDS(fname, i2, i1, g(2)%size/ims_npro, g(3)%size, i1, nyz, nobi_out, wrk3d)
+  ! call IO_WRITE_FIELDS(fname,  IO_FLOW, i1, g(2)%size/ims_npro, g(3)%size, i1, nobi_out, wrk3d)
   ! write nobi_b fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobi_b'))//trim(adjustl(fname))
   if (ims_pro == 0) write(*,*) fname
-  call DNS_WRITE_FIELDS(fname, i2, nob_max, g(2)%size/ims_npro, g(3)%size, i1, nyz*nob_max, nobi_b_out, wrk3d)     
+  ! call DNS_WRITE_FIELDS(fname, i2, nob_max, g(2)%size/ims_npro, g(3)%size, i1, nyz*nob_max, nobi_b_out, wrk3d)     
   ! write nobi_e fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobi_e'))//trim(adjustl(fname))
   if (ims_pro == 0) write(*,*) fname
-  call DNS_WRITE_FIELDS(fname, i2, nob_max, g(2)%size/ims_npro, g(3)%size, i1, nyz*nob_max, nobi_e_out, wrk3d)     
+  ! call DNS_WRITE_FIELDS(fname, i2, nob_max, g(2)%size/ims_npro, g(3)%size, i1, nyz*nob_max, nobi_e_out, wrk3d)     
   ! ------------------------------------------------------------------ !
   ! write nobj fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobj'))//trim(adjustl(fname))
   if (ims_pro == 0) write(*,*) fname
-  call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, i1, g(3)%size, i1, nxz, nobj_out, wrk3d)
+  ! call IO_WRITE_FIELDS(fname,  IO_FLOW, g(1)%size/ims_npro, i1, g(3)%size, i1, nobj_out, wrk3d)
+  ! call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, i1, g(3)%size, i1, nxz, nobj_out, wrk3d)
   ! write nobj_b fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobj_b'))//trim(adjustl(fname))
   if (ims_pro == 0) write(*,*) fname
-  call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, nob_max, g(3)%size, i1, nxz*nob_max, nobj_b_out, wrk3d)
+  ! call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, nob_max, g(3)%size, i1, nxz*nob_max, nobj_b_out, wrk3d)
   ! write nobj_e fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobj_e'))//trim(adjustl(fname))
   if (ims_pro == 0) write(*,*) fname
-  call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, nob_max, g(3)%size, i1, nxz*nob_max, nobj_e_out, wrk3d)
+  ! call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, nob_max, g(3)%size, i1, nxz*nob_max, nobj_e_out, wrk3d)
   ! ------------------------------------------------------------------ !
   ! write nobk fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobk'))//trim(adjustl(fname))
   if (ims_pro == 0) write(*,*) fname
-  call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, i1, i1, nxy, nobk_out, wrk3d)
+  ! call IO_WRITE_FIELDS(fname,  IO_FLOW, g(1)%size/ims_npro, g(2)%size, i1, i1, nobk_out, wrk3d)
+  ! call DNS_WRITE_FIELDS(fname,  i2,     g(1)%size/ims_npro, g(2)%size, i1, i1, nxy, nobk_out, wrk3d)
   ! write nobk_b fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobk_b'))//trim(adjustl(fname))
   if (ims_pro == 0) write(*,*) fname
-  call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, nob_max, i1, nxy*nob_max, nobk_b_out, wrk3d)
+  ! call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, nob_max, i1, nxy*nob_max, nobk_b_out, wrk3d)
   ! write nobk_e fields
   write(fname,*) i0; 
   fname = trim(adjustl('nobk_e'))//trim(adjustl(fname))
   if (ims_pro == 0) write(*,*) fname
-  call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, nob_max, i1, nxy*nob_max, nobk_e_out, wrk3d)
+  ! call DNS_WRITE_FIELDS(fname, i2, g(1)%size/ims_npro, g(2)%size, nob_max, i1, nxy*nob_max, nobk_e_out, wrk3d)
 #endif
   ! ================================================================== !
   ! ================================================================== !
@@ -492,9 +496,9 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   if ( ims_npro_i > 1 ) then
     call TLAB_MPI_TRPB_I(tmp2, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
   endif
-  call DNS_WRITE_FIELDS('nobi3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp1, wrk3d)
+  call IO_WRITE_FIELDS('nobi3d',  IO_FLOW, imax,jmax,kmax, i1, tmp1, wrk3d)
 #else
-  call DNS_WRITE_FIELDS('nobi3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+  call IO_WRITE_FIELDS('nobi3d',  IO_FLOW, imax,jmax,kmax, i1, tmp2, wrk3d)
 #endif
   tmp1(:) = C_0_R
   tmp2(:) = C_0_R
@@ -515,7 +519,7 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   end do
 
   call DNS_TRANSPOSE(tmp1, kmax, imax * jmax, kmax, tmp2, imax * jmax)
-  call DNS_WRITE_FIELDS('nobj3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+  call IO_WRITE_FIELDS('nobj3d',  IO_FLOW, imax,jmax,kmax, i1, tmp2, wrk3d)
   tmp1(:) = C_0_R
   tmp2(:) = C_0_R
 
@@ -538,9 +542,9 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   if ( ims_npro_k > 1 ) then
     call TLAB_MPI_TRPB_K(tmp1, tmp2, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
   endif
-  call DNS_WRITE_FIELDS('nobk3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+  call IO_WRITE_FIELDS('nobk3d',  IO_FLOW, imax,jmax,kmax, i1, tmp2, wrk3d)
 #else
-  call DNS_WRITE_FIELDS('nobk3d', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp1, wrk3d)
+  call IO_WRITE_FIELDS('nobk3d',  IO_FLOW, imax,jmax,kmax, i1, tmp1, wrk3d)
 #endif
 
   tmp1(:) = C_0_R
@@ -587,11 +591,11 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
     call TLAB_MPI_TRPB_I(tmp3, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
     call TLAB_MPI_TRPB_I(tmp4, tmp2, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
   endif
-  call DNS_WRITE_FIELDS('nobi3d_b', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp1, wrk3d)
-  call DNS_WRITE_FIELDS('nobi3d_e', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+  call IO_WRITE_FIELDS('nobi3d_b',  IO_FLOW, imax,jmax,kmax, i1, tmp1, wrk3d)
+  call IO_WRITE_FIELDS('nobi3d_e',  IO_FLOW, imax,jmax,kmax, i1, tmp2, wrk3d)
 #else
-  call DNS_WRITE_FIELDS('nobi3d_b', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp3, wrk3d)
-  call DNS_WRITE_FIELDS('nobi3d_e', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp4, wrk3d)
+  call IO_WRITE_FIELDS('nobi3d_b',  IO_FLOW, imax,jmax,kmax, i1, tmp3, wrk3d)
+  call IO_WRITE_FIELDS('nobi3d_e',  IO_FLOW, imax,jmax,kmax, i1, tmp4, wrk3d)
 #endif
 
   tmp1(:) = C_0_R
@@ -635,8 +639,8 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   call DNS_TRANSPOSE(tmp1, kmax, imax * jmax, kmax, tmp3, imax * jmax)
   call DNS_TRANSPOSE(tmp2, kmax, imax * jmax, kmax, tmp4, imax * jmax)
 
-  call DNS_WRITE_FIELDS('nobj3d_b', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp3, wrk3d)
-  call DNS_WRITE_FIELDS('nobj3d_e', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp4, wrk3d)
+  call IO_WRITE_FIELDS('nobj3d_b',  IO_FLOW, imax,jmax,kmax, i1, tmp3, wrk3d)
+  call IO_WRITE_FIELDS('nobj3d_e',  IO_FLOW, imax,jmax,kmax, i1, tmp4, wrk3d)
 
   tmp1(:) = C_0_R
   tmp2(:) = C_0_R
@@ -682,11 +686,12 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
     call TLAB_MPI_TRPB_K(tmp1, tmp3, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
     call TLAB_MPI_TRPB_K(tmp2, tmp4, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
   endif
-  call DNS_WRITE_FIELDS('nobk3d_b', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp3, wrk3d)
-  call DNS_WRITE_FIELDS('nobk3d_e', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp4, wrk3d)
+  call IO_WRITE_FIELDS('nobk3d_b',  IO_FLOW, imax,jmax,kmax, i1, tmp3, wrk3d)
+  call IO_WRITE_FIELDS('nobk3d_e',  IO_FLOW, imax,jmax,kmax, i1, tmp4, wrk3d)
 #else
-  call DNS_WRITE_FIELDS('nobk3d_b', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp1, wrk3d)
-  call DNS_WRITE_FIELDS('nobk3d_e', i2, imax,jmax,kmax, i1, imax*jmax*kmax, tmp2, wrk3d)
+  call IO_WRITE_FIELDS('nobk3d_b',  IO_FLOW, imax,jmax,kmax, i1, tmp1, wrk3d)
+  call IO_WRITE_FIELDS('nobk3d_e',  IO_FLOW, imax,jmax,kmax, i1, tmp2, wrk3d)
+
 #endif
 
   tmp1(:) = C_0_R

@@ -39,6 +39,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   use TLAB_VARS,        only: g
   use TLAB_VARS,        only: imax, jmax, kmax 
   use TLAB_VARS,        only: isize_field
+  use IO_FIELDS
 
 #ifdef USE_MPI 
   use TLAB_MPI_VARS,    only: ims_offset_i, ims_offset_j, ims_offset_k
@@ -162,7 +163,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   if (ims_pro == 0) write(*,*) '======== Write eps field ================================'
   if (ims_pro == 0) write(*,*) fname 
 #endif
-  call DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, i1, imax*jmax*kmax, eps, wrk3d)
+  call IO_WRITE_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i1, eps, wrk3d)
 
   return
 end subroutine IBM_GENERATE_GEOMETRY_XBARS

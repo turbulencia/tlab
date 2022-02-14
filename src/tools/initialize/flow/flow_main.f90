@@ -15,6 +15,7 @@ PROGRAM INIFLOW
 #endif
   USE THERMO_VARS, ONLY : imixture
   USE FLOW_LOCAL
+  USE IO_FIELDS
 #ifdef USE_CGLOC
   USE CG_GLOBAL, ONLY : cg_unif, cg_ord
 #endif
@@ -123,27 +124,13 @@ PROGRAM INIFLOW
      CALL PRESSURE_MEAN(p,T,s, wrk1d)
      CALL DENSITY_MEAN(rho,p,T,s, txc, wrk1d,wrk2d,wrk3d)
 
-#ifdef CHEMISTRY
-     IF ( ireactive /= CHEM_NONE .AND. icalc_scal == 1 ) THEN
-        CALL DNS_READ_FIELDS(TRIM(ADJUSTL(tag_scal))//'ics', i1, imax,jmax,kmax, inb_scal,inb_scal, isize_wrk3d, s(1,inb_scal), wrk3d)
-        IF ( ireactive == CHEM_FINITE .AND. ichem_config /= CHEM_PREMIXED .AND. flag_mixture == 2 ) THEN ! Initialize density from flame
-           r0   = C_0_R
-           CALL CHEM_READ_TEXT(flame_ini_file, i11, i11, i2, isize_field, r0, s(1,inb_scal), rho, isize_wrk3d, wrk3d)
-        ELSE
-           CALL THERMO_BURKESCHUMANN(rho, s(1,inb_scal))
-        END IF
-     END IF
-     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Chemistry part to be checked')
-     CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-#endif
-
      IF ( flag_u /= 0 ) THEN
         CALL PRESSURE_FLUCTUATION(q(1,1),q(1,2),q(1,3),rho,p,txc(1,1), &
              txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
      END IF
 
      IF ( imixture > 0 ) THEN
-        CALL DNS_READ_FIELDS(TRIM(ADJUSTL(tag_scal))//'ics', i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
+        CALL IO_READ_FIELDS(TRIM(ADJUSTL(tag_scal))//'ics', IO_SCAL, imax,jmax,kmax, inb_scal,i0, s, wrk3d)
      END IF
 
      IF ( flag_t == 4 .OR. flag_t == 5 ) THEN
@@ -157,7 +144,7 @@ PROGRAM INIFLOW
   END IF
 
   ! ###################################################################
-  CALL DNS_WRITE_FIELDS(TRIM(ADJUSTL(tag_flow))//'ics', i2, imax,jmax,kmax, inb_flow, isize_wrk3d, q, wrk3d)
+  CALL IO_WRITE_FIELDS(TRIM(ADJUSTL(tag_flow))//'ics', IO_FLOW, imax,jmax,kmax, inb_flow, q, wrk3d)
 
   CALL TLAB_STOP(0)
 END PROGRAM INIFLOW

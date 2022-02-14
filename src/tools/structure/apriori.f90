@@ -18,6 +18,7 @@ PROGRAM APRIORI
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
 #endif
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -208,12 +209,12 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
      IF ( iread_flow .EQ. 1 ) THEN ! Flow variables
         WRITE(flow_file,*) itime; flow_file = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(flow_file))
-        CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
+        CALL IO_READ_FIELDS(flow_file, IO_FLOW, imax,jmax,kmax, inb_flow, i0, q, wrk3d)
      ENDIF
 
      IF ( iread_scal .EQ. 1 ) THEN ! Scalar variables
         WRITE(scal_file,*) itime; scal_file = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(scal_file))
-        CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
+        CALL IO_READ_FIELDS(scal_file, IO_SCAL, imax,jmax,kmax, inb_scal, i0, s, wrk3d)
      ENDIF
 
 ! -------------------------------------------------------------------

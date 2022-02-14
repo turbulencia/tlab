@@ -81,17 +81,24 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian8/CompactDirect6>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacpenta6/CompactJacobian8/CompactDirect6>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'FileFormat', 'RawSplit', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'rawarray' ) THEN; imode_files = DNS_FILE_RAWARRAY
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'rawsplit' ) THEN; imode_files = DNS_FILE_RAWSPLIT
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'netcdf'   ) THEN; imode_files = DNS_FILE_NETCDF
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'none'   )   THEN; imode_files = DNS_NOFILE
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'FileFormat', 'MpiIO', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'mpiio'    ) THEN; imode_files = IO_MPIIO
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'netcdf'   ) THEN; imode_files = IO_NETCDF
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'none'     ) THEN; imode_files = IO_NOFILE
   ELSE
      CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Main.FileFormat.')
+     CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'FileType', 'Double', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'double'   ) THEN; imode_precision_files = IO_TYPE_DOUBLE
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'single'   ) THEN; imode_precision_files = IO_TYPE_SINGLE
+  ELSE
+     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Main.FileType.')
      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
@@ -243,6 +250,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'SpaceOrder', 'void', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian4' ) THEN; imode_fdm = FDM_COM4_JACOBIAN;
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian6' ) THEN; imode_fdm = FDM_COM6_JACOBIAN;
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacpenta6' ) THEN; imode_fdm = FDM_COM6_JACPENTA;
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian8' ) THEN; imode_fdm = FDM_COM8_JACOBIAN;
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactdirect6'   ) THEN; imode_fdm = FDM_COM6_DIRECT;
   ELSE
@@ -1174,7 +1182,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      IF ( transport%type .EQ. EQNS_TRANS_SUTHERLAND .OR. transport%type .EQ. EQNS_TRANS_POWERLAW ) inb_flow_array = inb_flow_array + 1 ! space for vis
   ENDIF
 
-  inb_wrk1d = 16
+  inb_wrk1d = 18
   IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN; inb_wrk2d = 11
   ELSE;                                        inb_wrk2d =  2; ENDIF
 
@@ -1190,13 +1198,13 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
      IF ( g(is)%periodic ) THEN
         g(is)%inb_grid = g(is)%inb_grid  &
-                       + 5               & ! LU decomposition 1. order
+                       + 7               & ! LU decomposition 1. order
                        + 5               & ! LU decomposition 2. order
                        + 5 *(1+inb_scal) & ! LU decomposition 2. order with diffusivities
                        + 2                 ! modified wavenumbers
      ELSE
         g(is)%inb_grid = g(is)%inb_grid  &
-                       + 3 *4            & ! LU decomposition 1. order, 4 bcs
+                       + 5 *4            & ! LU decomposition 1. order, 4 bcs
                        + 3 *4            & ! LU decomposition 2. order, 4 bcs
                        + 3 *(1+inb_scal)   ! LU decomposition 2. order w/ diffusivities, 1 bcs
 ! In Direct mode, we only need 10 instead of 3*4 because only 1 bcs is considered

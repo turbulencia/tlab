@@ -10,6 +10,9 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   USE TLAB_TYPES,  ONLY : grid_dt
   USE TLAB_VARS, ONLY : inb_scal
   USE TLAB_VARS, ONLY : reynolds, schmidt
+  USE TLAB_VARS, ONLY : C1N6M_ALPHA2, C1N6M_BETA2
+  USE TLAB_VARS, ONLY : C1N6M_A, C1N6M_BD2, C1N6M_CD3
+
   USE TLAB_PROCS
 
   IMPLICIT NONE
@@ -23,6 +26,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
   TINTEGER i, ip, is, ig, ibc_min, ibc_max, nx
   TREAL r04, r28, r24, r48, r25, r60, dummy
+  TREAL ra1, rb2, rc3, r2a, r2b 
 
 #ifdef TRACE_ON
   CALL TLAB_WRITE_ASCII(tfile,'Entering SUBROUTINE FDM_INITIALIZE')
@@ -38,6 +42,10 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 
   ig = ig + 1
 
+! ###################################################################
+! Coefficients of pentadiagonal 6th-order scheme for 1st derivative
+  IF (g%mode_fdm .EQ. FDM_COM6_JACPENTA) CALL FDM_C1N6M_COEFF()
+  
 ! ###################################################################
 ! Jacobians
 ! ###################################################################
@@ -92,6 +100,10 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
         CALL FDM_C1N6_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
         CALL FDM_C1N6_RHS(nx,i1, i0,i0, x, g%jac(1,1))
+      
+     CASE( FDM_COM6_JACPENTA )
+        CALL FDM_C1N6M_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
+        CALL FDM_C1N6M_RHS(nx,i1, i0,i0, x, g%jac(1,1))
 
      CASE( FDM_COM8_JACOBIAN )
         CALL FDM_C1N8_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
@@ -99,8 +111,13 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 
      END SELECT
 
-     CALL TRIDFS(nx,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-     CALL TRIDSS(nx, i1, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), g%jac(1,1))
+     IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
+        CALL TRIDFS(nx,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+        CALL TRIDSS(nx, i1, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), g%jac(1,1))
+     ELSE
+        CALL PENTADFS2(nx,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
+        CALL PENTADSS2(nx, i1, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), g%jac(1,1))
+     ENDIF
 
 ! -------------------------------------------------------------------
 ! second derivative
@@ -113,7 +130,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
         CALL FDM_C2N4_LHS(nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
         CALL FDM_C2N4_RHS(nx,i1, i0,i0,             x, g%jac(1,2))
 
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
+     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA )
        ! CALL FDM_C2N6_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
        ! CALL FDM_C2N6_RHS( nx,i1, i0,i0,             x, g%jac(1,2))
        CALL FDM_C2N6H_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
@@ -143,7 +160,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   g%lu1 => x(:,ig:)
 
 ! -------------------------------------------------------------------
-! Periodic case; pentadiagonal
+! Periodic case
 ! -------------------------------------------------------------------
   IF ( g%periodic ) THEN
      SELECT CASE( g%mode_fdm )
@@ -154,40 +171,54 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
      CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
         CALL FDM_C1N6P_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
 
+     CASE( FDM_COM6_JACPENTA )
+        CALL FDM_C1N6MP_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5))     
+
      CASE( FDM_COM8_JACOBIAN )
         CALL FDM_C1N8P_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
 
      END SELECT
 
-     CALL TRIDPFS(nx, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5))
-     ig = ig + 5
+     IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
+        CALL TRIDPFS(  nx, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5))
+     ELSE
+        CALL PENTADPFS(nx, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5),g%lu1(1,6),g%lu1(1,7))
+     ENDIF
+     ig = ig + 7
+
 ! -------------------------------------------------------------------
-! Nonperiodic case; tridiagonal for 4 different BCs
+! Nonperiodic case (4 different BCs)
 ! -------------------------------------------------------------------
   ELSE
      DO i = 0,3
         ibc_min = MOD(i,2)
         ibc_max = i /2
-        ip = i*3
-
+        ip = i*5
         SELECT CASE( g%mode_fdm )
 
         CASE( FDM_COM4_JACOBIAN )
-           CALL FDM_C1N4_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+           CALL FDM_C1N4_LHS(nx,  ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
 
         CASE( FDM_COM6_JACOBIAN )
-           CALL FDM_C1N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+           CALL FDM_C1N6_LHS(nx,  ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+
+        CASE( FDM_COM6_JACPENTA )
+           CALL FDM_C1N6M_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))
 
         CASE( FDM_COM8_JACOBIAN )
-           CALL FDM_C1N8_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+           CALL FDM_C1N8_LHS(nx,  ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
 
         CASE( FDM_COM6_DIRECT   ) ! Not yet implemented; using Jacobian version
-           CALL FDM_C1N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+           CALL FDM_C1N6_LHS(nx,  ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
 
         END SELECT
 
-        CALL TRIDFS(nx, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
-        ig = ig + 3
+        IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
+           CALL TRIDFS(   nx, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+        ELSE
+           CALL PENTADFS2(nx, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))
+        ENDIF
+        ig = ig + 5
      ENDDO
 
   ENDIF
@@ -206,7 +237,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
      CASE( FDM_COM4_JACOBIAN )
         CALL FDM_C2N4P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
 
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )  ! Direct = Jacobian because uniform grid
+     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA )  ! Direct = Jacobian because uniform grid
        ! CALL FDM_C2N6P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
        CALL FDM_C2N6HP_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
 
@@ -231,7 +262,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
         CASE( FDM_COM4_JACOBIAN )
            CALL FDM_C2N4_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
 
-        CASE( FDM_COM6_JACOBIAN )
+        CASE( FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA )
           ! CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
           CALL FDM_C2N6H_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
 
@@ -312,11 +343,18 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
 ! First-order derivative
 ! -------------------------------------------------------------------
+     ! tridiagonal scheme
      r04 = C_2_R /C_5_R
      r28 = C_14_R*C_2_R
      r48 = C_6_R *C_8_R
      r25 = C_5_R *C_5_R /C_4_R
      r60 = C_1_R /( C_6_R *C_10_R )
+     ! pentadiagonal scheme
+     ra1 = C1N6M_A
+     rb2 = C1N6M_BD2
+     rc3 = C1N6M_CD3
+     r2a = C1N6M_ALPHA2
+     r2b = C1N6M_BETA2
 
      SELECT CASE( g%mode_fdm )
 
@@ -324,9 +362,13 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
         g%mwn(:,1)=( r28*sin(wrk1d(:,1))+    sin(C_2_R*wrk1d(:,1))                          )&
                   /( C_18_R +C_12_R*cos(wrk1d(:,1)))
 
+     CASE( FDM_COM6_JACPENTA )
+        g%mwn(:,1)=( ra1*sin(wrk1d(:,1))+rb2*sin(C_2_R*wrk1d(:,1))+rc3*sin(C_3_R*wrk1d(:,1)))&
+                  /( C_1_R  +r2a   *cos(wrk1d(:,1))+r2b*cos(2*wrk1d(:,1)))
+   
      CASE( FDM_COM8_JACOBIAN )
         g%mwn(:,1)=( r25*sin(wrk1d(:,1))+r04*sin(C_2_R*wrk1d(:,1))-r60*sin(C_3_R*wrk1d(:,1)))&
-                  /( C_4_R +C_3_R *cos(wrk1d(:,1)))
+                  /( C_4_R  +C_3_R *cos(wrk1d(:,1)))
 
      END SELECT
 
@@ -340,7 +382,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 
      SELECT CASE( g%mode_fdm )
 
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
+     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA )
         g%mwn(:,2)=( r24*(1-cos(wrk1d(:,1))) + C_1_5_R*(C_1_R-cos(C_2_R*wrk1d(:,1))) )&
                   /( C_11_R + C_4_R*cos(wrk1d(:,1)) )
 
@@ -363,7 +405,6 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   g%anelastic = .FALSE. ! Default; activated in fi_profiles_initialize
 
   ig = ig +1
-
 ! ###################################################################
 ! Check array sizes
 ! ###################################################################
