@@ -10,6 +10,7 @@ PROGRAM VBURGERS
   USE TLAB_MPI_PROCS
   USE TLAB_MPI_VARS
 #endif
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -62,7 +63,7 @@ PROGRAM VBURGERS
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-  CALL DNS_READ_FIELDS('flow.0', i1, imax,jmax,kmax, i1,i0, isize_wrk3d, a, wrk3d)
+  CALL IO_READ_FIELDS('field.inp', IO_SCAL, imax,jmax,kmax, i1,i0, a, wrk3d)
 
 ! ###################################################################
   CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), a,b, c, wrk2d,wrk3d)
@@ -86,7 +87,7 @@ PROGRAM VBURGERS
   IF (ims_pro == 0) THEN
      WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
   ENDIF
-! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, e, wrk3d)
+! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c, wrk3d)
 
 ! ###################################################################
   CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), a,b, c, wrk2d,wrk3d)
@@ -103,14 +104,14 @@ PROGRAM VBURGERS
   
   c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
-   error2 = error; dummy2 = dummy
-   CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-   CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  error2 = error; dummy2 = dummy
+  CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
-   IF (ims_pro == 0) THEN
-      WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-   ENDIF
-!  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, c, wrk3d)
+  IF (ims_pro == 0) THEN
+     WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
+  ENDIF
+! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c, wrk3d)
 
 ! ###################################################################
   IF ( g(3)%size .GT. 1 ) THEN
@@ -136,7 +137,7 @@ PROGRAM VBURGERS
      IF (ims_pro == 0) THEN
         WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
      ENDIF
-!    CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, e, wrk3d)
+!    CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c, wrk3d)
 
   END IF
 

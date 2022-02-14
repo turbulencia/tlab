@@ -218,12 +218,12 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
      IF ( iread_flow .EQ. 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-        CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_field, q, wrk3d)
+        CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i3,i0, q, wrk3d)
      ENDIF
 
      IF ( iread_scal .EQ. 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-        CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,inb_scal, isize_field, s, wrk3d)
+        CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal,inb_scal, s, wrk3d)
      ENDIF
 
 ! -------------------------------------------------------------------
@@ -283,13 +283,15 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! save surfaces w/o header
         WRITE(fname,*) itime; fname = 'sl'//TRIM(ADJUSTL(fname))
-        idummy = g(2)%size; g(2)%size = 1
-        CALL DNS_WRITE_FIELDS(fname, i0, imax,i1,kmax, i2, isize_field, sl, wrk3d)
-        g(2)%size = idummy
+        ! idummy = g(2)%size; g(2)%size = 1
+        ! CALL DNS_WRITE_FIELDS(fname, i0, imax,i1,kmax, i2, isize_field, sl, wrk3d)
+        ! g(2)%size = idummy
+        CALL TLAB_WRITE_ASCII(efile, 'SL_BOUNDARY. To be written in terms of IO_SUBARRAY as in averages.x')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
 
 ! save scalar dissipation as scalar field
         ! WRITE(fname,*) itime; fname = 'chi'//TRIM(ADJUSTL(fname))
-        ! CALL DNS_WRITE_FIELDS(fname, i1, imax,jmax,kmax, i1, isize_field, field, wrk3d)
+        ! CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, i1, field, wrk3d)
 
 ! -------------------------------------------------------------------
 ! Surface PDFs

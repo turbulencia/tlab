@@ -18,13 +18,11 @@ PROGRAM TRANSFIELDS
   USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
   USE TLAB_MPI_PROCS
 #endif
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   ! Parameter definitions
   TINTEGER, PARAMETER :: itime_size_max = 3000
@@ -458,12 +456,12 @@ PROGRAM TRANSFIELDS
 
      IF ( iread_flow .EQ. 1 ) THEN ! Flow variables
         WRITE(flow_file,*) itime; flow_file = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(flow_file))
-        CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
+        CALL IO_READ_FIELDS(flow_file, IO_FLOW, imax,jmax,kmax, inb_flow, i0, q, wrk3d)
      ENDIF
 
      IF ( iread_scal .EQ. 1 ) THEN ! Scalar variables
         WRITE(scal_file,*) itime; scal_file = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(scal_file))
-        CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
+        CALL IO_READ_FIELDS(scal_file, IO_SCAL, imax,jmax,kmax, inb_scal, i0, s, wrk3d)
      ENDIF
 
      ! ###################################################################
@@ -664,11 +662,11 @@ PROGRAM TRANSFIELDS
      IF ( opt_main .NE. 4 .AND. opt_main .NE. 7 ) THEN
         IF ( icalc_flow .GT. 0 ) THEN
            flow_file=TRIM(ADJUSTL(flow_file))//'.trn'
-           CALL DNS_WRITE_FIELDS(flow_file, i2, imax_dst,jmax_dst,kmax_dst, inb_flow, isize_wrk3d, q_dst,wrk3d)
+           CALL IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst,jmax_dst,kmax_dst, inb_flow, q_dst,wrk3d)
         ENDIF
         IF ( icalc_scal .GT. 0 ) THEN
            scal_file=TRIM(ADJUSTL(scal_file))//'.trn'
-           CALL DNS_WRITE_FIELDS(scal_file, i1, imax_dst,jmax_dst,kmax_dst, inb_scal_dst, isize_wrk3d, s_dst,wrk3d)
+           CALL IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst,jmax_dst,kmax_dst, inb_scal_dst, s_dst,wrk3d)
         ENDIF
      ENDIF
 
@@ -680,11 +678,11 @@ PROGRAM TRANSFIELDS
   IF ( opt_main .EQ. 4 .OR. opt_main .EQ. 7 ) THEN
      IF ( icalc_flow .GT. 0 ) THEN
        flow_file=TRIM(ADJUSTL(flow_file))//'.trn'
-        CALL DNS_WRITE_FIELDS(flow_file, i2, imax_dst,jmax_dst,kmax_dst, inb_flow, isize_wrk3d, q_dst,wrk3d)
+        CALL IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst,jmax_dst,kmax_dst, inb_flow, q_dst,wrk3d)
      ENDIF
      IF ( icalc_scal .GT. 0 ) THEN
        scal_file=TRIM(ADJUSTL(scal_file))//'.trn'
-        CALL DNS_WRITE_FIELDS(scal_file, i1, imax_dst,jmax_dst,kmax_dst, inb_scal_dst, isize_wrk3d, s_dst,wrk3d)
+        CALL IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst,jmax_dst,kmax_dst, inb_scal_dst, s_dst,wrk3d)
      ENDIF
   ENDIF
 

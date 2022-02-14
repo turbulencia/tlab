@@ -24,6 +24,7 @@ PROGRAM VINTERPARTIAL
   USE TLAB_CONSTANTS
   USE TLAB_VARS
   USE TLAB_PROCS
+  USE IO_FIELDS
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
   USE TLAB_MPI_VARS
@@ -55,6 +56,15 @@ PROGRAM VINTERPARTIAL
 #endif
 
   isize_wrk3d = isize_txc_field
+
+! -------------------------------------------------------------------
+! Check input
+! ------------------------------------------------------------------- 
+  IF (istagger .EQ. 0) THEN
+    CALL TLAB_WRITE_ASCII(efile,'VINTERPARTIAL. Set "StaggerGrid=yes" in dns.ini!')
+    CALL TLAB_STOP(i0)
+  ENDIF 
+
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
@@ -76,7 +86,7 @@ PROGRAM VINTERPARTIAL
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-  CALL DNS_READ_FIELDS('flow.0', i1, imax,jmax,kmax, i1,i0, isize_wrk3d, a, wrk3d)
+  CALL IO_READ_FIELDS('field.inp', IO_SCAL, imax,jmax,kmax, i1,i0, a, wrk3d)
 
 ! ###################################################################
 ! x-direction: Interpolation + interpolatory 1st derivative
@@ -95,7 +105,7 @@ PROGRAM VINTERPARTIAL
     WRITE(*,*) 'x-direction: Interpolation + interp. 1st derivative'
     WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
   ENDIF
-  ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
 ! -------------------------------------------------------------------
 ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
   CALL OPR_PARTIAL_X(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(1), a,     a_int, tmp1, wrk2d,wrk3d)
@@ -111,7 +121,7 @@ PROGRAM VINTERPARTIAL
   IF (ims_pro == 0) THEN
      WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
   ENDIF
-  ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
 ! -------------------------------------------------------------------
 ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
   CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), a,     a_int, tmp1, wrk2d,wrk3d)
@@ -128,7 +138,7 @@ PROGRAM VINTERPARTIAL
      WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
      WRITE(*,*) '--------------------------------------------------------'
   ENDIF
-  ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
 ! ###################################################################
 ! z-direction: Interpolation + interpolatory 1st derivative
 ! ###################################################################  
@@ -147,7 +157,7 @@ PROGRAM VINTERPARTIAL
         WRITE(*,*) 'z-direction: Interpolation + interp. 1st derivative'
         WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
      ENDIF
-     ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
+     ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
    ! -------------------------------------------------------------------
    ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
      CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), a,     a_int, tmp1, wrk2d,wrk3d)
@@ -163,7 +173,7 @@ PROGRAM VINTERPARTIAL
      IF (ims_pro == 0) THEN
         WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
      ENDIF
-     ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
+    ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
    ! -------------------------------------------------------------------
    ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
      CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), a,     a_int, tmp1, wrk2d,wrk3d)
@@ -180,7 +190,7 @@ PROGRAM VINTERPARTIAL
         WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
         WRITE(*,*) '--------------------------------------------------------'
      ENDIF
-     ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
+     ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
   ENDIF
 
 ! #===============================================================# !
@@ -212,9 +222,9 @@ PROGRAM VINTERPARTIAL
      WRITE(*,*) 'y-direction: Interpolation + interp. 1st derivative'
      WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
   ENDIF
-  ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
-  ! CALL DNS_WRITE_FIELDS('field.bak', i1, imax,jmax,kmax, i1, isize_wrk3d, b,     wrk3d)
-  ! CALL DNS_WRITE_FIELDS('field.int', i1, imax,jmax,kmax, i1, isize_wrk3d, a_int, wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.bak', IO_SCAL, imax,jmax,kmax, i1, b,     wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.int', IO_SCAL, imax,jmax,kmax, i1, a_int, wrk3d)
 ! -------------------------------------------------------------------
 ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
   CALL OPR_PARTIAL_Y(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(2), a,     a_int, tmp1, wrk2d,wrk3d)
@@ -233,10 +243,9 @@ PROGRAM VINTERPARTIAL
   IF (ims_pro == 0) THEN
      WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
   ENDIF
-  ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
-  ! CALL DNS_WRITE_FIELDS('field.bak', i1, imax,jmax,kmax, i1, isize_wrk3d, b,     wrk3d)
-  ! CALL DNS_WRITE_FIELDS('field.int', i1, imax,jmax,kmax, i1, isize_wrk3d, a_int, wrk3d)
-  ! CALL DNS_WRITE_FIELDS('field.dy',  i1, imax,jmax,kmax, i1, isize_wrk3d, c,     wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.bak', IO_SCAL, imax,jmax,kmax, i1, b,     wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.int', IO_SCAL, imax,jmax,kmax, i1, a_int, wrk3d)
   ! -------------------------------------------------------------------
 ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
   CALL OPR_PARTIAL_Y(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(2), a,     a_int, tmp1, wrk2d,wrk3d)
@@ -256,9 +265,9 @@ PROGRAM VINTERPARTIAL
      WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
      WRITE(*,*) '--------------------------------------------------------'
   ENDIF
-  ! CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, a_dif, wrk3d)
-  ! CALL DNS_WRITE_FIELDS('field.bak', i1, imax,jmax,kmax, i1, isize_wrk3d, b,     wrk3d)
-  ! CALL DNS_WRITE_FIELDS('field.dy',  i1, imax,jmax,kmax, i1, isize_wrk3d, c,     wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.bak', IO_SCAL, imax,jmax,kmax, i1, b,     wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.int', IO_SCAL, imax,jmax,kmax, i1, a_int, wrk3d)
 ! ###################################################################
 ! ###################################################################
 

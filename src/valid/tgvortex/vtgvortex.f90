@@ -4,6 +4,7 @@
 PROGRAM VTGVORTEX
 
   USE TLAB_VARS
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -52,11 +53,11 @@ PROGRAM VTGVORTEX
   CALL FLOW_TAYLORGREEN(imax,jmax,kmax, rtime,visc, x,y,z, q(1,1),q(1,2),q(1,3),q(1,4))
   q(:,1) = q(:,1) + mean_u
   fname = 'pt0'
-  CALL DNS_WRITE_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, q,      wrk3d)
+  CALL IO_WRITE_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i3, q,      wrk3d)
 
   q(:,4) = C_0_R
   fname = 'sc0'
-  CALL DNS_WRITE_FIELDS(fname, i1, imax,jmax,kmax, i1,i0, q(1,4), wrk3d)
+  CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, i1, q(1,4), wrk3d)
 
 ! ###################################################################
   ELSE IF ( iopt .EQ. 2 ) THEN
@@ -64,12 +65,12 @@ PROGRAM VTGVORTEX
   READ(*,*) itime
 
   WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-  CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
+  CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i3,i0, q, wrk3d)
   txc(:,1) = C_0_R; txc(:,4) = C_0_R
 !  CALL FI_FORCING_1(imax,jmax,kmax,  &
 !       rtime,visc, txc(1,1),txc(1,4), q(1,1),q(1,2),q(1,3),q(1,4), wrk2d,wrk3d)
 !  CALL FI_FORCING_0(imax,jmax,kmax, rtime,visc, q(1,1),q(1,2), txc(1,1),txc(1,4))
-!  CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
+!  CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i3,i0, q, wrk3d)
 
   CALL FI_PRESSURE_BOUSSINESQ(q(1,1),q(1,2),q(1,3),txc(1,4), q(1,4), &
        txc(1,1),txc(1,2),txc(1,3), wrk1d,wrk2d,wrk3d)
@@ -95,7 +96,7 @@ PROGRAM VTGVORTEX
      WRITE(*,*) 'L-2 error ..........: ', sqrt(error*g(1)%jac(1,1)*g(2)%jac(1,1))
      WRITE(*,*) 'Relative error .....: ', sqrt(error)/sqrt(dummy)
      WRITE(fname,*) iv; fname = 'error'//TRIM(ADJUSTL(fname))
-     CALL DNS_WRITE_FIELDS(fname, i1, imax,jmax,kmax, i1, i0, txc(1,iv), wrk3d)
+     CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, i1, txc(1,iv), wrk3d)
      ENDIF
 
   ENDDO

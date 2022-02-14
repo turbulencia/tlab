@@ -20,6 +20,7 @@ MODULE TLAB_VARS
   TINTEGER :: icalc_flow, icalc_scal, icalc_part
   TINTEGER :: imode_sim                ! type of simulation (spatial, temporal)
   TINTEGER :: imode_files              ! files format
+  TINTEGER :: imode_precision_files
   TINTEGER :: imode_verbosity          ! level of verbosity used in log files
   TINTEGER :: imode_eqns               ! set of equations to be solved
   TINTEGER :: iadvection, iviscous, idiffusion ! formulation
