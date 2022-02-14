@@ -17,6 +17,7 @@ PROGRAM INIRAND
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_pro
 #endif
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -65,12 +66,12 @@ PROGRAM INIRAND
   IF ( ipdf .EQ. 2 ) THEN ! Gaussian PDF
     CALL RAND_COVARIANCE(ucov, q(:,1),q(:,2),q(:,3))
   ENDIF
-  CALL DNS_WRITE_FIELDS('flow.rand', i2, imax,jmax,kmax, inb_flow, isize_field, q, txc)
+  CALL IO_WRITE_FIELDS('flow.rand', IO_FLOW, imax,jmax,kmax, inb_flow, q, txc)
 
   DO is = 1,inb_scal
     CALL RAND_FIELD( ucov(is), s(1,is), txc(1,1), txc(1,2), txc(1,3), wrk2d,wrk3d )
   ENDDO
-  CALL DNS_WRITE_FIELDS('scal.rand', i1, imax,jmax,kmax, inb_scal, isize_field, s, txc)
+  CALL IO_WRITE_FIELDS('scal.rand', IO_SCAL, imax,jmax,kmax, inb_scal, s, txc)
 
   CALL TLAB_STOP(0)
 END PROGRAM INIRAND

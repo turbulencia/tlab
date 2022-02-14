@@ -85,13 +85,20 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'FileFormat', 'RawSplit', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'rawarray' ) THEN; imode_files = DNS_FILE_RAWARRAY
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'rawsplit' ) THEN; imode_files = DNS_FILE_RAWSPLIT
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'netcdf'   ) THEN; imode_files = DNS_FILE_NETCDF
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'none'   )   THEN; imode_files = DNS_NOFILE
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'FileFormat', 'MpiIO', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'mpiio'    ) THEN; imode_files = IO_MPIIO
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'netcdf'   ) THEN; imode_files = IO_NETCDF
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'none'     ) THEN; imode_files = IO_NOFILE
   ELSE
      CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Main.FileFormat.')
+     CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'FileType', 'Double', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'double'   ) THEN; imode_precision_files = IO_TYPE_DOUBLE
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'single'   ) THEN; imode_precision_files = IO_TYPE_SINGLE
+  ELSE
+     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Main.FileType.')
      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 

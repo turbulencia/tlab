@@ -14,6 +14,7 @@ PROGRAM INISCAL
   USE TLAB_MPI_PROCS
 #endif
   USE THERMO_VARS, ONLY : imixture
+  USE IO_FIELDS
   USE SCAL_LOCAL
 
   IMPLICIT NONE
@@ -93,28 +94,6 @@ PROGRAM INISCAL
   ENDIF
 
   ! ###################################################################
-#ifdef CHEMISTRY
-  ELSE
-    is = inb_scal
-
-    IF      ( flag_mixture .EQ. 0 ) THEN            ! pasive scalar field
-      CALL SCAL_MEAN(is, s(1,is), wrk1d,wrk2d,wrk3d)
-    ELSE IF ( flag_mixture .EQ. 2 ) THEN
-      CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, i1,i1, isize_wrk3d, s(1,is), wrk3d)
-    ENDIF
-
-    IF      ( ireactive .EQ. CHEM_FINITE ) THEN     ! species mass fractions
-      CALL SCREACT_FINITE(x, s, isize_wrk3d, wrk3d)
-    ELSE IF ( ireactive .EQ. CHEM_INFINITE .AND. inb_scal .GT. 1 ) THEN
-      CALL SCREACT_INFINITE(x, s, isize_wrk3d, wrk3d)
-    ENDIF
-    CALL TLAB_WRITE_ASCII(efile, 'INISCAL. Chemistry part to be checked')
-    CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-
-  ENDIF
-#endif
-
-  ! ###################################################################
   IF ( radiation%type .NE. EQNS_NONE ) THEN         ! Initial radiation effect as an accumulation during a certain interval of time
 
     IF ( ABS(radiation%parameters(1)) .GT. C_0_R ) THEN
@@ -136,7 +115,7 @@ PROGRAM INISCAL
   ENDIF
 
 ! ###################################################################
-  CALL DNS_WRITE_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, isize_wrk3d, s, wrk3d)
+  CALL IO_WRITE_FIELDS('scal.ics', IO_SCAL, imax,jmax,kmax, inb_scal, s, wrk3d)
 
   CALL TLAB_STOP(0)
 END PROGRAM INISCAL

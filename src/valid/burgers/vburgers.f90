@@ -9,6 +9,7 @@ PROGRAM VBURGERS
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
 #endif
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -56,7 +57,7 @@ PROGRAM VBURGERS
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-  CALL DNS_READ_FIELDS('field.inp', i1, imax,jmax,kmax, i1,i0, isize_wrk3d, a, wrk3d)
+  CALL IO_READ_FIELDS('field.inp', IO_SCAL, imax,jmax,kmax, i1,i0, a, wrk3d)
 
 ! ###################################################################
   CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), a,b, c, wrk2d,wrk3d)
@@ -83,7 +84,7 @@ PROGRAM VBURGERS
      ENDDO
   ENDDO
   WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-!  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, e, wrk3d)
+!  CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, e, wrk3d)
 
 ! ###################################################################
   CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), a,b, c, wrk2d,wrk3d)
@@ -110,7 +111,7 @@ PROGRAM VBURGERS
      ENDDO
   ENDDO
   WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-!  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, c, wrk3d)
+!  CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c, wrk3d)
 
 ! ###################################################################
   IF ( g(3)%size .GT. 1 ) THEN
@@ -139,7 +140,7 @@ PROGRAM VBURGERS
      ENDDO
   ENDDO
   WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-!  CALL DNS_WRITE_FIELDS('field.dif', i1, imax,jmax,kmax, i1, isize_wrk3d, e, wrk3d)
+!  CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, e, wrk3d)
 
   END IF
 

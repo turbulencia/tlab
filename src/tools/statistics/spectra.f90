@@ -43,6 +43,7 @@ PROGRAM SPECTRA
   USE TLAB_MPI_PROCS
 #endif
   USE THERMO_VARS, ONLY : imixture
+  USE IO_FIELDS
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
@@ -479,12 +480,12 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
      IF ( iread_flow .EQ. 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-        CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q, wrk3d)
+        CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_flow,i0, q, wrk3d)
      ENDIF
 
      IF ( iread_scal .EQ. 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-        CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
+        CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, inb_scal,i0, s, wrk3d)
      ENDIF
 
      CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
