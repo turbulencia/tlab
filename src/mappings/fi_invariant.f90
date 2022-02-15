@@ -10,6 +10,7 @@
 
 !########################################################################
 ! First invariant
+! (caution: div(u)=0 condition only holds on pressure nodes)
 !########################################################################
 SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
 

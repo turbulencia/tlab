@@ -19,3 +19,11 @@ target_link_libraries(vburgers.x mappings operators ibm fitpack io thermodynamic
 FILE(GLOB sourcefiles "spline/*.f90")
 add_executable(vspline.x ${sourcefiles})
 target_link_libraries(vspline.x operators ibm fitpack io fdm ${LEVEL1_LIBS} ${LIBS})
+
+FILE(GLOB sourcefiles "interpol/*.f90")
+add_executable(vinterpol.x ${sourcefiles})
+target_link_libraries(vinterpol.x operators ibm fitpack io fdm ${LEVEL1_LIBS} ${LIBS})
+
+FILE(GLOB sourcefiles "interpartial/*.f90")
+add_executable(vinterpartial.x ${sourcefiles})
+target_link_libraries(vinterpartial.x mappings operators ibm fitpack io thermodynamics fdm ${LEVEL1_LIBS} ${LIBS})

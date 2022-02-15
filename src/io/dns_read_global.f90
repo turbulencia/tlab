@@ -82,6 +82,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
   CALL TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacpenta6/CompactJacobian8/CompactDirect6>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#StaggerGrid=<yes/no>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
@@ -259,6 +260,15 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
   g(1:3)%mode_fdm = imode_fdm
+
+! -------------------------------------------------------------------
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'StaggerGrid', 'no', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; istagger = 1
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; istagger = 0
+  ELSE
+     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.StaggerGrid must be yes or no')
+     CALL TLAB_STOP(DNS_ERROR_CALCFLOW)
+  ENDIF
 
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
@@ -1211,13 +1221,35 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ENDIF
      g(is)%inb_grid = g(is)%inb_grid  &
                     + 1                    ! Density correction in anelastic mode
+     IF ( istagger .EQ. 1 ) THEN 
+        IF ( g(is)%periodic ) THEN
+           g(is)%inb_grid = g(is)%inb_grid  &
+                          + 5               & ! LU decomposition interpolation
+                          + 5                 ! LU decomposition 1. order interpolatory
+                        
+        ELSE
+           g(is)%inb_grid = g(is)%inb_grid  &
+                          + 3 *2            & ! LU decomposition interpolation,    2 directions
+                          + 3 *2            & ! LU decomposition 1. order interp., 2 directions
+                          + 1                 ! Jacobians of first-order derivatives on pressure mesh
+        ENDIF
+     ENDIF
   END DO
 
 ! auxiliar array txc
+! needs to be adjusted for hybrid meshs, not for horizontal staggering!
+!   isize_txc_field = imax*(jmax + 1)*kmax
   isize_txc_field = imax*jmax*kmax
   IF ( ifourier .EQ. 1 ) THEN
-     isize_txc_dimz  = (imax+2)*(jmax+2)
-     isize_txc_dimx  =  kmax   *(jmax+2)
+     IF ( istagger .EQ. 1 ) THEN
+      !   isize_txc_dimx  =  kmax   *(jmax+4) ! Check! not sure if this is right
+      !   isize_txc_dimz  = (imax+2)*(jmax+4) ! Check! not sure if this is right
+        isize_txc_dimz  = (imax+2)*(jmax+2)
+        isize_txc_dimx  =  kmax   *(jmax+2)
+     ELSE
+        isize_txc_dimz  = (imax+2)*(jmax+2)
+        isize_txc_dimx  =  kmax   *(jmax+2)
+     ENDIF
      isize_txc_field = isize_txc_dimz*kmax ! space for FFTW lib
 #ifdef USE_MPI
      IF ( ims_npro_k .GT. 1 ) THEN

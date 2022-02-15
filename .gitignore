@@ -19,7 +19,7 @@ test_files/*
 test_debug/*
 test_little/*
 test_parallel/*
-files_history/*
+.vscode/*
 *~
 */*~
 */*/*~
