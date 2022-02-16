@@ -35,10 +35,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-  USE DNS_IBM,   ONLY : ibm_burgers, eps
+  USE DNS_IBM,   ONLY : ibm_burgers, ibm_partial, eps
 
 ! ############################################# ! 
 ! DEBUG ####################################### !
+  USE IO_FIELDS
 #ifdef IBM_DEBUG
 #ifdef USE_MPI
   use TLAB_MPI_VARS,   only : ims_pro
@@ -61,6 +62,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! ############################################# ! 
 ! DEBUG ####################################### !
+  TINTEGER subdomain(6)
 #ifdef IBM_DEBUG
 #ifdef USE_MPI
 #else
@@ -256,15 +258,22 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #endif
 !$omp end parallel
 
+     IF ( imode_ibm == 1 ) THEN 
+        CALL IBM_BCS_FLOW(tmp2,i1)
+        CALL IBM_BCS_FLOW(tmp3,i1)
+        CALL IBM_BCS_FLOW(tmp4,i1)
+     ENDIF
+
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp2)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
      ENDIF
+    !  IF ( imode_ibm == 1 ) ibm_partial = .true.
      CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4,tmp3, wrk3d, wrk2d,wrk3d)
-
+    !  IF ( imode_ibm == 1 ) ibm_partial = .false.
   ELSE
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h2,tmp2)

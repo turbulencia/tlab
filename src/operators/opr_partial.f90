@@ -164,6 +164,40 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d)
 END SUBROUTINE OPR_PARTIAL1_IBM
 ! ###################################################################
 ! ###################################################################
+SUBROUTINE OPR_IBM(nlines, bcs, g, u,result, wrk2d)
+
+  USE TLAB_TYPES, ONLY : grid_dt
+  USE DNS_IBM,    ONLY : nobi,    nobj,   nobk
+  USE DNS_IBM,    ONLY : nobi_b,  nobj_b, nobk_b 
+  USE DNS_IBM,    ONLY : nobi_e,  nobj_e, nobk_e 
+  USE DNS_IBM,    ONLY : isize_nobi,    isize_nobj,    isize_nobk
+  USE DNS_IBM,    ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
+   
+  IMPLICIT NONE
+   
+  TINTEGER,                        INTENT(IN)    :: nlines
+  TINTEGER, DIMENSION(2,*),        INTENT(IN)    :: bcs    
+  TYPE(grid_dt),                   INTENT(IN)    :: g
+  TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: u
+  TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result
+  TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
+  ! -------------------------------------------------------------------
+  ! IBM not for scalar fields! (will be implemented later)
+  ! modify incoming u fields (fill solids with spline functions, depending on direction)
+  
+  SELECT CASE (g%name)
+  CASE('x')
+    CALL IBM_SPLINE_XYZ(u, result, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
+  CASE('y')
+    CALL IBM_SPLINE_XYZ(u, result, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e)
+  CASE('z')
+    CALL IBM_SPLINE_XYZ(u, result, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
+  END SELECT
+
+  RETURN
+END SUBROUTINE OPR_IBM
+! ###################################################################
+! ###################################################################
 SUBROUTINE OPR_PARTIAL2(nlines, bcs, g, u,result, wrk2d,wrk3d)
 
   USE TLAB_TYPES, ONLY : grid_dt
@@ -560,6 +594,9 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
         CALL OPR_PARTIAL1(nyz, bcs, g, p_b, p_d, wrk2d)
      ENDIF
 
+  CASE( OPR_IBM_P0 )
+    CALL OPR_IBM(    nyz, bcs, g, p_b,p_c, wrk2d    )
+
   END SELECT
 
 ! ###################################################################
@@ -680,6 +717,9 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
         CALL OPR_PARTIAL1(nxy, bcs, g, p_a,p_c, wrk2d)
      ENDIF
 
+  CASE( OPR_IBM_P0 )
+    CALL OPR_IBM(    nxy, bcs, g, p_a,p_b, wrk2d    )
+
   END SELECT
 
 ! ###################################################################
@@ -782,6 +822,9 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
         CALL OPR_PARTIAL1(nxz, bcs, g, p_a,p_c, wrk2d)
      ENDIF
+
+  CASE( OPR_IBM_P0 )
+    CALL OPR_IBM(    nxz, bcs, g, p_a,p_b, wrk2d    )
 
   END SELECT
 

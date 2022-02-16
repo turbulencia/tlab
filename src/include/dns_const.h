@@ -74,6 +74,7 @@
 #define OPR_P2                2
 #define OPR_P2_P1             3
 #define OPR_P1_BCS            4
+#define OPR_IBM_P0            5
 
 ! Runge-Kutta method
 #define RKM_EXP3              3
