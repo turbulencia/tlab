@@ -263,7 +263,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL IBM_BCS_FLOW(tmp3,i1)
         CALL IBM_BCS_FLOW(tmp4,i1)
      ENDIF
-
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp2)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
@@ -275,6 +274,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4,tmp3, wrk3d, wrk2d,wrk3d)
     !  IF ( imode_ibm == 1 ) ibm_partial = .false.
   ELSE
+     IF ( imode_ibm == 1 ) THEN 
+        CALL IBM_BCS_FLOW(h2,i1)
+        CALL IBM_BCS_FLOW(h1,i1)
+        CALL IBM_BCS_FLOW(h3,i1)
+     ENDIF
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h2,tmp2)
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h1,tmp3)
