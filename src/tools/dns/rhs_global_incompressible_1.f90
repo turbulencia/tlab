@@ -35,20 +35,17 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-  USE DNS_IBM,   ONLY : ibm_burgers, eps
+  USE DNS_IBM,   ONLY : ibm_burgers
 
-! ! ############################################# ! 
-! ! DEBUG ####################################### !
-! #ifdef IBM_DEBUG
-! #ifdef USE_MPI
-!   use TLAB_MPI_VARS,   only : ims_pro
-! #endif
-! #endif
-! ! ############################################# !   
+! ############################################# ! 
+! DEBUG ####################################### !
+  ! USE IO_FIELDS
+#ifdef IBM_DEBUG
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
   USE TLAB_MPI_VARS
 #endif
+! ############################################# ! 
 
   IMPLICIT NONE
 
@@ -70,6 +67,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! ############################################# ! 
 ! DEBUG ####################################### !
+  TINTEGER subdomain(6)
 #ifdef IBM_DEBUG
 #ifdef USE_MPI
 #else
@@ -265,6 +263,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #endif
 !$omp end parallel
 
+     IF ( imode_ibm == 1 ) THEN 
+        CALL IBM_BCS_FLOW(tmp2,i1)
+        CALL IBM_BCS_FLOW(tmp3,i1)
+        CALL IBM_BCS_FLOW(tmp4,i1)
+     ENDIF
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp2)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
@@ -296,11 +299,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #endif
 ! #######################################################################
      IF (istagger .EQ. 1 ) THEN
-        IF ( imode_ibm == 1 ) THEN
-          CALL IBM_BCS_FLOW(tmp2,i1)
-          CALL IBM_BCS_FLOW(tmp3,i1)
-          CALL IBM_BCS_FLOW(tmp4,i1)
-        ENDIF
      !  tmp2 on pressure nodes
         CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
@@ -311,12 +309,15 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
      ENDIF
-    !  imode_ibm = i0
      CALL OPR_PARTIAL_Y(OPR_P1,           imax,jmax,kmax, bcs, g(2), tmp2, tmp1, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_X(OPR_P1,           imax,jmax,kmax, bcs, g(1), tmp3, tmp2, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P1,           imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d,wrk3d)
-    !  imode_ibm = i1 
   ELSE
+     IF ( imode_ibm == 1 ) THEN 
+        CALL IBM_BCS_FLOW(h2,i1)
+        CALL IBM_BCS_FLOW(h1,i1)
+        CALL IBM_BCS_FLOW(h3,i1)
+     ENDIF
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h2,tmp2)
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h1,tmp3)
