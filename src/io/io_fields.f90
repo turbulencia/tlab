@@ -67,6 +67,7 @@ CONTAINS
   SUBROUTINE IO_READ_FIELDS(fname, iheader, nx,ny,nz, nfield,iread, a, txc)
     USE TLAB_VARS, ONLY : imode_files, imode_precision_files
     USE TLAB_VARS, ONLY : itime, rtime, visc
+    USE, INTRINSIC :: ISO_C_binding, ONLY : c_f_pointer, c_loc
     IMPLICIT NONE
 
     CHARACTER(LEN=*) fname
@@ -76,9 +77,12 @@ CONTAINS
     TREAL,     INTENT(  OUT) :: a(nx*ny*nz,*)
     TREAL,     INTENT(INOUT) :: txc(nx*ny*nz)
 
+    TARGET txc
+
     ! -------------------------------------------------------------------
     TINTEGER header_offset
     TINTEGER ifield, iz
+    REAL(4), POINTER :: s_wrk(:) => NULL()
 
     TINTEGER isize_max, isize
     PARAMETER(isize_max=20)
@@ -100,6 +104,9 @@ CONTAINS
     WRITE(name,*) ny_total; line = TRIM(ADJUSTL(line))//'x'//TRIM(ADJUSTL(name))
     WRITE(name,*) nz_total; line = TRIM(ADJUSTL(line))//'x'//TRIM(ADJUSTL(name))//'...'
     CALL TLAB_WRITE_ASCII(lfile, line)
+
+    ! Pass memory address from double precision array to single precision array
+    CALL c_f_POINTER(c_LOC(txc), s_wrk, shape=[nx*ny*nz])
 
     ! ###################################################################
     SELECT CASE( imode_files )
@@ -164,8 +171,8 @@ CONTAINS
           CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
           IF ( imode_precision_files == IO_TYPE_SINGLE ) THEN ! to be finished; here just as an idea
             CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL4, subarray, 'native', MPI_INFO_NULL, ims_err)
-            CALL MPI_File_read_all(mpio_fh, a(1,iz), mpio_locsize, MPI_REAL4, status, ims_err)
-            ! I should read teh data in a real*4 array and pass it to array a
+            CALL MPI_File_read_all(mpio_fh, s_wrk, mpio_locsize, MPI_REAL4, status, ims_err)
+            a(:,iz) = DBLE(s_wrk(:))
           ELSE
             CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL8, subarray, 'native', MPI_INFO_NULL, ims_err)
             CALL MPI_File_read_all(mpio_fh, a(1,iz), mpio_locsize, MPI_REAL8, status, ims_err)
@@ -175,8 +182,9 @@ CONTAINS
 #else
 #include "dns_open_file.h"
           IF ( imode_precision_files == IO_TYPE_SINGLE ) THEN ! to be finished; here just as an idea
-            READ(LOC_UNIT_ID,POS=header_offset+1) a(:,iz)
-          ELSE
+            READ(LOC_UNIT_ID,POS=header_offset+1) s_wrk(:)
+            a(:,iz) = DBLE(s_wrk(:))
+    ELSE
             READ(LOC_UNIT_ID,POS=header_offset+1) a(:,iz)
           END IF
           CLOSE(LOC_UNIT_ID)
@@ -364,6 +372,7 @@ CONTAINS
     USE TLAB_VARS, ONLY : visc, froude, rossby, damkohler, prandtl, mach
     USE TLAB_VARS, ONLY : schmidt
     USE THERMO_VARS, ONLY : gama0
+    USE, INTRINSIC :: ISO_C_binding, ONLY : c_f_pointer, c_loc
     IMPLICIT NONE
 
     CHARACTER(LEN=*) fname
@@ -373,9 +382,12 @@ CONTAINS
     TREAL,     INTENT(IN   ) :: a(nx*ny*nz,nfield)
     TREAL,     INTENT(INOUT) :: txc(nx*ny*nz)
 
+    TARGET txc
+
     ! -------------------------------------------------------------------
     TINTEGER header_offset
     TINTEGER ifield
+    REAL(4), POINTER :: s_wrk(:) => NULL()
 
     TINTEGER isize_max, isize
     PARAMETER(isize_max=20)
@@ -397,6 +409,9 @@ CONTAINS
     WRITE(name,*) ny_total; line = TRIM(ADJUSTL(line))//'x'//TRIM(ADJUSTL(name))
     WRITE(name,*) nz_total; line = TRIM(ADJUSTL(line))//'x'//TRIM(ADJUSTL(name))//'...'
     CALL TLAB_WRITE_ASCII(lfile, line)
+
+    ! Pass memory address from double precision array to single precision array
+    CALL c_f_POINTER(c_LOC(txc), s_wrk, shape=[nx*ny*nz])
 
     ! ###################################################################
     SELECT CASE( imode_files )
@@ -479,7 +494,8 @@ CONTAINS
         CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
         IF ( imode_precision_files == IO_TYPE_SINGLE ) THEN ! to be finished; here just as an idea
           CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL4, subarray, 'native', MPI_INFO_NULL, ims_err)
-          CALL MPI_File_write_all(mpio_fh, SNGL(a(1,ifield)), mpio_locsize, MPI_REAL4, status, ims_err)
+          s_wrk(:) = SNGL(a(:,ifield))
+          CALL MPI_File_write_all(mpio_fh, s_wrk, mpio_locsize, MPI_REAL4, status, ims_err)
         ELSE
           CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL8, subarray, 'native', MPI_INFO_NULL, ims_err)
           CALL MPI_File_write_all(mpio_fh, a(1,ifield), mpio_locsize, MPI_REAL8, status, ims_err)
@@ -489,7 +505,8 @@ CONTAINS
 #else
 #include "dns_open_file.h"
         IF ( imode_precision_files == IO_TYPE_SINGLE ) THEN ! to be finished; here just as an idea
-          WRITE(LOC_UNIT_ID,POS=header_offset+1) SNGL(a(:,ifield))
+          s_wrk(:) = SNGL(a(:,ifield))
+          WRITE(LOC_UNIT_ID,POS=header_offset+1) s_wrk(:)
         ELSE
           WRITE(LOC_UNIT_ID,POS=header_offset+1) a(:,ifield)
         END IF
