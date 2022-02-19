@@ -10,8 +10,7 @@
 !########################################################################
 !#
 !# Read/write files of size (nx*ims_npro_i)x(ny*ims_npro_y)x(nz*ims_npro_z)
-!# with header/metadata
-!#
+!# With header/metadata
 !# Unformatted records
 !# No embedded record information
 !#
@@ -20,6 +19,7 @@
 MODULE IO_FIELDS
 
   USE TLAB_CONSTANTS, ONLY : lfile, wfile, efile
+  USE TLAB_CONSTANTS, ONLY : sp,dp
   USE TLAB_PROCS, ONLY : TLAB_STOP, TLAB_WRITE_ASCII
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
@@ -42,8 +42,8 @@ MODULE IO_FIELDS
   TINTEGER, PARAMETER :: IO_FLOW = 2 ! Header of flow field
 
   TINTEGER nx_total, ny_total, nz_total
-  CHARACTER*32 str, name
-  CHARACTER*128 line
+  CHARACTER(LEN=32 ) str, name
+  CHARACTER(LEN=128) line
 
 #ifdef USE_MPI
 #include "mpif.h"
@@ -68,7 +68,6 @@ CONTAINS
     USE TLAB_VARS, ONLY : imode_files, imode_precision_files
     USE TLAB_VARS, ONLY : itime, rtime, visc
     USE, INTRINSIC :: ISO_C_binding, ONLY : c_f_pointer, c_loc
-    IMPLICIT NONE
 
     CHARACTER(LEN=*) fname
     TINTEGER,  INTENT(IN   ) :: iheader         ! 1 for scalar header, 2 flow header
@@ -82,7 +81,7 @@ CONTAINS
     ! -------------------------------------------------------------------
     TINTEGER header_offset
     TINTEGER ifield, iz
-    REAL(4), POINTER :: s_wrk(:) => NULL()
+    REAL(sp), POINTER :: s_wrk(:) => NULL()
 
     TINTEGER isize_max, isize
     PARAMETER(isize_max=20)
@@ -172,7 +171,7 @@ CONTAINS
           IF ( imode_precision_files == IO_TYPE_SINGLE ) THEN ! to be finished; here just as an idea
             CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL4, subarray, 'native', MPI_INFO_NULL, ims_err)
             CALL MPI_File_read_all(mpio_fh, s_wrk, mpio_locsize, MPI_REAL4, status, ims_err)
-            a(:,iz) = DBLE(s_wrk(:))
+            a(:,iz) = REAL(s_wrk(:),dp)
           ELSE
             CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL8, subarray, 'native', MPI_INFO_NULL, ims_err)
             CALL MPI_File_read_all(mpio_fh, a(1,iz), mpio_locsize, MPI_REAL8, status, ims_err)
@@ -183,7 +182,7 @@ CONTAINS
 #include "dns_open_file.h"
           IF ( imode_precision_files == IO_TYPE_SINGLE ) THEN ! to be finished; here just as an idea
             READ(LOC_UNIT_ID,POS=header_offset+1) s_wrk(:)
-            a(:,iz) = DBLE(s_wrk(:))
+            a(:,iz) = REAL(s_wrk(:),dp)
     ELSE
             READ(LOC_UNIT_ID,POS=header_offset+1) a(:,iz)
           END IF
@@ -221,7 +220,6 @@ CONTAINS
   !########################################################################
   !########################################################################
   SUBROUTINE IO_READ_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a, wrk)
-    IMPLICIT NONE
 
 #include "integers.h"
 
@@ -279,7 +277,6 @@ CONTAINS
   !########################################################################
   !########################################################################
   SUBROUTINE IO_READ_FIELD_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
-    IMPLICIT NONE
 
     CHARACTER(LEN=*) name
     TINTEGER,   INTENT(IN   ) :: iheader, nx,ny,nz,nt
@@ -373,7 +370,6 @@ CONTAINS
     USE TLAB_VARS, ONLY : schmidt
     USE THERMO_VARS, ONLY : gama0
     USE, INTRINSIC :: ISO_C_binding, ONLY : c_f_pointer, c_loc
-    IMPLICIT NONE
 
     CHARACTER(LEN=*) fname
     TINTEGER,  INTENT(IN   ) :: iheader         ! Scalar or Flow headers
@@ -387,7 +383,7 @@ CONTAINS
     ! -------------------------------------------------------------------
     TINTEGER header_offset
     TINTEGER ifield
-    REAL(4), POINTER :: s_wrk(:) => NULL()
+    REAL(sp), POINTER :: s_wrk(:) => NULL()
 
     TINTEGER isize_max, isize
     PARAMETER(isize_max=20)
@@ -494,7 +490,7 @@ CONTAINS
         CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
         IF ( imode_precision_files == IO_TYPE_SINGLE ) THEN ! to be finished; here just as an idea
           CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL4, subarray, 'native', MPI_INFO_NULL, ims_err)
-          s_wrk(:) = SNGL(a(:,ifield))
+          s_wrk(:) = REAL(a(:,ifield),sp)
           CALL MPI_File_write_all(mpio_fh, s_wrk, mpio_locsize, MPI_REAL4, status, ims_err)
         ELSE
           CALL MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL8, subarray, 'native', MPI_INFO_NULL, ims_err)
@@ -505,7 +501,7 @@ CONTAINS
 #else
 #include "dns_open_file.h"
         IF ( imode_precision_files == IO_TYPE_SINGLE ) THEN ! to be finished; here just as an idea
-          s_wrk(:) = SNGL(a(:,ifield))
+          s_wrk(:) = REAL(a(:,ifield),sp)
           WRITE(LOC_UNIT_ID,POS=header_offset+1) s_wrk(:)
         ELSE
           WRITE(LOC_UNIT_ID,POS=header_offset+1) a(:,ifield)
@@ -523,7 +519,6 @@ CONTAINS
   !########################################################################
   !########################################################################
   SUBROUTINE IO_WRITE_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a, wrk)
-    IMPLICIT NONE
 
 #include "integers.h"
 
@@ -578,7 +573,6 @@ CONTAINS
   !########################################################################
   !########################################################################
   SUBROUTINE IO_WRITE_FIELD_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
-    IMPLICIT NONE
 
     CHARACTER(LEN=*) name
     TINTEGER,   INTENT(IN   ) :: iheader, nx,ny,nz,nt, isize
@@ -659,8 +653,6 @@ CONTAINS
   !########################################################################
   !########################################################################
   SUBROUTINE IO_READ_HEADER(unit, offset, nx,ny,nz,nt, params)
-    IMPLICIT NONE
-
     TINTEGER unit, offset, nx,ny,nz,nt
     TREAL, DIMENSION(*) :: params
 
@@ -699,8 +691,6 @@ CONTAINS
   !########################################################################
   !########################################################################
   SUBROUTINE IO_WRITE_HEADER(unit, isize, nx,ny,nz,nt, params)
-    IMPLICIT NONE
-
     TINTEGER unit, isize, nx,ny,nz,nt
     TREAL, DIMENSION(isize) :: params
 
