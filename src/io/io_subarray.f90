@@ -9,12 +9,10 @@ SUBROUTINE IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, DATA, sizes, work)
   USE TLAB_CONSTANTS, ONLY : lfile
   USE TLAB_VARS,    ONLY : io_aux
   USE TLAB_PROCS
-
-  IMPLICIT NONE
-
 #ifdef USE_MPI
-#include "mpif.h"
+  USE MPI
 #endif
+  IMPLICIT NONE
 
   TINTEGER,                                   INTENT(IN)    :: iflag_mode
   CHARACTER*(*),                              INTENT(IN)    :: fname
@@ -82,12 +80,11 @@ SUBROUTINE IO_READ_SUBARRAY8(iflag_mode, fname, varname, DATA, sizes, work)
   USE TLAB_CONSTANTS, ONLY : lfile, efile
   USE TLAB_VARS,    ONLY : io_aux
   USE TLAB_PROCS
+#ifdef USE_MPI
+  USE MPI
+#endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER,                                   INTENT(IN)    :: iflag_mode
   CHARACTER*(*),                              INTENT(IN)    :: fname
@@ -159,12 +156,11 @@ SUBROUTINE IO_WRITE_SUBARRAY8(iflag_mode, fname, varname, DATA, sizes, work)
   USE TLAB_CONSTANTS, ONLY : lfile
   USE TLAB_VARS,    ONLY : io_aux
   USE TLAB_PROCS
+#ifdef USE_MPI
+  USE MPI
+#endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER,                                   INTENT(IN)    :: iflag_mode
   CHARACTER*(*),                              INTENT(IN)    :: fname

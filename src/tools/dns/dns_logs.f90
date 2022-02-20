@@ -37,14 +37,11 @@ SUBROUTINE DNS_LOGS(iflag)
   USE THERMO_VARS, ONLY : NEWTONRAPHSON_ERROR
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER iflag
 #ifdef USE_MPI

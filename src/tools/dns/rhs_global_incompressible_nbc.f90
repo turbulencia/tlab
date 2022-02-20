@@ -49,10 +49,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   USE NB3DFFT,    ONLY : nb3dfft_r2r_y1unpack,     nb3dfft_r2r_y2unpack
   USE NB3DFFT,    ONLY : nb3dfft_r2r_ready,        mytype
 
+  USE MPI
+
   IMPLICIT NONE
 
 #include "integers.h"
-#include "mpif.h"
   !
   ! PARAMETERS
   !

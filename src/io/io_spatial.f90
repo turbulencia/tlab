@@ -141,6 +141,7 @@ SUBROUTINE IO_READ_AVG_SPATIAL(name,mean_flow,mean_scal)
   USE TLAB_PROCS
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS
 #endif
 #ifdef LES
@@ -150,9 +151,6 @@ SUBROUTINE IO_READ_AVG_SPATIAL(name,mean_flow,mean_scal)
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   CHARACTER*(*) name
   TREAL, DIMENSION(nstatavg*jmax*MA_MOMENTUM_SIZE)        :: mean_flow

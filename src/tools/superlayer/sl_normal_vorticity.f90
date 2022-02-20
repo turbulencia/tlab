@@ -20,18 +20,16 @@
 !########################################################################
 SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_size, &
      threshold, ibuffer_npy, u,v,w,p,z1, a, sl, profiles, txc, mean, wrk1d,wrk2d,wrk3d)
-  
+
   USE TLAB_VARS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
 #define L_NFIELDS_MAX 13
 

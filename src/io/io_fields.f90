@@ -22,6 +22,7 @@ MODULE IO_FIELDS
   USE TLAB_CONSTANTS, ONLY : sp,dp
   USE TLAB_PROCS, ONLY : TLAB_STOP, TLAB_WRITE_ASCII
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
   USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro_i, ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_j, ims_offset_k
@@ -46,7 +47,6 @@ MODULE IO_FIELDS
   CHARACTER(LEN=128) line
 
 #ifdef USE_MPI
-#include "mpif.h"
   INTEGER mpio_fh, mpio_locsize, status(MPI_STATUS_SIZE)
   INTEGER(KIND=MPI_OFFSET_KIND) mpio_disp
   TINTEGER                :: subarray, ndims

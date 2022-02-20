@@ -9,16 +9,14 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
   USE TLAB_TYPES,  ONLY : subarray_dt
   USE TLAB_VARS, ONLY : g, isize_txc_field
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS,    ONLY : ims_pro
   USE TLAB_MPI_PROCS
 #endif
   USE IO_FIELDS
-  
+
   IMPLICIT NONE
 
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 #include "integers.h"
 
   TINTEGER iformat, nx,ny,nz, nfield, subdomain(6)
@@ -264,10 +262,8 @@ SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
 
   USE TLAB_VARS, ONLY : imax,kmax, io_aux
   USE TLAB_MPI_VARS
-
+  USE MPI
   IMPLICIT NONE
-
-#include "mpif.h"
 
   TINTEGER,                 INTENT(IN)  :: opt_format, subdomain(6)
 

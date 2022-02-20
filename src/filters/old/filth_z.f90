@@ -2,19 +2,15 @@
 #include "dns_error.h"
 
 SUBROUTINE FILTH_Z(iunifz, k1bc, imax,jmax,kmax, nz, cfz, z1, zf1, wrk)
-  
+
   USE DNS_CONSTANTS, ONLY : efile
 
 #ifdef USE_MPI
+   USE MPI
   USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
-
 
   TINTEGER iunifz, k1bc, imax,jmax,kmax, nz
   TREAL cfz(*)
@@ -23,7 +19,7 @@ SUBROUTINE FILTH_Z(iunifz, k1bc, imax,jmax,kmax, nz, cfz, z1, zf1, wrk)
   TREAL wrk(imax, jmax, *)
 
   TINTEGER nij
-  TINTEGER i2 
+  TINTEGER i2
 
 #ifdef USE_MPI
   TINTEGER npl
@@ -100,4 +96,3 @@ SUBROUTINE FILTH_Z(iunifz, k1bc, imax,jmax,kmax, nz, cfz, z1, zf1, wrk)
 
   RETURN
 END SUBROUTINE FILTH_Z
-

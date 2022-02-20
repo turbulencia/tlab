@@ -25,9 +25,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   CHARACTER*(*) inifile
 

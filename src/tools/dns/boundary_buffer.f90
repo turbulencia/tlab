@@ -189,6 +189,10 @@ CONTAINS
   ! ###################################################################
   ! ###################################################################
   SUBROUTINE INI_BLOCK(idir, tag,item, rho, a, wrk3d)
+#ifdef USE_MPI
+    USE MPI
+#endif
+
     IMPLICIT NONE
 
     TINTEGER,         INTENT(IN   ) :: idir         ! Wall-normal direction of buffer zone
@@ -205,10 +209,6 @@ CONTAINS
     CHARACTER*128 line
 
     TREAL COV2V1D, COV2V2D
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
 #ifdef USE_MPI
     TINTEGER                :: ndims

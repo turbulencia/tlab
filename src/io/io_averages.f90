@@ -10,14 +10,13 @@ SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, ny,nv,ng, y, varnames, groupna
 
   USE TLAB_CONSTANTS, ONLY : lfile,efile
   USE TLAB_PROCS
+#ifdef USE_MPI
+  USE MPI
+#endif
 #ifdef USE_NETCDF
   USE NETCDF
 #endif
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   CHARACTER(LEN=*), INTENT(IN   ) :: fname, varnames(ng), groupnames(ng)
   TINTEGER,         INTENT(IN   ) :: itime

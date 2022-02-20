@@ -40,13 +40,13 @@ CONTAINS
   SUBROUTINE PLANES_INITIALIZE()
 
 #ifdef USE_MPI
+    USE MPI
     USE TLAB_MPI_VARS
 #endif
 
     IMPLICIT NONE
 
 #ifdef USE_MPI
-#include "mpif.h"
 
     ! -----------------------------------------------------------------------
     TINTEGER                :: ndims, id

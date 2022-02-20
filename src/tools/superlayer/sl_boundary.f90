@@ -16,15 +16,13 @@ PROGRAM SL_BOUNDARY
 
   USE TLAB_VARS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays

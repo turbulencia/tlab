@@ -12,13 +12,13 @@ SUBROUTINE CAVG1V_N( fname, time, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,g
   USE TLAB_CONSTANTS,  ONLY : lfile
   USE TLAB_PROCS
   USE PDFS
+#ifdef USE_MPI
+  USE MPI
+#endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   CHARACTER*(*),      INTENT(IN   ) :: fname
   TREAL,              INTENT(IN   ) :: time
@@ -100,13 +100,13 @@ SUBROUTINE CAVG2V( fname, time, nx,ny,nz, nbins, u,v, a, y, avg, wrk2d )
   USE TLAB_CONSTANTS,  ONLY : lfile
   USE TLAB_PROCS
   USE PDFS
+#ifdef USE_MPI
+  USE MPI
+#endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   CHARACTER*(*), INTENT(IN   ) :: fname
   TREAL,         INTENT(IN   ) :: time

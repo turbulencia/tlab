@@ -128,11 +128,10 @@ SUBROUTINE SCAL_MPIO_AUX()
 
   USE TLAB_VARS, ONLY : imax,kmax
   USE TLAB_VARS, ONLY : io_aux
+  USE MPI
   USE TLAB_MPI_VARS
 
   IMPLICIT NONE
-
-#include "mpif.h"
 
 ! -----------------------------------------------------------------------
   TINTEGER                :: ndims, id

@@ -8,6 +8,7 @@ MODULE TLAB_PROCS
   USE OMP_LIB
 #endif
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS
 #endif
   IMPLICIT NONE
@@ -15,10 +16,6 @@ MODULE TLAB_PROCS
   PRIVATE
 
   CHARACTER*128 str, line
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   PUBLIC :: TLAB_START
   PUBLIC :: TLAB_STOP

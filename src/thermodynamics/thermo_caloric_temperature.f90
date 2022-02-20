@@ -3,18 +3,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/06/09 - J.P. Mellado
-!#              Created
-!# 2007/06/21 - J.P. Mellado
-!#              Introducing case AIRWATER
-!#
-!########################################################################
-!# DESCRIPTION
 !#
 !# Computing temperature from density, energy and species mass fractions:
 !#
@@ -30,13 +18,13 @@ SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s,e,rho, T, wrk3d)
   USE TLAB_PROCS
   USE THERMO_VARS, ONLY : imixture, gama0, GRATIO
   USE THERMO_VARS, ONLY : NSP, NCP_CHEMKIN, WGHT_INV, THERMO_AI
+#ifdef USE_MPI
+  USE MPI
+#endif
 
   IMPlICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)    :: s

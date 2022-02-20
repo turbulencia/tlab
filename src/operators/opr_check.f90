@@ -12,20 +12,18 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
   USE TLAB_CONSTANTS, ONLY : lfile
   USE TLAB_PROCS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
   USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
   USE TLAB_MPI_VARS, ONLY : ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  USE TLAB_MPI_VARS, ONLY : ims_sizBlock_i, ims_sizBlock_k 
+  USE TLAB_MPI_VARS, ONLY : ims_sizBlock_i, ims_sizBlock_k
   USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER nx,ny,nz
   TREAL, DIMENSION(isize_field,2)     :: a
@@ -73,11 +71,11 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
           //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
      CALL TLAB_WRITE_ASCII(lfile,line)
 
-     IF ( ims_npro_i .GT. ims_sizBlock_i ) THEN 
+     IF ( ims_npro_i .GT. ims_sizBlock_i ) THEN
         line=''
         WRITE(line,*) ims_sizBlock_i
         line = '   using blocking of ' // TRIM(ADJUSTL(line)) // ' in  TLAB_MPI_TRP<F,B>_I'
-        CALL TLAB_WRITE_ASCII(lfile,line) 
+        CALL TLAB_WRITE_ASCII(lfile,line)
      ENDIF
   ENDIF
 #endif
@@ -108,11 +106,11 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
           //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
      CALL TLAB_WRITE_ASCII(lfile,line)
 
-     IF ( ims_npro_k .GT. ims_sizBlock_k ) THEN 
+     IF ( ims_npro_k .GT. ims_sizBlock_k ) THEN
         line=''
         WRITE(line,*) ims_sizBlock_k
         line = '   using blocking of ' // TRIM(ADJUSTL(line)) // ' in  TLAB_MPI_TRP<F,B>_K'
-        CALL TLAB_WRITE_ASCII(lfile,line) 
+        CALL TLAB_WRITE_ASCII(lfile,line)
      ENDIF
   ENDIF
 #endif
