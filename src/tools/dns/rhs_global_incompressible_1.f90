@@ -28,25 +28,16 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : rbackground, ribackground
-  USE DNS_LOCAL,  ONLY : idivergence
-  USE DNS_LOCAL,  ONLY : tower_mode
-  USE TIME,       ONLY : rkm_substep,rkm_endstep
+  USE DNS_LOCAL, ONLY : idivergence
+  USE DNS_LOCAL, ONLY : tower_mode
+  USE TIME,      ONLY : rkm_substep,rkm_endstep
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-#ifdef USE_MPI
-  USE TLAB_MPI_PROCS
-  USE TLAB_MPI_VARS
-#endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#else
-  TINTEGER, PARAMETER             :: ims_pro=0
-#endif
 
   TREAL dte
   TREAL, DIMENSION(isize_field)   :: u,v,w, h1,h2,h3
