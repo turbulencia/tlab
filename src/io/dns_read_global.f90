@@ -82,7 +82,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
   CALL TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacpenta6/CompactJacobian8/CompactDirect6>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#StaggerGrid=<yes/no>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#StaggerHorizontalGrid=<yes/no>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#InterpolVerticalGrid=<yes/no>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
@@ -262,12 +263,20 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   g(1:3)%mode_fdm = imode_fdm
 
 ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'StaggerGrid', 'no', sRes)
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'StaggerHorizontalGrid', 'no', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; istagger = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; istagger = 0
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.StaggerGrid must be yes or no')
-     CALL TLAB_STOP(DNS_ERROR_CALCFLOW)
+     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main. StaggerHorizontalGrid must be yes or no')
+     CALL TLAB_STOP(DNS_ERROR_OPTION)
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'Main', 'InterpolVerticalGrid', 'no', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; ivinterpol = 1
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; ivinterpol = 0
+  ELSE
+     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main. InterpolVerticalGrid must be yes or no')
+     CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -1237,19 +1246,10 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   END DO
 
 ! auxiliar array txc
-! needs to be adjusted for hybrid meshs, not for horizontal staggering!
-!   isize_txc_field = imax*(jmax + 1)*kmax
   isize_txc_field = imax*jmax*kmax
   IF ( ifourier .EQ. 1 ) THEN
-     IF ( istagger .EQ. 1 ) THEN
-      !   isize_txc_dimx  =  kmax   *(jmax+4) ! Check! not sure if this is right
-      !   isize_txc_dimz  = (imax+2)*(jmax+4) ! Check! not sure if this is right
-        isize_txc_dimz  = (imax+2)*(jmax+2)
-        isize_txc_dimx  =  kmax   *(jmax+2)
-     ELSE
-        isize_txc_dimz  = (imax+2)*(jmax+2)
-        isize_txc_dimx  =  kmax   *(jmax+2)
-     ENDIF
+     isize_txc_dimz  = (imax+2)*(jmax+2)
+     isize_txc_dimx  =  kmax   *(jmax+2)
      isize_txc_field = isize_txc_dimz*kmax ! space for FFTW lib
 #ifdef USE_MPI
      IF ( ims_npro_k .GT. 1 ) THEN

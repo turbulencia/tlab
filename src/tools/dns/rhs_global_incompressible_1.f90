@@ -38,7 +38,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE TLAB_MPI_PROCS
   USE TLAB_MPI_VARS
 #endif
-  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -310,9 +309,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp1, wrk3d, wrk2d,wrk3d)
   ENDIF
-
-  ! CALL IO_WRITE_FIELDS('pre_rhs', IO_SCAL, imax,jmax,kmax, i1, tmp1, wrk3d)
-  ! CALL TLAB_STOP(i0)
 
 ! horizontal pressure derivatives
   CALL OPR_PARTIAL_X(OPR_P1,           imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
