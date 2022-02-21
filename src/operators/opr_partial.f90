@@ -594,7 +594,7 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
         CALL OPR_PARTIAL1(nyz, bcs, g, p_b, p_d, wrk2d)
      ENDIF
 
-  CASE( OPR_IBM_P0 )
+  CASE( OPR_P0_IBM )
     CALL OPR_IBM(    nyz, bcs, g, p_b,p_c, wrk2d    )
 
   END SELECT
@@ -717,7 +717,7 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
         CALL OPR_PARTIAL1(nxy, bcs, g, p_a,p_c, wrk2d)
      ENDIF
 
-  CASE( OPR_IBM_P0 )
+  CASE( OPR_P0_IBM )
     CALL OPR_IBM(    nxy, bcs, g, p_a,p_b, wrk2d    )
 
   END SELECT
@@ -823,7 +823,7 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
         CALL OPR_PARTIAL1(nxz, bcs, g, p_a,p_c, wrk2d)
      ENDIF
 
-  CASE( OPR_IBM_P0 )
+  CASE( OPR_P0_IBM )
     CALL OPR_IBM(    nxz, bcs, g, p_a,p_b, wrk2d    )
 
   END SELECT
