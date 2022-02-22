@@ -11,8 +11,9 @@
 SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp3, wrk1d,wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_wrk1d, imode_eqns
+  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_wrk1d, imode_eqns, imode_ibm
   USE TLAB_VARS, ONLY : rbackground
+  USE DNS_IBM,   ONLY : ibm_burgers
 
 IMPLICIT NONE
 
@@ -46,6 +47,9 @@ IMPLICIT NONE
 ! Sources
   CALL FI_SOURCES_FLOW(q,s, tmp3, tmp1, wrk1d,wrk2d,wrk3d)
 
+! If IBM, then use modified fields for derivatives
+  IF ( imode_ibm == 1 ) ibm_burgers = .true.
+
 ! Advection and diffusion terms
   CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u,    p, tmp1, wrk2d,wrk3d) ! store u transposed in tmp1
   tmp3(:,:,:,1) = tmp3(:,:,:,1) + p
@@ -67,6 +71,14 @@ IMPLICIT NONE
   tmp3(:,:,:,2) = tmp3(:,:,:,2) + p
   CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), u,w,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains w transposed
   tmp3(:,:,:,1) = tmp3(:,:,:,1) + p
+
+! IBM
+  IF ( imode_ibm == 1 ) THEN 
+     ibm_burgers = .false.
+     CALL IBM_BCS_FLOW(tmp3(:,:,:,1),i1)
+     CALL IBM_BCS_FLOW(tmp3(:,:,:,2),i1)
+     CALL IBM_BCS_FLOW(tmp3(:,:,:,3),i1)
+  ENDIF
 
   p = C_0_R
   
