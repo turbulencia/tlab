@@ -13,8 +13,9 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imax,jmax,kmax
   USE TLAB_VARS, ONLY : isize_wrk1d, isize_field
-  USE TLAB_VARS, ONLY : imode_eqns, istagger
+  USE TLAB_VARS, ONLY : imode_eqns, imode_ibm, istagger
   USE TLAB_VARS, ONLY : rbackground
+  USE DNS_IBM,   ONLY : ibm_burgers
 
   IMPLICIT NONE
 
@@ -59,6 +60,9 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   tmp4 => tmp6(:,2)
   tmp5 => tmp6(:,3)
 
+! If IBM, then use modified fields for derivatives
+  IF ( imode_ibm == 1 ) ibm_burgers = .true.
+
 ! Advection and diffusion terms
   CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u,    p, tmp1, wrk2d,wrk3d) ! store u transposed in tmp1
   tmp3 = tmp3 + p
@@ -83,6 +87,14 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
 
 ! Set p-field back to zero
   p = C_0_R
+
+! IBM
+  IF ( imode_ibm == 1 ) THEN 
+     ibm_burgers = .false.
+     CALL IBM_BCS_FLOW(tmp3,i1)
+     CALL IBM_BCS_FLOW(tmp4,i1)
+     CALL IBM_BCS_FLOW(tmp5,i1)
+  ENDIF
 
 ! Calculate forcing term Ox
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
