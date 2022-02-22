@@ -773,7 +773,7 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      CALL OPR_PARTIAL1_INT(i1, nyz, bcs, g, p_b,p_c, wrk2d,p_c)
 
   CASE( OPR_P0_IBM )
-    CALL OPR_IBM(    nyz, bcs, g, p_b,p_c, wrk2d    )
+     CALL OPR_IBM(             nyz, bcs, g, p_b,p_c, wrk2d    )
 
   END SELECT
 
@@ -1048,7 +1048,7 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      CALL OPR_PARTIAL1_INT(i1, nxz, bcs, g, p_a,p_b, wrk2d,p_c)
 
   CASE( OPR_P0_IBM )
-    CALL OPR_IBM(    nxz, bcs, g, p_a,p_b, wrk2d    )
+     CALL OPR_IBM(             nxz, bcs, g, p_a,p_b, wrk2d    )
 
   END SELECT
 
