@@ -14,7 +14,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE TLAB_VARS,    ONLY : pbg, rbg, damkohler
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_txc_field, isize_wrk1d,isize_wrk2d,isize_wrk3d
   USE TLAB_VARS,    ONLY : inb_flow,inb_scal,inb_txc
-  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, imode_ibm, iadvection, iviscous, icalc_part, itransport, istagger
+  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, imode_ibm, iadvection, iviscous, icalc_part, itransport
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : FilterDomain
   USE TLAB_VARS,    ONLY : nstatavg
@@ -1035,13 +1035,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( imode_rhs == EQNS_RHS_NONBLOCKING ) inb_txc = MAX(inb_txc,15)
 #endif
 
-! needs to be adjusted for hybrid meshs, not for horizontal staggering!
-  IF ( istagger   == 1) THEN 
-    ! isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX((jmax+1),g_inf(2)%size)*kmax
-    isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
-  ELSE 
-    isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
-  ENDIF
+  isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
   IF ( icalc_part == 1) THEN
     isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))

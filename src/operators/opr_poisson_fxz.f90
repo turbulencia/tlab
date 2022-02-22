@@ -28,8 +28,9 @@
 SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
      a,dpdy, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
-  USE TLAB_TYPES,  ONLY : grid_dt
-  USE TLAB_VARS, ONLY : isize_txc_dimz
+  USE TLAB_TYPES,    ONLY : grid_dt
+  USE TLAB_VARS,     ONLY : isize_txc_dimz
+  USE TLAB_VARS,     ONLY : ivinterpol
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -50,7 +51,7 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 
 ! -----------------------------------------------------------------------
   TINTEGER i, j, k, iglobal, kglobal, ip, isize_line
-  TREAL lambda, norm
+  TREAL lambda, norm, w1, w2
   TCOMPLEX bcs(3)
 
 ! #######################################################################
@@ -125,13 +126,33 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 
      END SELECT
 
-! normalize
-     DO j = 1,ny
-        ip = (j-1)*isize_line + i
-        tmp1(ip,k) = aux(j,2)  *norm ! solution
-        tmp2(ip,k) = wrk1d(j,1)*norm ! Oy derivative
-     ENDDO
-        
+   ! Vertical midpoint interpolation of p and dpdy ("filter") 
+     IF (ivinterpol .EQ. 1 ) THEN
+      !  interpolation/filter parameter 
+         w2 =  C_1_R       / C_2_R
+         w1 = (C_1_R - w2) / C_2_R
+      !  boundary points
+         ip = i                     ! bottom
+         tmp1(ip,k) =   aux( 1,2)*norm
+         tmp2(ip,k) = wrk1d( 1,1)*norm 
+         ip = (ny-1)*isize_line + i ! top
+         tmp1(ip,k) =   aux(ny,2)*norm
+         tmp2(ip,k) = wrk1d(ny,1)*norm
+      !  interpolation + normalization
+         DO j = 2,ny-1
+            ip = (j-1)*isize_line + i
+            tmp1(ip,k) = ( w1*  aux(j-1,2) + w2*  aux(j,2) + w1*  aux(j+1,2) )*norm ! pressure p
+            tmp2(ip,k) = ( w1*wrk1d(j-1,1) + w2*wrk1d(j,1) + w1*wrk1d(j+1,1) )*norm ! Oy derivative dpdy
+         ENDDO
+      ELSE
+      !  normalize
+         DO j = 1,ny
+            ip = (j-1)*isize_line + i
+            tmp1(ip,k) = aux(j,2)  *norm ! solution
+            tmp2(ip,k) = wrk1d(j,1)*norm ! Oy derivative
+         ENDDO
+      ENDIF
+     
   ENDDO
   ENDDO
 

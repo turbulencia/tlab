@@ -13,7 +13,7 @@
 !# Implementation of the interpolatory finite difference  first derivative
 !# with 6th-order tridiagonal compact scheme by JCP Lele 1992, non-periodic.
 !# Interior points according to Eq. B.1.1 (\alpha=9/62, \beta=0, c=0).
-!# System for this scheme is multiplied by 4/3 to eliminate one 
+!# System for this scheme is multiplied by 62/63 to eliminate one 
 !# multiplication in the RHS.
 !#
 !# Different boundary closures can be found in Albin 2010
