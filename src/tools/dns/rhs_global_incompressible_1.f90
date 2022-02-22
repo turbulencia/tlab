@@ -39,7 +39,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! ############################################# ! 
 ! DEBUG ####################################### !
-  ! USE IO_FIELDS
 #ifdef IBM_DEBUG
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
@@ -317,6 +316,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1
   tmp4 = h2 
+! Zero in body
+  IF ( imode_ibm == 1 ) CALL IBM_BCS_FLOW(tmp4,i1)
 ! Stagger also Bcs
   IF (istagger .EQ. 1 ) THEN
      CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)

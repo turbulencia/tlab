@@ -24,6 +24,7 @@ PROGRAM VISUALS
   USE THERMO_VARS, ONLY : NSP, THERMO_SPNAME
   USE LAGRANGE_VARS
   USE LAGRANGE_ARRAYS
+  USE DNS_IBM,     ONLY : xbars_geo, kspl, nflu, ibm_spline_global, ibm_procs_idle
   USE IO_FIELDS
 
   IMPLICIT NONE
@@ -46,6 +47,8 @@ PROGRAM VISUALS
   CHARACTER*32 fname, bakfile
   CHARACTER*32 flow_file, scal_file, part_file, plot_file, time_str
   CHARACTER*64 str
+
+  LOGICAL ibm_allocated
 
   TINTEGER opt_format
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
@@ -79,6 +82,20 @@ PROGRAM VISUALS
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) CALL PARTICLE_READ_GLOBAL(ifile)
 
+  ! -------------------------------------------------------------------
+  ! IBM status (before TLAB_MPI_INITIALIZE!)
+  ! -------------------------------------------------------------------
+  CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
+  IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm = 0
+  ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm = 1
+  ELSE
+    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong IBM Status option.')
+    CALL TLAB_STOP(DNS_ERROR_OPTION)
+  ENDIF
+
+  ! -------------------------------------------------------------------
+  ! Initialize MPI
+  ! -------------------------------------------------------------------
 #ifdef USE_MPI
   CALL TLAB_MPI_INITIALIZE
 #endif
@@ -233,6 +250,40 @@ PROGRAM VISUALS
   IF ( opt_format .LT. 0 ) opt_format = 2 ! default is single precission, no header
 
   ! -------------------------------------------------------------------
+  ! Read local options - IBM parameters and geometry informations
+  ! -------------------------------------------------------------------
+  IF (imode_ibm .EQ. 1) THEN
+    CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'SplineOrder', '3', kspl)
+    CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'FluidPoints', '3', nflu)
+
+    CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'SplineGlobal', 'no', sRes)
+    IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_spline_global = .TRUE.
+    ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_spline_global = .FALSE.
+    ENDIF
+
+    CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'ProcsIdle', 'no', sRes)
+    IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_procs_idle = .TRUE.
+    ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_procs_idle = .FALSE.
+    ENDIF
+
+    !Geometry
+    CALL SCANINICHAR(bakfile, ifile, 'IBMGeometry', 'Type', 'XBars', sRes)
+    IF   (TRIM(ADJUSTL(sRes)) .EQ. 'xbars' ) THEN; xbars_geo%name   = 'xbars'
+      CALL SCANINICHAR(bakfile, ifile, 'IBMGeometry', 'Mirrored', 'no', sRes)
+      IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; xbars_geo%mirrored = .TRUE.
+      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; xbars_geo%mirrored = .FALSE.
+      ENDIF
+      CALL SCANINIINT(bakfile, ifile, 'IBMGeometry',  'MaxNumber', '0', xbars_geo%number)
+      CALL SCANINIINT(bakfile, ifile, 'IBMGeometry',  'Length',    '0', xbars_geo%length)
+      CALL SCANINIINT(bakfile, ifile, 'IBMGeometry',  'Height',    '0', xbars_geo%height)
+      CALL SCANINIINT(bakfile, ifile, 'IBMGeometry',  'Width',     '0', xbars_geo%width)
+    ELSE
+      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBMGeometryType option.')
+      CALL TLAB_STOP(DNS_ERROR_OPTION)
+    ENDIF
+  ENDIF
+  
+  ! -------------------------------------------------------------------
   ! Defining gate levels for conditioning
   ! -------------------------------------------------------------------
   opt_cond      = 0 ! default values
@@ -267,6 +318,11 @@ PROGRAM VISUALS
     CALL PARTICLE_ALLOCATE(C_FILE_LOC)
   ENDIF
 
+  IF ( imode_ibm .EQ. 1 ) THEN
+    ibm_allocated = .FALSE.
+    CALL IBM_ALLOCATE(C_FILE_LOC, ibm_allocated)
+  ENDIF
+
   ! -------------------------------------------------------------------
   ! Initialize
   ! -------------------------------------------------------------------
@@ -284,6 +340,10 @@ PROGRAM VISUALS
   ENDIF
 
   CALL FI_PROFILES_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
+
+  IF ( imode_ibm .EQ. 1 ) THEN
+    CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
+  ENDIF  
 
 #ifdef USE_MPI
   CALL VISUALS_MPIO_AUX(opt_format, subdomain)
@@ -328,6 +388,11 @@ PROGRAM VISUALS
       WRITE(flow_file,*) itime; flow_file = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(flow_file))
       CALL IO_READ_FIELDS(flow_file, IO_FLOW, imax,jmax,kmax, inb_flow, i0, q, wrk3d)
     ENDIF
+
+    IF ( imode_ibm .EQ. 1 ) THEN
+      CALL IBM_BCS_FLOW(q, inb_flow) ! apply IBM BCs on ini flow fields
+      ! IF ( icalc_scal == 1 ) CALL IBM_BCS_SCAL(s)
+    ENDIF 
 
     CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
 
