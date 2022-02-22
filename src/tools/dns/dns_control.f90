@@ -11,7 +11,7 @@
 !########################################################################
 SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
 
-  USE TLAB_CONSTANTS, ONLY : efile, lfile
+  USE TLAB_CONSTANTS, ONLY : efile, lfile, wfile
   USE TLAB_PROCS
   USE TLAB_VARS,ONLY : imode_eqns, imode_ibm, icalc_scal, inb_scal, istagger
   USE TLAB_VARS,ONLY : isize_field, imax,jmax,kmax
@@ -77,7 +77,16 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
            ENDIF
         ENDIF
 
-        IF ( imode_ibm == 1 ) CALL IBM_BCS_FLOW(txc(1,1),i1) ! IBM - zeros in solid
+        IF ( imode_ibm == 1 ) THEN 
+           IF (istagger .EQ. 1 ) THEN
+           !  IBM - zeros in solid on pressure mesh --> not implemented yet!!
+              CALL TLAB_WRITE_ASCII(wfile, 'DNS_CONTROL. Dilatation on pressure mesh not correct.')
+              CALL IBM_BCS_FLOW(txc(1,1),i1)
+           ELSE
+           !  IBM - zeros in solid on velocity mesh
+              CALL IBM_BCS_FLOW(txc(1,1),i1) ! 
+           ENDIF
+        ENDIF
 
         CALL MINMAX(imax,jmax,kmax, txc(1,1), logs_data(11),logs_data(10))
         logs_data(10)=-logs_data(10); logs_data(11)=-logs_data(11)
