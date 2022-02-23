@@ -22,6 +22,8 @@
 !#              Adding correlation, and cross terms
 !# 2015/01/01 - J.P. Mellado
 !#              Parallelizing the 1D spectra; radial spectre not yet
+!# 2022/02/23 - J. Kostelecky
+!#              adding IBM
 !#
 !########################################################################
 !# DESCRIPTION
@@ -31,7 +33,7 @@
 !########################################################################
 PROGRAM SPECTRA
 
-  USE TLAB_TYPES, ONLY : pointers_dt, subarray_dt
+  USE TLAB_TYPES,    ONLY : pointers_dt, subarray_dt
   USE TLAB_CONSTANTS
   USE TLAB_VARS
   USE TLAB_ARRAYS
@@ -42,7 +44,8 @@ PROGRAM SPECTRA
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   USE TLAB_MPI_PROCS
 #endif
-  USE THERMO_VARS, ONLY : imixture
+  USE THERMO_VARS,   ONLY : imixture
+  USE DNS_IBM,       ONLY : xbars_geo, kspl, nflu, ibm_spline_global, ibm_procs_idle
   USE IO_FIELDS
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -93,6 +96,8 @@ PROGRAM SPECTRA
 
   TINTEGER inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
 
+  LOGICAL ibm_allocated
+
 ! Reading variables
   CHARACTER*512 sRes
 
@@ -114,6 +119,20 @@ PROGRAM SPECTRA
 
   CALL DNS_READ_GLOBAL(ifile)
 
+  ! -------------------------------------------------------------------
+  ! IBM status (before TLAB_MPI_INITIALIZE!)
+  ! -------------------------------------------------------------------
+  CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
+  IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm = 0
+  ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm = 1
+  ELSE
+    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong IBM Status option.')
+    CALL TLAB_STOP(DNS_ERROR_OPTION)
+  ENDIF
+
+  ! -------------------------------------------------------------------
+  ! Initialize MPI
+  ! -------------------------------------------------------------------
 #ifdef USE_MPI
   CALL TLAB_MPI_INITIALIZE
 #endif
@@ -181,6 +200,40 @@ PROGRAM SPECTRA
      CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_time.')
      CALL TLAB_STOP(DNS_ERROR_INVALOPT)
   ENDIF
+
+! -------------------------------------------------------------------
+! Read local options - IBM parameters and geometry informations
+! -------------------------------------------------------------------
+  IF (imode_ibm .EQ. 1) THEN
+   CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'SplineOrder', '3', kspl)
+   CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'FluidPoints', '3', nflu)
+
+   CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'SplineGlobal', 'no', sRes)
+   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_spline_global = .TRUE.
+   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_spline_global = .FALSE.
+   ENDIF
+
+   CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'ProcsIdle', 'no', sRes)
+   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_procs_idle = .TRUE.
+   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_procs_idle = .FALSE.
+   ENDIF
+
+   !Geometry
+   CALL SCANINICHAR(bakfile, ifile, 'IBMGeometry', 'Type', 'XBars', sRes)
+   IF   (TRIM(ADJUSTL(sRes)) .EQ. 'xbars' ) THEN; xbars_geo%name   = 'xbars'
+     CALL SCANINICHAR(bakfile, ifile, 'IBMGeometry', 'Mirrored', 'no', sRes)
+     IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; xbars_geo%mirrored = .TRUE.
+     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; xbars_geo%mirrored = .FALSE.
+     ENDIF
+     CALL SCANINIINT(bakfile, ifile, 'IBMGeometry',  'MaxNumber', '0', xbars_geo%number)
+     CALL SCANINIINT(bakfile, ifile, 'IBMGeometry',  'Length',    '0', xbars_geo%length)
+     CALL SCANINIINT(bakfile, ifile, 'IBMGeometry',  'Height',    '0', xbars_geo%height)
+     CALL SCANINIINT(bakfile, ifile, 'IBMGeometry',  'Width',     '0', xbars_geo%width)
+   ELSE
+     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBMGeometryType option.')
+     CALL TLAB_STOP(DNS_ERROR_OPTION)
+   ENDIF
+ ENDIF
 
 ! -------------------------------------------------------------------
 ! Definitions
@@ -328,6 +381,11 @@ PROGRAM SPECTRA
      ENDIF
   ENDIF
 
+  IF ( imode_ibm .EQ. 1 ) THEN
+     ibm_allocated = .FALSE.
+     CALL IBM_ALLOCATE(C_FILE_LOC, ibm_allocated)
+  ENDIF
+
 ! extend array by complex nyquist frequency in x (+1 TCOMPLEX = +2 TREAL)
 !              by boundary conditions in y       (+1 TCOMPLEX = +2 TREAL)
 
@@ -370,6 +428,13 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 ! Initialize thermodynamic quantities
 ! -------------------------------------------------------------------
   CALL FI_PROFILES_INITIALIZE(wrk1d)
+
+! -------------------------------------------------------------------
+! Initialize IBM geometry
+! -------------------------------------------------------------------
+  IF ( imode_ibm .EQ. 1 ) THEN
+     CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
+  ENDIF  
 
 ! -------------------------------------------------------------------
 ! Initialize
@@ -487,6 +552,11 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
         CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, inb_scal,i0, s, wrk3d)
      ENDIF
+
+     IF ( imode_ibm .EQ. 1 ) THEN
+        CALL IBM_BCS_FIELD(q, inb_flow) ! apply IBM BCs on ini flow fields
+        ! IF ( icalc_scal == 1 ) CALL IBM_BCS_FIELD(s)
+     ENDIF 
 
      CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
 

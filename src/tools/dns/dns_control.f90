@@ -69,7 +69,7 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
            CALL FI_INVARIANT_P(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), wrk2d,wrk3d)
         ENDIF
 
-        IF ( imode_ibm == 1 ) CALL IBM_BCS_FLOW(txc(1,1),i1) ! IBM - zeros in solid
+        IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(txc(1,1),i1) ! IBM - zeros in solid
 
         CALL MINMAX(imax,jmax,kmax, txc(1,1), logs_data(11),logs_data(10))
         logs_data(10)=-logs_data(10); logs_data(11)=-logs_data(11)
