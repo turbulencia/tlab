@@ -39,6 +39,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! ############################################# ! 
 ! DEBUG ####################################### !
+  ! USE IO_FIELDS
+  ! USE TLAB_PROCS
 #ifdef IBM_DEBUG
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
@@ -58,7 +60,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(imax,kmax,*)   :: wrk2d
 
-  TARGET hs, tmp4
+  TARGET tmp4, hs
 
 ! ############################################# ! 
 ! DEBUG ####################################### !
@@ -259,9 +261,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
 
      IF ( imode_ibm == 1 ) THEN 
-        CALL IBM_BCS_FLOW(tmp2,i1)
-        CALL IBM_BCS_FLOW(tmp3,i1)
-        CALL IBM_BCS_FLOW(tmp4,i1)
+        CALL IBM_BCS_FIELD(tmp2,i1)
+        CALL IBM_BCS_FIELD(tmp3,i1)
+        CALL IBM_BCS_FIELD(tmp4,i1)
      ENDIF
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp2)
@@ -284,9 +286,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL OPR_PARTIAL_Z(OPR_P1,           imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d,wrk3d)
   ELSE
      IF ( imode_ibm == 1 ) THEN 
-        CALL IBM_BCS_FLOW(h2,i1)
-        CALL IBM_BCS_FLOW(h1,i1)
-        CALL IBM_BCS_FLOW(h3,i1)
+        CALL IBM_BCS_FIELD(h2,i1)
+        CALL IBM_BCS_FIELD(h1,i1)
+        CALL IBM_BCS_FIELD(h3,i1)
      ENDIF
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h2,tmp2)
@@ -316,16 +318,15 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1
   tmp4 = h2 
-! Zero in body
-  IF ( imode_ibm == 1 ) CALL IBM_BCS_FLOW(tmp4,i1)
 ! Stagger also Bcs
+  CALL IBM_BCS_FIELD(tmp4,i1)
   IF (istagger .EQ. 1 ) THEN
      CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
   ENDIF
   DO k = 1,kmax
-     p_bcs => tmp4(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-     p_bcs => tmp4(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+    p_bcs => tmp4(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+    p_bcs => tmp4(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
   ENDDO
 
 ! Adding density in BCs
@@ -407,7 +408,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hq(1,iq), &
              BcsFlowJmin%ref(1,1,iq),BcsFlowJmax%ref(1,1,iq), wrk1d,tmp1,wrk3d)
      ENDIF
-     IF ( imode_ibm == 1 ) CALL IBM_BCS_FLOW(hq(1,iq),i1)
+     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(hq(1,iq),i1)
   ENDDO
 
   DO is = 1,inb_scal
@@ -423,7 +424,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
           BcsScalJmax%type(is) .NE. DNS_SFC_STATIC ) THEN
         CALL BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
      ENDIF
-    !  IF ( imode_ibm == 1 ) CALL IBM_BCS_SCAL(hs(1,is),i1)
+    !  IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(hs(1,is),i1)
   ENDDO
 
 ! -----------------------------------------------------------------------

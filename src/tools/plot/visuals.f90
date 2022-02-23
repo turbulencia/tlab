@@ -390,8 +390,8 @@ PROGRAM VISUALS
     ENDIF
 
     IF ( imode_ibm .EQ. 1 ) THEN
-      CALL IBM_BCS_FLOW(q, inb_flow) ! apply IBM BCs on ini flow fields
-      ! IF ( icalc_scal == 1 ) CALL IBM_BCS_SCAL(s)
+      CALL IBM_BCS_FIELD(q, inb_flow) ! apply IBM BCs on ini flow fields
+      ! IF ( icalc_scal == 1 ) CALL IBM_BCS_FIELD(s)
     ENDIF 
 
     CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )

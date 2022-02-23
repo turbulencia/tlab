@@ -93,9 +93,9 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
 
 ! Apply IBM BCs
   IF ( imode_ibm == 1 ) THEN 
-    CALL IBM_BCS_FLOW(tmp3,i1)
-    CALL IBM_BCS_FLOW(tmp4,i1)
-    CALL IBM_BCS_FLOW(tmp5,i1)
+    CALL IBM_BCS_FIELD(tmp3,i1)
+    CALL IBM_BCS_FIELD(tmp4,i1)
+    CALL IBM_BCS_FIELD(tmp5,i1)
   ENDIF
 
 ! Calculate forcing term Ox
@@ -130,9 +130,6 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   ENDIF
   CALL OPR_PARTIAL_Z(  OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp5,tmp1, wrk3d, wrk2d,wrk3d)
   p = p + tmp1
-
-! #######################################################################
-! Solve Poisson equation
 ! #######################################################################
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration) 
 ! (tmp4 already staggered here)

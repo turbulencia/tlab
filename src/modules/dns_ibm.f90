@@ -25,7 +25,7 @@ module DNS_IBM
   save 
 
   ! descriptive geometry fields (saved)
-  TREAL,    dimension(:),     allocatable :: eps                         ! eps indicator field
+  TREAL, dimension(:),allocatable, target :: eps                         ! eps indicator field
   TINTEGER, dimension(:),     allocatable :: nobi,    nobj,   nobk       ! number of objects in i/j/k 
   TINTEGER, dimension(:),     allocatable :: nobi_b,  nobj_b, nobk_b     ! beginn of objects in i/j/k 
   TINTEGER, dimension(:),     allocatable :: nobi_e,  nobj_e, nobk_e     ! end    of objects in i/j/k
