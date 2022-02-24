@@ -318,9 +318,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1
   tmp4 = h2 
-! Stagger also Bcs
-  CALL IBM_BCS_FIELD(tmp4,i1)
-  IF (istagger .EQ. 1 ) THEN
+! Stagger also BCs
+  IF ( imode_ibm .EQ. 1 ) CALL IBM_BCS_FIELD(tmp4,i1)
+  IF ( istagger  .EQ. 1 ) THEN
      CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
   ENDIF
