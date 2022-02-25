@@ -27,6 +27,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
   TINTEGER i, ip, is, ig, ibc_min, ibc_max, nx
   TREAL r04, r28, r24, r48, r25, r60, dummy
   TREAL ra1, rb2, rc3, r2a, r2b 
+  TREAL sa,  sb,  sal
 
 #ifdef TRACE_ON
   CALL TLAB_WRITE_ASCII(tfile,'Entering SUBROUTINE FDM_INITIALIZE')
@@ -495,22 +496,40 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
      rc3 = C1N6M_CD3
      r2a = C1N6M_ALPHA2
      r2b = C1N6M_BETA2
+     ! staggered tridiagonal 6th-order scheme
+     sal = C_9_R  / C_62_R 
+     sa  = C_63_R / C_62_R
+     sb  = C_17_R / C_62_R 
 
-     SELECT CASE( g%mode_fdm )
+     IF ( istagger  .EQ. 0 ) THEN
 
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
-        g%mwn(:,1)=( r28*sin(wrk1d(:,1))+    sin(C_2_R*wrk1d(:,1))                          )&
-                  /( C_18_R +C_12_R*cos(wrk1d(:,1)))
-
-     CASE( FDM_COM6_JACPENTA )
-        g%mwn(:,1)=( ra1*sin(wrk1d(:,1))+rb2*sin(C_2_R*wrk1d(:,1))+rc3*sin(C_3_R*wrk1d(:,1)))&
-                  /( C_1_R  +r2a   *cos(wrk1d(:,1))+r2b*cos(2*wrk1d(:,1)))
+        SELECT CASE( g%mode_fdm )
+         
+        CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
+           g%mwn(:,1)=( r28*sin(wrk1d(:,1))+    sin(C_2_R*wrk1d(:,1))                          )&
+                     /( C_18_R +C_12_R*cos(wrk1d(:,1)))
    
-     CASE( FDM_COM8_JACOBIAN )
-        g%mwn(:,1)=( r25*sin(wrk1d(:,1))+r04*sin(C_2_R*wrk1d(:,1))-r60*sin(C_3_R*wrk1d(:,1)))&
-                  /( C_4_R  +C_3_R *cos(wrk1d(:,1)))
+        CASE( FDM_COM6_JACPENTA )
+           g%mwn(:,1)=( ra1*sin(wrk1d(:,1))+rb2*sin(C_2_R*wrk1d(:,1))+rc3*sin(C_3_R*wrk1d(:,1)))&
+                     /( C_1_R  +r2a   *cos(wrk1d(:,1))+r2b*cos(2*wrk1d(:,1)))
+         
+        CASE( FDM_COM8_JACOBIAN )
+           g%mwn(:,1)=( r25*sin(wrk1d(:,1))+r04*sin(C_2_R*wrk1d(:,1))-r60*sin(C_3_R*wrk1d(:,1)))&
+                     /( C_4_R  +C_3_R *cos(wrk1d(:,1)))
+   
+        END SELECT
 
-     END SELECT
+     ELSE ! staggered case has different modified wavenumbers!
+
+        SELECT CASE( g%mode_fdm )
+         
+        CASE DEFAULT
+           g%mwn(:,1)=( C_2_R * sa * sin(C_1_R/C_2_R * wrk1d(:,1)) + C_2_R/C_3_R * sb * sin(C_3_R/C_2_R * wrk1d(:,1)))&
+                     /( C_1_R + C_2_R * sal * cos(wrk1d(:,1)))
+ 
+        END SELECT
+
+     ENDIF
 
 ! Final calculations because it is mainly used in the Poisson solver like this
      g%mwn(:,1) = ( g%mwn(:,1) /g%jac(1,1) )**2

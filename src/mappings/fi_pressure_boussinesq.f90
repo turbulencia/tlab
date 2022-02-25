@@ -98,6 +98,7 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
     CALL IBM_BCS_FIELD(tmp5,i1)
   ENDIF
 
+#if 0
 ! Calculate forcing term Ox
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
     CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
@@ -130,14 +131,57 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   ENDIF
   CALL OPR_PARTIAL_Z(  OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp5,tmp1, wrk3d, wrk2d,wrk3d)
   p = p + tmp1
+#endif
+
+  ! Calculate forcing term Ox
+  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+    CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
+  ENDIF
+  IF (istagger .EQ. 1 ) THEN
+    CALL OPR_PARTIAL_X(OPR_P1_INT_VP,  imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(3), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
+  ELSE
+    CALL OPR_PARTIAL_X(OPR_P1,         imax,jmax,kmax, bcs, g(1), tmp3,tmp1, wrk3d, wrk2d,wrk3d)
+  ENDIF
+  p = p + tmp1
+
+  ! Calculate forcing term Oy
+  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+    CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
+  ENDIF
+  tmp3 = tmp4 ! copy for BCS of poisson solver 
+  IF (istagger .EQ. 1 ) THEN
+    CALL OPR_PARTIAL_X(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(1), tmp4,tmp2, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Y(OPR_P1,         imax,jmax,kmax, bcs, g(2), tmp2,tmp4, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(3), tmp4,tmp1, wrk3d, wrk2d,wrk3d)
+  ELSE
+    CALL OPR_PARTIAL_Y(OPR_P1,         imax,jmax,kmax, bcs, g(2), tmp4,tmp1, wrk3d, wrk2d,wrk3d)
+  ENDIF
+  p = p + tmp1
+
+  ! Calculate forcing term Oz
+  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+    CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp5)
+  ENDIF
+  IF (istagger .EQ. 1 ) THEN
+    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp5,tmp2, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
+  ELSE  
+    CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp5,tmp1, wrk3d, wrk2d,wrk3d)
+  ENDIF
+  p = p + tmp1
+
 ! #######################################################################
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration) 
-! (tmp4 already staggered here)
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1
+  IF ( istagger  .EQ. 1 ) THEN
+    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
+  ENDIF
   DO k = 1,kmax
-    p_bcs => tmp4(ip_b:); wrk2d(1:imax,k,1) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-    p_bcs => tmp4(ip_t:); wrk2d(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+    p_bcs => tmp3(ip_b:); wrk2d(1:imax,k,1) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+    p_bcs => tmp3(ip_t:); wrk2d(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
   ENDDO
 
 ! Pressure field in p
