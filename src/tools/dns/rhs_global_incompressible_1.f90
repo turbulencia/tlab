@@ -39,8 +39,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 ! ############################################# ! 
 ! DEBUG ####################################### !
-  USE IO_FIELDS
-  USE TLAB_PROCS
+  ! USE IO_FIELDS
+  ! USE TLAB_PROCS
 #ifdef IBM_DEBUG
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
@@ -252,9 +252,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
 #else 
      DO ij = srt,end
-       tmp2(ij) = h2(ij) !+ v(ij)*dummy
-       tmp3(ij) = h1(ij) !+ u(ij)*dummy
-       tmp4(ij) = h3(ij) !+ w(ij)*dummy
+       tmp2(ij) = h2(ij) + v(ij)*dummy
+       tmp3(ij) = h1(ij) + u(ij)*dummy
+       tmp4(ij) = h3(ij) + w(ij)*dummy
      ENDDO
 
 #endif
@@ -362,12 +362,12 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
        tmp1,tmp3, tmp2,tmp4, BcsFlowJmin%ref(1,1,2),BcsFlowJmax%ref(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
 
-  IF (istagger .EQ. 1 ) THEN
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp1, wrk3d, wrk2d,wrk3d)
-  ENDIF
-  CALL IO_WRITE_FIELDS('Pressure000001', IO_FLOW, imax,jmax,kmax, i1, tmp1,wrk3d)
-  CALL TLAB_STOP(i0)
+  ! IF (istagger .EQ. 1 ) THEN
+  !   CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
+  !   CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp1, wrk3d, wrk2d,wrk3d)
+  ! ENDIF
+  ! CALL IO_WRITE_FIELDS('Pressure000001', IO_FLOW, imax,jmax,kmax, i1, tmp1,wrk3d)
+  ! CALL TLAB_STOP(i0)
 
 ! Saving pressure for towers to tmp array
   IF ( tower_mode .EQ. 1 .AND. rkm_substep .EQ. rkm_endstep ) THEN
