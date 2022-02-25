@@ -28,6 +28,7 @@ MODULE BOUNDARY_BUFFER
   USE TLAB_VARS,    ONLY : io_aux
   USE TLAB_PROCS
   USE THERMO_VARS, ONLY : gama0
+  USE IO_FIELDS
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
   USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
@@ -210,11 +211,11 @@ CONTAINS
 
     TREAL COV2V1D, COV2V2D
 
-#ifdef USE_MPI
-    TINTEGER                :: ndims
-    TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
-#endif
-
+! #ifdef USE_MPI
+!     TINTEGER                :: ndims
+!     TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
+! #endif
+!
     ! ###################################################################
     ! Reference fields
     IF ( idir == 1 ) ALLOCATE( item%ref(item%size,jmax,kmax,item%nfields) )
@@ -225,39 +226,45 @@ CONTAINS
     SELECT CASE ( idir )
     CASE( 1 )
       id = IO_SUBARRAY_BUFFER_ZOY
-      idummy = item%size*jmax*kmax; io_sizes = (/idummy,1,idummy,1,item%nfields/)
-
+      io_aux(id)%offset = 0
 #ifdef USE_MPI
       IF ( ims_pro_i ==  ( item%offset /imax) ) io_aux(id)%active = .TRUE. ! info must belong to only 1 PE
       io_aux(id)%communicator = ims_comm_z
+      io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY( jmax*item%size,kmax, MPI_REAL8 )
 
-      ndims = 2
-      sizes(1)   = jmax *item%size; sizes(2)   = kmax *ims_npro_k
-      locsize(1) = jmax *item%size; locsize(2) = kmax
-      offset(1)  = 0;               offset(2)  = ims_offset_k
+      ! ndims = 2
+      ! sizes(1)   = jmax *item%size; sizes(2)   = kmax *ims_npro_k
+      ! locsize(1) = jmax *item%size; locsize(2) = kmax
+      ! offset(1)  = 0;               offset(2)  = ims_offset_k
+      !
+      ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+      !     MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
+      ! CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 #endif
+      idummy = item%size*jmax*kmax; io_sizes = (/idummy,1,idummy,1,item%nfields/)
 
     CASE( 2 )
       id = IO_SUBARRAY_BUFFER_XOZ
-      idummy = imax*item%size*kmax; io_sizes = (/idummy,1,idummy,1,item%nfields/)
-
+      io_aux(id)%offset = 0
 #ifdef USE_MPI
       io_aux(id)%active = .TRUE.
       io_aux(id)%communicator = MPI_COMM_WORLD
-
-      ndims = 3
-      sizes(1)  =imax *ims_npro_i; sizes(2)   = item%size; sizes(3)   = kmax *ims_npro_k
-      locsize(1)=imax;             locsize(2) = item%size; locsize(3) = kmax
-      offset(1) =ims_offset_i;     offset(2)  = 0;         offset(3)  = ims_offset_k
+      io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ( imax,item%size,kmax, MPI_REAL8 )
+      !
+      ! ndims = 3
+      ! sizes(1)  =imax *ims_npro_i; sizes(2)   = item%size; sizes(3)   = kmax *ims_npro_k
+      ! locsize(1)=imax;             locsize(2) = item%size; locsize(3) = kmax
+      ! offset(1) =ims_offset_i;     offset(2)  = 0;         offset(3)  = ims_offset_k
 #endif
+      idummy = imax*item%size*kmax; io_sizes = (/idummy,1,idummy,1,item%nfields/)
 
     END SELECT
 
-#ifdef USE_MPI
-    CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-        MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
-    CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
-#endif
+! #ifdef USE_MPI
+!     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+!         MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
+!     CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
+! #endif
 
     IF ( BuffLoad ) THEN
       CALL IO_READ_SUBARRAY8(id, tag, varname, item%ref, io_sizes, wrk3d)

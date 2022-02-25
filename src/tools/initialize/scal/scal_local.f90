@@ -162,7 +162,7 @@ SUBROUTINE SCAL_FLUCTUATION_PLANE(is, s, disp)
   CASE( 4,6,8 )   ! Broadband case
     WRITE(varname,*) is; varname = TRIM(ADJUSTL(varname))
     idummy=imax*kmax; io_sizes = (/idummy,1,idummy,1,1/)
-    CALL IO_READ_SUBARRAY8(i1, 'scal.rand', varname, disp, io_sizes, s) ! using array s as aux array
+    CALL IO_READ_SUBARRAY8(IO_SUBARRAY_AUX, 'scal.rand', varname, disp, io_sizes, s) ! using array s as aux array
     dummy = AVG1V2D(imax,i1,kmax, i1, i1, disp)     ! remove mean
     disp = disp - dummy
 

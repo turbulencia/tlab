@@ -3,6 +3,9 @@
 
 #define SIZEOFBYTE 1
 
+! The offset should be converted into logical and,
+! when .TRUE., read the first integer in file as offset
+
 SUBROUTINE IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, DATA, sizes, work)
 
   USE TLAB_TYPES,     ONLY : subarray_dt
