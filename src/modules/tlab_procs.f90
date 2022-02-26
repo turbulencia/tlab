@@ -159,7 +159,10 @@ CONTAINS
     line='Starting on '//TRIM(ADJUSTL(clock(1)(1:8)))//' at '//TRIM(ADJUSTL(clock(2)))
     CALL TLAB_WRITE_ASCII(lfile,line)
 
-    line='Git-hash '//GITHASH
+    line='Git-hash   '//GITHASH
+    CALL TLAB_WRITE_ASCII(lfile,line)
+
+    line='Git-branch '//GITBRANCH
     CALL TLAB_WRITE_ASCII(lfile,line)
 
 #ifdef USE_MPI
