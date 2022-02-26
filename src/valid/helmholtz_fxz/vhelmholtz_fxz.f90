@@ -11,15 +11,13 @@ PROGRAM VHELMHOLTZ_FXZ
   USE TLAB_PROCS
   USE IO_FIELDS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TREAL, DIMENSION(:,:),   ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:,:), ALLOCATABLE :: b, c, d, h

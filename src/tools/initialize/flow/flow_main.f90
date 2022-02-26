@@ -11,6 +11,7 @@ PROGRAM INIFLOW
   USE TLAB_ARRAYS
   USE TLAB_PROCS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_PROCS
 #endif
   USE THERMO_VARS, ONLY : imixture
@@ -24,6 +25,9 @@ PROGRAM INIFLOW
 #endif
 
   IMPLICIT NONE
+
+  ! -------------------------------------------------------------------
+  TINTEGER id
 
   ! -------------------------------------------------------------------
   ! Additional local arrays
@@ -59,6 +63,15 @@ PROGRAM INIFLOW
   CALL FDM_INITIALIZE(x, g(1), wrk1d)
   CALL FDM_INITIALIZE(y, g(2), wrk1d)
   CALL FDM_INITIALIZE(z, g(3), wrk1d)
+
+  ! Metadata to read plane data for options 4, 6, 8
+  id = IO_SUBARRAY_AUX
+  io_aux(id)%offset = 52 ! header size in bytes
+#ifdef USE_MPI
+  io_aux(id)%active = .TRUE.
+  io_aux(id)%communicator = MPI_COMM_WORLD
+  io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ( imax,1,kmax, MPI_REAL8 )
+#endif
 
   IF ( flag_u /= 0 ) THEN ! Initialize Poisson Solver
      IF ( ifourier == 1 .AND. g(1)%periodic .AND. g(3)%periodic ) THEN
@@ -134,7 +147,7 @@ PROGRAM INIFLOW
      END IF
 
      IF ( flag_t == 4 .OR. flag_t == 5 ) THEN
-        CALL DENSITY_FLUCTUATION(flag_t, s,p,rho, txc(1,1),txc(1,2), wrk2d,wrk3d)
+        CALL DENSITY_FLUCTUATION(flag_t, s,p,rho, txc(1,1),txc(1,2), wrk2d)
      END IF
 
      ! Calculate specfic energy. Array s should contain the species fields at this point.

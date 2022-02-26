@@ -84,15 +84,7 @@ CONTAINS
       io_aux(id)%active = .FALSE.  ! defaults
       IF ( ims_pro_k == ( kplanes%nodes(1) /kmax) ) io_aux(id)%active = .TRUE.
       io_aux(id)%communicator = ims_comm_x
-
-      ndims = 2
-      sizes(1)   = imax *ims_npro_i; sizes(2)   = jmax *kplanes%size
-      locsize(1) = imax;             locsize(2) = jmax *kplanes%size
-      offset(1)  = ims_offset_i;     offset(2)  = 0
-
-      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
-      CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
+      io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY( imax, jmax*kplanes%size, MPI_REAL4 )
 #endif
     ENDIF
 
@@ -104,15 +96,6 @@ CONTAINS
       IF ( ims_pro_i ==  ( iplanes%nodes(1) /imax) ) io_aux(id)%active = .TRUE.
       io_aux(id)%communicator = ims_comm_z
       io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY( jmax*iplanes%size,kmax, MPI_REAL4 )
-
-      ! ndims = 2
-      ! sizes(1)   = jmax *iplanes%size;  sizes(2)   = kmax *ims_npro_k
-      ! locsize(1) = jmax *iplanes%size;  locsize(2) = kmax
-      ! offset(1)  = 0;                   offset(2)  = ims_offset_k
-      !
-      ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-      !     MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
-      ! CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 #endif
     ENDIF
 
@@ -123,15 +106,6 @@ CONTAINS
       io_aux(id)%active = .TRUE.
       io_aux(id)%communicator = MPI_COMM_WORLD
       io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ( imax,jplanes%size,kmax, MPI_REAL4 )
-
-      ! ndims = 3 ! Subarray for the output of the 2D data
-      ! sizes(1)  =imax *ims_npro_i;  sizes(2)   = jplanes%size;  sizes(3)   = kmax *ims_npro_k
-      ! locsize(1)=imax;              locsize(2) = jplanes%size;  locsize(3) = kmax
-      ! offset(1) =ims_offset_i;      offset(2)  = 0;             offset(3)  = ims_offset_k
-      !
-      ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-      !     MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
-      ! CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 #endif
 
     ENDIF

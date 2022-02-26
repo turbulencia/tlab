@@ -263,61 +263,66 @@ SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
   USE TLAB_VARS, ONLY : imax,kmax, io_aux
   USE TLAB_MPI_VARS
   USE MPI
+  USE IO_FIELDS
   IMPLICIT NONE
 
-  TINTEGER,                 INTENT(IN)  :: opt_format, subdomain(6)
+  TINTEGER, INTENT(IN)  :: opt_format, subdomain(6)
 
   ! -----------------------------------------------------------------------
-  TINTEGER                :: ndims, id
-  TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
+  TINTEGER id, ny_loc
 
   ! #######################################################################
   io_aux(:)%active = .FALSE.
   io_aux(:)%offset = 0
   IF ( opt_format .EQ. 1 ) io_aux(:)%offset = 244 ! # bytes of ensight header
 
+  ny_loc = subdomain(4)-subdomain(3)+1
+
   ! ###################################################################
   ! Saving full vertical xOy planes; using subdomain(5) to define the plane
   id = IO_SUBARRAY_VISUALS_XOY
   IF ( ims_pro_k .EQ. ( (subdomain(5)-1) /kmax) ) io_aux(id)%active = .TRUE.
   io_aux(id)%communicator = ims_comm_x
+  io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY( imax,ny_loc, MPI_REAL4 )
 
-  ndims = 2
-  sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1
-  locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1
-  offset(1)  = ims_offset_i;     offset(2)  = 0
-
-  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-      MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
-  CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
+  ! ndims = 2
+  ! sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1
+  ! locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1
+  ! offset(1)  = ims_offset_i;     offset(2)  = 0
+  !
+  ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+  !     MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
+  ! CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 
   ! Saving full vertical zOy planes; using subiddomain(1) to define the plane
   id = IO_SUBARRAY_VISUALS_ZOY
   IF ( ims_pro_i .EQ.  ( (subdomain(1)-1) /imax) ) io_aux(id)%active = .TRUE.
   io_aux(id)%communicator = ims_comm_z
+  io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY( ny_loc,kmax, MPI_REAL4 )
 
-  ndims = 2
-  sizes(1)   = subdomain(4)-subdomain(3)+1; sizes(2)   = kmax *ims_npro_k
-  locsize(1) = subdomain(4)-subdomain(3)+1; locsize(2) = kmax
-  offset(1)  = 0;                           offset(2)  = ims_offset_k
-
-  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-      MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
-  CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
+  ! ndims = 2
+  ! sizes(1)   = subdomain(4)-subdomain(3)+1; sizes(2)   = kmax *ims_npro_k
+  ! locsize(1) = subdomain(4)-subdomain(3)+1; locsize(2) = kmax
+  ! offset(1)  = 0;                           offset(2)  = ims_offset_k
+  !
+  ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+  !     MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
+  ! CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 
   ! Saving full blocks xOz planes
   id = IO_SUBARRAY_VISUALS_XOZ
   io_aux(id)%active = .TRUE.
   io_aux(id)%communicator = MPI_COMM_WORLD
+  io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ( imax,ny_loc,kmax, MPI_REAL4 )
 
-  ndims = 3
-  sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1; sizes(3)   = kmax *ims_npro_k
-  locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1; locsize(3) = kmax
-  offset(1)  = ims_offset_i;     offset(2)  = 0;                           offset(3)  = ims_offset_k
-
-  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-      MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
-  CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
+  ! ndims = 3
+  ! sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1; sizes(3)   = kmax *ims_npro_k
+  ! locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1; locsize(3) = kmax
+  ! offset(1)  = ims_offset_i;     offset(2)  = 0;                           offset(3)  = ims_offset_k
+  !
+  ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+  !     MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
+  ! CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 
   RETURN
 END SUBROUTINE VISUALS_MPIO_AUX

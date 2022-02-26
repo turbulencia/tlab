@@ -58,7 +58,6 @@ PROGRAM INISCAL
   id = IO_SUBARRAY_AUX
   io_aux(id)%offset = 52 ! header size in bytes
 #ifdef USE_MPI
-  ! CALL SCAL_MPIO_AUX ! Needed for options 4, 6, 8
   io_aux(id)%active = .TRUE.
   io_aux(id)%communicator = MPI_COMM_WORLD
   io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ( imax,1,kmax, MPI_REAL8 )
@@ -124,47 +123,3 @@ PROGRAM INISCAL
 
   CALL TLAB_STOP(0)
 END PROGRAM INISCAL
-
-! ! ###################################################################
-! ! ###################################################################
-! #ifdef USE_MPI
-!
-! SUBROUTINE SCAL_MPIO_AUX()
-!
-!   USE TLAB_VARS, ONLY : imax,kmax
-!   USE TLAB_VARS, ONLY : io_aux
-!   USE MPI
-!   USE TLAB_MPI_VARS
-!
-!   IMPLICIT NONE
-!
-! ! -----------------------------------------------------------------------
-!   TINTEGER                :: ndims, id
-!   TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
-!
-! ! #######################################################################
-!   io_aux(:)%active = .FALSE. ! defaults
-!   io_aux(:)%offset = 0
-!
-! ! ###################################################################
-! ! Subarray information to read plane data
-! ! ###################################################################
-!   id = 1
-!
-!   io_aux(id)%active = .TRUE.
-!   io_aux(id)%communicator = MPI_COMM_WORLD
-!   io_aux(:)%offset  = 52 ! size of header in bytes
-!
-!   ndims = 3
-!   sizes(1)  =imax *ims_npro_i; sizes(2)   = 1; sizes(3)   = kmax *ims_npro_k
-!   locsize(1)=imax;             locsize(2) = 1; locsize(3) = kmax
-!   offset(1) =ims_offset_i;     offset(2)  = 0; offset(3)  = ims_offset_k
-!
-!   CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-!        MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
-!   CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
-!
-!   RETURN
-! END SUBROUTINE SCAL_MPIO_AUX
-!
-! #endif

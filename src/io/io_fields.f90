@@ -26,9 +26,6 @@ MODULE IO_FIELDS
   USE TLAB_MPI_VARS, ONLY : ims_err
   USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro_i, ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_j, ims_offset_k
-  !
-  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-  USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
@@ -37,7 +34,7 @@ MODULE IO_FIELDS
   PUBLIC :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
   PUBLIC :: IO_FLOW, IO_SCAL
 #ifdef USE_MPI
-  PUBLIC :: IO_CREATE_SUBARRAY_XOZ, IO_CREATE_SUBARRAY_ZOY
+  PUBLIC :: IO_CREATE_SUBARRAY_XOY, IO_CREATE_SUBARRAY_XOZ, IO_CREATE_SUBARRAY_ZOY
 #endif
 
   PRIVATE
@@ -52,12 +49,7 @@ MODULE IO_FIELDS
 #ifdef USE_MPI
   INTEGER mpio_fh, mpio_locsize, status(MPI_STATUS_SIZE)
   INTEGER(KIND=MPI_OFFSET_KIND) mpio_disp
-  TINTEGER                :: subarray!, ndims
-  ! TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
-  !
-  INTEGER(KIND=MPI_OFFSET_KIND) mpio_locoff
-  TREAL, DIMENSION(:), POINTER :: p_read, p_write
-  TINTEGER id, npage
+  TINTEGER subarray
 #endif
 
 CONTAINS
@@ -65,6 +57,24 @@ CONTAINS
 #ifdef USE_MPI
   !########################################################################
   !########################################################################
+  FUNCTION IO_CREATE_SUBARRAY_XOY( nx,ny, mpi_type ) RESULT( subarray )
+    TINTEGER, INTENT(in   ) :: nx,ny
+    INTEGER,  INTENT(in   ) :: mpi_type
+
+    INTEGER  :: subarray
+    TINTEGER, PARAMETER :: ndims = 2
+    TINTEGER :: sizes(ndims), locsize(ndims), offset(ndims)
+
+    sizes   = [ nx*ims_npro_i, ny           ]
+    locsize = [ nx,            ny           ]
+    offset  = [ ims_offset_i,  ims_offset_j ]
+
+    CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+         MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
+    CALL MPI_Type_commit(subarray, ims_err)
+
+  END FUNCTION IO_CREATE_SUBARRAY_XOY
+
   FUNCTION IO_CREATE_SUBARRAY_XOZ(nx,ny,nz,mpi_type) RESULT(subarray)
     TINTEGER, INTENT(in   ) :: nx,ny,nz
     INTEGER,  INTENT(in   ) :: mpi_type
@@ -153,28 +163,18 @@ END FUNCTION IO_CREATE_SUBARRAY_ZOY
     ! ###################################################################
     SELECT CASE( imode_files )
 
-    CASE( IO_NOFILE )        ! Do nothing
+    CASE( IO_NOFILE )         ! Do nothing
        a(:,1:nfield) = C_0_R
 
-    CASE( IO_NETCDF )   ! To be implemented
+    CASE( IO_NETCDF )         ! To be implemented
 
     CASE DEFAULT              ! One file with header per field
 #ifdef USE_MPI
-       ! ndims = 3
-       ! sizes(1)   = nx*ims_npro_i; sizes(2)   = ny;           sizes(3)   = nz*ims_npro_k
-       ! locsize(1) = nx;            locsize(2) = ny;           locsize(3) = nz
-       ! offset(1)  = ims_offset_i;  offset(2)  = ims_offset_j; offset(3)  = ims_offset_k
-
        IF ( imode_precision_files == IO_TYPE_SINGLE ) THEN ! to be finished; here just as an idea
           subarray = IO_CREATE_SUBARRAY_XOZ( nx,ny,nz, MPI_REAL4 )
-          ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          !      MPI_ORDER_FORTRAN, MPI_REAL4, subarray, ims_err)
        ELSE
           subarray = IO_CREATE_SUBARRAY_XOZ( nx,ny,nz, MPI_REAL8 )
-          ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          !      MPI_ORDER_FORTRAN, MPI_REAL8, subarray, ims_err)
        END IF
-       ! CALL MPI_Type_commit(subarray, ims_err)
 #endif
 
        ! -------------------------------------------------------------------
@@ -264,63 +264,6 @@ END FUNCTION IO_CREATE_SUBARRAY_ZOY
 
   !########################################################################
   !########################################################################
-  SUBROUTINE IO_READ_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a, wrk)
-
-#include "integers.h"
-
-    CHARACTER(LEN=*) name
-    TINTEGER, INTENT(IN   ) :: header_offset, nx,ny,nz
-    TREAL,    INTENT(  OUT) :: a(nx*ny*nz)
-    TREAL,    INTENT(INOUT) :: wrk(nx*ny*nz)
-
-    TARGET a, wrk
-
-    ! ###################################################################
-#ifdef USE_MPI
-    mpio_disp = header_offset*SIZEOFBYTE ! Displacement to start of field
-
-    IF ( ims_npro_i > 1 ) THEN
-       ! We always initialize types here. For the general field files, we could
-       ! use TLAB_MPI_I_PARTIAL, but we use this routine for other files.
-       CALL TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
-       id = TLAB_MPI_I_AUX1
-       npage = nz*ny
-       CALL TLAB_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
-            ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
-
-       p_read => wrk
-
-    ELSE
-       p_read => a
-
-    END IF
-
-    mpio_locsize = nx*ny*nz
-    mpio_locoff  = mpio_locsize         ! mpio_locoff might be of type larger than INT4
-    mpio_locoff  = ims_pro*mpio_locoff  ! mpio_locoff might be of type larger than INT4
-    CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-    CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
-    CALL MPI_FILE_READ_AT_ALL(mpio_fh, mpio_locoff, p_read, mpio_locsize, MPI_REAL8, status, ims_err)
-    CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
-
-    IF ( ims_npro_i > 1 ) THEN
-       CALL TLAB_MPI_TRPB_I(p_read, a, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
-    END IF
-
-    NULLIFY(p_read)
-
-#else
-#include "dns_open_file.h"
-    READ(LOC_UNIT_ID,POS=header_offset +1) a
-    CLOSE(LOC_UNIT_ID)
-
-#endif
-
-    RETURN
-  END SUBROUTINE IO_READ_FIELD_XPENCIL
-
-  !########################################################################
-  !########################################################################
   SUBROUTINE IO_READ_FIELD_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
 
     CHARACTER(LEN=*) name
@@ -349,14 +292,6 @@ END FUNCTION IO_CREATE_SUBARRAY_ZOY
     CALL TLAB_WRITE_ASCII(lfile, line)
 
 #ifdef USE_MPI
-    ! ndims = 3
-    ! sizes(1)   = nx_total;     sizes(2)   = ny_total;     sizes(3)   = nz_total
-    ! locsize(1) = nx;           locsize(2) = ny;           locsize(3) = nz
-    ! offset(1)  = ims_offset_i; offset(2)  = ims_offset_j; offset(3)  = ims_offset_k
-    !
-    ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-    !      MPI_ORDER_FORTRAN, MPI_INTEGER1, subarray, ims_err)
-    ! CALL MPI_Type_commit(subarray, ims_err)
     subarray = IO_CREATE_SUBARRAY_XOZ( nx,ny,nz, MPI_INTEGER1 )
 #endif
 
@@ -458,27 +393,17 @@ END FUNCTION IO_CREATE_SUBARRAY_ZOY
     ! ###################################################################
     SELECT CASE( imode_files )
 
-    CASE( IO_NOFILE )        ! Do nothing
+    CASE( IO_NOFILE )         ! Do nothing
 
-    CASE( IO_NETCDF )   ! To be implemented
+    CASE( IO_NETCDF )         ! To be implemented
 
     CASE DEFAULT              ! One file with header per field
 #ifdef USE_MPI
-       ! ndims = 3
-       ! sizes(1)   = nx*ims_npro_i; sizes(2)   = ny;           sizes(3)   = nz*ims_npro_k
-       ! locsize(1) = nx;            locsize(2) = ny;           locsize(3) = nz
-       ! offset(1)  = ims_offset_i;  offset(2)  = ims_offset_j; offset(3)  = ims_offset_k
-
        IF ( imode_precision_files == IO_TYPE_SINGLE ) THEN ! to be finished; here just as an idea
-          ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          !      MPI_ORDER_FORTRAN, MPI_REAL4, subarray, ims_err)
           subarray = IO_CREATE_SUBARRAY_XOZ( nx,ny,nz, MPI_REAL4 )
        ELSE
-          ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          !      MPI_ORDER_FORTRAN, MPI_REAL8, subarray, ims_err)
           subarray = IO_CREATE_SUBARRAY_XOZ( nx,ny,nz, MPI_REAL8 )
        END IF
-       ! CALL MPI_Type_commit(subarray, ims_err)
 #endif
 
        ! -------------------------------------------------------------------
@@ -566,60 +491,6 @@ END FUNCTION IO_CREATE_SUBARRAY_ZOY
 
   !########################################################################
   !########################################################################
-  SUBROUTINE IO_WRITE_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a, wrk)
-
-#include "integers.h"
-
-    CHARACTER(LEN=*) name
-    TINTEGER,  INTENT(IN   ) :: header_offset, nx,ny,nz
-    TREAL,     INTENT(IN   ) :: a(nx*ny*nz)
-    TREAL,     INTENT(INOUT) :: wrk(nx*ny*nz)
-
-    TARGET a, wrk
-
-    ! ###################################################################
-#ifdef USE_MPI
-    mpio_disp = header_offset*SIZEOFBYTE
-
-    CALL MPI_BARRIER(MPI_COMM_WORLD, ims_err)
-
-    IF ( ims_npro_i > 1 ) THEN
-       ! We always initialize types here. For the general field files, we could
-       ! use TLAB_MPI_I_PARTIAL, but we use this routine for other files.
-       CALL TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
-       id = TLAB_MPI_I_AUX1
-       npage = nz*ny
-       CALL TLAB_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
-            ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
-
-       CALL TLAB_MPI_TRPF_I(a, wrk, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
-       p_write => wrk
-
-    ELSE
-       p_write => a
-
-    END IF
-
-    mpio_locsize = nx*ny*nz
-    mpio_locoff  = mpio_locsize         ! reclen might be of type larger than INT4
-    mpio_locoff  = ims_pro*mpio_locoff  ! reclen might be of type larger than INT4
-    CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-    CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
-    CALL MPI_FILE_WRITE_AT_ALL(mpio_fh, mpio_locoff, p_write, mpio_locsize, MPI_REAL8, status, ims_err)
-    CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
-    NULLIFY(p_write)
-
-#else
-#include "dns_open_file.h"
-    WRITE(LOC_UNIT_ID,POS=header_offset+1) a
-    CLOSE(LOC_UNIT_ID)
-#endif
-
-    RETURN
-  END SUBROUTINE IO_WRITE_FIELD_XPENCIL
-
-  !########################################################################
-  !########################################################################
   SUBROUTINE IO_WRITE_FIELD_INT1(name, iheader, nx,ny,nz,nt, isize,params, a)
 
     CHARACTER(LEN=*) name
@@ -670,14 +541,6 @@ END FUNCTION IO_CREATE_SUBARRAY_ZOY
 
     CALL MPI_BARRIER(MPI_COMM_WORLD, ims_err)
 
-    ! ndims = 3
-    ! sizes(1)   = nx_total;     sizes(2)   = ny_total;     sizes(3)   = nz_total
-    ! locsize(1) = nx;           locsize(2) = ny;           locsize(3) = nz
-    ! offset(1)  = ims_offset_i; offset(2)  = ims_offset_j; offset(3)  = ims_offset_k
-    !
-    ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-    !      MPI_ORDER_FORTRAN, MPI_INTEGER1, subarray, ims_err)
-    ! CALL MPI_Type_commit(subarray, ims_err)
     subarray = IO_CREATE_SUBARRAY_XOZ( nx,ny,nz, MPI_INTEGER1 )
 
     mpio_locsize = nx*ny*nz
@@ -754,5 +617,146 @@ END FUNCTION IO_CREATE_SUBARRAY_ZOY
 
     RETURN
   END SUBROUTINE IO_WRITE_HEADER
+
+  !########################################################################
+  !########################################################################
+#define LOC_UNIT_ID 54
+#define LOC_STATUS 'old'
+
+  SUBROUTINE IO_READ_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a, wrk)
+#ifdef USE_MPI
+    USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+    USE TLAB_MPI_PROCS
+#endif
+#include "integers.h"
+
+    CHARACTER(LEN=*) name
+    TINTEGER, INTENT(IN   ) :: header_offset, nx,ny,nz
+    TREAL,    INTENT(  OUT) :: a(nx*ny*nz)
+    TREAL,    INTENT(INOUT) :: wrk(nx*ny*nz)
+
+    TARGET a, wrk
+
+#ifdef USE_MPI
+    INTEGER(KIND=MPI_OFFSET_KIND) mpio_locoff
+    TREAL, DIMENSION(:), POINTER :: p_read, p_write
+    TINTEGER id, npage
+#endif
+
+    ! ###################################################################
+#ifdef USE_MPI
+    mpio_disp = header_offset*SIZEOFBYTE ! Displacement to start of field
+
+    IF ( ims_npro_i > 1 ) THEN
+       ! We always initialize types here. For the general field files, we could
+       ! use TLAB_MPI_I_PARTIAL, but we use this routine for other files.
+       CALL TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
+       id = TLAB_MPI_I_AUX1
+       npage = nz*ny
+       CALL TLAB_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
+            ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+
+       p_read => wrk
+
+    ELSE
+       p_read => a
+
+    END IF
+
+    mpio_locsize = nx*ny*nz
+    mpio_locoff  = mpio_locsize         ! mpio_locoff might be of type larger than INT4
+    mpio_locoff  = ims_pro*mpio_locoff  ! mpio_locoff might be of type larger than INT4
+    CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
+    CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
+    CALL MPI_FILE_READ_AT_ALL(mpio_fh, mpio_locoff, p_read, mpio_locsize, MPI_REAL8, status, ims_err)
+    CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
+
+    IF ( ims_npro_i > 1 ) THEN
+       CALL TLAB_MPI_TRPB_I(p_read, a, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+    END IF
+
+    NULLIFY(p_read)
+
+#else
+#include "dns_open_file.h"
+    READ(LOC_UNIT_ID,POS=header_offset +1) a
+    CLOSE(LOC_UNIT_ID)
+
+#endif
+
+    RETURN
+  END SUBROUTINE IO_READ_FIELD_XPENCIL
+
+#undef LOC_UNIT_ID
+#undef LOC_STATUS
+
+!########################################################################
+!########################################################################
+#define LOC_UNIT_ID 55
+#define LOC_STATUS 'unknown'
+
+SUBROUTINE IO_WRITE_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a, wrk)
+#ifdef USE_MPI
+ USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+ USE TLAB_MPI_PROCS
+#endif
+#include "integers.h"
+
+  CHARACTER(LEN=*) name
+  TINTEGER,  INTENT(IN   ) :: header_offset, nx,ny,nz
+  TREAL,     INTENT(IN   ) :: a(nx*ny*nz)
+  TREAL,     INTENT(INOUT) :: wrk(nx*ny*nz)
+
+  TARGET a, wrk
+
+#ifdef USE_MPI
+      INTEGER(KIND=MPI_OFFSET_KIND) mpio_locoff
+      TREAL, DIMENSION(:), POINTER :: p_read, p_write
+      TINTEGER id, npage
+#endif
+
+  ! ###################################################################
+#ifdef USE_MPI
+  mpio_disp = header_offset*SIZEOFBYTE
+
+  CALL MPI_BARRIER(MPI_COMM_WORLD, ims_err)
+
+  IF ( ims_npro_i > 1 ) THEN
+     ! We always initialize types here. For the general field files, we could
+     ! use TLAB_MPI_I_PARTIAL, but we use this routine for other files.
+     CALL TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
+     id = TLAB_MPI_I_AUX1
+     npage = nz*ny
+     CALL TLAB_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
+          ims_size_i(id), ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+
+     CALL TLAB_MPI_TRPF_I(a, wrk, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
+     p_write => wrk
+
+  ELSE
+     p_write => a
+
+  END IF
+
+  mpio_locsize = nx*ny*nz
+  mpio_locoff  = mpio_locsize         ! reclen might be of type larger than INT4
+  mpio_locoff  = ims_pro*mpio_locoff  ! reclen might be of type larger than INT4
+  CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
+  CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
+  CALL MPI_FILE_WRITE_AT_ALL(mpio_fh, mpio_locoff, p_write, mpio_locsize, MPI_REAL8, status, ims_err)
+  CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
+  NULLIFY(p_write)
+
+#else
+#include "dns_open_file.h"
+  WRITE(LOC_UNIT_ID,POS=header_offset+1) a
+  CLOSE(LOC_UNIT_ID)
+#endif
+
+  RETURN
+END SUBROUTINE IO_WRITE_FIELD_XPENCIL
+
+#undef LOC_UNIT_ID
+#undef LOC_STATUS
 
 END MODULE IO_FIELDS
