@@ -136,9 +136,9 @@ contains
     TINTEGER ifield, iz
     real(sp), pointer :: s_wrk(:) => null()
 
-    TINTEGER isize_max, isize
-    parameter(isize_max=20)
+    TINTEGER, parameter :: isize_max = 20
     TREAL params(isize_max)
+    TINTEGER isize
 
     ! ###################################################################
 #ifdef USE_MPI
@@ -184,25 +184,22 @@ contains
         if ( iread == 0 .or. iread == ifield ) then
           write(name,'(I2)') ifield
           name=trim(adjustl(fname))//'.'//trim(adjustl(name))
-          isize = isize_max
 
           ! -------------------------------------------------------------------
           ! header
 #ifdef USE_MPI
           if ( ims_pro == 0 ) then
 #endif
-
-            header_offset = 0
 #include "dns_open_file.h"
             rewind(LOC_UNIT_ID)
             call IO_READ_HEADER(LOC_UNIT_ID, header_offset, nx_total,ny_total,nz_total,itime, params)
-            isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
             close(LOC_UNIT_ID)
 
 #ifdef USE_MPI
           end if
-          call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
           call MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
+          ! isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
+          ! call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 #endif
 
           ! -------------------------------------------------------------------
@@ -240,6 +237,7 @@ contains
 
       ! -------------------------------------------------------------------
       ! process header info
+      isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
       if ( isize > isize_max ) then
         call TLAB_WRITE_ASCII(efile, 'IO_READ_FIELDS. Parameters array size error')
         call TLAB_STOP(DNS_ERROR_ALLOC)
@@ -300,20 +298,19 @@ contains
 #ifdef USE_MPI
     if ( ims_pro == 0 ) then
 #endif
-
       header_offset = 0
 #include "dns_open_file.h"
       rewind(LOC_UNIT_ID)
       if ( iheader > 0 ) then
         call IO_READ_HEADER(LOC_UNIT_ID, header_offset, nx_total,ny_total,nz_total,nt, params)
-        isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
       end if
       close(LOC_UNIT_ID)
 
 #ifdef USE_MPI
     end if
-    call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
     call MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
+    isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
+    call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 
     ! -------------------------------------------------------------------
     ! field
@@ -366,9 +363,9 @@ contains
     TINTEGER ifield
     real(sp), pointer :: s_wrk(:) => null()
 
-    TINTEGER isize_max, isize
-    parameter(isize_max=20)
+    TINTEGER, parameter :: isize_max = 20
     TREAL params(isize_max)
+    TINTEGER isize
 
     ! ###################################################################
 #ifdef USE_MPI
@@ -429,6 +426,8 @@ contains
         call TLAB_STOP(DNS_ERROR_ALLOC)
       end if
 
+      header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
+
       ! -------------------------------------------------------------------
       ! write data
       do ifield = 1,nfield
@@ -442,14 +441,11 @@ contains
 #ifdef USE_MPI
         if ( ims_pro == 0 ) then
 #endif
-          header_offset = 0
 #include "dns_open_file.h"
           call IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total,ny_total,nz_total,itime, params)
-          header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
           close(LOC_UNIT_ID)
 #ifdef USE_MPI
         end if
-        call MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
 #endif
 
         ! -------------------------------------------------------------------
@@ -517,32 +513,36 @@ contains
     write(str,*) nz_total; line = trim(adjustl(line))//'x'//trim(adjustl(str))//'...'
     call TLAB_WRITE_ASCII(lfile, line)
 
-    ! -------------------------------------------------------------------
-    ! header
+    ! ###################################################################
 #ifdef USE_MPI
-    if ( ims_pro == 0 ) then
+    subarray = IO_CREATE_SUBARRAY_XOZ( nx,ny,nz, MPI_INTEGER1 )
 #endif
 
-      header_offset = 0
-#include "dns_open_file.h"
-      if ( iheader > 0 ) then
-        call IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total,ny_total,nz_total,nt, params)
-        header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
-      end if
-      close(LOC_UNIT_ID)
-
+    ! -------------------------------------------------------------------
+    ! header
+    if ( iheader > 0 ) then
+      header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
 #ifdef USE_MPI
+      if ( ims_pro == 0 ) then
+#endif
+#include "dns_open_file.h"
+        call IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total,ny_total,nz_total,nt, params)
+        close(LOC_UNIT_ID)
+#ifdef USE_MPI
+      end if
+#endif
+
+    else
+      header_offset = 0
+
     end if
 
     ! -------------------------------------------------------------------
     ! field
-    call MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
-    mpio_disp = header_offset*SIZEOFBYTE
-
+#ifdef USE_MPI
     call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
 
-    subarray = IO_CREATE_SUBARRAY_XOZ( nx,ny,nz, MPI_INTEGER1 )
-
+    mpio_disp = header_offset*SIZEOFBYTE
     mpio_locsize = nx*ny*nz
     call MPI_FILE_OPEN(MPI_COMM_WORLD, name, ior(MPI_MODE_WRONLY,MPI_MODE_CREATE), MPI_INFO_NULL, mpio_fh, ims_err)
     call MPI_File_set_view(mpio_fh, mpio_disp, MPI_INTEGER1, subarray, 'native', MPI_INFO_NULL, ims_err)
