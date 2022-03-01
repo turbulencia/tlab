@@ -340,15 +340,15 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1
   tmp4 = h2 
-! Stagger also BCs
+! Stagger also BCs for Poisson solver
   IF ( imode_ibm .EQ. 1 ) CALL IBM_BCS_FIELD(tmp4,i1)
   IF ( istagger  .EQ. 1 ) THEN
      CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
   ENDIF
   DO k = 1,kmax
-    p_bcs => tmp4(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-    p_bcs => tmp4(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+     p_bcs => tmp4(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+     p_bcs => tmp4(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
   ENDDO
 
 ! Adding density in BCs
@@ -390,13 +390,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #endif
 
   IF (istagger .EQ. 1 ) THEN
-    !stagger tmp3 (Oy pressure deriv. dp/dy) back on horizontal velocity nodes
+  !  vertical pressure derivative   dpdy - back on horizontal velocity nodes
      CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
-    !horizontal pressure derivatives
+  !  horizontal pressure derivative dpdz - back on horizontal velocity nodes
      CALL OPR_PARTIAL_Z(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
-     !
+  !  horizontal pressure derivative dpdx - back on horizontal velocity nodes
      CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_X(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
   ELSE
