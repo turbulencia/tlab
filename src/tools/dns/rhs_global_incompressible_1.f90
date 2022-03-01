@@ -34,6 +34,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
+! DEBUGGING
+  ! USE IO_FIELDS
+  ! USE TLAB_PROCS 
 
   IMPLICIT NONE
 
@@ -224,6 +227,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
      ENDIF
+#if 0
      IF (istagger .EQ. 1 ) THEN
      !  stagger tmp2 on horizontal pressure nodes
         CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
@@ -238,6 +242,23 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL OPR_PARTIAL_Y(OPR_P1,           imax,jmax,kmax, bcs, g(2), tmp2, tmp1, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_X(OPR_P1,           imax,jmax,kmax, bcs, g(1), tmp3, tmp2, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P1,           imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d,wrk3d)
+#endif
+     IF (istagger .EQ. 1 ) THEN 
+     !  stagger tmp2 on horizontal pressure nodes
+        CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp2, tmp1, wrk3d, wrk2d,wrk3d)
+     !  stagger tmp3 on horizontal pressure nodes
+        CALL OPR_PARTIAL_X(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(1), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+     !  stagger tmp4 on horizontal pressure nodes
+        CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
+     ELSE
+        CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), tmp2, tmp1, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1,        imax,jmax,kmax, bcs, g(1), tmp3, tmp2, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d,wrk3d)
+     ENDIF     
   ELSE
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h2,tmp2)
@@ -287,11 +308,21 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
        tmp1,tmp3, tmp2,tmp4, BcsFlowJmin%ref(1,1,2),BcsFlowJmax%ref(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
+! ========================================================================
+  ! IF (istagger .EQ. 1 ) THEN
+  !    CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
+  !    CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp1, wrk3d, wrk2d,wrk3d)
+  ! ENDIF
+  ! CALL IO_WRITE_FIELDS('Pressure000001', IO_FLOW, imax,jmax,kmax, i1, tmp1,wrk3d)
+  ! CALL TLAB_STOP(i0)
+! ========================================================================
+
 ! Saving pressure for towers to tmp array
   IF ( tower_mode .EQ. 1 .AND. rkm_substep .EQ. rkm_endstep ) THEN
      CALL DNS_TOWER_ACCUMULATE(tmp1,i4,wrk1d)
   ENDIF
 
+#if 0
   IF (istagger .EQ. 1 ) THEN
   !  stagger tmp3 (Oy pressure deriv. dp/dy) back on horizontal velocity nodes
      CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
@@ -300,10 +331,27 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp1, wrk3d, wrk2d,wrk3d)
   ENDIF
-
-! horizontal pressure derivatives
+  
+  ! horizontal pressure derivatives
   CALL OPR_PARTIAL_X(OPR_P1,           imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Z(OPR_P1,           imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
+#endif
+
+  IF (istagger .EQ. 1 ) THEN
+  !  vertical pressure derivative   dpdy - back on horizontal velocity nodes
+     CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
+  !  horizontal pressure derivative dpdz - back on horizontal velocity nodes
+     CALL OPR_PARTIAL_Z(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+  !  horizontal pressure derivative dpdx - back on horizontal velocity nodes
+     CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+  ELSE
+  !  horizontal pressure derivatives 
+     CALL OPR_PARTIAL_X(OPR_P1,        imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
+  ENDIF
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient
