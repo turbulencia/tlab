@@ -84,6 +84,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacpenta6/CompactJacobian8/CompactDirect6>')
   CALL TLAB_WRITE_ASCII(bakfile, '#StaggerHorizontalGrid=<yes/no>')
   CALL TLAB_WRITE_ASCII(bakfile, '#InterpolVerticalGrid=<yes/no>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#FilterParameter=<value>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
@@ -278,7 +279,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main. InterpolVerticalGrid must be yes or no')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
-
+  
+  CALL SCANINIREAL(bakfile, inifile, 'Main', 'Filterparameter', '3', vfilter_param)
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
   CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeITranspose', 'asynchronous',sRes)

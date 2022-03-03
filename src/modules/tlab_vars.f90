@@ -27,6 +27,7 @@ MODULE TLAB_VARS
   TINTEGER :: ifourier
   TINTEGER :: itransport
   TINTEGER :: istagger, ivinterpol     ! vel./pre. grid staggering + interpolation
+  TREAL    :: vfilter_param            ! vertical filter parameter pressure
 
   TINTEGER :: imode_fdm                ! finite-difference method for spatial operators
 
