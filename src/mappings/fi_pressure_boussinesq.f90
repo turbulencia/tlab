@@ -35,7 +35,7 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(:),   POINTER :: tmp3,tmp4,tmp5
   TREAL, DIMENSION(:,:), POINTER :: tmp6
 
-  TREAL, DIMENSION(:), POINTER :: p_bcs
+  TREAL, DIMENSION(:),   POINTER :: p_bcs
 
 ! #######################################################################
   nxy  = imax*jmax
@@ -84,27 +84,30 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
 ! Set p-field back to zero
   p = C_0_R
 
-#if 0
 ! Calculate forcing term Ox
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
     CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
   ENDIF
   IF (istagger .EQ. 1 ) THEN
-    CALL OPR_PARTIAL_X(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(3), tmp2,tmp3, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_X(OPR_P1_INT_VP,  imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(3), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
+  ELSE
+    CALL OPR_PARTIAL_X(OPR_P1,         imax,jmax,kmax, bcs, g(1), tmp3,tmp1, wrk3d, wrk2d,wrk3d)
   ENDIF
-  CALL OPR_PARTIAL_X(  OPR_P1,         imax,jmax,kmax, bcs, g(1), tmp3,tmp1, wrk3d, wrk2d,wrk3d)
   p = p + tmp1
 
-  ! Calculate forcing term Oy
+! Calculate forcing term Oy
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
     CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
   ENDIF
+  tmp3 = tmp4 ! copy for BCs of poisson solver 
   IF (istagger .EQ. 1 ) THEN
     CALL OPR_PARTIAL_X(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(1), tmp4,tmp2, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(3), tmp2,tmp4, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Y(OPR_P1,         imax,jmax,kmax, bcs, g(2), tmp2,tmp4, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(3), tmp4,tmp1, wrk3d, wrk2d,wrk3d)
+  ELSE
+    CALL OPR_PARTIAL_Y(OPR_P1,         imax,jmax,kmax, bcs, g(2), tmp4,tmp1, wrk3d, wrk2d,wrk3d)
   ENDIF
-  CALL OPR_PARTIAL_Y(  OPR_P1,         imax,jmax,kmax, bcs, g(2), tmp4,tmp1, wrk3d, wrk2d,wrk3d)
   p = p + tmp1
 
 ! Calculate forcing term Oz
@@ -113,49 +116,11 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   ENDIF
   IF (istagger .EQ. 1 ) THEN
     CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp5,tmp2, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp2,tmp5, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
+  ELSE  
+    CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp5,tmp1, wrk3d, wrk2d,wrk3d)
   ENDIF
-  CALL OPR_PARTIAL_Z(  OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp5,tmp1, wrk3d, wrk2d,wrk3d)
   p = p + tmp1
-#endif
-
-! Calculate forcing term Ox
-IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-  CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
-ENDIF
-IF (istagger .EQ. 1 ) THEN
-  CALL OPR_PARTIAL_X(OPR_P1_INT_VP,  imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(3), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
-ELSE
-  CALL OPR_PARTIAL_X(OPR_P1,         imax,jmax,kmax, bcs, g(1), tmp3,tmp1, wrk3d, wrk2d,wrk3d)
-ENDIF
-p = p + tmp1
-
-! Calculate forcing term Oy
-IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-  CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
-ENDIF
-tmp3 = tmp4 ! copy for BCS of poisson solver 
-IF (istagger .EQ. 1 ) THEN
-  CALL OPR_PARTIAL_X(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(1), tmp4,tmp2, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1,         imax,jmax,kmax, bcs, g(2), tmp2,tmp4, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(3), tmp4,tmp1, wrk3d, wrk2d,wrk3d)
-ELSE
-  CALL OPR_PARTIAL_Y(OPR_P1,         imax,jmax,kmax, bcs, g(2), tmp4,tmp1, wrk3d, wrk2d,wrk3d)
-ENDIF
-p = p + tmp1
-
-! Calculate forcing term Oz
-IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-  CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp5)
-ENDIF
-IF (istagger .EQ. 1 ) THEN
-  CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp5,tmp2, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
-ELSE  
-  CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp5,tmp1, wrk3d, wrk2d,wrk3d)
-ENDIF
-p = p + tmp1
 
 ! #######################################################################
 ! Solve Poisson equation
@@ -176,7 +141,7 @@ p = p + tmp1
   CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, i3, &
        p,wrk3d, tmp1,tmp2, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
-! Interpolate back on velocity grid
+! Stagger pressure field p back on velocity grid
   IF (istagger .EQ. 1 ) THEN
     CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), p,    tmp1, wrk3d, wrk2d,wrk3d)
     CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp1, p,    wrk3d, wrk2d,wrk3d)

@@ -263,23 +263,6 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   g(1:3)%mode_fdm = imode_fdm
 
 ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'StaggerHorizontalGrid', 'no', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; istagger = 1
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; istagger = 0
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main. StaggerHorizontalGrid must be yes or no')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'InterpolVerticalGrid', 'no', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; ivinterpol = 1
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; ivinterpol = 0
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main. InterpolVerticalGrid must be yes or no')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
-
-! -------------------------------------------------------------------
 #ifdef USE_MPI
   CALL SCANINICHAR(bakfile,inifile, 'Main', 'ComModeITranspose', 'asynchronous',sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none')         THEN; ims_trp_mode_i = TLAB_MPI_TRP_NONE
@@ -299,6 +282,51 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 #endif
+
+! ###################################################################
+! Pressure staggering 
+! ###################################################################
+  CALL TLAB_WRITE_ASCII(bakfile, '#')
+  CALL TLAB_WRITE_ASCII(bakfile, '#[Staggering]')
+  CALL TLAB_WRITE_ASCII(bakfile, '#StaggerHorizontalPressure=<yes/no>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#FilterVerticalPressure=<yes/no>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#FilterParameter=<value>')
+
+  CALL SCANINICHAR(bakfile, inifile, 'Staggering', 'StaggerHorizontalPressure', 'no', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; istagger = 1; CALL TLAB_WRITE_ASCII(lfile, 'Horizontal staggering of the pressure along Ox and Oz.')
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; istagger = 0
+  ELSE
+     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main. StaggerHorizontalPressure must be yes or no')
+     CALL TLAB_STOP(DNS_ERROR_OPTION)
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'Staggering', 'FilterVerticalPressure', 'no', sRes)
+  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; ivfilter = 1;  CALL TLAB_WRITE_ASCII(lfile, 'Vertical filtering of the pressure and dpdy along Oy.')
+  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; ivfilter = 0
+  ELSE
+     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main. FilterVerticalPressure must be yes or no')
+     CALL TLAB_STOP(DNS_ERROR_OPTION)
+  ENDIF
+
+  CALL SCANINIREAL(bakfile, inifile, 'Staggering', 'Filterparameter', '4.0', vfilter_param)
+
+! Consistency check
+  IF ( istagger .EQ. 1 ) THEN
+     IF ( .NOT. ( (imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE) .OR. (imode_eqns .EQ. DNS_EQNS_ANELASTIC) ) ) THEN
+       CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
+       CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+     ENDIF
+     IF ( .NOT. (iadvection .EQ. EQNS_CONVECTIVE) ) THEN
+      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Horizontal pressure staggering only implemented for convective advection scheme.')
+      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+     ENDIF
+  ENDIF
+  IF ( ivfilter .EQ. 1 ) THEN
+     IF ( .NOT. (istagger .EQ. 1) ) THEN
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Vertical pressure filtering only incombination with Horizontal pressure staggering.')
+        CALL TLAB_STOP(DNS_ERROR_OPTION)
+     ENDIF
+  ENDIF
 
 ! ###################################################################
 ! Dimensionles parameters
@@ -1230,18 +1258,10 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ENDIF
      g(is)%inb_grid = g(is)%inb_grid  &
                     + 1                    ! Density correction in anelastic mode
-     IF ( istagger .EQ. 1 ) THEN 
-        IF ( g(is)%periodic ) THEN
-           g(is)%inb_grid = g(is)%inb_grid  &
-                          + 5               & ! LU decomposition interpolation
-                          + 5                 ! LU decomposition 1. order interpolatory
-                        
-        ELSE
-           g(is)%inb_grid = g(is)%inb_grid  &
-                          + 3 *2            & ! LU decomposition interpolation,    2 directions
-                          + 3 *2            & ! LU decomposition 1. order interp., 2 directions
-                          + 1                 ! Jacobians of first-order derivatives on pressure mesh
-        ENDIF
+     IF ( (istagger .EQ. 1) .AND. g(is)%periodic ) THEN 
+        g(is)%inb_grid = g(is)%inb_grid  &
+                       + 5               & ! LU decomposition interpolation
+                       + 5                 ! LU decomposition 1. order interpolatory
      ENDIF
   END DO
 

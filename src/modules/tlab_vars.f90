@@ -26,7 +26,9 @@ MODULE TLAB_VARS
   TINTEGER :: iadvection, iviscous, idiffusion ! formulation
   TINTEGER :: ifourier
   TINTEGER :: itransport
-  TINTEGER :: istagger, ivinterpol     ! vel./pre. grid staggering + interpolation
+  TINTEGER :: istagger, ivfilter       ! horizontal staggering of pressure 
+                                       ! vertical   filtering  of pressure
+  TREAL    :: vfilter_param            ! vertical filter parameter
 
   TINTEGER :: imode_fdm                ! finite-difference method for spatial operators
 

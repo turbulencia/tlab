@@ -30,7 +30,7 @@ PROGRAM VINTEGRAL
 
   TYPE(grid_dt)                      :: g
   TINTEGER                           :: jmax,kmax, i
-  TINTEGER, PARAMETER                :: imax=128, inb_grid=44
+  TINTEGER, PARAMETER                :: imax=128, inb_grid=57
   TREAL,    DIMENSION(imax,inb_grid) :: x
   TREAL,    DIMENSION(imax         ) :: wrk2d, wrk3d
   TREAL,    DIMENSION(imax         ) :: u, w_n, f

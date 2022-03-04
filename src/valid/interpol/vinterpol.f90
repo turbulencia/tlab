@@ -22,20 +22,21 @@
 PROGRAM INTERPOL
 
   USE TLAB_TYPES, ONLY : grid_dt
+  USE TLAB_PROCS
   
   IMPLICIT NONE
  
 #include "integers.h"
   
   TYPE(grid_dt)                       :: g, g_pre
-  TINTEGER                            :: jmax,kmax, i, l, test_type
+  TINTEGER                            :: jmax,kmax, i, l, test_type, periodic
   TREAL                               :: lambda, error, sol
  
-  TINTEGER, PARAMETER                 :: imax=41, len=1, inb_grid=44
+  TINTEGER, PARAMETER                 :: imax=32, len=10, inb_grid=57
   TINTEGER, PARAMETER                 :: imaxp=imax-1 
  
   TREAL,    DIMENSION(imax, inb_grid) :: x
-  TREAL,    DIMENSION(imaxp,inb_grid) :: x_pre ! pressure grid (for non-periodic case!)
+  TREAL,    DIMENSION(imaxp,inb_grid) :: x_pre ! pressure grid (for non-periodic case)
  
   TREAL,    DIMENSION(imax)           :: x_int, x_aux
   TREAL,    DIMENSION(len,imax)       :: u, u_int, u_aux, u_a, u_b, u_c
@@ -51,11 +52,9 @@ PROGRAM INTERPOL
   jmax       = 1
   kmax       = 1
   g%mode_fdm = FDM_COM6_JACOBIAN 
-   
-! Valid stettings
-  g%periodic = .FALSE. ! .TRUE. 
   lambda     = 1               
-
+   
+! Input
   WRITE(*,*) '........... Test type (1/2/3/4)? ...............'
   WRITE(*,*) 'Interpolation from vel. to pre. grid        = 1'
   WRITE(*,*) 'Interpolation from pre. to vel. grid        = 2'
@@ -63,9 +62,23 @@ PROGRAM INTERPOL
   WRITE(*,*) '1st Interpol. deriv. from pre. to vel. grid = 4'
   WRITE(*,*) '................................................'
   READ(*,*) test_type
-  IF ( g%periodic .EQV. .TRUE. ) THEN
+  IF ( test_type .LT. 1 .OR. test_type .GT. 4 ) THEN 
+    WRITE(*,*) 'ERROR, STOP. Chose value between 1 and 4.'
+    CALL TLAB_STOP(i0)
+  ENDIF
+  WRITE(*,*) 'Testing     periodic schemes = 0'
+  WRITE(*,*) 'Testing non-periodic schemes = 1'
+  WRITE(*,*) '................................................'
+  READ(*,*) periodic
+  IF ( periodic .NE. 0 .AND. periodic .NE. 1) THEN 
+    WRITE(*,*) 'ERROR, STOP. Chose value between 0 and 1.'
+    CALL TLAB_STOP(i0)
+  ENDIF
+  IF (     periodic .EQ. 0 ) THEN 
+    g%periodic = .TRUE.
     WRITE(*,*) '.......... Testing periodic schemes ............'
-  ELSE
+  ELSEIF ( periodic .EQ. 1 ) THEN 
+    g%periodic = .FALSE.
     WRITE(*,*) '........ Testing non-periodic schemes ..........'
   ENDIF
   WRITE(*,*) '................................................'
@@ -81,10 +94,10 @@ PROGRAM INTERPOL
     ENDDO
   ENDIF
 
-  ! Velocity grid
+! Velocity grid
   CALL FDM_INITIALIZE(x, g, wrk1d) 
 
-  ! Initialize grids (interpolation grid on midpoints)  
+! Initialize grids (interpolation grid on midpoints)  
   IF ( g%periodic ) THEN
     DO i = 1,imax
       x_int(i) = g%nodes(i) + 0.5 * g%jac(i,1)
@@ -97,8 +110,8 @@ PROGRAM INTERPOL
   ENDIF
   x_aux(:) = x_int(:)
 
-  ! Initialize pressure grid (only needed for non-periodic case)
-  ! (here: periodic case implies the usage of uniform grids!)
+! Initialize pressure grid (only needed for non-periodic case)
+! (here: periodic case implies the usage of uniform grids!)
   DO i = 1,imaxp; x_pre(i,1) = x_int(i); ENDDO
   g_pre%size=imaxp; g_pre%scale=x_int(imaxp); g_pre%uniform=g%uniform
   g_pre%mode_fdm=g%mode_fdm; g_pre%periodic=.FALSE. 
