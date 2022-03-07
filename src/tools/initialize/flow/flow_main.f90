@@ -73,6 +73,12 @@ PROGRAM INIFLOW
   io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ( imax,1,kmax, MPI_REAL8 )
 #endif
 
+  ! Staggering of the pressure grid not implemented here
+  IF ( istagger == 1 .or. ivfilter ==1 ) THEN
+     CALL TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not yet implemented.')
+     istagger = i0; ivfilter = i0 ! turn staggering off for OPR_POISSON_FXZ(...)
+  ENDIF 
+
   IF ( flag_u /= 0 ) THEN ! Initialize Poisson Solver
      IF ( ifourier == 1 .AND. g(1)%periodic .AND. g(3)%periodic ) THEN
         CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)

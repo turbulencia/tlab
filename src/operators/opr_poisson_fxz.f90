@@ -146,10 +146,9 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 
      END SELECT
 
-   ! Vertical filtering of p and dpdy with a spectral erf filter
-     IF (ivfilter .EQ. 1 ) THEN
-        CALL FILTER_VERTICAL_1D(aux(:,2),   ny, vfilter_param, aux(1,1))
-        CALL FILTER_VERTICAL_1D(wrk1d(:,1), ny, vfilter_param, aux(1,1))
+   ! Vertical filtering of p and dpdy in case of staggering
+     IF ( ivfilter .EQ. 1 ) THEN
+        CALL FILTER_VERTICAL_PRESSURE(aux(1,2), wrk1d(1,1), ny, vfilter_param, wrk1d(1,2))
      ENDIF
  
    ! Normalize
@@ -161,7 +160,6 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
       
    ENDDO
    ENDDO
- 
 
 ! ###################################################################
 ! Fourier field p (based on array tmp1)
@@ -187,88 +185,3 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 
   RETURN
 END SUBROUTINE OPR_POISSON_FXZ
-
-!########################################################################
-!# DESCRIPTTION
-!# 
-!# Filter function
-!#
-!########################################################################
-SUBROUTINE FILTER_VERTICAL_1D(a, n, lcut, wrk1)
-  IMPLICIT NONE
-  
-#include "integers.h"
-#ifdef USE_FFTW
-#include "fftw3.f"
-#endif 
-  
-  TCOMPLEX, DIMENSION(n), INTENT(INOUT) :: a       ! 1d-array to be filtered
-  TINTEGER,               INTENT(INOUT) :: n       ! ny
-  TREAL,                  INTENT(INOUT) :: lcut    ! filter parameter
-  TCOMPLEX, DIMENSION(n), INTENT(INOUT) :: wrk1    ! aux 1d-array
-  
-! -------------------------------------------------------------------
-
-  INTEGER(8)                            :: plan_f, plan_b  
-  TREAL                                 :: norm 
-  
-! ###################################################################
-  norm = C_1_R / M_REAL(n)
-  
-! Build plans
-  CALL dfftw_plan_dft_1d(plan_f, n, a,    wrk1, FFTW_FORWARD,  FFTW_ESTIMATE)
-  CALL dfftw_plan_dft_1d(plan_b, n, wrk1, a,    FFTW_BACKWARD, FFTW_ESTIMATE)
-
-! Execute + Filtering
-  CALL dfftw_execute_dft(plan_f, a,    wrk1)
-  CALL FILTER_ERF_1D(wrk1, n, lcut)
-  CALL dfftw_execute_dft(plan_b, wrk1, a   )
-
-! Normalize
-  a = a * norm
-
-! Destroy plans  
-  CALL dfftw_destroy_plan(plan_f)
-  CALL dfftw_destroy_plan(plan_b)
-
-  RETURN
-END SUBROUTINE FILTER_VERTICAL_1D
-!########################################################################
-SUBROUTINE FILTER_ERF_1D(a, n, lcut)
-
-  IMPLICIT NONE
- 
-#include "integers.h"
- 
-  TCOMPLEX, DIMENSION(n), INTENT(INOUT) :: a       ! 1d-array to be filtered
-  TINTEGER,               INTENT(IN   ) :: n 
-  TREAL,                  INTENT(IN   ) :: lcut    ! filter parameter
- 
- ! -------------------------------------------------------------------
-   
-  TREAL                                 :: k_ref, k_rel
-  TINTEGER                              :: i, j, n_ny
- 
- ! ###################################################################
-  n_ny  = n/2+1
-  k_ref = C_2_R * n / lcut
- 
-  DO i=1,n_ny
-    k_rel = (i-1) / k_ref
-    a(i)  = a(i) * (ERF(C_8_R * (C_1_R - k_rel)) + C_1_R) / C_2_R
-   !  write(*,*)'i,    krel = ', i, j, k_rel
-  ENDDO
-
-!   write(*,*)'======================================================='
-
-  i = n_ny+1
-
-  DO j=n_ny-1,n-(n-2),-1 
-    k_rel = (j-1) / k_ref
-    a(i)  = a(i) * (ERF(C_8_R * (C_1_R - k_rel)) + C_1_R) / C_2_R
-   !  write(*,*)'i, j, krel = ', i, j, k_rel
-    i = i + 1
-  ENDDO
-
-  RETURN
-END SUBROUTINE FILTER_ERF_1D

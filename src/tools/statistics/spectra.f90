@@ -361,6 +361,10 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
      CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
   ENDIF
 
+  IF ( ivfilter .EQ. 1 ) THEN
+     CALL OPR_STAGGERING_INITIALIZE(g, wrk1d)
+  ENDIF
+
   CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
 
 ! -------------------------------------------------------------------

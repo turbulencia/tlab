@@ -1,6 +1,8 @@
 #include "types.h"
 #include "dns_const.h"
 
+#define C_FILE_LOC "VPOISSON"
+
 PROGRAM VPOISSON
 
   USE TLAB_CONSTANTS
@@ -66,7 +68,7 @@ PROGRAM VPOISSON
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-  CALL IO_READ_FIELDS('field.inp', IO_SCAL, imax,jmax,kmax, i1,i0, a, wrk3d)
+  CALL IO_READ_FIELDS('flow.0', IO_SCAL, imax,jmax,kmax, i1,i0, a, wrk3d)
 
 ! remove 2\Delta x wave
 !  CALL OPR_FILTER(i1,imax,jmax,kmax, ibc_x,ibc_y,ibc_z, i1, a, cx,cy,cz,wrk1d,wrk2d,wrk3d)
@@ -83,6 +85,12 @@ PROGRAM VPOISSON
 ! ###################################################################
   f = a; bcs_hb = C_0_R; bcs_ht = C_0_R
   itype = 1
+
+! Staggering of the pressure grid not implemented here
+  IF ( istagger == 1 .or. ivfilter ==1 ) THEN
+    CALL TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not yet implemented.')
+    istagger = i0; ivfilter = i0 ! turn staggering off for OPR_POISSON_FXZ(...)
+  ENDIF 
 
   IF      ( itype .EQ. 1 ) THEN
      CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &

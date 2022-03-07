@@ -310,6 +310,10 @@ PROGRAM AVERAGES
 
   CALL FI_PROFILES_INITIALIZE(wrk1d)  ! Initialize thermodynamic quantities
 
+  IF ( ivfilter == 1 ) THEN ! Initialize vertical pressure filtering
+    CALL OPR_STAGGERING_INITIALIZE(g, wrk1d)
+  ENDIF
+
   y_aux(:) = 0                        ! Reduced vertical grid
   DO ij = 1,jmax_aux*opt_block
     is = (ij-1)/opt_block + 1

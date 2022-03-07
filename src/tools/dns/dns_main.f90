@@ -92,6 +92,10 @@ PROGRAM DNS
 
   CALL FI_PROFILES_INITIALIZE(wrk1d)
 
+  IF ( ivfilter == 1 ) THEN
+    CALL OPR_STAGGERING_INITIALIZE(g, wrk1d)
+  ENDIF
+
   ! ###################################################################
   ! Initialize fields
   ! ###################################################################
