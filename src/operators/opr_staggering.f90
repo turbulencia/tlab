@@ -94,6 +94,7 @@ SUBROUTINE FILTER_VERTICAL_PRESSURE(a, b, n, lcut, wrk1)
 
 ! Normalize
   a = a * norm
+  b = b * norm
 
   RETURN
 END SUBROUTINE FILTER_VERTICAL_PRESSURE
