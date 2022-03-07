@@ -43,9 +43,7 @@ MODULE TLAB_TYPES
      LOGICAL uniform, periodic, anelastic
      TREAL scale
      TREAL, DIMENSION(:),   POINTER :: nodes
-     TREAL, DIMENSION(:),   POINTER :: nodesp! nodes on non-perodic pressure grid
      TREAL, DIMENSION(:,:), POINTER :: jac   ! pointer to Jacobians
-     TREAL, DIMENSION(:,:), POINTER :: jacp  ! pointer to 1st order Jacobians on pressure mesh 
      TREAL, DIMENSION(:,:), POINTER :: lu0i  ! pointer to LU decomposition for interpolation 
      TREAL, DIMENSION(:,:), POINTER :: lu1   ! pointer to LU decomposition for 1. derivative
      TREAL, DIMENSION(:,:), POINTER :: lu1i  ! pointer to LU decomposition for 1. derivative inc. interp. 

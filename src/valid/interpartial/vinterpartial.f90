@@ -25,6 +25,7 @@ PROGRAM VINTERPARTIAL
   USE TLAB_PROCS
   USE IO_FIELDS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_PROCS
   USE TLAB_MPI_VARS
 #endif
@@ -33,7 +34,6 @@ PROGRAM VINTERPARTIAL
 
 #include "integers.h"
 #ifdef USE_MPI
-#include "mpif.h"
 #else
   TINTEGER, PARAMETER                                :: ims_pro=0
 #endif

@@ -40,7 +40,7 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 #include "integers.h"
 
   LOGICAL,                                  INTENT(IN)    :: flag
-  TINTEGER,                                 INTENT(INOUT)    :: nx,ny,nz, ibc
+  TINTEGER,                                 INTENT(INOUT) :: nx,ny,nz, ibc
   TYPE(grid_dt),                            INTENT(IN)    :: g(3)
   TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: a    ! Forcing term, ans solution field p
   TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: dpdy ! Derivative, flag .TRUE.
@@ -51,7 +51,7 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 
 ! -----------------------------------------------------------------------
   TINTEGER i, j, k, iglobal, kglobal, ip, isize_line
-  TREAL lambda, norm, w1, w2
+  TREAL lambda, norm
   TCOMPLEX bcs(3)
 
 ! #######################################################################

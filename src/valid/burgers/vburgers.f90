@@ -7,6 +7,7 @@ PROGRAM VBURGERS
   USE TLAB_VARS
   USE TLAB_PROCS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_PROCS
   USE TLAB_MPI_VARS
 #endif
@@ -16,7 +17,6 @@ PROGRAM VBURGERS
 
 #include "integers.h"
 #ifdef USE_MPI
-#include "mpif.h"
 #else
    TINTEGER, PARAMETER                 :: ims_pro=0
 #endif
