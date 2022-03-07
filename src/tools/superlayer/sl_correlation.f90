@@ -13,6 +13,7 @@ PROGRAM SL_CORRELATION
 
   USE TLAB_VARS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_PROCS
 #endif
   USE IO_FIELDS
@@ -20,9 +21,6 @@ PROGRAM SL_CORRELATION
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays

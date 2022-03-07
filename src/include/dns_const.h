@@ -195,8 +195,9 @@
 #define IO_SUBARRAY_SPECTRA_Z   10
 #define IO_SUBARRAY_SPECTRA_XZ  11
 #define IO_SUBARRAY_ENVELOPES   12
+#define IO_SUBARRAY_AUX         13
 
-#define IO_SUBARRAY_SIZE        12
+#define IO_SUBARRAY_SIZE        13
 
 ! Lagrangian Type
 #define LAG_TYPE_NONE          0

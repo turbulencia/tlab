@@ -24,9 +24,6 @@ PROGRAM LAGRANGE_PDF
 
   IMPLICIT NONE
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
 ! -------------------------------------------------------------------
 ! Additional local arrays

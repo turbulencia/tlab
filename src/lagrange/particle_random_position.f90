@@ -14,14 +14,12 @@ SUBROUTINE PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk3d)
   USE LAGRANGE_VARS, ONLY : particle_rnd_mode, y_particle_pos, y_particle_width, ilagrange
   USE THERMO_VARS,   ONLY : imixture
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS
 #endif
   USE IO_FIELDS
   IMPLICIT NONE
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TYPE(particle_dt)                               :: l_g
   TREAL,      DIMENSION(isize_particle,*), TARGET :: l_q, l_txc

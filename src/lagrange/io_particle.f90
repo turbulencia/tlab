@@ -18,13 +18,11 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
   USE TLAB_PROCS
   USE LAGRANGE_VARS, ONLY : particle_dt, particle_number_total
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
 #endif
 
   IMPLICIT NONE
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   CHARACTER*(*)     fname
   TYPE(particle_dt) l_g
@@ -164,13 +162,11 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
   USE TLAB_PROCS
   USE LAGRANGE_VARS, ONLY : particle_dt
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
 #endif
 
   IMPLICIT NONE
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   CHARACTER*(*)     fname
   TYPE(particle_dt) l_g

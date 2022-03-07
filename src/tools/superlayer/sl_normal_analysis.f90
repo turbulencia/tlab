@@ -6,16 +6,14 @@ PROGRAM SL_NORMAL_ANALYSIS
 
   USE TLAB_VARS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_PROCS
 #endif
   USE IO_FIELDS
-  
+
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays

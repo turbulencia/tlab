@@ -37,6 +37,7 @@ PROGRAM SPECTRA
   USE TLAB_ARRAYS
   USE TLAB_PROCS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
   USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
@@ -51,10 +52,6 @@ PROGRAM SPECTRA
   IMPLICIT NONE
 
 #include "integers.h"
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
 ! Parameter definitions
   TINTEGER, PARAMETER :: itime_size_max = 512

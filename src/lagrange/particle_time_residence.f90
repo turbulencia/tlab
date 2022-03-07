@@ -45,13 +45,11 @@ SUBROUTINE PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q)
 
   USE TLAB_VARS, ONLY : isize_particle, inb_part_array
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE
-#ifdef USE_MPI
-#include "mpif.h"
-#endif  
 
   CHARACTER*(*) fname
   TINTEGER particle_number
@@ -65,7 +63,7 @@ SUBROUTINE PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q)
   TREAL residence_pdf_interval
 #ifdef USE_MPI
   TLONGINTEGER, DIMENSION(:,:), ALLOCATABLE :: residence_bins_local
-#endif 
+#endif
 
 ! #####################################################################
   residence_tmax = 100
@@ -73,11 +71,11 @@ SUBROUTINE PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q)
   residence_pdf_interval = real(residence_tmax)/real(residence_nbins)
 
 !#######################################################################
-  ALLOCATE(residence_bins(residence_nbins,2)) 
-  ALLOCATE(residence_counter_interval(residence_nbins)) 
+  ALLOCATE(residence_bins(residence_nbins,2))
+  ALLOCATE(residence_counter_interval(residence_nbins))
 #ifdef USE_MPI
-  ALLOCATE(residence_bins_local(residence_nbins,2)) 
-#endif 
+  ALLOCATE(residence_bins_local(residence_nbins,2))
+#endif
 
   residence_bins=int(0,KIND=8)
 
@@ -95,10 +93,10 @@ SUBROUTINE PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q)
 !#######################################################################
 !Reduce all information to root
 !#######################################################################
-  CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err) 
+  CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
   CALL MPI_REDUCE(residence_bins, residence_bins_local, residence_nbins*2, MPI_INTEGER8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
   residence_bins = residence_bins_local
-  
+
 !#######################################################################
 !Create interval for writing
 !#######################################################################
@@ -119,12 +117,12 @@ SUBROUTINE PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q)
      END DO
      CLOSE(116)
 
-#ifdef USE_MPI     
+#ifdef USE_MPI
   END IF
 
-  CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err) 
+  CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
   DEALLOCATE(residence_bins_local)
-#endif 
+#endif
 
   DEALLOCATE(residence_bins)
   DEALLOCATE(residence_counter_interval)

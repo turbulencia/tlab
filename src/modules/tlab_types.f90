@@ -1,6 +1,9 @@
 #include "types.h"
 
 MODULE TLAB_TYPES
+#ifdef USE_MPI
+  USE MPI
+#endif
   IMPLICIT NONE
   SAVE
 
@@ -74,10 +77,6 @@ MODULE TLAB_TYPES
      SEQUENCE
      TREAL, DIMENSION(:,:,:), POINTER :: field
   END TYPE pointers3d_dt
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TYPE subarray_dt
      SEQUENCE

@@ -16,15 +16,13 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   USE TLAB_PROCS
   USE LAGRANGE_VARS,ONLY : particle_dt, isize_l_comm, inb_particle_interp
 #ifdef USE_MPI
-  USE TLAB_MPI_VARS,        ONLY:  ims_err
+ USE MPI
+ USE TLAB_MPI_VARS, ONLY : ims_err
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER nvar
   TYPE(pointers3d_dt), DIMENSION(nvar)                 :: data_in
@@ -109,15 +107,12 @@ SUBROUTINE PARTICLE_HALO_K(nvar, data, halo_field_k, buffer_send, buffer_recv)
   USE TLAB_VARS, ONLY : imax,jmax,kmax
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro, ims_pro_k, ims_npro_k, ims_map_k
   USE TLAB_MPI_VARS, ONLY : ims_err
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER nvar
   TYPE(pointers3d_dt), DIMENSION(nvar):: data
@@ -174,15 +169,12 @@ SUBROUTINE PARTICLE_HALO_I(nvar, data, halo_field_i, halo_field_k, halo_field_ik
   USE TLAB_VARS,     ONLY : imax,jmax,kmax
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro, ims_pro_i, ims_npro_i, ims_map_i
   USE TLAB_MPI_VARS, ONLY : ims_err
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER nvar
   TYPE(pointers3d_dt), DIMENSION(nvar):: data

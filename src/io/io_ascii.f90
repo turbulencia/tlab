@@ -102,13 +102,11 @@ END SUBROUTINE SCANINICHAR
 SUBROUTINE IO_READ_ASCII(fname, title, name, value, default)
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_pro, ims_err
 #endif
   IMPLICIT NONE
 
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
   CHARACTER*(*), INTENT(IN)  :: fname, title, name, default
   CHARACTER*(*), INTENT(OUT) :: value
 

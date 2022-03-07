@@ -21,9 +21,6 @@ PROGRAM INIPART
 
   IMPLICIT NONE
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   ! -------------------------------------------------------------------
   TINTEGER  ierr

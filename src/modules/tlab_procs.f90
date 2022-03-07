@@ -8,6 +8,7 @@ MODULE TLAB_PROCS
   USE OMP_LIB
 #endif
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS
 #endif
   IMPLICIT NONE
@@ -15,10 +16,6 @@ MODULE TLAB_PROCS
   PRIVATE
 
   CHARACTER*128 str, line
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   PUBLIC :: TLAB_START
   PUBLIC :: TLAB_STOP
@@ -162,7 +159,10 @@ CONTAINS
     line='Starting on '//TRIM(ADJUSTL(clock(1)(1:8)))//' at '//TRIM(ADJUSTL(clock(2)))
     CALL TLAB_WRITE_ASCII(lfile,line)
 
-    line='Git-hash '//GITHASH
+    line='Git-hash   '//GITHASH
+    CALL TLAB_WRITE_ASCII(lfile,line)
+
+    line='Git-branch '//GITBRANCH
     CALL TLAB_WRITE_ASCII(lfile,line)
 
 #ifdef USE_MPI

@@ -36,7 +36,7 @@ MODULE DNS_TOWER
 
   USE TLAB_VARS, ONLY : inb_flow, inb_scal
   USE TLAB_PROCS
-  
+
   TINTEGER tower_imax, tower_jmax,tower_kmax, tower_isize_field
   TINTEGER, TARGET :: tower_isize_plane,tower_isize_plane_total
   TINTEGER tower_imax_total, tower_jmax_total,tower_kmax_total
@@ -67,6 +67,7 @@ CONTAINS
     USE DNS_LOCAL, ONLY : nitera_save
 
 #ifdef USE_MPI
+    USE MPI
     USE TLAB_VARS,ONLY : g
     USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro
 #endif
@@ -74,7 +75,6 @@ CONTAINS
     IMPLICIT NONE
 
 #ifdef USE_MPI
-#include "mpif.h"
 #else
     TINTEGER :: ims_offset_i,ims_offset_j, ims_offset_k,ims_pro
     PARAMETER(ims_offset_i=0,ims_offset_j=0,ims_offset_k=0,ims_pro=-1)
@@ -210,6 +210,7 @@ CONTAINS
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifdef USE_MPI
+    USE MPI
     USE TLAB_MPI_VARS, ONLY : ims_err
 #endif
 
@@ -217,10 +218,6 @@ CONTAINS
     USE TLAB_VARS, ONLY : itime,rtime
 
     IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
     ! 1 -- flow;  2 -- scalar;  4 -- pressure
     TINTEGER,                           INTENT(IN)   :: index
@@ -305,12 +302,12 @@ CONTAINS
     USE TLAB_VARS,    ONLY : itime
     USE TLAB_CONSTANTS, ONLY : wfile
 #ifdef USE_MPI
+    USE MPI
     USE TLAB_MPI_VARS,   ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro,ims_err
 #endif
     IMPLICIT NONE
 
 #ifdef USE_MPI
-#include "mpif.h"
 #else
     TINTEGER :: ims_offset_i, ims_offset_j, ims_offset_k, ims_pro
     PARAMETER(ims_offset_i=0, ims_offset_j=0, ims_offset_k=0,ims_pro=-1)
@@ -443,13 +440,13 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #include "types.h"
 
+#ifdef USE_MPI
+    USE MPI
+#endif
     USE TLAB_VARS, ONLY : area, g
 
     IMPLICIT NONE
 
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
     TINTEGER imax, jmax, kmax
     TREAL a(imax, jmax, kmax)
     TREAL avg(tower_jmax), wrk(tower_jmax)
