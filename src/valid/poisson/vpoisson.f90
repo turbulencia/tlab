@@ -61,6 +61,12 @@ PROGRAM VPOISSON
   ! ibc_y(1) = 0; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0
   ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0
 
+! Staggering of the pressure grid not implemented here
+  IF ( istagger == 1 .or. ivfilter ==1 ) THEN
+    CALL TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not implemented here.')
+    istagger = i0; ivfilter = i0 ! turn staggering off for OPR_POISSON_FXZ(...)
+  ENDIF 
+
   bcs = 0
 
   CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
@@ -85,12 +91,6 @@ PROGRAM VPOISSON
 ! ###################################################################
   f = a; bcs_hb = C_0_R; bcs_ht = C_0_R
   itype = 1
-
-! Staggering of the pressure grid not implemented here
-  IF ( istagger == 1 .or. ivfilter ==1 ) THEN
-    CALL TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not yet implemented.')
-    istagger = i0; ivfilter = i0 ! turn staggering off for OPR_POISSON_FXZ(...)
-  ENDIF 
 
   IF      ( itype .EQ. 1 ) THEN
      CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &

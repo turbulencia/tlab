@@ -285,10 +285,6 @@ PROGRAM VISUALS
 
   CALL FI_PROFILES_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
 
-  IF ( ivfilter .EQ. 1 ) THEN ! Initialize vertical pressure filtering
-    CALL OPR_STAGGERING_INITIALIZE(g, wrk1d)
-  ENDIF
-
 #ifdef USE_MPI
   CALL VISUALS_MPIO_AUX(opt_format, subdomain)
 #else
