@@ -30,7 +30,7 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 
   USE TLAB_TYPES,    ONLY : grid_dt
   USE TLAB_VARS,     ONLY : isize_txc_dimz
-  USE TLAB_VARS,     ONLY : ivinterpol, istagger, vfilter_param
+  USE TLAB_VARS,     ONLY : ivfilter, istagger, vfilter_param
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -40,7 +40,7 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 #include "integers.h"
 
   LOGICAL,                                  INTENT(IN)    :: flag
-  TINTEGER,                                 INTENT(IN)    :: nx,ny,nz, ibc
+  TINTEGER,                                 INTENT(INOUT) :: nx,ny,nz, ibc
   TYPE(grid_dt),                            INTENT(IN)    :: g(3)
   TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: a    ! Forcing term, ans solution field p
   TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: dpdy ! Derivative, flag .TRUE.
@@ -51,7 +51,7 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 
 ! -----------------------------------------------------------------------
   TINTEGER i, j, k, iglobal, kglobal, ip, isize_line
-  TREAL lambda, norm, w1, w2
+  TREAL lambda, norm
   TCOMPLEX bcs(3)
 
 ! #######################################################################
@@ -146,50 +146,20 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 
      END SELECT
 
-   ! ! Vertical midpoint interpolation of p and dpdy ("filter") 
-   !   IF (ivinterpol .EQ. 1 ) THEN
-   !   !  interpolation/filter parameter 
-   !      w2 =  C_1_R       / C_2_R
-   !      w1 = (C_1_R - w2) / C_2_R
-   !   !  boundary points
-   !      ip = i                     ! bottom
-   !      tmp1(ip,k) =   aux( 1,2)*norm
-   !      tmp2(ip,k) = wrk1d( 1,1)*norm 
-   !      ip = (ny-1)*isize_line + i ! top
-   !      tmp1(ip,k) =   aux(ny,2)*norm
-   !      tmp2(ip,k) = wrk1d(ny,1)*norm
-   !   !  interpolation + normalization
-   !      DO j = 2,ny-1
-   !         ip = (j-1)*isize_line + i
-   !         tmp1(ip,k) = ( w1*  aux(j-1,2) + w2*  aux(j,2) + w1*  aux(j+1,2) )*norm ! pressure p
-   !         tmp2(ip,k) = ( w1*wrk1d(j-1,1) + w2*wrk1d(j,1) + w1*wrk1d(j+1,1) )*norm ! Oy derivative dpdy
-   !      ENDDO
-   !   ELSE
-   !   !  normalize
-   !      DO j = 1,ny
-   !         ip = (j-1)*isize_line + i
-   !         tmp1(ip,k) = aux(j,2)  *norm ! solution
-   !         tmp2(ip,k) = wrk1d(j,1)*norm ! Oy derivative
-   !      ENDDO
-   !   ENDIF
-
-   ! Spectral erf filter of p and dpdy in vertical direction
-     IF (ivinterpol .EQ. 1 ) THEN
-     ! filtering solution aux(:,2)
-       CALL FILTER_VERTICAL_1D(aux(:,2),   ny, vfilter_param, aux(1,1))
-     ! filtering derivative wrk1d(:,1)
-       CALL FILTER_VERTICAL_1D(wrk1d(:,1), ny, vfilter_param, aux(1,1))
+   ! Vertical filtering of p and dpdy in case of staggering
+     IF ( ivfilter .EQ. 1 ) THEN
+        CALL FILTER_VERTICAL_PRESSURE(aux(1,2), wrk1d(1,1), ny, vfilter_param, wrk1d(1,2))
      ENDIF
-
-   ! normalize
+ 
+   ! Normalize
      DO j = 1,ny
-       ip = (j-1)*isize_line + i
-       tmp1(ip,k) = aux(j,2)  *norm ! solution
-       tmp2(ip,k) = wrk1d(j,1)*norm ! Oy derivative
+        ip = (j-1)*isize_line + i
+        tmp1(ip,k) = aux(j,2)  *norm ! solution
+        tmp2(ip,k) = wrk1d(j,1)*norm ! Oy derivative
      ENDDO
-     
-  ENDDO
-  ENDDO
+      
+   ENDDO
+   ENDDO
 
 ! ###################################################################
 ! Fourier field p (based on array tmp1)
@@ -215,88 +185,3 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 
   RETURN
 END SUBROUTINE OPR_POISSON_FXZ
-!########################################################################
-!# DESCRIPTTION
-!# 
-!# Filter function
-!#
-!########################################################################
-SUBROUTINE FILTER_VERTICAL_1D(a, n, lcut, wrk1)
-
-  IMPLICIT NONE
-  
-#include "integers.h"
-#ifdef USE_FFTW
-#include "fftw3.f"
-#endif 
-  
-  TCOMPLEX, DIMENSION(n), INTENT(INOUT) :: a       ! 1d-array to be filtered
-  TINTEGER,               INTENT(INOUT) :: n       ! ny
-  TREAL,                  INTENT(INOUT) :: lcut    ! filter parameter
-  TCOMPLEX, DIMENSION(n), INTENT(INOUT) :: wrk1    ! aux 1d-array
-  
-! -------------------------------------------------------------------
-
-  INTEGER(8)                            :: plan_f, plan_b  
-  TREAL                                 :: norm 
-  
-! ###################################################################
-  norm = C_1_R / M_REAL(n)
-  
-! Build plans
-  CALL dfftw_plan_dft_1d(plan_f, n, a,    wrk1, FFTW_FORWARD,  FFTW_ESTIMATE)
-  CALL dfftw_plan_dft_1d(plan_b, n, wrk1, a,    FFTW_BACKWARD, FFTW_ESTIMATE)
-
-! Execute + Filtering
-  CALL dfftw_execute_dft(plan_f, a,    wrk1)
-  CALL FILTER_ERF_1D(wrk1, n, lcut)
-  CALL dfftw_execute_dft(plan_b, wrk1, a   )
-
-! Normalize
-  a = a * norm
-
-! Destroy plans  
-  CALL dfftw_destroy_plan(plan_f)
-  CALL dfftw_destroy_plan(plan_b)
-
-  RETURN
-END SUBROUTINE FILTER_VERTICAL_1D
-!########################################################################
-SUBROUTINE FILTER_ERF_1D(a, n, lcut)
-
-  IMPLICIT NONE
- 
-#include "integers.h"
- 
-  TCOMPLEX, DIMENSION(n), INTENT(INOUT) :: a       ! 1d-array to be filtered
-  TINTEGER,               INTENT(IN   ) :: n 
-  TREAL,                  INTENT(IN   ) :: lcut    ! filter parameter
- 
- ! -------------------------------------------------------------------
-   
-  TREAL                                 :: k_ref, k_rel
-  TINTEGER                              :: i, j, n_ny
- 
- ! ###################################################################
-  n_ny  = n/2+1
-  k_ref = C_2_R * n / lcut
- 
-  DO i=1,n_ny
-    k_rel = (i-1) / k_ref
-    a(i)  = a(i) * (ERF(C_8_R * (C_1_R - k_rel)) + C_1_R) / C_2_R
-   !  write(*,*)'i,    krel = ', i, j, k_rel
-  ENDDO
-
-!   write(*,*)'======================================================='
-
-  i = n_ny+1
-
-  DO j=n_ny-1,n-(n-2),-1 
-    k_rel = (j-1) / k_ref
-    a(i)  = a(i) * (ERF(C_8_R * (C_1_R - k_rel)) + C_1_R) / C_2_R
-   !  write(*,*)'i, j, krel = ', i, j, k_rel
-    i = i + 1
-  ENDDO
-
-  RETURN
-END SUBROUTINE FILTER_ERF_1D

@@ -64,13 +64,13 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
            CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, q(1,1),txc(1,3))
            CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, q(1,2),txc(1,4))
            CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, q(1,3),txc(1,5))
-           IF (istagger .EQ. 1 ) THEN
+           IF ( istagger .EQ. 1 ) THEN
               CALL FI_INVARIANT_P_STAG(imax,jmax,kmax, txc(1,3),txc(1,4),txc(1,5), txc(1,1),txc(1,2),txc(1,6), wrk2d,wrk3d)
            ELSE   
               CALL FI_INVARIANT_P(     imax,jmax,kmax, txc(1,3),txc(1,4),txc(1,5), txc(1,1),txc(1,2),          wrk2d,wrk3d)
            ENDIF
         ELSE
-           IF (istagger .EQ. 1 ) THEN
+           IF ( istagger .EQ. 1 ) THEN
               CALL FI_INVARIANT_P_STAG(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), txc(1,6), wrk2d,wrk3d)
            ELSE   
               CALL FI_INVARIANT_P(     imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),           wrk2d,wrk3d)

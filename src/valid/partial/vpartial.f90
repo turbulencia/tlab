@@ -31,7 +31,7 @@ PROGRAM VPARTIAL
   TYPE(grid_dt)                      :: g
    
   TINTEGER                           :: jmax,kmax, i, l
-  TINTEGER, PARAMETER                :: imax=128, len=1, inb_grid=44
+  TINTEGER, PARAMETER                :: imax=128, len=1, inb_grid=57
    
   TREAL,    DIMENSION(imax,inb_grid) :: x
   TREAL,    DIMENSION(len,imax)      :: u, wrk3d

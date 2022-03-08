@@ -14,7 +14,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE TLAB_VARS,    ONLY : pbg, rbg, damkohler
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_txc_field, isize_wrk1d,isize_wrk2d,isize_wrk3d
   USE TLAB_VARS,    ONLY : inb_flow,inb_scal,inb_txc
-  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, imode_ibm, iadvection, iviscous, icalc_part, itransport
+  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, imode_ibm, iadvection, iviscous, icalc_part, itransport, istagger
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : FilterDomain
   USE TLAB_VARS,    ONLY : nstatavg
@@ -976,6 +976,16 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
   ENDIF
+
+! -------------------------------------------------------------------
+! Pressure staggering
+! -------------------------------------------------------------------
+  IF ( istagger .EQ. 1 ) THEN
+     IF ( .NOT. (imode_rhs == EQNS_RHS_COMBINED) ) THEN
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Horizontal pressure staggering only implemented for imode_rhs == EQNS_RHS_COMBINED.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+     ENDIF
+ ENDIF
 
 ! -------------------------------------------------------------------
 ! Nonblocking formulation only valid for 2 scalars or less

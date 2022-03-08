@@ -27,7 +27,3 @@ target_link_libraries(vinterpol.x operators ibm fitpack io fdm ${LEVEL1_LIBS} ${
 FILE(GLOB sourcefiles "interpartial/*.f90")
 add_executable(vinterpartial.x ${sourcefiles})
 target_link_libraries(vinterpartial.x mappings operators ibm fitpack io thermodynamics fdm ${LEVEL1_LIBS} ${LIBS})
-
-FILE(GLOB sourcefiles "interpderiv/*.f90")
-add_executable(vinterpderiv.x ${sourcefiles})
-target_link_libraries(vinterpderiv.x  mappings operators ibm fitpack io thermodynamics fdm ${LEVEL1_LIBS} ${LIBS})

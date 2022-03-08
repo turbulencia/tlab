@@ -42,6 +42,7 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : fft_plan_fz,fft_plan_bz
   USE TLAB_VARS, ONLY : imax,jmax, isize_txc_field
   USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : ivfilter
   USE TLAB_PROCS
 
 #ifdef USE_MPI
@@ -181,6 +182,14 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
         tmp,   g(2)%size, isize_stride, i1, &
         wrk3d, g(2)%size, isize_stride, i1, FFTW_BACKWARD, FFTW_MEASURE)
 #endif
+  ENDIF
+
+  ! -----------------------------------------------------------------------
+  ! Oy direction - spectral pressure filter 
+  ! (used in combination with horizontal pressure grid staggering)
+  ! -----------------------------------------------------------------------
+  IF ( ivfilter == 1 ) THEN
+    CALL OPR_STAGGERING_INITIALIZE(wrk3d)
   ENDIF
 
 #else
