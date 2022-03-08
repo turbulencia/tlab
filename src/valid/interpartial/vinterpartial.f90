@@ -85,7 +85,7 @@ PROGRAM VINTERPARTIAL
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-  CALL IO_READ_FIELDS('flow.0', IO_SCAL, imax,jmax,kmax, i1,i0, a, wrk3d)
+  CALL IO_READ_FIELDS('field.inp', IO_SCAL, imax,jmax,kmax, i1,i0, a, wrk3d)
 
 ! ###################################################################
 ! x-direction: Interpolation + interpolatory 1st derivative
