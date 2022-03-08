@@ -6,14 +6,11 @@
 TREAL FUNCTION AVG1V1D(nx,ny,nz, i,j, imom, a)
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_comm_z, ims_npro_k
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER, INTENT(IN) :: nx,ny,nz, i,j, imom ! Moment order
   TREAL,    INTENT(IN) :: a(nx,ny,nz)
@@ -44,12 +41,11 @@ END FUNCTION AVG1V1D
 ! Adding in k of the matrix a for all the elements in j
 !########################################################################
 SUBROUTINE SUM1V1D_V(ny,nz, a, avg, wrk)
+#ifdef USE_MPI
+  USE MPI
+#endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER, INTENT(IN   ) :: ny,nz
   TREAL,    INTENT(IN   ) :: a(ny,nz)
@@ -84,14 +80,11 @@ END SUBROUTINE SUM1V1D_V
 TREAL FUNCTION COV2V1D(nx,ny,nz, i,j, a,b)
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_comm_z, ims_npro_k
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER, INTENT(IN) :: nx,ny,nz, i,j
   TREAL,    INTENT(IN) :: a(nx,ny,nz), b(nx,ny,nz)
@@ -124,14 +117,11 @@ END FUNCTION COV2V1D
 TREAL FUNCTION AVG1V2D(nx,ny,nz, j, imom, a)
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i,ims_npro_k
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER, INTENT(IN) :: nx,ny,nz, j, imom ! Moment order
   TREAL,    INTENT(IN) :: a(nx,ny,nz)
@@ -166,14 +156,11 @@ END FUNCTION AVG1V2D
 SUBROUTINE AVG1V2D_V(nx,ny,nz, imom, a, avg, wrk)
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i,ims_npro_k
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER, INTENT(IN   ) :: nx,ny,nz, imom ! Moment order
   TREAL,    INTENT(IN   ) :: a(nx,ny,nz)
@@ -209,12 +196,11 @@ END SUBROUTINE AVG1V2D_V
 ! Average within the plane j conditioned on the intermittency signal given by array gate
 !########################################################################
 TREAL FUNCTION AVG1V2D1G(nx,ny,nz, j, igate, imom, a, gate)
+#ifdef USE_MPI
+  USE MPI
+#endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER,   INTENT(IN) :: nx,ny,nz, j, imom   ! Moment order
   INTEGER(1), INTENT(IN) :: igate               ! Gate level to use
@@ -261,14 +247,11 @@ END FUNCTION AVG1V2D1G
 TREAL FUNCTION INTER1V2D(nx,ny,nz, j, igate, gate)
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i,ims_npro_k
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER,   INTENT(IN) :: nx,ny,nz, j
   INTEGER(1), INTENT(IN) :: gate(nx,ny,nz), igate
@@ -305,14 +288,11 @@ END FUNCTION INTER1V2D
 TREAL FUNCTION COV2V2D(nx,ny,nz, j, a, b)
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i,ims_npro_k
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER, INTENT(IN) :: nx,ny,nz, j
   TREAL,    INTENT(IN) :: a(nx,ny,nz), b(nx,ny,nz)
@@ -350,14 +330,11 @@ END FUNCTION COV2V2D
 TREAL FUNCTION AVG_IK(nx,ny,nz, j, a, dx,dz, area)
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k, ims_err
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER, INTENT(IN) :: nx,ny,nz, j
   TREAL,    INTENT(IN) :: dx(*),dz(*), area
@@ -403,14 +380,11 @@ END FUNCTION AVG_IK
 SUBROUTINE AVG_IK_V(nx,ny,nz, jm, a, dx,dz, avg, wrk, area)
 
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k, ims_err
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER, INTENT(IN   ) :: nx,ny,nz, jm
   TREAL,    INTENT(IN   ) :: dx(*),dz(*), area

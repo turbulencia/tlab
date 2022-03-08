@@ -14,6 +14,7 @@ PROGRAM AVERAGES
   USE TLAB_ARRAYS
   USE TLAB_PROCS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
   USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
@@ -27,9 +28,6 @@ PROGRAM AVERAGES
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   ! Parameter definitions
   TINTEGER, PARAMETER :: itime_size_max = 512

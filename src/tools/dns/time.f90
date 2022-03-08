@@ -25,6 +25,7 @@ MODULE TIME
   USE TLAB_PROCS
   USE LAGRANGE_VARS, ONLY : l_g, ilagrange
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS
 #endif
 
@@ -47,9 +48,6 @@ MODULE TIME
   TREAL schmidtfactor, dx2i
   TINTEGER i,j,k, kdsp,idsp, is
   TREAL dummy
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   PUBLIC :: TIME_INITIALIZE
   PUBLIC :: TIME_RUNGEKUTTA

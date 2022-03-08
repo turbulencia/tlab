@@ -3,16 +3,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# Tool/Library DNS
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/11/08 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
 !#
 !# Extracted from THERMO_AIRWATER_RE. Case dsmooth > 0 not yet validated !
 !#
@@ -21,15 +11,13 @@ SUBROUTINE THERMO_AIRWATER_RH(nx, ny, nz, z1, h, rho, T, dqldqt)
 
   USE THERMO_VARS, ONLY : GRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER nx, ny, nz
   TREAL h(*), z1(nx*ny*nz,*), rho(*), dqldqt(*)
@@ -91,7 +79,7 @@ SUBROUTINE THERMO_AIRWATER_RH(nx, ny, nz, z1, h, rho, T, dqldqt)
              ( h(i)-THERMO_AI(6,1,2) )
         B_LOC(3) = B_LOC_CONST_3 - rho(i)*WGHT_INV(1)*&
              ( THERMO_AI(1,1,2) )
-! Newton-Raphson 
+! Newton-Raphson
         t_loc = T(i)
         DO inr = 1,nrmax
            FUN = B_LOC(10)
@@ -174,13 +162,13 @@ SUBROUTINE THERMO_AIRWATER_RH(nx, ny, nz, z1, h, rho, T, dqldqt)
              ( z1(i,1)*HEAT_CAPACITY_LD + THERMO_AI(1,1,2) )
 ! IF ( dsmooth .GT. C_0_R ) THEN
 ! dsmooth_loc = dsmooth*qsat
-! alpha =-( dsmooth_loc*LOG(EXP((z1(i,1)-qsat)/dsmooth_loc)+C_1_R) 
-! $                 -(z1(i,1)-qsat) )*dqldqt(i) 
+! alpha =-( dsmooth_loc*LOG(EXP((z1(i,1)-qsat)/dsmooth_loc)+C_1_R)
+! $                 -(z1(i,1)-qsat) )*dqldqt(i)
 ! B_LOC(2) = B_LOC(2) - rho(i)*WGHT_INV(1)*alpha*LATENT_HEAT
 ! B_LOC(3) = B_LOC(3) + rho(i)*WGHT_INV(1)*alpha*HEAT_CAPACITY_LV
 ! ENDIF
 
-! Newton-Raphson 
+! Newton-Raphson
         DO inr = 1,nrmax
            FUN = B_LOC(10)
            DER = C_0_R

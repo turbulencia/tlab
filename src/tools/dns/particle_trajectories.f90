@@ -29,12 +29,11 @@ CONTAINS
 !#######################################################################
 !#######################################################################
 SUBROUTINE PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
+#ifdef USE_MPI
+  USE MPI
+#endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER nitera_save, nitera_last
 
@@ -197,12 +196,11 @@ END SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE
 !#######################################################################
 !#######################################################################
 SUBROUTINE PARTICLE_TRAJECTORIES_WRITE(fname)
+#ifdef USE_MPI
+  USE MPI
+#endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   CHARACTER*(*) fname
 

@@ -15,11 +15,11 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3
   USE TLAB_VARS, ONLY : visc, radiation
   USE LAGRANGE_VARS, ONLY : l_g, ilagrange, lagrange_param
   USE THERMO_VARS, ONLY : thermo_param
+#ifdef USE_MPI
+  USE MPI
+#endif
 
   IMPLICIT NONE
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 #include "integers.h"
 
   TREAL, DIMENSION(isize_field,*),    TARGET :: q, s, txc
@@ -32,19 +32,19 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3
   TINTEGER bcs(2,2), nvar
   TINTEGER i
   TREAL delta_inv0, delta_inv2, delta_inv4
-  
+
   TYPE(pointers3d_dt), DIMENSION(7) :: data
   TYPE(pointers_dt),   DIMENSION(7) :: data_out
 
 ! #####################################################################
   bcs = 0
-  
+
 ! Setting pointers to velocity fields
   nvar = 0
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => q(:,1); data_out(nvar)%field => l_hq(:,1)
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => q(:,2); data_out(nvar)%field => l_hq(:,2)
   nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => q(:,3); data_out(nvar)%field => l_hq(:,3)
-  
+
 ! -------------------------------------------------------------------
 ! Additional terms depending on type of particle evolution equations
 ! -------------------------------------------------------------------
@@ -84,7 +84,7 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3
      nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => txc(:,3); data_out(nvar)%field => l_txc(:,3)
      nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => txc(:,4); data_out(nvar)%field => l_txc(:,4)
      l_txc(:,1:4) = C_0_R
-     
+
   ENDIF
 
 ! -------------------------------------------------------------------
@@ -93,25 +93,25 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3
 !  consitutes already the evolution equation for particle position
 ! -------------------------------------------------------------------
   CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_g,l_q,l_comm, wrk3d)
-  
+
 ! -------------------------------------------------------------------
 ! Completing evolution equations
 ! -------------------------------------------------------------------
   IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
-! l_txc(1) = equation without ds/dxi 
+! l_txc(1) = equation without ds/dxi
 ! l_txc(2) = xi
-! l_txc(3) = evaporation/condensation term without d2s/dxi2 
+! l_txc(3) = evaporation/condensation term without d2s/dxi2
 ! l_txc(4) = radiation term without ds/dxi
-     
+
      delta_inv0 =  C_1_R  /thermo_param(1)/thermo_param(3)
      delta_inv2 = -C_05_R /thermo_param(1)/thermo_param(3)
      delta_inv4 = -C_025_R/thermo_param(1)/thermo_param(3)
-     
+
      DO i = 1,l_g%np
         l_hq(i,4) = l_hq(i,4) - l_txc(i,1)/(C_1_R + EXP(l_txc(i,2)*delta_inv0))
-        
+
         l_hq(i,5) = l_hq(i,5) - l_txc(i,4)/(C_1_R + EXP(l_txc(i,2)*delta_inv0)) &
-                              - l_txc(i,3)*delta_inv4/(COSH(l_txc(i,2)*delta_inv2)**2) 
+                              - l_txc(i,3)*delta_inv4/(COSH(l_txc(i,2)*delta_inv2)**2)
      ENDDO
 
   ELSE IF (ilagrange .EQ. LAG_TYPE_SIMPLE_SETT) THEN
@@ -123,6 +123,6 @@ SUBROUTINE RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3
   DO i = 1,nvar
      NULLIFY(data(i)%field,data_out(i)%field)
   ENDDO
-  
+
   RETURN
 END SUBROUTINE RHS_PARTICLE_GLOBAL

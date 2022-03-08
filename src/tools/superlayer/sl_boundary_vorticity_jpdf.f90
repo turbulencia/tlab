@@ -9,9 +9,6 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
 #define L_NFIELDS_MAX 4
 
@@ -28,11 +25,6 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
   INTEGER(1) igate
   CHARACTER*32 fname
   CHARACTER*16 suffix
-#ifdef USE_MPI
-  TINTEGER ioffset, ip
-  INTEGER mpio_ip, mpio_locsize
-  INTEGER status(MPI_STATUS_SIZE)
-#endif
 
 ! ###################################################################
   jmin_loc = MAX(1,2*ibuffer_npy)

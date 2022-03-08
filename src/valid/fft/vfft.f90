@@ -11,16 +11,13 @@ USE TLAB_VARS, ONLY:  imax,jmax,kmax
 USE TLAB_VARS, ONLY:  isize_txc_dimz
 USE TLAB_PROCS
 #ifdef USE_MPI
+USE MPI
 USE TLAB_MPI_PROCS
 #endif
 
 IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
-
 
 TREAL, DIMENSION(:), ALLOCATABLE    :: trans, trans2, trans_ref
 TREAL, DIMENSION(:), ALLOCATABLE    :: tmp1,tmp2,tmp3,tmp4,wrk2d,wrk3d

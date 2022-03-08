@@ -23,9 +23,6 @@ PROGRAM APRIORI
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
 ! Parameter definitions
   TINTEGER, PARAMETER :: itime_size_max = 512
