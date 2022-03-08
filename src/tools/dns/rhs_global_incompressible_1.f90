@@ -224,7 +224,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
      ENDIF
-     IF (istagger .EQ. 1 ) THEN ! staggering on horizontal pressure nodes 
+     IF ( istagger .EQ. 1 ) THEN ! staggering on horizontal pressure nodes 
       ! Oy derivative
         CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
@@ -270,7 +270,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ip_t = imax*(jmax-1) + 1
   tmp4 = h2 ! copy, h2 shouldn't be staggered
 ! Stagger also Bcs
-  IF (istagger .EQ. 1 ) THEN
+  IF ( istagger .EQ. 1 ) THEN
      CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
   ENDIF
@@ -294,7 +294,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL DNS_TOWER_ACCUMULATE(tmp1,i4,wrk1d)
   ENDIF
  
-  IF (istagger .EQ. 1 ) THEN
+  IF ( istagger .EQ. 1 ) THEN
   !  vertical pressure derivative   dpdy - back on horizontal velocity nodes
      CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
