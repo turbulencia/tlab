@@ -114,9 +114,8 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
               CALL FDE_BVP_REGULAR_NN(g(2)%mode_fdm, ny,i2, lambda, &
                     g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
            ENDIF
-        ELSE 
-           ! In case of staggering only one singular mode + different modified wavenumbers
-           IF ( kglobal .EQ. 1 .AND. iglobal .EQ. 1     )THEN
+        ELSE ! In case of staggering only one singular mode + different modified wavenumbers
+           IF ( kglobal .EQ. 1 .AND. iglobal .EQ. 1 )THEN
               CALL FDE_BVP_SINGULAR_NN(g(2)%mode_fdm, ny,i2, &
                     g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
            ELSE
@@ -126,13 +125,23 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
         ENDIF
 
      CASE(0) ! Dirichlet & Dirichlet BCs
-        IF ( kglobal .EQ. 1             .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1) .OR.&
-             kglobal .EQ. g(3)%size/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1)     )THEN
-           CALL FDE_BVP_SINGULAR_DD(g(2)%mode_fdm, ny,i2, &
-                g(2)%nodes,g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
-        ELSE
-           CALL FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny,i2, lambda, &
-                           g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+        IF ( istagger .EQ. 0 ) THEN
+           IF ( kglobal .EQ. 1             .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1) .OR.&
+                kglobal .EQ. g(3)%size/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1)     )THEN
+              CALL FDE_BVP_SINGULAR_DD(g(2)%mode_fdm, ny,i2, &
+                    g(2)%nodes,g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
+           ELSE
+              CALL FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny,i2, lambda, &
+                    g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+           ENDIF
+        ELSE ! In case of staggering only one singular mode + different modified wavenumbers
+           IF ( kglobal .EQ. 1 .AND. iglobal .EQ. 1 )THEN
+              CALL FDE_BVP_SINGULAR_DD(g(2)%mode_fdm, ny,i2, &
+                    g(2)%nodes,g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
+           ELSE
+              CALL FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny,i2, lambda, &
+                    g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+           ENDIF
         ENDIF
 
      END SELECT
@@ -164,11 +173,10 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
    !      ENDDO
    !   ENDIF
 
-   ! Spectral erf filter of p and dpdy
+   ! Spectral erf filter of p and dpdy in vertical direction
      IF (ivinterpol .EQ. 1 ) THEN
      ! filtering solution aux(:,2)
        CALL FILTER_VERTICAL_1D(aux(:,2),   ny, vfilter_param, aux(1,1))
-      !  write(*,*) 'filter param = ', vfilter_param
      ! filtering derivative wrk1d(:,1)
        CALL FILTER_VERTICAL_1D(wrk1d(:,1), ny, vfilter_param, aux(1,1))
      ENDIF
@@ -274,7 +282,7 @@ SUBROUTINE FILTER_ERF_1D(a, n, lcut)
   k_ref = C_2_R * n / lcut
  
   DO i=1,n_ny
-    k_rel = i / k_ref
+    k_rel = (i-1) / k_ref
     a(i)  = a(i) * (ERF(C_8_R * (C_1_R - k_rel)) + C_1_R) / C_2_R
    !  write(*,*)'i,    krel = ', i, j, k_rel
   ENDDO
@@ -284,7 +292,7 @@ SUBROUTINE FILTER_ERF_1D(a, n, lcut)
   i = n_ny+1
 
   DO j=n_ny-1,n-(n-2),-1 
-    k_rel = j / k_ref
+    k_rel = (j-1) / k_ref
     a(i)  = a(i) * (ERF(C_8_R * (C_1_R - k_rel)) + C_1_R) / C_2_R
    !  write(*,*)'i, j, krel = ', i, j, k_rel
     i = i + 1
