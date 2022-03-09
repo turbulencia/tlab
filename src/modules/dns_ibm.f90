@@ -18,7 +18,8 @@
 
 module DNS_IBM
 
-  use TLAB_TYPES, only: ibm_geo_dt
+  use TLAB_TYPES,     only: ibm_geo_dt
+  use TLAB_CONSTANTS, only: MAX_NSP 
 
   implicit none
 
@@ -37,6 +38,9 @@ module DNS_IBM
 
   ! modified field
   TREAL, dimension(:), allocatable, target:: fld_ibm                     ! with splines in solid regions
+
+  ! boundary values of scalar fields
+  TREAL, dimension(MAX_NSP)               :: ibmscaljmin, ibmscaljmax 
 
   ! work array for splines
   TREAL,    dimension(:),     allocatable :: wrk_ibm

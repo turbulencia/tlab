@@ -174,8 +174,8 @@ PROGRAM DNS
   ! ###################################################################
   IF ( imode_ibm == 1 ) THEN
     CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
-    CALL IBM_BCS_FIELD(q, inb_flow) ! apply IBM BCs on ini flow fields
-    ! IF ( icalc_scal == 1 ) CALL IBM_BCS_FIELD(s)
+    CALL IBM_BCS_FIELD(i0, q, inb_flow)
+    IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s, inb_scal)
   ENDIF  
 
   ! ###################################################################
@@ -216,8 +216,8 @@ PROGRAM DNS
     IF ( MOD(itime-nitera_first,FilterDomainStep) == 0 ) THEN
       CALL DNS_FILTER()
       IF ( imode_ibm == 1 ) THEN
-        CALL IBM_BCS_FIELD(q, inb_flow) ! apply IBM BCs
-        ! IF ( icalc_scal == 1 ) CALL IBM_BCS_FIELD(s)
+        CALL IBM_BCS_FIELD(i0, q, inb_flow) ! apply IBM BCs
+        IF ( icalc_scal == 1 ) CALL IBM_BCS_FIELD(i1, s, inb_scal)
       ENDIF  
     END IF
 

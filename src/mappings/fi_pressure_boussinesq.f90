@@ -93,9 +93,9 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
 
 ! Apply IBM BCs
   IF ( imode_ibm == 1 ) THEN 
-    CALL IBM_BCS_FIELD(tmp3,i1)
-    CALL IBM_BCS_FIELD(tmp4,i1)
-    CALL IBM_BCS_FIELD(tmp5,i1)
+    CALL IBM_BCS_FIELD(i0,tmp3,i1)
+    CALL IBM_BCS_FIELD(i0,tmp4,i1)
+    CALL IBM_BCS_FIELD(i0,tmp5,i1)
   ENDIF
 
 ! Calculate forcing term Ox

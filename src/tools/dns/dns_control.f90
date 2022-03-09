@@ -81,10 +81,10 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
            IF (istagger .EQ. 1 ) THEN
            !  IBM - zeros in solid on pressure mesh --> not implemented yet!!
               CALL TLAB_WRITE_ASCII(wfile, 'DNS_CONTROL. Dilatation on pressure mesh not correct.')
-              CALL IBM_BCS_FIELD(txc(1,1),i1)
+              CALL IBM_BCS_FIELD(i0,txc(1,1),i1)
            ELSE
            !  IBM - zeros in solid on velocity mesh
-              CALL IBM_BCS_FIELD(txc(1,1),i1) ! 
+              CALL IBM_BCS_FIELD(i0,txc(1,1),i1) ! 
            ENDIF
         ENDIF
 
