@@ -14,23 +14,22 @@ if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build
    set(CMAKE_BUILD_TYPE RELEASE)
 
 else() # compiler for serial build
-   set(ENV{FC} gfortran)
-   set(CMAKE_Fortran_COMPILER gfortran)
-   set(USER_Fortran_FLAGS "-cpp -std=legacy -ffree-form -ffree-line-length-none -fno-automatic")
+   set(ENV{FC} gfortran-10)
+   set(CMAKE_Fortran_COMPILER gfortran-10)
+   set(USER_Fortran_FLAGS "-cpp -std=legacy -ffree-form -ffree-line-length-none -fno-automatic -fallow-argument-mismatch")
    add_definitions(-DUSE_FFTW)# -DIBM_DEBUG)
 
    if    ( ${BUILD_TYPE} STREQUAL "BIG" )
-     set(USER_Fortran_FLAGS_RELEASE "-fconvert=big-endian -ffpe-summary=none -O3 -ffast-math -ffinite-math-only -mtune=native -march=native")
+     set(USER_Fortran_FLAGS_RELEASE "-fconvert=big-endian -ffpe-summary=none -O3 -ffast-math -ffinite-math-only -mtune=native -march=native -funroll-loops")
      set(CMAKE_BUILD_TYPE RELEASE)
 
    elseif( ${BUILD_TYPE} STREQUAL "LITTLE" )
-     set(USER_Fortran_FLAGS_RELEASE "-fconvert=little-endian -ffpe-summary=none -O3 -ffast-math -ffinite-math-only -mtune=native -march=native")
+     set(USER_Fortran_FLAGS_RELEASE "-fconvert=little-endian -ffpe-summary=none -O3 -ffast-math -ffinite-math-only -mtune=native -march=native -funroll-loops")
      set(CMAKE_BUILD_TYPE RELEASE)
 
-   # else()
    elseif( ${BUILD_TYPE} STREQUAL "DEBUG" )
      # set(USER_Fortran_FLAGS_DEBUG "-O0 -p -ggdb -Wall -fbacktrace -ffpe-trap=invalid,zero,overflow,underflow,precision,denormal")
-     set(USER_Fortran_FLAGS_DEBUG "-O0 -ggdb3 -Wall -fbacktrace -fconvert=little-endian -ffpe-trap=invalid,zero,overflow")
+     set(USER_Fortran_FLAGS_DEBUG "-Og -ggdb3 -Wall -fbacktrace -fconvert=little-endian -ffpe-trap=invalid,zero,overflow")
      add_definitions(-D_DEBUG)
      set(CMAKE_BUILD_TYPE DEBUG)
 
