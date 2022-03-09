@@ -18,6 +18,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : FilterDomain
   USE TLAB_VARS,    ONLY : nstatavg
+  USE TLAB_VARS,    ONLY : buoyancy, radiation, transport, chemistry, subsidence
   USE TLAB_PROCS
   USE DNS_IBM,      ONLY : xbars_geo, kspl, nflu, ibm_spline_global, ibm_procs_idle
   USE THERMO_VARS, ONLY : imixture
@@ -904,30 +905,61 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ENDDO
 
 ! -------------------------------------------------------------------
-! Immersed Boundary Method (IBM)
+! Immersed Boundary Method (IBM) - consistency check
 ! -------------------------------------------------------------------
   IF ( imode_ibm .eq. 1 ) THEN
      IF (.NOT. ((kspl .EQ. 3) .OR. (kspl .EQ. 5))) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong SplineOrder, choose 3rd. or 5th. order.')
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Wrong SplineOrder, choose 3rd. or 5th. order.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF 
-     !
      IF ((.NOT. ibm_spline_global) .AND. (nflu .LT. kspl)) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong FluidPoints and SplineOrder combination.')
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Wrong FluidPoints and SplineOrder combination.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF 
-    !
      IF ( ( mod(g(3)%size,2*xbars_geo%number) .eq. 0 ) .and. ( mod(xbars_geo%width,2) .ne. 0 ) ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Interfaces of bars have to be on gridpoints.')
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Requirenments: mod(jmax_total,(2*nbars))==0 & mod(wbar,2)==0.')
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Interfaces of bars have to be on gridpoints.')
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Requirenments: mod(jmax_total,(2*nbars))==0 & mod(wbar,2)==0.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ELSEIF ( ( mod(g(3)%size,2*xbars_geo%number) .ne. 0 ) .and. & 
               ( mod(real(g(3)%size/(2*xbars_geo%number)),0.5) .eq. 0 ) .and. &
               ( mod(xbars_geo%width,2) .ne. 1) ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Interfaces of bars have to be on gridpoints.')
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Requirenments: mod(jmax_total/(2*nbars),0.5)==0 & mod(wbar,2)==1.')
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Interfaces of bars have to be on gridpoints.')
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Requirenments: mod(jmax_total/(2*nbars),0.5)==0 & mod(wbar,2)==1.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)    
      ENDIF
+     IF ( .NOT. ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) ) THEN
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM only implemented for incompressible mode.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+     ENDIF
+     IF ( .NOT. (iadvection .EQ. EQNS_CONVECTIVE) ) THEN
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM only implemented for convective advection scheme.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+     ENDIF
+     IF ( .NOT. (imode_rhs .EQ. EQNS_RHS_COMBINED) ) THEN
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM only implemented for imode_rhs == EQNS_RHS_COMBINED.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+     ENDIF
+     IF ( ( radiation%type  .NE. EQNS_NONE) .OR. &
+          ( transport%type  .NE. EQNS_NONE) .OR. &
+          ( radiation%type  .NE. EQNS_NONE) .OR. &
+          ( chemistry%type  .NE. EQNS_NONE) .OR. &
+          ( subsidence%type .NE. EQNS_NONE)        ) THEN
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM not implemented for radiation, transport, chemistry, subsidence.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+     ENDIF
+     DO is = 1,inb_scal
+        IF ( ( BcsScalJmin%type(is)    .NE. DNS_BCS_DIRICHLET ) .OR. ( BcsScalJmax%type(is)    .NE. DNS_BCS_DIRICHLET ) .OR. &
+             ( BcsScalJmin%SfcType(is) .NE. DNS_SFC_STATIC    ) .OR. ( BcsScalJmax%SfcType(is) .NE. DNS_SFC_STATIC    ) ) THEN 
+           CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Wrong scalar BCs.')
+           CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        ENDIF
+     ENDDO
+     DO is = 1,3
+        IF ( BcsFlowJmin%type(is) .NE. DNS_BCS_DIRICHLET ) THEN 
+            CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Wrong Flow BCs.')
+            CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        ENDIF
+     ENDDO
   ENDIF
 
 ! -------------------------------------------------------------------
