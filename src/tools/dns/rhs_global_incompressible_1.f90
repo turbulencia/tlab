@@ -219,6 +219,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
 
   ENDDO
+  ! IF ( imode_ibm == 1 ) ibm_burgers = .false.
 
 ! #######################################################################
 ! Impose buffer zone as relaxation terms

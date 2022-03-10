@@ -39,14 +39,12 @@ subroutine IBM_IO_READ(wrk3d)
 
 #include "integers.h"
   
-  TREAL, dimension(*), intent(inout)           ::  wrk3d
+  TREAL, dimension(*), intent(inout) ::  wrk3d
 
-  character(len=32)                            :: fname
-
+  character(len=32)                  :: fname
 
   ! ================================================================== !
-
-  ! read eps field
+  ! read eps field (filename 'eps0.1')
   write(fname,*) i0; 
   fname = trim(adjustl('eps'))//trim(adjustl(fname))
   
