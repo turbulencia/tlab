@@ -44,9 +44,12 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   TREAL, dimension(*), intent(inout) :: txc, wrk3d
 
   ! ================================================================== !
-
+  if ( ibm_restart ) then
+    call IBM_IO_READ(wrk3d)
+  else
   ! generate native 3d-geometry field (eps_aux) of immersed objects (define your own geomtry here)
-  call IBM_GENERATE_GEOMETRY_XBARS(wrk3d) 
+    call IBM_GENERATE_GEOMETRY_XBARS(wrk3d) 
+  endif
 
   ! transpose eps in epsi, epsj, epsk and allocate neccessary memory
   call IBM_GEOMETRY_TRANSPOSE(wrk3d,txc)
@@ -55,7 +58,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   call IBM_GENERATE_GEOMETRY(wrk3d,txc) ! txc for DEBUG
 
   ! check idle procs
-  if (ibm_procs_idle) then
+  if ( ibm_procs_idle ) then
     call IBM_CHECK_PROCS()
   else
     ims_pro_ibm_x = .true.; ims_pro_ibm_y = .true.; ims_pro_ibm_z = .true.

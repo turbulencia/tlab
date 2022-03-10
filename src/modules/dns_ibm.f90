@@ -53,7 +53,7 @@ module DNS_IBM
   logical                                 :: ibm_burgers, ibm_partial
 
   ! read_local from dns.ini file 
-  logical                                 :: ibm_spline_global, ibm_procs_idle
+  logical                                 :: ibm_restart, ibm_spline_global, ibm_procs_idle
   TINTEGER                                :: kspl                        ! spline order kspl=[1,5] (best: 3 or 5)
   TINTEGER                                :: nflu                        ! number of fluid points used for Splines 
                                                                          ! (on one side) nflu >= kspl

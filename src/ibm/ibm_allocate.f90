@@ -109,15 +109,16 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
     
   ! allocate here all ibm related arrays
   if ( .not. allocated ) then 
-
+    if ( .not. ibm_restart) then
     ! eps_aux 3d-array
-    write(str,*) inb_ibm; line = 'Allocating array IBM eps_aux of size '//trim(adjustl(str))//'x'
-    write(str,*) isize_field; line = trim(adjustl(line))//trim(adjustl(str))
-    call TLAB_WRITE_ASCII(lfile,line)
-    allocate(eps_aux(imax,jmax,kmax), stat=ierr)
-    if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  eps_aux.')
-    call TLAB_STOP(DNS_ERROR_ALLOC)
+      write(str,*) inb_ibm; line = 'Allocating array IBM eps_aux of size '//trim(adjustl(str))//'x'
+      write(str,*) isize_field; line = trim(adjustl(line))//trim(adjustl(str))
+      call TLAB_WRITE_ASCII(lfile,line)
+      allocate(eps_aux(imax,jmax,kmax), stat=ierr)
+      if ( ierr /= 0 ) then
+      call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  eps_aux.')
+      call TLAB_STOP(DNS_ERROR_ALLOC)
+      end if
     end if
 
     ! eps

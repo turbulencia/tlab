@@ -1,13 +1,15 @@
+#include "types.h"
+
 !########################################################################
 !# HISTORY / AUTHORS
 !#
-!# 2021/XX/XX - J. Kostelecky
+!# 2022/XX/XX - J. Kostelecky
 !#              Created
 !#
 !########################################################################
 !# DESCRIPTION OF SUBROUTINES
-!#   called once in dns_main.f90 in ibm_initialize()
-!#    
+!#  
+!#  
 !#    
 !#    
 !#
@@ -27,28 +29,28 @@
 !#                           
 !#
 !########################################################################
-
-subroutine IBM_DEALLOCATE()
-
-  use DNS_IBM, only : ibm_restart
-  use DNS_IBM, only : eps_aux, epsi, epsj, epsk
+subroutine IBM_IO_READ(wrk3d)
+  
+  use DNS_IBM,   only : eps
+  use TLAB_VARS, only : imax,jmax,kmax
+  use IO_FIELDS
 
   implicit none
 
+#include "integers.h"
+  
+  TREAL, dimension(*), intent(inout)           ::  wrk3d
+
+  character(len=32)                            :: fname
+
+
   ! ================================================================== !
 
-  ! deallocate here not needed arrays
-  if ( .not. ibm_restart ) then
-    deallocate(eps_aux)
-  end if
+  ! read eps field
+  write(fname,*) i0; 
+  fname = trim(adjustl('eps'))//trim(adjustl(fname))
   
-  deallocate(epsi)
+  call IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i1, i1, eps, wrk3d)
   
-  deallocate(epsj)
-  
-  deallocate(epsk)
-
   return
-end subroutine IBM_DEALLOCATE
-
-!########################################################################
+end subroutine IBM_IO_READ
