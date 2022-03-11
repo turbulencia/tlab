@@ -236,14 +236,16 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   ! ================================================================== !
   ! debug -- Block comment with #if 0 and #endif
   ! ================================================================== !
-  if (is/=i0 .and. g%name == 'y') then
+  ! if (is/=i0 .and. g%name == 'y') then
+  if (g%name == 'y') then
     ! ================================================================== !
     ! debug
     if (ims_pro == 0) write(*,*) '========================================================='
 
     ! write out fld_mod for debugging
     call DNS_TRANSPOSE(fld_mod, kmax, imax*jmax, kmax, fld_mod_tr, imax*jmax)
-    call IO_WRITE_FIELDS('scal.4',  IO_SCAL, imax,jmax,kmax, i1, fld_mod_tr, wrk3d)
+    call IO_WRITE_FIELDS('fld_mod',  IO_SCAL, imax,jmax,kmax, i1, fld_mod_tr, wrk3d)
+    ! call IO_WRITE_FIELDS('scal.4',  IO_SCAL, imax,jmax,kmax, i1, fld_mod_tr, wrk3d)
 
     ! stop after writing field
     call TLAB_STOP(i0)
@@ -267,7 +269,7 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
 #endif
 
     ! stop after writing field
-    stop
+    call TLAB_STOP(i0)
     ! ================================================================== !
   end if
     ! ================================================================== !

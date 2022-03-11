@@ -551,9 +551,9 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
      ENDIF
 
      IF ( imode_ibm .EQ. 1 ) THEN
-        CALL IBM_BCS_FIELD(i0, q, inb_flow) ! apply IBM BCs on ini flow fields
-        IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s, inb_scal)
-     ENDIF 
+        CALL IBM_BCS_FIELD_COMBINED(i0, q)
+        IF ( icalc_scal .EQ. 1 ) CALL IBM_INITIALIZE_SCAL(s)
+     ENDIF  
 
      CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
 

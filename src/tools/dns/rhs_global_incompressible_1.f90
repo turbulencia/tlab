@@ -261,9 +261,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
 
      IF ( imode_ibm == 1 ) THEN 
-        CALL IBM_BCS_FIELD(i0,tmp2,i1)
-        CALL IBM_BCS_FIELD(i0,tmp3,i1)
-        CALL IBM_BCS_FIELD(i0,tmp4,i1)
+        CALL IBM_BCS_FIELD(tmp2)
+        CALL IBM_BCS_FIELD(tmp3)
+        CALL IBM_BCS_FIELD(tmp4)
      ENDIF
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp2)
@@ -288,9 +288,9 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      ENDIF     
   ELSE
      IF ( imode_ibm == 1 ) THEN 
-        CALL IBM_BCS_FIELD(i0,h2,i1)
-        CALL IBM_BCS_FIELD(i0,h1,i1)
-        CALL IBM_BCS_FIELD(i0,h3,i1)
+        CALL IBM_BCS_FIELD(h2)
+        CALL IBM_BCS_FIELD(h1)
+        CALL IBM_BCS_FIELD(h3)
      ENDIF
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h2,tmp2)
@@ -321,8 +321,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ip_t = imax*(jmax-1) + 1
   tmp4 = h2 ! copy, h2 shouldn't be staggered
 ! Stagger also Bcs
-  IF ( imode_ibm .EQ. 1 ) CALL IBM_BCS_FIELD(i0,tmp4,i1)
-  IF ( istagger  .EQ. 1 ) THEN
+  IF ( imode_ibm .EQ. 1 ) CALL IBM_BCS_FIELD(tmp4)
+  IF ( istagger  .EQ. 1 ) THEN 
      CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
   ENDIF
@@ -413,7 +413,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hq(1,iq), &
              BcsFlowJmin%ref(1,1,iq),BcsFlowJmax%ref(1,1,iq), wrk1d,tmp1,wrk3d)
      ENDIF
-     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(i0,hq(1,iq),i1)
+     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(hq(1,iq))
   ENDDO
 
   DO is = 1,inb_scal
@@ -429,7 +429,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
           BcsScalJmax%type(is) .NE. DNS_SFC_STATIC ) THEN
         CALL BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
      ENDIF
-     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(i0,hs(1,is),i1)
+     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(hs(1,is))
   ENDDO
 
 ! -----------------------------------------------------------------------
