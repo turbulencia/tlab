@@ -270,7 +270,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ip_t = imax*(jmax-1) + 1
   tmp4 = h2 ! copy, h2 shouldn't be staggered
 ! Stagger also Bcs
-  IF ( istagger .EQ. 1 ) THEN
+  IF ( istagger .EQ. 1 ) THEN ! todo: only need to stagger upper/lower boundary plane, not full h2-array
      CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
   ENDIF
