@@ -130,7 +130,7 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
             call IBM_SPLINE_VECTOR(is, i3, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
             ! .............................................................. !
           else
-            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE not enough fluid points right of the right interface')
+            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE not enough fluid points right of the right interface.')
             call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
           end if
         ! ================================================================== !
@@ -156,12 +156,12 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
             call IBM_SPLINE_VECTOR(is, i6, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
             ! .............................................................. !
           else
-            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE not enough fluid points left of the left interface')
+            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE not enough fluid points left of the left interface.')
             call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
           end if
           ! .............................................................. !
         else
-          call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE this case is not implemented yet')
+          call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE this case is not implemented yet.')
           call TLAB_STOP(DNS_ERROR_NOTIMPL)
         end if
 

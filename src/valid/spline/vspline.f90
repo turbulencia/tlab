@@ -7,9 +7,9 @@ program vspline
 
 ! ###################################################################
 ! define spline parameters here  
-  TINTEGER, parameter          :: imax    = 10                      ! number of data points imax >= 10
+  TINTEGER, parameter          :: imax    = 100                     ! number of data points imax >= 10
   TINTEGER, parameter          :: k       = 3                       ! degree of the spline k=[1,5]
-  TINTEGER, parameter          :: mesh    = 15                      ! mesh refinement factor (mesh=1 for x=x_new)
+  TINTEGER, parameter          :: mesh    = 10                      ! mesh refinement factor (mesh=1 for x=x_new)
 ! do not change the following
   TINTEGER, parameter          :: nest    = imax+2*k                ! number of knots of spline >=2*k+2, always large enough is nest=m+k+1,
   TINTEGER, parameter          :: lwrk    = imax*(k+1)+nest*(8+5*k) ! smallest dimension of working arrays >=imax*(k+1)+nest*(7+3*k) 
@@ -21,7 +21,7 @@ program vspline
   TREAL                        :: res_2, res_inf
 ! time messurement
   TINTEGER                     :: iter, c1, c2, c3, c11, c22, c33   
-  TINTEGER, parameter          :: start=0, end=1000, step=250
+  TINTEGER, parameter          :: start=0, end=50000, step=5000
   TREAL,    dimension((end-start)/step+1) :: delta_t
 ! data arrays                                                       ! better one working array for w,t,c,wrk,iwrk, see opr_interpolate_pool.f90
   TREAL,    dimension(imax)    :: x, y, w
@@ -188,28 +188,6 @@ program vspline
     end do  
   close(12)
   close(13)
-! ###################################################################
-! ## DEBUGGING
-! ###################################################################
-! ! write out random data points
-!   write(*,*) '================================================================================'
-!   do i = 1,imax
-!     write(*,*) 'random data point (x,y)   : ', x(i),y(i)
-!   end do
-!   write(*,*) '================================================================================'
-! ! write out interpolated spline points 
-!   do i = 1,imax_new
-!     write(*,*) 'spline point (x,y)        : ', x_new(i),y_sp(i)
-!   end do
-!   write(*,*) '================================================================================'
-!   do i=1,n-k-1
-!     write(*,*) 'b-spline coefficient      : ', c(i)
-!   end do
-!   write(*,*) '================================================================================'
-!   do i=1,nest
-!     write(*,*) 'b-spline knot position    : ', t(i)
-!   end do
-!   write(*,*) '================================================================================'
 
 ! ###################################################################
 ! ## acces larger data - messure scaling for column/row access ######
@@ -318,35 +296,6 @@ program vspline
     end do  
   close(15)
   close(16)  
-! ###################################################################
-! ## DEBUGGING
-! ###################################################################
-  ! write(*,*) '================================================================================'
-  ! do i = 1,imax2_new
-  !   write(*,*) 'x2new  data point (x)   : ', i, x2_new(i)
-  ! end do
-  ! write(*,*) '================================================================================'
-  ! do i = 1,imax2_new
-  !   write(*,*) 'epsilon field     (x)   : ', i, epsi(i)
-  ! end do
-  ! write(*,*) '================================================================================'
-  ! do i = 1,imax2
-  !   write(*,*) 'x2gap data point  (x)   : ', i, x2(i)
-  ! end do
-  ! write(*,*) '================================================================================'
-  ! do i = 1,imax2
-  !   write(*,*) 'w2                (x)   : ', i, w2(i)
-  ! end do
-  ! write(*,*) '================================================================================'
-  ! do i = 1,imax2
-  !   write(*,*) 'y2                (x)   : ', i, y2c(i,1) , y2r(1,i)
-  ! end do
-  ! write(*,*) '================================================================================'
-  ! do i = 1,imax2
-  !   write(*,*) 'y2_new            (x)   : ', i, y2c_new(i,1) , y2r_new(1,i)
-  ! end do
-  ! write(*,*) '================================================================================'
-  ! ! write(*,*) 'y2                (x)   : ', y2(:,1)
-  ! write(*,*) '================================================================================'
+
   stop
 end program vspline

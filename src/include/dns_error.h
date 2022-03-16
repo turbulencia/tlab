@@ -114,5 +114,6 @@
 #define DNS_ERROR_RESIDENCERESET    204
 
 #define DNS_ERROR_IBM_SPLINE        300
+#define DNS_ERROR_CUBIC_SPLINE      301
 
 #endif
