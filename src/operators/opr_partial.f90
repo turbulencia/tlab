@@ -77,7 +77,7 @@ SUBROUTINE OPR_PARTIAL1(nlines, bcs, g, u,result, wrk2d)
 END SUBROUTINE OPR_PARTIAL1
 ! ###################################################################
 ! ###################################################################
-SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d)
+SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d, wrk3d)
 
   USE TLAB_TYPES, ONLY : grid_dt
   USE DNS_IBM,    ONLY : fld_ibm
@@ -107,6 +107,7 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d)
   TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: u
   TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result
   TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
+  TREAL, DIMENSION(nlines*g%size), INTENT(INOUT) :: wrk3d
 
   ! -------------------------------------------------------------------
 
@@ -130,7 +131,7 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d)
     IF (ims_pro == 0) write(*,*) 'ibm_partial_', g%name ! debug
 #endif
     IF (ims_pro_ibm_x) THEN
-      CALL IBM_SPLINE_XYZ(u, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
+      CALL IBM_SPLINE_XYZ(u, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
       CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
     ELSE
       CALL OPR_PARTIAL1(nlines, bcs, g, u,       result, wrk2d)  ! no splines needed  
@@ -141,7 +142,7 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d)
     IF (ims_pro == 0) write(*,*) 'ibm_partial_', g%name ! debug
 #endif
     IF (ims_pro_ibm_y) THEN
-      CALL IBM_SPLINE_XYZ(u, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e)
+      CALL IBM_SPLINE_XYZ(u, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
       CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
     ELSE
       CALL OPR_PARTIAL1(nlines, bcs, g, u,       result, wrk2d)  ! no splines needed
@@ -152,7 +153,7 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d)
     IF (ims_pro == 0) write(*,*) 'ibm_partial_', g%name ! debug
 #endif
     IF (ims_pro_ibm_z) THEN
-      CALL IBM_SPLINE_XYZ(u, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
+      CALL IBM_SPLINE_XYZ(u, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
       CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
     ELSE
       CALL OPR_PARTIAL1(nlines, bcs, g, u,       result, wrk2d)  ! no splines needed
@@ -164,7 +165,7 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d)
 END SUBROUTINE OPR_PARTIAL1_IBM
 ! ###################################################################
 ! ###################################################################
-SUBROUTINE OPR_IBM(nlines, bcs, g, u,result, wrk2d)
+SUBROUTINE OPR_IBM(nlines, g, u,result, wrk3d)
 
   USE TLAB_TYPES, ONLY : grid_dt
   USE DNS_IBM,    ONLY : nobi,    nobj,   nobk
@@ -176,22 +177,21 @@ SUBROUTINE OPR_IBM(nlines, bcs, g, u,result, wrk2d)
   IMPLICIT NONE
    
   TINTEGER,                        INTENT(IN)    :: nlines
-  TINTEGER, DIMENSION(2,*),        INTENT(IN)    :: bcs    
   TYPE(grid_dt),                   INTENT(IN)    :: g
   TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: u
   TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
+  TREAL, DIMENSION(nlines*g%size), INTENT(INOUT) :: wrk3d
   ! -------------------------------------------------------------------
   ! IBM not for scalar fields! (will be implemented later)
   ! modify incoming u fields (fill solids with spline functions, depending on direction)
   
   SELECT CASE (g%name)
   CASE('x')
-    CALL IBM_SPLINE_XYZ(u, result, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
+    CALL IBM_SPLINE_XYZ(u, result, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
   CASE('y')
-    CALL IBM_SPLINE_XYZ(u, result, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e)
+    CALL IBM_SPLINE_XYZ(u, result, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
   CASE('z')
-    CALL IBM_SPLINE_XYZ(u, result, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
+    CALL IBM_SPLINE_XYZ(u, result, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
   END SELECT
 
   RETURN
@@ -454,7 +454,7 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
 #endif
     IF (ims_pro_ibm_x) THEN
-      CALL IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
+      CALL IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
       p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
       CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)  ! now with modified u fields
     ELSE
@@ -466,7 +466,7 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
 #endif
     IF (ims_pro_ibm_y) THEN
-      CALL IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e)
+      CALL IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
       p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
       CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)  ! now with modified u fields
     ELSE
@@ -478,7 +478,7 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
     IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
 #endif
     IF (ims_pro_ibm_z) THEN
-      CALL IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
+      CALL IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
       p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
       CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)  ! now with modified u fields
     ELSE
@@ -687,17 +687,17 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
   SELECT CASE( type )
 
   CASE( OPR_P2 )
-     CALL OPR_PARTIAL2(nyz, bcs, g, p_b,p_c, wrk2d,p_d)
+     CALL OPR_PARTIAL2(     nyz, bcs, g, p_b,p_c, wrk2d,p_d)
 
   CASE( OPR_P1 )
     IF (ibm_partial) THEN
-      CALL OPR_PARTIAL1_IBM(nyz, bcs, g, p_b,p_c, wrk2d    )
+      CALL OPR_PARTIAL1_IBM(nyz, bcs, g, p_b,p_c, wrk2d,p_d)
     ELSE
       CALL OPR_PARTIAL1(    nyz, bcs, g, p_b,p_c, wrk2d    )
     ENDIF
 
   CASE( OPR_P2_P1 )
-     CALL OPR_PARTIAL2(nyz, bcs, g, p_b,p_c, wrk2d,p_d)
+     CALL OPR_PARTIAL2(     nyz, bcs, g, p_b,p_c, wrk2d,p_d)
 
 ! Check whether we need to calculate the 1. order derivative
      IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
@@ -717,7 +717,7 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      CALL OPR_PARTIAL1_INT(i1, nyz, g, p_b,p_c, wrk2d)
 
   CASE( OPR_P0_IBM )
-     CALL OPR_IBM(             nyz, bcs, g, p_b,p_c, wrk2d    )
+     CALL OPR_IBM(             nyz, g, p_b,p_c, p_d)
 
   END SELECT
 
@@ -831,12 +831,12 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   CASE( OPR_P1 )
     IF (ibm_partial) THEN
-      CALL OPR_PARTIAL1_IBM(nxy, bcs, g, p_a,p_b, wrk2d    )
+      CALL OPR_PARTIAL1_IBM(nxy, bcs, g, p_a,p_b, wrk2d,p_c)
     ELSE
       CALL OPR_PARTIAL1(    nxy, bcs, g, p_a,p_b, wrk2d    )
     ENDIF
   CASE( OPR_P2_P1 )
-     CALL OPR_PARTIAL2(nxy, bcs, g, p_a,p_b, wrk2d,p_c)
+     CALL OPR_PARTIAL2(     nxy, bcs, g, p_a,p_b, wrk2d,p_c)
 
 ! Check whether we need to calculate the 1. order derivative
      IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
@@ -856,7 +856,7 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      CALL OPR_PARTIAL1_INT(i1, nxy, g, p_a,p_b, wrk2d)
 
   CASE( OPR_P0_IBM )
-    CALL OPR_IBM(    nxy, bcs, g, p_a,p_b, wrk2d    )
+    CALL OPR_IBM(              nxy, g, p_a,p_b, p_c)
 
   END SELECT
 
@@ -952,13 +952,13 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   CASE( OPR_P1 )
     IF (ibm_partial) THEN
-      CALL OPR_PARTIAL1_IBM(nxz, bcs, g, p_a,p_b, wrk2d    )
+      CALL OPR_PARTIAL1_IBM(nxz, bcs, g, p_a,p_b, wrk2d,p_c)
     ELSE
       CALL OPR_PARTIAL1(    nxz, bcs, g, p_a,p_b, wrk2d    )
     ENDIF
 
   CASE( OPR_P2_P1 )
-     CALL OPR_PARTIAL2(nxz, bcs, g, p_a,p_b, wrk2d,p_c)
+     CALL OPR_PARTIAL2(     nxz, bcs, g, p_a,p_b, wrk2d,p_c)
 
 ! Check whether we need to calculate the 1. order derivative
      IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
@@ -978,7 +978,7 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      CALL OPR_PARTIAL1_INT(i1, nxz, g, p_a,p_b, wrk2d)
 
   CASE( OPR_P0_IBM )
-     CALL OPR_IBM(             nxz, bcs, g, p_a,p_b, wrk2d    )
+     CALL OPR_IBM(             nxz, g, p_a,p_b, p_c)
 
   END SELECT
 

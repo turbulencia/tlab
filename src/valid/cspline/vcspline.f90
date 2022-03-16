@@ -117,6 +117,10 @@ program CSPLINE
   close(20)
   1000 format(6(1x,e16.10))
 
+  ! Validation option in pyhthon with:
+  !   from   scipy.interpolate import CubicSpline  
+  !   sp = CubicSpline(xorg,yorg,bc_type='natural')
+
   stop
 
 end program CSPLINE

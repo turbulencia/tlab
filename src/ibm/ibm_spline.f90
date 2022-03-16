@@ -32,7 +32,7 @@
 !#
 !########################################################################
 
-subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
+subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e, wrk3d)
 
   use DNS_IBM,        only: xa, xb, x_mask, ya, yb, y_mask 
   use DNS_IBM,        only: nflu, ibm_spline_global, ibmscaljmin
@@ -61,29 +61,28 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
 #ifdef USE_MPI 
 #include "mpif.h"
 #include "dns_const_mpi.h"  
-  TINTEGER, parameter                            :: idi = TLAB_MPI_I_PARTIAL 
-  TINTEGER, parameter                            :: idj = TLAB_MPI_J_PARTIAL 
-  TINTEGER, parameter                            :: idk = TLAB_MPI_K_PARTIAL 
+  TINTEGER, parameter                              :: idi = TLAB_MPI_I_PARTIAL 
+  TINTEGER, parameter                              :: idj = TLAB_MPI_J_PARTIAL 
+  TINTEGER, parameter                              :: idk = TLAB_MPI_K_PARTIAL 
 #else
-  TINTEGER, parameter                            :: ims_pro=0, ims_npro=1
+  TINTEGER, parameter                              :: ims_pro=0, ims_npro=1
 #endif
+  ! debug
+  TREAL, dimension(isize_field)                    :: fld_mod_tr ! debug
+  TINTEGER                                         :: m
 #endif
   
-  TINTEGER,                          intent(in)  :: is     ! scalar index; if 0, then velocity
-  TREAL,    dimension(isize_field),  intent(in)  :: fld 
-  TREAL,    dimension(isize_field),  intent(out) :: fld_mod 
-  type(grid_dt),                     intent(in)  :: g
-  TINTEGER,                          intent(in)  :: nlines, isize_nob, isize_nob_be
-  TINTEGER, dimension(isize_nob),    intent(in)  :: nob
-  TINTEGER, dimension(isize_nob_be), intent(in)  :: nob_b, nob_e
+  TINTEGER,                          intent(in)    :: is     ! scalar index; if 0, then velocity
+  TREAL,    dimension(isize_field),  intent(in)    :: fld 
+  TREAL,    dimension(isize_field),  intent(out)   :: fld_mod 
+  type(grid_dt),                     intent(in)    :: g
+  TINTEGER,                          intent(in)    :: nlines, isize_nob, isize_nob_be
+  TINTEGER, dimension(isize_nob),    intent(in)    :: nob
+  TINTEGER, dimension(isize_nob_be), intent(in)    :: nob_b, nob_e
+  TREAL,    dimension(isize_field),  intent(inout) :: wrk3d
 
-  TINTEGER                                       :: l, ii, ip, ia, ib, ic, iob, iu_il
-  logical                                        :: splines, global
-
-  ! debug
-  TREAL, dimension(isize_field)                  :: wrk3d      ! debug
-  TREAL, dimension(isize_field)                  :: fld_mod_tr ! debug
-  TINTEGER                                       :: m
+  TINTEGER                                         :: l, ii, ip, ia, ib, ic, iob, iu_il
+  logical                                          :: splines, global
   
   ! ================================================================== !  
 #ifdef IBM_DEBUG
@@ -171,7 +170,8 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
         if ((splines) .and. (.not. global)) then
 
           ! generate splines
-          call IBM_SPLINE(ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib)) 
+          call IBM_SPLINE( ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib)) 
+          ! call CUBIC_SPLINE(ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib), wrk3d) 
 
           ! force yb at interface to physical BCs (without this yb approx delta 10^-16 wrong at interface)
           if ( is /= i0 ) then
@@ -216,6 +216,7 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
 
         ! generate splines
         call IBM_SPLINE(ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib)) 
+        ! call CUBIC_SPLINE(ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib), wrk3d) 
 
         ! force yb at interface to zero (without this yb approx 10^-16 at interface)
         where (.not. y_mask(1:g%size)) yb(1:g%size) = C_0_R
@@ -236,7 +237,6 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   ! ================================================================== !
   ! debug -- Block comment with #if 0 and #endif
   ! ================================================================== !
-  ! if (is/=i0 .and. g%name == 'y') then
   if (g%name == 'y') then
     ! ================================================================== !
     ! debug
@@ -245,13 +245,12 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
     ! write out fld_mod for debugging
     call DNS_TRANSPOSE(fld_mod, kmax, imax*jmax, kmax, fld_mod_tr, imax*jmax)
     call IO_WRITE_FIELDS('fld_mod',  IO_SCAL, imax,jmax,kmax, i1, fld_mod_tr, wrk3d)
-    ! call IO_WRITE_FIELDS('scal.4',  IO_SCAL, imax,jmax,kmax, i1, fld_mod_tr, wrk3d)
 
     ! stop after writing field
     call TLAB_STOP(i0)
     ! ================================================================== !
   end if
-  !
+
   if (g%name == 'z') then
     ! ================================================================== !
     ! debug
