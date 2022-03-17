@@ -81,7 +81,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
 #else
   nyz = jmax * kmax     ! global
   nxz = imax * kmax     
-  nxy = imax * jmax     
+  nxy = imax * jmax
 #endif  
 
   ! ================================================================== !
@@ -94,11 +94,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
   isize_nobj_be   = nxz * nob_max  
   isize_nobk_be   = nxy * nob_max
   !
-  if (ibm_spline_global) then
-    nsp           = max(g(1)%size, max(g(2)%size, g(3)%size)) 
-  else
-    nsp           = 2 * nflu + 2    ! number of data points (with 2 interface points) nsp > kspl
-  endif
+  nsp             = 2 * nflu + 2    ! number of data points (with 2 interface points) nsp > kspl
   ! cf. fitpack package (routines curfit and splev)
   nest            = nsp + kspl + 1
   isize_wrk_ibm   = nsp + 2 * nest + nsp * (kspl + 1) + nest * (7 + 3 * kspl)
@@ -330,27 +326,6 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
     call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  yb.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
-
-    if (ibm_spline_global) then
-      ! x_mask, y_mask
-      write(str,*) inb_ibm; line = 'Allocating array IBM x_mask of size '//trim(adjustl(str))//'x'
-      write(str,*) isize_wrk1d_ibm; line = trim(adjustl(line))//trim(adjustl(str))
-      call TLAB_WRITE_ASCII(lfile,line)
-      allocate(x_mask(isize_wrk1d_ibm), stat=ierr)
-      if ( ierr /= 0 ) then
-      call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  x_mask.')
-      call TLAB_STOP(DNS_ERROR_ALLOC)
-      end if
-      !
-      write(str,*) inb_ibm; line = 'Allocating array IBM y_mask of size '//trim(adjustl(str))//'x'
-      write(str,*) isize_wrk1d_ibm; line = trim(adjustl(line))//trim(adjustl(str))
-      call TLAB_WRITE_ASCII(lfile,line)
-      allocate(y_mask(isize_wrk1d_ibm), stat=ierr)
-      if ( ierr /= 0 ) then
-      call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  y_mask.')
-      call TLAB_STOP(DNS_ERROR_ALLOC)
-      end if
-    end if 
     ! ------------------------------------------------------------------ !
 
     ! set alloc flag: done

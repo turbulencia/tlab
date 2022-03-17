@@ -34,8 +34,8 @@
 
 subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e, wrk3d)
 
-  use DNS_IBM,        only: xa, xb, x_mask, ya, yb, y_mask 
-  use DNS_IBM,        only: nflu, ibm_spline_global, ibmscaljmin
+  use DNS_IBM,        only: xa, xb, ya, yb 
+  use DNS_IBM,        only: nflu, ibmscaljmin
   use TLAB_VARS,      only: isize_field
   use TLAB_CONSTANTS, only: efile
   use TLAB_TYPES,     only: grid_dt
@@ -81,8 +81,8 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   TINTEGER, dimension(isize_nob_be), intent(in)    :: nob_b, nob_e
   TREAL,    dimension(isize_field),  intent(inout) :: wrk3d
 
-  TINTEGER                                         :: l, ii, ip, ia, ib, ic, iob, iu_il
-  logical                                          :: splines, global
+  TINTEGER                                         :: l, ii, ip, ia, ib, iob, iu_il
+  logical                                          :: splines
   
   ! ================================================================== !  
 #ifdef IBM_DEBUG
@@ -96,7 +96,6 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   ! ||...-ip_fl-x-(fluid points)-x-ip_il||---(solid points)---||ip_ir-x-(fluid points)-x-ip_fr-...||
 
   splines = .true.  ! 1. case doesn't need splines
-  global  = .false. ! flag for global spline evaluation
   fld_mod = fld
 
   ! index ii (dummy index; for x: ii == jk, for y: ii == ik, for z: ii == ij)
@@ -104,13 +103,6 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   do ii = 1, nlines        ! index of ii-plane, loop over plane and check for objects in each line
     if(nob(ii) /= i0) then ! if line contains immersed object(s) --yes-->  spline interpolation
       ip = i0
-      
-      if (ibm_spline_global) then ! ini vectors once for every full line
-        ic     = i0 
-        x_mask = .true. 
-        y_mask = .true. 
-      end if
-
       do iob = 1, nob(ii)  ! loop over immersed object(s)
 
         ! select different cases of immersed objects
@@ -135,16 +127,8 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
         ! ================================================================== !
         else if(nob_b(ip+ii) >= (nflu+1)) then
           if(nob_e(ip+ii) <= (g%size - nflu)) then 
-            ! 4. case: object is fully immersed (global or local splines)
-            if (ibm_spline_global) then
-              global                                = .true.  ! flag
-              x_mask(nob_b(ip+ii)+1:nob_e(ip+ii)-1) = .false. ! without interface points
-              y_mask(nob_b(ip+ii))                  = .false. ! only    interface points                  
-              y_mask(nob_e(ip+ii))                  = .false. ! only    interface points 
-              ic = ic + (nob_e(ip+ii) - nob_b(ip+ii)) - 1     ! counter solid points                   
-            else
-              call IBM_SPLINE_VECTOR(is, i4, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
-            end if
+            ! 4. case: object is fully immersed
+            call IBM_SPLINE_VECTOR(is, i4, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
             ! .............................................................. !
           else if((nob_e(ip+ii) == g%size) .eqv. g%periodic) then
             ! 5. case: object is semi-immersed - periodic case (not implemented yet)
@@ -167,10 +151,10 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
         ! ================================================================== !
 
         ! spline interpolation and fill gap in fld_ibm
-        if ((splines) .and. (.not. global)) then
+        if ( splines ) then
 
           ! generate splines
-          call IBM_SPLINE( ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib)) 
+          call IBM_SPLINE( ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib)) ! old fitpack routines
           ! call CUBIC_SPLINE(ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib), wrk3d) 
 
           ! force yb at interface to physical BCs (without this yb approx delta 10^-16 wrong at interface)
@@ -205,31 +189,6 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
         end if
         ip = ip + nlines
       end do
-    
-      ! ================================================================== !
-
-      ! global splines 
-      if (ibm_spline_global .and. global) then
-
-        ! build global vector
-        call IBM_SPLINE_VECTOR_GLOB(fld, g, xa, ya, xb, x_mask, y_mask, ia, ib, ic, nlines, ii) 
-
-        ! generate splines
-        call IBM_SPLINE(ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib)) 
-        ! call CUBIC_SPLINE(ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib), wrk3d) 
-
-        ! force yb at interface to zero (without this yb approx 10^-16 at interface)
-        where (.not. y_mask(1:g%size)) yb(1:g%size) = C_0_R
-        
-        ! replace splines in solid gaps
-        do l = 1, g%size
-          if ((.not. x_mask(l)) .or. (.not. y_mask(l))) fld_mod(ii + (l - 1) * nlines) = yb(l)
-        end do 
-
-        ! flag
-        global = .false.
-
-      end if
     end if
   end do
 
@@ -570,50 +529,3 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
   ! end select
   return
 end subroutine IBM_SPLINE_VECTOR
-
-!########################################################################
-
-subroutine IBM_SPLINE_VECTOR_GLOB(fld, g, xa, ya, xb, x_mask, y_mask, ia, ib, ic, nlines, plane) 
-
-  use DNS_IBM,    only: isize_wrk1d_ibm, nsp 
-  use TLAB_VARS,  only: isize_field
-  use TLAB_TYPES, only: grid_dt
-   
-  implicit none
-  
-#include "integers.h"
-
-  TREAL,   dimension(isize_field),     intent(in)  :: fld 
-  type(grid_dt),                       intent(in)  :: g   
-  TREAL,   dimension(nsp),             intent(out) :: xa, ya ! max size (not always needed)
-  TREAL,   dimension(isize_wrk1d_ibm), intent(out) :: xb  
-  logical, dimension(isize_wrk1d_ibm), intent(out) :: x_mask, y_mask  
-  TINTEGER,                            intent(out) :: ia
-  TINTEGER,                            intent(out) :: ib
-  TINTEGER,                            intent(in)  :: ic
-  TINTEGER,                            intent(in)  :: plane, nlines
-
-  TINTEGER                                         :: l
-
-  ! ================================================================== !
-
-  ! global vector packing (copy full lines for spline generation)
-  xa(1:g%size) = g%nodes
-  xb(1:g%size) = g%nodes
-  !
-  do l = 1, g%size ! whole line where objects are located
-    ya(l) = fld(plane + (l - 1) * nlines) 
-  end do 
-
-  ! set interface points to zero
-  where (.not. y_mask(1:g%size)) ya(1:g%size) = C_0_R
-
-  ! packing
-  ia = g%size - ic ! xa, ya size after packing
-  ib = g%size
-  !
-  xa(1:ia) = pack(xa(1:g%size),x_mask(1:g%size))
-  ya(1:ia) = pack(ya(1:g%size),x_mask(1:g%size))
-
-  return
-end subroutine IBM_SPLINE_VECTOR_GLOB

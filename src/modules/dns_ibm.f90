@@ -47,13 +47,12 @@ module DNS_IBM
   TINTEGER, dimension(:),     allocatable :: iwrk_ibm
   !
   TREAL,    dimension(:),     allocatable :: xa, xb, ya, yb
-  logical,  dimension(:),     allocatable :: x_mask, y_mask
 
   ! flag - decides which fdm calls are with modiefied field or not (opr_burgers.f90)
   logical                                 :: ibm_burgers, ibm_partial
 
   ! read_local from dns.ini file 
-  logical                                 :: ibm_restart, ibm_spline_global, ibm_procs_idle
+  logical                                 :: ibm_restart, ibm_procs_idle
   TINTEGER                                :: kspl                        ! spline order kspl=[1,5] (best: 3 or 5)
   TINTEGER                                :: nflu                        ! number of fluid points used for Splines 
                                                                          ! (on one side) nflu >= kspl
@@ -62,7 +61,8 @@ module DNS_IBM
   TINTEGER                                :: isize_nobi,    isize_nobj,    isize_nobk
   TINTEGER                                :: isize_nobi_be, isize_nobj_be, isize_nobk_be
   TINTEGER                                :: nsp, nest
-  TINTEGER                                :: isize_wrk_ibm, isize_iwrk_ibm, isize_wrk1d_ibm
+  TINTEGER                                :: isize_wrk1d_ibm
+  TINTEGER                                :: isize_wrk_ibm, isize_iwrk_ibm
 
   ! check IBM procs (active/idle)
   logical                                 :: ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z

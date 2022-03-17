@@ -24,7 +24,7 @@ PROGRAM VISUALS
   USE THERMO_VARS, ONLY : NSP, THERMO_SPNAME
   USE LAGRANGE_VARS
   USE LAGRANGE_ARRAYS
-  USE DNS_IBM,     ONLY : xbars_geo, kspl, nflu, ibm_spline_global, ibm_procs_idle
+  USE DNS_IBM,     ONLY : xbars_geo, kspl, nflu, ibm_procs_idle
   USE IO_FIELDS
 
   IMPLICIT NONE
@@ -255,11 +255,6 @@ PROGRAM VISUALS
   IF (imode_ibm .EQ. 1) THEN
     CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'SplineOrder', '3', kspl)
     CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'FluidPoints', '3', nflu)
-
-    CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'SplineGlobal', 'no', sRes)
-    IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_spline_global = .TRUE.
-    ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_spline_global = .FALSE.
-    ENDIF
 
     CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'ProcsIdle', 'no', sRes)
     IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_procs_idle = .TRUE.

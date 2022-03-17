@@ -20,7 +20,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE TLAB_VARS,    ONLY : nstatavg
   USE TLAB_VARS,    ONLY : buoyancy, radiation, transport, chemistry, subsidence
   USE TLAB_PROCS
-  USE DNS_IBM,      ONLY : xbars_geo, kspl, nflu, ibm_spline_global, ibm_procs_idle, ibm_restart
+  USE DNS_IBM,      ONLY : xbars_geo, kspl, nflu, ibm_procs_idle, ibm_restart
   USE THERMO_VARS, ONLY : imixture
   USE LAGRANGE_VARS,ONLY: inb_particle_interp
   USE DNS_LOCAL
@@ -457,7 +457,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#RestartGeometry=<yes/no>')
   CALL TLAB_WRITE_ASCII(bakfile, '#SplineOrder=<value>')
   CALL TLAB_WRITE_ASCII(bakfile, '#FluidPoints=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#SplineGlobal=<yes/no>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ProcsIdle=<yes/no>')
 
   CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'Status', 'off', sRes)
@@ -475,11 +474,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
   CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'SplineOrder', '3', kspl)
   CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'FluidPoints', '3', nflu)
-
-  CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'SplineGlobal', 'no', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_spline_global = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_spline_global = .FALSE.
-  ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'ProcsIdle', 'no', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_procs_idle = .TRUE.
@@ -918,7 +912,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Wrong SplineOrder, choose 3rd. or 5th. order.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF 
-     IF ((.NOT. ibm_spline_global) .AND. (nflu .LT. kspl)) THEN
+     IF ( nflu .LT. kspl ) THEN
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Wrong FluidPoints and SplineOrder combination.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF 
