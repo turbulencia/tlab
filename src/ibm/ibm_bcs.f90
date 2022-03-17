@@ -1,5 +1,4 @@
 #include "types.h"
-#include "dns_error.h"
 
 !########################################################################
 !# HISTORY / AUTHORS
@@ -32,12 +31,10 @@
 !########################################################################
 subroutine IBM_INITIALIZE_SCAL(s)
   
-  use DNS_IBM,        only : eps, xbars_geo
+  use DNS_IBM,        only : eps
   use DNS_IBM,        only : ibmscaljmin, ibmscaljmax 
   use TLAB_VARS,      only : isize_field,inb_scal
   use TLAB_VARS,      only : imax,jmax,kmax
-  use TLAB_CONSTANTS, only : efile
-  use TLAB_PROCS
 
   implicit none
 
@@ -45,7 +42,7 @@ subroutine IBM_INITIALIZE_SCAL(s)
   
   TREAL, dimension(isize_field,inb_scal), intent(inout) :: s
 
-  TINTEGER                                              :: is, j, k, ip
+  TINTEGER                                              :: is
 
 ! ================================================================== !
 ! get scalar dirichlet boundary values of ini scalar field
@@ -58,25 +55,42 @@ subroutine IBM_INITIALIZE_SCAL(s)
 ! set scalar values in solid to zero
   call IBM_BCS_FIELD_COMBINED(i1,s)
 
+! apply ibmscaljmin, ibmscaljmax on scalar field(s)
+  do is = 1, inb_scal
+    call IBM_BCS_SCAL(is,s(:,is),eps(:))
+  end do
+
+  return
+end subroutine IBM_INITIALIZE_SCAL
+!########################################################################
+subroutine IBM_BCS_SCAL(is,s,eps)
+  
+  use DNS_IBM,        only : ibmscaljmin, ibmscaljmax, xbars_geo
+  use TLAB_VARS,      only : imax,jmax,kmax
+
+  implicit none
+
+  TINTEGER,                            intent(in   ) :: is
+  TREAL,    dimension(imax,jmax,kmax), intent(inout) :: s
+  TREAL,    dimension(imax,jmax,kmax), intent(in   ) :: eps
+
+  TINTEGER                                           :: j
+
+! ================================================================== !
 ! default, set only scalar value on lower boundary
 ! if objects also on upper boundary present, 
 ! values needs to be overwritten, cf. next loop
-  do is = 1, inb_scal
-    s(:,is) = s(:,is) + eps(:) * ibmscaljmin(is) 
-  end do
+  s(:,:,:) = s(:,:,:) + eps(:,:,:) * ibmscaljmin(is) 
 
 ! in case of objects on upper boundary, set different temperature here
   if ( xbars_geo%mirrored ) then
-    do is = 1, inb_scal
-      if ( ibmscaljmax(is) /= C_0_R ) then
-        call TLAB_WRITE_ASCII(efile, 'IBM_SCAL. Dirichlet BCs for upper boundary needs to be zero.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
-      end if
+    do j = jmax-xbars_geo%height,jmax
+      s(:,j,:) = (C_1_R - eps(:,j,:)) *  s(:,j,:) + eps(:,j,:) * ibmscaljmax(is) 
     end do
   end if
 
   return
-end subroutine IBM_INITIALIZE_SCAL
+end subroutine IBM_BCS_SCAL
 !########################################################################
 subroutine IBM_BCS_FIELD_COMBINED(is,fld)
   
