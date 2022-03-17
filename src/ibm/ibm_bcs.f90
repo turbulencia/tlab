@@ -68,20 +68,10 @@ subroutine IBM_INITIALIZE_SCAL(s)
 ! in case of objects on upper boundary, set different temperature here
   if ( xbars_geo%mirrored ) then
     do is = 1, inb_scal
-
       if ( ibmscaljmax(is) /= C_0_R ) then
         call TLAB_WRITE_ASCII(efile, 'IBM_SCAL. Dirichlet BCs for upper boundary needs to be zero.')
         call TLAB_STOP(DNS_ERROR_INVALOPT)
       end if
-      ! == caution: bug == !
-      ! ip = imax*(jmax-xbars_geo%height) + 1
-      ! do k = 1,kmax
-      !   do j = 1, xbars_geo%height   
-      !     s(ip:ip+imax,is) = (C_1_R - eps(ip:ip+imax)) * s(ip:ip+imax,is) + eps(ip:ip+imax)*ibmscaljmax(is)
-      !     ip  = ip + imax
-      !   end do
-      !   ip = imax*(jmax-xbars_geo%height) + k*imax*jmax
-      ! end do
     end do
   end if
 
