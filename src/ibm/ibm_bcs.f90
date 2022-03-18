@@ -106,7 +106,6 @@ subroutine IBM_BCS_FIELD_COMBINED(is,fld)
 
   ! ================================================================== !
   ! apply IBM BCs on many fields
-
   if ( is == 0 ) then
     do i = 1, inb_flow
       call IBM_BCS_FIELD(fld(1,i))

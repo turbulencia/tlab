@@ -413,7 +413,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hq(1,iq), &
              BcsFlowJmin%ref(1,1,iq),BcsFlowJmax%ref(1,1,iq), wrk1d,tmp1,wrk3d)
      ENDIF
-     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(hq(1,iq))
+     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(hq(1,iq)) ! set tendency in solid to zero
   ENDDO
 
   DO is = 1,inb_scal
@@ -429,7 +429,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
           BcsScalJmax%type(is) .NE. DNS_SFC_STATIC ) THEN
         CALL BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
      ENDIF
-     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(hs(1,is))
+     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(hs(1,is)) ! set tendency in solid to zero
   ENDDO
 
 ! -----------------------------------------------------------------------

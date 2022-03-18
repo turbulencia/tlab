@@ -79,7 +79,7 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   TINTEGER,                          intent(in)    :: nlines, isize_nob, isize_nob_be
   TINTEGER, dimension(isize_nob),    intent(in)    :: nob
   TINTEGER, dimension(isize_nob_be), intent(in)    :: nob_b, nob_e
-  TREAL,    dimension(isize_field),  intent(inout) :: wrk3d
+  TREAL,    dimension(isize_field),  intent(inout) :: wrk3d  ! for cubic splines subroutine
 
   TINTEGER                                         :: l, ii, ip, ia, ib, iob, iu_il
   logical                                          :: splines
@@ -98,13 +98,12 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   splines = .true.  ! 1. case doesn't need splines
   fld_mod = fld
 
-  ! index ii (dummy index; for x: ii == jk, for y: ii == ik, for z: ii == ij)
+  ! index ii (dummy index; for x,y,z: ii == jk,ik,ij)
 
   do ii = 1, nlines        ! index of ii-plane, loop over plane and check for objects in each line
     if(nob(ii) /= i0) then ! if line contains immersed object(s) --yes-->  spline interpolation
       ip = i0
       do iob = 1, nob(ii)  ! loop over immersed object(s)
-
         ! select different cases of immersed objects
         if(nob_b(ip+ii) == i1) then
         ! ================================================================== !

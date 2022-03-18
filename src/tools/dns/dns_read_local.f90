@@ -14,7 +14,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE TLAB_VARS,    ONLY : pbg, rbg, damkohler
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_txc_field, isize_wrk1d,isize_wrk2d,isize_wrk3d
   USE TLAB_VARS,    ONLY : inb_flow,inb_scal,inb_txc
-  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, imode_ibm, iadvection, iviscous, icalc_part, itransport, istagger
+  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, imode_ibm, iadvection, iviscous, icalc_part, icalc_scal, itransport, istagger
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : FilterDomain
   USE TLAB_VARS,    ONLY : nstatavg
@@ -927,6 +927,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Requirenments: mod(jmax_total/(2*nbars),0.5)==0 & mod(wbar,2)==1.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)    
      ENDIF
+     DO is = 1,3
+        IF ( ( FilterDomain(is)%type .NE. DNS_FILTER_NONE ) .AND. ( icalc_scal .EQ. 1 ) ) THEN
+           CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM with domain filter and scalar not tested yet.')
+           CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        ENDIF
+     ENDDO
      IF ( .NOT. ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) ) THEN
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM only implemented for incompressible mode.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
