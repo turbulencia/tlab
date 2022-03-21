@@ -30,8 +30,7 @@
 
 subroutine IBM_DEALLOCATE()
 
-  use DNS_IBM, only : ibm_restart
-  use DNS_IBM, only : eps_aux, epsi, epsj, epsk
+  use DNS_IBM, only : ibm_restart, eps_aux, epsi, epsj, epsk
 
   implicit none
 

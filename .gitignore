@@ -20,7 +20,7 @@ test_debug/*
 test_little/*
 test_parallel/*
 test_channel/*
-test_variable_scal/*
+test_parallel360/*
 .vscode/*
 *~
 */*~

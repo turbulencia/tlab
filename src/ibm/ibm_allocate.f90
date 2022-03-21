@@ -1,6 +1,9 @@
 #include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
+#ifdef USE_MPI
+#include "dns_const_mpi.h"
+#endif
 
 !########################################################################
 !# HISTORY / AUTHORS
@@ -36,12 +39,11 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
 
   use DNS_IBM
   use TLAB_CONSTANTS, only: lfile, efile
-  use TLAB_VARS,      only: imax, jmax, kmax
-  use TLAB_VARS,      only: g
-  use TLAB_VARS,      only: isize_field
+  use TLAB_VARS,      only: g, imax, jmax, kmax, isize_field
   use TLAB_PROCS  
 
 #ifdef USE_MPI
+  use MPI
   use TLAB_MPI_VARS,  only: ims_size_i, ims_size_j, ims_size_k 
 #endif    
 
@@ -49,17 +51,15 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
 
 #include "integers.h"
 
+  character(len=128), intent(in)    :: C_FILE_LOC
+  logical,            intent(inout) :: allocated       ! flag, just allocate memory space once
+
 #ifdef USE_MPI 
-#include "mpif.h"
-#include "dns_const_mpi.h"
   TINTEGER, parameter               :: idi = TLAB_MPI_I_PARTIAL 
   TINTEGER, parameter               :: idj = TLAB_MPI_J_PARTIAL 
   TINTEGER, parameter               :: idk = TLAB_MPI_K_PARTIAL 
 #endif
 
-  character(len=128), intent(in)    :: C_FILE_LOC
-  logical,            intent(inout) :: allocated       ! flag, just allocate memory space once
-  
   TINTEGER                          :: ierr, inb_ibm
   TINTEGER                          :: nyz, nxz, nxy
   TINTEGER                          :: nob_max

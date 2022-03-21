@@ -1,6 +1,4 @@
 #include "types.h"
-#include "dns_const.h"
-#include "dns_error.h"
 
 !########################################################################
 !# HISTORY / AUTHORS
@@ -37,16 +35,13 @@ subroutine IBM_CHECK_PROCS()
   use DNS_IBM
 
 #ifdef USE_MPI 
+  use MPI
   use TLAB_MPI_VARS, only: ims_pro
 #endif
   
   implicit none
   
 #include "integers.h"
-#ifdef USE_MPI 
-#include "mpif.h"
-#include "dns_const_mpi.h"     
-#endif
 
   ! ================================================================== !
 

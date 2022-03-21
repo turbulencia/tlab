@@ -31,10 +31,8 @@
 !########################################################################
 subroutine IBM_INITIALIZE_SCAL(s)
   
-  use DNS_IBM,        only : eps
-  use DNS_IBM,        only : ibmscaljmin, ibmscaljmax 
-  use TLAB_VARS,      only : isize_field,inb_scal
-  use TLAB_VARS,      only : imax,jmax,kmax
+  use DNS_IBM,   only : eps, ibmscaljmin, ibmscaljmax 
+  use TLAB_VARS, only : imax,jmax, isize_field,inb_scal
 
   implicit none
 
@@ -54,8 +52,10 @@ subroutine IBM_INITIALIZE_SCAL(s)
 
 ! set scalar values in solid to zero
   call IBM_BCS_FIELD_COMBINED(i1,s)
+  ! call IBM_BCS_FIELD(s(1,1)) ! variable scalar is=2 in solid
 
 ! apply ibmscaljmin, ibmscaljmax on scalar field(s)
+  ! do is = 1, 1                 ! variable scalar is=2 in solid
   do is = 1, inb_scal
     call IBM_BCS_SCAL(is,s(:,is),eps(:))
   end do
@@ -65,8 +65,8 @@ end subroutine IBM_INITIALIZE_SCAL
 !########################################################################
 subroutine IBM_BCS_SCAL(is,s,eps)
   
-  use DNS_IBM,        only : ibmscaljmin, ibmscaljmax, xbars_geo
-  use TLAB_VARS,      only : imax,jmax,kmax
+  use DNS_IBM,   only : ibmscaljmin, ibmscaljmax, xbars_geo
+  use TLAB_VARS, only : imax,jmax,kmax
 
   implicit none
 
@@ -94,7 +94,6 @@ end subroutine IBM_BCS_SCAL
 !########################################################################
 subroutine IBM_BCS_FIELD_COMBINED(is,fld)
   
-  use DNS_IBM,   only : eps
   use TLAB_VARS, only : isize_field, inb_flow, inb_scal
 
   implicit none

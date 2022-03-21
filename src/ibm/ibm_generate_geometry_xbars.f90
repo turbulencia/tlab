@@ -36,15 +36,13 @@
 subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 
   use DNS_IBM
-  use TLAB_VARS,        only: g
-  use TLAB_VARS,        only: imax, jmax, kmax 
-  use TLAB_VARS,        only: isize_field
-  use IO_FIELDS
+  use TLAB_VARS,     only: g, imax, jmax, kmax, isize_field
 
 #ifdef USE_MPI 
-  use TLAB_MPI_VARS,    only: ims_offset_i, ims_offset_j, ims_offset_k
-  use TLAB_MPI_VARS,    only: ims_pro,  ims_pro_i,  ims_pro_j,  ims_pro_k  ! each number of each proc
-  use TLAB_MPI_VARS,    only: ims_npro, ims_npro_i, ims_npro_j, ims_npro_k ! total numbers of proc
+  use MPI
+  use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_j, ims_offset_k
+  use TLAB_MPI_VARS, only: ims_pro,  ims_pro_i,  ims_pro_j,  ims_pro_k  ! each number of each proc
+  use TLAB_MPI_VARS, only: ims_npro, ims_npro_i, ims_npro_j, ims_npro_k ! total numbers of proc
 #endif 
 
   implicit none
@@ -52,22 +50,19 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 #include "integers.h"
 
 #ifdef USE_MPI
-#include "mpif.h"
 #else
   TINTEGER, parameter :: ims_offset_i=0, ims_offset_j=0, ims_offset_k=0
   TINTEGER, parameter :: ims_pro_i=0,    ims_pro_j=0,    ims_pro_k=0,    ims_pro=0  
   TINTEGER, parameter :: ims_npro_i=1,   ims_npro_j=1,   ims_npro_k=1,   ims_npro=0 
 #endif
 
+  TREAL, dimension(isize_field), intent(inout) :: wrk3d
+  
   TINTEGER                                     :: nbars, hbar, wbar
   TREAL                                        :: zcenter_bar
   TINTEGER, dimension(xbars_geo%number)        :: zstart_bar, zend_bar
   TINTEGER                                     :: istart, iend, jstart, jend, kstart, kend
   TINTEGER                                     :: i,j,k,l
-
-  ! DEBUG 
-  character(len=32)                            :: fname
-  TREAL, dimension(isize_field), intent(inout) :: wrk3d
 
   ! ================================================================== !
 
@@ -156,14 +151,9 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   ! reshape 3D-eps_aux field into 1D-eps
   eps = reshape(eps_aux,(/isize_field/))
 
-  ! write eps field
-  write(fname,*) i0; 
-  fname = trim(adjustl('eps'))//trim(adjustl(fname))
-#ifdef IBM_DEBUG
-  if (ims_pro == 0) write(*,*) '======== Write eps field ================================'
-  if (ims_pro == 0) write(*,*) fname 
-#endif
-  call IO_WRITE_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i1, eps, wrk3d)
+  ! write eps
+  call IBM_IO_WRITE(wrk3d)
+  ! call IBM_IO_WRITE_INT1(eps)
 
   return
 end subroutine IBM_GENERATE_GEOMETRY_XBARS

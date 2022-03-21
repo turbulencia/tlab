@@ -1,6 +1,9 @@
 #include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
+#ifdef USE_MPI 
+#include "dns_const_mpi.h"  
+#endif
 
 !########################################################################
 !# HISTORY / AUTHORS
@@ -34,8 +37,7 @@
 
 subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e, wrk3d)
 
-  use DNS_IBM,        only: xa, xb, ya, yb 
-  use DNS_IBM,        only: nflu, ibmscaljmin
+  use DNS_IBM,        only: xa, xb, ya, yb, nflu, ibmscaljmin
   use TLAB_VARS,      only: isize_field
   use TLAB_CONSTANTS, only: efile
   use TLAB_TYPES,     only: grid_dt
@@ -46,6 +48,7 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   use IO_FIELDS
   use TLAB_VARS,      only: imax, jmax, kmax
 #ifdef USE_MPI 
+  use MPI
   use TLAB_MPI_VARS,  only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   use TLAB_MPI_VARS,  only: ims_npro_k, ims_pro
   use TLAB_MPI_PROCS
@@ -56,22 +59,6 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   
 #include "integers.h"
 
-! MPI just for debugging
-#ifdef IBM_DEBUG
-#ifdef USE_MPI 
-#include "mpif.h"
-#include "dns_const_mpi.h"  
-  TINTEGER, parameter                              :: idi = TLAB_MPI_I_PARTIAL 
-  TINTEGER, parameter                              :: idj = TLAB_MPI_J_PARTIAL 
-  TINTEGER, parameter                              :: idk = TLAB_MPI_K_PARTIAL 
-#else
-  TINTEGER, parameter                              :: ims_pro=0, ims_npro=1
-#endif
-  ! debug
-  TREAL, dimension(isize_field)                    :: fld_mod_tr ! debug
-  TINTEGER                                         :: m
-#endif
-  
   TINTEGER,                          intent(in)    :: is     ! scalar index; if 0, then velocity
   TREAL,    dimension(isize_field),  intent(in)    :: fld 
   TREAL,    dimension(isize_field),  intent(out)   :: fld_mod 
@@ -83,7 +70,20 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
 
   TINTEGER                                         :: l, ii, ip, ia, ib, iob, iu_il
   logical                                          :: splines
-  
+
+! MPI just for debugging
+#ifdef IBM_DEBUG
+#ifdef USE_MPI 
+  TINTEGER, parameter                              :: idi = TLAB_MPI_I_PARTIAL 
+  TINTEGER, parameter                              :: idj = TLAB_MPI_J_PARTIAL 
+  TINTEGER, parameter                              :: idk = TLAB_MPI_K_PARTIAL 
+#else
+  TINTEGER, parameter                              :: ims_pro=0, ims_npro=1
+#endif
+  ! debug
+  TREAL, dimension(isize_field)                    :: fld_mod_tr ! debug
+  TINTEGER                                         :: m
+#endif
   ! ================================================================== !  
 #ifdef IBM_DEBUG
   if (ims_pro == 0) write(*,*) '========================================================='

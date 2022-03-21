@@ -98,6 +98,8 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d, wrk3d)
 ! ############################################# ! 
    
   IMPLICIT NONE
+
+#include "integers.h"
    
   TINTEGER,                        INTENT(IN)    :: nlines ! # of lines to be solved
   TINTEGER, DIMENSION(2,*),        INTENT(IN)    :: bcs    ! BCs at xmin (1,*) and xmax (2,*):
@@ -108,6 +110,8 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d, wrk3d)
   TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result
   TREAL, DIMENSION(nlines),        INTENT(INOUT) :: wrk2d
   TREAL, DIMENSION(nlines*g%size), INTENT(INOUT) :: wrk3d
+
+  TINTEGER, PARAMETER                            :: is = i0 ! scalar index; if 0, then velocity
 
   ! -------------------------------------------------------------------
 
@@ -131,7 +135,7 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d, wrk3d)
     IF (ims_pro == 0) write(*,*) 'ibm_partial_', g%name ! debug
 #endif
     IF (ims_pro_ibm_x) THEN
-      CALL IBM_SPLINE_XYZ(u, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
+      CALL IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
       CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
     ELSE
       CALL OPR_PARTIAL1(nlines, bcs, g, u,       result, wrk2d)  ! no splines needed  
@@ -142,7 +146,7 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d, wrk3d)
     IF (ims_pro == 0) write(*,*) 'ibm_partial_', g%name ! debug
 #endif
     IF (ims_pro_ibm_y) THEN
-      CALL IBM_SPLINE_XYZ(u, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
+      CALL IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
       CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
     ELSE
       CALL OPR_PARTIAL1(nlines, bcs, g, u,       result, wrk2d)  ! no splines needed
@@ -153,7 +157,7 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d, wrk3d)
     IF (ims_pro == 0) write(*,*) 'ibm_partial_', g%name ! debug
 #endif
     IF (ims_pro_ibm_z) THEN
-      CALL IBM_SPLINE_XYZ(u, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
+      CALL IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
       CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
     ELSE
       CALL OPR_PARTIAL1(nlines, bcs, g, u,       result, wrk2d)  ! no splines needed
@@ -175,23 +179,28 @@ SUBROUTINE OPR_IBM(nlines, g, u,result, wrk3d)
   USE DNS_IBM,    ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
    
   IMPLICIT NONE
+
+#include "integers.h"
    
   TINTEGER,                        INTENT(IN)    :: nlines
   TYPE(grid_dt),                   INTENT(IN)    :: g
   TREAL, DIMENSION(nlines*g%size), INTENT(IN)    :: u
   TREAL, DIMENSION(nlines*g%size), INTENT(OUT)   :: result
   TREAL, DIMENSION(nlines*g%size), INTENT(INOUT) :: wrk3d
+
+  TINTEGER, PARAMETER                            :: is = i0 ! scalar index; if 0, then velocity
+  
   ! -------------------------------------------------------------------
   ! IBM not for scalar fields! (will be implemented later)
   ! modify incoming u fields (fill solids with spline functions, depending on direction)
   
   SELECT CASE (g%name)
   CASE('x')
-    CALL IBM_SPLINE_XYZ(u, result, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
+    CALL IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
   CASE('y')
-    CALL IBM_SPLINE_XYZ(u, result, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
+    CALL IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
   CASE('z')
-    CALL IBM_SPLINE_XYZ(u, result, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
+    CALL IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
   END SELECT
 
   RETURN

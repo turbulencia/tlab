@@ -37,15 +37,13 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   
   implicit none
 
-#ifdef USE_MPI 
-#include "mpif.h"
-#endif 
   
   TREAL, dimension(*), intent(inout) :: txc, wrk3d
 
   ! ================================================================== !
   if ( ibm_restart ) then
     call IBM_IO_READ(wrk3d)
+    ! call IBM_IO_READ_INT1(eps,wrk3d) ! not working yet
   else
   ! generate native 3d-geometry field (eps_aux) of immersed objects (define your own geomtry here)
     call IBM_GENERATE_GEOMETRY_XBARS(wrk3d) 

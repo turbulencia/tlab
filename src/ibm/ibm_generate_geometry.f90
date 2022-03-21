@@ -1,6 +1,9 @@
 #include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
+#ifdef USE_MPI 
+#include "dns_const_mpi.h"
+#endif
 
 !########################################################################
 !# HISTORY / AUTHORS
@@ -34,10 +37,11 @@
 
 subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
   
-  use DNS_IBM
   use TLAB_VARS,        only: g, imax, jmax, kmax 
+  use DNS_IBM
 
 #ifdef USE_MPI
+  use MPI
   use TLAB_MPI_VARS,    only: ims_size_i, ims_size_j, ims_size_k    
   use TLAB_MPI_PROCS
 #endif    
@@ -60,8 +64,6 @@ subroutine IBM_GENERATE_GEOMETRY(wrk3d,txc)
 #include "integers.h"
   
 #ifdef USE_MPI 
-#include "mpif.h"
-#include "dns_const_mpi.h"  
   TINTEGER, parameter                                :: idi        = TLAB_MPI_I_PARTIAL 
   TINTEGER, parameter                                :: idj        = TLAB_MPI_J_PARTIAL 
   TINTEGER, parameter                                :: idk        = TLAB_MPI_K_PARTIAL 

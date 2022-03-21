@@ -29,7 +29,7 @@ program CSPLINE
   TINTEGER, parameter          :: imax     = 100                       ! number of data points imax >= 10
   TINTEGER, parameter          :: mesh     = 10                       ! mesh refinement factor (mesh=1 for x_new=x)
   TINTEGER, parameter          :: imax_new = (imax+(mesh-1)*(imax-1)) ! number of spline data points
-  TINTEGER                     :: i, j, n
+  TINTEGER                     :: i, j
   TREAL                        :: xb, xe
   ! validation routine
   TREAL                        :: res_2, res_inf
