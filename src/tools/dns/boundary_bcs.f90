@@ -50,6 +50,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
   USE THERMO_VARS, ONLY : gama0
   USE BOUNDARY_BUFFER
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_VARS,    ONLY : inb_scal_array
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
@@ -60,9 +61,6 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TREAL, DIMENSION(*) :: wrk3d
 

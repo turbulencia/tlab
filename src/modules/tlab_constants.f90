@@ -7,6 +7,13 @@ MODULE TLAB_CONSTANTS
   TINTEGER, PARAMETER :: MajorVersion = 7
   TINTEGER, PARAMETER :: MinorVersion = 0
 
+  TINTEGER, PARAMETER :: sp = KIND(1.0)
+  TINTEGER, PARAMETER :: dp = KIND(1.0d0)
+  ! !> Single precision real numbers, 6 digits, range 10⁻³⁷ to 10³⁷-1; 32 bits
+  ! integer, parameter :: sp = selected_real_kind(6, 37)
+  ! !> Double precision real numbers, 15 digits, range 10⁻³⁰⁷ to 10³⁰⁷-1; 64 bits
+  ! integer, parameter :: dp = selected_real_kind(15, 307)
+
   TINTEGER, PARAMETER :: MAX_VARS = 20
   TINTEGER, PARAMETER :: MAX_PROF = 10
   TINTEGER, PARAMETER :: MAX_JETS =  5

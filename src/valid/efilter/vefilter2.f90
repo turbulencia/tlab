@@ -1,6 +1,7 @@
 PROGRAM VEFILTER2
 
   USE TLAB_VARS
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -34,7 +35,7 @@ PROGRAM VEFILTER2
   ! CALL FLT4E_INI(g(2)%scale, y, cy)
   ! CALL FLT4E_INI(g(3)%scale, z, cz)
 
-  CALL DNS_READ_FIELDS('field.inp', i1, imax,jmax,kmax, i1,i0, i1, a, wrk3d)
+  CALL IO_READ_FIELDS('field.inp', IO_SCAL, imax,jmax,kmax, i1,i0, i1, a, wrk3d)
 
 !  CALL OPR_FILTER(i4, imax, jmax, kmax,  i1bc, j1bc, k1bc, i1, i1, i1, i1, a, &
 !       cx, cy, cz, wrk3d)
@@ -49,7 +50,7 @@ PROGRAM VEFILTER2
   CALL OPR_FILTER(i3, imax, jmax, kmax,  i1bc, j1bc, k1bc, i1, i1, i1, i1, wrk3d(1,2), &
        cx, cy, cz, a)
 
-  CALL DNS_WRITE_FIELDS('field.out', i1, imax,jmax,kmax, i1, i1, a, wrk3d)
+  CALL IO_WRITE_FIELDS('field.out', IO_SCAL, imax,jmax,kmax, i1, i1, a, wrk3d)
 
   STOP
 END PROGRAM VEFILTER2

@@ -6,7 +6,7 @@ MODULE SCAL_LOCAL
   USE TLAB_TYPES,  ONLY : background_dt, discrete_dt
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, inb_scal, MAX_NSP
   USE TLAB_VARS, ONLY : g, sbg
-
+  USE IO_FIELDS
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_offset_i,ims_offset_k
 #endif
@@ -96,7 +96,7 @@ SUBROUTINE SCAL_FLUCTUATION_VOLUME( is, s, tmp, wrk1d, wrk2d, wrk3d )
 
   SELECT CASE( flag_s )
   CASE( 1 )   ! Broadband case
-    CALL DNS_READ_FIELDS('scal.rand', i1, imax,jmax,kmax, inb_scal,is, isize_field, tmp, wrk3d)
+    CALL IO_READ_FIELDS('scal.rand', IO_SCAL, imax,jmax,kmax, inb_scal,is, tmp, wrk3d)
 
     amplify = C_0_R
     DO j = 1,jmax
@@ -162,7 +162,7 @@ SUBROUTINE SCAL_FLUCTUATION_PLANE(is, s, disp)
   CASE( 4,6,8 )   ! Broadband case
     WRITE(varname,*) is; varname = TRIM(ADJUSTL(varname))
     idummy=imax*kmax; io_sizes = (/idummy,1,idummy,1,1/)
-    CALL IO_READ_SUBARRAY8(i1, 'scal.rand', varname, disp, io_sizes, s) ! using array s as aux array
+    CALL IO_READ_SUBARRAY8(IO_SUBARRAY_AUX, 'scal.rand', varname, disp, io_sizes, s) ! using array s as aux array
     dummy = AVG1V2D(imax,i1,kmax, i1, i1, disp)     ! remove mean
     disp = disp - dummy
 

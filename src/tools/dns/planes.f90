@@ -38,18 +38,17 @@ CONTAINS
   ! ###################################################################
   ! ###################################################################
   SUBROUTINE PLANES_INITIALIZE()
-
 #ifdef USE_MPI
+    USE MPI
     USE TLAB_MPI_VARS
+    USE IO_FIELDS
 #endif
-
     IMPLICIT NONE
 
-#ifdef USE_MPI
-#include "mpif.h"
-
     ! -----------------------------------------------------------------------
-    TINTEGER                :: ndims, id
+    TINTEGER id
+#ifdef USE_MPI
+    TINTEGER                :: ndims
     TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
 #endif
 
@@ -78,59 +77,38 @@ CONTAINS
     idummy = imax *jmax *kplanes%size; kplanes%io = [ idummy, 1, idummy, 1, 1 ]
     varname = [ '' ]
 
-    io_aux(:)%offset = 0        ! defaults
-
-#ifdef USE_MPI
-    io_aux(:)%active = .FALSE.  ! defaults
-
-    id = IO_SUBARRAY_PLANES_XOY
     IF ( kplanes%n > 0 ) THEN ! Saving full vertical xOy planes; writing only info of PE containing the first plane
+      id = IO_SUBARRAY_PLANES_XOY
+      io_aux(id)%offset = 0
+#ifdef USE_MPI
+      io_aux(id)%active = .FALSE.  ! defaults
       IF ( ims_pro_k == ( kplanes%nodes(1) /kmax) ) io_aux(id)%active = .TRUE.
       io_aux(id)%communicator = ims_comm_x
-
-      ndims = 2
-      sizes(1)   = imax *ims_npro_i; sizes(2)   = jmax *kplanes%size
-      locsize(1) = imax;             locsize(2) = jmax *kplanes%size
-      offset(1)  = ims_offset_i;     offset(2)  = 0
-
-      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
-      CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
-
+      io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY( imax, jmax*kplanes%size, MPI_REAL4 )
+#endif
     ENDIF
 
-    id = IO_SUBARRAY_PLANES_ZOY
     IF ( iplanes%n > 0 ) THEN ! Saving full vertical zOy planes; writing only info of PE containing the first plane
+      id = IO_SUBARRAY_PLANES_ZOY
+      io_aux(id)%offset = 0
+#ifdef USE_MPI
+      io_aux(id)%active = .FALSE.  ! defaults
       IF ( ims_pro_i ==  ( iplanes%nodes(1) /imax) ) io_aux(id)%active = .TRUE.
       io_aux(id)%communicator = ims_comm_z
-
-      ndims = 2
-      sizes(1)   = jmax *iplanes%size;  sizes(2)   = kmax *ims_npro_k
-      locsize(1) = jmax *iplanes%size;  locsize(2) = kmax
-      offset(1)  = 0;                   offset(2)  = ims_offset_k
-
-      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
-      CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
-
+      io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY( jmax*iplanes%size,kmax, MPI_REAL4 )
+#endif
     ENDIF
 
-    id = IO_SUBARRAY_PLANES_XOZ
     IF ( jplanes%n > 0 ) THEN ! Saving full blocks xOz planes for prognostic variables
+      id = IO_SUBARRAY_PLANES_XOZ
+      io_aux(id)%offset = 0
+#ifdef USE_MPI
       io_aux(id)%active = .TRUE.
       io_aux(id)%communicator = MPI_COMM_WORLD
-
-      ndims = 3 ! Subarray for the output of the 2D data
-      sizes(1)  =imax *ims_npro_i;  sizes(2)   = jplanes%size;  sizes(3)   = kmax *ims_npro_k
-      locsize(1)=imax;              locsize(2) = jplanes%size;  locsize(3) = kmax
-      offset(1) =ims_offset_i;      offset(2)  = 0;             offset(3)  = ims_offset_k
-
-      CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
-      CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
+      io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ( imax,jplanes%size,kmax, MPI_REAL4 )
+#endif
 
     ENDIF
-#endif
 
     RETURN
   END SUBROUTINE PLANES_INITIALIZE

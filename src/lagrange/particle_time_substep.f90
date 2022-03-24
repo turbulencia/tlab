@@ -7,21 +7,19 @@
 
 !########################################################################
 !########################################################################
-SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )    
-  
+SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
+
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : isize_particle, inb_part
   USE LAGRANGE_VARS, ONLY : isize_l_comm
   USE LAGRANGE_VARS, ONLY : l_g
 #ifdef USE_MPI
-  USE LAGRANGE_VARS, ONLY : isize_pbuffer
+  USE MPI
   USE TLAB_MPI_VARS
+  USE LAGRANGE_VARS, ONLY : isize_pbuffer
 #endif
 
   IMPLICIT NONE
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TREAL dte
   TREAL, DIMENSION(isize_particle,*)     :: l_q
@@ -82,8 +80,8 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
      END IF
   END IF
 
-  CALL PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, & 
-       p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags, l_g%np) 
+  CALL PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
+       p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags, l_g%np)
 
 ! -------------------------------------------------------------------
 !Particle sorting for Send/Recv Z-Direction
@@ -104,11 +102,11 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
      END IF
   END IF
 
-  CALL PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, & 
+  CALL PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
        p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags, l_g%np)
 
   NULLIFY(p_buffer_1,p_buffer_2)
-  
+
 #else
 !#######################################################################
 ! Serial
@@ -118,20 +116,20 @@ SUBROUTINE PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
 
      ELSEIF( l_q(i,1) .LT. g(1)%nodes(1) ) THEN
         l_q(i,1) = l_q(i,1) + g(1)%scale
-        
+
      END IF
-     
+
      IF    ( l_q(i,3) .GT. z_right       ) THEN
         l_q(i,3) = l_q(i,3) - g(3)%scale
-        
+
      ELSEIF( l_q(i,3) .LT. g(3)%nodes(1) ) THEN
         l_q(i,3) = l_q(i,3) + g(3)%scale
-        
+
      END IF
   END DO
-  
+
 #endif
-  
+
 !#######################################################################
 ! Recalculating closest node below in Y direction
 !#######################################################################

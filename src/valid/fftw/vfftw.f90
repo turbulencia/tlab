@@ -3,6 +3,7 @@
 PROGRAM VFFTW
 
   USE TLAB_VARS
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -66,12 +67,11 @@ PROGRAM VFFTW
 !        ENDDO
 !     ENDDO
 !  ENDDO
-!  CALL DNS_WRITE_FIELDS('field.inp', imax, jmax, kmax, kmax_total, i1, i1, i1, a, dummy)
-  CALL DNS_READ_FIELDS('field.inp', i1, imax,jmax,kmax, i1,i0, i1, a, dummy)
+  CALL IO_READ_FIELDS('field.inp', IO_SCAL, imax,jmax,kmax, i1,i0, a, dummy)
 
 !  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, c, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, c, wrk3d, wrk2d,wrk3d)
-  CALL DNS_WRITE_FIELDS('field.ref', i1, imax,jmax,kmax, i1, i1, c, dummy)
+  CALL IO_WRITE_FIELDS('field.ref', IO_SCAL, imax,jmax,kmax, i1, c, dummy)
 
 ! ###################################################################
   CALL dfftw_plan_dft_r2c_1d&
@@ -156,7 +156,7 @@ PROGRAM VFFTW
      ENDDO
   ENDDO
 
-  CALL DNS_WRITE_FIELDS('field.out', i1, imax,jmax,kmax, i1, i1, b, dummy)
+  CALL IO_WRITE_FIELDS('field.out', IO_SCAL, imax,jmax,kmax, i1, b, dummy)
 
 ! ###################################################################
 ! Error

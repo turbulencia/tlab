@@ -13,15 +13,14 @@ PROGRAM SL_CORRELATION
 
   USE TLAB_VARS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_PROCS
 #endif
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
@@ -166,10 +165,10 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! read data
      WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-     CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, i3,i0, isize_wrk3d, q, wrk3d)
+     CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i3,i0, q, wrk3d)
 
      WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-     CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,inb_scal, isize_wrk3d, z1, wrk3d)
+     CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal,inb_scal, z1, wrk3d)
 
 ! do correlations
      CALL SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, profiles, &

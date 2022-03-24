@@ -4,14 +4,13 @@
 #include "dns_error.h"
 
 MODULE TLAB_MPI_PROCS
+   USE MPI
   USE TLAB_CONSTANTS, ONLY : lfile, efile
   USE TLAB_PROCS, ONLY : TLAB_WRITE_ASCII, TLAB_STOP
   USE TLAB_MPI_VARS
   IMPLICIT NONE
   SAVE
   PRIVATE
-
-#include "mpif.h"
 
   INTEGER  :: ims_tag
 
@@ -394,13 +393,13 @@ CONTAINS
           ELSEIF ( ims_trp_mode_k == TLAB_MPI_TRP_SENDRECV) THEN
              CALL MPI_SENDRECV(&
                   a(dsend(ns)+1), 1, tsend, ips, ims_tag, &
-                  b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_status(1,1), ims_err)
+                  b(drecv(nr)+1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_status(:,1), ims_err)
           ELSE;  CONTINUE     ! No transpose
           END IF
        END DO
 
        IF ( ims_trp_mode_k == TLAB_MPI_TRP_ASYNCHRONOUS ) &
-            CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
+            CALL MPI_WAITALL(l, ims_request, ims_status, ims_err)
 
        CALL TLAB_MPI_TAGUPDT
     ENDDO
@@ -439,13 +438,13 @@ CONTAINS
           ELSEIF ( ims_trp_mode_i == TLAB_MPI_TRP_SENDRECV ) THEN
              CALL MPI_SENDRECV(&
                   a(dsend(ns)+1),1,tsend,ips, ims_tag, &
-                  b(drecv(nr)+1),1,trecv,ipr, ims_tag,ims_comm_x,ims_status(1,1),ims_err)
+                  b(drecv(nr)+1),1,trecv,ipr, ims_tag,ims_comm_x,ims_status(:,1),ims_err)
           ELSE; CONTINUE ! No transpose
           END IF
        END DO
 
        IF ( ims_trp_mode_i == TLAB_MPI_TRP_ASYNCHRONOUS ) &
-            CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
+            CALL MPI_WAITALL(l, ims_request, ims_status, ims_err)
 
        CALL TLAB_MPI_TAGUPDT
     ENDDO
@@ -488,13 +487,13 @@ CONTAINS
           ELSEIF ( ims_trp_mode_k == TLAB_MPI_TRP_SENDRECV ) THEN
              CALL MPI_SENDRECV(&
                   b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag,  &
-                  a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_z, ims_status(1,1), ims_err)
+                  a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_z, ims_status(:,1), ims_err)
           ELSE; CONTINUE   ! No transpose
           END IF
        END DO
 
        IF ( ims_trp_mode_k == TLAB_MPI_TRP_ASYNCHRONOUS ) &
-            CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
+            CALL MPI_WAITALL(l, ims_request, ims_status, ims_err)
 
        CALL TLAB_MPI_TAGUPDT
     ENDDO
@@ -534,13 +533,13 @@ CONTAINS
           ELSEIF ( ims_trp_mode_i == TLAB_MPI_TRP_SENDRECV ) THEN
              CALL MPI_SENDRECV(&
                   b(drecv(nr)+1), 1, trecv(1), ipr, ims_tag,&
-                  a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_x, ims_status(1,1), ims_err)
+                  a(dsend(ns)+1), 1, tsend(1), ips, ims_tag, ims_comm_x, ims_status(:,1), ims_err)
           ELSE; CONTINUE    ! No transpose
           END IF
        END DO
 
        IF ( ims_trp_mode_i == TLAB_MPI_TRP_ASYNCHRONOUS ) &
-            CALL MPI_WAITALL(l, ims_request(1), ims_status(1,1), ims_err)
+            CALL MPI_WAITALL(l, ims_request, ims_status, ims_err)
 
        CALL TLAB_MPI_TAGUPDT
     ENDDO
@@ -760,7 +759,7 @@ CONTAINS
       CALL MPI_ISEND(a(1,kmax+1-npl_loc), icount, MPI_REAL8, ims_pro_r, &
           ims_tag, MPI_COMM_WORLD, mpireq(6), ims_err)
 
-      CALL MPI_WAITALL(4, mpireq(5), status, ims_err)
+      CALL MPI_WAITALL(4, mpireq(5:), status, ims_err)
 
       CALL TLAB_MPI_TAGUPDT
 

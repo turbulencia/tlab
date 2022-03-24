@@ -15,6 +15,7 @@ PROGRAM PDFS
   USE TLAB_MPI_PROCS
 #endif
   USE THERMO_VARS, ONLY : imixture
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -264,12 +265,12 @@ PROGRAM PDFS
 
     IF ( iread_scal == 1 ) THEN
       WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-      CALL DNS_READ_FIELDS(fname, i1, imax,jmax,kmax, inb_scal,i0, isize_wrk3d, s, wrk3d)
+      CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal,i0, s, wrk3d)
     END IF
 
     IF ( iread_flow == 1 ) THEN
       WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-      CALL DNS_READ_FIELDS(fname, i2, imax,jmax,kmax, inb_flow,i0, isize_wrk3d, q, wrk3d)
+      CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, inb_flow,i0, q, wrk3d)
     END IF
 
     CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
@@ -279,7 +280,7 @@ PROGRAM PDFS
     ! -------------------------------------------------------------------
     IF      ( opt_cond == 1 ) THEN ! External file
       WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
-      CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
+      CALL IO_READ_FIELD_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
       igate_size = INT(params(2))
 
     ELSE IF ( opt_cond > 1 ) THEN

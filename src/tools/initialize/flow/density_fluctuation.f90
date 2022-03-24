@@ -1,4 +1,5 @@
 #include "types.h"
+#include "dns_error.h"
 #include "dns_const.h"
 
 !########################################################################
@@ -10,22 +11,24 @@
 !# Array s enters with the scalar total field, including fluctuations.
 !#
 !########################################################################
-SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
+SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
 
+  USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_VARS,    ONLY : rbg, tbg
   USE THERMO_VARS, ONLY : imixture
+  USE TLAB_PROCS
   USE FLOW_LOCAL
 
   IMPLICIT NONE
 
   TINTEGER code
 
-  TREAL, DIMENSION(imax,jmax,kmax)   :: T, h, rho, p, wrk3d
+  TREAL, DIMENSION(imax,jmax,kmax)   :: T, h, rho, p
   TREAL, DIMENSION(imax,jmax,kmax,*) :: s
   TREAL, DIMENSION(imax,kmax)        :: disp
 
   ! -------------------------------------------------------------------
-  TINTEGER idummy, iprof_loc
+  TINTEGER idummy, iprof_loc, io_sizes(5)
   TREAL dummy, ycenter, mean_loc, delta_loc
   TREAL AVG1V2D, PROFILES
   TREAL xcenter, amplify
@@ -53,9 +56,8 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp, wrk3d)
   ! Broadband case
   ! -------------------------------------------------------------------
   IF ( code .EQ. 4 ) THEN
-    idummy = g(2)%size; g(2)%size = 1
-    CALL DNS_READ_FIELDS('scal.rand', i1, imax,i1,kmax, i1,i0, isize_field, disp, wrk3d)
-    g(2)%size = idummy
+    idummy=imax*kmax; io_sizes = (/idummy,1,idummy,1,1/)
+    CALL IO_READ_SUBARRAY8(IO_SUBARRAY_AUX, 'scal.rand', '1', disp, io_sizes, s) ! using array s as aux array
     dummy = AVG1V2D(imax,i1,kmax, i1, i1, disp)     ! remove mean
     disp = disp - dummy
 

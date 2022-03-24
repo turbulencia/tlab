@@ -41,6 +41,7 @@ PROGRAM LAGRANGE_INI_TRAJEC
   USE TLAB_ARRAYS
   USE TLAB_PROCS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
   USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro
   USE TLAB_MPI_PROCS
@@ -50,9 +51,6 @@ PROGRAM LAGRANGE_INI_TRAJEC
 
   IMPLICIT NONE
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
 ! -------------------------------------------------------------------
 ! Additional local arrays

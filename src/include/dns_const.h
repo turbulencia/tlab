@@ -3,10 +3,12 @@
 #define DNS_CONST_H_INCLUDED
 
 ! File formats
-#define DNS_FILE_RAWARRAY   1
-#define DNS_FILE_RAWSPLIT   2
-#define DNS_FILE_NETCDF     3
-#define DNS_NOFILE          4
+#define IO_MPIIO      1
+#define IO_NETCDF     2
+#define IO_NOFILE     3
+
+#define IO_TYPE_SINGLE     1
+#define IO_TYPE_DOUBLE     2
 
 ! Flow Types
 #define DNS_FLOW_SHEAR       1
@@ -191,8 +193,9 @@
 #define IO_SUBARRAY_SPECTRA_Z   10
 #define IO_SUBARRAY_SPECTRA_XZ  11
 #define IO_SUBARRAY_ENVELOPES   12
+#define IO_SUBARRAY_AUX         13
 
-#define IO_SUBARRAY_SIZE        12
+#define IO_SUBARRAY_SIZE        13
 
 ! Lagrangian Type
 #define LAG_TYPE_NONE          0

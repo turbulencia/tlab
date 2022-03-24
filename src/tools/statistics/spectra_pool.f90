@@ -11,6 +11,7 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
 
   USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
   USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
@@ -20,10 +21,6 @@ SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER,                   INTENT(IN)  :: nx,ny,nz, kr_total, isize_aux
   TREAL, DIMENSION(nx,ny,nz), INTENT(IN)  :: spec_2d ! power spectral density
@@ -175,15 +172,13 @@ SUBROUTINE REDUCE_SPECTRUM(nx,ny,nz, nblock, in,out, tmp1,variance)
 ! need to know about domain decomposition in x b/o
 ! nyquist frequency and zero frequency account different for the variance
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_pro_i, ims_npro_i, ims_err
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER,                                 INTENT(IN)  :: nx,ny,nz, nblock
   TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz), INTENT(IN)  :: in, tmp1
@@ -434,11 +429,10 @@ SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
   USE TLAB_TYPES,  ONLY : subarray_dt
   USE TLAB_VARS, ONLY : imax,jmax,kmax
   USE TLAB_VARS, ONLY : io_aux
+  USE MPI
   USE TLAB_MPI_VARS
 
   IMPLICIT NONE
-
-#include "mpif.h"
 
   TINTEGER, INTENT(IN) :: opt_main, nblock
 

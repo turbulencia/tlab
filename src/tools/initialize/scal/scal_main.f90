@@ -11,15 +11,17 @@ PROGRAM INISCAL
   USE TLAB_ARRAYS
   USE TLAB_PROCS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_PROCS
 #endif
   USE THERMO_VARS, ONLY : imixture
+  USE IO_FIELDS
   USE SCAL_LOCAL
 
   IMPLICIT NONE
 
 ! -------------------------------------------------------------------
-  TINTEGER is, inb_scal_loc
+  TINTEGER is, inb_scal_loc, id
 
 ! ###################################################################
   CALL TLAB_START()
@@ -52,10 +54,13 @@ PROGRAM INISCAL
 
   CALL FI_PROFILES_INITIALIZE(wrk1d)
 
+  ! Metadata to read plane data for options 4, 6, 8
+  id = IO_SUBARRAY_AUX
+  io_aux(id)%offset = 52 ! header size in bytes
 #ifdef USE_MPI
-  CALL SCAL_MPIO_AUX ! Needed for options 4, 6, 8
-#else
-  io_aux(1)%offset = 52 ! header size in bytes
+  io_aux(id)%active = .TRUE.
+  io_aux(id)%communicator = MPI_COMM_WORLD
+  io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ( imax,1,kmax, MPI_REAL8 )
 #endif
 
   itime = 0; rtime = C_0_R
@@ -93,28 +98,6 @@ PROGRAM INISCAL
   ENDIF
 
   ! ###################################################################
-#ifdef CHEMISTRY
-  ELSE
-    is = inb_scal
-
-    IF      ( flag_mixture .EQ. 0 ) THEN            ! pasive scalar field
-      CALL SCAL_MEAN(is, s(1,is), wrk1d,wrk2d,wrk3d)
-    ELSE IF ( flag_mixture .EQ. 2 ) THEN
-      CALL DNS_READ_FIELDS('scal.ics', i1, imax,jmax,kmax, i1,i1, isize_wrk3d, s(1,is), wrk3d)
-    ENDIF
-
-    IF      ( ireactive .EQ. CHEM_FINITE ) THEN     ! species mass fractions
-      CALL SCREACT_FINITE(x, s, isize_wrk3d, wrk3d)
-    ELSE IF ( ireactive .EQ. CHEM_INFINITE .AND. inb_scal .GT. 1 ) THEN
-      CALL SCREACT_INFINITE(x, s, isize_wrk3d, wrk3d)
-    ENDIF
-    CALL TLAB_WRITE_ASCII(efile, 'INISCAL. Chemistry part to be checked')
-    CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-
-  ENDIF
-#endif
-
-  ! ###################################################################
   IF ( radiation%type .NE. EQNS_NONE ) THEN         ! Initial radiation effect as an accumulation during a certain interval of time
 
     IF ( ABS(radiation%parameters(1)) .GT. C_0_R ) THEN
@@ -136,52 +119,7 @@ PROGRAM INISCAL
   ENDIF
 
 ! ###################################################################
-  CALL DNS_WRITE_FIELDS('scal.ics', i1, imax,jmax,kmax, inb_scal, isize_wrk3d, s, wrk3d)
+  CALL IO_WRITE_FIELDS('scal.ics', IO_SCAL, imax,jmax,kmax, inb_scal, s, wrk3d)
 
   CALL TLAB_STOP(0)
 END PROGRAM INISCAL
-
-! ###################################################################
-! ###################################################################
-#ifdef USE_MPI
-
-SUBROUTINE SCAL_MPIO_AUX()
-
-  USE TLAB_VARS, ONLY : imax,kmax
-  USE TLAB_VARS, ONLY : io_aux
-  USE TLAB_MPI_VARS
-
-  IMPLICIT NONE
-
-#include "mpif.h"
-
-! -----------------------------------------------------------------------
-  TINTEGER                :: ndims, id
-  TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
-
-! #######################################################################
-  io_aux(:)%active = .FALSE. ! defaults
-  io_aux(:)%offset = 0
-
-! ###################################################################
-! Subarray information to read plane data
-! ###################################################################
-  id = 1
-
-  io_aux(id)%active = .TRUE.
-  io_aux(id)%communicator = MPI_COMM_WORLD
-  io_aux(:)%offset  = 52 ! size of header in bytes
-
-  ndims = 3
-  sizes(1)  =imax *ims_npro_i; sizes(2)   = 1; sizes(3)   = kmax *ims_npro_k
-  locsize(1)=imax;             locsize(2) = 1; locsize(3) = kmax
-  offset(1) =ims_offset_i;     offset(2)  = 0; offset(3)  = ims_offset_k
-
-  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-       MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
-  CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
-
-  RETURN
-END SUBROUTINE SCAL_MPIO_AUX
-
-#endif

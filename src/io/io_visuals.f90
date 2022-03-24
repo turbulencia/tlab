@@ -1,4 +1,5 @@
 #include "types.h"
+#include "dns_const.h"
 
 #define LOC_UNIT_ID i55
 #define LOC_STATUS 'unknown'
@@ -8,15 +9,14 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
   USE TLAB_TYPES,  ONLY : subarray_dt
   USE TLAB_VARS, ONLY : g, isize_txc_field
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS,    ONLY : ims_pro
   USE TLAB_MPI_PROCS
 #endif
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 #include "integers.h"
 
   TINTEGER iformat, nx,ny,nz, nfield, subdomain(6)
@@ -24,12 +24,12 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
   TREAL, DIMENSION(nx*ny*nz,2) :: txc
   CHARACTER*(*) fname
 
-! -------------------------------------------------------------------
-  TINTEGER iaux_loc, sizes(5), nx_aux,ny_aux,nz_aux, ifield
+  ! -------------------------------------------------------------------
+  TINTEGER sizes(5), nx_aux,ny_aux,nz_aux, ifield
   CHARACTER*32 varname(16), name
   TINTEGER iflag_mode
 
-! ###################################################################
+  ! ###################################################################
   sizes(5) = nfield
 
   nx_aux = subdomain(2)-subdomain(1)+1
@@ -40,75 +40,75 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
   sizes(1) = isize_txc_field     ! array size
   sizes(2) = 1                   ! lower bound
   IF      ( subdomain(2)-subdomain(1)+1 .EQ. g(1)%size .AND. &
-            subdomain(6)-subdomain(5)+1 .EQ. 1          ) THEN! xOy plane
-     iflag_mode = 1
-     sizes(3)   = ny_aux *nx     ! upper bound
-     sizes(4)   = 1              ! stride
+      subdomain(6)-subdomain(5)+1 .EQ. 1          ) THEN! xOy plane
+    iflag_mode = IO_SUBARRAY_VISUALS_XOY
+    sizes(3)   = ny_aux *nx     ! upper bound
+    sizes(4)   = 1              ! stride
 
   ELSE IF ( subdomain(6)-subdomain(5)+1 .EQ. g(3)%size .AND. &
-            subdomain(2)-subdomain(1)+1 .EQ. 1          ) THEN! zOy plane
-     iflag_mode = 2
-     sizes(3)   = ny_aux *nx *nz ! upper bound
-     sizes(4)   = nx             ! stride
+      subdomain(2)-subdomain(1)+1 .EQ. 1          ) THEN! zOy plane
+    iflag_mode = IO_SUBARRAY_VISUALS_ZOY
+    sizes(3)   = ny_aux *nx *nz ! upper bound
+    sizes(4)   = nx             ! stride
 
   ELSE IF ( subdomain(2)-subdomain(1)+1 .EQ. g(1)%size .AND. &
-            subdomain(6)-subdomain(5)+1 .EQ. g(3)%size ) THEN
-     iflag_mode = 3                                           ! xOy blocks
-     sizes(3)   = ny_aux *nx *nz ! upper bound
-     sizes(4)   = 1              ! stride
+      subdomain(6)-subdomain(5)+1 .EQ. g(3)%size ) THEN! xOz blocks
+    iflag_mode = IO_SUBARRAY_VISUALS_XOZ
+    sizes(3)   = ny_aux *nx *nz ! upper bound
+    sizes(4)   = 1              ! stride
 
   ENDIF
 
-! ###################################################################
+  ! ###################################################################
   IF      ( iformat .EQ. 0 ) THEN ! standard scalar format
-     iaux_loc = nx*ny*nz
-     CALL DNS_WRITE_FIELDS(fname, i1, nx,ny,nz, nfield, iaux_loc, field, txc)
+    CALL IO_WRITE_FIELDS(fname, IO_SCAL, nx,ny,nz, nfield, field, txc)
 
-! -------------------------------------------------------------------
+    ! -------------------------------------------------------------------
   ELSE IF ( iformat .EQ. 1 ) THEN  ! ensight; to be removed
-     CALL ENSIGHT_FIELD(fname, i1, nx,ny,nz, nfield, subdomain, field, txc)
+    CALL ENSIGHT_FIELD(fname, i1, nx,ny,nz, nfield, subdomain, field, txc)
 
-! -------------------------------------------------------------------
+    ! -------------------------------------------------------------------
   ELSE IF ( iformat .EQ. 2 .AND. iflag_mode .GT. 0 ) THEN  ! single precision, using MPI_IO
-     IF ( ny_aux .NE. ny ) THEN
-        DO ifield = 1,nfield
-           CALL REDUCE_BLOCK_INPLACE(nx,ny,nz, i1,subdomain(3),i1, nx,ny_aux,nz, field(1,ifield), txc)
-        ENDDO
-     ENDIF
+    IF ( ny_aux .NE. ny ) THEN
+      DO ifield = 1,nfield
+        CALL REDUCE_BLOCK_INPLACE(nx,ny,nz, i1,subdomain(3),i1, nx,ny_aux,nz, field(1,ifield), txc)
+      ENDDO
+    ENDIF
 
-     varname = ''
-     IF ( nfield .GT. 1 ) THEN
-        DO ifield = 1,nfield; WRITE(varname(ifield),*) ifield; varname(ifield) = TRIM(ADJUSTL(varname(ifield))); ENDDO
-     ENDIF
-     CALL IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, field, sizes, txc)
+    varname = ''
+    IF ( nfield .GT. 1 ) THEN
+      DO ifield = 1,nfield; WRITE(varname(ifield),*) ifield; varname(ifield) = TRIM(ADJUSTL(varname(ifield)))
+      ENDDO
+    ENDIF
+    CALL IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, field, sizes, txc)
 
-! -------------------------------------------------------------------
+    ! -------------------------------------------------------------------
   ELSE                                                     ! single precision, through PE0
-     DO ifield = 1,nfield
-        IF ( nfield .GT. 1 ) THEN
-           WRITE(name,*) ifield; name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(name))
-        ELSE
-           name = fname
-        ENDIF
+    DO ifield = 1,nfield
+      IF ( nfield .GT. 1 ) THEN
+        WRITE(name,*) ifield; name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(name))
+      ELSE
+        name = fname
+      ENDIF
 
 #ifdef USE_MPI
-        IF ( ims_pro .EQ. 0 ) THEN
+      IF ( ims_pro .EQ. 0 ) THEN
 #endif
 #include "dns_open_file.h"
 
 #ifdef USE_MPI
-        ENDIF
-        CALL TLAB_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field(1,ifield), txc(1,1), txc(1,2))
-        IF ( ims_pro .EQ. 0 ) THEN
+      ENDIF
+      CALL TLAB_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field(1,ifield), txc(1,1), txc(1,2))
+      IF ( ims_pro .EQ. 0 ) THEN
 #else
-           CALL REDUCE_BLOCK_INPLACE(nx,ny,nz, subdomain(1),subdomain(3),subdomain(5), nx_aux,ny_aux,nz_aux, field(1,ifield), txc)
-           WRITE(LOC_UNIT_ID) SNGL(field(1:nx_aux*ny_aux*nz_aux,ifield))
+        CALL REDUCE_BLOCK_INPLACE(nx,ny,nz, subdomain(1),subdomain(3),subdomain(5), nx_aux,ny_aux,nz_aux, field(1,ifield), txc)
+        WRITE(LOC_UNIT_ID) SNGL(field(1:nx_aux*ny_aux*nz_aux,ifield))
 #endif
-           CLOSE(LOC_UNIT_ID)
+        CLOSE(LOC_UNIT_ID)
 #ifdef USE_MPI
-        ENDIF
+      ENDIF
 #endif
-     ENDDO
+    ENDDO
 
   ENDIF
 
@@ -125,7 +125,7 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
   USE TLAB_MPI_PROCS
 #endif
 
-  implicit NONE
+  IMPLICIT NONE
 
 #include "integers.h"
 
@@ -136,7 +136,7 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
   TREAL, DIMENSION(nx,ny,nz,nfield) :: field
   TREAL, DIMENSION(nx*ny*nz,2     ) :: tmp_mpi
 
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
   CHARACTER*80 line
 #ifdef USE_MPI
   TINTEGER ifield
@@ -144,59 +144,59 @@ SUBROUTINE ENSIGHT_FIELD(name, iheader, nx,ny,nz, nfield, subdomain, field, tmp_
   TINTEGER i,j,k, ifield
 #endif
 
-! ###################################################################
-! Header in Ensight Gold Variable File Format
-! ###################################################################
+  ! ###################################################################
+  ! Header in Ensight Gold Variable File Format
+  ! ###################################################################
 #ifdef USE_MPI
   IF ( ims_pro .EQ. 0 ) THEN
 #endif
 #include "dns_open_file.h"
 
-  IF ( iheader .EQ. 1 ) THEN
-     line='description line              '
-     WRITE(LOC_UNIT_ID) line
-     line='part                          '
-     WRITE(LOC_UNIT_ID) line
-     WRITE(LOC_UNIT_ID) i1
-     line='block                         '
-     WRITE(LOC_UNIT_ID) line
-  ENDIF
+    IF ( iheader .EQ. 1 ) THEN
+      line='description line              '
+      WRITE(LOC_UNIT_ID) line
+      line='part                          '
+      WRITE(LOC_UNIT_ID) line
+      WRITE(LOC_UNIT_ID) i1
+      line='block                         '
+      WRITE(LOC_UNIT_ID) line
+    ENDIF
 
 #ifdef USE_MPI
   ENDIF
 #endif
 
-! ###################################################################
-! Body
-! ###################################################################
-! -------------------------------------------------------------------
-! parallel
-! -------------------------------------------------------------------
+  ! ###################################################################
+  ! Body
+  ! ###################################################################
+  ! -------------------------------------------------------------------
+  ! parallel
+  ! -------------------------------------------------------------------
 #ifdef USE_MPI
   DO ifield = 1,nfield
-     CALL TLAB_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field, tmp_mpi(1,1), tmp_mpi(1,2))
+    CALL TLAB_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx,ny,nz, subdomain, field, tmp_mpi(1,1), tmp_mpi(1,2))
   END DO
 
-! -------------------------------------------------------------------
-! serial
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
+  ! serial
+  ! -------------------------------------------------------------------
 #else
   DO ifield = 1,nfield
-     DO k = subdomain(5),subdomain(6)
-        DO j = subdomain(3),subdomain(4)
-           WRITE(LOC_UNIT_ID) (SNGL(field(i,j,k,ifield)),i=subdomain(1),subdomain(2))
-        ENDDO
-     ENDDO
+    DO k = subdomain(5),subdomain(6)
+      DO j = subdomain(3),subdomain(4)
+        WRITE(LOC_UNIT_ID) (SNGL(field(i,j,k,ifield)),i=subdomain(1),subdomain(2))
+      ENDDO
+    ENDDO
   END DO
 
 #endif
 
-! ###################################################################
-! ###################################################################
+  ! ###################################################################
+  ! ###################################################################
 #ifdef USE_MPI
   IF ( ims_pro .EQ. 0 ) THEN
 #endif
-     CLOSE(LOC_UNIT_ID)
+    CLOSE(LOC_UNIT_ID)
 #ifdef USE_MPI
   ENDIF
 #endif
@@ -218,11 +218,11 @@ SUBROUTINE ENSIGHT_GRID(name, nx,ny,nz, subdomain, x,y,z)
   TREAL x(nx), y(ny), z(nz)
   CHARACTER*(*) name
 
-! -------------------------------------------------------------------
+  ! -------------------------------------------------------------------
   CHARACTER*80 line
   TINTEGER ij
 
-! ###################################################################
+  ! ###################################################################
 #include "dns_open_file.h"
 
   line='Fortran Binary                '
@@ -254,7 +254,6 @@ SUBROUTINE ENSIGHT_GRID(name, nx,ny,nz, subdomain, x,y,z)
   RETURN
 END SUBROUTINE ENSIGHT_GRID
 
-
 ! ###################################################################
 ! ###################################################################
 #ifdef USE_MPI
@@ -263,61 +262,67 @@ SUBROUTINE VISUALS_MPIO_AUX(opt_format, subdomain)
 
   USE TLAB_VARS, ONLY : imax,kmax, io_aux
   USE TLAB_MPI_VARS
-
+  USE MPI
+  USE IO_FIELDS
   IMPLICIT NONE
 
-#include "mpif.h"
+  TINTEGER, INTENT(IN)  :: opt_format, subdomain(6)
 
-  TINTEGER,                 INTENT(IN)  :: opt_format, subdomain(6)
+  ! -----------------------------------------------------------------------
+  TINTEGER id, ny_loc
 
-! -----------------------------------------------------------------------
-  TINTEGER                :: ndims
-  TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
-
-! #######################################################################
+  ! #######################################################################
   io_aux(:)%active = .FALSE.
   io_aux(:)%offset = 0
   IF ( opt_format .EQ. 1 ) io_aux(:)%offset = 244 ! # bytes of ensight header
 
-! ###################################################################
-! Saving full vertical xOy planes; using subdomain(5) to define the plane
-  IF ( ims_pro_k .EQ. ( (subdomain(5)-1) /kmax) ) io_aux(1)%active = .TRUE.
-  io_aux(1)%communicator = ims_comm_x
+  ny_loc = subdomain(4)-subdomain(3)+1
 
-  ndims = 2
-  sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1
-  locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1
-  offset(1)  = ims_offset_i;     offset(2)  = 0
+  ! ###################################################################
+  ! Saving full vertical xOy planes; using subdomain(5) to define the plane
+  id = IO_SUBARRAY_VISUALS_XOY
+  IF ( ims_pro_k .EQ. ( (subdomain(5)-1) /kmax) ) io_aux(id)%active = .TRUE.
+  io_aux(id)%communicator = ims_comm_x
+  io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY( imax,ny_loc, MPI_REAL4 )
 
-  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-       MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(1)%subarray, ims_err)
-  CALL MPI_Type_commit(io_aux(1)%subarray, ims_err)
+  ! ndims = 2
+  ! sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1
+  ! locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1
+  ! offset(1)  = ims_offset_i;     offset(2)  = 0
+  !
+  ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+  !     MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
+  ! CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 
-! Saving full vertical zOy planes; using subdomain(1) to define the plane
-  IF ( ims_pro_i .EQ.  ( (subdomain(1)-1) /imax) ) io_aux(2)%active = .TRUE.
-  io_aux(2)%communicator = ims_comm_z
+  ! Saving full vertical zOy planes; using subiddomain(1) to define the plane
+  id = IO_SUBARRAY_VISUALS_ZOY
+  IF ( ims_pro_i .EQ.  ( (subdomain(1)-1) /imax) ) io_aux(id)%active = .TRUE.
+  io_aux(id)%communicator = ims_comm_z
+  io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY( ny_loc,kmax, MPI_REAL4 )
 
-  ndims = 2
-                             sizes(1)   = subdomain(4)-subdomain(3)+1; sizes(2)   = kmax *ims_npro_k
-                             locsize(1) = subdomain(4)-subdomain(3)+1; locsize(2) = kmax
-                             offset(1)  = 0;                           offset(2)  = ims_offset_k
+  ! ndims = 2
+  ! sizes(1)   = subdomain(4)-subdomain(3)+1; sizes(2)   = kmax *ims_npro_k
+  ! locsize(1) = subdomain(4)-subdomain(3)+1; locsize(2) = kmax
+  ! offset(1)  = 0;                           offset(2)  = ims_offset_k
+  !
+  ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+  !     MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
+  ! CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 
-  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-       MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(2)%subarray, ims_err)
-  CALL MPI_Type_commit(io_aux(2)%subarray, ims_err)
+  ! Saving full blocks xOz planes
+  id = IO_SUBARRAY_VISUALS_XOZ
+  io_aux(id)%active = .TRUE.
+  io_aux(id)%communicator = MPI_COMM_WORLD
+  io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ( imax,ny_loc,kmax, MPI_REAL4 )
 
-! Saving full blocks xOz planes
-  io_aux(3)%active = .TRUE.
-  io_aux(3)%communicator = MPI_COMM_WORLD
-
-  ndims = 3
-  sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1; sizes(3)   = kmax *ims_npro_k
-  locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1; locsize(3) = kmax
-  offset(1)  = ims_offset_i;     offset(2)  = 0;                           offset(3)  = ims_offset_k
-
-  CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-       MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(3)%subarray, ims_err)
-  CALL MPI_Type_commit(io_aux(3)%subarray, ims_err)
+  ! ndims = 3
+  ! sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1; sizes(3)   = kmax *ims_npro_k
+  ! locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1; locsize(3) = kmax
+  ! offset(1)  = ims_offset_i;     offset(2)  = 0;                           offset(3)  = ims_offset_k
+  !
+  ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+  !     MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
+  ! CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 
   RETURN
 END SUBROUTINE VISUALS_MPIO_AUX

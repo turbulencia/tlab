@@ -45,16 +45,14 @@ SUBROUTINE OPR_FOURIER_INITIALIZE(tmp, wrk1d,wrk2d,wrk3d)
   USE TLAB_PROCS
 
 #ifdef USE_MPI
-USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
-USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_size_k
+  USE MPI
+  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_size_k
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 #ifdef USE_FFTW
 #include "fftw3.f"
 #endif
@@ -634,14 +632,11 @@ SUBROUTINE OPR_FOURIER_SPECTRA_3D(nx,ny,nz, isize_psd, u, psd, wrk1d)
   USE TLAB_VARS, ONLY : isize_txc_dimz
   USE TLAB_VARS, ONLY : g
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_offset_k, ims_pro, ims_err
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER ,                           INTENT(IN)    :: nx,ny,nz, isize_psd
   TREAL, DIMENSION(isize_txc_dimz,nz), INTENT(IN)    :: u

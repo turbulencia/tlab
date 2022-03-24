@@ -1,6 +1,9 @@
 #include "types.h"
 
 MODULE PDFS
+#ifdef USE_MPI
+   USE MPI
+#endif
   IMPLICIT NONE
 
   PRIVATE
@@ -11,7 +14,6 @@ MODULE PDFS
   TREAL umin,umax,ustep
 
 #ifdef USE_MPI
-#include "mpif.h"
   INTEGER ims_err, impi
   TREAL umin_p, umax_p
 #endif

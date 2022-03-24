@@ -24,6 +24,7 @@ PROGRAM VISUALS
   USE THERMO_VARS, ONLY : NSP, THERMO_SPNAME
   USE LAGRANGE_VARS
   USE LAGRANGE_ARRAYS
+  USE IO_FIELDS
 
   IMPLICIT NONE
 
@@ -318,12 +319,12 @@ PROGRAM VISUALS
 
     IF ( iread_scal .EQ. 1 ) THEN ! Scalar variables
       WRITE(scal_file,*) itime; scal_file = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(scal_file))
-      CALL DNS_READ_FIELDS(scal_file, i1, imax,jmax,kmax, inb_scal, i0, isize_wrk3d, s, wrk3d)
+      CALL IO_READ_FIELDS(scal_file, IO_SCAL, imax,jmax,kmax, inb_scal, i0, s, wrk3d)
     ENDIF
 
     IF ( iread_flow .EQ. 1 ) THEN ! Flow variables
       WRITE(flow_file,*) itime; flow_file = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(flow_file))
-      CALL DNS_READ_FIELDS(flow_file, i2, imax,jmax,kmax, inb_flow, i0, isize_wrk3d, q, wrk3d)
+      CALL IO_READ_FIELDS(flow_file, IO_FLOW, imax,jmax,kmax, inb_flow, i0, q, wrk3d)
     ENDIF
 
     CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
@@ -340,7 +341,7 @@ PROGRAM VISUALS
     ! -------------------------------------------------------------------
     IF      ( opt_cond .EQ. 1 ) THEN ! Read external file
       WRITE(fname,*) itime; fname = 'gate.'//TRIM(ADJUSTL(fname)); params_size = 2
-      CALL IO_READ_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
+      CALL IO_READ_FIELD_INT1(fname, i1, imax,jmax,kmax,itime, params_size,params, gate)
       igate_size = INT(params(2))
 
     ELSE IF ( opt_cond .GT. 1 ) THEN

@@ -9,16 +9,15 @@ PROGRAM VHELMHOLTZ_FXZ
   USE TLAB_TYPES, ONLY : pointers_dt
   USE TLAB_VARS, ONLY : imax,jmax,kmax, inb_wrk1d,inb_wrk2d,isize_wrk1d,isize_wrk2d,gfile,isize_txc_field
   USE TLAB_PROCS
+  USE IO_FIELDS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_PROCS
 #endif
 
   IMPLICIT NONE
 
 #include "integers.h"
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TREAL, DIMENSION(:,:),   ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:,:), ALLOCATABLE :: b, c, d, h
@@ -99,7 +98,7 @@ PROGRAM VHELMHOLTZ_FXZ
   t_new=0.0
   t_old=0.0
   DO opt=1,2
-     CALL DNS_READ_FIELDS('field.inp', i2, imax,jmax,kmax, nfield,i0, isize_wrk3d, a, wrk3d)
+     CALL IO_READ_FIELDS('field.inp', IO_FLOW, imax,jmax,kmax, nfield,i0, a, wrk3d)
      f = a
      IF ( opt .EQ. 1 ) THEN
         DO imeasure=1,nmeasure

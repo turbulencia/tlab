@@ -5,14 +5,11 @@ SUBROUTINE FILTH2_Z(iunifz, k1bc, imax,jmax,kmax, nz0,nz1, cf2z, z1, zf1, wrk)
 
   USE DNS_CONSTANTS, ONLY : efile
 #ifdef USE_MPI
+   USE MPI
   USE TLAB_MPI_VARS
 #endif
 
   IMPLICIT NONE
-
-#ifdef USE_MPI
-#include "mpif.h"
-#endif
 
   TINTEGER iunifz, k1bc, imax,jmax,kmax, nz0,nz1
   TREAL cf2z(*)
@@ -21,7 +18,7 @@ SUBROUTINE FILTH2_Z(iunifz, k1bc, imax,jmax,kmax, nz0,nz1, cf2z, z1, zf1, wrk)
   TREAL wrk(imax, jmax, *)
 
   TINTEGER nij, nz
-  TINTEGER i2 
+  TINTEGER i2
 
 #ifdef USE_MPI
   TINTEGER npl
@@ -49,7 +46,7 @@ SUBROUTINE FILTH2_Z(iunifz, k1bc, imax,jmax,kmax, nz0,nz1, cf2z, z1, zf1, wrk)
         CALL TLAB_WRITE_ASCII(efile, 'FILTH2_Z. Size kmax too small for PARALLEL mode.')
         CALL DNS_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
-        
+
      IF ( iunifz .EQ. 0 ) THEN
         IF ( k1bc .EQ. 0 ) THEN
            IF ( nz .EQ. 4 ) THEN
@@ -91,4 +88,3 @@ SUBROUTINE FILTH2_Z(iunifz, k1bc, imax,jmax,kmax, nz0,nz1, cf2z, z1, zf1, wrk)
 
   RETURN
 END SUBROUTINE FILTH2_Z
-
