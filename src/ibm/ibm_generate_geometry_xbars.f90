@@ -151,9 +151,11 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   ! reshape 3D-eps_aux field into 1D-eps
   eps = reshape(eps_aux,(/isize_field/))
 
-  ! write eps
-  call IBM_IO_WRITE(wrk3d)
-  ! call IBM_IO_WRITE_INT1(eps)
+  ! write eps as real dp
+  ! call IBM_IO_WRITE(wrk3d)
+
+  ! write eps as int1
+  call IBM_IO_WRITE_INT1(eps)
 
   return
 end subroutine IBM_GENERATE_GEOMETRY_XBARS

@@ -97,7 +97,6 @@
 #define DNS_BCS_NEUMANN     4
 
 ! Surface Models
-
 #define DNS_SFC_STATIC      0
 #define DNS_SFC_LINEAR      1
 
@@ -212,5 +211,12 @@
 #define LAG_TRAJECTORY_FIRST     1
 #define LAG_TRAJECTORY_LARGEST   2
 #define LAG_TRAJECTORY_VORTICITY 3
+
+! Cubic Splines
+#define CS_BCS_PERIODIC 0
+#define CS_BCS_CLAMPED  1
+#define CS_BCS_FIXED_1  2
+#define CS_BCS_NATURAL  3
+#define CS_BCS_FIXED_2  4
 
 #endif

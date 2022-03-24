@@ -42,8 +42,8 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
 
   ! ================================================================== !
   if ( ibm_restart ) then
-    call IBM_IO_READ(wrk3d)
-    ! call IBM_IO_READ_INT1(eps,wrk3d) ! not working yet
+    ! call IBM_IO_READ(wrk3d)    ! read eps as real dp
+    call IBM_IO_READ_INT1(wrk3d) ! read eps as int1
   else
   ! generate native 3d-geometry field (eps_aux) of immersed objects (define your own geomtry here)
     call IBM_GENERATE_GEOMETRY_XBARS(wrk3d) 
