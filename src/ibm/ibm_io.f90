@@ -85,7 +85,7 @@ subroutine IBM_IO_READ_INT1(wrk3d)
   params_size = i1
   
   ! read eps field as int(1)
-  call IO_READ_FIELD_INT1(fname, i1, imax,jmax,kmax, i0, params_size, params, int_wrk)
+  call IO_READ_FIELD_INT1(fname, i0, imax,jmax,kmax, i0, params_size, params, int_wrk)
 
   ! type casting
   eps(:) = real(int_wrk(:), dp)
@@ -144,7 +144,7 @@ subroutine IBM_IO_WRITE_INT1(a)
   fname         = 'eps0.1'
   
   ! write eps field (filename 'eps0.1') as int(1) 
-  call IO_WRITE_FIELD_INT1(fname, i1, imax,jmax,kmax, i0, isize, params, int_a)
+  call IO_WRITE_FIELD_INT1(fname, i0, imax,jmax,kmax, i0, isize, params, int_a)
 
   return
 end subroutine IBM_IO_WRITE_INT1
