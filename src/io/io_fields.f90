@@ -237,25 +237,23 @@ contains
 
       ! -------------------------------------------------------------------
       ! process header info
-      if ( iheader > 0 ) then
-        isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
-        if ( isize > isize_max ) then
-          call TLAB_WRITE_ASCII(efile, 'IO_READ_FIELDS. Parameters array size error')
-          call TLAB_STOP(DNS_ERROR_ALLOC)
-        end if
-
-        rtime = params(1)
-        if ( iheader == IO_FLOW ) then
-          visc  = params(2)
-        end if
-#ifdef USE_MPI
-        call MPI_BCAST(itime, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
-        call MPI_BCAST(rtime, 1, MPI_REAL8,    0, MPI_COMM_WORLD, ims_err)
-        if ( iheader == IO_FLOW ) then
-          call MPI_BCAST(visc,  1, MPI_REAL8,    0, MPI_COMM_WORLD, ims_err)
-        end if
-#endif
+      isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
+      if ( isize > isize_max ) then
+        call TLAB_WRITE_ASCII(efile, 'IO_READ_FIELDS. Parameters array size error')
+        call TLAB_STOP(DNS_ERROR_ALLOC)
       end if
+
+      rtime = params(1)
+      if ( iheader == IO_FLOW ) then
+        visc  = params(2)
+      end if
+#ifdef USE_MPI
+      call MPI_BCAST(itime, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
+      call MPI_BCAST(rtime, 1, MPI_REAL8,    0, MPI_COMM_WORLD, ims_err)
+      if ( iheader == IO_FLOW ) then
+        call MPI_BCAST(visc,  1, MPI_REAL8,    0, MPI_COMM_WORLD, ims_err)
+      end if
+#endif
 
     end select
 
@@ -310,14 +308,9 @@ contains
 
 #ifdef USE_MPI
     end if
-
-    if ( iheader > 0 ) then
-      call MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
-      isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
-      call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
-    else
-      isize = 0
-    endif
+    call MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
+    isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
+    call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 
     ! -------------------------------------------------------------------
     ! field
