@@ -44,7 +44,9 @@ MODULE TLAB_TYPES
      TREAL scale
      TREAL, DIMENSION(:),   POINTER :: nodes
      TREAL, DIMENSION(:,:), POINTER :: jac   ! pointer to Jacobians
+     TREAL, DIMENSION(:,:), POINTER :: lu0i  ! pointer to LU decomposition for interpolation 
      TREAL, DIMENSION(:,:), POINTER :: lu1   ! pointer to LU decomposition for 1. derivative
+     TREAL, DIMENSION(:,:), POINTER :: lu1i  ! pointer to LU decomposition for 1. derivative inc. interp. 
      TREAL, DIMENSION(:,:), POINTER :: lu2   ! pointer to LU decomposition for 2. derivative
      TREAL, DIMENSION(:,:), POINTER :: lu2d  ! pointer to LU decomposition for 2. derivative inc. diffusion
      TREAL, DIMENSION(:,:), POINTER :: mwn   ! pointer to modified wavenumbers

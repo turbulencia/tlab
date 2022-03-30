@@ -7,21 +7,27 @@ PROGRAM VBURGERS
   USE TLAB_VARS
   USE TLAB_PROCS
 #ifdef USE_MPI
+  USE MPI
   USE TLAB_MPI_PROCS
+  USE TLAB_MPI_VARS
 #endif
   USE IO_FIELDS
 
   IMPLICIT NONE
 
 #include "integers.h"
-
+#ifdef USE_MPI
+#else
+   TINTEGER, PARAMETER                 :: ims_pro=0
+#endif
+   
   TREAL, DIMENSION(:,:),   ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:,:), ALLOCATABLE :: a, b, c
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: wrk1d, wrk2d
   TREAL, DIMENSION(:),     ALLOCATABLE :: wrk3d, tmp1
 
   TINTEGER i, j, k,  bcs(2,2)
-  TREAL dummy, error
+  TREAL dummy, error, dummy2, error2
 
 ! ###################################################################
   CALL TLAB_START()
@@ -71,20 +77,17 @@ PROGRAM VBURGERS
   ENDDO
 
   CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), a,a,a, c, tmp1, wrk2d,wrk3d)
-  c = c -b
 
-  error = C_0_R
-  dummy = C_0_R
-  DO k = 1,kmax
-     DO j = 1,jmax
-        DO i = 1,imax
-           error = error + c(i,j,k)*c(i,j,k)
-           dummy = dummy + b(i,j,k)*b(i,j,k)
-        ENDDO
-     ENDDO
-  ENDDO
-  WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-!  CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, e, wrk3d)
+  c = c - b; error = sum(c**2); dummy = sum(b**2)
+#ifdef USE_MPI
+  error2 = error; dummy2 = dummy
+  CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+#endif
+  IF (ims_pro == 0) THEN
+     WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
+  ENDIF
+! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c, wrk3d)
 
 ! ###################################################################
   CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), a,b, c, wrk2d,wrk3d)
@@ -98,49 +101,43 @@ PROGRAM VBURGERS
   ENDDO
 
   CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, g(2), a,a,a, c, tmp1, wrk2d,wrk3d)
-  c = c -b
-
-  error = C_0_R
-  dummy = C_0_R
-  DO k = 1,kmax
-     DO j = 1,jmax
-        DO i = 1,imax
-           error = error + c(i,j,k)*c(i,j,k)
-           dummy = dummy + b(i,j,k)*b(i,j,k)
-        ENDDO
-     ENDDO
-  ENDDO
-  WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-!  CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c, wrk3d)
+  
+  c = c - b; error = sum(c**2); dummy = sum(b**2)
+#ifdef USE_MPI
+  error2 = error; dummy2 = dummy
+  CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+#endif
+  IF (ims_pro == 0) THEN
+     WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
+  ENDIF
+! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c, wrk3d)
 
 ! ###################################################################
   IF ( g(3)%size .GT. 1 ) THEN
 
-  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), a,b, c, wrk2d,wrk3d)
-  DO k = 1,kmax
-     DO j = 1,jmax
-        DO i = 1,imax
-!           b(i,j,k) = b(i,j,k) *visc - a(i,j,k) *c(i,j,k)
-           b(i,j,k) = b(i,j,k) *visc *ribackground(j)- a(i,j,k) *c(i,j,k)
+     CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), a,b, c, wrk2d,wrk3d)
+     DO k = 1,kmax
+        DO j = 1,jmax
+           DO i = 1,imax
+   !           b(i,j,k) = b(i,j,k) *visc - a(i,j,k) *c(i,j,k)
+              b(i,j,k) = b(i,j,k) *visc *ribackground(j)- a(i,j,k) *c(i,j,k)
+           ENDDO
         ENDDO
      ENDDO
-  ENDDO
-
-  CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, g(3), a,a,a, c, tmp1, wrk2d,wrk3d)
-  c = c -b
-
-  error = C_0_R
-  dummy = C_0_R
-  DO k = 1,kmax
-     DO j = 1,jmax
-        DO i = 1,imax
-           error = error + c(i,j,k)*c(i,j,k)
-           dummy = dummy + b(i,j,k)*b(i,j,k)
-        ENDDO
-     ENDDO
-  ENDDO
-  WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-!  CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, e, wrk3d)
+   
+     CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, g(3), a,a,a, c, tmp1, wrk2d,wrk3d)
+   
+     c = c - b; error = sum(c**2); dummy = sum(b**2)
+#ifdef USE_MPI
+     error2 = error; dummy2 = dummy
+     CALL MPI_ALLREDUCE(dummy2, dummy, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+     CALL MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+#endif
+     IF (ims_pro == 0) THEN
+        WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
+     ENDIF
+!    CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c, wrk3d)
 
   END IF
 

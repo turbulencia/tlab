@@ -28,8 +28,9 @@
 SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
      a,dpdy, tmp1,tmp2, bcs_hb,bcs_ht, aux, wrk1d,wrk3d)
 
-  USE TLAB_TYPES,  ONLY : grid_dt
-  USE TLAB_VARS, ONLY : isize_txc_dimz
+  USE TLAB_TYPES,    ONLY : grid_dt
+  USE TLAB_VARS,     ONLY : isize_txc_dimz
+  USE TLAB_VARS,     ONLY : ivfilter, istagger, vfilter_param
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -39,7 +40,7 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
 #include "integers.h"
 
   LOGICAL,                                  INTENT(IN)    :: flag
-  TINTEGER,                                 INTENT(IN)    :: nx,ny,nz, ibc
+  TINTEGER,                                 INTENT(INOUT) :: nx,ny,nz, ibc
   TYPE(grid_dt),                            INTENT(IN)    :: g(3)
   TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: a    ! Forcing term, ans solution field p
   TREAL,    DIMENSION(nx,ny,nz),            INTENT(INOUT) :: dpdy ! Derivative, flag .TRUE.
@@ -104,36 +105,61 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
      SELECT CASE(ibc)
 
      CASE(3) ! Neumann   & Neumann   BCs
-        IF ( kglobal .EQ. 1             .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1) .OR.&
-             kglobal .EQ. g(3)%size/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1)     )THEN
-           CALL FDE_BVP_SINGULAR_NN(g(2)%mode_fdm, ny,i2, &
-                g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
-        ELSE
-           CALL FDE_BVP_REGULAR_NN(g(2)%mode_fdm, ny,i2, lambda, &
-                g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+        IF ( istagger .EQ. 0 ) THEN
+           IF ( kglobal .EQ. 1             .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1) .OR.&
+                kglobal .EQ. g(3)%size/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1)     )THEN
+              CALL FDE_BVP_SINGULAR_NN(g(2)%mode_fdm, ny,i2, &
+                    g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
+           ELSE
+              CALL FDE_BVP_REGULAR_NN(g(2)%mode_fdm, ny,i2, lambda, &
+                    g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+           ENDIF
+        ELSE ! In case of staggering only one singular mode + different modified wavenumbers
+           IF ( kglobal .EQ. 1 .AND. iglobal .EQ. 1 )THEN
+              CALL FDE_BVP_SINGULAR_NN(g(2)%mode_fdm, ny,i2, &
+                    g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
+           ELSE
+              CALL FDE_BVP_REGULAR_NN(g(2)%mode_fdm, ny,i2, lambda, &
+                    g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+           ENDIF
         ENDIF
 
      CASE(0) ! Dirichlet & Dirichlet BCs
-        IF ( kglobal .EQ. 1             .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1) .OR.&
-             kglobal .EQ. g(3)%size/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1)     )THEN
-           CALL FDE_BVP_SINGULAR_DD(g(2)%mode_fdm, ny,i2, &
-                g(2)%nodes,g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
-        ELSE
-           CALL FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny,i2, lambda, &
-                           g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+        IF ( istagger .EQ. 0 ) THEN
+           IF ( kglobal .EQ. 1             .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1) .OR.&
+                kglobal .EQ. g(3)%size/2+1 .AND. (iglobal .EQ. 1 .OR. iglobal .EQ. g(1)%size/2+1)     )THEN
+              CALL FDE_BVP_SINGULAR_DD(g(2)%mode_fdm, ny,i2, &
+                    g(2)%nodes,g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
+           ELSE
+              CALL FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny,i2, lambda, &
+                    g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+           ENDIF
+        ELSE ! In case of staggering only one singular mode + different modified wavenumbers
+           IF ( kglobal .EQ. 1 .AND. iglobal .EQ. 1 )THEN
+              CALL FDE_BVP_SINGULAR_DD(g(2)%mode_fdm, ny,i2, &
+                    g(2)%nodes,g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,3))
+           ELSE
+              CALL FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny,i2, lambda, &
+                    g(2)%jac, aux(1,2),aux(1,1), bcs, wrk1d(1,1), wrk1d(1,2))
+           ENDIF
         ENDIF
 
      END SELECT
 
-! normalize
+   ! Vertical filtering of p and dpdy in case of staggering
+     IF ( ivfilter .EQ. 1 ) THEN
+        CALL FILTER_VERTICAL_PRESSURE(aux(1,2), wrk1d(1,1), ny, vfilter_param, wrk1d(1,2))
+     ENDIF
+ 
+   ! Normalize
      DO j = 1,ny
         ip = (j-1)*isize_line + i
         tmp1(ip,k) = aux(j,2)  *norm ! solution
         tmp2(ip,k) = wrk1d(j,1)*norm ! Oy derivative
      ENDDO
-        
-  ENDDO
-  ENDDO
+      
+   ENDDO
+   ENDDO
 
 ! ###################################################################
 ! Fourier field p (based on array tmp1)
