@@ -46,7 +46,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(imax,kmax,*)   :: wrk2d
 
-  TARGET hs, tmp4
+  TARGET hs, h2, tmp4
 
 ! -----------------------------------------------------------------------
   TINTEGER iq, is, ij, k, nxy, ip_b, ip_t
@@ -268,16 +268,20 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1
-  tmp4 = h2 ! copy, h2 shouldn't be staggered
 ! Stagger also Bcs
   IF ( istagger .EQ. 1 ) THEN ! todo: only need to stagger upper/lower boundary plane, not full h2-array
-     CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), h2,   tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+     DO k = 1,kmax
+        p_bcs => tmp4(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+        p_bcs => tmp4(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+     ENDDO
+  ELSE
+     DO k = 1,kmax
+        p_bcs => h2(ip_b:);   BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+        p_bcs => h2(ip_t:);   BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+     ENDDO
   ENDIF
-  DO k = 1,kmax
-     p_bcs => tmp4(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-     p_bcs => tmp4(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
-  ENDDO
 
 ! Adding density in BCs
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
