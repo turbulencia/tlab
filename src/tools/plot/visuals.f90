@@ -317,9 +317,11 @@ PROGRAM VISUALS
     WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))//'.'
     CALL TLAB_WRITE_ASCII(lfile, sRes)
 
-    IF ( iread_scal .EQ. 1 ) THEN ! Scalar variables
+    IF ( icalc_scal .EQ. 1 .AND. iread_scal .EQ. 1 ) THEN ! Scalar variables
       WRITE(scal_file,*) itime; scal_file = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(scal_file))
       CALL IO_READ_FIELDS(scal_file, IO_SCAL, imax,jmax,kmax, inb_scal, i0, s, wrk3d)
+    ELSEIF (icalc_scal .EQ. 0) THEN
+      s = C_0_R
     ENDIF
 
     IF ( iread_flow .EQ. 1 ) THEN ! Flow variables

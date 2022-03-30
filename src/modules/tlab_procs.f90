@@ -199,6 +199,7 @@ CONTAINS
   SUBROUTINE TLAB_STOP(error_code)
     USE TLAB_VARS, ONLY : g
     USE TLAB_VARS, ONLY : ifourier, fft_plan_fx, fft_plan_bx, fft_plan_fz, fft_plan_bz
+    USE TLAB_VARS, ONLY : ivfilter, fft_plan_fy1d, fft_plan_by1d
     IMPLICIT NONE
 
     INTEGER, INTENT(IN) :: error_code
@@ -213,6 +214,10 @@ CONTAINS
         CALL dfftw_destroy_plan(fft_plan_bz)
       END IF
     END IF
+    IF (ivfilter .EQ. 1 ) THEN
+      CALL dfftw_destroy_plan(fft_plan_fy1d)
+      CALL dfftw_destroy_plan(fft_plan_by1d)
+    ENDIF
 #endif
 
     ! ###################################################################
