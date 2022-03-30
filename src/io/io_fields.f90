@@ -182,6 +182,7 @@ contains
       iz = 0
       do ifield = 1,nfield
         if ( iread == 0 .or. iread == ifield ) then
+          iz = iz +1
           write(name,'(I2)') ifield
           name=trim(adjustl(fname))//'.'//trim(adjustl(name))
 
@@ -199,14 +200,11 @@ contains
           end if
           call MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
           ! isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
-          ! call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
-#endif
+          ! if ( isize > 0 ) call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 
           ! -------------------------------------------------------------------
           ! field
-          iz = iz +1
           ! CALL IO_READ_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a(1,iz),txc)
-#ifdef USE_MPI
           mpio_disp = header_offset*SIZEOFBYTE ! Displacement to start of field
           mpio_locsize = nx*ny*nz
           call MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
@@ -309,8 +307,6 @@ contains
 #ifdef USE_MPI
     end if
     call MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
-    isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
-    call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 
     ! -------------------------------------------------------------------
     ! field
@@ -327,6 +323,13 @@ contains
     read(LOC_UNIT_ID,POS=header_offset) a
     close(LOC_UNIT_ID)
 
+#endif
+
+    ! -------------------------------------------------------------------
+    ! process header info
+    isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
+#ifdef USE_MPI
+    if ( isize > 0 ) call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 #endif
 
     return
