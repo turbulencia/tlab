@@ -34,8 +34,6 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
 ! Pointers to existing allocated space
   TREAL, DIMENSION(:),   POINTER :: u,v,w
   TREAL, DIMENSION(:),   POINTER :: tmp3,tmp4,tmp5
-  TREAL, DIMENSION(:,:), POINTER :: tmp6
-
   TREAL, DIMENSION(:),   POINTER :: p_bcs
 
 ! #######################################################################
@@ -51,14 +49,13 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   v    => q(:,2)
   w    => q(:,3)
   
-  tmp6 => tmp(:,:)
 ! #######################################################################
 ! Sources
-  CALL FI_SOURCES_FLOW(q,s, tmp6, tmp1, wrk1d,wrk2d,wrk3d)
+  CALL FI_SOURCES_FLOW(q,s, tmp, tmp1, wrk1d,wrk2d,wrk3d)
 
-  tmp3 => tmp6(:,1)
-  tmp4 => tmp6(:,2)
-  tmp5 => tmp6(:,3)
+  tmp3 => tmp(:,1)
+  tmp4 => tmp(:,2)
+  tmp5 => tmp(:,3)
 
 ! If IBM, then use modified fields for derivatives
   IF ( imode_ibm == 1 ) ibm_burgers = .true.
@@ -114,11 +111,10 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
     CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
   ENDIF
-  tmp3 = tmp4 ! copy for BCS of poisson solver 
   IF (istagger .EQ. 1 ) THEN
     CALL OPR_PARTIAL_X(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(1), tmp4,tmp2, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Y(OPR_P1,         imax,jmax,kmax, bcs, g(2), tmp2,tmp4, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(3), tmp4,tmp1, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Y(OPR_P1,         imax,jmax,kmax, bcs, g(2), tmp2,tmp3, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(3), tmp3,tmp1, wrk3d, wrk2d,wrk3d)
   ELSE
     CALL OPR_PARTIAL_Y(OPR_P1,         imax,jmax,kmax, bcs, g(2), tmp4,tmp1, wrk3d, wrk2d,wrk3d)
   ENDIF
@@ -141,12 +137,12 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1
   IF ( istagger  .EQ. 1 ) THEN
-    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
   ENDIF
   DO k = 1,kmax
-    p_bcs => tmp3(ip_b:); wrk2d(1:imax,k,1) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-    p_bcs => tmp3(ip_t:); wrk2d(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+    p_bcs => tmp4(ip_b:); wrk2d(1:imax,k,1) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+    p_bcs => tmp4(ip_t:); wrk2d(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
   ENDDO
 
 ! Pressure field in p
