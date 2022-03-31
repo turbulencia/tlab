@@ -24,7 +24,7 @@ module IO_FIELDS
 #ifdef USE_MPI
   use MPI
   use TLAB_MPI_VARS, only : ims_err
-  use TLAB_MPI_VARS, only : ims_pro, ims_npro_i, ims_npro_k
+  use TLAB_MPI_VARS, only : ims_pro, ims_npro_i, ims_npro_k, ims_pro_i, ims_pro_k
   use TLAB_MPI_VARS, only : ims_offset_i, ims_offset_j, ims_offset_k
 #endif
 
@@ -67,7 +67,7 @@ contains
 
     sizes   = [ nx*ims_npro_i, ny           ]
     locsize = [ nx,            ny           ]
-    offset  = [ ims_offset_i,  ims_offset_j ]
+    offset  = [ nx*ims_pro_i,  0 ]
 
     call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
          MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
@@ -83,9 +83,9 @@ contains
     TINTEGER, parameter :: ndims = 3
     TINTEGER :: sizes(ndims), locsize(ndims), offset(ndims)
 
-    sizes   = [ nx*ims_npro_i, ny,           nz*ims_npro_k ]
-    locsize = [ nx,            ny,           nz            ]
-    offset  = [ ims_offset_i,  ims_offset_j, ims_offset_k  ]
+    sizes   = [ nx*ims_npro_i, ny,   nz*ims_npro_k ]
+    locsize = [ nx,            ny,   nz            ]
+    offset  = [ nx*ims_pro_i,  0,    nz*ims_pro_k  ]
 
     call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
          MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
@@ -101,9 +101,9 @@ contains
     TINTEGER, parameter :: ndims = 2
     TINTEGER :: sizes(ndims), locsize(ndims), offset(ndims)
 
-    sizes   = [ ny,           nz*ims_npro_k ]
-    locsize = [ ny,           nz            ]
-    offset  = [ ims_offset_j, ims_offset_k  ]
+    sizes   = [ ny, nz*ims_npro_k ]
+    locsize = [ ny, nz            ]
+    offset  = [ 0,  nz*ims_pro_k  ]
 
     call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
          MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
@@ -182,6 +182,7 @@ contains
       iz = 0
       do ifield = 1,nfield
         if ( iread == 0 .or. iread == ifield ) then
+          iz = iz +1
           write(name,'(I2)') ifield
           name=trim(adjustl(fname))//'.'//trim(adjustl(name))
 
@@ -199,14 +200,11 @@ contains
           end if
           call MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
           ! isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
-          ! call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
-#endif
+          ! if ( isize > 0 ) call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 
           ! -------------------------------------------------------------------
           ! field
-          iz = iz +1
           ! CALL IO_READ_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a(1,iz),txc)
-#ifdef USE_MPI
           mpio_disp = header_offset*SIZEOFBYTE ! Displacement to start of field
           mpio_locsize = nx*ny*nz
           call MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
@@ -309,8 +307,6 @@ contains
 #ifdef USE_MPI
     end if
     call MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
-    isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
-    call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 
     ! -------------------------------------------------------------------
     ! field
@@ -327,6 +323,13 @@ contains
     read(LOC_UNIT_ID,POS=header_offset) a
     close(LOC_UNIT_ID)
 
+#endif
+
+    ! -------------------------------------------------------------------
+    ! process header info
+    isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
+#ifdef USE_MPI
+    if ( isize > 0 ) call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 #endif
 
     return
