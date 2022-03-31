@@ -24,13 +24,13 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS,ONLY:tfile
 #endif
-  USE TLAB_VARS, ONLY : imode_eqns
+  USE TLAB_VARS, ONLY : imode_eqns, istagger
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : rbackground, ribackground
-  USE DNS_LOCAL,  ONLY : idivergence
-  USE DNS_LOCAL,  ONLY : tower_mode
-  USE TIME,       ONLY : rkm_substep,rkm_endstep
+  USE DNS_LOCAL, ONLY : idivergence
+  USE DNS_LOCAL, ONLY : tower_mode
+  USE TIME,      ONLY : rkm_substep,rkm_endstep
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
@@ -46,7 +46,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(imax,kmax,*)   :: wrk2d
 
-  TARGET h2, hs
+  TARGET hs, h2, tmp4
 
 ! -----------------------------------------------------------------------
   TINTEGER iq, is, ij, k, nxy, ip_b, ip_t
@@ -209,11 +209,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL DZAXPY(ilen, dummy, u(srt), 1, h1(srt), 1, tmp3(srt), 1)
      CALL DZAXPY(ilen, dummy, w(srt), 1, h3(srt), 1, tmp4(srt), 1)
 
-#else
+#else 
      DO ij = srt,end
-        tmp2(ij) = h2(ij) + v(ij)*dummy
-        tmp3(ij) = h1(ij) + u(ij)*dummy
-        tmp4(ij) = h3(ij) + w(ij)*dummy
+       tmp2(ij) = h2(ij) + v(ij)*dummy
+       tmp3(ij) = h1(ij) + u(ij)*dummy
+       tmp4(ij) = h3(ij) + w(ij)*dummy
      ENDDO
 
 #endif
@@ -224,10 +224,22 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
      ENDIF
-     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4,tmp3, wrk3d, wrk2d,wrk3d)
-
+     IF ( istagger .EQ. 1 ) THEN ! staggering on horizontal pressure nodes 
+      ! Oy derivative
+        CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp2, tmp1, wrk3d, wrk2d,wrk3d)
+      ! Ox derivative
+        CALL OPR_PARTIAL_X(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(1), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+      ! Oz derivative 
+        CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
+     ELSE
+        CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), tmp2, tmp1, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_X(OPR_P1,        imax,jmax,kmax, bcs, g(1), tmp3, tmp2, wrk3d, wrk2d,wrk3d)
+        CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d,wrk3d)
+     ENDIF     
   ELSE
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h2,tmp2)
@@ -256,10 +268,20 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1
-  DO k = 1,kmax
-     p_bcs => h2(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-     p_bcs => h2(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
-  ENDDO
+! Stagger also Bcs
+  IF ( istagger .EQ. 1 ) THEN ! todo: only need to stagger upper/lower boundary plane, not full h2-array
+     CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), h2,   tmp5, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+     DO k = 1,kmax
+        p_bcs => tmp4(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+        p_bcs => tmp4(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+     ENDDO
+  ELSE
+     DO k = 1,kmax
+        p_bcs => h2(ip_b:);   BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+        p_bcs => h2(ip_t:);   BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+     ENDDO
+  ENDIF
 
 ! Adding density in BCs
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
@@ -275,10 +297,22 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   IF ( tower_mode .EQ. 1 .AND. rkm_substep .EQ. rkm_endstep ) THEN
      CALL DNS_TOWER_ACCUMULATE(tmp1,i4,wrk1d)
   ENDIF
-
-! horizontal derivatives
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1,tmp2, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp1,tmp4, wrk3d, wrk2d,wrk3d)
+ 
+  IF ( istagger .EQ. 1 ) THEN
+  !  vertical pressure derivative   dpdy - back on horizontal velocity nodes
+     CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
+  !  horizontal pressure derivative dpdz - back on horizontal velocity nodes
+     CALL OPR_PARTIAL_Z(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+  !  horizontal pressure derivative dpdx - back on horizontal velocity nodes
+     CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+  ELSE
+  !  horizontal pressure derivatives
+     CALL OPR_PARTIAL_X(OPR_P1,        imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
+  ENDIF
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient

@@ -1,6 +1,8 @@
 #include "types.h"
 #include "dns_const.h"
 
+#define C_FILE_LOC "VPOISSON"
+
 PROGRAM VPOISSON
 
   USE TLAB_CONSTANTS
@@ -58,6 +60,12 @@ PROGRAM VPOISSON
   ! ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 0; ibc_x(4) = 0
   ! ibc_y(1) = 0; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0
   ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0
+
+! Staggering of the pressure grid not implemented here
+  IF ( istagger == 1 .or. ivfilter ==1 ) THEN
+    CALL TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not implemented here.')
+    istagger = i0; ivfilter = i0 ! turn staggering off for OPR_POISSON_FXZ(...)
+  ENDIF 
 
   bcs = 0
 

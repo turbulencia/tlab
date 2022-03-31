@@ -26,6 +26,9 @@ MODULE TLAB_VARS
   TINTEGER :: iadvection, iviscous, idiffusion ! formulation
   TINTEGER :: ifourier
   TINTEGER :: itransport
+  TINTEGER :: istagger, ivfilter       ! horizontal staggering of pressure 
+                                       ! vertical   filtering  of pressure
+  TREAL    :: vfilter_param            ! vertical filter parameter
 
   TINTEGER :: imode_fdm                ! finite-difference method for spatial operators
 
@@ -112,7 +115,7 @@ MODULE TLAB_VARS
 ! FFTW
 ! ###################################################################
   INTEGER(8) :: fft_plan_fx, fft_plan_bx, fft_plan_fx_bcs
-  INTEGER(8) :: fft_plan_fy, fft_plan_by
+  INTEGER(8) :: fft_plan_fy, fft_plan_by, fft_plan_fy1d, fft_plan_by1d
   INTEGER(8) :: fft_plan_fz, fft_plan_bz
 
   TINTEGER :: fft_reordering

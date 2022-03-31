@@ -271,9 +271,114 @@ SUBROUTINE OPR_PARTIAL2D(is,nlines, bcs, g, u,result, wrk2d,wrk3d)
   RETURN
 END SUBROUTINE OPR_PARTIAL2D
 
+! ###################################################################
+#include "dns_error.h"
+! ###################################################################
+
+SUBROUTINE OPR_PARTIAL0_INT(dir, nlines, g, u,result, wrk2d)
+
+  USE TLAB_TYPES,     ONLY : grid_dt
+  USE TLAB_PROCS,     ONLY : TLAB_STOP, TLAB_WRITE_ASCII
+  USE TLAB_CONSTANTS, ONLY : efile
+
+  IMPLICIT NONE
+ 
+  TINTEGER,                            INTENT(IN)    :: dir    ! scalar direction flag
+                                                               !     0 'vp' --> vel. to pre. grid
+                                                               !     1 'pv' --> pre. to vel. grid
+  TINTEGER,                            INTENT(IN)    :: nlines ! number of lines to be solved
+  TYPE(grid_dt),                       INTENT(IN)    :: g
+  TREAL, DIMENSION(nlines,g%size),     INTENT(IN)    :: u
+  TREAL, DIMENSION(nlines,g%size),     INTENT(OUT)   :: result
+  TREAL, DIMENSION(nlines),            INTENT(INOUT) :: wrk2d
+ 
+! -------------------------------------------------------------------
+  TINTEGER                                           :: ip, i, jk
+! ###################################################################
+! Interpolation, direction 'vp': vel. --> pre. grid
+  IF ( dir .EQ. 0 ) THEN 
+    IF ( g%periodic ) THEN
+      SELECT CASE( g%mode_fdm )        
+      CASE DEFAULT
+        CALL FDM_C0INTVP6P_RHS(g%size,nlines, u, result)
+      END SELECT
+      CALL TRIDPSS(g%size,nlines, g%lu0i(1,1),g%lu0i(1,2),g%lu0i(1,3),g%lu0i(1,4),g%lu0i(1,5), result,wrk2d)
+    ELSE
+      CALL TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case not implemented.')
+      CALL TLAB_STOP(DNS_ERROR_NOTIMPL)
+    ENDIF
+! Interpolation, direction 'pv': pre. --> vel. grid
+  ELSE IF ( dir .EQ. 1 ) THEN 
+    IF ( g%periodic ) THEN
+      SELECT CASE( g%mode_fdm )        
+      CASE DEFAULT
+        CALL FDM_C0INTPV6P_RHS(g%size,nlines, u, result)
+      END SELECT
+      CALL TRIDPSS(g%size,nlines, g%lu0i(1,1),g%lu0i(1,2),g%lu0i(1,3),g%lu0i(1,4),g%lu0i(1,5), result,wrk2d)
+    ELSE
+      CALL TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case not implemented.')
+      CALL TLAB_STOP(DNS_ERROR_NOTIMPL)
+    ENDIF
+  ENDIF
+
+  RETURN
+END SUBROUTINE OPR_PARTIAL0_INT
 
 ! ###################################################################
 ! ###################################################################
+
+SUBROUTINE OPR_PARTIAL1_INT(dir, nlines, g, u,result, wrk2d)
+
+  USE TLAB_TYPES,     ONLY : grid_dt
+  USE TLAB_PROCS,     ONLY : TLAB_STOP, TLAB_WRITE_ASCII
+  USE TLAB_CONSTANTS, ONLY : efile
+
+  IMPLICIT NONE
+ 
+  TINTEGER,                            INTENT(IN)    :: dir    ! scalar direction flag
+                                                               !     0 'vp' --> vel. to pre. grid
+                                                               !     1 'pv' --> pre. to vel. grid
+  TINTEGER,                            INTENT(IN)    :: nlines ! number of lines to be solved
+  TYPE(grid_dt),                       INTENT(IN)    :: g
+  TREAL, DIMENSION(nlines,g%size),     INTENT(IN)    :: u
+  TREAL, DIMENSION(nlines,g%size),     INTENT(OUT)   :: result
+  TREAL, DIMENSION(nlines),            INTENT(INOUT) :: wrk2d
+
+! -------------------------------------------------------------------
+  TINTEGER                                           :: ip, i, jk
+! ###################################################################
+! 1st interpolatory derivative, direction 'vp': vel. --> pre. grid
+  IF ( dir .EQ. 0 ) THEN
+    IF ( g%periodic ) THEN
+      SELECT CASE( g%mode_fdm )
+      CASE( FDM_COM6_JACOBIAN )
+        CALL FDM_C1INTVP6P_RHS(g%size,nlines, u, result)
+      END SELECT
+      CALL TRIDPSS(g%size,nlines, g%lu1i(1,1),g%lu1i(1,2),g%lu1i(1,3),g%lu1i(1,4),g%lu1i(1,5), result,wrk2d)
+    ELSE
+      CALL TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case not implemented.')
+      CALL TLAB_STOP(DNS_ERROR_NOTIMPL)
+    ENDIF
+! 1st interpolatory derivative, direction 'pv': pre. --> vel. grid
+  ELSE IF ( dir .EQ. 1 ) THEN
+    IF ( g%periodic ) THEN
+      SELECT CASE( g%mode_fdm )
+      CASE( FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM8_JACOBIAN )
+        CALL FDM_C1INTPV6P_RHS(g%size,nlines, u, result)
+      END SELECT
+      CALL TRIDPSS(g%size,nlines, g%lu1i(1,1),g%lu1i(1,2),g%lu1i(1,3),g%lu1i(1,4),g%lu1i(1,5), result,wrk2d)
+    ELSE
+      CALL TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case not implemented.')
+      CALL TLAB_STOP(DNS_ERROR_NOTIMPL)
+    ENDIF
+  ENDIF
+
+  RETURN
+END SUBROUTINE OPR_PARTIAL1_INT
+ 
+! ###################################################################
+! ###################################################################
+
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
 #endif
@@ -283,7 +388,7 @@ END SUBROUTINE OPR_PARTIAL2D
 !########################################################################
 SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
-  USE TLAB_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES,    ONLY : grid_dt
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -292,9 +397,13 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   IMPLICIT NONE
 
-  TINTEGER,                   INTENT(IN)    :: type      ! OPR_P1     1.order derivative
-                                                         ! OPR_P2     2.order derivative
-                                                         ! OPR_P2_P1  2. and 1.order derivatives (1. in tmp1)
+#include "integers.h"
+
+  TINTEGER,                   INTENT(IN)    :: type      ! OPR_P1           1.order derivative
+                                                         ! OPR_P2           2.order derivative
+                                                         ! OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
+                                                         ! OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
+                                                         ! OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz  ! array sizes
   TINTEGER, DIMENSION(2,*),   INTENT(IN)    :: bcs       ! BCs at xmin (1,*) and xmax (2,*)
   TYPE(grid_dt),              INTENT(IN)    :: g
@@ -367,6 +476,18 @@ SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
         CALL OPR_PARTIAL1(nyz, bcs, g, p_b, p_d, wrk2d)
      ENDIF
+  
+  CASE( OPR_P0_INT_VP )
+     CALL OPR_PARTIAL0_INT(i0, nyz, g, p_b,p_c, wrk2d)
+
+  CASE( OPR_P0_INT_PV )
+     CALL OPR_PARTIAL0_INT(i1, nyz, g, p_b,p_c, wrk2d)
+
+  CASE( OPR_P1_INT_VP )
+     CALL OPR_PARTIAL1_INT(i0, nyz, g, p_b,p_c, wrk2d)
+
+  CASE( OPR_P1_INT_PV )
+     CALL OPR_PARTIAL1_INT(i1, nyz, g, p_b,p_c, wrk2d)
 
   END SELECT
 
@@ -404,7 +525,7 @@ END SUBROUTINE OPR_PARTIAL_X
 !########################################################################
 SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
-  USE TLAB_TYPES, ONLY : grid_dt
+  USE TLAB_TYPES,    ONLY : grid_dt
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
@@ -413,9 +534,13 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   IMPLICIT NONE
 
-  TINTEGER,                   INTENT(IN)    :: type      ! OPR_P1     1.order derivative
-                                                         ! OPR_P2     2.order derivative
-                                                         ! OPR_P2_P1  2. and 1.order derivatives (1. in tmp1)
+#include "integers.h"
+
+  TINTEGER,                   INTENT(IN)    :: type      ! OPR_P1           1.order derivative
+                                                         ! OPR_P2           2.order derivative
+                                                         ! OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
+                                                         ! OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
+                                                         ! OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz  ! array sizes
   TINTEGER, DIMENSION(2,*),   INTENT(IN)    :: bcs       ! BCs at xmin (1,*) and xmax (2,*)
   TYPE(grid_dt),              INTENT(IN)    :: g
@@ -483,6 +608,18 @@ SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
         CALL OPR_PARTIAL1(nxy, bcs, g, p_a,p_c, wrk2d)
      ENDIF
+  
+  CASE( OPR_P0_INT_VP )
+     CALL OPR_PARTIAL0_INT(i0, nxy, g, p_a,p_b, wrk2d)
+ 
+  CASE( OPR_P0_INT_PV )
+     CALL OPR_PARTIAL0_INT(i1, nxy, g, p_a,p_b, wrk2d)
+
+  CASE( OPR_P1_INT_VP )
+     CALL OPR_PARTIAL1_INT(i0, nxy, g, p_a,p_b, wrk2d)
+
+  CASE( OPR_P1_INT_PV )
+     CALL OPR_PARTIAL1_INT(i1, nxy, g, p_a,p_b, wrk2d)
 
   END SELECT
 
@@ -515,16 +652,20 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   IMPLICIT NONE
 
-  TINTEGER,                   INTENT(IN)    :: type      ! OPR_P1     1.order derivative
-                                                         ! OPR_P2     2.order derivative
-                                                         ! OPR_P2_P1  2. and 1.order derivatives (1. in tmp1)
-  TINTEGER,                   INTENT(IN)    :: nx,ny,nz  ! array sizes
-  TINTEGER, DIMENSION(2,*),   INTENT(IN)    :: bcs       ! BCs at xmin (1,*) and xmax (2,*)
-  TYPE(grid_dt),              INTENT(IN)    :: g
-  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u
-  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1, wrk3d
-  TREAL, DIMENSION(nx*nz),    INTENT(INOUT) :: wrk2d
+#include "integers.h"
+
+  TINTEGER,                       INTENT(IN)    :: type      ! OPR_P1           1.order derivative
+                                                             ! OPR_P2           2.order derivative
+                                                             ! OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
+                                                             ! OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
+                                                             ! OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
+  TINTEGER,                       INTENT(IN)    :: nx,ny,nz  ! array sizes
+  TINTEGER, DIMENSION(2,*),       INTENT(IN)    :: bcs       ! BCs at xmin (1,*) and xmax (2,*)
+  TYPE(grid_dt),                  INTENT(IN)    :: g
+  TREAL, DIMENSION(nx*ny*nz),     INTENT(IN)    :: u
+  TREAL, DIMENSION(nx*ny*nz),     INTENT(OUT)   :: result
+  TREAL, DIMENSION(nx*ny*nz),     INTENT(INOUT) :: tmp1, wrk3d 
+  TREAL, DIMENSION(nx*nz),        INTENT(INOUT) :: wrk2d
 
   TARGET u, tmp1, result, wrk3d
 
@@ -581,6 +722,18 @@ SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
      IF ( g%uniform .OR. g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
         CALL OPR_PARTIAL1(nxz, bcs, g, p_a,p_c, wrk2d)
      ENDIF
+  
+  CASE( OPR_P0_INT_VP )
+     CALL OPR_PARTIAL0_INT(i0, nxz, g, p_a,p_b, wrk2d)
+ 
+  CASE( OPR_P0_INT_PV )
+     CALL OPR_PARTIAL0_INT(i1, nxz, g, p_a,p_b, wrk2d)
+ 
+  CASE( OPR_P1_INT_VP )
+     CALL OPR_PARTIAL1_INT(i0, nxz, g, p_a,p_b, wrk2d)
+ 
+  CASE( OPR_P1_INT_PV )
+     CALL OPR_PARTIAL1_INT(i1, nxz, g, p_a,p_b, wrk2d)
 
   END SELECT
 
