@@ -292,8 +292,6 @@ SUBROUTINE OPR_PARTIAL0_INT(dir, nlines, g, u,result, wrk2d)
   TREAL, DIMENSION(nlines,g%size),     INTENT(OUT)   :: result
   TREAL, DIMENSION(nlines),            INTENT(INOUT) :: wrk2d
  
-! -------------------------------------------------------------------
-  TINTEGER                                           :: ip, i, jk
 ! ###################################################################
 ! Interpolation, direction 'vp': vel. --> pre. grid
   IF ( dir .EQ. 0 ) THEN 
@@ -344,8 +342,6 @@ SUBROUTINE OPR_PARTIAL1_INT(dir, nlines, g, u,result, wrk2d)
   TREAL, DIMENSION(nlines,g%size),     INTENT(OUT)   :: result
   TREAL, DIMENSION(nlines),            INTENT(INOUT) :: wrk2d
 
-! -------------------------------------------------------------------
-  TINTEGER                                           :: ip, i, jk
 ! ###################################################################
 ! 1st interpolatory derivative, direction 'vp': vel. --> pre. grid
   IF ( dir .EQ. 0 ) THEN
