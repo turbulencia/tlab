@@ -93,12 +93,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
   isize_nobi_be   = nyz * nob_max    
   isize_nobj_be   = nxz * nob_max  
   isize_nobk_be   = nxy * nob_max
-  !
   nsp             = 2 * nflu + 2    ! number of data points (with 2 interface points) nsp > kspl
-  ! cf. fitpack package (routines curfit and splev)
-  nest            = nsp + kspl + 1
-  isize_wrk_ibm   = nsp + 2 * nest + nsp * (kspl + 1) + nest * (7 + 3 * kspl)
-  isize_iwrk_ibm  =                  nsp * (kspl + 1) + nest * (7 + 3 * kspl)
   isize_wrk1d_ibm = max(g(1)%size, max(g(2)%size, g(3)%size)) ! gap size unknown (max size assumed)
 
   ! ================================================================== !
@@ -269,26 +264,6 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
 
     ! ------------------------------------------------------------------ !
 
-    ! wrk_ibm [contains: w(nsp); t(nest); c(nest); wrk(nsp*(kspl+1)+nest*(7+3*kspl))], cf. fitpack
-    write(str,*) inb_ibm; line = 'Allocating array IBM wrk_ibm of size '//trim(adjustl(str))//'x'
-    write(str,*) isize_wrk_ibm; line = trim(adjustl(line))//trim(adjustl(str))
-    call TLAB_WRITE_ASCII(lfile,line)
-    allocate(wrk_ibm(isize_wrk_ibm), stat=ierr)
-    if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  wrk_ibm.')
-    call TLAB_STOP(DNS_ERROR_ALLOC)
-    end if
-
-    ! iwrk_ibm [contains: iwrk(lwrk=m*(k+1)+nest*(7+3*k)) --> integer array]   
-    write(str,*) inb_ibm; line = 'Allocating array IBM iwrk_ibm of size '//trim(adjustl(str))//'x'
-    write(str,*) isize_iwrk_ibm; line = trim(adjustl(line))//trim(adjustl(str))
-    call TLAB_WRITE_ASCII(lfile,line)
-    allocate(iwrk_ibm(isize_iwrk_ibm), stat=ierr)
-    if ( ierr /= 0 ) then
-    call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  iwrk_ibm.')
-    call TLAB_STOP(DNS_ERROR_ALLOC)
-    end if
-
     ! xa, ya spline arrays input
     write(str,*) inb_ibm; line = 'Allocating array IBM xa of size '//trim(adjustl(str))//'x'
     write(str,*) nsp; line = trim(adjustl(line))//trim(adjustl(str))
@@ -326,6 +301,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
     call TLAB_WRITE_ASCII(efile,  C_FILE_LOC//'.  Error while allocating memory space for  yb.')
     call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
+    
     ! ------------------------------------------------------------------ !
 
     ! set alloc flag: done

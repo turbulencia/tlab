@@ -43,9 +43,6 @@ module DNS_IBM
   TREAL, dimension(MAX_NSP)               :: ibmscaljmin, ibmscaljmax 
 
   ! work array for splines
-  TREAL,    dimension(:),     allocatable :: wrk_ibm
-  TINTEGER, dimension(:),     allocatable :: iwrk_ibm
-  !
   TREAL,    dimension(:),     allocatable :: xa, xb, ya, yb
 
   ! flag - decides which fdm calls are with modiefied field or not (opr_burgers.f90)
@@ -60,9 +57,8 @@ module DNS_IBM
   ! array sizes
   TINTEGER                                :: isize_nobi,    isize_nobj,    isize_nobk
   TINTEGER                                :: isize_nobi_be, isize_nobj_be, isize_nobk_be
-  TINTEGER                                :: nsp, nest
+  TINTEGER                                :: nsp
   TINTEGER                                :: isize_wrk1d_ibm
-  TINTEGER                                :: isize_wrk_ibm, isize_iwrk_ibm
 
   ! check IBM procs (active/idle)
   logical                                 :: ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z

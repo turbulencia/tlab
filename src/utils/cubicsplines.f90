@@ -39,7 +39,7 @@ subroutine CUBIC_SPLINE(bc, bcval, norg, nint, xorg, yorg, xint, yint, wrk)
 #include "integers.h"
 
   TINTEGER, dimension(2     ),  intent(in)   :: bc         ! boundary condition for both endpoints
-                                                           ! bc=0 periodic ! not implemented yet !
+                                                           ! bc=0 periodic
                                                            ! bc=1 clamped
                                                            ! bc=2 fixed1
                                                            ! bc=3 natural
@@ -346,7 +346,7 @@ subroutine CUBIC_SPLINE_BISECT(n, a, x, idx)
   TINTEGER,               intent(out):: idx ! index for insertion
   
   ! -------------------------------------------------------------------
-  TINTEGER                           :: i, mid, lo, hi
+  TINTEGER                           :: mid, lo, hi
   
   ! ###################################################################
 

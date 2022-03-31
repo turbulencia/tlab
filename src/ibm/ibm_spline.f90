@@ -70,6 +70,9 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
 
   TINTEGER                                         :: l, ii, ip, ia, ib, iob, iu_il
   logical                                          :: splines
+  TINTEGER, dimension(2)                           :: bc      
+  TREAL,    dimension(2)                           :: bcval 
+  TREAL                                            :: m1, m2
 
 ! MPI just for debugging
 #ifdef IBM_DEBUG
@@ -152,9 +155,11 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
         ! spline interpolation and fill gap in fld_ibm
         if ( splines ) then
 
-          ! generate splines
-          call IBM_SPLINE( ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib)) ! old fitpack routines
-          ! call CUBIC_SPLINE(ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib), wrk3d) 
+          ! generate splines (other possibility: natural boundary conditions)
+          bc(:) = i2 ! fixed first derivative at endpoints
+          m1 = (ya(2)  - ya(1)   ) / (xa(2)  - xa(1)   ); bcval(1) = m1 
+          m2 = (ya(ia) - ya(ia-1)) / (xa(ia) - xa(ia-1)); bcval(2) = m2
+          call CUBIC_SPLINE(bc, bcval, ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib), wrk3d)
 
           ! force yb at interface to physical BCs (without this yb approx delta 10^-16 wrong at interface)
           if ( is /= i0 ) then
@@ -234,100 +239,11 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   return
 end subroutine IBM_SPLINE_XYZ
 
-!########################################################################
+! !########################################################################
 
-subroutine IBM_SPLINE(ia, ib, xa, ya, xb, yb)
-  
-  use DNS_IBM,        only: isize_iwrk_ibm, nest, nsp, kspl
-  use DNS_IBM,        only: wrk_ibm, iwrk_ibm
-  use TLAB_CONSTANTS, only: efile
-  use TLAB_PROCS
-   
-  implicit none
-  
-#include "integers.h"
 
-  TINTEGER,                intent(in)  :: ia
-  TINTEGER,                intent(in)  :: ib
-  TREAL,    dimension(ia), intent(in)  :: xa 
-  TREAL,    dimension(ia), intent(in)  :: ya 
-  TREAL,    dimension(ib), intent(in)  :: xb
-  TREAL,    dimension(ib), intent(out) :: yb 
 
-  TREAL                                :: xstart, xend, s, fp
-  TINTEGER                             :: iopt, n, l, ier
-  TINTEGER                             :: ip1, ip2, ip3, ip4
-
-  character(len=128)                   :: line
-  
-  ! ================================================================== !
-  ! spline function parameter
-  iopt = i0    ! (iopt=0 or 1) smoothing spline, weighted least-squares spline (iopt=-1)
-  s    = C_0_R ! control the tradeoff between closeness of fit and smoothness
-
-  ! set interval for spline approximation
-  xstart = xa(1);  xend = xa(ia)
- 
-  ! define working arrays and their relative positions
-  ip1  = 1          ! w(nsp)
-  ip2  = ip1 + nsp  ! t(nest)
-  ip3  = ip2 + nest ! c(nest)
-  ip4  = ip3 + nest ! wrk(nsp*(kspl+1)+nest*(7+3*kspl))
-
-  ! weights of data points w(nsp)
-  do l = 1, nsp
-    wrk_ibm(l) = C_1_R ! here: all weights are equal
-  end do
-
-  ! ================================================================== !
-    ! evaluation of spline function [curfit(iopt,m,x,y,w,xb,xe,k,s,nest,n,t,c,fp,wrk,lwrk,iwrk,ier)]
-    !s    : (in case iopt>=0) s must specify the smoothing factor. 
-    !       if s=0 then interpolation spline, data points coincident with spline points
-    !t    : array,length n, which contains the position of the knots.
-    !n    : integer, giving the total number of knots of s(x). [output]
-    !c    : array,length n, which contains the b-spline coefficients.
-    !k    : integer, giving the degree of s(x).
-    !x    : array,length m, which contains the points where s(x) must
-    !fp   : contains the weighted sum of squared residuals of the spline approximation [output]
-    !ier  : ier contains a non-positive value on exit [-2,-1,0], if error ier=[1,2,3,10]
-
-  !    curfit(iopt, m,   x,  y,  w,            xb,     xe,   k,    s, nest, n, &
-  call curfit(iopt, ia,  xa, ya, wrk_ibm(ip1), xstart, xend, kspl, s, nest, n, & 
-  !           t,            c,            fp, wrk,          lwrk,           iwrk,     ier)
-              wrk_ibm(ip2), wrk_ibm(ip3), fp, wrk_ibm(ip4), isize_iwrk_ibm, iwrk_ibm, ier)
-  
-  if ( (ier /= 0) .and. (ier /= -1) ) then
-    write(line, *) 'IBM_SPLINE. Curfit error code = ', ier
-    call TLAB_WRITE_ASCII(efile, line)
-    call TLAB_STOP(DNS_ERROR_CURFIT)
-  end if
-
-  ! ================================================================== !
-    ! evaluation of the spline [call splev(t,n,c,k,x,y,m,ier)] function to evaluate a B-spline or its derivatives
-    !###### input parameters:
-    !t    : array,length n, which contains the position of the knots.
-    !n    : integer, giving the total number of knots of s(x).
-    !c    : array,length n, which contains the b-spline coefficients.
-    !k    : integer, giving the degree of s(x).
-    !x    : array,length m, which contains the points where s(x) must be evaluated.
-    !m    : integer, giving the number of points where s(x) must be evaluated.
-    !###### output parameter:
-    !y    : array,length m, giving the value of s(x) at the different points.
-    !ier  : error flag: ier = 0 : normal return, ier =10 : invalid input data (see restrictions)
-
-  !    splev(t,            n, c,            k,    x,  y,  m,  ier)
-  call splev(wrk_ibm(ip2), n, wrk_ibm(ip3), kspl, xb, yb, ib, ier)
-  
-  if (ier /= 0) then
-    write(line, *) 'IBM_SPLINE. Splev error code = ', ier
-    call TLAB_WRITE_ASCII(efile, line)
-    call TLAB_STOP(DNS_ERROR_CURFIT)
-  end if
-
-  return
-end subroutine IBM_SPLINE
-
-!########################################################################
+! !########################################################################
 
 subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir, nlines, plane) 
 
