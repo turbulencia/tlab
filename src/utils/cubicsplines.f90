@@ -75,9 +75,9 @@ subroutine CUBIC_SPLINE(bc, bcval, norg, nint, xorg, yorg, xint, yint, wrk)
   end do
 
   ! check input data
-! #ifdef _DEBUG
+#ifdef _DEBUG
   call CUBIC_SPLINE_CHECK_INPUT(bc, bcval, norg, nint, xorg, yorg, xint, yint, dx)
-! #endif
+#endif
 
   ! build diagonals and rhs
   call CUBIC_SPLINE_LHS(bc,norg,dx,aa,bb,cc)
@@ -263,7 +263,7 @@ subroutine CUBIC_SPLINE_RHS(bc, bcval, n, dx, y, rhs)
   case( CS_BCS_CLAMPED )
     rhs(n) = (C_6_R / dx(n-1)) *               (y(n-1) - y(n)) / dx(n-1)
   case( CS_BCS_FIXED_1 )
-    rhs(n) = (C_6_R / dx(n-1)) * (-bcval(2) + ((y(n-1) - y(n)) / dx(n-1)))
+    rhs(n) = (C_6_R / dx(n-1)) * ( bcval(2) + ((y(n-1) - y(n)) / dx(n-1)))
   case( CS_BCS_NATURAL )
     rhs(n) = C_0_R
   case( CS_BCS_FIXED_2 )
