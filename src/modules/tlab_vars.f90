@@ -80,6 +80,7 @@ MODULE TLAB_VARS
   TYPE(term_dt) :: transport  ! Transport parameters
   TYPE(term_dt) :: chemistry  ! Chemistry parameters
   TYPE(term_dt) :: subsidence ! Large-scale parameters
+  TYPE(term_dt) :: random     ! Random Forcing parameters
 
 ! ###################################################################
 ! Nondimensional numbers

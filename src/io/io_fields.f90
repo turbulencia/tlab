@@ -24,7 +24,7 @@ module IO_FIELDS
 #ifdef USE_MPI
   use MPI
   use TLAB_MPI_VARS, only : ims_err
-  use TLAB_MPI_VARS, only : ims_pro, ims_npro_i, ims_npro_k
+  use TLAB_MPI_VARS, only : ims_pro, ims_npro_i, ims_npro_k, ims_pro_i, ims_pro_k
   use TLAB_MPI_VARS, only : ims_offset_i, ims_offset_j, ims_offset_k
 #endif
 
@@ -67,7 +67,7 @@ contains
 
     sizes   = [ nx*ims_npro_i, ny           ]
     locsize = [ nx,            ny           ]
-    offset  = [ ims_offset_i,  ims_offset_j ]
+    offset  = [ nx*ims_pro_i,  0 ]
 
     call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
          MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
@@ -83,9 +83,9 @@ contains
     TINTEGER, parameter :: ndims = 3
     TINTEGER :: sizes(ndims), locsize(ndims), offset(ndims)
 
-    sizes   = [ nx*ims_npro_i, ny,           nz*ims_npro_k ]
-    locsize = [ nx,            ny,           nz            ]
-    offset  = [ ims_offset_i,  ims_offset_j, ims_offset_k  ]
+    sizes   = [ nx*ims_npro_i, ny,   nz*ims_npro_k ]
+    locsize = [ nx,            ny,   nz            ]
+    offset  = [ nx*ims_pro_i,  0,    nz*ims_pro_k  ]
 
     call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
          MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
@@ -101,9 +101,9 @@ contains
     TINTEGER, parameter :: ndims = 2
     TINTEGER :: sizes(ndims), locsize(ndims), offset(ndims)
 
-    sizes   = [ ny,           nz*ims_npro_k ]
-    locsize = [ ny,           nz            ]
-    offset  = [ ims_offset_j, ims_offset_k  ]
+    sizes   = [ ny, nz*ims_npro_k ]
+    locsize = [ ny, nz            ]
+    offset  = [ 0,  nz*ims_pro_k  ]
 
     call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
          MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)

@@ -241,7 +241,7 @@ def avg2dict_asc(file_list,ntimes,avgtype,avgpath,jmax,ftype,tstart=-1, tend=-1,
         us = np.sqrt(np.sqrt(dudy**2+dwdy**2)/(reynolds*reynolds/2))
         al = np.arctan2(dwdy,dudy)*180/np.pi if us>1e-12 else 0. 
 
-        print('Calculating u* and alpha:',us,al,np.average(avg['FrictionVelocity'][:t]),np.average(avg['FrictionAngle'][:t] ) )
+        print('Calculating u* and alpha:',t,us,al,np.average(avg['FrictionVelocity'][:t]),np.average(avg['FrictionAngle'][:t] ) )
         avg['FrictionVelocity'][t] = us
         avg['FrictionAngle'][t] = al 
 
@@ -302,7 +302,8 @@ def dict2nc(dict, ncname, flag=0,groups=-1):
 
   if groups != -1:
       for v in groups.keys():
-          avgnc[v].setncattr('Group',groups[v])
+          if  v != 'dummy' :
+              avgnc[v].setncattr('Group',groups[v])
 
   # close the file
   avgnc.close()

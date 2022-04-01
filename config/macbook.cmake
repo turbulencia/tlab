@@ -7,8 +7,8 @@ endif()
 
 
 if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build
-   set(ENV{FC} /opt/local/bin/mpif90-mpich-gcc10)
-   set(CMAKE_Fortran_COMPILER /opt/local/bin/mpif90-mpich-gcc10)
+   set(ENV{FC} /opt/local/bin/mpif90-mpich-clang11)
+   set(CMAKE_Fortran_COMPILER /opt/local/bin/mpif90-mpich-clang11)
    set(USER_Fortran_FLAGS     "-fallow-argument-mismatch -ffree-form -ffree-line-length-2048 -fno-automatic -O3 -cpp -arch x86_64 -ffast-math -ffinite-math-only -funroll-loops -mtune=native -Wunused")
 #   set(USER_Fortran_FLAGS_RELEASE  "-O3 -cpp -arch x86_64 -ffast-math -ffinite-math-only -funroll-loops -mtune=native ")
 

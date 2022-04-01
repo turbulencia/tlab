@@ -78,6 +78,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#TermRandom=<value>') 
   CALL TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacpenta6/CompactJacobian8/CompactDirect6>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
@@ -243,6 +244,17 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'ozone'            ) THEN; chemistry%type = EQNS_CHEM_OZONE;
   ELSE;                                                        chemistry%type = EQNS_NONE; ENDIF
 
+! -------------------------------------------------------------------
+  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TermRandom', '0.0', dummy)
+  IF ( ABS(dummy) .GT. 0.0 ) THEN
+     random%type = EQNS_RAND_MULTIPLY
+     random%parameters=dummy 
+     random%active(1:3)=.TRUE.
+  ELSE
+     random%type = EQNS_NONE
+     random%active(1:3)=.FALSE. 
+  ENDIF
+     
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'SpaceOrder', 'void', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian4' ) THEN; imode_fdm = FDM_COM4_JACOBIAN;
