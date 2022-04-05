@@ -27,7 +27,7 @@ PROGRAM VBURGERS
   TREAL, DIMENSION(:),     ALLOCATABLE :: wrk3d, tmp1
 
   TINTEGER i, j, k,  bcs(2,2)
-  TREAL dummy, error, dummy2, error2
+  TREAL dummy, error
 
 ! ###################################################################
   CALL TLAB_START()

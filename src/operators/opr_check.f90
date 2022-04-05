@@ -6,7 +6,6 @@
 SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : isize_field,isize_txc_field, isize_wrk2d
-  USE TLAB_VARS, ONLY : itime
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : ifourier !, fft_reordering
   USE TLAB_CONSTANTS, ONLY : lfile
