@@ -1,4 +1,5 @@
 #include "types.h"
+#include "dns_const.h"
 #include "dns_error.h"
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
@@ -263,76 +264,53 @@ SUBROUTINE INTERPOLATE_1D(periodic, imax,kmax, imax_dst, scalex, x_org,x_dst, u_
   IMPLICIT NONE
 
   LOGICAL periodic
-  TINTEGER imax,kmax, imax_dst, isize_wrk
+  TINTEGER imax,kmax, imax_dst, isize_wrk, k
   TREAL scalex
   TREAL x_org(imax+1)
   TREAL x_dst(imax_dst)
   TREAL u_org(imax,*)
   TREAL u_dst(imax_dst,*)
 
-  TREAL wrk(isize_wrk)
+  TREAL wrk(isize_wrk), rdum
 
-! -----------------------------------------------------------------------
-  TINTEGER i,k
-  TINTEGER iopt, kx, nest, lwrk, nx
-  TINTEGER ip1, ip2, ip3, ip4, ip5, ip6, ier, imax1
-
-  TREAL xb, xe, s, fp
-
-  CHARACTER*64 line
+  TINTEGER, dimension(2) :: CSpline_BCType
+  TREAL,    dimension(2) :: CSpline_BCVal
 
 ! #######################################################################
-  iopt = 0
-  xb = x_org(1); xe = x_org(imax)                  ! just used in the non-periodic case
-  imax1 = imax+1; x_org(imax1) = x_org(1) + scalex ! the periodic case
-  kx = 5                                           ! order of the splines interpolation
-  s = C_0_R
-  nest = imax1 + 2*kx                              ! the periodic case requires maximum sizes
-  lwrk = imax1*(kx+1)+nest*(8+5*kx)
 
-! Working array relative possitions
-  ip1 = 1           ! w
-  ip2 = ip1 + imax1 ! t
-  ip3 = ip2 + nest  ! c
-  ip4 = ip3 + nest  ! wrk
-  ip5 = ip4 + lwrk  ! iwkr
-  ip6 = ip5 + nest  ! returned value
-
-  IF ( isize_wrk .LT. ip6 ) THEN
+  IF ( isize_wrk .LT. 12*imax +1 ) THEN
      CALL TLAB_WRITE_ASCII(efile, 'INTERPOLATE_1D. Temporary Array not large enough')
      CALL TLAB_STOP(DNS_ERROR_CURFIT)
   ENDIF
-
-! #######################################################################
-  DO i=1,imax
-     wrk(ip1+i-1) = C_1_R
-  ENDDO
-
-  DO k = 1,kmax
-     IF ( periodic ) THEN
-        CALL percur(iopt, imax1, x_org, u_org(1,k), wrk(ip1),        kx, s, &
-             nest, nx, wrk(ip2), wrk(ip3), fp, wrk(ip4), lwrk, wrk(ip5), ier)
-
-        IF ( ier .NE. 0 .AND. ier .NE. -1 ) THEN
-           WRITE(line, *) 'INTERPOLATE_1D. Percur error code = ', ier
-           CALL TLAB_WRITE_ASCII(efile, line)
-           CALL TLAB_STOP(DNS_ERROR_CURFIT)
-        ENDIF
+  !------------------------------------------! the periodic case
+     IF ( periodic ) THEN                    !
+        Cspline_BCType(1) = CS_BCS_PERIODIC  !
+        Cspline_BCType(2) = CSpline_BCType(1)!
+        CSpline_BCVal(:) = C_0_R             !
+        x_org(imax+1) = x_org(1) + scalex    ! extend x_org for periodic point
+        DO k = 1,kmax-1                      !
+           rdum=u_org(imax+1,k)              ! use u_org(imax+1,k) to extend array and
+           u_org(imax+1,k) = u_org(1,k)      ! avoid the copy of the whole line
+           CALL CUBIC_SPLINE(CSpline_BCType,CSpline_BCVal,&
+                imax+1,imax_dst,x_org,u_org(1,k),x_dst,u_dst(1,k),&
+                wrk(imax+2))                 !
+           u_org(imax+1,k) = rdum            ! set u_org back to stored value rdum
+        ENDDO                                !
+        wrk(1:imax) = u_org(1:imax,kmax)     ! cannot avoid the copy for the last line
+        wrk(imax+1) = u_org(1,kmax)          ! as u_org(imax+1,kmax) is out of bounds
+        CALL CUBIC_SPLINE(CSpline_BCType,CSpline_BCVal,&
+             imax+1,imax_dst,x_org,wrk,x_dst,u_dst(1,kmax),&
+             wrk(imax+2))
+     !---------------------------------------! the aperiodic case
      ELSE
-        CALL curfit(iopt, imax,  x_org, u_org(1,k), wrk(ip1), xb,xe, kx, s, &
-             nest, nx, wrk(ip2), wrk(ip3), fp, wrk(ip4), lwrk, wrk(ip5), ier)
-
-        IF ( ier .NE. 0 .AND. ier .NE. -1 ) THEN
-           WRITE(line, *) 'INTERPOLATE_1D. Curfit error code = ', ier
-           CALL TLAB_WRITE_ASCII(efile, line)
-           CALL TLAB_STOP(DNS_ERROR_CURFIT)
-        ENDIF
+        CSpline_BCType(1) = CS_BCS_NATURAL; CSpline_BCVal(1) = C_0_R
+        CSpline_BCType(2) = CS_BCS_NATURAL; CSpline_BCVal(2) = C_0_R
+        DO k=1,kmax
+           CALL CUBIC_SPLINE(CSpline_BCType,CSpline_BCVal,&
+                imax,imax_dst,x_org,u_org(1,k),x_dst,u_dst(1,k),&
+                wrk)
+        ENDDO
      ENDIF
-
-
-     CALL splev(wrk(ip2),nx,wrk(ip3),kx,x_dst,u_dst(1,k), imax_dst, ier)
-
-  ENDDO
 
   RETURN
 END SUBROUTINE INTERPOLATE_1D

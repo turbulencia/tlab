@@ -34,7 +34,7 @@ program CSPLINE
   TINTEGER, parameter                    :: imax     = 11                       ! number of data points
   TINTEGER, parameter                    :: mesh     = 10                       ! mesh refinement factor (mesh=1 for x_int=x)
   TINTEGER, parameter                    :: imax_int = (imax+(mesh-1)*(imax-1)) ! number of spline data points
-  TINTEGER                               :: i, j
+  TINTEGER                               :: i
   TREAL                                  :: xb, xe, lambda, r
   TREAL                                  :: res_2, res_inf
   logical                                :: periodic, random, uniform
@@ -63,8 +63,8 @@ program CSPLINE
   ! bc(1) = CS_BCS_FIXED_1;  bcval(:) = C_3_R  ! fixed 1st deriv.
   ! bc(1) = CS_BCS_NATURAL;  bcval(:) = C_0_R  ! 2nd deriv. is zero
   ! bc(1) = CS_BCS_FIXED_2;  bcval(:) = C_3_R  ! fixed 2nd deriv.
-  bc(1) = CS_BCS_PERIODIC; bcval(:) = C_0_R  ! periodic BCs (for start and end of curve!)
-  bc(2) = bc(1)           ! also mixed BCs possible (not for periodic BC!)
+  bc(1) = CS_BCS_PERIODIC; bcval(:) = C_0_R    ! periodic BCs (for start and end of curve!)
+  bc(2) = bc(1)                                ! also mixed BCs possible (not for periodic BC!)
   
 ! ###################################################################
 ! initialize original grid with test function
