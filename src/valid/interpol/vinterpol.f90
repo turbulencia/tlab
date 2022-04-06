@@ -39,7 +39,7 @@ PROGRAM INTERPOL
   TREAL,    DIMENSION(imaxp,inb_grid) :: x_pre ! pressure grid (for non-periodic case)
  
   TREAL,    DIMENSION(imax)           :: x_int, x_aux
-  TREAL,    DIMENSION(len,imax)       :: u, u_int, u_aux, u_a, u_b, u_c
+  TREAL,    DIMENSION(len,imax)       :: u, u_int, u_aux, u_a, u_c
   TREAL,    DIMENSION(len,imax)       :: dudx, dudx_int, dudx_aux
   TREAL,    DIMENSION(imax,5)         :: wrk1d
   TREAL,    DIMENSION(len)            :: wrk2d

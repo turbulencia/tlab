@@ -577,20 +577,8 @@ contains
     !########################################################################
     read(unit) offset, nx_loc, ny_loc, nz_loc, nt_loc
 
-    isize = offset - 5*SIZEOFINT
-    if ( isize > 0 .and. mod(isize,SIZEOFREAL) == 0 ) then
-      isize = isize/SIZEOFREAL
-      read(unit) params(1:isize)
-
-    else
-      call TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER. Header format incorrect.')
-      call TLAB_STOP(DNS_ERROR_RECLEN)
-
-    end if
-
     ! Check
     if ( nx /= nx_loc .or. ny /= ny_loc .or. nz /= nz_loc ) then
-      close(unit)
       call TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER. Grid size mismatch.')
       call TLAB_STOP(DNS_ERROR_DIMGRID)
     end if
@@ -600,7 +588,19 @@ contains
       !     nt = nt_loc
     end if
 
+    isize = offset - 5*SIZEOFINT
+    if ( isize > 0 .AND. mod(isize,SIZEOFREAL) == 0 ) then
+       isize = isize/SIZEOFREAL
+       read(unit) params(1:isize)
+    elseif ( isize .EQ. 0 ) then
+       continue ! no params to read; header format is correct 
+    else
+       call TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER. Header format incorrect.')
+       call TLAB_STOP(DNS_ERROR_RECLEN)
+    endif
+
     return
+
   end subroutine IO_READ_HEADER
 
   !########################################################################
@@ -616,7 +616,10 @@ contains
     offset = 5*SIZEOFINT + isize*SIZEOFREAL
 
     write(unit) offset, nx, ny, nz, nt
-    write(unit) params(1:isize)
+
+    IF ( isize .GT. 0 ) THEN   ! do not write params to file if there are none 
+       write(unit) params(1:isize)
+    ENDIF
 
     return
   end subroutine IO_WRITE_HEADER

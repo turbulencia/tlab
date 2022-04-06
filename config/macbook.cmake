@@ -30,16 +30,13 @@ else() # compiler for serial build
    elseif( ${BUILD_TYPE} STREQUAL "LITTLE" )
      set(USER_Fortran_FLAGS_RELEASE  "-O3 -fconvert=little-endian -mtune=native -ffast-math -ffinite-math-only -funroll-loops")
 #     add_definitions(-DTRACE_ON)
-     set(CMAKE_BUILD_TYPE RELEASE)
 
    else()
      set(USER_Fortran_FLAGS_DEBUG    "-Og -ggdb3 -Wall -Wno-unknown-pragmas")
-
      add_definitions(-D_DEBUG)
-
      set(CMAKE_BUILD_TYPE DEBUG)
-
    endif()
+
 
 endif()
 

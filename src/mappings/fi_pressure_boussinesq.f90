@@ -27,7 +27,7 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   TREAL, DIMENSION(isize_wrk1d,16), INTENT(INOUT)         :: wrk1d
   TREAL, DIMENSION(imax,kmax,2   ), INTENT(INOUT)         :: wrk2d
 ! -----------------------------------------------------------------------
-  TINTEGER i, k, bcs(2,2)
+  TINTEGER k, bcs(2,2)
   TINTEGER ip_b, ip_t, nxy
 
 ! Pointers to existing allocated space
@@ -142,6 +142,8 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
     CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), p,    tmp1, wrk3d, wrk2d,wrk3d)
     CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp1, p,    wrk3d, wrk2d,wrk3d)
   ENDIF
+
+  NULLIFY(u,v,w, tmp3,tmp4,tmp5)
 
   RETURN
 END SUBROUTINE FI_PRESSURE_BOUSSINESQ

@@ -44,8 +44,8 @@ PROGRAM VINTERPARTIAL
   TREAL, DIMENSION(:,:),   ALLOCATABLE               :: wrk1d, wrk2d
   TREAL, DIMENSION(:),     ALLOCATABLE               :: wrk3d, tmp1, d
 
-  TINTEGER i, j, k,  bcs(2,2), ip_a,ip_b,ip_t
-  TREAL dummy, dummy2, error, error2
+  TINTEGER bcs(2,2)
+  TREAL dummy, error
 ! ###################################################################
   CALL TLAB_START()
 
