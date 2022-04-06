@@ -24,7 +24,7 @@ PROGRAM VISUALS
   USE THERMO_VARS, ONLY : NSP, THERMO_SPNAME
   USE LAGRANGE_VARS
   USE LAGRANGE_ARRAYS
-  USE DNS_IBM,     ONLY : xbars_geo, kspl, nflu, ibm_procs_idle
+  USE DNS_IBM
   USE IO_FIELDS
 
   IMPLICIT NONE
@@ -89,7 +89,7 @@ PROGRAM VISUALS
   IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm = 0
   ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm = 1
   ELSE
-    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong IBM Status option.')
+    CALL TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBM Status option.')
     CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -206,6 +206,15 @@ PROGRAM VISUALS
     IF ( opt_vec(iv) .EQ. iscal_offset+20) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,7); ENDIF
   ENDDO
 
+  ! check if enough memory is provided for the IBM
+  IF ( imode_ibm .EQ. 1 ) THEN 
+#ifdef IBM_DEBUG
+    inb_txc = MAX(inb_txc,6)
+#else
+    inb_txc = MAX(inb_txc,3)
+#endif
+  ENDIF
+
   ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
@@ -250,31 +259,29 @@ PROGRAM VISUALS
   IF ( opt_format .LT. 0 ) opt_format = 2 ! default is single precission, no header
 
   ! -------------------------------------------------------------------
-  ! Read local options - IBM parameters and geometry informations
+  ! Read local options - IBM parameters and geometry
   ! -------------------------------------------------------------------
   IF (imode_ibm .EQ. 1) THEN
-    CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'SplineOrder', '3', kspl)
+    CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'IBMScalar', 'off', sRes)
+    IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm_scal = 0
+    ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm_scal = 1
+    ELSE
+      CALL TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBMScalar option.')
+      CALL TLAB_STOP(DNS_ERROR_OPTION)
+    ENDIF
+    CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'RestartGeometry', 'no', sRes)
+    IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_restart = .TRUE.
+    ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_restart = .FALSE.
+    ENDIF  
+    IF ( imode_ibm .EQ. 1 .AND. ibm_restart .NEQV. .TRUE. ) THEN
+      CALL TLAB_WRITE_ASCII(efile, 'VISUALS. IBM option only possible with existing geometry.')
+      CALL TLAB_STOP(DNS_ERROR_OPTION)
+    ENDIF  
+    CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'MaxNumberObj', '0', nob_max)
     CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'FluidPoints', '3', nflu)
-
     CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'ProcsIdle', 'no', sRes)
     IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_procs_idle = .TRUE.
     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_procs_idle = .FALSE.
-    ENDIF
-
-    !Geometry
-    CALL SCANINICHAR(bakfile, ifile, 'IBMGeometry', 'Type', 'XBars', sRes)
-    IF   (TRIM(ADJUSTL(sRes)) .EQ. 'xbars' ) THEN; xbars_geo%name   = 'xbars'
-      CALL SCANINICHAR(bakfile, ifile, 'IBMGeometry', 'Mirrored', 'no', sRes)
-      IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; xbars_geo%mirrored = .TRUE.
-      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; xbars_geo%mirrored = .FALSE.
-      ENDIF
-      CALL SCANINIINT(bakfile, ifile, 'IBMGeometry',  'MaxNumber', '0', xbars_geo%number)
-      CALL SCANINIINT(bakfile, ifile, 'IBMGeometry',  'Length',    '0', xbars_geo%length)
-      CALL SCANINIINT(bakfile, ifile, 'IBMGeometry',  'Height',    '0', xbars_geo%height)
-      CALL SCANINIINT(bakfile, ifile, 'IBMGeometry',  'Width',     '0', xbars_geo%width)
-    ELSE
-      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBMGeometryType option.')
-      CALL TLAB_STOP(DNS_ERROR_OPTION)
     ENDIF
   ENDIF
   

@@ -12,12 +12,14 @@ examples/Case*/dns.err
 examples/Case*/dns.war
 build_BIG/*
 build_LITTLE/* 
+build_SERIAL/* 
 build_PARALLEL/*
 build_DEBUG/*
 build/*
 test_files/*
 test_debug/*
 test_little/*
+test_serial/*
 test_parallel/*
 test_channel/*
 test_parallel360/*

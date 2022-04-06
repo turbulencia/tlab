@@ -24,7 +24,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS,ONLY:tfile
 #endif
-  USE TLAB_VARS, ONLY : imode_ibm
+  USE TLAB_VARS, ONLY : imode_ibm, imode_ibm_scal
   USE TLAB_VARS, ONLY : imode_eqns, istagger
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE TLAB_VARS, ONLY : g
@@ -36,18 +36,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
   USE DNS_IBM,   ONLY : ibm_burgers
-
-! ############################################# ! 
-! DEBUG ####################################### !
-  ! USE IO_FIELDS
-  ! USE TLAB_PROCS
-#ifdef IBM_DEBUG
-#ifdef USE_MPI
-  USE TLAB_MPI_PROCS
-  USE TLAB_MPI_VARS
-#endif
-#endif
-! ############################################# ! 
 
   IMPLICIT NONE
 
@@ -62,15 +50,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 
   TARGET tmp4, h2, hs
 
-! ############################################# ! 
-! DEBUG ####################################### !
-#ifdef IBM_DEBUG
-#ifdef USE_MPI
-#else
-    TINTEGER, parameter  ::  ims_pro=0  
-#endif
-#endif
-! ############################################# ! 
 ! -----------------------------------------------------------------------
   TINTEGER iq, is, ij, k, nxy, ip_b, ip_t
   TINTEGER ibc, bcs(2,2)
@@ -121,14 +100,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ENDDO
 
 ! #######################################################################
-! Preliminaries for IBM use
-! (if .true., OPR_BURGERS_X/Y/Z uses modified fields for derivatives)
+! Preliminaries for IBM use 
+! (OPR_BURGERS_X/Y/Z uses modified fields for derivatives)
 ! #######################################################################
   IF ( imode_ibm == 1 ) ibm_burgers = .true.
-#ifdef IBM_DEBUG
-  if (ims_pro == 0) write(*,*) '========================================================='
-  if (ims_pro == 0) write(*,*) 'ibm_burgers start of rhs (no scal)', ibm_burgers
-#endif
+
 ! #######################################################################
 ! Ox diffusion and convection terms in Ox momentum eqn
 ! Initializing tmp5 for the rest of terms
@@ -192,13 +168,17 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
 
 ! #######################################################################
-! IBM not implemented for scalar fields yet (set ibm_burgers flag back to .false.)
+! IBM
 ! #######################################################################
-  IF ( imode_ibm == 1 ) ibm_burgers = .false.
-#ifdef IBM_DEBUG
-  if (ims_pro == 0) write(*,*) 'ibm_burgers end of rhs (no scal)', ibm_burgers
-  if (ims_pro == 0) write(*,*) '========================================================='
-#endif
+  IF ( imode_ibm == 1 ) THEN
+     ibm_burgers = .false. ! until here, IBM is used for flow fields
+     IF ( imode_ibm_scal == 1 ) THEN ! IBM usage for scalar field
+        ! (requirenments: only possible with objects on bottom boundary 
+        !  with homogeneous temperature in solid regions)
+        ibm_burgers = .true.
+     ENDIF
+  ENDIF
+
 ! #######################################################################
 ! Diffusion and convection terms in scalar eqns
 ! #######################################################################
@@ -219,7 +199,12 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
 
   ENDDO
-  ! IF ( imode_ibm == 1 ) ibm_burgers = .false.
+
+! #######################################################################
+! IBM
+! #######################################################################
+! IBM usage for scalar field, done
+  IF ( imode_ibm_scal == 1 ) ibm_burgers = .false.
 
 ! #######################################################################
 ! Impose buffer zone as relaxation terms
@@ -330,8 +315,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      ENDDO
   ELSE
      DO k = 1,kmax
-        p_bcs => h2(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-        p_bcs => h2(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+        p_bcs =>   h2(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+        p_bcs =>   h2(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
      ENDDO
   ENDIF
 

@@ -573,13 +573,12 @@ contains
 
     !########################################################################
     read(unit) offset, nx_loc, ny_loc, nz_loc, nt_loc
-
     isize = offset - 5*SIZEOFINT
     if ( isize > 0 .and. mod(isize,SIZEOFREAL) == 0 ) then
       isize = isize/SIZEOFREAL
       read(unit) params(1:isize)
 
-    else
+    else if ( isize > 0 ) then
       call TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER. Header format incorrect.')
       call TLAB_STOP(DNS_ERROR_RECLEN)
 

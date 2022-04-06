@@ -3,51 +3,58 @@
 !########################################################################
 !# HISTORY / AUTHORS
 !#
-!# 2021/XX/XX - J. Kostelecky
+!# 2022/04/01 - J. Kostelecky
 !#              Created
 !#
 !########################################################################
 !# DESCRIPTION OF SUBROUTINES
-!#  
+!#   checks IBM status of each proc, whether it is idle (do nothing) 
+!#   or active (spline reconstruction) 
 !#  
 !#    
-!#    
-!#
-!# 
 !########################################################################
 !# ARGUMENTS 
 !#
 !# 
-!#                            
-!#                           
-!#
 !########################################################################
 !# REQUIREMENTS
 !#
 !# 
-!#                            
-!#                           
-!#
 !########################################################################
 
-subroutine IBM_CHECK_PROCS()
+subroutine IBM_CHECK_PROCS(epsi, epsj, epsk)
   
   use DNS_IBM
-
+  use TLAB_VARS,     only : isize_field
 #ifdef USE_MPI 
   use MPI
-  use TLAB_MPI_VARS, only: ims_pro
+#ifdef IBM_DEBUG
+  use TLAB_MPI_VARS, only : ims_pro
+#endif
 #endif
   
   implicit none
   
 #include "integers.h"
 
-  ! ================================================================== !
+  TREAL, dimension(isize_field), intent(in) :: epsi, epsj, epsk
 
+#ifdef IBM_DEBUG
+#ifdef USE_MPI
+#else
+  TINTEGER, parameter                       :: ims_pro = 0 
+#endif
+#endif
+
+  ! ================================================================== !
 #ifdef USE_MPI 
+
+#ifdef IBM_DEBUG
+  if ( ims_pro == 0 ) write(*,*) '======== Check Procs for IBM usage ======================'
+#endif
+
   ! Check in X
-  if (sum(epsi) == 0) then
+  if ( sum(epsi) == 0 ) then
     ims_pro_ibm_x = .false.
 #ifdef IBM_DEBUG
     write(*,*) 'Task: ', ims_pro, ' idle   for IBM spline generation in x'
@@ -60,7 +67,7 @@ subroutine IBM_CHECK_PROCS()
   end if 
 
   ! Check in Y
-  if (sum(epsj) == 0) then
+  if ( sum(epsj) == 0 ) then
     ims_pro_ibm_y = .false.
 #ifdef IBM_DEBUG
     write(*,*) 'Task: ', ims_pro, ' idle   for IBM spline generation in y' 
@@ -73,7 +80,7 @@ subroutine IBM_CHECK_PROCS()
   end if 
 
   ! Check in Z
-  if (sum(epsk) == 0) then
+  if ( sum(epsk) == 0 ) then
     ims_pro_ibm_z = .false.
 #ifdef IBM_DEBUG
     write(*,*) 'Task: ', ims_pro, ' idle   for IBM spline generation in z' 
@@ -84,8 +91,10 @@ subroutine IBM_CHECK_PROCS()
     write(*,*) 'Task: ', ims_pro, ' active for IBM spline generation in z'
 #endif
   end if 
+
 #else
-  ims_pro_ibm_x = .true.; ims_pro_ibm_y = .true.; ims_pro_ibm_z = .true. ! one task with full domain
+  ! in case of serial mode: one task with full domain
+  ims_pro_ibm_x = .true.; ims_pro_ibm_y = .true.; ims_pro_ibm_z = .true.
 #endif
 
   return

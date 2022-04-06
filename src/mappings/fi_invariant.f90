@@ -16,20 +16,8 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imode_ibm
   USE DNS_IBM,   ONLY : ibm_partial
-  
-! ############################################# ! 
-! DEBUG
-#ifdef IBM_DEBUG
-#ifdef USE_MPI
-  use TLAB_MPI_VARS, only : ims_pro
-  use IO_FIELDS
-#endif
-#endif
-! ############################################# ! 
 
   IMPLICIT NONE
-
-#include "integers.h"
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u,v,w
@@ -39,16 +27,6 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
   
 ! -------------------------------------------------------------------
   TINTEGER bcs(2,2)
-
-  ! ############################################# ! 
-  ! DEBUG
-#ifdef IBM_DEBUG
-#ifdef USE_MPI
-#else
-  TINTEGER, parameter                       :: ims_pro=0
-#endif
-#endif
-  ! ############################################# ! 
   
 ! ###################################################################
   bcs = 0
@@ -56,40 +34,27 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
   ! -------------------------------------------------------------------
   ! IBM   (if .true., OPR_PARTIAL_X/Y/Z uses modified fields for derivatives)
   IF ( imode_ibm == 1 ) ibm_partial = .true.
-#ifdef IBM_DEBUG
-  if (ims_pro == 0) write(*,*) '========================================================='
-  if (ims_pro == 0) write(*,*) 'ibm_partial in dns_control "FI_INVARIANT_P"', ibm_partial
-#endif
+
   ! -------------------------------------------------------------------
   
   CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), u, result, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), v, tmp1,   wrk3d, wrk2d,wrk3d)
-#ifdef IBM_DEBUG 
-  call IO_WRITE_FIELDS('dudx', IO_FLOW, nx,ny,nz, i1, result, wrk3d)
-  call IO_WRITE_FIELDS('dvdy', IO_FLOW, nx,ny,nz, i1, tmp1,   wrk3d)
-#endif
+
   result =  result + tmp1
   CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), w, tmp1,   wrk3d, wrk2d,wrk3d)
-#ifdef IBM_DEBUG   
-  call IO_WRITE_FIELDS('dwdz', IO_FLOW, nx,ny,nz, i1, tmp1,   wrk3d)
-#endif
+
   result =-(result + tmp1)
 
   ! -------------------------------------------------------------------
   IF ( imode_ibm == 1 ) ibm_partial = .false.  
-
-#ifdef IBM_DEBUG
-  if (ims_pro == 0) write(*,*) '========================================================='
-  if (ims_pro == 0) write(*,*) 'ibm_partial in dns_control "FI_INVARIANT_P"', ibm_partial
-  call IO_WRITE_FIELDS('dil',  IO_FLOW, nx,ny,nz, i1, result, wrk3d)
-#endif
 
   RETURN
 END SUBROUTINE FI_INVARIANT_P
 
 !########################################################################
 ! First invariant on horizontal pressure nodes
-! (caution: div(u)=0 condition only holds on pressure nodes)
+! (caution: div(u)=0 condition only holds on pressure nodes,
+!           in IBM-mode without splines, because of combined schemes)
 !########################################################################
 SUBROUTINE FI_INVARIANT_P_STAG(nx,ny,nz, u,v,w, result, tmp1, tmp2, wrk2d,wrk3d)
 

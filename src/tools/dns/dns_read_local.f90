@@ -14,13 +14,13 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE TLAB_VARS,    ONLY : pbg, rbg, damkohler
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_txc_field, isize_wrk1d,isize_wrk2d,isize_wrk3d
   USE TLAB_VARS,    ONLY : inb_flow,inb_scal,inb_txc
-  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, imode_ibm, iadvection, iviscous, icalc_part, icalc_scal, itransport, istagger
+  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, imode_ibm, imode_ibm_scal, iadvection, iviscous, icalc_part, icalc_scal, itransport, istagger
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : FilterDomain
   USE TLAB_VARS,    ONLY : nstatavg
   USE TLAB_VARS,    ONLY : buoyancy, radiation, transport, chemistry, subsidence
   USE TLAB_PROCS
-  USE DNS_IBM,      ONLY : xbars_geo, kspl, nflu, ibm_procs_idle, ibm_restart
+  USE DNS_IBM,      ONLY : xbars_geo, nob_max, nflu, ibm_procs_idle, ibm_restart
   USE THERMO_VARS, ONLY : imixture
   USE LAGRANGE_VARS,ONLY: inb_particle_interp
   USE DNS_LOCAL
@@ -454,8 +454,9 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#')
   CALL TLAB_WRITE_ASCII(bakfile, '#[IBMParameter]')
   CALL TLAB_WRITE_ASCII(bakfile, '#Status=<on/off>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#IBMScalar=<on/off>')
   CALL TLAB_WRITE_ASCII(bakfile, '#RestartGeometry=<yes/no>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#SplineOrder=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#MaxNumberObj=<value>')
   CALL TLAB_WRITE_ASCII(bakfile, '#FluidPoints=<value>')
   CALL TLAB_WRITE_ASCII(bakfile, '#ProcsIdle=<yes/no>')
 
@@ -467,12 +468,21 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
     CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
+  CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'IBMScalar', 'off', sRes)
+  IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm_scal = 0
+  ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm_scal = 1
+  ELSE
+    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong IBMScalar option.')
+    CALL TLAB_STOP(DNS_ERROR_OPTION)
+  ENDIF
+
   CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'RestartGeometry', 'no', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_restart = .TRUE.
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_restart = .FALSE.
   ENDIF
 
-  CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'SplineOrder', '3', kspl)
+  CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'MaxNumberObj', '0', nob_max)
+
   CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'FluidPoints', '3', nflu)
 
   CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'ProcsIdle', 'no', sRes)
@@ -480,13 +490,12 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_procs_idle = .FALSE.
   ENDIF
 
-  !Geometry
+  ! Geometry
   CALL TLAB_WRITE_ASCII(bakfile, '#')
   CALL TLAB_WRITE_ASCII(bakfile, '#[IBMGeometry]')
   CALL TLAB_WRITE_ASCII(bakfile, '#Type=<XBars>')       
   CALL TLAB_WRITE_ASCII(bakfile, '#Mirrored=<yes/no>')       
-  CALL TLAB_WRITE_ASCII(bakfile, '#MaxNumber=<value>') ! max number of elements in one spatial direction
-  CALL TLAB_WRITE_ASCII(bakfile, '#Length=<value>')    ! in x/i
+  CALL TLAB_WRITE_ASCII(bakfile, '#Number=<value>') ! max number of elements in one spatial direction
   CALL TLAB_WRITE_ASCII(bakfile, '#Height=<value>')    ! in y/j
   CALL TLAB_WRITE_ASCII(bakfile, '#Width=<value>')     ! in z/k
 
@@ -496,10 +505,9 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
     IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; xbars_geo%mirrored = .TRUE.
     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; xbars_geo%mirrored = .FALSE.
     ENDIF
-    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry',  'MaxNumber', '0', xbars_geo%number)
-    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry',  'Length',    '0', xbars_geo%length)
-    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry',  'Height',    '0', xbars_geo%height)
-    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry',  'Width',     '0', xbars_geo%width)
+    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry',  'Number', '0', xbars_geo%number)
+    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry',  'Height', '0', xbars_geo%height)
+    CALL SCANINIINT(bakfile, inifile, 'IBMGeometry',  'Width',  '0', xbars_geo%width)
   ELSE
     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBMGeometryType option.')
     CALL TLAB_STOP(DNS_ERROR_OPTION)
@@ -908,12 +916,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! Immersed Boundary Method (IBM) - consistency check
 ! -------------------------------------------------------------------
   IF ( imode_ibm .eq. 1 ) THEN
-     IF (.NOT. ((kspl .EQ. 3) .OR. (kspl .EQ. 5))) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Wrong SplineOrder, choose 3rd. or 5th. order.')
-        CALL TLAB_STOP(DNS_ERROR_OPTION)
-     ENDIF 
-     IF ( nflu .LT. kspl ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Wrong FluidPoints and SplineOrder combination.')
+     IF ( nflu .LT. 2 ) THEN
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Too less FluidPoints (nflu>2).')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF 
      IF ( ( mod(g(3)%size,2*xbars_geo%number) .eq. 0 ) .and. ( mod(xbars_geo%width,2) .ne. 0 ) ) THEN
@@ -937,11 +941,11 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM only implemented for incompressible mode.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
-     IF ( .NOT. (iadvection .EQ. EQNS_CONVECTIVE) ) THEN
+     IF ( .NOT. ( iadvection .EQ. EQNS_CONVECTIVE ) ) THEN
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM only implemented for convective advection scheme.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
-     IF ( .NOT. (imode_rhs .EQ. EQNS_RHS_COMBINED) ) THEN
+     IF ( .NOT. ( imode_rhs .EQ. EQNS_RHS_COMBINED ) ) THEN
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM only implemented for imode_rhs == EQNS_RHS_COMBINED.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF

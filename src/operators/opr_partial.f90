@@ -87,15 +87,6 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d, wrk3d)
   USE DNS_IBM,    ONLY : isize_nobi,    isize_nobj,    isize_nobk
   USE DNS_IBM,    ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
   USE DNS_IBM,    ONLY : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
-
-! ############################################# ! 
-! DEBUG
-#ifdef IBM_DEBUG
-#ifdef USE_MPI
-  use TLAB_MPI_VARS,   only : ims_pro
-#endif
-#endif
-! ############################################# ! 
    
   IMPLICIT NONE
 
@@ -114,26 +105,11 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d, wrk3d)
   TINTEGER, PARAMETER                            :: is = i0 ! scalar index; if 0, then velocity
 
   ! -------------------------------------------------------------------
-
-! ############################################# ! 
-! debugging
-#ifdef IBM_DEBUG
-#ifdef USE_MPI
-#else
-  TINTEGER, parameter  ::  ims_pro=0  
-#endif
-#endif
-! ############################################ ! 
-
-  ! IBM not for scalar fields! (will be implemented later)
   ! modify incoming u fields (fill solids with spline functions, depending on direction)
 
   SELECT CASE (g%name)
    
   CASE('x')
-#ifdef IBM_DEBUG
-    IF (ims_pro == 0) write(*,*) 'ibm_partial_', g%name ! debug
-#endif
     IF (ims_pro_ibm_x) THEN
       CALL IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
       CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
@@ -142,9 +118,6 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d, wrk3d)
     ENDIF
 
   CASE('y')
-#ifdef IBM_DEBUG
-    IF (ims_pro == 0) write(*,*) 'ibm_partial_', g%name ! debug
-#endif
     IF (ims_pro_ibm_y) THEN
       CALL IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
       CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
@@ -153,9 +126,6 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d, wrk3d)
     ENDIF
 
   CASE('z')
-#ifdef IBM_DEBUG
-    IF (ims_pro == 0) write(*,*) 'ibm_partial_', g%name ! debug
-#endif
     IF (ims_pro_ibm_z) THEN
       CALL IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
       CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
@@ -410,15 +380,6 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
   USE DNS_IBM,    ONLY : isize_nobi,    isize_nobj,    isize_nobk
   USE DNS_IBM,    ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
   USE DNS_IBM,    ONLY : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
-
-! ############################################# ! 
-! DEBUG
-#ifdef IBM_DEBUG
-#ifdef USE_MPI
-  use TLAB_MPI_VARS,   only : ims_pro
-#endif
-#endif
-! ############################################# ! 
    
   IMPLICIT NONE
    
@@ -438,30 +399,15 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
   
   ! -------------------------------------------------------------------
 
-! ############################################# ! 
-! debugging
-#ifdef IBM_DEBUG
-#ifdef USE_MPI
-#else
-  TINTEGER, parameter  ::  ims_pro=0  
-#endif
-#endif
-! ############################################ ! 
-
   ! pointer to field
   p_fld => u
 
   ! -------------------------------------------------------------------
-
-  ! IBM not for scalar fields! (will be implemented later)
   ! modify incoming u fields (fill solids with spline functions, depending on direction)
 
   SELECT CASE (g%name)
    
   CASE('x')
-#ifdef IBM_DEBUG
-    IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-#endif
     IF (ims_pro_ibm_x) THEN
       CALL IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
       p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
@@ -471,9 +417,6 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
     ENDIF
 
   CASE('y')
-#ifdef IBM_DEBUG
-    IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-#endif
     IF (ims_pro_ibm_y) THEN
       CALL IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
       p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
@@ -483,9 +426,6 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
     ENDIF
 
   CASE('z')
-#ifdef IBM_DEBUG
-    IF (ims_pro == 0) write(*,*) 'ibm_burgers_', g%name ! debug
-#endif
     IF (ims_pro_ibm_z) THEN
       CALL IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
       p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
@@ -572,7 +512,7 @@ SUBROUTINE OPR_PARTIAL1_INT(dir, nlines, g, u,result, wrk2d)
   TREAL, DIMENSION(nlines,g%size),     INTENT(IN)    :: u
   TREAL, DIMENSION(nlines,g%size),     INTENT(OUT)   :: result
   TREAL, DIMENSION(nlines),            INTENT(INOUT) :: wrk2d
-  
+
 ! ###################################################################
 ! 1st interpolatory derivative, direction 'vp': vel. --> pre. grid
   IF ( dir .EQ. 0 ) THEN

@@ -3,36 +3,28 @@
 !########################################################################
 !# HISTORY / AUTHORS
 !#
-!# 2022/XX/XX - J. Kostelecky
+!# 2022/04/01 - J. Kostelecky
 !#              Created
 !#
 !########################################################################
 !# DESCRIPTION OF SUBROUTINES
-!#  
+!#   apply IBM boundary conditions to flow/scalar fields
 !#  
 !#    
-!#    
-!#
-!# 
 !########################################################################
 !# ARGUMENTS 
-!#
-!# 
-!#                            
-!#                           
+!#                         
 !#
 !########################################################################
 !# REQUIREMENTS
 !#
 !# 
-!#                            
-!#                           
-!#
 !########################################################################
+
 subroutine IBM_INITIALIZE_SCAL(s)
   
   use DNS_IBM,   only : eps, ibmscaljmin, ibmscaljmax 
-  use TLAB_VARS, only : imax,jmax, isize_field,inb_scal
+  use TLAB_VARS, only : imax, jmax, isize_field,inb_scal
 
   implicit none
 
@@ -52,21 +44,21 @@ subroutine IBM_INITIALIZE_SCAL(s)
 
 ! set scalar values in solid to zero
   call IBM_BCS_FIELD_COMBINED(i1,s)
-  ! call IBM_BCS_FIELD(s(1,1)) ! variable scalar is=2 in solid
 
 ! apply ibmscaljmin, ibmscaljmax on scalar field(s)
-  ! do is = 1, 1                 ! variable scalar is=2 in solid
   do is = 1, inb_scal
     call IBM_BCS_SCAL(is,s(:,is),eps(:))
   end do
 
   return
 end subroutine IBM_INITIALIZE_SCAL
+
 !########################################################################
+
 subroutine IBM_BCS_SCAL(is,s,eps)
   
   use DNS_IBM,   only : ibmscaljmin, ibmscaljmax, xbars_geo
-  use TLAB_VARS, only : imax,jmax,kmax
+  use TLAB_VARS, only : imax, jmax, kmax
 
   implicit none
 
@@ -91,14 +83,16 @@ subroutine IBM_BCS_SCAL(is,s,eps)
 
   return
 end subroutine IBM_BCS_SCAL
+
 !########################################################################
+
 subroutine IBM_BCS_FIELD_COMBINED(is,fld)
   
   use TLAB_VARS, only : isize_field, inb_flow, inb_scal
 
   implicit none
   
-  TINTEGER,                        intent(in)    :: is
+  TINTEGER,                        intent(in   ) :: is
   TREAL, dimension(isize_field,*), intent(inout) :: fld
 
   TINTEGER                                       :: i
@@ -117,7 +111,9 @@ subroutine IBM_BCS_FIELD_COMBINED(is,fld)
 
   return
 end subroutine IBM_BCS_FIELD_COMBINED
+
 !########################################################################
+
 subroutine IBM_BCS_FIELD(fld)
   
   use DNS_IBM,   only : eps
@@ -137,3 +133,48 @@ subroutine IBM_BCS_FIELD(fld)
 
   return
 end subroutine IBM_BCS_FIELD
+
+!########################################################################
+
+subroutine IBM_BCS_FIELD_STAGGER(fld)
+  
+  use DNS_IBM,   only : epsp
+  use TLAB_VARS, only : isize_field
+
+  implicit none
+  
+  TREAL, dimension(isize_field), intent(inout) :: fld
+
+  TINTEGER                                     :: i
+
+  ! ================================================================== !
+  ! apply IBM BCs on scalar/flow fields
+  do i = 1, isize_field
+    fld(i) = (C_1_R - epsp(i)) * fld(i)  
+  end do
+
+  return
+end subroutine IBM_BCS_FIELD_STAGGER
+
+!########################################################################
+
+subroutine IBM_BCS_FIELD_INV(fld,tmp)
+  
+  use DNS_IBM,   only : eps
+  use TLAB_VARS, only : isize_field
+
+  implicit none
+  
+  TREAL, dimension(isize_field), intent(in)  :: fld
+  TREAL, dimension(isize_field), intent(out) :: tmp
+
+  TINTEGER                                   :: i
+
+  ! ================================================================== !
+  ! apply inverse IBM BCs on fields -- only BCs in solid left, fluid regions are zero
+  do i = 1, isize_field
+    tmp(i) = eps(i) * fld(i)  
+  end do
+
+  return
+end subroutine IBM_BCS_FIELD_INV

@@ -4,14 +4,15 @@
 !########################################################################
 !# HISTORY / AUTHORS
 !#
-!# 2021/XX/XX - J. Kostelecky
+!# 2022/04/01 - J. Kostelecky
 !#              Created
 !#
 !########################################################################
 !# DESCRIPTION OF MODLE
-!#
-!#
-!#
+!#   IBM based on:
+!#     "A simple and scalable immersed boundary method for high-ﬁdelity 
+!#      simulations of ﬁxed and moving objects on a Cartesian mesh"
+!#      https://doi.org/10.1016/j.apm.2021.06.026
 !#                    
 !#
 !########################################################################
@@ -26,15 +27,11 @@ module DNS_IBM
   save 
 
   ! descriptive geometry fields (saved)
-  TREAL, dimension(:),allocatable, target :: eps                         ! eps indicator field
+  TREAL, dimension(:),allocatable, target :: eps, epsp                   ! eps indicator field
   TINTEGER, dimension(:),     allocatable :: nobi,    nobj,   nobk       ! number of objects in i/j/k 
   TINTEGER, dimension(:),     allocatable :: nobi_b,  nobj_b, nobk_b     ! beginn of objects in i/j/k 
   TINTEGER, dimension(:),     allocatable :: nobi_e,  nobj_e, nobk_e     ! end    of objects in i/j/k
-  
-  ! descriptive geometry fields (deallocated after initialization of geometry)
-  TREAL,    dimension(:,:,:), allocatable :: eps_aux                     ! eps_aux field 
-                                                                         ! (debugging / geometry generation)
-  TREAL,    dimension(:),     allocatable :: epsi, epsj, epsk            ! eps transposed in i/j/k
+  TINTEGER                                :: nobi_max, nobj_max, nobk_max, nob_max
 
   ! modified field
   TREAL, dimension(:), allocatable, target:: fld_ibm                     ! with splines in solid regions
@@ -50,14 +47,12 @@ module DNS_IBM
 
   ! read_local from dns.ini file 
   logical                                 :: ibm_restart, ibm_procs_idle
-  TINTEGER                                :: kspl                        ! spline order kspl=[1,5] (best: 3 or 5)
   TINTEGER                                :: nflu                        ! number of fluid points used for Splines 
-                                                                         ! (on one side) nflu >= kspl
   
   ! array sizes
   TINTEGER                                :: isize_nobi,    isize_nobj,    isize_nobk
   TINTEGER                                :: isize_nobi_be, isize_nobj_be, isize_nobk_be
-  TINTEGER                                :: nsp
+  TINTEGER                                :: nspl
   TINTEGER                                :: isize_wrk1d_ibm
 
   ! check IBM procs (active/idle)

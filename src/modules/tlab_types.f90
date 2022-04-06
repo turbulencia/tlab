@@ -68,7 +68,7 @@ MODULE TLAB_TYPES
   TYPE ibm_geo_dt
      SEQUENCE
      CHARACTER(32) :: name
-     TINTEGER      :: number, height, width, length
+     TINTEGER      :: number, height, width
      LOGICAL       :: mirrored
   END TYPE ibm_geo_dt
 

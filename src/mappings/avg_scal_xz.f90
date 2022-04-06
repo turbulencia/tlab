@@ -45,7 +45,7 @@ USE TLAB_PROCS
   TINTEGER i,j,k,bcs(2,2)
   TREAL diff, dummy, coefT, coefR, coefQ, c23
 
-  TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nv
+  TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nv, im
 
   CHARACTER*32 name, groupname(MAX_VARS_GROUPS)
   CHARACTER*250 line1, varname(MAX_VARS_GROUPS)
@@ -87,6 +87,11 @@ USE TLAB_PROCS
 
   groupname(ng) = 'Mean'
   varname(ng)   = 'rS fS rS_y fS_y rQ fQ'
+  IF ( imode_ibm == 1 ) THEN
+    varname(ng) = TRIM(ADJUSTL(varname(ng)))//' eps'
+#define ep(j)     mean2d(j,ig(1)+6)
+    sg(ng) = sg(ng) + 1
+  END IF
   IF ( radiation%active(is) ) THEN
     varname(ng) = TRIM(ADJUSTL(varname(ng)))//' rQrad rQradC'
     sg(ng) = sg(ng) + 2
@@ -270,6 +275,16 @@ USE TLAB_PROCS
   ! #######################################################################
   WRITE(line1,*) itime; line1 = 'Calculating scal statistics at It'//TRIM(ADJUSTL(line1))//'...'
   CALL TLAB_WRITE_ASCII(lfile,line1)
+
+  ! #######################################################################
+  ! Preliminary for IBM usage
+  ! #######################################################################
+  ! Calculating average of scalar Bcs in solids
+  im = 5
+  IF ( imode_ibm == 1 ) THEN
+    CALL IBM_BCS_FIELD_INV(s_local, tmp1)
+    CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, ep(1), wrk1d, area); im = im + 1
+  END IF
 
   ! #######################################################################
   ! Preliminary data of velocity and density
@@ -526,7 +541,7 @@ USE TLAB_PROCS
 
   ! -----------------------------------------------------------------------
   ! Calculating averages
-  k = ig(1)+5
+  k = ig(1) + im
   IF ( radiation%active(is) ) THEN
     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, mean2d(1,k), wrk1d, area)
     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, g(1)%jac,g(3)%jac, mean2d(1,k), wrk1d, area) ! correction term or flux
