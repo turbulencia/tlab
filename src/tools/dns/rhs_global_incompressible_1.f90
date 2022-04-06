@@ -48,7 +48,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(imax,kmax,*)   :: wrk2d
 
-  TARGET tmp4, h2, hs
+  TARGET hs, h2, tmp4
 
 ! -----------------------------------------------------------------------
   TINTEGER iq, is, ij, k, nxy, ip_b, ip_t
@@ -306,7 +306,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ip_t = imax*(jmax-1) + 1
 ! Stagger also Bcs
   IF ( imode_ibm .EQ. 1 ) CALL IBM_BCS_FIELD(h2)
-  IF ( istagger  .EQ. 1 ) THEN 
+  IF ( istagger  .EQ. 1 ) THEN ! todo: only need to stagger upper/lower boundary plane, not full h2-array
      CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), h2,   tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
      DO k = 1,kmax
@@ -315,8 +315,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      ENDDO
   ELSE
      DO k = 1,kmax
-        p_bcs =>   h2(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-        p_bcs =>   h2(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+        p_bcs => h2(ip_b:);   BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+        p_bcs => h2(ip_t:);   BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
      ENDDO
   ENDIF
 
@@ -334,7 +334,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   IF ( tower_mode .EQ. 1 .AND. rkm_substep .EQ. rkm_endstep ) THEN
      CALL DNS_TOWER_ACCUMULATE(tmp1,i4,wrk1d)
   ENDIF
-
+ 
   IF ( istagger .EQ. 1 ) THEN
   !  vertical pressure derivative   dpdy - back on horizontal velocity nodes
      CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp3, tmp5, wrk3d, wrk2d,wrk3d)

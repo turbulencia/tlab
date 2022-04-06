@@ -23,7 +23,6 @@
 SUBROUTINE OPR_STAGGERING_INITIALIZE(aux)
 
   USE TLAB_CONSTANTS, ONLY : efile
-  ! USE TLAB_TYPES,     ONLY : grid_dt
   USE TLAB_VARS,      ONLY : g
   USE TLAB_VARS,      ONLY : fft_plan_fy1d, fft_plan_by1d
   USE TLAB_PROCS
@@ -35,7 +34,6 @@ SUBROUTINE OPR_STAGGERING_INITIALIZE(aux)
 #include "fftw3.f"
 #endif
 
-  ! TYPE(grid_dt),                    INTENT(IN)    :: g(3)
   TCOMPLEX, DIMENSION(g(2)%size,2), INTENT(INOUT) :: aux  
 ! ###################################################################
 

@@ -9,7 +9,7 @@
 SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
-  USE TLAB_VARS, ONLY : buoyancy, coriolis, subsidence
+  USE TLAB_VARS, ONLY : buoyancy, coriolis, subsidence, random
   USE TLAB_VARS, ONLY : bbackground, pbackground, rbackground, epbackground
 
   IMPLICIT NONE
@@ -124,6 +124,12 @@ SUBROUTINE FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
 
      END IF
 
+     ! -----------------------------------------------------------------------
+     ! Random forcing
+     ! -----------------------------------------------------------------------
+     IF ( random%active(iq) ) THEN
+        CALL FI_RANDOM(random,imax,jmax,kmax,hq(1,iq),tmp1)
+     ENDIF
   END DO
 
   RETURN
