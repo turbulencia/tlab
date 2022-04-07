@@ -7,7 +7,7 @@
 !# HISTORY
 !#
 !# 2022/01/21 - J. Kostelecky
-!#              Created           
+!#              Created
 !#
 !########################################################################
 !# DESCRIPTION
@@ -15,7 +15,7 @@
 !# Validate compact interpolation schemes.
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
 PROGRAM VINTERPARTIAL
@@ -34,10 +34,11 @@ PROGRAM VINTERPARTIAL
 
 #include "integers.h"
 #ifdef USE_MPI
+  TREAL error2, dummy2
 #else
   TINTEGER, PARAMETER                                :: ims_pro=0
 #endif
- 
+
   TREAL, DIMENSION(:,:),   ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:,:), ALLOCATABLE               :: a, a_int, a_dif
   TREAL, DIMENSION(:,:,:), ALLOCATABLE               :: b, c
@@ -58,11 +59,11 @@ PROGRAM VINTERPARTIAL
 
 ! -------------------------------------------------------------------
 ! Check input
-! ------------------------------------------------------------------- 
+! -------------------------------------------------------------------
   IF (istagger .EQ. 0) THEN
     CALL TLAB_WRITE_ASCII(efile,'VINTERPARTIAL. Set "StaggerGrid=yes" in dns.ini!')
     CALL TLAB_STOP(i0)
-  ENDIF 
+  ENDIF
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
@@ -144,7 +145,7 @@ PROGRAM VINTERPARTIAL
   ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
 ! ###################################################################
 ! z-direction: Interpolation + interpolatory 1st derivative
-! ###################################################################  
+! ###################################################################
   IF ( g(3)%size .GT. 1 ) THEN
   ! Interpolation: vel. <--> pre. grid
     CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), a,     a_int, tmp1, wrk2d,wrk3d)
@@ -201,7 +202,7 @@ PROGRAM VINTERPARTIAL
     ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
   ENDIF
 
-! ###################################################################  
-  
+! ###################################################################
+
   CALL TLAB_STOP(i0)
 END PROGRAM VINTERPARTIAL
