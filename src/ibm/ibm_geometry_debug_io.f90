@@ -60,7 +60,6 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3, wrk3d)
 #endif
   TINTEGER                                     :: i, j, k, ij, ik, jk, ip, inum
   TINTEGER                                     :: nyz, nxz, nxy
-  character(len=32)                            :: fname
 #ifdef USE_MPI 
 #else
   TINTEGER, parameter                          :: ims_pro = 0         

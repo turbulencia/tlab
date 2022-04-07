@@ -34,8 +34,8 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
   TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d
 
 ! -------------------------------------------------------------------
-  TINTEGER ip,ij
-  
+  TINTEGER ij
+
 ! ###################################################################
   IF ( bcs(1,2) + bcs(2,2) .GT. 0 ) THEN
      CALL TLAB_WRITE_ASCII(efile,'OPR_BURGERS. Only developed for biased BCs.')

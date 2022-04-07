@@ -4,7 +4,6 @@
 SUBROUTINE FI_RANDOM(random, nx,ny,nz, h, tmp)
 
   USE TLAB_TYPES,  ONLY : term_dt
-  USE TLAB_VARS, ONLY : inb_scal_array
 
   IMPLICIT NONE
   
@@ -14,7 +13,6 @@ SUBROUTINE FI_RANDOM(random, nx,ny,nz, h, tmp)
   TREAL, DIMENSION(nx,ny,nz)                  :: tmp
 
   ! -----------------------------------------------------------------------
-  TINTEGER ijk
   TREAL dummy
 
   dummy=random%parameters(1)

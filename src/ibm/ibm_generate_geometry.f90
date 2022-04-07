@@ -56,7 +56,6 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 #endif
   TINTEGER                                     :: i, j, k, ij, ik, jk, ip, inum
   TINTEGER                                     :: nyz, nxz, nxy
-  character(len=32)                            :: fname
 #ifdef IBM_DEBUG
 #ifdef USE_MPI 
 #else

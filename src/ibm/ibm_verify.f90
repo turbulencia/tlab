@@ -52,13 +52,14 @@ subroutine IBM_VERIFY_GEOMETRY()
   TINTEGER, parameter :: idi = TLAB_MPI_I_PARTIAL 
   TINTEGER, parameter :: idj = TLAB_MPI_J_PARTIAL 
   TINTEGER, parameter :: idk = TLAB_MPI_K_PARTIAL 
+  TREAL               :: dummy
 #else
 #ifdef IBM_DEBUG
   TINTEGER, parameter :: ims_pro = 0 
 #endif
 #endif
   TINTEGER            :: nyz, nxz, nxy    
-  TREAL               :: dummy, ob_min
+  TREAL               :: ob_min
   ! ================================================================== !
 
 #ifdef IBM_DEBUG
@@ -106,7 +107,6 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
   use DNS_IBM,        only : nflu
   use TLAB_CONSTANTS, only : efile
   use TLAB_TYPES,     only : grid_dt
-  use TLAB_VARS,      only : isize_field
   use TLAB_PROCS
 
   implicit none
@@ -136,7 +136,7 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
         ! ================================================================== !
         ! check number of fluid points (to boarders and between objects)
         if ( iob == 1 ) then                    ! left
-          fp_l = nob_b(ip+ii) - C_1_R
+          fp_l = nob_b(ip+ii) - i1
           if ( fp_l < fp_min .and. fp_l /= 0 ) then
             call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY not enough fluid points between left boarder and first object.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
