@@ -16,8 +16,7 @@ PRJS=\
      helmholtz_fde  \
      helmholtz_fxz  \
      tgvortex   \
-     diffusion \
-     spline
+     diffusion
 #     superlayer \
 
 PASSVARS = FF="$(FF)"               \

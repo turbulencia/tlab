@@ -25,8 +25,6 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
 
   IMPLICIT NONE
   
-#include "integers.h"
-
   TINTEGER,                        INTENT(IN)    :: flag_dilatation
   TREAL, DIMENSION(isize_field,*), INTENT(INOUT) :: q,s
   TREAL, DIMENSION(isize_field,6), INTENT(INOUT) :: txc
@@ -77,7 +75,7 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
            ENDIF
         ENDIF
 
-        IF ( imode_ibm == 1 ) THEN 
+        IF ( imode_ibm .EQ. 1 ) THEN 
            IF ( istagger .EQ. 1 ) THEN
               CALL IBM_BCS_FIELD_STAGGER(txc(1,1)) ! IBM - zeros in solid on pressure mesh 
            ELSE

@@ -200,7 +200,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermCoriolis', 'void', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'       )         THEN; coriolis%type = EQNS_NONE
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'       ) THEN; coriolis%type = EQNS_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit'   ) THEN; coriolis%type = EQNS_EXPLICIT
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'normalized' ) THEN; coriolis%type = EQNS_COR_NORMALIZED
   ELSE

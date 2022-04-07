@@ -133,6 +133,8 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   p = p + tmp1
 
 ! #######################################################################
+! Solve Poisson equation
+! #######################################################################
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration) 
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1

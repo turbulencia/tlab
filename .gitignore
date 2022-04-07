@@ -21,8 +21,6 @@ test_debug/*
 test_little/*
 test_serial/*
 test_parallel/*
-test_channel/*
-test_parallel360/*
 .vscode/*
 *~
 */*~

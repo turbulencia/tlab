@@ -14,10 +14,7 @@
 #define TLAB_MPI_K_AUX1        9
 #define TLAB_MPI_K_AUX2       10
 
-#define TLAB_MPI_K_IBM_NOB    11    
-#define TLAB_MPI_K_IBM_NOB_BE 12    
-
-#define TLAB_MPI_K_MAXTYPES   12
+#define TLAB_MPI_K_MAXTYPES   10
 
 #define TLAB_MPI_I_PARTIAL     1
 #define TLAB_MPI_I_SHEAR       2
@@ -26,7 +23,7 @@
 #define TLAB_MPI_I_AUX1        5
 #define TLAB_MPI_I_AUX2        6  
 
-#define TLAB_MPI_I_MAXTYPES    8
+#define TLAB_MPI_I_MAXTYPES    6
 
 #define TLAB_MPI_J_PARTIAL     1 
 #define TLAB_MPI_J_MAXTYPES    1

@@ -77,12 +77,12 @@ PROGRAM DNS
 
   IF ( tower_mode == 1 ) THEN
     CALL DNS_TOWER_INITIALIZE(tower_stride)
-  ENDIF
+  END IF
   
   IF ( imode_ibm == 1 ) THEN
     ibm_allocated = .FALSE.
     CALL IBM_ALLOCATE(C_FILE_LOC, ibm_allocated)
-  ENDIF
+  END IF
 
   ! ###################################################################
   ! Initialize operators and reference data
@@ -145,11 +145,11 @@ PROGRAM DNS
     END IF
   END IF
 
-  ! ! ###################################################################
-  ! ! Check
-  ! ! ###################################################################
-  ! logs_data(1) = 0 ! Status
-  ! CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
+  ! ###################################################################
+  ! Check
+  ! ###################################################################
+  logs_data(1) = 0 ! Status
+  CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
 
   ! ###################################################################
   ! Initialize particle simumulation
@@ -176,7 +176,7 @@ PROGRAM DNS
     CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
     CALL IBM_BCS_FIELD_COMBINED(i0, q)
     IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s)
-  ENDIF  
+  END IF  
 
   ! ###################################################################
   ! Check
@@ -218,7 +218,7 @@ PROGRAM DNS
       IF ( imode_ibm == 1 ) THEN
         CALL IBM_BCS_FIELD_COMBINED(i0, q) ! apply IBM BCs
         IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s) ! not tested !
-      ENDIF  
+      END IF  
     END IF
 
     IF ( flag_viscosity ) THEN          ! Change viscosity if necessary

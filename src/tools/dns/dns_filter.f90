@@ -8,7 +8,6 @@ SUBROUTINE DNS_FILTER()
   USE TLAB_CONSTANTS, ONLY : lfile
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, isize_field
   USE TLAB_VARS,    ONLY : imode_eqns, imode_sim
-  USE TLAB_VARS,    ONLY : icalc_scal
   USE TLAB_VARS,    ONLY : itime, rtime
   USE TLAB_VARS,    ONLY : FilterDomain
   USE TLAB_VARS,    ONLY : g, area

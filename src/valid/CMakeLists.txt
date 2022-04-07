@@ -2,11 +2,11 @@ set(LEVEL1_LIBS utils modules)
 
 FILE(GLOB sourcefiles "partial/*.f90")
 add_executable(vpartial.x ${sourcefiles})
-target_link_libraries(vpartial.x operators ibm io thermodynamics fdm ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(vpartial.x operators ibm io fdm ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "integral/*.f90")
 add_executable(vintegral.x ${sourcefiles})
-target_link_libraries(vintegral.x operators ibm io thermodynamics fdm ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(vintegral.x operators ibm io fdm ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "poisson/*.f90")
 add_executable(vpoisson.x ${sourcefiles})

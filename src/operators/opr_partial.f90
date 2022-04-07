@@ -555,8 +555,8 @@ END SUBROUTINE OPR_PARTIAL1_INT
 !########################################################################
 SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
-  USE TLAB_TYPES, ONLY : grid_dt
-  USE DNS_IBM,    ONLY : ibm_partial
+  USE TLAB_TYPES,    ONLY : grid_dt
+  USE DNS_IBM,       ONLY : ibm_partial
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i

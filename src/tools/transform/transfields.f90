@@ -52,7 +52,7 @@ PROGRAM TRANSFIELDS
 
   LOGICAL flag_crop, flag_extend
   TINTEGER jmax_aux, inb_scal_dst
-  TREAL dummy, area_dst
+  TREAL dummy
 
   TINTEGER itime_size, it
   TINTEGER itime_vec(itime_size_max)

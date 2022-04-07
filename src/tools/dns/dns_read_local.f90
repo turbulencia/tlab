@@ -18,7 +18,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : FilterDomain
   USE TLAB_VARS,    ONLY : nstatavg
-  USE TLAB_VARS,    ONLY : buoyancy, radiation, transport, chemistry, subsidence
+  USE TLAB_VARS,    ONLY : radiation, transport, chemistry, subsidence
   USE TLAB_PROCS
   USE DNS_IBM,      ONLY : xbars_geo, nob_max, nflu, ibm_procs_idle, ibm_restart
   USE THERMO_VARS, ONLY : imixture
@@ -83,7 +83,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   WRITE(lstr,*) C_05_R  *cfla ! Default value for reactive CFL
   CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeReactiveCFL',  TRIM(ADJUSTL(lstr)), cflr )
   CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeStep', '0.05', dtime)
-  
+
 ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermDivergence', 'remove', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'   ) THEN; idivergence = EQNS_NONE
@@ -496,8 +496,8 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#Type=<XBars>')       
   CALL TLAB_WRITE_ASCII(bakfile, '#Mirrored=<yes/no>')       
   CALL TLAB_WRITE_ASCII(bakfile, '#Number=<value>') ! max number of elements in one spatial direction
-  CALL TLAB_WRITE_ASCII(bakfile, '#Height=<value>')    ! in y/j
-  CALL TLAB_WRITE_ASCII(bakfile, '#Width=<value>')     ! in z/k
+  CALL TLAB_WRITE_ASCII(bakfile, '#Height=<value>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#Width=<value>')
 
   CALL SCANINICHAR(bakfile, inifile, 'IBMGeometry', 'Type', 'XBars', sRes)
   IF   (TRIM(ADJUSTL(sRes)) .EQ. 'xbars' ) THEN; xbars_geo%name   = 'xbars'

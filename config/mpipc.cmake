@@ -6,7 +6,7 @@ endif()
 if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build
    set(ENV{FC} mpif90)
    set(CMAKE_Fortran_COMPILER mpif90)
-   set(USER_Fortran_FLAGS "-cpp -std=legacy -ffree-form -ffree-line-length-none -fno-automatic")
+   set(USER_Fortran_FLAGS "-cpp -ffree-form -ffree-line-length-none -fno-automatic")
    set(USER_Fortran_FLAGS_RELEASE "-fconvert=little-endian -O3 -ffast-math -mtune=native -march=native")
 
    add_definitions(-DUSE_FFTW -DUSE_MPI -DUSE_MPI_IO)
@@ -16,7 +16,7 @@ if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build
 else() # compiler for serial build
    set(ENV{FC} gfortran)
    set(CMAKE_Fortran_COMPILER gfortran)
-   set(USER_Fortran_FLAGS "-cpp -std=legacy -ffree-form -ffree-line-length-none -fno-automatic")
+   set(USER_Fortran_FLAGS "-cpp -ffree-form -ffree-line-length-none -fno-automatic")
 
    add_definitions(-DUSE_FFTW)
 
@@ -44,11 +44,7 @@ endif()
 
 set(GNU_SED "gsed")
 
-# set(FFTW_INCLUDE_DIR   "/sw/jessie-x64/fftw-3.3.4-openmp-gccsys/include")
-# set(FFTW_LIB           "/sw/jessie-x64/fftw-3.3.4-openmp-gccsys/lib/libfftw3.a")
-# set(LIBS ${FFTW_LIB} )
-
-# new for notebook
-set(FFTW_INCLUDE_DIR   "/usr/local/include")
-set(FFTW_LIB           "/usr/lib/x86_64-linux-gnu/libfftw3.a")
-set(LIBS ${FFTW_LIB})
+set(FFTW_INCLUDE_DIR   "/sw/jessie-x64/fftw-3.3.4-openmp-gccsys/include")
+set(FFTW_LIB           "/sw/jessie-x64/fftw-3.3.4-openmp-gccsys/lib/libfftw3.a")
+set(INCLUDE_DIRS ${FFTW_INCLUDE_DIR})
+set(LIBS ${FFTW_LIB} )
