@@ -61,7 +61,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   if ( ibm_restart ) then
     select case( ibm_io )
     case ( IBM_IO_REAL )
-      call IO_READ_FIELDS(eps_name(1:4), IO_FLOW, imax,jmax,kmax, i1, i0, eps, wrk3d)
+      call IO_READ_FIELDS(eps_name_real, IO_FLOW, imax,jmax,kmax, i1, i0, eps, wrk3d)
     case ( IBM_IO_INT  )
       call IBM_IO_READ_INT_GEOMETRY(wrk3d)
     case ( IBM_IO_BIT  )

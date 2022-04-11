@@ -88,7 +88,7 @@ subroutine IBM_VERIFY_GEOMETRY()
     call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
   endif
 
-  ! check each direction
+  ! check all objects in each direction
   call IBM_VERIFY(g(1), nyz, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e) ! x
   call IBM_VERIFY(g(2), nxz, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e) ! y
   call IBM_VERIFY(g(3), nxy, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e) ! z
@@ -154,9 +154,6 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
           fp_r = g%size - nob_e(ip+ii)
           if ( fp_r < fp_min .and. fp_r /= 0 ) then
             call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY not enough fluid points between right boarder and first object.')
-            call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
-          else if ( ( fp_r == 0 ) .and. ( fp_l /= 0 ) .and. ( g%periodic .eqv. .true. ) ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY in periodic directions, objects are not allowed to extend to right boundary.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
           end if
         end if 

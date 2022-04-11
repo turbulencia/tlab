@@ -63,7 +63,8 @@ module DNS_IBM
   type(ibm_geo_dt)                        :: xbars_geo                   ! create new geometry here
 
   ! name of io eps
-  character(len=32), parameter            :: eps_name = 'eps0.1'
+  character(len=32), parameter            :: eps_name      = 'eps0.1'
+  character(len=32), parameter            :: eps_name_real = eps_name(1:4)
 
 end module DNS_IBM
 
