@@ -20,7 +20,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE TLAB_VARS,    ONLY : nstatavg
   USE TLAB_VARS,    ONLY : radiation, transport, chemistry, subsidence
   USE TLAB_PROCS
-  USE DNS_IBM,      ONLY : xbars_geo, nob_max, nflu, ibm_procs_idle, ibm_restart
+  USE DNS_IBM,      ONLY : xbars_geo, nob_max, nflu, ibm_restart, ibm_io
   USE THERMO_VARS, ONLY : imixture
   USE LAGRANGE_VARS,ONLY: inb_particle_interp
   USE DNS_LOCAL
@@ -456,15 +456,15 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#Status=<on/off>')
   CALL TLAB_WRITE_ASCII(bakfile, '#IBMScalar=<on/off>')
   CALL TLAB_WRITE_ASCII(bakfile, '#RestartGeometry=<yes/no>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#DataTypeGeometry=<real/int/bit>')
   CALL TLAB_WRITE_ASCII(bakfile, '#MaxNumberObj=<value>')
   CALL TLAB_WRITE_ASCII(bakfile, '#FluidPoints=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ProcsIdle=<yes/no>')
 
   CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'Status', 'off', sRes)
   IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm = 0
   ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm = 1
   ELSE
-    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong IBM Status option.')
+    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBM Status option.')
     CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -472,35 +472,43 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm_scal = 0
   ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm_scal = 1
   ELSE
-    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong IBMScalar option.')
+    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBMScalar option.')
     CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
   CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'RestartGeometry', 'no', sRes)
   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_restart = .TRUE.
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_restart = .FALSE.
+  ELSE
+    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBM Restart option.')
+    CALL TLAB_STOP(DNS_ERROR_OPTION)
+  ENDIF
+
+  CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'DataTypeGeometry', 'int', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'real' ) THEN; ibm_io = IBM_IO_REAL
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'int'  ) THEN; ibm_io = IBM_IO_INT
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bit'  ) THEN; ibm_io = IBM_IO_BIT
+  ELSE
+    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBM Data type option.')
+    CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
   CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'MaxNumberObj', '0', nob_max)
 
   CALL SCANINIINT(bakfile, inifile, 'IBMParameter', 'FluidPoints', '3', nflu)
 
-  CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'ProcsIdle', 'no', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_procs_idle = .TRUE.
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_procs_idle = .FALSE.
-  ENDIF
-
   ! Geometry
   CALL TLAB_WRITE_ASCII(bakfile, '#')
   CALL TLAB_WRITE_ASCII(bakfile, '#[IBMGeometry]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Type=<XBars>')       
+  CALL TLAB_WRITE_ASCII(bakfile, '#Type=<none,XBars>')       
   CALL TLAB_WRITE_ASCII(bakfile, '#Mirrored=<yes/no>')       
   CALL TLAB_WRITE_ASCII(bakfile, '#Number=<value>') ! max number of elements in one spatial direction
   CALL TLAB_WRITE_ASCII(bakfile, '#Height=<value>')
   CALL TLAB_WRITE_ASCII(bakfile, '#Width=<value>')
 
-  CALL SCANINICHAR(bakfile, inifile, 'IBMGeometry', 'Type', 'XBars', sRes)
-  IF   (TRIM(ADJUSTL(sRes)) .EQ. 'xbars' ) THEN; xbars_geo%name   = 'xbars'
+  CALL SCANINICHAR(bakfile, inifile, 'IBMGeometry', 'Type', 'none', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none' )  THEN; CONTINUE
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'xbars' ) THEN; xbars_geo%name   = 'xbars'
     CALL SCANINICHAR(bakfile, inifile, 'IBMGeometry', 'Mirrored', 'no', sRes)
     IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; xbars_geo%mirrored = .TRUE.
     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; xbars_geo%mirrored = .FALSE.
@@ -915,21 +923,33 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
 ! Immersed Boundary Method (IBM) - consistency check
 ! -------------------------------------------------------------------
-  IF ( imode_ibm .eq. 1 ) THEN
+  IF ( imode_ibm .EQ. 1 ) THEN
+     IF ( ibm_io .EQ. IBM_IO_BIT ) THEN
+        IF ( mod( imax, i8 ) .NE. 0 ) THEN
+           CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM_IO bitwise not possible, restriction: mod(imax/8)=0.')
+           CALL TLAB_STOP(DNS_ERROR_OPTION)
+        ENDIF
+     ENDIF
+     IF ( nob_max .LE. 0 ) THEN
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Too no objects in flow, set number of objects correctly.')
+        CALL TLAB_STOP(DNS_ERROR_OPTION)
+     ENDIF 
      IF ( nflu .LT. 2 ) THEN
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Too less FluidPoints (nflu>2).')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF 
-     IF ( ( mod(g(3)%size,2*xbars_geo%number) .eq. 0 ) .and. ( mod(xbars_geo%width,2) .ne. 0 ) ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Interfaces of bars have to be on gridpoints.')
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Requirenments: mod(jmax_total,(2*nbars))==0 & mod(wbar,2)==0.')
-        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-     ELSEIF ( ( mod(g(3)%size,2*xbars_geo%number) .ne. 0 ) .and. & 
-              ( mod(real(g(3)%size/(2*xbars_geo%number)),0.5) .eq. 0 ) .and. &
-              ( mod(xbars_geo%width,2) .ne. 1) ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Interfaces of bars have to be on gridpoints.')
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Requirenments: mod(jmax_total/(2*nbars),0.5)==0 & mod(wbar,2)==1.')
-        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)    
+     IF ( xbars_geo%name .EQ. 'xbars' ) THEN
+        IF ( ( mod(g(3)%size,2*xbars_geo%number) .EQ. 0 ) .AND. ( mod(xbars_geo%width,2) .NE. 0 ) ) THEN
+            CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Interfaces of bars have to be on gridpoints.')
+            CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Requirenments: mod(jmax_total,(2*nbars))==0 & mod(wbar,2)==0.')
+            CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        ELSEIF ( ( mod(g(3)%size,2*xbars_geo%number) .NE. 0 ) .AND. & 
+                  ( mod(real(g(3)%size/(2*xbars_geo%number)),0.5) .EQ. 0 ) .AND. &
+                  ( mod(xbars_geo%width,2) .NE. 1) ) THEN
+            CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Interfaces of bars have to be on gridpoints.')
+            CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Requirenments: mod(jmax_total/(2*nbars),0.5)==0 & mod(wbar,2)==1.')
+            CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)    
+        ENDIF
      ENDIF
      DO is = 1,3
         IF ( ( FilterDomain(is)%type .NE. DNS_FILTER_NONE ) .AND. ( icalc_scal .EQ. 1 ) ) THEN
@@ -946,7 +966,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
      IF ( .NOT. ( imode_rhs .EQ. EQNS_RHS_COMBINED ) ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM only implemented for imode_rhs == EQNS_RHS_COMBINED.')
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM only implemented for combined rhs mode.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
      IF ( ( radiation%type  .NE. EQNS_NONE) .OR. &

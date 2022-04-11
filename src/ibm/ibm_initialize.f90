@@ -1,5 +1,6 @@
 #include "types.h"
 #include "dns_error.h"
+#include "dns_const.h"
 
 !########################################################################
 !# HISTORY / AUTHORS
@@ -27,12 +28,15 @@
 subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)  
   
   use DNS_IBM
-  use TLAB_VARS,      only : isize_field, inb_txc
+  use TLAB_VARS,      only : imax,jmax,kmax, isize_field, inb_txc
   use TLAB_VARS,      only : istagger
   use TLAB_CONSTANTS, only : efile
+  use IO_FIELDS
   use TLAB_PROCS
-  
+
   implicit none
+
+#include "integers.h"
 
   TREAL, dimension(isize_field,inb_txc), intent(inout) :: txc
   TREAL, dimension(isize_field),         intent(inout) :: wrk3d
@@ -55,7 +59,14 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   !   2. write own routine to generate geometry 
   !      (cf. IBM_GENERATE_GEOMETRY_XBARS, ibm_restart==.false.)
   if ( ibm_restart ) then
-    call IBM_IO_READ_GEOMETRY(wrk3d)
+    select case( ibm_io )
+    case ( IBM_IO_REAL )
+      call IO_READ_FIELDS(eps_name(1:4), IO_FLOW, imax,jmax,kmax, i1, i0, eps, wrk3d)
+    case ( IBM_IO_INT  )
+      call IBM_IO_READ_INT_GEOMETRY(wrk3d)
+    case ( IBM_IO_BIT  )
+      call IBM_IO_READ_BIT_GEOMETRY(wrk3d)
+    end select 
   else if ( xbars_geo%name == 'xbars' ) then
     call IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   else
@@ -78,11 +89,12 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   end if
 
   ! check idle procs
-  if ( ibm_procs_idle ) then
-    call IBM_CHECK_PROCS(epsi, epsj, epsk)
-  else
-    ims_pro_ibm_x = .true.; ims_pro_ibm_y = .true.; ims_pro_ibm_z = .true.
-  end if
+#ifdef USE_MPI
+  call IBM_CHECK_PROCS(epsi, epsj, epsk)
+#else   
+  ! in case of serial mode: one task with full domain, no idle procs
+  ims_pro_ibm_x = .true.; ims_pro_ibm_y = .true.; ims_pro_ibm_z = .true.
+#endif
 
 #ifdef IBM_DEBUG
   ! io of all geometry fields in debugging mode 
@@ -91,9 +103,8 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   nullify(tmp1, tmp2, tmp3)
 #endif
 
-  ! switch to true in routines if IBM is needed
-  ibm_burgers = .false. 
-  ibm_partial = .false.
+  ! switch to true in routines where the IBM is needed
+  ibm_burgers = .false.; ibm_partial = .false.
   
   ! disassociate pointers
   nullify(epsi, epsj, epsk)

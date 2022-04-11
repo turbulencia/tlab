@@ -219,11 +219,7 @@ PROGRAM SPECTRA
      ENDIF  
      CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'MaxNumberObj', '0', nob_max)
      CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'FluidPoints', '3', nflu)
-     CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'ProcsIdle', 'no', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_procs_idle = .TRUE.
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_procs_idle = .FALSE.
-     ENDIF
- ENDIF
+  ENDIF
 
 ! -------------------------------------------------------------------
 ! Definitions

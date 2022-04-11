@@ -34,6 +34,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 
   use DNS_IBM
   use TLAB_VARS,     only : g, imax, jmax, kmax, isize_field
+  use IO_FIELDS
 #ifdef USE_MPI 
   use MPI
   use TLAB_MPI_VARS, only : ims_offset_i, ims_offset_j, ims_offset_k
@@ -42,7 +43,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 #endif
 #endif 
 
-  implicit none
+implicit none
 
 #include "integers.h"
 
@@ -141,8 +142,15 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   eps          = reshape(wrk3d,(/isize_field/))
   wrk3d(:,:,:) = C_0_R
 
-  ! write eps as int1
-  call IBM_IO_WRITE_GEOMETRY(wrk3d)
+  ! io of eps
+  select case( ibm_io )
+  case ( IBM_IO_REAL )
+    call IO_WRITE_FIELDS(eps_name(1:4), IO_FLOW, imax,jmax,kmax, i1, eps, wrk3d)
+  case ( IBM_IO_INT  )
+    call IBM_IO_WRITE_INT_GEOMETRY(wrk3d)
+  case ( IBM_IO_BIT  )
+    call IBM_IO_WRITE_BIT_GEOMETRY(wrk3d)
+  end select 
   
   return
 end subroutine IBM_GENERATE_GEOMETRY_XBARS

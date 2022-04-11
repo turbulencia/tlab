@@ -24,11 +24,11 @@
 
 subroutine IBM_CHECK_PROCS(epsi, epsj, epsk)
   
-  use DNS_IBM
+  use DNS_IBM,       only : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
   use TLAB_VARS,     only : isize_field
+#ifdef IBM_DEBUG
 #ifdef USE_MPI 
   use MPI
-#ifdef IBM_DEBUG
   use TLAB_MPI_VARS, only : ims_pro
 #endif
 #endif
@@ -47,7 +47,6 @@ subroutine IBM_CHECK_PROCS(epsi, epsj, epsk)
 #endif
 
   ! ================================================================== !
-#ifdef USE_MPI 
 
 #ifdef IBM_DEBUG
   if ( ims_pro == 0 ) write(*,*) '======== Check Procs for IBM usage ======================'
@@ -91,11 +90,6 @@ subroutine IBM_CHECK_PROCS(epsi, epsj, epsk)
     write(*,*) 'Task: ', ims_pro, ' active for IBM spline generation in z'
 #endif
   end if 
-
-#else
-  ! in case of serial mode: one task with full domain
-  ims_pro_ibm_x = .true.; ims_pro_ibm_y = .true.; ims_pro_ibm_z = .true.
-#endif
 
   return
 end subroutine IBM_CHECK_PROCS
