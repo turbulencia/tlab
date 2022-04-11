@@ -24,13 +24,13 @@
 !#
 !########################################################################
 
-subroutine IBM_STAGGER_GEOMETRY(eps, epsp, wrk3d)
+subroutine IBM_STAGGER_GEOMETRY(eps, epsp)
 
   use TLAB_VARS,     only : imax, jmax, kmax
 
   implicit none
 
-  TREAL, dimension(imax,jmax,kmax), intent(inout) ::  eps, epsp, wrk3d
+  TREAL, dimension(imax,jmax,kmax), intent(inout) ::  eps, epsp
 
   TINTEGER                                        :: i,j,k
 

@@ -31,11 +31,13 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
 
   use DNS_IBM
   use TLAB_CONSTANTS, only : lfile, efile
-  use TLAB_VARS,      only : g, imax, jmax, kmax, isize_field, istagger
+  use TLAB_VARS,      only : g, isize_field, istagger
   use TLAB_PROCS  
 #ifdef USE_MPI
   use MPI
   use TLAB_MPI_VARS,  only : ims_size_i, ims_size_j, ims_size_k 
+#else
+  use TLAB_VARS,      only : imax, jmax, kmax
 #endif    
 
   implicit none

@@ -29,7 +29,6 @@
 subroutine IBM_VERIFY_GEOMETRY()
 
   use TLAB_VARS,      only : g
-  use TLAB_VARS,      only : imax,    jmax,   kmax
   use DNS_IBM,        only : eps
   use DNS_IBM,        only : nobi,    nobj,   nobk
   use DNS_IBM,        only : nobi_b,  nobj_b, nobk_b 
@@ -41,7 +40,12 @@ subroutine IBM_VERIFY_GEOMETRY()
 
 #ifdef USE_MPI
   use MPI
-  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_j, ims_size_k, ims_err, ims_pro
+  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_j, ims_size_k, ims_err
+#ifdef IBM_DEBUG
+  use TLAB_MPI_VARS,  only : ims_pro
+#endif
+#else
+  use TLAB_VARS,      only : imax,    jmax,   kmax
 #endif    
    
   implicit none

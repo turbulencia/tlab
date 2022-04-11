@@ -164,7 +164,6 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
 
   TINTEGER                                          :: kflu, gap
   TINTEGER                                          :: ip_fl, iu_fl, iu_ir
-  character(len=128)                                :: str, line
 
   ! ================================================================== !
   ! indices

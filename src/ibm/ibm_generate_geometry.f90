@@ -29,12 +29,14 @@
 
 subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   
-  use TLAB_VARS,     only : g, imax, jmax, kmax, isize_field
+  use TLAB_VARS,     only : g, isize_field
   use DNS_IBM
 #ifdef USE_MPI
   use MPI
   use TLAB_MPI_VARS, only : ims_size_i, ims_size_j, ims_size_k    
   use TLAB_MPI_PROCS
+#else
+  use TLAB_VARS,     only : imax, jmax, kmax
 #endif    
 #ifdef IBM_DEBUG
 #ifdef USE_MPI
@@ -52,12 +54,12 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   TINTEGER, parameter                          :: idi = TLAB_MPI_I_PARTIAL 
   TINTEGER, parameter                          :: idj = TLAB_MPI_J_PARTIAL 
   TINTEGER, parameter                          :: idk = TLAB_MPI_K_PARTIAL 
-  TINTEGER                                     :: dummy
 #endif
   TINTEGER                                     :: i, j, k, ij, ik, jk, ip, inum
   TINTEGER                                     :: nyz, nxz, nxy
 #ifdef IBM_DEBUG
 #ifdef USE_MPI 
+  TINTEGER                                     :: dummy
 #else
   TINTEGER, parameter                          :: ims_pro = 0         
 #endif

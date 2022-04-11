@@ -85,7 +85,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
 
   ! generate epsp on pressure mesh
   if ( istagger == 1 ) then
-    call IBM_STAGGER_GEOMETRY(eps, epsp, wrk3d)
+    call IBM_STAGGER_GEOMETRY(eps, epsp)
   end if
 
   ! check idle procs

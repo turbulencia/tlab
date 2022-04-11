@@ -51,7 +51,7 @@ SUBROUTINE OPR_INTERPOLATE(nx,ny,nz, nx_dst,ny_dst,nz_dst, &
 ! -------------------------------------------------------------------
 
 #ifdef USE_MPI
-  TINTEGER id, npage, npage_k
+  TINTEGER id, npage
 #endif
 
 ! ###################################################################
