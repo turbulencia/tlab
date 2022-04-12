@@ -29,7 +29,7 @@
 subroutine IBM_VERIFY_GEOMETRY()
 
   use DNS_IBM 
-  use TLAB_VARS,      only : g
+  use TLAB_VARS,      only : g, imode_ibm_scal
   use TLAB_CONSTANTS, only : efile
   use TLAB_PROCS
 #ifdef USE_MPI
@@ -90,6 +90,11 @@ subroutine IBM_VERIFY_GEOMETRY()
   call IBM_VERIFY(g(1), nyz, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e) ! x
   call IBM_VERIFY(g(2), nxz, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e) ! y
   call IBM_VERIFY(g(3), nxy, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e) ! z
+
+  ! check if objects on upper boundary are present
+  if ( imode_ibm_scal == 1 ) then
+    call IBM_VERIFY_SCAL(eps)
+  end if
 
 #ifdef IBM_DEBUG
   if ( ims_pro == 0 ) write(*,*) 'Verification successfull!'
@@ -170,3 +175,46 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
 
   return
 end subroutine IBM_VERIFY
+
+!########################################################################
+
+subroutine IBM_VERIFY_SCAL(eps)
+
+  use TLAB_VARS,      only : isize_field, imax,jmax,kmax
+  use TLAB_CONSTANTS, only : efile
+  use TLAB_PROCS
+#ifdef USE_MPI
+  use MPI
+  use TLAB_MPI_VARS,  only : ims_err
+#endif    
+
+  implicit none
+  
+#include "integers.h"
+
+  TREAL, dimension(isize_field), intent(in) :: eps
+  
+  TINTEGER                                     :: ip_t, k, nxy
+  TREAL                                        :: dummy, top
+
+  ! ================================================================== !
+
+  ! check that no objects are present on upper 
+  nxy  = imax*jmax
+  ip_t = imax*(jmax-1) + 1
+  do k = 1, kmax
+    top = sum(eps(ip_t:ip_t+imax-1)) 
+    ip_t = ip_t + nxy
+  end do
+
+#ifdef USE_MPI
+  dummy = top
+  call MPI_ALLREDUCE(dummy, top, i0, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+#endif
+
+  if ( top == 0 ) then
+    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY no objects on upper domain allowed if IBM is turned on for scalars.')
+    call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+  endif
+
+end subroutine IBM_VERIFY_SCAL

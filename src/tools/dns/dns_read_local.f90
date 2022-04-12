@@ -950,6 +950,10 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
             CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. Requirenments: mod(jmax_total/(2*nbars),0.5)==0 & mod(wbar,2)==1.')
             CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)    
         ENDIF
+        IF ( xbars_geo%mirrored .AND. imode_ibm_scal .EQ. 1 ) THEN
+          CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. No IBM for scalars possible with objects on upper domain.')
+          CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)   
+        ENDIF
      ELSEIF ( ( xbars_geo%name .EQ. 'none' ) .AND. .NOT. ibm_restart ) THEN
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. No IBM geometry defined.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)    
