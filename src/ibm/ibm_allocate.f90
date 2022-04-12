@@ -77,7 +77,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
   isize_nobi_be   = nyz * nob_max    
   isize_nobj_be   = nxz * nob_max  
   isize_nobk_be   = nxy * nob_max
-  nspl            = 2 * nflu + 2    ! number of data points (with 2 interface points)
+  nspl            = 2 * nflu + 2    ! data points (incl. 2 interface points)
   isize_wrk1d_ibm = max(g(1)%size, max(g(2)%size, g(3)%size)) ! gap size unknown (max size assumed)
 
   ! ================================================================== !

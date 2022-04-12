@@ -72,6 +72,8 @@ Case50. 1D perturbed laminar Ekman layer, implicit solver.
 3D cases: Channel flow
 
 Case61. Channel flow with constant streamwise pressure gradient (Re_tau=180, rotation term for turbulent transition!).
+Case62. Same as 61, with horizontal pressure staggering and vertical pressure filter (without rotation term).
+Case63. Same as 62, with IBM (streamwise aligned bars on lower and upper boundary).
 
 ---
 

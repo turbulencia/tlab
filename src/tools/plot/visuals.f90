@@ -276,6 +276,14 @@ PROGRAM VISUALS
     IF ( imode_ibm .EQ. 1 .AND. ibm_restart .NEQV. .TRUE. ) THEN
       CALL TLAB_WRITE_ASCII(efile, 'VISUALS. IBM option only possible with existing geometry.')
       CALL TLAB_STOP(DNS_ERROR_OPTION)
+    ENDIF
+    CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'DataTypeGeometry', 'int', sRes)
+    IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'real' ) THEN; ibm_io = IBM_IO_REAL
+    ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'int'  ) THEN; ibm_io = IBM_IO_INT
+    ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bit'  ) THEN; ibm_io = IBM_IO_BIT
+    ELSE
+      CALL TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBM Data type option.')
+      CALL TLAB_STOP(DNS_ERROR_OPTION)
     ENDIF  
     CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'MaxNumberObj', '0', nob_max)
     CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'FluidPoints', '3', nflu)

@@ -309,6 +309,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   IF ( istagger  .EQ. 1 ) THEN ! todo: only need to stagger upper/lower boundary plane, not full h2-array
      CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), h2,   tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+     IF ( imode_ibm .EQ. 1 ) CALL IBM_BCS_FIELD_STAGGER(tmp4)
      DO k = 1,kmax
         p_bcs => tmp4(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
         p_bcs => tmp4(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top

@@ -11,7 +11,7 @@
 !########################################################################
 SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
 
-  USE TLAB_CONSTANTS, ONLY : efile, lfile, wfile
+  USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_PROCS
   USE TLAB_VARS,ONLY : imode_eqns, imode_ibm, icalc_scal, inb_scal, istagger
   USE TLAB_VARS,ONLY : isize_field, imax,jmax,kmax

@@ -103,12 +103,11 @@ subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d)
   
   integer(1), dimension(isize_field), target, intent(inout) :: wrk3d
 
-  ! target                                            :: wrk3d
-  integer(1), dimension(:),           pointer       :: eps_bit 
+  integer(1), dimension(:),           pointer               :: eps_bit 
 
-  TINTEGER, parameter                               :: param_size = 1
-  TINTEGER                                          :: isize, bsize_field, imax_bit
-  TREAL                                             :: params(param_size)
+  TINTEGER, parameter                                       :: param_size = 1
+  TINTEGER                                                  :: isize, bsize_field, imax_bit
+  TREAL                                                     :: params(param_size)
   ! ================================================================== !
   
   ! size of bit-array
@@ -134,8 +133,8 @@ end subroutine IBM_IO_WRITE_BIT_GEOMETRY
 
 subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d)
   
-  use DNS_IBM,   only : eps, eps_name
-  use TLAB_VARS, only : isize_field, imax,jmax,kmax
+  use DNS_IBM,                     only : eps, eps_name
+  use TLAB_VARS,                   only : isize_field, imax,jmax,kmax
   use TLAB_CONSTANTS,              only : dp
   use IO_FIELDS
   use, intrinsic :: ISO_C_binding, only : c_f_pointer, c_loc

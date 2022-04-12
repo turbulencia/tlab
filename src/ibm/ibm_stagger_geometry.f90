@@ -26,7 +26,7 @@
 
 subroutine IBM_STAGGER_GEOMETRY(eps, epsp)
 
-  use TLAB_VARS,     only : imax, jmax, kmax
+  use TLAB_VARS, only : imax, jmax, kmax
 
   implicit none
 
