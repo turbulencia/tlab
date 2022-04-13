@@ -24,6 +24,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS,ONLY:tfile
 #endif
+  USE TLAB_VARS, ONLY : imode_ibm, imode_ibm_scal
   USE TLAB_VARS, ONLY : imode_eqns, istagger
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE TLAB_VARS, ONLY : g
@@ -34,6 +35,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
+  USE DNS_IBM,   ONLY : ibm_burgers
 
   IMPLICIT NONE
 
@@ -42,7 +44,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   TREAL dte
   TREAL, DIMENSION(isize_field)   :: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,*) :: q,hq, s,hs
-  TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk3d
+  TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,wrk3d
   TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
   TREAL, DIMENSION(imax,kmax,*)   :: wrk2d
 
@@ -96,6 +98,12 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      ip_b = ip_b + nxy ! bottom BC address
      ip_t = ip_t + nxy ! top BC address
   ENDDO
+
+! #######################################################################
+! Preliminaries for IBM use 
+! (OPR_BURGERS_X/Y/Z uses modified fields for derivatives)
+! #######################################################################
+  IF ( imode_ibm == 1 ) ibm_burgers = .true.
 
 ! #######################################################################
 ! Ox diffusion and convection terms in Ox momentum eqn
@@ -160,6 +168,18 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
 
 ! #######################################################################
+! IBM
+! #######################################################################
+  IF ( imode_ibm == 1 ) THEN
+     ibm_burgers = .false. ! until here, IBM is used for flow fields
+     IF ( imode_ibm_scal == 1 ) THEN ! IBM usage for scalar field
+        ! (requirenments: only possible with objects on bottom boundary 
+        !  with homogeneous temperature in solid regions)
+        ibm_burgers = .true.
+     ENDIF
+  ENDIF
+
+! #######################################################################
 ! Diffusion and convection terms in scalar eqns
 ! #######################################################################
   DO is = 1,inb_scal
@@ -179,6 +199,12 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 !$omp end parallel
 
   ENDDO
+
+! #######################################################################
+! IBM
+! #######################################################################
+! IBM usage for scalar field, done
+  IF ( imode_ibm_scal == 1 ) ibm_burgers = .false.
 
 ! #######################################################################
 ! Impose buffer zone as relaxation terms
@@ -219,20 +245,25 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #endif
 !$omp end parallel
 
+     IF ( imode_ibm == 1 ) THEN 
+        CALL IBM_BCS_FIELD(tmp2)
+        CALL IBM_BCS_FIELD(tmp3)
+        CALL IBM_BCS_FIELD(tmp4)
+     ENDIF
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp2)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
         CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
      ENDIF
      IF ( istagger .EQ. 1 ) THEN ! staggering on horizontal pressure nodes 
-      ! Oy derivative
+     !  Oy derivative
         CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp2, tmp1, wrk3d, wrk2d,wrk3d)
-      ! Ox derivative
+     !  Ox derivative
         CALL OPR_PARTIAL_X(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(1), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
-      ! Oz derivative 
+     !  Oz derivative
         CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
         CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
      ELSE
@@ -241,6 +272,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d,wrk3d)
      ENDIF     
   ELSE
+     IF ( imode_ibm == 1 ) THEN 
+        CALL IBM_BCS_FIELD(h2)
+        CALL IBM_BCS_FIELD(h1)
+        CALL IBM_BCS_FIELD(h3)
+     ENDIF
      IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h2,tmp2)
         CALL THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax,jmax,kmax, rbackground, h1,tmp3)
@@ -269,9 +305,11 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   ip_b =                 1
   ip_t = imax*(jmax-1) + 1
 ! Stagger also Bcs
-  IF ( istagger .EQ. 1 ) THEN ! todo: only need to stagger upper/lower boundary plane, not full h2-array
+  IF ( imode_ibm .EQ. 1 ) CALL IBM_BCS_FIELD(h2)
+  IF ( istagger  .EQ. 1 ) THEN ! todo: only need to stagger upper/lower boundary plane, not full h2-array
      CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), h2,   tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+     IF ( imode_ibm .EQ. 1 ) CALL IBM_BCS_FIELD_STAGGER(tmp4)
      DO k = 1,kmax
         p_bcs => tmp4(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
         p_bcs => tmp4(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
@@ -309,7 +347,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
      CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_X(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
   ELSE
-  !  horizontal pressure derivatives
+  !  horizontal pressure derivatives 
      CALL OPR_PARTIAL_X(OPR_P1,        imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
   ENDIF
@@ -365,6 +403,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
         CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hq(1,iq), &
              BcsFlowJmin%ref(1,1,iq),BcsFlowJmax%ref(1,1,iq), wrk1d,tmp1,wrk3d)
      ENDIF
+     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(hq(1,iq)) ! set tendency in solid to zero
   ENDDO
 
   DO is = 1,inb_scal
@@ -380,6 +419,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
           BcsScalJmax%type(is) .NE. DNS_SFC_STATIC ) THEN
         CALL BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
      ENDIF
+     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(hs(1,is)) ! set tendency in solid to zero
   ENDDO
 
 ! -----------------------------------------------------------------------

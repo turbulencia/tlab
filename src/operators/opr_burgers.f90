@@ -18,6 +18,7 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 
   USE TLAB_TYPES,     ONLY : grid_dt
   USE TLAB_CONSTANTS, ONLY : efile
+  USE DNS_IBM,        ONLY : ibm_burgers
   USE TLAB_PROCS
   IMPLICIT NONE
 
@@ -41,8 +42,12 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
-  CALL OPR_PARTIAL2D(is,nlines,bcs,g,s,result,wrk2d,wrk3d)  ! wrk3d: 1st derivative
-                                                            ! result:2nd derivative including diffusivity
+  ! wrk3d: 1st derivative; result: 2nd derivative including diffusivity
+  IF (ibm_burgers) THEN
+    CALL OPR_PARTIAL2D_IBM(is,nlines,bcs,g,s,result,wrk2d,wrk3d)
+  ELSE
+    CALL OPR_PARTIAL2D(    is,nlines,bcs,g,s,result,wrk2d,wrk3d)
+  ENDIF
 
 ! ###################################################################
 ! Operation; diffusivity included in 2.-order derivative

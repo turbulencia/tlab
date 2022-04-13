@@ -80,6 +80,7 @@
 #define OPR_P1_INT_PV         6
 #define OPR_P0_INT_VP         7
 #define OPR_P0_INT_PV         8
+#define OPR_P0_IBM            9
 
 ! Runge-Kutta method
 #define RKM_EXP3              3
@@ -98,7 +99,6 @@
 #define DNS_BCS_NEUMANN     4
 
 ! Surface Models
-
 #define DNS_SFC_STATIC      0
 #define DNS_SFC_LINEAR      1
 
@@ -220,5 +220,10 @@
 #define CS_BCS_FIXED_1  2
 #define CS_BCS_NATURAL  3
 #define CS_BCS_FIXED_2  4
+
+! IBM IO Types
+#define IBM_IO_REAL     1
+#define IBM_IO_INT      2
+#define IBM_IO_BIT      3
 
 #endif

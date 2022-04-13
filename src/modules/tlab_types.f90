@@ -41,7 +41,7 @@ MODULE TLAB_TYPES
      CHARACTER*8 name
      TINTEGER size, inb_grid, mode_fdm
      LOGICAL uniform, periodic, anelastic
-     TREAL scale
+     TREAL scale, fixed_scale
      TREAL, DIMENSION(:),   POINTER :: nodes
      TREAL, DIMENSION(:,:), POINTER :: jac   ! pointer to Jacobians
      TREAL, DIMENSION(:,:), POINTER :: lu0i  ! pointer to LU decomposition for interpolation 
@@ -64,6 +64,13 @@ MODULE TLAB_TYPES
      TINTEGER mpitype
      TREAL, DIMENSION(:,:), ALLOCATABLE :: coeffs ! pointer to coefficients
   END TYPE filter_dt
+
+  TYPE ibm_geo_dt
+     SEQUENCE
+     CHARACTER(32) :: name
+     TINTEGER      :: number, height, width
+     LOGICAL       :: mirrored
+  END TYPE ibm_geo_dt
 
   TYPE pointers_dt
      SEQUENCE

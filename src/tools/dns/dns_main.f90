@@ -19,6 +19,7 @@ PROGRAM DNS
   USE DNS_ARRAYS
   USE TIME
   USE DNS_TOWER
+  USE DNS_IBM
   USE PLANES
   USE BOUNDARY_INFLOW
   USE BOUNDARY_BUFFER
@@ -35,6 +36,7 @@ PROGRAM DNS
   ! -------------------------------------------------------------------
   CHARACTER*32 fname, str
   TINTEGER ig
+  LOGICAL ibm_allocated
 
   ! ###################################################################
   CALL TLAB_START()
@@ -75,6 +77,11 @@ PROGRAM DNS
 
   IF ( tower_mode == 1 ) THEN
     CALL DNS_TOWER_INITIALIZE(tower_stride)
+  END IF
+  
+  IF ( imode_ibm == 1 ) THEN
+    ibm_allocated = .FALSE.
+    CALL IBM_ALLOCATE(C_FILE_LOC, ibm_allocated)
   END IF
 
   ! ###################################################################
@@ -163,6 +170,21 @@ PROGRAM DNS
   END IF
 
   ! ###################################################################
+  ! Initialize IBM
+  ! ###################################################################
+  IF ( imode_ibm == 1 ) THEN
+    CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
+    CALL IBM_BCS_FIELD_COMBINED(i0, q)
+    IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s)
+  END IF  
+
+  ! ###################################################################
+  ! Check
+  ! ###################################################################
+  logs_data(1) = 0 ! Status
+  CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
+
+  ! ###################################################################
   ! Initialize time marching scheme
   ! ###################################################################
   CALL TIME_INITIALIZE()
@@ -193,6 +215,10 @@ PROGRAM DNS
 
     IF ( MOD(itime-nitera_first,FilterDomainStep) == 0 ) THEN
       CALL DNS_FILTER()
+      IF ( imode_ibm == 1 ) THEN
+        CALL IBM_BCS_FIELD_COMBINED(i0, q) ! apply IBM BCs
+        IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s) ! not tested !
+      END IF  
     END IF
 
     IF ( flag_viscosity ) THEN          ! Change viscosity if necessary
