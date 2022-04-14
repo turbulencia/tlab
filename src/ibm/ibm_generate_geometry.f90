@@ -48,20 +48,20 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   
 #include "integers.h"
 
-  TREAL, dimension(isize_field), intent(inout) :: epsi, epsj, epsk
+  TREAL, dimension(isize_field), intent(in) :: epsi, epsj, epsk
   
 #ifdef USE_MPI 
-  TINTEGER, parameter                          :: idi = TLAB_MPI_I_PARTIAL 
-  TINTEGER, parameter                          :: idj = TLAB_MPI_J_PARTIAL 
-  TINTEGER, parameter                          :: idk = TLAB_MPI_K_PARTIAL 
+  TINTEGER, parameter                       :: idi = TLAB_MPI_I_PARTIAL 
+  TINTEGER, parameter                       :: idj = TLAB_MPI_J_PARTIAL 
+  TINTEGER, parameter                       :: idk = TLAB_MPI_K_PARTIAL 
 #endif
-  TINTEGER                                     :: i, j, k, ij, ik, jk, ip, inum
-  TINTEGER                                     :: nyz, nxz, nxy
+  TINTEGER                                  :: i, j, k, ij, ik, jk, ip, inum
+  TINTEGER                                  :: nyz, nxz, nxy
 #ifdef IBM_DEBUG
 #ifdef USE_MPI 
-  TINTEGER                                     :: dummy
+  TINTEGER                                  :: dummy
 #else
-  TINTEGER, parameter                          :: ims_pro = 0         
+  TINTEGER, parameter                       :: ims_pro = 0         
 #endif
 #endif
 
@@ -77,7 +77,6 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   nxy = imax * jmax     
 #endif
 
-  ! ================================================================== !
   ! initialize 
   nobi(:)   = i0; nobj(:)   = i0; nobk(:)   = i0
   nobi_b(:) = i0; nobj_b(:) = i0; nobk_b(:) = i0
@@ -85,7 +84,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   nobi_max  = i0; nobj_max  = i0; nobk_max  = i0
 
   ! ================================================================== !
-  ! number of objects in x-direction
+  ! number, begin and end of objects in x-direction
   ip = i1
   do i = 1, g(1)%size - 1     ! contiguous i-lines
     do jk = 1, nyz            ! pages of   i-lines
@@ -95,23 +94,6 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
       if((epsi(ip+jk-1) == C_0_R) .and. (epsi(ip+jk-1+nyz) == C_1_R)) then ! check for interface 
         nobi(jk) = nobi(jk) + i1
       end if
-    end do
-    ip = ip + nyz
-  end do
-
-#ifdef IBM_DEBUG
-  nobi_max = maxval(nobi)
-#ifdef USE_MPI
-  dummy = nobi_max
-  call MPI_ALLREDUCE(dummy, nobi_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
-#endif
-#endif
-
-  ! ================================================================== !
-  ! begin and end of objects in x-direction
-  ip = i1
-  do i = 1, g(1)%size - 1     ! contiguous i-lines
-    do jk = 1, nyz            ! pages of   i-lines
       if((i == 1) .and. (epsi(jk) == C_1_R)) then ! exception: check first plane for interface
         nobi_b(jk) = i ! nobi_b
       end if
@@ -140,7 +122,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   end do
 
   ! ================================================================== !
-  ! number of objects in y-direction
+  ! number, begin and end of objects in y-direction
   ip = i1
   do j = 1, g(2)%size - 1     ! contiguous j-lines
     do ik = 1, nxz            ! pages of   j-lines
@@ -150,23 +132,6 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
       if((epsj(ip+ik-1) == C_0_R) .and. (epsj(ip+ik-1+nxz) == C_1_R)) then ! check for interface 
         nobj(ik) = nobj(ik) + i1
       end if
-    end do
-    ip = ip + nxz
-  end do
-
-#ifdef IBM_DEBUG
-  nobj_max = maxval(nobj)
-#ifdef USE_MPI
-  dummy = nobj_max
-  call MPI_ALLREDUCE(dummy, nobj_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
-#endif
-#endif
-
-  ! ================================================================== !
-  ! begin and end of objects in y-direction
-  ip = i1
-  do j = 1, g(2)%size - 1     ! contiguous j-lines
-    do ik = 1, nxz            ! pages of   j-lines
       if((j == 1) .and. (epsj(ik) == C_1_R)) then ! exception: check first plane for interface
         nobj_b(ik) = j ! nobj_b
       end if
@@ -195,7 +160,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   end do
 
   ! ================================================================== !
-  ! number of objects in z-direction
+  ! number, begin and end of objects in z-direction
   ip = i1
   do k = 1, g(3)%size - 1     ! contiguous k-lines
     do ij = 1, nxy            ! pages of   k-lines
@@ -205,23 +170,6 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
       if((epsk(ip+ij-1) == C_0_R) .and. (epsk(ip+ij-1+nxy) == C_1_R)) then ! check for interface 
         nobk(ij) = nobk(ij) + i1
       end if
-    end do
-    ip = ip + nxy
-  end do
-
-#ifdef IBM_DEBUG
-  nobk_max = maxval(nobk)
-#ifdef USE_MPI
-  dummy = nobk_max
-  call MPI_ALLREDUCE(dummy, nobk_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
-#endif
-#endif
-
-  ! ================================================================== !
-  ! begin and end of objects in z-direction
-  ip = i1
-  do k = 1, g(3)%size - 1     ! contiguous k-lines
-    do ij = 1, nxy            ! pages of   k-lines
       if((k == 1) .and. (epsk(ij) == C_1_R)) then ! exception: check first plane for interface
         nobk_b(ij) = k ! nobj_b
       end if
@@ -251,6 +199,17 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 
   ! ================================================================== !
 #ifdef IBM_DEBUG
+  nobi_max = maxval(nobi)
+  nobj_max = maxval(nobj)
+  nobk_max = maxval(nobk)
+#ifdef USE_MPI
+  dummy = nobi_max
+  call MPI_ALLREDUCE(dummy, nobi_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
+  dummy = nobj_max
+  call MPI_ALLREDUCE(dummy, nobj_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
+  dummy = nobk_max
+  call MPI_ALLREDUCE(dummy, nobk_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
+#endif
   if (ims_pro == 0) then
     write(*,*) '======== Max number of objects in each direction ========'
     write(*,*) 'max number of objects in x = ', nobi_max

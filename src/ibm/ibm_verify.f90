@@ -82,7 +82,7 @@ subroutine IBM_VERIFY_GEOMETRY()
   call MPI_ALLREDUCE(dummy, ob_min, i0, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
   if ( ob_min == 0 ) then
-    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY no objects in flow.')
+    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. No objects in flow.')
     call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
   endif
 
@@ -132,16 +132,16 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
   sp_min = i4   ! 3 solid + 2 interface points - 1
 
   ! index ii (dummy index; for x,y,z: ii == jk,ik,ij)
-  do ii = 1, nlines        ! index of ii-plane, loop over plane and check for objects in each line
+  do ii = 1, nlines          ! index of ii-plane, loop over plane and check for objects in each line
     if ( nob(ii) /= 0 ) then ! if line contains immersed object(s) --yes-->  spline interpolation
       ip = i0        
-      do iob = 1, nob(ii)  ! loop over immersed object(s)
+      do iob = 1, nob(ii)    ! loop over immersed object(s)
         ! ================================================================== !
         ! check number of fluid points (to boarders and between objects)
         if ( iob == 1 ) then                    ! left
           fp_l = nob_b(ip+ii) - i1
           if ( fp_l < fp_min .and. fp_l /= 0 ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY not enough fluid points between left boarder and first object.')
+            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between left boarder and first object.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
           end if
         end if 
@@ -149,14 +149,14 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
           ipp = ip + nlines ! next obj
           fp_inter = nob_b(ipp+ii) - nob_e(ip+ii)
           if ( fp_inter < fp_min ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY not enough fluid points between objects.')
+            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between objects.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
           end if
         end if
         if ( iob == nob(ii) ) then              ! right
           fp_r = g%size - nob_e(ip+ii)
           if ( fp_r < fp_min .and. fp_r /= 0 ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY not enough fluid points between right boarder and first object.')
+            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between right boarder and first object.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
           end if
         end if 
@@ -164,12 +164,23 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
         ! check number of solid points of object
         sp_ob = nob_e(ip+ii) - nob_b(ip+ii)
         if ( sp_ob < sp_min ) then
-          call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY not enough solid points in object(s).')
+          call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough solid points in objects.')
           call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
         end if
         ! ================================================================== !        
         ip = ip + nlines
       end do
+      ! check for overlapping objects in periodic case
+      if ( g%periodic ) then
+        if ( nob(ii) > 1 ) then
+          fp_l = nob_b(ii)                           ! begin of first object
+          fp_r = nob_e((nob(ii) - i1) * nlines + ii) ! end of last object
+          if ( (fp_r - fp_l + i1) == g%size ) then
+            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Overlapping objects are not allowed.')
+            call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+          end if 
+        end if
+      end if
     end if
   end do
 
@@ -194,8 +205,8 @@ subroutine IBM_VERIFY_SCAL(eps)
 
   TREAL, dimension(isize_field), intent(in) :: eps
   
-  TINTEGER                                     :: ip_t, k, nxy
-  TREAL                                        :: dummy, top
+  TINTEGER                                  :: ip_t, k, nxy
+  TREAL                                     :: dummy, top
 
   ! ================================================================== !
 
@@ -213,7 +224,7 @@ subroutine IBM_VERIFY_SCAL(eps)
 #endif
 
   if ( top == 0 ) then
-    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY no objects on upper domain allowed if IBM is turned on for scalars.')
+    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. No objects on upper domain allowed if IBM is turned on for scalars.')
     call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
   endif
 

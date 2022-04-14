@@ -30,9 +30,10 @@ subroutine IBM_STAGGER_GEOMETRY(eps, epsp)
 
   implicit none
 
-  TREAL, dimension(imax,jmax,kmax), intent(inout) ::  eps, epsp
+  TREAL, dimension(imax,jmax,kmax), intent(in ) ::  eps
+  TREAL, dimension(imax,jmax,kmax), intent(out) ::  epsp
 
-  TINTEGER                                        :: i,j,k
+  TINTEGER                                      :: i,j,k
 
   ! ================================================================== !
    

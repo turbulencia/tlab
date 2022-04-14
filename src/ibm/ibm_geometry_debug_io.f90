@@ -49,7 +49,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3, wrk3d)
   
 #include "integers.h"
 
-  TREAL, dimension(isize_field), intent(inout) :: epsi, epsj, epsk
+  TREAL, dimension(isize_field), intent(in   ) :: epsi, epsj, epsk
   TREAL, dimension(isize_field), intent(inout) :: tmp1, tmp2, tmp3, wrk3d
   
 #ifdef USE_MPI 

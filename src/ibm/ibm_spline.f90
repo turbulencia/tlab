@@ -62,10 +62,10 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   fld_mod = fld     ! never modify u,v,w,s directly !
 
   ! index ii (dummy index; for x,y,z: ii == jk,ik,ij)
-  do ii = 1, nlines        ! index of ii-plane, loop over plane and check for objects in each line
+  do ii = 1, nlines          ! index of ii-plane, loop over plane and check for objects in each line
     if ( nob(ii) /= 0 ) then ! if line contains immersed object(s) --yes-->  spline interpolation
       ip = i0
-      do iob = 1, nob(ii)  ! loop over immersed object(s)
+      do iob = 1, nob(ii)    ! loop over immersed object(s)
         ! select different cases of immersed objects
         if ( nob_b(ip+ii ) == 1) then
         ! ================================================================== !
@@ -82,7 +82,7 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
             call IBM_SPLINE_VECTOR(is, i3, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
             ! .............................................................. !
           else
-            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE not enough fluid points right of the right interface.')
+            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE. Not enough fluid points right of the right interface.')
             call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
           end if
         ! ================================================================== !
@@ -100,12 +100,12 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
             call IBM_SPLINE_VECTOR(is, i6, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
             ! .............................................................. !
           else
-            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE not enough fluid points left of the left interface.')
+            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE. Not enough fluid points left of the left interface.')
             call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
           end if
           ! .............................................................. !
         else
-          call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE this case is not implemented yet.')
+          call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE. This case is not implemented yet.')
           call TLAB_STOP(DNS_ERROR_NOTIMPL)
         end if
         ! ================================================================== !
