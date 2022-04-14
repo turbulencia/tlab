@@ -41,7 +41,8 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
   
 #include "integers.h"
   
-  TREAL, dimension(isize_field), intent(inout) :: epsi, epsj, epsk, tmp
+  TREAL, dimension(isize_field), intent(  out) :: epsi, epsj, epsk
+  TREAL, dimension(isize_field), intent(inout) :: tmp
 
 #ifdef USE_MPI 
   TINTEGER, parameter                          :: idi = TLAB_MPI_I_PARTIAL 

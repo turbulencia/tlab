@@ -23,7 +23,7 @@ MODULE TLAB_PROCS
   PUBLIC :: TLAB_STOP
   PUBLIC :: TLAB_WRITE_ASCII
   PUBLIC :: TLAB_ALLOCATE
-  PUBLIC :: TLAB_ALLOCATE_ARRAY1, TLAB_ALLOCATE_ARRAY2
+  PUBLIC :: TLAB_ALLOCATE_ARRAY1, TLAB_ALLOCATE_ARRAY1_INT, TLAB_ALLOCATE_ARRAY2
 
 CONTAINS
 
@@ -55,21 +55,22 @@ CONTAINS
     RETURN
   END SUBROUTINE TLAB_ALLOCATE
 
-
   ! ######################################################################
   ! ######################################################################
   SUBROUTINE TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,a,i1,s)
 
     IMPLICIT NONE
 
-    CHARACTER(LEN=*) :: C_FILE_LOC
-    TREAL, DIMENSION(:),ALLOCATABLE,INTENT(INOUT) :: a
-    TINTEGER,INTENT(IN):: i1
-    CHARACTER(LEN=*), INTENT(IN) :: s
-    ! --------------------------------------------------
-    CHARACTER*128 str,line
-    TINTEGER ierr
-
+    CHARACTER(LEN=*),                 INTENT(IN   ) :: C_FILE_LOC
+    TREAL, DIMENSION(:), ALLOCATABLE, INTENT(INOUT) :: a
+    TINTEGER,                         INTENT(IN   ) :: i1
+    CHARACTER(LEN=*),                 INTENT(IN   ) :: s
+    ! --------------------------------------------------------------------
+    
+    CHARACTER*128                                   :: str, line
+    TINTEGER                                        :: ierr
+    
+    !#####################################################################
     IF ( i1 .LE. 0 ) RETURN 
     
     WRITE(str,*) i1; line = 'Allocating array '//TRIM(ADJUSTL(s))//' of size '//TRIM(ADJUSTL(str))
@@ -84,18 +85,48 @@ CONTAINS
 
   ! ######################################################################
   ! ######################################################################
+  SUBROUTINE TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC,a,i1,s)
+
+    IMPLICIT NONE
+
+    CHARACTER(LEN=*),                    INTENT(IN   ) :: C_FILE_LOC
+    TINTEGER, DIMENSION(:), ALLOCATABLE, INTENT(INOUT) :: a
+    TINTEGER,                            INTENT(IN   ) :: i1
+    CHARACTER(LEN=*),                    INTENT(IN   ) :: s
+    ! --------------------------------------------------------------------
+    
+    CHARACTER*128                                      :: str, line
+    TINTEGER                                           :: ierr
+    
+    !#####################################################################
+    IF ( i1 .LE. 0 ) RETURN 
+    
+    WRITE(str,*) i1; line = 'Allocating array '//TRIM(ADJUSTL(s))//' of size '//TRIM(ADJUSTL(str))
+    CALL TLAB_WRITE_ASCII(lfile,line)
+    ALLOCATE(a(i1),stat=ierr)
+    IF ( ierr /= 0 ) THEN
+       CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//TRIM(ADJUSTL(s)) //'.')
+       CALL TLAB_STOP(DNS_ERROR_ALLOC)
+    END IF
+   
+  END SUBROUTINE TLAB_ALLOCATE_ARRAY1_INT
+
+  ! ######################################################################
+  ! ######################################################################
   SUBROUTINE TLAB_ALLOCATE_ARRAY2(C_FILE_LOC,a,i1,i2,s)
 
     IMPLICIT NONE
 
-    CHARACTER(LEN=*) :: C_FILE_LOC
-    TREAL,DIMENSION(:,:),ALLOCATABLE,INTENT(INOUT) :: a
-    TINTEGER, INTENT(IN) :: i1,i2
-    CHARACTER(LEN=*), INTENT(IN) ::  s
-    !--------------------------------------------------
-    CHARACTER*128 str,line
-    TINTEGER ierr
+    CHARACTER(LEN=*),                   INTENT(IN   ) :: C_FILE_LOC
+    TREAL, DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT) :: a
+    TINTEGER,                           INTENT(IN   ) :: i1, i2
+    CHARACTER(LEN=*),                   INTENT(IN   ) :: s
+    ! --------------------------------------------------------------------
+    
+    CHARACTER*128                                     :: str, line
+    TINTEGER                                          :: ierr
 
+    !#####################################################################
     IF ( i1 .LE. 0 .OR. i2 .LE. 0 ) RETURN 
     
     WRITE(str,*) i1; line = 'Allocating array '//TRIM(ADJUSTL(s))//' of size '//TRIM(ADJUSTL(str))//'x'
@@ -103,7 +134,7 @@ CONTAINS
     CALL TLAB_WRITE_ASCII(lfile,line)
     ALLOCATE(a(i2,i1),stat=ierr)
     IF ( ierr /= 0 ) THEN
-       CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//TRIM(ADJUSTL(s))//' txc.')
+       CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//TRIM(ADJUSTL(s))//'.')
        CALL TLAB_STOP(DNS_ERROR_ALLOC)
     END IF
     

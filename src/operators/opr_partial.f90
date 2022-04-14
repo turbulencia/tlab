@@ -105,31 +105,31 @@ SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d, wrk3d)
   TINTEGER, PARAMETER                            :: is = i0 ! scalar index; if 0, then velocity
 
   ! -------------------------------------------------------------------
-  ! modify incoming u fields (fill solids with spline functions, depending on direction)
+  ! modify incoming fields (fill solids with spline functions, depending on direction)
 
   SELECT CASE (g%name)
    
   CASE('x')
-    IF (ims_pro_ibm_x) THEN
+    IF (ims_pro_ibm_x) THEN ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
       CALL IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
       CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
-    ELSE
+    ELSE ! idle IBM-Tasks
       CALL OPR_PARTIAL1(nlines, bcs, g, u,       result, wrk2d)  ! no splines needed  
     ENDIF
 
   CASE('y')
-    IF (ims_pro_ibm_y) THEN
+    IF (ims_pro_ibm_y) THEN ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
       CALL IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
       CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
-    ELSE
+    ELSE ! idle IBM-Tasks
       CALL OPR_PARTIAL1(nlines, bcs, g, u,       result, wrk2d)  ! no splines needed
     ENDIF
 
   CASE('z')
-    IF (ims_pro_ibm_z) THEN
+    IF (ims_pro_ibm_z) THEN ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
       CALL IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
       CALL OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
-    ELSE
+    ELSE ! idle IBM-Tasks
       CALL OPR_PARTIAL1(nlines, bcs, g, u,       result, wrk2d)  ! no splines needed
     ENDIF
    
@@ -161,8 +161,7 @@ SUBROUTINE OPR_IBM(nlines, g, u,result, wrk3d)
   TINTEGER, PARAMETER                            :: is = i0 ! scalar index; if 0, then velocity
   
   ! -------------------------------------------------------------------
-  ! IBM not for scalar fields! (will be implemented later)
-  ! modify incoming u fields (fill solids with spline functions, depending on direction)
+  ! modify incoming fields (fill solids with spline functions, depending on direction)
   
   SELECT CASE (g%name)
   CASE('x')
@@ -403,34 +402,34 @@ SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
   p_fld => u
 
   ! -------------------------------------------------------------------
-  ! modify incoming u fields (fill solids with spline functions, depending on direction)
+  ! modify incoming fields (fill solids with spline functions, depending on direction)
 
   SELECT CASE (g%name)
    
   CASE('x')
-    IF (ims_pro_ibm_x) THEN
+    IF (ims_pro_ibm_x) THEN ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
       CALL IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
       p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
       CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)  ! now with modified u fields
-    ELSE
+    ELSE ! idle IBM-Tasks
       CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld,     result, wrk2d, wrk3d)  ! no splines needed  
     ENDIF
 
   CASE('y')
-    IF (ims_pro_ibm_y) THEN
+    IF (ims_pro_ibm_y) THEN ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
       CALL IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
       p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
       CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)  ! now with modified u fields
-    ELSE
+    ELSE ! idle IBM-Tasks
       CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld,     result, wrk2d, wrk3d)  ! no splines needed
     ENDIF
 
   CASE('z')
-    IF (ims_pro_ibm_z) THEN
+    IF (ims_pro_ibm_z) THEN ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
       CALL IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
       p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
       CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)  ! now with modified u fields
-    ELSE
+    ELSE ! idle IBM-Tasks
       CALL OPR_PARTIAL2D(is, nlines, bcs, g, p_fld,     result, wrk2d, wrk3d)  ! no splines needed
     ENDIF
    
