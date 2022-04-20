@@ -32,6 +32,7 @@ module DNS_IBM
   TINTEGER, dimension(:),     allocatable :: nobi_b,  nobj_b, nobk_b     ! beginn of objects in i/j/k 
   TINTEGER, dimension(:),     allocatable :: nobi_e,  nobj_e, nobk_e     ! end    of objects in i/j/k
   TINTEGER                                :: nobi_max, nobj_max, nobk_max, nob_max
+  TINTEGER                                :: max_height_objlo, max_height_objup
 
   ! modified field
   TREAL, dimension(:), allocatable, target:: fld_ibm                     ! with splines in solid regions
@@ -43,7 +44,7 @@ module DNS_IBM
   TREAL,    dimension(:),     allocatable :: xa, xb, ya, yb
 
   ! flag (decides which fdm calls are with modified fields)
-  logical                                 :: ibm_burgers, ibm_partial
+  logical                                 :: ibm_burgers, ibm_partial, ibm_objup
 
   ! read_local
   logical                                 :: ibm_restart

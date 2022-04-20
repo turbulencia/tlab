@@ -57,7 +57,7 @@ end subroutine IBM_INITIALIZE_SCAL
 
 subroutine IBM_BCS_SCAL(is,s,eps)
   
-  use DNS_IBM,   only : ibmscaljmin, ibmscaljmax, xbars_geo
+  use DNS_IBM,   only : ibmscaljmin, ibmscaljmax, ibm_objup, max_height_objup
   use TLAB_VARS, only : imax, jmax, kmax
 
   implicit none
@@ -75,11 +75,11 @@ subroutine IBM_BCS_SCAL(is,s,eps)
   s(:,:,:) = s(:,:,:) + eps(:,:,:) * ibmscaljmin(is) 
 
 ! in case of objects on upper boundary, set different temperature here
-  if ( xbars_geo%mirrored ) then
-    do j = jmax-xbars_geo%height,jmax
-      s(:,j,:) = (C_1_R - eps(:,j,:)) *  s(:,j,:) + eps(:,j,:) * ibmscaljmax(is) 
+  if ( ibm_objup ) then
+    do j = jmax-max_height_objup,jmax
+    s(:,j,:) = (C_1_R - eps(:,j,:)) *  s(:,j,:) + eps(:,j,:) * ibmscaljmax(is) 
     end do
-  end if
+  end if 
 
   return
 end subroutine IBM_BCS_SCAL

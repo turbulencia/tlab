@@ -29,7 +29,7 @@
 subroutine IBM_VERIFY_GEOMETRY()
 
   use DNS_IBM 
-  use TLAB_VARS,      only : g, imode_ibm_scal
+  use TLAB_VARS,      only : g, imode_ibm_scal, icalc_scal
   use TLAB_CONSTANTS, only : efile
   use TLAB_PROCS
 #ifdef USE_MPI
@@ -92,10 +92,14 @@ subroutine IBM_VERIFY_GEOMETRY()
   call IBM_VERIFY(g(3), nxy, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e) ! z
 
   ! check if objects on upper boundary are present
-  if ( imode_ibm_scal == 1 ) then
-    call IBM_VERIFY_SCAL(eps)
-  end if
+  call IBM_VERIFY_UP(eps)
 
+  ! if so, check with scalar options
+  if ( icalc_scal == 1 .and. ibm_objup ) then
+    call IBM_VERIFY_SCAL()
+  end if 
+  
+  ! final
 #ifdef IBM_DEBUG
   if ( ims_pro == 0 ) write(*,*) 'Verification successfull!'
 #endif
@@ -189,8 +193,9 @@ end subroutine IBM_VERIFY
 
 !########################################################################
 
-subroutine IBM_VERIFY_SCAL(eps)
+subroutine IBM_VERIFY_UP(eps)
 
+  use DNS_IBM,        only : ibm_objup, max_height_objlo, max_height_objup
   use TLAB_VARS,      only : isize_field, imax,jmax,kmax
   use TLAB_CONSTANTS, only : efile
   use TLAB_PROCS
@@ -205,16 +210,17 @@ subroutine IBM_VERIFY_SCAL(eps)
 
   TREAL, dimension(isize_field), intent(in) :: eps
   
-  TINTEGER                                  :: ip_t, k, nxy
+  TINTEGER                                  :: ip_t, ip_b, j, k, nxy, height_up, height_lo
   TREAL                                     :: dummy, top
 
   ! ================================================================== !
 
-  ! check that no objects are present on upper 
+  ! check if objects are present on upper boundary 
   nxy  = imax*jmax
   ip_t = imax*(jmax-1) + 1
+  top  = 0
   do k = 1, kmax
-    top = sum(eps(ip_t:ip_t+imax-1)) 
+    top = top + sum(eps(ip_t:ip_t+imax-1)) 
     ip_t = ip_t + nxy
   end do
 
@@ -223,9 +229,79 @@ subroutine IBM_VERIFY_SCAL(eps)
   call MPI_ALLREDUCE(dummy, top, i0, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
 
-  if ( top == 0 ) then
-    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. No objects on upper domain allowed if IBM is turned on for scalars.')
+  if ( top > 0 ) then
+    ibm_objup = .true. ! objects are present on upper boundary
+  elseif ( top == 0 ) then
+    ibm_objup = .false.
+  else
+    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Problem with objects on upper domain boundary.')
     call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
   endif
 
+  ! if so, check height of upper and lower objects
+  if ( ibm_objup ) then
+    ! upper 
+    do j = 2, jmax
+      ip_t = imax*(jmax-j) + 1
+      dummy = 0
+      do k = 1, kmax
+        dummy = dummy + sum(eps(ip_t:ip_t+imax-1)) 
+        ip_t = ip_t + nxy
+      end do  
+      if ( dummy == 0 ) exit
+      max_height_objup = j   
+    end do
+#ifdef USE_MPI
+    dummy = max_height_objup
+    call MPI_ALLREDUCE(dummy, max_height_objup, i0, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+#endif
+    ! lower
+    do j = 1, jmax
+      ip_b = imax*(j-1)+1
+      dummy = 0
+      do k = 1, kmax
+        dummy = dummy + sum(eps(ip_b:ip_b+imax-1)) 
+        ip_b = ip_b + nxy
+      end do  
+      if ( dummy == 0 ) exit
+      max_height_objlo = j   
+    end do
+#ifdef USE_MPI
+    dummy = max_height_objlo
+    call MPI_ALLREDUCE(dummy, max_height_objlo, i0, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+#endif  
+  end if
+
+  return
+end subroutine IBM_VERIFY_UP
+
+!########################################################################
+
+subroutine IBM_VERIFY_SCAL()
+
+  use DNS_IBM,        only : ibm_objup, max_height_objlo, max_height_objup
+  use TLAB_VARS,      only : g, imode_ibm_scal
+  use TLAB_CONSTANTS, only : efile
+  use TLAB_PROCS
+#ifdef USE_MPI
+  use MPI
+  use TLAB_MPI_VARS,  only : ims_err
+#endif    
+
+  implicit none
+
+  ! ================================================================== !
+
+  if ( imode_ibm_scal == 1 ) then
+    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. No objects on upper domain allowed if IBM is turned on for scalars.')
+    call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+  end if
+
+  ! no overlapping in vertical direction allowed
+  if ( (g(2)%size-max_height_objup) < max_height_objlo ) then
+    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. No overlapping of objects in vertical direction if scalars is on.')
+    call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+  end if 
+
+  return
 end subroutine IBM_VERIFY_SCAL
