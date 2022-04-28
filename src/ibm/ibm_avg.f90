@@ -89,3 +89,34 @@ subroutine IBM_AVG_GAMMA(gamma, eps, wrk3d, wrk1d)
 end subroutine IBM_AVG_GAMMA
 
 !########################################################################
+
+subroutine IBM_AVG_SCAL_BCS(is, scalv_bcs)
+  
+  use DNS_IBM,   only : ibm_objup, max_height_objlo, max_height_objup
+  use DNS_IBM,   only : ibmscaljmin, ibmscaljmax
+  use TLAB_VARS, only : jmax
+
+  implicit none
+
+  TINTEGER,               intent(in ) :: is
+  TREAL, dimension(jmax), intent(out) :: scalv_bcs
+  
+  TINTEGER                            :: j
+
+  ! ================================================================== !
+  ! write out scalar boundary values applied in solids (vertical)
+  ! assuming homogenous temperature in solids, otherwise change here
+  
+  scalv_bcs = C_0_R
+
+  do j = 1, int(max_height_objlo)
+    scalv_bcs(j) = ibmscaljmin(is)
+  end do
+  if ( ibm_objup ) then
+    do j = jmax-int(max_height_objup),jmax
+      scalv_bcs(j) = ibmscaljmax(is)
+    end do
+  end if
+
+  return
+end subroutine IBM_AVG_SCAL_BCS

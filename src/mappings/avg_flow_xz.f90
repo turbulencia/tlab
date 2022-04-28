@@ -441,7 +441,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! #######################################################################
   ! Preliminary for IBM usage
   ! #######################################################################
-  ! Calculating average of eps-field
+  ! Calculating gamma for conditional averages (Pope, p.170 [5.305])
   IF ( imode_ibm == 1 ) THEN
     CALL IBM_AVG_GAMMA(ep(1), eps, wrk3d, wrk1d)
   END IF
@@ -466,7 +466,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   V_y1(:) = rV_y(:)
   W_y1(:) = rW_y(:)
 
-  ! Density and Fabre avrages
+  ! Density and Favre avrages
   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
     rR(:) = rbackground(:)
 

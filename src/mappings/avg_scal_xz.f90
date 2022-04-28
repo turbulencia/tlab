@@ -20,7 +20,8 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE TLAB_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_VARS
-  USE THERMO_VARS, ONLY : imixture, thermo_param
+  USE THERMO_VARS,    ONLY : imixture, thermo_param
+  USE DNS_IBM,        ONLY : eps
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif
@@ -88,9 +89,10 @@ USE TLAB_PROCS
   groupname(ng) = 'Mean'
   varname(ng)   = 'rS fS rS_y fS_y rQ fQ'
   IF ( imode_ibm == 1 ) THEN
-    varname(ng) = TRIM(ADJUSTL(varname(ng)))//' eps'
+    varname(ng) = TRIM(ADJUSTL(varname(ng)))//' eps Sbcs'
 #define ep(j)     mean2d(j,ig(1)+6)
-    sg(ng) = sg(ng) + 1
+#define Sbcs(j)   mean2d(j,ig(1)+7)
+    sg(ng) = sg(ng) + 2
   END IF
   IF ( radiation%active(is) ) THEN
     varname(ng) = TRIM(ADJUSTL(varname(ng)))//' rQrad rQradC'
@@ -279,11 +281,12 @@ USE TLAB_PROCS
   ! #######################################################################
   ! Preliminary for IBM usage
   ! #######################################################################
-  ! Calculating average of scalar Bcs in solids
+  ! Calculating gamma for conditional averages (Pope, p.170 [5.305])
+  ! write out scalar boundary values applied in solids
   im = 5
   IF ( imode_ibm == 1 ) THEN
-    CALL IBM_BCS_FIELD_INV(s_local, tmp1)
-    CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, ep(1), wrk1d, area); im = im + 1
+    CALL IBM_AVG_GAMMA(ep(1), eps, wrk3d, wrk1d); im = im + 1
+    CALL IBM_AVG_SCAL_BCS(is, Sbcs(1));           im = im + 1
   END IF
 
   ! #######################################################################
