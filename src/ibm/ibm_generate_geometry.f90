@@ -204,11 +204,11 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   nobk_max = maxval(nobk)
 #ifdef USE_MPI
   dummy = nobi_max
-  call MPI_ALLREDUCE(dummy, nobi_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
+  call MPI_ALLREDUCE(dummy, nobi_max, i1, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
   dummy = nobj_max
-  call MPI_ALLREDUCE(dummy, nobj_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
+  call MPI_ALLREDUCE(dummy, nobj_max, i1, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
   dummy = nobk_max
-  call MPI_ALLREDUCE(dummy, nobk_max, i0, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
+  call MPI_ALLREDUCE(dummy, nobk_max, i1, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
 #endif
   if (ims_pro == 0) then
     write(*,*) '======== Max number of objects in each direction ========'

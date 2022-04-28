@@ -79,7 +79,7 @@ subroutine IBM_VERIFY_GEOMETRY()
   ob_min = sum(eps)
 #ifdef USE_MPI
   dummy = ob_min
-  call MPI_ALLREDUCE(dummy, ob_min, i0, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  call MPI_ALLREDUCE(dummy, ob_min, i1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
   if ( ob_min == 0 ) then
     call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. No objects in flow.')
@@ -226,7 +226,7 @@ subroutine IBM_VERIFY_UP(eps)
 
 #ifdef USE_MPI
   dummy = top
-  call MPI_ALLREDUCE(dummy, top, i0, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+  call MPI_ALLREDUCE(dummy, top, i1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
 
   if ( top > 0 ) then
@@ -253,7 +253,7 @@ subroutine IBM_VERIFY_UP(eps)
     end do
 #ifdef USE_MPI
     dummy = max_height_objup
-    call MPI_ALLREDUCE(dummy, max_height_objup, i0, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+    call MPI_ALLREDUCE(dummy, max_height_objup, i1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
 #endif
     ! lower
     do j = 1, jmax
@@ -268,7 +268,7 @@ subroutine IBM_VERIFY_UP(eps)
     end do
 #ifdef USE_MPI
     dummy = max_height_objlo
-    call MPI_ALLREDUCE(dummy, max_height_objlo, i0, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+    call MPI_ALLREDUCE(dummy, max_height_objlo, i1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
 #endif  
   end if
 
