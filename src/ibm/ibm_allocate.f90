@@ -49,7 +49,6 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
   TINTEGER, parameter               :: idj = TLAB_MPI_J_PARTIAL 
   TINTEGER, parameter               :: idk = TLAB_MPI_K_PARTIAL 
 #endif
-  TINTEGER                          :: inb_ibm
   TINTEGER                          :: nyz, nxz, nxy    
 
   ! ================================================================== !
@@ -65,26 +64,27 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
 #endif  
 
   ! array sizes
-  inb_ibm         = i1 
   isize_nobi      = nyz    
   isize_nobj      = nxz  
   isize_nobk      = nxy
+  !
   isize_nobi_be   = nyz * nob_max    
   isize_nobj_be   = nxz * nob_max  
   isize_nobk_be   = nxy * nob_max
+  !
   nspl            = 2 * nflu + 2    ! data points (incl. 2 interface points)
   isize_wrk1d_ibm = max(g(1)%size, max(g(2)%size, g(3)%size)) ! gap size unknown (max size assumed)
 
   ! allocate here all ibm related arrays
   if ( .not. allocated ) then
     ! eps          (geometry fields)
-    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,   eps,     isize_field, 'eps'    )
+    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,   eps,      isize_field, 'eps'     )
     if ( istagger == 1 ) then
-      call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, epsp,    isize_field, 'epsp'   )
+      call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, epsp,     isize_field, 'epsp'    )
     end if
 
     ! fld_ibm      (copying modified field)
-    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,   fld_ibm, isize_field, 'fld_ibm')
+    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,   fld_ibm,  isize_field, 'fld_ibm' )
 
     ! nob(i/j/k)   (number of objects)
     call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobi,   isize_nobi,    'nobi'  )

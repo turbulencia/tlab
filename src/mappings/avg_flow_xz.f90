@@ -443,7 +443,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! #######################################################################
   ! Calculating average of eps-field
   IF ( imode_ibm == 1 ) THEN
-    CALL AVG_IK_V(imax,jmax,kmax, jmax, eps, g(1)%jac,g(3)%jac, ep(1), wrk1d, area)
+    CALL IBM_AVG_GAMMA(ep(1), eps, wrk3d, wrk1d)
   END IF
 
   ! ###################################################################
