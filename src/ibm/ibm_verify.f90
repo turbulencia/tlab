@@ -149,9 +149,9 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
           end if
         end if 
-        if ( iob > 1 .and. iob < nob(ii) ) then ! in between objects
-          ipp = ip + nlines ! next obj
-          fp_inter = nob_b(ipp+ii) - nob_e(ip+ii)
+        if ( iob > 1 ) then ! in between objects
+          ipp = ip - nlines ! previous obj
+          fp_inter = nob_b(ip+ii) - nob_e(ipp+ii)
           if ( fp_inter < fp_min ) then
             call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between objects.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
