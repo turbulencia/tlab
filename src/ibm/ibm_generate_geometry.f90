@@ -38,9 +38,10 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 #else
   use TLAB_VARS,     only : imax, jmax, kmax
 #endif    
-#ifdef IBM_DEBUG
 #ifdef USE_MPI
-  use TLAB_MPI_VARS, only : ims_pro, ims_err
+  use TLAB_MPI_VARS, only : ims_err
+#ifdef IBM_DEBUG
+  use TLAB_MPI_VARS, only : ims_pro
 #endif  
 #endif
   
@@ -57,10 +58,10 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 #endif
   TINTEGER                                  :: i, j, k, ij, ik, jk, ip, inum
   TINTEGER                                  :: nyz, nxz, nxy
-#ifdef IBM_DEBUG
 #ifdef USE_MPI 
   TINTEGER                                  :: dummy
 #else
+#ifdef IBM_DEBUG
   TINTEGER, parameter                       :: ims_pro = 0         
 #endif
 #endif
@@ -198,7 +199,6 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   end do
 
   ! ================================================================== !
-#ifdef IBM_DEBUG
   nobi_max = maxval(nobi)
   nobj_max = maxval(nobj)
   nobk_max = maxval(nobk)
@@ -210,12 +210,15 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   dummy = nobk_max
   call MPI_ALLREDUCE(dummy, nobk_max, i1, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
 #endif
-  if (ims_pro == 0) then
-    write(*,*) '======== Max number of objects in each direction ========'
-    write(*,*) 'max number of objects in x = ', nobi_max
-    write(*,*) 'max number of objects in y = ', nobj_max
-    write(*,*) 'max number of objects in z = ', nobk_max
-  end if
+
+  ! ================================================================== !
+#ifdef IBM_DEBUG
+    if (ims_pro == 0) then
+      write(*,*) '======== Max number of objects in each direction ========'
+      write(*,*) 'max number of objects in x = ', nobi_max
+      write(*,*) 'max number of objects in y = ', nobj_max
+      write(*,*) 'max number of objects in z = ', nobk_max
+    end if
 #endif
 
   return

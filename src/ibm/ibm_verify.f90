@@ -56,7 +56,7 @@ subroutine IBM_VERIFY_GEOMETRY()
   TINTEGER, parameter :: ims_pro = 0 
 #endif
 #endif
-  TINTEGER            :: nyz, nxz, nxy    
+  TINTEGER            :: nyz, nxz, nxy, dummi    
   TREAL               :: ob_min
   ! ================================================================== !
 
@@ -75,6 +75,13 @@ subroutine IBM_VERIFY_GEOMETRY()
   nxy = imax * jmax
 #endif
 
+  ! check if "MaxNumberObj" in dns.ini is set correctly
+  dummi = maxval((/nobi_max, nobj_max, nobk_max/))
+  if ( dummi > nob_max ) then
+    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. MaxNumberObj too small in dns.ini.')
+    call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+  end if
+  
   ! check if any objects are present
   ob_min = sum(eps)
 #ifdef USE_MPI
