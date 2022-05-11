@@ -30,16 +30,14 @@
 
 subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3, wrk3d)
   
-  use TLAB_VARS,     only : g, imax, jmax, kmax, isize_field
   use DNS_IBM
+  use IO_FIELDS
+  use TLAB_VARS,     only : g, imax, jmax, kmax, isize_field
 #ifdef USE_MPI
   use MPI
-  use TLAB_MPI_VARS, only : ims_size_i, ims_size_j, ims_size_k    
   use TLAB_MPI_PROCS
-#endif    
-  use IO_FIELDS
-#ifdef USE_MPI
   use TLAB_MPI_VARS, only : ims_pro
+  use TLAB_MPI_VARS, only : ims_size_i, ims_size_k    
   use TLAB_MPI_VARS, only : ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i   
   use TLAB_MPI_VARS, only : ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k   
   use TLAB_MPI_VARS, only : ims_npro_i, ims_npro_k , ims_err      
@@ -54,7 +52,6 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3, wrk3d)
   
 #ifdef USE_MPI 
   TINTEGER, parameter                          :: idi = TLAB_MPI_I_PARTIAL 
-  TINTEGER, parameter                          :: idj = TLAB_MPI_J_PARTIAL 
   TINTEGER, parameter                          :: idk = TLAB_MPI_K_PARTIAL 
 #endif
   TINTEGER                                     :: i, j, k, ij, ik, jk, ip, inum
@@ -67,13 +64,25 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3, wrk3d)
   ! ================================================================== !
   ! npages
 #ifdef USE_MPI
-  nyz = ims_size_i(idi) ! local
-  nxz = ims_size_j(idj) 
-  nxy = ims_size_k(idk) 
-#else
-  nyz = jmax * kmax     ! global
+  if ( ims_npro_i > 1 ) then
+    nyz = ims_size_i(idi)
+  else
+#endif
+  nyz = jmax * kmax 
+#ifdef USE_MPI
+  end if
+#endif
+
   nxz = imax * kmax     
-  nxy = imax * jmax     
+
+#ifdef USE_MPI
+  if ( ims_npro_k > 1 ) then
+    nxy = ims_size_k(idk)
+  else
+#endif
+  nxy = imax * jmax
+#ifdef USE_MPI
+  end if
 #endif
 
   tmp1(:) = C_0_R; tmp2(:) = C_0_R; tmp3(:) = C_0_R

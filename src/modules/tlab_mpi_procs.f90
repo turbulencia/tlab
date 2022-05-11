@@ -30,7 +30,7 @@ CONTAINS
   SUBROUTINE TLAB_MPI_INITIALIZE
     USE TLAB_VARS, ONLY : imax,jmax,kmax
     USE TLAB_VARS, ONLY : isize_txc_dimz, isize_txc_dimx
-    USE TLAB_VARS, ONLY : imode_sim, ifourier, imode_ibm
+    USE TLAB_VARS, ONLY : imode_sim, ifourier
     IMPLICIT NONE
 
 #include "integers.h"
@@ -59,8 +59,6 @@ CONTAINS
     ALLOCATE(ims_plan_trps_k(ims_npro_k))
     ALLOCATE(ims_plan_trpr_k(ims_npro_k))
 
-    ALLOCATE(ims_size_j(TLAB_MPI_J_MAXTYPES)) ! IBM
-    
     ALLOCATE(ims_size_p(ims_npro))            ! Particle information
 
 #ifdef HLRS_HAWK
@@ -138,13 +136,6 @@ CONTAINS
       CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
     END IF
-
-    ! -----------------------------------------------------------------------
-    IF (imode_ibm == 1) THEN ! IBM
-      id = TLAB_MPI_J_PARTIAL
-      npage = imax*kmax
-      ims_size_j(id) = npage
-    ENDIF
     
     ! -----------------------------------------------------------------------
     IF ( ims_npro_i > 1 .AND. ifourier == 1 ) THEN
