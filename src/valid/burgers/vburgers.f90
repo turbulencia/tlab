@@ -17,10 +17,11 @@ PROGRAM VBURGERS
 
 #include "integers.h"
 #ifdef USE_MPI
+  TREAL error2, dummy2
 #else
    TINTEGER, PARAMETER                 :: ims_pro=0
 #endif
-   
+
   TREAL, DIMENSION(:,:),   ALLOCATABLE, SAVE, TARGET :: x,y,z
   TREAL, DIMENSION(:,:,:), ALLOCATABLE :: a, b, c
   TREAL, DIMENSION(:,:),   ALLOCATABLE :: wrk1d, wrk2d
@@ -101,7 +102,7 @@ PROGRAM VBURGERS
   ENDDO
 
   CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, g(2), a,a,a, c, tmp1, wrk2d,wrk3d)
-  
+
   c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
   error2 = error; dummy2 = dummy
@@ -125,9 +126,9 @@ PROGRAM VBURGERS
            ENDDO
         ENDDO
      ENDDO
-   
+
      CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, g(3), a,a,a, c, tmp1, wrk2d,wrk3d)
-   
+
      c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
      error2 = error; dummy2 = dummy
