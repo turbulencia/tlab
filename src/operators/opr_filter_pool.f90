@@ -404,6 +404,7 @@ END SUBROUTINE OPR_FILTER_BAND_2D
 !#                 > 0: High-pass
 !#                 < 0: Low-pass
 !#    spc_param(2) width of transition in logarithmic wavenumber space
+!#    spc_param(3) normalise wavenumers in z-direction 
 !#
 !########################################################################
 SUBROUTINE OPR_FILTER_ERF_2D(nx,ny,nz, spc_param, a)
@@ -434,15 +435,15 @@ SUBROUTINE OPR_FILTER_ERF_2D(nx,ny,nz, spc_param, a)
      off_pass  = 1.
   ENDIF
 
-  fcut_log = LOG(spc_param(1))
+  fcut_log = LOG(ABS(spc_param(1)))
   DO k = 1,nz
 #ifdef USE_MPI
      kglobal = k + ims_offset_k
 #else
      kglobal = k
 #endif
-     IF ( kglobal .LE. g(3)%size/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale
-     ELSE;                                   fk =-M_REAL(g(3)%size+1-kglobal)/g(3)%scale; ENDIF
+     IF ( kglobal .LE. g(3)%size/2+1 ) THEN; fk = M_REAL(kglobal-1)/g(3)%scale/spc_param(3)
+     ELSE;                                   fk =-M_REAL(g(3)%size+1-kglobal)/g(3)%scale/spc_param(3); ENDIF
 
      DO i = 1,nx/2+1
 #ifdef USE_MPI
