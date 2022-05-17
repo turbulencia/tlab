@@ -49,8 +49,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   
 #ifdef USE_MPI 
   TINTEGER, parameter                       :: idi = TLAB_MPI_I_PARTIAL 
-
-  TINTEGER, parameter                       :: idj = TLAB_MPI_J_PARTIAL 
+  TINTEGER, parameter                       :: idk = TLAB_MPI_K_PARTIAL 
 #endif
   TINTEGER                                  :: i, j, k, ij, ik, jk, ip, inum
   TINTEGER                                  :: nyz, nxz, nxy
@@ -222,14 +221,12 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 
   ! ================================================================== !
 #ifdef IBM_DEBUG
-
     if (ims_pro == 0) then
       write(*,*) '======== Max number of objects in each direction ========'
       write(*,*) 'max number of objects in x = ', nobi_max
       write(*,*) 'max number of objects in y = ', nobj_max
       write(*,*) 'max number of objects in z = ', nobk_max
     end if
-
 #endif
 
   return

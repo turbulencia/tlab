@@ -48,8 +48,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
   TINTEGER, parameter               :: idi = TLAB_MPI_I_PARTIAL 
   TINTEGER, parameter               :: idk = TLAB_MPI_K_PARTIAL 
 #endif
-
-  TINTEGER                          :: inb_ibm
+  TINTEGER                          :: nyz, nxz, nxy 
 
   ! ================================================================== !
   ! npages

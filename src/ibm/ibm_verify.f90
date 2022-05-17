@@ -227,10 +227,8 @@ subroutine IBM_VERIFY_UP(eps)
 #include "integers.h"
 
   TREAL, dimension(isize_field), intent(in) :: eps
-  
 
   TINTEGER                                  :: ip_t, ip_b, j, k, nxy, height_up, height_lo
-
   TREAL                                     :: dummy, top
 
   ! ================================================================== !
@@ -248,7 +246,6 @@ subroutine IBM_VERIFY_UP(eps)
   dummy = top
   call MPI_ALLREDUCE(dummy, top, i1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
-
 
   if ( top > 0 ) then
     ibm_objup = .true. ! objects are present on upper boundary
