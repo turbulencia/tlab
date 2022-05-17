@@ -21,14 +21,14 @@ if ( ${BUILD_TYPE} STREQUAL "PARALLEL" )
    set(CMAKE_Fortran_COMPILER mpif90)
    set(USER_Fortran_FLAGS "-cpp -ffree-form -ffree-line-length-none -fno-automatic")
    set(USER_Fortran_FLAGS_RELEASE "-ffpe-summary=none -O3 -fconvert=little-endian -O3 -ffast-math -ffinite-math-only -mtune=native -march=native -fprefetch-loop-arrays") # -fallow-argument-mismatch
-   add_definitions(-DUSE_FFTW -DUSE_MPI -DUSE_ALLTOALL -DUSE_MPI_IO) # -DIBM_DEBUG)
+   add_definitions(-DUSE_FFTW -DUSE_MPI -DUSE_ALLTOALL -DUSE_MPI_IO)# -DIBM_DEBUG)
    set(CMAKE_BUILD_TYPE RELEASE)
 # Compiler for serial build
 elseif( ${BUILD_TYPE} STREQUAL "SERIAL" ) 
    set(ENV{FC} gfortran-10)
    set(CMAKE_Fortran_COMPILER gfortran-10)
    set(USER_Fortran_FLAGS "-cpp -std=legacy -ffree-form -ffree-line-length-none -fno-automatic -fallow-argument-mismatch")
-   add_definitions(-DUSE_FFTW) # -DIBM_DEBUG)
+   add_definitions(-DUSE_FFTW)# -DIBM_DEBUG)
    set(USER_Fortran_FLAGS_RELEASE "-fconvert=little-endian -ffpe-summary=none -O3 -ffast-math -ffinite-math-only -mtune=native -march=native -funroll-loops")
    set(CMAKE_BUILD_TYPE RELEASE)
 # Compiler for debug build

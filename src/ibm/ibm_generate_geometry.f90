@@ -29,16 +29,20 @@
 
 subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   
+  use TLAB_VARS,     only : g, isize_field
   use DNS_IBM
-  use TLAB_VARS,     only : g, isize_field, imax, jmax, kmax
 #ifdef USE_MPI
   use MPI
-  use TLAB_MPI_VARS, only : ims_size_i, ims_size_k    
-  use TLAB_MPI_VARS, only : ims_npro_i, ims_npro_k, ims_err 
+  use TLAB_MPI_VARS, only : ims_size_i, ims_size_j, ims_size_k    
   use TLAB_MPI_PROCS
+#else
+  use TLAB_VARS,     only : imax, jmax, kmax
+#endif    
+#ifdef USE_MPI
+  use TLAB_MPI_VARS, only : ims_err
 #ifdef IBM_DEBUG
   use TLAB_MPI_VARS, only : ims_pro
-#endif
+#endif  
 #endif
   
   implicit none
@@ -49,8 +53,13 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   
 #ifdef USE_MPI 
   TINTEGER, parameter                       :: idi = TLAB_MPI_I_PARTIAL 
+<<<<<<< HEAD
 
   TINTEGER, parameter                       :: idj = TLAB_MPI_J_PARTIAL 
+=======
+  TINTEGER, parameter                       :: idj = TLAB_MPI_J_PARTIAL 
+  TINTEGER, parameter                       :: idk = TLAB_MPI_K_PARTIAL 
+>>>>>>> parent of 2a57c51... IBM bugfix for MPI decomp only in x or z
 #endif
   TINTEGER                                  :: i, j, k, ij, ik, jk, ip, inum
   TINTEGER                                  :: nyz, nxz, nxy
@@ -66,25 +75,13 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   ! ================================================================== !
   ! npages
 #ifdef USE_MPI
-  if ( ims_npro_i > 1 ) then
-    nyz = ims_size_i(idi)
-  else
-#endif
-  nyz = jmax * kmax 
-#ifdef USE_MPI
-  end if
-#endif
-
+  nyz = ims_size_i(idi) ! local
+  nxz = ims_size_j(idj) 
+  nxy = ims_size_k(idk) 
+#else
+  nyz = jmax * kmax     ! global
   nxz = imax * kmax     
-
-#ifdef USE_MPI
-  if ( ims_npro_k > 1 ) then
-    nxy = ims_size_k(idk)
-  else
-#endif
-  nxy = imax * jmax
-#ifdef USE_MPI
-  end if
+  nxy = imax * jmax     
 #endif
 
   ! initialize 

@@ -46,20 +46,27 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
 
 #ifdef USE_MPI 
   TINTEGER, parameter                          :: idi = TLAB_MPI_I_PARTIAL 
+  TINTEGER, parameter                          :: idj = TLAB_MPI_J_PARTIAL 
   TINTEGER, parameter                          :: idk = TLAB_MPI_K_PARTIAL 
 #endif
   TINTEGER                                     :: nyz, nxy
 
   ! ================================================================== !
+  ! npages
+#ifdef USE_MPI
+  nyz = ims_size_i(idi) 
+#else
+  nyz = jmax * kmax   
+#endif
+  nxy = imax * jmax
+
   ! MPI  and local transposition in x
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
     call TLAB_MPI_TRPF_I(eps, tmp, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
-    nyz = ims_size_i(idi)
   else
 #endif
   tmp = eps
-  nyz = jmax * kmax 
 #ifdef USE_MPI
   end if
 #endif
@@ -69,15 +76,14 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
 #else
   call DNS_TRANSPOSE(tmp, g(1)%size, nyz,       g(1)%size, epsi, nyz)
 #endif
-  ! -------------------------------------------------------------------
+
   ! local transposition in y
-  nxy = imax * jmax
 #ifdef USE_ESSL
   call DGETMO       (eps, nxy, nxy, kmax, epsj, kmax)
 #else
   call DNS_TRANSPOSE(eps, nxy, kmax, nxy, epsj, kmax)
 #endif
-  ! -------------------------------------------------------------------
+
   ! MPI transposition in z
 #ifdef USE_MPI
   if ( ims_npro_k > 1 ) then

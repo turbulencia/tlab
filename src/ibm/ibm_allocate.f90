@@ -29,12 +29,12 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
 
   use DNS_IBM
   use TLAB_VARS,      only : g, isize_field, istagger
-  use TLAB_VARS,      only : imax, jmax, kmax
   use TLAB_PROCS  
 #ifdef USE_MPI
   use MPI
-  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_k 
-  use TLAB_MPI_VARS,  only : ims_npro_i, ims_npro_k 
+  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_j, ims_size_k 
+#else
+  use TLAB_VARS,      only : imax, jmax, kmax
 #endif    
 
   implicit none
@@ -46,6 +46,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
 
 #ifdef USE_MPI 
   TINTEGER, parameter               :: idi = TLAB_MPI_I_PARTIAL 
+  TINTEGER, parameter               :: idj = TLAB_MPI_J_PARTIAL 
   TINTEGER, parameter               :: idk = TLAB_MPI_K_PARTIAL 
 #endif
 
@@ -53,27 +54,15 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
 
   ! ================================================================== !
   ! npages
-#ifdef USE_MPI
-  if ( ims_npro_i > 1 ) then
-    nyz = ims_size_i(idi)
-  else
-#endif
-  nyz = jmax * kmax 
-#ifdef USE_MPI
-  end if
-#endif
-
+#ifdef USE_MPI 
+  nyz = ims_size_i(idi)
+  nxz = ims_size_j(idj) 
+  nxy = ims_size_k(idk) 
+#else
+  nyz = jmax * kmax  
   nxz = imax * kmax     
-
-#ifdef USE_MPI
-  if ( ims_npro_k > 1 ) then
-    nxy = ims_size_k(idk)
-  else
-#endif
   nxy = imax * jmax
-#ifdef USE_MPI
-  end if
-#endif
+#endif  
 
   ! array sizes
   isize_nobi      = nyz    

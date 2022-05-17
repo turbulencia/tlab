@@ -29,17 +29,17 @@
 subroutine IBM_VERIFY_GEOMETRY()
 
   use DNS_IBM 
-  use TLAB_PROCS
   use TLAB_VARS,      only : g, imode_ibm_scal, icalc_scal
-  use TLAB_VARS,      only : imax, jmax, kmax
   use TLAB_CONSTANTS, only : efile
+  use TLAB_PROCS
 #ifdef USE_MPI
   use MPI
-  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_k, ims_err
-  use TLAB_MPI_VARS,  only : ims_npro_i, ims_npro_k
+  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_j, ims_size_k, ims_err
 #ifdef IBM_DEBUG
   use TLAB_MPI_VARS,  only : ims_pro
 #endif
+#else
+  use TLAB_VARS,      only : imax, jmax, kmax
 #endif    
    
   implicit none
@@ -48,6 +48,7 @@ subroutine IBM_VERIFY_GEOMETRY()
 
 #ifdef USE_MPI 
   TINTEGER, parameter :: idi = TLAB_MPI_I_PARTIAL 
+  TINTEGER, parameter :: idj = TLAB_MPI_J_PARTIAL 
   TINTEGER, parameter :: idk = TLAB_MPI_K_PARTIAL 
   TREAL               :: dummy
 #else
@@ -63,27 +64,15 @@ subroutine IBM_VERIFY_GEOMETRY()
   if ( ims_pro == 0 ) write(*,*) '================ Verifying the geometry ================='
 #endif
 
-  ! npages
-#ifdef USE_MPI
-  if ( ims_npro_i > 1 ) then
-    nyz = ims_size_i(idi)
-  else
-#endif
-  nyz = jmax * kmax 
-#ifdef USE_MPI
-  end if
-#endif
-
+  ! nlines
+#ifdef USE_MPI 
+  nyz = ims_size_i(idi)
+  nxz = ims_size_j(idj) 
+  nxy = ims_size_k(idk) 
+#else
+  nyz = jmax * kmax  
   nxz = imax * kmax     
-
-#ifdef USE_MPI
-  if ( ims_npro_k > 1 ) then
-    nxy = ims_size_k(idk)
-  else
-#endif
   nxy = imax * jmax
-#ifdef USE_MPI
-  end if
 #endif
 
   ! check if "MaxNumberObj" in dns.ini is set correctly
