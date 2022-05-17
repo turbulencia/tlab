@@ -717,6 +717,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ! >0: high-pass filter
      ! <0; low-pass filter
      ! Parameter2 is the characteristic width--in log units (relative to domain size)'
+     FilterDomain(:)%parameters(3) = C_1_R    ! used no normalise wavenumbers in z-direction
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'helmholtz'      ) THEN; FilterDomain(:)%type = DNS_FILTER_HELMHOLTZ
      FilterDomain(:)%parameters(1) = C_1_R    ! default filter size
   ELSE
