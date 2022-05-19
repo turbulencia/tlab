@@ -20,6 +20,9 @@ MODULE BOUNDARY_BUFFER
   USE TLAB_TYPES,     ONLY : filter_dt
 
   USE TLAB_CONSTANTS, ONLY : tag_flow,tag_scal, wfile,lfile,efile, MAX_VARS
+#ifdef TRACE_ON
+  USE TLAB_CONSTANTS, ONLY : tfile
+#endif
   USE TLAB_VARS,    ONLY : imode_eqns, imode_sim
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, isize_field
   USE TLAB_VARS,    ONLY : g
@@ -31,7 +34,7 @@ MODULE BOUNDARY_BUFFER
   USE IO_FIELDS
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
-  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
+  USE TLAB_MPI_VARS, ONLY : ims_pro,ims_npro_i, ims_npro_k, ims_npro
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   USE TLAB_MPI_VARS, ONLY : ims_comm_z
@@ -48,7 +51,7 @@ MODULE BOUNDARY_BUFFER
   TYPE buffer_dt
     SEQUENCE
     TINTEGER TYPE                                  ! relaxation, filter...
-    TINTEGER size                                  ! # points in buffer layer
+    TINTEGER size, total_size                      ! # points in buffer layer on this task and in total
     TINTEGER offset                                ! position in absolute grid
     TINTEGER nfields                               ! number of fields to apply tosition in absolute grid
     LOGICAL active(MAX_VARS), hard
@@ -150,6 +153,16 @@ CONTAINS
     BuffScalImin%offset = 0; BuffScalImax%offset = g(1)%size -BuffScalImax%size
     BuffScalJmin%offset = 0; BuffScalJmax%offset = g(2)%size -BuffScalJmax%size
 
+    BuffFlowImin%total_size = BuffFlowImin%size; BuffFlowImax%total_size = BuffFlowImax%size
+    BuffFlowJmin%total_size = BuffFlowJmin%size; BuffFlowJmax%total_size = BuffFlowJmax%size
+    BuffScalImin%total_size = BuffScalImin%size; BuffScalImax%total_size = BuffScalImax%size
+    BuffScalJmin%total_size = BuffScalJmin%size; BuffScalJmax%total_size = BuffSCalJmax%size
+#ifdef USE_MPI
+    BuffFlowImin%size = MIN(imax,MAX( 0, BuffFlowImin%total_size - ims_offset_i) )
+    BuffFlowImax%size = MIN(imax,MAX( 0, BuffFlowImax%total_size - ims_offset_i) )
+    BuffScalImin%size = MIN(imax,MAX( 0, BuffScalImin%total_size - ims_offset_i) )
+    BuffScalImax%size = MIN(imax,MAX( 0, BuffScalImax%total_size - ims_offset_i) )
+#endif
     BuffFlowImin%nfields = inb_flow; BuffFlowImax%nfields = inb_flow
     BuffFlowJmin%nfields = inb_flow; BuffFlowJmax%nfields = inb_flow
     BuffScalImin%nfields = inb_scal; BuffScalImax%nfields = inb_scal
@@ -174,15 +187,15 @@ CONTAINS
       txc(:,1) = C_1_R ! Density
     ENDIF
 
-    IF ( BuffFlowImin%size > 0 ) CALL INI_BLOCK(1, TRIM(ADJUSTL(tag_flow))//'bcs.imin', BuffFlowImin, txc(1,1), txc(1,2), wrk3d )
-    IF ( BuffFlowImax%size > 0 ) CALL INI_BLOCK(1, TRIM(ADJUSTL(tag_flow))//'bcs.imax', BuffFlowImax, txc(1,1), txc(1,2), wrk3d )
-    IF ( BuffFlowJmin%size > 0 ) CALL INI_BLOCK(2, TRIM(ADJUSTL(tag_flow))//'bcs.jmin', BuffFlowJmin, txc(1,1), txc(1,2), wrk3d )
-    IF ( BuffFlowJmax%size > 0 ) CALL INI_BLOCK(2, TRIM(ADJUSTL(tag_flow))//'bcs.jmax', BuffFlowJmax, txc(1,1), txc(1,2), wrk3d )
+    IF ( BuffFlowImin%total_size > 0 ) CALL INI_BLOCK(1, TRIM(ADJUSTL(tag_flow))//'bcs.imin', BuffFlowImin, txc(1,1), txc(1,2), wrk3d )
+    IF ( BuffFlowImax%total_size > 0 ) CALL INI_BLOCK(1, TRIM(ADJUSTL(tag_flow))//'bcs.imax', BuffFlowImax, txc(1,1), txc(1,2), wrk3d )
+    IF ( BuffFlowJmin%total_size > 0 ) CALL INI_BLOCK(2, TRIM(ADJUSTL(tag_flow))//'bcs.jmin', BuffFlowJmin, txc(1,1), txc(1,2), wrk3d )
+    IF ( BuffFlowJmax%total_size > 0 ) CALL INI_BLOCK(2, TRIM(ADJUSTL(tag_flow))//'bcs.jmax', BuffFlowJmax, txc(1,1), txc(1,2), wrk3d )
 
-    IF ( BuffScalImin%size > 0 ) CALL INI_BLOCK(1, TRIM(ADJUSTL(tag_scal))//'bcs.imin', BuffScalImin, txc(1,1), s, wrk3d )
-    IF ( BuffScalImax%size > 0 ) CALL INI_BLOCK(1, TRIM(ADJUSTL(tag_scal))//'bcs.imax', BuffScalImax, txc(1,1), s, wrk3d )
-    IF ( BuffScalJmin%size > 0 ) CALL INI_BLOCK(2, TRIM(ADJUSTL(tag_scal))//'bcs.jmin', BuffScalJmin, txc(1,1), s, wrk3d )
-    IF ( BuffScalJmax%size > 0 ) CALL INI_BLOCK(2, TRIM(ADJUSTL(tag_scal))//'bcs.jmax', BuffScalJmax, txc(1,1), s, wrk3d )
+    IF ( BuffScalImin%total_size > 0 ) CALL INI_BLOCK(1, TRIM(ADJUSTL(tag_scal))//'bcs.imin', BuffScalImin, txc(1,1), s, wrk3d )
+    IF ( BuffScalImax%total_size > 0 ) CALL INI_BLOCK(1, TRIM(ADJUSTL(tag_scal))//'bcs.imax', BuffScalImax, txc(1,1), s, wrk3d )
+    IF ( BuffScalJmin%total_size > 0 ) CALL INI_BLOCK(2, TRIM(ADJUSTL(tag_scal))//'bcs.jmin', BuffScalJmin, txc(1,1), s, wrk3d )
+    IF ( BuffScalJmax%total_size > 0 ) CALL INI_BLOCK(2, TRIM(ADJUSTL(tag_scal))//'bcs.jmax', BuffScalJmax, txc(1,1), s, wrk3d )
 
     RETURN
   END SUBROUTINE BOUNDARY_BUFFER_INITIALIZE
@@ -204,31 +217,68 @@ CONTAINS
 
     ! -------------------------------------------------------------------
     TINTEGER io_sizes(5), id
-    TREAL var_max,var_min
+    TREAL, DIMENSION(2) :: var_minmax
 
     CHARACTER*32 str, varname(item%nfields)
     CHARACTER*128 line
-
     TREAL COV2V1D, COV2V2D
+#ifdef USE_MPI
+    INTEGER sa_comm_color
+    INTEGER,PARAMETER :: sa_ndims=3
+    INTEGER, DIMENSION(sa_ndims) :: sa_size, sa_locsize,sa_offset
+    ! INTEGER :: sa_comm_rank, sa_comm_size
+    TREAL, DIMENSION(2) :: dummy2
+#endif
+
 
     ! ###################################################################
     ! Reference fields
-    IF ( idir == 1 ) ALLOCATE( item%ref(item%size,jmax,kmax,item%nfields) )
-    IF ( idir == 2 ) ALLOCATE( item%ref(imax,item%size,kmax,item%nfields) )
+
+#ifdef TRACE_ON
+    CALL TLAB_WRITE_ASCII(tfile,'ENTERING INI_BLOCK (boundary_buffer.f90)')
+#endif
+
+    IF ( item%size .GT. 0 ) THEN
+       IF ( idir == 1 ) ALLOCATE( item%ref(item%size,jmax,kmax,item%nfields) )
+       IF ( idir == 2 ) ALLOCATE( item%ref(imax,item%size,kmax,item%nfields) )
+    ENDIF
 
     DO iq = 1,item%nfields; WRITE(varname(iq),*) iq; ENDDO
 
     SELECT CASE ( idir )
     CASE( 1 )
+#ifdef USE_MPI
       id = IO_SUBARRAY_BUFFER_ZOY
       io_aux(id)%offset = 0
-#ifdef USE_MPI
-      IF ( ims_pro_i ==  ( item%offset /imax) ) io_aux(id)%active = .TRUE. ! info must belong to only 1 PE
-      io_aux(id)%communicator = ims_comm_z
-      io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY( jmax*item%size,kmax, MPI_REAL8 )
-#endif
-      idummy = item%size*jmax*kmax; io_sizes = (/idummy,1,idummy,1,item%nfields/)
+      IF ( ims_npro_i .GT. 1  .AND. item%total_size .EQ. imax ) THEN
+         ! Buffer lives on exactly one PE in x; we can use ims_comm_z 
+         IF ( item%size .GT. 0 ) THEN
+            io_aux(id)%active = .TRUE.
+            io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY( jmax*item%total_size,kmax, MPI_REAL8 )
+            io_aux(id)%communicator = ims_comm_z
+         ELSE
+            io_aux(id)%active = .FALSE.
+         ENDIF
+      ELSE ! Buffer occupies more or less than one PE --> need new subarray and communicator 
+         sa_comm_color = MPI_UNDEFINED
+         IF ( item%size .GT. 0 ) THEN
+            io_aux(id)%active = .TRUE.
+            sa_size =    [ item%total_size,   jmax, kmax*ims_npro_k]
+            sa_locsize=  [ item%size      ,   jmax, kmax           ]
+            sa_offset=   [ imax*ims_pro_i ,   0,    kmax*ims_pro_k ]
 
+            MPICALL(CALL MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err))
+            MPICALL(CALL MPI_TYPE_COMMIT(io_aux(id)%subarray,ims_err))
+            sa_comm_color = 1
+         ELSE
+            io_aux(id)%active = .FALSE.
+         ENDIF
+         io_aux(id)%communicator = MPI_UNDEFINED
+         MPICALL(CALL MPI_Comm_Split(MPI_COMM_WORLD,sa_comm_color,ims_pro,io_aux(id)%communicator,ims_err))
+      ENDIF
+#endif
+      idummy = item%size*jmax*kmax;
+      io_sizes=[idummy,1,idummy,1,item%nfields]
     CASE( 2 )
       id = IO_SUBARRAY_BUFFER_XOZ
       io_aux(id)%offset = 0
@@ -238,14 +288,11 @@ CONTAINS
       io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ( imax,item%size,kmax, MPI_REAL8 )
 #endif
       idummy = imax*item%size*kmax; io_sizes = (/idummy,1,idummy,1,item%nfields/)
-
     END SELECT
 
     IF ( BuffLoad ) THEN
-      CALL IO_READ_SUBARRAY8(id, tag, varname, item%ref, io_sizes, wrk3d)
-
+       CALL IO_READ_SUBARRAY8(id, tag, varname, item%ref, io_sizes, wrk3d)
     ELSE
-
       SELECT CASE ( idir )
       CASE( 1 )
         DO iq = 1,item%nfields
@@ -287,18 +334,21 @@ CONTAINS
     ENDIF
 
     DO iq = 1, item%nfields ! Control
-      var_max = MAXVAL(item%ref(:,:,:,iq)); var_min = MINVAL(item%ref(:,:,:,iq))
 #ifdef USE_MPI
-      CALL MPI_ALLREDUCE(var_max, dummy, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
-      var_max = dummy
-      CALL MPI_ALLREDUCE(var_min, dummy, 1, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
-      var_min = dummy
+       IF ( io_aux(id)%active ) THEN
+          var_minmax = [ MINVAL(item%ref(:,:,:,iq)), -MAXVAL(item%ref(:,:,:,iq)) ]
+          CALL MPI_ALLREDUCE(var_minmax, dummy2, 2, MPI_REAL8, MPI_MIN, io_aux(id)%communicator, ims_err)
+          var_minmax = dummy2; var_minmax(2) = -var_minmax(2)
+       ENDIF
+#else
+       var_minmax = [ MINVAL(item%ref(:,:,:,iq)), MAXVAL(item%ref(:,:,:,iq)) ]
 #endif
-      WRITE(line,10) var_max
-      WRITE(str, 10) var_min
-      line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
-      line = 'Checking bounds of field '//TRIM(ADJUSTL(tag))//'.'//TRIM(ADJUSTL(varname(iq)))//': '//TRIM(ADJUSTL(line))
-      CALL TLAB_WRITE_ASCII(lfile,line)
+       WRITE(line,10) var_minmax(2)
+       WRITE(str, 10) var_minmax(1)
+
+       line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
+       line = 'Checking bounds of field '//TRIM(ADJUSTL(tag))//'.'//TRIM(ADJUSTL(varname(iq)))//': '//TRIM(ADJUSTL(line))
+       CALL TLAB_WRITE_ASCII(lfile,line)
     ENDDO
 
     ! -----------------------------------------------------------------------
@@ -336,6 +386,9 @@ CONTAINS
     ENDIF
 #endif
 
+#ifdef TRACE_ON
+    CALL TLAB_WRITE_ASCII(tfile,'LEAVING INI_BLOCK (boundary_buffer.f90)')
+#endif
     RETURN
 10  FORMAT(G_FORMAT_R)
   END SUBROUTINE INI_BLOCK

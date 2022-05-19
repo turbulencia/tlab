@@ -18,6 +18,7 @@ SUBROUTINE RHS_FLOW_CONDUCTION_EXPLICIT(vis, z1, T, h4, tmp1,tmp2,tmp3,tmp4,tmp5
   USE TLAB_CONSTANTS, ONLY : efile
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS, ONLY : tfile
+  USE TLAB_PROCS,     ONLY : TLAB_WRITE_ASCII 
 #endif
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
   USE TLAB_VARS,    ONLY : g
