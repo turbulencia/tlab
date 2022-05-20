@@ -55,9 +55,13 @@ SUBROUTINE IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, DATA, sizes, work)
 
 #ifdef USE_MPI
       CALL MPI_File_open(io_aux(iflag_mode)%communicator, TRIM(ADJUSTL(name)), IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err)
+      DO_MPI_ERROR_CHECK
       CALL MPI_File_set_view(mpio_fh, io_aux(iflag_mode)%offset, MPI_REAL4, io_aux(iflag_mode)%subarray, 'native', MPI_INFO_NULL, ims_err)
+      DO_MPI_ERROR_CHECK
       CALL MPI_File_write_all(mpio_fh, work, isize, MPI_REAL4, mpio_status, ims_err)
+      DO_MPI_ERROR_CHECK
       CALL MPI_File_close(mpio_fh, ims_err)
+      DO_MPI_ERROR_CHECK
 
 #else
 #include "dns_open_file.h"
@@ -89,7 +93,7 @@ SUBROUTINE IO_READ_SUBARRAY8(iflag_mode, fname, varname, DATA, sizes, work)
   USE TLAB_PROCS
 #ifdef USE_MPI
   USE MPI
-  USE TLAB_MPI_VARS,  ONLY : ims_pro, ims_err
+  USE TLAB_MPI_VARS,  ONLY : ims_err
 #endif
 
   IMPLICIT NONE
@@ -118,8 +122,13 @@ SUBROUTINE IO_READ_SUBARRAY8(iflag_mode, fname, varname, DATA, sizes, work)
 #ifdef TRACE_ON
   CALL TLAB_WRITE_ASCII(tfile,'ENTERING IO_READ_SUBARRAY8')
 #endif
-
   isize = ( sizes(3) -sizes(2) ) /sizes(4) +1
+
+  DO iv = 1,sizes(5)
+     name = TRIM(ADJUSTL(fname))
+     IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
+     CALL TLAB_WRITE_ASCII(lfile, 'Reading field '//TRIM(ADJUSTL(name))//'...')
+  ENDDO
 
 #ifdef USE_MPI
   IF ( io_aux(iflag_mode)%active ) THEN
@@ -128,14 +137,15 @@ SUBROUTINE IO_READ_SUBARRAY8(iflag_mode, fname, varname, DATA, sizes, work)
     DO iv = 1,sizes(5)
       name = TRIM(ADJUSTL(fname))
       IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
-
-      CALL TLAB_WRITE_ASCII(lfile, 'Reading field '//TRIM(ADJUSTL(name))//'...')
-
 #ifdef USE_MPI
-      MPICALL(CALL MPI_File_open(io_aux(iflag_mode)%communicator, TRIM(ADJUSTL(name)), MPI_MODE_RDONLY,MPI_INFO_NULL,mpio_fh, ims_err))
-      MPICALL(CALL MPI_File_set_view(mpio_fh, io_aux(iflag_mode)%offset, MPI_REAL8, io_aux(iflag_mode)%subarray, 'native', MPI_INFO_NULL, ims_err))
-      MPICALL(CALL MPI_File_read_all(mpio_fh, work, isize, MPI_REAL8, mpio_status, ims_err))
-      MPICALL(CALL MPI_File_close(mpio_fh, ims_err))
+      CALL MPI_File_open(io_aux(iflag_mode)%communicator, TRIM(ADJUSTL(name)), MPI_MODE_RDONLY,MPI_INFO_NULL,mpio_fh, ims_err)
+      DO_MPI_ERROR_CHECK
+      CALL MPI_File_set_view(mpio_fh, io_aux(iflag_mode)%offset, MPI_REAL8, io_aux(iflag_mode)%subarray, 'native', MPI_INFO_NULL, ims_err)
+      DO_MPI_ERROR_CHECK
+      CALL MPI_File_read_all(mpio_fh, work, isize, MPI_REAL8, mpio_status, ims_err)
+      DO_MPI_ERROR_CHECK
+      CALL MPI_File_close(mpio_fh, ims_err)
+      DO_MPI_ERROR_CHECK
 #else
 #include "dns_open_file.h"
       ioffset_local = io_aux(iflag_mode)%offset + 1
@@ -206,9 +216,13 @@ SUBROUTINE IO_WRITE_SUBARRAY8(iflag_mode, fname, varname, DATA, sizes, work)
 
 #ifdef USE_MPI
       CALL MPI_File_open(io_aux(iflag_mode)%communicator, TRIM(ADJUSTL(name)), IOR(MPI_MODE_WRONLY,MPI_MODE_CREATE),MPI_INFO_NULL,mpio_fh, ims_err)
+      DO_MPI_ERROR_CHECK
       CALL MPI_File_set_view(mpio_fh, io_aux(iflag_mode)%offset, MPI_REAL8, io_aux(iflag_mode)%subarray, 'native', MPI_INFO_NULL, ims_err)
+      DO_MPI_ERROR_CHECK
       CALL MPI_File_write_all(mpio_fh, work, isize, MPI_REAL8, mpio_status, ims_err)
+      DO_MPI_ERROR_CHECK
       CALL MPI_File_close(mpio_fh, ims_err)
+      DO_MPI_ERROR_CHECK
 
 #else
 #include "dns_open_file.h"

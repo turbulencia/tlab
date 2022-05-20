@@ -159,9 +159,9 @@ CONTAINS
     BuffScalJmin%total_size = BuffScalJmin%size; BuffScalJmax%total_size = BuffSCalJmax%size
 #ifdef USE_MPI
     BuffFlowImin%size = MIN(imax,MAX( 0, BuffFlowImin%total_size - ims_offset_i) )
-    BuffFlowImax%size = MIN(imax,MAX( 0, BuffFlowImax%total_size - ims_offset_i) )
+    BuffFlowImax%size = MIN(imax,MAX( 0, ims_offset_i+imax-BuffFlowImax%offset) )
     BuffScalImin%size = MIN(imax,MAX( 0, BuffScalImin%total_size - ims_offset_i) )
-    BuffScalImax%size = MIN(imax,MAX( 0, BuffScalImax%total_size - ims_offset_i) )
+    BuffScalImax%size = MIN(imax,MAX( 0, ims_offset_i+imax-BuffScalImax%offset) )
 #endif
     BuffFlowImin%nfields = inb_flow; BuffFlowImax%nfields = inb_flow
     BuffFlowJmin%nfields = inb_flow; BuffFlowJmax%nfields = inb_flow
@@ -226,7 +226,6 @@ CONTAINS
     INTEGER sa_comm_color
     INTEGER,PARAMETER :: sa_ndims=3
     INTEGER, DIMENSION(sa_ndims) :: sa_size, sa_locsize,sa_offset
-    ! INTEGER :: sa_comm_rank, sa_comm_size
     TREAL, DIMENSION(2) :: dummy2
 #endif
 
@@ -263,18 +262,27 @@ CONTAINS
          sa_comm_color = MPI_UNDEFINED
          IF ( item%size .GT. 0 ) THEN
             io_aux(id)%active = .TRUE.
-            sa_size =    [ item%total_size,   jmax, kmax*ims_npro_k]
-            sa_locsize=  [ item%size      ,   jmax, kmax           ]
-            sa_offset=   [ imax*ims_pro_i ,   0,    kmax*ims_pro_k ]
+            sa_size    = [ item%total_size,             jmax, kmax*ims_npro_k ]
+            sa_locsize = [ item%size      ,             jmax, kmax            ]
+            IF ( item%offset .EQ. 0 ) THEN
+               sa_offset=[ ims_offset_i,                   0, kmax*ims_pro_k  ]
+            ELSE
+               sa_offset=[ MAX(0,ims_offset_i-item%offset),0, kmax*ims_pro_k  ]
+            ENDIF
 
-            MPICALL(CALL MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err))
-            MPICALL(CALL MPI_TYPE_COMMIT(io_aux(id)%subarray,ims_err))
+            CALL MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
+            DO_MPI_ERROR_CHECK
+            CALL MPI_TYPE_COMMIT(io_aux(id)%subarray,ims_err)
+            DO_MPI_ERROR_CHECK
+
             sa_comm_color = 1
          ELSE
             io_aux(id)%active = .FALSE.
          ENDIF
          io_aux(id)%communicator = MPI_UNDEFINED
-         MPICALL(CALL MPI_Comm_Split(MPI_COMM_WORLD,sa_comm_color,ims_pro,io_aux(id)%communicator,ims_err))
+         CALL MPI_Comm_Split(MPI_COMM_WORLD,sa_comm_color,ims_pro,io_aux(id)%communicator,ims_err)
+         DO_MPI_ERROR_CHECK
+
       ENDIF
 #endif
       idummy = item%size*jmax*kmax;
@@ -337,9 +345,13 @@ CONTAINS
 #ifdef USE_MPI
        IF ( io_aux(id)%active ) THEN
           var_minmax = [ MINVAL(item%ref(:,:,:,iq)), -MAXVAL(item%ref(:,:,:,iq)) ]
-          CALL MPI_ALLREDUCE(var_minmax, dummy2, 2, MPI_REAL8, MPI_MIN, io_aux(id)%communicator, ims_err)
-          var_minmax = dummy2; var_minmax(2) = -var_minmax(2)
+       ELSE
+          var_minmax = [ HUGE(dummy), HUGE(dummy)]
        ENDIF
+
+       CALL MPI_ALLREDUCE(var_minmax, dummy2, 2, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
+       DO_MPI_ERROR_CHECK
+       var_minmax = dummy2; var_minmax(2) = -var_minmax(2)
 #else
        var_minmax = [ MINVAL(item%ref(:,:,:,iq)), MAXVAL(item%ref(:,:,:,iq)) ]
 #endif
