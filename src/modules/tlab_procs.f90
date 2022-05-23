@@ -12,16 +12,21 @@ MODULE TLAB_PROCS
   USE TLAB_MPI_VARS
 #endif
   IMPLICIT NONE
+
   SAVE
+
   PRIVATE
 
-  CHARACTER*128 str, line
+  CHARACTER*128 line
 
   PUBLIC :: TLAB_START
   PUBLIC :: TLAB_STOP
   PUBLIC :: TLAB_WRITE_ASCII
   PUBLIC :: TLAB_ALLOCATE
-
+  PUBLIC :: TLAB_ALLOCATE_ARRAY1, TLAB_ALLOCATE_ARRAY2
+#ifdef USE_MPI
+  PUBLIC :: TLAB_MPI_PANIC
+#endif
 CONTAINS
 
   ! ###################################################################
@@ -37,90 +42,81 @@ CONTAINS
     CHARACTER(LEN=*) C_FILE_LOC
 
     ! -------------------------------------------------------------------
-    TINTEGER ierr
-
-    ! ###################################################################
-    WRITE(str,*) g(1)%inb_grid; line = 'Allocating array x of size '//TRIM(ADJUSTL(str))//'x'
-    WRITE(str,*) g(1)%size; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-    CALL TLAB_WRITE_ASCII(lfile,line)
-    ALLOCATE(x(g(1)%size,g(1)%inb_grid),stat=ierr)
-    IF ( ierr /= 0 ) THEN
-      CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for x.')
-      CALL TLAB_STOP(DNS_ERROR_ALLOC)
-    END IF
-
-    WRITE(str,*) g(2)%inb_grid; line = 'Allocating array y of size '//TRIM(ADJUSTL(str))//'x'
-    WRITE(str,*) g(2)%size; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-    CALL TLAB_WRITE_ASCII(lfile,line)
-    ALLOCATE(y(g(2)%size,g(2)%inb_grid),stat=ierr)
-    IF ( ierr /= 0 ) THEN
-      CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for y.')
-      CALL TLAB_STOP(DNS_ERROR_ALLOC)
-    END IF
-
-    WRITE(str,*) g(3)%inb_grid; line = 'Allocating array z of size '//TRIM(ADJUSTL(str))//'x'
-    WRITE(str,*) g(3)%size; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-    CALL TLAB_WRITE_ASCII(lfile,line)
-    ALLOCATE(z(g(3)%size,g(3)%inb_grid),stat=ierr)
-    IF ( ierr /= 0 ) THEN
-      CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for z.')
-      CALL TLAB_STOP(DNS_ERROR_ALLOC)
-    END IF
-
+    CALL TLAB_ALLOCATE_ARRAY2(C_FILE_LOC,x,    g(1)%inb_grid, g(1)%size,  'x')
+    CALL TLAB_ALLOCATE_ARRAY2(C_FILE_LOC,y,    g(2)%inb_grid, g(2)%size,  'y')
+    CALL TLAB_ALLOCATE_ARRAY2(C_FILE_LOC,z,    g(3)%inb_grid, g(3)%size,  'z')
     ! -------------------------------------------------------------------
-    IF ( inb_flow_array .GT. 0 ) THEN
-      WRITE(str,*) inb_flow_array; line = 'Allocating array flow  of size '//TRIM(ADJUSTL(str))//'x'
-      WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-      CALL TLAB_WRITE_ASCII(lfile,line)
-      ALLOCATE(q(isize_field,inb_flow_array),stat=ierr)
-      IF ( ierr /= 0 ) THEN
-        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for flow.')
-        CALL TLAB_STOP(DNS_ERROR_ALLOC)
-      END IF
-    END IF
-
-    IF ( inb_scal_array .GT. 0 ) THEN
-      WRITE(str,*) inb_scal_array; line = 'Allocating array scal  of size '//TRIM(ADJUSTL(str))//'x'
-      WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-      CALL TLAB_WRITE_ASCII(lfile,line)
-      ALLOCATE(s(isize_field,inb_scal_array),stat=ierr)
-      IF ( ierr /= 0 ) THEN
-        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for scal.')
-        CALL TLAB_STOP(DNS_ERROR_ALLOC)
-      END IF
-    END IF
-
+    CALL TLAB_ALLOCATE_ARRAY2(C_FILE_LOC,q,    inb_flow_array,isize_field,'flow') 
+    CALL TLAB_ALLOCATE_ARRAY2(C_FILE_LOC,s,    inb_scal_array,isize_field,'scal') 
     ! -------------------------------------------------------------------
-    IF ( inb_txc .GT. 0 ) THEN
-      WRITE(str,*) inb_txc; line = 'Allocating array txc   of size '//TRIM(ADJUSTL(str))//'x'
-      WRITE(str,*) isize_txc_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-      CALL TLAB_WRITE_ASCII(lfile,line)
-      ALLOCATE(txc(isize_txc_field,inb_txc),stat=ierr)
-      IF ( ierr /= 0 ) THEN
-        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for txc.')
-        CALL TLAB_STOP(DNS_ERROR_ALLOC)
-      END IF
-    END IF
-
-    WRITE(str,*) isize_wrk3d; line = 'Allocating array wrk3d of size '//TRIM(ADJUSTL(str))
-    CALL TLAB_WRITE_ASCII(lfile,line)
-    ALLOCATE(wrk3d(isize_wrk3d),stat=ierr)
-    IF ( ierr /= 0 ) THEN
-      CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for wrk3d.')
-      CALL TLAB_STOP(DNS_ERROR_ALLOC)
-    END IF
-
-    ALLOCATE(wrk1d(isize_wrk1d,inb_wrk1d))
-    ALLOCATE(wrk2d(isize_wrk2d,inb_wrk2d))
+    CALL TLAB_ALLOCATE_ARRAY2(C_FILE_LOC,txc,  inb_txc,isize_txc_field,   'txc')
+    CALL TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,wrk3d,isize_wrk3d,               'wrk3d')
+    CALL TLAB_ALLOCATE_ARRAY2(C_FILE_LOC,wrk1d,inb_wrk1d,isize_wrk1d,     'wrk1d') 
+    CALL TLAB_ALLOCATE_ARRAY2(C_FILE_LOC,wrk2d,inb_wrk2d,isize_wrk2d,     'wrk2d') 
 
     RETURN
   END SUBROUTINE TLAB_ALLOCATE
 
+
+  ! ######################################################################
+  ! ######################################################################
+  SUBROUTINE TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,a,i1,s)
+
+    IMPLICIT NONE
+
+    CHARACTER(LEN=*) :: C_FILE_LOC
+    TREAL, DIMENSION(:),ALLOCATABLE,INTENT(INOUT) :: a
+    TINTEGER,INTENT(IN):: i1
+    CHARACTER(LEN=*), INTENT(IN) :: s
+    ! --------------------------------------------------
+    CHARACTER*128 str,line
+    TINTEGER ierr
+
+    IF ( i1 .LE. 0 ) RETURN 
+    
+    WRITE(str,*) i1; line = 'Allocating array '//TRIM(ADJUSTL(s))//' of size '//TRIM(ADJUSTL(str))
+    CALL TLAB_WRITE_ASCII(lfile,line)
+    ALLOCATE(a(i1),stat=ierr)
+    IF ( ierr /= 0 ) THEN
+       CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//TRIM(ADJUSTL(s)) //'.')
+       CALL TLAB_STOP(DNS_ERROR_ALLOC)
+    END IF
+   
+  END SUBROUTINE TLAB_ALLOCATE_ARRAY1
+
+  ! ######################################################################
+  ! ######################################################################
+  SUBROUTINE TLAB_ALLOCATE_ARRAY2(C_FILE_LOC,a,i1,i2,s)
+
+    IMPLICIT NONE
+
+    CHARACTER(LEN=*) :: C_FILE_LOC
+    TREAL,DIMENSION(:,:),ALLOCATABLE,INTENT(INOUT) :: a
+    TINTEGER, INTENT(IN) :: i1,i2
+    CHARACTER(LEN=*), INTENT(IN) ::  s
+    !--------------------------------------------------
+    CHARACTER*128 str,line
+    TINTEGER ierr
+
+    IF ( i1 .LE. 0 .OR. i2 .LE. 0 ) RETURN 
+    
+    WRITE(str,*) i1; line = 'Allocating array '//TRIM(ADJUSTL(s))//' of size '//TRIM(ADJUSTL(str))//'x'
+    WRITE(str,*) i2; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+    CALL TLAB_WRITE_ASCII(lfile,line)
+    ALLOCATE(a(i2,i1),stat=ierr)
+    IF ( ierr /= 0 ) THEN
+       CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//TRIM(ADJUSTL(s))//' txc.')
+       CALL TLAB_STOP(DNS_ERROR_ALLOC)
+    END IF
+    
+  ENd SUBROUTINE TLAB_ALLOCATE_ARRAY2
+  
   ! ###################################################################
   ! ###################################################################
   SUBROUTINE TLAB_START()
     USE TLAB_VARS, ONLY : imode_verbosity
     USE TLAB_VARS, ONLY : dns_omp_numThreads
+
     IMPLICIT NONE
 
     CHARACTER*10 clock(2)
@@ -255,12 +251,36 @@ CONTAINS
     CALL TLAB_WRITE_ASCII(lfile, '########################################')
 
 #ifdef USE_MPI
-    CALL MPI_FINALIZE(ims_err)
+    IF ( ims_err .EQ. 0 ) THEN
+       CALL MPI_FINALIZE(ims_err)
+    ELSE
+       CALL MPI_Abort(MPI_COMM_WORLD,ims_err,ims_err)
+    ENDIF
 #endif
-    STOP
-
     RETURN
   END SUBROUTINE TLAB_STOP
+
+#ifdef USE_MPI 
+  SUBROUTINE TLAB_MPI_PANIC(location,mpi_error_code)
+
+    IMPLICIT NONE
+
+    CHARACTER(LEN=*), INTENT(IN) :: location
+    INTEGER,          INTENT(IN) :: mpi_error_code
+
+    !##############################
+    CHARACTER error_string*1024, line*512
+    INTEGER error_local, error_len
+
+    CALL MPI_Error_String(mpi_error_code, error_string, error_len, error_local)
+    CALL TLAB_WRITE_ASCII(efile,'MPI-ERROR: Source file'//TRIM(ADJUSTL(LOCATION)),.TRUE.)
+    CALL TLAB_WRITE_ASCII(efile,error_string,.TRUE.)
+
+    CALL TLAB_STOP(mpi_error_code)
+    ! Not supposed to return from this subroutine
+
+  END SUBROUTINE TLAB_MPI_PANIC
+#endif
 
   ! ###################################################################
   ! ###################################################################

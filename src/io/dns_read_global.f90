@@ -63,7 +63,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! ###################################################################
   CALL TLAB_WRITE_ASCII(bakfile, '#')
   CALL TLAB_WRITE_ASCII(bakfile, '#[Main]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#FileFormat=<RawArray/RawSplit/NetCDF>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#FileFormat=<mpiio/RawSplit/NetCDF>')
   CALL TLAB_WRITE_ASCII(bakfile, '#VerbosityLevel=<0/1/2>')
   CALL TLAB_WRITE_ASCII(bakfile, '#Type=<temporal/spatial>')
   CALL TLAB_WRITE_ASCII(bakfile, '#CalculateFlow=<yes/no>')
