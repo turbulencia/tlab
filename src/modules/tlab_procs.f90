@@ -24,7 +24,9 @@ MODULE TLAB_PROCS
   PUBLIC :: TLAB_WRITE_ASCII
   PUBLIC :: TLAB_ALLOCATE
   PUBLIC :: TLAB_ALLOCATE_ARRAY1, TLAB_ALLOCATE_ARRAY1_INT, TLAB_ALLOCATE_ARRAY2
-
+#ifdef USE_MPI
+  PUBLIC :: TLAB_MPI_PANIC
+#endif
 CONTAINS
 
   ! ###################################################################
@@ -145,6 +147,7 @@ CONTAINS
   SUBROUTINE TLAB_START()
     USE TLAB_VARS, ONLY : imode_verbosity
     USE TLAB_VARS, ONLY : dns_omp_numThreads
+
     IMPLICIT NONE
 
     CHARACTER*10 clock(2)
@@ -279,12 +282,36 @@ CONTAINS
     CALL TLAB_WRITE_ASCII(lfile, '########################################')
 
 #ifdef USE_MPI
-    CALL MPI_FINALIZE(ims_err)
+    IF ( ims_err .EQ. 0 ) THEN
+       CALL MPI_FINALIZE(ims_err)
+    ELSE
+       CALL MPI_Abort(MPI_COMM_WORLD,ims_err,ims_err)
+    ENDIF
 #endif
-    STOP
-
     RETURN
   END SUBROUTINE TLAB_STOP
+
+#ifdef USE_MPI 
+  SUBROUTINE TLAB_MPI_PANIC(location,mpi_error_code)
+
+    IMPLICIT NONE
+
+    CHARACTER(LEN=*), INTENT(IN) :: location
+    INTEGER,          INTENT(IN) :: mpi_error_code
+
+    !##############################
+    CHARACTER error_string*1024, line*512
+    INTEGER error_local, error_len
+
+    CALL MPI_Error_String(mpi_error_code, error_string, error_len, error_local)
+    CALL TLAB_WRITE_ASCII(efile,'MPI-ERROR: Source file'//TRIM(ADJUSTL(LOCATION)),.TRUE.)
+    CALL TLAB_WRITE_ASCII(efile,error_string,.TRUE.)
+
+    CALL TLAB_STOP(mpi_error_code)
+    ! Not supposed to return from this subroutine
+
+  END SUBROUTINE TLAB_MPI_PANIC
+#endif
 
   ! ###################################################################
   ! ###################################################################

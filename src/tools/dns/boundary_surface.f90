@@ -8,6 +8,7 @@
 SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS,ONLY : tfile
+  USE TLAB_PROCS,    ONLY : TLAB_WRITE_ASCII
 #endif
   USE TLAB_CONSTANTS,ONLY : lfile
   USE TLAB_VARS,   ONLY : imax,jmax,kmax, g
