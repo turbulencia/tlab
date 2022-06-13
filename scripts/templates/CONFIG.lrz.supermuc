@@ -1,0 +1,6 @@
+site=lrz
+system=supermuc
+os=linux
+account=pn49de
+queue=general
+hpc=parallel
