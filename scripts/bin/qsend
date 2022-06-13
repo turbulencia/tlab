@@ -42,6 +42,7 @@ QSEND_TIME=14400
 QSEND_MAXITER=2000
 QSEND_STEP=500
 QSEND_SCRIPT="dns.nqs.sh.$site.$system"
+QSEND_QUEUE="$queue"
 if [ $system = "jugene" ]; then
    QSEND_CPUMODE="smp"
 fi
@@ -49,7 +50,7 @@ if [ $system = "juqueen" ]; then
    QSEND_COMMMODE=blocking
    QSEND_RANKSPERNODE=16
 fi
-if [ $system = "juwels" ]; then
+if [ $system = "juwels"  ]; then
    QSEND_COMMMODE=blocking
    QSEND_RANKSPERNODE=48
    QSEND_THREADSPERRANK=1
@@ -58,6 +59,11 @@ fi
 if [ $system = "jureca" ]; then 
    QSEND_COMMODE=blocking 
    QSEND_RANKSPERNODE=24
+   QSEND_THREADSPERRANK=1
+fi
+if [ $system = "supermuc" ]; then
+   QSEND_COMMMODE=blocking
+   QSEND_RANKSPERNODE=48
    QSEND_THREADSPERRANK=1
 fi
 
@@ -127,7 +133,7 @@ if [ $# -eq 0 ]; then
 
    fi
 
-   if [ $system = "juwels" ] ; then 
+   if [ $system = "juwels"  ]; then 
       echo "Enter ranks per node [$QSEND_RANKSPERNODE] :(1-48)"
       read value
       if [ -n "$value" ]; then
@@ -141,7 +147,29 @@ if [ $# -eq 0 ]; then
          QSEND_THREADSPERRANK=$value
       fi
 
-      echo "Enter system partition [$QSEND_QUEUE] : (batch,mem192,devel)"
+      echo "Enter system partition [$QSEND_QUEUE] : (batch,mem192,devell)"
+      read value
+      if [ -n "$value" ]; then  
+	  QSEND_QUEUE=$value
+      fi 
+
+   fi
+
+   if [ $system = "supermuc" ]; then 
+      echo "Enter ranks per node [$QSEND_RANKSPERNODE] :(1-48)"
+      read value
+      if [ -n "$value" ]; then
+         QSEND_RANKSPERNODE=$value
+      fi
+
+      QSEND_THREADSPERRANK=$((48/$QSEND_RANKSPERNODE))
+      echo "Enter threads per rank [$QSEND_THREADSPERRANK] :(1-48)"
+      read value
+      if [ -n "$value" ]; then
+         QSEND_THREADSPERRANK=$value
+      fi
+
+      echo "Enter system partition [$QSEND_QUEUE] : (general,micro,test)"
       read value
       if [ -n "$value" ]; then  
 	  QSEND_QUEUE=$value
@@ -219,7 +247,7 @@ if [ $# -eq 0 ]; then
       echo "Communication mode   : $QSEND_COMMMODE"
       echo "Ranks per node       : $QSEND_RANKSPERNODE"
    fi
-   if [ $system = "juwels" ] || [ $system = "jureca" ]; then 
+   if [ $system = "juwels" ] || [ $system = "jureca" ]  || [ $system = "supermuc" ]; then 
       echo "Partition            : $QSEND_QUEUE"
       echo "Ranks per node       : $QSEND_RANKSPERNODE"
       echo "Threads per rank     : $QSEND_THREADSPERRANK"
@@ -539,7 +567,7 @@ if [ $answer = "yes" ]; then
 		}
 	    print $0
 	}' 
-    elif [ $system = "juwels" ] || [ $system = "jureca" ]; then
+    elif [ $system = "juwels" ] || [ $system = "jureca" ]  || [ $system = "supermuc" ]; then
 	LINE='BEGIN {} 
 	    { 
              if ($4 == "DIRECTIVES" ) 
@@ -867,15 +895,12 @@ if [ $answer = "yes" ]; then
 	if [ $answer = "yes" ]; then
 	    echo "Submiting Job $QSEND_NAME"
 	    chmod +x $QSEND_TMP_SCRIPT
-	    if [[ $site = "fzj" ]]; then
-#	        llsubmit $queue $QSEND_TMP_SCRIPT
-	        sbatch $queue $QSEND_TMP_SCRIPT
-            elif [ $site = "dkrz" ]; then
-		sbatch $queue $QSEND_TMP_SCRIPT
-            elif [ $site = "tacc" ]; then
-                bsub < $QSEND_TMP_SCRIPT
+	    if [ $site = "tacc" ]; then
+	       bsub < $QSEND_TMP_SCRIPT
+            elif [ $site = "rwth" ]; then
+	       qsub $queue $QSEND_TMP_SCRIPT
 	    else
-		qsub $queue $QSEND_TMP_SCRIPT
+	       sbatch $QSEND_TMP_SCRIPT
 	    fi
 	fi
     fi
