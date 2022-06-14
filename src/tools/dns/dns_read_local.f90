@@ -972,7 +972,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM only implemented for incompressible mode.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
-     IF ( .NOT. ( iadvection .EQ. EQNS_CONVECTIVE ) ) THEN
+     IF ( .NOT. ( (iadvection .EQ. EQNS_CONVECTIVE) .OR. (iadvection .EQ. EQNS_SKEWSYMMETRIC) ) ) THEN
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM only implemented for convective advection scheme.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF

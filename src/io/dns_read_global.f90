@@ -323,7 +323,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
-     IF ( .NOT. (iadvection .EQ. EQNS_CONVECTIVE .OR. iadvection .EQ. EQNS_SKEWSYMMETRIC) ) THEN
+     IF ( .NOT. ( (iadvection .EQ. EQNS_CONVECTIVE) .OR. (iadvection .EQ. EQNS_SKEWSYMMETRIC) ) ) THEN
       CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Horizontal pressure staggering only implemented for convective advection scheme.')
       CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
