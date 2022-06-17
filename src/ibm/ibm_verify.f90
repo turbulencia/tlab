@@ -273,22 +273,22 @@ subroutine IBM_VERIFY_UP(eps)
     dummy = max_height_objup
     call MPI_ALLREDUCE(dummy, max_height_objup, i1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
 #endif
-    ! lower
-    do j = 1, jmax
-      ip_b = imax*(j-1)+1
-      dummy = 0
-      do k = 1, kmax
-        dummy = dummy + sum(eps(ip_b:ip_b+imax-1)) 
-        ip_b = ip_b + nxy
-      end do  
-      if ( dummy == 0 ) exit
-      max_height_objlo = j   
-    end do
-#ifdef USE_MPI
-    dummy = max_height_objlo
-    call MPI_ALLREDUCE(dummy, max_height_objlo, i1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
-#endif  
   end if
+  ! lower (always assuming objects on lower boundary!)
+  do j = 1, jmax
+    ip_b = imax*(j-1)+1
+    dummy = 0
+    do k = 1, kmax
+      dummy = dummy + sum(eps(ip_b:ip_b+imax-1)) 
+      ip_b = ip_b + nxy
+    end do  
+    if ( dummy == 0 ) exit
+    max_height_objlo = j   
+  end do
+#ifdef USE_MPI
+  dummy = max_height_objlo
+  call MPI_ALLREDUCE(dummy, max_height_objlo, i1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+#endif  
 
   return
 end subroutine IBM_VERIFY_UP
