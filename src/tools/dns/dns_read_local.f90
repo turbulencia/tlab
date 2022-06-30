@@ -962,12 +962,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. No IBM geometry defined.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)    
      ENDIF
-     DO is = 1,3
-        IF ( ( FilterDomain(is)%type .NE. DNS_FILTER_NONE ) .AND. ( icalc_scal .EQ. 1 ) ) THEN
-           CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM with domain filter and scalar not tested yet.')
-           CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        ENDIF
-     ENDDO
      IF ( .NOT. ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) ) THEN
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. IBM. IBM only implemented for incompressible mode.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
