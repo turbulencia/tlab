@@ -61,6 +61,10 @@ elif [ $system = "mistral" ]; then
     srun -l --propagate=STACK --cpu_bind=cores \
 	--distribution=block:cyclic $exfile > $STDOUT 2> $STDERR
 
+elif [ $system = "supermuc" ]; then
+    srun --export=ALL \
+	$exfile > $STDOUT 2> $STDERR
+
 elif [ $system = "juwels" ]; then
     srun --export=ALL,ROMIO_HINTS=/p/home/jusers/ansorge1/juwels/romio_hints \
 	$exfile > $STDOUT 2> $STDERR
