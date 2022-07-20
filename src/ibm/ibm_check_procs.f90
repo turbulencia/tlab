@@ -9,7 +9,7 @@
 !########################################################################
 !# DESCRIPTION OF SUBROUTINES
 !#   checks IBM status of each proc, whether it is idle (do nothing) 
-!#   or active (spline reconstruction) 
+!#   or active (spline reconstruction for derivatives) 
 !#  
 !#    
 !########################################################################

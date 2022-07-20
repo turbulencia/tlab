@@ -158,7 +158,7 @@ end subroutine IBM_BCS_FIELD_STAGGER
 
 !########################################################################
 
-subroutine IBM_BCS_FIELD_INV(fld,tmp)
+subroutine IBM_BCS_FIELD_INV(fld,tmp) ! not used so far
   
   use DNS_IBM,   only : eps
   use TLAB_VARS, only : isize_field

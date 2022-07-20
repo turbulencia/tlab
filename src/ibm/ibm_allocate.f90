@@ -11,8 +11,7 @@
 !#
 !########################################################################
 !# DESCRIPTION OF SUBROUTINES
-!#   called once in dns_main.f90 l.210 to allocate needed memory for ibm
-!#   module
+!#   called once in dns_main.f90 to allocate needed memory for ibm module
 !#    
 !#    
 !########################################################################
@@ -94,7 +93,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
       call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, epsp,     isize_field, 'epsp'    )
     end if
 
-    ! fld_ibm      (copying modified field)
+    ! fld_ibm      (copy modified field)
     call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,   fld_ibm,  isize_field, 'fld_ibm' )
 
     ! nob(i/j/k)   (number of objects)
@@ -102,7 +101,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
     call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobj,   isize_nobj,    'nobj'  )
     call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobk,   isize_nobk,    'nobk'  )
     
-    ! nob(i/j/k)_b (beginnging objects)
+    ! nob(i/j/k)_b (beginning objects)
     call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobi_b, isize_nobi_be, 'nobi_b')
     call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobj_b, isize_nobj_be, 'nobj_b')
     call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobk_b, isize_nobk_be, 'nobk_b')

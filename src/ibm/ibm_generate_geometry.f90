@@ -93,7 +93,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   nobi_max  = i0; nobj_max  = i0; nobk_max  = i0
 
   ! ================================================================== !
-  ! number, begin and end of objects in x-direction
+  ! number, beginning and end of objects in x-direction
   ip = i1
   do i = 1, g(1)%size - 1     ! contiguous i-lines
     do jk = 1, nyz            ! pages of   i-lines
