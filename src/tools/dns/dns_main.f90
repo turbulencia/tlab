@@ -167,6 +167,9 @@ PROGRAM DNS
   ! Initialize IBM
   ! ###################################################################
   IF ( imode_ibm == 1 ) THEN
+    CALL IBM_READ_INI(ifile, imode_rhs,    BcsFlowJmin%type, &
+                      BcsScalJmin%type,    BcsScalJmax%type, &
+                      BcsScalJmin%SfcType, BcsScalJmax%SfcType)
     CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
     CALL IBM_BCS_FIELD_COMBINED(i0, q)
     IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s)
