@@ -156,8 +156,8 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   IF (istagger .EQ. 1 ) THEN
     CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), p,    tmp1, wrk3d, wrk2d,wrk3d)
     CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp1, p,    wrk3d, wrk2d,wrk3d)
-  ENDIF  
-  
+  ENDIF
+
   NULLIFY(u,v,w, tmp3,tmp4,tmp5)
 
   RETURN
