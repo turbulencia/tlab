@@ -24,7 +24,7 @@
 !# 
 !########################################################################
 
-subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
+subroutine IBM_ALLOCATE(C_FILE_LOC)
 
   use DNS_IBM
   use TLAB_VARS,      only : g, isize_field, istagger
@@ -40,14 +40,13 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
 
 #include "integers.h"
 
-  character(len=128), intent(in   ) :: C_FILE_LOC
-  logical,            intent(inout) :: allocated
+  character(len=128), intent(in) :: C_FILE_LOC
 
 #ifdef USE_MPI 
-  TINTEGER, parameter               :: idi = TLAB_MPI_I_PARTIAL 
-  TINTEGER, parameter               :: idk = TLAB_MPI_K_PARTIAL 
+  TINTEGER, parameter            :: idi = TLAB_MPI_I_PARTIAL 
+  TINTEGER, parameter            :: idk = TLAB_MPI_K_PARTIAL 
 #endif
-  TINTEGER                          :: nyz, nxz, nxy 
+  TINTEGER                       :: nyz, nxz, nxy 
 
   ! ================================================================== !
   ! npages
@@ -86,42 +85,38 @@ subroutine IBM_ALLOCATE(C_FILE_LOC, allocated)
   isize_wrk1d_ibm = max(g(1)%size, max(g(2)%size, g(3)%size)) ! gap size unknown (max size assumed)
 
   ! allocate here all ibm related arrays
-  if ( .not. allocated ) then
-    ! eps          (geometry fields)
-    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,   eps,      isize_field, 'eps'     )
-    if ( istagger == 1 ) then
-      call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, epsp,     isize_field, 'epsp'    )
-    end if
 
-    ! fld_ibm      (copy modified field)
-    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,   fld_ibm,  isize_field, 'fld_ibm' )
-
-    ! nob(i/j/k)   (number of objects)
-    call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobi,   isize_nobi,    'nobi'  )
-    call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobj,   isize_nobj,    'nobj'  )
-    call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobk,   isize_nobk,    'nobk'  )
-    
-    ! nob(i/j/k)_b (beginning objects)
-    call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobi_b, isize_nobi_be, 'nobi_b')
-    call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobj_b, isize_nobj_be, 'nobj_b')
-    call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobk_b, isize_nobk_be, 'nobk_b')
-
-    ! nob(i/j/k)_e (end of objects)
-    call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobi_e, isize_nobi_be, 'nobi_e')
-    call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobj_e, isize_nobj_be, 'nobj_e')
-    call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobk_e, isize_nobk_be, 'nobk_e')
-    
-    ! xa, ya (spline arrays input)
-    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, xa, nspl,            'xa')
-    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, ya, nspl,            'ya')
-
-    ! xb, yb (spline arrays output)
-    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, xb, isize_wrk1d_ibm, 'xb')
-    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, yb, isize_wrk1d_ibm, 'yb')
-
-    ! set alloc flag: done
-    allocated = .true.
+  ! eps          (geometry fields)
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,   eps,      isize_field, 'eps'     )
+  if ( istagger == 1 ) then
+    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, epsp,     isize_field, 'epsp'    )
   end if
+
+  ! fld_ibm      (copy modified field)
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,   fld_ibm,  isize_field, 'fld_ibm' )
+
+  ! nob(i/j/k)   (number of objects)
+  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobi,   isize_nobi,    'nobi'  )
+  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobj,   isize_nobj,    'nobj'  )
+  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobk,   isize_nobk,    'nobk'  )
+  
+  ! nob(i/j/k)_b (beginning objects)
+  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobi_b, isize_nobi_be, 'nobi_b')
+  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobj_b, isize_nobj_be, 'nobj_b')
+  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobk_b, isize_nobk_be, 'nobk_b')
+
+  ! nob(i/j/k)_e (end of objects)
+  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobi_e, isize_nobi_be, 'nobi_e')
+  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobj_e, isize_nobj_be, 'nobj_e')
+  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobk_e, isize_nobk_be, 'nobk_e')
+  
+  ! xa, ya (spline arrays input)
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, xa, nspl,            'xa')
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, ya, nspl,            'ya')
+
+  ! xb, yb (spline arrays output)
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, xb, isize_wrk1d_ibm, 'xb')
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, yb, isize_wrk1d_ibm, 'yb')
 
   return
 end subroutine IBM_ALLOCATE

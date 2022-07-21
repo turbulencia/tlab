@@ -59,7 +59,7 @@ CONTAINS
     ALLOCATE(ims_plan_trps_k(ims_npro_k))
     ALLOCATE(ims_plan_trpr_k(ims_npro_k))
 
-    ALLOCATE(ims_size_p(ims_npro))            ! Particle information
+    ALLOCATE(ims_size_p(ims_npro))                ! Particle information
 
 #ifdef HLRS_HAWK
     ! On hawk, we tested that 192 yields optimum performace;
@@ -136,7 +136,7 @@ CONTAINS
       CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
           ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
     END IF
-    
+
     ! -----------------------------------------------------------------------
     IF ( ims_npro_i > 1 .AND. ifourier == 1 ) THEN
       CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Ox FFTW in Poisson solver.')

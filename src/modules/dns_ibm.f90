@@ -17,14 +17,35 @@
 !#
 !########################################################################
 
+module IBM_TYPES
+
+  implicit none
+  
+  save
+  
+  ! add new geometry types in this module
+  type ibm_geo_dt
+      sequence
+      CHARACTER(32) :: name
+      TINTEGER      :: number, height, width
+      LOGICAL       :: mirrored
+  end type ibm_geo_dt
+
+end module IBM_TYPES
+
+!########################################################################
+
 module DNS_IBM
 
-  use TLAB_TYPES,     only: ibm_geo_dt
   use TLAB_CONSTANTS, only: MAX_NSP 
+  use IBM_TYPES
 
   implicit none
 
   save 
+
+  ! ibm_scalar mode
+  TINTEGER                                :: imode_ibm_scal
 
   ! descriptive geometry fields (saved)
   TREAL, dimension(:),allocatable, target :: eps, epsp                   ! eps indicator field

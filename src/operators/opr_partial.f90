@@ -18,7 +18,7 @@ SUBROUTINE OPR_PARTIAL1(nlines, bcs, g, u,result, wrk2d)
 
 ! -------------------------------------------------------------------
   TINTEGER ip
-  
+
 ! ###################################################################
   IF ( g%periodic ) THEN
      SELECT CASE( g%mode_fdm )

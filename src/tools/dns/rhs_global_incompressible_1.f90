@@ -24,7 +24,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS,ONLY:tfile
 #endif
-  USE TLAB_VARS, ONLY : imode_ibm, imode_ibm_scal
+  USE TLAB_VARS, ONLY : imode_ibm
   USE TLAB_VARS, ONLY : imode_eqns, istagger
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d
   USE TLAB_VARS, ONLY : g
@@ -35,7 +35,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-  USE DNS_IBM,   ONLY : ibm_burgers
+  USE DNS_IBM,   ONLY : imode_ibm_scal, ibm_burgers
 
   IMPLICIT NONE
 

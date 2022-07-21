@@ -48,8 +48,6 @@ PROGRAM VISUALS
   CHARACTER*32 flow_file, scal_file, part_file, plot_file, time_str
   CHARACTER*64 str
 
-  LOGICAL ibm_allocated
-
   TINTEGER opt_format
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
   TINTEGER ij, is, bcs(2,2)
@@ -262,31 +260,7 @@ PROGRAM VISUALS
   ! Read local options - IBM parameters and geometry
   ! -------------------------------------------------------------------
   IF (imode_ibm .EQ. 1) THEN
-    CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'IBMScalar', 'off', sRes)
-    IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm_scal = 0
-    ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm_scal = 1
-    ELSE
-      CALL TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBMScalar option.')
-      CALL TLAB_STOP(DNS_ERROR_OPTION)
-    ENDIF
-    CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'RestartGeometry', 'no', sRes)
-    IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_restart = .TRUE.
-    ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_restart = .FALSE.
-    ENDIF  
-    IF ( imode_ibm .EQ. 1 .AND. ibm_restart .NEQV. .TRUE. ) THEN
-      CALL TLAB_WRITE_ASCII(efile, 'VISUALS. IBM option only possible with existing geometry.')
-      CALL TLAB_STOP(DNS_ERROR_OPTION)
-    ENDIF
-    CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'DataTypeGeometry', 'int', sRes)
-    IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'real' ) THEN; ibm_io = IBM_IO_REAL
-    ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'int'  ) THEN; ibm_io = IBM_IO_INT
-    ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bit'  ) THEN; ibm_io = IBM_IO_BIT
-    ELSE
-      CALL TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBM Data type option.')
-      CALL TLAB_STOP(DNS_ERROR_OPTION)
-    ENDIF  
-    CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'MaxNumberObj', '0', nob_max)
-    CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'FluidPoints', '3', nflu)
+    CALL IBM_READ_INI(ifile)
   ENDIF
   
   ! -------------------------------------------------------------------
@@ -325,8 +299,7 @@ PROGRAM VISUALS
   ENDIF
 
   IF ( imode_ibm .EQ. 1 ) THEN
-    ibm_allocated = .FALSE.
-    CALL IBM_ALLOCATE(C_FILE_LOC, ibm_allocated)
+    CALL IBM_ALLOCATE(C_FILE_LOC)
   ENDIF
 
   ! -------------------------------------------------------------------

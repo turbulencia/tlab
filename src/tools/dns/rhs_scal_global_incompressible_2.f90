@@ -15,8 +15,8 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2&
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : idiffusion, visc, schmidt
   USE BOUNDARY_BCS,ONLY: BcsScalJmin, BcsScalJmax
-  USE TLAB_VARS, ONLY : imode_ibm, imode_ibm_scal
-  USE DNS_IBM,   ONLY : ibm_partial
+  USE TLAB_VARS, ONLY : imode_ibm
+  USE DNS_IBM,   ONLY : imode_ibm_scal, ibm_partial
 
   IMPLICIT NONE
 

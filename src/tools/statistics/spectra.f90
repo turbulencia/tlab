@@ -93,8 +93,6 @@ PROGRAM SPECTRA
 
   TINTEGER inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
 
-  LOGICAL ibm_allocated
-
 ! Reading variables
   CHARACTER*512 sRes
 
@@ -202,33 +200,8 @@ PROGRAM SPECTRA
   ! Read local options - IBM parameters and geometry
   ! -------------------------------------------------------------------
   IF (imode_ibm .EQ. 1) THEN
-     CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'IBMScalar', 'off', sRes)
-     IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm_scal = 0
-     ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm_scal = 1
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Wrong IBMScalar option.')
-        CALL TLAB_STOP(DNS_ERROR_OPTION)
-     ENDIF
-     CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'RestartGeometry', 'no', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ibm_restart = .TRUE.
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no'  ) THEN; ibm_restart = .FALSE.
-     ENDIF  
-     IF ( imode_ibm .EQ. 1 .AND. ibm_restart .NEQV. .TRUE. ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. IBM option only possible with existing geometry.')
-        CALL TLAB_STOP(DNS_ERROR_OPTION)
-     ENDIF  
-     CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'DataTypeGeometry', 'int', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'real' ) THEN; ibm_io = IBM_IO_REAL
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'int'  ) THEN; ibm_io = IBM_IO_INT
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bit'  ) THEN; ibm_io = IBM_IO_BIT
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Wrong IBM Data type option.')
-        CALL TLAB_STOP(DNS_ERROR_OPTION)
-     ENDIF
-     CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'MaxNumberObj', '0', nob_max)
-     CALL SCANINIINT(bakfile, ifile, 'IBMParameter', 'FluidPoints', '3', nflu)
+     CALL IBM_READ_INI(ifile)
   ENDIF
-
 ! -------------------------------------------------------------------
 ! Definitions
 ! -------------------------------------------------------------------
@@ -380,8 +353,7 @@ PROGRAM SPECTRA
   ENDIF
 
   IF ( imode_ibm .EQ. 1 ) THEN
-     ibm_allocated = .FALSE.
-     CALL IBM_ALLOCATE(C_FILE_LOC, ibm_allocated)
+     CALL IBM_ALLOCATE(C_FILE_LOC)
   ENDIF
 
 ! extend array by complex nyquist frequency in x (+1 TCOMPLEX = +2 TREAL)

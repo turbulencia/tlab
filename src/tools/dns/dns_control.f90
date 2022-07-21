@@ -24,7 +24,7 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
 #endif
 
   IMPLICIT NONE
-  
+
   TINTEGER,                        INTENT(IN)    :: flag_dilatation
   TREAL, DIMENSION(isize_field,*), INTENT(INOUT) :: q,s
   TREAL, DIMENSION(isize_field,6), INTENT(INOUT) :: txc

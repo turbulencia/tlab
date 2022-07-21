@@ -30,7 +30,7 @@ subroutine IBM_VERIFY_GEOMETRY()
 
   use DNS_IBM 
   use TLAB_PROCS
-  use TLAB_VARS,      only : g, imode_ibm_scal, icalc_scal
+  use TLAB_VARS,      only : g, icalc_scal
   use TLAB_VARS,      only : imax, jmax, kmax
   use TLAB_CONSTANTS, only : efile
 #ifdef USE_MPI
@@ -297,8 +297,8 @@ end subroutine IBM_VERIFY_UP
 
 subroutine IBM_VERIFY_SCAL()
 
-  use DNS_IBM,        only : ibm_objup, max_height_objlo, max_height_objup
-  use TLAB_VARS,      only : g, imode_ibm_scal
+  use DNS_IBM,        only : ibm_objup, max_height_objlo, max_height_objup, imode_ibm_scal
+  use TLAB_VARS,      only : g
   use TLAB_CONSTANTS, only : efile
   use TLAB_PROCS
 #ifdef USE_MPI
