@@ -24,7 +24,7 @@
 #define TLAB_MPI_I_POISSON1  3
 #define TLAB_MPI_I_POISSON2  4
 #define TLAB_MPI_I_AUX1      5
-#define TLAB_MPI_I_AUX2      6  
+#define TLAB_MPI_I_AUX2      6
 
 #define TLAB_MPI_I_MAXTYPES  6
 

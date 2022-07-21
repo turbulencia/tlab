@@ -48,7 +48,7 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   u    => q(:,1)
   v    => q(:,2)
   w    => q(:,3)
-  
+
 ! #######################################################################
 ! Sources
   CALL FI_SOURCES_FLOW(q,s, tmp, tmp1, wrk1d,wrk2d,wrk3d)
