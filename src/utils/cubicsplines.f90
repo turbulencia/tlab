@@ -76,7 +76,7 @@ subroutine CUBIC_SPLINE(bc, bcval, norg, nint, xorg, yorg, xint, yint, wrk)
 
   ! check input data
 #ifdef _DEBUG
-  call CUBIC_SPLINE_CHECK_INPUT(bc, bcval, norg, nint, xorg, yorg, xint, yint, dx)
+  call CUBIC_SPLINE_CHECK_INPUT(bc, bcval, norg, nint, xorg, xint, dx)
 #endif
 
   ! build diagonals and rhs
@@ -108,7 +108,7 @@ end subroutine CUBIC_SPLINE
 !########################################################################
 !########################################################################
 
-subroutine CUBIC_SPLINE_CHECK_INPUT(bc, bcval,norg, nint, xorg, yorg, xint, yint, dx)
+subroutine CUBIC_SPLINE_CHECK_INPUT(bc, bcval,norg, nint, xorg, xint, dx)
 
   use TLAB_CONSTANTS, only: efile
   use TLAB_PROCS
@@ -118,9 +118,8 @@ subroutine CUBIC_SPLINE_CHECK_INPUT(bc, bcval,norg, nint, xorg, yorg, xint, yint
   TINTEGER, dimension(2     ), intent(in):: bc
   TREAL,    dimension(2     ), intent(in):: bcval
   TINTEGER,                    intent(in):: norg, nint
-  TREAL,    dimension(norg  ), intent(in):: xorg, yorg
+  TREAL,    dimension(norg  ), intent(in):: xorg
   TREAL,    dimension(nint  ), intent(in):: xint
-  TREAL,    dimension(nint  ), intent(in):: yint
   TREAL,    dimension(norg-1), intent(in):: dx
   
   ! -------------------------------------------------------------------
@@ -133,7 +132,7 @@ subroutine CUBIC_SPLINE_CHECK_INPUT(bc, bcval,norg, nint, xorg, yorg, xint, yint
     call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE)
   end if 
   if ( (xint(1) < xorg(1)) .or. (xint(nint) > xorg(norg)) ) then
-    call TLAB_WRITE_ASCII(efile, 'CUBIC SPLINE. No extrapolation, just interpolation - check boarders of xint.')
+    call TLAB_WRITE_ASCII(efile, 'CUBIC SPLINE. No extrapolation, just interpolation - check borders of xint.')
     call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE)
   end if
   do i = 1, norg-1

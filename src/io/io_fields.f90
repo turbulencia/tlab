@@ -589,10 +589,10 @@ contains
     end if
 
     isize = offset - 5*SIZEOFINT
-    if ( isize > 0 .AND. mod(isize,SIZEOFREAL) == 0 ) then
+    if ( isize > 0 .and. mod(isize,SIZEOFREAL) == 0 ) then
        isize = isize/SIZEOFREAL
        read(unit) params(1:isize)
-    elseif ( isize .EQ. 0 ) then
+    elseif ( isize == 0 ) then
        continue ! no params to read; header format is correct 
     else
        call TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER. Header format incorrect.')

@@ -14,7 +14,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE TLAB_VARS,    ONLY : pbg, rbg, damkohler
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_txc_field, isize_wrk1d,isize_wrk2d,isize_wrk3d
   USE TLAB_VARS,    ONLY : inb_flow,inb_scal,inb_txc
-  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, iadvection, iviscous, icalc_part, itransport, istagger
+  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, imode_ibm, iadvection, iviscous, icalc_part, itransport, istagger
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : FilterDomain
   USE TLAB_VARS,    ONLY : nstatavg
@@ -446,6 +446,20 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   BcsScalKmin%ctan = dummy(1); BcsScalKmax%ctan = dummy(1)
 
 ! ###################################################################
+! IBM Status Parameter
+! ###################################################################
+  CALL TLAB_WRITE_ASCII(bakfile, '#')
+  CALL TLAB_WRITE_ASCII(bakfile, '#[IBMParameter]')
+  CALL TLAB_WRITE_ASCII(bakfile, '#Status=<on/off>')
+  CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'Status', 'off', sRes)
+  IF      (TRIM(ADJUSTL(sRes)) == 'off') THEN; imode_ibm = 0
+  ELSE IF (TRIM(ADJUSTL(sRes)) == 'on' ) THEN; imode_ibm = 1
+  ELSE
+    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBM Status option.')
+    CALL TLAB_STOP(DNS_ERROR_OPTION)
+  ENDIF
+
+! ###################################################################
 ! Buffer Zone Parameters
 ! ###################################################################
   CALL TLAB_WRITE_ASCII(bakfile, '#')
@@ -843,7 +857,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
         CALL TLAB_STOP(DNS_ERROR_JBC)
      ENDIF
   ENDDO
-
 
 ! -------------------------------------------------------------------
 ! Implicit RKM part

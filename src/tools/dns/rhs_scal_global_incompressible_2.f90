@@ -15,7 +15,9 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2&
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : idiffusion, visc, schmidt
   USE BOUNDARY_BCS,ONLY: BcsScalJmin, BcsScalJmax
-  
+  USE TLAB_VARS, ONLY : imode_ibm
+  USE IBM_VARS,  ONLY : imode_ibm_scal, ibm_partial
+
   IMPLICIT NONE
 
   TINTEGER is
@@ -61,6 +63,16 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2&
      ip_t = ip_t + nxy ! top BC address
   ENDDO
 
+! #######################################################################
+! IBM
+! #######################################################################
+  IF ( imode_ibm == 1 ) THEN
+     IF ( imode_ibm_scal == 1 ) THEN ! IBM usage for scalar field
+        ! (requirenments: only possible with objects on bottom boundary 
+        !  with homogeneous temperature in solid regions)
+        ibm_partial = .true.
+     ENDIF
+  ENDIF
 
 ! #######################################################################
 ! Diffusion and convection terms in scalar equations
@@ -86,6 +98,12 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2&
   hs = hs - C_05_R*( tmp6 + tmp5 + tmp4 )
 
 ! #######################################################################
+! IBM
+! #######################################################################
+! IBM usage for scalar field, done
+  IF ( imode_ibm_scal == 1 ) ibm_partial = .false.
+
+! #######################################################################
 ! Boundary conditions
 ! #######################################################################
   ibc = 0
@@ -100,6 +118,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2&
        BcsScalJmax%SfcType(is) .NE. DNS_SFC_STATIC ) THEN
      CALL BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,tmp3,wrk1d,wrk2d,wrk3d)
   ENDIF
+     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(hs(1)) ! set tendency in solid to zero
 
 ! -----------------------------------------------------------------------
 ! Impose bottom at Jmin/max

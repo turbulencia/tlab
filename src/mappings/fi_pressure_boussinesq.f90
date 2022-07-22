@@ -13,8 +13,9 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imax,jmax,kmax
   USE TLAB_VARS, ONLY : isize_wrk1d, isize_field
-  USE TLAB_VARS, ONLY : imode_eqns, istagger
+  USE TLAB_VARS, ONLY : imode_eqns, imode_ibm, istagger
   USE TLAB_VARS, ONLY : rbackground
+  USE IBM_VARS,  ONLY : ibm_burgers
 
   IMPLICIT NONE
 
@@ -56,6 +57,9 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   tmp4 => tmp(:,2)
   tmp5 => tmp(:,3)
 
+! If IBM, then use modified fields for derivatives
+  IF ( imode_ibm == 1 ) ibm_burgers = .true.
+
 ! Advection and diffusion terms
   CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u,    p, tmp1, wrk2d,wrk3d) ! store u transposed in tmp1
   tmp3 = tmp3 + p
@@ -78,8 +82,18 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), u,w,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains w transposed
   tmp3 = tmp3 + p
 
+! If IBM, set flag back to false
+  IF ( imode_ibm == 1 ) ibm_burgers = .false.
+
 ! Set p-field back to zero
   p = C_0_R
+
+! Apply IBM BCs
+  IF ( imode_ibm == 1 ) THEN 
+    CALL IBM_BCS_FIELD(tmp3)
+    CALL IBM_BCS_FIELD(tmp4)
+    CALL IBM_BCS_FIELD(tmp5)
+  ENDIF
 
 ! Calculate forcing term Ox
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
@@ -127,6 +141,7 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   IF ( istagger  .EQ. 1 ) THEN ! todo: only need to stagger upper/lower boundary plane, not full h2-array
     CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
     CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+    IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD_STAGGER(tmp4)
   ENDIF
   DO k = 1,kmax
     p_bcs => tmp4(ip_b:); wrk2d(1:imax,k,1) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom

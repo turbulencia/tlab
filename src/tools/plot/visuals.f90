@@ -24,6 +24,7 @@ PROGRAM VISUALS
   USE THERMO_VARS, ONLY : NSP, THERMO_SPNAME
   USE LAGRANGE_VARS
   USE LAGRANGE_ARRAYS
+  USE IBM_VARS
   USE IO_FIELDS
 
   IMPLICIT NONE
@@ -79,6 +80,20 @@ PROGRAM VISUALS
   CALL DNS_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) CALL PARTICLE_READ_GLOBAL(ifile)
 
+  ! -------------------------------------------------------------------
+  ! IBM status (before TLAB_MPI_INITIALIZE!)
+  ! -------------------------------------------------------------------
+  CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
+  IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm = 0
+  ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm = 1
+  ELSE
+    CALL TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBM Status option.')
+    CALL TLAB_STOP(DNS_ERROR_OPTION)
+  ENDIF
+
+  ! -------------------------------------------------------------------
+  ! Initialize MPI
+  ! -------------------------------------------------------------------
 #ifdef USE_MPI
   CALL TLAB_MPI_INITIALIZE
 #endif
@@ -189,6 +204,15 @@ PROGRAM VISUALS
     IF ( opt_vec(iv) .EQ. iscal_offset+20) THEN; iread_flow = 1; iread_scal = 1; inb_txc=MAX(inb_txc,7); ENDIF
   ENDDO
 
+  ! check if enough memory is provided for the IBM
+  IF ( imode_ibm .EQ. 1 ) THEN 
+#ifdef IBM_DEBUG
+    inb_txc = MAX(inb_txc,6)
+#else
+    inb_txc = MAX(inb_txc,3)
+#endif
+  ENDIF
+
   ! -------------------------------------------------------------------
   CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
@@ -233,6 +257,13 @@ PROGRAM VISUALS
   IF ( opt_format .LT. 0 ) opt_format = 2 ! default is single precission, no header
 
   ! -------------------------------------------------------------------
+  ! Read local options - IBM parameters and geometry
+  ! -------------------------------------------------------------------
+  IF (imode_ibm .EQ. 1) THEN
+    CALL IBM_READ_INI(ifile)
+  ENDIF
+  
+  ! -------------------------------------------------------------------
   ! Defining gate levels for conditioning
   ! -------------------------------------------------------------------
   opt_cond      = 0 ! default values
@@ -267,6 +298,10 @@ PROGRAM VISUALS
     CALL PARTICLE_ALLOCATE(C_FILE_LOC)
   ENDIF
 
+  IF ( imode_ibm .EQ. 1 ) THEN
+    CALL IBM_ALLOCATE(C_FILE_LOC)
+  ENDIF
+
   ! -------------------------------------------------------------------
   ! Initialize
   ! -------------------------------------------------------------------
@@ -284,6 +319,10 @@ PROGRAM VISUALS
   ENDIF
 
   CALL FI_PROFILES_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
+
+  IF ( imode_ibm .EQ. 1 ) THEN
+    CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
+  ENDIF  
 
 #ifdef USE_MPI
   CALL VISUALS_MPIO_AUX(opt_format, subdomain)
@@ -328,6 +367,11 @@ PROGRAM VISUALS
       WRITE(flow_file,*) itime; flow_file = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(flow_file))
       CALL IO_READ_FIELDS(flow_file, IO_FLOW, imax,jmax,kmax, inb_flow, i0, q, wrk3d)
     ENDIF
+
+    IF ( imode_ibm .EQ. 1 ) THEN
+      CALL IBM_BCS_FIELD_COMBINED(i0, q)
+      IF ( icalc_scal .EQ. 1 ) CALL IBM_INITIALIZE_SCAL(s)
+    ENDIF  
 
     CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
 

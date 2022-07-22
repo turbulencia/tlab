@@ -14,7 +14,9 @@
 SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  
+  USE TLAB_VARS, ONLY : imode_ibm
+  USE IBM_VARS,  ONLY : ibm_partial
+
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
@@ -28,19 +30,31 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
   
 ! ###################################################################
   bcs = 0
+
+  ! -------------------------------------------------------------------
+  ! IBM   (if .true., OPR_PARTIAL_X/Y/Z uses modified fields for derivatives)
+  IF ( imode_ibm == 1 ) ibm_partial = .true.
+
+  ! -------------------------------------------------------------------
   
   CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), u, result, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), v, tmp1,   wrk3d, wrk2d,wrk3d)
+
   result =  result + tmp1
   CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), w, tmp1,   wrk3d, wrk2d,wrk3d)
+
   result =-(result + tmp1)
+
+  ! -------------------------------------------------------------------
+  IF ( imode_ibm == 1 ) ibm_partial = .false.  
 
   RETURN
 END SUBROUTINE FI_INVARIANT_P
 
 !########################################################################
 ! First invariant on horizontal pressure nodes
-! (caution: div(u)=0 condition only holds on pressure nodes)
+! (caution: div(u)=0 condition only holds on pressure nodes,
+!           in IBM-mode without splines, because of combined schemes)
 !########################################################################
 SUBROUTINE FI_INVARIANT_P_STAG(nx,ny,nz, u,v,w, result, tmp1, tmp2, wrk2d,wrk3d)
 

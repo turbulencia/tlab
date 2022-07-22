@@ -13,7 +13,7 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
 
   USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_PROCS
-  USE TLAB_VARS,ONLY : imode_eqns, icalc_scal, istagger, inb_scal
+  USE TLAB_VARS,ONLY : imode_eqns, imode_ibm, icalc_scal, inb_scal, istagger
   USE TLAB_VARS,ONLY : isize_field, imax,jmax,kmax
   USE TLAB_VARS,ONLY : rbackground
   USE DNS_LOCAL, ONLY : ilimit_flow, p_bound_min,p_bound_max, r_bound_min,r_bound_max, d_bound_max
@@ -72,6 +72,14 @@ SUBROUTINE DNS_CONTROL(flag_dilatation, q,s, txc, wrk2d,wrk3d)
               CALL FI_INVARIANT_P_STAG(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2), txc(1,6), wrk2d,wrk3d)
            ELSE   
               CALL FI_INVARIANT_P(     imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),           wrk2d,wrk3d)
+           ENDIF
+        ENDIF
+
+        IF ( imode_ibm .EQ. 1 ) THEN 
+           IF ( istagger .EQ. 1 ) THEN
+              CALL IBM_BCS_FIELD_STAGGER(txc(1,1)) ! IBM - zeros in solid on pressure mesh 
+           ELSE
+              CALL IBM_BCS_FIELD(txc(1,1))         ! IBM - zeros in solid on velocity mesh
            ENDIF
         ENDIF
 

@@ -116,4 +116,8 @@
 
 #define DNS_ERROR_CUBIC_SPLINE      300
 
+#define DNS_ERROR_IBM_SPLINE        400
+#define DNS_ERROR_IBM_GEOMETRY      401
+#define DNS_ERROR_IBM_MISS_GEO      402
+
 #endif

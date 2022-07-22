@@ -51,7 +51,6 @@ program CSPLINE
   TREAL,    dimension(11*imax)           :: wrk  
   TREAL,    DIMENSION(imax,    5)        :: wrk1d
   TREAL,    DIMENSION(imax_int,5)        :: wrk1d_int
-
 ! ###################################################################
 ! test data (random data or specific test function)
   ! random = .false.  ! uniform grid with sin() function

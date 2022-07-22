@@ -20,7 +20,8 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE TLAB_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
   USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_VARS
-  USE THERMO_VARS, ONLY : imixture, thermo_param
+  USE THERMO_VARS,    ONLY : imixture, thermo_param
+  USE IBM_VARS,       ONLY : eps
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif
@@ -45,7 +46,7 @@ USE TLAB_PROCS
   TINTEGER i,j,k,bcs(2,2)
   TREAL diff, dummy, coefT, coefR, coefQ, c23
 
-  TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nv
+  TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nv, im
 
   CHARACTER*32 name, groupname(MAX_VARS_GROUPS)
   CHARACTER*250 line1, varname(MAX_VARS_GROUPS)
@@ -87,6 +88,12 @@ USE TLAB_PROCS
 
   groupname(ng) = 'Mean'
   varname(ng)   = 'rS fS rS_y fS_y rQ fQ'
+  IF ( imode_ibm == 1 ) THEN
+    varname(ng) = TRIM(ADJUSTL(varname(ng)))//' eps Sbcs'
+#define ep(j)     mean2d(j,ig(1)+6)
+#define Sbcs(j)   mean2d(j,ig(1)+7)
+    sg(ng) = sg(ng) + 2
+  END IF
   IF ( radiation%active(is) ) THEN
     varname(ng) = TRIM(ADJUSTL(varname(ng)))//' rQrad rQradC'
     sg(ng) = sg(ng) + 2
@@ -270,6 +277,17 @@ USE TLAB_PROCS
   ! #######################################################################
   WRITE(line1,*) itime; line1 = 'Calculating scal statistics at It'//TRIM(ADJUSTL(line1))//'...'
   CALL TLAB_WRITE_ASCII(lfile,line1)
+
+  ! #######################################################################
+  ! Preliminary for IBM usage
+  ! #######################################################################
+  ! Calculating gamma for conditional averages (Pope, p.170 [5.305])
+  ! write out scalar boundary values applied in solids
+  im = 5
+  IF ( imode_ibm == 1 ) THEN
+    CALL IBM_AVG_GAMMA(ep(1), eps, wrk3d, wrk1d); im = im + 1
+    CALL IBM_AVG_SCAL_BCS(is, Sbcs(1));           im = im + 1
+  END IF
 
   ! #######################################################################
   ! Preliminary data of velocity and density
@@ -526,7 +544,7 @@ USE TLAB_PROCS
 
   ! -----------------------------------------------------------------------
   ! Calculating averages
-  k = ig(1)+5
+  k = ig(1) + im
   IF ( radiation%active(is) ) THEN
     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac,g(3)%jac, mean2d(1,k), wrk1d, area)
     k = k + 1; CALL AVG_IK_V(imax,jmax,kmax, jmax, dsdx, g(1)%jac,g(3)%jac, mean2d(1,k), wrk1d, area) ! correction term or flux
