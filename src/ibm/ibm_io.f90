@@ -112,7 +112,7 @@ subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d)
   
   ! size of bit-array
   bsize_field = isize_field / i8 
-  imax_bit    = imax / i8 ! already checked in dns_read_local if possible
+  imax_bit    = imax / i8 ! already checked in IBM_READ_CONSISTENCY_CHECK if possible
 
   ! assign to scratch
   eps_bit => wrk3d(1:bsize_field)
@@ -153,7 +153,7 @@ subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d)
   
   ! size of bit-array
   bsize_field = isize_field / i8 
-  imax_bit    = imax / i8 ! already checked in dns_read_local if possible
+  imax_bit    = imax / i8 ! already checked in IBM_READ_CONSISTENCY_CHECK if possible
 
   ! pass memory address from double precision array to int1 array
   call c_f_pointer(c_loc(wrk3d), int_wrk, shape=[imax_bit*jmax*kmax])
