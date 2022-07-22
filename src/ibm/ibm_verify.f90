@@ -28,7 +28,7 @@
 
 subroutine IBM_VERIFY_GEOMETRY()
 
-  use DNS_IBM 
+  use IBM_VARS 
   use TLAB_PROCS
   use TLAB_VARS,      only : g, icalc_scal
   use TLAB_VARS,      only : imax, jmax, kmax
@@ -129,7 +129,7 @@ end subroutine IBM_VERIFY_GEOMETRY
 
 subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
 
-  use DNS_IBM,        only : nflu
+  use IBM_VARS,       only : nflu
   use TLAB_CONSTANTS, only : efile
   use TLAB_TYPES,     only : grid_dt
   use TLAB_PROCS
@@ -213,7 +213,7 @@ end subroutine IBM_VERIFY
 
 subroutine IBM_VERIFY_UP(eps)
 
-  use DNS_IBM,        only : ibm_objup, max_height_objlo, max_height_objup
+  use IBM_VARS,       only : ibm_objup, max_height_objlo, max_height_objup
   use TLAB_VARS,      only : isize_field, imax,jmax,kmax
   use TLAB_CONSTANTS, only : efile
   use TLAB_PROCS
@@ -297,7 +297,7 @@ end subroutine IBM_VERIFY_UP
 
 subroutine IBM_VERIFY_SCAL()
 
-  use DNS_IBM,        only : ibm_objup, max_height_objlo, max_height_objup, imode_ibm_scal
+  use IBM_VARS,       only : ibm_objup, max_height_objlo, max_height_objup, imode_ibm_scal
   use TLAB_VARS,      only : g
   use TLAB_CONSTANTS, only : efile
   use TLAB_PROCS

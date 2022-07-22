@@ -18,7 +18,7 @@ SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
 
   USE TLAB_TYPES,     ONLY : grid_dt
   USE TLAB_CONSTANTS, ONLY : efile
-  USE DNS_IBM,        ONLY : ibm_burgers
+  USE IBM_VARS,       ONLY : ibm_burgers
   USE TLAB_PROCS
   IMPLICIT NONE
 

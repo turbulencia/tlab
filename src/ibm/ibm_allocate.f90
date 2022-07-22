@@ -26,7 +26,7 @@
 
 subroutine IBM_ALLOCATE(C_FILE_LOC)
 
-  use DNS_IBM
+  use IBM_VARS
   use TLAB_VARS,      only : g, isize_field, istagger
   use TLAB_VARS,      only : imax, jmax, kmax
   use TLAB_PROCS  

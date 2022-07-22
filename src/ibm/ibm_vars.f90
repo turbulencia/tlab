@@ -17,25 +17,7 @@
 !#
 !########################################################################
 
-module IBM_TYPES
-
-  implicit none
-  
-  save
-  
-  ! add new geometry types in this module
-  type ibm_geo_dt
-      sequence
-      CHARACTER(32) :: name
-      TINTEGER      :: number, height, width
-      LOGICAL       :: mirrored
-  end type ibm_geo_dt
-
-end module IBM_TYPES
-
-!########################################################################
-
-module DNS_IBM
+module IBM_VARS
 
   use TLAB_CONSTANTS, only: MAX_NSP 
   use IBM_TYPES
@@ -88,6 +70,6 @@ module DNS_IBM
   character(len=32), parameter            :: eps_name      = 'eps0.1'
   character(len=32), parameter            :: eps_name_real = eps_name(1:4)
 
-end module DNS_IBM
+end module IBM_VARS
 
 !########################################################################

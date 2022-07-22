@@ -29,7 +29,7 @@
 
 subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   
-  use DNS_IBM
+  use IBM_VARS
   use TLAB_VARS,     only : g, isize_field, imax, jmax, kmax
 #ifdef USE_MPI
   use MPI

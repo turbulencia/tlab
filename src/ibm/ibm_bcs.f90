@@ -23,7 +23,7 @@
 
 subroutine IBM_INITIALIZE_SCAL(s)
   
-  use DNS_IBM,   only : eps, ibmscaljmin, ibmscaljmax 
+  use IBM_VARS,  only : eps, ibmscaljmin, ibmscaljmax 
   use TLAB_VARS, only : imax, jmax, isize_field,inb_scal
 
   implicit none
@@ -57,7 +57,7 @@ end subroutine IBM_INITIALIZE_SCAL
 
 subroutine IBM_BCS_SCAL(is,s,eps)
   
-  use DNS_IBM,   only : ibmscaljmin, ibmscaljmax, ibm_objup, max_height_objup
+  use IBM_VARS,  only : ibmscaljmin, ibmscaljmax, ibm_objup, max_height_objup
   use TLAB_VARS, only : imax, jmax, kmax
 
   implicit none
@@ -116,7 +116,7 @@ end subroutine IBM_BCS_FIELD_COMBINED
 
 subroutine IBM_BCS_FIELD(fld)
   
-  use DNS_IBM,   only : eps
+  use IBM_VARS,  only : eps
   use TLAB_VARS, only : isize_field
 
   implicit none
@@ -138,7 +138,7 @@ end subroutine IBM_BCS_FIELD
 
 subroutine IBM_BCS_FIELD_STAGGER(fld)
   
-  use DNS_IBM,   only : epsp
+  use IBM_VARS,  only : epsp
   use TLAB_VARS, only : isize_field
 
   implicit none
@@ -160,7 +160,7 @@ end subroutine IBM_BCS_FIELD_STAGGER
 
 subroutine IBM_BCS_FIELD_INV(fld,tmp) ! not used so far
   
-  use DNS_IBM,   only : eps
+  use IBM_VARS,  only : eps
   use TLAB_VARS, only : isize_field
 
   implicit none

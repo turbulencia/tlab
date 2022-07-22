@@ -15,7 +15,7 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : isize_wrk1d, isize_field
   USE TLAB_VARS, ONLY : imode_eqns, imode_ibm, istagger
   USE TLAB_VARS, ONLY : rbackground
-  USE DNS_IBM,   ONLY : ibm_burgers
+  USE IBM_VARS,  ONLY : ibm_burgers
 
   IMPLICIT NONE
 

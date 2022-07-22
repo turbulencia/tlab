@@ -26,7 +26,7 @@
 
 subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
   
-  use DNS_IBM
+  use IBM_VARS
   use TLAB_VARS,     only : g, imax, jmax, kmax, isize_field 
 #ifdef USE_MPI
   use MPI

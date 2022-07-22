@@ -23,7 +23,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE TLAB_PROCS
   USE THERMO_VARS, ONLY : imixture, MRATIO, GRATIO
   USE THERMO_VARS, ONLY : THERMO_AI, WGHT_INV
-  USE DNS_IBM,     ONLY : eps
+  USE IBM_VARS,    ONLY : eps
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS, ONLY : tfile
 #endif

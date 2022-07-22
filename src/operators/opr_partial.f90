@@ -80,13 +80,13 @@ END SUBROUTINE OPR_PARTIAL1
 SUBROUTINE OPR_PARTIAL1_IBM(nlines, bcs, g, u,result, wrk2d, wrk3d)
 
   USE TLAB_TYPES, ONLY : grid_dt
-  USE DNS_IBM,    ONLY : fld_ibm
-  USE DNS_IBM,    ONLY : nobi,    nobj,   nobk
-  USE DNS_IBM,    ONLY : nobi_b,  nobj_b, nobk_b 
-  USE DNS_IBM,    ONLY : nobi_e,  nobj_e, nobk_e 
-  USE DNS_IBM,    ONLY : isize_nobi,    isize_nobj,    isize_nobk
-  USE DNS_IBM,    ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
-  USE DNS_IBM,    ONLY : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
+  USE IBM_VARS,   ONLY : fld_ibm
+  USE IBM_VARS,   ONLY : nobi,    nobj,   nobk
+  USE IBM_VARS,   ONLY : nobi_b,  nobj_b, nobk_b 
+  USE IBM_VARS,   ONLY : nobi_e,  nobj_e, nobk_e 
+  USE IBM_VARS,   ONLY : isize_nobi,    isize_nobj,    isize_nobk
+  USE IBM_VARS,   ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
+  USE IBM_VARS,   ONLY : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
    
   IMPLICIT NONE
 
@@ -142,11 +142,11 @@ END SUBROUTINE OPR_PARTIAL1_IBM
 SUBROUTINE OPR_IBM(nlines, g, u,result, wrk3d)
 
   USE TLAB_TYPES, ONLY : grid_dt
-  USE DNS_IBM,    ONLY : nobi,    nobj,   nobk
-  USE DNS_IBM,    ONLY : nobi_b,  nobj_b, nobk_b 
-  USE DNS_IBM,    ONLY : nobi_e,  nobj_e, nobk_e 
-  USE DNS_IBM,    ONLY : isize_nobi,    isize_nobj,    isize_nobk
-  USE DNS_IBM,    ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
+  USE IBM_VARS,    ONLY : nobi,    nobj,   nobk
+  USE IBM_VARS,    ONLY : nobi_b,  nobj_b, nobk_b 
+  USE IBM_VARS,    ONLY : nobi_e,  nobj_e, nobk_e 
+  USE IBM_VARS,    ONLY : isize_nobi,    isize_nobj,    isize_nobk
+  USE IBM_VARS,    ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
    
   IMPLICIT NONE
 
@@ -372,13 +372,13 @@ END SUBROUTINE OPR_PARTIAL2D
 SUBROUTINE OPR_PARTIAL2D_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
 
   USE TLAB_TYPES, ONLY : grid_dt
-  USE DNS_IBM,    ONLY : fld_ibm
-  USE DNS_IBM,    ONLY : nobi,    nobj,   nobk
-  USE DNS_IBM,    ONLY : nobi_b,  nobj_b, nobk_b 
-  USE DNS_IBM,    ONLY : nobi_e,  nobj_e, nobk_e 
-  USE DNS_IBM,    ONLY : isize_nobi,    isize_nobj,    isize_nobk
-  USE DNS_IBM,    ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
-  USE DNS_IBM,    ONLY : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
+  USE IBM_VARS,    ONLY : fld_ibm
+  USE IBM_VARS,    ONLY : nobi,    nobj,   nobk
+  USE IBM_VARS,    ONLY : nobi_b,  nobj_b, nobk_b 
+  USE IBM_VARS,    ONLY : nobi_e,  nobj_e, nobk_e 
+  USE IBM_VARS,    ONLY : isize_nobi,    isize_nobj,    isize_nobk
+  USE IBM_VARS,    ONLY : isize_nobi_be, isize_nobj_be, isize_nobk_be 
+  USE IBM_VARS,    ONLY : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
    
   IMPLICIT NONE
    
@@ -555,7 +555,7 @@ END SUBROUTINE OPR_PARTIAL1_INT
 SUBROUTINE OPR_PARTIAL_X(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   USE TLAB_TYPES,    ONLY : grid_dt
-  USE DNS_IBM,       ONLY : ibm_partial
+  USE IBM_VARS,       ONLY : ibm_partial
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_i
   USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -700,7 +700,7 @@ END SUBROUTINE OPR_PARTIAL_X
 SUBROUTINE OPR_PARTIAL_Z(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   USE TLAB_TYPES,    ONLY : grid_dt
-  USE DNS_IBM,       ONLY : ibm_partial
+  USE IBM_VARS,       ONLY : ibm_partial
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_npro_k
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
@@ -827,7 +827,7 @@ END SUBROUTINE OPR_PARTIAL_Z
 SUBROUTINE OPR_PARTIAL_Y(type, nx,ny,nz, bcs, g, u, result, tmp1, wrk2d,wrk3d)
 
   USE TLAB_TYPES, ONLY : grid_dt
-  USE DNS_IBM,    ONLY : ibm_partial
+  USE IBM_VARS,    ONLY : ibm_partial
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif

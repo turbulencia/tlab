@@ -29,7 +29,7 @@
 
 subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e, wrk3d)
 
-  use DNS_IBM,        only : xa, xb, ya, yb, nflu, ibmscaljmin
+  use IBM_VARS,       only : xa, xb, ya, yb, nflu, ibmscaljmin
   use TLAB_VARS,      only : isize_field
   use TLAB_CONSTANTS, only : efile
   use TLAB_TYPES,     only : grid_dt
@@ -143,7 +143,7 @@ end subroutine IBM_SPLINE_XYZ
 
 subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir, nlines, plane) 
 
-  use DNS_IBM,        only : nflu, isize_wrk1d_ibm, nspl, ibmscaljmin
+  use IBM_VARS,        only : nflu, isize_wrk1d_ibm, nspl, ibmscaljmin
   use TLAB_VARS,      only : isize_field
   use TLAB_TYPES,     only : grid_dt
    

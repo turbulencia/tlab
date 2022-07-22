@@ -28,7 +28,7 @@ subroutine IBM_READ_INI(inifile)
 
   use TLAB_CONSTANTS, only : efile, lfile
   use TLAB_PROCS,     only : TLAB_STOP, TLAB_WRITE_ASCII
-  use DNS_IBM
+  use IBM_VARS
   
   implicit none
 
@@ -125,7 +125,7 @@ subroutine IBM_READ_CONSISTENCY_CHECK(imode_rhs,                              &
   use TLAB_VARS,      only : imode_eqns, iadvection, inb_scal
   use TLAB_VARS,      only : radiation, transport, chemistry, subsidence
   use TLAB_PROCS,     only : TLAB_STOP, TLAB_WRITE_ASCII
-  use DNS_IBM
+  use IBM_VARS
   
   implicit none
 

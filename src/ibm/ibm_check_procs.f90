@@ -24,7 +24,7 @@
 
 subroutine IBM_CHECK_PROCS(epsi, epsj, epsk)
   
-  use DNS_IBM,       only : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
+  use IBM_VARS,      only : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
   use TLAB_VARS,     only : isize_field
 #ifdef IBM_DEBUG
 #ifdef USE_MPI 

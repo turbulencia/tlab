@@ -27,7 +27,7 @@
 
 subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)  
   
-  use DNS_IBM
+  use IBM_VARS
   use TLAB_VARS,      only : imax,jmax,kmax, isize_field, inb_txc
   use TLAB_VARS,      only : istagger
   use TLAB_CONSTANTS, only : efile

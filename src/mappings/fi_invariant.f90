@@ -15,7 +15,7 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imode_ibm
-  USE DNS_IBM,   ONLY : ibm_partial
+  USE IBM_VARS,  ONLY : ibm_partial
 
   IMPLICIT NONE
 

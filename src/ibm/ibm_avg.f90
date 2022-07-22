@@ -92,8 +92,8 @@ end subroutine IBM_AVG_GAMMA
 
 subroutine IBM_AVG_SCAL_BCS(is, scalv_bcs)
   
-  use DNS_IBM,   only : ibm_objup, max_height_objlo, max_height_objup
-  use DNS_IBM,   only : ibmscaljmin, ibmscaljmax
+  use IBM_VARS,  only : ibm_objup, max_height_objlo, max_height_objup
+  use IBM_VARS,  only : ibmscaljmin, ibmscaljmax
   use TLAB_VARS, only : jmax
 
   implicit none

@@ -32,7 +32,7 @@
 
 subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 
-  use DNS_IBM
+  use IBM_VARS
   use TLAB_VARS,     only : g, imax, jmax, kmax, isize_field
   use IO_FIELDS
 #ifdef USE_MPI 

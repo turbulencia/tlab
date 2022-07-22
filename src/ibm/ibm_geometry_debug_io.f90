@@ -30,7 +30,7 @@
 
 subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3, wrk3d)
   
-  use DNS_IBM
+  use IBM_VARS
   use IO_FIELDS
   use TLAB_VARS,     only : g, imax, jmax, kmax, isize_field
 #ifdef USE_MPI

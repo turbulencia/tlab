@@ -25,7 +25,7 @@
 subroutine IBM_IO_READ_INT_GEOMETRY(wrk3d)
   
   use TLAB_VARS,                   only : imax,jmax,kmax, isize_field
-  use DNS_IBM,                     only : eps, eps_name
+  use IBM_VARS,                    only : eps, eps_name
   use TLAB_CONSTANTS,              only : dp
   use IO_FIELDS
   use, intrinsic :: ISO_C_binding, only : c_f_pointer, c_loc
@@ -62,7 +62,7 @@ end subroutine IBM_IO_READ_INT_GEOMETRY
 
 subroutine IBM_IO_WRITE_INT_GEOMETRY(wrk3d)
   
-  use DNS_IBM,   only : eps, eps_name
+  use IBM_VARS,  only : eps, eps_name
   use TLAB_VARS, only : isize_field, imax,jmax,kmax
   use IO_FIELDS
 
@@ -93,7 +93,7 @@ end subroutine IBM_IO_WRITE_INT_GEOMETRY
 
 subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d)
   
-  use DNS_IBM,   only : eps, eps_name
+  use IBM_VARS,  only : eps, eps_name
   use TLAB_VARS, only : isize_field, imax,jmax,kmax
   use IO_FIELDS
 
@@ -133,7 +133,7 @@ end subroutine IBM_IO_WRITE_BIT_GEOMETRY
 
 subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d)
   
-  use DNS_IBM,                     only : eps, eps_name
+  use IBM_VARS,                    only : eps, eps_name
   use TLAB_VARS,                   only : isize_field, imax,jmax,kmax
   use TLAB_CONSTANTS,              only : dp
   use IO_FIELDS

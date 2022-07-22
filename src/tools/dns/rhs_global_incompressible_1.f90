@@ -35,7 +35,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1&
   USE DNS_TOWER
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-  USE DNS_IBM,   ONLY : imode_ibm_scal, ibm_burgers
+  USE IBM_VARS,  ONLY : imode_ibm_scal, ibm_burgers
 
   IMPLICIT NONE
 
