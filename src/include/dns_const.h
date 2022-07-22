@@ -221,9 +221,4 @@
 #define CS_BCS_NATURAL  3
 #define CS_BCS_FIXED_2  4
 
-! IBM IO Types
-#define IBM_IO_REAL     1
-#define IBM_IO_INT      2
-#define IBM_IO_BIT      3
-
 #endif

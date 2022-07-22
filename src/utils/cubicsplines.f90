@@ -132,7 +132,7 @@ subroutine CUBIC_SPLINE_CHECK_INPUT(bc, bcval,norg, nint, xorg, xint, dx)
     call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE)
   end if 
   if ( (xint(1) < xorg(1)) .or. (xint(nint) > xorg(norg)) ) then
-    call TLAB_WRITE_ASCII(efile, 'CUBIC SPLINE. No extrapolation, just interpolation - check boarders of xint.')
+    call TLAB_WRITE_ASCII(efile, 'CUBIC SPLINE. No extrapolation, just interpolation - check borders of xint.')
     call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE)
   end if
   do i = 1, norg-1

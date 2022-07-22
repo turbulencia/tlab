@@ -1,5 +1,4 @@
 #include "types.h"
-#include "dns_const.h"
 
 !########################################################################
 !# HISTORY / AUTHORS
@@ -69,6 +68,11 @@ module IBM_VARS
   ! name of io eps
   character(len=32), parameter            :: eps_name      = 'eps0.1'
   character(len=32), parameter            :: eps_name_real = eps_name(1:4)
+
+  ! io types
+  TINTEGER,          parameter            ::  IBM_IO_REAL  = 1
+  TINTEGER,          parameter            ::  IBM_IO_INT   = 2
+  TINTEGER,          parameter            ::  IBM_IO_BIT   = 3
 
 end module IBM_VARS
 

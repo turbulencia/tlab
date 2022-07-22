@@ -159,11 +159,11 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
       ip = i0        
       do iob = 1, nob(ii)    ! loop over immersed object(s)
         ! ================================================================== !
-        ! check number of fluid points (to boarders and between objects)
+        ! check number of fluid points (to borders and between objects)
         if ( iob == 1 ) then                    ! left
           fp_l = nob_b(ip+ii) - i1
           if ( fp_l < fp_min .and. fp_l /= 0 ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between left boarder and first object.')
+            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between left border and first object.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
           end if
         end if 
@@ -178,7 +178,7 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
         if ( iob == nob(ii) ) then              ! right
           fp_r = g%size - nob_e(ip+ii)
           if ( fp_r < fp_min .and. fp_r /= 0 ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between right boarder and first object.')
+            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between right border and first object.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
           end if
         end if 
