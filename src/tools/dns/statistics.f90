@@ -159,7 +159,8 @@ CONTAINS
               txc(1,1),txc(1,2),txc(1,4),txc(1,5),txc(1,6),hq(1,3), mean, wrk1d,wrk2d,wrk3d)
         END DO
 
-        ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
+        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+            ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
         IF ( stats_buoyancy ) THEN
           IF ( buoyancy%TYPE .EQ. EQNS_EXPLICIT ) THEN
             CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, hq(1,1))
@@ -176,7 +177,6 @@ CONTAINS
 
         END IF
 
-        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
           IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
             is = is + 1
             CALL THERMO_ANELASTIC_THETA_L(imax,jmax,kmax, s, epbackground,pbackground, hq(1,1))
