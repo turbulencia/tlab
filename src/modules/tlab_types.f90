@@ -1,91 +1,99 @@
 #include "types.h"
 
-MODULE TLAB_TYPES
+module TLAB_TYPES
 #ifdef USE_MPI
-  USE MPI
+    use MPI
 #endif
-  IMPLICIT NONE
-  SAVE
+    implicit none
+    save
 
-  TINTEGER, PARAMETER :: MAX_PARS = 10
-  TINTEGER, PARAMETER :: MAX_VARS = 20
-  TINTEGER, PARAMETER :: MAX_MODES= 20
+    TINTEGER, parameter :: sp = KIND(1.0)
+    TINTEGER, parameter :: dp = KIND(1.0d0)
+    TINTEGER, parameter :: cp = dp             ! code precision
+    ! !> Single precision real numbers, 6 digits, range 10⁻³⁷ to 10³⁷-1; 32 bits
+    ! integer, parameter :: sp = selected_real_kind(6, 37)
+    ! !> Double precision real numbers, 15 digits, range 10⁻³⁰⁷ to 10³⁰⁷-1; 64 bits
+    ! integer, parameter :: dp = selected_real_kind(15, 307)
 
-  TYPE discrete_dt
-     SEQUENCE
-     TINTEGER type, size
-     TINTEGER, DIMENSION(MAX_MODES) :: modex, modez
-     TREAL,    DIMENSION(MAX_MODES) :: amplitude, phasex, phasez
-     TREAL,    DIMENSION(MAX_PARS)  :: parameters
-  END TYPE discrete_dt
+    TINTEGER, parameter :: MAX_PARS = 10
+    TINTEGER, parameter :: MAX_VARS = 20
+    TINTEGER, parameter :: MAX_MODES = 20
 
-  TYPE background_dt
-     SEQUENCE
-     TINTEGER type, padding
-     TREAL reference, mean, delta, ymean, thick, diam
-     TREAL, DIMENSION(MAX_PARS) :: parameters
-  END TYPE background_dt
+    type discrete_dt
+        sequence
+        TINTEGER type, size
+        TINTEGER, dimension(MAX_MODES) :: modex, modez
+        TREAL, dimension(MAX_MODES) :: amplitude, phasex, phasez
+        TREAL, dimension(MAX_PARS) :: parameters
+    end type discrete_dt
 
-  TYPE term_dt
-     SEQUENCE
-     TINTEGER type
-     TINTEGER, DIMENSION(MAX_PARS) :: scalar     ! fields defining this term
-     LOGICAL,  DIMENSION(MAX_PARS) :: active, lpadding(3)     ! fields affected by this term
-     TREAL,    DIMENSION(MAX_PARS) :: parameters
-     TREAL,    DIMENSION(MAX_PARS) :: auxiliar
-     TREAL,    DIMENSION(3)        :: vector
-  END TYPE term_dt
+    type background_dt
+        sequence
+        TINTEGER type, padding
+        TREAL reference, mean, delta, ymean, thick, diam
+        TREAL, dimension(MAX_PARS) :: parameters
+    end type background_dt
 
-  TYPE grid_dt
-     SEQUENCE
-     CHARACTER*8 name
-     TINTEGER size, inb_grid, mode_fdm
-     LOGICAL uniform, periodic, anelastic
-     TREAL scale
-     TREAL, DIMENSION(:),   POINTER :: nodes
-     TREAL, DIMENSION(:,:), POINTER :: jac   ! pointer to Jacobians
-     TREAL, DIMENSION(:,:), POINTER :: lu0i  ! pointer to LU decomposition for interpolation 
-     TREAL, DIMENSION(:,:), POINTER :: lu1   ! pointer to LU decomposition for 1. derivative
-     TREAL, DIMENSION(:,:), POINTER :: lu1i  ! pointer to LU decomposition for 1. derivative inc. interp. 
-     TREAL, DIMENSION(:,:), POINTER :: lu2   ! pointer to LU decomposition for 2. derivative
-     TREAL, DIMENSION(:,:), POINTER :: lu2d  ! pointer to LU decomposition for 2. derivative inc. diffusion
-     TREAL, DIMENSION(:,:), POINTER :: mwn   ! pointer to modified wavenumbers
-     TREAL, DIMENSION(:),   POINTER :: rhoinv! pointer to density correction in anelastic
-  END TYPE grid_dt
+    type term_dt
+        sequence
+        TINTEGER type
+        TINTEGER, dimension(MAX_PARS) :: scalar     ! fields defining this term
+        logical, dimension(MAX_PARS) :: active, lpadding(3)     ! fields affected by this term
+        TREAL, dimension(MAX_PARS) :: parameters
+        TREAL, dimension(MAX_PARS) :: auxiliar
+        TREAL, dimension(3) :: vector
+    end type term_dt
 
-  TYPE filter_dt
-     SEQUENCE
-     TINTEGER type, ipadding
-     TINTEGER size, inb_filter
-     LOGICAL uniform, periodic, lpadding(2)
-     TREAL,    DIMENSION(MAX_PARS) :: parameters
-     TINTEGER BcsMin, BcsMax                  ! boundary conditions
-     TINTEGER repeat
-     TINTEGER mpitype
-     TREAL, DIMENSION(:,:), ALLOCATABLE :: coeffs ! pointer to coefficients
-  END TYPE filter_dt
+    type grid_dt
+        sequence
+        character*8 name
+        TINTEGER size, inb_grid, mode_fdm
+        logical uniform, periodic, anelastic
+        TREAL scale
+        TREAL, dimension(:), pointer :: nodes
+        TREAL, dimension(:, :), pointer :: jac   ! pointer to Jacobians
+        TREAL, dimension(:, :), pointer :: lu0i  ! pointer to LU decomposition for interpolation
+        TREAL, dimension(:, :), pointer :: lu1   ! pointer to LU decomposition for 1. derivative
+        TREAL, dimension(:, :), pointer :: lu1i  ! pointer to LU decomposition for 1. derivative inc. interp.
+        TREAL, dimension(:, :), pointer :: lu2   ! pointer to LU decomposition for 2. derivative
+        TREAL, dimension(:, :), pointer :: lu2d  ! pointer to LU decomposition for 2. derivative inc. diffusion
+        TREAL, dimension(:, :), pointer :: mwn   ! pointer to modified wavenumbers
+        TREAL, dimension(:), pointer :: rhoinv! pointer to density correction in anelastic
+    end type grid_dt
 
-  TYPE pointers_dt
-     SEQUENCE
-     CHARACTER*32                 :: tag
-     TREAL, DIMENSION(:), POINTER :: field
-  END TYPE pointers_dt
+    type filter_dt
+        sequence
+        TINTEGER type, ipadding
+        TINTEGER size, inb_filter
+        logical uniform, periodic, lpadding(2)
+        TREAL, dimension(MAX_PARS) :: parameters
+        TINTEGER BcsMin, BcsMax                  ! boundary conditions
+        TINTEGER repeat
+        TINTEGER mpitype
+        TREAL, dimension(:, :), allocatable :: coeffs ! pointer to coefficients
+    end type filter_dt
 
-  TYPE pointers3d_dt
-     SEQUENCE
-     TREAL, DIMENSION(:,:,:), POINTER :: field
-  END TYPE pointers3d_dt
+    type pointers_dt
+        sequence
+        character*32 :: tag
+        TREAL, dimension(:), pointer :: field
+    end type pointers_dt
 
-  TYPE subarray_dt
-     SEQUENCE
+    type pointers3d_dt
+        sequence
+        TREAL, dimension(:, :, :), pointer :: field
+    end type pointers3d_dt
+
+    type subarray_dt
+        sequence
 #ifdef USE_MPI
-     LOGICAL active, lpadding(3)
-     INTEGER communicator
-     INTEGER subarray
-     INTEGER(KIND=MPI_OFFSET_KIND) offset
+        logical active, lpadding(3)
+        integer communicator
+        integer subarray
+        integer(KIND=MPI_OFFSET_KIND) offset
 #else
-     INTEGER offset
+        integer offset
 #endif
-  END type subarray_dt
+    end type subarray_dt
 
-END MODULE TLAB_TYPES
+end module TLAB_TYPES

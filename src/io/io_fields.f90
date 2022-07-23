@@ -18,8 +18,8 @@
 
 module IO_FIELDS
 
-  use TLAB_CONSTANTS, only : lfile, wfile, efile
-  use TLAB_CONSTANTS, only : sp,dp
+    use TLAB_TYPES, only : sp,dp
+    use TLAB_CONSTANTS, only : lfile, wfile, efile
   use TLAB_PROCS, only : TLAB_STOP, TLAB_WRITE_ASCII
 #ifdef USE_MPI
   use MPI

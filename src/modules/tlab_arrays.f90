@@ -1,19 +1,19 @@
 #include "types.h"
 
-MODULE TLAB_ARRAYS
-  IMPLICIT NONE
-  SAVE
-  PRIVATE
+module TLAB_ARRAYS
+    implicit none
+    save
+    private
 
-  TREAL, ALLOCATABLE, PUBLIC :: x(:,:),y(:,:),z(:,:)  ! Grid and associated arrays
-  TREAL, ALLOCATABLE, PUBLIC :: q(:,:)                ! Eulerian fields, flow vartiables
-  TREAL, ALLOCATABLE, PUBLIC :: s(:,:)                ! Eulerian fields, scalar variables
-  TREAL, ALLOCATABLE, PUBLIC :: txc(:,:)              ! Temporary space for Eulerian fields
-  TREAL, ALLOCATABLE, PUBLIC :: wrk1d(:,:)            ! Work arrays (scratch space)
-  TREAL, ALLOCATABLE, PUBLIC :: wrk2d(:,:)            ! Work arrays (scratch space)
-  TREAL, ALLOCATABLE, PUBLIC :: wrk3d(:)              ! Work arrays (scratch space)
+    TREAL, allocatable, public :: x(:, :), y(:, :), z(:, :)     ! Grid and associated arrays
+    TREAL, allocatable, public :: q(:, :)                       ! Eulerian fields, flow vartiables
+    TREAL, allocatable, public :: s(:, :)                       ! Eulerian fields, scalar variables
+    TREAL, allocatable, public :: txc(:, :)                     ! Temporary space for Eulerian fields
+    TREAL, allocatable, public :: wrk1d(:, :)                   ! Work arrays (scratch space)
+    TREAL, allocatable, public :: wrk2d(:, :)                   ! Work arrays (scratch space)
+    TREAL, allocatable, public :: wrk3d(:)                      ! Work arrays (scratch space)
 
-  TARGET x, y, z
-  TARGET q, s, txc
+    target x, y, z
+    target q, s, txc
 
-END MODULE TLAB_ARRAYS
+end module TLAB_ARRAYS
