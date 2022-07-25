@@ -19,6 +19,7 @@ PROGRAM DNS
   USE DNS_ARRAYS
   USE TIME
   USE DNS_TOWER
+  USE IBM_VARS
   USE PLANES
   USE BOUNDARY_INFLOW
   USE BOUNDARY_BUFFER
@@ -47,7 +48,12 @@ PROGRAM DNS
   CALL CHEM_READ_GLOBAL(ifile)
 #endif
   CALL DNS_READ_LOCAL(ifile)
-
+  IF ( imode_ibm == 1 ) THEN
+    CALL IBM_READ_INI(ifile)
+    CALL IBM_READ_CONSISTENCY_CHECK(imode_rhs, BcsFlowJmin%type(:),  &
+                      BcsScalJmin%type(:),     BcsScalJmax%type(:),  &
+                      BcsScalJmin%SfcType(:),  BcsScalJmax%SfcType(:))
+  END IF  
 #ifdef USE_MPI
   CALL TLAB_MPI_INITIALIZE
 #ifdef USE_PSFFT
@@ -75,6 +81,10 @@ PROGRAM DNS
 
   IF ( tower_mode == 1 ) THEN
     CALL DNS_TOWER_INITIALIZE(tower_stride)
+  END IF
+  
+  IF ( imode_ibm == 1 ) THEN
+    CALL IBM_ALLOCATE(C_FILE_LOC)
   END IF
 
   ! ###################################################################
@@ -139,12 +149,6 @@ PROGRAM DNS
   END IF
 
   ! ###################################################################
-  ! Check
-  ! ###################################################################
-  logs_data(1) = 0 ! Status
-  CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
-
-  ! ###################################################################
   ! Initialize particle simumulation
   ! ###################################################################
   IF ( icalc_part == 1 ) THEN
@@ -161,6 +165,21 @@ PROGRAM DNS
   IF ( imode_sim == DNS_MODE_SPATIAL ) THEN
     CALL BOUNDARY_INFLOW_INITIALIZE(rtime, txc, wrk1d,wrk2d,wrk3d)
   END IF
+
+  ! ###################################################################
+  ! Initialize IBM
+  ! ###################################################################
+  IF ( imode_ibm == 1 ) THEN
+    CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
+    CALL IBM_BCS_FIELD_COMBINED(i0, q)
+    IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s)
+  END IF  
+
+  ! ###################################################################
+  ! Check
+  ! ###################################################################
+  logs_data(1) = 0 ! Status
+  CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
 
   ! ###################################################################
   ! Initialize time marching scheme
@@ -193,6 +212,10 @@ PROGRAM DNS
 
     IF ( MOD(itime-nitera_first,FilterDomainStep) == 0 ) THEN
       CALL DNS_FILTER()
+      IF ( imode_ibm == 1 ) THEN
+        CALL IBM_BCS_FIELD_COMBINED(i0, q) ! apply IBM BCs
+        IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s)
+      END IF  
     END IF
 
     IF ( flag_viscosity ) THEN          ! Change viscosity if necessary

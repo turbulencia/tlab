@@ -68,6 +68,7 @@ add_subdirectory(filters)
 add_subdirectory(operators)
 add_subdirectory(mappings)
 add_subdirectory(lagrange)
+add_subdirectory(ibm)
 
 # produce executables
 add_subdirectory(tools)

@@ -22,6 +22,8 @@
 !#              Adding correlation, and cross terms
 !# 2015/01/01 - J.P. Mellado
 !#              Parallelizing the 1D spectra; radial spectre not yet
+!# 2022/02/23 - J. Kostelecky
+!#              adding IBM
 !#
 !########################################################################
 !# DESCRIPTION
@@ -31,7 +33,7 @@
 !########################################################################
 PROGRAM SPECTRA
 
-  USE TLAB_TYPES, ONLY : pointers_dt, subarray_dt
+  USE TLAB_TYPES,    ONLY : pointers_dt, subarray_dt
   USE TLAB_CONSTANTS
   USE TLAB_VARS
   USE TLAB_ARRAYS
@@ -43,7 +45,8 @@ PROGRAM SPECTRA
   USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
   USE TLAB_MPI_PROCS
 #endif
-  USE THERMO_VARS, ONLY : imixture
+  USE THERMO_VARS,   ONLY : imixture
+  USE IBM_VARS
   USE IO_FIELDS
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -111,6 +114,20 @@ PROGRAM SPECTRA
 
   CALL DNS_READ_GLOBAL(ifile)
 
+  ! -------------------------------------------------------------------
+  ! IBM status (before TLAB_MPI_INITIALIZE!)
+  ! -------------------------------------------------------------------
+  CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
+  IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm = 0
+  ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm = 1
+  ELSE
+     CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Wrong IBM Status option.')
+     CALL TLAB_STOP(DNS_ERROR_OPTION)
+  ENDIF
+
+  ! -------------------------------------------------------------------
+  ! Initialize MPI
+  ! -------------------------------------------------------------------
 #ifdef USE_MPI
   CALL TLAB_MPI_INITIALIZE
 #endif
@@ -179,6 +196,12 @@ PROGRAM SPECTRA
      CALL TLAB_STOP(DNS_ERROR_INVALOPT)
   ENDIF
 
+  ! -------------------------------------------------------------------
+  ! Read local options - IBM parameters and geometry
+  ! -------------------------------------------------------------------
+  IF (imode_ibm .EQ. 1) THEN
+     CALL IBM_READ_INI(ifile)
+  ENDIF
 ! -------------------------------------------------------------------
 ! Definitions
 ! -------------------------------------------------------------------
@@ -269,7 +292,11 @@ PROGRAM SPECTRA
 
   ENDIF
 
+#ifdef IBM_DEBUG  
+  inb_txc = 6
+#else
   inb_txc = 5 ! default
+#endif
 
   isize_aux = jmax_aux
 #ifdef USE_MPI
@@ -325,6 +352,10 @@ PROGRAM SPECTRA
      ENDIF
   ENDIF
 
+  IF ( imode_ibm .EQ. 1 ) THEN
+     CALL IBM_ALLOCATE(C_FILE_LOC)
+  ENDIF
+
 ! extend array by complex nyquist frequency in x (+1 TCOMPLEX = +2 TREAL)
 !              by boundary conditions in y       (+1 TCOMPLEX = +2 TREAL)
 
@@ -367,6 +398,13 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 ! Initialize thermodynamic quantities
 ! -------------------------------------------------------------------
   CALL FI_PROFILES_INITIALIZE(wrk1d)
+
+! -------------------------------------------------------------------
+! Initialize IBM geometry
+! -------------------------------------------------------------------
+  IF ( imode_ibm .EQ. 1 ) THEN
+     CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
+  ENDIF  
 
 ! -------------------------------------------------------------------
 ! Initialize
@@ -484,6 +522,11 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
         CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, inb_scal,i0, s, wrk3d)
      ENDIF
+
+     IF ( imode_ibm .EQ. 1 ) THEN
+        CALL IBM_BCS_FIELD_COMBINED(i0, q)
+        IF ( icalc_scal .EQ. 1 ) CALL IBM_INITIALIZE_SCAL(s)
+     ENDIF  
 
      CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
 

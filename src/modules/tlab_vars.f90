@@ -32,6 +32,8 @@ MODULE TLAB_VARS
 
   TINTEGER :: imode_fdm                ! finite-difference method for spatial operators
 
+  TINTEGER :: imode_ibm                ! IBM mode
+
 ! ###################################################################
 ! Iteration
 ! ###################################################################

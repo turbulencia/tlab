@@ -39,7 +39,7 @@ PROGRAM INTERPOL
   TREAL,    DIMENSION(imaxp,inb_grid) :: x_pre ! pressure grid (for non-periodic case)
  
   TREAL,    DIMENSION(imax)           :: x_int, x_aux
-  TREAL,    DIMENSION(len,imax)       :: u, u_int, u_aux, u_a, u_c
+  TREAL,    DIMENSION(len,imax)       :: u, u_int, u_aux, u_a, u_b
   TREAL,    DIMENSION(len,imax)       :: dudx, dudx_int, dudx_aux
   TREAL,    DIMENSION(imax,5)         :: wrk1d
   TREAL,    DIMENSION(len)            :: wrk2d
@@ -244,8 +244,8 @@ PROGRAM INTERPOL
   DO i = 1,imax
     DO l = 1,len
       WRITE(20,1000) x(i,1), x_int(i), u(l,i), u_int(l,i), u_a(l,i), u_a(l,i) - u_int(l,i)
-      u_c(l,i) = ABS(u_a(l,i) - u_int(l,i))
-      error = error + u_c(l,i)   * u_c(l,i)
+      u_b(l,i) = ABS(u_a(l,i) - u_int(l,i))
+      error = error + u_b(l,i)   * u_b(l,i)
       sol   = sol   + u_int(l,i) * u_int(l,i)
     ENDDO
   ENDDO
@@ -254,7 +254,7 @@ PROGRAM INTERPOL
   WRITE(*,2000) 'Solution L2-norm ...........:', SQRT(g%jac(1,1)*sol   / M_REAL(len))
   IF ( sol .EQ. C_0_R ) STOP
   WRITE(*,2000) 'Error L2-norm ..............:', SQRT(g%jac(1,1)*error / M_REAL(len)) 
-  WRITE(*,2000) 'Error Linf-norm ............:', MAXVAL(u_c(1,1:imax))
+  WRITE(*,2000) 'Error Linf-norm ............:', MAXVAL(u_b(1,1:imax))
   WRITE(*,2000) 'Relative error .............:', sqrt(error)/sqrt(sol)
 
   STOP

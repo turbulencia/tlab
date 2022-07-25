@@ -72,7 +72,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#TermAdvection=<divergence/skewsymmetric>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermViscous=<divergence/explicit>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Linear/Bilinear/Quadratic>')
+  CALL TLAB_WRITE_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Homogeneous/Linear/Bilinear/Quadratic>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermRadiation=<none/Bulk1dGlobal/Bulk1dLocal>')
   CALL TLAB_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
@@ -320,12 +320,12 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! Consistency check
   IF ( istagger .EQ. 1 ) THEN
      IF ( .NOT. ( (imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE) .OR. (imode_eqns .EQ. DNS_EQNS_ANELASTIC) ) ) THEN
-       CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
-       CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
-     IF ( .NOT. (iadvection .EQ. EQNS_CONVECTIVE) ) THEN
-      CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Horizontal pressure staggering only implemented for convective advection scheme.')
-      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+     IF ( .NOT. ( (iadvection .EQ. EQNS_CONVECTIVE) .OR. (iadvection .EQ. EQNS_SKEWSYMMETRIC) ) ) THEN
+        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Horizontal pressure staggering not implemented for current advection scheme.')
+        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
   ENDIF
   IF ( ivfilter .EQ. 1 ) THEN

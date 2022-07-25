@@ -68,7 +68,7 @@ def check_input(bcs,x,y,xint,bcs_val):
         if x.size < 3:
             raise ValueError('At least three data points needed for cubic spline interpolation.')
     if ((xint.min() < x.min()) or (xint.max() > x.max())): 
-        raise ValueError('No extrapolation possible, just interpolation - check boarders of xint.')
+        raise ValueError('No extrapolation possible, just interpolation - check borders of xint.')
     if any(i < 0 for i in np.diff(x)):
         raise ValueError('x values must be strictly increasing.')
     if len(bcs) != 2:

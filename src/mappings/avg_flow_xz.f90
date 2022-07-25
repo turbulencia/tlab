@@ -23,6 +23,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE TLAB_PROCS
   USE THERMO_VARS, ONLY : imixture, MRATIO, GRATIO
   USE THERMO_VARS, ONLY : THERMO_AI, WGHT_INV
+  USE IBM_VARS,    ONLY : eps
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS, ONLY : tfile
 #endif
@@ -100,6 +101,12 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   groupname(ng) = 'Mean'
   varname(ng)   = 'rR rU rV rW rP rT re rh rs rB fU fV fW fT fe fh fs'
+
+  IF ( imode_ibm == 1 ) THEN
+    varname(ng) = TRIM(ADJUSTL(varname(ng)))//' eps'
+    sg(ng) = sg(ng) + 1
+#define ep(j)     mean2d(j,ig(1)+17)
+  END IF
 
   ! -----------------------------------------------------------------------
   ng = ng + 1; ig(ng) = ig(ng-1)+ sg(ng-1)
@@ -431,8 +438,16 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   WRITE(line1,*) itime; line1 = 'Calculating flow statistics at It'//TRIM(ADJUSTL(line1))//'...'
   CALL TLAB_WRITE_ASCII(lfile,line1)
 
+  ! #######################################################################
+  ! Preliminary for IBM usage
+  ! #######################################################################
+  ! Calculating gamma for conditional averages (Pope, p.170 [5.305])
+  IF ( imode_ibm == 1 ) THEN
+    CALL IBM_AVG_GAMMA(ep(1), eps, wrk3d, wrk1d)
+  END IF
+
   ! ###################################################################
-  ! Averages (do not overwrite dudz; it cotains p for incompressible case)
+  ! Averages (do not overwrite dudz; it contains p for incompressible case)
   ! ###################################################################
 #ifdef TRACE_ON
   CALL TLAB_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 2')
@@ -451,7 +466,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   V_y1(:) = rV_y(:)
   W_y1(:) = rW_y(:)
 
-  ! Density and Fabre avrages
+  ! Density and Favre avrages
   IF      ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE ) THEN
     rR(:) = rbackground(:)
 

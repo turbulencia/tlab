@@ -10,10 +10,14 @@ examples/Case*/grid
 examples/Case*/grid.sts
 examples/Case*/dns.err
 examples/Case*/dns.war
+examples/Case*/eps*
 build_BIG/*
 build_LITTLE/* 
+build_SERIAL/* 
 build_PARALLEL/*
 build_DEBUG/*
+test/*
+.vscode/*
 *~
 */*~
 */*/*~

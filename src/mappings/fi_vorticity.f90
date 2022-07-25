@@ -16,6 +16,8 @@
 SUBROUTINE FI_VORTICITY(nx,ny,nz, u,v,w, result, tmp1,tmp2, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : imode_ibm
+  USE IBM_VARS,  ONLY : ibm_partial
   
   IMPLICIT NONE
 
@@ -30,6 +32,9 @@ SUBROUTINE FI_VORTICITY(nx,ny,nz, u,v,w, result, tmp1,tmp2, wrk2d,wrk3d)
   
 ! ###################################################################
   bcs = 0
+
+  ! IBM   (if .true., OPR_PARTIAL_X/Y/Z uses modified fields for derivatives)
+  IF ( imode_ibm == 1 ) ibm_partial = .true.
   
 ! v,x-u,y
   CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), v, tmp1, wrk3d, wrk2d,wrk3d)
@@ -45,6 +50,11 @@ SUBROUTINE FI_VORTICITY(nx,ny,nz, u,v,w, result, tmp1,tmp2, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), w, tmp1, wrk3d, wrk2d,wrk3d)
   CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), v, tmp2, wrk3d, wrk2d,wrk3d)
   result = result +( tmp1-tmp2 ) *( tmp1-tmp2 ) 
+
+  IF ( imode_ibm == 1 ) THEN
+    ibm_partial = .false.  
+    call IBM_BCS_FIELD(result)
+  ENDIF
 
   RETURN
 END SUBROUTINE FI_VORTICITY
