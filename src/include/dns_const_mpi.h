@@ -2,9 +2,6 @@
 #ifndef DNS_CONST_MPI_H_INCLUDED
 #define DNS_CONST_MPI_H_INCLUDED
 
-! MPI ERROR HANDLING
-#define DO_MPI_ERROR_CHECK  IF ( ims_err /= MPI_SUCCESS ) CALL TLAB_MPI_PANIC(__FILE__,ims_err)
-
 ! MPI structures id
 #define TLAB_MPI_K_PARTIAL   1
 #define TLAB_MPI_K_SHEAR     2
