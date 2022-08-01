@@ -733,8 +733,8 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
     ENDDO
    
 #ifdef USE_MPI
-    Deasliasing(1)%mpitype = TLAB_MPI_I_PARTIAL
-    Deasliasing(3)%mpitype = TLAB_MPI_K_PARTIAL
+    Dealiasing(1)%mpitype = TLAB_MPI_I_PARTIAL
+    Dealiasing(3)%mpitype = TLAB_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
