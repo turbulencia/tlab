@@ -14,11 +14,14 @@
 !# Second derivative uses LE decomposition including diffusivity coefficient
 !#
 !########################################################################
-subroutine OPR_BURGERS(is, nlines, bcs, g, s, u, result, wrk2d, wrk3d)
+module opr_burgs
+    contains
+subroutine OPR_BURGERS(is, nlines, bcs, g, dealiasing, s, u, result, wrk2d, wrk3d)
 
-    use TLAB_TYPES, only: grid_dt
+    use TLAB_TYPES, only: grid_dt, filter_dt
     use TLAB_CONSTANTS, only: efile
     use IBM_VARS, only: ibm_burgers
+    use TLAB_ARRAYS, only : wrk1d
     use TLAB_PROCS
     implicit none
 
@@ -28,13 +31,18 @@ subroutine OPR_BURGERS(is, nlines, bcs, g, s, u, result, wrk2d, wrk3d)
                                                     !     0 biased, non-zero
                                                     !     1 forced to zero
     type(grid_dt), intent(in) :: g
+    type(filter_dt), intent(in) :: dealiasing
     TREAL, dimension(nlines, g%size), intent(in) :: s, u    ! argument field and velocity field
     TREAL, dimension(nlines, g%size), intent(out) :: result ! N(u) applied to s
     TREAL, dimension(nlines, g%size), intent(inout) :: wrk3d  ! dsdx
     TREAL, dimension(*), intent(inout) :: wrk2d
 
+    target u, wrk3d
+
 ! -------------------------------------------------------------------
     TINTEGER ij
+    TREAL, dimension(:,:), allocatable, target :: uf, dsf
+    TREAL, dimension(:,:), pointer :: p_u, p_ds
 
 ! ###################################################################
     if (bcs(1, 2) + bcs(2, 2) > 0) then
@@ -52,24 +60,42 @@ subroutine OPR_BURGERS(is, nlines, bcs, g, s, u, result, wrk2d, wrk3d)
 ! ###################################################################
 ! Operation; diffusivity included in 2.-order derivative
 ! ###################################################################
+    if ( dealiasing%type /= DNS_FILTER_NONE) then
+        allocate(uf(nlines,g%size),dsf(nlines,g%size))
+        call  OPR_FILTER_1D(nlines, dealiasing, u, uf, wrk1d,wrk2d,wrk3d) ! wrk3d is not used in compact filter
+        call  OPR_FILTER_1D(nlines, dealiasing, wrk3d, dsf, wrk1d,wrk2d,wrk3d)
+        p_u => uf
+        p_ds => dsf
+    else
+        p_u => u
+        p_ds => wrk3d
+    end if
+
     if (g%anelastic) then
         do ij = 1, g%size
-            result(:, ij) = result(:, ij)*g%rhoinv(:) - u(:, ij)*wrk3d(:, ij)
+            ! result(:, ij) = result(:, ij)*g%rhoinv(:) - u(:, ij)*wrk3d(:, ij)
+            result(:, ij) = result(:, ij)*g%rhoinv(:) - p_u(:, ij)*p_ds(:, ij)
         end do
 
     else
 !$omp parallel default( shared ) private( ij )
 !$omp do
         do ij = 1, nlines*g%size
-            result(ij, 1) = result(ij, 1) - u(ij, 1)*wrk3d(ij, 1)
+            ! result(ij, 1) = result(ij, 1) - u(ij, 1)*wrk3d(ij, 1)
+            result(ij, 1) = result(ij, 1) - p_u(ij, 1)*p_ds(ij, 1)
         end do
 !$omp end do
 !$omp end parallel
 
     end if
 
+    if (allocated(uf)) deallocate(uf)
+    if (allocated(dsf)) deallocate(dsf)
+
     return
 end subroutine OPR_BURGERS
+
+end module opr_burgs
 
 !########################################################################
 !# Routines for different specific directions:
@@ -83,12 +109,14 @@ end subroutine OPR_BURGERS
 subroutine OPR_BURGERS_X(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1, wrk2d, wrk3d)
 
     use TLAB_TYPES, only: grid_dt
+    use TLAB_VARS, only : Dealiasing
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_npro_i
     use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
     use TLAB_MPI_PROCS
 #endif
-
+    use OPR_BURGS
+    
     implicit none
 
     TINTEGER ivel, is, nx, ny, nz
@@ -143,7 +171,7 @@ subroutine OPR_BURGERS_X(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1, 
 #endif
 
 ! ###################################################################
-    call OPR_BURGERS(is, nyz, bcs, g, p_b, p_vel, p_d, wrk2d, p_c)
+    call OPR_BURGERS(is, nyz, bcs, g, Dealiasing(1), p_b, p_vel, p_d, wrk2d, p_c)
 
 ! ###################################################################
 ! Put arrays back in the order in which they came in
@@ -170,6 +198,8 @@ subroutine OPR_BURGERS_Y(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1, 
 
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: subsidence
+    use TLAB_VARS, only : Dealiasing
+    use OPR_BURGS
     implicit none
 
     TINTEGER ivel, is, nx, ny, nz
@@ -219,7 +249,7 @@ subroutine OPR_BURGERS_Y(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1, 
         end if
 
 ! ###################################################################
-        call OPR_BURGERS(is, nxz, bcs, g, p_org, p_vel, p_dst2, wrk2d, p_dst1)
+        call OPR_BURGERS(is, nxz, bcs, g, Dealiasing(2), p_org, p_vel, p_dst2, wrk2d, p_dst1)
 
         if (subsidence%type == EQNS_SUB_CONSTANT_LOCAL) then
             do j = 1, ny
@@ -249,12 +279,13 @@ end subroutine OPR_BURGERS_Y
 subroutine OPR_BURGERS_Z(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1, wrk2d, wrk3d)
 
     use TLAB_TYPES, only: grid_dt
+    use TLAB_VARS, only : Dealiasing
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_npro_k
     use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
     use TLAB_MPI_PROCS
 #endif
-
+    USE opr_burgs
     implicit none
 
     TINTEGER ivel, is, nx, ny, nz
@@ -313,7 +344,7 @@ subroutine OPR_BURGERS_Z(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1, 
         end if
 
 ! ###################################################################
-        call OPR_BURGERS(is, nxy, bcs, g, p_a, p_vel, p_c, wrk2d, p_b)
+        call OPR_BURGERS(is, nxy, bcs, g, Dealiasing(3), p_a, p_vel, p_c, wrk2d, p_b)
 
 ! ###################################################################
 ! Put arrays back in the order in which they came in

@@ -92,6 +92,7 @@ PROGRAM DNS
   ! ###################################################################
   DO ig = 1,3
     CALL OPR_FILTER_INITIALIZE( g(ig), FilterDomain(ig), wrk1d )
+    CALL OPR_FILTER_INITIALIZE( g(ig), Dealiasing(ig), wrk1d )
   END DO
 
   IF ( ifourier == 1 ) THEN

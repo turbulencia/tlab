@@ -679,6 +679,65 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
 ! ###################################################################
+! Dealising (a filter type)
+! ###################################################################
+    CALL TLAB_WRITE_ASCII(bakfile, '#')
+    CALL TLAB_WRITE_ASCII(bakfile, '#[Dealising]')
+    CALL TLAB_WRITE_ASCII(bakfile, '#Type=<none/compact>')
+    CALL TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
+    CALL TLAB_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
+    CALL TLAB_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
+    CALL TLAB_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
+
+    Dealiasing(:)%size       = g(:)%size
+    Dealiasing(:)%periodic   = g(:)%periodic
+    Dealiasing(:)%uniform    = g(:)%uniform
+    CALL SCANINICHAR(bakfile, inifile, 'Dealiasing', 'Type', 'none', sRes)
+    IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; Dealiasing(:)%type = DNS_FILTER_NONE
+    ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; Dealiasing(:)%type = DNS_FILTER_COMPACT
+        Dealiasing(:)%parameters(1) = 0.49 ! default alpha value
+        Dealiasing(:)%inb_filter    = 6
+        Dealiasing(:)%BcsMin = DNS_FILTER_BCS_BIASED
+        Dealiasing(:)%BcsMax = DNS_FILTER_BCS_BIASED
+    ENDIF
+
+    ! Boundary conditions correction
+    DO ig = 1,3
+        IF ( FilterDomain(ig)%periodic ) THEN
+            Dealiasing(ig)%BcsMin = DNS_FILTER_BCS_PERIODIC
+            Dealiasing(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
+        ENDIF
+    ENDDO
+
+    CALL SCANINICHAR(bakfile, inifile, 'Dealiasing', 'Parameters', 'void', sRes)
+    IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
+        idummy = MAX_PROF
+        CALL LIST_REAL(sRes, idummy, Dealiasing(1)%parameters(:) )
+        IF ( idummy .LT. 3 ) & ! Fill 3 directions; if global, filled information is unused
+        Dealiasing(1)%parameters(idummy+1:3) = FilterDomain(1)%parameters(idummy)
+        DO ig = 2,3
+            Dealiasing(ig)%parameters(1) = FilterDomain(1)%parameters(ig)
+        ENDDO
+    ENDIF
+
+    CALL SCANINICHAR(bakfile, inifile, 'Dealiasing', 'ActiveX', 'yes', sRes)
+    IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) Dealiasing(1)%type = DNS_FILTER_NONE
+    CALL SCANINICHAR(bakfile, inifile, 'Dealiasing', 'ActiveY', 'yes', sRes)
+    IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) Dealiasing(2)%type = DNS_FILTER_NONE
+    CALL SCANINICHAR(bakfile, inifile, 'Dealiasing', 'ActiveZ', 'yes', sRes)
+    IF ( TRIM(ADJUSTL(sRes)) .EQ. 'no' ) Dealiasing(3)%type = DNS_FILTER_NONE
+
+    ! Further control
+    DO ig = 1,3
+        IF ( Dealiasing(ig)%size .EQ. 1 ) Dealiasing(ig)%type = DNS_FILTER_NONE
+    ENDDO
+   
+#ifdef USE_MPI
+    Deasliasing(1)%mpitype = TLAB_MPI_I_PARTIAL
+    Deasliasing(3)%mpitype = TLAB_MPI_K_PARTIAL
+#endif
+
+! ###################################################################
 ! Filter
 ! ###################################################################
   CALL TLAB_WRITE_ASCII(bakfile, '#')

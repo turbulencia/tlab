@@ -113,6 +113,8 @@ module TLAB_VARS
     logical, dimension(MAX_VARS) :: FilterDomainActive
     TINTEGER, dimension(MAX_VARS) :: FilterDomainBcsFlow, FilterDomainBcsScal
 
+    type(filter_dt), dimension(3) :: Dealiasing
+
 ! ###################################################################
 ! FFTW
 ! ###################################################################

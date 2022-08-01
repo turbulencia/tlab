@@ -82,7 +82,7 @@ PROGRAM SPECTRA
   TINTEGER flag_mode, iread_flow, iread_scal, ierr
   TINTEGER isize_out2d, isize_aux, sizes(5)
   TINTEGER nfield, nfield_ref
-  TINTEGER is, iv, iv_offset, iv1, iv2, ip, j
+  TINTEGER is, iv, iv_offset, iv1, iv2, ip, j, ig
   TINTEGER jmax_aux, kxmax,kymax,kzmax
   TINTEGER icalc_radial
   TREAL norm, dummy
@@ -371,6 +371,10 @@ CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(
 CALL FDM_INITIALIZE(x, g(1), wrk1d)
 CALL FDM_INITIALIZE(y, g(2), wrk1d)
 CALL FDM_INITIALIZE(z, g(3), wrk1d)
+
+  DO ig = 1,3
+    CALL OPR_FILTER_INITIALIZE( g(ig), Dealiasing(ig), wrk1d )
+  END DO
 
   icalc_radial = 0
   IF ( flag_mode .EQ. 1 .AND. g(1)%size     .EQ. g(3)%size     ) icalc_radial = 1 ! Calculate radial spectra
