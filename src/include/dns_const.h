@@ -118,6 +118,7 @@
 #define DNS_FILTER_BAND      6
 #define DNS_FILTER_ERF       7
 #define DNS_FILTER_TOPHAT    8
+#define DNS_FILTER_COMPACT_CUTOFF    9
 
 #define DNS_FILTER_BCS_PERIODIC  0
 #define DNS_FILTER_BCS_BIASED    1

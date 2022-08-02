@@ -9,119 +9,167 @@
 !# uf_i + alpha*(uf_i-1 + uf_i+1) = a*u_i + b*(u_i-1 + u_i+1) + c*(u_i-2 + u_i+2)
 !#
 !########################################################################
-SUBROUTINE FLT_C4(imax,jkmax, periodic, bcsimin, bcsimax, cxi, u, uf, txi)
+subroutine FLT_C4(imax, jkmax, periodic, bcsimin, bcsimax, cxi, u, uf, txi)
 
-  IMPLICIT NONE
+    implicit none
 
-  LOGICAL periodic
-  TINTEGER,                     INTENT(IN)    :: imax,jkmax, bcsimin, bcsimax
-  TREAL, DIMENSION(jkmax,imax), INTENT(IN)    :: u
-  TREAL, DIMENSION(jkmax,imax), INTENT(OUT)   :: uf
-  TREAL, DIMENSION(imax,6),     INTENT(IN)    :: cxi
-  TREAL, DIMENSION(imax,5),     INTENT(INOUT) :: txi
+    logical periodic
+    TINTEGER, intent(IN) :: imax, jkmax, bcsimin, bcsimax
+    TREAL, dimension(jkmax, imax), intent(IN) :: u
+    TREAL, dimension(jkmax, imax), intent(OUT) :: uf
+    TREAL, dimension(imax, 6), intent(IN) :: cxi
+    TREAL, dimension(imax, 5), intent(INOUT) :: txi
 
 ! -----------------------------------------------------------------------
-  TINTEGER jk, i
-  TREAL vmult1, vmultmx
+    TINTEGER jk, i
+    TREAL vmult1, vmultmx
 
 ! ###################################################################
-  vmult1 = C_1_R; vmultmx = C_1_R
-  IF ( bcsimin .EQ. DNS_FILTER_BCS_ZERO ) vmult1  = C_0_R ! No filter at i=1
-  IF ( bcsimax .EQ. DNS_FILTER_BCS_ZERO ) vmultmx = C_0_R ! No filter at i=imax
+    vmult1 = C_1_R; vmultmx = C_1_R
+    if (bcsimin == DNS_FILTER_BCS_ZERO) vmult1 = C_0_R ! No filter at i=1
+    if (bcsimax == DNS_FILTER_BCS_ZERO) vmultmx = C_0_R ! No filter at i=imax
 
 ! #######################################################################
 ! Set up the left hand side and factor the matrix
 ! Constant alpha contained in array cxi(6)
 ! #######################################################################
-  IF ( periodic ) THEN ! periodic
-     txi(1,1) = cxi(1,6)
-     txi(1,2) = C_1_R
-     txi(1,3) = cxi(1,6)
+    if (periodic) then ! periodic
+        txi(1, 1) = cxi(1, 6)
+        txi(1, 2) = C_1_R
+        txi(1, 3) = cxi(1, 6)
 
-     txi(imax,1) = cxi(imax,6)
-     txi(imax,2) = C_1_R
-     txi(imax,3) = cxi(imax,6)
+        txi(imax, 1) = cxi(imax, 6)
+        txi(imax, 2) = C_1_R
+        txi(imax, 3) = cxi(imax, 6)
 
-  ELSE ! biased
-     txi(1,1) = C_0_R
-     txi(1,2) = C_1_R
-     txi(1,3) = cxi(1,6)*vmult1
+    else ! biased
+        txi(1, 1) = C_0_R
+        txi(1, 2) = C_1_R
+        txi(1, 3) = cxi(1, 6)*vmult1
 
-     txi(imax,1) = cxi(imax,6)*vmultmx
-     txi(imax,2) = C_1_R
-     txi(imax,3) = C_0_R
+        txi(imax, 1) = cxi(imax, 6)*vmultmx
+        txi(imax, 2) = C_1_R
+        txi(imax, 3) = C_0_R
 
-  ENDIF
+    end if
 
-  DO i = 2, imax-1
-     txi(i,1) = cxi(i,6)
-     txi(i,2) = C_1_R
-     txi(i,3) = cxi(i,6)
-  ENDDO
+    do i = 2, imax - 1
+        txi(i, 1) = cxi(i, 6)
+        txi(i, 2) = C_1_R
+        txi(i, 3) = cxi(i, 6)
+    end do
 
 ! #######################################################################
 ! Set up right hand side and DO forward/backward substitution
 ! #######################################################################
-  IF ( periodic ) THEN ! periodic
-     DO jk=1, jkmax
-        uf(jk,1) = cxi(1,1)*u(jk,imax-1) + cxi(1,2)*u(jk,imax) + cxi(1,3)*u(jk,1) + &
-             cxi(1,4)*u(jk,2) + cxi(1,5)*u(jk,3)
+    if (periodic) then ! periodic
+        do jk = 1, jkmax
+            uf(jk, 1) = cxi(1, 1)*u(jk, imax - 1) + cxi(1, 2)*u(jk, imax) + cxi(1, 3)*u(jk, 1) + &
+                        cxi(1, 4)*u(jk, 2) + cxi(1, 5)*u(jk, 3)
 
-        uf(jk,2) = cxi(2,1)*u(jk,imax)   + cxi(2,2)*u(jk,1)    + cxi(2,3)*u(jk,2) + &
-             cxi(2,4)*u(jk,3) + cxi(2,5)*u(jk,4)
+            uf(jk, 2) = cxi(2, 1)*u(jk, imax) + cxi(2, 2)*u(jk, 1) + cxi(2, 3)*u(jk, 2) + &
+                        cxi(2, 4)*u(jk, 3) + cxi(2, 5)*u(jk, 4)
 
-        uf(jk,imax  ) = cxi(imax,1)  *u(jk,imax-2) + cxi(imax,2)*  u(jk,imax-1) &
-             + cxi(imax,3)*u(jk,imax)     + cxi(imax,4)*u(jk,1)      + cxi(imax,5)*u(jk,2)
+            uf(jk, imax) = cxi(imax, 1)*u(jk, imax - 2) + cxi(imax, 2)*u(jk, imax - 1) &
+                           + cxi(imax, 3)*u(jk, imax) + cxi(imax, 4)*u(jk, 1) + cxi(imax, 5)*u(jk, 2)
 
-        uf(jk,imax-1) = cxi(imax-1,1)*u(jk,imax-3) + cxi(imax-1,2)*u(jk,imax-2) &
-             + cxi(imax-1,3)*u(jk,imax-1) + cxi(imax-1,4)*u(jk,imax) + cxi(imax-1,5)*u(jk,1)
-     ENDDO
+            uf(jk, imax - 1) = cxi(imax - 1, 1)*u(jk, imax - 3) + cxi(imax - 1, 2)*u(jk, imax - 2) &
+                               + cxi(imax - 1, 3)*u(jk, imax - 1) + cxi(imax - 1, 4)*u(jk, imax) + cxi(imax - 1, 5)*u(jk, 1)
+        end do
 
-  ELSE ! biased
-     DO jk=1, jkmax
-        uf(jk,1) = cxi(1,1)*u(jk,1) &
-             + cxi(1,2)*u(jk,2) &
-             + cxi(1,3)*u(jk,3) &
-             + cxi(1,4)*u(jk,4) &
-             + cxi(1,5)*u(jk,5)
-        uf(jk,2) = cxi(2,1) *u(jk,1) &
-             + cxi(2,2) *u(jk,2) &
-             + cxi(2,3) *u(jk,3) &
-             + cxi(2,4) *u(jk,4) &
-             + cxi(2,5) *u(jk,5)
+    else ! biased
+        do jk = 1, jkmax
+            uf(jk, 1) = cxi(1, 1)*u(jk, 1) &
+                        + cxi(1, 2)*u(jk, 2) &
+                        + cxi(1, 3)*u(jk, 3) &
+                        + cxi(1, 4)*u(jk, 4) &
+                        + cxi(1, 5)*u(jk, 5)
+            uf(jk, 2) = cxi(2, 1)*u(jk, 1) &
+                        + cxi(2, 2)*u(jk, 2) &
+                        + cxi(2, 3)*u(jk, 3) &
+                        + cxi(2, 4)*u(jk, 4) &
+                        + cxi(2, 5)*u(jk, 5)
 
-        uf(jk,imax-1) = cxi(imax-1,5)*u(jk,imax)&
-             + cxi(imax-1,4)*u(jk,imax-1) &
-             + cxi(imax-1,3)*u(jk,imax-2) &
-             + cxi(imax-1,2)*u(jk,imax-3) &
-             + cxi(imax-1,1)*u(jk,imax-4)
-        uf(jk,imax) = cxi(imax,5)*u(jk,imax)&
-             + cxi(imax,4)*u(jk,imax-1) &
-             + cxi(imax,3)*u(jk,imax-2) &
-             + cxi(imax,2)*u(jk,imax-3) &
-             + cxi(imax,1)*u(jk,imax-4)
-     ENDDO
+            uf(jk, imax - 1) = cxi(imax - 1, 5)*u(jk, imax) &
+                               + cxi(imax - 1, 4)*u(jk, imax - 1) &
+                               + cxi(imax - 1, 3)*u(jk, imax - 2) &
+                               + cxi(imax - 1, 2)*u(jk, imax - 3) &
+                               + cxi(imax - 1, 1)*u(jk, imax - 4)
+            uf(jk, imax) = cxi(imax, 5)*u(jk, imax) &
+                           + cxi(imax, 4)*u(jk, imax - 1) &
+                           + cxi(imax, 3)*u(jk, imax - 2) &
+                           + cxi(imax, 2)*u(jk, imax - 3) &
+                           + cxi(imax, 1)*u(jk, imax - 4)
+        end do
 
-     IF ( bcsimin .EQ. DNS_FILTER_BCS_ZERO ) THEN ! No filter at i=1
-        DO jk=1, jkmax
-           uf(jk,   1) = u(jk,   1)
-        ENDDO
-     ENDIF
-     IF ( bcsimax .EQ. DNS_FILTER_BCS_ZERO ) THEN ! No filter at i=1
-        DO jk=1, jkmax
-           uf(jk,imax) = u(jk,imax) 
-        ENDDO
-     ENDIF
+        if (bcsimin == DNS_FILTER_BCS_ZERO) then ! No filter at i=1
+            do jk = 1, jkmax
+                uf(jk, 1) = u(jk, 1)
+            end do
+        end if
+        if (bcsimax == DNS_FILTER_BCS_ZERO) then ! No filter at i=1
+            do jk = 1, jkmax
+                uf(jk, imax) = u(jk, imax)
+            end do
+        end if
 
-  ENDIF
+    end if
 
-  DO i=3,imax-2
-     DO jk=1,jkmax
-        uf(jk,i) = cxi(i,1)*u(jk,i-2)+ cxi(i,2)*u(jk,i-1) + cxi(i,3)*u(jk,i) + &
-             cxi(i,4)*u(jk,i+1) + cxi(i,5)*u(jk,i+2) 
-     ENDDO
-  ENDDO
+    do i = 3, imax - 2
+        do jk = 1, jkmax
+            uf(jk, i) = cxi(i, 1)*u(jk, i - 2) + cxi(i, 2)*u(jk, i - 1) + cxi(i, 3)*u(jk, i) + &
+                        cxi(i, 4)*u(jk, i + 1) + cxi(i, 5)*u(jk, i + 2)
+        end do
+    end do
 
-  RETURN
-END SUBROUTINE FLT_C4
+    return
+end subroutine FLT_C4
 
+subroutine FLT_C4P_CUTOFF_LHS(imax, a, b, c, d, e)
+    implicit none
+
+    TINTEGER, intent(in) :: imax
+    TREAL, intent(out) :: a(imax), b(imax), c(imax), d(imax), e(imax)
+
+    TREAL, parameter :: C4_ALPHA = 0.6522474d0
+    TREAL, parameter :: C4_BETA = 0.1702929d0
+
+    a(:) = C4_BETA
+    b(:) = C4_ALPHA
+    c(:) = C_1_R
+    d(:) = C4_ALPHA
+    e(:) = C4_BETA
+
+    return
+end subroutine FLT_C4P_CUTOFF_LHS
+
+subroutine FLT_C4P_CUTOFF_RHS(imax, jkmax, u, rhs)
+    implicit none
+
+    TINTEGER, intent(in) :: imax, jkmax
+    TREAL, intent(in) :: u(jkmax, imax)
+    TREAL, intent(out) :: rhs(jkmax, imax)
+
+    integer i
+    integer im3, im2, im1, ip1, ip2, ip3
+
+    TREAL, parameter :: C4_A = 0.9891856d0
+    TREAL, parameter :: C4_BD2 = 0.66059d0    ! 1.321180 /2
+    TREAL, parameter :: C4_CD2 = 0.1666774d0  ! 0.3333548 /2
+    TREAL, parameter :: C4_DD2 = 0.679925d-3  ! 0.001359850 /2
+
+    do i = 1, imax
+        im3 = MOD(i + imax - 4, imax) + 1   ! i-3
+        im2 = MOD(i + imax - 3, imax) + 1   ! i-2
+        im1 = MOD(i + imax - 2, imax) + 1   ! i-1
+        ip1 = MOD(i, imax) + 1              ! i+1
+        ip2 = MOD(i + 1, imax) + 1          ! i+2
+        ip3 = MOD(i + 2, imax) + 1          ! i+3
+        rhs(:, i) = C4_BD2*(u(:, ip1) + u(:, im1)) + &
+                    C4_CD2*(u(:, ip2) + u(:, im2)) + &
+                    C4_DD2*(u(:, ip3) + u(:, im3)) + &
+                    C4_A*u(:, i)
+    end do
+
+    return
+end subroutine FLT_C4P_CUTOFF_RHS
