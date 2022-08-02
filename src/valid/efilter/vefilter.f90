@@ -2,78 +2,94 @@
 #include "dns_const.h"
 
 program VEFILTER
-    use TLAB_TYPES, only : filter_dt, grid_dt
+    use TLAB_TYPES, only: filter_dt, grid_dt
+    use TLAB_VARS, only: reynolds, schmidt
 
     implicit none
 
 #include "integers.h"
 
-    TINTEGER imax, i, ik, i1bc, idummy
+    TINTEGER imax, i, ik, i1bc
     parameter(imax=256)
-    TREAL scalex
-    TREAL x(imax), u(imax), uf(imax)
-    TREAL wrk1d(imax, 5), wrk2d(imax), wrk3d(imax)
+    TREAL x(imax, 50), u(imax), uf(imax)
+    TREAL wrk1d(imax, 10), wrk2d(imax), wrk3d(imax)
     type(filter_dt) filter
     type(grid_dt) g
 
 ! ###################################################################
-    filter%type = DNS_FILTER_COMPACT_CUTOFF
-    filter%size = imax
-    filter%inb_filter = 7
-    
-    scalex = C_2_R*C_PI_R
+    g%size = imax
+    g%scale = 2*C_PI_R
+    g%mode_fdm = FDM_COM6_JACOBIAN
+    reynolds = C_1_R
+    schmidt = C_1_R
 
     write (*, *) 'Periodic (0) or nonperiodic (1) case ?'
     read (*, *) i1bc
 
     if (i1bc == 0) then
-        filter%periodic = .true.
+        g%periodic = .true.
+        g%uniform = .true.
+        filter%bcsmin = DNS_FILTER_BCS_PERIODIC
+        filter%bcsmax = DNS_FILTER_BCS_PERIODIC
         do i = 1, imax
-            x(i) = M_REAL(i - 1)/M_REAL(imax)*scalex
+            x(i, 1) = M_REAL(i - 1)/M_REAL(imax)*g%scale
         end do
     else
-        filter%periodic = .false.
+        g%periodic = .false.
+        g%uniform = .false.
+        filter%bcsmin = DNS_FILTER_BCS_ZERO
+        filter%bcsmax = DNS_FILTER_BCS_ZERO
+        ! do i = 1, imax
+        !     x(i, 1) = M_REAL(i - 1)/M_REAL(imax-1)*g%scale
+        ! end do
         open (21, file='y.dat')
         do i = 1, imax
-!        x(i) = M_REAL(i-1)/M_REAL(imax-1)*scalex
-            read (21, *) idummy, x(i)
+            read (21, *) x(i, 1)
         end do
         close (21)
-        scalex = x(imax) - x(1)
+        g%scale = x(imax, 1) - x(1, 1)
     end if
 
-! ###################################################################
-! Define the function
-    if (i1bc == 0) then
-        write (*, *) 'Wavenumber ?'
-        read (*, *) ik
-        do i = 1, imax
-            u(i) = SIN(C_2_R*C_PI_R/scalex*M_REAL(ik)*x(i) + C_PI_R*C_05_R)
-            uf(i) = u(i)
-        end do
-    else
-        open (21, file='f.dat')
-        do i = 1, imax
-            read (21, *) u(i)
-            uf(i) = u(i)
-        end do
-        close (21)
-    end if
+    call FDM_INITIALIZE(x, g, wrk1d)
+
+    ! ###################################################################
+
+    ! Define the function
+    ! if (i1bc == 0) then
+    write (*, *) 'Wavenumber ?'
+    read (*, *) ik
+    u(:) = SIN(C_2_R*C_PI_R/g%scale*M_REAL(ik)*x(:, 1) + C_PI_R*C_05_R)
+    ! else
+    !     open (21, file='f.dat')
+    !     do i = 1, imax
+    !         read (21, *) u(i)
+    !         uf(i) = u(i)
+    !     end do
+    !     close (21)
+    ! end if
 
 ! ###################################################################
-    call OPR_FILTER_INITIALIZE( g, filter, wrk1d)
+    filter%size = g%size
+    filter%periodic = g%periodic
+    ! filter%type = DNS_FILTER_COMPACT_CUTOFF
+    ! filter%inb_filter = 7
+    filter%type = DNS_FILTER_COMPACT
+    filter%inb_filter = 10
+    filter%parameters(1) = 0.49
+
+    call OPR_FILTER_INITIALIZE(g, filter, wrk1d)
 
     call OPR_FILTER_1D(1, filter, u, uf, wrk1d, wrk2d, wrk3d)
 
     open (20, file='filter.dat')
     do i = 1, imax
-        write (20, *) x(i), u(i), uf(i)
+        write (20, *) x(i,1), u(i), uf(i)
     end do
     close (20)
 
     open (20, file='transfer.dat')
-    do ik = 1, imax /2
-        u = SIN(C_2_R*C_PI_R/scalex*M_REAL(ik)*x)
+    do ik = 1, imax/2
+        u = SIN(C_2_R*C_PI_R/g%scale*M_REAL(ik)*x(:,1))
         call OPR_FILTER_1D(1, filter, u, uf, wrk1d, wrk2d, wrk3d)
         write (20, *) ik, maxval(uf)
     end do

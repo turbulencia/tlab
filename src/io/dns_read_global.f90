@@ -696,14 +696,14 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; Dealiasing(:)%type = DNS_FILTER_NONE
     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; Dealiasing(:)%type = DNS_FILTER_COMPACT
         Dealiasing(:)%parameters(1) = 0.49 ! default alpha value
-        Dealiasing(:)%inb_filter    = 6
+        Dealiasing(:)%inb_filter    = 10
         Dealiasing(:)%BcsMin = DNS_FILTER_BCS_BIASED
         Dealiasing(:)%BcsMax = DNS_FILTER_BCS_BIASED
     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compactcutoff'   ) THEN; Dealiasing(:)%type = DNS_FILTER_COMPACT_CUTOFF
         Dealiasing(:)%inb_filter    = 7
         Dealiasing(2)%type = DNS_FILTER_COMPACT ! nonuniform version not yet implemented; fall back to compact
         Dealiasing(2)%parameters(1) = 0.49
-        Dealiasing(2)%inb_filter    = 6
+        Dealiasing(2)%inb_filter    = 10
         Dealiasing(2)%BcsMin = DNS_FILTER_BCS_BIASED
         Dealiasing(2)%BcsMax = DNS_FILTER_BCS_BIASED
     ENDIF
@@ -767,7 +767,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; FilterDomain(:)%type = DNS_FILTER_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'compact'   ) THEN; FilterDomain(:)%type = DNS_FILTER_COMPACT
      FilterDomain(:)%parameters(1) = 0.49 ! default alpha value
-     FilterDomain(:)%inb_filter    = 6
+     FilterDomain(:)%inb_filter    = 10
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit6' ) THEN; FilterDomain(:)%type = DNS_FILTER_6E
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit4' ) THEN; FilterDomain(:)%type = DNS_FILTER_4E
      FilterDomain(:)%inb_filter = 5

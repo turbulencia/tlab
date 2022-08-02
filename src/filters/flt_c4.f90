@@ -9,7 +9,28 @@
 !# uf_i + alpha*(uf_i-1 + uf_i+1) = a*u_i + b*(u_i-1 + u_i+1) + c*(u_i-2 + u_i+2)
 !#
 !########################################################################
-subroutine FLT_C4(imax, jkmax, periodic, bcsimin, bcsimax, cxi, u, uf, txi)
+subroutine FLT_C4_LHS(imax, bcsimin, bcsimax, alpha, a,b,c)
+    implicit none
+    TINTEGER, intent(in) :: imax, bcsimin, bcsimax
+    TREAL, intent(in) :: alpha
+    TREAL, intent(out) :: a(imax), b(imax), c(imax)
+
+    a(:) = alpha
+    b(:) = C_1_R    
+    c(:) = alpha
+
+    if ( bcsimin == DNS_FILTER_BCS_ZERO ) then
+        c(1) = C_0_R
+    end if
+
+    if ( bcsimax== DNS_FILTER_BCS_ZERO ) then
+        a(imax) = C_0_R
+    end if
+
+    return
+end subroutine FLT_C4_LHS
+
+subroutine FLT_C4_RHS(imax, jkmax, periodic, bcsimin, bcsimax, cxi, u, uf)!, txi)
 
     implicit none
 
@@ -17,47 +38,10 @@ subroutine FLT_C4(imax, jkmax, periodic, bcsimin, bcsimax, cxi, u, uf, txi)
     TINTEGER, intent(IN) :: imax, jkmax, bcsimin, bcsimax
     TREAL, dimension(jkmax, imax), intent(IN) :: u
     TREAL, dimension(jkmax, imax), intent(OUT) :: uf
-    TREAL, dimension(imax, 6), intent(IN) :: cxi
-    TREAL, dimension(imax, 5), intent(INOUT) :: txi
+    TREAL, dimension(imax, 5), intent(IN) :: cxi
 
 ! -----------------------------------------------------------------------
     TINTEGER jk, i
-    TREAL vmult1, vmultmx
-
-! ###################################################################
-    vmult1 = C_1_R; vmultmx = C_1_R
-    if (bcsimin == DNS_FILTER_BCS_ZERO) vmult1 = C_0_R ! No filter at i=1
-    if (bcsimax == DNS_FILTER_BCS_ZERO) vmultmx = C_0_R ! No filter at i=imax
-
-! #######################################################################
-! Set up the left hand side and factor the matrix
-! Constant alpha contained in array cxi(6)
-! #######################################################################
-    if (periodic) then ! periodic
-        txi(1, 1) = cxi(1, 6)
-        txi(1, 2) = C_1_R
-        txi(1, 3) = cxi(1, 6)
-
-        txi(imax, 1) = cxi(imax, 6)
-        txi(imax, 2) = C_1_R
-        txi(imax, 3) = cxi(imax, 6)
-
-    else ! biased
-        txi(1, 1) = C_0_R
-        txi(1, 2) = C_1_R
-        txi(1, 3) = cxi(1, 6)*vmult1
-
-        txi(imax, 1) = cxi(imax, 6)*vmultmx
-        txi(imax, 2) = C_1_R
-        txi(imax, 3) = C_0_R
-
-    end if
-
-    do i = 2, imax - 1
-        txi(i, 1) = cxi(i, 6)
-        txi(i, 2) = C_1_R
-        txi(i, 3) = cxi(i, 6)
-    end do
 
 ! #######################################################################
 ! Set up right hand side and DO forward/backward substitution
@@ -123,7 +107,7 @@ subroutine FLT_C4(imax, jkmax, periodic, bcsimin, bcsimax, cxi, u, uf, txi)
     end do
 
     return
-end subroutine FLT_C4
+end subroutine FLT_C4_RHS
 
 subroutine FLT_C4P_CUTOFF_LHS(imax, a, b, c, d, e)
     implicit none

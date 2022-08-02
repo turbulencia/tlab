@@ -31,6 +31,12 @@ subroutine OPR_FILTER_INITIALIZE(g, f, wrk1d)
         call FLT_T1_INI(g%scale, g%nodes, f, wrk1d)
 
     case (DNS_FILTER_COMPACT)
+        call FLT_C4_LHS(f%size, f%bcsmin, f%bcsmax, f%parameters(1), f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8))
+        if ( f%periodic ) then
+            call TRIDPFS(f%size, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), f%coeffs(1, 9), f%coeffs(1, 10))
+        else
+            call TRIDFS(f%size, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8))
+        end if
         call FLT_C4_INI(g%jac, f)
 
     case (DNS_FILTER_COMPACT_CUTOFF)
@@ -74,13 +80,11 @@ subroutine OPR_FILTER_1D(nlines, f, u, result, wrk1d, wrk2d, wrk3d)
     select case (f%type)
 
     case (DNS_FILTER_COMPACT)
-        call FLT_C4(f%size, nlines, f%periodic, f%bcsmin, f%bcsmax, f%coeffs, u, result, wrk1d)
+        call FLT_C4_RHS(f%size, nlines, f%periodic, f%bcsmin, f%bcsmax, f%coeffs, u, result)
         if (f%periodic) then
-            call TRIDPFS(f%size, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-            call TRIDPSS(f%size, nlines, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), result, wrk2d)
+            call TRIDPSS(f%size, nlines, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), f%coeffs(1, 9), f%coeffs(1, 10), result, wrk2d)
         else
-            call TRIDFS(f%size, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            call TRIDSS(f%size, nlines, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), result)
+            call TRIDSS(f%size, nlines, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), result)
         end if
 
     case (DNS_FILTER_COMPACT_CUTOFF)
