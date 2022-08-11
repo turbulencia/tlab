@@ -2,7 +2,7 @@ set(LEVEL1_LIBS utils modules)
 
 FILE(GLOB sourcefiles "efilter/*.f90")
 add_executable(vefilter.x efilter/vefilter.f90)
-target_link_libraries(vefilter.x operators filters fdm ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(vefilter.x operators filters ibm fdm ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "partial/*.f90")
 add_executable(vpartial.x ${sourcefiles})

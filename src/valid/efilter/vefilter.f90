@@ -10,7 +10,7 @@ program VEFILTER
 #include "integers.h"
 
     TINTEGER imax, i, ik, i1bc
-    parameter(imax=256)
+    parameter(imax=257)
     TREAL x(imax, 50), u(imax), uf(imax)
     TREAL wrk1d(imax, 10), wrk2d(imax), wrk3d(imax)
     type(filter_dt) filter
@@ -39,15 +39,15 @@ program VEFILTER
         g%uniform = .false.
         filter%bcsmin = DNS_FILTER_BCS_ZERO
         filter%bcsmax = DNS_FILTER_BCS_ZERO
-        ! do i = 1, imax
-        !     x(i, 1) = M_REAL(i - 1)/M_REAL(imax-1)*g%scale
-        ! end do
-        open (21, file='y.dat')
         do i = 1, imax
-            read (21, *) x(i, 1)
+            x(i, 1) = M_REAL(i - 1)/M_REAL(imax-1)*g%scale
         end do
-        close (21)
-        g%scale = x(imax, 1) - x(1, 1)
+        ! open (21, file='y.dat')
+        ! do i = 1, imax
+        !     read (21, *) x(i, 1)
+        ! end do
+        ! close (21)
+        ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
     call FDM_INITIALIZE(x, g, wrk1d)
@@ -58,7 +58,7 @@ program VEFILTER
     ! if (i1bc == 0) then
     write (*, *) 'Wavenumber ?'
     read (*, *) ik
-    u(:) = SIN(C_2_R*C_PI_R/g%scale*M_REAL(ik)*x(:, 1) + C_PI_R*C_05_R)
+    u(:) = SIN(C_2_R*C_PI_R/g%scale*M_REAL(ik)*x(:, 1))
     ! else
     !     open (21, file='f.dat')
     !     do i = 1, imax
@@ -80,6 +80,7 @@ program VEFILTER
     call OPR_FILTER_INITIALIZE(g, filter, wrk1d)
 
     call OPR_FILTER_1D(1, filter, u, uf, wrk1d, wrk2d, wrk3d)
+    ! call OPR_PARTIAL1(1, [0,0], g, u, uf, wrk2d)
 
     open (20, file='filter.dat')
     do i = 1, imax
@@ -88,9 +89,11 @@ program VEFILTER
     close (20)
 
     open (20, file='transfer.dat')
-    do ik = 1, imax/2
-        u = SIN(C_2_R*C_PI_R/g%scale*M_REAL(ik)*x(:,1))
+    ! do ik = 1, imax/2
+    do ik = 1, (imax-1)/2
+            u = SIN(C_2_R*C_PI_R/g%scale*M_REAL(ik)*x(:,1))
         call OPR_FILTER_1D(1, filter, u, uf, wrk1d, wrk2d, wrk3d)
+        ! call OPR_PARTIAL1(1, [0,0], g, u, uf, wrk2d)
         write (20, *) ik, maxval(uf)
     end do
     close (20)

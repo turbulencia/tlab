@@ -9,6 +9,7 @@
 subroutine OPR_FILTER_INITIALIZE(g, f, wrk1d)
 
     use TLAB_TYPES, only: grid_dt, filter_dt
+    use FLT_C4
 
     implicit none
 
@@ -32,12 +33,12 @@ subroutine OPR_FILTER_INITIALIZE(g, f, wrk1d)
 
     case (DNS_FILTER_COMPACT)
         call FLT_C4_LHS(f%size, f%bcsmin, f%bcsmax, f%parameters(1), f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8))
-        if ( f%periodic ) then
+        if (f%periodic) then
             call TRIDPFS(f%size, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), f%coeffs(1, 9), f%coeffs(1, 10))
         else
             call TRIDFS(f%size, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8))
         end if
-        call FLT_C4_INI(g%jac, f)
+        call FLT_C4_RHS_COEFFS(f%size, f%parameters(1), f%periodic, g%jac, f%coeffs(1,1))
 
     case (DNS_FILTER_COMPACT_CUTOFF)
         if (f%periodic) then
@@ -45,6 +46,9 @@ subroutine OPR_FILTER_INITIALIZE(g, f, wrk1d)
             call PENTADPFS(f%size, f%coeffs(1, 1), f%coeffs(1, 2), f%coeffs(1, 3), &
                            f%coeffs(1, 4), f%coeffs(1, 5), f%coeffs(1, 6), f%coeffs(1, 7))
         else
+            call FLT_C4_CUTOFF_LHS(f%size, f%coeffs(1, 1), f%coeffs(1, 2), f%coeffs(1, 3), f%coeffs(1, 4), f%coeffs(1, 5))
+            call PENTADFS2(f%size, f%coeffs(1, 1), f%coeffs(1, 2), f%coeffs(1, 3), &
+                          f%coeffs(1, 4), f%coeffs(1, 5))
         end if
 
     case (DNS_FILTER_HELMHOLTZ)
@@ -59,6 +63,7 @@ end subroutine OPR_FILTER_INITIALIZE
 ! Filter kernel along one direction
 ! ###################################################################
 subroutine OPR_FILTER_1D(nlines, f, u, result, wrk1d, wrk2d, wrk3d)
+    use FLT_C4
 
     use TLAB_TYPES, only: filter_dt
 
@@ -75,14 +80,14 @@ subroutine OPR_FILTER_1D(nlines, f, u, result, wrk1d, wrk2d, wrk3d)
     TINTEGER delta
 
 ! ###################################################################
-    delta = INT(f%parameters(1))
+    delta = int(f%parameters(1))
 
     select case (f%type)
 
     case (DNS_FILTER_COMPACT)
         call FLT_C4_RHS(f%size, nlines, f%periodic, f%bcsmin, f%bcsmax, f%coeffs, u, result)
         if (f%periodic) then
-            call TRIDPSS(f%size, nlines, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), f%coeffs(1, 9), f%coeffs(1, 10), result, wrk2d)
+        call TRIDPSS(f%size, nlines, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), f%coeffs(1, 9), f%coeffs(1, 10), result, wrk2d)
         else
             call TRIDSS(f%size, nlines, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), result)
         end if
@@ -93,6 +98,9 @@ subroutine OPR_FILTER_1D(nlines, f, u, result, wrk1d, wrk2d, wrk3d)
             call PENTADPSS(f%size, nlines, f%coeffs(1, 1), f%coeffs(1, 2), f%coeffs(1, 3), &
                            f%coeffs(1, 4), f%coeffs(1, 5), f%coeffs(1, 6), f%coeffs(1, 7), result)
         else
+            call FLT_C4_CUTOFF_RHS(f%size, nlines, u, result)
+            call PENTADSS2(f%size, nlines, f%coeffs(1, 1), f%coeffs(1, 2), f%coeffs(1, 3), &
+                          f%coeffs(1, 4), f%coeffs(1, 5), result)
         end if
 
     case (DNS_FILTER_6E)
@@ -396,7 +404,7 @@ subroutine OPR_FILTER_BAND_2D(nx, ny, nz, spc_param, a)
 #endif
             fi = M_REAL(iglobal - 1)/g(1)%scale
 
-            f = SQRT(fi**2 + fk**2)
+            f = sqrt(fi**2 + fk**2)
 
 ! apply spectral cutoff
             do j = 1, ny
@@ -455,7 +463,7 @@ subroutine OPR_FILTER_ERF_2D(nx, ny, nz, spc_param, a)
         off_pass = 1.
     end if
 
-    fcut_log = LOG(ABS(spc_param(1)))
+    fcut_log = log(abs(spc_param(1)))
     do k = 1, nz
 #ifdef USE_MPI
         kglobal = k + ims_offset_k
@@ -473,8 +481,8 @@ subroutine OPR_FILTER_ERF_2D(nx, ny, nz, spc_param, a)
 #endif
             fi = M_REAL(iglobal - 1)/g(1)%scale
 
-            f = SQRT(fi**2 + fk**2)
-            if (f > 0) then; damp = (ERF((LOG(f) - fcut_log)/spc_param(2)) + 1.)/2.
+            f = sqrt(fi**2 + fk**2)
+            if (f > 0) then; damp = (erf((log(f) - fcut_log)/spc_param(2)) + 1.)/2.
             else; damp = C_0_R; 
             end if
 
