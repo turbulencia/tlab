@@ -1,8 +1,8 @@
 #include "types.h"
 #include "dns_const.h"
 
-! Compact fields following Lele, JCP, 1992
-module FLT_C4
+! Compact filters following Lele, JCP, 1992
+module FLT_COMPACT
     implicit none
     private
 
@@ -373,4 +373,4 @@ contains
         return
     end subroutine FLT_C4_CUTOFF_RHS
 
-end module FLT_C4
+end module FLT_COMPACT

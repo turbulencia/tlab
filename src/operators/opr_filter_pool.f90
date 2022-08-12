@@ -7,9 +7,9 @@
 ! ###################################################################
 ! ###################################################################
 subroutine OPR_FILTER_INITIALIZE(g, f, wrk1d)
-
     use TLAB_TYPES, only: grid_dt, filter_dt
-    use FLT_C4
+    use FLT_COMPACT
+    use FLT_EXPLICIT
 
     implicit none
 
@@ -26,7 +26,7 @@ subroutine OPR_FILTER_INITIALIZE(g, f, wrk1d)
     select case (f%type)
 
     case (DNS_FILTER_4E, DNS_FILTER_ADM)
-        call FLT_E4_INI(g%scale, g%nodes, f)
+        call FLT_E4_COEFFS(f%size, f%periodic, g%scale, g%nodes, f%coeffs)
 
     case (DNS_FILTER_TOPHAT)
         call FLT_T1_INI(g%scale, g%nodes, f, wrk1d)
@@ -63,9 +63,9 @@ end subroutine OPR_FILTER_INITIALIZE
 ! Filter kernel along one direction
 ! ###################################################################
 subroutine OPR_FILTER_1D(nlines, f, u, result, wrk1d, wrk2d, wrk3d)
-    use FLT_C4
-
     use TLAB_TYPES, only: filter_dt
+    use FLT_COMPACT
+    use FLT_EXPLICIT
 
     implicit none
 
