@@ -31,7 +31,7 @@ err_count = i0
 case_count= i0
 
 CALL TLAB_START()
-CALL DNS_READ_GLOBAL('dns.ini')
+CALL IO_READ_GLOBAL('dns.ini')
 #ifdef USE_MPI
 CALL TLAB_MPI_INITIALIZE
 #endif

@@ -26,7 +26,7 @@ PROGRAM INISCAL
 ! ###################################################################
   CALL TLAB_START()
 
-  CALL DNS_READ_GLOBAL(ifile)
+  CALL IO_READ_GLOBAL(ifile)
   CALL SCAL_READ_LOCAL(ifile)
 #ifdef CHEMISTRY
   CALL CHEM_READ_GLOBAL(ifile)

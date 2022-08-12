@@ -33,7 +33,7 @@ PROGRAM INIPART
   !########################################################################
   CALL TLAB_START
 
-  CALL DNS_READ_GLOBAL(ifile)
+  CALL IO_READ_GLOBAL(ifile)
 
   IF ( icalc_part .EQ. 1 ) THEN
     CALL PARTICLE_READ_GLOBAL(ifile)

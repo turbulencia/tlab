@@ -112,7 +112,7 @@ PROGRAM SPECTRA
 
   CALL TLAB_START()
 
-  CALL DNS_READ_GLOBAL(ifile)
+  CALL IO_READ_GLOBAL(ifile)
 
   ! -------------------------------------------------------------------
   ! IBM status (before TLAB_MPI_INITIALIZE!)

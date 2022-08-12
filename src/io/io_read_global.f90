@@ -5,6 +5,8 @@
 #include "dns_const_mpi.h"
 #endif
 
+#define C_FILE_LOC "IO_READ_LOCAL"
+
 !########################################################################
 !# DESCRIPTION
 !#
@@ -12,7 +14,7 @@
 !# and doing cross-check of these general data.
 !#
 !########################################################################
-SUBROUTINE DNS_READ_GLOBAL(inifile)
+SUBROUTINE IO_READ_GLOBAL(inifile)
 
   USE TLAB_CONSTANTS, ONLY : lfile, efile, wfile, MajorVersion, MinorVersion
   USE TLAB_VARS
@@ -49,7 +51,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   CALL SCANINIINT(bakfile, inifile, 'Version', 'Major', '0', idummy)
   IF ( MajorVersion .NE. idummy ) THEN
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Major version error.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Major version error.')
      CALL TLAB_STOP(DNS_ERROR_VERSION)
   ENDIF
   CALL SCANINIINT(bakfile, inifile, 'Version', 'Minor', '0', idummy)
@@ -88,7 +90,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'netcdf'   ) THEN; imode_files = IO_NETCDF
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'none'     ) THEN; imode_files = IO_NOFILE
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Main.FileFormat.')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Wrong Main.FileFormat.')
      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
@@ -96,7 +98,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'double'   ) THEN; imode_precision_files = IO_TYPE_DOUBLE
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'single'   ) THEN; imode_precision_files = IO_TYPE_SINGLE
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Main.FileType.')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Wrong Main.FileType.')
      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
@@ -106,7 +108,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'temporal' ) THEN; imode_sim = DNS_MODE_TEMPORAL
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'spatial'  ) THEN; imode_sim = DNS_MODE_SPATIAL
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.Type must be temporal or spatial')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Entry Main.Type must be temporal or spatial')
      CALL TLAB_STOP(DNS_ERROR_SIMTYPE)
   ENDIF
 
@@ -114,7 +116,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_flow = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_flow = 0
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.CalculateFlow must be yes or no')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Entry Main.CalculateFlow must be yes or no')
      CALL TLAB_STOP(DNS_ERROR_CALCFLOW)
   ENDIF
 
@@ -122,7 +124,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_scal = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_scal = 0
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.CalculateScalar must be yes or no')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Entry Main.CalculateScalar must be yes or no')
      CALL TLAB_STOP(DNS_ERROR_CALCSCALAR)
   ENDIF
 
@@ -130,7 +132,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_part = 1
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_part = 0
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main.CalculateParticle must be yes or no')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Entry Main.CalculateParticle must be yes or no')
      CALL TLAB_STOP(DNS_ERROR_CALCPARTICLE)
   ENDIF
 
@@ -140,7 +142,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'incompressible' ) THEN; imode_eqns = DNS_EQNS_INCOMPRESSIBLE
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'anelastic'      ) THEN; imode_eqns = DNS_EQNS_ANELASTIC
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong entry Main.Equations option.')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Wrong entry Main.Equations option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -154,7 +156,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwater'      ) THEN; imixture = MIXT_TYPE_AIRWATER
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterlinear') THEN; imixture = MIXT_TYPE_AIRWATER_LINEAR
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong entry Main.Mixture model.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong entry Main.Mixture model.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -165,7 +167,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'skewsymmetric' ) THEN; iadvection = EQNS_SKEWSYMMETRIC
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'convective'    ) THEN; iadvection = EQNS_CONVECTIVE
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermAdvection option.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermAdvection option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -174,7 +176,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'divergence' ) THEN; iviscous = EQNS_DIVERGENCE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit'   ) THEN; iviscous = EQNS_EXPLICIT
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermViscous option.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermViscous option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -183,7 +185,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'divergence' ) THEN; idiffusion = EQNS_DIVERGENCE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit'   ) THEN; idiffusion = EQNS_EXPLICIT
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermDiffusion option.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermDiffusion option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -195,7 +197,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bilinear'    ) THEN; buoyancy%type = EQNS_BOD_BILINEAR
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'quadratic'   ) THEN; buoyancy%type = EQNS_BOD_QUADRATIC
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermBodyForce option.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermBodyForce option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -204,7 +206,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'explicit'   ) THEN; coriolis%type = EQNS_EXPLICIT
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'normalized' ) THEN; coriolis%type = EQNS_COR_NORMALIZED
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermCoriolis option.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermCoriolis option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -213,7 +215,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dglobal'  ) THEN; radiation%type = EQNS_RAD_BULK1D_GLOBAL
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'bulk1dlocal'   ) THEN; radiation%type = EQNS_RAD_BULK1D_LOCAL
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermRadiation option.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermRadiation option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -222,7 +224,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'constantdivergencelocal' ) THEN; subsidence%type = EQNS_SUB_CONSTANT_LOCAL
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'constantdivergenceglobal') THEN; subsidence%type = EQNS_SUB_CONSTANT_GLOBAL
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong TermSubsidence option.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermSubsidence option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -263,7 +265,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactjacobian8' ) THEN; imode_fdm = FDM_COM8_JACOBIAN;
   ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'compactdirect6'   ) THEN; imode_fdm = FDM_COM6_DIRECT;
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong SpaceOrder option.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong SpaceOrder option.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -303,7 +305,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; istagger = 1; CALL TLAB_WRITE_ASCII(lfile, 'Horizontal staggering of the pressure along Ox and Oz.')
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; istagger = 0
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main. StaggerHorizontalPressure must be yes or no')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Entry Main. StaggerHorizontalPressure must be yes or no')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -311,7 +313,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; ivfilter = 1;  CALL TLAB_WRITE_ASCII(lfile, 'Vertical filtering of the pressure and dpdy along Oy.')
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; ivfilter = 0
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Main. FilterVerticalPressure must be yes or no')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Entry Main. FilterVerticalPressure must be yes or no')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -320,17 +322,17 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! Consistency check
   IF ( istagger .EQ. 1 ) THEN
      IF ( .NOT. ( (imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE) .OR. (imode_eqns .EQ. DNS_EQNS_ANELASTIC) ) ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
      IF ( .NOT. ( (iadvection .EQ. EQNS_CONVECTIVE) .OR. (iadvection .EQ. EQNS_SKEWSYMMETRIC) ) ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Horizontal pressure staggering not implemented for current advection scheme.')
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering not implemented for current advection scheme.')
         CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
      ENDIF
   ENDIF
   IF ( ivfilter .EQ. 1 ) THEN
      IF ( .NOT. (istagger .EQ. 1) ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Vertical pressure filtering only in combination with horizontal pressure staggering.')
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Vertical pressure filtering only in combination with horizontal pressure staggering.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF
   ENDIF
@@ -369,7 +371,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   damkohler(:) = C_0_R; inb_scal_local2 = MAX_NSP
   CALL LIST_REAL(sRes, inb_scal_local2, damkohler)
   IF ( inb_scal_local1 .NE. inb_scal_local2 ) THEN ! Consistency check
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Schmidt and Damkholer sizes do not match.')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Schmidt and Damkholer sizes do not match.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -394,7 +396,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      IF ( froude .GT. C_0_R ) THEN
            buoyancy%vector(:) = buoyancy%vector(:) /froude ! adding the froude number into de vector g
      ELSE
-        CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Froude number must be nonzero if buoyancy is retained.')
+        CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Froude number must be nonzero if buoyancy is retained.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF
 
@@ -426,7 +428,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      IF ( rossby .GT. C_0_R ) THEN
         coriolis%vector(:) = coriolis%vector(:) /rossby ! adding the rossby number into the vector
      ELSE
-        CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Rossby number must be nonzero if coriolis is retained.')
+        CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Rossby number must be nonzero if coriolis is retained.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF
 
@@ -436,7 +438,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      CALL LIST_REAL(sRes, idummy, coriolis%parameters)
 
      IF ( coriolis%parameters(2) .EQ. C_0_R ) THEN
-        CALL TLAB_WRITE_ASCII(lfile,'DNS_READ_GLOBAL. Default normalized geostrophic velocity set to one.')
+        CALL TLAB_WRITE_ASCII(lfile,C_FILE_LOC//'. Default normalized geostrophic velocity set to one.')
         coriolis%parameters(2) = C_1_R
      ENDIF
 
@@ -445,7 +447,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! Consistency check
   IF ( coriolis%type .EQ. EQNS_COR_NORMALIZED ) THEN
      IF ( coriolis%active(2) ) THEN
-        CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. TermCoriolis option only allows for angular velocity along Oy.')
+        CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. TermCoriolis option only allows for angular velocity along Oy.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF
   ENDIF
@@ -512,7 +514,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      IF ( settling .GT. C_0_R ) THEN
         transport%parameters = transport%parameters *settling ! adding the settling number in the parameter definitions
      ELSE
-        CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Settling number must be nonzero if transport is retained.')
+        CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Settling number must be nonzero if transport is retained.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF
 
@@ -599,7 +601,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      IF ( kmax .GT. 0 .AND. MOD(g(3)%size,kmax) .EQ. 0 ) THEN
         ims_npro_k = g(3)%size/kmax
      ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Input kmax incorrect')
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Input kmax incorrect')
         CALL TLAB_STOP(DNS_ERROR_KMAXTOTAL)
      ENDIF
 
@@ -607,7 +609,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      IF ( imax .GT. 0 .AND. MOD(g(1)%size,imax) .EQ. 0 ) THEN
         ims_npro_i = g(1)%size/imax
      ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Input imax incorrect')
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Input imax incorrect')
         CALL TLAB_STOP(DNS_ERROR_KMAXTOTAL)
      ENDIF
 
@@ -616,7 +618,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         lstr = TRIM(ADJUSTL(lstr))//'x'//TRIM(ADJUSTL(sRes))
         CALL TLAB_WRITE_ASCII(lfile, 'Initializing domain partition '//TRIM(ADJUSTL(lstr)))
      ELSE
-        CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Inconsistency in total number of PEs')
+        CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Inconsistency in total number of PEs')
         CALL TLAB_STOP(DNS_ERROR_KMAXTOTAL)
      ENDIF
 
@@ -631,7 +633,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(1)%uniform = .TRUE.
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(1)%uniform = .FALSE.
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Uniform X grid')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Uniform X grid')
      CALL TLAB_STOP(DNS_ERROR_UNIFORMX)
   ENDIF
 
@@ -639,7 +641,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(2)%uniform = .TRUE.
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(2)%uniform = .FALSE.
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Uniform Y grid')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Uniform Y grid')
      CALL TLAB_STOP(DNS_ERROR_UNIFORMY)
   ENDIF
 
@@ -647,7 +649,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(3)%uniform = .TRUE.
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(3)%uniform = .FALSE.
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Uniform Z grid')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Uniform Z grid')
      CALL TLAB_STOP(DNS_ERROR_UNIFORMZ)
   ENDIF
 
@@ -658,7 +660,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(1)%periodic = .TRUE.
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(1)%periodic = .FALSE.
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Periodic X grid')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Periodic X grid')
      CALL TLAB_STOP(DNS_ERROR_IBC)
   ENDIF
 
@@ -666,7 +668,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(2)%periodic = .TRUE.
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(2)%periodic = .FALSE.
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Periodic Y grid')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Periodic Y grid')
      CALL TLAB_STOP(DNS_ERROR_JBC)
   ENDIF
 
@@ -674,7 +676,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; g(3)%periodic = .TRUE.
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; g(3)%periodic = .FALSE.
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error in Periodic Z grid')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Periodic Z grid')
      CALL TLAB_STOP(DNS_ERROR_KBC)
   ENDIF
 
@@ -787,7 +789,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'helmholtz'      ) THEN; FilterDomain(:)%type = DNS_FILTER_HELMHOLTZ
      FilterDomain(:)%parameters(1) = C_1_R    ! default filter size
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Filter.Type.')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Wrong Filter.Type.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -808,7 +810,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_NEUMANN
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'zero'      ) THEN; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_ZERO
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Filter.BcsJmin.')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Wrong Filter.BcsJmin.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -821,7 +823,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_NEUMANN
   ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'zero'      ) THEN; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_ZERO
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Wrong Filter.BcsJmax.')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Wrong Filter.BcsJmax.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -840,7 +842,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF ( idummy .GT. 0 ) THEN
      FilterDomain(:)%repeat = idummy
   ELSE
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Entry Filter.Repeat must be positive.')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Entry Filter.Repeat must be positive.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
 
@@ -862,7 +864,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
      IF ( FilterDomain(ig)%type .EQ. DNS_FILTER_TOPHAT ) THEN
         IF ( MOD(INT(FilterDomain(is)%parameters(1)),2) .NE. 0 ) THEN
-           CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Tophat filter size must be even.')
+           CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Tophat filter size must be even.')
            CALL TLAB_STOP(DNS_ERROR_PARAMETER)
         ENDIF
         FilterDomain(ig)%inb_filter = INT(FilterDomain(ig)%parameters(1)) +1
@@ -930,7 +932,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhsymmetric'     ) THEN; qbg(1)%type = PROFILE_TANH_SYM
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhantisymmetric' ) THEN; qbg(1)%type = PROFILE_TANH_ANTISYM
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong velocity profile.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong velocity profile.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityX',     '0.0', qbg(1)%mean )
@@ -949,7 +951,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; qbg(2)%type = PROFILE_NONE
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; qbg(2)%type = PROFILE_LINEAR
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong velocity Y profile.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong velocity Y profile.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityY',      '0.0', qbg(2)%mean)
@@ -978,7 +980,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; qbg(3)%type = PROFILE_LINEAR_CROP
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; qbg(3)%type = PROFILE_MIXEDLAYER
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong velocity Z profile.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong velocity Z profile.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityZ',      '0.0', qbg(3)%mean)
@@ -1013,7 +1015,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhsymmetric'     ) THEN; rbg%type = PROFILE_TANH_SYM
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhantisymmetric' ) THEN; rbg%type = PROFILE_TANH_ANTISYM
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong density profile.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong density profile.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Density',      '0.0', rbg%mean )
@@ -1039,7 +1041,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhsymmetric'     ) THEN; tbg%type = PROFILE_TANH_SYM
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhantisymmetric' ) THEN; tbg%type = PROFILE_TANH_ANTISYM
   ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong temperature profile.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong temperature profile.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   ENDIF
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Temperature',      '0.0', tbg%mean )
@@ -1063,12 +1065,12 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! consistency check
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
      IF ( rbg%type .EQ. PROFILE_NONE .AND. tbg%type .EQ. PROFILE_NONE ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Specify density or temperature.')
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Specify density or temperature.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF
 
      IF ( rbg%type .NE. PROFILE_NONE .AND. tbg%type .NE. PROFILE_NONE ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Specify only density or only temperature.')
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Specify only density or only temperature.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF
   ENDIF
@@ -1133,7 +1135,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhsymmetric'     ) THEN; sbg(is)%type = PROFILE_TANH_SYM
      ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhantisymmetric' ) THEN; sbg(is)%type = PROFILE_TANH_ANTISYM
      ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Wrong species profile.')
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong species profile.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF
      WRITE(lstr,*) is; lstr='MeanScalar'//TRIM(ADJUSTL(lstr))
@@ -1213,7 +1215,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   IF ( imixture .NE. MIXT_TYPE_NONE ) THEN ! particular mixture (requires implementation)
      CALL THERMO_INITIALIZE                ! gama0 is defined here
      IF ( inb_scal_local1 .NE. inb_scal )  THEN
-        CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Incorrect number of Schmidt numbers.')
+        CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Incorrect number of Schmidt numbers.')
         CALL TLAB_STOP(DNS_ERROR_OPTION)
      ENDIF
   ENDIF
@@ -1230,7 +1232,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC .AND. &
        imixture .NE. MIXT_TYPE_AIR .AND. imixture .NE. MIXT_TYPE_AIRVAPOR .AND. imixture .NE. MIXT_TYPE_AIRWATER ) THEN
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Incorrect mixture type.')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Incorrect mixture type.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
   END IF
 
@@ -1238,7 +1240,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
        buoyancy%type .EQ. EQNS_BOD_BILINEAR .OR. &
        buoyancy%type .EQ. EQNS_BOD_QUADRATIC ) THEN
      IF ( inb_scal .EQ. 0 ) THEN
-        CALL TLAB_WRITE_ASCII(wfile,'DNS_READ_GLOBAL. Zero scalars; setting TermBodyForce equal to none.')
+        CALL TLAB_WRITE_ASCII(wfile,C_FILE_LOC//'. Zero scalars; setting TermBodyForce equal to none.')
         buoyancy%type = EQNS_NONE
      ENDIF
   ENDIF
@@ -1281,7 +1283,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         IF ( damkohler(1) .EQ. C_0_R .AND. damkohler(2) .EQ. C_0_R ) THEN
            damkohler(1:2) = damkohler(3)
         ELSE
-           CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. AirWater requires at least first 2 Damkholer numbers zero.')
+           CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. AirWater requires at least first 2 Damkholer numbers zero.')
            CALL TLAB_STOP(DNS_ERROR_OPTION)
         ENDIF
 
@@ -1362,14 +1364,14 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      ENDIF
 #endif
      IF ( MOD(imax,2) .NE. 0 ) THEN
-        CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Imax must be a multiple of 2 for the FFT operations.')
+        CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Imax must be a multiple of 2 for the FFT operations.')
         CALL TLAB_STOP(DNS_ERROR_DIMGRID)
      ENDIF
   ENDIF
 
 ! loop counters over the whole domain are integer*4
   IF ( isize_field .GT. HUGE(imax) ) THEN
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Integer model of 4 bytes not big enough.')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Integer model of 4 bytes not big enough.')
      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
 
@@ -1377,17 +1379,17 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
 ! Test periodicity constrains
 ! -------------------------------------------------------------------
   IF ( g(1)%periodic .AND. ( .NOT. g(1)%uniform ) ) THEN
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Grid must be uniform in periodic direction X')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Grid must be uniform in periodic direction X')
      CALL TLAB_STOP(DNS_ERROR_CHECKUNIFX)
   ENDIF
 
   IF ( g(2)%periodic .AND. ( .NOT. g(2)%uniform ) ) THEN
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Grid must be uniform in periodic direction Y')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Grid must be uniform in periodic direction Y')
      CALL TLAB_STOP(DNS_ERROR_CHECKUNIFY)
   ENDIF
 
   IF ( g(3)%periodic .AND. ( .NOT. g(3)%uniform ) ) THEN
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Grid must be uniform in periodic direction Z')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Grid must be uniform in periodic direction Z')
      CALL TLAB_STOP(DNS_ERROR_CHECKUNIFZ)
   ENDIF
 
@@ -1405,7 +1407,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
      IF      ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_DIRICHLET
      ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_NEUMANN
      ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. BoundaryConditions.VelocityJmin.')
+        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. BoundaryConditions.VelocityJmin.')
         CALL TLAB_STOP(DNS_ERROR_IBC)
      ENDIF
      FilterDomainBcsFlow(2) = DNS_FILTER_BCS_DIRICHLET ! Normal velocity is always Dirichlet
@@ -1415,7 +1417,7 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
         IF      ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; FilterDomainBcsScal(is) = DNS_FILTER_BCS_DIRICHLET
         ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; FilterDomainBcsScal(is) = DNS_FILTER_BCS_NEUMANN
         ELSE
-           CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
+           CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
            CALL TLAB_STOP(DNS_ERROR_IBC)
         ENDIF
      ENDDO
@@ -1438,27 +1440,27 @@ SUBROUTINE DNS_READ_GLOBAL(inifile)
   ENDIF
 
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL .AND. ( .NOT. g(1)%periodic ) ) THEN
-     CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Grid must be uniform and periodic in direction X for temporal simulation')
+     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Grid must be uniform and periodic in direction X for temporal simulation')
      CALL TLAB_STOP(DNS_ERROR_CHECKUNIFX)
   ENDIF
 
   IF ( inb_flow + inb_scal .GT. MAX_VARS ) THEN
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_GLOBAL. Error MAX_VARS < inb_flow + inb_scal')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error MAX_VARS < inb_flow + inb_scal')
      CALL TLAB_STOP(DNS_ERROR_TOTALVARS)
   ENDIF
 
   SELECT CASE ( imode_eqns )
   CASE( DNS_EQNS_INCOMPRESSIBLE,DNS_EQNS_ANELASTIC )
     IF ( iviscous /= EQNS_EXPLICIT ) THEN
-      CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Main.TermViscous undeveloped.')
+      CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Main.TermViscous undeveloped.')
       CALL TLAB_STOP(DNS_ERROR_OPTION)
     END IF
     IF ( idiffusion /= EQNS_EXPLICIT ) THEN
-      CALL TLAB_WRITE_ASCII(efile,'DNS_READ_GLOBAL. Main.TermDiffusion undeveloped.')
+      CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Main.TermDiffusion undeveloped.')
       CALL TLAB_STOP(DNS_ERROR_OPTION)
     END IF
   CASE( DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL )
   END SELECT
 
   RETURN
-END SUBROUTINE DNS_READ_GLOBAL
+END SUBROUTINE IO_READ_GLOBAL

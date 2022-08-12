@@ -49,7 +49,7 @@ PROGRAM VHELMHOLTZ_FXZ
 ! ###################################################################
   CALL TLAB_START()
 
-  CALL DNS_READ_GLOBAL('dns.ini')
+  CALL IO_READ_GLOBAL('dns.ini')
 #ifdef USE_MPI
   CALL TLAB_MPI_INITIALIZE
 #endif
