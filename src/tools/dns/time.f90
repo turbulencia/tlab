@@ -774,7 +774,8 @@ CONTAINS
     USE DNS_ARRAYS
     USE THERMO_VARS, ONLY : gama0
     USE BOUNDARY_BUFFER
-    USE BOUNDARY_BCS
+    USE BOUNDARY_BCS, ONLY : BcsDrift
+    USE BOUNDARY_BCS_COMPRESSIBLE
 
     IMPLICIT NONE
 
@@ -928,12 +929,12 @@ CONTAINS
     IF ( .NOT. g(2)%periodic ) THEN
       CALL BOUNDARY_BCS_Y(isize_field, M2_max,        rho,u,v,w,p,GAMMA_LOC(1),s, &
           hq(1,5),hq(1,1),hq(1,2),hq(1,3),hq(1,4),hs,&
-          txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), AUX_LOC(1), wrk2d,wrk3d)
+          txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5), AUX_LOC(:), wrk2d,wrk3d)
     END IF
 
     IF ( .NOT. g(1)%periodic ) THEN
       CALL BOUNDARY_BCS_X(isize_field, M2_max, etime, rho,u,v,w,p,GAMMA_LOC(1),s, &
-          hq(1,5),hq(1,1),hq(1,2),hq(1,3),hq(1,4),hs, txc, AUX_LOC(1), wrk1d,wrk2d,wrk3d)
+          hq(1,5),hq(1,1),hq(1,2),hq(1,3),hq(1,4),hs, txc, AUX_LOC(:), wrk1d,wrk2d,wrk3d)
     END IF
 
 #undef GAMMA_LOC
