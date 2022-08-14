@@ -27,6 +27,7 @@
 !########################################################################
 subroutine THERMO_INITIALIZE
 
+    use TLAB_TYPES
     use THERMO_VARS
 
     use TLAB_CONSTANTS, only: efile, lfile
@@ -36,19 +37,21 @@ subroutine THERMO_INITIALIZE
     implicit none
 
 ! -------------------------------------------------------------------
+    TREAL WGHT(MAX_NSP)
     TINTEGER icp, is, im
+    TREAL TREF_LOC, HREF(MAX_NSP), SREF(MAX_NSP)
     TINTEGER ISPREF                     ! reference species for CPREF and WREF
-    TREAL CPREF, RREF
-    TREAL WGHT(MAX_NSP), HREF(MAX_NSP), SREF(MAX_NSP)
-    TREAL WRK1D_LOC(MAX_NPSAT), tloc
+    TREAL CPREF
+    TREAL WRK1D_LOC(MAX_NPSAT)
+    TREAL PREF_LOC
     TINTEGER ipsat, i, j
     TREAL tmp1, tmp2
     character*46 str
 
 ! ###################################################################
-! Species tags and molecular weights in kg/kmol
+! Species tags and molar masses in kg/kmol
 ! ###################################################################
-    WGHT = C_1_R        ! Initialize molecular weight to 1 kg /kmol
+    WGHT = C_1_R        ! Initialize molar masses to 1 kg /kmol
 
     select case (imixture)
 
@@ -173,8 +176,8 @@ subroutine THERMO_INITIALIZE
         THERMO_SPNAME(1) = 'H2O'
         THERMO_SPNAME(2) = 'AIR'
 
-        WGHT(1) = 18.015
-        WGHT(2) = 28.9644
+        WGHT(1) = 18.015_cp    ! from Iribarne and Godson, 1981
+        WGHT(2) = 28.9644_cp
 
 ! -------------------------------------------------------------------
 ! Water vapor and air
@@ -187,10 +190,8 @@ subroutine THERMO_INITIALIZE
         THERMO_SPNAME(1) = 'H2O'
         THERMO_SPNAME(2) = 'AIR'
 
-!     WGHT(1) = 18.01538 ! from Burcat&Ruscic
-!     WGHT(2) = 28.96518
-        WGHT(1) = 18.015    ! from Iribarne and Godson, 1981
-        WGHT(2) = 28.9644
+        WGHT(1) = 18.015_cp    ! from Iribarne and Godson, 1981
+        WGHT(2) = 28.9644_cp
 
 ! -------------------------------------------------------------------
 ! Water vapor, air and liquid water
@@ -206,9 +207,9 @@ subroutine THERMO_INITIALIZE
         THERMO_SPNAME(2) = 'AIR'
         THERMO_SPNAME(3) = 'H2Ol'
 
-        WGHT(1) = 18.015
-        WGHT(2) = 28.9644
-        WGHT(3) = 18.015
+        WGHT(1) = 18.015_cp    ! from Iribarne and Godson, 1981
+        WGHT(2) = 28.9644_cp
+        WGHT(3) = 18.015_cp
 
 ! -------------------------------------------------------------------
 ! Linearized thermodynamics for stratocumulus case
@@ -227,9 +228,9 @@ subroutine THERMO_INITIALIZE
         end do
         THERMO_SPNAME(NSP) = 'Liquid' ! Normalized Liquid
 
-        WGHT(1) = 18.015              ! unused, but defined for re-normalization below
-        WGHT(2) = 28.9644
-        WGHT(3) = 18.015
+        WGHT(1) = 18.015_cp           ! unused, but defined for re-normalization below
+        WGHT(2) = 28.9644_cp
+        WGHT(3) = 18.015_cp
         WGHT(4:) = C_1_R
 
     end select
@@ -253,7 +254,7 @@ subroutine THERMO_INITIALIZE
 !
 ! i.e., dh_i = C_{p,i}dT and ds_{T,i}=C_{p,i}dT/T, where a_6 is
 ! related to the formation enthalpy, and a_7 to the formation entropy.
-! HREF and SREF (at TREF) are used to fix last Cpi 6-7 coefficients.
+! HREF and SREF (at TREF_LOC) are used to fix last Cpi 6-7 coefficients.
 !
 ! Note that Burcat&Ruscic give values devided by R^0
 !
@@ -264,21 +265,20 @@ subroutine THERMO_INITIALIZE
 ! The pressure contribution to the entropy still needs to be added
 !
 ! ###################################################################
-    TREF = 298.0d0          ! K, auxiliar value to define caloric data
-
     THERMO_AI = C_0_R       ! Initialize to zero
     HREF = C_0_R
     SREF = C_0_R
 
-    THERMO_TLIM(1, :) = 200.0e0     ! Default T limits for the 2 intervals of polynomial fits
-    THERMO_TLIM(2, :) = 5000.0e0    ! These intervals are currently not used
-    THERMO_TLIM(3, :) = 5000.0e0
+    THERMO_TLIM(1, :) = 200.0_cp     ! Default T limits for the 2 intervals of polynomial fits
+    THERMO_TLIM(2, :) = 5000.0_cp    ! These intervals are currently not used
+    THERMO_TLIM(3, :) = 5000.0_cp
 
     select case (imixture)
 ! -------------------------------------------------------------------
 ! FIXED THERMODYNAMIC DATA FOR METHANE
 ! -------------------------------------------------------------------
     case (MIXT_TYPE_BS, MIXT_TYPE_QUASIBS)
+        TREF_LOC = 298.0d0          ! K, auxiliar value to define caloric data
 
 ! Enthalpy of Formation in Jules/Kmol
         HREF(1) = -74.0*C_1E6_R
@@ -294,14 +294,14 @@ subroutine THERMO_INITIALIZE
         SREF(4) = 213.78*C_1E3_R
         SREF(5) = 191.61*C_1E3_R
 
-! Heat capacity polynomial. Values taken from fit with T-TREF instead T
+! Heat capacity polynomial. Values taken from fit with T-TREF_LOC instead T
         NCP = 2
         do im = 1, 2
-            THERMO_AI(1, im, 1) = 35.70*C_1E3_R - 42.4833*TREF
-            THERMO_AI(1, im, 2) = 28.96*C_1E3_R - 6.21666*TREF
-            THERMO_AI(1, im, 3) = 32.76*C_1E3_R - 11.9570*TREF
-            THERMO_AI(1, im, 4) = 37.22*C_1E3_R - 17.6500*TREF
-            THERMO_AI(1, im, 5) = 28.88*C_1E3_R - 4.70833*TREF
+            THERMO_AI(1, im, 1) = 35.70*C_1E3_R - 42.4833*TREF_LOC
+            THERMO_AI(1, im, 2) = 28.96*C_1E3_R - 6.21666*TREF_LOC
+            THERMO_AI(1, im, 3) = 32.76*C_1E3_R - 11.9570*TREF_LOC
+            THERMO_AI(1, im, 4) = 37.22*C_1E3_R - 17.6500*TREF_LOC
+            THERMO_AI(1, im, 5) = 28.88*C_1E3_R - 4.70833*TREF_LOC
 
             THERMO_AI(2, im, 1) = 42.4833
             THERMO_AI(2, im, 2) = 6.21666
@@ -312,17 +312,22 @@ subroutine THERMO_INITIALIZE
 ! 6th and 7th coefficient are calculated from reference enthalpy
             do is = 1, NSP
                 THERMO_AI(6, im, is) = HREF(is) &
-                                       - THERMO_AI(1, im, is)*TREF &
-                                       - THERMO_AI(2, im, is)*TREF*TREF*C_05_R
+                                       - THERMO_AI(1, im, is)*TREF_LOC &
+                                       - THERMO_AI(2, im, is)*TREF_LOC*TREF_LOC*C_05_R
                 THERMO_AI(7, im, is) = SREF(is) &
-                                       - THERMO_AI(2, im, is)*TREF
+                                       - THERMO_AI(2, im, is)*TREF_LOC
             end do
+        end do
+
+        do is = 1, NSP  ! Change heat capacities from molar to mass specific
+            THERMO_AI(:, :, is) = THERMO_AI(:, :, is)/WGHT(is)
         end do
 
 ! -------------------------------------------------------------------
 ! FIXED THERMODYNAMIC DATA FOR SIMPLE REACTION
 ! -------------------------------------------------------------------
     case (MIXT_TYPE_UNIDECOMP)
+        TREF_LOC = 298.0d0          ! K, auxiliar value to define caloric data
 
 ! Enthalpy of Formation in Jules/Kmol
         HREF(1) = C_0_R
@@ -342,15 +347,20 @@ subroutine THERMO_INITIALIZE
 ! 6th and 7th coefficient are calculated from reference enthalpy
             do is = 1, NSP
                 THERMO_AI(6, im, is) = HREF(is) &
-                                       - THERMO_AI(1, im, is)*TREF
+                                       - THERMO_AI(1, im, is)*TREF_LOC
                 THERMO_AI(7, im, is) = SREF(is)
             end do
         end do
 
+        do is = 1, NSP  ! Change heat capacities from molar to mass specific
+            THERMO_AI(:, :, is) = THERMO_AI(:, :, is)/WGHT(is)
+        end do
+    
 ! -------------------------------------------------------------------
 ! FIXED THERMODYNAMIC DATA FOR SIMPLE REACTION
 ! -------------------------------------------------------------------
     case (MIXT_TYPE_ONESTEP)
+        TREF_LOC = 298.0d0          ! K, auxiliar value to define caloric data
 
 ! Enthalpy of Formation in Jules/Kmol
         HREF(1) = C_0_R
@@ -375,36 +385,41 @@ subroutine THERMO_INITIALIZE
 ! 6th and 7th coefficient are calculated from reference enthalpy
             do is = 1, NSP
                 THERMO_AI(6, im, is) = HREF(is) &
-                                       - THERMO_AI(1, im, is)*TREF
+                                       - THERMO_AI(1, im, is)*TREF_LOC
                 THERMO_AI(7, im, is) = SREF(is)
             end do
         end do
 
+        do is = 1, NSP  ! Change heat capacities from molar to mass specific
+            THERMO_AI(:, :, is) = THERMO_AI(:, :, is)/WGHT(is)
+        end do
+    
 ! -------------------------------------------------------------------
 ! Water vapor, air and water liquid
 ! -------------------------------------------------------------------
     case (MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR)
+        TREF_LOC = 273.15_cp
 
-! Enthalpy of Formation in Jules/Kmol
-        HREF(1) = 33.688*C_1E3_R*TREF                   ! values s.t. THERMO_AI(6,im,1:2) = 0, i.e., liquid-water enthalpy
-        HREF(2) = 29.167*C_1E3_R*TREF
-        HREF(3) = 33.688*C_1E3_R*TREF - 44.009*C_1E6_R  ! latent heat of vaporization at 298 K is 2501.6-58.690=2442.91 kJ/kg
+! Enthalpy of Formation in J /kg
+        HREF(1) = 1870.0_cp*TREF_LOC                ! values s.t. THERMO_AI(6,im,1:2) = 0, i.e., liquid-water enthalpy
+        HREF(2) = 1007.0_cp*TREF_LOC
+        HREF(3) = 1870.0_cp*TREF_LOC -2501600_cp      ! latent heat of vaporization at 273.15 K is 2501.6 kJ/kg
 
-! Entropy of Formation in Jules/(Kelvin Kmol)
+! Entropy of Formation in J /kg /K
         SREF(1) = C_0_R
         SREF(2) = C_0_R
-        SREF(3) = -44.009*C_1E6_R/TREF
+        SREF(3) = -2501600_cp/TREF_LOC
 
-! Heat capacity polynomial; using only the low temperature range
+! Heat capacity polynomial in J /kg /K; using only the low temperature range 
         NCP = 1
         do im = 1, 2
-            THERMO_AI(1, im, 1) = 33.688*C_1E3_R    ! water vapor, 1870 J /kg /K; values s.t. THERMO_AI(6,im,1:2) = 0
-            THERMO_AI(1, im, 2) = 29.167*C_1E3_R    ! dry air, 1007 J /kg /K
-            THERMO_AI(1, im, 3) = 75.980*C_1E3_R    ! liquid water, 4217.6 J /kg /K
+            THERMO_AI(1, im, 1) = 1870.0_cp     ! water vapor
+            THERMO_AI(1, im, 2) = 1007.0_cp     ! dry air
+            THERMO_AI(1, im, 3) = 4217.6_cp     ! liquid water
 
 ! 6th and 7th coefficient are calculated from reference enthalpy
             do is = 1, NSP
-                THERMO_AI(6, im, is) = HREF(is) - THERMO_AI(1, im, is)*TREF
+                THERMO_AI(6, im, is) = HREF(is) - THERMO_AI(1, im, is)*TREF_LOC
                 THERMO_AI(7, im, is) = SREF(is)
             end do
         end do
@@ -413,6 +428,10 @@ subroutine THERMO_INITIALIZE
         call THERMO_READ_CHEMKIN(chemkin_file)
         THERMO_AI = THERMO_AI*RGAS
         NCP = 5
+    
+        do is = 1, NSP  ! Change heat capacities from molar to mass specific
+            THERMO_AI(:, :, is) = THERMO_AI(:, :, is)/WGHT(is)
+        end do
 
     end select
 
@@ -422,8 +441,6 @@ subroutine THERMO_INITIALIZE
 ! -------------------------------------------------------------------
     if (imixture == MIXT_TYPE_BILGER1997) then
         WGHT(5) = C_05_R*(WGHT(5) + WGHT(8))
-        HREF(5) = C_05_R*(HREF(5) + HREF(8))
-        SREF(5) = C_05_R*(SREF(5) + SREF(8))
         THERMO_AI(:, :, 5) = C_05_R*(THERMO_AI(:, :, 5) + THERMO_AI(:, :, 8))
     end if
 
@@ -453,7 +470,7 @@ subroutine THERMO_INITIALIZE
         WRK1D_LOC(9) = 0.209339997*C_1EM13_R
 
 ! going from powers of (T-T_ref) to T, with T_ref = 273.15 K
-        tloc = 273.15D0
+        TREF_LOC = 273.15D0
         do ipsat = 1, NPSAT
             THERMO_PSAT(ipsat) = C_0_R
             do i = ipsat, NPSAT
@@ -462,13 +479,13 @@ subroutine THERMO_INITIALIZE
                     tmp1 = tmp1*M_REAL(j)
                 end do
                 THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat) + &
-                                     WRK1D_LOC(i)*tloc**(i - 1)*tmp1*(-1)**(i - ipsat)
+                                     WRK1D_LOC(i)*TREF_LOC**(i - 1)*tmp1*(-1)**(i - ipsat)
             end do
             tmp2 = C_1_R
             do j = ipsat - 1, 1, -1
                 tmp2 = tmp2*M_REAL(j)
             end do
-            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/tmp2/tloc**(ipsat - 1)
+            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/tmp2/TREF_LOC**(ipsat - 1)
         end do
 
     case default
@@ -476,29 +493,15 @@ subroutine THERMO_INITIALIZE
     end select
 
 ! ###################################################################
-! Final calculations
-!
-! From this point onwards, do not use href() and sref(), and
-! normalized reference temperature is 1.0
-!
-! ###################################################################
-! -------------------------------------------------------------------
-! Change heat capacities from molar to mass specific
-! -------------------------------------------------------------------
-    do is = 1, NSP
-        THERMO_AI(:, :, is) = THERMO_AI(:, :, is)/WGHT(is)
-    end do
-
-! -------------------------------------------------------------------
 ! Nondimensionalization
-! -------------------------------------------------------------------
-    TREF = 298.0d0                  ! K, same value as used before to construct caloric data, but need not be 
+! ###################################################################
+    TREF = 298.0d0                  ! K
     ISPREF = 2                      ! Species 2 is taken as reference
     WREF = WGHT(ISPREF)             ! kg /kmol
 
     THERMO_TLIM = THERMO_TLIM/TREF  ! Temperature limis for polynomial fits to cp
 
-    WGHT_INV = WREF/WGHT            ! Inverse of molar weight, i.e., normalized gas constants
+    WGHT_INV = WREF/WGHT            ! Inverse of molar masses, i.e., normalized gas constants
 
     CPREF = C_0_R                   ! Reference cp
     do icp = NCP, 1, -1
@@ -517,9 +520,9 @@ subroutine THERMO_INITIALIZE
 
     gama0 = CPREF*WREF/(CPREF*WREF - RGAS)
 
-    RREF = C_1E5_R/(RGAS/WREF*TREF) ! density s.t. pressure is 1 bar
-    do ipsat = 1, NPSAT ! Saturation pressure; RREF is taken to have pressure of 1bar
-        THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/(RREF*RGAS/WREF*TREF)
+    PREF_LOC = C_1E5_R      ! Pa
+    do ipsat = 1, NPSAT
+        THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/PREF_LOC
         THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)*(TREF**(ipsat - 1))
     end do
 
@@ -536,7 +539,7 @@ subroutine THERMO_INITIALIZE
     write (str, 1010) 'Setting TREF = ', TREF
     call TLAB_WRITE_ASCII(lfile, str)
     if (NPSAT > 0) then
-        write (str, 1010) 'Setting RREF = ', RREF
+        write (str, 1010) 'Setting RREF = ', PREF_LOC/(RGAS/WREF*TREF)
         call TLAB_WRITE_ASCII(lfile, str)
     end if
     write (str, 1020) 'Setting CPREF = ', CPREF
