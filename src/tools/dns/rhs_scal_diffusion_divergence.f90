@@ -20,7 +20,7 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : idiffusion, visc, prandtl, schmidt
-  USE THERMO_VARS, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
+  USE THERMO_VARS, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
   USE BOUNDARY_BCS
 
   IMPLICIT NONE
@@ -81,7 +81,7 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
         ELSE
            im = 1
         ENDIF
-        DO icp = NCP_CHEMKIN,1,-1
+        DO icp = NCP,1,-1
            tmp4(i) = tmp4(i)*T(i) + (THERMO_AI(icp,im,is)-THERMO_AI(icp,im,NSP))/M_REAL(icp)
         ENDDO
 ! factor (diff-cond) added now

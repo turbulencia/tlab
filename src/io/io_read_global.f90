@@ -155,6 +155,7 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airvapor'      ) THEN; imixture = MIXT_TYPE_AIRVAPOR
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwater'      ) THEN; imixture = MIXT_TYPE_AIRWATER
   ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'airwaterlinear') THEN; imixture = MIXT_TYPE_AIRWATER_LINEAR
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'chemkin'       ) THEN; imixture = MIXT_TYPE_CHEMKIN ! use chemkin file to read the data
   ELSE
      CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong entry Main.Mixture model.')
      CALL TLAB_STOP(DNS_ERROR_OPTION)
@@ -552,7 +553,16 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
 ! ###################################################################
   CALL TLAB_WRITE_ASCII(bakfile, '#')
   CALL TLAB_WRITE_ASCII(bakfile, '#[Thermodynamics]')
+  CALL TLAB_WRITE_ASCII(bakfile, '#Nondimensional=<yes,no>')
   CALL TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
+
+  CALL SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Nondimensional', 'yes', sRes)
+  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; nondimensional = .TRUE.
+  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; nondimensional = .FALSE.
+  ELSE
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Thermodynamics.Nondimensional')
+     CALL TLAB_STOP(DNS_ERROR_OPTION)
+  ENDIF
 
   IF ( imixture .NE. EQNS_NONE ) THEN
      thermo_param(:) = C_0_R
@@ -560,6 +570,10 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
      idummy = MAX_PROF
      CALL LIST_REAL(sRes, idummy, thermo_param)
 
+  ENDIF
+
+  IF ( imixture .NE. MIXT_TYPE_CHEMKIN ) THEN
+    CALL SCANINICHAR(bakfile, inifile, 'Scalar', 'ChemkinFile', 'none', chemkin_file)
   ENDIF
 
 ! ###################################################################
@@ -1165,11 +1179,6 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(4))
 
   ENDDO
-
-! use chemkin for the thermodynamic data
-  CALL SCANINICHAR(bakfile, inifile, 'Scalar', 'ChemkinFile', 'none', chemkin_file)
-  IF ( TRIM(ADJUSTL(chemkin_file)) .EQ. 'none' ) THEN; iuse_chemkin = 0
-  ELSE;                                                iuse_chemkin = 1; ENDIF
 
 ! Special data
   IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN

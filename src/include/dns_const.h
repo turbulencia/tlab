@@ -184,6 +184,7 @@
 #define MIXT_TYPE_AIRVAPOR        10
 #define MIXT_TYPE_AIRWATER        11
 #define MIXT_TYPE_AIRWATER_LINEAR 12
+#define MIXT_TYPE_CHEMKIN         13
 
 ! Information for IO subarrays
 #define IO_SUBARRAY_VISUALS_XOY  1
