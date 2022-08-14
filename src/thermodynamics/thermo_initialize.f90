@@ -411,7 +411,6 @@ subroutine THERMO_INITIALIZE
 
     case (MIXT_TYPE_CHEMKIN) ! Load thermodynamic data from chemkin file
         call THERMO_READ_CHEMKIN(chemkin_file)
-        RGAS = 8.314*C_1E3_R    ! J /kg /K
         THERMO_AI = THERMO_AI*RGAS
         NCP = 5
 
@@ -516,7 +515,6 @@ subroutine THERMO_INITIALIZE
         end do
     end do
 
-    RGAS = 8.314*C_1E3_R    ! J /kg /K
     gama0 = CPREF*WREF/(CPREF*WREF - RGAS)
 
     RREF = C_1E5_R/(RGAS/WREF*TREF) ! density s.t. pressure is 1 bar

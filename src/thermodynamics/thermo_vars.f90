@@ -6,12 +6,14 @@ module THERMO_VARS
     implicit none
     save
 
-    TREAL :: gama0, GRATIO                  ! Compressibility. Specific heat ratio
-    TREAL :: MRATIO                         ! Compressible parameter
+    TREAL :: gama0                          ! Compressibility. Specific heat ratio
+    TREAL :: GRATIO                         ! (gama0-1)/gama0 to save calculations
+    TREAL :: MRATIO                         ! gama0 mach^2 to save calculations
 
     TINTEGER :: imixture
     character*128 :: chemkin_file           ! File with thermodynamic data, if used
 
+    ! NSP_MAX is defined in global TLAB_CONSTANTS because it is used as maximum number of scalars
     TINTEGER :: NSP                         ! Number of components (species) in a mixture
     character*16, dimension(MAX_NSP) :: THERMO_SPNAME
     TREAL, dimension(MAX_NSP) :: WGHT_INV   ! Inverse of molecular weight, i.e., gas constant
@@ -30,7 +32,8 @@ module THERMO_VARS
     TREAL :: THERMO_PSAT(MAX_NPSAT), NEWTONRAPHSON_ERROR
 
     logical nondimensional                  ! Nondimensional formulation
-    TREAL :: WREF, TREF, RGAS
+    TREAL :: WREF, TREF                     ! Reference values; together with gama0, they contain all information
+    TREAL, parameter :: RGAS = 8314d0       ! Universal gas constant, J /kg /K
 
     TREAL :: thermo_param(MAX_PROF)         ! Additional data
 
