@@ -857,7 +857,7 @@ SUBROUTINE THERMO_ANELASTIC_LAPSE_FR(nx,ny,nz, s, dTdy, e, lapse, frequency)
   Lv0=-THERMO_AI(6,1,3)
 
   IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
-     lapse = GRATIO /pbg%parameters(1)
+     lapse = GRATIO /pbg%parameters(5)
 
      ij = 0
      DO jk = 0,ny*nz-1
@@ -875,7 +875,7 @@ SUBROUTINE THERMO_ANELASTIC_LAPSE_FR(nx,ny,nz, s, dTdy, e, lapse, frequency)
      ENDDO
 
   ELSE IF ( imixture .EQ. MIXT_TYPE_AIRVAPOR ) THEN 
-     lapse = GRATIO /pbg%parameters(1) /( Cd  + s(:,2) *Cdv )
+     lapse = GRATIO /pbg%parameters(5) /( Cd  + s(:,2) *Cdv )
 
      ij = 0
      DO jk = 0,ny*nz-1
@@ -893,7 +893,7 @@ SUBROUTINE THERMO_ANELASTIC_LAPSE_FR(nx,ny,nz, s, dTdy, e, lapse, frequency)
      ENDDO
 
   ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-     lapse = GRATIO /pbg%parameters(1) /( Cd + s(:,2) *Cdv + s(:,3) *Cvl )
+     lapse = GRATIO /pbg%parameters(5) /( Cd + s(:,2) *Cdv + s(:,3) *Cvl )
      
      ij = 0
      DO jk = 0,ny*nz-1
@@ -947,7 +947,7 @@ SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU(nx,ny,nz, s, dTdy,dqldy, e,p,r, lapse, fre
   Cvl= THERMO_AI(1,1,3) - THERMO_AI(1,1,1)
   Lv0=-THERMO_AI(6,1,3)
 
-  scaleheightinv = GRATIO /pbg%parameters(1)
+  scaleheightinv = GRATIO /pbg%parameters(5)
   rd_ov_rv = WGHT_INV(2) /WGHT_INV(1)
     
   IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
@@ -994,7 +994,7 @@ SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU(nx,ny,nz, s, dTdy,dqldy, e,p,r, lapse, fre
         E_LOC = e(is)
         R_LOC = r(is)
         
-        RT_INV = R_LOC /P_LOC /pbg%parameters(1)
+        RT_INV = R_LOC /P_LOC /pbg%parameters(5)
         
         DO i = 1,nx
            ij = ij +1
@@ -1077,7 +1077,7 @@ SUBROUTINE THERMO_ANELASTIC_DEWPOINT(nx,ny,nz, s, e,p,r, Td,Lapse)
   Lv0=-THERMO_AI(6,1,3)
 
   rd_ov_rv = WGHT_INV(2) /WGHT_INV(1)
-  scaleheightinv = C_1_R /pbg%parameters(1)
+  scaleheightinv = C_1_R /pbg%parameters(5)
 
   IF      ( imixture .EQ. MIXT_TYPE_AIR      ) THEN
      

@@ -934,152 +934,24 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#ThickTemperature=<value>')
   CALL TLAB_WRITE_ASCII(bakfile, '#DeltaTemperature=<value>')
 
-! streamwise velocity
-  CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileVelocity', 'Tanh', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; qbg(1)%type = PROFILE_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; qbg(1)%type = PROFILE_LINEAR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'      ) THEN; qbg(1)%type = PROFILE_TANH
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; qbg(1)%type = PROFILE_ERF
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erfsurface') THEN; qbg(1)%type = PROFILE_ERF_SURFACE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bickley'   ) THEN; qbg(1)%type = PROFILE_BICKLEY
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'gaussian'  ) THEN; qbg(1)%type = PROFILE_GAUSSIAN
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekman'     ) THEN; qbg(1)%type = PROFILE_EKMAN_U
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekmanp'    ) THEN; qbg(1)%type = PROFILE_EKMAN_U_P
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic' ) THEN; qbg(1)%type = PROFILE_PARABOLIC
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; qbg(1)%type = PROFILE_LINEAR_CROP
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; qbg(1)%type = PROFILE_MIXEDLAYER
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhsymmetric'     ) THEN; qbg(1)%type = PROFILE_TANH_SYM
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhantisymmetric' ) THEN; qbg(1)%type = PROFILE_TANH_ANTISYM
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong velocity profile.')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
+
+  call PROFILE_READBLOCK(bakfile, inifile, 'Flow', 'Velocity', qbg(1))  
+! originally, all velocity data was contained in block 'Velocity' except for the mean value
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityX',     '0.0', qbg(1)%mean )
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorVelocity', '0.5', qbg(1)%ymean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickVelocity', '0.0', qbg(1)%thick)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaVelocity', '0.0', qbg(1)%delta)
+  call PROFILE_READBLOCK(bakfile, inifile, 'Flow', 'VelocityY', qbg(2))
+  call PROFILE_READBLOCK(bakfile, inifile, 'Flow', 'VelocityZ', qbg(3))
 
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamVelocity',  '0.0', qbg(1)%diam )
-  qbg(1)%parameters(5) = qbg(1)%diam
-
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceThickVelocity', '1.0', qbg(1)%parameters(3))
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceDeltaVelocity', '0.0', qbg(1)%parameters(4))
-
-! crosswise velocity
-  CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileVelocityY', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; qbg(2)%type = PROFILE_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; qbg(2)%type = PROFILE_LINEAR
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong velocity Y profile.')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityY',      '0.0', qbg(2)%mean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorVelocityY', '0.5', qbg(2)%ymean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickVelocityY', '0.0', qbg(2)%thick)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaVelocityY', '0.0', qbg(2)%delta)
-
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamVelocityY',  '0.0', qbg(2)%diam )
-  qbg(2)%parameters(5) = qbg(2)%diam
-
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceThickVelocityY', '1.0', qbg(2)%parameters(3))
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceDeltaVelocityY', '0.0', qbg(2)%parameters(4))
-
-! spanwise velocity
-  CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileVelocityZ', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; qbg(3)%type = PROFILE_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; qbg(3)%type = PROFILE_LINEAR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'      ) THEN; qbg(3)%type = PROFILE_TANH
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; qbg(3)%type = PROFILE_ERF
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erfsurface') THEN; qbg(3)%type = PROFILE_ERF_SURFACE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'bickley'   ) THEN; qbg(3)%type = PROFILE_BICKLEY
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'gaussian'  ) THEN; qbg(3)%type = PROFILE_GAUSSIAN
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekman'     ) THEN; qbg(3)%type = PROFILE_EKMAN_V
-  ! ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'ekmanp'    ) THEN; qbg(3)%type = PROFILE_EKMAN_U_P
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic' ) THEN; qbg(3)%type = PROFILE_PARABOLIC
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; qbg(3)%type = PROFILE_LINEAR_CROP
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; qbg(3)%type = PROFILE_MIXEDLAYER
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong velocity Z profile.')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityZ',      '0.0', qbg(3)%mean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorVelocityZ', '0.5', qbg(3)%ymean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickVelocityZ', '0.0', qbg(3)%thick)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaVelocityZ', '0.0', qbg(3)%delta)
-
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamVelocityZ',  '0.0', qbg(3)%diam )
-  qbg(3)%parameters(5) = qbg(3)%diam
-
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceThickVelocityZ', '1.0', qbg(3)%parameters(3))
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'SurfaceDeltaVelocityZ', '0.0', qbg(3)%parameters(4))
-
-! Consistency check
-  IF ( ( qbg(1)%type .EQ. PROFILE_EKMAN_U .OR. qbg(1)%type .EQ. PROFILE_EKMAN_U_P ) &
-       .AND. qbg(3)%type .EQ. PROFILE_NONE ) THEN
+  ! Consistency check
+ IF ( qbg(1)%type .EQ. PROFILE_EKMAN_U .OR. qbg(1)%type .EQ. PROFILE_EKMAN_U_P ) THEN
      qbg(3)%type  = PROFILE_EKMAN_V
      qbg(3)%ymean = qbg(1)%ymean
      qbg(3)%thick = qbg(1)%thick
      qbg(3)%delta = qbg(1)%delta
   ENDIF
 
-! density
-  CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileDensity', 'None', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; rbg%type = PROFILE_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; rbg%type = PROFILE_LINEAR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'      ) THEN; rbg%type = PROFILE_TANH
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; rbg%type = PROFILE_ERF
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic' ) THEN; rbg%type = PROFILE_PARABOLIC
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; rbg%type = PROFILE_LINEAR_CROP
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; rbg%type = PROFILE_MIXEDLAYER
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhsymmetric'     ) THEN; rbg%type = PROFILE_TANH_SYM
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhantisymmetric' ) THEN; rbg%type = PROFILE_TANH_ANTISYM
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong density profile.')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Density',      '0.0', rbg%mean )
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorDensity', '0.5', rbg%ymean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickDensity', '0.0', rbg%thick)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaDensity', '0.0', rbg%delta)
-
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamDensity',  '0.0', rbg%diam )
-  rbg%parameters(5) = rbg%diam
-
-! temperature/enthalpy
-  CALL SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileTemperature', 'None', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'              ) THEN; tbg%type = PROFILE_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'            ) THEN; tbg%type = PROFILE_LINEAR
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'              ) THEN; tbg%type = PROFILE_TANH
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'               ) THEN; tbg%type = PROFILE_ERF
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearerf'         ) THEN; tbg%type = PROFILE_LINEAR_ERF
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'enthalpyerf'       ) THEN; tbg%type =-PROFILE_ERF
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'enthalpylinearerf' ) THEN; tbg%type =-PROFILE_LINEAR_ERF
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic'         ) THEN; tbg%type = PROFILE_PARABOLIC
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop'        ) THEN; tbg%type = PROFILE_LINEAR_CROP
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer'        ) THEN; tbg%type = PROFILE_MIXEDLAYER
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhsymmetric'     ) THEN; tbg%type = PROFILE_TANH_SYM
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhantisymmetric' ) THEN; tbg%type = PROFILE_TANH_ANTISYM
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong temperature profile.')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Temperature',      '0.0', tbg%mean )
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorTemperature', '0.5', tbg%ymean)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickTemperature', '0.0', tbg%thick)
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DeltaTemperature', '0.0', tbg%delta)
-
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'DiamTemperature',  '0.0', tbg%diam )
-  tbg%parameters(5) = tbg%diam
-
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'BottomSlope', '0.0',  tbg%parameters(1))
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'UpperSlope',  '0.0',  tbg%parameters(2))
-
-! pressure
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'Pressure',          '0.0', pbg%mean         )
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'YCoorPressure',     '0.5', pbg%ymean        )
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ReferencePressure', '0.0', pbg%reference    )
-
-  CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ScaleHeight',       '0.0', pbg%parameters(1))
+  call PROFILE_READBLOCK(bakfile, inifile, 'Flow', 'Density', rbg)
+  call PROFILE_READBLOCK(bakfile, inifile, 'Flow', 'Temperature', tbg)  ! temperature/enthalpy
+  call PROFILE_READBLOCK(bakfile, inifile, 'Flow', 'Pressure', pbg)
 
 ! consistency check
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
@@ -1138,51 +1010,8 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#Delta=<value>')
 
   DO is = 1,MAX_NSP
-     WRITE(lstr,*) is; lstr='ProfileScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINICHAR(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), 'None', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'      ) THEN; sbg(is)%type = PROFILE_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanh'      ) THEN; sbg(is)%type = PROFILE_TANH
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linear'    ) THEN; sbg(is)%type = PROFILE_LINEAR
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearcrop') THEN; sbg(is)%type = PROFILE_LINEAR_CROP
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearerf' ) THEN; sbg(is)%type = PROFILE_LINEAR_ERF
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'linearerfsurface' ) THEN; sbg(is)%type = PROFILE_LINEAR_ERF_SURFACE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erf'       ) THEN; sbg(is)%type = PROFILE_ERF
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erfsurface') THEN; sbg(is)%type = PROFILE_ERF_SURFACE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'erfantisym') THEN; sbg(is)%type = PROFILE_ERF_ANTISYM
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'parabolic' ) THEN; sbg(is)%type = PROFILE_PARABOLIC
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'mixedlayer') THEN; sbg(is)%type = PROFILE_MIXEDLAYER
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhsymmetric'     ) THEN; sbg(is)%type = PROFILE_TANH_SYM
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'tanhantisymmetric' ) THEN; sbg(is)%type = PROFILE_TANH_ANTISYM
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong species profile.')
-        CALL TLAB_STOP(DNS_ERROR_OPTION)
-     ENDIF
-     WRITE(lstr,*) is; lstr='MeanScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%mean )
-     WRITE(lstr,*) is; lstr='YCoorScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.5', sbg(is)%ymean)
-     WRITE(lstr,*) is; lstr='ThickScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%thick)
-     WRITE(lstr,*) is; lstr='DeltaScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%delta)
-     WRITE(lstr,*) is; lstr='ReferenceScalar'//TRIM(ADJUSTL(lstr))
-     WRITE(default,*) sbg(is)%mean
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), TRIM(ADJUSTL(default)), sbg(is)%reference)
-
-     WRITE(lstr,*) is; lstr='DiamScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%diam )
-     sbg(is)%parameters(5) = sbg(is)%diam
-
-     WRITE(lstr,*) is; lstr='BottomSlopeScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(1))
-     WRITE(lstr,*) is; lstr='UpperSlopeScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(2))
-
-     WRITE(lstr,*) is; lstr='SurfaceThickScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(3))
-     WRITE(lstr,*) is; lstr='SurfaceDeltaScalar'//TRIM(ADJUSTL(lstr))
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(4))
-
+     WRITE(lstr,*) is
+     call PROFILE_READBLOCK(bakfile, inifile, 'Scalar', 'Scalar'//TRIM(ADJUSTL(lstr)), sbg(is))
   ENDDO
 
 ! -------------------------------------------------------------------

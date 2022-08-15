@@ -26,7 +26,7 @@ PROGRAM STATE
   IF ( gama0 .GT. C_0_R ) GRATIO = (gama0-C_1_R)/gama0
   ep = C_0_R
   dsmooth = C_0_R
-  pbg%parameters(1) = C_1_R
+  pbg%parameters(5) = C_1_R
 
   Cd = THERMO_AI(1,1,2)
   Cdv= THERMO_AI(1,1,1) - THERMO_AI(1,1,2)

@@ -30,7 +30,7 @@ module TLAB_TYPES
     type background_dt
         sequence
         TINTEGER type, padding
-        TREAL reference, mean, delta, ymean, thick, diam
+        TREAL mean, delta, ymean, thick, diam
         TREAL, dimension(MAX_PARS) :: parameters
     end type background_dt
 
