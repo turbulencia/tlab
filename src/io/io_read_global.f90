@@ -573,8 +573,13 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
   ENDIF
 
   IF ( imixture .NE. MIXT_TYPE_CHEMKIN ) THEN
-    CALL SCANINICHAR(bakfile, inifile, 'Scalar', 'ChemkinFile', 'none', chemkin_file)
+    CALL SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'ChemkinFile', 'none', chemkin_file)
   ENDIF
+
+  IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
+     CALL SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'SmoothFactor', '0.1', dsmooth)
+  ENDIF
+
 
 ! ###################################################################
 ! Grid Parameters
@@ -1179,11 +1184,6 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
      CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.0', sbg(is)%parameters(4))
 
   ENDDO
-
-! Special data
-  IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-     CALL SCANINIREAL(bakfile, inifile, 'Scalar', 'SmoothFactor', '0.1', dsmooth)
-  ENDIF
 
 ! -------------------------------------------------------------------
 ! Spatial case
