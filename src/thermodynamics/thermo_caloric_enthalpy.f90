@@ -23,7 +23,6 @@ SUBROUTINE THERMO_CALORIC_ENTHALPY(nx,ny,nz, s, T, h)
 
   USE THERMO_VARS, ONLY : imixture
   USE THERMO_VARS, ONLY : NSP, NCP, THERMO_AI, THERMO_TLIM
-  USE THERMO_VARS, ONLY : YMASS
 
   IMPLICIT NONE
 
@@ -35,6 +34,7 @@ SUBROUTINE THERMO_CALORIC_ENTHALPY(nx,ny,nz, s, T, h)
 ! -------------------------------------------------------------------
   TINTEGER i, is, im, icp
   TREAL ENTHALPY_I, ENTHALPY_V, ENTHALPY_D, ENTHALPY_L
+  TREAL, dimension(NSP) :: YMASS
 
 ! ###################################################################
 ! Single species

@@ -29,7 +29,6 @@ SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
 
   USE THERMO_VARS, ONLY : imixture, gama0, GRATIO
   USE THERMO_VARS, ONLY : NSP, NCP, WGHT_INV, THERMO_AI, THERMO_TLIM
-  USE THERMO_VARS, ONLY : YMASS
 
   IMPLICIT NONE
 
@@ -41,6 +40,7 @@ SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
 ! -------------------------------------------------------------------
   TINTEGER ij, is, im, icp
   TREAL WMEAN_INV, ENTROPY_I, XMOL_I, alpha
+  TREAL, dimension(NSP) :: YMASS
 
 ! ###################################################################
 ! Single species

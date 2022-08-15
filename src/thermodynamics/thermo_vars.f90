@@ -16,7 +16,7 @@ module THERMO_VARS
     ! NSP_MAX is defined in global TLAB_CONSTANTS because it is used as maximum number of scalars
     TINTEGER :: NSP                         ! Number of components (species) in a mixture
     character*16, dimension(MAX_NSP) :: THERMO_SPNAME
-    TREAL, dimension(MAX_NSP) :: WGHT_INV   ! Inverse of molecular weight, i.e., gas constant
+    TREAL, dimension(MAX_NSP) :: WGHT_INV   ! Inverse of molar masses, i.e., gas constants
 
     TINTEGER, parameter :: MAX_NCP = 7      ! Caloric data; cp(T), formation enthalpy, formation entropy
     TINTEGER :: NCP                         ! Number of terms in polynomial fit to cp
@@ -24,8 +24,7 @@ module THERMO_VARS
     !                                         The second index indicates each of the 2 temperature intervals considered in the fit
     TREAL :: THERMO_TLIM(3, MAX_NSP)        ! Temperature limits of the two temperature intervals in the polynomial fits.
 
-    TREAL :: WMEAN, dsmooth                 ! Inifinitely fast
-    TREAL, dimension(MAX_NSP) :: YMASS
+    TREAL :: dsmooth                        ! Smoothing factor for derivaative discontinuity in inifinitely fast chemistry and saturation adjustment
 
     TINTEGER, parameter :: MAX_NPSAT = 10   ! Polynomial fit to saturation pressure
     TINTEGER :: NPSAT

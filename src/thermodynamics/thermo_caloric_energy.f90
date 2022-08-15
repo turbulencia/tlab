@@ -32,7 +32,6 @@ SUBROUTINE THERMO_CALORIC_ENERGY(nx,ny,nz, s,T, e)
 
   USE THERMO_VARS, ONLY : imixture, gama0, GRATIO
   USE THERMO_VARS, ONLY : NSP, NCP, WGHT_INV, THERMO_AI, THERMO_TLIM
-  USE THERMO_VARS, ONLY : YMASS
 
   IMPLICIT NONE
 
@@ -45,6 +44,7 @@ SUBROUTINE THERMO_CALORIC_ENERGY(nx,ny,nz, s,T, e)
   TINTEGER i, is, im, icp
   TREAL ENTHALPY_I, WMEAN_INV
   TREAL ENERGY_V, ENERGY_D, ENERGY_L
+  TREAL, dimension(NSP) :: YMASS
 
 ! ###################################################################
 ! Single species

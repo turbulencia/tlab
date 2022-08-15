@@ -25,7 +25,6 @@ SUBROUTINE THERMO_GAMMA(nx,ny,nz, s, T, gama)
 
   USE THERMO_VARS, ONLY : imixture, gama0, GRATIO
   USE THERMO_VARS, ONLY : NSP, NCP, WGHT_INV, THERMO_AI, THERMO_TLIM
-  USE THERMO_VARS, ONLY : YMASS
 
   IMPLICIT NONE
 
@@ -37,6 +36,7 @@ SUBROUTINE THERMO_GAMMA(nx,ny,nz, s, T, gama)
 ! -------------------------------------------------------------------
   TINTEGER ij, is, icp, im
   TREAL WMEAN_INV, HEAT_CAPACITY, HEAT_CAPACITY_I
+  TREAL, dimension(NSP) :: YMASS
 
 ! ###################################################################
 ! Single species

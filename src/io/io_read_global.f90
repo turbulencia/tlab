@@ -1239,6 +1239,11 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
      MRATIO = gama0*mach*mach
   ENDIF
 
+  if ( .not. nondimensional ) then
+    MRATIO = C_1_R
+    GRATIO = C_1_R
+  end if
+  
   IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC .AND. &
        imixture .NE. MIXT_TYPE_AIR .AND. imixture .NE. MIXT_TYPE_AIRVAPOR .AND. imixture .NE. MIXT_TYPE_AIRWATER ) THEN
      CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Incorrect mixture type.')
