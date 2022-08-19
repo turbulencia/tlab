@@ -1,73 +1,102 @@
-PROGRAM VEFILTER
-  
-  IMPLICIT NONE
-
 #include "types.h"
+#include "dns_const.h"
+
+program VEFILTER
+    use TLAB_TYPES, only: filter_dt, grid_dt
+    use TLAB_VARS, only: reynolds, schmidt
+
+    implicit none
+
 #include "integers.h"
-  
-  TINTEGER imode_fdm, imax, jmax, kmax, i, wk, i1bc, idummy, iunif
-  PARAMETER(imax=256)
-  TREAL scalex
-  TREAL x(imax), dx(imax,2+4*3+4*3), u(imax), uf(imax), a(imax,5)
-  TREAL wrk1d(imax,5), wrk2d(imax), wrk3d(imax)
-  TREAL tmp(imax)
-  
-! ###################################################################
-  scalex = C_2_R*C_PI_R
-  jmax  = 1
-  kmax  = 1
-  imode_fdm = 6
-  iunif = 1
-  
-  WRITE(*,*) 'Periodic (0) or nonperiodic (1) case ?'
-  READ(*,*) i1bc
-  
-  IF ( i1bc .EQ. 0 ) THEN
-     DO i = 1,imax
-        x(i) = M_REAL(i-1)/M_REAL(imax)*scalex
-     ENDDO
-  ELSE
-     OPEN(21,file='y.dat')
-     DO i = 1,imax
-!        x(i) = M_REAL(i-1)/M_REAL(imax-1)*scalex
-        READ(21,*) idummy, x(i)
-     ENDDO
-     CLOSE(21)
-     scalex = x(imax)-x(1)
-  ENDIF
-  
-  ! TO BE REVIEWED
-  ! CALL FDM_INITIALIZE(iunif, imode_fdm, imax, i1bc, scalex, x, dx, wrk1d)
-  
-! ###################################################################
-! Define the function
-  IF ( i1bc .EQ. 0 ) THEN
-     WRITE(*,*) 'Wavenumber ?'
-     READ(*,*) wk
-     DO i = 1,imax
-        u(i)  = SIN(C_2_R*C_PI_R/scalex*M_REAL(wk)*x(i) + C_PI_R*C_05_R)
-        uf(i) = u(i)
-     ENDDO
-  ELSE
-     OPEN(21,file='f.dat')
-     DO i = 1,imax
-        READ(21,*) u(i)
-        uf(i) = u(i)
-     ENDDO
-     CLOSE(21)
-  ENDIF
+
+    TINTEGER imax, i, ik, i1bc
+    parameter(imax=257)
+    TREAL x(imax, 50), u(imax), uf(imax)
+    TREAL wrk1d(imax, 10), wrk2d(imax), wrk3d(imax)
+    type(filter_dt) filter
+    type(grid_dt) g
 
 ! ###################################################################
-  ! CALL FILT4E_INI(imax, i1bc, scalex, x, a)
-  ! CALL OPR_FILTER_X_OLD(i3, imax, jmax, kmax, i1bc, i0, i0, uf, a, wrk3d, wrk3d)
-!  CALL  OPR_FILTER(i3, imax, jmax, kmax, kmax, i1bc, i1bc, i1bc, i1, i0, i0, i1, uf, a, a, a, wrk3d)
+    g%size = imax
+    g%scale = 2*C_PI_R
+    g%mode_fdm = FDM_COM6_JACOBIAN
+    reynolds = C_1_R
+    schmidt = C_1_R
 
-  OPEN(20,file='filter.dat')
-  DO i = 1,imax
-     WRITE(20,*) x(i), u(i), uf(i)
-  ENDDO
-  CLOSE(20)
-  
-  STOP
-END PROGRAM VEFILTER
-      
+    write (*, *) 'Periodic (0) or nonperiodic (1) case ?'
+    read (*, *) i1bc
+
+    if (i1bc == 0) then
+        g%periodic = .true.
+        g%uniform = .true.
+        filter%bcsmin = DNS_FILTER_BCS_PERIODIC
+        filter%bcsmax = DNS_FILTER_BCS_PERIODIC
+        do i = 1, imax
+            x(i, 1) = M_REAL(i - 1)/M_REAL(imax)*g%scale
+        end do
+    else
+        g%periodic = .false.
+        g%uniform = .false.
+        filter%bcsmin = DNS_FILTER_BCS_ZERO
+        filter%bcsmax = DNS_FILTER_BCS_ZERO
+        do i = 1, imax
+            x(i, 1) = M_REAL(i - 1)/M_REAL(imax-1)*g%scale
+        end do
+        ! open (21, file='y.dat')
+        ! do i = 1, imax
+        !     read (21, *) x(i, 1)
+        ! end do
+        ! close (21)
+        ! g%scale = x(imax, 1) - x(1, 1)
+    end if
+
+    call FDM_INITIALIZE(x, g, wrk1d)
+
+    ! ###################################################################
+
+    ! Define the function
+    ! if (i1bc == 0) then
+    write (*, *) 'Wavenumber ?'
+    read (*, *) ik
+    u(:) = SIN(C_2_R*C_PI_R/g%scale*M_REAL(ik)*x(:, 1))
+    ! else
+    !     open (21, file='f.dat')
+    !     do i = 1, imax
+    !         read (21, *) u(i)
+    !         uf(i) = u(i)
+    !     end do
+    !     close (21)
+    ! end if
+
+! ###################################################################
+    filter%size = g%size
+    filter%periodic = g%periodic
+    ! filter%type = DNS_FILTER_COMPACT_CUTOFF
+    ! filter%inb_filter = 7
+    filter%type = DNS_FILTER_COMPACT
+    filter%inb_filter = 10
+    filter%parameters(1) = 0.49
+
+    call OPR_FILTER_INITIALIZE(g, filter, wrk1d)
+
+    call OPR_FILTER_1D(1, filter, u, uf, wrk1d, wrk2d, wrk3d)
+    ! call OPR_PARTIAL1(1, [0,0], g, u, uf, wrk2d)
+
+    open (20, file='filter.dat')
+    do i = 1, imax
+        write (20, *) x(i,1), u(i), uf(i)
+    end do
+    close (20)
+
+    open (20, file='transfer.dat')
+    ! do ik = 1, imax/2
+    do ik = 1, (imax-1)/2
+            u = SIN(C_2_R*C_PI_R/g%scale*M_REAL(ik)*x(:,1))
+        call OPR_FILTER_1D(1, filter, u, uf, wrk1d, wrk2d, wrk3d)
+        ! call OPR_PARTIAL1(1, [0,0], g, u, uf, wrk2d)
+        write (20, *) ik, maxval(uf)
+    end do
+    close (20)
+
+    stop
+end program VEFILTER

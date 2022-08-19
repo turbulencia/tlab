@@ -747,16 +747,20 @@ USE TLAB_PROCS
   ! #######################################################################
   ! Source terms in transport equations
   ! #######################################################################
-  IF ( buoyancy%type == EQNS_EXPLICIT ) THEN
-    CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d)
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+    IF ( buoyancy%type == EQNS_EXPLICIT ) THEN
+        CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, wrk3d)
+    ELSE
+        wrk1d(1:jmax,1) = C_0_R
+        CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+    ENDIF
+    dummy =  C_1_R /froude
+    wrk3d = wrk3d *dummy
   ELSE
-    wrk1d(1:jmax,1) = C_0_R
-    CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, wrk3d, wrk1d)
+    wrk3d = rho *buoyancy%vector(2)
   ENDIF
-  dummy =  C_1_R /froude
-  IF ( imode_eqns == DNS_EQNS_INTERNAL .OR. imode_eqns == DNS_EQNS_TOTAL ) wrk3d = wrk3d *rho
   DO j = 1,jmax
-    wrk3d(:,j,:) = (s_local(:,j,:)-fS(j)) *wrk3d(:,j,:) *dummy
+    wrk3d(:,j,:) = (s_local(:,j,:)-fS(j)) *wrk3d(:,j,:)
   END DO
   CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac,g(3)%jac, Bsv(1), wrk1d, area)
   Bsv(:) = Bsv(:) /rR(:)

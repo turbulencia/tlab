@@ -1,39 +1,32 @@
 #include "types.h"
 
-MODULE TLAB_CONSTANTS
-  IMPLICIT NONE
-  SAVE
+module TLAB_CONSTANTS
+    implicit none
+    save
 
-  TINTEGER, PARAMETER :: MajorVersion = 7
-  TINTEGER, PARAMETER :: MinorVersion = 0
+    TINTEGER, parameter :: MajorVersion = 7
+    TINTEGER, parameter :: MinorVersion = 0
 
-  TINTEGER, PARAMETER :: sp = KIND(1.0)
-  TINTEGER, PARAMETER :: dp = KIND(1.0d0)
-  ! !> Single precision real numbers, 6 digits, range 10⁻³⁷ to 10³⁷-1; 32 bits
-  ! integer, parameter :: sp = selected_real_kind(6, 37)
-  ! !> Double precision real numbers, 15 digits, range 10⁻³⁰⁷ to 10³⁰⁷-1; 64 bits
-  ! integer, parameter :: dp = selected_real_kind(15, 307)
+    TINTEGER, parameter :: MAX_VARS = 20
+    TINTEGER, parameter :: MAX_PROF = 10
+    TINTEGER, parameter :: MAX_JETS = 5
 
-  TINTEGER, PARAMETER :: MAX_VARS = 20
-  TINTEGER, PARAMETER :: MAX_PROF = 10
-  TINTEGER, PARAMETER :: MAX_JETS =  5
+    TINTEGER, parameter :: MAX_NSP = 10 ! Species in the mixture
 
-  TINTEGER, PARAMETER :: MAX_NSP = 10 ! Species in the mixture
+    TINTEGER, parameter :: MAX_AVG_TEMPORAL = 230
+    TINTEGER, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
 
-  TINTEGER, PARAMETER :: MAX_AVG_TEMPORAL  = 230
-  TINTEGER, PARAMETER :: MAX_STATS_SPATIAL = 100 ! Running statistics
+    character*32, parameter :: gfile = 'grid'
+    character*32, parameter :: ifile = 'dns.ini'
+    character*32, parameter :: ofile = 'dns.out'
+    character*32, parameter :: lfile = 'dns.log'
+    character*32, parameter :: efile = 'dns.err'
+    character*32, parameter :: wfile = 'dns.war'
+    character*32, parameter :: tfile = 'dns.trc'
 
-  CHARACTER*32, PARAMETER :: gfile = 'grid'
-  CHARACTER*32, PARAMETER :: ifile = 'dns.ini'
-  CHARACTER*32, PARAMETER :: ofile = 'dns.out'
-  CHARACTER*32, PARAMETER :: lfile = 'dns.log'
-  CHARACTER*32, PARAMETER :: efile = 'dns.err'
-  CHARACTER*32, PARAMETER :: wfile = 'dns.war'
-  CHARACTER*32, PARAMETER :: tfile = 'dns.trc'
+    character*32, parameter :: tag_flow = 'flow.'
+    character*32, parameter :: tag_scal = 'scal.'
+    character*32, parameter :: tag_part = 'part.'
+    character*32, parameter :: tag_traj = 'traj.'
 
-  CHARACTER*32, PARAMETER :: tag_flow ='flow.'
-  CHARACTER*32, PARAMETER :: tag_scal ='scal.'
-  CHARACTER*32, PARAMETER :: tag_part ='part.'
-  CHARACTER*32, PARAMETER :: tag_traj ='traj.'
-
-END MODULE TLAB_CONSTANTS
+end module TLAB_CONSTANTS

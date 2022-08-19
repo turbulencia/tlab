@@ -28,8 +28,7 @@ SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
   USE TLAB_VARS, ONLY : pbg
 
   USE THERMO_VARS, ONLY : imixture, gama0, GRATIO
-  USE THERMO_VARS, ONLY : NSP, NCP_CHEMKIN, WGHT_INV, THERMO_AI, THERMO_TLIM
-  USE THERMO_VARS, ONLY : YMASS
+  USE THERMO_VARS, ONLY : NSP, NCP, WGHT_INV, THERMO_AI, THERMO_TLIM
 
   IMPLICIT NONE
 
@@ -41,6 +40,7 @@ SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
 ! -------------------------------------------------------------------
   TINTEGER ij, is, im, icp
   TREAL WMEAN_INV, ENTROPY_I, XMOL_I, alpha
+  TREAL, dimension(NSP) :: YMASS
 
 ! ###################################################################
 ! Single species
@@ -64,7 +64,7 @@ SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
            IF ( T(ij) .LT. THERMO_TLIM(3,is) ) THEN; im = 2
            ELSE;                                     im = 1; ENDIF
            ENTROPY_I = C_0_R
-           DO icp = NCP_CHEMKIN,2,-1
+           DO icp = NCP,2,-1
               ENTROPY_I = ENTROPY_I*T(ij) + THERMO_AI(icp,im,is)/M_REAL(icp-1)
            ENDDO
            ENTROPY_I = ENTROPY_I*T(ij) + THERMO_AI(7,im,is) + &
@@ -103,7 +103,7 @@ SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
            IF ( T(ij) .LT. THERMO_TLIM(3,is) ) THEN; im = 2
            ELSE;                                     im = 1; ENDIF
            ENTROPY_I = C_0_R
-           DO icp = NCP_CHEMKIN,2,-1
+           DO icp = NCP,2,-1
               ENTROPY_I = ENTROPY_I*T(ij) + THERMO_AI(icp,im,is)/M_REAL(icp-1)
            ENDDO
            ENTROPY_I = ENTROPY_I*T(ij) + THERMO_AI(7,im,is) + &

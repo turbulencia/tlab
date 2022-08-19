@@ -29,7 +29,7 @@ PROGRAM VFFTW
 ! ###################################################################
   CALL DNS_START
 
-  CALL DNS_READ_GLOBAL(ifile)
+  CALL IO_READ_GLOBAL(ifile)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space

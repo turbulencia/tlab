@@ -77,7 +77,7 @@ PROGRAM VISUALS
 
   CALL TLAB_START()
 
-  CALL DNS_READ_GLOBAL(ifile)
+  CALL IO_READ_GLOBAL(ifile)
   IF ( icalc_part .EQ. 1 ) CALL PARTICLE_READ_GLOBAL(ifile)
 
   ! -------------------------------------------------------------------

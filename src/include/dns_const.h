@@ -118,6 +118,7 @@
 #define DNS_FILTER_BAND      6
 #define DNS_FILTER_ERF       7
 #define DNS_FILTER_TOPHAT    8
+#define DNS_FILTER_COMPACT_CUTOFF    9
 
 #define DNS_FILTER_BCS_PERIODIC  0
 #define DNS_FILTER_BCS_BIASED    1
@@ -183,6 +184,7 @@
 #define MIXT_TYPE_AIRVAPOR        10
 #define MIXT_TYPE_AIRWATER        11
 #define MIXT_TYPE_AIRWATER_LINEAR 12
+#define MIXT_TYPE_CHEMKIN         13
 
 ! Information for IO subarrays
 #define IO_SUBARRAY_VISUALS_XOY  1

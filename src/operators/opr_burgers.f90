@@ -14,62 +14,90 @@
 !# Second derivative uses LE decomposition including diffusivity coefficient
 !#
 !########################################################################
-SUBROUTINE OPR_BURGERS(is, nlines, bcs, g, s,u, result, wrk2d,wrk3d)
+subroutine OPR_BURGERS(is, nlines, bcs, g, dealiasing, s, u, result, wrk2d, wrk3d)
 
-  USE TLAB_TYPES,     ONLY : grid_dt
-  USE TLAB_CONSTANTS, ONLY : efile
-  USE IBM_VARS,       ONLY : ibm_burgers
-  USE TLAB_PROCS
-  IMPLICIT NONE
+    use TLAB_TYPES, only: grid_dt, filter_dt
+    use TLAB_CONSTANTS, only: efile
+    use IBM_VARS, only: ibm_burgers
+    use TLAB_ARRAYS, only: wrk1d
+    use TLAB_PROCS
+    implicit none
 
-  TINTEGER,                        INTENT(IN)    :: is     ! scalar index; if 0, then velocity
-  TINTEGER,                        INTENT(IN)    :: nlines ! # of lines to be solved
-  TINTEGER, DIMENSION(2,*),        INTENT(IN)    :: bcs    ! BCs at xmin (1,*) and xmax (2,*):
-                                                           !     0 biased, non-zero
-                                                           !     1 forced to zero
-  TYPE(grid_dt),                   INTENT(IN)    :: g
-  TREAL, DIMENSION(nlines,g%size), INTENT(IN)    :: s,u    ! argument field and velocity field
-  TREAL, DIMENSION(nlines,g%size), INTENT(OUT)   :: result ! N(u) applied to s
-  TREAL, DIMENSION(nlines,g%size), INTENT(INOUT) :: wrk3d  ! dsdx
-  TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d
+    TINTEGER, intent(in) :: is     ! scalar index; if 0, then velocity
+    TINTEGER, intent(in) :: nlines ! # of lines to be solved
+    TINTEGER, dimension(2, *), intent(in) :: bcs    ! BCs at xmin (1,*) and xmax (2,*):
+    !     0 biased, non-zero
+    !     1 forced to zero
+    type(grid_dt), intent(in) :: g
+    type(filter_dt), intent(in) :: dealiasing
+    TREAL, dimension(nlines, g%size), intent(in) :: s, u    ! argument field and velocity field
+    TREAL, dimension(nlines, g%size), intent(out) :: result ! N(u) applied to s
+    TREAL, dimension(nlines, g%size), intent(inout) :: wrk3d  ! dsdx
+    TREAL, dimension(*), intent(inout) :: wrk2d
 
 ! -------------------------------------------------------------------
-  TINTEGER ij
+    TINTEGER ij
+    TREAL, dimension(:, :), allocatable :: uf, dsf
 
 ! ###################################################################
-  IF ( bcs(1,2) + bcs(2,2) .GT. 0 ) THEN
-     CALL TLAB_WRITE_ASCII(efile,'OPR_BURGERS. Only developed for biased BCs.')
-     CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-  ENDIF
+    if (bcs(1, 2) + bcs(2, 2) > 0) then
+        call TLAB_WRITE_ASCII(efile, 'OPR_BURGERS. Only developed for biased BCs.')
+        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+    end if
 
-  ! wrk3d: 1st derivative; result: 2nd derivative including diffusivity
-  IF (ibm_burgers) THEN
-    CALL OPR_PARTIAL2D_IBM(is,nlines,bcs,g,s,result,wrk2d,wrk3d)
-  ELSE
-    CALL OPR_PARTIAL2D(    is,nlines,bcs,g,s,result,wrk2d,wrk3d)
-  ENDIF
+    ! wrk3d: 1st derivative; result: 2nd derivative including diffusivity
+    if (ibm_burgers) then
+        call OPR_PARTIAL2_IBM(is, nlines, bcs, g, s, result, wrk2d, wrk3d)
+    else
+        call OPR_PARTIAL2(is, nlines, bcs, g, s, result, wrk2d, wrk3d)
+    end if
 
 ! ###################################################################
 ! Operation; diffusivity included in 2.-order derivative
 ! ###################################################################
-  IF ( g%anelastic ) THEN
-     DO ij = 1,g%size
-        result(:,ij) = result(:,ij) *g%rhoinv(:) - u(:,ij)*wrk3d(:,ij)
-     ENDDO
+    if (dealiasing%type /= DNS_FILTER_NONE) then
+        allocate (uf(nlines, g%size), dsf(nlines, g%size))
+        call OPR_FILTER_1D(nlines, dealiasing, u, uf, wrk1d, wrk2d, wrk3d) ! wrk3d is not used in compact filter
+        call OPR_FILTER_1D(nlines, dealiasing, wrk3d, dsf, wrk1d, wrk2d, wrk3d)
 
-  ELSE
+! We duplicate a few lines of code instead of using pointers becasue
+! creating pointers take some running time
+        if (g%anelastic) then
+            do ij = 1, g%size
+                result(:, ij) = result(:, ij)*g%rhoinv(:) - uf(:, ij)*dsf(:, ij)
+            end do
+
+        else
 !$omp parallel default( shared ) private( ij )
 !$omp do
-     DO ij = 1,nlines*g%size
-        result(ij,1) = result(ij,1) - u(ij,1)*wrk3d(ij,1)
-     ENDDO
+            do ij = 1, nlines*g%size
+                result(ij, 1) = result(ij, 1) - uf(ij, 1)*dsf(ij, 1)
+            end do
 !$omp end do
 !$omp end parallel
+        end if
 
-  END IF
+        deallocate(uf,dsf)
 
-  RETURN
-END SUBROUTINE OPR_BURGERS
+    else
+        if (g%anelastic) then
+            do ij = 1, g%size
+                result(:, ij) = result(:, ij)*g%rhoinv(:) - u(:, ij)*wrk3d(:, ij)
+            end do
+
+        else
+!$omp parallel default( shared ) private( ij )
+!$omp do
+            do ij = 1, nlines*g%size
+                result(ij, 1) = result(ij, 1) - u(ij, 1)*wrk3d(ij, 1)
+            end do
+!$omp end do
+!$omp end parallel
+        end if
+    end if
+
+    return
+end subroutine OPR_BURGERS
 
 !########################################################################
 !# Routines for different specific directions:
@@ -80,30 +108,31 @@ END SUBROUTINE OPR_BURGERS
 !# is         In   Scalar index; if 0, then velocity
 !# tmp1       Out  Transpose velocity
 !########################################################################
-SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
+subroutine OPR_BURGERS_X(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1, wrk2d, wrk3d)
 
-  USE TLAB_TYPES, ONLY : grid_dt
+    use TLAB_TYPES, only: grid_dt
+    use TLAB_VARS, only: Dealiasing
 #ifdef USE_MPI
-  USE TLAB_MPI_VARS, ONLY : ims_npro_i
-  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-  USE TLAB_MPI_PROCS
+    use TLAB_MPI_VARS, only: ims_npro_i
+    use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+    use TLAB_MPI_PROCS
 #endif
 
-  IMPLICIT NONE
+    implicit none
 
-  TINTEGER ivel, is, nx,ny,nz
-  TINTEGER, DIMENSION(2,*),   INTENT(IN)            :: bcs ! BCs at xmin (1,*) and xmax (2,*)
-  TYPE(grid_dt),              INTENT(IN)            :: g
-  TREAL, DIMENSION(nx*ny*nz), INTENT(IN),    TARGET :: s,u1,u2
-  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT),   TARGET :: result
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT), TARGET :: tmp1, wrk3d
-  TREAL, DIMENSION(ny*nz),    INTENT(INOUT)         :: wrk2d
+    TINTEGER ivel, is, nx, ny, nz
+    TINTEGER, dimension(2, *), intent(in) :: bcs ! BCs at xmin (1,*) and xmax (2,*)
+    type(grid_dt), intent(in) :: g
+    TREAL, dimension(nx*ny*nz), intent(in), target :: s, u1, u2
+    TREAL, dimension(nx*ny*nz), intent(out), target :: result
+    TREAL, dimension(nx*ny*nz), intent(inout), target :: tmp1, wrk3d
+    TREAL, dimension(ny*nz), intent(inout) :: wrk2d
 
 ! -------------------------------------------------------------------
-  TINTEGER nyz
-  TREAL, DIMENSION(:), POINTER :: p_a,p_b,p_c,p_d, p_vel
+    TINTEGER nyz
+    TREAL, dimension(:), pointer :: p_a, p_b, p_c, p_d, p_vel
 #ifdef USE_MPI
-  TINTEGER, PARAMETER :: id = TLAB_MPI_I_PARTIAL
+    TINTEGER, parameter :: id = TLAB_MPI_I_PARTIAL
 #endif
 
 ! ###################################################################
@@ -111,221 +140,222 @@ SUBROUTINE OPR_BURGERS_X(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2
 ! MPI transposition
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-  IF ( ims_npro_i .GT. 1 ) THEN
-     CALL TLAB_MPI_TRPF_I(s, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
-     p_a => result
-     p_b => tmp1
-     p_c => wrk3d
-     p_d => result
-     nyz = ims_size_i(id)
-  ELSE
+    if (ims_npro_i > 1) then
+        call TLAB_MPI_TRPF_I(s, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+        p_a => result
+        p_b => tmp1
+        p_c => wrk3d
+        p_d => result
+        nyz = ims_size_i(id)
+    else
 #endif
-     p_a => s
-     p_b => tmp1
-     p_c => result
-     p_d => wrk3d
-     nyz = ny*nz
+        p_a => s
+        p_b => tmp1
+        p_c => result
+        p_d => wrk3d
+        nyz = ny*nz
 #ifdef USE_MPI
-  ENDIF
+    end if
 #endif
 
 ! pointer to velocity
-  IF ( ivel .EQ. 0 ) THEN; p_vel => p_b
-  ELSE;                    p_vel => u2; ENDIF ! always transposed needed
+    if (ivel == 0) then; p_vel => p_b
+    else; p_vel => u2; end if ! always transposed needed
 
 ! -------------------------------------------------------------------
 ! Local transposition: make x-direction the last one
 ! -------------------------------------------------------------------
 #ifdef USE_ESSL
-  CALL DGETMO       (p_a, g%size, g%size, nyz,    p_b, nyz)
+    call DGETMO(p_a, g%size, g%size, nyz, p_b, nyz)
 #else
-  CALL DNS_TRANSPOSE(p_a, g%size, nyz,    g%size, p_b, nyz)
+    call DNS_TRANSPOSE(p_a, g%size, nyz, g%size, p_b, nyz)
 #endif
 
 ! ###################################################################
-  CALL OPR_BURGERS(is, nyz, bcs, g, p_b, p_vel, p_d, wrk2d,p_c)
+    call OPR_BURGERS(is, nyz, bcs, g, Dealiasing(1), p_b, p_vel, p_d, wrk2d, p_c)
 
 ! ###################################################################
 ! Put arrays back in the order in which they came in
 #ifdef USE_ESSL
-  CALL DGETMO       (p_d, nyz, nyz,        g%size, p_c, g%size)
+    call DGETMO(p_d, nyz, nyz, g%size, p_c, g%size)
 #else
-  CALL DNS_TRANSPOSE(p_d, nyz, g%size, nyz,        p_c, g%size)
+    call DNS_TRANSPOSE(p_d, nyz, g%size, nyz, p_c, g%size)
 #endif
 
 #ifdef USE_MPI
-  IF ( ims_npro_i .GT. 1 ) THEN
-       CALL TLAB_MPI_TRPB_I(p_c, result, ims_ds_i(1,id), ims_dr_i(1,id), ims_ts_i(1,id), ims_tr_i(1,id))
-  ENDIF
+    if (ims_npro_i > 1) then
+        call TLAB_MPI_TRPB_I(p_c, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+    end if
 #endif
 
-  NULLIFY(p_a,p_b,p_c,p_d, p_vel)
+    nullify (p_a, p_b, p_c, p_d, p_vel)
 
-  RETURN
-END SUBROUTINE OPR_BURGERS_X
+    return
+end subroutine OPR_BURGERS_X
 
 !########################################################################
 !########################################################################
-SUBROUTINE OPR_BURGERS_Y(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
+subroutine OPR_BURGERS_Y(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1, wrk2d, wrk3d)
 
-  USE TLAB_TYPES, ONLY : grid_dt
-  USE TLAB_VARS, ONLY : subsidence
-  IMPLICIT NONE
+    use TLAB_TYPES, only: grid_dt
+    use TLAB_VARS, only: subsidence
+    use TLAB_VARS, only: Dealiasing
+    implicit none
 
-  TINTEGER ivel, is, nx,ny,nz
-  TINTEGER, DIMENSION(2,*),   INTENT(IN)            :: bcs ! BCs at xmin (1,*) and xmax (2,*)
-  TYPE(grid_dt),              INTENT(IN)            :: g
-  TREAL, DIMENSION(nx*nz,ny), INTENT(IN),    TARGET :: s,u1,u2
-  TREAL, DIMENSION(nx*nz,ny), INTENT(OUT),   TARGET :: result
-  TREAL, DIMENSION(nx*nz,ny), INTENT(INOUT), TARGET :: tmp1, wrk3d
-  TREAL, DIMENSION(nx*nz),    INTENT(INOUT)         :: wrk2d
+    TINTEGER ivel, is, nx, ny, nz
+    TINTEGER, dimension(2, *), intent(in) :: bcs ! BCs at xmin (1,*) and xmax (2,*)
+    type(grid_dt), intent(in) :: g
+    TREAL, dimension(nx*nz, ny), intent(in), target :: s, u1, u2
+    TREAL, dimension(nx*nz, ny), intent(out), target :: result
+    TREAL, dimension(nx*nz, ny), intent(inout), target :: tmp1, wrk3d
+    TREAL, dimension(nx*nz), intent(inout) :: wrk2d
 
 ! -------------------------------------------------------------------
-  TINTEGER nxy, nxz, j
-  TREAL, DIMENSION(:,:), POINTER :: p_org, p_dst1, p_dst2, p_vel
+    TINTEGER nxy, nxz, j
+    TREAL, dimension(:, :), pointer :: p_org, p_dst1, p_dst2, p_vel
 
 ! ###################################################################
-  IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
-     result = C_0_R
+    if (g%size == 1) then ! Set to zero in 2D case
+        result = C_0_R
 
-  ELSE
+    else
 ! ###################################################################
-  nxy = nx*ny
-  nxz = nx*nz
+        nxy = nx*ny
+        nxz = nx*nz
 
 ! -------------------------------------------------------------------
 ! Local transposition: Make y-direction the last one
 ! -------------------------------------------------------------------
-  IF ( nz .EQ. 1 ) THEN
-     p_org  => s
-     p_dst1 => tmp1
-     p_dst2 => result
-  ELSE
+        if (nz == 1) then
+            p_org => s
+            p_dst1 => tmp1
+            p_dst2 => result
+        else
 #ifdef USE_ESSL
-     CALL DGETMO       (s, nxy, nxy, nz, tmp1, nz)
+            call DGETMO(s, nxy, nxy, nz, tmp1, nz)
 #else
-     CALL DNS_TRANSPOSE(s, nxy, nz, nxy, tmp1, nz)
+            call DNS_TRANSPOSE(s, nxy, nz, nxy, tmp1, nz)
 #endif
-     p_org  => tmp1
-     p_dst1 => result
-     p_dst2 => wrk3d
-  ENDIF
+            p_org => tmp1
+            p_dst1 => result
+            p_dst2 => wrk3d
+        end if
 
 ! pointer to velocity
-  IF ( ivel .EQ. 0 ) THEN; p_vel => p_org
-  ELSE;
-     IF ( nz .EQ. 1 ) THEN; p_vel => u1         ! I do not need the transposed
-     ELSE;                  p_vel => u2; ENDIF  ! I do     need the transposed
-  ENDIF
+        if (ivel == 0) then; p_vel => p_org
+        else; 
+            if (nz == 1) then; p_vel => u1         ! I do not need the transposed
+            else; p_vel => u2; end if  ! I do     need the transposed
+        end if
 
 ! ###################################################################
-  CALL OPR_BURGERS(is, nxz, bcs, g, p_org, p_vel, p_dst2, wrk2d,p_dst1)
+        call OPR_BURGERS(is, nxz, bcs, g, Dealiasing(2), p_org, p_vel, p_dst2, wrk2d, p_dst1)
 
-  IF ( subsidence%type == EQNS_SUB_CONSTANT_LOCAL ) THEN
-     DO j = 1,ny
-        p_dst2(:,j) = p_dst2(:,j) +g%nodes(j) *subsidence%parameters(1) *p_dst1(:,j)
-     ENDDO
-  ENDIF
+        if (subsidence%type == EQNS_SUB_CONSTANT_LOCAL) then
+            do j = 1, ny
+                p_dst2(:, j) = p_dst2(:, j) + g%nodes(j)*subsidence%parameters(1)*p_dst1(:, j)
+            end do
+        end if
 
 ! ###################################################################
 ! Put arrays back in the order in which they came in
-  IF ( nz .GT. 1 ) THEN
+        if (nz > 1) then
 #ifdef USE_ESSL
-     CALL DGETMO       (p_dst2, nz, nz, nxy, result, nxy)
+            call DGETMO(p_dst2, nz, nz, nxy, result, nxy)
 #else
-     CALL DNS_TRANSPOSE(p_dst2, nz, nxy, nz, result, nxy)
+            call DNS_TRANSPOSE(p_dst2, nz, nxy, nz, result, nxy)
 #endif
-  ENDIF
+        end if
 
-  NULLIFY(p_org,p_dst1,p_dst2, p_vel)
+        nullify (p_org, p_dst1, p_dst2, p_vel)
 
-  ENDIF
+    end if
 
-  RETURN
-END SUBROUTINE OPR_BURGERS_Y
+    return
+end subroutine OPR_BURGERS_Y
 
 !########################################################################
 !########################################################################
-SUBROUTINE OPR_BURGERS_Z(ivel, is, nx,ny,nz, bcs, g, s,u1,u2, result, tmp1, wrk2d,wrk3d)
+subroutine OPR_BURGERS_Z(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1, wrk2d, wrk3d)
 
-  USE TLAB_TYPES, ONLY : grid_dt
+    use TLAB_TYPES, only: grid_dt
+    use TLAB_VARS, only: Dealiasing
 #ifdef USE_MPI
-USE TLAB_MPI_VARS, ONLY : ims_npro_k
-USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  USE TLAB_MPI_PROCS
+    use TLAB_MPI_VARS, only: ims_npro_k
+    use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLAB_MPI_PROCS
 #endif
+    implicit none
 
-  IMPLICIT NONE
-
-  TINTEGER ivel, is, nx,ny,nz
-  TINTEGER, DIMENSION(2,*),   INTENT(IN)            :: bcs ! BCs at xmin (1,*) and xmax (2,*)
-  TYPE(grid_dt),              INTENT(IN)            :: g
-  TREAL, DIMENSION(nx*ny*nz), INTENT(IN),    TARGET :: s,u1,u2
-  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT),   TARGET :: result
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT), TARGET :: tmp1, wrk3d
-  TREAL, DIMENSION(nx*ny),    INTENT(INOUT)         :: wrk2d
+    TINTEGER ivel, is, nx, ny, nz
+    TINTEGER, dimension(2, *), intent(in) :: bcs ! BCs at xmin (1,*) and xmax (2,*)
+    type(grid_dt), intent(in) :: g
+    TREAL, dimension(nx*ny*nz), intent(in), target :: s, u1, u2
+    TREAL, dimension(nx*ny*nz), intent(out), target :: result
+    TREAL, dimension(nx*ny*nz), intent(inout), target :: tmp1, wrk3d
+    TREAL, dimension(nx*ny), intent(inout) :: wrk2d
 
 ! -------------------------------------------------------------------
-  TINTEGER nxy
-  TREAL, DIMENSION(:), POINTER :: p_a,p_b,p_c, p_vel
+    TINTEGER nxy
+    TREAL, dimension(:), pointer :: p_a, p_b, p_c, p_vel
 #ifdef USE_MPI
-  TINTEGER, PARAMETER :: id  = TLAB_MPI_K_PARTIAL
+    TINTEGER, parameter :: id = TLAB_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
-  IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
-     result = C_0_R
+    if (g%size == 1) then ! Set to zero in 2D case
+        result = C_0_R
 
-  ELSE
+    else
 ! ###################################################################
 ! -------------------------------------------------------------------
 ! MPI transposition
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-  IF ( ims_npro_k .GT. 1 ) THEN
-     CALL TLAB_MPI_TRPF_K(s, tmp1, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-     p_a => tmp1
-     p_b => result
-     p_c => wrk3d
-     nxy = ims_size_k(id)
-  ELSE
+        if (ims_npro_k > 1) then
+            call TLAB_MPI_TRPF_K(s, tmp1, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            p_a => tmp1
+            p_b => result
+            p_c => wrk3d
+            nxy = ims_size_k(id)
+        else
 #endif
-     p_a => s
-     p_b => tmp1
-     p_c => result
-     nxy = nx*ny
+            p_a => s
+            p_b => tmp1
+            p_c => result
+            nxy = nx*ny
 #ifdef USE_MPI
-  ENDIF
+        end if
 #endif
 
 ! pointer to velocity
-  IF ( ivel .EQ. 0 ) THEN; p_vel => p_a
-  ELSE
+        if (ivel == 0) then; p_vel => p_a
+        else
 #ifdef USE_MPI
-     IF ( ims_npro_k .GT. 1 ) THEN ! I do     need the transposed
-        p_vel => u2
-     ELSE
+            if (ims_npro_k > 1) then ! I do     need the transposed
+                p_vel => u2
+            else
 #endif
-        p_vel => u1                ! I do not need the transposed
+                p_vel => u1                ! I do not need the transposed
 #ifdef USE_MPI
-     ENDIF
+            end if
 #endif
-  ENDIF
+        end if
 
 ! ###################################################################
-  CALL OPR_BURGERS(is, nxy, bcs, g, p_a, p_vel, p_c, wrk2d,p_b)
+        call OPR_BURGERS(is, nxy, bcs, g, Dealiasing(3), p_a, p_vel, p_c, wrk2d, p_b)
 
 ! ###################################################################
 ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
-  IF ( ims_npro_k .GT. 1 ) THEN
-     CALL TLAB_MPI_TRPB_K(p_c, result, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-  ENDIF
+        if (ims_npro_k > 1) then
+            call TLAB_MPI_TRPB_K(p_c, result, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+        end if
 #endif
 
-  NULLIFY(p_a,p_b,p_c, p_vel)
+        nullify (p_a, p_b, p_c, p_vel)
 
-  ENDIF
+    end if
 
-  RETURN
-END SUBROUTINE OPR_BURGERS_Z
+    return
+end subroutine OPR_BURGERS_Z

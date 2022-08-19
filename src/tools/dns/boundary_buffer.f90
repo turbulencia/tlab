@@ -44,6 +44,7 @@ MODULE BOUNDARY_BUFFER
 
   IMPLICIT NONE
   SAVE
+  PRIVATE
 
   TINTEGER, PARAMETER :: FORM_POWER_MIN = 1
   TINTEGER, PARAMETER :: FORM_POWER_MAX = 2
@@ -76,8 +77,6 @@ MODULE BOUNDARY_BUFFER
   PUBLIC :: BOUNDARY_BUFFER_RELAX_SCAL
   PUBLIC :: BOUNDARY_BUFFER_RELAX_SCAL_I
   PUBLIC :: BOUNDARY_BUFFER_FILTER
-
-  PRIVATE
 
   TINTEGER j,jloc, i,iloc, iq,is, idummy
   TREAL dummy
@@ -271,9 +270,9 @@ CONTAINS
             ENDIF
 
             CALL MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
-            DO_MPI_ERROR_CHECK
+            IF ( ims_err /= MPI_SUCCESS ) CALL TLAB_MPI_PANIC(__FILE__,ims_err)
             CALL MPI_TYPE_COMMIT(io_aux(id)%subarray,ims_err)
-            DO_MPI_ERROR_CHECK
+            IF ( ims_err /= MPI_SUCCESS ) CALL TLAB_MPI_PANIC(__FILE__,ims_err)
 
             sa_comm_color = 1
          ELSE
@@ -281,7 +280,7 @@ CONTAINS
          ENDIF
          io_aux(id)%communicator = MPI_UNDEFINED
          CALL MPI_Comm_Split(MPI_COMM_WORLD,sa_comm_color,ims_pro,io_aux(id)%communicator,ims_err)
-         DO_MPI_ERROR_CHECK
+         IF ( ims_err /= MPI_SUCCESS ) CALL TLAB_MPI_PANIC(__FILE__,ims_err)
 
       ENDIF
 #endif
@@ -350,7 +349,7 @@ CONTAINS
        ENDIF
 
        CALL MPI_ALLREDUCE(var_minmax, dummy2, 2, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
-       DO_MPI_ERROR_CHECK
+       IF ( ims_err /= MPI_SUCCESS ) CALL TLAB_MPI_PANIC(__FILE__,ims_err)
        var_minmax = dummy2; var_minmax(2) = -var_minmax(2)
 #else
        var_minmax = [ MINVAL(item%ref(:,:,:,iq)), MAXVAL(item%ref(:,:,:,iq)) ]

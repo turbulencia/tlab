@@ -70,7 +70,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
   DO iter = 1,niter           ! iterate
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_DENSITY(i1,g%size,i1, s, e,wrk1d(1,6), wrk1d(1,7))   ! Get 1/RT
-        dummy = -C_1_R / SIGN(pbg%parameters(1),buoyancy%vector(2))
+        dummy = -C_1_R / SIGN(pbg%parameters(5),buoyancy%vector(2))
      ELSE
         CALL THERMO_AIRWATER_PH_RE(i1,g%size, i1, s(1,2), p, s(1,1), T)
         CALL THERMO_THERMAL_DENSITY(i1,g%size,i1, s(1,2),wrk1d(1,6),T, wrk1d(1,7)) ! Get 1/RT

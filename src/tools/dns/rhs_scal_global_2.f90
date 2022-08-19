@@ -23,7 +23,7 @@ SUBROUTINE RHS_SCAL_GLOBAL_2(is, rho,u,v,w, z1, T, zh1, h4, tmp1,tmp2,tmp3,tmp4,
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : idiffusion, visc,prandtl,schmidt
-  USE THERMO_VARS, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP_CHEMKIN
+  USE THERMO_VARS, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
   USE BOUNDARY_BCS
 
 #ifdef USE_OPENMP
@@ -99,7 +99,7 @@ SUBROUTINE RHS_SCAL_GLOBAL_2(is, rho,u,v,w, z1, T, zh1, h4, tmp1,tmp2,tmp3,tmp4,
      DO i = 1, imax*jmax*kmax
         IF ( T(i) .LT. THERMO_TLIM(3,is) ) THEN; im = 2
         ELSE;                                    im = 1; ENDIF
-        DO icp = NCP_CHEMKIN,1,-1
+        DO icp = NCP,1,-1
            tmp4(i) = tmp4(i)*T(i) &
                 + (THERMO_AI(icp,im,is)-THERMO_AI(icp,im,NSP))/M_REAL(icp)
         ENDDO

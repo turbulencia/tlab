@@ -59,7 +59,7 @@ PROGRAM SL_CORRELATION
 ! ###################################################################
   CALL DNS_START
 
-  CALL DNS_READ_GLOBAL('dns.ini')
+  CALL IO_READ_GLOBAL('dns.ini')
 
 #ifdef USE_MPI
   CALL TLAB_MPI_INITIALIZE

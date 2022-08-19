@@ -21,12 +21,12 @@ PROGRAM INISCAL
   IMPLICIT NONE
 
 ! -------------------------------------------------------------------
-  TINTEGER is, inb_scal_loc, id
+  TINTEGER is, inb_scal_loc
 
 ! ###################################################################
   CALL TLAB_START()
 
-  CALL DNS_READ_GLOBAL(ifile)
+  CALL IO_READ_GLOBAL(ifile)
   CALL SCAL_READ_LOCAL(ifile)
 #ifdef CHEMISTRY
   CALL CHEM_READ_GLOBAL(ifile)
@@ -53,15 +53,6 @@ PROGRAM INISCAL
   CALL TLAB_WRITE_ASCII(lfile,'Initializing scalar fiels.')
 
   CALL FI_PROFILES_INITIALIZE(wrk1d)
-
-  ! Metadata to read plane data for options 4, 6, 8
-  id = IO_SUBARRAY_AUX
-  io_aux(id)%offset = 52 ! header size in bytes
-#ifdef USE_MPI
-  io_aux(id)%active = .TRUE.
-  io_aux(id)%communicator = MPI_COMM_WORLD
-  io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ( imax,1,kmax, MPI_REAL8 )
-#endif
 
   itime = 0; rtime = C_0_R
   s = C_0_R

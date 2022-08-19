@@ -21,7 +21,7 @@ PROGRAM VTGVORTEX
 ! ###################################################################
   CALL DNS_START
 
-  CALL DNS_READ_GLOBAL(ifile)
+  CALL IO_READ_GLOBAL(ifile)
 
   isize_wrk3d = isize_txc_field
 

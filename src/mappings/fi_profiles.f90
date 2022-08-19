@@ -58,9 +58,9 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
 !     wrk1d(:,is) = sbg(is)%reference
   ENDDO
 
-  IF ( pbg%parameters(1) .GT. C_0_R ) THEN
+  IF ( pbg%parameters(5) .GT. C_0_R ) THEN
 ! Calculate derived thermodynamic profiles
-     epbackground = (g(2)%nodes - g(2)%nodes(1) - g(2)%scale *pbg%ymean) *GRATIO /pbg%parameters(1)
+     epbackground = (g(2)%nodes - g(2)%nodes(1) - g(2)%scale *pbg%ymean) *GRATIO /pbg%parameters(5)
 
      IF ( buoyancy%active(2) ) THEN
 !        CALL FI_HYDROSTATIC_H_OLD(g(2)%size, g(2)%nodes, wrk1d, epbackground, tbackground, pbackground, wrk1d(1,4))
@@ -75,7 +75,7 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
      CALL THERMO_AIRWATER_LINEAR(i1,g(2)%size,i1, wrk1d, wrk1d(1,inb_scal_array))
   ENDIF
 
-  IF ( pbg%parameters(1) .GT. C_0_R ) THEN
+  IF ( pbg%parameters(5) .GT. C_0_R ) THEN
      CALL THERMO_ANELASTIC_DENSITY(i1,g(2)%size,i1, wrk1d, epbackground,pbackground, rbackground)
      ribackground = C_1_R /rbackground
   ENDIF

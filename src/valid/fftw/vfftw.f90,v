@@ -50,7 +50,7 @@ text
 ! ###################################################################
   CALL DNS_INIT
   
-  CALL DNS_READ_GLOBAL('dns.ini')
+  CALL IO_READ_GLOBAL('dns.ini')
 
   ALLOCATE(x(imax))
   ALLOCATE(y(jmax))

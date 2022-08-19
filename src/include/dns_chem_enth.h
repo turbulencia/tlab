@@ -13,7 +13,7 @@
      ENDIF
      CHW_HI = C_0_R
      CHW_CP = C_0_R
-     DO icp=NCP_CHEMKIN, 1, -1
+     DO icp=NCP, 1, -1
         CHW_HI = CHW_HI*CHW_T + THERMO_AI(icp,im,is)/M_REAL(icp)
         CHW_CP = CHW_CP*CHW_T + THERMO_AI(icp,im,is)
      ENDDO

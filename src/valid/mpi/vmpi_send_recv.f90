@@ -113,7 +113,7 @@ PROGRAM VMPI
   call MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro, ims_err)
 
 ! ###################################################################
-! from DNS_READ_GLOBAL
+! from IO_READ_GLOBAL
   DO ip = 1,ims_npro
      mip(ip) = kmax
   ENDDO

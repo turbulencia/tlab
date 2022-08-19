@@ -40,7 +40,7 @@ PROGRAM DNS
   ! ###################################################################
   CALL TLAB_START()
 
-  CALL DNS_READ_GLOBAL(ifile)
+  CALL IO_READ_GLOBAL(ifile)
   IF ( icalc_part == 1 ) THEN
     CALL PARTICLE_READ_GLOBAL(ifile)
   END IF
@@ -92,6 +92,7 @@ PROGRAM DNS
   ! ###################################################################
   DO ig = 1,3
     CALL OPR_FILTER_INITIALIZE( g(ig), FilterDomain(ig), wrk1d )
+    CALL OPR_FILTER_INITIALIZE( g(ig), Dealiasing(ig), wrk1d )
   END DO
 
   IF ( ifourier == 1 ) THEN

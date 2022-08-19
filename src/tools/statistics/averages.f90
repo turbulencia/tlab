@@ -51,7 +51,7 @@ PROGRAM AVERAGES
 
   TINTEGER opt_main, opt_block, opt_order
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
-  TINTEGER nfield, ifield, is, ij, k, bcs(2,2)
+  TINTEGER nfield, ifield, is, ij, k, bcs(2,2), ig
   TREAL eloc1, eloc2, eloc3, cos1, cos2, cos3, dummy
   TINTEGER jmax_aux, iread_flow, iread_scal, idummy
 
@@ -87,7 +87,7 @@ PROGRAM AVERAGES
 
   CALL TLAB_START()
 
-  CALL DNS_READ_GLOBAL(ifile)
+  CALL IO_READ_GLOBAL(ifile)
   IF ( icalc_part == 1 ) THEN
     CALL PARTICLE_READ_GLOBAL(ifile)
   END IF
@@ -299,6 +299,10 @@ PROGRAM AVERAGES
   CALL FDM_INITIALIZE(x, g(1), wrk1d)
   CALL FDM_INITIALIZE(y, g(2), wrk1d)
   CALL FDM_INITIALIZE(z, g(3), wrk1d)
+
+  DO ig = 1,3
+    CALL OPR_FILTER_INITIALIZE( g(ig), Dealiasing(ig), wrk1d )
+  END DO
 
   IF ( ifourier == 1 ) THEN         ! For Poisson solver
     CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)

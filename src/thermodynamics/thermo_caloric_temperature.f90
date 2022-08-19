@@ -17,7 +17,7 @@ SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s,e,rho, T, wrk3d)
   USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_PROCS
   USE THERMO_VARS, ONLY : imixture, gama0, GRATIO
-  USE THERMO_VARS, ONLY : NSP, NCP_CHEMKIN, WGHT_INV, THERMO_AI
+  USE THERMO_VARS, ONLY : NSP, NCP, WGHT_INV, THERMO_AI
 #ifdef USE_MPI
   USE MPI
 #endif
@@ -57,7 +57,7 @@ SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s,e,rho, T, wrk3d)
 ! -------------------------------------------------------------------
 ! Cp linear with T. It assumes also only one temperature range
 ! -------------------------------------------------------------------
-     IF ( NCP_CHEMKIN .EQ. 1 ) THEN
+     IF ( NCP .EQ. 1 ) THEN
         DO i = 1, nx*ny*nz
 ! calculate heat capacity C_p and formation energy of mixture
            HEAT_CAPACITY    = C_0_R

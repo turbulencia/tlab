@@ -41,7 +41,7 @@ PROGRAM PDFS
 
   TINTEGER opt_main, opt_block, opt_bins(2)
   TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
-  TINTEGER nfield, ifield, ij, is, bcs(2,2), isize_pdf
+  TINTEGER nfield, ifield, ij, is, bcs(2,2), isize_pdf, ig
   TREAL dummy, eloc1, eloc2, eloc3, cos1, cos2, cos3
   TINTEGER jmax_aux, iread_flow, iread_scal, idummy
   TINTEGER ibc(16)
@@ -71,7 +71,7 @@ PROGRAM PDFS
 
   CALL TLAB_START()
 
-  CALL DNS_READ_GLOBAL(ifile)
+  CALL IO_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
   CALL TLAB_MPI_INITIALIZE
@@ -235,6 +235,10 @@ PROGRAM PDFS
   CALL FDM_INITIALIZE(x, g(1), wrk1d)
   CALL FDM_INITIALIZE(y, g(2), wrk1d)
   CALL FDM_INITIALIZE(z, g(3), wrk1d)
+
+  DO ig = 1,3
+    CALL OPR_FILTER_INITIALIZE( g(ig), Dealiasing(ig), wrk1d )
+  END DO
 
   IF ( ifourier == 1 ) THEN         ! For Poisson solver
     CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)

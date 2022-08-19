@@ -31,8 +31,7 @@
 SUBROUTINE THERMO_CALORIC_ENERGY(nx,ny,nz, s,T, e)
 
   USE THERMO_VARS, ONLY : imixture, gama0, GRATIO
-  USE THERMO_VARS, ONLY : NSP, NCP_CHEMKIN, WGHT_INV, THERMO_AI, THERMO_TLIM
-  USE THERMO_VARS, ONLY : YMASS
+  USE THERMO_VARS, ONLY : NSP, NCP, WGHT_INV, THERMO_AI, THERMO_TLIM
 
   IMPLICIT NONE
 
@@ -45,6 +44,7 @@ SUBROUTINE THERMO_CALORIC_ENERGY(nx,ny,nz, s,T, e)
   TINTEGER i, is, im, icp
   TREAL ENTHALPY_I, WMEAN_INV
   TREAL ENERGY_V, ENERGY_D, ENERGY_L
+  TREAL, dimension(NSP) :: YMASS
 
 ! ###################################################################
 ! Single species
@@ -86,7 +86,7 @@ SUBROUTINE THERMO_CALORIC_ENERGY(nx,ny,nz, s,T, e)
               im = 1
            ENDIF
            ENTHALPY_I = C_0_R
-           DO icp = NCP_CHEMKIN,1,-1
+           DO icp = NCP,1,-1
               ENTHALPY_I = ENTHALPY_I*T(i) + THERMO_AI(icp,im,is)/M_REAL(icp)
            ENDDO
            ENTHALPY_I = ENTHALPY_I*T(i) + THERMO_AI(6,im,is)
