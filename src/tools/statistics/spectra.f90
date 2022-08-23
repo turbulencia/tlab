@@ -561,12 +561,23 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
         ENDDO
      ENDIF
 
-! If IBM is active: remove mean values in solid regions from fluctuations
+! If IBM is active: remove mean values in solid regions from fluctuations (except pressure)
      IF ( imode_ibm .EQ. 1 ) THEN
-        DO iv = 1,nfield_ref
-           CALL IBM_BCS_FIELD(vars(iv)%field)
-        ENDDO
-     ENDIF  
+        IF ( icalc_flow .EQ. 1 ) THEN 
+           DO iv = 1,3 ! u,v,w fields - skip pressure
+              CALL IBM_BCS_FIELD(vars(iv)%field)
+           ENDDO
+           IF ( nfield_ref .GT. 4 ) THEN
+              DO iv = 5,nfield_ref ! r,t,(s) fields
+                 CALL IBM_BCS_FIELD(vars(iv)%field)
+              ENDDO
+           ENDIF
+        ELSE IF ( ( icalc_flow .NE. 1 ) .AND. ( icalc_scal .EQ. 1 ) ) THEN 
+           DO iv = 1,nfield_ref    ! s fields (no pressure)
+              CALL IBM_BCS_FIELD(vars(iv)%field)
+           ENDDO
+        ENDIF
+     ENDIF
 
 ! reset if needed
      IF( opt_time .EQ. SPEC_SINGLE ) THEN
