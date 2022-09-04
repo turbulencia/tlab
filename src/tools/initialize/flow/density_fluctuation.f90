@@ -83,7 +83,7 @@ SUBROUTINE DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
   ! -------------------------------------------------------------------
   ! Modulation
   ! -------------------------------------------------------------------
-  IF ( fp%type .EQ. 1 .AND. fp%parameters(1) .GT. C_0_R ) THEN
+  IF ( fp%type .EQ. PROFILE_GAUSSIAN .AND. fp%parameters(1) .GT. C_0_R ) THEN
     DO k = 1,kmax
       DO i = 1,imax
         xcenter   = x(i) - g(1)%scale *C_05_R - x(1)

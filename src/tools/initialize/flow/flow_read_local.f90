@@ -128,81 +128,12 @@ SUBROUTINE FLOW_READ_LOCAL(inifile)
   ! ###################################################################
   ! Discrete Forcing
   ! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[Discrete]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Aplitude=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ModeX=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ModeZ=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#PhaseX=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#PhaseZ=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Type=<Gaussian>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Broadening=<value>')
+  call DISCRETE_READBLOCK(bakfile, inifile, 'Discrete', fp)
+  ! Modulation type in fp%type
 
-  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'Amplitude', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
-  CALL SCANINICHAR(bakfile, inifile, 'Discrete', '2DAmpl', '0.0', sRes)
-  fp%amplitude(:)=C_0_R; fp%size = MAX_MODES
-  CALL LIST_REAL(sRes, fp%size, fp%amplitude)
-
-  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'ModeX', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN ! Default
-    DO idummy = 1,fp%size; fp%modex(idummy) = idummy; ENDDO
-  ELSE
-    idummy = MAX_MODES
-    CALL LIST_INTEGER(sRes, idummy, fp%modex)
-    IF ( idummy .NE. fp%size ) THEN
-      CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.ModeX.')
-      CALL TLAB_STOP(DNS_ERROR_INFDISCR)
-    ENDIF
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'ModeZ', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN ! Default
-    fp%modez = 0
-  ELSE
-    idummy = MAX_MODES
-    CALL LIST_INTEGER(sRes, idummy, fp%modez)
-    IF ( idummy .NE. fp%size ) THEN
-      CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.ModeZ.')
-      CALL TLAB_STOP(DNS_ERROR_INFDISCR)
-    ENDIF
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'PhaseX', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) & ! backwards compatilibity
-  CALL SCANINICHAR(bakfile, inifile, 'Discrete', '2DPhi', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN ! Default
-    fp%phasex = 0
-  ELSE
-    idummy = MAX_MODES
-    CALL LIST_REAL(sRes, idummy, fp%phasex)
-    IF ( idummy .NE. fp%size ) THEN
-      CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.PhaseX.')
-      CALL TLAB_STOP(DNS_ERROR_INFDISCR)
-    ENDIF
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'PhaseZ', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN ! Default
-    fp%phasez = 0
-  ELSE
-    idummy = MAX_MODES
-    CALL LIST_REAL(sRes, idummy, fp%phasez)
-    IF ( idummy .NE. fp%size ) THEN
-      CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.PhaseZ.')
-      CALL TLAB_STOP(DNS_ERROR_INFDISCR)
-    ENDIF
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'Discrete', 'Type', 'None', sRes) ! Modulation type
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; fp%type = 0
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'gaussian' ) THEN; fp%type = 1
-  ELSE
-    CALL TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Error in Discrete.Type.')
-    CALL TLAB_STOP(DNS_ERROR_INFDISCR)
-  ENDIF
-
-  CALL SCANINIREAL(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
+!   specific for this tool
+  call SCANINIREAL(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
+  call SCANINIREAL(bakfile, inifile, 'Discrete', 'ThickStep', '-1.0', fp%parameters(2))
 
   RETURN
 END SUBROUTINE FLOW_READ_LOCAL

@@ -120,6 +120,8 @@ subroutine PROFILE_READBLOCK(bakfile, inifile, block, tag, variable)
     use TLAB_TYPES
     use TLAB_CONSTANTS, only: efile
     use TLAB_PROCS
+    implicit none
+    
     character(len=*), intent(in) :: bakfile, inifile, block, tag
     type(background_dt), intent(out) :: variable
 
