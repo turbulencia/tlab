@@ -1,85 +1,77 @@
-#include "types.h"
 #include "dns_error.h"
 
-MODULE RAND_LOCAL
-
-  USE TLAB_CONSTANTS, ONLY : efile
-  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_txc_field
-  USE TLAB_VARS, ONLY : g
-  USE TLAB_PROCS
-  
-  IMPLICIT NONE
-  SAVE
-
-  ! -------------------------------------------------------------------
-  TINTEGER :: ispectrum
-  TREAL    :: spc_param(5)  ! Fundamental frequency, fmin, fmax, sigma
-
-  TINTEGER :: ipdf
-  TREAL    :: ucov(6)
-
-  TINTEGER :: seed          ! Random number generator
-
-  ! -------------------------------------------------------------------
-  TINTEGER i
-
-#include "integers.h"
-
-CONTAINS
-
-  ! ###################################################################
-  SUBROUTINE RAND_FIELD(variance, a, tmp1,tmp2,tmp3, wrk2d,wrk3d)
-    IMPLICIT NONE
-
-    TREAL,                              INTENT(IN)    :: variance
-    TREAL, DIMENSION(isize_field),      INTENT(OUT)   :: a
-    TREAL, DIMENSION(isize_txc_field),  INTENT(INOUT) :: tmp1, tmp2, tmp3
-    TREAL, DIMENSION(*),                INTENT(INOUT) :: wrk2d,wrk3d
-
-    TINTEGER idim
-    TREAL RAN0, RANG
-    EXTERNAL RAN0, RANG
+module RAND_LOCAL
+    use TLAB_TYPES, only: cp, ci
+    use TLAB_CONSTANTS, only: efile
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_txc_field
+    use TLAB_VARS, only: g
+    use TLAB_PROCS
+    implicit none
+    save
 
     ! -------------------------------------------------------------------
-    SELECT CASE( ipdf )
-    CASE( 1 )     ! Uniform distribution
-      DO i = 1,isize_field
-        tmp2(i) = RAN0(seed) -C_05_R
-      ENDDO
+    integer(ci) :: ispectrum
+    real(cp) :: spc_param(5)  ! Fundamental frequency, fmin, fmax, sigma
 
-    CASE( 2 )     ! Gaussian distribution
-      DO i = 1,isize_field
-        tmp2(i) = RANG(C_0_R, C_1_R, seed)
-      ENDDO
+    integer(ci) :: ipdf
+    real(cp) :: ucov(6)
 
-    END SELECT
-
-    IF ( ispectrum .GT. 0 ) THEN
-      IF ( g(2)%size .EQ. 1 ) THEN; idim = 2;           ! 2D Fourier transform
-      ELSE;                         idim = 3; ENDIF     ! 3D Fourier transform
-
-      IF ( ipdf .GT. 0 ) CALL OPR_FOURIER_F(idim, imax,jmax,kmax, tmp2,tmp1, tmp3,wrk2d,wrk3d)
-      CALL RAND_PSD(imax,jmax,kmax, tmp1)
-      CALL OPR_FOURIER_B(idim, imax,jmax,kmax, tmp1, tmp2, wrk3d)
-
-    ENDIF
-
-    CALL RAND_NORMALIZE( variance, tmp2 )
-    a(1:isize_field) = tmp2(1:isize_field)
-
-    RETURN
-  END SUBROUTINE RAND_FIELD
-
-  !########################################################################
-  SUBROUTINE RAND_COVARIANCE(cov, u,v,w)
-    IMPLICIT NONE
-
-    TREAL cov(6)
-    TREAL, DIMENSION(isize_field), INTENT(OUT)   :: u,v,w
+    integer(ci) :: seed          ! Random number generator
 
     ! -------------------------------------------------------------------
-    TREAL trace, lambda1, lambda2, alpha, calpha, salpha
-    TREAL rdummy
+    integer(ci) i
+
+contains
+
+    ! ###################################################################
+    subroutine RAND_FIELD(variance, a, tmp1, tmp2, tmp3, wrk2d, wrk3d)
+        real(cp), intent(IN) :: variance
+        real(cp), dimension(isize_field), intent(OUT) :: a
+        real(cp), dimension(isize_txc_field), intent(INOUT) :: tmp1, tmp2, tmp3
+        real(cp), dimension(*), intent(INOUT) :: wrk2d, wrk3d
+
+        integer(ci) idim
+        real(cp) RAN0, RANG
+        external RAN0, RANG
+
+        ! -------------------------------------------------------------------
+        select case (ipdf)
+        case (1)     ! Uniform distribution
+            do i = 1, isize_field
+                tmp2(i) = RAN0(seed) - 0.5_cp
+            end do
+
+        case (2)     ! Gaussian distribution
+            do i = 1, isize_field
+                tmp2(i) = RANG(0.0_cp, 1.0_cp, seed)
+            end do
+
+        end select
+
+        if (ispectrum > 0) then
+            if (g(2)%size == 1) then; idim = 2; ! 2D Fourier transform
+            else; idim = 3; end if     ! 3D Fourier transform
+
+            if (ipdf > 0) call OPR_FOURIER_F(idim, imax, jmax, kmax, tmp2, tmp1, tmp3, wrk2d, wrk3d)
+            call RAND_PSD(imax, jmax, kmax, tmp1)
+            call OPR_FOURIER_B(idim, imax, jmax, kmax, tmp1, tmp2, wrk3d)
+
+        end if
+
+        call RAND_NORMALIZE(variance, tmp2)
+        a(1:isize_field) = tmp2(1:isize_field)
+
+        return
+    end subroutine RAND_FIELD
+
+    !########################################################################
+    subroutine RAND_COVARIANCE(cov, u, v, w)
+        real(cp) cov(6)
+        real(cp), dimension(isize_field), intent(OUT) :: u, v, w
+
+        ! -------------------------------------------------------------------
+        real(cp) trace, lambda1, lambda2, alpha, calpha, salpha
+        real(cp) rdummy
 
 #define Rxx cov(1)
 #define Ryy cov(2)
@@ -88,45 +80,45 @@ CONTAINS
 #define Rxz cov(5)
 #define Ryz cov(6)
 
-    ! ###################################################################
-    IF ( g(3)%size .GT. 1 ) THEN
-      IF ( Rxz .NE. C_0_R .OR. Ryz .NE. C_0_R ) THEN ! only 2D case developed
-        CALL TLAB_WRITE_ASCII(efile,'Terms Rxz and Ryz not developed yet.')
-        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-      ENDIF
+        ! ###################################################################
+        if (g(3)%size > 1) then
+            if (Rxz /= 0.0_cp .or. Ryz /= 0.0_cp) then ! only 2D case developed
+                call TLAB_WRITE_ASCII(efile, 'Terms Rxz and Ryz not developed yet.')
+                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            end if
 
-      CALL RAND_NORMALIZE(Rzz, w)
+            call RAND_NORMALIZE(Rzz, w)
 
-    ENDIF
+        end if
 
-    IF ( Rxy .EQ. C_0_R ) THEN  ! Diagonal case
-      CALL RAND_NORMALIZE(Rxx, u)
-      CALL RAND_NORMALIZE(Ryy, v)
+        if (Rxy == 0.0_cp) then  ! Diagonal case
+            call RAND_NORMALIZE(Rxx, u)
+            call RAND_NORMALIZE(Ryy, v)
 
-    ELSE                        ! Nondiagonal case
-      ! get eigenvalues
-      trace = Rxx+Ryy
-      lambda1 = C_05_R*(trace + SQRT(trace*trace-C_4_R*(Rxx*Ryy-Rxy*Rxy)))
-      lambda2 = trace - lambda1
+        else                        ! Nondiagonal case
+            ! get eigenvalues
+            trace = Rxx + Ryy
+            lambda1 = 0.5_cp*(trace + SQRT(trace*trace - 4.0_cp*(Rxx*Ryy - Rxy*Rxy)))
+            lambda2 = trace - lambda1
 
-      ! define fields in rotated uncorrelated frame
-      CALL RAND_NORMALIZE(lambda1, u)
-      CALL RAND_NORMALIZE(lambda2, v)
+            ! define fields in rotated uncorrelated frame
+            call RAND_NORMALIZE(lambda1, u)
+            call RAND_NORMALIZE(lambda2, v)
 
-      ! rotate to XY correlated frame
-      alpha  = ATAN((lambda1-Rxx)/Rxy)
-      calpha = COS(alpha)
-      salpha = SIN(alpha)
+            ! rotate to XY correlated frame
+            alpha = ATAN((lambda1 - Rxx)/Rxy)
+            calpha = COS(alpha)
+            salpha = SIN(alpha)
 
-      DO i =1,isize_field
-        rdummy = calpha*u(i) - salpha*v(i)
-        v(i)   = salpha*u(i) + calpha*v(i)
-        u(i)   = rdummy
-      ENDDO
+            do i = 1, isize_field
+                rdummy = calpha*u(i) - salpha*v(i)
+                v(i) = salpha*u(i) + calpha*v(i)
+                u(i) = rdummy
+            end do
 
-    ENDIF
+        end if
 
-    RETURN
+        return
 
 #undef Rxx
 #undef Ryy
@@ -135,30 +127,28 @@ CONTAINS
 #undef Rxz
 #undef Ryz
 
-  END SUBROUTINE RAND_COVARIANCE
-
-  ! ###################################################################
-  SUBROUTINE RAND_NORMALIZE(variance, a)
-    IMPLICIT NONE
-
-    TREAL,                            INTENT(IN)    :: variance
-    TREAL, DIMENSION(imax,jmax,kmax), INTENT(INOUT) :: a
-
-    ! -------------------------------------------------------------------
-    TREAL AVG1V2D, dummy
-    EXTERNAL AVG1V2D
+    end subroutine RAND_COVARIANCE
 
     ! ###################################################################
-    dummy = AVG1V2D(imax*jmax,i1,kmax, i1, i1, a) ! 3D average
-    a = a -dummy
+    subroutine RAND_NORMALIZE(variance, a)
+        real(cp), intent(IN) :: variance
+        real(cp), dimension(imax, jmax, kmax), intent(INOUT) :: a
 
-    dummy = AVG1V2D(imax*jmax,i1,kmax, i1, i2, a) ! 3D average
-    IF ( dummy .GT. C_0_R ) THEN
-      dummy = SQRT(variance/dummy)
-      a  = a *dummy
-    ENDIF
+        ! -------------------------------------------------------------------
+        real(cp) AVG1V2D, dummy
+        external AVG1V2D
 
-    RETURN
-  END SUBROUTINE RAND_NORMALIZE
+        ! ###################################################################
+        dummy = AVG1V2D(imax*jmax, 1, kmax, 1, 1, a) ! 3D average
+        a = a - dummy
 
-END MODULE RAND_LOCAL
+        dummy = AVG1V2D(imax*jmax, 1, kmax, 1, 2, a) ! 3D average
+        if (dummy > 0.0_cp) then
+            dummy = SQRT(variance/dummy)
+            a = a*dummy
+        end if
+
+        return
+    end subroutine RAND_NORMALIZE
+
+end module RAND_LOCAL
