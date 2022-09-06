@@ -935,11 +935,11 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#DeltaTemperature=<value>')
 
 
-  call PROFILE_READBLOCK(bakfile, inifile, 'Flow', 'Velocity', qbg(1))  
+  call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Velocity', qbg(1))  
 ! originally, all velocity data was contained in block 'Velocity' except for the mean value
   CALL SCANINIREAL(bakfile, inifile, 'Flow', 'VelocityX',     '0.0', qbg(1)%mean )
-  call PROFILE_READBLOCK(bakfile, inifile, 'Flow', 'VelocityY', qbg(2))
-  call PROFILE_READBLOCK(bakfile, inifile, 'Flow', 'VelocityZ', qbg(3))
+  call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'VelocityY', qbg(2))
+  call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'VelocityZ', qbg(3))
 
   ! Consistency check
  IF ( qbg(1)%type .EQ. PROFILE_EKMAN_U .OR. qbg(1)%type .EQ. PROFILE_EKMAN_U_P ) THEN
@@ -949,9 +949,9 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
      qbg(3)%delta = qbg(1)%delta
   ENDIF
 
-  call PROFILE_READBLOCK(bakfile, inifile, 'Flow', 'Density', rbg)
-  call PROFILE_READBLOCK(bakfile, inifile, 'Flow', 'Temperature', tbg)  ! temperature/enthalpy
-  call PROFILE_READBLOCK(bakfile, inifile, 'Flow', 'Pressure', pbg)
+  call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Density', rbg)
+  call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Temperature', tbg)  ! temperature/enthalpy
+  call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Pressure', pbg)
 
 ! consistency check
   IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
@@ -1011,7 +1011,7 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
 
   DO is = 1,MAX_NSP
      WRITE(lstr,*) is
-     call PROFILE_READBLOCK(bakfile, inifile, 'Scalar', 'Scalar'//TRIM(ADJUSTL(lstr)), sbg(is))
+     call PROFILES_READBLOCK(bakfile, inifile, 'Scalar', 'Scalar'//TRIM(ADJUSTL(lstr)), sbg(is))
   ENDDO
 
 ! -------------------------------------------------------------------

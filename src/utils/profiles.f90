@@ -2,6 +2,76 @@
 #include "dns_const.h"
 #include "dns_error.h"
 
+subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
+    use TLAB_TYPES
+    use TLAB_CONSTANTS, only: efile
+    use TLAB_PROCS
+    implicit none
+
+    character(len=*), intent(in) :: bakfile, inifile, block, tag
+    type(background_dt), intent(out) :: var
+
+    character(len=512) sRes
+    real(cp) derivative
+
+    call SCANINICHAR(bakfile, inifile, block, 'Profile'//TRIM(ADJUSTL(tag)), 'none', sRes)
+    if (TRIM(ADJUSTL(sRes)) == 'none') then; var%type = PROFILE_NONE
+    else if (TRIM(ADJUSTL(sRes)) == 'tanh') then; var%type = PROFILE_TANH
+    else if (TRIM(ADJUSTL(sRes)) == 'tanhsymmetric') then; var%type = PROFILE_TANH_SYM
+    else if (TRIM(ADJUSTL(sRes)) == 'tanhantisymmetric') then; var%type = PROFILE_TANH_ANTISYM
+    else if (TRIM(ADJUSTL(sRes)) == 'linear') then; var%type = PROFILE_LINEAR
+    else if (TRIM(ADJUSTL(sRes)) == 'linearcrop') then; var%type = PROFILE_LINEAR_CROP
+    else if (TRIM(ADJUSTL(sRes)) == 'erf') then; var%type = PROFILE_ERF
+    else if (TRIM(ADJUSTL(sRes)) == 'erfsurface') then; var%type = PROFILE_ERF_SURFACE
+    else if (TRIM(ADJUSTL(sRes)) == 'erfantisym') then; var%type = PROFILE_ERF_ANTISYM
+    else if (TRIM(ADJUSTL(sRes)) == 'bickley') then; var%type = PROFILE_BICKLEY
+    else if (TRIM(ADJUSTL(sRes)) == 'gaussian') then; var%type = PROFILE_GAUSSIAN
+    else if (TRIM(ADJUSTL(sRes)) == 'ekman') then; var%type = PROFILE_EKMAN_U
+    else if (TRIM(ADJUSTL(sRes)) == 'ekmanp') then; var%type = PROFILE_EKMAN_U_P
+    else if (TRIM(ADJUSTL(sRes)) == 'parabolic') then; var%type = PROFILE_PARABOLIC
+    else if (TRIM(ADJUSTL(sRes)) == 'mixedlayer') then; var%type = PROFILE_MIXEDLAYER
+! the following 2 are used in initialize/flow/pressure_mean; should be cleaned
+    else if (TRIM(ADJUSTL(sRes)) == 'enthalpyerf') then; var%type = -PROFILE_ERF
+    else
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong '//TRIM(ADJUSTL(tag))//' profile.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
+
+    call SCANINICHAR(bakfile, inifile, block, 'Mean'//TRIM(ADJUSTL(tag)), 'void', sRes)
+    if (TRIM(ADJUSTL(sRes)) == 'void') then ! Backwards compatibility
+        call SCANINIREAL(bakfile, inifile, block, TRIM(ADJUSTL(tag)), '0.0', var%mean)
+    else
+        call SCANINIREAL(bakfile, inifile, block, 'Mean'//TRIM(ADJUSTL(tag)), '0.0', var%mean)
+    end if
+    call SCANINIREAL(bakfile, inifile, block, 'YCoor'//TRIM(ADJUSTL(tag)), '0.5', var%ymean)
+    call SCANINIREAL(bakfile, inifile, block, 'Delta'//TRIM(ADJUSTL(tag)), '0.0', var%delta)
+    call SCANINIREAL(bakfile, inifile, block, 'Thick'//TRIM(ADJUSTL(tag)), '0.0', var%thick)
+    call SCANINIREAL(bakfile, inifile, block, 'BottomSlope'//TRIM(ADJUSTL(tag)), '0.0', var%parameters(1))
+    call SCANINIREAL(bakfile, inifile, block, 'UpperSlope'//TRIM(ADJUSTL(tag)), '0.0', var%parameters(2))
+    ! alternative to provide the variable thick in terms of the maximum derivative
+    call SCANINICHAR(bakfile, inifile, block, 'Derivative'//TRIM(ADJUSTL(tag)), 'void', sRes)
+    if (TRIM(ADJUSTL(sRes)) /= 'void') then
+        call SCANINIREAL(bakfile, inifile, block, 'Derivative'//TRIM(ADJUSTL(tag)), '0.0', derivative)
+        call PROFILES_DERTOTHICK(derivative, var)
+    end if
+
+    call SCANINIREAL(bakfile, inifile, block, 'SurfaceThick'//TRIM(ADJUSTL(tag)), '1.0', var%parameters(3))
+    call SCANINIREAL(bakfile, inifile, block, 'SurfaceDelta'//TRIM(ADJUSTL(tag)), '0.0', var%parameters(4))
+    ! alternative to provide the variable thick in terms of the maximum derivative
+    call SCANINICHAR(bakfile, inifile, block, 'SurfaceDerivative'//TRIM(ADJUSTL(tag)), 'void', sRes)
+    if (TRIM(ADJUSTL(sRes)) /= 'void') then
+        call SCANINIREAL(bakfile, inifile, block, 'SurfaceDerivative'//TRIM(ADJUSTL(tag)), '0.0', derivative)
+        call PROFILES_DERTOTHICK(derivative, var)
+    end if
+
+    call SCANINIREAL(bakfile, inifile, block, 'ScaleHeight', '0.0', var%parameters(5))
+
+    call SCANINIREAL(bakfile, inifile, block, 'Diam'//TRIM(ADJUSTL(tag)), '0.0', var%diam)
+    var%parameters(6) = var%diam
+
+    return
+end subroutine PROFILES_READBLOCK
+
 function PROFILES(iflag, thick, delta, mean, ycenter, param, y)
 
     implicit none
@@ -21,10 +91,7 @@ function PROFILES(iflag, thick, delta, mean, ycenter, param, y)
     ! base state varying between two constant levels
     ! -------------------------------------------------------------------
     if (thick == C_0_R) then
-        if (iflag > 0) then
-            if (yrel <= C_0_R) then; amplify = C_05_R
-            else if (yrel > C_0_R) then; amplify = -C_05_R; end if
-        end if
+        if (iflag > 0) amplify = C_05_R*sign(C_1_R, yrel)
 
     else
         xi = yrel/thick
@@ -43,7 +110,7 @@ function PROFILES(iflag, thick, delta, mean, ycenter, param, y)
         case (PROFILE_TANH_ANTISYM)
             amplify = C_025_R*(TANH(-C_05_R*(xi - C_05_R*param(6)/thick)) - TANH(C_05_R*(xi + C_05_R*param(6)/thick)))
 
-        case (PROFILE_ERF, PROFILE_LINEAR_ERF, PROFILE_ERF_ANTISYM, PROFILE_ERF_SURFACE, PROFILE_LINEAR_ERF_SURFACE)
+        case (PROFILE_ERF, PROFILE_ERF_ANTISYM, PROFILE_ERF_SURFACE)
             amplify = C_05_R*ERF(-C_05_R*xi)
 
         case (PROFILE_PARABOLIC, PROFILE_PARABOLIC_SURFACE)
@@ -78,22 +145,13 @@ function PROFILES(iflag, thick, delta, mean, ycenter, param, y)
 
     end if
 
-    ! mean profile
-    if (ABS(delta) > C_0_R) then
-        PROFILES = mean + delta*amplify
-    else
-        PROFILES = mean
-    end if
+    ! mean profile plus two linear-varying layers
+    PROFILES = mean + delta*amplify + param(1)*yrel*C_05_R*(C_1_R - sign(C_1_R, yrel)) &
+               + param(2)*yrel*C_05_R*(C_1_R + sign(C_1_R, yrel))
 
     ! -------------------------------------------------------------------
     ! special profiles
     ! -------------------------------------------------------------------
-    ! two linear-varying layers
-    if (iflag == PROFILE_LINEAR_ERF .or. iflag == PROFILE_LINEAR_ERF_SURFACE) then
-        if (yrel < C_0_R) then; PROFILES = PROFILES + param(1)*yrel
-        else; PROFILES = PROFILES + param(2)*yrel; end if
-    end if
-
     ! cropped linear
     if (iflag == PROFILE_LINEAR_CROP) then
         if (yrel < C_0_R) then; PROFILES = MIN(param(1)*yrel, param(1)*thick)
@@ -116,71 +174,42 @@ function PROFILES(iflag, thick, delta, mean, ycenter, param, y)
     return
 end function PROFILES
 
-subroutine PROFILE_READBLOCK(bakfile, inifile, block, tag, variable)
-    use TLAB_TYPES
+subroutine PROFILES_DERTOTHICK(derivative, var)  ! Obtain thick from the value of the maximum derivative
+    use TLAB_TYPES, only: background_dt, cp
     use TLAB_CONSTANTS, only: efile
     use TLAB_PROCS
     implicit none
-    
-    character(len=*), intent(in) :: bakfile, inifile, block, tag
-    type(background_dt), intent(out) :: variable
 
-    character(len=512) sRes
+    real(cp), intent(in) :: derivative
+    type(background_dt), intent(inout) :: var
 
-    call SCANINICHAR(bakfile, inifile, block, 'Profile'//TRIM(ADJUSTL(tag)), 'none', sRes)
-    if (TRIM(ADJUSTL(sRes)) == 'none') then; variable%type = PROFILE_NONE
-    else if (TRIM(ADJUSTL(sRes)) == 'tanh') then; variable%type = PROFILE_TANH
-    else if (TRIM(ADJUSTL(sRes)) == 'tanhsymmetric') then; variable%type = PROFILE_TANH_SYM
-    else if (TRIM(ADJUSTL(sRes)) == 'tanhantisymmetric') then; variable%type = PROFILE_TANH_ANTISYM
-    else if (TRIM(ADJUSTL(sRes)) == 'linear') then; variable%type = PROFILE_LINEAR
-    else if (TRIM(ADJUSTL(sRes)) == 'linearcrop') then; variable%type = PROFILE_LINEAR_CROP
-    else if (TRIM(ADJUSTL(sRes)) == 'linearerf') then; variable%type = PROFILE_LINEAR_ERF
-    else if (TRIM(ADJUSTL(sRes)) == 'linearerfsurface') then; variable%type = PROFILE_LINEAR_ERF_SURFACE
-    else if (TRIM(ADJUSTL(sRes)) == 'erf') then; variable%type = PROFILE_ERF
-    else if (TRIM(ADJUSTL(sRes)) == 'erfsurface') then; variable%type = PROFILE_ERF_SURFACE
-    else if (TRIM(ADJUSTL(sRes)) == 'erfantisym') then; variable%type = PROFILE_ERF_ANTISYM
-    else if (TRIM(ADJUSTL(sRes)) == 'bickley') then; variable%type = PROFILE_BICKLEY
-    else if (TRIM(ADJUSTL(sRes)) == 'gaussian') then; variable%type = PROFILE_GAUSSIAN
-    else if (TRIM(ADJUSTL(sRes)) == 'ekman') then; variable%type = PROFILE_EKMAN_U
-    else if (TRIM(ADJUSTL(sRes)) == 'ekmanp') then; variable%type = PROFILE_EKMAN_U_P
-    else if (TRIM(ADJUSTL(sRes)) == 'parabolic') then; variable%type = PROFILE_PARABOLIC
-    else if (TRIM(ADJUSTL(sRes)) == 'mixedlayer') then; variable%type = PROFILE_MIXEDLAYER
-! the following 2 are used in initialize/flow/pressure_mean; should be cleaned
-    else if (TRIM(ADJUSTL(sRes)) == 'enthalpyerf') then; variable%type = -PROFILE_ERF
-    else if (TRIM(ADJUSTL(sRes)) == 'enthalpylinearerf') then; variable%type = -PROFILE_LINEAR_ERF
-    else
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong '//TRIM(ADJUSTL(tag))//' profile.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
+    real(cp) thick_ratio    ! for readibility
 
-    call SCANINICHAR(bakfile, inifile, block, 'Mean'//TRIM(ADJUSTL(tag)), 'void', sRes)
-    if (TRIM(ADJUSTL(sRes)) == 'void') then ! Backwards compatibility
-        call SCANINIREAL(bakfile, inifile, block, TRIM(ADJUSTL(tag)), '0.0', variable%mean)
-    else
-        call SCANINIREAL(bakfile, inifile, block, 'Mean'//TRIM(ADJUSTL(tag)), '0.0', variable%mean)
-    end if
-    call SCANINIREAL(bakfile, inifile, block, 'YCoor'//TRIM(ADJUSTL(tag)), '0.5', variable%ymean)
-    call SCANINIREAL(bakfile, inifile, block, 'Thick'//TRIM(ADJUSTL(tag)), '0.0', variable%thick)
-    call SCANINIREAL(bakfile, inifile, block, 'Delta'//TRIM(ADJUSTL(tag)), '0.0', variable%delta)
+    print *, var%thick
+    print *, var%parameters(3)
 
-    call SCANINIREAL(bakfile, inifile, block, 'Diam'//TRIM(ADJUSTL(tag)), '0.0', variable%diam)
-    variable%parameters(6) = variable%diam
+    select case (var%type)
 
-    call SCANINICHAR(bakfile, inifile, block, 'BottomSlope'//TRIM(ADJUSTL(tag)), 'void', sRes)
-    if (TRIM(ADJUSTL(sRes)) == 'void') then ! Backwards compatibility
-        call SCANINIREAL(bakfile, inifile, block, 'BottomSlope', '0.0', variable%parameters(1))
-    else
-        call SCANINIREAL(bakfile, inifile, block, 'BottomSlope'//TRIM(ADJUSTL(tag)), '0.0', variable%parameters(1))
-    end if
-    call SCANINICHAR(bakfile, inifile, block, 'UpperSlope'//TRIM(ADJUSTL(tag)), 'void', sRes)
-    if (TRIM(ADJUSTL(sRes)) == 'void') then ! Backwards compatibility
-        call SCANINIREAL(bakfile, inifile, block, 'UpperSlope', '0.0', variable%parameters(2))
-    else
-        call SCANINIREAL(bakfile, inifile, block, 'UpperSlope'//TRIM(ADJUSTL(tag)), '0.0', variable%parameters(2))
-    end if
-    call SCANINIREAL(bakfile, inifile, block, 'SurfaceThick'//TRIM(ADJUSTL(tag)), '1.0', variable%parameters(3))
-    call SCANINIREAL(bakfile, inifile, block, 'SurfaceDelta'//TRIM(ADJUSTL(tag)), '0.0', variable%parameters(4))
+    case (PROFILE_TANH, PROFILE_TANH_SYM, PROFILE_TANH_ANTISYM)
+        thick_ratio = 4.0_cp
+        var%thick = -var%delta/derivative/thick_ratio
 
-    call SCANINIREAL(bakfile, inifile, block, 'ScaleHeight', '0.0', variable%parameters(5))
+    case (PROFILE_ERF, PROFILE_ERF_ANTISYM)
+        thick_ratio = 2.0_cp*sqrt(C_PI_R)
+        var%thick = -var%delta/(derivative - var%parameters(2))/thick_ratio
 
-end subroutine PROFILE_READBLOCK
+    case (PROFILE_ERF_SURFACE)
+        thick_ratio = 2.0_cp*sqrt(C_PI_R)
+        var%parameters(3) = -var%parameters(4)/derivative/thick_ratio
+
+    case default
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Undevelop derivative input for this case.')
+        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+
+    end select
+
+    print *, var%thick
+    print *, var%parameters(3)
+
+    return
+end subroutine PROFILES_DERTOTHICK

@@ -6,83 +6,70 @@
 
 The general form is given as a function of the coordinate $x_2$ according to
 \begin{equation}
-  f(x_2) = f_\text{ref}+\Delta f\, g(\xi) \;,\qquad
-  \xi=\frac{x_2-x_{2,\text{ref}}}{\delta} \;,
-\label{equ:profile}
+    f(x_2) = f_\text{ref}+\Delta f\, g(\xi) \;,\qquad 
+    \xi=\frac{x_2-x_{2,\text{ref}}}{\delta} \;.
+    \label{equ:profile}
 \end{equation}
-where the set of parameters $\{f_\text{ref},\,\Delta
-f,\,x_{2,\text{ref}},\,\delta\}$ need to be provided, as well a the normalized
-profile $g(\xi)$.
+where the set of parameters $\{f_\text{ref},\,\Delta f,\,x_{2,\text{ref}},\,\delta\}$ need to be provided together with the normalized profile $g(\xi)$.
 
-Possible forms are given in table~\ref{tab:profile} and
-figure~\ref{fig:profile}. There are shear-like and jet-like profiles. In the
-former case, the normalized profiles vary between $-1/2$ and $+1/2$, so that
-equation~(\ref{equ:profile}) represents a variation of order $\Delta f$ around
-the reference value $f_\text{ref}$ across a distance of order $\delta$ centered
-around the position $x_{2,\text{ref}}$. The sign of $\delta$ can be used to
-impose the symmetric form, if needed. The gradient thickness is defined by
+Possible forms are given in table~\ref{tab:profile} and figure~\ref{fig:profile}. There are shear-like and jet-like profiles. In the former case, the normalized profiles vary between $-1/2$ and $+1/2$, so that equation~(\ref{equ:profile}) represents a variation of order $\Delta f$ around the reference value $f_\text{ref}$ across a distance of order $\delta$ centered around the position $x_{2,\text{ref}}$. The sign of $\delta$ can be used to impose the symmetric form, if needed. The gradient thickness is defined by
 \begin{equation}
-  \delta_g =\frac{\Delta f}{|d f/d x_2|_\text{max}} =
-  \delta\,\frac{1}{|d g/d \xi|_\text{max}} \;.
-\label{equ:deltag}
+    \delta_g =\frac{\Delta f}{|d f/d x_2|_\text{max}} =
+    \delta\,\frac{1}{|d g/d \xi|_\text{max}} \;.
+    \label{equ:deltag}
 \end{equation}
-In the case in which the profile is used to define the mean velocity, this
-thickness is known as vorticity thickness.  It is very often more convenient to
-define the problem in terms of the gradient thickness instead of the thickness
-parameter $\delta$. The reason to keep it in terms of $\delta$ in the code is
-simply for compatibility with the previous versions.
+In the case in which the profile is used to define the mean velocity, this thickness is known as vorticity thickness.  It is very often more convenient to define the problem in terms of the gradient thickness instead of the thickness parameter $\delta$. The reason to keep it in terms of $\delta$ in the code is simply for compatibility with the previous versions.
 
 \begin{SCfigure}
-\includegraphics[clip,width=0.6\textwidth]{figs/profiles1}
-\caption{Different normalized profiles used in equation~(\ref{equ:profile}). The
-  black profiles provide shear-like backgrounds, the green lines provide
-  jet-like backgrounds. These background profiles are used consistently for the
-  boundary and initial conditions and aims at the study of different canonical
-  flows, free and wall-bounded, shear- and buoyancy-driven.}\label{fig:profile}
+    \includegraphics[clip,width=0.6\textwidth]{figs/profiles1}
+    \caption{Different normalized profiles used in equation~(\ref{equ:profile}). The black profiles provide shear-like backgrounds, the green lines provide jet-like backgrounds. These background profiles are used consistently for the boundary and initial conditions and aims at the study of different canonical flows, free and wall-bounded, shear- and buoyancy-driven.}\label{fig:profile}
 \end{SCfigure}
 
-The second group of profiles deliver a jet-like shape. In that case, $\Delta f$
-provides the maximum difference with respect to the reference level
-$f_\text{ref}$. The integral thickness is defined by
+The second group of profiles deliver a jet-like shape. In that case, $\Delta f$ provides the maximum difference with respect to the reference level $f_\text{ref}$. The integral thickness is defined by
 \begin{equation}
-  \delta_i =\frac{1}{\Delta f}\int\! (f-f_\text{ref})\,\mathrm{d} x_2
-  = \delta\int\! g(\xi)\mathrm{d}\,\xi \;.
-\label{equ:deltai}
+    \delta_i =\frac{1}{\Delta f}\int\! (f-f_\text{ref})\,\mathrm{d} x_2
+    = \delta\int\! g(\xi)\mathrm{d}\,\xi \;.
+    \label{equ:deltai}
 \end{equation}
-According the implementation currently used, shown in table~\ref{tab:profile},
-typical values are $2-3\delta$.
+According the implementation currently used, typical values are $\delta_i\sim 2-3\delta$ (table~\ref{tab:profile}).
 
 \begin{table}[!h]
-\footnotesize
-\renewcommand{\arraystretch}{1.2}
-\centering
-\rowcolors{1}{gray!25}{white}
-\begin{tabular}{|l >{\centering}p{0.2\textwidth} c c p{0.4\textwidth}|}
-%
-\hline
-\multicolumn{1}{|>{\columncolor{gray!50}}c}{\bf Type} &
-\multicolumn{1}{>{\columncolor{gray!50}}c}{\bf $\mathbf{g}(\boldsymbol{\xi})$} &
-\multicolumn{1}{>{\columncolor{gray!50}}c}{\bf $\boldsymbol{\delta}_g/\boldsymbol{\delta}$ }&
-\multicolumn{1}{>{\columncolor{gray!50}}c}{\bf $\boldsymbol{\delta}_i/\boldsymbol{\delta}$ }&
-\multicolumn{1}{>{\columncolor{gray!50}}c|}{\bf Notes}\\
-\hline
-Hyperbolic tangent  & $(1/2)\tanh(-\xi/2)$ & $4$ & &
-                      Used in shear layer because it is the reference profile commonly used in linear stability analysis. The parameter $\delta$ is equal to the momentum thickness. Used because of available linear stability analysis.\\
-Error function      & $(1/2)\text{erf}(-\xi/2)$ & $2\sqrt{\pi}$ & &
-                      Used in diffusion dominated problems because it is a solution of the diffusion equation.\\
-Linear              & $-\xi$ & 1 & & Varying $\Delta f$ along $\delta$.\\
-Ekman               & $1-\exp(-\xi)\cos(\xi)$ \newline $\phantom{1}-\exp(-\xi)\sin(\xi)$& 1 & &
-                      Velocity component along geostrophic wind. \newline Normal component.\\
-Gaussian            & $\exp(-\xi^2/2)$ & $1.65$ & $\sqrt{2\pi}$&
-                      Gaussian bell with standard deviation equal to $\delta$. \\
-Bickley             & $1/\cosh^2(\xi/2)$ & & $4$&
-                      Bell shape used in the linear stability of jets. Used because of available linear stability analysis.\\
-Parabolic           & $(1+\xi/2)(1-\xi/2)$ & & $8/3$&
-                      Parabola crossing the reference value at $x_{2,ref}\pm 2\delta$. Used for Poiseuille and channel flows. The thickness $\delta_i$ is calculated using only the positive part of the profile in the integral.\\
-\hline
-\end{tabular}
-\caption{Different normalized profiles used in equation~(\ref{equ:profile}). The third column contains the gradient thickness $\delta_g$, defined by equation~(\ref{equ:deltag}), written explicitly as a function of the thickness parameter $\delta$. The fourth column contains the integral thickness $\delta_i$, defined by equation~(\ref{equ:deltai})}\label{tab:profile}
+    \footnotesize
+    \renewcommand{\arraystretch}{1.2}
+    \centering
+    \rowcolors{1}{gray!25}{white}
+    \begin{tabular}{|l >{\centering}p{0.2\textwidth} c c p{0.4\textwidth}|}
+        %
+        \hline
+        \multicolumn{1}{|>{\columncolor{gray!50}}c}{\bf Type} &
+        \multicolumn{1}{>{\columncolor{gray!50}}c}{\bf $\mathbf{g}(\boldsymbol{\xi})$} &
+        \multicolumn{1}{>{\columncolor{gray!50}}c}{\bf $\boldsymbol{\delta}_g/\boldsymbol{\delta}$ }&
+        \multicolumn{1}{>{\columncolor{gray!50}}c}{\bf $\boldsymbol{\delta}_i/\boldsymbol{\delta}$ }&
+        \multicolumn{1}{>{\columncolor{gray!50}}c|}{\bf Notes}\\
+        \hline
+        Hyperbolic tangent  & $(1/2)\tanh(-\xi/2)$ & $4$ & &
+        Used in shear layer because it is the reference profile commonly used in linear stability analysis. The parameter $\delta$ is equal to the momentum thickness. Used because of available linear stability analysis.\\
+        Error function      & $(1/2)\text{erf}(-\xi/2)$ & $2\sqrt{\pi}$ & &
+        Used in diffusion dominated problems because it is a solution of the diffusion equation.\\
+        Linear              & $-\xi$ & 1 & & Varying $\Delta f$ along $\delta$.\\
+        Ekman               & $1-\exp(-\xi)\cos(\xi)$ \newline $\phantom{1}-\exp(-\xi)\sin(\xi)$& 1 & &
+        Velocity component along geostrophic wind. \newline Normal component.\\
+        Gaussian            & $\exp(-\xi^2/2)$ & $1.65$ & $\sqrt{2\pi}$&
+        Gaussian bell with standard deviation equal to $\delta$. \\
+        Bickley             & $1/\cosh^2(\xi/2)$ & & $4$&
+        Bell shape used in the linear stability of jets. Used because of available linear stability analysis.\\
+        Parabolic           & $(1+\xi/2)(1-\xi/2)$ & & $8/3$&
+        Parabola crossing the reference value at $x_{2,ref}\pm 2\delta$. Used for Poiseuille and channel flows. The thickness $\delta_i$ is calculated using only the positive part of the profile in the integral.\\
+        \hline
+    \end{tabular}
+    \caption{Different normalized profiles used in equation~(\ref{equ:profile}). The third column contains the gradient thickness $\delta_g$, defined by equation~(\ref{equ:deltag}), written explicitly as a function of the thickness parameter $\delta$. The fourth column contains the integral thickness $\delta_i$, defined by equation~(\ref{equ:deltai})}\label{tab:profile}
 \end{table}
+
+The are additionally two linear contributions below and above the reference position $x_{2,\text{ref}}$:
+\begin{equation}
+    f(x_2) = f(x_2)  +\alpha_l (x_2-x_{2,\text{ref}}) \mathcal{H}(x_{2,\text{ref}}-x_2)+\alpha_u (x_2-x_{2,\text{ref}}) \mathcal{H}(x_2-x_{2,\text{ref}})\;,
+\end{equation}
+where $\mathcal{H}$ is the Heaviside function. The slopes $\alpha_l$ and $\alpha_u$ need to be provided. The default values of the slopes are zero, so that no linear variations are added unless explicitly indicated.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -90,9 +77,9 @@ Parabolic           & $(1+\xi/2)(1-\xi/2)$ & & $8/3$&
 
 White noise is typically added to mean profiles to accelerate the transition to turbulence. There are reasons, however, to construct initial conditions that are more elaborated than white noise:
 \begin{itemize}
-  \item To be able to compare with analytical solutions and thereby validate the code and algorithms.
-  \item To ascertain the duration of the initial transient before the flow enters into the fully developed turbulent regime. We can do that by varying the initial conditions in a controlled way.
-  \item To control certain aspects of that transient by using results from stability analysis and exciting or not certain modes. White noise excites all of them equally, and the higher frequency content is dissipated much faster, which might render the energy amount that we use in the initialization misleading. %In this respect, it maybe appropriate to say that the control of the duration of that transient is relatively difficult; on the other hand, the peak of turbulence intensities can be indeed controlled, if necessary e.g. because of resolution constraints.
+    \item To be able to compare with analytical solutions and thereby validate the code and algorithms.
+    \item To ascertain the duration of the initial transient before the flow enters into the fully developed turbulent regime. We can do that by varying the initial conditions in a controlled way.
+    \item To control certain aspects of that transient by using results from stability analysis and exciting or not certain modes. White noise excites all of them equally, and the higher frequency content is dissipated much faster, which might render the energy amount that we use in the initialization misleading. %In this respect, it maybe appropriate to say that the control of the duration of that transient is relatively difficult; on the other hand, the peak of turbulence intensities can be indeed controlled, if necessary e.g. because of resolution constraints.
 \end{itemize}
 
 The first step is to defined a mean background profile according to the previous section. For instance, a hyperbolic tangent profile for the mean streamwise velocity, $\bar{u}_1(x_2)$, while all other mean velocity components are set to zero.  The upper stream has a velocity $u_{1,ref}-\Delta u/2$ and the lower stream has a velocity $u_{1,ref}+\Delta u/2$ (see figure~\ref{fig:profile}). The mean density (or the mean temperature) can be similarly initialized, and a mean pressure is set to a uniform value $p_0$. The mean scalar can be similarly initialized.
@@ -103,23 +90,23 @@ In addition to the mean values, discrete or broadband perturbation can be added.
 
 For the general case of a scalar field $s$, we consider the linear superposition of $m$ modes of the form
 \begin{equation}
-  s_m = A_mf(y) \cos(w_{xm}x+\phi_{xm})\cos(w_{zm}z+\phi_{zm})\;, \\
+    s_m = A_mf(y) \cos(w_{xm}x+\phi_{xm})\cos(w_{zm}z+\phi_{zm})\;, \\
 \end{equation}
 where $f(y)$ is one of the shape functions discussed before.
 
 For the particular case of the velocity field, we consider the linear superposition of $m$ modes of the form
 \begin{eqnarray}
-  u_m &= &A_mg(y)\,c_{xm}         \sin(\omega_{xm}x+\phi_{xm})\cos(\omega_{zm}z+\phi_{zm})\;, \\
-  v_m &= &A_mf(y)\phantom{c_{xm}} \cos(\omega_{xm}x+\phi_{xm})\cos(\omega_{zm}z+\phi_{zm})\;, \\
-  w_m &= &A_mg(y)\,c_{zm}         \cos(\omega_{xm}x+\phi_{xm})\sin(\omega_{zm}z+\phi_{zm})\;,
+    u_m &= &A_mg(y)\,c_{xm}         \sin(\omega_{xm}x+\phi_{xm})\cos(\omega_{zm}z+\phi_{zm})\;, \\
+    v_m &= &A_mf(y)\phantom{c_{xm}} \cos(\omega_{xm}x+\phi_{xm})\cos(\omega_{zm}z+\phi_{zm})\;, \\
+    w_m &= &A_mg(y)\,c_{zm}         \cos(\omega_{xm}x+\phi_{xm})\sin(\omega_{zm}z+\phi_{zm})\;,
 \end{eqnarray}
 where
 \begin{equation*}
-  \begin{array}{lll}
-    c_{xm}=1/\omega_{xm}    & c_{zm}=0            & \text{if } \omega_{zm}=0\;, \\
-    c_{xm}=0           & c_{zm}=1/\omega_{zm}     & \text{if } \omega_{xm}=0\;, \\
-    c_{xm}=1/(2\omega_{xm}) & c_{zm}=1/(2\omega_{zm})  & \text{otherwise}\;,
-  \end{array}
+    \begin{array}{lll}
+        c_{xm}=1/\omega_{xm}    & c_{zm}=0            & \text{if } \omega_{zm}=0\;, \\
+        c_{xm}=0           & c_{zm}=1/\omega_{zm}     & \text{if } \omega_{xm}=0\;, \\
+        c_{xm}=1/(2\omega_{xm}) & c_{zm}=1/(2\omega_{zm})  & \text{otherwise}\;,
+    \end{array}
 \end{equation*}
 and $g(y)=-f'(y)$. Each mode satisfies the solenoidal constraint.
 
@@ -128,32 +115,32 @@ and $g(y)=-f'(y)$. Each mode satisfies the solenoidal constraint.
 We generate a random field on which an isotropic turbulence spectrum  is imposed according to the spectral functions in Table~\ref{tab:spectra}.
 
 \begin{table}[!h]
-\footnotesize
-\renewcommand{\arraystretch}{1.2}
-\centering
-\rowcolors{1}{gray!25}{white}
-\begin{tabular}{|l c p{0.4\textwidth}|}
-%
-\hline
-\rowcolor{gray!50}
-\multicolumn{1}{|>{\columncolor{gray!50}}c}{\bf Type} &
-\multicolumn{1}{>{\columncolor{gray!50}}c}{\bf $E(f)$} &
-\multicolumn{1}{>{\columncolor{gray!50}}c|}{\bf Notes}\\
-uniform   & $1$                                 & ~\\
-quadratic & $(f/f_0)^2 \exp[-2 (f/f_0)]$        & ~\\
-quartic   & $(f/f_0)^4 \exp[-2 (f/f_0)^2]$      & ~\\
-Gaussian  & $\exp[-(1/2)(f/f_0-1)^2/(\sigma/f_0)^2]$ & ~\\
-\hline
-\end{tabular}
-\caption{Different spectral functions that can be used to create a random field. The variable $f$ is the spatial frequency and the parameter $f_0$ is the peak spatial frequency. }\label{tab:spectra}
+    \footnotesize
+    \renewcommand{\arraystretch}{1.2}
+    \centering
+    \rowcolors{1}{gray!25}{white}
+    \begin{tabular}{|l c p{0.4\textwidth}|}
+        %
+        \hline
+        \rowcolor{gray!50}
+        \multicolumn{1}{|>{\columncolor{gray!50}}c}{\bf Type} &
+        \multicolumn{1}{>{\columncolor{gray!50}}c}{\bf $E(f)$} &
+        \multicolumn{1}{>{\columncolor{gray!50}}c|}{\bf Notes}\\
+        uniform   & $1$                                 & ~\\
+        quadratic & $(f/f_0)^2 \exp[-2 (f/f_0)]$        & ~\\
+        quartic   & $(f/f_0)^4 \exp[-2 (f/f_0)^2]$      & ~\\
+        Gaussian  & $\exp[-(1/2)(f/f_0-1)^2/(\sigma/f_0)^2]$ & ~\\
+        \hline
+    \end{tabular}
+    \caption{Different spectral functions that can be used to create a random field. The variable $f$ is the spatial frequency and the parameter $f_0$ is the peak spatial frequency. }\label{tab:spectra}
 \end{table}
 
 After these three-dimensional field is created, it is multiplied by a shape function to control the spatial location of this random fluctuation. In case of the velocity field, the solenoidal constraint is imposed on this random field. Such quasi-incompressible fluctuations minimize compressibility transients \cite{Erlebacher:1990}. The pressure fluctuations are obtained from the Poisson equation for incompressible flow.
 
 \begin{SCfigure}
-  \includegraphics[clip,width=0.6\textwidth]{figs/spectra}
-  \caption{Different power spectral densities available as initial conditions, Table~(\ref{tab:spectra}). Normalized such that all of them have equal integral. The Gaussian profile is plotted for the case $\sigma/f_0=1/6$ typically used in the simulations.}
-  \label{fig:spectra}
+    \includegraphics[clip,width=0.6\textwidth]{figs/spectra}
+    \caption{Different power spectral densities available as initial conditions, Table~(\ref{tab:spectra}). Normalized such that all of them have equal integral. The Gaussian profile is plotted for the case $\sigma/f_0=1/6$ typically used in the simulations.}
+    \label{fig:spectra}
 \end{SCfigure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -178,15 +165,15 @@ points over which they extend. We can consider a filter or a relaxation form.
 
 Regarding the relaxation form, we simply add
 \begin{equation}
-\left(\frac{\delta \mathbf{q}}{\delta t}\right)_b=-\tau_q^{-1}(\mathbf{q}-\mathbf{q}_0)
-\;,\qquad
-\left(\frac{\delta \mathbf{s}}{\delta t}\right)_b=-\tau_s^{-1}(\mathbf{s}-\mathbf{s}_0)
+    \left(\frac{\delta \mathbf{q}}{\delta t}\right)_b=-\tau_q^{-1}(\mathbf{q}-\mathbf{q}_0)
+    \;,\qquad
+    \left(\frac{\delta \mathbf{s}}{\delta t}\right)_b=-\tau_s^{-1}(\mathbf{s}-\mathbf{s}_0)
 \end{equation}
 to the right-hand sides of the transport equations \citep{Hu:1996b}.  The
 relaxation times $\tau(\mathbf{x})$ are defined in terms of a power function as
 \begin{equation}
-  \tau_q^{-1}=\alpha_1(n-n_0)^{\alpha_2} \;,\qquad
-  \tau_s^{-1}=\beta_1(n-n_0)^{\beta_2}
+    \tau_q^{-1}=\alpha_1(n-n_0)^{\alpha_2} \;,\qquad
+    \tau_s^{-1}=\beta_1(n-n_0)^{\beta_2}
 \end{equation}
 where $n$ is the coordinate normal to the corresponding boundary and $n_0$ the
 coordinate where the buffer region begins. The coefficients $\alpha_i$ and

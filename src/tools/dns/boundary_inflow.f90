@@ -333,7 +333,7 @@ CONTAINS
     TINTEGER j, k, im, kdsp
     TREAL wx, wz, wx_1, wz_1, xaux, vmult, factorx, factorz, dummy
 
-    TREAL PROFILES, ycenter, yr
+    TREAL PROFILES, ycenter, yr, param
     EXTERNAL PROFILES
 
     TREAL, DIMENSION(:), POINTER :: y,z
@@ -355,6 +355,8 @@ CONTAINS
 
     xaux =-qbg(1)%mean *etime
 
+    param = C_0_R
+    
     ! ###################################################################
     ! Shape function
     ! ###################################################################
@@ -363,7 +365,7 @@ CONTAINS
       ycenter = y(1) +g(2)%scale *qbg(1)%ymean
       DO j = 1,jmax
         yr = y(j)-ycenter
-        wrk1d(j,1) = PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, C_0_R, y(j) )
+        wrk1d(j,1) = PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, param, y(j) )
         wrk1d(j,2) = yr /( fp%parameters(1) **2 ) *wrk1d(j,1) ! Derivative of f
       ENDDO
 
@@ -371,7 +373,7 @@ CONTAINS
       ycenter = y(1) +g(2)%scale *qbg(1)%ymean -C_05_R *qbg(1)%diam
       DO j = 1,jmax
         yr = y(j) - ycenter
-        wrk1d(j,1) = PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, C_0_R, y(j) )
+        wrk1d(j,1) = PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, param, y(j) )
         wrk1d(j,2) =-yr /( fp%parameters(1) **2 ) *wrk1d(j,1)
       ENDDO
 
@@ -381,7 +383,7 @@ CONTAINS
       ENDIF
       DO j = 1,jmax
         yr = y(j) - ycenter
-        dummy = factorx *PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, C_0_R, y(j) )
+        dummy = factorx *PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, param, y(j) )
         wrk1d(j,1) = wrk1d(j,1) +dummy
         wrk1d(j,2) = wrk1d(j,2) +yr /( fp%parameters(1) **2 ) *dummy
       ENDDO
