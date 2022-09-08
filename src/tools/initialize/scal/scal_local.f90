@@ -21,6 +21,7 @@ module SCAL_LOCAL
     integer(ci) :: flag_s, flag_mixture
 
     type(background_dt) :: Sini(MAX_NSP)                            ! Geometry of perturbation of initial boundary condition
+    type(background_dt) :: prof_loc
     real(cp) :: norm_ini_s(MAX_NSP), norm_ini_radiation  ! Scaling of perturbation
     type(discrete_dt) :: fp                                       ! Discrete perturbation
 
@@ -49,9 +50,12 @@ contains
         ! ###################################################################
         yn => g(2)%nodes
 
+        prof_loc = Sini(is)
+        prof_loc%delta = C_1_R
+        prof_loc%mean = C_0_R
         ycenter = yn(1) + g(2)%scale*Sini(is)%ymean
         do j = 1, jmax
-            wrk1d(j, 1) = PROFILES(Sini(is)%type, Sini(is)%thick, C_1_R, C_0_R, ycenter, Sini(is)%parameters, yn(j))
+            wrk1d(j, 1) = PROFILES(prof_loc, ycenter, yn(j))
         end do
 
         select case (Sini(is)%type)
@@ -141,7 +145,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         real(cp), dimension(imax, kmax) :: disp
 
         ! -------------------------------------------------------------------
-        real(cp) dummy, ycenter, thick_loc, delta_loc, mean_loc
+        real(cp) dummy, ycenter
         real(cp) AVG1V2D, PROFILES
         real(cp) xcenter, zcenter, rcenter, amplify
 
@@ -212,33 +216,40 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
                 do i = 1, imax
                     ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean + disp(i, k)
                     do j = 1, jmax
-         s(i, j, k) = PROFILES(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES(sbg(is), ycenter, g(2)%nodes(j))
                     end do
                 end do
             end do
 
         case (6, 7)           ! Perturbation in the thickness
+            prof_loc = sbg(is)
+
             do k = 1, kmax
                 do i = 1, imax
                     ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean
-                    thick_loc = sbg(is)%thick + disp(i, k)
+                    prof_loc%thick = sbg(is)%thick + disp(i, k)
+
                     do j = 1, jmax
-             s(i, j, k) = PROFILES(sbg(is)%type, thick_loc, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES(prof_loc, ycenter, g(2)%nodes(j))
                     end do
+                    
                 end do
             end do
 
         case (8, 9)           ! Perturbation in the magnitude (constant derivative)
+            prof_loc = sbg(is)
+
             do k = 1, kmax
                 do i = 1, imax
                     ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean
-                    delta_loc = sbg(is)%delta + disp(i, k)
-                    mean_loc = (delta_loc)*C_05_R
-                    if (sbg(is)%delta > 0) then; thick_loc = delta_loc/sbg(is)%delta*sbg(is)%thick; 
-                    else; thick_loc = sbg(is)%thick; end if
+                    prof_loc%delta = sbg(is)%delta + disp(i, k)
+                    prof_loc%mean = (prof_loc%delta)*C_05_R
+                    if (sbg(is)%delta > 0) prof_loc%thick = prof_loc%delta/sbg(is)%delta*sbg(is)%thick
+
                     do j = 1, jmax
-                     s(i, j, k) = PROFILES(sbg(is)%type, thick_loc, delta_loc, mean_loc, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES(prof_loc, ycenter, g(2)%nodes(j))
                     end do
+
                 end do
             end do
 

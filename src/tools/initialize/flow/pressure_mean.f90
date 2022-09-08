@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 subroutine PRESSURE_MEAN(p, T, s, wrk1d)
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_TYPES, only: cp, ci, background_dt
     use TLAB_CONSTANTS, only: efile
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
@@ -19,9 +19,10 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
     real(cp), dimension(jmax, *), intent(INOUT) :: wrk1d
 
 ! -------------------------------------------------------------------
-    integer(ci) j, iprof_loc
+    integer(ci) j
     real(cp) pmin, pmax, ycenter
     real(cp) PROFILES
+    type(background_dt) prof_loc
 
     real(cp), dimension(:), pointer :: y, dy
 
@@ -59,10 +60,10 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
             if (imixture == MIXT_TYPE_AIRWATER .and. tbg%type > 0) then
                 do j = 1, jmax
                     ycenter = y(1) + g(2)%scale*tbg%ymean
-                    t_loc(j) = PROFILES(tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
+                    t_loc(j) = PROFILES(tbg, ycenter, y(j))
 
                     ycenter = y(1) + g(2)%scale*sbg(1)%ymean
-               z1_loc(j) = PROFILES(sbg(1)%type, sbg(1)%thick, sbg(1)%delta, sbg(1)%mean, ycenter, sbg(1)%parameters, g(2)%nodes(j))
+                    z1_loc(j) = PROFILES(sbg(1), ycenter, g(2)%nodes(j))
 
                 end do
                 ! CALL FI_HYDROSTATIC_AIRWATER_T&
@@ -77,13 +78,15 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
 
 ! AIRWATER case: enthalpy/mixture profile is given
             else if (imixture == MIXT_TYPE_AIRWATER .and. tbg%type < 0) then
+                prof_loc = tbg
+                prof_loc%type = -tbg%type
+
                 do j = 1, jmax
                     ycenter = y(1) + g(2)%scale*tbg%ymean
-                    iprof_loc = -tbg%type
-                    z1_loc(j) = PROFILES(iprof_loc, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
+                    z1_loc(j) = PROFILES(prof_loc, ycenter, y(j))
 
                     ycenter = y(1) + g(2)%scale*sbg(1)%ymean
-               z2_loc(j) = PROFILES(sbg(1)%type, sbg(1)%thick, sbg(1)%delta, sbg(1)%mean, ycenter, sbg(1)%parameters, g(2)%nodes(j))
+                    z2_loc(j) = PROFILES(sbg(1), ycenter, g(2)%nodes(j))
 
                 end do
 !           CALL FI_HYDROSTATIC_H_OLD(jmax, y, z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))

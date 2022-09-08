@@ -53,7 +53,7 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
   DO is = 1,inb_scal
      ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
      DO j = 1,g(2)%size
-        wrk1d(j,is) = PROFILES(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+        wrk1d(j,is) = PROFILES(sbg(is), ycenter, g(2)%nodes(j))
      ENDDO
 !     wrk1d(:,is) = sbg(is)%reference
   ENDDO

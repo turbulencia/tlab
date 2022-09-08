@@ -29,8 +29,7 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
     real(cp), dimension(imax, kmax) :: disp
 
     ! -------------------------------------------------------------------
-    integer(ci) iprof_loc
-    real(cp) dummy, ycenter, mean_loc, delta_loc
+    real(cp) dummy, ycenter
     real(cp) AVG1V2D, PROFILES
     real(cp) xcenter, amplify
 
@@ -100,15 +99,16 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
     ! Perturbation in the thermodynamic fields
     ! ###################################################################
     if (rbg%type == PROFILE_NONE) then
+        prof_loc = tbg
 
         if (tbg%type > 0) then ! temperature/mixture profile is given
             do k = 1, kmax
                 do i = 1, imax
-                    delta_loc = tbg%delta + (tbg%parameters(2) - tbg%parameters(1))*disp(i, k)*g(2)%scale
-                    mean_loc = tbg%mean + C_05_R*(tbg%parameters(2) + tbg%parameters(1))*disp(i, k)*g(2)%scale
                     ycenter = y(1) + g(2)%scale*tbg%ymean + disp(i, k)
+                    prof_loc%delta = tbg%delta + (tbg%parameters(2) - tbg%parameters(1))*disp(i, k)*g(2)%scale
+                    prof_loc%mean = tbg%mean + C_05_R*(tbg%parameters(2) + tbg%parameters(1))*disp(i, k)*g(2)%scale
                     do j = 1, jmax
-                        T(i, j, k) = PROFILES(tbg%type, tbg%thick, delta_loc, mean_loc, ycenter, tbg%parameters, y(j))
+                        T(i, j, k) = PROFILES(prof_loc, ycenter, y(j))
                     end do
                 end do
             end do
@@ -118,14 +118,15 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
             end if
 
         else if (tbg%type < 0) then ! enthalpy/mixture profile is given
+            prof_loc%type = -tbg%type
+
             do k = 1, kmax
                 do i = 1, imax
-                    delta_loc = tbg%delta + (tbg%parameters(2) - tbg%parameters(1))*disp(i, k)*g(2)%scale
-                    mean_loc = tbg%mean + C_05_R*(tbg%parameters(2) + tbg%parameters(1))*disp(i, k)*g(2)%scale
+                    prof_loc%delta = tbg%delta + (tbg%parameters(2) - tbg%parameters(1))*disp(i, k)*g(2)%scale
+                    prof_loc%mean = tbg%mean + C_05_R*(tbg%parameters(2) + tbg%parameters(1))*disp(i, k)*g(2)%scale
                     ycenter = y(1) + g(2)%scale*tbg%ymean + disp(i, k)
-                    iprof_loc = -tbg%type
                     do j = 1, jmax
-                        h(i, j, k) = PROFILES(iprof_loc, tbg%thick, delta_loc, mean_loc, ycenter, tbg%parameters, y(j))
+                        h(i, j, k) = PROFILES(prof_loc, ycenter, y(j))
                     end do
                 end do
             end do

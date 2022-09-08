@@ -322,6 +322,7 @@ CONTAINS
   !########################################################################
   !########################################################################
   SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk1d, wrk2d)
+    USE TLAB_TYPES, ONLY: background_dt
     IMPLICIT NONE
 
     TREAL etime
@@ -333,7 +334,8 @@ CONTAINS
     TINTEGER j, k, im, kdsp
     TREAL wx, wz, wx_1, wz_1, xaux, vmult, factorx, factorz, dummy
 
-    TREAL PROFILES, ycenter, yr, param
+    TREAL PROFILES, ycenter, yr
+    type(background_dt) prof_loc
     EXTERNAL PROFILES
 
     TREAL, DIMENSION(:), POINTER :: y,z
@@ -355,26 +357,32 @@ CONTAINS
 
     xaux =-qbg(1)%mean *etime
 
-    param = C_0_R
-    
+    prof_loc%type=PROFILE_GAUSSIAN
+    prof_loc%thick=fp%parameters(1)
+    prof_loc%delta=C_1_R
+    prof_loc%mean=C_0_R
+    prof_loc%parameters=C_0_R
+  
     ! ###################################################################
     ! Shape function
     ! ###################################################################
     SELECT CASE ( fp%TYPE )
     CASE ( PROFILE_GAUSSIAN )
       ycenter = y(1) +g(2)%scale *qbg(1)%ymean
-      DO j = 1,jmax
+    DO j = 1,jmax
         yr = y(j)-ycenter
-        wrk1d(j,1) = PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, param, y(j) )
-        wrk1d(j,2) = yr /( fp%parameters(1) **2 ) *wrk1d(j,1) ! Derivative of f
+        wrk1d(j,1) = PROFILES( prof_loc, ycenter, y(j) )
+!        wrk1d(j,1) = PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, param, y(j) )
+        wrk1d(j,2) = yr /( prof_loc%thick**2 ) *wrk1d(j,1) ! Derivative of f
       ENDDO
 
     CASE (PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM)
       ycenter = y(1) +g(2)%scale *qbg(1)%ymean -C_05_R *qbg(1)%diam
       DO j = 1,jmax
         yr = y(j) - ycenter
-        wrk1d(j,1) = PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, param, y(j) )
-        wrk1d(j,2) =-yr /( fp%parameters(1) **2 ) *wrk1d(j,1)
+        wrk1d(j,1) = PROFILES( prof_loc, ycenter, y(j) )
+!        wrk1d(j,1) = PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, param, y(j) )
+        wrk1d(j,2) =-yr /( prof_loc%thick**2 ) *wrk1d(j,1)
       ENDDO
 
       ycenter = y(1) +g(2)%scale *qbg(1)%ymean +C_05_R *qbg(1)%diam
@@ -383,9 +391,10 @@ CONTAINS
       ENDIF
       DO j = 1,jmax
         yr = y(j) - ycenter
-        dummy = factorx *PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, param, y(j) )
+        dummy = PROFILES( prof_loc, ycenter, y(j) )
+!        dummy = factorx *PROFILES( PROFILE_GAUSSIAN, fp%parameters(1), C_1_R, C_0_R, ycenter, param, y(j) )
         wrk1d(j,1) = wrk1d(j,1) +dummy
-        wrk1d(j,2) = wrk1d(j,2) +yr /( fp%parameters(1) **2 ) *dummy
+        wrk1d(j,2) = wrk1d(j,2) +yr /( prof_loc%thick**2 ) *dummy
       ENDDO
 
     END SELECT

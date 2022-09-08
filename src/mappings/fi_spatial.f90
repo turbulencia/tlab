@@ -12,10 +12,9 @@
 !# Array u_vo and tem_vo are auxiliar.
 !#
 !########################################################################
-SUBROUTINE FLOW_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem, mean_tem, &
-     ycoor_tem, diam_tem, jet_tem, iprof_u, thick_u, delta_u, mean_u, ycoor_u, diam_u, &
-     jet_u, scaley, x, y, z1, p, rho_vi, u_vi, tem_vi, rho_vo, u_vo, tem_vo, wrk1d)
-
+SUBROUTINE FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
+    scaley, x, y, z1, p, rho_vi, u_vi, tem_vi, rho_vo, u_vo, tem_vo, wrk1d)
+    USE TLAB_TYPES, ONLY : background_dt
   USE TLAB_CONSTANTS, ONLY : wfile
   USE TLAB_PROCS
 
@@ -23,10 +22,9 @@ SUBROUTINE FLOW_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem, mea
 
 #include "integers.h"
 
-  TINTEGER imax, jmax, iprof_tem, iprof_u
-  TREAL delta_tem, mean_tem, thick_tem, ycoor_tem, diam_tem
-  TREAL delta_u, mean_u, thick_u, ycoor_u, diam_u
-  TREAL scaley, jet_u(*), jet_tem(*)
+  TINTEGER imax, jmax
+  type(background_dt) tbg, ubg
+  TREAL scaley
   TREAL x(imax)
   TREAL y(jmax)
 
@@ -49,10 +47,10 @@ SUBROUTINE FLOW_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem, mea
   tol = C_1EM6_R
 
   tem_vi(1:jmax) = C_0_R
-  ycenter = y(1) + scaley*ycoor_tem
+  ycenter = y(1) + scaley*tbg%ymean
   DO j = 1,jmax
-     tem_vi(j) = PROFILES&
-          (iprof_tem, thick_tem, delta_tem, mean_tem, ycenter, jet_tem, y(j))
+     tem_vi(j) = PROFILES(tbg, ycenter, y(j))
+        !   (iprof_tem, thick_tem, delta_tem, mean_tem, ycenter, jet_tem, y(j))
   ENDDO
 
 #define rho_aux(j) wrk1d(j,1)
@@ -70,16 +68,18 @@ SUBROUTINE FLOW_SPATIAL_DENSITY(imax, jmax, iprof_tem, thick_tem, delta_tem, mea
 ! Begining iteration for a fixed x-plane
      DO n = 1,nmax
 ! Velocity profile. Array tem_vo used as auxiliar array
-        ycenter = y(1) + scaley*ycoor_u
+        ycenter = y(1) + scaley*ubg%ymean
         CALL FLOW_SPATIAL_VELOCITY&
-             (i1, jmax, iprof_u, thick_u, delta_u, mean_u, diam_u, ycenter,&
-             jet_u(2), jet_u(3), jet_u(4), x(i), y, &
+             (i1, jmax, ubg, ubg%diam, ycenter,&
+            !  jet_u(2), jet_u(3), jet_u(4), 
+             ubg%parameters(2), ubg%parameters(3), ubg%parameters(4), x(i), y, &
              rho_vi, u_vi, rho_aux(1), u_vo, tem_vo, aux(1), wrk1d(1,3))
 ! Normalized temperature and density profiles
-        ycenter = y(1) + scaley*ycoor_tem
+        ycenter = y(1) + scaley*tbg%ymean
         CALL FLOW_SPATIAL_SCALAR&
-             (i1, jmax, iprof_tem, thick_tem, delta_tem, mean_tem, diam_tem, diam_u, ycenter,&
-             jet_tem(2), jet_tem(3), jet_tem(4), x(i), y, &
+             (i1, jmax, tbg, tbg%diam, ubg%diam, ycenter,&
+!             jet_tem(2), jet_tem(3), jet_tem(4), x
+             tbg%parameters(2), tbg%parameters(3), tbg%parameters(4), x(i), y, &
              rho_vi, u_vi, tem_vi, rho_aux(1), u_vo, tem_vo, aux(1))
         CALL THERMO_THERMAL_DENSITY(i1, jmax, i1, z1, p, tem_vo, wrk1d(1,2))
 ! Convergence criteria (infinity norm)
@@ -119,9 +119,9 @@ END SUBROUTINE FLOW_SPATIAL_DENSITY
 !#
 !########################################################################
 SUBROUTINE FLOW_SPATIAL_VELOCITY&
-     (imax, jmax, iprof_u, thick_u, delta_u, mean_u, diam_u, ycenter,&
+     (imax, jmax, prof_loc, diam_u, ycenter,&
      jet_u_a, jet_u_b, jet_u_flux, x, y, rho_vi, u_vi, rho, u, v, wrk1d, wrk2d)
-
+  USE TLAB_TYPES, only: background_dt
   USE TLAB_CONSTANTS, ONLY : efile, wfile
   USE TLAB_PROCS
 
@@ -129,8 +129,9 @@ SUBROUTINE FLOW_SPATIAL_VELOCITY&
 
 #include "integers.h"
 
-  TINTEGER imax, jmax, iprof_u
-  TREAL delta_u, mean_u, thick_u, diam_u, ycenter
+  TINTEGER imax, jmax
+  type(background_dt) prof_loc
+  TREAL diam_u, ycenter
   TREAL jet_u_a, jet_u_b, jet_u_flux
   TREAL x(imax)
   TREAL y(jmax)
@@ -142,14 +143,14 @@ SUBROUTINE FLOW_SPATIAL_VELOCITY&
 ! -------------------------------------------------------------------
   TREAL c1, c2
   TREAL delta, eta, ExcMom_vi, Q1, Q2, U2, UC
-  TREAL dummy, param(5), flux_aux, diam_loc
+  TREAL dummy, flux_aux, diam_loc
   TREAL SIMPSON_NU, PROFILES
   TREAL xi_tr, dxi_tr
 
   TINTEGER i, j, jsym
 
 ! ###################################################################
-  param = C_0_R
+!  param = C_0_R
 
 ! Bradbury profile
 #ifdef SINGLE_PREC
@@ -160,7 +161,8 @@ SUBROUTINE FLOW_SPATIAL_VELOCITY&
   c2 = 0.027d+0
 #endif
 
-  U2 = mean_u - C_05_R*delta_u
+U2 = prof_loc%mean - C_05_R*prof_loc%delta
+!U2 = mean_u - C_05_R*delta_u
 
 ! ###################################################################
 ! Axial velocity, U_c*f(eta)
@@ -186,10 +188,11 @@ SUBROUTINE FLOW_SPATIAL_VELOCITY&
      diam_loc = C_2_R*delta
 
 ! inflow profile
-     param(5) = diam_loc
+     prof_loc%parameters(5)=diam_loc
      wrk1d(1:jmax,1) = C_0_R
      DO j = 1,jmax
-        wrk1d(j,1) = PROFILES(iprof_u, thick_u, delta_u, mean_u, ycenter, param, y(j))
+        wrk1d(j,1) = PROFILES(prof_loc, ycenter, y(j))
+        ! wrk1d(j,1) = PROFILES(iprof_u, thick_u, delta_u, mean_u, ycenter, param, y(j))
      ENDDO
      UC = wrk1d(jmax/2,1)-U2
 
@@ -294,19 +297,19 @@ END SUBROUTINE FLOW_SPATIAL_VELOCITY
 !# In this subroutine, the density and velocity field are a given input.
 !#
 !########################################################################
-SUBROUTINE FLOW_SPATIAL_SCALAR(imax, jmax, iprof_z, thick_z, delta_z, mean_z, &
-     diam_z, diam_u, ycenter, jet_z_a, jet_z_b, jet_z_flux, &
+SUBROUTINE FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, & !iprof_z, thick_z, delta_z, mean_z, &
+    diam_z, diam_u, ycenter, jet_z_a, jet_z_b, jet_z_flux, &
      x, y, rho_vi, u_vi, z_vi, rho, u, z1, wrk1d)
-
-  USE TLAB_CONSTANTS, ONLY : wfile
+     USE TLAB_TYPES, only: background_dt
+     USE TLAB_CONSTANTS, ONLY : wfile
   USE TLAB_PROCS
 
   IMPLICIT NONE
 
 #include "integers.h"
 
-  TINTEGER imax, jmax, iprof_z
-  TREAL delta_z, mean_z, thick_z, diam_u, diam_z, ycenter
+  TINTEGER imax, jmax
+  TREAL diam_u, diam_z, ycenter
   TREAL jet_z_a, jet_z_b, jet_z_flux
   TREAL x(imax)
   TREAL y(jmax)
@@ -318,13 +321,14 @@ SUBROUTINE FLOW_SPATIAL_SCALAR(imax, jmax, iprof_z, thick_z, delta_z, mean_z, &
 ! -------------------------------------------------------------------
   TREAL c1, c2
   TREAL delta, eta, ExcMom_vi, Q1, Z2, ZC, flux_aux
-  TREAL dummy, diam_loc, param(5)
+  TREAL dummy, diam_loc
   TREAL SIMPSON_NU, PROFILES
   TREAL xi_tr, dxi_tr
   TINTEGER i, j
+  type(background_dt) prof_loc
 
 ! ###################################################################
-  param = C_0_R
+!   param = C_0_R
 
 ! Ramaprian85 for the scalar ?
 #ifdef SINGLE_PREC
@@ -335,7 +339,8 @@ SUBROUTINE FLOW_SPATIAL_SCALAR(imax, jmax, iprof_z, thick_z, delta_z, mean_z, &
   c2 = 0.027d+0
 #endif
 
-  Z2 = mean_z - C_05_R*delta_z
+Z2 = prof_loc%mean - C_05_R*prof_loc%delta
+!Z2 = mean_z - C_05_R*delta_z
 
 ! -------------------------------------------------------------------
 ! Transition as a tanh profile around xi_tr between (0,2xi_tr)
@@ -358,10 +363,12 @@ SUBROUTINE FLOW_SPATIAL_SCALAR(imax, jmax, iprof_z, thick_z, delta_z, mean_z, &
      diam_loc = C_2_R*delta
 
 ! inflow profile
-     param(5) = diam_loc
+!     param(5) = diam_loc
+     prof_loc%parameters(5)=diam_loc
      wrk1d(1:jmax,1) = C_0_R
      DO j = 1,jmax
-        wrk1d(j,1) = PROFILES(iprof_z, thick_z, delta_z, mean_z, ycenter, param, y(j))
+        wrk1d(j,1) = PROFILES(prof_loc, ycenter, y(j))
+!        wrk1d(j,1) = PROFILES(iprof_z, thick_z, delta_z, mean_z, ycenter, param, y(j))
      ENDDO
      ZC = wrk1d(jmax/2,1)-Z2
 

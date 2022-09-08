@@ -72,13 +72,13 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     return
 end subroutine PROFILES_READBLOCK
 
-function PROFILES(iflag, thick, delta, mean, ycenter, param, y)
-
+function PROFILES(var, ycenter, y) result(f)
+    use TLAB_TYPES, only: background_dt
     implicit none
 
-    TINTEGER, intent(IN) :: iflag                                 ! type of profile
-    TREAL, intent(IN) :: thick, delta, mean, ycenter, param(*) ! parameters defining the profile
-    TREAL y, PROFILES
+    type(background_dt), intent(in) :: var
+    TREAL, intent(in) :: ycenter, y
+    TREAL f
 
     ! -------------------------------------------------------------------
     TREAL yrel, xi, amplify, zamp, cnought
@@ -90,13 +90,13 @@ function PROFILES(iflag, thick, delta, mean, ycenter, param, y)
     ! -------------------------------------------------------------------
     ! base state varying between two constant levels
     ! -------------------------------------------------------------------
-    if (thick == C_0_R) then
-        if (iflag > 0) amplify = C_05_R*sign(C_1_R, yrel)
+    if (var%thick == C_0_R) then
+        if (var%type > 0) amplify = C_05_R*sign(C_1_R, yrel)
 
     else
-        xi = yrel/thick
+        xi = yrel/var%thick
 
-        select case (iflag)
+        select case (var%type)
 
         case (PROFILE_LINEAR)
             amplify = -xi
@@ -105,10 +105,11 @@ function PROFILES(iflag, thick, delta, mean, ycenter, param, y)
             amplify = C_05_R*TANH(-C_05_R*xi)
 
         case (PROFILE_TANH_SYM)
-            amplify = C_05_R*(TANH(-C_05_R*(xi - C_05_R*param(6)/thick)) + TANH(C_05_R*(xi + C_05_R*param(6)/thick)) - C_1_R)
+            amplify = C_05_R*(TANH(-C_05_R*(xi - C_05_R*var%parameters(6)/var%thick)) + TANH(C_05_R*(xi + C_05_R*var%parameters(6)/var%thick)) - C_1_R)
 
         case (PROFILE_TANH_ANTISYM)
-            amplify = C_025_R*(TANH(-C_05_R*(xi - C_05_R*param(6)/thick)) - TANH(C_05_R*(xi + C_05_R*param(6)/thick)))
+            amplify = C_025_R*(TANH(-C_05_R*(xi - C_05_R*var%parameters(6)/var%thick)) &
+                               - TANH(C_05_R*(xi + C_05_R*var%parameters(6)/var%thick)))
 
         case (PROFILE_ERF, PROFILE_ERF_ANTISYM, PROFILE_ERF_SURFACE)
             amplify = C_05_R*ERF(-C_05_R*xi)
@@ -123,10 +124,12 @@ function PROFILES(iflag, thick, delta, mean, ycenter, param, y)
             amplify = EXP(-C_05_R*xi**C_2_R)
 
         case (PROFILE_GAUSSIAN_SYM)
-            amplify = EXP(-C_05_R*(xi - C_05_R*param(6)/thick)**C_2_R) + EXP(-C_05_R*(xi + C_05_R*param(6)/thick)**C_2_R)
+            amplify = EXP(-C_05_R*(xi - C_05_R*var%parameters(6)/var%thick)**C_2_R) &
+                      + EXP(-C_05_R*(xi + C_05_R*var%parameters(6)/var%thick)**C_2_R)
 
         case (PROFILE_GAUSSIAN_ANTISYM)
-            amplify = EXP(-C_05_R*(xi - C_05_R*param(6)/thick)**C_2_R) - EXP(-C_05_R*(xi + C_05_R*param(6)/thick)**C_2_R)
+            amplify = EXP(-C_05_R*(xi - C_05_R*var%parameters(6)/var%thick)**C_2_R) &
+                      - EXP(-C_05_R*(xi + C_05_R*var%parameters(6)/var%thick)**C_2_R)
 
         case (PROFILE_EKMAN_U)
             amplify = C_1_R - EXP(-xi)*COS(xi)
@@ -134,8 +137,8 @@ function PROFILES(iflag, thick, delta, mean, ycenter, param, y)
         case (PROFILE_EKMAN_U_P)
             amplify = C_1_R - EXP(-xi)*COS(xi) ! + perturbation:
 
-            cnought = C_PI_R*C_PI_R/C_4_R/C_4_R       ! Maximum initial Perturbation is at y=pi/2*thick
-            zamp = SQRT(C_2_R)*xi*EXP(-xi*xi/C_8_R/cnought)/(thick*thick*C_4_R*cnought)**C_1_5_R
+            cnought = C_PI_R*C_PI_R/C_4_R/C_4_R       ! Maximum initial Perturbation is at y=pi/2*var%thick
+            zamp = SQRT(C_2_R)*xi*EXP(-xi*xi/C_8_R/cnought)/(var%thick*var%thick*C_4_R*cnought)**C_1_5_R
             amplify = amplify + zamp                  ! Add Perturbations
 
         case (PROFILE_EKMAN_V)
@@ -145,31 +148,36 @@ function PROFILES(iflag, thick, delta, mean, ycenter, param, y)
 
     end if
 
-    ! mean profile plus two linear-varying layers
-    PROFILES = mean + delta*amplify + param(1)*yrel*C_05_R*(C_1_R - sign(C_1_R, yrel)) &
-               + param(2)*yrel*C_05_R*(C_1_R + sign(C_1_R, yrel))
+    ! var%mean profile plus two linear-varying layers
+    f = var%mean + var%delta*amplify &
+        + var%parameters(1)*yrel*C_05_R*(C_1_R - sign(C_1_R, yrel)) &
+        + var%parameters(2)*yrel*C_05_R*(C_1_R + sign(C_1_R, yrel))
 
     ! -------------------------------------------------------------------
     ! special profiles
     ! -------------------------------------------------------------------
-    ! cropped linear
-    if (iflag == PROFILE_LINEAR_CROP) then
-        if (yrel < C_0_R) then; PROFILES = MIN(param(1)*yrel, param(1)*thick)
-        else; PROFILES = MAX(param(2)*yrel, param(2)*thick); end if
-    end if
+    select case (var%type)
 
-    ! mixed layer
-    if (iflag == PROFILE_MIXEDLAYER) then
-        if (yrel < C_0_R) then; PROFILES = MIN(param(1)*yrel, param(1)*thick)
-        else; PROFILES = MAX(param(2)*yrel, param(2)*thick); end if
-        PROFILES = PROFILES - C_025_R*param(2)*thick*(C_1_R - SIGN(C_1_R, y - thick))
-    end if
+    case (PROFILE_LINEAR_CROP)
+        if (yrel < C_0_R) then
+            f = MIN(var%parameters(1)*yrel, var%parameters(1)*var%thick)
+        else
+            f = MAX(var%parameters(2)*yrel, var%parameters(2)*var%thick)
+        end if
 
-    ! adding surface flux
-    if (iflag == PROFILE_ERF_SURFACE .or. iflag == PROFILE_LINEAR_ERF_SURFACE) then
-        xi = y/param(3)
-        PROFILES = PROFILES + param(4)*C_05_R*(C_1_R + ERF(-C_05_R*xi))
-    end if
+    case (PROFILE_MIXEDLAYER)
+        if (yrel < C_0_R) then
+            f = MIN(var%parameters(1)*yrel, var%parameters(1)*var%thick)
+        else
+            f = MAX(var%parameters(2)*yrel, var%parameters(2)*var%thick)
+        end if
+        f = f - C_025_R*var%parameters(2)*var%thick*(C_1_R - SIGN(C_1_R, y - var%thick))
+
+    case (PROFILE_ERF_SURFACE)
+        xi = y/var%parameters(3)
+        f = f + var%parameters(4)*C_05_R*(C_1_R + ERF(-C_05_R*xi))
+
+    end select
 
     return
 end function PROFILES

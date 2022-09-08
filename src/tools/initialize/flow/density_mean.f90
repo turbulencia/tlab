@@ -61,14 +61,14 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
             if (rbg%type == PROFILE_NONE) then
                 ycenter = g(2)%nodes(1) + g(2)%scale*tbg%ymean
                 do j = 1, jmax
-                    dummy = PROFILES(tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, g(2)%nodes(j))
+                    dummy = PROFILES(tbg, ycenter, g(2)%nodes(j))
                     TEM_MEAN_LOC(:, j, :) = dummy
                 end do
 
                 do is = 1, inb_scal
                     ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean
                     do j = 1, jmax
-              dummy = PROFILES(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+                        dummy = PROFILES(sbg(is), ycenter, g(2)%nodes(j))
                         s(:, j, :, is) = dummy
                     end do
                 end do
@@ -85,7 +85,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
             else
                 ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean
                 do j = 1, jmax
-                    dummy = PROFILES(rbg%type, rbg%thick, rbg%delta, rbg%mean, ycenter, rbg%parameters, g(2)%nodes(j))
+                    dummy = PROFILES(rbg, ycenter, g(2)%nodes(j))
                     rho(:, j, :) = rho(:, j, :) + dummy
                 end do
 
@@ -132,13 +132,11 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
             ! Inflow profile of axial velocity
             ycenter = g(2)%nodes(1) + g(2)%scale*qbg(1)%ymean
             do j = 1, jmax
-                u_vi(j) = PROFILES(qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, g(2)%nodes(j))
+                u_vi(j) = PROFILES(qbg(1), ycenter, g(2)%nodes(j))
             end do
 
             ! 2D distribution of density
-            call FLOW_SPATIAL_DENSITY(imax, jmax, &
-                                      tbg%type, tbg%thick, tbg%delta, tbg%mean, tbg%ymean, tbg%diam, tbg%parameters, &
-                               qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, qbg(1)%ymean, qbg(1)%diam, qbg(1)%parameters, &
+            call FLOW_SPATIAL_DENSITY(imax, jmax, tbg, qbg(1), &
                               g(2)%scale, g(1)%nodes, g(2)%nodes, s, p, rho_vi(1), u_vi(1), aux1(1), rho, aux2(1), aux3(1), aux4(1))
 
             do k = 2, kmax
@@ -148,7 +146,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
         else ! density profile itself is given
             ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean
             do j = 1, jmax
-                dummy = PROFILES(rbg%type, rbg%thick, rbg%delta, rbg%mean, ycenter, rbg%parameters, g(2)%nodes(j))
+                dummy = PROFILES(rbg, ycenter, g(2)%nodes(j))
                 rho(:, j, :) = rho(:, j, :) + dummy
             end do
 

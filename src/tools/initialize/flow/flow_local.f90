@@ -15,8 +15,8 @@ module FLOW_LOCAL
     ! -------------------------------------------------------------------
     integer(ci) :: flag_u, flag_t, flag_dilatation, flag_mixture
 
-    type(background_dt) :: Kini                   ! Geometry of perturbation of initial boundary condition
-    real(cp) :: norm_ini_u, norm_ini_p ! Scaling of perturbation
+    type(background_dt) :: Kini                 ! Geometry of perturbation of initial boundary condition
+    real(cp) :: norm_ini_u, norm_ini_p          ! Scaling of perturbation
     type(discrete_dt) :: fp                     ! Discrete perturbation
 
     integer(ci) :: flag_wall ! Boundary conditions: 0  Free-Slip/Free-Slip
@@ -28,6 +28,7 @@ module FLOW_LOCAL
 
     integer(ci) im, idsp, kdsp
     real(cp) wx, wz, wx_1, wz_1
+    type(background_dt) prof_loc
 
     real(cp), dimension(:), pointer :: xn, zn
 
@@ -48,10 +49,12 @@ contains
         bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
         yn => g(2)%nodes
-
+        prof_loc= Kini
+        prof_loc%delta=C_1_R
+        prof_loc%mean=C_0_R
         ycenter = yn(1) + g(2)%scale*Kini%ymean
         do j = 1, jmax                               ! Wall-normal velocity
-            wrk1d(j, 1) = PROFILES(Kini%type, Kini%thick, C_1_R, C_0_R, ycenter, Kini%parameters, yn(j))
+            wrk1d(j, 1) = PROFILES(prof_loc, ycenter, yn(j))
         end do
         call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
         wrk1d(:, 2) = -wrk1d(:, 2)                     ! Negative of the derivative of f, wall-parallel velocity

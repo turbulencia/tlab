@@ -23,7 +23,7 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
         do iq = 1, 3
             ycenter = g(2)%nodes(1) + g(2)%scale*qbg(iq)%ymean
             do j = 1, jmax
-       wrk1d(j, iq) = PROFILES(qbg(iq)%type, qbg(iq)%thick, qbg(iq)%delta, qbg(iq)%mean, ycenter, qbg(iq)%parameters, g(2)%nodes(j))
+                wrk1d(j, iq) = PROFILES(qbg(iq), ycenter, g(2)%nodes(j))
             end do
         end do
 
@@ -55,7 +55,7 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
 ! #define aux(j)    wrk1d(j,3)
 !     ycenter = g(2)%nodes(1) + g(2)%scale *qbg(iq)%ymean
 !     DO j = 1,jmax
-!       u_vi(j) = PROFILES( qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, g(2)%nodes(j) )
+!       u_vi(j) = PROFILES( qbg(1), ycenter, g(2)%nodes(j) )
 !     ENDDO
 !     rho_vi(:) = rho(1,:,1)
 !
