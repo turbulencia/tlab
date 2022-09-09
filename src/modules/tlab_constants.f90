@@ -1,6 +1,7 @@
 #include "types.h"
 
 module TLAB_CONSTANTS
+    use TLAB_TYPES, only: cp
     implicit none
     save
 
@@ -28,5 +29,7 @@ module TLAB_CONSTANTS
     character*32, parameter :: tag_scal = 'scal.'
     character*32, parameter :: tag_part = 'part.'
     character*32, parameter :: tag_traj = 'traj.'
+
+    real(cp), parameter :: pi_cp = 3.14159265358979323846_cp 
 
 end module TLAB_CONSTANTS
