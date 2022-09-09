@@ -3,12 +3,11 @@
 #include "dns_const_mpi.h"
 
 !########################################################################
-!# DESCRIPTION
 !#
-!# Initialize data of reference profiles
+!# Initialize data of reference thermodynamic profiles
 !#
 !########################################################################
-SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
+SUBROUTINE FI_BACKGROUND_INITIALIZE(wrk1d)
 
   USE TLAB_CONSTANTS, ONLY : lfile
   USE TLAB_VARS, ONLY : inb_scal, inb_scal_array, imax,jmax,kmax, imode_eqns
@@ -163,4 +162,4 @@ SUBROUTINE FI_PROFILES_INITIALIZE(wrk1d)
   END IF
 
   RETURN
-END SUBROUTINE FI_PROFILES_INITIALIZE
+END SUBROUTINE FI_BACKGROUND_INITIALIZE

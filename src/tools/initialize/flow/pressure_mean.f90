@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 subroutine PRESSURE_MEAN(p, T, s, wrk1d)
-    use TLAB_TYPES, only: cp, ci, background_dt
+    use TLAB_TYPES, only: cp, ci, profiles_dp
     use TLAB_CONSTANTS, only: efile
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
@@ -22,7 +22,7 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
     integer(ci) j
     real(cp) pmin, pmax, ycenter
     real(cp) PROFILES
-    type(background_dt) prof_loc
+    type(profiles_dp) prof_loc
 
     real(cp), dimension(:), pointer :: y, dy
 

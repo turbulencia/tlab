@@ -401,7 +401,7 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 ! -------------------------------------------------------------------
 ! Initialize thermodynamic quantities
 ! -------------------------------------------------------------------
-  CALL FI_PROFILES_INITIALIZE(wrk1d)
+  CALL FI_BACKGROUND_INITIALIZE(wrk1d)
 
 ! -------------------------------------------------------------------
 ! Initialize IBM geometry

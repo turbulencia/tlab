@@ -3,7 +3,7 @@
 
 module SCAL_LOCAL
 
-    use TLAB_TYPES, only: cp, ci, background_dt, discrete_dt
+    use TLAB_TYPES, only: cp, ci, profiles_dp, discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, MAX_NSP
     use TLAB_VARS, only: g, sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
@@ -20,8 +20,8 @@ module SCAL_LOCAL
     ! -------------------------------------------------------------------
     integer(ci) :: flag_s, flag_mixture
 
-    type(background_dt) :: Sini(MAX_NSP)                        ! Geometry of perturbation of initial boundary condition
-    type(background_dt) :: prof_loc
+    type(profiles_dp) :: Sini(MAX_NSP)                        ! Geometry of perturbation of initial boundary condition
+    type(profiles_dp) :: prof_loc
     real(cp) :: norm_ini_s(MAX_NSP), norm_ini_radiation         ! Scaling of perturbation
     type(discrete_dt) :: fp                                     ! Discrete perturbation
 

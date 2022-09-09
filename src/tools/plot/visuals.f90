@@ -318,7 +318,7 @@ PROGRAM VISUALS
     CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   ENDIF
 
-  CALL FI_PROFILES_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
+  CALL FI_BACKGROUND_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
 
   IF ( imode_ibm .EQ. 1 ) THEN
     CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)

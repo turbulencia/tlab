@@ -322,7 +322,7 @@ CONTAINS
   !########################################################################
   !########################################################################
   SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk1d, wrk2d)
-    USE TLAB_TYPES, ONLY: background_dt
+    USE TLAB_TYPES, ONLY: profiles_dp
     IMPLICIT NONE
 
     TREAL etime
@@ -335,7 +335,7 @@ CONTAINS
     TREAL wx, wz, wx_1, wz_1, xaux, vmult, factorx, factorz, dummy
 
     TREAL PROFILES, ycenter, yr
-    type(background_dt) prof_loc
+    type(profiles_dp) prof_loc
     EXTERNAL PROFILES
 
     TREAL, DIMENSION(:), POINTER :: y,z

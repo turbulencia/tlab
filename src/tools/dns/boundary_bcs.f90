@@ -38,7 +38,7 @@ CONTAINS
 ! ###################################################################
 ! ###################################################################
 SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
-  USE TLAB_TYPES, ONLY: background_dt
+  USE TLAB_TYPES, ONLY: profiles_dp
   USE TLAB_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS, ONLY : tfile
@@ -68,7 +68,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
   TINTEGER j, is
   TREAL prefactor
   TREAL ycenter, PROFILES
-  type(background_dt) prof_loc
+  type(profiles_dp) prof_loc
 
 #ifdef USE_MPI
   CHARACTER*32 str

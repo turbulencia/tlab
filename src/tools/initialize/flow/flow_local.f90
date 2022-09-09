@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 module FLOW_LOCAL
-    use TLAB_TYPES, only: background_dt, discrete_dt, cp, ci
+    use TLAB_TYPES, only: profiles_dp, discrete_dt, cp, ci
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g, qbg
     use IO_FIELDS
@@ -15,7 +15,7 @@ module FLOW_LOCAL
     ! -------------------------------------------------------------------
     integer(ci) :: flag_u, flag_t, flag_dilatation, flag_mixture
 
-    type(background_dt) :: Kini                 ! Geometry of perturbation of initial boundary condition
+    type(profiles_dp) :: Kini                 ! Geometry of perturbation of initial boundary condition
     real(cp) :: norm_ini_u, norm_ini_p          ! Scaling of perturbation
     type(discrete_dt) :: fp                     ! Discrete perturbation
 
@@ -28,7 +28,7 @@ module FLOW_LOCAL
 
     integer(ci) im, idsp, kdsp
     real(cp) wx, wz, wx_1, wz_1
-    type(background_dt) prof_loc
+    type(profiles_dp) prof_loc
 
     real(cp), dimension(:), pointer :: xn, zn
 

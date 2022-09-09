@@ -14,7 +14,7 @@
 !########################################################################
 SUBROUTINE FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
     scaley, x, y, z1, p, rho_vi, u_vi, tem_vi, rho_vo, u_vo, tem_vo, wrk1d)
-    USE TLAB_TYPES, ONLY : background_dt
+    USE TLAB_TYPES, ONLY : profiles_dp
   USE TLAB_CONSTANTS, ONLY : wfile
   USE TLAB_PROCS
 
@@ -23,7 +23,7 @@ SUBROUTINE FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
 #include "integers.h"
 
   TINTEGER imax, jmax
-  type(background_dt) tbg, ubg
+  type(profiles_dp) tbg, ubg
   TREAL scaley
   TREAL x(imax)
   TREAL y(jmax)
@@ -118,7 +118,7 @@ END SUBROUTINE FLOW_SPATIAL_DENSITY
 SUBROUTINE FLOW_SPATIAL_VELOCITY&
      (imax, jmax, prof_loc, diam_u, ycenter,&
      jet_u_a, jet_u_b, jet_u_flux, x, y, rho_vi, u_vi, rho, u, v, wrk1d, wrk2d)
-  USE TLAB_TYPES, only: background_dt
+  USE TLAB_TYPES, only: profiles_dp
   USE TLAB_CONSTANTS, ONLY : efile, wfile
   USE TLAB_PROCS
 
@@ -127,7 +127,7 @@ SUBROUTINE FLOW_SPATIAL_VELOCITY&
 #include "integers.h"
 
   TINTEGER imax, jmax
-  type(background_dt) prof_loc
+  type(profiles_dp) prof_loc
   TREAL diam_u, ycenter
   TREAL jet_u_a, jet_u_b, jet_u_flux
   TREAL x(imax)
@@ -294,7 +294,7 @@ END SUBROUTINE FLOW_SPATIAL_VELOCITY
 SUBROUTINE FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, & 
     diam_z, diam_u, ycenter, jet_z_a, jet_z_b, jet_z_flux, &
      x, y, rho_vi, u_vi, z_vi, rho, u, z1, wrk1d)
-     USE TLAB_TYPES, only: background_dt
+     USE TLAB_TYPES, only: profiles_dp
      USE TLAB_CONSTANTS, ONLY : wfile
   USE TLAB_PROCS
 
@@ -319,7 +319,7 @@ SUBROUTINE FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
   TREAL SIMPSON_NU, PROFILES
   TREAL xi_tr, dxi_tr
   TINTEGER i, j
-  type(background_dt) prof_loc
+  type(profiles_dp) prof_loc
 
 ! ###################################################################
 !   param = C_0_R

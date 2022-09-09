@@ -52,7 +52,7 @@ program INISCAL
 ! ###################################################################
     call TLAB_WRITE_ASCII(lfile, 'Initializing scalar fiels.')
 
-    call FI_PROFILES_INITIALIZE(wrk1d)
+    call FI_BACKGROUND_INITIALIZE(wrk1d)
 
     itime = 0; rtime = 0.0_cp
     s = 0.0_cp

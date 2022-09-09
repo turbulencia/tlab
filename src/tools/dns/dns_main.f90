@@ -101,7 +101,7 @@ PROGRAM DNS
 
   CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
 
-  CALL FI_PROFILES_INITIALIZE(wrk1d)
+  CALL FI_BACKGROUND_INITIALIZE(wrk1d)
 
   ! ###################################################################
   ! Initialize fields

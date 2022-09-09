@@ -312,7 +312,7 @@ PROGRAM AVERAGES
     CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   END IF
 
-  CALL FI_PROFILES_INITIALIZE(wrk1d)  ! Initialize thermodynamic quantities
+  CALL FI_BACKGROUND_INITIALIZE(wrk1d)  ! Initialize thermodynamic quantities
 
   y_aux(:) = 0                        ! Reduced vertical grid
   DO ij = 1,jmax_aux*opt_block

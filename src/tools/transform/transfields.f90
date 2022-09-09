@@ -316,7 +316,7 @@ PROGRAM TRANSFIELDS
   ! -------------------------------------------------------------------
   ! Initialize thermodynamic quantities
   ! -------------------------------------------------------------------
-  CALL FI_PROFILES_INITIALIZE(wrk1d)
+  CALL FI_BACKGROUND_INITIALIZE(wrk1d)
 
   ! -------------------------------------------------------------------
   ! Initialize remeshing

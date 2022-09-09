@@ -9,7 +9,7 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     implicit none
 
     character(len=*), intent(in) :: bakfile, inifile, block, tag
-    type(background_dt), intent(out) :: var
+    type(profiles_dp), intent(out) :: var
 
     character(len=512) sRes
     real(cp) derivative
@@ -73,10 +73,10 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
 end subroutine PROFILES_READBLOCK
 
 function PROFILES(var, ycenter, y) result(f)
-    use TLAB_TYPES, only: background_dt
+    use TLAB_TYPES, only: profiles_dp
     implicit none
 
-    type(background_dt), intent(in) :: var
+    type(profiles_dp), intent(in) :: var
     TREAL, intent(in) :: ycenter, y
     TREAL f
 
@@ -105,7 +105,8 @@ function PROFILES(var, ycenter, y) result(f)
             amplify = C_05_R*TANH(-C_05_R*xi)
 
         case (PROFILE_TANH_SYM)
-            amplify = C_05_R*(TANH(-C_05_R*(xi - C_05_R*var%parameters(6)/var%thick)) + TANH(C_05_R*(xi + C_05_R*var%parameters(6)/var%thick)) - C_1_R)
+            amplify = C_05_R*(TANH(-C_05_R*(xi - C_05_R*var%parameters(6)/var%thick)) &
+                              + TANH(C_05_R*(xi + C_05_R*var%parameters(6)/var%thick)) - C_1_R)
 
         case (PROFILE_TANH_ANTISYM)
             amplify = C_025_R*(TANH(-C_05_R*(xi - C_05_R*var%parameters(6)/var%thick)) &
@@ -183,13 +184,13 @@ function PROFILES(var, ycenter, y) result(f)
 end function PROFILES
 
 subroutine PROFILES_DERTOTHICK(derivative, var)  ! Obtain thick from the value of the maximum derivative
-    use TLAB_TYPES, only: background_dt, cp
+    use TLAB_TYPES, only: profiles_dp, cp
     use TLAB_CONSTANTS, only: efile
     use TLAB_PROCS
     implicit none
 
     real(cp), intent(in) :: derivative
-    type(background_dt), intent(inout) :: var
+    type(profiles_dp), intent(inout) :: var
 
     real(cp) thick_ratio    ! for readibility
 
