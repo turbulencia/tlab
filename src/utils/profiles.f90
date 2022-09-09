@@ -46,8 +46,8 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     call SCANINIREAL(bakfile, inifile, block, 'YCoor'//TRIM(ADJUSTL(tag)), '0.5', var%ymean)
     call SCANINIREAL(bakfile, inifile, block, 'Delta'//TRIM(ADJUSTL(tag)), '0.0', var%delta)
     call SCANINIREAL(bakfile, inifile, block, 'Thick'//TRIM(ADJUSTL(tag)), '0.0', var%thick)
-    call SCANINIREAL(bakfile, inifile, block, 'BottomSlope'//TRIM(ADJUSTL(tag)), '0.0', var%parameters(1))
-    call SCANINIREAL(bakfile, inifile, block, 'UpperSlope'//TRIM(ADJUSTL(tag)), '0.0', var%parameters(2))
+    call SCANINIREAL(bakfile, inifile, block, 'BottomSlope'//TRIM(ADJUSTL(tag)), '0.0', var%lslope)
+    call SCANINIREAL(bakfile, inifile, block, 'UpperSlope'//TRIM(ADJUSTL(tag)), '0.0', var%uslope)
     ! alternative to provide the variable thick in terms of the maximum derivative
     call SCANINICHAR(bakfile, inifile, block, 'Derivative'//TRIM(ADJUSTL(tag)), 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) /= 'void') then
@@ -150,8 +150,8 @@ function PROFILES(var, ycenter, y) result(f)
 
     ! var%mean profile plus two linear-varying layers
     f = var%mean + var%delta*amplify &
-        + var%parameters(1)*yrel*C_05_R*(C_1_R - sign(C_1_R, yrel)) &
-        + var%parameters(2)*yrel*C_05_R*(C_1_R + sign(C_1_R, yrel))
+        + var%lslope*yrel*C_05_R*(C_1_R - sign(C_1_R, yrel)) &
+        + var%uslope*yrel*C_05_R*(C_1_R + sign(C_1_R, yrel))
 
     ! -------------------------------------------------------------------
     ! special profiles
@@ -160,18 +160,18 @@ function PROFILES(var, ycenter, y) result(f)
 
     case (PROFILE_LINEAR_CROP)
         if (yrel < C_0_R) then
-            f = MIN(var%parameters(1)*yrel, var%parameters(1)*var%thick)
+            f = MIN(var%lslope*yrel, var%lslope*var%thick)
         else
-            f = MAX(var%parameters(2)*yrel, var%parameters(2)*var%thick)
+            f = MAX(var%uslope*yrel, var%uslope*var%thick)
         end if
 
     case (PROFILE_MIXEDLAYER)
         if (yrel < C_0_R) then
-            f = MIN(var%parameters(1)*yrel, var%parameters(1)*var%thick)
+            f = MIN(var%lslope*yrel, var%lslope*var%thick)
         else
-            f = MAX(var%parameters(2)*yrel, var%parameters(2)*var%thick)
+            f = MAX(var%uslope*yrel, var%uslope*var%thick)
         end if
-        f = f - C_025_R*var%parameters(2)*var%thick*(C_1_R - SIGN(C_1_R, y - var%thick))
+        f = f - C_025_R*var%uslope*var%thick*(C_1_R - SIGN(C_1_R, y - var%thick))
 
     case (PROFILE_ERF_SURFACE)
         xi = y/var%parameters(3)
@@ -193,9 +193,6 @@ subroutine PROFILES_DERTOTHICK(derivative, var)  ! Obtain thick from the value o
 
     real(cp) thick_ratio    ! for readibility
 
-    print *, var%thick
-    print *, var%parameters(3)
-
     select case (var%type)
 
     case (PROFILE_TANH, PROFILE_TANH_SYM, PROFILE_TANH_ANTISYM)
@@ -204,7 +201,7 @@ subroutine PROFILES_DERTOTHICK(derivative, var)  ! Obtain thick from the value o
 
     case (PROFILE_ERF, PROFILE_ERF_ANTISYM)
         thick_ratio = 2.0_cp*sqrt(C_PI_R)
-        var%thick = -var%delta/(derivative - var%parameters(2))/thick_ratio
+        var%thick = -var%delta/(derivative - var%uslope)/thick_ratio
 
     case (PROFILE_ERF_SURFACE)
         thick_ratio = 2.0_cp*sqrt(C_PI_R)
@@ -215,9 +212,6 @@ subroutine PROFILES_DERTOTHICK(derivative, var)  ! Obtain thick from the value o
         call TLAB_STOP(DNS_ERROR_UNDEVELOP)
 
     end select
-
-    print *, var%thick
-    print *, var%parameters(3)
 
     return
 end subroutine PROFILES_DERTOTHICK

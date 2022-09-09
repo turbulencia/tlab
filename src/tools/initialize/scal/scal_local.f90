@@ -20,10 +20,10 @@ module SCAL_LOCAL
     ! -------------------------------------------------------------------
     integer(ci) :: flag_s, flag_mixture
 
-    type(background_dt) :: Sini(MAX_NSP)                            ! Geometry of perturbation of initial boundary condition
+    type(background_dt) :: Sini(MAX_NSP)                        ! Geometry of perturbation of initial boundary condition
     type(background_dt) :: prof_loc
-    real(cp) :: norm_ini_s(MAX_NSP), norm_ini_radiation  ! Scaling of perturbation
-    type(discrete_dt) :: fp                                       ! Discrete perturbation
+    real(cp) :: norm_ini_s(MAX_NSP), norm_ini_radiation         ! Scaling of perturbation
+    type(discrete_dt) :: fp                                     ! Discrete perturbation
 
     ! -------------------------------------------------------------------
     integer(ci) i, j, k

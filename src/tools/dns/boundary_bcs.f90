@@ -241,6 +241,8 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         prof_loc%thick=qbg(1)%diam/C_8_R
         prof_loc%delta=C_1_R
         prof_loc%mean=C_05_R
+        prof_loc%lslope=C_0_R
+        prof_loc%uslope=C_0_R
         prof_loc%parameters=C_0_R
         prof_loc%parameters(5)=C_3_R*qbg(1)%diam
         BcsFlowImin%ref(:,:,inb_flow+1) = PROFILES(prof_loc, ycenter, g(2)%nodes(j))

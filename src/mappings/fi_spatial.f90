@@ -50,7 +50,6 @@ SUBROUTINE FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
   ycenter = y(1) + scaley*tbg%ymean
   DO j = 1,jmax
      tem_vi(j) = PROFILES(tbg, ycenter, y(j))
-        !   (iprof_tem, thick_tem, delta_tem, mean_tem, ycenter, jet_tem, y(j))
   ENDDO
 
 #define rho_aux(j) wrk1d(j,1)
@@ -71,14 +70,12 @@ SUBROUTINE FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
         ycenter = y(1) + scaley*ubg%ymean
         CALL FLOW_SPATIAL_VELOCITY&
              (i1, jmax, ubg, ubg%diam, ycenter,&
-            !  jet_u(2), jet_u(3), jet_u(4), 
              ubg%parameters(2), ubg%parameters(3), ubg%parameters(4), x(i), y, &
              rho_vi, u_vi, rho_aux(1), u_vo, tem_vo, aux(1), wrk1d(1,3))
 ! Normalized temperature and density profiles
         ycenter = y(1) + scaley*tbg%ymean
         CALL FLOW_SPATIAL_SCALAR&
              (i1, jmax, tbg, tbg%diam, ubg%diam, ycenter,&
-!             jet_tem(2), jet_tem(3), jet_tem(4), x
              tbg%parameters(2), tbg%parameters(3), tbg%parameters(4), x(i), y, &
              rho_vi, u_vi, tem_vi, rho_aux(1), u_vo, tem_vo, aux(1))
         CALL THERMO_THERMAL_DENSITY(i1, jmax, i1, z1, p, tem_vo, wrk1d(1,2))
@@ -150,7 +147,6 @@ SUBROUTINE FLOW_SPATIAL_VELOCITY&
   TINTEGER i, j, jsym
 
 ! ###################################################################
-!  param = C_0_R
 
 ! Bradbury profile
 #ifdef SINGLE_PREC
@@ -162,7 +158,6 @@ SUBROUTINE FLOW_SPATIAL_VELOCITY&
 #endif
 
 U2 = prof_loc%mean - C_05_R*prof_loc%delta
-!U2 = mean_u - C_05_R*delta_u
 
 ! ###################################################################
 ! Axial velocity, U_c*f(eta)
@@ -192,7 +187,6 @@ U2 = prof_loc%mean - C_05_R*prof_loc%delta
      wrk1d(1:jmax,1) = C_0_R
      DO j = 1,jmax
         wrk1d(j,1) = PROFILES(prof_loc, ycenter, y(j))
-        ! wrk1d(j,1) = PROFILES(iprof_u, thick_u, delta_u, mean_u, ycenter, param, y(j))
      ENDDO
      UC = wrk1d(jmax/2,1)-U2
 
@@ -297,7 +291,7 @@ END SUBROUTINE FLOW_SPATIAL_VELOCITY
 !# In this subroutine, the density and velocity field are a given input.
 !#
 !########################################################################
-SUBROUTINE FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, & !iprof_z, thick_z, delta_z, mean_z, &
+SUBROUTINE FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, & 
     diam_z, diam_u, ycenter, jet_z_a, jet_z_b, jet_z_flux, &
      x, y, rho_vi, u_vi, z_vi, rho, u, z1, wrk1d)
      USE TLAB_TYPES, only: background_dt
@@ -340,7 +334,6 @@ SUBROUTINE FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, & !iprof_z, thick_z, delta_
 #endif
 
 Z2 = prof_loc%mean - C_05_R*prof_loc%delta
-!Z2 = mean_z - C_05_R*delta_z
 
 ! -------------------------------------------------------------------
 ! Transition as a tanh profile around xi_tr between (0,2xi_tr)
@@ -363,12 +356,10 @@ Z2 = prof_loc%mean - C_05_R*prof_loc%delta
      diam_loc = C_2_R*delta
 
 ! inflow profile
-!     param(5) = diam_loc
      prof_loc%parameters(5)=diam_loc
      wrk1d(1:jmax,1) = C_0_R
      DO j = 1,jmax
         wrk1d(j,1) = PROFILES(prof_loc, ycenter, y(j))
-!        wrk1d(j,1) = PROFILES(iprof_z, thick_z, delta_z, mean_z, ycenter, param, y(j))
      ENDDO
      ZC = wrk1d(jmax/2,1)-Z2
 

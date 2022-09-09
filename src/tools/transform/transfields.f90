@@ -791,8 +791,7 @@ CONTAINS
        IF ( is .EQ. 1 ) THEN ! Only the mean velocity
           ycenter = y(1) + g(2)%scale *qbg(1)%ymean
           DO j = 1,ny
-             dummy =  PROFILES&
-                  (qbg(1)%TYPE, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, y(j))
+             dummy =  PROFILES(qbg, ycenter, y(j))
              b(:,j,:) = dummy + a(:,j,:)
           ENDDO
        ELSE
@@ -802,8 +801,7 @@ CONTAINS
     ELSE                         ! Scalars
        ycenter = y(1) + g(2)%scale *sbg(is)%ymean
        DO j = 1,ny
-          dummy =  PROFILES&
-               (sbg(is)%TYPE, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, y(j))
+          dummy =  PROFILES(sbg(is), ycenter, y(j))
           b(:,j,:) = dummy + a(:,j,:)
        ENDDO
 

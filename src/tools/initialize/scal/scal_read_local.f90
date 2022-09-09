@@ -49,7 +49,8 @@ subroutine SCAL_READ_LOCAL(inifile)
     else if (TRIM(ADJUSTL(sRes)) == 'fluxbroadband') then; flag_s = 8
     else if (TRIM(ADJUSTL(sRes)) == 'fluxdiscrete') then; flag_s = 9; end if
 
-! Geometry and scaling of perturbation
+    Sini(:) = sbg(:) ! default geometry and scaling of perturbation
+
     call SCANINICHAR(bakfile, inifile, 'IniFields', 'ProfileIniS', 'GaussianSurface', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'none') then; Sini(:)%type = PROFILE_NONE
     else if (TRIM(ADJUSTL(sRes)) == 'gaussian') then; Sini(:)%type = PROFILE_GAUSSIAN
@@ -99,7 +100,7 @@ subroutine SCAL_READ_LOCAL(inifile)
         end if
     end if
 
-    do idummy = 1, inb_scal; Sini(idummy)%parameters(:) = 0.0_cp; end do
+    ! do idummy = 1, inb_scal; Sini(idummy)%parameters(:) = 0.0_cp; end do
 
     call SCANINICHAR(bakfile, inifile, 'IniFields', 'NormalizeS', '-1.0', sRes)
     norm_ini_s(:) = 0.0_cp; idummy = MAX_NSP
@@ -127,7 +128,7 @@ subroutine SCAL_READ_LOCAL(inifile)
 ! Discrete Forcing
 ! ###################################################################
     call DISCRETE_READBLOCK(bakfile, inifile, 'Discrete', fp)
- ! Modulation type in fp%type
+    ! Modulation type in fp%type
 
 !   specific for this tool
     call SCANINIREAL(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
