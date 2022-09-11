@@ -8,5 +8,5 @@ FILE(GLOB to_remove "particle_send_recv.f90")
 list(REMOVE_ITEM sourcefiles ${to_remove})
 endif()
 
-add_library(lagrange STATIC ${sourcefiles})
-add_dependencies(lagrange thermodynamics io modules)
+add_library(particles STATIC ${sourcefiles})
+add_dependencies(particles thermodynamics io modules)

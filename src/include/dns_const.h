@@ -204,19 +204,6 @@
 
 #define IO_SUBARRAY_SIZE        13
 
-! Lagrangian Type
-#define LAG_TYPE_NONE          0
-#define LAG_TYPE_TRACER        1
-#define LAG_TYPE_SIMPLE_SETT   2
-#define LAG_TYPE_BIL_CLOUD_3   3
-#define LAG_TYPE_BIL_CLOUD_4   4
-
-! Lagrangian Trajectories
-#define LAG_TRAJECTORY_NONE      0
-#define LAG_TRAJECTORY_FIRST     1
-#define LAG_TRAJECTORY_LARGEST   2
-#define LAG_TRAJECTORY_VORTICITY 3
-
 ! Cubic Splines
 #define CS_BCS_PERIODIC 0
 #define CS_BCS_CLAMPED  1

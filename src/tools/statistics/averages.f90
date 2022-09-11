@@ -21,8 +21,8 @@ PROGRAM AVERAGES
   USE TLAB_MPI_PROCS
 #endif
   USE THERMO_VARS, ONLY : imixture
-  USE LAGRANGE_VARS
-  USE LAGRANGE_ARRAYS
+  USE PARTICLE_VARS
+  USE PARTICLE_ARRAYS
   USE IO_FIELDS
 
   IMPLICIT NONE
@@ -88,9 +88,7 @@ PROGRAM AVERAGES
   CALL TLAB_START()
 
   CALL IO_READ_GLOBAL(ifile)
-  IF ( icalc_part == 1 ) THEN
-    CALL PARTICLE_READ_GLOBAL(ifile)
-  END IF
+  CALL PARTICLE_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
   CALL TLAB_MPI_INITIALIZE
@@ -284,7 +282,7 @@ PROGRAM AVERAGES
 
   isize_wrk3d = MAX(isize_field,opt_order*nfield*jmax)
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
-  IF ( icalc_part == 1) THEN
+  IF ( imode_part /= PART_TYPE_NONE ) THEN
     isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
   END IF
 
@@ -425,8 +423,7 @@ PROGRAM AVERAGES
       END IF
 
       ! Lagrange Liquid and Liquid without diffusion
-      IF ( icalc_part == 1 ) THEN
-        IF ( ilagrange == LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange == LAG_TYPE_BIL_CLOUD_4 ) THEN
+        IF ( imode_part == PART_TYPE_BIL_CLOUD_3 .OR. imode_part == PART_TYPE_BIL_CLOUD_4 ) THEN
           WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
           CALL IO_READ_PARTICLE(fname, l_g, l_q)
 
@@ -448,7 +445,6 @@ PROGRAM AVERAGES
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
           END DO
         END IF
-      END IF
 
       IF ( icalc_flow == 1 ) THEN
         txc(1:isize_field,3) = txc(1:isize_field,9) ! Pass the pressure in tmp3

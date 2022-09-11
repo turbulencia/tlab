@@ -7,7 +7,7 @@
 #define C_FILE_LOC "INIPART"
 
 program INIPART
-    use TLAB_TYPES, only: cp,ci
+    use TLAB_TYPES, only: cp, ci
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_ARRAYS
@@ -15,8 +15,8 @@ program INIPART
 #ifdef USE_MPI
     use TLAB_MPI_PROCS
 #endif
-    use LAGRANGE_VARS
-    use LAGRANGE_ARRAYS
+    use PARTICLE_VARS
+    use PARTICLE_ARRAYS
 
     implicit none
 
@@ -31,8 +31,9 @@ program INIPART
 
     call IO_READ_GLOBAL(ifile)
 
-    if (icalc_part == 1) then
-        call PARTICLE_READ_GLOBAL(ifile)
+    call PARTICLE_READ_GLOBAL(ifile)
+
+    if (imode_part /= PART_TYPE_NONE) then
 #ifdef USE_MPI
         call TLAB_MPI_INITIALIZE
 #endif
@@ -68,7 +69,7 @@ program INIPART
         ! -------------------------------------------------------------------
         ! Initialize particle information
         ! -------------------------------------------------------------------
-        call PARTICLE_RANDOM_POSITION(l_g, l_q, l_txc, l_comm, txc, wrk3d)
+        call PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
 
         call IO_WRITE_PARTICLE(TRIM(ADJUSTL(tag_part))//'ics', l_g, l_q)
 

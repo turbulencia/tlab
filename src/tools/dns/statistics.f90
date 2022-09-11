@@ -54,14 +54,12 @@ CONTAINS
     USE TLAB_VARS,    ONLY : froude
     USE TLAB_VARS,    ONLY : epbackground, pbackground, rbackground
     USE TLAB_VARS,    ONLY : itime, rtime
-    USE TLAB_VARS,      ONLY : inb_part, icalc_part
     USE TLAB_VARS,      ONLY : sbg, schmidt
     USE TLAB_ARRAYS
     USE DNS_ARRAYS
     USE THERMO_VARS, ONLY : imixture
-    USE LAGRANGE_VARS, ONLY : l_g, ilagrange
-    USE LAGRANGE_VARS, ONLY : icalc_part_pdf
-    USE LAGRANGE_ARRAYS
+    USE PARTICLE_VARS
+    USE PARTICLE_ARRAYS
 
     IMPLICIT NONE
 
@@ -193,8 +191,7 @@ CONTAINS
           mean, wrk1d,wrk2d,wrk3d)
 
       ! Lagrange Liquid and Liquid without diffusion
-      IF ( icalc_part == 1 ) THEN
-        IF (ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN
+        IF (imode_part .EQ. PART_TYPE_BIL_CLOUD_3 .OR. imode_part .EQ. PART_TYPE_BIL_CLOUD_4) THEN
           l_txc(:,1) = C_1_R; ! We want density
           CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,5), wrk2d,wrk3d)
 
@@ -209,19 +206,17 @@ CONTAINS
           END DO
         END IF
 
-        IF ( icalc_part_pdf .EQ. 1) THEN                ! Save particle pathlines for particle_pdf
+        IF ( imode_part /= PART_TYPE_NONE .and. icalc_part_pdf .EQ. 1) THEN                ! Save particle pathlines for particle_pdf
           WRITE(fname,*) itime; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
           CALL PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk3d)
         END IF
 
-        IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4) THEN  ! Save particle residence times
+        IF ( imode_part .EQ. PART_TYPE_BIL_CLOUD_4) THEN  ! Save particle residence times
           WRITE(fname,*) itime; fname = "residence_pdf."//TRIM(ADJUSTL(fname))
           CALL PARTICLE_RESIDENCE_PDF(fname, l_g%np, l_q)
         END IF
 
       END IF
-
-    END IF
 
 #ifdef TRACE_ON
     CALL TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_TEMPORAL_LAYER' )

@@ -10,8 +10,8 @@ from matplotlib import rc
 
 np = 0   # total number of particles in the files; if 0, then search dns.ini
 varnames=['x-coordinate','y-coordinate','z-coordinate',
-          'buoyancy',
-          'x-vorticity','y-vorticity','z-vorticity']
+          'scalar']
+#          'x-vorticity','y-vorticity','z-vorticity']
     
 # do not edit
 nv = len(varnames)

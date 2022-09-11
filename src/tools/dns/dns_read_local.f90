@@ -14,13 +14,13 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   USE TLAB_VARS,    ONLY : pbg, rbg, damkohler
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_txc_field, isize_wrk1d,isize_wrk2d,isize_wrk3d
   USE TLAB_VARS,    ONLY : inb_flow,inb_scal,inb_txc
-  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, imode_ibm, iadvection, iviscous, icalc_part, itransport, istagger
+  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, imode_ibm, iadvection, iviscous, itransport, istagger
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : FilterDomain
   USE TLAB_VARS,    ONLY : nstatavg
   USE TLAB_PROCS
   USE THERMO_VARS, ONLY : imixture
-  USE LAGRANGE_VARS,ONLY: inb_particle_interp
+  USE PARTICLE_VARS
   USE DNS_LOCAL
   USE TIME,          ONLY : rkm_mode, dtime, cfla, cfld, cflr
   USE BOUNDARY_BUFFER
@@ -899,10 +899,10 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
   isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
-  IF ( icalc_part == 1) THEN
+  IF (imode_part /= PART_TYPE_NONE) THEN
     isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
-    isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_particle_interp*2))
-    isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_particle_interp*2))
+    isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_part_interp*2))
+    isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_part_interp*2))
   END IF
   IF ( tower_mode == 1 ) THEN
     isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))

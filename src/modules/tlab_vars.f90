@@ -17,7 +17,7 @@ module TLAB_VARS
 ! ###################################################################
 ! General options
 ! ###################################################################
-    TINTEGER :: icalc_flow, icalc_scal, icalc_part
+    TINTEGER :: icalc_flow, icalc_scal
     TINTEGER :: imode_sim                ! type of simulation (spatial, temporal)
     TINTEGER :: imode_files              ! files format
     TINTEGER :: imode_precision_files
@@ -54,11 +54,6 @@ module TLAB_VARS
     TINTEGER :: isize_wrk3d                     ! 2D arrays
     TINTEGER :: isize_txc_field, inb_txc        ! 3D arrays for intermediate calculations
     TINTEGER :: isize_txc_dimx, isize_txc_dimz  ! partition for MPI data transposition
-
-! Particle arrays
-    TINTEGER :: isize_particle                  ! max number of particles per processor
-    TINTEGER :: inb_part, inb_part_array
-    TINTEGER :: inb_part_txc
 
 ! subarray information (offset)
     type(subarray_dt), dimension(IO_SUBARRAY_SIZE) :: io_aux

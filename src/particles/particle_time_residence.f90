@@ -13,14 +13,14 @@
 !########################################################################
 SUBROUTINE PARTICLE_TIME_RESIDENCE(dtime, particle_number, l_q)
 
-  USE TLAB_VARS,      ONLY : isize_particle, inb_part_array
-  USE LAGRANGE_VARS, ONLY : l_y_lambda, l_y_base
+  USE PARTICLE_VARS,      ONLY : isize_part, inb_part_array
+  USE PARTICLE_VARS, ONLY : l_y_lambda, l_y_base
 
   IMPLICIT NONE
 
   TREAL dtime
   TINTEGER particle_number
-  TREAL, DIMENSION(isize_particle,*) :: l_q
+  TREAL, DIMENSION(isize_part,*) :: l_q
 
   TINTEGER i
 
@@ -43,7 +43,7 @@ END SUBROUTINE PARTICLE_TIME_RESIDENCE
 !########################################################################
 SUBROUTINE PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q)
 
-  USE TLAB_VARS, ONLY : isize_particle, inb_part_array
+  USE PARTICLE_VARS, ONLY : isize_part, inb_part_array
 #ifdef USE_MPI
   USE MPI
   USE TLAB_MPI_VARS
@@ -53,7 +53,7 @@ SUBROUTINE PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q)
 
   CHARACTER*(*) fname
   TINTEGER particle_number
-  TREAL, DIMENSION(isize_particle,*) :: l_q
+  TREAL, DIMENSION(isize_part,*) :: l_q
 
 ! -------------------------------------------------------------------
   TLONGINTEGER, DIMENSION(:,:), ALLOCATABLE :: residence_bins

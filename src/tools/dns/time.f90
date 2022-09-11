@@ -16,14 +16,13 @@ MODULE TIME
 #endif
   USE TLAB_CONSTANTS, ONLY : efile
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, inb_flow,inb_scal, inb_flow_array,inb_scal_array
-  USE TLAB_VARS, ONLY : icalc_flow,icalc_scal,icalc_part, imode_eqns
-  USE TLAB_VARS, ONLY : isize_particle, inb_part,inb_part_array
+  USE TLAB_VARS, ONLY : icalc_flow,icalc_scal, imode_eqns
   USE TLAB_VARS, ONLY : rtime, itime
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : itransport, visc, prandtl, schmidt
   USE DNS_LOCAL,  ONLY : nitera_first, nitera_log, logs_data
   USE TLAB_PROCS
-  USE LAGRANGE_VARS, ONLY : l_g, ilagrange
+  USE PARTICLE_VARS
 #ifdef USE_MPI
   USE MPI
   USE TLAB_MPI_VARS
@@ -152,7 +151,7 @@ CONTAINS
   ! ###################################################################
   SUBROUTINE TIME_RUNGEKUTTA()
     USE TLAB_ARRAYS
-    USE LAGRANGE_ARRAYS
+    USE PARTICLE_ARRAYS
     USE DNS_ARRAYS
     IMPLICIT NONE
 
@@ -181,7 +180,7 @@ CONTAINS
     IF ( rkm_mode == RKM_EXP3 .OR. rkm_mode == RKM_EXP4 ) THEN
       IF ( icalc_flow == 1 ) hq = C_0_R
       IF ( icalc_scal == 1 ) hs = C_0_R
-      IF ( icalc_part == 1 ) l_hq = C_0_R
+      IF (imode_part /= PART_TYPE_NONE) l_hq = C_0_R
     END IF
 
     !########################################################################
@@ -198,7 +197,11 @@ CONTAINS
 #ifdef USE_PROFILE
       CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES)
 #endif
-      SELECT CASE ( imode_eqns )
+    IF (imode_part /= PART_TYPE_NONE) THEN
+        CALL PARTICLE_TIME_SUBSTEP(dte, l_hq, l_comm )
+    END IF  
+  
+    SELECT CASE ( imode_eqns )
       CASE( DNS_EQNS_INCOMPRESSIBLE,DNS_EQNS_ANELASTIC )
         IF    ( rkm_mode == RKM_EXP3 .OR. rkm_mode == RKM_EXP4 ) THEN
           CALL TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT()
@@ -220,7 +223,7 @@ CONTAINS
       CALL DNS_CONTROL(flag_control, q,s, txc, wrk2d,wrk3d)
       IF ( INT(logs_data(1)) /= 0 ) RETURN ! Error detected
 
-      IF ( icalc_part == 1 .AND. ilagrange == LAG_TYPE_BIL_CLOUD_4 ) THEN
+      IF ( imode_part == PART_TYPE_BIL_CLOUD_4 ) THEN
         CALL PARTICLE_TIME_RESIDENCE(dtime, l_g%np, l_q)
         CALL PARTICLE_TIME_LIQUID_CLIPPING(s, l_q,l_txc, l_comm, wrk3d)
       END IF
@@ -267,7 +270,7 @@ CONTAINS
         END IF
 !$omp end parallel
 
-        IF ( icalc_part == 1 ) THEN
+        IF (imode_part /= PART_TYPE_NONE) THEN
           DO is = 1,inb_part
             l_hq(1:l_g%np,is) = alpha*l_hq(1:l_g%np,is)
           END DO
@@ -609,7 +612,7 @@ CONTAINS
     USE TLAB_ARRAYS
     USE DNS_LOCAL, ONLY : imode_rhs
     USE DNS_ARRAYS
-    USE LAGRANGE_ARRAYS
+    USE PARTICLE_ARRAYS
     USE BOUNDARY_BUFFER
     IMPLICIT NONE
 
@@ -683,10 +686,6 @@ CONTAINS
       END SELECT
     END SELECT
 
-    IF ( icalc_part == 1 ) THEN
-      CALL RHS_PARTICLE_GLOBAL(q,s, txc, l_q,l_hq,l_txc,l_comm, wrk1d,wrk2d,wrk3d)
-    END IF
-
     IF ( BuffType == DNS_BUFFER_RELAX .OR. BuffType == DNS_BUFFER_BOTH ) THEN
       CALL BOUNDARY_BUFFER_RELAX_SCAL(s,hs, q) ! Flow part needs to be taken into account in the pressure
     END IF
@@ -727,13 +726,6 @@ CONTAINS
 #ifdef USE_OPENMP
 !$omp end parallel
 #endif
-
-    ! ######################################################################
-    ! Particle POSTION UPDATED and  SEND/RECV TO THE NEW PROCESSOR
-    ! ######################################################################
-    IF ( icalc_part == 1 ) THEN
-      CALL PARTICLE_TIME_SUBSTEP(dte, l_q, l_hq, l_comm )
-    END IF
 
     RETURN
   END SUBROUTINE TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT

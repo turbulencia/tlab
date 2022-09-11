@@ -128,14 +128,6 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
      CALL TLAB_STOP(DNS_ERROR_CALCSCALAR)
   ENDIF
 
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'CalculateParticle', 'no', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; icalc_part = 1
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'no'  ) THEN; icalc_part = 0
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'. Entry Main.CalculateParticle must be yes or no')
-     CALL TLAB_STOP(DNS_ERROR_CALCPARTICLE)
-  ENDIF
-
   CALL SCANINICHAR(bakfile, inifile, 'Main', 'Equations', 'internal', sRes)
   IF     ( TRIM(ADJUSTL(sRes)) .eq. 'total'          ) THEN; imode_eqns = DNS_EQNS_TOTAL
   ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'internal'       ) THEN; imode_eqns = DNS_EQNS_INTERNAL

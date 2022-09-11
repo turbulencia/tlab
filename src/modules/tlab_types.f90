@@ -24,7 +24,9 @@ module TLAB_TYPES
     integer, parameter :: i4_ = selected_int_kind(9)            ! i4 was already used...
     ! !> Long length for integers, range -2⁶³ to 2⁶³-1; 64 bits
     ! integer, parameter :: i8 = selected_int_kind(18)
-    integer, parameter :: ci = i4_             ! code integer type
+    integer, parameter :: i8_ = selected_int_kind(18)           ! i8 was already used...
+    integer, parameter :: ci = i4_                  ! code integer type
+    integer, parameter :: longi = i8_             ! long integer type; different variable name to avoid errors
 
     TINTEGER, parameter :: MAX_PARS = 10
     TINTEGER, parameter :: MAX_VARS = 20
