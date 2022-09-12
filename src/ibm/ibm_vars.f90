@@ -39,11 +39,15 @@ module IBM_VARS
   ! modified field
   TREAL, dimension(:), allocatable, target:: fld_ibm                     ! with splines in solid regions
 
-  ! boundary values of scalar fields
+  ! boundary values of scalar fields 
   TREAL, dimension(MAX_NSP)               :: ibmscaljmin, ibmscaljmax 
 
   ! work array for splines
   TREAL,    dimension(:),     allocatable :: xa, xb, ya, yb
+
+  ! gammas for conditional averages & scalar boundary values applied in solids
+  TREAL,    dimension(:),     allocatable :: gamma_0, gamma_i, gamma_1, gamma_f, gamma_s
+  TREAL,    dimension(:,:),   allocatable :: scal_bcs
 
   ! flag (decides which fdm calls are with modified fields)
   logical                                 :: ibm_burgers, ibm_partial, ibm_objup
@@ -70,9 +74,9 @@ module IBM_VARS
   character(len=32), parameter            :: eps_name_real = eps_name(1:4)
 
   ! io types
-  TINTEGER,          parameter            ::  IBM_IO_REAL  = 1
-  TINTEGER,          parameter            ::  IBM_IO_INT   = 2
-  TINTEGER,          parameter            ::  IBM_IO_BIT   = 3
+  TINTEGER,          parameter            :: IBM_IO_REAL  = 1
+  TINTEGER,          parameter            :: IBM_IO_INT   = 2
+  TINTEGER,          parameter            :: IBM_IO_BIT   = 3
 
 end module IBM_VARS
 

@@ -387,7 +387,7 @@ contains
         ! Pass memory address from double precision array to single precision array
             call c_f_pointer(c_loc(txc), s_wrk, shape=[nx*ny*nz])
         else
-            line = 'Reading double precision field '//trim(adjustl(fname))//' of size'
+            line = 'Writing double precision field '//trim(adjustl(fname))//' of size'
         end if
         write (name, *) nx_total; line = trim(adjustl(line))//' '//trim(adjustl(name))
         write (name, *) ny_total; line = trim(adjustl(line))//'x'//trim(adjustl(name))

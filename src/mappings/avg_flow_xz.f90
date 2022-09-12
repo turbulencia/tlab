@@ -23,7 +23,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE TLAB_PROCS
   USE THERMO_VARS, ONLY : imixture, MRATIO, GRATIO
   USE THERMO_VARS, ONLY : THERMO_AI, WGHT_INV
-  USE IBM_VARS,    ONLY : eps
+  USE IBM_VARS,    ONLY : gamma_0, gamma_i, gamma_1, gamma_f, gamma_s 
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS, ONLY : tfile
 #endif
@@ -103,9 +103,13 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   varname(ng)   = 'rR rU rV rW rP rT re rh rs rB fU fV fW fT fe fh fs'
 
   IF ( imode_ibm == 1 ) THEN
-    varname(ng) = TRIM(ADJUSTL(varname(ng)))//' eps'
-    sg(ng) = sg(ng) + 1
-#define ep(j)     mean2d(j,ig(1)+17)
+    varname(ng) = TRIM(ADJUSTL(varname(ng)))//' eps_0 eps_i eps_1 eps_f eps_s'
+    sg(ng) = sg(ng) + 5
+#define ep_0(j)   mean2d(j,ig(1)+17)
+#define ep_i(j)   mean2d(j,ig(1)+18)
+#define ep_1(j)   mean2d(j,ig(1)+19)
+#define ep_f(j)   mean2d(j,ig(1)+20)
+#define ep_s(j)   mean2d(j,ig(1)+21)
   END IF
 
   ! -----------------------------------------------------------------------
@@ -441,9 +445,10 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! #######################################################################
   ! Preliminary for IBM usage
   ! #######################################################################
-  ! Calculating gamma for conditional averages (Pope, p.170 [5.305])
+  ! Asign gammas for conditional averages (c.f. Pope, p.170 [5.305])
   IF ( imode_ibm == 1 ) THEN
-    CALL IBM_AVG_GAMMA(ep(1), eps, wrk3d, wrk1d)
+    ep_0(:) = gamma_0; ep_i(:) = gamma_i; ep_1(:) = gamma_1 
+    ep_f(:) = gamma_f; ep_s(:) = gamma_s 
   END IF
 
   ! ###################################################################

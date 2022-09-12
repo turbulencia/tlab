@@ -13,7 +13,7 @@ module TLAB_CONSTANTS
 
     TINTEGER, parameter :: MAX_NSP = 10 ! Species in the mixture
 
-    TINTEGER, parameter :: MAX_AVG_TEMPORAL = 230
+    TINTEGER, parameter :: MAX_AVG_TEMPORAL = 235
     TINTEGER, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
 
     character*32, parameter :: gfile = 'grid'

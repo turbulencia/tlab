@@ -23,8 +23,8 @@
 
 subroutine IBM_INITIALIZE_SCAL(s)
   
-  use IBM_VARS,  only : eps, ibmscaljmin, ibmscaljmax 
-  use TLAB_VARS, only : imax, jmax, isize_field,inb_scal
+  use IBM_VARS,  only : eps, ibmscaljmin, ibmscaljmax, scal_bcs
+  use TLAB_VARS, only : imax, jmax, isize_field, inb_scal
 
   implicit none
 
@@ -48,6 +48,11 @@ subroutine IBM_INITIALIZE_SCAL(s)
 ! apply ibmscaljmin, ibmscaljmax on scalar field(s)
   do is = 1, inb_scal
     call IBM_BCS_SCAL(is,s(:,is),eps(:))
+  end do
+
+! write out scalar boundary values applied in solids
+  do is = 1, inb_scal
+    call IBM_AVG_SCAL_BCS(is, scal_bcs(is,1))
   end do
 
   return

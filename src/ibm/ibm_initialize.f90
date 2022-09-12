@@ -43,13 +43,12 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   target                                               :: txc
 
   TREAL, dimension(:), pointer                         :: epsi, epsj, epsk
-#ifdef IBM_DEBUG
   TREAL, dimension(:), pointer                         :: tmp1, tmp2, tmp3
-#endif
 
   ! ================================================================== !
   ! assigning pointer to scratch
   txc = C_0_R; epsi => txc(:,1); epsj => txc(:,2); epsk => txc(:,3)
+  tmp1 => txc(:,4); tmp2 => txc(:,5); tmp3 => txc(:,6)
 
   ! options for geometry generation
   !   0. use existing eps field (ibm_restart==.true.)
@@ -87,6 +86,10 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
     call IBM_STAGGER_GEOMETRY(eps, epsp)
   end if
 
+  ! compute gammas for conditional averages 
+  CALL IBM_AVG_GAMMA(gamma_0, gamma_i, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2, tmp3)
+  tmp1(:) = C_0_R; tmp2(:) = C_0_R; tmp3(:) = C_0_R
+
   ! check idle procs
 #ifdef USE_MPI
   call IBM_CHECK_PROCS(epsi, epsj, epsk)
@@ -97,9 +100,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
 
 #ifdef IBM_DEBUG
   ! io of all geometry fields in debugging mode 
-  tmp1 => txc(:,4); tmp2 => txc(:,5); tmp3 => txc(:,6)
   call IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
-  nullify(tmp1, tmp2, tmp3)
 #endif
 
   ! switch to true in routines where the IBM is needed
@@ -107,6 +108,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   
   ! disassociate pointers
   nullify(epsi, epsj, epsk)
+  nullify(tmp1, tmp2, tmp3)
 
   return
 end subroutine IBM_INITIALIZE_GEOMETRY
