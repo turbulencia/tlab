@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 module TLAB_VARS
-    use TLAB_TYPES, only: grid_dt, filter_dt, subarray_dt, term_dt, profiles_dp
+    use TLAB_TYPES, only: grid_dt, filter_dt, subarray_dt, term_dt, profiles_dt
     use TLAB_CONSTANTS, only: MAX_VARS, MAX_NSP
     use TLAB_CONSTANTS, only: MAX_STATS_SPATIAL
     implicit none
@@ -63,9 +63,9 @@ module TLAB_VARS
     TREAL :: area                         ! Horizontal area and volume
 
 ! ###################################################################
-    type(profiles_dp) :: qbg(3)         ! Velocity background
-    type(profiles_dp) :: sbg(MAX_NSP)   ! Scalars backgrounds
-    type(profiles_dp) :: pbg, rbg, tbg  ! Pressure, density, temperature backgrounds
+    type(profiles_dt) :: qbg(3)         ! Velocity background
+    type(profiles_dt) :: sbg(MAX_NSP)   ! Scalars backgrounds
+    type(profiles_dt) :: pbg, rbg, tbg  ! Pressure, density, temperature backgrounds
 
     TREAL, dimension(:), allocatable :: pbackground, tbackground, rbackground, ribackground
     TREAL, dimension(:), allocatable :: bbackground, epbackground

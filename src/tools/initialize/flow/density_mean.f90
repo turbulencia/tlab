@@ -59,14 +59,14 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
 
             ! temperature/mixture profile are given
             if (rbg%type == PROFILE_NONE) then
-                ycenter = g(2)%nodes(1) + g(2)%scale*tbg%ymean
+                ycenter = g(2)%nodes(1) + g(2)%scale*tbg%ymean_rel
                 do j = 1, jmax
                     dummy = PROFILES(tbg, ycenter, g(2)%nodes(j))
                     TEM_MEAN_LOC(:, j, :) = dummy
                 end do
 
                 do is = 1, inb_scal
-                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean
+                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
                     do j = 1, jmax
                         dummy = PROFILES(sbg(is), ycenter, g(2)%nodes(j))
                         s(:, j, :, is) = dummy
@@ -83,7 +83,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
 
                 ! density profile itself is given
             else
-                ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean
+                ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean_rel
                 do j = 1, jmax
                     dummy = PROFILES(rbg, ycenter, g(2)%nodes(j))
                     rho(:, j, :) = rho(:, j, :) + dummy
@@ -130,21 +130,21 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
             ! rho_vi(:) = rho(1,:,1) ! I need to update this because rho(1,:,1) is now undefined
 
             ! Inflow profile of axial velocity
-            ycenter = g(2)%nodes(1) + g(2)%scale*qbg(1)%ymean
+            ycenter = g(2)%nodes(1) + g(2)%scale*qbg(1)%ymean_rel
             do j = 1, jmax
                 u_vi(j) = PROFILES(qbg(1), ycenter, g(2)%nodes(j))
             end do
 
             ! 2D distribution of density
             call FLOW_SPATIAL_DENSITY(imax, jmax, tbg, qbg(1), &
-                              g(2)%scale, g(1)%nodes, g(2)%nodes, s, p, rho_vi(1), u_vi(1), aux1(1), rho, aux2(1), aux3(1), aux4(1))
+                              g(1)%nodes, g(2)%nodes, s, p, rho_vi(1), u_vi(1), aux1(1), rho, aux2(1), aux3(1), aux4(1))
 
             do k = 2, kmax
                 rho(:, :, k) = rho(:, :, 1)
             end do
 
         else ! density profile itself is given
-            ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean
+            ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean_rel
             do j = 1, jmax
                 dummy = PROFILES(rbg, ycenter, g(2)%nodes(j))
                 rho(:, j, :) = rho(:, j, :) + dummy

@@ -65,8 +65,7 @@ subroutine SCAL_READ_LOCAL(inifile)
     call SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIniS', 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'void') &    ! backwards compatilibity
         call SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIni', 'void', sRes)
-    if (TRIM(ADJUSTL(sRes)) == 'void') then; Sini(:)%thick = sbg(:)%thick; 
-    else
+    if (TRIM(ADJUSTL(sRes)) /= 'void') then
         dummy = 0.0_cp; idummy = MAX_NSP
         call LIST_REAL(sRes, idummy, dummy)
         Sini(:)%thick = dummy(:)
@@ -84,14 +83,13 @@ subroutine SCAL_READ_LOCAL(inifile)
     call SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIniS', 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'void') &    ! backwards compatilibity
         call SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'void', sRes)
-    if (TRIM(ADJUSTL(sRes)) == 'void') then; Sini(:)%ymean = sbg(:)%ymean; 
-    else
+    if (TRIM(ADJUSTL(sRes)) /= 'void') then
         dummy = 0.0_cp; idummy = MAX_NSP
         call LIST_REAL(sRes, idummy, dummy)
-        Sini(:)%ymean = dummy(:)
+        Sini(:)%ymean_rel = dummy(:)
         if (idummy /= inb_scal) then         ! Consistency check
             if (idummy == 1) then
-                Sini(2:)%ymean = Sini(1)%ymean
+                Sini(2:)%ymean_rel = Sini(1)%ymean_rel
                 call TLAB_WRITE_ASCII(wfile, 'SCAL_READ_LOCAL. Using YCoorIniS(1) for all scalars.')
             else
                 call TLAB_WRITE_ASCII(efile, 'SCAL_READ_LOCAL. YCoorIniS size does not match number of scalars.')

@@ -73,10 +73,11 @@ subroutine PARTICLE_INITIALIZE()
 
     ! set boundarys for residence time pdf
     if (imode_part == PART_TYPE_BIL_CLOUD_4) then
-        l_y_lambda = (g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(1)%ymean - 2.0_cp
-        l_y_base = ((g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(1)%ymean - &
-                    (g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(3)%ymean)/2.0_cp &
-                   + (g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(3)%ymean
+        ! to be rewritten
+        ! l_y_lambda = (g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(1)%ymean_rel - 2.0_cp
+        ! l_y_base = ((g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(1)%ymean_rel - &
+        !             (g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(3)%ymean_rel)/2.0_cp &
+        !            + (g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(3)%ymean_rel
         if (residence_reset == 1) then
             l_q(:, 6:7) = 0.0_cp
         end if

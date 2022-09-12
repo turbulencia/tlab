@@ -38,7 +38,7 @@ CONTAINS
 ! ###################################################################
 ! ###################################################################
 SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
-  USE TLAB_TYPES, ONLY: profiles_dp
+  USE TLAB_TYPES, ONLY: profiles_dt
   USE TLAB_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS, ONLY : tfile
@@ -68,7 +68,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
   TINTEGER j, is
   TREAL prefactor
   TREAL ycenter, PROFILES
-  type(profiles_dp) prof_loc
+  type(profiles_dt) prof_loc
 
 #ifdef USE_MPI
   CHARACTER*32 str
@@ -236,7 +236,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
              BcsFlowImin%Ref(1,1,1), BcsFlowImin%Ref(1,1,7), BcsFlowImin%Ref(1,1,5))
 
 ! shape factor
-        ycenter   = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
+        ycenter   = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean_rel
         prof_loc%type=PROFILE_TANH
         prof_loc%thick=qbg(1)%diam/C_8_R
         prof_loc%delta=C_1_R

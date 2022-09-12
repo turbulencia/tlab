@@ -198,7 +198,7 @@ CONTAINS
           hq(:,1) = hq(:,1) + C_SMALL_R
           idummy = inb_part - 3 ! # scalar properties solved in the lagrangian
           DO is = inb_scal_array +1 +1, inb_scal_array+1 +idummy
-            sbg(is)%mean = C_1_R; sbg(is)%delta = C_0_R; sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
+            schmidt(is) = schmidt(1)
             CALL PARTICLE_TO_FIELD(l_q, l_q(1,3+is-inb_scal_array-1), hq(1,2), wrk2d,wrk3d)
             hq(:,2) = hq(:,2) /hq(:,1)
             CALL AVG_SCAL_XZ(is, q,s, hq(1,2), &

@@ -2,13 +2,13 @@
 #include "dns_error.h"
 
 subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
-    use TLAB_TYPES, only: profiles_dp, cp
+    use TLAB_TYPES, only: profiles_dt, cp
     use TLAB_CONSTANTS
     use TLAB_PROCS
     implicit none
 
     character(len=*), intent(in) :: bakfile, inifile, block, tag
-    type(profiles_dp), intent(out) :: var
+    type(profiles_dt), intent(out) :: var
 
     character(len=512) sRes
     real(cp) derivative
@@ -42,7 +42,7 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     else
         call SCANINIREAL(bakfile, inifile, block, 'Mean'//TRIM(ADJUSTL(tag)), '0.0', var%mean)
     end if
-    call SCANINIREAL(bakfile, inifile, block, 'YCoor'//TRIM(ADJUSTL(tag)), '0.5', var%ymean)
+    call SCANINIREAL(bakfile, inifile, block, 'YCoor'//TRIM(ADJUSTL(tag)), '0.5', var%ymean_rel)
     call SCANINIREAL(bakfile, inifile, block, 'Delta'//TRIM(ADJUSTL(tag)), '0.0', var%delta)
     call SCANINIREAL(bakfile, inifile, block, 'Thick'//TRIM(ADJUSTL(tag)), '0.0', var%thick)
     call SCANINIREAL(bakfile, inifile, block, 'BottomSlope'//TRIM(ADJUSTL(tag)), '0.0', var%lslope)
@@ -71,11 +71,11 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
 end subroutine PROFILES_READBLOCK
 
 function PROFILES(var, ycenter, y) result(f)
-    use TLAB_TYPES, only: profiles_dp, cp
+    use TLAB_TYPES, only: profiles_dt, cp
     use TLAB_CONSTANTS
     implicit none
 
-    type(profiles_dp), intent(in) :: var
+    type(profiles_dt), intent(in) :: var
     real(cp), intent(in) :: ycenter, y
     real(cp) f
 
@@ -183,13 +183,13 @@ function PROFILES(var, ycenter, y) result(f)
 end function PROFILES
 
 subroutine PROFILES_DERTOTHICK(derivative, var)  ! Obtain thick from the value of the maximum derivative
-    use TLAB_TYPES, only: profiles_dp, cp
+    use TLAB_TYPES, only: profiles_dt, cp
     use TLAB_CONSTANTS
     use TLAB_PROCS
     implicit none
 
     real(cp), intent(in) :: derivative
-    type(profiles_dp), intent(inout) :: var
+    type(profiles_dt), intent(inout) :: var
 
     real(cp) thick_ratio    ! for readibility
 

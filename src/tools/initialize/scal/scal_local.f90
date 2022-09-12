@@ -3,7 +3,7 @@
 
 module SCAL_LOCAL
 
-    use TLAB_TYPES, only: cp, ci, profiles_dp, discrete_dt
+    use TLAB_TYPES, only: cp, ci, profiles_dt, discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, MAX_NSP
     use TLAB_VARS, only: g, sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
@@ -20,8 +20,8 @@ module SCAL_LOCAL
     ! -------------------------------------------------------------------
     integer(ci) :: flag_s, flag_mixture
 
-    type(profiles_dp) :: Sini(MAX_NSP)                        ! Geometry of perturbation of initial boundary condition
-    type(profiles_dp) :: prof_loc
+    type(profiles_dt) :: Sini(MAX_NSP)                        ! Geometry of perturbation of initial boundary condition
+    type(profiles_dt) :: prof_loc
     real(cp) :: norm_ini_s(MAX_NSP), norm_ini_radiation         ! Scaling of perturbation
     type(discrete_dt) :: fp                                     ! Discrete perturbation
 
@@ -53,7 +53,7 @@ contains
         prof_loc = Sini(is)
         prof_loc%delta = C_1_R
         prof_loc%mean = C_0_R
-        ycenter = yn(1) + g(2)%scale*Sini(is)%ymean
+        ycenter = g(2)%nodes(1) + g(2)%scale*prof_loc%ymean_rel
         do j = 1, jmax
             wrk1d(j, 1) = PROFILES(prof_loc, ycenter, yn(j))
         end do
@@ -214,7 +214,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         case (4, 5)           ! Perturbation in the centerplane
             do k = 1, kmax
                 do i = 1, imax
-                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean + disp(i, k)
+                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel + disp(i, k)
                     do j = 1, jmax
                         s(i, j, k) = PROFILES(sbg(is), ycenter, g(2)%nodes(j))
                     end do
@@ -226,7 +226,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 
             do k = 1, kmax
                 do i = 1, imax
-                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean
+                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
                     prof_loc%thick = sbg(is)%thick + disp(i, k)
 
                     do j = 1, jmax
@@ -241,7 +241,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 
             do k = 1, kmax
                 do i = 1, imax
-                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean
+                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
                     prof_loc%delta = sbg(is)%delta + disp(i, k)
                     prof_loc%mean = (prof_loc%delta)*C_05_R
                     if (sbg(is)%delta > 0) prof_loc%thick = prof_loc%delta/sbg(is)%delta*sbg(is)%thick

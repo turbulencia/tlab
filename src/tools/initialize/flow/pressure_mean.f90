@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 subroutine PRESSURE_MEAN(p, T, s, wrk1d)
-    use TLAB_TYPES, only: cp, ci, profiles_dp
+    use TLAB_TYPES, only: cp, ci, profiles_dt
     use TLAB_CONSTANTS, only: efile
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
@@ -22,7 +22,7 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
     integer(ci) j
     real(cp) pmin, pmax, ycenter
     real(cp) PROFILES
-    type(profiles_dp) prof_loc
+    type(profiles_dt) prof_loc
 
     real(cp), dimension(:), pointer :: y, dy
 
@@ -59,10 +59,10 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
 ! AIRWATER case: temperature/mixture profile is given
             if (imixture == MIXT_TYPE_AIRWATER .and. tbg%type > 0) then
                 do j = 1, jmax
-                    ycenter = y(1) + g(2)%scale*tbg%ymean
+                    ycenter = y(1) + g(2)%scale*tbg%ymean_rel
                     t_loc(j) = PROFILES(tbg, ycenter, y(j))
 
-                    ycenter = y(1) + g(2)%scale*sbg(1)%ymean
+                    ycenter = y(1) + g(2)%scale*sbg(1)%ymean_rel
                     z1_loc(j) = PROFILES(sbg(1), ycenter, g(2)%nodes(j))
 
                 end do
@@ -82,10 +82,10 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
                 prof_loc%type = -tbg%type
 
                 do j = 1, jmax
-                    ycenter = y(1) + g(2)%scale*tbg%ymean
+                    ycenter = y(1) + g(2)%scale*prof_loc%ymean_rel
                     z1_loc(j) = PROFILES(prof_loc, ycenter, y(j))
 
-                    ycenter = y(1) + g(2)%scale*sbg(1)%ymean
+                    ycenter = y(1) + g(2)%scale*sbg(1)%ymean_rel
                     z2_loc(j) = PROFILES(sbg(1), ycenter, g(2)%nodes(j))
 
                 end do
@@ -99,14 +99,14 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
 
 ! General case: temperature/mixture profile is given
             else
-                ycenter = y(1) + tbg%ymean*g(2)%scale
+                ! ycenter = y(1) + tbg%ymean_rel*g(2)%scale
 !           CALL FI_HYDROSTATIC(i1, jmax, i1, ycenter, y, p_loc(1))
                 call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 2 undeveloped')
                 call TLAB_STOP(DNS_ERROR_UNDEVELOP)
 
-                do j = 1, jmax
-                    p_loc(j) = pbg%mean*EXP(p_loc(j))
-                end do
+                ! do j = 1, jmax
+                !     p_loc(j) = pbg%mean*EXP(p_loc(j))
+                ! end do
 
             end if
 

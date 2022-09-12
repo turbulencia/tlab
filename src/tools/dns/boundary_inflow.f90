@@ -322,7 +322,7 @@ CONTAINS
   !########################################################################
   !########################################################################
   SUBROUTINE BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk1d, wrk2d)
-    USE TLAB_TYPES, ONLY: profiles_dp
+    USE TLAB_TYPES, ONLY: profiles_dt
     IMPLICIT NONE
 
     TREAL etime
@@ -335,7 +335,7 @@ CONTAINS
     TREAL wx, wz, wx_1, wz_1, xaux, vmult, factorx, factorz, dummy
 
     TREAL PROFILES, ycenter, yr
-    type(profiles_dp) prof_loc
+    type(profiles_dt) prof_loc
     EXTERNAL PROFILES
 
     TREAL, DIMENSION(:), POINTER :: y,z
@@ -361,6 +361,8 @@ CONTAINS
     prof_loc%thick=fp%parameters(1)
     prof_loc%delta=C_1_R
     prof_loc%mean=C_0_R
+    prof_loc%lslope=C_0_R
+    prof_loc%uslope=C_0_R
     prof_loc%parameters=C_0_R
   
     ! ###################################################################
@@ -368,7 +370,7 @@ CONTAINS
     ! ###################################################################
     SELECT CASE ( fp%TYPE )
     CASE ( PROFILE_GAUSSIAN )
-      ycenter = y(1) +g(2)%scale *qbg(1)%ymean
+      ycenter = y(1) +g(2)%scale *qbg(1)%ymean_rel
     DO j = 1,jmax
         yr = y(j)-ycenter
         wrk1d(j,1) = PROFILES( prof_loc, ycenter, y(j) )
@@ -377,7 +379,7 @@ CONTAINS
       ENDDO
 
     CASE (PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM)
-      ycenter = y(1) +g(2)%scale *qbg(1)%ymean -C_05_R *qbg(1)%diam
+      ycenter = y(1) +g(2)%scale *qbg(1)%ymean_rel -C_05_R *qbg(1)%diam
       DO j = 1,jmax
         yr = y(j) - ycenter
         wrk1d(j,1) = PROFILES( prof_loc, ycenter, y(j) )
@@ -385,7 +387,7 @@ CONTAINS
         wrk1d(j,2) =-yr /( prof_loc%thick**2 ) *wrk1d(j,1)
       ENDDO
 
-      ycenter = y(1) +g(2)%scale *qbg(1)%ymean +C_05_R *qbg(1)%diam
+      ycenter = y(1) +g(2)%scale *qbg(1)%ymean_rel +C_05_R *qbg(1)%diam
       IF     ( fp%TYPE .EQ. PROFILE_GAUSSIAN_ANTISYM ) THEN; factorx =-C_1_R ! varicose
       ELSEIF ( fp%TYPE .EQ. PROFILE_GAUSSIAN_SYM     ) THEN; factorx = C_1_R ! Sinuous
       ENDIF

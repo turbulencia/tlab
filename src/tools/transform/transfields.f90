@@ -789,7 +789,7 @@ CONTAINS
     ! #######################################################################
     IF ( flag_mode .EQ. 0 ) THEN ! Velocity
        IF ( is .EQ. 1 ) THEN ! Only the mean velocity
-          ycenter = y(1) + g(2)%scale *qbg(1)%ymean
+          ycenter = y(1) + g(2)%scale *qbg(1)%ymean_rel
           DO j = 1,ny
              dummy =  PROFILES(qbg, ycenter, y(j))
              b(:,j,:) = dummy + a(:,j,:)
@@ -799,7 +799,7 @@ CONTAINS
        ENDIF
 
     ELSE                         ! Scalars
-       ycenter = y(1) + g(2)%scale *sbg(is)%ymean
+       ycenter = y(1) + g(2)%scale *sbg(is)%ymean_rel
        DO j = 1,ny
           dummy =  PROFILES(sbg(is), ycenter, y(j))
           b(:,j,:) = dummy + a(:,j,:)

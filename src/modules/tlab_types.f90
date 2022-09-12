@@ -40,12 +40,12 @@ module TLAB_TYPES
         TREAL, dimension(MAX_PARS) :: parameters
     end type discrete_dt
 
-    type profiles_dp
+    type profiles_dt
         sequence
         TINTEGER type, padding
-        TREAL mean, delta, ymean, thick, lslope, uslope, diam
+        TREAL mean, delta, ymean_rel, thick, lslope, uslope, diam
         TREAL, dimension(MAX_PARS) :: parameters
-    end type profiles_dp
+    end type profiles_dt
 
     type term_dt
         sequence

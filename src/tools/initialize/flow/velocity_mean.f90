@@ -21,7 +21,7 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
 
         ! Construct reference profiles into array wrk1d
         do iq = 1, 3
-            ycenter = g(2)%nodes(1) + g(2)%scale*qbg(iq)%ymean
+            ycenter = g(2)%nodes(1) + g(2)%scale*qbg(iq)%ymean_rel
             do j = 1, jmax
                 wrk1d(j, iq) = PROFILES(qbg(iq), ycenter, g(2)%nodes(j))
             end do
@@ -53,13 +53,13 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
 ! #define rho_vi(j) wrk1d(j,1)
 ! #define u_vi(j)   wrk1d(j,2)
 ! #define aux(j)    wrk1d(j,3)
-!     ycenter = g(2)%nodes(1) + g(2)%scale *qbg(iq)%ymean
+!     ycenter = g(2)%nodes(1) + g(2)%scale *qbg(iq)%ymean_rel
 !     DO j = 1,jmax
 !       u_vi(j) = PROFILES( qbg(1), ycenter, g(2)%nodes(j) )
 !     ENDDO
 !     rho_vi(:) = rho(1,:,1)
 !
-!     ycenter = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
+!     ycenter = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean_rel
 !     CALL FLOW_SPATIAL_VELOCITY(imax,jmax, &
 !     qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, qbg(1)%diam, ycenter, &
 !     qbg(1)%parameters(2), qbg(1)%parameters(3), qbg(1)%parameters(4), &

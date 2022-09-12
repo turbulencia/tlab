@@ -50,7 +50,7 @@ SUBROUTINE FI_BACKGROUND_INITIALIZE(wrk1d)
 
 ! Construct given thermodynamic profiles
   DO is = 1,inb_scal
-     ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
+     ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean_rel
      DO j = 1,g(2)%size
         wrk1d(j,is) = PROFILES(sbg(is), ycenter, g(2)%nodes(j))
      ENDDO
@@ -59,7 +59,8 @@ SUBROUTINE FI_BACKGROUND_INITIALIZE(wrk1d)
 
   IF ( pbg%parameters(5) .GT. C_0_R ) THEN
 ! Calculate derived thermodynamic profiles
-     epbackground = (g(2)%nodes - g(2)%nodes(1) - g(2)%scale *pbg%ymean) *GRATIO /pbg%parameters(5)
+    ycenter = g(2)%nodes(1) + g(2)%scale *pbg%ymean_rel
+    epbackground = (g(2)%nodes - ycenter) *GRATIO /pbg%parameters(5)
 
      IF ( buoyancy%active(2) ) THEN
 !        CALL FI_HYDROSTATIC_H_OLD(g(2)%size, g(2)%nodes, wrk1d, epbackground, tbackground, pbackground, wrk1d(1,4))
@@ -91,19 +92,22 @@ SUBROUTINE FI_BACKGROUND_INITIALIZE(wrk1d)
 ! Add diagnostic fields to reference profile data, if any
 ! #######################################################################
   DO is = inb_scal+1,inb_scal_array ! Add diagnostic fields, if any
-     sbg(is)%mean = C_1_R; sbg(is)%delta = C_0_R; sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
+     sbg(is) = sbg(1)
+     schmidt(is) = schmidt(1)
   ENDDO
 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
+  sbg(is) = sbg(1)
   sbg(is)%mean  =    (bbackground(1)+bbackground(g(2)%size)) /froude
   sbg(is)%delta = ABS(bbackground(1)-bbackground(g(2)%size)) /froude
-  sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
+  schmidt(is) = schmidt(1)
 
   IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
      is = is + 1
      CALL THERMO_ANELASTIC_THETA_L(i1,g(2)%size,i1, wrk1d, epbackground,pbackground, wrk1d(1,inb_scal_array+1))
+     sbg(is) = sbg(1)
      sbg(is)%mean  =    (wrk1d(1,inb_scal_array+1)+wrk1d(g(2)%size,inb_scal_array+1)) * C_05_R
      sbg(is)%delta = ABS(wrk1d(1,inb_scal_array+1)-wrk1d(g(2)%size,inb_scal_array+1))
-     sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
+     schmidt(is) = schmidt(1)
   ENDIF
 
 ! #######################################################################

@@ -81,7 +81,7 @@ subroutine FLOW_READ_LOCAL(inifile)
     if (TRIM(ADJUSTL(sRes)) /= 'void') then
         dummy(1) = 1.0_cp; idummy = 1
         call LIST_REAL(sRes, idummy, dummy)
-        Kini%ymean = dummy(1)
+        Kini%ymean_rel = dummy(1)
     end if
 
     call SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeK', '-1.0', norm_ini_u)

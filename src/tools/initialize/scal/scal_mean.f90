@@ -23,7 +23,7 @@ subroutine SCAL_MEAN(is, s, wrk1d, wrk2d, wrk3d)
 
     !########################################################################
     if (imode_sim == DNS_MODE_TEMPORAL) then
-        ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean
+        ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
         do j = 1, jmax
             dummy = PROFILES(sbg(is), ycenter, g(2)%nodes(j))
             s(:, j, :) = dummy + s(:, j, :)
@@ -43,14 +43,14 @@ subroutine SCAL_MEAN(is, s, wrk1d, wrk2d, wrk3d)
 #define v_loc(i,j)   wrk2d(i,j,4)
 #define t_loc(i,j)   wrk2d(i,j,5)
         ! Inflow profile of scalar
-        ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean
+        ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
         do j = 1, jmax
             z_vi(j) = PROFILES(sbg(is), ycenter, g(2)%nodes(j))
         end do
 
         ! Initialize density field
         rho_vi(1:jmax) = 0.0_cp
-        ycenter = g(2)%nodes(1) + g(2)%scale*tbg%ymean
+        ycenter = g(2)%nodes(1) + g(2)%scale*tbg%ymean_rel
         do j = 1, jmax
             dummy = PROFILES(tbg, ycenter, g(2)%nodes(j))
             ! pilot to be added: ijet_pilot, rjet_pilot_thickness, XIST
@@ -65,7 +65,7 @@ subroutine SCAL_MEAN(is, s, wrk1d, wrk2d, wrk3d)
 
         ! inflow profile of velocity
         u_vi(1:jmax) = 0.0_cp
-        ycenter = g(2)%nodes(1) + g(2)%scale*qbg(1)%ymean
+        ycenter = g(2)%nodes(1) + g(2)%scale*qbg(1)%ymean_rel
         do j = 1, jmax
             u_vi(j) = PROFILES(qbg(1), ycenter, g(2)%nodes(j))
             ! pilot to be added: ijet_pilot, rjet_pilot_thickness, rjet_pilot_velocity
@@ -74,16 +74,14 @@ subroutine SCAL_MEAN(is, s, wrk1d, wrk2d, wrk3d)
         ! 2D distributions of density and velocity
         if (rbg%delta /= 0.0_cp) then
             call FLOW_SPATIAL_DENSITY(imax, jmax, tbg, qbg(1), &
-                                   g(2)%scale, g(1)%nodes, g(2)%nodes, s, p_loc(1, 1), rho_vi(1), u_vi(1), aux1(1), rho_loc(1, 1), &
+                                   g(1)%nodes, g(2)%nodes, s, p_loc(1, 1), rho_vi(1), u_vi(1), aux1(1), rho_loc(1, 1), &
                                       aux2(1), aux3(1), aux4(1))
         end if
-        ycenter = g(2)%nodes(1) + g(2)%scale*qbg(1)%ymean
-        call FLOW_SPATIAL_VELOCITY(imax, jmax, qbg(1), qbg(1)%diam, ycenter, &
+        call FLOW_SPATIAL_VELOCITY(imax, jmax, qbg(1), qbg(1)%diam,  &
                                    qbg(1)%parameters(2), qbg(1)%parameters(3), qbg(1)%parameters(4), &
                                 g(1)%nodes, g(2)%nodes, rho_vi(1), u_vi(1), rho_loc(1, 1), u_loc(1, 1), v_loc(1, 1), aux1(1), wrk3d)
         ! 2D distribution of scalar
-        ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean
-        call FLOW_SPATIAL_SCALAR(imax, jmax, sbg(is), sbg(is)%diam, sbg(is)%diam, ycenter, &
+        call FLOW_SPATIAL_SCALAR(imax, jmax, sbg(is), sbg(is)%diam, sbg(is)%diam,  &
                                  sbg(is)%parameters(2), sbg(is)%parameters(3), sbg(is)%parameters(4), &
                                  g(1)%nodes, g(2)%nodes, rho_vi(1), u_vi(1), z_vi(1), rho_loc(1, 1), u_loc(1, 1), s, wrk3d)
         if (g(3)%size > 1) then

@@ -936,7 +936,7 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
   ! Consistency check
  IF ( qbg(1)%type .EQ. PROFILE_EKMAN_U .OR. qbg(1)%type .EQ. PROFILE_EKMAN_U_P ) THEN
      qbg(3)%type  = PROFILE_EKMAN_V
-     qbg(3)%ymean = qbg(1)%ymean
+     qbg(3)%ymean_rel = qbg(1)%ymean_rel
      qbg(3)%thick = qbg(1)%thick
      qbg(3)%delta = qbg(1)%delta
   ENDIF
