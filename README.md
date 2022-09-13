@@ -1,6 +1,6 @@
 # Tlab
 
-Tools to simulate and analyze turbulent flows in 2D and 3D configurations. The numerical schemes are based on compact finite differences with structured meshes, where grid stretching allowed. Time advancement in based on Runge-Kutta schemes. There are two possible modes [temporal|spatial], which corresponds to temporally evolving flows and spatially evolving flows, respectively. This parameter refers to the statistical homogeneities of the configuration, and it partly defines the boundary conditions and the calculation of statistical properties. Hybrid parallelization using MPI in two directions and OpenMPI in big loops.
+Tools to simulate and analyze turbulent flows in 2D and 3D configurations. The numerical schemes are based on compact finite differences with structured meshes, where grid stretching allowed. Time advancement in based on Runge-Kutta schemes. There are two possible modes [temporal|spatial], which corresponds to temporally evolving flows and spatially evolving flows, respectively. This parameter refers to the statistical homogeneities of the configuration, and it partly defines the boundary conditions and the calculation of statistical properties. The code implements a hybrid parallelization: MPI for a domain decomposition in the first and third direction, and OpenMPI in big loops.
 
 Some examples of applications can be found in this [website](https://jpmellado.github.io/gallery.html).
 
@@ -27,6 +27,7 @@ To clean the tree, simply delete the directories build*
 * cmake (at a computing centre, try `module load cmake`)
 * fortran compiler
 * [FFTW](http://www.fftw.org/)
+* Optionally, [NetCDF](https://docs.unidata.ucar.edu/netcdf-c/current/building_netcdf_fortran.html) for statistical data.
 
 ## Check
 
@@ -78,6 +79,6 @@ tools → mappings → operators → {fdm,filter,io,thermo,utils,external} → t
 
 **Arrays**
 
-* The inner-most index is the streamwise direction
-* The outer-most index is the spanwise direction
+* The inner-most index is the first (streamwise) direction
+* The outer-most index is the third (spanwise) direction
 * MPI domain decomposition in these two directions

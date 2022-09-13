@@ -266,19 +266,17 @@ Data is case insensitive.
 %
 \multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Flow]}\\
 %
-\tt ProfileVelocity & \tt None, Tanh, Erf, Ekman,...& Functional form of the mean velocity profile, typically along $Oy$.\\
-\tt VelocityX       & {\em value} & Reference mean velocity along $Ox$.\\
-\tt VelocityY       & {\em value} & Reference mean velocity along $Oy$.\\
-\tt VelocityZ       & {\em value} & Reference mean velocity along $Oz$.\\
-\tt YCoorVelocity   & {\em value} & y-coordinate of profile reference point, relative to the total scale, equation~(\ref{equ:profile}).\\
-\tt ThickVelocity   & {\em value} & Reference profile thickness, equation~(\ref{equ:profile}).\\
-\tt DeltaVelocity   & {\em value} & Reference profile difference,
-equation~(\ref{equ:profile}).\\
-\tt DiamVelocity    & {\em value} & Reference profile diameter (jet mode).\\
+\tt Profile*        & \tt None, Tanh, Erf, Ekman,...& Functional form of the mean profile $g$, equation~(\ref{equ:profile}).\\
+\tt Mean*           & {\em value} & Reference mean value.\\
+\tt YCoor*          & {\em value} & y-coordinate of profile reference point, relative to the total scale.\\
+\tt Thick*          & {\em value} & Reference profile thickness.\\
+\tt Delta*          & {\em value} & Reference profile difference.\\
+\tt BottomSlope*    & {\em value} & Slope of the linear variation below the reference point.\\
+\tt UpperSlope*     & {\em value} & Slope of the linear variation above the reference point.\\
+\tt Diam*           & {\em value} & Reference profile diameter (jet mode).\\
 %
-\multicolumn{3}{l}{\it Similarly for density or temperature}\\
+\multicolumn{3}{l}{\it * is VelocityX, VelocityY, VelocityZ, density, pressure or temperature}\\
 %
-\tt Pressure        & {\em value} & Reference mean pressure.\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -288,13 +286,21 @@ equation~(\ref{equ:profile}).\\
 %
 \multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Scalar]}\\
 %
-\tt ProfileScalar\# & \tt None, Tanh, Erf,... & Functional form of the mean profile.\\
-\tt MeanScalar\#    & {\em value} & Reference mean scalar.\\
-\tt YCoorScalar\#   & {\em value} & y-coordinate of profile reference point, relative to the total scale.\\
-\tt ThickScalar\#   & {\em value} & Reference profile thickness.\\
-\tt DeltaScalar\#   & {\em value} & Reference profile difference.\\
-\tt DiamScalar\#    & {\em value} & Reference profile diameter (jet mode).\\
+\tt idem & \tt idem & idem\\
 %
+\multicolumn{3}{l}{\it Same as {\tt [Flow]} but * is {\tt Scalar\#}.}\\
+%
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+%
+\multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Thermodynamics]}\\
+%
+\tt Pressure        & {\em value} & Reference mean pressure.\\
+\tt Parameters & {\em value1, value2, ...} & Parameters that define the buoyancy function $b^e(s_i)$.\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
