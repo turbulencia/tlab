@@ -13,6 +13,17 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     character(len=512) sRes
     real(cp) derivative
 
+    ! -------------------------------------------------------------------
+    call TLAB_WRITE_ASCII(bakfile, '#Profile'//TRIM(ADJUSTL(tag))//'=<None/Tanh/Erf/Ekman/Parabolic/...>')
+    call TLAB_WRITE_ASCII(bakfile, '#'//TRIM(ADJUSTL(tag))//'=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#YCoor'//TRIM(ADJUSTL(tag))//'=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#Diam'//TRIM(ADJUSTL(tag))//'=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#Thick'//TRIM(ADJUSTL(tag))//'=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#Delta'//TRIM(ADJUSTL(tag))//'=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#BottomSlope'//TRIM(ADJUSTL(tag))//'=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#UpperSlope'//TRIM(ADJUSTL(tag))//'=<value>')
+
+    ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, block, 'Profile'//TRIM(ADJUSTL(tag)), 'none', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'none') then; var%type = PROFILE_NONE
     else if (TRIM(ADJUSTL(sRes)) == 'tanh') then; var%type = PROFILE_TANH
@@ -42,7 +53,14 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     else
         call SCANINIREAL(bakfile, inifile, block, 'Mean'//TRIM(ADJUSTL(tag)), '0.0', var%mean)
     end if
-    call SCANINIREAL(bakfile, inifile, block, 'YCoor'//TRIM(ADJUSTL(tag)), '0.5', var%ymean_rel)
+    call SCANINICHAR(bakfile, inifile, block, 'YMean'//TRIM(ADJUSTL(tag)), 'void', sRes)
+    if (TRIM(ADJUSTL(sRes)) == 'void') then ! Backwards compatibility
+        var%relative = .true.
+        call SCANINIREAL(bakfile, inifile, block, 'YCoor'//TRIM(ADJUSTL(tag)), '0.5', var%ymean_rel)    ! Position in relative coordinates
+    else
+        var%relative = .false.
+        call SCANINIREAL(bakfile, inifile, block, 'YMean'//TRIM(ADJUSTL(tag)), '0.0', var%ymean)         ! Position in absolute coordinates
+    end if
     call SCANINIREAL(bakfile, inifile, block, 'Delta'//TRIM(ADJUSTL(tag)), '0.0', var%delta)
     call SCANINIREAL(bakfile, inifile, block, 'Thick'//TRIM(ADJUSTL(tag)), '0.0', var%thick)
     call SCANINIREAL(bakfile, inifile, block, 'BottomSlope'//TRIM(ADJUSTL(tag)), '0.0', var%lslope)
@@ -70,20 +88,20 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     return
 end subroutine PROFILES_READBLOCK
 
-function PROFILES(var, ycenter, y) result(f)
+function PROFILES(var, y) result(f)
     use TLAB_TYPES, only: profiles_dt, cp
     use TLAB_CONSTANTS
     implicit none
 
     type(profiles_dt), intent(in) :: var
-    real(cp), intent(in) :: ycenter, y
+    real(cp), intent(in) :: y
     real(cp) f
 
     ! -------------------------------------------------------------------
     real(cp) yrel, xi, amplify, zamp, cnought
 
     ! ###################################################################
-    yrel = y - ycenter ! position relative to ycenter
+    yrel = y - var%ymean ! position relative to ycenter
     amplify = 0.0_cp    ! default
 
     ! -------------------------------------------------------------------

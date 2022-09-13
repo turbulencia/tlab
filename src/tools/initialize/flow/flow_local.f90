@@ -40,7 +40,7 @@ contains
 
         ! -------------------------------------------------------------------
         integer(ci) bcs(2, 2)
-        real(cp) PROFILES, ycenter, yr
+        real(cp) PROFILES, yr
         external PROFILES
 
         real(cp), dimension(:), pointer :: yn
@@ -52,9 +52,8 @@ contains
         prof_loc= Kini
         prof_loc%delta=C_1_R
         prof_loc%mean=C_0_R
-        ycenter = yn(1) + g(2)%scale*prof_loc%ymean_rel
         do j = 1, jmax                               ! Wall-normal velocity
-            wrk1d(j, 1) = PROFILES(prof_loc, ycenter, yn(j))
+            wrk1d(j, 1) = PROFILES(prof_loc, yn(j))
         end do
         call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
         wrk1d(:, 2) = -wrk1d(:, 2)                     ! Negative of the derivative of f, wall-parallel velocity

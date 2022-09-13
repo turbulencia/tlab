@@ -372,7 +372,9 @@ CALL FDM_INITIALIZE(x, g(1), wrk1d)
 CALL FDM_INITIALIZE(y, g(2), wrk1d)
 CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
-  DO ig = 1,3
+CALL FI_BACKGROUND_INITIALIZE(wrk1d)
+
+DO ig = 1,3
     CALL OPR_FILTER_INITIALIZE( g(ig), Dealiasing(ig), wrk1d )
   END DO
 
@@ -397,11 +399,6 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
   ENDIF
 
   CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
-
-! -------------------------------------------------------------------
-! Initialize thermodynamic quantities
-! -------------------------------------------------------------------
-  CALL FI_BACKGROUND_INITIALIZE(wrk1d)
 
 ! -------------------------------------------------------------------
 ! Initialize IBM geometry

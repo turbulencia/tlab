@@ -29,7 +29,7 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
     real(cp), dimension(imax, kmax) :: disp
 
     ! -------------------------------------------------------------------
-    real(cp) dummy, ycenter
+    real(cp) dummy
     real(cp) AVG1V2D, PROFILES
     real(cp) xcenter, amplify
 
@@ -104,11 +104,11 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
         if (tbg%type > 0) then ! temperature/mixture profile is given
             do k = 1, kmax
                 do i = 1, imax
-                    ycenter = y(1) + g(2)%scale*prof_loc%ymean_rel + disp(i, k)
+                    prof_loc%ymean = tbg%ymean + disp(i, k)
                     prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
                     prof_loc%mean = tbg%mean + C_05_R*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
                     do j = 1, jmax
-                        T(i, j, k) = PROFILES(prof_loc, ycenter, y(j))
+                        T(i, j, k) = PROFILES(prof_loc, y(j))
                     end do
                 end do
             end do
@@ -122,11 +122,11 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
 
             do k = 1, kmax
                 do i = 1, imax
+                    prof_loc%ymean = tbg%ymean + disp(i, k)
                     prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
                     prof_loc%mean = tbg%mean + C_05_R*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
-                    ycenter = y(1) + g(2)%scale*prof_loc%ymean_rel + disp(i, k)
                     do j = 1, jmax
-                        h(i, j, k) = PROFILES(prof_loc, ycenter, y(j))
+                        h(i, j, k) = PROFILES(prof_loc, y(j))
                     end do
                 end do
             end do

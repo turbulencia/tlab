@@ -26,7 +26,7 @@ target_link_libraries(inigrid.x operators fdm io ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "initialize/rand/*.f90")
 add_executable(inirand.x ${sourcefiles})
-target_link_libraries(inirand.x operators fdm io thermodynamics ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(inirand.x mappings operators fdm io thermodynamics ${LEVEL1_LIBS} ${LIBS})
 if (PSFFT_LIB)
 set_target_properties(inirand.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
 endif()
@@ -86,10 +86,10 @@ if (PSFFT_LIB)
 set_target_properties(transfields.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
 endif()
 
-# Lagrangian
+# Particles
 FILE(GLOB sourcefiles "initialize/part/*.f90")
 add_executable(inipart.x ${sourcefiles})
-target_link_libraries(inipart.x operators particles fdm io thermodynamics ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(inipart.x mappings operators particles fdm io thermodynamics ${LEVEL1_LIBS} ${LIBS})
 if (PSFFT_LIB)
 set_target_properties(inipart.x PROPERTIES LINK_FLAGS "${PSFFT_LINK_FLAGS} ${LINK_FLAGS}")
 endif()

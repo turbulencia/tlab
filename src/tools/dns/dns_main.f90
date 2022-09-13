@@ -69,6 +69,8 @@ PROGRAM DNS
   CALL FDM_INITIALIZE(y, g(2), wrk1d)
   CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
+  CALL FI_BACKGROUND_INITIALIZE(wrk1d)
+
   CALL PARTICLE_ALLOCATE(C_FILE_LOC)
 
   CALL DNS_ALLOCATE()
@@ -98,8 +100,6 @@ PROGRAM DNS
   END IF
 
   CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
-
-  CALL FI_BACKGROUND_INITIALIZE(wrk1d)
 
   ! ###################################################################
   ! Initialize fields

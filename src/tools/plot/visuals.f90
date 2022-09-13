@@ -310,6 +310,8 @@ PROGRAM VISUALS
   CALL FDM_INITIALIZE(y, g(2), wrk1d)
   CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
+  CALL FI_BACKGROUND_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
+
   IF ( ifourier .EQ. 1 .AND. inb_txc .GE. 1 ) THEN ! For Poisson solver
     CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
   ENDIF
@@ -317,8 +319,6 @@ PROGRAM VISUALS
   IF ( iread_flow .EQ. 1 .AND. inb_txc .GE. 3 ) THEN ! We need array space
     CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   ENDIF
-
-  CALL FI_BACKGROUND_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
 
   IF ( imode_ibm .EQ. 1 ) THEN
     CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)

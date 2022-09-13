@@ -904,27 +904,6 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
 ! ###################################################################
   CALL TLAB_WRITE_ASCII(bakfile, '#')
   CALL TLAB_WRITE_ASCII(bakfile, '#[Flow]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#VelocityX=<mean velocity X>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#VelocityY=<mean velocity Y>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#VelocityZ=<mean velocity Z>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Pressure=<mean pressure>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Density=<mean density>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Temperature=<mean temperature>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ProfileVelocity=<None/Linear/Tanh/Erf/Ekman/EkmanP/Parabolic>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#YCoorVelocity=<Relative Y reference point>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#DiamVelocity=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ThickVelocity=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#DeltaVelocity=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ProfileDensity=<None/Linear/Tanh/Erf>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#YCoorDensity=<Relative Y reference point>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#DiamDensity=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ThickDensity=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#DeltaDensity=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ProfileTemperature=<None/Linear/Tanh/Erf>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#YCoorTemperature=<Relative Y reference point>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#DiamTemperature=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ThickTemperature=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#DeltaTemperature=<value>')
 
 
   call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Velocity', qbg(1))  
@@ -958,6 +937,15 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
      ENDIF
   ENDIF
 
+! Scalars
+  CALL TLAB_WRITE_ASCII(bakfile, '#')
+  CALL TLAB_WRITE_ASCII(bakfile, '#[Scalar]')
+
+  DO is = 1,MAX_NSP
+     WRITE(lstr,*) is
+     call PROFILES_READBLOCK(bakfile, inifile, 'Scalar', 'Scalar'//TRIM(ADJUSTL(lstr)), sbg(is))
+  ENDDO
+
 ! -------------------------------------------------------------------
 ! Spatial case
 ! Thickness evolutions delta_i/diam_i=a*(x/diam_i+b)
@@ -987,31 +975,7 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
      CALL SCANINIREAL(bakfile, inifile, 'Flow', 'ThickBTemperature', '2.0',  tbg%parameters(3))
      CALL SCANINIREAL(bakfile, inifile, 'Flow', 'FluxTemperature',   '0.94', tbg%parameters(4))
 
-  ENDIF
-
-! ###################################################################
-! Scalars physical properties of the system
-! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[Scalar]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Profile=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#YCoor=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Diam=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Thick=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Mean=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Delta=<value>')
-
-  DO is = 1,MAX_NSP
-     WRITE(lstr,*) is
-     call PROFILES_READBLOCK(bakfile, inifile, 'Scalar', 'Scalar'//TRIM(ADJUSTL(lstr)), sbg(is))
-  ENDDO
-
-! -------------------------------------------------------------------
-! Spatial case
-! Thickness evolutions delta_i/diam_i=a*(x/diam_i+b)
-! Ramaprian is the default (x0=a*b)
-! -------------------------------------------------------------------
-  IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
+     ! Scalars
      CALL TLAB_WRITE_ASCII(bakfile, '#ThickA=<value>')
      CALL TLAB_WRITE_ASCII(bakfile, '#ThickB=<value>')
      CALL TLAB_WRITE_ASCII(bakfile, '#Flux=<value>')
@@ -1025,7 +989,7 @@ SUBROUTINE IO_READ_GLOBAL(inifile)
         CALL SCANINIREAL(bakfile, inifile, 'Scalar', TRIM(ADJUSTL(lstr)), '0.94', sbg(is)%parameters(4))
      ENDDO
 
-  ENDIF
+    ENDIF
 
 ! ###################################################################
 ! Final consistency check and initialization

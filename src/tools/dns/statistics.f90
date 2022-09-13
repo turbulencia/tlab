@@ -54,7 +54,7 @@ CONTAINS
     USE TLAB_VARS,    ONLY : froude
     USE TLAB_VARS,    ONLY : epbackground, pbackground, rbackground
     USE TLAB_VARS,    ONLY : itime, rtime
-    USE TLAB_VARS,      ONLY : sbg, schmidt
+    USE TLAB_VARS,      ONLY : schmidt
     USE TLAB_ARRAYS
     USE DNS_ARRAYS
     USE THERMO_VARS, ONLY : imixture

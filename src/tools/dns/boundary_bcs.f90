@@ -67,7 +67,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 ! -------------------------------------------------------------------
   TINTEGER j, is
   TREAL prefactor
-  TREAL ycenter, PROFILES
+  TREAL PROFILES
   type(profiles_dt) prof_loc
 
 #ifdef USE_MPI
@@ -236,17 +236,17 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
              BcsFlowImin%Ref(1,1,1), BcsFlowImin%Ref(1,1,7), BcsFlowImin%Ref(1,1,5))
 
 ! shape factor
-        ycenter   = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean_rel
         prof_loc%type=PROFILE_TANH
         prof_loc%thick=qbg(1)%diam/C_8_R
         prof_loc%delta=C_1_R
+        prof_loc%ymean=qbg(1)%ymean
         prof_loc%mean=C_05_R
         prof_loc%lslope=C_0_R
         prof_loc%uslope=C_0_R
         prof_loc%parameters=C_0_R
         prof_loc%parameters(5)=C_3_R*qbg(1)%diam
-        BcsFlowImin%ref(:,:,inb_flow+1) = PROFILES(prof_loc, ycenter, g(2)%nodes(j))
-        BcsScalImin%ref(:,:,inb_scal+1) = PROFILES(prof_loc, ycenter, g(2)%nodes(j))
+        BcsFlowImin%ref(:,:,inb_flow+1) = PROFILES(prof_loc, g(2)%nodes(j))
+        BcsScalImin%ref(:,:,inb_scal+1) = PROFILES(prof_loc, g(2)%nodes(j))
 
      ENDIF
 

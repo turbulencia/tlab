@@ -25,9 +25,6 @@ program INIFLOW
     implicit none
 
     ! -------------------------------------------------------------------
-    ! integer(ci) id
-
-    ! -------------------------------------------------------------------
     ! Additional local arrays
 #ifdef USE_CGLOC
     real(cp), dimension(:), allocatable, save :: ci, cj, ck, ipos, jpos, kpos
@@ -59,6 +56,9 @@ program INIFLOW
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
+
+    call FI_BACKGROUND_INITIALIZE(wrk1d)
+    if (Kini%relative) Kini%ymean = g(2)%nodes(1) + g(2)%scale*Kini%ymean_rel
 
     ! Staggering of the pressure grid not implemented here
     if (istagger == 1 .or. ivfilter == 1) then

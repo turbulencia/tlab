@@ -40,7 +40,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
     real(cp), dimension(jmax, *), intent(INOUT) :: wrk1d, wrk2d
 
     ! -------------------------------------------------------------------
-    real(cp) ycenter, dummy
+    real(cp) dummy
     integer(ci) j, k, is, bcs(2, 2)
     real(cp) PROFILES
     external PROFILES
@@ -59,16 +59,14 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
 
             ! temperature/mixture profile are given
             if (rbg%type == PROFILE_NONE) then
-                ycenter = g(2)%nodes(1) + g(2)%scale*tbg%ymean_rel
                 do j = 1, jmax
-                    dummy = PROFILES(tbg, ycenter, g(2)%nodes(j))
+                    dummy = PROFILES(tbg, g(2)%nodes(j))
                     TEM_MEAN_LOC(:, j, :) = dummy
                 end do
 
                 do is = 1, inb_scal
-                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
                     do j = 1, jmax
-                        dummy = PROFILES(sbg(is), ycenter, g(2)%nodes(j))
+                        dummy = PROFILES(sbg(is), g(2)%nodes(j))
                         s(:, j, :, is) = dummy
                     end do
                 end do
@@ -83,9 +81,8 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
 
                 ! density profile itself is given
             else
-                ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean_rel
                 do j = 1, jmax
-                    dummy = PROFILES(rbg, ycenter, g(2)%nodes(j))
+                    dummy = PROFILES(rbg, g(2)%nodes(j))
                     rho(:, j, :) = rho(:, j, :) + dummy
                 end do
 
@@ -130,9 +127,8 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
             ! rho_vi(:) = rho(1,:,1) ! I need to update this because rho(1,:,1) is now undefined
 
             ! Inflow profile of axial velocity
-            ycenter = g(2)%nodes(1) + g(2)%scale*qbg(1)%ymean_rel
             do j = 1, jmax
-                u_vi(j) = PROFILES(qbg(1), ycenter, g(2)%nodes(j))
+                u_vi(j) = PROFILES(qbg(1), g(2)%nodes(j))
             end do
 
             ! 2D distribution of density
@@ -144,9 +140,8 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
             end do
 
         else ! density profile itself is given
-            ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean_rel
             do j = 1, jmax
-                dummy = PROFILES(rbg, ycenter, g(2)%nodes(j))
+                dummy = PROFILES(rbg, g(2)%nodes(j))
                 rho(:, j, :) = rho(:, j, :) + dummy
             end do
 

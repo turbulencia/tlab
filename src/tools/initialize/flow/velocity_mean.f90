@@ -13,7 +13,7 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
 
     ! -------------------------------------------------------------------
     integer(ci) iq, j
-    real(cp) PROFILES, ycenter, calpha, salpha
+    real(cp) PROFILES, calpha, salpha
     external PROFILES
 
     !########################################################################
@@ -21,9 +21,8 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
 
         ! Construct reference profiles into array wrk1d
         do iq = 1, 3
-            ycenter = g(2)%nodes(1) + g(2)%scale*qbg(iq)%ymean_rel
             do j = 1, jmax
-                wrk1d(j, iq) = PROFILES(qbg(iq), ycenter, g(2)%nodes(j))
+                wrk1d(j, iq) = PROFILES(qbg(iq), g(2)%nodes(j))
             end do
         end do
 

@@ -20,7 +20,7 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
 
 ! -------------------------------------------------------------------
     integer(ci) j
-    real(cp) pmin, pmax, ycenter
+    real(cp) pmin, pmax
     real(cp) PROFILES
     type(profiles_dt) prof_loc
 
@@ -59,11 +59,9 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
 ! AIRWATER case: temperature/mixture profile is given
             if (imixture == MIXT_TYPE_AIRWATER .and. tbg%type > 0) then
                 do j = 1, jmax
-                    ycenter = y(1) + g(2)%scale*tbg%ymean_rel
-                    t_loc(j) = PROFILES(tbg, ycenter, y(j))
+                    t_loc(j) = PROFILES(tbg, y(j))
 
-                    ycenter = y(1) + g(2)%scale*sbg(1)%ymean_rel
-                    z1_loc(j) = PROFILES(sbg(1), ycenter, g(2)%nodes(j))
+                    z1_loc(j) = PROFILES(sbg(1), g(2)%nodes(j))
 
                 end do
                 ! CALL FI_HYDROSTATIC_AIRWATER_T&
@@ -82,11 +80,9 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
                 prof_loc%type = -tbg%type
 
                 do j = 1, jmax
-                    ycenter = y(1) + g(2)%scale*prof_loc%ymean_rel
-                    z1_loc(j) = PROFILES(prof_loc, ycenter, y(j))
+                    z1_loc(j) = PROFILES(prof_loc, y(j))
 
-                    ycenter = y(1) + g(2)%scale*sbg(1)%ymean_rel
-                    z2_loc(j) = PROFILES(sbg(1), ycenter, g(2)%nodes(j))
+                    z2_loc(j) = PROFILES(sbg(1), g(2)%nodes(j))
 
                 end do
 !           CALL FI_HYDROSTATIC_H_OLD(jmax, y, z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))

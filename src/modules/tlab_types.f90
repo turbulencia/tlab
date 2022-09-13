@@ -43,7 +43,8 @@ module TLAB_TYPES
     type profiles_dt
         sequence
         TINTEGER type, padding
-        TREAL mean, delta, ymean_rel, thick, lslope, uslope, diam
+        logical relative
+        TREAL mean, delta, ymean, ymean_rel, thick, lslope, uslope, diam
         TREAL, dimension(MAX_PARS) :: parameters
     end type profiles_dt
 

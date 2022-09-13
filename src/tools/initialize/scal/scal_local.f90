@@ -42,7 +42,7 @@ contains
         real(cp), dimension(jmax, 1), intent(inout) :: wrk1d
 
         ! -------------------------------------------------------------------
-        real(cp) PROFILES, ycenter, yr
+        real(cp) PROFILES, yr
         external PROFILES
 
         real(cp), dimension(:), pointer :: yn
@@ -53,9 +53,8 @@ contains
         prof_loc = Sini(is)
         prof_loc%delta = C_1_R
         prof_loc%mean = C_0_R
-        ycenter = g(2)%nodes(1) + g(2)%scale*prof_loc%ymean_rel
         do j = 1, jmax
-            wrk1d(j, 1) = PROFILES(prof_loc, ycenter, yn(j))
+            wrk1d(j, 1) = PROFILES(prof_loc, yn(j))
         end do
 
         select case (Sini(is)%type)
@@ -145,7 +144,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         real(cp), dimension(imax, kmax) :: disp
 
         ! -------------------------------------------------------------------
-        real(cp) dummy, ycenter
+        real(cp) dummy
         real(cp) AVG1V2D, PROFILES
         real(cp) xcenter, zcenter, rcenter, amplify
 
@@ -214,9 +213,9 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         case (4, 5)           ! Perturbation in the centerplane
             do k = 1, kmax
                 do i = 1, imax
-                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel + disp(i, k)
+                    ! ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel + disp(i, k)
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES(sbg(is), ycenter, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES(sbg(is), g(2)%nodes(j)-disp(i, k))
                     end do
                 end do
             end do
@@ -226,11 +225,10 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 
             do k = 1, kmax
                 do i = 1, imax
-                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
                     prof_loc%thick = sbg(is)%thick + disp(i, k)
 
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES(prof_loc, ycenter, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES(prof_loc, g(2)%nodes(j))
                     end do
                     
                 end do
@@ -241,13 +239,12 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 
             do k = 1, kmax
                 do i = 1, imax
-                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
                     prof_loc%delta = sbg(is)%delta + disp(i, k)
                     prof_loc%mean = (prof_loc%delta)*C_05_R
                     if (sbg(is)%delta > 0) prof_loc%thick = prof_loc%delta/sbg(is)%delta*sbg(is)%thick
 
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES(prof_loc, ycenter, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES(prof_loc, g(2)%nodes(j))
                     end do
 
                 end do

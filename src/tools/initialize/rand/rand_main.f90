@@ -42,6 +42,8 @@ program INIRAND
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
+    call FI_BACKGROUND_INITIALIZE(wrk1d)
+
     ! ###################################################################
     call TLAB_WRITE_ASCII(lfile, 'Initializing random fiels.')
 
