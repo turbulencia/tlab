@@ -105,7 +105,7 @@ end subroutine FLOW_SPATIAL_DENSITY
 !#
 !# In this subroutine, the density field is a given input.
 !#
-!# The calculation of v assumes ycoor_u equal to 0.5. This section
+!# The calculation of v assumes ymean_rel_u equal to 0.5. This section
 !# should also be rewritten in terms of OPR_PARTIAL_ and QUAD routines.
 !#
 !########################################################################

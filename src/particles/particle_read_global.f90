@@ -33,7 +33,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#Number=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#MemoryFactor=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#IniType=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#IniYCoor=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#IniYMean=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#IniThick=<value>')
 
     call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
@@ -54,7 +54,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
         call SCANINIINT(bakfile, inifile, block, 'IniType', '1', part_ini_mode)
-        call SCANINIREAL(bakfile, inifile, block, 'IniYCoor', '0.5', part_ini_ymean)
+        call SCANINIREAL(bakfile, inifile, block, 'IniYMean', '0.5', part_ini_ymean)
         call SCANINIREAL(bakfile, inifile, block, 'IniThick', '1.0', part_ini_thick)
 
 ! -------------------------------------------------------------------
