@@ -43,7 +43,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 
   TREAL wrk1d(isize_wrk1d,*)
   TREAL wrk2d(isize_wrk2d,*)
-
+    TREAL ycenter
 ! -------------------------------------------------------------------
 #define rU(A,B)     stat(A,B,1)
 #define rV(A,B)     stat(A,B,2)
@@ -1018,7 +1018,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 !      ENDDO
 !
 ! ! Mixing layer limit (U=0.1dU and U=0.9dU)
-!      y_center = g(2)%nodes(1) + qbg(1)%ymean*g(2)%scale
+!      y_center = g(2)%nodes(1) + qbg(1)%ymean_rel*g(2)%scale
 !      DO n = 1,nstatavg
 !         fU_05 = U2 + C_01_R*qbg(1)%delta
 !         DO j = 1,jmax
@@ -1185,7 +1185,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
      ENDIF
 
 ! Jet center line based on velocity
-     y_center = g(2)%nodes(1) + qbg(1)%ymean*g(2)%scale
+     y_center = g(2)%nodes(1) + qbg(1)%ymean_rel*g(2)%scale
      DO n = 1,nstatavg
         DO j = 1,jmax
            wrk1d(j,1) = fU(n,j)
@@ -1527,8 +1527,10 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         ivauxpre = 4
         VAUXPRE(1) = g(1)%nodes(i) /qbg(1)%diam
         VAUXPRE(2) = g(2)%nodes(j) /qbg(1)%diam
-        VAUXPRE(3) = (g(2)%nodes(j)- g(2)%nodes(1) - qbg(1)%ymean *g(2)%scale)/delta_05
-        VAUXPRE(4) = (g(2)%nodes(j)- g(2)%nodes(1) - tbg%ymean    *g(2)%scale)/delta_t
+        ycenter = g(2)%nodes(1) + qbg(1)%ymean_rel *g(2)%scale
+        VAUXPRE(3) = (g(2)%nodes(j)- ycenter)/delta_05
+        ycenter = g(2)%nodes(1) + tbg%ymean_rel    *g(2)%scale
+        VAUXPRE(4) = (g(2)%nodes(j)- ycenter)/delta_t
 
         IF ( j .EQ. jmax/2 ) THEN
            ivauxdum = ivauxpos

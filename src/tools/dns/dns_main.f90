@@ -13,8 +13,8 @@ PROGRAM DNS
 #ifdef USE_MPI
   USE TLAB_MPI_PROCS
 #endif
-  USE LAGRANGE_VARS
-  USE LAGRANGE_ARRAYS
+  USE PARTICLE_VARS
+  USE PARTICLE_ARRAYS
   USE DNS_LOCAL
   USE DNS_ARRAYS
   USE TIME
@@ -41,9 +41,7 @@ PROGRAM DNS
   CALL TLAB_START()
 
   CALL IO_READ_GLOBAL(ifile)
-  IF ( icalc_part == 1 ) THEN
     CALL PARTICLE_READ_GLOBAL(ifile)
-  END IF
 #ifdef CHEMISTRY
   CALL CHEM_READ_GLOBAL(ifile)
 #endif
@@ -70,6 +68,8 @@ PROGRAM DNS
   CALL FDM_INITIALIZE(x, g(1), wrk1d)
   CALL FDM_INITIALIZE(y, g(2), wrk1d)
   CALL FDM_INITIALIZE(z, g(3), wrk1d)
+
+  CALL FI_BACKGROUND_INITIALIZE(wrk1d)
 
   CALL PARTICLE_ALLOCATE(C_FILE_LOC)
 
@@ -101,8 +101,6 @@ PROGRAM DNS
 
   CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
 
-  CALL FI_PROFILES_INITIALIZE(wrk1d)
-
   ! ###################################################################
   ! Initialize fields
   ! ###################################################################
@@ -120,10 +118,10 @@ PROGRAM DNS
 
   CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )  ! Initialize diagnostic thermodynamic quantities
 
-  IF ( icalc_part == 1 ) THEN
+  IF (imode_part /= PART_TYPE_NONE) THEN
     WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
     CALL IO_READ_PARTICLE(fname, l_g, l_q)
-    IF ( itrajectory /= LAG_TRAJECTORY_NONE ) THEN
+    IF ( imode_traj /= TRAJ_TYPE_NONE ) THEN
       CALL PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
     END IF
   END IF
@@ -152,7 +150,7 @@ PROGRAM DNS
   ! ###################################################################
   ! Initialize particle simumulation
   ! ###################################################################
-  IF ( icalc_part == 1 ) THEN
+  IF (imode_part /= PART_TYPE_NONE) THEN
     CALL PARTICLE_INITIALIZE()
   END IF
 
@@ -241,7 +239,7 @@ PROGRAM DNS
       CALL DNS_TOWER_ACCUMULATE(s,2,wrk1d)
     END IF
 
-    IF ( itrajectory /= LAG_TRAJECTORY_NONE ) THEN
+    IF ( imode_traj /= TRAJ_TYPE_NONE ) THEN
       CALL PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
     END IF
 
@@ -272,10 +270,10 @@ PROGRAM DNS
         CALL DNS_TOWER_WRITE(wrk3d)
       END IF
 
-      IF ( icalc_part == 1 ) THEN
+      IF (imode_part /= PART_TYPE_NONE) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
         CALL IO_WRITE_PARTICLE(fname, l_g, l_q)
-        IF ( itrajectory /= LAG_TRAJECTORY_NONE ) THEN
+        IF ( imode_traj /= TRAJ_TYPE_NONE ) THEN
           WRITE(fname,*) itime; fname =TRIM(ADJUSTL(tag_traj))//TRIM(ADJUSTL(fname))
           CALL PARTICLE_TRAJECTORIES_WRITE(fname)
         END IF
@@ -326,7 +324,7 @@ CONTAINS
   END IF
 
   ! -------------------------------------------------------------------
-  IF ( icalc_part == 1 ) THEN
+  IF (imode_part /= PART_TYPE_NONE) THEN
     WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
     CALL TLAB_WRITE_ASCII(lfile,line)
     ALLOCATE(l_comm(isize_l_comm), stat=ierr)
@@ -335,10 +333,10 @@ CONTAINS
       CALL TLAB_STOP(DNS_ERROR_ALLOC)
     END IF
 
-    WRITE(str,*) isize_particle; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
+    WRITE(str,*) isize_part; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
     WRITE(str,*) inb_part; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
     CALL TLAB_WRITE_ASCII(lfile,line)
-    ALLOCATE(l_hq(isize_particle,inb_part),stat=ierr)
+    ALLOCATE(l_hq(isize_part,inb_part),stat=ierr)
     IF ( ierr /= 0 ) THEN
       CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
       CALL TLAB_STOP(DNS_ERROR_ALLOC)

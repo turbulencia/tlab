@@ -37,8 +37,6 @@ module TLAB_MPI_VARS
     TINTEGER, dimension(:), allocatable :: ims_plan_trps_k, ims_plan_trpr_k
     TINTEGER :: ims_trp_mode_k
 
-    TINTEGER, dimension(:), allocatable :: ims_size_p ! Particle data
-
     integer, dimension(:, :), allocatable :: ims_status
     integer, dimension(:), allocatable :: ims_request
 

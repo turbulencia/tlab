@@ -13,20 +13,21 @@
 SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
 
   USE TLAB_CONSTANTS,   ONLY : lfile, efile
-  USE TLAB_VARS,      ONLY : isize_particle, inb_part_array
   USE TLAB_VARS,      ONLY : g
   USE TLAB_PROCS
-  USE LAGRANGE_VARS, ONLY : particle_dt, particle_number_total
+  USE PARTICLE_VARS, ONLY : isize_part, inb_part_array, isize_part_total
+  USE PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
   USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro, ims_err
+  USE PARTICLE_VARS, ONLY : ims_size_p
 #endif
 
   IMPLICIT NONE
 
   CHARACTER*(*)     fname
   TYPE(particle_dt) l_g
-  TREAL, DIMENSION(isize_particle,inb_part_array) :: l_q !, OPTIONAL :: l_q
+  TREAL, DIMENSION(isize_part,inb_part_array) :: l_q !, OPTIONAL :: l_q
 
 ! -------------------------------------------------------------------
   TINTEGER i
@@ -81,7 +82,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
   DO i = ims_pro+1,ims_npro
      count = count +INT(ims_size_p(i),KIND=8)
   ENDDO
-  IF ( particle_number_total .NE. count ) THEN
+  IF ( isize_part_total .NE. count ) THEN
      CALL TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
      CALL TLAB_STOP(DNS_ERROR_PARTICLE)
   ENDIF
@@ -117,7 +118,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
   READ(LOC_UNIT_ID) idummy                   ! dummy, should be 1 in serial
   READ(LOC_UNIT_ID) particle_number_loc
 ! Check
-  IF ( particle_number_total .NE. INT(particle_number_loc,KIND=8) ) THEN
+  IF ( isize_part_total .NE. INT(particle_number_loc,KIND=8) ) THEN
      CALL TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
      CLOSE(LOC_UNIT_ID)
      CALL TLAB_STOP(DNS_ERROR_PARTICLE)
@@ -127,7 +128,7 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
 
 ! For homogeneity with MPI version
 ! If we need more than 4 bytes, we should be using MPI...
-  l_g%np = INT(particle_number_total)
+  l_g%np = INT(isize_part_total)
 
 !  IF ( PRESENT(l_q) ) THEN
      DO i = 1,inb_part_array
@@ -158,19 +159,20 @@ END SUBROUTINE IO_READ_PARTICLE
 SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
 
   USE TLAB_CONSTANTS,   ONLY : lfile
-  USE TLAB_VARS,      ONLY : isize_particle, inb_part_array
+  USE PARTICLE_VARS,      ONLY : isize_part, inb_part_array
   USE TLAB_PROCS
-  USE LAGRANGE_VARS, ONLY : particle_dt
+  USE PARTICLE_TYPES, ONLY : particle_dt
 #ifdef USE_MPI
   USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_size_p, ims_pro, ims_npro, ims_err
+  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro, ims_err
+  USE PARTICLE_VARS, ONLY : ims_size_p
 #endif
 
   IMPLICIT NONE
 
   CHARACTER*(*)     fname
   TYPE(particle_dt) l_g
-  TREAL, DIMENSION(isize_particle,inb_part_array) :: l_q !, OPTIONAL :: l_q
+  TREAL, DIMENSION(isize_part,inb_part_array) :: l_q !, OPTIONAL :: l_q
 
 ! -------------------------------------------------------------------
   TINTEGER i

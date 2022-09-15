@@ -12,9 +12,9 @@ SUBROUTINE  FIELD_TO_PARTICLE &
 
   USE TLAB_CONSTANTS,  ONLY : efile, lfile
   USE TLAB_TYPES,      ONLY : pointers_dt, pointers3d_dt
-  USE TLAB_VARS,     ONLY : imax,jmax,kmax, isize_particle
+  USE TLAB_VARS,     ONLY : imax,jmax,kmax
   USE TLAB_PROCS
-  USE LAGRANGE_VARS,ONLY : particle_dt, isize_l_comm, inb_particle_interp
+  USE PARTICLE_VARS,ONLY : isize_part, particle_dt, isize_l_comm, inb_part_interp
 #ifdef USE_MPI
  USE MPI
  USE TLAB_MPI_VARS, ONLY : ims_err
@@ -28,7 +28,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   TYPE(pointers3d_dt), DIMENSION(nvar)                 :: data_in
   TYPE(pointers_dt),   DIMENSION(nvar)                 :: data_out
   TYPE(particle_dt)                                    :: l_g
-  TREAL,               DIMENSION(isize_particle,*)     :: l_q
+  TREAL,               DIMENSION(isize_part,*)     :: l_q
   TREAL,               DIMENSION(isize_l_comm), TARGET :: l_comm
   TREAL,               DIMENSION(*)                    :: wrk3d
 
@@ -40,7 +40,7 @@ SUBROUTINE  FIELD_TO_PARTICLE &
   TYPE(pointers3d_dt), DIMENSION(nvar) :: data_halo_i, data_halo_k, data_halo_ik
 
 !#######################################################################
-  IF ( nvar .GT. inb_particle_interp ) THEN
+  IF ( nvar .GT. inb_part_interp ) THEN
      CALL TLAB_WRITE_ASCII(efile,'FIELD_TO_PARTICLE. Not enough memory.')
      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
   ENDIF
@@ -238,9 +238,8 @@ SUBROUTINE FIELD_TO_PARTICLE_INTERPOLATE &
      (iflag, nvar, data_in, data_out, l_q, grid_start, grid_end)
 
   USE TLAB_TYPES,      ONLY : pointers_dt, pointers3d_dt
-  USE TLAB_VARS,     ONLY : isize_particle
   USE TLAB_VARS,     ONLY : g
-  USE LAGRANGE_VARS,ONLY : l_g
+  USE PARTICLE_VARS,ONLY : isize_part, l_g
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY: ims_offset_i, ims_offset_k
 #endif
@@ -251,7 +250,7 @@ SUBROUTINE FIELD_TO_PARTICLE_INTERPOLATE &
   TINTEGER iflag, nvar, grid_start, grid_end
   TYPE(pointers3d_dt), DIMENSION(nvar)             :: data_in
   TYPE(pointers_dt),   DIMENSION(nvar)             :: data_out
-  TREAL,               DIMENSION(isize_particle,3) :: l_q
+  TREAL,               DIMENSION(isize_part,3) :: l_q
 
 ! -------------------------------------------------------------------
   TREAL length_g_p(6), cube_g_p(4)

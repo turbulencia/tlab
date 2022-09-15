@@ -140,7 +140,7 @@ Some scalars can be diagnostic and not prognostic variables, so that there is no
 
 Different expressions for the buoyancy and the Coriolis terms are possible depending on the geometry and the definition of the (kinematic) modified pressure.
 
-For the buoyancy (see routine {\tt flow/flow\_buoyancy}), the most common expressions are a linear or bilinear relation to the scalar fields as
+For the buoyancy (see routine {\tt mappings/fi\_buoyancy}), the most common expressions are a linear or bilinear relation to the scalar fields as
 \begin{equation}
   b^e=\alpha_1\zeta_1+\alpha_2\zeta_2+\ldots+\alpha_\mathrm{\tt inb\_scal\_array+1}\;,
 \end{equation}
@@ -206,7 +206,7 @@ In case of the Coriolis force term, the case that is currently implemented in th
 \end{subequations}
 The geostrophic velocity vector $(u_{1,g},\,u_{2,g},\,u_{3,g}) = (\cos\alpha,\,0,\,-\sin\alpha)$ is defined in terms of the input parameter $\alpha$ (rotation angle around $Ox_2$), to be provided.
 
-Radiation heating or cooling can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{R}\,r\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the corresponding non-dimensional heat parameter and the radiation function $r^e(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) heat parameter $Q$. So far, $\mathrm{\bf Da}_\mathrm{R}=1$ (to be added at the end of the input list of the Damk{\"o}hler numbers?). One possible formulation is a one-dimensional bulk model (see routine {\tt flow/flow\_radiation}), which is represented by radiation functions of the form
+Radiation heating or cooling can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{R}\,r\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the corresponding non-dimensional heat parameter and the radiation function $r^e(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) heat parameter $Q$. So far, $\mathrm{\bf Da}_\mathrm{R}=1$ (to be added at the end of the input list of the Damk{\"o}hler numbers?). One possible formulation is a one-dimensional bulk model (see routine {\tt operators/opr\_radiation}), which is represented by radiation functions of the form
 \begin{equation}
   r^e=\alpha_0 \zeta_{\gamma}\exp\left[
   -\alpha_1^{-1}\int_z^\infty\zeta_{\gamma}(z')\,\mathrm{d}z'\right] \;.
@@ -262,3 +262,11 @@ The first scalar is the static energy
   \zeta_1 = h + \frac{\gamma_0-1}{\gamma_0}\mathbf{H}^{-1}(x_2-x_{2,0}) \;.
 \end{equation}
 The remaining scalars are the composition (e.g., total water specific humidity and liquid water specific humidity in the case of the airwater mixture).
+
+\section{Particle formulation}
+
+Lagrange formulation to describe the evolution of a set of particles.
+
+Details to follow.
+
+The main assumption is that the grid spacing in the first and third directions are uniform, which is used to locate the grid nodes to interpolate the Eulerian fields into the particle position, and to extrapolate particle information into the surrounding grid points. Stretching is still allowed in the second direction.

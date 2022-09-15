@@ -56,8 +56,6 @@ contains
         allocate (ims_plan_trps_k(ims_npro_k))
         allocate (ims_plan_trpr_k(ims_npro_k))
 
-        allocate (ims_size_p(ims_npro))                ! Particle information
-
 #ifdef HLRS_HAWK
         ! On hawk, we tested that 192 yields optimum performace;
         ! Blocking will thus only take effect in very large cases

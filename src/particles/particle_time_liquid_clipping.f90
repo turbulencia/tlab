@@ -18,15 +18,16 @@
 SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, l_q,l_txc,l_comm, wrk3d)
 
   USE TLAB_TYPES,  ONLY : pointers_dt, pointers3d_dt
-  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_particle, inb_part_array
+  USE TLAB_VARS, ONLY : imax,jmax,kmax
+  USE PARTICLE_VARS, ONLY : isize_part, inb_part_array
   USE TLAB_VARS, ONLY : isize_field, inb_scal_array
-  USE LAGRANGE_VARS, ONLY : l_g
+  USE PARTICLE_VARS, ONLY : l_g
 
   IMPLICIT NONE
 
   TREAL, DIMENSION(isize_field,*), TARGET  :: s
-  TREAL, DIMENSION(isize_particle,*)       :: l_q
-  TREAL, DIMENSION(isize_particle), TARGET :: l_txc
+  TREAL, DIMENSION(isize_part,*)       :: l_q
+  TREAL, DIMENSION(isize_part), TARGET :: l_txc
   TREAL, DIMENSION(*)                      :: l_comm
   TREAL, DIMENSION(*)                      :: wrk3d
 

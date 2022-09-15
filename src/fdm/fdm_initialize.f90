@@ -455,7 +455,7 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 ! ###################################################################
   g%rhoinv => x(:,ig)
 
-  g%anelastic = .FALSE. ! Default; activated in fi_profiles_initialize
+  g%anelastic = .FALSE. ! Default; activated in FI_BACKGROUND_INITIALIZE
 
   ig = ig +1
 ! ###################################################################

@@ -67,7 +67,7 @@ add_subdirectory(fdm)
 add_subdirectory(filters)
 add_subdirectory(operators)
 add_subdirectory(mappings)
-add_subdirectory(lagrange)
+add_subdirectory(particles)
 add_subdirectory(ibm)
 
 # produce executables

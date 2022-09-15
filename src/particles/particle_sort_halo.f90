@@ -9,9 +9,9 @@
 SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
 
   USE TLAB_TYPES,      ONLY : pointers_dt
-  USE TLAB_VARS,     ONLY : isize_particle, inb_part_array
+  USE PARTICLE_VARS,     ONLY : isize_part, inb_part_array
   USE TLAB_VARS,     ONLY : g
-  USE LAGRANGE_VARS,ONLY : particle_dt
+  USE PARTICLE_VARS,ONLY : particle_dt
 
 #ifdef USE_MPI
   USE TLAB_VARS, ONLY : imax,kmax
@@ -23,7 +23,7 @@ SUBROUTINE PARTICLE_SORT_HALO(l_g,l_q, nvar,data, grid_zone, halo_zone_x, halo_z
   TINTEGER grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal, nvar
   TYPE(pointers_dt), DIMENSION(nvar)                        :: data
   TYPE(particle_dt)                                         :: l_g
-  TREAL,             DIMENSION(isize_particle,inb_part_array) :: l_q
+  TREAL,             DIMENSION(isize_part,inb_part_array) :: l_q
 
 ! -------------------------------------------------------------------
   TREAL dummy, right_limit, upper_limit

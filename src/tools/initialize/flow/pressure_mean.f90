@@ -1,47 +1,45 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 
-SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d)
+subroutine PRESSURE_MEAN(p, T, s, wrk1d)
+    use TLAB_TYPES, only: cp, ci, profiles_dt
+    use TLAB_CONSTANTS, only: efile
+    use TLAB_VARS, only: g
+    use TLAB_VARS, only: imax, jmax, kmax
+    use TLAB_VARS, only: rbg, pbg, tbg, sbg
+    use TLAB_VARS, only: buoyancy
+    use TLAB_PROCS
+    use THERMO_VARS, only: imixture
 
-  USE TLAB_CONSTANTS, ONLY : efile
-  USE TLAB_VARS,    ONLY : g
-  USE TLAB_VARS,    ONLY : imax,jmax,kmax
-  USE TLAB_VARS,    ONLY : rbg, pbg, tbg, sbg
-  USE TLAB_VARS,    ONLY : buoyancy
-  USE TLAB_PROCS
-  USE THERMO_VARS, ONLY : imixture
+    implicit none
 
-  IMPLICIT NONE
-
-#include "integers.h"
-
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(OUT)   :: p
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: T
-  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(INOUT) :: s
-  TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: wrk1d
+    real(cp), dimension(imax, jmax, kmax), intent(OUT) :: p
+    real(cp), dimension(imax, jmax, kmax), intent(INOUT) :: T
+    real(cp), dimension(imax, jmax, kmax, *), intent(INOUT) :: s
+    real(cp), dimension(jmax, *), intent(INOUT) :: wrk1d
 
 ! -------------------------------------------------------------------
-  TINTEGER j, iprof_loc
-  TREAL pmin,pmax, ycenter
-  TREAL PROFILES
+    integer(ci) j
+    real(cp) pmin, pmax
+    real(cp) PROFILES
+    type(profiles_dt) prof_loc
 
-  TREAL, DIMENSION(:), POINTER :: y,dy
+    real(cp), dimension(:), pointer :: y, dy
 
 ! ###################################################################
 ! Define pointers
-  y => g(2)%nodes; dy => g(2)%jac(:,1)
+    y => g(2)%nodes; dy => g(2)%jac(:, 1)
 
 ! ###################################################################
 ! Constant pressure
 ! ###################################################################
-  IF ( buoyancy%type .EQ. EQNS_NONE ) THEN
-     p = pbg%mean
+    if (buoyancy%type == EQNS_NONE) then
+        p = pbg%mean
 
 ! ###################################################################
 ! Hydrostatic equilibrium
 ! ###################################################################
-  ELSE
+    else
 
 #define p_loc(i)       wrk1d(i,1)
 #define r_loc(i)       wrk1d(i,2)
@@ -56,86 +54,84 @@ SUBROUTINE PRESSURE_MEAN(p,T,s, wrk1d)
 ! -------------------------------------------------------------------
 ! Temperature profile is given
 ! -------------------------------------------------------------------
-     IF ( rbg%type .EQ. PROFILE_NONE ) THEN
+        if (rbg%type == PROFILE_NONE) then
 
 ! AIRWATER case: temperature/mixture profile is given
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. tbg%type .GT. 0 ) THEN
-           DO j = 1,jmax
-              ycenter = y(1) + g(2)%scale *tbg%ymean
-              t_loc(j) = PROFILES(tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
+            if (imixture == MIXT_TYPE_AIRWATER .and. tbg%type > 0) then
+                do j = 1, jmax
+                    t_loc(j) = PROFILES(tbg, y(j))
 
-              ycenter = y(1) + g(2)%scale *sbg(1)%ymean
-              z1_loc(j) = PROFILES(sbg(1)%type, sbg(1)%thick, sbg(1)%delta, sbg(1)%mean, ycenter, sbg(1)%parameters, g(2)%nodes(j))
+                    z1_loc(j) = PROFILES(sbg(1), g(2)%nodes(j))
 
-           ENDDO
-           ! CALL FI_HYDROSTATIC_AIRWATER_T&
-           !      (y, dy, z1_loc(1), t_loc(1), p_loc(1), r_loc(1), wrk1d_loc(1), wrk2d, wrk3d)
-           CALL TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 1 undeveloped')
-           CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-           DO j = 1,jmax
-              s(:,j,:,1) = z1_loc(j)
-              s(:,j,:,2) = z2_loc(j)
-              T(:,j,:)   =  t_loc(j)
-           ENDDO
+                end do
+                ! CALL FI_HYDROSTATIC_AIRWATER_T&
+                !      (y, dy, z1_loc(1), t_loc(1), p_loc(1), r_loc(1), wrk1d_loc(1), wrk2d, wrk3d)
+                call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 1 undeveloped')
+                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                do j = 1, jmax
+                    s(:, j, :, 1) = z1_loc(j)
+                    s(:, j, :, 2) = z2_loc(j)
+                    T(:, j, :) = t_loc(j)
+                end do
 
 ! AIRWATER case: enthalpy/mixture profile is given
-        ELSE IF ( imixture .EQ. MIXT_TYPE_AIRWATER .AND. tbg%type .LT. 0 ) THEN
-           DO j = 1,jmax
-              ycenter = y(1) + g(2)%scale *tbg%ymean
-              iprof_loc =-tbg%type
-              z1_loc(j) = PROFILES(iprof_loc, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, y(j))
+            else if (imixture == MIXT_TYPE_AIRWATER .and. tbg%type < 0) then
+                prof_loc = tbg
+                prof_loc%type = -tbg%type
 
-              ycenter = y(1) + g(2)%scale *sbg(1)%ymean
-              z2_loc(j) = PROFILES(sbg(1)%type, sbg(1)%thick, sbg(1)%delta, sbg(1)%mean, ycenter, sbg(1)%parameters, g(2)%nodes(j))
+                do j = 1, jmax
+                    z1_loc(j) = PROFILES(prof_loc, y(j))
 
-           ENDDO
+                    z2_loc(j) = PROFILES(sbg(1), g(2)%nodes(j))
+
+                end do
 !           CALL FI_HYDROSTATIC_H_OLD(jmax, y, z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
-           CALL FI_HYDROSTATIC_H(g(2), z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
-           DO j = 1,jmax
-              s(:,j,:,1) = z2_loc(j)
-              s(:,j,:,2) = z3_loc(j)
-              T(:,j,:)   =  t_loc(j)
-           ENDDO
+                call FI_HYDROSTATIC_H(g(2), z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
+                do j = 1, jmax
+                    s(:, j, :, 1) = z2_loc(j)
+                    s(:, j, :, 2) = z3_loc(j)
+                    T(:, j, :) = t_loc(j)
+                end do
 
 ! General case: temperature/mixture profile is given
-        ELSE
-           ycenter = y(1) + tbg%ymean*g(2)%scale
+            else
+                ! ycenter = y(1) + tbg%ymean_rel*g(2)%scale
 !           CALL FI_HYDROSTATIC(i1, jmax, i1, ycenter, y, p_loc(1))
-           CALL TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 2 undeveloped')
-           CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 2 undeveloped')
+                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
 
-           DO j = 1,jmax
-              p_loc(j) = pbg%mean*EXP(p_loc(j))
-           ENDDO
+                ! do j = 1, jmax
+                !     p_loc(j) = pbg%mean*EXP(p_loc(j))
+                ! end do
 
-        ENDIF
+            end if
 
 ! -------------------------------------------------------------------
 ! Density profile is given
 ! -------------------------------------------------------------------
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Density case undeveloped')
-        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-     ENDIF
+        else
+            call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Density case undeveloped')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
 
 ! -------------------------------------------------------------------
 ! 3D array. Simple case of g parallel and opposite to OY
 ! -------------------------------------------------------------------
-     DO j = 1,jmax
-        p(:,j,:) = p_loc(j)
-     ENDDO
+        do j = 1, jmax
+            p(:, j, :) = p_loc(j)
+        end do
 
-  ENDIF
+    end if
 
 ! ###################################################################
 ! Control
 ! ###################################################################
-  CALL MINMAX(imax,jmax,kmax, p, pmin,pmax)
+    call MINMAX(imax, jmax, kmax, p, pmin, pmax)
 
-  IF ( pmin .LT. C_0_R .OR. pmax .LT. C_0_R ) THEN
-     CALL TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Negative pressure.')
-     CALL TLAB_STOP(DNS_ERROR_NEGPRESS)
-  ENDIF
+    if (pmin < 0.0_cp .or. pmax < 0.0_cp) then
+        call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Negative pressure.')
+        call TLAB_STOP(DNS_ERROR_NEGPRESS)
+    end if
 
-  RETURN
-END SUBROUTINE PRESSURE_MEAN
+    return
+end subroutine PRESSURE_MEAN

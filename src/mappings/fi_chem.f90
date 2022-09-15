@@ -3,7 +3,7 @@
 
 SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
 
-  USE TLAB_TYPES,  ONLY : term_dt
+  USE TLAB_TYPES,  ONLY : term_dt, profiles_dt
   USE TLAB_VARS, ONLY : sbg, damkohler
   USE TLAB_VARS, ONLY : g
 
@@ -15,20 +15,26 @@ SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
   TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: source
 
 ! -----------------------------------------------------------------------
-  TREAL dummy, dummy2, xi, thickness_inv, ycenter
+  TREAL dummy, dummy2, PROFILES
+  type(profiles_dt) prof_loc
   TINTEGER i,j,k
+  external PROFILES
 
 !########################################################################
   SELECT CASE( chemistry%type )
 
   CASE( EQNS_CHEM_LAYEREDRELAXATION )
-     ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean + chemistry%parameters(2)
-     thickness_inv = C_1_R /chemistry%parameters(3)
+     prof_loc%type = PROFILE_TANH
+     prof_loc%ymean = sbg(is)%ymean
+     prof_loc%thick =-chemistry%parameters(3) *C_05_R
+     prof_loc%mean = C_05_R
+     prof_loc%delta = C_1_R
+     prof_loc%lslope=C_0_R
+     prof_loc%uslope=C_0_R
      DO i=1,nx
         DO k=1,nz
            DO j=1,ny
-              xi = (g(2)%nodes(j)-ycenter) *thickness_inv
-              source(i+(j-1)*nx+(k-1)*nx*ny) = C_05_R *( C_1_R +TANH(xi) ) ! strength constant
+              source(i+(j-1)*nx+(k-1)*nx*ny) = PROFILES(prof_loc, g(2)%nodes(j)-chemistry%parameters(2)) ! strength constant
            ENDDO
         ENDDO
      ENDDO

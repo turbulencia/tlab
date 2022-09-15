@@ -3,7 +3,7 @@
 
 module SCAL_LOCAL
 
-    use TLAB_TYPES, only: background_dt, discrete_dt
+    use TLAB_TYPES, only: cp, ci, profiles_dt, discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, MAX_NSP
     use TLAB_VARS, only: g, sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
@@ -18,42 +18,43 @@ module SCAL_LOCAL
     public :: SCAL_FLUCTUATION_PLANE, SCAL_FLUCTUATION_VOLUME
 
     ! -------------------------------------------------------------------
-    TINTEGER :: flag_s, flag_mixture
+    integer(ci) :: flag_s, flag_mixture
 
-    type(background_dt) :: Sini(MAX_NSP)                            ! Geometry of perturbation of initial boundary condition
-    TREAL :: norm_ini_s(MAX_NSP), norm_ini_radiation  ! Scaling of perturbation
-    type(discrete_dt) :: fp                                       ! Discrete perturbation
+    type(profiles_dt) :: Sini(MAX_NSP)                        ! Geometry of perturbation of initial boundary condition
+    type(profiles_dt) :: prof_loc
+    real(cp) :: norm_ini_s(MAX_NSP), norm_ini_radiation         ! Scaling of perturbation
+    type(discrete_dt) :: fp                                     ! Discrete perturbation
 
     ! -------------------------------------------------------------------
-    TINTEGER i, j, k
+    integer(ci) i, j, k
 
-    TINTEGER im, idsp, kdsp
-    TREAL wx, wz, wx_1, wz_1
+    integer(ci) im, idsp, kdsp
+    real(cp) wx, wz, wx_1, wz_1
 
-    TREAL, dimension(:), pointer :: xn, zn
-
-#include "integers.h"
+    real(cp), dimension(:), pointer :: xn, zn
 
 contains
 
 ! ###################################################################
     subroutine SCAL_SHAPE(is, wrk1d)
 
-        TINTEGER is
-        TREAL, dimension(jmax, 1), intent(inout) :: wrk1d
+        integer(ci) is
+        real(cp), dimension(jmax, 1), intent(inout) :: wrk1d
 
         ! -------------------------------------------------------------------
-        TREAL PROFILES, ycenter, yr
+        real(cp) PROFILES, yr
         external PROFILES
 
-        TREAL, dimension(:), pointer :: yn
+        real(cp), dimension(:), pointer :: yn
 
         ! ###################################################################
         yn => g(2)%nodes
 
-        ycenter = yn(1) + g(2)%scale*Sini(is)%ymean
+        prof_loc = Sini(is)
+        prof_loc%delta = C_1_R
+        prof_loc%mean = C_0_R
         do j = 1, jmax
-            wrk1d(j, 1) = PROFILES(Sini(is)%type, Sini(is)%thick, C_1_R, C_0_R, ycenter, Sini(is)%parameters, yn(j))
+            wrk1d(j, 1) = PROFILES(prof_loc, yn(j))
         end do
 
         select case (Sini(is)%type)
@@ -73,14 +74,14 @@ contains
 ! ###################################################################
     subroutine SCAL_FLUCTUATION_VOLUME(is, s, tmp, wrk1d, wrk2d, wrk3d)
 
-        TINTEGER is
-        TREAL, dimension(imax, jmax, kmax), intent(out) :: s
-        TREAL, dimension(jmax, 1), intent(inout) :: wrk1d
-        TREAL, dimension(imax, kmax, 1), intent(inout) :: wrk2d
-        TREAL, dimension(imax, jmax, kmax), intent(inout) :: tmp, wrk3d
+        integer(ci) is
+        real(cp), dimension(imax, jmax, kmax), intent(out) :: s
+        real(cp), dimension(jmax, 1), intent(inout) :: wrk1d
+        real(cp), dimension(imax, kmax, 1), intent(inout) :: wrk2d
+        real(cp), dimension(imax, jmax, kmax), intent(inout) :: tmp, wrk3d
 
         ! -------------------------------------------------------------------
-        TREAL AVG1V2D, dummy, amplify
+        real(cp) AVG1V2D, dummy, amplify
         external AVG1V2D
 
 ! ###################################################################
@@ -103,7 +104,7 @@ contains
 
             amplify = C_0_R
             do j = 1, jmax
-                dummy = AVG1V2D(imax, jmax, kmax, j, i1, tmp)       ! Calculate mean
+                dummy = AVG1V2D(imax, jmax, kmax, j, 1, tmp)       ! Calculate mean
                 wrk3d(:, j, :) = (tmp(:, j, :) - dummy)*wrk1d(j, 1)  ! Remove mean and apply shape function
             end do
 
@@ -138,14 +139,14 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 ! ###################################################################
     subroutine SCAL_FLUCTUATION_PLANE(is, s, disp)
 
-        TINTEGER is
-        TREAL, dimension(imax, jmax, kmax) :: s
-        TREAL, dimension(imax, kmax) :: disp
+        integer(ci) is
+        real(cp), dimension(imax, jmax, kmax) :: s
+        real(cp), dimension(imax, kmax) :: disp
 
         ! -------------------------------------------------------------------
-        TREAL dummy, ycenter, thick_loc, delta_loc, mean_loc
-        TREAL AVG1V2D, PROFILES
-        TREAL xcenter, zcenter, rcenter, amplify
+        real(cp) dummy
+        real(cp) AVG1V2D, PROFILES
+        real(cp) xcenter, zcenter, rcenter, amplify
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -162,9 +163,9 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         select case (flag_s)
         case (4, 6, 8)   ! Broadband case
             dummy = rtime   ! rtime is overwritten in io_read_fields
-            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, i1, kmax, i1, i1, disp, s) ! using array s as aux array
+            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, 1, kmax, 1, 1, disp, s) ! using array s as aux array
             rtime = dummy
-            dummy = AVG1V2D(imax, i1, kmax, i1, i1, disp)     ! remove mean
+            dummy = AVG1V2D(imax, 1, kmax, 1, 1, disp)     ! remove mean
             disp = disp - dummy
 
         case (5, 7, 9)   ! Discrete case
@@ -175,7 +176,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
                 wx = M_REAL(fp%modex(im))*wx_1
                 wz = M_REAL(fp%modez(im))*wz_1
 
-                if (fp%type == 2) then ! Smoothed step funtion Tanh(a*Cos(\xi/b))
+                if (fp%type == PROFILE_TANH_COS) then ! Smoothed step funtion Tanh(a*Cos(\xi/b))
                     if (fp%parameters(2) <= C_0_R) then; dummy = C_BIG_R; 
                     else; dummy = C_05_R/(wx*fp%parameters(2)); end if
                     do k = 1, kmax
@@ -194,7 +195,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         end select
 
         ! Modulation
-        if (fp%type == 1 .and. fp%parameters(1) > C_0_R) then
+        if (fp%type == PROFILE_GAUSSIAN .and. fp%parameters(1) > C_0_R) then
             do k = 1, kmax
                 do i = 1, imax
                     xcenter = g(1)%nodes(i + idsp) - g(1)%scale*fp%phasex(1) - g(1)%nodes(1)
@@ -212,35 +213,40 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         case (4, 5)           ! Perturbation in the centerplane
             do k = 1, kmax
                 do i = 1, imax
-                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean + disp(i, k)
+                    ! ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel + disp(i, k)
                     do j = 1, jmax
-         s(i, j, k) = PROFILES(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES(sbg(is), g(2)%nodes(j)-disp(i, k))
                     end do
                 end do
             end do
 
         case (6, 7)           ! Perturbation in the thickness
+            prof_loc = sbg(is)
+
             do k = 1, kmax
                 do i = 1, imax
-                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean
-                    thick_loc = sbg(is)%thick + disp(i, k)
+                    prof_loc%thick = sbg(is)%thick + disp(i, k)
+
                     do j = 1, jmax
-             s(i, j, k) = PROFILES(sbg(is)%type, thick_loc, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES(prof_loc, g(2)%nodes(j))
                     end do
+                    
                 end do
             end do
 
         case (8, 9)           ! Perturbation in the magnitude (constant derivative)
+            prof_loc = sbg(is)
+
             do k = 1, kmax
                 do i = 1, imax
-                    ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean
-                    delta_loc = sbg(is)%delta + disp(i, k)
-                    mean_loc = (delta_loc)*C_05_R
-                    if (sbg(is)%delta > 0) then; thick_loc = delta_loc/sbg(is)%delta*sbg(is)%thick; 
-                    else; thick_loc = sbg(is)%thick; end if
+                    prof_loc%delta = sbg(is)%delta + disp(i, k)
+                    prof_loc%mean = (prof_loc%delta)*C_05_R
+                    if (sbg(is)%delta > 0) prof_loc%thick = prof_loc%delta/sbg(is)%delta*sbg(is)%thick
+
                     do j = 1, jmax
-                     s(i, j, k) = PROFILES(sbg(is)%type, thick_loc, delta_loc, mean_loc, ycenter, sbg(is)%parameters, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES(prof_loc, g(2)%nodes(j))
                     end do
+
                 end do
             end do
 
@@ -252,17 +258,17 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 ! ###################################################################
     subroutine SCAL_NORMALIZE(is, s)
 
-        TINTEGER is
-        TREAL, dimension(imax, jmax, kmax), intent(inout) :: s
+        integer(ci) is
+        real(cp), dimension(imax, jmax, kmax), intent(inout) :: s
 
         ! -------------------------------------------------------------------
-        TREAL AVG1V2D, dummy, amplify
+        real(cp) AVG1V2D, dummy, amplify
         external AVG1V2D
 
         ! ###################################################################
         amplify = C_0_R                                      ! Maximum across the layer
         do j = 1, jmax
-            dummy = AVG1V2D(imax, jmax, kmax, j, i2, s)
+            dummy = AVG1V2D(imax, jmax, kmax, j, 2, s)
             amplify = MAX(dummy, amplify)
         end do
 

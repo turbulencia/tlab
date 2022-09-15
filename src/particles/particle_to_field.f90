@@ -21,7 +21,8 @@
 !########################################################################
 SUBROUTINE PARTICLE_TO_FIELD(l_q, particle_property, field_out, wrk2d,wrk3d)
 
-  USE TLAB_VARS, ONLY: imax,jmax,kmax, isize_particle
+  USE TLAB_VARS, ONLY: imax,jmax,kmax
+  USE PARTICLE_VARS, ONLY: isize_part
 #ifdef USE_MPI
   USE MPI
    USE TLAB_MPI_VARS, ONLY: ims_err
@@ -29,8 +30,8 @@ SUBROUTINE PARTICLE_TO_FIELD(l_q, particle_property, field_out, wrk2d,wrk3d)
 
    IMPLICIT NONE
 
-  TREAL, DIMENSION(isize_particle,3)    :: l_q
-  TREAL, DIMENSION(isize_particle)      :: particle_property
+  TREAL, DIMENSION(isize_part,3)    :: l_q
+  TREAL, DIMENSION(isize_part)      :: particle_property
   TREAL, DIMENSION(imax,jmax,kmax)      :: field_out
   TREAL, DIMENSION(*)                   :: wrk2d
   TREAL, DIMENSION(imax+1,jmax,kmax+1)  :: wrk3d
@@ -70,8 +71,8 @@ SUBROUTINE PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
 
   USE TLAB_VARS,     ONLY: imax,jmax,kmax
   USE TLAB_VARS,     ONLY: g
-  USE TLAB_VARS,     ONLY: isize_particle
-  USE LAGRANGE_VARS,ONLY: l_g
+  USE PARTICLE_VARS,     ONLY: isize_part
+  USE PARTICLE_VARS,ONLY: l_g
 #ifdef USE_MPI
   USE MPI
   USE TLAB_MPI_VARS, ONLY: ims_offset_i, ims_offset_k
@@ -81,8 +82,8 @@ SUBROUTINE PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
 #include "integers.h"
 
   TREAL, DIMENSION(imax+1,jmax,kmax+1) :: field
-  TREAL, DIMENSION(isize_particle,3)   :: l_q
-  TREAL, DIMENSION(isize_particle)     :: particle_property
+  TREAL, DIMENSION(isize_part,3)   :: l_q
+  TREAL, DIMENSION(isize_part)     :: particle_property
 
   TREAL length_g_p(6), cube_g_p(4)
   TINTEGER  g_p(6)
