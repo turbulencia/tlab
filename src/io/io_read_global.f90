@@ -20,6 +20,7 @@ subroutine IO_READ_GLOBAL(inifile)
     use TLAB_VARS
     use TLAB_PROCS
     use THERMO_VARS
+    use PROFILES
 #ifdef USE_MPI
     use TLAB_MPI_VARS
 #endif

@@ -1,12 +1,18 @@
 #include "dns_const.h"
 #include "dns_error.h"
 
-subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
-    use TLAB_TYPES, only: profiles_dt, wp
-    use TLAB_CONSTANTS
-    use TLAB_PROCS
-    implicit none
+module PROFILES
+use TLAB_TYPES, only: profiles_dt, wp
+use TLAB_CONSTANTS
+use TLAB_PROCS
+implicit none
+private
 
+public :: PROFILES_READBLOCK, PROFILES_CALCULATE
+
+contains
+
+subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     character(len=*), intent(in) :: bakfile, inifile, block, tag
     type(profiles_dt), intent(out) :: var
 
@@ -96,11 +102,7 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     return
 end subroutine PROFILES_READBLOCK
 
-function PROFILES(var, y) result(f)
-    use TLAB_TYPES, only: profiles_dt, wp
-    use TLAB_CONSTANTS
-    implicit none
-
+function PROFILES_CALCULATE(var, y) result(f)
     type(profiles_dt), intent(in) :: var
     real(wp), intent(in) :: y
     real(wp) f
@@ -206,14 +208,9 @@ function PROFILES(var, y) result(f)
     end select
 
     return
-end function PROFILES
+end function PROFILES_CALCULATE
 
 subroutine PROFILES_DERTOTHICK(derivative, var)  ! Obtain thick from the value of the maximum derivative
-    use TLAB_TYPES, only: profiles_dt, wp
-    use TLAB_CONSTANTS
-    use TLAB_PROCS
-    implicit none
-
     real(wp), intent(in) :: derivative
     type(profiles_dt), intent(inout) :: var
 
@@ -241,3 +238,5 @@ subroutine PROFILES_DERTOTHICK(derivative, var)  ! Obtain thick from the value o
 
     return
 end subroutine PROFILES_DERTOTHICK
+
+end module PROFILES

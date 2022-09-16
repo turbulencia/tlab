@@ -30,7 +30,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
     use TLAB_VARS, only: rbg, tbg, sbg, qbg
     use TLAB_VARS, only: buoyancy
     use THERMO_VARS, only: imixture
-
+    use PROFILES
     implicit none
 
     real(wp), dimension(imax, jmax, kmax), intent(IN) :: p, T
@@ -42,8 +42,6 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
     ! -------------------------------------------------------------------
     real(wp) dummy
     integer(wi) j, k, is, bcs(2, 2)
-    real(wp) PROFILES
-    external PROFILES
 
     bcs = 0
 
@@ -60,13 +58,13 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
             ! temperature/mixture profile are given
             if (rbg%type == PROFILE_NONE) then
                 do j = 1, jmax
-                    dummy = PROFILES(tbg, g(2)%nodes(j))
+                    dummy = PROFILES_CALCULATE(tbg, g(2)%nodes(j))
                     TEM_MEAN_LOC(:, j, :) = dummy
                 end do
 
                 do is = 1, inb_scal
                     do j = 1, jmax
-                        dummy = PROFILES(sbg(is), g(2)%nodes(j))
+                        dummy = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
                         s(:, j, :, is) = dummy
                     end do
                 end do
@@ -82,7 +80,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
                 ! density profile itself is given
             else
                 do j = 1, jmax
-                    dummy = PROFILES(rbg, g(2)%nodes(j))
+                    dummy = PROFILES_CALCULATE(rbg, g(2)%nodes(j))
                     rho(:, j, :) = rho(:, j, :) + dummy
                 end do
 
@@ -128,7 +126,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
 
             ! Inflow profile of axial velocity
             do j = 1, jmax
-                u_vi(j) = PROFILES(qbg(1), g(2)%nodes(j))
+                u_vi(j) = PROFILES_CALCULATE(qbg(1), g(2)%nodes(j))
             end do
 
             ! 2D distribution of density
@@ -141,7 +139,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
 
         else ! density profile itself is given
             do j = 1, jmax
-                dummy = PROFILES(rbg, g(2)%nodes(j))
+                dummy = PROFILES_CALCULATE(rbg, g(2)%nodes(j))
                 rho(:, j, :) = rho(:, j, :) + dummy
             end do
 

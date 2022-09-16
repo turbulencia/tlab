@@ -8,6 +8,7 @@ module SCAL_LOCAL
     use TLAB_VARS, only: g, sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
     use IO_FIELDS
+    use PROFILES
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
@@ -37,13 +38,11 @@ contains
 
 ! ###################################################################
     subroutine SCAL_SHAPE(is, wrk1d)
-
         integer(wi) is
         real(wp), dimension(jmax, 1), intent(inout) :: wrk1d
 
         ! -------------------------------------------------------------------
-        real(wp) PROFILES, yr
-        external PROFILES
+        real(wp) yr
 
         real(wp), dimension(:), pointer :: yn
 
@@ -54,7 +53,7 @@ contains
         prof_loc%delta = C_1_R
         prof_loc%mean = C_0_R
         do j = 1, jmax
-            wrk1d(j, 1) = PROFILES(prof_loc, yn(j))
+            wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, yn(j))
         end do
 
         select case (Sini(is)%type)
@@ -145,7 +144,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 
         ! -------------------------------------------------------------------
         real(wp) dummy
-        real(wp) AVG1V2D, PROFILES
+        real(wp) AVG1V2D
         real(wp) xcenter, zcenter, rcenter, amplify
 
         ! ###################################################################
@@ -215,7 +214,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
                 do i = 1, imax
                     ! ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel + disp(i, k)
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES(sbg(is), g(2)%nodes(j)-disp(i, k))
+                        s(i, j, k) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j)-disp(i, k))
                     end do
                 end do
             end do
@@ -228,7 +227,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
                     prof_loc%thick = sbg(is)%thick + disp(i, k)
 
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES(prof_loc, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
                     end do
                     
                 end do
@@ -244,7 +243,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
                     if (sbg(is)%delta > 0) prof_loc%thick = prof_loc%delta/sbg(is)%delta*sbg(is)%thick
 
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES(prof_loc, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
                     end do
 
                 end do

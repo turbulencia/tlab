@@ -19,7 +19,7 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
     use TLAB_PROCS
     use FLOW_LOCAL
-
+    use PROFILES
     implicit none
 
     integer(wi) code
@@ -30,7 +30,7 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
 
     ! -------------------------------------------------------------------
     real(wp) dummy
-    real(wp) AVG1V2D, PROFILES
+    real(wp) AVG1V2D
     real(wp) xcenter, amplify
 
     real(wp), dimension(:), pointer :: x, y, z
@@ -108,7 +108,7 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
                     prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
                     prof_loc%mean = tbg%mean + C_05_R*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
                     do j = 1, jmax
-                        T(i, j, k) = PROFILES(prof_loc, y(j))
+                        T(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
                     end do
                 end do
             end do
@@ -126,7 +126,7 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
                     prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
                     prof_loc%mean = tbg%mean + C_05_R*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
                     do j = 1, jmax
-                        h(i, j, k) = PROFILES(prof_loc, y(j))
+                        h(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
                     end do
                 end do
             end do

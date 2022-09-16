@@ -6,6 +6,7 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
     use TLAB_VARS, only: imode_sim, imax, jmax, kmax
     use TLAB_VARS, only: qbg
     use TLAB_VARS, only: coriolis
+    use PROFILES
     implicit none
 
     real(wp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
@@ -13,8 +14,7 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
 
     ! -------------------------------------------------------------------
     integer(wi) iq, j
-    real(wp) PROFILES, calpha, salpha
-    external PROFILES
+    real(wp) calpha, salpha
 
     !########################################################################
     if (imode_sim == DNS_MODE_TEMPORAL) then
@@ -22,7 +22,7 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
         ! Construct reference profiles into array wrk1d
         do iq = 1, 3
             do j = 1, jmax
-                wrk1d(j, iq) = PROFILES(qbg(iq), g(2)%nodes(j))
+                wrk1d(j, iq) = PROFILES_CALCULATE(qbg(iq), g(2)%nodes(j))
             end do
         end do
 
@@ -54,7 +54,7 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
 ! #define aux(j)    wrk1d(j,3)
 !     ycenter = g(2)%nodes(1) + g(2)%scale *qbg(iq)%ymean_rel
 !     DO j = 1,jmax
-!       u_vi(j) = PROFILES( qbg(1), ycenter, g(2)%nodes(j) )
+!       u_vi(j) = PROFILES_CALCULATE( qbg(1), ycenter, g(2)%nodes(j) )
 !     ENDDO
 !     rho_vi(:) = rho(1,:,1)
 !
