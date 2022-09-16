@@ -80,21 +80,40 @@ subroutine SCAL_READ_LOCAL(inifile)
         end if
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'IniFields', 'YMeanRelativeIniS', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'void') &    ! backwards compatilibity
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIniS', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'void') &    ! backwards compatilibity
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'void', sRes)
-    if (trim(adjustl(sRes)) /= 'void') then
+    call SCANINICHAR(bakfile, inifile, 'IniFields', 'YMeanIniS', 'void', sRes)
+    if (trim(adjustl(sRes)) == 'void') then
+        Sini(:)%relative = .true.
+
+        call SCANINICHAR(bakfile, inifile, 'IniFields', 'YMeanRelativeIniS', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'void') &    ! backwards compatilibity
+            call SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIniS', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'void') &    ! backwards compatilibity
+            call SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'void', sRes)
+        if (trim(adjustl(sRes)) /= 'void') then
+            dummy = 0.0_wp; idummy = MAX_NSP
+            call LIST_REAL(sRes, idummy, dummy)
+            Sini(:)%ymean_rel = dummy(:)
+            if (idummy /= inb_scal) then         ! Consistency check
+                if (idummy == 1) then
+                    Sini(2:)%ymean_rel = Sini(1)%ymean_rel
+                    call TLAB_WRITE_ASCII(wfile, 'SCAL_READ_LOCAL. Using YMeanRelativeIniS(1) for all scalars.')
+                else
+                    call TLAB_WRITE_ASCII(efile, 'SCAL_READ_LOCAL. YMeanRelativeIniS size does not match number of scalars.')
+                    call TLAB_STOP(DNS_ERROR_OPTION)
+                end if
+            end if
+        end if
+    else
+        Sini(:)%relative = .false.
         dummy = 0.0_wp; idummy = MAX_NSP
         call LIST_REAL(sRes, idummy, dummy)
-        Sini(:)%ymean_rel = dummy(:)
+        Sini(:)%ymean = dummy(:)
         if (idummy /= inb_scal) then         ! Consistency check
             if (idummy == 1) then
-                Sini(2:)%ymean_rel = Sini(1)%ymean_rel
-                call TLAB_WRITE_ASCII(wfile, 'SCAL_READ_LOCAL. Using YCoorIniS(1) for all scalars.')
+                Sini(2:)%ymean = Sini(1)%ymean
+                call TLAB_WRITE_ASCII(wfile, 'SCAL_READ_LOCAL. Using YMeanIniS(1) for all scalars.')
             else
-                call TLAB_WRITE_ASCII(efile, 'SCAL_READ_LOCAL. YCoorIniS size does not match number of scalars.')
+                call TLAB_WRITE_ASCII(efile, 'SCAL_READ_LOCAL. YMeanIniS size does not match number of scalars.')
                 call TLAB_STOP(DNS_ERROR_OPTION)
             end if
         end if
