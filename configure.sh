@@ -25,6 +25,8 @@ case $kernel in
                 SYST=eetac;; 
             mi* )
                 SYST=uhhpc;; 
+            *.cen.uni-hamburg.de )
+                SYST=uhhpc-c;; 
 	esac 
 esac
 
