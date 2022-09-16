@@ -13,8 +13,8 @@ subroutine RAND_READ_LOCAL(inifile)
     character*512 sRes
     character*32 bakfile
 
-    integer(ci) :: idummy
-    real(cp) :: rdummy(6)
+    integer(wi) :: idummy
+    real(wp) :: rdummy(6)
 
 ! ###################################################################
     bakfile = TRIM(ADJUSTL(inifile))//'.bak'
@@ -39,13 +39,13 @@ subroutine RAND_READ_LOCAL(inifile)
     else if (TRIM(ADJUSTL(sRes)) == 'quadratic') then; ispectrum = 4
     else if (TRIM(ADJUSTL(sRes)) == 'gaussian') then; ispectrum = 6; end if
 
-    spc_param = 0.0_cp
+    spc_param = 0.0_wp
     call SCANINICHAR(bakfile, inifile, 'Broadband', 'f0', '1.0', sRes)
     idummy = 3
     call LIST_REAL(sRes, idummy, spc_param)
 
     call SCANINIREAL(bakfile, inifile, 'Broadband', 'Sigma', '-1.0', spc_param(4))
-    if (spc_param(4) < 0.0_cp) spc_param(4) = spc_param(1)/6.0_cp    ! Default value
+    if (spc_param(4) < 0.0_wp) spc_param(4) = spc_param(1)/6.0_wp    ! Default value
 
     call SCANINICHAR(bakfile, inifile, 'Broadband', 'Distribution', 'none', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'none') then; ipdf = 0
@@ -56,8 +56,8 @@ subroutine RAND_READ_LOCAL(inifile)
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
-    ucov(1:3) = 1.0_cp ! diagonal terms
-    ucov(4:6) = 0.0_cp ! off-diagonal terms
+    ucov(1:3) = 1.0_wp ! diagonal terms
+    ucov(4:6) = 0.0_wp ! off-diagonal terms
     call SCANINICHAR(bakfile, inifile, 'Broadband', 'Covariance', '-1', sRes)
     if (TRIM(ADJUSTL(sRes)) /= '-1') then
         idummy = 6

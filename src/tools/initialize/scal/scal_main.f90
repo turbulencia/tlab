@@ -5,7 +5,7 @@
 
 program INISCAL
 
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_TYPES, only: wp, wi
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_ARRAYS
@@ -21,7 +21,7 @@ program INISCAL
     implicit none
 
 ! -------------------------------------------------------------------
-    integer(ci) is, inb_scal_loc
+    integer(wi) is, inb_scal_loc
 
 ! ###################################################################
     call TLAB_START()
@@ -57,12 +57,12 @@ program INISCAL
 ! ###################################################################
     call TLAB_WRITE_ASCII(lfile, 'Initializing scalar fiels.')
 
-    itime = 0; rtime = 0.0_cp
-    s = 0.0_cp
+    itime = 0; rtime = 0.0_wp
+    s = 0.0_wp
 
     inb_scal_loc = inb_scal
     if (imixture == MIXT_TYPE_AIRWATER) then
-        if (damkohler(1) > 0.0_cp .and. flag_mixture == 1) then
+        if (damkohler(1) > 0.0_wp .and. flag_mixture == 1) then
             inb_scal_loc = inb_scal - 1
         end if
     end if
@@ -82,7 +82,7 @@ program INISCAL
     end do
 
     if (imixture == MIXT_TYPE_AIRWATER) then ! Initial liquid in equilibrium; overwrite previous values
-        if (damkohler(3) > 0.0_cp .and. flag_mixture == 1) then
+        if (damkohler(3) > 0.0_wp .and. flag_mixture == 1) then
             call THERMO_AIRWATER_PH(imax, jmax, kmax, s(1, 2), s(1, 1), epbackground, pbackground)
         end if
     end if
@@ -90,11 +90,11 @@ program INISCAL
     ! ###################################################################
     if (radiation%type /= EQNS_NONE) then         ! Initial radiation effect as an accumulation during a certain interval of time
 
-        if (ABS(radiation%parameters(1)) > 0.0_cp) then
+        if (ABS(radiation%parameters(1)) > 0.0_wp) then
             radiation%parameters(3) = radiation%parameters(3)/radiation%parameters(1)*norm_ini_radiation
         end if
         radiation%parameters(1) = norm_ini_radiation
-        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_cp) then ! Calculate q_l
+        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
             call THERMO_AIRWATER_PH(imax, jmax, kmax, s(1, 2), s(1, 1), epbackground, pbackground)
         else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             call THERMO_AIRWATER_LINEAR(imax, jmax, kmax, s, s(1, inb_scal_array))

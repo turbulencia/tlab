@@ -1,7 +1,7 @@
 #include "dns_error.h"
 
 module RAND_LOCAL
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_TYPES, only: wp, wi
     use TLAB_CONSTANTS, only: efile
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_txc_field
     use TLAB_VARS, only: g
@@ -10,40 +10,40 @@ module RAND_LOCAL
     save
 
     ! -------------------------------------------------------------------
-    integer(ci) :: ispectrum
-    real(cp) :: spc_param(5)  ! Fundamental frequency, fmin, fmax, sigma
+    integer(wi) :: ispectrum
+    real(wp) :: spc_param(5)  ! Fundamental frequency, fmin, fmax, sigma
 
-    integer(ci) :: ipdf
-    real(cp) :: ucov(6)
+    integer(wi) :: ipdf
+    real(wp) :: ucov(6)
 
-    integer(ci) :: seed          ! Random number generator
+    integer(wi) :: seed          ! Random number generator
 
     ! -------------------------------------------------------------------
-    integer(ci) i
+    integer(wi) i
 
 contains
 
     ! ###################################################################
     subroutine RAND_FIELD(variance, a, tmp1, tmp2, tmp3, wrk2d, wrk3d)
-        real(cp), intent(IN) :: variance
-        real(cp), dimension(isize_field), intent(OUT) :: a
-        real(cp), dimension(isize_txc_field), intent(INOUT) :: tmp1, tmp2, tmp3
-        real(cp), dimension(*), intent(INOUT) :: wrk2d, wrk3d
+        real(wp), intent(IN) :: variance
+        real(wp), dimension(isize_field), intent(OUT) :: a
+        real(wp), dimension(isize_txc_field), intent(INOUT) :: tmp1, tmp2, tmp3
+        real(wp), dimension(*), intent(INOUT) :: wrk2d, wrk3d
 
-        integer(ci) idim
-        real(cp) RAN0, RANG
+        integer(wi) idim
+        real(wp) RAN0, RANG
         external RAN0, RANG
 
         ! -------------------------------------------------------------------
         select case (ipdf)
         case (1)     ! Uniform distribution
             do i = 1, isize_field
-                tmp2(i) = RAN0(seed) - 0.5_cp
+                tmp2(i) = RAN0(seed) - 0.5_wp
             end do
 
         case (2)     ! Gaussian distribution
             do i = 1, isize_field
-                tmp2(i) = RANG(0.0_cp, 1.0_cp, seed)
+                tmp2(i) = RANG(0.0_wp, 1.0_wp, seed)
             end do
 
         end select
@@ -66,12 +66,12 @@ contains
 
     !########################################################################
     subroutine RAND_COVARIANCE(cov, u, v, w)
-        real(cp) cov(6)
-        real(cp), dimension(isize_field), intent(OUT) :: u, v, w
+        real(wp) cov(6)
+        real(wp), dimension(isize_field), intent(OUT) :: u, v, w
 
         ! -------------------------------------------------------------------
-        real(cp) trace, lambda1, lambda2, alpha, calpha, salpha
-        real(cp) rdummy
+        real(wp) trace, lambda1, lambda2, alpha, calpha, salpha
+        real(wp) rdummy
 
 #define Rxx cov(1)
 #define Ryy cov(2)
@@ -82,7 +82,7 @@ contains
 
         ! ###################################################################
         if (g(3)%size > 1) then
-            if (Rxz /= 0.0_cp .or. Ryz /= 0.0_cp) then ! only 2D case developed
+            if (Rxz /= 0.0_wp .or. Ryz /= 0.0_wp) then ! only 2D case developed
                 call TLAB_WRITE_ASCII(efile, 'Terms Rxz and Ryz not developed yet.')
                 call TLAB_STOP(DNS_ERROR_UNDEVELOP)
             end if
@@ -91,14 +91,14 @@ contains
 
         end if
 
-        if (Rxy == 0.0_cp) then  ! Diagonal case
+        if (Rxy == 0.0_wp) then  ! Diagonal case
             call RAND_NORMALIZE(Rxx, u)
             call RAND_NORMALIZE(Ryy, v)
 
         else                        ! Nondiagonal case
             ! get eigenvalues
             trace = Rxx + Ryy
-            lambda1 = 0.5_cp*(trace + SQRT(trace*trace - 4.0_cp*(Rxx*Ryy - Rxy*Rxy)))
+            lambda1 = 0.5_wp*(trace + SQRT(trace*trace - 4.0_wp*(Rxx*Ryy - Rxy*Rxy)))
             lambda2 = trace - lambda1
 
             ! define fields in rotated uncorrelated frame
@@ -131,11 +131,11 @@ contains
 
     ! ###################################################################
     subroutine RAND_NORMALIZE(variance, a)
-        real(cp), intent(IN) :: variance
-        real(cp), dimension(imax, jmax, kmax), intent(INOUT) :: a
+        real(wp), intent(IN) :: variance
+        real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: a
 
         ! -------------------------------------------------------------------
-        real(cp) AVG1V2D, dummy
+        real(wp) AVG1V2D, dummy
         external AVG1V2D
 
         ! ###################################################################
@@ -143,7 +143,7 @@ contains
         a = a - dummy
 
         dummy = AVG1V2D(imax*jmax, 1, kmax, 1, 2, a) ! 3D average
-        if (dummy > 0.0_cp) then
+        if (dummy > 0.0_wp) then
             dummy = SQRT(variance/dummy)
             a = a*dummy
         end if

@@ -3,7 +3,7 @@
 #include "dns_error.h"
 
 subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
-    use TLAB_TYPES, only: discrete_dt, MAX_MODES, MAX_PARS, cp
+    use TLAB_TYPES, only: discrete_dt, MAX_MODES, MAX_PARS, wp
     use TLAB_CONSTANTS, only: efile
     use TLAB_PROCS
     implicit none
@@ -30,7 +30,7 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
     call SCANINICHAR(bakfile, inifile, block, 'Amplitude', 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'void') &        ! backwards compatilibity
         call SCANINICHAR(bakfile, inifile, block, '2DAmpl', '0.0', sRes)
-    var%amplitude(:) = 0.0_cp; var%size = MAX_MODES
+    var%amplitude(:) = 0.0_wp; var%size = MAX_MODES
     call LIST_REAL(sRes, var%size, var%amplitude)
 
     call SCANINICHAR(bakfile, inifile, block, 'ModeX', 'void', sRes)

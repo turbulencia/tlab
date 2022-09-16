@@ -23,7 +23,7 @@
 !#
 !########################################################################
 subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_TYPES, only: wp, wi
     use TLAB_CONSTANTS, only: efile
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imode_sim, inb_scal, imax, jmax, kmax
@@ -33,16 +33,16 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
 
     implicit none
 
-    real(cp), dimension(imax, jmax, kmax), intent(IN) :: p, T
-    real(cp), dimension(imax, jmax, kmax), intent(OUT) :: rho
-    real(cp), dimension(imax, jmax, kmax, *), intent(OUT) :: s
-    real(cp), dimension(imax, jmax, kmax), intent(INOUT) :: txc, wrk3d
-    real(cp), dimension(jmax, *), intent(INOUT) :: wrk1d, wrk2d
+    real(wp), dimension(imax, jmax, kmax), intent(IN) :: p, T
+    real(wp), dimension(imax, jmax, kmax), intent(OUT) :: rho
+    real(wp), dimension(imax, jmax, kmax, *), intent(OUT) :: s
+    real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: txc, wrk3d
+    real(wp), dimension(jmax, *), intent(INOUT) :: wrk1d, wrk2d
 
     ! -------------------------------------------------------------------
-    real(cp) dummy
-    integer(ci) j, k, is, bcs(2, 2)
-    real(cp) PROFILES
+    real(wp) dummy
+    integer(wi) j, k, is, bcs(2, 2)
+    real(wp) PROFILES
     external PROFILES
 
     bcs = 0
@@ -104,7 +104,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
                 ! General case
             else
                 call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, txc, wrk3d, wrk2d, wrk3d)
-                dummy = 1.0_cp/buoyancy%vector(2)
+                dummy = 1.0_wp/buoyancy%vector(2)
                 rho(:, :, :) = rho(:, :, :) + txc(:, :, :)*dummy
             end if
 

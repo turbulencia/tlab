@@ -3,7 +3,7 @@
 
 subroutine SCAL_READ_LOCAL(inifile)
 
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_TYPES, only: wp, wi
     use TLAB_CONSTANTS, only: efile, lfile, wfile, MAX_NSP
     use TLAB_VARS, only: inb_scal
     use TLAB_VARS, only: sbg
@@ -15,8 +15,8 @@ subroutine SCAL_READ_LOCAL(inifile)
     character*(*) inifile
 
 ! -------------------------------------------------------------------
-    real(cp) dummy(MAX_NSP)
-    integer(ci) idummy
+    real(wp) dummy(MAX_NSP)
+    integer(wi) idummy
     character*512 sRes
     character*32 bakfile
 
@@ -66,7 +66,7 @@ subroutine SCAL_READ_LOCAL(inifile)
     if (trim(adjustl(sRes)) == 'void') &    ! backwards compatilibity
         call SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIni', 'void', sRes)
     if (trim(adjustl(sRes)) /= 'void') then
-        dummy = 0.0_cp; idummy = MAX_NSP
+        dummy = 0.0_wp; idummy = MAX_NSP
         call LIST_REAL(sRes, idummy, dummy)
         Sini(:)%thick = dummy(:)
         if (idummy /= inb_scal) then         ! Consistency check
@@ -86,7 +86,7 @@ subroutine SCAL_READ_LOCAL(inifile)
     if (trim(adjustl(sRes)) == 'void') &    ! backwards compatilibity
         call SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'void', sRes)
     if (trim(adjustl(sRes)) /= 'void') then
-        dummy = 0.0_cp; idummy = MAX_NSP
+        dummy = 0.0_wp; idummy = MAX_NSP
         call LIST_REAL(sRes, idummy, dummy)
         Sini(:)%ymean_rel = dummy(:)
         if (idummy /= inb_scal) then         ! Consistency check
@@ -101,7 +101,7 @@ subroutine SCAL_READ_LOCAL(inifile)
     end if
 
     call SCANINICHAR(bakfile, inifile, 'IniFields', 'NormalizeS', '-1.0', sRes)
-    norm_ini_s(:) = 0.0_cp; idummy = MAX_NSP
+    norm_ini_s(:) = 0.0_wp; idummy = MAX_NSP
     call LIST_REAL(sRes, idummy, norm_ini_s)
     if (idummy /= inb_scal) then            ! Consistency check
         if (idummy == 1) then

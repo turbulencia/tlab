@@ -7,7 +7,7 @@
 #define C_FILE_LOC "INIPART"
 
 program INIPART
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_TYPES, only: wp
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_ARRAYS
@@ -21,8 +21,8 @@ program INIPART
     implicit none
 
     ! -------------------------------------------------------------------
-    integer(ci) ierr
-    real(cp), dimension(:), allocatable, save :: l_comm
+    integer(wi) ierr
+    real(wp), dimension(:), allocatable, save :: l_comm
     character*64 str, line
 
     !########################################################################

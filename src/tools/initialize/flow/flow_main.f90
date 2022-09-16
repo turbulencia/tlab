@@ -27,7 +27,7 @@ program INIFLOW
     ! -------------------------------------------------------------------
     ! Additional local arrays
 #ifdef USE_CGLOC
-    real(cp), dimension(:), allocatable, save :: ci, cj, ck, ipos, jpos, kpos
+    real(wp), dimension(:), allocatable, save :: ci, cj, ck, ipos, jpos, kpos
 #endif
 
     !########################################################################
@@ -100,8 +100,8 @@ program INIFLOW
     end if
 
     ! ###################################################################
-    itime = 0; rtime = 0.0_cp
-    q = 0.0_cp
+    itime = 0; rtime = 0.0_wp
+    q = 0.0_wp
 
     ! ###################################################################
     call TLAB_WRITE_ASCII(lfile, 'Initializing velocity.')

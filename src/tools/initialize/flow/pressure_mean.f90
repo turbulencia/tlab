@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 subroutine PRESSURE_MEAN(p, T, s, wrk1d)
-    use TLAB_TYPES, only: cp, ci, profiles_dt
+    use TLAB_TYPES, only: wp, wi, profiles_dt
     use TLAB_CONSTANTS, only: efile
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
@@ -13,18 +13,18 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
 
     implicit none
 
-    real(cp), dimension(imax, jmax, kmax), intent(OUT) :: p
-    real(cp), dimension(imax, jmax, kmax), intent(INOUT) :: T
-    real(cp), dimension(imax, jmax, kmax, *), intent(INOUT) :: s
-    real(cp), dimension(jmax, *), intent(INOUT) :: wrk1d
+    real(wp), dimension(imax, jmax, kmax), intent(OUT) :: p
+    real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: T
+    real(wp), dimension(imax, jmax, kmax, *), intent(INOUT) :: s
+    real(wp), dimension(jmax, *), intent(INOUT) :: wrk1d
 
 ! -------------------------------------------------------------------
-    integer(ci) j
-    real(cp) pmin, pmax
-    real(cp) PROFILES
+    integer(wi) j
+    real(wp) pmin, pmax
+    real(wp) PROFILES
     type(profiles_dt) prof_loc
 
-    real(cp), dimension(:), pointer :: y, dy
+    real(wp), dimension(:), pointer :: y, dy
 
 ! ###################################################################
 ! Define pointers
@@ -128,7 +128,7 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
 ! ###################################################################
     call MINMAX(imax, jmax, kmax, p, pmin, pmax)
 
-    if (pmin < 0.0_cp .or. pmax < 0.0_cp) then
+    if (pmin < 0.0_wp .or. pmax < 0.0_wp) then
         call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Negative pressure.')
         call TLAB_STOP(DNS_ERROR_NEGPRESS)
     end if

@@ -20,7 +20,7 @@ program INIRAND
     implicit none
 
     ! -------------------------------------------------------------------
-    integer(ci) iq, is
+    integer(wi) iq, is
 
     ! ###################################################################
     call TLAB_START()
@@ -58,7 +58,7 @@ program INIRAND
 
     call OPR_CHECK(imax, jmax, kmax, q, txc, wrk2d, wrk3d)
 
-    itime = 0; rtime = 0.0_cp
+    itime = 0; rtime = 0.0_wp
 
     do iq = 1, inb_flow
         call RAND_FIELD(ucov(iq), q(1, iq), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)

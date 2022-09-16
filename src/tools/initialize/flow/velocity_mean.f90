@@ -1,19 +1,19 @@
 #include "dns_const.h"
 
 subroutine VELOCITY_MEAN(u, v, w, wrk1d)
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_TYPES, only: wp, wi
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imode_sim, imax, jmax, kmax
     use TLAB_VARS, only: qbg
     use TLAB_VARS, only: coriolis
     implicit none
 
-    real(cp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
-    real(cp), dimension(jmax, *), intent(INOUT) :: wrk1d
+    real(wp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
+    real(wp), dimension(jmax, *), intent(INOUT) :: wrk1d
 
     ! -------------------------------------------------------------------
-    integer(ci) iq, j
-    real(cp) PROFILES, calpha, salpha
+    integer(wi) iq, j
+    real(wp) PROFILES, calpha, salpha
     external PROFILES
 
     !########################################################################
@@ -29,7 +29,7 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
         ! Construct velocity field
         if (coriolis%type == EQNS_COR_NORMALIZED) then
             calpha = COS(coriolis%parameters(1)); salpha = SIN(coriolis%parameters(1))
-            wrk1d(:, 3) = wrk1d(:, 3)*SIGN(1.0_cp, coriolis%vector(2)) ! right angular velocity vector (Garratt, 1992, p.42)
+            wrk1d(:, 3) = wrk1d(:, 3)*SIGN(1.0_wp, coriolis%vector(2)) ! right angular velocity vector (Garratt, 1992, p.42)
 
             do j = 1, jmax
                 u(:, j, :) = u(:, j, :) + wrk1d(j, 1)*calpha + wrk1d(j, 3)*salpha
@@ -77,7 +77,7 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
     end if
 
     ! -------------------------------------------------------------------
-    if (g(3)%size == 1) w = 0.0_cp
+    if (g(3)%size == 1) w = 0.0_wp
 
     return
 end subroutine VELOCITY_MEAN

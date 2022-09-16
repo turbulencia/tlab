@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 subroutine PARTICLE_READ_GLOBAL(inifile)
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_TYPES, only: wp
     use TLAB_CONSTANTS, only: efile, lfile
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
     use TLAB_VARS, only: imax, jmax, kmax, isize_wrk2d
@@ -19,8 +19,8 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
     character*512 sRes
     character*32 bakfile, block
-    integer(ci) idummy
-    real(cp) memory_factor
+    integer(wi) idummy
+    real(wp) memory_factor
 
 ! ###################################################################
     bakfile = TRIM(ADJUSTL(inifile))//'.bak'
@@ -63,7 +63,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         elseif (TRIM(ADJUSTL(sRes)) == 'no') then; icalc_part_pdf = 0
         end if
         call SCANINICHAR(bakfile, inifile, block, 'PdfSubdomain', '-1', sRes)
-        particle_pdf_subdomain = 0.0_cp; idummy = 6
+        particle_pdf_subdomain = 0.0_wp; idummy = 6
         call LIST_REAL(sRes, idummy, particle_pdf_subdomain)
         call SCANINIREAL(bakfile, inifile, block, 'PdfMax', '10', particle_pdf_max)
         call SCANINIREAL(bakfile, inifile, block, 'PdfInterval', '0.5', particle_pdf_interval)

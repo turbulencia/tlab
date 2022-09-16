@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
-    use TLAB_TYPES, only: profiles_dt, cp
+    use TLAB_TYPES, only: profiles_dt, wp
     use TLAB_CONSTANTS
     use TLAB_PROCS
     implicit none
@@ -11,7 +11,7 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     type(profiles_dt), intent(out) :: var
 
     character(len=512) sRes
-    real(cp) derivative
+    real(wp) derivative
 
     ! -------------------------------------------------------------------
     call TLAB_WRITE_ASCII(bakfile, '#Profile'//trim(adjustl(tag))//'=<None/Tanh/Erf/Ekman/Parabolic/...>')
@@ -97,26 +97,26 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
 end subroutine PROFILES_READBLOCK
 
 function PROFILES(var, y) result(f)
-    use TLAB_TYPES, only: profiles_dt, cp
+    use TLAB_TYPES, only: profiles_dt, wp
     use TLAB_CONSTANTS
     implicit none
 
     type(profiles_dt), intent(in) :: var
-    real(cp), intent(in) :: y
-    real(cp) f
+    real(wp), intent(in) :: y
+    real(wp) f
 
     ! -------------------------------------------------------------------
-    real(cp) yrel, xi, amplify, zamp, cnought
+    real(wp) yrel, xi, amplify, zamp, cnought
 
     ! ###################################################################
     yrel = y - var%ymean ! position relative to ycenter
-    amplify = 0.0_cp    ! default
+    amplify = 0.0_wp    ! default
 
     ! -------------------------------------------------------------------
     ! base state varying between two constant levels
     ! -------------------------------------------------------------------
-    if (var%thick == 0.0_cp) then
-        if (var%type > 0) amplify = 0.5_cp*sign(1.0_cp, yrel)
+    if (var%thick == 0.0_wp) then
+        if (var%type > 0) amplify = 0.5_wp*sign(1.0_wp, yrel)
 
     else
         xi = yrel/var%thick
@@ -127,44 +127,44 @@ function PROFILES(var, y) result(f)
             amplify = -xi
 
         case (PROFILE_TANH)
-            amplify = 0.5_cp*tanh(-0.5_cp*xi)
+            amplify = 0.5_wp*tanh(-0.5_wp*xi)
 
         case (PROFILE_TANH_SYM)
-            amplify = 0.5_cp*(tanh(-0.5_cp*(xi - 0.5_cp*var%diam/var%thick)) &
-                              + tanh(0.5_cp*(xi + 0.5_cp*var%diam/var%thick)) - 1.0_cp)
+            amplify = 0.5_wp*(tanh(-0.5_wp*(xi - 0.5_wp*var%diam/var%thick)) &
+                              + tanh(0.5_wp*(xi + 0.5_wp*var%diam/var%thick)) - 1.0_wp)
 
         case (PROFILE_TANH_ANTISYM)
-            amplify = 0.25_cp*(tanh(-0.5_cp*(xi - 0.5_cp*var%diam/var%thick)) &
-                               - tanh(0.5_cp*(xi + 0.5_cp*var%diam/var%thick)))
+            amplify = 0.25_wp*(tanh(-0.5_wp*(xi - 0.5_wp*var%diam/var%thick)) &
+                               - tanh(0.5_wp*(xi + 0.5_wp*var%diam/var%thick)))
 
         case (PROFILE_ERF, PROFILE_ERF_ANTISYM, PROFILE_ERF_SURFACE)
-            amplify = 0.5_cp*erf(-0.5_cp*xi)
+            amplify = 0.5_wp*erf(-0.5_wp*xi)
 
         case (PROFILE_PARABOLIC, PROFILE_PARABOLIC_SURFACE)
-            amplify = (1.0_cp + 0.5_cp*xi)*(1.0_cp - 0.5_cp*xi)
+            amplify = (1.0_wp + 0.5_wp*xi)*(1.0_wp - 0.5_wp*xi)
 
         case (PROFILE_BICKLEY)
-            amplify = 1.0_cp/(cosh(0.5_cp*xi))**2.0_cp
+            amplify = 1.0_wp/(cosh(0.5_wp*xi))**2.0_wp
 
         case (PROFILE_GAUSSIAN, PROFILE_GAUSSIAN_SURFACE)
-            amplify = exp(-0.5_cp*xi**2.0_cp)
+            amplify = exp(-0.5_wp*xi**2.0_wp)
 
         case (PROFILE_GAUSSIAN_SYM)
-            amplify = exp(-0.5_cp*(xi - 0.5_cp*var%diam/var%thick)**2.0_cp) &
-                      + exp(-0.5_cp*(xi + 0.5_cp*var%diam/var%thick)**2.0_cp)
+            amplify = exp(-0.5_wp*(xi - 0.5_wp*var%diam/var%thick)**2.0_wp) &
+                      + exp(-0.5_wp*(xi + 0.5_wp*var%diam/var%thick)**2.0_wp)
 
         case (PROFILE_GAUSSIAN_ANTISYM)
-            amplify = exp(-0.5_cp*(xi - 0.5_cp*var%diam/var%thick)**2.0_cp) &
-                      - exp(-0.5_cp*(xi + 0.5_cp*var%diam/var%thick)**2.0_cp)
+            amplify = exp(-0.5_wp*(xi - 0.5_wp*var%diam/var%thick)**2.0_wp) &
+                      - exp(-0.5_wp*(xi + 0.5_wp*var%diam/var%thick)**2.0_wp)
 
         case (PROFILE_EKMAN_U)
-            amplify = 1.0_cp - exp(-xi)*cos(xi)
+            amplify = 1.0_wp - exp(-xi)*cos(xi)
 
         case (PROFILE_EKMAN_U_P)
-            amplify = 1.0_cp - exp(-xi)*cos(xi) ! + perturbation:
+            amplify = 1.0_wp - exp(-xi)*cos(xi) ! + perturbation:
 
-            cnought = pi_cp*pi_cp/4.0_cp/4.0_cp       ! Maximum initial Perturbation is at y=pi/2*var%thick
-            zamp = sqrt(2.0_cp)*xi*exp(-xi*xi/8.0_cp/cnought)/(var%thick*var%thick*4.0_cp*cnought)**1.5_cp
+            cnought = pi_wp*pi_wp/4.0_wp/4.0_wp       ! Maximum initial Perturbation is at y=pi/2*var%thick
+            zamp = sqrt(2.0_wp)*xi*exp(-xi*xi/8.0_wp/cnought)/(var%thick*var%thick*4.0_wp*cnought)**1.5_wp
             amplify = amplify + zamp                  ! Add Perturbations
 
         case (PROFILE_EKMAN_V)
@@ -176,8 +176,8 @@ function PROFILES(var, y) result(f)
 
     ! var%mean profile plus two linear-varying layers
     f = var%mean + var%delta*amplify &
-        + var%lslope*yrel*0.5_cp*(1.0_cp - sign(1.0_cp, yrel)) &
-        + var%uslope*yrel*0.5_cp*(1.0_cp + sign(1.0_cp, yrel))
+        + var%lslope*yrel*0.5_wp*(1.0_wp - sign(1.0_wp, yrel)) &
+        + var%uslope*yrel*0.5_wp*(1.0_wp + sign(1.0_wp, yrel))
 
     ! -------------------------------------------------------------------
     ! special profiles
@@ -185,23 +185,23 @@ function PROFILES(var, y) result(f)
     select case (var%type)
 
     case (PROFILE_LINEAR_CROP)
-        if (yrel < 0.0_cp) then
+        if (yrel < 0.0_wp) then
             f = min(var%lslope*yrel, var%lslope*var%thick)
         else
             f = max(var%uslope*yrel, var%uslope*var%thick)
         end if
 
     case (PROFILE_MIXEDLAYER)
-        if (yrel < 0.0_cp) then
+        if (yrel < 0.0_wp) then
             f = min(var%lslope*yrel, var%lslope*var%thick)
         else
             f = max(var%uslope*yrel, var%uslope*var%thick)
         end if
-        f = f - 0.25_cp*var%uslope*var%thick*(1.0_cp - sign(1.0_cp, y - var%thick))
+        f = f - 0.25_wp*var%uslope*var%thick*(1.0_wp - sign(1.0_wp, y - var%thick))
 
     case (PROFILE_ERF_SURFACE)
         xi = y/var%parameters(3)
-        f = f + var%parameters(4)*0.5_cp*(1.0_cp + erf(-0.5_cp*xi))
+        f = f + var%parameters(4)*0.5_wp*(1.0_wp + erf(-0.5_wp*xi))
 
     end select
 
@@ -209,28 +209,28 @@ function PROFILES(var, y) result(f)
 end function PROFILES
 
 subroutine PROFILES_DERTOTHICK(derivative, var)  ! Obtain thick from the value of the maximum derivative
-    use TLAB_TYPES, only: profiles_dt, cp
+    use TLAB_TYPES, only: profiles_dt, wp
     use TLAB_CONSTANTS
     use TLAB_PROCS
     implicit none
 
-    real(cp), intent(in) :: derivative
+    real(wp), intent(in) :: derivative
     type(profiles_dt), intent(inout) :: var
 
-    real(cp) thick_ratio    ! for readibility
+    real(wp) thick_ratio    ! for readibility
 
     select case (var%type)
 
     case (PROFILE_TANH, PROFILE_TANH_SYM, PROFILE_TANH_ANTISYM)
-        thick_ratio = 4.0_cp
+        thick_ratio = 4.0_wp
         var%thick = -var%delta/derivative/thick_ratio
 
     case (PROFILE_ERF, PROFILE_ERF_ANTISYM)
-        thick_ratio = 2.0_cp*sqrt(pi_cp)
+        thick_ratio = 2.0_wp*sqrt(pi_wp)
         var%thick = -var%delta/(derivative - var%uslope)/thick_ratio
 
     case (PROFILE_ERF_SURFACE)
-        thick_ratio = 2.0_cp*sqrt(pi_cp)
+        thick_ratio = 2.0_wp*sqrt(pi_wp)
         var%parameters(3) = -var%parameters(4)/derivative/thick_ratio
 
     case default

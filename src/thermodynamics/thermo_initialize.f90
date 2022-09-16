@@ -176,8 +176,8 @@ subroutine THERMO_INITIALIZE
         THERMO_SPNAME(1) = 'H2O'
         THERMO_SPNAME(2) = 'AIR'
 
-        WGHT(1) = 18.015_cp    ! from Iribarne and Godson, 1981
-        WGHT(2) = 28.9644_cp
+        WGHT(1) = 18.015_wp    ! from Iribarne and Godson, 1981
+        WGHT(2) = 28.9644_wp
 
 ! -------------------------------------------------------------------
 ! Water vapor and air
@@ -190,8 +190,8 @@ subroutine THERMO_INITIALIZE
         THERMO_SPNAME(1) = 'H2O'
         THERMO_SPNAME(2) = 'AIR'
 
-        WGHT(1) = 18.015_cp    ! from Iribarne and Godson, 1981
-        WGHT(2) = 28.9644_cp
+        WGHT(1) = 18.015_wp    ! from Iribarne and Godson, 1981
+        WGHT(2) = 28.9644_wp
 
 ! -------------------------------------------------------------------
 ! Water vapor, air and liquid water
@@ -207,9 +207,9 @@ subroutine THERMO_INITIALIZE
         THERMO_SPNAME(2) = 'AIR'
         THERMO_SPNAME(3) = 'H2Ol'
 
-        WGHT(1) = 18.015_cp    ! from Iribarne and Godson, 1981
-        WGHT(2) = 28.9644_cp
-        WGHT(3) = 18.015_cp
+        WGHT(1) = 18.015_wp    ! from Iribarne and Godson, 1981
+        WGHT(2) = 28.9644_wp
+        WGHT(3) = 18.015_wp
 
 ! -------------------------------------------------------------------
 ! Linearized thermodynamics for stratocumulus case
@@ -228,9 +228,9 @@ subroutine THERMO_INITIALIZE
         end do
         THERMO_SPNAME(NSP) = 'Liquid' ! Normalized Liquid
 
-        WGHT(1) = 18.015_cp           ! unused, but defined for re-normalization below
-        WGHT(2) = 28.9644_cp
-        WGHT(3) = 18.015_cp
+        WGHT(1) = 18.015_wp           ! unused, but defined for re-normalization below
+        WGHT(2) = 28.9644_wp
+        WGHT(3) = 18.015_wp
 
     end select
 
@@ -265,9 +265,9 @@ subroutine THERMO_INITIALIZE
     HREF_LOC = C_0_R
     SREF_LOC = C_0_R
 
-    THERMO_TLIM(1, :) = 200.0_cp    ! Default T limits for the 2 intervals of polynomial fits
-    THERMO_TLIM(2, :) = 5000.0_cp   ! These intervals are currently not used
-    THERMO_TLIM(3, :) = 5000.0_cp
+    THERMO_TLIM(1, :) = 200.0_wp    ! Default T limits for the 2 intervals of polynomial fits
+    THERMO_TLIM(2, :) = 5000.0_wp   ! These intervals are currently not used
+    THERMO_TLIM(3, :) = 5000.0_wp
 
     select case (imixture)
 ! -------------------------------------------------------------------
@@ -394,24 +394,24 @@ subroutine THERMO_INITIALIZE
 ! Water vapor, air and water liquid
 ! -------------------------------------------------------------------
     case (MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR)
-        TREF_LOC = 273.15_cp
+        TREF_LOC = 273.15_wp
 
 ! Enthalpy of Formation in J /kg
-        HREF_LOC(1) = 1870.0_cp*TREF_LOC                ! values s.t. THERMO_AI(6,im,1:2) = 0, i.e., liquid-water enthalpy
-        HREF_LOC(2) = 1007.0_cp*TREF_LOC
-        HREF_LOC(3) = 1870.0_cp*TREF_LOC - 2501600_cp    ! latent heat of vaporization at 273.15 K is 2501.6 kJ/kg
+        HREF_LOC(1) = 1870.0_wp*TREF_LOC                ! values s.t. THERMO_AI(6,im,1:2) = 0, i.e., liquid-water enthalpy
+        HREF_LOC(2) = 1007.0_wp*TREF_LOC
+        HREF_LOC(3) = 1870.0_wp*TREF_LOC - 2501600_wp    ! latent heat of vaporization at 273.15 K is 2501.6 kJ/kg
 
 ! Entropy of Formation in J /kg /K
         SREF_LOC(1) = C_0_R
         SREF_LOC(2) = C_0_R
-        SREF_LOC(3) = -2501600_cp/TREF_LOC
+        SREF_LOC(3) = -2501600_wp/TREF_LOC
 
 ! Heat capacity polynomial in J /kg /K; using only the low temperature range
         NCP = 1
         do im = 1, 2
-            THERMO_AI(1, im, 1) = 1870.0_cp     ! water vapor
-            THERMO_AI(1, im, 2) = 1007.0_cp     ! dry air
-            THERMO_AI(1, im, 3) = 4217.6_cp     ! liquid water
+            THERMO_AI(1, im, 1) = 1870.0_wp     ! water vapor
+            THERMO_AI(1, im, 2) = 1007.0_wp     ! dry air
+            THERMO_AI(1, im, 3) = 4217.6_wp     ! liquid water
 
 ! 6th and 7th coefficient are calculated from reference enthalpy
             do is = 1, NSP

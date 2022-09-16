@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 subroutine PARTICLE_ALLOCATE(C_FILE_LOC)
-    use TLAB_TYPES, only: ci
+    use TLAB_TYPES, only: wi
     use TLAB_CONSTANTS, only: lfile, efile
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
@@ -17,7 +17,7 @@ subroutine PARTICLE_ALLOCATE(C_FILE_LOC)
 
     ! -------------------------------------------------------------------
     character(LEN=128) str, line
-    integer(ci) ierr
+    integer(wi) ierr
 
     ! ###################################################################
     write (str, *) isize_part; line = 'Allocating array l_g.tags of size '//TRIM(ADJUSTL(str))
@@ -74,12 +74,12 @@ subroutine PARTICLE_INITIALIZE()
     ! set boundarys for residence time pdf
     if (imode_part == PART_TYPE_BIL_CLOUD_4) then
         ! to be rewritten
-        ! l_y_lambda = (g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(1)%ymean_rel - 2.0_cp
+        ! l_y_lambda = (g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(1)%ymean_rel - 2.0_wp
         ! l_y_base = ((g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(1)%ymean_rel - &
-        !             (g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(3)%ymean_rel)/2.0_cp &
+        !             (g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(3)%ymean_rel)/2.0_wp &
         !            + (g(2)%nodes(g(2)%size) - g(2)%nodes(1))*sbg(3)%ymean_rel
         if (residence_reset == 1) then
-            l_q(:, 6:7) = 0.0_cp
+            l_q(:, 6:7) = 0.0_wp
         end if
     end if
 

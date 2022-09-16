@@ -12,7 +12,7 @@
 !#
 !########################################################################
 subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_TYPES, only: wp
     use TLAB_CONSTANTS, only: efile
     use TLAB_VARS, only: rbg, tbg
     use THERMO_VARS, only: imixture
@@ -22,18 +22,18 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
 
     implicit none
 
-    integer(ci) code
+    integer(wi) code
 
-    real(cp), dimension(imax, jmax, kmax) :: T, h, rho, p
-    real(cp), dimension(imax, jmax, kmax, *) :: s
-    real(cp), dimension(imax, kmax) :: disp
+    real(wp), dimension(imax, jmax, kmax) :: T, h, rho, p
+    real(wp), dimension(imax, jmax, kmax, *) :: s
+    real(wp), dimension(imax, kmax) :: disp
 
     ! -------------------------------------------------------------------
-    real(cp) dummy
-    real(cp) AVG1V2D, PROFILES
-    real(cp) xcenter, amplify
+    real(wp) dummy
+    real(wp) AVG1V2D, PROFILES
+    real(wp) xcenter, amplify
 
-    real(cp), dimension(:), pointer :: x, y, z
+    real(wp), dimension(:), pointer :: x, y, z
 
     ! ###################################################################
     ! Define pointers

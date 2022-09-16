@@ -14,7 +14,7 @@ module TLAB_TYPES
     ! integer, parameter :: sp = selected_real_kind(6, 37)
     ! !> Double precision real numbers, 15 digits, range 10⁻³⁰⁷ to 10³⁰⁷-1; 64 bits
     ! integer, parameter :: dp = selected_real_kind(15, 307)
-    integer, parameter :: cp = dp             ! code precision
+    integer, parameter :: wp = dp             ! working precision
 
     ! !> Char length for integers, range -2⁷ to 2⁷-1; 8 bits
     ! integer, parameter :: i1 = selected_int_kind(2)
@@ -25,7 +25,7 @@ module TLAB_TYPES
     ! !> Long length for integers, range -2⁶³ to 2⁶³-1; 64 bits
     ! integer, parameter :: i8 = selected_int_kind(18)
     integer, parameter :: i8_ = selected_int_kind(18)           ! i8 was already used...
-    integer, parameter :: ci = i4_                  ! code integer type
+    integer, parameter :: wi = i4_                ! working integer type
     integer, parameter :: longi = i8_             ! long integer type; different variable name to avoid errors
 
     TINTEGER, parameter :: MAX_PARS = 10

@@ -4,7 +4,7 @@
 #define C_FILE_LOC "INIGRID"
 
 program INIGRID
-    use TLAB_TYPES, only: grid_dt, cp, ci
+    use TLAB_TYPES, only: grid_dt, wp
     use TLAB_CONSTANTS, only: gfile, ifile, lfile, efile
     use TLAB_PROCS
     use GRID_LOCAL
@@ -15,9 +15,9 @@ program INIGRID
 
     character*32 sfile, bakfile
     type(grid_dt) :: g(3)
-    real(cp), allocatable :: wrk1d(:, :)
-    integer(ci) idir, iseg, isize_wrk1d, n, nmax, iloc
-    real(cp) scale_old, scale_new, ds
+    real(wp), allocatable :: wrk1d(:, :)
+    integer(wi) idir, iseg, isize_wrk1d, n, nmax, iloc
+    real(wp) scale_old, scale_new, ds
     character(len=16), parameter :: block(3) = ['IniGridOx', 'IniGridOy', 'IniGridOz']
 
     ! #######################################################################
@@ -56,14 +56,14 @@ program INIGRID
         iloc = 1
         if (g_build(idir)%mirrored) iloc = g(idir)%size/2   ! mirrored case; first point in array is imax/2
 
-        g(idir)%nodes(iloc) = 0.0_cp                        ! set origin at zero
+        g(idir)%nodes(iloc) = 0.0_wp                        ! set origin at zero
 
         do iseg = 1, g_build(idir)%nseg                     ! Loop over the segments that build the grid
             nmax = g_build(idir)%size(iseg)                 ! for readability below
             ! create uniform reference grid s starting at zero
             if (nmax > 1) then
-                ds = (g_build(idir)%end(iseg) - g(idir)%nodes(iloc))/real(nmax - 1, cp)
-                g(idir)%nodes(iloc:) = [(real(n - 1, cp), n=1, nmax)]*ds + g(idir)%nodes(iloc)
+                ds = (g_build(idir)%end(iseg) - g(idir)%nodes(iloc))/real(nmax - 1, wp)
+                g(idir)%nodes(iloc:) = [(real(n - 1, wp), n=1, nmax)]*ds + g(idir)%nodes(iloc)
                 ! do n = 1, nmax - 1
                 !     g(idir)%nodes(iloc + n) = g(idir)%nodes(iloc + n - 1) + ds
                 ! end do
@@ -94,10 +94,10 @@ program INIGRID
         if (g(idir)%size > 1) then
             g(idir)%scale = g(idir)%nodes(g(idir)%size) - g(idir)%nodes(1)
         else
-            g(idir)%scale = 1.0_cp
+            g(idir)%scale = 1.0_wp
         end if
 
-        if (g_build(idir)%fixed_scale > 0.0_cp) then                ! rescale on exact fixed value
+        if (g_build(idir)%fixed_scale > 0.0_wp) then                ! rescale on exact fixed value
             scale_new = g_build(idir)%fixed_scale
             scale_old = g(idir)%scale
             g(idir)%nodes = (g(idir)%nodes/scale_old)*scale_new     ! rescale nodes
@@ -171,7 +171,7 @@ contains
         logical, intent(OUT) :: periodic
 
 ! -------------------------------------------------------------------
-        integer(ci) idummy
+        integer(wi) idummy
         character(LEN=512) sRes, str
 
 ! #######################################################################
@@ -238,16 +238,16 @@ contains
     subroutine GRID_MIRROR(imax, x)
         implicit none
 
-        integer(ci), intent(IN) :: imax
-        real(cp), intent(INOUT) :: x(imax)
+        integer(wi), intent(IN) :: imax
+        real(wp), intent(INOUT) :: x(imax)
 
         ! -----------------------------------------------------------------------
-        integer(ci) i
-        real(cp) offset
+        integer(wi) i
+        real(wp) offset
 
         ! #######################################################################
         ! Offset for even number of points
-        offset = (x(imax/2 + 1) - x(imax/2))/2.0_cp
+        offset = (x(imax/2 + 1) - x(imax/2))/2.0_wp
         do i = imax/2, imax
             x(i) = x(i) - offset
         end do
