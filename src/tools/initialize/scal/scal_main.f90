@@ -5,7 +5,6 @@
 
 program INISCAL
 
-    use TLAB_TYPES, only: wp, wi
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_ARRAYS

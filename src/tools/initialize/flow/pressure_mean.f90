@@ -2,8 +2,8 @@
 #include "dns_const.h"
 
 subroutine PRESSURE_MEAN(p, T, s, wrk1d)
-    use TLAB_TYPES, only: wp, wi, profiles_dt
-    use TLAB_CONSTANTS, only: efile
+    use TLAB_TYPES, only: profiles_dt
+    use TLAB_CONSTANTS, only: wp, wi, efile
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: rbg, pbg, tbg, sbg

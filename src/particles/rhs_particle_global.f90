@@ -6,25 +6,25 @@
 !#######################################################################
 subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d, wrk3d)
 
-    use TLAB_TYPES, only: pointers_dt, pointers3d_dt
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: g
-    use TLAB_VARS, only: visc, radiation
+    use TLAB_TYPES,  only: pointers_dt, pointers3d_dt
+    use TLAB_VARS,   only: imax, jmax, kmax, isize_field
+    use TLAB_VARS,   only: g
+    use TLAB_VARS,   only: visc, radiation
     use PARTICLE_VARS
     use THERMO_VARS, only: thermo_param
 
     implicit none
 
-    TREAL, dimension(isize_field, *), target :: q, s, txc
-    TREAL, dimension(isize_part, *), target :: l_q, l_hq, l_txc
-    TREAL, dimension(*) :: l_comm
-    TREAL, dimension(*) :: wrk1d, wrk2d, wrk3d
+    real(wp), dimension(isize_field, *), target :: q, s, txc
+    real(wp), dimension(isize_part, *), target :: l_q, l_hq, l_txc
+    real(wp), dimension(*) :: l_comm
+    real(wp), dimension(*) :: wrk1d, wrk2d, wrk3d
 
 ! -------------------------------------------------------------------
-    TREAL dummy, dummy2
-    TINTEGER bcs(2, 2), nvar
-    TINTEGER i
-    TREAL delta_inv0, delta_inv2, delta_inv4
+    real(wp) dummy, dummy2
+    integer(wi) bcs(2, 2), nvar
+    integer(wi) i
+    real(wp) delta_inv0, delta_inv2, delta_inv4
 
     type(pointers3d_dt), dimension(7) :: data
     type(pointers_dt), dimension(7) :: data_out

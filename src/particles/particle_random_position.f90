@@ -6,12 +6,12 @@
 
 subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
 
-    use TLAB_TYPES, only: pointers_dt, pointers3d_dt, wp, wi, longi
+    use TLAB_TYPES,     only: pointers_dt, pointers3d_dt, wp, wi, longi
     use TLAB_CONSTANTS
     use TLAB_VARS
     use PARTICLE_TYPES, only: particle_dt
     use PARTICLE_VARS
-    use THERMO_VARS, only: imixture
+    use THERMO_VARS,    only: imixture
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS

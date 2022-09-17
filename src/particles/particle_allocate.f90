@@ -2,13 +2,13 @@
 #include "dns_error.h"
 
 subroutine PARTICLE_ALLOCATE(C_FILE_LOC)
-    use TLAB_TYPES, only: wi
+    use TLAB_TYPES,     only: wi
     use TLAB_CONSTANTS, only: lfile, efile
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_npro
+    use TLAB_MPI_VARS,  only: ims_npro
 #endif
 
     implicit none

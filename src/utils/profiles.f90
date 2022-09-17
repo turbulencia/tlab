@@ -13,11 +13,11 @@ public :: PROFILES_READBLOCK, PROFILES_CALCULATE
 contains
 
 subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
-    character(len=*), intent(in) :: bakfile, inifile, block, tag
+    character(len=*),  intent(in)  :: bakfile, inifile, block, tag
     type(profiles_dt), intent(out) :: var
 
     character(len=512) sRes
-    real(wp) derivative
+    real(wp)           derivative
 
     ! -------------------------------------------------------------------
     call TLAB_WRITE_ASCII(bakfile, '#Profile'//trim(adjustl(tag))//'=<None/Tanh/Erf/Ekman/Parabolic/...>')
@@ -31,23 +31,22 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
 
     ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, block, 'Profile'//trim(adjustl(tag)), 'none', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; var%type = PROFILE_NONE
-    else if (trim(adjustl(sRes)) == 'tanh') then; var%type = PROFILE_TANH
-    else if (trim(adjustl(sRes)) == 'tanhsymmetric') then; var%type = PROFILE_TANH_SYM
+    if      (trim(adjustl(sRes)) == 'none')              then; var%type = PROFILE_NONE
+    else if (trim(adjustl(sRes)) == 'tanh')              then; var%type = PROFILE_TANH
+    else if (trim(adjustl(sRes)) == 'tanhsymmetric')     then; var%type = PROFILE_TANH_SYM
     else if (trim(adjustl(sRes)) == 'tanhantisymmetric') then; var%type = PROFILE_TANH_ANTISYM
-    else if (trim(adjustl(sRes)) == 'linear') then; var%type = PROFILE_LINEAR
-    else if (trim(adjustl(sRes)) == 'linearcrop') then; var%type = PROFILE_LINEAR_CROP
-    else if (trim(adjustl(sRes)) == 'erf') then; var%type = PROFILE_ERF
-    else if (trim(adjustl(sRes)) == 'erfsurface') then; var%type = PROFILE_ERF_SURFACE
-    else if (trim(adjustl(sRes)) == 'erfantisym') then; var%type = PROFILE_ERF_ANTISYM
-    else if (trim(adjustl(sRes)) == 'bickley') then; var%type = PROFILE_BICKLEY
-    else if (trim(adjustl(sRes)) == 'gaussian') then; var%type = PROFILE_GAUSSIAN
-    else if (trim(adjustl(sRes)) == 'ekman') then; var%type = PROFILE_EKMAN_U
-    else if (trim(adjustl(sRes)) == 'ekmanp') then; var%type = PROFILE_EKMAN_U_P
-    else if (trim(adjustl(sRes)) == 'parabolic') then; var%type = PROFILE_PARABOLIC
-    else if (trim(adjustl(sRes)) == 'mixedlayer') then; var%type = PROFILE_MIXEDLAYER
-! the following 2 are used in initialize/flow/pressure_mean; should be cleaned
-    else if (trim(adjustl(sRes)) == 'enthalpyerf') then; var%type = -PROFILE_ERF
+    else if (trim(adjustl(sRes)) == 'linear')            then; var%type = PROFILE_LINEAR
+    else if (trim(adjustl(sRes)) == 'linearcrop')        then; var%type = PROFILE_LINEAR_CROP
+    else if (trim(adjustl(sRes)) == 'erf')               then; var%type = PROFILE_ERF
+    else if (trim(adjustl(sRes)) == 'erfsurface')        then; var%type = PROFILE_ERF_SURFACE
+    else if (trim(adjustl(sRes)) == 'erfantisym')        then; var%type = PROFILE_ERF_ANTISYM
+    else if (trim(adjustl(sRes)) == 'bickley')           then; var%type = PROFILE_BICKLEY
+    else if (trim(adjustl(sRes)) == 'gaussian')          then; var%type = PROFILE_GAUSSIAN
+    else if (trim(adjustl(sRes)) == 'ekman')             then; var%type = PROFILE_EKMAN_U
+    else if (trim(adjustl(sRes)) == 'ekmanp')            then; var%type = PROFILE_EKMAN_U_P
+    else if (trim(adjustl(sRes)) == 'parabolic')         then; var%type = PROFILE_PARABOLIC
+    else if (trim(adjustl(sRes)) == 'mixedlayer')        then; var%type = PROFILE_MIXEDLAYER
+    else if (trim(adjustl(sRes)) == 'enthalpyerf')       then; var%type = -PROFILE_ERF ! in initialize/flow/pressure_mean; should be cleaned
     else
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong '//trim(adjustl(tag))//' profile.')
         call TLAB_STOP(DNS_ERROR_OPTION)
@@ -211,7 +210,7 @@ function PROFILES_CALCULATE(var, y) result(f)
 end function PROFILES_CALCULATE
 
 subroutine PROFILES_DERTOTHICK(derivative, var)  ! Obtain thick from the value of the maximum derivative
-    real(wp), intent(in) :: derivative
+    real(wp),          intent(in)    :: derivative
     type(profiles_dt), intent(inout) :: var
 
     real(wp) thick_ratio    ! for readibility

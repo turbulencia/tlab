@@ -18,7 +18,7 @@
 !#
 !########################################################################
 subroutine PRESSURE_FLUCTUATION(u, v, w, rho, p, pprime, txc1, txc2, txc3, txc4, wrk1d, wrk2d, wrk3d)
-    use TLAB_TYPES, only: wp, wi
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_wrk1d
     use THERMO_VARS, only: gama0

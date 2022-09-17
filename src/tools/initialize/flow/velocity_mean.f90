@@ -1,7 +1,7 @@
 #include "dns_const.h"
 
 subroutine VELOCITY_MEAN(u, v, w, wrk1d)
-    use TLAB_TYPES, only: wp, wi
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imode_sim, imax, jmax, kmax
     use TLAB_VARS, only: qbg

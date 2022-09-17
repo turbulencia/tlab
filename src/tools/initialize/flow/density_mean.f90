@@ -23,8 +23,7 @@
 !#
 !########################################################################
 subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
-    use TLAB_TYPES, only: wp, wi
-    use TLAB_CONSTANTS, only: efile
+    use TLAB_CONSTANTS, only: wp, wi, efile
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imode_sim, inb_scal, imax, jmax, kmax
     use TLAB_VARS, only: rbg, tbg, sbg, qbg

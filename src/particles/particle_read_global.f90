@@ -2,8 +2,7 @@
 #include "dns_const.h"
 
 subroutine PARTICLE_READ_GLOBAL(inifile)
-    use TLAB_TYPES, only: wp
-    use TLAB_CONSTANTS, only: efile, lfile
+    use TLAB_CONSTANTS, only: wp, efile, lfile
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
     use TLAB_VARS, only: imax, jmax, kmax, isize_wrk2d
     use PARTICLE_VARS
@@ -14,7 +13,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 
     implicit none
 
-    character*(*) inifile
+    character(len=*) inifile
 
 ! -------------------------------------------------------------------
     character*512 sRes
@@ -23,7 +22,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     real(wp) memory_factor
 
 ! ###################################################################
-    bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+    bakfile = trim(adjustl(inifile))//'.bak'
     block = 'Particles'
     call TLAB_WRITE_ASCII(lfile, 'Reading '//trim(adjustl(block))//' input data.')
 
@@ -37,11 +36,11 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#IniThick=<value>')
 
     call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
-    if (TRIM(ADJUSTL(sRes)) == 'none') then; imode_part = PART_TYPE_NONE
-    else if (TRIM(ADJUSTL(sRes)) == 'tracer') then; imode_part = PART_TYPE_TRACER
-    else if (TRIM(ADJUSTL(sRes)) == 'simplesettling') then; imode_part = PART_TYPE_SIMPLE_SETT
-    else if (TRIM(ADJUSTL(sRes)) == 'bilinearcloudthree') then; imode_part = PART_TYPE_BIL_CLOUD_3
-    else if (TRIM(ADJUSTL(sRes)) == 'bilinearcloudfour') then; imode_part = PART_TYPE_BIL_CLOUD_4
+    if      (trim(adjustl(sRes)) == 'none')               then; imode_part = PART_TYPE_NONE
+    else if (trim(adjustl(sRes)) == 'tracer')             then; imode_part = PART_TYPE_TRACER
+    else if (trim(adjustl(sRes)) == 'simplesettling')     then; imode_part = PART_TYPE_SIMPLE_SETT
+    else if (trim(adjustl(sRes)) == 'bilinearcloudthree') then; imode_part = PART_TYPE_BIL_CLOUD_3
+    else if (trim(adjustl(sRes)) == 'bilinearcloudfour')  then; imode_part = PART_TYPE_BIL_CLOUD_4
     else
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Particles.Type.')
         call TLAB_STOP(DNS_ERROR_OPTION)
@@ -59,8 +58,8 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
         call SCANINICHAR(bakfile, inifile, block, 'CalculatePdf', 'no', sRes)
-        if (TRIM(ADJUSTL(sRes)) == 'yes') then; icalc_part_pdf = 1
-        elseif (TRIM(ADJUSTL(sRes)) == 'no') then; icalc_part_pdf = 0
+        if (trim(adjustl(sRes)) == 'yes') then; icalc_part_pdf = 1
+        elseif (trim(adjustl(sRes)) == 'no') then; icalc_part_pdf = 0
         end if
         call SCANINICHAR(bakfile, inifile, block, 'PdfSubdomain', '-1', sRes)
         particle_pdf_subdomain = 0.0_wp; idummy = 6
@@ -69,25 +68,25 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         call SCANINIREAL(bakfile, inifile, block, 'PdfInterval', '0.5', particle_pdf_interval)
 
         call SCANINICHAR(bakfile, inifile, block, 'ResidenceReset', 'yes', sRes)
-        if (TRIM(ADJUSTL(sRes)) == 'yes') then; residence_reset = 1
-        elseif (TRIM(ADJUSTL(sRes)) == 'no') then; residence_reset = 0
+        if (trim(adjustl(sRes)) == 'yes') then; residence_reset = 1
+        elseif (trim(adjustl(sRes)) == 'no') then; residence_reset = 0
         else
             call TLAB_WRITE_ASCII(efile, __FILE__//'. ResidenceReset must be yes or no')
             call TLAB_STOP(DNS_ERROR_RESIDENCERESET)
         end if
 
         call SCANINICHAR(bakfile, inifile, block, 'Parameters', '0.0', sRes)
-        idummy = MAX_LAGPARAM
+        idummy = MAX_PARS
         call LIST_REAL(sRes, idummy, PARTICLE_param)
 
 ! -------------------------------------------------------------------
         inb_traj = inb_flow_array + inb_scal_array
         call SCANINICHAR(bakfile, inifile, block, 'TrajectoryType', 'first', sRes)
-        if (TRIM(ADJUSTL(sRes)) == 'first') then; imode_traj = TRAJ_TYPE_FIRST
-        elseif (TRIM(ADJUSTL(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
+        if (trim(adjustl(sRes)) == 'first') then; imode_traj = TRAJ_TYPE_FIRST
+        elseif (trim(adjustl(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
             inb_traj = inb_traj + 3 ! + vorticity
-        elseif (TRIM(ADJUSTL(sRes)) == 'largest') then; imode_traj = TRAJ_TYPE_LARGEST
-        elseif (TRIM(ADJUSTL(sRes)) == 'none') then; imode_traj = TRAJ_TYPE_NONE
+        elseif (trim(adjustl(sRes)) == 'largest') then; imode_traj = TRAJ_TYPE_LARGEST
+        elseif (trim(adjustl(sRes)) == 'none') then; imode_traj = TRAJ_TYPE_NONE
         else
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Invalid option in TrajectoryType')
             call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
@@ -131,28 +130,28 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         end if
 
 #ifdef USE_MPI
-        isize_part = INT(isize_part_total/INT(ims_npro, KIND=8))
-        if (MOD(isize_part_total, INT(ims_npro, KIND=8)) /= 0) then ! All PEs with equal memory
+        isize_part = int(isize_part_total/int(ims_npro, KIND=8))
+        if (mod(isize_part_total, int(ims_npro, KIND=8)) /= 0) then ! All PEs with equal memory
             isize_part = isize_part + 1
         end if
-        isize_part = isize_part*INT(memory_factor*100)/100          ! extra memory space to allow particles concentrating into a few processors
+        isize_part = isize_part*int(memory_factor*100)/100          ! extra memory space to allow particles concentrating into a few processors
 #else
-        isize_part = INT(isize_part_total)
+        isize_part = int(isize_part_total)
 #endif
 
         if (imode_traj /= TRAJ_TYPE_NONE) then
-            inb_part_txc = MAX(inb_part_txc, inb_flow_array + inb_scal_array - 3)
-            inb_part_interp = MAX(inb_part_interp, inb_traj)
+            inb_part_txc = max(inb_part_txc, inb_flow_array + inb_scal_array - 3)
+            inb_part_interp = max(inb_part_interp, inb_traj)
         end if
 
         isize_pbuffer = int(isize_part/4*(inb_part_array*2 + 1)) !same size for both buffers
         isize_l_comm = 2*jmax*kmax*inb_part_interp &
                        + imax*jmax*2*inb_part_interp &
                        + 2*jmax*2*inb_part_interp
-        isize_l_comm = MAX(isize_l_comm, 2*isize_pbuffer)
+        isize_l_comm = max(isize_l_comm, 2*isize_pbuffer)
 
-        idummy = MAX((imax + 1)*jmax, MAX((imax + 1)*kmax, jmax*(kmax + 1)))
-        isize_wrk2d = MAX(isize_wrk2d, idummy)
+        idummy = max((imax + 1)*jmax, max((imax + 1)*kmax, jmax*(kmax + 1)))
+        isize_wrk2d = max(isize_wrk2d, idummy)
 
     end if
 

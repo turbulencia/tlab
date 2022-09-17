@@ -3,7 +3,8 @@
 
 module SCAL_LOCAL
 
-    use TLAB_TYPES, only: wp, wi, profiles_dt, discrete_dt
+    use TLAB_TYPES, only: profiles_dt, discrete_dt
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, MAX_NSP
     use TLAB_VARS, only: g, sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields

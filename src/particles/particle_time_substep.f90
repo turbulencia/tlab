@@ -6,7 +6,7 @@
 !########################################################################
 subroutine PARTICLE_TIME_SUBSTEP(dte, l_hq, l_comm)
 
-    use TLAB_VARS, only: g
+    use TLAB_VARS,     only: g
     use TLAB_ARRAYS
     use PARTICLE_VARS, only: isize_part, inb_part
     use PARTICLE_VARS, only: isize_l_comm
@@ -20,33 +20,32 @@ subroutine PARTICLE_TIME_SUBSTEP(dte, l_hq, l_comm)
 
     implicit none
 
-    TREAL dte
-    TREAL, dimension(isize_part, *) :: l_hq
-    TREAL, dimension(isize_l_comm), target :: l_comm
+    real(wp) dte
+    real(wp), dimension(isize_part, *) :: l_hq
+    real(wp), dimension(isize_l_comm), target :: l_comm
 
 ! -------------------------------------------------------------------
-    TINTEGER is, i
+    integer(wi) is, i
 
 #ifdef USE_MPI
-    TREAL, dimension(:), pointer :: p_buffer_1, p_buffer_2
-    TINTEGER nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north
+    real(wp), dimension(:), pointer :: p_buffer_1, p_buffer_2
+    integer(wi) nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north
 #else
-    TREAL x_right, z_right
+    real(wp) x_right, z_right
 #endif
 
 !#####################################################################
     call RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d, wrk3d)
 
 !#######################################################################
-! Particle new position
+! Update particle properties
 !#######################################################################
     do is = 1, inb_part
         l_q(1:l_g%np, is) = l_q(1:l_g%np, is) + dte*l_hq(1:l_g%np, is)
-
     end do
 
 !#####################################################################
-! Boundaries
+! Boundary control to see if particles leave processor
 !#####################################################################
 #ifdef USE_MPI
     p_buffer_1(1:isize_pbuffer) => l_comm(1:isize_pbuffer)

@@ -1,5 +1,5 @@
 module GRID_LOCAL
-    use TLAB_TYPES, only: wp, wi
+    use TLAB_CONSTANTS, only: wp, wi
     implicit none
     save
 
