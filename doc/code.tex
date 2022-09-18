@@ -182,6 +182,7 @@ Data is case insensitive.
 \tt Gama      & {\em value} & Ratio of specific heats $\gamma$.\\
 \tt Schmidt   & {\em value1, value2, ...} & List of Schmidt numbers $\mathbf{Sc}_i$, as many as scalar fields.\\ %Consistency with {\tt [Main].Mixture} is checked.\\
 \tt Damkohler & {\em value1, value2, ...} & List of Damkohler numbers $\mathbf{Da}_i$.\\
+\tt Settling  & {\em value1, value2, ...} & List of settling numbers $\mathbf{Sv}_i$.\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -198,7 +199,7 @@ Data is case insensitive.
 \tt FlowLimit   & \tt yes, no & Force the thermodynamic fields within the prescribed interval.\\
 \tt MinScalar   & {\em value} & Lower bound for the scalar interval.\\
 \tt MaxScalar   & {\em value} & Upper bound for the scalar interval.\\
-\tt ScalLimit   & \tt yes, no & Force the scalar fields within the prescribed interval.\\
+\tt ScalLimit   & \tt yes, no & Force the scalar fields within the prescribed interval.
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -210,7 +211,7 @@ Data is case insensitive.
 %
 \tt Imax      & {\it value} & Number of points along $Ox$ (first array index).\\
 \tt Jmax      & {\it value} & Number of points along $Oy$ (second array index).\\
-\tt Kmax      & {\it value} & Number of points along $Oz$ (third array index). Set to 1 for 2D simulation.\\
+\tt Kmax      & {\it value} & Number of points along $Oz$ (third array index). Set to 1 in 2D.\\
 \tt XUniform  & \tt yes, no & If yes, no Jacobian information is needed along $Ox$.\\
 \tt YUniform  & \tt yes, no & If yes, no Jacobian information is needed along $Oy$.\\
 \tt ZUniform  & \tt yes, no & If yes, no Jacobian information is needed along $Oz$.\\
@@ -220,7 +221,7 @@ Data is case insensitive.
 \multicolumn{3}{>{\columncolor{white}}l}{\it MPI parallel mode}\\
 \tt Imax(*)   & {\it value} & Number of points per processor (MPI task) along $Ox$.\\
 \tt Jmax(*)   & {\it value} & Number of points per processor (MPI task) along $Oy$. \newline Set equal to the total size in the current 2D decomposition.\\
-\tt Kmax(*)   & {\it value} & Number of points per processor (MPI task) along $Oz$.\\
+\tt Kmax(*)   & {\it value} & Number of points per processor (MPI task) along $Oz$.
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -234,8 +235,7 @@ Data is case insensitive.
 \tt VelocityImax & \tt none, noslip, freeslip & Velocity boundary condition at $x_\text{max}$.\\
 \tt Scalar\#Imin & \tt none, dirichlet, neumman & Boundary condition of scalar number {\tt \#} at $x_\text{min}$.\\
 \tt Scalar\#Imax & \tt none, dirichlet, neumman & Boundary condition of scalar number {\tt \#} at $x_\text{max}$.\\
-\multicolumn{3}{>{\columncolor{white}}l}{\it Similarly in the other directions $Oy$ and $Oz$.}\\
-\multicolumn{3}{>{\columncolor{white}}l}{\it Compressible case: to be filled.}\\
+\multicolumn{3}{>{\columncolor{white}}l}{\it Similarly in the other directions $Oy$ and $Oz$. Compressible case to be done.}
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -246,7 +246,7 @@ Data is case insensitive.
 \multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [BufferZone]}\\
 %
 \tt Type        & \tt none, relaxation, filter, both & Type of buffer layer (sponge layer) to use.\\
-\tt LoadBuffer  & \tt no, yes & If {\tt no}, construct buffer fields and save them to disk. If {\tt yes}, read them from disk: {\tt flow.bcs.jmax.\#} and {\tt scal.bcs.jmax.\#} for the upper boundary, and so on.\\
+\tt LoadBuffer  & \tt no, yes & If {\tt no}, construct buffer fields and save them to disk. If {\tt yes}, read them from disk: {\tt \{flow,scal\}.bcs.\{imin,imax,jmin,jmax\}.\#}.\\
 \tt PointsImin  & {\em value} & Number of points in $Ox$ at $x_\text{min}$.\\
 \tt PointsImax  & {\em value} & Number of points in $Ox$ at $x_\text{max}$.\\
 \tt PointsUJmin & {\em value} & Number of points in $Oy$ at $y_\text{min}$ for the velocity fields.\\
@@ -268,7 +268,8 @@ Data is case insensitive.
 %
 \tt Profile*        & \tt None, Tanh, Erf, Ekman,...& Functional form of the mean profile $g$, equation~(\ref{equ:profile}).\\
 \tt Mean*           & {\em value} & Reference mean value.\\
-\tt YCoor*          & {\em value} & y-coordinate of profile reference point, relative to the total scale.\\
+\tt YMean*          & {\em value} & y-coordinate of profile reference point.\\
+\tt YMeanRelative*  & {\em value} & y-coordinate of profile reference point, relative to the total scale.\\
 \tt Thick*          & {\em value} & Reference profile thickness.\\
 \tt Delta*          & {\em value} & Reference profile difference.\\
 \tt BottomSlope*    & {\em value} & Slope of the linear variation below the reference point.\\

@@ -504,3 +504,15 @@ The dissipation and dispersion error maps corresponding to the third-order impli
   blue, $-0.10<\theta/\pi<-0.01$; dark red, $0<\theta/\pi<0.01$; light red,
   $0.01<\theta/\pi<0.10$.}\label{fig:rkm3implicit}
 \end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Particle algorithms}
+
+See directory {\tt particles}.
+
+The algorithm assumes that the grid spacing in the first and third directions are uniform, which is used to locate the grid nodes to interpolate the Eulerian fields into the particle position, and to extrapolate particle information into the surrounding grid points. Stretching is still allowed in the second direction.
+
+\subsection{Interpolations}
+
+To be done.
