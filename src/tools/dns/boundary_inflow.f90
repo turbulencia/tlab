@@ -23,6 +23,7 @@ module BOUNDARY_INFLOW
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
     use IO_FIELDS
+    use OPR_FILTERS
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_npro_i, ims_npro_k
     use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
