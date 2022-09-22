@@ -48,7 +48,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
     if (ims_pro < INT(MOD(isize_part_total, INT(ims_npro, KIND=8)))) then
         l_g%np = l_g%np + 1
     end if
-    call MPI_ALLGATHER(l_g%np, 1, MPI_INTEGER4, ims_size_p, 1, MPI_INTEGER4, MPI_COMM_WORLD, ims_err)
+    call MPI_ALLGATHER(l_g%np, 1, MPI_INTEGER4, ims_np_all, 1, MPI_INTEGER4, MPI_COMM_WORLD, ims_err)
 
 #else
     l_g%np = INT(isize_part_total)
@@ -59,7 +59,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
     count = 0
 #ifdef USE_MPI
     do i = 1, ims_pro
-        count = count + INT(ims_size_p(i), KIND=8)
+        count = count + INT(ims_np_all(i), KIND=8)
     end do
 #endif
     do i = 1, l_g%np

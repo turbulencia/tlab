@@ -2,63 +2,27 @@
 #include "dns_error.h"
 
 subroutine PARTICLE_ALLOCATE(C_FILE_LOC)
-    use TLAB_TYPES,     only: wi
-    use TLAB_CONSTANTS, only: lfile, efile
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_VARS,  only: ims_npro
+    use TLAB_MPI_VARS, only: ims_npro
 #endif
-
     implicit none
 
     character(LEN=*) C_FILE_LOC
 
     ! -------------------------------------------------------------------
-    character(LEN=128) str, line
-    integer(wi) ierr
 
     ! ###################################################################
-    write (str, *) isize_part; line = 'Allocating array l_g.tags of size '//TRIM(ADJUSTL(str))
-    call TLAB_WRITE_ASCII(lfile, line)
-    allocate (l_g%tags(isize_part), stat=ierr)
-    if (ierr /= 0) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for l_tags.')
-        call TLAB_STOP(DNS_ERROR_ALLOC)
-    end if
-
-    write (str, *) isize_part; line = 'Allocating array l_g.nodes of size '//TRIM(ADJUSTL(str))
-    call TLAB_WRITE_ASCII(lfile, line)
-    allocate (l_g%nodes(isize_part), stat=ierr)
-    if (ierr /= 0) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for l_g.')
-        call TLAB_STOP(DNS_ERROR_ALLOC)
-    end if
-
+    call TLAB_ALLOCATE_ARRAY1_LONG_INT(C_FILE_LOC, l_g%tags, isize_part, 'l_tags')
+    call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, l_g%nodes, isize_part, 'l_g')
 #ifdef USE_MPI
-    allocate (ims_size_p(ims_npro))
+    allocate (ims_np_all(ims_npro))
 #endif
 
-    write (str, *) isize_part; line = 'Allocating array l_q of size '//TRIM(ADJUSTL(str))//'x'
-    write (str, *) inb_part_array; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-    call TLAB_WRITE_ASCII(lfile, line)
-    allocate (l_q(isize_part, inb_part_array), stat=ierr)
-    if (ierr /= 0) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for l_q.')
-        call TLAB_STOP(DNS_ERROR_ALLOC)
-    end if
-
-    if (inb_part_txc > 0) then
-        write (str, *) isize_part; line = 'Allocating array l_txc of size '//TRIM(ADJUSTL(str))//'x'
-        write (str, *) inb_part_txc; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-        call TLAB_WRITE_ASCII(lfile, line)
-        allocate (l_txc(isize_part, inb_part_txc), stat=ierr)
-        if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for l_txc.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
-        end if
-    end if
+    call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, l_q, inb_part_array, isize_part, 'l_q')
+    call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, l_txc, inb_part_txc, isize_part, 'l_txc')
 
     return
 end subroutine PARTICLE_ALLOCATE

@@ -11,7 +11,7 @@
 #define LOC_STATUS 'old'
 
 subroutine IO_READ_PARTICLE(fname, l_g, l_q)
-    use TLAB_CONSTANTS, only: wp, wi, lfile, efile
+    use TLAB_CONSTANTS, only: wp, wi, longi, lfile, efile
     use TLAB_VARS, only: g
     use TLAB_PROCS
     use PARTICLE_VARS, only: isize_part, inb_part_array, isize_part_total
@@ -19,7 +19,7 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS, only: ims_pro, ims_npro, ims_err
-    use PARTICLE_VARS, only: ims_size_p
+    use PARTICLE_VARS, only: ims_np_all
 #endif
 
     implicit none
@@ -34,10 +34,9 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
 #ifdef USE_MPI
     integer(wi) ims_npro_loc
     integer(wi) mpio_fh
-    integer(KIND=8) mpio_disp, count
+    integer(longi) mpio_disp, count
     integer(wi) status(MPI_STATUS_SIZE)
 #else
-    integer(wi) particle_number_loc
     integer(wi) idummy
 #endif
 
@@ -54,7 +53,7 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
         name = trim(adjustl(fname))//".id"
 #include "dns_open_file.h"
         read (LOC_UNIT_ID) ims_npro_loc
-        read (LOC_UNIT_ID) ims_size_p(1:ims_npro_loc)
+        read (LOC_UNIT_ID) ims_np_all(1:ims_npro_loc)
         close (LOC_UNIT_ID)
     end if
 
@@ -66,28 +65,28 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
     end if
 
 ! Broadcast number of particles per processor
-    call MPI_BCAST(ims_size_p, ims_npro, MPI_INTEGER, 0, MPI_COMM_WORLD, ims_err)
+    call MPI_BCAST(ims_np_all, ims_npro, MPI_INTEGER, 0, MPI_COMM_WORLD, ims_err)
+
+! Number of particles in local processor
+    l_g%np = ims_np_all(ims_pro + 1)
 
 ! Displacement per processor
-    mpio_disp = int((ims_npro + 1)*SIZEOFINT, KIND=8)
+    mpio_disp = int((ims_npro + 1)*SIZEOFINT, longi)
 
     count = 0
     do i = 1, ims_pro
-        count = count + int(ims_size_p(i), KIND=8)
+        count = count + int(ims_np_all(i), longi)
     end do
-    mpio_disp = mpio_disp + count*int(SIZEOFLONGINT, KIND=8)
+    mpio_disp = mpio_disp + count*int(SIZEOFLONGINT, longi)
 
 ! Check
     do i = ims_pro + 1, ims_npro
-        count = count + int(ims_size_p(i), KIND=8)
+        count = count + int(ims_np_all(i), longi)
     end do
     if (isize_part_total /= count) then
         call TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
         call TLAB_STOP(DNS_ERROR_PARTICLE)
     end if
-
-! Number of particles in local processor
-    l_g%np = ims_size_p(ims_pro + 1)
 
 ! -------------------------------------------------------------------
 ! Use MPI-IO to read particle tags in each processor
@@ -115,9 +114,9 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
     name = trim(adjustl(fname))//".id"
 #include "dns_open_file.h"
     read (LOC_UNIT_ID) idummy                   ! dummy, should be 1 in serial
-    read (LOC_UNIT_ID) particle_number_loc
+    read (LOC_UNIT_ID) l_g%np
 ! Check
-    if (isize_part_total /= int(particle_number_loc, KIND=8)) then
+    if (isize_part_total /= int(l_g%np, longi)) then
         call TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
         close (LOC_UNIT_ID)
         call TLAB_STOP(DNS_ERROR_PARTICLE)
@@ -125,16 +124,12 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
     read (LOC_UNIT_ID) l_g%tags
     close (LOC_UNIT_ID)
 
-! For homogeneity with MPI version
-! If we need more than 4 bytes, we should be using MPI...
-    l_g%np = int(isize_part_total)
-
 !  IF ( PRESENT(l_q) ) THEN
     do i = 1, inb_part_array
         write (name, *) i; name = trim(adjustl(fname))//"."//trim(adjustl(name))
 #include "dns_open_file.h"
         read (LOC_UNIT_ID) idummy             ! dummy, should be 1 in serial
-        read (LOC_UNIT_ID) particle_number_loc
+        read (LOC_UNIT_ID) l_g%np
         read (LOC_UNIT_ID) l_q(:, i)
         close (LOC_UNIT_ID)
     end do
@@ -157,19 +152,19 @@ end subroutine IO_READ_PARTICLE
 
 subroutine IO_WRITE_PARTICLE(fname, l_g, l_q)
 
-    use TLAB_CONSTANTS, only: wp, wi, lfile
+    use TLAB_CONSTANTS, only: wp, wi, longi, lfile
     use PARTICLE_VARS, only: isize_part, inb_part_array
     use TLAB_PROCS
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS, only: ims_pro, ims_npro, ims_err
-    use PARTICLE_VARS, only: ims_size_p
+    use PARTICLE_VARS, only: ims_np_all
 #endif
 
     implicit none
 
-    character*(*) fname
+    character(len=*) fname
     type(particle_dt) l_g
     real(wp), dimension(isize_part, inb_part_array) :: l_q !, OPTIONAL :: l_q
 
@@ -193,13 +188,13 @@ subroutine IO_WRITE_PARTICLE(fname, l_g, l_q)
 ! -------------------------------------------------------------------
 ! Let Process 0 handle header
 ! -------------------------------------------------------------------
-    call MPI_ALLGATHER(l_g%np, 1, MPI_INTEGER4, ims_size_p, 1, MPI_INTEGER4, MPI_COMM_WORLD, ims_err)
+    call MPI_ALLGATHER(l_g%np, 1, MPI_INTEGER4, ims_np_all, 1, MPI_INTEGER4, MPI_COMM_WORLD, ims_err)
 
     if (ims_pro == 0) then
         name = trim(adjustl(fname))//".id"
 #include "dns_open_file.h"
         write (LOC_UNIT_ID) ims_npro
-        write (LOC_UNIT_ID) ims_size_p
+        write (LOC_UNIT_ID) ims_np_all
         close (LOC_UNIT_ID)
 
 !     IF ( PRESENT(l_q) ) THEN
@@ -207,20 +202,20 @@ subroutine IO_WRITE_PARTICLE(fname, l_g, l_q)
             write (name, *) i; name = trim(adjustl(fname))//"."//trim(adjustl(name))
 #include "dns_open_file.h"
             write (LOC_UNIT_ID) ims_npro
-            write (LOC_UNIT_ID) ims_size_p
+            write (LOC_UNIT_ID) ims_np_all
             close (LOC_UNIT_ID)
         end do
 !     ENDIF
     end if
 
 ! Displacement per processor
-    mpio_disp = int((ims_npro + 1)*SIZEOFINT, KIND=8)
+    mpio_disp = int((ims_npro + 1)*SIZEOFINT, longi)
 
     count = 0
     do i = 1, ims_pro
-        count = count + int(ims_size_p(i), KIND=8)
+        count = count + int(ims_np_all(i), longi)
     end do
-    mpio_disp = mpio_disp + count*int(SIZEOFLONGINT, KIND=8)
+    mpio_disp = mpio_disp + count*int(SIZEOFLONGINT, longi)
 
 ! -------------------------------------------------------------------
 ! Use MPI-IO to write particle tags in each processor

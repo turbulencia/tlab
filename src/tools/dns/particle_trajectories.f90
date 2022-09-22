@@ -84,7 +84,7 @@ SUBROUTINE PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
 #define LOC_STATUS 'old'
 #include "dns_open_file.h"
         READ(LOC_UNIT_ID) ims_npro_loc
-!        READ(LOC_UNIT_ID) ims_size_p(1:ims_npro_loc)
+!        READ(LOC_UNIT_ID) ims_np_all(1:ims_npro_loc)
         READ(LOC_UNIT_ID, POS=SIZEOFINT*(ims_npro_loc+1) +1) l_trajectories_tags
         CLOSE(LOC_UNIT_ID)
 #undef LOC_UNIT_ID

@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 subroutine PARTICLE_READ_GLOBAL(inifile)
-    use TLAB_CONSTANTS, only: wp, efile, lfile
+    use TLAB_CONSTANTS, only: wp, wi, longi, efile, lfile
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
     use TLAB_VARS, only: imax, jmax, kmax, isize_wrk2d
     use PARTICLE_VARS
@@ -36,11 +36,11 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#IniThick=<value>')
 
     call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
-    if      (trim(adjustl(sRes)) == 'none')               then; imode_part = PART_TYPE_NONE
-    else if (trim(adjustl(sRes)) == 'tracer')             then; imode_part = PART_TYPE_TRACER
-    else if (trim(adjustl(sRes)) == 'simplesettling')     then; imode_part = PART_TYPE_SIMPLE_SETT
+    if (trim(adjustl(sRes)) == 'none') then; imode_part = PART_TYPE_NONE
+    else if (trim(adjustl(sRes)) == 'tracer') then; imode_part = PART_TYPE_TRACER
+    else if (trim(adjustl(sRes)) == 'simplesettling') then; imode_part = PART_TYPE_SIMPLE_SETT
     else if (trim(adjustl(sRes)) == 'bilinearcloudthree') then; imode_part = PART_TYPE_BIL_CLOUD_3
-    else if (trim(adjustl(sRes)) == 'bilinearcloudfour')  then; imode_part = PART_TYPE_BIL_CLOUD_4
+    else if (trim(adjustl(sRes)) == 'bilinearcloudfour') then; imode_part = PART_TYPE_BIL_CLOUD_4
     else
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Particles.Type.')
         call TLAB_STOP(DNS_ERROR_OPTION)
@@ -108,7 +108,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         inb_part_array = 3          ! # of particle properties in array
         inb_part = 3                ! # of particle properties in Runge-Kutta
         inb_part_txc = 1            ! # of particle auxiliary properties for intermediate calculations
-        inb_part_interp = 3
+        inb_part_interp = 3         ! # of interpolated fields into lagrangian framework
 
         if (imode_part == PART_TYPE_BIL_CLOUD_3) then
             inb_part_array = 5
@@ -130,8 +130,8 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         end if
 
 #ifdef USE_MPI
-        isize_part = int(isize_part_total/int(ims_npro, KIND=8))
-        if (mod(isize_part_total, int(ims_npro, KIND=8)) /= 0) then ! All PEs with equal memory
+        isize_part = int(isize_part_total/int(ims_npro, longi))
+        if (mod(isize_part_total, int(ims_npro, longi)) /= 0) then ! All PEs with equal memory
             isize_part = isize_part + 1
         end if
         isize_part = isize_part*int(memory_factor*100)/100          ! extra memory space to allow particles concentrating into a few processors
@@ -144,11 +144,13 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
             inb_part_interp = max(inb_part_interp, inb_traj)
         end if
 
-        isize_pbuffer = int(isize_part/4*(inb_part_array*2 + 1)) !same size for both buffers
         isize_l_comm = 2*jmax*kmax*inb_part_interp &
                        + imax*jmax*2*inb_part_interp &
                        + 2*jmax*2*inb_part_interp
+#ifdef USE_MPI
+        isize_pbuffer = int(isize_part/4*(inb_part_array*2 + 1)) !same size for both buffers
         isize_l_comm = max(isize_l_comm, 2*isize_pbuffer)
+#endif
 
         idummy = max((imax + 1)*jmax, max((imax + 1)*kmax, jmax*(kmax + 1)))
         isize_wrk2d = max(isize_wrk2d, idummy)
