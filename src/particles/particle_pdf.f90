@@ -15,6 +15,7 @@ SUBROUTINE PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk3d)
   USE PARTICLE_TYPES, ONLY : particle_dt
   USE PARTICLE_VARS, ONLY : isize_part
   USE PARTICLE_VARS, ONLY : particle_pdf_subdomain, particle_pdf_max, particle_pdf_interval
+  use PARTICLE_INTERPOLATE
 #ifdef USE_MPI
   USE MPI
   USE TLAB_MPI_VARS

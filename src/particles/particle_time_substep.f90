@@ -10,7 +10,6 @@ subroutine PARTICLE_TIME_SUBSTEP(dte, l_hq, l_comm)
     use TLAB_ARRAYS
     use PARTICLE_VARS, only: isize_part, inb_part
     use PARTICLE_VARS, only: isize_l_comm
-    use PARTICLE_VARS, only: l_g
     use PARTICLE_ARRAYS
 #ifdef USE_MPI
     use MPI

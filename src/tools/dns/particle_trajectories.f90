@@ -2,240 +2,241 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
-MODULE PARTICLE_TRAJECTORIES
+module PARTICLE_TRAJECTORIES
 
-  USE TLAB_CONSTANTS,  ONLY : efile, lfile
-  USE TLAB_VARS,     ONLY : inb_flow_array, inb_scal_array
-  USE PARTICLE_VARS,     ONLY : isize_part
-  USE TLAB_PROCS
-  USE PARTICLE_VARS
+    use TLAB_CONSTANTS, only: efile, lfile
+    use TLAB_VARS, only: inb_flow_array, inb_scal_array
+    use PARTICLE_VARS, only: isize_part
+    use TLAB_PROCS
+    use PARTICLE_VARS
 #ifdef USE_MPI
-  USE TLAB_MPI_VARS,        ONLY : ims_pro, ims_err
+    use TLAB_MPI_VARS, only: ims_pro, ims_err
 #endif
 
-  IMPLICIT NONE
-  SAVE
+    implicit none
+    save
 
-  REAL(4),    DIMENSION(:,:,:), ALLOCATABLE :: l_trajectories
-  INTEGER(8), DIMENSION(:),     ALLOCATABLE :: l_trajectories_tags
-  TINTEGER                                  :: counter, isize_time
+    real(4), dimension(:, :, :), allocatable :: l_trajectories
+    integer(8), dimension(:), allocatable :: l_trajectories_tags
+    TINTEGER :: counter, isize_time
 #ifdef USE_MPI
-  REAL(4),    DIMENSION(:,:),   ALLOCATABLE :: mpi_tmp
+    real(4), dimension(:, :), allocatable :: mpi_tmp
 #endif
 
-CONTAINS
+contains
 
 !#######################################################################
 !#######################################################################
-SUBROUTINE PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
+    subroutine PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
 #ifdef USE_MPI
-  USE MPI
+        use MPI
 #endif
 
-  IMPLICIT NONE
+        implicit none
 
-  TINTEGER nitera_save, nitera_last
+        TINTEGER nitera_save, nitera_last
 
 ! -------------------------------------------------------------------
-  CHARACTER*32 name
-  CHARACTER*128 str, line
-  TINTEGER ims_npro_loc
+        character*32 name
+        character*128 str, line
+        TINTEGER ims_npro_loc
 
-  TINTEGER j, ierr
+        TINTEGER j, ierr
 
 !#######################################################################
-  isize_time = nitera_save
+        isize_time = nitera_save
 
 ! Adding space for saving the time
-  WRITE(str,*) (isize_traj+1)*isize_time; line = 'Allocating array l_trajectories of size '//TRIM(ADJUSTL(str))//'x'
-  WRITE(str,*) inb_traj; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-  CALL TLAB_WRITE_ASCII(lfile,line)
-  ALLOCATE(l_trajectories(isize_traj+1,isize_time,inb_traj),stat=ierr)
-  IF ( ierr .NE. 0 ) THEN
-     CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for l_trajectories.')
-     CALL TLAB_STOP(DNS_ERROR_ALLOC)
-  ENDIF
+        write (str, *) (isize_traj + 1)*isize_time; line = 'Allocating array l_trajectories of size '//TRIM(ADJUSTL(str))//'x'
+        write (str, *) inb_traj; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+        call TLAB_WRITE_ASCII(lfile, line)
+        allocate (l_trajectories(isize_traj + 1, isize_time, inb_traj), stat=ierr)
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, 'DNS. Not enough memory for l_trajectories.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
 
-  WRITE(str,*) isize_traj; line = 'Allocating array l_trajectory_tags of size '//TRIM(ADJUSTL(str))
-  CALL TLAB_WRITE_ASCII(lfile,line)
-  ALLOCATE(l_trajectories_tags(isize_traj),stat=ierr)
-  IF ( ierr .NE. 0 ) THEN
-     CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for l_trajectories_tags.')
-     CALL TLAB_STOP(DNS_ERROR_ALLOC)
-  ENDIF
+        write (str, *) isize_traj; line = 'Allocating array l_trajectory_tags of size '//TRIM(ADJUSTL(str))
+        call TLAB_WRITE_ASCII(lfile, line)
+        allocate (l_trajectories_tags(isize_traj), stat=ierr)
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, 'DNS. Not enough memory for l_trajectories_tags.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
 
 #ifdef USE_MPI
-  WRITE(str,*) (isize_traj+1)*isize_time; line = 'Allocating array mpi_tmp of size '//TRIM(ADJUSTL(str))
-  CALL TLAB_WRITE_ASCII(lfile,line)
-  ALLOCATE(mpi_tmp(isize_traj+1,isize_time),stat=ierr)
-  IF ( ierr .NE. 0 ) THEN
-     CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for l_trajectories.')
-     CALL TLAB_STOP(DNS_ERROR_ALLOC)
-  ENDIF
+        write (str, *) (isize_traj + 1)*isize_time; line = 'Allocating array mpi_tmp of size '//TRIM(ADJUSTL(str))
+        call TLAB_WRITE_ASCII(lfile, line)
+        allocate (mpi_tmp(isize_traj + 1, isize_time), stat=ierr)
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, 'DNS. Not enough memory for l_trajectories.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
 #endif
 
 ! Initialize
-  IF ( imode_traj .EQ. TRAJ_TYPE_LARGEST ) THEN ! Read file with tags of largest particles, the ones to track
-     WRITE(name,*) nitera_last; name='largest_particle.'//TRIM(ADJUSTL(name))
+        if (imode_traj == TRAJ_TYPE_LARGEST) then ! Read file with tags of largest particles, the ones to track
+            write (name, *) nitera_last; name = 'largest_particle.'//TRIM(ADJUSTL(name))
 #ifdef USE_MPI
-     IF (ims_pro .EQ. 0) THEN
+            if (ims_pro == 0) then
 #endif
 #define LOC_UNIT_ID 117
 #define LOC_STATUS 'old'
 #include "dns_open_file.h"
-        READ(LOC_UNIT_ID) ims_npro_loc
+                read (LOC_UNIT_ID) ims_npro_loc
 !        READ(LOC_UNIT_ID) ims_np_all(1:ims_npro_loc)
-        READ(LOC_UNIT_ID, POS=SIZEOFINT*(ims_npro_loc+1) +1) l_trajectories_tags
-        CLOSE(LOC_UNIT_ID)
+                read (LOC_UNIT_ID, POS=SIZEOFINT*(ims_npro_loc + 1) + 1) l_trajectories_tags
+                close (LOC_UNIT_ID)
 #undef LOC_UNIT_ID
 #undef LOC_STATUS
 #ifdef USE_MPI
-     ENDIF
-     CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
-     CALL MPI_BCAST(l_trajectories_tags,isize_traj,MPI_INTEGER8,0,MPI_COMM_WORLD,ims_err)
+            end if
+            call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
+            call MPI_BCAST(l_trajectories_tags, isize_traj, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
 #endif
 
-  ELSE ! default track only isize_traj particles
-     DO j=1,isize_traj
-        l_trajectories_tags(j) = INT(j, KIND=8)
-     ENDDO
+        else ! default track only isize_traj particles
+            do j = 1, isize_traj
+                l_trajectories_tags(j) = INT(j, KIND=8)
+            end do
 
-  ENDIF
+        end if
 
-  l_trajectories = C_0_R
-  counter        = 0
+        l_trajectories = C_0_R
+        counter = 0
 
-  RETURN
-END SUBROUTINE PARTICLE_TRAJECTORIES_INITIALIZE
+        return
+    end subroutine PARTICLE_TRAJECTORIES_INITIALIZE
 
 !#######################################################################
 !#######################################################################
-SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
+    subroutine PARTICLE_TRAJECTORIES_ACCUMULATE(q, s, txc, l_g, l_q, l_hq, l_txc, l_comm, wrk2d, wrk3d)
 
-  USE TLAB_TYPES, ONLY : pointers_dt, pointers3d_dt
-  USE TLAB_VARS,ONLY : isize_field, imax,jmax,kmax
-  USE TLAB_VARS,ONLY : rtime
+        use TLAB_TYPES, only: pointers_dt, pointers3d_dt
+        use TLAB_VARS, only: isize_field, imax, jmax, kmax
+        use TLAB_VARS, only: rtime
+        use PARTICLE_INTERPOLATE
 
-  IMPLICIT NONE
+        implicit none
 
-  TREAL,      DIMENSION(isize_field,*),    TARGET :: q, s, txc
-  TYPE(particle_dt)                               :: l_g
-  TREAL,      DIMENSION(isize_part,*), TARGET :: l_q, l_hq, l_txc ! l_hq as aux array
-  TREAL,      DIMENSION(isize_l_comm)             :: l_comm
-  TREAL,      DIMENSION(*)                        :: wrk2d, wrk3d
+        TREAL, dimension(isize_field, *), target :: q, s, txc
+        type(particle_dt) :: l_g
+        TREAL, dimension(isize_part, *), target :: l_q, l_hq, l_txc ! l_hq as aux array
+        TREAL, dimension(isize_l_comm) :: l_comm
+        TREAL, dimension(*) :: wrk2d, wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER i, j
-  TINTEGER iv, nvar
-  TYPE(pointers3d_dt), DIMENSION(inb_traj) :: data_in
-  TYPE(pointers_dt),   DIMENSION(inb_traj) :: data
+        TINTEGER i, j
+        TINTEGER iv, nvar
+        type(pointers3d_dt), dimension(inb_traj) :: data_in
+        type(pointers_dt), dimension(inb_traj) :: data
 
 !#######################################################################
-  counter = counter +1
+        counter = counter + 1
 
 ! -------------------------------------------------------------------
 ! Setting pointers to position
-  nvar = 0
-  nvar = nvar+1; data(nvar)%field => l_q(:,1)
-  nvar = nvar+1; data(nvar)%field => l_q(:,2)
-  nvar = nvar+1; data(nvar)%field => l_q(:,3)
+        nvar = 0
+        nvar = nvar + 1; data(nvar)%field => l_q(:, 1)
+        nvar = nvar + 1; data(nvar)%field => l_q(:, 2)
+        nvar = nvar + 1; data(nvar)%field => l_q(:, 3)
 
 ! Primitive variables
-  DO iv = 4,inb_flow_array
-     nvar = nvar+1; data_in(nvar)%field(1:imax,1:jmax,1:kmax) => q(:,iv);   data(nvar)%field => l_txc(:,iv-3)
-     l_txc(:,iv-3) = C_0_R ! Field to particle is additive
-  ENDDO
+        do iv = 4, inb_flow_array
+            nvar = nvar + 1; data_in(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, iv); data(nvar)%field => l_txc(:, iv - 3)
+            l_txc(:, iv - 3) = C_0_R ! Field to particle is additive
+        end do
 
-  DO iv = 1,inb_scal_array
-     nvar = nvar+1; data_in(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,iv);   data(nvar)%field => l_txc(:,iv-3+inb_flow_array)
-     l_txc(:,iv-3+inb_flow_array) = C_0_R ! Field to particle is additive
-  ENDDO
+        do iv = 1, inb_scal_array
+            nvar = nvar + 1; data_in(nvar)%field(1:imax, 1:jmax, 1:kmax) => s(:, iv); data(nvar)%field => l_txc(:, iv - 3 + inb_flow_array)
+            l_txc(:, iv - 3 + inb_flow_array) = C_0_R ! Field to particle is additive
+        end do
 
 ! -------------------------------------------------------------------
 ! Additional information
-  IF ( imode_traj .EQ. TRAJ_TYPE_VORTICITY ) THEN
-     CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3), txc(1,4), wrk2d,wrk3d)
-     nvar = nvar+1; data_in(nvar)%field(1:imax,1:jmax,1:kmax) => txc(:,1); data(nvar)%field => l_hq(:,1)
-     nvar = nvar+1; data_in(nvar)%field(1:imax,1:jmax,1:kmax) => txc(:,2); data(nvar)%field => l_hq(:,2)
-     nvar = nvar+1; data_in(nvar)%field(1:imax,1:jmax,1:kmax) => txc(:,3); data(nvar)%field => l_hq(:,3)
-     l_hq(:,1:3) = C_0_R ! Field to particle is additive
-  ENDIF
+        if (imode_traj == TRAJ_TYPE_VORTICITY) then
+            call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+            nvar = nvar + 1; data_in(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 1); data(nvar)%field => l_hq(:, 1)
+            nvar = nvar + 1; data_in(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 2); data(nvar)%field => l_hq(:, 2)
+            nvar = nvar + 1; data_in(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 3); data(nvar)%field => l_hq(:, 3)
+            l_hq(:, 1:3) = C_0_R ! Field to particle is additive
+        end if
 
 ! -------------------------------------------------------------------
 ! Interpolation
-  IF ( nvar-3 .GT. 0 ) THEN
-     iv = nvar -3
-     CALL FIELD_TO_PARTICLE(iv, data_in(4), data(4), l_g,l_q,l_comm, wrk3d)
-  ENDIF
+        if (nvar - 3 > 0) then
+            iv = nvar - 3
+            call FIELD_TO_PARTICLE(iv, data_in(4), data(4), l_g, l_q, l_comm, wrk3d)
+        end if
 
 ! -------------------------------------------------------------------
 ! Accumulate time
 #ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN
+        if (ims_pro == 0) then
 #endif
-     l_trajectories(1,counter,1:nvar) = SNGL(rtime)
+            l_trajectories(1, counter, 1:nvar) = SNGL(rtime)
 #ifdef USE_MPI
-  ENDIF
+        end if
 #endif
 
 ! Accumulating the data
-  DO i = 1,l_g%np
-     DO j = 1,isize_traj
-        IF ( l_g%tags(i) .EQ. l_trajectories_tags(j) ) THEN
-           DO iv = 1,nvar
-              l_trajectories(1+j,counter,iv) = SNGL(data(iv)%field(i))
-           ENDDO
-        ENDIF
-     ENDDO
-  ENDDO
+        do i = 1, l_g%np
+            do j = 1, isize_traj
+                if (l_g%tags(i) == l_trajectories_tags(j)) then
+                    do iv = 1, nvar
+                        l_trajectories(1 + j, counter, iv) = SNGL(data(iv)%field(i))
+                    end do
+                end if
+            end do
+        end do
 
-  RETURN
-END SUBROUTINE PARTICLE_TRAJECTORIES_ACCUMULATE
+        return
+    end subroutine PARTICLE_TRAJECTORIES_ACCUMULATE
 
 !#######################################################################
 !#######################################################################
-SUBROUTINE PARTICLE_TRAJECTORIES_WRITE(fname)
+    subroutine PARTICLE_TRAJECTORIES_WRITE(fname)
 #ifdef USE_MPI
-  USE MPI
+        use MPI
 #endif
 
-  IMPLICIT NONE
+        implicit none
 
-  CHARACTER*(*) fname
+        character*(*) fname
 
 ! -------------------------------------------------------------------
-  CHARACTER(len=32) name
-  TINTEGER iv
+        character(len=32) name
+        TINTEGER iv
 
 !#######################################################################
-  DO iv = 1,inb_traj
+        do iv = 1, inb_traj
 #ifdef USE_MPI
-     mpi_tmp = C_0_R
-     CALL MPI_REDUCE(l_trajectories(1,1,iv), mpi_tmp, (1+isize_traj)*isize_time, MPI_REAL4, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
-     CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
-     IF(ims_pro .EQ. 0) THEN
+            mpi_tmp = C_0_R
+     call MPI_REDUCE(l_trajectories(1, 1, iv), mpi_tmp, (1 + isize_traj)*isize_time, MPI_REAL4, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+            call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
+            if (ims_pro == 0) then
 #endif
 
-        WRITE(name,*) iv; name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(name))
+                write (name, *) iv; name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(name))
 #define LOC_UNIT_ID 115
 #define LOC_STATUS 'unknown'
 #include "dns_open_file.h"
-        REWIND(LOC_UNIT_ID)
+                rewind (LOC_UNIT_ID)
 #ifdef USE_MPI
-        WRITE(LOC_UNIT_ID) mpi_tmp
+                write (LOC_UNIT_ID) mpi_tmp
 #else
-        WRITE(LOC_UNIT_ID) l_trajectories(:,:,iv)
+                write (LOC_UNIT_ID) l_trajectories(:, :, iv)
 #endif
-        CLOSE(LOC_UNIT_ID)
+                close (LOC_UNIT_ID)
 #ifdef USE_MPI
-     END IF
+            end if
 #endif
-  ENDDO
+        end do
 
-  l_trajectories = C_0_R
-  counter        = 0
+        l_trajectories = C_0_R
+        counter = 0
 
-  RETURN
-END SUBROUTINE PARTICLE_TRAJECTORIES_WRITE
+        return
+    end subroutine PARTICLE_TRAJECTORIES_WRITE
 
-END MODULE PARTICLE_TRAJECTORIES
+end module PARTICLE_TRAJECTORIES

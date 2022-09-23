@@ -152,6 +152,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         isize_l_comm = max(isize_l_comm, 2*isize_pbuffer)
 #endif
 
+        ! I do not think this is needed; ony used in particle_to_field.f90
         idummy = max((imax + 1)*jmax, max((imax + 1)*kmax, jmax*(kmax + 1)))
         isize_wrk2d = max(isize_wrk2d, idummy)
 

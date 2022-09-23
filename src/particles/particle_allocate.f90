@@ -30,7 +30,7 @@ end subroutine PARTICLE_ALLOCATE
 ! ###################################################################
 ! ###################################################################
 subroutine PARTICLE_INITIALIZE()
-    use TLAB_VARS, only: g, sbg
+    ! use TLAB_VARS, only: g, sbg
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     implicit none

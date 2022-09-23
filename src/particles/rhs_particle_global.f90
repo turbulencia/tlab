@@ -11,6 +11,8 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
     use TLAB_VARS,   only: g
     use TLAB_VARS,   only: visc, radiation
     use PARTICLE_VARS
+    use PARTICLE_ARRAYS, only: l_g ! but this is also changeing in time...
+    use PARTICLE_INTERPOLATE
     use THERMO_VARS, only: thermo_param
 
     implicit none

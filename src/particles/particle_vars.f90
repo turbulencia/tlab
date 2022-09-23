@@ -20,8 +20,6 @@ module PARTICLE_VARS
     integer(wi)       :: imode_part                   ! type if particle formulation, e.g., tracer, inertia...
     integer(longi)    :: isize_part_total             ! total # of particles
 
-    type(particle_dt) :: l_g                          ! particle tags and Oy-node information in local processor
-
     integer(wi)       :: isize_part                   ! maximum # of particles per processor (to allocate memory space)
     integer(wi)       :: inb_part_array               ! # of particle properties in arrays (prognostic & diagnostic)
     integer(wi)       :: inb_part                     ! # of particle properties in Runge-Kutta (prognostic)
@@ -30,7 +28,6 @@ module PARTICLE_VARS
     integer(wi)       :: isize_l_comm                 ! memory space for the halo regions
 
 #ifdef USE_MPI
-    integer(wi), allocatable :: ims_np_all(:)         ! vector with all # of particles per processor
     integer(wi)   :: isize_pbuffer                    ! space for communication of halo regions
 #endif
 
