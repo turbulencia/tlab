@@ -3,13 +3,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# HISTORY
-!#
-!# 2014/02 - L. Muessle
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
 !#
 !#  Sorting of particles into grid-west-east
 !#  Sending to processors in west and east
@@ -17,7 +10,7 @@
 !#  Sending to processors in south and north
 !#
 !########################################################################
-subroutine PARTICLE_SORT(x_or_z, l_g, l_q, l_hq, &
+subroutine PARTICLE_MPI_SORT(x_or_z, l_g, l_q, l_hq, &
                          nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
 
     use TLAB_VARS, only: imax, kmax
@@ -234,4 +227,4 @@ subroutine PARTICLE_SORT(x_or_z, l_g, l_q, l_hq, &
     end if
 
     return
-end subroutine PARTICLE_SORT
+end subroutine PARTICLE_MPI_SORT

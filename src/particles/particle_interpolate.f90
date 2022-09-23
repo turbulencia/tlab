@@ -58,13 +58,13 @@ contains
 
 ! -------------------------------------------------------------------
 ! Setting fields in halo regions
-        call PARTICLE_HALO_K(nvar, data_in, data_halo_k(1)%field, wrk3d(1), wrk3d(imax*jmax*nvar + 1))
-        call PARTICLE_HALO_I_IK(nvar, data_in, data_halo_i(1)%field, data_halo_k(1)%field, data_halo_ik(1)%field, wrk3d(1), &
+        call Create_Halo_K(nvar, data_in, data_halo_k(1)%field, wrk3d(1), wrk3d(imax*jmax*nvar + 1))
+        call Create_Halo_I_IK(nvar, data_in, data_halo_i(1)%field, data_halo_k(1)%field, data_halo_ik(1)%field, wrk3d(1), &
                              wrk3d(jmax*(kmax + 1)*nvar + 1))
 
 ! -------------------------------------------------------------------
 ! Sorting and counting particles for each zone
-        call PARTICLE_SORT_HALO(nvar, l_g, l_q, data_out, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
+        call Sort_Into_Zones(nvar, l_g, l_q, data_out, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
 
 #ifdef USE_MPI
         call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
@@ -74,24 +74,24 @@ contains
 ! Interpolating
         npar_start = 1
         npar_end = grid_zone
-        call FIELD_TO_PARTICLE_INTERPOLATE('grid_zone', nvar, data_in, data_out, l_g, l_q, npar_start, npar_end)
+        call Interpolate_Inside_Zones('grid_zone', nvar, data_in, data_out, l_g, l_q, npar_start, npar_end)
 
         if (halo_zone_x /= 0) then
             npar_start = npar_end + 1
             npar_end = npar_end + halo_zone_x
-            call FIELD_TO_PARTICLE_INTERPOLATE('halo_zone_x', nvar, data_halo_i, data_out, l_g, l_q, npar_start, npar_end)
+            call Interpolate_Inside_Zones('halo_zone_x', nvar, data_halo_i, data_out, l_g, l_q, npar_start, npar_end)
         end if
 
         if (halo_zone_z /= 0) then
             npar_start = npar_end + 1
             npar_end = npar_end + halo_zone_z
-            call FIELD_TO_PARTICLE_INTERPOLATE('halo_zone_k', nvar, data_halo_k, data_out, l_g, l_q, npar_start, npar_end)
+            call Interpolate_Inside_Zones('halo_zone_k', nvar, data_halo_k, data_out, l_g, l_q, npar_start, npar_end)
         end if
 
         if (halo_zone_diagonal /= 0) then
             npar_start = npar_end + 1
             npar_end = npar_end + halo_zone_diagonal
-            call FIELD_TO_PARTICLE_INTERPOLATE('halo_zone_diagonal', nvar, data_halo_ik, data_out, l_g, l_q, npar_start, npar_end)
+            call Interpolate_Inside_Zones('halo_zone_diagonal', nvar, data_halo_ik, data_out, l_g, l_q, npar_start, npar_end)
         end if
 
 ! -------------------------------------------------------------------
@@ -104,7 +104,7 @@ contains
 
 !#######################################################################
 !#######################################################################
-    subroutine PARTICLE_HALO_K(nvar, data, halo_field_k, buffer_send, buffer_recv)
+    subroutine Create_Halo_K(nvar, data, halo_field_k, buffer_send, buffer_recv)
         integer(wi),         intent(in)    :: nvar
         type(pointers3d_dt), intent(in)    :: data(nvar)
         real(wp),            intent(out)   :: halo_field_k(imax, jmax, 2, nvar)
@@ -150,11 +150,11 @@ contains
 #endif
 
         return
-    end subroutine PARTICLE_HALO_K
+    end subroutine Create_Halo_K
 
 !#######################################################################
 !#######################################################################
-    subroutine PARTICLE_HALO_I_IK(nvar, data, halo_field_i, halo_field_k, halo_field_ik, buffer_send, buffer_recv)
+    subroutine Create_Halo_I_IK(nvar, data, halo_field_i, halo_field_k, halo_field_ik, buffer_send, buffer_recv)
         integer(wi),         intent(in)    :: nvar
         type(pointers3d_dt), intent(in)    :: data(nvar)
         real(wp),            intent(out)   :: halo_field_i(2, jmax, kmax, nvar)
@@ -209,11 +209,11 @@ contains
         halo_field_ik(1, 1:jmax, 2, 1:nvar) = halo_field_k(imax, 1:jmax, 2, 1:nvar)
 
         return
-    end subroutine PARTICLE_HALO_I_IK
+    end subroutine Create_Halo_I_IK
 
 !########################################################################
 !########################################################################
-    subroutine FIELD_TO_PARTICLE_INTERPOLATE(zone, nvar, data_in, data_out, l_g, l_q, grid_start, grid_end)
+    subroutine Interpolate_Inside_Zones(zone, nvar, data_in, data_out, l_g, l_q, grid_start, grid_end)
         character(len=*),    intent(in)  :: zone
         integer(wi),         intent(in)  :: nvar, grid_start, grid_end
         type(pointers3d_dt), intent(in)  :: data_in(nvar)
@@ -357,13 +357,13 @@ contains
         end if
 
         return
-    end subroutine FIELD_TO_PARTICLE_INTERPOLATE
+    end subroutine Interpolate_Inside_Zones
 
 !########################################################################
 !# Sorting structure grid-halo_x-halo_z-halo_diagonal
 !# First algorithm sorts all grid-particle into first part of particle
 !########################################################################
-    subroutine PARTICLE_SORT_HALO(nvar, l_g, l_q, data, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
+    subroutine Sort_Into_Zones(nvar, l_g, l_q, data, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
         integer(wi),       intent(in)    :: nvar
         type(pointers_dt), intent(inout) :: data(nvar)
         type(particle_dt), intent(inout) :: l_g
@@ -623,6 +623,6 @@ contains
         halo_zone_diagonal = l_g%np - grid_zone - halo_zone_x - halo_zone_z
 
         return
-    end subroutine PARTICLE_SORT_HALO
+    end subroutine Sort_Into_Zones
 
 end module PARTICLE_INTERPOLATE

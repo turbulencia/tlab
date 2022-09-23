@@ -53,7 +53,7 @@ subroutine PARTICLE_TIME_SUBSTEP(dte, l_hq, l_comm)
 ! -------------------------------------------------------------------
 !Particle sorting for Send/Recv X-Direction
 ! -------------------------------------------------------------------
-    call PARTICLE_SORT(1, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
+    call PARTICLE_MPI_SORT(1, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
 
     if (ims_pro_i == 0) then !Take care of periodic boundary conditions west
         if (nzone_west /= 0) then
@@ -69,13 +69,13 @@ subroutine PARTICLE_TIME_SUBSTEP(dte, l_hq, l_comm)
         end if
     end if
 
-    call PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
+    call PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
                               p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags, l_g%np)
 
 ! -------------------------------------------------------------------
 !Particle sorting for Send/Recv Z-Direction
 ! -------------------------------------------------------------------
-    call PARTICLE_SORT(3, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
+    call PARTICLE_MPI_SORT(3, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
 
     if (ims_pro_k == 0) then !Take care of periodic boundary conditions south
         if (nzone_south /= 0) then
@@ -91,7 +91,7 @@ subroutine PARTICLE_TIME_SUBSTEP(dte, l_hq, l_comm)
         end if
     end if
 
-    call PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
+    call PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
                               p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags, l_g%np)
 
     nullify (p_buffer_1, p_buffer_2)

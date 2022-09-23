@@ -6,13 +6,6 @@
 #endif
 
 !########################################################################
-!# HISTORY
-!#
-!# 2014/02 - L. Muessle
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
 !#
 !# Send particles to neighbouring processors
 !# Subroutine is divided into 2 optional parts
@@ -24,7 +17,7 @@
 
 !#######################################################################
 !#######################################################################
-SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
+SUBROUTINE PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
      p_buffer_1, p_buffer_2, l_q, l_hq, l_tags, particle_number)
 
   USE PARTICLE_VARS, ONLY: isize_part, inb_part_array, inb_part
@@ -244,11 +237,11 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
   END IF
 
   RETURN
-END SUBROUTINE PARTICLE_SEND_RECV_I
+END SUBROUTINE PARTICLE_MPI_SEND_RECV_I
 
 !#######################################################################
 !#######################################################################
-SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
+SUBROUTINE PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
      p_buffer_1, p_buffer_2, l_q, l_hq, l_tags, particle_number)
 
   USE PARTICLE_VARS, ONLY: isize_part, inb_part_array, inb_part
@@ -469,4 +462,4 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
   END IF
 
   RETURN
-END SUBROUTINE PARTICLE_SEND_RECV_K
+END SUBROUTINE PARTICLE_MPI_SEND_RECV_K
