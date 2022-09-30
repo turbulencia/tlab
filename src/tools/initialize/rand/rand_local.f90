@@ -5,6 +5,7 @@ module RAND_LOCAL
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_txc_field
     use TLAB_VARS, only: g
     use TLAB_PROCS
+    use AVGS, only: AVG1V2D
     implicit none
     save
 
@@ -134,8 +135,7 @@ contains
         real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: a
 
         ! -------------------------------------------------------------------
-        real(wp) AVG1V2D, dummy
-        external AVG1V2D
+        real(wp) dummy
 
         ! ###################################################################
         dummy = AVG1V2D(imax*jmax, 1, kmax, 1, 1, a) ! 3D average

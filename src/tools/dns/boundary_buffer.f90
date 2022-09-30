@@ -33,6 +33,8 @@ MODULE BOUNDARY_BUFFER
   USE THERMO_VARS, ONLY : gama0
   USE IO_FIELDS
   USE OPR_FILTERS
+  USE AVGS, ONLY :    COV2V1D, COV2V2D
+
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
   USE TLAB_MPI_VARS, ONLY : ims_pro,ims_npro_i, ims_npro_k, ims_npro
@@ -221,7 +223,6 @@ CONTAINS
 
     CHARACTER*32 str, varname(item%nfields)
     CHARACTER*128 line
-    TREAL COV2V1D, COV2V2D
 #ifdef USE_MPI
     INTEGER sa_comm_color
     INTEGER,PARAMETER :: sa_ndims=3

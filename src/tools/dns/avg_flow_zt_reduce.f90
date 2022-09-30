@@ -34,7 +34,7 @@ SUBROUTINE AVG_FLOW_ZT_REDUCE(q, hq,txc, mean1d, wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : itransport, visc
   USE TLAB_VARS, ONLY : nstatavg, statavg, nstatavg_points
   USE TLAB_PROCS
-
+  USE AVGS, ONLY: SUM1V1D_V
   IMPLICIT NONE
 
   TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN   ), TARGET :: q
@@ -3365,6 +3365,7 @@ SUBROUTINE AVG_TKE_ZT_REDUCE(rho, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, t
   ! ##############################################
 
   USE TLAB_VARS
+  USE AVGS, ONLY: SUM1V1D_V
 
   IMPLICIT NONE
 

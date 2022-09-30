@@ -1,426 +1,337 @@
-#include "types.h"
+module AVGS
+    use TLAB_CONSTANTS, only: wp, wi
+#ifdef USE_MPI
+    use MPI
+    use TLAB_MPI_VARS, only: ims_comm_z, ims_npro_i, ims_npro_k
+    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k, ims_err
+#endif
+    implicit none
+    private
 
+    integer(wi) k
+#ifdef USE_MPI
+    real(wp) sum_mpi
+#endif
+
+    public :: AVG1V1D, SUM1V1D_V
+    public :: AVG1V2D, AVG1V2D_V, AVG1V2D1G
+    public :: INTER1V2D
+    public :: COV2V1D
+    public :: COV2V2D
+    public :: AVG_IK, AVG_IK_V
+
+contains
 !########################################################################
 ! Average along line ij
 !########################################################################
-TREAL FUNCTION AVG1V1D(nx,ny,nz, i,j, imom, a)
+    function AVG1V1D(nx, ny, nz, i, j, imom, a) result(avg)
+        integer(wi), intent(in) :: nx, ny, nz, i, j, imom ! Moment order
+        real(wp),    intent(in) :: a(nx, ny, nz)
+        real(wp) avg
 
+        ! ###################################################################
+        avg = 0.0_wp
+        do k = 1, nz
+            avg = avg + a(i, j, k)**imom
+        end do
+
+        avg = avg/real(nz,wp)
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_comm_z, ims_npro_k
+        sum_mpi = avg/real(ims_npro_k,wp)
+        call MPI_ALLREDUCE(sum_mpi, avg, 1, MPI_REAL8, MPI_SUM, ims_comm_z, ims_err)
 #endif
 
-  IMPLICIT NONE
-
-  TINTEGER, INTENT(IN) :: nx,ny,nz, i,j, imom ! Moment order
-  TREAL,    INTENT(IN) :: a(nx,ny,nz)
-
-  ! -------------------------------------------------------------------
-  TINTEGER k
-#ifdef USE_MPI
-  INTEGER ims_err
-  TREAL sum_mpi
-#endif
-
-  ! ###################################################################
-  AVG1V1D = C_0_R
-  DO k = 1,nz
-    AVG1V1D = AVG1V1D + a(i,j,k)**imom
-  END DO
-
-  AVG1V1D = AVG1V1D /M_REAL(nz)
-#ifdef USE_MPI
-  sum_mpi = AVG1V1D /M_REAL(ims_npro_k)
-  CALL MPI_ALLREDUCE(sum_mpi, AVG1V1D,  1, MPI_REAL8, MPI_SUM, ims_comm_z, ims_err)
-#endif
-
-  RETURN
-END FUNCTION AVG1V1D
+        return
+    end function AVG1V1D
 
 !########################################################################
 ! Adding in k of the matrix a for all the elements in j
 !########################################################################
-SUBROUTINE SUM1V1D_V(ny,nz, a, avg, wrk)
-#ifdef USE_MPI
-  USE MPI
-#endif
+    subroutine SUM1V1D_V(ny, nz, a, avg, wrk)
+        integer(wi), intent(in)    :: ny, nz
+        real(wp),    intent(in)    :: a(ny, nz)
+        real(wp),    intent(out)   :: avg(ny)
+        real(wp),    intent(inout) :: wrk(ny)
 
-  IMPLICIT NONE
-
-  TINTEGER, INTENT(IN   ) :: ny,nz
-  TREAL,    INTENT(IN   ) :: a(ny,nz)
-  TREAL,    INTENT(  OUT) :: avg(ny)
-  TREAL,    INTENT(INOUT) :: wrk(ny)
-
-  ! -------------------------------------------------------------------
-  TINTEGER j, k
-#ifdef USE_MPI
-  INTEGER ims_err
-#endif
-
-  ! ###################################################################
-  avg = C_0_R
-  DO k = 1,nz
-    DO j = 1,ny
-      avg(j) = avg(j) + a(j,k)
-    END DO
-  END DO
+        ! ###################################################################
+        avg = 0.0_wp
+        do k = 1, nz
+            avg(:) = avg(:) + a(:, k)
+        end do
 
 #ifdef USE_MPI
-  wrk = avg
-  CALL MPI_ALLREDUCE(wrk, avg, ny, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+        wrk = avg
+        call MPI_ALLREDUCE(wrk, avg, ny, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
 
-  RETURN
-END SUBROUTINE SUM1V1D_V
+        return
+    end subroutine SUM1V1D_V
 
 !########################################################################
 ! Covariance along line ij
 !########################################################################
-TREAL FUNCTION COV2V1D(nx,ny,nz, i,j, a,b)
+    function COV2V1D(nx, ny, nz, i, j, a, b) result(avg)
+        integer(wi), intent(in) :: nx, ny, nz, i, j
+        real(wp),    intent(in) :: a(nx, ny, nz), b(nx, ny, nz)
+        real(wp) avg
+        ! -------------------------------------------------------------------
+        ! ###################################################################
+        avg = 0.0_wp
+        do k = 1, nz
+            avg = avg + a(i, j, k)*b(i, j, k)
+        end do
 
+        avg = avg/real(nz,wp)
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_comm_z, ims_npro_k
+        sum_mpi = avg/real(ims_npro_k,wp)
+        call MPI_ALLREDUCE(sum_mpi, avg, 1, MPI_REAL8, MPI_SUM, ims_comm_z, ims_err)
 #endif
 
-  IMPLICIT NONE
-
-  TINTEGER, INTENT(IN) :: nx,ny,nz, i,j
-  TREAL,    INTENT(IN) :: a(nx,ny,nz), b(nx,ny,nz)
-
-  ! -------------------------------------------------------------------
-  TINTEGER k
-#ifdef USE_MPI
-  INTEGER ims_err
-  TREAL sum_mpi
-#endif
-
-  ! ###################################################################
-  COV2V1D = C_0_R
-  DO k = 1,nz
-    COV2V1D = COV2V1D + a(i,j,k) *b(i,j,k)
-  END DO
-
-  COV2V1D = COV2V1D /M_REAL(nz)
-#ifdef USE_MPI
-  sum_mpi = COV2V1D /M_REAL(ims_npro_k)
-  CALL MPI_ALLREDUCE(sum_mpi, COV2V1D,  1, MPI_REAL8, MPI_SUM, ims_comm_z, ims_err)
-#endif
-
-  RETURN
-END FUNCTION COV2V1D
+        return
+    end function COV2V1D
 
 !########################################################################
 ! Average within the plane j
 !########################################################################
-TREAL FUNCTION AVG1V2D(nx,ny,nz, j, imom, a)
+    function AVG1V2D(nx, ny, nz, j, imom, a) result(avg)
+        integer(wi), intent(in) :: nx, ny, nz, j, imom ! Moment order
+        real(wp),    intent(in) :: a(nx, ny, nz)
+        real(wp) avg
 
+        ! -------------------------------------------------------------------
+        integer(wi) i
+
+        ! ###################################################################
+        avg = 0.0_wp
+        do k = 1, nz
+            do i = 1, nx
+                avg = avg + a(i, j, k)**imom
+            end do
+        end do
+
+        avg = avg/real(nx*nz,wp)
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_npro_i,ims_npro_k
+        sum_mpi = avg/real(ims_npro_i*ims_npro_k,wp)
+        call MPI_ALLREDUCE(sum_mpi, avg, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
 
-  IMPLICIT NONE
-
-  TINTEGER, INTENT(IN) :: nx,ny,nz, j, imom ! Moment order
-  TREAL,    INTENT(IN) :: a(nx,ny,nz)
-
-  ! -------------------------------------------------------------------
-  TINTEGER i,k
-#ifdef USE_MPI
-  INTEGER ims_err
-  TREAL sum_mpi
-#endif
-
-  ! ###################################################################
-  AVG1V2D = C_0_R
-  DO k = 1,nz
-    DO i = 1,nx
-      AVG1V2D = AVG1V2D + a(i,j,k)**imom
-    END DO
-  END DO
-
-  AVG1V2D = AVG1V2D /M_REAL(nx*nz)
-#ifdef USE_MPI
-  sum_mpi = AVG1V2D /M_REAL(ims_npro_i*ims_npro_k)
-  CALL MPI_ALLREDUCE(sum_mpi, AVG1V2D,  1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-#endif
-
-  RETURN
-END FUNCTION AVG1V2D
+        return
+    end function AVG1V2D
 
 ! #######################################################################
 ! #######################################################################
 ! Vector form
-SUBROUTINE AVG1V2D_V(nx,ny,nz, imom, a, avg, wrk)
+    subroutine AVG1V2D_V(nx, ny, nz, imom, a, avg, wrk)
+        integer(wi), intent(in)    :: nx, ny, nz, imom ! Moment order
+        real(wp),    intent(in)    :: a(nx, ny, nz)
+        real(wp),    intent(out)   :: avg(ny)
+        real(wp),    intent(inout) :: wrk(ny)
 
+        ! -------------------------------------------------------------------
+        integer(wi) i, j
+
+        ! ###################################################################
+        avg = 0.0_wp
+        do k = 1, nz
+            do j = 1, ny
+                do i = 1, nx
+                    avg(j) = avg(j) + a(i, j, k)**imom
+                end do
+            end do
+        end do
+
+        avg = avg/real(nx*nz,wp)
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_npro_i,ims_npro_k
+        wrk = avg/real(ims_npro_i*ims_npro_k,wp)
+        call MPI_ALLREDUCE(wrk, avg, ny, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
 
-  IMPLICIT NONE
-
-  TINTEGER, INTENT(IN   ) :: nx,ny,nz, imom ! Moment order
-  TREAL,    INTENT(IN   ) :: a(nx,ny,nz)
-  TREAL,    INTENT(  OUT) :: avg(ny)
-  TREAL,    INTENT(INOUT) :: wrk(ny)
-
-  ! -------------------------------------------------------------------
-  TINTEGER i,j,k
-#ifdef USE_MPI
-  INTEGER ims_err
-  TREAL sum_mpi
-#endif
-
-  ! ###################################################################
-  avg = C_0_R
-  DO k = 1,nz
-    DO j = 1,ny
-      DO i = 1,nx
-        avg(j) = avg(j) + a(i,j,k)**imom
-      END DO
-    END DO
-  END DO
-
-  avg = avg /M_REAL(nx*nz)
-#ifdef USE_MPI
-  wrk = avg /M_REAL(ims_npro_i*ims_npro_k)
-  CALL MPI_ALLREDUCE(wrk, avg, ny, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-#endif
-
-END SUBROUTINE AVG1V2D_V
+    end subroutine AVG1V2D_V
 
 !########################################################################
 ! Average within the plane j conditioned on the intermittency signal given by array gate
 !########################################################################
-TREAL FUNCTION AVG1V2D1G(nx,ny,nz, j, igate, imom, a, gate)
-#ifdef USE_MPI
-  USE MPI
-#endif
+    function AVG1V2D1G(nx, ny, nz, j, igate, imom, a, gate) result(avg)
+        integer(wi), intent(in) :: nx, ny, nz, j, imom   ! Moment order
+        integer(1),  intent(in) :: igate               ! Gate level to use
+        real(wp),    intent(in) :: a(nx, ny, nz)
+        integer(1),  intent(in) :: gate(nx, ny, nz)
+        real(wp) avg
 
-  IMPLICIT NONE
-
-  TINTEGER,   INTENT(IN) :: nx,ny,nz, j, imom   ! Moment order
-  INTEGER(1), INTENT(IN) :: igate               ! Gate level to use
-  TREAL,      INTENT(IN) :: a(nx,ny,nz)
-  INTEGER(1), INTENT(IN) :: gate(nx,ny,nz)
-
-  ! -------------------------------------------------------------------
-  TINTEGER i,k, nsample
+        ! -------------------------------------------------------------------
+        integer(wi) i, nsample
 
 #ifdef USE_MPI
-  TINTEGER nsample_mpi
-  TREAL sum_mpi
-  INTEGER ims_err
+        integer(wi) nsample_mpi
 #endif
 
-  ! ###################################################################
-  AVG1V2D1G = C_0_R
-  nsample = 0
-  DO k = 1,nz
-    DO i = 1,nx
-      IF ( gate(i,j,k) == igate ) THEN
-        AVG1V2D1G = AVG1V2D1G + a(i,j,k)**imom
-        nsample = nsample+1
-      END IF
-    END DO
-  END DO
+        ! ###################################################################
+        avg = 0.0_wp
+        nsample = 0
+        do k = 1, nz
+            do i = 1, nx
+                if (gate(i, j, k) == igate) then
+                    avg = avg + a(i, j, k)**imom
+                    nsample = nsample + 1
+                end if
+            end do
+        end do
 
 #ifdef USE_MPI
-  nsample_mpi = nsample
-  CALL MPI_ALLREDUCE(nsample_mpi, nsample, 1, MPI_INTEGER4, MPI_SUM, MPI_COMM_WORLD, ims_err)
+        nsample_mpi = nsample
+        call MPI_ALLREDUCE(nsample_mpi, nsample, 1, MPI_INTEGER4, MPI_SUM, MPI_COMM_WORLD, ims_err)
 
-  sum_mpi = AVG1V2D1G
-  CALL MPI_ALLREDUCE(sum_mpi, AVG1V2D1G, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+        sum_mpi = avg
+        call MPI_ALLREDUCE(sum_mpi, avg, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
 
-  IF ( nsample > 0 ) AVG1V2D1G = AVG1V2D1G /M_REAL(nsample)
+        if (nsample > 0) avg = avg/real(nsample,wp)
 
-  RETURN
-END FUNCTION AVG1V2D1G
+        return
+    end function AVG1V2D1G
 
 !########################################################################
 ! Intermittency factor within the plane j
 !########################################################################
-TREAL FUNCTION INTER1V2D(nx,ny,nz, j, igate, gate)
+    function INTER1V2D(nx, ny, nz, j, igate, gate) result(avg)
+        integer(wi), intent(in) :: nx, ny, nz, j
+        integer(1),  intent(in) :: gate(nx, ny, nz), igate
+        real(wp) avg
 
+        ! -------------------------------------------------------------------
+        integer(wi) i
+
+        ! ###################################################################
+        avg = 0.0_wp
+        do k = 1, nz
+            do i = 1, nx
+                if (gate(i, j, k) == igate) then
+                    avg = avg + 1.0_wp
+                end if
+            end do
+        end do
+
+        avg = avg/real(nx*nz,wp)
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_npro_i,ims_npro_k
+        sum_mpi = avg/real(ims_npro_i*ims_npro_k,wp)
+        call MPI_ALLREDUCE(sum_mpi, avg, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
 
-  IMPLICIT NONE
-
-  TINTEGER,   INTENT(IN) :: nx,ny,nz, j
-  INTEGER(1), INTENT(IN) :: gate(nx,ny,nz), igate
-
-  ! -------------------------------------------------------------------
-  TINTEGER i,k
-#ifdef USE_MPI
-  INTEGER ims_err
-  TREAL sum_mpi
-#endif
-
-  ! ###################################################################
-  INTER1V2D = C_0_R
-  DO k = 1,nz
-    DO i = 1,nx
-      IF ( gate(i,j,k) == igate ) THEN
-        INTER1V2D = INTER1V2D + C_1_R
-      END IF
-    END DO
-  END DO
-
-  INTER1V2D = INTER1V2D /M_REAL(nx*nz)
-#ifdef USE_MPI
-  sum_mpi = INTER1V2D /M_REAL(ims_npro_i*ims_npro_k)
-  CALL MPI_ALLREDUCE(sum_mpi, INTER1V2D,  1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-#endif
-
-  RETURN
-END FUNCTION INTER1V2D
+        return
+    end function INTER1V2D
 
 ! ###################################################################
 ! Covariance within the plane j
 ! ###################################################################
-TREAL FUNCTION COV2V2D(nx,ny,nz, j, a, b)
+    function COV2V2D(nx, ny, nz, j, a, b) result(avg)
+        integer(wi), intent(in) :: nx, ny, nz, j
+        real(wp),    intent(in) :: a(nx, ny, nz), b(nx, ny, nz)
+        real(wp) avg
 
+        ! -------------------------------------------------------------------
+        integer(wi) i
+
+        ! ###################################################################
+        avg = 0.0_wp
+        do k = 1, nz
+            do i = 1, nx
+                avg = avg + a(i, j, k)*b(i, j, k)
+            end do
+        end do
+
+        avg = avg/real(nx*nz,wp)
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_npro_i,ims_npro_k
+        sum_mpi = avg/real(ims_npro_i*ims_npro_k,wp)
+        call MPI_ALLREDUCE(sum_mpi, avg, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
 
-  IMPLICIT NONE
-
-  TINTEGER, INTENT(IN) :: nx,ny,nz, j
-  TREAL,    INTENT(IN) :: a(nx,ny,nz), b(nx,ny,nz)
-
-  ! -------------------------------------------------------------------
-  TINTEGER i,k
-#ifdef USE_MPI
-  INTEGER ims_err
-  TREAL sum_mpi
-#endif
-
-  ! ###################################################################
-  COV2V2D = C_0_R
-  DO k = 1,nz
-    DO i = 1,nx
-      COV2V2D = COV2V2D + a(i,j,k)*b(i,j,k)
-    END DO
-  END DO
-
-  COV2V2D = COV2V2D /M_REAL(nx*nz)
-#ifdef USE_MPI
-  sum_mpi = COV2V2D /M_REAL(ims_npro_i*ims_npro_k)
-  CALL MPI_ALLREDUCE(sum_mpi, COV2V2D, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
-#endif
-
-  RETURN
-END FUNCTION COV2V2D
+        return
+    end function COV2V2D
 
 !########################################################################
-!# DESCRIPTION
-!#
 !# Calculate the average of the plane j in array a over nonuniform grids.
-!#
 !########################################################################
-TREAL FUNCTION AVG_IK(nx,ny,nz, j, a, dx,dz, area)
+    function AVG_IK(nx, ny, nz, j, a, dx, dz, area) result(avg)
+        integer(wi), intent(in) :: nx, ny, nz, j
+        real(wp),    intent(in) :: dx(*), dz(*), area
+        real(wp),    intent(in) :: a(nx, ny, nz)
+        real(wp) avg
 
+        ! -------------------------------------------------------------------
+        integer(wi) i, k, idsp, kdsp
+        real(wp) sum
+
+        ! ###################################################################
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k, ims_err
-#endif
-
-  IMPLICIT NONE
-
-  TINTEGER, INTENT(IN) :: nx,ny,nz, j
-  TREAL,    INTENT(IN) :: dx(*),dz(*), area
-  TREAL,    INTENT(IN) :: a(nx,ny,nz)
-
-  ! -------------------------------------------------------------------
-  TINTEGER i,k, idsp,kdsp
-  TREAL sum
-
-  ! ###################################################################
-#ifdef USE_MPI
-  idsp = ims_offset_i
-  kdsp = ims_offset_k
+        idsp = ims_offset_i
+        kdsp = ims_offset_k
 #else
-  idsp = 0
-  kdsp = 0
+        idsp = 0
+        kdsp = 0
 #endif
 
-  ! number of + ops: nx*nz*1 + nz*1
-  ! number of * ops: nx*nz*1 + nz*1
-  AVG_IK = C_0_R
-  DO k = 1,nz
-    sum = C_0_R
-    DO i = 1,nx
-      sum = sum + a(i,j,k)*dx(idsp+i)
-    END DO
-    AVG_IK = AVG_IK + sum*dz(kdsp+k)
-  END DO
+        ! number of + ops: nx*nz*1 + nz*1
+        ! number of * ops: nx*nz*1 + nz*1
+        avg = 0.0_wp
+        do k = 1, nz
+            sum = 0.0_wp
+            do i = 1, nx
+                sum = sum + a(i, j, k)*dx(idsp + i)
+            end do
+            avg = avg + sum*dz(kdsp + k)
+        end do
 
-  AVG_IK = AVG_IK /area
+        avg = avg/area
 #ifdef USE_MPI
-  sum = AVG_IK
-  CALL MPI_ALLREDUCE(sum, AVG_IK, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+        sum = avg
+        call MPI_ALLREDUCE(sum, avg, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #else
 #endif
 
-  RETURN
-END FUNCTION AVG_IK
+        return
+    end function AVG_IK
 
 !########################################################################
 !########################################################################
 ! Vector form
-SUBROUTINE AVG_IK_V(nx,ny,nz, jm, a, dx,dz, avg, wrk, area)
+    subroutine AVG_IK_V(nx, ny, nz, jm, a, dx, dz, avg, wrk, area)
+        integer(wi), intent(in)    :: nx, ny, nz, jm
+        real(wp),    intent(in)    :: dx(*), dz(*), area
+        real(wp),    intent(in)    :: a(nx, ny, nz)
+        real(wp),    intent(out)   :: avg(jm)
+        real(wp),    intent(inout) :: wrk(jm)
 
+        ! -------------------------------------------------------------------
+        integer(wi) i, j, idsp, kdsp
+        real(wp) sum
+
+        ! ###################################################################
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k, ims_err
-#endif
-
-  IMPLICIT NONE
-
-  TINTEGER, INTENT(IN   ) :: nx,ny,nz, jm
-  TREAL,    INTENT(IN   ) :: dx(*),dz(*), area
-  TREAL,    INTENT(IN   ) :: a(nx,ny,nz)
-  TREAL,    INTENT(  OUT) :: avg(jm)
-  TREAL,    INTENT(INOUT) :: wrk(jm)
-
-  ! -------------------------------------------------------------------
-  TINTEGER i,j,k, idsp,kdsp
-  TREAL sum
-
-  ! ###################################################################
-#ifdef USE_MPI
-  idsp = ims_offset_i
-  kdsp = ims_offset_k
+        idsp = ims_offset_i
+        kdsp = ims_offset_k
 #else
-  idsp = 0
-  kdsp = 0
+        idsp = 0
+        kdsp = 0
 #endif
 
-  avg = C_0_R
-  DO k = 1,nz
-    DO j = 1,jm
-      sum = C_0_R
-      DO i = 1,nx
-        sum = sum + a(i,j,k) *dx(idsp+i)
-      END DO
-      avg(j) = avg(j) + sum *dz(k+kdsp)
-    END DO
-  END DO
+        avg = 0.0_wp
+        do k = 1, nz
+            do j = 1, jm
+                sum = 0.0_wp
+                do i = 1, nx
+                    sum = sum + a(i, j, k)*dx(idsp + i)
+                end do
+                avg(j) = avg(j) + sum*dz(k + kdsp)
+            end do
+        end do
 
-  avg = avg /area
+        avg = avg/area
 #ifdef USE_MPI
-  wrk = avg
-  CALL MPI_ALLREDUCE(wrk, avg, jm, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+        wrk = avg
+        call MPI_ALLREDUCE(wrk, avg, jm, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
 
-  RETURN
-END SUBROUTINE AVG_IK_V
+        return
+    end subroutine AVG_IK_V
+
+end module AVGS

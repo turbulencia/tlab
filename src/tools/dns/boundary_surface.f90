@@ -15,7 +15,7 @@ SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
   USE TLAB_VARS,   ONLY : isize_field,isize_wrk1d 
   USE TLAB_VARS,   ONLY : visc,schmidt
   USE BOUNDARY_BCS, ONLY : BcsScalJmin, BcsScalJmax 
-
+  USE AVGS, ONLY : AVG1V2D
   IMPLICIT NONE  
 
 #include "integers.h"
@@ -31,7 +31,6 @@ SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
   TINTEGER nxy,ip,k
   TREAL, DIMENSION(:,:), POINTER       :: hfx,hfx_anom
   TREAL :: diff,hfx_avg
-  TREAL AVG1V2D
 
 #ifdef TRACE_ON
   CALL TLAB_WRITE_ASCII(tfile,'ENTERING SUBROUTINE BOUNDARY_SURFACE_J')
