@@ -19,6 +19,7 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
     use TLAB_PROCS
     use FLOW_LOCAL
+    use AVGS, only: AVG1V2D
     use PROFILES
     implicit none
 
@@ -30,7 +31,6 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
 
     ! -------------------------------------------------------------------
     real(wp) dummy
-    real(wp) AVG1V2D
     real(wp) xcenter, amplify
 
     real(wp), dimension(:), pointer :: x, y, z

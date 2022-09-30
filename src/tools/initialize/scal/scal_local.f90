@@ -10,6 +10,7 @@ module SCAL_LOCAL
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
     use IO_FIELDS
     use PROFILES
+    use AVGS, only: AVG1V2D
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
@@ -81,8 +82,7 @@ contains
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: tmp, wrk3d
 
         ! -------------------------------------------------------------------
-        real(wp) AVG1V2D, dummy, amplify
-        external AVG1V2D
+        real(wp) dummy, amplify
 
 ! ###################################################################
 #ifdef USE_MPI
@@ -145,7 +145,6 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 
         ! -------------------------------------------------------------------
         real(wp) dummy
-        real(wp) AVG1V2D
         real(wp) xcenter, zcenter, rcenter, amplify
 
         ! ###################################################################
@@ -262,8 +261,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: s
 
         ! -------------------------------------------------------------------
-        real(wp) AVG1V2D, dummy, amplify
-        external AVG1V2D
+        real(wp) dummy, amplify
 
         ! ###################################################################
         amplify = C_0_R                                      ! Maximum across the layer

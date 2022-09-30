@@ -6,6 +6,7 @@ module FLOW_LOCAL
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g, qbg
     use IO_FIELDS
+    use AVGS, only: AVG1V2D
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
@@ -157,8 +158,7 @@ wrk2d(:,k,2) = wrk2d(:,k,2) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 
         ! -------------------------------------------------------------------
         integer(wi) ibc, bcs(2, 2), bcs2(2, 2)
-        real(wp) AVG1V2D, dummy
-        external AVG1V2D
+        real(wp) dummy
 
         ! ###################################################################
         bcs = 0
@@ -284,8 +284,7 @@ wrk2d(:,k,2) = wrk2d(:,k,2) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         real(wp), dimension(imax, jmax, kmax) :: u, v, w
 
         ! -------------------------------------------------------------------
-        real(wp) AVG1V2D, dummy, amplify
-        external AVG1V2D
+        real(wp) dummy, amplify
 
         ! ###################################################################
         amplify = C_0_R                                      ! Maximum across the layer

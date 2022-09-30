@@ -26,6 +26,7 @@
 subroutine IBM_AVG_GAMMA(gamma, eps, wrk3d, wrk1d)
 
   use TLAB_VARS, only : imax, jmax, kmax, g, area
+  USE AVGS, ONLY: AVG_IK_V
 
   implicit none
 
