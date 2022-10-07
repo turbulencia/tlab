@@ -14,6 +14,11 @@ def find_nearest(array,value):
     idx = (np.abs(array-value)).argmin()
     return idx
 
+def median(w,weights):
+    f = np.cumsum(weights)
+    f = f /f[-1]
+    return np.interp( 0.5, f, w )
+
 def find_nearest_bisection(array,value):
     """
     Returns an index j such that ``value`` is between array[j]
@@ -42,18 +47,13 @@ def find_nearest_bisection(array,value):
     else:
         return jl
 
-def running_average(x,f,dx,m):
+def running_average(x,f,dx,y):
     """
-    Calculate running average over dx at equally spaced m points.
+    Calculate an average of f(x) over a window dx centered at the points in array y.
     Assuming the independent variable x is non-decreasing.
     """
 
-    # Defining the final independent variable
-    yl = x[0]  +0.5 *dx
-    jl = find_nearest_bisection(x,yl)
-    yr = x[-1] -0.5 *dx
-    jr = find_nearest_bisection(x,yr)
-    y = np.linspace(yl,yr,m)
+    m = np.size(y)
 
     if   np.ndim(f) == 1:
         avg = np.empty(m)
@@ -65,19 +65,27 @@ def running_average(x,f,dx,m):
     for j in range(m):
         yl = y[j] -0.5 *dx
         jl = find_nearest_bisection(x,yl)
+        jl = max(jl,0)
         yr = y[j] +0.5 *dx
         jr = find_nearest_bisection(x,yr)
+        jr = min(jr+1,np.shape(f)[0]-1)
+        # print(jl,jr)
+
+        if jr == jl:
+            avg[j] = f[jl]
+            std[j] = 0.
+            continue
 
         if   np.ndim(f) == 1:
-            avg[j] = np.trapz(  f[jl:jr]            ,x[jl:jr]) /( x[jr-1]-x[jl] )
-            std[j] = np.trapz( (f[jl:jr]-avg[j])**2.,x[jl:jr]) /( x[jr-1]-x[jl] )
+            avg[j] = np.trapz(  f[jl:jr+1]            ,x[jl:jr+1]) /( x[jr]-x[jl] )
+            std[j] = np.trapz( (f[jl:jr+1]-avg[j])**2.,x[jl:jr+1]) /( x[jr]-x[jl] )
         elif np.ndim(f) == 2:
-            avg[j,:] = np.trapz(  f[jl:jr,:]              ,x[jl:jr], axis=0) /( x[jr-1]-x[jl] )
-            std[j,:] = np.trapz( (f[jl:jr,:]-avg[j,:])**2.,x[jl:jr], axis=0) /( x[jr-1]-x[jl] )
+            avg[j,:] = np.trapz(  f[jl:jr+1,:]              ,x[jl:jr+1], axis=0) /( x[jr]-x[jl] )
+            std[j,:] = np.trapz( (f[jl:jr+1,:]-avg[j,:])**2.,x[jl:jr+1], axis=0) /( x[jr]-x[jl] )
 
     std = np.sqrt( std )
 
-    return y, avg, std
+    return avg, std
 
 def gradient(x,f,order):
     """
