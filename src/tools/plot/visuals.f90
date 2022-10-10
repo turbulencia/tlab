@@ -22,8 +22,8 @@ PROGRAM VISUALS
 #endif
   USE THERMO_VARS, ONLY : imixture
   USE THERMO_VARS, ONLY : NSP, THERMO_SPNAME
-  USE LAGRANGE_VARS
-  USE LAGRANGE_ARRAYS
+  USE PARTICLE_VARS
+  USE PARTICLE_ARRAYS
   USE IBM_VARS
   USE IO_FIELDS
 
@@ -78,7 +78,7 @@ PROGRAM VISUALS
   CALL TLAB_START()
 
   CALL IO_READ_GLOBAL(ifile)
-  IF ( icalc_part .EQ. 1 ) CALL PARTICLE_READ_GLOBAL(ifile)
+  CALL PARTICLE_READ_GLOBAL(ifile)
 
   ! -------------------------------------------------------------------
   ! IBM status (before TLAB_MPI_INITIALIZE!)
@@ -287,7 +287,7 @@ PROGRAM VISUALS
 #ifdef USE_MPI
   isize_wrk3d = isize_wrk3d + isize_field ! more space in wrk3d array needed in IO_WRITE_VISUALS
 #endif
-  IF ( icalc_part .eq. 1) THEN
+  IF ( imode_part /= PART_TYPE_NONE ) THEN
     isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
   END IF
 
@@ -310,6 +310,8 @@ PROGRAM VISUALS
   CALL FDM_INITIALIZE(y, g(2), wrk1d)
   CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
+  CALL FI_BACKGROUND_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
+
   IF ( ifourier .EQ. 1 .AND. inb_txc .GE. 1 ) THEN ! For Poisson solver
     CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
   ENDIF
@@ -317,8 +319,6 @@ PROGRAM VISUALS
   IF ( iread_flow .EQ. 1 .AND. inb_txc .GE. 3 ) THEN ! We need array space
     CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   ENDIF
-
-  CALL FI_PROFILES_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
 
   IF ( imode_ibm .EQ. 1 ) THEN
     CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
@@ -868,19 +868,19 @@ PROGRAM VISUALS
         CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,1), wrk2d,wrk3d)
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
-        IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 )  THEN
+        IF ( imode_part .EQ. PART_TYPE_BIL_CLOUD_3 .OR. imode_part .EQ. PART_TYPE_BIL_CLOUD_4 )  THEN
           txc(:,1) = txc(:,1) + 0.00000001
           DO is=1,2
-            plot_file = TRIM(ADJUSTL(LAGRANGE_SPNAME(is)))//time_str(1:MaskSize)
+            plot_file = TRIM(ADJUSTL(PARTICLE_SPNAME(is)))//time_str(1:MaskSize)
             CALL PARTICLE_TO_FIELD(l_q, l_q(1,3+is), txc(1,2), wrk2d,wrk3d)
             txc(:,2) = txc(:,2) /txc(:,1)
             CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
           END DO
         END IF
 
-        IF ( ilagrange .EQ. LAG_TYPE_BIL_CLOUD_4 ) THEN
+        IF ( imode_part .EQ. PART_TYPE_BIL_CLOUD_4 ) THEN
           !inb_part_array is the last component -> residence times in bil_cloud_4
-          plot_file = TRIM(ADJUSTL(LAGRANGE_SPNAME(3)))//time_str(1:MaskSize)
+          plot_file = TRIM(ADJUSTL(PARTICLE_SPNAME(3)))//time_str(1:MaskSize)
           CALL PARTICLE_TO_FIELD(l_q, l_q(1,inb_part_array-1), txc(1,2), wrk2d,wrk3d)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
         ENDIF

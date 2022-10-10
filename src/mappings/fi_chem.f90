@@ -1,71 +1,76 @@
 #include "types.h"
 #include "dns_const.h"
 
-SUBROUTINE FI_CHEM(chemistry, nx,ny,nz, is, s, source)
+subroutine FI_CHEM(chemistry, nx, ny, nz, is, s, source)
 
-  USE TLAB_TYPES,  ONLY : term_dt
-  USE TLAB_VARS, ONLY : sbg, damkohler
-  USE TLAB_VARS, ONLY : g
+    use TLAB_TYPES, only: term_dt, profiles_dt
+    use TLAB_VARS, only: sbg, damkohler
+    use TLAB_VARS, only: g
+    use PROFILES
+    implicit none
 
-  IMPLICIT NONE
-
-  TYPE(term_dt),                INTENT(IN)  :: chemistry
-  TINTEGER,                     INTENT(IN)  :: nx,ny,nz, is
-  TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
-  TREAL, DIMENSION(nx*ny*nz),   INTENT(OUT) :: source
+    type(term_dt), intent(IN) :: chemistry
+    TINTEGER, intent(IN) :: nx, ny, nz, is
+    TREAL, dimension(nx*ny*nz, *), intent(IN) :: s
+    TREAL, dimension(nx*ny*nz), intent(OUT) :: source
 
 ! -----------------------------------------------------------------------
-  TREAL dummy, dummy2, xi, thickness_inv, ycenter
-  TINTEGER i,j,k
+    TREAL dummy, dummy2
+    type(profiles_dt) prof_loc
+    TINTEGER i, j, k
 
 !########################################################################
-  SELECT CASE( chemistry%type )
+    select case (chemistry%type)
 
-  CASE( EQNS_CHEM_LAYEREDRELAXATION )
-     ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean + chemistry%parameters(2)
-     thickness_inv = C_1_R /chemistry%parameters(3)
-     DO i=1,nx
-        DO k=1,nz
-           DO j=1,ny
-              xi = (g(2)%nodes(j)-ycenter) *thickness_inv
-              source(i+(j-1)*nx+(k-1)*nx*ny) = C_05_R *( C_1_R +TANH(xi) ) ! strength constant
-           ENDDO
-        ENDDO
-     ENDDO
-     
-     dummy  =-damkohler(is) /chemistry%parameters(1)
-     source = dummy *source *s(:,is)
+    case (EQNS_CHEM_LAYEREDRELAXATION)
+        prof_loc%type = PROFILE_TANH
+        prof_loc%ymean = sbg(is)%ymean
+        prof_loc%thick = -chemistry%parameters(3)*C_05_R
+        prof_loc%mean = C_05_R
+        prof_loc%delta = C_1_R
+        prof_loc%lslope = C_0_R
+        prof_loc%uslope = C_0_R
+        do i = 1, nx
+            do k = 1, nz
+                do j = 1, ny
+                    source(i + (j - 1)*nx + (k - 1)*nx*ny) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j) - chemistry%parameters(2)) ! strength constant
+                end do
+            end do
+        end do
 
-  CASE( EQNS_CHEM_QUADRATIC  )
-     dummy  = damkohler(is) *chemistry%parameters(is)
-     source = dummy *s(:,2) *s(:,3)
+        dummy = -damkohler(is)/chemistry%parameters(1)
+        source = dummy*source*s(:, is)
 
-  CASE( EQNS_CHEM_QUADRATIC3 )
-     dummy  = damkohler(is) *chemistry%parameters(is)
+    case (EQNS_CHEM_QUADRATIC)
+        dummy = damkohler(is)*chemistry%parameters(is)
+        source = dummy*s(:, 2)*s(:, 3)
 
-     IF      ( is .GE. 1 .AND. is .LE. 3 ) THEN
-        source = dummy *s(:,2) *s(:,3)
-     ELSE IF ( is .GE. 4 .AND. is .LE. 6 ) THEN
-        source = dummy *s(:,4) *s(:,5)
-     ELSE IF ( is .GE. 7 .AND. is .LE. 9 ) THEN
-        source = dummy *s(:,7) *s(:,8)
-     ENDIF
-     
-  CASE( EQNS_CHEM_OZONE )
-     dummy  = damkohler(is)
-     IF ( is .EQ. 4 ) dummy =-dummy
-     
-     source =-chemistry%parameters(1) /( C_1_R +chemistry%parameters(2)*s(:,1) )
-     source = EXP(source)
+    case (EQNS_CHEM_QUADRATIC3)
+        dummy = damkohler(is)*chemistry%parameters(is)
 
-     IF ( is .EQ. 4 ) THEN
-        dummy2 = C_1_R + chemistry%parameters(3)
-        source = dummy *( dummy2 *s(:,4) - source *s(:,2) *s(:,3) )
-     ELSE
-        source = dummy *(         s(:,4) - source *s(:,2) *s(:,3) )
-     ENDIF
-     
-  END SELECT
-  
-  RETURN
-END SUBROUTINE FI_CHEM
+        if (is >= 1 .and. is <= 3) then
+            source = dummy*s(:, 2)*s(:, 3)
+        else if (is >= 4 .and. is <= 6) then
+            source = dummy*s(:, 4)*s(:, 5)
+        else if (is >= 7 .and. is <= 9) then
+            source = dummy*s(:, 7)*s(:, 8)
+        end if
+
+    case (EQNS_CHEM_OZONE)
+        dummy = damkohler(is)
+        if (is == 4) dummy = -dummy
+
+        source = -chemistry%parameters(1)/(C_1_R + chemistry%parameters(2)*s(:, 1))
+        source = exp(source)
+
+        if (is == 4) then
+            dummy2 = C_1_R + chemistry%parameters(3)
+            source = dummy*(dummy2*s(:, 4) - source*s(:, 2)*s(:, 3))
+        else
+            source = dummy*(s(:, 4) - source*s(:, 2)*s(:, 3))
+        end if
+
+    end select
+
+    return
+end subroutine FI_CHEM

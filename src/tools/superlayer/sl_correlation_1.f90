@@ -29,7 +29,7 @@ SUBROUTINE SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
 
 ! -------------------------------------------------------------------
   TINTEGER j, bcs(2,2)
-  TREAL mean_1, mean_2, var_1, var_2, delta_w
+  TREAL mean_1, mean_2, var_1, var_2, delta_w, ycenter
   TREAL AVG1V2D, COV2V2D
 
   CHARACTER*32 fname
@@ -133,8 +133,9 @@ SUBROUTINE SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
 ! -------------------------------------------------------------------
 ! Body
 ! -------------------------------------------------------------------
+     ycenter = y(1) + g(2)%scale *qbg(1)%ymean_rel
      DO j = 1,jmax
-        WRITE(23,1020) 1, j, g(2)%nodes(j), (g(2)%nodes(j)-g(2)%scale *qbg(1)%ymean-y(1))/delta_w,&
+        WRITE(23,1020) 1, j, g(2)%nodes(j), (g(2)%nodes(j)-ycenter)/delta_w,&
              corr(j,1), corr(j,2), corr(j,3)
      ENDDO
 

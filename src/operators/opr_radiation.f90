@@ -21,6 +21,7 @@
 SUBROUTINE OPR_RADIATION(radiation, nx,ny,nz, g, s, r, wrk1d,wrk3d)
 
   USE TLAB_TYPES, ONLY : term_dt, grid_dt
+  USE AVGS, ONLY: AVG1V2D_V
 
   IMPLICIT NONE
 
@@ -134,6 +135,7 @@ END SUBROUTINE OPR_RADIATION
 SUBROUTINE OPR_RADIATION_FLUX(radiation, nx,ny,nz, g, s, r, wrk1d,wrk3d)
 
   USE TLAB_TYPES, ONLY : term_dt, grid_dt
+  USE AVGS, ONLY: AVG1V2D_V
 
   IMPLICIT NONE
 

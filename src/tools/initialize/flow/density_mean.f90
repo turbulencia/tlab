@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 
@@ -23,140 +22,128 @@
 !# Spatial case with mulstispecies is not jet done
 !#
 !########################################################################
-SUBROUTINE DENSITY_MEAN(rho, p,T,s, txc, wrk1d,wrk2d,wrk3d)
+subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
+    use TLAB_CONSTANTS, only: wp, wi, efile
+    use TLAB_VARS, only: g
+    use TLAB_VARS, only: imode_sim, inb_scal, imax, jmax, kmax
+    use TLAB_VARS, only: rbg, tbg, sbg, qbg
+    use TLAB_VARS, only: buoyancy
+    use THERMO_VARS, only: imixture
+    use PROFILES
+    implicit none
 
-  USE TLAB_CONSTANTS, ONLY : efile
-  USE TLAB_VARS,    ONLY : g
-  USE TLAB_VARS,    ONLY : imode_sim, inb_scal, imax,jmax,kmax
-  USE TLAB_VARS,    ONLY : rbg, tbg, sbg, qbg
-  USE TLAB_VARS,    ONLY : buoyancy
-  USE THERMO_VARS, ONLY : imixture
+    real(wp), dimension(imax, jmax, kmax), intent(IN) :: p, T
+    real(wp), dimension(imax, jmax, kmax), intent(OUT) :: rho
+    real(wp), dimension(imax, jmax, kmax, *), intent(OUT) :: s
+    real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: txc, wrk3d
+    real(wp), dimension(jmax, *), intent(INOUT) :: wrk1d, wrk2d
 
-  IMPLICIT NONE
+    ! -------------------------------------------------------------------
+    real(wp) dummy
+    integer(wi) j, k, is, bcs(2, 2)
 
-#include "integers.h"
+    bcs = 0
 
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(IN)    :: p,T
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(OUT)   :: rho
-  TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(OUT)   :: s
-  TREAL, DIMENSION(imax,jmax,kmax),   INTENT(INOUT) :: txc, wrk3d
-  TREAL, DIMENSION(jmax,*),           INTENT(INOUT) :: wrk1d,wrk2d
-
-  ! -------------------------------------------------------------------
-  TREAL ycenter, dummy
-  TINTEGER j, k, is, bcs(2,2)
-  TREAL PROFILES
-  EXTERNAL PROFILES
-
-  bcs = 0
-
-  ! -------------------------------------------------------------------
-  ! Temporal shear layer case without volumetric force:
-  ! Calculate density from equation of state
-  ! -------------------------------------------------------------------
-  IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) THEN
-    IF ( buoyancy%type .EQ. EQNS_NONE ) THEN
+    ! -------------------------------------------------------------------
+    ! Temporal shear layer case without volumetric force:
+    ! Calculate density from equation of state
+    ! -------------------------------------------------------------------
+    if (imode_sim == DNS_MODE_TEMPORAL) then
+        if (buoyancy%type == EQNS_NONE) then
 
 #define TEM_MEAN_LOC(i,j,k) wrk3d(i,j,k)
 #define RHO_MEAN_LOC(i,j,k) txc(i,j,k)
 
-      ! temperature/mixture profile are given
-      IF ( rbg%type .EQ. PROFILE_NONE ) THEN
-        ycenter = g(2)%nodes(1) + g(2)%scale *tbg%ymean
-        DO j = 1,jmax
-          dummy =  PROFILES(tbg%type, tbg%thick, tbg%delta, tbg%mean, ycenter, tbg%parameters, g(2)%nodes(j))
-          TEM_MEAN_LOC(:,j,:) = dummy
-        ENDDO
+            ! temperature/mixture profile are given
+            if (rbg%type == PROFILE_NONE) then
+                do j = 1, jmax
+                    dummy = PROFILES_CALCULATE(tbg, g(2)%nodes(j))
+                    TEM_MEAN_LOC(:, j, :) = dummy
+                end do
 
-        DO is = 1,inb_scal
-          ycenter = g(2)%nodes(1) + g(2)%scale *sbg(is)%ymean
-          DO j = 1,jmax
-            dummy =  PROFILES(sbg(is)%type, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, g(2)%nodes(j))
-            s(:,j,:,is) = dummy
-          ENDDO
-        ENDDO
+                do is = 1, inb_scal
+                    do j = 1, jmax
+                        dummy = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
+                        s(:, j, :, is) = dummy
+                    end do
+                end do
 
-        ! define liquid content in AirWater case: (p,T) given
-        IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-          CALL THERMO_AIRWATER_PT(imax,jmax,kmax, s, p, TEM_MEAN_LOC(1,1,1))
-        ENDIF
+                ! define liquid content in AirWater case: (p,T) given
+                if (imixture == MIXT_TYPE_AIRWATER) then
+                    call THERMO_AIRWATER_PT(imax, jmax, kmax, s, p, TEM_MEAN_LOC(1, 1, 1))
+                end if
 
-        CALL THERMO_THERMAL_DENSITY(imax,jmax,kmax, s, p, TEM_MEAN_LOC(1,1,1), RHO_MEAN_LOC(1,1,1))
-        rho(:,:,:) = rho(:,:,:) + RHO_MEAN_LOC(:,:,:)
+                call THERMO_THERMAL_DENSITY(imax, jmax, kmax, s, p, TEM_MEAN_LOC(1, 1, 1), RHO_MEAN_LOC(1, 1, 1))
+                rho(:, :, :) = rho(:, :, :) + RHO_MEAN_LOC(:, :, :)
 
-        ! density profile itself is given
-      ELSE
-        ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean
-        DO j = 1,jmax
-          dummy =  PROFILES(rbg%type, rbg%thick, rbg%delta, rbg%mean, ycenter, rbg%parameters, g(2)%nodes(j))
-          rho(:,j,:) = rho(:,j,:) + dummy
-        ENDDO
+                ! density profile itself is given
+            else
+                do j = 1, jmax
+                    dummy = PROFILES_CALCULATE(rbg, g(2)%nodes(j))
+                    rho(:, j, :) = rho(:, j, :) + dummy
+                end do
 
-      ENDIF
+            end if
 
 #undef TEM_MEAN_LOC
 #undef RHO_MEAN_LOC
 
-      ! -------------------------------------------------------------------
-      ! Temporal shear layer case with volumetric force:
-      ! Calculate density from hydrostatic equilibrium
-      ! assuming a volumetric force along OY
-      ! -------------------------------------------------------------------
-    ELSE
-      ! AIRWATER case. Routine OPR_PARTIAL_Y introduces small errors in equilibrium
-      IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-        CALL THERMO_THERMAL_DENSITY(imax, jmax, kmax, s, p, T, rho)
+            ! -------------------------------------------------------------------
+            ! Temporal shear layer case with volumetric force:
+            ! Calculate density from hydrostatic equilibrium
+            ! assuming a volumetric force along OY
+            ! -------------------------------------------------------------------
+        else
+            ! AIRWATER case. Routine OPR_PARTIAL_Y introduces small errors in equilibrium
+            if (imixture == MIXT_TYPE_AIRWATER) then
+                call THERMO_THERMAL_DENSITY(imax, jmax, kmax, s, p, T, rho)
 
-        ! General case
-      ELSE
-        CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), p, txc, wrk3d, wrk2d,wrk3d)
-        dummy = C_1_R /buoyancy%vector(2)
-        rho(:,:,:) = rho(:,:,:) + txc(:,:,:) *dummy
-      ENDIF
+                ! General case
+            else
+                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, txc, wrk3d, wrk2d, wrk3d)
+                dummy = 1.0_wp/buoyancy%vector(2)
+                rho(:, :, :) = rho(:, :, :) + txc(:, :, :)*dummy
+            end if
 
-    ENDIF
+        end if
 
-    ! -------------------------------------------------------------------
-    ! Spatial jet
-    ! Only if there is a density variation. Constant density is already
-    ! initialized in previous routine segment.
-    ! -------------------------------------------------------------------
-  ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-    IF ( rbg%type .EQ. PROFILE_NONE ) THEN ! temperature/mixture profile are given
+        ! -------------------------------------------------------------------
+        ! Spatial jet
+        ! Only if there is a density variation. Constant density is already
+        ! initialized in previous routine segment.
+        ! -------------------------------------------------------------------
+    else if (imode_sim == DNS_MODE_SPATIAL) then
+        if (rbg%type == PROFILE_NONE) then ! temperature/mixture profile are given
 #define rho_vi(j) wrk1d(j,1)
 #define u_vi(j)   wrk1d(j,2)
 #define aux1(j)   wrk1d(j,3)
 #define aux2(j)   wrk1d(j,4)
 #define aux3(j)   wrk1d(j,5)
 #define aux4(j)   wrk1d(j,6)
-      ! Inflow profile of density
-      ! rho_vi(:) = rho(1,:,1) ! I need to update this because rho(1,:,1) is now undefined
+            ! Inflow profile of density
+            ! rho_vi(:) = rho(1,:,1) ! I need to update this because rho(1,:,1) is now undefined
 
-      ! Inflow profile of axial velocity
-      ycenter = g(2)%nodes(1) + g(2)%scale*qbg(1)%ymean
-      DO j = 1,jmax
-        u_vi(j) = PROFILES(qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters,g(2)%nodes(j))
-      ENDDO
+            ! Inflow profile of axial velocity
+            do j = 1, jmax
+                u_vi(j) = PROFILES_CALCULATE(qbg(1), g(2)%nodes(j))
+            end do
 
-      ! 2D distribution of density
-      CALL FLOW_SPATIAL_DENSITY(imax, jmax, &
-      tbg%type, tbg%thick, tbg%delta, tbg%mean, tbg%ymean, tbg%diam, tbg%parameters, &
-      qbg(1)%type, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, qbg(1)%ymean, qbg(1)%diam, qbg(1)%parameters, &
-      g(2)%scale, g(1)%nodes, g(2)%nodes, s,p,rho_vi(1),u_vi(1),aux1(1),rho,aux2(1),aux3(1),aux4(1))
+            ! 2D distribution of density
+            call FLOW_SPATIAL_DENSITY(imax, jmax, tbg, qbg(1), &
+                              g(1)%nodes, g(2)%nodes, s, p, rho_vi(1), u_vi(1), aux1(1), rho, aux2(1), aux3(1), aux4(1))
 
-      DO k = 2,kmax
-        rho(:,:,k) = rho(:,:,1)
-      ENDDO
+            do k = 2, kmax
+                rho(:, :, k) = rho(:, :, 1)
+            end do
 
-    ELSE ! density profile itself is given
-      ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean
-      DO j = 1,jmax
-        dummy =  PROFILES(rbg%type, rbg%thick, rbg%delta, rbg%mean, ycenter, rbg%parameters, g(2)%nodes(j))
-        rho(:,j,:) = rho(:,j,:) + dummy
-      ENDDO
+        else ! density profile itself is given
+            do j = 1, jmax
+                dummy = PROFILES_CALCULATE(rbg, g(2)%nodes(j))
+                rho(:, j, :) = rho(:, j, :) + dummy
+            end do
 
-    ENDIF
-  ENDIF
+        end if
+    end if
 
-RETURN
-END SUBROUTINE DENSITY_MEAN
+    return
+end subroutine DENSITY_MEAN

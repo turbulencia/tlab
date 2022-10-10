@@ -558,7 +558,7 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc
  CALL DELTA_X(nstatavg, jmax, g(2)%nodes, fS(1,1), wrk1d, delta_s_d(1), delta_s_u(1), S2, r05)
 
 ! Jet center line based on scalar
- y_center = g(2)%nodes(1) + sbg(inb_scal)%ymean *g(2)%scale
+ y_center = g(2)%nodes(1) + sbg(inb_scal)%ymean_rel *g(2)%scale
  DO n = 1,nstatavg
     DO j = 1,jmax
        wrk1d(j) = fS(n,j)
@@ -699,8 +699,8 @@ SUBROUTINE AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc,jmax_loc, mean1d, mean1d_sc
         ivauxpre = 4
         VAUXPRE(1) = g(1)%nodes(i) /qbg(1)%diam
         VAUXPRE(2) = g(2)%nodes(j) /qbg(1)%diam
-        VAUXPRE(3) = (g(2)%nodes(j)- g(2)%nodes(1) - sbg(inb_scal)%ymean *g(2)%scale)/delta_s
-        VAUXPRE(4) = (g(2)%nodes(j)- g(2)%nodes(1) - sbg(inb_scal)%ymean *g(2)%scale)/delta_05
+        VAUXPRE(3) = (g(2)%nodes(j)- g(2)%nodes(1) - sbg(inb_scal)%ymean_rel *g(2)%scale)/delta_s
+        VAUXPRE(4) = (g(2)%nodes(j)- g(2)%nodes(1) - sbg(inb_scal)%ymean_rel *g(2)%scale)/delta_05
 
         IF ( j .EQ. jmax/2 ) THEN
            ivauxdum = ivauxpos

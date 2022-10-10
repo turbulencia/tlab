@@ -48,6 +48,8 @@ PROGRAM SPECTRA
   USE THERMO_VARS,   ONLY : imixture
   USE IBM_VARS
   USE IO_FIELDS
+  USE OPR_FILTERS
+  USE AVGS, ONLY: AVG1V2D, COV2V2D
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
@@ -88,8 +90,6 @@ PROGRAM SPECTRA
   TREAL norm, dummy
 
   TINTEGER kx_total,ky_total,kz_total, kr_total, isize_spec2dr
-
-  TREAL AVG1V2D, COV2V2D
 
   TINTEGER inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
 
@@ -372,7 +372,9 @@ CALL FDM_INITIALIZE(x, g(1), wrk1d)
 CALL FDM_INITIALIZE(y, g(2), wrk1d)
 CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
-  DO ig = 1,3
+CALL FI_BACKGROUND_INITIALIZE(wrk1d)
+
+DO ig = 1,3
     CALL OPR_FILTER_INITIALIZE( g(ig), Dealiasing(ig), wrk1d )
   END DO
 
@@ -397,11 +399,6 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
   ENDIF
 
   CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
-
-! -------------------------------------------------------------------
-! Initialize thermodynamic quantities
-! -------------------------------------------------------------------
-  CALL FI_PROFILES_INITIALIZE(wrk1d)
 
 ! -------------------------------------------------------------------
 ! Initialize IBM geometry

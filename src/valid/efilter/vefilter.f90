@@ -4,6 +4,7 @@
 program VEFILTER
     use TLAB_TYPES, only: filter_dt, grid_dt
     use TLAB_VARS, only: reynolds, schmidt
+    USE OPR_FILTERS
 
     implicit none
 
@@ -79,7 +80,7 @@ program VEFILTER
 
     call OPR_FILTER_INITIALIZE(g, filter, wrk1d)
 
-    call OPR_FILTER_1D(1, filter, u, uf, wrk1d, wrk2d, wrk3d)
+    call OPR_FILTER_1D(1, filter, u, uf, wrk2d, wrk3d)
     ! call OPR_PARTIAL1(1, [0,0], g, u, uf, wrk2d)
 
     open (20, file='filter.dat')
@@ -92,7 +93,7 @@ program VEFILTER
     ! do ik = 1, imax/2
     do ik = 1, (imax-1)/2
             u = SIN(C_2_R*C_PI_R/g%scale*M_REAL(ik)*x(:,1))
-        call OPR_FILTER_1D(1, filter, u, uf, wrk1d, wrk2d, wrk3d)
+        call OPR_FILTER_1D(1, filter, u, uf, wrk2d, wrk3d)
         ! call OPR_PARTIAL1(1, [0,0], g, u, uf, wrk2d)
         write (20, *) ik, maxval(uf)
     end do

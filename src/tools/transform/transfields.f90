@@ -19,6 +19,7 @@ PROGRAM TRANSFIELDS
   USE TLAB_MPI_PROCS
 #endif
   USE IO_FIELDS
+  USE OPR_FILTERS
 
   IMPLICIT NONE
 
@@ -289,9 +290,8 @@ PROGRAM TRANSFIELDS
   CALL FDM_INITIALIZE(y, g(2), wrk1d)
   CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
-  ! -------------------------------------------------------------------
-  ! Initialize filters
-  ! -------------------------------------------------------------------
+  CALL FI_BACKGROUND_INITIALIZE(wrk1d)
+
   IF ( opt_main .EQ. 5 ) THEN
      DO ig = 1,3
         CALL OPR_FILTER_INITIALIZE( g(ig), FilterDomain(ig), wrk1d )
@@ -312,11 +312,6 @@ PROGRAM TRANSFIELDS
      IF ( icalc_flow .EQ. 1 ) q_dst = C_0_R
      IF ( icalc_scal .EQ. 1 ) s_dst = C_0_R
   ENDIF
-
-  ! -------------------------------------------------------------------
-  ! Initialize thermodynamic quantities
-  ! -------------------------------------------------------------------
-  CALL FI_PROFILES_INITIALIZE(wrk1d)
 
   ! -------------------------------------------------------------------
   ! Initialize remeshing
@@ -772,8 +767,8 @@ CONTAINS
   SUBROUTINE TRANS_ADD_MEAN(flag_mode, is, nx,ny,nz, y, a,b)
 
     USE TLAB_CONSTANTS, ONLY : efile
-    USE TLAB_VARS, ONLY : g, sbg, qbg
-
+    USE TLAB_VARS, ONLY : sbg, qbg
+    USE PROFILES
     IMPLICIT NONE
 
     TINTEGER flag_mode, is, nx,ny,nz
@@ -783,16 +778,14 @@ CONTAINS
 
     ! -----------------------------------------------------------------------
     TINTEGER j
-    TREAL PROFILES, ycenter, dummy
-    EXTERNAL PROFILES
+    TREAL dummy
 
+    
     ! #######################################################################
     IF ( flag_mode .EQ. 0 ) THEN ! Velocity
        IF ( is .EQ. 1 ) THEN ! Only the mean velocity
-          ycenter = y(1) + g(2)%scale *qbg(1)%ymean
           DO j = 1,ny
-             dummy =  PROFILES&
-                  (qbg(1)%TYPE, qbg(1)%thick, qbg(1)%delta, qbg(1)%mean, ycenter, qbg(1)%parameters, y(j))
+             dummy =  PROFILES_CALCULATE(qbg(1), y(j))
              b(:,j,:) = dummy + a(:,j,:)
           ENDDO
        ELSE
@@ -800,10 +793,8 @@ CONTAINS
        ENDIF
 
     ELSE                         ! Scalars
-       ycenter = y(1) + g(2)%scale *sbg(is)%ymean
        DO j = 1,ny
-          dummy =  PROFILES&
-               (sbg(is)%TYPE, sbg(is)%thick, sbg(is)%delta, sbg(is)%mean, ycenter, sbg(is)%parameters, y(j))
+          dummy =  PROFILES_CALCULATE(sbg(is), y(j))
           b(:,j,:) = dummy + a(:,j,:)
        ENDDO
 

@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 module TLAB_VARS
-    use TLAB_TYPES, only: grid_dt, filter_dt, subarray_dt, term_dt, background_dt
+    use TLAB_TYPES, only: grid_dt, filter_dt, subarray_dt, term_dt, profiles_dt
     use TLAB_CONSTANTS, only: MAX_VARS, MAX_NSP
     use TLAB_CONSTANTS, only: MAX_STATS_SPATIAL
     implicit none
@@ -17,7 +17,7 @@ module TLAB_VARS
 ! ###################################################################
 ! General options
 ! ###################################################################
-    TINTEGER :: icalc_flow, icalc_scal, icalc_part
+    TINTEGER :: icalc_flow, icalc_scal
     TINTEGER :: imode_sim                ! type of simulation (spatial, temporal)
     TINTEGER :: imode_files              ! files format
     TINTEGER :: imode_precision_files
@@ -55,11 +55,6 @@ module TLAB_VARS
     TINTEGER :: isize_txc_field, inb_txc        ! 3D arrays for intermediate calculations
     TINTEGER :: isize_txc_dimx, isize_txc_dimz  ! partition for MPI data transposition
 
-! Particle arrays
-    TINTEGER :: isize_particle                  ! max number of particles per processor
-    TINTEGER :: inb_part, inb_part_array
-    TINTEGER :: inb_part_txc
-
 ! subarray information (offset)
     type(subarray_dt), dimension(IO_SUBARRAY_SIZE) :: io_aux
 
@@ -68,9 +63,9 @@ module TLAB_VARS
     TREAL :: area                         ! Horizontal area and volume
 
 ! ###################################################################
-    type(background_dt) :: qbg(3)         ! Velocity background
-    type(background_dt) :: sbg(MAX_NSP)   ! Scalars backgrounds
-    type(background_dt) :: pbg, rbg, tbg  ! Pressure, density, temperature backgrounds
+    type(profiles_dt) :: qbg(3)         ! Velocity background
+    type(profiles_dt) :: sbg(MAX_NSP)   ! Scalars backgrounds
+    type(profiles_dt) :: pbg, rbg, tbg  ! Pressure, density, temperature backgrounds
 
     TREAL, dimension(:), allocatable :: pbackground, tbackground, rbackground, ribackground
     TREAL, dimension(:), allocatable :: bbackground, epbackground
@@ -92,8 +87,8 @@ module TLAB_VARS
     TREAL :: damkohler(MAX_NSP)                  ! reaction
     TREAL :: froude                              ! body force
     TREAL :: rossby                              ! Coriolis force
-    TREAL :: stokes                              ! Stokes number of liquid particles
-    TREAL :: settling                            ! sedimentation parameter for liquid particle
+    TREAL :: stokes                              ! inertial effects
+    TREAL :: settling                            ! sedimentation effects
 
     TREAL :: visc                                ! 1/reynolds
 

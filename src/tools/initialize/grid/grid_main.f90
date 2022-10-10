@@ -1,193 +1,267 @@
-#include "types.h"
-
 !# Grid generation tool. Origin is set always to (0,0,0)
-PROGRAM INIGRID
+#include "dns_error.h"
 
-  USE TLAB_TYPES, ONLY     : grid_dt
-  USE TLAB_CONSTANTS, ONLY : gfile, ifile, lfile
-  USE TLAB_PROCS
-  USE GRID_LOCAL
+#define C_FILE_LOC "INIGRID"
+
+program INIGRID
+    use TLAB_TYPES, only: grid_dt, wp
+    use TLAB_CONSTANTS, only: gfile, ifile, lfile, efile
+    use TLAB_PROCS
+    use GRID_LOCAL
 #ifdef USE_MPI
-  USE TLAB_MPI_VARS, ONLY : ims_pro
+    use TLAB_MPI_VARS, only: ims_pro
 #endif
-  IMPLICIT NONE
+    implicit none
 
-  CHARACTER*32  sfile
-  TYPE(grid_dt)              :: g(3)
-  TREAL, ALLOCATABLE, TARGET :: x(:),y(:),z(:)
-  TREAL, ALLOCATABLE         :: wrk1d(:,:)
-  TINTEGER idir, iseg, isize_wrk1d, n, nmax, iloc
-  TREAL scale_old, scale_new, ds
-
-  ! #######################################################################
-  ! Initialize
-  ! #######################################################################
-  sfile = TRIM(ADJUSTL(gfile))//'.sts'
-
-  g(1)%name = 'x'
-  g(2)%name = 'y'
-  g(3)%name = 'z'
-
-  CALL TLAB_START()
-
-  DO idir = 1,3
-
-    CALL GRID_READ_LOCAL(ifile, idir, g(idir)%scale, g(idir)%periodic)
-
-    ! Calculate total number of points
-    g(idir)%size = g_build(idir)%SIZE(1)
-    DO iseg = 2,g_build(idir)%nseg
-      g(idir)%size = g(idir)%size + g_build(idir)%SIZE(iseg) - 1
-    ENDDO
-    IF ( g_build(idir)%mirrored ) g(idir)%size = 2*g(idir)%size - 2
-
-  ENDDO
-
-  ! #######################################################################
-  ! Allocation of arrays
-  ! #######################################################################
-  ALLOCATE(x(g(1)%size)); g(1)%nodes => x
-  ALLOCATE(y(g(2)%size)); g(2)%nodes => y
-  ALLOCATE(z(g(3)%size)); g(3)%nodes => z
-
-  isize_wrk1d = MAX(g(1)%size,MAX(g(2)%size,g(3)%size))
-  ALLOCATE(wrk1d(isize_wrk1d,8))
-
-  ! #######################################################################
-  ! Construct grid
-  ! #######################################################################
-  DO idir = 1,3
-
-    iloc = 1
-    IF ( g_build(idir)%mirrored ) iloc = g(idir)%size/2 ! mirrored case; first point in array is imax/2
-
-    g(idir)%nodes(iloc) = C_0_R                 ! set origin at zero
-
-    DO iseg = 1,g_build(idir)%nseg              ! Loop over the segments that build the grid
-      nmax = g_build(idir)%SIZE(iseg)           ! for readability below
-      ! create uniform reference grid s
-      ds = ( g_build(idir)%END(iseg) -g(idir)%nodes(iloc) )/ M_REAL( nmax -1 )
-      DO n=1,nmax-1
-        g(idir)%nodes(iloc+n) = g(idir)%nodes(iloc+n-1) +ds
-      ENDDO
-
-      SELECT CASE(g_build(idir)%opts(1,iseg))
-
-      CASE( GTYPE_UNIFORM )
-        ! already done
-
-      CASE( GTYPE_TANH )
-        CALL BLD_TANH(idir, iseg, g(idir)%nodes(iloc:), nmax, wrk1d)
-
-      CASE( GTYPE_EXP )
-        CALL BLD_EXP( idir, iseg, g(idir)%nodes(iloc:), nmax, wrk1d)
-
-      CASE DEFAULT
-        CALL BLD_THEREST( idir, iseg, g(idir)%nodes(iloc:), nmax)
-
-      END SELECT
-
-      iloc = iloc +nmax -1
-      IF ( nmax > 1 ) g(idir)%scale = g(idir)%nodes(iloc) ! correct value of scale
-
-    ENDDO
-
-    IF ( g_build(idir)%mirrored ) CALL GRID_MIRROR(g(idir)%size, g(idir)%nodes, g(idir)%scale)
-
-    IF ( g(idir)%periodic ) g(idir)%size = g(idir)%size - 1
-
-    IF ( g_build(idir)%fixed_scale > C_0_R ) THEN               ! rescale on exact fixed value
-      scale_new     =  g_build(idir)%fixed_scale; scale_old = g(idir)%scale
-      g(idir)%nodes = (g(idir)%nodes / scale_old) * scale_new   ! rescale nodes
-      g(idir)%nodes(g(idir)%size) =                 scale_new   ! avoid rounding error
-      g(idir)%scale =                               scale_new   ! update scale
-    ENDIF
-  ENDDO
-
-  ! #######################################################################
-  ! Statistics
-  ! #######################################################################
-#ifdef USE_MPI
-  IF ( ims_pro == 0 ) THEN
-#endif
-    OPEN(20,file=sfile)
-
-    DO idir = 1,3
-      WRITE(20,3000) '['//TRIM(ADJUSTL(g(idir)%name))//'-direction]'
-
-      IF ( g(idir)%size > 1 ) THEN
-        wrk1d(2,1) = g(idir)%nodes(2) - g(idir)%nodes(1)
-        DO n = 3,g(idir)%size
-          wrk1d(n,1) = g(idir)%nodes(n)-g(idir)%nodes(n-1)
-          wrk1d(n,2) = wrk1d(n,1)/wrk1d(n-1,1)
-        ENDDO
-
-        WRITE(20,2000) 'number of points .......: ',g(idir)%size
-        WRITE(20,1000) 'origin .................: ',g(idir)%nodes(1)
-        WRITE(20,1000) 'end point ..............: ',g(idir)%nodes(g(idir)%size)
-        WRITE(20,1000) 'scale ..................: ',g(idir)%scale
-        WRITE(20,1000) 'minimum step ...........: ',MINVAL(wrk1d(2:g(idir)%size,1))
-        WRITE(20,1000) 'maximum step ...........: ',MAXVAL(wrk1d(2:g(idir)%size,1))
-        WRITE(20,1000) 'minimum stretching .....: ',MINVAL(wrk1d(3:g(idir)%size,2))
-        WRITE(20,1000) 'maximum stretching .....: ',MAXVAL(wrk1d(3:g(idir)%size,2))
-
-      ELSE
-        WRITE(20,'(a7)') '2D case'
-
-      ENDIF
-
-    ENDDO
-
-    CLOSE(20)
+    character*32 sfile, bakfile
+    type(grid_dt) :: g(3)
+    real(wp), allocatable :: wrk1d(:, :)
+    integer(wi) idir, iseg, isize_wrk1d, n, nmax, iloc
+    real(wp) scale_old, scale_new, ds
+    character(len=16), parameter :: block(3) = ['IniGridOx', 'IniGridOy', 'IniGridOz']
 
     ! #######################################################################
-    ! Writing data
+    ! Initialize
     ! #######################################################################
-    CALL TLAB_WRITE_ASCII(lfile, 'Writing grid.')
-    CALL IO_WRITE_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, g(1)%nodes,g(2)%nodes,g(3)%nodes)
+    sfile = TRIM(ADJUSTL(gfile))//'.sts'
+    bakfile = TRIM(ADJUSTL(ifile))//'.bak'
+
+    g(1)%name = 'x'
+    g(2)%name = 'y'
+    g(3)%name = 'z'
+
+    call TLAB_START()
+
+    do idir = 1, 3
+        call GRID_READBLOCK(bakfile, ifile, block(idir), g_build(idir), g(idir)%periodic)
+
+        g(idir)%size = g_build(idir)%size(1)                    ! Calculate total number of points
+        do iseg = 2, g_build(idir)%nseg
+            g(idir)%size = g(idir)%size + g_build(idir)%SIZE(iseg) - 1
+        end do
+        if (g_build(idir)%mirrored) g(idir)%size = 2*g(idir)%size - 2
+
+        allocate (g(idir)%nodes(g(idir)%size))                   ! memory space for the grid nodes
+
+    end do
+
+    isize_wrk1d = MAX(g(1)%size, MAX(g(2)%size, g(3)%size))
+    allocate (wrk1d(isize_wrk1d, 8))
+
+    ! #######################################################################
+    ! Construct grid
+    ! #######################################################################
+    do idir = 1, 3
+
+        iloc = 1
+        if (g_build(idir)%mirrored) iloc = g(idir)%size/2   ! mirrored case; first point in array is imax/2
+
+        g(idir)%nodes(iloc) = 0.0_wp                        ! set origin at zero
+
+        do iseg = 1, g_build(idir)%nseg                     ! Loop over the segments that build the grid
+            nmax = g_build(idir)%size(iseg)                 ! for readability below
+            ! create uniform reference grid s starting at zero
+            if (nmax > 1) then
+                ds = (g_build(idir)%end(iseg) - g(idir)%nodes(iloc))/real(nmax - 1, wp)
+                g(idir)%nodes(iloc:) = [(real(n - 1, wp), n=1, nmax)]*ds + g(idir)%nodes(iloc)
+                ! do n = 1, nmax - 1
+                !     g(idir)%nodes(iloc + n) = g(idir)%nodes(iloc + n - 1) + ds
+                ! end do
+
+                select case (g_build(idir)%opts(1, iseg))
+
+                case (GTYPE_UNIFORM)
+                    ! already done
+
+                case (GTYPE_TANH)
+                    call BLD_TANH(idir, iseg, g(idir)%nodes(iloc:), nmax, wrk1d)
+
+                case (GTYPE_EXP)
+                    call BLD_EXP(idir, iseg, g(idir)%nodes(iloc:), nmax, wrk1d)
+
+                case DEFAULT
+                    call BLD_THEREST(idir, iseg, g(idir)%nodes(iloc:), nmax)
+
+                end select
+
+                iloc = iloc + nmax - 1
+
+            end if
+        end do
+
+        if (g_build(idir)%mirrored) call GRID_MIRROR(g(idir)%size, g(idir)%nodes)
+
+        if (g(idir)%size > 1) then
+            g(idir)%scale = g(idir)%nodes(g(idir)%size) - g(idir)%nodes(1)
+        else
+            g(idir)%scale = 1.0_wp
+        end if
+
+        if (g_build(idir)%fixed_scale > 0.0_wp) then                ! rescale on exact fixed value
+            scale_new = g_build(idir)%fixed_scale
+            scale_old = g(idir)%scale
+            g(idir)%nodes = (g(idir)%nodes/scale_old)*scale_new     ! rescale nodes
+            g(idir)%nodes(g(idir)%size) = scale_new                 ! avoid rounding error
+            g(idir)%scale = g(idir)%nodes(g(idir)%size)             ! update scale
+        end if
+
+        if (g(idir)%periodic) g(idir)%size = g(idir)%size - 1
+
+    end do
+
+    ! #######################################################################
+    ! Statistics
+    ! #######################################################################
+#ifdef USE_MPI
+    if (ims_pro == 0) then
+#endif
+        open (20, file=sfile)
+
+        do idir = 1, 3
+            write (20, 3000) '['//TRIM(ADJUSTL(g(idir)%name))//'-direction]'
+
+            if (g(idir)%size > 1) then
+                wrk1d(2, 1) = g(idir)%nodes(2) - g(idir)%nodes(1)
+                do n = 3, g(idir)%size
+                    wrk1d(n, 1) = g(idir)%nodes(n) - g(idir)%nodes(n - 1)
+                    wrk1d(n, 2) = wrk1d(n, 1)/wrk1d(n - 1, 1)
+                end do
+
+                write (20, 2000) 'number of points .......: ', g(idir)%size
+                write (20, 1000) 'origin .................: ', g(idir)%nodes(1)
+                write (20, 1000) 'end point ..............: ', g(idir)%nodes(g(idir)%size)
+                write (20, 1000) 'scale ..................: ', g(idir)%scale
+                write (20, 1000) 'minimum step ...........: ', MINVAL(wrk1d(2:g(idir)%size, 1))
+                write (20, 1000) 'maximum step ...........: ', MAXVAL(wrk1d(2:g(idir)%size, 1))
+                write (20, 1000) 'minimum stretching .....: ', MINVAL(wrk1d(3:g(idir)%size, 2))
+                write (20, 1000) 'maximum stretching .....: ', MAXVAL(wrk1d(3:g(idir)%size, 2))
+
+            else
+                write (20, '(a7)') '2D case'
+
+            end if
+
+        end do
+
+        close (20)
+
+        ! #######################################################################
+        ! Writing data
+        ! #######################################################################
+        call TLAB_WRITE_ASCII(lfile, 'Writing grid.')
+  call IO_WRITE_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, g(1)%nodes, g(2)%nodes, g(3)%nodes)
 
 #ifdef USE_MPI
-  ENDIF
+    end if
 #endif
 
-  CALL TLAB_STOP(0)
+    call TLAB_STOP(0)
 
-1000 FORMAT(a25,e12.5)
-2000 FORMAT(a25,i5)
-3000 FORMAT(a13)
+1000 format(a25, e12.5)
+2000 format(a25, i5)
+3000 format(a13)
 
-CONTAINS
-  ! #######################################################################
-  ! #######################################################################
-  SUBROUTINE GRID_MIRROR(imax, x, scalex)
-    IMPLICIT NONE
+contains
+    ! #######################################################################
+    ! #######################################################################
+    subroutine GRID_READBLOCK(bakfile, inifile, block, var, periodic)
 
-    TINTEGER, INTENT(IN   ) :: imax
-    TREAL,    INTENT(INOUT) :: x(imax), scalex
+        character(LEN=*), intent(in) :: bakfile, inifile, block
+        type(grid_build_dt), intent(out) :: var
+        logical, intent(OUT) :: periodic
 
-    ! -----------------------------------------------------------------------
-    TINTEGER i
-    TREAL offset
+! -------------------------------------------------------------------
+        integer(wi) idummy
+        character(LEN=512) sRes, str
+
+! #######################################################################
+        call TLAB_WRITE_ASCII(bakfile, '['//block//']')
+        call TLAB_WRITE_ASCII(bakfile, 'segments=<number of segments>')
+        call TLAB_WRITE_ASCII(bakfile, 'periodic=<yes/no>')
+        call TLAB_WRITE_ASCII(bakfile, 'mirrored=<yes/no>')
+        call TLAB_WRITE_ASCII(bakfile, 'fixed_scale=<value>')
+
+        call SCANINIINT(bakfile, inifile, block, 'segments', '1', var%nseg)
+
+        periodic = .false.
+        call SCANINICHAR(bakfile, inifile, block, 'periodic', 'no', sRes)
+        if (TRIM(ADJUSTL(sRes)) == 'yes') periodic = .true.
+
+        var%mirrored = .false.
+        call SCANINICHAR(bakfile, inifile, block, 'mirrored', 'no', sRes)
+        if (TRIM(ADJUSTL(sRes)) == 'yes') var%mirrored = .true.
+
+        call SCANINIREAL(bakfile, inifile, block, 'fixed_scale', '-1.0', var%fixed_scale)
+
+        if (periodic .and. var%mirrored) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Periodicity with mirroring is not supported.')
+            call TLAB_STOP(DNS_ERROR_GRID_SCALE)
+        end if
+
+! -------------------------------------------------------------------
+! Loop over the segments
+! -------------------------------------------------------------------
+        do iseg = 1, var%nseg
+            write (str, *) iseg
+
+            call TLAB_WRITE_ASCII(bakfile, 'Segment number '//TRIM(ADJUSTL(str)))
+            call TLAB_WRITE_ASCII(bakfile, 'scales_'//TRIM(ADJUSTL(str))//'=<physical end of the segment>')
+            call TLAB_WRITE_ASCII(bakfile, 'points_'//TRIM(ADJUSTL(str))//'=<points in the segment>')
+            call TLAB_WRITE_ASCII(bakfile, 'opts_'//TRIM(ADJUSTL(str))//'=<option>')
+            call TLAB_WRITE_ASCII(bakfile, 'vals_'//TRIM(ADJUSTL(str))//'=<values>')
+
+            call SCANINIINT(bakfile, inifile, block, 'points_'//TRIM(ADJUSTL(str)), '1', var%size(iseg))
+            call SCANINIREAL(bakfile, inifile, block, 'scales_'//TRIM(ADJUSTL(str)), '-1.0', var%end(iseg))
+
+            var%opts(:, iseg) = 0
+            call SCANINICHAR(bakfile, inifile, block, 'opts_'//TRIM(ADJUSTL(str)), '1', sRes)
+            if (TRIM(ADJUSTL(sRes)) == 'uniform') then; var%opts(1, iseg) = GTYPE_UNIFORM
+            else if (TRIM(ADJUSTL(sRes)) == 'tanh') then; var%opts(1, iseg) = GTYPE_TANH
+            else if (TRIM(ADJUSTL(sRes)) == 'exp') then; var%opts(1, iseg) = GTYPE_EXP
+            else
+                idummy = MAX_PARAMES
+                call LIST_INTEGER(sRes, idummy, var%opts(1, iseg))
+            end if
+
+            var%vals(:, iseg) = 0
+            call SCANINICHAR(bakfile, inifile, block, 'vals_'//TRIM(ADJUSTL(str)), '1.0', sRes)
+            idummy = MAX_PARAMES
+            call LIST_REAL(sRes, idummy, var%vals(1, iseg))
+
+        end do
+
+        return
+    end subroutine GRID_READBLOCK
 
     ! #######################################################################
-    ! Offset for even number of points
-    offset = (x(imax/2+1)-x(imax/2)) / C_2_R
-    DO i = imax/2,imax
-      x(i) = x(i) - offset
-    ENDDO
+    ! #######################################################################
+    subroutine GRID_MIRROR(imax, x)
+        implicit none
 
-    ! Mirroring
-    DO i = 1,imax/2-1
-      x(i) = - x(imax+1-i)
-    ENDDO
+        integer(wi), intent(IN) :: imax
+        real(wp), intent(INOUT) :: x(imax)
 
-    ! Global translation
-    offset = x(1)
-    x = x -offset
+        ! -----------------------------------------------------------------------
+        integer(wi) i
+        real(wp) offset
 
-    scalex = x(imax)-x(1)
+        ! #######################################################################
+        ! Offset for even number of points
+        offset = (x(imax/2 + 1) - x(imax/2))/2.0_wp
+        do i = imax/2, imax
+            x(i) = x(i) - offset
+        end do
 
-    RETURN
-  END SUBROUTINE GRID_MIRROR
+        ! Mirroring
+        do i = 1, imax/2 - 1
+            x(i) = -x(imax + 1 - i)
+        end do
 
-END PROGRAM INIGRID
+        ! Global translation to set origin at zero
+        offset = x(1)
+        x = x - offset
+
+        return
+    end subroutine GRID_MIRROR
+
+end program INIGRID

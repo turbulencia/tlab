@@ -44,7 +44,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
   
 ! ###################################################################
 ! Get the center  
-  ycenter = g%nodes(1) + pbg%ymean *g%scale
+  ycenter = g%nodes(1) + pbg%ymean_rel *g%scale
   DO j = 1,g%size
      IF ( g%nodes(j  ) .LE. ycenter .AND. &
           g%nodes(j+1) .GT. ycenter ) THEN
@@ -83,7 +83,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
      CALL PENTADSS(g%size-1,i1, wrk1d(2,1),wrk1d(2,2),wrk1d(2,3),wrk1d(2,4),wrk1d(2,5), p(2))
      p(1) = C_0_R
 
-! Calculate pressure and normalize s.t. p=pbg%mean at y=pbg%ymean
+! Calculate pressure and normalize s.t. p=pbg%mean at y=pbg%ymean_rel
      p(:) = EXP(p(:))
      IF ( ABS(ycenter-g%nodes(jcenter)) .EQ. C_0_R ) THEN
         dummy = p(jcenter)

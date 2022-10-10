@@ -38,7 +38,7 @@ CONTAINS
 ! ###################################################################
 ! ###################################################################
 SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
-
+  USE TLAB_TYPES, ONLY: profiles_dt
   USE TLAB_CONSTANTS, ONLY : tag_flow,tag_scal, lfile, efile
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS, ONLY : tfile
@@ -49,6 +49,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
   USE TLAB_VARS,    ONLY : mach, pbg, qbg
   USE THERMO_VARS, ONLY : gama0
   USE BOUNDARY_BUFFER
+  USE PROFILES
 #ifdef USE_MPI
   USE MPI
   USE TLAB_VARS,    ONLY : inb_scal_array
@@ -66,8 +67,8 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 
 ! -------------------------------------------------------------------
   TINTEGER j, is
-  TREAL prefactor, param(5)
-  TREAL diam_loc, thick_loc, ycenter, r1, r05, PROFILES
+  TREAL prefactor
+  type(profiles_dt) prof_loc
 
 #ifdef USE_MPI
   CHARACTER*32 str
@@ -152,8 +153,6 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
      BcsFlowKmin%ref(:,:,5) = pbg%mean; BcsFlowKmax%ref(:,:,5) = pbg%mean
 
      prefactor = C_05_R *(gama0-C_1_R) *mach*mach
-     r1        = C_1_R
-     r05       = C_05_R
 
 ! -------------------------------------------------------------------
 ! Using buffer fields; bottom
@@ -237,12 +236,17 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
              BcsFlowImin%Ref(1,1,1), BcsFlowImin%Ref(1,1,7), BcsFlowImin%Ref(1,1,5))
 
 ! shape factor
-        diam_loc  = C_3_R*qbg(1)%diam
-        thick_loc = qbg(1)%diam/C_8_R
-        ycenter   = g(2)%nodes(1) + g(2)%scale *qbg(1)%ymean
-        param=C_0_R; param(5) = diam_loc
-        BcsFlowImin%ref(:,:,inb_flow+1) = PROFILES(i2, thick_loc, r1, r05, ycenter, param, g(2)%nodes(j))
-        BcsScalImin%ref(:,:,inb_scal+1) = PROFILES(i2, thick_loc, r1, r05, ycenter, param, g(2)%nodes(j))
+        prof_loc%type=PROFILE_TANH
+        prof_loc%thick=qbg(1)%diam/C_8_R
+        prof_loc%delta=C_1_R
+        prof_loc%ymean=qbg(1)%ymean
+        prof_loc%mean=C_05_R
+        prof_loc%lslope=C_0_R
+        prof_loc%uslope=C_0_R
+        prof_loc%parameters=C_0_R
+        prof_loc%parameters(5)=C_3_R*qbg(1)%diam
+        BcsFlowImin%ref(:,:,inb_flow+1) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
+        BcsScalImin%ref(:,:,inb_scal+1) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
 
      ENDIF
 

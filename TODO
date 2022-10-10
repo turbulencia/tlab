@@ -1,8 +1,6 @@
 * Variable ifilt_step in AVG_FLOW_SPATIAL_LAYER
 * In some routines I do not need icalc_scal, icalc_flow, I can do the same with inb_scal=0
 * Error control in libraries averages, pdfs...
-* Introduce new mean profiles to get rid of the factor of 2 when wall-bounded cases?
-* Multi-segment inigrid. To be written using integral compact schemes instead of quad?
 * OMP/BLAS optimization to be implemented in THERMO routines
 * Compressible cases have a bug with relaxation of BCs (SigmaInfJ and SigmaOut)
 * In avg_scal_xz, add convective term and source Qss in transport eqn for Rss;

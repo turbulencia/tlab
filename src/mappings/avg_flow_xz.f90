@@ -24,6 +24,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE THERMO_VARS, ONLY : imixture, MRATIO, GRATIO
   USE THERMO_VARS, ONLY : THERMO_AI, WGHT_INV
   USE IBM_VARS,    ONLY : gamma_0, gamma_1, gamma_f, gamma_s 
+  USE AVGS,        ONLY : AVG_IK_V
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS, ONLY : tfile
 #endif
@@ -46,7 +47,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   ! -------------------------------------------------------------------
   TINTEGER, PARAMETER :: MAX_VARS_GROUPS = 20
   TINTEGER j, bcs(2,2)
-  TREAL dummy
+  TREAL dummy, ycenter
   TREAL c23, prefactor
 
   TINTEGER ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nv
@@ -1367,10 +1368,12 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
 
   ! Potential energy equation
   IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-    Pot(:)       = -rB(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale *sbg(inb_scal)%ymean)
+    ycenter = g(2)%nodes(1) + g(2)%scale *sbg(inb_scal)%ymean_rel
+    Pot(:)       = -rB(:)*(g(2)%nodes(:) - ycenter)
 
   ELSE
-    Pot(:)       =-rR(:)*(g(2)%nodes(:) - g(2)%nodes(1) - g(2)%scale*rbg%ymean)*buoyancy%vector(2)
+    ycenter = g(2)%nodes(1) + g(2)%scale*rbg%ymean_rel
+    Pot(:)       =-rR(:)*(g(2)%nodes(:) - ycenter)*buoyancy%vector(2)
 
   END IF
 

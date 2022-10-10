@@ -6,13 +6,6 @@
 #endif
 
 !########################################################################
-!# HISTORY
-!#
-!# 2014/02 - L. Muessle
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
 !#
 !# Send particles to neighbouring processors
 !# Subroutine is divided into 2 optional parts
@@ -24,10 +17,10 @@
 
 !#######################################################################
 !#######################################################################
-SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
+SUBROUTINE PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
      p_buffer_1, p_buffer_2, l_q, l_hq, l_tags, particle_number)
 
-  USE TLAB_VARS, ONLY: isize_particle, inb_part_array, inb_part
+  USE PARTICLE_VARS, ONLY: isize_part, inb_part_array, inb_part
   USE MPI
   USE TLAB_MPI_VARS
 
@@ -35,10 +28,10 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
 
   TINTEGER nzone_grid, nzone_west, nzone_east
 
-  TREAL, DIMENSION(isize_particle,*)  :: l_q
-  TREAL, DIMENSION(isize_particle,*)  :: l_hq
-  TREAL, DIMENSION(isize_particle)    :: l_tags !Attention. Chosen TREAL on purpose.
-  TREAL, DIMENSION(*)                 :: p_buffer_1, p_buffer_2 !allocation = isize_particle/4*7
+  TREAL, DIMENSION(isize_part,*)  :: l_q
+  TREAL, DIMENSION(isize_part,*)  :: l_hq
+  TREAL, DIMENSION(isize_part)    :: l_tags !Attention. Chosen TREAL on purpose.
+  TREAL, DIMENSION(*)                 :: p_buffer_1, p_buffer_2 !allocation = isize_part/4*7
   TINTEGER particle_number
 
 ! -------------------------------------------------------------------
@@ -244,14 +237,14 @@ SUBROUTINE PARTICLE_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
   END IF
 
   RETURN
-END SUBROUTINE PARTICLE_SEND_RECV_I
+END SUBROUTINE PARTICLE_MPI_SEND_RECV_I
 
 !#######################################################################
 !#######################################################################
-SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
+SUBROUTINE PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
      p_buffer_1, p_buffer_2, l_q, l_hq, l_tags, particle_number)
 
-  USE TLAB_VARS, ONLY: isize_particle, inb_part_array, inb_part
+  USE PARTICLE_VARS, ONLY: isize_part, inb_part_array, inb_part
   USE MPI
   USE TLAB_MPI_VARS
 
@@ -259,10 +252,10 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
 
   TINTEGER nzone_grid, nzone_south, nzone_north
 
-  TREAL, DIMENSION(isize_particle,*) :: l_q
-  TREAL, DIMENSION(isize_particle,*) :: l_hq
-  TREAL, DIMENSION(isize_particle)   :: l_tags !Attention. Chosen TREAL on purpose.
-  TREAL, DIMENSION(*)                :: p_buffer_1, p_buffer_2 !allocation = isize_particle/4*7
+  TREAL, DIMENSION(isize_part,*) :: l_q
+  TREAL, DIMENSION(isize_part,*) :: l_hq
+  TREAL, DIMENSION(isize_part)   :: l_tags !Attention. Chosen TREAL on purpose.
+  TREAL, DIMENSION(*)                :: p_buffer_1, p_buffer_2 !allocation = isize_part/4*7
   TINTEGER particle_number
 
 ! -------------------------------------------------------------------
@@ -469,4 +462,4 @@ SUBROUTINE PARTICLE_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
   END IF
 
   RETURN
-END SUBROUTINE PARTICLE_SEND_RECV_K
+END SUBROUTINE PARTICLE_MPI_SEND_RECV_K

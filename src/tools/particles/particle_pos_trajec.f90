@@ -1,0 +1,172 @@
+#include "types.h"
+#include "dns_error.h"
+#include "dns_const.h"
+#ifdef USE_MPI
+#include "dns_const_mpi.h"
+#endif
+
+#define C_FILE_LOC "PARTICLE_POS_TRAJEC"
+
+!########################################################################
+!# Tool/Library PLOT
+!#
+!########################################################################
+!# HISTORY
+!#
+!# 2014/01/16 - L. Muessle
+!#
+!#
+!########################################################################
+!# DESCRIPTION
+!#
+!# This program reads the ID(TAG) of the largest particle file from the
+!# the program l_trajec.x and then determines the position of these
+!# largest particles at the start point of the simulation.
+!#
+!#
+!#
+!########################################################################
+!# ARGUMENTS
+!#
+!########################################################################
+program PARTICLE_POS_TRAJEC
+
+    use TLAB_CONSTANTS
+    use TLAB_VARS
+    use TLAB_PROCS
+#ifdef USE_MPI
+    use MPI
+    use TLAB_MPI_VARS, only: ims_err
+    use TLAB_MPI_VARS, only: ims_pro, ims_npro
+    use TLAB_MPI_PROCS
+#endif
+    use PARTICLE_VARS
+    use PARTICLE_ARRAYS
+
+    implicit none
+#include "integers.h"
+
+! -------------------------------------------------------------------
+
+#ifdef USE_MPI
+    TINTEGER ierr, i, j, particle_pos
+
+    TINTEGER dummy_ims_npro
+    TINTEGER dummy_isize_traj
+    TINTEGER, dimension(:), allocatable :: dummy_proc, all_dummy_proc
+    integer(8), dimension(:), allocatable :: l_trajectories_tags
+    TREAL, dimension(:), allocatable :: dummy_big_overall
+    TREAL, dimension(:, :), allocatable :: l_trajectories, all_l_trajectories
+
+    TINTEGER nitera_first, nitera_last
+
+    character*64 str, fname
+    character*128 line
+    character*32 bakfile
+
+    bakfile = TRIM(ADJUSTL(ifile))//'.bak'
+
+    call TLAB_START()
+
+    call IO_READ_GLOBAL(ifile)
+    call PARTICLE_READ_GLOBAL('dns.ini')
+    
+#ifdef USE_MPI
+    call TLAB_MPI_INITIALIZE
+#endif
+
+! Get the local information from the dns.ini
+    call SCANINIINT(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
+
+    call PARTICLE_ALLOCATE(C_FILE_LOC)
+
+    allocate (dummy_proc(isize_traj))
+    allocate (all_dummy_proc(isize_traj))
+    allocate (dummy_big_overall(isize_traj))
+    allocate (l_trajectories_tags(isize_traj))
+    allocate (l_trajectories(3, isize_traj))
+    allocate (all_l_trajectories(3, isize_traj))
+
+    l_trajectories(:, :) = C_0_R
+    all_l_trajectories(:, :) = C_0_R
+    dummy_proc(:) = C_0_R
+    all_dummy_proc(:) = C_0_R
+
+!#######################################################################
+!READ THE (FIRST) FILE
+!#######################################################################
+    write (fname, *) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
+    call IO_READ_PARTICLE(fname, l_g, l_q)
+
+    if (ims_pro == 0) then
+        fname = 'largest_particle'
+        write (str, *) nitera_last; str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
+        open (unit=117, file=str, access='stream', form='unformatted')
+        read (117) dummy_ims_npro   !is a integer
+        read (117, POS=SIZEOFINT + 1) dummy_isize_traj  !is an integer
+        read (117, POS=SIZEOFINT*2 + 1) dummy_big_overall  !is real(8)
+        read (117, POS=(SIZEOFINT*2 + 1) + SIZEOFREAL*isize_traj) l_trajectories_tags ! attention is integer(8)
+        close (117)
+    end if
+
+!#######################################################################
+!BROADCAST THE ID OF THE LARGEST PARTICLES
+!#######################################################################
+    call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
+    call MPI_BCAST(l_trajectories_tags, isize_traj, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
+
+!#######################################################################
+!SEARCH FOR LARGEST PARTICLES
+!#######################################################################
+    do i = 1, l_g%np
+        do j = 1, isize_traj
+            if (l_g%tags(i) == l_trajectories_tags(j)) then
+                l_trajectories(1, j) = l_q(i, 1)
+                l_trajectories(2, j) = l_q(i, 2)
+                l_trajectories(3, j) = l_q(i, 3)
+                dummy_proc(j) = ims_pro
+            end if
+        end do
+    end do
+
+!#######################################################################
+!REDUCE ALL INFORMATION TO ROOT
+!#######################################################################
+    call MPI_REDUCE(l_trajectories, all_l_trajectories, 3*isize_traj, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+    call MPI_REDUCE(dummy_proc, all_dummy_proc, isize_traj, MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+    call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
+
+!#######################################################################
+!WRITE DATA WITH ROOT
+!#######################################################################
+
+    if (ims_pro == 0) then
+        fname = 'pos_largest_particle_start'
+        write (str, *) nitera_first; str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
+        open (unit=15, file=str, access='stream', form='unformatted')
+        inquire (UNIT=15, POS=particle_pos) !would be 1
+        write (15) ims_npro  !header
+        inquire (UNIT=15, POS=particle_pos) !would be 5
+        write (15) isize_traj  !header
+        inquire (UNIT=15, POS=particle_pos)  !would be 9
+        write (15) l_trajectories_tags
+        inquire (UNIT=15, POS=particle_pos)  !409
+        write (15) all_l_trajectories
+        inquire (UNIT=15, POS=particle_pos)  !would be 1609 with 50 numbers
+        write (15) all_dummy_proc
+        close (15)
+    end if
+!    !Just for testing and as template
+!      IF (ims_pro .EQ. 0) THEN
+!    OPEN(unit=117, file=str, access='stream', form='unformatted')
+!    READ(117) test1   !is a integer
+!    READ(117, POS=SIZEOFINT+1) test2  !is an integer
+!    READ(117, POS=SIZEOFINT*2+1) test3  !is real(8)
+!    READ(117, POS=(SIZEOFINT*2+1)+SIZEOFREAL*isize_traj) test4 ! attention is integer(8)
+!    CLOSE(117)
+!    ENDIF
+
+#endif
+
+    call TLAB_STOP(0)
+end program

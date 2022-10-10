@@ -3,7 +3,7 @@
 #include "dns_error.h"
 
 module TLAB_PROCS
-    use TLAB_CONSTANTS, only: lfile, efile
+    use TLAB_CONSTANTS, only: wp, wi, longi, lfile, efile
     use TLAB_VARS
 #ifdef USE_OPENMP
     use OMP_LIB
@@ -23,7 +23,8 @@ module TLAB_PROCS
     public :: TLAB_STOP
     public :: TLAB_WRITE_ASCII
     public :: TLAB_ALLOCATE
-    public :: TLAB_ALLOCATE_ARRAY1, TLAB_ALLOCATE_ARRAY1_INT, TLAB_ALLOCATE_ARRAY2
+    public :: TLAB_ALLOCATE_ARRAY1, TLAB_ALLOCATE_ARRAY2
+    public :: TLAB_ALLOCATE_ARRAY1_INT, TLAB_ALLOCATE_ARRAY1_LONG_INT
 #ifdef USE_MPI
     public :: TLAB_MPI_PANIC
 #endif
@@ -79,8 +80,8 @@ contains
     subroutine TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, a, i1, s)
 
         character(len=*), intent(in) :: C_FILE_LOC
-        TINTEGER, dimension(:), allocatable, intent(inout) :: a
-        TINTEGER, intent(in) :: i1
+        integer(wi), dimension(:), allocatable, intent(inout) :: a
+        integer(wi), intent(in) :: i1
         character(len=*), intent(in) :: s
 
         !#####################################################################
@@ -95,6 +96,28 @@ contains
         end if
 
     end subroutine TLAB_ALLOCATE_ARRAY1_INT
+
+    ! ######################################################################
+    ! ######################################################################
+    subroutine TLAB_ALLOCATE_ARRAY1_LONG_INT(C_FILE_LOC, a, i1, s)
+
+        character(len=*), intent(in) :: C_FILE_LOC
+        integer(longi), dimension(:), allocatable, intent(inout) :: a
+        integer(wi), intent(in) :: i1
+        character(len=*), intent(in) :: s
+
+        !#####################################################################
+        if (i1 <= 0) return
+
+        write (str, *) i1; line = 'Allocating array '//TRIM(ADJUSTL(s))//' of size '//TRIM(ADJUSTL(str))
+        call TLAB_WRITE_ASCII(lfile, line)
+        allocate (a(i1), stat=ierr)
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//TRIM(ADJUSTL(s))//'.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
+
+    end subroutine TLAB_ALLOCATE_ARRAY1_LONG_INT
 
     ! ######################################################################
     ! ######################################################################

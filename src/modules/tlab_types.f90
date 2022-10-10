@@ -1,23 +1,12 @@
 #include "types.h"
 
 module TLAB_TYPES
+    use TLAB_CONSTANTS
 #ifdef USE_MPI
     use MPI
 #endif
     implicit none
     save
-
-    TINTEGER, parameter :: sp = KIND(1.0)
-    TINTEGER, parameter :: dp = KIND(1.0d0)
-    TINTEGER, parameter :: cp = dp             ! code precision
-    ! !> Single precision real numbers, 6 digits, range 10⁻³⁷ to 10³⁷-1; 32 bits
-    ! integer, parameter :: sp = selected_real_kind(6, 37)
-    ! !> Double precision real numbers, 15 digits, range 10⁻³⁰⁷ to 10³⁰⁷-1; 64 bits
-    ! integer, parameter :: dp = selected_real_kind(15, 307)
-
-    TINTEGER, parameter :: MAX_PARS = 10
-    TINTEGER, parameter :: MAX_VARS = 20
-    TINTEGER, parameter :: MAX_MODES = 20
 
     type discrete_dt
         sequence
@@ -27,12 +16,13 @@ module TLAB_TYPES
         TREAL, dimension(MAX_PARS) :: parameters
     end type discrete_dt
 
-    type background_dt
+    type profiles_dt
         sequence
         TINTEGER type, padding
-        TREAL mean, delta, ymean, thick, diam
+        logical relative
+        TREAL mean, delta, ymean, ymean_rel, thick, lslope, uslope, diam
         TREAL, dimension(MAX_PARS) :: parameters
-    end type background_dt
+    end type profiles_dt
 
     type term_dt
         sequence

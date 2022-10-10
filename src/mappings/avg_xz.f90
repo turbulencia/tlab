@@ -13,6 +13,7 @@ SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, av
   USE TLAB_TYPES,     ONLY : pointers_dt
   USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_PROCS
+  USE AVGS, ONLY : AVG1V2d, AVG1V2D1G
 
   IMPLICIT NONE
 
@@ -27,7 +28,7 @@ SUBROUTINE AVG_N_XZ(fname, itime,rtime, nx,ny,nz, nv,nm, vars, igate,gate, y, av
 
   ! -------------------------------------------------------------------
   TINTEGER j,iv,im
-  TREAL AVG1V2D, AVG1V2D1G, moments(nm)
+  TREAL moments(nm)
 
   CHARACTER*32 str
   CHARACTER*32 groupname(1) ! 3 groups for consistency with old TkStat format
@@ -110,6 +111,7 @@ SUBROUTINE INTER_N_XZ(fname, itime,rtime, nx,ny,nz, np, parname, gate, y, inter)
 
   USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_PROCS
+  USE AVGS, ONLY: INTER1V2D
 
   IMPLICIT NONE
 
@@ -123,7 +125,6 @@ SUBROUTINE INTER_N_XZ(fname, itime,rtime, nx,ny,nz, np, parname, gate, y, inter)
 
   ! -------------------------------------------------------------------
   TINTEGER ip, j
-  TREAL INTER1V2D
   INTEGER(1) gate_level
 
   CHARACTER*32 groupname(1) ! Two groups for consistency with old TkStat format

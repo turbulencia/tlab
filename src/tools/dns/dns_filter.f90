@@ -13,9 +13,11 @@ SUBROUTINE DNS_FILTER()
   USE TLAB_VARS,    ONLY : g, area
   USE TLAB_ARRAYS
   USE TLAB_PROCS
+  USE OPR_FILTERS
   USE DNS_LOCAL,     ONLY : ilimit_scal, s_bound_min, s_bound_max
   USE DNS_LOCAL,     ONLY : nitera_stats_spa, nitera_first,nitera_stats
   USE STATISTICS
+  USE AVGS, ONLY: AVG_IK_V
 
   IMPLICIT NONE
 

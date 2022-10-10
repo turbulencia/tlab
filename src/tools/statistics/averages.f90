@@ -21,9 +21,10 @@ PROGRAM AVERAGES
   USE TLAB_MPI_PROCS
 #endif
   USE THERMO_VARS, ONLY : imixture
-  USE LAGRANGE_VARS
-  USE LAGRANGE_ARRAYS
+  USE PARTICLE_VARS
+  USE PARTICLE_ARRAYS
   USE IO_FIELDS
+  USE OPR_FILTERS
 
   IMPLICIT NONE
 
@@ -88,9 +89,7 @@ PROGRAM AVERAGES
   CALL TLAB_START()
 
   CALL IO_READ_GLOBAL(ifile)
-  IF ( icalc_part == 1 ) THEN
-    CALL PARTICLE_READ_GLOBAL(ifile)
-  END IF
+  CALL PARTICLE_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI
   CALL TLAB_MPI_INITIALIZE
@@ -284,7 +283,7 @@ PROGRAM AVERAGES
 
   isize_wrk3d = MAX(isize_field,opt_order*nfield*jmax)
   isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
-  IF ( icalc_part == 1) THEN
+  IF ( imode_part /= PART_TYPE_NONE ) THEN
     isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
   END IF
 
@@ -300,6 +299,8 @@ PROGRAM AVERAGES
   CALL FDM_INITIALIZE(y, g(2), wrk1d)
   CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
+  CALL FI_BACKGROUND_INITIALIZE(wrk1d)  ! Initialize thermodynamic quantities
+
   DO ig = 1,3
     CALL OPR_FILTER_INITIALIZE( g(ig), Dealiasing(ig), wrk1d )
   END DO
@@ -311,8 +312,6 @@ PROGRAM AVERAGES
   IF ( iread_flow == 1 ) THEN       ! We need array space
     CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
   END IF
-
-  CALL FI_PROFILES_INITIALIZE(wrk1d)  ! Initialize thermodynamic quantities
 
   y_aux(:) = 0                        ! Reduced vertical grid
   DO ij = 1,jmax_aux*opt_block
@@ -425,8 +424,7 @@ PROGRAM AVERAGES
       END IF
 
       ! Lagrange Liquid and Liquid without diffusion
-      IF ( icalc_part == 1 ) THEN
-        IF ( ilagrange == LAG_TYPE_BIL_CLOUD_3 .OR. ilagrange == LAG_TYPE_BIL_CLOUD_4 ) THEN
+        IF ( imode_part == PART_TYPE_BIL_CLOUD_3 .OR. imode_part == PART_TYPE_BIL_CLOUD_4 ) THEN
           WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
           CALL IO_READ_PARTICLE(fname, l_g, l_q)
 
@@ -436,19 +434,15 @@ PROGRAM AVERAGES
           txc(:,7) = txc(:,7) + C_SMALL_R
           idummy = inb_part - 3 ! # scalar properties solved in the lagrangian
           DO is = inb_scal_array +1 +1, inb_scal_array+1 +idummy
-            sbg(is)%mean = C_1_R; sbg(is)%delta = C_0_R; sbg(is)%ymean = sbg(1)%ymean; schmidt(is) = schmidt(1)
+            schmidt(is) = schmidt(1)
             l_txc(:,1)=l_q(:,3+is-inb_scal_array-1) !!! DO WE WANT l_txc(:,is) ???
             CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,8), wrk2d,wrk3d)
             txc(:,8) = txc(:,8) /txc(:,7)
-            sbg(is)%mean  = sbg(inb_scal_array)%mean
-            sbg(is)%delta = sbg(inb_scal_array)%delta
-            sbg(is)%ymean = sbg(inb_scal_array)%ymean
             txc(1:isize_field,6) = txc(1:isize_field,9) ! Pass the pressure in tmp6
             CALL AVG_SCAL_XZ(is, q,s, txc(1,8), &
                 txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), mean, wrk1d,wrk2d,wrk3d)
           END DO
         END IF
-      END IF
 
       IF ( icalc_flow == 1 ) THEN
         txc(1:isize_field,3) = txc(1:isize_field,9) ! Pass the pressure in tmp3

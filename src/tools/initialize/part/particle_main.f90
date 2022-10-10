@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -7,76 +6,76 @@
 
 #define C_FILE_LOC "INIPART"
 
-PROGRAM INIPART
-
-  USE TLAB_CONSTANTS
-  USE TLAB_VARS
-  USE TLAB_ARRAYS
-  USE TLAB_PROCS
+program INIPART
+    use TLAB_TYPES, only: wp
+    use TLAB_CONSTANTS
+    use TLAB_VARS
+    use TLAB_ARRAYS
+    use TLAB_PROCS
 #ifdef USE_MPI
-  USE TLAB_MPI_PROCS
+    use TLAB_MPI_PROCS
 #endif
-  USE LAGRANGE_VARS
-  USE LAGRANGE_ARRAYS
+    use PARTICLE_VARS
+    use PARTICLE_ARRAYS
 
-  IMPLICIT NONE
-#include "integers.h"
+    implicit none
 
-  ! -------------------------------------------------------------------
-  TINTEGER  ierr
+    ! -------------------------------------------------------------------
+    integer(wi) ierr
+    real(wp), dimension(:), allocatable, save :: l_comm
+    character*64 str, line
 
-  TREAL,      DIMENSION(:),   ALLOCATABLE, SAVE :: l_comm
+    !########################################################################
+    !########################################################################
+    call TLAB_START
 
-  CHARACTER*64 str, line
+    call IO_READ_GLOBAL(ifile)
 
-  !########################################################################
-  !########################################################################
-  CALL TLAB_START
+    call PARTICLE_READ_GLOBAL(ifile)
 
-  CALL IO_READ_GLOBAL(ifile)
-
-  IF ( icalc_part .EQ. 1 ) THEN
-    CALL PARTICLE_READ_GLOBAL(ifile)
+    if (imode_part /= PART_TYPE_NONE) then
 #ifdef USE_MPI
-    CALL TLAB_MPI_INITIALIZE
+        call TLAB_MPI_INITIALIZE
 #endif
 
-    ! -------------------------------------------------------------------
-    ! Allocating memory space
-    ! -------------------------------------------------------------------
-    inb_flow_array = 0
-    inb_scal_array = 0
-    isize_wrk3d    = imax*jmax*kmax
-    inb_txc        = inb_scal
+        ! -------------------------------------------------------------------
+        ! Allocating memory space
+        ! -------------------------------------------------------------------
+        inb_flow_array = 0
+        inb_scal_array = 0
+        isize_wrk3d = imax*jmax*kmax
+        inb_txc = inb_scal
 
-    CALL TLAB_ALLOCATE(C_FILE_LOC)
+        call TLAB_ALLOCATE(C_FILE_LOC)
 
-    CALL PARTICLE_ALLOCATE(C_FILE_LOC)
+        call PARTICLE_ALLOCATE(C_FILE_LOC)
 
-    WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
-    CALL TLAB_WRITE_ASCII(lfile,line)
-    ALLOCATE(l_comm(isize_l_comm), stat=ierr)
-    IF ( ierr .NE. 0 ) THEN
-      CALL TLAB_WRITE_ASCII(efile,C_FILE_LOC//'Not enough memory for l_comm.')
-      CALL TLAB_STOP(DNS_ERROR_ALLOC)
-    ENDIF
+        write (str, *) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
+        call TLAB_WRITE_ASCII(lfile, line)
+        allocate (l_comm(isize_l_comm), stat=ierr)
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'Not enough memory for l_comm.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
 
-    ! -------------------------------------------------------------------
-    ! Read the grid
-    ! -------------------------------------------------------------------
-    CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
-    CALL FDM_INITIALIZE(x, g(1), wrk1d)
-    CALL FDM_INITIALIZE(y, g(2), wrk1d)
-    CALL FDM_INITIALIZE(z, g(3), wrk1d)
+        ! -------------------------------------------------------------------
+        ! Read the grid
+        ! -------------------------------------------------------------------
+        call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+        call FDM_INITIALIZE(x, g(1), wrk1d)
+        call FDM_INITIALIZE(y, g(2), wrk1d)
+        call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    ! -------------------------------------------------------------------
-    ! Initialize particle information
-    ! -------------------------------------------------------------------
-    CALL PARTICLE_RANDOM_POSITION(l_g,l_q,l_txc,l_comm, txc, wrk3d)
+        call FI_BACKGROUND_INITIALIZE(wrk1d)
 
-    CALL IO_WRITE_PARTICLE(TRIM(ADJUSTL(tag_part))//'ics', l_g, l_q)
+        ! -------------------------------------------------------------------
+        ! Initialize particle information
+        ! -------------------------------------------------------------------
+        call PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
 
-  ENDIF
+        call IO_WRITE_PARTICLE(TRIM(ADJUSTL(tag_part))//'ics', l_g, l_q)
 
-  CALL TLAB_STOP(0)
-END PROGRAM INIPART
+    end if
+
+    call TLAB_STOP(0)
+end program INIPART

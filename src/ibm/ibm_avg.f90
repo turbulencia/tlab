@@ -47,11 +47,11 @@ subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2)
   use TLAB_VARS,      only : imax, jmax, kmax, g, area
   use TLAB_CONSTANTS, only : efile
   use TLAB_PROCS,     only : TLAB_STOP, TLAB_WRITE_ASCII
+  use AVGS,           only : AVG_IK_V
 #ifdef USE_MPI
   use MPI
   use TLAB_MPI_VARS,  only : ims_err 
 #endif
-  use IO_FIELDS
 
   implicit none
 
@@ -67,9 +67,6 @@ subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2)
   TINTEGER                                        :: i,j,k
   TREAL                                           :: dummy, check
   
-  TREAL, dimension(:,:,:),allocatable :: tmp
-  allocate(tmp(imax,jmax,kmax))
-
   ! ================================================================== !
   ! solid + interface points are filled with zeros
   tmp1(:,:,:) = C_0_R; tmp2(:,:) = C_0_R
@@ -146,8 +143,6 @@ subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2)
     end do
   end do
   
-  CALL IO_WRITE_FIELDS('flow.10', IO_FLOW, imax,jmax,kmax, 1, tmp1, tmp)
-
   ! horizontal average - compute gamma_s
   CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac, g(3)%jac, gamma_s, wrk1d, area)
 

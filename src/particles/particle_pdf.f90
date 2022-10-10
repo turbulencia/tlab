@@ -10,10 +10,12 @@
 SUBROUTINE PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk3d)
 
   USE TLAB_TYPES,  ONLY: pointers_dt, pointers3d_dt
-  USE TLAB_VARS, ONLY: imax,jmax,kmax, isize_field,isize_particle, inb_scal_array
+  USE TLAB_VARS, ONLY: imax,jmax,kmax, isize_field, inb_scal_array
   USE TLAB_VARS, ONLY: g
-  USE LAGRANGE_VARS, ONLY : particle_dt
-  USE LAGRANGE_VARS, ONLY : particle_pdf_subdomain, particle_pdf_max, particle_pdf_interval
+  USE PARTICLE_TYPES, ONLY : particle_dt
+  USE PARTICLE_VARS, ONLY : isize_part
+  USE PARTICLE_VARS, ONLY : particle_pdf_subdomain, particle_pdf_max, particle_pdf_interval
+  use PARTICLE_INTERPOLATE
 #ifdef USE_MPI
   USE MPI
   USE TLAB_MPI_VARS
@@ -26,8 +28,8 @@ SUBROUTINE PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk3d)
   TREAL, DIMENSION(*)                     :: wrk3d
 
   TYPE(particle_dt)                          :: l_g
-  TREAL, DIMENSION(isize_particle,*)         :: l_q
-  TREAL, DIMENSION(isize_particle,1), TARGET :: l_txc
+  TREAL, DIMENSION(isize_part,*)         :: l_q
+  TREAL, DIMENSION(isize_part,1), TARGET :: l_txc
   TREAL, DIMENSION(*)                        :: l_comm
 
 ! -------------------------------------------------------------------

@@ -11,6 +11,7 @@ SUBROUTINE FI_DISSIPATION(flag, nx,ny,nz, u,v,w, eps, tmp1,tmp2,tmp3,tmp4, wrk1d
 
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : area,visc
+  USE AVGS, ONLY: AVG_IK_V
 
   IMPLICIT NONE
 
@@ -134,6 +135,7 @@ SUBROUTINE FI_RTKE(nx,ny,nz, q, wrk1d,wrk3d)
 
   USE TLAB_VARS, ONLY : imode_eqns
   USE TLAB_VARS, ONLY : g, area, rbackground
+  USE AVGS, ONLY: AVG_IK_V
 
   IMPLICIT NONE
 
@@ -179,13 +181,15 @@ END SUBROUTINE FI_RTKE
 !########################################################################
 SUBROUTINE FI_FLUCTUATION_INPLACE(nx,ny,nz, a)
   USE TLAB_VARS, ONLY : g, area
+  USE AVGS, ONLY: AVG_IK
+
   IMPLICIT NONE
 
   TINTEGER, INTENT(IN)    :: nx,ny,nz
   TREAL,    INTENT(INOUT) :: a(nx,ny,nz)
 
   ! -------------------------------------------------------------------
-  TREAL dummy, AVG_IK
+  TREAL dummy
   TINTEGER j
 
   ! ###################################################################

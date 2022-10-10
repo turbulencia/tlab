@@ -19,8 +19,8 @@ subroutine OPR_BURGERS(is, nlines, bcs, g, dealiasing, s, u, result, wrk2d, wrk3
     use TLAB_TYPES, only: grid_dt, filter_dt
     use TLAB_CONSTANTS, only: efile
     use IBM_VARS, only: ibm_burgers
-    use TLAB_ARRAYS, only: wrk1d
     use TLAB_PROCS
+    use OPR_FILTERS
     implicit none
 
     TINTEGER, intent(in) :: is     ! scalar index; if 0, then velocity
@@ -57,8 +57,8 @@ subroutine OPR_BURGERS(is, nlines, bcs, g, dealiasing, s, u, result, wrk2d, wrk3
 ! ###################################################################
     if (dealiasing%type /= DNS_FILTER_NONE) then
         allocate (uf(nlines, g%size), dsf(nlines, g%size))
-        call OPR_FILTER_1D(nlines, dealiasing, u, uf, wrk1d, wrk2d, wrk3d) ! wrk3d is not used in compact filter
-        call OPR_FILTER_1D(nlines, dealiasing, wrk3d, dsf, wrk1d, wrk2d, wrk3d)
+        call OPR_FILTER_1D(nlines, dealiasing, u, uf, wrk2d, wrk3d) ! wrk3d is not used in compact filter
+        call OPR_FILTER_1D(nlines, dealiasing, wrk3d, dsf, wrk2d, wrk3d)
 
 ! We duplicate a few lines of code instead of using pointers becasue
 ! creating pointers take some running time
