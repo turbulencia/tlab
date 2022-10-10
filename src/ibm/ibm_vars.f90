@@ -46,7 +46,7 @@ module IBM_VARS
   TREAL,    dimension(:),     allocatable :: xa, xb, ya, yb
 
   ! gammas for conditional averages & scalar boundary values applied in solids
-  TREAL,    dimension(:),     allocatable :: gamma_0, gamma_i, gamma_1, gamma_f, gamma_s
+  TREAL,    dimension(:),     allocatable :: gamma_0, gamma_1, gamma_f, gamma_s
   TREAL,    dimension(:,:),   allocatable :: scal_bcs
 
   ! flag (decides which fdm calls are with modified fields)

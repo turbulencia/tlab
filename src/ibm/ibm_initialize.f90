@@ -87,7 +87,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   end if
 
   ! compute gammas for conditional averages 
-  CALL IBM_AVG_GAMMA(gamma_0, gamma_i, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2, tmp3)
+  CALL IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2)
   tmp1(:) = C_0_R; tmp2(:) = C_0_R; tmp3(:) = C_0_R
 
   ! check idle procs

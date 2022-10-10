@@ -120,7 +120,6 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
 
   ! gammas for conditional averages
   call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_0,  jmax, 'eps_0')
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_i,  jmax, 'eps_i')
   call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_1,  jmax, 'eps_1')
   call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_f,  jmax, 'eps_f')
   call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_s,  jmax, 'eps_s')
