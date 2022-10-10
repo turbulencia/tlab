@@ -24,6 +24,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE THERMO_VARS, ONLY : imixture, MRATIO, GRATIO
   USE THERMO_VARS, ONLY : THERMO_AI, WGHT_INV
   USE IBM_VARS,    ONLY : eps
+  USE AVGS, ONLY: AVG_IK_V
 #ifdef TRACE_ON
   USE TLAB_CONSTANTS, ONLY : tfile
 #endif

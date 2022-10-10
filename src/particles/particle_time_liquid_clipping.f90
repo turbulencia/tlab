@@ -12,56 +12,57 @@
 !# DESCRIPTION
 !#
 !# Sets negative particle liquid to zero
-!# Sets particle liquid with no eulerian liquid surrounded to zero 
+!# Sets particle liquid with no eulerian liquid surrounded to zero
 !#
 !########################################################################
-SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING(s, l_q,l_txc,l_comm, wrk3d)
+subroutine PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc, l_comm, wrk3d)
 
-  USE TLAB_TYPES,  ONLY : pointers_dt, pointers3d_dt
-  USE TLAB_VARS, ONLY : imax,jmax,kmax
-  USE PARTICLE_VARS, ONLY : isize_part, inb_part_array
-  USE TLAB_VARS, ONLY : isize_field, inb_scal_array
-  USE PARTICLE_VARS, ONLY : l_g
+    use TLAB_TYPES, only: pointers_dt, pointers3d_dt
+    use TLAB_VARS, only: imax, jmax, kmax
+    use PARTICLE_VARS, only: isize_part, inb_part_array
+    use TLAB_VARS, only: isize_field, inb_scal_array
+    use PARTICLE_ARRAYS, only: l_g
+    use PARTICLE_INTERPOLATE
+    
+    implicit none
 
-  IMPLICIT NONE
-
-  TREAL, DIMENSION(isize_field,*), TARGET  :: s
-  TREAL, DIMENSION(isize_part,*)       :: l_q
-  TREAL, DIMENSION(isize_part), TARGET :: l_txc
-  TREAL, DIMENSION(*)                      :: l_comm
-  TREAL, DIMENSION(*)                      :: wrk3d
+    TREAL, dimension(isize_field, *), target :: s
+    TREAL, dimension(isize_part, *) :: l_q
+    TREAL, dimension(isize_part), target :: l_txc
+    TREAL, dimension(*) :: l_comm
+    TREAL, dimension(*) :: wrk3d
 
 ! -------------------------------------------------------------------
-  TINTEGER is, i, nvar
-  TYPE(pointers3d_dt), DIMENSION(1) :: data
-  TYPE(pointers_dt),   DIMENSION(1) :: data_out
+    TINTEGER is, i, nvar
+    type(pointers3d_dt), dimension(1) :: data
+    type(pointers_dt), dimension(1) :: data_out
 
 ! ###################################################################
 ! If negative liquid set lagrange liquid 0
 ! ###################################################################
-  DO is=4,inb_part_array
-     DO i=1,l_g%np
-        IF ( l_q(i,is) .LT. C_0_R ) THEN
-           l_q(i,is)=C_0_R
-        ENDIF
-     ENDDO
-  ENDDO
+    do is = 4, inb_part_array
+        do i = 1, l_g%np
+            if (l_q(i, is) < C_0_R) then
+                l_q(i, is) = C_0_R
+            end if
+        end do
+    end do
 
 ! ###################################################################
 ! If no liquid around in Eulerian, set liquid droplet to zero
 ! ###################################################################
-  nvar = 0
-  nvar = nvar+1; data(nvar)%field(1:imax,1:jmax,1:kmax) => s(:,inb_scal_array); data_out(nvar)%field => l_txc(:)
-  l_txc = C_0_R
-  CALL FIELD_TO_PARTICLE(nvar, data, data_out, l_g,l_q,l_comm, wrk3d)
+    nvar = 0
+    nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => s(:, inb_scal_array); data_out(nvar)%field => l_txc(:)
+    l_txc = C_0_R
+    call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q, l_comm, wrk3d)
 
-  DO i=1,l_g%np
-     IF (l_txc(i) .LT. 0.00001) THEN
-        DO is=4,inb_part_array
-           l_q(i,is)=C_0_R
-        ENDDO
-     ENDIF
-  ENDDO
+    do i = 1, l_g%np
+        if (l_txc(i) < 0.00001) then
+            do is = 4, inb_part_array
+                l_q(i, is) = C_0_R
+            end do
+        end if
+    end do
 
-  RETURN
-END SUBROUTINE PARTICLE_TIME_LIQUID_CLIPPING
+    return
+end subroutine PARTICLE_TIME_LIQUID_CLIPPING

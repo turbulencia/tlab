@@ -1,6 +1,6 @@
 # Tlab
 
-Tools to simulate and analyze turbulent flows in 2D and 3D configurations. The numerical schemes are based on compact finite differences with structured meshes, where grid stretching allowed. Time advancement in based on Runge-Kutta schemes. There are two possible modes [temporal|spatial], which corresponds to temporally evolving flows and spatially evolving flows, respectively. This parameter refers to the statistical homogeneities of the configuration, and it partly defines the boundary conditions and the calculation of statistical properties. The code implements a hybrid parallelization: MPI for a domain decomposition in the first and third direction, and OpenMPI in big loops.
+Tools to simulate and analyze turbulent flows in 2D and 3D configurations. The numerical schemes are based on compact finite differences and Runge-Kutta methods. Meshes are structured and allow grid stretching. There are two possible simulation modes [temporal|spatial], which correspond to temporally evolving flows and spatially evolving flows, respectively. This parameter refers to the statistical homogeneities of the configuration, and it partly defines the boundary conditions and the calculation of statistical properties. The code implements a hybrid parallelization: MPI for a domain decomposition in the first and third directions, and OpenMPI in big loops.
 
 Some examples of applications can be found in this [website](https://jpmellado.github.io/gallery.html).
 
@@ -24,7 +24,7 @@ You can also run `./configure.sh`, which would create the different build_* dire
 To clean the tree, simply delete the directories build*
 
 **Prerequisites**
-* cmake (at a computing centre, try `module load cmake`)
+* cmake
 * fortran compiler
 * [FFTW](http://www.fftw.org/)
 * Optionally, [NetCDF](https://docs.unidata.ucar.edu/netcdf-c/current/building_netcdf_fortran.html) for statistical data.
@@ -51,7 +51,7 @@ Use valgrind to check for memory leaks.
 
 * [`config`](./config): configuration files for different architectures and compilers
 * [`doc`](./doc): documentation files
-* [`examples`](./examples): sample cases for reference and for development testing
+* [`examples`](./examples): sample cases for reference and for debugging
 * [`scripts`](./scripts): shell and python scripts for job management and postprocessing
 * [`src`](./src): source files  
   * [`src/tools`](./src/tools): executables
@@ -59,7 +59,7 @@ Use valgrind to check for memory leaks.
   * [`src/operators`](./src/operators): library with operators that depend only on fdm routines
   * [`src/fdm`](./src/fdm): library with finite difference schemes
   * [`src/utils`](./src/utils): library with basic generic operators
-  * [`src/external`](./src/external): external libraries
+  * [`src/external`](./src/external): external libraries, if any
   * [`src/modules`](./src/modules): constants, variables, arrays and basic procedures
   * ...
 

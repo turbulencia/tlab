@@ -36,6 +36,7 @@ MODULE AVG_SCAL_ZT
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : nstatavg, statavg
   USE TLAB_VARS, ONLY : itransport, visc
+  USE AVGS, ONLY: SUM1V1D_V
 
   IMPLICIT NONE
   PRIVATE

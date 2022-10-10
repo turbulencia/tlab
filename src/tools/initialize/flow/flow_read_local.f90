@@ -9,13 +9,13 @@ subroutine FLOW_READ_LOCAL(inifile)
 
     implicit none
 
-    integer(ci) :: bcs_flow_jmin, bcs_flow_jmax ! Boundary conditions
+    integer(wi) :: bcs_flow_jmin, bcs_flow_jmax ! Boundary conditions
 
     character*(*) inifile
 
     ! -------------------------------------------------------------------
-    real(cp) dummy(1)
-    integer(ci) idummy
+    real(wp) dummy(1)
+    integer(wi) idummy
     character*512 sRes
     character*32 bakfile
 
@@ -70,20 +70,28 @@ subroutine FLOW_READ_LOCAL(inifile)
     if (trim(adjustl(sRes)) == 'void') & ! backwards compatilibity
         call SCANINICHAR(bakfile, inifile, 'IniFields', 'ThickIni', 'void', sRes)
     if (trim(adjustl(sRes)) /= 'void') then
-        dummy(1) = 1.0_cp; idummy = 1
+        dummy(1) = 1.0_wp; idummy = 1
         call LIST_REAL(sRes, idummy, dummy)
         Kini%thick = dummy(1)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'IniFields', 'YMeanRelativeIniK', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'void') & ! backwards compatilibity
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIniK', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'void') & ! backwards compatilibity
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'void', sRes)
-    if (trim(adjustl(sRes)) /= 'void') then
-        dummy(1) = 1.0_cp; idummy = 1
-        call LIST_REAL(sRes, idummy, dummy)
-        Kini%ymean_rel = dummy(1)
+    call SCANINICHAR(bakfile, inifile, 'IniFields', 'YMeanIniK', 'void', sRes)
+    if (trim(adjustl(sRes)) == 'void') then
+        Kini%relative = .true.
+
+        call SCANINICHAR(bakfile, inifile, 'IniFields', 'YMeanRelativeIniK', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'void') & ! backwards compatilibity
+            call SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIniK', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'void') & ! backwards compatilibity
+            call SCANINICHAR(bakfile, inifile, 'IniFields', 'YCoorIni', 'void', sRes)
+        if (trim(adjustl(sRes)) /= 'void') then
+            dummy(1) = 1.0_wp; idummy = 1
+            call LIST_REAL(sRes, idummy, dummy)
+            Kini%ymean_rel = dummy(1)
+        end if
+    else
+        Kini%relative = .false.
+        call SCANINIREAL(bakfile, inifile, 'IniFields', 'YMeanIniK', '-1.0', Kini%ymean)
     end if
 
     call SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeK', '-1.0', norm_ini_u)

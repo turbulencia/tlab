@@ -19,6 +19,7 @@ PROGRAM TRANSFIELDS
   USE TLAB_MPI_PROCS
 #endif
   USE IO_FIELDS
+  USE OPR_FILTERS
 
   IMPLICIT NONE
 
@@ -767,7 +768,7 @@ CONTAINS
 
     USE TLAB_CONSTANTS, ONLY : efile
     USE TLAB_VARS, ONLY : sbg, qbg
-
+    USE PROFILES
     IMPLICIT NONE
 
     TINTEGER flag_mode, is, nx,ny,nz
@@ -777,14 +778,14 @@ CONTAINS
 
     ! -----------------------------------------------------------------------
     TINTEGER j
-    TREAL PROFILES, dummy
-    EXTERNAL PROFILES
+    TREAL dummy
 
+    
     ! #######################################################################
     IF ( flag_mode .EQ. 0 ) THEN ! Velocity
        IF ( is .EQ. 1 ) THEN ! Only the mean velocity
           DO j = 1,ny
-             dummy =  PROFILES(qbg, y(j))
+             dummy =  PROFILES_CALCULATE(qbg(1), y(j))
              b(:,j,:) = dummy + a(:,j,:)
           ENDDO
        ELSE
@@ -793,7 +794,7 @@ CONTAINS
 
     ELSE                         ! Scalars
        DO j = 1,ny
-          dummy =  PROFILES(sbg(is), y(j))
+          dummy =  PROFILES_CALCULATE(sbg(is), y(j))
           b(:,j,:) = dummy + a(:,j,:)
        ENDDO
 

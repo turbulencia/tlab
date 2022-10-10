@@ -1,20 +1,20 @@
 #include "dns_const.h"
 
 subroutine VELOCITY_MEAN(u, v, w, wrk1d)
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imode_sim, imax, jmax, kmax
     use TLAB_VARS, only: qbg
     use TLAB_VARS, only: coriolis
+    use PROFILES
     implicit none
 
-    real(cp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
-    real(cp), dimension(jmax, *), intent(INOUT) :: wrk1d
+    real(wp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
+    real(wp), dimension(jmax, *), intent(INOUT) :: wrk1d
 
     ! -------------------------------------------------------------------
-    integer(ci) iq, j
-    real(cp) PROFILES, calpha, salpha
-    external PROFILES
+    integer(wi) iq, j
+    real(wp) calpha, salpha
 
     !########################################################################
     if (imode_sim == DNS_MODE_TEMPORAL) then
@@ -22,14 +22,14 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
         ! Construct reference profiles into array wrk1d
         do iq = 1, 3
             do j = 1, jmax
-                wrk1d(j, iq) = PROFILES(qbg(iq), g(2)%nodes(j))
+                wrk1d(j, iq) = PROFILES_CALCULATE(qbg(iq), g(2)%nodes(j))
             end do
         end do
 
         ! Construct velocity field
         if (coriolis%type == EQNS_COR_NORMALIZED) then
             calpha = COS(coriolis%parameters(1)); salpha = SIN(coriolis%parameters(1))
-            wrk1d(:, 3) = wrk1d(:, 3)*SIGN(1.0_cp, coriolis%vector(2)) ! right angular velocity vector (Garratt, 1992, p.42)
+            wrk1d(:, 3) = wrk1d(:, 3)*SIGN(1.0_wp, coriolis%vector(2)) ! right angular velocity vector (Garratt, 1992, p.42)
 
             do j = 1, jmax
                 u(:, j, :) = u(:, j, :) + wrk1d(j, 1)*calpha + wrk1d(j, 3)*salpha
@@ -54,7 +54,7 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
 ! #define aux(j)    wrk1d(j,3)
 !     ycenter = g(2)%nodes(1) + g(2)%scale *qbg(iq)%ymean_rel
 !     DO j = 1,jmax
-!       u_vi(j) = PROFILES( qbg(1), ycenter, g(2)%nodes(j) )
+!       u_vi(j) = PROFILES_CALCULATE( qbg(1), ycenter, g(2)%nodes(j) )
 !     ENDDO
 !     rho_vi(:) = rho(1,:,1)
 !
@@ -77,7 +77,7 @@ subroutine VELOCITY_MEAN(u, v, w, wrk1d)
     end if
 
     ! -------------------------------------------------------------------
-    if (g(3)%size == 1) w = 0.0_cp
+    if (g(3)%size == 1) w = 0.0_wp
 
     return
 end subroutine VELOCITY_MEAN

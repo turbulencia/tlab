@@ -22,6 +22,7 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE TLAB_VARS
   USE THERMO_VARS,    ONLY : imixture, thermo_param
   USE IBM_VARS,       ONLY : eps
+  USE AVGS, ONLY: AVG_IK_V
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif

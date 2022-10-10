@@ -2,10 +2,11 @@
 #include "dns_const.h"
 
 module FLOW_LOCAL
-    use TLAB_TYPES, only: profiles_dt, discrete_dt, cp, ci
+    use TLAB_TYPES, only: profiles_dt, discrete_dt, wp, wi
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g, qbg
     use IO_FIELDS
+    use AVGS, only: AVG1V2D
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
@@ -13,37 +14,37 @@ module FLOW_LOCAL
     implicit none
     save
     ! -------------------------------------------------------------------
-    integer(ci) :: flag_u, flag_t, flag_dilatation, flag_mixture
+    integer(wi) :: flag_u, flag_t, flag_dilatation, flag_mixture
 
     type(profiles_dt) :: Kini                 ! Geometry of perturbation of initial boundary condition
-    real(cp) :: norm_ini_u, norm_ini_p          ! Scaling of perturbation
+    real(wp) :: norm_ini_u, norm_ini_p          ! Scaling of perturbation
     type(discrete_dt) :: fp                     ! Discrete perturbation
 
-    integer(ci) :: flag_wall ! Boundary conditions: 0  Free-Slip/Free-Slip
+    integer(wi) :: flag_wall ! Boundary conditions: 0  Free-Slip/Free-Slip
     ! 1  No-Slip/Free-Slip
     ! 2  Free-Slip/No-Slip
     ! 3  No-Slip/No-Slip
     ! -------------------------------------------------------------------
-    integer(ci) i, j, k
+    integer(wi) i, j, k
 
-    integer(ci) im, idsp, kdsp
-    real(cp) wx, wz, wx_1, wz_1
+    integer(wi) im, idsp, kdsp
+    real(wp) wx, wz, wx_1, wz_1
     type(profiles_dt) prof_loc
 
-    real(cp), dimension(:), pointer :: xn, zn
+    real(wp), dimension(:), pointer :: xn, zn
 
 contains
 
     ! ###################################################################
     subroutine FLOW_SHAPE(wrk1d)
-        real(cp), dimension(jmax, 5), intent(INOUT) :: wrk1d
+        use PROFILES
+        real(wp), dimension(jmax, 5), intent(INOUT) :: wrk1d
 
         ! -------------------------------------------------------------------
-        integer(ci) bcs(2, 2)
-        real(cp) PROFILES, yr
-        external PROFILES
+        integer(wi) bcs(2, 2)
+        real(wp) yr
 
-        real(cp), dimension(:), pointer :: yn
+        real(wp), dimension(:), pointer :: yn
 
         ! ###################################################################
         bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
@@ -53,7 +54,7 @@ contains
         prof_loc%delta=C_1_R
         prof_loc%mean=C_0_R
         do j = 1, jmax                               ! Wall-normal velocity
-            wrk1d(j, 1) = PROFILES(prof_loc, yn(j))
+            wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, yn(j))
         end do
         call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
         wrk1d(:, 2) = -wrk1d(:, 2)                     ! Negative of the derivative of f, wall-parallel velocity
@@ -91,12 +92,12 @@ contains
 
     ! ###################################################################
     subroutine VELOCITY_DISCRETE(u, v, w, wrk1d, wrk2d)
-        real(cp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
-        real(cp), dimension(jmax, 2), intent(INOUT) :: wrk1d
-        real(cp), dimension(imax, kmax, 3), intent(INOUT) :: wrk2d
+        real(wp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
+        real(wp), dimension(jmax, 2), intent(INOUT) :: wrk1d
+        real(wp), dimension(imax, kmax, 3), intent(INOUT) :: wrk2d
 
         ! -------------------------------------------------------------------
-        real(cp) factorx, factorz
+        real(wp) factorx, factorz
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -150,15 +151,14 @@ wrk2d(:,k,2) = wrk2d(:,k,2) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
     subroutine VELOCITY_BROADBAND(u, v, w, ax, ay, az, tmp4, tmp5, wrk1d, wrk2d, wrk3d)
         use TLAB_VARS, only: visc
 
-        real(cp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
-        real(cp), dimension(imax, jmax, kmax), intent(INOUT) :: ax, ay, az, tmp4, tmp5, wrk3d
-        real(cp), dimension(imax, kmax, *), intent(INOUT) :: wrk2d
-        real(cp), dimension(jmax, *), intent(INOUT) :: wrk1d
+        real(wp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
+        real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: ax, ay, az, tmp4, tmp5, wrk3d
+        real(wp), dimension(imax, kmax, *), intent(INOUT) :: wrk2d
+        real(wp), dimension(jmax, *), intent(INOUT) :: wrk1d
 
         ! -------------------------------------------------------------------
-        integer(ci) ibc, bcs(2, 2), bcs2(2, 2)
-        real(cp) AVG1V2D, dummy
-        external AVG1V2D
+        integer(wi) ibc, bcs(2, 2), bcs2(2, 2)
+        real(wp) dummy
 
         ! ###################################################################
         bcs = 0
@@ -281,11 +281,10 @@ wrk2d(:,k,2) = wrk2d(:,k,2) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 
     ! ###################################################################
     subroutine FLOW_NORMALIZE(u, v, w)
-        real(cp), dimension(imax, jmax, kmax) :: u, v, w
+        real(wp), dimension(imax, jmax, kmax) :: u, v, w
 
         ! -------------------------------------------------------------------
-        real(cp) AVG1V2D, dummy, amplify
-        external AVG1V2D
+        real(wp) dummy, amplify
 
         ! ###################################################################
         amplify = C_0_R                                      ! Maximum across the layer

@@ -49,6 +49,7 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
   USE TLAB_VARS,    ONLY : mach, pbg, qbg
   USE THERMO_VARS, ONLY : gama0
   USE BOUNDARY_BUFFER
+  USE PROFILES
 #ifdef USE_MPI
   USE MPI
   USE TLAB_VARS,    ONLY : inb_scal_array
@@ -67,7 +68,6 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
 ! -------------------------------------------------------------------
   TINTEGER j, is
   TREAL prefactor
-  TREAL PROFILES
   type(profiles_dt) prof_loc
 
 #ifdef USE_MPI
@@ -245,8 +245,8 @@ SUBROUTINE BOUNDARY_BCS_INITIALIZE(wrk3d)
         prof_loc%uslope=C_0_R
         prof_loc%parameters=C_0_R
         prof_loc%parameters(5)=C_3_R*qbg(1)%diam
-        BcsFlowImin%ref(:,:,inb_flow+1) = PROFILES(prof_loc, g(2)%nodes(j))
-        BcsScalImin%ref(:,:,inb_scal+1) = PROFILES(prof_loc, g(2)%nodes(j))
+        BcsFlowImin%ref(:,:,inb_flow+1) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
+        BcsScalImin%ref(:,:,inb_scal+1) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
 
      ENDIF
 

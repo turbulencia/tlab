@@ -2,29 +2,28 @@
 #include "dns_const.h"
 
 subroutine PRESSURE_MEAN(p, T, s, wrk1d)
-    use TLAB_TYPES, only: cp, ci, profiles_dt
-    use TLAB_CONSTANTS, only: efile
+    use TLAB_TYPES, only: profiles_dt
+    use TLAB_CONSTANTS, only: wp, wi, efile
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: rbg, pbg, tbg, sbg
     use TLAB_VARS, only: buoyancy
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
-
+    use PROFILES
     implicit none
 
-    real(cp), dimension(imax, jmax, kmax), intent(OUT) :: p
-    real(cp), dimension(imax, jmax, kmax), intent(INOUT) :: T
-    real(cp), dimension(imax, jmax, kmax, *), intent(INOUT) :: s
-    real(cp), dimension(jmax, *), intent(INOUT) :: wrk1d
+    real(wp), dimension(imax, jmax, kmax), intent(OUT) :: p
+    real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: T
+    real(wp), dimension(imax, jmax, kmax, *), intent(INOUT) :: s
+    real(wp), dimension(jmax, *), intent(INOUT) :: wrk1d
 
 ! -------------------------------------------------------------------
-    integer(ci) j
-    real(cp) pmin, pmax
-    real(cp) PROFILES
+    integer(wi) j
+    real(wp) pmin, pmax
     type(profiles_dt) prof_loc
 
-    real(cp), dimension(:), pointer :: y, dy
+    real(wp), dimension(:), pointer :: y, dy
 
 ! ###################################################################
 ! Define pointers
@@ -59,9 +58,9 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
 ! AIRWATER case: temperature/mixture profile is given
             if (imixture == MIXT_TYPE_AIRWATER .and. tbg%type > 0) then
                 do j = 1, jmax
-                    t_loc(j) = PROFILES(tbg, y(j))
+                    t_loc(j) = PROFILES_CALCULATE(tbg, y(j))
 
-                    z1_loc(j) = PROFILES(sbg(1), g(2)%nodes(j))
+                    z1_loc(j) = PROFILES_CALCULATE(sbg(1), g(2)%nodes(j))
 
                 end do
                 ! CALL FI_HYDROSTATIC_AIRWATER_T&
@@ -80,9 +79,9 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
                 prof_loc%type = -tbg%type
 
                 do j = 1, jmax
-                    z1_loc(j) = PROFILES(prof_loc, y(j))
+                    z1_loc(j) = PROFILES_CALCULATE(prof_loc, y(j))
 
-                    z2_loc(j) = PROFILES(sbg(1), g(2)%nodes(j))
+                    z2_loc(j) = PROFILES_CALCULATE(sbg(1), g(2)%nodes(j))
 
                 end do
 !           CALL FI_HYDROSTATIC_H_OLD(jmax, y, z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
@@ -128,7 +127,7 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
 ! ###################################################################
     call MINMAX(imax, jmax, kmax, p, pmin, pmax)
 
-    if (pmin < 0.0_cp .or. pmax < 0.0_cp) then
+    if (pmin < 0.0_wp .or. pmax < 0.0_wp) then
         call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Negative pressure.')
         call TLAB_STOP(DNS_ERROR_NEGPRESS)
     end if

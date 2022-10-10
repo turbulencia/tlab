@@ -32,6 +32,9 @@ MODULE BOUNDARY_BUFFER
   USE TLAB_PROCS
   USE THERMO_VARS, ONLY : gama0
   USE IO_FIELDS
+  USE OPR_FILTERS
+  USE AVGS, ONLY :    COV2V1D, COV2V2D
+
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_err
   USE TLAB_MPI_VARS, ONLY : ims_pro,ims_npro_i, ims_npro_k, ims_npro
@@ -220,7 +223,6 @@ CONTAINS
 
     CHARACTER*32 str, varname(item%nfields)
     CHARACTER*128 line
-    TREAL COV2V1D, COV2V2D
 #ifdef USE_MPI
     INTEGER sa_comm_color
     INTEGER,PARAMETER :: sa_ndims=3
@@ -658,7 +660,7 @@ CONTAINS
     TREAL, DIMENSION(*)                       :: wrk1d,wrk2d,wrk3d
 
     ! -------------------------------------------------------------------
-    TINTEGER id, k, ibc_x(4), ibc_y(4), ibc_z(4), buff_imax
+    TINTEGER id, k, buff_imax!, ibc_x(4), ibc_y(4), ibc_z(4)
     TREAL eta, delta, amp, ampr, rho_ratio
 
     ! ###################################################################
@@ -714,11 +716,12 @@ CONTAINS
         ENDDO
       ENDDO
 
-      CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc1, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-      CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc2, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-      CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc3, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-      CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc4, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-      CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc5, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+      ! To be checked for the new formulation of opr_filter
+      !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc1, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+    !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc2, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+    !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc3, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+    !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc4, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+    !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc5, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
 
       ! thickness \delta_\theta s.t. 2\delta_w = L_buffer/2
       delta = (g(1)%nodes(imax)-g(1)%nodes(buff_imax))/C_16_R
@@ -769,8 +772,8 @@ CONTAINS
           ENDDO
         ENDDO
 
-        CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, &
-            txc2, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+      ! To be checked for the new formulation of opr_filter
+        ! CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id,  txc2, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
 
         ! thickness \delta_\theta s.t. 2\delta_w = L_buffer/2
         delta = (g(1)%nodes(imax)-g(1)%nodes(buff_imax))/C_16_R

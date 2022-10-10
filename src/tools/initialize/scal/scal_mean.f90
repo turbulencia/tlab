@@ -2,29 +2,28 @@
 
 subroutine SCAL_MEAN(is, s, wrk1d, wrk2d, wrk3d)
 
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_TYPES, only: wp, wi
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: pbg, rbg, tbg, sbg, qbg
-
+    use PROFILES
     implicit none
 
-    integer(ci) is
-    real(cp), intent(OUT) :: s(imax, jmax, kmax)
-    real(cp), intent(INOUT) :: wrk3d(*)
-    real(cp), intent(INOUT) :: wrk2d(imax, jmax, *)
-    real(cp), intent(INOUT) :: wrk1d(jmax, *)
+    integer(wi) is
+    real(wp), intent(OUT) :: s(imax, jmax, kmax)
+    real(wp), intent(INOUT) :: wrk3d(*)
+    real(wp), intent(INOUT) :: wrk2d(imax, jmax, *)
+    real(wp), intent(INOUT) :: wrk1d(jmax, *)
 
     ! -------------------------------------------------------------------
-    integer(ci) j, k
-    real(cp) PROFILES, dummy
-    external PROFILES
+    integer(wi) j, k
+    real(wp) dummy
 
     !########################################################################
     if (imode_sim == DNS_MODE_TEMPORAL) then
         do j = 1, jmax
-            dummy = PROFILES(sbg(is), g(2)%nodes(j))
+            dummy = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
             s(:, j, :) = dummy + s(:, j, :)
         end do
 
@@ -43,13 +42,13 @@ subroutine SCAL_MEAN(is, s, wrk1d, wrk2d, wrk3d)
 #define t_loc(i,j)   wrk2d(i,j,5)
         ! Inflow profile of scalar
         do j = 1, jmax
-            z_vi(j) = PROFILES(sbg(is), g(2)%nodes(j))
+            z_vi(j) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
         end do
 
         ! Initialize density field
-        rho_vi(1:jmax) = 0.0_cp
+        rho_vi(1:jmax) = 0.0_wp
         do j = 1, jmax
-            dummy = PROFILES(tbg, g(2)%nodes(j))
+            dummy = PROFILES_CALCULATE(tbg, g(2)%nodes(j))
             ! pilot to be added: ijet_pilot, rjet_pilot_thickness, XIST
             t_loc(:, j) = dummy
         end do
@@ -61,14 +60,14 @@ subroutine SCAL_MEAN(is, s, wrk1d, wrk2d, wrk3d)
         rho_vi(:) = rho_loc(1, :)
 
         ! inflow profile of velocity
-        u_vi(1:jmax) = 0.0_cp
+        u_vi(1:jmax) = 0.0_wp
         do j = 1, jmax
-            u_vi(j) = PROFILES(qbg(1), g(2)%nodes(j))
+            u_vi(j) = PROFILES_CALCULATE(qbg(1), g(2)%nodes(j))
             ! pilot to be added: ijet_pilot, rjet_pilot_thickness, rjet_pilot_velocity
         end do
 
         ! 2D distributions of density and velocity
-        if (rbg%delta /= 0.0_cp) then
+        if (rbg%delta /= 0.0_wp) then
             call FLOW_SPATIAL_DENSITY(imax, jmax, tbg, qbg(1), &
                                    g(1)%nodes, g(2)%nodes, s, p_loc(1, 1), rho_vi(1), u_vi(1), aux1(1), rho_loc(1, 1), &
                                       aux2(1), aux3(1), aux4(1))

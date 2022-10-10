@@ -1,35 +1,53 @@
-#include "types.h"
-
 module TLAB_CONSTANTS
-    use TLAB_TYPES, only: cp
     implicit none
     save
 
-    TINTEGER, parameter :: MajorVersion = 7
-    TINTEGER, parameter :: MinorVersion = 0
+    integer, parameter :: MajorVersion      = 7
+    integer, parameter :: MinorVersion      = 0
 
-    TINTEGER, parameter :: MAX_VARS = 20
-    TINTEGER, parameter :: MAX_PROF = 10
-    TINTEGER, parameter :: MAX_JETS = 5
+    integer, parameter :: MAX_PARS          = 10
+    integer, parameter :: MAX_VARS          = 20
+    integer, parameter :: MAX_MODES         = 20
+    integer, parameter :: MAX_PROF          = 10
+    integer, parameter :: MAX_JETS          = 5
+    integer, parameter :: MAX_NSP           = 10  ! Species in the mixture
+    integer, parameter :: MAX_AVG_TEMPORAL  = 230
+    integer, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
 
-    TINTEGER, parameter :: MAX_NSP = 10 ! Species in the mixture
+    character(len=*), parameter :: gfile    = 'grid'
+    character(len=*), parameter :: ifile    = 'dns.ini'
+    character(len=*), parameter :: ofile    = 'dns.out'
+    character(len=*), parameter :: lfile    = 'dns.log'
+    character(len=*), parameter :: efile    = 'dns.err'
+    character(len=*), parameter :: wfile    = 'dns.war'
+    character(len=*), parameter :: tfile    = 'dns.trc'
 
-    TINTEGER, parameter :: MAX_AVG_TEMPORAL = 230
-    TINTEGER, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
+    character(len=*), parameter :: tag_flow = 'flow.'
+    character(len=*), parameter :: tag_scal = 'scal.'
+    character(len=*), parameter :: tag_part = 'part.'
+    character(len=*), parameter :: tag_traj = 'traj.'
 
-    character*32, parameter :: gfile = 'grid'
-    character*32, parameter :: ifile = 'dns.ini'
-    character*32, parameter :: ofile = 'dns.out'
-    character*32, parameter :: lfile = 'dns.log'
-    character*32, parameter :: efile = 'dns.err'
-    character*32, parameter :: wfile = 'dns.war'
-    character*32, parameter :: tfile = 'dns.trc'
+! from https://fortran-lang.org/en/learn/best_practices/floating_point/
+    integer, parameter :: sp = kind(1.0)
+    integer, parameter :: dp = kind(1.0d0)
+! !> Single precision real numbers, 6 digits, range 10⁻³⁷ to 10³⁷-1; 32 bits
+! integer, parameter :: sp = selected_real_kind(6, 37)
+! !> Double precision real numbers, 15 digits, range 10⁻³⁰⁷ to 10³⁰⁷-1; 64 bits
+! integer, parameter :: dp = selected_real_kind(15, 307)
+    integer, parameter :: wp = dp             ! working precision
 
-    character*32, parameter :: tag_flow = 'flow.'
-    character*32, parameter :: tag_scal = 'scal.'
-    character*32, parameter :: tag_part = 'part.'
-    character*32, parameter :: tag_traj = 'traj.'
+! !> Char length for integers, range -2⁷ to 2⁷-1; 8 bits
+! integer, parameter :: i1 = selected_int_kind(2)
+! !> Short length for integers, range -2¹⁵ to 2¹⁵-1; 16 bits
+! integer, parameter :: i2 = selected_int_kind(4)
+!> Length of default integers, range -2³¹ to 2³¹-1; 32 bits
+    integer, parameter :: i4_ = selected_int_kind(9)            ! i4 was already used...
+! !> Long length for integers, range -2⁶³ to 2⁶³-1; 64 bits
+! integer, parameter :: i8 = selected_int_kind(18)
+    integer, parameter :: i8_ = selected_int_kind(18)           ! i8 was already used...
+    integer, parameter :: wi = i4_                ! working integer type
+    integer, parameter :: longi = i8_             ! long integer type; different variable name to avoid errors
 
-    real(cp), parameter :: pi_cp = 3.14159265358979323846_cp 
+    real(wp), parameter :: pi_wp = 3.14159265358979323846_wp
 
 end module TLAB_CONSTANTS

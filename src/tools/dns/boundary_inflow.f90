@@ -23,6 +23,7 @@ module BOUNDARY_INFLOW
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
     use IO_FIELDS
+    use OPR_FILTERS
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_npro_i, ims_npro_k
     use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -323,6 +324,7 @@ contains
     !########################################################################
     subroutine BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk1d, wrk2d)
         use TLAB_TYPES, only: profiles_dt
+        use PROFILES
         implicit none
 
         TREAL etime
@@ -334,9 +336,8 @@ contains
         TINTEGER j, k, im, kdsp
         TREAL wx, wz, wx_1, wz_1, xaux, vmult, factorx, factorz, dummy
 
-        TREAL PROFILES, yr
+        TREAL yr
         type(profiles_dt) prof_loc
-        external PROFILES
 
         TREAL, dimension(:), pointer :: y, z
 
@@ -373,7 +374,7 @@ contains
             prof_loc%ymean = qbg(1)%ymean
             do j = 1, jmax
                 yr = y(j) - prof_loc%ymean
-                wrk1d(j, 1) = PROFILES(prof_loc, y(j))
+                wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, y(j))
                 wrk1d(j, 2) = yr/(prof_loc%thick**2)*wrk1d(j, 1) ! Derivative of f
             end do
 
@@ -381,7 +382,7 @@ contains
             prof_loc%ymean = qbg(1)%ymean - C_05_R*qbg(1)%diam
             do j = 1, jmax
                 yr = y(j) - prof_loc%ymean 
-                wrk1d(j, 1) = PROFILES(prof_loc, y(j))
+                wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, y(j))
                 wrk1d(j, 2) = -yr/(prof_loc%thick**2)*wrk1d(j, 1)
             end do
 
@@ -391,7 +392,7 @@ contains
             end if
             do j = 1, jmax
                 yr = y(j) - prof_loc%ymean
-                dummy = PROFILES(prof_loc, y(j))
+                dummy = PROFILES_CALCULATE(prof_loc, y(j))
                 wrk1d(j, 1) = wrk1d(j, 1) + dummy
                 wrk1d(j, 2) = wrk1d(j, 2) + yr/(prof_loc%thick**2)*dummy
             end do

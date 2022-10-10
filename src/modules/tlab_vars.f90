@@ -87,8 +87,8 @@ module TLAB_VARS
     TREAL :: damkohler(MAX_NSP)                  ! reaction
     TREAL :: froude                              ! body force
     TREAL :: rossby                              ! Coriolis force
-    TREAL :: stokes                              ! Stokes number of liquid particles
-    TREAL :: settling                            ! sedimentation parameter for liquid particle
+    TREAL :: stokes                              ! inertial effects
+    TREAL :: settling                            ! sedimentation effects
 
     TREAL :: visc                                ! 1/reynolds
 

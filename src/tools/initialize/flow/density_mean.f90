@@ -23,27 +23,24 @@
 !#
 !########################################################################
 subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
-    use TLAB_TYPES, only: cp, ci
-    use TLAB_CONSTANTS, only: efile
+    use TLAB_CONSTANTS, only: wp, wi, efile
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imode_sim, inb_scal, imax, jmax, kmax
     use TLAB_VARS, only: rbg, tbg, sbg, qbg
     use TLAB_VARS, only: buoyancy
     use THERMO_VARS, only: imixture
-
+    use PROFILES
     implicit none
 
-    real(cp), dimension(imax, jmax, kmax), intent(IN) :: p, T
-    real(cp), dimension(imax, jmax, kmax), intent(OUT) :: rho
-    real(cp), dimension(imax, jmax, kmax, *), intent(OUT) :: s
-    real(cp), dimension(imax, jmax, kmax), intent(INOUT) :: txc, wrk3d
-    real(cp), dimension(jmax, *), intent(INOUT) :: wrk1d, wrk2d
+    real(wp), dimension(imax, jmax, kmax), intent(IN) :: p, T
+    real(wp), dimension(imax, jmax, kmax), intent(OUT) :: rho
+    real(wp), dimension(imax, jmax, kmax, *), intent(OUT) :: s
+    real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: txc, wrk3d
+    real(wp), dimension(jmax, *), intent(INOUT) :: wrk1d, wrk2d
 
     ! -------------------------------------------------------------------
-    real(cp) dummy
-    integer(ci) j, k, is, bcs(2, 2)
-    real(cp) PROFILES
-    external PROFILES
+    real(wp) dummy
+    integer(wi) j, k, is, bcs(2, 2)
 
     bcs = 0
 
@@ -60,13 +57,13 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
             ! temperature/mixture profile are given
             if (rbg%type == PROFILE_NONE) then
                 do j = 1, jmax
-                    dummy = PROFILES(tbg, g(2)%nodes(j))
+                    dummy = PROFILES_CALCULATE(tbg, g(2)%nodes(j))
                     TEM_MEAN_LOC(:, j, :) = dummy
                 end do
 
                 do is = 1, inb_scal
                     do j = 1, jmax
-                        dummy = PROFILES(sbg(is), g(2)%nodes(j))
+                        dummy = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
                         s(:, j, :, is) = dummy
                     end do
                 end do
@@ -82,7 +79,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
                 ! density profile itself is given
             else
                 do j = 1, jmax
-                    dummy = PROFILES(rbg, g(2)%nodes(j))
+                    dummy = PROFILES_CALCULATE(rbg, g(2)%nodes(j))
                     rho(:, j, :) = rho(:, j, :) + dummy
                 end do
 
@@ -104,7 +101,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
                 ! General case
             else
                 call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, txc, wrk3d, wrk2d, wrk3d)
-                dummy = 1.0_cp/buoyancy%vector(2)
+                dummy = 1.0_wp/buoyancy%vector(2)
                 rho(:, :, :) = rho(:, :, :) + txc(:, :, :)*dummy
             end if
 
@@ -128,7 +125,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
 
             ! Inflow profile of axial velocity
             do j = 1, jmax
-                u_vi(j) = PROFILES(qbg(1), g(2)%nodes(j))
+                u_vi(j) = PROFILES_CALCULATE(qbg(1), g(2)%nodes(j))
             end do
 
             ! 2D distribution of density
@@ -141,7 +138,7 @@ subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
 
         else ! density profile itself is given
             do j = 1, jmax
-                dummy = PROFILES(rbg, g(2)%nodes(j))
+                dummy = PROFILES_CALCULATE(rbg, g(2)%nodes(j))
                 rho(:, j, :) = rho(:, j, :) + dummy
             end do
 

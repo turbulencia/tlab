@@ -15,7 +15,7 @@ rc('savefig',    dpi=100)
 
 # pl.ion()
 
-data = nc.Dataset('./avg0-20000.nc', 'r')
+data = nc.Dataset('./avg0.nc', 'r')
 data.set_auto_mask(False)
 
 t=data.variables['t'][:]
@@ -29,7 +29,7 @@ axes = plt.gca()
 for it in range(0,np.size(t),int(np.size(t)/10)):
     plt.plot(f[it,:],y)
 
-plt.xlabel(r'Tke')
+plt.xlabel(r'function $f(y)$')
 plt.ylabel(r'height $y$')
 axes.spines['right'].set_visible(False)
 axes.get_yaxis().tick_left()

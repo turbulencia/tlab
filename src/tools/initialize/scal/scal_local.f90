@@ -3,11 +3,14 @@
 
 module SCAL_LOCAL
 
-    use TLAB_TYPES, only: cp, ci, profiles_dt, discrete_dt
+    use TLAB_TYPES, only: profiles_dt, discrete_dt
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, MAX_NSP
     use TLAB_VARS, only: g, sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
     use IO_FIELDS
+    use PROFILES
+    use AVGS, only: AVG1V2D
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
@@ -18,34 +21,32 @@ module SCAL_LOCAL
     public :: SCAL_FLUCTUATION_PLANE, SCAL_FLUCTUATION_VOLUME
 
     ! -------------------------------------------------------------------
-    integer(ci) :: flag_s, flag_mixture
+    integer(wi) :: flag_s, flag_mixture
 
     type(profiles_dt) :: Sini(MAX_NSP)                        ! Geometry of perturbation of initial boundary condition
     type(profiles_dt) :: prof_loc
-    real(cp) :: norm_ini_s(MAX_NSP), norm_ini_radiation         ! Scaling of perturbation
+    real(wp) :: norm_ini_s(MAX_NSP), norm_ini_radiation         ! Scaling of perturbation
     type(discrete_dt) :: fp                                     ! Discrete perturbation
 
     ! -------------------------------------------------------------------
-    integer(ci) i, j, k
+    integer(wi) i, j, k
 
-    integer(ci) im, idsp, kdsp
-    real(cp) wx, wz, wx_1, wz_1
+    integer(wi) im, idsp, kdsp
+    real(wp) wx, wz, wx_1, wz_1
 
-    real(cp), dimension(:), pointer :: xn, zn
+    real(wp), dimension(:), pointer :: xn, zn
 
 contains
 
 ! ###################################################################
     subroutine SCAL_SHAPE(is, wrk1d)
-
-        integer(ci) is
-        real(cp), dimension(jmax, 1), intent(inout) :: wrk1d
+        integer(wi) is
+        real(wp), dimension(jmax, 1), intent(inout) :: wrk1d
 
         ! -------------------------------------------------------------------
-        real(cp) PROFILES, yr
-        external PROFILES
+        real(wp) yr
 
-        real(cp), dimension(:), pointer :: yn
+        real(wp), dimension(:), pointer :: yn
 
         ! ###################################################################
         yn => g(2)%nodes
@@ -54,7 +55,7 @@ contains
         prof_loc%delta = C_1_R
         prof_loc%mean = C_0_R
         do j = 1, jmax
-            wrk1d(j, 1) = PROFILES(prof_loc, yn(j))
+            wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, yn(j))
         end do
 
         select case (Sini(is)%type)
@@ -74,15 +75,14 @@ contains
 ! ###################################################################
     subroutine SCAL_FLUCTUATION_VOLUME(is, s, tmp, wrk1d, wrk2d, wrk3d)
 
-        integer(ci) is
-        real(cp), dimension(imax, jmax, kmax), intent(out) :: s
-        real(cp), dimension(jmax, 1), intent(inout) :: wrk1d
-        real(cp), dimension(imax, kmax, 1), intent(inout) :: wrk2d
-        real(cp), dimension(imax, jmax, kmax), intent(inout) :: tmp, wrk3d
+        integer(wi) is
+        real(wp), dimension(imax, jmax, kmax), intent(out) :: s
+        real(wp), dimension(jmax, 1), intent(inout) :: wrk1d
+        real(wp), dimension(imax, kmax, 1), intent(inout) :: wrk2d
+        real(wp), dimension(imax, jmax, kmax), intent(inout) :: tmp, wrk3d
 
         ! -------------------------------------------------------------------
-        real(cp) AVG1V2D, dummy, amplify
-        external AVG1V2D
+        real(wp) dummy, amplify
 
 ! ###################################################################
 #ifdef USE_MPI
@@ -139,14 +139,13 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 ! ###################################################################
     subroutine SCAL_FLUCTUATION_PLANE(is, s, disp)
 
-        integer(ci) is
-        real(cp), dimension(imax, jmax, kmax) :: s
-        real(cp), dimension(imax, kmax) :: disp
+        integer(wi) is
+        real(wp), dimension(imax, jmax, kmax) :: s
+        real(wp), dimension(imax, kmax) :: disp
 
         ! -------------------------------------------------------------------
-        real(cp) dummy
-        real(cp) AVG1V2D, PROFILES
-        real(cp) xcenter, zcenter, rcenter, amplify
+        real(wp) dummy
+        real(wp) xcenter, zcenter, rcenter, amplify
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -215,7 +214,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
                 do i = 1, imax
                     ! ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel + disp(i, k)
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES(sbg(is), g(2)%nodes(j)-disp(i, k))
+                        s(i, j, k) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j)-disp(i, k))
                     end do
                 end do
             end do
@@ -228,7 +227,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
                     prof_loc%thick = sbg(is)%thick + disp(i, k)
 
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES(prof_loc, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
                     end do
                     
                 end do
@@ -244,7 +243,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
                     if (sbg(is)%delta > 0) prof_loc%thick = prof_loc%delta/sbg(is)%delta*sbg(is)%thick
 
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES(prof_loc, g(2)%nodes(j))
+                        s(i, j, k) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
                     end do
 
                 end do
@@ -258,12 +257,11 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 ! ###################################################################
     subroutine SCAL_NORMALIZE(is, s)
 
-        integer(ci) is
-        real(cp), dimension(imax, jmax, kmax), intent(inout) :: s
+        integer(wi) is
+        real(wp), dimension(imax, jmax, kmax), intent(inout) :: s
 
         ! -------------------------------------------------------------------
-        real(cp) AVG1V2D, dummy, amplify
-        external AVG1V2D
+        real(wp) dummy, amplify
 
         ! ###################################################################
         amplify = C_0_R                                      ! Maximum across the layer

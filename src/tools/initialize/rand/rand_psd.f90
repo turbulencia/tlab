@@ -10,14 +10,14 @@ subroutine RAND_PSD(nx, ny, nz, u)
 
     implicit none
 
-    integer(ci) nx, ny, nz
-    real(cp), dimension(isize_txc_dimz, nz), intent(INOUT) :: u
+    integer(wi) nx, ny, nz
+    real(wp), dimension(isize_txc_dimz, nz), intent(INOUT) :: u
 
     ! -----------------------------------------------------------------------
-    integer(ci) j, k, iglobal, jglobal, kglobal, ip
-    real(cp) pow_dst, pow_org, phase
-    real(cp) f, f0, f1, fi, fj, fk
-    real(cp) RAN0
+    integer(wi) j, k, iglobal, jglobal, kglobal, ip
+    real(wp) pow_dst, pow_org, phase
+    real(wp) f, f0, f1, fi, fj, fk
+    real(wp) RAN0
 
     ! #######################################################################
     f0 = spc_param(1); f1 = spc_param(4)
@@ -58,10 +58,10 @@ subroutine RAND_PSD(nx, ny, nz, u)
                 elseif (ispectrum == 6) then; pow_dst = EXP(-C_05_R*((f - f0)/f1)**2)/(f1*SQRT(C_2_R*C_PI_R))
                 end if
 
-                if ((f - spc_param(2))*(spc_param(3) - f) > 0.0_cp) pow_dst = 0.0_cp ! Clip
+                if ((f - spc_param(2))*(spc_param(3) - f) > 0.0_wp) pow_dst = 0.0_wp ! Clip
 
-                if (f == 0.0_cp) then
-                    pow_dst = 0.0_cp
+                if (f == 0.0_wp) then
+                    pow_dst = 0.0_wp
                 else
                     if (g(2)%size == 1 .or. g(3)%size == 1) then ! 2D spectrum
                         pow_dst = pow_dst/(C_PI_R*f)
@@ -76,7 +76,7 @@ subroutine RAND_PSD(nx, ny, nz, u)
                 ip = (nx + 2)*(j - 1) + 2*i
 
                 if (ipdf == 0) then
-                    if (iglobal == 1 .or. iglobal == g(1)%size/2 + 1) then; phase = 0.0_cp
+                    if (iglobal == 1 .or. iglobal == g(1)%size/2 + 1) then; phase = 0.0_wp
                     else; phase = (RAN0(seed) - C_05_R)*C_2_R*C_PI_R; end if
                     u(ip - 1, k) = SQRT(pow_dst)*COS(phase)
                     u(ip, k) = SQRT(pow_dst)*SIN(phase)
@@ -84,7 +84,7 @@ subroutine RAND_PSD(nx, ny, nz, u)
                 else
                     pow_org = u(ip - 1, k)**2 + u(ip, k)**2
 
-                    if (pow_org > 0.0_cp) pow_dst = SQRT(pow_dst/pow_org)
+                    if (pow_org > 0.0_wp) pow_dst = SQRT(pow_dst/pow_org)
 
                     u(ip - 1, k) = u(ip - 1, k)*pow_dst
                     u(ip, k) = u(ip, k)*pow_dst

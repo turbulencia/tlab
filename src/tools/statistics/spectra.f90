@@ -48,6 +48,8 @@ PROGRAM SPECTRA
   USE THERMO_VARS,   ONLY : imixture
   USE IBM_VARS
   USE IO_FIELDS
+  USE OPR_FILTERS
+  USE AVGS, ONLY: AVG1V2D, COV2V2D
 #ifdef USE_OPENMP
   USE OMP_LIB
 #endif
@@ -88,8 +90,6 @@ PROGRAM SPECTRA
   TREAL norm, dummy
 
   TINTEGER kx_total,ky_total,kz_total, kr_total, isize_spec2dr
-
-  TREAL AVG1V2D, COV2V2D
 
   TINTEGER inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
 

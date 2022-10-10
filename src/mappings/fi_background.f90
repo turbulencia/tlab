@@ -18,6 +18,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
     use TLAB_VARS, only: buoyancy
     use TLAB_PROCS
     use THERMO_VARS, only: imixture, GRATIO
+    use PROFILES
 #ifdef USE_MPI
     use TLAB_MPI_VARS
 #endif
@@ -30,7 +31,6 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 
 ! -----------------------------------------------------------------------
     TINTEGER is, j, ip, nlines, offset
-    TREAL PROFILES
 
 ! #######################################################################
     do is = 1,size(qbg)
@@ -63,7 +63,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 ! Construct given thermodynamic profiles
     do is = 1, inb_scal
         do j = 1, g(2)%size
-            wrk1d(j, is) = PROFILES(sbg(is), g(2)%nodes(j))
+            wrk1d(j, is) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
         end do
 !     wrk1d(:,is) = sbg(is)%reference
     end do

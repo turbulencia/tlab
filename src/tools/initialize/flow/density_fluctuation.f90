@@ -12,28 +12,28 @@
 !#
 !########################################################################
 subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_TYPES, only: wp
     use TLAB_CONSTANTS, only: efile
     use TLAB_VARS, only: rbg, tbg
     use THERMO_VARS, only: imixture
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
     use TLAB_PROCS
     use FLOW_LOCAL
-
+    use AVGS, only: AVG1V2D
+    use PROFILES
     implicit none
 
-    integer(ci) code
+    integer(wi) code
 
-    real(cp), dimension(imax, jmax, kmax) :: T, h, rho, p
-    real(cp), dimension(imax, jmax, kmax, *) :: s
-    real(cp), dimension(imax, kmax) :: disp
+    real(wp), dimension(imax, jmax, kmax) :: T, h, rho, p
+    real(wp), dimension(imax, jmax, kmax, *) :: s
+    real(wp), dimension(imax, kmax) :: disp
 
     ! -------------------------------------------------------------------
-    real(cp) dummy
-    real(cp) AVG1V2D, PROFILES
-    real(cp) xcenter, amplify
+    real(wp) dummy
+    real(wp) xcenter, amplify
 
-    real(cp), dimension(:), pointer :: x, y, z
+    real(wp), dimension(:), pointer :: x, y, z
 
     ! ###################################################################
     ! Define pointers
@@ -108,7 +108,7 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
                     prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
                     prof_loc%mean = tbg%mean + C_05_R*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
                     do j = 1, jmax
-                        T(i, j, k) = PROFILES(prof_loc, y(j))
+                        T(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
                     end do
                 end do
             end do
@@ -126,7 +126,7 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
                     prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
                     prof_loc%mean = tbg%mean + C_05_R*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
                     do j = 1, jmax
-                        h(i, j, k) = PROFILES(prof_loc, y(j))
+                        h(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
                     end do
                 end do
             end do

@@ -17,7 +17,7 @@ subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
     use TLAB_TYPES, only: profiles_dt
     use TLAB_CONSTANTS, only: wfile
     use TLAB_PROCS
-
+    use PROFILES
     implicit none
 
 #include "integers.h"
@@ -34,7 +34,6 @@ subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
     TREAL wrk1d(jmax, *)
 
 ! -------------------------------------------------------------------
-    TREAL PROFILES
     TREAL tol, err
 
     TINTEGER i, j, n, nmax, ier
@@ -47,7 +46,7 @@ subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
 
     tem_vi(1:jmax) = C_0_R
     do j = 1, jmax
-        tem_vi(j) = PROFILES(tbg, y(j))
+        tem_vi(j) = PROFILES_CALCULATE(tbg, y(j))
     end do
 
 #define rho_aux(j) wrk1d(j,1)
@@ -115,7 +114,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
     use TLAB_CONSTANTS, only: efile, wfile
     use TLAB_VARS, only: g
     use TLAB_PROCS
-
+    use PROFILES
     implicit none
 
 #include "integers.h"
@@ -135,7 +134,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
     TREAL c1, c2
     TREAL delta, eta, ExcMom_vi, Q1, Q2, U2, UC
     TREAL dummy, flux_aux, diam_loc
-    TREAL SIMPSON_NU, PROFILES, ycenter
+    TREAL SIMPSON_NU, ycenter
     TREAL xi_tr, dxi_tr
 
     TINTEGER i, j, jsym
@@ -181,7 +180,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
         prof_loc%parameters(5) = diam_loc
         wrk1d(1:jmax, 1) = C_0_R
         do j = 1, jmax
-            wrk1d(j, 1) = PROFILES(prof_loc, y(j))
+            wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, y(j))
         end do
         UC = wrk1d(jmax/2, 1) - U2
 
@@ -293,7 +292,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
     use TLAB_CONSTANTS, only: wfile
     use TLAB_VARS, only: g
     use TLAB_PROCS
-
+    use PROFILES
     implicit none
 
 #include "integers.h"
@@ -312,7 +311,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
     TREAL c1, c2
     TREAL delta, eta, ExcMom_vi, Q1, Z2, ZC, flux_aux
     TREAL dummy, diam_loc
-    TREAL SIMPSON_NU, PROFILES, ycenter
+    TREAL SIMPSON_NU, ycenter
     TREAL xi_tr, dxi_tr
     TINTEGER i, j
     type(profiles_dt) prof_loc
@@ -356,7 +355,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
         prof_loc%parameters(5) = diam_loc
         wrk1d(1:jmax, 1) = C_0_R
         do j = 1, jmax
-            wrk1d(j, 1) = PROFILES(prof_loc, y(j))
+            wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, y(j))
         end do
         ZC = wrk1d(jmax/2, 1) - Z2
 

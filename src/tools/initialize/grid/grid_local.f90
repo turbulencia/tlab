@@ -1,31 +1,31 @@
 module GRID_LOCAL
-    use TLAB_TYPES, only: cp, ci
+    use TLAB_CONSTANTS, only: wp, wi
     implicit none
     save
 
-    integer(ci), parameter :: GTYPE_UNIFORM = 0
-    integer(ci), parameter :: GTYPE_TANH = 5
-    integer(ci), parameter :: GTYPE_EXP = 6
+    integer(wi), parameter :: GTYPE_UNIFORM = 0
+    integer(wi), parameter :: GTYPE_TANH = 5
+    integer(wi), parameter :: GTYPE_EXP = 6
 
-    integer(ci), parameter :: MAX_PARAMES = 9
-    integer(ci), parameter :: MAX_OPTIONS = 5
-    integer(ci), parameter :: MAX_SEGMENT = 10
+    integer(wi), parameter :: MAX_PARAMES = 9
+    integer(wi), parameter :: MAX_OPTIONS = 5
+    integer(wi), parameter :: MAX_SEGMENT = 10
 
     type grid_build_dt                              ! Information to construct grid in one direction
         sequence
-        integer(ci) nseg                            ! number of segments in this direction
+        integer(wi) nseg                            ! number of segments in this direction
         logical mirrored                            ! It true, mirror the grid
-        real(cp) fixed_scale                        ! If positive, rescale grid to this value
-        integer(ci) SIZE(MAX_SEGMENT)               ! number of points in each segment
-        real(cp) end(MAX_SEGMENT)                   ! physical end of each segment
-        integer(ci) opts(MAX_OPTIONS, MAX_SEGMENT)  ! 0   uniform segment
+        real(wp) fixed_scale                        ! If positive, rescale grid to this value
+        integer(wi) SIZE(MAX_SEGMENT)               ! number of points in each segment
+        real(wp) end(MAX_SEGMENT)                   ! physical end of each segment
+        integer(wi) opts(MAX_OPTIONS, MAX_SEGMENT)  ! 0   uniform segment
         ! 1   Colonius, Lele and Moin stretching
         ! 2   Second order polynomial stretching
         ! 3   Third order polynomial stretching
         ! 4   Geometric progression
         ! 5   Hyperbolic tangent
         ! 6   Exponential
-        real(cp) vals(MAX_PARAMES, MAX_SEGMENT)
+        real(wp) vals(MAX_PARAMES, MAX_SEGMENT)
     end type grid_build_dt
 
     type(grid_build_dt) g_build(3)
@@ -41,12 +41,12 @@ contains
     subroutine BLD_TANH(idir, iseg, x, nmax, work)
         implicit none
 
-        integer(ci), intent(IN) :: idir, iseg, nmax
-        real(cp), intent(INOUT) :: x(nmax), work(nmax)
+        integer(wi), intent(IN) :: idir, iseg, nmax
+        real(wp), intent(INOUT) :: x(nmax), work(nmax)
 
         ! -----------------------------------------------------------------------
-        real(cp) st(3), f(3), delta(3)    ! superposition of up to 3 modes, each with 3 parameters
-        integer(ci) im
+        real(wp) st(3), f(3), delta(3)    ! superposition of up to 3 modes, each with 3 parameters
+        integer(wi) im
 
         ! #######################################################################
         ! define local variables for readability below; strides of 3
@@ -55,10 +55,10 @@ contains
         delta = g_build(idir)%vals(3 :: 3, iseg)
 
         ! create mapping from grid s to grid x
-        work = 0.0_cp
+        work = 0.0_wp
         do im = 1, 3                           ! 3 modes at most
-            if (ABS(delta(im)) > 0.0_cp) then
-                work(:) = work(:) + (f(im) - 1.0_cp)*delta(im)*LOG(EXP((x(:) - st(im))/delta(im)) + 1.0_cp)
+            if (ABS(delta(im)) > 0.0_wp) then
+                work(:) = work(:) + (f(im) - 1.0_wp)*delta(im)*LOG(EXP((x(:) - st(im))/delta(im)) + 1.0_wp)
             end if
         end do
         work = work - work(1) ! Integration constant
@@ -80,16 +80,16 @@ contains
     subroutine BLD_EXP(idir, iseg, x, nmax, w)
         implicit none
 
-        integer(ci), intent(IN) :: idir, iseg, nmax
-        real(cp), intent(INOUT) :: x(nmax), w(nmax, 8)
+        integer(wi), intent(IN) :: idir, iseg, nmax
+        real(wp), intent(INOUT) :: x(nmax), w(nmax, 8)
 
         ! -----------------------------------------------------------------------
-        real(cp) st(3), df(3), delta(3)    ! superposition of up to 3 modes, each with 3 parameters
-        integer(ci) im, ibc, i1
-        real(cp) ds
+        real(wp) st(3), df(3), delta(3)    ! superposition of up to 3 modes, each with 3 parameters
+        integer(wi) im, ibc, i1
+        real(wp) ds
 
         ! #######################################################################
-        ds = (x(nmax) - x(1))/real(nmax - 1,cp)
+        ds = (x(nmax) - x(1))/real(nmax - 1,wp)
 
         ! define local variables for readability below; strides of 3
         st = g_build(idir)%vals(1 :: 3, iseg)     ! transition point in uniform grid
@@ -100,10 +100,10 @@ contains
 #define jac(j)    w(j,6)
 #define rhs(j)    w(j,7)
 #define result(j) w(j,8)
-        rhs(:) = 1.0_cp
+        rhs(:) = 1.0_wp
         do im = 1, 3               ! 3 modes at most
-            if (ABS(delta(im)) > 0.0_cp) then
-                rhs(:) = rhs(:)*(EXP((x(:) - st(im))/delta(im)) + 1.0_cp)**(df(im)*delta(im))
+            if (ABS(delta(im)) > 0.0_wp) then
+                rhs(:) = rhs(:)*(EXP((x(:) - st(im))/delta(im)) + 1.0_wp)**(df(im)*delta(im))
             end if
         end do
         jac(:) = ds
@@ -127,13 +127,13 @@ contains
     subroutine BLD_THEREST(idir, iseg, x, nmax)
         implicit none
 
-        integer(ci), intent(IN) :: idir, iseg, nmax
-        real(cp), intent(INOUT) :: x(nmax)
+        integer(wi), intent(IN) :: idir, iseg, nmax
+        real(wp), intent(INOUT) :: x(nmax)
 
         ! -----------------------------------------------------------------------
-        real(cp) a, b, c, d, e
-        real(cp) eta, deta, dx
-        integer(ci) n
+        real(wp) a, b, c, d, e
+        real(wp) eta, deta, dx
+        integer(wi) n
 
         ! #######################################################################
         call BLD_CONSTANTS(nmax, x(1), x(nmax), &
@@ -142,19 +142,19 @@ contains
                            g_build(idir)%vals(3, iseg), g_build(idir)%vals(4, iseg), a, b, c, d, e)
 
         ! Go from computational eta in [0,1] to physical domains
-        dx = 1.0_cp
+        dx = 1.0_wp
         if (nmax == 1) then
-            deta = 1.0_cp
+            deta = 1.0_wp
         else; 
-            deta = 1.0_cp/real(nmax - 1,cp)
+            deta = 1.0_wp/real(nmax - 1,wp)
         end if
 
         do n = 2, nmax
-            eta = real(n - 1,cp)*deta
+            eta = real(n - 1,wp)*deta
 
             select case (g_build(idir)%opts(1, iseg))
             case (1)     ! Colonius, Lele and Moin
-                x(n) = e + a*eta + d*LOG(EXP(c*(a*eta - b)) + 1.0_cp - EXP(-b*c))
+                x(n) = e + a*eta + d*LOG(EXP(c*(a*eta - b)) + 1.0_wp - EXP(-b*c))
             case (2, 3)   ! 2nd- 3rd-Order Polynomial Stretching
                 x(n) = a + b*eta + c*eta*eta + d*eta*eta*eta
             case (4)     ! Geometric prograssion
@@ -173,13 +173,13 @@ contains
 
         implicit none
 
-        integer(ci) imax, iopt1_loc, iopt2_loc
-        real(cp) vbeg, vend, val_1, val_2, val_3, val_4
-        real(cp) a, b, c, d, e
+        integer(wi) imax, iopt1_loc, iopt2_loc
+        real(wp) vbeg, vend, val_1, val_2, val_3, val_4
+        real(wp) a, b, c, d, e
 
-        real(cp) x1, x2, x3, x4, valmx
-        real(cp) z1, z2, z3, z4
-        integer(ci) indx1, indx2, indx3, indx4
+        real(wp) x1, x2, x3, x4, valmx
+        real(wp) z1, z2, z3, z4
+        integer(wi) indx1, indx2, indx3, indx4
 
         ! ######################################
         ! # Colonius, Lele and Moin Stretching #

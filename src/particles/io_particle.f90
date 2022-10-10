@@ -10,39 +10,37 @@
 #define LOC_UNIT_ID 117
 #define LOC_STATUS 'old'
 
-SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
-
-  USE TLAB_CONSTANTS,   ONLY : lfile, efile
-  USE TLAB_VARS,      ONLY : g
-  USE TLAB_PROCS
-  USE PARTICLE_VARS, ONLY : isize_part, inb_part_array, isize_part_total
-  USE PARTICLE_TYPES, only: particle_dt
+subroutine IO_READ_PARTICLE(fname, l_g, l_q)
+    use TLAB_CONSTANTS, only: wp, wi, longi, lfile, efile
+    use TLAB_VARS, only: g
+    use TLAB_PROCS
+    use PARTICLE_VARS, only: isize_part, inb_part_array, isize_part_total
+    use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro, ims_err
-  USE PARTICLE_VARS, ONLY : ims_size_p
+    use MPI
+    use TLAB_MPI_VARS, only: ims_pro, ims_npro, ims_err
+    use PARTICLE_ARRAYS, only: ims_np_all
 #endif
 
-  IMPLICIT NONE
+    implicit none
 
-  CHARACTER*(*)     fname
-  TYPE(particle_dt) l_g
-  TREAL, DIMENSION(isize_part,inb_part_array) :: l_q !, OPTIONAL :: l_q
+    character*(*) fname
+    type(particle_dt) l_g
+    real(wp), dimension(isize_part, inb_part_array) :: l_q !, OPTIONAL :: l_q
 
 ! -------------------------------------------------------------------
-  TINTEGER i
-  CHARACTER(len=32) name
+    integer(wi) i
+    character(len=32) name
 #ifdef USE_MPI
-  TINTEGER ims_npro_loc
-  TINTEGER mpio_fh
-  INTEGER (KIND=8) mpio_disp, count
-  TINTEGER status(MPI_STATUS_SIZE)
+    integer(wi) ims_npro_loc
+    integer(wi) mpio_fh
+    integer(longi) mpio_disp, count
+    integer(wi) status(MPI_STATUS_SIZE)
 #else
-  TINTEGER particle_number_loc
-  TINTEGER idummy
+    integer(wi) idummy
 #endif
 
-  CALL TLAB_WRITE_ASCII(lfile, 'Reading field '//TRIM(ADJUSTL(fname))//'...')
+    call TLAB_WRITE_ASCII(lfile, 'Reading field '//trim(adjustl(fname))//'...')
 
 #ifdef USE_MPI
 !#######################################################################
@@ -51,102 +49,98 @@ SUBROUTINE IO_READ_PARTICLE(fname, l_g, l_q)
 ! -------------------------------------------------------------------
 ! Let Process 0 handle header
 ! -------------------------------------------------------------------
-  IF ( ims_pro .EQ. 0 ) THEN
-     name = TRIM(ADJUSTL(fname))//".id"
+    if (ims_pro == 0) then
+        name = trim(adjustl(fname))//".id"
 #include "dns_open_file.h"
-     READ(LOC_UNIT_ID) ims_npro_loc
-     READ(LOC_UNIT_ID) ims_size_p(1:ims_npro_loc)
-     CLOSE(LOC_UNIT_ID)
-  END IF
+        read (LOC_UNIT_ID) ims_npro_loc
+        read (LOC_UNIT_ID) ims_np_all(1:ims_npro_loc)
+        close (LOC_UNIT_ID)
+    end if
 
 ! Check
-  CALL MPI_BCAST(ims_npro_loc,1,MPI_INTEGER,0,MPI_COMM_WORLD,ims_err)
-  IF ( ims_npro .NE. ims_npro_loc) THEN
-     CALL TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-processors mismatch.')
-     CALL TLAB_STOP(DNS_ERROR_PARTICLE)
-  ENDIF
+    call MPI_BCAST(ims_npro_loc, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ims_err)
+    if (ims_npro /= ims_npro_loc) then
+        call TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-processors mismatch.')
+        call TLAB_STOP(DNS_ERROR_PARTICLE)
+    end if
 
 ! Broadcast number of particles per processor
-  CALL MPI_BCAST(ims_size_p,ims_npro,MPI_INTEGER,0,MPI_COMM_WORLD,ims_err)
-
-! Displacement per processor
-  mpio_disp = INT( (ims_npro+1)*SIZEOFINT, KIND=8 )
-
-  count = 0
-  DO i = 1,ims_pro
-     count = count +INT(ims_size_p(i),KIND=8)
-  ENDDO
-  mpio_disp = mpio_disp +count *INT(SIZEOFLONGINT,KIND=8)
-
-! Check
-  DO i = ims_pro+1,ims_npro
-     count = count +INT(ims_size_p(i),KIND=8)
-  ENDDO
-  IF ( isize_part_total .NE. count ) THEN
-     CALL TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
-     CALL TLAB_STOP(DNS_ERROR_PARTICLE)
-  ENDIF
+    call MPI_BCAST(ims_np_all, ims_npro, MPI_INTEGER, 0, MPI_COMM_WORLD, ims_err)
 
 ! Number of particles in local processor
-  l_g%np = ims_size_p(ims_pro+1)
+    l_g%np = ims_np_all(ims_pro + 1)
+
+! Displacement per processor
+    mpio_disp = int((ims_npro + 1)*SIZEOFINT, longi)
+
+    count = 0
+    do i = 1, ims_pro
+        count = count + int(ims_np_all(i), longi)
+    end do
+    mpio_disp = mpio_disp + count*int(SIZEOFLONGINT, longi)
+
+! Check
+    do i = ims_pro + 1, ims_npro
+        count = count + int(ims_np_all(i), longi)
+    end do
+    if (isize_part_total /= count) then
+        call TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
+        call TLAB_STOP(DNS_ERROR_PARTICLE)
+    end if
 
 ! -------------------------------------------------------------------
 ! Use MPI-IO to read particle tags in each processor
 ! -------------------------------------------------------------------
-  name = TRIM(ADJUSTL(fname))//".id"
-  CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-  CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_INTEGER8, MPI_INTEGER8, 'native', MPI_INFO_NULL, ims_err)
-  CALL MPI_FILE_READ_ALL(mpio_fh, l_g%tags, l_g%np, MPI_INTEGER8, status, ims_err)
-  CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
+    name = trim(adjustl(fname))//".id"
+    call MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
+    call MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_INTEGER8, MPI_INTEGER8, 'native', MPI_INFO_NULL, ims_err)
+    call MPI_FILE_READ_ALL(mpio_fh, l_g%tags, l_g%np, MPI_INTEGER8, status, ims_err)
+    call MPI_FILE_CLOSE(mpio_fh, ims_err)
 
 !  IF ( PRESENT(l_q) ) THEN
-     DO i = 1,inb_part_array
-        WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
-        CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-        CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
-        CALL MPI_FILE_READ_ALL(mpio_fh, l_q(1,i), l_g%np, MPI_REAL8, status, ims_err)
-        CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
-     ENDDO
+    do i = 1, inb_part_array
+        write (name, *) i; name = trim(adjustl(fname))//"."//trim(adjustl(name))
+        call MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
+        call MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
+        call MPI_FILE_READ_ALL(mpio_fh, l_q(1, i), l_g%np, MPI_REAL8, status, ims_err)
+        call MPI_FILE_CLOSE(mpio_fh, ims_err)
+    end do
 !  ENDIF
 
 #else
 ! #######################################################################
 ! Serial case
 ! #######################################################################
-  name = TRIM(ADJUSTL(fname))//".id"
+    name = trim(adjustl(fname))//".id"
 #include "dns_open_file.h"
-  READ(LOC_UNIT_ID) idummy                   ! dummy, should be 1 in serial
-  READ(LOC_UNIT_ID) particle_number_loc
+    read (LOC_UNIT_ID) idummy                   ! dummy, should be 1 in serial
+    read (LOC_UNIT_ID) l_g%np
 ! Check
-  IF ( isize_part_total .NE. INT(particle_number_loc,KIND=8) ) THEN
-     CALL TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
-     CLOSE(LOC_UNIT_ID)
-     CALL TLAB_STOP(DNS_ERROR_PARTICLE)
-  ENDIF
-  READ(LOC_UNIT_ID) l_g%tags
-  CLOSE(LOC_UNIT_ID)
-
-! For homogeneity with MPI version
-! If we need more than 4 bytes, we should be using MPI...
-  l_g%np = INT(isize_part_total)
+    if (isize_part_total /= int(l_g%np, longi)) then
+        call TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
+        close (LOC_UNIT_ID)
+        call TLAB_STOP(DNS_ERROR_PARTICLE)
+    end if
+    read (LOC_UNIT_ID) l_g%tags
+    close (LOC_UNIT_ID)
 
 !  IF ( PRESENT(l_q) ) THEN
-     DO i = 1,inb_part_array
-        WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
+    do i = 1, inb_part_array
+        write (name, *) i; name = trim(adjustl(fname))//"."//trim(adjustl(name))
 #include "dns_open_file.h"
-        READ(LOC_UNIT_ID) idummy             ! dummy, should be 1 in serial
-        READ(LOC_UNIT_ID) particle_number_loc
-        READ(LOC_UNIT_ID) l_q(:,i)
-        CLOSE(LOC_UNIT_ID)
-     ENDDO
+        read (LOC_UNIT_ID) idummy             ! dummy, should be 1 in serial
+        read (LOC_UNIT_ID) l_g%np
+        read (LOC_UNIT_ID) l_q(:, i)
+        close (LOC_UNIT_ID)
+    end do
 !  ENDIF
 
 #endif
 
-  CALL PARTICLE_LOCATE_Y( l_g%np, l_q(1,2), l_g%nodes, g(2)%size, g(2)%nodes )
+    call PARTICLE_LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, g(2)%size, g(2)%nodes)
 
-  RETURN
-END SUBROUTINE IO_READ_PARTICLE
+    return
+end subroutine IO_READ_PARTICLE
 
 #undef LOC_UNIT_ID
 #undef LOC_STATUS
@@ -156,36 +150,36 @@ END SUBROUTINE IO_READ_PARTICLE
 #define LOC_UNIT_ID 118
 #define LOC_STATUS 'unknown'
 
-SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
+subroutine IO_WRITE_PARTICLE(fname, l_g, l_q)
 
-  USE TLAB_CONSTANTS,   ONLY : lfile
-  USE PARTICLE_VARS,      ONLY : isize_part, inb_part_array
-  USE TLAB_PROCS
-  USE PARTICLE_TYPES, ONLY : particle_dt
+    use TLAB_CONSTANTS, only: wp, wi, longi, lfile
+    use PARTICLE_VARS, only: isize_part, inb_part_array
+    use TLAB_PROCS
+    use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro, ims_err
-  USE PARTICLE_VARS, ONLY : ims_size_p
+    use MPI
+    use TLAB_MPI_VARS, only: ims_pro, ims_npro, ims_err
+    use PARTICLE_ARRAYS, only: ims_np_all
 #endif
 
-  IMPLICIT NONE
+    implicit none
 
-  CHARACTER*(*)     fname
-  TYPE(particle_dt) l_g
-  TREAL, DIMENSION(isize_part,inb_part_array) :: l_q !, OPTIONAL :: l_q
+    character(len=*) fname
+    type(particle_dt) l_g
+    real(wp), dimension(isize_part, inb_part_array) :: l_q !, OPTIONAL :: l_q
 
 ! -------------------------------------------------------------------
-  TINTEGER i
-  CHARACTER(len=32) name
+    integer(wi) i
+    character(len=32) name
 #ifdef USE_MPI
-  TINTEGER mpio_fh
-  INTEGER (KIND=8)  mpio_disp, count
-  TINTEGER status(MPI_STATUS_SIZE)
+    integer(wi) mpio_fh
+    integer(KIND=8) mpio_disp, count
+    integer(wi) status(MPI_STATUS_SIZE)
 #else
-  TINTEGER idummy
+    integer(wi) idummy
 #endif
 
-  CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(fname))//'...')
+    call TLAB_WRITE_ASCII(lfile, 'Writing field '//trim(adjustl(fname))//'...')
 
 #ifdef USE_MPI
 !#######################################################################
@@ -194,107 +188,107 @@ SUBROUTINE IO_WRITE_PARTICLE(fname, l_g, l_q)
 ! -------------------------------------------------------------------
 ! Let Process 0 handle header
 ! -------------------------------------------------------------------
-  CALL MPI_ALLGATHER(l_g%np, 1, MPI_INTEGER4, ims_size_p, 1, MPI_INTEGER4, MPI_COMM_WORLD, ims_err)
+    call MPI_ALLGATHER(l_g%np, 1, MPI_INTEGER4, ims_np_all, 1, MPI_INTEGER4, MPI_COMM_WORLD, ims_err)
 
-  IF ( ims_pro .EQ. 0 ) THEN
-     name = TRIM(ADJUSTL(fname))//".id"
+    if (ims_pro == 0) then
+        name = trim(adjustl(fname))//".id"
 #include "dns_open_file.h"
-     WRITE(LOC_UNIT_ID) ims_npro
-     WRITE(LOC_UNIT_ID) ims_size_p
-     CLOSE(LOC_UNIT_ID)
+        write (LOC_UNIT_ID) ims_npro
+        write (LOC_UNIT_ID) ims_np_all
+        close (LOC_UNIT_ID)
 
 !     IF ( PRESENT(l_q) ) THEN
-        DO i = 1,inb_part_array
-           WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
+        do i = 1, inb_part_array
+            write (name, *) i; name = trim(adjustl(fname))//"."//trim(adjustl(name))
 #include "dns_open_file.h"
-           WRITE(LOC_UNIT_ID) ims_npro
-           WRITE(LOC_UNIT_ID) ims_size_p
-           CLOSE(LOC_UNIT_ID)
-        ENDDO
+            write (LOC_UNIT_ID) ims_npro
+            write (LOC_UNIT_ID) ims_np_all
+            close (LOC_UNIT_ID)
+        end do
 !     ENDIF
-  END IF
+    end if
 
 ! Displacement per processor
-  mpio_disp = INT( (ims_npro+1)*SIZEOFINT, KIND=8 )
+    mpio_disp = int((ims_npro + 1)*SIZEOFINT, longi)
 
-  count = 0
-  DO i = 1,ims_pro
-     count = count +INT(ims_size_p(i),KIND=8)
-  ENDDO
-  mpio_disp = mpio_disp +count *INT(SIZEOFLONGINT,KIND=8)
+    count = 0
+    do i = 1, ims_pro
+        count = count + int(ims_np_all(i), longi)
+    end do
+    mpio_disp = mpio_disp + count*int(SIZEOFLONGINT, longi)
 
 ! -------------------------------------------------------------------
 ! Use MPI-IO to write particle tags in each processor
 ! -------------------------------------------------------------------
-  name = TRIM(ADJUSTL(fname))//".id"
-  CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-  CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_INTEGER8, MPI_INTEGER8, 'native', MPI_INFO_NULL, ims_err)
-  CALL MPI_FILE_WRITE_ALL(mpio_fh, l_g%tags, l_g%np, MPI_INTEGER8, status, ims_err)
-  CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
+    name = trim(adjustl(fname))//".id"
+    call MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
+    call MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_INTEGER8, MPI_INTEGER8, 'native', MPI_INFO_NULL, ims_err)
+    call MPI_FILE_WRITE_ALL(mpio_fh, l_g%tags, l_g%np, MPI_INTEGER8, status, ims_err)
+    call MPI_FILE_CLOSE(mpio_fh, ims_err)
 
 !  IF ( PRESENT(l_q) ) THEN
-     DO i = 1,inb_part_array
-        WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
-        CALL MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-        CALL MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
-        CALL MPI_FILE_WRITE_ALL(mpio_fh, l_q(1,i), l_g%np, MPI_REAL8, status, ims_err)
-        CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
-     ENDDO
+    do i = 1, inb_part_array
+        write (name, *) i; name = trim(adjustl(fname))//"."//trim(adjustl(name))
+        call MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
+        call MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
+        call MPI_FILE_WRITE_ALL(mpio_fh, l_q(1, i), l_g%np, MPI_REAL8, status, ims_err)
+        call MPI_FILE_CLOSE(mpio_fh, ims_err)
+    end do
 !  ENDIF
 
 #else
 ! #######################################################################
 ! Serial case
 ! #######################################################################
-  idummy = 1
-  name = TRIM(ADJUSTL(fname))//".id"
+    idummy = 1
+    name = trim(adjustl(fname))//".id"
 #include "dns_open_file.h"
-  WRITE(LOC_UNIT_ID) idummy
-  WRITE(LOC_UNIT_ID) l_g%np
-  WRITE(LOC_UNIT_ID) l_g%tags
-  CLOSE(LOC_UNIT_ID)
+    write (LOC_UNIT_ID) idummy
+    write (LOC_UNIT_ID) l_g%np
+    write (LOC_UNIT_ID) l_g%tags
+    close (LOC_UNIT_ID)
 
 !  IF ( PRESENT(l_q) ) THEN
-     DO i = 1,inb_part_array
-        WRITE(name,*) i; name = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(name))
+    do i = 1, inb_part_array
+        write (name, *) i; name = trim(adjustl(fname))//"."//trim(adjustl(name))
 #include "dns_open_file.h"
-        WRITE(LOC_UNIT_ID) idummy
-        WRITE(LOC_UNIT_ID) l_g%np
-        WRITE(LOC_UNIT_ID) l_q(:,i)
-        CLOSE(LOC_UNIT_ID)
-     ENDDO
+        write (LOC_UNIT_ID) idummy
+        write (LOC_UNIT_ID) l_g%np
+        write (LOC_UNIT_ID) l_q(:, i)
+        close (LOC_UNIT_ID)
+    end do
 !  ENDIF
 
 #endif
 
-  RETURN
-END SUBROUTINE IO_WRITE_PARTICLE
+    return
+end subroutine IO_WRITE_PARTICLE
 
 !#######################################################################
 !#######################################################################
-SUBROUTINE PARTICLE_LOCATE_Y( pmax, y_part, j_part, jmax, y_grid )
+subroutine PARTICLE_LOCATE_Y(pmax, y_part, j_part, jmax, y_grid)
+    use TLAB_CONSTANTS, only: wp, wi
+    implicit none
 
-  IMPLICIT NONE
+    integer(wi), intent(in)  :: pmax, jmax
+    real(wp),    intent(in)  :: y_part(pmax)
+    integer(wi), intent(out) :: j_part(pmax)
+    real(wp),    intent(in)  :: y_grid(jmax)
 
-  TINTEGER, INTENT(IN) :: pmax, jmax
-  TREAL,    DIMENSION(pmax), INTENT(IN) :: y_part
-  TINTEGER, DIMENSION(pmax), INTENT(OUT) :: j_part
-  TREAL,    DIMENSION(jmax), INTENT(IN) :: y_grid
+    integer(wi) ip, jm, jp, jc
 
-  TINTEGER ip, jm, jp, jc
-
-  DO ip = 1,pmax
-     jp = jmax
-     jm = 1
-     jc = ( jm +jp ) /2
-     DO WHILE ( (y_part(ip)-y_grid(jc))*(y_part(ip)-y_grid(jc+1)) .GT. C_0_R .AND. jc .GT. jm )
-        IF ( y_part(ip) .LT. y_grid(jc) ) THEN; jp = jc;
-        ELSE;                                   jm = jc; END IF
-        jc = ( jm +jp ) /2
-     END DO
-     j_part(ip) = jc
+    do ip = 1, pmax
+        jp = jmax
+        jm = 1
+        jc = (jm + jp)/2
+        do while ((y_part(ip) - y_grid(jc))*(y_part(ip) - y_grid(jc + 1)) > C_0_R .and. jc > jm)
+            if (y_part(ip) < y_grid(jc)) then; jp = jc; 
+            else; jm = jc; end if
+            jc = (jm + jp)/2
+        end do
+        j_part(ip) = jc
 !     WRITE(*,'(i,3f)') ip, y_grid(jc), y_part(ip), y_grid(jc+1)
-  END DO
+    end do
 
-  RETURN
-END SUBROUTINE PARTICLE_LOCATE_Y
+    return
+end subroutine PARTICLE_LOCATE_Y
