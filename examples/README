@@ -30,7 +30,7 @@ Case07. Unstable inversion. Rayleigh-Taylor.
 Case08. Stably stratified shear layer. 
 Case09. Heated plate. 
 Case10. Same as Case09, but two scalars with different BCs.
-Case11. Channel flow. 
+Case11. Half Channel flow. 
 Case12. Same as 11, implicit solver.
 Case13. Radiation case.
 Case14. Cloud-top mixing layer, airwater equilibrium compressible formulation 
@@ -47,6 +47,7 @@ Case24. Airwater equilibrium incompressible formulation: Stratocumulus-topped bo
 Case25. Anelastic formulation of CBL.
 Case26. Airvapor anelastic formulation of CBL.
 Case27. Airwater equilibrium anelastic formulation: Stratocumulus-topped boundary layer.
+Case28. Channel flow. 
 
 2D cases: Lagrangian routines
 
