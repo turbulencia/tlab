@@ -48,6 +48,7 @@ subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2)
   use TLAB_CONSTANTS, only : efile
   use TLAB_PROCS,     only : TLAB_STOP, TLAB_WRITE_ASCII
   use AVGS,           only : AVG_IK_V
+  use IBM_VARS,       only : dy, facu, facl
 #ifdef USE_MPI
   use MPI
   use TLAB_MPI_VARS,  only : ims_err 
@@ -59,11 +60,11 @@ subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2)
   TREAL, dimension(     jmax     ), intent(out  ) :: gamma_f, gamma_s
   TREAL, dimension(imax,jmax,kmax), intent(in   ) :: eps
   TREAL, dimension(imax,jmax,kmax), intent(inout) :: tmp1
-  TREAL, dimension(jmax,2),         intent(inout) :: tmp2
+  TREAL, dimension(     jmax,   2), intent(inout) :: tmp2
 
   target                                          :: tmp2
   TREAL, dimension(:),              pointer       :: wrk1d, res
-  
+
   TINTEGER                                        :: i,j,k
   TREAL                                           :: dummy, check
   
@@ -81,6 +82,15 @@ subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2)
 
   ! take boundaries, edges and corner into account
   tmp1(:,:,:) = eps(:,:,:)
+
+  ! take grid stretching in vertical direction into account
+  do j = 1, jmax-1   ! dy[jmax-1] - vertical spacing
+    dy(j) = g(2)%nodes(j+1) - g(2)%nodes(j) 
+  end do
+  do j = 1, jmax-2   ! fac[jmax-2]
+    facl(j) = dy(j  ) / ( dy(j) + dy(j+1) ) ! lower obj
+    facu(j) = dy(j+1) / ( dy(j) + dy(j+1) ) ! upper obj
+  end do
 
   ! in x-direction - inner points - boundary points
   do k = 1, kmax   
@@ -102,17 +112,28 @@ subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2)
       end if
     end do
 
-    ! in y-direction - inner points - boundary points
+    ! in y-direction - inner points - boundary points 
+    ! (without considering stretching on the ground)
     do i = 1, imax   
       j = 1        
       if (        eps(i,j,k) == 0 .and. eps(i,j+1,k) == 1 ) then
-        tmp1(i,j+1,k) = C_05_R * tmp1(i,j+1,k)
+        tmp1(i,j+1,k) = C_05_R * tmp1(i,j+1,k)   
       end if 
       do j = 2, jmax-1
         if (      eps(i,j,k) == 0 .and. eps(i,j+1,k) == 1 ) then
-          tmp1(i,j+1,k) = C_05_R * tmp1(i,j+1,k)
+          if ( j == 2 .or. j == jmax-1 ) then
+            tmp1(i,j+1,k) = C_05_R * tmp1(i,j+1,k) 
+          else
+            tmp1(i,j+1,k) = facu(j) * tmp1(i,j+1,k)
+          end if
+          ! tmp1(i,j+1,k) = C_05_R * tmp1(i,j+1,k)
         else if ( eps(i,j,k) == 0 .and. eps(i,j-1,k) == 1 ) then
-          tmp1(i,j-1,k) = C_05_R * tmp1(i,j-1,k)
+          if ( j == 2 .or. j == jmax-1 ) then
+            tmp1(i,j-1,k) = C_05_R * tmp1(i,j-1,k)
+          else
+            tmp1(i,j-1,k) = facl(j-2) * tmp1(i,j-1,k)
+          end if
+          ! tmp1(i,j-1,k) = C_05_R * tmp1(i,j-1,k) 
         end if
       end do 
       j = jmax
@@ -142,7 +163,7 @@ subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2)
       end if
     end do
   end do
-  
+
   ! horizontal average - compute gamma_s
   CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac, g(3)%jac, gamma_s, wrk1d, area)
 

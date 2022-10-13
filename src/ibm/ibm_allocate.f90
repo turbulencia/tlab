@@ -119,11 +119,14 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
   call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, yb, isize_wrk1d_ibm, 'yb')
 
   ! gammas for conditional averages
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_0,  jmax, 'eps_0')
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_1,  jmax, 'eps_1')
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_f,  jmax, 'eps_f')
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_s,  jmax, 'eps_s')
-  call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, scal_bcs, jmax, inb_scal, 'scal_bcs')
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, dy,       jmax-1, 'dy'   )
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, facu,     jmax-2, 'facu' )
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, facl,     jmax-2, 'facl' )
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_0,  jmax,   'eps_0')
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_1,  jmax,   'eps_1')
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_f,  jmax,   'eps_f')
+  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_s,  jmax,   'eps_s')
+  call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, scal_bcs, inb_scal, jmax, 'scal_bcs')
 
   return
 end subroutine IBM_ALLOCATE

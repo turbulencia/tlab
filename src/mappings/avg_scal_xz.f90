@@ -291,7 +291,7 @@ USE TLAB_PROCS
   IF ( imode_ibm == 1 ) THEN
     ep_0(:) = gamma_0; ep_1(:) = gamma_1 
     ep_f(:) = gamma_f; ep_s(:) = gamma_s
-    Sbcs(:) = scal_bcs(is,:)
+    Sbcs(:) = scal_bcs(:,is)
     im = im + 5
   END IF
 

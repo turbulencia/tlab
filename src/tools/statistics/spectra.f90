@@ -526,7 +526,7 @@ DO ig = 1,3
 
      IF ( imode_ibm .EQ. 1 ) THEN
         CALL IBM_BCS_FIELD_COMBINED(i0, q)
-        IF ( icalc_scal .EQ. 1 ) CALL IBM_INITIALIZE_SCAL(s)
+        IF ( icalc_scal .EQ. 1 ) CALL IBM_INITIALIZE_SCAL(i0, s)
      ENDIF  
 
      CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )

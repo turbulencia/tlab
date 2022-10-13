@@ -1,4 +1,4 @@
-# JUWELS (FZ JUELICH) 
+# HLRS HAWK - AMD (Stuttgart) 
 
 if ( NOT BUILD_TYPE )
    message( WARNING "Setting CMAKE_BUILD_TYPE to default value." )
@@ -48,7 +48,7 @@ else( ${BUILD_TYPE} STREQUAL "SERIAL" )
   #set(CMAKE_Fortran_COMPILER gfortran) 
 endif()     
 
-set(USER_Fortran_FLAGS         "-cpp -ffree-form -ffree-line-length-2048 -fno-automatic") #-fallow-argument-mismatch from gnu-version10
+set(USER_Fortran_FLAGS         "-cpp -ffree-form -ffree-line-length-2048 -fno-automatic -fallow-argument-mismatch")
 set(USER_Fortran_FLAGS_RELEASE "-march=znver2 -mtune=znver2 -O3 -ffinite-math-only -fprefetch-loop-arrays --param prefetch-latency=300")
 # Do not use -funroll-all-loops / -funroll-loops 
 set(USER_Fortran_FLAGS_DEBUG   "-g -traceback -debug all -ffpe-trap=all") 
