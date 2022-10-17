@@ -1270,5 +1270,9 @@ subroutine IO_READ_GLOBAL(inifile)
     case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
     end select
 
+    if ( imode_fdm == FDM_COM6_JACPENTA ) then ! CFL_max depends on max[g%mwn(:,1)]
+        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacpenta6 requires adjusted CFL-number depending on C1N6M_ALPHA, C1N6M_BETA values.')
+    end if
+  
     return
 end subroutine IO_READ_GLOBAL

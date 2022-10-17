@@ -131,8 +131,8 @@ contains
         !#####################################################################
         if (i1 <= 0 .or. i2 <= 0) return
 
-        write (str, *) i1; line = 'Allocating array '//TRIM(ADJUSTL(s))//' of size '//TRIM(ADJUSTL(str))//'x'
-        write (str, *) i2; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+        write (str, *) i2; line = 'Allocating array '//TRIM(ADJUSTL(s))//' of size '//TRIM(ADJUSTL(str))//'x'
+        write (str, *) i1; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
         call TLAB_WRITE_ASCII(lfile, line)
         allocate (a(i2, i1), stat=ierr)
         if (ierr /= 0) then

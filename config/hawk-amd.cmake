@@ -1,4 +1,4 @@
-# JUWELS (FZ JUELICH) 
+# HLRS HAWK - GCC (Stuttgart) 
 
 if ( NOT BUILD_TYPE )
    message( WARNING "Setting CMAKE_BUILD_TYPE to default value." )
@@ -48,11 +48,11 @@ if ( NOT CMAKE_BUILD_TYPE )
   set(CMAKE_BUILD_TYPE RELEASE)  
 endif() 
 
-add_definitions(-DUSE_FFTW -DHLRS_HAWK) # -DUSE_BLAS -DUSE_MKL) 
-
+add_definitions(-DUSE_FFTW -DHLRS_HAWK -DUSE_NETCDF) # -DUSE_BLAS -DUSE_MKL)
 set(FFTW_LIB   "-lfftw3")
+set(NCDF_LIB   "-lnetcdff") 
 #set(FFTW_INCLUDE_DIR "/opt/hlrs/spack/rev-004_2020-06-17/fftw/3.3.8-clang-9.0.0-2buapgdw/include/")
-set(LIBS             "${FFTW_LIB} -l:libamdlibm.a -lm")
+set(LIBS             "${NCDF_LIB} ${FFTW_LIB} -l:libamdlibm.a -lm")
 
 set(GNU_SED "gsed")
 

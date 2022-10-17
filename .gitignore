@@ -18,6 +18,7 @@ build_PARALLEL/*
 build_DEBUG/*
 test/*
 .vscode/*
+*.mod
 *~
 */*~
 */*/*~

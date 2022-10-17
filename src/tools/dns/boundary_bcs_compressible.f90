@@ -16,6 +16,9 @@ module BOUNDARY_BCS_COMPRESSIBLE
 #ifdef USE_MPI
     use TLAB_MPI_VARS
 #endif
+#ifdef TRACE_ON
+    use TLAB_CONSTANTS, only: tfile
+#endif
 
     implicit none
     private

@@ -21,8 +21,8 @@ SUBROUTINE AVG_SCAL_XZ(is, q,s, s_local, dsdx,dsdy,dsdz, tmp1,tmp2,tmp3, mean2d,
   USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_VARS
   USE THERMO_VARS,    ONLY : imixture, thermo_param
-  USE IBM_VARS,       ONLY : eps
-  USE AVGS, ONLY: AVG_IK_V
+  USE IBM_VARS,       ONLY : gamma_0, gamma_1, gamma_f, gamma_s, scal_bcs 
+  USE AVGS,           ONLY : AVG_IK_V
 #ifdef USE_MPI
   USE TLAB_MPI_VARS
 #endif
@@ -90,10 +90,13 @@ USE TLAB_PROCS
   groupname(ng) = 'Mean'
   varname(ng)   = 'rS fS rS_y fS_y rQ fQ'
   IF ( imode_ibm == 1 ) THEN
-    varname(ng) = TRIM(ADJUSTL(varname(ng)))//' eps Sbcs'
-#define ep(j)     mean2d(j,ig(1)+6)
-#define Sbcs(j)   mean2d(j,ig(1)+7)
-    sg(ng) = sg(ng) + 2
+    varname(ng) = TRIM(ADJUSTL(varname(ng)))//' eps_0 eps_1 eps_f eps_s Sbcs'
+#define ep_0(j)   mean2d(j,ig(1)+6)
+#define ep_1(j)   mean2d(j,ig(1)+7)
+#define ep_f(j)   mean2d(j,ig(1)+8)
+#define ep_s(j)   mean2d(j,ig(1)+9)
+#define Sbcs(j)   mean2d(j,ig(1)+10)
+    sg(ng) = sg(ng) + 5
   END IF
   IF ( radiation%active(is) ) THEN
     varname(ng) = TRIM(ADJUSTL(varname(ng)))//' rQrad rQradC'
@@ -282,12 +285,14 @@ USE TLAB_PROCS
   ! #######################################################################
   ! Preliminary for IBM usage
   ! #######################################################################
-  ! Calculating gamma for conditional averages (Pope, p.170 [5.305])
+  ! Asign gammas for conditional averages (c.f. Pope, p.170 [5.305])
   ! write out scalar boundary values applied in solids
   im = 5
   IF ( imode_ibm == 1 ) THEN
-    CALL IBM_AVG_GAMMA(ep(1), eps, wrk3d, wrk1d); im = im + 1
-    CALL IBM_AVG_SCAL_BCS(is, Sbcs(1));           im = im + 1
+    ep_0(:) = gamma_0; ep_1(:) = gamma_1 
+    ep_f(:) = gamma_f; ep_s(:) = gamma_s
+    Sbcs(:) = scal_bcs(:,is)
+    im = im + 5
   END IF
 
   ! #######################################################################

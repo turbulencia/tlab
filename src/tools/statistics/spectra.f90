@@ -526,7 +526,7 @@ DO ig = 1,3
 
      IF ( imode_ibm .EQ. 1 ) THEN
         CALL IBM_BCS_FIELD_COMBINED(i0, q)
-        IF ( icalc_scal .EQ. 1 ) CALL IBM_INITIALIZE_SCAL(s)
+        IF ( icalc_scal .EQ. 1 ) CALL IBM_INITIALIZE_SCAL(i0, s)
      ENDIF  
 
      CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
@@ -556,6 +556,24 @@ DO ig = 1,3
         DO iv = 1,nfield_ref
            CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, vars(iv)%field)
         ENDDO
+     ENDIF
+
+! If IBM is active: remove mean values in solid regions from fluctuations (except pressure)
+     IF ( imode_ibm .EQ. 1 ) THEN
+        IF ( icalc_flow .EQ. 1 ) THEN 
+           DO iv = 1,3 ! u,v,w fields - skip pressure
+              CALL IBM_BCS_FIELD(vars(iv)%field)
+           ENDDO
+           IF ( nfield_ref .GT. 4 ) THEN
+              DO iv = 5,nfield_ref ! r,t,(s) fields
+                 CALL IBM_BCS_FIELD(vars(iv)%field)
+              ENDDO
+           ENDIF
+        ELSE IF ( ( icalc_flow .NE. 1 ) .AND. ( icalc_scal .EQ. 1 ) ) THEN 
+           DO iv = 1,nfield_ref    ! s fields (no pressure)
+              CALL IBM_BCS_FIELD(vars(iv)%field)
+           ENDDO
+        ENDIF
      ENDIF
 
 ! reset if needed

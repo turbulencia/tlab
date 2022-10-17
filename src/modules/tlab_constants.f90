@@ -11,7 +11,7 @@ module TLAB_CONSTANTS
     integer, parameter :: MAX_PROF          = 10
     integer, parameter :: MAX_JETS          = 5
     integer, parameter :: MAX_NSP           = 10  ! Species in the mixture
-    integer, parameter :: MAX_AVG_TEMPORAL  = 230
+    integer, parameter :: MAX_AVG_TEMPORAL  = 235
     integer, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
 
     character(len=*), parameter :: gfile    = 'grid'

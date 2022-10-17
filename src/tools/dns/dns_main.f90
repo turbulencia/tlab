@@ -172,7 +172,7 @@ PROGRAM DNS
   IF ( imode_ibm == 1 ) THEN
     CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
     CALL IBM_BCS_FIELD_COMBINED(i0, q)
-    IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s)
+    IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(i1, s)
   END IF  
 
   ! ###################################################################
@@ -214,7 +214,7 @@ PROGRAM DNS
       CALL DNS_FILTER()
       IF ( imode_ibm == 1 ) THEN
         CALL IBM_BCS_FIELD_COMBINED(i0, q) ! apply IBM BCs
-        IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s)
+        IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(i0, s)
       END IF  
     END IF
 

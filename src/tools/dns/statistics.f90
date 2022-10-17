@@ -159,21 +159,21 @@ CONTAINS
 
         IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
             ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
-        IF ( stats_buoyancy ) THEN
-          IF ( buoyancy%TYPE .EQ. EQNS_EXPLICIT ) THEN
-            CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, hq(1,1))
-          ELSE
-            wrk1d(1:jmax,1) = C_0_R
-            CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, hq(1,1), wrk1d) ! note that wrk3d is defined as integer.
+          IF ( stats_buoyancy ) THEN
+            IF ( buoyancy%TYPE .EQ. EQNS_EXPLICIT ) THEN
+              CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, hq(1,1))
+            ELSE
+              wrk1d(1:jmax,1) = C_0_R
+              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, hq(1,1), wrk1d) ! note that wrk3d is defined as integer.
+            END IF
+            dummy = C_1_R/froude
+            hq(1:isize_field,1) = hq(1:isize_field,1) *dummy
+
+            hq(1:isize_field,3) = txc(1:isize_field,3) ! Pass the pressure
+            CALL AVG_SCAL_XZ(is, q,s, hq(1,1), &
+                txc(1,1),txc(1,2),txc(1,4),txc(1,5),txc(1,6),hq(1,3), mean, wrk1d,wrk2d,wrk3d)
+
           END IF
-          dummy = C_1_R/froude
-          hq(1:isize_field,1) = hq(1:isize_field,1) *dummy
-
-          hq(1:isize_field,3) = txc(1:isize_field,3) ! Pass the pressure
-          CALL AVG_SCAL_XZ(is, q,s, hq(1,1), &
-              txc(1,1),txc(1,2),txc(1,4),txc(1,5),txc(1,6),hq(1,3), mean, wrk1d,wrk2d,wrk3d)
-
-        END IF
 
           IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
             is = is + 1
