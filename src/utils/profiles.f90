@@ -80,7 +80,14 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     call SCANINICHAR(bakfile, inifile, block, 'Derivative'//trim(adjustl(tag)), 'void', sRes)
     if (trim(adjustl(sRes)) /= 'void') then
         call SCANINIREAL(bakfile, inifile, block, 'Derivative'//trim(adjustl(tag)), '0.0', derivative)
-        call PROFILES_DERTOTHICK(derivative, var)
+        call SCANINICHAR(bakfile, inifile, block, 'Thick'//trim(adjustl(tag)), 'void', sRes)
+        if (trim(adjustl(sRes)) == 'void') then
+            call Profiles_DerToThick(derivative, var)
+        end if
+        call SCANINICHAR(bakfile, inifile, block, 'Delta'//trim(adjustl(tag)), 'void', sRes)
+        if (trim(adjustl(sRes)) == 'void') then
+            call Profiles_DerToDelta(derivative, var)
+        end if
     end if
 
     call SCANINIREAL(bakfile, inifile, block, 'BottomSlope'//trim(adjustl(tag)), '0.0', var%lslope)
@@ -93,7 +100,14 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     call SCANINICHAR(bakfile, inifile, block, 'SurfaceDerivative'//trim(adjustl(tag)), 'void', sRes)
     if (trim(adjustl(sRes)) /= 'void') then
         call SCANINIREAL(bakfile, inifile, block, 'SurfaceDerivative'//trim(adjustl(tag)), '0.0', derivative)
-        call PROFILES_DERTOTHICK(derivative, var)
+        call SCANINICHAR(bakfile, inifile, block, 'SurfaceThick'//trim(adjustl(tag)), 'void', sRes)
+        if (trim(adjustl(sRes)) == 'void') then
+            call Profiles_DerToThick(derivative, var)
+        end if
+        call SCANINICHAR(bakfile, inifile, block, 'SurfaceDelta'//trim(adjustl(tag)), 'void', sRes)
+        if (trim(adjustl(sRes)) == 'void') then
+            call Profiles_DerToDelta(derivative, var)
+        end if
     end if
 
     call SCANINIREAL(bakfile, inifile, block, 'ScaleHeight', '0.0', var%parameters(5))
@@ -209,7 +223,7 @@ function PROFILES_CALCULATE(var, y) result(f)
     return
 end function PROFILES_CALCULATE
 
-subroutine PROFILES_DERTOTHICK(derivative, var)  ! Obtain thick from the value of the maximum derivative
+subroutine Profiles_DerToThick(derivative, var)  ! Obtain thick from the value of the maximum derivative
     real(wp),          intent(in)    :: derivative
     type(profiles_dt), intent(inout) :: var
 
@@ -236,6 +250,35 @@ subroutine PROFILES_DERTOTHICK(derivative, var)  ! Obtain thick from the value o
     end select
 
     return
-end subroutine PROFILES_DERTOTHICK
+end subroutine Profiles_DerToThick
+
+subroutine Profiles_DerToDelta(derivative, var)  ! Obtain thick from the value of the maximum derivative
+    real(wp),          intent(in)    :: derivative
+    type(profiles_dt), intent(inout) :: var
+
+    real(wp) thick_ratio    ! for readibility
+
+    select case (var%type)
+
+    case (PROFILE_TANH, PROFILE_TANH_SYM, PROFILE_TANH_ANTISYM)
+        thick_ratio = 4.0_wp
+        var%delta = -var%thick *derivative *thick_ratio
+
+    case (PROFILE_ERF, PROFILE_ERF_ANTISYM)
+        thick_ratio = 2.0_wp*sqrt(pi_wp)
+        var%delta = -var%thick *(derivative - var%uslope) *thick_ratio
+
+    case (PROFILE_ERF_SURFACE)
+        thick_ratio = 2.0_wp*sqrt(pi_wp)
+        var%parameters(4) = -var%parameters(3) *derivative*thick_ratio
+
+    case default
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Undevelop derivative input for this case.')
+        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+
+    end select
+
+    return
+end subroutine Profiles_DerToDelta
 
 end module PROFILES
