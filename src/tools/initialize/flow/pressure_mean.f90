@@ -94,8 +94,7 @@ subroutine PRESSURE_MEAN(p, T, s, wrk1d)
 
 ! General case: temperature/mixture profile is given
             else
-                ! ycenter = y(1) + tbg%ymean_rel*g(2)%scale
-!           CALL FI_HYDROSTATIC(i1, jmax, i1, ycenter, y, p_loc(1))
+!           CALL FI_HYDROSTATIC(i1, jmax, i1, tbg%ymean, y, p_loc(1))
                 call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Hydrostatic equilibrium 2 undeveloped')
                 call TLAB_STOP(DNS_ERROR_UNDEVELOP)
 

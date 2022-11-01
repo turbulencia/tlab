@@ -134,7 +134,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
     TREAL c1, c2
     TREAL delta, eta, ExcMom_vi, Q1, Q2, U2, UC
     TREAL dummy, flux_aux, diam_loc
-    TREAL SIMPSON_NU, ycenter
+    TREAL SIMPSON_NU
     TREAL xi_tr, dxi_tr
 
     TINTEGER i, j, jsym
@@ -151,7 +151,6 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
 #endif
 
     U2 = prof_loc%mean - C_05_R*prof_loc%delta
-    ycenter = y(1) + g(2)%scale*prof_loc%ymean_rel
 
 ! ###################################################################
 ! Axial velocity, U_c*f(eta)
@@ -186,7 +185,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
 
 ! U-U2=f(y) reference profile, stored in array u.
         do j = 1, jmax
-            eta = (y(j) - ycenter)/delta
+            eta = (y(j) - prof_loc%ymean)/delta
             u(i, j) = EXP(c1*eta**2*(C_1_R + c2*eta**4))
             dummy = C_05_R*(C_1_R + TANH(C_05_R*(x(i)/diam_u - xi_tr)/dxi_tr))
             u(i, j) = dummy*u(i, j)*UC + (C_1_R - dummy)*(wrk1d(j, 1) - U2)
@@ -311,7 +310,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
     TREAL c1, c2
     TREAL delta, eta, ExcMom_vi, Q1, Z2, ZC, flux_aux
     TREAL dummy, diam_loc
-    TREAL SIMPSON_NU, ycenter
+    TREAL SIMPSON_NU
     TREAL xi_tr, dxi_tr
     TINTEGER i, j
     type(profiles_dt) prof_loc
@@ -329,7 +328,6 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
 #endif
 
     Z2 = prof_loc%mean - C_05_R*prof_loc%delta
-    ycenter = y(1) + g(2)%scale*prof_loc%ymean_rel
 
 ! -------------------------------------------------------------------
 ! Transition as a tanh profile around xi_tr between (0,2xi_tr)
@@ -361,7 +359,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
 
 ! Z-Z2=f(y) reference profile, stored in array z1.
         do j = 1, jmax
-            eta = (y(j) - ycenter)/delta
+            eta = (y(j) - prof_loc%ymean)/delta
             z1(i, j) = EXP(c1*eta**2*(C_1_R + c2*eta**4))
             dummy = C_05_R*(C_1_R + TANH(C_05_R*(x(i)/diam_u - xi_tr)/dxi_tr))
             z1(i, j) = dummy*z1(i, j)*ZC + (C_1_R - dummy)*(wrk1d(j, 1) - Z2)

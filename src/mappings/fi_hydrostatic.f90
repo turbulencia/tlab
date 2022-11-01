@@ -12,8 +12,8 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Evaluate the integral \int_ycenter^y dx/H(x), where H(x) is the scale 
-!# height in the system, where ycenter is some given value
+!# Evaluate the integral \int_pbg%ymean^y dx/H(x), where H(x) is the scale 
+!# height in the system
 !#
 !########################################################################
 
@@ -40,14 +40,13 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
 
 ! -------------------------------------------------------------------
   TINTEGER iter, niter, ibc, j, jcenter
-  TREAL dummy, ycenter
+  TREAL dummy
   
 ! ###################################################################
 ! Get the center  
-  ycenter = g%nodes(1) + pbg%ymean_rel *g%scale
   DO j = 1,g%size
-     IF ( g%nodes(j  ) .LE. ycenter .AND. &
-          g%nodes(j+1) .GT. ycenter ) THEN
+     IF ( g%nodes(j  ) .LE. pbg%ymean .AND. &
+          g%nodes(j+1) .GT. pbg%ymean ) THEN
         jcenter = j
         EXIT
      ENDIF
@@ -85,11 +84,11 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
 
 ! Calculate pressure and normalize s.t. p=pbg%mean at y=pbg%ymean_rel
      p(:) = EXP(p(:))
-     IF ( ABS(ycenter-g%nodes(jcenter)) .EQ. C_0_R ) THEN
+     IF ( ABS(pbg%ymean-g%nodes(jcenter)) .EQ. C_0_R ) THEN
         dummy = p(jcenter)
      ELSE
         dummy = p(jcenter) + (p(jcenter+1)      -p(jcenter)      ) &
-                           / (g%nodes(jcenter+1)-g%nodes(jcenter)) *(ycenter-g%nodes(jcenter))
+                           / (g%nodes(jcenter+1)-g%nodes(jcenter)) *(pbg%ymean-g%nodes(jcenter))
      ENDIF
      dummy = pbg%mean /dummy     
      p(:)  = dummy *p(:)

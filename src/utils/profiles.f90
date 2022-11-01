@@ -124,8 +124,8 @@ function PROFILES_CALCULATE(var, y) result(f)
     real(wp) yrel, xi, amplify, zamp, cnought
 
     ! ###################################################################
-    yrel = y - var%ymean ! position relative to ycenter
-    amplify = 0.0_wp    ! default
+    yrel = y - var%ymean    ! position relative to reference height
+    amplify = 0.0_wp        ! default
 
     ! -------------------------------------------------------------------
     ! base state varying between two constant levels

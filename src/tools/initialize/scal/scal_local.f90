@@ -212,7 +212,6 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         case (4, 5)           ! Perturbation in the centerplane
             do k = 1, kmax
                 do i = 1, imax
-                    ! ycenter = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel + disp(i, k)
                     do j = 1, jmax
                         s(i, j, k) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j)-disp(i, k))
                     end do

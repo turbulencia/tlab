@@ -43,7 +43,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
 
   TREAL wrk1d(isize_wrk1d,*)
   TREAL wrk2d(isize_wrk2d,*)
-    TREAL ycenter
+
 ! -------------------------------------------------------------------
 #define rU(A,B)     stat(A,B,1)
 #define rV(A,B)     stat(A,B,2)
@@ -1527,10 +1527,8 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
         ivauxpre = 4
         VAUXPRE(1) = g(1)%nodes(i) /qbg(1)%diam
         VAUXPRE(2) = g(2)%nodes(j) /qbg(1)%diam
-        ycenter = g(2)%nodes(1) + qbg(1)%ymean_rel *g(2)%scale
-        VAUXPRE(3) = (g(2)%nodes(j)- ycenter)/delta_05
-        ycenter = g(2)%nodes(1) + tbg%ymean_rel    *g(2)%scale
-        VAUXPRE(4) = (g(2)%nodes(j)- ycenter)/delta_t
+        VAUXPRE(3) = (g(2)%nodes(j)- qbg(1)%ymean)/delta_05
+        VAUXPRE(4) = (g(2)%nodes(j)- tbg%ymean)/delta_t
 
         IF ( j .EQ. jmax/2 ) THEN
            ivauxdum = ivauxpos
