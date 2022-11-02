@@ -14,7 +14,7 @@
 subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
     use TLAB_TYPES, only: wp
     use TLAB_CONSTANTS, only: efile
-    use TLAB_VARS, only: rbg, tbg
+    use TLAB_VARS, only: rbg, tbg, hbg
     use THERMO_VARS, only: imixture
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
     use TLAB_PROCS
@@ -74,8 +74,8 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
             wz = M_REAL(fp%modez(im))*wz_1
 
             do k = 1, kmax
-                disp(:, k) = disp(:, k) + fp%amplitude(im)*COS(wx*x(idsp + 1:idsp + imax) + fp%phasex(im)) &
-                             *COS(wz*z(kdsp + k) + fp%phasez(im))
+                disp(:, k) = disp(:, k) + fp%amplitude(im)*cos(wx*x(idsp + 1:idsp + imax) + fp%phasex(im)) &
+                             *cos(wz*z(kdsp + k) + fp%phasez(im))
             end do
 
         end do
@@ -89,7 +89,7 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
         do k = 1, kmax
             do i = 1, imax
                 xcenter = x(i) - g(1)%scale*C_05_R - x(1)
-                amplify = EXP(-C_05_R*(xcenter/fp%parameters(1))**2)
+                amplify = exp(-C_05_R*(xcenter/fp%parameters(1))**2)
                 disp(i, k) = disp(i, k)*amplify
             end do
         end do
@@ -98,49 +98,45 @@ subroutine DENSITY_FLUCTUATION(code, s, p, rho, T, h, disp)
     ! ###################################################################
     ! Perturbation in the thermodynamic fields
     ! ###################################################################
-    if (rbg%type == PROFILE_NONE) then
+    if (tbg%type /= PROFILE_NONE) then
         prof_loc = tbg
-
-        if (tbg%type > 0) then ! temperature/mixture profile is given
-            do k = 1, kmax
-                do i = 1, imax
-                    prof_loc%ymean = tbg%ymean + disp(i, k)
-                    prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
-                    prof_loc%mean = tbg%mean + C_05_R*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
-                    do j = 1, jmax
-                        T(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
-                    end do
+        do k = 1, kmax
+            do i = 1, imax
+                prof_loc%ymean = tbg%ymean + disp(i, k)
+                prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
+                prof_loc%mean = tbg%mean + C_05_R*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
+                do j = 1, jmax
+                    T(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
                 end do
             end do
+        end do
 
-            if (imixture == MIXT_TYPE_AIRWATER) then
-                call THERMO_AIRWATER_PT(imax, jmax, kmax, s, p, T)
-            end if
-
-        else if (tbg%type < 0) then ! enthalpy/mixture profile is given
-            prof_loc%type = -tbg%type
-
-            do k = 1, kmax
-                do i = 1, imax
-                    prof_loc%ymean = tbg%ymean + disp(i, k)
-                    prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
-                    prof_loc%mean = tbg%mean + C_05_R*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
-                    do j = 1, jmax
-                        h(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
-                    end do
-                end do
-            end do
-
-            if (imixture == MIXT_TYPE_AIRWATER) then
-                call THERMO_AIRWATER_PH_RE(imax, jmax, kmax, s, p, h, T)
-            end if
-
+        if (imixture == MIXT_TYPE_AIRWATER) then
+            call THERMO_AIRWATER_PT(imax, jmax, kmax, s, p, T)
         end if
 
-        ! compute perturbation in density
         call THERMO_THERMAL_DENSITY(imax, jmax, kmax, s, p, T, rho)
 
-    else ! Defined in terms of the density, to be developed
+    end if
+
+    if (hbg%type /= PROFILE_NONE) then
+        prof_loc = hbg
+        do k = 1, kmax
+            do i = 1, imax
+                prof_loc%ymean = hbg%ymean + disp(i, k)
+                prof_loc%delta = hbg%delta + (hbg%uslope - hbg%lslope)*disp(i, k)*g(2)%scale
+                prof_loc%mean = hbg%mean + C_05_R*(hbg%uslope + hbg%lslope)*disp(i, k)*g(2)%scale
+                do j = 1, jmax
+                    h(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
+                end do
+            end do
+        end do
+
+        if (imixture == MIXT_TYPE_AIRWATER) then
+            call THERMO_AIRWATER_PH_RE(imax, jmax, kmax, s, p, h, T)
+        end if
+
+        call THERMO_THERMAL_DENSITY(imax, jmax, kmax, s, p, T, rho)
 
     end if
 

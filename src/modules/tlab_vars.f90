@@ -63,9 +63,9 @@ module TLAB_VARS
     TREAL :: area                         ! Horizontal area and volume
 
 ! ###################################################################
-    type(profiles_dt) :: qbg(3)         ! Velocity background
-    type(profiles_dt) :: sbg(MAX_NSP)   ! Scalars backgrounds
-    type(profiles_dt) :: pbg, rbg, tbg  ! Pressure, density, temperature backgrounds
+    type(profiles_dt) :: qbg(3)             ! Velocity background
+    type(profiles_dt) :: sbg(MAX_NSP)       ! Scalars backgrounds
+    type(profiles_dt) :: pbg, rbg, tbg, hbg ! Pressure, density, temperature, enthalpy backgrounds
 
     TREAL, dimension(:), allocatable :: pbackground, tbackground, rbackground, ribackground
     TREAL, dimension(:), allocatable :: bbackground, epbackground

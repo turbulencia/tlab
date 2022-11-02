@@ -46,7 +46,6 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     else if (trim(adjustl(sRes)) == 'ekmanp')            then; var%type = PROFILE_EKMAN_U_P
     else if (trim(adjustl(sRes)) == 'parabolic')         then; var%type = PROFILE_PARABOLIC
     else if (trim(adjustl(sRes)) == 'mixedlayer')        then; var%type = PROFILE_MIXEDLAYER
-    else if (trim(adjustl(sRes)) == 'enthalpyerf')       then; var%type = -PROFILE_ERF ! in initialize/flow/pressure_mean; should be cleaned
     else
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong '//trim(adjustl(tag))//' profile.')
         call TLAB_STOP(DNS_ERROR_OPTION)

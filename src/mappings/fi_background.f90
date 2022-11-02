@@ -12,7 +12,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
     use TLAB_CONSTANTS, only: lfile
     use TLAB_VARS, only: inb_scal, inb_scal_array, imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: qbg, pbg, rbg, tbg, sbg
+    use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: damkohler, froude, schmidt
     use TLAB_VARS, only: rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
     use TLAB_VARS, only: buoyancy
@@ -39,6 +39,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
     if (pbg%relative) pbg%ymean = g(2)%nodes(1) + g(2)%scale*pbg%ymean_rel
     if (rbg%relative) rbg%ymean = g(2)%nodes(1) + g(2)%scale*rbg%ymean_rel
     if (tbg%relative) tbg%ymean = g(2)%nodes(1) + g(2)%scale*tbg%ymean_rel
+    if (hbg%relative) hbg%ymean = g(2)%nodes(1) + g(2)%scale*hbg%ymean_rel
     do is = 1,size(sbg)
         if (sbg(is)%relative) sbg(is)%ymean = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
     enddo
