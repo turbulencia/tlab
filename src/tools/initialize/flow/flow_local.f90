@@ -1,94 +1,146 @@
-#include "types.h"
 #include "dns_const.h"
+#include "dns_error.h"
 
 module FLOW_LOCAL
-    use TLAB_TYPES, only: profiles_dt, discrete_dt, wp, wi
+    use TLAB_CONSTANTS, only: efile, lfile, wp, wi, pi_wp
+    use TLAB_TYPES, only: profiles_dt, discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: g, qbg
+    use TLAB_VARS, only: g, qbg, tbg, hbg
+    use TLAB_PROCS
     use IO_FIELDS
     use AVGS, only: AVG1V2D
+    use PROFILES
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
-
     implicit none
     save
-    ! -------------------------------------------------------------------
-    integer(wi) :: flag_u, flag_t, flag_dilatation, flag_mixture
+    private
 
-    type(profiles_dt) :: Kini                 ! Geometry of perturbation of initial boundary condition
+    ! -------------------------------------------------------------------
+    integer(wi) :: flag_u, flag_t               ! Type of perturbation in velocity and thermodynamic fields
+    integer, parameter :: PERT_NONE = 0
+    integer, parameter :: PERT_DISCRETE = 1
+    integer, parameter :: PERT_BROADBAND = 2
+    integer, parameter :: PERT_BROADBAND_VORTICITY = 3
+    integer, parameter :: PERT_BROADBAND_POTENTIAL = 4
+
+    integer(wi) :: flag_wall ! Boundary conditions: 0  Free-Slip/Free-Slip
+    !                                               1  No-Slip/Free-Slip
+    !                                               2  Free-Slip/No-Slip
+    !                                               3  No-Slip/No-Slip
+
+    logical :: RemoveDilatation
+
+    type(profiles_dt) :: IniK                   ! Geometry of perturbation of initial boundary condition
     real(wp) :: norm_ini_u, norm_ini_p          ! Scaling of perturbation
     type(discrete_dt) :: fp                     ! Discrete perturbation
 
-    integer(wi) :: flag_wall ! Boundary conditions: 0  Free-Slip/Free-Slip
-    ! 1  No-Slip/Free-Slip
-    ! 2  Free-Slip/No-Slip
-    ! 3  No-Slip/No-Slip
+    public :: flag_u, flag_t, IniK, norm_ini_p
+    public :: PERT_DISCRETE, PERT_BROADBAND, PERT_BROADBAND_POTENTIAL, PERT_BROADBAND_VORTICITY
+    public :: FLOW_READ_LOCAL
+    public :: VELOCITY_BROADBAND, VELOCITY_DISCRETE
+    public :: DENSITY_FLUCTUATION, PRESSURE_FLUCTUATION ! Only in compressible formulation
+
     ! -------------------------------------------------------------------
     integer(wi) i, j, k
-
     integer(wi) im, idsp, kdsp
     real(wp) wx, wz, wx_1, wz_1
-    type(profiles_dt) prof_loc
-
     real(wp), dimension(:), pointer :: xn, zn
 
 contains
 
     ! ###################################################################
-    subroutine FLOW_SHAPE(wrk1d)
-        use PROFILES
-        real(wp), dimension(jmax, 5), intent(INOUT) :: wrk1d
+    subroutine FLOW_READ_LOCAL(inifile)
+        character(len=*), intent(in) :: inifile
 
         ! -------------------------------------------------------------------
-        integer(wi) bcs(2, 2)
-        real(wp) yr
+        character*512 sRes
+        character*32 bakfile
 
-        real(wp), dimension(:), pointer :: yn
+        integer(wi) :: bcs_flow_jmin, bcs_flow_jmax ! Boundary conditions
+        integer :: IniKvalid(6) = [PROFILE_NONE,PROFILE_GAUSSIAN, PROFILE_GAUSSIAN_ANTISYM, PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_SURFACE, PROFILE_PARABOLIC_SURFACE]
 
         ! ###################################################################
-        bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+        bakfile = trim(adjustl(inifile))//'.bak'
 
-        yn => g(2)%nodes
-        prof_loc= Kini
-        prof_loc%delta=C_1_R
-        prof_loc%mean=C_0_R
-        do j = 1, jmax                               ! Wall-normal velocity
-            wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, yn(j))
-        end do
-        call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-        wrk1d(:, 2) = -wrk1d(:, 2)                     ! Negative of the derivative of f, wall-parallel velocity
+        call TLAB_WRITE_ASCII(lfile, 'Reading local input data')
 
-        select case (Kini%type)
-        case (PROFILE_PARABOLIC_SURFACE)
-            ! Zero wall-parallel velocity for no-slip condition, multiply by parabolic again, f=f*f
-            wrk1d(:, 2) = C_2_R*wrk1d(:, 2)*wrk1d(:, 1)          ! Wall-parallel velocity
-            wrk1d(:, 1) = wrk1d(:, 1)**C_2_R                     ! Wall-normal velocity
+        ! ###################################################################
+        call TLAB_WRITE_ASCII(bakfile, '#')
+        call TLAB_WRITE_ASCII(bakfile, '#[IniFields]')
+        call TLAB_WRITE_ASCII(bakfile, '#Velocity=<option>')
+        call TLAB_WRITE_ASCII(bakfile, '#Temperature=<option>')
+        call TLAB_WRITE_ASCII(bakfile, '#ForceDilatation=<yes/no>')
+        call TLAB_WRITE_ASCII(bakfile, '#ProfileIniK=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#ThickIniK=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#YMeanIniK=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#NormalizeK=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#NormalizeP=<value>')
 
-        case (PROFILE_GAUSSIAN_SURFACE)
-            ! Zero wall-normal derivative of wall-parallel velocity for free-slip and potentialvelocity mode, f=f*tanh
-            if (flag_wall == 1 .or. flag_wall == 3) then  ! jmin
-                do j = 1, jmax
-                    yr = C_05_R*(yn(j) - yn(1))/Kini%thick
-                    wrk1d(j, 2) = wrk1d(j, 2)*TANH(yr)**2 - &       ! Wall-parallel velocity
-                                  wrk1d(j, 1)*TANH(yr)/COSH(yr)**2/Kini%thick
-                    wrk1d(j, 1) = wrk1d(j, 1)*TANH(yr)**2           ! Wall-normal velocity
-                end do
-            end if
+        call SCANINICHAR(bakfile, inifile, 'IniFields', 'Velocity', 'None', sRes)
+        if (trim(adjustl(sRes)) == 'none') then; flag_u = PERT_NONE
+        else if (trim(adjustl(sRes)) == 'velocitydiscrete') then; flag_u = PERT_DISCRETE
+        else if (trim(adjustl(sRes)) == 'velocitybroadband') then; flag_u = PERT_BROADBAND
+        else if (trim(adjustl(sRes)) == 'vorticitybroadband') then; flag_u = PERT_BROADBAND_VORTICITY
+        else if (trim(adjustl(sRes)) == 'potentialbroadband') then; flag_u = PERT_BROADBAND_POTENTIAL
+        else
+            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Velocity forcing type unknown')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
 
-            if (flag_wall == 2 .or. flag_wall == 3) then  ! jmax
-                do j = 1, jmax
-                    yr = C_05_R*(yn(jmax) - yn(j))/Kini%thick
-                    wrk1d(j, 2) = wrk1d(j, 2)*TANH(yr)**2 + &       ! Wall-parallel velocity
-                                  wrk1d(j, 1)*TANH(yr)/COSH(yr)**2/Kini%thick
-                    wrk1d(j, 1) = wrk1d(j, 1)*TANH(yr)**2           ! Wall-normal velocity
-                end do
-            end if
+        RemoveDilatation = .true.
+        call SCANINICHAR(bakfile, inifile, 'IniFields', 'ForceDilatation', 'yes', sRes)
+        if (trim(adjustl(sRes)) == 'no') RemoveDilatation = .false.
 
-        end select
+        call PROFILES_READBLOCK(bakfile, inifile, 'IniFields', 'IniK', IniK)
+        if (.not. any(IniKvalid == IniK%type)) then
+            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Undeveloped IniK type.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
+        IniK%delta = 1.0_wp
+        IniK%mean = 0.0_wp
+
+        call SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeK', '-1.0', norm_ini_u)
+        call SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeP', '-1.0', norm_ini_p)
+
+        ! Boundary conditions
+        flag_wall = 0
+        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'freeslip', sRes)
+        if (trim(adjustl(sRes)) == 'none') then; bcs_flow_jmin = DNS_BCS_NONE
+        else if (trim(adjustl(sRes)) == 'noslip') then; bcs_flow_jmin = DNS_BCS_DIRICHLET; flag_wall = flag_wall + 1
+        else if (trim(adjustl(sRes)) == 'freeslip') then; bcs_flow_jmin = DNS_BCS_NEUMANN
+        else
+            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmin.')
+            call TLAB_STOP(DNS_ERROR_IBC)
+        end if
+        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmax', 'freeslip', sRes)
+        if (trim(adjustl(sRes)) == 'none') then; bcs_flow_jmax = DNS_BCS_NONE
+        else if (trim(adjustl(sRes)) == 'noslip') then; bcs_flow_jmax = DNS_BCS_DIRICHLET; flag_wall = flag_wall + 2
+        else if (trim(adjustl(sRes)) == 'freeslip') then; bcs_flow_jmax = DNS_BCS_NEUMANN
+        else
+            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmax.')
+            call TLAB_STOP(DNS_ERROR_IBC)
+        end if
+
+        ! In compressible formulation
+        call SCANINICHAR(bakfile, inifile, 'IniFields', 'Temperature', 'None', sRes)
+        if (trim(adjustl(sRes)) == 'none') then; flag_t = 0
+        else if (trim(adjustl(sRes)) == 'planediscrete') then; flag_t = PERT_DISCRETE
+        else if (trim(adjustl(sRes)) == 'planebroadband') then; flag_t = PERT_BROADBAND
+        else
+            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Temperature forcing type unknown')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
+
+        ! Discrete Forcing
+        call DISCRETE_READBLOCK(bakfile, inifile, 'Discrete', fp) ! Modulation type in fp%type
+        ! specific for this tool
+        call SCANINIREAL(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
+        call SCANINIREAL(bakfile, inifile, 'Discrete', 'ThickStep', '-1.0', fp%parameters(2))
 
         return
-    end subroutine FLOW_SHAPE
+    end subroutine FLOW_READ_LOCAL
 
     ! ###################################################################
     subroutine VELOCITY_DISCRETE(u, v, w, wrk1d, wrk2d)
@@ -111,25 +163,28 @@ contains
 
         call FLOW_SHAPE(wrk1d)
 
-        wx_1 = C_2_R*C_PI_R/g(1)%scale ! Fundamental wavelengths
-        wz_1 = C_2_R*C_PI_R/g(3)%scale
+        wx_1 = 2.0_wp*pi_wp/g(1)%scale ! Fundamental wavelengths
+        wz_1 = 2.0_wp*pi_wp/g(3)%scale
 
-        wrk2d = C_0_R
+        wrk2d = 0.0_wp
         do im = 1, fp%size
-            wx = M_REAL(fp%modex(im))*wx_1
-            wz = M_REAL(fp%modez(im))*wz_1
+            wx = real(fp%modex(im), wp)*wx_1
+            wz = real(fp%modez(im), wp)*wz_1
 
             ! Factor to impose solenoidal constraint
             if (fp%modex(im) == 0 .and. fp%modez(im) == 0) then; exit
-            elseif (fp%modez(im) == 0) then; factorx = C_1_R/wx; factorz = C_0_R
-            elseif (fp%modex(im) == 0) then; factorx = C_0_R; factorz = C_1_R/wz
-            else; factorx = C_05_R/wx; factorz = C_05_R/wz
+            elseif (fp%modez(im) == 0) then; factorx = 1.0_wp/wx; factorz = 0.0_wp
+            elseif (fp%modex(im) == 0) then; factorx = 0.0_wp; factorz = 1.0_wp/wz
+            else; factorx = 0.5_wp/wx; factorz = 0.5_wp/wz
             end if
 
             do k = 1, kmax
-wrk2d(:,k,2) = wrk2d(:,k,2) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +fp%phasex(im) ) *COS( wz *zn(kdsp+k) +fp%phasez(im) )
-          wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *SIN( wx *xn(idsp+1:idsp+imax) +fp%phasex(im) ) *COS( wz *zn(kdsp+k) +fp%phasez(im) ) *factorx
-          wrk2d(:,k,3) = wrk2d(:,k,3) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +fp%phasex(im) ) *SIN( wz *zn(kdsp+k) +fp%phasez(im) ) *factorz
+                wrk2d(:, k, 2) = wrk2d(:, k, 2) + fp%amplitude(im)*cos(wx*xn(idsp + 1:idsp + imax) + fp%phasex(im)) &
+                                 *cos(wz*zn(kdsp + k) + fp%phasez(im))
+                wrk2d(:, k, 1) = wrk2d(:, k, 1) + fp%amplitude(im)*sin(wx*xn(idsp + 1:idsp + imax) + fp%phasex(im)) &
+                                 *cos(wz*zn(kdsp + k) + fp%phasez(im))*factorx
+                wrk2d(:, k, 3) = wrk2d(:, k, 3) + fp%amplitude(im)*cos(wx*xn(idsp + 1:idsp + imax) + fp%phasex(im)) &
+                                 *sin(wz*zn(kdsp + k) + fp%phasez(im))*factorz
             end do
 
         end do
@@ -142,7 +197,7 @@ wrk2d(:,k,2) = wrk2d(:,k,2) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
             end do
         end do
 
-        if (norm_ini_u >= C_0_R) call FLOW_NORMALIZE(u, v, w)
+        if (norm_ini_u >= 0.0_wp) call FLOW_NORMALIZE(u, v, w)
 
         return
     end subroutine VELOCITY_DISCRETE
@@ -182,66 +237,14 @@ wrk2d(:,k,2) = wrk2d(:,k,2) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 
         ! ###################################################################
         select case (flag_u)
-        case (2) ! Velocity given
+        case (PERT_BROADBAND)               ! Velocity u given
             do j = 1, jmax
                 u(:, j, :) = u(:, j, :)*wrk1d(j, 2)
                 v(:, j, :) = v(:, j, :)*wrk1d(j, 1)
                 w(:, j, :) = w(:, j, :)*wrk1d(j, 2)
             end do
 
-        case (3)  ! Vorticity given, solve lap(u) = - rot(vort), vort = rot(u)
-            call FI_CURL(imax, jmax, kmax, u, v, w, ax, ay, az, tmp4, wrk2d, wrk3d)
-            do j = 1, jmax
-                ax(:, j, :) = -ax(:, j, :)*wrk1d(j, 2)
-                ay(:, j, :) = -ay(:, j, :)*wrk1d(j, 1)
-                az(:, j, :) = -az(:, j, :)*wrk1d(j, 2)
-            end do
-            call FI_CURL(imax, jmax, kmax, ax, ay, az, u, v, w, tmp4, wrk2d, wrk3d)
-
-            ! Solve lap(u) = - (rot(vort))_x
-            if (flag_wall == 0) then; ibc = 3         ! FreeSlip
-            else; ibc = 0
-            end if  ! NoSlip
-            if (g(1)%periodic .and. g(3)%periodic) then
-                wrk2d(:, :, 1:2) = C_0_R                      ! bcs
-                call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, ibc, &
-                                     u, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
-            else                                          ! General treatment, need global variable ipos,jpos,kpos,ci,cj,ck
-#ifdef USE_CGLOC
-                call CGPOISSON(1, imax, jmax, kmax, g(3)%size, u, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, wrk2d)
-#endif
-            end if
-
-            ! Solve lap(v) = - (rot(vort))_y
-            ibc = 0                                       ! No penetration
-            if (g(1)%periodic .and. g(3)%periodic) then
-                wrk2d(:, :, 1:2) = C_0_R                      ! bcs
-                call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, ibc, &
-                                     v, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
-            else                                          ! General treatment
-#ifdef USE_CGLOC
-                call CGPOISSON(1, imax, jmax, kmax, g(3)%size, v, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, wrk2d)
-#endif
-            end if
-
-            ! Solve lap(w) = - (rot(vort))_z
-            if (g(3)%size > 1) then
-                if (flag_wall == 0) then; ibc = 3         ! FreeSlip
-                else; ibc = 0
-                end if  ! NoSlip
-                if (g(1)%periodic .and. g(3)%periodic) then
-                    wrk2d(:, :, 1:2) = C_0_R                      ! bcs
-                    call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, ibc, &
-                                         w, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
-                else                                          ! General treatment
-#ifdef USE_CGLOC
-                    call CGPOISSON(1, imax, jmax, kmax, g(3)%size, w, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, wrk2d)
-#endif
-                end if
-            end if
-
-            ! ###################################################################
-        case (4) ! Vector potential given
+        case (PERT_BROADBAND_POTENTIAL)     ! Velocity potential u given, calculate u = rot(u)
             do j = 1, jmax
                 ax(:, j, :) = u(:, j, :)*wrk1d(j, 1) ! Horizontal components of vector potential give vertical velocity
                 ay(:, j, :) = v(:, j, :)*wrk1d(j, 2)
@@ -264,20 +267,121 @@ wrk2d(:,k,2) = wrk2d(:,k,2) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
                 w = w - tmp4
             end if
 
+        case (PERT_BROADBAND_VORTICITY)     ! Vorticity given, solve lap(u) = - rot(vort), vort = rot(u)
+            call FI_CURL(imax, jmax, kmax, u, v, w, ax, ay, az, tmp4, wrk2d, wrk3d)
+            do j = 1, jmax
+                ax(:, j, :) = -ax(:, j, :)*wrk1d(j, 2)
+                ay(:, j, :) = -ay(:, j, :)*wrk1d(j, 1)
+                az(:, j, :) = -az(:, j, :)*wrk1d(j, 2)
+            end do
+            call FI_CURL(imax, jmax, kmax, ax, ay, az, u, v, w, tmp4, wrk2d, wrk3d)
+
+            ! Solve lap(u) = - (rot(vort))_x
+            if (flag_wall == 0) then; ibc = 3         ! FreeSlip
+            else; ibc = 0
+            end if  ! NoSlip
+            if (g(1)%periodic .and. g(3)%periodic) then
+                wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
+                call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, ibc, &
+                                     u, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+            else                                          ! General treatment, need global variable ipos,jpos,kpos,ci,cj,ck
+#ifdef USE_CGLOC
+                call CGPOISSON(1, imax, jmax, kmax, g(3)%size, u, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, wrk2d)
+#endif
+            end if
+
+            ! Solve lap(v) = - (rot(vort))_y
+            ibc = 0                                       ! No penetration
+            if (g(1)%periodic .and. g(3)%periodic) then
+                wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
+                call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, ibc, &
+                                     v, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+            else                                          ! General treatment
+#ifdef USE_CGLOC
+                call CGPOISSON(1, imax, jmax, kmax, g(3)%size, v, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, wrk2d)
+#endif
+            end if
+
+            ! Solve lap(w) = - (rot(vort))_z
+            if (g(3)%size > 1) then
+                if (flag_wall == 0) then; ibc = 3         ! FreeSlip
+                else; ibc = 0
+                end if  ! NoSlip
+                if (g(1)%periodic .and. g(3)%periodic) then
+                    wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
+                    call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, ibc, &
+                                         w, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+                else                                          ! General treatment
+#ifdef USE_CGLOC
+                    call CGPOISSON(1, imax, jmax, kmax, g(3)%size, w, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, wrk2d)
+#endif
+                end if
+            end if
+
         end select
 
         ! ###################################################################
-        ! Remove dilatation (vort was not really a vorticity field because it was not solenoidal)
-        if (flag_dilatation == 1) then
+        if (RemoveDilatation) then  ! Remove dilatation (vort was not really a vorticity field because it was not solenoidal)
             call FI_SOLENOIDAL(flag_wall, imax, jmax, kmax, u, v, w, ax, ay, az, tmp4, tmp5, wrk1d, wrk2d, wrk3d)
         end if
 
-        if (g(3)%size == 1) w = C_0_R       ! Impose zero spanwise velocity in 2D case
+        if (g(3)%size == 1) w = 0.0_wp       ! Impose zero spanwise velocity in 2D case
 
-        if (norm_ini_u >= C_0_R) call FLOW_NORMALIZE(u, v, w)
+        if (norm_ini_u >= 0.0_wp) call FLOW_NORMALIZE(u, v, w)
 
         return
     end subroutine VELOCITY_BROADBAND
+
+    ! ###################################################################
+    subroutine FLOW_SHAPE(wrk1d)
+        real(wp), dimension(jmax, 5), intent(inout) :: wrk1d
+
+        ! -------------------------------------------------------------------
+        integer(wi) bcs(2, 2)
+        real(wp) yr
+
+        real(wp), dimension(:), pointer :: yn
+
+        ! ###################################################################
+        bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+
+        yn => g(2)%nodes
+        do j = 1, jmax                               ! Wall-normal velocity
+            wrk1d(j, 1) = PROFILES_CALCULATE(IniK, yn(j))
+        end do
+        call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
+        wrk1d(:, 2) = -wrk1d(:, 2)                     ! Negative of the derivative of f, wall-parallel velocity
+
+        select case (IniK%type)
+        case (PROFILE_PARABOLIC_SURFACE)
+            ! Zero wall-parallel velocity for no-slip condition, multiply by parabolic again, f=f*f
+            wrk1d(:, 2) = 2.0_wp*wrk1d(:, 2)*wrk1d(:, 1)          ! Wall-parallel velocity
+            wrk1d(:, 1) = wrk1d(:, 1)**2.0_wp                     ! Wall-normal velocity
+
+        case (PROFILE_GAUSSIAN_SURFACE)
+            ! Zero wall-normal derivative of wall-parallel velocity for free-slip and potentialvelocity mode, f=f*tanh
+            if (flag_wall == 1 .or. flag_wall == 3) then  ! jmin
+                do j = 1, jmax
+                    yr = 0.5_wp*(yn(j) - yn(1))/IniK%thick
+                    wrk1d(j, 2) = wrk1d(j, 2)*tanh(yr)**2 - &       ! Wall-parallel velocity
+                                  wrk1d(j, 1)*tanh(yr)/cosh(yr)**2/IniK%thick
+                    wrk1d(j, 1) = wrk1d(j, 1)*tanh(yr)**2           ! Wall-normal velocity
+                end do
+            end if
+
+            if (flag_wall == 2 .or. flag_wall == 3) then  ! jmax
+                do j = 1, jmax
+                    yr = 0.5_wp*(yn(jmax) - yn(j))/IniK%thick
+                    wrk1d(j, 2) = wrk1d(j, 2)*tanh(yr)**2 + &       ! Wall-parallel velocity
+                                  wrk1d(j, 1)*tanh(yr)/cosh(yr)**2/IniK%thick
+                    wrk1d(j, 1) = wrk1d(j, 1)*tanh(yr)**2           ! Wall-normal velocity
+                end do
+            end if
+
+        end select
+
+        return
+    end subroutine FLOW_SHAPE
 
     ! ###################################################################
     subroutine FLOW_NORMALIZE(u, v, w)
@@ -287,14 +391,14 @@ wrk2d(:,k,2) = wrk2d(:,k,2) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         real(wp) dummy, amplify
 
         ! ###################################################################
-        amplify = C_0_R                                      ! Maximum across the layer
+        amplify = 0.0_wp                                      ! Maximum across the layer
         do j = 1, jmax
             dummy = AVG1V2D(imax, jmax, kmax, j, 2, u) + AVG1V2D(imax, jmax, kmax, j, 2, v) + AVG1V2D(imax, jmax, kmax, j, 2, w)
-            amplify = MAX(dummy, amplify)
+            amplify = max(dummy, amplify)
         end do
-        amplify = C_05_R*amplify
+        amplify = 0.5_wp*amplify
 
-        amplify = SQRT(norm_ini_u/amplify)           ! Scaling factor to normalize to maximum TKE
+        amplify = sqrt(norm_ini_u/amplify)           ! Scaling factor to normalize to maximum TKE
 
         u = u*amplify
         v = v*amplify
@@ -302,5 +406,193 @@ wrk2d(:,k,2) = wrk2d(:,k,2) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 
         return
     end subroutine FLOW_NORMALIZE
+
+    ! ###################################################################
+    !# Perturbation of the thermodynamic fields by a displacement of the reference center plane.
+    !# Array s enters with the scalar total field, including fluctuations.
+    !# Only used in compressible formulation
+    !# Together discrete and broadband in one procedure
+    !########################################################################
+    subroutine DENSITY_FLUCTUATION(s, p, rho, T, h, disp)
+        use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
+        use THERMO_VARS, only: imixture
+
+        real(wp), dimension(imax, jmax, kmax) :: T, h, rho, p
+        real(wp), dimension(imax, jmax, kmax, *) :: s
+        real(wp), dimension(imax, kmax) :: disp
+
+        ! -------------------------------------------------------------------
+        real(wp) dummy
+        real(wp) xcenter, amplify
+        type(profiles_dt) :: prof_loc
+
+        real(wp), dimension(:), pointer :: x, y, z
+
+        ! ###################################################################
+        ! Define pointers
+        x => g(1)%nodes
+        y => g(2)%nodes
+        z => g(3)%nodes
+
+#ifdef USE_MPI
+        idsp = ims_offset_i; kdsp = ims_offset_k
+#else
+        idsp = 0; kdsp = 0
+#endif
+
+        ! ###################################################################
+        ! Center plane displacement
+        ! ###################################################################
+        disp = 0.0_wp
+
+        select case (flag_t)
+        case (PERT_BROADBAND)
+            dummy = rtime   ! rtime is overwritten in io_read_fields
+            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, 1, kmax, 1, 1, disp, s) ! using array s as aux array
+            rtime = dummy
+            dummy = AVG1V2D(imax, 1, kmax, 1, 1, disp)     ! remove mean
+            disp = disp - dummy
+
+        case (PERT_DISCRETE)
+            wx_1 = 2.0_wp*pi_wp/g(1)%scale ! Fundamental wavelengths
+            wz_1 = 2.0_wp*pi_wp/g(3)%scale
+
+            do im = 1, fp%size
+                wx = real(fp%modex(im), wp)*wx_1
+                wz = real(fp%modez(im), wp)*wz_1
+
+                do k = 1, kmax
+                    disp(:, k) = disp(:, k) + fp%amplitude(im)*cos(wx*x(idsp + 1:idsp + imax) + fp%phasex(im)) &
+                                 *cos(wz*z(kdsp + k) + fp%phasez(im))
+                end do
+
+            end do
+
+        end select
+
+        ! -------------------------------------------------------------------
+        ! Modulation
+        ! -------------------------------------------------------------------
+        if (fp%type == PROFILE_GAUSSIAN .and. fp%parameters(1) > 0.0_wp) then
+            do k = 1, kmax
+                do i = 1, imax
+                    xcenter = x(i) - g(1)%scale*0.5_wp - x(1)
+                    amplify = exp(-0.5_wp*(xcenter/fp%parameters(1))**2)
+                    disp(i, k) = disp(i, k)*amplify
+                end do
+            end do
+        end if
+
+        ! ###################################################################
+        ! Perturbation in the thermodynamic fields
+        ! ###################################################################
+        if (tbg%type /= PROFILE_NONE) then
+            prof_loc = tbg
+            do k = 1, kmax
+                do i = 1, imax
+                    prof_loc%ymean = tbg%ymean + disp(i, k)
+                    prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
+                    prof_loc%mean = tbg%mean + 0.5_wp*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
+                    do j = 1, jmax
+                        T(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
+                    end do
+                end do
+            end do
+
+            if (imixture == MIXT_TYPE_AIRWATER) then
+                call THERMO_AIRWATER_PT(imax, jmax, kmax, s, p, T)
+            end if
+
+            call THERMO_THERMAL_DENSITY(imax, jmax, kmax, s, p, T, rho)
+
+        end if
+
+        if (hbg%type /= PROFILE_NONE) then
+            prof_loc = hbg
+            do k = 1, kmax
+                do i = 1, imax
+                    prof_loc%ymean = hbg%ymean + disp(i, k)
+                    prof_loc%delta = hbg%delta + (hbg%uslope - hbg%lslope)*disp(i, k)*g(2)%scale
+                    prof_loc%mean = hbg%mean + 0.5_wp*(hbg%uslope + hbg%lslope)*disp(i, k)*g(2)%scale
+                    do j = 1, jmax
+                        h(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
+                    end do
+                end do
+            end do
+
+            if (imixture == MIXT_TYPE_AIRWATER) then
+                call THERMO_AIRWATER_PH_RE(imax, jmax, kmax, s, p, h, T)
+            end if
+
+            call THERMO_THERMAL_DENSITY(imax, jmax, kmax, s, p, T, rho)
+
+        end if
+
+        return
+    end subroutine DENSITY_FLUCTUATION
+
+    ! ###################################################################
+    !# solve Poisson equation for p', nabla^2 p' = d/dx_i d/dx_j (rho_0 u_i u_j),
+    !# assuming p/rho^\gamma0 constant(Homentropic conditions)
+    ! ###################################################################
+    subroutine PRESSURE_FLUCTUATION(u, v, w, rho, p, pprime, txc1, txc2, txc3, txc4, wrk1d, wrk2d, wrk3d)
+        use THERMO_VARS, only: gama0
+
+        real(wp), dimension(imax, jmax, kmax), intent(in) :: u, v, w
+        real(wp), dimension(imax, jmax, kmax), intent(inout) :: rho, p, pprime
+        real(wp), dimension(imax, jmax, kmax), intent(inout) :: txc1, txc2, txc3, txc4, wrk3d
+        real(wp), dimension(imax, kmax, *), intent(inout) :: wrk2d
+        real(wp), dimension(jmax, *), intent(inout) :: wrk1d
+
+        ! -------------------------------------------------------------------
+        integer(wi) bcs(2, 2)
+
+        ! ###################################################################
+        ! Calculate RHS d/dx_i d/dx_j (u_i u_j), stored in txc4
+
+        ! terms with u
+        txc1 = rho*u*u; txc2 = rho*u*v; txc3 = rho*u*w
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc3, txc4, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc2, txc3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc1, txc2, wrk3d, wrk2d, wrk3d)
+        txc2 = 2.0_wp*(txc4 + txc3) + txc2
+
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc2, txc4, wrk3d, wrk2d, wrk3d)
+
+        ! terms with v
+        txc1 = rho*v*v; txc2 = rho*v*w
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc2, txc3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc1, txc2, wrk3d, wrk2d, wrk3d)
+        txc2 = txc2 + 2.0_wp*txc3
+
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc2, txc1, wrk3d, wrk2d, wrk3d)
+        txc4 = txc4 + txc1
+
+        ! terms with w
+        txc1 = rho*w*w
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc1, txc2, wrk3d, wrk2d, wrk3d)
+
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc2, txc1, wrk3d, wrk2d, wrk3d)
+        txc4 = txc4 + txc1
+
+        ! Solve Poisson equation; pprime contains fluctuating p' (BCs are equal to zero!)
+        if (g(1)%periodic .and. g(3)%periodic) then ! Doubly periodic in xOz
+            wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
+            pprime = -txc4          ! change of forcing term sign
+            call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, 0, &
+                                 pprime, wrk3d, txc1, txc2, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+        else                                      ! General treatment
+#ifdef USE_CGLOC
+            ! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
+            call CGPOISSON(i1, imax, jmax, kmax, g(3)%size, pprime, txc4, txc3, txc2, ipos, jpos, kpos, cj, ck, wrk2d)
+#endif
+        end if
+
+        ! An amplification factor norm_ini_p is allowed as in previous versions
+        rho = (norm_ini_p*pprime/p/gama0 + 1.0_wp)*rho
+        p = norm_ini_p*pprime + p
+
+        return
+    end subroutine PRESSURE_FLUCTUATION
 
 end module FLOW_LOCAL

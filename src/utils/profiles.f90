@@ -42,9 +42,13 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     else if (trim(adjustl(sRes)) == 'erfantisym')        then; var%type = PROFILE_ERF_ANTISYM
     else if (trim(adjustl(sRes)) == 'bickley')           then; var%type = PROFILE_BICKLEY
     else if (trim(adjustl(sRes)) == 'gaussian')          then; var%type = PROFILE_GAUSSIAN
+    else if (trim(adjustl(sRes)) == 'gaussiansurface')   then; var%type = PROFILE_GAUSSIAN_SURFACE
+    else if (trim(adjustl(sRes)) == 'gaussianvaricose')  then; var%type = PROFILE_GAUSSIAN_ANTISYM
+    else if (trim(adjustl(sRes)) == 'gaussiansinuous')   then; var%type = PROFILE_GAUSSIAN_SYM
     else if (trim(adjustl(sRes)) == 'ekman')             then; var%type = PROFILE_EKMAN_U
     else if (trim(adjustl(sRes)) == 'ekmanp')            then; var%type = PROFILE_EKMAN_U_P
     else if (trim(adjustl(sRes)) == 'parabolic')         then; var%type = PROFILE_PARABOLIC
+    else if (trim(adjustl(sRes)) == 'parabolicsurface')  then; var%type = PROFILE_PARABOLIC_SURFACE
     else if (trim(adjustl(sRes)) == 'mixedlayer')        then; var%type = PROFILE_MIXEDLAYER
     else
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong '//trim(adjustl(tag))//' profile.')

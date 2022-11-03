@@ -13,12 +13,13 @@ program INIFLOW
     use TLAB_MPI_PROCS
 #endif
     use THERMO_VARS, only: imixture
-    use FLOW_LOCAL
     use IO_FIELDS
 #ifdef USE_CGLOC
     use CG_GLOBAL, only: cg_unif, cg_ord
 #endif
-
+    use FLOW_LOCAL
+    use FLOW_MEAN
+    
     implicit none
 
     ! -------------------------------------------------------------------
@@ -52,7 +53,7 @@ program INIFLOW
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
     call FI_BACKGROUND_INITIALIZE(wrk1d)
-    if (Kini%relative) Kini%ymean = g(2)%nodes(1) + g(2)%scale*Kini%ymean_rel
+    if (IniK%relative) IniK%ymean = g(2)%nodes(1) + g(2)%scale*IniK%ymean_rel
 
     ! Staggering of the pressure grid not implemented here
     if (istagger == 1 .or. ivfilter == 1) then
@@ -103,11 +104,11 @@ program INIFLOW
     call VELOCITY_MEAN(q(1, 1), q(1, 2), q(1, 3), wrk1d)
 
     select case (flag_u)
-    case (1)
+    case (PERT_DISCRETE)
         call VELOCITY_DISCRETE(txc(1, 1), txc(1, 2), txc(1, 3), wrk1d, wrk2d)
         q(1:isize_field, 1:3) = q(1:isize_field, 1:3) + txc(1:isize_field, 1:3)
 
-    case (2, 3, 4)
+    case (PERT_BROADBAND, PERT_BROADBAND_POTENTIAL, PERT_BROADBAND_VORTICITY)
         call VELOCITY_BROADBAND(txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), &
                                 wrk1d, wrk2d, wrk3d)
         q(1:isize_field, 1:3) = q(1:isize_field, 1:3) + txc(1:isize_field, 1:3)
@@ -115,6 +116,7 @@ program INIFLOW
     end select
 
     ! ###################################################################
+    ! Compressible formulation
     if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
         call TLAB_WRITE_ASCII(lfile, 'Initializing pressure and density.')
 
@@ -135,8 +137,8 @@ program INIFLOW
             call IO_READ_FIELDS(TRIM(ADJUSTL(tag_scal))//'ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, s, wrk3d)
         end if
 
-        if (flag_t == 4 .or. flag_t == 5) then
-            call DENSITY_FLUCTUATION(flag_t, s, p_loc, r_loc, txc(1, 1), txc(1, 2), wrk2d)
+        if (flag_t /= 0) then
+            call DENSITY_FLUCTUATION(s, p_loc, r_loc, txc(1, 1), txc(1, 2), wrk2d)
         end if
 
         ! Calculate specfic energy. Array s should contain the species fields at this point.
