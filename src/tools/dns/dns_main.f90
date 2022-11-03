@@ -43,9 +43,6 @@ PROGRAM DNS
 
   CALL IO_READ_GLOBAL(ifile)
     CALL PARTICLE_READ_GLOBAL(ifile)
-#ifdef CHEMISTRY
-  CALL CHEM_READ_GLOBAL(ifile)
-#endif
   CALL DNS_READ_LOCAL(ifile)
   IF ( imode_ibm == 1 ) THEN
     CALL IBM_READ_INI(ifile)

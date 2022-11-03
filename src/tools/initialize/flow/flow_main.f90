@@ -18,9 +18,6 @@ program INIFLOW
 #ifdef USE_CGLOC
     use CG_GLOBAL, only: cg_unif, cg_ord
 #endif
-#ifdef CHEMISTRY
-    use CHEM_GLOBAL
-#endif
 
     implicit none
 
@@ -35,9 +32,6 @@ program INIFLOW
 
     call IO_READ_GLOBAL(ifile)
     call FLOW_READ_LOCAL(ifile)
-#ifdef CHEMISTRY
-    call CHEM_READ_GLOBAL(ifile)
-#endif
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE

@@ -27,9 +27,6 @@ program INISCAL
 
     call IO_READ_GLOBAL(ifile)
     call SCAL_READ_LOCAL(ifile)
-#ifdef CHEMISTRY
-    call CHEM_READ_GLOBAL(ifile)
-#endif
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE

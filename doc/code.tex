@@ -142,8 +142,8 @@ Data is case insensitive.
 \tt TermRadiation   & \tt None, Bulk1dGlobal, Bulk1dLocal & Formulation of radiation terms (see {\tt operators/opr\_radiation}).\\
 \tt SpaceOrder      & \tt CompactJacobian4, CompactJacobian6, CompactDirect6 & Finite difference method used for spatial derivatives.\\
 \tt TimeOrder       & \tt RungeKuttaExplicit3, RungeKuttaExplicit4, RungeKuttaDiffusion3 & Runge-Kutta method used for time advancement.\\
-\tt TimeStep        & {\it value} & If positive, constant time step to be used in time marching scheme.\\
 \tt TimeCFL         & {\it value} & Courant number for the advection part.\\
+\tt TimeStep        & {\it value} & If \texttt{TimeCFL} is negative, constant time step in time marching scheme.\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -65,12 +65,6 @@ SUBROUTINE DNS_LOGS(iflag)
      line1 = line1(1:ip)//' '//' D#';   ip = ip + 1 + 10
      line1 = line1(1:ip)//' '//' visc'; ip = ip + 1 + 10
 
-#ifdef CHEMISTRY
-     IF ( ireactive .NE. CHEM_NONE ) THEN
-        line1 = line1(1:ip)//' '//' R#'; ip = ip + 1 + 10
-     ENDIF
-#endif
-
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         line1 = line1(1:ip)//' '//' DilMin'; ip = ip + 1 + 13
         line1 = line1(1:ip)//' '//' DilMax'; ip = ip + 1 + 13
@@ -98,15 +92,6 @@ SUBROUTINE DNS_LOGS(iflag)
   IF ( iflag .EQ. 2 ) THEN
      WRITE(line1,100) INT(logs_data(1)), itime, rtime, dtime, (logs_data(ip),ip=2,3), visc
 100  FORMAT((1X,I1),(1X,I7),(1X,E13.6),4(1X,E10.3))
-
-#ifdef CHEMISTRY
-     IF ( ireactive .NE. CHEM_NONE ) THEN
-        WRITE(line2,101) logs_data(4)
-101     FORMAT(1(1X,E10.3))
-        line1 = TRIM(line1)//TRIM(line2)
-
-     ENDIF
-#endif
 
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         WRITE(line2,200) logs_data(10), logs_data(11)
