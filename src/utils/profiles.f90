@@ -113,8 +113,6 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
         end if
     end if
 
-    call SCANINIREAL(bakfile, inifile, block, 'ScaleHeight', '0.0', var%parameters(5))
-
     return
 end subroutine PROFILES_READBLOCK
 

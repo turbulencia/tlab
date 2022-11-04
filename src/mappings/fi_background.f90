@@ -17,7 +17,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
     use TLAB_VARS, only: rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
     use TLAB_VARS, only: buoyancy
     use TLAB_PROCS
-    use THERMO_VARS, only: imixture, GRATIO
+    use THERMO_VARS, only: imixture, GRATIO, scaleheight
     use PROFILES
 #ifdef USE_MPI
     use TLAB_MPI_VARS
@@ -69,9 +69,9 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 !     wrk1d(:,is) = sbg(is)%reference
     end do
 
-    if (pbg%parameters(5) > C_0_R) then
+    if (scaleheight > C_0_R) then
 ! Calculate derived thermodynamic profiles
-        epbackground = (g(2)%nodes - pbg%ymean)*GRATIO/pbg%parameters(5)
+        epbackground = (g(2)%nodes - pbg%ymean)*GRATIO/scaleheight
 
         if (buoyancy%active(2)) then
 !        CALL FI_HYDROSTATIC_H_OLD(g(2)%size, g(2)%nodes, wrk1d, epbackground, tbackground, pbackground, wrk1d(1,4))
@@ -86,7 +86,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
         call THERMO_AIRWATER_LINEAR(i1, g(2)%size, i1, wrk1d, wrk1d(1, inb_scal_array))
     end if
 
-    if (pbg%parameters(5) > C_0_R) then
+    if (scaleheight > C_0_R) then
         call THERMO_ANELASTIC_DENSITY(i1, g(2)%size, i1, wrk1d, epbackground, pbackground, rbackground)
         ribackground = C_1_R/rbackground
     end if

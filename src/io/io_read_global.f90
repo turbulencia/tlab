@@ -148,7 +148,6 @@ subroutine IO_READ_GLOBAL(inifile)
     else if (trim(adjustl(sRes)) == 'airvapor') then; imixture = MIXT_TYPE_AIRVAPOR
     else if (trim(adjustl(sRes)) == 'airwater') then; imixture = MIXT_TYPE_AIRWATER
     else if (trim(adjustl(sRes)) == 'airwaterlinear') then; imixture = MIXT_TYPE_AIRWATER_LINEAR
-    else if (trim(adjustl(sRes)) == 'chemkin') then; imixture = MIXT_TYPE_CHEMKIN ! use chemkin file to read the data
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong entry Main.Mixture model.')
         call TLAB_STOP(DNS_ERROR_OPTION)
@@ -565,9 +564,7 @@ subroutine IO_READ_GLOBAL(inifile)
 
     end if
 
-    if (imixture /= MIXT_TYPE_CHEMKIN) then
-        call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'ChemkinFile', 'none', chemkin_file)
-    end if
+    call SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)
 
     if (imixture == MIXT_TYPE_AIRWATER) then
         call SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'SmoothFactor', '0.1', dsmooth)
@@ -1271,9 +1268,9 @@ subroutine IO_READ_GLOBAL(inifile)
     case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
     end select
 
-    if ( imode_fdm == FDM_COM6_JACPENTA ) then ! CFL_max depends on max[g%mwn(:,1)]
+    if (imode_fdm == FDM_COM6_JACPENTA) then ! CFL_max depends on max[g%mwn(:,1)]
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacpenta6 requires adjusted CFL-number depending on C1N6M_ALPHA, C1N6M_BETA values.')
     end if
-  
+
     return
 end subroutine IO_READ_GLOBAL

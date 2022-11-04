@@ -21,8 +21,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
   USE TLAB_CONSTANTS, ONLY : efile, lfile
   USE TLAB_VARS
   USE TLAB_PROCS
-  USE THERMO_VARS, ONLY : imixture, MRATIO, GRATIO
-  USE THERMO_VARS, ONLY : THERMO_AI, WGHT_INV
+  USE THERMO_VARS
   USE IBM_VARS,    ONLY : gamma_0, gamma_1, gamma_f, gamma_s 
   USE AVGS,        ONLY : AVG_IK_V
 #ifdef TRACE_ON
@@ -753,7 +752,7 @@ SUBROUTINE AVG_FLOW_XZ(q,s, dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz, mean2d
     CALL THERMO_ANELASTIC_LAPSE_FR (imax,jmax,kmax, s,dudz,      epbackground,                         GAMMA_LOC(1,1,1),wrk3d)
     CALL AVG_IK_V(imax,jmax,kmax, jmax, GAMMA_LOC(1,1,1), g(1)%jac,g(3)%jac, lapse_fr(1), wrk1d, area)
     CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d,            g(1)%jac,g(3)%jac, bfreq_fr(1), wrk1d, area)
-    ! dummy = C_1_R /( pbg%parameters(5) *gama0 )
+    ! dummy = C_1_R /( scaleheight *gama0 )
     ! bfreq_fr(:) = -rR_y(:) /rbackground(:) -dummy *rR(:) /pbackground(:)
     bfreq_fr(:) = bfreq_fr(:) *buoyancy%vector(2)
 
