@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 
@@ -17,7 +16,7 @@ module TLAB_PROCS
     private
 
     character*128 :: str, line
-    TINTEGER :: ierr
+    integer :: ierr
 
     public :: TLAB_START
     public :: TLAB_STOP
@@ -58,8 +57,8 @@ contains
     subroutine TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, a, i1, s)
 
         character(len=*), intent(in) :: C_FILE_LOC
-        TREAL, dimension(:), allocatable, intent(inout) :: a
-        TINTEGER, intent(in) :: i1
+        real(wp), dimension(:), allocatable, intent(inout) :: a
+        integer(wi), intent(in) :: i1
         character(len=*), intent(in) :: s
 
         !#####################################################################
@@ -124,8 +123,8 @@ contains
     subroutine TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, a, i1, i2, s)
 
         character(len=*), intent(in) :: C_FILE_LOC
-        TREAL, dimension(:, :), allocatable, intent(inout) :: a
-        TINTEGER, intent(in) :: i1, i2
+        real(wp), dimension(:, :), allocatable, intent(inout) :: a
+        integer(wi), intent(in) :: i1, i2
         character(len=*), intent(in) :: s
 
         !#####################################################################
@@ -167,7 +166,7 @@ contains
 
         ims_time_min = MPI_WTIME()
 
-        ims_time_trans = C_0_R
+        ims_time_trans = 0.0_wp
 
 #endif
 

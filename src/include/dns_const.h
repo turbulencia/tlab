@@ -2,6 +2,9 @@
 #ifndef DNS_CONST_H_INCLUDED
 #define DNS_CONST_H_INCLUDED
 
+! write format of real numbers
+#define G_FORMAT_R  E13.5E3
+
 ! File formats
 #define IO_MPIIO      1
 #define IO_NETCDF     2

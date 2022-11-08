@@ -1,4 +1,5 @@
 #include "types.h"
+#include "dns_const.h"
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
 #endif
@@ -125,12 +126,12 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
      wrk2d(:,1:2) = C_0_R
      txc(1:isize_field,3) = a(1:isize_field,1)
 
-!     fft_reordering = 1
+!     fft_reordering = .true.
      CALL SYSTEM_CLOCK(t_srt,PROC_CYCLES,MAX_CYCLES)
      CALL OPR_FOURIER_F(i2, nx,ny,nz, txc(1,3),txc(1,1), txc(1,2), wrk2d,wrk3d)
      CALL OPR_FOURIER_B(i2, nx,ny,nz, txc(1,1),txc(1,2), wrk3d)
      CALL SYSTEM_CLOCK(t_end,PROC_CYCLES,MAX_CYCLES)
-!     fft_reordering = 0
+!     fft_reordering = .false.
 
      a(1:isize_field,2) = txc(1:isize_field,2)
 
