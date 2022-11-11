@@ -49,5 +49,7 @@ module TLAB_CONSTANTS
     integer, parameter :: longi = i8_             ! long integer type; different variable name to avoid errors
 
     real(wp), parameter :: pi_wp = 3.14159265358979323846_wp
+    real(wp), parameter :: small_wp = 1.0e-20_wp
+    real(wp), parameter :: big_wp = 1.0e20_wp
 
 end module TLAB_CONSTANTS
