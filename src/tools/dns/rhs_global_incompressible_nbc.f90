@@ -30,7 +30,8 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   !
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-  USE DNS_LOCAL,  ONLY : rkm_substep,rkm_endstep,tower_mode
+  USE TIME,  ONLY : rkm_substep,rkm_endstep
+  USE DNS_LOCAL,  ONLY : use_tower
 
   USE DNS_TOWER
 
@@ -608,7 +609,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
        tmp12,tmp11, tmp41,tmp42, BcsFlowJmin%ref(1,1,2),BcsFlowJmax%ref(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
 
-  IF ( tower_mode .EQ. 1 .AND. rkm_substep .EQ. rkm_endstep ) THEN
+  IF ( use_tower .AND. rkm_substep .EQ. rkm_endstep ) THEN
      CALL DNS_TOWER_ACCUMULATE(tmp12,i4,wrk1d)
   ENDIF
 

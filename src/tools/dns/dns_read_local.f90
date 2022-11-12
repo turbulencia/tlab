@@ -125,6 +125,10 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! Accumulate statistics in spatial mode
   CALL SCANINIINT(bakfile, inifile, 'Iteration', 'SaveStats', '-1', nitera_stats_spa)
 
+! Domain Filter (Should we move it to Iteration?)
+  CALL SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', nitera_filter)
+  IF ( nitera_filter .EQ. 0 ) FilterDomain(:)%type = DNS_FILTER_NONE
+
 ! ###################################################################
 ! Control Limits
 ! ###################################################################
@@ -139,47 +143,61 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL TLAB_WRITE_ASCII(bakfile, '#MinScalar=<scalar>')
   CALL TLAB_WRITE_ASCII(bakfile, '#MaxScalar=<scalar>')
 
+  bound_r%active = .false.
+  bound_p%active = .false.
   CALL SCANINICHAR(bakfile, inifile, 'Control', 'FlowLimit', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; ilimit_flow=1
-  ELSE;                                       ilimit_flow=0; ENDIF
-  CALL SCANINICHAR(bakfile, inifile, 'Control', 'ScalLimit', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ilimit_scal=1
-  ELSE;                                       ilimit_scal=0; ENDIF
-
+  IF ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN
+    bound_r%active = .true.
+    bound_p%active = .true.
+  ENDIF
 ! Final check in last section of the routine
-  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MinPressure', '-1.0', p_bound_min)
-  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MaxPressure', '-1.0', p_bound_max)
-  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MinDensity',  '-1.0', r_bound_min)
-  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MaxDensity',  '-1.0', r_bound_max)
+  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MinPressure', '-1.0', bound_p%min)
+  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MaxPressure', '-1.0', bound_p%max)
+  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MinDensity',  '-1.0', bound_r%min)
+  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MaxDensity',  '-1.0', bound_r%max)
 
-  d_bound_max = C_BIG_R ! default
-  CALL SCANINICHAR(bakfile, inifile, 'Control', 'MaxDilatation', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
-     idummy = 1
-     CALL LIST_REAL(sRes, idummy, dummy)
-     d_bound_max = dummy(1)
+  bound_d%active = .false.
+  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+    bound_d%active = .true.
+    bound_d%max = C_BIG_R ! default
+    CALL SCANINICHAR(bakfile, inifile, 'Control', 'MaxDilatation', 'void', sRes)
+    IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
+        idummy = 1
+        CALL LIST_REAL(sRes, idummy, dummy)
+        bound_d%max = dummy(1)
+    ENDIF
   ENDIF
 
-  s_bound_min(:) = C_0_R; inb_scal_local1 = MAX_NSP
-  IF ( ilimit_scal .EQ. 1 ) THEN
-     CALL SCANINICHAR(bakfile, inifile, 'Control', 'MinScalar',  'void', sRes)
+  bound_s(:)%active = .false.
+  CALL SCANINICHAR(bakfile, inifile, 'Control', 'ScalLimit', 'yes', sRes)
+  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN
+    bound_s(:)%active = .true.
+  ENDIF
+
+  bound_s(:)%min = C_0_R; inb_scal_local1 = MAX_NSP
+  if ( any(bound_s(:)%active ) ) then
+    CALL SCANINICHAR(bakfile, inifile, 'Control', 'MinScalar',  'void', sRes)
      IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
-        CALL LIST_REAL(sRes, inb_scal_local1, s_bound_min)
+        CALL LIST_REAL(sRes, inb_scal_local1, dummy)
         IF ( inb_scal_local1 .NE. inb_scal ) THEN ! Consistency check
            CALL TLAB_WRITE_ASCII(efile,'DNS_READ_LOCAL. MinScalar size does not match inb_scal.')
            CALL TLAB_STOP(DNS_ERROR_OPTION)
+        ELSE
+            bound_s(1:inb_scal)%min = dummy(1:inb_scal)
         ENDIF
      ENDIF
   ENDIF
 
-  s_bound_max(:) = C_1_R; inb_scal_local1 = MAX_NSP
-  IF ( ilimit_scal .EQ. 1 ) THEN
-     CALL SCANINICHAR(bakfile, inifile, 'Control', 'MaxScalar',  'void', sRes)
+  bound_s%max = C_1_R; inb_scal_local1 = MAX_NSP
+  if ( any(bound_s(:)%active) ) then
+    CALL SCANINICHAR(bakfile, inifile, 'Control', 'MaxScalar',  'void', sRes)
      IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
-        CALL LIST_REAL(sRes, inb_scal_local1, s_bound_max)
+        CALL LIST_REAL(sRes, inb_scal_local1, dummy)
         IF ( inb_scal_local1 .NE. inb_scal ) THEN ! Consistency check
            CALL TLAB_WRITE_ASCII(efile,'DNS_READ_LOCAL. MaxScalar size does not match inb_scal.')
            CALL TLAB_STOP(DNS_ERROR_OPTION)
+        ELSE
+            bound_s(1:inb_scal)%max = dummy(1:inb_scal)
         ENDIF
      ENDIF
   ENDIF
@@ -542,12 +560,6 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   CALL SCANINIREAL(bakfile, inifile, 'ViscChange', 'Time', '0.0', visc_time)
 
 ! ###################################################################
-! Domain Filter
-! ###################################################################
-  CALL SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', FilterDomainStep)
-  IF ( FilterDomainStep .EQ. 0 ) FilterDomain(:)%type = DNS_FILTER_NONE
-
-! ###################################################################
 ! Save planes to disk
 ! ###################################################################
   CALL TLAB_WRITE_ASCII(bakfile, '#')
@@ -702,7 +714,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
   IF ( nitera_stats     .LE. 0 ) nitera_stats     = nitera_last - nitera_first + 1
   IF ( nitera_log       .LE. 0 ) nitera_log       = nitera_last - nitera_first + 1
   IF ( nitera_pln       .LE. 0 ) nitera_pln       = nitera_last - nitera_first + 1
-  IF ( FilterDomainStep .LE. 0 ) FilterDomainStep = nitera_last - nitera_first + 1
+  IF ( nitera_filter .LE. 0 ) nitera_filter = nitera_last - nitera_first + 1
 
   IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) nitera_stats_spa =-1 ! Never call avg_spatial routines
   IF ( nitera_stats_spa .LE. 0 ) nitera_stats_spa = nitera_last - nitera_first + 1
@@ -711,10 +723,10 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 ! Control limits
 ! I need rbg%mean
 ! -------------------------------------------------------------------
-  IF ( p_bound_min .LT. C_0_R ) p_bound_min = pbg%mean*C_1EM6_R
-  IF ( p_bound_max .LT. C_0_R ) p_bound_max = pbg%mean/C_1EM6_R
-  IF ( r_bound_min .LT. C_0_R ) r_bound_min = rbg%mean*C_1EM6_R
-  IF ( r_bound_max .LT. C_0_R ) r_bound_max = rbg%mean/C_1EM6_R
+  IF ( bound_p%min .LT. C_0_R ) bound_p%min = pbg%mean*C_1EM6_R
+  IF ( bound_p%max .LT. C_0_R ) bound_p%max = pbg%mean/C_1EM6_R
+  IF ( bound_r%min .LT. C_0_R ) bound_r%min = rbg%mean*C_1EM6_R
+  IF ( bound_r%max .LT. C_0_R ) bound_r%max = rbg%mean/C_1EM6_R
 
 ! -------------------------------------------------------------------
 ! Boundary conditions
@@ -815,13 +827,14 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
 
 ! -------------------------------------------------------------------
 ! Towers information
-! So far, the use or not use of tower information (tower_mode) is
+! So far, the use or not use of tower information is
 ! set by the stride information.
 ! -------------------------------------------------------------------
-  IF ( MINVAL(tower_stride).GT.0 ) THEN; tower_mode=1; ELSE;  tower_mode=0; ENDIF
+  use_tower = .false.
+  IF ( MINVAL(tower_stride).GT.0 ) THEN; use_tower=.true.; ENDIF
 
 ! We need space
-  IF ( tower_mode .EQ. 1 ) THEN
+  IF ( use_tower ) THEN
      idummy = tower_stride(1) *tower_stride(2) *tower_stride(3)
      IF ( idummy .LT. 5 ) THEN
         CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Not enough space in wrk3d array to handle tower information. Increase strides.')
@@ -904,7 +917,7 @@ SUBROUTINE DNS_READ_LOCAL(inifile)
     isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_part_interp*2))
     isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_part_interp*2))
   END IF
-  IF ( tower_mode == 1 ) THEN
+  IF ( use_tower ) THEN
     isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))
   ENDIF
 

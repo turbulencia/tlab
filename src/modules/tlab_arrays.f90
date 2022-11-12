@@ -13,6 +13,6 @@ module TLAB_ARRAYS
     real(wp), allocatable, public :: wrk3d(:)                      ! Work arrays (scratch space)
 
     target x, y, z
-    target q, s, txc
+    target q, s, txc, wrk3d
 
 end module TLAB_ARRAYS

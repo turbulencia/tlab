@@ -16,7 +16,6 @@ module TLAB_CONSTANTS
 
     character(len=*), parameter :: gfile    = 'grid'
     character(len=*), parameter :: ifile    = 'dns.ini'
-    character(len=*), parameter :: ofile    = 'dns.out'
     character(len=*), parameter :: lfile    = 'dns.log'
     character(len=*), parameter :: efile    = 'dns.err'
     character(len=*), parameter :: wfile    = 'dns.war'

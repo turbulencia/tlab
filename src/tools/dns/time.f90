@@ -60,9 +60,9 @@ contains
         case (RKM_EXP3)             ! Runge-Kutta explicit 3th order from Williamson 1980
             rkm_endstep = 3
 
-            kdt(1:3) = (/C_1_R/C_3_R, C_15_R/C_16_R, C_8_R/C_15_R/)
-            ktime(1:3) = (/C_0_R, C_1_R/C_3_R, C_3_R/C_4_R/)
-            kco(1:2) = (/-C_5_R/C_9_R, -C_153_R/C_128_R/)
+            kdt(1:3)   = [C_1_R/C_3_R, C_15_R/C_16_R, C_8_R/C_15_R]
+            ktime(1:3) = [C_0_R, C_1_R/C_3_R, C_3_R/C_4_R]
+            kco(1:2)   = [-C_5_R/C_9_R, -C_153_R/C_128_R]
 
         case (RKM_EXP4)             ! Runge-Kutta explicit 4th order 5 stages from Carpenter & Kennedy 1994
             rkm_endstep = 5
@@ -147,10 +147,11 @@ contains
     subroutine TIME_RUNGEKUTTA()
         use TLAB_ARRAYS
         use PARTICLE_ARRAYS
+        use DNS_LOCAL
         use DNS_ARRAYS
 
         ! -------------------------------------------------------------------
-        integer(wi) flag_control
+        integer flag_control_dilatation
         real(wp) alpha
 
         integer(wi) ij_srt, ij_end, ij_siz ! Variables for OpenMP Paritioning
@@ -213,8 +214,8 @@ contains
             ! -------------------------------------------------------------------
             ! Control updated values
             ! -------------------------------------------------------------------
-            flag_control = mod(rkm_substep, rkm_endstep) + mod(itime + 1 - nitera_first, nitera_log) ! Only when datalogs are written
-            call DNS_CONTROL(flag_control, q, s, txc, wrk2d, wrk3d)
+            flag_control_dilatation = mod(rkm_substep, rkm_endstep) + mod(itime + 1 - nitera_first, nitera_log) ! Check dilatation only when datalogs are written
+            call DNS_CONTROL(flag_control_dilatation)
             if (int(logs_data(1)) /= 0) return ! Error detected
 
             if (imode_part == PART_TYPE_BIL_CLOUD_4) then

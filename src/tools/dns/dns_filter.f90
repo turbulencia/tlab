@@ -14,7 +14,7 @@ SUBROUTINE DNS_FILTER()
   USE TLAB_ARRAYS
   USE TLAB_PROCS
   USE OPR_FILTERS
-  USE DNS_LOCAL,     ONLY : ilimit_scal, s_bound_min, s_bound_max
+  USE DNS_LOCAL,     ONLY : bound_s
   USE DNS_LOCAL,     ONLY : nitera_stats_spa, nitera_first,nitera_stats
   USE STATISTICS
   USE AVGS, ONLY: AVG_IK_V
@@ -90,13 +90,13 @@ SUBROUTINE DNS_FILTER()
   ENDIF
 
   ! -------------------------------------------------------------------
-  IF ( inb_scal .GT. 0 .AND. ilimit_scal .EQ. 1 ) THEN
-     DO is =1,inb_scal
-        DO ij = 1,isize_field
-           s(ij,is) = MIN(MAX(s(ij,is),s_bound_min(is)), s_bound_max(is))
-        ENDDO
-     ENDDO
-  ENDIF
+  do is = 1, inb_scal
+    if (bound_s(is)%active) then
+        do ij = 1, isize_field
+            s(ij, is) = min(max(s(ij, is), bound_s(is)%min), bound_s(is)%max)
+        end do
+    end if
+    end do
 
   ! -------------------------------------------------------------------
   ! statistics

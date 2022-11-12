@@ -25,12 +25,11 @@
 !########################################################################
 SUBROUTINE DNS_LOGS(iflag)
 
-  USE TLAB_CONSTANTS, ONLY : ofile
   USE TLAB_VARS,    ONLY : imode_eqns
   USE TLAB_VARS,    ONLY : itime, rtime, visc
   USE TLAB_VARS,    ONLY : damkohler
   USE TLAB_PROCS
-  USE DNS_LOCAL,     ONLY : logs_data
+  USE DNS_LOCAL,     ONLY : logs_data, ofile
   USE TIME,          ONLY : dtime
 
   USE THERMO_VARS, ONLY : imixture
