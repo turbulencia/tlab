@@ -151,7 +151,6 @@ contains
         use DNS_ARRAYS
 
         ! -------------------------------------------------------------------
-        integer flag_control_dilatation
         real(wp) alpha
 
         integer(wi) ij_srt, ij_end, ij_siz ! Variables for OpenMP Paritioning
@@ -211,12 +210,8 @@ contains
 
             call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)
 
-            ! -------------------------------------------------------------------
-            ! Control updated values
-            ! -------------------------------------------------------------------
-            flag_control_dilatation = mod(rkm_substep, rkm_endstep) + mod(itime + 1 - nitera_first, nitera_log) ! Check dilatation only when datalogs are written
-            call DNS_CONTROL(flag_control_dilatation)
-            if (int(logs_data(1)) /= 0) return ! Error detected
+            call DNS_BOUNDS_LIMIT()
+!            if (int(logs_data(1)) /= 0) return ! Error detected
 
             if (imode_part == PART_TYPE_BIL_CLOUD_4) then
                 call PARTICLE_TIME_RESIDENCE(dtime, l_g%np, l_q)

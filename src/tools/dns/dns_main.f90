@@ -32,9 +32,9 @@ program DNS
     save
 
     ! -------------------------------------------------------------------
-    character*32 fname, str
+    character(len=32) fname, str
     integer ig
-    integer, parameter :: i0 = 0, i1 = 1, i2 = 2
+    integer, parameter :: i0 = 0, i1 = 1
 
     ! ###################################################################
     call TLAB_START()
@@ -175,7 +175,8 @@ program DNS
     ! Check
     ! ###################################################################
     logs_data(1) = 0 ! Status
-    call DNS_CONTROL(0)
+    call DNS_BOUNDS_CONTROL()
+    call DNS_BOUNDS_LIMIT()
 
     ! ###################################################################
     ! Initialize time marching scheme
@@ -186,8 +187,8 @@ program DNS
     ! ###################################################################
     ! Check-pointing: Initialize logfiles
     ! ###################################################################
-    call DNS_LOGS(i1) ! headers
-    call DNS_LOGS(i2) ! first line
+    call DNS_LOGS_INITIALIZE() ! headers
+    call DNS_LOGS() ! first line
 
     ! ###################################################################
     ! Do simulation: Integrate equations
@@ -227,8 +228,9 @@ program DNS
         ! -------------------------------------------------------------------
         ! The rest: Logging, postprocessing and saving
         ! -------------------------------------------------------------------
+        call DNS_BOUNDS_CONTROL()
         if (mod(itime - nitera_first, nitera_log) == 0 .or. int(logs_data(1)) /= 0) then
-            call DNS_LOGS(i2)
+            call DNS_LOGS()
         end if
 
         if (use_tower) then
@@ -291,5 +293,105 @@ program DNS
 
     ! ###################################################################
     call TLAB_STOP(int(logs_data(1)))
+
+contains
+!########################################################################
+! Create headers or dns.out file
+!
+!# logs_data01 State (>0 if error)
+!#
+!# logs_data02 Maximum CFL number
+!# logs_data03 Maximum diffusion number
+!# logs_data04 Maximum source number
+!#
+!# logs_data05 Minimum pressure
+!# logs_data06 Maximum pressure
+!# logs_data07 Minimum density
+!# logs_data08 Maximum density
+!# logs_data09 NEWTONRAPHSON_ERROR
+!#
+!# logs_data10 Minimum dilatation
+!# logs_data11 Maximum dilatation
+!########################################################################
+    subroutine DNS_LOGS_INITIALIZE()
+        use THERMO_VARS, only: imixture
+
+        integer ip
+        character(len=256) line1
+
+        line1 = '#'; ip = 1
+        line1 = line1(1:ip)//' '//' Itn.'; ip = ip + 1 + 7
+        line1 = line1(1:ip)//' '//' time'; ip = ip + 1 + 13
+        line1 = line1(1:ip)//' '//' dt'; ip = ip + 1 + 10
+        line1 = line1(1:ip)//' '//' CFL#'; ip = ip + 1 + 10
+        line1 = line1(1:ip)//' '//' D#'; ip = ip + 1 + 10
+        line1 = line1(1:ip)//' '//' visc'; ip = ip + 1 + 10
+
+        select case (imode_eqns)
+        case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+            line1 = line1(1:ip)//' '//' DilMin'; ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' DilMax'; ip = ip + 1 + 13
+
+        case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
+            line1 = line1(1:ip)//' '//' PMin'; ip = ip + 1 + 10
+            line1 = line1(1:ip)//' '//' PMax'; ip = ip + 1 + 10
+            line1 = line1(1:ip)//' '//' RMin'; ip = ip + 1 + 10
+            line1 = line1(1:ip)//' '//' RMax'; ip = ip + 1 + 10
+
+        end select
+
+        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
+            line1 = line1(1:ip)//' '//' NewtonRs'; ip = ip + 1 + 10
+        end if
+
+        line1 = line1(1:ip - 1)//'#'
+        call TLAB_WRITE_ASCII(ofile, repeat('#', len_trim(line1)))
+        call TLAB_WRITE_ASCII(ofile, trim(adjustl(line1)))
+        call TLAB_WRITE_ASCII(ofile, repeat('#', len_trim(line1)))
+
+    end subroutine DNS_LOGS_INITIALIZE
+
+!########################################################################
+!########################################################################
+    subroutine DNS_LOGS()
+        use THERMO_VARS, only: imixture, NEWTONRAPHSON_ERROR
+#ifdef USE_MPI
+        use MPI
+        use TLAB_MPI_VARS, only: ims_err
+        real(wp) dummy
+#endif
+
+        integer ip
+        character(len=256) line1, line2
+
+        write (line1, 100) int(logs_data(1)), itime, rtime, dtime, (logs_data(ip), ip=2, 3), visc
+100     format((1x, I1), (1x, I7), (1x, E13.6), 4(1x, E10.3))
+
+        select case (imode_eqns)
+        case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+            write (line2, 200) logs_data(10), logs_data(11)
+200         format(2(1x, E13.6))
+            line1 = trim(line1)//trim(line2)
+
+        case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
+            write (line2, 300) (logs_data(ip), ip=5, 8)
+300         format(4(1x, E10.3))
+            line1 = trim(line1)//trim(line2)
+
+        end select
+
+        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
+#ifdef USE_MPI
+            call MPI_ALLREDUCE(NEWTONRAPHSON_ERROR, dummy, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+            NEWTONRAPHSON_ERROR = dummy
+#endif
+            write (line2, 400) NEWTONRAPHSON_ERROR
+400         format(1(1x, E10.3))
+            line1 = trim(line1)//trim(line2)
+        end if
+
+        call TLAB_WRITE_ASCII(ofile, trim(adjustl(line1)))
+
+    end subroutine DNS_LOGS
 
 end program DNS
