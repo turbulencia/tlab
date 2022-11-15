@@ -102,7 +102,7 @@ module TLAB_VARS
 ! ###########################################################
 ! Filters
 ! ###########################################################
-    type(filter_dt)(3) :: FilterDomain(3)
+    type(filter_dt) :: FilterDomain(3)
     logical :: FilterDomainActive(MAX_VARS)
     integer :: FilterDomainBcsFlow(MAX_VARS), FilterDomainBcsScal(MAX_VARS)
 

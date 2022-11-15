@@ -17,9 +17,7 @@
 !########################################################################
 
 module IO_FIELDS
-
-    use TLAB_TYPES, only: sp, dp
-    use TLAB_CONSTANTS, only: lfile, wfile, efile
+    use TLAB_CONSTANTS, only: lfile, wfile, efile, wp, wi, sp, dp
     use TLAB_PROCS, only: TLAB_STOP, TLAB_WRITE_ASCII
 #ifdef USE_MPI
     use MPI
@@ -39,17 +37,17 @@ module IO_FIELDS
 
     private
 
-    TINTEGER, parameter :: IO_SCAL = 1 ! Header of scalar field
-    TINTEGER, parameter :: IO_FLOW = 2 ! Header of flow field
+    integer, parameter :: IO_SCAL = 1 ! Header of scalar field
+    integer, parameter :: IO_FLOW = 2 ! Header of flow field
 
-    TINTEGER nx_total, ny_total, nz_total
+    integer(wi) nx_total, ny_total, nz_total
     character(LEN=32) str, name
     character(LEN=128) line
 
 #ifdef USE_MPI
     integer mpio_fh, mpio_locsize, status(MPI_STATUS_SIZE)
     integer(KIND=MPI_OFFSET_KIND) mpio_disp
-    TINTEGER subarray
+    integer subarray
 #endif
 
 contains
@@ -58,12 +56,12 @@ contains
     !########################################################################
     !########################################################################
     function IO_CREATE_SUBARRAY_XOY(nx, ny, mpi_type) result(subarray)
-        TINTEGER, intent(in) :: nx, ny
+        integer(wi), intent(in) :: nx, ny
         integer, intent(in) :: mpi_type
 
         integer :: subarray
-        TINTEGER, parameter :: ndims = 2
-        TINTEGER :: sizes(ndims), locsize(ndims), offset(ndims)
+        integer, parameter :: ndims = 2
+        integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
 
         sizes   = [nx*ims_npro_i,   ny]
         locsize = [nx,              ny]
@@ -76,12 +74,12 @@ contains
     end function IO_CREATE_SUBARRAY_XOY
 
     function IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, mpi_type) result(subarray)
-        TINTEGER, intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: mpi_type
 
         integer :: subarray
-        TINTEGER, parameter :: ndims = 3
-        TINTEGER :: sizes(ndims), locsize(ndims), offset(ndims)
+        integer, parameter :: ndims = 3
+        integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
 
         sizes   = [nx*ims_npro_i,   ny,     nz*ims_npro_k]
         locsize = [nx,              ny,     nz]
@@ -94,12 +92,12 @@ contains
     end function IO_CREATE_SUBARRAY_XOZ
 
     function IO_CREATE_SUBARRAY_ZOY(ny, nz, mpi_type) result(subarray)
-        TINTEGER, intent(in) :: ny, nz
+        integer(wi), intent(in) :: ny, nz
         integer, intent(in) :: mpi_type
 
         integer :: subarray
-        TINTEGER, parameter :: ndims = 2
-        TINTEGER :: sizes(ndims), locsize(ndims), offset(ndims)
+        integer, parameter :: ndims = 2
+        integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
 
         sizes   = [ny,  nz*ims_npro_k]
         locsize = [ny,  nz]
@@ -123,22 +121,22 @@ contains
         use, intrinsic :: ISO_C_binding, only: c_f_pointer, c_loc
 
         character(LEN=*) fname
-        TINTEGER, intent(in) :: iheader         ! 1 for scalar header, 2 flow header
-        TINTEGER, intent(in) :: nfield, iread   ! iread=0 reads all nfields, otherwise iread field
-        TINTEGER, intent(in) :: nx, ny, nz
-        TREAL, intent(out) :: a(nx*ny*nz, *)
-        TREAL, intent(inout) :: txc(nx*ny*nz)
+        integer, intent(in) :: iheader         ! 1 for scalar header, 2 flow header
+        integer, intent(in) :: nfield, iread   ! iread=0 reads all nfields, otherwise iread field
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(out) :: a(nx*ny*nz, *)
+        real(wp), intent(inout) :: txc(nx*ny*nz)
 
         target txc
 
         ! -------------------------------------------------------------------
-        TINTEGER header_offset
-        TINTEGER ifield, iz
+        integer(wi) header_offset
+        integer ifield, iz
         real(sp), pointer :: s_wrk(:) => null()
 
-        TINTEGER, parameter :: isize_max = 20
-        TREAL params(isize_max)
-        TINTEGER isize
+        integer, parameter :: isize_max = 20
+        real(wp) params(isize_max)
+        integer isize
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -167,7 +165,7 @@ contains
         select case (imode_files)
 
         case (IO_NOFILE)         ! Do nothing
-            a(:, 1:nfield) = C_0_R
+            a(:, 1:nfield) = 0.0_wp
 
         case (IO_NETCDF)         ! To be implemented
 
@@ -263,13 +261,14 @@ contains
     !########################################################################
     subroutine IO_READ_FIELD_INT1(name, iheader, nx, ny, nz, nt, isize, params, a)
 
-        character(LEN=*) name
-        TINTEGER, intent(in) :: iheader, nx, ny, nz, nt
-        TINTEGER, intent(inout) :: isize
-        TREAL, intent(inout) :: params(isize)
+        character(len=*) name
+        integer, intent(in) :: iheader
+        integer(wi), intent(in) :: nx, ny, nz, nt
+        integer, intent(inout) :: isize
+        real(wp), intent(inout) :: params(isize)
         integer(1), intent(out) :: a(nx*ny*nz)
 
-        TINTEGER header_offset
+        integer(wi) header_offset
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -353,23 +352,23 @@ contains
         use THERMO_VARS, only: gama0
         use, intrinsic :: ISO_C_binding, only: c_f_pointer, c_loc
 
-        character(LEN=*) fname
-        TINTEGER, intent(in) :: iheader         ! Scalar or Flow headers
-        TINTEGER, intent(in) :: nfield
-        TINTEGER, intent(in) :: nx, ny, nz
-        TREAL, intent(in) :: a(nx*ny*nz, nfield)
-        TREAL, intent(inout) :: txc(nx*ny*nz)
+        character(len=*) fname
+        integer, intent(in) :: iheader         ! Scalar or Flow headers
+        integer, intent(in) :: nfield
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: a(nx*ny*nz, nfield)
+        real(wp), intent(inout) :: txc(nx*ny*nz)
 
         target txc
 
         ! -------------------------------------------------------------------
-        TINTEGER header_offset
-        TINTEGER ifield
+        integer(wi) header_offset
+        integer ifield
         real(sp), pointer :: s_wrk(:) => null()
 
-        TINTEGER, parameter :: isize_max = 20
-        TREAL params(isize_max)
-        TINTEGER isize
+        integer, parameter :: isize_max = 20
+        real(wp) params(isize_max)
+        integer isize
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -496,12 +495,13 @@ contains
     !########################################################################
     subroutine IO_WRITE_FIELD_INT1(name, iheader, nx, ny, nz, nt, isize, params, a)
 
-        character(LEN=*) name
-        TINTEGER, intent(in) :: iheader, nx, ny, nz, nt, isize
-        TREAL, intent(in) :: params(isize)
+        character(len=*) name
+        integer, intent(in) :: iheader, isize
+        integer(wi), intent(in) :: nx, ny, nz, nt
+        real(wp), intent(in) :: params(isize)
         integer(1), intent(in) :: a(nx*ny*nz)
 
-        TINTEGER header_offset
+        integer(wi) header_offset
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -572,11 +572,14 @@ contains
     !########################################################################
     !########################################################################
     subroutine IO_READ_HEADER(unit, offset, nx, ny, nz, nt, params)
-        TINTEGER unit, offset, nx, ny, nz, nt
-        TREAL, dimension(*) :: params
+        integer, intent(in) :: unit
+        integer(wi), intent(out) :: offset
+        integer(wi), intent(in) :: nx, ny, nz, nt
+        real(wp), intent(inout) :: params(:)
 
         ! -------------------------------------------------------------------
-        TINTEGER isize, nx_loc, ny_loc, nz_loc, nt_loc
+        integer isize
+        integer(wi) nx_loc, ny_loc, nz_loc, nt_loc
 
         !########################################################################
         read (unit) offset, nx_loc, ny_loc, nz_loc, nt_loc
@@ -610,11 +613,12 @@ contains
     !########################################################################
     !########################################################################
     subroutine IO_WRITE_HEADER(unit, isize, nx, ny, nz, nt, params)
-        TINTEGER unit, isize, nx, ny, nz, nt
-        TREAL, dimension(isize) :: params
+        integer, intent(in) :: unit, isize
+        integer(wi), intent(in) :: nx, ny, nz, nt
+        real(wp), intent(in) :: params(isize)
 
         ! -------------------------------------------------------------------
-        TINTEGER offset
+        integer(wi) offset
 
         !########################################################################
         offset = 5*SIZEOFINT + isize*SIZEOFREAL
@@ -641,16 +645,16 @@ contains
 #include "integers.h"
 
         character(LEN=*) name
-        TINTEGER, intent(in) :: header_offset, nx, ny, nz
-        TREAL, intent(out) :: a(nx*ny*nz)
-        TREAL, intent(inout) :: wrk(nx*ny*nz)
+        integer(wi), intent(in) :: header_offset, nx, ny, nz
+        real(wp), intent(out) :: a(nx*ny*nz)
+        real(wp), intent(inout) :: wrk(nx*ny*nz)
 
         target a, wrk
 
 #ifdef USE_MPI
         integer(KIND=MPI_OFFSET_KIND) mpio_locoff
-        TREAL, dimension(:), pointer :: p_read, p_write
-        TINTEGER id, npage
+        real(wp), dimension(:), pointer :: p_read, p_write
+        integer(wi) id, npage
 #endif
 
         ! ###################################################################
@@ -713,16 +717,16 @@ contains
 #include "integers.h"
 
         character(LEN=*) name
-        TINTEGER, intent(in) :: header_offset, nx, ny, nz
-        TREAL, intent(in) :: a(nx*ny*nz)
-        TREAL, intent(inout) :: wrk(nx*ny*nz)
+        integer(wi), intent(in) :: header_offset, nx, ny, nz
+        real(wp), intent(in) :: a(nx*ny*nz)
+        real(wp), intent(inout) :: wrk(nx*ny*nz)
 
         target a, wrk
 
 #ifdef USE_MPI
         integer(KIND=MPI_OFFSET_KIND) mpio_locoff
-        TREAL, dimension(:), pointer :: p_read, p_write
-        TINTEGER id, npage
+        real(wp), dimension(:), pointer :: p_read, p_write
+        integer(wi) id, npage
 #endif
 
         ! ###################################################################
