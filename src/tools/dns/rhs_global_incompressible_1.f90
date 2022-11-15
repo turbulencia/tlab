@@ -28,7 +28,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1 &
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d
     use TLAB_VARS, only: g
     use TLAB_VARS, only: rbackground, ribackground
-    use DNS_LOCAL, only: idivergence
+    use DNS_LOCAL, only: remove_divergence
     use DNS_LOCAL, only: use_tower
     use TIME, only: rkm_substep, rkm_endstep
     use DNS_TOWER
@@ -213,7 +213,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1 &
 ! #######################################################################
 ! Pressure term
 ! #######################################################################
-    if (idivergence == EQNS_DIVERGENCE) then ! remove residual divergence
+    if (remove_divergence) then ! remove residual divergence
 
 #ifdef USE_ESSL
 !$omp parallel default( shared )&

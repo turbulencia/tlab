@@ -72,8 +72,8 @@ subroutine DNS_READ_LOCAL(inifile)
 
 ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermDivergence', 'remove', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; idivergence = EQNS_NONE
-    else if (trim(adjustl(sRes)) == 'remove') then; idivergence = EQNS_DIVERGENCE
+    if (trim(adjustl(sRes)) == 'none') then; remove_divergence = .false.
+    else if (trim(adjustl(sRes)) == 'remove') then; remove_divergence = .true.
     else
         call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong TermDivergence option.')
         call TLAB_STOP(DNS_ERROR_OPTION)

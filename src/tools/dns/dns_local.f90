@@ -2,8 +2,7 @@
 #include "dns_const.h"
 
 module DNS_LOCAL
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_VARS, only: MAX_NSP
+    use TLAB_CONSTANTS, only: MAX_NSP, wp, wi
 #ifdef USE_PSFFT
     use NB3DFFT, only: NB3DFFT_SCHEDLTYPE
 #endif
@@ -11,25 +10,22 @@ module DNS_LOCAL
     ! private
     save
 
-! Iteration
     integer :: nitera_first     ! First iteration in current run
     integer :: nitera_last      ! Last iteration in current run
-    integer :: nitera_save      ! Iteration step to save restart files
-    integer :: nitera_stats     ! Iteration step to save statistical data
+    integer :: nitera_save      ! Iteration step to check-point: save restart files
+    integer :: nitera_stats     ! Iteration step to check-point: save statistical data
     integer :: nitera_stats_spa ! Iteration step to accumulate statistics in spatial mode
     integer :: nitera_pln       ! Iteration step to save planes
     integer :: nitera_filter    ! Iteration step for domain filter, if any
 
-    integer :: nitera_log       ! Iteration step for checkpoints (datalogs into ofile)
-    character(len=*), parameter :: ofile = 'dns.out'
+    integer :: nitera_log           ! Iteration step for data logger with simulation information
+    character(len=*), parameter :: ofile = 'dns.out'    ! data logger filename
+    real(wp) :: logs_data(20)       ! information (time, time step, cfls, dilatation...)
 
-    integer :: imode_rhs        ! Type of implementation of the RHS of evolution equations
-    integer :: idivergence      ! Remove residual divergence every time step
+    integer :: imode_rhs            ! Type of implementation of the RHS of evolution equations
+    logical :: remove_divergence    ! Remove residual divergence every time step
 
-! Check-pointing and control
-    real(wp) :: logs_data(20)           ! information (time, time step, cfls, dilatation...)
-
-    type bounds_dt
+    type bounds_dt                      ! control
         sequence
         logical active
         real(wp) min
@@ -56,10 +52,9 @@ module DNS_LOCAL
 
 contains
 !########################################################################
-!# Limit min/max values of fields, if required
+! Limit min/max values of fields, if required
 !########################################################################
     subroutine DNS_BOUNDS_LIMIT()
-
         use TLAB_VARS, only: inb_scal
         use TLAB_ARRAYS
 
@@ -70,24 +65,15 @@ contains
         do is = 1, inb_scal
             if (bound_s(is)%active) then
                 s(:, is) = min(max(s(:, is), bound_s(is)%min), bound_s(is)%max)
-                ! do ij = 1, isize_field
-                !     s(ij, is) = min(max(s(ij, is), bound_s(is)%min), bound_s(is)%max)
-                ! end do
             end if
         end do
 
         if (bound_r%active) then
             q(:, 5) = min(max(q(:, 5), bound_r%min), bound_r%max)
-            ! do ij = 1, isize_field
-            !     q(ij, 5) = min(max(q(ij, 5), bound_r%min), bound_r%max)
-            ! end do
         end if
 
         if (bound_p%active) then
             q(:, 6) = min(max(q(:, 6), bound_p%min), bound_p%max)
-            ! do ij = 1, isize_field
-            !     q(ij, 6) = min(max(q(ij, 6), bound_p%min), bound_p%max)
-            ! end do
         end if
 
         return
@@ -96,13 +82,12 @@ contains
 !########################################################################
 !########################################################################
     subroutine DNS_BOUNDS_CONTROL()
-
         use TLAB_CONSTANTS, only: efile, lfile
-        use TLAB_PROCS
         use TLAB_VARS, only: imode_eqns, imode_ibm, istagger
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: rbackground
         use TLAB_ARRAYS
+        use TLAB_PROCS
 #ifdef USE_MPI
         use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif

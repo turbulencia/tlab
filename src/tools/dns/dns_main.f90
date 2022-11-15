@@ -226,7 +226,7 @@ program DNS
         call TIME_COURANT(q, wrk3d)
 
         ! -------------------------------------------------------------------
-        ! The rest: Logging, postprocessing and saving
+        ! The rest: Logging, postprocessing and check-pointing
         ! -------------------------------------------------------------------
         call DNS_BOUNDS_CONTROL()
         if (mod(itime - nitera_first, nitera_log) == 0 .or. int(logs_data(1)) /= 0) then
@@ -252,7 +252,7 @@ program DNS
             if (imode_sim == DNS_MODE_SPATIAL) call STATISTICS_SPATIAL()
         end if
 
-        if (mod(itime - nitera_first, nitera_save) == 0 .or. &      ! Save restart files
+        if (mod(itime - nitera_first, nitera_save) == 0 .or. &      ! Check-pointing: Save restart files
             itime == nitera_last .or. int(logs_data(1)) /= 0) then  ! Secure that one restart file is saved
 
             if (icalc_flow == 1) then

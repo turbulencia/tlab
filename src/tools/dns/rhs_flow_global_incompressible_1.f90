@@ -22,7 +22,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d, inb_flow
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : visc
-  USE DNS_LOCAL,  ONLY : idivergence
+  USE DNS_LOCAL,  ONLY : remove_divergence
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
 
@@ -125,7 +125,7 @@ SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1&
 ! #######################################################################
 ! Pressure term
 ! #######################################################################
-  IF ( idivergence .EQ. EQNS_DIVERGENCE ) THEN ! remove residual divergence
+  IF (  remove_divergence ) THEN ! remove residual divergence
 
 #ifdef USE_ESSL
 !$omp parallel default( shared )&

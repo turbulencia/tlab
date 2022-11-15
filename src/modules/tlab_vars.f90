@@ -102,11 +102,11 @@ module TLAB_VARS
 ! ###########################################################
 ! Filters
 ! ###########################################################
-    type(filter_dt), dimension(3) :: FilterDomain
-    logical, dimension(MAX_VARS) :: FilterDomainActive
-    integer, dimension(MAX_VARS) :: FilterDomainBcsFlow, FilterDomainBcsScal
+    type(filter_dt)(3) :: FilterDomain(3)
+    logical :: FilterDomainActive(MAX_VARS)
+    integer :: FilterDomainBcsFlow(MAX_VARS), FilterDomainBcsScal(MAX_VARS)
 
-    type(filter_dt), dimension(3) :: Dealiasing
+    type(filter_dt) :: Dealiasing(3)
 
 ! ###################################################################
 ! FFTW
@@ -120,9 +120,9 @@ module TLAB_VARS
 ! ###################################################################
 ! Jet Statistics
 ! ###################################################################
-    integer :: nstatavg, statavg(MAX_STATS_SPATIAL), & ! Ox planes at which to accumulate statistics
-        nstatavg_points, &                      ! number of accumulated points
-        istattimeorg                            ! time at which accumulation of statistics started
+    integer :: nstatavg, statavg(MAX_STATS_SPATIAL) ! Ox planes at which to accumulate statistics
+    integer :: nstatavg_points                      ! number of accumulated points
+    integer :: istattimeorg                         ! time at which accumulation of statistics started
     real(wp) :: rstattimeorg
 
 end module TLAB_VARS

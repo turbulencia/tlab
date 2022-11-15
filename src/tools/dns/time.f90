@@ -17,7 +17,6 @@ module TIME
     use TLAB_CONSTANTS, only: efile, wp, wi
     use TLAB_VARS
     use THERMO_VARS, only: gama0
-    use DNS_LOCAL, only: nitera_first, nitera_log, logs_data
     use TLAB_PROCS
     use PARTICLE_VARS
 #ifdef USE_MPI
@@ -327,6 +326,8 @@ contains
 !#
 !########################################################################
     subroutine TIME_COURANT(q, wrk3d)
+        use DNS_LOCAL, only: logs_data
+
         real(wp), intent(IN) :: q(imax, jmax, kmax, inb_flow_array)
         real(wp), intent(INOUT) :: wrk3d(imax, jmax, kmax)
 
