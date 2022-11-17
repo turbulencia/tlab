@@ -55,7 +55,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1 &
 
     integer(wi) siz, srt, end    !  Variables for OpenMP Partitioning
 
-    real(wp), dimension(:), pointer :: p_bcs
+    real(wp), dimension(:, :, :), pointer :: p_bcs
 
 #ifdef USE_ESSL
     integer ilen
@@ -83,18 +83,13 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1 &
     BcsScalJmax%ref(:, :, :) = 0.0_wp
 
 ! Keep the old tendency of the scalar at the boundary to be used in dynamic BCs
-    ip_b = 1
-    ip_t = imax*(jmax - 1) + 1
-    do k = 1, kmax
+    if (any(BcsScalJmin%SfcType(1:inb_scal) == DNS_SFC_LINEAR) .or. any(BcsScalJmax%SfcType(1:inb_scal) == DNS_SFC_LINEAR)) then
         do is = 1, inb_scal
-            if (BcsScalJmin%SfcType(is) == DNS_SFC_LINEAR) then
-                p_bcs => hs(ip_b:, is); BcsScalJmin%ref(1:imax, k, is) = p_bcs(1:imax); end if
-            if (BcsScalJmax%SfcType(is) == DNS_SFC_LINEAR) then
-                p_bcs => hs(ip_t:, is); BcsScalJmax%ref(1:imax, k, is) = p_bcs(1:imax); end if
+            p_bcs(1:imax, 1:jmax, 1:kmax) => hs(1:imax*jmax*kmax,is)
+            if (BcsScalJmin%SfcType(is) == DNS_SFC_LINEAR) BcsScalJmin%ref(:, :, is) = p_bcs(:, 1, :)
+            if (BcsScalJmax%SfcType(is) == DNS_SFC_LINEAR) BcsScalJmax%ref(:, :, is) = p_bcs(:, jmax, :)
         end do
-        ip_b = ip_b + nxy ! bottom BC address
-        ip_t = ip_t + nxy ! top BC address
-    end do
+    end if
 
 ! #######################################################################
 ! Preliminaries for IBM use
@@ -151,7 +146,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1 &
 
 ! #######################################################################
 ! Diffusion and convection terms in Ox momentum eqn
-! The term \nu u'' - u u' has been already added in the beginning
+! The term u u''-u u' has been already added in the beginning
 ! #######################################################################
     call OPR_BURGERS_Y(i1, i0, imax, jmax, kmax, bcs, g(2), u, v, tmp4, tmp2, tmp1, wrk2d, wrk3d) ! tmp4 contains w transposed
     call OPR_BURGERS_Z(i1, i0, imax, jmax, kmax, bcs, g(3), u, w, tmp6, tmp3, tmp1, wrk2d, wrk3d) ! tmp6 contains w transposed
@@ -299,29 +294,23 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1 &
 
 ! -----------------------------------------------------------------------
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
-    ip_b = 1
-    ip_t = imax*(jmax - 1) + 1
 ! Stagger also Bcs
     if (imode_ibm == 1) call IBM_BCS_FIELD(h2)
     if (istagger == 1) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
         call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), h2, tmp5, wrk3d, wrk2d, wrk3d)
         call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
         if (imode_ibm == 1) call IBM_BCS_FIELD_STAGGER(tmp4)
-        do k = 1, kmax
-            p_bcs => tmp4(ip_b:); BcsFlowJmin%ref(1:imax, k, 2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-            p_bcs => tmp4(ip_t:); BcsFlowJmax%ref(1:imax, k, 2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
-        end do
+        p_bcs(1:imax, 1:jmax, 1:kmax) => tmp4(1:imax*jmax*kmax)
     else
-        do k = 1, kmax
-            p_bcs => h2(ip_b:); BcsFlowJmin%ref(1:imax, k, 2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-            p_bcs => h2(ip_t:); BcsFlowJmax%ref(1:imax, k, 2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
-        end do
+        p_bcs(1:imax, 1:jmax, 1:kmax) => h2(1:imax*jmax*kmax)
     end if
 
-! Adding density in BCs
     if (imode_eqns == DNS_EQNS_ANELASTIC) then
-        BcsFlowJmin%ref(:, :, 2) = BcsFlowJmin%ref(:, :, 2)*rbackground(1)
-        BcsFlowJmax%ref(:, :, 2) = BcsFlowJmax%ref(:, :, 2)*rbackground(g(2)%size)
+        BcsFlowJmin%ref(:, :, 2) = p_bcs(:, 1, :)*rbackground(1)
+        BcsFlowJmax%ref(:, :, 2) = p_bcs(:, jmax, :)*rbackground(g(2)%size)
+    else
+        BcsFlowJmin%ref(:, :, 2) = p_bcs(:, 1, :)
+        BcsFlowJmax%ref(:, :, 2) = p_bcs(:, jmax, :)
     end if
 
 ! pressure in tmp1, Oy derivative in tmp3
