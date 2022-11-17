@@ -217,170 +217,34 @@ subroutine DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
     BcsScalImin%type(:) = DNS_BCS_NONE; BcsScalImax%type(:) = DNS_BCS_NONE
     if (.not. g(1)%periodic) then
-    do is = 1, inb_scal
-        write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'Imin'
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'none', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; BcsScalImin%type(is) = DNS_BCS_NONE
-        else if (trim(adjustl(sRes)) == 'dirichlet') then; BcsScalImin%type(is) = DNS_BCS_DIRICHLET
-        else if (trim(adjustl(sRes)) == 'neumann') then; BcsScalImin%type(is) = DNS_BCS_NEUMANN
-        else
-            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//trim(adjustl(lstr)))
-            call TLAB_STOP(DNS_ERROR_IBC)
-        end if
-        write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'Imax'
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'none', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; BcsScalImax%type(is) = DNS_BCS_NONE
-        else if (trim(adjustl(sRes)) == 'dirichlet') then; BcsScalImax%type(is) = DNS_BCS_DIRICHLET
-        else if (trim(adjustl(sRes)) == 'neumann') then; BcsScalImax%type(is) = DNS_BCS_NEUMANN
-        else
-            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//trim(adjustl(lstr)))
-            call TLAB_STOP(DNS_ERROR_IBC)
-        end if
-    end do
+        call BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, 'Imin', BcsScalImin)
+        call BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, 'Imax', BcsScalImax)
     end if
 
     BcsScalJmin%type(:) = DNS_BCS_NONE; BcsScalJmax%type(:) = DNS_BCS_NONE
     if (.not. g(2)%periodic) then
-    do is = 1, inb_scal
-        !
-        write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'Jmin'
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'void', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; BcsScalJmin%type(is) = DNS_BCS_NONE
-        else if (trim(adjustl(sRes)) == 'dirichlet') then; BcsScalJmin%type(is) = DNS_BCS_DIRICHLET
-        else if (trim(adjustl(sRes)) == 'neumann') then; BcsScalJmin%type(is) = DNS_BCS_NEUMANN
-        else
-            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//trim(adjustl(lstr)))
-            call TLAB_STOP(DNS_ERROR_JBC)
-        end if
-        write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'SfcTypeJmin'
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'static', sRes)
-        if (sRes == 'static') then
-            BcsScalJmin%SfcType(is) = DNS_SFC_STATIC
-        elseif (sRes == 'linear') then
-            BcsScalJmin%SfcType(is) = DNS_SFC_LINEAR
-        else
-            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//trim(adjustl(lstr)))
-            call TLAB_STOP(DNS_ERROR_JBC)
-        end if
-        write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'CouplingJmin'
-        call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), '0.0', BcsScalJmin%cpl(is))
-        !
-        write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'Jmax'
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'void', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; BcsScalJmax%type(is) = DNS_BCS_NONE
-        else if (trim(adjustl(sRes)) == 'dirichlet') then; BcsScalJmax%type(is) = DNS_BCS_DIRICHLET
-        else if (trim(adjustl(sRes)) == 'neumann') then; BcsScalJmax%type(is) = DNS_BCS_NEUMANN
-        else
-            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//trim(adjustl(lstr)))
-            call TLAB_STOP(DNS_ERROR_JBC)
-        end if
-        write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'SfcTypeJmax'
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'static', sRes)
-        if (sRes == 'static') then
-            BcsScalJmax%SfcType(is) = DNS_SFC_STATIC
-        elseif (sRes == 'linear') then
-            BcsScalJmax%SfcType(is) = DNS_SFC_LINEAR
-        else
-            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//trim(adjustl(lstr)))
-            call TLAB_STOP(DNS_ERROR_JBC)
-        end if
-        write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'CouplingJmax'
-        call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), '0.0', BcsScalJmax%cpl(is))
-    end do
+        call BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, 'Jmin', BcsScalJmin)
+        call BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, 'Jmax', BcsScalJmax)
     end if
 
     BcsScalKmin%type(:) = DNS_BCS_NONE; BcsScalKmax%type(:) = DNS_BCS_NONE
     if (.not. g(3)%periodic) then
-    do is = 1, inb_scal
-        write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'Kmin'
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'none', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; BcsScalKmin%type(is) = DNS_BCS_NONE
-        else if (trim(adjustl(sRes)) == 'dirichlet') then; BcsScalKmin%type(is) = DNS_BCS_DIRICHLET
-        else if (trim(adjustl(sRes)) == 'neumann') then; BcsScalKmin%type(is) = DNS_BCS_NEUMANN
-        else
-            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//trim(adjustl(lstr)))
-            call TLAB_STOP(DNS_ERROR_KBC)
-        end if
-        write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'Kmax'
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'none', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; BcsScalKmax%type(is) = DNS_BCS_NONE
-        else if (trim(adjustl(sRes)) == 'dirichlet') then; BcsScalKmax%type(is) = DNS_BCS_DIRICHLET
-        else if (trim(adjustl(sRes)) == 'neumann') then; BcsScalKmax%type(is) = DNS_BCS_NEUMANN
-        else
-            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//trim(adjustl(lstr)))
-            call TLAB_STOP(DNS_ERROR_KBC)
-        end if
-    end do
+        call BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, 'Kmin', BcsScalKmin)
+        call BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, 'Kmax', BcsScalKmax)
     end if
 
 ! -------------------------------------------------------------------
 ! Velocity terms / Euler part in compressible mode
 ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityImin', 'freeslip', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; BcsFlowImin%type(1:3) = DNS_BCS_NONE
-    else if (trim(adjustl(sRes)) == 'noslip') then; BcsFlowImin%type(1:3) = DNS_BCS_DIRICHLET
-    else if (trim(adjustl(sRes)) == 'freeslip') then; BcsFlowImin%type(1) = DNS_BCS_DIRICHLET
-        BcsFlowImin%type(2) = DNS_BCS_NEUMANN
-        BcsFlowImin%type(3) = DNS_BCS_NEUMANN
-    else
-        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityImin.')
-        call TLAB_STOP(DNS_ERROR_IBC)
-    end if
-    call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityImax', 'freeslip', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; BcsFlowImax%type(1:3) = DNS_BCS_NONE
-    else if (trim(adjustl(sRes)) == 'noslip') then; BcsFlowImax%type(1:3) = DNS_BCS_DIRICHLET
-    else if (trim(adjustl(sRes)) == 'freeslip') then; BcsFlowImax%type(1) = DNS_BCS_DIRICHLET
-        BcsFlowImax%type(2) = DNS_BCS_NEUMANN
-        BcsFlowImax%type(3) = DNS_BCS_NEUMANN
-    else
-        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityImax.')
-        call TLAB_STOP(DNS_ERROR_IBC)
-    end if
-
-    call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'freeslip', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; BcsFlowJmin%type(1:3) = DNS_BCS_NONE
-    else if (trim(adjustl(sRes)) == 'noslip') then; BcsFlowJmin%type(1:3) = DNS_BCS_DIRICHLET
-    else if (trim(adjustl(sRes)) == 'freeslip') then; BcsFlowJmin%type(2) = DNS_BCS_DIRICHLET
-        BcsFlowJmin%type(1) = DNS_BCS_NEUMANN
-        BcsFlowJmin%type(3) = DNS_BCS_NEUMANN
-    else
-        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityJmin.')
-        call TLAB_STOP(DNS_ERROR_JBC)
-    end if
-    call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmax', 'freeslip', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; BcsFlowJmax%type(1:3) = DNS_BCS_NONE
-    else if (trim(adjustl(sRes)) == 'noslip') then; BcsFlowJmax%type(1:3) = DNS_BCS_DIRICHLET
-    else if (trim(adjustl(sRes)) == 'freeslip') then; BcsFlowJmax%type(2) = DNS_BCS_DIRICHLET
-        BcsFlowJmax%type(1) = DNS_BCS_NEUMANN
-        BcsFlowJmax%type(3) = DNS_BCS_NEUMANN
-    else
-        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityJmax.')
-        call TLAB_STOP(DNS_ERROR_JBC)
-    end if
-
-    call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityKmin', 'freeslip', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; BcsFlowKmin%type(1:3) = DNS_BCS_NONE
-    else if (trim(adjustl(sRes)) == 'noslip') then; BcsFlowKmin%type(1:3) = DNS_BCS_DIRICHLET
-    else if (trim(adjustl(sRes)) == 'freeslip') then; BcsFlowKmin%type(3) = DNS_BCS_DIRICHLET
-        BcsFlowKmin%type(2) = DNS_BCS_NEUMANN
-        BcsFlowKmin%type(1) = DNS_BCS_NEUMANN
-    else
-        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityKmin.')
-        call TLAB_STOP(DNS_ERROR_KBC)
-    end if
-    call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityKmax', 'freeslip', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; BcsFlowKmax%type(1:3) = DNS_BCS_NONE
-    else if (trim(adjustl(sRes)) == 'noslip') then; BcsFlowKmax%type(1:3) = DNS_BCS_DIRICHLET
-    else if (trim(adjustl(sRes)) == 'freeslip') then; BcsFlowKmax%type(3) = DNS_BCS_DIRICHLET
-        BcsFlowKmax%type(2) = DNS_BCS_NEUMANN
-        BcsFlowKmax%type(1) = DNS_BCS_NEUMANN
-    else
-        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityKmax.')
-        call TLAB_STOP(DNS_ERROR_KBC)
-    end if
+    call BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, 'Imin', BcsFlowImin)
+    call BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, 'Imax', BcsFlowImax)
+    call BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, 'Jmin', BcsFlowJmin)
+    call BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, 'Jmax', BcsFlowJmax)
+    call BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, 'Kmin', BcsFlowKmin)
+    call BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, 'Kmax', BcsFlowKmax)
 
 ! -------------------------------------------------------------------
-! Viscous terms
+! Viscous terms, used only t odefine bcs_inf and bcs_out
 ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousI', 'none', sRes)
     if (trim(adjustl(sRes)) == 'none') then; bcs_visc_imin = 0; bcs_visc_imax = 0
@@ -416,8 +280,6 @@ subroutine DNS_READ_LOCAL(inifile)
 
 ! Inflow terms
     call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaInf', '-1.0', dummy(1))
-    ! IF ( dummy(1) .LE. 0.0_wp ) THEN; dummy(1) = 0.0_wp
-    ! ELSE;                            BcsDrift = .TRUE.; ENDIF
     if (dummy(1) >= 0.0_wp) BcsDrift = .true.
     BcsFlowImin%cinf = dummy(1); BcsFlowImax%cinf = dummy(1) ! so far, all of them the same
     BcsFlowJmin%cinf = dummy(1); BcsFlowJmax%cinf = dummy(1)
@@ -428,8 +290,6 @@ subroutine DNS_READ_LOCAL(inifile)
 
 ! Outflow terms
     call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaOut', '-1.0', dummy(1))
-    ! IF ( dummy(1) .LE. 0.0_wp ) THEN; dummy(1) = 0.0_wp
-    ! ELSE;                            BcsDrift =  .TRUE.; ENDIF
     if (dummy(1) >= 0.0_wp) BcsDrift = .true.
     BcsFlowImin%cout = dummy(1); BcsFlowImax%cout = dummy(1) ! so far, all of them the same
     BcsFlowJmin%cout = dummy(1); BcsFlowJmax%cout = dummy(1)
@@ -440,8 +300,6 @@ subroutine DNS_READ_LOCAL(inifile)
 
 ! Transverse terms
     call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'BetaTransverse', '-1.0', dummy(1))
-    ! IF ( dummy(1) .LE. 0.0_wp ) THEN; dummy(1) = 0.0_wp
-    ! ELSE;                            BcsDrift =  .TRUE.; ENDIF
     if (dummy(1) >= 0.0_wp) BcsDrift = .true.
     BcsFlowImin%ctan = dummy(1); BcsFlowImax%ctan = dummy(1) ! so far, all of them the same
     BcsFlowJmin%ctan = dummy(1); BcsFlowJmax%ctan = dummy(1)
@@ -697,10 +555,10 @@ subroutine DNS_READ_LOCAL(inifile)
     end if
 
 ! Avoid dividing by zero in time_integration routine
-    if (nitera_save   <= 0) nitera_save   = nitera_last - nitera_first + 1
-    if (nitera_stats  <= 0) nitera_stats  = nitera_last - nitera_first + 1
-    if (nitera_log    <= 0) nitera_log    = nitera_last - nitera_first + 1
-    if (nitera_pln    <= 0) nitera_pln    = nitera_last - nitera_first + 1
+    if (nitera_save <= 0) nitera_save = nitera_last - nitera_first + 1
+    if (nitera_stats <= 0) nitera_stats = nitera_last - nitera_first + 1
+    if (nitera_log <= 0) nitera_log = nitera_last - nitera_first + 1
+    if (nitera_pln <= 0) nitera_pln = nitera_last - nitera_first + 1
     if (nitera_filter <= 0) nitera_filter = nitera_last - nitera_first + 1
 
     if (imode_sim == DNS_MODE_TEMPORAL) nitera_stats_spa = -1 ! Never call avg_spatial routines
