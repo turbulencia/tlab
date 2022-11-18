@@ -21,18 +21,19 @@
 !# 
 !########################################################################
 
-subroutine IBM_INITIALIZE_SCAL(s)
+subroutine IBM_INITIALIZE_SCAL(isbcs, s)
   
-  use IBM_VARS,  only : eps, ibmscaljmin, ibmscaljmax 
-  use TLAB_VARS, only : imax, jmax, isize_field,inb_scal
+  use IBM_VARS,  only : eps, ibmscaljmin, ibmscaljmax, scal_bcs
+  use TLAB_VARS, only : imax, jmax, isize_field, inb_scal
 
   implicit none
 
 #include "integers.h"
   
-  TREAL, dimension(isize_field,inb_scal), intent(inout) :: s
+  TINTEGER,                                  intent(in   ) :: isbcs
+  TREAL,    dimension(isize_field,inb_scal), intent(inout) :: s
 
-  TINTEGER                                              :: is
+  TINTEGER                                                 :: is
 
 ! ================================================================== !
 ! get scalar dirichlet boundary values of ini scalar field
@@ -49,6 +50,13 @@ subroutine IBM_INITIALIZE_SCAL(s)
   do is = 1, inb_scal
     call IBM_BCS_SCAL(is,s(:,is),eps(:))
   end do
+
+! write out scalar boundary values applied in solids
+  if ( isbcs > i0 ) then
+    do is = 1, inb_scal
+      call IBM_AVG_SCAL_BCS(is, scal_bcs(:,is))
+    end do
+  end if
 
   return
 end subroutine IBM_INITIALIZE_SCAL

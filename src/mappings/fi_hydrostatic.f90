@@ -12,8 +12,8 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Evaluate the integral \int_ycenter^y dx/H(x), where H(x) is the scale 
-!# height in the system, where ycenter is some given value
+!# Evaluate the integral \int_pbg%ymean^y dx/H(x), where H(x) is the scale 
+!# height in the system
 !#
 !########################################################################
 
@@ -26,7 +26,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
 
   USE TLAB_VARS, ONLY : imode_eqns
   USE TLAB_VARS, ONLY : pbg, damkohler, buoyancy
-  USE THERMO_VARS, ONLY : imixture
+  USE THERMO_VARS, ONLY : imixture, scaleheight
 
   IMPLICIT NONE
 
@@ -40,14 +40,13 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
 
 ! -------------------------------------------------------------------
   TINTEGER iter, niter, ibc, j, jcenter
-  TREAL dummy, ycenter
+  TREAL dummy
   
 ! ###################################################################
 ! Get the center  
-  ycenter = g%nodes(1) + pbg%ymean_rel *g%scale
   DO j = 1,g%size
-     IF ( g%nodes(j  ) .LE. ycenter .AND. &
-          g%nodes(j+1) .GT. ycenter ) THEN
+     IF ( g%nodes(j  ) .LE. pbg%ymean .AND. &
+          g%nodes(j+1) .GT. pbg%ymean ) THEN
         jcenter = j
         EXIT
      ENDIF
@@ -70,7 +69,7 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
   DO iter = 1,niter           ! iterate
      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
         CALL THERMO_ANELASTIC_DENSITY(i1,g%size,i1, s, e,wrk1d(1,6), wrk1d(1,7))   ! Get 1/RT
-        dummy = -C_1_R / SIGN(pbg%parameters(5),buoyancy%vector(2))
+        dummy = -C_1_R / SIGN(scaleheight,buoyancy%vector(2))
      ELSE
         CALL THERMO_AIRWATER_PH_RE(i1,g%size, i1, s(1,2), p, s(1,1), T)
         CALL THERMO_THERMAL_DENSITY(i1,g%size,i1, s(1,2),wrk1d(1,6),T, wrk1d(1,7)) ! Get 1/RT
@@ -85,11 +84,11 @@ SUBROUTINE FI_HYDROSTATIC_H(g, s, e, T,p, wrk1d)
 
 ! Calculate pressure and normalize s.t. p=pbg%mean at y=pbg%ymean_rel
      p(:) = EXP(p(:))
-     IF ( ABS(ycenter-g%nodes(jcenter)) .EQ. C_0_R ) THEN
+     IF ( ABS(pbg%ymean-g%nodes(jcenter)) .EQ. C_0_R ) THEN
         dummy = p(jcenter)
      ELSE
         dummy = p(jcenter) + (p(jcenter+1)      -p(jcenter)      ) &
-                           / (g%nodes(jcenter+1)-g%nodes(jcenter)) *(ycenter-g%nodes(jcenter))
+                           / (g%nodes(jcenter+1)-g%nodes(jcenter)) *(pbg%ymean-g%nodes(jcenter))
      ENDIF
      dummy = pbg%mean /dummy     
      p(:)  = dummy *p(:)

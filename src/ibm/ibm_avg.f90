@@ -1,5 +1,5 @@
 #include "types.h"
-
+#include "dns_error.h"
 !########################################################################
 !# HISTORY / AUTHORS
 !#
@@ -8,10 +8,29 @@
 !#
 !########################################################################
 !# DESCRIPTION OF SUBROUTINES
-!#   compute gamma (conditional/intrinsic averaging) [cf. Pope. p.170]
-!#   eps field needs to be adjusted because of the treatment of interface
-!#   points (Riemann midpoint rule), these points are weighted with 0.5*dz
-!# 
+!#   Compute gammas - needed for conditional/intrinsic 
+!#   averaging of 1d-vertical-statistics [cf. Pope. p.170].
+!#   
+!#   The gammas describe the share of different partitions in the 
+!#   whole simulation domain:
+!#
+!#      gamma_1: partition solid (with interfaces) 
+!#               [solid and interface partitions are described 
+!#               with ones in the eps - indicator field]
+!#      gamma_0: partition fluid (without interfaces) 
+!#               [fluid partitions are described with zeros in 
+!#               in the eps - indicator field]
+!#
+!#   And the physically correct partitions (based on volume fractions)
+!#   [interface points are splitted in half for solid and fluid]:
+!#      {the following is not valid at edges and corners!
+!#       --> special treatment of these points (e.g. for gamma_s):
+!#           - plain interface : 1/2
+!#           - edges           : 1/4
+!#           - corners         : 1/8}
+!#      gamma_f: partition fluid
+!#      gamma_s: partition solid
+!#
 !#
 !########################################################################
 !# ARGUMENTS 
@@ -23,43 +42,105 @@
 !#
 !########################################################################
 
-subroutine IBM_AVG_GAMMA(gamma, eps, wrk3d, wrk1d)
+subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2)
 
-  use TLAB_VARS, only : imax, jmax, kmax, g, area
-  USE AVGS, ONLY: AVG_IK_V
+  use TLAB_VARS,      only : imax, jmax, kmax, g, area
+  use TLAB_CONSTANTS, only : efile
+  use TLAB_PROCS,     only : TLAB_STOP, TLAB_WRITE_ASCII
+  use AVGS,           only : AVG_IK_V
+  use IBM_VARS,       only : dy, facu, facl
+#ifdef USE_MPI
+  use MPI
+  use TLAB_MPI_VARS,  only : ims_err 
+#endif
 
   implicit none
 
-  TREAL, dimension(     jmax     ), intent(out  ) ::  gamma
-  TREAL, dimension(imax,jmax,kmax), intent(in   ) ::  eps
-  TREAL, dimension(imax,jmax,kmax), intent(inout) ::  wrk3d
-  TREAL, dimension(     jmax     ), intent(inout) ::  wrk1d
+  TREAL, dimension(     jmax     ), intent(out  ) :: gamma_0, gamma_1
+  TREAL, dimension(     jmax     ), intent(out  ) :: gamma_f, gamma_s
+  TREAL, dimension(imax,jmax,kmax), intent(in   ) :: eps
+  TREAL, dimension(imax,jmax,kmax), intent(inout) :: tmp1
+  TREAL, dimension(     jmax,   2), intent(inout) :: tmp2
+
+  target                                          :: tmp2
+  TREAL, dimension(:),              pointer       :: wrk1d, res
 
   TINTEGER                                        :: i,j,k
-
+  TREAL                                           :: dummy, check
+  
   ! ================================================================== !
-  ! exclude body points (filled with zeros)
-  wrk3d(:,:,:) = (C_1_R - eps(:,:,:))
+  ! solid + interface points are filled with zeros
+  tmp1(:,:,:) = C_0_R; tmp2(:,:) = C_0_R
+  wrk1d => tmp2(:,1); res => tmp2(:,2)
+
+  ! horizontal average - compute gamma_1
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, eps,  g(1)%jac, g(3)%jac, gamma_1, wrk1d, area)
+  
+  ! horizontal average - compute gamma_0
+  tmp1(:,:,:) = (C_1_R - eps(:,:,:))
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac, g(3)%jac, gamma_0, wrk1d, area)
+
+  ! take boundaries, edges and corner into account
+  tmp1(:,:,:) = eps(:,:,:)
+
+  ! take grid stretching in vertical direction into account
+  do j = 1, jmax-1   ! dy[jmax-1] - vertical spacing
+    dy(j) = g(2)%nodes(j+1) - g(2)%nodes(j) 
+  end do
+  do j = 1, jmax-2   ! fac[jmax-2]
+    facl(j) = dy(j  ) / ( dy(j) + dy(j+1) ) ! lower obj
+    facu(j) = dy(j+1) / ( dy(j) + dy(j+1) ) ! upper obj
+  end do
 
   ! in x-direction - inner points - boundary points
   do k = 1, kmax   
     do j = 1, jmax 
       i = 1
       if (        eps(i,j,k) == 0 .and. eps(i+1,j,k) == 1 ) then
-        wrk3d(i+1,j,k) = C_05_R 
+        tmp1(i+1,j,k) = C_05_R * tmp1(i+1,j,k)
       end if
       do i = 2, imax-1
         if (      eps(i,j,k) == 0 .and. eps(i+1,j,k) == 1 ) then
-          wrk3d(i+1,j,k) = C_05_R 
+          tmp1(i+1,j,k) = C_05_R * tmp1(i+1,j,k)
         else if ( eps(i,j,k) == 0 .and. eps(i-1,j,k) == 1 ) then
-          wrk3d(i-1,j,k) = C_05_R 
+          tmp1(i-1,j,k) = C_05_R * tmp1(i-1,j,k)
         end if
       end do 
       i = imax
       if (        eps(i,j,k) == 0 .and. eps(i-1,j,k) == 1 ) then
-        wrk3d(i-1,j,k) = C_05_R 
+        tmp1(i-1,j,k) = C_05_R * tmp1(i-1,j,k)
       end if
     end do
+
+    ! in y-direction - inner points - boundary points 
+    ! (without considering stretching on the ground)
+    do i = 1, imax   
+      j = 1        
+      if (        eps(i,j,k) == 0 .and. eps(i,j+1,k) == 1 ) then
+        tmp1(i,j+1,k) = C_05_R * tmp1(i,j+1,k)   
+      end if 
+      do j = 2, jmax-1
+        if (      eps(i,j,k) == 0 .and. eps(i,j+1,k) == 1 ) then
+          if ( j == 2 .or. j == jmax-1 ) then
+            tmp1(i,j+1,k) = C_05_R * tmp1(i,j+1,k) 
+          else
+            tmp1(i,j+1,k) = facu(j) * tmp1(i,j+1,k)
+          end if
+          ! tmp1(i,j+1,k) = C_05_R * tmp1(i,j+1,k)
+        else if ( eps(i,j,k) == 0 .and. eps(i,j-1,k) == 1 ) then
+          if ( j == 2 .or. j == jmax-1 ) then
+            tmp1(i,j-1,k) = C_05_R * tmp1(i,j-1,k)
+          else
+            tmp1(i,j-1,k) = facl(j-2) * tmp1(i,j-1,k)
+          end if
+          ! tmp1(i,j-1,k) = C_05_R * tmp1(i,j-1,k) 
+        end if
+      end do 
+      j = jmax
+      if (        eps(i,j,k) == 0 .and. eps(i,j-1,k) == 1 ) then
+        tmp1(i,j-1,k) = C_05_R * tmp1(i,j-1,k)
+      end if
+    end do  
   end do
 
   ! in z-direction - inner points - boundary points
@@ -67,24 +148,48 @@ subroutine IBM_AVG_GAMMA(gamma, eps, wrk3d, wrk1d)
     do j = 1, jmax 
       k = 1        
       if (        eps(i,j,k) == 0 .and. eps(i,j,k+1) == 1 ) then
-        wrk3d(i,j,k+1) = C_05_R 
+        tmp1(i,j,k+1) = C_05_R * tmp1(i,j,k+1)
       end if 
       do k = 2, kmax-1
         if (      eps(i,j,k) == 0 .and. eps(i,j,k+1) == 1 ) then
-          wrk3d(i,j,k+1) = C_05_R 
+          tmp1(i,j,k+1) = C_05_R * tmp1(i,j,k+1)
         else if ( eps(i,j,k) == 0 .and. eps(i,j,k-1) == 1 ) then
-          wrk3d(i,j,k-1) = C_05_R 
+          tmp1(i,j,k-1) = C_05_R * tmp1(i,j,k-1)
         end if
       end do 
       k = kmax
       if (        eps(i,j,k) == 0 .and. eps(i,j,k-1) == 1 ) then
-        wrk3d(i,j,k-1) = C_05_R 
+        tmp1(i,j,k-1) = C_05_R * tmp1(i,j,k-1)
       end if
     end do
   end do
 
-  ! horizontal average
-  CALL AVG_IK_V(imax,jmax,kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, gamma, wrk1d, area)
+  ! horizontal average - compute gamma_s
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac, g(3)%jac, gamma_s, wrk1d, area)
+
+  ! horizontal average - compute gamma_f
+  tmp1(:,:,:) = (C_1_R - tmp1(:,:,:))
+  CALL AVG_IK_V(imax,jmax,kmax, jmax, tmp1, g(1)%jac, g(3)%jac, gamma_f, wrk1d, area)
+
+  ! constistency check of partitioning
+  do j = 1, jmax 
+    if ( gamma_f(j) /= C_1_R ) then
+      res(j) = (gamma_f(j) - gamma_0(j)) + (gamma_s(j) - gamma_1(j)) 
+    else
+      res(j) = C_0_R
+    end if
+  end do
+  check = sum(res)
+#ifdef USE_MPI
+  dummy = check
+  CALL MPI_ALLREDUCE(dummy, check, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
+#endif
+  if ( check > C_1EM10_R ) then
+    call TLAB_WRITE_ASCII(efile, 'IBM_AVG_GAMMA. Sum of gammas is not correct.')
+    call TLAB_STOP(DNS_ERROR_IBM_GAMMA)
+  end if
+
+  nullify(wrk1d, res)
 
   return
 end subroutine IBM_AVG_GAMMA

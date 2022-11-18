@@ -47,13 +47,13 @@
 
   ENDIF
 
-  IF      ( opt_cond .EQ. 3 ) THEN; gate_threshold = gate_threshold**C_2_R; ! using enstrophy
-  ELSE IF ( opt_cond .EQ. 4 ) THEN; gate_threshold = gate_threshold**C_2_R; ! using scalar dissipation
+  IF      ( opt_cond .EQ. 3 ) THEN; gate_threshold = gate_threshold**2.0_wp; ! using enstrophy
+  ELSE IF ( opt_cond .EQ. 4 ) THEN; gate_threshold = gate_threshold**2.0_wp; ! using scalar dissipation
   ENDIF
 
   IF ( igate_size .GT. 0 ) THEN
      IF ( opt_cond .EQ. 7 ) THEN
-        igate_size = INT(2.**M_REAL(igate_size)) ! double conditioning
+        igate_size = INT(2.0**real(igate_size,wp)) ! double conditioning
      ELSE
         CALL SORT_REAL(igate_size,gate_threshold)
         igate_size = igate_size+1 ! # of gate levels is +1 number of thresholds between them

@@ -4,7 +4,8 @@
 SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold, ibuffer_npy, &
      u, v, w, z1, a, sl, samples, pdf, txc, wrk1d, wrk2d, wrk3d)
 
-  USE TLAB_VARS
+     USE TLAB_VARS
+     USE TLAB_AVGS
 
   IMPLICIT NONE
 
@@ -20,7 +21,7 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
   TREAL wrk1d(*), wrk2d(*), wrk3d(*)
 
 ! -------------------------------------------------------------------
-  TREAL vmin, vmax, vmean, AVG_IK, ycenter
+  TREAL vmin, vmax, vmean
   TINTEGER ij, ikmax, ipfield, nfield_loc, ioffset, isize, iv, ip, jmin_loc, jmax_loc
   CHARACTER*32 fname
   CHARACTER*32 varname(L_NFIELDS_MAX)
@@ -152,22 +153,21 @@ SUBROUTINE SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
 
   varname(5) = 'height'
 
-  ycenter = y(1) + qbg(1)%ymean_rel *g(2)%scale
   IF ( isl .EQ. 1 ) THEN
      DO ij = 1,imax*kmax
         ip = ipfield + (ij-1)*ioffset
-        samples(ip) = sl(ij,1) - ycenter
+        samples(ip) = sl(ij,1) - qbg(1)%ymean
      ENDDO
   ELSE IF (isl .EQ. 2 ) THEN
      DO ij = 1,imax*kmax
         ip = ipfield + (ij-1)*ioffset
-        samples(ip) = ycenter - sl(ij,1)
+        samples(ip) = qbg(1)%ymean - sl(ij,1)
      ENDDO
   ELSE
      DO ij = 1,imax*kmax
         ip = ipfield + (ij-1)*ioffset
-        samples(ip  ) = sl(ij,1) - ycenter
-        samples(ip+1) = ycenter - sl(ij,2)
+        samples(ip  ) = sl(ij,1) - qbg(1)%ymean
+        samples(ip+1) = qbg(1)%ymean - sl(ij,2)
      ENDDO
 ! correct the number of fields from this section
      nfield_loc = nfield_loc*2

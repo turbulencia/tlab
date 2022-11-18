@@ -35,7 +35,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
   USE TLAB_VARS, ONLY : buoyancy, coriolis
   USE TLAB_VARS, ONLY : bbackground
   USE TLAB_PROCS
-  USE DNS_LOCAL,  ONLY : idivergence
+  USE DNS_LOCAL,  ONLY : remove_divergence
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
 
@@ -409,7 +409,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 ! #######################################################################
 ! Pressure term
 ! #######################################################################
-  IF ( idivergence .EQ. EQNS_DIVERGENCE ) THEN ! remove residual divergence
+  IF ( remove_divergence ) THEN ! remove residual divergence
      CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
      CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)

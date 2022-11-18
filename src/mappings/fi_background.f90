@@ -12,12 +12,12 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
     use TLAB_CONSTANTS, only: lfile
     use TLAB_VARS, only: inb_scal, inb_scal_array, imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: qbg, pbg, rbg, tbg, sbg
+    use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: damkohler, froude, schmidt
     use TLAB_VARS, only: rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
     use TLAB_VARS, only: buoyancy
     use TLAB_PROCS
-    use THERMO_VARS, only: imixture, GRATIO
+    use THERMO_VARS, only: imixture, GRATIO, scaleheight
     use PROFILES
 #ifdef USE_MPI
     use TLAB_MPI_VARS
@@ -39,6 +39,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
     if (pbg%relative) pbg%ymean = g(2)%nodes(1) + g(2)%scale*pbg%ymean_rel
     if (rbg%relative) rbg%ymean = g(2)%nodes(1) + g(2)%scale*rbg%ymean_rel
     if (tbg%relative) tbg%ymean = g(2)%nodes(1) + g(2)%scale*tbg%ymean_rel
+    if (hbg%relative) hbg%ymean = g(2)%nodes(1) + g(2)%scale*hbg%ymean_rel
     do is = 1,size(sbg)
         if (sbg(is)%relative) sbg(is)%ymean = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
     enddo
@@ -68,9 +69,9 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 !     wrk1d(:,is) = sbg(is)%reference
     end do
 
-    if (pbg%parameters(5) > C_0_R) then
+    if (scaleheight > C_0_R) then
 ! Calculate derived thermodynamic profiles
-        epbackground = (g(2)%nodes - pbg%ymean)*GRATIO/pbg%parameters(5)
+        epbackground = (g(2)%nodes - pbg%ymean)*GRATIO/scaleheight
 
         if (buoyancy%active(2)) then
 !        CALL FI_HYDROSTATIC_H_OLD(g(2)%size, g(2)%nodes, wrk1d, epbackground, tbackground, pbackground, wrk1d(1,4))
@@ -85,7 +86,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
         call THERMO_AIRWATER_LINEAR(i1, g(2)%size, i1, wrk1d, wrk1d(1, inb_scal_array))
     end if
 
-    if (pbg%parameters(5) > C_0_R) then
+    if (scaleheight > C_0_R) then
         call THERMO_ANELASTIC_DENSITY(i1, g(2)%size, i1, wrk1d, epbackground, pbackground, rbackground)
         ribackground = C_1_R/rbackground
     end if

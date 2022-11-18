@@ -151,7 +151,7 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
   
   ! min vals solid/fluid
   fp_min = nflu ! 3rd point can be next interface/boundary
-  sp_min = i4   ! 3 solid + 2 interface points - 1
+  sp_min = i3   ! 3 solid + 2 interface points - 1
 
   ! index ii (dummy index; for x,y,z: ii == jk,ik,ij)
   do ii = 1, nlines          ! index of ii-plane, loop over plane and check for objects in each line
@@ -163,30 +163,29 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
         if ( iob == 1 ) then                    ! left
           fp_l = nob_b(ip+ii) - i1
           if ( fp_l < fp_min .and. fp_l /= 0 ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between left border and first object.')
+            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between left border and first object. Check also MaxNumberObj in dns.ini.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
           end if
         end if 
-        if ( iob > 1 ) then ! in between objects
-          ipp = ip - nlines ! previous obj
-          fp_inter = nob_b(ip+ii) - nob_e(ipp+ii)
+        if ( iob < nob(ii) ) then               ! in between objects
+          ipp = ip + nlines                     ! next obj
+          fp_inter = nob_b(ipp+ii) - nob_e(ip+ii) - i1
           if ( fp_inter < fp_min ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between objects.')
+            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between objects. Check also MaxNumberObj in dns.ini.')
+            call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+          end if
+        else if ( iob == nob(ii) ) then         ! right
+          fp_r = g%size - nob_e(ip+ii)
+          if ( fp_r < fp_min .and. fp_r /= 0 ) then
+            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between right border and first object. Check also MaxNumberObj in dns.ini.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
           end if
         end if
-        if ( iob == nob(ii) ) then              ! right
-          fp_r = g%size - nob_e(ip+ii)
-          if ( fp_r < fp_min .and. fp_r /= 0 ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between right border and first object.')
-            call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
-          end if
-        end if 
         ! ================================================================== !
         ! check number of solid points of object
-        sp_ob = nob_e(ip+ii) - nob_b(ip+ii)
+        sp_ob = nob_e(ip+ii) - nob_b(ip+ii) + i1
         if ( sp_ob < sp_min ) then
-          call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough solid points in objects.')
+          call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough solid points in objects. Check also MaxNumberObj in dns.ini.')
           call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
         end if
         ! ================================================================== !        
@@ -198,7 +197,7 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
           fp_l = nob_b(ii)                           ! begin of first object
           fp_r = nob_e((nob(ii) - i1) * nlines + ii) ! end of last object
           if ( (fp_r - fp_l + i1) == g%size ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Overlapping objects are not allowed.')
+            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Overlapping objects are not allowed. Check also MaxNumberObj in dns.ini.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
           end if 
         end if
@@ -228,7 +227,7 @@ subroutine IBM_VERIFY_UP(eps)
 
   TREAL, dimension(isize_field), intent(in) :: eps
 
-  TINTEGER                                  :: ip_t, ip_b, j, k, nxy, height_up, height_lo
+  TINTEGER                                  :: ip_t, ip_b, j, k, nxy
   TREAL                                     :: dummy, top
 
   ! ================================================================== !
@@ -297,7 +296,7 @@ end subroutine IBM_VERIFY_UP
 
 subroutine IBM_VERIFY_SCAL()
 
-  use IBM_VARS,       only : ibm_objup, max_height_objlo, max_height_objup, imode_ibm_scal
+  use IBM_VARS,       only : max_height_objlo, max_height_objup, imode_ibm_scal
   use TLAB_VARS,      only : g
   use TLAB_CONSTANTS, only : efile
   use TLAB_PROCS

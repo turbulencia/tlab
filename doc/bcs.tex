@@ -75,22 +75,22 @@ where $\mathcal{H}$ is the Heaviside function. The slopes $\alpha_l$ and $\alpha
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Initial conditions}
 
-White noise is typically added to mean profiles to accelerate the transition to turbulence. There are reasons, however, to construct initial conditions that are more elaborated than white noise:
+See files in \texttt{tools/initialize/\{flow,scal\}}. The information is in the block \texttt{[IniFields]} of the input file. White noise is often added to mean profiles to accelerate the transition to turbulence. There are reasons, however, to construct initial conditions that are more elaborated than white noise, both in the flow fields and in the scalar fields:
 \begin{itemize}
     \item To be able to compare with analytical solutions and thereby validate the code and algorithms.
     \item To ascertain the duration of the initial transient before the flow enters into the fully developed turbulent regime. We can do that by varying the initial conditions in a controlled way.
     \item To control certain aspects of that transient by using results from stability analysis and exciting or not certain modes. White noise excites all of them equally, and the higher frequency content is dissipated much faster, which might render the energy amount that we use in the initialization misleading. %In this respect, it maybe appropriate to say that the control of the duration of that transient is relatively difficult; on the other hand, the peak of turbulence intensities can be indeed controlled, if necessary e.g. because of resolution constraints.
 \end{itemize}
 
-The first step is to defined a mean background profile according to the previous section. For instance, a hyperbolic tangent profile for the mean streamwise velocity, $\bar{u}_1(x_2)$, while all other mean velocity components are set to zero.  The upper stream has a velocity $u_{1,ref}-\Delta u/2$ and the lower stream has a velocity $u_{1,ref}+\Delta u/2$ (see figure~\ref{fig:profile}). The mean density (or the mean temperature) can be similarly initialized, and a mean pressure is set to a uniform value $p_0$. The mean scalar can be similarly initialized.
+The first step is to defined a mean background profile for velocity, thermodynamic and scalar fields according to the previous section. For instance, a hyperbolic tangent profile for the mean streamwise velocity, $\bar{u}_1(x_2)$, while all other mean velocity components are set to zero.  The upper stream has a velocity $u_{1,ref}-\Delta u/2$ and the lower stream has a velocity $u_{1,ref}+\Delta u/2$ (see figure~\ref{fig:profile}). The mean density (or the mean temperature) can be similarly initialized, and a mean pressure is set to a uniform value $p_0$. The mean scalar can be similarly initialized. For this step, we use the information in the block \texttt{[Flow]} and the block \texttt{[Scalar]}.
 
-In addition to the mean values, discrete or broadband perturbation can be added.
+These mean values define mean fields. In addition, we can add perturbation fields to these mean fields. These perturbation fields can be discrete or broadband.
 
 \subsection{Discrete Perturbations}
 
 For the general case of a scalar field $s$, we consider the linear superposition of $m$ modes of the form
 \begin{equation}
-    s_m = A_mf(y) \cos(w_{xm}x+\phi_{xm})\cos(w_{zm}z+\phi_{zm})\;, \\
+    s_m = A_mf(y) \cos(w_{xm}x+\phi_{xm})\cos(w_{zm}z+\phi_{zm})\;, 
 \end{equation}
 where $f(y)$ is one of the shape functions discussed before.
 
@@ -110,9 +110,11 @@ where
 \end{equation*}
 and $g(y)=-f'(y)$. Each mode satisfies the solenoidal constraint.
 
-\subsection{Broadband Perturbations}
+For this step, we use the information in the block \texttt{[Discrete]}.
 
-We generate a random field on which an isotropic turbulence spectrum  is imposed according to the spectral functions in Table~\ref{tab:spectra}.
+\subsection{Random Fields}
+
+The first step to make a broadband perturbation is to generate a random field. We generate a random field on which an isotropic turbulence spectrum  is imposed according to the spectral functions in Table~\ref{tab:spectra}. These three-dimensional fields are saved to disk in the same format as the usual flow and scalar variables. We can use them as initial conditions for the simulations. However, we typically use them to create perturbation fields that are added to mean fields, and this sum of mean plus perturbation is what makes the flow and scalar fields that are used as initial condition.
 
 \begin{table}[!h]
     \footnotesize
@@ -135,13 +137,25 @@ We generate a random field on which an isotropic turbulence spectrum  is imposed
     \caption{Different spectral functions that can be used to create a random field. The variable $f$ is the spatial frequency and the parameter $f_0$ is the peak spatial frequency. }\label{tab:spectra}
 \end{table}
 
-After these three-dimensional field is created, it is multiplied by a shape function to control the spatial location of this random fluctuation. In case of the velocity field, the solenoidal constraint is imposed on this random field. Such quasi-incompressible fluctuations minimize compressibility transients \cite{Erlebacher:1990}. The pressure fluctuations are obtained from the Poisson equation for incompressible flow.
-
 \begin{SCfigure}
     \includegraphics[clip,width=0.6\textwidth]{figs/spectra}
     \caption{Different power spectral densities available as initial conditions, Table~(\ref{tab:spectra}). Normalized such that all of them have equal integral. The Gaussian profile is plotted for the case $\sigma/f_0=1/6$ typically used in the simulations.}
     \label{fig:spectra}
 \end{SCfigure}
+
+See files in \texttt{tools/initialize/rand} and the information in the block \texttt{[Broadband]} in the input file. 
+
+\subsection{Broadband Perturbations}
+
+To construct perturbation fields from these random fields, we first multiply the random field with a shape function $f(y)$ to control the spatial location of this random fluctuation. This shape function follows the same structure as the profiles that we explained in the first section about background profiles. It is the variable \texttt{IniK} in \texttt{tools/initialize/flow} and \texttt{IniS} in \texttt{tools/initialize/scal}. For instance, we can multiply them by a Gaussian function of a given thickness to put the perturbation in certain layer inside the computational domain.
+
+There are 3 options to generate a velocity field from these random fields. We can use the random field directly to create a perturbation in the velocity field $f\mathbf{a}$. Instead, we can consider the random fields as a vector potential $f\mathbf{a}$ of a velocity field $\mathbf{u}=\nabla\times(f\mathbf{a}$). The third option is to consider a Helmholtz decomposition of $\mathbf{u}$ into a divergence free part and an irrotational part, set the irrotational part equal to zero, and consider $\nabla\times(f\mathbf{a}$) as the  divergence free part.
+
+In case of the velocity field, the last step typically consists in imposing the solenoidal constraint. For the incompressible and anelastic formulations, we need it. For the compressible formulation, such quasi-incompressible fluctuations minimize compressibility transients \cite{Erlebacher:1990}. 
+
+In the compressible formulation, the pressure fluctuations are obtained from the Poisson equation that would correspond to incompressible flows.
+
+See files in \texttt{tools/initialize/\{flow,scal\}} and the information in the block \texttt{[IniFields]} in the input file. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

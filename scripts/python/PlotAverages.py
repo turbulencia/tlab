@@ -25,8 +25,9 @@ f=data.variables['Tke'][:,:] # the first index is time, the second is vertical n
 plt.figure(figsize=(5,4))
 axes = plt.gca()
 
-# plot 10 profiles in the given range of times
-for it in range(0,np.size(t),int(np.size(t)/10)):
+its = [ 0 ]                                         # Plot just the first time
+#its = list(range(0,np.size(t),int(np.size(t)/10)))  # plot 10 profiles in the given range of times
+for it in its:
     plt.plot(f[it,:],y)
 
 plt.xlabel(r'function $f(y)$')

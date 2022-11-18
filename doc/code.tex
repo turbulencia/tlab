@@ -142,8 +142,8 @@ Data is case insensitive.
 \tt TermRadiation   & \tt None, Bulk1dGlobal, Bulk1dLocal & Formulation of radiation terms (see {\tt operators/opr\_radiation}).\\
 \tt SpaceOrder      & \tt CompactJacobian4, CompactJacobian6, CompactDirect6 & Finite difference method used for spatial derivatives.\\
 \tt TimeOrder       & \tt RungeKuttaExplicit3, RungeKuttaExplicit4, RungeKuttaDiffusion3 & Runge-Kutta method used for time advancement.\\
-\tt TimeStep        & {\it value} & If positive, constant time step to be used in time marching scheme.\\
 \tt TimeCFL         & {\it value} & Courant number for the advection part.\\
+\tt TimeStep        & {\it value} & If \texttt{TimeCFL} is negative, constant time step in time marching scheme.\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -351,11 +351,10 @@ PlaneBroadband, DeltaDiscrete, DeltaBroadband, FluxDiscrete, FluxBroadband & Typ
 \tt ForceDilatation   & \tt yes, no & Force the velocity field to satisfy the solenoidal constraint.\\
 \tt ProfileIni\{K,S\} & \tt Gaussian, Parabolic, ... & Shape profile of the fluctuation. Use {\tt K} or {\tt S} to differentiate between flow and scalar fields.\\
 \tt ThickIni\{K,S\}   & {\em value}[{\em1 , value2, ...}]& Thickness of fluctuation shape profile. It defaults to the corresponding values in {\tt [Flow]} and {\tt [Scalar]}. For scalars, provide as many values as scalars.\\
-\tt YCoorIni\{K,S\}   & {\em value}[{\em1 , value2, ...}] & Coordinate along $Oy$ of the reference point of the fluctuation shape profile, relative to the total scale.\\
+\tt YMeanIni\{K,S\}   & {\em value}[{\em1 , value2, ...}] & Coordinate along $Oy$ of the reference point of the fluctuation shape profile, relative to the total scale.\\
 \tt NormalizeK        & {\em value} & Maximum value of the profile of the turbulent kinetic energy.\\
 \tt NormalizeP        & {\em value} & Maximum value of the profile of the pressure root-mean-square.\\
 \tt NormalizeS        & {\em value1, value2, ...} & Maximum value of the profile of the scalar root-mean-square.\\
-\tt Mixture           & \tt None, Equilibrium, LoadFields & Type of mixture with which to initialize the thermodynamic fields.\\
 \end{longtable}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

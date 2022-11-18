@@ -2,6 +2,9 @@
 #ifndef DNS_CONST_H_INCLUDED
 #define DNS_CONST_H_INCLUDED
 
+! write format of real numbers
+#define G_FORMAT_R  E13.5E3
+
 ! File formats
 #define IO_MPIIO      1
 #define IO_NETCDF     2
@@ -153,23 +156,6 @@
 #define PROFILE_TANH_SYM           21
 #define PROFILE_TANH_COS           22
 
-! Chemistry Constants
-#define CHEM_NONE           0
-#define CHEM_INFINITE       1
-#define CHEM_FINITE         2
-
-#define CHEM_NONPREMIXED    0
-#define CHEM_PREMIXED       1
-
-! Chemistry Type
-#define CHEM_TYPE_BS          1
-#define CHEM_TYPE_PETERS1991  2
-#define CHEM_TYPE_PETERS1988  3
-#define CHEM_TYPE_UNIDECOMP   4
-#define CHEM_TYPE_BSZELDOVICH 5
-#define CHEM_TYPE_ONESTEP     6
-#define CHEM_TYPE_BILGER1997  7
-#define CHEM_TYPE_QUASIBS     8
 
 ! Mixture Type
 #define MIXT_TYPE_NONE             0

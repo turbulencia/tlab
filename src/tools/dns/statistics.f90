@@ -1,293 +1,289 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 #include "avgij_map.h"
 
-MODULE STATISTICS
+module STATISTICS
+    use TLAB_CONSTANTS, only: MAX_AVG_TEMPORAL, wp, wi, small_wp
+    implicit none
+    save
+    private
 
-  USE TLAB_CONSTANTS, ONLY : MAX_AVG_TEMPORAL
-  IMPLICIT NONE
-  SAVE
+    real(wp), allocatable, public :: mean(:, :)
+    real(wp), allocatable, public :: mean_flow(:, :, :)     ! These 2 are for spatial case
+    real(wp), allocatable, public :: mean_scal(:, :, :, :)
 
-  TREAL, ALLOCATABLE, PUBLIC, DIMENSION(:,:)     :: mean
-  TREAL, ALLOCATABLE, PUBLIC, DIMENSION(:,:,:)   :: mean_flow
-  TREAL, ALLOCATABLE, PUBLIC, DIMENSION(:,:,:,:) :: mean_scal
+    logical, public :: stats_averages, stats_pdfs, stats_intermittency, stats_buoyancy
 
-  PRIVATE
+    public :: STATISTICS_INITIALIZE, STATISTICS_TEMPORAL, STATISTICS_SPATIAL
 
-  LOGICAL, PUBLIC :: stats_averages, stats_pdfs, stats_intermittency, stats_buoyancy
+contains
 
-  PUBLIC :: STATISTICS_INITIALIZE, STATISTICS_TEMPORAL, STATISTICS_SPATIAL
+    ! ###################################################################
+    ! ###################################################################
+    subroutine STATISTICS_INITIALIZE()
 
-CONTAINS
+        use TLAB_VARS, only: imode_sim, jmax, inb_scal, nstatavg
 
-  ! ###################################################################
-  ! ###################################################################
-  SUBROUTINE STATISTICS_INITIALIZE()
+        if (imode_sim == DNS_MODE_TEMPORAL) then
+            allocate (mean(jmax, MAX_AVG_TEMPORAL))
 
-    USE TLAB_VARS, ONLY : imode_sim, jmax, inb_scal, nstatavg
+        else if (imode_sim == DNS_MODE_SPATIAL) then
+            allocate (mean_flow(nstatavg, jmax, MA_MOMENTUM_SIZE))
+            allocate (mean_scal(nstatavg, jmax, MS_SCALAR_SIZE, inb_scal))
 
-    IF      ( imode_sim .EQ. DNS_MODE_TEMPORAL) THEN
-      ALLOCATE(mean(jmax,MAX_AVG_TEMPORAL))
+        end if
 
-    ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-      ALLOCATE(mean_flow(nstatavg,jmax,MA_MOMENTUM_SIZE))
-      ALLOCATE(mean_scal(nstatavg,jmax,MS_SCALAR_SIZE,inb_scal))
+        return
+    end subroutine STATISTICS_INITIALIZE
 
-    END IF
-
-    RETURN
-  END SUBROUTINE STATISTICS_INITIALIZE
-
-  !########################################################################
-  !########################################################################
-  SUBROUTINE STATISTICS_TEMPORAL()
+    !########################################################################
+    !########################################################################
+    subroutine STATISTICS_TEMPORAL()
 
 #ifdef TRACE_ON
-    USE TLAB_CONSTANTS, ONLY : tfile
-    USE TLAB_PROCS,     ONLY : TLAB_WRITE_ASCII 
+        use TLAB_CONSTANTS, only: tfile
+        use TLAB_PROCS, only: TLAB_WRITE_ASCII
 #endif
-    USE TLAB_TYPES,     ONLY : pointers_dt
-    USE TLAB_VARS,    ONLY : g
-    USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field, inb_scal_array
-    USE TLAB_VARS,    ONLY : buoyancy, imode_eqns, icalc_scal
-    USE TLAB_VARS,    ONLY : froude
-    USE TLAB_VARS,    ONLY : epbackground, pbackground, rbackground
-    USE TLAB_VARS,    ONLY : itime, rtime
-    USE TLAB_VARS,      ONLY : schmidt
-    USE TLAB_ARRAYS
-    USE DNS_ARRAYS
-    USE THERMO_VARS, ONLY : imixture
-    USE PARTICLE_VARS
-    USE PARTICLE_ARRAYS
+        use TLAB_TYPES, only: pointers_dt
+        use TLAB_VARS, only: g
+        use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
+        use TLAB_VARS, only: buoyancy, imode_eqns, icalc_scal
+        use TLAB_VARS, only: froude
+        use TLAB_VARS, only: epbackground, pbackground, rbackground
+        use TLAB_VARS, only: itime, rtime
+        use TLAB_VARS, only: schmidt
+        use TLAB_ARRAYS
+        use DNS_ARRAYS
+        use THERMO_VARS, only: imixture
+        use PARTICLE_VARS
+        use PARTICLE_ARRAYS
 
-    IMPLICIT NONE
+        ! -------------------------------------------------------------------
+        real(wp) dummy, amin(16), amax(16)
+        integer is, idummy, nbins, ibc(16), nfield
+        integer(wi) ij
+        type(pointers_dt) vars(16)
+        character*32 fname, gatename(1)
+        character*64 str
+        integer(1) igate
+        integer(1), allocatable, save :: gate(:)
 
-    ! -------------------------------------------------------------------
-    TREAL dummy, amin(16), amax(16)
-    TINTEGER ij, is, idummy, nbins, ibc(16), nfield
-    TYPE(pointers_dt) vars(16)
-    CHARACTER*32 fname, gatename(1)
-    CHARACTER*64 str
-    INTEGER(1) igate
-    INTEGER(1), ALLOCATABLE, SAVE :: gate(:)
-
-    ! ###################################################################
+        ! ###################################################################
 #ifdef TRACE_ON
-    CALL TLAB_WRITE_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER' )
+        call TLAB_WRITE_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER')
 #endif
 
-    stats_buoyancy = .FALSE.  ! default
+        stats_buoyancy = .false.  ! default
 
-    ! in case we need the buoyancy statistics
-    IF ( buoyancy%TYPE .EQ. EQNS_BOD_QUADRATIC   .OR. &
-        buoyancy%TYPE .EQ. EQNS_BOD_BILINEAR    .OR. &
-        imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
-        imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-      stats_buoyancy = .TRUE.
-    END IF
+        ! in case we need the buoyancy statistics
+        if (buoyancy%type == EQNS_BOD_QUADRATIC .or. &
+            buoyancy%type == EQNS_BOD_BILINEAR .or. &
+            imixture == MIXT_TYPE_AIRWATER .or. &
+            imixture == MIXT_TYPE_AIRWATER_LINEAR) then
+            stats_buoyancy = .true.
+        end if
 
-    ! Calculate pressure
-    IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-      CALL FI_PRESSURE_BOUSSINESQ(q,s, txc(1,3), txc(1,1),txc(1,2), txc(1,4), wrk1d,wrk2d,wrk3d)
-    END IF
+        ! Calculate pressure
+        if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 3), txc(1, 1), txc(1, 2), txc(1, 4), wrk1d, wrk2d, wrk3d)
+        end if
 
-    ! ###################################################################
-    ! Intermittency
-    ! ###################################################################
-    IF ( stats_intermittency ) THEN
-      ALLOCATE(gate(isize_field))
-      CALL FI_VORTICITY(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,4), wrk2d,wrk3d)
+        ! ###################################################################
+        ! Intermittency
+        ! ###################################################################
+        if (stats_intermittency) then
+            allocate (gate(isize_field))
+            call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 4), wrk2d, wrk3d)
 
-      ! calculate vorticity gate based on 1% threshold
-      CALL MINMAX(imax,jmax,kmax, txc(1,1), amin(1),amax(1))
-      amin(1) = C_1EM3_R*C_1EM3_R*amax(1)
-      DO ij = 1,isize_field
-        IF ( txc(ij,1) .GT. amin(1) ) THEN; gate(ij) = 1  ! gate array
-        ELSE;                               gate(ij) = 0
-        END IF
-      END DO
-      nfield = 1; gatename(1) = 'Vorticity'
+            ! calculate vorticity gate based on 1% threshold
+            call MINMAX(imax, jmax, kmax, txc(1, 1), amin(1), amax(1))
+            amin(1) = 1.0e-3_wp*1.0e-3_wp*amax(1)
+            do ij = 1, isize_field
+                if (txc(ij, 1) > amin(1)) then; gate(ij) = 1  ! gate array
+                else; gate(ij) = 0
+                end if
+            end do
+            nfield = 1; gatename(1) = 'Vorticity'
 
-      WRITE(fname,*) itime; fname='int'//TRIM(ADJUSTL(fname))
-      CALL INTER_N_XZ(fname, itime,rtime, imax,jmax,kmax, nfield, gatename, gate, g(2)%nodes, mean)
+            write (fname, *) itime; fname = 'int'//trim(adjustl(fname))
+            call INTER_N_XZ(fname, itime, rtime, imax, jmax, kmax, nfield, gatename, gate, g(2)%nodes, mean)
 
-      DEALLOCATE(gate)
-    END IF
+            deallocate (gate)
+        end if
 
-    ! ###################################################################
-    ! Unconditional plane PDFs
-    ! ###################################################################
-    IF ( stats_pdfs ) THEN
-      nfield = 0
-      nfield = nfield+1; vars(nfield)%field => q(:,1); vars(nfield)%tag = 'u'
-      nfield = nfield+1; vars(nfield)%field => q(:,2); vars(nfield)%tag = 'v'
-      nfield = nfield+1; vars(nfield)%field => q(:,3); vars(nfield)%tag = 'w'
-      IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-        nfield = nfield+1; vars(nfield)%field => txc(:,3); vars(nfield)%tag = 'p'
-      ELSE
-        nfield = nfield+1; vars(nfield)%field => q(:,6); vars(nfield)%tag = 'p'
-        nfield = nfield+1; vars(nfield)%field => q(:,5); vars(nfield)%tag = 'r'
-        nfield = nfield+1; vars(nfield)%field => q(:,7); vars(nfield)%tag = 't'
-      END IF
+        ! ###################################################################
+        ! Unconditional plane PDFs
+        ! ###################################################################
+        if (stats_pdfs) then
+            nfield = 0
+            nfield = nfield + 1; vars(nfield)%field => q(:, 1); vars(nfield)%tag = 'u'
+            nfield = nfield + 1; vars(nfield)%field => q(:, 2); vars(nfield)%tag = 'v'
+            nfield = nfield + 1; vars(nfield)%field => q(:, 3); vars(nfield)%tag = 'w'
+            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+                nfield = nfield + 1; vars(nfield)%field => txc(:, 3); vars(nfield)%tag = 'p'
+            else
+                nfield = nfield + 1; vars(nfield)%field => q(:, 6); vars(nfield)%tag = 'p'
+                nfield = nfield + 1; vars(nfield)%field => q(:, 5); vars(nfield)%tag = 'r'
+                nfield = nfield + 1; vars(nfield)%field => q(:, 7); vars(nfield)%tag = 't'
+            end if
 
-      DO is = 1,inb_scal_array
-        nfield = nfield+1; vars(nfield)%field => s(:,is); vars(nfield)%tag = 's'
-        WRITE(str,*) is; vars(nfield)%tag=TRIM(ADJUSTL(vars(nfield)%tag))//TRIM(ADJUSTL(str))
-      END DO
+            do is = 1, inb_scal_array
+                nfield = nfield + 1; vars(nfield)%field => s(:, is); vars(nfield)%tag = 's'
+                write (str, *) is; vars(nfield)%tag = trim(adjustl(vars(nfield)%tag))//trim(adjustl(str))
+            end do
 
-      ibc(1:nfield) = 2 ! BCs in the calculation of the PDFs
-      igate = 0         ! no intermittency partition
+            ibc(1:nfield) = 2 ! BCs in the calculation of the PDFs
+            igate = 0         ! no intermittency partition
 
-      nbins = 32
-      WRITE(fname,*) itime; fname='pdf'//TRIM(ADJUSTL(fname))
-      CALL PDF1V_N(fname, rtime, imax,jmax,kmax, &
-          nfield, nbins, ibc, amin,amax,vars, igate,wrk3d, g(2)%nodes, txc, wrk1d)
+            nbins = 32
+            write (fname, *) itime; fname = 'pdf'//trim(adjustl(fname))
+            call PDF1V_N(fname, rtime, imax, jmax, kmax, &
+                         nfield, nbins, ibc, amin, amax, vars, igate, wrk3d, g(2)%nodes, txc, wrk1d)
 
-    END IF
+        end if
 
-    ! ###################################################################
-    ! Plane averages
-    ! ###################################################################
-    IF ( stats_averages ) THEN
-      IF ( icalc_scal .EQ. 1 ) THEN
-        DO is = 1,inb_scal_array          ! All, prognostic and diagnostic fields in array s
-          hq(1:isize_field,3) = txc(1:isize_field,3) ! Pass the pressure
-          CALL AVG_SCAL_XZ(is, q,s, s(1,is), &
-              txc(1,1),txc(1,2),txc(1,4),txc(1,5),txc(1,6),hq(1,3), mean, wrk1d,wrk2d,wrk3d)
-        END DO
+        ! ###################################################################
+        ! Plane averages
+        ! ###################################################################
+        if (stats_averages) then
+            if (icalc_scal == 1) then
+                do is = 1, inb_scal_array          ! All, prognostic and diagnostic fields in array s
+                    hq(1:isize_field, 3) = txc(1:isize_field, 3) ! Pass the pressure
+                    call AVG_SCAL_XZ(is, q, s, s(1, is), &
+                                     txc(1, 1), txc(1, 2), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 3), mean, wrk1d, wrk2d, wrk3d)
+                end do
 
-        IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-            ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
-        IF ( stats_buoyancy ) THEN
-          IF ( buoyancy%TYPE .EQ. EQNS_EXPLICIT ) THEN
-            CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, hq(1,1))
-          ELSE
-            wrk1d(1:jmax,1) = C_0_R
-            CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, hq(1,1), wrk1d) ! note that wrk3d is defined as integer.
-          END IF
-          dummy = C_1_R/froude
-          hq(1:isize_field,1) = hq(1:isize_field,1) *dummy
+                if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+                    ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
+                    if (stats_buoyancy) then
+                        if (buoyancy%type == EQNS_EXPLICIT) then
+                            call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, hq(1, 1))
+                        else
+                            wrk1d(1:jmax, 1) = 0.0_wp
+                            call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, hq(1, 1), wrk1d) ! note that wrk3d is defined as integer.
+                        end if
+                        dummy = 1.0_wp/froude
+                        hq(1:isize_field, 1) = hq(1:isize_field, 1)*dummy
 
-          hq(1:isize_field,3) = txc(1:isize_field,3) ! Pass the pressure
-          CALL AVG_SCAL_XZ(is, q,s, hq(1,1), &
-              txc(1,1),txc(1,2),txc(1,4),txc(1,5),txc(1,6),hq(1,3), mean, wrk1d,wrk2d,wrk3d)
+                        hq(1:isize_field, 3) = txc(1:isize_field, 3) ! Pass the pressure
+                        call AVG_SCAL_XZ(is, q, s, hq(1, 1), &
+                                         txc(1, 1), txc(1, 2), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 3), mean, wrk1d, wrk2d, wrk3d)
 
-        END IF
+                    end if
 
-          IF ( imixture .EQ. MIXT_TYPE_AIRWATER ) THEN
-            is = is + 1
-            CALL THERMO_ANELASTIC_THETA_L(imax,jmax,kmax, s, epbackground,pbackground, hq(1,1))
+                    if (imixture == MIXT_TYPE_AIRWATER) then
+                        is = is + 1
+                        call THERMO_ANELASTIC_THETA_L(imax, jmax, kmax, s, epbackground, pbackground, hq(1, 1))
 
-            hq(1:isize_field,3) = txc(1:isize_field,3) ! Pass the pressure
-            CALL AVG_SCAL_XZ(is, q,s, hq(1,1), &
-                txc(1,1),txc(1,2),txc(1,4),txc(1,5),txc(1,6),hq(1,3), mean, wrk1d,wrk2d,wrk3d)
-          END IF
-        END IF
+                        hq(1:isize_field, 3) = txc(1:isize_field, 3) ! Pass the pressure
+                        call AVG_SCAL_XZ(is, q, s, hq(1, 1), &
+                                         txc(1, 1), txc(1, 2), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 3), mean, wrk1d, wrk2d, wrk3d)
+                    end if
+                end if
 
-      END IF
+            end if
 
-      CALL AVG_FLOW_XZ(q,s, txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),hq(1,1),hq(1,2),hq(1,3),  &
-          mean, wrk1d,wrk2d,wrk3d)
+            call AVG_FLOW_XZ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 1), hq(1, 2), hq(1, 3), &
+                             mean, wrk1d, wrk2d, wrk3d)
 
-      ! Lagrange Liquid and Liquid without diffusion
-        IF (imode_part .EQ. PART_TYPE_BIL_CLOUD_3 .OR. imode_part .EQ. PART_TYPE_BIL_CLOUD_4) THEN
-          l_txc(:,1) = C_1_R; ! We want density
-          CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,5), wrk2d,wrk3d)
+            ! Lagrange Liquid and Liquid without diffusion
+            if (imode_part == PART_TYPE_BIL_CLOUD_3 .or. imode_part == PART_TYPE_BIL_CLOUD_4) then
+                l_txc(:, 1) = 1.0_wp; ! We want density
+                call PARTICLE_TO_FIELD(l_q, l_txc, txc(1, 5), wrk2d, wrk3d)
 
-          hq(:,1) = hq(:,1) + C_SMALL_R
-          idummy = inb_part - 3 ! # scalar properties solved in the lagrangian
-          DO is = inb_scal_array +1 +1, inb_scal_array+1 +idummy
-            schmidt(is) = schmidt(1)
-            CALL PARTICLE_TO_FIELD(l_q, l_q(1,3+is-inb_scal_array-1), hq(1,2), wrk2d,wrk3d)
-            hq(:,2) = hq(:,2) /hq(:,1)
-            CALL AVG_SCAL_XZ(is, q,s, hq(1,2), &
-                txc(1,1),txc(1,2),txc(1,3),txc(1,4), txc(1,5),txc(1,6),mean, wrk1d,wrk2d,wrk3d)
-          END DO
-        END IF
+                hq(:, 1) = hq(:, 1) + small_wp
+                idummy = inb_part - 3 ! # scalar properties solved in the lagrangian
+                do is = inb_scal_array + 1 + 1, inb_scal_array + 1 + idummy
+                    schmidt(is) = schmidt(1)
+                    call PARTICLE_TO_FIELD(l_q, l_q(1, 3 + is - inb_scal_array - 1), hq(1, 2), wrk2d, wrk3d)
+                    hq(:, 2) = hq(:, 2)/hq(:, 1)
+                    call AVG_SCAL_XZ(is, q, s, hq(1, 2), &
+                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean, wrk1d, wrk2d, wrk3d)
+                end do
+            end if
 
-        IF ( imode_part /= PART_TYPE_NONE .and. icalc_part_pdf .EQ. 1) THEN                ! Save particle pathlines for particle_pdf
-          WRITE(fname,*) itime; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
-          CALL PARTICLE_PDF(fname,s, l_g,l_q,l_txc,l_comm, wrk3d)
-        END IF
+            if (imode_part /= PART_TYPE_NONE .and. icalc_part_pdf == 1) then                ! Save particle pathlines for particle_pdf
+                write (fname, *) itime; fname = "particle_pdf."//trim(adjustl(fname))
+                call PARTICLE_PDF(fname, s, l_g, l_q, l_txc, l_comm, wrk3d)
+            end if
 
-        IF ( imode_part .EQ. PART_TYPE_BIL_CLOUD_4) THEN  ! Save particle residence times
-          WRITE(fname,*) itime; fname = "residence_pdf."//TRIM(ADJUSTL(fname))
-          CALL PARTICLE_RESIDENCE_PDF(fname, l_g%np, l_q)
-        END IF
+            if (imode_part == PART_TYPE_BIL_CLOUD_4) then  ! Save particle residence times
+                write (fname, *) itime; fname = "residence_pdf."//trim(adjustl(fname))
+                call PARTICLE_RESIDENCE_PDF(fname, l_g%np, l_q)
+            end if
 
-      END IF
-
-#ifdef TRACE_ON
-    CALL TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_TEMPORAL_LAYER' )
-#endif
-
-    RETURN
-  END SUBROUTINE STATISTICS_TEMPORAL
-
-  ! ###################################################################
-  ! ###################################################################
-  SUBROUTINE STATISTICS_SPATIAL()
+        end if
 
 #ifdef TRACE_ON
-    USE TLAB_CONSTANTS, ONLY : tfile
-    USE TLAB_PROCS,     ONLY : TLAB_WRITE_ASCII 
+        call TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_TEMPORAL_LAYER')
 #endif
-    USE TLAB_VARS
-    USE TLAB_ARRAYS
-    USE DNS_LOCAL
-    USE BOUNDARY_BUFFER
+
+        return
+    end subroutine STATISTICS_TEMPORAL
+
+    ! ###################################################################
+    ! ###################################################################
+    subroutine STATISTICS_SPATIAL()
+
+#ifdef TRACE_ON
+        use TLAB_CONSTANTS, only: tfile
+        use TLAB_PROCS, only: TLAB_WRITE_ASCII
+#endif
+        use TLAB_VARS
+        use TLAB_ARRAYS
+        use DNS_LOCAL
+        use BOUNDARY_BUFFER
 #ifdef USE_MPI
-    USE TLAB_MPI_VARS
+        use TLAB_MPI_VARS
 #endif
 
-    IMPLICIT NONE
+        implicit none
 
-    ! -----------------------------------------------------------------------
-    TINTEGER is, buff_u_jmin, buff_u_jmax, isize_txc
+        ! -----------------------------------------------------------------------
+        integer(wi) is, buff_u_jmin, buff_u_jmax, isize_txc
 
-    ! #######################################################################
+        ! #######################################################################
 #ifdef TRACE_ON
-    CALL TLAB_WRITE_ASCII(tfile, 'ENTERING STATS_SPATIAL_LAYER' )
+        call TLAB_WRITE_ASCII(tfile, 'ENTERING STATS_SPATIAL_LAYER')
 #endif
 
-    ! #######################################################################
-    ! Averages
-    ! #######################################################################
-    IF ( stats_averages ) THEN
+        ! #######################################################################
+        ! Averages
+        ! #######################################################################
+        if (stats_averages) then
 #ifdef USE_MPI
-      IF ( ims_pro .EQ. 0 ) THEN
+            if (ims_pro == 0) then
 #endif
-        isize_txc = inb_txc*isize_txc_field
+                isize_txc = inb_txc*isize_txc_field
 
-        buff_u_jmin = BuffFlowJmax%size
-        buff_u_jmax = jmax -BuffFlowJmax%size +1
-        CALL AVG_FLOW_SPATIAL_LAYER(isize_txc, buff_u_jmin,buff_u_jmax, &
-            mean_flow, txc, wrk1d,wrk2d)
+                buff_u_jmin = BuffFlowJmax%size
+                buff_u_jmax = jmax - BuffFlowJmax%size + 1
+                call AVG_FLOW_SPATIAL_LAYER(isize_txc, buff_u_jmin, buff_u_jmax, &
+                                            mean_flow, txc, wrk1d, wrk2d)
 
-        IF ( icalc_scal .EQ. 1 ) THEN
-          DO is = 1,inb_scal
-            CALL AVG_SCAL_SPATIAL_LAYER(is, isize_txc, buff_u_jmin,buff_u_jmax, &
-                mean_flow, mean_scal(1,1,1,is), txc, wrk1d)
-          END DO
-        END IF
+                if (icalc_scal == 1) then
+                    do is = 1, inb_scal
+                        call AVG_SCAL_SPATIAL_LAYER(is, isize_txc, buff_u_jmin, buff_u_jmax, &
+                                                    mean_flow, mean_scal(1, 1, 1, is), txc, wrk1d)
+                    end do
+                end if
 
 #ifdef LES
-        IF ( iles .EQ. 1 ) THEN
-          CALL LES_AVG_SPATIAL_LAYER(isize_txc, x,y, vaux(vindex(VA_MEAN_WRK)), txc, wrk1d,wrk2d)
-        END IF
+                if (iles == 1) then
+                    call LES_AVG_SPATIAL_LAYER(isize_txc, x, y, vaux(vindex(VA_MEAN_WRK)), txc, wrk1d, wrk2d)
+                end if
 #endif
 
 #ifdef USE_MPI
-      END IF
+            end if
 #endif
-    END IF
+        end if
 
 #ifdef TRACE_ON
-    CALL TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_SPATIAL_LAYER' )
+        call TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_SPATIAL_LAYER')
 #endif
 
-    RETURN
-  END SUBROUTINE STATISTICS_SPATIAL
+        return
+    end subroutine STATISTICS_SPATIAL
 
-END MODULE STATISTICS
+end module STATISTICS

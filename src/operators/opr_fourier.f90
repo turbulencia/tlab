@@ -124,7 +124,7 @@ SUBROUTINE OPR_FOURIER_CONVOLUTION_FXZ(flag1,flag2, nx,ny,nz, in1,in2, tmp1,tmp2
 
 ! #######################################################################
   wrk2d = C_0_R
-  fft_reordering = i1
+  fft_reordering = .true.
  
   IF ( g(3)%size .GT. 1 ) THEN
      CALL OPR_FOURIER_F_X_EXEC(nx,ny,nz, in1,wrk2d(1,1),wrk2d(1,2),wrk3d, tmp1,tmp2) 
@@ -159,7 +159,7 @@ SUBROUTINE OPR_FOURIER_CONVOLUTION_FXZ(flag1,flag2, nx,ny,nz, in1,in2, tmp1,tmp2
   ENDIF
 
 ! -----------------------------------------------------------------------
-  fft_reordering = i0
+  fft_reordering = .false.
 
   RETURN
 END SUBROUTINE OPR_FOURIER_CONVOLUTION_FXZ

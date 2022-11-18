@@ -148,7 +148,6 @@ subroutine IO_READ_GLOBAL(inifile)
     else if (trim(adjustl(sRes)) == 'airvapor') then; imixture = MIXT_TYPE_AIRVAPOR
     else if (trim(adjustl(sRes)) == 'airwater') then; imixture = MIXT_TYPE_AIRWATER
     else if (trim(adjustl(sRes)) == 'airwaterlinear') then; imixture = MIXT_TYPE_AIRWATER_LINEAR
-    else if (trim(adjustl(sRes)) == 'chemkin') then; imixture = MIXT_TYPE_CHEMKIN ! use chemkin file to read the data
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong entry Main.Mixture model.')
         call TLAB_STOP(DNS_ERROR_OPTION)
@@ -565,9 +564,7 @@ subroutine IO_READ_GLOBAL(inifile)
 
     end if
 
-    if (imixture /= MIXT_TYPE_CHEMKIN) then
-        call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'ChemkinFile', 'none', chemkin_file)
-    end if
+    call SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)
 
     if (imixture == MIXT_TYPE_AIRWATER) then
         call SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'SmoothFactor', '0.1', dsmooth)
@@ -929,22 +926,23 @@ subroutine IO_READ_GLOBAL(inifile)
         qbg(3)%delta = qbg(1)%delta
     end if
 
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Density', rbg)
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Temperature', tbg)  ! temperature/enthalpy
     call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Pressure', pbg)
+    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Density', rbg)
+    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Temperature', tbg)
+    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Enthalpy', hbg)
 
-! consistency check
-    if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
-        if (rbg%type == PROFILE_NONE .and. tbg%type == PROFILE_NONE) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Specify density or temperature.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
-
-        if (rbg%type /= PROFILE_NONE .and. tbg%type /= PROFILE_NONE) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Specify only density or only temperature.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
-    end if
+! ! consistency check; two and only two are givem TO BE CHECKED BECAUSE PROFILE_NONE is used as constant profile
+    ! if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
+    !     idummy=0
+    !     if (pbg%type == PROFILE_NONE) idummy=idummy+1
+    !     if (rbg%type == PROFILE_NONE) idummy=idummy+1
+    !     if (tbg%type == PROFILE_NONE) idummy=idummy+1
+    !     if (hbg%type == PROFILE_NONE) idummy=idummy+1
+    !     if (idummy /= 2) then
+    !         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Specify only 2 thermodynamic profiles.')
+    !         call TLAB_STOP(DNS_ERROR_OPTION)
+    !     end if
+    ! end if
 
 ! Scalars
     call TLAB_WRITE_ASCII(bakfile, '#')
@@ -1269,6 +1267,10 @@ subroutine IO_READ_GLOBAL(inifile)
         end if
     case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
     end select
+
+    if (imode_fdm == FDM_COM6_JACPENTA) then ! CFL_max depends on max[g%mwn(:,1)]
+        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacpenta6 requires adjusted CFL-number depending on C1N6M_ALPHA, C1N6M_BETA values.')
+    end if
 
     return
 end subroutine IO_READ_GLOBAL

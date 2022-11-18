@@ -11,12 +11,11 @@ module TLAB_CONSTANTS
     integer, parameter :: MAX_PROF          = 10
     integer, parameter :: MAX_JETS          = 5
     integer, parameter :: MAX_NSP           = 10  ! Species in the mixture
-    integer, parameter :: MAX_AVG_TEMPORAL  = 230
+    integer, parameter :: MAX_AVG_TEMPORAL  = 235
     integer, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
 
     character(len=*), parameter :: gfile    = 'grid'
     character(len=*), parameter :: ifile    = 'dns.ini'
-    character(len=*), parameter :: ofile    = 'dns.out'
     character(len=*), parameter :: lfile    = 'dns.log'
     character(len=*), parameter :: efile    = 'dns.err'
     character(len=*), parameter :: wfile    = 'dns.war'
@@ -49,5 +48,7 @@ module TLAB_CONSTANTS
     integer, parameter :: longi = i8_             ! long integer type; different variable name to avoid errors
 
     real(wp), parameter :: pi_wp = 3.14159265358979323846_wp
+    real(wp), parameter :: small_wp = 1.0e-20_wp
+    real(wp), parameter :: big_wp = 1.0e20_wp
 
 end module TLAB_CONSTANTS

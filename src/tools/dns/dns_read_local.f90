@@ -1,912 +1,770 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #include "avgij_map.h"
 
-#ifdef USE_MPI
-#include "dns_const_mpi.h"
-#endif
+subroutine DNS_READ_LOCAL(inifile)
 
-SUBROUTINE DNS_READ_LOCAL(inifile)
+    use TLAB_TYPES, only: MAX_MODES
+    use TLAB_CONSTANTS
+    use TLAB_VARS
+    use TLAB_PROCS
+    use THERMO_VARS, only: imixture
+    use PARTICLE_VARS
+    use DNS_LOCAL
+    use TIME, only: rkm_mode, dtime, cfla, cfld, cflr
+    use BOUNDARY_BUFFER
+    use BOUNDARY_BCS
+    use BOUNDARY_INFLOW
+    use STATISTICS
+    use PLANES
 
-  USE TLAB_TYPES,     ONLY : MAX_MODES
-  USE TLAB_CONSTANTS, ONLY : efile, lfile, wfile, MAX_PROF
-  USE TLAB_VARS,    ONLY : pbg, rbg, damkohler
-  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_txc_field, isize_wrk1d,isize_wrk2d,isize_wrk3d
-  USE TLAB_VARS,    ONLY : inb_flow,inb_scal,inb_txc
-  USE TLAB_VARS,    ONLY : imode_sim, imode_eqns, imode_ibm, iadvection, iviscous, itransport, istagger
-  USE TLAB_VARS,    ONLY : g
-  USE TLAB_VARS,    ONLY : FilterDomain
-  USE TLAB_VARS,    ONLY : nstatavg
-  USE TLAB_PROCS
-  USE THERMO_VARS, ONLY : imixture
-  USE PARTICLE_VARS
-  USE DNS_LOCAL
-  USE TIME,          ONLY : rkm_mode, dtime, cfla, cfld, cflr
-  USE BOUNDARY_BUFFER
-  USE BOUNDARY_BCS
-  USE BOUNDARY_INFLOW
-  USE STATISTICS
-  USE PLANES
+    implicit none
 
-  IMPLICIT NONE
-
-#include "integers.h"
-
-  CHARACTER*(*) inifile
+    character*(*) inifile
 
 ! -------------------------------------------------------------------
-  CHARACTER*512 sRes
-  CHARACTER*64 lstr
-  CHARACTER*32 bakfile
-  TINTEGER is,idummy,inb_scal_local1
-  TREAL dummy(inb_flow+inb_scal+1)
+    character*512 sRes
+    character*64 lstr
+    character*32 bakfile
+    integer is, inb_scal_local1
+    integer(wi) idummy
+    real(wp) dummy(inb_flow + inb_scal + 1)
 
-  TINTEGER :: bcs_visc_imin, bcs_visc_imax
-  TINTEGER :: bcs_visc_jmin, bcs_visc_jmax
-  TINTEGER :: bcs_visc_kmin, bcs_visc_kmax
+    integer :: bcs_visc_imin, bcs_visc_imax
+    integer :: bcs_visc_jmin, bcs_visc_jmax
+    integer :: bcs_visc_kmin, bcs_visc_kmax
 
 ! ###################################################################
-  bakfile = TRIM(ADJUSTL(inifile))//'.bak'
+    bakfile = trim(adjustl(inifile))//'.bak'
 
-  CALL TLAB_WRITE_ASCII(lfile, 'Reading local input data.')
+    call TLAB_WRITE_ASCII(lfile, 'Reading local input data.')
 
 ! ###################################################################
 ! Main Section
 ! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[Main]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#TimeOrder=<RungeKuttaExplicit3/RungeKuttaExplicit4/RungeKuttaDiffusion3>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#TimeStep=<value (used if CFL is negative)>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#TimeCFL=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#TimeDiffusiveCFL=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#TimeReactiveCFL=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#TermDivergence=<none/remove>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#RhsMode=<split/combined/nonblocking>')
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[Main]')
+    call TLAB_WRITE_ASCII(bakfile, '#TimeOrder=<RungeKuttaExplicit3/RungeKuttaExplicit4/RungeKuttaDiffusion3>')
+    call TLAB_WRITE_ASCII(bakfile, '#TimeStep=<value (used if CFL is negative)>')
+    call TLAB_WRITE_ASCII(bakfile, '#TimeCFL=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#TimeDiffusiveCFL=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#TimeReactiveCFL=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#TermDivergence=<none/remove>')
+    call TLAB_WRITE_ASCII(bakfile, '#RhsMode=<split/combined/nonblocking>')
 
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'TimeOrder', 'dummy', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttaexplicit3'  ) THEN; rkm_mode = RKM_EXP3;           lstr = '0.6';
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttaexplicit4'  ) THEN; rkm_mode = RKM_EXP4;           lstr = '1.2';
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttadiffusion3' ) THEN; rkm_mode = RKM_IMP3_DIFFUSION; lstr = '0.6';
+    call SCANINICHAR(bakfile, inifile, 'Main', 'TimeOrder', 'dummy', sRes)
+    if (trim(adjustl(sRes)) == 'rungekuttaexplicit3') then; rkm_mode = RKM_EXP3; lstr = '0.6'; 
+    elseif (trim(adjustl(sRes)) == 'rungekuttaexplicit4') then; rkm_mode = RKM_EXP4; lstr = '1.2'; 
+    elseif (trim(adjustl(sRes)) == 'rungekuttadiffusion3') then; rkm_mode = RKM_IMP3_DIFFUSION; lstr = '0.6'; 
 !  ELSEIF ( TRIM(ADJUSTL(sRes)) .EQ. 'rungekuttasource3'    ) THEN; rkm_mode = RKM_IMP3_SOURCE;
-  ELSE
-    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong TimeOrder option.')
-    CALL TLAB_STOP(DNS_ERROR_RKORDER)
-  ENDIF
+    else
+        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong TimeOrder option.')
+        call TLAB_STOP(DNS_ERROR_RKORDER)
+    end if
 
- ! Default cfla value set in lstr while reading TimeOrder
-  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeCFL',          TRIM(ADJUSTL(lstr)), cfla )
-  WRITE(lstr,*) C_025_R *cfla ! Default value for diffusive CFL
-  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeDiffusiveCFL', TRIM(ADJUSTL(lstr)), cfld )
-  WRITE(lstr,*) C_05_R  *cfla ! Default value for reactive CFL
-  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeReactiveCFL',  TRIM(ADJUSTL(lstr)), cflr )
-  CALL SCANINIREAL(bakfile, inifile, 'Main', 'TimeStep', '0.05', dtime)
+    ! Default cfla value set in lstr while reading TimeOrder
+    call SCANINIREAL(bakfile, inifile, 'Main', 'TimeCFL', trim(adjustl(lstr)), cfla)
+    write (lstr, *) 0.25_wp*cfla ! Default value for diffusive CFL
+    call SCANINIREAL(bakfile, inifile, 'Main', 'TimeDiffusiveCFL', trim(adjustl(lstr)), cfld)
+    write (lstr, *) 0.5_wp*cfla ! Default value for reactive CFL
+    call SCANINIREAL(bakfile, inifile, 'Main', 'TimeReactiveCFL', trim(adjustl(lstr)), cflr)
+    call SCANINIREAL(bakfile, inifile, 'Main', 'TimeStep', '0.05', dtime)
 
 ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'TermDivergence', 'remove', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'   ) THEN; idivergence = EQNS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'remove' ) THEN; idivergence = EQNS_DIVERGENCE
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong TermDivergence option.')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
+    call SCANINICHAR(bakfile, inifile, 'Main', 'TermDivergence', 'remove', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; remove_divergence = .false.
+    else if (trim(adjustl(sRes)) == 'remove') then; remove_divergence = .true.
+    else
+        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong TermDivergence option.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
 
-  CALL SCANINICHAR(bakfile, inifile, 'Main', 'RhsMode', 'combined', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'split'       ) THEN; imode_rhs = EQNS_RHS_SPLIT
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'combined'    ) THEN; imode_rhs = EQNS_RHS_COMBINED
+    call SCANINICHAR(bakfile, inifile, 'Main', 'RhsMode', 'combined', sRes)
+    if (trim(adjustl(sRes)) == 'split') then; imode_rhs = EQNS_RHS_SPLIT
+    else if (trim(adjustl(sRes)) == 'combined') then; imode_rhs = EQNS_RHS_COMBINED
 #ifdef USE_PSFFT
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'nonblocking' ) THEN; imode_rhs = EQNS_RHS_NONBLOCKING
+    else if (trim(adjustl(sRes)) == 'nonblocking') then; imode_rhs = EQNS_RHS_NONBLOCKING
 #endif
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong RhsMode option.')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
+    else
+        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong RhsMode option.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
 
 ! ###################################################################
 ! Iteration Section
 ! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[Iteration]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Start=<integral start time>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#End=<integral stop time>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Restart=<restart time step>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Statistics=<statistics time step>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#IteraLog=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Saveplanes=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#RunAvera=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[Iteration]')
+    call TLAB_WRITE_ASCII(bakfile, '#Start=<integral start time>')
+    call TLAB_WRITE_ASCII(bakfile, '#End=<integral stop time>')
+    call TLAB_WRITE_ASCII(bakfile, '#Restart=<restart time step>')
+    call TLAB_WRITE_ASCII(bakfile, '#Statistics=<statistics time step>')
+    call TLAB_WRITE_ASCII(bakfile, '#IteraLog=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#Saveplanes=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#RunAvera=<yes/no>')
 
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Start',      '0',  nitera_first)
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'End',        '0',  nitera_last )
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Restart',    '50', nitera_save )
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Statistics', '50', nitera_stats)
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'IteraLog',   '10', nitera_log  )
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'Saveplanes', '-1', nitera_pln  )
+    call SCANINIINT(bakfile, inifile, 'Iteration', 'Start', '0', nitera_first)
+    call SCANINIINT(bakfile, inifile, 'Iteration', 'End', '0', nitera_last)
+    call SCANINIINT(bakfile, inifile, 'Iteration', 'Restart', '50', nitera_save)
+    call SCANINIINT(bakfile, inifile, 'Iteration', 'Statistics', '50', nitera_stats)
+    call SCANINIINT(bakfile, inifile, 'Iteration', 'IteraLog', '10', nitera_log)
+    call SCANINIINT(bakfile, inifile, 'Iteration', 'Saveplanes', '-1', nitera_pln)
 
 ! Accumulate statistics in spatial mode
-  CALL SCANINIINT(bakfile, inifile, 'Iteration', 'SaveStats', '-1', nitera_stats_spa)
+    call SCANINIINT(bakfile, inifile, 'Iteration', 'SaveStats', '-1', nitera_stats_spa)
+
+! Domain Filter (Should we move it to Iteration?)
+    call SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', nitera_filter)
+    if (nitera_filter == 0) FilterDomain(:)%type = DNS_FILTER_NONE
 
 ! ###################################################################
 ! Control Limits
 ! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[Control]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#FlowLimit=<yes/no>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#MinPressure=<pressure>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#MaxPressure=<pressure>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#MinDensity=<density>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#MaxDensity=<density>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ScalLimit=<yes/no>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#MinScalar=<scalar>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#MaxScalar=<scalar>')
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[Control]')
+    call TLAB_WRITE_ASCII(bakfile, '#FlowLimit=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#MinPressure=<pressure>')
+    call TLAB_WRITE_ASCII(bakfile, '#MaxPressure=<pressure>')
+    call TLAB_WRITE_ASCII(bakfile, '#MinDensity=<density>')
+    call TLAB_WRITE_ASCII(bakfile, '#MaxDensity=<density>')
+    call TLAB_WRITE_ASCII(bakfile, '#ScalLimit=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#MinScalar=<scalar>')
+    call TLAB_WRITE_ASCII(bakfile, '#MaxScalar=<scalar>')
 
-  CALL SCANINICHAR(bakfile, inifile, 'Control', 'FlowLimit', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .eq. 'yes' ) THEN; ilimit_flow=1
-  ELSE;                                       ilimit_flow=0; ENDIF
-  CALL SCANINICHAR(bakfile, inifile, 'Control', 'ScalLimit', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; ilimit_scal=1
-  ELSE;                                       ilimit_scal=0; ENDIF
-
+    bound_r%active = .false.
+    bound_p%active = .false.
+    call SCANINICHAR(bakfile, inifile, 'Control', 'FlowLimit', 'yes', sRes)
+    if (trim(adjustl(sRes)) == 'yes') then
+        bound_r%active = .true.
+        bound_p%active = .true.
+    end if
 ! Final check in last section of the routine
-  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MinPressure', '-1.0', p_bound_min)
-  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MaxPressure', '-1.0', p_bound_max)
-  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MinDensity',  '-1.0', r_bound_min)
-  CALL SCANINIREAL(bakfile, inifile, 'Control', 'MaxDensity',  '-1.0', r_bound_max)
+    call SCANINIREAL(bakfile, inifile, 'Control', 'MinPressure', '-1.0', bound_p%min)
+    call SCANINIREAL(bakfile, inifile, 'Control', 'MaxPressure', '-1.0', bound_p%max)
+    call SCANINIREAL(bakfile, inifile, 'Control', 'MinDensity', '-1.0', bound_r%min)
+    call SCANINIREAL(bakfile, inifile, 'Control', 'MaxDensity', '-1.0', bound_r%max)
 
-  d_bound_max = C_BIG_R ! default
-  CALL SCANINICHAR(bakfile, inifile, 'Control', 'MaxDilatation', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
-     idummy = 1
-     CALL LIST_REAL(sRes, idummy, dummy)
-     d_bound_max = dummy(1)
-  ENDIF
+    bound_d%active = .false.
+    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+        bound_d%active = .true.
+        bound_d%max = big_wp ! default
+        call SCANINICHAR(bakfile, inifile, 'Control', 'MaxDilatation', 'void', sRes)
+        if (trim(adjustl(sRes)) /= 'void') then
+            idummy = 1
+            call LIST_REAL(sRes, idummy, dummy)
+            bound_d%max = dummy(1)
+        end if
+    end if
 
-  s_bound_min(:) = C_0_R; inb_scal_local1 = MAX_NSP
-  IF ( ilimit_scal .EQ. 1 ) THEN
-     CALL SCANINICHAR(bakfile, inifile, 'Control', 'MinScalar',  'void', sRes)
-     IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
-        CALL LIST_REAL(sRes, inb_scal_local1, s_bound_min)
-        IF ( inb_scal_local1 .NE. inb_scal ) THEN ! Consistency check
-           CALL TLAB_WRITE_ASCII(efile,'DNS_READ_LOCAL. MinScalar size does not match inb_scal.')
-           CALL TLAB_STOP(DNS_ERROR_OPTION)
-        ENDIF
-     ENDIF
-  ENDIF
+    bound_s(:)%active = .false.
+    call SCANINICHAR(bakfile, inifile, 'Control', 'ScalLimit', 'yes', sRes)
+    if (trim(adjustl(sRes)) == 'yes') then
+        bound_s(:)%active = .true.
+    end if
 
-  s_bound_max(:) = C_1_R; inb_scal_local1 = MAX_NSP
-  IF ( ilimit_scal .EQ. 1 ) THEN
-     CALL SCANINICHAR(bakfile, inifile, 'Control', 'MaxScalar',  'void', sRes)
-     IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
-        CALL LIST_REAL(sRes, inb_scal_local1, s_bound_max)
-        IF ( inb_scal_local1 .NE. inb_scal ) THEN ! Consistency check
-           CALL TLAB_WRITE_ASCII(efile,'DNS_READ_LOCAL. MaxScalar size does not match inb_scal.')
-           CALL TLAB_STOP(DNS_ERROR_OPTION)
-        ENDIF
-     ENDIF
-  ENDIF
+    bound_s(:)%min = 0.0_wp; inb_scal_local1 = MAX_NSP
+    if (any(bound_s(:)%active)) then
+        call SCANINICHAR(bakfile, inifile, 'Control', 'MinScalar', 'void', sRes)
+        if (trim(adjustl(sRes)) /= 'void') then
+            call LIST_REAL(sRes, inb_scal_local1, dummy)
+            if (inb_scal_local1 /= inb_scal) then ! Consistency check
+                call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. MinScalar size does not match inb_scal.')
+                call TLAB_STOP(DNS_ERROR_OPTION)
+            else
+                bound_s(1:inb_scal)%min = dummy(1:inb_scal)
+            end if
+        end if
+    end if
+
+    bound_s%max = 1.0_wp; inb_scal_local1 = MAX_NSP
+    if (any(bound_s(:)%active)) then
+        call SCANINICHAR(bakfile, inifile, 'Control', 'MaxScalar', 'void', sRes)
+        if (trim(adjustl(sRes)) /= 'void') then
+            call LIST_REAL(sRes, inb_scal_local1, dummy)
+            if (inb_scal_local1 /= inb_scal) then ! Consistency check
+                call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. MaxScalar size does not match inb_scal.')
+                call TLAB_STOP(DNS_ERROR_OPTION)
+            else
+                bound_s(1:inb_scal)%max = dummy(1:inb_scal)
+            end if
+        end if
+    end if
 
 ! ###################################################################
 ! Boundary Conditions
 ! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[BoundaryConditions]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ScalarImin=<none/dirichlet/neumman>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ScalarJmin=<none/dirichlet/neumman>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ScalarSfcTypeJmin=<static/linear>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ScalarSfcTypeJmax=<static/linear>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ScalarCouplingJmin=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ScalarCouplingJmax=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ScalarKmin=<none/dirichlet/neumman>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#VelocityImin=<none/dirichlet/neumman>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#VelocityJmin=<none/dirichlet/neumman>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#VelocityKmin=<none/dirichlet/neumman>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ViscousI=<none/inflow/outflow>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ViscousJ=<none/inflow/outflow>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ViscousK=<none/inflow/outflow>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#SigmaOut=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#SigmaInf=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#BetaTransverse=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[BoundaryConditions]')
+    call TLAB_WRITE_ASCII(bakfile, '#ScalarImin=<none/dirichlet/neumman>')
+    call TLAB_WRITE_ASCII(bakfile, '#ScalarJmin=<none/dirichlet/neumman>')
+    call TLAB_WRITE_ASCII(bakfile, '#ScalarSfcTypeJmin=<static/linear>')
+    call TLAB_WRITE_ASCII(bakfile, '#ScalarSfcTypeJmax=<static/linear>')
+    call TLAB_WRITE_ASCII(bakfile, '#ScalarCouplingJmin=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#ScalarCouplingJmax=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#ScalarKmin=<none/dirichlet/neumman>')
+    call TLAB_WRITE_ASCII(bakfile, '#VelocityImin=<none/dirichlet/neumman>')
+    call TLAB_WRITE_ASCII(bakfile, '#VelocityJmin=<none/dirichlet/neumman>')
+    call TLAB_WRITE_ASCII(bakfile, '#VelocityKmin=<none/dirichlet/neumman>')
+    call TLAB_WRITE_ASCII(bakfile, '#ViscousI=<none/inflow/outflow>')
+    call TLAB_WRITE_ASCII(bakfile, '#ViscousJ=<none/inflow/outflow>')
+    call TLAB_WRITE_ASCII(bakfile, '#ViscousK=<none/inflow/outflow>')
+    call TLAB_WRITE_ASCII(bakfile, '#SigmaOut=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#SigmaInf=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#BetaTransverse=<value>')
 
 ! -------------------------------------------------------------------
 ! Scalar terms (including surface model at vertical boundaries)
 ! -------------------------------------------------------------------
-  BcsScalImin%type(:) = DNS_BCS_NONE; BcsScalImax%type(:) = DNS_BCS_NONE
-  IF ( .NOT. g(1)%periodic ) THEN
-  DO is = 1,inb_scal
-     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Imin'
-     CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'none', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalImin%type(is) = DNS_BCS_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; BcsScalImin%type(is) = DNS_BCS_DIRICHLET
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalImin%type(is) = DNS_BCS_NEUMANN
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
-        CALL TLAB_STOP(DNS_ERROR_IBC)
-     ENDIF
-     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Imax'
-     CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'none', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalImax%type(is) = DNS_BCS_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; BcsScalImax%type(is) = DNS_BCS_DIRICHLET
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalImax%type(is) = DNS_BCS_NEUMANN
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
-        CALL TLAB_STOP(DNS_ERROR_IBC)
-     ENDIF
-  ENDDO
-  ENDIF
+    BcsScalImin%type(:) = DNS_BCS_NONE; BcsScalImax%type(:) = DNS_BCS_NONE
+    if (.not. g(1)%periodic) then
+        call BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, 'Imin', BcsScalImin)
+        call BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, 'Imax', BcsScalImax)
+    end if
 
-  BcsScalJmin%type(:) = DNS_BCS_NONE; BcsScalJmax%type(:) = DNS_BCS_NONE
-  IF ( .NOT. g(2)%periodic ) THEN
-  DO is = 1,inb_scal
-     !
-     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Jmin'
-     CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'void', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalJmin%type(is) = DNS_BCS_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; BcsScalJmin%type(is) = DNS_BCS_DIRICHLET
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalJmin%type(is) = DNS_BCS_NEUMANN
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
-        CALL TLAB_STOP(DNS_ERROR_JBC)
-     ENDIF
-     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'SfcTypeJmin'
-     CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'static', sRes)
-     IF ( sRes .eq. 'static' ) THEN
-        BcsScalJmin%SfcType(is) = DNS_SFC_STATIC
-     ELSEIF (sRes .eq. 'linear' ) THEN
-        BcsScalJmin%SfcType(is) = DNS_SFC_LINEAR
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
-        CALL TLAB_STOP(DNS_ERROR_JBC)
-     ENDIF
-     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'CouplingJmin'
-     CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), '0.0', BcsScalJmin%cpl(is))
-     !
-     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Jmax'
-     CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'void', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalJmax%type(is) = DNS_BCS_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; BcsScalJmax%type(is) = DNS_BCS_DIRICHLET
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalJmax%type(is) = DNS_BCS_NEUMANN
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
-        CALL TLAB_STOP(DNS_ERROR_JBC)
-     ENDIF
-     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'SfcTypeJmax'
-     CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'static', sRes)
-     IF ( sRes .eq. 'static' ) THEN
-        BcsScalJmax%SfcType(is) = DNS_SFC_STATIC
-     ELSEIF (sRes .eq. 'linear' ) THEN
-        BcsScalJmax%SfcType(is) = DNS_SFC_LINEAR
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
-        CALL TLAB_STOP(DNS_ERROR_JBC)
-     ENDIF
-     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'CouplingJmax'
-     CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), '0.0', BcsScalJmax%cpl(is))
-  ENDDO
-  ENDIF
+    BcsScalJmin%type(:) = DNS_BCS_NONE; BcsScalJmax%type(:) = DNS_BCS_NONE
+    if (.not. g(2)%periodic) then
+        call BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, 'Jmin', BcsScalJmin)
+        call BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, 'Jmax', BcsScalJmax)
+    end if
 
-  BcsScalKmin%type(:) = DNS_BCS_NONE; BcsScalKmax%type(:) = DNS_BCS_NONE
-  IF ( .NOT. g(3)%periodic ) THEN
-  DO is = 1,inb_scal
-     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Kmin'
-     CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'none', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalKmin%type(is) = DNS_BCS_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; BcsScalKmin%type(is) = DNS_BCS_DIRICHLET
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalKmin%type(is) = DNS_BCS_NEUMANN
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
-        CALL TLAB_STOP(DNS_ERROR_KBC)
-     ENDIF
-     WRITE(lstr,*) is; lstr='Scalar'//TRIM(ADJUSTL(lstr))//'Kmax'
-     CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', TRIM(ADJUSTL(lstr)), 'none', sRes)
-     IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'      ) THEN; BcsScalKmax%type(is) = DNS_BCS_NONE
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'dirichlet' ) THEN; BcsScalKmax%type(is) = DNS_BCS_DIRICHLET
-     ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'neumann'   ) THEN; BcsScalKmax%type(is) = DNS_BCS_NEUMANN
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.'//TRIM(ADJUSTL(lstr)))
-        CALL TLAB_STOP(DNS_ERROR_KBC)
-     ENDIF
-  ENDDO
-  ENDIF
+    BcsScalKmin%type(:) = DNS_BCS_NONE; BcsScalKmax%type(:) = DNS_BCS_NONE
+    if (.not. g(3)%periodic) then
+        call BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, 'Kmin', BcsScalKmin)
+        call BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, 'Kmax', BcsScalKmax)
+    end if
 
 ! -------------------------------------------------------------------
 ! Velocity terms / Euler part in compressible mode
 ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityImin', 'freeslip', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowImin%type(1:3) = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowImin%type(1:3) = DNS_BCS_DIRICHLET
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; BcsFlowImin%type(1)   = DNS_BCS_DIRICHLET
-                                                        BcsFlowImin%type(2)   = DNS_BCS_NEUMANN
-                                                        BcsFlowImin%type(3)   = DNS_BCS_NEUMANN
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityImin.')
-     CALL TLAB_STOP(DNS_ERROR_IBC)
-  ENDIF
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityImax', 'freeslip', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowImax%type(1:3) = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowImax%type(1:3) = DNS_BCS_DIRICHLET
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; BcsFlowImax%type(1)   = DNS_BCS_DIRICHLET
-                                                        BcsFlowImax%type(2)   = DNS_BCS_NEUMANN
-                                                        BcsFlowImax%type(3)   = DNS_BCS_NEUMANN
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityImax.')
-     CALL TLAB_STOP(DNS_ERROR_IBC)
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'freeslip', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowJmin%type(1:3) = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowJmin%type(1:3) = DNS_BCS_DIRICHLET
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; BcsFlowJmin%type(2)   = DNS_BCS_DIRICHLET
-                                                        BcsFlowJmin%type(1)   = DNS_BCS_NEUMANN
-                                                        BcsFlowJmin%type(3)   = DNS_BCS_NEUMANN
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityJmin.')
-     CALL TLAB_STOP(DNS_ERROR_JBC)
-  ENDIF
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmax', 'freeslip', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowJmax%type(1:3) = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowJmax%type(1:3) = DNS_BCS_DIRICHLET
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; BcsFlowJmax%type(2)   = DNS_BCS_DIRICHLET
-                                                        BcsFlowJmax%type(1)   = DNS_BCS_NEUMANN
-                                                        BcsFlowJmax%type(3)   = DNS_BCS_NEUMANN
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityJmax.')
-     CALL TLAB_STOP(DNS_ERROR_JBC)
-  ENDIF
-
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityKmin', 'freeslip', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowKmin%type(1:3) = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowKmin%type(1:3) = DNS_BCS_DIRICHLET
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; BcsFlowKmin%type(3)   = DNS_BCS_DIRICHLET
-                                                        BcsFlowKmin%type(2)   = DNS_BCS_NEUMANN
-                                                        BcsFlowKmin%type(1)   = DNS_BCS_NEUMANN
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityKmin.')
-     CALL TLAB_STOP(DNS_ERROR_KBC)
-  ENDIF
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityKmax', 'freeslip', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'     ) THEN; BcsFlowKmax%type(1:3) = DNS_BCS_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'noslip'   ) THEN; BcsFlowKmax%type(1:3) = DNS_BCS_DIRICHLET
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'freeslip' ) THEN; BcsFlowKmax%type(3)   = DNS_BCS_DIRICHLET
-                                                        BcsFlowKmax%type(2)   = DNS_BCS_NEUMANN
-                                                        BcsFlowKmax%type(1)   = DNS_BCS_NEUMANN
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.VelocityKmax.')
-     CALL TLAB_STOP(DNS_ERROR_KBC)
-  ENDIF
-
+    call BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, 'Imin', BcsFlowImin)
+    call BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, 'Imax', BcsFlowImax)
+    call BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, 'Jmin', BcsFlowJmin)
+    call BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, 'Jmax', BcsFlowJmax)
+    call BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, 'Kmin', BcsFlowKmin)
+    call BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, 'Kmax', BcsFlowKmax)
 
 ! -------------------------------------------------------------------
-! Viscous terms
+! Viscous terms, used only t odefine bcs_inf and bcs_out
 ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousI', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'    ) THEN; bcs_visc_imin = 0;  bcs_visc_imax = 0
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'inflow'  ) THEN; bcs_visc_imin = 1;  bcs_visc_imax = 2
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'outflow' ) THEN; bcs_visc_imin = 2;  bcs_visc_imax = 2
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.ViscousI.')
-     CALL TLAB_STOP(DNS_ERROR_IVSICBC)
-  ENDIF
+    call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousI', 'none', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; bcs_visc_imin = 0; bcs_visc_imax = 0
+    else if (trim(adjustl(sRes)) == 'inflow') then; bcs_visc_imin = 1; bcs_visc_imax = 2
+    else if (trim(adjustl(sRes)) == 'outflow') then; bcs_visc_imin = 2; bcs_visc_imax = 2
+    else
+        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.ViscousI.')
+        call TLAB_STOP(DNS_ERROR_IVSICBC)
+    end if
 
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousJ', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'    ) THEN; bcs_visc_jmin = 0;  bcs_visc_jmax = 0
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'inflow'  ) THEN; bcs_visc_jmin = 1;  bcs_visc_jmax = 2
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'outflow' ) THEN; bcs_visc_jmin = 2;  bcs_visc_jmax = 2
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.ViscousJ.')
-     CALL TLAB_STOP(DNS_ERROR_JVSICBC)
-  ENDIF
+    call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousJ', 'none', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; bcs_visc_jmin = 0; bcs_visc_jmax = 0
+    else if (trim(adjustl(sRes)) == 'inflow') then; bcs_visc_jmin = 1; bcs_visc_jmax = 2
+    else if (trim(adjustl(sRes)) == 'outflow') then; bcs_visc_jmin = 2; bcs_visc_jmax = 2
+    else
+        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.ViscousJ.')
+        call TLAB_STOP(DNS_ERROR_JVSICBC)
+    end if
 
-  CALL SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousK', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .eq. 'none'    ) THEN; bcs_visc_kmin = 0;  bcs_visc_kmax = 0
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'inflow'  ) THEN; bcs_visc_kmin = 1;  bcs_visc_kmax = 2
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .eq. 'outflow' ) THEN; bcs_visc_kmin = 2;  bcs_visc_kmax = 2
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.ViscousK.')
-     CALL TLAB_STOP(DNS_ERROR_KVSICBC)
-  ENDIF
+    call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousK', 'none', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; bcs_visc_kmin = 0; bcs_visc_kmax = 0
+    else if (trim(adjustl(sRes)) == 'inflow') then; bcs_visc_kmin = 1; bcs_visc_kmax = 2
+    else if (trim(adjustl(sRes)) == 'outflow') then; bcs_visc_kmin = 2; bcs_visc_kmax = 2
+    else
+        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. BoundaryConditions.ViscousK.')
+        call TLAB_STOP(DNS_ERROR_KVSICBC)
+    end if
 
 ! -------------------------------------------------------------------
 ! Relaxation coefficients towards reference values in characteristic formulation
 ! -------------------------------------------------------------------
-  BcsDrift = .FALSE.
+    BcsDrift = .false.
 
 ! Inflow terms
-  CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaInf', '-1.0', dummy(1))
-  ! IF ( dummy(1) .LE. C_0_R ) THEN; dummy(1) = C_0_R
-  ! ELSE;                            BcsDrift = .TRUE.; ENDIF
-  IF ( dummy(1) .GE. C_0_R ) BcsDrift = .TRUE.
-  BcsFlowImin%cinf = dummy(1); BcsFlowImax%cinf = dummy(1) ! so far, all of them the same
-  BcsFlowJmin%cinf = dummy(1); BcsFlowJmax%cinf = dummy(1)
-  BcsFlowKmin%cinf = dummy(1); BcsFlowKmax%cinf = dummy(1)
-  BcsScalImin%cinf = dummy(1); BcsScalImax%cinf = dummy(1)
-  BcsScalJmin%cinf = dummy(1); BcsScalJmax%cinf = dummy(1)
-  BcsScalKmin%cinf = dummy(1); BcsScalKmax%cinf = dummy(1)
+    call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaInf', '-1.0', dummy(1))
+    if (dummy(1) >= 0.0_wp) BcsDrift = .true.
+    BcsFlowImin%cinf = dummy(1); BcsFlowImax%cinf = dummy(1) ! so far, all of them the same
+    BcsFlowJmin%cinf = dummy(1); BcsFlowJmax%cinf = dummy(1)
+    BcsFlowKmin%cinf = dummy(1); BcsFlowKmax%cinf = dummy(1)
+    BcsScalImin%cinf = dummy(1); BcsScalImax%cinf = dummy(1)
+    BcsScalJmin%cinf = dummy(1); BcsScalJmax%cinf = dummy(1)
+    BcsScalKmin%cinf = dummy(1); BcsScalKmax%cinf = dummy(1)
 
 ! Outflow terms
-  CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaOut', '-1.0', dummy(1))
-  ! IF ( dummy(1) .LE. C_0_R ) THEN; dummy(1) = C_0_R
-  ! ELSE;                            BcsDrift =  .TRUE.; ENDIF
-  IF ( dummy(1) .GE. C_0_R ) BcsDrift = .TRUE.
-  BcsFlowImin%cout = dummy(1); BcsFlowImax%cout = dummy(1) ! so far, all of them the same
-  BcsFlowJmin%cout = dummy(1); BcsFlowJmax%cout = dummy(1)
-  BcsFlowKmin%cout = dummy(1); BcsFlowKmax%cout = dummy(1)
-  BcsScalImin%cout = dummy(1); BcsScalImax%cout = dummy(1)
-  BcsScalJmin%cout = dummy(1); BcsScalJmax%cout = dummy(1)
-  BcsScalKmin%cout = dummy(1); BcsScalKmax%cout = dummy(1)
+    call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaOut', '-1.0', dummy(1))
+    if (dummy(1) >= 0.0_wp) BcsDrift = .true.
+    BcsFlowImin%cout = dummy(1); BcsFlowImax%cout = dummy(1) ! so far, all of them the same
+    BcsFlowJmin%cout = dummy(1); BcsFlowJmax%cout = dummy(1)
+    BcsFlowKmin%cout = dummy(1); BcsFlowKmax%cout = dummy(1)
+    BcsScalImin%cout = dummy(1); BcsScalImax%cout = dummy(1)
+    BcsScalJmin%cout = dummy(1); BcsScalJmax%cout = dummy(1)
+    BcsScalKmin%cout = dummy(1); BcsScalKmax%cout = dummy(1)
 
 ! Transverse terms
-  CALL SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'BetaTransverse', '-1.0', dummy(1))
-  ! IF ( dummy(1) .LE. C_0_R ) THEN; dummy(1) = C_0_R
-  ! ELSE;                            BcsDrift =  .TRUE.; ENDIF
-  IF ( dummy(1) .GE. C_0_R ) BcsDrift = .TRUE.
-  BcsFlowImin%ctan = dummy(1); BcsFlowImax%ctan = dummy(1) ! so far, all of them the same
-  BcsFlowJmin%ctan = dummy(1); BcsFlowJmax%ctan = dummy(1)
-  BcsFlowKmin%ctan = dummy(1); BcsFlowKmax%ctan = dummy(1)
-  BcsScalImin%ctan = dummy(1); BcsScalImax%ctan = dummy(1)
-  BcsScalJmin%ctan = dummy(1); BcsScalJmax%ctan = dummy(1)
-  BcsScalKmin%ctan = dummy(1); BcsScalKmax%ctan = dummy(1)
+    call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'BetaTransverse', '-1.0', dummy(1))
+    if (dummy(1) >= 0.0_wp) BcsDrift = .true.
+    BcsFlowImin%ctan = dummy(1); BcsFlowImax%ctan = dummy(1) ! so far, all of them the same
+    BcsFlowJmin%ctan = dummy(1); BcsFlowJmax%ctan = dummy(1)
+    BcsFlowKmin%ctan = dummy(1); BcsFlowKmax%ctan = dummy(1)
+    BcsScalImin%ctan = dummy(1); BcsScalImax%ctan = dummy(1)
+    BcsScalJmin%ctan = dummy(1); BcsScalJmax%ctan = dummy(1)
+    BcsScalKmin%ctan = dummy(1); BcsScalKmax%ctan = dummy(1)
 
 ! ###################################################################
 ! IBM Status Parameter
 ! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[IBMParameter]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Status=<on/off>')
-  CALL SCANINICHAR(bakfile, inifile, 'IBMParameter', 'Status', 'off', sRes)
-  IF      (TRIM(ADJUSTL(sRes)) == 'off') THEN; imode_ibm = 0
-  ELSE IF (TRIM(ADJUSTL(sRes)) == 'on' ) THEN; imode_ibm = 1
-  ELSE
-    CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBM Status option.')
-    CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[IBMParameter]')
+    call TLAB_WRITE_ASCII(bakfile, '#Status=<on/off>')
+    call SCANINICHAR(bakfile, inifile, 'IBMParameter', 'Status', 'off', sRes)
+    if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
+    else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
+    else
+        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBM Status option.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
 
 ! ###################################################################
 ! Buffer Zone Parameters
 ! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[BufferZone]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Type=<none/relaxation/filter/both>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#LoadBuffer=<yes/no>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#PointsJmin=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#PointsJmax=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#PointsImin=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#PointsImax=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ParametersJmin=<values>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ParametersJmax=<values>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ParametersImin=<values>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ParametersImax=<values>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#HardValuesJmin=<values>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#HardValuesJmax=<values>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#HardValuesImin=<values>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#HardValuesImax=<values>')
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[BufferZone]')
+    call TLAB_WRITE_ASCII(bakfile, '#Type=<none/relaxation/filter/both>')
+    call TLAB_WRITE_ASCII(bakfile, '#LoadBuffer=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#PointsJmin=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#PointsJmax=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#PointsImin=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#PointsImax=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#ParametersJmin=<values>')
+    call TLAB_WRITE_ASCII(bakfile, '#ParametersJmax=<values>')
+    call TLAB_WRITE_ASCII(bakfile, '#ParametersImin=<values>')
+    call TLAB_WRITE_ASCII(bakfile, '#ParametersImax=<values>')
+    call TLAB_WRITE_ASCII(bakfile, '#HardValuesJmin=<values>')
+    call TLAB_WRITE_ASCII(bakfile, '#HardValuesJmax=<values>')
+    call TLAB_WRITE_ASCII(bakfile, '#HardValuesImin=<values>')
+    call TLAB_WRITE_ASCII(bakfile, '#HardValuesImax=<values>')
 
-  CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'Type', 'none', sRes)
-  IF      ( TRIM(ADJUSTL(sRes)) .EQ. 'none'       ) THEN; BuffType = DNS_BUFFER_NONE
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'relaxation' ) THEN; BuffType = DNS_BUFFER_RELAX
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'filter'     ) THEN; BuffType = DNS_BUFFER_FILTER
-  ELSE IF ( TRIM(ADJUSTL(sRes)) .EQ. 'both'       ) THEN; BuffType = DNS_BUFFER_BOTH
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong BufferType option.')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
+    call SCANINICHAR(bakfile, inifile, 'BufferZone', 'Type', 'none', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; BuffType = DNS_BUFFER_NONE
+    else if (trim(adjustl(sRes)) == 'relaxation') then; BuffType = DNS_BUFFER_RELAX
+    else if (trim(adjustl(sRes)) == 'filter') then; BuffType = DNS_BUFFER_FILTER
+    else if (trim(adjustl(sRes)) == 'both') then; BuffType = DNS_BUFFER_BOTH
+    else
+        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong BufferType option.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
 
 ! Load buffer if used also by BCs
-  CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'LoadBuffer', 'no', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; BuffLoad = .TRUE.
-  ELSE;                                       BuffLoad = .FALSE.
-  ENDIF
+    call SCANINICHAR(bakfile, inifile, 'BufferZone', 'LoadBuffer', 'no', sRes)
+    if (trim(adjustl(sRes)) == 'yes') then; BuffLoad = .true.
+    else; BuffLoad = .false.
+    end if
 
 ! Sizes; read always because allocation checks if # points is zero
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUImin', '0', BuffFlowImin%size)
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUImax', '0', BuffFlowImax%size)
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUJmin', '0', BuffFlowJmin%size)
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUJmax', '0', BuffFlowJmax%size)
+    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUImin', '0', BuffFlowImin%size)
+    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUImax', '0', BuffFlowImax%size)
+    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUJmin', '0', BuffFlowJmin%size)
+    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUJmax', '0', BuffFlowJmax%size)
 
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSImin', '0', BuffScalImin%size)
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSImax', '0', BuffScalImax%size)
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSJmin', '0', BuffScalJmin%size)
-  CALL SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSJmax', '0', BuffScalJmax%size)
+    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSImin', '0', BuffScalImin%size)
+    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSImax', '0', BuffScalImax%size)
+    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSJmin', '0', BuffScalJmin%size)
+    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSJmax', '0', BuffScalJmax%size)
 
-  BuffScalImin%type = BuffType; BuffFlowImin%type = BuffType ! So far, all the same
-  BuffScalImax%type = BuffType; BuffFlowImax%type = BuffType
-  BuffScalJmin%type = BuffType; BuffFlowJmin%type = BuffType
-  BuffScalJmax%type = BuffType; BuffFlowJmax%type = BuffType
+    BuffScalImin%type = BuffType; BuffFlowImin%type = BuffType ! So far, all the same
+    BuffScalImax%type = BuffType; BuffFlowImax%type = BuffType
+    BuffScalJmin%type = BuffType; BuffFlowJmin%type = BuffType
+    BuffScalJmax%type = BuffType; BuffFlowJmax%type = BuffType
 
-  IF ( BuffScalImin%size .NE. BuffFlowImin%size .OR. &
-       BuffScalImax%size .NE. BuffFlowImax%size .OR. &
-       BuffScalJmin%size .NE. BuffFlowJmin%size .OR. &
-       BuffScalJmax%size .NE. BuffFlowJmax%size      ) THEN ! Because of io_subarray
-     CALL TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Buffer zone sizes must be equal in flow and scal.')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
+    if (BuffScalImin%size /= BuffFlowImin%size .or. &
+        BuffScalImax%size /= BuffFlowImax%size .or. &
+        BuffScalJmin%size /= BuffFlowJmin%size .or. &
+        BuffScalJmax%size /= BuffFlowJmax%size) then ! Because of io_subarray
+        call TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Buffer zone sizes must be equal in flow and scal.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
 
 ! Parameters
-  IF ( BuffType .NE. DNS_BUFFER_NONE ) THEN
-    CALL BOUNDARY_BUFFER_READBLOCK(bakfile,inifile,'UImin',BuffFlowImin,inb_flow)
-    CALL BOUNDARY_BUFFER_READBLOCK(bakfile,inifile,'UImax',BuffFlowImax,inb_flow)
-    CALL BOUNDARY_BUFFER_READBLOCK(bakfile,inifile,'UJmin',BuffFlowJmin,inb_flow)
-    CALL BOUNDARY_BUFFER_READBLOCK(bakfile,inifile,'UJmax',BuffFlowJmax,inb_flow)
-    CALL BOUNDARY_BUFFER_READBLOCK(bakfile,inifile,'SImin',BuffScalImin,inb_scal)
-    CALL BOUNDARY_BUFFER_READBLOCK(bakfile,inifile,'SImax',BuffScalImax,inb_scal)
-    CALL BOUNDARY_BUFFER_READBLOCK(bakfile,inifile,'SJmin',BuffScalJmin,inb_scal)
-    CALL BOUNDARY_BUFFER_READBLOCK(bakfile,inifile,'SJmax',BuffScalJmax,inb_scal)
-  ENDIF
+    if (BuffType /= DNS_BUFFER_NONE) then
+        call BOUNDARY_BUFFER_READBLOCK(bakfile, inifile, 'UImin', BuffFlowImin, inb_flow)
+        call BOUNDARY_BUFFER_READBLOCK(bakfile, inifile, 'UImax', BuffFlowImax, inb_flow)
+        call BOUNDARY_BUFFER_READBLOCK(bakfile, inifile, 'UJmin', BuffFlowJmin, inb_flow)
+        call BOUNDARY_BUFFER_READBLOCK(bakfile, inifile, 'UJmax', BuffFlowJmax, inb_flow)
+        call BOUNDARY_BUFFER_READBLOCK(bakfile, inifile, 'SImin', BuffScalImin, inb_scal)
+        call BOUNDARY_BUFFER_READBLOCK(bakfile, inifile, 'SImax', BuffScalImax, inb_scal)
+        call BOUNDARY_BUFFER_READBLOCK(bakfile, inifile, 'SJmin', BuffScalJmin, inb_scal)
+        call BOUNDARY_BUFFER_READBLOCK(bakfile, inifile, 'SJmax', BuffScalJmax, inb_scal)
+    end if
 
 ! ###################################################################
 ! Viscosity Control
 ! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[ViscChange]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Time=<time>')
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[ViscChange]')
+    call TLAB_WRITE_ASCII(bakfile, '#Time=<time>')
 
-  CALL SCANINIREAL(bakfile, inifile, 'ViscChange', 'Time', '0.0', visc_time)
-
-! ###################################################################
-! Domain Filter
-! ###################################################################
-  CALL SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', FilterDomainStep)
-  IF ( FilterDomainStep .EQ. 0 ) FilterDomain(:)%type = DNS_FILTER_NONE
+    call SCANINIREAL(bakfile, inifile, 'ViscChange', 'Time', '0.0', visc_time)
 
 ! ###################################################################
 ! Save planes to disk
 ! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[SavePlanes]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#PlanesI=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#PlanesJ=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#PlanesK=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[SavePlanes]')
+    call TLAB_WRITE_ASCII(bakfile, '#PlanesI=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#PlanesJ=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#PlanesK=<value>')
 
-  CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesI', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
-     iplanes%n = 0; iplanes%nodes = 0
-  ELSE
-     iplanes%n = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, iplanes%n, iplanes%nodes)
-  ENDIF
+    call SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesI', 'void', sRes)
+    if (trim(adjustl(sRes)) == 'void') then
+        iplanes%n = 0; iplanes%nodes = 0
+    else
+        iplanes%n = MAX_SAVEPLANES; call LIST_INTEGER(sRes, iplanes%n, iplanes%nodes)
+    end if
 
-  CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesJ', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
-     jplanes%n = 0; jplanes%nodes = 0
-  ELSE
-     jplanes%n = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, jplanes%n, jplanes%nodes)
-  ENDIF
+    call SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesJ', 'void', sRes)
+    if (trim(adjustl(sRes)) == 'void') then
+        jplanes%n = 0; jplanes%nodes = 0
+    else
+        jplanes%n = MAX_SAVEPLANES; call LIST_INTEGER(sRes, jplanes%n, jplanes%nodes)
+    end if
 
-  CALL SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesK', 'void', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void'  ) THEN
-     kplanes%n = 0; kplanes%nodes = 0
-  ELSE
-     kplanes%n = MAX_SAVEPLANES; CALL LIST_INTEGER(sRes, kplanes%n, kplanes%nodes)
-  ENDIF
+    call SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesK', 'void', sRes)
+    if (trim(adjustl(sRes)) == 'void') then
+        kplanes%n = 0; kplanes%nodes = 0
+    else
+        kplanes%n = MAX_SAVEPLANES; call LIST_INTEGER(sRes, kplanes%n, kplanes%nodes)
+    end if
 
 ! ###################################################################
 ! Save lines to disk
 ! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[SaveTowers]')
-  CALL TLAB_WRITE_ASCII(bakfile, 'Stride=<value_i,value_j,value_k>')
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[SaveTowers]')
+    call TLAB_WRITE_ASCII(bakfile, 'Stride=<value_i,value_j,value_k>')
 
-  CALL SCANINICHAR(bakfile, inifile, 'SaveTowers', 'Stride', '0,0,0', sRes)
-  idummy = 3; CALL LIST_INTEGER(sRes,idummy,tower_stride)
-  IF ( idummy .NE. 3 ) THEN
-     tower_stride(:) = 0
-     CALL TLAB_WRITE_ASCII(bakfile, 'Stride=0,0,0')
-     CALL TLAB_WRITE_ASCII(wfile,   'DNS_READ_LOCAL. Cannot read stride for towers; set to 0,0,0.')
-  ENDIF
+    call SCANINICHAR(bakfile, inifile, 'SaveTowers', 'Stride', '0,0,0', sRes)
+    idummy = 3; call LIST_INTEGER(sRes, idummy, tower_stride)
+    if (idummy /= 3) then
+        tower_stride(:) = 0
+        call TLAB_WRITE_ASCII(bakfile, 'Stride=0,0,0')
+        call TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Cannot read stride for towers; set to 0,0,0.')
+    end if
 
 ! ###################################################################
 ! Statistics Control
 ! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[Statsitics]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Averages=<yes/no>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Pdfs=<yes/no>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#ConditionalAverages=<yes/no>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Intermittency=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[Statsitics]')
+    call TLAB_WRITE_ASCII(bakfile, '#Averages=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#Pdfs=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#ConditionalAverages=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#Intermittency=<yes/no>')
 
-  CALL SCANINICHAR(bakfile, inifile, 'Statistics', 'Averages', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; stats_averages = .TRUE.
-  ELSE;                                       stats_averages = .FALSE.; ENDIF
+    call SCANINICHAR(bakfile, inifile, 'Statistics', 'Averages', 'yes', sRes)
+    if (trim(adjustl(sRes)) == 'yes') then; stats_averages = .true.
+    else; stats_averages = .false.; end if
 
-  CALL SCANINICHAR(bakfile, inifile, 'Statistics', 'Pdfs', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; stats_pdfs = .TRUE.
-  ELSE;                                       stats_pdfs = .FALSE.; ENDIF
+    call SCANINICHAR(bakfile, inifile, 'Statistics', 'Pdfs', 'yes', sRes)
+    if (trim(adjustl(sRes)) == 'yes') then; stats_pdfs = .true.
+    else; stats_pdfs = .false.; end if
 
-  CALL SCANINICHAR(bakfile, inifile, 'Statistics', 'Intermittency', 'yes', sRes)
-  IF ( TRIM(ADJUSTL(sRes)) .EQ. 'yes' ) THEN; stats_intermittency = .TRUE.
-  ELSE;                                       stats_intermittency = .FALSE.; ENDIF
+    call SCANINICHAR(bakfile, inifile, 'Statistics', 'Intermittency', 'yes', sRes)
+    if (trim(adjustl(sRes)) == 'yes') then; stats_intermittency = .true.
+    else; stats_intermittency = .false.; end if
 
 ! ###################################################################
 ! Inflow forcing conditions
 ! ###################################################################
-  CALL TLAB_WRITE_ASCII(bakfile, '#')
-  CALL TLAB_WRITE_ASCII(bakfile, '#[Inflow]')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Type=<None/Discrete/Broadband/Both>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Adapt=<value>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Imax=<imax>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Jmax=<jmax>')
-  CALL TLAB_WRITE_ASCII(bakfile, '#Kmax=<kmax>')
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[Inflow]')
+    call TLAB_WRITE_ASCII(bakfile, '#Type=<None/Discrete/Broadband/Both>')
+    call TLAB_WRITE_ASCII(bakfile, '#Adapt=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#Imax=<imax>')
+    call TLAB_WRITE_ASCII(bakfile, '#Jmax=<jmax>')
+    call TLAB_WRITE_ASCII(bakfile, '#Kmax=<kmax>')
 
-  CALL SCANINICHAR(bakfile, inifile, 'Inflow', 'Type', 'None', sRes)
-  IF     ( TRIM(ADJUSTL(sRes)) .eq. 'none'                ) THEN; inflow_mode = 0
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'discrete'            ) THEN; inflow_mode = 1
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'broadbandperiodic'   ) THEN; inflow_mode = 2
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'broadbandsequential' ) THEN; inflow_mode = 3
-  ELSEIF ( TRIM(ADJUSTL(sRes)) .eq. 'both'                ) THEN; inflow_mode = 4
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Type.')
-     CALL TLAB_STOP(DNS_ERROR_INFTYPE)
-  ENDIF
+    call SCANINICHAR(bakfile, inifile, 'Inflow', 'Type', 'None', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; inflow_mode = 0
+    elseif (trim(adjustl(sRes)) == 'discrete') then; inflow_mode = 1
+    elseif (trim(adjustl(sRes)) == 'broadbandperiodic') then; inflow_mode = 2
+    elseif (trim(adjustl(sRes)) == 'broadbandsequential') then; inflow_mode = 3
+    elseif (trim(adjustl(sRes)) == 'both') then; inflow_mode = 4
+    else
+        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Type.')
+        call TLAB_STOP(DNS_ERROR_INFTYPE)
+    end if
 
-  CALL SCANINIREAL(bakfile, inifile, 'Inflow', 'Adapt', '0.0', inflow_adapt)
+    call SCANINIREAL(bakfile, inifile, 'Inflow', 'Adapt', '0.0', inflow_adapt)
 
 ! Broadband forcing: Grid size of the inflow domain
-  g_inf(:)%size     = 1       ! default
-  g_inf(:)%periodic = g(:)%periodic
-  g_inf(:)%uniform  = g(:)%uniform
-  IF ( inflow_mode .EQ. 2 .OR. inflow_mode .EQ. 3 .OR. inflow_mode .EQ. 4 ) THEN
-     CALL SCANINIINT(bakfile, inifile, 'Inflow', 'Imax', '0', idummy)
-     IF ( idummy .GT. 0         ) THEN; g_inf(1)%size = idummy
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Imax.')
-        CALL TLAB_STOP(DNS_ERROR_INFTYPE)
-     ENDIF
+    g_inf(:)%size = 1       ! default
+    g_inf(:)%periodic = g(:)%periodic
+    g_inf(:)%uniform = g(:)%uniform
+    if (inflow_mode == 2 .or. inflow_mode == 3 .or. inflow_mode == 4) then
+        call SCANINIINT(bakfile, inifile, 'Inflow', 'Imax', '0', idummy)
+        if (idummy > 0) then; g_inf(1)%size = idummy
+        else
+            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Imax.')
+            call TLAB_STOP(DNS_ERROR_INFTYPE)
+        end if
 
-     CALL SCANINIINT(bakfile, inifile, 'Inflow', 'Jmax', '0', idummy)
-     IF ( idummy .GT. 0         ) THEN; g_inf(2)%size = idummy
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Jmax.')
-        CALL TLAB_STOP(DNS_ERROR_INFTYPE)
-     ENDIF
+        call SCANINIINT(bakfile, inifile, 'Inflow', 'Jmax', '0', idummy)
+        if (idummy > 0) then; g_inf(2)%size = idummy
+        else
+            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Jmax.')
+            call TLAB_STOP(DNS_ERROR_INFTYPE)
+        end if
 
-     CALL SCANINIINT(bakfile, inifile, 'Inflow', 'Kmax', '0', idummy)
-     IF ( idummy .EQ. g(3)%size ) THEN; g_inf(3)%size = idummy
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Kmax.')
-        CALL TLAB_STOP(DNS_ERROR_INFTYPE)
-     ENDIF
+        call SCANINIINT(bakfile, inifile, 'Inflow', 'Kmax', '0', idummy)
+        if (idummy == g(3)%size) then; g_inf(3)%size = idummy
+        else
+            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Kmax.')
+            call TLAB_STOP(DNS_ERROR_INFTYPE)
+        end if
 
-  ENDIF
-  g_inf(1)%inb_grid = g(1)%inb_grid
-  g_inf(2)%inb_grid = 1
-  g_inf(3)%inb_grid = 1
+    end if
+    g_inf(1)%inb_grid = g(1)%inb_grid
+    g_inf(2)%inb_grid = 1
+    g_inf(3)%inb_grid = 1
 
-  IF ( inflow_mode .EQ. 2 ) THEN
-     g_inf(1)%periodic = .TRUE.
-     g_inf(1)%uniform  = .TRUE.
-  ENDIF
+    if (inflow_mode == 2) then
+        g_inf(1)%periodic = .true.
+        g_inf(1)%uniform = .true.
+    end if
 
-  idummy = MAX(g_inf(1)%size,MAX(g_inf(2)%size,g_inf(3)%size))
-  isize_wrk1d = MAX(isize_wrk1d,idummy)
+    idummy = max(g_inf(1)%size, max(g_inf(2)%size, g_inf(3)%size))
+    isize_wrk1d = max(isize_wrk1d, idummy)
 
-  idummy = MAX(g_inf(1)%size*g_inf(2)%size,MAX(g_inf(1)%size*g_inf(3)%size,g_inf(2)%size*g_inf(3)%size))
-  isize_wrk2d = MAX(isize_wrk2d, idummy)
+    idummy = max(g_inf(1)%size*g_inf(2)%size, max(g_inf(1)%size*g_inf(3)%size, g_inf(2)%size*g_inf(3)%size))
+    isize_wrk2d = max(isize_wrk2d, idummy)
 
-  ! -------------------------------------------------------------------
-  ! Discrete Forcing
-  ! -------------------------------------------------------------------
-  call DISCRETE_READBLOCK(bakfile, inifile, 'Discrete', fp)
-  ! Modulation type in fp%type; varicose or sinuous
+    ! -------------------------------------------------------------------
+    ! Discrete Forcing
+    ! -------------------------------------------------------------------
+    call DISCRETE_READBLOCK(bakfile, inifile, 'Discrete', fp)
+    ! Modulation type in fp%type; varicose or sinuous
 
-  ! Parameter 1 is the y-thickness of the perturbation
-  ! Parameter 2 is the x-length of the inflow domain
+    ! Parameter 1 is the y-thickness of the perturbation
+    ! Parameter 2 is the x-length of the inflow domain
 
 ! ###################################################################
 ! Final initialization and control statements
 ! ###################################################################
-  IF ( nitera_first .GT. nitera_last ) THEN
-     CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Not started because nitera_first > nitera_last.' )
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  END IF
+    if (nitera_first > nitera_last) then
+        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Not started because nitera_first > nitera_last.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
 
 ! Avoid dividing by zero in time_integration routine
-  IF ( nitera_save      .LE. 0 ) nitera_save      = nitera_last - nitera_first + 1
-  IF ( nitera_stats     .LE. 0 ) nitera_stats     = nitera_last - nitera_first + 1
-  IF ( nitera_log       .LE. 0 ) nitera_log       = nitera_last - nitera_first + 1
-  IF ( nitera_pln       .LE. 0 ) nitera_pln       = nitera_last - nitera_first + 1
-  IF ( FilterDomainStep .LE. 0 ) FilterDomainStep = nitera_last - nitera_first + 1
+    if (nitera_save <= 0) nitera_save = nitera_last - nitera_first + 1
+    if (nitera_stats <= 0) nitera_stats = nitera_last - nitera_first + 1
+    if (nitera_log <= 0) nitera_log = nitera_last - nitera_first + 1
+    if (nitera_pln <= 0) nitera_pln = nitera_last - nitera_first + 1
+    if (nitera_filter <= 0) nitera_filter = nitera_last - nitera_first + 1
 
-  IF ( imode_sim .EQ. DNS_MODE_TEMPORAL ) nitera_stats_spa =-1 ! Never call avg_spatial routines
-  IF ( nitera_stats_spa .LE. 0 ) nitera_stats_spa = nitera_last - nitera_first + 1
+    if (imode_sim == DNS_MODE_TEMPORAL) nitera_stats_spa = -1 ! Never call avg_spatial routines
+    if (nitera_stats_spa <= 0) nitera_stats_spa = nitera_last - nitera_first + 1
 
 ! -------------------------------------------------------------------
 ! Control limits
 ! I need rbg%mean
 ! -------------------------------------------------------------------
-  IF ( p_bound_min .LT. C_0_R ) p_bound_min = pbg%mean*C_1EM6_R
-  IF ( p_bound_max .LT. C_0_R ) p_bound_max = pbg%mean/C_1EM6_R
-  IF ( r_bound_min .LT. C_0_R ) r_bound_min = rbg%mean*C_1EM6_R
-  IF ( r_bound_max .LT. C_0_R ) r_bound_max = rbg%mean/C_1EM6_R
+    if (bound_p%min < 0.0_wp) bound_p%min = pbg%mean*1.0e-6_wp
+    if (bound_p%max < 0.0_wp) bound_p%max = pbg%mean*1.0e6_wp
+    if (bound_r%min < 0.0_wp) bound_r%min = rbg%mean*1.0e-6_wp
+    if (bound_r%max < 0.0_wp) bound_r%max = rbg%mean*1.0e6_wp
 
 ! -------------------------------------------------------------------
 ! Boundary conditions
 ! -------------------------------------------------------------------
 ! Make sure periodic BCs are not modified
-  IF ( g(1)%periodic ) THEN;
-     BcsFlowImin%type(:)  = DNS_BCS_NONE; BcsFlowImax%type(:)  = DNS_BCS_NONE
-     BcsScalImin%type(:)  = DNS_BCS_NONE; BcsScalImax%type(:)  = DNS_BCS_NONE
-     bcs_visc_imin     = DNS_BCS_NONE; bcs_visc_imax     = DNS_BCS_NONE
-  ENDIF
-  IF ( g(2)%periodic ) THEN;
-     BcsFlowJmin%type(:)  = DNS_BCS_NONE; BcsFlowJmax%type(:)  = DNS_BCS_NONE
-     BcsScalJmin%type(:)  = DNS_BCS_NONE; BcsScalJmax%type(:)  = DNS_BCS_NONE
-     bcs_visc_jmin     = DNS_BCS_NONE; bcs_visc_jmax     = DNS_BCS_NONE
-  ENDIF
-  IF ( g(3)%periodic ) THEN;
-     BcsFlowKmin%type(:)  = DNS_BCS_NONE; BcsFlowKmax%type(:)  = DNS_BCS_NONE
-     BcsScalKmin%type(:)  = DNS_BCS_NONE; BcsScalKmax%type(:)  = DNS_BCS_NONE
-     bcs_visc_kmin     = DNS_BCS_NONE; bcs_visc_kmax     = DNS_BCS_NONE
-  ENDIF
+    if (g(1)%periodic) then; 
+        BcsFlowImin%type(:) = DNS_BCS_NONE; BcsFlowImax%type(:) = DNS_BCS_NONE
+        BcsScalImin%type(:) = DNS_BCS_NONE; BcsScalImax%type(:) = DNS_BCS_NONE
+        bcs_visc_imin = DNS_BCS_NONE; bcs_visc_imax = DNS_BCS_NONE
+    end if
+    if (g(2)%periodic) then; 
+        BcsFlowJmin%type(:) = DNS_BCS_NONE; BcsFlowJmax%type(:) = DNS_BCS_NONE
+        BcsScalJmin%type(:) = DNS_BCS_NONE; BcsScalJmax%type(:) = DNS_BCS_NONE
+        bcs_visc_jmin = DNS_BCS_NONE; bcs_visc_jmax = DNS_BCS_NONE
+    end if
+    if (g(3)%periodic) then; 
+        BcsFlowKmin%type(:) = DNS_BCS_NONE; BcsFlowKmax%type(:) = DNS_BCS_NONE
+        BcsScalKmin%type(:) = DNS_BCS_NONE; BcsScalKmax%type(:) = DNS_BCS_NONE
+        bcs_visc_kmin = DNS_BCS_NONE; bcs_visc_kmax = DNS_BCS_NONE
+    end if
 
 ! BCs for OPR_PARTIAL at xmin (1,*) and xmax (2,*)
-  bcs_inf = 0                                    ! default is biased non-zero; if 1, set to zero
-  IF ( bcs_visc_imin .EQ. 1 ) bcs_inf(1,2,1) = 1 ! Inflow conditions
-  IF ( bcs_visc_imax .EQ. 1 ) bcs_inf(2,2,1) = 1
-  IF ( bcs_visc_jmin .EQ. 1 ) bcs_inf(1,2,2) = 1
-  IF ( bcs_visc_jmax .EQ. 1 ) bcs_inf(2,2,2) = 1
-  IF ( bcs_visc_kmin .EQ. 1 ) bcs_inf(1,2,3) = 1
-  IF ( bcs_visc_kmax .EQ. 1 ) bcs_inf(2,2,3) = 1
+    bcs_inf = 0                                    ! default is biased non-zero; if 1, set to zero
+    if (bcs_visc_imin == 1) bcs_inf(1, 2, 1) = 1 ! Inflow conditions
+    if (bcs_visc_imax == 1) bcs_inf(2, 2, 1) = 1
+    if (bcs_visc_jmin == 1) bcs_inf(1, 2, 2) = 1
+    if (bcs_visc_jmax == 1) bcs_inf(2, 2, 2) = 1
+    if (bcs_visc_kmin == 1) bcs_inf(1, 2, 3) = 1
+    if (bcs_visc_kmax == 1) bcs_inf(2, 2, 3) = 1
 
-  bcs_out = 0
-  IF ( bcs_visc_imin .EQ. 2 ) bcs_out(1,2,1) = 1 ! Outflow conditions
-  IF ( bcs_visc_imax .EQ. 2 ) bcs_out(2,2,1) = 1
-  IF ( bcs_visc_jmin .EQ. 2 ) bcs_out(1,2,2) = 1
-  IF ( bcs_visc_jmax .EQ. 2 ) bcs_out(2,2,2) = 1
-  IF ( bcs_visc_kmin .EQ. 2 ) bcs_out(1,2,3) = 1
-  IF ( bcs_visc_kmax .EQ. 2 ) bcs_out(2,2,3) = 1
+    bcs_out = 0
+    if (bcs_visc_imin == 2) bcs_out(1, 2, 1) = 1 ! Outflow conditions
+    if (bcs_visc_imax == 2) bcs_out(2, 2, 1) = 1
+    if (bcs_visc_jmin == 2) bcs_out(1, 2, 2) = 1
+    if (bcs_visc_jmax == 2) bcs_out(2, 2, 2) = 1
+    if (bcs_visc_kmin == 2) bcs_out(1, 2, 3) = 1
+    if (bcs_visc_kmax == 2) bcs_out(2, 2, 3) = 1
 
 ! Make sure there is array space for reference mean drift
-  IF ( BcsDrift ) THEN
-     BuffFlowJmin%size = MAX(BuffFlowJmin%size,i1); BuffFlowJmax%size = MAX(BuffFlowJmax%size,i1)
-     BuffScalJmin%size = BuffFlowJmin%size; BuffScalJmax%size = BuffFlowJmax%size
-     IF ( imode_sim .EQ. DNS_MODE_SPATIAL  ) THEN
-        BuffFlowImin%size = MAX(BuffFlowImin%size,i1); BuffFlowImax%size = MAX(BuffFlowImax%size,i1)
-     ENDIF
-     BuffScalImin%size = BuffFlowImin%size; BuffScalImax%size = BuffFlowImax%size
-  ENDIF
+    if (BcsDrift) then
+        BuffFlowJmin%size = max(BuffFlowJmin%size, 1); BuffFlowJmax%size = max(BuffFlowJmax%size, 1)
+        BuffScalJmin%size = BuffFlowJmin%size; BuffScalJmax%size = BuffFlowJmax%size
+        if (imode_sim == DNS_MODE_SPATIAL) then
+            BuffFlowImin%size = max(BuffFlowImin%size, 1); BuffFlowImax%size = max(BuffFlowImax%size, 1)
+        end if
+        BuffScalImin%size = BuffFlowImin%size; BuffScalImax%size = BuffFlowImax%size
+    end if
 
 ! -------------------------------------------------------------------
 ! Interactive Boundary conditions
 ! -------------------------------------------------------------------
-  DO is =1,inb_scal
-     IF ( BcsScalJmin%type(is).NE. DNS_BCS_DIRICHLET .AND. &
-          BcsScalJmin%SfcType(is) .NE. DNS_SFC_STATIC ) THEN
-        CALL TLAB_WRITE_ASCII(efile, &
-             'DNS_READ_LOCAL. Interactive BC at jmin not implemented for non-Dirichlet BC')
-        CALL TLAB_STOP(DNS_ERROR_JBC)
-     ENDIF
-     IF ( BcsScalJmax%type(is).NE. DNS_BCS_DIRICHLET .AND. &
-          BcsScalJmax%SfcType(is) .NE. DNS_SFC_STATIC ) THEN
-        WRITE(*,*) BcsScalJmax%type(is), BcsScalJmax%SfcType(is), BcsScalJmax%cpl(is)
-        CALL TLAB_WRITE_ASCII(efile, &
-             'DNS_READ_LOCAL. Interactive BC at jmax not implemented for non-Dirichlet BC')
-        CALL TLAB_STOP(DNS_ERROR_JBC)
-     ENDIF
-  ENDDO
+    do is = 1, inb_scal
+        if (BcsScalJmin%type(is) /= DNS_BCS_DIRICHLET .and. &
+            BcsScalJmin%SfcType(is) /= DNS_SFC_STATIC) then
+            call TLAB_WRITE_ASCII(efile, &
+                                  'DNS_READ_LOCAL. Interactive BC at jmin not implemented for non-Dirichlet BC')
+            call TLAB_STOP(DNS_ERROR_JBC)
+        end if
+        if (BcsScalJmax%type(is) /= DNS_BCS_DIRICHLET .and. &
+            BcsScalJmax%SfcType(is) /= DNS_SFC_STATIC) then
+            write (*, *) BcsScalJmax%type(is), BcsScalJmax%SfcType(is), BcsScalJmax%cpl(is)
+            call TLAB_WRITE_ASCII(efile, &
+                                  'DNS_READ_LOCAL. Interactive BC at jmax not implemented for non-Dirichlet BC')
+            call TLAB_STOP(DNS_ERROR_JBC)
+        end if
+    end do
 
 ! -------------------------------------------------------------------
 ! Implicit RKM part
 ! -------------------------------------------------------------------
-  IF ( rkm_mode .EQ. RKM_IMP3_DIFFUSION ) THEN
+    if (rkm_mode == RKM_IMP3_DIFFUSION) then
 
 ! Check if Neumann BCs for scalar are present and warn if so
-     DO is=1,inb_scal
-        IF ( BcsScalJmin%type(is) .EQ. DNS_BCS_NEUMANN .OR. &
-             BcsScalJmax%type(is) .EQ. DNS_BCS_NEUMANN ) THEN
-           WRITE(sRes, *) is; sRes='DNS_REAL_LOCAL. Scalar'//TRIM(ADJUSTL(sRes))//&
-                ': Finite flux BC not implemented for SEMI-IMPLICITE DIFFUSION'
-           CALL TLAB_WRITE_ASCII(wfile, TRIM(ADJUSTL(sRes)))
-           WRITE(sRes, *) is; sRes='DNS_REAL_LOCAL. Scalar'//TRIM(ADJUSTL(sRes))//&
-                ': Setting fluxes at boundary to zero'
-           CALL TLAB_WRITE_ASCII(wfile, TRIM(ADJUSTL(sRes)))
-        ENDIF
-     ENDDO
+        do is = 1, inb_scal
+            if (BcsScalJmin%type(is) == DNS_BCS_NEUMANN .or. &
+                BcsScalJmax%type(is) == DNS_BCS_NEUMANN) then
+                write (sRes, *) is; sRes = 'DNS_REAL_LOCAL. Scalar'//trim(adjustl(sRes))// &
+ ': Finite flux BC not implemented for SEMI-IMPLICITE DIFFUSION'
+                call TLAB_WRITE_ASCII(wfile, trim(adjustl(sRes)))
+                write (sRes, *) is; sRes = 'DNS_REAL_LOCAL. Scalar'//trim(adjustl(sRes))// &
+ ': Setting fluxes at boundary to zero'
+                call TLAB_WRITE_ASCII(wfile, trim(adjustl(sRes)))
+            end if
+        end do
 
 ! Check if grid is non-uniform
-     IF ( .NOT. g(1)%uniform .AND. g(1)%mode_fdm .NE. FDM_COM6_DIRECT ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Non-uniform grid requires a direct FDM formulation.')
-        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-     ENDIF
+        if (.not. g(1)%uniform .and. g(1)%mode_fdm /= FDM_COM6_DIRECT) then
+            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Non-uniform grid requires a direct FDM formulation.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
 
-     IF ( imode_eqns /= DNS_EQNS_INCOMPRESSIBLE ) THEN
-       CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Implicit formulation only available for incompressible case.')
-       CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-    ENDIF
+        if (imode_eqns /= DNS_EQNS_INCOMPRESSIBLE) then
+            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Implicit formulation only available for incompressible case.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
 
-  ENDIF
+    end if
 
 ! -------------------------------------------------------------------
 ! Towers information
-! So far, the use or not use of tower information (tower_mode) is
+! So far, the use or not use of tower information is
 ! set by the stride information.
 ! -------------------------------------------------------------------
-  IF ( MINVAL(tower_stride).GT.0 ) THEN; tower_mode=1; ELSE;  tower_mode=0; ENDIF
+    use_tower = .false.
+    if (minval(tower_stride) > 0) then; use_tower = .true.; end if
 
 ! We need space
-  IF ( tower_mode .EQ. 1 ) THEN
-     idummy = tower_stride(1) *tower_stride(2) *tower_stride(3)
-     IF ( idummy .LT. 5 ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Not enough space in wrk3d array to handle tower information. Increase strides.')
-        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-     ENDIF
-  ENDIF
+    if (use_tower) then
+        idummy = tower_stride(1)*tower_stride(2)*tower_stride(3)
+        if (idummy < 5) then
+      call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Not enough space in wrk3d array to handle tower information. Increase strides.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+    end if
 
 ! -------------------------------------------------------------------
 ! Pressure staggering
 ! -------------------------------------------------------------------
-  IF ( istagger .EQ. 1 ) THEN
-     IF ( .NOT. (imode_rhs == EQNS_RHS_COMBINED) ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Horizontal pressure staggering only implemented for imode_rhs == EQNS_RHS_COMBINED.')
-        CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-     ENDIF
- ENDIF
+    if (istagger == 1) then
+        if (.not. (imode_rhs == EQNS_RHS_COMBINED)) then
+ call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Horizontal pressure staggering only implemented for imode_rhs == EQNS_RHS_COMBINED.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+    end if
 
 ! -------------------------------------------------------------------
 ! Nonblocking formulation only valid for 2 scalars or less
 ! -------------------------------------------------------------------
-  IF ( imode_rhs .EQ. EQNS_RHS_NONBLOCKING ) THEN
-    IF ( inb_scal .GT. 2 ) THEN
-       CALL TLAB_WRITE_ASCII(efile,&
-            'DNS_READ_LOCAL. Nonblocking Communication not implemented >2 scalars' )
-       CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-    ELSE IF ( inb_scal .LT. 1 ) THEN
-       CALL TLAB_WRITE_ASCII(efile,&
-            'DNS_READ_LOCAL. Nonblocking Communication require at least 1 scalar')
-       CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-    ENDIF
-  ENDIF
+    if (imode_rhs == EQNS_RHS_NONBLOCKING) then
+        if (inb_scal > 2) then
+            call TLAB_WRITE_ASCII(efile, &
+                                  'DNS_READ_LOCAL. Nonblocking Communication not implemented >2 scalars')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        else if (inb_scal < 1) then
+            call TLAB_WRITE_ASCII(efile, &
+                                  'DNS_READ_LOCAL. Nonblocking Communication require at least 1 scalar')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+    end if
 
-  ! -------------------------------------------------------------------
-  ! Array sizes
-  ! -------------------------------------------------------------------
-  SELECT CASE ( imode_eqns )
-  CASE( DNS_EQNS_INCOMPRESSIBLE,DNS_EQNS_ANELASTIC )
-    inb_txc = 6
-    IF ( rkm_mode == RKM_IMP3_DIFFUSION ) inb_txc = inb_txc+1
-  CASE( DNS_EQNS_INTERNAL,DNS_EQNS_TOTAL)
-    IF ( itransport .EQ. EQNS_TRANS_POWERLAW ) THEN
-       CALL TLAB_WRITE_ASCII(efile,'RHS_SCAL_GLOBAL_2. Only constant viscosity.')
-       CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-    ENDIF
+    ! -------------------------------------------------------------------
+    ! Array sizes
+    ! -------------------------------------------------------------------
+    select case (imode_eqns)
+    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+        inb_txc = 6
+        if (rkm_mode == RKM_IMP3_DIFFUSION) inb_txc = inb_txc + 1
+    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
+        if (itransport == EQNS_TRANS_POWERLAW) then
+            call TLAB_WRITE_ASCII(efile, 'RHS_SCAL_GLOBAL_2. Only constant viscosity.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
 
-    IF ( imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-       CALL TLAB_WRITE_ASCII(efile,'RHS_SCAL_GLOBAL_2. No total energy formulation.')
-       CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-    ENDIF
+        if (imode_eqns == DNS_EQNS_TOTAL) then
+            call TLAB_WRITE_ASCII(efile, 'RHS_SCAL_GLOBAL_2. No total energy formulation.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
 
-    inb_txc = 9
-    IF ( imode_eqns == DNS_EQNS_INTERNAL .AND. iadvection == EQNS_SKEWSYMMETRIC .AND. &
-      iviscous   == EQNS_EXPLICIT ) inb_txc = 6
-  END SELECT
-  IF ( imixture == MIXT_TYPE_AIRWATER .AND. damkohler(3) > C_0_R ) inb_txc = inb_txc + 1
+        inb_txc = 9
+        if (imode_eqns == DNS_EQNS_INTERNAL .and. iadvection == EQNS_SKEWSYMMETRIC .and. &
+            iviscous == EQNS_EXPLICIT) inb_txc = 6
+    end select
+    if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) > 0.0_wp) inb_txc = inb_txc + 1
 
-  IF ( imode_sim == DNS_MODE_SPATIAL ) THEN ! because of the statistics
-    inb_txc = MAX(inb_txc,7)
+    if (imode_sim == DNS_MODE_SPATIAL) then ! because of the statistics
+        inb_txc = max(inb_txc, 7)
 
-    IF ( stats_averages ) THEN
-      idummy = MAX(MA_MOMENTUM_SIZE,MS_SCALAR_SIZE)
-      IF ( MOD( nstatavg*jmax*idummy , isize_txc_field ) > 0 ) THEN
-        idummy = nstatavg*jmax*idummy / isize_txc_field + 1
-      ELSE
-        idummy = nstatavg*jmax*idummy / isize_txc_field
-      ENDIF
-      inb_txc = MAX(inb_txc,idummy)
-    ENDIF
+        if (stats_averages) then
+            idummy = max(MA_MOMENTUM_SIZE, MS_SCALAR_SIZE)
+            if (mod(nstatavg*jmax*idummy, isize_txc_field) > 0) then
+                idummy = nstatavg*jmax*idummy/isize_txc_field + 1
+            else
+                idummy = nstatavg*jmax*idummy/isize_txc_field
+            end if
+            inb_txc = max(inb_txc, idummy)
+        end if
 
-  ENDIF
+    end if
 
 #ifdef USE_PSFFT
-  IF ( imode_rhs == EQNS_RHS_NONBLOCKING ) inb_txc = MAX(inb_txc,15)
+    if (imode_rhs == EQNS_RHS_NONBLOCKING) inb_txc = max(inb_txc, 15)
 #endif
 
-  isize_wrk3d = MAX(imax,g_inf(1)%size)*MAX(jmax,g_inf(2)%size)*kmax
-  isize_wrk3d = MAX(isize_wrk3d,isize_txc_field)
-  IF (imode_part /= PART_TYPE_NONE) THEN
-    isize_wrk3d = MAX(isize_wrk3d,(imax+1)*jmax*(kmax+1))
-    isize_wrk3d = MAX(isize_wrk3d,(jmax*(kmax+1)*inb_part_interp*2))
-    isize_wrk3d = MAX(isize_wrk3d,(jmax*(imax+1)*inb_part_interp*2))
-  END IF
-  IF ( tower_mode == 1 ) THEN
-    isize_wrk3d = MAX(isize_wrk3d,nitera_save*(g(2)%size+2))
-  ENDIF
+    isize_wrk3d = max(imax, g_inf(1)%size)*max(jmax, g_inf(2)%size)*kmax
+    isize_wrk3d = max(isize_wrk3d, isize_txc_field)
+    if (imode_part /= PART_TYPE_NONE) then
+        isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
+        isize_wrk3d = max(isize_wrk3d, (jmax*(kmax + 1)*inb_part_interp*2))
+        isize_wrk3d = max(isize_wrk3d, (jmax*(imax + 1)*inb_part_interp*2))
+    end if
+    if (use_tower) then
+        isize_wrk3d = max(isize_wrk3d, nitera_save*(g(2)%size + 2))
+    end if
 
-  RETURN
-END SUBROUTINE DNS_READ_LOCAL
+    return
+end subroutine DNS_READ_LOCAL

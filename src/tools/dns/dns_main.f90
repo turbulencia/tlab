@@ -1,350 +1,397 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 
 #define C_FILE_LOC "DNS"
 
-PROGRAM DNS
+program DNS
 
-  USE TLAB_CONSTANTS
-  USE TLAB_VARS
-  USE TLAB_ARRAYS
-  USE TLAB_PROCS
+    use TLAB_CONSTANTS
+    use TLAB_VARS
+    use TLAB_ARRAYS
+    use TLAB_PROCS
 #ifdef USE_MPI
-  USE TLAB_MPI_PROCS
+    use TLAB_MPI_PROCS
 #endif
-  USE PARTICLE_VARS
-  USE PARTICLE_ARRAYS
-  USE DNS_LOCAL
-  USE DNS_ARRAYS
-  USE TIME
-  USE DNS_TOWER
-  USE IBM_VARS
-  USE PLANES
-  USE BOUNDARY_INFLOW
-  USE BOUNDARY_BUFFER
-  USE BOUNDARY_BCS
-  USE STATISTICS
-  USE PARTICLE_TRAJECTORIES
-  USE AVG_SCAL_ZT
-  USE IO_FIELDS
-  USE OPR_FILTERS
-  IMPLICIT NONE
-  SAVE
+    use PARTICLE_VARS
+    use PARTICLE_ARRAYS
+    use DNS_LOCAL
+    use DNS_ARRAYS
+    use TIME
+    use DNS_TOWER
+    use IBM_VARS
+    use PLANES
+    use BOUNDARY_INFLOW
+    use BOUNDARY_BUFFER
+    use BOUNDARY_BCS
+    use STATISTICS
+    use PARTICLE_TRAJECTORIES
+    use AVG_SCAL_ZT
+    use IO_FIELDS
+    use OPR_FILTERS
+    implicit none
+    save
 
-#include "integers.h"
+    ! -------------------------------------------------------------------
+    character(len=32) fname, str
+    integer ig
+    integer, parameter :: i0 = 0, i1 = 1
 
-  ! -------------------------------------------------------------------
-  CHARACTER*32 fname, str
-  TINTEGER ig
+    ! ###################################################################
+    call TLAB_START()
 
-  ! ###################################################################
-  CALL TLAB_START()
-
-  CALL IO_READ_GLOBAL(ifile)
-    CALL PARTICLE_READ_GLOBAL(ifile)
-#ifdef CHEMISTRY
-  CALL CHEM_READ_GLOBAL(ifile)
-#endif
-  CALL DNS_READ_LOCAL(ifile)
-  IF ( imode_ibm == 1 ) THEN
-    CALL IBM_READ_INI(ifile)
-    CALL IBM_READ_CONSISTENCY_CHECK(imode_rhs, BcsFlowJmin%type(:),  &
-                      BcsScalJmin%type(:),     BcsScalJmax%type(:),  &
-                      BcsScalJmin%SfcType(:),  BcsScalJmax%SfcType(:))
-  END IF  
+    call IO_READ_GLOBAL(ifile)
+    call PARTICLE_READ_GLOBAL(ifile)
+    call DNS_READ_LOCAL(ifile)
+    if (imode_ibm == 1) then
+        call IBM_READ_INI(ifile)
+        call IBM_READ_CONSISTENCY_CHECK(imode_rhs, BcsFlowJmin%type(:), &
+                                        BcsScalJmin%type(:), BcsScalJmax%type(:), &
+                                        BcsScalJmin%SfcType(:), BcsScalJmax%SfcType(:))
+    end if
 #ifdef USE_MPI
-  CALL TLAB_MPI_INITIALIZE
+    call TLAB_MPI_INITIALIZE
 #ifdef USE_PSFFT
-  IF ( imode_rhs == EQNS_RHS_NONBLOCKING ) CALL DNS_NB3DFFT_INITIALIZE
+    if (imode_rhs == EQNS_RHS_NONBLOCKING) call DNS_NB3DFFT_INITIALIZE
 #endif
 #endif
 
-  ! #######################################################################
-  ! Initialize memory space and grid data
-  ! #######################################################################
-  CALL TLAB_ALLOCATE(C_FILE_LOC)
+    ! #######################################################################
+    ! Initialize memory space and grid data
+    ! #######################################################################
+    call TLAB_ALLOCATE(C_FILE_LOC)
 
-  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
-  CALL FDM_INITIALIZE(x, g(1), wrk1d)
-  CALL FDM_INITIALIZE(y, g(2), wrk1d)
-  CALL FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call FDM_INITIALIZE(x, g(1), wrk1d)
+    call FDM_INITIALIZE(y, g(2), wrk1d)
+    call FDM_INITIALIZE(z, g(3), wrk1d)
 
-  CALL FI_BACKGROUND_INITIALIZE(wrk1d)
+    call FI_BACKGROUND_INITIALIZE(wrk1d)
 
-  CALL PARTICLE_ALLOCATE(C_FILE_LOC)
+    call PARTICLE_ALLOCATE(C_FILE_LOC)
 
-  CALL DNS_ALLOCATE()
+    call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, hq, inb_flow, isize_field, 'flow-rhs')
+    call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, hs, inb_scal, isize_field, 'scal-rhs')
+    if (imode_part /= PART_TYPE_NONE) then
+        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, l_hq, inb_part, isize_part, 'part-rhs')
+        call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, l_comm, isize_l_comm, 'l_comm')
+    end if
 
-  CALL STATISTICS_INITIALIZE()
+    call STATISTICS_INITIALIZE()
 
-  CALL PLANES_INITIALIZE()
+    call PLANES_INITIALIZE()
 
-  IF ( tower_mode == 1 ) THEN
-    CALL DNS_TOWER_INITIALIZE(tower_stride)
-  END IF
-  
-  IF ( imode_ibm == 1 ) THEN
-    CALL IBM_ALLOCATE(C_FILE_LOC)
-  END IF
+    if (use_tower) then
+        call DNS_TOWER_INITIALIZE(tower_stride)
+    end if
 
-  ! ###################################################################
-  ! Initialize operators and reference data
-  ! ###################################################################
-  DO ig = 1,3
-    CALL OPR_FILTER_INITIALIZE( g(ig), FilterDomain(ig), wrk1d )
-    CALL OPR_FILTER_INITIALIZE( g(ig), Dealiasing(ig), wrk1d )
-  END DO
+    if (imode_ibm == 1) then
+        call IBM_ALLOCATE(C_FILE_LOC)
+    end if
 
-  IF ( ifourier == 1 ) THEN
-    CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
-  END IF
+    ! ###################################################################
+    ! Initialize operators and reference data
+    ! ###################################################################
+    do ig = 1, 3
+        call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig), wrk1d)
+        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig), wrk1d)
+    end do
 
-  CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
+    if (ifourier == 1) then
+        call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+    end if
 
-  ! ###################################################################
-  ! Initialize fields
-  ! ###################################################################
-  itime = nitera_first
+    call OPR_CHECK(imax, jmax, kmax, q, txc, wrk2d, wrk3d)
 
-  visc_stop  = visc ! Value read in ifile
+    ! ###################################################################
+    ! Initialize fields
+    ! ###################################################################
+    itime = nitera_first
 
-  IF ( icalc_scal == 1 ) THEN
-    WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-    CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal, i0, s, wrk3d)
-  END IF
+    visc_stop = visc ! Value read in ifile
 
-  WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-  CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, inb_flow, i0, q, wrk3d)
+    if (icalc_scal == 1) then
+        write (fname, *) nitera_first; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
+        call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s, wrk3d)
+    end if
 
-  CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )  ! Initialize diagnostic thermodynamic quantities
+    write (fname, *) nitera_first; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
+    call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q, wrk3d)
 
-  IF (imode_part /= PART_TYPE_NONE) THEN
-    WRITE(fname,*) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
-    CALL IO_READ_PARTICLE(fname, l_g, l_q)
-    IF ( imode_traj /= TRAJ_TYPE_NONE ) THEN
-      CALL PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
-    END IF
-  END IF
+    call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)  ! Initialize diagnostic thermodynamic quantities
 
-  IF ( imode_sim == DNS_MODE_SPATIAL .AND. nitera_stats_spa > 0 ) THEN
-    WRITE(fname,*) nitera_first; fname = 'st'//TRIM(ADJUSTL(fname))
-    CALL IO_READ_AVG_SPATIAL(fname, mean_flow, mean_scal)
-  END IF
+    if (imode_part /= PART_TYPE_NONE) then
+        write (fname, *) nitera_first; fname = trim(adjustl(tag_part))//trim(adjustl(fname))
+        call IO_READ_PARTICLE(fname, l_g, l_q)
+        call PARTICLE_INITIALIZE()
 
-  ! ###################################################################
-  ! Initialize change in viscosity
-  ! ###################################################################
-  flag_viscosity = .FALSE.
-  IF ( visc /= visc_stop ) THEN
-    WRITE(str,*) visc
-    CALL TLAB_WRITE_ASCII(lfile,'Changing original viscosity '//TRIM(ADJUSTL(str))//' to new value.')
-    IF ( visc_time > C_0_R ) THEN
-      visc_rate = ( visc_stop -visc ) /visc_time
-      visc_time = rtime +visc_time                 ! Stop when this time is reached
-      flag_viscosity = .TRUE.
-    ELSE
-      visc = visc_stop
-    END IF
-  END IF
+        if (imode_traj /= TRAJ_TYPE_NONE) then
+            call PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
+        end if
 
-  ! ###################################################################
-  ! Initialize particle simumulation
-  ! ###################################################################
-  IF (imode_part /= PART_TYPE_NONE) THEN
-    CALL PARTICLE_INITIALIZE()
-  END IF
+    end if
 
-  ! ###################################################################
-  ! Initialize data for boundary conditions
-  ! ###################################################################
-  CALL BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
+    if (imode_sim == DNS_MODE_SPATIAL .and. nitera_stats_spa > 0) then
+        write (fname, *) nitera_first; fname = 'st'//trim(adjustl(fname))
+        call IO_READ_AVG_SPATIAL(fname, mean_flow, mean_scal)
+    end if
 
-  CALL BOUNDARY_BCS_INITIALIZE(wrk3d)
+    ! ###################################################################
+    ! Initialize change in viscosity
+    ! ###################################################################
+    flag_viscosity = .false.
+    if (visc /= visc_stop) then
+        write (str, *) visc
+        call TLAB_WRITE_ASCII(lfile, 'Changing original viscosity '//trim(adjustl(str))//' to new value.')
+        if (visc_time > 0.0_wp) then
+            visc_rate = (visc_stop - visc)/visc_time
+            visc_time = rtime + visc_time                 ! Stop when this time is reached
+            flag_viscosity = .true.
+        else
+            visc = visc_stop
+        end if
+    end if
 
-  IF ( imode_sim == DNS_MODE_SPATIAL ) THEN
-    CALL BOUNDARY_INFLOW_INITIALIZE(rtime, txc, wrk1d,wrk2d,wrk3d)
-  END IF
+    ! ###################################################################
+    ! Initialize data for boundary conditions
+    ! ###################################################################
+    call BOUNDARY_BUFFER_INITIALIZE(q, s, txc, wrk3d)
 
-  ! ###################################################################
-  ! Initialize IBM
-  ! ###################################################################
-  IF ( imode_ibm == 1 ) THEN
-    CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
-    CALL IBM_BCS_FIELD_COMBINED(i0, q)
-    IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s)
-  END IF  
+    call BOUNDARY_BCS_INITIALIZE(wrk3d)
 
-  ! ###################################################################
-  ! Check
-  ! ###################################################################
-  logs_data(1) = 0 ! Status
-  CALL DNS_CONTROL(i0, q,s, txc, wrk2d,wrk3d)
+    if (imode_sim == DNS_MODE_SPATIAL) then
+        call BOUNDARY_INFLOW_INITIALIZE(rtime, txc, wrk1d, wrk2d, wrk3d)
+    end if
 
-  ! ###################################################################
-  ! Initialize time marching scheme
-  ! ###################################################################
-  CALL TIME_INITIALIZE()
-  CALL TIME_COURANT(q, wrk3d)
+    ! ###################################################################
+    ! Initialize IBM
+    ! ###################################################################
+    if (imode_ibm == 1) then
+        call IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
+        call IBM_BCS_FIELD_COMBINED(i0, q)
+        if (icalc_scal == 1) call IBM_INITIALIZE_SCAL(i1, s)
+    end if
 
-  ! ###################################################################
-  ! Initialize logfiles
-  ! ###################################################################
-  CALL DNS_LOGS(i1) ! headers
-  CALL DNS_LOGS(i2) ! first line
+    ! ###################################################################
+    ! Check
+    ! ###################################################################
+    logs_data(1) = 0 ! Status
+    call DNS_BOUNDS_CONTROL()
+    call DNS_BOUNDS_LIMIT()
 
-  ! ###################################################################
-  ! Do simulation: Integrate equations
-  ! ###################################################################
-  itime = nitera_first
+    ! ###################################################################
+    ! Initialize time marching scheme
+    ! ###################################################################
+    call TIME_INITIALIZE()
+    call TIME_COURANT(q, wrk3d)
 
-  WRITE(str,*) itime
-  CALL TLAB_WRITE_ASCII(lfile,'Starting time integration at It'//TRIM(ADJUSTL(str))//'.')
+    ! ###################################################################
+    ! Check-pointing: Initialize logfiles
+    ! ###################################################################
+    call DNS_LOGS_INITIALIZE() ! headers
+    call DNS_LOGS() ! first line
 
-  DO
-    IF ( itime >= nitera_last   ) EXIT
-    IF ( INT(logs_data(1)) /= 0 ) EXIT
+    ! ###################################################################
+    ! Do simulation: Integrate equations
+    ! ###################################################################
+    itime = nitera_first
 
-    CALL TIME_RUNGEKUTTA()
+    write (str, *) itime
+    call TLAB_WRITE_ASCII(lfile, 'Starting time integration at It'//trim(adjustl(str))//'.')
 
-    itime = itime + 1
-    rtime = rtime + dtime
+    do
+        if (itime >= nitera_last) exit
+        if (int(logs_data(1)) /= 0) exit
 
-    IF ( MOD(itime-nitera_first,FilterDomainStep) == 0 ) THEN
-      CALL DNS_FILTER()
-      IF ( imode_ibm == 1 ) THEN
-        CALL IBM_BCS_FIELD_COMBINED(i0, q) ! apply IBM BCs
-        IF ( icalc_scal == 1 ) CALL IBM_INITIALIZE_SCAL(s)
-      END IF  
-    END IF
+        call TIME_RUNGEKUTTA()
 
-    IF ( flag_viscosity ) THEN          ! Change viscosity if necessary
-      visc = visc +visc_rate *dtime
-      IF ( rtime .GT. visc_time ) THEN
-        visc = visc_stop                ! Fix new value without any roundoff
-        flag_viscosity = .FALSE.
-      END IF
-    END IF
+        itime = itime + 1
+        rtime = rtime + dtime
 
-    CALL TIME_COURANT(q, wrk3d)
+        if (mod(itime - nitera_first, nitera_filter) == 0) then
+            call DNS_FILTER()
+            if (imode_ibm == 1) then
+                call IBM_BCS_FIELD_COMBINED(i0, q) ! apply IBM BCs
+                if (icalc_scal == 1) call IBM_INITIALIZE_SCAL(i0, s)
+            end if
+        end if
 
-    ! -------------------------------------------------------------------
-    ! The rest: Logging, postprocessing and saving
-    ! -------------------------------------------------------------------
-    IF ( MOD(itime-nitera_first,nitera_log) == 0 .OR. INT(logs_data(1)) /= 0 ) THEN
-      CALL DNS_LOGS(i2)
-    END IF
+        if (flag_viscosity) then                ! Change viscosity if necessary
+            visc = visc + visc_rate*dtime
+            if (rtime > visc_time) then
+                visc = visc_stop                ! Fix new value without any roundoff
+                flag_viscosity = .false.
+            end if
+        end if
 
-    IF ( tower_mode == 1 ) THEN
-      CALL DNS_TOWER_ACCUMULATE(q,1,wrk1d)
-      CALL DNS_TOWER_ACCUMULATE(s,2,wrk1d)
-    END IF
+        call TIME_COURANT(q, wrk3d)
 
-    IF ( imode_traj /= TRAJ_TYPE_NONE ) THEN
-      CALL PARTICLE_TRAJECTORIES_ACCUMULATE(q,s, txc, l_g,l_q,l_hq,l_txc,l_comm, wrk2d,wrk3d)
-    END IF
+        ! -------------------------------------------------------------------
+        ! The rest: Logging, postprocessing and check-pointing
+        ! -------------------------------------------------------------------
+        call DNS_BOUNDS_CONTROL()
+        if (mod(itime - nitera_first, nitera_log) == 0 .or. int(logs_data(1)) /= 0) then
+            call DNS_LOGS()
+        end if
 
-    IF ( MOD(itime-nitera_first,nitera_stats_spa) == 0 ) THEN   ! Accumulate statistics in spatially evolving cases
-      IF ( icalc_flow == 1 ) CALL AVG_FLOW_ZT_REDUCE(q,   hq,txc, mean_flow, wrk2d,wrk3d)
-      IF ( icalc_scal == 1 ) CALL AVG_SCAL_ZT_REDUCE(q,s, hq,txc, mean_scal, wrk2d,wrk3d)
-    END IF
+        if (use_tower) then
+            call DNS_TOWER_ACCUMULATE(q, 1, wrk1d)
+            call DNS_TOWER_ACCUMULATE(s, 2, wrk1d)
+        end if
 
-    IF ( MOD(itime-nitera_first,nitera_stats) == 0 ) THEN       ! Calculate statistics
-      IF ( imode_sim == DNS_MODE_TEMPORAL ) CALL STATISTICS_TEMPORAL()
-      IF ( imode_sim == DNS_MODE_SPATIAL  ) CALL STATISTICS_SPATIAL()
-    END IF
+        if (imode_traj /= TRAJ_TYPE_NONE) then
+            call PARTICLE_TRAJECTORIES_ACCUMULATE(q, s, txc, l_g, l_q, l_hq, l_txc, l_comm, wrk2d, wrk3d)
+        end if
 
-    IF ( MOD(itime-nitera_first,nitera_save) == 0 .OR. &        ! Save restart files
-        itime == nitera_last .OR. INT(logs_data(1)) /= 0 ) THEN ! Secure that one restart file is saved
+        if (mod(itime - nitera_first, nitera_stats_spa) == 0) then  ! Accumulate statistics in spatially evolving cases
+            if (icalc_flow == 1) call AVG_FLOW_ZT_REDUCE(q, hq, txc, mean_flow, wrk2d, wrk3d)
+            if (icalc_scal == 1) call AVG_SCAL_ZT_REDUCE(q, s, hq, txc, mean_scal, wrk2d, wrk3d)
+        end if
 
-      IF ( icalc_flow == 1 ) THEN
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-        CALL IO_WRITE_FIELDS(fname, IO_FLOW, imax,jmax,kmax, inb_flow, q, wrk3d)
-      END IF
+        if (mod(itime - nitera_first, nitera_stats) == 0) then      ! Calculate statistics
+            if (imode_sim == DNS_MODE_TEMPORAL) call STATISTICS_TEMPORAL()
+            if (imode_sim == DNS_MODE_SPATIAL) call STATISTICS_SPATIAL()
+        end if
 
-      IF ( icalc_scal == 1 ) THEN
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-        CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal, s, wrk3d)
-      END IF
+        if (mod(itime - nitera_first, nitera_save) == 0 .or. &      ! Check-pointing: Save restart files
+            itime == nitera_last .or. int(logs_data(1)) /= 0) then  ! Secure that one restart file is saved
 
-      IF ( tower_mode == 1 ) THEN
-        CALL DNS_TOWER_WRITE(wrk3d)
-      END IF
+            if (icalc_flow == 1) then
+                write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
+                call IO_WRITE_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, q, wrk3d)
+            end if
 
-      IF (imode_part /= PART_TYPE_NONE) THEN
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
-        CALL IO_WRITE_PARTICLE(fname, l_g, l_q)
-        IF ( imode_traj /= TRAJ_TYPE_NONE ) THEN
-          WRITE(fname,*) itime; fname =TRIM(ADJUSTL(tag_traj))//TRIM(ADJUSTL(fname))
-          CALL PARTICLE_TRAJECTORIES_WRITE(fname)
-        END IF
-      END IF
+            if (icalc_scal == 1) then
+                write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
+                call IO_WRITE_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, s, wrk3d)
+            end if
 
-      IF ( imode_sim == DNS_MODE_SPATIAL .AND. nitera_stats_spa > 0 ) THEN ! Spatial; running averages
-        WRITE(fname,*) itime; fname='st'//TRIM(ADJUSTL(fname))
-        CALL IO_WRITE_AVG_SPATIAL(fname, mean_flow, mean_scal)
-      END IF
+            if (use_tower) then
+                call DNS_TOWER_WRITE(wrk3d)
+            end if
 
-    END IF
+            if (imode_part /= PART_TYPE_NONE) then
+                write (fname, *) itime; fname = trim(adjustl(tag_part))//trim(adjustl(fname))
+                call IO_WRITE_PARTICLE(fname, l_g, l_q)
+                if (imode_traj /= TRAJ_TYPE_NONE) then
+                    write (fname, *) itime; fname = trim(adjustl(tag_traj))//trim(adjustl(fname))
+                    call PARTICLE_TRAJECTORIES_WRITE(fname)
+                end if
+            end if
 
-    IF ( MOD(itime-nitera_first,nitera_pln) == 0 ) THEN
-      CALL PLANES_SAVE( q,s, txc(1,1), txc(1,2),txc(1,3),txc(1,4), wrk1d,wrk2d,wrk3d )
-    END IF
+            if (imode_sim == DNS_MODE_SPATIAL .and. nitera_stats_spa > 0) then ! Spatial; running averages
+                write (fname, *) itime; fname = 'st'//trim(adjustl(fname))
+                call IO_WRITE_AVG_SPATIAL(fname, mean_flow, mean_scal)
+            end if
 
-  END DO
+        end if
 
-  ! ###################################################################
-  CALL TLAB_STOP(INT(logs_data(1)))
+        if (mod(itime - nitera_first, nitera_pln) == 0) then
+            call PLANES_SAVE(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk1d, wrk2d, wrk3d)
+        end if
 
-CONTAINS
-  ! #######################################################################
-  ! #######################################################################
-  SUBROUTINE DNS_ALLOCATE()
-  IMPLICIT NONE
+    end do
 
-  TINTEGER ierr
-  CHARACTER*128 line
+    ! ###################################################################
+    call TLAB_STOP(int(logs_data(1)))
 
-  ! ###################################################################
-  WRITE(str,*) inb_flow; line = 'Allocating array rhs flow of size '//TRIM(ADJUSTL(str))//'x'
-  WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-  CALL TLAB_WRITE_ASCII(lfile,line)
-  ALLOCATE(hq(isize_field,inb_flow),    stat=ierr)
-  IF ( ierr /= 0 ) THEN
-    CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for h_q.')
-    CALL TLAB_STOP(DNS_ERROR_ALLOC)
-  END IF
+contains
+!########################################################################
+! Create headers or dns.out file
+!
+!# logs_data01 State (>0 if error)
+!#
+!# logs_data02 Maximum CFL number
+!# logs_data03 Maximum diffusion number
+!# logs_data04 Maximum source number
+!#
+!# logs_data05 Minimum pressure
+!# logs_data06 Maximum pressure
+!# logs_data07 Minimum density
+!# logs_data08 Maximum density
+!# logs_data09 NEWTONRAPHSON_ERROR
+!#
+!# logs_data10 Minimum dilatation
+!# logs_data11 Maximum dilatation
+!########################################################################
+    subroutine DNS_LOGS_INITIALIZE()
+        use THERMO_VARS, only: imixture
 
-  WRITE(str,*) inb_scal; line = 'Allocating array rhs scal of size '//TRIM(ADJUSTL(str))//'x'
-  WRITE(str,*) isize_field; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-  CALL TLAB_WRITE_ASCII(lfile,line)
-  ALLOCATE(hs(isize_field,inb_scal),    stat=ierr)
-  IF ( ierr /= 0 ) THEN
-    CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for h_s.')
-    CALL TLAB_STOP(DNS_ERROR_ALLOC)
-  END IF
+        integer ip
+        character(len=256) line1
 
-  ! -------------------------------------------------------------------
-  IF (imode_part /= PART_TYPE_NONE) THEN
-    WRITE(str,*) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
-    CALL TLAB_WRITE_ASCII(lfile,line)
-    ALLOCATE(l_comm(isize_l_comm), stat=ierr)
-    IF ( ierr /= 0 ) THEN
-      CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for l_comm.')
-      CALL TLAB_STOP(DNS_ERROR_ALLOC)
-    END IF
+        line1 = '#'; ip = 1
+        line1 = line1(1:ip)//' '//' Itn.'; ip = ip + 1 + 7
+        line1 = line1(1:ip)//' '//' time'; ip = ip + 1 + 13
+        line1 = line1(1:ip)//' '//' dt'; ip = ip + 1 + 10
+        line1 = line1(1:ip)//' '//' CFL#'; ip = ip + 1 + 10
+        line1 = line1(1:ip)//' '//' D#'; ip = ip + 1 + 10
+        line1 = line1(1:ip)//' '//' visc'; ip = ip + 1 + 10
 
-    WRITE(str,*) isize_part; line = 'Allocating array l_hq of size '//TRIM(ADJUSTL(str))//'x'
-    WRITE(str,*) inb_part; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-    CALL TLAB_WRITE_ASCII(lfile,line)
-    ALLOCATE(l_hq(isize_part,inb_part),stat=ierr)
-    IF ( ierr /= 0 ) THEN
-      CALL TLAB_WRITE_ASCII(efile,'DNS. Not enough memory for l_hq.')
-      CALL TLAB_STOP(DNS_ERROR_ALLOC)
-    END IF
+        select case (imode_eqns)
+        case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+            line1 = line1(1:ip)//' '//' DilMin'; ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' DilMax'; ip = ip + 1 + 13
 
-  END IF
+        case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
+            line1 = line1(1:ip)//' '//' PMin'; ip = ip + 1 + 10
+            line1 = line1(1:ip)//' '//' PMax'; ip = ip + 1 + 10
+            line1 = line1(1:ip)//' '//' RMin'; ip = ip + 1 + 10
+            line1 = line1(1:ip)//' '//' RMax'; ip = ip + 1 + 10
 
-  RETURN
-  END SUBROUTINE DNS_ALLOCATE
-END PROGRAM DNS
+        end select
+
+        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
+            line1 = line1(1:ip)//' '//' NewtonRs'; ip = ip + 1 + 10
+        end if
+
+        line1 = line1(1:ip - 1)//'#'
+        call TLAB_WRITE_ASCII(ofile, repeat('#', len_trim(line1)))
+        call TLAB_WRITE_ASCII(ofile, trim(adjustl(line1)))
+        call TLAB_WRITE_ASCII(ofile, repeat('#', len_trim(line1)))
+
+    end subroutine DNS_LOGS_INITIALIZE
+
+!########################################################################
+!########################################################################
+    subroutine DNS_LOGS()
+        use THERMO_VARS, only: imixture, NEWTONRAPHSON_ERROR
+#ifdef USE_MPI
+        use MPI
+        use TLAB_MPI_VARS, only: ims_err
+        real(wp) dummy
+#endif
+
+        integer ip
+        character(len=256) line1, line2
+
+        write (line1, 100) int(logs_data(1)), itime, rtime, dtime, (logs_data(ip), ip=2, 3), visc
+100     format((1x, I1), (1x, I7), (1x, E13.6), 4(1x, E10.3))
+
+        select case (imode_eqns)
+        case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+            write (line2, 200) logs_data(10), logs_data(11)
+200         format(2(1x, E13.6))
+            line1 = trim(line1)//trim(line2)
+
+        case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
+            write (line2, 300) (logs_data(ip), ip=5, 8)
+300         format(4(1x, E10.3))
+            line1 = trim(line1)//trim(line2)
+
+        end select
+
+        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
+#ifdef USE_MPI
+            call MPI_ALLREDUCE(NEWTONRAPHSON_ERROR, dummy, 1, MPI_REAL8, MPI_MAX, MPI_COMM_WORLD, ims_err)
+            NEWTONRAPHSON_ERROR = dummy
+#endif
+            write (line2, 400) NEWTONRAPHSON_ERROR
+400         format(1(1x, E10.3))
+            line1 = trim(line1)//trim(line2)
+        end if
+
+        call TLAB_WRITE_ASCII(ofile, trim(adjustl(line1)))
+
+    end subroutine DNS_LOGS
+
+end program DNS

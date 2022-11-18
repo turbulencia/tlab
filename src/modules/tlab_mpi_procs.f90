@@ -1,11 +1,10 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_const_mpi.h"
 #include "dns_error.h"
 
 module TLAB_MPI_PROCS
     use MPI
-    use TLAB_CONSTANTS, only: lfile, efile
+    use TLAB_CONSTANTS, only: lfile, efile, wp, wi
     use TLAB_VARS
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
     use TLAB_MPI_VARS
@@ -30,11 +29,9 @@ contains
     ! ######################################################################
     subroutine TLAB_MPI_INITIALIZE
 
-#include "integers.h"
-
         ! -----------------------------------------------------------------------
-        TINTEGER id, ip, npage
-        TINTEGER dims(2)
+        integer(wi) id, ip, npage
+        integer(wi) dims(2)
         logical period(2), remain_dims(2), reorder
 
         ! #######################################################################
@@ -119,7 +116,7 @@ contains
             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Ox derivatives.')
             id = TLAB_MPI_I_PARTIAL
             npage = kmax*jmax
-            call TLAB_MPI_TYPE_I(ims_npro_i, imax, npage, i1, i1, i1, i1, &
+            call TLAB_MPI_TYPE_I(ims_npro_i, imax, npage, 1, 1, 1, 1, &
                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
         end if
 
@@ -127,7 +124,7 @@ contains
             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Oz derivatives.')
             id = TLAB_MPI_K_PARTIAL
             npage = imax*jmax
-            call TLAB_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
+            call TLAB_MPI_TYPE_K(ims_npro_k, kmax, npage, 1, 1, 1, 1, &
                                  ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
         end if
 
@@ -136,13 +133,13 @@ contains
             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Ox FFTW in Poisson solver.')
             id = TLAB_MPI_I_POISSON1
             npage = isize_txc_dimx ! isize_txc_field/imax
-            call TLAB_MPI_TYPE_I(ims_npro_i, imax, npage, i1, i1, i1, i1, &
+            call TLAB_MPI_TYPE_I(ims_npro_i, imax, npage, 1, 1, 1, 1, &
                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Ox FFTW in Poisson solver.')
             id = TLAB_MPI_I_POISSON2 ! isize_txc_field/(imax+2)
             npage = isize_txc_dimx
-            call TLAB_MPI_TYPE_I(ims_npro_i, imax + 2, npage, i1, i1, i1, i1, &
+            call TLAB_MPI_TYPE_I(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, &
                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
         end if
@@ -151,7 +148,7 @@ contains
             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Oz FFTW in Poisson solver.')
             id = TLAB_MPI_K_POISSON
             npage = isize_txc_dimz ! isize_txc_field/kmax
-            call TLAB_MPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
+            call TLAB_MPI_TYPE_K(ims_npro_k, kmax, npage, 1, 1, 1, 1, &
                                  ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
         end if
 
@@ -223,13 +220,13 @@ contains
                                nsize, sdisp, rdisp, stype, rtype)
 
         integer npro_i
-        TINTEGER npage, nmax, nsize
-        TINTEGER nd, md, n1, n2
-        TINTEGER sdisp(*), rdisp(*)
+        integer(wi) npage, nmax, nsize
+        integer(wi) nd, md, n1, n2
+        integer(wi) sdisp(*), rdisp(*)
         integer, intent(out) :: stype, rtype
 
         ! -----------------------------------------------------------------------
-        TINTEGER i
+        integer(wi) i
         integer ims_ss, ims_rs
         integer ims_tmp1, ims_tmp2, ims_tmp3
         character*64 str, line
@@ -284,13 +281,13 @@ contains
                                nsize, sdisp, rdisp, stype, rtype)
 
         integer npro_k
-        TINTEGER npage, nmax, nsize
-        TINTEGER nd, md, n1, n2
-        TINTEGER sdisp(*), rdisp(*)
+        integer(wi) npage, nmax, nsize
+        integer(wi) nd, md, n1, n2
+        integer(wi) sdisp(*), rdisp(*)
         integer, intent(out) :: stype, rtype
 
         ! -----------------------------------------------------------------------
-        TINTEGER i
+        integer(wi) i
         integer ims_ss, ims_rs
         integer ims_tmp1, ims_tmp2, ims_tmp3
 
@@ -349,18 +346,18 @@ contains
             end function DNS_USLEEP
         end interface
 
-        TREAL, dimension(*), intent(in) :: a
-        TREAL, dimension(*), intent(out) :: b
-        TINTEGER, dimension(ims_npro_k), intent(in) :: dsend, drecv ! displacements
+        real(wp), dimension(*), intent(in) :: a
+        real(wp), dimension(*), intent(out) :: b
+        integer(wi), dimension(ims_npro_k), intent(in) :: dsend, drecv ! displacements
         integer, intent(in) :: tsend, trecv
 
         ! -----------------------------------------------------------------------
-        TINTEGER j, l, m, n, ns, nr, ips, ipr, idummy
+        integer(wi) j, l, m, n, ns, nr, ips, ipr, idummy
         integer ip
-        TREAL rdum
+        real(wp) rdum
         character*256 line
 #ifdef PROFILE_ON
-        TREAL time_loc_1, time_loc_2
+        real(wp) time_loc_1, time_loc_2
 #endif
 
         ! #######################################################################
@@ -401,13 +398,13 @@ contains
     !########################################################################
     subroutine TLAB_MPI_TRPF_I(a, b, dsend, drecv, tsend, trecv)
 
-        TREAL, dimension(*), intent(in) :: a
-        TREAL, dimension(*), intent(out) :: b
-        TINTEGER, dimension(ims_npro_i), intent(in) :: dsend, drecv ! displacements
+        real(wp), dimension(*), intent(in) :: a
+        real(wp), dimension(*), intent(out) :: b
+        integer(wi), dimension(ims_npro_i), intent(in) :: dsend, drecv ! displacements
         integer, intent(in) :: tsend, trecv
 
         ! -----------------------------------------------------------------------
-        TINTEGER j, l, m, ns, nr, ips, ipr
+        integer(wi) j, l, m, ns, nr, ips, ipr
         integer ip
 
         do j = 1, ims_npro_i, ims_sizBlock_i
@@ -440,17 +437,17 @@ contains
     !########################################################################
     subroutine TLAB_MPI_TRPB_K(b, a, dsend, drecv, tsend, trecv)
 
-        TREAL, dimension(*), intent(in) :: b
-        TREAL, dimension(*), intent(out) :: a
-        TINTEGER, dimension(ims_npro_k), intent(in) :: dsend, drecv
+        real(wp), dimension(*), intent(in) :: b
+        real(wp), dimension(*), intent(out) :: a
+        integer(wi), dimension(ims_npro_k), intent(in) :: dsend, drecv
         integer, dimension(ims_npro_k), intent(in) :: tsend, trecv
 
         ! -----------------------------------------------------------------------
-        TINTEGER j, l, m, ns, nr, ips, ipr
+        integer(wi) j, l, m, ns, nr, ips, ipr
         integer ip
 
 #ifdef PROFILE_ON
-        TREAL time_loc_1, time_loc_2
+        real(wp) time_loc_1, time_loc_2
 #endif
 
         ! #######################################################################
@@ -492,13 +489,13 @@ contains
     !########################################################################
     subroutine TLAB_MPI_TRPB_I(b, a, dsend, drecv, tsend, trecv)
 
-        TREAL, dimension(*), intent(in) :: b
-        TREAL, dimension(*), intent(out) :: a
-        TINTEGER, dimension(ims_npro_i), intent(in) :: dsend, drecv ! displacements
+        real(wp), dimension(*), intent(in) :: b
+        real(wp), dimension(*), intent(out) :: a
+        integer(wi), dimension(ims_npro_i), intent(in) :: dsend, drecv ! displacements
         integer, dimension(ims_npro_i), intent(in) :: tsend, trecv ! types
 
         ! -----------------------------------------------------------------------
-        TINTEGER j, l, m, ns, nr, ips, ipr
+        integer(wi) j, l, m, ns, nr, ips, ipr
         integer ip
 
         do j = 1, ims_npro_i, ims_sizBlock_i
@@ -531,21 +528,21 @@ contains
     !########################################################################
     subroutine TLAB_MPI_WRITE_PE0_SINGLE(iunit, nx, ny, nz, subdomain, u, tmp1, tmp2)
 
-        TINTEGER iunit, nx, ny, nz, subdomain(6)
-        TREAL, dimension(nx*ny*nz), target :: u, tmp1
-        TREAL, dimension(nx*ims_npro_i, *), target :: tmp2
+        integer(wi) iunit, nx, ny, nz, subdomain(6)
+        real(wp), dimension(nx*ny*nz), target :: u, tmp1
+        real(wp), dimension(nx*ims_npro_i, *), target :: tmp2
 
         ! -------------------------------------------------------------------
-        TINTEGER nx_total, ny_total, nz_total
-        TINTEGER nx_min, nx_max, ny_min, ny_max, nz_min, nz_max
-        TINTEGER nyz
+        integer(wi) nx_total, ny_total, nz_total
+        integer(wi) nx_min, nx_max, ny_min, ny_max, nz_min, nz_max
+        integer(wi) nyz
 
-        TINTEGER ip_i, ip_k, joffset_loc, koffset_loc, id
-        TINTEGER i, jk, j_loc, k_loc
+        integer(wi) ip_i, ip_k, joffset_loc, koffset_loc, id
+        integer(wi) i, jk, j_loc, k_loc
         integer mpio_size, mpio_ip
         integer status(MPI_STATUS_SIZE)
 
-        TREAL, dimension(:), pointer :: p_org
+        real(wp), dimension(:), pointer :: p_org
 
         ! ###################################################################
         nx_total = nx*ims_npro_i
@@ -622,10 +619,10 @@ contains
     !########################################################################
     subroutine TLAB_MPI_COPYPLN_1(ijmax, kmax, npl, a, bl, br)
 
-        TINTEGER ijmax, kmax, npl
-        TREAL a(ijmax, *)
-        TREAL bl(ijmax, *)
-        TREAL br(ijmax, *)
+        integer(wi) ijmax, kmax, npl
+        real(wp) a(ijmax, *)
+        real(wp) bl(ijmax, *)
+        real(wp) br(ijmax, *)
 
         ! -----------------------------------------------------------------------
         integer status(MPI_STATUS_SIZE, 4)
@@ -671,13 +668,13 @@ contains
     !########################################################################
     subroutine TLAB_MPI_COPYPLN_2(ijmax, kmax, npl, a, bl, br)
 
-        TINTEGER ijmax, kmax, npl
-        TREAL a(ijmax, kmax)
-        TREAL bl(ijmax, npl)
-        TREAL br(ijmax, npl)
+        integer(wi) ijmax, kmax, npl
+        real(wp) a(ijmax, kmax)
+        real(wp) bl(ijmax, npl)
+        real(wp) br(ijmax, npl)
 
         ! -----------------------------------------------------------------------
-        TINTEGER npl_loc
+        integer(wi) npl_loc
         integer status(MPI_STATUS_SIZE, 8)
         integer mpireq(8)
         integer ims_pro_l, ims_pro_r

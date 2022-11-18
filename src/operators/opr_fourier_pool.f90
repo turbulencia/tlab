@@ -475,7 +475,7 @@ SUBROUTINE OPR_FOURIER_F_Z_EXEC(in,out)
 
   CALL dfftw_execute_dft(fft_plan_fz, p_org, p_dst)
 
-  IF ( fft_reordering .EQ. i1 ) THEN ! re-shuffle spectra in z
+  IF ( fft_reordering ) THEN ! re-shuffle spectra in z
     DO k = 1,g(3)%size/2
       k_old1 = k + g(3)%size/2
       k_new1 = k
@@ -557,7 +557,7 @@ SUBROUTINE OPR_FOURIER_B_Z_EXEC(in,out)
   ENDIF
 #endif
 
-  IF ( fft_reordering .EQ. i1 ) THEN ! re-shuffle spectra in z
+  IF ( fft_reordering ) THEN ! re-shuffle spectra in z
     DO k = 1,g(3)%size/2
       k_new1 = k + g(3)%size/2
       k_old1 = k
