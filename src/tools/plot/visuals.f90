@@ -632,7 +632,10 @@ PROGRAM VISUALS
       IF ( opt_vec(iv) .EQ. iscal_offset+4 ) THEN ! VorticityVector
         plot_file = 'VorticityVector'//time_str(1:MaskSize)
         CALL FI_CURL(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
-        CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i3, subdomain, txc(1,1), wrk3d)
+        CALL IO_WRITE_FIELDS('VorticityVector000000.1', IO_SCAL, imax,jmax,kmax, i1, txc(1,1), wrk3d)
+        CALL IO_WRITE_FIELDS('VorticityVector000000.2', IO_SCAL, imax,jmax,kmax, i1, txc(1,2), wrk3d)
+        CALL IO_WRITE_FIELDS('VorticityVector000000.3', IO_SCAL, imax,jmax,kmax, i1, txc(1,3), wrk3d)
+        ! CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i3, subdomain, txc(1,1), wrk3d)
       ENDIF
 
       IF ( opt_vec(iv) .EQ. iscal_offset+5 .OR. opt_vec(iv) .EQ. iscal_offset+6 ) THEN ! Enstrophy
