@@ -33,7 +33,7 @@ module TIME
 
     real(wp), public :: cfla, cfld, cflr        ! CFL numbers
     real(wp), public :: dtime                   ! time step
-    real(wp) dte                                ! time step of each substep
+    real(wp), public :: dte                     ! time step of each substep
     real(wp) etime                              ! time at each substep
 
     real(wp) kdt(5), kco(4), ktime(5)           ! explicit scheme coefficients
@@ -515,7 +515,7 @@ contains
         select case (iadvection)
         case (EQNS_DIVERGENCE)
             call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
-            call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3(dte, q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
+            call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3(q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
                                        q, hq, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
 
             call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
@@ -526,7 +526,7 @@ contains
 
         case (EQNS_SKEWSYMMETRIC)
             call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
-            call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2(dte, q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
+            call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2(q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
                                        q, hq, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
 
             call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
@@ -539,7 +539,7 @@ contains
             select case (imode_rhs)
             case (EQNS_RHS_SPLIT)
                 call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
-                call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1(dte, q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
+                call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1(q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
                                        q, hq, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
 
                 call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
@@ -551,13 +551,11 @@ contains
             case (EQNS_RHS_COMBINED)
                 call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
                 call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
-                call RHS_GLOBAL_INCOMPRESSIBLE_1(dte, q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
-                                q, hq, s, hs, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
+                call RHS_GLOBAL_INCOMPRESSIBLE_1(q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
 
             case (EQNS_RHS_NONBLOCKING)
 #ifdef USE_PSFFT
-                call RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte, &
-                                                   q(1, 1), q(1, 2), q(1, 3), s(1, 1), &
+                call RHS_GLOBAL_INCOMPRESSIBLE_NBC(q(1, 1), q(1, 2), q(1, 3), s(1, 1), &
                                                    txc(1, 1), txc(1, 2), &
                                           txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), txc(1, 9), txc(1, 10), &
                                                    txc(1, 11), txc(1, 12), txc(1, 13), txc(1, 14), &
@@ -622,13 +620,12 @@ contains
 
         ! ######################################################################
         if (rkm_mode == RKM_IMP3_DIFFUSION) then
-            call RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2( &
-                dte, kex(rkm_substep), kim(rkm_substep), kco(rkm_substep), &
+            call RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex(rkm_substep), kim(rkm_substep), kco(rkm_substep), &
                 q, hq, q(:, 1), q(:, 2), q(:, 3), hq(1, 1), hq(1, 2), hq(1, 3), s, hs, &
                 txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk1d, wrk2d, wrk3d)
             ! pressure-correction algorithm; to be checked
             ! CALL RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(&
-            !      dte, kex,kim,kco,  &
+            !      kex,kim,kco,  &
             !      q, hq, q(:,1),q(:,2),q(:,3), hq(1,1),hq(1,2),hq(1,3), s,hs, &
             !      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), txc(1,8), &
             !      wrk1d,wrk2d,wrk3d)
