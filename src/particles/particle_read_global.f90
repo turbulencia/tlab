@@ -52,7 +52,15 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         call SCANINIREAL(bakfile, inifile, block, 'MemoryFactor', '2.0', memory_factor)
 
 ! -------------------------------------------------------------------
-        call SCANINIINT(bakfile, inifile, block, 'IniType', '1', part_ini_mode)
+        call SCANINICHAR(bakfile, inifile, block, 'IniType', 'None', sRes)
+        if (trim(adjustl(sRes)) == 'none') then; part_ini_mode = PART_INITYPE_NONE
+        else if (trim(adjustl(sRes)) == 'uniform') then; part_ini_mode = PART_INITYPE_UNIFORM
+        else if (trim(adjustl(sRes)) == 'scalar') then; part_ini_mode = PART_INITYPE_SCALAR
+        else
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Particles.IniType.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
+
         call SCANINIREAL(bakfile, inifile, block, 'IniYMean', '0.5', part_ini_ymean)
         call SCANINIREAL(bakfile, inifile, block, 'IniThick', '1.0', part_ini_thick)
 
@@ -81,7 +89,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
         inb_traj = inb_flow_array + inb_scal_array
-        call SCANINICHAR(bakfile, inifile, block, 'TrajectoryType', 'first', sRes)
+        call SCANINICHAR(bakfile, inifile, block, 'TrajType', 'first', sRes)
         if (trim(adjustl(sRes)) == 'first') then; imode_traj = TRAJ_TYPE_FIRST
         elseif (trim(adjustl(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
             inb_traj = inb_traj + 3 ! + vorticity
@@ -92,7 +100,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
             call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
         end if
 
-        call SCANINIINT(bakfile, inifile, block, 'TrajectoryNumber', '0', isize_traj)
+        call SCANINIINT(bakfile, inifile, block, 'TrajNumber', '0', isize_traj)
         if (isize_traj > isize_part_total) then
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Number of trajectories must be less or equal than number of particles.')
             call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)

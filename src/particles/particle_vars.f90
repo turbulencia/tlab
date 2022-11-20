@@ -11,6 +11,11 @@ module PARTICLE_VARS
     integer, parameter :: PART_TYPE_BIL_CLOUD_3 = 3
     integer, parameter :: PART_TYPE_BIL_CLOUD_4 = 4
 
+    ! Possible values of part_ini_mode
+    integer, parameter :: PART_INITYPE_NONE = 0
+    integer, parameter :: PART_INITYPE_UNIFORM = 1
+    integer, parameter :: PART_INITYPE_SCALAR = 2
+
     ! Posible values of imode_traj
     integer, parameter :: TRAJ_TYPE_NONE = 0
     integer, parameter :: TRAJ_TYPE_FIRST = 1

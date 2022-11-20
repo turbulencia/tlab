@@ -95,7 +95,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
     ! ########################################################################
     select case (part_ini_mode)
 
-    case (1)
+    case (PART_INITYPE_UNIFORM)
         yref = part_ini_ymean - 0.5_wp*part_ini_thick
         yscale = part_ini_thick
 
@@ -108,7 +108,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
 
         end do
 
-    case (2) ! Use the scalar field to create the particle distribution
+    case (PART_INITYPE_SCALAR) ! Use the scalar field to create the particle distribution
         call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc, wrk3d)
         is = 1 ! Reference scalar
 
