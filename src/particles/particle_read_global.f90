@@ -7,6 +7,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     use TLAB_VARS, only: imax, jmax, kmax, isize_wrk2d
     use PARTICLE_VARS
     use TLAB_PROCS
+    use PROFILES
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_npro
 #endif
@@ -31,16 +32,13 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Number=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#MemoryFactor=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#IniType=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#IniYMean=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#IniThick=<value>')
 
     call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; imode_part = PART_TYPE_NONE
-    else if (trim(adjustl(sRes)) == 'tracer') then; imode_part = PART_TYPE_TRACER
-    else if (trim(adjustl(sRes)) == 'simplesettling') then; imode_part = PART_TYPE_SIMPLE_SETT
+    if      (trim(adjustl(sRes)) == 'none')               then; imode_part = PART_TYPE_NONE
+    else if (trim(adjustl(sRes)) == 'tracer')             then; imode_part = PART_TYPE_TRACER
+    else if (trim(adjustl(sRes)) == 'simplesettling')     then; imode_part = PART_TYPE_SIMPLE_SETT
     else if (trim(adjustl(sRes)) == 'bilinearcloudthree') then; imode_part = PART_TYPE_BIL_CLOUD_3
-    else if (trim(adjustl(sRes)) == 'bilinearcloudfour') then; imode_part = PART_TYPE_BIL_CLOUD_4
+    else if (trim(adjustl(sRes)) == 'bilinearcloudfour')  then; imode_part = PART_TYPE_BIL_CLOUD_4
     else
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Particles.Type.')
         call TLAB_STOP(DNS_ERROR_OPTION)
@@ -52,17 +50,9 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         call SCANINIREAL(bakfile, inifile, block, 'MemoryFactor', '2.0', memory_factor)
 
 ! -------------------------------------------------------------------
-        call SCANINICHAR(bakfile, inifile, block, 'IniType', 'None', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; part_ini_mode = PART_INITYPE_NONE
-        else if (trim(adjustl(sRes)) == 'uniform') then; part_ini_mode = PART_INITYPE_UNIFORM
-        else if (trim(adjustl(sRes)) == 'scalar') then; part_ini_mode = PART_INITYPE_SCALAR
-        else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Particles.IniType.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
-
-        call SCANINIREAL(bakfile, inifile, block, 'IniYMean', '0.5', part_ini_ymean)
-        call SCANINIREAL(bakfile, inifile, block, 'IniThick', '1.0', part_ini_thick)
+        call PROFILES_READBLOCK(bakfile, inifile, block, 'IniP', IniP, 'gaussian') ! using gaussian as dummy to read rest of profile information
+        call SCANINICHAR(bakfile, inifile, block, 'ProfileIniP', 'None', sRes)
+        if (trim(adjustl(sRes)) == 'scalar') IniP%type = PART_INITYPE_SCALAR
 
 ! -------------------------------------------------------------------
         call SCANINICHAR(bakfile, inifile, block, 'CalculatePdf', 'no', sRes)

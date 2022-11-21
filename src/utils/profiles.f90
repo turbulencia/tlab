@@ -12,9 +12,10 @@ public :: PROFILES_READBLOCK, PROFILES_CALCULATE
 
 contains
 
-subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
+subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var, default)
     character(len=*),  intent(in)  :: bakfile, inifile, block, tag
     type(profiles_dt), intent(out) :: var
+    character(len=*),  intent(in), optional :: default
 
     character(len=512) sRes
     real(wp)           derivative
@@ -30,7 +31,11 @@ subroutine PROFILES_READBLOCK(bakfile, inifile, block, tag, var)
     call TLAB_WRITE_ASCII(bakfile, '#UpperSlope'//trim(adjustl(tag))//'=<value>')
 
     ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, block, 'Profile'//trim(adjustl(tag)), 'none', sRes)
+    if ( present(default) ) then
+        sRes = trim(adjustl(default))
+    else
+        call SCANINICHAR(bakfile, inifile, block, 'Profile'//trim(adjustl(tag)), 'none', sRes)
+    end if
     if      (trim(adjustl(sRes)) == 'none')              then; var%type = PROFILE_NONE
     else if (trim(adjustl(sRes)) == 'tanh')              then; var%type = PROFILE_TANH
     else if (trim(adjustl(sRes)) == 'tanhsymmetric')     then; var%type = PROFILE_TANH_SYM

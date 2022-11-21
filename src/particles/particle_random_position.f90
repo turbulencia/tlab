@@ -22,9 +22,10 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
     use IO_FIELDS
     implicit none
 
-    real(wp), dimension(isize_part, *), target :: l_q, l_txc
+    real(wp), dimension(isize_part, inb_part_array), target :: l_q
+    real(wp), dimension(isize_part, 2), target :: l_txc
     real(wp), dimension(*), target :: l_comm
-    real(wp), dimension(imax, jmax, kmax, *), target :: txc
+    real(wp), dimension(imax, jmax, kmax, inb_scal), target :: txc
     real(wp), dimension(*) :: wrk3d
 
 ! -------------------------------------------------------------------
@@ -32,7 +33,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
     integer(wi), allocatable :: x_seed(:)
     integer(wi) size_seed
 
-    real(wp) xref, yref, zref, xscale, yscale, zscale, dy_loc, dummy, dy_frac
+    real(wp) xref, zref, xscale, zscale, dy_loc, dummy, dy_frac
     real(wp) y_limits(2)
     integer(wi) j_limits(2)
 
@@ -93,27 +94,24 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
     if (g(3)%size == 1) zscale = 0.0_wp ! 2D case
 
     ! ########################################################################
-    select case (part_ini_mode)
+    select case (IniP%type)
 
-    case (PART_INITYPE_UNIFORM)
-        yref = part_ini_ymean - 0.5_wp*part_ini_thick
-        yscale = part_ini_thick
+    case default
+        call random_number(l_q(:,1))
+        l_q(:, 1) = xref + l_q(:,1)*xscale
 
-        do i = 1, l_g%np
-            call RANDOM_NUMBER(rnd_number(1:3))
+        call random_number(l_q(:,3))
+        l_q(:, 3) = zref + l_q(:,3)*zscale
 
-            l_q(i, 1) = xref + rnd_number(1)*xscale
-            l_q(i, 3) = zref + rnd_number(3)*zscale
-            l_q(i, 2) = yref + rnd_number(2)*yscale
-
-        end do
+        call random_number(l_q(:,2))
+        l_q(:, 2) = IniP%ymean + (l_q(:,2)-0.5_wp)*IniP%diam
 
     case (PART_INITYPE_SCALAR) ! Use the scalar field to create the particle distribution
         call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc, wrk3d)
         is = 1 ! Reference scalar
 
-        y_limits(1) = part_ini_ymean - 0.5_wp*part_ini_thick
-        y_limits(2) = part_ini_ymean + 0.5_wp*part_ini_thick
+        y_limits(1) = IniP%ymean - 0.5_wp*IniP%diam
+        y_limits(2) = IniP%ymean + 0.5_wp*IniP%diam
         call PARTICLE_LOCATE_Y(2, y_limits, j_limits, g(2)%size, g(2)%nodes)
         dy_loc = g(2)%nodes(j_limits(2)) - g(2)%nodes(j_limits(1))
 

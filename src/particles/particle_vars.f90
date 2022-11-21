@@ -1,5 +1,6 @@
 module PARTICLE_VARS
     use TLAB_CONSTANTS, only: wp, wi, longi, MAX_PARS, MAX_NSP
+    use TLAB_TYPES, only: profiles_dt
     use PARTICLE_TYPES
     implicit none
     save
@@ -10,11 +11,6 @@ module PARTICLE_VARS
     integer, parameter :: PART_TYPE_SIMPLE_SETT = 2
     integer, parameter :: PART_TYPE_BIL_CLOUD_3 = 3
     integer, parameter :: PART_TYPE_BIL_CLOUD_4 = 4
-
-    ! Possible values of part_ini_mode
-    integer, parameter :: PART_INITYPE_NONE = 0
-    integer, parameter :: PART_INITYPE_UNIFORM = 1
-    integer, parameter :: PART_INITYPE_SCALAR = 2
 
     ! Posible values of imode_traj
     integer, parameter :: TRAJ_TYPE_NONE = 0
@@ -37,9 +33,8 @@ module PARTICLE_VARS
 #endif
 
     ! Initialization
-    integer(wi)   :: part_ini_mode       ! Type of initialization
-    real(wp)      :: part_ini_ymean      ! Mean position where particles positions will be initialize
-    real(wp)      :: part_ini_thick      ! Width of initial particle distribution
+    type(profiles_dt) :: IniP                         ! Information about the initialization 
+    integer, parameter :: PART_INITYPE_SCALAR = 101   ! Special type of particle initialization not included in default profile data
 
     ! Trajectory
     integer(wi)   :: imode_traj          ! Type of trajectories
