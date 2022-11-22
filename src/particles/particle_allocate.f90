@@ -30,10 +30,12 @@ end subroutine PARTICLE_ALLOCATE
 ! ###################################################################
 ! ###################################################################
 subroutine PARTICLE_INITIALIZE()
-    ! use TLAB_VARS, only: g, sbg
+    use TLAB_VARS, only: g !, sbg
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     implicit none
+
+    if (IniP%relative) IniP%ymean = g(2)%nodes(1) + g(2)%scale*IniP%ymean_rel
 
     ! set boundarys for residence time pdf
     if (imode_part == PART_TYPE_BIL_CLOUD_4) then

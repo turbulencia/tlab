@@ -10,8 +10,7 @@
 #include "nb3dfft_defines.inc"
 #endif
 
-SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
-     u,v,w,s,&
+SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(u,v,w,s,&
      tmpu,tmpw,tmp11,tmp12,tmp21,tmp22,tmp31,tmp32,tmp41,tmp42,&
      bt1,bt2,bt3,bt4,&
      h1,h2,h3,hs,&
@@ -30,7 +29,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   !
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
-  USE TIME,  ONLY : rkm_substep,rkm_endstep
+  USE TIME,  ONLY : rkm_substep,rkm_endstep, dte
   USE DNS_LOCAL,  ONLY : use_tower
 
   USE DNS_TOWER
@@ -59,8 +58,6 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(dte,&
   ! PARAMETERS
   !
   TINTEGER, PARAMETER :: nmeasure=3
-
-  TREAL,                                        INTENT(IN)   :: dte
 
   TREAL, DIMENSION(isize_field),                INTENT(IN)   :: u,v,w
   TREAL, DIMENSION(isize_field,inb_scal_array), INTENT(IN)   :: s

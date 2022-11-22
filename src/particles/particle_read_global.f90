@@ -7,6 +7,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     use TLAB_VARS, only: imax, jmax, kmax, isize_wrk2d
     use PARTICLE_VARS
     use TLAB_PROCS
+    use PROFILES
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_npro
 #endif
@@ -31,16 +32,13 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Number=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#MemoryFactor=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#IniType=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#IniYMean=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#IniThick=<value>')
 
     call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; imode_part = PART_TYPE_NONE
-    else if (trim(adjustl(sRes)) == 'tracer') then; imode_part = PART_TYPE_TRACER
-    else if (trim(adjustl(sRes)) == 'simplesettling') then; imode_part = PART_TYPE_SIMPLE_SETT
+    if      (trim(adjustl(sRes)) == 'none')               then; imode_part = PART_TYPE_NONE
+    else if (trim(adjustl(sRes)) == 'tracer')             then; imode_part = PART_TYPE_TRACER
+    else if (trim(adjustl(sRes)) == 'simplesettling')     then; imode_part = PART_TYPE_SIMPLE_SETT
     else if (trim(adjustl(sRes)) == 'bilinearcloudthree') then; imode_part = PART_TYPE_BIL_CLOUD_3
-    else if (trim(adjustl(sRes)) == 'bilinearcloudfour') then; imode_part = PART_TYPE_BIL_CLOUD_4
+    else if (trim(adjustl(sRes)) == 'bilinearcloudfour')  then; imode_part = PART_TYPE_BIL_CLOUD_4
     else
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Particles.Type.')
         call TLAB_STOP(DNS_ERROR_OPTION)
@@ -52,9 +50,9 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         call SCANINIREAL(bakfile, inifile, block, 'MemoryFactor', '2.0', memory_factor)
 
 ! -------------------------------------------------------------------
-        call SCANINIINT(bakfile, inifile, block, 'IniType', '1', part_ini_mode)
-        call SCANINIREAL(bakfile, inifile, block, 'IniYMean', '0.5', part_ini_ymean)
-        call SCANINIREAL(bakfile, inifile, block, 'IniThick', '1.0', part_ini_thick)
+        call PROFILES_READBLOCK(bakfile, inifile, block, 'IniP', IniP, 'gaussian') ! using gaussian as dummy to read rest of profile information
+        call SCANINICHAR(bakfile, inifile, block, 'ProfileIniP', 'None', sRes)
+        if (trim(adjustl(sRes)) == 'scalar') IniP%type = PART_INITYPE_SCALAR
 
 ! -------------------------------------------------------------------
         call SCANINICHAR(bakfile, inifile, block, 'CalculatePdf', 'no', sRes)
@@ -81,7 +79,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
         inb_traj = inb_flow_array + inb_scal_array
-        call SCANINICHAR(bakfile, inifile, block, 'TrajectoryType', 'first', sRes)
+        call SCANINICHAR(bakfile, inifile, block, 'TrajType', 'first', sRes)
         if (trim(adjustl(sRes)) == 'first') then; imode_traj = TRAJ_TYPE_FIRST
         elseif (trim(adjustl(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
             inb_traj = inb_traj + 3 ! + vorticity
@@ -92,7 +90,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
             call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
         end if
 
-        call SCANINIINT(bakfile, inifile, block, 'TrajectoryNumber', '0', isize_traj)
+        call SCANINIINT(bakfile, inifile, block, 'TrajNumber', '0', isize_traj)
         if (isize_traj > isize_part_total) then
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Number of trajectories must be less or equal than number of particles.')
             call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)

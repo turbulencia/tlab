@@ -218,4 +218,6 @@ module DNS_ARRAYS
     real(wp), allocatable, public :: l_hq(:, :)     ! Right-hand sides Lagrangian fields
     real(wp), allocatable, public :: l_comm(:)      ! Communication space for Lagrangian fields
 
+    target hq, hs
+    
 end module DNS_ARRAYS

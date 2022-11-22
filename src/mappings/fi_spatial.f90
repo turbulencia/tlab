@@ -112,7 +112,6 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
      jet_u_a, jet_u_b, jet_u_flux, x, y, rho_vi, u_vi, rho, u, v, wrk1d, wrk2d)
     use TLAB_TYPES, only: profiles_dt
     use TLAB_CONSTANTS, only: efile, wfile
-    use TLAB_VARS, only: g
     use TLAB_PROCS
     use PROFILES
     implicit none
@@ -289,7 +288,6 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
                                x, y, rho_vi, u_vi, z_vi, rho, u, z1, wrk1d)
     use TLAB_TYPES, only: profiles_dt
     use TLAB_CONSTANTS, only: wfile
-    use TLAB_VARS, only: g
     use TLAB_PROCS
     use PROFILES
     implicit none

@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 
@@ -11,7 +10,7 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
     use TLAB_VARS,   only: g
     use TLAB_VARS,   only: visc, radiation
     use PARTICLE_VARS
-    use PARTICLE_ARRAYS, only: l_g ! but this is also changeing in time...
+    use PARTICLE_ARRAYS, only: l_g ! this changes in time...
     use PARTICLE_INTERPOLATE
     use THERMO_VARS, only: thermo_param
 
@@ -62,7 +61,7 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
         call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), s(1, 2), txc(1, 4), txc(1, 3), wrk2d, wrk3d)
 
         txc(:, 1) = txc(:, 1) + (visc*dummy2*(txc(:, 4) + txc(:, 5) + txc(:, 6))) !first eq. without ds/dxi
-        txc(:, 2) = C_1_R - dummy*s(:, 1) - dummy2*s(:, 2) !xi field in txc(1,2)
+        txc(:, 2) = 1.0_wp - dummy*s(:, 1) - dummy2*s(:, 2) !xi field in txc(1,2)
 
         call FI_GRADIENT(imax, jmax, kmax, txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d) ! square of chi gradient in txc(1,3)
         txc(:, 3) = visc*txc(:, 3)
@@ -79,7 +78,7 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
         nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 2); data_out(nvar)%field => l_txc(:, 2)
         nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 3); data_out(nvar)%field => l_txc(:, 3)
         nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 4); data_out(nvar)%field => l_txc(:, 4)
-        l_txc(:, 1:4) = C_0_R
+        l_txc(:, 1:4) = 0.0_wp
 
     end select
 
@@ -101,14 +100,14 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
 ! l_txc(3) = evaporation/condensation term without d2s/dxi2
 ! l_txc(4) = radiation term without ds/dxi
 
-        delta_inv0 = C_1_R/thermo_param(1)/thermo_param(3)
-        delta_inv2 = -C_05_R/thermo_param(1)/thermo_param(3)
-        delta_inv4 = -C_025_R/thermo_param(1)/thermo_param(3)
+        delta_inv0 = 1.0_wp/thermo_param(1)/thermo_param(3)
+        delta_inv2 = -0.5_wp/thermo_param(1)/thermo_param(3)
+        delta_inv4 = -0.25_wp/thermo_param(1)/thermo_param(3)
 
         do i = 1, l_g%np
-            l_hq(i, 4) = l_hq(i, 4) - l_txc(i, 1)/(C_1_R + EXP(l_txc(i, 2)*delta_inv0))
+            l_hq(i, 4) = l_hq(i, 4) - l_txc(i, 1)/(1.0_wp + EXP(l_txc(i, 2)*delta_inv0))
 
-            l_hq(i, 5) = l_hq(i, 5) - l_txc(i, 4)/(C_1_R + EXP(l_txc(i, 2)*delta_inv0)) &
+            l_hq(i, 5) = l_hq(i, 5) - l_txc(i, 4)/(1.0_wp + EXP(l_txc(i, 2)*delta_inv0)) &
                          - l_txc(i, 3)*delta_inv4/(COSH(l_txc(i, 2)*delta_inv2)**2)
         end do
 
