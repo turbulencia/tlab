@@ -73,7 +73,6 @@ program DNS
     call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, hs, inb_scal, isize_field, 'scal-rhs')
     if (imode_part /= PART_TYPE_NONE) then
         call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, l_hq, inb_part, isize_part, 'part-rhs')
-        call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, l_comm, isize_l_comm, 'l_comm')
     end if
 
     call STATISTICS_INITIALIZE()

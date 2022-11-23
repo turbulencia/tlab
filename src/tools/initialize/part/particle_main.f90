@@ -22,7 +22,6 @@ program INIPART
 
     ! -------------------------------------------------------------------
     integer(wi) ierr
-    real(wp), dimension(:), allocatable, save :: l_comm
     character*64 str, line
 
     !########################################################################
@@ -49,14 +48,6 @@ program INIPART
         call TLAB_ALLOCATE(C_FILE_LOC)
 
         call PARTICLE_ALLOCATE(C_FILE_LOC)
-
-        write (str, *) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
-        call TLAB_WRITE_ASCII(lfile, line)
-        allocate (l_comm(isize_l_comm), stat=ierr)
-        if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'Not enough memory for l_comm.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
-        end if
 
         ! -------------------------------------------------------------------
         ! Read the grid

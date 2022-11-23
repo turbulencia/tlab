@@ -3,23 +3,20 @@
 
 !#######################################################################
 !#######################################################################
-subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d, wrk3d)
+subroutine RHS_PART_1()
 
     use TLAB_TYPES,  only: pointers_dt, pointers3d_dt
-    use TLAB_VARS,   only: imax, jmax, kmax, isize_field
+    use TLAB_VARS,   only: imax, jmax, kmax
     use TLAB_VARS,   only: g
     use TLAB_VARS,   only: visc, radiation
+    use TLAB_ARRAYS
+    use DNS_ARRAYS
     use PARTICLE_VARS
-    use PARTICLE_ARRAYS, only: l_g ! this changes in time...
+    use PARTICLE_ARRAYS
     use PARTICLE_INTERPOLATE
     use THERMO_VARS, only: thermo_param
 
     implicit none
-
-    real(wp), dimension(isize_field, *), target :: q, s, txc
-    real(wp), dimension(isize_part, *), target :: l_q, l_hq, l_txc
-    real(wp), dimension(*) :: l_comm
-    real(wp), dimension(*) :: wrk1d, wrk2d, wrk3d
 
 ! -------------------------------------------------------------------
     real(wp) dummy, dummy2
@@ -122,4 +119,4 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
     end do
 
     return
-end subroutine RHS_PARTICLE_GLOBAL
+end subroutine RHS_PART_1

@@ -24,6 +24,8 @@ subroutine PARTICLE_ALLOCATE(C_FILE_LOC)
     call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, l_q, inb_part_array, isize_part, 'l_q')
     call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, l_txc, inb_part_txc, isize_part, 'l_txc')
 
+    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, l_comm, isize_l_comm, 'l_comm')
+
     return
 end subroutine PARTICLE_ALLOCATE
 

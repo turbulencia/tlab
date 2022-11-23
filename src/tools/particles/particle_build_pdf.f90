@@ -26,8 +26,6 @@ program PARTICLE_BUILD_PDF
 #include "integers.h"
 
 ! -------------------------------------------------------------------
-! Additional local arrays
-    TREAL, dimension(:), allocatable, save :: l_comm
 
     TINTEGER nitera_first, nitera_last, nitera_save
     TINTEGER ierr, i
@@ -78,14 +76,6 @@ program PARTICLE_BUILD_PDF
 
     if (imode_part == PART_TYPE_BIL_CLOUD_3 .or. imode_part == PART_TYPE_BIL_CLOUD_4) then !Allocte memory to read fields
         allocate (txc(isize_field, 3))
-    end if
-
-    write (str, *) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
-    call TLAB_WRITE_ASCII(lfile, line)
-    allocate (l_comm(isize_l_comm), stat=ierr)
-    if (ierr /= 0) then
-        call TLAB_WRITE_ASCII(efile, 'DNS. Not enough memory for l_comm.')
-        call TLAB_STOP(DNS_ERROR_ALLOC)
     end if
 
 ! -------------------------------------------------------------------

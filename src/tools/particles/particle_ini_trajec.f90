@@ -54,7 +54,6 @@ program PARTICLE_INI_TRAJEC
 
 ! -------------------------------------------------------------------
 ! Additional local arrays
-    TREAL, dimension(:), allocatable, save :: l_comm
 
     TINTEGER, dimension(:), allocatable :: dummy_proc
     integer(8), dimension(:), allocatable :: l_trajectories_tags, fake_l_trajectories_tags
@@ -105,14 +104,6 @@ program PARTICLE_INI_TRAJEC
     end if
 
     call PARTICLE_ALLOCATE(C_FILE_LOC)
-
-    write (str, *) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
-    call TLAB_WRITE_ASCII(lfile, line)
-    allocate (l_comm(isize_l_comm), stat=ierr)
-    if (ierr /= 0) then
-        call TLAB_WRITE_ASCII(efile, 'DNS. Not enough memory for l_comm.')
-        call TLAB_STOP(DNS_ERROR_ALLOC)
-    end if
 
     allocate (dummy_proc(isize_traj))
     allocate (l_trajectories_tags(isize_traj))

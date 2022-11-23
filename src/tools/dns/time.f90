@@ -59,9 +59,9 @@ contains
         case (RKM_EXP3)             ! Runge-Kutta explicit 3th order from Williamson 1980
             rkm_endstep = 3
 
-            kdt(1:3)   = [C_1_R/C_3_R, C_15_R/C_16_R, C_8_R/C_15_R]
+            kdt(1:3) = [C_1_R/C_3_R, C_15_R/C_16_R, C_8_R/C_15_R]
             ktime(1:3) = [C_0_R, C_1_R/C_3_R, C_3_R/C_4_R]
-            kco(1:2)   = [-C_5_R/C_9_R, -C_153_R/C_128_R]
+            kco(1:2) = [-C_5_R/C_9_R, -C_153_R/C_128_R]
 
         case (RKM_EXP4)             ! Runge-Kutta explicit 4th order 5 stages from Carpenter & Kennedy 1994
             rkm_endstep = 5
@@ -109,9 +109,9 @@ contains
         ! ###################################################################
         ! maximum diffusivities for TIME_COURANT
         schmidtfactor = C_1_R
-        dummy         = C_1_R/prandtl
+        dummy = C_1_R/prandtl
         schmidtfactor = max(schmidtfactor, dummy)
-        dummy         = C_1_R/minval(schmidt(1:inb_scal))
+        dummy = C_1_R/minval(schmidt(1:inb_scal))
         schmidtfactor = max(schmidtfactor, dummy)
         schmidtfactor = schmidtfactor*visc
 
@@ -191,7 +191,7 @@ contains
             call system_clock(t_srt, PROC_CYCLES, MAX_CYCLES)
 #endif
             if (imode_part /= PART_TYPE_NONE) then
-                call PARTICLE_TIME_SUBSTEP(dte, l_hq, l_comm)
+                call TIME_SUBSTEP_PARTICLE()
             end if
 
             select case (imode_eqns)
@@ -551,7 +551,7 @@ contains
             case (EQNS_RHS_COMBINED)
                 call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
                 call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
-                call RHS_GLOBAL_INCOMPRESSIBLE_1(q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+       call RHS_GLOBAL_INCOMPRESSIBLE_1(q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
 
             case (EQNS_RHS_NONBLOCKING)
 #ifdef USE_PSFFT
@@ -621,8 +621,8 @@ contains
         ! ######################################################################
         if (rkm_mode == RKM_IMP3_DIFFUSION) then
             call RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex(rkm_substep), kim(rkm_substep), kco(rkm_substep), &
-                q, hq, q(:, 1), q(:, 2), q(:, 3), hq(1, 1), hq(1, 2), hq(1, 3), s, hs, &
-                txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk1d, wrk2d, wrk3d)
+                                                      q, hq, q(:, 1), q(:, 2), q(:, 3), hq(1, 1), hq(1, 2), hq(1, 3), s, hs, &
+                                   txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk1d, wrk2d, wrk3d)
             ! pressure-correction algorithm; to be checked
             ! CALL RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(&
             !      kex,kim,kco,  &
@@ -880,5 +880,119 @@ contains
 
         return
     end subroutine TIME_SUBSTEP_COMPRESSIBLE
+
+    !########################################################################
+    !########################################################################
+    subroutine TIME_SUBSTEP_PARTICLE()
+        use DNS_ARRAYS
+        use PARTICLE_VARS
+        use PARTICLE_ARRAYS
+
+        ! -------------------------------------------------------------------
+        integer(wi) is, i
+
+#ifdef USE_MPI
+        real(wp), dimension(:), pointer :: p_buffer_1, p_buffer_2
+        integer(wi) nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north
+#else
+        real(wp) x_right, z_right
+#endif
+
+        !#####################################################################
+        call RHS_PART_1()
+        
+        !#######################################################################
+        ! Update particle properties
+        !#######################################################################
+        do is = 1, inb_part
+            l_q(1:l_g%np, is) = l_q(1:l_g%np, is) + dte*l_hq(1:l_g%np, is)
+        end do
+
+        !#####################################################################
+        ! Boundary control to see if particles leave processor
+        !#####################################################################
+#ifdef USE_MPI
+        p_buffer_1(1:isize_pbuffer) => l_comm(1:isize_pbuffer)
+        p_buffer_2(1:isize_pbuffer) => l_comm(isize_pbuffer + 1:isize_pbuffer*2)
+
+        ! -------------------------------------------------------------------
+        !Particle sorting for Send/Recv X-Direction
+        ! -------------------------------------------------------------------
+        call PARTICLE_MPI_SORT(1, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
+
+        if (ims_pro_i == 0) then !Take care of periodic boundary conditions west
+            if (nzone_west /= 0) then
+                l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) = &
+                    l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) + g(1)%scale
+            end if
+        end if
+
+        if (ims_pro_i == (ims_npro_i - 1)) then !Take care of periodic boundary conditions east
+            if (nzone_east /= 0) then
+                l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) = &
+                    l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) - g(1)%scale
+            end if
+        end if
+
+        call PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
+                                      p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags, l_g%np)
+
+        ! -------------------------------------------------------------------
+        !Particle sorting for Send/Recv Z-Direction
+        ! -------------------------------------------------------------------
+        call PARTICLE_MPI_SORT(3, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
+
+        if (ims_pro_k == 0) then !Take care of periodic boundary conditions south
+            if (nzone_south /= 0) then
+                l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) = &
+                    l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) + g(3)%scale
+            end if
+        end if
+
+        if (ims_pro_k == (ims_npro_k - 1)) then !Take care of periodic boundary conditions north
+            if (nzone_north /= 0) then
+                l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) = &
+                    l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) - g(3)%scale
+            end if
+        end if
+
+        call PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
+                                      p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags, l_g%np)
+
+        nullify (p_buffer_1, p_buffer_2)
+
+#else
+        !#######################################################################
+        ! Serial
+        x_right = g(1)%nodes(1) + g(1)%scale
+        z_right = g(3)%nodes(1) + g(3)%scale
+
+        do i = 1, l_g%np
+            if (l_q(i, 1) > x_right) then
+                l_q(i, 1) = l_q(i, 1) - g(1)%scale
+
+            elseif (l_q(i, 1) < g(1)%nodes(1)) then
+                l_q(i, 1) = l_q(i, 1) + g(1)%scale
+
+            end if
+
+            if (l_q(i, 3) > z_right) then
+                l_q(i, 3) = l_q(i, 3) - g(3)%scale
+
+            elseif (l_q(i, 3) < g(3)%nodes(1)) then
+                l_q(i, 3) = l_q(i, 3) + g(3)%scale
+
+            end if
+        end do
+
+#endif
+
+        !#######################################################################
+        ! Recalculating closest node below in Y direction
+        !#######################################################################
+        call PARTICLE_LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, g(2)%size, g(2)%nodes)
+
+        return
+    end subroutine TIME_SUBSTEP_PARTICLE
 
 end module TIME
