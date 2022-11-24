@@ -267,7 +267,7 @@ program AVERAGES
 
     isize_wrk3d = max(isize_field, opt_order*nfield*jmax)
     isize_wrk3d = max(isize_wrk3d, isize_txc_field)
-    if (imode_part /= PART_TYPE_NONE) then
+    if (part%type /= PART_TYPE_NONE) then
         isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
     end if
 
@@ -408,7 +408,7 @@ program AVERAGES
             end if
 
             ! Lagrange Liquid and Liquid without diffusion
-            if (imode_part == PART_TYPE_BIL_CLOUD_3 .or. imode_part == PART_TYPE_BIL_CLOUD_4) then
+            if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then
                 write (fname, *) itime; fname = trim(adjustl(tag_part))//trim(adjustl(fname))
                 call IO_READ_PARTICLE(fname, l_g, l_q)
 

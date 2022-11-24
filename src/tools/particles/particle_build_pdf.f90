@@ -28,10 +28,9 @@ program PARTICLE_BUILD_PDF
 ! -------------------------------------------------------------------
 
     TINTEGER nitera_first, nitera_last, nitera_save
-    TINTEGER ierr, i
+    TINTEGER i
 
-    character*64 fname, str
-    character*128 line
+    character*64 fname
     character*32 bakfile
 
     bakfile = TRIM(ADJUSTL(ifile))//'.bak'
@@ -74,7 +73,7 @@ program PARTICLE_BUILD_PDF
 
     allocate (s(isize_field, inb_scal_array))
 
-    if (imode_part == PART_TYPE_BIL_CLOUD_3 .or. imode_part == PART_TYPE_BIL_CLOUD_4) then !Allocte memory to read fields
+    if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then !Allocte memory to read fields
         allocate (txc(isize_field, 3))
     end if
 

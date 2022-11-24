@@ -13,6 +13,6 @@ module PARTICLE_ARRAYS
     real(wp), allocatable :: l_txc(:, :)        ! Temporary space for Lagrnagian fields
     real(wp), allocatable :: l_comm(:)          ! halo space for field-particle interpolations 
 
-    target l_txc, l_comm
+    target l_txc, l_comm, l_q
     
 end module PARTICLE_ARRAYS

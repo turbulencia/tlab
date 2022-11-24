@@ -32,7 +32,7 @@ if ( len(sys.argv) == 1 ):
 
 if ( np == 0 ):
     for line in open('dns.ini'):
-        if "trajectorynumber" in line.lower():
+        if "trajnumber" in line.lower():
             np = int(line.split("=",1)[1])
 
 def itnumber(filename):

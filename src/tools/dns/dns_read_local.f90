@@ -757,7 +757,7 @@ subroutine DNS_READ_LOCAL(inifile)
 
     isize_wrk3d = max(imax, g_inf(1)%size)*max(jmax, g_inf(2)%size)*kmax
     isize_wrk3d = max(isize_wrk3d, isize_txc_field)
-    if (imode_part /= PART_TYPE_NONE) then
+    if (part%type /= PART_TYPE_NONE) then
         isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
         isize_wrk3d = max(isize_wrk3d, (jmax*(kmax + 1)*inb_part_interp*2))
         isize_wrk3d = max(isize_wrk3d, (jmax*(imax + 1)*inb_part_interp*2))

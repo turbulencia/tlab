@@ -173,7 +173,7 @@ contains
         if (rkm_mode == RKM_EXP3 .or. rkm_mode == RKM_EXP4) then
             if (icalc_flow == 1) hq = C_0_R
             if (icalc_scal == 1) hs = C_0_R
-            if (imode_part /= PART_TYPE_NONE) l_hq = C_0_R
+            if (part%type /= PART_TYPE_NONE) l_hq = C_0_R
         end if
 
         !########################################################################
@@ -190,7 +190,7 @@ contains
 #ifdef USE_PROFILE
             call system_clock(t_srt, PROC_CYCLES, MAX_CYCLES)
 #endif
-            if (imode_part /= PART_TYPE_NONE) then
+            if (part%type /= PART_TYPE_NONE) then
                 call TIME_SUBSTEP_PARTICLE()
             end if
 
@@ -212,7 +212,7 @@ contains
             call DNS_BOUNDS_LIMIT()
 !            if (int(logs_data(1)) /= 0) return ! Error detected
 
-            if (imode_part == PART_TYPE_BIL_CLOUD_4) then
+            if (part%type == PART_TYPE_BIL_CLOUD_4) then
                 call PARTICLE_TIME_RESIDENCE(dtime, l_g%np, l_q)
                 call PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc, l_comm, wrk3d)
             end if
@@ -259,7 +259,7 @@ contains
                 end if
 !$omp end parallel
 
-                if (imode_part /= PART_TYPE_NONE) then
+                if (part%type /= PART_TYPE_NONE) then
                     do is = 1, inb_part
                         l_hq(1:l_g%np, is) = alpha*l_hq(1:l_g%np, is)
                     end do
@@ -916,7 +916,7 @@ contains
         p_buffer_2(1:isize_pbuffer) => l_comm(isize_pbuffer + 1:isize_pbuffer*2)
 
         ! -------------------------------------------------------------------
-        !Particle sorting for Send/Recv X-Direction
+        ! Particle sorting for Send/Recv X-Direction
         ! -------------------------------------------------------------------
         call PARTICLE_MPI_SORT(1, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
 
@@ -938,7 +938,7 @@ contains
                                       p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags, l_g%np)
 
         ! -------------------------------------------------------------------
-        !Particle sorting for Send/Recv Z-Direction
+        ! Particle sorting for Send/Recv Z-Direction
         ! -------------------------------------------------------------------
         call PARTICLE_MPI_SORT(3, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
 
@@ -963,7 +963,7 @@ contains
 
 #else
         !#######################################################################
-        ! Serial
+        ! Serial; would it be faster to use MOD?
         x_right = g(1)%nodes(1) + g(1)%scale
         z_right = g(3)%nodes(1) + g(3)%scale
 

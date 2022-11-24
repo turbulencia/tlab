@@ -1,4 +1,3 @@
-#include "dns_error.h"
 #include "dns_const.h"
 
 !#######################################################################
@@ -39,7 +38,7 @@ subroutine RHS_PART_1()
 ! -------------------------------------------------------------------
 ! Additional terms depending on type of particle evolution equations
 ! -------------------------------------------------------------------
-    select case (imode_part)
+    select case (part%type)
 
     case (PART_TYPE_BIL_CLOUD_3, PART_TYPE_BIL_CLOUD_4)
         dummy2 = -thermo_param(2)
@@ -89,7 +88,7 @@ subroutine RHS_PART_1()
 ! -------------------------------------------------------------------
 ! Completing evolution equations
 ! -------------------------------------------------------------------
-    select case (imode_part)
+    select case (part%type)
     
     case(PART_TYPE_BIL_CLOUD_3, PART_TYPE_BIL_CLOUD_4)
 ! l_txc(1) = equation without ds/dxi
@@ -109,7 +108,7 @@ subroutine RHS_PART_1()
         end do
 
     case(PART_TYPE_SIMPLE_SETT)
-        l_hq(1:l_g%np, 2) = l_hq(1:l_g%np, 2) - particle_param(1)
+        l_hq(1:l_g%np, 2) = l_hq(1:l_g%np, 2) - part%parameters(1)
     
     end select
     

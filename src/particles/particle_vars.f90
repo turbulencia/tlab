@@ -1,11 +1,11 @@
 module PARTICLE_VARS
     use TLAB_CONSTANTS, only: wp, wi, longi, MAX_PARS, MAX_NSP
-    use TLAB_TYPES, only: profiles_dt
+    use TLAB_TYPES, only: profiles_dt, term_dt
     use PARTICLE_TYPES
     implicit none
     save
 
-    ! Possible values of imode_part
+    ! Possible values of part%type
     integer, parameter :: PART_TYPE_NONE = 0
     integer, parameter :: PART_TYPE_TRACER = 1
     integer, parameter :: PART_TYPE_SIMPLE_SETT = 2
@@ -18,9 +18,11 @@ module PARTICLE_VARS
     integer, parameter :: TRAJ_TYPE_LARGEST = 2
     integer, parameter :: TRAJ_TYPE_VORTICITY = 3
 
-    integer(wi)       :: imode_part                   ! type if particle formulation, e.g., tracer, inertia...
-    integer(longi)    :: isize_part_total             ! total # of particles
+    type(term_dt)     :: part                         ! particle formulation, e.g., tracer, inertia... Maybe new derived type
 
+    character(len=32) :: part_spname(MAX_NSP)
+
+    integer(longi)    :: isize_part_total             ! total # of particles
     integer(wi)       :: isize_part                   ! maximum # of particles per processor (to allocate memory space)
     integer(wi)       :: inb_part_array               ! # of particle properties in arrays (prognostic & diagnostic)
     integer(wi)       :: inb_part                     ! # of particle properties in Runge-Kutta (prognostic)
@@ -47,13 +49,9 @@ module PARTICLE_VARS
     real(wp)      :: l_y_base            !set to be 1/3 of cloud domain between two bouyancy stratification for residence times
 
     ! Calculation of pdfs
-    integer(wi)   :: icalc_part_pdf      ! if calculation of pdf for particles
+    logical       :: particle_pdf_calc      ! if calculation of pdf for particles
     real(wp)      :: particle_pdf_subdomain(6)
     real(wp)      :: particle_pdf_max
     real(wp)      :: particle_pdf_interval
-
-    ! Auxiliary   data
-    real(wp)      :: particle_param(MAX_PARS) ! lagrange function parameters
-    character*32  :: particle_spname(MAX_NSP) !Name of different lagrange species
 
 end module PARTICLE_VARS

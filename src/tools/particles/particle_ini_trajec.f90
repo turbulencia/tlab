@@ -65,13 +65,12 @@ program PARTICLE_INI_TRAJEC
     TREAL, dimension(:, :), allocatable :: l_trajectories
     TREAL, dimension(:), allocatable :: fake_liquid, all_fake_liquid
 
-    TINTEGER nitera_first, ierr
+    TINTEGER nitera_first
 
-    character*64 str, line
     character*32 bakfile
 
 #ifdef USE_MPI
-    character*64 fname
+    character*64 fname, str
     TINTEGER particle_pos, i
     TLONGINTEGER dummy
 #endif
@@ -99,7 +98,7 @@ program PARTICLE_INI_TRAJEC
     isize_wrk3d = imax*jmax*kmax
     allocate (wrk3d(isize_wrk3d))
 
-    if (imode_part == PART_TYPE_BIL_CLOUD_3 .or. imode_part == PART_TYPE_BIL_CLOUD_4) then !Allocte memory to read fields
+    if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then !Allocte memory to read fields
         allocate (txc(isize_field, 3))
     end if
 
