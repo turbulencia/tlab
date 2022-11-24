@@ -6,9 +6,8 @@ module PARTICLE_TRAJECTORIES
 
     use TLAB_CONSTANTS, only: efile, lfile, wp, sp, wi, longi
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
-    use PARTICLE_VARS, only: isize_part
-    use TLAB_PROCS
     use PARTICLE_VARS
+    use TLAB_PROCS
     use DNS_LOCAL, only: nitera_save, nitera_last
 #ifdef USE_MPI
     use MPI
@@ -18,8 +17,8 @@ module PARTICLE_TRAJECTORIES
     save
     private
 
-    real(sp), allocatable :: l_trajectories(:, :, :)
-    integer(longi), allocatable :: l_trajectories_tags(:)
+    real(sp), allocatable :: l_traj(:, :, :)
+    integer(longi), allocatable :: l_traj_tags(:)
     integer(wi) :: counter
 #ifdef USE_MPI
     real(sp), allocatable :: mpi_tmp(:, :)
@@ -40,8 +39,8 @@ contains
         integer(wi) j
 
 !#######################################################################
-        call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, l_trajectories, [isize_traj + 1, nitera_save, inb_traj], 'l_traj')
-        call TLAB_ALLOCATE_ARRAY1_LONG_INT(__FILE__, l_trajectories_tags, isize_traj, 'l_trajectory_tags')
+        call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, l_traj, [isize_traj + 1, nitera_save, inb_traj], 'l_traj')
+        call TLAB_ALLOCATE_ARRAY1_LONG_INT(__FILE__, l_traj_tags, isize_traj, 'l_trajectory_tags')
 #ifdef USE_MPI
         call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, mpi_tmp, [isize_traj + 1, nitera_save], 'mpi_tmp')
 #endif
@@ -51,7 +50,7 @@ contains
         select case (imode_traj)
         case default                ! track only the first isize_traj particles
             do j = 1, isize_traj
-                l_trajectories_tags(j) = int(j, KIND=longi)
+                l_traj_tags(j) = int(j, KIND=longi)
             end do
 
         case (TRAJ_TYPE_LARGEST)    ! track the ones given in a file
@@ -64,20 +63,20 @@ contains
 #include "dns_open_file.h"
                 read (LOC_UNIT_ID) ims_npro_loc
 !        READ(LOC_UNIT_ID) ims_np_all(1:ims_npro_loc)
-                read (LOC_UNIT_ID, POS=SIZEOFINT*(ims_npro_loc + 1) + 1) l_trajectories_tags
+                read (LOC_UNIT_ID, POS=SIZEOFINT*(ims_npro_loc + 1) + 1) l_traj_tags
                 close (LOC_UNIT_ID)
 #undef LOC_UNIT_ID
 #undef LOC_STATUS
 #ifdef USE_MPI
             end if
             call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
-            call MPI_BCAST(l_trajectories_tags, isize_traj, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
+            call MPI_BCAST(l_traj_tags, isize_traj, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
 #endif
 
         end select
 
         ! initialize values
-        l_trajectories = 0.0_sp
+        l_traj = 0.0_sp
         counter = 0
 
         return
@@ -142,7 +141,7 @@ contains
 #ifdef USE_MPI
         if (ims_pro == 0) then
 #endif
-            l_trajectories(1, counter, 1:nvar) = SNGL(rtime)
+            l_traj(1, counter, 1:nvar) = SNGL(rtime)
 #ifdef USE_MPI
         end if
 #endif
@@ -150,9 +149,9 @@ contains
 ! Accumulating the data
         do i = 1, l_g%np
             do j = 1, isize_traj
-                if (l_g%tags(i) == l_trajectories_tags(j)) then
+                if (l_g%tags(i) == l_traj_tags(j)) then
                     do iv = 1, nvar
-                        l_trajectories(1 + j, counter, iv) = SNGL(data(iv)%field(i))
+                        l_traj(1 + j, counter, iv) = SNGL(data(iv)%field(i))
                     end do
                 end if
             end do
@@ -174,7 +173,7 @@ contains
         do iv = 1, inb_traj
 #ifdef USE_MPI
             mpi_tmp = 0.0_sp
-    call MPI_REDUCE(l_trajectories(1, 1, iv), mpi_tmp, (1 + isize_traj)*nitera_save, MPI_REAL4, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+    call MPI_REDUCE(l_traj(1, 1, iv), mpi_tmp, (1 + isize_traj)*nitera_save, MPI_REAL4, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
             call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
             if (ims_pro == 0) then
 #endif
@@ -187,7 +186,7 @@ contains
 #ifdef USE_MPI
                 write (LOC_UNIT_ID) mpi_tmp
 #else
-                write (LOC_UNIT_ID) l_trajectories(:, :, iv)
+                write (LOC_UNIT_ID) l_traj(:, :, iv)
 #endif
                 close (LOC_UNIT_ID)
 #ifdef USE_MPI
@@ -195,7 +194,7 @@ contains
 #endif
         end do
 
-        l_trajectories = 0.0_sp
+        l_traj = 0.0_sp
         counter = 0
 
         return
