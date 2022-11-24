@@ -14,9 +14,8 @@ module PARTICLE_VARS
 
     ! Posible values of imode_traj
     integer, parameter :: TRAJ_TYPE_NONE = 0
-    integer, parameter :: TRAJ_TYPE_FIRST = 1
-    integer, parameter :: TRAJ_TYPE_LARGEST = 2
-    integer, parameter :: TRAJ_TYPE_VORTICITY = 3
+    integer, parameter :: TRAJ_TYPE_BASIC = 1
+    integer, parameter :: TRAJ_TYPE_VORTICITY = 2
 
     type(term_dt)     :: part                         ! particle formulation, e.g., tracer, inertia... Maybe new derived type
 
@@ -39,9 +38,10 @@ module PARTICLE_VARS
     integer, parameter :: PART_INITYPE_SCALAR = 101   ! Special type of particle initialization not included in default profile data
 
     ! Trajectory
-    integer(wi)   :: imode_traj          ! Type of trajectories
-    integer(wi)   :: isize_traj          ! # of saved trajectories
-    integer(wi)   :: inb_traj            ! # of properties saved along trajectories
+    integer(wi)   :: imode_traj             ! Type of trajectory information that is saved
+    integer(wi)   :: isize_traj             ! # of saved trajectories
+    integer(wi)   :: inb_traj               ! # of properties saved along trajectories
+    character(len=32) :: traj_filename      ! file with the particle tags to be tracked; if void, then the first isize_traj particles are used
 
     ! Calculation of residence times
     integer(wi)   :: residence_reset     !if reseidence l_q should be reset

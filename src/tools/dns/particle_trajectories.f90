@@ -5,10 +5,9 @@
 module PARTICLE_TRAJECTORIES
 
     use TLAB_CONSTANTS, only: efile, lfile, wp, sp, wi, longi
-    use TLAB_VARS, only: inb_flow_array, inb_scal_array
     use PARTICLE_VARS
     use TLAB_PROCS
-    use DNS_LOCAL, only: nitera_save, nitera_last
+    use DNS_LOCAL, only: nitera_save
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS, only: ims_pro, ims_err
@@ -40,21 +39,22 @@ contains
 
 !#######################################################################
         call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, l_traj, [isize_traj + 1, nitera_save, inb_traj], 'l_traj')
-        call TLAB_ALLOCATE_ARRAY1_LONG_INT(__FILE__, l_traj_tags, isize_traj, 'l_trajectory_tags')
+        call TLAB_ALLOCATE_ARRAY1_LONG_INT(__FILE__, l_traj_tags, isize_traj, 'l_traj_tags')
 #ifdef USE_MPI
         call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, mpi_tmp, [isize_traj + 1, nitera_save], 'mpi_tmp')
 #endif
 
 !#######################################################################
         ! set the particle tags to be tracked
-        select case (imode_traj)
-        case default                ! track only the first isize_traj particles
+        select case (trim(adjustl(traj_filename)))
+        case ('void')               ! track only the first isize_traj particles
             do j = 1, isize_traj
                 l_traj_tags(j) = int(j, KIND=longi)
             end do
 
-        case (TRAJ_TYPE_LARGEST)    ! track the ones given in a file
-            write (name, *) nitera_last; name = 'largest_particle.'//trim(adjustl(name))
+        case default                ! track the ones given in a file
+            ! write (name, *) nitera_last; name = trim(adjustl(traj_filename))//trim(adjustl(name))
+            name = trim(adjustl(traj_filename))
 #ifdef USE_MPI
             if (ims_pro == 0) then
 #endif
@@ -86,6 +86,7 @@ contains
 !#######################################################################
     subroutine PARTICLE_TRAJECTORIES_ACCUMULATE()
         use TLAB_TYPES, only: pointers_dt, pointers3d_dt
+        use TLAB_VARS, only: inb_flow_array, inb_scal_array
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: rtime
         use TLAB_ARRAYS
@@ -120,7 +121,6 @@ contains
             l_txc(:, iv - 3 + inb_flow_array) = 0.0_wp ! Field to particle is additive
         end do
 
-! -------------------------------------------------------------------
 ! Additional information
         if (imode_traj == TRAJ_TYPE_VORTICITY) then
             call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
@@ -130,7 +130,6 @@ contains
             l_hq(:, 1:3) = 0.0_wp ! Field to particle is additive
         end if
 
-! -------------------------------------------------------------------
 ! Interpolation
         if (nvar > 3) then
             call FIELD_TO_PARTICLE(nvar - 3, data_in(4:), data(4:), l_g, l_q, l_comm, wrk3d)
@@ -163,7 +162,7 @@ contains
 !#######################################################################
 !#######################################################################
     subroutine PARTICLE_TRAJECTORIES_WRITE(fname)
-        character*(*) fname
+        character(len=*) fname
 
 ! -------------------------------------------------------------------
         character(len=32) name
@@ -173,7 +172,7 @@ contains
         do iv = 1, inb_traj
 #ifdef USE_MPI
             mpi_tmp = 0.0_sp
-    call MPI_REDUCE(l_traj(1, 1, iv), mpi_tmp, (1 + isize_traj)*nitera_save, MPI_REAL4, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+            call MPI_REDUCE(l_traj(1, 1, iv), mpi_tmp, (1 + isize_traj)*nitera_save, MPI_REAL4, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
             call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
             if (ims_pro == 0) then
 #endif
@@ -194,6 +193,7 @@ contains
 #endif
         end do
 
+        ! reinitialize
         l_traj = 0.0_sp
         counter = 0
 

@@ -78,18 +78,6 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         end if
 
 ! -------------------------------------------------------------------
-        inb_traj = inb_flow_array + inb_scal_array
-        call SCANINICHAR(bakfile, inifile, block, 'TrajType', 'first', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; imode_traj = TRAJ_TYPE_NONE
-        elseif (trim(adjustl(sRes)) == 'first') then; imode_traj = TRAJ_TYPE_FIRST
-        elseif (trim(adjustl(sRes)) == 'largest') then; imode_traj = TRAJ_TYPE_LARGEST
-        elseif (trim(adjustl(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
-            inb_traj = inb_traj + 3 ! + vorticity
-        else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Invalid option in TrajectoryType')
-            call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
-        end if
-
         call SCANINIINT(bakfile, inifile, block, 'TrajNumber', '0', isize_traj)
         if (isize_traj > isize_part_total) then
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Number of trajectories must be less or equal than number of particles.')
@@ -97,6 +85,18 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         end if
         if (isize_traj <= 0) imode_traj = TRAJ_TYPE_NONE
         if (part%type == PART_TYPE_NONE) imode_traj = TRAJ_TYPE_NONE
+
+        call SCANINICHAR(bakfile, inifile, block, 'TrajFileName', 'void', traj_filename)
+
+        inb_traj = inb_flow_array + inb_scal_array
+        call SCANINICHAR(bakfile, inifile, block, 'TrajType', 'basic', sRes)
+        if (trim(adjustl(sRes)) == 'basic') then; imode_traj = TRAJ_TYPE_BASIC
+        elseif (trim(adjustl(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
+            inb_traj = inb_traj + 3 ! + vorticity
+        else
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Invalid option in TrajectoryType')
+            call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
+        end if
 
 ! ###################################################################
 ! Initializing size of particle arrays
