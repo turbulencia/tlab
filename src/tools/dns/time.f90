@@ -214,7 +214,7 @@ contains
 
             if (part%type == PART_TYPE_BIL_CLOUD_4) then
                 call PARTICLE_TIME_RESIDENCE(dtime, l_g%np, l_q)
-                call PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc, l_comm, wrk3d)
+                call PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc, wrk3d)
             end if
 
             ! -------------------------------------------------------------------

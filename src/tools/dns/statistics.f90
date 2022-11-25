@@ -204,7 +204,7 @@ contains
 
             if (part%type /= PART_TYPE_NONE .and. particle_pdf_calc ) then                ! Save particle pathlines for particle_pdf
                 write (fname, *) itime; fname = "particle_pdf."//trim(adjustl(fname))
-                call PARTICLE_PDF(fname, s, l_g, l_q, l_txc, l_comm, wrk3d)
+                call PARTICLE_PDF(fname, s, l_g, l_q, l_txc, wrk3d)
             end if
 
             if (part%type == PART_TYPE_BIL_CLOUD_4) then  ! Save particle residence times

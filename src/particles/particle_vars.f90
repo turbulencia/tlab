@@ -27,7 +27,6 @@ module PARTICLE_VARS
     integer(wi)       :: inb_part                     ! # of particle properties in Runge-Kutta (prognostic)
     integer(wi)       :: inb_part_txc                 ! # of particle auxiliary properties for intermediate calculations
     integer(wi)       :: inb_part_interp              ! # of interpolated fields into lagrangian framework
-    integer(wi)       :: isize_l_comm                 ! memory space for the halo regions
 
 #ifdef USE_MPI
     integer(wi)   :: isize_pbuffer                    ! space for communication of halo regions

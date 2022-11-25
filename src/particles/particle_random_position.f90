@@ -4,7 +4,7 @@
 #include "dns_const_mpi.h"
 #endif
 
-subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
+subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc, wrk3d)
 
     use TLAB_TYPES,     only: pointers_dt, pointers3d_dt, wp, wi, longi
     use TLAB_CONSTANTS
@@ -24,7 +24,6 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
 
     real(wp), target :: l_q(isize_part, inb_part_array)
     real(wp), target :: l_txc(isize_part, 2)
-    real(wp), target :: l_comm(isize_l_comm)
     real(wp), target :: txc(imax, jmax, kmax, inb_scal)
     real(wp) :: wrk3d(isize_field)
 
@@ -160,7 +159,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
             nvar = nvar + 1; data(nvar)%field => txc(:, :, :, 1); data_out(nvar)%field => l_txc(:, 1)
             nvar = nvar + 1; data(nvar)%field => txc(:, :, :, 2); data_out(nvar)%field => l_txc(:, 2)
             l_txc(:, 1:2) = 0.0_wp
-            call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q, l_comm, wrk3d)
+            call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q, wrk3d)
 
             l_q(:, 4) = 0.0_wp
             call THERMO_AIRWATER_LINEAR(l_g%np, 1, 1, l_txc(1, 1), l_q(1, 4))

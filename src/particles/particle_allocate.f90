@@ -3,6 +3,7 @@
 subroutine PARTICLE_ALLOCATE(C_FILE_LOC)
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
+    use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_PROCS
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_npro
@@ -12,6 +13,7 @@ subroutine PARTICLE_ALLOCATE(C_FILE_LOC)
     character(len=*) C_FILE_LOC
 
     ! -------------------------------------------------------------------
+    integer(wi) :: isize_l_comm                 ! 
 
     ! ###################################################################
     call TLAB_ALLOCATE_ARRAY_LONG_INT(C_FILE_LOC, l_g%tags, [isize_part], 'l_tags')
@@ -22,6 +24,13 @@ subroutine PARTICLE_ALLOCATE(C_FILE_LOC)
 
     call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, l_q, [isize_part, inb_part_array], 'l_q')
     call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, l_txc, [isize_part, inb_part_txc], 'l_txc')
+
+    ! memory space for the halo regions for particle_interpolate
+    isize_l_comm = (2*jmax*kmax + imax*jmax*2 + 2*jmax*2)*inb_part_interp
+#ifdef USE_MPI
+    isize_pbuffer = int(isize_part/4*(inb_part_array*2 + 1)) ! same size for both buffers
+    isize_l_comm = max(isize_l_comm, 2*isize_pbuffer)
+#endif
     call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, l_comm, [isize_l_comm], 'l_comm')
 
     return

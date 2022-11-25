@@ -233,7 +233,7 @@ program DNS
         end if
 
         if (imode_traj /= TRAJ_TYPE_NONE) then
-            call PARTICLE_TRAJECTORIES_ACCUMULATE()!q, s, txc, l_g, l_q, l_hq, l_txc, l_comm, wrk2d, wrk3d)
+            call PARTICLE_TRAJECTORIES_ACCUMULATE()
         end if
 
         if (mod(itime - nitera_first, nitera_stats_spa) == 0) then  ! Accumulate statistics in spatially evolving cases
