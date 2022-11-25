@@ -1,7 +1,4 @@
-#include "dns_error.h"
 #include "dns_const.h"
-
-#define C_FILE_LOC "DNS"
 
 program DNS
 
@@ -58,7 +55,7 @@ program DNS
     ! #######################################################################
     ! Initialize memory space and grid data
     ! #######################################################################
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLAB_ALLOCATE(__FILE__)
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)
@@ -67,13 +64,11 @@ program DNS
 
     call FI_BACKGROUND_INITIALIZE(wrk1d)
 
-    call PARTICLE_ALLOCATE(C_FILE_LOC)
+    call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hq, [isize_field, inb_flow], 'flow-rhs')
+    call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hs, [isize_field, inb_scal], 'scal-rhs')
 
-    call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, hq, inb_flow, isize_field, 'flow-rhs')
-    call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, hs, inb_scal, isize_field, 'scal-rhs')
-    if (part%type /= PART_TYPE_NONE) then
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, l_hq, inb_part, isize_part, 'part-rhs')
-    end if
+    call PARTICLE_ALLOCATE(__FILE__)
+    call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, l_hq, [isize_part, inb_part], 'part-rhs')
 
     call STATISTICS_INITIALIZE()
 
@@ -84,7 +79,7 @@ program DNS
     end if
 
     if (imode_ibm == 1) then
-        call IBM_ALLOCATE(C_FILE_LOC)
+        call IBM_ALLOCATE(__FILE__)
     end if
 
     ! ###################################################################

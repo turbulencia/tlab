@@ -46,6 +46,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
+    isize_part = 0
     if (part%type /= PART_TYPE_NONE) then
         call SCANINICHAR(bakfile, inifile, block, 'Parameters', '0.0', sRes)
         idummy = MAX_PARS
