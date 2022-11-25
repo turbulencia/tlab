@@ -48,6 +48,8 @@ program INIPART
 
         call FI_BACKGROUND_INITIALIZE(wrk1d)
 
+        call PARTICLE_INITIALIZE()
+
         ! -------------------------------------------------------------------
         ! Initialize particle information
         ! -------------------------------------------------------------------
