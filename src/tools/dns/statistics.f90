@@ -187,7 +187,7 @@ contains
                              mean, wrk1d, wrk2d, wrk3d)
 
             ! Lagrange Liquid and Liquid without diffusion
-            if (imode_part == PART_TYPE_BIL_CLOUD_3 .or. imode_part == PART_TYPE_BIL_CLOUD_4) then
+            if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then
                 l_txc(:, 1) = 1.0_wp; ! We want density
                 call PARTICLE_TO_FIELD(l_q, l_txc, txc(1, 5), wrk2d, wrk3d)
 
@@ -202,12 +202,12 @@ contains
                 end do
             end if
 
-            if (imode_part /= PART_TYPE_NONE .and. icalc_part_pdf == 1) then                ! Save particle pathlines for particle_pdf
+            if (part%type /= PART_TYPE_NONE .and. particle_pdf_calc ) then                ! Save particle pathlines for particle_pdf
                 write (fname, *) itime; fname = "particle_pdf."//trim(adjustl(fname))
                 call PARTICLE_PDF(fname, s, l_g, l_q, l_txc, l_comm, wrk3d)
             end if
 
-            if (imode_part == PART_TYPE_BIL_CLOUD_4) then  ! Save particle residence times
+            if (part%type == PART_TYPE_BIL_CLOUD_4) then  ! Save particle residence times
                 write (fname, *) itime; fname = "residence_pdf."//trim(adjustl(fname))
                 call PARTICLE_RESIDENCE_PDF(fname, l_g%np, l_q)
             end if

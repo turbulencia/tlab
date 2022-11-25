@@ -1,13 +1,6 @@
-#include "dns_error.h"
-#include "dns_const.h"
-#ifdef USE_MPI
-#include "dns_const_mpi.h"
-#endif
-
 #define C_FILE_LOC "INIPART"
 
 program INIPART
-    use TLAB_TYPES, only: wp
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_ARRAYS
@@ -20,20 +13,15 @@ program INIPART
 
     implicit none
 
-    ! -------------------------------------------------------------------
-    integer(wi) ierr
-    real(wp), dimension(:), allocatable, save :: l_comm
-    character*64 str, line
-
     !########################################################################
     !########################################################################
-    call TLAB_START
+    call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
 
     call PARTICLE_READ_GLOBAL(ifile)
 
-    if (imode_part /= PART_TYPE_NONE) then
+    if (part%type /= PART_TYPE_NONE) then
 #ifdef USE_MPI
         call TLAB_MPI_INITIALIZE
 #endif
@@ -49,14 +37,6 @@ program INIPART
         call TLAB_ALLOCATE(C_FILE_LOC)
 
         call PARTICLE_ALLOCATE(C_FILE_LOC)
-
-        write (str, *) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
-        call TLAB_WRITE_ASCII(lfile, line)
-        allocate (l_comm(isize_l_comm), stat=ierr)
-        if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'Not enough memory for l_comm.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
-        end if
 
         ! -------------------------------------------------------------------
         ! Read the grid

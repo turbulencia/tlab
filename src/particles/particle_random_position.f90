@@ -22,11 +22,11 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
     use IO_FIELDS
     implicit none
 
-    real(wp), dimension(isize_part, inb_part_array), target :: l_q
-    real(wp), dimension(isize_part, 2), target :: l_txc
-    real(wp), dimension(*), target :: l_comm
-    real(wp), dimension(imax, jmax, kmax, inb_scal), target :: txc
-    real(wp), dimension(*) :: wrk3d
+    real(wp), target :: l_q(isize_part, inb_part_array)
+    real(wp), target :: l_txc(isize_part, 2)
+    real(wp), target :: l_comm(isize_l_comm)
+    real(wp), target :: txc(imax, jmax, kmax, inb_scal)
+    real(wp) :: wrk3d(isize_field)
 
 ! -------------------------------------------------------------------
     integer(wi) i, is
@@ -151,7 +151,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
 ! Remaining scalar properties of the lagrangian field
 !########################################################################
 
-    if (imode_part == PART_TYPE_BIL_CLOUD_3 .or. imode_part == PART_TYPE_BIL_CLOUD_4) then
+    if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then
 
         call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc, wrk3d)
 

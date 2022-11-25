@@ -1,25 +1,21 @@
-#include "dns_error.h"
 #include "dns_const.h"
 
 !#######################################################################
 !#######################################################################
-subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d, wrk3d)
+subroutine RHS_PART_1()
 
     use TLAB_TYPES,  only: pointers_dt, pointers3d_dt
-    use TLAB_VARS,   only: imax, jmax, kmax, isize_field
+    use TLAB_VARS,   only: imax, jmax, kmax
     use TLAB_VARS,   only: g
     use TLAB_VARS,   only: visc, radiation
+    use TLAB_ARRAYS
+    use DNS_ARRAYS
     use PARTICLE_VARS
-    use PARTICLE_ARRAYS, only: l_g ! this changes in time...
+    use PARTICLE_ARRAYS
     use PARTICLE_INTERPOLATE
     use THERMO_VARS, only: thermo_param
 
     implicit none
-
-    real(wp), dimension(isize_field, *), target :: q, s, txc
-    real(wp), dimension(isize_part, *), target :: l_q, l_hq, l_txc
-    real(wp), dimension(*) :: l_comm
-    real(wp), dimension(*) :: wrk1d, wrk2d, wrk3d
 
 ! -------------------------------------------------------------------
     real(wp) dummy, dummy2
@@ -42,7 +38,7 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
 ! -------------------------------------------------------------------
 ! Additional terms depending on type of particle evolution equations
 ! -------------------------------------------------------------------
-    select case (imode_part)
+    select case (part%type)
 
     case (PART_TYPE_BIL_CLOUD_3, PART_TYPE_BIL_CLOUD_4)
         dummy2 = -thermo_param(2)
@@ -92,7 +88,7 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
 ! -------------------------------------------------------------------
 ! Completing evolution equations
 ! -------------------------------------------------------------------
-    select case (imode_part)
+    select case (part%type)
     
     case(PART_TYPE_BIL_CLOUD_3, PART_TYPE_BIL_CLOUD_4)
 ! l_txc(1) = equation without ds/dxi
@@ -112,7 +108,7 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
         end do
 
     case(PART_TYPE_SIMPLE_SETT)
-        l_hq(1:l_g%np, 2) = l_hq(1:l_g%np, 2) - particle_param(1)
+        l_hq(1:l_g%np, 2) = l_hq(1:l_g%np, 2) - part%parameters(1)
     
     end select
     
@@ -122,4 +118,4 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
     end do
 
     return
-end subroutine RHS_PARTICLE_GLOBAL
+end subroutine RHS_PART_1
