@@ -865,14 +865,14 @@ PROGRAM VISUALS
         plot_file = 'ParticleDensity'//time_str(1:MaskSize)
         CALL IO_READ_PARTICLE(part_file, l_g, l_q)
         l_txc = C_1_R; ! We want density
-        CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,1), wrk2d,wrk3d)
+        CALL PARTICLE_TO_FIELD(l_q, l_txc, txc(1,1), wrk3d)
         CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,1), wrk3d)
 
         IF ( part%type .EQ. PART_TYPE_BIL_CLOUD_3 .OR. part%type .EQ. PART_TYPE_BIL_CLOUD_4 )  THEN
           txc(:,1) = txc(:,1) + 0.00000001
           DO is=1,2
             plot_file = TRIM(ADJUSTL(part_spname(is)))//time_str(1:MaskSize)
-            CALL PARTICLE_TO_FIELD(l_q, l_q(1,3+is), txc(1,2), wrk2d,wrk3d)
+            CALL PARTICLE_TO_FIELD(l_q, l_q(1,3+is), txc(1,2), wrk3d)
             txc(:,2) = txc(:,2) /txc(:,1)
             CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
           END DO
@@ -881,7 +881,7 @@ PROGRAM VISUALS
         IF ( part%type .EQ. PART_TYPE_BIL_CLOUD_4 ) THEN
           !inb_part_array is the last component -> residence times in bil_cloud_4
           plot_file = TRIM(ADJUSTL(part_spname(3)))//time_str(1:MaskSize)
-          CALL PARTICLE_TO_FIELD(l_q, l_q(1,inb_part_array-1), txc(1,2), wrk2d,wrk3d)
+          CALL PARTICLE_TO_FIELD(l_q, l_q(1,inb_part_array-1), txc(1,2), wrk3d)
           CALL IO_WRITE_VISUALS(plot_file, opt_format, imax,jmax,kmax, i1, subdomain, txc(1,2), wrk3d)
         ENDIF
 

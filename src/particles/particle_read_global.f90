@@ -4,7 +4,6 @@
 subroutine PARTICLE_READ_GLOBAL(inifile)
     use TLAB_CONSTANTS, only: wp, wi, longi, efile, lfile
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
-    use TLAB_VARS, only: imax, jmax, kmax, isize_wrk2d
     use PARTICLE_VARS
     use TLAB_PROCS
     use PROFILES
@@ -141,10 +140,6 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
             inb_part_txc = max(inb_part_txc, inb_flow_array + inb_scal_array - 3)
             inb_part_interp = max(inb_part_interp, inb_traj)
         end if
-
-        ! I do not think this is needed; ony used in particle_to_field.f90
-        idummy = max((imax + 1)*jmax, max((imax + 1)*kmax, jmax*(kmax + 1)))
-        isize_wrk2d = max(isize_wrk2d, idummy)
 
     end if
 
