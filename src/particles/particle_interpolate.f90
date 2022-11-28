@@ -11,6 +11,7 @@ module PARTICLE_INTERPOLATE
     use TLAB_VARS, only: g
     use TLAB_PROCS
     use PARTICLE_VARS
+    use PARTICLE_ARRAYS, only: l_comm
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS
@@ -23,13 +24,12 @@ module PARTICLE_INTERPOLATE
 contains
 !#######################################################################
 !#######################################################################
-    subroutine FIELD_TO_PARTICLE(nvar, data_in, data_out, l_g, l_q, l_comm, wrk3d)
+    subroutine FIELD_TO_PARTICLE(nvar, data_in, data_out, l_g, l_q, wrk3d)
         integer(wi),         intent(in)    :: nvar
         type(pointers3d_dt), intent(in)    :: data_in(nvar)
         type(pointers_dt),   intent(out)   :: data_out(nvar)
         type(particle_dt),   intent(inout) :: l_g
         real(wp),            intent(inout) :: l_q(isize_part, inb_part_array)
-        real(wp),            intent(inout) :: l_comm(isize_l_comm)
         real(wp),            intent(inout) :: wrk3d(isize_wrk3d)
 
 ! -------------------------------------------------------------------
@@ -38,8 +38,6 @@ contains
         integer(wi) ip_i, ip_k, ip_ik, np_i, np_k, np_ik, iv
 
         type(pointers3d_dt), dimension(nvar) :: data_halo_i, data_halo_k, data_halo_ik
-
-        target l_comm
 
 !#######################################################################
         if (nvar > inb_part_interp) then

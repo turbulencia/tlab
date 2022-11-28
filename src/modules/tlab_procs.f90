@@ -22,9 +22,13 @@ module TLAB_PROCS
     public :: TLAB_STOP
     public :: TLAB_WRITE_ASCII
     public :: TLAB_ALLOCATE
-    public :: TLAB_ALLOCATE_ARRAY1, TLAB_ALLOCATE_ARRAY2
-    public :: TLAB_ALLOCATE_ARRAY1_INT, TLAB_ALLOCATE_ARRAY1_LONG_INT
     public :: TLAB_ALLOCATE_ARRAY_SINGLE
+    public :: TLAB_ALLOCATE_ARRAY_DOUBLE
+    public :: TLAB_ALLOCATE_ARRAY_INT
+    public :: TLAB_ALLOCATE_ARRAY_LONG_INT
+    ! to be removed
+    public :: TLAB_ALLOCATE_ARRAY1, TLAB_ALLOCATE_ARRAY2
+    public :: TLAB_ALLOCATE_ARRAY1_INT!, TLAB_ALLOCATE_ARRAY1_LONG_INT
 #ifdef USE_MPI
     public :: TLAB_MPI_PANIC
 #endif
@@ -37,18 +41,17 @@ contains
 
         character(len=*), intent(in) :: C_FILE_LOC
 
-        ! -------------------------------------------------------------------
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, x, g(1)%inb_grid, g(1)%size, 'x')
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, y, g(2)%inb_grid, g(2)%size, 'y')
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, z, g(3)%inb_grid, g(3)%size, 'z')
-        ! -------------------------------------------------------------------
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, q, inb_flow_array, isize_field, 'flow')
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, s, inb_scal_array, isize_field, 'scal')
-        ! -------------------------------------------------------------------
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, txc, inb_txc, isize_txc_field, 'txc')
-        call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, wrk3d, isize_wrk3d, 'wrk3d')
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, wrk1d, inb_wrk1d, isize_wrk1d, 'wrk1d')
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, wrk2d, inb_wrk2d, isize_wrk2d, 'wrk2d')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, x, [g(1)%size, g(1)%inb_grid], g(1)%name)
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, y, [g(2)%size, g(2)%inb_grid], g(2)%name)
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, z, [g(3)%size, g(3)%inb_grid], g(3)%name)
+
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, q, [isize_field, inb_flow_array], 'flow')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, s, [isize_field, inb_scal_array], 'scal')
+
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk2d, [isize_wrk2d, inb_wrk2d], 'wrk2d')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
 
         return
     end subroutine TLAB_ALLOCATE
@@ -144,6 +147,40 @@ contains
 
     ! ######################################################################
     ! ######################################################################
+    subroutine TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, a, dims, s)
+
+        character(len=*), intent(in) :: C_FILE_LOC
+        real(wp), allocatable, intent(inout) :: a(..)
+        integer(wi), intent(in) :: dims(:)
+        character(len=*), intent(in) :: s
+
+        integer id
+
+        !#####################################################################
+        if (any(dims <= 0)) return
+
+        write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
+        do id = 2, size(dims)
+            write (str, *) dims(id); line = trim(adjustl(line))//'x'//trim(adjustl(str))
+        end do
+        call TLAB_WRITE_ASCII(lfile, line)
+        select rank (a)
+        rank (1)
+            allocate (a(dims(1)), stat=ierr)
+        rank (2)
+            allocate (a(dims(1), dims(2)), stat=ierr)
+        rank (3)
+            allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
+        end select
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
+
+    end subroutine TLAB_ALLOCATE_ARRAY_DOUBLE
+
+    ! ######################################################################
+    ! ######################################################################
     subroutine TLAB_ALLOCATE_ARRAY_SINGLE(C_FILE_LOC, a, dims, s)
 
         character(len=*), intent(in) :: C_FILE_LOC
@@ -165,9 +202,9 @@ contains
         rank (1)
             allocate (a(dims(1)), stat=ierr)
         rank (2)
-            allocate (a(dims(1),dims(2)), stat=ierr)
+            allocate (a(dims(1), dims(2)), stat=ierr)
         rank (3)
-            allocate (a(dims(1),dims(2),dims(3)), stat=ierr)
+            allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
         end select
         if (ierr /= 0) then
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
@@ -175,6 +212,72 @@ contains
         end if
 
     end subroutine TLAB_ALLOCATE_ARRAY_SINGLE
+
+    ! ######################################################################
+    ! ######################################################################
+    subroutine TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, a, dims, s)
+        character(len=*), intent(in) :: C_FILE_LOC
+        integer(wi), allocatable, intent(inout) :: a(..)
+        integer(wi), intent(in) :: dims(:)
+        character(len=*), intent(in) :: s
+
+        integer id
+
+        !#####################################################################
+        if (any(dims <= 0)) return
+
+        write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
+        do id = 2, size(dims)
+            write (str, *) dims(id); line = trim(adjustl(line))//'x'//trim(adjustl(str))
+        end do
+        call TLAB_WRITE_ASCII(lfile, line)
+        select rank (a)
+        rank (1)
+            allocate (a(dims(1)), stat=ierr)
+        rank (2)
+            allocate (a(dims(1), dims(2)), stat=ierr)
+        rank (3)
+            allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
+        end select
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
+
+    end subroutine TLAB_ALLOCATE_ARRAY_INT
+
+    ! ######################################################################
+    ! ######################################################################
+    subroutine TLAB_ALLOCATE_ARRAY_LONG_INT(C_FILE_LOC, a, dims, s)
+        character(len=*), intent(in) :: C_FILE_LOC
+        integer(longi), allocatable, intent(inout) :: a(..)
+        integer(wi), intent(in) :: dims(:)
+        character(len=*), intent(in) :: s
+
+        integer id
+
+        !#####################################################################
+        if (any(dims <= 0)) return
+
+        write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
+        do id = 2, size(dims)
+            write (str, *) dims(id); line = trim(adjustl(line))//'x'//trim(adjustl(str))
+        end do
+        call TLAB_WRITE_ASCII(lfile, line)
+        select rank (a)
+        rank (1)
+            allocate (a(dims(1)), stat=ierr)
+        rank (2)
+            allocate (a(dims(1), dims(2)), stat=ierr)
+        rank (3)
+            allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
+        end select
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
+
+    end subroutine TLAB_ALLOCATE_ARRAY_LONG_INT
 
     ! ###################################################################
     ! ###################################################################
