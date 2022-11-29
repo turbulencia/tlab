@@ -39,7 +39,7 @@ contains
 
 !#######################################################################
         call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, l_traj, [isize_traj + 1, nitera_save, inb_traj], 'l_traj')
-        call TLAB_ALLOCATE_ARRAY1_LONG_INT(__FILE__, l_traj_tags, isize_traj, 'l_traj_tags')
+        call TLAB_ALLOCATE_ARRAY_LONG_INT(__FILE__, l_traj_tags, [isize_traj], 'l_traj_tags')
 #ifdef USE_MPI
         call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, mpi_tmp, [isize_traj + 1, nitera_save], 'mpi_tmp')
 #endif
@@ -132,7 +132,7 @@ contains
 
 ! Interpolation
         if (nvar > 3) then
-            call FIELD_TO_PARTICLE(nvar - 3, data_in(4:), data(4:), l_g, l_q, l_comm, wrk3d)
+            call FIELD_TO_PARTICLE(nvar - 3, data_in(4:nvar), data(4:nvar), l_g, l_q, wrk3d)
         end if
 
 ! -------------------------------------------------------------------

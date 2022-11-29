@@ -1,6 +1,6 @@
 # Tlab
 
-Tools to simulate and analyze turbulent flows in 2D and 3D configurations. The numerical schemes are based on compact finite differences and Runge-Kutta methods. Meshes are structured and allow grid stretching. There are two possible simulation modes [temporal|spatial], which correspond to temporally evolving flows and spatially evolving flows, respectively. This parameter refers to the statistical homogeneities of the configuration, and it partly defines the boundary conditions and the calculation of statistical properties. The code implements a hybrid parallelization: MPI for a domain decomposition in the first and third directions, and OpenMPI in big loops.
+Tools to simulate and analyze 2D and 3D turbulent flows. The numerical schemes are based on compact finite differences and Runge-Kutta methods. Meshes are structured and can be nonuniform. There are two possible simulation modes, namely, temporally evolving flows and spatially evolving flows. This mode defines statistically homogeneous variables and the calculation of statistical properties, and it partly defines the boundary conditions. The code implements a hybrid parallelization: MPI for a domain decomposition in the first and third directions, and OpenMPI in big loops.
 
 Some examples of applications can be found in this [website](https://jpmellado.github.io/gallery.html).
 
@@ -39,7 +39,7 @@ cd examples
 make check BINS_PATH=${bins_LITTLE,bins_BIG,...} PRJS=${Case01,Case02,...}
 ```
 
-Instead of bins_LITTLE or bins_BIG, you have to use the corresponding directory whose executables you want to check.
+Instead of bins_LITTLE or bins_BIG, use the corresponding directory whose executables you want to check.
 
 If the variable PRJS is not passed, all projects in the directory examples will be checked.
 
@@ -55,17 +55,16 @@ Use valgrind to check for memory leaks.
 * [`scripts`](./scripts): shell and python scripts for job management and postprocessing
 * [`src`](./src): source files  
   * [`src/tools`](./src/tools): executables
-  * [`src/mappings`](./src/mappings): library with mappings from 3D fields to 3D, 2D and 1D data
-  * [`src/operators`](./src/operators): library with operators that depend only on fdm routines
-  * [`src/fdm`](./src/fdm): library with finite difference schemes
-  * [`src/utils`](./src/utils): library with basic generic operators
-  * [`src/external`](./src/external): external libraries, if any
+  * [`src/mappings`](./src/mappings): modules with mappings from 3D fields to 3D, 2D and 1D data
+  * [`src/operators`](./src/operators): modules with operators that depend only on fdm routines
+  * [`src/fdm`](./src/fdm): modules with finite difference schemes
+  * [`src/utils`](./src/utils): modules with basic generic operators
   * [`src/modules`](./src/modules): constants, variables, arrays and basic procedures
   * ...
 
 ## Library dependencies
 
-tools → mappings → operators → {fdm,filter,io,thermo,utils,external} → tlab
+tools → mappings → operators → {fdm,filter,io,thermo,utils} → tlab
 
 ## Data structure
 

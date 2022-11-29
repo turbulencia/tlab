@@ -48,10 +48,12 @@ program INIPART
 
         call FI_BACKGROUND_INITIALIZE(wrk1d)
 
+        call PARTICLE_INITIALIZE()
+
         ! -------------------------------------------------------------------
         ! Initialize particle information
         ! -------------------------------------------------------------------
-        call PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
+        call PARTICLE_RANDOM_POSITION(l_q, l_txc, txc, wrk3d)
 
         call IO_WRITE_PARTICLE(TRIM(ADJUSTL(tag_part))//'ics', l_g, l_q)
 

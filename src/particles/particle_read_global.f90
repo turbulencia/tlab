@@ -4,7 +4,6 @@
 subroutine PARTICLE_READ_GLOBAL(inifile)
     use TLAB_CONSTANTS, only: wp, wi, longi, efile, lfile
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
-    use TLAB_VARS, only: imax, jmax, kmax, isize_wrk2d
     use PARTICLE_VARS
     use TLAB_PROCS
     use PROFILES
@@ -46,6 +45,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
+    isize_part = 0
     if (part%type /= PART_TYPE_NONE) then
         call SCANINICHAR(bakfile, inifile, block, 'Parameters', '0.0', sRes)
         idummy = MAX_PARS
@@ -101,8 +101,6 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 ! ###################################################################
 ! Initializing size of particle arrays
 ! ###################################################################
-! -------------------------------------------------------------------
-! default
         inb_part_array = 3          ! # of particle properties in array
         inb_part = 3                ! # of particle properties in Runge-Kutta
         inb_part_txc = 1            ! # of particle auxiliary properties for intermediate calculations
@@ -142,16 +140,6 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
             inb_part_txc = max(inb_part_txc, inb_flow_array + inb_scal_array - 3)
             inb_part_interp = max(inb_part_interp, inb_traj)
         end if
-
-        isize_l_comm = (2*jmax*kmax + imax*jmax*2 + 2*jmax*2)*inb_part_interp
-#ifdef USE_MPI
-        isize_pbuffer = int(isize_part/4*(inb_part_array*2 + 1)) ! same size for both buffers
-        isize_l_comm = max(isize_l_comm, 2*isize_pbuffer)
-#endif
-
-        ! I do not think this is needed; ony used in particle_to_field.f90
-        idummy = max((imax + 1)*jmax, max((imax + 1)*kmax, jmax*(kmax + 1)))
-        isize_wrk2d = max(isize_wrk2d, idummy)
 
     end if
 

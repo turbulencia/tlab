@@ -27,7 +27,6 @@ module PARTICLE_VARS
     integer(wi)       :: inb_part                     ! # of particle properties in Runge-Kutta (prognostic)
     integer(wi)       :: inb_part_txc                 ! # of particle auxiliary properties for intermediate calculations
     integer(wi)       :: inb_part_interp              ! # of interpolated fields into lagrangian framework
-    integer(wi)       :: isize_l_comm                 ! memory space for the halo regions
 
 #ifdef USE_MPI
     integer(wi)   :: isize_pbuffer                    ! space for communication of halo regions
@@ -44,7 +43,7 @@ module PARTICLE_VARS
     character(len=32) :: traj_filename      ! file with the particle tags to be tracked; if void, then the first isize_traj particles are used
 
     ! Calculation of residence times
-    integer(wi)   :: residence_reset     !if reseidence l_q should be reset
+    integer(wi)   :: residence_reset     !if residence l_q should be reset
     real(wp)      :: l_y_lambda          !y coordinate where approx radiation begins for residence times (set in dns_main)
     real(wp)      :: l_y_base            !set to be 1/3 of cloud domain between two bouyancy stratification for residence times
 
