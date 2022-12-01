@@ -1,4 +1,3 @@
-#include "types.h"
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
 #endif
@@ -29,6 +28,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
   use IBM_VARS
   use TLAB_VARS,      only : g, isize_field, istagger, inb_scal
   use TLAB_VARS,      only : imax, jmax, kmax
+  use TLAB_CONSTANTS, only : wi
   use TLAB_PROCS  
 #ifdef USE_MPI
   use MPI
@@ -38,15 +38,13 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
 
   implicit none
 
-#include "integers.h"
-
   character(len=128), intent(in) :: C_FILE_LOC
 
 #ifdef USE_MPI 
-  TINTEGER, parameter            :: idi = TLAB_MPI_I_PARTIAL 
-  TINTEGER, parameter            :: idk = TLAB_MPI_K_PARTIAL 
+  integer(wi), parameter         :: idi = TLAB_MPI_I_PARTIAL 
+  integer(wi), parameter         :: idk = TLAB_MPI_K_PARTIAL 
 #endif
-  TINTEGER                       :: nyz, nxz, nxy 
+  integer(wi)                    :: nyz, nxz, nxy 
 
   ! ================================================================== !
   ! npages
@@ -87,46 +85,47 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
   ! allocate here all ibm related arrays
 
   ! eps          (geometry fields)
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,   eps,      isize_field, 'eps'     )
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   eps,     [isize_field], 'eps'    )
+
   if ( istagger == 1 ) then
-    call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, epsp,     isize_field, 'epsp'    )
+    call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, epsp,    [isize_field], 'epsp'   )
   end if
 
   ! fld_ibm      (copy modified field)
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC,   fld_ibm,  isize_field, 'fld_ibm' )
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   fld_ibm, [isize_field], 'fld_ibm')
 
   ! nob(i/j/k)   (number of objects)
-  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobi,   isize_nobi,    'nobi'  )
-  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobj,   isize_nobj,    'nobj'  )
-  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobk,   isize_nobk,    'nobk'  )
+  call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, nobi,   [isize_nobi],    'nobi'  )
+  call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, nobj,   [isize_nobj],    'nobj'  )
+  call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, nobk,   [isize_nobk],    'nobk'  )
   
   ! nob(i/j/k)_b (beginning objects)
-  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobi_b, isize_nobi_be, 'nobi_b')
-  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobj_b, isize_nobj_be, 'nobj_b')
-  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobk_b, isize_nobk_be, 'nobk_b')
+  call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, nobi_b, [isize_nobi_be], 'nobi_b')
+  call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, nobj_b, [isize_nobj_be], 'nobj_b')
+  call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, nobk_b, [isize_nobk_be], 'nobk_b')
 
   ! nob(i/j/k)_e (end of objects)
-  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobi_e, isize_nobi_be, 'nobi_e')
-  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobj_e, isize_nobj_be, 'nobj_e')
-  call TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, nobk_e, isize_nobk_be, 'nobk_e')
+  call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, nobi_e, [isize_nobi_be], 'nobi_e')
+  call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, nobj_e, [isize_nobj_be], 'nobj_e')
+  call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, nobk_e, [isize_nobk_be], 'nobk_e')
   
   ! xa, ya (spline arrays input)
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, xa, nspl,            'xa')
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, ya, nspl,            'ya')
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, xa, [nspl],            'xa')
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, ya, [nspl],            'ya')
 
   ! xb, yb (spline arrays output)
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, xb, isize_wrk1d_ibm, 'xb')
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, yb, isize_wrk1d_ibm, 'yb')
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, xb, [isize_wrk1d_ibm], 'xb')
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, yb, [isize_wrk1d_ibm], 'yb')
 
   ! gammas for conditional averages
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, dy,       jmax-1, 'dy'   )
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, facu,     jmax-2, 'facu' )
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, facl,     jmax-2, 'facl' )
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_0,  jmax,   'eps_0')
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_1,  jmax,   'eps_1')
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_f,  jmax,   'eps_f')
-  call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, gamma_s,  jmax,   'eps_s')
-  call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, scal_bcs, inb_scal, jmax, 'scal_bcs')
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, dy,       [jmax-1], 'dy'   )
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, facu,     [jmax-2], 'facu' )
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, facl,     [jmax-2], 'facl' )
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, gamma_0,  [jmax],   'eps_0')
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, gamma_1,  [jmax],   'eps_1')
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, gamma_f,  [jmax],   'eps_f')
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, gamma_s,  [jmax],   'eps_s')
+  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, scal_bcs, [jmax, inb_scal], 'scal_bcs')
 
   return
 end subroutine IBM_ALLOCATE

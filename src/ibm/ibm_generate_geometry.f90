@@ -1,4 +1,3 @@
-#include "types.h"
 #ifdef USE_MPI 
 #include "dns_const_mpi.h"
 #endif
@@ -30,35 +29,34 @@
 subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   
   use IBM_VARS
-  use TLAB_VARS,     only : g, isize_field, imax, jmax, kmax
+  use TLAB_VARS,      only : g, isize_field, imax, jmax, kmax
+  use TLAB_CONSTANTS, only : wi, wp
 #ifdef USE_MPI
   use MPI
-  use TLAB_MPI_VARS, only : ims_size_i, ims_size_k    
-  use TLAB_MPI_VARS, only : ims_npro_i, ims_npro_k, ims_err 
+  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_k    
+  use TLAB_MPI_VARS,  only : ims_npro_i, ims_npro_k, ims_err 
   use TLAB_MPI_PROCS
 #ifdef IBM_DEBUG
-  use TLAB_MPI_VARS, only : ims_pro
+  use TLAB_MPI_VARS,  only : ims_pro
 #endif
 #endif
   
   implicit none
   
-#include "integers.h"
-
-  TREAL, dimension(isize_field), intent(in) :: epsi, epsj, epsk
+  real(wp), dimension(isize_field), intent(in) :: epsi, epsj, epsk
   
 #ifdef USE_MPI 
-  TINTEGER, parameter                       :: idi = TLAB_MPI_I_PARTIAL 
-  TINTEGER, parameter                       :: idk = TLAB_MPI_K_PARTIAL 
+  integer(wi), parameter                       :: idi = TLAB_MPI_I_PARTIAL 
+  integer(wi), parameter                       :: idk = TLAB_MPI_K_PARTIAL 
 #endif
-  TINTEGER                                  :: i, j, k, ij, ik, jk, ip, inum
-  TINTEGER                                  :: nyz, nxz, nxy
+  integer(wi)                                  :: i, j, k, ij, ik, jk, ip, inum
+  integer(wi)                                  :: nyz, nxz, nxy
 
 #ifdef USE_MPI 
-  TINTEGER                                  :: dummy
+  integer(wi)                                  :: dummy
 #else
 #ifdef IBM_DEBUG
-  TINTEGER, parameter                       :: ims_pro = 0         
+  integer(wi), parameter                       :: ims_pro = 0         
 #endif
 #endif
 
@@ -87,41 +85,41 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 #endif
 
   ! initialize 
-  nobi(:)   = i0; nobj(:)   = i0; nobk(:)   = i0
-  nobi_b(:) = i0; nobj_b(:) = i0; nobk_b(:) = i0
-  nobi_e(:) = i0; nobj_e(:) = i0; nobk_e(:) = i0
-  nobi_max  = i0; nobj_max  = i0; nobk_max  = i0
+  nobi(:)   = 0; nobj(:)   = 0; nobk(:)   = 0
+  nobi_b(:) = 0; nobj_b(:) = 0; nobk_b(:) = 0
+  nobi_e(:) = 0; nobj_e(:) = 0; nobk_e(:) = 0
+  nobi_max  = 0; nobj_max  = 0; nobk_max  = 0
 
   ! ================================================================== !
   ! number, beginning and end of objects in x-direction
-  ip = i1
+  ip = 1
   do i = 1, g(1)%size - 1     ! contiguous i-lines
     do jk = 1, nyz            ! pages of   i-lines
-      if((ip == 1) .and. (epsi(jk) == C_1_R)) then ! exception: check first plane for objects
-        nobi(jk) = i1
+      if((ip == 1) .and. (epsi(jk) == 1.0_wp)) then ! exception: check first plane for objects
+        nobi(jk) = 1
       end if 
-      if((epsi(ip+jk-1) == C_0_R) .and. (epsi(ip+jk-1+nyz) == C_1_R)) then ! check for interface 
-        nobi(jk) = nobi(jk) + i1
+      if((epsi(ip+jk-1) == 0.0_wp) .and. (epsi(ip+jk-1+nyz) == 1.0_wp)) then ! check for interface 
+        nobi(jk) = nobi(jk) + 1
       end if
-      if((i == 1) .and. (epsi(jk) == C_1_R)) then ! exception: check first plane for interface
+      if((i == 1) .and. (epsi(jk) == 1.0_wp)) then ! exception: check first plane for interface
         nobi_b(jk) = i ! nobi_b
       end if
-      if((epsi(ip+jk-1) == C_0_R) .and. (epsi(ip+jk-1+nyz) == C_1_R)) then     ! nobi_b check for interface 
-        inum = i0
-        do while (nobi_b(inum+jk) /= i0)
+      if((epsi(ip+jk-1) == 0.0_wp) .and. (epsi(ip+jk-1+nyz) == 1.0_wp)) then     ! nobi_b check for interface 
+        inum = 0
+        do while (nobi_b(inum+jk) /= 0)
           inum = inum + nyz            
         end do 
-        nobi_b(inum+jk) = i + i1
-      elseif((epsi(ip+jk-1) == C_1_R) .and. (epsi(ip+jk-1+nyz) == C_0_R)) then ! nobi_e check for interface 
-        inum = i0
-        do while (nobi_e(inum+jk) /= i0)
+        nobi_b(inum+jk) = i + 1
+      elseif((epsi(ip+jk-1) == 1.0_wp) .and. (epsi(ip+jk-1+nyz) == 0.0_wp)) then ! nobi_e check for interface 
+        inum = 0
+        do while (nobi_e(inum+jk) /= 0)
           inum = inum + nyz            
         end do 
         nobi_e(inum+jk) = i        
       end if
-      if((i == (g(1)%size - 1)) .and. (epsi(ip+jk-1+nyz) == C_1_R)) then ! exception: check last plane for interface
-        inum = i0
-        do while (nobi_e(inum+jk) /= i0)
+      if((i == (g(1)%size - 1)) .and. (epsi(ip+jk-1+nyz) == 1.0_wp)) then ! exception: check last plane for interface
+        inum = 0
+        do while (nobi_e(inum+jk) /= 0)
           inum = inum + nyz            
         end do 
         nobi_e(inum+jk) = g(1)%size    
@@ -132,34 +130,34 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 
   ! ================================================================== !
   ! number, begin and end of objects in y-direction
-  ip = i1
+  ip = 1
   do j = 1, g(2)%size - 1     ! contiguous j-lines
     do ik = 1, nxz            ! pages of   j-lines
-      if((ip == 1) .and. (epsj(ik) == C_1_R)) then ! exception: check first plane for objects
-        nobj(ik) = i1
+      if((ip == 1) .and. (epsj(ik) == 1.0_wp)) then ! exception: check first plane for objects
+        nobj(ik) = 1
       end if 
-      if((epsj(ip+ik-1) == C_0_R) .and. (epsj(ip+ik-1+nxz) == C_1_R)) then ! check for interface 
-        nobj(ik) = nobj(ik) + i1
+      if((epsj(ip+ik-1) == 0.0_wp) .and. (epsj(ip+ik-1+nxz) == 1.0_wp)) then ! check for interface 
+        nobj(ik) = nobj(ik) + 1
       end if
-      if((j == 1) .and. (epsj(ik) == C_1_R)) then ! exception: check first plane for interface
+      if((j == 1) .and. (epsj(ik) == 1.0_wp)) then ! exception: check first plane for interface
         nobj_b(ik) = j ! nobj_b
       end if
-      if((epsj(ip+ik-1) == C_0_R) .and. (epsj(ip+ik-1+nxz) == C_1_R)) then     ! nobj_b check for interface 
-        inum = i0
-        do while (nobj_b(inum+ik) /= i0)
+      if((epsj(ip+ik-1) == 0.0_wp) .and. (epsj(ip+ik-1+nxz) == 1.0_wp)) then     ! nobj_b check for interface 
+        inum = 0
+        do while (nobj_b(inum+ik) /= 0)
           inum = inum + nxz            
         end do 
-        nobj_b(inum+ik) = j + i1
-      elseif((epsj(ip+ik-1) == C_1_R) .and. (epsj(ip+ik-1+nxz) == C_0_R)) then ! nobj_e check for interface 
-        inum = i0
-        do while (nobj_e(inum+ik) /= i0)
+        nobj_b(inum+ik) = j + 1
+      elseif((epsj(ip+ik-1) == 1.0_wp) .and. (epsj(ip+ik-1+nxz) == 0.0_wp)) then ! nobj_e check for interface 
+        inum = 0
+        do while (nobj_e(inum+ik) /= 0)
           inum = inum + nxz            
         end do 
         nobj_e(inum+ik) = j        
       end if
-      if((j == (g(2)%size - 1)) .and. (epsj(ip+ik-1+nxz) == C_1_R)) then ! exception: check last plane for interface
-        inum = i0
-        do while (nobj_e(inum+ik) /= i0)
+      if((j == (g(2)%size - 1)) .and. (epsj(ip+ik-1+nxz) == 1.0_wp)) then ! exception: check last plane for interface
+        inum = 0
+        do while (nobj_e(inum+ik) /= 0)
           inum = inum + nxz           
         end do 
         nobj_e(inum+ik) = g(2)%size    
@@ -170,34 +168,34 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 
   ! ================================================================== !
   ! number, begin and end of objects in z-direction
-  ip = i1
+  ip = 1
   do k = 1, g(3)%size - 1     ! contiguous k-lines
     do ij = 1, nxy            ! pages of   k-lines
-      if((ip == 1) .and. (epsk(ij) == C_1_R)) then ! exception: check first plane for objects
-        nobk(ij) = i1
+      if((ip == 1) .and. (epsk(ij) == 1.0_wp)) then ! exception: check first plane for objects
+        nobk(ij) = 1
       end if 
-      if((epsk(ip+ij-1) == C_0_R) .and. (epsk(ip+ij-1+nxy) == C_1_R)) then ! check for interface 
-        nobk(ij) = nobk(ij) + i1
+      if((epsk(ip+ij-1) == 0.0_wp) .and. (epsk(ip+ij-1+nxy) == 1.0_wp)) then ! check for interface 
+        nobk(ij) = nobk(ij) + 1
       end if
-      if((k == 1) .and. (epsk(ij) == C_1_R)) then ! exception: check first plane for interface
+      if((k == 1) .and. (epsk(ij) == 1.0_wp)) then ! exception: check first plane for interface
         nobk_b(ij) = k ! nobj_b
       end if
-      if((epsk(ip+ij-1) == C_0_R) .and. (epsk(ip+ij-1+nxy) == C_1_R)) then     ! nobk_b check for interface 
-        inum = i0
-        do while (nobk_b(inum+ij) /= i0)
+      if((epsk(ip+ij-1) == 0.0_wp) .and. (epsk(ip+ij-1+nxy) == 1.0_wp)) then     ! nobk_b check for interface 
+        inum = 0
+        do while (nobk_b(inum+ij) /= 0)
           inum = inum + nxy            
         end do 
-        nobk_b(inum+ij) = k + i1
-      elseif((epsk(ip+ij-1) == C_1_R) .and. (epsk(ip+ij-1+nxy) == C_0_R)) then ! nobk_e check for interface 
-        inum = i0
-        do while (nobk_e(inum+ij) /= i0)
+        nobk_b(inum+ij) = k + 1
+      elseif((epsk(ip+ij-1) == 1.0_wp) .and. (epsk(ip+ij-1+nxy) == 0.0_wp)) then ! nobk_e check for interface 
+        inum = 0
+        do while (nobk_e(inum+ij) /= 0)
           inum = inum + nxy            
         end do 
         nobk_e(inum+ij) = k        
       end if
-      if((k == (g(3)%size - 1)) .and. (epsk(ip+ij-1+nxy) == C_1_R)) then ! exception: check last plane for interface
-        inum = i0
-        do while (nobk_e(inum+ij) /= i0)
+      if((k == (g(3)%size - 1)) .and. (epsk(ip+ij-1+nxy) == 1.0_wp)) then ! exception: check last plane for interface
+        inum = 0
+        do while (nobk_e(inum+ij) /= 0)
           inum = inum + nxy           
         end do 
         nobk_e(inum+ij) = g(3)%size    
@@ -212,11 +210,11 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   nobk_max = maxval(nobk)
 #ifdef USE_MPI
   dummy = nobi_max
-  call MPI_ALLREDUCE(dummy, nobi_max, i1, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
+  call MPI_ALLREDUCE(dummy, nobi_max, 1, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
   dummy = nobj_max
-  call MPI_ALLREDUCE(dummy, nobj_max, i1, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
+  call MPI_ALLREDUCE(dummy, nobj_max, 1, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
   dummy = nobk_max
-  call MPI_ALLREDUCE(dummy, nobk_max, i1, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
+  call MPI_ALLREDUCE(dummy, nobk_max, 1, MPI_INTEGER4, MPI_MAX, MPI_COMM_WORLD, ims_err)
 #endif
 
   ! ================================================================== !

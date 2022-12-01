@@ -1,4 +1,3 @@
-#include "types.h"
 #ifdef USE_MPI 
 #include "dns_const_mpi.h"
 #endif
@@ -27,28 +26,27 @@
 subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
   
   use IBM_VARS
-  use TLAB_VARS,     only : g, imax, jmax, kmax, isize_field 
+  use TLAB_VARS,      only : g, imax, jmax, kmax, isize_field 
+  use TLAB_CONSTANTS, only : wi, wp
 #ifdef USE_MPI
-  use MPI
-  use TLAB_MPI_VARS, only : ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-  use TLAB_MPI_VARS, only : ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  use TLAB_MPI_VARS, only : ims_npro_i, ims_npro_k
-  use TLAB_MPI_VARS, only : ims_size_i 
+  use MPI 
+  use TLAB_MPI_VARS,  only : ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  use TLAB_MPI_VARS,  only : ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  use TLAB_MPI_VARS,  only : ims_npro_i, ims_npro_k
+  use TLAB_MPI_VARS,  only : ims_size_i 
   use TLAB_MPI_PROCS
 #endif
 
   implicit none
   
-#include "integers.h"
-  
-  TREAL, dimension(isize_field), intent(  out) :: epsi, epsj, epsk
-  TREAL, dimension(isize_field), intent(inout) :: tmp
+  real(wp), dimension(isize_field), intent(  out) :: epsi, epsj, epsk
+  real(wp), dimension(isize_field), intent(inout) :: tmp
 
 #ifdef USE_MPI 
-  TINTEGER, parameter                          :: idi = TLAB_MPI_I_PARTIAL 
-  TINTEGER, parameter                          :: idk = TLAB_MPI_K_PARTIAL 
+  integer(wi), parameter                          :: idi = TLAB_MPI_I_PARTIAL 
+  integer(wi), parameter                          :: idk = TLAB_MPI_K_PARTIAL 
 #endif
-  TINTEGER                                     :: nyz, nxy
+  integer(wi)                                     :: nyz, nxy
 
   ! ================================================================== !
   ! MPI  and local transposition in x

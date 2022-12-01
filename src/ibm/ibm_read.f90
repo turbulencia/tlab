@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 
@@ -32,11 +31,9 @@ subroutine IBM_READ_INI(inifile)
   
   implicit none
 
-#include "integers.h"
+  character*(*), intent(in) :: inifile
 
-  CHARACTER*(*), intent(in) :: inifile
-
-  CHARACTER                 :: bakfile*32, sRes*512
+  character                 :: bakfile*32, sRes*512
 
   ! ================================================================== !
   ! initialization 
@@ -120,7 +117,7 @@ subroutine IBM_READ_CONSISTENCY_CHECK(imode_rhs,                              &
                                       BcsScalJmin_type,    BcsScalJmax_type,  &
                                       BcsScalJmin_SfcType, BcsScalJmax_SfcType)
 
-  use TLAB_CONSTANTS, only : efile, MAX_VARS
+  use TLAB_CONSTANTS, only : efile, MAX_VARS, wi, wp
   use TLAB_VARS,      only : imax, g
   use TLAB_VARS,      only : imode_eqns, iadvection, inb_scal
   use TLAB_VARS,      only : radiation, transport, chemistry, subsidence
@@ -129,14 +126,12 @@ subroutine IBM_READ_CONSISTENCY_CHECK(imode_rhs,                              &
   
   implicit none
 
-#include "integers.h"
+  integer(wi), intent(in) :: imode_rhs
+  integer(wi), intent(in) :: BcsFlowJmin_type(MAX_VARS)
+  integer(wi), intent(in) :: BcsScalJmin_type(MAX_VARS),    BcsScalJmax_type(MAX_VARS)
+  integer(wi), intent(in) :: BcsScalJmin_SfcType(MAX_VARS), BcsScalJmax_SfcType(MAX_VARS)
 
-  TINTEGER,      intent(in) :: imode_rhs
-  TINTEGER,      intent(in) :: BcsFlowJmin_type(MAX_VARS)
-  TINTEGER,      intent(in) :: BcsScalJmin_type(MAX_VARS),    BcsScalJmax_type(MAX_VARS)
-  TINTEGER,      intent(in) :: BcsScalJmin_SfcType(MAX_VARS), BcsScalJmax_SfcType(MAX_VARS)
-
-  TINTEGER                  :: is
+  integer(wi)             :: is
 
   ! ================================================================== !
   ! consistency check of IBM input data
@@ -145,8 +140,13 @@ subroutine IBM_READ_CONSISTENCY_CHECK(imode_rhs,                              &
     call TLAB_STOP(DNS_ERROR_OPTION)
   end if
   if ( ibm_io == IBM_IO_BIT ) then
-    if ( mod( imax, i8 ) /= 0 ) then
-      call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM_IO bitwise not possible, restriction: mod(imax/8)=0.')
+    if ( wp == 8 ) then
+      if ( mod( imax, 8 ) /= 0 ) then
+        call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM_IO bitwise not possible, restriction: mod(imax/8)=0.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+      end if
+    else
+      call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM_IO bitwise not tested/changed yet for "working precision = single precision".')
       call TLAB_STOP(DNS_ERROR_OPTION)
     end if
   end if
