@@ -187,27 +187,27 @@ contains
                              mean, wrk1d, wrk2d, wrk3d)
 
             ! Lagrange Liquid and Liquid without diffusion
-            if (imode_part == PART_TYPE_BIL_CLOUD_3 .or. imode_part == PART_TYPE_BIL_CLOUD_4) then
+            if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then
                 l_txc(:, 1) = 1.0_wp; ! We want density
-                call PARTICLE_TO_FIELD(l_q, l_txc, txc(1, 5), wrk2d, wrk3d)
+                call PARTICLE_TO_FIELD(l_q, l_txc, txc(1, 5), wrk3d)
 
                 hq(:, 1) = hq(:, 1) + small_wp
                 idummy = inb_part - 3 ! # scalar properties solved in the lagrangian
                 do is = inb_scal_array + 1 + 1, inb_scal_array + 1 + idummy
                     schmidt(is) = schmidt(1)
-                    call PARTICLE_TO_FIELD(l_q, l_q(1, 3 + is - inb_scal_array - 1), hq(1, 2), wrk2d, wrk3d)
+                    call PARTICLE_TO_FIELD(l_q, l_q(1, 3 + is - inb_scal_array - 1), hq(1, 2), wrk3d)
                     hq(:, 2) = hq(:, 2)/hq(:, 1)
                     call AVG_SCAL_XZ(is, q, s, hq(1, 2), &
                                      txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean, wrk1d, wrk2d, wrk3d)
                 end do
             end if
 
-            if (imode_part /= PART_TYPE_NONE .and. icalc_part_pdf == 1) then                ! Save particle pathlines for particle_pdf
+            if (part%type /= PART_TYPE_NONE .and. particle_pdf_calc ) then                ! Save particle pathlines for particle_pdf
                 write (fname, *) itime; fname = "particle_pdf."//trim(adjustl(fname))
-                call PARTICLE_PDF(fname, s, l_g, l_q, l_txc, l_comm, wrk3d)
+                call PARTICLE_PDF(fname, s, l_g, l_q, l_txc, wrk3d)
             end if
 
-            if (imode_part == PART_TYPE_BIL_CLOUD_4) then  ! Save particle residence times
+            if (part%type == PART_TYPE_BIL_CLOUD_4) then  ! Save particle residence times
                 write (fname, *) itime; fname = "residence_pdf."//trim(adjustl(fname))
                 call PARTICLE_RESIDENCE_PDF(fname, l_g%np, l_q)
             end if

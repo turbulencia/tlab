@@ -1,26 +1,21 @@
-#include "types.h"
-#include "dns_error.h"
 #include "dns_const.h"
 
 !#######################################################################
 !#######################################################################
-subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d, wrk3d)
+subroutine RHS_PART_1()
 
     use TLAB_TYPES,  only: pointers_dt, pointers3d_dt
-    use TLAB_VARS,   only: imax, jmax, kmax, isize_field
+    use TLAB_VARS,   only: imax, jmax, kmax
     use TLAB_VARS,   only: g
     use TLAB_VARS,   only: visc, radiation
+    use TLAB_ARRAYS
+    use DNS_ARRAYS
     use PARTICLE_VARS
-    use PARTICLE_ARRAYS, only: l_g ! but this is also changeing in time...
+    use PARTICLE_ARRAYS
     use PARTICLE_INTERPOLATE
     use THERMO_VARS, only: thermo_param
 
     implicit none
-
-    real(wp), dimension(isize_field, *), target :: q, s, txc
-    real(wp), dimension(isize_part, *), target :: l_q, l_hq, l_txc
-    real(wp), dimension(*) :: l_comm
-    real(wp), dimension(*) :: wrk1d, wrk2d, wrk3d
 
 ! -------------------------------------------------------------------
     real(wp) dummy, dummy2
@@ -43,7 +38,7 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
 ! -------------------------------------------------------------------
 ! Additional terms depending on type of particle evolution equations
 ! -------------------------------------------------------------------
-    select case (imode_part)
+    select case (part%type)
 
     case (PART_TYPE_BIL_CLOUD_3, PART_TYPE_BIL_CLOUD_4)
         dummy2 = -thermo_param(2)
@@ -62,7 +57,7 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
         call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), s(1, 2), txc(1, 4), txc(1, 3), wrk2d, wrk3d)
 
         txc(:, 1) = txc(:, 1) + (visc*dummy2*(txc(:, 4) + txc(:, 5) + txc(:, 6))) !first eq. without ds/dxi
-        txc(:, 2) = C_1_R - dummy*s(:, 1) - dummy2*s(:, 2) !xi field in txc(1,2)
+        txc(:, 2) = 1.0_wp - dummy*s(:, 1) - dummy2*s(:, 2) !xi field in txc(1,2)
 
         call FI_GRADIENT(imax, jmax, kmax, txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d) ! square of chi gradient in txc(1,3)
         txc(:, 3) = visc*txc(:, 3)
@@ -79,21 +74,21 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
         nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 2); data_out(nvar)%field => l_txc(:, 2)
         nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 3); data_out(nvar)%field => l_txc(:, 3)
         nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 4); data_out(nvar)%field => l_txc(:, 4)
-        l_txc(:, 1:4) = C_0_R
+        l_txc(:, 1:4) = 0.0_wp
 
     end select
 
 ! -------------------------------------------------------------------
 ! Interpolating field data into particles
 ! The interpolated data is added to the existing data, which
-!  consitutes already the evolution equation for particle position
+! consitutes already the evolution equation for particle position
 ! -------------------------------------------------------------------
-    call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q, l_comm, wrk3d)
+    call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q, wrk3d)
 
 ! -------------------------------------------------------------------
 ! Completing evolution equations
 ! -------------------------------------------------------------------
-    select case (imode_part)
+    select case (part%type)
     
     case(PART_TYPE_BIL_CLOUD_3, PART_TYPE_BIL_CLOUD_4)
 ! l_txc(1) = equation without ds/dxi
@@ -101,19 +96,19 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
 ! l_txc(3) = evaporation/condensation term without d2s/dxi2
 ! l_txc(4) = radiation term without ds/dxi
 
-        delta_inv0 = C_1_R/thermo_param(1)/thermo_param(3)
-        delta_inv2 = -C_05_R/thermo_param(1)/thermo_param(3)
-        delta_inv4 = -C_025_R/thermo_param(1)/thermo_param(3)
+        delta_inv0 = 1.0_wp/thermo_param(1)/thermo_param(3)
+        delta_inv2 = -0.5_wp/thermo_param(1)/thermo_param(3)
+        delta_inv4 = -0.25_wp/thermo_param(1)/thermo_param(3)
 
         do i = 1, l_g%np
-            l_hq(i, 4) = l_hq(i, 4) - l_txc(i, 1)/(C_1_R + EXP(l_txc(i, 2)*delta_inv0))
+            l_hq(i, 4) = l_hq(i, 4) - l_txc(i, 1)/(1.0_wp + EXP(l_txc(i, 2)*delta_inv0))
 
-            l_hq(i, 5) = l_hq(i, 5) - l_txc(i, 4)/(C_1_R + EXP(l_txc(i, 2)*delta_inv0)) &
+            l_hq(i, 5) = l_hq(i, 5) - l_txc(i, 4)/(1.0_wp + EXP(l_txc(i, 2)*delta_inv0)) &
                          - l_txc(i, 3)*delta_inv4/(COSH(l_txc(i, 2)*delta_inv2)**2)
         end do
 
     case(PART_TYPE_SIMPLE_SETT)
-        l_hq(1:l_g%np, 2) = l_hq(1:l_g%np, 2) - particle_param(1)
+        l_hq(1:l_g%np, 2) = l_hq(1:l_g%np, 2) - part%parameters(1)
     
     end select
     
@@ -123,4 +118,4 @@ subroutine RHS_PARTICLE_GLOBAL(q, s, txc, l_q, l_hq, l_txc, l_comm, wrk1d, wrk2d
     end do
 
     return
-end subroutine RHS_PARTICLE_GLOBAL
+end subroutine RHS_PART_1

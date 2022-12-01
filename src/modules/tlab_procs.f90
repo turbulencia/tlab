@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module TLAB_PROCS
-    use TLAB_CONSTANTS, only: wp, wi, longi, lfile, efile
+    use TLAB_CONSTANTS, only: sp, wp, wi, longi, lfile, efile
     use TLAB_VARS
 #ifdef USE_OPENMP
     use OMP_LIB
@@ -22,8 +22,13 @@ module TLAB_PROCS
     public :: TLAB_STOP
     public :: TLAB_WRITE_ASCII
     public :: TLAB_ALLOCATE
+    public :: TLAB_ALLOCATE_ARRAY_SINGLE
+    public :: TLAB_ALLOCATE_ARRAY_DOUBLE
+    public :: TLAB_ALLOCATE_ARRAY_INT
+    public :: TLAB_ALLOCATE_ARRAY_LONG_INT
+    ! to be removed
     public :: TLAB_ALLOCATE_ARRAY1, TLAB_ALLOCATE_ARRAY2
-    public :: TLAB_ALLOCATE_ARRAY1_INT, TLAB_ALLOCATE_ARRAY1_LONG_INT
+    public :: TLAB_ALLOCATE_ARRAY1_INT!, TLAB_ALLOCATE_ARRAY1_LONG_INT
 #ifdef USE_MPI
     public :: TLAB_MPI_PANIC
 #endif
@@ -36,18 +41,17 @@ contains
 
         character(len=*), intent(in) :: C_FILE_LOC
 
-        ! -------------------------------------------------------------------
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, x, g(1)%inb_grid, g(1)%size, 'x')
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, y, g(2)%inb_grid, g(2)%size, 'y')
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, z, g(3)%inb_grid, g(3)%size, 'z')
-        ! -------------------------------------------------------------------
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, q, inb_flow_array, isize_field, 'flow')
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, s, inb_scal_array, isize_field, 'scal')
-        ! -------------------------------------------------------------------
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, txc, inb_txc, isize_txc_field, 'txc')
-        call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, wrk3d, isize_wrk3d, 'wrk3d')
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, wrk1d, inb_wrk1d, isize_wrk1d, 'wrk1d')
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, wrk2d, inb_wrk2d, isize_wrk2d, 'wrk2d')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, x, [g(1)%size, g(1)%inb_grid], g(1)%name)
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, y, [g(2)%size, g(2)%inb_grid], g(2)%name)
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, z, [g(3)%size, g(3)%inb_grid], g(3)%name)
+
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, q, [isize_field, inb_flow_array], 'flow')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, s, [isize_field, inb_scal_array], 'scal')
+
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk2d, [isize_wrk2d, inb_wrk2d], 'wrk2d')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
 
         return
     end subroutine TLAB_ALLOCATE
@@ -64,11 +68,11 @@ contains
         !#####################################################################
         if (i1 <= 0) return
 
-        write (str, *) i1; line = 'Allocating array '//TRIM(ADJUSTL(s))//' of size '//TRIM(ADJUSTL(str))
+        write (str, *) i1; line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
         call TLAB_WRITE_ASCII(lfile, line)
         allocate (a(i1), stat=ierr)
         if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//TRIM(ADJUSTL(s))//'.')
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
             call TLAB_STOP(DNS_ERROR_ALLOC)
         end if
 
@@ -86,11 +90,11 @@ contains
         !#####################################################################
         if (i1 <= 0) return
 
-        write (str, *) i1; line = 'Allocating array '//TRIM(ADJUSTL(s))//' of size '//TRIM(ADJUSTL(str))
+        write (str, *) i1; line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
         call TLAB_WRITE_ASCII(lfile, line)
         allocate (a(i1), stat=ierr)
         if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//TRIM(ADJUSTL(s))//'.')
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
             call TLAB_STOP(DNS_ERROR_ALLOC)
         end if
 
@@ -108,11 +112,11 @@ contains
         !#####################################################################
         if (i1 <= 0) return
 
-        write (str, *) i1; line = 'Allocating array '//TRIM(ADJUSTL(s))//' of size '//TRIM(ADJUSTL(str))
+        write (str, *) i1; line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
         call TLAB_WRITE_ASCII(lfile, line)
         allocate (a(i1), stat=ierr)
         if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//TRIM(ADJUSTL(s))//'.')
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
             call TLAB_STOP(DNS_ERROR_ALLOC)
         end if
 
@@ -130,16 +134,150 @@ contains
         !#####################################################################
         if (i1 <= 0 .or. i2 <= 0) return
 
-        write (str, *) i2; line = 'Allocating array '//TRIM(ADJUSTL(s))//' of size '//TRIM(ADJUSTL(str))//'x'
-        write (str, *) i1; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
+        write (str, *) i2; line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))//'x'
+        write (str, *) i1; line = trim(adjustl(line))//trim(adjustl(str))
         call TLAB_WRITE_ASCII(lfile, line)
         allocate (a(i2, i1), stat=ierr)
         if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//TRIM(ADJUSTL(s))//'.')
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
             call TLAB_STOP(DNS_ERROR_ALLOC)
         end if
 
     end subroutine TLAB_ALLOCATE_ARRAY2
+
+    ! ######################################################################
+    ! ######################################################################
+    subroutine TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, a, dims, s)
+
+        character(len=*), intent(in) :: C_FILE_LOC
+        real(wp), allocatable, intent(inout) :: a(..)
+        integer(wi), intent(in) :: dims(:)
+        character(len=*), intent(in) :: s
+
+        integer id
+
+        !#####################################################################
+        if (any(dims <= 0)) return
+
+        write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
+        do id = 2, size(dims)
+            write (str, *) dims(id); line = trim(adjustl(line))//'x'//trim(adjustl(str))
+        end do
+        call TLAB_WRITE_ASCII(lfile, line)
+        select rank (a)
+        rank (1)
+            allocate (a(dims(1)), stat=ierr)
+        rank (2)
+            allocate (a(dims(1), dims(2)), stat=ierr)
+        rank (3)
+            allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
+        end select
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
+
+    end subroutine TLAB_ALLOCATE_ARRAY_DOUBLE
+
+    ! ######################################################################
+    ! ######################################################################
+    subroutine TLAB_ALLOCATE_ARRAY_SINGLE(C_FILE_LOC, a, dims, s)
+
+        character(len=*), intent(in) :: C_FILE_LOC
+        real(sp), allocatable, intent(inout) :: a(..)
+        integer(wi), intent(in) :: dims(:)
+        character(len=*), intent(in) :: s
+
+        integer id
+
+        !#####################################################################
+        if (any(dims <= 0)) return
+
+        write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
+        do id = 2, size(dims)
+            write (str, *) dims(id); line = trim(adjustl(line))//'x'//trim(adjustl(str))
+        end do
+        call TLAB_WRITE_ASCII(lfile, line)
+        select rank (a)
+        rank (1)
+            allocate (a(dims(1)), stat=ierr)
+        rank (2)
+            allocate (a(dims(1), dims(2)), stat=ierr)
+        rank (3)
+            allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
+        end select
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
+
+    end subroutine TLAB_ALLOCATE_ARRAY_SINGLE
+
+    ! ######################################################################
+    ! ######################################################################
+    subroutine TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, a, dims, s)
+        character(len=*), intent(in) :: C_FILE_LOC
+        integer(wi), allocatable, intent(inout) :: a(..)
+        integer(wi), intent(in) :: dims(:)
+        character(len=*), intent(in) :: s
+
+        integer id
+
+        !#####################################################################
+        if (any(dims <= 0)) return
+
+        write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
+        do id = 2, size(dims)
+            write (str, *) dims(id); line = trim(adjustl(line))//'x'//trim(adjustl(str))
+        end do
+        call TLAB_WRITE_ASCII(lfile, line)
+        select rank (a)
+        rank (1)
+            allocate (a(dims(1)), stat=ierr)
+        rank (2)
+            allocate (a(dims(1), dims(2)), stat=ierr)
+        rank (3)
+            allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
+        end select
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
+
+    end subroutine TLAB_ALLOCATE_ARRAY_INT
+
+    ! ######################################################################
+    ! ######################################################################
+    subroutine TLAB_ALLOCATE_ARRAY_LONG_INT(C_FILE_LOC, a, dims, s)
+        character(len=*), intent(in) :: C_FILE_LOC
+        integer(longi), allocatable, intent(inout) :: a(..)
+        integer(wi), intent(in) :: dims(:)
+        character(len=*), intent(in) :: s
+
+        integer id
+
+        !#####################################################################
+        if (any(dims <= 0)) return
+
+        write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
+        do id = 2, size(dims)
+            write (str, *) dims(id); line = trim(adjustl(line))//'x'//trim(adjustl(str))
+        end do
+        call TLAB_WRITE_ASCII(lfile, line)
+        select rank (a)
+        rank (1)
+            allocate (a(dims(1)), stat=ierr)
+        rank (2)
+            allocate (a(dims(1), dims(2)), stat=ierr)
+        rank (3)
+            allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
+        end select
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
+
+    end subroutine TLAB_ALLOCATE_ARRAY_LONG_INT
 
     ! ###################################################################
     ! ###################################################################
@@ -172,8 +310,8 @@ contains
 
         !########################################################################
         ! First output
-        call DATE_AND_TIME(clock(1), clock(2))
-        line = 'Starting on '//TRIM(ADJUSTL(clock(1) (1:8)))//' at '//TRIM(ADJUSTL(clock(2)))
+        call date_and_time(clock(1), clock(2))
+        line = 'Starting on '//trim(adjustl(clock(1) (1:8)))//' at '//trim(adjustl(clock(2)))
         call TLAB_WRITE_ASCII(lfile, line)
 
         line = 'Git-hash   '//GITHASH
@@ -184,7 +322,7 @@ contains
 
 #ifdef USE_MPI
         write (line, *) ims_npro
-        line = 'Number of MPI tasks '//TRIM(ADJUSTL(line))
+        line = 'Number of MPI tasks '//trim(adjustl(line))
         call TLAB_WRITE_ASCII(lfile, line)
 
         if (ims_npro == 0) then
@@ -198,7 +336,7 @@ contains
 #ifdef USE_OPENMP
         dns_omp_numThreads = omp_get_max_threads()
         write (line, *) dns_omp_numThreads
-        line = 'Number of OMP threads '//TRIM(ADJUSTL(line))
+        line = 'Number of OMP threads '//trim(adjustl(line))
         call TLAB_WRITE_ASCII(lfile, line)
 
 #else
@@ -234,28 +372,28 @@ contains
         ! ###################################################################
         if (error_code /= 0) then
             write (line, *) error_code
-            line = 'Error code '//TRIM(ADJUSTL(line))//'.'
+            line = 'Error code '//trim(adjustl(line))//'.'
             call TLAB_WRITE_ASCII(efile, line)
         end if
 
         call GETARG(0, line)
-        write (line, *) 'Finalizing program '//TRIM(ADJUSTL(line))
+        write (line, *) 'Finalizing program '//trim(adjustl(line))
         if (error_code == 0) then
-            line = TRIM(ADJUSTL(line))//' normally.'
+            line = trim(adjustl(line))//' normally.'
         else
-            line = TRIM(ADJUSTL(line))//' abnormally. Check '//TRIM(ADJUSTL(efile))
+            line = trim(adjustl(line))//' abnormally. Check '//trim(adjustl(efile))
         end if
         call TLAB_WRITE_ASCII(lfile, line)
 
 #ifdef USE_MPI
         ims_time_max = MPI_WTIME()
         write (line, 1000) ims_time_max - ims_time_min
-        line = 'Time elapse ....................: '//TRIM(ADJUSTL(line))
+        line = 'Time elapse ....................: '//trim(adjustl(line))
         call TLAB_WRITE_ASCII(lfile, line)
 
 #ifdef PROFILE_ON
         write (line, 1000) ims_time_trans
-        line = 'Time in array transposition ....: '//TRIM(ADJUST(line))
+        line = 'Time in array transposition ....: '//trim(ADJUST(line))
         call TLAB_WRITE_ASCII(lfile, line)
 #endif
 
@@ -288,7 +426,7 @@ contains
         integer error_local, error_len
 
         call MPI_Error_String(mpi_error_code, error_string, error_len, error_local)
-        call TLAB_WRITE_ASCII(efile, 'MPI-ERROR: Source file'//TRIM(ADJUSTL(LOCATION)), .true.)
+        call TLAB_WRITE_ASCII(efile, 'MPI-ERROR: Source file'//trim(adjustl(LOCATION)), .true.)
         call TLAB_WRITE_ASCII(efile, error_string, .true.)
 
         call TLAB_STOP(mpi_error_code)
@@ -309,17 +447,17 @@ contains
 
         ! #######################################################################
 #ifdef USE_MPI
-        if (ims_pro == 0 .or. PRESENT(flag_all)) then
+        if (ims_pro == 0 .or. present(flag_all)) then
 #endif
 
             if (imode_verbosity > 0) then
 
                 open (UNIT=22, FILE=file, STATUS='unknown', POSITION='APPEND')
                 if (imode_verbosity == 1) then
-                    write (22, '(a)') TRIM(ADJUSTL(lineloc))
+                    write (22, '(a)') trim(adjustl(lineloc))
                 else if (imode_verbosity == 2) then
-                    call DATE_AND_TIME(clock(1), clock(2))
-                    write (22, '(a)') '['//TRIM(ADJUSTR(clock(2)))//'] '//TRIM(ADJUSTL(lineloc))
+                    call date_and_time(clock(1), clock(2))
+                    write (22, '(a)') '['//trim(adjustr(clock(2)))//'] '//trim(adjustl(lineloc))
                 end if
                 close (22)
 
@@ -327,7 +465,7 @@ contains
 
 #ifndef PARALLEL
             if (file == efile) then
-                write (*, *) TRIM(ADJUSTL(lineloc))
+                write (*, *) trim(adjustl(lineloc))
             end if
 #endif
 

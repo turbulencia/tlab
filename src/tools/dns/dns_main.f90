@@ -1,7 +1,4 @@
-#include "dns_error.h"
 #include "dns_const.h"
-
-#define C_FILE_LOC "DNS"
 
 program DNS
 
@@ -58,7 +55,7 @@ program DNS
     ! #######################################################################
     ! Initialize memory space and grid data
     ! #######################################################################
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLAB_ALLOCATE(__FILE__)
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)
@@ -67,14 +64,11 @@ program DNS
 
     call FI_BACKGROUND_INITIALIZE(wrk1d)
 
-    call PARTICLE_ALLOCATE(C_FILE_LOC)
+    call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hq, [isize_field, inb_flow], 'flow-rhs')
+    call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hs, [isize_field, inb_scal], 'scal-rhs')
 
-    call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, hq, inb_flow, isize_field, 'flow-rhs')
-    call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, hs, inb_scal, isize_field, 'scal-rhs')
-    if (imode_part /= PART_TYPE_NONE) then
-        call TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, l_hq, inb_part, isize_part, 'part-rhs')
-        call TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, l_comm, isize_l_comm, 'l_comm')
-    end if
+    call PARTICLE_ALLOCATE(__FILE__)
+    call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, l_hq, [isize_part, inb_part], 'part-rhs')
 
     call STATISTICS_INITIALIZE()
 
@@ -85,7 +79,7 @@ program DNS
     end if
 
     if (imode_ibm == 1) then
-        call IBM_ALLOCATE(C_FILE_LOC)
+        call IBM_ALLOCATE(__FILE__)
     end if
 
     ! ###################################################################
@@ -119,13 +113,13 @@ program DNS
 
     call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)  ! Initialize diagnostic thermodynamic quantities
 
-    if (imode_part /= PART_TYPE_NONE) then
+    if (part%type /= PART_TYPE_NONE) then
         write (fname, *) nitera_first; fname = trim(adjustl(tag_part))//trim(adjustl(fname))
         call IO_READ_PARTICLE(fname, l_g, l_q)
         call PARTICLE_INITIALIZE()
 
         if (imode_traj /= TRAJ_TYPE_NONE) then
-            call PARTICLE_TRAJECTORIES_INITIALIZE(nitera_save, nitera_last)
+            call PARTICLE_TRAJECTORIES_INITIALIZE()
         end if
 
     end if
@@ -239,7 +233,7 @@ program DNS
         end if
 
         if (imode_traj /= TRAJ_TYPE_NONE) then
-            call PARTICLE_TRAJECTORIES_ACCUMULATE(q, s, txc, l_g, l_q, l_hq, l_txc, l_comm, wrk2d, wrk3d)
+            call PARTICLE_TRAJECTORIES_ACCUMULATE()
         end if
 
         if (mod(itime - nitera_first, nitera_stats_spa) == 0) then  ! Accumulate statistics in spatially evolving cases
@@ -269,7 +263,7 @@ program DNS
                 call DNS_TOWER_WRITE(wrk3d)
             end if
 
-            if (imode_part /= PART_TYPE_NONE) then
+            if (part%type /= PART_TYPE_NONE) then
                 write (fname, *) itime; fname = trim(adjustl(tag_part))//trim(adjustl(fname))
                 call IO_WRITE_PARTICLE(fname, l_g, l_q)
                 if (imode_traj /= TRAJ_TYPE_NONE) then

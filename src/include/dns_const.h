@@ -155,7 +155,7 @@
 #define PROFILE_TANH_ANTISYM       20
 #define PROFILE_TANH_SYM           21
 #define PROFILE_TANH_COS           22
-
+#define PROFILE_GAUSSIAN_TANH_SYM  23
 
 ! Mixture Type
 #define MIXT_TYPE_NONE             0

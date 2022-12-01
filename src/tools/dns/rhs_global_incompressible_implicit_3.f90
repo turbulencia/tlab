@@ -24,7 +24,7 @@
 !#
 !########################################################################
 SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
-     (dte, kex,kim,kco, &
+     (kex,kim,kco, &
      q,hq,u,v,w,h1,h2,h3,s,hs,&
      tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8, &
      wrk1d,wrk2d,wrk3d)
@@ -39,6 +39,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
   USE TLAB_VARS, ONLY : visc, schmidt, rossby
   USE TLAB_VARS, ONLY : buoyancy, coriolis
   USE TLAB_VARS, ONLY : bbackground
+  USE TIME, only : dte
   USE DNS_LOCAL,  ONLY : remove_divergence
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
@@ -47,7 +48,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3&
 
 #include "integers.h"
 
-  TREAL dte, kex, kim, kco
+  TREAL kex, kim, kco
   TREAL, DIMENSION(isize_field,*)                     :: q,hq
   TREAL, DIMENSION(isize_field),         INTENT(INOUT):: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,inb_scal),INTENT(INOUT):: s,hs

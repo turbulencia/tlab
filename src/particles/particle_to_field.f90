@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -10,28 +9,28 @@
 !# Interpolate particle information to a field
 !#
 !########################################################################
-subroutine PARTICLE_TO_FIELD(l_q, particle_property, field_out, wrk2d, wrk3d)
-
+subroutine PARTICLE_TO_FIELD(l_q, particle_property, field_out, wrk3d)
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
     use PARTICLE_VARS, only: isize_part
 #ifdef USE_MPI
+    use PARTICLE_ARRAYS, only: l_comm
     use MPI
     use TLAB_MPI_VARS, only: ims_err
 #endif
 
     implicit none
 
-    TREAL, dimension(isize_part, 3) :: l_q
-    TREAL, dimension(isize_part) :: particle_property
-    TREAL, dimension(imax, jmax, kmax) :: field_out
-    TREAL, dimension(*) :: wrk2d
-    TREAL, dimension(imax + 1, jmax, kmax + 1) :: wrk3d
+    real(wp), dimension(isize_part, 3) :: l_q
+    real(wp), dimension(isize_part) :: particle_property
+    real(wp), dimension(imax, jmax, kmax) :: field_out
+    real(wp), dimension(imax + 1, jmax, kmax + 1) :: wrk3d
 
 !#######################################################################
 !Write data to fielf
 !Field is an extended field with grid, halo1, halo2 and halo3
 !#######################################################################
-    wrk3d = C_0_R
+    wrk3d = 0.0_wp
     call PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, wrk3d)
 
 #ifdef USE_MPI
@@ -43,8 +42,8 @@ subroutine PARTICLE_TO_FIELD(l_q, particle_property, field_out, wrk2d, wrk3d)
 !SEND to the North and RECV from the South
 !Sum the lowest row of field
 !#######################################################################
-    call PARTICLE_TO_FIELD_SEND_RECV_EAST(wrk2d(1), wrk2d((jmax*(kmax + 1)) + 1), wrk3d)
-    call PARTICLE_TO_FIELD_SEND_RECV_NORTH(wrk2d(1), wrk2d(((imax + 1)*jmax) + 1), wrk3d)
+    call PARTICLE_TO_FIELD_SEND_RECV_EAST(l_comm(1), l_comm((jmax*(kmax + 1)) + 1), wrk3d)
+    call PARTICLE_TO_FIELD_SEND_RECV_NORTH(l_comm(1), l_comm(((imax + 1)*jmax) + 1), wrk3d)
 
 #endif
 
@@ -59,7 +58,7 @@ end subroutine PARTICLE_TO_FIELD
 !########################################################################
 !########################################################################
 subroutine PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
-
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use PARTICLE_VARS, only: isize_part
@@ -70,20 +69,19 @@ subroutine PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
 #endif
 
     implicit none
-#include "integers.h"
 
-    TREAL, dimension(imax + 1, jmax, kmax + 1) :: field
-    TREAL, dimension(isize_part, 3) :: l_q
-    TREAL, dimension(isize_part) :: particle_property
+    real(wp), dimension(imax + 1, jmax, kmax + 1) :: field
+    real(wp), dimension(isize_part, 3) :: l_q
+    real(wp), dimension(isize_part) :: particle_property
 
-    TREAL length_g_p(6), cube_g_p(4)
-    TINTEGER g_p(6)
-    TINTEGER i
-    TREAL dx_loc_inv, dz_loc_inv
+    real(wp) length_g_p(6), cube_g_p(4)
+    integer(wi) g_p(6)
+    integer(wi) i
+    real(wp) dx_loc_inv, dz_loc_inv
 
 ! ######################################################################
-    dx_loc_inv = M_REAL(g(1)%size)/g(1)%scale
-    dz_loc_inv = M_REAL(g(3)%size)/g(3)%scale
+    dx_loc_inv = real(g(1)%size,wp)/g(1)%scale
+    dz_loc_inv = real(g(3)%size,wp)/g(3)%scale
 
     g_p(5) = 1 ! Default is 2D
     g_p(6) = 1
@@ -93,32 +91,32 @@ subroutine PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
 
         length_g_p(1) = l_q(i, 1)*dx_loc_inv            ! Local X position
         g_p(1) = floor(length_g_p(1))
-        length_g_p(1) = length_g_p(1) - M_REAL(g_p(1))
+        length_g_p(1) = length_g_p(1) - real(g_p(1),wp)
 #ifdef USE_MPI
         g_p(1) = g_p(1) + 1 - ims_offset_i
 #else
         g_p(1) = g_p(1) + 1
 #endif
         g_p(2) = g_p(1) + 1
-        length_g_p(2) = C_1_R - length_g_p(1)
+        length_g_p(2) = 1.0_wp - length_g_p(1)
 
         if (g(3)%size /= 1) then
             length_g_p(5) = l_q(i, 3)*dz_loc_inv            ! Local Z position
             g_p(5) = floor(length_g_p(5))
-            length_g_p(5) = length_g_p(5) - M_REAL(g_p(5))
+            length_g_p(5) = length_g_p(5) - real(g_p(5),wp)
 #ifdef USE_MPI
             g_p(5) = g_p(5) + 1 - ims_offset_k
 #else
             g_p(5) = g_p(5) + 1
 #endif
             g_p(6) = g_p(5) + 1
-            length_g_p(6) = C_1_R - length_g_p(5)
+            length_g_p(6) = 1.0_wp - length_g_p(5)
         end if
 
         g_p(3) = l_g%nodes(i)                    ! Local Y position
         g_p(4) = g_p(3) + 1
         length_g_p(3) = (l_q(i, 2) - g(2)%nodes(g_p(3)))/(g(2)%nodes(g_p(4)) - g(2)%nodes(g_p(3)))
-        length_g_p(4) = C_1_R - length_g_p(3)
+        length_g_p(4) = 1.0_wp - length_g_p(3)
 
         cube_g_p(1) = length_g_p(1)*length_g_p(3) ! bilear cubes for X and Y
         cube_g_p(2) = length_g_p(1)*length_g_p(4) ! be carefull multiply other side cube of grid for correct interpolation
@@ -159,7 +157,6 @@ end subroutine PARTICLE_TO_FIELD_INTERPOLATE
 #ifdef USE_MPI
 
 !########################################################################
-!# DESCRIPTION
 !#
 !# Sends field_halo to neighbouring processors
 !# Field has size imax+1 and kmax+1
@@ -167,24 +164,24 @@ end subroutine PARTICLE_TO_FIELD_INTERPOLATE
 !#
 !########################################################################
 subroutine PARTICLE_TO_FIELD_SEND_RECV_EAST(f_buffer_1, f_buffer_2, field)
-
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
     use MPI
     use TLAB_MPI_VARS
 
     implicit none
 
-    TINTEGER source_east
-    TINTEGER dest_east
-    TINTEGER l
-    TINTEGER mpireq(ims_npro*2)
-    TINTEGER status(MPI_STATUS_SIZE, ims_npro*2)
+    integer(wi) source_east
+    integer(wi) dest_east
+    integer(wi) l
+    integer(wi) mpireq(ims_npro*2)
+    integer(wi) status(MPI_STATUS_SIZE, ims_npro*2)
 
-    TREAL, dimension(imax + 1, jmax, kmax + 1) :: field
-    TREAL, dimension(jmax, kmax + 1) :: f_buffer_1, f_buffer_2
+    real(wp), dimension(imax + 1, jmax, kmax + 1) :: field
+    real(wp), dimension(jmax, kmax + 1) :: f_buffer_1, f_buffer_2
 
-    f_buffer_1 = C_0_R
-    f_buffer_2 = C_0_R
+    f_buffer_1 = 0.0_wp
+    f_buffer_2 = 0.0_wp
 
 !###################################################################
 !Calculating the source/dest for east and north
@@ -226,24 +223,24 @@ end subroutine PARTICLE_TO_FIELD_SEND_RECV_EAST
 !########################################################################
 !########################################################################
 subroutine PARTICLE_TO_FIELD_SEND_RECV_NORTH(f_buffer_1, f_buffer_2, field)
-
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
     use MPI
     use TLAB_MPI_VARS
 
     implicit none
 
-    TINTEGER source_north
-    TINTEGER dest_north
-    TINTEGER l
-    TINTEGER mpireq(ims_npro*2)
-    TINTEGER status(MPI_STATUS_SIZE, ims_npro*2)
+    integer(wi) source_north
+    integer(wi) dest_north
+    integer(wi) l
+    integer(wi) mpireq(ims_npro*2)
+    integer(wi) status(MPI_STATUS_SIZE, ims_npro*2)
 
-    TREAL, dimension(imax + 1, jmax, kmax + 1) :: field
-    TREAL, dimension(imax + 1, jmax) :: f_buffer_1, f_buffer_2
+    real(wp), dimension(imax + 1, jmax, kmax + 1) :: field
+    real(wp), dimension(imax + 1, jmax) :: f_buffer_1, f_buffer_2
 
-    f_buffer_1 = C_0_R
-    f_buffer_2 = C_0_R
+    f_buffer_1 = 0.0_wp
+    f_buffer_2 = 0.0_wp
 
 !###################################################################
 !Calculating the source/dest for east and north

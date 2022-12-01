@@ -267,7 +267,7 @@ program AVERAGES
 
     isize_wrk3d = max(isize_field, opt_order*nfield*jmax)
     isize_wrk3d = max(isize_wrk3d, isize_txc_field)
-    if (imode_part /= PART_TYPE_NONE) then
+    if (part%type /= PART_TYPE_NONE) then
         isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
     end if
 
@@ -408,19 +408,19 @@ program AVERAGES
             end if
 
             ! Lagrange Liquid and Liquid without diffusion
-            if (imode_part == PART_TYPE_BIL_CLOUD_3 .or. imode_part == PART_TYPE_BIL_CLOUD_4) then
+            if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then
                 write (fname, *) itime; fname = trim(adjustl(tag_part))//trim(adjustl(fname))
                 call IO_READ_PARTICLE(fname, l_g, l_q)
 
                 l_txc = 1.0_wp; ! We want density
-                call PARTICLE_TO_FIELD(l_q, l_txc, txc(1, 7), wrk2d, wrk3d)
+                call PARTICLE_TO_FIELD(l_q, l_txc, txc(1, 7), wrk3d)
 
                 txc(:, 7) = txc(:, 7) + small_wp
                 idummy = inb_part - 3 ! # scalar properties solved in the lagrangian
                 do is = inb_scal_array + 1 + 1, inb_scal_array + 1 + idummy
                     schmidt(is) = schmidt(1)
                     l_txc(:, 1) = l_q(:, 3 + is - inb_scal_array - 1) !!! DO WE WANT l_txc(:,is) ???
-                    call PARTICLE_TO_FIELD(l_q, l_txc, txc(1, 8), wrk2d, wrk3d)
+                    call PARTICLE_TO_FIELD(l_q, l_txc, txc(1, 8), wrk3d)
                     txc(:, 8) = txc(:, 8)/txc(:, 7)
                     txc(1:isize_field, 6) = txc(1:isize_field, 9) ! Pass the pressure in tmp6
                     call AVG_SCAL_XZ(is, q, s, txc(1, 8), &

@@ -1,8 +1,8 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
+#include "types.h"
 #endif
 
 !#######################################################################
@@ -281,7 +281,7 @@ subroutine PARTICLE_LOCATE_Y(pmax, y_part, j_part, jmax, y_grid)
         jp = jmax
         jm = 1
         jc = (jm + jp)/2
-        do while ((y_part(ip) - y_grid(jc))*(y_part(ip) - y_grid(jc + 1)) > C_0_R .and. jc > jm)
+        do while ((y_part(ip) - y_grid(jc))*(y_part(ip) - y_grid(jc + 1)) > 0.0_wp .and. jc > jm)
             if (y_part(ip) < y_grid(jc)) then; jp = jc; 
             else; jm = jc; end if
             jc = (jm + jp)/2

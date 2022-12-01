@@ -35,14 +35,16 @@ runs the simulation. Reads input from the file {\tt dns.ini} and needs initial f
 \multicolumn{2}{>{\columncolor{lightgreen}}c}{\rule{0pt}{11pt}\normalsize\bf Preprocessing}\\
 %
 \tt inigrid.x &
-generates the grid from the parameters of the dns.ini file, section [IniGridOx], [IniGridOy] and [IniGridOz].\newline
+Generates the grid from the parameters of the dns.ini file, section [IniGridOx], [IniGridOy] and [IniGridOz].\newline
 Sources in {\tt tools/initialize/grid}.\\
 \tt inirand.x &
-generates the scal.rand and flow.rand files that contain pseudo-random, isotropic fields that are used to generate flow and scalar initial fields. The parameters are described in {\tt dns.ini}, section [Broadband].\newline Sources in {\tt tools/initialize/rand}\\
+Generates the scal.rand and flow.rand files that contain pseudo-random, isotropic fields that are used to generate flow and scalar initial fields. The parameters are described in {\tt dns.ini}, section [Broadband].\newline Sources in {\tt tools/initialize/rand}\\
 \tt iniscal.x &
-generates the scal.ics file from the parameters of the dns.ini file, section [IniFields].\newline Sources in {\tt tools/initialize/scal.}\\
+Generates the scal.ics file from the parameters of the dns.ini file, section [IniFields].\newline Sources in {\tt tools/initialize/scal.}\\
 \tt iniflow.x &
-generates the flow.ics file from the parameters of the dns.ini file, section [IniFields].\newline Sources in {\tt tools/initialize/flow}.\\
+Generates the flow.ics file from the parameters of the dns.ini file, section [IniFields].\newline Sources in {\tt tools/initialize/flow}.\\
+\tt inipart.x &
+Generates the part.ics file from the parameters of the dns.ini file, section [Particles]. Files *.id are equivalent to grid file; they contain the number of processors, the number of particles per processor, and the ordered tags of the particles.\newline Sources in {\tt tools/initialize/part}.\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -53,16 +55,16 @@ generates the flow.ics file from the parameters of the dns.ini file, section [In
 \multicolumn{2}{>{\columncolor{lightgreen}}c}{\rule{0pt}{11pt}\normalsize\bf Postprocessing}\\
 %
 \tt averages.x &
-calculates main average profiles and conditional averages (outer intermittency).\newline
+Calculates main average profiles and conditional averages (outer intermittency).\newline
 Sources in {\tt tools/statistics/averages}.\\
 \tt spectra.x &
-calculates 1D, 2D and 3D spectra and co-spectra of main variables.\newline
+Calculates 1D, 2D and 3D spectra and co-spectra of main variables.\newline
 Sources in {\tt tools/statistics/spectra}.\\
 \tt pdfs.x &
-calculates PDFs, joints PDFs and conditional PDFs.\newline
+Calculates PDFs, joints PDFs and conditional PDFs.\newline
 Sources in {\tt tools/statistics/pdfs}.\\
 \tt visuals.x &
-calculates different fields and exports data for visualization.\newline
+Calculates different fields and exports data for visualization.\newline
 Sources in {\tt tools/plot/visuals}.\\
 \end{longtable}
 
@@ -440,6 +442,21 @@ level $\alpha_3$; number of bins $\alpha_4$.\\
 $\alpha_1$ (see {\tt tools/statistics/spectra.f90}); block size
 $\alpha_2$; save full spectra $\alpha_3$; average over iterations $\alpha_4$.\\
 \tt ParamVisuals & $\alpha_1,\,\alpha_2,\,\ldots$ & List of fields to be calculated (see {\tt tools/plot/visuals.f90}).\\
+\end{longtable}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\rowcolors{1}{gray!25}{gray!10}
+%
+\begin{longtable}{p{0.15\textwidth} p{0.3\textwidth} p{0.55\textwidth}}
+  %
+  \multicolumn{3}{>{\columncolor{lightblue}}c}{\normalsize\bf [Particles]}\\
+  %
+  \tt Type        & \tt Tracer, ...   & Type of particles equations to solve.\\
+  \tt Number      & \it value         & Number of particles.\\
+  \tt ProfileIniP & \tt TanhSymmetric, Scalar, ...  & Type of initialization.\\
+  \tt YMeanIniP   & \it value         & Similar to [Flow] and [Scalar].\\
+  \tt ThickIniP   & \it value         & Similar to [Flow] and [Scalar].\\
+  \tt TrajNumber  & \it value         & Number of particle trajectories to save.\\
 \end{longtable}
 
 }

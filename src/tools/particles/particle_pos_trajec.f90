@@ -54,9 +54,9 @@ program PARTICLE_POS_TRAJEC
     TINTEGER dummy_ims_npro
     TINTEGER dummy_isize_traj
     TINTEGER, dimension(:), allocatable :: dummy_proc, all_dummy_proc
-    integer(8), dimension(:), allocatable :: l_trajectories_tags
+    integer(8), dimension(:), allocatable :: l_traj_tags
     TREAL, dimension(:), allocatable :: dummy_big_overall
-    TREAL, dimension(:, :), allocatable :: l_trajectories, all_l_trajectories
+    TREAL, dimension(:, :), allocatable :: l_traj, all_l_traj
 
     TINTEGER nitera_first, nitera_last
 
@@ -83,12 +83,12 @@ program PARTICLE_POS_TRAJEC
     allocate (dummy_proc(isize_traj))
     allocate (all_dummy_proc(isize_traj))
     allocate (dummy_big_overall(isize_traj))
-    allocate (l_trajectories_tags(isize_traj))
-    allocate (l_trajectories(3, isize_traj))
-    allocate (all_l_trajectories(3, isize_traj))
+    allocate (l_traj_tags(isize_traj))
+    allocate (l_traj(3, isize_traj))
+    allocate (all_l_traj(3, isize_traj))
 
-    l_trajectories(:, :) = C_0_R
-    all_l_trajectories(:, :) = C_0_R
+    l_traj(:, :) = C_0_R
+    all_l_traj(:, :) = C_0_R
     dummy_proc(:) = C_0_R
     all_dummy_proc(:) = C_0_R
 
@@ -105,7 +105,7 @@ program PARTICLE_POS_TRAJEC
         read (117) dummy_ims_npro   !is a integer
         read (117, POS=SIZEOFINT + 1) dummy_isize_traj  !is an integer
         read (117, POS=SIZEOFINT*2 + 1) dummy_big_overall  !is real(8)
-        read (117, POS=(SIZEOFINT*2 + 1) + SIZEOFREAL*isize_traj) l_trajectories_tags ! attention is integer(8)
+        read (117, POS=(SIZEOFINT*2 + 1) + SIZEOFREAL*isize_traj) l_traj_tags ! attention is integer(8)
         close (117)
     end if
 
@@ -113,17 +113,17 @@ program PARTICLE_POS_TRAJEC
 !BROADCAST THE ID OF THE LARGEST PARTICLES
 !#######################################################################
     call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
-    call MPI_BCAST(l_trajectories_tags, isize_traj, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
+    call MPI_BCAST(l_traj_tags, isize_traj, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
 
 !#######################################################################
 !SEARCH FOR LARGEST PARTICLES
 !#######################################################################
     do i = 1, l_g%np
         do j = 1, isize_traj
-            if (l_g%tags(i) == l_trajectories_tags(j)) then
-                l_trajectories(1, j) = l_q(i, 1)
-                l_trajectories(2, j) = l_q(i, 2)
-                l_trajectories(3, j) = l_q(i, 3)
+            if (l_g%tags(i) == l_traj_tags(j)) then
+                l_traj(1, j) = l_q(i, 1)
+                l_traj(2, j) = l_q(i, 2)
+                l_traj(3, j) = l_q(i, 3)
                 dummy_proc(j) = ims_pro
             end if
         end do
@@ -132,7 +132,7 @@ program PARTICLE_POS_TRAJEC
 !#######################################################################
 !REDUCE ALL INFORMATION TO ROOT
 !#######################################################################
-    call MPI_REDUCE(l_trajectories, all_l_trajectories, 3*isize_traj, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+    call MPI_REDUCE(l_traj, all_l_traj, 3*isize_traj, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
     call MPI_REDUCE(dummy_proc, all_dummy_proc, isize_traj, MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
     call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
 
@@ -149,9 +149,9 @@ program PARTICLE_POS_TRAJEC
         inquire (UNIT=15, POS=particle_pos) !would be 5
         write (15) isize_traj  !header
         inquire (UNIT=15, POS=particle_pos)  !would be 9
-        write (15) l_trajectories_tags
+        write (15) l_traj_tags
         inquire (UNIT=15, POS=particle_pos)  !409
-        write (15) all_l_trajectories
+        write (15) all_l_traj
         inquire (UNIT=15, POS=particle_pos)  !would be 1609 with 50 numbers
         write (15) all_dummy_proc
         close (15)

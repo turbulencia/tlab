@@ -54,25 +54,23 @@ program PARTICLE_INI_TRAJEC
 
 ! -------------------------------------------------------------------
 ! Additional local arrays
-    TREAL, dimension(:), allocatable, save :: l_comm
 
     TINTEGER, dimension(:), allocatable :: dummy_proc
-    integer(8), dimension(:), allocatable :: l_trajectories_tags, fake_l_trajectories_tags
+    integer(8), dimension(:), allocatable :: l_traj_tags, fake_l_traj_tags
 #ifdef USE_MPI
     TINTEGER dummy_ims_npro
     TINTEGER dummy_isize_traj
-    integer(8), dimension(:), allocatable :: all_fake_l_trajectories_tags
+    integer(8), dimension(:), allocatable :: all_fake_l_traj_tags
 #endif
-    TREAL, dimension(:, :), allocatable :: l_trajectories
+    TREAL, dimension(:, :), allocatable :: l_traj
     TREAL, dimension(:), allocatable :: fake_liquid, all_fake_liquid
 
-    TINTEGER nitera_first, ierr
+    TINTEGER nitera_first
 
-    character*64 str, line
     character*32 bakfile
 
 #ifdef USE_MPI
-    character*64 fname
+    character*64 fname, str
     TINTEGER particle_pos, i
     TLONGINTEGER dummy
 #endif
@@ -100,31 +98,23 @@ program PARTICLE_INI_TRAJEC
     isize_wrk3d = imax*jmax*kmax
     allocate (wrk3d(isize_wrk3d))
 
-    if (imode_part == PART_TYPE_BIL_CLOUD_3 .or. imode_part == PART_TYPE_BIL_CLOUD_4) then !Allocte memory to read fields
+    if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then !Allocte memory to read fields
         allocate (txc(isize_field, 3))
     end if
 
     call PARTICLE_ALLOCATE(C_FILE_LOC)
 
-    write (str, *) isize_l_comm; line = 'Allocating array l_comm of size '//TRIM(ADJUSTL(str))
-    call TLAB_WRITE_ASCII(lfile, line)
-    allocate (l_comm(isize_l_comm), stat=ierr)
-    if (ierr /= 0) then
-        call TLAB_WRITE_ASCII(efile, 'DNS. Not enough memory for l_comm.')
-        call TLAB_STOP(DNS_ERROR_ALLOC)
-    end if
-
     allocate (dummy_proc(isize_traj))
-    allocate (l_trajectories_tags(isize_traj))
-    allocate (fake_l_trajectories_tags(isize_traj))
-    allocate (l_trajectories(3, isize_traj))
+    allocate (l_traj_tags(isize_traj))
+    allocate (fake_l_traj_tags(isize_traj))
+    allocate (l_traj(3, isize_traj))
     allocate (fake_liquid(isize_traj))
     allocate (all_fake_liquid(isize_traj))
 #ifdef USE_MPI
-    allocate (all_fake_l_trajectories_tags(isize_traj))
-    all_fake_l_trajectories_tags(:) = C_0_R
+    allocate (all_fake_l_traj_tags(isize_traj))
+    all_fake_l_traj_tags(:) = C_0_R
 #endif
-    fake_l_trajectories_tags(:) = C_0_R
+    fake_l_traj_tags(:) = C_0_R
     fake_liquid(:) = C_0_R
     all_fake_liquid(:) = C_0_R
 
@@ -139,7 +129,7 @@ program PARTICLE_INI_TRAJEC
     !#######################################################################
     !CREATE THE RANDOM PARTICLE FIELD
     !#######################################################################
-    call PARTICLE_RANDOM_POSITION(l_q, l_txc, l_comm, txc, wrk3d)
+    call PARTICLE_RANDOM_POSITION(l_q, l_txc, txc, wrk3d)
 
 #ifdef USE_MPI
     !#######################################################################
@@ -152,8 +142,8 @@ program PARTICLE_INI_TRAJEC
         open (unit=117, file=str, access='stream', form='unformatted')
         read (117) dummy_ims_npro   !is a integer
         read (117, POS=SIZEOFINT + 1) dummy_isize_traj  !is an integer
-        read (117, POS=SIZEOFINT*2 + 1) l_trajectories_tags  !is INTEGER(8)
-        read (117, POS=(SIZEOFINT*2 + 1) + SIZEOFREAL*isize_traj) l_trajectories ! attention is integer(8)
+        read (117, POS=SIZEOFINT*2 + 1) l_traj_tags  !is INTEGER(8)
+        read (117, POS=(SIZEOFINT*2 + 1) + SIZEOFREAL*isize_traj) l_traj ! attention is integer(8)
         read (117, POS=(SIZEOFINT*2 + 1) + SIZEOFREAL*isize_traj + 3*isize_traj*SIZEOFREAL) dummy_proc ! attention is integer(8)
         close (117)
     end if
@@ -162,8 +152,8 @@ program PARTICLE_INI_TRAJEC
     !BROADCAST INFORMATION OF LARGEST PARTICLES
     !#######################################################################
     call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
-    call MPI_BCAST(l_trajectories_tags, isize_traj, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
-    call MPI_BCAST(l_trajectories, isize_traj*3, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
+    call MPI_BCAST(l_traj_tags, isize_traj, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
+    call MPI_BCAST(l_traj, isize_traj*3, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
     call MPI_BCAST(dummy_proc, isize_traj, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
 
     !#######################################################################
@@ -173,10 +163,10 @@ program PARTICLE_INI_TRAJEC
     dummy = 1
     do i = 1, isize_traj
         if (ims_pro == dummy_proc(i)) then
-            l_q(dummy, 1) = l_trajectories(1, i)
-            l_q(dummy, 2) = l_trajectories(2, i)
-            l_q(dummy, 3) = l_trajectories(3, i)
-            fake_l_trajectories_tags(i) = l_g%tags(dummy)
+            l_q(dummy, 1) = l_traj(1, i)
+            l_q(dummy, 2) = l_traj(2, i)
+            l_q(dummy, 3) = l_traj(3, i)
+            fake_l_traj_tags(i) = l_g%tags(dummy)
             fake_liquid(i) = l_q(dummy, 5) ! just to be consistent with other output file
             dummy = dummy + 1
         end if
@@ -185,7 +175,7 @@ program PARTICLE_INI_TRAJEC
     !#######################################################################
     !WRITE FILE WITH NEW FAKE LARGEST IDs
     !#######################################################################
-  CALL MPI_REDUCE(fake_l_trajectories_tags, all_fake_l_trajectories_tags, isize_traj, MPI_INTEGER8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
+  CALL MPI_REDUCE(fake_l_traj_tags, all_fake_l_traj_tags, isize_traj, MPI_INTEGER8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
     call MPI_REDUCE(fake_liquid, all_fake_liquid, isize_traj, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
 
     !#######################################################################
@@ -201,7 +191,7 @@ program PARTICLE_INI_TRAJEC
         inquire (UNIT=15, POS=particle_pos)  !would be 9
         write (15) fake_liquid ! just to be consistent with other output file
         inquire (UNIT=15, POS=particle_pos)  !would be 409 with 50 numbers
-        write (15) all_fake_l_trajectories_tags
+        write (15) all_fake_l_traj_tags
         close (15)
     end if
 

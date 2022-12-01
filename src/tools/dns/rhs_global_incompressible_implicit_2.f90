@@ -24,7 +24,7 @@
 !#
 !########################################################################
 SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
-     (dte, kex,kim,kco, q,hq, u,v,w,h1,h2,h3, s,hs,&
+     (kex,kim,kco, q,hq, u,v,w,h1,h2,h3, s,hs,&
      tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7, wrk1d,wrk2d,wrk3d)
 
 #ifdef USE_OPENMP
@@ -37,6 +37,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   USE TLAB_VARS, ONLY : icalc_scal
   USE TLAB_VARS, ONLY : visc, schmidt
   USE TLAB_PROCS
+  USE TIME, only : dte
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
 
@@ -44,7 +45,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
 
 #include "integers.h"
 
-  TREAL dte, kex, kim, kco
+  TREAL kex, kim, kco
   TREAL, DIMENSION(isize_field,*)                     :: q,hq
   TREAL, DIMENSION(isize_field),         INTENT(INOUT):: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,inb_scal),INTENT(INOUT):: s,hs

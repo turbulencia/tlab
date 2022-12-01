@@ -11,20 +11,20 @@
 !#
 !########################################################################
 SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2&
-     (dte, u,v,w,h1,h2,h3, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
+     (u,v,w,h1,h2,h3, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
      wrk1d,wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d, inb_flow
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : visc
   USE TLAB_VARS, ONLY : imode_ibm, istagger
+  USE TIME, only : dte
   USE BOUNDARY_BUFFER
   USE BOUNDARY_BCS
   USE IBM_VARS,  ONLY : ibm_partial
 
 IMPLICIT NONE
 
-  TREAL dte
   TREAL, DIMENSION(isize_field)   :: u,v,w, h1,h2,h3
   TREAL, DIMENSION(isize_field,*) :: q,hq
   TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk3d
