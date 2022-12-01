@@ -7,7 +7,7 @@
 SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, txc)
 
   USE TLAB_TYPES,  ONLY : subarray_dt
-  USE TLAB_VARS, ONLY : g, isize_txc_field
+  USE TLAB_VARS,   ONLY : g, isize_txc_field
 #ifdef USE_MPI
   USE MPI
   USE TLAB_MPI_VARS,    ONLY : ims_pro
@@ -25,7 +25,7 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
   CHARACTER*(*) fname
 
   ! -------------------------------------------------------------------
-  TINTEGER sizes(5), nx_aux,ny_aux,nz_aux, ifield
+  TINTEGER sizes(5), nx_aux,ny_aux,nz_aux, ifield,i
   CHARACTER*32 varname(16), name
   TINTEGER iflag_mode
 
@@ -60,10 +60,25 @@ SUBROUTINE IO_WRITE_VISUALS(fname, iformat, nx,ny,nz, nfield, subdomain, field, 
   ENDIF
 
   ! ###################################################################
-  IF      ( iformat .EQ. 0 ) THEN ! standard scalar format
-    CALL IO_WRITE_FIELDS(fname, IO_SCAL, nx,ny,nz, nfield, field, txc)
+  ! We need to rearrange the arrays here, because 
+  ! IO_WRITE_FIELDS and ENSIGHT_FIELD expects field to be aligned by nx*ny*nz
+  ! (instead of isize_txc_field)
+  IF ( iformat .LT. 2. .AND. &
+       nfield .GT. 1   .AND. isize_txc_field .GT. nx*ny*nz ) THEN
+     DO ifield=2,nfield
+        DO i=1,nx*ny*nz
+           field( (ifield-1)*nx*ny*nz+i,1) = field(i,ifield)
+        ENDDO
+     ENDDO
+  ENDIF
 
-    ! -------------------------------------------------------------------
+  ! ###################################################################
+  
+  IF      ( iformat .EQ. 0 ) THEN ! standard scalar format
+     
+     CALL IO_WRITE_FIELDS(fname, IO_SCAL, nx,ny,nz, nfield, field, txc)
+
+     ! -------------------------------------------------------------------
   ELSE IF ( iformat .EQ. 1 ) THEN  ! ensight; to be removed
     CALL ENSIGHT_FIELD(fname, i1, nx,ny,nz, nfield, subdomain, field, txc)
 
