@@ -215,11 +215,11 @@ subroutine IBM_AVG_SCAL_BCS(is, scalv_bcs)
   
   scalv_bcs = 0.0_wp
 
-  do j = 1, int(max_height_objlo)
+  do j = 1, int(max_height_objlo, wi)
     scalv_bcs(j) = ibmscaljmin(is)
   end do
   if ( ibm_objup ) then
-    do j = jmax-int(max_height_objup),jmax
+    do j = jmax-int(max_height_objup, wi),jmax
       scalv_bcs(j) = ibmscaljmax(is)
     end do
   end if

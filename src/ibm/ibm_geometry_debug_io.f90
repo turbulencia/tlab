@@ -163,27 +163,27 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3, wrk3d)
   do i = 1, g(1)%size - 1     ! contiguous i-lines
     do jk = 1, nyz            ! pages of   i-lines
       if((i == 1) .and. (epsi(jk) == 1.0_wp)) then ! exception: check first plane for interface
-        tmp1(jk) = dble(i) ! nobi_b
+        tmp1(jk) = real(i, wp) ! nobi_b
       end if
       if((epsi(ip+jk-1) == 0.0_wp) .and. (epsi(ip+jk-1+nyz) == 1.0_wp)) then     ! nobi_b check for interface 
         inum = 0
         do while (tmp1(inum+jk) /= 0.0_wp)
           inum = inum + nyz            
         end do 
-        tmp1(inum+jk) = dble(i + 1)
+        tmp1(inum+jk) = real(i + 1, wp)
       elseif((epsi(ip+jk-1) == 1.0_wp) .and. (epsi(ip+jk-1+nyz) == 0.0_wp)) then ! nobi_e check for interface 
         inum = 0
         do while (tmp2(inum+jk) /= 0.0_wp)
           inum = inum + nyz            
         end do 
-        tmp2(inum+jk) = dble(i)        
+        tmp2(inum+jk) = real(i, wp)        
       end if
       if((i == (g(1)%size - 1)) .and. (epsi(ip+jk-1+nyz) == 1.0_wp)) then ! exception: check last plane for interface
         inum = 0
         do while (tmp2(inum+jk) /= 0.0_wp)
           inum = inum + nyz            
         end do 
-        tmp2(inum+jk) = dble(g(1)%size)    
+        tmp2(inum+jk) = real(g(1)%size, wp)    
       end if
     end do
     ip = ip + nyz
@@ -217,27 +217,27 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3, wrk3d)
   do j = 1, g(2)%size - 1     ! contiguous j-lines
     do ik = 1, nxz            ! pages of   j-lines
       if((j == 1) .and. (epsj(ik) == 1.0_wp)) then ! exception: check first plane for interface
-        tmp1(ik) = dble(j) ! nobj_b
+        tmp1(ik) = real(j, wp) ! nobj_b
       end if
       if((epsj(ip+ik-1) == 0.0_wp) .and. (epsj(ip+ik-1+nxz) == 1.0_wp)) then     ! nobj_b check for interface 
         inum = 0
         do while (tmp1(inum+ik) /= 0.0_wp)
           inum = inum + nxz            
         end do 
-        tmp1(inum+ik) = dble(j + 1)
+        tmp1(inum+ik) = real(j + 1, wp)
       elseif((epsj(ip+ik-1) == 1.0_wp) .and. (epsj(ip+ik-1+nxz) == 0.0_wp)) then ! nobj_e check for interface 
         inum = 0
         do while (tmp2(inum+ik) /= 0.0_wp)
           inum = inum + nxz            
         end do 
-        tmp2(inum+ik) = dble(j)        
+        tmp2(inum+ik) = real(j, wp)        
       end if
       if((j == (g(2)%size - 1)) .and. (epsj(ip+ik-1+nxz) == 1.0_wp)) then ! exception: check last plane for interface
         inum = 0
         do while (tmp2(inum+ik) /= 0.0_wp)
           inum = inum + nxz           
         end do 
-        tmp2(inum+ik) = dble(g(2)%size)    
+        tmp2(inum+ik) = real(g(2)%size, wp)    
       end if
     end do
     ip = ip + nxz
@@ -256,27 +256,27 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3, wrk3d)
   do k = 1, g(3)%size - 1     ! contiguous k-lines
     do ij = 1, nxy            ! pages of   k-lines
       if((k == 1) .and. (epsk(ij) == 1.0_wp)) then ! exception: check first plane for interface
-        tmp1(ij) = dble(k)    ! nobk_b
+        tmp1(ij) = real(k, wp)    ! nobk_b
       end if
       if((epsk(ip+ij-1) == 0.0_wp) .and. (epsk(ip+ij-1+nxy) == 1.0_wp)) then     ! nobk_b check for interface 
         inum = 0
         do while (tmp1(ij+inum) /= 0.0_wp)
           inum = inum + nxy
         end do
-        tmp1(ij+inum) = dble(k + 1)
+        tmp1(ij+inum) = real(k + 1, wp)
       elseif((epsk(ip+ij-1) == 1.0_wp) .and. (epsk(ip+ij-1+nxy) == 0.0_wp)) then ! nobk_e check for interface 
         inum = 0
         do while (tmp2(ij+inum) /= 0.0_wp)
           inum = inum + nxy
         end do
-        tmp2(ij+inum) = dble(k)
+        tmp2(ij+inum) = real(k, wp)
       end if
       if((k == (g(3)%size - 1)) .and. (epsk(ip+ij-1+nxy) == 1.0_wp)) then ! exception: check last plane for interface
         inum = 0
         do while (tmp2(inum+ij) /= 0.0_wp)
           inum = inum + nxy           
         end do 
-        tmp2(inum+ij) = dble(g(3)%size)    
+        tmp2(inum+ij) = real(g(3)%size, wp)    
       end if
     end do
     ip = ip + nxy

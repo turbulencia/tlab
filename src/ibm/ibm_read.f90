@@ -164,7 +164,7 @@ subroutine IBM_READ_CONSISTENCY_CHECK(imode_rhs,                              &
       call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. Requirenments: mod(jmax_total,(2*nbars))==0 & mod(wbar,2)==0.')
       call TLAB_STOP(DNS_ERROR_UNDEVELOP)
     else if ( ( mod(g(3)%size,2*xbars_geo%number) /= 0 ) .and. & 
-              ( mod(real(g(3)%size/(2*xbars_geo%number)),0.5) == 0 ) .and. &
+              ( mod(real(g(3)%size/(2*xbars_geo%number), wp),0.5) == 0 ) .and. &
               ( mod(xbars_geo%width,2) /= 1) ) then
       call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. Interfaces of bars have to be on gridpoints.')
       call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. Requirenments: mod(jmax_total/(2*nbars),0.5)==0 & mod(wbar,2)==1.')

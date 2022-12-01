@@ -82,7 +82,7 @@ subroutine IBM_BCS_SCAL(is,s,eps)
 
 ! in case of objects on upper boundary, set different temperature here
   if ( ibm_objup ) then
-    do j = jmax-int(max_height_objup),jmax
+    do j = jmax-int(max_height_objup, wi),jmax
       s(:,j,:) = (1.0_wp - eps(:,j,:)) *  s(:,j,:) + eps(:,j,:) * ibmscaljmax(is) 
     end do
   end if 

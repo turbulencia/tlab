@@ -90,8 +90,8 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   ! global z-positions of bars, equally distributed on gridpoints with equal spacing
   do l = 1, nbars
     zcenter_bar   = g(3)%size / nbars * (l - 0.5)
-    zstart_bar(l) = int(zcenter_bar - 0.5 * wbar)
-    zend_bar(l)   = int(zcenter_bar + 0.5 * wbar)
+    zstart_bar(l) = int(zcenter_bar - 0.5 * wbar, wi)
+    zend_bar(l)   = int(zcenter_bar + 0.5 * wbar, wi)
   end do
 
 #ifdef IBM_DEBUG

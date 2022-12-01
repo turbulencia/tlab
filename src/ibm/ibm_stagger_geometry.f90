@@ -29,8 +29,8 @@ subroutine IBM_STAGGER_GEOMETRY(eps, epsp)
 
   implicit none
 
-  real(wp), dimension(imax,jmax,kmax), intent(in ) ::  eps
-  real(wp), dimension(imax,jmax,kmax), intent(out) ::  epsp
+  real(wp), dimension(imax,jmax,kmax), intent(in ) :: eps
+  real(wp), dimension(imax,jmax,kmax), intent(out) :: epsp
 
   integer(wi)                                      :: i,j,k
 
