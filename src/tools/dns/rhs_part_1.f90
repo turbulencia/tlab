@@ -4,10 +4,10 @@
 !#######################################################################
 subroutine RHS_PART_1()
 
-    use TLAB_TYPES,  only: pointers_dt, pointers3d_dt
-    use TLAB_VARS,   only: imax, jmax, kmax
-    use TLAB_VARS,   only: g
-    use TLAB_VARS,   only: visc, radiation
+    use TLAB_TYPES, only: pointers_dt, pointers3d_dt
+    use TLAB_VARS, only: imax, jmax, kmax
+    use TLAB_VARS, only: g
+    use TLAB_VARS, only: visc, radiation, stokes
     use TLAB_ARRAYS
     use DNS_ARRAYS
     use PARTICLE_VARS
@@ -29,18 +29,29 @@ subroutine RHS_PART_1()
 ! #####################################################################
     bcs = 0
 
-! Setting pointers to velocity fields
+! #####################################################################
+! Setting pointers to Eulerian fields that need to be interpolated into particle positions
+! #####################################################################
     nvar = 0
-    nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 1); data_out(nvar)%field => l_hq(:, 1)
-    nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 2); data_out(nvar)%field => l_hq(:, 2)
-    nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 3); data_out(nvar)%field => l_hq(:, 3)
 
-! -------------------------------------------------------------------
-! Additional terms depending on type of particle evolution equations
-! -------------------------------------------------------------------
     select case (part%type)
 
+    case (PART_TYPE_TRACER)
+        nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 1); data_out(nvar)%field => l_hq(:, 1)
+        nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 2); data_out(nvar)%field => l_hq(:, 2)
+        nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 3); data_out(nvar)%field => l_hq(:, 3)
+    
+    case (PART_TYPE_INERTIA)
+        nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 1); data_out(nvar)%field => l_txc(:, 1)
+        nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 2); data_out(nvar)%field => l_txc(:, 2)
+        nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 3); data_out(nvar)%field => l_txc(:, 3)
+        l_txc(:, 1:3) = 0.0_wp  ! The interpolation routine adds on top of previous data
+
     case (PART_TYPE_BIL_CLOUD_3, PART_TYPE_BIL_CLOUD_4)
+        nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 1); data_out(nvar)%field => l_hq(:, 1)
+        nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 2); data_out(nvar)%field => l_hq(:, 2)
+        nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 3); data_out(nvar)%field => l_hq(:, 3)
+
         dummy2 = -thermo_param(2)
         dummy = -thermo_param(1)
 
@@ -85,12 +96,22 @@ subroutine RHS_PART_1()
 ! -------------------------------------------------------------------
     call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q, wrk3d)
 
-! -------------------------------------------------------------------
+! #####################################################################
 ! Completing evolution equations
-! -------------------------------------------------------------------
+! #####################################################################
     select case (part%type)
-    
-    case(PART_TYPE_BIL_CLOUD_3, PART_TYPE_BIL_CLOUD_4)
+
+    case (PART_TYPE_TRACER)
+        ! equation dx_p/dt = v_p = v(x_p) already calculated via interpolation step
+
+    case (PART_TYPE_INERTIA)
+        dummy = 1.0_wp /stokes
+        ! equation dx_p/dt = v_p 
+        l_hq(1:l_g%np,1:3) = l_hq(1:l_g%np,1:3) + l_q(1:l_g%np,1:3)
+        ! equation dv_p/dt = (v(x_p)-v_p)/stokes
+        l_hq(1:l_g%np,4:6) = l_hq(1:l_g%np,4:6) + dummy*(l_txc(1:l_g%np,1:3)-l_q(1:l_g%np,4:6))
+
+    case (PART_TYPE_BIL_CLOUD_3, PART_TYPE_BIL_CLOUD_4)
 ! l_txc(1) = equation without ds/dxi
 ! l_txc(2) = xi
 ! l_txc(3) = evaporation/condensation term without d2s/dxi2
@@ -101,17 +122,17 @@ subroutine RHS_PART_1()
         delta_inv4 = -0.25_wp/thermo_param(1)/thermo_param(3)
 
         do i = 1, l_g%np
-            l_hq(i, 4) = l_hq(i, 4) - l_txc(i, 1)/(1.0_wp + EXP(l_txc(i, 2)*delta_inv0))
+            l_hq(i, 4) = l_hq(i, 4) - l_txc(i, 1)/(1.0_wp + exp(l_txc(i, 2)*delta_inv0))
 
-            l_hq(i, 5) = l_hq(i, 5) - l_txc(i, 4)/(1.0_wp + EXP(l_txc(i, 2)*delta_inv0)) &
-                         - l_txc(i, 3)*delta_inv4/(COSH(l_txc(i, 2)*delta_inv2)**2)
+            l_hq(i, 5) = l_hq(i, 5) - l_txc(i, 4)/(1.0_wp + exp(l_txc(i, 2)*delta_inv0)) &
+                         - l_txc(i, 3)*delta_inv4/(cosh(l_txc(i, 2)*delta_inv2)**2)
         end do
 
-    case(PART_TYPE_SIMPLE_SETT)
+    case (PART_TYPE_SIMPLE_SETT)
         l_hq(1:l_g%np, 2) = l_hq(1:l_g%np, 2) - part%parameters(1)
-    
+
     end select
-    
+
 ! -------------------------------------------------------------------
     do i = 1, nvar
         nullify (data(i)%field, data_out(i)%field)

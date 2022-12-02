@@ -3,7 +3,7 @@
 
 subroutine PARTICLE_READ_GLOBAL(inifile)
     use TLAB_CONSTANTS, only: wp, wi, longi, efile, lfile
-    use TLAB_VARS, only: inb_flow_array, inb_scal_array
+    use TLAB_VARS, only: inb_scal_array
     use PARTICLE_VARS
     use TLAB_PROCS
     use PROFILES
@@ -37,6 +37,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
     if (trim(adjustl(sRes)) == 'none') then; part%type = PART_TYPE_NONE
     else if (trim(adjustl(sRes)) == 'tracer') then; part%type = PART_TYPE_TRACER
+    else if (trim(adjustl(sRes)) == 'inertia') then; part%type = PART_TYPE_INERTIA
     else if (trim(adjustl(sRes)) == 'simplesettling') then; part%type = PART_TYPE_SIMPLE_SETT
     else if (trim(adjustl(sRes)) == 'bilinearcloudthree') then; part%type = PART_TYPE_BIL_CLOUD_3
     else if (trim(adjustl(sRes)) == 'bilinearcloudfour') then; part%type = PART_TYPE_BIL_CLOUD_4
@@ -46,6 +47,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     end if
 
     isize_part = 0
+    
     if (part%type /= PART_TYPE_NONE) then
         call SCANINICHAR(bakfile, inifile, block, 'Parameters', '0.0', sRes)
         idummy = MAX_PARS
@@ -78,6 +80,14 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         end if
 
 ! -------------------------------------------------------------------
+        call SCANINICHAR(bakfile, inifile, block, 'TrajType', 'basic', sRes)
+        if (trim(adjustl(sRes)) == 'basic') then; imode_traj = TRAJ_TYPE_BASIC
+        elseif (trim(adjustl(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
+        else
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Invalid option in TrajectoryType')
+            call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
+        end if
+
         call SCANINIINT(bakfile, inifile, block, 'TrajNumber', '0', isize_traj)
         if (isize_traj > isize_part_total) then
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Number of trajectories must be less or equal than number of particles.')
@@ -88,42 +98,39 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 
         call SCANINICHAR(bakfile, inifile, block, 'TrajFileName', 'void', traj_filename)
 
-        inb_traj = inb_flow_array + inb_scal_array
-        call SCANINICHAR(bakfile, inifile, block, 'TrajType', 'basic', sRes)
-        if (trim(adjustl(sRes)) == 'basic') then; imode_traj = TRAJ_TYPE_BASIC
-        elseif (trim(adjustl(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
-            inb_traj = inb_traj + 3 ! + vorticity
-        else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Invalid option in TrajectoryType')
-            call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
-        end if
-
 ! ###################################################################
 ! Initializing size of particle arrays
 ! ###################################################################
-        inb_part_array = 3          ! # of particle properties in array
-        inb_part = 3                ! # of particle properties in Runge-Kutta
+        inb_part = 3                ! # of particle properties in Runge-Kutta (prognostic properties): at least, the position
+        inb_part_array = inb_part   ! # of particle properties in array (prognostic plus diagnostic): at leat, prognostic variables
         inb_part_txc = 1            ! # of particle auxiliary properties for intermediate calculations
         inb_part_interp = 3         ! # of interpolated fields into lagrangian framework
 
-        if (part%type == PART_TYPE_BIL_CLOUD_3) then
-            inb_part_array = 5
+        select case (part%type)
+
+        case (PART_TYPE_INERTIA)
+            inb_part = inb_part + 3         ! add particle velocity to particle position
+            inb_part_array = inb_part
+            inb_part_txc = 3
+
+        case (PART_TYPE_BIL_CLOUD_3)
             inb_part = 5
+            inb_part_array = inb_part
             inb_part_txc = 4
             inb_part_interp = inb_part_interp + 4
             part_spname(1) = 'droplet_diff_3'
             part_spname(2) = 'droplet_nodiff_3'
 
-        elseif (part%type == PART_TYPE_BIL_CLOUD_4) then
-            inb_part_array = 5 + 2 ! Space for residence time pdf
+        case (PART_TYPE_BIL_CLOUD_4)
             inb_part = 5
+            inb_part_array = inb_part + 2   ! add for residence time pdf
             inb_part_txc = 4
             inb_part_interp = inb_part_interp + 4
             part_spname(1) = 'droplet_diff_3'
             part_spname(2) = 'droplet_nodiff_3'
             part_spname(3) = 'residence_part'
 
-        end if
+        end select
 
 #ifdef USE_MPI
         call SCANINIREAL(bakfile, inifile, block, 'MemoryFactor', '2.0', memory_factor)
@@ -131,13 +138,26 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         if (mod(isize_part_total, int(ims_npro, longi)) /= 0) then ! All PEs with equal memory
             isize_part = isize_part + 1
         end if
-        isize_part = isize_part*int(memory_factor*100)/100          ! extra memory space to allow particles concentrating into a few processors
+        isize_part = isize_part*int(memory_factor*100)/100         ! extra memory space to allow particles concentrating into a few processors
 #else
         isize_part = int(isize_part_total)
 #endif
 
+! -------------------------------------------------------------------
+        inb_traj = inb_part             ! # of particle properties tracked in trajectories; at least, the prognostic properties
+
+        select case (imode_traj)
+        
+        case(TRAJ_TYPE_BASIC)
+            inb_traj = inb_traj + inb_scal_array     ! space for the scalar fields
+        
+        case(TRAJ_TYPE_VORTICITY)
+            inb_traj = inb_traj + 3     ! space for vorticity
+        
+        end select
+        
         if (imode_traj /= TRAJ_TYPE_NONE) then
-            inb_part_txc = max(inb_part_txc, inb_flow_array + inb_scal_array - 3)
+            inb_part_txc = max(inb_part_txc, inb_traj)
             inb_part_interp = max(inb_part_interp, inb_traj)
         end if
 
