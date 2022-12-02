@@ -11,6 +11,8 @@
 SUBROUTINE FI_CURL(nx,ny,nz, u,v,w, wx,wy,wz, tmp, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
+  USE TLAB_VARS, ONLY : imode_ibm
+  USE IBM_VARS,  ONLY : ibm_partial
 
   IMPLICIT NONE
 
@@ -24,6 +26,9 @@ SUBROUTINE FI_CURL(nx,ny,nz, u,v,w, wx,wy,wz, tmp, wrk2d,wrk3d)
 
 ! ###################################################################
   bcs = 0
+
+! IBM   (if .true., OPR_PARTIAL_X/Y/Z uses modified fields for derivatives)
+  IF ( imode_ibm == 1 ) ibm_partial = .true.
 
 ! v,x-u,y
   CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), v, wz,  wrk3d, wrk2d,wrk3d)
@@ -41,6 +46,14 @@ SUBROUTINE FI_CURL(nx,ny,nz, u,v,w, wx,wy,wz, tmp, wrk2d,wrk3d)
   wx = wx - tmp
 
   tmp = wx*wx + wy*wy + wz*wz
+
+  IF ( imode_ibm == 1 ) THEN
+    ibm_partial = .false.  
+    call IBM_BCS_FIELD(wx)
+    call IBM_BCS_FIELD(wy)
+    call IBM_BCS_FIELD(wz)
+    call IBM_BCS_FIELD(tmp)
+  ENDIF
 
   RETURN
 END SUBROUTINE FI_CURL

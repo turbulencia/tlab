@@ -1,5 +1,3 @@
-#include "types.h"
-
 !########################################################################
 !# HISTORY / AUTHORS
 !#
@@ -24,25 +22,24 @@
 
 subroutine IBM_CHECK_PROCS(epsi, epsj, epsk)
   
-  use IBM_VARS,      only : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
-  use TLAB_VARS,     only : isize_field
+  use IBM_VARS,       only : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
+  use TLAB_VARS,      only : isize_field
+  use TLAB_CONSTANTS, only : wi, wp
 #ifdef IBM_DEBUG
 #ifdef USE_MPI 
   use MPI
-  use TLAB_MPI_VARS, only : ims_pro
+  use TLAB_MPI_VARS,  only : ims_pro
 #endif
 #endif
   
   implicit none
   
-#include "integers.h"
-
-  TREAL, dimension(isize_field), intent(in) :: epsi, epsj, epsk
+  real(wp), dimension(isize_field), intent(in) :: epsi, epsj, epsk
 
 #ifdef IBM_DEBUG
 #ifdef USE_MPI
 #else
-  TINTEGER, parameter                       :: ims_pro = 0 
+  integer(wi), parameter                       :: ims_pro = 0 
 #endif
 #endif
 

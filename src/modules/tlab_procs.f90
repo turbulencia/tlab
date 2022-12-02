@@ -26,9 +26,6 @@ module TLAB_PROCS
     public :: TLAB_ALLOCATE_ARRAY_DOUBLE
     public :: TLAB_ALLOCATE_ARRAY_INT
     public :: TLAB_ALLOCATE_ARRAY_LONG_INT
-    ! to be removed
-    public :: TLAB_ALLOCATE_ARRAY1, TLAB_ALLOCATE_ARRAY2
-    public :: TLAB_ALLOCATE_ARRAY1_INT!, TLAB_ALLOCATE_ARRAY1_LONG_INT
 #ifdef USE_MPI
     public :: TLAB_MPI_PANIC
 #endif
@@ -55,95 +52,6 @@ contains
 
         return
     end subroutine TLAB_ALLOCATE
-
-    ! ######################################################################
-    ! ######################################################################
-    subroutine TLAB_ALLOCATE_ARRAY1(C_FILE_LOC, a, i1, s)
-
-        character(len=*), intent(in) :: C_FILE_LOC
-        real(wp), dimension(:), allocatable, intent(inout) :: a
-        integer(wi), intent(in) :: i1
-        character(len=*), intent(in) :: s
-
-        !#####################################################################
-        if (i1 <= 0) return
-
-        write (str, *) i1; line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
-        call TLAB_WRITE_ASCII(lfile, line)
-        allocate (a(i1), stat=ierr)
-        if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
-        end if
-
-    end subroutine TLAB_ALLOCATE_ARRAY1
-
-    ! ######################################################################
-    ! ######################################################################
-    subroutine TLAB_ALLOCATE_ARRAY1_INT(C_FILE_LOC, a, i1, s)
-
-        character(len=*), intent(in) :: C_FILE_LOC
-        integer(wi), dimension(:), allocatable, intent(inout) :: a
-        integer(wi), intent(in) :: i1
-        character(len=*), intent(in) :: s
-
-        !#####################################################################
-        if (i1 <= 0) return
-
-        write (str, *) i1; line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
-        call TLAB_WRITE_ASCII(lfile, line)
-        allocate (a(i1), stat=ierr)
-        if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
-        end if
-
-    end subroutine TLAB_ALLOCATE_ARRAY1_INT
-
-    ! ######################################################################
-    ! ######################################################################
-    subroutine TLAB_ALLOCATE_ARRAY1_LONG_INT(C_FILE_LOC, a, i1, s)
-
-        character(len=*), intent(in) :: C_FILE_LOC
-        integer(longi), dimension(:), allocatable, intent(inout) :: a
-        integer(wi), intent(in) :: i1
-        character(len=*), intent(in) :: s
-
-        !#####################################################################
-        if (i1 <= 0) return
-
-        write (str, *) i1; line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
-        call TLAB_WRITE_ASCII(lfile, line)
-        allocate (a(i1), stat=ierr)
-        if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
-        end if
-
-    end subroutine TLAB_ALLOCATE_ARRAY1_LONG_INT
-
-    ! ######################################################################
-    ! ######################################################################
-    subroutine TLAB_ALLOCATE_ARRAY2(C_FILE_LOC, a, i1, i2, s)
-
-        character(len=*), intent(in) :: C_FILE_LOC
-        real(wp), dimension(:, :), allocatable, intent(inout) :: a
-        integer(wi), intent(in) :: i1, i2
-        character(len=*), intent(in) :: s
-
-        !#####################################################################
-        if (i1 <= 0 .or. i2 <= 0) return
-
-        write (str, *) i2; line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))//'x'
-        write (str, *) i1; line = trim(adjustl(line))//trim(adjustl(str))
-        call TLAB_WRITE_ASCII(lfile, line)
-        allocate (a(i2, i1), stat=ierr)
-        if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
-        end if
-
-    end subroutine TLAB_ALLOCATE_ARRAY2
 
     ! ######################################################################
     ! ######################################################################
@@ -413,6 +321,8 @@ contains
         return
     end subroutine TLAB_STOP
 
+    ! ###################################################################
+    ! ###################################################################
 #ifdef USE_MPI
     subroutine TLAB_MPI_PANIC(location, mpi_error_code)
 

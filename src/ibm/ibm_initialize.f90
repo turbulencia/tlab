@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 
 !########################################################################
@@ -29,27 +28,25 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   use IBM_VARS
   use TLAB_VARS,      only : imax,jmax,kmax, isize_field, inb_txc
   use TLAB_VARS,      only : istagger
-  use TLAB_CONSTANTS, only : efile
+  use TLAB_CONSTANTS, only : efile, wp
   use IO_FIELDS
   use TLAB_PROCS
 
   implicit none
 
-#include "integers.h"
+  real(wp), dimension(isize_field,inb_txc), intent(inout) :: txc
+  real(wp), dimension(isize_field),         intent(inout) :: wrk3d
 
-  TREAL, dimension(isize_field,inb_txc), intent(inout) :: txc
-  TREAL, dimension(isize_field),         intent(inout) :: wrk3d
+  target                                                  :: txc
 
-  target                                               :: txc
-
-  TREAL, dimension(:), pointer                         :: epsi, epsj, epsk
-  TREAL, dimension(:), pointer                         :: tmp1, tmp2
+  real(wp), dimension(:), pointer                         :: epsi, epsj, epsk
+  real(wp), dimension(:), pointer                         :: tmp1, tmp2
 #ifdef IBM_DEBUG
-  TREAL, dimension(:), pointer                         :: tmp3
+  real(wp), dimension(:), pointer                         :: tmp3
 #endif
   ! ================================================================== !
   ! assigning pointer to scratch
-  txc = C_0_R; epsi => txc(:,1); epsj => txc(:,2); epsk => txc(:,3)
+  txc = 0.0_wp; epsi => txc(:,1); epsj => txc(:,2); epsk => txc(:,3)
   tmp1 => txc(:,4); tmp2 => txc(:,5)
 
   ! options for geometry generation
@@ -61,7 +58,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   if ( ibm_restart ) then
     select case( ibm_io )
     case ( IBM_IO_REAL )
-      call IO_READ_FIELDS(eps_name_real, IO_FLOW, imax,jmax,kmax, i1, i0, eps, wrk3d)
+      call IO_READ_FIELDS(eps_name_real, IO_FLOW, imax,jmax,kmax, 1, 0, eps, wrk3d)
     case ( IBM_IO_INT  )
       call IBM_IO_READ_INT_GEOMETRY(wrk3d)
     case ( IBM_IO_BIT  )
@@ -90,7 +87,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
 
   ! compute gammas for conditional averages 
   CALL IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, tmp1, tmp2)
-  tmp1(:) = C_0_R; tmp2(:) = C_0_R
+  tmp1(:) = 0.0_wp; tmp2(:) = 0.0_wp
 
   ! check idle procs
 #ifdef USE_MPI
@@ -102,7 +99,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
 
 #ifdef IBM_DEBUG
   ! io of all geometry fields in debugging mode 
-  tmp3 => txc(:,6); tmp3(:) = C_0_R
+  tmp3 => txc(:,6); tmp3(:) = 0.0_wp
   call IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
   nullify(tmp3)
 #endif
