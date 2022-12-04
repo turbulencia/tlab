@@ -69,12 +69,9 @@ contains
         ! ###################################################################
         call TLAB_WRITE_ASCII(bakfile, '#')
         call TLAB_WRITE_ASCII(bakfile, '#[IniFields]')
-        call TLAB_WRITE_ASCII(bakfile, '#Velocity=<option>')
+        call TLAB_WRITE_ASCII(bakfile, '#Velocity=<VelocityDiscrete/VelocityBroadband/PotentialBroadband/VorticityBroadband>')
         call TLAB_WRITE_ASCII(bakfile, '#Temperature=<option>')
         call TLAB_WRITE_ASCII(bakfile, '#ForceDilatation=<yes/no>')
-        call TLAB_WRITE_ASCII(bakfile, '#ProfileIniK=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#ThickIniK=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#YMeanIniK=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#NormalizeK=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#NormalizeP=<value>')
 
