@@ -83,7 +83,7 @@ contains
         if (halo_zone_z /= 0) then
             npar_start = npar_end + 1
             npar_end = npar_end + halo_zone_z
-            call Interpolate_Inside_Zones('halo_zone_k', nvar, data_halo_k, data_out, l_g, l_q, npar_start, npar_end)
+            call Interpolate_Inside_Zones('halo_zone_z', nvar, data_halo_k, data_out, l_g, l_q, npar_start, npar_end)
         end if
 
         if (halo_zone_diagonal /= 0) then
@@ -240,7 +240,7 @@ contains
         g5loc = 5
         g6loc = 6
 
-        select case (zone)
+        select case (trim(adjustl(zone)))
         case ('halo_zone_x')
             g1loc = 7
             g2loc = 8
