@@ -8,9 +8,10 @@ module PARTICLE_VARS
     ! Possible values of part%type
     integer, parameter :: PART_TYPE_NONE = 0
     integer, parameter :: PART_TYPE_TRACER = 1
-    integer, parameter :: PART_TYPE_SIMPLE_SETT = 2
-    integer, parameter :: PART_TYPE_BIL_CLOUD_3 = 3
-    integer, parameter :: PART_TYPE_BIL_CLOUD_4 = 4
+    integer, parameter :: PART_TYPE_INERTIA = 2
+    integer, parameter :: PART_TYPE_SIMPLE_SETT = 3
+    integer, parameter :: PART_TYPE_BIL_CLOUD_3 = 4
+    integer, parameter :: PART_TYPE_BIL_CLOUD_4 = 5
 
     ! Posible values of imode_traj
     integer, parameter :: TRAJ_TYPE_NONE = 0
@@ -37,10 +38,10 @@ module PARTICLE_VARS
     integer, parameter :: PART_INITYPE_SCALAR = 101   ! Special type of particle initialization not included in default profile data
 
     ! Trajectory
-    integer(wi)   :: imode_traj             ! Type of trajectory information that is saved
-    integer(wi)   :: isize_traj             ! # of saved trajectories
-    integer(wi)   :: inb_traj               ! # of properties saved along trajectories
-    character(len=32) :: traj_filename      ! file with the particle tags to be tracked; if void, then the first isize_traj particles are used
+    integer(wi)   :: imode_traj = TRAJ_TYPE_NONE      ! Type of trajectory information that is saved
+    integer(wi)   :: isize_traj                       ! # of saved trajectories
+    integer(wi)   :: inb_traj                         ! # of properties saved along trajectories
+    character(len=32) :: traj_filename                ! file with the particle tags to be tracked; if void, then the first isize_traj particles are used
 
     ! Calculation of residence times
     integer(wi)   :: residence_reset     !if residence l_q should be reset

@@ -23,6 +23,7 @@ contains
         ! -------------------------------------------------------------------
         call TLAB_WRITE_ASCII(bakfile, '#Profile'//trim(adjustl(tag))//'=<None/Tanh/Erf/Ekman/Parabolic/...>')
         call TLAB_WRITE_ASCII(bakfile, '#'//trim(adjustl(tag))//'=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#YMean'//trim(adjustl(tag))//'=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#YMeanRelative'//trim(adjustl(tag))//'=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Diam'//trim(adjustl(tag))//'=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Thick'//trim(adjustl(tag))//'=<value>')

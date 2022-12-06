@@ -1,5 +1,3 @@
-#include "types.h"
-
 !########################################################################
 !# HISTORY / AUTHORS
 !#
@@ -26,14 +24,15 @@
 
 subroutine IBM_STAGGER_GEOMETRY(eps, epsp)
 
-  use TLAB_VARS, only : imax, jmax, kmax
+  use TLAB_VARS,      only : imax, jmax, kmax
+  use TLAB_CONSTANTS, only : wp, wi
 
   implicit none
 
-  TREAL, dimension(imax,jmax,kmax), intent(in ) ::  eps
-  TREAL, dimension(imax,jmax,kmax), intent(out) ::  epsp
+  real(wp), dimension(imax,jmax,kmax), intent(in ) :: eps
+  real(wp), dimension(imax,jmax,kmax), intent(out) :: epsp
 
-  TINTEGER                                      :: i,j,k
+  integer(wi)                                      :: i,j,k
 
   ! ================================================================== !
    
@@ -46,7 +45,7 @@ subroutine IBM_STAGGER_GEOMETRY(eps, epsp)
     do j = 1, jmax 
       do i = 2, imax
         if ( eps(i,j,k) == 0 .and. eps(i-1,j,k) == 1 ) then
-          epsp(i-1,j,k) = C_0_R 
+          epsp(i-1,j,k) = 0.0_wp 
         end if
       end do 
     end do
@@ -56,7 +55,7 @@ subroutine IBM_STAGGER_GEOMETRY(eps, epsp)
     do j = 1, jmax 
       do k = 2, kmax
         if ( eps(i,j,k) == 0 .and. eps(i,j,k-1) == 1 ) then
-          epsp(i,j,k-1) = C_0_R 
+          epsp(i,j,k-1) = 0.0_wp 
         end if
       end do 
     end do

@@ -1,6 +1,3 @@
-#include "types.h"
-#include "dns_const.h"
-
 !########################################################################
 !# HISTORY / AUTHORS
 !#
@@ -16,15 +13,17 @@
 
 module IBM_TYPES
 
+  use TLAB_CONSTANTS, only : wi
+
   implicit none
   
   save
   
   type ibm_geo_dt
       sequence
-      CHARACTER(32) :: name
-      TINTEGER      :: number, height, width
-      LOGICAL       :: mirrored
+      character(32) :: name
+      integer(wi)   :: number, height, width
+      logical       :: mirrored
   end type ibm_geo_dt
 
 end module IBM_TYPES

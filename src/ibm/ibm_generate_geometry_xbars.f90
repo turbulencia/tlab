@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 
 !########################################################################
@@ -32,34 +31,33 @@
 subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 
   use IBM_VARS
-  use TLAB_VARS,     only : g, imax, jmax, kmax, isize_field
+  use TLAB_VARS,      only : g, imax, jmax, kmax, isize_field
   use IO_FIELDS
+  use TLAB_CONSTANTS, only : wi, wp
 #ifdef USE_MPI 
   use MPI
-  use TLAB_MPI_VARS, only : ims_offset_i, ims_offset_j, ims_offset_k
+  use TLAB_MPI_VARS,  only : ims_offset_i, ims_offset_j, ims_offset_k
 #ifdef IBM_DEBUG
-  use TLAB_MPI_VARS, only : ims_pro, ims_npro, ims_npro_i, ims_npro_k 
+  use TLAB_MPI_VARS,  only : ims_pro, ims_npro, ims_npro_i, ims_npro_k 
 #endif
 #endif 
 
-implicit none
+  implicit none
 
-#include "integers.h"
-
-  TREAL, dimension(imax, jmax, kmax), intent(inout) ::  wrk3d
+  real(wp), dimension(imax, jmax, kmax), intent(inout) ::  wrk3d
 
 #ifdef USE_MPI
 #else
-  TINTEGER, parameter                               :: ims_offset_i=0, ims_offset_j=0, ims_offset_k=0
+  integer(wi), parameter                               :: ims_offset_i=0, ims_offset_j=0, ims_offset_k=0
 #ifdef IBM_DEBUG
-  TINTEGER, parameter                               :: ims_pro=0, ims_npro_i=1, ims_npro_k=1, ims_npro=0 
+  integer(wi), parameter                               :: ims_pro=0, ims_npro_i=1, ims_npro_k=1, ims_npro=0 
 #endif
 #endif
-  TINTEGER                                          :: nbars, hbar, wbar
-  TREAL                                             :: zcenter_bar
-  TINTEGER, dimension(xbars_geo%number)             :: zstart_bar, zend_bar
-  TINTEGER                                          :: istart, iend, jstart, jend, kstart, kend
-  TINTEGER                                          :: i,j,k,l
+  integer(wi)                                          :: nbars, hbar, wbar
+  real(wp)                                             :: zcenter_bar
+  integer(wi), dimension(xbars_geo%number)             :: zstart_bar, zend_bar
+  integer(wi)                                          :: istart, iend, jstart, jend, kstart, kend
+  integer(wi)                                          :: i,j,k,l
 
   ! ================================================================== !
   ! global array indicies for each mpi task (indices start with 0)
@@ -87,13 +85,13 @@ implicit none
 
   ! geometry
   nbars=xbars_geo%number; hbar=xbars_geo%height; wbar=xbars_geo%width  
-  wrk3d(:,:,:) = C_0_R
+  wrk3d(:,:,:) = 0.0_wp
 
   ! global z-positions of bars, equally distributed on gridpoints with equal spacing
   do l = 1, nbars
     zcenter_bar   = g(3)%size / nbars * (l - 0.5)
-    zstart_bar(l) = int(zcenter_bar - 0.5 * wbar)
-    zend_bar(l)   = int(zcenter_bar + 0.5 * wbar)
+    zstart_bar(l) = int(zcenter_bar - 0.5 * wbar, wi)
+    zend_bar(l)   = int(zcenter_bar + 0.5 * wbar, wi)
   end do
 
 #ifdef IBM_DEBUG
@@ -101,7 +99,7 @@ implicit none
     write(*,*) '======== Z - Positions of streamwise aligned bars ======='
     if (xbars_geo%mirrored) write(*,*) 'Bars are mirrored on upper wall!'
     do l = 1, nbars
-      write(*,*)'bar nr.', l, ' start:', zstart_bar(l) + i1, ' end:', zend_bar(l)
+      write(*,*)'bar nr.', l, ' start:', zstart_bar(l) + 1, ' end:', zend_bar(l)
     end do
   end if
 #endif
@@ -115,7 +113,7 @@ implicit none
       do l = 1, nbars 
         if( ((k+kstart)>zstart_bar(l)) .and. ((k+kstart)<=zend_bar(l)) ) then 
           do i = 1, imax
-            wrk3d(i,j,k) = C_1_R
+            wrk3d(i,j,k) = 1.0_wp
           end do
         end if
       end do 
@@ -129,7 +127,7 @@ implicit none
         do l = 1, nbars 
           if( ((k+kstart)>zstart_bar(l)) .and. ((k+kstart)<=zend_bar(l)) ) then 
             do i = 1, imax
-              wrk3d(i,j,k) = C_1_R
+              wrk3d(i,j,k) = 1.0_wp
             end do
           end if
         end do 
@@ -139,12 +137,12 @@ implicit none
 
   ! reshape 3D-field into 1D-field
   eps          = reshape(wrk3d,(/isize_field/))
-  wrk3d(:,:,:) = C_0_R
+  wrk3d(:,:,:) = 0.0_wp
 
   ! io of eps
   select case( ibm_io )
   case ( IBM_IO_REAL )
-    call IO_WRITE_FIELDS(eps_name_real, IO_FLOW, imax,jmax,kmax, i1, eps, wrk3d)
+    call IO_WRITE_FIELDS(eps_name_real, IO_FLOW, imax,jmax,kmax, 1, eps, wrk3d)
   case ( IBM_IO_INT  )
     call IBM_IO_WRITE_INT_GEOMETRY(wrk3d)
   case ( IBM_IO_BIT  )
