@@ -36,6 +36,7 @@ contains
         character(len=32) name
         integer ims_npro_loc
         integer(wi) j
+        integer(longi) stride
 
 !#######################################################################
         call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, l_traj, [isize_traj + 1, nitera_save, inb_traj], 'l_traj')
@@ -47,10 +48,12 @@ contains
 !#######################################################################
         ! set the particle tags to be tracked
         select case (trim(adjustl(traj_filename)))
-        case ('void')               ! track the first isize_traj particles. In parallel, this might only track from 1 processor
+        case ('void')               ! track isize_traj particles unformly distributed over the population
+            stride = isize_part_total /isize_traj
             do j = 1, isize_traj
-                l_traj_tags(j) = int(j, KIND=longi)
+                l_traj_tags(j) = 1+(j-1)*stride
             end do
+            ! print*,l_traj_tags(isize_traj),isize_part_total
 
         case default                ! track the ones given in a file
             ! write (name, *) nitera_last; name = trim(adjustl(traj_filename))//trim(adjustl(name))
