@@ -47,7 +47,7 @@ contains
 !#######################################################################
         ! set the particle tags to be tracked
         select case (trim(adjustl(traj_filename)))
-        case ('void')               ! track only the first isize_traj particles
+        case ('void')               ! track the first isize_traj particles. In parallel, this might only track from 1 processor
             do j = 1, isize_traj
                 l_traj_tags(j) = int(j, KIND=longi)
             end do

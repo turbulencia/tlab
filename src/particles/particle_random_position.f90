@@ -96,14 +96,15 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc, wrk3d)
     select case (IniP%type)
 
     case default
-        call random_number(l_q(:,1))
-        l_q(:, 1) = xref + l_q(:,1)*xscale
 
-        call random_number(l_q(:,3))
-        l_q(:, 3) = zref + l_q(:,3)*zscale
+        call random_number(l_q(1:l_g%np,1))
+        l_q(1:l_g%np, 1) = xref + l_q(1:l_g%np,1)*xscale
 
-        call random_number(l_q(:,2))
-        l_q(:, 2) = IniP%ymean + (l_q(:,2)-0.5_wp)*IniP%diam
+        call random_number(l_q(1:l_g%np,3))
+        l_q(1:l_g%np, 3) = zref + l_q(1:l_g%np,3)*zscale
+
+        call random_number(l_q(1:l_g%np,2))
+        l_q(1:l_g%np, 2) = IniP%ymean + (l_q(1:l_g%np,2)-0.5_wp)*IniP%diam
 
     case (PART_INITYPE_SCALAR) ! Use the scalar field to create the particle distribution
         call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc, wrk3d)
