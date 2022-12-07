@@ -383,23 +383,19 @@ contains
 
         nvar = size(data)
         
-        grid_zone = 0               ! Initialize counters
-        halo_zone_x = 0
-        halo_zone_z = 0
-        halo_zone_diagonal = 0
-
         !#######################################################################
-        ! Sorting into grid zone all particles
+        ! Group together particles outside of the grid zone at the end of the arrays
+        grid_zone = 0
         i = 1       ! starting point of sorting algorithm
         j = l_g%np  ! end point of sorting algorithm
 
-        do while (i < j)
+        do while (i <= j)
 
             if (l_q(i, 1) > right_limit .or. l_q(i, 3) > upper_limit) then          ! particle i is in halo
                 do
                     if (l_q(j, 1) > right_limit .or. l_q(j, 3) > upper_limit) then  ! partcile j is in halo, leave it there
                         j = j - 1                                                   ! go to next particle
-                        if (i == j) exit                                            ! finished your upwards loop
+                        if (i >= j) exit                                            ! finished your upwards loop
 
                     else                                                            ! found a particle in grid, so swap
                         idummy = l_g%nodes(i)
@@ -428,24 +424,23 @@ contains
 
                     end if
                 end do
-                i = i + 1   ! go to next particle
 
-            else            ! particle i is in the grid
-                i = i + 1
+            else            ! particle i is in the grid, the right place
                 grid_zone = grid_zone + 1
 
             end if
+            i = i + 1       ! go to next particle
 
         end do
 
-        !Last particle might not be properly checked. We check it here.
-        if (i == j) then !Probably not needed
-            if ((l_q(i, 1) > right_limit) .or. (l_q(i, 3) > upper_limit)) then !Particle out the grid
-                !Do nothing
-            else
-                grid_zone = grid_zone + 1 !The last particle was not checked but it is in the grid
-            end if
-        end if
+        ! !Last particle might not be properly checked. We check it here.
+        ! if (i == j) then !Probably not needed
+        !     if ((l_q(i, 1) > right_limit) .or. (l_q(i, 3) > upper_limit)) then !Particle out the grid
+        !         !Do nothing
+        !     else
+        !         grid_zone = grid_zone + 1 !The last particle was not checked but it is in the grid
+        !     end if
+        ! end if
         !Possible optimization to avoid if i. EQ. j. Not completed.
         ! ELSE IF (i-1 .GT. j+1) THEN
         !   j=j+1
@@ -464,16 +459,17 @@ contains
         !   END IF
 
         ! -------------------------------------------------------------------
-        ! Sorting into East particles that are in halo, either North, East or North-east
+        ! From the remaning particles, group together particles outside the East zone at the end of the array
+        halo_zone_x = 0
         i = grid_zone + 1
         j = l_g%np
 
-        do while (i < j)
+        do while (i <= j)
             if (l_q(i, 3) > upper_limit) then           ! particle i is in North
                 do
                     if (l_q(j, 3) > upper_limit) then   ! particle j is in North, leave it here
                         j = j - 1
-                        if (i == j) exit
+                        if (i >= j) exit
 
                     else                                ! found a particle in East, so swap
                         idummy = l_g%nodes(i)
@@ -502,35 +498,36 @@ contains
 
                     end if
                 end do
-                i = i + 1
 
             else
-                i = i + 1
                 halo_zone_x = halo_zone_x + 1
 
             end if
+            i = i + 1
+
         end do
 
-        !Last particle might not be properly checked. We check it here.
-        if (i == j) then !Probably not needed
-            if (l_q(i, 3) > upper_limit) then !Particle is out North
-                !Do nothing
-            else
-                halo_zone_x = halo_zone_x + 1
-            end if
-        end if
+        ! !Last particle might not be properly checked. We check it here.
+        ! if (i == j) then !Probably not needed
+        !     if (l_q(i, 3) > upper_limit) then !Particle is out North
+        !         !Do nothing
+        !     else
+        !         halo_zone_x = halo_zone_x + 1
+        !     end if
+        ! end if
 
         ! -------------------------------------------------------------------
-        ! Sorting into North particles that are in North or North-east
+        ! From the remaning particles, group together particles outside the North zone at the end of the array
+        halo_zone_z = 0
         i = grid_zone + halo_zone_x + 1
         j = l_g%np
 
-        do while (i < j)
+        do while (i <= j)
             if (l_q(i, 1) > right_limit) then           ! particle i is in North-east
                 do 
                     if (l_q(j, 1) > right_limit) then   ! particle j is in North-east, leave it here
                         j = j - 1
-                        if (i == j) exit
+                        if (i >= j) exit
 
                     else                                ! found a particle in North, so swap
                         idummy = l_g%nodes(i)
@@ -559,26 +556,26 @@ contains
 
                     end if
                 end do
-                i = i + 1
 
             else
                 halo_zone_z = halo_zone_z + 1
-                i = i + 1
 
             end if
+            i = i + 1
 
         end do
 
-        !Last particle might not be properly checked. We check it here.
-        if (i == j) then !Probably not needed
-            if (l_q(i, 1) > right_limit) then !Particle is out East
-                !Do nothing
-            else
-                halo_zone_z = halo_zone_z + 1
-            end if
-        end if
+        ! !Last particle might not be properly checked. We check it here.
+        ! if (i == j) then !Probably not needed
+        !     if (l_q(i, 1) > right_limit) then !Particle is out East
+        !         !Do nothing
+        !     else
+        !         halo_zone_z = halo_zone_z + 1
+        !     end if
+        ! end if
 
-        !Calculating the number of particles in North-east
+        ! -------------------------------------------------------------------
+        ! What remains at the end of the array is in the North-East zone
         halo_zone_diagonal = l_g%np - grid_zone - halo_zone_x - halo_zone_z
 
         return
