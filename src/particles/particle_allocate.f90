@@ -26,13 +26,17 @@ subroutine PARTICLE_ALLOCATE(C_FILE_LOC)
     call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, l_txc, [isize_part, inb_part_txc], 'l_txc')
 
     ! memory space for the halo regions for particle_interpolate
-    ! isize_l_comm = (2*jmax*kmax + imax*jmax*2 + 2*jmax*2)*inb_part_interp
     isize_l_comm = (2*jmax*(kmax + 1) + (imax + 1)*jmax*2)*inb_part_interp
 #ifdef USE_MPI
+    isize_l_comm = isize_l_comm + (2*jmax*(kmax + 1) + (imax + 1)*jmax*2)*inb_part_interp
     isize_pbuffer = int(isize_part/4*(inb_part_array*2 + 1)) ! same size for both buffers
     isize_l_comm = max(isize_l_comm, 2*isize_pbuffer)
 #endif
     call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, l_comm, [isize_l_comm], 'l_comm')
+
+    allocate (data_halo_i(inb_part_interp))
+    allocate (data_halo_k(inb_part_interp))
+    allocate (data_halo_ik(inb_part_interp))
 
     return
 end subroutine PARTICLE_ALLOCATE
@@ -40,11 +44,35 @@ end subroutine PARTICLE_ALLOCATE
 ! ###################################################################
 ! ###################################################################
 subroutine PARTICLE_INITIALIZE()
-    use TLAB_VARS, only: g !, sbg
+    use TLAB_VARS, only: g, imax, jmax, kmax
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     implicit none
 
+    integer(wi) ip_i, ip_k, ip_ik, np_i, np_k, np_ik
+    integer iv
+
+    ! Define pointers to l_work array to create halo regions
+    ip_i = 1;                           np_i = 2*jmax*kmax
+    ip_k = ip_i + np_i*inb_part_interp; np_k = imax*jmax*2
+    ip_ik= ip_k + np_k*inb_part_interp; np_ik= 2*jmax*2
+
+    halo_field_i(1:2, 1:jmax, 1:kmax, 1:inb_part_interp) => l_comm(ip_i:ip_i + np_i*inb_part_interp - 1)
+    halo_field_k(1:imax, 1:jmax, 1:2, 1:inb_part_interp) => l_comm(ip_k:ip_k + np_k*inb_part_interp - 1)
+    halo_field_ik(1:2, 1:jmax, 1:2, 1:inb_part_interp) => l_comm(ip_ik:ip_ik + np_ik*inb_part_interp - 1)
+
+    do iv = 1, inb_part_interp
+        data_halo_i(iv)%field => halo_field_i(:,:,:, iv)
+        data_halo_k(iv)%field => halo_field_k(:,:,:, iv)
+        data_halo_ik(iv)%field => halo_field_ik(:,:,:, iv)
+    end do
+
+#ifdef USE_MPI
+    allocate(buffer_send_k(imax, jmax, inb_part_interp), buffer_recv_k(imax, jmax, inb_part_interp))
+    allocate(buffer_send_i(jmax, kmax + 1, inb_part_interp), buffer_recv_i(jmax, kmax + 1, inb_part_interp))
+#endif
+
+    ! Define profiles to initialize particles
     if (IniP%relative) IniP%ymean = g(2)%nodes(1) + g(2)%scale*IniP%ymean_rel
 
     ! set boundarys for residence time pdf

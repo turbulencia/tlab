@@ -53,8 +53,11 @@ contains
             do j = 1, isize_traj
                 l_traj_tags(j) = 1+(j-1)*stride
             end do
-            ! print*,l_traj_tags(isize_traj),isize_part_total
-
+            if (l_traj_tags(isize_traj) > isize_part_total) then
+                call TLAB_WRITE_ASCII(efile, __FILE__//'. Tags of trajectories out of range.')
+                call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
+            end if
+    
         case default                ! track the ones given in a file
             ! write (name, *) nitera_last; name = trim(adjustl(traj_filename))//trim(adjustl(name))
             name = trim(adjustl(traj_filename))
@@ -135,7 +138,7 @@ contains
 
 ! Interpolation
         if (nvar > 3) then
-            call FIELD_TO_PARTICLE(nvar - 3, data_in(4:nvar), data(4:nvar), l_g, l_q, wrk3d)
+            call FIELD_TO_PARTICLE(nvar - 3, data_in(4:nvar), data(4:nvar), l_g, l_q)
         end if
 
 ! -------------------------------------------------------------------

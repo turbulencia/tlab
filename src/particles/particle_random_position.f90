@@ -160,7 +160,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc, wrk3d)
             nvar = nvar + 1; data(nvar)%field => txc(:, :, :, 1); data_out(nvar)%field => l_txc(:, 1)
             nvar = nvar + 1; data(nvar)%field => txc(:, :, :, 2); data_out(nvar)%field => l_txc(:, 2)
             l_txc(:, 1:2) = 0.0_wp
-            call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q, wrk3d)
+            call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q)
 
             l_q(:, 4) = 0.0_wp
             call THERMO_AIRWATER_LINEAR(l_g%np, 1, 1, l_txc(1, 1), l_q(1, 4))

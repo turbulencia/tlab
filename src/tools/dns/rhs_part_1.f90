@@ -94,7 +94,7 @@ subroutine RHS_PART_1()
 ! The interpolated data is added to the existing data, which
 ! consitutes already the evolution equation for particle position
 ! -------------------------------------------------------------------
-    call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q, wrk3d)
+    call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q)
 
 ! #####################################################################
 ! Completing evolution equations

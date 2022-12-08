@@ -7,14 +7,16 @@
 module PARTICLE_INTERPOLATE
     use TLAB_CONSTANTS, only: wp, wi, efile, lfile
     use TLAB_TYPES, only: pointers_dt, pointers3d_dt
-    use TLAB_VARS, only: imax, jmax, kmax, isize_wrk3d
+    use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_PROCS
     use PARTICLE_VARS
-    use PARTICLE_ARRAYS, only: l_comm
+    use PARTICLE_ARRAYS, only: halo_field_i, halo_field_k, halo_field_ik
+    use PARTICLE_ARRAYS, only: data_halo_i, data_halo_k, data_halo_ik
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS
+    use PARTICLE_ARRAYS, only: buffer_recv_i, buffer_recv_k, buffer_send_i, buffer_send_k
 #endif
     implicit none
     private
@@ -24,20 +26,16 @@ module PARTICLE_INTERPOLATE
 contains
 !#######################################################################
 !#######################################################################
-    subroutine FIELD_TO_PARTICLE(nvar, data_in, data_out, l_g, l_q, wrk3d)
+    subroutine FIELD_TO_PARTICLE(nvar, data_in, data_out, l_g, l_q)
         integer(wi), intent(in) :: nvar
         type(pointers3d_dt), intent(in) :: data_in(nvar)
         type(pointers_dt), intent(out) :: data_out(nvar)
         type(particle_dt), intent(inout) :: l_g
         real(wp), intent(inout) :: l_q(isize_part, inb_part_array)
-        real(wp), intent(inout) :: wrk3d(isize_wrk3d)
 
 ! -------------------------------------------------------------------
         integer(wi) grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal
         integer(wi) npar_start, npar_end
-        integer(wi) ip_i, ip_k, ip_ik, np_i, np_k, np_ik, iv
-
-        type(pointers3d_dt), dimension(nvar) :: data_halo_i, data_halo_k, data_halo_ik
 
 !#######################################################################
         if (nvar > inb_part_interp) then
@@ -45,20 +43,10 @@ contains
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
 
-        np_i = 2*jmax*kmax; ip_i = 1
-        np_k = imax*jmax*2; ip_k = ip_i + np_i*nvar
-        np_ik = 2*jmax*2; ip_ik = ip_k + np_k*nvar
-        do iv = 1, nvar
-            data_halo_i(iv)%field(1:2, 1:jmax, 1:kmax) => l_comm(ip_i:ip_i + np_i - 1); ip_i = ip_i + np_i
-            data_halo_k(iv)%field(1:imax, 1:jmax, 1:2) => l_comm(ip_k:ip_k + np_k - 1); ip_k = ip_k + np_k
-            data_halo_ik(iv)%field(1:2, 1:jmax, 1:2) => l_comm(ip_ik:ip_ik + np_ik - 1); ip_ik = ip_ik + np_ik
-        end do
-
 ! -------------------------------------------------------------------
 ! Setting fields in halo regions
-        call Create_Halo_K(nvar, data_in, data_halo_k(1)%field, wrk3d(1), wrk3d(imax*jmax*nvar + 1))
-        call Create_Halo_I_IK(nvar, data_in, data_halo_i(1)%field, data_halo_k(1)%field, data_halo_ik(1)%field, wrk3d(1), &
-                              wrk3d(jmax*(kmax + 1)*nvar + 1))
+        call Create_Halo_K(data_in)
+        call Create_Halo_I_IK(data_in)
 
 ! -------------------------------------------------------------------
 ! Sorting and counting particles for each zone
@@ -72,52 +60,47 @@ contains
 ! Interpolating
         npar_start = 1
         npar_end = grid_zone
-        call Interpolate_Inside_Zones('grid_zone', nvar, data_in, data_out, l_g, l_q, npar_start, npar_end)
+        call Interpolate_Inside_Zones('grid_zone', data_in, data_out, l_g, l_q, npar_start, npar_end)
 
         if (halo_zone_x /= 0) then
             npar_start = npar_end + 1
             npar_end = npar_end + halo_zone_x
-            call Interpolate_Inside_Zones('halo_zone_x', nvar, data_halo_i, data_out, l_g, l_q, npar_start, npar_end)
+            call Interpolate_Inside_Zones('halo_zone_x', data_halo_i, data_out, l_g, l_q, npar_start, npar_end)
         end if
 
         if (halo_zone_z /= 0) then
             npar_start = npar_end + 1
             npar_end = npar_end + halo_zone_z
-            call Interpolate_Inside_Zones('halo_zone_z', nvar, data_halo_k, data_out, l_g, l_q, npar_start, npar_end)
+            call Interpolate_Inside_Zones('halo_zone_z', data_halo_k, data_out, l_g, l_q, npar_start, npar_end)
         end if
 
         if (halo_zone_diagonal /= 0) then
             npar_start = npar_end + 1
             npar_end = npar_end + halo_zone_diagonal
-            call Interpolate_Inside_Zones('halo_zone_diagonal', nvar, data_halo_ik, data_out, l_g, l_q, npar_start, npar_end)
+            call Interpolate_Inside_Zones('halo_zone_diagonal', data_halo_ik, data_out, l_g, l_q, npar_start, npar_end)
         end if
-
-! -------------------------------------------------------------------
-        do iv = 1, nvar
-            nullify (data_halo_i(iv)%field, data_halo_k(iv)%field, data_halo_ik(iv)%field)
-        end do
 
         return
     end subroutine FIELD_TO_PARTICLE
 
 !#######################################################################
 !#######################################################################
-    subroutine Create_Halo_K(nvar, data, halo_field_k, buffer_send, buffer_recv)
-        integer(wi), intent(in) :: nvar
-        type(pointers3d_dt), intent(in) :: data(nvar)
-        real(wp), intent(out) :: halo_field_k(imax, jmax, 2, nvar)
-        real(wp), intent(inout) :: buffer_send(imax, jmax, 1, nvar), buffer_recv(imax, jmax, 1, nvar)
+    subroutine Create_Halo_K(data)
+        type(pointers3d_dt), intent(in) :: data(:)
 
 ! -------------------------------------------------------------------
         integer(wi) i
+        integer nvar
 
 #ifdef USE_MPI
-        integer source, dest, l, size
+        integer source, dest, l, buff_size
         integer mpireq(ims_npro*2 + 2)
         integer status(MPI_STATUS_SIZE, ims_npro*2)
 #endif
 
 ! ######################################################################
+    nvar = size(data)
+
 #ifdef USE_MPI
         if (ims_npro_k == 1) then
 #endif
@@ -130,19 +113,19 @@ contains
         else
             do i = 1, nvar
                 halo_field_k(1:imax, 1:jmax, 1, i) = data(i)%field(1:imax, 1:jmax, kmax)
-                buffer_send(1:imax, 1:jmax, 1, i) = data(i)%field(1:imax, 1:jmax, 1) ! data to be transfered
+                buffer_send_k(1:imax, 1:jmax, i) = data(i)%field(1:imax, 1:jmax, 1) ! data to be transfered
             end do
 
             mpireq(1:ims_npro*2) = MPI_REQUEST_NULL
             l = 2*ims_pro + 1
             dest = ims_map_k(mod(ims_pro_k - 1 + ims_npro_k, ims_npro_k) + 1)
             source = ims_map_k(mod(ims_pro_k + 1 + ims_npro_k, ims_npro_k) + 1)
-            size = imax*jmax*nvar
-            call MPI_ISEND(buffer_send, size, MPI_REAL8, dest, 0, MPI_COMM_WORLD, mpireq(l), ims_err)
-            call MPI_IRECV(buffer_recv, size, MPI_REAL8, source, MPI_ANY_TAG, MPI_COMM_WORLD, mpireq(l + 1), ims_err)
+            buff_size = imax*jmax*nvar
+            call MPI_ISEND(buffer_send_k, buff_size, MPI_REAL8, dest, 0, MPI_COMM_WORLD, mpireq(l), ims_err)
+            call MPI_IRECV(buffer_recv_k, buff_size, MPI_REAL8, source, MPI_ANY_TAG, MPI_COMM_WORLD, mpireq(l + 1), ims_err)
             call MPI_Waitall(ims_npro*2, mpireq, status, ims_err)
 
-            halo_field_k(1:imax, 1:jmax, 2, 1:nvar) = buffer_recv(1:imax, 1:jmax, 1, 1:nvar)
+            halo_field_k(1:imax, 1:jmax, 2, 1:nvar) = buffer_recv_k(1:imax, 1:jmax, 1:nvar)
 
         end if
 #endif
@@ -152,24 +135,22 @@ contains
 
 !#######################################################################
 !#######################################################################
-    subroutine Create_Halo_I_IK(nvar, data, halo_field_i, halo_field_k, halo_field_ik, buffer_send, buffer_recv)
-        integer(wi), intent(in) :: nvar
-        type(pointers3d_dt), intent(in) :: data(nvar)
-        real(wp), intent(out) :: halo_field_i(2, jmax, kmax, nvar)
-        real(wp), intent(in) :: halo_field_k(imax, jmax, 2, nvar)
-        real(wp), intent(out) :: halo_field_ik(2, jmax, 2, nvar)
-        real(wp), intent(inout) :: buffer_send(1, jmax, kmax + 1, nvar), buffer_recv(1, jmax, kmax + 1, nvar)
+    subroutine Create_Halo_I_IK(data)
+        type(pointers3d_dt), intent(in) :: data(:)
 
 ! -------------------------------------------------------------------
         integer(wi) i
+        integer nvar
 
 #ifdef USE_MPI
-        integer source, dest, l, size
+        integer source, dest, l, buff_size
         integer mpireq(ims_npro*2 + 2)
         integer status(MPI_STATUS_SIZE, ims_npro*2)
 #endif
 
 ! ######################################################################
+    nvar = size(data)
+
 #ifdef USE_MPI
         if (ims_npro_i == 1) then
 #endif
@@ -183,21 +164,21 @@ contains
         else
             do i = 1, nvar
                 halo_field_i(1, 1:jmax, 1:kmax, i) = data(i)%field(imax, 1:jmax, 1:kmax)
-                buffer_send(1, 1:jmax, 1:kmax, i) = data(i)%field(1, 1:jmax, 1:kmax)   ! data to be transfered
-                buffer_send(1, 1:jmax, kmax + 1, i) = halo_field_k(1, 1:jmax, 2, i)
+                buffer_send_i(1:jmax, 1:kmax, i) = data(i)%field(1, 1:jmax, 1:kmax)   ! data to be transfered
+                buffer_send_i(1:jmax, kmax + 1, i) = halo_field_k(1, 1:jmax, 2, i)
             end do
 
             mpireq(1:ims_npro*2) = MPI_REQUEST_NULL
             l = 2*ims_pro + 1
             dest = ims_map_i(mod(ims_pro_i - 1 + ims_npro_i, ims_npro_i) + 1)
             source = ims_map_i(mod(ims_pro_i + 1 + ims_npro_i, ims_npro_i) + 1)
-            size = jmax*(kmax + 1)*nvar
-            call MPI_ISEND(buffer_send, size, MPI_REAL8, dest, 0, MPI_COMM_WORLD, mpireq(l), ims_err)
-            call MPI_IRECV(buffer_recv, size, MPI_REAL8, source, MPI_ANY_TAG, MPI_COMM_WORLD, mpireq(l + 1), ims_err)
+            buff_size = jmax*(kmax + 1)*nvar
+            call MPI_ISEND(buffer_send_i, buff_size, MPI_REAL8, dest, 0, MPI_COMM_WORLD, mpireq(l), ims_err)
+            call MPI_IRECV(buffer_recv_i, buff_size, MPI_REAL8, source, MPI_ANY_TAG, MPI_COMM_WORLD, mpireq(l + 1), ims_err)
             call MPI_Waitall(ims_npro*2, mpireq, status, ims_err)
 
-            halo_field_i(2, 1:jmax, 1:kmax, 1:nvar) = buffer_recv(1, 1:jmax, 1:kmax, 1:nvar)
-            halo_field_ik(2, 1:jmax, 2, 1:nvar) = buffer_recv(1, 1:jmax, kmax + 1, 1:nvar) ! top-right corner
+            halo_field_i(2, 1:jmax, 1:kmax, 1:nvar) = buffer_recv_i(1:jmax, 1:kmax, 1:nvar)
+            halo_field_ik(2, 1:jmax, 2, 1:nvar) = buffer_recv_i(1:jmax, kmax + 1, 1:nvar) ! top-right corner
 
         end if
 #endif
@@ -211,11 +192,11 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine Interpolate_Inside_Zones(zone, nvar, data_in, data_out, l_g, l_q, grid_start, grid_end)
+    subroutine Interpolate_Inside_Zones(zone, data_in, data_out, l_g, l_q, grid_start, grid_end)
         character(len=*), intent(in) :: zone
-        integer(wi), intent(in) :: nvar, grid_start, grid_end
-        type(pointers3d_dt), intent(in) :: data_in(nvar)
-        type(pointers_dt), intent(out) :: data_out(nvar)
+        integer(wi), intent(in) :: grid_start, grid_end
+        type(pointers3d_dt), intent(in) :: data_in(:)
+        type(pointers_dt), intent(out) :: data_out(:)
         type(particle_dt), intent(in) :: l_g
         real(wp), intent(in) :: l_q(isize_part, 3)
 
@@ -224,8 +205,11 @@ contains
         integer(wi) g_p(10), g1loc, g2loc, g5loc, g6loc
         integer(wi) i, j
         real(wp) dx_loc_inv, dz_loc_inv
+        integer nvar
 
 ! ######################################################################
+        nvar = size(data_out)
+
         dx_loc_inv = real(g(1)%size, wp)/g(1)%scale
         dz_loc_inv = real(g(3)%size, wp)/g(3)%scale
 
@@ -363,7 +347,7 @@ contains
     subroutine Sort_Into_Zones(l_g, l_q, data, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
         type(pointers_dt), intent(inout) :: data(:)
         type(particle_dt), intent(inout) :: l_g
-        real(wp), intent(inout) :: l_q(:,:)
+        real(wp), intent(inout) :: l_q(:, :)
         integer(wi), intent(out) :: grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal
 
         ! -------------------------------------------------------------------
@@ -382,7 +366,7 @@ contains
 #endif
 
         nvar = size(data)
-        
+
         !#######################################################################
         ! Group together particles outside of the grid zone at the end of the arrays
         grid_zone = 0
@@ -524,7 +508,7 @@ contains
 
         do while (i <= j)
             if (l_q(i, 1) > right_limit) then           ! particle i is in North-east
-                do 
+                do
                     if (l_q(j, 1) > right_limit) then   ! particle j is in North-east, leave it here
                         j = j - 1
                         if (i >= j) exit

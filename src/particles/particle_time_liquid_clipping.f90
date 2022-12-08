@@ -53,7 +53,7 @@ subroutine PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc, wrk3d)
     nvar = 0
     nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => s(:, inb_scal_array); data_out(nvar)%field => l_txc(:)
     l_txc = C_0_R
-    call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q, wrk3d)
+    call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q)
 
     do i = 1, l_g%np
         if (l_txc(i) < 0.00001) then
