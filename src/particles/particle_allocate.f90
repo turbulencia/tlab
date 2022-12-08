@@ -34,9 +34,9 @@ subroutine PARTICLE_ALLOCATE(C_FILE_LOC)
 #endif
     call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, l_comm, [isize_l_comm], 'l_comm')
 
-    allocate (data_halo_i(inb_part_interp))
-    allocate (data_halo_k(inb_part_interp))
-    allocate (data_halo_ik(inb_part_interp))
+    allocate (p_halo_i(inb_part_interp))
+    allocate (p_halo_k(inb_part_interp))
+    allocate (p_halo_ik(inb_part_interp))
 
     return
 end subroutine PARTICLE_ALLOCATE
@@ -57,19 +57,19 @@ subroutine PARTICLE_INITIALIZE()
     ip_k = ip_i + np_i*inb_part_interp; np_k = imax*jmax*2
     ip_ik= ip_k + np_k*inb_part_interp; np_ik= 2*jmax*2
 
-    halo_field_i(1:2, 1:jmax, 1:kmax, 1:inb_part_interp) => l_comm(ip_i:ip_i + np_i*inb_part_interp - 1)
-    halo_field_k(1:imax, 1:jmax, 1:2, 1:inb_part_interp) => l_comm(ip_k:ip_k + np_k*inb_part_interp - 1)
-    halo_field_ik(1:2, 1:jmax, 1:2, 1:inb_part_interp) => l_comm(ip_ik:ip_ik + np_ik*inb_part_interp - 1)
+    halo_i(1:2, 1:jmax, 1:kmax, 1:inb_part_interp) => l_comm(ip_i:ip_i + np_i*inb_part_interp - 1)
+    halo_k(1:imax, 1:jmax, 1:2, 1:inb_part_interp) => l_comm(ip_k:ip_k + np_k*inb_part_interp - 1)
+    halo_ik(1:2, 1:jmax, 1:2, 1:inb_part_interp) => l_comm(ip_ik:ip_ik + np_ik*inb_part_interp - 1)
 
     do iv = 1, inb_part_interp
-        data_halo_i(iv)%field => halo_field_i(:,:,:, iv)
-        data_halo_k(iv)%field => halo_field_k(:,:,:, iv)
-        data_halo_ik(iv)%field => halo_field_ik(:,:,:, iv)
+        p_halo_i(iv)%field => halo_i(:,:,:, iv)
+        p_halo_k(iv)%field => halo_k(:,:,:, iv)
+        p_halo_ik(iv)%field => halo_ik(:,:,:, iv)
     end do
 
 #ifdef USE_MPI
-    allocate(buffer_send_k(imax, jmax, inb_part_interp), buffer_recv_k(imax, jmax, inb_part_interp))
-    allocate(buffer_send_i(jmax, kmax + 1, inb_part_interp), buffer_recv_i(jmax, kmax + 1, inb_part_interp))
+    allocate(halo_mpi_send_k(imax, jmax, inb_part_interp), halo_mpi_recv_k(imax, jmax, inb_part_interp))
+    allocate(halo_mpi_send_i(jmax, kmax + 1, inb_part_interp), halo_mpi_recv_i(jmax, kmax + 1, inb_part_interp))
 #endif
 
     ! Define profiles to initialize particles

@@ -11,12 +11,12 @@ module PARTICLE_INTERPOLATE
     use TLAB_VARS, only: g
     use TLAB_PROCS
     use PARTICLE_VARS
-    use PARTICLE_ARRAYS, only: halo_field_i, halo_field_k, halo_field_ik
-    use PARTICLE_ARRAYS, only: data_halo_i, data_halo_k, data_halo_ik
+    use PARTICLE_ARRAYS, only: halo_i, halo_k, halo_ik
+    use PARTICLE_ARRAYS, only: p_halo_i, p_halo_k, p_halo_ik
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS
-    use PARTICLE_ARRAYS, only: buffer_recv_i, buffer_recv_k, buffer_send_i, buffer_send_k
+    use PARTICLE_ARRAYS, only: halo_mpi_recv_i, halo_mpi_recv_k, halo_mpi_send_i, halo_mpi_send_k
 #endif
     implicit none
     private
@@ -34,7 +34,7 @@ contains
         real(wp), intent(inout) :: l_q(isize_part, inb_part_array)
 
 ! -------------------------------------------------------------------
-        integer(wi) grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal
+        integer(wi) np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz
         integer(wi) npar_start, npar_end
 
 !#######################################################################
@@ -50,7 +50,7 @@ contains
 
 ! -------------------------------------------------------------------
 ! Sorting and counting particles for each zone
-        call Sort_Into_Zones(l_g, l_q, data_out, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
+        call Sort_Into_Zones(l_g, l_q, data_out, np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz)
 
 #ifdef USE_MPI
         call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
@@ -59,25 +59,25 @@ contains
 ! -------------------------------------------------------------------
 ! Interpolating
         npar_start = 1
-        npar_end = grid_zone
-        call Interpolate_Inside_Zones('grid_zone', data_in, data_out, l_g, l_q, npar_start, npar_end)
+        npar_end = np_in_grid
+        call Interpolate_Inside_Zones('grid', data_in, data_out, l_g, l_q, npar_start, npar_end)
 
-        if (halo_zone_x /= 0) then
+        if (np_in_halo_x /= 0) then
             npar_start = npar_end + 1
-            npar_end = npar_end + halo_zone_x
-            call Interpolate_Inside_Zones('halo_zone_x', data_halo_i, data_out, l_g, l_q, npar_start, npar_end)
+            npar_end = npar_end + np_in_halo_x
+            call Interpolate_Inside_Zones('halo_x', p_halo_i, data_out, l_g, l_q, npar_start, npar_end)
         end if
 
-        if (halo_zone_z /= 0) then
+        if (np_in_halo_z /= 0) then
             npar_start = npar_end + 1
-            npar_end = npar_end + halo_zone_z
-            call Interpolate_Inside_Zones('halo_zone_z', data_halo_k, data_out, l_g, l_q, npar_start, npar_end)
+            npar_end = npar_end + np_in_halo_z
+            call Interpolate_Inside_Zones('halo_z', p_halo_k, data_out, l_g, l_q, npar_start, npar_end)
         end if
 
-        if (halo_zone_diagonal /= 0) then
+        if (np_in_halo_xz /= 0) then
             npar_start = npar_end + 1
-            npar_end = npar_end + halo_zone_diagonal
-            call Interpolate_Inside_Zones('halo_zone_diagonal', data_halo_ik, data_out, l_g, l_q, npar_start, npar_end)
+            npar_end = npar_end + np_in_halo_xz
+            call Interpolate_Inside_Zones('halo_xz', p_halo_ik, data_out, l_g, l_q, npar_start, npar_end)
         end if
 
         return
@@ -105,15 +105,15 @@ contains
         if (ims_npro_k == 1) then
 #endif
             do i = 1, nvar
-                halo_field_k(1:imax, 1:jmax, 1, i) = data(i)%field(1:imax, 1:jmax, kmax)
-                halo_field_k(1:imax, 1:jmax, 2, i) = data(i)%field(1:imax, 1:jmax, 1)
+                halo_k(1:imax, 1:jmax, 1, i) = data(i)%field(1:imax, 1:jmax, kmax)
+                halo_k(1:imax, 1:jmax, 2, i) = data(i)%field(1:imax, 1:jmax, 1)
             end do
 
 #ifdef USE_MPI
         else
             do i = 1, nvar
-                halo_field_k(1:imax, 1:jmax, 1, i) = data(i)%field(1:imax, 1:jmax, kmax)
-                buffer_send_k(1:imax, 1:jmax, i) = data(i)%field(1:imax, 1:jmax, 1) ! data to be transfered
+                halo_k(1:imax, 1:jmax, 1, i) = data(i)%field(1:imax, 1:jmax, kmax)
+                halo_mpi_send_k(1:imax, 1:jmax, i) = data(i)%field(1:imax, 1:jmax, 1) ! data to be transfered
             end do
 
             mpireq(1:ims_npro*2) = MPI_REQUEST_NULL
@@ -121,11 +121,11 @@ contains
             dest = ims_map_k(mod(ims_pro_k - 1 + ims_npro_k, ims_npro_k) + 1)
             source = ims_map_k(mod(ims_pro_k + 1 + ims_npro_k, ims_npro_k) + 1)
             buff_size = imax*jmax*nvar
-            call MPI_ISEND(buffer_send_k, buff_size, MPI_REAL8, dest, 0, MPI_COMM_WORLD, mpireq(l), ims_err)
-            call MPI_IRECV(buffer_recv_k, buff_size, MPI_REAL8, source, MPI_ANY_TAG, MPI_COMM_WORLD, mpireq(l + 1), ims_err)
+            call MPI_ISEND(halo_mpi_send_k, buff_size, MPI_REAL8, dest, 0, MPI_COMM_WORLD, mpireq(l), ims_err)
+            call MPI_IRECV(halo_mpi_recv_k, buff_size, MPI_REAL8, source, MPI_ANY_TAG, MPI_COMM_WORLD, mpireq(l + 1), ims_err)
             call MPI_Waitall(ims_npro*2, mpireq, status, ims_err)
 
-            halo_field_k(1:imax, 1:jmax, 2, 1:nvar) = buffer_recv_k(1:imax, 1:jmax, 1:nvar)
+            halo_k(1:imax, 1:jmax, 2, 1:nvar) = halo_mpi_recv_k(1:imax, 1:jmax, 1:nvar)
 
         end if
 #endif
@@ -155,17 +155,17 @@ contains
         if (ims_npro_i == 1) then
 #endif
             do i = 1, nvar
-                halo_field_i(1, 1:jmax, 1:kmax, i) = data(i)%field(imax, 1:jmax, 1:kmax)
-                halo_field_i(2, 1:jmax, 1:kmax, i) = data(i)%field(1, 1:jmax, 1:kmax)
-                halo_field_ik(2, 1:jmax, 2, i) = halo_field_k(1, 1:jmax, 2, i) ! top-right corner
+                halo_i(1, 1:jmax, 1:kmax, i) = data(i)%field(imax, 1:jmax, 1:kmax)
+                halo_i(2, 1:jmax, 1:kmax, i) = data(i)%field(1, 1:jmax, 1:kmax)
+                halo_ik(2, 1:jmax, 2, i) = halo_k(1, 1:jmax, 2, i) ! top-right corner
             end do
 
 #ifdef USE_MPI
         else
             do i = 1, nvar
-                halo_field_i(1, 1:jmax, 1:kmax, i) = data(i)%field(imax, 1:jmax, 1:kmax)
-                buffer_send_i(1:jmax, 1:kmax, i) = data(i)%field(1, 1:jmax, 1:kmax)   ! data to be transfered
-                buffer_send_i(1:jmax, kmax + 1, i) = halo_field_k(1, 1:jmax, 2, i)
+                halo_i(1, 1:jmax, 1:kmax, i) = data(i)%field(imax, 1:jmax, 1:kmax)
+                halo_mpi_send_i(1:jmax, 1:kmax, i) = data(i)%field(1, 1:jmax, 1:kmax)   ! data to be transfered
+                halo_mpi_send_i(1:jmax, kmax + 1, i) = halo_k(1, 1:jmax, 2, i)
             end do
 
             mpireq(1:ims_npro*2) = MPI_REQUEST_NULL
@@ -173,19 +173,19 @@ contains
             dest = ims_map_i(mod(ims_pro_i - 1 + ims_npro_i, ims_npro_i) + 1)
             source = ims_map_i(mod(ims_pro_i + 1 + ims_npro_i, ims_npro_i) + 1)
             buff_size = jmax*(kmax + 1)*nvar
-            call MPI_ISEND(buffer_send_i, buff_size, MPI_REAL8, dest, 0, MPI_COMM_WORLD, mpireq(l), ims_err)
-            call MPI_IRECV(buffer_recv_i, buff_size, MPI_REAL8, source, MPI_ANY_TAG, MPI_COMM_WORLD, mpireq(l + 1), ims_err)
+            call MPI_ISEND(halo_mpi_send_i, buff_size, MPI_REAL8, dest, 0, MPI_COMM_WORLD, mpireq(l), ims_err)
+            call MPI_IRECV(halo_mpi_recv_i, buff_size, MPI_REAL8, source, MPI_ANY_TAG, MPI_COMM_WORLD, mpireq(l + 1), ims_err)
             call MPI_Waitall(ims_npro*2, mpireq, status, ims_err)
 
-            halo_field_i(2, 1:jmax, 1:kmax, 1:nvar) = buffer_recv_i(1:jmax, 1:kmax, 1:nvar)
-            halo_field_ik(2, 1:jmax, 2, 1:nvar) = buffer_recv_i(1:jmax, kmax + 1, 1:nvar) ! top-right corner
+            halo_i(2, 1:jmax, 1:kmax, 1:nvar) = halo_mpi_recv_i(1:jmax, 1:kmax, 1:nvar)
+            halo_ik(2, 1:jmax, 2, 1:nvar) = halo_mpi_recv_i(1:jmax, kmax + 1, 1:nvar) ! top-right corner
 
         end if
 #endif
 
-        halo_field_ik(1, 1:jmax, 1, 1:nvar) = halo_field_i(1, 1:jmax, kmax, 1:nvar)
-        halo_field_ik(2, 1:jmax, 1, 1:nvar) = halo_field_i(2, 1:jmax, kmax, 1:nvar)
-        halo_field_ik(1, 1:jmax, 2, 1:nvar) = halo_field_k(imax, 1:jmax, 2, 1:nvar)
+        halo_ik(1, 1:jmax, 1, 1:nvar) = halo_i(1, 1:jmax, kmax, 1:nvar)
+        halo_ik(2, 1:jmax, 1, 1:nvar) = halo_i(2, 1:jmax, kmax, 1:nvar)
+        halo_ik(1, 1:jmax, 2, 1:nvar) = halo_k(imax, 1:jmax, 2, 1:nvar)
 
         return
     end subroutine Create_Halo_I_IK
@@ -225,15 +225,15 @@ contains
         g6loc = 6
 
         select case (trim(adjustl(zone)))
-        case ('halo_zone_x')
+        case ('halo_x')
             g1loc = 7
             g2loc = 8
 
-        case ('halo_zone_z')
+        case ('halo_z')
             g5loc = 9
             g6loc = 10
 
-        case ('halo_zone_diagonal')
+        case ('halo_xz')
             g1loc = 7
             g2loc = 8
             g5loc = 9
@@ -344,11 +344,11 @@ contains
 !########################################################################
 ! Sorting structure grid-halo_x-halo_z-halo_diagonal
 !########################################################################
-    subroutine Sort_Into_Zones(l_g, l_q, data, grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal)
+    subroutine Sort_Into_Zones(l_g, l_q, data, np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz)
         type(pointers_dt), intent(inout) :: data(:)
         type(particle_dt), intent(inout) :: l_g
         real(wp), intent(inout) :: l_q(:, :)
-        integer(wi), intent(out) :: grid_zone, halo_zone_x, halo_zone_z, halo_zone_diagonal
+        integer(wi), intent(out) :: np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz
 
         ! -------------------------------------------------------------------
         real(wp) dummy, right_limit, upper_limit
@@ -369,7 +369,7 @@ contains
 
         !#######################################################################
         ! Group together particles outside of the grid zone at the end of the arrays
-        grid_zone = 0
+        np_in_grid = 0
         i = 1       ! starting point of sorting algorithm
         j = l_g%np  ! end point of sorting algorithm
 
@@ -403,14 +403,14 @@ contains
                         end do
 
                         j = j - 1
-                        grid_zone = grid_zone + 1
+                        np_in_grid = np_in_grid + 1
                         exit
 
                     end if
                 end do
 
             else            ! particle i is in the grid, the right place
-                grid_zone = grid_zone + 1
+                np_in_grid = np_in_grid + 1
 
             end if
             i = i + 1       ! go to next particle
@@ -422,14 +422,14 @@ contains
         !     if ((l_q(i, 1) > right_limit) .or. (l_q(i, 3) > upper_limit)) then !Particle out the grid
         !         !Do nothing
         !     else
-        !         grid_zone = grid_zone + 1 !The last particle was not checked but it is in the grid
+        !         np_in_grid = np_in_grid + 1 !The last particle was not checked but it is in the grid
         !     end if
         ! end if
         !Possible optimization to avoid if i. EQ. j. Not completed.
         ! ELSE IF (i-1 .GT. j+1) THEN
         !   j=j+1
         !   i=i-1
-        !   grid_zone=grid_zone-1
+        !   np_in_grid=np_in_grid-1
         !   IF ( (l_q(j,1) .GT. right_limit) .OR. l_q(j,3) .GT. upper_limit) THEN
         !          DO k=1,3
         !           dummy=l_q(i,k)
@@ -444,8 +444,8 @@ contains
 
         ! -------------------------------------------------------------------
         ! From the remaning particles, group together particles outside the East zone at the end of the array
-        halo_zone_x = 0
-        i = grid_zone + 1
+        np_in_halo_x = 0
+        i = np_in_grid + 1
         j = l_g%np
 
         do while (i <= j)
@@ -477,14 +477,14 @@ contains
                         end do
 
                         j = j - 1
-                        halo_zone_x = halo_zone_x + 1
+                        np_in_halo_x = np_in_halo_x + 1
                         exit
 
                     end if
                 end do
 
             else
-                halo_zone_x = halo_zone_x + 1
+                np_in_halo_x = np_in_halo_x + 1
 
             end if
             i = i + 1
@@ -496,14 +496,14 @@ contains
         !     if (l_q(i, 3) > upper_limit) then !Particle is out North
         !         !Do nothing
         !     else
-        !         halo_zone_x = halo_zone_x + 1
+        !         np_in_halo_x = np_in_halo_x + 1
         !     end if
         ! end if
 
         ! -------------------------------------------------------------------
         ! From the remaning particles, group together particles outside the North zone at the end of the array
-        halo_zone_z = 0
-        i = grid_zone + halo_zone_x + 1
+        np_in_halo_z = 0
+        i = np_in_grid + np_in_halo_x + 1
         j = l_g%np
 
         do while (i <= j)
@@ -535,14 +535,14 @@ contains
                         end do
 
                         j = j - 1
-                        halo_zone_z = halo_zone_z + 1
+                        np_in_halo_z = np_in_halo_z + 1
                         exit
 
                     end if
                 end do
 
             else
-                halo_zone_z = halo_zone_z + 1
+                np_in_halo_z = np_in_halo_z + 1
 
             end if
             i = i + 1
@@ -554,13 +554,13 @@ contains
         !     if (l_q(i, 1) > right_limit) then !Particle is out East
         !         !Do nothing
         !     else
-        !         halo_zone_z = halo_zone_z + 1
+        !         np_in_halo_z = np_in_halo_z + 1
         !     end if
         ! end if
 
         ! -------------------------------------------------------------------
         ! What remains at the end of the array is in the North-East zone
-        halo_zone_diagonal = l_g%np - grid_zone - halo_zone_x - halo_zone_z
+        np_in_halo_xz = l_g%np - np_in_grid - np_in_halo_x - np_in_halo_z
 
         return
     end subroutine Sort_Into_Zones

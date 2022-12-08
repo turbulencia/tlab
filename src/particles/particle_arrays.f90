@@ -13,11 +13,11 @@ module PARTICLE_ARRAYS
     real(wp), allocatable :: l_txc(:, :)        ! Temporary space for Lagrnagian fields
 
     real(wp), allocatable :: l_comm(:)          ! halo space for field-particle interpolations 
-    type(pointers3d_dt), allocatable :: data_halo_i(:), data_halo_k(:), data_halo_ik(:)
-    real(wp), pointer :: halo_field_k(:,:,:,:), halo_field_i(:,:,:,:), halo_field_ik(:,:,:,:)
+    type(pointers3d_dt), allocatable :: p_halo_i(:), p_halo_k(:), p_halo_ik(:)
+    real(wp), pointer :: halo_k(:,:,:,:), halo_i(:,:,:,:), halo_ik(:,:,:,:)
 #ifdef USE_MPI
-    real(wp), allocatable :: buffer_send_i(:,:,:), buffer_recv_i(:,:,:)
-    real(wp), allocatable :: buffer_send_k(:,:,:), buffer_recv_k(:,:,:)
+    real(wp), allocatable :: halo_mpi_send_i(:,:,:), halo_mpi_recv_i(:,:,:)
+    real(wp), allocatable :: halo_mpi_send_k(:,:,:), halo_mpi_recv_k(:,:,:)
 #endif
 
     target l_txc, l_comm, l_q
