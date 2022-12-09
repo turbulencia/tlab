@@ -13,7 +13,10 @@ subroutine PARTICLE_ALLOCATE(C_FILE_LOC)
     character(len=*) C_FILE_LOC
 
     ! -------------------------------------------------------------------
-    integer(wi) :: isize_l_comm                 !
+    integer(wi) :: isize_l_work
+#ifdef USE_MPI
+    integer(wi) :: idummy
+#endif
 
     ! ###################################################################
     call TLAB_ALLOCATE_ARRAY_LONG_INT(C_FILE_LOC, l_g%tags, [isize_part], 'l_tags')
@@ -26,13 +29,19 @@ subroutine PARTICLE_ALLOCATE(C_FILE_LOC)
     call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, l_txc, [isize_part, inb_part_txc], 'l_txc')
 
     ! memory space for the halo regions for particle_interpolate
-    isize_l_comm = (2*jmax*(kmax + 1) + (imax + 1)*jmax*2)*inb_part_interp
+    isize_l_work = (2*jmax*(kmax + 1) + (imax + 1)*jmax*2)*inb_part_interp
 #ifdef USE_MPI
-    isize_l_comm = isize_l_comm + (2*jmax*(kmax + 1) + (imax + 1)*jmax*2)*inb_part_interp
-    isize_pbuffer = int(isize_part/4*(inb_part_array*2 + 1)) ! same size for both buffers
-    isize_l_comm = max(isize_l_comm, 2*isize_pbuffer)
+    idummy = (2*jmax*(kmax + 1) + (imax + 1)*jmax*2)*inb_part_interp   ! trasnfer halos between MPI tasks
+    isize_l_work = isize_l_work + idummy
+    idummy = int(isize_part/4*(inb_part_array*2 + 1))            ! transfer particles between MPI tasks
+    isize_l_work = max(isize_l_work, 2*idummy)
 #endif
-    call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, l_comm, [isize_l_comm], 'l_comm')
+    call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, l_work, [isize_l_work], 'l_work')
+
+#ifdef USE_MPI
+    p_buffer_1 => l_work(1:idummy)
+    p_buffer_2 => l_work(idummy + 1:idummy*2)
+#endif
 
     allocate (p_halo_i(inb_part_interp))
     allocate (p_halo_k(inb_part_interp))
@@ -53,23 +62,23 @@ subroutine PARTICLE_INITIALIZE()
     integer iv
 
     ! Define pointers to l_work array to create halo regions
-    ip_i = 1;                           np_i = 2*jmax*kmax
+    ip_i = 1; np_i = 2*jmax*kmax
     ip_k = ip_i + np_i*inb_part_interp; np_k = imax*jmax*2
-    ip_ik= ip_k + np_k*inb_part_interp; np_ik= 2*jmax*2
+    ip_ik = ip_k + np_k*inb_part_interp; np_ik = 2*jmax*2
 
-    halo_i(1:2, 1:jmax, 1:kmax, 1:inb_part_interp) => l_comm(ip_i:ip_i + np_i*inb_part_interp - 1)
-    halo_k(1:imax, 1:jmax, 1:2, 1:inb_part_interp) => l_comm(ip_k:ip_k + np_k*inb_part_interp - 1)
-    halo_ik(1:2, 1:jmax, 1:2, 1:inb_part_interp) => l_comm(ip_ik:ip_ik + np_ik*inb_part_interp - 1)
+    halo_i(1:2, 1:jmax, 1:kmax, 1:inb_part_interp) => l_work(ip_i:ip_i + np_i*inb_part_interp - 1)
+    halo_k(1:imax, 1:jmax, 1:2, 1:inb_part_interp) => l_work(ip_k:ip_k + np_k*inb_part_interp - 1)
+    halo_ik(1:2, 1:jmax, 1:2, 1:inb_part_interp) => l_work(ip_ik:ip_ik + np_ik*inb_part_interp - 1)
 
     do iv = 1, inb_part_interp
-        p_halo_i(iv)%field => halo_i(:,:,:, iv)
-        p_halo_k(iv)%field => halo_k(:,:,:, iv)
-        p_halo_ik(iv)%field => halo_ik(:,:,:, iv)
+        p_halo_i(iv)%field => halo_i(:, :, :, iv)
+        p_halo_k(iv)%field => halo_k(:, :, :, iv)
+        p_halo_ik(iv)%field => halo_ik(:, :, :, iv)
     end do
 
 #ifdef USE_MPI
-    allocate(halo_mpi_send_k(imax, jmax, inb_part_interp), halo_mpi_recv_k(imax, jmax, inb_part_interp))
-    allocate(halo_mpi_send_i(jmax, kmax + 1, inb_part_interp), halo_mpi_recv_i(jmax, kmax + 1, inb_part_interp))
+    allocate (halo_mpi_send_k(imax, jmax, inb_part_interp), halo_mpi_recv_k(imax, jmax, inb_part_interp))
+    allocate (halo_mpi_send_i(jmax, kmax + 1, inb_part_interp), halo_mpi_recv_i(jmax, kmax + 1, inb_part_interp))
 #endif
 
     ! Define profiles to initialize particles
