@@ -35,7 +35,7 @@ contains
 
 ! -------------------------------------------------------------------
         integer(wi) np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz
-        integer(wi) npar_start, npar_end
+        integer(wi) ip_start, ip_end
 
 !#######################################################################
         if (nvar > inb_part_interp) then
@@ -50,7 +50,19 @@ contains
 
 ! -------------------------------------------------------------------
 ! Sorting and counting particles for each zone
-        call Sort_Into_Zones(l_g, l_q, data_out, np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz)
+        ! call Sort_Into_Zones(l_g, l_q, data_out, np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz)
+
+        ! Group particles inside the grid at the beginning of the array, outside of the grid zone at the end of the arrays
+        ip_start = 1
+        call Sort_Into_Grid(l_g, l_q, data_out, ip_start, l_g%np, np_in_grid)
+        ! From the remaning particles, group particles inside the East halo at the beginning of the array, outside the East halo at the end of the array
+        ip_start = ip_start + np_in_grid
+        call Sort_Into_Halos(3, l_g, l_q, data_out, ip_start, l_g%np, np_in_halo_x)
+        ! From the remaning particles, group particles inside the North halo at the beginning of the array, outside the North zone at the end of the array
+        ip_start = ip_start + np_in_halo_x
+        call Sort_Into_Halos(1, l_g, l_q, data_out, ip_start, l_g%np, np_in_halo_z)
+        ! What remains at the end of the array is in the North-East zone
+        np_in_halo_xz = l_g%np - np_in_grid - np_in_halo_x - np_in_halo_z
 
 #ifdef USE_MPI
         call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
@@ -58,26 +70,26 @@ contains
 
 ! -------------------------------------------------------------------
 ! Interpolating
-        npar_start = 1
-        npar_end = np_in_grid
-        call Interpolate_Inside_Zones('grid', data_in, data_out, l_g, l_q, npar_start, npar_end)
+        ip_start = 1
+        ip_end = np_in_grid
+        call Interpolate_Inside_Zones('grid', data_in, data_out, l_g, l_q, ip_start, ip_end)
 
         if (np_in_halo_x /= 0) then
-            npar_start = npar_end + 1
-            npar_end = npar_end + np_in_halo_x
-            call Interpolate_Inside_Zones('halo_x', p_halo_i, data_out, l_g, l_q, npar_start, npar_end)
+            ip_start = ip_end + 1
+            ip_end = ip_end + np_in_halo_x
+            call Interpolate_Inside_Zones('halo_x', p_halo_i, data_out, l_g, l_q, ip_start, ip_end)
         end if
 
         if (np_in_halo_z /= 0) then
-            npar_start = npar_end + 1
-            npar_end = npar_end + np_in_halo_z
-            call Interpolate_Inside_Zones('halo_z', p_halo_k, data_out, l_g, l_q, npar_start, npar_end)
+            ip_start = ip_end + 1
+            ip_end = ip_end + np_in_halo_z
+            call Interpolate_Inside_Zones('halo_z', p_halo_k, data_out, l_g, l_q, ip_start, ip_end)
         end if
 
         if (np_in_halo_xz /= 0) then
-            npar_start = npar_end + 1
-            npar_end = npar_end + np_in_halo_xz
-            call Interpolate_Inside_Zones('halo_xz', p_halo_ik, data_out, l_g, l_q, npar_start, npar_end)
+            ip_start = ip_end + 1
+            ip_end = ip_end + np_in_halo_xz
+            call Interpolate_Inside_Zones('halo_xz', p_halo_ik, data_out, l_g, l_q, ip_start, ip_end)
         end if
 
         return
@@ -99,7 +111,7 @@ contains
 #endif
 
 ! ######################################################################
-    nvar = size(data)
+        nvar = size(data)
 
 #ifdef USE_MPI
         if (ims_npro_k == 1) then
@@ -149,7 +161,7 @@ contains
 #endif
 
 ! ######################################################################
-    nvar = size(data)
+        nvar = size(data)
 
 #ifdef USE_MPI
         if (ims_npro_i == 1) then
@@ -342,13 +354,13 @@ contains
     end subroutine Interpolate_Inside_Zones
 
 !########################################################################
-! Sorting structure grid-halo_x-halo_z-halo_diagonal
 !########################################################################
-    subroutine Sort_Into_Zones(l_g, l_q, data, np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz)
+    subroutine Sort_Into_Grid(l_g, l_q, data, ip_start, ip_end, counter)
         type(pointers_dt), intent(inout) :: data(:)
         type(particle_dt), intent(inout) :: l_g
         real(wp), intent(inout) :: l_q(:, :)
-        integer(wi), intent(out) :: np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz
+        integer(wi), intent(in) :: ip_start, ip_end
+        integer(wi), intent(out) :: counter
 
         ! -------------------------------------------------------------------
         real(wp) dummy, right_limit, upper_limit
@@ -369,9 +381,10 @@ contains
 
         !#######################################################################
         ! Group together particles outside of the grid zone at the end of the arrays
-        np_in_grid = 0
-        i = 1       ! starting point of sorting algorithm
-        j = l_g%np  ! end point of sorting algorithm
+        i = ip_start        ! starting point of sorting algorithm
+        j = ip_end          ! end point of sorting algorithm
+
+        counter = 0
 
         do while (i <= j)
 
@@ -403,113 +416,69 @@ contains
                         end do
 
                         j = j - 1
-                        np_in_grid = np_in_grid + 1
+                        counter = counter + 1
                         exit
 
                     end if
                 end do
 
             else            ! particle i is in the grid, the right place
-                np_in_grid = np_in_grid + 1
+                counter = counter + 1
 
             end if
             i = i + 1       ! go to next particle
 
         end do
 
-        ! !Last particle might not be properly checked. We check it here.
-        ! if (i == j) then !Probably not needed
-        !     if ((l_q(i, 1) > right_limit) .or. (l_q(i, 3) > upper_limit)) then !Particle out the grid
-        !         !Do nothing
-        !     else
-        !         np_in_grid = np_in_grid + 1 !The last particle was not checked but it is in the grid
-        !     end if
-        ! end if
-        !Possible optimization to avoid if i. EQ. j. Not completed.
-        ! ELSE IF (i-1 .GT. j+1) THEN
-        !   j=j+1
-        !   i=i-1
-        !   np_in_grid=np_in_grid-1
-        !   IF ( (l_q(j,1) .GT. right_limit) .OR. l_q(j,3) .GT. upper_limit) THEN
-        !          DO k=1,3
-        !           dummy=l_q(i,k)
-        !           l_q(i,k)=l_q(j,k)
-        !           l_q(j,k)=dummy
+        return
+    end subroutine Sort_Into_Grid
 
-        !           idummy8=l_g%tags(i)
-        !           l_g%tags(i)=l_g%tags(j)
-        !           l_g%tags(j)=idummy8
-        !         END DO
-        !   END IF
+!########################################################################
+!########################################################################
+    subroutine Sort_Into_Halos(x_or_z, l_g, l_q, data, ip_start, ip_end, counter)
+        integer, intent(in) :: x_or_z
+        type(particle_dt), intent(inout) :: l_g
+        real(wp), intent(inout) :: l_q(:, :)
+        type(pointers_dt), intent(inout) :: data(:)
+        integer(wi), intent(in) :: ip_start, ip_end
+        integer(wi), intent(out) :: counter
 
         ! -------------------------------------------------------------------
-        ! From the remaning particles, group together particles outside the East zone at the end of the array
-        np_in_halo_x = 0
-        i = np_in_grid + 1
-        j = l_g%np
+        real(wp) dummy, limit
+        integer(wi) idummy, nvar
+        integer(longi) idummy8
+        integer(wi) i, j, k
 
-        do while (i <= j)
-            if (l_q(i, 3) > upper_limit) then           ! particle i is in North
-                do
-                    if (l_q(j, 3) > upper_limit) then   ! particle j is in North, leave it here
-                        j = j - 1
-                        if (i >= j) exit
+        !#######################################################################
+        select case (x_or_z)
+        case (1)
+#ifdef USE_MPI
+            limit = g(1)%nodes(ims_offset_i + imax)  ! right_limit is east
+#else
+            limit = g(1)%nodes(g(1)%size)
+#endif
 
-                    else                                ! found a particle in East, so swap
-                        idummy = l_g%nodes(i)
-                        l_g%nodes(i) = l_g%nodes(j)
-                        l_g%nodes(j) = idummy
+        case (3)
+#ifdef USE_MPI
+            limit = g(3)%nodes(ims_offset_k + kmax)  ! upper_limit is north
+#else
+            limit = g(3)%nodes(g(3)%size)
+#endif
 
-                        idummy8 = l_g%tags(i)
-                        l_g%tags(i) = l_g%tags(j)
-                        l_g%tags(j) = idummy8
+        end select
 
-                        do k = 1, inb_part_array
-                            dummy = l_q(i, k)
-                            l_q(i, k) = l_q(j, k)
-                            l_q(j, k) = dummy
-                        end do
-
-                        do k = 1, nvar
-                            dummy = data(k)%field(i)
-                            data(k)%field(i) = data(k)%field(j)
-                            data(k)%field(j) = dummy
-                        end do
-
-                        j = j - 1
-                        np_in_halo_x = np_in_halo_x + 1
-                        exit
-
-                    end if
-                end do
-
-            else
-                np_in_halo_x = np_in_halo_x + 1
-
-            end if
-            i = i + 1
-
-        end do
-
-        ! !Last particle might not be properly checked. We check it here.
-        ! if (i == j) then !Probably not needed
-        !     if (l_q(i, 3) > upper_limit) then !Particle is out North
-        !         !Do nothing
-        !     else
-        !         np_in_halo_x = np_in_halo_x + 1
-        !     end if
-        ! end if
+        nvar = size(data)
 
         ! -------------------------------------------------------------------
-        ! From the remaning particles, group together particles outside the North zone at the end of the array
-        np_in_halo_z = 0
-        i = np_in_grid + np_in_halo_x + 1
-        j = l_g%np
+        i = ip_start
+        j = ip_end
+
+        counter = 0
 
         do while (i <= j)
-            if (l_q(i, 1) > right_limit) then           ! particle i is in North-east
+            if (l_q(i, x_or_z) > limit) then           ! particle i is in North-east
                 do
-                    if (l_q(j, 1) > right_limit) then   ! particle j is in North-east, leave it here
+                    if (l_q(j, x_or_z) > limit) then   ! particle j is in North-east, leave it here
                         j = j - 1
                         if (i >= j) exit
 
@@ -535,34 +504,248 @@ contains
                         end do
 
                         j = j - 1
-                        np_in_halo_z = np_in_halo_z + 1
+                        counter = counter + 1
                         exit
 
                     end if
                 end do
 
             else
-                np_in_halo_z = np_in_halo_z + 1
+                counter = counter + 1
 
             end if
             i = i + 1
 
         end do
 
-        ! !Last particle might not be properly checked. We check it here.
-        ! if (i == j) then !Probably not needed
-        !     if (l_q(i, 1) > right_limit) then !Particle is out East
-        !         !Do nothing
-        !     else
-        !         np_in_halo_z = np_in_halo_z + 1
-        !     end if
-        ! end if
-
-        ! -------------------------------------------------------------------
-        ! What remains at the end of the array is in the North-East zone
-        np_in_halo_xz = l_g%np - np_in_grid - np_in_halo_x - np_in_halo_z
-
         return
-    end subroutine Sort_Into_Zones
+    end subroutine Sort_Into_Halos
+
+! !########################################################################
+! ! Sorting structure grid-halo_x-halo_z-halo_diagonal
+! !########################################################################
+!     subroutine Sort_Into_Zones(l_g, l_q, data, np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz)
+!         type(pointers_dt), intent(inout) :: data(:)
+!         type(particle_dt), intent(inout) :: l_g
+!         real(wp), intent(inout) :: l_q(:, :)
+!         integer(wi), intent(out) :: np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz
+
+!         ! -------------------------------------------------------------------
+!         real(wp) dummy, right_limit, upper_limit
+!         integer(wi) idummy, nvar
+!         integer(longi) idummy8
+!         integer(wi) i, j, k
+
+!         !#######################################################################
+! #ifdef USE_MPI
+!         right_limit = g(1)%nodes(ims_offset_i + imax)  ! right_limit is east
+!         upper_limit = g(3)%nodes(ims_offset_k + kmax)  ! upper_limit is north
+! #else
+!         right_limit = g(1)%nodes(g(1)%size)
+!         upper_limit = g(3)%nodes(g(3)%size)
+! #endif
+
+!         nvar = size(data)
+
+!         !#######################################################################
+!         ! Group together particles outside of the grid zone at the end of the arrays
+!         i = 1       ! starting point of sorting algorithm
+!         j = l_g%np  ! end point of sorting algorithm
+
+!         np_in_grid = 0
+
+!         do while (i <= j)
+
+!             if (l_q(i, 1) > right_limit .or. l_q(i, 3) > upper_limit) then          ! particle i is in halo
+!                 do
+!                     if (l_q(j, 1) > right_limit .or. l_q(j, 3) > upper_limit) then  ! partcile j is in halo, leave it there
+!                         j = j - 1                                                   ! go to next particle
+!                         if (i >= j) exit                                            ! finished your upwards loop
+
+!                     else                                                            ! found a particle in grid, so swap
+!                         idummy = l_g%nodes(i)
+!                         l_g%nodes(i) = l_g%nodes(j)
+!                         l_g%nodes(j) = idummy
+
+!                         idummy8 = l_g%tags(i)
+!                         l_g%tags(i) = l_g%tags(j)
+!                         l_g%tags(j) = idummy8
+
+!                         do k = 1, inb_part_array
+!                             dummy = l_q(i, k)
+!                             l_q(i, k) = l_q(j, k)
+!                             l_q(j, k) = dummy
+!                         end do
+
+!                         do k = 1, nvar      ! swap also this data because of the substages in the Runge-Kutta
+!                             dummy = data(k)%field(i)
+!                             data(k)%field(i) = data(k)%field(j)
+!                             data(k)%field(j) = dummy
+!                         end do
+
+!                         j = j - 1
+!                         np_in_grid = np_in_grid + 1
+!                         exit
+
+!                     end if
+!                 end do
+
+!             else            ! particle i is in the grid, the right place
+!                 np_in_grid = np_in_grid + 1
+
+!             end if
+!             i = i + 1       ! go to next particle
+
+!         end do
+
+!         ! !Last particle might not be properly checked. We check it here.
+!         ! if (i == j) then !Probably not needed
+!         !     if ((l_q(i, 1) > right_limit) .or. (l_q(i, 3) > upper_limit)) then !Particle out the grid
+!         !         !Do nothing
+!         !     else
+!         !         np_in_grid = np_in_grid + 1 !The last particle was not checked but it is in the grid
+!         !     end if
+!         ! end if
+!         !Possible optimization to avoid if i. EQ. j. Not completed.
+!         ! ELSE IF (i-1 .GT. j+1) THEN
+!         !   j=j+1
+!         !   i=i-1
+!         !   np_in_grid=np_in_grid-1
+!         !   IF ( (l_q(j,1) .GT. right_limit) .OR. l_q(j,3) .GT. upper_limit) THEN
+!         !          DO k=1,3
+!         !           dummy=l_q(i,k)
+!         !           l_q(i,k)=l_q(j,k)
+!         !           l_q(j,k)=dummy
+
+!         !           idummy8=l_g%tags(i)
+!         !           l_g%tags(i)=l_g%tags(j)
+!         !           l_g%tags(j)=idummy8
+!         !         END DO
+!         !   END IF
+
+!         ! -------------------------------------------------------------------
+!         ! From the remaning particles, group together particles outside the East zone at the end of the array
+!         i = np_in_grid + 1
+!         j = l_g%np
+
+!         np_in_halo_x = 0
+
+!         do while (i <= j)
+!             if (l_q(i, 3) > upper_limit) then           ! particle i is in North
+!                 do
+!                     if (l_q(j, 3) > upper_limit) then   ! particle j is in North, leave it here
+!                         j = j - 1
+!                         if (i >= j) exit
+
+!                     else                                ! found a particle in East, so swap
+!                         idummy = l_g%nodes(i)
+!                         l_g%nodes(i) = l_g%nodes(j)
+!                         l_g%nodes(j) = idummy
+
+!                         idummy8 = l_g%tags(i)
+!                         l_g%tags(i) = l_g%tags(j)
+!                         l_g%tags(j) = idummy8
+
+!                         do k = 1, inb_part_array
+!                             dummy = l_q(i, k)
+!                             l_q(i, k) = l_q(j, k)
+!                             l_q(j, k) = dummy
+!                         end do
+
+!                         do k = 1, nvar
+!                             dummy = data(k)%field(i)
+!                             data(k)%field(i) = data(k)%field(j)
+!                             data(k)%field(j) = dummy
+!                         end do
+
+!                         j = j - 1
+!                         np_in_halo_x = np_in_halo_x + 1
+!                         exit
+
+!                     end if
+!                 end do
+
+!             else
+!                 np_in_halo_x = np_in_halo_x + 1
+
+!             end if
+!             i = i + 1
+
+!         end do
+
+!         ! !Last particle might not be properly checked. We check it here.
+!         ! if (i == j) then !Probably not needed
+!         !     if (l_q(i, 3) > upper_limit) then !Particle is out North
+!         !         !Do nothing
+!         !     else
+!         !         np_in_halo_x = np_in_halo_x + 1
+!         !     end if
+!         ! end if
+
+!         ! -------------------------------------------------------------------
+!         ! From the remaning particles, group together particles outside the North zone at the end of the array
+!         i = np_in_grid + np_in_halo_x + 1
+!         j = l_g%np
+
+!         np_in_halo_z = 0
+
+!         do while (i <= j)
+!             if (l_q(i, 1) > right_limit) then           ! particle i is in North-east
+!                 do
+!                     if (l_q(j, 1) > right_limit) then   ! particle j is in North-east, leave it here
+!                         j = j - 1
+!                         if (i >= j) exit
+
+!                     else                                ! found a particle in North, so swap
+!                         idummy = l_g%nodes(i)
+!                         l_g%nodes(i) = l_g%nodes(j)
+!                         l_g%nodes(j) = idummy
+
+!                         idummy8 = l_g%tags(i)
+!                         l_g%tags(i) = l_g%tags(j)
+!                         l_g%tags(j) = idummy8
+
+!                         do k = 1, inb_part_array
+!                             dummy = l_q(i, k)
+!                             l_q(i, k) = l_q(j, k)
+!                             l_q(j, k) = dummy
+!                         end do
+
+!                         do k = 1, nvar
+!                             dummy = data(k)%field(i)
+!                             data(k)%field(i) = data(k)%field(j)
+!                             data(k)%field(j) = dummy
+!                         end do
+
+!                         j = j - 1
+!                         np_in_halo_z = np_in_halo_z + 1
+!                         exit
+
+!                     end if
+!                 end do
+
+!             else
+!                 np_in_halo_z = np_in_halo_z + 1
+
+!             end if
+!             i = i + 1
+
+!         end do
+
+!         ! !Last particle might not be properly checked. We check it here.
+!         ! if (i == j) then !Probably not needed
+!         !     if (l_q(i, 1) > right_limit) then !Particle is out East
+!         !         !Do nothing
+!         !     else
+!         !         np_in_halo_z = np_in_halo_z + 1
+!         !     end if
+!         ! end if
+
+!         ! -------------------------------------------------------------------
+!         ! What remains at the end of the array is in the North-East zone
+!         np_in_halo_xz = l_g%np - np_in_grid - np_in_halo_x - np_in_halo_z
+
+!         return
+!     end subroutine Sort_Into_Zones
 
 end module PARTICLE_INTERPOLATE

@@ -21,6 +21,7 @@ program AVERAGES
     use THERMO_VARS, only: imixture
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
+    use PARTICLE_PROCS
     use IO_FIELDS
     use OPR_FILTERS
 

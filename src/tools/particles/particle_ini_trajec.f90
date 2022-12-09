@@ -48,6 +48,7 @@ program PARTICLE_INI_TRAJEC
 #endif
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
+    use PARTICLE_PROCS
 
     implicit none
 #include "integers.h"
