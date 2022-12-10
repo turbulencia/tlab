@@ -138,7 +138,7 @@ contains
 
 ! Interpolation
         if (nvar > 3) then
-            call FIELD_TO_PARTICLE(nvar - 3, data_in(4:nvar), data(4:nvar), l_g, l_q)
+            call FIELD_TO_PARTICLE(data_in(4:nvar), data(4:nvar), l_g, l_q)
         end if
 
 ! -------------------------------------------------------------------

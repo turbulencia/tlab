@@ -1,8 +1,4 @@
 #include "dns_error.h"
-#include "dns_const.h"
-#ifdef USE_MPI
-#include "dns_const_mpi.h"
-#endif
 
 module PARTICLE_INTERPOLATE
     use TLAB_CONSTANTS, only: wp, wi, efile, lfile
@@ -21,24 +17,25 @@ module PARTICLE_INTERPOLATE
     implicit none
     private
 
+    integer iv, nvar
+
     public :: FIELD_TO_PARTICLE
 
 contains
 !#######################################################################
 !#######################################################################
-    subroutine FIELD_TO_PARTICLE(nvar, data_in, data_out, l_g, l_q)
-        integer(wi), intent(in) :: nvar
-        type(pointers3d_dt), intent(in) :: data_in(nvar)
-        type(pointers_dt), intent(out) :: data_out(nvar)
-        type(particle_dt), intent(inout) :: l_g
-        real(wp), intent(inout) :: l_q(isize_part, inb_part_array)
+    subroutine FIELD_TO_PARTICLE(data_in, data_out, l_g, l_q)
+        type(pointers3d_dt), intent(in)    :: data_in(:)
+        type(pointers_dt),   intent(out)   :: data_out(:)
+        type(particle_dt),   intent(inout) :: l_g
+        real(wp),            intent(inout) :: l_q(isize_part, inb_part_array)
 
 ! -------------------------------------------------------------------
         integer(wi) np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz
         integer(wi) ip_start, ip_end
 
 !#######################################################################
-        if (nvar > inb_part_interp) then
+        if (size(data_in) > inb_part_interp) then
             call TLAB_WRITE_ASCII(efile, 'FIELD_TO_PARTICLE. Not enough memory.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
@@ -100,10 +97,6 @@ contains
     subroutine Create_Halo_K(data)
         type(pointers3d_dt), intent(in) :: data(:)
 
-! -------------------------------------------------------------------
-        integer(wi) i
-        integer nvar
-
 #ifdef USE_MPI
         integer source, dest, l, buff_size
         integer mpireq(ims_npro*2 + 2)
@@ -116,22 +109,22 @@ contains
 #ifdef USE_MPI
         if (ims_npro_k == 1) then
 #endif
-            do i = 1, nvar
-                halo_k(1:imax, 1:jmax, 1, i) = data(i)%field(1:imax, 1:jmax, kmax)
-                halo_k(1:imax, 1:jmax, 2, i) = data(i)%field(1:imax, 1:jmax, 1)
+            do iv = 1, nvar
+                halo_k(1:imax, 1:jmax, 1, iv) = data(iv)%field(1:imax, 1:jmax, kmax)
+                halo_k(1:imax, 1:jmax, 2, iv) = data(iv)%field(1:imax, 1:jmax, 1)
             end do
 
 #ifdef USE_MPI
         else
-            do i = 1, nvar
-                halo_k(1:imax, 1:jmax, 1, i) = data(i)%field(1:imax, 1:jmax, kmax)
-                halo_mpi_send_k(1:imax, 1:jmax, i) = data(i)%field(1:imax, 1:jmax, 1) ! data to be transfered
+            do iv = 1, nvar
+                halo_k(1:imax, 1:jmax, 1, iv) = data(iv)%field(1:imax, 1:jmax, kmax)
+                halo_mpi_send_k(1:imax, 1:jmax, iv) = data(iv)%field(1:imax, 1:jmax, 1) ! data to be transfered
             end do
 
             mpireq(1:ims_npro*2) = MPI_REQUEST_NULL
             l = 2*ims_pro + 1
-            dest = ims_map_k(mod(ims_pro_k - 1 + ims_npro_k, ims_npro_k) + 1)
-            source = ims_map_k(mod(ims_pro_k + 1 + ims_npro_k, ims_npro_k) + 1)
+            dest      = ims_map_k(mod(ims_pro_k - 1 + ims_npro_k, ims_npro_k) + 1)
+            source    = ims_map_k(mod(ims_pro_k + 1 + ims_npro_k, ims_npro_k) + 1)
             buff_size = imax*jmax*nvar
             call MPI_ISEND(halo_mpi_send_k, buff_size, MPI_REAL8, dest, 0, MPI_COMM_WORLD, mpireq(l), ims_err)
             call MPI_IRECV(halo_mpi_recv_k, buff_size, MPI_REAL8, source, MPI_ANY_TAG, MPI_COMM_WORLD, mpireq(l + 1), ims_err)
@@ -150,10 +143,6 @@ contains
     subroutine Create_Halo_I_IK(data)
         type(pointers3d_dt), intent(in) :: data(:)
 
-! -------------------------------------------------------------------
-        integer(wi) i
-        integer nvar
-
 #ifdef USE_MPI
         integer source, dest, l, buff_size
         integer mpireq(ims_npro*2 + 2)
@@ -166,24 +155,24 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i == 1) then
 #endif
-            do i = 1, nvar
-                halo_i(1, 1:jmax, 1:kmax, i) = data(i)%field(imax, 1:jmax, 1:kmax)
-                halo_i(2, 1:jmax, 1:kmax, i) = data(i)%field(1, 1:jmax, 1:kmax)
-                halo_ik(2, 1:jmax, 2, i) = halo_k(1, 1:jmax, 2, i) ! top-right corner
+            do iv = 1, nvar
+                halo_i(1, 1:jmax, 1:kmax, iv) = data(iv)%field(imax, 1:jmax, 1:kmax)
+                halo_i(2, 1:jmax, 1:kmax, iv) = data(iv)%field(1, 1:jmax, 1:kmax)
+                halo_ik(2, 1:jmax, 2, iv) = halo_k(1, 1:jmax, 2, iv) ! top-right corner
             end do
 
 #ifdef USE_MPI
         else
-            do i = 1, nvar
-                halo_i(1, 1:jmax, 1:kmax, i) = data(i)%field(imax, 1:jmax, 1:kmax)
-                halo_mpi_send_i(1:jmax, 1:kmax, i) = data(i)%field(1, 1:jmax, 1:kmax)   ! data to be transfered
-                halo_mpi_send_i(1:jmax, kmax + 1, i) = halo_k(1, 1:jmax, 2, i)
+            do iv = 1, nvar
+                halo_i(1, 1:jmax, 1:kmax, iv)         = data(iv)%field(imax, 1:jmax, 1:kmax)
+                halo_mpi_send_i(1:jmax, 1:kmax, iv)   = data(iv)%field(1, 1:jmax, 1:kmax)   ! data to be transfered
+                halo_mpi_send_i(1:jmax, kmax + 1, iv) = halo_k(1, 1:jmax, 2, iv)
             end do
 
             mpireq(1:ims_npro*2) = MPI_REQUEST_NULL
             l = 2*ims_pro + 1
-            dest = ims_map_i(mod(ims_pro_i - 1 + ims_npro_i, ims_npro_i) + 1)
-            source = ims_map_i(mod(ims_pro_i + 1 + ims_npro_i, ims_npro_i) + 1)
+            dest      = ims_map_i(mod(ims_pro_i - 1 + ims_npro_i, ims_npro_i) + 1)
+            source    = ims_map_i(mod(ims_pro_i + 1 + ims_npro_i, ims_npro_i) + 1)
             buff_size = jmax*(kmax + 1)*nvar
             call MPI_ISEND(halo_mpi_send_i, buff_size, MPI_REAL8, dest, 0, MPI_COMM_WORLD, mpireq(l), ims_err)
             call MPI_IRECV(halo_mpi_recv_i, buff_size, MPI_REAL8, source, MPI_ANY_TAG, MPI_COMM_WORLD, mpireq(l + 1), ims_err)
@@ -204,20 +193,19 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine Interpolate_Inside_Zones(zone, data_in, data_out, l_g, l_q, grid_start, grid_end)
-        character(len=*), intent(in) :: zone
-        integer(wi), intent(in) :: grid_start, grid_end
-        type(pointers3d_dt), intent(in) :: data_in(:)
-        type(pointers_dt), intent(out) :: data_out(:)
-        type(particle_dt), intent(in) :: l_g
-        real(wp), intent(in) :: l_q(isize_part, 3)
+    subroutine Interpolate_Inside_Zones(zone, data_in, data_out, l_g, l_q, ip_start, ip_end)
+        character(len=*),    intent(in)  :: zone
+        type(pointers3d_dt), intent(in)  :: data_in(:)
+        type(pointers_dt),   intent(out) :: data_out(:)
+        type(particle_dt),   intent(in)  :: l_g
+        real(wp),            intent(in)  :: l_q(isize_part, 3)
+        integer(wi),         intent(in)  :: ip_start, ip_end
 
 ! -------------------------------------------------------------------
         real(wp) length_g_p(6), cube_g_p(4)
         integer(wi) g_p(10), g1loc, g2loc, g5loc, g6loc
-        integer(wi) i, j
+        integer(wi) i
         real(wp) dx_loc_inv, dz_loc_inv
-        integer nvar
 
 ! ######################################################################
         nvar = size(data_out)
@@ -256,7 +244,7 @@ contains
 ! ######################################################################
         if (g(3)%size /= 1) then
 
-            do i = grid_start, grid_end ! loop over all particles
+            do i = ip_start, ip_end ! loop over all particles
 
                 length_g_p(1) = l_q(i, 1)*dx_loc_inv            ! Local X position
                 g_p(1) = floor(length_g_p(1))
@@ -280,7 +268,7 @@ contains
                 g_p(6) = g_p(5) + 1
                 length_g_p(6) = 1.0_wp - length_g_p(5)
 
-                g_p(3) = l_g%nodes(i)                    ! Local Y position
+                g_p(3) = l_g%nodes(i)                           ! Local Y position
                 g_p(4) = g_p(3) + 1
                 length_g_p(3) = (l_q(i, 2) - g(2)%nodes(g_p(3)))/(g(2)%nodes(g_p(4)) - g(2)%nodes(g_p(3)))
                 length_g_p(4) = 1.0_wp - length_g_p(3)
@@ -295,16 +283,16 @@ contains
 ! Two bilinear interpolations for each k plane (g_p(5) and g_p(6)
 ! Then multipled by (1-length) for trilinear aspect
 ! -------------------------------------------------------------------
-                do j = 1, nvar
-                    data_out(j)%field(i) = data_out(j)%field(i) + &
-                                           ((cube_g_p(3)*data_in(j)%field(g_p(g1loc), g_p(3), g_p(g5loc)) &
-                                             + cube_g_p(4)*data_in(j)%field(g_p(g1loc), g_p(4), g_p(g5loc)) &
-                                             + cube_g_p(1)*data_in(j)%field(g_p(g2loc), g_p(4), g_p(g5loc)) &
-                                             + cube_g_p(2)*data_in(j)%field(g_p(g2loc), g_p(3), g_p(g5loc)))*length_g_p(6)) &
-                                           + ((cube_g_p(3)*data_in(j)%field(g_p(g1loc), g_p(3), g_p(g6loc)) &
-                                               + cube_g_p(4)*data_in(j)%field(g_p(g1loc), g_p(4), g_p(g6loc)) &
-                                               + cube_g_p(1)*data_in(j)%field(g_p(g2loc), g_p(4), g_p(g6loc)) &
-                                               + cube_g_p(2)*data_in(j)%field(g_p(g2loc), g_p(3), g_p(g6loc)))*length_g_p(5))
+                do iv = 1, nvar
+                    data_out(iv)%field(i) = data_out(iv)%field(i) + &
+                                           ((cube_g_p(3)*data_in(iv)%field(g_p(g1loc), g_p(3), g_p(g5loc)) &
+                                             + cube_g_p(4)*data_in(iv)%field(g_p(g1loc), g_p(4), g_p(g5loc)) &
+                                             + cube_g_p(1)*data_in(iv)%field(g_p(g2loc), g_p(4), g_p(g5loc)) &
+                                             + cube_g_p(2)*data_in(iv)%field(g_p(g2loc), g_p(3), g_p(g5loc)))*length_g_p(6)) &
+                                           + ((cube_g_p(3)*data_in(iv)%field(g_p(g1loc), g_p(3), g_p(g6loc)) &
+                                               + cube_g_p(4)*data_in(iv)%field(g_p(g1loc), g_p(4), g_p(g6loc)) &
+                                               + cube_g_p(1)*data_in(iv)%field(g_p(g2loc), g_p(4), g_p(g6loc)) &
+                                               + cube_g_p(2)*data_in(iv)%field(g_p(g2loc), g_p(3), g_p(g6loc)))*length_g_p(5))
                 end do
 
             end do
@@ -312,7 +300,7 @@ contains
 ! ######################################################################
         else !2D case
 
-            do i = grid_start, grid_end
+            do i = ip_start, ip_end
 
                 length_g_p(1) = l_q(i, 1)*dx_loc_inv
                 g_p(1) = floor(length_g_p(1))
@@ -338,12 +326,12 @@ contains
 ! -------------------------------------------------------------------
 ! Bilinear interpolation
 ! -------------------------------------------------------------------
-                do j = 1, nvar
-                    data_out(j)%field(i) = data_out(j)%field(i) + &
-                                           (cube_g_p(3)*data_in(j)%field(g_p(g1loc), g_p(3), 1) &
-                                            + cube_g_p(4)*data_in(j)%field(g_p(g1loc), g_p(4), 1) &
-                                            + cube_g_p(1)*data_in(j)%field(g_p(g2loc), g_p(4), 1) &
-                                            + cube_g_p(2)*data_in(j)%field(g_p(g2loc), g_p(3), 1))
+                do iv = 1, nvar
+                    data_out(iv)%field(i) = data_out(iv)%field(i) + &
+                                           (cube_g_p(3)*data_in(iv)%field(g_p(g1loc), g_p(3), 1) &
+                                            + cube_g_p(4)*data_in(iv)%field(g_p(g1loc), g_p(4), 1) &
+                                            + cube_g_p(1)*data_in(iv)%field(g_p(g2loc), g_p(4), 1) &
+                                            + cube_g_p(2)*data_in(iv)%field(g_p(g2loc), g_p(3), 1))
                 end do
 
             end do
@@ -354,19 +342,19 @@ contains
     end subroutine Interpolate_Inside_Zones
 
 !########################################################################
+! Group particles outside the grid zone at the end of the arrays
 !########################################################################
     subroutine Sort_Into_Grid(l_g, l_q, data, ip_start, ip_end, counter)
-        type(pointers_dt), intent(inout) :: data(:)
         type(particle_dt), intent(inout) :: l_g
-        real(wp), intent(inout) :: l_q(:, :)
-        integer(wi), intent(in) :: ip_start, ip_end
-        integer(wi), intent(out) :: counter
+        real(wp),          intent(inout) :: l_q(:, :)
+        type(pointers_dt), intent(inout) :: data(:)
+        integer(wi),       intent(in)    :: ip_start, ip_end
+        integer(wi),       intent(out)   :: counter
 
         ! -------------------------------------------------------------------
         real(wp) dummy, right_limit, upper_limit
-        integer(wi) idummy, nvar
         integer(longi) idummy8
-        integer(wi) i, j, k
+        integer(wi) i, j, idummy
 
         !#######################################################################
 #ifdef USE_MPI
@@ -379,22 +367,21 @@ contains
 
         nvar = size(data)
 
-        !#######################################################################
-        ! Group together particles outside of the grid zone at the end of the arrays
-        i = ip_start        ! starting point of sorting algorithm
-        j = ip_end          ! end point of sorting algorithm
+        ! -------------------------------------------------------------------
+        i = ip_start        ! starting particle of sorting algorithm, upward loop
+        j = ip_end          ! end particle of sorting algorithm, downward loop
 
         counter = 0
 
         do while (i <= j)
 
-            if (l_q(i, 1) > right_limit .or. l_q(i, 3) > upper_limit) then          ! particle i is in halo
+            if (l_q(i, 1) > right_limit .or. l_q(i, 3) > upper_limit) then          ! particle i is outside, look for particles inside to swap with
                 do
-                    if (l_q(j, 1) > right_limit .or. l_q(j, 3) > upper_limit) then  ! partcile j is in halo, leave it there
-                        j = j - 1                                                   ! go to next particle
+                    if (l_q(j, 1) > right_limit .or. l_q(j, 3) > upper_limit) then  ! particle j is outside, leave it here
+                        j = j - 1 
                         if (i >= j) exit                                            ! finished your upwards loop
 
-                    else                                                            ! found a particle in grid, so swap
+                    else                                                            ! particle j is inside, so swap
                         idummy = l_g%nodes(i)
                         l_g%nodes(i) = l_g%nodes(j)
                         l_g%nodes(j) = idummy
@@ -403,16 +390,16 @@ contains
                         l_g%tags(i) = l_g%tags(j)
                         l_g%tags(j) = idummy8
 
-                        do k = 1, inb_part_array
-                            dummy = l_q(i, k)
-                            l_q(i, k) = l_q(j, k)
-                            l_q(j, k) = dummy
+                        do iv = 1, inb_part_array
+                            dummy = l_q(i, iv)
+                            l_q(i, iv) = l_q(j, iv)
+                            l_q(j, iv) = dummy
                         end do
 
-                        do k = 1, nvar      ! swap also this data because of the substages in the Runge-Kutta
-                            dummy = data(k)%field(i)
-                            data(k)%field(i) = data(k)%field(j)
-                            data(k)%field(j) = dummy
+                        do iv = 1, nvar      ! swap also this data because of the substages in the Runge-Kutta
+                            dummy = data(iv)%field(i)
+                            data(iv)%field(i) = data(iv)%field(j)
+                            data(iv)%field(j) = dummy
                         end do
 
                         j = j - 1
@@ -422,11 +409,11 @@ contains
                     end if
                 end do
 
-            else            ! particle i is in the grid, the right place
+            else            ! particle i is inside, the right place
                 counter = counter + 1
 
             end if
-            i = i + 1       ! go to next particle
+            i = i + 1       ! go up to the next particle
 
         end do
 
@@ -436,18 +423,17 @@ contains
 !########################################################################
 !########################################################################
     subroutine Sort_Into_Halos(x_or_z, l_g, l_q, data, ip_start, ip_end, counter)
-        integer, intent(in) :: x_or_z
+        integer,           intent(in)    :: x_or_z
         type(particle_dt), intent(inout) :: l_g
-        real(wp), intent(inout) :: l_q(:, :)
+        real(wp),          intent(inout) :: l_q(:, :)
         type(pointers_dt), intent(inout) :: data(:)
-        integer(wi), intent(in) :: ip_start, ip_end
-        integer(wi), intent(out) :: counter
+        integer(wi),       intent(in)    :: ip_start, ip_end
+        integer(wi),       intent(out)   :: counter
 
         ! -------------------------------------------------------------------
         real(wp) dummy, limit
-        integer(wi) idummy, nvar
         integer(longi) idummy8
-        integer(wi) i, j, k
+        integer(wi) i, j, idummy
 
         !#######################################################################
         select case (x_or_z)
@@ -476,13 +462,13 @@ contains
         counter = 0
 
         do while (i <= j)
-            if (l_q(i, x_or_z) > limit) then           ! particle i is in North-east
+            if (l_q(i, x_or_z) > limit) then            ! particle i is outside, look for particles inside to swap with
                 do
-                    if (l_q(j, x_or_z) > limit) then   ! particle j is in North-east, leave it here
+                    if (l_q(j, x_or_z) > limit) then    ! particle j is outside, leave it here
                         j = j - 1
                         if (i >= j) exit
 
-                    else                                ! found a particle in North, so swap
+                    else                                ! particle j is inside, so swap
                         idummy = l_g%nodes(i)
                         l_g%nodes(i) = l_g%nodes(j)
                         l_g%nodes(j) = idummy
@@ -491,16 +477,16 @@ contains
                         l_g%tags(i) = l_g%tags(j)
                         l_g%tags(j) = idummy8
 
-                        do k = 1, inb_part_array
-                            dummy = l_q(i, k)
-                            l_q(i, k) = l_q(j, k)
-                            l_q(j, k) = dummy
+                        do iv = 1, inb_part_array
+                            dummy = l_q(i, iv)
+                            l_q(i, iv) = l_q(j, iv)
+                            l_q(j, iv) = dummy
                         end do
 
-                        do k = 1, nvar
-                            dummy = data(k)%field(i)
-                            data(k)%field(i) = data(k)%field(j)
-                            data(k)%field(j) = dummy
+                        do iv = 1, nvar
+                            dummy = data(iv)%field(i)
+                            data(iv)%field(i) = data(iv)%field(j)
+                            data(iv)%field(j) = dummy
                         end do
 
                         j = j - 1
@@ -510,7 +496,7 @@ contains
                     end if
                 end do
 
-            else
+            else                                        ! particle i is inside
                 counter = counter + 1
 
             end if
