@@ -42,9 +42,9 @@ program DNS
     call DNS_READ_LOCAL(ifile)
     if (imode_ibm == 1) then
         call IBM_READ_INI(ifile)
-        call IBM_READ_CONSISTENCY_CHECK(imode_rhs, BcsFlowJmin%type(:), &
-                                        BcsScalJmin%type(:), BcsScalJmax%type(:), &
-                                        BcsScalJmin%SfcType(:), BcsScalJmax%SfcType(:))
+        call IBM_READ_CONSISTENCY_CHECK(imode_rhs, BcsFlowJmin%type(:),    BcsFlowJmax%type(:), &
+                                                   BcsScalJmin%type(:),    BcsScalJmax%type(:), &
+                                                   BcsScalJmin%SfcType(:), BcsScalJmax%SfcType(:))
     end if
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
