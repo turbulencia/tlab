@@ -11,6 +11,7 @@ module OPR_FILTERS
     use TLAB_PROCS
     use FLT_COMPACT
     use FLT_EXPLICIT
+    use OPR_FOURIER
 #ifdef USE_MPI
     use TLAB_MPI_VARS
     use TLAB_MPI_PROCS

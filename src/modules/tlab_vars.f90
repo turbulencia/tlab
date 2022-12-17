@@ -36,7 +36,7 @@ module TLAB_VARS
 ! Iteration
 ! ###################################################################
     integer(wi) :: itime                    ! iteration number
-    real(wp) :: rtime                    ! physical time
+    real(wp) :: rtime                       ! physical time
 
 ! ###################################################################
 ! Arrays size
@@ -107,15 +107,6 @@ module TLAB_VARS
     integer :: FilterDomainBcsFlow(MAX_VARS), FilterDomainBcsScal(MAX_VARS)
 
     type(filter_dt) :: Dealiasing(3)
-
-! ###################################################################
-! FFTW
-! ###################################################################
-    integer(8) :: fft_plan_fx, fft_plan_bx, fft_plan_fx_bcs
-    integer(8) :: fft_plan_fy, fft_plan_by, fft_plan_fy1d, fft_plan_by1d
-    integer(8) :: fft_plan_fz, fft_plan_bz
-
-    logical :: fft_reordering
 
 ! ###################################################################
 ! Jet Statistics

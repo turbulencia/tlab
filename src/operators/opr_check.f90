@@ -11,7 +11,8 @@ SUBROUTINE OPR_CHECK(nx,ny,nz, a, txc, wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : ifourier !, fft_reordering
   USE TLAB_CONSTANTS, ONLY : lfile
   USE TLAB_PROCS
-  
+    use OPR_FOURIER
+    
 #ifdef USE_MPI
   USE TLAB_VARS, ONLY : itime
   
