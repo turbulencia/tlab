@@ -34,11 +34,11 @@ module OPR_FOURIER
 
     public :: fft_plan_fy1d, fft_plan_by1d
     public :: OPR_FOURIER_INITIALIZE
-    public :: OPR_FOURIER_F
+    public :: OPR_FOURIER_F_X_EXEC, OPR_FOURIER_B_X_EXEC    ! Main routines, used in Poisson solver, frequently used and hence optimized
+    public :: OPR_FOURIER_F_Z_EXEC, OPR_FOURIER_B_Z_EXEC
+    public :: OPR_FOURIER_F                                 ! Minor routines, less frequently used
     public :: OPR_FOURIER_B
     public :: OPR_FOURIER_CONVOLUTION_FXZ
-    public :: OPR_FOURIER_F_X_EXEC, OPR_FOURIER_B_X_EXEC
-    public :: OPR_FOURIER_F_Z_EXEC, OPR_FOURIER_B_Z_EXEC
     public :: OPR_FOURIER_SPECTRA_3D
 
 contains
@@ -367,11 +367,10 @@ contains
         complex(wp), dimension(g(1)%size/2 + 1, *) :: wrk1
 #endif
 
-        target wrk1, wrk2, out
+        target wrk1, wrk2
 
         ! -----------------------------------------------------------------------
         integer(wi) j, ip, isize_page, isize_line
-        complex(wp), dimension(:), pointer :: p_tmp
 
 #ifdef USE_MPI
         integer(wi) i, id, iold, inew
@@ -434,12 +433,11 @@ contains
 
             ! #######################################################################
             do k = 1, nz
-                p_tmp => out(1:, k)
-                call dfftw_execute_dft_r2c(fft_plan_fx, in(1, k), p_tmp)
-                j = 1 + ny; ip = (j - 1)*isize_line + 1; p_tmp => out(ip:, k)
-                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_hb(1, k), p_tmp)
-                j = 2 + ny; ip = (j - 1)*isize_line + 1; p_tmp => out(ip:, k)
-                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_ht(1, k), p_tmp)
+                call dfftw_execute_dft_r2c(fft_plan_fx, in(:, k), out(:, k))
+                j = 1 + ny; ip = (j - 1)*isize_line + 1
+                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_hb(:, k), out(ip:, k))
+                j = 2 + ny; ip = (j - 1)*isize_line + 1
+                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_ht(:, k), out(ip:, k))
             end do
 
 #ifdef USE_MPI
@@ -457,14 +455,13 @@ contains
         real(wp), dimension(nx*ny, nz), intent(OUT) :: out
         complex(wp), dimension(nx/2 + 1, *), intent(inout) :: wrk
 
-        target in, out, wrk
+        target out, wrk
 
         ! -----------------------------------------------------------------------
 #ifdef USE_MPI
         integer(wi) i, ip, id, iold, inew, isize_page
         real(wp), pointer :: r_wrk(:) => null()
 #endif
-        complex(wp), dimension(:), pointer :: p_tmp
 
         !########################################################################
         ! Ox Parallel Decomposition
@@ -519,8 +516,7 @@ contains
             ! No Ox Parallel Decomposition
             !########################################################################
             do k = 1, nz
-                p_tmp => in(1:, k)
-                call dfftw_execute_dft_c2r(fft_plan_bx, p_tmp, out(:, k))
+                call dfftw_execute_dft_c2r(fft_plan_bx, in(:,k), out(:, k))
             end do
 
 #ifdef USE_MPI
