@@ -315,17 +315,21 @@ subroutine IO_READ_GLOBAL(inifile)
 ! Consistency check
     if (istagger == 1) then
         if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
- call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
         if (.not. ((iadvection == EQNS_CONVECTIVE) .or. (iadvection == EQNS_SKEWSYMMETRIC))) then
-          call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering not implemented for current advection scheme.')
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering not implemented for current advection scheme.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
+        if (.not. (imode_fdm == FDM_COM6_JACOBIAN) ) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for compact jacobian 6th-order scheme.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if    
     end if
     if (ivfilter == 1) then
         if (.not. (istagger == 1)) then
-  call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Vertical pressure filtering only in combination with horizontal pressure staggering.')
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Vertical pressure filtering only in combination with horizontal pressure staggering.')
             call TLAB_STOP(DNS_ERROR_OPTION)
         end if
     end if
