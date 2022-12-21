@@ -262,20 +262,20 @@ contains
         integer, intent(in) :: error_code
 
         ! ###################################################################
-#ifdef USE_FFTW
-        if (ifourier == 1) then
-            call dfftw_destroy_plan(fft_plan_fx)
-            call dfftw_destroy_plan(fft_plan_bx)
-            if (g(3)%size > 1) then
-                call dfftw_destroy_plan(fft_plan_fz)
-                call dfftw_destroy_plan(fft_plan_bz)
-            end if
-        end if
-        if (ivfilter == 1) then
-            call dfftw_destroy_plan(fft_plan_fy1d)
-            call dfftw_destroy_plan(fft_plan_by1d)
-        end if
-#endif
+! #ifdef USE_FFTW
+!         if (ifourier == 1) then
+!             call dfftw_destroy_plan(fft_plan_fx)
+!             call dfftw_destroy_plan(fft_plan_bx)
+!             if (g(3)%size > 1) then
+!                 call dfftw_destroy_plan(fft_plan_fz)
+!                 call dfftw_destroy_plan(fft_plan_bz)
+!             end if
+!         end if
+!         if (ivfilter == 1) then
+!             call dfftw_destroy_plan(fft_plan_fy1d)
+!             call dfftw_destroy_plan(fft_plan_by1d)
+!         end if
+! #endif
 
         ! ###################################################################
         if (error_code /= 0) then

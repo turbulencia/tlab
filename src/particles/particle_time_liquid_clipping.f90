@@ -15,7 +15,7 @@
 !# Sets particle liquid with no eulerian liquid surrounded to zero
 !#
 !########################################################################
-subroutine PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc, wrk3d)
+subroutine PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc)
 
     use TLAB_TYPES, only: pointers_dt, pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax
@@ -29,7 +29,6 @@ subroutine PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc, wrk3d)
     TREAL, dimension(isize_field, *), target :: s
     TREAL, dimension(isize_part, *) :: l_q
     TREAL, dimension(isize_part), target :: l_txc
-    TREAL, dimension(*) :: wrk3d
 
 ! -------------------------------------------------------------------
     TINTEGER is, i, nvar
@@ -53,7 +52,7 @@ subroutine PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc, wrk3d)
     nvar = 0
     nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => s(:, inb_scal_array); data_out(nvar)%field => l_txc(:)
     l_txc = C_0_R
-    call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q, wrk3d)
+    call FIELD_TO_PARTICLE(data(1:nvar), data_out(1:nvar), l_g, l_q)
 
     do i = 1, l_g%np
         if (l_txc(i) < 0.00001) then

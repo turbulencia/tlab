@@ -36,6 +36,7 @@ contains
         character(len=32) name
         integer ims_npro_loc
         integer(wi) j
+        integer(longi) stride
 
 !#######################################################################
         call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, l_traj, [isize_traj + 1, nitera_save, inb_traj], 'l_traj')
@@ -47,11 +48,16 @@ contains
 !#######################################################################
         ! set the particle tags to be tracked
         select case (trim(adjustl(traj_filename)))
-        case ('void')               ! track only the first isize_traj particles
+        case ('void')               ! track isize_traj particles unformly distributed over the population
+            stride = isize_part_total /isize_traj
             do j = 1, isize_traj
-                l_traj_tags(j) = int(j, KIND=longi)
+                l_traj_tags(j) = 1+(j-1)*stride
             end do
-
+            if (l_traj_tags(isize_traj) > isize_part_total) then
+                call TLAB_WRITE_ASCII(efile, __FILE__//'. Tags of trajectories out of range.')
+                call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
+            end if
+    
         case default                ! track the ones given in a file
             ! write (name, *) nitera_last; name = trim(adjustl(traj_filename))//trim(adjustl(name))
             name = trim(adjustl(traj_filename))
@@ -132,7 +138,7 @@ contains
 
 ! Interpolation
         if (nvar > 3) then
-            call FIELD_TO_PARTICLE(nvar - 3, data_in(4:nvar), data(4:nvar), l_g, l_q, wrk3d)
+            call FIELD_TO_PARTICLE(data_in(4:nvar), data(4:nvar), l_g, l_q)
         end if
 
 ! -------------------------------------------------------------------

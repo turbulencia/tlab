@@ -14,7 +14,7 @@ subroutine PARTICLE_TO_FIELD(l_q, particle_property, field_out, wrk3d)
     use TLAB_VARS, only: imax, jmax, kmax
     use PARTICLE_VARS, only: isize_part
 #ifdef USE_MPI
-    use PARTICLE_ARRAYS, only: l_comm
+    use PARTICLE_ARRAYS, only: l_work
     use MPI
     use TLAB_MPI_VARS, only: ims_err
 #endif
@@ -42,8 +42,8 @@ subroutine PARTICLE_TO_FIELD(l_q, particle_property, field_out, wrk3d)
 !SEND to the North and RECV from the South
 !Sum the lowest row of field
 !#######################################################################
-    call PARTICLE_TO_FIELD_SEND_RECV_EAST(l_comm(1), l_comm((jmax*(kmax + 1)) + 1), wrk3d)
-    call PARTICLE_TO_FIELD_SEND_RECV_NORTH(l_comm(1), l_comm(((imax + 1)*jmax) + 1), wrk3d)
+    call PARTICLE_TO_FIELD_SEND_RECV_EAST(l_work(1), l_work((jmax*(kmax + 1)) + 1), wrk3d)
+    call PARTICLE_TO_FIELD_SEND_RECV_NORTH(l_work(1), l_work(((imax + 1)*jmax) + 1), wrk3d)
 
 #endif
 

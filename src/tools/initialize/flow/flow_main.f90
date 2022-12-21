@@ -17,6 +17,7 @@ program INIFLOW
 #ifdef USE_CGLOC
     use CG_GLOBAL, only: cg_unif, cg_ord
 #endif
+    use OPR_FOURIER
     use FLOW_LOCAL
     use FLOW_MEAN
     

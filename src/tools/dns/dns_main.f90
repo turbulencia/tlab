@@ -11,6 +11,7 @@ program DNS
 #endif
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
+    use PARTICLE_PROCS
     use DNS_LOCAL
     use DNS_ARRAYS
     use TIME
@@ -25,6 +26,7 @@ program DNS
     use AVG_SCAL_ZT
     use IO_FIELDS
     use OPR_FILTERS
+    use OPR_FOURIER
     implicit none
     save
 

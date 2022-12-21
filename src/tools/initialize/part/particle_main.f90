@@ -10,6 +10,7 @@ program INIPART
 #endif
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
+    use PARTICLE_PROCS
 
     implicit none
 

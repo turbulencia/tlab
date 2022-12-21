@@ -41,6 +41,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ(nx,ny,nz, g, ibc, alpha,&
   USE TLAB_TYPES,     ONLY : grid_dt
   USE TLAB_VARS,    ONLY : isize_txc_dimz
   USE TLAB_PROCS
+  use OPR_FOURIER
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
@@ -158,6 +159,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2(nx,ny,nz, g, ibc, alpha,&
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
+    use OPR_FOURIER
 
   IMPLICIT NONE
 
@@ -289,6 +291,7 @@ SUBROUTINE OPR_HELMHOLTZ_FXZ_2_N(nx,ny,nz, nfield, ibc, alpha, &
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif
+    use OPR_FOURIER
 
   IMPLICIT NONE
 #include "integers.h"

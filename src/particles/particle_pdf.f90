@@ -7,7 +7,7 @@
 
 !########################################################################
 !########################################################################
-subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc, wrk3d)
+subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
 
     use TLAB_TYPES, only: pointers_dt, pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
@@ -25,7 +25,6 @@ subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc, wrk3d)
 
     character*(*) fname
     TREAL, dimension(isize_field, *), target :: s
-    TREAL, dimension(*) :: wrk3d
 
     type(particle_dt) :: l_g
     TREAL, dimension(isize_part, *) :: l_q
@@ -59,7 +58,7 @@ subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc, wrk3d)
     nvar = 0
     nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => s(:, inb_scal_array); data_out(nvar)%field => l_txc(:, 1)
     l_txc(:, 1) = C_0_R
-    call FIELD_TO_PARTICLE(nvar, data, data_out, l_g, l_q, wrk3d)
+    call FIELD_TO_PARTICLE(data(1:nvar), data_out(1:nvar), l_g, l_q)
 
 !########################################################################
 ! Calculating

@@ -16,6 +16,7 @@ program INIRAND
     use TLAB_MPI_VARS, only: ims_pro
 #endif
     use IO_FIELDS
+    use OPR_FOURIER
 
     implicit none
 

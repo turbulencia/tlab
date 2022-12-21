@@ -29,10 +29,6 @@ module PARTICLE_VARS
     integer(wi)       :: inb_part_txc                 ! # of particle auxiliary properties for intermediate calculations
     integer(wi)       :: inb_part_interp              ! # of interpolated fields into lagrangian framework
 
-#ifdef USE_MPI
-    integer(wi)   :: isize_pbuffer                    ! space for communication of halo regions
-#endif
-
     ! Initialization
     type(profiles_dt) :: IniP                         ! Information about the initialization 
     integer, parameter :: PART_INITYPE_SCALAR = 101   ! Special type of particle initialization not included in default profile data

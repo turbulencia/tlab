@@ -17,10 +17,10 @@
 
 !#######################################################################
 !#######################################################################
-subroutine PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
-                                    p_buffer_1, p_buffer_2, l_q, l_hq, l_tags, particle_number)
+subroutine PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, l_q, l_hq, l_tags, particle_number)
 
     use PARTICLE_VARS, only: isize_part, inb_part_array, inb_part
+    use PARTICLE_ARRAYS, only: p_buffer_1, p_buffer_2
     use MPI
     use TLAB_MPI_VARS
 
@@ -31,7 +31,6 @@ subroutine PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
     TREAL, dimension(isize_part, *) :: l_q
     TREAL, dimension(isize_part, *) :: l_hq
     TREAL, dimension(isize_part) :: l_tags !Attention. Chosen TREAL on purpose.
-    TREAL, dimension(*) :: p_buffer_1, p_buffer_2 !allocation = isize_part/4*7
     TINTEGER particle_number
 
 ! -------------------------------------------------------------------
@@ -241,10 +240,10 @@ end subroutine PARTICLE_MPI_SEND_RECV_I
 
 !#######################################################################
 !#######################################################################
-subroutine PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
-                                    p_buffer_1, p_buffer_2, l_q, l_hq, l_tags, particle_number)
+subroutine PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, l_q, l_hq, l_tags, particle_number)
 
     use PARTICLE_VARS, only: isize_part, inb_part_array, inb_part
+    use PARTICLE_ARRAYS, only: p_buffer_1, p_buffer_2
     use MPI
     use TLAB_MPI_VARS
 
@@ -255,7 +254,6 @@ subroutine PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
     TREAL, dimension(isize_part, *) :: l_q
     TREAL, dimension(isize_part, *) :: l_hq
     TREAL, dimension(isize_part) :: l_tags !Attention. Chosen TREAL on purpose.
-    TREAL, dimension(*) :: p_buffer_1, p_buffer_2 !allocation = isize_part/4*7
     TINTEGER particle_number
 
 ! -------------------------------------------------------------------

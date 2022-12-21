@@ -21,6 +21,7 @@ program PARTICLE_BUILD_PDF
 #endif
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
+    use PARTICLE_PROCS
 
     implicit none
 #include "integers.h"
@@ -104,7 +105,7 @@ program PARTICLE_BUILD_PDF
 ! Save particle pathlines for particle_pdf
 ! ######################################################################
         write (fname, *) i; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
-        call PARTICLE_PDF(fname, s, l_g, l_q, l_txc, wrk3d)
+        call PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
 
     end do
 

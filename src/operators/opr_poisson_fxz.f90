@@ -31,6 +31,7 @@ SUBROUTINE OPR_POISSON_FXZ(flag, nx,ny,nz, g, ibc, &
   USE TLAB_TYPES,    ONLY : grid_dt
   USE TLAB_VARS,     ONLY : isize_txc_dimz
   USE TLAB_VARS,     ONLY : ivfilter, istagger, vfilter_param
+  use OPR_FOURIER
 #ifdef USE_MPI
   USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
 #endif

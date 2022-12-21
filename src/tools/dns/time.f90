@@ -214,7 +214,7 @@ contains
 
             if (part%type == PART_TYPE_BIL_CLOUD_4) then
                 call PARTICLE_TIME_RESIDENCE(dtime, l_g%np, l_q)
-                call PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc, wrk3d)
+                call PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc)
             end if
 
             ! -------------------------------------------------------------------
@@ -892,7 +892,6 @@ contains
         integer(wi) is, i
 
 #ifdef USE_MPI
-        real(wp), dimension(:), pointer :: p_buffer_1, p_buffer_2
         integer(wi) nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north
 #else
         real(wp) x_right, z_right
@@ -912,8 +911,6 @@ contains
         ! Boundary control to see if particles leave processor
         !#####################################################################
 #ifdef USE_MPI
-        p_buffer_1(1:isize_pbuffer) => l_comm(1:isize_pbuffer)
-        p_buffer_2(1:isize_pbuffer) => l_comm(isize_pbuffer + 1:isize_pbuffer*2)
 
         ! -------------------------------------------------------------------
         ! Particle sorting for Send/Recv X-Direction
@@ -935,7 +932,7 @@ contains
         end if
 
         call PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
-                                      p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags, l_g%np)
+                                      l_q, l_hq, l_g%tags, l_g%np)
 
         ! -------------------------------------------------------------------
         ! Particle sorting for Send/Recv Z-Direction
@@ -957,9 +954,7 @@ contains
         end if
 
         call PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
-                                      p_buffer_1, p_buffer_2, l_q, l_hq, l_g%tags, l_g%np)
-
-        nullify (p_buffer_1, p_buffer_2)
+                                      l_q, l_hq, l_g%tags, l_g%np)
 
 #else
         !#######################################################################
