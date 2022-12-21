@@ -26,6 +26,7 @@ program DNS
     use AVG_SCAL_ZT
     use IO_FIELDS
     use OPR_FILTERS
+    use OPR_FOURIER
     implicit none
     save
 

@@ -31,111 +31,112 @@
 !# Postprocessing tool to compute spectra in temporal mode
 !#
 !########################################################################
-PROGRAM SPECTRA
+program SPECTRA
 
-  USE TLAB_TYPES,    ONLY : pointers_dt, subarray_dt
-  USE TLAB_CONSTANTS
-  USE TLAB_VARS
-  USE TLAB_ARRAYS
-  USE TLAB_PROCS
+    use TLAB_TYPES, only: pointers_dt, subarray_dt
+    use TLAB_CONSTANTS
+    use TLAB_VARS
+    use TLAB_ARRAYS
+    use TLAB_PROCS
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_err
-  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_npro_k
-  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  USE TLAB_MPI_PROCS
+    use MPI
+    use TLAB_MPI_VARS, only: ims_err
+    use TLAB_MPI_VARS, only: ims_pro, ims_npro_k
+    use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLAB_MPI_PROCS
 #endif
-  USE THERMO_VARS,   ONLY : imixture
-  USE IBM_VARS
-  USE IO_FIELDS
-  USE OPR_FILTERS
-  USE AVGS, ONLY: AVG1V2D, COV2V2D
+    use THERMO_VARS, only: imixture
+    use IBM_VARS
+    use IO_FIELDS
+    use OPR_FILTERS
+    use AVGS, only: AVG1V2D, COV2V2D
+    use OPR_FOURIER
 #ifdef USE_OPENMP
-  USE OMP_LIB
+    use OMP_LIB
 #endif
 
-  IMPLICIT NONE
+    implicit none
 
 #include "integers.h"
 
 ! Parameter definitions
-  TINTEGER, PARAMETER :: itime_size_max = 512
-  TINTEGER, PARAMETER :: iopt_size_max  =  20
+    TINTEGER, parameter :: itime_size_max = 512
+    TINTEGER, parameter :: iopt_size_max = 20
 
-  ! -------------------------------------------------------------------
-  ! Additional local arrays
-  TREAL, DIMENSION(:),   ALLOCATABLE :: p_aux, y_aux, samplesize
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: out2d, outx,outz,outr
+    ! -------------------------------------------------------------------
+    ! Additional local arrays
+    TREAL, dimension(:), allocatable :: p_aux, y_aux, samplesize
+    TREAL, dimension(:, :), allocatable :: out2d, outx, outz, outr
 
-  TYPE(pointers_dt), DIMENSION(16) :: vars
+    type(pointers_dt), dimension(16) :: vars
 
-  TARGET p_aux
+    target p_aux
 
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
-  CHARACTER*32 fname, bakfile
-  CHARACTER*32 varname(16)
-  CHARACTER*64 str, line
-  CHARACTER*8  tag_file, tag_name, tag_var(16)
-  TINTEGER p_pairs(16,2)
+    character*32 fname, bakfile
+    character*32 varname(16)
+    character*64 str, line
+    character*8 tag_file, tag_name, tag_var(16)
+    TINTEGER p_pairs(16, 2)
 
-  TINTEGER opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
-  TINTEGER flag_mode, iread_flow, iread_scal, ierr
-  TINTEGER isize_out2d, isize_aux, sizes(5)
-  TINTEGER nfield, nfield_ref
-  TINTEGER is, iv, iv_offset, iv1, iv2, ip, j, ig
-  TINTEGER jmax_aux, kxmax,kymax,kzmax
-  TINTEGER icalc_radial
-  TREAL norm, dummy
+    TINTEGER opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
+    TINTEGER flag_mode, iread_flow, iread_scal, ierr
+    TINTEGER isize_out2d, isize_aux, sizes(5)
+    TINTEGER nfield, nfield_ref
+    TINTEGER is, iv, iv_offset, iv1, iv2, ip, j, ig
+    TINTEGER jmax_aux, kxmax, kymax, kzmax
+    TINTEGER icalc_radial
+    TREAL norm, dummy
 
-  TINTEGER kx_total,ky_total,kz_total, kr_total, isize_spec2dr
+    TINTEGER kx_total, ky_total, kz_total, kr_total, isize_spec2dr
 
-  TINTEGER inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
+    TINTEGER inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
 
 ! Reading variables
-  CHARACTER*512 sRes
+    character*512 sRes
 
-  TINTEGER itime_size, it
-  TINTEGER itime_vec(itime_size_max)
+    TINTEGER itime_size, it
+    TINTEGER itime_vec(itime_size_max)
 
-  TINTEGER iopt_size
-  TREAL opt_vec(iopt_size_max)
+    TINTEGER iopt_size
+    TREAL opt_vec(iopt_size_max)
 
 #ifdef USE_MPI
-  TINTEGER id
+    TINTEGER id
 #endif
 
 !########################################################################
 !########################################################################
-  bakfile = TRIM(ADJUSTL(ifile))//'.bak'
+    bakfile = trim(adjustl(ifile))//'.bak'
 
-  CALL TLAB_START()
+    call TLAB_START()
 
-  CALL IO_READ_GLOBAL(ifile)
+    call IO_READ_GLOBAL(ifile)
 
-  ! -------------------------------------------------------------------
-  ! IBM status (before TLAB_MPI_INITIALIZE!)
-  ! -------------------------------------------------------------------
-  CALL SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
-  IF      (TRIM(ADJUSTL(sRes)) .EQ. 'off') THEN; imode_ibm = 0
-  ELSE IF (TRIM(ADJUSTL(sRes)) .EQ. 'on' ) THEN; imode_ibm = 1
-  ELSE
-     CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Wrong IBM Status option.')
-     CALL TLAB_STOP(DNS_ERROR_OPTION)
-  ENDIF
+    ! -------------------------------------------------------------------
+    ! IBM status (before TLAB_MPI_INITIALIZE!)
+    ! -------------------------------------------------------------------
+    call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
+    if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
+    else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
+    else
+        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Wrong IBM Status option.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
 
-  ! -------------------------------------------------------------------
-  ! Initialize MPI
-  ! -------------------------------------------------------------------
+    ! -------------------------------------------------------------------
+    ! Initialize MPI
+    ! -------------------------------------------------------------------
 #ifdef USE_MPI
-  CALL TLAB_MPI_INITIALIZE
+    call TLAB_MPI_INITIALIZE
 #endif
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(y_aux(g(2)%size)) ! Reduced vertical grid
+    allocate (y_aux(g(2)%size)) ! Reduced vertical grid
 
 ! -------------------------------------------------------------------
 ! File names
@@ -145,623 +146,623 @@ PROGRAM SPECTRA
 ! -------------------------------------------------------------------
 ! Additional options
 ! -------------------------------------------------------------------
-  opt_main  =-1 ! default values
-  opt_block = 1
-  opt_ffmt  = 0
-  opt_time  = 0
+    opt_main = -1 ! default values
+    opt_block = 1
+    opt_ffmt = 0
+    opt_time = 0
 
-  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamSpectra', '-1', sRes)
-  iopt_size = iopt_size_max
-  CALL LIST_REAL(sRes, iopt_size, opt_vec)
+    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamSpectra', '-1', sRes)
+    iopt_size = iopt_size_max
+    call LIST_REAL(sRes, iopt_size, opt_vec)
 
-  IF ( sRes .EQ. '-1' ) THEN
+    if (sRes == '-1') then
 #ifdef USE_MPI
 #else
-     WRITE(*,*) 'Option ?'
-     WRITE(*,*) '1. Main variables 2D spectra'
-     WRITE(*,*) '2. Main variables 2D cross-spectra'
-     WRITE(*,*) '3. Main variables 2D correlation'
-     WRITE(*,*) '4. Main variables 2D cross-correlation'
-     WRITE(*,*) '5. Main variables 3D spectra'
-     READ(*,*) opt_main
+        write (*, *) 'Option ?'
+        write (*, *) '1. Main variables 2D spectra'
+        write (*, *) '2. Main variables 2D cross-spectra'
+        write (*, *) '3. Main variables 2D correlation'
+        write (*, *) '4. Main variables 2D cross-correlation'
+        write (*, *) '5. Main variables 3D spectra'
+        read (*, *) opt_main
 
-     IF ( opt_main .LT. 5 ) THEN
-        WRITE(*,*) 'Planes block size ?'
-        READ(*,*) opt_block
-     ENDIF
-     WRITE(*,*) 'Save full spectra fields to disk (1-yes/0-no) ?'
-     READ(*,*) opt_ffmt
-     WRITE(*,*) 'Average over time (1-yes/0-no) ?'
-     READ(*,*) opt_time
+        if (opt_main < 5) then
+            write (*, *) 'Planes block size ?'
+            read (*, *) opt_block
+        end if
+        write (*, *) 'Save full spectra fields to disk (1-yes/0-no) ?'
+        read (*, *) opt_ffmt
+        write (*, *) 'Average over time (1-yes/0-no) ?'
+        read (*, *) opt_time
 #endif
-  ELSE
-     opt_main = INT(opt_vec(1))
-     IF ( iopt_size .GT. 1 ) opt_block= INT(opt_vec(2))
-     IF ( iopt_size .GT. 2 ) opt_ffmt = INT(opt_vec(3))
-     IF ( iopt_size .GT. 3 ) opt_time = INT(opt_vec(4))
-  ENDIF
+    else
+        opt_main = int(opt_vec(1))
+        if (iopt_size > 1) opt_block = int(opt_vec(2))
+        if (iopt_size > 2) opt_ffmt = int(opt_vec(3))
+        if (iopt_size > 3) opt_time = int(opt_vec(4))
+    end if
 
-  IF ( opt_main .LT. 0 ) THEN ! Check
-     CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Missing input [ParamSpectra] in dns.ini.')
-     CALL TLAB_STOP(DNS_ERROR_INVALOPT)
-  ENDIF
+    if (opt_main < 0) then ! Check
+        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Missing input [ParamSpectra] in dns.ini.')
+        call TLAB_STOP(DNS_ERROR_INVALOPT)
+    end if
 
-  IF ( opt_block .LT. 1 ) THEN
-     CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_block.')
-     CALL TLAB_STOP(DNS_ERROR_INVALOPT)
-  ENDIF
+    if (opt_block < 1) then
+        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_block.')
+        call TLAB_STOP(DNS_ERROR_INVALOPT)
+    end if
 
-  IF ( opt_time .NE. SPEC_SINGLE .AND. opt_time .NE. SPEC_AVERAGE ) THEN
-     CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_time.')
-     CALL TLAB_STOP(DNS_ERROR_INVALOPT)
-  ENDIF
+    if (opt_time /= SPEC_SINGLE .and. opt_time /= SPEC_AVERAGE) then
+        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_time.')
+        call TLAB_STOP(DNS_ERROR_INVALOPT)
+    end if
 
-  ! -------------------------------------------------------------------
-  ! Read local options - IBM parameters and geometry
-  ! -------------------------------------------------------------------
-  IF (imode_ibm .EQ. 1) THEN
-     CALL IBM_READ_INI(ifile)
-  ENDIF
+    ! -------------------------------------------------------------------
+    ! Read local options - IBM parameters and geometry
+    ! -------------------------------------------------------------------
+    if (imode_ibm == 1) then
+        call IBM_READ_INI(ifile)
+    end if
 ! -------------------------------------------------------------------
 ! Definitions
 ! -------------------------------------------------------------------
 ! in case g(2)%size is not divisible by opt_block, drop the upper most planes
-  jmax_aux = g(2)%size/opt_block
+    jmax_aux = g(2)%size/opt_block
 
-  flag_buoyancy = 0 ! default
+    flag_buoyancy = 0 ! default
 
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
+    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
 ! in case we need the buoyancy statistics
-     IF ( buoyancy%type .EQ. EQNS_BOD_QUADRATIC   .OR. &
-          buoyancy%type .EQ. EQNS_BOD_BILINEAR    .OR. &
-          imixture .EQ. MIXT_TYPE_AIRWATER        .OR. &
-          imixture .EQ. MIXT_TYPE_AIRWATER_LINEAR ) THEN
-        flag_buoyancy = 1
-        inb_scal_array= inb_scal_array+1             ! space for the buoyancy field
-     ENDIF
-  ENDIF
+        if (buoyancy%type == EQNS_BOD_QUADRATIC .or. &
+            buoyancy%type == EQNS_BOD_BILINEAR .or. &
+            imixture == MIXT_TYPE_AIRWATER .or. &
+            imixture == MIXT_TYPE_AIRWATER_LINEAR) then
+            flag_buoyancy = 1
+            inb_scal_array = inb_scal_array + 1             ! space for the buoyancy field
+        end if
+    end if
 
-  IF      ( opt_main .EQ. 1 ) THEN; flag_mode = 1 ! spectra
-  ELSE IF ( opt_main .EQ. 2 ) THEN; flag_mode = 1
-  ELSE IF ( opt_main .EQ. 3 ) THEN; flag_mode = 2 ! correlations
-  ELSE IF ( opt_main .EQ. 4 ) THEN; flag_mode = 2
-  ELSE IF ( opt_main .EQ. 5 ) THEN; flag_mode = 1 ! spectra
-  ENDIF
+    if (opt_main == 1) then; flag_mode = 1 ! spectra
+    else if (opt_main == 2) then; flag_mode = 1
+    else if (opt_main == 3) then; flag_mode = 2 ! correlations
+    else if (opt_main == 4) then; flag_mode = 2
+    else if (opt_main == 5) then; flag_mode = 1 ! spectra
+    end if
 
-  IF      ( flag_mode .EQ. 1 ) THEN                 ! spectra
-     kxmax = imax/2; kymax = jmax/2; kzmax = kmax/2
-  ELSE                                              ! correlation
-     kxmax = imax;   kymax = jmax;   kzmax = kmax
-  ENDIF
-  isize_out2d = imax*jmax_aux*kmax                  ! accumulation of 2D data
+    if (flag_mode == 1) then                 ! spectra
+        kxmax = imax/2; kymax = jmax/2; kzmax = kmax/2
+    else                                              ! correlation
+        kxmax = imax; kymax = jmax; kzmax = kmax
+    end if
+    isize_out2d = imax*jmax_aux*kmax                  ! accumulation of 2D data
 
 ! -------------------------------------------------------------------
 !  maximum wavenumber & length lag; radial data is not really parallelized yet
-  kx_total = MAX(g(1)%size/2,1); ky_total = MAX(g(2)%size/2,1); kz_total = MAX(g(3)%size/2,1)
+    kx_total = max(g(1)%size/2, 1); ky_total = max(g(2)%size/2, 1); kz_total = max(g(3)%size/2, 1)
 
-  IF ( opt_main .EQ. 4 ) THEN    ! Cross-correlations need the full length
-     kx_total = MAX(g(1)%size,1); ky_total = MAX(g(2)%size,1); kz_total = MAX(g(3)%size,1)
-  ENDIF
+    if (opt_main == 4) then    ! Cross-correlations need the full length
+        kx_total = max(g(1)%size, 1); ky_total = max(g(2)%size, 1); kz_total = max(g(3)%size, 1)
+    end if
 
-  IF ( opt_main .GE. 5 ) THEN ! 3D spectrum
+    if (opt_main >= 5) then ! 3D spectrum
 !     kr_total =  INT(SQRT(M_REAL( (kx_total-1)**2 + (kz_total-1)**2 + (ky_total-1)**2))) + 1 ! Use if need to check Parseval's in output data
-     kr_total = MIN(kx_total,MIN(ky_total,kz_total))
-  ELSE
+        kr_total = min(kx_total, min(ky_total, kz_total))
+    else
 !     kr_total =  INT(SQRT(M_REAL( (kx_total-1)**2 + (kz_total-1)**2))) + 1 ! Use if need to check Parseval's in output data
-     kr_total = MIN(kx_total,kz_total)
-  ENDIF
+        kr_total = min(kx_total, kz_total)
+    end if
 
-  IF ( opt_main .GE. 5 ) THEN; isize_spec2dr = kr_total            ! 3D spectrum
-  ELSE;                        isize_spec2dr = kr_total *jmax_aux; ENDIF
+    if (opt_main >= 5) then; isize_spec2dr = kr_total            ! 3D spectrum
+    else; isize_spec2dr = kr_total*jmax_aux; end if
 
 ! -------------------------------------------------------------------
 ! Define MPI-type for writing spectra
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-  CALL SPECTRA_MPIO_AUX(opt_main, opt_block)
+    call SPECTRA_MPIO_AUX(opt_main, opt_block)
 #else
-  io_aux(:)%offset = 0
+    io_aux(:)%offset = 0
 #endif
 
 ! -------------------------------------------------------------------
 ! Further allocation of memory space
 ! -------------------------------------------------------------------
-  iread_flow = icalc_flow
-  iread_scal = icalc_scal
+    iread_flow = icalc_flow
+    iread_scal = icalc_scal
 
-  inb_scal_min = 1              ! Change this values if you want to reduce the number of scalars to process
-  inb_scal_max = inb_scal_array ! and thereby reduced memory requirements
-  ! inb_scal_min = 4
-  ! inb_scal_max = 4
+    inb_scal_min = 1              ! Change this values if you want to reduce the number of scalars to process
+    inb_scal_max = inb_scal_array ! and thereby reduced memory requirements
+    ! inb_scal_min = 4
+    ! inb_scal_max = 4
 
-  nfield_ref  = 0     ! defining the number of accesible fields
-  IF ( icalc_flow .EQ. 1 ) nfield_ref = nfield_ref + inb_flow + 1 ! pressure
-  IF ( icalc_scal .EQ. 1 ) nfield_ref = nfield_ref + inb_scal_array
+    nfield_ref = 0     ! defining the number of accesible fields
+    if (icalc_flow == 1) nfield_ref = nfield_ref + inb_flow + 1 ! pressure
+    if (icalc_scal == 1) nfield_ref = nfield_ref + inb_scal_array
 
-  nfield = 0          ! defining the number of accessed fields
-  IF      ( opt_main .EQ. 1 .OR. opt_main .EQ. 3 ) THEN ! Auto-spectra & correlations
-     IF ( icalc_flow .EQ. 1 ) nfield = nfield + inb_flow + 1 ! pressure
-     IF ( icalc_scal .EQ. 1 ) nfield = nfield +(inb_scal_max - inb_scal_min + 1)
+    nfield = 0          ! defining the number of accessed fields
+    if (opt_main == 1 .or. opt_main == 3) then ! Auto-spectra & correlations
+        if (icalc_flow == 1) nfield = nfield + inb_flow + 1 ! pressure
+        if (icalc_scal == 1) nfield = nfield + (inb_scal_max - inb_scal_min + 1)
 
-  ELSE IF ( opt_main .EQ. 2 .OR. opt_main .EQ. 4 ) THEN ! cross-spectra and cross-correlations
-     IF ( icalc_flow .EQ. 1 ) nfield = nfield + 3
-     IF ( icalc_scal .EQ. 1 ) nfield = nfield + 3 *(inb_scal_max - inb_scal_min + 1)
+    else if (opt_main == 2 .or. opt_main == 4) then ! cross-spectra and cross-correlations
+        if (icalc_flow == 1) nfield = nfield + 3
+        if (icalc_scal == 1) nfield = nfield + 3*(inb_scal_max - inb_scal_min + 1)
 
-  ELSE
-     nfield = nfield_ref
+    else
+        nfield = nfield_ref
 
-  ENDIF
+    end if
 
-#ifdef IBM_DEBUG  
-  inb_txc = 6
+#ifdef IBM_DEBUG
+    inb_txc = 6
 #else
-  inb_txc = 5 ! default
+    inb_txc = 5 ! default
 #endif
 
-  isize_aux = jmax_aux
+    isize_aux = jmax_aux
 #ifdef USE_MPI
-  IF ( ims_npro_k .GT. 1 ) THEN
-     IF ( MOD(jmax_aux,ims_npro_k) .NE. 0 ) THEN
-        isize_aux = ims_npro_k *(jmax_aux/ims_npro_k+1)
-     ENDIF
+    if (ims_npro_k > 1) then
+        if (mod(jmax_aux, ims_npro_k) /= 0) then
+            isize_aux = ims_npro_k*(jmax_aux/ims_npro_k + 1)
+        end if
 
-     CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI type 2 for Oz spectra integration.')
-     id = TLAB_MPI_K_AUX2
-     CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
-          ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+        call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
+        id = TLAB_MPI_K_AUX2
+        call TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
+                             ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
-  ENDIF
+    end if
 #endif
 
-  isize_wrk2d = MAX(isize_wrk2d,isize_aux*kmax); inb_wrk2d = MAX(inb_wrk2d,6)
+    isize_wrk2d = max(isize_wrk2d, isize_aux*kmax); inb_wrk2d = max(inb_wrk2d, 6)
 
-  ALLOCATE(outx(kxmax*jmax_aux, nfield))
-  ALLOCATE(outz(kzmax*jmax_aux, nfield))
+    allocate (outx(kxmax*jmax_aux, nfield))
+    allocate (outz(kzmax*jmax_aux, nfield))
 
-  WRITE(str,*) nfield; line = 'Allocating array outr  of size '//TRIM(ADJUSTL(str))//'x'
-  WRITE(str,*) isize_spec2dr; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-  CALL TLAB_WRITE_ASCII(lfile,line)
-  ALLOCATE(outr(isize_spec2dr, nfield),stat=ierr)
-  IF ( ierr .NE. 0 ) THEN
-     CALL TLAB_WRITE_ASCII(efile,'SPECTRA. Not enough memory for spectral data.')
-     CALL TLAB_STOP(DNS_ERROR_ALLOC)
-  ENDIF
+    write (str, *) nfield; line = 'Allocating array outr  of size '//trim(adjustl(str))//'x'
+    write (str, *) isize_spec2dr; line = trim(adjustl(line))//trim(adjustl(str))
+    call TLAB_WRITE_ASCII(lfile, line)
+    allocate (outr(isize_spec2dr, nfield), stat=ierr)
+    if (ierr /= 0) then
+        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Not enough memory for spectral data.')
+        call TLAB_STOP(DNS_ERROR_ALLOC)
+    end if
 
-  IF ( flag_mode .EQ. 2 ) THEN
-     ALLOCATE( samplesize(kr_total) )
-  ENDIF
+    if (flag_mode == 2) then
+        allocate (samplesize(kr_total))
+    end if
 
-  IF ( opt_ffmt .EQ. 1 ) THEN ! need additional space for 2d spectra
-     WRITE(str,*) nfield; line = 'Allocating array out2d of size '//TRIM(ADJUSTL(str))//'x'
-     WRITE(str,*) isize_out2d; line = TRIM(ADJUSTL(line))//TRIM(ADJUSTL(str))
-     CALL TLAB_WRITE_ASCII(lfile,line)
-     ALLOCATE(out2d(isize_out2d, nfield),stat=ierr)
-     IF ( ierr .NE. 0 ) THEN
-        CALL TLAB_WRITE_ASCII(efile,'SPECTRA. Not enough memory for spectral data.')
-        CALL TLAB_STOP(DNS_ERROR_ALLOC)
-     ENDIF
-  ENDIF
+    if (opt_ffmt == 1) then ! need additional space for 2d spectra
+        write (str, *) nfield; line = 'Allocating array out2d of size '//trim(adjustl(str))//'x'
+        write (str, *) isize_out2d; line = trim(adjustl(line))//trim(adjustl(str))
+        call TLAB_WRITE_ASCII(lfile, line)
+        allocate (out2d(isize_out2d, nfield), stat=ierr)
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, 'SPECTRA. Not enough memory for spectral data.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
+    end if
 
-  IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-     WRITE(str,*) isize_txc_field; line = 'Allocating array p_aux of size '//TRIM(ADJUSTL(str))
-     CALL TLAB_WRITE_ASCII(lfile,line)
-     ALLOCATE(p_aux(isize_txc_field),stat=ierr)
-     IF ( ierr .NE. 0 ) THEN
-        CALL TLAB_WRITE_ASCII(efile,'SPECTRA. Not enough memory for p_aux.')
-        CALL TLAB_STOP(DNS_ERROR_ALLOC)
-     ENDIF
-  ENDIF
+    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+        write (str, *) isize_txc_field; line = 'Allocating array p_aux of size '//trim(adjustl(str))
+        call TLAB_WRITE_ASCII(lfile, line)
+        allocate (p_aux(isize_txc_field), stat=ierr)
+        if (ierr /= 0) then
+            call TLAB_WRITE_ASCII(efile, 'SPECTRA. Not enough memory for p_aux.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
+        end if
+    end if
 
-  IF ( imode_ibm .EQ. 1 ) THEN
-     CALL IBM_ALLOCATE(C_FILE_LOC)
-  ENDIF
+    if (imode_ibm == 1) then
+        call IBM_ALLOCATE(C_FILE_LOC)
+    end if
 
 ! extend array by complex nyquist frequency in x (+1 TCOMPLEX = +2 TREAL)
 !              by boundary conditions in y       (+1 TCOMPLEX = +2 TREAL)
 
-  isize_wrk3d = isize_txc_field                ! default
-  isize_wrk3d = MAX(isize_wrk3d,isize_spec2dr) ! space needed in INTEGRATE_SPECTRUM
+    isize_wrk3d = isize_txc_field                ! default
+    isize_wrk3d = max(isize_wrk3d, isize_spec2dr) ! space needed in INTEGRATE_SPECTRUM
 
-  CALL TLAB_ALLOCATE(C_FILE_LOC)
+    call TLAB_ALLOCATE(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
-CALL FDM_INITIALIZE(x, g(1), wrk1d)
-CALL FDM_INITIALIZE(y, g(2), wrk1d)
-CALL FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call FDM_INITIALIZE(x, g(1), wrk1d)
+    call FDM_INITIALIZE(y, g(2), wrk1d)
+    call FDM_INITIALIZE(z, g(3), wrk1d)
 
-CALL FI_BACKGROUND_INITIALIZE(wrk1d)
+    call FI_BACKGROUND_INITIALIZE(wrk1d)
 
-DO ig = 1,3
-    CALL OPR_FILTER_INITIALIZE( g(ig), Dealiasing(ig), wrk1d )
-  END DO
+    do ig = 1, 3
+        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig), wrk1d)
+    end do
 
-  icalc_radial = 0
-  IF ( flag_mode .EQ. 1 .AND. g(1)%size     .EQ. g(3)%size     ) icalc_radial = 1 ! Calculate radial spectra
-  IF ( flag_mode .EQ. 2 .AND. g(1)%jac(1,1) .EQ. g(3)%jac(1,1) ) icalc_radial = 1 ! Calculate radial correlations
+    icalc_radial = 0
+    if (flag_mode == 1 .and. g(1)%size == g(3)%size) icalc_radial = 1 ! Calculate radial spectra
+    if (flag_mode == 2 .and. g(1)%jac(1, 1) == g(3)%jac(1, 1)) icalc_radial = 1 ! Calculate radial correlations
 
 ! ------------------------------------------------------------------------
 ! Define size of blocks
 ! ------------------------------------------------------------------------
-  y_aux(:) = 0
-  DO j = 1,jmax
-     is = (j-1)/opt_block + 1
-     y_aux(is) = y_aux(is) + y(j,1)/M_REAL(opt_block)
-  ENDDO
+    y_aux(:) = 0
+    do j = 1, jmax
+        is = (j - 1)/opt_block + 1
+        y_aux(is) = y_aux(is) + y(j, 1)/M_REAL(opt_block)
+    end do
 
 ! -------------------------------------------------------------------
 ! Initialize Poisson solver
 ! -------------------------------------------------------------------
-  IF ( ifourier .EQ. 1 ) THEN
-     CALL OPR_FOURIER_INITIALIZE(txc, wrk1d,wrk2d,wrk3d)
-  ENDIF
+    if (ifourier == 1) then
+        call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+    end if
 
-  CALL OPR_CHECK(imax,jmax,kmax, q, txc, wrk2d,wrk3d)
+    call OPR_CHECK(imax, jmax, kmax, q, txc, wrk2d, wrk3d)
 
 ! -------------------------------------------------------------------
 ! Initialize IBM geometry
 ! -------------------------------------------------------------------
-  IF ( imode_ibm .EQ. 1 ) THEN
-     CALL IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
-  ENDIF  
+    if (imode_ibm == 1) then
+        call IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
+    end if
 
 ! -------------------------------------------------------------------
 ! Initialize
 ! -------------------------------------------------------------------
-  outx = C_0_R; outz = C_0_R; outr = C_0_R
-  IF ( opt_ffmt .EQ. 1 ) out2d = C_0_R
+    outx = C_0_R; outz = C_0_R; outr = C_0_R
+    if (opt_ffmt == 1) out2d = C_0_R
 
 ! Normalization
-  IF ( opt_main .GE. 5 ) THEN ! 3D spectra
-     norm = C_1_R / M_REAL(g(1)%size*g(3)%size*g(2)%size)
-  ELSE
-     norm = C_1_R / M_REAL(g(1)%size*g(3)%size)
-  ENDIF
+    if (opt_main >= 5) then ! 3D spectra
+        norm = C_1_R/M_REAL(g(1)%size*g(3)%size*g(2)%size)
+    else
+        norm = C_1_R/M_REAL(g(1)%size*g(3)%size)
+    end if
 
 ! Define tags
-  IF      ( flag_mode .EQ. 1 ) THEN; tag_file = 'sp';  tag_name = 'E' ! spectra
-  ELSE IF ( flag_mode .EQ. 2 ) THEN; tag_file = 'cr';  tag_name = 'C' ! correlations
-  ENDIF
+    if (flag_mode == 1) then; tag_file = 'sp'; tag_name = 'E' ! spectra
+    else if (flag_mode == 2) then; tag_file = 'cr'; tag_name = 'C' ! correlations
+    end if
 
 ! Define reference pointers and tags
-  iv = 0
-  IF ( icalc_flow .EQ. 1 ) THEN
-     iv = iv+1; vars(iv)%field => q(:,1); tag_var(iv) = 'u'
-     iv = iv+1; vars(iv)%field => q(:,2); tag_var(iv) = 'v'
-     iv = iv+1; vars(iv)%field => q(:,3); tag_var(iv) = 'w'
-     IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL .OR. imode_eqns .EQ. DNS_EQNS_TOTAL ) THEN
-        iv = iv+1; vars(iv)%field => q(:,6); tag_var(iv) = 'p'
-        iv = iv+1; vars(iv)%field => q(:,5); tag_var(iv) = 'r'
-        iv = iv+1; vars(iv)%field => q(:,7); tag_var(iv) = 't'
-     ELSE
-        iv = iv+1; vars(iv)%field => p_aux;  tag_var(iv) = 'p'
-     ENDIF
-  ENDIF
-  iv_offset = iv
+    iv = 0
+    if (icalc_flow == 1) then
+        iv = iv + 1; vars(iv)%field => q(:, 1); tag_var(iv) = 'u'
+        iv = iv + 1; vars(iv)%field => q(:, 2); tag_var(iv) = 'v'
+        iv = iv + 1; vars(iv)%field => q(:, 3); tag_var(iv) = 'w'
+        if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
+            iv = iv + 1; vars(iv)%field => q(:, 6); tag_var(iv) = 'p'
+            iv = iv + 1; vars(iv)%field => q(:, 5); tag_var(iv) = 'r'
+            iv = iv + 1; vars(iv)%field => q(:, 7); tag_var(iv) = 't'
+        else
+            iv = iv + 1; vars(iv)%field => p_aux; tag_var(iv) = 'p'
+        end if
+    end if
+    iv_offset = iv
 
-  IF ( icalc_scal .EQ. 1 ) THEN
-     DO is = 1,inb_scal_array
-        WRITE(sRes,*) is
-        iv = iv+1; vars(iv)%field => s(:,is); tag_var(iv) = TRIM(ADJUSTL(sRes))
-     ENDDO
-  ENDIF
+    if (icalc_scal == 1) then
+        do is = 1, inb_scal_array
+            write (sRes, *) is
+            iv = iv + 1; vars(iv)%field => s(:, is); tag_var(iv) = trim(adjustl(sRes))
+        end do
+    end if
 
-  IF ( nfield_ref .NE. iv ) THEN ! Check
-     CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Array space nfield_ref incorrect.')
-     CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
-  ENDIF
+    if (nfield_ref /= iv) then ! Check
+        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Array space nfield_ref incorrect.')
+        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+    end if
 
 ! Define pairs
-  iv = 0
-  IF      ( opt_main .EQ. 1 .OR. opt_main .EQ. 3 ) THEN ! Auto-spectra & correlations
-     DO ip = 1,iv_offset
-        iv = iv+1; p_pairs(iv,1) = iv; p_pairs(iv,2) = iv
-     ENDDO
-     IF ( icalc_scal .EQ. 1 ) THEN
-        DO is = inb_scal_min,inb_scal_max
-           ip = is+iv_offset
-           iv = iv+1; p_pairs(iv,1) = ip; p_pairs(iv,2) = ip
-        ENDDO
-     ENDIF
+    iv = 0
+    if (opt_main == 1 .or. opt_main == 3) then ! Auto-spectra & correlations
+        do ip = 1, iv_offset
+            iv = iv + 1; p_pairs(iv, 1) = iv; p_pairs(iv, 2) = iv
+        end do
+        if (icalc_scal == 1) then
+            do is = inb_scal_min, inb_scal_max
+                ip = is + iv_offset
+                iv = iv + 1; p_pairs(iv, 1) = ip; p_pairs(iv, 2) = ip
+            end do
+        end if
 
-  ELSE IF ( opt_main .EQ. 2 .OR. opt_main .EQ. 4 ) THEN ! Cross-spectra & correlations
-     IF ( icalc_flow .EQ. 1 ) THEN
-        iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 2
-        iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 3
-        iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 3
-        IF ( icalc_scal .EQ. 1 ) THEN
-           DO is = inb_scal_min,inb_scal_max
-              ip = is+iv_offset
-              iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = ip
-              iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = ip
-              iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = ip
-           ENDDO
-        ENDIF
+    else if (opt_main == 2 .or. opt_main == 4) then ! Cross-spectra & correlations
+        if (icalc_flow == 1) then
+            iv = iv + 1; p_pairs(iv, 1) = 1; p_pairs(iv, 2) = 2
+            iv = iv + 1; p_pairs(iv, 1) = 1; p_pairs(iv, 2) = 3
+            iv = iv + 1; p_pairs(iv, 1) = 2; p_pairs(iv, 2) = 3
+            if (icalc_scal == 1) then
+                do is = inb_scal_min, inb_scal_max
+                    ip = is + iv_offset
+                    iv = iv + 1; p_pairs(iv, 1) = 1; p_pairs(iv, 2) = ip
+                    iv = iv + 1; p_pairs(iv, 1) = 2; p_pairs(iv, 2) = ip
+                    iv = iv + 1; p_pairs(iv, 1) = 3; p_pairs(iv, 2) = ip
+                end do
+            end if
 ! block to calculate the pressure-velocity and triple-velocity correlation terms in turbulent transport
-        ! iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 4
-        ! iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 4
-        ! iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 4
-        ! IF ( icalc_scal .EQ. 1 ) THEN ! aux array for u_iu_i/2
-        !    s(:,1) = C_05_R*( q(:,1)*q(:,1) + q(:,2)*q(:,2) + q(:,3)*q(:,3) ); tag_var(5) = 'q'
-        !    iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 5
-        !    iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 5
-        !    iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 5
-        ! ENDIF
-     ELSE
-        CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Cross-spectra needs flow fields.')
-        CALL TLAB_STOP(DNS_ERROR_INVALOPT)
-     ENDIF
+            ! iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 4
+            ! iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 4
+            ! iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 4
+            ! IF ( icalc_scal .EQ. 1 ) THEN ! aux array for u_iu_i/2
+            !    s(:,1) = C_05_R*( q(:,1)*q(:,1) + q(:,2)*q(:,2) + q(:,3)*q(:,3) ); tag_var(5) = 'q'
+            !    iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 5
+            !    iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 5
+            !    iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 5
+            ! ENDIF
+        else
+            call TLAB_WRITE_ASCII(efile, 'SPECTRA. Cross-spectra needs flow fields.')
+            call TLAB_STOP(DNS_ERROR_INVALOPT)
+        end if
 
-  ENDIF
+    end if
 
-  IF ( nfield .NE. iv ) THEN ! Check
-     CALL TLAB_WRITE_ASCII(efile, 'SPECTRA. Array space nfield incorrect.')
-     CALL TLAB_STOP(DNS_ERROR_WRKSIZE)
-  ENDIF
+    if (nfield /= iv) then ! Check
+        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Array space nfield incorrect.')
+        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+    end if
 
-  DO iv = 1,nfield ! define variable names
-     varname(iv) = tag_name(1:1)//TRIM(ADJUSTL(tag_var(p_pairs(iv,1))))//TRIM(ADJUSTL(tag_var(p_pairs(iv,2))))
-  ENDDO
+    do iv = 1, nfield ! define variable names
+        varname(iv) = tag_name(1:1)//trim(adjustl(tag_var(p_pairs(iv, 1))))//trim(adjustl(tag_var(p_pairs(iv, 2))))
+    end do
 
 ! ###################################################################
 ! Calculating statistics
 ! ###################################################################
-  DO it = 1,itime_size
-     itime = itime_vec(it)
+    do it = 1, itime_size
+        itime = itime_vec(it)
 
-     WRITE(sRes,*) itime; sRes = 'Processing iteration It'//TRIM(ADJUSTL(sRes))
-     CALL TLAB_WRITE_ASCII(lfile, sRes)
+        write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
+        call TLAB_WRITE_ASCII(lfile, sRes)
 
-     IF ( iread_flow .EQ. 1 ) THEN
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-        CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_flow,i0, q, wrk3d)
-     ENDIF
+        if (iread_flow == 1) then
+            write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
+            call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_flow, i0, q, wrk3d)
+        end if
 
-     IF ( iread_scal .EQ. 1 ) THEN
-        WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-        CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, inb_scal,i0, s, wrk3d)
-     ENDIF
+        if (iread_scal == 1) then
+            write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
+            call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_scal, i0, s, wrk3d)
+        end if
 
-     IF ( imode_ibm .EQ. 1 ) THEN
-        CALL IBM_BCS_FIELD_COMBINED(i0, q)
-        IF ( icalc_scal .EQ. 1 ) CALL IBM_INITIALIZE_SCAL(i0, s)
-     ENDIF  
+        if (imode_ibm == 1) then
+            call IBM_BCS_FIELD_COMBINED(i0, q)
+            if (icalc_scal == 1) call IBM_INITIALIZE_SCAL(i0, s)
+        end if
 
-     CALL FI_DIAGNOSTIC( imax,jmax,kmax, q,s, wrk3d )
+        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)
 
 ! Calculate additional diagnostic quantities to be processed
-     IF ( imode_eqns .EQ. DNS_EQNS_INCOMPRESSIBLE .OR. imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-        CALL FI_PRESSURE_BOUSSINESQ(q,s, p_aux, txc(1,1),txc(1,2), txc(1,3), wrk1d,wrk2d,wrk3d)
-        IF ( flag_buoyancy .EQ. 1 ) THEN
-           IF ( buoyancy%type .EQ. EQNS_EXPLICIT ) THEN
-              CALL THERMO_ANELASTIC_BUOYANCY(imax,jmax,kmax, s, epbackground,pbackground,rbackground, s(1,inb_scal_array))
-           ELSE
-              wrk1d(1:jmax,1) = C_0_R
-              CALL FI_BUOYANCY(buoyancy, imax,jmax,kmax, s, s(1,inb_scal_array), wrk1d)
-           ENDIF
-           dummy = C_1_R /froude
-           s(:,inb_scal_array) = s(:,inb_scal_array)*dummy
-        ENDIF
-     ENDIF
+        if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+            call FI_PRESSURE_BOUSSINESQ(q, s, p_aux, txc(1, 1), txc(1, 2), txc(1, 3), wrk1d, wrk2d, wrk3d)
+            if (flag_buoyancy == 1) then
+                if (buoyancy%type == EQNS_EXPLICIT) then
+                   call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, s(1, inb_scal_array))
+                else
+                    wrk1d(1:jmax, 1) = C_0_R
+                    call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, s(1, inb_scal_array), wrk1d)
+                end if
+                dummy = C_1_R/froude
+                s(:, inb_scal_array) = s(:, inb_scal_array)*dummy
+            end if
+        end if
 
 ! remove mean -- fluctuation only for spectrum
-     IF ( opt_main .GE. 5 ) THEN ! 3D spectra
-        DO iv = 1,nfield_ref
-          dummy = AVG1V2D(imax*jmax,i1,kmax, i1, i1, vars(iv)%field)  ! 3D average
-           vars(iv)%field =  vars(iv)%field - dummy
-        ENDDO
-     ELSE
-        DO iv = 1,nfield_ref
-           CALL FI_FLUCTUATION_INPLACE(imax,jmax,kmax, vars(iv)%field)
-        ENDDO
-     ENDIF
+        if (opt_main >= 5) then ! 3D spectra
+            do iv = 1, nfield_ref
+                dummy = AVG1V2D(imax*jmax, i1, kmax, i1, i1, vars(iv)%field)  ! 3D average
+                vars(iv)%field = vars(iv)%field - dummy
+            end do
+        else
+            do iv = 1, nfield_ref
+                call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, vars(iv)%field)
+            end do
+        end if
 
 ! If IBM is active: remove mean values in solid regions from fluctuations (except pressure)
-     IF ( imode_ibm .EQ. 1 ) THEN
-        IF ( icalc_flow .EQ. 1 ) THEN 
-           DO iv = 1,3 ! u,v,w fields - skip pressure
-              CALL IBM_BCS_FIELD(vars(iv)%field)
-           ENDDO
-           IF ( nfield_ref .GT. 4 ) THEN
-              DO iv = 5,nfield_ref ! r,t,(s) fields
-                 CALL IBM_BCS_FIELD(vars(iv)%field)
-              ENDDO
-           ENDIF
-        ELSE IF ( ( icalc_flow .NE. 1 ) .AND. ( icalc_scal .EQ. 1 ) ) THEN 
-           DO iv = 1,nfield_ref    ! s fields (no pressure)
-              CALL IBM_BCS_FIELD(vars(iv)%field)
-           ENDDO
-        ENDIF
-     ENDIF
+        if (imode_ibm == 1) then
+            if (icalc_flow == 1) then
+                do iv = 1, 3 ! u,v,w fields - skip pressure
+                    call IBM_BCS_FIELD(vars(iv)%field)
+                end do
+                if (nfield_ref > 4) then
+                    do iv = 5, nfield_ref ! r,t,(s) fields
+                        call IBM_BCS_FIELD(vars(iv)%field)
+                    end do
+                end if
+            else if ((icalc_flow /= 1) .and. (icalc_scal == 1)) then
+                do iv = 1, nfield_ref    ! s fields (no pressure)
+                    call IBM_BCS_FIELD(vars(iv)%field)
+                end do
+            end if
+        end if
 
 ! reset if needed
-     IF( opt_time .EQ. SPEC_SINGLE ) THEN
-        outx = C_0_R; outz = C_0_R; outr = C_0_R
-        IF ( opt_ffmt .EQ. 1 ) out2d = C_0_R
-     ENDIF
+        if (opt_time == SPEC_SINGLE) then
+            outx = C_0_R; outz = C_0_R; outr = C_0_R
+            if (opt_ffmt == 1) out2d = C_0_R
+        end if
 
 ! ###################################################################
 ! 2D Spectra & Correlations
 ! ###################################################################
-     IF ( opt_main .LE. 4 ) THEN
+        if (opt_main <= 4) then
 
 ! -------------------------------------------------------------------
 ! Calculate 2d spectra into array out2d and 1d spectra into arrays outX
 ! -------------------------------------------------------------------
-        DO iv = 1,nfield
-           iv1 = p_pairs(iv,1); iv2 = p_pairs(iv,2)
+            do iv = 1, nfield
+                iv1 = p_pairs(iv, 1); iv2 = p_pairs(iv, 2)
 
-           wrk1d(:,1:3) = C_0_R ! variance to normalize and check Parseval's relation
-           DO j=1,jmax
-              wrk1d(j,1) = COV2V2D(imax,jmax,kmax,j,vars(iv1)%field,vars(iv2)%field)
-              wrk1d(j,2) = COV2V2D(imax,jmax,kmax,j,vars(iv1)%field,vars(iv1)%field)
-              wrk1d(j,3) = COV2V2D(imax,jmax,kmax,j,vars(iv2)%field,vars(iv2)%field)
-           ENDDO
+                wrk1d(:, 1:3) = C_0_R ! variance to normalize and check Parseval's relation
+                do j = 1, jmax
+                    wrk1d(j, 1) = COV2V2D(imax, jmax, kmax, j, vars(iv1)%field, vars(iv2)%field)
+                    wrk1d(j, 2) = COV2V2D(imax, jmax, kmax, j, vars(iv1)%field, vars(iv1)%field)
+                    wrk1d(j, 3) = COV2V2D(imax, jmax, kmax, j, vars(iv2)%field, vars(iv2)%field)
+                end do
 
-           txc(1:isize_field,1) =  vars(iv1)%field(1:isize_field)
-           IF ( iv2 .EQ. iv1 ) THEN
-              CALL OPR_FOURIER_CONVOLUTION_FXZ(i1, flag_mode, imax,jmax,kmax, &
-                   txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
-           ELSE
-              txc(1:isize_field,2) = vars(iv2)%field(1:isize_field)
-              CALL OPR_FOURIER_CONVOLUTION_FXZ(i2, flag_mode, imax,jmax,kmax, &
-                   txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
-           ENDIF
+                txc(1:isize_field, 1) = vars(iv1)%field(1:isize_field)
+                if (iv2 == iv1) then
+                    call OPR_FOURIER_CONVOLUTION_FXZ('auto', flag_mode, imax, jmax, kmax, &
+                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+                else
+                    txc(1:isize_field, 2) = vars(iv2)%field(1:isize_field)
+                    call OPR_FOURIER_CONVOLUTION_FXZ('cross', flag_mode, imax, jmax, kmax, &
+                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+                end if
 
-           IF      ( flag_mode .EQ. 1 ) THEN ! Spectra
-              txc(:,1) = txc(:,1) *norm*norm
+                if (flag_mode == 1) then ! Spectra
+                    txc(:, 1) = txc(:, 1)*norm*norm
 
 ! Reduce 2D spectra into array wrk3d
-              wrk3d = C_0_R
-              CALL REDUCE_SPECTRUM(imax,jmax,kmax, opt_block, &
-                   txc(1,1),wrk3d, txc(1,3),wrk1d(1,4))
+                    wrk3d = C_0_R
+                    call REDUCE_SPECTRUM(imax, jmax, kmax, opt_block, &
+                                         txc(1, 1), wrk3d, txc(1, 3), wrk1d(1, 4))
 
 ! Calculate and accumulate 1D spectra; only the half of wrk3d with the power data is necessary
-              CALL INTEGRATE_SPECTRUM(imax/2, jmax_aux, kmax, kr_total, isize_aux, &
-                   wrk3d, outx(1,iv),outz(1,iv),outr(1,iv), wrk2d(1,1), wrk2d(1,3), wrk2d(1,5))
+                    call INTEGRATE_SPECTRUM(imax/2, jmax_aux, kmax, kr_total, isize_aux, &
+                                            wrk3d, outx(1, iv), outz(1, iv), outr(1, iv), wrk2d(1, 1), wrk2d(1, 3), wrk2d(1, 5))
 
-           ELSE IF ( flag_mode .EQ. 2 ) THEN  ! Correlations
-              txc(:,2) = txc(:,2) *norm*norm
+                else if (flag_mode == 2) then  ! Correlations
+                    txc(:, 2) = txc(:, 2)*norm*norm
 
 ! Reduce 2D correlation into array wrk3d and accumulate 1D correlation
-              wrk3d = C_0_R
-              CALL REDUCE_CORRELATION(imax,jmax,kmax, opt_block, kr_total, &
-                   txc(1,2), wrk3d, outx(1,iv),outz(1,iv),outr(1,iv), wrk1d(1,2),wrk1d(1,4),icalc_radial)
-           ENDIF
+                    wrk3d = C_0_R
+                    call REDUCE_CORRELATION(imax, jmax, kmax, opt_block, kr_total, &
+                                    txc(1, 2), wrk3d, outx(1, iv), outz(1, iv), outr(1, iv), wrk1d(1, 2), wrk1d(1, 4), icalc_radial)
+                end if
 
 ! Check Parseval's relation
-           ip = g(2)%size - MOD(g(2)%size,opt_block)  ! Drop the uppermost ny%nblock
-           WRITE(line,100) MAXVAL( ABS(wrk1d(1:ip,4) - wrk1d(1:ip,1)) )
-           WRITE(str, *  ) MAXLOC( ABS(wrk1d(1:ip,4) - wrk1d(1:ip,1)) )
-           line = 'Checking Parseval: Maximum residual '//TRIM(ADJUSTL(line))//' at level '//TRIM(ADJUSTL(str))//'.'
-           CALL TLAB_WRITE_ASCII(lfile, line)
+                ip = g(2)%size - mod(g(2)%size, opt_block)  ! Drop the uppermost ny%nblock
+                write (line, 100) maxval(abs(wrk1d(1:ip, 4) - wrk1d(1:ip, 1)))
+                write (str, *) maxloc(abs(wrk1d(1:ip, 4) - wrk1d(1:ip, 1)))
+                line = 'Checking Parseval: Maximum residual '//trim(adjustl(line))//' at level '//trim(adjustl(str))//'.'
+                call TLAB_WRITE_ASCII(lfile, line)
 
 ! Accumulate 2D information, if needed
-           IF ( opt_ffmt .EQ. 1 ) out2d(1:isize_out2d,iv) = out2d(1:isize_out2d,iv) + wrk3d(1:isize_out2d)
+                if (opt_ffmt == 1) out2d(1:isize_out2d, iv) = out2d(1:isize_out2d, iv) + wrk3d(1:isize_out2d)
 
-        ENDDO
+            end do
 
-        IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1 ) THEN  ! Calculate sampling size for radial correlation
-           samplesize = C_0_R
-           CALL RADIAL_SAMPLESIZE(imax,kmax, kr_total, samplesize)
-        ENDIF
+            if (flag_mode == 2 .and. icalc_radial == 1) then  ! Calculate sampling size for radial correlation
+                samplesize = C_0_R
+                call RADIAL_SAMPLESIZE(imax, kmax, kr_total, samplesize)
+            end if
 
 ! -------------------------------------------------------------------
 ! Output
 ! -------------------------------------------------------------------
-        IF ( opt_time .EQ. SPEC_SINGLE .OR. it .EQ. itime_size ) THEN
+            if (opt_time == SPEC_SINGLE .or. it == itime_size) then
 
 ! Normalizing accumulated spectra
-           ip = opt_block
-           IF( opt_time .EQ. SPEC_AVERAGE ) ip = ip*itime_size
-           dummy = C_1_R/M_REAL(ip)
-           IF ( ip .GT. 1 ) THEN
-              outx = outx *dummy; outz = outz *dummy; outr = outr *dummy
-              IF ( opt_ffmt .EQ. 1 ) out2d= out2d*dummy
-           ENDIF
+                ip = opt_block
+                if (opt_time == SPEC_AVERAGE) ip = ip*itime_size
+                dummy = C_1_R/M_REAL(ip)
+                if (ip > 1) then
+                    outx = outx*dummy; outz = outz*dummy; outr = outr*dummy
+                    if (opt_ffmt == 1) out2d = out2d*dummy
+                end if
 
 ! Reducing radial data
 #ifdef USE_MPI
-           DO iv = 1,nfield
-              CALL MPI_Reduce(outr(1,iv), wrk3d, isize_spec2dr, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
-              IF ( ims_pro .EQ. 0 ) outr(1:isize_spec2dr,iv) = wrk3d(1:isize_spec2dr)
-           ENDDO
+                do iv = 1, nfield
+                    call MPI_Reduce(outr(1, iv), wrk3d, isize_spec2dr, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+                    if (ims_pro == 0) outr(1:isize_spec2dr, iv) = wrk3d(1:isize_spec2dr)
+                end do
 
-           IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1 ) THEN ! Calculate sampling size for radial correlation
-              CALL MPI_Reduce(samplesize, wrk3d, kr_total, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
-              IF ( ims_pro .EQ. 0 ) samplesize(1:kr_total) = wrk3d(1:kr_total)
-           ENDIF
+                if (flag_mode == 2 .and. icalc_radial == 1) then ! Calculate sampling size for radial correlation
+                    call MPI_Reduce(samplesize, wrk3d, kr_total, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+                    if (ims_pro == 0) samplesize(1:kr_total) = wrk3d(1:kr_total)
+                end if
 #endif
 
 ! Normalize radial correlation
 #ifdef USE_MPI
-           IF ( ims_pro .EQ. 0 ) THEN
+                if (ims_pro == 0) then
 #endif
-           IF ( flag_mode .EQ. 2 .AND. icalc_radial .EQ. 1 ) THEN
-              DO iv1 = 1, kr_total
-                 IF ( samplesize(iv1) .GT. C_0_R ) samplesize(iv1) = C_1_R /samplesize(iv1)
-              ENDDO
+                    if (flag_mode == 2 .and. icalc_radial == 1) then
+                        do iv1 = 1, kr_total
+                            if (samplesize(iv1) > C_0_R) samplesize(iv1) = C_1_R/samplesize(iv1)
+                        end do
 
-              DO iv = 1,nfield
-                 DO j = 1,jmax_aux
-                    DO iv1 = 1, kr_total
-                       ip = iv1 + (j-1)*kr_total
-                       outr(ip,iv) = outr(ip,iv) *samplesize(iv1)
-                    ENDDO
-                 ENDDO
-              ENDDO
+                        do iv = 1, nfield
+                            do j = 1, jmax_aux
+                                do iv1 = 1, kr_total
+                                    ip = iv1 + (j - 1)*kr_total
+                                    outr(ip, iv) = outr(ip, iv)*samplesize(iv1)
+                                end do
+                            end do
+                        end do
 
-           ENDIF
+                    end if
 #ifdef USE_MPI
-           ENDIF
+                end if
 #endif
 
 ! Saving 1D fields
-           IF ( opt_time .EQ. SPEC_AVERAGE ) THEN
-             WRITE(str,*) itime; WRITE(fname,*) itime_vec(1); str = TRIM(ADJUSTL(fname))//'-'//TRIM(ADJUSTL(str))
-           ELSE
-             WRITE(str,*) itime;
-           ENDIF
-           fname = 'x'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(str))
-           sizes(1) = kxmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-           CALL IO_WRITE_SUBARRAY4(i1, fname, varname, outx, sizes, wrk3d)
+                if (opt_time == SPEC_AVERAGE) then
+                    write (str, *) itime; write (fname, *) itime_vec(1); str = trim(adjustl(fname))//'-'//trim(adjustl(str))
+                else
+                    write (str, *) itime; 
+                end if
+                fname = 'x'//trim(adjustl(tag_file))//trim(adjustl(str))
+                sizes(1) = kxmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
+                call IO_WRITE_SUBARRAY4(i1, fname, varname, outx, sizes, wrk3d)
 
-           IF ( g(3)%size .GT. 1 ) THEN
-              fname = 'z'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(str))
-              sizes(1) = kzmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-              CALL IO_WRITE_SUBARRAY4(i2, fname, varname, outz, sizes, wrk3d)
-           ENDIF
+                if (g(3)%size > 1) then
+                    fname = 'z'//trim(adjustl(tag_file))//trim(adjustl(str))
+                    sizes(1) = kzmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
+                    call IO_WRITE_SUBARRAY4(i2, fname, varname, outz, sizes, wrk3d)
+                end if
 
-           IF ( icalc_radial .EQ. 1 ) THEN
-              fname = 'r'//TRIM(ADJUSTL(tag_file))//TRIM(ADJUSTL(str))
-              CALL WRITE_SPECTRUM1D(fname, varname, kr_total*jmax_aux, nfield, outr)
-           ENDIF
+                if (icalc_radial == 1) then
+                    fname = 'r'//trim(adjustl(tag_file))//trim(adjustl(str))
+                    call WRITE_SPECTRUM1D(fname, varname, kr_total*jmax_aux, nfield, outr)
+                end if
 
 ! Saving 2D fields
-           IF ( opt_ffmt .EQ. 1 ) THEN
-              IF ( flag_mode .EQ. 2 ) THEN ! correlations
-                 fname = 'cor'//TRIM(ADJUSTL(str))
-                 sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-                 CALL IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
+                if (opt_ffmt == 1) then
+                    if (flag_mode == 2) then ! correlations
+                        fname = 'cor'//trim(adjustl(str))
+                        sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
+                        call IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
 
-              ELSE                         ! spectra
-                 fname = 'pow'//TRIM(ADJUSTL(str))
-                 sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1) /2; sizes(4) = 1; sizes(5) = nfield
-                 CALL IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
+                    else                         ! spectra
+                        fname = 'pow'//trim(adjustl(str))
+                        sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1)/2; sizes(4) = 1; sizes(5) = nfield
+                        call IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
 
-                 fname = 'pha'//TRIM(ADJUSTL(str))
-                 sizes(1) = isize_out2d; sizes(2) = 1+sizes(1) /2; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-                 CALL IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
+                        fname = 'pha'//trim(adjustl(str))
+                        sizes(1) = isize_out2d; sizes(2) = 1 + sizes(1)/2; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
+                        call IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
 
-              ENDIF
+                    end if
 
-           ENDIF
+                end if
 
-        ENDIF
+            end if
 
 ! ###################################################################
 ! 3D Spectra
 ! ###################################################################
-     ELSE IF ( opt_main .EQ. 5 ) THEN
+        else if (opt_main == 5) then
 
-        DO iv = 1,nfield
-           txc(1:isize_field,1) = vars(iv)%field(1:isize_field)
-           CALL OPR_FOURIER_F(i3, imax,jmax,kmax, txc(1,1),txc(1,2), txc(1,3),wrk2d,wrk3d)
+            do iv = 1, nfield
+                txc(1:isize_field, 1) = vars(iv)%field(1:isize_field)
+                call OPR_FOURIER_F(i3, imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
 
-           CALL OPR_FOURIER_SPECTRA_3D(imax,jmax,kmax, isize_spec2dr, txc(1,2), outr(1,iv), wrk3d)
-        ENDDO
+                call OPR_FOURIER_SPECTRA_3D(imax, jmax, kmax, isize_spec2dr, txc(1, 2), outr(1, iv), wrk3d)
+            end do
 
-        outr = outr *norm*norm
+            outr = outr*norm*norm
 
-        WRITE(fname,*) itime; fname = 'rsp'//TRIM(ADJUSTL(fname))
-        CALL WRITE_SPECTRUM1D(fname, varname, kr_total, nfield, outr)
+            write (fname, *) itime; fname = 'rsp'//trim(adjustl(fname))
+            call WRITE_SPECTRUM1D(fname, varname, kr_total, nfield, outr)
 
-     ENDIF
+        end if
 
-  ENDDO ! Loop in itime
+    end do ! Loop in itime
 
-  100 FORMAT(G_FORMAT_R)
-  CALL TLAB_STOP(0)
-END PROGRAM SPECTRA
+100 format(G_FORMAT_R)
+    call TLAB_STOP(0)
+end program SPECTRA

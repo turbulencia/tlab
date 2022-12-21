@@ -6,6 +6,7 @@ module RAND_LOCAL
     use TLAB_VARS, only: g
     use TLAB_PROCS
     use AVGS, only: AVG1V2D
+    use OPR_FOURIER
     implicit none
     save
 

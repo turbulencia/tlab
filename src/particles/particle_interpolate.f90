@@ -18,6 +18,9 @@ module PARTICLE_INTERPOLATE
     private
 
     integer iv, nvar
+#ifdef USE_MPI
+    integer source, dest, l, buff_size
+#endif
 
     public :: FIELD_TO_PARTICLE
 
@@ -97,13 +100,6 @@ contains
     subroutine Create_Halo_K(data)
         type(pointers3d_dt), intent(in) :: data(:)
 
-#ifdef USE_MPI
-        integer source, dest, l, buff_size
-        integer mpireq(ims_npro*2 + 2)
-        integer status(MPI_STATUS_SIZE, ims_npro*2)
-#endif
-
-! ######################################################################
         nvar = size(data)
 
 #ifdef USE_MPI
@@ -121,14 +117,14 @@ contains
                 halo_mpi_send_k(1:imax, 1:jmax, iv) = data(iv)%field(1:imax, 1:jmax, 1) ! data to be transfered
             end do
 
-            mpireq(1:ims_npro*2) = MPI_REQUEST_NULL
-            l = 2*ims_pro + 1
-            dest      = ims_map_k(mod(ims_pro_k - 1 + ims_npro_k, ims_npro_k) + 1)
-            source    = ims_map_k(mod(ims_pro_k + 1 + ims_npro_k, ims_npro_k) + 1)
+            ims_request(1:ims_npro_k*2) = MPI_REQUEST_NULL
+            l = 2*ims_pro_k + 1
+            source = mod(ims_pro_k + 1, ims_npro_k)
+            dest = mod(ims_pro_k - 1 + ims_npro_k, ims_npro_k)
             buff_size = imax*jmax*nvar
-            call MPI_ISEND(halo_mpi_send_k, buff_size, MPI_REAL8, dest, 0, MPI_COMM_WORLD, mpireq(l), ims_err)
-            call MPI_IRECV(halo_mpi_recv_k, buff_size, MPI_REAL8, source, MPI_ANY_TAG, MPI_COMM_WORLD, mpireq(l + 1), ims_err)
-            call MPI_Waitall(ims_npro*2, mpireq, status, ims_err)
+            call MPI_ISEND(halo_mpi_send_k, buff_size, MPI_REAL8, dest, 0, ims_comm_z, ims_request(l), ims_err)
+            call MPI_IRECV(halo_mpi_recv_k, buff_size, MPI_REAL8, source, MPI_ANY_TAG, ims_comm_z, ims_request(l + 1), ims_err)
+            call MPI_Waitall(ims_npro_k*2, ims_request, ims_status, ims_err)
 
             halo_k(1:imax, 1:jmax, 2, 1:nvar) = halo_mpi_recv_k(1:imax, 1:jmax, 1:nvar)
 
@@ -143,13 +139,6 @@ contains
     subroutine Create_Halo_I_IK(data)
         type(pointers3d_dt), intent(in) :: data(:)
 
-#ifdef USE_MPI
-        integer source, dest, l, buff_size
-        integer mpireq(ims_npro*2 + 2)
-        integer status(MPI_STATUS_SIZE, ims_npro*2)
-#endif
-
-! ######################################################################
         nvar = size(data)
 
 #ifdef USE_MPI
@@ -169,14 +158,14 @@ contains
                 halo_mpi_send_i(1:jmax, kmax + 1, iv) = halo_k(1, 1:jmax, 2, iv)
             end do
 
-            mpireq(1:ims_npro*2) = MPI_REQUEST_NULL
-            l = 2*ims_pro + 1
-            dest      = ims_map_i(mod(ims_pro_i - 1 + ims_npro_i, ims_npro_i) + 1)
-            source    = ims_map_i(mod(ims_pro_i + 1 + ims_npro_i, ims_npro_i) + 1)
+            ims_request(1:ims_npro_i*2) = MPI_REQUEST_NULL
+            l = 2*ims_pro_i + 1
+            source = mod(ims_pro_i + 1, ims_npro_i)
+            dest = mod(ims_pro_i - 1 + ims_npro_i, ims_npro_i)
             buff_size = jmax*(kmax + 1)*nvar
-            call MPI_ISEND(halo_mpi_send_i, buff_size, MPI_REAL8, dest, 0, MPI_COMM_WORLD, mpireq(l), ims_err)
-            call MPI_IRECV(halo_mpi_recv_i, buff_size, MPI_REAL8, source, MPI_ANY_TAG, MPI_COMM_WORLD, mpireq(l + 1), ims_err)
-            call MPI_Waitall(ims_npro*2, mpireq, status, ims_err)
+            call MPI_ISEND(halo_mpi_send_i, buff_size, MPI_REAL8, dest, 0, ims_comm_x, ims_request(l), ims_err)
+            call MPI_IRECV(halo_mpi_recv_i, buff_size, MPI_REAL8, source, MPI_ANY_TAG, ims_comm_x, ims_request(l + 1), ims_err)
+            call MPI_Waitall(ims_npro_i*2, ims_request, ims_status, ims_err)
 
             halo_i(2, 1:jmax, 1:kmax, 1:nvar) = halo_mpi_recv_i(1:jmax, 1:kmax, 1:nvar)
             halo_ik(2, 1:jmax, 2, 1:nvar) = halo_mpi_recv_i(1:jmax, kmax + 1, 1:nvar) ! top-right corner
