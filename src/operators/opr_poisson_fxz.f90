@@ -65,7 +65,7 @@ subroutine OPR_POISSON_FXZ(flag, nx, ny, nz, g, ibc, &
     call c_f_pointer(c_loc(aux), r_aux, shape=[ny*2, 2])
     call c_f_pointer(c_loc(bcs), r_bcs, shape=[3*2])
 
-    norm = 1.0_wp/real(g(1)%size*g(3)%size,wp)
+    norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
 
     isize_line = nx/2 + 1
 
@@ -118,6 +118,8 @@ subroutine OPR_POISSON_FXZ(flag, nx, ny, nz, g, ibc, &
                 if (istagger == 0) then
                     if (kglobal == 1 .and. (iglobal == 1 .or. iglobal == g(1)%size/2 + 1) .or. &
                         kglobal == g(3)%size/2 + 1 .and. (iglobal == 1 .or. iglobal == g(1)%size/2 + 1)) then
+                        ! cannot use mod as below because it 2D I get divivded by 0
+                        ! if (mod(kglobal, g(3)%size/2) == 1 .and. mod(iglobal, g(1)%size/2) == 1) then
                         call FDE_BVP_SINGULAR_NN(g(2)%mode_fdm, ny, 2, &
                                                  g(2)%jac, r_aux(:, 2), r_aux(:, 1), r_bcs, r_wrk1d(:, 1), r_wrk1d(:, 3))
                     else
@@ -138,8 +140,9 @@ subroutine OPR_POISSON_FXZ(flag, nx, ny, nz, g, ibc, &
                 if (istagger == 0) then
                     if (kglobal == 1 .and. (iglobal == 1 .or. iglobal == g(1)%size/2 + 1) .or. &
                         kglobal == g(3)%size/2 + 1 .and. (iglobal == 1 .or. iglobal == g(1)%size/2 + 1)) then
+                        ! if (mod(kglobal, g(3)%size/2) == 1 .and. mod(iglobal, g(1)%size/2) == 1) then
                         call FDE_BVP_SINGULAR_DD(g(2)%mode_fdm, ny, 2, &
-                                                 g(2)%nodes, g(2)%jac, r_aux(:, 2), r_aux(:, 1), r_bcs, r_wrk1d(:, 1), r_wrk1d(:, 3))
+                                                g(2)%nodes, g(2)%jac, r_aux(:, 2), r_aux(:, 1), r_bcs, r_wrk1d(:, 1), r_wrk1d(:, 3))
                     else
                         call FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny, 2, lambda, &
                                                 g(2)%jac, r_aux(:, 2), r_aux(:, 1), r_bcs, r_wrk1d(:, 1), r_wrk1d(:, 2))
@@ -147,7 +150,7 @@ subroutine OPR_POISSON_FXZ(flag, nx, ny, nz, g, ibc, &
                 else ! In case of staggering only one singular mode + different modified wavenumbers
                     if (kglobal == 1 .and. iglobal == 1) then
                         call FDE_BVP_SINGULAR_DD(g(2)%mode_fdm, ny, 2, &
-                                                 g(2)%nodes, g(2)%jac, r_aux(:, 2), r_aux(:, 1), r_bcs, r_wrk1d(:, 1), r_wrk1d(:, 3))
+                                                g(2)%nodes, g(2)%jac, r_aux(:, 2), r_aux(:, 1), r_bcs, r_wrk1d(:, 1), r_wrk1d(:, 3))
                     else
                         call FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny, 2, lambda, &
                                                 g(2)%jac, r_aux(:, 2), r_aux(:, 1), r_bcs, r_wrk1d(:, 1), r_wrk1d(:, 2))
