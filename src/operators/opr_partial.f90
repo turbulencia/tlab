@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 #ifdef USE_MPI
@@ -27,7 +26,7 @@ module OPR_PARTIAL
     implicit none
     private
 
-    TINTEGER ip
+    integer(wi) ip
 
     public :: OPR_PARTIAL_X
     public :: OPR_PARTIAL_Y
@@ -38,14 +37,14 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL1(nlines, bcs, g, u, result, wrk2d)
-        TINTEGER, intent(in) :: nlines              ! # of lines to be solved
-        TINTEGER, intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
-        !     0 biased, non-zero
-        !     1 forced to zero
-        type(grid_dt), intent(in) :: g
-        TREAL, intent(in) :: u(nlines*g%size)
-        TREAL, intent(out) :: result(nlines*g%size)
-        TREAL, intent(inout) :: wrk2d(nlines)
+        integer(wi), intent(in) :: nlines   ! # of lines to be solved
+        integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
+        !                                   0 biased, non-zero
+        !                                   1 forced to zero
+        type(grid_dt), intent(in)    :: g
+        real(wp),      intent(in)    :: u(nlines*g%size)
+        real(wp),      intent(out)   :: result(nlines*g%size)
+        real(wp),      intent(inout) :: wrk2d(nlines)
 
 ! ###################################################################
         if (g%periodic) then
@@ -109,17 +108,17 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL1_IBM(nlines, bcs, g, u, result, wrk2d, wrk3d)
-        TINTEGER, intent(in) :: nlines                  ! # of lines to be solved
-        TINTEGER, intent(in) :: bcs(2)    ! BCs at xmin (1,*) and xmax (2,*):
-        !     0 biased, non-zero
-        !     1 forced to zero
-        type(grid_dt), intent(in) :: g
-        TREAL, intent(in) :: u(nlines*g%size)
-        TREAL, intent(out) :: result(nlines*g%size)
-        TREAL, intent(inout) :: wrk2d(nlines)
-        TREAL, intent(inout) :: wrk3d(nlines*g%size)
+        integer(wi), intent(in) :: nlines   ! # of lines to be solved
+        integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1,*) and xmax (2,*):
+        !                                   0 biased, non-zero
+        !                                   1 forced to zero
+        type(grid_dt), intent(in)    :: g
+        real(wp),      intent(in)    :: u(nlines*g%size)
+        real(wp),      intent(out)   :: result(nlines*g%size)
+        real(wp),      intent(inout) :: wrk2d(nlines)
+        real(wp),      intent(inout) :: wrk3d(nlines*g%size)
 
-        TINTEGER, parameter :: is = 0                  ! scalar index; if 0, then velocity
+        integer(wi), parameter :: is = 0    ! scalar index; if 0, then velocity
 
         ! -------------------------------------------------------------------
         ! modify incoming fields (fill solids with spline functions, depending on direction)
@@ -158,13 +157,13 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_IBM(nlines, g, u, result, wrk3d)
-        TINTEGER, intent(in) :: nlines
-        type(grid_dt), intent(in) :: g
-        TREAL, intent(in) :: u(nlines*g%size)
-        TREAL, intent(out) :: result(nlines*g%size)
-        TREAL, intent(inout) :: wrk3d(nlines*g%size)
+        integer(wi),   intent(in)    :: nlines
+        type(grid_dt), intent(in)    :: g
+        real(wp),      intent(in)    :: u(nlines*g%size)
+        real(wp),      intent(out)   :: result(nlines*g%size)
+        real(wp),      intent(inout) :: wrk3d(nlines*g%size)
 
-        TINTEGER, parameter :: is = 0 ! scalar index; if 0, then velocity
+        integer(wi), parameter :: is = 0 ! scalar index; if 0, then velocity
 
         ! -------------------------------------------------------------------
         ! modify incoming fields (fill solids with spline functions, depending on direction)
@@ -184,21 +183,21 @@ contains
 ! ###################################################################################
 ! ###################################################################################
     subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
-        TINTEGER, intent(in) :: is                      ! premultiplying factor in second derivative
-        ! -1            factor 1, pure derivative
-        !  0            viscosity (velocity)
-        !  1:inb_scal   diffusivity
-        TINTEGER, intent(in) :: nlines                  ! # of lines to be solved
-        TINTEGER, intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
-        !     0 biased, non-zero
-        !     1 forced to zero
-        type(grid_dt), intent(in) :: g
-        TREAL, intent(in) :: u(nlines, g%size)
-        TREAL, intent(out) :: result(nlines, g%size)
-        TREAL, intent(inout) :: wrk2d(nlines)
-        TREAL, intent(inout) :: wrk3d(nlines, g%size)  ! First derivative
+        integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
+        !                                       -1            factor 1, pure derivative
+        !                                       0            viscosity (velocity)
+        !                                       1:inb_scal   diffusivity
+        integer(wi), intent(in) :: nlines                  ! # of lines to be solved
+        integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
+        !                                       0 biased, non-zero
+        !                                       1 forced to zero
+        type(grid_dt), intent(in)    :: g
+        real(wp),      intent(in)    :: u(nlines, g%size)
+        real(wp),      intent(out)   :: result(nlines, g%size)
+        real(wp),      intent(inout) :: wrk2d(nlines)
+        real(wp),      intent(inout) :: wrk3d(nlines, g%size)  ! First derivative
 
-        TREAL, dimension(:, :), pointer :: lu2_p
+        real(wp), dimension(:, :), pointer :: lu2_p
 
         ! ###################################################################
         ! Check whether to calculate 1. order derivative
@@ -286,19 +285,21 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL2_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
-        TINTEGER, intent(in) :: is     ! scalar index; if 0, then velocity
-        TINTEGER, intent(in) :: nlines ! # of lines to be solved
-        TINTEGER, intent(in) :: bcs(2,2)    ! BCs at xmin (1,*) and xmax (2,*):
-        !     0 biased, non-zero
-        !     1 forced to zero
-        type(grid_dt), intent(in) :: g
-        TREAL, intent(in), target :: u(nlines, g%size)
-        TREAL, intent(out) :: result(nlines, g%size)
-        TREAL, intent(inout) :: wrk2d(nlines)
-        TREAL, intent(inout) :: wrk3d(nlines, g%size)  ! First derivative
+        integer(wi), intent(in) :: is           ! scalar index; if 0, then velocity
+        integer(wi), intent(in) :: nlines       ! # of lines to be solved
+        integer(wi), intent(in) :: bcs(2,2)     ! BCs at xmin (1,*) and xmax (2,*):
+        !                                       0 biased, non-zero
+        !                                       1 forced to zero
+        type(grid_dt), intent(in)    :: g
+        real(wp),      intent(in)    :: u(nlines, g%size)
+        real(wp),      intent(out)   :: result(nlines, g%size)
+        real(wp),      intent(inout) :: wrk2d(nlines)
+        real(wp),      intent(inout) :: wrk3d(nlines, g%size)  ! First derivative
 
-        TREAL, dimension(:, :), pointer :: p_fld
-        TREAL, dimension(:), pointer :: p_fld_ibm
+        real(wp), dimension(:, :), pointer :: p_fld
+        real(wp), dimension(:), pointer :: p_fld_ibm
+
+        target u
 
         ! -------------------------------------------------------------------
 
@@ -349,14 +350,14 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL0_INT(dir, nlines, g, u, result, wrk2d)
-        TINTEGER, intent(in) :: dir     ! scalar direction flag
-        !     0 'vp' --> vel. to pre. grid
-        !     1 'pv' --> pre. to vel. grid
-        TINTEGER, intent(in) :: nlines  ! number of lines to be solved
-        type(grid_dt), intent(in) :: g
-        TREAL, intent(in) :: u(nlines, g%size)
-        TREAL, intent(out) :: result(nlines, g%size)
-        TREAL, intent(inout) :: wrk2d(nlines)
+        integer(wi), intent(in) :: dir      ! scalar direction flag
+        !                                   0 'vp' --> vel. to pre. grid
+        !                                   1 'pv' --> pre. to vel. grid
+        integer(wi), intent(in) :: nlines   ! number of lines to be solved
+        type(grid_dt), intent(in)    :: g
+        real(wp),      intent(in)    :: u(nlines, g%size)
+        real(wp),      intent(out)   :: result(nlines, g%size)
+        real(wp),      intent(inout) :: wrk2d(nlines)
 
 ! ###################################################################
 ! Interpolation, direction 'vp': vel. --> pre. grid
@@ -391,14 +392,14 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL1_INT(dir, nlines, g, u, result, wrk2d)
-        TINTEGER, intent(in) :: dir    ! scalar direction flag
-        !     0 'vp' --> vel. to pre. grid
-        !     1 'pv' --> pre. to vel. grid
-        TINTEGER, intent(in) :: nlines ! number of lines to be solved
-        type(grid_dt), intent(in) :: g
-        TREAL, intent(in) :: u(nlines, g%size)
-        TREAL, intent(out) :: result(nlines, g%size)
-        TREAL, intent(inout) :: wrk2d(nlines)
+        integer(wi), intent(in) :: dir      ! scalar direction flag
+        !                                   0 'vp' --> vel. to pre. grid
+        !                                   1 'pv' --> pre. to vel. grid
+        integer(wi), intent(in) :: nlines   ! number of lines to be solved
+        type(grid_dt), intent(in)    :: g
+        real(wp),      intent(in)    :: u(nlines, g%size)
+        real(wp),      intent(out)   :: result(nlines, g%size)
+        real(wp),      intent(inout) :: wrk2d(nlines)
 
 ! ###################################################################
 ! 1st interpolatory derivative, direction 'vp': vel. --> pre. grid
@@ -433,29 +434,29 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL_X(type, nx, ny, nz, bcs, g, u, result, tmp1, wrk2d, wrk3d)
-        TINTEGER, intent(in) :: type        ! OPR_P1           1.order derivative
-        ! OPR_P2           2.order derivative
-        ! OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
-        ! OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
-        ! OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
-        TINTEGER, intent(in) :: nx, ny, nz  ! array sizes
-        TINTEGER, intent(in) :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in) :: g
-        TREAL, intent(in) :: u(nx*ny*nz)
-        TREAL, intent(out) :: result(nx*ny*nz)
-        TREAL, intent(inout) :: tmp1(nx*ny*nz), wrk3d(nx*ny*nz)
-        TREAL, intent(inout) :: wrk2d(ny,nz)
+        integer(wi), intent(in) :: type     ! OPR_P1         1.order derivative
+        !                                   OPR_P2           2.order derivative
+        !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
+        !                                   OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
+        !                                   OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
+        integer(wi),   intent(in)    :: nx, ny, nz
+        integer(wi),   intent(in)    :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
+        type(grid_dt), intent(in)    :: g
+        real(wp),      intent(in)    :: u(nx*ny*nz)
+        real(wp),      intent(out)   :: result(nx*ny*nz)
+        real(wp),      intent(inout) :: tmp1(nx*ny*nz), wrk3d(nx*ny*nz)
+        real(wp),      intent(inout) :: wrk2d(ny,nz)
 
         target u, tmp1, result, wrk3d
 
 ! -------------------------------------------------------------------
-        TINTEGER nyz
-        TINTEGER, parameter :: is = -1 ! second derivative without viscosity/diffusivity
+        integer(wi) nyz
+        integer(wi), parameter :: is = -1 ! second derivative without viscosity/diffusivity
 
-        TREAL, dimension(:), pointer :: p_a, p_b, p_c, p_d
+        real(wp), dimension(:), pointer :: p_a, p_b, p_c, p_d
 
 #ifdef USE_MPI
-        TINTEGER, parameter :: id = TLAB_MPI_I_PARTIAL
+        integer(wi), parameter :: id = TLAB_MPI_I_PARTIAL
 #endif
 
 ! ###################################################################
@@ -566,35 +567,35 @@ contains
 !########################################################################
 !########################################################################
     subroutine OPR_PARTIAL_Z(type, nx, ny, nz, bcs, g, u, result, tmp1, wrk2d, wrk3d)
-        TINTEGER, intent(in) :: type        ! OPR_P1           1.order derivative
-        ! OPR_P2           2.order derivative
-        ! OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
-        ! OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
-        ! OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
-        TINTEGER, intent(in) :: nx, ny, nz  ! array sizes
-        TINTEGER, intent(in) :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in) :: g
-        TREAL, intent(in) :: u(nx*ny*nz)
-        TREAL, intent(out) :: result(nx*ny*nz)
-        TREAL, intent(inout) :: tmp1(nx*ny*nz), wrk3d(nx*ny*nz)
-        TREAL, intent(inout) :: wrk2d(nx*ny)
+        integer(wi), intent(in) :: type     ! OPR_P1           1.order derivative
+        !                                   OPR_P2           2.order derivative
+        !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
+        !                                   OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
+        !                                   OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
+        integer(wi),   intent(in)    :: nx, ny, nz
+        integer(wi),   intent(in)    :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
+        type(grid_dt), intent(in)    :: g
+        real(wp),      intent(in)    :: u(nx*ny*nz)
+        real(wp),      intent(out)   :: result(nx*ny*nz)
+        real(wp),      intent(inout) :: tmp1(nx*ny*nz), wrk3d(nx*ny*nz)
+        real(wp),      intent(inout) :: wrk2d(nx*ny)
 
         target u, tmp1, result, wrk3d
 
 ! -------------------------------------------------------------------
-        TINTEGER nxy
-        TINTEGER, parameter :: is = -1 ! second derivative without viscosity/diffusivity
+        integer(wi) nxy
+        integer(wi), parameter :: is = -1 ! second derivative without viscosity/diffusivity
 
-        TREAL, dimension(:), pointer :: p_a, p_b, p_c
+        real(wp), dimension(:), pointer :: p_a, p_b, p_c
 
 #ifdef USE_MPI
-        TINTEGER, parameter :: id = TLAB_MPI_K_PARTIAL
+        integer(wi), parameter :: id = TLAB_MPI_K_PARTIAL
 #endif
 
 ! ###################################################################
         if (g%size == 1) then ! Set to zero in 2D case
-            result = C_0_R
-            if (type == OPR_P2_P1) tmp1 = C_0_R
+            result = 0.0_wp
+            if (type == OPR_P2_P1) tmp1 = 0.0_wp
 
         else
 ! ###################################################################
@@ -681,30 +682,30 @@ contains
 !########################################################################
 !########################################################################
     subroutine OPR_PARTIAL_Y(type, nx, ny, nz, bcs, g, u, result, tmp1, wrk2d, wrk3d)
-        TINTEGER, intent(in) :: type        ! OPR_P1           1.order derivative
-        ! OPR_P2           2.order derivative
-        ! OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
-        ! OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
-        ! OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
-        TINTEGER, intent(in) :: nx, ny, nz  ! array sizes
-        TINTEGER, intent(in) :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in) :: g
-        TREAL, intent(in) :: u(nx*ny*nz)
-        TREAL, intent(out) :: result(nx*ny*nz)
-        TREAL, intent(inout) :: tmp1(nx*ny*nz), wrk3d(nx*ny*nz)
-        TREAL, intent(inout) :: wrk2d(nx*nz)
+        integer(wi), intent(in) :: type     ! OPR_P1           1.order derivative
+        !                                   OPR_P2           2.order derivative
+        !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
+        !                                   OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
+        !                                   OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
+        integer(wi),   intent(in)    :: nx, ny, nz
+        integer(wi),   intent(in)    :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
+        type(grid_dt), intent(in)    :: g
+        real(wp),      intent(in)    :: u(nx*ny*nz)
+        real(wp),      intent(out)   :: result(nx*ny*nz)
+        real(wp),      intent(inout) :: tmp1(nx*ny*nz), wrk3d(nx*ny*nz)
+        real(wp),      intent(inout) :: wrk2d(nx*nz)
 
         target u, tmp1, result, wrk3d
 
 ! -------------------------------------------------------------------
-        TINTEGER nxy, nxz
-        TINTEGER, parameter :: is = -1 ! second derivative without viscosity/diffusivity
-        TREAL, dimension(:), pointer :: p_a, p_b, p_c
+        integer(wi) nxy, nxz
+        integer(wi), parameter :: is = -1 ! second derivative without viscosity/diffusivity
+        real(wp), dimension(:), pointer :: p_a, p_b, p_c
 
 ! ###################################################################
         if (g%size == 1) then ! Set to zero in 2D case
-            result = C_0_R
-            if (type == OPR_P2_P1) tmp1 = C_0_R
+            result = 0.0_wp
+            if (type == OPR_P2_P1) tmp1 = 0.0_wp
 
         else
 ! ###################################################################
