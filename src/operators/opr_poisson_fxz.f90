@@ -1,5 +1,7 @@
 #include "dns_error.h"
+#ifdef USE_MPI
 #include "dns_const_mpi.h"
+#endif
 
 !########################################################################
 !#
@@ -31,7 +33,7 @@ subroutine OPR_POISSON_FXZ(flag, nx, ny, nz, g, ibc, &
     use TLAB_VARS, only: isize_txc_dimz
     use TLAB_VARS, only: ivfilter, istagger, vfilter_param
     use OPR_FOURIER
-    use FDE_BVP
+    use OPR_FDE
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif

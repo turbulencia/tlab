@@ -15,7 +15,7 @@
 !# tmp1    Out   First derivative
 !#
 !########################################################################
-module FDE_BVP
+module OPR_FDE
     use TLAB_CONSTANTS, only: wp, wi
     implicit none
     private
@@ -100,31 +100,31 @@ contains
         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
             call INT_C1N6_LHS(imax, i1, a, b, c, d, e)
             call INT_C1N6_RHS(imax, jkmax, i1, dx, tmp1, u)
-            call PENTADFS(imax - 1, a(2), b(2), c(2), d(2), e(2))
+            call PENTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
 
 !   obtain u^0
-            call PENTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), u(1, 2))
+            call PENTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
             bcs(:, 2) = u(:, 1); u(:, 1) = 0.0_wp
             bcs(:, 2) = (bcs(:, 2) + c(1)*u(:, 1) + d(1)*u(:, 2) + e(1)*u(:, 3))/dx(1) !u^(0)'_1
 
 !   obtain u^1, array wrk1d(:,7)
             call INT_C1N6_RHS(imax, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call PENTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), wrk1d(2, 7))
+            call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
             dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
         elseif (imode_fdm == FDM_COM6_JACPENTA) then
             call INT_C1N6M_LHS(imax, i1, a, b, c, d, e, g, h)
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, tmp1, u)
-            call HEPTADFS(imax - 1, a(2), b(2), c(2), d(2), e(2), g(2), h(2))
+            call HEPTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
 
 !   obtain u^0
-            call HEPTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), g(2), h(2), u(1, 2))
+            call HEPTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
             bcs(:, 2) = u(:, 1); u(:, 1) = 0.0_wp
             bcs(:, 2) = (bcs(:, 2) + d(1)*u(:, 1) + e(1)*u(:, 2) + g(1)*u(:, 3))/dx(1) !u^(0)'_1
 
 !   obtain u^1, array wrk1d(:,7)
             call INT_C1N6M_RHS(imax, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call HEPTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), g(2), h(2), wrk1d(2, 7))
+            call HEPTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 7))
             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
             dummy = (dummy + d(1)*wrk1d(1, 7) + e(1)*wrk1d(2, 7) + g(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
         end if
@@ -171,33 +171,33 @@ contains
             call INT_C1N6_LHS(imax, i1, a, b, c, d, e)
             call INT_C1N6_RHS(imax, jkmax, i1, dx, f, tmp1)
             wrk1d(:, 6) = 0.0_wp; wrk1d(imax, 6) = dx(imax); wrk1d(imax - 1, 6) = e(imax)*dx(imax) ! for v^1
-            call PENTADFS(imax - 1, a(2), b(2), c(2), d(2), e(2))
+            call PENTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
 
 !   obtain v^0, array tmp1
-            call PENTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), tmp1(1, 2))
+            call PENTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), tmp1(1, 2))
             tmp1(:, 1) = 0.0_wp
             do i = 1, imax
                 tmp1(:, i) = tmp1(:, i) + bcs(:, 1) ! add v_1 to free array bcs(:,1)
             end do
 
 !   obtain v^1, array wrk1d(:,6)
-            call PENTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), wrk1d(2, 6))
+            call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 6))
             wrk1d(1, 6) = 0.0_wp
         elseif (imode_fdm == FDM_COM6_JACPENTA) then
             call INT_C1N6M_LHS(imax, i1, a, b, c, d, e, g, h)
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, f, tmp1)
             wrk1d(:, 6) = 0.0_wp; wrk1d(imax, 6) = dx(imax); wrk1d(imax - 1, 6) = g(imax)*dx(imax) ! for v^1
-            call HEPTADFS(imax - 1, a(2), b(2), c(2), d(2), e(2), g(2), h(2))
+            call HEPTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
 
 !   obtain v^0, array tmp1
-            call HEPTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), g(2), h(2), tmp1(1, 2))
+            call HEPTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), tmp1(1, 2))
             tmp1(:, 1) = 0.0_wp
             do i = 1, imax
                 tmp1(:, i) = tmp1(:, i) + bcs(:, 1) ! add v_1 to free array bcs(:,1)
             end do
 
 !   obtain v^1, array wrk1d(:,6)
-            call HEPTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), g(2), h(2), wrk1d(2, 6))
+            call HEPTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 6))
             wrk1d(1, 6) = 0.0_wp
         end if
 
@@ -307,31 +307,31 @@ contains
         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
             call INT_C1N6_LHS(imax, i1, a, b, c, d, e)
             call INT_C1N6_RHS(imax, jkmax, i1, dx, tmp1, u)
-            call PENTADFS(imax - 1, a(2), b(2), c(2), d(2), e(2))
+            call PENTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
 
 !   obtain u^0
-            call PENTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), u(1, 2))
+            call PENTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
             bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
             bcs(:, 3) = (bcs(:, 3) + c(1)*u(:, 1) + d(1)*u(:, 2) + e(1)*u(:, 3))/dx(1) !u^(0)'_1
 
 !   obtain u^1, array wrk1d(:,7)
             call INT_C1N6_RHS(imax, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call PENTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), wrk1d(2, 7))
+            call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
             dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
         elseif (imode_fdm == FDM_COM6_JACPENTA) then
             call INT_C1N6M_LHS(imax, i1, a, b, c, d, e, g, h)
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, tmp1, u)
-            call HEPTADFS(imax - 1, a(2), b(2), c(2), d(2), e(2), g(2), h(2))
+            call HEPTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
 
 !   obtain u^0
-            call HEPTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), g(2), h(2), u(1, 2))
+            call HEPTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
             bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
             bcs(:, 3) = (bcs(:, 3) + d(1)*u(:, 1) + e(1)*u(:, 2) + g(1)*u(:, 3))/dx(1) !u^(0)'_1
 
 !   obtain u^1, array wrk1d(:,7)
             call INT_C1N6M_RHS(imax, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call HEPTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), g(2), h(2), wrk1d(2, 7))
+            call HEPTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 7))
             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
             dummy = (dummy + c(1)*wrk1d(1, 7) + e(1)*wrk1d(2, 7) + g(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
         end if
@@ -380,13 +380,13 @@ contains
         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
             call INT_C1N6_LHS(imax, i1, a, b, c, d, e)
             call INT_C1N6_RHS(imax, jkmax, i1, dx, f, tmp1)
-            call PENTADFS(imax - 1, a(2), b(2), c(2), d(2), e(2))
-            call PENTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), tmp1(1, 2))
+            call PENTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
+            call PENTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), tmp1(1, 2))
         elseif (imode_fdm == FDM_COM6_JACPENTA) then
             call INT_C1N6M_LHS(imax, i1, a, b, c, d, e, g, h)
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, f, tmp1)
-            call HEPTADFS(imax - 1, a(2), b(2), c(2), d(2), e(2), g(2), h(2))
-            call HEPTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), g(2), h(2), tmp1(1, 2))
+            call HEPTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
+            call HEPTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), tmp1(1, 2))
         end if
         tmp1(:, 1) = 0.0_wp
         do i = 1, imax
@@ -399,12 +399,12 @@ contains
 !   same l.h.s. as before
             call INT_C1N6_RHS(imax, jkmax, i1, dx, tmp1, u)
 !   same l.h.s. as before
-            call PENTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), u(1, 2))
+            call PENTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
         elseif (imode_fdm == FDM_COM6_JACPENTA) then
 !   same l.h.s. as before
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, tmp1, u)
 !   same l.h.s. as before
-            call HEPTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), g(2), h(2), u(1, 2))
+            call HEPTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
         end if
         u(:, 1) = 0.0_wp ! this integration constant is free and set to zero
 
@@ -480,26 +480,26 @@ contains
             wrk1d(imax, 6) = 0.0_wp
         end if
 ! -----------------------------------------------------------------------
-! 2nd step; solve for u^(0) and u^(1) and u^(2)
+! 2nd step; solve for u^(0) and u^(1) and u^(2:)
 ! -----------------------------------------------------------------------
         dummy = lambda
         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
             call INT_C1N6_LHS_E(imax, i1, dx, dummy, a, b, c, d, e, em)
             call INT_C1N6_RHS(imax, jkmax, i1, dx, tmp1, u)
-            call PENTADFS(imax - 1, a(2), b(2), c(2), d(2), e(2))
+            call PENTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
 
 !   obtain e^(m), array em
-            call PENTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), em(2))
+            call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), em(2:))
             g_1 = (c(1)*em(1) + d(1)*em(2) + e(1)*em(3))/dx(1)/lambda + 1.0_wp ! e^(-)'_1/\lambda + 1
 
 !   obtain u^(2), array wrk1d(:,8)
             call INT_C1N6_RHS(imax, i1, i1, dx, ep, wrk1d(1, 8))
-            call PENTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), wrk1d(2, 8))
+            call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 8))
             g_2 = wrk1d(1, 8); wrk1d(1, 8) = 0.0_wp
             g_2 = (g_2 + c(1)*wrk1d(1, 8) + d(1)*wrk1d(2, 8) + e(1)*wrk1d(3, 8))/dx(1) - ep(1)! u^(2)'_1 - e^(+)|_1
 
 !   obtain u^(0), array u
-            call PENTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), u(1, 2))
+            call PENTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
 
 !   BCs; intermediate step to save memory space
             dummy = 1.0_wp - wrk1d(imax, 8)*lambda
@@ -513,26 +513,26 @@ contains
 
 !   obtain u^(1), array wrk1d(:,7)
             call INT_C1N6_RHS(imax, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call PENTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), wrk1d(2, 7))
+            call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
             dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
         elseif (imode_fdm == FDM_COM6_JACPENTA) then
             call INT_C1N6M_LHS_E(imax, i1, dx, dummy, a, b, c, d, e, g, h, em)
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, tmp1, u)
-            call HEPTADFS(imax - 1, a(2), b(2), c(2), d(2), e(2), g(2), h(2))
+            call HEPTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
 
 !   obtain e^(m), array em
-            call HEPTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), g(2), h(2), em(2))
+            call HEPTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), em(2:))
             g_1 = (d(1)*em(1) + e(1)*em(2) + g(1)*em(3))/dx(1)/lambda + 1.0_wp ! e^(-)'_1/\lambda + 1
 
 !   obtain u^(2), array wrk1d(:,8)
             call INT_C1N6M_RHS(imax, i1, i1, dx, ep, wrk1d(1, 8))
-            call HEPTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), g(2), h(2), wrk1d(2, 8))
+            call HEPTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 8))
             g_2 = wrk1d(1, 8); wrk1d(1, 8) = 0.0_wp
             g_2 = (g_2 + d(1)*wrk1d(1, 8) + e(1)*wrk1d(2, 8) + g(1)*wrk1d(3, 8))/dx(1) - ep(1)! u^(2)'_1 - e^(+)|_1
 
 !   obtain u^(0), array u
-            call HEPTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), g(2), h(2), u(1, 2))
+            call HEPTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
 
 !   BCs; intermediate step to save memory space
             dummy = 1.0_wp - wrk1d(imax, 8)*lambda
@@ -546,7 +546,7 @@ contains
 
 !   obtain u^(1), array wrk1d(:,7)
             call INT_C1N6M_RHS(imax, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call HEPTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), g(2), h(2), wrk1d(2, 7))
+            call HEPTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 7))
             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
             dummy = (dummy + d(1)*wrk1d(1, 7) + e(1)*wrk1d(2, 7) + g(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
         end if
@@ -651,51 +651,51 @@ contains
         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
             call INT_C1N6_LHS_E(imax, i1, dx, dummy, a, b, c, d, e, em)
             call INT_C1N6_RHS(imax, jkmax, i1, dx, tmp1, u)
-            call PENTADFS(imax - 1, a(2), b(2), c(2), d(2), e(2))
+            call PENTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
 
 !   obtain e^(m), array em
-            call PENTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), em(2))
+            call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), em(2:))
             g_1 = (c(1)*em(1) + d(1)*em(2) + e(1)*em(3))/dx(1)/lambda + 1.0_wp ! e^(-)'_1/\lambda + 1
 
 !   obtain u^(2), array wrk1d(:,8)
             call INT_C1N6_RHS(imax, i1, i1, dx, ep, wrk1d(1, 8))
-            call PENTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), wrk1d(2, 8))
+            call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 8))
             g_2 = wrk1d(1, 8); wrk1d(1, 8) = 0.0_wp
             g_2 = (g_2 + c(1)*wrk1d(1, 8) + d(1)*wrk1d(2, 8) + e(1)*wrk1d(3, 8))/dx(1) - ep(1)! u^(2)'_1 - e^(+)|_1
 
 !   obtain u^(0), array u
-            call PENTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), u(1, 2))
+            call PENTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
             bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
             bcs(:, 3) = (bcs(:, 3) + c(1)*u(:, 1) + d(1)*u(:, 2) + e(1)*u(:, 3))/dx(1) !u^(0)'_1
 
 !   obtain u^(1), array wrk1d(:,7)
             call INT_C1N6_RHS(imax, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call PENTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), wrk1d(2, 7))
+            call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
             dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
         elseif (imode_fdm == FDM_COM6_JACPENTA) then
             call INT_C1N6M_LHS_E(imax, i1, dx, dummy, a, b, c, d, e, g, h, em)
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, tmp1, u)
-            call HEPTADFS(imax - 1, a(2), b(2), c(2), d(2), e(2), g(2), h(2))
+            call HEPTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
 
 !   obtain e^(m), array em
-            call HEPTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), g(2), h(2), em(2))
+            call HEPTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), em(2:))
             g_1 = (d(1)*em(1) + e(1)*em(2) + g(1)*em(3))/dx(1)/lambda + 1.0_wp ! e^(-)'_1/\lambda + 1
 
 !   obtain u^(2), array wrk1d(:,8)
             call INT_C1N6M_RHS(imax, i1, i1, dx, ep, wrk1d(1, 8))
-            call HEPTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), g(2), h(2), wrk1d(2, 8))
+            call HEPTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 8))
             g_2 = wrk1d(1, 8); wrk1d(1, 8) = 0.0_wp
             g_2 = (g_2 + d(1)*wrk1d(1, 8) + e(1)*wrk1d(2, 8) + g(1)*wrk1d(3, 8))/dx(1) - ep(1)! u^(2)'_1 - e^(+)|_1
 
 !   obtain u^(0), array u
-            call HEPTADSS(imax - 1, jkmax, a(2), b(2), c(2), d(2), e(2), g(2), h(2), u(1, 2))
+            call HEPTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
             bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
             bcs(:, 3) = (bcs(:, 3) + d(1)*u(:, 1) + e(1)*u(:, 2) + g(1)*u(:, 3))/dx(1) !u^(0)'_1
 
 !   obtain u^(1), array wrk1d(:,7)
             call INT_C1N6M_RHS(imax, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call HEPTADSS(imax - 1, i1, a(2), b(2), c(2), d(2), e(2), g(2), h(2), wrk1d(2, 7))
+            call HEPTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 7))
             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
             dummy = (dummy + d(1)*wrk1d(1, 7) + e(1)*wrk1d(2, 7) + g(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
         end if
@@ -724,4 +724,4 @@ contains
         return
     end subroutine FDE_BVP_REGULAR_DD
 
-end module FDE_BVP
+end module OPR_FDE
