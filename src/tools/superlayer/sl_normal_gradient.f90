@@ -5,6 +5,7 @@ SUBROUTINE SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, &
      u, v, w, z1, a, sl, profiles, txc, wrk1d, wrk2d, wrk3d)
   
   USE TLAB_VARS
+  use OPR_PARTIAL
 
   IMPLICIT NONE
 

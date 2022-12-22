@@ -34,6 +34,7 @@ SUBROUTINE AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc,jmax_loc, mean1d, stat, wrk1d,w
   USE TLAB_VARS
   USE TLAB_PROCS
   USE THERMO_VARS, ONLY : gama0, MRATIO
+  use OPR_PARTIAL
   IMPLICIT NONE
 
 #include "integers.h"

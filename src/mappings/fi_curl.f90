@@ -13,7 +13,8 @@ SUBROUTINE FI_CURL(nx,ny,nz, u,v,w, wx,wy,wz, tmp, wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imode_ibm
   USE IBM_VARS,  ONLY : ibm_partial
-
+  use OPR_PARTIAL
+  
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz

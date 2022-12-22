@@ -15,6 +15,7 @@ SUBROUTINE  RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3&
   USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : idiffusion, visc, schmidt
+  use OPR_PARTIAL
 
   IMPLICIT NONE
 

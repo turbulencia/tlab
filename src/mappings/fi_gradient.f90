@@ -16,7 +16,7 @@
 SUBROUTINE FI_GRADIENT(nx,ny,nz, s, result, tmp1, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  
+  use OPR_PARTIAL
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
@@ -46,7 +46,8 @@ END SUBROUTINE FI_GRADIENT
 SUBROUTINE FI_GRADIENT_PRODUCTION(nx,ny,nz, s, u,v,w, result, grad_x,grad_y,grad_z, tmp1,tmp2, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  
+  use OPR_PARTIAL
+
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
@@ -105,7 +106,8 @@ END SUBROUTINE FI_GRADIENT_PRODUCTION
 SUBROUTINE FI_GRADIENT_DIFFUSION(nx,ny,nz, s, result, grad, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  
+  use OPR_PARTIAL
+
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz

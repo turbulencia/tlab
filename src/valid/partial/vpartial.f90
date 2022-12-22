@@ -23,7 +23,8 @@ PROGRAM VPARTIAL
 
   USE TLAB_TYPES, ONLY : grid_dt
   USE TLAB_VARS,  ONLY : C1N6M_ALPHA
-  
+  use OPR_PARTIAL
+
   IMPLICIT NONE
  
 #include "integers.h"
@@ -41,7 +42,7 @@ PROGRAM VPARTIAL
   TREAL,    DIMENSION(imax,7)        :: wrk1d
   TREAL,    DIMENSION(len)           :: wrk2d
   TREAL,    DIMENSION(len,2)         :: bcs
-   
+    TINTEGER bcs_aux(2,2)
   TREAL                              :: lambda, error, dummy
   TINTEGER                           :: test_type, ibc
 
@@ -80,6 +81,7 @@ PROGRAM VPARTIAL
 ! Bcs
   bcs(1,1) = C_0_R
   bcs(1,2) = C_0_R
+  bcs_aux = 0
 
 ! ###################################################################
 ! Define the function and analytic derivatives
@@ -121,7 +123,7 @@ PROGRAM VPARTIAL
 ! Testing first-order derivatives
   
   IF ( test_type .EQ. 1 ) THEN 
-    CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g, u, du1_b, wrk3d, wrk2d,wrk3d)
+    CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_aux, g, u, du1_b, wrk3d, wrk2d,wrk3d)
 
 ! ! -------------------------------------------------------------------
 ! ! Testing second-order derivatives

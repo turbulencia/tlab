@@ -18,6 +18,7 @@ program PDFS
     use IO_FIELDS
     use OPR_FILTERS
     use OPR_FOURIER
+    use OPR_PARTIAL
 
     implicit none
 

@@ -16,7 +16,7 @@ SUBROUTINE FI_INVARIANT_P(nx,ny,nz, u,v,w, result, tmp1, wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imode_ibm
   USE IBM_VARS,  ONLY : ibm_partial
-
+    use OPR_PARTIAL
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
@@ -59,7 +59,8 @@ END SUBROUTINE FI_INVARIANT_P
 SUBROUTINE FI_INVARIANT_P_STAG(nx,ny,nz, u,v,w, result, tmp1, tmp2, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  
+  use OPR_PARTIAL
+
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
@@ -101,7 +102,8 @@ END SUBROUTINE FI_INVARIANT_P_STAG
 SUBROUTINE FI_INVARIANT_Q(nx,ny,nz, u,v,w, result, tmp1,tmp2,tmp3, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  
+  use OPR_PARTIAL
+
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
@@ -152,7 +154,8 @@ END SUBROUTINE FI_INVARIANT_Q
 SUBROUTINE FI_INVARIANT_R(nx,ny,nz, u,v,w, result, tmp1,tmp2,tmp3,tmp4,tmp5, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  
+  use OPR_PARTIAL
+
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz

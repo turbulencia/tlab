@@ -19,7 +19,7 @@ subroutine FI_TRANSPORT(transport, flag_grad, nx, ny, nz, is, s, trans, tmp, wrk
 
     use TLAB_TYPES, only: term_dt
     use TLAB_VARS, only: g, epbackground, inb_scal_array
-
+    use OPR_PARTIAL
     implicit none
 
     type(term_dt), intent(IN) :: transport

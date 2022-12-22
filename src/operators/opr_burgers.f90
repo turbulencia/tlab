@@ -21,6 +21,7 @@ subroutine OPR_BURGERS(is, nlines, bcs, g, dealiasing, s, u, result, wrk2d, wrk3
     use IBM_VARS, only: ibm_burgers
     use TLAB_PROCS
     use OPR_FILTERS
+    use OPR_PARTIAL
     implicit none
 
     TINTEGER, intent(in) :: is     ! scalar index; if 0, then velocity
@@ -117,7 +118,6 @@ subroutine OPR_BURGERS_X(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1, 
     use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
     use TLAB_MPI_PROCS
 #endif
-
     implicit none
 
     TINTEGER ivel, is, nx, ny, nz

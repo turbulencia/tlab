@@ -16,6 +16,8 @@ SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
   USE TLAB_VARS,   ONLY : visc,schmidt
   USE BOUNDARY_BCS, ONLY : BcsScalJmin, BcsScalJmax 
   USE AVGS, ONLY : AVG1V2D
+  use OPR_PARTIAL
+  
   IMPLICIT NONE  
 
 #include "integers.h"

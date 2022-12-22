@@ -15,6 +15,7 @@ program VHELMHOLTZ_FXZ
     use TLAB_MPI_PROCS
 #endif
     use OPR_FOURIER
+    use OPR_PARTIAL
 
     implicit none
 

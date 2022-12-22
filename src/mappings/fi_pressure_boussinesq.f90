@@ -16,7 +16,7 @@ SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : imode_eqns, imode_ibm, istagger
   USE TLAB_VARS, ONLY : rbackground
   USE IBM_VARS,  ONLY : ibm_burgers
-
+    use OPR_PARTIAL
   IMPLICIT NONE
 
 #include "integers.h"

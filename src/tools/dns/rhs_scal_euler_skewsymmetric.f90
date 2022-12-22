@@ -13,6 +13,7 @@ SUBROUTINE RHS_SCAL_EULER_SKEWSYMMETRIC(rho,u,v,w,z1, zh1, tmp1,tmp2,tmp3,tmp4, 
 
   USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
   USE TLAB_VARS,    ONLY : g
+  use OPR_PARTIAL
 
   IMPLICIT NONE
 

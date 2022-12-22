@@ -26,6 +26,7 @@ SUBROUTINE SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
   USE MPI
   USE TLAB_MPI_VARS
 #endif
+use OPR_PARTIAL
 
   IMPLICIT NONE
 

@@ -6,7 +6,7 @@ SUBROUTINE FI_SUBSIDENCE(subsidence, nx,ny,nz, s, source, wrk1d,wrk2d,wrk3d)
   USE TLAB_TYPES,  ONLY : term_dt
   USE TLAB_VARS, ONLY : g
   USE AVGS, ONLY: AVG1V2D_V
-  
+  use OPR_PARTIAL
   IMPLICIT NONE
 
 #include "integers.h"

@@ -15,7 +15,7 @@
 ! Sinusoidal forcing
 !########################################################################
 SUBROUTINE FI_FORCING_0(imax,jmax,kmax, time,visc, u,v, h_u,h_v)
-
+    use OPR_PARTIAL
   IMPLICIT NONE
 
 #include "integers.h"

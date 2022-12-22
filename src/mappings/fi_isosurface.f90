@@ -12,7 +12,7 @@
 SUBROUTINE FI_ISOSURFACE_ANGLE(nx,ny,nz, a,b, result, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  
+  use OPR_PARTIAL
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz

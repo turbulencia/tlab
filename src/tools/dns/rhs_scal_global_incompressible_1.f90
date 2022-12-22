@@ -19,7 +19,8 @@ SUBROUTINE RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1&
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : idiffusion, visc, schmidt
   USE BOUNDARY_BCS,ONLY: BcsScalJmin, BcsScalJmax
-  
+  use OPR_PARTIAL
+
   IMPLICIT NONE
 
 #include "integers.h"

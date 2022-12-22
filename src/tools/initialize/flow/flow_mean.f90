@@ -10,6 +10,7 @@ module FLOW_MEAN
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
     use PROFILES
+    use OPR_PARTIAL
     implicit none
     private
 

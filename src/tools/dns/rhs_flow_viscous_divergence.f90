@@ -22,6 +22,7 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE(vis, u,v,w,p, h1,h2,h3,h4, tau_xx,tau_xy,
   USE TLAB_VARS,    ONLY : visc, mach
   USE THERMO_VARS, ONLY : gama0
   USE BOUNDARY_BCS
+  use OPR_PARTIAL
 
   IMPLICIT NONE
 
@@ -120,19 +121,19 @@ SUBROUTINE RHS_FLOW_VISCOUS_DIVERGENCE(vis, u,v,w,p, h1,h2,h3,h4, tau_xx,tau_xy,
 ! ###################################################################
 ! Momentum equation
 ! ###################################################################
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_inf(1,2,1), g(1), tau_xx, tmp1, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(1,2,2), g(2), tau_xy, tmp2, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(1,2,3), g(3), tau_xz, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_inf(:,:,1), g(1), tau_xx, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(:,:,2), g(2), tau_xy, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(:,:,3), g(3), tau_xz, tmp3, wrk3d, wrk2d,wrk3d)
   h1 = h1 + tmp1 + tmp2 + tmp3
 
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(1,2,1), g(1), tau_xy, tmp1, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_inf(1,2,2), g(2), tau_yy, tmp2, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(1,2,3), g(3), tau_yz, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(:,:,1), g(1), tau_xy, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_inf(:,:,2), g(2), tau_yy, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(:,:,3), g(3), tau_yz, tmp3, wrk3d, wrk2d,wrk3d)
   h2 = h2 + tmp1 + tmp2 + tmp3
 
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(1,2,1), g(1), tau_xz, tmp1, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(1,2,2), g(2), tau_yz, tmp2, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_inf(1,2,3), g(3), tau_zz, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(:,:,1), g(1), tau_xz, tmp1, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(:,:,2), g(2), tau_yz, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_inf(:,:,3), g(3), tau_zz, tmp3, wrk3d, wrk2d,wrk3d)
   h3 = h3 + tmp1 + tmp2 + tmp3
 
 ! ###################################################################

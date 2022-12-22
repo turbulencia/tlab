@@ -26,7 +26,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLAB_MPI_VARS
 #endif
     use TLAB_PROCS
-
+    use OPR_PARTIAL
+    
     implicit none
 
     integer, intent(IN) :: is

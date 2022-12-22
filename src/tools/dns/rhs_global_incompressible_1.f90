@@ -35,6 +35,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1(u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tm
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
     use IBM_VARS, only: imode_ibm_scal, ibm_burgers
+    use OPR_PARTIAL
 
     implicit none
 

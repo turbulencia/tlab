@@ -31,6 +31,7 @@ SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC(u,v,w,s,&
   USE BOUNDARY_BCS
   USE TIME,  ONLY : rkm_substep,rkm_endstep, dte
   USE DNS_LOCAL,  ONLY : use_tower
+  use OPR_PARTIAL
 
   USE DNS_TOWER
 

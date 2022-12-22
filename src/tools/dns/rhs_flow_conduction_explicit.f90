@@ -24,7 +24,7 @@ SUBROUTINE RHS_FLOW_CONDUCTION_EXPLICIT(vis, z1, T, h4, tmp1,tmp2,tmp3,tmp4,tmp5
   USE TLAB_VARS,    ONLY : g
   USE TLAB_VARS,    ONLY : idiffusion, visc, prandtl
   USE BOUNDARY_BCS
-
+    use OPR_PARTIAL
   IMPLICIT NONE
 
   TREAL, DIMENSION(isize_field),   INTENT(IN)    :: vis, T
@@ -49,9 +49,9 @@ SUBROUTINE RHS_FLOW_CONDUCTION_EXPLICIT(vis, z1, T, h4, tmp1,tmp2,tmp3,tmp4,tmp5
   CALL THERMO_CALORIC_ENTHALPY(imax, jmax, kmax, z1, T, tmp4)
 
 ! total flux
-  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs_out(1,1,3), g(3), tmp4, tmp3, tmp5, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs_out(1,1,2), g(2), tmp4, tmp2, tmp5, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs_out(1,1,1), g(1), tmp4, tmp1, tmp5, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs_out(:,:,3), g(3), tmp4, tmp3, tmp5, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs_out(:,:,2), g(2), tmp4, tmp2, tmp5, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs_out(:,:,1), g(1), tmp4, tmp1, tmp5, wrk2d,wrk3d)
   h4 = h4 + cond*vis*( tmp1 + tmp2 + tmp3 )
 
 #ifdef TRACE_ON

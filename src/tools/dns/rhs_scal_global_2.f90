@@ -25,6 +25,7 @@ SUBROUTINE RHS_SCAL_GLOBAL_2(is, rho,u,v,w, z1, T, zh1, h4, tmp1,tmp2,tmp3,tmp4,
   USE TLAB_VARS,    ONLY : idiffusion, visc,prandtl,schmidt
   USE THERMO_VARS, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
   USE BOUNDARY_BCS
+  use OPR_PARTIAL
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -77,9 +78,9 @@ SUBROUTINE RHS_SCAL_GLOBAL_2(is, rho,u,v,w, z1, T, zh1, h4, tmp1,tmp2,tmp3,tmp4,
 ! ###################################################################
 ! convective part + diffusion
 ! ###################################################################
-  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs_out(1,1,3), g(3), z1,tmp6, tmp3, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs_out(1,1,2), g(2), z1,tmp5, tmp2, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs_out(1,1,1), g(1), z1,tmp4, tmp1, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs_out(:,:,3), g(3), z1,tmp6, tmp3, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs_out(:,:,2), g(2), z1,tmp5, tmp2, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs_out(:,:,1), g(1), z1,tmp4, tmp1, wrk2d,wrk3d)
 
 !$omp parallel default( shared ) private( i )
 !$omp do

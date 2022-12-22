@@ -2,13 +2,6 @@
 #include "dns_const.h"
 
 !########################################################################
-!# HISTORY
-!#
-!# 2010/11/03 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
 !#
 !# Calculate the boundary values of a field s.t. the normal derivative
 !# is zero
@@ -16,144 +9,137 @@
 !# Routine format extracted from OPR_PARTIAL_Y
 !#
 !########################################################################
-!# ARGUMENTS 
-!#
-!# ibc  In  BCs at jmin/jmax: 1, for Neumann/-
-!#                            2, for -      /Neumann   
-!#                            3, for Neumann/Neumann
-!#
-!########################################################################
-SUBROUTINE BOUNDARY_BCS_NEUMANN_Y(ibc, nx,ny,nz, g, u, bcs_hb,bcs_ht, wrk1d,tmp1,tmp2)
+subroutine BOUNDARY_BCS_NEUMANN_Y(ibc, nx, ny, nz, g, u, bcs_hb, bcs_ht, wrk1d, tmp1, tmp2)
+    use TLAB_TYPES, only: grid_dt
+    use OPR_PARTIAL
+    implicit none
 
-  USE TLAB_TYPES, ONLY : grid_dt
-
-  IMPLICIT NONE
-
-#include "integers.h"
-
-  TINTEGER nx,ny,nz, ibc
-  TYPE(grid_dt),                      INTENT(IN)  :: g
-  TREAL, DIMENSION(nx*nz,ny), TARGET, INTENT(IN)  :: u         ! they are transposed below
-  TREAL, DIMENSION(nx*nz,ny), TARGET              :: tmp1,tmp2 ! they are transposed below
-  TREAL, DIMENSION(g%size,5), TARGET              :: wrk1d
-  TREAL, DIMENSION(nx*nz),    TARGET, INTENT(OUT) :: bcs_hb,bcs_ht
+    TINTEGER, intent(in) :: ibc     ! BCs at jmin/jmax: 1, for Neumann/-
+    !                                                   2, for -      /Neumann
+    !                                                   3, for Neumann/Neumann
+    TINTEGER nx, ny, nz
+    type(grid_dt), intent(IN) :: g
+    TREAL, dimension(nx*nz, ny), target, intent(IN) :: u         ! they are transposed below
+    TREAL, dimension(nx*nz, ny), target :: tmp1, tmp2 ! they are transposed below
+    TREAL, dimension(g%size, 5), target :: wrk1d
+    TREAL, dimension(nx*nz), target, intent(OUT) :: bcs_hb, bcs_ht
 
 ! -------------------------------------------------------------------
-  TINTEGER nxz, nxy
+    TINTEGER nxz, nxy
 
-  TREAL, DIMENSION(:,:), POINTER :: p_org,p_dst
-  TREAL, DIMENSION(:),   POINTER :: p_bcs_hb,p_bcs_ht
-  TREAL, DIMENSION(:),   POINTER :: a,b,c,d,e
+    TREAL, dimension(:, :), pointer :: p_org, p_dst
+    TREAL, dimension(:), pointer :: p_bcs_hb, p_bcs_ht
+    TREAL, dimension(:), pointer :: a, b, c, d, e
 
 ! ###################################################################
-  IF ( g%size .EQ. 1 ) THEN ! Set to zero in 2D case
-  bcs_hb = C_0_R; bcs_ht = C_0_R 
+    if (g%size == 1) then ! Set to zero in 2D case
+        bcs_hb = C_0_R; bcs_ht = C_0_R
 
-  ELSE
+    else
 ! ###################################################################
-  nxy = nx*ny 
-  nxz = nx*nz
+        nxy = nx*ny
+        nxz = nx*nz
 
-  a => wrk1d(:,1)
-  b => wrk1d(:,2)
-  c => wrk1d(:,3)
-  d => wrk1d(:,4)
-  e => wrk1d(:,5)
+        a => wrk1d(:, 1)
+        b => wrk1d(:, 2)
+        c => wrk1d(:, 3)
+        d => wrk1d(:, 4)
+        e => wrk1d(:, 5)
 
 ! -------------------------------------------------------------------
 ! Make y  direction the last one
 ! -------------------------------------------------------------------
-  IF ( nz .EQ. 1 ) THEN
-     p_org => u
-     p_dst => tmp1
-     p_bcs_hb => bcs_hb
-     p_bcs_ht => bcs_ht
-  ELSE
+        if (nz == 1) then
+            p_org => u
+            p_dst => tmp1
+            p_bcs_hb => bcs_hb
+            p_bcs_ht => bcs_ht
+        else
 #ifdef USE_ESSL
-     CALL DGETMO(u, nxy, nxy, nz, tmp1, nz)
+            call DGETMO(u, nxy, nxy, nz, tmp1, nz)
 #else
-     CALL DNS_TRANSPOSE(u, nxy, nz, nxy, tmp1, nz)
+            call DNS_TRANSPOSE(u, nxy, nz, nxy, tmp1, nz)
 #endif
-     p_org => tmp1
-     p_dst => tmp2
-     p_bcs_hb => tmp1(:,1)
-     p_bcs_ht => tmp1(:,2)
-  ENDIF
+            p_org => tmp1
+            p_dst => tmp2
+            p_bcs_hb => tmp1(:, 1)
+            p_bcs_ht => tmp1(:, 2)
+        end if
 
 ! ###################################################################
-  SELECT CASE( g%mode_fdm )
-     
-  CASE( FDM_COM4_JACOBIAN ) !not yet implemented
-     
-  CASE( FDM_COM6_JACOBIAN )
-     CALL FDM_C1N6_BCS_LHS( ny,     ibc, g%jac, a,b,c)
-     CALL FDM_C1N6_BCS_RHS( ny,nxz, ibc,        p_org,p_dst)
+        select case (g%mode_fdm)
 
-  CASE( FDM_COM6_JACPENTA )
-     CALL FDM_C1N6M_BCS_LHS(ny,     ibc, g%jac, a,b,c,d,e)
-     CALL FDM_C1N6M_BCS_RHS(ny,nxz, ibc,        p_org,p_dst)
+        case (FDM_COM4_JACOBIAN) !not yet implemented
 
-  CASE( FDM_COM6_DIRECT   ) !not yet implemented
-     CALL FDM_C1N6_BCS_LHS( ny,     ibc, g%jac, a,b,c)
-     CALL FDM_C1N6_BCS_RHS( ny,nxz, ibc,        p_org,p_dst)
-     
-  CASE( FDM_COM8_JACOBIAN ) !not yet implemented
-     
-  END SELECT
-  
+        case (FDM_COM6_JACOBIAN)
+            call FDM_C1N6_BCS_LHS(ny, ibc, g%jac, a, b, c)
+            call FDM_C1N6_BCS_RHS(ny, nxz, ibc, p_org, p_dst)
+
+        case (FDM_COM6_JACPENTA)
+            call FDM_C1N6M_BCS_LHS(ny, ibc, g%jac, a, b, c, d, e)
+            call FDM_C1N6M_BCS_RHS(ny, nxz, ibc, p_org, p_dst)
+
+        case (FDM_COM6_DIRECT) !not yet implemented
+            call FDM_C1N6_BCS_LHS(ny, ibc, g%jac, a, b, c)
+            call FDM_C1N6_BCS_RHS(ny, nxz, ibc, p_org, p_dst)
+
+        case (FDM_COM8_JACOBIAN) !not yet implemented
+
+        end select
+
 ! -------------------------------------------------------------------
-  IF      ( ibc .EQ. 1 ) THEN
-     IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
-        CALL TRIDFS(ny-1,     a(2),b(2),c(2))
-        CALL TRIDSS(ny-1,nxz, a(2),b(2),c(2), p_dst(1,2))
-        p_bcs_hb(:) = p_dst(:,1 ) + c(1) *p_dst(:,2)   
-     ELSE
-        CALL PENTADFS2(ny-1,     a(2),b(2),c(2),d(2),e(2))
-        CALL PENTADSS2(ny-1,nxz, a(2),b(2),c(2),d(2),e(2), p_dst(1,2))
-        p_bcs_hb(:) = p_dst(:,1 ) + d(1) *p_dst(:,2)
-     ENDIF   
+        if (ibc == 1) then
+            if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
+                call TRIDFS(ny - 1, a(2:), b(2:), c(2:))
+                call TRIDSS(ny - 1, nxz, a(2:), b(2:), c(2:), p_dst(:, 2))
+                p_bcs_hb(:) = p_dst(:, 1) + c(1)*p_dst(:, 2)
+            else
+                call PENTADFS2(ny - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
+                call PENTADSS2(ny - 1, nxz, a(2:), b(2:), c(2:), d(2:), e(2:), p_dst(:, 2))
+                p_bcs_hb(:) = p_dst(:, 1) + d(1)*p_dst(:, 2)
+            end if
 
-  ELSE IF ( ibc .EQ. 2 ) THEN
-     IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
-        CALL TRIDFS(ny-1,     a,b,c)
-        CALL TRIDSS(ny-1,nxz, a,b,c, p_dst)
-        p_bcs_ht(:) = p_dst(:,ny) + a(ny)*p_dst(:,ny-1)  
-     ELSE
-        CALL PENTADFS2(ny-1,     a,b,c,d,e)
-        CALL PENTADSS2(ny-1,nxz, a,b,c,d,e, p_dst)
-        p_bcs_ht(:) = p_dst(:,ny) + b(ny)*p_dst(:,ny-1)  
-     ENDIF     
+        else if (ibc == 2) then
+            if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
+                call TRIDFS(ny - 1, a, b, c)
+                call TRIDSS(ny - 1, nxz, a, b, c, p_dst)
+                p_bcs_ht(:) = p_dst(:, ny) + a(ny)*p_dst(:, ny - 1)
+            else
+                call PENTADFS2(ny - 1, a, b, c, d, e)
+                call PENTADSS2(ny - 1, nxz, a, b, c, d, e, p_dst)
+                p_bcs_ht(:) = p_dst(:, ny) + b(ny)*p_dst(:, ny - 1)
+            end if
 
-  ELSE IF ( ibc .EQ. 3 ) THEN
-     IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
-        CALL TRIDFS(ny-2,     a(2),b(2),c(2))
-        CALL TRIDSS(ny-2,nxz, a(2),b(2),c(2), p_dst(1,2))
-        p_bcs_hb(:) = p_dst(:,1 ) + c(1) *p_dst(:,2)   
-        p_bcs_ht(:) = p_dst(:,ny) + a(ny)*p_dst(:,ny-1)
-     ELSE
-        CALL PENTADFS2(ny-2,     a(2),b(2),c(2),d(2),e(2))
-        CALL PENTADSS2(ny-2,nxz, a(2),b(2),c(2),d(2),e(2), p_dst(1,2))
-        p_bcs_hb(:) = p_dst(:,1 ) + d(1) *p_dst(:,2)   
-        p_bcs_ht(:) = p_dst(:,ny) + b(ny)*p_dst(:,ny-1)
-     ENDIF
-  ENDIF
+        else if (ibc == 3) then
+            if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
+                call TRIDFS(ny - 2, a(2:), b(2:), c(2:))
+                call TRIDSS(ny - 2, nxz, a(2:), b(2:), c(2:), p_dst(:, 2))
+                p_bcs_hb(:) = p_dst(:, 1) + c(1)*p_dst(:, 2)
+                p_bcs_ht(:) = p_dst(:, ny) + a(ny)*p_dst(:, ny - 1)
+            else
+                call PENTADFS2(ny - 2, a(2:), b(2:), c(2:), d(2:), e(2:))
+                call PENTADSS2(ny - 2, nxz, a(2:), b(2:), c(2:), d(2:), e(2:), p_dst(:, 2))
+                p_bcs_hb(:) = p_dst(:, 1) + d(1)*p_dst(:, 2)
+                p_bcs_ht(:) = p_dst(:, ny) + b(ny)*p_dst(:, ny - 1)
+            end if
+        end if
 
 ! ###################################################################
 ! -------------------------------------------------------------------
 ! Put bcs arrays in correct order
 ! -------------------------------------------------------------------
-  IF ( nz .GT. 1 ) THEN
+        if (nz > 1) then
 #ifdef USE_ESSL
-     IF ( ibc .EQ. 1 .OR. ibc .EQ. 3 ) CALL DGETMO(p_bcs_hb, nz, nz, nx, bcs_hb, nx)
-     IF ( ibc .EQ. 2 .OR. ibc .EQ. 3 ) CALL DGETMO(p_bcs_ht, nz, nz, nx, bcs_ht, nx)
+            if (ibc == 1 .or. ibc == 3) call DGETMO(p_bcs_hb, nz, nz, nx, bcs_hb, nx)
+            if (ibc == 2 .or. ibc == 3) call DGETMO(p_bcs_ht, nz, nz, nx, bcs_ht, nx)
 #else
-     IF ( ibc .EQ. 1 .OR. ibc .EQ. 3 ) CALL DNS_TRANSPOSE(p_bcs_hb, nz, nx, nz, bcs_hb, nx)
-     IF ( ibc .EQ. 2 .OR. ibc .EQ. 3 ) CALL DNS_TRANSPOSE(p_bcs_ht, nz, nx, nz, bcs_ht, nx)
+            if (ibc == 1 .or. ibc == 3) call DNS_TRANSPOSE(p_bcs_hb, nz, nx, nz, bcs_hb, nx)
+            if (ibc == 2 .or. ibc == 3) call DNS_TRANSPOSE(p_bcs_ht, nz, nx, nz, bcs_ht, nx)
 #endif
-  ENDIF
-  NULLIFY(p_org,p_dst,p_bcs_hb,p_bcs_ht,a,b,c,d,e)
+        end if
+        nullify (p_org, p_dst, p_bcs_hb, p_bcs_ht, a, b, c, d, e)
 
-  ENDIF
+    end if
 
-  RETURN
-END SUBROUTINE BOUNDARY_BCS_NEUMANN_Y
+    return
+end subroutine BOUNDARY_BCS_NEUMANN_Y

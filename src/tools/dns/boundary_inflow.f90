@@ -31,7 +31,8 @@ module BOUNDARY_INFLOW
     use TLAB_MPI_VARS, only: ims_offset_k
     use TLAB_MPI_PROCS
 #endif
-
+    use OPR_PARTIAL
+    
     implicit none
     save
     private
@@ -67,7 +68,7 @@ contains
         TREAL, intent(INOUT) :: wrk1d(*), wrk2d(*), wrk3d(*)
 
         ! -------------------------------------------------------------------
-        TINTEGER is, itimetmp, bcs(2, 1)
+        TINTEGER is, itimetmp, bcs(2, 2)
         TINTEGER joffset, jglobal, j, iwrk_size
         TREAL tolerance, dy
         TREAL visctmp, rtimetmp

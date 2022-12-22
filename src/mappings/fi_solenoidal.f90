@@ -13,57 +13,57 @@
 !# The BCs are such that a and a + grad phi are the same at top and bottom
 !#
 !########################################################################
-SUBROUTINE FI_SOLENOIDAL(iwall, nx,ny,nz, u,v,w, tmp1,tmp2,tmp3,tmp4,tmp5, wrk1d,wrk2d,wrk3d)
+subroutine FI_SOLENOIDAL(iwall, nx, ny, nz, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, wrk1d, wrk2d, wrk3d)
 
-  USE TLAB_VARS, ONLY : g
-
-  IMPLICIT NONE
+    use TLAB_VARS, only: g
+    use OPR_PARTIAL
+    implicit none
 
 #include "integers.h"
 
-  TINTEGER,                   INTENT(IN)    :: iwall, nx,ny,nz
-  TREAL, DIMENSION(nx,ny,nz), INTENT(INOUT) :: u,v,w
-  TREAL, DIMENSION(nx,ny,nz), INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4,tmp5, wrk3d
-  TREAL, DIMENSION(nx,nz,*),  INTENT(INOUT) :: wrk2d
-  TREAL, DIMENSION(ny,*),     INTENT(INOUT) :: wrk1d
+    TINTEGER, intent(IN) :: iwall, nx, ny, nz
+    TREAL, dimension(nx, ny, nz), intent(INOUT) :: u, v, w
+    TREAL, dimension(nx, ny, nz), intent(INOUT) :: tmp1, tmp2, tmp3, tmp4, tmp5, wrk3d
+    TREAL, dimension(nx, nz, *), intent(INOUT) :: wrk2d
+    TREAL, dimension(ny, *), intent(INOUT) :: wrk1d
 
 ! -------------------------------------------------------------------
-  TINTEGER  ibc, bcs(2,1)
+    TINTEGER ibc, bcs(2, 2)
 
 ! ###################################################################
-  bcs = 0
+    bcs = 0
 
 !  IF ( iwall .EQ. 1) THEN; ibc = 4
 !  ELSE;                    ibc = 3; ENDIF
-  ibc = 3
+    ibc = 3
 
 ! -------------------------------------------------------------------
 ! Solve lap(phi) = - div(u)
 ! -------------------------------------------------------------------
-  CALL FI_INVARIANT_P(nx,ny,nz, u,v,w, tmp1, tmp2, wrk2d,wrk3d)
+    call FI_INVARIANT_P(nx, ny, nz, u, v, w, tmp1, tmp2, wrk2d, wrk3d)
 
-  IF ( g(1)%periodic .AND. g(3)%periodic ) THEN ! Doubly periodic in xOz
-     wrk2d(:,:,1:2) = C_0_R  ! bcs
-     CALL OPR_POISSON_FXZ(.FALSE., nx,ny,nz, g, ibc, &
-          tmp1,wrk3d, tmp4,tmp5, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
+    if (g(1)%periodic .and. g(3)%periodic) then ! Doubly periodic in xOz
+        wrk2d(:, :, 1:2) = C_0_R  ! bcs
+        call OPR_POISSON_FXZ(.false., nx, ny, nz, g, ibc, &
+                             tmp1, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
 
-  ELSE                                          ! General treatment
+    else                                          ! General treatment
 #ifdef USE_CGLOC
 ! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
-     tmp2 = -tmp1            ! change of forcing term sign
-     CALL CGPOISSON(i1, nx,ny,nz,g(3)%size, tmp1, tmp2,tmp3,tmp4, ipos,jpos,kpos,ci,cj,ck, wrk2d)
+        tmp2 = -tmp1            ! change of forcing term sign
+        call CGPOISSON(i1, nx, ny, nz, g(3)%size, tmp1, tmp2, tmp3, tmp4, ipos, jpos, kpos, ci, cj, ck, wrk2d)
 #endif
-  ENDIF
+    end if
 
 ! -------------------------------------------------------------------
 ! Eliminate solenoidal part of u by adding grad(phi)
 ! -------------------------------------------------------------------
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
-  u = u + tmp2
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
-  v = v + tmp2
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
-  w = w + tmp2
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
+    u = u + tmp2
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
+    v = v + tmp2
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
+    w = w + tmp2
 
-  RETURN
-END SUBROUTINE FI_SOLENOIDAL
+    return
+end subroutine FI_SOLENOIDAL

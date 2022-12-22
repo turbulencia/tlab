@@ -28,6 +28,7 @@ program VISUALS
     use IBM_VARS
     use IO_FIELDS
     use OPR_FOURIER
+    use OPR_PARTIAL
 
     implicit none
 

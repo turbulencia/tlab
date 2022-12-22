@@ -13,6 +13,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use THERMO_VARS, only: imixture, gama0, THERMO_AI
     use BOUNDARY_INFLOW
     use BOUNDARY_BCS
+    use OPR_PARTIAL
 #ifdef USE_MPI
     use TLAB_MPI_VARS
 #endif

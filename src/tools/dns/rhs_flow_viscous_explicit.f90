@@ -27,6 +27,7 @@ SUBROUTINE RHS_FLOW_VISCOUS_EXPLICIT(vis, u,v,w,p, h1,h2,h3,h4, tmp1,tmp2,tmp3,t
   USE TLAB_VARS,    ONLY : visc, mach
   USE THERMO_VARS, ONLY : gama0
   USE BOUNDARY_BCS
+  use OPR_PARTIAL
 
   IMPLICIT NONE
 
@@ -89,22 +90,22 @@ SUBROUTINE RHS_FLOW_VISCOUS_EXPLICIT(vis, u,v,w,p, h1,h2,h3,h4, tmp1,tmp2,tmp3,t
 ! ###################################################################
 ! Laplacian terms in the momentum equation
 ! ###################################################################
-  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs_inf(1,1,1), g(1), u,    tmp1, tmp4,  wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs_out(1,1,2), g(2), u,    tmp2, tmp4,  wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs_out(1,1,3), g(3), u,    tmp3, tmp4,  wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_inf(1,2,1), g(1), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs_inf(:,:,1), g(1), u,    tmp1, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs_out(:,:,2), g(2), u,    tmp2, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs_out(:,:,3), g(3), u,    tmp3, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_inf(:,:,1), g(1), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
   h1 = h1 + vis*visc*(tmp1 + tmp2 + tmp3 + c13*tmp4)
 
-  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs_out(1,1,1), g(1), v,    tmp1, tmp4,  wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs_inf(1,1,2), g(2), v,    tmp2, tmp4,  wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs_out(1,1,3), g(3), v,    tmp3, tmp4,  wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_inf(1,2,2), g(2), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs_out(:,:,1), g(1), v,    tmp1, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs_inf(:,:,2), g(2), v,    tmp2, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs_out(:,:,3), g(3), v,    tmp3, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_inf(:,:,2), g(2), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
   h2 = h2 + vis*visc*(tmp1 + tmp2 + tmp3 + c13*tmp4)
 
-  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs_out(1,1,1), g(1), w,    tmp1, tmp4,  wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs_out(1,1,2), g(2), w,    tmp2, tmp4,  wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs_inf(1,1,3), g(3), w,    tmp3, tmp4,  wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_inf(1,2,3), g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P2, imax,jmax,kmax, bcs_out(:,:,1), g(1), w,    tmp1, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P2, imax,jmax,kmax, bcs_out(:,:,2), g(2), w,    tmp2, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P2, imax,jmax,kmax, bcs_inf(:,:,3), g(3), w,    tmp3, tmp4,  wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_inf(:,:,3), g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
   h3 = h3 + vis*visc*(tmp1 + tmp2 + tmp3 + c13*tmp4)
 
 #ifdef TRACE_ON

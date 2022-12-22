@@ -11,6 +11,7 @@ program VPOISSON
     use IO_FIELDS
     use OPR_FILTERS
     use OPR_FOURIER
+    use OPR_PARTIAL
 
     implicit none
 
@@ -22,7 +23,7 @@ program VPOISSON
     TREAL, dimension(:, :), allocatable :: wrk1d, wrk2d, bcs_hb, bcs_ht
     TREAL, dimension(:), allocatable :: wrk3d!, cx, cy, cz
 
-    TINTEGER i, j, k, bcs !, ibc_x(4), ibc_y(4), ibc_z(4)
+    TINTEGER i, j, k, bcs(2,2) !, ibc_x(4), ibc_y(4), ibc_z(4)
     TINTEGER itype
     TREAL dummy, error, lambda!, falpha
 

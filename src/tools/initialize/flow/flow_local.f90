@@ -13,6 +13,7 @@ module FLOW_LOCAL
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
+    use OPR_PARTIAL
     implicit none
     save
     private
