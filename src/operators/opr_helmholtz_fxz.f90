@@ -144,6 +144,8 @@ subroutine OPR_HELMHOLTZ_FXZ(nx, ny, nz, g, ibc, alpha, &
         call OPR_FOURIER_B_X_EXEC(nx, ny, nz, tmp1, a, wrk3d)
     end if
 
+    nullify (r_wrk1d, r_aux, r_bcs)
+
     return
 end subroutine OPR_HELMHOLTZ_FXZ
 

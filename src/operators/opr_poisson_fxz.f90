@@ -196,5 +196,7 @@ subroutine OPR_POISSON_FXZ(flag, nx, ny, nz, g, ibc, &
         end if
     end if
 
+    nullify (r_wrk1d, r_aux, r_bcs)
+
     return
 end subroutine OPR_POISSON_FXZ
