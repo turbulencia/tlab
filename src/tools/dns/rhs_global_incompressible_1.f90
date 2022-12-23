@@ -36,7 +36,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1(u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tm
     use BOUNDARY_BCS
     use IBM_VARS, only: imode_ibm_scal, ibm_burgers
     use OPR_PARTIAL
-
+    use OPR_BURGERS
+    
     implicit none
 
     real(wp), dimension(isize_field), intent(in) :: u, v, w
@@ -48,7 +49,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1(u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tm
     integer(wi) iq, is, ij
     integer ibc, bcs(2, 2)
     real(wp) dummy
-    integer, parameter :: i0 = 0, i1 = 1, i3 = 3
+    integer, parameter :: i3 = 3
 
     integer(wi) siz, srt, end    !  Variables for OpenMP Partitioning
 
@@ -96,14 +97,14 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1(u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tm
 ! Ox diffusion and convection terms in Ox momentum eqn
 ! Initializing tmp5 for the rest of terms
 ! #######################################################################
-    call OPR_BURGERS_X(i0, i0, imax, jmax, kmax, bcs, g(1), u, u, u, tmp1, tmp5, wrk2d, wrk3d) ! store u transposed in tmp5
+    call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, u, tmp1, tmp5) ! store u transposed in tmp5
     hq(:,1) = hq(:,1) + tmp1(:)
 
 ! #######################################################################
 ! Oy diffusion and convection terms in Oy momentum eqn
 ! Initializing tmp4 for the rest of terms
 ! #######################################################################
-    call OPR_BURGERS_Y(i0, i0, imax, jmax, kmax, bcs, g(2), v, v, v, tmp2, tmp4, wrk2d, wrk3d) ! store v transposed in tmp4
+    call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, v, tmp2, tmp4) ! store v transposed in tmp4
     hq(:,2) = hq(:,2) + tmp2(:)
 
 ! #######################################################################
@@ -111,9 +112,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1(u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tm
 ! #######################################################################
     if (g(3)%size > 1) then
 
-        call OPR_BURGERS_X(i1, i0, imax, jmax, kmax, bcs, g(1), w, u, tmp5, tmp1, tmp6, wrk2d, wrk3d) ! tmp5 contains u transposed
-        call OPR_BURGERS_Y(i1, i0, imax, jmax, kmax, bcs, g(2), w, v, tmp4, tmp2, tmp6, wrk2d, wrk3d) ! tmp4 contains v transposed
-        call OPR_BURGERS_Z(i0, i0, imax, jmax, kmax, bcs, g(3), w, w, w, tmp3, tmp6, wrk2d, wrk3d) ! store w transposed in tmp6
+        call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, u, tmp5, tmp1, tmp6) ! tmp5 contains u transposed
+        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, v, tmp4, tmp2, tmp6) ! tmp4 contains v transposed
+        call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, w, tmp3, tmp6) ! store w transposed in tmp6
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -128,8 +129,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1(u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tm
 ! #######################################################################
 ! Diffusion and convection terms in Oy momentum eqn
 ! #######################################################################
-    call OPR_BURGERS_X(i1, i0, imax, jmax, kmax, bcs, g(1), v, u, tmp5, tmp1, tmp2, wrk2d, wrk3d) ! tmp5 contains u transposed
-    call OPR_BURGERS_Z(i1, i0, imax, jmax, kmax, bcs, g(3), v, w, tmp6, tmp3, tmp2, wrk2d, wrk3d) ! tmp6 contains w transposed
+    call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, u, tmp5, tmp1, tmp2) ! tmp5 contains u transposed
+    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, w, tmp6, tmp3, tmp2) ! tmp6 contains w transposed
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -143,8 +144,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1(u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tm
 ! Diffusion and convection terms in Ox momentum eqn
 ! The term u u''-u u' has been already added in the beginning
 ! #######################################################################
-    call OPR_BURGERS_Y(i1, i0, imax, jmax, kmax, bcs, g(2), u, v, tmp4, tmp2, tmp1, wrk2d, wrk3d) ! tmp4 contains v transposed
-    call OPR_BURGERS_Z(i1, i0, imax, jmax, kmax, bcs, g(3), u, w, tmp6, tmp3, tmp1, wrk2d, wrk3d) ! tmp6 contains w transposed
+    call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, v, tmp4, tmp2, tmp1) ! tmp4 contains v transposed
+    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, w, tmp6, tmp3, tmp1) ! tmp6 contains w transposed
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -171,11 +172,11 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1(u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tm
 ! #######################################################################
     do is = 1, inb_scal
 
-        call OPR_BURGERS_Y(i1, is, imax, jmax, kmax, bcs, g(2), s(1, is), v, tmp4, tmp2, tmp1, wrk2d, wrk3d) ! tmp4 contains v transposed
+        call OPR_BURGERS_Y(OPR_B_U_IN, is, imax, jmax, kmax, bcs, g(2), s(1, is), v, tmp4, tmp2, tmp1) ! tmp4 contains v transposed
         hs(:, is) = hs(:, is) + tmp2
 
-        call OPR_BURGERS_X(i1, is, imax, jmax, kmax, bcs, g(1), s(1, is), u, tmp5, tmp1, tmp2, wrk2d, wrk3d) ! tmp5 contains u transposed
-        call OPR_BURGERS_Z(i1, is, imax, jmax, kmax, bcs, g(3), s(1, is), w, tmp6, tmp3, tmp2, wrk2d, wrk3d) ! tmp6 contains w transposed
+        call OPR_BURGERS_X(OPR_B_U_IN, is, imax, jmax, kmax, bcs, g(1), s(1, is), u, tmp5, tmp1, tmp2) ! tmp5 contains u transposed
+        call OPR_BURGERS_Z(OPR_B_U_IN, is, imax, jmax, kmax, bcs, g(3), s(1, is), w, tmp6, tmp3, tmp2) ! tmp6 contains w transposed
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
