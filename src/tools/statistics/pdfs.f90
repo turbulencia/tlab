@@ -249,9 +249,7 @@ program PDFS
         call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
     end if
 
-    if (iread_flow == 1) then       ! We need array space
-        call OPR_CHECK(imax, jmax, kmax, q, txc, wrk2d, wrk3d)
-    end if
+    call OPR_CHECK()
 
     y_aux(:) = 0                        ! Reduced vertical grid
     do ij = 1, jmax_aux*opt_block

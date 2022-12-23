@@ -96,7 +96,7 @@ program DNS
         call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
     end if
 
-    call OPR_CHECK(imax, jmax, kmax, q, txc, wrk2d, wrk3d)
+    call OPR_CHECK()
 
     ! ###################################################################
     ! Initialize fields

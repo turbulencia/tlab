@@ -95,7 +95,7 @@ contains
 #endif
 
 ! ###################################################################
-        call BURGERS_KERNEL(is, nyz, bcs, g, Dealiasing(1), p_b, p_vel, p_d, p_c)
+        call OPR_BURGERS_1D(is, nyz, bcs, g, Dealiasing(1), p_b, p_vel, p_d, p_c)
 
 ! ###################################################################
 ! Put arrays back in the order in which they came in
@@ -173,7 +173,7 @@ contains
             end if
 
 ! ###################################################################
-            call BURGERS_KERNEL(is, nxz, bcs, g, Dealiasing(2), p_org, p_vel, p_dst2, p_dst1)
+            call OPR_BURGERS_1D(is, nxz, bcs, g, Dealiasing(2), p_org, p_vel, p_dst2, p_dst1)
 
             if (subsidence%type == EQNS_SUB_CONSTANT_LOCAL) then
                 do j = 1, ny
@@ -261,7 +261,7 @@ contains
             end if
 
 ! ###################################################################
-            call BURGERS_KERNEL(is, nxy, bcs, g, Dealiasing(3), p_a, p_vel, p_c, p_b)
+            call OPR_BURGERS_1D(is, nxy, bcs, g, Dealiasing(3), p_a, p_vel, p_c, p_b)
 
 ! ###################################################################
 ! Put arrays back in the order in which they came in
@@ -284,7 +284,7 @@ contains
 !#
 !# Second derivative uses LE decomposition including diffusivity coefficient
 !########################################################################
-    subroutine BURGERS_KERNEL(is, nlines, bcs, g, dealiasing, s, u, result, dsdx)
+    subroutine OPR_BURGERS_1D(is, nlines, bcs, g, dealiasing, s, u, result, dsdx)
         integer,     intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
@@ -358,6 +358,6 @@ contains
         end if
 
         return
-    end subroutine BURGERS_KERNEL
+    end subroutine OPR_BURGERS_1D
 
 end module OPR_BURGERS

@@ -319,9 +319,7 @@ program VISUALS
         call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
     end if
 
-    if (iread_flow == 1 .and. inb_txc >= 3) then ! We need array space
-        call OPR_CHECK(imax, jmax, kmax, q, txc, wrk2d, wrk3d)
-    end if
+    call OPR_CHECK()
 
     if (imode_ibm == 1) then
         call IBM_INITIALIZE_GEOMETRY(txc, wrk3d)

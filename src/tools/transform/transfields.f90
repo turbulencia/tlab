@@ -305,7 +305,7 @@ program TRANSFIELDS
     ! -------------------------------------------------------------------
     if (ifourier == 1) call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
 
-    if (inb_txc >= 3 .and. icalc_flow > 0) call OPR_CHECK(imax, jmax, kmax, q, txc, wrk2d, wrk3d)
+    call OPR_CHECK()
 
     ! -------------------------------------------------------------------
     ! Initialize cumulative field
