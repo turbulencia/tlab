@@ -64,7 +64,7 @@ program INIFLOW
 
     if (flag_u /= 0) then ! Initialize Poisson Solver
         if (ifourier == 1 .and. g(1)%periodic .and. g(3)%periodic) then
-            call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+            call OPR_FOURIER_INITIALIZE()
 
         else
 #ifdef USE_CGLOC

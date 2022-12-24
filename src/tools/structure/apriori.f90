@@ -193,7 +193,7 @@ program APRIORI
 ! -------------------------------------------------------------------
 ! Initialize Poisson solver
 ! -------------------------------------------------------------------
-    if (ifourier == 1) call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+    if (ifourier == 1) call OPR_FOURIER_INITIALIZE()
 
     call OPR_CHECK()
 

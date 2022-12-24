@@ -49,7 +49,7 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
     isize_fft3d = (imax + 2)*(jmax + 2)*kmax
     isize_trn3d = (imax/2)*jmax*(2*kmax)
 
-    call OPR_FOURIER_INITIALIZE(tmp1, tmp2, wrk2d, wrk3d)
+    call OPR_FOURIER_INITIALIZE()
 
     norm = C_1_R/M_REAL(g(1)%size*g(3)%size)
 

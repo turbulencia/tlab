@@ -396,7 +396,7 @@ program SPECTRA
 ! Initialize Poisson solver
 ! -------------------------------------------------------------------
     if (ifourier == 1) then
-        call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+        call OPR_FOURIER_INITIALIZE()
     end if
 
     call OPR_CHECK()

@@ -246,7 +246,7 @@ program PDFS
     end do
 
     if (ifourier == 1) then         ! For Poisson solver
-        call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+        call OPR_FOURIER_INITIALIZE()
     end if
 
     call OPR_CHECK()

@@ -45,8 +45,8 @@ program VTGVORTEX
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! ###################################################################
-    call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
-
+    call OPR_FOURIER_INITIALIZE()
+    
     write (*, *) '1-ICs / 2-Error ?'; read (*, *) iopt
 
     if (iopt == 1) then

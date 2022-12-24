@@ -316,7 +316,7 @@ program VISUALS
     call FI_BACKGROUND_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
 
     if (ifourier == 1 .and. inb_txc >= 1) then ! For Poisson solver
-        call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+        call OPR_FOURIER_INITIALIZE()
     end if
 
     call OPR_CHECK()

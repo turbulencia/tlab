@@ -293,7 +293,7 @@ program AVERAGES
     end do
 
     if (ifourier == 1) then         ! For Poisson solver
-        call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+        call OPR_FOURIER_INITIALIZE()
     end if
 
     if (iread_flow == 1) then       ! We need array space

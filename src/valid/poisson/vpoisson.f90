@@ -72,8 +72,8 @@ program VPOISSON
 
     bcs = 0
 
-    call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
-
+    call OPR_FOURIER_INITIALIZE()
+    
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
