@@ -12,8 +12,7 @@
 !# Includes the scalar to benefit from the same reduction
 !#
 !########################################################################
-subroutine RHS_GLOBAL_INCOMPRESSIBLE_1(u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6)
-
+subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
@@ -27,6 +26,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1(u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tm
     use TLAB_VARS, only: g
     use TLAB_VARS, only: rbackground, ribackground
     use TLAB_ARRAYS
+    use TLAB_POINTERS
     use DNS_ARRAYS
     use DNS_LOCAL, only: remove_divergence
     use DNS_LOCAL, only: use_tower
@@ -37,13 +37,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1(u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tm
     use IBM_VARS, only: imode_ibm_scal, ibm_burgers
     use OPR_PARTIAL
     use OPR_BURGERS
-    
-    implicit none
 
-    real(wp), dimension(isize_field), intent(in) :: u, v, w
-    real(wp), dimension(isize_field), intent(inout) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
-    
-    target tmp4
+    implicit none
 
 ! -----------------------------------------------------------------------
     integer(wi) iq, is, ij
@@ -297,7 +292,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1(u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tm
         call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), hq(:,2), tmp5, wrk3d, wrk2d, wrk3d)
         call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
         if (imode_ibm == 1) call IBM_BCS_FIELD_STAGGER(tmp4)
-        p_bcs(1:imax, 1:jmax, 1:kmax) => tmp4(1:imax*jmax*kmax)
+        p_bcs(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax,4)
     else
         p_bcs(1:imax, 1:jmax, 1:kmax) => hq(1:imax*jmax*kmax,2)
     end if

@@ -1,9 +1,7 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_const_mpi.h"
 
 !########################################################################
-!# DESCRIPTION
 !#
 !# Momentum equations, nonlinear term in convective form and the
 !# viscous term explicit: 9 2nd order + 9 1st order derivatives.
@@ -12,16 +10,17 @@
 !# Scalar needed for the buoyancy term
 !#
 !########################################################################
-subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
-    (u, v, w, h1, h2, h3, q, hq, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, &
-     wrk1d, wrk2d, wrk3d)
-
+subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
+    use TLAB_CONSTANTS, only: wp, wi
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_flow
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow
     use TLAB_VARS, only: g
     use TLAB_VARS, only: visc
+    use TLAB_ARRAYS
+    use TLAB_POINTERS
+    use DNS_ARRAYS
     use TIME, only: dte
     use DNS_LOCAL, only: remove_divergence
     use BOUNDARY_BUFFER
@@ -31,24 +30,14 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
     
     implicit none
 
-#include "integers.h"
-
-    TREAL, dimension(isize_field) :: u, v, w, h1, h2, h3
-    TREAL, dimension(isize_field, *) :: q, hq
-    TREAL, dimension(isize_field) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
-    TREAL, dimension(isize_wrk1d, *) :: wrk1d
-    TREAL, dimension(*) :: wrk2d, wrk3d
-
-    target tmp2, h2
-
 ! -----------------------------------------------------------------------
-    TINTEGER iq, ij, k, nxy, ip_b, ip_t
-    TINTEGER ibc, bcs(2, 2)
-    TREAL dummy
+    integer(wi) iq, ij, k, nxy, ip_b, ip_t
+    integer(wi) ibc, bcs(2, 2)
+    real(wp) dummy
 
-    TINTEGER siz, srt, end    !  Variables for OpenMP Partitioning
+    integer(wi) siz, srt, end    !  Variables for OpenMP Partitioning
 
-    TREAL, dimension(:), pointer :: p_bcs
+    real(wp), dimension(:), pointer :: p_bcs
 
 #ifdef USE_ESSL
     integer ilen
@@ -68,12 +57,12 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
 ! #######################################################################
     call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), u, tmp6, tmp3, wrk2d, wrk3d)
     call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), u, tmp5, tmp2, wrk2d, wrk3d)
-    call OPR_BURGERS_X(i0, i0, imax, jmax, kmax, bcs, g(1), u, u, u, tmp4, tmp1)
+    call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, u, tmp4, tmp1)
 
 !$omp parallel default( shared ) private( ij, srt,end,siz )
     call DNS_OMP_PARTITION(isize_field, srt, end, siz)
     do ij = srt, end
-        h1(ij) = h1(ij) + tmp4(ij) + visc*(tmp6(ij) + tmp5(ij)) &
+        hq(:,1) = hq(:,1) + tmp4(ij) + visc*(tmp6(ij) + tmp5(ij)) &
                  - (w(ij)*tmp3(ij) + v(ij)*tmp2(ij))
     end do
 !$omp end parallel
@@ -82,14 +71,14 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
 ! Diffusion and convection terms in Oz momentum eqn
 ! #######################################################################
     if (g(3)%size > 1) then
-        call OPR_BURGERS_Z(i0, i0, imax, jmax, kmax, bcs, g(3), w, w, w, tmp6, tmp3)
+        call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, w, tmp6, tmp3)
         call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), w, tmp5, tmp2, wrk2d, wrk3d)
         call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), w, tmp4, tmp1, wrk2d, wrk3d)
 
 !$omp parallel default( shared ) private( ij, srt,end,siz )
         call DNS_OMP_PARTITION(isize_field, srt, end, siz)
         do ij = srt, end
-            h3(ij) = h3(ij) + tmp6(ij) + visc*(tmp5(ij) + tmp4(ij)) &
+            hq(:,3) = hq(:,3) + tmp6(ij) + visc*(tmp5(ij) + tmp4(ij)) &
                      - (v(ij)*tmp2(ij) + u(ij)*tmp1(ij))
         end do
 !$omp end parallel
@@ -100,7 +89,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
 ! Diffusion and convection terms in Oy momentum eqn
 ! #######################################################################
     call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), v, tmp6, tmp3, wrk2d, wrk3d)
-    call OPR_BURGERS_Y(i0, i0, imax, jmax, kmax, bcs, g(2), v, v, v, tmp5, tmp2)
+    call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, v, tmp5, tmp2)
     call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), v, tmp4, tmp1, wrk2d, wrk3d)
 
 #ifdef USE_ESSL
@@ -112,7 +101,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
 #endif
     call DNS_OMP_PARTITION(isize_field, srt, end, siz)
     do ij = srt, end
-        h2(ij) = h2(ij) + tmp5(ij) + visc*(tmp6(ij) + tmp4(ij)) &
+        hq(:,2) = hq(:,2) + tmp5(ij) + visc*(tmp6(ij) + tmp4(ij)) &
                  - (w(ij)*tmp3(ij) + u(ij)*tmp1(ij))
     end do
 !$omp end parallel
@@ -138,19 +127,19 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
 #endif
 
         call DNS_OMP_PARTITION(isize_field, srt, end, siz)
-        dummy = C_1_R/dte
+        dummy = 1.0_WP/dte
 
 #ifdef USE_ESSL
         ilen = siz
-        call DZAXPY(ilen, dummy, v(srt), 1, h2(srt), 1, tmp2(srt), 1)
-        call DZAXPY(ilen, dummy, u(srt), 1, h1(srt), 1, tmp3(srt), 1)
-        call DZAXPY(ilen, dummy, w(srt), 1, h3(srt), 1, tmp4(srt), 1)
+        call DZAXPY(ilen, dummy, v(srt), 1, hq(srt,2), 1, tmp2(srt), 1)
+        call DZAXPY(ilen, dummy, u(srt), 1, hq(srt,1), 1, tmp3(srt), 1)
+        call DZAXPY(ilen, dummy, w(srt), 1, hq(srt,3), 1, tmp4(srt), 1)
 
 #else
         do ij = srt, end
-            tmp2(ij) = h2(ij) + v(ij)*dummy
-            tmp3(ij) = h1(ij) + u(ij)*dummy
-            tmp4(ij) = h3(ij) + w(ij)*dummy
+            tmp2(ij) = hq(ij,2) + v(ij)*dummy
+            tmp3(ij) = hq(ij,1) + u(ij)*dummy
+            tmp4(ij) = hq(ij,3) + w(ij)*dummy
         end do
 
 #endif
@@ -161,9 +150,9 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
         call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d, wrk3d)
 
     else
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), h2, tmp1, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), h1, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), h3, tmp3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), hq(:,2), tmp1, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), hq(:,1), tmp2, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), hq(:,3), tmp3, wrk3d, wrk2d, wrk3d)
 
     end if
 
@@ -180,8 +169,8 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
     ip_b = 1
     ip_t = imax*(jmax - 1) + 1
     do k = 1, kmax
-        p_bcs => h2(ip_b:); BcsFlowJmin%ref(1:imax, k, 2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-        p_bcs => h2(ip_t:); BcsFlowJmax%ref(1:imax, k, 2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
+        p_bcs => hq(ip_b:,2); BcsFlowJmin%ref(1:imax, k, 2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
+        p_bcs => hq(ip_t:,2); BcsFlowJmax%ref(1:imax, k, 2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
     end do
 
 ! pressure in tmp1, Oy derivative in tmp3
@@ -207,15 +196,15 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
 
 #ifdef USE_ESSL
     ilen = siz
-    dummy = -C_1_R
-    call DAXPY(ilen, dummy, tmp2(srt), 1, h1(srt), 1)
-    call DAXPY(ilen, dummy, tmp3(srt), 1, h2(srt), 1)
-    call DAXPY(ilen, dummy, tmp4(srt), 1, h3(srt), 1)
+    dummy = -1.0_WP
+    call DAXPY(ilen, dummy, tmp2(srt), 1, hq(srt,1), 1)
+    call DAXPY(ilen, dummy, tmp3(srt), 1, hq(srt,2), 1)
+    call DAXPY(ilen, dummy, tmp4(srt), 1, hq(srt,3), 1)
 #else
     do ij = srt, end
-        h1(ij) = h1(ij) - tmp2(ij)
-        h2(ij) = h2(ij) - tmp3(ij)
-        h3(ij) = h3(ij) - tmp4(ij)
+        hq(:,1) = hq(:,1) - tmp2(ij)
+        hq(:,2) = hq(:,2) - tmp3(ij)
+        hq(:,3) = hq(:,3) - tmp4(ij)
     end do
 #endif
 
@@ -227,8 +216,8 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
 ! -----------------------------------------------------------------------
 ! Preliminaries
 ! -----------------------------------------------------------------------
-    BcsFlowJmin%ref = C_0_R ! default is no-slip (dirichlet)
-    BcsFlowJmax%ref = C_0_R
+    BcsFlowJmin%ref = 0.0_wp ! default is no-slip (dirichlet)
+    BcsFlowJmax%ref = 0.0_wp
 
     do iq = 1, inb_flow
         ibc = 0
@@ -245,9 +234,9 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
 ! -----------------------------------------------------------------------
     ip_b = 1
     do k = 1, kmax
-        h1(ip_b:ip_b + imax - 1) = BcsFlowJmin%ref(1:imax, k, 1)
-        h2(ip_b:ip_b + imax - 1) = BcsFlowJmin%ref(1:imax, k, 2)
-        h3(ip_b:ip_b + imax - 1) = BcsFlowJmin%ref(1:imax, k, 3); ip_b = ip_b + nxy
+        hq(ip_b:ip_b + imax - 1,1) = BcsFlowJmin%ref(1:imax, k, 1)
+        hq(ip_b:ip_b + imax - 1,2) = BcsFlowJmin%ref(1:imax, k, 2)
+        hq(ip_b:ip_b + imax - 1,3) = BcsFlowJmin%ref(1:imax, k, 3); ip_b = ip_b + nxy
     end do
 
 ! -----------------------------------------------------------------------
@@ -255,9 +244,9 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1 &
 ! -----------------------------------------------------------------------
     ip_t = imax*(jmax - 1) + 1
     do k = 1, kmax
-        h1(ip_t:ip_t + imax - 1) = BcsFlowJmax%ref(1:imax, k, 1)
-        h2(ip_t:ip_t + imax - 1) = BcsFlowJmax%ref(1:imax, k, 2)
-        h3(ip_t:ip_t + imax - 1) = BcsFlowJmax%ref(1:imax, k, 3); ip_t = ip_t + nxy
+        hq(ip_t:ip_t + imax - 1,1) = BcsFlowJmax%ref(1:imax, k, 1)
+        hq(ip_t:ip_t + imax - 1,2) = BcsFlowJmax%ref(1:imax, k, 2)
+        hq(ip_t:ip_t + imax - 1,3) = BcsFlowJmax%ref(1:imax, k, 3); ip_t = ip_t + nxy
     end do
 
     return

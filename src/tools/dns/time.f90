@@ -539,8 +539,7 @@ contains
             select case (imode_rhs)
             case (EQNS_RHS_SPLIT)
                 call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
-                call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1(q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
-                                       q, hq, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
+                call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 
                 call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
                 do is = 1, inb_scal
@@ -551,7 +550,7 @@ contains
             case (EQNS_RHS_COMBINED)
                 call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
                 call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
-       call RHS_GLOBAL_INCOMPRESSIBLE_1(q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+                call RHS_GLOBAL_INCOMPRESSIBLE_1()
 
             case (EQNS_RHS_NONBLOCKING)
 #ifdef USE_PSFFT
@@ -899,7 +898,7 @@ contains
 
         !#####################################################################
         call RHS_PART_1()
-        
+
         !#######################################################################
         ! Update particle properties
         !#######################################################################

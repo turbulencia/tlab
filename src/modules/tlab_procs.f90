@@ -35,8 +35,11 @@ contains
     ! ###################################################################
     subroutine TLAB_ALLOCATE(C_FILE_LOC)
         use TLAB_ARRAYS
+        use TLAB_POINTERS
 
         character(len=*), intent(in) :: C_FILE_LOC
+
+        integer(wi) idummy(2)
 
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, x, [g(1)%size, g(1)%inb_grid], g(1)%name)
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, y, [g(2)%size, g(2)%inb_grid], g(2)%name)
@@ -50,6 +53,19 @@ contains
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk2d, [isize_wrk2d, inb_wrk2d], 'wrk2d')
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
 
+        idummy = shape(q)
+        if (idummy(2) >= 1) u(1:isize_field) => q(1:isize_field,1)
+        if (idummy(2) >= 2) v(1:isize_field) => q(1:isize_field,2)
+        if (idummy(2) >= 3) w(1:isize_field) => q(1:isize_field,3)
+
+        idummy = shape(txc)
+        if (idummy(2) >= 1) tmp1(1:isize_field) => txc(1:isize_field,1)
+        if (idummy(2) >= 2) tmp2(1:isize_field) => txc(1:isize_field,2)
+        if (idummy(2) >= 3) tmp3(1:isize_field) => txc(1:isize_field,3)
+        if (idummy(2) >= 4) tmp4(1:isize_field) => txc(1:isize_field,4)
+        if (idummy(2) >= 5) tmp5(1:isize_field) => txc(1:isize_field,5)
+        if (idummy(2) >= 6) tmp6(1:isize_field) => txc(1:isize_field,6)
+        
         return
     end subroutine TLAB_ALLOCATE
 

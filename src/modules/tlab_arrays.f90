@@ -15,3 +15,19 @@ module TLAB_ARRAYS
     target q, s, txc, wrk3d
 
 end module TLAB_ARRAYS
+
+module TLAB_POINTERS
+    use TLAB_CONSTANTS, only: wp
+    use TLAB_ARRAYS
+    implicit none
+
+    real(wp), pointer :: u(:) => null()
+    real(wp), pointer :: v(:) => null()
+    real(wp), pointer :: w(:) => null()
+    real(wp), pointer :: tmp1(:) => null()
+    real(wp), pointer :: tmp2(:) => null()
+    real(wp), pointer :: tmp3(:) => null()
+    real(wp), pointer :: tmp4(:) => null()
+    real(wp), pointer :: tmp5(:) => null()
+    real(wp), pointer :: tmp6(:) => null()
+end module TLAB_POINTERS
