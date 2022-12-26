@@ -568,7 +568,7 @@ contains
         end select
 
         if (BuffType == DNS_BUFFER_RELAX .or. BuffType == DNS_BUFFER_BOTH) then
-            call BOUNDARY_BUFFER_RELAX_SCAL(s, hs, q) ! Flow part needs to be taken into account in the pressure
+            call BOUNDARY_BUFFER_RELAX_SCAL() ! Flow part needs to be taken into account in the pressure
         end if
 
         ! #######################################################################
@@ -785,8 +785,8 @@ contains
         ! Impose buffer zone as relaxation terms
         ! ###################################################################
         if (BuffType == DNS_BUFFER_RELAX .or. BuffType == DNS_BUFFER_BOTH) then
-            call BOUNDARY_BUFFER_RELAX_FLOW(q, hq)
-            call BOUNDARY_BUFFER_RELAX_SCAL(s, hs, q)
+            call BOUNDARY_BUFFER_RELAX_FLOW()
+            call BOUNDARY_BUFFER_RELAX_SCAL()
         end if
 
         ! ###################################################################
@@ -874,7 +874,7 @@ contains
         ! ###################################################################
         if (BuffType == DNS_BUFFER_FILTER .or. BuffType == DNS_BUFFER_BOTH) then
             call BOUNDARY_BUFFER_FILTER &
-                (rho, u, v, w, e, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk1d, wrk2d, wrk3d)
+                (rho, u, v, w, e, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
         end if
 
         return

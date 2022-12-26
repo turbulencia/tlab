@@ -280,7 +280,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1&
 ! Impose buffer zone as relaxation terms (Flow)
 ! #######################################################################
   IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
-     CALL BOUNDARY_BUFFER_RELAX_FLOW(q,hq)
+     CALL BOUNDARY_BUFFER_RELAX_FLOW()
   ENDIF
 
 ! Explicit part of time integration

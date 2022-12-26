@@ -193,7 +193,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 ! Impose buffer zone as relaxation terms
 ! #######################################################################
     if (BuffType == DNS_BUFFER_RELAX .or. BuffType == DNS_BUFFER_BOTH) then
-        call BOUNDARY_BUFFER_RELAX_FLOW(q, hq)
+        call BOUNDARY_BUFFER_RELAX_FLOW()
     end if
 
 ! #######################################################################

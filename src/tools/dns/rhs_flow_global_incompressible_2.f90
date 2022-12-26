@@ -154,7 +154,7 @@ IMPLICIT NONE
 ! Impose buffer zone as relaxation terms
 ! #######################################################################
   IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
-     CALL BOUNDARY_BUFFER_RELAX_FLOW(q, hq)
+     CALL BOUNDARY_BUFFER_RELAX_FLOW()
   ENDIF
 
 ! #######################################################################

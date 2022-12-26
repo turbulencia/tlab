@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 #include "dns_const_mpi.h"
@@ -15,790 +14,767 @@
 !# the header global variables (like itime) are not updated within this routine
 !#
 !########################################################################
-MODULE BOUNDARY_BUFFER
+module BOUNDARY_BUFFER
 
-  USE TLAB_TYPES,     ONLY : filter_dt
+    use TLAB_TYPES, only: filter_dt
 
-  USE TLAB_CONSTANTS, ONLY : tag_flow,tag_scal, wfile,lfile,efile, MAX_VARS
+    use TLAB_CONSTANTS, only: tag_flow, tag_scal, wfile, lfile, efile, MAX_VARS, wp, wi
 #ifdef TRACE_ON
-  USE TLAB_CONSTANTS, ONLY : tfile
+    use TLAB_CONSTANTS, only: tfile
 #endif
-  USE TLAB_VARS,    ONLY : imode_eqns, imode_sim
-  USE TLAB_VARS,    ONLY : imax,jmax,kmax, inb_flow,inb_scal, isize_field
-  USE TLAB_VARS,    ONLY : g
-  USE TLAB_VARS,    ONLY : itime
-  USE TLAB_VARS,    ONLY : mach
-  USE TLAB_VARS,    ONLY : io_aux
-  USE TLAB_PROCS
-  USE THERMO_VARS, ONLY : gama0
-  USE IO_FIELDS
-  USE OPR_FILTERS
-  USE AVGS, ONLY :    COV2V1D, COV2V2D
+    use TLAB_VARS, only: imode_eqns, imode_sim
+    use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, isize_field
+    use TLAB_VARS, only: g
+    use TLAB_VARS, only: itime
+    use TLAB_VARS, only: mach
+    use TLAB_VARS, only: io_aux
+    use TLAB_PROCS
+    use THERMO_VARS, only: gama0
+    use IO_FIELDS
+    use OPR_FILTERS
+    use AVGS, only: COV2V1D, COV2V2D
 
 #ifdef USE_MPI
-  USE TLAB_MPI_VARS, ONLY : ims_err
-  USE TLAB_MPI_VARS, ONLY : ims_pro,ims_npro_i, ims_npro_k, ims_npro
-  USE TLAB_MPI_VARS, ONLY : ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  USE TLAB_MPI_VARS, ONLY : ims_comm_z
-  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k, ims_pro_i, ims_pro_k
-  USE TLAB_MPI_PROCS
+    use TLAB_MPI_VARS, only: ims_err
+    use TLAB_MPI_VARS, only: ims_pro, ims_npro_i, ims_npro_k, ims_npro
+    use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+    use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLAB_MPI_VARS, only: ims_comm_z
+    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro_i, ims_pro_k
+    use TLAB_MPI_PROCS
 #endif
 
-  IMPLICIT NONE
-  SAVE
-  PRIVATE
+    implicit none
+    save
+    private
 
-  TINTEGER, PARAMETER :: FORM_POWER_MIN = 1
-  TINTEGER, PARAMETER :: FORM_POWER_MAX = 2
+    integer(wi), parameter :: FORM_POWER_MIN = 1
+    integer(wi), parameter :: FORM_POWER_MAX = 2
 
-  TYPE buffer_dt
-    SEQUENCE
-    TINTEGER TYPE                                  ! relaxation, filter...
-    TINTEGER size, total_size                      ! # points in buffer layer on this task and in total
-    TINTEGER offset                                ! position in absolute grid
-    TINTEGER nfields                               ! number of fields to apply tosition in absolute grid
-    LOGICAL active(MAX_VARS), hard
-    TREAL strength(MAX_VARS), sigma(MAX_VARS)      ! parameters in relaxation term
-    TINTEGER form                                  ! form of function of relaxation term
-    TREAL hardvalues(MAX_VARS)                     ! Fixed reference values
-    TREAL, ALLOCATABLE, DIMENSION(:,:)     :: tau  ! relaxation timescale for each field
-    TREAL, ALLOCATABLE, DIMENSION(:,:,:,:) :: ref  ! reference fields
-    TINTEGER id_subarray
-  END TYPE buffer_dt
+    type buffer_dt
+        sequence
+        integer type                                  ! relaxation, filter...
+        integer(wi) size, total_size                      ! # points in buffer layer on this task and in total
+        integer(wi) offset                                ! position in absolute grid
+        integer(wi) nfields                               ! number of fields to apply tosition in absolute grid
+        logical active(MAX_VARS), hard
+        real(wp) strength(MAX_VARS), sigma(MAX_VARS)      ! parameters in relaxation term
+        integer(wi) form                                  ! form of function of relaxation term
+        real(wp) hardvalues(MAX_VARS)                     ! Fixed reference values
+        real(wp), allocatable, dimension(:, :) :: tau  ! relaxation timescale for each field
+        real(wp), allocatable, dimension(:, :, :, :) :: ref  ! reference fields
+        integer(wi) id_subarray
+    end type buffer_dt
 
-  TINTEGER,        PUBLIC :: BuffType
-  LOGICAL,         PUBLIC :: BuffLoad
-  TYPE(buffer_dt), PUBLIC :: BuffFlowImin,BuffFlowImax,BuffFlowJmin,BuffFlowJmax
-  TYPE(buffer_dt), PUBLIC :: BuffScalImin,BuffScalImax,BuffScalJmin,BuffScalJmax
-  !  TYPE(filter_dt), DIMENSION(3) :: FilterBuffer
-  ! BufferFilter should then be a block in dns.ini as [Filter], which is read in io_read_global.
+    integer(wi), public :: BuffType
+    logical, public :: BuffLoad
+    type(buffer_dt), public :: BuffFlowImin, BuffFlowImax, BuffFlowJmin, BuffFlowJmax
+    type(buffer_dt), public :: BuffScalImin, BuffScalImax, BuffScalJmin, BuffScalJmax
+    !  TYPE(filter_dt), DIMENSION(3) :: FilterBuffer
+    ! BufferFilter should then be a block in dns.ini as [Filter], which is read in io_read_global.
 
-  PUBLIC :: BOUNDARY_BUFFER_READBLOCK
-  PUBLIC :: BOUNDARY_BUFFER_INITIALIZE
-  PUBLIC :: BOUNDARY_BUFFER_RELAX_FLOW
-  PUBLIC :: BOUNDARY_BUFFER_RELAX_SCAL
-  PUBLIC :: BOUNDARY_BUFFER_RELAX_SCAL_I
-  PUBLIC :: BOUNDARY_BUFFER_FILTER
+    public :: BOUNDARY_BUFFER_READBLOCK
+    public :: BOUNDARY_BUFFER_INITIALIZE
+    public :: BOUNDARY_BUFFER_RELAX_FLOW
+    public :: BOUNDARY_BUFFER_RELAX_SCAL
+    public :: BOUNDARY_BUFFER_RELAX_SCAL_I
+    public :: BOUNDARY_BUFFER_FILTER
 
-  TINTEGER j,jloc, i,iloc, iq,is, idummy
-  TREAL dummy
+    integer(wi) j, jloc, i, iloc, iq, is, idummy
+    real(wp) dummy
 
-CONTAINS
-
-  ! ###################################################################
-  ! ###################################################################
-  SUBROUTINE BOUNDARY_BUFFER_READBLOCK(bakfile,inifile,tag,variable,nfields)
-    IMPLICIT NONE
-
-    CHARACTER(LEN=*) bakfile,inifile,tag
-    TYPE(buffer_dt) variable
-    TINTEGER nfields
-
-    TREAL dummies(nfields+1)
-    CHARACTER(LEN=512) sRes
-    CHARACTER(LEN=4) str
+contains
 
     ! ###################################################################
-    variable%active(:) = .FALSE.; variable%hard = .FALSE.
-    IF ( variable%size .GT. 0 ) THEN
-      CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'Parameters'//TRIM(ADJUSTL(tag)), 'void', sRes)
-      IF ( TRIM(ADJUSTL(sRes)) .EQ. 'void' ) THEN
-        str = TRIM(ADJUSTL(tag))
-        CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'Parameters'//str(1:1), '1.0,2.0', sRes)
-      ENDIF
-      is = nfields+1; CALL LIST_REAL(sRes, is, dummies)
-      IF      ( is .EQ. 1 ) THEN
-        variable%strength(:) = dummies(1)
-        variable%sigma(:) = C_2_R
-      ELSE IF ( is .EQ. 2 ) THEN
-        variable%strength(:) = dummies(1)
-        variable%sigma(:) = dummies(2)
-      ELSE IF ( is .EQ. nfields+1 ) THEN
-        variable%strength(1:nfields) = dummies(1:nfields)
-        variable%sigma(:) = dummies(nfields+1)
-      ELSE
-        CALL TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersUImin.')
-        CALL TLAB_STOP(DNS_ERROR_OPTION)
-      ENDIF
-      DO is = 1,nfields
-        IF ( variable%strength(is) .NE. C_0_R ) variable%active(is) = .TRUE.
-      ENDDO
+    ! ###################################################################
+    subroutine BOUNDARY_BUFFER_READBLOCK(bakfile, inifile, tag, variable, nfields)
 
-      CALL SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValues'//TRIM(ADJUSTL(tag)), 'void', sRes)
-      IF ( TRIM(ADJUSTL(sRes)) .NE. 'void' ) THEN
-        is = nfields; CALL LIST_REAL(sRes, is, variable%hardvalues)
-        IF ( is .EQ. nfields ) THEN
-          variable%hard = .TRUE.
-        ELSE
-          CALL TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValues.'//TRIM(ADJUSTL(tag))//'.')
-          CALL TLAB_STOP(DNS_ERROR_OPTION)
-        ENDIF
-      ENDIF
+        character(LEN=*) bakfile, inifile, tag
+        type(buffer_dt) variable
+        integer(wi) nfields
 
-    ENDIF
+        real(wp) dummies(nfields + 1)
+        character(LEN=512) sRes
+        character(LEN=4) str
 
-  END SUBROUTINE BOUNDARY_BUFFER_READBLOCK
+        ! ###################################################################
+        variable%active(:) = .false.; variable%hard = .false.
+        if (variable%size > 0) then
+            call SCANINICHAR(bakfile, inifile, 'BufferZone', 'Parameters'//TRIM(ADJUSTL(tag)), 'void', sRes)
+            if (TRIM(ADJUSTL(sRes)) == 'void') then
+                str = TRIM(ADJUSTL(tag))
+                call SCANINICHAR(bakfile, inifile, 'BufferZone', 'Parameters'//str(1:1), '1.0,2.0', sRes)
+            end if
+            is = nfields + 1; call LIST_REAL(sRes, is, dummies)
+            if (is == 1) then
+                variable%strength(:) = dummies(1)
+                variable%sigma(:) = 2.0_wp
+            else if (is == 2) then
+                variable%strength(:) = dummies(1)
+                variable%sigma(:) = dummies(2)
+            else if (is == nfields + 1) then
+                variable%strength(1:nfields) = dummies(1:nfields)
+                variable%sigma(:) = dummies(nfields + 1)
+            else
+                call TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersUImin.')
+                call TLAB_STOP(DNS_ERROR_OPTION)
+            end if
+            do is = 1, nfields
+                if (variable%strength(is) /= 0.0_wp) variable%active(is) = .true.
+            end do
 
-  ! ###################################################################
-  ! ###################################################################
-  SUBROUTINE BOUNDARY_BUFFER_INITIALIZE(q,s, txc, wrk3d)
-    IMPLICIT NONE
+            call SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValues'//TRIM(ADJUSTL(tag)), 'void', sRes)
+            if (TRIM(ADJUSTL(sRes)) /= 'void') then
+                is = nfields; call LIST_REAL(sRes, is, variable%hardvalues)
+                if (is == nfields) then
+                    variable%hard = .true.
+                else
+           call TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValues.'//TRIM(ADJUSTL(tag))//'.')
+                    call TLAB_STOP(DNS_ERROR_OPTION)
+                end if
+            end if
 
-    TREAL, DIMENSION(isize_field,*), INTENT(IN   ) :: q, s
-    TREAL, DIMENSION(isize_field,6), INTENT(INOUT) :: txc
-    TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: wrk3d
+        end if
+
+    end subroutine BOUNDARY_BUFFER_READBLOCK
 
     ! ###################################################################
-    BuffFlowImin%offset = 0; BuffFlowImax%offset = g(1)%size -BuffFlowImax%size
-    BuffFlowJmin%offset = 0; BuffFlowJmax%offset = g(2)%size -BuffFlowJmax%size
-    BuffScalImin%offset = 0; BuffScalImax%offset = g(1)%size -BuffScalImax%size
-    BuffScalJmin%offset = 0; BuffScalJmax%offset = g(2)%size -BuffScalJmax%size
+    ! ###################################################################
+    subroutine BOUNDARY_BUFFER_INITIALIZE(q, s, txc, wrk3d)
+        ! Careful, txc is here contiguous
+        real(wp), dimension(isize_field, *), intent(IN) :: q, s
+        real(wp), dimension(isize_field, 6), intent(INOUT) :: txc
+        real(wp), dimension(isize_field), intent(INOUT) :: wrk3d
 
-    BuffFlowImin%total_size = BuffFlowImin%size; BuffFlowImax%total_size = BuffFlowImax%size
-    BuffFlowJmin%total_size = BuffFlowJmin%size; BuffFlowJmax%total_size = BuffFlowJmax%size
-    BuffScalImin%total_size = BuffScalImin%size; BuffScalImax%total_size = BuffScalImax%size
-    BuffScalJmin%total_size = BuffScalJmin%size; BuffScalJmax%total_size = BuffSCalJmax%size
+        ! ###################################################################
+        BuffFlowImin%offset = 0; BuffFlowImax%offset = g(1)%size - BuffFlowImax%size
+        BuffFlowJmin%offset = 0; BuffFlowJmax%offset = g(2)%size - BuffFlowJmax%size
+        BuffScalImin%offset = 0; BuffScalImax%offset = g(1)%size - BuffScalImax%size
+        BuffScalJmin%offset = 0; BuffScalJmax%offset = g(2)%size - BuffScalJmax%size
+
+        BuffFlowImin%total_size = BuffFlowImin%size; BuffFlowImax%total_size = BuffFlowImax%size
+        BuffFlowJmin%total_size = BuffFlowJmin%size; BuffFlowJmax%total_size = BuffFlowJmax%size
+        BuffScalImin%total_size = BuffScalImin%size; BuffScalImax%total_size = BuffScalImax%size
+        BuffScalJmin%total_size = BuffScalJmin%size; BuffScalJmax%total_size = BuffSCalJmax%size
 #ifdef USE_MPI
-    BuffFlowImin%size = MIN(imax,MAX( 0, BuffFlowImin%total_size - ims_offset_i) )
-    BuffFlowImax%size = MIN(imax,MAX( 0, ims_offset_i+imax-BuffFlowImax%offset) )
-    BuffScalImin%size = MIN(imax,MAX( 0, BuffScalImin%total_size - ims_offset_i) )
-    BuffScalImax%size = MIN(imax,MAX( 0, ims_offset_i+imax-BuffScalImax%offset) )
+        BuffFlowImin%size = MIN(imax, MAX(0, BuffFlowImin%total_size - ims_offset_i))
+        BuffFlowImax%size = MIN(imax, MAX(0, ims_offset_i + imax - BuffFlowImax%offset))
+        BuffScalImin%size = MIN(imax, MAX(0, BuffScalImin%total_size - ims_offset_i))
+        BuffScalImax%size = MIN(imax, MAX(0, ims_offset_i + imax - BuffScalImax%offset))
 #endif
-    BuffFlowImin%nfields = inb_flow; BuffFlowImax%nfields = inb_flow
-    BuffFlowJmin%nfields = inb_flow; BuffFlowJmax%nfields = inb_flow
-    BuffScalImin%nfields = inb_scal; BuffScalImax%nfields = inb_scal
-    BuffScalJmin%nfields = inb_scal; BuffScalJmax%nfields = inb_scal
+        BuffFlowImin%nfields = inb_flow; BuffFlowImax%nfields = inb_flow
+        BuffFlowJmin%nfields = inb_flow; BuffFlowJmax%nfields = inb_flow
+        BuffScalImin%nfields = inb_scal; BuffScalImax%nfields = inb_scal
+        BuffScalJmin%nfields = inb_scal; BuffScalJmax%nfields = inb_scal
 
-    BuffFlowImin%form = FORM_POWER_MIN; BuffFlowImax%form = FORM_POWER_MAX
-    BuffFlowJmin%form = FORM_POWER_MIN; BuffFlowJmax%form = FORM_POWER_MAX
-    BuffScalImin%form = FORM_POWER_MIN; BuffScalImax%form = FORM_POWER_MAX
-    BuffScalJmin%form = FORM_POWER_MIN; BuffScalJmax%form = FORM_POWER_MAX
+        BuffFlowImin%form = FORM_POWER_MIN; BuffFlowImax%form = FORM_POWER_MAX
+        BuffFlowJmin%form = FORM_POWER_MIN; BuffFlowJmax%form = FORM_POWER_MAX
+        BuffScalImin%form = FORM_POWER_MIN; BuffScalImax%form = FORM_POWER_MAX
+        BuffScalJmin%form = FORM_POWER_MIN; BuffScalJmax%form = FORM_POWER_MAX
+
+        ! ###################################################################
+        txc(:, 2:inb_flow + 1) = q(:, 1:inb_flow)
+        if (imode_eqns == DNS_EQNS_TOTAL) then
+            txc(:, 1) = q(:, 5) ! Density
+            dummy = 0.5_wp*(gama0 - 1.0_wp)*mach*mach
+            txc(:, 5) = q(:, 4) + dummy*(q(:, 1)*q(:, 1) + q(:, 2)*q(:, 2) + q(:, 3)*q(:, 3))
+            txc(:, 6) = 1.0_wp
+        else if (imode_eqns == DNS_EQNS_INTERNAL) then
+            txc(:, 1) = q(:, 5) ! Density
+            txc(:, 6) = 1.0_wp
+        else
+            txc(:, 1) = 1.0_wp ! Density
+        end if
+
+  if (BuffFlowImin%total_size > 0) call INI_BLOCK(1, TRIM(ADJUSTL(tag_flow))//'bcs.imin', BuffFlowImin, txc(1, 1), txc(1, 2), wrk3d)
+  if (BuffFlowImax%total_size > 0) call INI_BLOCK(1, TRIM(ADJUSTL(tag_flow))//'bcs.imax', BuffFlowImax, txc(1, 1), txc(1, 2), wrk3d)
+  if (BuffFlowJmin%total_size > 0) call INI_BLOCK(2, TRIM(ADJUSTL(tag_flow))//'bcs.jmin', BuffFlowJmin, txc(1, 1), txc(1, 2), wrk3d)
+  if (BuffFlowJmax%total_size > 0) call INI_BLOCK(2, TRIM(ADJUSTL(tag_flow))//'bcs.jmax', BuffFlowJmax, txc(1, 1), txc(1, 2), wrk3d)
+
+        if (BuffScalImin%total_size > 0) call INI_BLOCK(1, TRIM(ADJUSTL(tag_scal))//'bcs.imin', BuffScalImin, txc(1, 1), s, wrk3d)
+        if (BuffScalImax%total_size > 0) call INI_BLOCK(1, TRIM(ADJUSTL(tag_scal))//'bcs.imax', BuffScalImax, txc(1, 1), s, wrk3d)
+        if (BuffScalJmin%total_size > 0) call INI_BLOCK(2, TRIM(ADJUSTL(tag_scal))//'bcs.jmin', BuffScalJmin, txc(1, 1), s, wrk3d)
+        if (BuffScalJmax%total_size > 0) call INI_BLOCK(2, TRIM(ADJUSTL(tag_scal))//'bcs.jmax', BuffScalJmax, txc(1, 1), s, wrk3d)
+
+        return
+    end subroutine BOUNDARY_BUFFER_INITIALIZE
 
     ! ###################################################################
-    txc(:,2:inb_flow+1) = q(:,1:inb_flow)
-    IF      ( imode_eqns .EQ. DNS_EQNS_TOTAL    ) THEN
-      txc(:,1) = q(:,5) ! Density
-      dummy = C_05_R *(gama0-C_1_R)*mach*mach
-      txc(:,5) = q(:,4) + dummy *( q(:,1)*q(:,1) +q(:,2)*q(:,2) +q(:,3)*q(:,3) )
-      txc(:,6) = C_1_R
-    ELSE IF ( imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
-      txc(:,1) = q(:,5) ! Density
-      txc(:,6) = C_1_R
-    ELSE
-      txc(:,1) = C_1_R ! Density
-    ENDIF
-
-    IF ( BuffFlowImin%total_size > 0 ) CALL INI_BLOCK(1, TRIM(ADJUSTL(tag_flow))//'bcs.imin', BuffFlowImin, txc(1,1), txc(1,2), wrk3d )
-    IF ( BuffFlowImax%total_size > 0 ) CALL INI_BLOCK(1, TRIM(ADJUSTL(tag_flow))//'bcs.imax', BuffFlowImax, txc(1,1), txc(1,2), wrk3d )
-    IF ( BuffFlowJmin%total_size > 0 ) CALL INI_BLOCK(2, TRIM(ADJUSTL(tag_flow))//'bcs.jmin', BuffFlowJmin, txc(1,1), txc(1,2), wrk3d )
-    IF ( BuffFlowJmax%total_size > 0 ) CALL INI_BLOCK(2, TRIM(ADJUSTL(tag_flow))//'bcs.jmax', BuffFlowJmax, txc(1,1), txc(1,2), wrk3d )
-
-    IF ( BuffScalImin%total_size > 0 ) CALL INI_BLOCK(1, TRIM(ADJUSTL(tag_scal))//'bcs.imin', BuffScalImin, txc(1,1), s, wrk3d )
-    IF ( BuffScalImax%total_size > 0 ) CALL INI_BLOCK(1, TRIM(ADJUSTL(tag_scal))//'bcs.imax', BuffScalImax, txc(1,1), s, wrk3d )
-    IF ( BuffScalJmin%total_size > 0 ) CALL INI_BLOCK(2, TRIM(ADJUSTL(tag_scal))//'bcs.jmin', BuffScalJmin, txc(1,1), s, wrk3d )
-    IF ( BuffScalJmax%total_size > 0 ) CALL INI_BLOCK(2, TRIM(ADJUSTL(tag_scal))//'bcs.jmax', BuffScalJmax, txc(1,1), s, wrk3d )
-
-    RETURN
-  END SUBROUTINE BOUNDARY_BUFFER_INITIALIZE
-
-  ! ###################################################################
-  ! ###################################################################
-  SUBROUTINE INI_BLOCK(idir, tag,item, rho, a, wrk3d)
-#ifdef USE_MPI
-    USE MPI
-#endif
-
-    IMPLICIT NONE
-
-    TINTEGER,         INTENT(IN   ) :: idir         ! Wall-normal direction of buffer zone
-    CHARACTER(LEN=*), INTENT(IN   ) :: tag          ! File name information
-    TYPE(buffer_dt),  INTENT(INOUT) :: item
-    TREAL,            INTENT(IN   ) :: rho(isize_field), a(isize_field,item%nfields)
-    TREAL,            INTENT(INOUT) :: wrk3d(isize_field)
-
-    ! -------------------------------------------------------------------
-    TINTEGER io_sizes(5), id
-    TREAL, DIMENSION(2) :: var_minmax
-
-    CHARACTER*32 str, varname(item%nfields)
-    CHARACTER*128 line
-#ifdef USE_MPI
-    INTEGER sa_comm_color
-    INTEGER,PARAMETER :: sa_ndims=3
-    INTEGER, DIMENSION(sa_ndims) :: sa_size, sa_locsize,sa_offset
-    TREAL, DIMENSION(2) :: dummy2
-#endif
-
-
     ! ###################################################################
-    ! Reference fields
+    subroutine INI_BLOCK(idir, tag, item, rho, a, wrk3d)
+#ifdef USE_MPI
+        use MPI
+#endif
+
+        integer(wi), intent(IN) :: idir         ! Wall-normal direction of buffer zone
+        character(LEN=*), intent(IN) :: tag          ! File name information
+        type(buffer_dt), intent(INOUT) :: item
+        real(wp), intent(IN) :: rho(isize_field), a(isize_field, item%nfields)
+        real(wp), intent(INOUT) :: wrk3d(isize_field)
+
+        ! -------------------------------------------------------------------
+        integer(wi) io_sizes(5), id
+        real(wp), dimension(2) :: var_minmax
+
+        character*32 str, varname(item%nfields)
+        character*128 line
+#ifdef USE_MPI
+        integer sa_comm_color
+        integer, parameter :: sa_ndims = 3
+        integer, dimension(sa_ndims) :: sa_size, sa_locsize, sa_offset
+        real(wp), dimension(2) :: dummy2
+#endif
+
+        ! ###################################################################
+        ! Reference fields
 
 #ifdef TRACE_ON
-    CALL TLAB_WRITE_ASCII(tfile,'ENTERING INI_BLOCK (boundary_buffer.f90)')
+        call TLAB_WRITE_ASCII(tfile, 'ENTERING INI_BLOCK (boundary_buffer.f90)')
 #endif
 
-    IF ( item%size .GT. 0 ) THEN
-       IF ( idir == 1 ) ALLOCATE( item%ref(item%size,jmax,kmax,item%nfields) )
-       IF ( idir == 2 ) ALLOCATE( item%ref(imax,item%size,kmax,item%nfields) )
-    ENDIF
+        if (item%size > 0) then
+            if (idir == 1) allocate (item%ref(item%size, jmax, kmax, item%nfields))
+            if (idir == 2) allocate (item%ref(imax, item%size, kmax, item%nfields))
+        end if
 
-    DO iq = 1,item%nfields; WRITE(varname(iq),*) iq; ENDDO
+        do iq = 1, item%nfields; write (varname(iq), *) iq; end do
 
-    SELECT CASE ( idir )
-    CASE( 1 )
+        select case (idir)
+        case (1)
 #ifdef USE_MPI
-      id = IO_SUBARRAY_BUFFER_ZOY
-      io_aux(id)%offset = 0
-      IF ( ims_npro_i .GT. 1  .AND. item%total_size .EQ. imax ) THEN
-         ! Buffer lives on exactly one PE in x; we can use ims_comm_z 
-         IF ( item%size .GT. 0 ) THEN
-            io_aux(id)%active = .TRUE.
-            io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY( jmax*item%total_size,kmax, MPI_REAL8 )
-            io_aux(id)%communicator = ims_comm_z
-         ELSE
-            io_aux(id)%active = .FALSE.
-         ENDIF
-      ELSE ! Buffer occupies more or less than one PE --> need new subarray and communicator 
-         sa_comm_color = MPI_UNDEFINED
-         IF ( item%size .GT. 0 ) THEN
-            io_aux(id)%active = .TRUE.
-            sa_size    = [ item%total_size,             jmax, kmax*ims_npro_k ]
-            sa_locsize = [ item%size      ,             jmax, kmax            ]
-            IF ( item%offset .EQ. 0 ) THEN
-               sa_offset=[ ims_offset_i,                   0, kmax*ims_pro_k  ]
-            ELSE
-               sa_offset=[ MAX(0,ims_offset_i-item%offset),0, kmax*ims_pro_k  ]
-            ENDIF
+            id = IO_SUBARRAY_BUFFER_ZOY
+            io_aux(id)%offset = 0
+            if (ims_npro_i > 1 .and. item%total_size == imax) then
+                ! Buffer lives on exactly one PE in x; we can use ims_comm_z
+                if (item%size > 0) then
+                    io_aux(id)%active = .true.
+                    io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY(jmax*item%total_size, kmax, MPI_REAL8)
+                    io_aux(id)%communicator = ims_comm_z
+                else
+                    io_aux(id)%active = .false.
+                end if
+            else ! Buffer occupies more or less than one PE --> need new subarray and communicator
+                sa_comm_color = MPI_UNDEFINED
+                if (item%size > 0) then
+                    io_aux(id)%active = .true.
+                    sa_size = [item%total_size, jmax, kmax*ims_npro_k]
+                    sa_locsize = [item%size, jmax, kmax]
+                    if (item%offset == 0) then
+                        sa_offset = [ims_offset_i, 0, kmax*ims_pro_k]
+                    else
+                        sa_offset = [MAX(0, ims_offset_i - item%offset), 0, kmax*ims_pro_k]
+                    end if
 
-            CALL MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
-            IF ( ims_err /= MPI_SUCCESS ) CALL TLAB_MPI_PANIC(__FILE__,ims_err)
-            CALL MPI_TYPE_COMMIT(io_aux(id)%subarray,ims_err)
-            IF ( ims_err /= MPI_SUCCESS ) CALL TLAB_MPI_PANIC(__FILE__,ims_err)
+ call MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    call MPI_TYPE_COMMIT(io_aux(id)%subarray, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
 
-            sa_comm_color = 1
-         ELSE
-            io_aux(id)%active = .FALSE.
-         ENDIF
-         io_aux(id)%communicator = MPI_UNDEFINED
-         CALL MPI_Comm_Split(MPI_COMM_WORLD,sa_comm_color,ims_pro,io_aux(id)%communicator,ims_err)
-         IF ( ims_err /= MPI_SUCCESS ) CALL TLAB_MPI_PANIC(__FILE__,ims_err)
+                    sa_comm_color = 1
+                else
+                    io_aux(id)%active = .false.
+                end if
+                io_aux(id)%communicator = MPI_UNDEFINED
+                call MPI_Comm_Split(MPI_COMM_WORLD, sa_comm_color, ims_pro, io_aux(id)%communicator, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
 
-      ENDIF
+            end if
 #endif
-      idummy = item%size*jmax*kmax;
-      io_sizes=[idummy,1,idummy,1,item%nfields]
-    CASE( 2 )
-      id = IO_SUBARRAY_BUFFER_XOZ
-      io_aux(id)%offset = 0
+            idummy = item%size*jmax*kmax; 
+            io_sizes = [idummy, 1, idummy, 1, item%nfields]
+        case (2)
+            id = IO_SUBARRAY_BUFFER_XOZ
+            io_aux(id)%offset = 0
 #ifdef USE_MPI
-      io_aux(id)%active = .TRUE.
-      io_aux(id)%communicator = MPI_COMM_WORLD
-      io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ( imax,item%size,kmax, MPI_REAL8 )
+            io_aux(id)%active = .true.
+            io_aux(id)%communicator = MPI_COMM_WORLD
+            io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ(imax, item%size, kmax, MPI_REAL8)
 #endif
-      idummy = imax*item%size*kmax; io_sizes = (/idummy,1,idummy,1,item%nfields/)
-    END SELECT
+            idummy = imax*item%size*kmax; io_sizes = (/idummy, 1, idummy, 1, item%nfields/)
+        end select
 
-    IF ( BuffLoad ) THEN
-       CALL IO_READ_SUBARRAY8(id, tag, varname, item%ref, io_sizes, wrk3d)
-    ELSE
-      SELECT CASE ( idir )
-      CASE( 1 )
-        DO iq = 1,item%nfields
-          DO j = 1,jmax
-            DO iloc = 1, item%size
-              i = item%offset +iloc
-              IF ( .NOT. item%hard ) item%hardvalues(iq) = COV2V1D(imax,jmax,kmax, i,j, rho, a(1,iq))
-              item%ref(iloc,j,:,iq) = item%hardvalues(iq)
-            ENDDO
-          ENDDO
-        ENDDO
+        if (BuffLoad) then
+            call IO_READ_SUBARRAY8(id, tag, varname, item%ref, io_sizes, wrk3d)
+        else
+            select case (idir)
+            case (1)
+                do iq = 1, item%nfields
+                    do j = 1, jmax
+                        do iloc = 1, item%size
+                            i = item%offset + iloc
+                            if (.not. item%hard) item%hardvalues(iq) = COV2V1D(imax, jmax, kmax, i, j, rho, a(1, iq))
+                            item%ref(iloc, j, :, iq) = item%hardvalues(iq)
+                        end do
+                    end do
+                end do
 
-      CASE( 2 )
-        IF ( imode_sim == DNS_MODE_TEMPORAL ) THEN
-          DO iq = 1,item%nfields
-            DO jloc = 1, item%size
-              j = item%offset +jloc
-              IF ( .NOT. item%hard ) item%hardvalues(iq) = COV2V2D(imax,jmax,kmax, j, rho, a(1,iq))
-              item%ref(:,jloc,:,iq) = item%hardvalues(iq)
-            ENDDO
-          ENDDO
-        ELSE IF ( imode_sim .EQ. DNS_MODE_SPATIAL ) THEN
-          DO iq = 1,item%nfields
-            DO jloc = 1, item%size
-              j = item%offset +jloc
-              DO i = 1,imax
-                IF ( .NOT. item%hard ) item%hardvalues(iq) = COV2V1D(imax,jmax,kmax, i,j, rho, a(1,iq))
-                item%ref(i,jloc,:,iq) = item%hardvalues(iq)
-              ENDDO
-            ENDDO
-          ENDDO
-        ENDIF
+            case (2)
+                if (imode_sim == DNS_MODE_TEMPORAL) then
+                    do iq = 1, item%nfields
+                        do jloc = 1, item%size
+                            j = item%offset + jloc
+                            if (.not. item%hard) item%hardvalues(iq) = COV2V2D(imax, jmax, kmax, j, rho, a(1, iq))
+                            item%ref(:, jloc, :, iq) = item%hardvalues(iq)
+                        end do
+                    end do
+                else if (imode_sim == DNS_MODE_SPATIAL) then
+                    do iq = 1, item%nfields
+                        do jloc = 1, item%size
+                            j = item%offset + jloc
+                            do i = 1, imax
+                                if (.not. item%hard) item%hardvalues(iq) = COV2V1D(imax, jmax, kmax, i, j, rho, a(1, iq))
+                                item%ref(i, jloc, :, iq) = item%hardvalues(iq)
+                            end do
+                        end do
+                    end do
+                end if
 
-      END SELECT
+            end select
 
-      WRITE(str, *) itime; str = TRIM(ADJUSTL(tag))//'.'//TRIM(ADJUSTL(str))
-      CALL IO_WRITE_SUBARRAY8(id, str, varname, item%ref, io_sizes, wrk3d)
+            write (str, *) itime; str = TRIM(ADJUSTL(tag))//'.'//TRIM(ADJUSTL(str))
+            call IO_WRITE_SUBARRAY8(id, str, varname, item%ref, io_sizes, wrk3d)
 
-    ENDIF
+        end if
 
-    DO iq = 1, item%nfields ! Control
+        do iq = 1, item%nfields ! Control
 #ifdef USE_MPI
-       IF ( io_aux(id)%active ) THEN
-          var_minmax = [ MINVAL(item%ref(:,:,:,iq)), -MAXVAL(item%ref(:,:,:,iq)) ]
-       ELSE
-          var_minmax = [ HUGE(dummy), HUGE(dummy)]
-       ENDIF
+            if (io_aux(id)%active) then
+                var_minmax = [MINVAL(item%ref(:, :, :, iq)), -MAXVAL(item%ref(:, :, :, iq))]
+            else
+                var_minmax = [HUGE(dummy), HUGE(dummy)]
+            end if
 
-       CALL MPI_ALLREDUCE(var_minmax, dummy2, 2, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
-       IF ( ims_err /= MPI_SUCCESS ) CALL TLAB_MPI_PANIC(__FILE__,ims_err)
-       var_minmax = dummy2; var_minmax(2) = -var_minmax(2)
+            call MPI_ALLREDUCE(var_minmax, dummy2, 2, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
+            if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+            var_minmax = dummy2; var_minmax(2) = -var_minmax(2)
 #else
-       var_minmax = [ MINVAL(item%ref(:,:,:,iq)), MAXVAL(item%ref(:,:,:,iq)) ]
+            var_minmax = [MINVAL(item%ref(:, :, :, iq)), MAXVAL(item%ref(:, :, :, iq))]
 #endif
-       WRITE(line,10) var_minmax(2)
-       WRITE(str, 10) var_minmax(1)
+            write (line, 10) var_minmax(2)
+            write (str, 10) var_minmax(1)
 
-       line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
-       line = 'Checking bounds of field '//TRIM(ADJUSTL(tag))//'.'//TRIM(ADJUSTL(varname(iq)))//': '//TRIM(ADJUSTL(line))
-       CALL TLAB_WRITE_ASCII(lfile,line)
-    ENDDO
+            line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
+            line = 'Checking bounds of field '//TRIM(ADJUSTL(tag))//'.'//TRIM(ADJUSTL(varname(iq)))//': '//TRIM(ADJUSTL(line))
+            call TLAB_WRITE_ASCII(lfile, line)
+        end do
 
-    ! -----------------------------------------------------------------------
-    ! Strength of the telaxation terms
-    ALLOCATE( item%tau(item%size,item%nfields) )
-    DO iq = 1,item%nfields
-      dummy = C_1_R /( g(idir)%nodes( item%offset+item%size ) - g(idir)%nodes( item%offset+1 ) ) ! Inverse of segment length
-      DO jloc = 1,item%size
-        j = item%offset +jloc
+        ! -----------------------------------------------------------------------
+        ! Strength of the telaxation terms
+        allocate (item%tau(item%size, item%nfields))
+        do iq = 1, item%nfields
+            dummy = 1.0_wp/(g(idir)%nodes(item%offset + item%size) - g(idir)%nodes(item%offset + 1)) ! Inverse of segment length
+            do jloc = 1, item%size
+                j = item%offset + jloc
         IF ( item%form == FORM_POWER_MAX ) item%tau(jloc,iq) = item%strength(iq) *( ( g(idir)%nodes(j) -g(idir)%nodes(item%offset+1) ) *dummy ) **item%sigma(iq)
         IF ( item%form == FORM_POWER_MIN ) item%tau(jloc,iq) = item%strength(iq) *( ( g(idir)%nodes(item%offset+item%size) -g(idir)%nodes(j)) *dummy ) **item%sigma(iq)
-      ENDDO
-    ENDDO
+            end do
+        end do
 
-    ! -----------------------------------------------------------------------
-    ! Filters at boundaries; nseeds to be checked
+        ! -----------------------------------------------------------------------
+        ! Filters at boundaries; nseeds to be checked
 #ifdef USE_MPI
-    IF ( item%type == DNS_BUFFER_FILTER ) THEN
-      SELECT CASE ( idir )
-      CASE( 1 )
-        CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI types for Ox BCs explicit filter.')
-        id     = TLAB_MPI_K_OUTBCS
-        idummy = item%size*jmax
-        CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, idummy, 1,1,1,1, &
-            ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+        if (item%type == DNS_BUFFER_FILTER) then
+            select case (idir)
+            case (1)
+                call TLAB_WRITE_ASCII(lfile, 'Initialize MPI types for Ox BCs explicit filter.')
+                id = TLAB_MPI_K_OUTBCS
+                idummy = item%size*jmax
+                call TLAB_MPI_TYPE_K(ims_npro_k, kmax, idummy, 1, 1, 1, 1, &
+                                     ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
-      CASE( 2 )
-        CALL TLAB_WRITE_ASCII(lfile,'Initialize MPI types for Oy BCs explicit filter.')
-        id     = TLAB_MPI_K_TOPBCS
-        idummy = imax*item%size
-        CALL TLAB_MPI_TYPE_K(ims_npro_k, kmax, idummy, 1,1,1,1, &
-            ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+            case (2)
+                call TLAB_WRITE_ASCII(lfile, 'Initialize MPI types for Oy BCs explicit filter.')
+                id = TLAB_MPI_K_TOPBCS
+                idummy = imax*item%size
+                call TLAB_MPI_TYPE_K(ims_npro_k, kmax, idummy, 1, 1, 1, 1, &
+                                     ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
-      END SELECT
-    ENDIF
+            end select
+        end if
 #endif
 
 #ifdef TRACE_ON
-    CALL TLAB_WRITE_ASCII(tfile,'LEAVING INI_BLOCK (boundary_buffer.f90)')
+        call TLAB_WRITE_ASCII(tfile, 'LEAVING INI_BLOCK (boundary_buffer.f90)')
 #endif
-    RETURN
-10  FORMAT(G_FORMAT_R)
-  END SUBROUTINE INI_BLOCK
-
-  ! ###################################################################
-  ! ###################################################################
-  SUBROUTINE BOUNDARY_BUFFER_RELAX_SCAL(s,hs, q)
-    IMPLICIT NONE
-
-    TREAL, INTENT(IN   ) :: s(isize_field,inb_scal)
-    TREAL, INTENT(  OUT) :: hs(isize_field,inb_scal)
-    TREAL, INTENT(IN   ) :: q(isize_field,inb_flow)   ! In case I need the density
+        return
+10      format(G_FORMAT_R)
+    end subroutine INI_BLOCK
 
     ! ###################################################################
-    SELECT CASE( imode_eqns )
-    CASE ( DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL )
-      IF ( BuffScalImin%size > 0 ) CALL RELAX_BLOCK_RHO( 1, BuffScalImin, s,hs, q(:,5) )
-      IF ( BuffScalImax%size > 0 ) CALL RELAX_BLOCK_RHO( 1, BuffScalImax, s,hs, q(:,5) )
-      IF ( BuffScalJmin%size > 0 ) CALL RELAX_BLOCK_RHO( 2, BuffScalJmin, s,hs, q(:,5) )
-      IF ( BuffScalJmax%size > 0 ) CALL RELAX_BLOCK_RHO( 2, BuffScalJmax, s,hs, q(:,5) )
-    CASE DEFAULT
-      IF ( BuffScalImin%size > 0 ) CALL RELAX_BLOCK( 1, BuffScalImin, s,hs )
-      IF ( BuffScalImax%size > 0 ) CALL RELAX_BLOCK( 1, BuffScalImax, s,hs )
-      IF ( BuffScalJmin%size > 0 ) CALL RELAX_BLOCK( 2, BuffScalJmin, s,hs )
-      IF ( BuffScalJmax%size > 0 ) CALL RELAX_BLOCK( 2, BuffScalJmax, s,hs )
-    END SELECT
+    ! ###################################################################
+    subroutine BOUNDARY_BUFFER_RELAX_SCAL()
+        use TLAB_ARRAYS, only: q, s
+        use DNS_ARRAYS, only: hs
 
-    RETURN
-  END SUBROUTINE BOUNDARY_BUFFER_RELAX_SCAL
+        ! ###################################################################
+        select case (imode_eqns)
+        case (DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL)
+            if (BuffScalImin%size > 0) call RELAX_BLOCK_RHO(1, BuffScalImin, s, hs, q(:, 5))
+            if (BuffScalImax%size > 0) call RELAX_BLOCK_RHO(1, BuffScalImax, s, hs, q(:, 5))
+            if (BuffScalJmin%size > 0) call RELAX_BLOCK_RHO(2, BuffScalJmin, s, hs, q(:, 5))
+            if (BuffScalJmax%size > 0) call RELAX_BLOCK_RHO(2, BuffScalJmax, s, hs, q(:, 5))
+        case DEFAULT
+            if (BuffScalImin%size > 0) call RELAX_BLOCK(1, BuffScalImin, s, hs)
+            if (BuffScalImax%size > 0) call RELAX_BLOCK(1, BuffScalImax, s, hs)
+            if (BuffScalJmin%size > 0) call RELAX_BLOCK(2, BuffScalJmin, s, hs)
+            if (BuffScalJmax%size > 0) call RELAX_BLOCK(2, BuffScalJmax, s, hs)
+        end select
 
-  ! ###################################################################
-  ! ###################################################################
-  SUBROUTINE BOUNDARY_BUFFER_RELAX_SCAL_I(is, s,hs)
-    IMPLICIT NONE
-
-    TINTEGER, INTENT(IN   ) :: is ! field to which relaxation is applied
-    TREAL,    INTENT(IN   ) :: s(isize_field)
-    TREAL,    INTENT(  OUT) :: hs(isize_field)
+        return
+    end subroutine BOUNDARY_BUFFER_RELAX_SCAL
 
     ! ###################################################################
-    IF ( BuffScalImin%size > 0 ) CALL RELAX_BLOCK_I( 1, BuffScalImin, s,hs, is )
-    IF ( BuffScalImax%size > 0 ) CALL RELAX_BLOCK_I( 1, BuffScalImax, s,hs, is )
-    IF ( BuffScalJmin%size > 0 ) CALL RELAX_BLOCK_I( 2, BuffScalJmin, s,hs, is )
-    IF ( BuffScalJmax%size > 0 ) CALL RELAX_BLOCK_I( 2, BuffScalJmax, s,hs, is )
+    ! ###################################################################
+    subroutine BOUNDARY_BUFFER_RELAX_SCAL_I(is, s, hs)
+        implicit none
 
-    RETURN
-  END SUBROUTINE BOUNDARY_BUFFER_RELAX_SCAL_I
+        integer(wi), intent(IN) :: is ! field to which relaxation is applied
+        real(wp), intent(IN) :: s(isize_field)
+        real(wp), intent(OUT) :: hs(isize_field)
 
-  ! ###################################################################
-  ! ###################################################################
-  SUBROUTINE BOUNDARY_BUFFER_RELAX_FLOW(q,hq)
-    IMPLICIT NONE
+        ! ###################################################################
+        if (BuffScalImin%size > 0) call RELAX_BLOCK_I(1, BuffScalImin, s, hs, is)
+        if (BuffScalImax%size > 0) call RELAX_BLOCK_I(1, BuffScalImax, s, hs, is)
+        if (BuffScalJmin%size > 0) call RELAX_BLOCK_I(2, BuffScalJmin, s, hs, is)
+        if (BuffScalJmax%size > 0) call RELAX_BLOCK_I(2, BuffScalJmax, s, hs, is)
 
-    TREAL, INTENT(IN   ) :: q(isize_field,inb_flow)
-    TREAL, INTENT(  OUT) :: hq(isize_field,inb_flow)
+        return
+    end subroutine BOUNDARY_BUFFER_RELAX_SCAL_I
 
     ! ###################################################################
-    SELECT CASE( imode_eqns )
-    CASE ( DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL )
-      IF ( BuffFlowImin%size > 0 ) CALL RELAX_BLOCK_CF( 1, BuffFlowImin, q,hq )
-      IF ( BuffFlowImax%size > 0 ) CALL RELAX_BLOCK_CF( 1, BuffFlowImax, q,hq )
-      IF ( BuffFlowJmin%size > 0 ) CALL RELAX_BLOCK_CF( 2, BuffFlowJmin, q,hq )
-      IF ( BuffFlowJmax%size > 0 ) CALL RELAX_BLOCK_CF( 2, BuffFlowJmax, q,hq )
-    CASE DEFAULT
-      IF ( BuffFlowImin%size > 0 ) CALL RELAX_BLOCK( 1, BuffFlowImin, q,hq )
-      IF ( BuffFlowImax%size > 0 ) CALL RELAX_BLOCK( 1, BuffFlowImax, q,hq )
-      IF ( BuffFlowJmin%size > 0 ) CALL RELAX_BLOCK( 2, BuffFlowJmin, q,hq )
-      IF ( BuffFlowJmax%size > 0 ) CALL RELAX_BLOCK( 2, BuffFlowJmax, q,hq )
-    END SELECT
+    ! ###################################################################
+    subroutine BOUNDARY_BUFFER_RELAX_FLOW()
+        use TLAB_ARRAYS, only: q
+        use DNS_ARRAYS, only: hq
 
-    RETURN
-  END SUBROUTINE BOUNDARY_BUFFER_RELAX_FLOW
+        ! ###################################################################
+        select case (imode_eqns)
+        case (DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL)
+            if (BuffFlowImin%size > 0) call RELAX_BLOCK_CF(1, BuffFlowImin, q, hq)
+            if (BuffFlowImax%size > 0) call RELAX_BLOCK_CF(1, BuffFlowImax, q, hq)
+            if (BuffFlowJmin%size > 0) call RELAX_BLOCK_CF(2, BuffFlowJmin, q, hq)
+            if (BuffFlowJmax%size > 0) call RELAX_BLOCK_CF(2, BuffFlowJmax, q, hq)
+        case DEFAULT
+            if (BuffFlowImin%size > 0) call RELAX_BLOCK(1, BuffFlowImin, q, hq)
+            if (BuffFlowImax%size > 0) call RELAX_BLOCK(1, BuffFlowImax, q, hq)
+            if (BuffFlowJmin%size > 0) call RELAX_BLOCK(2, BuffFlowJmin, q, hq)
+            if (BuffFlowJmax%size > 0) call RELAX_BLOCK(2, BuffFlowJmax, q, hq)
+        end select
 
-  ! ###################################################################
-  ! ###################################################################
-  SUBROUTINE RELAX_BLOCK( idir, item, s, hs )
-    IMPLICIT NONE
-
-    TINTEGER,         INTENT(IN   ) :: idir
-    TYPE(buffer_dt),  INTENT(IN   ) :: item
-    TREAL,            INTENT(IN   ) :: s(imax,jmax,kmax,item%nfields)
-    TREAL,            INTENT(  OUT) :: hs(imax,jmax,kmax,item%nfields)
+        return
+    end subroutine BOUNDARY_BUFFER_RELAX_FLOW
 
     ! ###################################################################
-    SELECT CASE ( idir )
-    CASE( 1 )
-      DO iq = 1,item%nfields
-        DO jloc = 1, item%size
-          j = item%offset +jloc
-          hs(j,:,:,iq) = hs(j,:,:,iq) -item%Tau(jloc,iq) *( s(j,:,:,iq) -item%Ref(jloc,:,:,iq))
-        ENDDO
-      ENDDO
+    ! ###################################################################
+    subroutine RELAX_BLOCK(idir, item, s, hs)
+        integer(wi), intent(IN) :: idir
+        type(buffer_dt), intent(IN) :: item
+        real(wp), intent(IN) :: s(imax, jmax, kmax, item%nfields)
+        real(wp), intent(OUT) :: hs(imax, jmax, kmax, item%nfields)
 
-    CASE( 2 )
-      DO iq = 1,item%nfields
-        DO jloc = 1, item%size
-          j = item%offset +jloc
-          hs(:,j,:,iq) = hs(:,j,:,iq) -item%Tau(jloc,iq) *( s(:,j,:,iq) -item%Ref(:,jloc,:,iq))
-        ENDDO
-      ENDDO
+        ! ###################################################################
+        select case (idir)
+        case (1)
+            do iq = 1, item%nfields
+                do jloc = 1, item%size
+                    j = item%offset + jloc
+                    hs(j, :, :, iq) = hs(j, :, :, iq) - item%Tau(jloc, iq)*(s(j, :, :, iq) - item%Ref(jloc, :, :, iq))
+                end do
+            end do
 
-    END SELECT
+        case (2)
+            do iq = 1, item%nfields
+                do jloc = 1, item%size
+                    j = item%offset + jloc
+                    hs(:, j, :, iq) = hs(:, j, :, iq) - item%Tau(jloc, iq)*(s(:, j, :, iq) - item%Ref(:, jloc, :, iq))
+                end do
+            end do
 
-    RETURN
-  END SUBROUTINE RELAX_BLOCK
+        end select
 
-  ! ###################################################################
-  ! ###################################################################
-  SUBROUTINE RELAX_BLOCK_RHO( idir, item, s, hs, rho )
-    IMPLICIT NONE
-
-    TINTEGER,         INTENT(IN   ) :: idir
-    TYPE(buffer_dt),  INTENT(IN   ) :: item
-    TREAL,            INTENT(IN   ) :: s(imax,jmax,kmax,item%nfields)
-    TREAL,            INTENT(  OUT) :: hs(imax,jmax,kmax,item%nfields)
-    TREAL,            INTENT(IN   ) :: rho(imax,jmax,kmax)
+        return
+    end subroutine RELAX_BLOCK
 
     ! ###################################################################
-    SELECT CASE ( idir )
-    CASE( 1 )
-      DO iq = 1,item%nfields
-        DO jloc = 1, item%size
-          j = item%offset +jloc
-          hs(j,:,:,iq) = hs(j,:,:,iq) -item%Tau(jloc,iq) *( rho(j,:,:) *s(j,:,:,iq) -item%Ref(jloc,:,:,iq))
-        ENDDO
-      ENDDO
+    ! ###################################################################
+    subroutine RELAX_BLOCK_RHO(idir, item, s, hs, rho)
+        integer(wi), intent(IN) :: idir
+        type(buffer_dt), intent(IN) :: item
+        real(wp), intent(IN) :: s(imax, jmax, kmax, item%nfields)
+        real(wp), intent(OUT) :: hs(imax, jmax, kmax, item%nfields)
+        real(wp), intent(IN) :: rho(imax, jmax, kmax)
 
-    CASE( 2 )
-      DO iq = 1,item%nfields
-        DO jloc = 1, item%size
-          j = item%offset +jloc
-          hs(:,j,:,iq) = hs(:,j,:,iq) -item%Tau(jloc,iq) *( rho(:,j,:) *s(:,j,:,iq) -item%Ref(:,jloc,:,iq))
-        ENDDO
-      ENDDO
+        ! ###################################################################
+        select case (idir)
+        case (1)
+            do iq = 1, item%nfields
+                do jloc = 1, item%size
+                    j = item%offset + jloc
+                    hs(j, :, :, iq) = hs(j, :, :, iq) - item%Tau(jloc, iq)*(rho(j, :, :)*s(j, :, :, iq) - item%Ref(jloc, :, :, iq))
+                end do
+            end do
 
-    END SELECT
+        case (2)
+            do iq = 1, item%nfields
+                do jloc = 1, item%size
+                    j = item%offset + jloc
+                    hs(:, j, :, iq) = hs(:, j, :, iq) - item%Tau(jloc, iq)*(rho(:, j, :)*s(:, j, :, iq) - item%Ref(:, jloc, :, iq))
+                end do
+            end do
 
-    RETURN
-  END SUBROUTINE RELAX_BLOCK_RHO
+        end select
 
-  ! ###################################################################
-  ! ###################################################################
-  SUBROUTINE RELAX_BLOCK_I( idir, item, s, hs, iq )
-    IMPLICIT NONE
-
-    TINTEGER,         INTENT(IN   ) :: idir,iq
-    TYPE(buffer_dt),  INTENT(IN   ) :: item
-    TREAL,            INTENT(IN   ) :: s(imax,jmax,kmax)
-    TREAL,            INTENT(  OUT) :: hs(imax,jmax,kmax)
+        return
+    end subroutine RELAX_BLOCK_RHO
 
     ! ###################################################################
-    SELECT CASE ( idir )
-    CASE( 1 )
-      DO jloc = 1, item%size
-        j = item%offset +jloc
-        hs(j,:,:) = hs(j,:,:) -item%Tau(jloc,iq) *( s(j,:,:) -item%Ref(jloc,:,:,iq) )
-      ENDDO
+    ! ###################################################################
+    subroutine RELAX_BLOCK_I(idir, item, s, hs, iq)
+        integer(wi), intent(IN) :: idir, iq
+        type(buffer_dt), intent(IN) :: item
+        real(wp), intent(IN) :: s(imax, jmax, kmax)
+        real(wp), intent(OUT) :: hs(imax, jmax, kmax)
 
-    CASE( 2 )
-      DO jloc = 1, item%size
-        j = item%offset +jloc
-        hs(:,j,:) = hs(:,j,:) -item%Tau(jloc,iq) *( s(:,j,:) -item%Ref(:,jloc,:,iq) )
-      ENDDO
+        ! ###################################################################
+        select case (idir)
+        case (1)
+            do jloc = 1, item%size
+                j = item%offset + jloc
+                hs(j, :, :) = hs(j, :, :) - item%Tau(jloc, iq)*(s(j, :, :) - item%Ref(jloc, :, :, iq))
+            end do
 
-    END SELECT
+        case (2)
+            do jloc = 1, item%size
+                j = item%offset + jloc
+                hs(:, j, :) = hs(:, j, :) - item%Tau(jloc, iq)*(s(:, j, :) - item%Ref(:, jloc, :, iq))
+            end do
 
-    RETURN
-  END SUBROUTINE RELAX_BLOCK_I
+        end select
 
-  ! ###################################################################
-  ! ###################################################################
-  SUBROUTINE RELAX_BLOCK_CF( idir, item, q,hq )  ! Compressible flow case
-    IMPLICIT NONE
-
-    TINTEGER,         INTENT(IN   ) :: idir
-    TYPE(buffer_dt),  INTENT(IN   ) :: item
-    TREAL,            INTENT(IN   ) :: q(imax,jmax,kmax,item%nfields)
-    TREAL,            INTENT(  OUT) :: hq(imax,jmax,kmax,item%nfields)
+        return
+    end subroutine RELAX_BLOCK_I
 
     ! ###################################################################
-    IF ( imode_eqns == DNS_EQNS_TOTAL ) THEN
-      dummy = C_05_R *(gama0-C_1_R) *mach*mach
-    END IF
-
-    SELECT CASE ( idir )
-    CASE( 1 )
-      DO iq = 1,item%nfields-2
-        DO jloc = 1, item%size
-          j = item%offset +jloc
-          hq(j,:,:,iq) = hq(j,:,:,iq) -item%Tau(jloc,iq) *( q(j,:,:,5) *q(j,:,:,iq) -item%Ref(jloc,:,:,iq))
-        ENDDO
-      ENDDO
-      iq = item%nfields-1       ! Energy variable
-        IF ( imode_eqns == DNS_EQNS_TOTAL ) THEN
-          DO jloc = 1, item%size
-            j = item%offset +jloc
-            hq(j,:,:,iq) = hq(j,:,:,iq) -item%Tau(jloc,iq) *( q(j,:,:,5) *( q(j,:,:,iq) &
-                          +dummy *( q(j,:,:,1)*q(j,:,:,1) +q(j,:,:,2)*q(j,:,:,2) +q(j,:,:,3)*q(j,:,:,3) ) ) &
-                          -item%Ref(jloc,:,:,iq) )
-          ENDDO
-        ELSE
-          DO jloc = 1, item%size
-            j = item%offset +jloc
-            hq(j,:,:,iq) = hq(j,:,:,iq) -item%Tau(jloc,iq) *( q(j,:,:,5) *q(j,:,:,iq) -item%Ref(jloc,:,:,iq))
-          ENDDO
-        ENDIF
-      iq = item%nfields         ! Density, should be iq = 5
-        DO jloc = 1, item%size
-          j = item%offset +jloc
-          hq(j,:,:,iq) = hq(j,:,:,iq) -item%Tau(jloc,iq) *( q(j,:,:,iq) -item%Ref(jloc,:,:,iq))
-        ENDDO
-
-    CASE( 2 )
-      DO iq = 1,item%nfields-2
-        DO jloc = 1, item%size
-          j = item%offset +jloc
-          hq(:,j,:,iq) = hq(:,j,:,iq) -item%Tau(jloc,iq) *( q(:,j,:,5) *q(:,j,:,iq) -item%Ref(:,jloc,:,iq))
-        ENDDO
-      ENDDO
-      iq = item%nfields-1       ! Energy variable
-      IF ( imode_eqns == DNS_EQNS_TOTAL ) THEN
-        DO jloc = 1, item%size
-          j = item%offset +jloc
-          hq(:,j,:,iq) = hq(:,j,:,iq) -item%Tau(jloc,iq) *( q(:,j,:,5) *( q(:,j,:,iq) &
-                        +dummy *( q(:,j,:,1)*q(:,j,:,1) +q(:,j,:,2)*q(:,j,:,2) +q(:,j,:,3)*q(:,j,:,3) ) ) &
-                        -item%Ref(:,jloc,:,iq) )
-        END DO
-      ELSE
-        DO jloc = 1, item%size
-          j = item%offset +jloc
-          hq(:,j,:,iq) = hq(:,j,:,iq) -item%Tau(jloc,iq) *( q(:,j,:,5) *q(:,j,:,iq) -item%Ref(:,jloc,:,iq))
-        ENDDO
-      ENDIF
-      iq = item%nfields         ! Density, should be iq = 5
-        DO jloc = 1, item%size
-          j = item%offset +jloc
-          hq(:,j,:,iq) = hq(:,j,:,iq) -item%Tau(jloc,iq) *( q(:,j,:,iq) -item%Ref(:,jloc,:,iq))
-        ENDDO
-
-    END SELECT
-
-    RETURN
-  END SUBROUTINE RELAX_BLOCK_CF
-
-  !########################################################################
-  !########################################################################
-  SUBROUTINE BOUNDARY_BUFFER_FILTER(rho,u,v,w,e,z1, txc1,txc2,txc3,txc4,txc5, wrk1d,wrk2d,wrk3d)
-
-    IMPLICIT NONE
-
-#include "integers.h"
-
-    TREAL, DIMENSION(imax,jmax,kmax  )        :: rho, u, v, w, e
-    TREAL, DIMENSION(imax,jmax,kmax,*)        :: z1
-    TREAL, DIMENSION(BuffFlowImax%size,jmax,kmax) :: txc1, txc2, txc3, txc4, txc5
-    TREAL, DIMENSION(*)                       :: wrk1d,wrk2d,wrk3d
-
-    ! -------------------------------------------------------------------
-    TINTEGER id, k, buff_imax!, ibc_x(4), ibc_y(4), ibc_z(4)
-    TREAL eta, delta, amp, ampr, rho_ratio
-
     ! ###################################################################
+    subroutine RELAX_BLOCK_CF(idir, item, q, hq)  ! Compressible flow case
+        implicit none
+
+        integer(wi), intent(IN) :: idir
+        type(buffer_dt), intent(IN) :: item
+        real(wp), intent(IN) :: q(imax, jmax, kmax, item%nfields)
+        real(wp), intent(OUT) :: hq(imax, jmax, kmax, item%nfields)
+
+        ! ###################################################################
+        if (imode_eqns == DNS_EQNS_TOTAL) then
+            dummy = 0.5_wp*(gama0 - 1.0_wp)*mach*mach
+        end if
+
+        select case (idir)
+        case (1)
+            do iq = 1, item%nfields - 2
+                do jloc = 1, item%size
+                    j = item%offset + jloc
+                    hq(j, :, :, iq) = hq(j, :, :, iq) - item%Tau(jloc, iq)*(q(j, :, :, 5)*q(j, :, :, iq) - item%Ref(jloc, :, :, iq))
+                end do
+            end do
+            iq = item%nfields - 1       ! Energy variable
+            if (imode_eqns == DNS_EQNS_TOTAL) then
+                do jloc = 1, item%size
+                    j = item%offset + jloc
+                    hq(j, :, :, iq) = hq(j, :, :, iq) - item%Tau(jloc, iq)*(q(j, :, :, 5)*(q(j, :, :, iq) &
+                                + dummy*(q(j, :, :, 1)*q(j, :, :, 1) + q(j, :, :, 2)*q(j, :, :, 2) + q(j, :, :, 3)*q(j, :, :, 3))) &
+                                                                            - item%Ref(jloc, :, :, iq))
+                end do
+            else
+                do jloc = 1, item%size
+                    j = item%offset + jloc
+                    hq(j, :, :, iq) = hq(j, :, :, iq) - item%Tau(jloc, iq)*(q(j, :, :, 5)*q(j, :, :, iq) - item%Ref(jloc, :, :, iq))
+                end do
+            end if
+            iq = item%nfields         ! Density, should be iq = 5
+            do jloc = 1, item%size
+                j = item%offset + jloc
+                hq(j, :, :, iq) = hq(j, :, :, iq) - item%Tau(jloc, iq)*(q(j, :, :, iq) - item%Ref(jloc, :, :, iq))
+            end do
+
+        case (2)
+            do iq = 1, item%nfields - 2
+                do jloc = 1, item%size
+                    j = item%offset + jloc
+                    hq(:, j, :, iq) = hq(:, j, :, iq) - item%Tau(jloc, iq)*(q(:, j, :, 5)*q(:, j, :, iq) - item%Ref(:, jloc, :, iq))
+                end do
+            end do
+            iq = item%nfields - 1       ! Energy variable
+            if (imode_eqns == DNS_EQNS_TOTAL) then
+                do jloc = 1, item%size
+                    j = item%offset + jloc
+                    hq(:, j, :, iq) = hq(:, j, :, iq) - item%Tau(jloc, iq)*(q(:, j, :, 5)*(q(:, j, :, iq) &
+                                + dummy*(q(:, j, :, 1)*q(:, j, :, 1) + q(:, j, :, 2)*q(:, j, :, 2) + q(:, j, :, 3)*q(:, j, :, 3))) &
+                                                                            - item%Ref(:, jloc, :, iq))
+                end do
+            else
+                do jloc = 1, item%size
+                    j = item%offset + jloc
+                    hq(:, j, :, iq) = hq(:, j, :, iq) - item%Tau(jloc, iq)*(q(:, j, :, 5)*q(:, j, :, iq) - item%Ref(:, jloc, :, iq))
+                end do
+            end if
+            iq = item%nfields         ! Density, should be iq = 5
+            do jloc = 1, item%size
+                j = item%offset + jloc
+                hq(:, j, :, iq) = hq(:, j, :, iq) - item%Tau(jloc, iq)*(q(:, j, :, iq) - item%Ref(:, jloc, :, iq))
+            end do
+
+        end select
+
+        return
+    end subroutine RELAX_BLOCK_CF
+
+    !########################################################################
+    !########################################################################
+    subroutine BOUNDARY_BUFFER_FILTER(rho, u, v, w, e, z1, txc1, txc2, txc3, txc4, txc5)
+        real(wp), dimension(imax, jmax, kmax) :: rho, u, v, w, e
+        real(wp), dimension(imax, jmax, kmax, *) :: z1
+        real(wp), dimension(BuffFlowImax%size, jmax, kmax) :: txc1, txc2, txc3, txc4, txc5
+
+        ! -------------------------------------------------------------------
+        integer(wi) id, k, buff_imax!, ibc_x(4), ibc_y(4), ibc_z(4)
+        real(wp) eta, delta, amp, ampr, rho_ratio
+
+        ! ###################################################################
 !!! Routines OPR_FILTER have been changed. This routine needs to be updates !!!
-    CALL TLAB_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
-    CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
+        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
 
+        ! BCs for the filters (see routine FILTER)
+        ! ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 1; ibc_x(4) = 1
+        ! ibc_y(1) = 1; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0
+        ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0
 
-    ! BCs for the filters (see routine FILTER)
-    ! ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 1; ibc_x(4) = 1
-    ! ibc_y(1) = 1; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0
-    ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0
+        ! ###################################################################
+        ! Bottom boundary
+        ! ###################################################################
+        if (BuffFlowJmin%size > 1) then
+            call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
 
-    ! ###################################################################
-    ! Bottom boundary
-    ! ###################################################################
-    IF ( BuffFlowJmin%size .GT. 1 ) THEN
-      CALL TLAB_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
-      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-    ENDIF
+        ! ###################################################################
+        ! Top boundary
+        ! ###################################################################
+        if (BuffFlowJmax%size > 1) then
+            call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
 
-    ! ###################################################################
-    ! Top boundary
-    ! ###################################################################
-    IF ( BuffFlowJmax%size .GT. 1 ) THEN
-      CALL TLAB_WRITE_ASCII(efile,'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
-      CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-    ENDIF
+        ! ###################################################################
+        ! Outflow boundary
+        ! ###################################################################
+        if (BuffFlowImax%size > 1) then
+            id = TLAB_MPI_K_OUTBCS
+            buff_imax = imax - BuffFlowImax%size + iloc
+            ! -------------------------------------------------------------------
+            ! Flow
+            ! -------------------------------------------------------------------
+            do k = 1, kmax
+                do j = 1, jmax
+                    do iloc = 1, BuffFlowImax%size ! Outflow boundary
+                        i = imax - BuffFlowImax%size + iloc
+                        txc1(iloc, j, k) = rho(i, j, k)
+                        txc2(iloc, j, k) = rho(i, j, k)*u(i, j, k)
+                        txc3(iloc, j, k) = rho(i, j, k)*v(i, j, k)
+                        txc4(iloc, j, k) = rho(i, j, k)*w(i, j, k)
+                        txc5(iloc, j, k) = rho(i, j, k)*e(i, j, k)
+                        !              txc2(iloc,j,k) = u(i,j,k)
+                        !              txc3(iloc,j,k) = v(i,j,k)
+                        !              txc4(iloc,j,k) = w(i,j,k)
+                        !              txc5(iloc,j,k) = e(i,j,k)
+                    end do
+                end do
+            end do
 
-    ! ###################################################################
-    ! Outflow boundary
-    ! ###################################################################
-    IF ( BuffFlowImax%size .GT. 1 ) THEN
-      id = TLAB_MPI_K_OUTBCS
-      buff_imax = imax -BuffFlowImax%size +iloc
-      ! -------------------------------------------------------------------
-      ! Flow
-      ! -------------------------------------------------------------------
-      DO k = 1,kmax
-        DO j = 1,jmax
-          DO iloc = 1,BuffFlowImax%size ! Outflow boundary
-            i = imax -BuffFlowImax%size +iloc
-            txc1(iloc,j,k) = rho(i,j,k)
-            txc2(iloc,j,k) = rho(i,j,k)*u(i,j,k)
-            txc3(iloc,j,k) = rho(i,j,k)*v(i,j,k)
-            txc4(iloc,j,k) = rho(i,j,k)*w(i,j,k)
-            txc5(iloc,j,k) = rho(i,j,k)*e(i,j,k)
-            !              txc2(iloc,j,k) = u(i,j,k)
-            !              txc3(iloc,j,k) = v(i,j,k)
-            !              txc4(iloc,j,k) = w(i,j,k)
-            !              txc5(iloc,j,k) = e(i,j,k)
-          ENDDO
-        ENDDO
-      ENDDO
+            ! To be checked for the new formulation of opr_filter
+            !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc1, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+            !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc2, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+            !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc3, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+            !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc4, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+            !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc5, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
 
-      ! To be checked for the new formulation of opr_filter
-      !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc1, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-    !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc2, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-    !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc3, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-    !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc4, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
-    !   CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id, txc5, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+            ! thickness \delta_\theta s.t. 2\delta_w = L_buffer/2
+            delta = (g(1)%nodes(imax) - g(1)%nodes(buff_imax))/16.0_wp
+            do i = buff_imax, imax
+                iloc = i - buff_imax + 1
 
-      ! thickness \delta_\theta s.t. 2\delta_w = L_buffer/2
-      delta = (g(1)%nodes(imax)-g(1)%nodes(buff_imax))/C_16_R
-      DO i = buff_imax,imax
-        iloc = i-buff_imax+1
+                eta = g(1)%nodes(i) - 0.5_wp*(g(1)%nodes(imax) + g(1)%nodes(buff_imax))
+                amp = 0.5_wp*(1.0_wp + TANH(0.5_wp*eta/delta))
+                ampr = 1.0_wp - amp
 
-        eta = g(1)%nodes(i) - C_05_R*( g(1)%nodes(imax)+g(1)%nodes(buff_imax) )
-        amp = C_05_R*(C_1_R+TANH(C_05_R*eta/delta))
-        ampr= C_1_R-amp
+                do k = 1, kmax
+                    do j = 1, jmax
+                        rho_ratio = rho(i, j, k)
+                        rho(i, j, k) = ampr*rho(i, j, k) + amp*txc1(iloc, j, k)
+                        rho_ratio = rho_ratio/rho(i, j, k)
 
-        DO k = 1,kmax
-          DO j = 1,jmax
-            rho_ratio = rho(i,j,k)
-            rho(i,j,k) = ampr*rho(i,j,k) + amp*txc1(iloc,j,k)
-            rho_ratio = rho_ratio/rho(i,j,k)
+                        u(i, j, k) = ampr*rho_ratio*u(i, j, k) + amp*txc2(iloc, j, k)/rho(i, j, k)
+                        v(i, j, k) = ampr*rho_ratio*v(i, j, k) + amp*txc3(iloc, j, k)/rho(i, j, k)
+                        w(i, j, k) = ampr*rho_ratio*w(i, j, k) + amp*txc4(iloc, j, k)/rho(i, j, k)
+                        e(i, j, k) = ampr*rho_ratio*e(i, j, k) + amp*txc5(iloc, j, k)/rho(i, j, k)
 
-            u(i,j,k) = ampr*rho_ratio*u(i,j,k) + amp*txc2(iloc,j,k)/rho(i,j,k)
-            v(i,j,k) = ampr*rho_ratio*v(i,j,k) + amp*txc3(iloc,j,k)/rho(i,j,k)
-            w(i,j,k) = ampr*rho_ratio*w(i,j,k) + amp*txc4(iloc,j,k)/rho(i,j,k)
-            e(i,j,k) = ampr*rho_ratio*e(i,j,k) + amp*txc5(iloc,j,k)/rho(i,j,k)
+                        ! store rho_ratio to be used in scalar section
+                        txc1(iloc, j, k) = rho_ratio
 
-            ! store rho_ratio to be used in scalar section
-            txc1(iloc,j,k) = rho_ratio
+                        !              rho(i,j,k) = ampr*rho(i,j,k) + amp*txc1(iloc,j,k)
+                        !              u(i,j,k)   = ampr*u(i,j,k)   + amp*txc2(iloc,j,k)
+                        !              v(i,j,k)   = ampr*v(i,j,k)   + amp*txc3(iloc,j,k)
+                        !              w(i,j,k)   = ampr*w(i,j,k)   + amp*txc4(iloc,j,k)
+                        !              e(i,j,k)   = ampr*e(i,j,k)   + amp*txc5(iloc,j,k)
 
-            !              rho(i,j,k) = ampr*rho(i,j,k) + amp*txc1(iloc,j,k)
-            !              u(i,j,k)   = ampr*u(i,j,k)   + amp*txc2(iloc,j,k)
-            !              v(i,j,k)   = ampr*v(i,j,k)   + amp*txc3(iloc,j,k)
-            !              w(i,j,k)   = ampr*w(i,j,k)   + amp*txc4(iloc,j,k)
-            !              e(i,j,k)   = ampr*e(i,j,k)   + amp*txc5(iloc,j,k)
+                    end do
+                end do
+            end do
 
-          ENDDO
-        ENDDO
-      ENDDO
+            ! -------------------------------------------------------------------
+            ! Scalar
+            ! -------------------------------------------------------------------
+            !     IF ( icalc_scal .EQ. 1 ) THEN
+            do is = 1, inb_scal
 
-      ! -------------------------------------------------------------------
-      ! Scalar
-      ! -------------------------------------------------------------------
-      !     IF ( icalc_scal .EQ. 1 ) THEN
-      DO is = 1,inb_scal
+                do k = 1, kmax
+                    do j = 1, jmax
+                        do iloc = 1, BuffFlowImax%size ! Outflow boundary
+                            i = imax - BuffFlowImax%size + iloc
+                            txc2(iloc, j, k) = rho(i, j, k)*z1(i, j, k, is)
+                            !                    txc2(iloc,j,k) = z1(i,j,k,is)
+                        end do
+                    end do
+                end do
 
-        DO k = 1,kmax
-          DO j = 1,jmax
-            DO iloc = 1,BuffFlowImax%size ! Outflow boundary
-              i = imax -BuffFlowImax%size +iloc
-              txc2(iloc,j,k) = rho(i,j,k)*z1(i,j,k,is)
-              !                    txc2(iloc,j,k) = z1(i,j,k,is)
-            ENDDO
-          ENDDO
-        ENDDO
+                ! To be checked for the new formulation of opr_filter
+                ! CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id,  txc2, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
 
-      ! To be checked for the new formulation of opr_filter
-        ! CALL OPR_FILTER(i2, BuffFlowImax%size,jmax,kmax, ibc_x,ibc_y,ibc_z, id,  txc2, wrk3d,wrk3d,wrk3d, wrk1d,wrk2d,wrk3d)
+                ! thickness \delta_\theta s.t. 2\delta_w = L_buffer/2
+                delta = (g(1)%nodes(imax) - g(1)%nodes(buff_imax))/16.0_wp
+                do i = buff_imax, imax
+                    iloc = i - buff_imax + 1
 
-        ! thickness \delta_\theta s.t. 2\delta_w = L_buffer/2
-        delta = (g(1)%nodes(imax)-g(1)%nodes(buff_imax))/C_16_R
-        DO i = buff_imax,imax
-          iloc = i-buff_imax+1
+                    eta = g(1)%nodes(i) - 0.5_wp*(g(1)%nodes(imax) + g(1)%nodes(buff_imax))
+                    amp = 0.5_wp*(1.0_wp + TANH(0.5_wp*eta/delta))
+                    ampr = 1.0_wp - amp
 
-          eta = g(1)%nodes(i) - C_05_R*( g(1)%nodes(imax)+g(1)%nodes(buff_imax) )
-          amp = C_05_R*(C_1_R+TANH(C_05_R*eta/delta))
-          ampr= C_1_R-amp
+                    do k = 1, kmax
+                        do j = 1, jmax
+                            z1(i, j, k, is) = ampr*txc1(iloc, j, k)*z1(i, j, k, is) + &
+                                              amp*txc2(iloc, j, k)/rho(i, j, k)
+                            !                    z1(i,j,k,is) = ampr*z1(i,j,k,is) + amp*txc2(iloc,j,k)
+                        end do
+                    end do
 
-          DO k = 1,kmax
-            DO j = 1,jmax
-              z1(i,j,k,is) = ampr*txc1(iloc,j,k)*z1(i,j,k,is) + &
-                  amp*txc2(iloc,j,k)/rho(i,j,k)
-              !                    z1(i,j,k,is) = ampr*z1(i,j,k,is) + amp*txc2(iloc,j,k)
-            ENDDO
-          ENDDO
+                end do
 
-        ENDDO
+            end do
+            !     ENDIF
 
-      ENDDO
-      !     ENDIF
+        end if
 
-    ENDIF
-
-    RETURN
-  END SUBROUTINE BOUNDARY_BUFFER_FILTER
-END MODULE BOUNDARY_BUFFER
+        return
+    end subroutine BOUNDARY_BUFFER_FILTER
+end module BOUNDARY_BUFFER
