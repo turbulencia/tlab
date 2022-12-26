@@ -57,6 +57,12 @@ contains
         if (idummy(2) >= 1) u(1:isize_field) => q(1:isize_field,1)
         if (idummy(2) >= 2) v(1:isize_field) => q(1:isize_field,2)
         if (idummy(2) >= 3) w(1:isize_field) => q(1:isize_field,3)
+        ! compressible flows variables
+        if (idummy(2) >= 4) e(1:isize_field) => q(1:isize_field,4)
+        if (idummy(2) >= 5) rho(1:isize_field) => q(1:isize_field,5)
+        if (idummy(2) >= 6) p(1:isize_field) => q(1:isize_field,6)
+        if (idummy(2) >= 7) T(1:isize_field) => q(1:isize_field,7)
+        if (idummy(2) >= 8) vis(1:isize_field) => q(1:isize_field,8)
 
         idummy = shape(txc)
         if (idummy(2) >= 1) tmp1(1:isize_field) => txc(1:isize_field,1)

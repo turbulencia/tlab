@@ -24,10 +24,17 @@ module TLAB_POINTERS
     real(wp), pointer :: u(:) => null()
     real(wp), pointer :: v(:) => null()
     real(wp), pointer :: w(:) => null()
+    real(wp), pointer :: e(:) => null()
+    real(wp), pointer :: rho(:) => null()
+    real(wp), pointer :: p(:) => null()
+    real(wp), pointer :: T(:) => null()
+    real(wp), pointer :: vis(:) => null()
+
     real(wp), pointer :: tmp1(:) => null()
     real(wp), pointer :: tmp2(:) => null()
     real(wp), pointer :: tmp3(:) => null()
     real(wp), pointer :: tmp4(:) => null()
     real(wp), pointer :: tmp5(:) => null()
     real(wp), pointer :: tmp6(:) => null()
+
 end module TLAB_POINTERS
