@@ -641,6 +641,7 @@ contains
 !########################################################################
     subroutine TIME_SUBSTEP_COMPRESSIBLE()
         use TLAB_ARRAYS
+        use TLAB_POINTERS
         use DNS_ARRAYS
         use BOUNDARY_BUFFER
         use BOUNDARY_BCS, only: BcsDrift
@@ -651,22 +652,6 @@ contains
         real(wp) M2_max, dummy
         integer(wi) inb_scal_loc
 
-        ! Pointers to existing allocated space
-        real(wp), dimension(:), pointer :: u, v, w, e, rho, p, T, vis
-
-        ! ###################################################################
-        ! Define pointers
-        u => q(:, 1)
-        v => q(:, 2)
-        w => q(:, 3)
-
-        e => q(:, 4)
-        rho => q(:, 5)
-        p => q(:, 6)
-        T => q(:, 7)
-
-        vis => q(:, 8)
-
         ! ###################################################################
         ! Evaluate standard RHS of equations
         ! global formulation
@@ -675,8 +660,8 @@ contains
             iadvection == EQNS_SKEWSYMMETRIC .and. &
             iviscous == EQNS_EXPLICIT .and. &
             idiffusion == EQNS_EXPLICIT) then
-            call RHS_FLOW_GLOBAL_2(rho, u, v, w, p, e, T, s, hq(1, 5), hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), hs, &
-                                   txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+            call RHS_FLOW_GLOBAL_2()
+            
             do is = 1, inb_scal
                 call RHS_SCAL_GLOBAL_2(is, rho, u, v, w, s, T, hs, hq(1, 4), &
                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
