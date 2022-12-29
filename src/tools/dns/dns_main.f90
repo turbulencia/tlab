@@ -178,7 +178,7 @@ program DNS
     ! Initialize time marching scheme
     ! ###################################################################
     call TIME_INITIALIZE()
-    call TIME_COURANT(q, wrk3d)
+    call TIME_COURANT()
 
     ! ###################################################################
     ! Check-pointing: Initialize logfiles
@@ -219,7 +219,7 @@ program DNS
             end if
         end if
 
-        call TIME_COURANT(q, wrk3d)
+        call TIME_COURANT()
 
         ! -------------------------------------------------------------------
         ! The rest: Logging, postprocessing and check-pointing

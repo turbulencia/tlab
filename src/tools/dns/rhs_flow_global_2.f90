@@ -20,7 +20,7 @@ subroutine RHS_FLOW_GLOBAL_2()
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal
     use TLAB_VARS, only: g, buoyancy
     use TLAB_VARS, only: idiffusion, visc, prandtl, mach
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use TLAB_ARRAYS, only: s, wrk2d, wrk3d
     use TLAB_POINTERS
     use DNS_ARRAYS
     use THERMO_VARS, only: gama0
