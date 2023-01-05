@@ -19,7 +19,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
     use TLAB_VARS, only: g
     use TLAB_VARS, only: visc
     use TLAB_ARRAYS
-    use TLAB_POINTERS
+    use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS
     use TIME, only: dte
     use DNS_LOCAL, only: remove_divergence

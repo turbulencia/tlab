@@ -327,7 +327,7 @@ contains
 !########################################################################
     subroutine TIME_COURANT()
         use DNS_LOCAL, only: logs_data
-        use TLAB_POINTERS_3D
+        use TLAB_POINTERS_3D, only: u, v, w, p_wrk3d, p, rho, vis
 
         ! -------------------------------------------------------------------
         integer(wi) ipmax, k_glo
