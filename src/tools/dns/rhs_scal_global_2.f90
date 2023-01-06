@@ -22,8 +22,8 @@ subroutine RHS_SCAL_GLOBAL_2(is)
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, prandtl, schmidt
     use TLAB_ARRAYS, only: s, wrk2d, wrk3d
-    use TLAB_POINTERS
-    use DNS_ARRAYS
+    use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, T, rho
+    use DNS_ARRAYS, only: hs, hq
     use THERMO_VARS, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
     use BOUNDARY_BCS
     use OPR_PARTIAL

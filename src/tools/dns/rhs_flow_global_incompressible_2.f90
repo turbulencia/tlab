@@ -1,8 +1,6 @@
-#include "types.h"
 #include "dns_const.h"
 
 !########################################################################
-!# DESCRIPTION
 !#
 !# Momentum equations, nonlinear term in skew-symmetric form and the
 !# viscous term explicit. 9 2nd order + 9+9 1st order derivatives.
@@ -10,119 +8,67 @@
 !# Scalar needed for the buoyancy term
 !#
 !########################################################################
-SUBROUTINE  RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2&
-     (u,v,w,h1,h2,h3, q,hq, tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, &
-     wrk1d,wrk2d,wrk3d)
+subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_VARS, only: imax, jmax, kmax
+    use TLAB_VARS, only: g
+    use TLAB_VARS, only: visc
+    use TLAB_VARS, only: imode_ibm, istagger
+    use TLAB_ARRAYS, only: q, wrk1d, wrk2d, wrk3d
+    use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
+    use DNS_ARRAYS, only: hq
+    use TIME, only: dte
+    use BOUNDARY_BUFFER
+    use BOUNDARY_BCS, only: BcsFlowJmin, BcsFlowJmax
+    use IBM_VARS, only: ibm_partial
+    use OPR_PARTIAL
 
-  USE TLAB_VARS, ONLY : imax,jmax,kmax, isize_field, isize_wrk1d, inb_flow
-  USE TLAB_VARS, ONLY : g
-  USE TLAB_VARS, ONLY : visc
-  USE TLAB_VARS, ONLY : imode_ibm, istagger
-  USE TIME, only : dte
-  USE BOUNDARY_BUFFER
-  USE BOUNDARY_BCS
-  USE IBM_VARS,  ONLY : ibm_partial
-  use OPR_PARTIAL
-
-IMPLICIT NONE
-
-  TREAL, DIMENSION(isize_field)   :: u,v,w, h1,h2,h3
-  TREAL, DIMENSION(isize_field,*) :: q,hq
-  TREAL, DIMENSION(isize_field)   :: tmp1,tmp2,tmp3,tmp4,tmp5,tmp6, wrk3d
-  TREAL, DIMENSION(isize_wrk1d,*) :: wrk1d
-  TREAL, DIMENSION(*)             :: wrk2d
-
-  TARGET tmp2, h2, tmp4
+    implicit none
 
 ! -----------------------------------------------------------------------
-  TINTEGER iq, ij, k, nxy, ip_b, ip_t
-  TINTEGER ibc, bcs(2,2)
-  TREAL alpha
+    integer(wi) iq, iq_max
+    integer(wi) ibc, bcs(2, 2)
+    real(wp) alpha
 
-  TREAL, DIMENSION(:), POINTER :: p_bcs
-
-! #######################################################################
-  nxy    = imax*jmax
-
-  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+    real(wp), dimension(:, :, :), pointer :: p_bcs
 
 ! #######################################################################
-! Preliminaries for IBM use 
+    bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+
+! #######################################################################
+! Preliminaries for IBM use
 ! (OPR_PARTIAL_X/Y/Z uses modified fields for derivatives)
 ! #######################################################################
-  IF ( imode_ibm == 1 ) ibm_partial = .true.
+    if (imode_ibm == 1) ibm_partial = .true.
 
 ! #######################################################################
-! Diffusion and convection terms in Ox momentum equations
+! Diffusion and convection terms in momentum equations
 ! #######################################################################
-  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), u, tmp6, tmp3, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), u, tmp5, tmp2, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), u, tmp4, tmp1, wrk2d,wrk3d)
+    if (g(3)%size > 1) then
+        iq_max = 3
+    else
+        iq_max = 2
+    end if
 
-  DO ij = 1,isize_field
-     h1(ij) = h1(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
-          - C_05_R*( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
-  ENDDO
+    do iq = 1, iq_max
+        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp6, tmp3, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp5, tmp2, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), q(:, iq), tmp4, tmp1, wrk2d, wrk3d)
+        hq(:, iq) = hq(:, iq) + visc*(tmp6 + tmp5 + tmp4) - 0.5_wp*(w*tmp3 + v*tmp2 + u*tmp1)
 
-! #######################################################################
-! Diffusion and convection terms in Oy momentum eqn
-! #######################################################################
-  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), v, tmp6, tmp3, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), v, tmp5, tmp2, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), v, tmp4, tmp1, wrk2d,wrk3d)
+        ! Adding the conservative-form terms to complete skew-symmetric formulation
+        tmp1 = u*q(:, iq)
+        tmp2 = v*q(:, iq)
+        tmp3 = w*q(:, iq)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp5, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp6, wrk3d, wrk2d, wrk3d)
+        hq(:, iq) = hq(:, iq) - 0.5_wp*(tmp6 + tmp5 + tmp4)
 
-  DO ij = 1,isize_field
-     h2(ij) = h2(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
-          - C_05_R*( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
-  ENDDO
-
-! #######################################################################
-! Diffusion and convection terms in Oz momentum eqn
-! #######################################################################
-  IF ( g(3)%size .GT. 1 ) THEN
-
-  CALL OPR_PARTIAL_Z(OPR_P2_P1, imax,jmax,kmax, bcs, g(3), w, tmp6, tmp3, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), w, tmp5, tmp2, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P2_P1, imax,jmax,kmax, bcs, g(1), w, tmp4, tmp1, wrk2d,wrk3d)
-
-  DO ij = 1,isize_field
-     h3(ij) = h3(ij) + visc*( tmp6(ij)+tmp5(ij)+tmp4(ij) ) &
-          - C_05_R*( w(ij)*tmp3(ij) + v(ij)*tmp2(ij) + u(ij)*tmp1(ij) )
-  ENDDO
-
-  ENDIF
-
-! #######################################################################
-! Adding the conservative-form terms to complete skew-symmetric formulation
-! #######################################################################
-  tmp1 = u*u
-  tmp2 = v*u
-  tmp3 = w*u
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3, tmp6, wrk3d, wrk2d,wrk3d)
-  h1 = h1 - C_05_R*( tmp6 + tmp5 + tmp4 )
-
-  tmp1 = u*v
-  tmp2 = v*v
-  tmp3 = w*v
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3, tmp6, wrk3d, wrk2d,wrk3d)
-  h2 = h2 - C_05_R*( tmp6 + tmp5 + tmp4 )
-
-  IF ( g(3)%size .GT. 1 ) THEN
-  tmp1 = u*w
-  tmp2 = v*w
-  tmp3 = w*w
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp3, tmp6, wrk3d, wrk2d,wrk3d)
-  h3 = h3 - C_05_R*( tmp6 + tmp5 + tmp4 )
-  ENDIF
+    end do
 
 ! -----------------------------------------------------------------------
-! In case the is dilatation
+! In case there is dilatation
 ! -----------------------------------------------------------------------
 !  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
 !  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
@@ -130,17 +76,17 @@ IMPLICIT NONE
 !  DO k = 1,kmax
 !     DO i = 1,imax
 !        ij = i                 + imax*jmax*(k-1) ! bottom
-!        h1(ij) = h1(ij) + C_05_R*u(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
-!        h3(ij) = h3(ij) + C_05_R*w(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
+!        h1(ij) = h1(ij) + 0.5_wp*u(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
+!        h3(ij) = h3(ij) + 0.5_wp*w(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
 !        ij = i + imax*(jmax-1) + imax*jmax*(k-1) ! top
-!        h1(ij) = h1(ij) + C_05_R*u(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
-!        h3(ij) = h3(ij) + C_05_R*w(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
+!        h1(ij) = h1(ij) + 0.5_wp*u(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
+!        h3(ij) = h3(ij) + 0.5_wp*w(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
 !     ENDDO
 !  ENDDO
 !  DO ij = 1,isize_field
-!     h1(ij) = h1(ij) - C_05_R*u(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
-!     h2(ij) = h2(ij) - C_05_R*v(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
-!     h3(ij) = h3(ij) - C_05_R*w(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
+!     h1(ij) = h1(ij) - 0.5_wp*u(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
+!     h2(ij) = h2(ij) - 0.5_wp*v(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
+!     h3(ij) = h3(ij) - 0.5_wp*w(ij)*( tmp3(ij) + tmp2(ij) + tmp1(ij) )
 !  ENDDO
 ! no big impact of this part, but in the BCs I need it because I already have
 ! add 1/2 of it.
@@ -148,14 +94,14 @@ IMPLICIT NONE
 ! #######################################################################
 ! IBM
 ! #######################################################################
-  IF ( imode_ibm == 1 ) ibm_partial = .false. ! until here, IBM is used for flow fields
+    if (imode_ibm == 1) ibm_partial = .false. ! until here, IBM is used for flow fields
 
 ! #######################################################################
 ! Impose buffer zone as relaxation terms
 ! #######################################################################
-  IF ( BuffType .EQ. DNS_BUFFER_RELAX .OR. BuffType .EQ. DNS_BUFFER_BOTH ) THEN
-     CALL BOUNDARY_BUFFER_RELAX_FLOW()
-  ENDIF
+    if (BuffType == DNS_BUFFER_RELAX .or. BuffType == DNS_BUFFER_BOTH) then
+        call BOUNDARY_BUFFER_RELAX_FLOW()
+    end if
 
 ! #######################################################################
 ! Pressure term
@@ -164,129 +110,100 @@ IMPLICIT NONE
 ! -----------------------------------------------------------------------
 ! Poisson equation
 ! -----------------------------------------------------------------------
-  alpha=C_1_R/dte
-  DO ij = 1,isize_field
-     tmp1(ij) = h1(ij) + u(ij)*alpha
-     tmp2(ij) = h2(ij) + v(ij)*alpha
-     tmp3(ij) = h3(ij) + w(ij)*alpha
-  ENDDO
-  IF ( imode_ibm == 1 ) THEN 
-     CALL IBM_BCS_FIELD(tmp1)
-     CALL IBM_BCS_FIELD(tmp2)
-     CALL IBM_BCS_FIELD(tmp3)
-  ENDIF
-  IF ( istagger .EQ. 1 ) THEN ! staggering on horizontal pressure nodes 
-  !  Ox derivative
-     CALL OPR_PARTIAL_X(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(1), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
-  !  Oy derivative
-     CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp2, tmp6, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), tmp6, tmp2, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
-  !  Oz derivative
-     CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp3, tmp1, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), tmp1, tmp6, wrk3d, wrk2d,wrk3d)
-  ELSE
-     CALL OPR_PARTIAL_X(OPR_P1,        imax,jmax,kmax, bcs, g(1), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_Y(OPR_P1,        imax,jmax,kmax, bcs, g(2), tmp2, tmp5, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp3, tmp6, wrk3d, wrk2d,wrk3d)
-  ENDIF     
+    alpha = 1.0_wp/dte
+    tmp1 = hq(:, 1) + alpha*u
+    tmp2 = hq(:, 2) + alpha*v
+    tmp3 = hq(:, 3) + alpha*w
+    if (imode_ibm == 1) then
+        call IBM_BCS_FIELD(tmp1)
+        call IBM_BCS_FIELD(tmp2)
+        call IBM_BCS_FIELD(tmp3)
+    end if
+    if (istagger == 1) then ! staggering on horizontal pressure nodes
+        !  Ox derivative
+        call OPR_PARTIAL_X(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(1), tmp1, tmp5, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
+        !  Oy derivative
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp2, tmp6, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp6, tmp2, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp2, tmp5, wrk3d, wrk2d, wrk3d)
+        !  Oz derivative
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp3, tmp1, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(3), tmp1, tmp6, wrk3d, wrk2d, wrk3d)
+    else
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp5, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp6, wrk3d, wrk2d, wrk3d)
+    end if
 
-! forcing term in txc1
-  DO ij = 1,isize_field
-     tmp1(ij) = tmp6(ij) + tmp5(ij) + tmp4(ij)
-  ENDDO
+! forcing term
+    tmp1 = tmp6 + tmp5 + tmp4
 
 ! -----------------------------------------------------------------------
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
-  ip_b =                 1
-  ip_t = imax*(jmax-1) + 1
 ! Stagger also Bcs
-  IF ( imode_ibm .EQ. 1 ) CALL IBM_BCS_FIELD(h2)
-  IF ( istagger  .EQ. 1 ) THEN ! todo: only need to stagger upper/lower boundary plane, not full h2-array
-     CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), h2,   tmp5, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
-     IF ( imode_ibm .EQ. 1 ) CALL IBM_BCS_FIELD_STAGGER(tmp4)
-     DO k = 1,kmax
-        p_bcs => tmp4(ip_b:); BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-        p_bcs => tmp4(ip_t:); BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
-     ENDDO
-  ELSE
-     DO k = 1,kmax
-        p_bcs => h2(ip_b:);   BcsFlowJmin%ref(1:imax,k,2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-        p_bcs => h2(ip_t:);   BcsFlowJmax%ref(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
-     ENDDO
-  ENDIF
+    if (imode_ibm == 1) call IBM_BCS_FIELD(hq(:, 2))
+    if (istagger == 1) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), hq(:, 2), tmp5, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
+        if (imode_ibm == 1) call IBM_BCS_FIELD_STAGGER(tmp4)
+        p_bcs(1:imax, 1:jmax, 1:kmax) => tmp4(1:imax*jmax*kmax)
+    else
+        p_bcs(1:imax, 1:jmax, 1:kmax) => hq(1:imax*jmax*kmax, 2)
+    end if
+
+    BcsFlowJmin%ref(:, :, 2) = p_bcs(:, 1, :)
+    BcsFlowJmax%ref(:, :, 2) = p_bcs(:, jmax, :)
 
 ! pressure in tmp1, Oy derivative in tmp3
-  ibc = 3
-  CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, ibc, &
-       tmp1,tmp3, tmp2,tmp4, BcsFlowJmin%ref(1,1,2),BcsFlowJmax%ref(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
+    ibc = 3
+    call OPR_POISSON_FXZ(.true., imax, jmax, kmax, g, ibc, &
+                         tmp1, tmp3, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
 
-  IF ( istagger .EQ. 1 ) THEN
-  !  vertical pressure derivative   dpdy - back on horizontal velocity nodes
-     CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp3, tmp5, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp3, wrk3d, wrk2d,wrk3d)
-  !  horizontal pressure derivative dpdz - back on horizontal velocity nodes
-     CALL OPR_PARTIAL_Z(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
-  !  horizontal pressure derivative dpdx - back on horizontal velocity nodes
-     CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_X(OPR_P1_INT_PV, imax,jmax,kmax, bcs, g(1), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
-  ELSE
-  !  horizontal pressure derivatives 
-     CALL OPR_PARTIAL_X(OPR_P1,        imax,jmax,kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d,wrk3d)
-  ENDIF
+    if (istagger == 1) then
+        !  vertical pressure derivative   dpdy - back on horizontal velocity nodes
+        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp3, tmp5, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp3, wrk3d, wrk2d, wrk3d)
+        !  horizontal pressure derivative dpdz - back on horizontal velocity nodes
+        call OPR_PARTIAL_Z(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
+        !  horizontal pressure derivative dpdx - back on horizontal velocity nodes
+        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp2, wrk3d, wrk2d, wrk3d)
+    else
+        !  horizontal pressure derivatives
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
+    end if
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient
 ! -----------------------------------------------------------------------
-  DO ij = 1,isize_field
-     h1(ij) = h1(ij) - tmp2(ij)
-     h2(ij) = h2(ij) - tmp3(ij)
-     h3(ij) = h3(ij) - tmp4(ij)
-  ENDDO
+    hq(:, 1) = hq(:, 1) - tmp2
+    hq(:, 2) = hq(:, 2) - tmp3
+    hq(:, 3) = hq(:, 3) - tmp4
 
 ! #######################################################################
 ! Boundary conditions
 ! #######################################################################
-! -----------------------------------------------------------------------
-! Preliminaries
-! -----------------------------------------------------------------------
-  BcsFlowJmin%ref = C_0_R ! default is no-slip (dirichlet)
-  BcsFlowJmax%ref = C_0_R
+    BcsFlowJmin%ref = 0.0_wp ! default is no-slip (dirichlet)
+    BcsFlowJmax%ref = 0.0_wp ! Scalar BCs initialized at start of routine
 
-  DO iq = 1,inb_flow
-     ibc = 0
-     IF ( BcsFlowJmin%type(iq) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 1
-     IF ( BcsFlowJmax%type(iq) .EQ. DNS_BCS_NEUMANN ) ibc = ibc + 2
-     IF ( ibc .GT. 0 ) THEN
-        CALL BOUNDARY_BCS_NEUMANN_Y(ibc, imax,jmax,kmax, g(2), hq(1,iq), &
-             BcsFlowJmin%ref(1,1,iq),BcsFlowJmax%ref(1,1,iq), wrk1d,tmp1,wrk3d)
-     ENDIF
-     IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD(hq(1,iq)) ! set tendency in solid to zero
-  ENDDO
+    do iq = 1, iq_max
+        ibc = 0
+        if (BcsFlowJmin%type(iq) == DNS_BCS_NEUMANN) ibc = ibc + 1
+        if (BcsFlowJmax%type(iq) == DNS_BCS_NEUMANN) ibc = ibc + 2
+        if (ibc > 0) then
+            call BOUNDARY_BCS_NEUMANN_Y(ibc, imax, jmax, kmax, g(2), hq(1, iq), &
+                                        BcsFlowJmin%ref(1, 1, iq), BcsFlowJmax%ref(1, 1, iq), wrk1d, tmp1, wrk3d)
+        end if
+        if (imode_ibm == 1) call IBM_BCS_FIELD(hq(1, iq)) ! set tendency in solid to zero
 
-! -----------------------------------------------------------------------
-! Impose bottom BCs at Jmin
-! -----------------------------------------------------------------------
-  ip_b =                 1
-  DO k = 1,kmax
-     h1(ip_b:ip_b+imax-1) = BcsFlowJmin%ref(1:imax,k,1)
-     h2(ip_b:ip_b+imax-1) = BcsFlowJmin%ref(1:imax,k,2)
-     h3(ip_b:ip_b+imax-1) = BcsFlowJmin%ref(1:imax,k,3); ip_b = ip_b + nxy
-  ENDDO
+        p_bcs(1:imax, 1:jmax, 1:kmax) => hq(1:imax*jmax*kmax, iq)
+        p_bcs(:, 1, :) = BcsFlowJmin%ref(:, :, iq)
+        p_bcs(:, jmax, :) = BcsFlowJmax%ref(:, :, iq)
 
-! -----------------------------------------------------------------------
-! Impose top BCs at Jmax
-! -----------------------------------------------------------------------
-  ip_t = imax*(jmax-1) + 1
-  DO k = 1,kmax
-     h1(ip_t:ip_t+imax-1) = BcsFlowJmax%ref(1:imax,k,1)
-     h2(ip_t:ip_t+imax-1) = BcsFlowJmax%ref(1:imax,k,2)
-     h3(ip_t:ip_t+imax-1) = BcsFlowJmax%ref(1:imax,k,3); ip_t = ip_t + nxy
-  ENDDO
+    end do
 
-  RETURN
-END SUBROUTINE RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2
+    return
+end subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2

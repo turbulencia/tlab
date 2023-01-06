@@ -540,24 +540,20 @@ contains
         select case (iadvection)
         case (EQNS_DIVERGENCE)
             call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
-            call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3(q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
-                                       q, hq, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
+            call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
 
             call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
             do is = 1, inb_scal
-                call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is, q(1, 1), q(1, 2), q(1, 3), s(1, is), hs(1, is), &
-                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is)
             end do
 
         case (EQNS_SKEWSYMMETRIC)
             call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
-            call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2(q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
-                                       q, hq, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
+            call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
 
             call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
             do is = 1, inb_scal
-                call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is, q(1, 1), q(1, 2), q(1, 3), s(1, is), hs(1, is), &
-                                              txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
+                call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is)
             end do
 
         case (EQNS_CONVECTIVE)
@@ -568,8 +564,7 @@ contains
 
                 call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
                 do is = 1, inb_scal
-                    call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is, q(1, 1), q(1, 2), q(1, 3), s(1, is), hs(1, is), &
-                                              txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
+                    call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
                 end do
 
             case (EQNS_RHS_COMBINED)
