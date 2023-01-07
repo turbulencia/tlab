@@ -95,25 +95,27 @@ contains
         integer(wi) idummy(2)
 
         idummy = shape(q)
-        if (idummy(2) >= 1) u(1:imax,1:jmax,1:kmax) => q(1:isize_field, 1)
-        if (idummy(2) >= 2) v(1:imax,1:jmax,1:kmax) => q(1:isize_field, 2)
-        if (idummy(2) >= 3) w(1:imax,1:jmax,1:kmax) => q(1:isize_field, 3)
+        if (idummy(2) >= 1) u(1:imax, 1:jmax, 1:kmax) => q(1:isize_field, 1)
+        if (idummy(2) >= 2) v(1:imax, 1:jmax, 1:kmax) => q(1:isize_field, 2)
+        if (idummy(2) >= 3) w(1:imax, 1:jmax, 1:kmax) => q(1:isize_field, 3)
         ! compressible flows variables
-        if (idummy(2) >= 4) e(1:imax,1:jmax,1:kmax) => q(1:isize_field, 4)
-        if (idummy(2) >= 5) rho(1:imax,1:jmax,1:kmax) => q(1:isize_field, 5)
-        if (idummy(2) >= 6) p(1:imax,1:jmax,1:kmax) => q(1:isize_field, 6)
-        if (idummy(2) >= 7) T(1:imax,1:jmax,1:kmax) => q(1:isize_field, 7)
-        if (idummy(2) >= 8) vis(1:imax,1:jmax,1:kmax) => q(1:isize_field, 8)
+        if (idummy(2) >= 4) e(1:imax, 1:jmax, 1:kmax) => q(1:isize_field, 4)
+        if (idummy(2) >= 5) rho(1:imax, 1:jmax, 1:kmax) => q(1:isize_field, 5)
+        if (idummy(2) >= 6) p(1:imax, 1:jmax, 1:kmax) => q(1:isize_field, 6)
+        if (idummy(2) >= 7) T(1:imax, 1:jmax, 1:kmax) => q(1:isize_field, 7)
+        if (idummy(2) >= 8) vis(1:imax, 1:jmax, 1:kmax) => q(1:isize_field, 8)
 
-        if (allocated(wrk3d)) p_wrk3d(1:imax,1:jmax,1:kmax) => wrk3d(1:isize_field)
+        if (allocated(q)) p_q(1:imax, 1:jmax, 1:kmax, 1:inb_flow_array) => q(1:isize_field*inb_flow_array, 1)
+        if (allocated(s)) p_s(1:imax, 1:jmax, 1:kmax, 1:inb_scal_array) => s(1:isize_field*inb_scal_array, 1)
+        if (allocated(wrk3d)) p_wrk3d(1:imax, 1:jmax, 1:kmax) => wrk3d(1:isize_field)
 
         idummy = shape(txc)
-        if (idummy(2) >= 1) tmp1(1:imax,1:jmax,1:kmax) => txc(1:isize_field, 1)
-        if (idummy(2) >= 2) tmp2(1:imax,1:jmax,1:kmax) => txc(1:isize_field, 2)
-        if (idummy(2) >= 3) tmp3(1:imax,1:jmax,1:kmax) => txc(1:isize_field, 3)
-        if (idummy(2) >= 4) tmp4(1:imax,1:jmax,1:kmax) => txc(1:isize_field, 4)
-        if (idummy(2) >= 5) tmp5(1:imax,1:jmax,1:kmax) => txc(1:isize_field, 5)
-        if (idummy(2) >= 6) tmp6(1:imax,1:jmax,1:kmax) => txc(1:isize_field, 6)
+        if (idummy(2) >= 1) tmp1(1:imax, 1:jmax, 1:kmax) => txc(1:isize_field, 1)
+        if (idummy(2) >= 2) tmp2(1:imax, 1:jmax, 1:kmax) => txc(1:isize_field, 2)
+        if (idummy(2) >= 3) tmp3(1:imax, 1:jmax, 1:kmax) => txc(1:isize_field, 3)
+        if (idummy(2) >= 4) tmp4(1:imax, 1:jmax, 1:kmax) => txc(1:isize_field, 4)
+        if (idummy(2) >= 5) tmp5(1:imax, 1:jmax, 1:kmax) => txc(1:isize_field, 5)
+        if (idummy(2) >= 6) tmp6(1:imax, 1:jmax, 1:kmax) => txc(1:isize_field, 6)
 
     end subroutine TLAB_DEFINE_POINTERS_3D
 

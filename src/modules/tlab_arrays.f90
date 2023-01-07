@@ -12,7 +12,7 @@ module TLAB_ARRAYS
     real(wp), allocatable :: wrk3d(:)                      ! Work arrays (scratch space)
 
     target x, y, z
-    target q, s, txc, wrk3d
+    target q, s, txc, wrk2d, wrk3d
 
 end module TLAB_ARRAYS
 
@@ -51,6 +51,8 @@ module TLAB_POINTERS_3D
     real(wp), pointer :: T(:,:,:) => null()
     real(wp), pointer :: vis(:,:,:) => null()
 
+    real(wp), pointer :: p_q(:,:,:,:) => null()
+    real(wp), pointer :: p_s(:,:,:,:) => null()
     real(wp), pointer :: p_wrk3d(:,:,:) => null()
 
     real(wp), pointer :: tmp1(:,:,:) => null()

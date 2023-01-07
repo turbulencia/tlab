@@ -3,13 +3,13 @@
 
 module PLANES
     use TLAB_CONSTANTS, only: lfile, efile, wp, wi
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_txc_field, inb_scal_array, inb_flow_array
+    use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array, inb_flow_array
     use TLAB_VARS, only: rbackground, g
     use TLAB_VARS, only: itime, rtime
     use TLAB_VARS, only: io_aux
+    use TLAB_ARRAYS, only: q, s, wrk1d, wrk2d, wrk3d, txc
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
-    use DNS_LOCAL
     implicit none
     save
     private
@@ -27,6 +27,8 @@ module PLANES
     type(planes_dt), public :: iplanes, jplanes, kplanes
     character*32 varname(1)
     integer(wi) idummy
+
+    real(wp), pointer :: data_i(:, :, :), data_j(:, :, :), data_k(:, :, :), p_wrk2d(:, :)
 
     public :: PLANES_INITIALIZE, PLANES_SAVE
 
@@ -66,6 +68,12 @@ contains
             call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size kmax is is insufficient.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
+
+        ! Pointers
+        data_i(1:jmax, 1:iplanes%size, 1:kmax) => txc(1:jmax*iplanes%size*kmax, 2)
+        data_j(1:imax, 1:jplanes%size, 1:kmax) => txc(1:imax*jplanes%size*kmax, 2)
+        data_k(1:imax, 1:jmax, 1:kplanes%size) => txc(1:imax*jmax*kplanes%size, 2)
+        p_wrk2d(1:imax, 1:kmax) => wrk2d(1:imax*kmax, 1)
 
         ! Info for IO routines: total size, lower bound, upper bound, stride, # variables
         idummy = jmax*kmax*iplanes%size; iplanes%io = [idummy, 1, idummy, 1, 1]
@@ -111,17 +119,8 @@ contains
 
     ! ###################################################################
     ! ###################################################################
-    subroutine PLANES_SAVE(q, s, p, tmp1, tmp2, tmp3, wrk1d, wrk2d, wrk3d)
-
-        real(wp), intent(IN) :: q(imax, jmax, kmax, inb_flow_array)
-        real(wp), intent(IN) :: s(imax, jmax, kmax, inb_scal_array)
-        real(wp), intent(INOUT) :: p(imax, jmax, kmax)             ! larger arrays for the Poisson solver,
-        real(wp), intent(INOUT) :: tmp1(imax, jmax, kplanes%size)  ! but local shapes are used
-        real(wp), intent(INOUT) :: tmp2(imax, jplanes%size, kmax)  ! to arrange plane data.
-        real(wp), intent(INOUT) :: wrk3d(jmax, iplanes%size, kmax) ! In this array we transpose data
-        real(wp), intent(INOUT) :: tmp3(imax, jmax, kmax, 3)
-        real(wp), intent(INOUT) :: wrk1d(*)
-        real(wp), intent(INOUT) :: wrk2d(imax, kmax, *)
+    subroutine PLANES_SAVE()
+        use TLAB_POINTERS_3D
 
         ! -------------------------------------------------------------------
         integer(wi) offset, j, k
@@ -133,68 +132,74 @@ contains
         write (line1, *) itime; line1 = 'Writing planes at It'//trim(adjustl(line1))//' and time '//trim(adjustl(fname))//'.'
         call TLAB_WRITE_ASCII(lfile, line1)
 
-        call FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp3, wrk1d, wrk2d, wrk3d)
+        call FI_PRESSURE_BOUSSINESQ(q, s, tmp1, tmp2, tmp3, tmp4, wrk1d, wrk2d, wrk3d)
 
         if (kplanes%n > 0) then
             offset = 0
             do idummy = 1, inb_flow_array
-                tmp1(:, :, 1 + offset:kplanes%n + offset) = q(:, :, kplanes%nodes(1:kplanes%n), idummy)
+                data_k(:, :, 1 + offset:kplanes%n + offset) = p_q(:, :, kplanes%nodes(1:kplanes%n), idummy)
                 offset = offset + kplanes%n
             end do
             do idummy = 1, inb_scal_array
-                tmp1(:, :, 1 + offset:kplanes%n + offset) = s(:, :, kplanes%nodes(1:kplanes%n), idummy)
+                data_k(:, :, 1 + offset:kplanes%n + offset) = p_s(:, :, kplanes%nodes(1:kplanes%n), idummy)
                 offset = offset + kplanes%n
             end do
-            tmp1(:, :, 1 + offset:kplanes%n + offset) = p(:, :, kplanes%nodes(1:kplanes%n))
+            data_k(:, :, 1 + offset:kplanes%n + offset) = tmp1(:, :, kplanes%nodes(1:kplanes%n))
             offset = offset + kplanes%n
             write (fname, *) itime; fname = 'planesK.'//trim(adjustl(fname))
-            call IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_XOY, fname, varname, tmp1, kplanes%io, wrk3d)
+            call IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_XOY, fname, varname, data_k, kplanes%io, wrk3d)
         end if
 
         if (jplanes%n > 0) then
             offset = 0
             do idummy = 1, inb_flow_array
-                tmp2(:, 1 + offset:jplanes%n + offset, :) = q(:, jplanes%nodes(1:jplanes%n), :, idummy)
+                data_j(:, 1 + offset:jplanes%n + offset, :) = p_q(:, jplanes%nodes(1:jplanes%n), :, idummy)
                 offset = offset + jplanes%n
             end do
             do idummy = 1, inb_scal_array
-                tmp2(:, 1 + offset:jplanes%n + offset, :) = s(:, jplanes%nodes(1:jplanes%n), :, idummy)
+                data_j(:, 1 + offset:jplanes%n + offset, :) = p_s(:, jplanes%nodes(1:jplanes%n), :, idummy)
                 offset = offset + jplanes%n
             end do
-            tmp2(:, 1 + offset:jplanes%n + offset, :) = p(:, jplanes%nodes(1:jplanes%n), :)
+            data_j(:, 1 + offset:jplanes%n + offset, :) = tmp1(:, jplanes%nodes(1:jplanes%n), :)
             offset = offset + jplanes%n
             if (imixture == MIXT_TYPE_AIRWATER) then    ! Add LWP and intgral of TWP
-                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, s(1, 1, 1, inb_scal_array), wrk2d, wrk1d, wrk3d)
-                tmp2(:, 1 + offset, :) = wrk2d(:, :, 1)
+                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, p_s(1, 1, 1, inb_scal_array), p_wrk2d, wrk1d, wrk3d)
+                data_j(:, 1 + offset, :) = p_wrk2d(:, :)
                 offset = offset + 1
-                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, s(1, 1, 1, inb_scal_array - 1), wrk2d, wrk1d, wrk3d)
-                tmp2(:, 1 + offset, :) = wrk2d(:, :, 1)
+             call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, p_s(1, 1, 1, inb_scal_array - 1), p_wrk2d, wrk1d, wrk3d)
+                data_j(:, 1 + offset, :) = p_wrk2d(:, :)
                 offset = offset + 1
             end if
             write (fname, *) itime; fname = 'planesJ.'//trim(adjustl(fname))
-            call IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_XOZ, fname, varname, tmp2, jplanes%io, wrk3d)
+            call IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_XOZ, fname, varname, data_j, jplanes%io, wrk3d)
         end if
 
         if (iplanes%n > 0) then       ! We transpose to make j-lines together in memory
             offset = 0
             do idummy = 1, inb_flow_array
-                do k = 1, kmax; do j = 1, jmax
-                        wrk3d(j, 1 + offset:iplanes%n + offset, k) = q(iplanes%nodes(1:iplanes%n), j, k, idummy)
-                    end do; end do
+                do k = 1, kmax
+                    do j = 1, jmax
+                        data_i(j, 1 + offset:iplanes%n + offset, k) = p_q(iplanes%nodes(1:iplanes%n), j, k, idummy)
+                    end do
+                end do
                 offset = offset + iplanes%n
             end do
             do idummy = 1, inb_scal_array
-                do k = 1, kmax; do j = 1, jmax
-                        wrk3d(j, 1 + offset:iplanes%n + offset, k) = s(iplanes%nodes(1:iplanes%n), j, k, idummy)
-                    end do; end do
+                do k = 1, kmax
+                    do j = 1, jmax
+                        data_i(j, 1 + offset:iplanes%n + offset, k) = p_s(iplanes%nodes(1:iplanes%n), j, k, idummy)
+                    end do
+                end do
                 offset = offset + iplanes%n
             end do
-            do k = 1, kmax; do j = 1, jmax
-                    wrk3d(j, 1 + offset:iplanes%n + offset, k) = p(iplanes%nodes(1:iplanes%n), j, k)
-                end do; end do
+            do k = 1, kmax
+                do j = 1, jmax
+                    data_i(j, 1 + offset:iplanes%n + offset, k) = tmp1(iplanes%nodes(1:iplanes%n), j, k)
+                end do
+            end do
             offset = offset + iplanes%n
             write (fname, *) itime; fname = 'planesI.'//trim(adjustl(fname))
-            call IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_ZOY, fname, varname, wrk3d, iplanes%io, tmp1)
+            call IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_ZOY, fname, varname, data_i, iplanes%io, wrk3d)
         end if
 
         return

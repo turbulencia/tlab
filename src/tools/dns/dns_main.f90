@@ -282,7 +282,7 @@ program DNS
         end if
 
         if (mod(itime - nitera_first, nitera_pln) == 0) then
-            call PLANES_SAVE(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk1d, wrk2d, wrk3d)
+            call PLANES_SAVE()
         end if
 
     end do
