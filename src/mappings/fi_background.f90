@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_const_mpi.h"
 
@@ -8,8 +7,7 @@
 !#
 !########################################################################
 subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
-
-    use TLAB_CONSTANTS, only: lfile
+    use TLAB_CONSTANTS, only: lfile, wp, wi
     use TLAB_VARS, only: inb_scal, inb_scal_array, imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
@@ -25,24 +23,23 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 
     implicit none
 
-#include "integers.h"
-
-    TREAL, dimension(g(2)%size, *), intent(INOUT) :: wrk1d
+    real(wp), dimension(g(2)%size, *), intent(INOUT) :: wrk1d
 
 ! -----------------------------------------------------------------------
-    TINTEGER is, j, ip, nlines, offset
+    integer(wi) is, j, ip, nlines, offset
+    integer, parameter :: i1 = 1
 
 ! #######################################################################
-    do is = 1,size(qbg)
+    do is = 1, size(qbg)
         if (qbg(is)%relative) qbg(is)%ymean = g(2)%nodes(1) + g(2)%scale*qbg(is)%ymean_rel
-    enddo
+    end do
     if (pbg%relative) pbg%ymean = g(2)%nodes(1) + g(2)%scale*pbg%ymean_rel
     if (rbg%relative) rbg%ymean = g(2)%nodes(1) + g(2)%scale*rbg%ymean_rel
     if (tbg%relative) tbg%ymean = g(2)%nodes(1) + g(2)%scale*tbg%ymean_rel
     if (hbg%relative) hbg%ymean = g(2)%nodes(1) + g(2)%scale*hbg%ymean_rel
-    do is = 1,size(sbg)
+    do is = 1, size(sbg)
         if (sbg(is)%relative) sbg(is)%ymean = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
-    enddo
+    end do
 
 ! #######################################################################
     allocate (pbackground(g(2)%size))
@@ -55,11 +52,11 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 ! #######################################################################
 ! Thermodynamic background profiles
 ! #######################################################################
-    rbackground = C_1_R ! defaults
-    ribackground = C_1_R
-    pbackground = C_1_R
-    tbackground = C_1_R
-    epbackground = C_0_R
+    rbackground = 1.0_wp ! defaults
+    ribackground = 1.0_wp
+    pbackground = 1.0_wp
+    tbackground = 1.0_wp
+    epbackground = 0.0_wp
 
 ! Construct given thermodynamic profiles
     do is = 1, inb_scal
@@ -69,7 +66,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 !     wrk1d(:,is) = sbg(is)%reference
     end do
 
-    if (scaleheight > C_0_R) then
+    if (scaleheight > 0.0_wp) then
 ! Calculate derived thermodynamic profiles
         epbackground = (g(2)%nodes - pbg%ymean)*GRATIO/scaleheight
 
@@ -80,22 +77,22 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 
     end if
 
-    if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= C_0_R) then ! Calculate q_l
+    if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
         call THERMO_AIRWATER_PH(i1, g(2)%size, i1, wrk1d(1, 2), wrk1d(1, 1), epbackground, pbackground)
     else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
         call THERMO_AIRWATER_LINEAR(i1, g(2)%size, i1, wrk1d, wrk1d(1, inb_scal_array))
     end if
 
-    if (scaleheight > C_0_R) then
+    if (scaleheight > 0.0_wp) then
         call THERMO_ANELASTIC_DENSITY(i1, g(2)%size, i1, wrk1d, epbackground, pbackground, rbackground)
-        ribackground = C_1_R/rbackground
+        ribackground = 1.0_wp/rbackground
     end if
 
 ! Calculate buoyancy profile
     if (buoyancy%type == EQNS_EXPLICIT) then
         call THERMO_ANELASTIC_BUOYANCY(i1, g(2)%size, i1, wrk1d, epbackground, pbackground, rbackground, bbackground)
     else
-        wrk1d(:, inb_scal_array + 1) = C_0_R
+        wrk1d(:, inb_scal_array + 1) = 0.0_wp
         call FI_BUOYANCY(buoyancy, i1, g(2)%size, i1, wrk1d, bbackground, wrk1d(1, inb_scal_array + 1))
     end if
 
@@ -109,15 +106,15 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
     sbg(is) = sbg(1)
     sbg(is)%mean = (bbackground(1) + bbackground(g(2)%size))/froude
-    sbg(is)%delta = ABS(bbackground(1) - bbackground(g(2)%size))/froude
+    sbg(is)%delta = abs(bbackground(1) - bbackground(g(2)%size))/froude
     schmidt(is) = schmidt(1)
 
     if (imixture == MIXT_TYPE_AIRWATER) then
         is = is + 1
         call THERMO_ANELASTIC_THETA_L(i1, g(2)%size, i1, wrk1d, epbackground, pbackground, wrk1d(1, inb_scal_array + 1))
         sbg(is) = sbg(1)
-        sbg(is)%mean = (wrk1d(1, inb_scal_array + 1) + wrk1d(g(2)%size, inb_scal_array + 1))*C_05_R
-        sbg(is)%delta = ABS(wrk1d(1, inb_scal_array + 1) - wrk1d(g(2)%size, inb_scal_array + 1))
+        sbg(is)%mean = (wrk1d(1, inb_scal_array + 1) + wrk1d(g(2)%size, inb_scal_array + 1))*0.5_wp
+        sbg(is)%delta = abs(wrk1d(1, inb_scal_array + 1) - wrk1d(g(2)%size, inb_scal_array + 1))
         schmidt(is) = schmidt(1)
     end if
 
@@ -142,7 +139,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 #endif
         allocate (g(1)%rhoinv(nlines))
         do j = 1, nlines
-            ip = MOD(offset + j - 1, g(2)%size) + 1
+            ip = mod(offset + j - 1, g(2)%size) + 1
             g(1)%rhoinv(j) = ribackground(ip)
         end do
 

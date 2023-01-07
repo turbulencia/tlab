@@ -152,10 +152,10 @@ program DNS
     ! ###################################################################
     call BOUNDARY_BUFFER_INITIALIZE(q, s, txc, wrk3d)
 
-    call BOUNDARY_BCS_INITIALIZE(wrk3d)
+    call BOUNDARY_BCS_INITIALIZE()
 
     if (imode_sim == DNS_MODE_SPATIAL) then
-        call BOUNDARY_INFLOW_INITIALIZE(rtime, txc, wrk1d, wrk2d, wrk3d)
+        call BOUNDARY_INFLOW_INITIALIZE(rtime, txc)
     end if
 
     ! ###################################################################
