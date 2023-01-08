@@ -28,7 +28,7 @@ module PLANES
     character*32 varname(1)
     integer(wi) idummy
 
-    real(wp), pointer :: data_i(:, :, :), data_j(:, :, :), data_k(:, :, :), p_wrk2d(:, :)
+    real(wp), pointer :: data_i(:, :, :), data_j(:, :, :), data_k(:, :, :)
 
     public :: PLANES_INITIALIZE, PLANES_SAVE
 
@@ -73,7 +73,6 @@ contains
         data_i(1:jmax, 1:iplanes%size, 1:kmax) => txc(1:jmax*iplanes%size*kmax, 2)
         data_j(1:imax, 1:jplanes%size, 1:kmax) => txc(1:imax*jplanes%size*kmax, 2)
         data_k(1:imax, 1:jmax, 1:kplanes%size) => txc(1:imax*jmax*kplanes%size, 2)
-        p_wrk2d(1:imax, 1:kmax) => wrk2d(1:imax*kmax, 1)
 
         ! Info for IO routines: total size, lower bound, upper bound, stride, # variables
         idummy = jmax*kmax*iplanes%size; iplanes%io = [idummy, 1, idummy, 1, 1]
@@ -132,7 +131,7 @@ contains
         write (line1, *) itime; line1 = 'Writing planes at It'//trim(adjustl(line1))//' and time '//trim(adjustl(fname))//'.'
         call TLAB_WRITE_ASCII(lfile, line1)
 
-        call FI_PRESSURE_BOUSSINESQ(q, s, tmp1, tmp2, tmp3, tmp4, wrk1d, wrk2d, wrk3d)
+        call FI_PRESSURE_BOUSSINESQ(q, s, tmp1, tmp2, tmp3, tmp4)
 
         if (kplanes%n > 0) then
             offset = 0
@@ -164,10 +163,10 @@ contains
             offset = offset + jplanes%n
             if (imixture == MIXT_TYPE_AIRWATER) then    ! Add LWP and intgral of TWP
                 call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, p_s(1, 1, 1, inb_scal_array), p_wrk2d, wrk1d, wrk3d)
-                data_j(:, 1 + offset, :) = p_wrk2d(:, :)
+                data_j(:, 1 + offset, :) = p_wrk2d(:, :, 1)
                 offset = offset + 1
              call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, p_s(1, 1, 1, inb_scal_array - 1), p_wrk2d, wrk1d, wrk3d)
-                data_j(:, 1 + offset, :) = p_wrk2d(:, :)
+                data_j(:, 1 + offset, :) = p_wrk2d(:, :, 1)
                 offset = offset + 1
             end if
             write (fname, *) itime; fname = 'planesJ.'//trim(adjustl(fname))

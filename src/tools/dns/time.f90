@@ -539,19 +539,19 @@ contains
 
         select case (iadvection)
         case (EQNS_DIVERGENCE)
-            call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
+            call FI_SOURCES_FLOW(q, s, hq, txc(1, 1))
             call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
 
-            call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
+            call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2))
             do is = 1, inb_scal
                 call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is)
             end do
 
         case (EQNS_SKEWSYMMETRIC)
-            call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
+            call FI_SOURCES_FLOW(q, s, hq, txc(1, 1))
             call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
 
-            call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
+            call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2))
             do is = 1, inb_scal
                 call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is)
             end do
@@ -559,17 +559,17 @@ contains
         case (EQNS_CONVECTIVE)
             select case (imode_rhs)
             case (EQNS_RHS_SPLIT)
-                call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
+                call FI_SOURCES_FLOW(q, s, hq, txc(1, 1))
                 call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 
-                call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
+                call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2))
                 do is = 1, inb_scal
                     call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
                 end do
 
             case (EQNS_RHS_COMBINED)
-                call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
-                call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
+                call FI_SOURCES_FLOW(q, s, hq, txc(1, 1))
+                call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2))
                 call RHS_GLOBAL_INCOMPRESSIBLE_1()
 
             case (EQNS_RHS_NONBLOCKING)

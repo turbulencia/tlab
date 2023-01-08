@@ -369,7 +369,7 @@ program AVERAGES
             ! ###################################################################
         case (1)
             if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 9), txc(1, 1), txc(1, 2), txc(1, 4), wrk1d, wrk2d, wrk3d)
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 9), txc(1, 1), txc(1, 2), txc(1, 4))
             end if
 
             if (icalc_scal == 1) then
@@ -528,7 +528,7 @@ program AVERAGES
             ifield = ifield + 1; vars(ifield)%field => w(:); vars(ifield)%tag = 'W'
 
             if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk1d, wrk2d, wrk3d)
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'P'
             else
                 ifield = ifield + 1; vars(ifield)%field => q(:, 5); vars(ifield)%tag = 'R'
@@ -610,7 +610,7 @@ program AVERAGES
             ifield = 0
 
             if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk1d, wrk2d, wrk3d)
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, u, v, w, txc(1, 1), &
                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
             else
@@ -826,11 +826,11 @@ program AVERAGES
             call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk1d, wrk2d, wrk3d)
+            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'P'
 
             q = 0.0_wp
-            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk1d, wrk2d, wrk3d)
+            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'Psta'
 
             txc(:, 3) = txc(:, 1) - txc(:, 2)

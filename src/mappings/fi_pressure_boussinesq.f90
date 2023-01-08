@@ -2,41 +2,39 @@
 
 !########################################################################
 !#
-!# Calculate the pressure field from a divergence free velocity field
-!# and a body force.
+!# Calculate the pressure field from a divergence free velocity field and a body force.
 !#
 !########################################################################
-subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, wrk1d, wrk2d, wrk3d)
+subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: isize_wrk1d, isize_field
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: imode_eqns, imode_ibm, istagger
     use TLAB_VARS, only: rbackground
+    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
+    use TLAB_POINTERS_3D, only: p_wrk2d
     use IBM_VARS, only: ibm_burgers
     use OPR_PARTIAL
     use OPR_BURGERS
     implicit none
 
-    real(wp), dimension(isize_field, *), intent(IN), target :: q, s
-    real(wp), dimension(isize_field), intent(OUT) :: p
-    real(wp), dimension(isize_field), intent(INOUT) :: tmp1, tmp2, wrk3d
-    real(wp), dimension(isize_field, 3), intent(INOUT), target :: tmp
-    real(wp), dimension(isize_wrk1d, 16), intent(INOUT) :: wrk1d
-    real(wp), dimension(imax, kmax, 2), intent(INOUT) :: wrk2d
+    real(wp), intent(in)    :: q(isize_field, 3)
+    real(wp), intent(in)    :: s(isize_field, *)
+    real(wp), intent(out)   :: p(isize_field)
+    real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field)
+    real(wp), intent(inout) :: tmp(isize_field, 3)
+
+    target q, tmp
 ! -----------------------------------------------------------------------
-    integer(wi) k, bcs(2, 2)
-    integer(wi) ip_b, ip_t, nxy
+    integer(wi) bcs(2, 2)
     integer, parameter :: i3 = 3
 
 ! Pointers to existing allocated space
     real(wp), dimension(:), pointer :: u, v, w
     real(wp), dimension(:), pointer :: tmp3, tmp4, tmp5
-    real(wp), dimension(:), pointer :: p_bcs
+    real(wp), dimension(:, :, :), pointer :: p_bcs
 
 ! #######################################################################
-    nxy = imax*jmax
-
     bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
     p = 0.0_wp
@@ -49,7 +47,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, wrk1d, wrk2d, wrk3d)
 
 ! #######################################################################
 ! Sources
-    call FI_SOURCES_FLOW(q, s, tmp, tmp1, wrk1d, wrk2d, wrk3d)
+    call FI_SOURCES_FLOW(q, s, tmp, tmp1)
 
     tmp3 => tmp(:, 1)
     tmp4 => tmp(:, 2)
@@ -134,21 +132,18 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, wrk1d, wrk2d, wrk3d)
 ! Solve Poisson equation
 ! #######################################################################
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
-    ip_b = 1
-    ip_t = imax*(jmax - 1) + 1
     if (istagger == 1) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
         call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d, wrk3d)
         call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
         if (imode_ibm == 1) call IBM_BCS_FIELD_STAGGER(tmp4)
     end if
-    do k = 1, kmax
-        p_bcs => tmp4(ip_b:); wrk2d(1:imax, k, 1) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-        p_bcs => tmp4(ip_t:); wrk2d(1:imax, k, 2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
-    end do
+    p_bcs(1:imax, 1:jmax, 1:kmax) => tmp4(1:imax*jmax*kmax)
+    p_wrk2d(:, :, 1) = p_bcs(:, 1, :)
+    p_wrk2d(:, :, 2) = p_bcs(:, jmax, :)
 
 ! Pressure field in p
     call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, i3, &
-                         p, wrk3d, tmp1, tmp2, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+                         p, wrk3d, tmp1, tmp2, p_wrk2d(1, 1, 1), p_wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
 
 ! Stagger pressure field p back on velocity grid
     if (istagger == 1) then
@@ -156,7 +151,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, wrk1d, wrk2d, wrk3d)
         call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp1, p, wrk3d, wrk2d, wrk3d)
     end if
 
-    nullify (u, v, w, tmp3, tmp4, tmp5)
+    nullify (u, v, w, tmp3, tmp4, tmp5, p_bcs)
 
     return
 end subroutine FI_PRESSURE_BOUSSINESQ

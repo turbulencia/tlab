@@ -534,7 +534,7 @@ program SPECTRA
 
 ! Calculate additional diagnostic quantities to be processed
         if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-            call FI_PRESSURE_BOUSSINESQ(q, s, p_aux, txc(1, 1), txc(1, 2), txc(1, 3), wrk1d, wrk2d, wrk3d)
+            call FI_PRESSURE_BOUSSINESQ(q, s, p_aux, txc(1, 1), txc(1, 2), txc(1, 3))
             if (flag_buoyancy == 1) then
                 if (buoyancy%type == EQNS_EXPLICIT) then
                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, s(1, inb_scal_array))

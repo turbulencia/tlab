@@ -74,7 +74,7 @@ program VTGVORTEX
 !  CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i3,i0, q, wrk3d)
 
         call FI_PRESSURE_BOUSSINESQ(q(1, 1), q(1, 2), q(1, 3), txc(1, 4), q(1, 4), &
-                                    txc(1, 1), txc(1, 2), txc(1, 3), wrk1d, wrk2d, wrk3d)
+                                    txc(1, 1), txc(1, 2), txc(1, 3))
 
 ! Theoretical Taylor-Green in array txc
         x = x - mean_u*rtime

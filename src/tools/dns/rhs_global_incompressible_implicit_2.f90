@@ -201,7 +201,7 @@ SUBROUTINE  RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2&
   ENDDO
 
 ! #######################################################################
-  CALL FI_SOURCES_FLOW(q,s, hq, tmp1, wrk1d,wrk2d,wrk3d)
+  CALL FI_SOURCES_FLOW(q,s, hq, tmp1)
 
 ! #######################################################################
 ! Impose buffer zone as relaxation terms (Flow)

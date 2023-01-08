@@ -477,7 +477,7 @@ program VISUALS
 
                 else if (opt_vec(iv) == 8) then ! pressure
                     plot_file = 'Pressure'//time_str(1:MaskSize)
-                    call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk1d, wrk2d, wrk3d)
+                    call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                     plot_file = 'PressureGradientPower'//time_str(1:MaskSize)
@@ -512,7 +512,7 @@ program VISUALS
 
                     plot_file = 'PressureHydrostatic'//time_str(1:MaskSize)
                     q = C_0_R
-                    call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk1d, wrk2d, wrk3d)
+                    call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
 
                     plot_file = 'PressureHydrodynamic'//time_str(1:MaskSize)
@@ -933,7 +933,7 @@ program VISUALS
 
                 plot_file = 'Pressure'//time_str(1:MaskSize)
                 bbackground = C_0_R
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk1d, wrk2d, wrk3d)
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'PressureGradientY'//time_str(1:MaskSize)
