@@ -11,16 +11,17 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: imode_eqns, imode_ibm, istagger
     use TLAB_VARS, only: rbackground
-    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
+    use TLAB_ARRAYS, only: wrk2d, wrk3d
     use TLAB_POINTERS_3D, only: p_wrk2d
     use IBM_VARS, only: ibm_burgers
     use OPR_PARTIAL
     use OPR_BURGERS
+    use OPR_ELLIPTIC
     implicit none
 
-    real(wp), intent(in)    :: q(isize_field, 3)
-    real(wp), intent(in)    :: s(isize_field, *)
-    real(wp), intent(out)   :: p(isize_field)
+    real(wp), intent(in) :: q(isize_field, 3)
+    real(wp), intent(in) :: s(isize_field, *)
+    real(wp), intent(out) :: p(isize_field)
     real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field)
     real(wp), intent(inout) :: tmp(isize_field, 3)
 
@@ -142,8 +143,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     p_wrk2d(:, :, 2) = p_bcs(:, jmax, :)
 
 ! Pressure field in p
-    call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, i3, &
-                         p, wrk3d, tmp1, tmp2, p_wrk2d(1, 1, 1), p_wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+    call OPR_POISSON_FXZ(imax, jmax, kmax, g, i3, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
 ! Stagger pressure field p back on velocity grid
     if (istagger == 1) then

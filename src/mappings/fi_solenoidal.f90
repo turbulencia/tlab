@@ -17,6 +17,7 @@ subroutine FI_SOLENOIDAL(iwall, nx, ny, nz, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp
 
     use TLAB_VARS, only: g
     use OPR_PARTIAL
+    use OPR_ELLIPTIC
     implicit none
 
 #include "integers.h"
@@ -44,8 +45,7 @@ subroutine FI_SOLENOIDAL(iwall, nx, ny, nz, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp
 
     if (g(1)%periodic .and. g(3)%periodic) then ! Doubly periodic in xOz
         wrk2d(:, :, 1:2) = C_0_R  ! bcs
-        call OPR_POISSON_FXZ(.false., nx, ny, nz, g, ibc, &
-                             tmp1, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+        call OPR_POISSON_FXZ(nx, ny, nz, g, ibc, tmp1, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2))
 
     else                                          ! General treatment
 #ifdef USE_CGLOC

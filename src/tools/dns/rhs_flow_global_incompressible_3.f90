@@ -20,6 +20,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS, only: BcsFlowJmin, BcsFlowJmax
     use OPR_PARTIAL
+    use OPR_ELLIPTIC
 
     implicit none
 
@@ -110,8 +111,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
 
 ! pressure in tmp1, Oy derivative in tmp3
     ibc = 3
-    call OPR_POISSON_FXZ(.true., imax, jmax, kmax, g, ibc, &
-                         tmp1, tmp3, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+    call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
 
 ! horizontal derivatives
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)

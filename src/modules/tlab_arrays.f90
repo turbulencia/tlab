@@ -12,7 +12,7 @@ module TLAB_ARRAYS
     real(wp), allocatable :: wrk3d(:)                      ! Work arrays (scratch space)
 
     target x, y, z
-    target q, s, txc, wrk2d, wrk3d
+    target q, s, txc, wrk1d, wrk2d, wrk3d
 
 end module TLAB_ARRAYS
 

@@ -37,6 +37,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use IBM_VARS, only: imode_ibm_scal, ibm_burgers
     use OPR_PARTIAL
     use OPR_BURGERS
+    use OPR_ELLIPTIC
 
     implicit none
 
@@ -76,7 +77,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 ! Keep the old tendency of the scalar at the boundary to be used in dynamic BCs
     if (any(BcsScalJmin%SfcType(1:inb_scal) == DNS_SFC_LINEAR) .or. any(BcsScalJmax%SfcType(1:inb_scal) == DNS_SFC_LINEAR)) then
         do is = 1, inb_scal
-            p_bcs(1:imax, 1:jmax, 1:kmax) => hs(1:imax*jmax*kmax,is)
+            p_bcs(1:imax, 1:jmax, 1:kmax) => hs(1:imax*jmax*kmax, is)
             if (BcsScalJmin%SfcType(is) == DNS_SFC_LINEAR) BcsScalJmin%ref(:, :, is) = p_bcs(:, 1, :)
             if (BcsScalJmax%SfcType(is) == DNS_SFC_LINEAR) BcsScalJmax%ref(:, :, is) = p_bcs(:, jmax, :)
         end do
@@ -93,14 +94,14 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 ! Initializing tmp5 for the rest of terms
 ! #######################################################################
     call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, u, tmp1, tmp5) ! store u transposed in tmp5
-    hq(:,1) = hq(:,1) + tmp1(:)
+    hq(:, 1) = hq(:, 1) + tmp1(:)
 
 ! #######################################################################
 ! Oy diffusion and convection terms in Oy momentum eqn
 ! Initializing tmp4 for the rest of terms
 ! #######################################################################
     call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, v, tmp2, tmp4) ! store v transposed in tmp4
-    hq(:,2) = hq(:,2) + tmp2(:)
+    hq(:, 2) = hq(:, 2) + tmp2(:)
 
 ! #######################################################################
 ! Diffusion and convection terms in Oz momentum eqn
@@ -115,7 +116,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 !$omp private( ij, srt,end,siz )
         call DNS_OMP_PARTITION(isize_field, srt, end, siz)
         do ij = srt, end
-            hq(ij,3) = hq(ij,3) + tmp1(ij) + tmp2(ij) + tmp3(ij)
+            hq(ij, 3) = hq(ij, 3) + tmp1(ij) + tmp2(ij) + tmp3(ij)
         end do
 !$omp end parallel
 
@@ -131,7 +132,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 !$omp private( ij, srt,end,siz )
     call DNS_OMP_PARTITION(isize_field, srt, end, siz)
     do ij = srt, end
-        hq(ij,2) = hq(ij,2) + tmp1(ij) + tmp3(ij)
+        hq(ij, 2) = hq(ij, 2) + tmp1(ij) + tmp3(ij)
     end do
 !$omp end parallel
 
@@ -146,7 +147,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 !$omp private( ij, srt,end,siz )
     call DNS_OMP_PARTITION(isize_field, srt, end, siz)
     do ij = srt, end
-        hq(ij,1) = hq(ij,1) + tmp2(ij) + tmp3(ij)
+        hq(ij, 1) = hq(ij, 1) + tmp2(ij) + tmp3(ij)
     end do
 !$omp end parallel
 
@@ -214,15 +215,15 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
 #ifdef USE_ESSL
         ilen = siz
-        call DZAXPY(ilen, dummy, v(srt), 1, hq(srt,2), 1, tmp2(srt), 1)
-        call DZAXPY(ilen, dummy, u(srt), 1, hq(srt,1), 1, tmp3(srt), 1)
-        call DZAXPY(ilen, dummy, w(srt), 1, hq(srt,3), 1, tmp4(srt), 1)
+        call DZAXPY(ilen, dummy, v(srt), 1, hq(srt, 2), 1, tmp2(srt), 1)
+        call DZAXPY(ilen, dummy, u(srt), 1, hq(srt, 1), 1, tmp3(srt), 1)
+        call DZAXPY(ilen, dummy, w(srt), 1, hq(srt, 3), 1, tmp4(srt), 1)
 
 #else
         do ij = srt, end
-            tmp2(ij) = hq(ij,2) + v(ij)*dummy
-            tmp3(ij) = hq(ij,1) + u(ij)*dummy
-            tmp4(ij) = hq(ij,3) + w(ij)*dummy
+            tmp2(ij) = hq(ij, 2) + v(ij)*dummy
+            tmp3(ij) = hq(ij, 1) + u(ij)*dummy
+            tmp4(ij) = hq(ij, 3) + w(ij)*dummy
         end do
 
 #endif
@@ -257,21 +258,21 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
     else
         if (imode_ibm == 1) then
-            call IBM_BCS_FIELD(hq(:,2))
-            call IBM_BCS_FIELD(hq(:,1))
-            call IBM_BCS_FIELD(hq(:,3))
+            call IBM_BCS_FIELD(hq(:, 2))
+            call IBM_BCS_FIELD(hq(:, 1))
+            call IBM_BCS_FIELD(hq(:, 3))
         end if
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:,2), tmp2)
-            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:,1), tmp3)
-            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:,3), tmp4)
+            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 2), tmp2)
+            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 1), tmp3)
+            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 3), tmp4)
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp1, wrk3d, wrk2d, wrk3d)
             call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp3, tmp2, wrk3d, wrk2d, wrk3d)
             call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d, wrk3d)
         else
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), hq(:,2), tmp1, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), hq(:,1), tmp2, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), hq(:,3), tmp3, wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), hq(:, 2), tmp1, wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), hq(:, 1), tmp2, wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), hq(:, 3), tmp3, wrk3d, wrk2d, wrk3d)
         end if
 
     end if
@@ -287,14 +288,14 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 ! -----------------------------------------------------------------------
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
 ! Stagger also Bcs
-    if (imode_ibm == 1) call IBM_BCS_FIELD(hq(:,2))
+    if (imode_ibm == 1) call IBM_BCS_FIELD(hq(:, 2))
     if (istagger == 1) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
-        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), hq(:,2), tmp5, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), hq(:, 2), tmp5, wrk3d, wrk2d, wrk3d)
         call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
         if (imode_ibm == 1) call IBM_BCS_FIELD_STAGGER(tmp4)
-        p_bcs(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax,4)
+        p_bcs(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 4)
     else
-        p_bcs(1:imax, 1:jmax, 1:kmax) => hq(1:imax*jmax*kmax,2)
+        p_bcs(1:imax, 1:jmax, 1:kmax) => hq(1:imax*jmax*kmax, 2)
     end if
 
     if (imode_eqns == DNS_EQNS_ANELASTIC) then
@@ -306,8 +307,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     end if
 
 ! pressure in tmp1, Oy derivative in tmp3
-    call OPR_POISSON_FXZ(.true., imax, jmax, kmax, g, i3, &
-                         tmp1, tmp3, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+    call OPR_POISSON_FXZ(imax, jmax, kmax, g, i3, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
 
 ! Saving pressure for towers to tmp array
     if (use_tower .and. rkm_substep == rkm_endstep) then
@@ -334,9 +334,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 ! Add pressure gradient
 ! -----------------------------------------------------------------------
     if (imode_eqns == DNS_EQNS_ANELASTIC) then
-        call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp2, hq(:,1))
-        call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp3, hq(:,2))
-        call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp4, hq(:,3))
+        call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp2, hq(:, 1))
+        call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp3, hq(:, 2))
+        call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp4, hq(:, 3))
 
     else
 #ifdef USE_ESSL
@@ -351,14 +351,14 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 #ifdef USE_ESSL
         ilen = siz
         dummy = -1.0_wp
-        call DAXPY(ilen, dummy, tmp2(srt), 1, hq(srt,1), 1)
-        call DAXPY(ilen, dummy, tmp3(srt), 1, hq(srt,2), 1)
-        call DAXPY(ilen, dummy, tmp4(srt), 1, hq(srt,3), 1)
+        call DAXPY(ilen, dummy, tmp2(srt), 1, hq(srt, 1), 1)
+        call DAXPY(ilen, dummy, tmp3(srt), 1, hq(srt, 2), 1)
+        call DAXPY(ilen, dummy, tmp4(srt), 1, hq(srt, 3), 1)
 #else
         do ij = srt, end
-            hq(ij,1) = hq(ij,1) - tmp2(ij)
-            hq(ij,2) = hq(ij,2) - tmp3(ij)
-            hq(ij,3) = hq(ij,3) - tmp4(ij)
+            hq(ij, 1) = hq(ij, 1) - tmp2(ij)
+            hq(ij, 2) = hq(ij, 2) - tmp3(ij)
+            hq(ij, 3) = hq(ij, 3) - tmp4(ij)
         end do
 #endif
 !$omp end parallel
@@ -380,9 +380,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
         end if
         if (imode_ibm == 1) call IBM_BCS_FIELD(hq(1, iq)) ! set tendency in solid to zero
 
-        p_bcs(1:imax, 1:jmax, 1:kmax) => hq(1:imax*jmax*kmax,iq)
-        p_bcs(:,1,:) = BcsFlowJmin%ref(:, :, iq)
-        p_bcs(:,jmax,:) = BcsFlowJmax%ref(:, :, iq)
+        p_bcs(1:imax, 1:jmax, 1:kmax) => hq(1:imax*jmax*kmax, iq)
+        p_bcs(:, 1, :) = BcsFlowJmin%ref(:, :, iq)
+        p_bcs(:, jmax, :) = BcsFlowJmax%ref(:, :, iq)
 
     end do
 
@@ -401,9 +401,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
         end if
         if (imode_ibm == 1) call IBM_BCS_FIELD(hs(1, is)) ! set tendency in solid to zero
 
-        p_bcs(1:imax, 1:jmax, 1:kmax) => hs(1:imax*jmax*kmax,is)
-        p_bcs(:,1,:) = BcsScalJmin%ref(:, :, is)
-        p_bcs(:,jmax,:) = BcsScalJmax%ref(:, :, is)
+        p_bcs(1:imax, 1:jmax, 1:kmax) => hs(1:imax*jmax*kmax, is)
+        p_bcs(:, 1, :) = BcsScalJmin%ref(:, :, is)
+        p_bcs(:, jmax, :) = BcsScalJmax%ref(:, :, is)
 
     end do
 

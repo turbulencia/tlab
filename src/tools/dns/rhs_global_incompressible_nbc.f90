@@ -32,6 +32,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     use TIME, only: rkm_substep, rkm_endstep, dte
     use DNS_LOCAL, only: use_tower
     use OPR_PARTIAL
+    use OPR_ELLIPTIC
 
     use DNS_TOWER
 
@@ -602,8 +603,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     end if
 
 ! pressure in tmp12, Oy derivative in tmp11
-    call OPR_POISSON_FXZ(.true., imax, jmax, kmax, g, i3, &
-                         tmp12, tmp11, tmp41, tmp42, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+    call OPR_POISSON_FXZ(imax, jmax, kmax, g, i3, tmp12, tmp41, tmp42, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp11)
 
     if (use_tower .and. rkm_substep == rkm_endstep) then
         call DNS_TOWER_ACCUMULATE(tmp12, i4, wrk1d)

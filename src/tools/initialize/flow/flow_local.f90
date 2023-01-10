@@ -14,6 +14,7 @@ module FLOW_LOCAL
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
     use OPR_PARTIAL
+    use OPR_ELLIPTIC
     implicit none
     save
     private
@@ -280,8 +281,7 @@ contains
             end if  ! NoSlip
             if (g(1)%periodic .and. g(3)%periodic) then
                 wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, ibc, &
-                                     u, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+                call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, u, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2))
             else                                          ! General treatment, need global variable ipos,jpos,kpos,ci,cj,ck
 #ifdef USE_CGLOC
                 call CGPOISSON(1, imax, jmax, kmax, g(3)%size, u, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, wrk2d)
@@ -292,8 +292,7 @@ contains
             ibc = 0                                       ! No penetration
             if (g(1)%periodic .and. g(3)%periodic) then
                 wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, ibc, &
-                                     v, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+                call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, v, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2))
             else                                          ! General treatment
 #ifdef USE_CGLOC
                 call CGPOISSON(1, imax, jmax, kmax, g(3)%size, v, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, wrk2d)
@@ -307,8 +306,7 @@ contains
                 end if  ! NoSlip
                 if (g(1)%periodic .and. g(3)%periodic) then
                     wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                    call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, ibc, &
-                                         w, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+                    call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, w, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2))
                 else                                          ! General treatment
 #ifdef USE_CGLOC
                     call CGPOISSON(1, imax, jmax, kmax, g(3)%size, w, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, wrk2d)
@@ -577,8 +575,7 @@ contains
         if (g(1)%periodic .and. g(3)%periodic) then ! Doubly periodic in xOz
             wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
             pprime = -txc4          ! change of forcing term sign
-            call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, 0, &
-                                 pprime, wrk3d, txc1, txc2, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+            call OPR_POISSON_FXZ(imax, jmax, kmax, g, 0, pprime, txc1, txc2, wrk2d(1, 1, 1), wrk2d(1, 1, 2))
         else                                      ! General treatment
 #ifdef USE_CGLOC
             ! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
