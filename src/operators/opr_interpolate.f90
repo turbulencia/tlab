@@ -34,9 +34,9 @@ contains
 !########################################################################
 !########################################################################
     subroutine OPR_INTERPOLATE(nx, ny, nz, nx_dst, ny_dst, nz_dst, &
-                               g, x_org, y_org, z_org, x_dst, y_dst, z_dst, u_org, u_dst, txc, isize_wrk3d, wrk3d)
+                               g, x_org, y_org, z_org, x_dst, y_dst, z_dst, u_org, u_dst, txc)
 
-        integer(wi) nx, ny, nz, nx_dst, ny_dst, nz_dst, isize_wrk3d
+        integer(wi) nx, ny, nz, nx_dst, ny_dst, nz_dst
         type(grid_dt), intent(IN) :: g(3)
         real(wp), dimension(nx + 1), intent(INOUT) :: x_org
         real(wp), dimension(ny + 1), intent(INOUT) :: y_org
@@ -45,7 +45,6 @@ contains
         real(wp), dimension(nx*ny*nz), intent(IN) :: u_org
         real(wp), dimension(nx_dst*ny_dst*nz_dst), intent(OUT) :: u_dst
         real(wp), dimension(isize_txc_field, *), intent(INOUT) :: txc
-        real(wp), dimension(isize_wrk3d), intent(INOUT) :: wrk3d
 
 ! -------------------------------------------------------------------
 
@@ -98,21 +97,21 @@ contains
 ! Always interpolating along Ox
         if (g(1)%size > 1) then
             call OPR_INTERPOLATE_X(nx, ny, nz, nx_dst, g(1)%periodic, g(1)%scale, x_org, x_dst, &
-                                   u_org, txc(1, 1), txc(1, 2), txc(1, 3), isize_wrk3d, wrk3d)
+                                   u_org, txc(1, 1), txc(1, 2), txc(1, 3))
         else
             txc(1:nx*ny*nz, 1) = u_org(1:nx*ny*nz)
         end if
 
         if (g(2)%size > 1) then
             call OPR_INTERPOLATE_Y(nx_dst, ny, nz, ny_dst, g(2)%periodic, g(2)%scale, y_org, y_dst, &
-                                   txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), isize_wrk3d, wrk3d)
+                                   txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
         else
             txc(1:nx_dst*ny*nz, 2) = txc(1:nx_dst*ny*nz, 1)
         end if
 
         if (g(3)%size > 1) then
             call OPR_INTERPOLATE_Z(nx_dst, ny_dst, nz, nz_dst, g(3)%periodic, g(3)%scale, z_org, z_dst, &
-                                   txc(1, 2), u_dst, txc(1, 1), txc(1, 3), isize_wrk3d, wrk3d)
+                                   txc(1, 2), u_dst, txc(1, 1), txc(1, 3))
         else
             u_dst(1:nx_dst*ny_dst*nz_dst) = txc(1:nx_dst*ny_dst*nz_dst, 2)
         end if
@@ -124,16 +123,15 @@ contains
 ! Interpolation in X
 ! #######################################################################
     subroutine OPR_INTERPOLATE_X(nx, ny, nz, nx_dst, periodic, scalex, &
-                                 x_org, x_dst, u_org, u_dst, u_tmp1, u_tmp2, isize_wrk3d, wrk3d)
+                                 x_org, x_dst, u_org, u_dst, u_tmp1, u_tmp2)
 
         logical periodic
-        integer(wi) nx, ny, nz, nx_dst, isize_wrk3d
+        integer(wi) nx, ny, nz, nx_dst
         real(wp) scalex
         real(wp), dimension(*) :: x_org, x_dst
         real(wp), dimension(nx*ny*nz), target :: u_org
         real(wp), dimension(nx_dst*ny*nz), target :: u_dst
         real(wp), dimension(isize_txc_field), target :: u_tmp1, u_tmp2
-        real(wp), dimension(isize_wrk3d) :: wrk3d
 
         ! -----------------------------------------------------------------------
         integer(wi) nyz, nx_total, nx_total_dst
@@ -171,7 +169,7 @@ contains
 #endif
 
         ! -----------------------------------------------------------------------
-        call INTERPOLATE_1D(periodic, nx_total, nyz, nx_total_dst, scalex, x_org, x_dst, p_a, p_b, isize_wrk3d, wrk3d)
+        call INTERPOLATE_1D(periodic, nx_total, nyz, nx_total_dst, scalex, x_org, x_dst, p_a, p_b)
 
         ! -------------------------------------------------------------------
         ! Transposition
@@ -192,16 +190,15 @@ contains
     ! Interpolation in Oz direction
     ! ###################################################################
     subroutine OPR_INTERPOLATE_Z(nx, ny, nz, nz_dst, periodic, scalez, &
-                                 z_org, z_dst, u_org, u_dst, u_tmp1, u_tmp2, isize_wrk3d, wrk3d)
+                                 z_org, z_dst, u_org, u_dst, u_tmp1, u_tmp2)
 
         logical periodic
-        integer(wi) nx, ny, nz, nz_dst, isize_wrk3d
+        integer(wi) nx, ny, nz, nz_dst
         real(wp) scalez
         real(wp), dimension(*) :: z_org, z_dst
         real(wp), dimension(nx*ny*nz), target :: u_org
         real(wp), dimension(nx*ny*nz_dst), target :: u_dst
         real(wp), dimension(isize_txc_field), target :: u_tmp1, u_tmp2
-        real(wp), dimension(isize_wrk3d) :: wrk3d
 
         ! -----------------------------------------------------------------------
         integer(wi) nxy, nz_total, nz_total_dst
@@ -246,7 +243,7 @@ contains
 #endif
 
         ! -----------------------------------------------------------------------
-        call INTERPOLATE_1D(periodic, nz_total, nxy, nz_total_dst, scalez, z_org, z_dst, u_tmp1, u_tmp2, isize_wrk3d, wrk3d)
+        call INTERPOLATE_1D(periodic, nz_total, nxy, nz_total_dst, scalez, z_org, z_dst, u_tmp1, u_tmp2)
 
         ! -------------------------------------------------------------------
         ! Put arrays back in the right order
@@ -275,16 +272,15 @@ contains
     ! Interpolation in Y
     ! #######################################################################
     subroutine OPR_INTERPOLATE_Y(nx, ny, nz, ny_dst, periodic, scaley, &
-                                 y_org, y_dst, u_org, u_dst, u_tmp1, u_tmp2, isize_wrk3d, wrk3d)
+                                 y_org, y_dst, u_org, u_dst, u_tmp1, u_tmp2)
 
         logical periodic
-        integer(wi) nx, ny, nz, ny_dst, isize_wrk3d
+        integer(wi) nx, ny, nz, ny_dst
         real(wp) scaley
         real(wp) y_org(ny + 1)
         real(wp) y_dst(ny_dst)
         real(wp), dimension(nx, ny, nz) :: u_org, u_tmp1
         real(wp), dimension(nx, ny_dst, nz) :: u_dst, u_tmp2
-        real(wp), dimension(isize_wrk3d) :: wrk3d
 
         ! -----------------------------------------------------------------------
         integer(wi) ikmax, nyz
@@ -302,7 +298,7 @@ contains
 
         ! -----------------------------------------------------------------------
         ikmax = nx*nz
-        call INTERPOLATE_1D(periodic, ny, ikmax, ny_dst, scaley, y_org, y_dst, u_tmp1, u_tmp2, isize_wrk3d, wrk3d)
+        call INTERPOLATE_1D(periodic, ny, ikmax, ny_dst, scaley, y_org, y_dst, u_tmp1, u_tmp2)
 
         ! -------------------------------------------------------------------
         ! Put arrays back in the right order
@@ -323,23 +319,24 @@ contains
     ! #######################################################################
     ! Interpolation in 1D
     ! #######################################################################
-    subroutine INTERPOLATE_1D(periodic, imax, kmax, imax_dst, scalex, x_org, x_dst, u_org, u_dst, isize_wrk, wrk)
+    subroutine INTERPOLATE_1D(periodic, imax, kmax, imax_dst, scalex, x_org, x_dst, u_org, u_dst)
+        use TLAB_ARRAYS, only: wrk3d
         logical periodic
-        integer(wi) imax, kmax, imax_dst, isize_wrk, k
+        integer(wi) imax, kmax, imax_dst
         real(wp) scalex
         real(wp) x_org(imax + 1)
         real(wp) x_dst(imax_dst)
         real(wp) u_org(imax, *)
         real(wp) u_dst(imax_dst, *)
 
-        real(wp) wrk(isize_wrk), rdum
-
+        real(wp) rdum
+        integer(wi) k
         integer(wi), dimension(2) :: CSpline_BCType
         real(wp), dimension(2) :: CSpline_BCVal
 
         ! #######################################################################
 
-        if (isize_wrk < 12*imax + 1) then
+        if (size(wrk3d) < 12*imax + 1) then
             call TLAB_WRITE_ASCII(efile, 'INTERPOLATE_1D. Temporary Array not large enough')
             call TLAB_STOP(DNS_ERROR_CURFIT)
         end if
@@ -354,14 +351,14 @@ contains
                 u_org(imax + 1, k) = u_org(1, k)      ! avoid the copy of the whole line
                 call CUBIC_SPLINE(CSpline_BCType, CSpline_BCVal, &
                                   imax + 1, imax_dst, x_org, u_org(1, k), x_dst, u_dst(1, k), &
-                                  wrk(imax + 2))                 !
+                                  wrk3d(imax + 2))                 !
                 u_org(imax + 1, k) = rdum            ! set u_org back to stored value rdum
             end do                                !
-            wrk(1:imax) = u_org(1:imax, kmax)     ! cannot avoid the copy for the last line
-            wrk(imax + 1) = u_org(1, kmax)          ! as u_org(imax+1,kmax) is out of bounds
+            wrk3d(1:imax) = u_org(1:imax, kmax)     ! cannot avoid the copy for the last line
+            wrk3d(imax + 1) = u_org(1, kmax)          ! as u_org(imax+1,kmax) is out of bounds
             call CUBIC_SPLINE(CSpline_BCType, CSpline_BCVal, &
-                              imax + 1, imax_dst, x_org, wrk, x_dst, u_dst(1, kmax), &
-                              wrk(imax + 2))
+                              imax + 1, imax_dst, x_org, wrk3d, x_dst, u_dst(1, kmax), &
+                              wrk3d(imax + 2))
             !---------------------------------------! the aperiodic case
         else
             CSpline_BCType(1) = CS_BCS_NATURAL; CSpline_BCVal(1) = 0.0_wp
@@ -369,7 +366,7 @@ contains
             do k = 1, kmax
                 call CUBIC_SPLINE(CSpline_BCType, CSpline_BCVal, &
                                   imax, imax_dst, x_org, u_org(1, k), x_dst, u_dst(1, k), &
-                                  wrk)
+                                  wrk3d)
             end do
         end if
 

@@ -518,7 +518,7 @@ program TRANSFIELDS
                     end if
                     call OPR_INTERPOLATE(imax, jmax_aux, kmax, imax_dst, jmax_dst, kmax_dst, &
                                          g, wrk1d(:, 1), y_aux, wrk1d(:, 3), x_dst, y_dst, z_dst, &
-                                         txc_aux, q_dst(:, iq), txc, isize_wrk3d, wrk3d)
+                                         txc_aux, q_dst(:, iq), txc)
                 end do
             end if
 
@@ -538,7 +538,7 @@ program TRANSFIELDS
                     end if
                     call OPR_INTERPOLATE(imax, jmax_aux, kmax, imax_dst, jmax_dst, kmax_dst, &
                                          g, wrk1d(:, 1), y_aux, wrk1d(:, 3), x_dst, y_dst, z_dst, &
-                                         txc_aux, s_dst(:, is), txc, isize_wrk3d, wrk3d)
+                                         txc_aux, s_dst(:, is), txc)
                 end do
             end if
 
