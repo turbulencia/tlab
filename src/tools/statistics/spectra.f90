@@ -45,6 +45,7 @@ program SPECTRA
     use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
     use TLAB_MPI_PROCS
 #endif
+    use FI_SOURCES, only: FI_BUOYANCY
     use THERMO_VARS, only: imixture
     use IBM_VARS
     use IO_FIELDS

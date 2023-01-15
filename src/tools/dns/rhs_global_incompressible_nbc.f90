@@ -33,7 +33,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     use DNS_LOCAL, only: use_tower
     use OPR_PARTIAL
     use OPR_ELLIPTIC
-
+    use FI_SOURCES
     use DNS_TOWER
 
 #ifdef USE_PSFFT

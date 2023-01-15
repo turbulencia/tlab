@@ -26,6 +26,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLAB_MPI_VARS
 #endif
     use TLAB_PROCS
+    use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE, FI_TRANSPORT, FI_TRANSPORT_FLUX
     use OPR_PARTIAL
     
     implicit none
@@ -496,7 +497,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     end if
 
     if (transport%active(is)) then ! Transport in tmp3 and dsdz
-        call FI_TRANSPORT(transport, i1, imax, jmax, kmax, is, s, tmp3, dsdy, wrk2d, wrk3d)
+        call FI_TRANSPORT(transport, i1, imax, jmax, kmax, is, s, tmp3, dsdy)
         call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, dsdz)
     end if
 
@@ -548,8 +549,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         else
             if (buoyancy%type /= EQNS_EXPLICIT) then
                 call FI_GRADIENT(imax, jmax, kmax, s, dsdx, dsdy, wrk2d, wrk3d)
-                call FI_BUOYANCY_SOURCE(buoyancy, isize_field, s, dsdx, wrk3d) ! dsdx contains gradient
-                tmp1 = wrk3d*diff/froude
+                call FI_BUOYANCY_SOURCE(buoyancy, imax, jmax, kmax, s, dsdx, tmp1) ! dsdx contains gradient
+                tmp1 = tmp1*diff/froude
             end if
 
         end if

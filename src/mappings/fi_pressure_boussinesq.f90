@@ -17,6 +17,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use OPR_PARTIAL
     use OPR_BURGERS
     use OPR_ELLIPTIC
+    use FI_SOURCES
     implicit none
 
     real(wp), intent(in) :: q(isize_field, 3)

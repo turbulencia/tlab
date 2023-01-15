@@ -318,7 +318,7 @@ contains
 
         ! ###################################################################
         if (RemoveDilatation) then  ! Remove dilatation (vort was not really a vorticity field because it was not solenoidal)
-            call FI_SOLENOIDAL(flag_wall, imax, jmax, kmax, u, v, w, ax, ay, az, tmp4, tmp5, wrk1d, wrk2d, wrk3d)
+            call FI_SOLENOIDAL(flag_wall, imax, jmax, kmax, u, v, w, ax, ay, az)
         end if
 
         if (g(3)%size == 1) w = 0.0_wp       ! Impose zero spanwise velocity in 2D case
@@ -531,14 +531,13 @@ contains
     !# solve Poisson equation for p', nabla^2 p' = d/dx_i d/dx_j (rho_0 u_i u_j),
     !# assuming p/rho^\gamma0 constant(Homentropic conditions)
     ! ###################################################################
-    subroutine PRESSURE_FLUCTUATION(u, v, w, rho, p, pprime, txc1, txc2, txc3, txc4, wrk1d, wrk2d, wrk3d)
+    subroutine PRESSURE_FLUCTUATION(u, v, w, rho, p, pprime, txc1, txc2, txc3, txc4, wrk2d, wrk3d)
         use THERMO_VARS, only: gama0
 
         real(wp), dimension(imax, jmax, kmax), intent(in) :: u, v, w
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: rho, p, pprime
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: txc1, txc2, txc3, txc4, wrk3d
         real(wp), dimension(imax, kmax, *), intent(inout) :: wrk2d
-        real(wp), dimension(jmax, *), intent(inout) :: wrk1d
 
         ! -------------------------------------------------------------------
         integer(wi) bcs(2, 2)

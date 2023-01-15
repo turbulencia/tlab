@@ -42,7 +42,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
     use BOUNDARY_BCS
     use OPR_PARTIAL
     use OPR_ELLIPTIC
-
+    use FI_SOURCES
     implicit none
 
 #include "integers.h"

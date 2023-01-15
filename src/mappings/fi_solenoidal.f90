@@ -1,8 +1,6 @@
-#include "types.h"
 #include "dns_const.h"
 
 !########################################################################
-!# DESCRIPTION
 !#
 !# remove divergence part of a vector field a=(u,v,w)
 !#
@@ -13,23 +11,21 @@
 !# The BCs are such that a and a + grad phi are the same at top and bottom
 !#
 !########################################################################
-subroutine FI_SOLENOIDAL(iwall, nx, ny, nz, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, wrk1d, wrk2d, wrk3d)
-
+subroutine FI_SOLENOIDAL(iwall, nx, ny, nz, u, v, w, tmp1, tmp2, tmp3)
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: g
+    use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use TLAB_POINTERS_3D, only: p_wrk2d
     use OPR_PARTIAL
     use OPR_ELLIPTIC
     implicit none
 
-#include "integers.h"
-
-    TINTEGER, intent(IN) :: iwall, nx, ny, nz
-    TREAL, dimension(nx, ny, nz), intent(INOUT) :: u, v, w
-    TREAL, dimension(nx, ny, nz), intent(INOUT) :: tmp1, tmp2, tmp3, tmp4, tmp5, wrk3d
-    TREAL, dimension(nx, nz, *), intent(INOUT) :: wrk2d
-    TREAL, dimension(ny, *), intent(INOUT) :: wrk1d
+    integer(wi), intent(IN) :: iwall, nx, ny, nz
+    real(wp), dimension(nx, ny, nz), intent(INOUT) :: u, v, w
+    real(wp), dimension(nx, ny, nz), intent(INOUT) :: tmp1, tmp2, tmp3
 
 ! -------------------------------------------------------------------
-    TINTEGER ibc, bcs(2, 2)
+    integer(wi) ibc, bcs(2, 2)
 
 ! ###################################################################
     bcs = 0
@@ -44,8 +40,8 @@ subroutine FI_SOLENOIDAL(iwall, nx, ny, nz, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp
     call FI_INVARIANT_P(nx, ny, nz, u, v, w, tmp1, tmp2, wrk2d, wrk3d)
 
     if (g(1)%periodic .and. g(3)%periodic) then ! Doubly periodic in xOz
-        wrk2d(:, :, 1:2) = C_0_R  ! bcs
-        call OPR_POISSON_FXZ(nx, ny, nz, g, ibc, tmp1, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2))
+        p_wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
+        call OPR_POISSON_FXZ(nx, ny, nz, g, ibc, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
     else                                          ! General treatment
 #ifdef USE_CGLOC

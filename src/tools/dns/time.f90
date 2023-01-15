@@ -524,7 +524,8 @@ contains
         use DNS_ARRAYS
         use DNS_LOCAL, only: imode_rhs
         use BOUNDARY_BUFFER
-
+        use FI_SOURCES
+        
         ! -----------------------------------------------------------------------
         integer(wi) ij_srt, ij_end, ij_siz    !  Variables for OpenMP Partitioning
 

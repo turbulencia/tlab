@@ -57,6 +57,7 @@ contains
         use THERMO_VARS, only: imixture
         use PARTICLE_VARS
         use PARTICLE_ARRAYS
+        use FI_SOURCES, only: FI_BUOYANCY
 
         ! -------------------------------------------------------------------
         real(wp) dummy, amin(16), amax(16)
@@ -160,7 +161,7 @@ contains
                             call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, hq(1, 1))
                         else
                             wrk1d(1:jmax, 1) = 0.0_wp
-                            call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, hq(1, 1), wrk1d) ! note that wrk3d is defined as integer.
+                            call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, hq(1, 1), wrk1d)
                         end if
                         dummy = 1.0_wp/froude
                         hq(1:isize_field, 1) = hq(1:isize_field, 1)*dummy

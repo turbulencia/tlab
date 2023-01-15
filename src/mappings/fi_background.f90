@@ -17,6 +17,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
     use TLAB_PROCS
     use THERMO_VARS, only: imixture, GRATIO, scaleheight
     use PROFILES
+    use FI_SOURCES, only: FI_BUOYANCY
 #ifdef USE_MPI
     use TLAB_MPI_VARS
 #endif
@@ -93,7 +94,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
         call THERMO_ANELASTIC_BUOYANCY(i1, g(2)%size, i1, wrk1d, epbackground, pbackground, rbackground, bbackground)
     else
         wrk1d(:, inb_scal_array + 1) = 0.0_wp
-        call FI_BUOYANCY(buoyancy, i1, g(2)%size, i1, wrk1d, bbackground, wrk1d(1, inb_scal_array + 1))
+        call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, wrk1d(1,1), bbackground, wrk1d(1, inb_scal_array + 1))
     end if
 
 ! #######################################################################

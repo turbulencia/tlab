@@ -131,7 +131,7 @@ program INIFLOW
 
         if (flag_u /= 0) then
             call PRESSURE_FLUCTUATION(q(1, 1), q(1, 2), q(1, 3), r_loc, p_loc, txc(1, 1), &
-                                      txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk1d, wrk2d, wrk3d)
+                                      txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
         end if
 
         if (imixture > 0) then

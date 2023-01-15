@@ -41,6 +41,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1 &
     use BOUNDARY_BCS
     use OPR_PARTIAL
     use OPR_ELLIPTIC
+    use FI_SOURCES, only: FI_BUOYANCY
 
     implicit none
 

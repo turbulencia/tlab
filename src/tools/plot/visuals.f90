@@ -20,6 +20,7 @@ program VISUALS
     use TLAB_MPI_VARS, only: ims_pro
     use TLAB_MPI_PROCS
 #endif
+    use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use THERMO_VARS, only: imixture
     use THERMO_VARS, only: NSP, THERMO_SPNAME
     use PARTICLE_VARS
@@ -790,7 +791,7 @@ program VISUALS
                     txc(1:isize_field, 2) = txc(1:isize_field, 2)*txc(1:isize_field, 3)*dummy
                 else
                     call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 1), txc(1, 2), wrk2d, wrk3d)
-                    call FI_BUOYANCY_SOURCE(buoyancy, isize_field, s, txc(1, 1), txc(1, 2))
+                    call FI_BUOYANCY_SOURCE(buoyancy, imax, jmax, kmax, s, txc(1, 1), txc(1, 2))
                 end if
                 dummy = visc/schmidt(1)/froude
                 txc(1:isize_field, 1) = txc(1:isize_field, 2)*dummy
