@@ -13,6 +13,7 @@ module FLOW_LOCAL
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
+    use FI_VECTORCALCULUS
     use OPR_PARTIAL
     use OPR_ELLIPTIC
     implicit none
@@ -204,6 +205,7 @@ contains
     ! ###################################################################
     subroutine VELOCITY_BROADBAND(u, v, w, ax, ay, az, tmp4, tmp5, wrk1d, wrk2d, wrk3d)
         use TLAB_VARS, only: visc
+        use FI_VECTORCALCULUS
 
         real(wp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
         real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: ax, ay, az, tmp4, tmp5, wrk3d
@@ -267,13 +269,13 @@ contains
             end if
 
         case (PERT_BROADBAND_VORTICITY)     ! Vorticity given, solve lap(u) = - rot(vort), vort = rot(u)
-            call FI_CURL(imax, jmax, kmax, u, v, w, ax, ay, az, tmp4, wrk2d, wrk3d)
+            call FI_CURL(imax, jmax, kmax, u, v, w, ax, ay, az, tmp4)
             do j = 1, jmax
                 ax(:, j, :) = -ax(:, j, :)*wrk1d(j, 2)
                 ay(:, j, :) = -ay(:, j, :)*wrk1d(j, 1)
                 az(:, j, :) = -az(:, j, :)*wrk1d(j, 2)
             end do
-            call FI_CURL(imax, jmax, kmax, ax, ay, az, u, v, w, tmp4, wrk2d, wrk3d)
+            call FI_CURL(imax, jmax, kmax, ax, ay, az, u, v, w, tmp4)
 
             ! Solve lap(u) = - (rot(vort))_x
             if (flag_wall == 0) then; ibc = 3         ! FreeSlip
@@ -318,7 +320,7 @@ contains
 
         ! ###################################################################
         if (RemoveDilatation) then  ! Remove dilatation (vort was not really a vorticity field because it was not solenoidal)
-            call FI_SOLENOIDAL(flag_wall, imax, jmax, kmax, u, v, w, ax, ay, az)
+            call FI_SOLENOIDAL(imax, jmax, kmax, u, v, w, ax, ay, az)
         end if
 
         if (g(3)%size == 1) w = 0.0_wp       ! Impose zero spanwise velocity in 2D case

@@ -24,6 +24,7 @@ program AVERAGES
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
     use IO_FIELDS
+    use FI_VECTORCALCULUS
     use OPR_FILTERS
     use OPR_FOURIER
     use OPR_PARTIAL
@@ -352,7 +353,7 @@ program AVERAGES
 
             call TLAB_WRITE_ASCII(lfile, 'Calculating partition...')
             call FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
-                         imax, jmax, kmax, igate_size, gate_threshold, q, s, txc, gate, wrk2d, wrk3d)
+                         imax, jmax, kmax, igate_size, gate_threshold, q, s, txc, gate)
 
             if (jmax_aux*opt_block /= g(2)%size) then
                 call REDUCE_BLOCK_INPLACE_INT1(imax, jmax, kmax, i1, i1, i1, imax, jmax_aux*opt_block, kmax, gate, wrk1d)
@@ -576,7 +577,7 @@ program AVERAGES
                 call FI_VORTICITY_BAROCLINIC(imax, jmax, kmax, q(1, 5), q(1, 6), txc(1, 4), txc(1, 3), txc(1, 7), wrk2d, wrk3d)
             end if
 
-            call FI_CURL(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 7), wrk2d, wrk3d)
+            call FI_CURL(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 7))
             txc(1:isize_field, 8) = txc(1:isize_field, 1)*txc(1:isize_field, 4) &
                                     + txc(1:isize_field, 2)*txc(1:isize_field, 5) + txc(1:isize_field, 3)*txc(1:isize_field, 6)
 
@@ -588,7 +589,7 @@ program AVERAGES
             txc(1:isize_field, 2) = visc*txc(1:isize_field, 2)
 
             call FI_VORTICITY(imax, jmax, kmax, u, v, w, txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)  ! Enstrophy
-            call FI_INVARIANT_P(imax, jmax, kmax, u, v, w, txc(1, 4), txc(1, 5), wrk2d, wrk3d)  ! Dilatation
+            call FI_INVARIANT_P(imax, jmax, kmax, u, v, w, txc(1, 4), txc(1, 5))  ! Dilatation
 
             txc(1:isize_field, 6) = txc(1:isize_field, 4)*txc(1:isize_field, 3) ! -w^2 div(u)
             txc(1:isize_field, 5) = txc(1:isize_field, 1)/txc(1:isize_field, 3) ! production rate
@@ -671,9 +672,9 @@ program AVERAGES
             call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-      call FI_INVARIANT_R(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
-            call FI_INVARIANT_Q(imax, jmax, kmax, u, v, w, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
-            call FI_INVARIANT_P(imax, jmax, kmax, u, v, w, txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+            call FI_INVARIANT_R(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+            call FI_INVARIANT_Q(imax, jmax, kmax, u, v, w, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+            call FI_INVARIANT_P(imax, jmax, kmax, u, v, w, txc(1, 3), txc(1, 4))
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 3); vars(ifield)%tag = 'InvariantP'
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'InvariantQ'
@@ -729,7 +730,7 @@ program AVERAGES
             call FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7))  ! txc7-txc9
             call FI_TENSOR_EIGENFRAME(imax, jmax, kmax, txc(1, 1), txc(1, 7))   ! txc1-txc6
 
-            call FI_CURL(imax, jmax, kmax, u, v, w, txc(1, 7), txc(1, 8), txc(1, 9), txc(1, 10), wrk2d, wrk3d)
+            call FI_CURL(imax, jmax, kmax, u, v, w, txc(1, 7), txc(1, 8), txc(1, 9), txc(1, 10))
             do ij = 1, isize_field                                             ! local direction cosines of vorticity vector
                 dummy = sqrt(txc(ij, 7)*txc(ij, 7) + txc(ij, 8)*txc(ij, 8) + txc(ij, 9)*txc(ij, 9))
                 u(ij) = (txc(ij, 7)*txc(ij, 1) + txc(ij, 8)*txc(ij, 2) + txc(ij, 9)*txc(ij, 3))/dummy
@@ -877,7 +878,7 @@ program AVERAGES
             call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-            call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+            call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
             txc(1:isize_field, 6) = txc(1:isize_field, 1)*txc(1:isize_field, 1) &
                                     + txc(1:isize_field, 2)*txc(1:isize_field, 2) &
                                     + txc(1:isize_field, 3)*txc(1:isize_field, 3) ! Enstrophy

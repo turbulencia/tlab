@@ -1,94 +1,94 @@
-#include "types.h"
 #include "dns_const.h"
 
-SUBROUTINE FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
-                   nx,ny,nz, igate_size, gate_threshold, q,s, txc, gate, wrk2d,wrk3d)
-
-  USE TLAB_VARS, ONLY : g
+subroutine FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
+                   nx, ny, nz, igate_size, gate_threshold, q, s, txc, gate)
+    use TLAB_CONSTANTS, only: wp, wi, small_wp
+    use TLAB_VARS, only: g
+    use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use FI_VECTORCALCULUS, only: FI_CURL
     use OPR_PARTIAL
-  IMPLICIT NONE
+    implicit none
 
-  TINTEGER,                          INTENT(IN)    :: opt_cond, opt_cond_relative, opt_cond_scal
-  TINTEGER,                          INTENT(IN)    :: nx,ny,nz, igate_size
-  TREAL,                             INTENT(INOUT) :: gate_threshold(igate_size)
-  TREAL,      DIMENSION(nx*ny*nz,*), INTENT(IN)    :: q,s
-  TREAL,      DIMENSION(nx*ny*nz,5), INTENT(INOUT) :: txc
-  INTEGER(1), DIMENSION(nx*ny*nz),   INTENT(OUT)   :: gate
-  TREAL,      DIMENSION(*),          INTENT(INOUT) :: wrk2d,wrk3d
+    integer(wi), intent(IN) :: opt_cond, opt_cond_relative, opt_cond_scal
+    integer(wi), intent(IN) :: nx, ny, nz, igate_size
+    real(wp), intent(INOUT) :: gate_threshold(igate_size)
+    real(wp), dimension(nx*ny*nz, *), intent(IN) :: q, s
+    real(wp), dimension(nx*ny*nz, 5), intent(INOUT) :: txc
+    integer(1), dimension(nx*ny*nz), intent(OUT) :: gate
 
 ! -----------------------------------------------------------------------
-  TINTEGER ij,n
-  TREAL umin,umax, gate_threshold_loc(igate_size)
-  TINTEGER bcs(2,2)
+    integer(wi) ij, n
+    real(wp) umin, umax, gate_threshold_loc(igate_size)
+    integer(wi) bcs(2, 2)
 
 ! #######################################################################
 ! Preparing indicator field
 
-  bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+    bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-  IF      ( opt_cond .EQ. 2 ) THEN ! Based on scalar
-     txc(:,1) = s(:,opt_cond_scal)
+    if (opt_cond == 2) then ! Based on scalar
+        txc(:, 1) = s(:, opt_cond_scal)
 
-  ELSE IF ( opt_cond .EQ. 3 ) THEN ! Based on vorticity
-     CALL FI_VORTICITY(nx,ny,nz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3), wrk2d,wrk3d)
+    else if (opt_cond == 3) then ! Based on vorticity
+        call FI_VORTICITY(nx, ny, nz, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
 
-  ELSE IF ( opt_cond .EQ. 4 ) THEN ! Based on scalar gradient
-     CALL FI_GRADIENT(nx,ny,nz, s, txc(1,1),txc(1,2),txc(1,3), wrk2d,wrk3d)
+    else if (opt_cond == 4) then ! Based on scalar gradient
+        call FI_GRADIENT(nx, ny, nz, s, txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
 
-  ELSE IF ( opt_cond .EQ. 5 ) THEN ! Based on vertical velocity
-     txc(:,1) = q(:,2)
+    else if (opt_cond == 5) then ! Based on vertical velocity
+        txc(:, 1) = q(:, 2)
 
-  ELSE IF ( opt_cond .EQ. 6 .OR. opt_cond .EQ. 7 ) THEN ! Based on scalar fluctuation
-     txc(:,1) = s(:,opt_cond_scal)
-     CALL FI_FLUCTUATION_INPLACE(nx,ny,nz, txc(1,1))
+    else if (opt_cond == 6 .or. opt_cond == 7) then ! Based on scalar fluctuation
+        txc(:, 1) = s(:, opt_cond_scal)
+        call FI_FLUCTUATION_INPLACE(nx, ny, nz, txc(1, 1))
 
-  ELSE IF ( opt_cond .EQ. 8 ) THEN ! Based on potential vorticity
-     CALL FI_CURL(nx,ny,nz, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4), wrk2d,wrk3d)
+    else if (opt_cond == 8) then ! Based on potential vorticity
+        call FI_CURL(nx, ny, nz, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
 
-     txc(:,4) = s(:,opt_cond_scal)
-     CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), txc(1,4),txc(1,5), wrk3d, wrk2d,wrk3d)
-     txc(:,1) =           txc(:,1)*txc(:,5)
-     CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), txc(1,4),txc(1,5), wrk3d, wrk2d,wrk3d)
-     txc(:,1) = txc(:,1) +txc(:,2)*txc(:,5)
-     CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), txc(1,4),txc(1,5), wrk3d, wrk2d,wrk3d)
-     txc(:,1) = txc(:,1) +txc(:,3)*txc(:,5)
+        txc(:, 4) = s(:, opt_cond_scal)
+        call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), txc(1, 4), txc(1, 5), wrk3d, wrk2d, wrk3d)
+        txc(:, 1) = txc(:, 1)*txc(:, 5)
+        call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), txc(1, 4), txc(1, 5), wrk3d, wrk2d, wrk3d)
+        txc(:, 1) = txc(:, 1) + txc(:, 2)*txc(:, 5)
+        call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), txc(1, 4), txc(1, 5), wrk3d, wrk2d, wrk3d)
+        txc(:, 1) = txc(:, 1) + txc(:, 3)*txc(:, 5)
 
-     txc(:,1) = txc(:,1)*txc(:,1)
-     txc(:,1) = LOG(txc(:,1)+C_SMALL_R)
+        txc(:, 1) = txc(:, 1)*txc(:, 1)
+        txc(:, 1) = log(txc(:, 1) + small_wp)
 
-  ENDIF
+    end if
 
 ! #######################################################################
 ! define gate field
 
-  IF ( opt_cond .EQ. 7 ) THEN ! double conditioning; flux
-     DO ij = 1,nx*ny*nz
-        IF      ( txc(ij,1) .GT. C_0_R .AND. q(ij,2) .GE. C_0_R ) THEN; gate(ij) = 1;
-        ELSE IF ( txc(ij,1) .LE. C_0_R .AND. q(ij,2) .GT. C_0_R ) THEN; gate(ij) = 2;
-        ELSE IF ( txc(ij,1) .LT. C_0_R .AND. q(ij,2) .LE. C_0_R ) THEN; gate(ij) = 3;
-        ELSE;                                                           gate(ij) = 4; ENDIF
-     ENDDO
+    if (opt_cond == 7) then ! double conditioning; flux
+        do ij = 1, nx*ny*nz
+            if (txc(ij, 1) > 0.0_wp .and. q(ij, 2) >= 0.0_wp) then; gate(ij) = 1; 
+            else if (txc(ij, 1) <= 0.0_wp .and. q(ij, 2) > 0.0_wp) then; gate(ij) = 2; 
+            else if (txc(ij, 1) < 0.0_wp .and. q(ij, 2) <= 0.0_wp) then; gate(ij) = 3; 
+            else; gate(ij) = 4; end if
+        end do
 
-  ELSE                             ! Local file
-     IF ( opt_cond_relative .EQ. 1 ) THEN ! case of threshold relative to maximum
-        CALL MINMAX(nx,ny,nz, txc(1,1), umin,umax)
-        gate_threshold_loc = gate_threshold *(umax-umin)
+    else                             ! Local file
+        if (opt_cond_relative == 1) then ! case of threshold relative to maximum
+            call MINMAX(nx, ny, nz, txc(1, 1), umin, umax)
+            gate_threshold_loc = gate_threshold*(umax - umin)
 
-     ELSE
-        gate_threshold_loc = gate_threshold
+        else
+            gate_threshold_loc = gate_threshold
 
-     ENDIF
+        end if
 
 ! Loop over all thresholds (# thresholds is 1 less than # gate levels)
 ! Thresholds are in ascending order
-     DO ij = 1,nx*ny*nz
-        DO n = 1,igate_size-1
-           IF ( txc(ij,1) .LT. gate_threshold_loc(n) ) EXIT
-        ENDDO
-        gate(ij) = INT(n,KIND=1) ! note that gate can get -- correctly -- the value igate_size
-     ENDDO
+        do ij = 1, nx*ny*nz
+            do n = 1, igate_size - 1
+                if (txc(ij, 1) < gate_threshold_loc(n)) exit
+            end do
+            gate(ij) = int(n, KIND=1) ! note that gate can get -- correctly -- the value igate_size
+        end do
 
-  ENDIF
+    end if
 
-  RETURN
-END SUBROUTINE FI_GATE
+    return
+end subroutine FI_GATE

@@ -28,6 +28,7 @@ program VISUALS
     use PARTICLE_PROCS
     use IBM_VARS
     use IO_FIELDS
+    use FI_VECTORCALCULUS
     use OPR_FOURIER
     use OPR_PARTIAL
 
@@ -400,7 +401,7 @@ program VISUALS
 
             call TLAB_WRITE_ASCII(lfile, 'Calculating partition...')
             call FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
-                         imax, jmax, kmax, igate_size, gate_threshold, q, s, txc, gate, wrk2d, wrk3d)
+                         imax, jmax, kmax, igate_size, gate_threshold, q, s, txc, gate)
         end if
 
         ! -------------------------------------------------------------------
@@ -633,7 +634,7 @@ program VISUALS
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 4) then ! VorticityVector
                 plot_file = 'VorticityVector'//time_str(1:MaskSize)
-                call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+                call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i3, subdomain, txc(1, 1), wrk3d)
             end if
 
@@ -658,7 +659,7 @@ program VISUALS
                 call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc(1, 4), txc(1, 1), wrk3d, wrk2d, wrk3d)
                 call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 4), txc(1, 2), wrk3d, wrk2d, wrk3d)
                 call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc(1, 4), txc(1, 3), wrk3d, wrk2d, wrk3d)
-                call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk2d, wrk3d)
+                call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
                 txc(1:isize_field, 1) = txc(1:isize_field, 1)*txc(1:isize_field, 4) &
                                         + txc(1:isize_field, 2)*txc(1:isize_field, 5) &
                                         + txc(1:isize_field, 3)*txc(1:isize_field, 6)
@@ -733,16 +734,16 @@ program VISUALS
             ! -------------------------------------------------------------------
             if (opt_vec(iv) == iscal_offset + 10) then ! Invariants
                 plot_file = 'InvariantP'//time_str(1:MaskSize)
-                call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), wrk2d, wrk3d)
+                call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'InvariantQ'//time_str(1:MaskSize)
-          call FI_INVARIANT_Q(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+                call FI_INVARIANT_Q(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'InvariantR'//time_str(1:MaskSize)
                 call FI_INVARIANT_R(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
-                                    txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                    txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
             end if
