@@ -568,7 +568,7 @@ program PDFS
             call TLAB_WRITE_ASCII(lfile, 'Computing eigenvalues of Sij...')
 
      CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
-            call FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc7-txc9
+            call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc7-txc9
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 7); vars(ifield)%tag = 'Lambda1'; ibc(ifield) = 2
             ifield = ifield + 1; vars(ifield)%field => txc(:, 8); vars(ifield)%tag = 'Lambda2'; ibc(ifield) = 2
@@ -581,8 +581,8 @@ program PDFS
             call TLAB_WRITE_ASCII(lfile, 'Computing eigenframe of Sij...')
 
      CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
-            call FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc7-txc9
-            call FI_TENSOR_EIGENFRAME(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc1-txc6
+            call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc7-txc9
+            call TENSOR_EIGENFRAME(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc1-txc6
             call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 7), txc(1, 8), txc(1, 9), txc(1, 10))
 
             do ij = 1, isize_field ! local direction cosines of vorticity vector
