@@ -88,7 +88,7 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
 
     if (BcsScalJmin%type(is) /= DNS_SFC_STATIC .or. &
         BcsScalJmax%type(is) /= DNS_SFC_STATIC) then
-        call BOUNDARY_SURFACE_J(is, bcs, s(:,is), hs(:,is), tmp1, tmp2, tmp3, wrk1d, wrk2d, wrk3d)
+        call BOUNDARY_SURFACE_J(is, bcs, s(:,is), hs(:,is), tmp1, tmp2, tmp3)
     end if
 
 ! -----------------------------------------------------------------------

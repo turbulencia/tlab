@@ -280,7 +280,7 @@ program PDFS
             call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, i0, q, wrk3d)
         end if
 
-        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)
+        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
         ! -------------------------------------------------------------------
         ! Calculate intermittency

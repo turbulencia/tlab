@@ -5,11 +5,12 @@
 !# Calculate diagnostic variables
 !#
 !########################################################################
-subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s, wrk3d)
+subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
     use TLAB_VARS, only: imode_eqns, itransport, damkohler
     use TLAB_VARS, only: epbackground, pbackground
+    use TLAB_ARRAYS, only: wrk3d
     use THERMO_VARS, only: imixture
 
     implicit none
@@ -17,7 +18,6 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s, wrk3d)
     integer(wi), intent(IN) :: nx, ny, nz
     real(wp), intent(INOUT) :: q(nx*ny*nz, inb_flow_array)
     real(wp), intent(INOUT) :: s(nx*ny*nz, inb_scal_array)
-    real(wp), intent(INOUT) :: wrk3d(nx*ny*nz)
 
     ! -------------------------------------------------------------------
     ! ###################################################################

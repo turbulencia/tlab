@@ -376,7 +376,7 @@ program VISUALS
             if (icalc_scal == 1) call IBM_INITIALIZE_SCAL(i0, s)
         end if
 
-        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)
+        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
         if (iread_part == 1) then ! Particle variables
             write (part_file, *) itime; part_file = trim(adjustl(tag_part))//trim(adjustl(part_file))

@@ -531,7 +531,7 @@ program SPECTRA
             if (icalc_scal == 1) call IBM_INITIALIZE_SCAL(i0, s)
         end if
 
-        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)
+        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
 ! Calculate additional diagnostic quantities to be processed
         if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then

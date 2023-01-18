@@ -5,80 +5,77 @@
 ! Calculates and updates interactive surface boundary condition
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE BOUNDARY_SURFACE_J(is,bcs,s,hs,tmp1,tmp2,aux,wrk1d,wrk2d,wrk3d)
+subroutine BOUNDARY_SURFACE_J(is, bcs, s, hs, tmp1, tmp2, aux)
 #ifdef TRACE_ON
-  USE TLAB_CONSTANTS,ONLY : tfile
-  USE TLAB_PROCS,    ONLY : TLAB_WRITE_ASCII
+    use TLAB_CONSTANTS, only: tfile
+    use TLAB_PROCS, only: TLAB_WRITE_ASCII
 #endif
-  USE TLAB_CONSTANTS,ONLY : lfile
-  USE TLAB_VARS,   ONLY : imax,jmax,kmax, g
-  USE TLAB_VARS,   ONLY : isize_field,isize_wrk1d 
-  USE TLAB_VARS,   ONLY : visc,schmidt
-  USE BOUNDARY_BCS, ONLY : BcsScalJmin, BcsScalJmax 
-  USE AVGS, ONLY : AVG1V2D
-  use OPR_PARTIAL
-  
-  IMPLICIT NONE  
+    use TLAB_CONSTANTS, only: lfile
+    use TLAB_VARS, only: imax, jmax, kmax, g
+    use TLAB_VARS, only: isize_field
+    use TLAB_VARS, only: visc, schmidt
+    use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use BOUNDARY_BCS, only: BcsScalJmin, BcsScalJmax
+    use AVGS, only: AVG1V2D
+    use OPR_PARTIAL
+
+    implicit none
 
 #include "integers.h"
 
-  TINTEGER is
-  TINTEGER, DIMENSION(2,2), INTENT(IN) :: bcs          ! Boundary conditions from derivative operator
-  TREAL, DIMENSION(isize_field,*)      :: s,hs
-  TREAL, DIMENSION(isize_field)        :: tmp1,tmp2
-  TREAL, DIMENSION(imax,kmax,6),TARGET :: aux 
-  TREAL, DIMENSION(isize_wrk1d,*)      :: wrk1d
-  TREAL, DIMENSION(*)                  :: wrk2d,wrk3d
+    TINTEGER is
+    TINTEGER, dimension(2, 2), intent(IN) :: bcs          ! Boundary conditions from derivative operator
+    TREAL, dimension(isize_field, *) :: s, hs
+    TREAL, dimension(isize_field) :: tmp1, tmp2
+    TREAL, dimension(imax, kmax, 6), target :: aux
 
-  TINTEGER nxy,ip,k
-  TREAL, DIMENSION(:,:), POINTER       :: hfx,hfx_anom
-  TREAL :: diff,hfx_avg
+    TINTEGER nxy, ip, k
+    TREAL, dimension(:, :), pointer :: hfx, hfx_anom
+    TREAL :: diff, hfx_avg
 
 #ifdef TRACE_ON
-  CALL TLAB_WRITE_ASCII(tfile,'ENTERING SUBROUTINE BOUNDARY_SURFACE_J')
+    call TLAB_WRITE_ASCII(tfile, 'ENTERING SUBROUTINE BOUNDARY_SURFACE_J')
 #endif
-  diff = visc/schmidt(is)
-  nxy = imax*jmax
+    diff = visc/schmidt(is)
+    nxy = imax*jmax
 
-  ! vertical derivative of scalar for flux at the boundaries
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), s(:,is), tmp1,wrk3d,wrk2d,wrk3d)
+    ! vertical derivative of scalar for flux at the boundaries
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp1, wrk3d, wrk2d, wrk3d)
 
-  ! ------------------------------------------------------------
-  ! Bottom Boundary
-  ! ------------------------------------------------------------
-  IF ( BcsScalJmin%SfcType(is) .EQ. DNS_SFC_LINEAR ) THEN
-     hfx =>      aux(:,:,1)
-     hfx_anom => aux(:,:,2)
-     ip=1
-     DO k=1,kmax    ! Calculate the surface flux
-        hfx(:,k) = diff*tmp1(ip:ip+imax-1); ip=ip+nxy
-     ENDDO
-     hfx_avg = diff*AVG1V2D(imax,jmax,kmax,1,1,tmp1)
-     hfx_anom = hfx - hfx_avg
-     BcsScalJmin%ref(:,:,is) = BcsScalJmin%ref(:,:,is) + BcsScalJmin%cpl(is)*hfx_anom
-  ENDIF
+    ! ------------------------------------------------------------
+    ! Bottom Boundary
+    ! ------------------------------------------------------------
+    if (BcsScalJmin%SfcType(is) == DNS_SFC_LINEAR) then
+        hfx => aux(:, :, 1)
+        hfx_anom => aux(:, :, 2)
+        ip = 1
+        do k = 1, kmax    ! Calculate the surface flux
+            hfx(:, k) = diff*tmp1(ip:ip + imax - 1); ip = ip + nxy
+        end do
+        hfx_avg = diff*AVG1V2D(imax, jmax, kmax, 1, 1, tmp1)
+        hfx_anom = hfx - hfx_avg
+        BcsScalJmin%ref(:, :, is) = BcsScalJmin%ref(:, :, is) + BcsScalJmin%cpl(is)*hfx_anom
+    end if
 
-
-  ! ------------------------------------------------------------
-  ! Top Boundary
-  ! ------------------------------------------------------------
-  IF ( BcsScalJmax%SfcType(is) .EQ. DNS_SFC_LINEAR ) THEN
-     hfx =>      aux(:,:,3)
-     hfx_anom => aux(:,:,4)
-     ip = imax*(jmax-1) + 1
-     DO k=1,kmax;     ! Calculate the surface flux
-        hfx(:,k) = -diff*tmp1(ip:ip+imax-1); ip=ip+nxy;
-     ENDDO
-     hfx_avg = diff*AVG1V2D(imax,jmax,kmax,1,1,tmp1)
-     hfx_anom = hfx - hfx_avg
-     BcsScalJmax%ref(:,:,is) = BcsScalJmax%ref(:,:,is) + BcsScalJmax%cpl(is)*hfx_anom
-  ENDIF
-
+    ! ------------------------------------------------------------
+    ! Top Boundary
+    ! ------------------------------------------------------------
+    if (BcsScalJmax%SfcType(is) == DNS_SFC_LINEAR) then
+        hfx => aux(:, :, 3)
+        hfx_anom => aux(:, :, 4)
+        ip = imax*(jmax - 1) + 1
+        do k = 1, kmax; ! Calculate the surface flux
+            hfx(:, k) = -diff*tmp1(ip:ip + imax - 1); ip = ip + nxy; 
+        end do
+        hfx_avg = diff*AVG1V2D(imax, jmax, kmax, 1, 1, tmp1)
+        hfx_anom = hfx - hfx_avg
+        BcsScalJmax%ref(:, :, is) = BcsScalJmax%ref(:, :, is) + BcsScalJmax%cpl(is)*hfx_anom
+    end if
 
 #ifdef TRACE_ON
-  CALL TLAB_WRITE_ASCII(TFILE,'LEAVING SUBROUTINE BOUNDAR_SURFACE_J')
+    call TLAB_WRITE_ASCII(TFILE, 'LEAVING SUBROUTINE BOUNDAR_SURFACE_J')
 #endif
 
-  RETURN
+    return
 
-END SUBROUTINE BOUNDARY_SURFACE_J
+end subroutine BOUNDARY_SURFACE_J

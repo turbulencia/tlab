@@ -397,7 +397,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
         if (BcsScalJmin%type(is) /= DNS_SFC_STATIC .or. &
             BcsScalJmax%type(is) /= DNS_SFC_STATIC) then
-            call BOUNDARY_SURFACE_J(is, bcs, s, hs, tmp1, tmp2, tmp3, wrk1d, wrk2d, wrk3d)
+            call BOUNDARY_SURFACE_J(is, bcs, s, hs, tmp1, tmp2, tmp3)
         end if
         if (imode_ibm == 1) call IBM_BCS_FIELD(hs(1, is)) ! set tendency in solid to zero
 

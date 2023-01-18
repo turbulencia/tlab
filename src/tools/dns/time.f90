@@ -207,7 +207,7 @@ contains
 
             end select
 
-            call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)
+            call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
             call DNS_BOUNDS_LIMIT()
 !            if (int(logs_data(1)) /= 0) return ! Error detected

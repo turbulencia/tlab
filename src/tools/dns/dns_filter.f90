@@ -105,7 +105,7 @@ subroutine DNS_FILTER()
 
     ! -------------------------------------------------------------------
     ! recalculation of diagnostic variables
-    call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)
+    call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
     return
 end subroutine DNS_FILTER
